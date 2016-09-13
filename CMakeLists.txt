@@ -1,11 +1,21 @@
 cmake_minimum_required (VERSION 2.8)
+foreach(p
+    CMP048  ##NEW project() behavior for setting VERSION variable
+    CMP0025 # CMake 3.0 AppleClang vs. regular Clang
+    CMP0042 # CMake 3.0 ``MACOSX_RPATH`` is enabled by default.
+    CMP0054 # CMake 3.1 Only interpret ``if()`` arguments as variables or keywords when unquoted.
+    CMP0056 # CMake 3.2 Honor link flags in ``try_compile()`` source-file signature.
+    CMP0058 # CMake 3.3 Ninja requires custom command byproducts to be explicit.
+    CMP0063 # CMake 3.3.2 Honor visibility properties for all target types
+    )
+  if(POLICY ${p})
+    cmake_policy(SET ${p} NEW)
+  endif()
+endforeach()
+
 project (tbb CXX)
 
 include (CheckCXXCompilerFlag)
-
-if(POLICY CMP0058)
-  cmake_policy(SET CMP0058 NEW)
-endif()
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "Setting build type to 'Release' as none was specified.")
