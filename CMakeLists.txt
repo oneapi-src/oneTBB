@@ -299,7 +299,7 @@ if (TBB_BUILD_TESTS)
   find_library (LIBRT_LIBRARIES rt)
   find_library (LIDL_LIBRARIES dl)
   find_package (Threads)
-  find_package (OpenMP)
+  find_package (OpenMP QUIET)
 
   add_custom_target (tests)
 
