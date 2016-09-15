@@ -180,30 +180,30 @@ generic_scheduler* governor::init_scheduler_weak() {
 
 generic_scheduler* governor::init_scheduler( int num_threads, stack_size_type stack_size, bool auto_init ) {
     one_time_init();
-    uintptr_t v = theTLS.get();
-    generic_scheduler* s = tls_scheduler_of( v );
-    if( v&1 ) { // TLS holds scheduler instance with arena
-        __TBB_ASSERT( s->my_arena, "TLS is marked for scheduler with arena" );
-        s->my_ref_count += 1;
-        return s;
-    }
-    if( v ) { //TLS holds scheduler instance without arena
-        __TBB_ASSERT( !s->my_arena, "TLS is marked for scheduler without arena" );
-        __TBB_ASSERT( s->my_auto_initialized, "weakly initialized scheduler is supposed to be auto-initialized" );
-        s->attach_arena( market::create_arena( default_num_threads(), 0, true ), 0, /*is_master*/true );
-        __TBB_ASSERT( s->my_arena_index == 0, "Master thread must occupy the first slot in its arena" );
-        s->my_arena_slot->my_scheduler = s;
-        s->my_arena->my_default_ctx = s->default_context(); // it also transfers implied ownership
-        s->my_ref_count += 1;
-        assume_scheduler( s );
+    if ( uintptr_t v = theTLS.get() ) {
+        generic_scheduler* s = tls_scheduler_of( v );
+        if ( (v&1) == 0 ) { // TLS holds scheduler instance without arena
+            __TBB_ASSERT( s->my_ref_count == 1, "weakly initialized scheduler must have refcount equal to 1" );
+            __TBB_ASSERT( !s->my_arena, "weakly initialized scheduler  must have no arena" );
+            __TBB_ASSERT( s->my_auto_initialized, "weakly initialized scheduler is supposed to be auto-initialized" );
+            s->attach_arena( market::create_arena( default_num_threads(), 1, 0, true ), 0, /*is_master*/true );
+            __TBB_ASSERT( s->my_arena_index == 0, "Master thread must occupy the first slot in its arena" );
+            s->my_arena_slot->my_scheduler = s;
+            s->my_arena->my_default_ctx = s->default_context(); // it also transfers implied ownership
+            // Mark the scheduler as fully initialized
+            assume_scheduler( s );
+        }
+        // Increment refcount only for explicit instances of task_scheduler_init.
+        if ( !auto_init ) s->my_ref_count += 1;
+        __TBB_ASSERT( s->my_arena, "scheduler is not initialized fully" );
         return s;
     }
     // Create new scheduler instance with arena
     bool default_concurrency_requested = num_threads == task_scheduler_init::automatic;
     if( default_concurrency_requested )
         num_threads = default_num_threads();
-    arena *a = market::create_arena( num_threads, stack_size, default_concurrency_requested );
-    s = generic_scheduler::create_master( a );
+    arena *a = market::create_arena( num_threads, 1, stack_size, default_concurrency_requested );
+    generic_scheduler* s = generic_scheduler::create_master( a );
     __TBB_ASSERT(s, "Somehow a local scheduler creation for a master thread failed");
     __TBB_ASSERT( is_set(s), NULL );
     s->my_auto_initialized = auto_init;
@@ -214,20 +214,24 @@ void governor::terminate_scheduler( generic_scheduler* s, const task_scheduler_i
     __TBB_ASSERT( is_set(s), "Attempt to terminate non-local scheduler instance" );
     if (--(s->my_ref_count)) {
         // can't throw exception, because this is on dtor's call chain
-        __TBB_ASSERT_RELEASE( !BlockingTSI || BlockingTSI!=tsi_ptr,
+        __TBB_ASSERT_RELEASE( BlockingTSI!=tsi_ptr,
                               "Attempt to terminate nested scheduler in blocking mode" );
     } else {
+        bool needs_wait_workers = false;
+        if ( BlockingTSI==tsi_ptr ) {
+            needs_wait_workers = true;
+            BlockingTSI = NULL;
 #if TBB_USE_ASSERT
-        if (BlockingTSI) {
-            __TBB_ASSERT( BlockingTSI == tsi_ptr, "For blocking termination last terminate_scheduler must be blocking." );
             IsBlockingTerminationInProgress = true;
-        }
 #endif
-        s->cleanup_master();
+        }
+        s->cleanup_master( needs_wait_workers );
         __TBB_ASSERT( is_set(NULL), "cleanup_master has not cleared its TLS slot" );
-        BlockingTSI = NULL;
 #if TBB_USE_ASSERT
-        IsBlockingTerminationInProgress = false;
+        if ( needs_wait_workers ) {
+            __TBB_ASSERT( IsBlockingTerminationInProgress, NULL );
+            IsBlockingTerminationInProgress = false;
+        }
 #endif
     }
 }
@@ -236,12 +240,11 @@ void governor::auto_terminate(void* arg){
     generic_scheduler* s = tls_scheduler_of( uintptr_t(arg) ); // arg is equivalent to theTLS.get()
     if( s && s->my_auto_initialized ) {
         if( !--(s->my_ref_count) ) {
-            __TBB_ASSERT( !BlockingTSI, "Blocking auto-terminate is not supported." );
             // If the TLS slot is already cleared by OS or underlying concurrency
             // runtime, restore its value.
             if( !is_set(s) )
                 assume_scheduler(s);
-            s->cleanup_master();
+            s->cleanup_master( /*needs_wait_workers=*/false );
             __TBB_ASSERT( is_set(NULL), "cleanup_master has not cleared its TLS slot" );
         }
     }

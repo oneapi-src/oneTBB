@@ -123,7 +123,7 @@
 #define __TBB_THROW_FROM_DTOR_BROKEN (__clang__ &&  (__apple_build_version__ &&  __apple_build_version__ < 5000279 || __TBB_CLANG_VERSION && __TBB_CLANG_VERSION < 50000))
 
 //std::uncaught_exception is broken on some version of stdlibc++ (it returns true with no active exception)
-#define __TBB_STD_UNCAUGHT_EXCEPTION_BROKEN (__linux__ && (__TBB_GCC_VERSION == 40407 || __TBB_GCC_VERSION == 40902))
+#define __TBB_STD_UNCAUGHT_EXCEPTION_BROKEN (__linux__ && (__TBB_GCC_VERSION == 40407 || __TBB_GCC_VERSION == 40802 || __TBB_GCC_VERSION == 40902))
 
 #if __TBB_LIBSTDCPP_EXCEPTION_HEADERS_BROKEN
   #define _EXCEPTION_PTR_H /* prevents exception_ptr.h inclusion */

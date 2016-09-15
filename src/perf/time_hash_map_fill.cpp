@@ -108,8 +108,8 @@ struct Uniques : TesterBase {
     // Executes test mode for a given thread. Return value is ignored when used with timing wrappers.
     /*override*/ double test(int testn, int t)
     {
-        if( testn != 1 ) { // do insertions
-            for(int i = testn*value+t*n_items, e = testn*value+(t+1)*n_items; i < e; i++) {
+        if( testn == 0 ) { // do insertions
+            for(int i = t*n_items, e = (t+1)*n_items; i < e; i++) {
                 Table.insert( std::make_pair(Data[i],t) );
             }
         } else { // do last finds
@@ -138,7 +138,7 @@ void execute_percent(test_sandbox &the_test, int p) {
     int uniques = p==100?std::numeric_limits<int>::max() : MAX_TABLE_SIZE;
     ASSERT(p==100 || p <= 30, "Function is broken for %% > 30 except for 100%%");
     for(int i = 0; i < input_size; i++)
-        Data[i] = rand()%uniques;
+        Data[i] = (rand()*rand())%uniques;
     for(int t = MinThread; t <= MaxThread; t++)
         the_test.factory(input_size, t); // executes the tests specified in BOX-es for given 'value' and threads
     the_test.report.SetRoundTitle(rounds++, "%d%%", p);

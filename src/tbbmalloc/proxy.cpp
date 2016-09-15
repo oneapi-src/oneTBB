@@ -331,38 +331,42 @@ void* __TBB_malloc_safer__aligned_realloc_##CRTLIB( void *ptr, size_t size, size
     return __TBB_malloc_safer_aligned_realloc( ptr, size, aligment, &func_ptrs );                    \
 }
 
-// limit is 30 bytes/60 symbols per line
+// limit is 30 bytes/60 symbols per line, * can be used to match any digit in bytecodes
 const char* known_bytecodes[] = {
 #if _WIN64
+ #if __TBB_OVERLOAD_OLD_MSVCR
     "4883EC284885C974",       //release free() win64
-    "4883EC384885C975",       //release msize() win64
     "4885C974375348",         //release free() 8.0.50727.42 win64
-    "48894C24084883EC28BA",   //debug prologue for win64
     "4C8BC1488B0DA6E4040033", //win64 SDK
-    "4883EC284885C975",       //release msize() 10.0.21003.1 win64
     "48895C2408574883EC20",   //release _aligned_msize() win64
+ #endif
+    "4883EC384885C975",       //release msize() 9.0 win64
+    "48894C24084883EC28BA",   //debug prologue for win64
+    "4883EC284885C975",       //release msize() 10.0.21003.1 win64
     "4C894424184889542410",   //debug _aligned_msize() win64
-#else
-    "558BEC6A018B",           //debug free() & _msize() 8.0.50727.4053 win32
+#else // _WIN64
+ #if __TBB_OVERLOAD_OLD_MSVCR
     "6A1868********E8",       //release free() 8.0.50727.4053 win32
-    "6A1C68********E8",       //release _msize() 8.0.50727.4053 win32
-    "558BEC837D08000F",       //release _msize() 11.0.51106.1 win32
-    "8BFF558BEC6A",           //debug free() & _msize() 9.0.21022.8 win32
-    "8BFF558BEC83",           //debug free() & _msize() 10.0.21003.1 win32
     "8BFF558BEC8B4508",       //release _aligned_msize() 10.0 win32
+ #endif
+    "6A1C68********E8",       //release _msize() 8.0.50727.4053, 9.0 win32
+    "558BEC6A018B",           //debug free() & _msize() 11.0 win32
+    "558BEC837D08000F",       //release _msize() 11.0.51106.1 win32
+    "8BFF558BEC6A",           //debug free() & _msize() 10.0.40219.325 win32
+    "8BFF558BEC83",           //release free() & _msize() 10.0.40219.325 win32
     "8BFF558BEC8B4510",       //debug _aligned_msize() 10.0 win32
     "558BEC8B451050",         //debug _aligned_msize() 11.0 win32
-#endif
+#endif // _WIN64
     NULL
     };
 
-#define __TBB_ORIG_ALLOCATOR_REPLACEMENT_CALL_ENTRY(CRT_VER,function_name,dbg_modifier)                                                                         \
+#define __TBB_ORIG_ALLOCATOR_REPLACEMENT_CALL_ENTRY(CRT_VER,function_name,dbg_modifier) \
     ReplaceFunctionWithStore( #CRT_VER #dbg_modifier ".dll", #function_name, (FUNCPTR)__TBB_malloc_safer_##function_name##_##CRT_VER##dbg_modifier, known_bytecodes, (FUNCPTR*)&orig_##function_name##_##CRT_VER##dbg_modifier );
 
-#define __TBB_ORIG_ALLOCATOR_REPLACEMENT_CALL_ENTRY_NO_FALLBACK(CRT_VER,function_name,dbg_modifier)                                                             \
+#define __TBB_ORIG_ALLOCATOR_REPLACEMENT_CALL_ENTRY_NO_FALLBACK(CRT_VER,function_name,dbg_modifier) \
     ReplaceFunctionWithStore( #CRT_VER #dbg_modifier ".dll", #function_name, (FUNCPTR)__TBB_malloc_safer_##function_name##_##CRT_VER##dbg_modifier, 0, NULL );
 
-#define __TBB_ORIG_ALLOCATOR_REPLACEMENT_CALL_ENTRY_REDIRECT(CRT_VER,function_name,dest_func,dbg_modifier)                                                      \
+#define __TBB_ORIG_ALLOCATOR_REPLACEMENT_CALL_ENTRY_REDIRECT(CRT_VER,function_name,dest_func,dbg_modifier) \
     ReplaceFunctionWithStore( #CRT_VER #dbg_modifier ".dll", #function_name, (FUNCPTR)__TBB_malloc_safer_##dest_func##_##CRT_VER##dbg_modifier, 0, NULL );
 
 
@@ -381,12 +385,14 @@ const char* known_bytecodes[] = {
     __TBB_ORIG_ALLOCATOR_REPLACEMENT_CALL_RELEASE(CRT_VER) \
     __TBB_ORIG_ALLOCATOR_REPLACEMENT_CALL_DEBUG(CRT_VER)
 
+#if __TBB_OVERLOAD_OLD_MSVCR
 __TBB_ORIG_ALLOCATOR_REPLACEMENT_WRAPPER(msvcr70d);
 __TBB_ORIG_ALLOCATOR_REPLACEMENT_WRAPPER(msvcr70);
 __TBB_ORIG_ALLOCATOR_REPLACEMENT_WRAPPER(msvcr71d);
 __TBB_ORIG_ALLOCATOR_REPLACEMENT_WRAPPER(msvcr71);
 __TBB_ORIG_ALLOCATOR_REPLACEMENT_WRAPPER(msvcr80d);
 __TBB_ORIG_ALLOCATOR_REPLACEMENT_WRAPPER(msvcr80);
+#endif
 __TBB_ORIG_ALLOCATOR_REPLACEMENT_WRAPPER(msvcr90d);
 __TBB_ORIG_ALLOCATOR_REPLACEMENT_WRAPPER(msvcr90);
 __TBB_ORIG_ALLOCATOR_REPLACEMENT_WRAPPER(msvcr100d);
@@ -441,8 +447,6 @@ void operator_delete_arr_t(void* ptr, const std::nothrow_t&) throw() {
 }
 
 const char* modules_to_replace[] = {
-    "msvcr80d.dll",
-    "msvcr80.dll",
     "msvcr90d.dll",
     "msvcr90.dll",
     "msvcr100d.dll",
@@ -451,11 +455,16 @@ const char* modules_to_replace[] = {
     "msvcr110.dll",
     "msvcr120d.dll",
     "msvcr120.dll",
-//    "ucrtbase.dll",
+    "ucrtbase.dll",
+//    "ucrtbased.dll" is not supported because of problems with _dbg functions
+#if __TBB_OVERLOAD_OLD_MSVCR
+    "msvcr80d.dll",
+    "msvcr80.dll",
     "msvcr70d.dll",
     "msvcr70.dll",
     "msvcr71d.dll",
     "msvcr71.dll",
+#endif
 #if __TBB_TODO
     // TODO: Try enabling replacement for non-versioned system binaries below
     "msvcrtd.dll",
@@ -526,27 +535,29 @@ typedef wchar_t unicode_char_t;
 
 void ReplaceFunctionWithStore( const unicode_char_t *dllName, const char *funcName, FUNCPTR newFunc, const char ** opcodes, FUNCPTR* origFunc,  FRR_ON_ERROR on_error = FRR_FAIL )
 {
-    FRR_TYPE type = ReplaceFunction( dllName, funcName, newFunc, opcodes, origFunc );
-    if (type == FRR_NODLL) return;
-    if (type != FRR_OK && on_error == FRR_FAIL)
-    {
-        fprintf(stderr, "Failed to replace function %s in module %s\n",
-                funcName, dllName);
-        exit(1);
-    }
+    FRR_TYPE res = ReplaceFunction( dllName, funcName, newFunc, opcodes, origFunc );
+
+    if (res == FRR_OK || res == FRR_NODLL || (res == FRR_NOFUNC && on_error == FRR_IGNORE))
+        return;
+
+    fprintf(stderr, "Failed to %s function %s in module %s\n",
+            res==FRR_NOFUNC? "find" : "replace", funcName, dllName);
+    exit(1);
 }
 
 void doMallocReplacement()
 {
     // Replace functions and keep backup of original code (separate for each runtime)
+#if __TBB_OVERLOAD_OLD_MSVCR
     __TBB_ORIG_ALLOCATOR_REPLACEMENT_CALL(msvcr70)
     __TBB_ORIG_ALLOCATOR_REPLACEMENT_CALL(msvcr71)
     __TBB_ORIG_ALLOCATOR_REPLACEMENT_CALL(msvcr80)
+#endif
     __TBB_ORIG_ALLOCATOR_REPLACEMENT_CALL(msvcr90)
     __TBB_ORIG_ALLOCATOR_REPLACEMENT_CALL(msvcr100)
     __TBB_ORIG_ALLOCATOR_REPLACEMENT_CALL(msvcr110)
     __TBB_ORIG_ALLOCATOR_REPLACEMENT_CALL(msvcr120)
-//    __TBB_ORIG_ALLOCATOR_REPLACEMENT_CALL_RELEASE(ucrtbase)
+    __TBB_ORIG_ALLOCATOR_REPLACEMENT_CALL_RELEASE(ucrtbase)
 
     // Replace functions without storing original code
     for (size_t j = 0; j < arrayLength(modules_to_replace); j++) {

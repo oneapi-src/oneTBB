@@ -3528,7 +3528,7 @@ public:
 
 };  // class composite_node
 
-#endif // __TBB_PREVIEW_COMPOSITE_NODE
+#endif // __TBB_FLOW_GRAPH_CPP11_FEATURES
 
 #if __TBB_PREVIEW_ASYNC_NODE
 namespace internal {

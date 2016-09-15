@@ -331,16 +331,18 @@ static void *fixedBufGetMem(intptr_t pool_id, size_t &bytes)
     return ((FixedPoolHeadBase*)pool_id)->useData(bytes);
 }
 
-class FixedPoolRun: NoAssign {
-    Harness::SpinBarrier *startB;
+class FixedPoolUse: NoAssign {
+    static Harness::SpinBarrier startB;
     rml::MemoryPool *pool;
     size_t reqSize;
     int iters;
 public:
-    FixedPoolRun(Harness::SpinBarrier *b, rml::MemoryPool *p, size_t sz, int it) :
-        startB(b), pool(p), reqSize(sz), iters(it) {}
+    FixedPoolUse(unsigned threads, rml::MemoryPool *p, size_t sz, int it) :
+        pool(p), reqSize(sz), iters(it) {
+        startB.initialize(threads);
+    }
     void operator()( int /*id*/ ) const {
-        startB->wait();
+        startB.wait();
         for (int i=0; i<iters; i++) {
             void *o = pool_malloc(pool, reqSize);
             ASSERT(o, NULL);
@@ -348,6 +350,8 @@ public:
         }
     }
 };
+
+Harness::SpinBarrier FixedPoolUse::startB;
 
 class FixedPoolNomem: NoAssign {
     Harness::SpinBarrier *startB;
@@ -394,78 +398,73 @@ void TestFixedBufferPool()
     rml::MemPoolPolicy pol(fixedBufGetMem, NULL, 0, /*fixedSizePool=*/true,
                            /*keepMemTillDestroy=*/false);
     rml::MemoryPool *pool;
-    FixedPoolHead<MAX_OBJECT + 1024*1024> head;
-
-    pool_create_v1((intptr_t)&head, &pol, &pool);
-    void *largeObj = pool_malloc(pool, MAX_OBJECT);
-    ASSERT(largeObj, NULL);
-    pool_free(pool, largeObj);
-
-    largeObj = pool_malloc(pool, MAX_OBJECT);
-    ASSERT(largeObj, NULL);
-    pool_free(pool, largeObj);
-
-    for (int i=0; i<ITERS; i++) {
-        ptrs[i] = pool_malloc(pool, MAX_OBJECT/ITERS);
-        ASSERT(ptrs[i], NULL);
-    }
-    for (int i=0; i<ITERS; i++)
-        pool_free(pool, ptrs[i]);
-
-    largeObj = pool_malloc(pool, MAX_OBJECT);
-    ASSERT(largeObj, NULL);
-    pool_free(pool, largeObj);
-
-    // each thread asks for an MAX_OBJECT/p/2 object,
-    // /2 is to cover fragmentation
-    for (int p=MinThread; p<=MaxThread; p++) {
-        Harness::SpinBarrier startB(p);
-        NativeParallelFor( p, FixedPoolRun(&startB, pool,
-                                           MAX_OBJECT/p/2, 10000) );
-    }
     {
-        size_t maxSz;
-        int p = 512;
-        Harness::SpinBarrier barrier(p);
+        FixedPoolHead<MAX_OBJECT + 1024*1024> head;
 
-        // Find maximal useful object size. Start with MAX_OBJECT/2,
-        // as the pool might be fragmented by BootStrapBlocks consumed during
-        // FixedPoolRun.
-        size_t l, r;
-        ASSERT(haveEnoughSpace(pool, MAX_OBJECT/2), NULL);
-        for (l = MAX_OBJECT/2, r = MAX_OBJECT + 1024*1024; l < r-1; ) {
-            size_t mid = (l+r)/2;
-            if (haveEnoughSpace(pool, mid))
-                l = mid;
-            else
-                r = mid;
+        pool_create_v1((intptr_t)&head, &pol, &pool);
+        {
+            NativeParallelFor( 1, FixedPoolUse(1, pool, MAX_OBJECT, 2) );
+
+            for (int i=0; i<ITERS; i++) {
+                ptrs[i] = pool_malloc(pool, MAX_OBJECT/ITERS);
+                ASSERT(ptrs[i], NULL);
+            }
+            for (int i=0; i<ITERS; i++)
+                pool_free(pool, ptrs[i]);
+
+            NativeParallelFor( 1, FixedPoolUse(1, pool, MAX_OBJECT, 1) );
         }
-        maxSz = l;
-        ASSERT(!haveEnoughSpace(pool, maxSz+1), "Expect to find boundary value.");
-        // consume all available memory
-        largeObj = pool_malloc(pool, maxSz);
-        ASSERT(largeObj, NULL);
-        void *o = pool_malloc(pool, 64);
-        if (o) // pool fragmented, skip FixedPoolNomem
-            pool_free(pool, o);
-        else
-            NativeParallelFor( p, FixedPoolNomem(&barrier, pool) );
-        pool_free(pool, largeObj);
-        // keep some space unoccupied
-        largeObj = pool_malloc(pool, maxSz-512*1024);
-        ASSERT(largeObj, NULL);
-        NativeParallelFor( p, FixedPoolSomeMem(&barrier, pool) );
-        pool_free(pool, largeObj);
-    }
-    bool ok = pool_destroy(pool);
-    ASSERT(ok, NULL);
+        // each thread asks for an MAX_OBJECT/p/2 object,
+        // /2 is to cover fragmentation
+        for (int p=MinThread; p<=MaxThread; p++)
+            NativeParallelFor( p, FixedPoolUse(p, pool, MAX_OBJECT/p/2, 10000) );
+        {
+            const int p=128;
+            NativeParallelFor( p, FixedPoolUse(p, pool, MAX_OBJECT/p/2, 1) );
+        }
+        {
+            size_t maxSz;
+            const int p = 512;
+            Harness::SpinBarrier barrier(p);
 
+            // Find maximal useful object size. Start with MAX_OBJECT/2,
+            // as the pool might be fragmented by BootStrapBlocks consumed during
+            // FixedPoolRun.
+            size_t l, r;
+            ASSERT(haveEnoughSpace(pool, MAX_OBJECT/2), NULL);
+            for (l = MAX_OBJECT/2, r = MAX_OBJECT + 1024*1024; l < r-1; ) {
+                size_t mid = (l+r)/2;
+                if (haveEnoughSpace(pool, mid))
+                    l = mid;
+                else
+                    r = mid;
+            }
+            maxSz = l;
+            ASSERT(!haveEnoughSpace(pool, maxSz+1), "Expect to find boundary value.");
+            // consume all available memory
+            void *largeObj = pool_malloc(pool, maxSz);
+            ASSERT(largeObj, NULL);
+            void *o = pool_malloc(pool, 64);
+            if (o) // pool fragmented, skip FixedPoolNomem
+                pool_free(pool, o);
+            else
+                NativeParallelFor( p, FixedPoolNomem(&barrier, pool) );
+            pool_free(pool, largeObj);
+            // keep some space unoccupied
+            largeObj = pool_malloc(pool, maxSz-512*1024);
+            ASSERT(largeObj, NULL);
+            NativeParallelFor( p, FixedPoolSomeMem(&barrier, pool) );
+            pool_free(pool, largeObj);
+        }
+        bool ok = pool_destroy(pool);
+        ASSERT(ok, NULL);
+    }
+    // check that fresh untouched pool can successfully fulfil requests from 128 threads
     {
         FixedPoolHead<MAX_OBJECT + 1024*1024> head;
         pool_create_v1((intptr_t)&head, &pol, &pool);
         int p=128;
-        Harness::SpinBarrier startB(p);
-        NativeParallelFor( p, FixedPoolRun(&startB, pool, MAX_OBJECT/p/2, 1) );
+        NativeParallelFor( p, FixedPoolUse(p, pool, MAX_OBJECT/p/2, 1) );
         bool ok = pool_destroy(pool);
         ASSERT(ok, NULL);
     }
@@ -650,7 +649,7 @@ void TestPoolCreation()
 
     for (created=0; created<MAX_POOLS; created++) {
         putMemCalls = getMemCalls = 0;
-        MemPoolError res = pool_create_v1(created, &okPolicy, pools+created);
+        res = pool_create_v1(created, &okPolicy, pools+created);
         if (res!=POOL_OK) {
             ASSERT(!getMemCalls && !putMemCalls, "No leak after fail.");
             break;
@@ -668,7 +667,7 @@ void TestPoolCreation()
     }
     // check that failure during pool creation doesn't lead to leaks
     for (size_t i=0; i<created; i++) {
-        MemPoolError res = pool_create_v1(i, &okPolicy, pools+i);
+        res = pool_create_v1(i, &okPolicy, pools+i);
         ASSERT(res==POOL_OK, "2nd iteration of pool creation must be possible.");
         void *o = pool_malloc(pools[i], 1024);
         ASSERT(o, "Created pool must be useful.");

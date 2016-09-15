@@ -131,6 +131,8 @@ public:
 
 class ArenaObserver : public tbb::task_scheduler_observer {
     int myId;
+    int myMaxConcurrency;
+    int myNumReservedSlots;
     /*override*/
     void on_scheduler_entry( bool is_worker ) {
         REMARK("a %s #%p is entering arena %d from %d on slot %d\n", is_worker?"worker":"master",
@@ -141,8 +143,8 @@ class ArenaObserver : public tbb::task_scheduler_observer {
         ASSERT(old_id.local() != myId, "double-entry to the same arena");
         local_id.local() = myId;
         slot_id.local() = tbb::task_arena::current_thread_index();
-        if(is_worker) ASSERT(tbb::task_arena::current_thread_index()>0, NULL);
-        else ASSERT(tbb::task_arena::current_thread_index()==0, NULL);
+        ASSERT(tbb::task_arena::current_thread_index()<(myMaxConcurrency>1?myMaxConcurrency:2), NULL);
+        if(is_worker) ASSERT(tbb::task_arena::current_thread_index()>=myNumReservedSlots, NULL);
     }
     /*override*/
     void on_scheduler_exit( bool is_worker ) {
@@ -155,9 +157,12 @@ class ArenaObserver : public tbb::task_scheduler_observer {
         old_id.local() = 0;
     }
 public:
-    ArenaObserver(tbb::task_arena &a, int id) : tbb::task_scheduler_observer(a) {
-        ASSERT(id, NULL);
-        myId = id;
+    ArenaObserver(tbb::task_arena &a, int maxConcurrency, int numReservedSlots, int id) 
+        : tbb::task_scheduler_observer(a)
+        , myId(id)
+        , myMaxConcurrency(maxConcurrency)
+        , myNumReservedSlots(numReservedSlots) {
+        ASSERT(myId, NULL);
         observe(true);
     }
     ~ArenaObserver () {
@@ -182,9 +187,9 @@ void TestConcurrentArenas(int p) {
     //Harness::ConcurrencyTracker::Reset();
     tbb::task_arena a1;
     a1.initialize(1,0);
-    ArenaObserver o1(a1, p*2+1);
+    ArenaObserver o1(a1, 1, 0, p*2+1);
     tbb::task_arena a2(2,1);
-    ArenaObserver o2(a2, p*2+2);
+    ArenaObserver o2(a2, 2, 1, p*2+2);
     Harness::SpinBarrier barrier(2);
     AsynchronousWork work(barrier);
     a1.enqueue(work); // put async work
@@ -318,12 +323,30 @@ public:
     }
 };
 
+class MultipleMastersPart5 : NoAssign {
+    tbb::task_arena &my_a;
+    Harness::SpinBarrier &my_b;
+
+public:
+    MultipleMastersPart5( tbb::task_arena &a, Harness::SpinBarrier &b) : my_a(a), my_b(b) {}
+    // NativeParallelFor's functor
+    void operator()(int) const {
+        local_id.local() = 1;
+        my_a.execute(*this);
+    }
+    // Arena's functor
+    void operator()() const {
+        ASSERT( local_id.local() == 1, "Unexpected thread." );
+        my_b.timed_wait( 10 );
+    }
+};
+
 void TestMultipleMasters(int p) {
     {
         REMARK("multiple masters, part 1\n");
         tbb::task_arena a(1,0);
         a.initialize();
-        ArenaObserver o(a, 1);
+        ArenaObserver o(a, 1, 0, 1);
         Harness::SpinBarrier barrier1(p), barrier2(2*p+1); // each of p threads will submit two tasks signaling the barrier
         NativeParallelFor( p, MultipleMastersBody(a, barrier1, barrier2) );
         barrier2.timed_wait(10);
@@ -331,7 +354,7 @@ void TestMultipleMasters(int p) {
     } {
         REMARK("multiple masters, part 2\n");
         tbb::task_arena a(2,1);
-        ArenaObserver o(a, 2);
+        ArenaObserver o(a, 2, 1, 2);
         Harness::SpinBarrier barrier(p+2);
         a.enqueue(AsynchronousWork(barrier, /*blocking=*/true)); // occupy the worker, a regression test for bug 1981
         NativeParallelFor( p, MultipleMastersPart2(a, barrier) );
@@ -349,11 +372,18 @@ void TestMultipleMasters(int p) {
         int c = p%3? (p%2? p : 2) : 3;
         REMARK("multiple masters, part 4: contexts, arena(%d)\n", c);
         tbb::task_arena a(c, 1);
-        ArenaObserver o(a, c);
+        ArenaObserver o(a, c, 1, c);
         Harness::SpinBarrier barrier(c);
         MultipleMastersPart4 test(a, barrier);
         NativeParallelFor(p, test);
         a.debug_wait_until_empty();
+    } {
+        // Check if multiple masters can achive maximum concurrency.
+        REMARK("multiple masters, part 5: masters on barrier, arena(%d)\n", p);
+        tbb::task_arena a(p, 1);
+        Harness::SpinBarrier barrier(p);
+        MultipleMastersPart5 test(a, barrier);
+        NativeParallelFor(p, test);
     }
 }
 
@@ -470,6 +500,115 @@ void TestArenaEntryConsistency() {
         body.test(i);
 }
 
+class TestArenaMaxParallelismBody : NoAssign {
+    tbb::task_arena &my_a;
+    int my_p;
+    Harness::SpinBarrier *my_barrier;
+public:
+    TestArenaMaxParallelismBody( tbb::task_arena &a, int p, Harness::SpinBarrier *b = NULL ) : my_a( a ), my_p( p ), my_barrier(b) {}
+    // NativeParallelFor's functor
+    void operator()( int ) const {
+        my_a.execute( *this );
+    }
+    // Arena's functor
+    void operator()() const {
+        int idx = tbb::task_arena::current_thread_index();
+        ASSERT( idx < (my_p > 1 ? my_p : 2), NULL );
+        if ( my_barrier ) my_barrier->timed_wait( 10 );
+        else Harness::Sleep( 10 );
+    }
+};
+
+void TestArenaMaxParallelism( int p ) {
+    {
+        tbb::task_arena a( p, 0 );
+        Harness::SpinBarrier b( p );
+        TestArenaMaxParallelismBody test( a, p, &b );
+        for ( int i = 1; i < p; ++i )
+            a.enqueue( test );
+        a.execute( test );
+        a.debug_wait_until_empty();
+    }
+    {
+        tbb::task_arena a( p, 1 );
+        Harness::SpinBarrier b( p );
+        TestArenaMaxParallelismBody test( a, p, &b );
+        for ( int i = 1; i < p; ++i )
+            a.enqueue( test );
+        a.execute( test );
+        a.debug_wait_until_empty();
+    }
+    {
+        tbb::task_arena a( p, 0 );
+        NativeParallelFor( 2*p, TestArenaMaxParallelismBody( a, p ) );
+        a.debug_wait_until_empty();
+    }
+    {
+        tbb::task_arena a( p, 1 );
+        NativeParallelFor( 2*p, TestArenaMaxParallelismBody( a, p ) );
+        a.debug_wait_until_empty();
+    }
+}
+
+class TestArenaReservedMasterSlotsBody : NoAssign {
+    tbb::task_arena &my_a;
+    Harness::SpinBarrier &my_barrier;
+    Harness::SpinBarrier &my_worker_barrier;
+    int my_max_concurrency;
+    int my_reserved_slots;
+public:
+    TestArenaReservedMasterSlotsBody( tbb::task_arena &a, Harness::SpinBarrier &b, Harness::SpinBarrier &worker_b, int max_concurrency, int reserved_slots )
+        : my_a( a ), my_barrier(b), my_worker_barrier(worker_b), my_max_concurrency(max_concurrency), my_reserved_slots(reserved_slots)  {}
+    // NativeParallelFor's functor
+    void operator()( int ) const {
+        local_id.local() = 1;
+        my_a.execute( *this );
+    }
+    // Arena's functor
+    void operator()() const {
+        int idx = tbb::task_arena::current_thread_index();
+        ASSERT( idx < (my_max_concurrency > 1 ? my_max_concurrency : 2), NULL );
+        if ( local_id.local() != 1 ) {
+            // Worker thread
+            ASSERT( idx >= my_reserved_slots, NULL );
+            my_worker_barrier.timed_wait( 10 );
+        } else {
+            ASSERT( idx < my_reserved_slots, "Masters are not supposed to occupy non-reserved slots in this test" );
+        }
+        my_barrier.timed_wait( 10 );
+    }
+};
+
+void TestArenaReservedMasterSlots( int p ) {
+    for ( int reserved_slots = 0; reserved_slots <= p; ++reserved_slots ) {
+        tbb::task_arena a( p, reserved_slots );
+        Harness::SpinBarrier barrier(p);
+        Harness::SpinBarrier worker_barrier( p - reserved_slots + 1 );
+        TestArenaReservedMasterSlotsBody test( a, barrier, worker_barrier, p, reserved_slots );
+        for ( int i = reserved_slots; i < p; ++i )
+            a.enqueue( test );
+        worker_barrier.timed_wait( 10 );
+        if ( reserved_slots )
+            NativeParallelFor( reserved_slots, test );
+        a.debug_wait_until_empty();
+        ResetTLS();
+    }
+}
+
+struct test_functor_t {
+    void operator()() { ASSERT( false, "Non-const operator called" ); }
+    void operator()() const { /* library requires this overload only */ }
+};
+
+void TestConstantFunctorRequirement() {
+    tbb::task_arena a;
+    test_functor_t tf;
+    a.enqueue( tf );
+#if __TBB_TASK_PRIORITY
+    a.enqueue( tf, tbb::priority_normal );
+#endif
+}
+
 int TestMain () {
     // TODO: a workaround for temporary p-1 issue in market
     tbb::task_scheduler_init init_market_p_plus_one(MaxThread+1);
@@ -480,7 +619,10 @@ int TestMain () {
         ResetTLS();
         TestMultipleMasters( p );
         ResetTLS();
+        TestArenaMaxParallelism( p );
     }
     TestArenaEntryConsistency();
+    TestArenaReservedMasterSlots( MaxThread );
+    TestConstantFunctorRequirement();
     return Harness::Done;
 }

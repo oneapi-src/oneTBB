@@ -91,6 +91,7 @@ struct scheduler_state {
     //! Pointer to market's (for workers) or current arena's (for the master) reload epoch counter.
     volatile uintptr_t *my_ref_reload_epoch;
 #endif /* __TBB_TASK_PRIORITY */
+    bool my_is_worker;
 };
 
 //! Work stealing task scheduler.
@@ -255,7 +256,7 @@ public: // almost every class in TBB uses generic_scheduler
     static generic_scheduler* create_master( arena* a );
 
     //! Perform necessary cleanup when a master thread stops using TBB.
-    void cleanup_master();
+    void cleanup_master( bool needs_wait_workers );
 
     //! Initialize a scheduler for a worker thread.
     static generic_scheduler* create_worker( market& m, size_t index );
@@ -278,7 +279,7 @@ public:
 
     void attach_arena( arena*, size_t index, bool is_master );
 #if __TBB_TASK_ARENA
-    void nested_arena_entry( arena*, nested_arena_context &, bool as_worker );
+    void nested_arena_entry( arena*, size_t, nested_arena_context &, bool as_worker );
     void nested_arena_exit( nested_arena_context & );
     void wait_until_empty();
 #endif
@@ -540,7 +541,7 @@ inline void generic_scheduler::attach_mailbox( affinity_id id ) {
 }
 
 inline bool generic_scheduler::is_worker() {
-    return my_arena_index != 0; //TODO: rework for multiple master
+    return my_is_worker;
 }
 
 inline unsigned generic_scheduler::number_of_workers_in_my_arena() {

@@ -18,55 +18,22 @@
     reasons why the executable file might be covered by the GNU General Public License.
 */
 
-#ifndef FRACTAL_VIDEO_H_
-#define FRACTAL_VIDEO_H_
+#ifndef tbb_test_harness_allocator_overload_H
+#define tbb_test_harness_allocator_overload_H
 
-#include "../../common/gui/video.h"
-#include "fractal.h"
+#include "../tbbmalloc/proxy.h" // for MALLOC_UNIXLIKE_OVERLOAD_ENABLED, MALLOC_ZONE_OVERLOAD_ENABLED
+#include "tbb/tbb_config.h" // for __TBB_WIN8UI_SUPPORT
 
-extern video *v;
-extern bool single;
+// Skip configurations with unsupported system malloc overload:
+// skip unsupported MSVCs, WIN8UI and MINGW (it doesn't define _MSC_VER),
+// no support for MSVC 2015 in debug for now,
+// don't use defined(_MSC_VER), because result of using defined() in macro expansion is undefined
+#define MALLOC_WINDOWS_OVERLOAD_ENABLED ((_WIN32||_WIN64) && !__TBB_WIN8UI_SUPPORT && _MSC_VER >= 1500 && !(_MSC_VER == 1900 && _DEBUG))
 
-class fractal_video : public video
-{
-    fractal_group *fg;
+// Skip configurations with unsupported system malloc overload:
+// * overload via linking with -lmalloc_proxy is broken in offload,
+// as the library is loaded too late in that mode,
+// * LD_PRELOAD mechanism is broken in offload
+#define HARNESS_SKIP_TEST ((!MALLOC_WINDOWS_OVERLOAD_ENABLED && !MALLOC_UNIXLIKE_OVERLOAD_ENABLED && !MALLOC_ZONE_OVERLOAD_ENABLED) || __TBB_MIC_OFFLOAD)
 
-private:
-    void on_mouse( int x, int y, int key ) {
-        if( key == 1 ) {
-            if ( fg ) {
-                fg->set_num_frames_at_least(20);
-                fg->mouse_click( x, y );
-            }
-        }
-    }
-
-    void on_key( int key ) {
-        switch ( key&0xff ) {
-        case 27:
-            running = false; break;
-        case ' ': // space
-            if( fg ) fg->switch_priorities();
-        default:
-            if( fg ) fg->set_num_frames_at_least(20);
-        }
-    }
-
-    void on_process() {
-        if ( fg ) {
-            fg->run( !single );
-        }
-    }
-
-public:
-    fractal_video() :fg(0) {
-        title = "Dynamic Priorities in TBB: Fractal Example";
-        v = this;
-    }
-
-    void set_fractal_group( fractal_group &_fg ) {
-        fg = &_fg;
-    }
-};
-
-#endif /* FRACTAL_VIDEO_H_ */
+#endif // tbb_test_harness_allocator_overload_H

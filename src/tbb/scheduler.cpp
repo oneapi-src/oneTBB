@@ -1021,6 +1021,7 @@ generic_scheduler* generic_scheduler::create_worker( market& m, size_t index ) {
     __TBB_ASSERT(index, "workers should have index > 0");
     s->my_arena_index = index; // index is not a real slot in arena yet
     s->my_dummy_task->prefix().ref_count = 2;
+    s->my_is_worker = true;
     governor::sign_on(s);
     return s;
 }
@@ -1044,13 +1045,14 @@ generic_scheduler* generic_scheduler::create_master( arena* a ) {
     s->my_market->my_masters.push_front( *s );
     lock.release();
 #endif /* __TBB_TASK_GROUP_CONTEXT */
+    s->my_is_worker = false;
     if( a ) {
     // Master thread always occupies the first slot
         s->attach_arena( a, /*index*/0, /*is_master*/true );
     s->my_arena_slot->my_scheduler = s;
         a->my_default_ctx = s->default_context(); // also transfers implied ownership
     }
-    __TBB_ASSERT( !s->is_worker(), "Master thread must occupy the first slot in its arena" );
+    __TBB_ASSERT( s->my_arena_index == 0, "Master thread must occupy the first slot in its arena" );
     governor::sign_on(s);
 
 #if _WIN32||_WIN64
@@ -1074,7 +1076,7 @@ void generic_scheduler::cleanup_worker( void* arg, bool worker ) {
     s.free_scheduler();
 }
 
-void generic_scheduler::cleanup_master() {
+void generic_scheduler::cleanup_master( bool needs_wait_workers ) {
     arena* const a = my_arena;
     market * const m = my_market;
     __TBB_ASSERT( my_market, NULL );
@@ -1122,9 +1124,7 @@ void generic_scheduler::cleanup_master() {
     my_arena_slot = NULL; // detached from slot
     free_scheduler();
     // TODO: read global settings for the parameter at that point
-    // if workers are not joining, market can be released from on_thread_leaving(),
-    // so keep copy the state on local stack
-    bool must_join = m->join_workers = governor::needsWaitWorkers();
+    m->join_workers = needs_wait_workers;
     if( a ) {
 #if __TBB_STATISTICS_EARLY_DUMP
     // Resetting arena to EMPTY state (as earlier TBB versions did) should not be
@@ -1137,7 +1137,7 @@ void generic_scheduler::cleanup_master() {
 #endif
     a->on_thread_leaving</*is_master*/true>();
     }
-    if( must_join )
+    if( needs_wait_workers )
         m->wait_workers();
     m->release( /*is_public*/ a != NULL ); // TODO: ideally, it should always be true
 }

@@ -810,6 +810,18 @@ void TestStructuredWait () {
     sg.wait();
 }
 
+struct test_functor_t {
+    void operator()() { ASSERT( false, "Non-const operator called" ); }
+    void operator()() const { /* library requires this overload only */ }
+};
+
+void TestConstantFunctorRequirement() {
+    tbb::task_group g;
+    test_functor_t tf;
+    g.run( tf ); g.wait();
+    g.run_and_wait( tf );
+}
+
 int TestMain () {
     REMARK ("Testing %s task_group functionality\n", TBBTEST_USE_TBB ? "TBB" : "PPL");
     for( int p=MinThread; p<=MaxThread; ++p ) {
@@ -855,6 +867,7 @@ int TestMain () {
         s->Release();
 #endif
     }
+    TestConstantFunctorRequirement();
 #if __TBB_THROW_ACROSS_MODULE_BOUNDARY_BROKEN
     REPORT("Known issue: exception handling tests are skipped.\n");
 #endif

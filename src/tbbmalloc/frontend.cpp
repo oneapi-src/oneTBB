@@ -2444,7 +2444,8 @@ static inline bool isSmallObject (void *ptr)
 /**** Check if an object was allocated by scalable_malloc ****/
 static inline bool isRecognized (void* ptr)
 {
-    return isLargeObject<unknownMem>(ptr) || isSmallObject(ptr);
+    return defaultMemPool->extMemPool.backend.ptrCanBeValid(ptr) &&
+        (isLargeObject<unknownMem>(ptr) || isSmallObject(ptr));
 }
 
 static inline void freeSmallObject(MemoryPool *memPool, void *object)
@@ -2853,15 +2854,21 @@ extern "C" void __TBB_malloc_safer_free(void *object, void (*original_free)(void
     if (!object)
         return;
 
-    // must check 1st for large object, because small object check touches 4 pages on left,
-    // and it can be inaccessible
-    if (isLargeObject<unknownMem>(object)) {
-        TLSData *tls = defaultMemPool->getTLS(/*create=*/false);
+    // tbbmalloc can allocate object only when tbbmalloc has been initialized
+    if (FencedLoad(mallocInitialized) && defaultMemPool->extMemPool.backend.ptrCanBeValid(object)) {
+        if (isLargeObject<unknownMem>(object)) {
+            // must check 1st for large object, because small object check touches 4 pages on left,
+            // and it can be inaccessible
+            TLSData *tls = defaultMemPool->getTLS(/*create=*/false);
 
-        defaultMemPool->putToLLOCache(tls, object);
-    } else if (isSmallObject(object)) {
-        freeSmallObject(defaultMemPool, object);
-    } else if (original_free)
+            defaultMemPool->putToLLOCache(tls, object);
+            return;
+        } else if (isSmallObject(object)) {
+            freeSmallObject(defaultMemPool, object);
+            return;
+        }
+    }
+    if (original_free)
         original_free(object);
 }
 
@@ -2903,7 +2910,7 @@ extern "C" void* __TBB_malloc_safer_realloc(void* ptr, size_t sz, void* original
 
     if (!ptr) {
         tmp = internalMalloc(sz);
-    } else if (isRecognized(ptr)) {
+    } else if (FencedLoad(mallocInitialized) && isRecognized(ptr)) {
         if (!sz) {
             internalFree(ptr);
             return NULL;
@@ -3029,7 +3036,7 @@ extern "C" void * __TBB_malloc_safer_aligned_realloc(void *ptr, size_t size, siz
 
     if (!ptr) {
         tmp = allocateAligned(defaultMemPool, size, alignment);
-    } else if (isRecognized(ptr)) {
+    } else if (FencedLoad(mallocInitialized) && isRecognized(ptr)) {
         if (!size) {
             internalFree(ptr);
             return NULL;
@@ -3094,7 +3101,7 @@ extern "C" size_t __TBB_malloc_safer_msize(void *object, size_t (*original_msize
 {
     if (object) {
         // Check if the memory was allocated by scalable_malloc
-        if (isRecognized(object))
+        if (FencedLoad(mallocInitialized) && isRecognized(object))
             return internalMsize(object);
         else if (original_msize)
             return original_msize(object);
@@ -3113,7 +3120,7 @@ extern "C" size_t __TBB_malloc_safer_aligned_msize(void *object, size_t alignmen
 {
     if (object) {
         // Check if the memory was allocated by scalable_malloc
-        if (isRecognized(object))
+        if (FencedLoad(mallocInitialized) && isRecognized(object))
             return internalMsize(object);
         else if (orig_aligned_msize)
             return orig_aligned_msize(object,alignment,offset);

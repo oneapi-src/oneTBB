@@ -467,15 +467,18 @@ void task_group_context::set_priority ( priority_t prio ) {
     internal::generic_scheduler* s = governor::local_scheduler_if_initialized();
     if ( !s || !s->my_arena || !s->my_market->propagate_task_group_state(&task_group_context::my_priority, *this, p) )
         return;
-    // Updating arena priority here does not eliminate necessity of checking each
-    // task priority and updating arena priority if necessary before the task execution.
-    // These checks will be necessary because:
-    // a) set_priority() may be invoked before any tasks from this task group are spawned;
-    // b) all spawned tasks from this task group are retrieved from the task pools.
-    // These cases create a time window when arena priority may be lowered.
-    s->my_market->update_arena_priority( *s->my_arena, p );
+
     //! TODO: the arena of the calling thread might be unrelated;
     // need to find out the right arena for priority update.
+    // The executing status check only guarantees being inside some working arena.
+    if ( s->my_innermost_running_task->state() == task::executing )
+        // Updating arena priority here does not eliminate necessity of checking each
+        // task priority and updating arena priority if necessary before the task execution.
+        // These checks will be necessary because:
+        // a) set_priority() may be invoked before any tasks from this task group are spawned;
+        // b) all spawned tasks from this task group are retrieved from the task pools.
+        // These cases create a time window when arena priority may be lowered.
+        s->my_market->update_arena_priority( *s->my_arena, p );
 }
 
 priority_t task_group_context::priority () const {

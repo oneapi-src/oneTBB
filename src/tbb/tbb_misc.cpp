@@ -196,12 +196,12 @@ bool cpu_has_speculation() {
 #if __TBB_TSX_AVAILABLE
 #if (__INTEL_COMPILER || __GNUC__ || _MSC_VER || __SUNPRO_CC)
     bool result = false;
-    const int hle_ebx_mask = 1<<4;
+    const int rtm_ebx_mask = 1<<11;
 #if _MSC_VER
     int info[4] = {0,0,0,0};
     const int reg_ebx = 1;
     __cpuidex(info, 7, 0);
-    result = (info[reg_ebx] & hle_ebx_mask)!=0;
+    result = (info[reg_ebx] & rtm_ebx_mask)!=0;
 #elif __GNUC__ || __SUNPRO_CC
     int32_t reg_ebx = 0;
     int32_t reg_eax = 7;
@@ -216,7 +216,7 @@ bool cpu_has_speculation() {
 #endif
                            "edx"
                            );
-    result = (reg_ebx & hle_ebx_mask)!=0 ;
+    result = (reg_ebx & rtm_ebx_mask)!=0 ;
 #endif
     return result;
 #else

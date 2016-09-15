@@ -23,19 +23,23 @@
 #include "tbb/parallel_for.h"
 #include "tbb/blocked_range2d.h"
 #include "tbb/task_scheduler_init.h"
+#include "tbb/task_arena.h"
+#include "tbb/task_group.h"
 #include "tbb/tick_count.h"
-#include "tbb/compat/thread"
 
 #include <math.h>
 #include <stdio.h>
+
+// Included for __TBB_CPP11_LAMBDAS_PRESENT definition
+#include "tbb/tbb_config.h"
 
 video *v;
 extern bool silent;
 extern bool schedule_auto;
 extern int grain_size;
 
-color_t fractal::calc_one_pixel(int x0, int y0) {
-    int iter;
+color_t fractal::calc_one_pixel( int x0, int y0 ) const {
+    unsigned int iter;
     double fx0, fy0, xtemp, x, y, mu;
 
     color_t color;
@@ -46,11 +50,13 @@ color_t fractal::calc_one_pixel(int x0, int y0) {
     fy0 = fy0 / magn + cy;
 
     iter = 0; x = 0; y = 0;
+    mu = 0;
 
-    while (((x*x + y*y) <= 4) && (iter < max_iterations)) { 
+    while (((x*x + y*y) <= 4) && (iter < max_iterations)) {
         xtemp = x*x - y*y + fx0;
         y = 2*x*y + fy0;
         x = xtemp;
+        mu += exp(-sqrt(x*x+y*y));
         iter++;
     }
 
@@ -58,18 +64,6 @@ color_t fractal::calc_one_pixel(int x0, int y0) {
         // point corresponds to the mandelbrot set
         color = v->get_color(255, 255, 255);
         return color;
-    }
-
-    // compute again but with exponent calculation at each iteration
-    // it's all for coloring point outside the mandelbrot set
-    iter = 0; x = 0; y = 0;
-    mu = 0;
-    while (((x*x + y*y) <= 4) && (iter < max_iterations)) { 
-        xtemp = x*x - y*y + fx0;
-        y = 2*x*y + fy0;
-        x = xtemp;
-        mu += exp(-sqrt(x*x+y*y));
-        iter++;
     }
 
     int b = (int)(256*mu);
@@ -85,7 +79,7 @@ color_t fractal::calc_one_pixel(int x0, int y0) {
 }
 
 void fractal::clear() {
-    drawing_area area( off_x, off_y, size_x, size_y, dm) ;
+    drawing_area area( off_x, off_y, size_x, size_y, dm ) ;
 
     // fill the rendering area with black color
     for (int y=0; y<size_y; ++y) {
@@ -118,7 +112,7 @@ void fractal::draw_border( bool is_active ) {
         area3.set_pixel(0, i, color);
 }
 
-void fractal::render_rect( int x0, int y0, int x1, int y1 ) {
+void fractal::render_rect( int x0, int y0, int x1, int y1 ) const {
     // render the specified rectangle area
     drawing_area area(off_x+x0, off_y+y0, x1-x0, y1-y0, dm);
     for ( int y=y0; y<y1; ++y ) {
@@ -137,27 +131,33 @@ public:
             f.render_rect( r.cols().begin(), r.rows().begin(), r.cols().end(), r.rows().end() );
     }
 
-    fractal_body( fractal &f ) : f(f) {
+    fractal_body( fractal &_f ) : f(_f) {
     }
 };
 
 void fractal::render( tbb::task_group_context &context ) {
-    // run parallel_for that process the fractal area
+    // Make copy of fractal object and render fractal with parallel_for with
+    // the provided context and partitioner chosen by schedule_auto.
+    // Updates to fractal are not reflected in the render.
+    fractal f = *this;
+    fractal_body body(f);
+
     if( schedule_auto )
         tbb::parallel_for( tbb::blocked_range2d<int>(0, size_y, grain_size, 0, size_x, grain_size ),
-                fractal_body(*this), tbb::auto_partitioner(), context);
+                body, tbb::auto_partitioner(), context);
     else
         tbb::parallel_for( tbb::blocked_range2d<int>(0, size_y, grain_size, 0, size_x, grain_size ),
-                fractal_body(*this), tbb::simple_partitioner(), context);
+                body, tbb::simple_partitioner(), context);
 }
 
 void fractal::run( tbb::task_group_context &context ) {
     clear();
+    context.reset();
     render( context );
 }
 
-bool fractal::check_point( int x, int y ) {
-    return x >= off_x && x <= off_x+size_x && 
+bool fractal::check_point( int x, int y ) const {
+    return x >= off_x && x <= off_x+size_x &&
             y >= off_y && y <= off_y+size_y;
 }
 
@@ -177,17 +177,10 @@ void fractal_group::calc_fractal( int num ) {
     }
 }
 
-void fg_thread_func(fractal_group *fg) {
-    // initialize the task scheduler for the second thread
-    tbb::task_scheduler_init init( fg->get_num_threads() );
-    // calculate the second fractal
-    fg->calc_fractal( 1 );
-}
-
 void fractal_group::set_priorities() {
     // set the high priority for the active area and the normal priority for another area
     context[active].set_priority( tbb::priority_high );
-    context[active^1].set_priority( tbb::priority_normal );
+    context[active^1].set_priority( tbb::priority_low );
 }
 
 void fractal_group::switch_priorities( int new_active ) {
@@ -197,10 +190,38 @@ void fractal_group::switch_priorities( int new_active ) {
     draw_borders();
 }
 
-void fractal_group::set_num_frames_at_least(int n) {
+void fractal_group::set_num_frames_at_least( int n ) {
     if ( num_frames[0]<n ) num_frames[0] = n;
     if ( num_frames[1]<n ) num_frames[1] = n;
 }
+
+#if !__TBB_CPP11_LAMBDAS_PRESENT
+class task_group_body {
+    fractal_group &fg;
+public:
+    task_group_body(fractal_group &_fg) : fg(_fg) { }
+
+    void operator() () const { fg.calc_fractal( 1 ); }
+};
+
+class arena_body {
+    task_group_body &tg_body;
+    tbb::task_group &task_group;
+public:
+    arena_body( task_group_body &_tg_body, tbb::task_group &_task_group )
+        :  tg_body( _tg_body ), task_group( _task_group )  { }
+
+    void operator() () const { task_group.run( tg_body ); }
+};
+
+class arena_body_wait {
+    tbb::task_group &group;
+public:
+    arena_body_wait( tbb::task_group &gr ) : group(gr) { }
+
+    void operator() () const { group.wait(); }
+};
+#endif
 
 void fractal_group::run( bool create_second_fractal ) {
     // initialize task scheduler
@@ -212,17 +233,32 @@ void fractal_group::run( bool create_second_fractal ) {
     set_priorities();
     draw_borders();
 
+    tbb::task_arena arena;
+    tbb::task_group gr;
+
     // the second fractal is calculating on separated thread
-    std::thread *fg_thread = 0;
-    if ( create_second_fractal ) fg_thread = new std::thread( fg_thread_func, this );
+    if ( create_second_fractal ) {
+#if __TBB_CPP11_LAMBDAS_PRESENT
+        arena.execute( [&] {
+            gr.run( [&] { calc_fractal( 1 ); } );
+        } );
+#else
+        task_group_body tg_body( *this );
+        arena_body a_body( tg_body, gr );
+        arena.execute( a_body );
+#endif
+    }
 
     // calculate the first fractal
     calc_fractal( 0 );
 
-    if ( fg_thread ) {
+    if ( create_second_fractal ) {
+#if __TBB_CPP11_LAMBDAS_PRESENT
         // wait for second fractal
-        fg_thread->join();
-        delete fg_thread;
+        arena.execute( [&] { gr.wait(); } );
+#else
+        arena.execute( arena_body_wait( gr ) );
+#endif
     }
 
     delete[] context;
@@ -233,7 +269,7 @@ void fractal_group::draw_borders() {
     f1.draw_border( active==1 );
 }
 
-fractal_group::fractal_group( const drawing_memory &_dm, int _num_threads, int _max_iterations, int _num_frames ) : f0(_dm), f1(_dm), num_threads(_num_threads) {
+fractal_group::fractal_group( const drawing_memory &_dm, int _num_threads, unsigned int _max_iterations, int _num_frames ) : f0(_dm), f1(_dm), num_threads(_num_threads) {
     // set rendering areas
     f0.size_x = f1.size_x = _dm.sizex/2-4;
     f0.size_y = f1.size_y = _dm.sizey-4;
@@ -251,7 +287,7 @@ fractal_group::fractal_group( const drawing_memory &_dm, int _num_threads, int _
     num_frames[0] = num_frames[1] = _num_frames;
 }
 
-void fractal_group::mouse_click(int x, int y) {
+void fractal_group::mouse_click( int x, int y ) {
     // assumption that the point is not inside any fractal area
     int new_active = -1;
 

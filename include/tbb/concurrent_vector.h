@@ -127,6 +127,12 @@ namespace internal {
             T* pointer() const {  return static_cast<T*>(const_cast<void*>(array)); }
         };
 
+        friend void enforce_segment_allocated(segment_value_t const& s, internal::exception_id exception = eid_bad_last_alloc){
+            if(s != segment_allocated()){
+                internal::throw_exception(exception);
+            }
+        }
+
         // Segment pointer.
         class segment_t {
             atomic<void*> array;
@@ -1153,8 +1159,9 @@ private:
 
         pointer internal_push_back_result(){ return g.element;}
         iterator return_iterator_and_dismiss(){
+            pointer ptr = g.element;
             g.dismiss();
-            return iterator(v, k, g.element);
+            return iterator(v, k, ptr);
         }
     };
 };
@@ -1235,8 +1242,7 @@ T& concurrent_vector<T, A>::internal_subscript_with_exceptions( size_type index 
     //TODO: why not make a load of my_segment relaxed as well ?
     //TODO: add an assertion that my_segment[k] is properly aligned to please ITT
     segment_value_t segment_value =  my_segment[k].template load<relaxed>();
-    if( segment_value != segment_allocated() ) // check for correct segment pointer
-        internal::throw_exception(internal::eid_index_range_error); // throw std::range_error
+    enforce_segment_allocated(segment_value, internal::eid_index_range_error);
     return (segment_value.pointer<T>())[j];
 }
 

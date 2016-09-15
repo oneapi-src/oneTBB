@@ -226,12 +226,13 @@ bool governor::does_client_join_workers (const tbb::internal::rml::tbb_client &c
     return ((const market&)client).must_join_workers();
 }
 
-arena* market::create_arena ( int num_slots, size_t stack_size, bool default_concurrency_requested ) {
+arena* market::create_arena ( int num_slots, int num_reserved_slots, size_t stack_size, bool default_concurrency_requested ) {
     __TBB_ASSERT( num_slots > 0, NULL );
-    market &m = global_market( num_slots-1, stack_size, default_concurrency_requested,
+    __TBB_ASSERT( num_reserved_slots <= num_slots, NULL );
+    market &m = global_market( num_slots-num_reserved_slots, stack_size, default_concurrency_requested,
                                /*is_public*/ true ); // increases market's public ref count
 
-    arena& a = arena::allocate_arena( m, min(num_slots, (int)m.my_num_workers_hard_limit) );
+    arena& a = arena::allocate_arena( m, num_slots, num_reserved_slots );
     // Add newly created arena into the existing market's list.
     arenas_list_mutex_type::scoped_lock lock(m.my_arenas_list_mutex);
     m.insert_arena_into_list(a);
@@ -377,7 +378,7 @@ void market::update_allotment ( intptr_t highest_affected_priority ) {
         pl.workers_available = 0;
         arena_list_type::iterator it = pl.arenas.begin();
         for ( ; it != pl.arenas.end(); ++it ) {
-            __TBB_ASSERT( it->my_num_workers_requested || !it->my_num_workers_allotted, NULL );
+            __TBB_ASSERT( it->my_num_workers_requested >= 0 || !it->my_num_workers_allotted, NULL );
             it->my_num_workers_allotted = 0;
         }
     }
@@ -410,7 +411,6 @@ void market::adjust_demand ( arena& a, int delta ) {
     priority_level_info &pl = my_priority_levels[p];
     pl.workers_requested += delta;
     __TBB_ASSERT( pl.workers_requested >= 0, NULL );
-    __TBB_ASSERT( a.my_num_workers_requested >= 0, NULL );
     if ( a.my_num_workers_requested <= 0 ) {
         if ( a.my_top_priority != normalized_normal_priority ) {
             GATHER_STATISTIC( ++governor::local_scheduler_if_initialized()->my_counters.arena_prio_resets );
@@ -431,6 +431,8 @@ void market::adjust_demand ( arena& a, int delta ) {
     }
     else if ( p > my_global_top_priority ) {
         __TBB_ASSERT( pl.workers_requested > 0, NULL );
+        // TODO: investigate if the following invariant is always valid
+        __TBB_ASSERT( a.my_num_workers_requested >= 0, NULL );
         update_global_top_priority(p);
         a.my_num_workers_allotted = min( (int)my_num_workers_soft_limit, a.my_num_workers_requested );
         my_priority_levels[p - 1].workers_available = my_num_workers_soft_limit - a.my_num_workers_allotted;
@@ -600,6 +602,7 @@ bool market::lower_arena_priority ( arena& a, intptr_t new_priority, uintptr_t o
 }
 
 bool market::update_arena_priority ( arena& a, intptr_t new_priority ) {
+    // TODO: do not acquire this global lock while checking arena's state.
     arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex);
 
     __TBB_ASSERT( my_global_top_priority >= a.my_top_priority || a.my_num_workers_requested <= 0, NULL );

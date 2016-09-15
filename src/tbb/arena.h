@@ -62,7 +62,7 @@ struct arena_base : padded<intrusive_list_node> {
     volatile intptr_t my_top_priority;  // heavy use in stealing loop
 #endif /* !__TBB_TASK_PRIORITY */
 
-    //! Maximal currently busy slot.
+    //! Maximal number of currently busy slots.
     atomic<unsigned> my_limit;          // heavy use in stealing loop
 
     //! Task pool for the tasks scheduled via task::enqueue() method
@@ -139,6 +139,9 @@ struct arena_base : padded<intrusive_list_node> {
     //! Number of slots in the arena
     unsigned my_num_slots;
 
+    //! Number of reserved slots (can be occupied only by masters)
+    unsigned my_num_reserved_slots;
+
     //! Indicates if there is an oversubscribing worker created to service enqueued tasks.
     bool my_mandatory_concurrency;
 
@@ -159,10 +162,10 @@ public:
     typedef padded<arena_base> base_type;
 
     //! Constructor
-    arena ( market&, unsigned max_num_workers );
+    arena ( market&, unsigned max_num_workers, unsigned num_reserved_slots );
 
     //! Allocate an instance of arena.
-    static arena& allocate_arena( market&, unsigned num_slots );
+    static arena& allocate_arena( market&, unsigned num_slots, unsigned num_reserved_slots );
 
     static int unsigned num_slots_to_reserve ( unsigned num_slots ) {
         return max(2u, num_slots);
@@ -234,6 +237,13 @@ public:
     //! Returns the number of task objects "living" in worker threads
     intptr_t workers_task_node_count();
 #endif
+
+    static const size_t out_of_arena = ~size_t(0);
+    //! Tries to occupy a slot in the arena. On success, returns the slot index; if no slot is available, returns out_of_arena.
+    template <bool as_worker>
+    size_t occupy_free_slot( generic_scheduler& s );
+    //! Tries to occupy a slot in the specified range.
+    size_t occupy_free_slot_in_range( generic_scheduler& s, size_t lower, size_t upper );
 
     /** Must be the last data field */
     arena_slot my_slots[1];

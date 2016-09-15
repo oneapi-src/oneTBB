@@ -138,13 +138,12 @@
     #endif
     #define __TBB_STATIC_ASSERT_PRESENT               (__INTEL_CXX11_MODE__ || _MSC_VER >= 1600)
     #define __TBB_CPP11_TUPLE_PRESENT                 (_MSC_VER >= 1600 || (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40300))
-    /**Intel C++ compiler 14.0 crashes on using __has_include. When it fixed, condition will need to be updated. **/
     #if (__clang__ && __INTEL_COMPILER > 1400)
+        /* Older versions of Intel Compiler do not have __has_include */
         #if (__has_feature(__cxx_generalized_initializers__) && __has_include(<initializer_list>))
             #define __TBB_INITIALIZER_LISTS_PRESENT   1
         #endif
     #else
-        /** TODO: when MSVC2013 is supported by Intel C++ compiler, it will be enabled silently by compiler, so rule will need to be updated.**/
         #define __TBB_INITIALIZER_LISTS_PRESENT       __INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1400 && (_MSC_VER >= 1800 || __TBB_GCC_VERSION >= 40400 || _LIBCPP_VERSION)
     #endif
     
@@ -206,7 +205,7 @@
     #define __TBB_STATIC_ASSERT_PRESENT               (_MSC_VER >= 1600)
     #define __TBB_CPP11_TUPLE_PRESENT                 (_MSC_VER >= 1600)
     #define __TBB_INITIALIZER_LISTS_PRESENT           (_MSC_VER >= 1800)
-    #define __TBB_CONSTEXPR_PRESENT                   0
+    #define __TBB_CONSTEXPR_PRESENT                   (_MSC_VER >= 1900)
     #define __TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT  (_MSC_VER >= 1800)
     #define __TBB_NOEXCEPT_PRESENT                    (_MSC_VER >= 1900)
     #define __TBB_CPP11_STD_BEGIN_END_PRESENT         (_MSC_VER >= 1700)
@@ -322,23 +321,21 @@
 #endif
 
 #ifndef TBB_IMPLEMENT_CPP0X
-    /** By default, use C++11 classes if available **/
-    #if __GNUC__==4 && __GNUC_MINOR__>=4 && __GXX_EXPERIMENTAL_CXX0X__
-        #define TBB_IMPLEMENT_CPP0X 0
-    #elif __clang__ && __cplusplus >= 201103L
-        //TODO: consider introducing separate macros for each file?
-        //prevent injection of corresponding tbb names into std:: namespace if native headers are present
-        #if __has_include(<thread>) || __has_include(<condition_variable>)
-            #define TBB_IMPLEMENT_CPP0X 0
+/** By default, use C++11 classes if available **/
+    #if __clang__
+        /* Old versions of Intel Compiler do not have __has_include */
+        #if (__INTEL_COMPILER && __INTEL_COMPILER <= 1400) 
+            #define TBB_IMPLEMENT_CPP0X !(_LIBCPP_VERSION && (__cplusplus >= 201103L))
         #else
-            #define TBB_IMPLEMENT_CPP0X 1
+            #define TBB_IMPLEMENT_CPP0X (__cplusplus < 201103L || (!__has_include(<thread>) && !__has_include(<condition_variable>)))
         #endif
-    #elif _MSC_VER>=1700
-        #define TBB_IMPLEMENT_CPP0X 0
-    #elif __STDCPP_THREADS__
-        #define TBB_IMPLEMENT_CPP0X 0
+    #elif __GNUC__
+        #define TBB_IMPLEMENT_CPP0X (__TBB_GCC_VERSION < 40400 || !__GXX_EXPERIMENTAL_CXX0X__)
+    #elif _MSC_VER
+        #define TBB_IMPLEMENT_CPP0X (_MSC_VER < 1700)
     #else
-        #define TBB_IMPLEMENT_CPP0X 1
+        // TODO: Reconsider general approach to be more reliable, e.g. (!(__cplusplus >= 201103L && __ STDC_HOSTED__))
+        #define TBB_IMPLEMENT_CPP0X (!__STDCPP_THREADS__)
     #endif
 #endif /* TBB_IMPLEMENT_CPP0X */
 
@@ -628,7 +625,7 @@
     #define __TBB_FORCE_64BIT_ALIGNMENT_BROKEN 0
 #endif
 
-#if __TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT && __TBB_GCC_VERSION < 40700 && !defined(__INTEL_COMPILER) && !defined (__clang__)
+#if __GNUC__ && !__INTEL_COMPILER && !__clang__ && __TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT && __TBB_GCC_VERSION < 40700
     #define __TBB_ZERO_INIT_WITH_DEFAULTED_CTOR_BROKEN 1
 #endif
 

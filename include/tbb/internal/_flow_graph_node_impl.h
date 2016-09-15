@@ -851,7 +851,7 @@ namespace internal {
     };  // multifunction_output
 
 //composite_node
-#if TBB_PREVIEW_FLOW_GRAPH_TRACE
+#if TBB_PREVIEW_FLOW_GRAPH_TRACE && __TBB_FLOW_GRAPH_CPP11_FEATURES
     template<typename CompositeType>
     void add_nodes_impl(CompositeType*, bool) {}
 

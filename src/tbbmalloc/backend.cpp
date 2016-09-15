@@ -97,7 +97,37 @@ void HugePagesStatus::doPrintStatus(bool state, const char *stateName)
     fputs("\n", stderr);
 }
 
-void *Backend::allocRawMem(size_t &size) const
+#if CHECK_ALLOCATION_RANGE
+
+void Backend::UsedAddressRange::registerAlloc(uintptr_t left, uintptr_t right)
+{
+    MallocMutex::scoped_lock lock(mutex);
+    if (left < leftBound)
+        leftBound = left;
+    if (right > rightBound)
+        rightBound = right;
+    MALLOC_ASSERT(leftBound, ASSERT_TEXT);
+    MALLOC_ASSERT(leftBound < rightBound, ASSERT_TEXT);
+    MALLOC_ASSERT(leftBound <= left && right <= rightBound, ASSERT_TEXT);
+}
+
+void Backend::UsedAddressRange::registerFree(uintptr_t left, uintptr_t right)
+{
+    MallocMutex::scoped_lock lock(mutex);
+    if (leftBound == left) {
+        if (rightBound == right) {
+            leftBound = ADDRESS_UPPER_BOUND;
+            rightBound = 0;
+        } else
+            leftBound = right;
+    } else if (rightBound == right)
+        rightBound = left;
+    MALLOC_ASSERT((!rightBound && leftBound == ADDRESS_UPPER_BOUND)
+                  || leftBound < rightBound, ASSERT_TEXT);
+}
+#endif // CHECK_ALLOCATION_RANGE
+
+void *Backend::allocRawMem(size_t &size)
 {
     void *res = NULL;
     size_t allocSize;
@@ -128,13 +158,15 @@ void *Backend::allocRawMem(size_t &size) const
 
     if ( res ) {
         size = allocSize;
+        if (!extMemPool->userPool())
+            usedAddrRange.registerAlloc((uintptr_t)res, (uintptr_t)res+size);
         AtomicAdd((intptr_t&)totalMemSize, size);
     }
 
     return res;
 }
 
-bool Backend::freeRawMem(void *object, size_t size) const
+bool Backend::freeRawMem(void *object, size_t size)
 {
     bool fail;
     AtomicAdd((intptr_t&)totalMemSize, -size);
@@ -142,6 +174,7 @@ bool Backend::freeRawMem(void *object, size_t size) const
         MALLOC_ASSERT(!extMemPool->fixedPool, "No free for fixed-size pools.");
         fail = (*extMemPool->rawFree)(extMemPool->poolId, object, size);
     } else {
+        usedAddrRange.registerFree((uintptr_t)object, (uintptr_t)object + size);
         hugePages.registerReleasing(object, size);
         fail = freeRawMemory(object, size);
     }
@@ -980,6 +1013,7 @@ void *Backend::remap(void *ptr, size_t oldSize, size_t newSize, size_t alignment
 
     MemRegion *oldRegion = static_cast<LastFreeBlock*>(right)->memRegion;
     MALLOC_ASSERT( oldRegion < ptr, ASSERT_TEXT );
+    const size_t oldRegionSize = oldRegion->allocSz;
     if (oldRegion->type != MEMREG_ONE_BLOCK)
         return NULL;  // we are not single in the region
     const size_t userOffset = (uintptr_t)ptr - (uintptr_t)oldRegion;
@@ -1024,6 +1058,9 @@ void *Backend::remap(void *ptr, size_t oldSize, size_t newSize, size_t alignment
     header->memoryBlock = lmb;
     MALLOC_ASSERT((uintptr_t)lmb + lmb->unalignedSize >=
                   (uintptr_t)object + lmb->objectSize, "An object must fit to the block.");
+
+    usedAddrRange.registerFree((uintptr_t)oldRegion, (uintptr_t)oldRegion + oldRegionSize);
+    usedAddrRange.registerAlloc((uintptr_t)region, (uintptr_t)region + requestSize);
     return object;
 }
 #endif /* BACKEND_HAS_MREMAP */
@@ -1363,6 +1400,7 @@ FreeBlock *Backend::addNewRegion(size_t size, MemRegionType memRegType, bool add
 void Backend::init(ExtMemoryPool *extMemoryPool)
 {
     extMemPool = extMemoryPool;
+    usedAddrRange.init();
     coalescQ.init(&bkndSync);
     bkndSync.init(this);
 }

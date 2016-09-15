@@ -472,7 +472,7 @@ namespace TestConstExprInitializationOfGlobalObjectsHelper{
        static_before(){ result = (static_atomic==ct_value); }            \
     } ;                                                                  \
                                                                          \
-    typename tester<T>::static_before tester<T>::static_before_;         \
+    tester<T>::static_before tester<T>::static_before_;                  \
     tbb::atomic<T> tester<T>::static_atomic(ct_value);                   \
                                                                          \
     auto_registered_tests_helper::registration<T> tester<T>::registered; \

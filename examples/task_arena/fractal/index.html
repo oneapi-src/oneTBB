@@ -3,7 +3,7 @@
 
 <H2>Overview</H2>
 The example calculates two classical Mandelbrot fractals with different priorities. 
-The application window is divided into two areas where fractals are rendered. With mouse click on an area the user can change the priority of the calculating fractal. In the clicked area the fractal priority is changed to be "high" and the priority of the other fractal is changed to "normal".
+The application window is divided into two areas where fractals are rendered. With mouse click on an area the user can change the priority of the calculating fractal. In the clicked area the fractal priority is changed to be "high" and the priority of the other fractal is changed to "low". The fractal with "high" priority we will call active.
 The example also has the console mode but in this mode the priorities could not be changed during execution.
 
 
@@ -50,6 +50,34 @@ General build directions can be found <A HREF=../../index.html#build>here</A>.
 <DD>Build a <I>debug</I> version of the example
     (see the <A HREF=../../index.html#build>build directions</A>).
     <BR>Run it with a small fractal iterations number and the desired number of threads, e.g., <TT>fractal 4 1 10000</TT>.
+</DL>
+
+<H2>Hot keys</H2>
+The following hot keys can be used in interactive execution mode when the example is compiled with the graphical
+user interface:
+<DL>
+<dt>&lt;left mouse button&gt;
+<dd>Make the fractal active and change its priority to high
+<dt>&lt;space&gt;
+<dd>Switch priorities
+<dt>&lt;w&gt;
+<dd>Move the active fractal up
+<dt>&lt;a&gt;
+<dd>Move the active fractal to the left
+<dt>&lt;s&gt;
+<dd>Move the active fractal down
+<dt>&lt;d&gt;
+<dd>Move the active fractal to the right
+<dt>&lt;q&gt;
+<dd>Zoom in the active fractal
+<dt>&lt;e&gt;
+<dd>Zoom out the active fractal
+<dt>&lt;r&gt;
+<dd>Increase quality (count of iterations for each pixel) the active fractal
+<dt>&lt;f&gt;
+<dd>Decrease quality (count of iterations for each pixel) the active fractal
+<dt>&lt;esc&gt;
+<dd>Stop execution.
 </DL>
 
 <HR>

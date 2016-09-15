@@ -44,8 +44,8 @@ bool have_TSX() {
     const int reg_ebx = 1;
     int old_ecx = 0;
     __cpuidex(info, 7, old_ecx);
-    result = (info[reg_ebx] & hle_ebx_mask)!=0;
-    if( result ) ASSERT( (info[reg_ebx] & rtm_ebx_mask)!=0, NULL );
+    result = (info[reg_ebx] & rtm_ebx_mask)!=0;
+    if( result ) ASSERT( (info[reg_ebx] & hle_ebx_mask)!=0, NULL );
 #elif __GNUC__ || __SUNPRO_CC
     int32_t reg_ebx = 0;
     int32_t reg_eax = 7;
@@ -60,8 +60,8 @@ bool have_TSX() {
 #endif
                            "edx"
                            );
-    result = (reg_ebx & hle_ebx_mask)!=0 ;
-    if( result ) ASSERT( (reg_ebx & rtm_ebx_mask)!=0, NULL );
+    result = (reg_ebx & rtm_ebx_mask)!=0 ;
+    if( result ) ASSERT( (reg_ebx & hle_ebx_mask)!=0, NULL );
 #endif
     return result;
 }

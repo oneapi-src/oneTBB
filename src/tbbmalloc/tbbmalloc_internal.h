@@ -37,6 +37,7 @@
 
 // TODO: *BSD also has it
 #define BACKEND_HAS_MREMAP __linux__
+#define CHECK_ALLOCATION_RANGE MALLOC_DEBUG || MALLOC_ZONE_OVERLOAD_ENABLED || MALLOC_UNIXLIKE_OVERLOAD_ENABLED
 
 #include "tbb/tbb_config.h" // for __TBB_LIBSTDCPP_EXCEPTION_HEADERS_BROKEN
 #if __TBB_LIBSTDCPP_EXCEPTION_HEADERS_BROKEN
@@ -731,30 +732,64 @@ private:
         inline bool operator()(size_t oldMaxReq, size_t requestSize) const;
     };
 
-    ExtMemoryPool *extMemPool;
-    // used for release every region on pool destroying
-    MemRegionList  regionList;
+#if CHECK_ALLOCATION_RANGE
+    // Keep min and max of all addresses requested from OS,
+    // use it for checking memory possibly allocated by replaced allocators
+    // and for debugging purposes. Valid only for default memory pool.
+    class UsedAddressRange {
+        static const uintptr_t ADDRESS_UPPER_BOUND = UINTPTR_MAX;
 
-    CoalRequestQ   coalescQ; // queue of coalescing requests
-    BackendSync    bkndSync;
+        uintptr_t   leftBound,
+                    rightBound;
+        MallocMutex mutex;
+    public:
+        // rightBound is zero-initialized
+        void init() { leftBound = ADDRESS_UPPER_BOUND; }
+        void registerAlloc(uintptr_t left, uintptr_t right);
+        void registerFree(uintptr_t left, uintptr_t right);
+        // as only left and right bounds are kept, we can return true
+        // for pointer not allocated by us, if more than single region
+        // was requested from OS
+        bool inRange(void *ptr) const {
+            const uintptr_t p = (uintptr_t)ptr;
+            return leftBound<=p && p<=rightBound;
+        }
+    };
+#else
+    class UsedAddressRange {
+    public:
+        void init() { }
+        void registerAlloc(uintptr_t, uintptr_t) {}
+        void registerFree(uintptr_t, uintptr_t) {}
+        bool inRange(void *) const { return true; }
+    };
+#endif
+
+    ExtMemoryPool   *extMemPool;
+    // used for release every region on pool destroying
+    MemRegionList    regionList;
+
+    CoalRequestQ     coalescQ; // queue of coalescing requests
+    BackendSync      bkndSync;
     // semaphore protecting adding more more memory from OS
     MemExtendingSema memExtendingSema;
-    size_t         totalMemSize,
-                   memSoftLimit;
+    size_t           totalMemSize,
+                     memSoftLimit;
+    UsedAddressRange usedAddrRange;
     // to keep 1st allocation large than requested, keep bootstrapping status
     enum {
         bootsrapMemNotDone = 0,
         bootsrapMemInitializing,
         bootsrapMemDone
     };
-    intptr_t       bootsrapMemStatus;
-    MallocMutex    bootsrapMemStatusMutex;
+    intptr_t         bootsrapMemStatus;
+    MallocMutex      bootsrapMemStatusMutex;
 
     // Using of maximal observed requested size allows decrease
     // memory consumption for small requests and decrease fragmentation
     // for workloads when small and large allocation requests are mixed.
     // TODO: decrease, not only increase it
-    size_t         maxRequestedSize;
+    size_t           maxRequestedSize;
 
     FreeBlock *addNewRegion(size_t size, MemRegionType type, bool addToBin);
     FreeBlock *findBlockInRegion(MemRegion *region, size_t exactBlockSize);
@@ -780,8 +815,8 @@ private:
 
     void removeBlockFromBin(FreeBlock *fBlock);
 
-    void *allocRawMem(size_t &size) const;
-    bool freeRawMem(void *object, size_t size) const;
+    void *allocRawMem(size_t &size);
+    bool freeRawMem(void *object, size_t size);
 
     void putLargeBlock(LargeMemoryBlock *lmb);
     void releaseCachesToLimit();
@@ -819,6 +854,8 @@ public:
         releaseCachesToLimit();
     }
     inline size_t getMaxBinnedSize() const;
+
+    bool ptrCanBeValid(void *ptr) const { return usedAddrRange.inRange(ptr); }
 
 #if __TBB_MALLOC_WHITEBOX_TEST
     size_t getTotalMemSize() const { return totalMemSize; }

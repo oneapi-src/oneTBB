@@ -401,10 +401,10 @@ template&lt;typename Range , typename Body &gt; </td></tr>
 <tr class="memdesc:ga62b1a9ac304ba1eb4f87ab8cc18dd281"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parallel iteration over range with affinity_partitioner and user-supplied context.  <a href="a00256.html#ga62b1a9ac304ba1eb4f87ab8cc18dd281">More...</a><br/></td></tr>
 <tr class="separator:ga62b1a9ac304ba1eb4f87ab8cc18dd281"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">parallel_for_each</div></td></tr>
-<tr class="memitem:ga96bf42caaec779e413e5a2396c1e301c"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator , typename Function &gt; </td></tr>
-<tr class="memitem:ga96bf42caaec779e413e5a2396c1e301c"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00256.html#ga96bf42caaec779e413e5a2396c1e301c">parallel_for_each</a> (InputIterator first, InputIterator last, const Function &amp;f, <a class="el" href="a00155.html">task_group_context</a> &amp;context)</td></tr>
-<tr class="memdesc:ga96bf42caaec779e413e5a2396c1e301c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calls function f for all items from [first, last) interval using user-supplied context.  <a href="a00256.html#ga96bf42caaec779e413e5a2396c1e301c">More...</a><br/></td></tr>
-<tr class="separator:ga96bf42caaec779e413e5a2396c1e301c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac9225af45fd0468843b3fc32608c71de"><td class="memTemplParams" colspan="2">template&lt;typename Iterator , typename Function &gt; </td></tr>
+<tr class="memitem:gac9225af45fd0468843b3fc32608c71de"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00256.html#gac9225af45fd0468843b3fc32608c71de">parallel_for_each</a> (Iterator first, Iterator last, const Function &amp;f, <a class="el" href="a00155.html">task_group_context</a> &amp;context)</td></tr>
+<tr class="memdesc:gac9225af45fd0468843b3fc32608c71de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calls function f for all items from [first, last) interval using user-supplied context.  <a href="a00256.html#gac9225af45fd0468843b3fc32608c71de">More...</a><br/></td></tr>
+<tr class="separator:gac9225af45fd0468843b3fc32608c71de"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga72131543fd218b67dbb048b768d534e4"><td class="memTemplParams" colspan="2">template&lt;typename Range , typename Function &gt; </td></tr>
 <tr class="memitem:ga72131543fd218b67dbb048b768d534e4"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00256.html#ga72131543fd218b67dbb048b768d534e4">parallel_for_each</a> (Range &amp;rng, const Function &amp;f, <a class="el" href="a00155.html">task_group_context</a> &amp;context)</td></tr>
 <tr class="memdesc:ga72131543fd218b67dbb048b768d534e4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calls function f for all items from rng using user-supplied context.  <a href="a00256.html#ga72131543fd218b67dbb048b768d534e4">More...</a><br/></td></tr>
@@ -413,11 +413,11 @@ template&lt;typename Range , typename Body &gt; </td></tr>
 <tr class="memitem:gad7d0702d16fbd7554584ab735eed39ba"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00256.html#gad7d0702d16fbd7554584ab735eed39ba">parallel_for_each</a> (const Range &amp;rng, const Function &amp;f, <a class="el" href="a00155.html">task_group_context</a> &amp;context)</td></tr>
 <tr class="memdesc:gad7d0702d16fbd7554584ab735eed39ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calls function f for all items from const rng user-supplied context.  <a href="a00256.html#gad7d0702d16fbd7554584ab735eed39ba">More...</a><br/></td></tr>
 <tr class="separator:gad7d0702d16fbd7554584ab735eed39ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gaef59e9baf9141a19c99a291e4532bd98"><td class="memTemplParams" colspan="2"><a class="anchor" id="gaef59e9baf9141a19c99a291e4532bd98"></a>
-template&lt;typename InputIterator , typename Function &gt; </td></tr>
-<tr class="memitem:gaef59e9baf9141a19c99a291e4532bd98"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00256.html#gaef59e9baf9141a19c99a291e4532bd98">parallel_for_each</a> (InputIterator first, InputIterator last, const Function &amp;f)</td></tr>
-<tr class="memdesc:gaef59e9baf9141a19c99a291e4532bd98"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uses default context. <br/></td></tr>
-<tr class="separator:gaef59e9baf9141a19c99a291e4532bd98"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga21c63dee10188196a2f0514afa81ff1f"><td class="memTemplParams" colspan="2"><a class="anchor" id="ga21c63dee10188196a2f0514afa81ff1f"></a>
+template&lt;typename Iterator , typename Function &gt; </td></tr>
+<tr class="memitem:ga21c63dee10188196a2f0514afa81ff1f"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00256.html#ga21c63dee10188196a2f0514afa81ff1f">parallel_for_each</a> (Iterator first, Iterator last, const Function &amp;f)</td></tr>
+<tr class="memdesc:ga21c63dee10188196a2f0514afa81ff1f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uses default context. <br/></td></tr>
+<tr class="separator:ga21c63dee10188196a2f0514afa81ff1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga5868cd01f2126b139ab5809f64632db1"><td class="memTemplParams" colspan="2"><a class="anchor" id="ga5868cd01f2126b139ab5809f64632db1"></a>
 template&lt;typename Range , typename Function &gt; </td></tr>
 <tr class="memitem:ga5868cd01f2126b139ab5809f64632db1"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00256.html#ga5868cd01f2126b139ab5809f64632db1">parallel_for_each</a> (Range &amp;rng, const Function &amp;f)</td></tr>

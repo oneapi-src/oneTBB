@@ -91,8 +91,10 @@ public:
     T& operator* () { return *my_ptr; }
     RandomIterator& operator++ () { ++my_ptr; return *this; }
     bool operator== ( const RandomIterator& r ) { return my_ptr == r.my_ptr; }
-    difference_type operator- (const RandomIterator &r) {return my_ptr - r.my_ptr;}
+    bool operator!= ( const RandomIterator& r ) { return my_ptr != r.my_ptr; }
+    difference_type operator- (const RandomIterator &r) const {return my_ptr - r.my_ptr;}
     RandomIterator operator+ (difference_type n) {return RandomIterator(my_ptr + n);}
+    bool operator< (const RandomIterator &r) const {return my_ptr < r.my_ptr;}
 };
 
 template <class T>
@@ -116,8 +118,10 @@ public:
     const T& operator* () { return *my_ptr; }
     ConstRandomIterator& operator++ () { ++my_ptr; return *this; }
     bool operator== ( const ConstRandomIterator& r ) { return my_ptr == r.my_ptr; }
-    difference_type operator- (const ConstRandomIterator &r) {return my_ptr - r.my_ptr;}
+    bool operator!= ( const ConstRandomIterator& r ) { return my_ptr != r.my_ptr; }
+    difference_type operator- (const ConstRandomIterator &r) const {return my_ptr - r.my_ptr;}
     ConstRandomIterator operator+ (difference_type n) {return ConstRandomIterator(my_ptr + n);}
+    bool operator< (const ConstRandomIterator &r) const {return my_ptr < r.my_ptr;}
 };
 
 } // namespace Harness

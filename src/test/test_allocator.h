@@ -59,6 +59,33 @@ inline char PseudoRandomValue( size_t j, size_t k ) {
     return char(j*3 ^ j>>4 ^ k);
 }
 
+#if __APPLE__
+#include <fcntl.h>
+#include <unistd.h>
+
+// A RAII class to disable stderr in a certain scope. It's not thread-safe.
+class DisableStderr {
+    int stderrCopy;
+    static void dupToStderrAndClose(int fd) {
+        int ret = dup2(fd, STDERR_FILENO); // close current stderr
+        ASSERT(ret != -1, NULL);
+        ret = close(fd);
+        ASSERT(ret != -1, NULL);
+    }
+public:
+    DisableStderr() {
+        int devNull = open("/dev/null", O_WRONLY);
+        ASSERT(devNull != -1, NULL);
+        stderrCopy = dup(STDERR_FILENO);
+        ASSERT(stderrCopy != -1, NULL);
+        dupToStderrAndClose(devNull);
+    }
+    ~DisableStderr() {
+        dupToStderrAndClose(stderrCopy);
+    }
+};
+#endif
+
 //! T is type and A is allocator for that type 
 template<typename T, typename A>
 void TestBasic( A& a ) {
@@ -138,6 +165,11 @@ void TestBasic( A& a ) {
     bool exception_caught = false;
     typename A::pointer p1 = NULL;
     try {
+#if __APPLE__
+        // On OS X*, failure to map memory results in messages to stderr;
+        // suppress them.
+        DisableStderr disableStderr;
+#endif
         p1 = a.allocate(too_big);
     } catch ( std::bad_alloc ) {
         exception_caught = true;

@@ -27,12 +27,7 @@
  */
 
 #include <stdlib.h>
-#include "../tbbmalloc/proxy.h" // __TBB_malloc_safer_msize
-#include "tbb/tbb_config.h"     // for __TBB_WIN8UI_SUPPORT
-
-#if !(_WIN32||_WIN64 || MALLOC_UNIXLIKE_OVERLOAD_ENABLED || MALLOC_ZONE_OVERLOAD_ENABLED) || __TBB_WIN8UI_SUPPORT || __MINGW32__ || __MINGW64__
-#define HARNESS_SKIP_TEST 1
-#endif
+#include "harness_allocator_overload.h"
 
 // __TBB_malloc_safer_msize() returns 0 for unknown objects,
 // thus we can detect ownership
@@ -155,9 +150,6 @@ bool dll_isMallocOverloaded();
 int TestMain () {
 #ifdef _PGO_INSTRUMENT
     REPORT("Known issue: test_malloc_atexit hangs if compiled with -prof-genx\n");
-    return Harness::Skipped;
-#elif __TBB_MIC_OFFLOAD
-    REPORT("Known issue: libmalloc_proxy.so is loaded too late in the offload mode on the target when linked via -lmalloc_proxy\n");
     return Harness::Skipped;
 #else
     ASSERT( dll_isMallocOverloaded(), "malloc was not replaced" );

@@ -127,6 +127,9 @@ ifeq ($(VCCOMPAT_FLAG),)
         VCCOMPAT_FLAG := $(if $(findstring vc12, $(VCVERSION)),/Qvc12)
 endif
 ifeq ($(VCCOMPAT_FLAG),)
+        VCCOMPAT_FLAG := $(if $(findstring vc14, $(VCVERSION)),/Qvc14)
+endif
+ifeq ($(VCCOMPAT_FLAG),)
         $(error VC version not detected correctly: $(VCVERSION) )
 endif
 export VCCOMPAT_FLAG

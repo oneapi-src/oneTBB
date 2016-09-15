@@ -181,23 +181,23 @@ size_t NFS_GetLineSize() {
 
 void* NFS_Allocate( size_t n, size_t element_size, void* /*hint*/ ) {
     //TODO: make this functionality  available via an adaptor over generic STL like allocator
-    size_t cache_line_size = NFS_LineSize;
-    __TBB_ASSERT( cache_line_size <= NFS_MaxLineSize, "illegal value for NFS_LineSize" );
-    __TBB_ASSERT( is_power_of_two(cache_line_size), "must be power of two" );
+    const size_t nfs_cache_line_size = NFS_LineSize;
+    __TBB_ASSERT( nfs_cache_line_size <= NFS_MaxLineSize, "illegal value for NFS_LineSize" );
+    __TBB_ASSERT( is_power_of_two(nfs_cache_line_size), "must be power of two" );
     size_t bytes = n*element_size;
 
-    if (bytes<n || bytes+cache_line_size<bytes) {
+    if (bytes<n || bytes+nfs_cache_line_size<bytes) {
         // Overflow
         throw_exception(eid_bad_alloc);
     }
     // scalable_aligned_malloc considers zero size request an error, and returns NULL
     if (bytes==0) bytes = 1;
-    
-    void* result = (*padded_allocate_handler)( bytes, cache_line_size );
+
+    void* result = (*padded_allocate_handler)( bytes, nfs_cache_line_size );
     if (!result)
         throw_exception(eid_bad_alloc);
 
-    __TBB_ASSERT( is_aligned(result, cache_line_size), "The address returned isn't aligned to cache line size" );
+    __TBB_ASSERT( is_aligned(result, nfs_cache_line_size), "The address returned isn't aligned to cache line size" );
     return result;
 }
 
@@ -205,16 +205,16 @@ void NFS_Free( void* p ) {
     (*padded_free_handler)( p );
 }
 
-static void* padded_allocate( size_t bytes, size_t alignment ) {    
+static void* padded_allocate( size_t bytes, size_t alignment ) {
     unsigned char* result = NULL;
     unsigned char* base = (unsigned char*)malloc(alignment+bytes);
-    if( base ) {        
+    if( base ) {
         // Round up to the next line
         result = (unsigned char*)((uintptr_t)(base+alignment)&-alignment);
         // Record where block actually starts.
         ((uintptr_t*)result)[-1] = uintptr_t(base);
     }
-    return result;    
+    return result;
 }
 
 static void padded_free( void* p ) {
@@ -227,7 +227,7 @@ static void padded_free( void* p ) {
     }
 }
 
-void* __TBB_EXPORTED_FUNC allocate_via_handler_v3( size_t n ) {    
+void* __TBB_EXPORTED_FUNC allocate_via_handler_v3( size_t n ) {
     void* result = (*MallocHandler) (n);
     if (!result) {
         throw_exception(eid_bad_alloc);
@@ -236,7 +236,7 @@ void* __TBB_EXPORTED_FUNC allocate_via_handler_v3( size_t n ) {
 }
 
 void __TBB_EXPORTED_FUNC deallocate_via_handler_v3( void *p ) {
-    if( p ) {        
+    if( p ) {
         (*FreeHandler)( p );
     }
 }

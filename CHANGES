@@ -2,8 +2,48 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 4.4 Update 1
+TBB_INTERFACE_VERSION == 9001
+
+Changes (w.r.t. Intel TBB 4.4):
+
+- Added support for Microsoft* Visual Studio* 2015.
+- Intel TBB no longer performs dynamic replacement of memory allocation
+    functions for Microsoft Visual Studio 2005 and earlier versions.
+- For GCC 4.7 and higher, the intrinsics-based platform isolation layer
+    uses __atomic_* built-ins instead of the legacy __sync_* ones.
+    This change is inspired by a contribution from Mathieu Malaterre.
+- Improvements in task_arena:
+    Several application threads may join a task_arena and execute tasks
+    simultaneously. The amount of concurrency reserved for application
+    threads at task_arena construction can be set to any value between
+    0 and the arena concurrency limit.
+- The fractal example was modified to demonstrate class task_arena
+    and moved to examples/task_arena/fractal.
+
+Bugs fixed:
+
+- Fixed a deadlock during destruction of task_scheduler_init objects
+    when one of destructors is set to wait for worker threads.
+- Added a workaround for a possible crash on OS X* when dynamic memory
+    allocator replacement (libtbbmalloc_proxy) is used and memory is
+    released during application startup.
+- Usage of mutable functors with task_group::run_and_wait() and
+    task_arena::enqueue() is disabled. An attempt to pass a functor
+    which operator()() is not const will produce compilation errors.
+- Makefiles and environment scripts now properly recognize GCC 5.0 and
+    higher.
+
+Open-source contributions integrated:
+
+- Improved performance of parallel_for_each for inputs allowing random
+    access, by Raf Schietekat.
+
+------------------------------------------------------------------------
 Intel TBB 4.4
 TBB_INTERFACE_VERSION == 9000
+
+Changes (w.r.t. Intel TBB 4.3 Update 6):
 
 - The following features are now fully supported:
     tbb::flow::composite_node;
@@ -60,6 +100,7 @@ Intel TBB 4.3 Update 6
 TBB_INTERFACE_VERSION == 8006
 
 Changes (w.r.t. Intel TBB 4.3 Update 5):
+
 - Supported zero-copy realloc for objects >1MB under Linux* via
     mremap system call.
 - C++11 move-aware insert and emplace methods have been added to
@@ -67,6 +108,7 @@ Changes (w.r.t. Intel TBB 4.3 Update 5):
 - install_name is set to @rpath/<library name> on OS X*.
 
 Preview Features:
+
 - Added template class async_node to the flow graph API. It allows a
     flow graph to communicate with an external activity managed by
     the user or another runtime.
@@ -75,6 +117,7 @@ Preview Features:
 - extract() method of graph nodes now takes no arguments.
 
 Bugs fixed:
+
 - concurrent_unordered_{set,map} behaves correctly for degenerate
     hashes.
 - Fixed a race condition in the memory allocator that may lead to
@@ -85,9 +128,11 @@ Intel TBB 4.3 Update 5
 TBB_INTERFACE_VERSION == 8005
 
 Changes (w.r.t. Intel TBB 4.3 Update 4):
+
 - Added add_ref_count() method of class tbb::task.
 
 Preview Features:
+
 - Added class global_control for application-wide control of allowed
     parallelism and thread stack size.
 - memory_pool_allocator now throws the std::bad_alloc exception on
@@ -96,6 +141,7 @@ Preview Features:
     std::bad_alloc to std::invalid_argument and std::runtime_error.
 
 Bugs fixed:
+
 - scalable_allocator now throws the std::bad_alloc exception on
     allocation failure.
 - Fixed a race condition in the memory allocator that may lead to
@@ -104,6 +150,7 @@ Bugs fixed:
     might be unable to modify the number of worker threads.
 
 Open-source contributions integrated:
+
 - (Added but not enabled) push_front() method of class tbb::task_list
     by Raf Schietekat.
 
@@ -112,6 +159,7 @@ Intel TBB 4.3 Update 4
 TBB_INTERFACE_VERSION == 8004
 
 Changes (w.r.t. Intel TBB 4.3 Update 3):
+
 - Added a C++11 variadic constructor for enumerable_thread_specific.
     The arguments from this constructor are used to construct
     thread-local values.
@@ -123,6 +171,7 @@ Changes (w.r.t. Intel TBB 4.3 Update 3):
     concurrent unordered containers.
 
 Preview Features:
+
 - Interface-breaking change: typedefs changed for node predecessor and
     successor lists, affecting copy_predecessors and copy_successors
     methods.
@@ -132,6 +181,7 @@ Preview Features:
     automatically using the node port with index 0 for an edge.
 
 Open-source contributions integrated:
+
 - Draft code for enumerable_thread_specific constructor with multiple
     arguments (see above) by Adrien Guinet.
 - Fix for GCC invocation on IBM* Blue Gene*

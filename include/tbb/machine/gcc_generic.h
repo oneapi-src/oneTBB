@@ -50,6 +50,9 @@
     #define __TBB_ENDIANNESS __TBB_ENDIAN_DETECT
 #endif
 
+#if __TBB_GCC_VERSION < 40700
+// Use __sync_* builtins
+
 /** As this generic implementation has absolutely no information about underlying
     hardware, its performance most likely will be sub-optimal because of full memory
     fence usages where a more lightweight synchronization means (or none at all)
@@ -64,10 +67,37 @@
 inline T __TBB_machine_cmpswp##S( volatile void *ptr, T value, T comparand ) {                    \
     return __sync_val_compare_and_swap(reinterpret_cast<volatile T *>(ptr),comparand,value);      \
 }                                                                                                 \
-                                                                                                  \
 inline T __TBB_machine_fetchadd##S( volatile void *ptr, T value ) {                               \
     return __sync_fetch_and_add(reinterpret_cast<volatile T *>(ptr),value);                       \
+}
+
+#define __TBB_USE_GENERIC_FETCH_STORE 1
+
+#else
+// __TBB_GCC_VERSION >= 40700; use __atomic_* builtins available since gcc 4.7
+
+#define __TBB_compiler_fence()              __asm__ __volatile__("": : :"memory")
+// Acquire and release fence intrinsics in GCC might miss compiler fence.
+// Adding it at both sides of an intrinsic, as we do not know what reordering can be made.
+#define __TBB_acquire_consistency_helper()  __TBB_compiler_fence(); __atomic_thread_fence(__ATOMIC_ACQUIRE); __TBB_compiler_fence()
+#define __TBB_release_consistency_helper()  __TBB_compiler_fence(); __atomic_thread_fence(__ATOMIC_RELEASE); __TBB_compiler_fence()
+#define __TBB_full_memory_fence()           __atomic_thread_fence(__ATOMIC_SEQ_CST)
+#define __TBB_control_consistency_helper()  __TBB_acquire_consistency_helper()
+
+#define __TBB_MACHINE_DEFINE_ATOMICS(S,T)                                                         \
+inline T __TBB_machine_cmpswp##S( volatile void *ptr, T value, T comparand ) {                    \
+    (void)__atomic_compare_exchange_n(reinterpret_cast<volatile T *>(ptr), &comparand, value,     \
+                                      false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);                 \
+    return comparand;                                                                             \
 }                                                                                                 \
+inline T __TBB_machine_fetchadd##S( volatile void *ptr, T value ) {                               \
+    return __atomic_fetch_add(reinterpret_cast<volatile T *>(ptr), value, __ATOMIC_SEQ_CST);      \
+}                                                                                                 \
+inline T __TBB_machine_fetchstore##S( volatile void *ptr, T value ) {                             \
+    return __atomic_exchange_n(reinterpret_cast<volatile T *>(ptr), value, __ATOMIC_SEQ_CST);     \
+}
+
+#endif // __TBB_GCC_VERSION < 40700
 
 __TBB_MACHINE_DEFINE_ATOMICS(1,int8_t)
 __TBB_MACHINE_DEFINE_ATOMICS(2,int16_t)
@@ -86,6 +116,13 @@ static inline intptr_t __TBB_machine_lg( uintptr_t x ) {
     return sizeof(x)*8 - tbb::internal::gcc_builtins::clz(x) -1 ;
 }
 
+
+typedef unsigned char __TBB_Flag;
+typedef __TBB_atomic __TBB_Flag __TBB_atomic_flag;
+
+#if __TBB_GCC_VERSION < 40700
+// Use __sync_* builtins
+
 static inline void __TBB_machine_or( volatile void *ptr, uintptr_t addend ) {
     __sync_fetch_and_or(reinterpret_cast<volatile uintptr_t *>(ptr),addend);
 }
@@ -94,11 +131,6 @@ static inline void __TBB_machine_and( volatile void *ptr, uintptr_t addend ) {
     __sync_fetch_and_and(reinterpret_cast<volatile uintptr_t *>(ptr),addend);
 }
 
-
-typedef unsigned char __TBB_Flag;
-
-typedef __TBB_atomic __TBB_Flag __TBB_atomic_flag;
-
 inline bool __TBB_machine_try_lock_byte( __TBB_atomic_flag &flag ) {
     return __sync_lock_test_and_set(&flag,1)==0;
 }
@@ -106,6 +138,27 @@ inline bool __TBB_machine_try_lock_byte( __TBB_atomic_flag &flag ) {
 inline void __TBB_machine_unlock_byte( __TBB_atomic_flag &flag ) {
     __sync_lock_release(&flag);
 }
+
+#else
+// __TBB_GCC_VERSION >= 40700; use __atomic_* builtins available since gcc 4.7
+
+static inline void __TBB_machine_or( volatile void *ptr, uintptr_t addend ) {
+    __atomic_fetch_or(reinterpret_cast<volatile uintptr_t *>(ptr),addend,__ATOMIC_SEQ_CST);
+}
+
+static inline void __TBB_machine_and( volatile void *ptr, uintptr_t addend ) {
+    __atomic_fetch_and(reinterpret_cast<volatile uintptr_t *>(ptr),addend,__ATOMIC_SEQ_CST);
+}
+
+inline bool __TBB_machine_try_lock_byte( __TBB_atomic_flag &flag ) {
+    return !__atomic_test_and_set(&flag,__ATOMIC_ACQUIRE);
+}
+
+inline void __TBB_machine_unlock_byte( __TBB_atomic_flag &flag ) {
+    __atomic_clear(&flag,__ATOMIC_RELEASE);
+}
+
+#endif // __TBB_GCC_VERSION < 40700
 
 // Machine specific atomic operations
 #define __TBB_AtomicOR(P,V)     __TBB_machine_or(P,V)
@@ -117,7 +170,7 @@ inline void __TBB_machine_unlock_byte( __TBB_atomic_flag &flag ) {
 // Definition of other functions
 #define __TBB_Log2(V)           __TBB_machine_lg(V)
 
-#define __TBB_USE_GENERIC_FETCH_STORE                       1
+// TODO: implement with __atomic_* builtins where available
 #define __TBB_USE_GENERIC_HALF_FENCED_LOAD_STORE            1
 #define __TBB_USE_GENERIC_RELAXED_LOAD_STORE                1
 #define __TBB_USE_GENERIC_SEQUENTIAL_CONSISTENCY_LOAD_STORE 1

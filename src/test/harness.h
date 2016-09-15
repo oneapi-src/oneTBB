@@ -131,7 +131,7 @@ void print_call_stack() {
     #elif __SUNPRO_CC
         REPORT("Call stack info:\n");
         printstack(fileno(stdout));
-    #elif _WIN32_WINNT > 0x0501 && _MSC_VER && !__TBB_WIN8UI_SUPPORT
+    #elif _WIN32_WINNT > 0x0501 && _MSC_VER>=1500 && !__TBB_WIN8UI_SUPPORT
         const int sz = 62; // XP limitation for number of frames
         void *buff[sz];
         int n = CaptureStackBackTrace(0, sz, buff, NULL);

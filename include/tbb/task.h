@@ -901,7 +901,11 @@ class empty_task: public task {
 namespace internal {
     template<typename F>
     class function_task : public task {
+#if __TBB_ALLOW_MUTABLE_FUNCTORS
         F my_func;
+#else
+        const F my_func;
+#endif
         /*override*/ task* execute() {
             my_func();
             return NULL;
