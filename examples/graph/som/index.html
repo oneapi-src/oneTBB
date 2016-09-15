@@ -1,0 +1,53 @@
+<HTML>
+<BODY>
+
+<H2>Overview</H2>
+The Self-Organizing Map demonstrates tbb::flow and the use of cancellation in scheduling multiple iterations of
+map updates.
+<p>
+For tutorials on Self-organizing Maps, see <a href="http://www.ai-junkie.com/ann/som/som1.html">here</a> and
+<a href="http://davis.wpi.edu/~matt/courses/soms/">here</a>.
+</p>
+<p>
+The program trains the map with several examples, splitting the map into subsections and looking for best-match
+for multiple examples.  When an example is used to update the map, the graphs examining the sections being
+updated for the next example are cancelled and restarted after the update.
+</p>
+
+<H2>Source Files</H2>
+<DL>
+<DT><A HREF="som_graph.cpp">som_graph.cpp</A>
+<DD>The main program.
+<DT><A HREF="som.cpp">som.cpp</A>
+<DD>utilities for handling the map.
+<DT><A HREF="som.h">som.h</A>
+<DD>Definitions and utilites.
+<DT><A HREF="Makefile">Makefile</A>, <A HREF=Makefile.windows>Makefile.windows</A>
+<DD>Makefiles for building example.
+</DL>
+
+<H2>Directories</H2>
+<DL>
+<DT><A HREF="msvs">msvs</A>
+<DD>Contains Microsoft* Visual Studio* 2010 workspace for building and running the
+    example (Windows* systems only).
+<DT><A HREF="xcode">xcode</A>
+<DD>Contains Xcode* IDE workspace for building and running the example (OS X*
+    systems only).</DL>
+
+<H2>To Build</H2>
+General build directions can be found <A HREF=../../index.html#build>here</A>.
+<P></P>
+
+<HR>
+<A HREF="../index.html">Up to parent directory</A>
+<p></p>
+Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+<P></P>
+Intel is a registered trademark or trademark of Intel Corporation
+or its subsidiaries in the United States and other countries.
+<p></p>
+* Other names and brands may be claimed as the property of others.
+</BODY>
+</HTML>
+

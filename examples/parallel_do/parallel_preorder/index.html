@@ -1,0 +1,99 @@
+<HTML>
+<BODY>
+
+<H2>Overview</H2>
+Example that uses parallel_do to do parallel preorder traversal of a sparse graph.
+<P>
+Each vertex in the graph is called a "cell".  
+Each cell has a value. 
+The value is a matrix. 
+Some of the cells have operators
+that compute the cell's value, using other cell's values as input.
+A cell that uses the value of cell x is called a successor of x.
+</P><P>
+The algorithm works as follows. 
+<OL>
+<LI> Compute the set of cells that have no inputs. This set is called <TT>root_set</TT>.
+<LI> Each cell has an associated field <TT>ref_count</TT> that is an atomic integer.
+     Initialize <TT>ref_count</TT> to the number of inputs for the Cell.
+<LI> Update each cell in <TT>root_set</TT>, by applying a <TT>parallel_do</TT> to a <TT>root_set</TT>
+<LI> After updating a cell, for each of its successors 
+<OL>
+<LI> Atomically decrement the successor's <TT>ref_count</TT>
+<LI> If the count became zero, add the cell to the set of cells to be updated,
+     by calling <TT>parallel_do_feeder_impl::add</TT>.
+</OL>
+</OL>
+</P><P>
+The times printed are for the traversal and update, 
+and do not include time for computing the root_set.
+</P><P>
+The example is using custom synchronization via <TT>ref_count</TT> atomic variable.
+Correctness checking tools might not take this into account, and report data races
+between different tasks that are actually synchronized.
+</P>
+
+<B>NOTE: </B>It is important to understand that this example is unlikely to show speedup 
+if the cell values are changed to type "float".  The reason is twofold.
+<UL>
+<LI> The smaller value type causes each Cell to be significantly smaller than a cache line,
+     which leads to false sharing conflicts.
+<LI> The time to update the cells becomes very small, and consequently the overhead of
+     parallel_do swamps the useful work.
+</UL>
+
+<H2>Files</H2>
+<DL>
+<DT><A HREF="main.cpp">main.cpp</A>
+<DD>Main program which parses command line options and runs the algorithm with different numbers of threads.
+<DT><A HREF="parallel_preorder.cpp">parallel_preorder.cpp</A>
+<DD>Implementation of the parallel preorder traversal algorithm.
+<DT><A HREF="Graph.h">Graph.h</A>
+<DD>Interfaces of the Graph and Cell classes.
+<DT><A HREF="Graph.cpp">Graph.cpp</A>
+<DD>Implementations of the Graph and Cell classes.
+<DT><A HREF="Matrix.h">Matrix.h</A>
+<DD>The Matrix class definition.
+<DT><A HREF="Makefile">Makefile</A>
+<DD>Makefile for building example.
+</DL>
+
+<H2>Directories</H2>
+<DL>
+<DT><A HREF="msvs">msvs</A>
+<DD>Contains Microsoft* Visual Studio* 2010 workspace for building and running the example (Windows* systems only).
+<DT><A HREF="xcode">xcode</A>
+<DD>Contains Xcode* IDE workspace for building and running the example (OS X* systems only).
+</DL>
+
+<H2>To Build</H2>
+General build directions can be found <A HREF=../../index.html#build>here</A>.
+
+<H2>Usage</H2>
+<DL>
+<DT><TT>parallel_preorder <I>-h</I></TT>
+<DD>Prints the help for command line options
+<DT><TT>parallel_preorder [<I>n-of-threads</I>=value] [<I>n-of-nodes</I>=value] [<I>n-of-traversals</I>=value] [<I>silent</I>] </TT>
+<DT><TT>parallel_preorder [<I>n-of-threads</I> [<I>n-of-nodes</I> [<I>n-of-traversals</I>]]] [<I>silent</I>] </TT> 
+<DD><I>n-of-threads</I> is the number of threads to use; a range of the form <I>low</I>[:<I>high</I>], where low and optional high are non-negative integers or 'auto' for the TBB default.<BR>
+    <I>n-of-nodes</I> is a number of nodes in the graph. Default value is 1000.<BR>
+    <I>n-of-traversals</I> is the number of times to evaluate the graph. Default value is 500.<BR>
+    <I>silent</I> - no output except elapsed time.<BR>
+<DT>To run a short version of this example, e.g., for use with Intel&reg; Parallel Inspector:
+<DD>Build a <I>debug</I> version of the example
+    (see the <A HREF=../../index.html#build>build directions</A>).
+    <BR>Run it with the desired number of threads and smaller number of traversals, e.g., <TT>parallel_preorder 4 1000 5</TT>.
+</DL>
+
+<HR>
+<A HREF="../index.html">Up to parent directory</A>
+<p></p>
+Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+<P></P>
+Intel is a registered trademark or trademark of Intel Corporation
+or its subsidiaries in the United States and other countries.
+<p></p>
+* Other names and brands may be claimed as the property of others.
+</BODY>
+</HTML>
+

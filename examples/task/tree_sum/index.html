@@ -1,0 +1,76 @@
+<HTML>
+<BODY>
+
+<H2>Overview</H2>
+This directory contains a simple example that sums values in a tree.
+The example exhibits some speedup, but not a lot,  because it quickly saturates 
+the system bus on a multiprocessor.  For good speedup, there needs to be 
+more computation cycles per memory reference.  The point of the example 
+is to teach how to use the raw task interface, so the computation is
+deliberately trivial.
+<P>
+The performance of this example is better when objects are allocated
+by the scalable_allocator instead of
+the default "operator new".  The reason is that the scalable_allocator typically
+packs small objects more tightly than the default "operator new", resulting in
+a smaller memory footprint, and thus more efficient use of cache and virtual memory.
+In addition, the scalable_allocator performs better for multi-threaded allocations.
+</P>
+<H2>Files</H2>
+<DL>
+<DT><A HREF="SerialSumTree.cpp">SerialSumTree.cpp</A>
+<DD>Sums sequentially.
+<DT><A HREF="SimpleParallelSumTree.cpp">SimpleParallelSumTree.cpp</A><DT>
+<DD>Sums in parallel without any fancy tricks.
+<DT><A HREF="OptimizedParallelSumTree.cpp">OptimizedParallelSumTree.cpp</A><DT>
+<DD>Sums in parallel, using "recycling" and "continuation-passing" tricks. 
+    In this case, it is only slightly faster than the simple version.
+<DT><A HREF="common.h">common.h</A>
+<DD>Shared declarations.
+<DT><A HREF="main.cpp">main.cpp</A>
+<DD>Main program which parses command line options and runs the algorithm.
+<DT><A HREF="Makefile">Makefile</A>
+<DD>Makefile for building example.
+</DL>
+
+<H2>Directories</H2>
+<DL>
+<DT><A HREF="msvs">msvs</A>
+<DD>Contains Microsoft* Visual Studio* 2010 workspace for building and running the 
+    example (Windows* systems only).<DT><A HREF="xcode">xcode</A>
+<DD>Contains Xcode* IDE workspace for building and running the example (OS X*
+    systems only).</DL>
+
+<H2>To Build</H2>
+General build directions can be found <A HREF=../../index.html#build>here</A>.
+<P></P>
+
+<H2>Usage</H2>
+<DL>
+<DT><TT>tree_sum <I>-h</I></TT>
+<DD>Prints the help for command line options
+<DT><TT>tree_sum [<I>n-of-threads</I>=value] [<I>number-of-nodes</I>=value] [<I>silent</I>] [<I>stdmalloc</I>]</TT>
+<DT><TT>tree_sum [<I>n-of-threads</I> [<I>number-of-nodes</I>]] [<I>silent</I>] [<I>stdmalloc</I>]</TT> 
+<DD><I>n-of-threads</I> is the number of threads to use; a range of the form <I>low</I>[:<I>high</I>], where low and optional high are non-negative integers or 'auto' for the default.<BR>
+    <I>number-of-nodes</I> is the number of nodes in the tree.<BR>
+    <I>silent</I> - no output except elapsed time.<BR>
+    <I>stdmalloc</I> - causes the default "operator new" to be used for memory allocations instead of the scalable_allocator.<BR>
+
+<DT>To run a short version of this example, e.g., for use with Intel&reg; Parallel Inspector:
+<DD>Build a <I>debug</I> version of the example
+    (see the <A HREF=../../index.html#build>build directions</A>).
+    <BR>Run it with a small problem size and the desired number of threads, e.g., <TT>tree_sum 4 100000</TT>.
+</DL>
+
+<HR>
+<A HREF="../index.html">Up to parent directory</A>
+<p></p>
+Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+<P></P>
+Intel is a registered trademark or trademark of Intel Corporation
+or its subsidiaries in the United States and other countries.
+<p></p>
+* Other names and brands may be claimed as the property of others.
+</BODY>
+</HTML>
+

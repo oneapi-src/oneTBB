@@ -1,0 +1,43 @@
+<HTML>
+<BODY>
+
+<H2>Overview</H2>
+The Dining Philosophers problem demonstrates tbb::flow and the use of the reserving join node to
+solve the potential deadlock.
+<br>This program runs some number of philosophers in parallel, each thinking and then waiting for chopsticks
+to be available before eating.  Eating and thinking are implemented with sleep().  The chopstick positions are represented by a queue_node with one item.
+
+<H2>Source Files</H2>
+<DL>
+<DT><A HREF="src/dining_philosophers.cpp">dining_philosophers.cpp</A>
+<DD>Source code for the example.
+<DT><A HREF="Makefile">Makefile</A>, <A HREF=Makefile.windows>Makefile.windows</A>
+<DD>Makefiles for building example.
+</DL>
+
+<H2>Directories</H2>
+<DL>
+<DT><A HREF="src">src</A>
+<DD>Contains source file mentioned above.
+<DT><A HREF="msvs">msvs</A>
+<DD>Contains Microsoft* Visual Studio* 2010 workspace for building and running the 
+    example (Windows* systems only).<DT><A HREF="xcode">xcode</A>
+<DD>Contains Xcode* IDE workspace for building and running the example (OS X* 
+    systems only).</DL>
+
+<H2>To Build</H2>
+General build directions can be found <A HREF=../../index.html#build>here</A>.
+<P></P>
+
+<HR>
+<A HREF="../index.html">Up to parent directory</A>
+<p></p>
+Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+<P></P>
+Intel is a registered trademark or trademark of Intel Corporation
+or its subsidiaries in the United States and other countries.
+<p></p>
+* Other names and brands may be claimed as the property of others.
+</BODY>
+</HTML>
+

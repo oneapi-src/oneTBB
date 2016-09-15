@@ -1,0 +1,63 @@
+<HTML>
+<BODY>
+
+<H2>Overview</H2>
+<DL>
+<DT>Parallel version of the Sieve of Eratosthenes.
+<DT>The example can be built in the offload version to run on Intel&reg; Many Integrated Core (Intel&reg; MIC) Architecture based coprocessor (see <A HREF=../../index.html#build_4>build instructions</A>).
+</DL>
+
+<H2>Files</H2>
+<DL>
+<DT><A HREF="main.cpp">main.cpp</A>
+<DD>Main program which parses command line options and runs the algorithm with different numbers of threads.
+<DT><A HREF="primes.h">primes.h</A>
+<DD>The Sieve of Eratosthenes interface.
+<DT><A HREF="primes.cpp">primes.cpp</A>
+<DD>The Sieve of Eratosthenes implementation.
+<DT><A HREF="Makefile">Makefile</A>
+<DD>Makefile for building example.
+</DL>
+
+<H2>Directories</H2>
+<DL>
+<DT><A HREF="msvs">msvs</A>
+<DD>Contains Microsoft* Visual Studio* 2010 workspace for building and running the 
+    example (Windows* systems only).<DT><A HREF="xcode">xcode</A>
+<DD>Contains Xcode* IDE workspace for building and running the example (OS X* 
+    systems only).</DL>
+
+<H2>To Build</H2>
+General build directions can be found <A HREF=../../index.html#build>here</A>.
+<A HREF=../../index.html#build_4>here</A>
+
+<H2>Usage</H2>
+<DL>
+<DT><TT>primes <I>-h</I></TT>
+<DD>Prints the help for command line options
+<DT><TT>primes [<I>n-of-threads</I>=value] [<I>number</I>=value] [<I>grain-size</I>=value] [<I>n-of-repeats</I>=value] [<I>silent</I>]</TT>
+<DT><TT>primes [<I>n-of-threads</I> [<I>number</I> [<I>grain-size</I> [<I>n-of-repeats</I>]]]][<I>silent</I>]</TT> 
+<DD><I>n-of-threads</I> is the number of threads to use; a range of the form <I>low</I>[:<I>high</I>], where low and optional high are non-negative integers or 'auto' for the TBB default.<BR>
+    <I>number</I> is an upper bound of range to search primes in, must be a positive integer.<BR>
+    <I>grain-size</I> is an optional grain size, must be a positive integer. <BR>
+    <I>n-of-repeats</I> is a number of the calculation repeats, must be a positive integer.<BR>
+    <I>silent</I> - no output except elapsed time.<BR>
+
+<DT>To run a short version of this example, e.g., for use with Intel&reg; Parallel Inspector:
+<DD>Build a <I>debug</I> version of the example
+    (see the <A HREF=../../index.html#build>build directions</A>).
+    <BR>Run it with a small problem size and the desired number of threads, e.g., <TT>primes 4 100000</TT>.
+</DL>
+
+<HR>
+<A HREF="../index.html">Up to parent directory</A>
+<p></p>
+Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+<P></P>
+Intel is a registered trademark or trademark of Intel Corporation
+or its subsidiaries in the United States and other countries.
+<p></p>
+* Other names and brands may be claimed as the property of others.
+</BODY>
+</HTML>
+

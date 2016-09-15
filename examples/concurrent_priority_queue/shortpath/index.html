@@ -1,0 +1,82 @@
+<HTML>
+<BODY>
+
+<H2>Overview</H2>
+
+This directory contains a simple example that solves the single source
+shortest path problem.  It is parameterized by N, a number of nodes,
+and a start and end node in [0..N).  A graph is generated with N nodes
+and some random number of connections between those nodes.  A parallel
+algorithm based on A* is used to find the shortest path.  This
+algorithm varies from serial A* in that it needs to add nodes back to
+the open set when the g estimate (shortest path from start to the
+node) is improved, even if the node has already been "visited".  This
+is because nodes are added and removed from the open-set in parallel,
+resulting in some less optimal paths being explored.  The open-set is
+implemented with the concurrent_priority_queue.  Note that since we
+re-visit nodes, the f estimate (on which the priority queue is sorted)
+is not technically needed, so we could use this same parallel
+algorithm with just a concurrent_queue.  However, keeping the f
+estimate and using concurrent_priority_queue results in much better
+performance.  Silent mode prints run time only, regular mode prints
+shortest path length, and verbose mode prints out the shortest path.
+The generated graph follows a pattern in which the closer two pairs of
+node ids are together, the fewer hops there are in a typical path
+between those nodes.  So, for example, the path between 5 and 7 likely
+has few hops whereas 14 to 78 has more and 0 to 9999 has even more,
+etc.
+
+
+<H2>Files</H2>
+<DL>
+<DT><A HREF="shortpath.cpp">shortpath.cpp</A>
+<DD>Driver.
+
+<DT><A HREF="Makefile">Makefile</A>
+<DD>Makefile for building example.
+
+</DL>
+
+<H2>Directories</H2>
+<DL>
+<DT><A HREF="msvs">msvs</A>
+<DD>Contains Microsoft* Visual Studio* 2010 workspace for building and running the example with the Intel&reg; C++ compiler (Windows* systems only).
+<DT><A HREF="xcode">xcode</A>
+<DD>Contains OS X* Xcode* workspace for building and running the example (OS X* systems only).
+</DL>
+
+<H2>To Build</H2>
+General build directions can be found <A HREF=../../index.html#build>here</A>.
+<P></P>
+
+<H2>Usage</H2>
+<DL>
+
+<DT><TT>shortpath <I>-h</I></TT>
+<DD>Prints the help for command line options
+<DT><TT>shortpath [<I>#threads</I>=value] [<I>verbose</I>] [<I>silent</I>] [<I>N</I>=value] [<I>start</I>=value] [<I>end</I>=value] [<I>#threads</I>]</TT>
+<DD><I>#threads</I> is the number of threads to use; a range of the form <I>low</I>[:<I>high</I>] where low and optional high are non-negative integers, or 'auto' for the TBB default.<BR>
+    <I>verbose</I> print full path to screen<BR>
+    <I>silent</I> limits output to timing info; overrides verbose<BR>
+    <I>N</I> number of nodes in graph<BR>
+    <I>start</I> node to start path at<BR>
+    <I>end</I> node to end path at<BR>
+
+
+<DT>To run a short version of this example, e.g., for use with Intel&reg; Parallel Inspector:
+<DD>Build a <I>debug</I> version of the example
+    (see the <A HREF=../../index.html#build>build directions</A>).
+    <BR>Run it with a small problem size and the desired number of threads, e.g., <TT>shortpath 4 N=20 start=0 end=19</TT>.
+</DL>
+
+<HR>
+<A HREF="../index.html">Up to parent directory</A>
+<p></p>
+Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+<P></P>
+Intel is a registered trademark or trademark of Intel Corporation
+or its subsidiaries in the United States and other countries.
+<p></p>
+* Other names and brands may be claimed as the property of others.
+</BODY>
+</HTML>

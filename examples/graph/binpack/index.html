@@ -1,0 +1,72 @@
+<HTML>
+<BODY>
+
+<H2>Overview</H2>
+
+This directory contains a simple tbb::flow example that performs 
+binpacking of N integer values into a near-optimal number of bins
+of capacity V. It features a source_node which passes randomly
+generated integer values of size<=V to a queue_node.  Multiple
+function_nodes set about taking values from this queue_node and 
+packing them into bins according to a best-fit policy.  Items that
+cannot be made to fit are rejected and returned to the queue. When 
+a bin is packed as well as it can be, it is passed to a buffer_node
+where it waits to be picked up by another function_node.  This final
+function nodes gathers stats about the bin and optionally prints its
+contents.  When all bins are accounted for, it optionally prints a 
+summary of the quality of the bin-packing.
+
+<H2>Files</H2>
+<DL>
+<DT><A HREF="binpack.cpp">binpack.cpp</A>
+<DD>Driver.
+
+<DT><A HREF="Makefile">Makefile</A>
+<DD>Makefile for building example.
+
+</DL>
+
+<H2>Directories</H2>
+<DL>
+<DT><A HREF="msvs">msvs</A>
+<DD>Contains Microsoft* Visual Studio* 2010 workspace for building and running the example with the Intel&reg; C++ compiler (Windows* systems only).
+<DT><A HREF="xcode">xcode</A>
+<DD>Contains Xcode* IDE workspace for building and running the example (OS X* systems only).
+</DL>
+
+<H2>To Build</H2>
+General build directions can be found <A HREF=../../index.html#build>here</A>.
+<P></P>
+
+<H2>Usage</H2>
+<DL>
+
+<DT><TT>binpack <I>-h</I></TT>
+<DD>Prints the help for command line options
+<DT><TT>binpack [<I>#threads</I>=value] [<I>verbose</I>] [<I>silent</I>] [<I>N</I>=value] [<I>V</I>=value] [<I>#packers</I>=value] [<I>optimality</I>=value] [<I>#threads</I>]</TT>
+<DD><I>#threads</I> is the number of threads to use; a range of the form <I>low</I>[:<I>high</I>] where low and optional high are non-negative integers, or 'auto' for the TBB default.<BR>
+    <I>verbose</I> print diagnostic output to screen<BR>
+    <I>silent</I> limits output to timing info; overrides verbose<BR>
+    <I>N</I> number of values to pack<BR>
+    <I>V</I> capacity of each bin<BR>
+    <I>#packers</I> number of concurrent bin packers to use (default=#threads)<BR>
+    <I>optimality</I> controls optimality of solution; 1 is highest, use larger numbers for less optimal but faster solution<BR>
+
+
+<DT>To run a short version of this example, e.g., for use with Intel&reg; Parallel Inspector:
+<DD>Build a <I>debug</I> version of the example
+    (see the <A HREF=../../index.html#build>build directions</A>).
+    <BR>Run it with a small problem size and the desired number of threads, e.g., <TT>binpack 4 N=100</TT>.
+</DL>
+
+<HR>
+<A HREF="../index.html">Up to parent directory</A>
+<p></p>
+Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+<P></P>
+Intel is a registered trademark or trademark of Intel Corporation
+or its subsidiaries in the United States and other countries.
+<p></p>
+* Other names and brands may be claimed as the property of others.
+</BODY>
+</HTML>

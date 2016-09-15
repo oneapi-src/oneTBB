@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/thread0"
+        android:title="Auto" android:showAsAction="ifRoom"/>
+    <item android:id="@+id/thread1"
+        android:title="1 thread" android:showAsAction="ifRoom"/>
+    <item android:id="@+id/thread2"
+        android:title="2 threads" android:showAsAction="ifRoom"/>
+    <item android:id="@+id/thread4"
+        android:title="4 threads" android:showAsAction="ifRoom"/>
+    <item android:id="@+id/thread8"
+        android:title="8 threads" android:showAsAction="ifRoom"/>
+    <item android:id="@+id/exit"
+        android:title="Exit" android:showAsAction="ifRoom"/>
+</menu>

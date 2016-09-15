@@ -1,0 +1,112 @@
+<HTML>
+<BODY>
+
+<H2>Overview</H2>
+<DL>
+<DT>Parallel seismic wave simulation that demonstrates use of parallel_for and affinity_partitioner.
+<DT>The example can be built in the offload version to run on Intel&reg; Many Integrated Core (Intel&reg; MIC) Architecture based coprocessor (see <A HREF=../../index.html#build_4>build instructions</A>).
+NOTE: Currently, the offload version does not support GUI and can only be used with console mode.
+</DL>
+
+<H2>Files</H2>
+<DL>
+<DT><A HREF="main.cpp">main.cpp</A>
+<DD>Main program which parses command line options and runs the algorithm with different numbers of threads.
+<DT><A HREF="universe.h">universe.h</A>
+<DD>Wave propagation methods interface.
+<DT><A HREF="universe.cpp">universe.cpp</A>
+<DD>Wave propagation methods implementation.
+<DT><A HREF="seismic_video.h">seismic_video.h</A>
+<DD>GUI mode support interface.
+<DT><A HREF="seismic_video.cpp">seismic_video.cpp</A>
+<DD>GUI mode support implementation.
+<DT><A HREF="Makefile">Makefile</A>
+<DD>Makefile for building example.
+</DL>
+
+<H2>Directories</H2>
+<DL>
+<DT><A HREF="msvs">msvs</A>
+<DD>Contains Microsoft* Visual Studio* 2010 workspace for building and running the 
+    example (Windows* systems only).<DT><A HREF="xcode">xcode</A>
+<DD>Contains Xcode* IDE workspace for building and running the example (OS X* 
+    systems only).</DL>
+
+<H2>To Build</H2>
+General build directions can be found <A HREF=../../index.html#build>here</A>.
+The following additional options are supported:
+<DL>
+<DT><TT>make [(general targets: {release, debug} [test])] UI={con, gdi, d2d, x, mac}</TT>
+<DD>Build and run as usual, but build with the specified GUI driver: console, GDI+*,  
+    Direct2D*, X11, or OpenGL*
+    (see the description of the <A HREF=../../common/index.html>common GUI code</A>
+    for more information on available graphics support).
+    For Linux* and OS X* systems, the best available driver is detected automatically by the Makefile.
+    For Windows* systems, UI=gdi is the default GUI driver; compiling with UI=d2d may offer superior
+    performance, but can only be used if the Microsoft* DirectX* SDK is installed on your system 
+    and if overlay is supported by your graphics card.
+    Use UI=con to build without the GUI for use in making performance measurements
+    <I>(strongly recommended when measuring performance or scalability; see note below)</I>.
+<DT><TT>make [(above options or targets)] XARCH=x64</TT>
+<DD>Build and run as above, but also specify XARCH=x64
+    (or XARCH=AMD64 for older compilers) when building the example on Windows* as a 64-bit binary.
+<DT><TT>make [(above options or targets)] DDLIB_DIR=&lt;<I>specify path to library directory of Direct Draw* SDK here</I>&gt;</TT>
+<DD>If you experience ddraw.lib linking problems, specify the correct library directory via this option.
+<DT><TT>make [(above options or targets)] CXXFLAGS=-DX_FULLSYNC</TT>
+<DD>Build and run as above, but enable full X11 synchronization if you experience "tearing" of motion on slower video systems.
+</DL>
+
+<H2>Usage</H2>
+<DL>
+<DT><TT>seismic <I>-h</I></TT>
+<DD>Prints the help for command line options
+<DT><TT>seismic [<I>n-of-threads</I>=value] [<I>n-of-frames</I>=value] [<I>silent</I>] [<I>serial</I>]</TT>
+<DT><TT>seismic [<I>n-of-threads</I> [<I>n-of-frames</I>]] [<I>silent</I>] [<I>serial</I>]</TT>
+<DD><I>n-of-threads</I> is the number of threads to use; a range of the form low[:high], where low and optional high are non-negative integers or 'auto' for the TBB default.<BR>
+    <I>n-of-frames</I> is a number of frames the example processes internally.<BR>
+    <I>silent</I> - no output except elapsed time.<BR>
+    <I>serial</I> - in GUI mode start with serial version of algorithm.<BR>
+
+<DT>To run a short version of this example, e.g., for use with Intel&reg; Parallel Inspector::
+<DD>Build a <I>debug</I> version of the example
+    (see the <A HREF=../../index.html#build>build directions</A>).
+    <BR>Run it with the desired number of threads and smaller number of frames, e.g., <TT>seismic 4 5</TT>.
+</DL>
+
+<H2>Hot keys</H2>
+The following hot keys can be used in interactive execution mode when the example is compiled with the graphical
+user interface:
+<DL>
+<dt>&lt;left mouse button&gt;
+<dd>Starts new seismic wave in place specified by mouse cursor.
+<dt>&lt;space&gt;
+<dd>Toggles between parallel and serial execution modes.
+<dt>&lt;p&gt;
+<dd>Enables parallel execution mode.
+<dt>&lt;s&gt;
+<dd>Enables serial execution mode.
+<dt>&lt;e&gt;
+<dd>Enables screen updates.
+<dt>&lt;d&gt;
+<dd>Disables screen updates <I>(strongly recommended when measuring performance or scalability; see note below)</I>.
+<dt>&lt;esc&gt;
+<dd>Stops execution.
+</DL>
+
+<H2>Notes</H2>
+<UL>
+<LI>While running with the GUI display turned on should yield reasonable performance in most cases, <I>running with the GUI
+    display turned off is strongly recommended</I> in order to demonstrate the full performance and scalability of the example.
+</UL>
+
+<HR>
+<A HREF="../index.html">Up to parent directory</A>
+<p></p>
+Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+<P></P>
+Intel is a registered trademark or trademark of Intel Corporation
+or its subsidiaries in the United States and other countries.
+<p></p>
+* Other names and brands may be claimed as the property of others.
+</BODY>
+</HTML>

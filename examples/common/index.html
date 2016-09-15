@@ -1,0 +1,68 @@
+<HTML>
+<BODY>
+
+<H2>Overview</H2>
+This directory contains common code that is used in the Intel&reg; Threading Building Blocks (Intel&reg; TBB) examples.
+
+<P>
+This code is not intended to be used directly.  It is incorporated automatically by the examples that need it.
+</P>
+
+<H2>Directories</H2>
+<DL>
+<DT><A HREF="gui">gui</A>
+<DD>GUI code for examples that have graphical user interfaces.  Currently supports:
+    <UL>
+    <LI>GDI+*, DirectDraw*, Direct2D* (Windows* systems)
+    <LI>OpenGL* (OS X* systems)
+    <LI>X window (Linux* or OS X* systems)
+    </UL>
+    See the examples that use the GUI
+    (<A HREF=../parallel_for/tachyon/index.html>tachyon</A>, <A HREF=../parallel_for/seismic/index.html>seismic</A>)
+    for more details.
+</DL>
+<DL>
+<DT><A HREF="utility">utility</A>
+<DD>Common driver and utility code for examples. Currently provides:
+    <UL>
+    <LI>class FastRandom - a random number generator that uses linear congruental method
+        (<A HREF="utility/fast_random.h">fast_random.h</A>)
+    <LI>class thread_number_range - a class to specify the numbers of threads an example should use
+        (<A HREF="utility/utility.h">utility.h</A>)
+    <LI>support for command line interface - class cli_argument_pack and function parse_cli_arguments
+        (<A HREF="utility/utility.h">utility.h</A>)
+    </UL>
+</DL>
+
+<H2>Common information</H2>
+<H3>Number of threads</H3>
+Most Intel TBB examples allow to specify <I>n-of-threads</I>, the set of thread numbers that should be used to run an example.
+<BR>Usually, it is a range of the form <I>low[:high[:(+|*|#)S]]</I>, where <I>low</I> and optional <I>high</I>
+are non-negative integers or 'auto' for the default choice, and optional step expression <I>(+|*|#)S</I> 
+specifies how thread numbers are chosen within the range:
+    <UL>
+    <LI>With <I>+/*</I>, the previous number is incremented/multiplied by <I>S</I>.
+        E.g., expression '12:16:+1' means 12,13,14,15,16 threads, and '1:16:*2' means 1,2,4,8,16 threads.
+    <LI>With <I>#</I>, <I>S</I> is the desired number of steps between any subsequent powers of 2;
+        it must be a power of 2 on its own, with most meaningful values being 2,4, and 8. 
+        For a given number of threads, the actual step value is computed as the quotient
+        of the nearest smaller power of 2 divided by the number of steps, but is at least 1.
+        E.g., '1:32:#4' means 1,2,3,4,5,6,7,8,10,12,14,16,20,24,28,32 threads;
+        note the step doubling at 8 and 16 to keep 4 steps between powers of 2.
+    </UL>
+A default value for the number of threads can be customized in an example; if not customized, it is '1:auto:#4'.
+The 'auto' parameter is substituted with a value returned by a specified function, which typically is
+tbb::task_scheduler_init::default_num_threads().
+<P/>
+
+<HR>
+<A HREF="../index.html">Up to parent directory</A>
+<p></p>
+Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+<P></P>
+Intel is a registered trademark or trademark of Intel Corporation
+or its subsidiaries in the United States and other countries.
+<p></p>
+* Other names and brands may be claimed as the property of others.
+</BODY>
+</HTML>

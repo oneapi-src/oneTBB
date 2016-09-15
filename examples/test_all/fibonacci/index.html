@@ -1,0 +1,51 @@
+<HTML>
+<BODY>
+
+<H2>Overview</H2>
+This directory contains an example that computes Fibonacci numbers in several
+different ways. The purpose of the example is to exercise every include file
+and class in Intel&reg; Threading Building Blocks.
+Most of the computations are deliberately silly and not expected to
+show any speedup on multiprocessors.
+<H2>Files</H2>
+<DL>
+<DT><A HREF="Fibonacci.cpp">Fibonacci.cpp</A>
+<DD>Source code for example.
+<DT><A HREF="Makefile">Makefile</A>
+<DD>Makefile for building example.
+</DL>
+
+<H2>Directories</H2>
+<DL>
+<DT><A HREF="msvs">msvs</A> 
+<DD>Contains Microsoft* Visual Studio* 2010 workspace for building and running the 
+    example (Windows* systems only).<DT><A HREF="xcode">xcode</A>
+<DD>Contains Xcode* IDE workspace for building and running the example (OS X* 
+    systems only).</DL>
+
+<H2>To Build</H2>
+General build directions can be found <A HREF=../../index.html#build>here</A>.
+
+<H2>Usage</H2>
+<DL>
+<DT><TT>fibonacci <I>K</I> [<I>M</I>[:<I>N</I>]] [<I>R</I>]</TT>
+<DD>Calculates the <I>K</I>-th fibonacci number.
+    <I>M</I> and <I>N</I> are a range of numbers of threads to be used.
+    <I>R</I> is the number of times to repeat the calculation.
+<DT>To run a short version of this example, e.g., for use with Intel&reg; Threading Tools:
+<DD>Build a <I>debug</I> version of the example
+    (see the <A HREF=../../index.html#build>build directions</A>).
+    <BR>Run it with a small fibonacci number and the desired number of threads, e.g., <TT>fibonacci 100 4</TT>.
+</DL>
+
+<HR>
+<A HREF="../index.html">Up to parent directory</A>
+<p></p>
+Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+<P></P>
+Intel is a registered trademark or trademark of Intel Corporation
+or its subsidiaries in the United States and other countries.
+<p></p>
+* Other names and brands may be claimed as the property of others.
+</BODY>
+</HTML>

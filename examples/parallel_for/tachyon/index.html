@@ -1,0 +1,220 @@
+<HTML>
+<BODY>
+
+<H2>Overview</H2>
+Parallel raytracer / renderer that demonstrates the use of parallel_for.
+
+<P><I>
+This example includes software developed by John E. Stone.  See
+<A HREF=#copyright>here</A> for copyright information.
+</I></P>
+
+<P>
+This example is a 2-D raytracer/renderer that visually shows different parallel scheduling
+methods and their resulting speedup.  The code was parallelized by speculating
+that each pixel could be rendered in parallel.  The resulting parallel code was
+then checked for correctness by using Intel&reg; Thread Checker, which
+pointed out where synchronization was needed.  Minimal synchronization was then
+inserted into the parallel code.  The resulting parallel code exhibits good speedup.
+</P>
+
+<P>
+The following versions of the example are provided:
+<DL>
+<DT>serial
+<DD>Original sequential version.
+<DT>tbb1d
+<DD>Parallel version that uses Intel&reg; Threading Building Blocks (Intel&reg; TBB) and blocked_range to parallelize
+	over tasks that are groups of scan-lines.
+    <UL>
+    <LI>By default, this version uses one thread per available processor.  To change this
+	default, set the TBB_NUM_THREADS environment variable to the desired number of threads before running.
+    <LI>This version uses the preview feature: auto_range_partitioner.  No grain size is provided to blocked_range.
+        The blocked_range class uses a default grain size of 1 when none is provided.  However, the auto_range_partitioner 
+        controls the amount of range splitting dynamically at runtime, resulting in sub-ranges of varying sizes.  
+    </UL>
+<DT>tbb
+<DD>Parallel version that uses Intel TBB and blocked_range2d to parallelize
+	over tasks that are rectangular sub-areas.
+    <UL>
+    <LI>By default, this version uses one thread per available processor.  To change this
+	default, set the TBB_NUM_THREADS environment variable to the desired number of threads before running.
+    <LI>This version uses a reasonable task grain size by default.  To change this default,
+	set the TBB_GRAINSIZE environment variable to the desired grain size before running.
+	The grain size corresponds to the number of pixels (in the X or Y direction, for a
+	rectangular sub-area) in each parallel task.
+    </UL>
+</DL>
+</P>
+
+<H2>Files</H2>
+<DL>
+<DT><A HREF="src/main.cpp">src/main.cpp</A>
+<DD>Main program which parses command line options and runs the raytracer.
+<DT><A HREF="src/tachyon_video.cpp">src/tachyon_video.cpp</A>
+<DD>Source code for GUI interfaces.
+<DT><A HREF="src/trace.serial.cpp">src/trace.serial.cpp</A>
+<DD>Source code for original sequential version of example.
+<DT><A HREF="src/trace.tbb1d.cpp">src/trace.tbb1d.cpp</A>
+<DD>Source code for Intel TBB blocked_range (scan-line) version of example.
+<DT><A HREF="src/trace.tbb.cpp">src/trace.tbb.cpp</A>
+<DD>Source code for Intel TBB blocked_range2d (rectangular sub-area) version of example.
+<DT>(src/*.cpp)
+<DD>Remainder of source code for example.
+<DT>(src/*.h)
+<DD>Remainder of include files for example.
+<DT><A HREF="Makefile">Makefile</A>
+<DD>Makefile for building example.
+</DL>
+
+<H2>Directories</H2>
+<DL>
+<DT><A HREF="src">src</A>
+<DD>Contains source code and include files for the example.
+<DT><A HREF="dat">dat</A>
+<DD>Contains data sets for running the example.
+<DT><A HREF="msvs">msvs</A>
+<DD>Contains Microsoft* Visual Studio* 2010 workspace for building and running the 
+    example (Windows* systems only).<DT><A HREF="xcode">xcode</A>
+<DD>Contains Xcode* IDE workspace for building and running the example (OS X* 
+    systems only).
+<A HREF="android">android</A>
+<DD>Contains Eclipse* IDE workspace for building and running the example on Android* system. JNI part needs to be compiled by Android NDK.</DL> 
+
+
+<H2>To Build</H2>
+General build directions can be found <A HREF=../../index.html#build>here</A>.
+
+<P>
+For Windows* systems Microsoft* Visual Studio* projects are provided for each of the above 
+    example versions.
+</P>
+
+<P>
+The Makefile supports the following build targets (in addition to the <A HREF=../../index.html#build>general</A> ones).
+Here, &lt;<I>version</I>&gt; is one of the above versions of the example, i.e., {serial, tbb1d, tbb}.
+</P>
+<DL>
+<DT><TT>make &lt;<I>version</I>&gt;[_debug]</TT>
+<DD>Build and run a single version (release or debug).
+    Equivalent to 'make build_&lt;<I>version</I>&gt;[_debug] run_&lt;<I>version</I>&gt;'.
+<DT><TT>make build_&lt;<I>version</I>&gt;[_debug]</TT>
+<DD>Compile and link a single version (release or debug).
+    The resulting executable is left in the directory for the example.
+<DT><TT>make run_&lt;<I>version</I>&gt;</TT>
+<DD>Run a single version previously produced by one of the above commands.
+<DT><TT>make [(above options or targets)] DATASET={820spheres, balls, balls3, lattice, model2,
+    teapot, trypsin4pti}</TT>
+<DD>Build and run as above, but run with the specified data set.
+<DT><TT>make [(above options or targets)] ARGS=-D</TT>
+<DD>Build and run as above, but run with disabled run-time display updating for use in making performance measurements
+    <I>(strongly recommended when measuring performance or scalability; see note below)</I>.
+<DT><TT>make [(above options or targets)] UI={con, gdi, d2d, x, mac}</TT>
+<DD>Build and run as usual, but build with the specified GUI driver: console, GDI+*, Direct2D*, X11, or OpenGL*
+	(see the description of the <A HREF=../../common/index.html>common GUI code</A>
+	for more information on available graphics support).
+    For Linux* and OS X* systems, the best available driver is detected automatically by the Makefile.
+    For Windows* systems, UI=gdi is the default GUI driver; compiling with UI=d2d may offer superior
+	performance, but can only be used if the Microsoft* DirectX* SDK is installed on your system.
+    Use UI=con to build without the GUI for use in making performance measurements
+	<I>(strongly recommended when measuring performance or scalability; see note below)</I>.
+<DT><TT>make [(above options or targets)] XARCH=x64</TT>
+<DD>Build and run as above, but
+    also specify XARCH=x64 (or XARCH=AMD64 for older compilers) when building the example on Windows* as a 64-bit binary.
+<DT><TT>make [(above options or targets)] DDLIB_DIR=&lt;<I>specify path to library directory of Direct Draw* SDK here</I>&gt;</TT>
+<DD>If you experience ddraw.lib linking problems, specify the correct library directory via this option.
+</DL>
+
+<H2>Usage</H2>
+Building via the above make commands, or via Visual Studio projects on Windows* systems, produces executable files
+named <TT>tachyon.&lt;<I>version</I>&gt;.exe</TT>.  To run these executables directly, use one or more of the following commands.
+<DL>
+<DT><TT>tachyon.&lt;<I>version</I>&gt; <I>-h</I></TT>
+<DD>Prints the help for command line options
+<DT><TT>tachyon.&lt;<I>version</I>&gt; [<I>dataset</I>=value] [<I>boundthresh</I>=value] [<I>no-display-updating</I>] [<I>nobounding</I>] [<I>silent</I>]</TT>
+<DT><TT>tachyon.&lt;<I>version</I>&gt; [<I>dataset</I> [<I>boundthresh</I>]] [<I>no-display-updating</I>] [<I>nobounding</I>] [<I>silent</I>]</TT> 
+<DD><I>dataset</I> is the path/name of one of the *.dat files in the <A HREF="dat">dat</A> directory for the example.<BR>
+    <I>boundthresh</I> is a bounding threshold value.<BR>
+    <I>no-display-updating</I> - disable run-time display updating.<BR>
+    <I>no-bounding</I> - disable bounding technique.<BR>
+    <I>silent</I> - no output except elapsed time.<BR>
+<DT><TT>tachyon.&lt;<I>version</I>&gt; [<I>dataset</I>] [<I>no-display-updating</I>]</TT>
+<DD>Run this version (release or debug), but run with disabled run-time display updating
+    for use in making performance measurements
+    <I>(strongly recommended when measuring performance or scalability; see note below)</I>.
+<DT>To run a short version of this example, e.g., for use with Intel&reg; Parallel Inspector:
+<DD>Build a <I>debug</I> version of the <TT>tbb</TT> example with the GUI turned off
+    (e.g., <TT>make UI=con tbb_debug</TT>; see also the build directions above).
+    <BR>Run it with a small dataset, e.g., <TT>tachyon.tbb.exe dat/820spheres.dat no-display-updating</TT>.
+</DL>
+
+<H2>Keys</H2>
+While running with the GUI display turned on the following keyboard keys can be used:
+<DL>
+<DT><TT>ESC</TT>
+<DD>Interrupt the rendering and exit
+<DT><TT><I>Any key</I></TT>
+<DD>Enable repetition of rendering after the pause. Press ESC to stop the application.
+<DT><TT>Space</TT>
+<DD>Toggle run-time display updating mode while rendering (see no-display-updating above).
+<DT><TT>p</TT>
+<DD>Holds the picture after rendering completion. Press 'p' again to continue.
+</DL>
+
+<H2>Notes</H2>
+<UL>
+<LI>While running with the GUI display turned on should yield reasonable performance in most cases, <I>running with the GUI
+    display turned off is strongly recommended</I> in order to demonstrate the full performance and scalability of the example.
+</UL>
+
+<a name="copyright"></a>
+
+<HR>
+<A HREF="../index.html">Up to parent directory</A>
+<p></p>
+Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+<P></P>
+Intel is a registered trademark or trademark of Intel Corporation
+or its subsidiaries in the United States and other countries.
+<p></p>
+* Other names and brands may be claimed as the property of others.
+
+<I>
+<P>
+The original source for this example is
+Copyright (c) 1994-2008 John E. Stone
+All rights reserved.
+</P>
+
+<P>
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+<OL>
+<LI>Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+<LI>Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+<LI>The name of the author may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
+</OL>
+</P>
+
+<P>
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+</P>
+</I>
+
+</BODY>
+</HTML>

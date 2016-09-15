@@ -1,0 +1,52 @@
+<HTML>
+<BODY>
+
+<H2>Overview</H2>
+Parallel version of convex hull algorithm (quick hull).
+
+<H2>Files</H2>
+<DL>
+<DT><A HREF="convex_hull_sample.cpp">convex_hull_sample.cpp</A>
+<DD>Source code for TBB version of example.
+<DT><A HREF="convex_hull_bench.cpp">convex_hull_bench.cpp</A>
+<DD>Source code for version of example that compares serial and TBB buffered and unbuffered implementations.
+<DT><A HREF="convex_hull.h">convex_hull.h</A>
+<DD>Include file for example.
+<DT><A HREF="Makefile">Makefile</A>
+<DD>Makefile for building example.
+</DL>
+
+<H2>Directories</H2>
+<DL>
+<DT><A HREF="msvs">msvs</A>
+<DD>Contains Microsoft* Visual Studio* 2010 workspace for building and running the 
+    example (Windows* systems only).<DT><A HREF="xcode">xcode</A>
+<DD>Contains Xcode* IDE workspace for building and running the example (OS X* 
+    systems only).</DL>
+
+<H2>To Build</H2>
+General build directions can be found <A HREF=../../index.html#build>here</A>.
+
+<H2>Usage</H2>
+<DL>
+<DT><TT>convex_hull_sample [<I>S</I>] [<I>M</I>[:<I>N</I>]] [-v]</TT>
+<DD><I>S</I> is the number of points (problem size).
+    <I>M:N</I> are a range of numbers of threads to be used.
+    Use the -v option to turn on verbose output.
+<DT>To run a short version of this example, e.g., for use with Intel&reg; Threading Tools:
+<DD>Build a <I>debug</I> version of the example
+    (see the <A HREF=../../index.html#build>build directions</A>).
+    <BR>Run it with a small problem size and the desired number of threads, e.g., <TT>convex_hull_sample 500000 4</TT>.
+</DL>
+
+<HR>
+<A HREF="../index.html">Up to parent directory</A>
+<p></p>
+Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+<P></P>
+Intel is a registered trademark or trademark of Intel Corporation
+or its subsidiaries in the United States and other countries.
+<p></p>
+* Other names and brands may be claimed as the property of others.
+</BODY>
+</HTML>

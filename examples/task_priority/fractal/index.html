@@ -1,0 +1,66 @@
+<HTML>
+<BODY>
+
+<H2>Overview</H2>
+The example calculates two classical Mandelbrot fractals with different priorities. 
+The application window is divided into two areas where fractals are rendered. With mouse click on an area the user can change the priority of the calculating fractal. In the clicked area the fractal priority is changed to be "high" and the priority of the other fractal is changed to "normal".
+The example also has the console mode but in this mode the priorities could not be changed during execution.
+
+
+<H2>Files</H2>
+<DL>
+<DT><A HREF="main.cpp">main.cpp</A>
+<DD>Main program which parses command line options and runs the fractals calculation in GUI or Console mode.
+<DT><A HREF="fractal.h">fractal.h</A>
+<DD>Interfaces of fractal and fractal_group classes.
+<DT><A HREF="fractal.cpp">fractal.cpp</A>
+<DD>Implementations of fractal and fractal_group classes.
+<DT><A HREF="fractal_video.h">fractal_video.h</A>
+<DD>GUI mode support interface.
+<DT><A HREF="Makefile">Makefile</A>
+<DD>Makefile for building example.
+</DL>
+
+<H2>Directories</H2>
+<DL>
+<DT><A HREF="msvs">msvs</A>
+<DD>Contains Microsoft* Visual Studio* 2010 workspace for building and running the example (Windows* systems only).
+<DT><A HREF="xcode">xcode</A>
+<DD>Contains Xcode* IDE workspace for building and running the example (OS X* systems only).
+</DL>
+
+<H2>To Build</H2>
+General build directions can be found <A HREF=../../index.html#build>here</A>.
+
+<H2>Usage</H2>
+<DL>
+<DT><TT>fractal <I>-h</I></TT>
+<DD>Prints the help for command line options
+<DT><TT>fractal [<I>n-of-threads=value</I>] [<I>n-of-frames=value</I>] [<I>max-of-iterations=value</I>] [<I>grain-size=value</I>] [<I>silent</I>] [<I>single</I>]</TT>
+<DT><TT>fractal [<I>n-of-threads</I> [<I>n-of-frames</I> [<I>max-of-iterations</I> [<I>grain-size</I>]]]] [<I>silent</I>] [<I>single</I>]</TT> 
+<DD><I>n-of-threads</I> is the number of threads to use; a range of the form <I>low</I>[:<I>high</I>], where low and optional high are non-negative integers or 'auto' for the TBB default.<BR>
+    <I>n-of-frames</I> is a number of frames the example processes internally.<BR>
+    <I>max-of-iterations</I> is a maximum number of the fractal iterations.<BR>
+    <I>grain-size</I> is an optional grain size, must be a positive integer. <BR>
+    <I>use-auto-partitioner</I> - use tbb::auto_partitioner.<BR>
+    <I>silent</I> - no output except elapsed time.<BR>
+    <I>single</I> - process only one fractal.<BR>
+
+<DT>To run a short version of this example, e.g., for use with Intel&reg; Parallel Inspector:
+<DD>Build a <I>debug</I> version of the example
+    (see the <A HREF=../../index.html#build>build directions</A>).
+    <BR>Run it with a small fractal iterations number and the desired number of threads, e.g., <TT>fractal 4 1 10000</TT>.
+</DL>
+
+<HR>
+<A HREF="../index.html">Up to parent directory</A>
+<p></p>
+Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+<P></P>
+Intel is a registered trademark or trademark of Intel Corporation
+or its subsidiaries in the United States and other countries.
+<p></p>
+* Other names and brands may be claimed as the property of others.
+</BODY>
+</HTML>
+

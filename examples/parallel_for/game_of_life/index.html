@@ -1,0 +1,54 @@
+<HTML>
+<BODY>
+
+<H2>Overview</H2>
+The "Game of life" example demonstrates interoperability of TBB and .NET. 
+<br>This program runs 2 simultaneous instances of the classic Conway's "Game of Life". 
+One of these instances uses serial calculations to update the board. The other one calculates in parallel with TBB.
+The visualization is written in managed C++ and uses .NET CLR.
+
+<H2>Source Files</H2>
+<DL>
+<DT><A HREF="src/Form1.h">Form1.h</A>, <A HREF="src/Board.h">Board.h</A>
+<DD>Header files for GUI classes.
+<DT><A HREF="src/Evolution.h">Evolution.h</A>, <A HREF="src/Evolution.cpp">Evolution.cpp</A>
+<DD>Contain class hierarchy to implement game evolution in serial and parallel.
+<DT><A HREF="src/Update_state.cpp">Update_state.cpp </A>
+<DD>Implements 2 approaches for calculating steps in the program: with the use of SSE intrinsics, and ordinary C++ code.
+<DT><A HREF="src/Game_of_life.cpp">Game_of_life.cpp </A>
+<DD>Contains program entry point and other source not related to logical structure of the example.
+<DT><A HREF="Makefile">Makefile</A>
+<DD>Makefile for building example.
+</DL>
+
+<H2>Directories</H2>
+<DL>
+<DT><A HREF="src">src</A>
+<DD>Contains source files mentioned above.
+<DT><A HREF="msvs">msvs</A>
+<DD>Contains Microsoft* Visual Studio* 2010 workspace for building and running the example (Windows* systems only).
+<DT><A HREF="xcode">xcode</A>
+<DD>Contains Xcode* IDE workspace for building and running the example (OS X* systems only).
+</DL>
+
+<H2>To Build</H2>
+General build directions can be found <A HREF=../../index.html#build>here</A>.
+<P></P>
+
+<H2>Usage</H2>
+<DL>
+For Windows* systems, Microsoft* Visual Studio* projects are provided for each of the above versions. 
+</DL>
+
+<HR>
+<A HREF="../index.html">Up to parent directory</A>
+<p></p>
+Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+<P></P>
+Intel is a registered trademark or trademark of Intel Corporation
+or its subsidiaries in the United States and other countries.
+<p></p>
+* Other names and brands may be claimed as the property of others.
+</BODY>
+</HTML>
+

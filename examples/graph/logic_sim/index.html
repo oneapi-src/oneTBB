@@ -1,0 +1,67 @@
+<HTML>
+<BODY>
+
+<H2>Overview</H2>
+
+This directory contains a simple tbb::flow example that performs
+simplistic digital logic simulations with basic logic gates that can
+be easily composed to create more interesting circuits.  It
+exemplifies the multifunction_node and the indexer_node CPF, among others.
+
+<H2>Files</H2>
+<DL>
+<DT><A HREF="basics.h">basics.h</A>
+<DD>Several I/O devices and basic gates.
+<DT><A HREF="one_bit_adder.h">one_bit_adder.h</A>
+<DD>A one-bit full adder composed of basic gates.
+<DT><A HREF="four_bit_adder.h">four_bit_adder.h</A>
+<DD>A four-bit full adder composed of one-bit adders.
+<DT><A HREF="D_latch.h">D_latch.h</A>
+<DD>A D-latch composed of basic gates.
+<DT><A HREF="test_all.cpp">test_all.cpp</A>
+<DD>A simple test program that exercises the code in the headers.
+
+<DT><A HREF="Makefile">Makefile</A>
+<DD>Makefile for building example.
+
+</DL>
+
+<H2>Directories</H2>
+<DL>
+<DT><A HREF="msvs">msvs</A>
+<DD>Contains Microsoft* Visual Studio* 2010 workspace for building and running the example with the Intel&reg; C++ compiler (Windows* systems only).
+<DT><A HREF="xcode">xcode</A>
+<DD>Contains Xcode* IDE workspace for building and running the example (OS X* systems only).
+</DL>
+
+<H2>To Build</H2>
+General build directions can be found <A HREF=../../index.html#build>here</A>.
+<P></P>
+
+<H2>Usage</H2>
+<DL>
+
+<DT><TT>test_all <I>-h</I></TT>
+<DD>Prints the help for command line options
+<DT><TT>test_all [<I>#threads</I>=value] [<I>verbose</I>] [<I>silent</I>] [<I>#threads</I>]</TT>
+<DD><I>#threads</I> is the number of threads to use; a range of the form <I>low</I>[:<I>high</I>] where low and optional high are non-negative integers, or 'auto' for the TBB default.<BR>
+    <I>verbose</I> print diagnostic output to screen<BR>
+    <I>silent</I> limits output to timing info; overrides verbose<BR>
+
+<DT>To run a short version of this example, e.g., for use with Intel&reg; Parallel Inspector:
+<DD>Build a <I>debug</I> version of the example
+    (see the <A HREF=../../index.html#build>build directions</A>).
+    <BR>Run it with the desired number of threads, e.g., <TT>test_all 4</TT>.
+</DL>
+
+<HR>
+<A HREF="../index.html">Up to parent directory</A>
+<p></p>
+Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+<P></P>
+Intel is a registered trademark or trademark of Intel Corporation
+or its subsidiaries in the United States and other countries.
+<p></p>
+* Other names and brands may be claimed as the property of others.
+</BODY>
+</HTML>

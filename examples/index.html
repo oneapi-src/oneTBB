@@ -1,0 +1,166 @@
+<HTML>
+<BODY>
+
+<H2>Overview</H2>
+This directory has example usages of Intel&reg; Threading Building Blocks (Intel&reg; TBB).
+
+<H2>Directories</H2>
+<DL>
+<DT><A HREF="GettingStarted/index.html">GettingStarted</A>
+<DD>Examples from the Getting Started Guide.
+<DT><A HREF="concurrent_hash_map/index.html">concurrent_hash_map</A>
+<DD>Examples using <CODE>concurrent_hash_map</CODE>.
+<DT><A HREF="concurrent_priority_queue/shortpath/index.html">concurrent_priority_queue</A>
+<DD>Examples using <CODE>concurrent_priority_queue</CODE>.
+<DT><A HREF="graph/index.html">graph</A>
+<DD>Examples using <CODE>tbb::flow graph</CODE>.
+<DT><A HREF="parallel_do/index.html">parallel_do</A>
+<DD>Examples using <CODE>parallel_do</CODE>.
+<DT><A HREF="parallel_for/index.html">parallel_for</A>
+<DD>Examples using <CODE>parallel_for</CODE>.
+<DT><A HREF="parallel_reduce/index.html">parallel_reduce</A>
+<DD>Examples using <CODE>parallel_reduce</CODE>.
+<DT><A HREF="pipeline/index.html">pipeline</A>
+<DD>Examples using <CODE>pipeline</CODE>.
+<DT><A HREF="task/index.html">task</A>
+<DD>Examples using raw <CODE>task</CODE> interface.
+<DT><A HREF="task_group/index.html">task_group</A>
+<DD>Examples using <CODE>task_group</CODE> interface.
+<DT><A HREF="task_priority/index.html">task_priority</A>
+<DD>Examples using the task priority feature.
+<DT><A HREF="test_all/index.html">test_all</A>
+<DD>Examples that test all the parts of the package.
+<DT><A HREF="common/index.html">common</A>
+<DD>Common files for building various examples.  Should not be used directly. But if you copy an example to other place this folder should be copied also and should have the same relative path for copied example.
+</DL>
+
+<A NAME=build><H2>To Build</H2></A>
+Build each example by using one of the following methods.  The specific directions for each
+method can be found below.
+<UL>
+<LI>Build by using a <A HREF=#build_1>Microsoft* Visual Studio* project (Windows* systems only)</A>.
+<LI>Build by using a <A HREF=#build_2>Xcode* IDE project (OS X* systems only)</A>.
+<LI>Build by using a <A HREF=#build_3>Makefile (Windows*, Linux* or OS X* systems)</A>.
+</UL>
+
+<P>
+Some of the following directions refer to a shell window; this refers
+to the command prompt environment/window normally used on your system.
+A shell might be a cmd.exe command prompt window (Windows* systems), or a
+sh, bash, csh, ksh, etc. (or compatible) shell window (Windows*, Linux* or OS X* systems).
+</P>
+
+<A name="build_1"><H4>To build by using a Microsoft* Visual Studio* project (Windows* systems):</H4></A>
+Perform the following steps:
+<OL>
+<LI>Identify the solution (*.sln) file for the example you wish to build and run. For Microsoft* Visual Studio* 2010, the *.sln file is in the example's msvs sub-directory.</LI>
+<LI>Open the project by using one of the following methods:
+    <UL>
+    <LI>Navigate to the *.sln file from My Computer, by using Windows Explorer, or by using another file browser. Double-click the *.sln file to invoke Microsoft* Visual Studio* and open the project.</LI>
+    <LI>Invoke Microsoft* Visual Studio* from the Start menu and use the "Open Project" dialog to navigate to and open the project.</LI>
+    </UL>
+</LI>
+<LI>Press &lt;ctrl-F5&gt; to build and run the example.</LI>
+<li>If you copied an example to another place separately from libraries you need to 
+    set %TBBROOT% variable pointing to &lt;installdir&gt; folder.</li>
+</OL>
+
+<A name="build_2"><H4>To build by using a Xcode* IDE project (OS X* systems):</H4></A>
+Perform the following steps:
+<OL>
+<LI>Identify the project (*.xcodeproj) file for the example you wish to build and run.
+    <UL>
+    <LI>The *.xcodeproj file is in the example's xcode sub-directory.
+    </UL>
+</LI>
+<LI>Open the project by using one of the following methods:
+    <UL>
+    <LI>Navigate to the *.xcodeproj file by using the Finder.Double-click the *.xcodeproj file to invoke the Xcode* IDE and open the project.</LI>
+    <LI>Invoke the Xcode* IDE and use the "File -> Open" dialog to navigate to and open the project.</LI>
+    </UL>
+</LI>
+<LI>Press &lt;Apple-R&gt;, or press the "Build and Go" button in the toolbox, to build and run the example.
+</LI>
+</OL>
+
+<A name="build_3"><H4>To build by using a Makefile (Windows*, Linux* or OS X* systems):</H4></A>
+Perform the following steps:
+<OL>
+<LI>Open a shell window.  For Windows* systems, make sure this shell window has the proper environment
+    defined for use with Microsoft* Visual Studio* (2005, 2008, 2010 or 2012); such a shell can be invoked
+    from the Start menu, under Visual Studio, Visual Studio Tools, Visual Studio Command Prompt.
+<LI>Set up the environment in this shell window for use with Intel TBB.
+    <BR>See below for how to set up the environment for <A href="#env_1">Windows*</A>, <A href="#env_23">Linux*</A> or <A href="#env_23">OS X*</A> systems.
+<LI>Unless you installed Intel TBB yourself, you may not have write permissions to the directory 
+    containing the example.  In this case, make a copy of the example, and use the copy for the following steps.
+<LI>In the shell window, navigate to the directory for the example
+    (or to the directory for the copy of the example if you made one in the previous step).
+<LI>Use one or more of the following commands to build and run the example.
+    Here, make refers to the make command normally used on your system: this could be
+    nmake, gmake, or make on Windows* systems, or make or gmake on Linux* or OS X* systems.
+    <DL>
+    <DT><TT>make</TT>
+    <DD>Default build and run.  Equivalent to 'make release test'.
+    <DT><TT>make release</TT>
+    <DD>Compile and link against the release version of Intel TBB runtime library. The resulting executable is left in the directory for the example.
+    <DT><TT>make debug</TT>
+    <DD>Compile and link against the debug version of Intel TBB runtime library. The resulting executable is left in the directory for the example.
+    <DT><TT>make test</TT>
+    <DD>Run an executable previously produced by one of the above commands.
+    <DT><TT>make <B>[</B>(above options or targets)<B>]</B> CXX=<B>{</B>icl, icc<B>}</B></TT>
+    <DD>Build and run as above, but use Intel&reg; compilers instead of default, native compilers (e.g., icl instead of cl.exe on Windows* systems, or icc instead of g++ on Linux* or OS X* systems).
+    <DT><A NAME=build_4><TT>make <B>[</B>(above options or targets)<B>]</B> offload=mic</TT></A>
+    <DD>Build and run the offload version of an example for Intel&reg; Many Integrated Core (Intel&reg; MIC) Architecture.
+    <DD><I>Note: Only Intel&reg; MIC Architecture with Linux* based host is currently supported.</I>
+    <DT><TT>make clean</TT>
+    <DD>Remove any executables or intermediate files produced by the above commands.
+    </DL>
+</OL>
+
+<A name="env_1"><H4>To set up the environment (Windows* systems):</H4></A>
+It is <B>strongly</B> recommended that the environment be set up when installing Intel TBB.
+Do this by selecting the appropriate check-box during the install.  However, if the environment is not set up
+during installation, or you wish to build for an alternate architecture or Microsoft* Visual Studio* version,
+it may be set up, for a given type of shell window, by using one of the following commands:
+<DL>
+<DT>For cmd.exe (command prompt):
+<DD><TT>&lt;<I>installdir</I>&gt;\bin\tbbvars.bat (arch) (vs)</TT>
+<pre>
+    where (arch) must be is one of the following
+       ia32         : Set up for IA-32  architecture
+       intel64      : Set up for Intel&reg; 64  architecture
+   (vs) should be one of the following
+       vs2010      : Set to use with Microsoft Visual Studio 2010 runtime DLLs
+       vs2012      : Set to use with Microsoft Visual Studio 2012 runtime DLLs
+       vs2013      : Set to use with Microsoft Visual Studio 2013 runtime DLLs
+       all         : Set to use TBB statically linked with Microsoft Visual C++ runtime
+   if (vs) is not set TBB statically linked with Microsoft Visual C++ runtime will be used.
+</pre>
+</DL>
+<A name="env_23">
+    <H4>To set up the environment (Linux* or OS X* systems):</H4></A>
+The environment may be set up, for a given type of shell window, by using one of the following commands:
+<DL>
+<DT>For sh, bash, ksh (or compatibles):
+<DD>. &lt;<I>installdir</I>&gt;/bin/tbbvars.sh (arch)
+<DT>For csh (or compatibles):
+<DD>source &lt;<I>installdir</I>&gt;/bin/tbbvars.csh (arch)
+<DT><I>Notes:</I>
+<DD><I><SL>
+    <LI>Choose one of {ia32,intel64} depending on the architecture to be used.
+    <LI>Environment setup need only be performed once per shell window to be used.
+    <LI>Always source tbbvars.sh or tbbvars.csh rather than executing them directly.
+    </SL></I>
+</DL>
+
+<HR>
+<A href="../index.html">Up to parent directory</A>
+<p></p>
+Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+<P></P>
+Intel is a registered trademark or trademark of Intel Corporation
+or its subsidiaries in the United States and other countries.
+<p></p>
+* Other names and brands may be claimed as the property of others.
+</BODY>
+</HTML>

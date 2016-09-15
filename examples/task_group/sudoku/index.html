@@ -1,0 +1,76 @@
+<HTML>
+<BODY>
+
+<H2>Overview</H2>
+<DL>
+<DT>This directory contains a simple example that finds all solutions to a
+Sudoku board. It uses a straightforward state-space search algorithm
+that exhibits OR-parallelism.  It can be optionally run until it
+obtains just the first solution. The point of the example is to teach
+how to use the task_group interface.
+<DT>The example can be built in the offload version to run on Intel&reg; Many Integrated Core (Intel&reg; MIC) Architecture based coprocessor (see <A HREF=../../index.html#build_4>build instructions</A>).
+</DL>
+
+<H2>Files</H2>
+<DL>
+<DT><A HREF="sudoku.cpp">sudoku.cpp</A>
+<DD>Driver.
+<DT><A HREF="input1">input1</A>
+<DD>Sample input file with modest number of solutions.
+
+<DT><A HREF="input2">input2</A>
+<DD>Sample input file with small number of solutions.
+
+<DT><A HREF="input3">input3</A>
+<DD>Sample input file with larger number of solutions.
+
+<DT><A HREF="input4">input4</A>
+<DD>Sample input file with very large number of solutions.
+
+<DT><A HREF="Makefile">Makefile</A>
+<DD>Makefile for building example.
+
+</DL>
+
+<H2>Directories</H2>
+<DL>
+<DT><A HREF="msvs">msvs</A>
+<DD>Contains Microsoft* Visual Studio* 2010 workspace for building and running the example with the Intel&reg; C++ compiler (Windows* systems only).
+<DT><A HREF="xcode">xcode</A>
+<DD>Contains Xcode* IDE workspace for building and running the example (OS X* systems only).
+</DL>
+
+<H2>To Build</H2>
+General build directions can be found <A HREF=../../index.html#build>here</A>.
+<P></P>
+
+<H2>Usage</H2>
+<DL>
+
+<DT><TT>sudoku <I>-h</I></TT>
+<DD>Prints the help for command line options
+<DT><TT>sudoku [<I>n-of-threads</I>=value] [<I>filename</I>=value] [<I>verbose</I>] [<I>silent</I>] [<I>find-one</I>]</TT>
+<DT><TT>sudoku [n-of-threads [filename]] [<I>verbose</I>] [<I>silent</I>] [<I>find-one</I>]</TT> 
+<DD><I>n-of-threads</I> is the number of threads to use; a range of the form <I>low</I>[:<I>high</I>], where low and optional high are non-negative integers or 'auto' for the TBB default.<BR>
+    <I>filename</I> is an input filename.<BR>
+    <I>verbose</I> - prints the first solution.<BR>
+    <I>silent</I> - no output except elapsed time.<BR>
+    <I>find-one</I> - stops after finding first solution.<BR>
+
+<DT>To run a short version of this example, e.g., for use with Intel&reg; Parallel Inspector:
+<DD>Build a <I>debug</I> version of the example
+    (see the <A HREF=../../index.html#build>build directions</A>).
+    <BR>Run it with a small problem size and the desired number of threads, e.g., <TT>sudoku 4 input2</TT>.
+</DL>
+
+<HR>
+<A HREF="../index.html">Up to parent directory</A>
+<p></p>
+Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+<P></P>
+Intel is a registered trademark or trademark of Intel Corporation
+or its subsidiaries in the United States and other countries.
+<p></p>
+* Other names and brands may be claimed as the property of others.
+</BODY>
+</HTML>

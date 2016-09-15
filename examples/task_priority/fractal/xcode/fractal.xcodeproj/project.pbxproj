@@ -1,0 +1,349 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		84011722152D687A00B07E4D /* fractal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84011720152D687A00B07E4D /* fractal.cpp */; };
+		84B8DA19152C9AC600D59B95 /* libtbb.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 84B8DA13152C9AC600D59B95 /* libtbb.dylib */; };
+		84B8DA77152CA90100D59B95 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 84B8DA6F152CA90100D59B95 /* main.m */; };
+		84B8DA78152CA90100D59B95 /* OpenGLView.m in Sources */ = {isa = PBXBuildFile; fileRef = 84B8DA71152CA90100D59B95 /* OpenGLView.m */; };
+		84B8DA79152CA90100D59B95 /* tbbAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 84B8DA73152CA90100D59B95 /* tbbAppDelegate.m */; };
+		84B8DA7A152CA90100D59B95 /* (null) in Resources */ = {isa = PBXBuildFile; };
+		84B8DA80152CA97B00D59B95 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 84B8DA7C152CA97B00D59B95 /* InfoPlist.strings */; };
+		84B8DA81152CA97B00D59B95 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 84B8DA7E152CA97B00D59B95 /* MainMenu.xib */; };
+		84B8DA87152CA99C00D59B95 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B8DA82152CA99C00D59B95 /* main.cpp */; };
+		84B8DA9A152CADF400D59B95 /* macvideo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B8DA99152CADF400D59B95 /* macvideo.cpp */; };
+		84D017561527431F0008A4E0 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 84D017551527431F0008A4E0 /* Cocoa.framework */; };
+		84D01776152744BD0008A4E0 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 84D01775152744BD0008A4E0 /* OpenGL.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		8401171F152D687A00B07E4D /* fractal_video.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fractal_video.h; path = ../fractal_video.h; sourceTree = "<group>"; };
+		84011720152D687A00B07E4D /* fractal.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fractal.cpp; path = ../fractal.cpp; sourceTree = "<group>"; };
+		84011721152D687A00B07E4D /* fractal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fractal.h; path = ../fractal.h; sourceTree = "<group>"; };
+		84B8DA13152C9AC600D59B95 /* libtbb.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libtbb.dylib; path = ../../../../lib/libtbb.dylib; sourceTree = "<group>"; };
+		84B8DA6F152CA90100D59B95 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = ../../../common/gui/xcode/tbbExample/main.m; sourceTree = "<group>"; };
+		84B8DA70152CA90100D59B95 /* OpenGLView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OpenGLView.h; path = ../../../common/gui/xcode/tbbExample/OpenGLView.h; sourceTree = "<group>"; };
+		84B8DA71152CA90100D59B95 /* OpenGLView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OpenGLView.m; path = ../../../common/gui/xcode/tbbExample/OpenGLView.m; sourceTree = "<group>"; };
+		84B8DA72152CA90100D59B95 /* tbbAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = tbbAppDelegate.h; path = ../../../common/gui/xcode/tbbExample/tbbAppDelegate.h; sourceTree = "<group>"; };
+		84B8DA73152CA90100D59B95 /* tbbAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = tbbAppDelegate.m; path = ../../../common/gui/xcode/tbbExample/tbbAppDelegate.m; sourceTree = "<group>"; };
+		84B8DA75152CA90100D59B95 /* tbbExample-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "tbbExample-Prefix.pch"; path = "../../../common/gui/xcode/tbbExample/tbbExample-Prefix.pch"; sourceTree = "<group>"; };
+		84B8DA7D152CA97B00D59B95 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = InfoPlist.strings; sourceTree = "<group>"; };
+		84B8DA7F152CA97B00D59B95 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = MainMenu.xib; sourceTree = "<group>"; };
+		84B8DA82152CA99C00D59B95 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../main.cpp; sourceTree = "<group>"; };
+		84B8DA99152CADF400D59B95 /* macvideo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = macvideo.cpp; path = ../../../common/gui/macvideo.cpp; sourceTree = "<group>"; };
+		84D017511527431F0008A4E0 /* tbbExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = tbbExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		84D017551527431F0008A4E0 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
+		84D017581527431F0008A4E0 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
+		84D017591527431F0008A4E0 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
+		84D0175A1527431F0008A4E0 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		84D01775152744BD0008A4E0 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		84D0174E1527431F0008A4E0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				84D01776152744BD0008A4E0 /* OpenGL.framework in Frameworks */,
+				84D017561527431F0008A4E0 /* Cocoa.framework in Frameworks */,
+				84B8DA19152C9AC600D59B95 /* libtbb.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		84011727152D68D200B07E4D /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				8401171F152D687A00B07E4D /* fractal_video.h */,
+				84B8DA82152CA99C00D59B95 /* main.cpp */,
+				84011720152D687A00B07E4D /* fractal.cpp */,
+				84011721152D687A00B07E4D /* fractal.h */,
+			);
+			name = Sources;
+			sourceTree = "<group>";
+		};
+		84B8DA6C152CA8D900D59B95 /* tbbExample */ = {
+			isa = PBXGroup;
+			children = (
+				84011727152D68D200B07E4D /* Sources */,
+				84B8DA98152CAD8600D59B95 /* Gui layer */,
+				84B8DA7B152CA97B00D59B95 /* Resources */,
+			);
+			name = tbbExample;
+			sourceTree = "<group>";
+		};
+		84B8DA7B152CA97B00D59B95 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				84B8DA7C152CA97B00D59B95 /* InfoPlist.strings */,
+				84B8DA7E152CA97B00D59B95 /* MainMenu.xib */,
+			);
+			name = Resources;
+			path = ../../../common/gui/xcode/tbbExample/en.lproj;
+			sourceTree = "<group>";
+		};
+		84B8DA98152CAD8600D59B95 /* Gui layer */ = {
+			isa = PBXGroup;
+			children = (
+				84B8DA99152CADF400D59B95 /* macvideo.cpp */,
+				84B8DA6F152CA90100D59B95 /* main.m */,
+				84B8DA70152CA90100D59B95 /* OpenGLView.h */,
+				84B8DA71152CA90100D59B95 /* OpenGLView.m */,
+				84B8DA72152CA90100D59B95 /* tbbAppDelegate.h */,
+				84B8DA73152CA90100D59B95 /* tbbAppDelegate.m */,
+				84B8DA75152CA90100D59B95 /* tbbExample-Prefix.pch */,
+			);
+			name = "Gui layer";
+			sourceTree = "<group>";
+		};
+		84D017461527431F0008A4E0 = {
+			isa = PBXGroup;
+			children = (
+				84B8DA6C152CA8D900D59B95 /* tbbExample */,
+				84D017541527431F0008A4E0 /* Frameworks */,
+				84D017521527431F0008A4E0 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		84D017521527431F0008A4E0 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				84D017511527431F0008A4E0 /* tbbExample.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		84D017541527431F0008A4E0 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				84D01775152744BD0008A4E0 /* OpenGL.framework */,
+				84D017551527431F0008A4E0 /* Cocoa.framework */,
+				84D017571527431F0008A4E0 /* Other Frameworks */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		84D017571527431F0008A4E0 /* Other Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				84B8DA13152C9AC600D59B95 /* libtbb.dylib */,
+				84D017581527431F0008A4E0 /* AppKit.framework */,
+				84D017591527431F0008A4E0 /* CoreData.framework */,
+				84D0175A1527431F0008A4E0 /* Foundation.framework */,
+			);
+			name = "Other Frameworks";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		84D017501527431F0008A4E0 /* tbbExample */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 84D01772152743200008A4E0 /* Build configuration list for PBXNativeTarget "tbbExample" */;
+			buildPhases = (
+				84D0174D1527431F0008A4E0 /* Sources */,
+				84D0174E1527431F0008A4E0 /* Frameworks */,
+				84D0174F1527431F0008A4E0 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = tbbExample;
+			productName = tbbExample;
+			productReference = 84D017511527431F0008A4E0 /* tbbExample.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		84D017481527431F0008A4E0 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				CLASSPREFIX = tbb;
+				LastUpgradeCheck = 0430;
+			};
+			buildConfigurationList = 84D0174B1527431F0008A4E0 /* Build configuration list for PBXProject "fractal" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 84D017461527431F0008A4E0;
+			productRefGroup = 84D017521527431F0008A4E0 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				84D017501527431F0008A4E0 /* tbbExample */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		84D0174F1527431F0008A4E0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				84B8DA7A152CA90100D59B95 /* (null) in Resources */,
+				84B8DA80152CA97B00D59B95 /* InfoPlist.strings in Resources */,
+				84B8DA81152CA97B00D59B95 /* MainMenu.xib in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		84D0174D1527431F0008A4E0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				84B8DA77152CA90100D59B95 /* main.m in Sources */,
+				84B8DA78152CA90100D59B95 /* OpenGLView.m in Sources */,
+				84B8DA79152CA90100D59B95 /* tbbAppDelegate.m in Sources */,
+				84B8DA87152CA99C00D59B95 /* main.cpp in Sources */,
+				84B8DA9A152CADF400D59B95 /* macvideo.cpp in Sources */,
+				84011722152D687A00B07E4D /* fractal.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		84B8DA7C152CA97B00D59B95 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				84B8DA7D152CA97B00D59B95 /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		84B8DA7E152CA97B00D59B95 /* MainMenu.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				84B8DA7F152CA97B00D59B95 /* en */,
+			);
+			name = MainMenu.xib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		84D01770152743200008A4E0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		84D01771152743200008A4E0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		84D01773152743200008A4E0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "../../../common/gui/xcode/tbbExample/tbbExample-Prefix.pch";
+				HEADER_SEARCH_PATHS = "\"$(SRCROOT)/../../../../include\"";
+				INFOPLIST_FILE = "../../../common/gui/xcode/tbbExample/tbbExample-Info.plist";
+				LIBRARY_SEARCH_PATHS = "\"$(SRCROOT)/../../../../lib\"";
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				RUN_CLANG_STATIC_ANALYZER = YES;
+				USER_HEADER_SEARCH_PATHS = "\"$(SRCROOT)/../../../../include\"";
+				VERSION_INFO_BUILDER = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Debug;
+		};
+		84D01774152743200008A4E0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "../../../common/gui/xcode/tbbExample/tbbExample-Prefix.pch";
+				HEADER_SEARCH_PATHS = "\"$(SRCROOT)/../../../../include\"";
+				INFOPLIST_FILE = "../../../common/gui/xcode/tbbExample/tbbExample-Info.plist";
+				LIBRARY_SEARCH_PATHS = (
+					"\"$(SRCROOT)/../../../../lib\"",
+					"\"$(SRCROOT)\"",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				RUN_CLANG_STATIC_ANALYZER = YES;
+				USER_HEADER_SEARCH_PATHS = "\"$(SRCROOT)/../../../../include\"";
+				VERSION_INFO_BUILDER = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		84D0174B1527431F0008A4E0 /* Build configuration list for PBXProject "fractal" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				84D01770152743200008A4E0 /* Debug */,
+				84D01771152743200008A4E0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		84D01772152743200008A4E0 /* Build configuration list for PBXNativeTarget "tbbExample" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				84D01773152743200008A4E0 /* Debug */,
+				84D01774152743200008A4E0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 84D017481527431F0008A4E0 /* Project object */;
+}

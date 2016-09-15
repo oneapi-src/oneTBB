@@ -1,0 +1,132 @@
+<HTML>
+<BODY>
+
+<H2>Overview</H2>
+
+fgbzip2 is a parallel implementation of bzip2 block-sorting file compressor that uses tbb::flow.
+The output of this application is fully compatible with bzip2 v1.0.6 or newer.
+
+<P><I>
+This example includes software developed by Julian R Seward.  See
+<A HREF=#copyright>here</A> for copyright information.
+</I></P>
+
+It exemplifies the async_node CPF, among others.
+
+<H2>Files</H2>
+<DL>
+<DT><A HREF="fgbzip2.cpp">fgbzip2.cpp</A>
+<DD>Flow Graph implementation of bzip2 compressor.
+
+<DT><A HREF="blocksort.cpp">blocksort.cpp</A>
+<DD>Block sorting machinery of libbzip2.
+
+<DT><A HREF="bzlib.cpp">bzlib.cpp</A>
+<DD>libbzip2 top-level functions.
+
+<DT><A HREF="bzlib.h">bzlib.h</A>
+<DD>Public header file for the libbzip2.
+
+<DT><A HREF="bzlib_private.h">bzlib_private.h</A>
+<DD>Private header file for the libbzip2.
+
+<DT><A HREF="compress.cpp">compress.cpp</A>
+<DD>Compression machinery of libbzip2.
+
+<DT><A HREF="crctable.cpp">crctable.cpp</A>
+<DD>libbzip2 table for doing CRCs.
+
+<DT><A HREF="decompress.cpp">decompress.cpp</A>
+<DD>Decompression machinery of libbzip2.
+
+<DT><A HREF="huffman.cpp">huffman.cpp</A>
+<DD>Huffman coding low-level stuff of libbzip2.
+
+<DT><A HREF="randtable.cpp">randtable.cpp</A>
+<DD>libbzip2 table for randomising repetitive blocks.
+
+<DT><A HREF="Makefile">Makefile</A>
+<DD>Makefile for building example.
+
+</DL>
+
+<H2>Directories</H2>
+<DL>
+There are no any sub-directories.
+</DL>
+
+<H2>To Build</H2>
+General build directions can be found <A HREF=../../index.html#build>here</A>.
+<P></P>
+
+<H2>Usage</H2>
+<DL>
+
+<DT><TT>fgbzip2 <I>-h</I></TT>
+<DD>Prints the help for command line options
+<DT><TT>fgbzip2 [<I>-b</I>=value] [<I>-q</I>] [<I>-v</I>] [<I>-a</I>] [<I>filename</I>]</TT>
+<DD><I>-b</I> block size in 100 Kb chunks, [1 .. 9]<BR>
+    <I>-q</I> limits output to timing info; overrides verbose<BR>
+    <I>-v</I> print diagnostic output to screen<BR>
+    <I>-a</I> use async_node version<BR>
+    <I>filename</I> name of the file to compress<BR>
+
+
+<DT>To run a short version of this example, e.g., for use with Intel&reg; Parallel Inspector:
+<DD>Build a <I>debug</I> version of the example
+    (see the <A HREF=../../index.html#build>build directions</A>).
+    <BR>Run it with a small problem size, e.g., <TT>fgbzip2 -b=1 -a fgbzip2</TT>.
+</DL>
+
+<a name="copyright"></a>
+
+<HR>
+<A HREF="../index.html">Up to parent directory</A>
+<p></p>
+Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+<P></P>
+Intel is a registered trademark or trademark of Intel Corporation
+or its subsidiaries in the United States and other countries.
+<p></p>
+* Other names and brands may be claimed as the property of others.
+
+<I>
+<P>
+The "libbzip2" sources for this example is
+Copyright (c) 1996-2010 Julian R Seward.
+All rights reserved.
+</P>
+<P>
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+<OL>
+<LI>Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+<LI>The origin of this software must not be misrepresented; you must
+   not claim that you wrote the original software.  If you use this
+   software in a product, an acknowledgment in the product
+   documentation would be appreciated but is not required.
+<LI>Altered source versions must be plainly marked as such, and must
+   not be misrepresented as being the original software.
+<LI>The name of the author may not be used to endorse or promote
+   products derived from this software without specific prior written
+   permission.
+</OL>
+</P>
+<P>
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+</P>
+</I>
+</BODY>
+</HTML>

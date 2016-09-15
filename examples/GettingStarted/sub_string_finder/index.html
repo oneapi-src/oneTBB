@@ -1,0 +1,67 @@
+<HTML>
+<BODY>
+
+<H2>Overview</H2>
+<DL>
+<DT>A simple example that uses the parallel_for template in a substring matching program. For each position 
+in a string, the program displays the length of the largest matching substring elsewhere in the string. 
+The program also displays the location of a largest match for each position.  Consider the string "babba" 
+as an example. Starting at position 0, "ba" is the largest substring with a match elsewhere in the 
+string (position 3). 
+<DT>The code located in the <A HREF="sub_string_finder_extended.cpp">sub_string_finder_extended.cpp</A> file 
+demonstrates offload programming for Intel&reg; Many Integrated Core (Intel&reg; MIC) Architecture (see <A HREF=../../index.html#build_4>build instructions</A>).
+</DL>
+
+<H2>Files</H2>
+<DL>
+<DT><A HREF="sub_string_finder.cpp">sub_string_finder.cpp</A>
+<DD>The example as it appears in the Getting Started Guide.
+<DT><A HREF="sub_string_finder_extended.cpp">sub_string_finder_extended.cpp</A>
+<DD>An example similar to the one in the Getting Started Guide, but with an added sequential
+    implementation, and with an offload region added that can be executed on Intel&reg; MIC Architecture based coprocessor.
+    The three implementations are timed, by using tick_count,
+    and the speedup of the parallel version and 
+    the speedup of the parallel version and, if applicable, the offload version is calculated and displayed.
+<DT><A HREF="sub_string_finder_pretty.cpp">sub_string_finder_pretty.cpp</A>
+<DD>An example similar to the one in the Getting Started Guide, but with more attractive printing of the results.
+<DT><A HREF="Makefile">Makefile</A>
+<DD>Makefile for building example.
+</DL>
+
+<H2>Directories</H2>
+<DL>
+<DT><A HREF="msvs">msvs</A>
+<DD>Contains Microsoft* Visual Studio* 2010 workspace for building and running the example (Windows* systems only).
+<DT><A HREF="xcode">xcode</A>
+<DD>Contains Xcode* IDE workspace for building and running the example (OS X* systems only).
+</DL>
+
+<H2>To Build</H2>
+General build directions can be found <A HREF=../../index.html#build>here</A>.
+
+<H2>Usage</H2>
+<DL>
+<DT><TT>sub_string_finder</TT>
+<DD>Runs the example as it appears in the Getting Started Guide.
+<DT><TT>sub_string_finder_pretty</TT>
+<DD>Runs the similar example with more attractive printing of the results.
+<DT><TT>sub_string_finder_extended</TT>
+<DD>Runs the example extended with a sequential implementation and an offload region that can be executed on Intel&reg; MIC Architecture based coprocessor.
+<DT>To run a short version of this example, e.g., for use with Intel&reg; Threading Tools:
+<DD>Build a <I>debug</I> version of the <TT>sub_string_finder_pretty</TT> example
+    (see the <A HREF=../../index.html#build>build directions</A>).
+    <BR>Run it, e.g., <TT>sub_string_finder_pretty</TT>.
+</DL>
+
+<HR>
+<A HREF="../index.html">Up to parent directory</A>
+<p></p>
+Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+<P></P>
+Intel is a registered trademark or trademark of Intel Corporation
+or its subsidiaries in the United States and other countries.
+<p></p>
+* Other names and brands may be claimed as the property of others.
+</BODY>
+</HTML>
+

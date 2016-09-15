@@ -1,0 +1,55 @@
+<HTML>
+<BODY>
+
+<H2>Overview</H2>
+The example counts the number of unique words in a text.
+
+
+<H2>Files</H2>
+<DL>
+<DT><A HREF="count_strings.cpp">count_strings.cpp</A>
+<DD>Source code for example.
+<DT><A HREF="Makefile">Makefile</A>
+<DD>Makefile for building example.
+</DL>
+
+<H2>Directories</H2>
+<DL>
+<DT><A HREF="msvs">msvs</A>
+<DD>Contains Microsoft* Visual Studio* 2010 workspace for building and running the example (Windows* systems only). 
+<DT><A HREF="xcode">xcode</A>
+<DD>Contains Xcode* IDE workspace for building and running the example (OS X* systems only). 
+</DL>
+
+<H2>To Build</H2>
+General build directions can be found <A HREF=../../index.html#build>here</A>.
+
+<H2>Usage</H2>
+<DL>
+<DT><TT>count_strings <I>-h</I></TT>
+<DD>Prints the help for command line options
+<DT><TT>count_strings [<I>n-of-threads</I>=value] [<I>n-of-strings</I>=value] [<I>verbose</I>] [<I>silent</I>]</TT>
+<DT><TT>count_strings [<I>n-of-threads</I> [<I>n-of-strings</I>]] [<I>verbose</I>] [<I>silent</I>] </TT> 
+<DD><I>n-of-threads</I> is the number of threads to use; a range of the form <I>low</I>[:<I>high</I>], where low and optional high are non-negative integers or 'auto' for the TBB default.<BR>
+    <I>n-of-strings</I> is a number of strings.<BR>
+    <I>verbose</I> - enables printing of extra information during execution.<BR>
+    <I>silent</I> - no output except elapsed time.<BR>
+
+<DT>To run a short version of this example, e.g., for use with Intel&reg; Parallel Inspector:
+<DD>Build a <I>debug</I> version of the example
+    (see the <A HREF=../../index.html#build>build directions</A>).
+    <BR>Run it with a small number of strings and the desired number of threads, e.g., <TT>count_strings 2 10000</TT>.
+</DL>
+
+<HR>
+<A HREF="../index.html">Up to parent directory</A>
+<p></p>
+Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+<P></P>
+Intel is a registered trademark or trademark of Intel Corporation
+or its subsidiaries in the United States and other countries.
+<p></p>
+* Other names and brands may be claimed as the property of others.
+</BODY>
+</HTML>
+

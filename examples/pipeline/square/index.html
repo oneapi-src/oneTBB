@@ -1,0 +1,71 @@
+<HTML>
+<BODY>
+
+<H2>Overview</H2>
+Text filter that demonstrates class pipeline. Example program reads a file 
+containing decimal integers in text format, and changes each to its square.
+
+<H2>Files</H2>
+<DL>
+<DT><A HREF="square.cpp">square.cpp</A>
+<DD>Source code for example.
+<DT><A HREF="gen_input.cpp">gen_input.cpp </A>
+<DD>Source code for sample input generation.
+<DT><A HREF="Makefile">Makefile</A>
+<DD>Makefile for building example.
+</DL>
+
+<H2>Directories</H2>
+<DL>
+<DT><A HREF="msvs">msvs</A>
+<DD>Contains Microsoft* Visual Studio* 2010 workspace for building and running the 
+    example (Windows* systems only).<DT><A HREF="xcode">xcode</A>
+<DD>Contains Xcode* IDE workspace for building and running the example (OS X*
+    systems only).</DL>
+
+<H2>To Build</H2>
+General build directions can be found <A HREF=../../index.html#build>here</A>.
+<P></P>
+Two additional targets for this example:
+<DL>
+    <DT><TT>make gen_input</TT>
+    <DD>Create an input generator program that prints out a sequence of integers.
+    <DT><TT>make input.txt</TT>
+    <DD>Create an input file for the example (with help of <TT>gen_input</TT>).
+</DL>
+<P></P>
+
+<H2>Usage</H2>
+<DL>
+<DT><TT>square <I>-h</I></TT>
+<DD>Prints the help for command line options
+<DT><TT>square [<I>n-of-threads</I>=value] [<I>input-file</I>=value] [<I>output-file</I>=value] [<I>max-slice-size</I>=value] [<I>silent</I>]</TT>
+<DT><TT>square [<I>n-of-threads</I> [<I>input-file</I> [<I>output-file</I> [<I>max-slice-size</I>]]]] [<I>silent</I>]</TT> 
+<DD><I>n-of-threads</I> is the number of threads to use; a range of the form <I>low</I>[:<I>high</I>], where low and optional high are non-negative integers or 'auto' for the TBB default.<BR>
+    <I>input-file</I> is an input file name.<BR>
+    <I>output-file</I> is an output file name. <BR>
+    <I>max-slice-size</I> is the maximum number of characters in one slice.<BR>
+    <I>silent</I> - no output except elapsed time.<BR>
+<DT><TT>gen_input [<I>LN</I>] &gt; <I>inputfile</I></TT>
+<DD>Generate a file named <I>inputfile</I> consisting of <I>LN</I> lines each containing one integer.
+    If not specified, <I>LN</I> is assumed to be 1000000.
+
+<DT>To run a short version of this example, e.g., for use with Intel&reg; Parallel Inspector:
+<DD>Build a <I>debug</I> version of the example
+    (see the <A HREF=../../index.html#build>build directions</A>).
+    <BR>Prepare an <I>inputfile</I> with about 5,000 lines of text (see the instruction above).
+    <BR>Run it with this <I>inputfile</I> and the desired number of threads,
+    e.g., <TT>square 4 <I>inputfile</I> <I>outputfile</I></TT>.
+</DL>
+
+<HR>
+<A HREF="../index.html">Up to parent directory</A>
+<p></p>
+Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+<P></P>
+Intel is a registered trademark or trademark of Intel Corporation
+or its subsidiaries in the United States and other countries.
+<p></p>
+* Other names and brands may be claimed as the property of others.
+</BODY>
+</HTML>
