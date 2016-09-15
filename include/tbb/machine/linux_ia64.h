@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -39,7 +39,7 @@
 #else
     #define __TBB_compiler_fence() __asm__ __volatile__("": : :"memory")
     #define __TBB_control_consistency_helper() __TBB_compiler_fence()
-    // Even though GCC imbues volatile loads with acquire semantics, it sometimes moves 
+    // Even though GCC imbues volatile loads with acquire semantics, it sometimes moves
     // loads over the acquire fence. The following helpers stop such incorrect code motion.
     #define __TBB_acquire_consistency_helper() __TBB_compiler_fence()
     #define __TBB_release_consistency_helper() __TBB_compiler_fence()
@@ -82,21 +82,21 @@ extern "C" {
     int64_t __TBB_machine_fetchstore8acquire(volatile void *ptr, int64_t value);
     int64_t __TBB_machine_fetchstore8release(volatile void *ptr, int64_t value);
 
-    int8_t __TBB_machine_cmpswp1__TBB_full_fence (volatile void *ptr, int8_t value, int8_t comparand); 
-    int8_t __TBB_machine_cmpswp1acquire(volatile void *ptr, int8_t value, int8_t comparand); 
-    int8_t __TBB_machine_cmpswp1release(volatile void *ptr, int8_t value, int8_t comparand); 
+    int8_t __TBB_machine_cmpswp1__TBB_full_fence (volatile void *ptr, int8_t value, int8_t comparand);
+    int8_t __TBB_machine_cmpswp1acquire(volatile void *ptr, int8_t value, int8_t comparand);
+    int8_t __TBB_machine_cmpswp1release(volatile void *ptr, int8_t value, int8_t comparand);
 
     int16_t __TBB_machine_cmpswp2__TBB_full_fence (volatile void *ptr, int16_t value, int16_t comparand);
-    int16_t __TBB_machine_cmpswp2acquire(volatile void *ptr, int16_t value, int16_t comparand); 
-    int16_t __TBB_machine_cmpswp2release(volatile void *ptr, int16_t value, int16_t comparand); 
+    int16_t __TBB_machine_cmpswp2acquire(volatile void *ptr, int16_t value, int16_t comparand);
+    int16_t __TBB_machine_cmpswp2release(volatile void *ptr, int16_t value, int16_t comparand);
 
     int32_t __TBB_machine_cmpswp4__TBB_full_fence (volatile void *ptr, int32_t value, int32_t comparand);
-    int32_t __TBB_machine_cmpswp4acquire(volatile void *ptr, int32_t value, int32_t comparand); 
-    int32_t __TBB_machine_cmpswp4release(volatile void *ptr, int32_t value, int32_t comparand); 
+    int32_t __TBB_machine_cmpswp4acquire(volatile void *ptr, int32_t value, int32_t comparand);
+    int32_t __TBB_machine_cmpswp4release(volatile void *ptr, int32_t value, int32_t comparand);
 
     int64_t __TBB_machine_cmpswp8__TBB_full_fence (volatile void *ptr, int64_t value, int64_t comparand);
-    int64_t __TBB_machine_cmpswp8acquire(volatile void *ptr, int64_t value, int64_t comparand); 
-    int64_t __TBB_machine_cmpswp8release(volatile void *ptr, int64_t value, int64_t comparand); 
+    int64_t __TBB_machine_cmpswp8acquire(volatile void *ptr, int64_t value, int64_t comparand);
+    int64_t __TBB_machine_cmpswp8release(volatile void *ptr, int64_t value, int64_t comparand);
 
     int64_t __TBB_machine_lg(uint64_t value);
     void __TBB_machine_pause(int32_t delay);
@@ -127,7 +127,7 @@ extern "C" {
 #define __TBB_machine_fetchstore4full_fence __TBB_machine_fetchstore4__TBB_full_fence
 #define __TBB_machine_fetchstore8full_fence __TBB_machine_fetchstore8__TBB_full_fence
 #define __TBB_machine_cmpswp1full_fence     __TBB_machine_cmpswp1__TBB_full_fence
-#define __TBB_machine_cmpswp2full_fence     __TBB_machine_cmpswp2__TBB_full_fence 
+#define __TBB_machine_cmpswp2full_fence     __TBB_machine_cmpswp2__TBB_full_fence
 #define __TBB_machine_cmpswp4full_fence     __TBB_machine_cmpswp4__TBB_full_fence
 #define __TBB_machine_cmpswp8full_fence     __TBB_machine_cmpswp8__TBB_full_fence
 
@@ -143,7 +143,7 @@ extern "C" {
 #define __TBB_machine_fetchstore4relaxed    __TBB_machine_fetchstore4acquire
 #define __TBB_machine_fetchstore8relaxed    __TBB_machine_fetchstore8acquire
 #define __TBB_machine_cmpswp1relaxed        __TBB_machine_cmpswp1acquire
-#define __TBB_machine_cmpswp2relaxed        __TBB_machine_cmpswp2acquire 
+#define __TBB_machine_cmpswp2relaxed        __TBB_machine_cmpswp2acquire
 #define __TBB_machine_cmpswp4relaxed        __TBB_machine_cmpswp4acquire
 #define __TBB_machine_cmpswp8relaxed        __TBB_machine_cmpswp8acquire
 

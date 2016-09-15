@@ -41,6 +41,8 @@ method can be found below.
 <LI>Build by using a <A HREF=#build_1>Microsoft* Visual Studio* project (Windows* systems only)</A>.
 <LI>Build by using a <A HREF=#build_2>Xcode* IDE project (OS X* systems only)</A>.
 <LI>Build by using a <A HREF=#build_3>Makefile (Windows*, Linux* or OS X* systems)</A>.
+<LI>Build by using a <A HREF=#build_4>Eclipse* IDE project (Windows* systems only)</A>.
+<LI>Build by using a <A HREF=#build_5>Android* Studio* project (Windows* systems only)</A>.
 </UL>
 
 <P>
@@ -61,7 +63,7 @@ Perform the following steps:
     </UL>
 </LI>
 <LI>Press &lt;ctrl-F5&gt; to build and run the example.</LI>
-<li>If you copied an example to another place separately from libraries you need to 
+<li>If you copied an example to another place separately from libraries you need to
     set %TBBROOT% variable pointing to &lt;installdir&gt; folder.</li>
 </OL>
 
@@ -87,11 +89,11 @@ Perform the following steps:
 Perform the following steps:
 <OL>
 <LI>Open a shell window.  For Windows* systems, make sure this shell window has the proper environment
-    defined for use with Microsoft* Visual Studio* (2005, 2008, 2010 or 2012); such a shell can be invoked
+    defined for use with Microsoft* Visual Studio* (2010, 2012, 2013 or 2015); such a shell can be invoked
     from the Start menu, under Visual Studio, Visual Studio Tools, Visual Studio Command Prompt.
 <LI>Set up the environment in this shell window for use with Intel TBB.
     <BR>See below for how to set up the environment for <A href="#env_1">Windows*</A>, <A href="#env_23">Linux*</A> or <A href="#env_23">OS X*</A> systems.
-<LI>Unless you installed Intel TBB yourself, you may not have write permissions to the directory 
+<LI>Unless you installed Intel TBB yourself, you may not have write permissions to the directory
     containing the example.  In this case, make a copy of the example, and use the copy for the following steps.
 <LI>In the shell window, navigate to the directory for the example
     (or to the directory for the copy of the example if you made one in the previous step).
@@ -117,6 +119,43 @@ Perform the following steps:
     </DL>
 </OL>
 
+<A name="build_4"><H4>To build by using a Eclipse* IDE project (Windows* systems only):</H4></A>
+Perform the following steps:
+<OL>
+<LI>Launch Eclipse* IDE. Create a new Eclipse* workspace located in the Intel TBB root directory.</LI>
+<LI>Perform the following steps to open a project you wish to build and run:
+    <OL type='i'>
+    <LI>Go to the "File -> Import" dialog and choose "Android -> Existing Android Code Into Workspace".</LI>
+    <LI>Fill in the "Root directory" field with the project folder path.
+    <br><I>Note: To be built and run correctly, Intel TBB example project for Eclipse* IDE has to be located in %TBBROOT%\examples\&lt;feature_name&gt;\&lt;example_name&gt;\android folder.</I></LI>
+    <LI>Make sure the "Copy projects into workspace" option is unchecked.</LI>
+    <LI>Click "Finish".</LI>
+    </OL>
+</LI>
+<LI>Press &lt;Ctrl-B&gt; or use "Project -> Build All" or "Project -> Build Project" to build the example.
+<br><I>Note: Do not forget to set the "NDK location" in "Window -> Preferences -> Android -> NDK".</I></LI>
+<LI>Use "Run -> Run Configurations" to create a new deployment configuration for your project. Choose "Android Application" configuration type and "Always prompt to pick device" target selection mode.</LI>
+<LI>To run the example, press &lt;Ctrl-F11&gt; or use "Run -> Run" and select any compatible Android device.</LI>
+</OL>
+
+<A name="build_5"><H4>To build by using a Android* Studio* project (Windows* systems only):</H4></A>
+Perform the following steps:
+<OL>
+<LI>Launch Android* Studio* and open a project you wish to build and run by using one of the following methods:
+    <UL>
+    <LI>In the "Welcome to Android Studio" window choose "Open an existing Android* Studio* Project" and navigate to the project folder;</LI>
+    <LI>In the IDE window use "File -> Open" dialog to navigate to and open the project.</LI>
+    </UL>
+    <I>Note: To be built and run correctly, Intel TBB example project for Android* Studio* has to be located in %TBBROOT%\examples\&lt;feature_name&gt;\&lt;example_name&gt;\android_as folder;</I>
+    <br><I>Also note that source files for Intel TBB example project for Android* Studio* are located in %TBBROOT%\examples\&lt;feature_name&gt;\&lt;example_name&gt;\android folder.</I>
+</LI>
+<LI>Use "Tools -> Android -> Sync Project with Gradle Files" to synchronize your project with Gradle* build scripts.
+<LI>Press &lt;Shift-F9&gt;, or use "Build -> Make project" to build the example.
+<LI>Start any compatible Android* Virtual Device or plug in a real Android* device with the appropriate architecture.
+<LI>Press &lt;Shift-F10&gt;, or use "Run -> Run 'app'" to run the example.
+</LI>
+</OL>
+
 <A name="env_1"><H4>To set up the environment (Windows* systems):</H4></A>
 It is <B>strongly</B> recommended that the environment be set up when installing Intel TBB.
 Do this by selecting the appropriate check-box during the install.  However, if the environment is not set up
@@ -127,36 +166,40 @@ it may be set up, for a given type of shell window, by using one of the followin
 <DD><TT>&lt;<I>installdir</I>&gt;\bin\tbbvars.bat (arch) (vs)</TT>
 <pre>
     where (arch) must be is one of the following
-       ia32         : Set up for IA-32  architecture
-       intel64      : Set up for Intel&reg; 64  architecture
-   (vs) should be one of the following
-       vs2010      : Set to use with Microsoft Visual Studio 2010 runtime DLLs
-       vs2012      : Set to use with Microsoft Visual Studio 2012 runtime DLLs
-       vs2013      : Set to use with Microsoft Visual Studio 2013 runtime DLLs
-       all         : Set to use TBB statically linked with Microsoft Visual C++ runtime
-   if (vs) is not set TBB statically linked with Microsoft Visual C++ runtime will be used.
+        ia32         : Set up for IA-32  architecture
+        intel64      : Set up for Intel&reg; 64  architecture
+    (vs) should be one of the following
+        vs2010       : Set to use with Microsoft Visual Studio 2010 runtime DLLs
+        vs2012       : Set to use with Microsoft Visual Studio 2012 runtime DLLs
+        vs2013       : Set to use with Microsoft Visual Studio 2013 runtime DLLs
+        vs2015       : Set to use with Microsoft Visual Studio 2015 runtime DLLs
+        all          : Set to use TBB statically linked with Microsoft Visual C++ runtime
+    if (vs) is not set TBB statically linked with Microsoft Visual C++ runtime will be used.
 </pre>
 </DL>
 <A name="env_23">
     <H4>To set up the environment (Linux* or OS X* systems):</H4></A>
 The environment may be set up, for a given type of shell window, by using one of the following commands:
 <DL>
-<DT>For sh, bash, ksh (or compatibles):
-<DD>. &lt;<I>installdir</I>&gt;/bin/tbbvars.sh (arch)
+<DT>For sh, bash, ksh, dash (or compatibles):
+<DD>. &lt;<I>installdir</I>&gt;/bin/tbbvars.sh (arch) [platform [TBBROOT_detection_mode]]
 <DT>For csh (or compatibles):
-<DD>source &lt;<I>installdir</I>&gt;/bin/tbbvars.csh (arch)
+<DD>source &lt;<I>installdir</I>&gt;/bin/tbbvars.csh (arch) [platform [TBBROOT_detection_mode]]
 <DT><I>Notes:</I>
 <DD><I><SL>
-    <LI>Choose one of {ia32,intel64} depending on the architecture to be used.
+    <LI>(arch) argument represents target architecture. Its possible values are 'ia32' or 'intel64'.
+    <LI>[platform] argument represents target platform. Its possible values are 'linux' or 'android'.
+    <LI>[TBBROOT_detection_mode] argument represents TBBROOT path detection method. Its only possible value is 'auto_tbbroot'. In this case the environment variable TBBROOT is detected automatically by using the tbbvars script directory path.
     <LI>Environment setup need only be performed once per shell window to be used.
     <LI>Always source tbbvars.sh or tbbvars.csh rather than executing them directly.
+    <LI>If the arguments to the sourced script are ignored (consult docs for your shell) the alternative way to specify target is environment variables COMPILERVARS_ARCHITECTURE to pass <arch> to the script and COMPILERVARS_PLATFORM to pass <platform>.
     </SL></I>
 </DL>
 
 <HR>
 <A href="../index.html">Up to parent directory</A>
 <p></p>
-Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.
 <P></P>
 Intel is a registered trademark or trademark of Intel Corporation
 or its subsidiaries in the United States and other countries.

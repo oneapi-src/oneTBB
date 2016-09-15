@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -127,7 +127,7 @@ void __TBB_InitOnce::add_ref() {
 
 void __TBB_InitOnce::remove_ref() {
     int k = --count;
-    __TBB_ASSERT(k>=0,"removed __TBB_InitOnce ref that was not added?"); 
+    __TBB_ASSERT(k>=0,"removed __TBB_InitOnce ref that was not added?");
     if( k==0 ) {
         governor::release_resources();
         ITT_FINI_ITTLIB();
@@ -161,7 +161,7 @@ struct resource_string {
 #define TBB_STRING_RESOURCE( index_name, str ) { str, NULL },
 static resource_string strings_for_itt[] = {
     #include "tbb/internal/_tbb_strings.h"
-    { "num_resource_strings", NULL } 
+    { "num_resource_strings", NULL }
 };
 #undef TBB_STRING_RESOURCE
 
@@ -276,7 +276,7 @@ void* itt_load_pointer_with_acquire_v3( const void* src ) {
     ITT_NOTIFY(sync_acquired, const_cast<void*>(src));
     return result;
 }
-    
+
 #if DO_ITT_NOTIFY
 void call_itt_notify_v5(int t, void *ptr) {
     switch (t) {
@@ -308,7 +308,7 @@ static inline void itt_id_create(const __itt_domain *domain, __itt_id id) {
     ITTNOTIFY_VOID_D1(id_create, domain, id);
 }
 
-void itt_make_task_group_v7( itt_domain_enum domain, void *group, unsigned long long group_extra, 
+void itt_make_task_group_v7( itt_domain_enum domain, void *group, unsigned long long group_extra,
                              void *parent, unsigned long long parent_extra, string_index name_index ) {
     if ( __itt_domain *d = get_itt_domain( domain ) ) {
         __itt_id group_id = itt_null_id;
@@ -323,7 +323,7 @@ void itt_make_task_group_v7( itt_domain_enum domain, void *group, unsigned long 
     }
 }
 
-void itt_metadata_str_add_v7( itt_domain_enum domain, void *addr, unsigned long long addr_extra, 
+void itt_metadata_str_add_v7( itt_domain_enum domain, void *addr, unsigned long long addr_extra,
                               string_index key, const char *value ) {
     if ( __itt_domain *d = get_itt_domain( domain ) ) {
         __itt_id id = itt_null_id;
@@ -338,18 +338,18 @@ void itt_metadata_str_add_v7( itt_domain_enum domain, void *addr, unsigned long 
     }
 }
 
-void itt_relation_add_v7( itt_domain_enum domain, void *addr0, unsigned long long addr0_extra, 
+void itt_relation_add_v7( itt_domain_enum domain, void *addr0, unsigned long long addr0_extra,
                           itt_relation relation, void *addr1, unsigned long long addr1_extra ) {
     if ( __itt_domain *d = get_itt_domain( domain ) ) {
-        __itt_id id0 = itt_null_id; 
+        __itt_id id0 = itt_null_id;
         __itt_id id1 = itt_null_id;
         itt_id_make( &id0, addr0, addr0_extra );
         itt_id_make( &id1, addr1, addr1_extra );
-        ITTNOTIFY_VOID_D3(relation_add, d, id0, (__itt_relation)relation, id1); 
+        ITTNOTIFY_VOID_D3(relation_add, d, id0, (__itt_relation)relation, id1);
     }
 }
 
-void itt_task_begin_v7( itt_domain_enum domain, void *task, unsigned long long task_extra, 
+void itt_task_begin_v7( itt_domain_enum domain, void *task, unsigned long long task_extra,
                         void *parent, unsigned long long parent_extra, string_index name_index ) {
     if ( __itt_domain *d = get_itt_domain( domain ) ) {
         __itt_id task_id = itt_null_id;
@@ -369,7 +369,7 @@ void itt_task_end_v7( itt_domain_enum domain ) {
     }
 }
 
-void itt_region_begin_v9( itt_domain_enum domain, void *region, unsigned long long region_extra, 
+void itt_region_begin_v9( itt_domain_enum domain, void *region, unsigned long long region_extra,
                           void *parent, unsigned long long parent_extra, string_index /* name_index */ ) {
     if ( __itt_domain *d = get_itt_domain( domain ) ) {
         __itt_id region_id = itt_null_id;
@@ -392,21 +392,21 @@ void itt_region_end_v9( itt_domain_enum domain, void *region, unsigned long long
 
 #else // DO_ITT_NOTIFY
 
-void itt_make_task_group_v7( itt_domain_enum domain, void *group, unsigned long long group_extra, 
+void itt_make_task_group_v7( itt_domain_enum domain, void *group, unsigned long long group_extra,
                              void *parent, unsigned long long parent_extra, string_index name_index ) { }
 
-void itt_metadata_str_add_v7( itt_domain_enum domain, void *addr, unsigned long long addr_extra, 
+void itt_metadata_str_add_v7( itt_domain_enum domain, void *addr, unsigned long long addr_extra,
                               string_index key, const char *value ) { }
 
-void itt_relation_add_v7( itt_domain_enum domain, void *addr0, unsigned long long addr0_extra, 
+void itt_relation_add_v7( itt_domain_enum domain, void *addr0, unsigned long long addr0_extra,
                           itt_relation relation, void *addr1, unsigned long long addr1_extra ) { }
 
-void itt_task_begin_v7( itt_domain_enum domain, void *task, unsigned long long task_extra, 
+void itt_task_begin_v7( itt_domain_enum domain, void *task, unsigned long long task_extra,
                         void * /*parent*/, unsigned long long /* parent_extra */, string_index /* name_index */ ) { }
 
 void itt_task_end_v7( itt_domain_enum domain ) { }
 
-void itt_region_begin_v9( itt_domain_enum domain, void *region, unsigned long long region_extra, 
+void itt_region_begin_v9( itt_domain_enum domain, void *region, unsigned long long region_extra,
                           void *parent, unsigned long long parent_extra, string_index /* name_index */ ) { }
 
 void itt_region_end_v9( itt_domain_enum domain, void *region, unsigned long long region_extra ) { }
@@ -446,14 +446,13 @@ protected:
 
 class allowed_parallelism_control : public padded<control_storage> {
     virtual size_t default_value() const {
-        // current implementation can't have effective active value below 2
-        return max(2U, governor::default_num_threads());
+        return max(1U, governor::default_num_threads());
     }
     virtual bool is_first_arg_preferred(size_t a, size_t b) const {
         return a<b; // prefer min allowed parallelism
     }
     virtual void apply_active() const {
-        __TBB_ASSERT( my_active_value>=2, NULL );
+        __TBB_ASSERT( my_active_value>=1, NULL );
         // -1 to take master into account
         market::set_active_num_workers( my_active_value-1 );
     }

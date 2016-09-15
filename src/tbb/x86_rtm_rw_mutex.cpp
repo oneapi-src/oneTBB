@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -28,9 +28,10 @@
 
 // __TBB_RW_MUTEX_DELAY_TEST shifts the point where flags aborting speculation are
 // added to the read-set of the operation.  If 1, will add the test just before
-// the transaction is ended.
+// the transaction is ended; this technique is called lazy subscription.
+// CAUTION: due to proven issues of lazy subscription, use of __TBB_RW_MUTEX_DELAY_TEST is discouraged!
 #ifndef __TBB_RW_MUTEX_DELAY_TEST
-    #define __TBB_RW_MUTEX_DELAY_TEST 1
+    #define __TBB_RW_MUTEX_DELAY_TEST 0
 #endif
 
 #if defined(_MSC_VER) && defined(_Wp64)
@@ -202,10 +203,18 @@ bool x86_rtm_rw_mutex::internal_upgrade(x86_rtm_rw_mutex::scoped_lock& s)
             return no_release;
         }
     case RTM_transacting_reader:
-        s.transaction_state = RTM_transacting_writer;
-        // don't need to add w_flag to read_set even if __TBB_RW_MUTEX_DELAY_TEST
-        // because the this pointer (the spin_rw_mutex) will be sufficient on release.
-        return true;
+#if !__TBB_RW_MUTEX_DELAY_TEST
+        if(this->state) {  // add spin_rw_mutex to read-set.
+            // Real reader or writer holds the lock; so commit the read and re-acquire for write.
+            internal_release(s);
+            internal_acquire_writer(s);
+            return false;
+        } else
+#endif
+        {
+            s.transaction_state = RTM_transacting_writer;
+            return true;
+        }
     default:
         __TBB_ASSERT(false, "Invalid state for upgrade");
         return false;

@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -73,7 +73,7 @@ static inline  T __TBB_machine_fetchstore##S(volatile void *ptr, T value)       
                           : "memory");                                               \
     return result;                                                                   \
 }                                                                                    \
-                                                                                     
+
 __TBB_MACHINE_DEFINE_ATOMICS(1,int8_t,"","=q")
 __TBB_MACHINE_DEFINE_ATOMICS(2,int16_t,"","=r")
 __TBB_MACHINE_DEFINE_ATOMICS(4,int32_t,"l","=r")
@@ -102,7 +102,7 @@ static inline __TBB_IA32_CAS8_NOINLINE int64_t __TBB_machine_cmpswp8 (volatile v
         int32_t i32[2];
     };
     i64 = value;
-#if __PIC__ 
+#if __PIC__
     /* compiling position-independent code */
     // EBX register preserved for compliance with position-independent code rules on IA32
     int32_t tmp;
@@ -218,7 +218,7 @@ static inline void __TBB_machine_store8(volatile void *ptr, int64_t value) {
     }
 #endif
 }
- 
+
 // Machine specific atomic operations
 #define __TBB_AtomicOR(P,V) __TBB_machine_or(P,V)
 #define __TBB_AtomicAND(P,V) __TBB_machine_and(P,V)

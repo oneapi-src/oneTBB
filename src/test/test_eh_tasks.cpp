@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -114,10 +114,10 @@ inline void WaitForException () {
 class TaskBase : public tbb::task {
     tbb::task* execute () {
         tbb::task* t = NULL;
-        __TBB_TRY { 
+        __TBB_TRY {
             t = do_execute();
-        } __TBB_CATCH( ... ) { 
-            g_CurStat.IncExecuted(); 
+        } __TBB_CATCH( ... ) {
+            g_CurStat.IncExecuted();
             __TBB_RETHROW();
         }
         g_CurStat.IncExecuted();
@@ -183,13 +183,13 @@ void Test0 () {
     r.destroy( r );
 }
 
-//! Default exception behavior test. 
-/** Allocates a root task that spawns a bunch of children, one or several of which throw 
+//! Default exception behavior test.
+/** Allocates a root task that spawns a bunch of children, one or several of which throw
     a test exception in a worker or master thread (depending on the global setting). **/
 void Test1 () {
     ResetGlobals();
     tbb::empty_task &r = *new( tbb::task::allocate_root() ) tbb::empty_task;
-    ASSERT (!g_CurStat.Existing() && !g_CurStat.Existed() && !g_CurStat.Executed(), 
+    ASSERT (!g_CurStat.Existing() && !g_CurStat.Existed() && !g_CurStat.Executed(),
             "something wrong with the task accounting");
     r.set_ref_count(NUM_CHILD_TASKS + 1);
     for ( int i = 0; i < NUM_CHILD_TASKS; ++i )
@@ -201,15 +201,15 @@ void Test1 () {
     ASSERT_TEST_POSTCOND();
 } // void Test1 ()
 
-//! Default exception behavior test. 
+//! Default exception behavior test.
 /** Allocates and spawns root task that runs a bunch of children, one of which throws
-    a test exception in a worker thread. (Similar to Test1, except that the root task 
-    is spawned by the test function, and children are created by the root task instead 
+    a test exception in a worker thread. (Similar to Test1, except that the root task
+    is spawned by the test function, and children are created by the root task instead
     of the test function body.) **/
 void Test2 () {
     ResetGlobals();
     SimpleRootTask &r = *new( tbb::task::allocate_root() ) SimpleRootTask;
-    ASSERT (g_CurStat.Existing() == 1 && g_CurStat.Existed() == 1 && !g_CurStat.Executed(), 
+    ASSERT (g_CurStat.Existing() == 1 && g_CurStat.Existed() == 1 && !g_CurStat.Executed(),
             "something wrong with the task accounting");
     TRY();
         tbb::task::spawn_root_and_wait(r);
@@ -219,13 +219,13 @@ void Test2 () {
 } // void Test2 ()
 
 //! The same as Test2() except the root task has explicit context.
-/** The context is initialized as bound in order to check correctness of its associating 
+/** The context is initialized as bound in order to check correctness of its associating
     with a root task. **/
 void Test3 () {
     ResetGlobals();
     tbb::task_group_context  ctx(tbb::task_group_context::bound);
     SimpleRootTask &r = *new( tbb::task::allocate_root(ctx) ) SimpleRootTask;
-    ASSERT (g_CurStat.Existing() == 1 && g_CurStat.Existed() == 1 && !g_CurStat.Executed(), 
+    ASSERT (g_CurStat.Existing() == 1 && g_CurStat.Existed() == 1 && !g_CurStat.Executed(),
             "something wrong with the task accounting");
     TRY();
         tbb::task::spawn_root_and_wait(r);
@@ -236,7 +236,7 @@ void Test3 () {
 
 class RootLauncherTask : public TaskBase {
     tbb::task_group_context::kind_type m_CtxKind;
- 
+
     tbb::task* do_execute () {
         tbb::task_group_context  ctx(m_CtxKind);
         SimpleRootTask &r = *new( allocate_root() ) SimpleRootTask;
@@ -253,8 +253,8 @@ public:
     RootLauncherTask ( tbb::task_group_context::kind_type ctx_kind = tbb::task_group_context::isolated ) : m_CtxKind(ctx_kind) {}
 };
 
-/** Allocates and spawns a bunch of roots, which allocate and spawn new root with 
-    isolated context, which at last spawns a bunch of children each, one of which 
+/** Allocates and spawns a bunch of roots, which allocate and spawn new root with
+    isolated context, which at last spawns a bunch of children each, one of which
     throws a test exception in a worker thread. **/
 void Test4 () {
     ResetGlobals();
@@ -305,8 +305,8 @@ class RootsGroupLauncherTask : public TaskBase {
     }
 };
 
-/** Allocates and spawns a bunch of roots, which allocate and spawn groups of roots 
-    with an isolated context shared by all group members, which at last spawn a bunch 
+/** Allocates and spawns a bunch of roots, which allocate and spawn groups of roots
+    with an isolated context shared by all group members, which at last spawn a bunch
     of children each, one of which throws a test exception in a worker thread. **/
 void Test5 () {
     ResetGlobals();
@@ -381,10 +381,10 @@ public:
 }; // class BoundHierarchyLauncherTask
 
 //! Test for bound contexts forming 2 level tree. Exception is thrown on the 1st (root) level.
-/** Allocates and spawns a root that spawns a bunch of 2nd level roots sharing 
-    the same isolated context, each of which in their turn spawns a single 3rd level 
-    root with  the bound context, and these 3rd level roots spawn bunches of leaves 
-    in the end. Leaves do not generate exceptions. The test exception is generated 
+/** Allocates and spawns a root that spawns a bunch of 2nd level roots sharing
+    the same isolated context, each of which in their turn spawns a single 3rd level
+    root with  the bound context, and these 3rd level roots spawn bunches of leaves
+    in the end. Leaves do not generate exceptions. The test exception is generated
     by one of the 2nd level roots. **/
 void Test6 () {
     ResetGlobals();
@@ -393,14 +393,14 @@ void Test6 () {
         tbb::task::spawn_root_and_wait(r);
     CATCH_AND_ASSERT();
     ASSERT (!l_ExceptionCaughtAtCurrentLevel, "unexpected exception intercepted");
-    // After the first of the branches (ThrowingRootLauncherTask) completes, 
+    // After the first of the branches (ThrowingRootLauncherTask) completes,
     // the rest of the task tree may be collapsed before having a chance to execute leaves.
     // A number of branches running concurrently with the first one will be able to spawn leaves though.
     /// \todo: If additional checkpoints are added to scheduler the following assertion must weaken
     intptr_t  num_tasks_expected = 1 + NUM_ROOT_TASKS * (2 + NUM_CHILD_TASKS);
     intptr_t  min_num_tasks_created = 1 + g_NumThreads * 2 + NUM_CHILD_TASKS;
     // 2 stands for BoundHierarchyLauncherTask and SimpleRootTask
-    // 1 corresponds to BoundHierarchyLauncherTask 
+    // 1 corresponds to BoundHierarchyLauncherTask
     intptr_t  min_num_tasks_executed = 2 + 1 + NUM_CHILD_TASKS;
     ASSERT (g_CurStat.Existed() <= num_tasks_expected, "Number of expected tasks is calculated incorrectly");
     ASSERT (g_CurStat.Existed() >= min_num_tasks_created, "Too few tasks created");
@@ -409,10 +409,10 @@ void Test6 () {
 } // void Test6 ()
 
 //! Tests task_group_context::unbind and task_group_context::reset methods.
-/** Allocates and spawns a root that spawns a bunch of 2nd level roots sharing 
-    the same isolated context, each of which in their turn spawns a single 3rd level 
-    root with  the bound context, and these 3rd level roots spawn bunches of leaves 
-    in the end. Leaves do not generate exceptions. The test exception is generated 
+/** Allocates and spawns a root that spawns a bunch of 2nd level roots sharing
+    the same isolated context, each of which in their turn spawns a single 3rd level
+    root with  the bound context, and these 3rd level roots spawn bunches of leaves
+    in the end. Leaves do not generate exceptions. The test exception is generated
     by one of the 2nd level roots. **/
 void Test7 () {
     ResetGlobals();
@@ -440,9 +440,9 @@ class BoundHierarchyLauncherTask2 : public TaskBase {
 }; // class BoundHierarchyLauncherTask2
 
 //! Test for bound contexts forming 2 level tree. Exception is thrown in the 2nd (outer) level.
-/** Allocates and spawns a root that spawns a bunch of 2nd level roots sharing 
-    the same isolated context, each of which in their turn spawns a single 3rd level 
-    root with  the bound context, and these 3rd level roots spawn bunches of leaves 
+/** Allocates and spawns a root that spawns a bunch of 2nd level roots sharing
+    the same isolated context, each of which in their turn spawns a single 3rd level
+    root with  the bound context, and these 3rd level roots spawn bunches of leaves
     in the end. The test exception is generated by one of the leaves. **/
 void Test8 () {
     ResetGlobals();
@@ -465,7 +465,7 @@ void Test8 () {
 template<typename T>
 void ThrowMovableException ( intptr_t threshold, const T& data ) {
     if ( !IsThrowingThread() )
-        return; 
+        return;
     if ( !g_SolitaryException ) {
 #if __TBB_ATOMICS_CODEGEN_BROKEN
         g_ExceptionsThrown = g_ExceptionsThrown + 1;
@@ -483,7 +483,7 @@ void ThrowMovableException ( intptr_t threshold, const T& data ) {
 const int g_IntExceptionData = -375;
 const std::string g_StringExceptionData = "My test string";
 
-// Exception data class implementing minimal requirements of tbb::movable_exception 
+// Exception data class implementing minimal requirements of tbb::movable_exception
 class ExceptionData {
     const ExceptionData& operator = ( const ExceptionData& src );
     explicit ExceptionData ( int n ) : m_Int(n), m_String(g_StringExceptionData) {}
@@ -517,8 +517,8 @@ class LeafTaskWithMovableExceptions : public TaskBase {
 };
 
 void CheckException ( tbb::tbb_exception& e ) {
-    ASSERT (strcmp(e.name(), (g_SolitaryException ? typeid(SolitaryMovableException) 
-                                                   : typeid(MultipleMovableException)).name() ) == 0, 
+    ASSERT (strcmp(e.name(), (g_SolitaryException ? typeid(SolitaryMovableException)
+                                                   : typeid(MultipleMovableException)).name() ) == 0,
                                                    "Unexpected original exception name");
     ASSERT (strcmp(e.what(), "tbb::movable_exception") == 0, "Unexpected original exception info ");
     if ( g_SolitaryException ) {
@@ -543,7 +543,7 @@ void CheckException () {
 }
 
 //! Test for movable_exception behavior, and external exception recording.
-/** Allocates a root task that spawns a bunch of children, one or several of which throw 
+/** Allocates a root task that spawns a bunch of children, one or several of which throw
     a movable exception in a worker or master thread (depending on the global settings).
     The test also checks the correctness of multiple rethrowing of the pending exception. **/
 void TestMovableException () {
@@ -552,7 +552,7 @@ void TestMovableException () {
     bool bUnsupported = false;
     tbb::task_group_context ctx;
     tbb::empty_task *r = new( tbb::task::allocate_root() ) tbb::empty_task;
-    ASSERT (!g_CurStat.Existing() && !g_CurStat.Existed() && !g_CurStat.Executed(), 
+    ASSERT (!g_CurStat.Existing() && !g_CurStat.Existed() && !g_CurStat.Executed(),
             "something wrong with the task accounting");
     r->set_ref_count(NUM_CHILD_TASKS + 1);
     for ( int i = 0; i < NUM_CHILD_TASKS; ++i )

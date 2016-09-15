@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -111,7 +111,7 @@ public:
     ~task_group_base() __TBB_NOEXCEPT(false) {
         if( my_root->ref_count() > 1 ) {
             bool stack_unwinding_in_progress = std::uncaught_exception();
-            // Always attempt to do proper cleanup to avoid inevitable memory corruption 
+            // Always attempt to do proper cleanup to avoid inevitable memory corruption
             // in case of missing wait (for the sake of better testability & debuggability)
             if ( !is_canceling() )
                 cancel();
@@ -206,7 +206,7 @@ public:
     }
 }; // class structured_task_group
 
-inline 
+inline
 bool is_current_task_group_canceling() {
     return task::self().is_cancelled();
 }

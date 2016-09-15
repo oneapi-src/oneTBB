@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -28,7 +28,7 @@ static volatile bool ScanIsRunning = false;
 
 //! Sum of 0..i with wrap around on overflow.
 inline int TriangularSum( int i ) {
-    return i&1 ? ((i>>1)+1)*i : (i>>1)*(i+1); 
+    return i&1 ? ((i>>1)+1)*i : (i>>1)*(i+1);
 }
 
 //! Verify that sum is sum of integers in closed interval [start_index..finish_index].
@@ -43,11 +43,11 @@ enum AddendFlag {
     USED_FINAL=2
 };
 
-//! Array recording how each addend was used. 
+//! Array recording how each addend was used.
 /** 'unsigned char' instead of AddendFlag for sake of compactness. */
 static unsigned char AddendHistory[MAXN];
 
-//! Set to 1 for debugging output 
+//! Set to 1 for debugging output
 #define PRINT_DEBUG 0
 
 #include "tbb/atomic.h"
@@ -94,14 +94,14 @@ public:
 #endif /* PRINT_DEBUG */
     ~Accumulator() {
 #if PRINT_DEBUG
-        REPORT("%d [%ld..%ld) destroyed\n",id,my_range.begin(),my_range.end() ); 
+        REPORT("%d [%ld..%ld) destroyed\n",id,my_range.begin(),my_range.end() );
 #endif /* PRINT_DEBUG */
         // Clear self as first action of destructor, to indicate that object is not fully constructed.
         self = 0;
         --NumberOfLiveAccumulator;
     }
-    Accumulator( Accumulator& a, tbb::split ) : 
-        my_total(0), my_array(a.my_array), my_sum(a.my_sum), my_range(-1,-1,1)  
+    Accumulator( Accumulator& a, tbb::split ) :
+        my_total(0), my_array(a.my_array), my_sum(a.my_sum), my_range(-1,-1,1)
     {
         ++NumberOfLiveAccumulator;
 #if PRINT_DEBUG
@@ -111,7 +111,7 @@ public:
         // Set self as last action of constructor, to indicate that object is fully constructed.
         self = this;
     }
-    template<typename Tag> 
+    template<typename Tag>
     void operator()( const Range& r, Tag /*tag*/ ) {
         Snooze(true);
 #if PRINT_DEBUG
@@ -131,7 +131,7 @@ public:
             } else {
                 ASSERT( AddendHistory[i]==UNUSED, "addend used too many times" );
                 AddendHistory[i] |= USED_NONFINAL;
-            }   
+            }
         }
         if( my_range.empty() )
             my_range = r;
@@ -147,13 +147,13 @@ public:
                id,my_range.begin(),my_range.end());
 #endif /* PRINT_DEBUG */
         Snooze(true);
-        ASSERT( ScanIsRunning, NULL );     
+        ASSERT( ScanIsRunning, NULL );
         ASSERT( left.my_range.end()==my_range.begin(), NULL );
         my_total += left.my_total;
         my_range = Range( left.my_range.begin(), my_range.end(), 1 );
-        ASSERT( ScanIsRunning, NULL );     
+        ASSERT( ScanIsRunning, NULL );
         Snooze(true);
-        ASSERT( ScanIsRunning, NULL );     
+        ASSERT( ScanIsRunning, NULL );
         ASSERT( self==this, NULL );
         ASSERT( left.self==&left, NULL );
     }
@@ -215,7 +215,7 @@ void TestAccumulator( int mode, int nthread ) {
         Snooze(false);
         tbb::tick_count t1 = tbb::tick_count::now();
         long used_once_count = 0;
-        for( long i=0; i<n; ++i ) 
+        for( long i=0; i<n; ++i )
             if( !(AddendHistory[i]&USED_FINAL) ) {
                 REPORT("failed to use addend[%ld] %s\n",i,AddendHistory[i]&USED_NONFINAL?"(but used nonfinal)":"");
             }
@@ -253,7 +253,7 @@ int TestMain () {
             TestCPUUserTime(p);
 
             // Checking has to be done late, because when parallel_scan makes copies of
-            // the user's "Body", the copies might be destroyed slightly after parallel_scan 
+            // the user's "Body", the copies might be destroyed slightly after parallel_scan
             // returns.
             ASSERT( NumberOfLiveAccumulator==0, NULL );
         }

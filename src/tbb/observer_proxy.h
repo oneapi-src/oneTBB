@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -106,7 +106,7 @@ class observer_proxy {
     friend class observer_list;
     //! Reference count used for garbage collection.
     /** 1 for reference from my task_scheduler_observer.
-        1 for each task dispatcher's last observer pointer. 
+        1 for each task dispatcher's last observer pointer.
         No accounting for neighbors in the shared list. */
     atomic<int> my_ref_count;
     //! Reference to the list this observer belongs to.

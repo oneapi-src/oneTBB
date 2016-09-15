@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -202,7 +202,7 @@ void generic_scheduler::init_stack_info () {
             // IA-64 architecture stack is split into RSE backup and memory parts
             my_rsb_stealing_threshold = (uintptr_t)((char*)rsb_base + stack_size/2);
 #endif /* __TBB_ipf */
-            // Size of the stack free part 
+            // Size of the stack free part
             stack_size = size_t((char*)stack_base - (char*)stack_limit);
         }
         pthread_attr_destroy(&np_attr_stack);
@@ -582,10 +582,10 @@ void generic_scheduler::local_spawn( task& first, task*& next ) {
     if ( &first.prefix().next == &next ) {
         // Single task is being spawned
 #if __TBB_TODO
-        // TODO: 
+        // TODO:
         // In the future we need to add overloaded spawn method for a single task,
         // and a method accepting an array of task pointers (we may also want to
-        // change the implementation of the task_list class). But since such changes 
+        // change the implementation of the task_list class). But since such changes
         // may affect the binary compatibility, we postpone them for a while.
 #endif
         size_t T = prepare_task_pool( 1 );
@@ -624,7 +624,7 @@ void generic_scheduler::local_spawn( task& first, task*& next ) {
     }
     if ( !is_task_pool_published() )
         publish_task_pool();
-    my_arena->advertise_new_work</*Spawned=*/true>();
+    my_arena->advertise_new_work<arena::work_spawned>();
     assert_task_pool_valid();
 }
 
@@ -686,9 +686,9 @@ task* generic_scheduler::winnow_task_pool () {
     // The purpose of the synchronization algorithm here is for the owner thread
     // to avoid locking task pool most of the time.
 #if __TBB_TODO
-    // Just locking the task pool unconditionally would produce simpler code, 
-    // scalability of which should not suffer unless priority jitter takes place. 
-    // Since priority jitter is nocuous by itself, we may want to evaluate 
+    // Just locking the task pool unconditionally would produce simpler code,
+    // scalability of which should not suffer unless priority jitter takes place.
+    // Since priority jitter is nocuous by itself, we may want to evaluate
     // applicability of the simpler variant...
     // Non-blocking variant also prevent us from relocating remaining tasks to
     // the beginning of the task pool, not sure if it makes much sense.
@@ -808,7 +808,7 @@ task* generic_scheduler::reload_tasks ( task*& offloaded_tasks, task**& offloade
         if ( --num_tasks ) {
             commit_spawned_tasks( T += num_tasks );
             publish_task_pool();
-            my_arena->advertise_new_work</*Spawned=*/true>();
+            my_arena->advertise_new_work<arena::work_spawned>();
         }
         __TBB_ASSERT( T == __TBB_load_relaxed(my_arena_slot->tail), NULL );
         __TBB_ASSERT( T < my_arena_slot->my_task_pool_size, NULL );
@@ -838,14 +838,14 @@ task* generic_scheduler::reload_tasks () {
         // are still present. This results in both bottom and top priority bounds
         // becoming 'normal', which makes offloaded low priority tasks unreachable.
         // Update arena's bottom priority to accommodate them.
-        // NOTE:    If the number of priority levels is increased, we may want 
+        // NOTE:    If the number of priority levels is increased, we may want
         //          to calculate minimum of priorities in my_offloaded_tasks.
 
         // First indicate the presence of lower-priority tasks
         my_market->update_arena_priority( *my_arena, priority(*my_offloaded_tasks) );
         // Then mark arena as full to unlock arena priority level adjustment
         // by arena::is_out_of_work(), and ensure worker's presence
-        my_arena->advertise_new_work</*Spawned=*/false>();
+        my_arena->advertise_new_work<arena::wakeup>();
     }
     my_local_reload_epoch = reload_epoch;
     return t;
@@ -972,7 +972,7 @@ retry:
     if( --skip_and_bump > 0 ) { // if both: task skipped and head&tail bumped
         // Synchronize with snapshot as we bumped head and tail which can falsely trigger EMPTY state
         atomic_fence();
-        my_arena->advertise_new_work</*Spawned=*/true>();
+        my_arena->advertise_new_work<arena::work_spawned>();
     }
     return result;
 }
@@ -1125,7 +1125,7 @@ void generic_scheduler::cleanup_master( bool needs_wait_workers ) {
     my_arena_slot = NULL; // detached from slot
     free_scheduler();
     // TODO: read global settings for the parameter at that point
-    m->join_workers = needs_wait_workers;
+    m->my_join_workers = needs_wait_workers;
     if( a )
         a->on_thread_leaving<arena::ref_external>();
     if( needs_wait_workers )
@@ -1196,8 +1196,8 @@ void generic_scheduler::cleanup_master( bool needs_wait_workers ) {
     enough information for the main thread on IA-64 architecture (RSE spill area
     and memory stack are allocated as two separate discontinuous chunks of memory),
     and there is no portable way to discern the main and the secondary threads.
-    Thus for OS X* and IA-64 Linux architecture we use the TBB worker stack size for 
-    all threads and use the current stack top as the stack base. This simplified 
+    Thus for OS X* and IA-64 Linux architecture we use the TBB worker stack size for
+    all threads and use the current stack top as the stack base. This simplified
     approach is based on the following assumptions:
     1) If the default stack size is insufficient for the user app needs, the
     required amount will be explicitly specified by the user at the point of the

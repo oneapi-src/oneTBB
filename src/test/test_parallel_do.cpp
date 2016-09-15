@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -277,8 +277,8 @@ int TestMain () {
         // Test that all workers sleep when no work
         TestCPUUserTime(p);
     }
-    // This check must be performed after the scheduler terminated because only in this 
-    // case there is a guarantee that the workers already destroyed their last tasks. 
+    // This check must be performed after the scheduler terminated because only in this
+    // case there is a guarantee that the workers already destroyed their last tasks.
     ASSERT( g_values_counter == 0, "Value objects were leaked" );
     return Harness::Done;
 }

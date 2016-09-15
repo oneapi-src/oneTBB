@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -58,7 +58,7 @@ namespace tbb {
     //! Unicode character type. Always wchar_t on Windows.
     /** We do not use typedefs from Windows TCHAR family to keep consistence of TBB coding style. **/
     typedef wchar_t tchar;
-    //! Standard Windows macro to markup the string literals. 
+    //! Standard Windows macro to markup the string literals.
     #define _T(string_literal) L ## string_literal
 #else /* !WIN */
     typedef char tchar;
@@ -70,11 +70,11 @@ namespace tbb {
 #if DO_ITT_NOTIFY
 namespace tbb {
     //! Display names of internal synchronization types
-    extern const tchar 
+    extern const tchar
             *SyncType_GlobalLock,
             *SyncType_Scheduler;
     //! Display names of internal synchronization components/scenarios
-    extern const tchar 
+    extern const tchar
             *SyncObj_SchedulerInitialization,
             *SyncObj_SchedulersList,
             *SyncObj_WorkerLifeCycleMgmt,
@@ -89,7 +89,7 @@ namespace tbb {
             ;
 
     namespace internal {
-        void __TBB_EXPORTED_FUNC itt_set_sync_name_v3( void* obj, const tchar* name); 
+        void __TBB_EXPORTED_FUNC itt_set_sync_name_v3( void* obj, const tchar* name);
 
     } // namespace internal
 

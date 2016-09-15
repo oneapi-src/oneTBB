@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -328,7 +328,7 @@ struct AllButOneSleep : NoAssign {
                 try {
                     ++n_sleepers;
                     mon->commit_wait( thr_ctx );
-                    if( --n_sleepers>VLN ) 
+                    if( --n_sleepers>VLN )
                         break;
                 } catch( tbb::user_abort& ) {
                     // can no longer access 'mon'

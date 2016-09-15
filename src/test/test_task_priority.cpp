@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -46,7 +46,7 @@ int BaseDepth = 0;
 const int DesiredNumThreads = 12;
 
 const int NumTests = 8;
-const int TestRepeats = 4;
+int TestSwitchBetweenMastersRepeats = 4;
 
 int g_NumMasters = 0;
 volatile intptr_t *g_LeavesExecuted = NULL;
@@ -151,7 +151,7 @@ protected:
         parent_node->set_ref_count(NumLeafTasks + 1);
         --m_depth;
         for ( int i = 0; i < NumLeafTasks; ++i ) {
-            task *t = m_depth ? (task*) new(parent_node->allocate_child()) NodeType(m_tid, m_depth, m_opts, m_root) 
+            task *t = m_depth ? (task*) new(parent_node->allocate_child()) NodeType(m_tid, m_depth, m_opts, m_root)
                               : (task*) new(parent_node->allocate_child()) LeafTask(m_tid, m_opts);
             task::spawn(*t);
         }
@@ -300,7 +300,7 @@ void TestPrioritySwitchBetweenTwoMasters () {
     }
     REMARK( "Stress tests: %s / %s \n", Low == tbb::priority_low ? "Low" : "Normal", High == tbb::priority_normal ? "Normal" : "High" );
     PrepareGlobals( 2 );
-    for ( int i = 0; i < TestRepeats; ++i ) {
+    for ( int i = 0; i < TestSwitchBetweenMastersRepeats; ++i ) {
         for ( BaseDepth = MinBaseDepth; BaseDepth <= MaxBaseDepth; ++BaseDepth ) {
             RunPrioritySwitchBetweenTwoMasters<BlockingNodeTask>( 0, NoPriorities );
             RunPrioritySwitchBetweenTwoMasters<BlockingNodeTask>( 1, TestPreemption );
@@ -315,7 +315,7 @@ void TestPrioritySwitchBetweenTwoMasters () {
         }
     }
 #if __TBB_TASK_PRIORITY
-    const int NumRuns = TestRepeats * (MaxBaseDepth - MinBaseDepth + 1);
+    const int NumRuns = TestSwitchBetweenMastersRepeats * (MaxBaseDepth - MinBaseDepth + 1);
     for ( int i = 0; i < NumTests; ++i ) {
         if ( g_TestFailures[i] )
             REMARK( "Test %d: %d failures in %d runs\n", i, g_TestFailures[i], NumRuns );
@@ -370,6 +370,9 @@ void EmulateWork( int ) {
 
 class PeriodicActivitiesBody {
 public:
+    static const int parallelIters[2];
+    static const int seqIters[2];
+    static int mode;
     void operator() ( int id ) const {
         tbb::task_group_context ctx;
 #if __TBB_TASK_PRIORITY
@@ -377,12 +380,16 @@ public:
 #else /* !__TBB_TASK_PRIORITY */
         (void)id;
 #endif /* !__TBB_TASK_PRIORITY */
-        for ( int i = 0; i < 5; ++i ) {
+        for ( int i = 0; i < seqIters[mode]; ++i ) {
             tbb::task_scheduler_init init;
-            tbb::parallel_for( 1, 10000, &EmulateWork, ctx );
+            tbb::parallel_for( 1, parallelIters[mode], &EmulateWork, ctx );
         }
     }
 };
+
+const int PeriodicActivitiesBody::parallelIters[] = {10000, 100};
+const int PeriodicActivitiesBody::seqIters[] = {5, 2};
+int PeriodicActivitiesBody::mode = 0;
 
 void TestPeriodicConcurrentActivities () {
     REMARK( "TestPeriodicConcurrentActivities: %s / %s \n", Low == tbb::priority_low ? "Low" : "Normal", High == tbb::priority_normal ? "Normal" : "High" );
@@ -562,14 +569,8 @@ void TestTGContextOnNewThread() {
 #include "harness_concurrency.h"
 #endif
 
-int TestMain () {
-#if !__TBB_TEST_SKIP_AFFINITY
-    Harness::LimitNumberOfThreads( DesiredNumThreads );
-#endif
-#if !__TBB_TASK_PRIORITY
-    REMARK( "Priorities disabled: Running as just yet another task scheduler test\n" );
-#else
-    test_propagation::TestSetPriority(); // TODO: move down when bug 1996 is fixed
+int RunTests () {
+#if __TBB_TASK_PRIORITY
     TestEnqueueOrder();
 #endif /* __TBB_TASK_PRIORITY */
     TestPriorityAssertions();
@@ -592,7 +593,28 @@ int TestMain () {
     PreemptionActivatorId = 1;
     TestPrioritySwitchBetweenTwoMasters();
     regression::TestTGContextOnNewThread();
+
     return Harness::Done;
+}
+
+#define TBB_PREVIEW_GLOBAL_CONTROL 1
+#include "tbb/global_control.h"
+
+int TestMain () {
+#if !__TBB_TEST_SKIP_AFFINITY
+    Harness::LimitNumberOfThreads( DesiredNumThreads );
+#endif
+#if !__TBB_TASK_PRIORITY
+    REMARK( "Priorities disabled: Running as just yet another task scheduler test\n" );
+#else
+    test_propagation::TestSetPriority(); // TODO: move down when bug 1996 is fixed
+#endif /* __TBB_TASK_PRIORITY */
+
+    RunTests();
+    tbb::global_control c(tbb::global_control::max_allowed_parallelism, 1);
+    PeriodicActivitiesBody::mode = 1;
+    TestSwitchBetweenMastersRepeats = 1;
+    return RunTests();
 }
 
 #else /* !__TBB_TASK_GROUP_CONTEXT */

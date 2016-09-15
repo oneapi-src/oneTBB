@@ -1,4 +1,4 @@
-# Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+# Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 #
 # This file is part of Threading Building Blocks. Threading Building Blocks is free software;
 # you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -32,8 +32,8 @@ endif
 gcc_version = $(shell $(tbb_tool_prefix)g++ -dumpversion)
 
 ifdef ANDROID_NDK_ROOT
-    $(warning "NDK version $(ANDROID_NDK_ROOT)")
     ndk_version:= $(lastword $(subst -, ,$(ANDROID_NDK_ROOT)))
+    $(warning "NDK version $(ndk_version)")
 else
     $(warning "NDK version not set in environment, using \'unknown\' instead.")
     ndk_version:=unknown

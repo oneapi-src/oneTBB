@@ -107,29 +107,29 @@
 	<PropertyGroup Label="UserMacros"/>
 	<PropertyGroup>
 		<_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
-		<OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)ia32\$(Configuration)\</OutDir>
-		<IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)ia32\$(Configuration)\</IntDir>
+		<OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+		<IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Platform)\$(ProjectName)\$(Configuration)\</IntDir>
 		<LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkIncremental>
-		<OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)intel64\$(Configuration)\</OutDir>
-		<IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)intel64\$(Configuration)\</IntDir>
+		<OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+		<IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)$(Platform)\$(ProjectName)\$(Configuration)\</IntDir>
 		<LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkIncremental>
-		<OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)ia32\$(Configuration)\</OutDir>
-		<IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)ia32\$(Configuration)\</IntDir>
+		<OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+		<IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Platform)\$(ProjectName)\$(Configuration)\</IntDir>
 		<LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
-		<OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)intel64\$(Configuration)\</OutDir>
-		<IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)intel64\$(Configuration)\</IntDir>
+		<OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+		<IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)$(Platform)\$(ProjectName)\$(Configuration)\</IntDir>
 		<LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
-		<OutDir Condition="'$(Configuration)|$(Platform)'=='Debug-MT|Win32'">$(SolutionDir)ia32\$(Configuration)\</OutDir>
-		<IntDir Condition="'$(Configuration)|$(Platform)'=='Debug-MT|Win32'">$(SolutionDir)ia32\$(Configuration)\</IntDir>
+		<OutDir Condition="'$(Configuration)|$(Platform)'=='Debug-MT|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+		<IntDir Condition="'$(Configuration)|$(Platform)'=='Debug-MT|Win32'">$(SolutionDir)$(Platform)\$(ProjectName)\$(Configuration)\</IntDir>
 		<LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug-MT|Win32'">false</LinkIncremental>
-		<OutDir Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">$(SolutionDir)intel64\$(Configuration)\</OutDir>
-		<IntDir Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">$(SolutionDir)intel64\$(Configuration)\</IntDir>
+		<OutDir Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+		<IntDir Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">$(SolutionDir)$(Platform)\$(ProjectName)\$(Configuration)\</IntDir>
 		<LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">false</LinkIncremental>
-		<OutDir Condition="'$(Configuration)|$(Platform)'=='Release-MT|Win32'">$(SolutionDir)ia32\$(Configuration)\</OutDir>
-		<IntDir Condition="'$(Configuration)|$(Platform)'=='Release-MT|Win32'">$(SolutionDir)ia32\$(Configuration)\</IntDir>
+		<OutDir Condition="'$(Configuration)|$(Platform)'=='Release-MT|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+		<IntDir Condition="'$(Configuration)|$(Platform)'=='Release-MT|Win32'">$(SolutionDir)$(Platform)\$(ProjectName)\$(Configuration)\</IntDir>
 		<LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release-MT|Win32'">false</LinkIncremental>
-		<OutDir Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">$(SolutionDir)intel64\$(Configuration)\</OutDir>
-		<IntDir Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">$(SolutionDir)intel64\$(Configuration)\</IntDir>
+		<OutDir Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+		<IntDir Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">$(SolutionDir)$(Platform)\$(ProjectName)\$(Configuration)\</IntDir>
 		<LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">false</LinkIncremental>
 		<CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug-MT|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
 		<CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug-MT|Win32'"/>
@@ -197,9 +197,6 @@
 			<MinimalRebuild>true</MinimalRebuild>
 			<BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
 			<RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-			<BufferSecurityCheck>false</BufferSecurityCheck>
-			<PrecompiledHeader>
-			</PrecompiledHeader>
 			<WarningLevel>Level4</WarningLevel>
 			<DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
 			<ShowIncludes>false</ShowIncludes>
@@ -249,9 +246,6 @@
 			<AdditionalIncludeDirectories>.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 			<PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
 			<RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-			<BufferSecurityCheck>false</BufferSecurityCheck>
-			<PrecompiledHeader>
-			</PrecompiledHeader>
 			<WarningLevel>Level4</WarningLevel>
 			<DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
 		</ClCompile>
@@ -306,9 +300,6 @@
 			<MinimalRebuild>true</MinimalRebuild>
 			<BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
 			<RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-			<BufferSecurityCheck>false</BufferSecurityCheck>
-			<PrecompiledHeader>
-			</PrecompiledHeader>
 			<WarningLevel>Level4</WarningLevel>
 			<DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
 			<ShowIncludes>false</ShowIncludes>
@@ -358,9 +349,6 @@
 			<AdditionalIncludeDirectories>.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 			<PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
 			<RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-			<BufferSecurityCheck>false</BufferSecurityCheck>
-			<PrecompiledHeader>
-			</PrecompiledHeader>
 			<WarningLevel>Level4</WarningLevel>
 			<DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
 		</ClCompile>
@@ -396,46 +384,38 @@
 		<CustomBuild Include="..\..\src\tbb\intel64-masm\atomic_support.asm">
 			<ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-MT|Win32'">true</ExcludedFromBuild>
 			<Message Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">building atomic_support.obj</Message>
-			<Command Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">ml64 /Fo"intel64\Debug-MT\atomic_support.obj" /DUSE_FRAME_POINTER /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/atomic_support.asm
-</Command>
-			<Outputs Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">intel64\Debug-MT\atomic_support.obj;%(Outputs)</Outputs>
+			<Command Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">ml64 /Fo"$(IntDir)%(FileName).obj" /DUSE_FRAME_POINTER /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/atomic_support.asm</Command>
+			<Outputs Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">$(IntDir)%(FileName).obj;%(Outputs)</Outputs>
 			<ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
 			<Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">building atomic_support.obj</Message>
-			<Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ml64 /Fo"intel64\Debug\atomic_support.obj" /DUSE_FRAME_POINTER /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/atomic_support.asm
-</Command>
-			<Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">intel64\Debug\atomic_support.obj;%(Outputs)</Outputs>
+			<Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ml64 /Fo"$(IntDir)%(FileName).obj" /DUSE_FRAME_POINTER /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/atomic_support.asm</Command>
+			<Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(FileName).obj;%(Outputs)</Outputs>
 			<ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release-MT|Win32'">true</ExcludedFromBuild>
 			<Message Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">building atomic_support.obj</Message>
-			<Command Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">ml64 /Fo"intel64\Release-MT\atomic_support.obj"  /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/atomic_support.asm
-</Command>
-			<Outputs Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">intel64\Release-MT\atomic_support.obj;%(Outputs)</Outputs>
+			<Command Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">ml64 /Fo"$(IntDir)%(FileName).obj"  /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/atomic_support.asm</Command>
+			<Outputs Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">$(IntDir)%(FileName).obj;%(Outputs)</Outputs>
 			<ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
 			<Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">building atomic_support.obj</Message>
-			<Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ml64 /Fo"intel64\Release\atomic_support.obj"  /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/atomic_support.asm
-</Command>
-			<Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">intel64\Release\atomic_support.obj;%(Outputs)</Outputs>
+			<Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ml64 /Fo"$(IntDir)%(FileName).obj"  /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/atomic_support.asm</Command>
+			<Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(FileName).obj;%(Outputs)</Outputs>
 		</CustomBuild>
 		<CustomBuild Include="..\..\src\tbb\intel64-masm\intel64_misc.asm">
 			<ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-MT|Win32'">true</ExcludedFromBuild>
 			<Message Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">building intel64_misc.obj</Message>
-			<Command Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">ml64 /Fo"intel64\Debug-MT\intel64_misc.obj" /DUSE_FRAME_POINTER /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/intel64_misc.asm
-</Command>
-			<Outputs Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">intel64\Debug-MT\intel64_misc.obj;%(Outputs)</Outputs>
+			<Command Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">ml64 /Fo"$(IntDir)%(FileName).obj" /DUSE_FRAME_POINTER /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/intel64_misc.asm</Command>
+			<Outputs Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">$(IntDir)%(FileName).obj;%(Outputs)</Outputs>
 			<ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
 			<Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">building intel64_misc.obj</Message>
-			<Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ml64 /Fo"intel64\Debug\intel64_misc.obj" /DUSE_FRAME_POINTER /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/intel64_misc.asm
-</Command>
-			<Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">intel64\Debug\intel64_misc.obj;%(Outputs)</Outputs>
+			<Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ml64 /Fo"$(IntDir)%(FileName).obj" /DUSE_FRAME_POINTER /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/intel64_misc.asm</Command>
+			<Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(FileName).obj;%(Outputs)</Outputs>
 			<ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release-MT|Win32'">true</ExcludedFromBuild>
 			<Message Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">building intel64_misc.obj</Message>
-			<Command Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">ml64 /Fo"intel64\Release-MT\intel64_misc.obj"  /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/intel64_misc.asm
-</Command>
-			<Outputs Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">intel64\Release-MT\intel64_misc.obj;%(Outputs)</Outputs>
+			<Command Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">ml64 /Fo"$(IntDir)%(FileName).obj"  /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/intel64_misc.asm</Command>
+			<Outputs Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">$(IntDir)%(FileName).obj;%(Outputs)</Outputs>
 			<ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
 			<Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">building intel64_misc.obj</Message>
-			<Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ml64 /Fo"intel64\Release\intel64_misc.obj"  /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/intel64_misc.asm
-</Command>
-			<Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">intel64\Release\intel64_misc.obj;%(Outputs)</Outputs>
+			<Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ml64 /Fo"$(IntDir)%(FileName).obj"  /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/intel64_misc.asm</Command>
+			<Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(FileName).obj;%(Outputs)</Outputs>
 		</CustomBuild>
 		<MASM Include="..\..\src\tbb\ia32-masm\itsx.asm">
 			<AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug-MT|Win32'">/coff /Zi</AdditionalOptions>
@@ -454,24 +434,20 @@
 		<CustomBuild Include="..\..\src\tbb\intel64-masm\itsx.asm">
 			<ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-MT|Win32'">true</ExcludedFromBuild>
 			<Message Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">building itsx.obj</Message>
-			<Command Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">ml64 /Fo"intel64\Debug-MT\itsx.obj" /DUSE_FRAME_POINTER /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/itsx.asm
-</Command>
-			<Outputs Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">intel64\Debug-MT\itsx.obj;%(Outputs)</Outputs>
+			<Command Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">ml64 /Fo"$(IntDir)%(FileName).obj" /DUSE_FRAME_POINTER /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/itsx.asm</Command>
+			<Outputs Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">$(IntDir)%(FileName).obj;%(Outputs)</Outputs>
 			<ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
 			<Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">building itsx.obj</Message>
-			<Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ml64 /Fo"intel64\Debug\itsx.obj" /DUSE_FRAME_POINTER /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/itsx.asm
-</Command>
-			<Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">intel64\Debug\itsx.obj;%(Outputs)</Outputs>
+			<Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ml64 /Fo"$(IntDir)%(FileName).obj" /DUSE_FRAME_POINTER /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/itsx.asm</Command>
+			<Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(FileName).obj;%(Outputs)</Outputs>
 			<ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release-MT|Win32'">true</ExcludedFromBuild>
 			<Message Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">building itsx.obj</Message>
-			<Command Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">ml64 /Fo"intel64\Release-MT\itsx.obj"  /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/itsx.asm
-</Command>
-			<Outputs Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">intel64\Release-MT\itsx.obj;%(Outputs)</Outputs>
+			<Command Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">ml64 /Fo"$(IntDir)%(FileName).obj"  /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/itsx.asm</Command>
+			<Outputs Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">$(IntDir)%(FileName).obj;%(Outputs)</Outputs>
 			<ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
 			<Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">building itsx.obj</Message>
-			<Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ml64 /Fo"intel64\Release\itsx.obj"  /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/itsx.asm
-</Command>
-			<Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">intel64\Release\itsx.obj;%(Outputs)</Outputs>
+			<Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ml64 /Fo"$(IntDir)%(FileName).obj"  /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/itsx.asm</Command>
+			<Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(FileName).obj;%(Outputs)</Outputs>
 		</CustomBuild>
 		<MASM Include="..\..\src\tbb\ia32-masm\lock_byte.asm">
 			<AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug-MT|Win32'">/coff /Zi</AdditionalOptions>
@@ -569,44 +545,7 @@
 		</CustomBuild>
 	</ItemGroup>
 	<ItemGroup>
-		<ClCompile Include="..\..\src\tbb\concurrent_hash_map.cpp"/>
-		<ClCompile Include="..\..\src\tbb\concurrent_queue.cpp"/>
-		<ClCompile Include="..\..\src\tbb\concurrent_vector.cpp"/>
-		<ClCompile Include="..\..\src\tbb\dynamic_link.cpp"/>
-		<ClCompile Include="..\..\src\tbb\itt_notify.cpp"/>
-		<ClCompile Include="..\..\src\tbb\cache_aligned_allocator.cpp"/>
-		<ClCompile Include="..\..\src\tbb\pipeline.cpp"/>
-		<ClCompile Include="..\..\src\tbb\queuing_mutex.cpp"/>
-		<ClCompile Include="..\..\src\tbb\queuing_rw_mutex.cpp"/>
-		<ClCompile Include="..\..\src\tbb\reader_writer_lock.cpp"/>
-		<ClCompile Include="..\..\src\tbb\spin_rw_mutex.cpp"/>
-		<ClCompile Include="..\..\src\tbb\spin_mutex.cpp"/>
-		<ClCompile Include="..\..\src\tbb\critical_section.cpp"/>
-		<ClCompile Include="..\..\src\tbb\mutex.cpp"/>
-		<ClCompile Include="..\..\src\tbb\recursive_mutex.cpp"/>
-		<ClCompile Include="..\..\src\tbb\condition_variable.cpp"/>
-		<ClCompile Include="..\..\src\tbb\tbb_thread.cpp"/>
-		<ClCompile Include="..\..\src\tbb\concurrent_monitor.cpp"/>
-		<ClCompile Include="..\..\src\tbb\semaphore.cpp"/>
-		<ClCompile Include="..\..\src\tbb\private_server.cpp"/>
-		<ClCompile Include="..\..\src\rml\client\rml_tbb.cpp"/>
-		<ClCompile Include="..\..\src\tbb\tbb_misc.cpp"/>
-		<ClCompile Include="..\..\src\tbb\tbb_misc_ex.cpp"/>
-		<ClCompile Include="..\..\src\tbb\task.cpp"/>
-		<ClCompile Include="..\..\src\tbb\task_group_context.cpp"/>
-		<ClCompile Include="..\..\src\tbb\governor.cpp"/>
-		<ClCompile Include="..\..\src\tbb\market.cpp"/>
-		<ClCompile Include="..\..\src\tbb\arena.cpp"/>
-		<ClCompile Include="..\..\src\tbb\scheduler.cpp"/>
-		<ClCompile Include="..\..\src\tbb\observer_proxy.cpp"/>
-		<ClCompile Include="..\..\src\tbb\tbb_statistics.cpp"/>
-		<ClCompile Include="..\..\src\tbb\tbb_main.cpp"/>
-		<ClCompile Include="..\..\src\old\concurrent_vector_v2.cpp"/>
-		<ClCompile Include="..\..\src\old\concurrent_queue_v2.cpp"/>
-		<ClCompile Include="..\..\src\old\spin_rw_mutex_v2.cpp"/>
-		<ClCompile Include="..\..\src\old\task_v2.cpp"/>
-		<ClCompile Include="..\..\src\tbb\x86_rtm_rw_mutex.cpp"/>
-	</ItemGroup>
+		<ClCompile Include="..\..\src\tbb\concurrent_hash_map.cpp"/><ClCompile Include="..\..\src\tbb\concurrent_queue.cpp"/><ClCompile Include="..\..\src\tbb\concurrent_vector.cpp"/><ClCompile Include="..\..\src\tbb\dynamic_link.cpp"/><ClCompile Include="..\..\src\tbb\itt_notify.cpp"/><ClCompile Include="..\..\src\tbb\cache_aligned_allocator.cpp"/><ClCompile Include="..\..\src\tbb\pipeline.cpp"/><ClCompile Include="..\..\src\tbb\queuing_mutex.cpp"/><ClCompile Include="..\..\src\tbb\queuing_rw_mutex.cpp"/><ClCompile Include="..\..\src\tbb\reader_writer_lock.cpp"/><ClCompile Include="..\..\src\tbb\spin_rw_mutex.cpp"/><ClCompile Include="..\..\src\tbb\x86_rtm_rw_mutex.cpp"/><ClCompile Include="..\..\src\tbb\spin_mutex.cpp"/><ClCompile Include="..\..\src\tbb\critical_section.cpp"/><ClCompile Include="..\..\src\tbb\mutex.cpp"/><ClCompile Include="..\..\src\tbb\recursive_mutex.cpp"/><ClCompile Include="..\..\src\tbb\condition_variable.cpp"/><ClCompile Include="..\..\src\tbb\tbb_thread.cpp"/><ClCompile Include="..\..\src\tbb\concurrent_monitor.cpp"/><ClCompile Include="..\..\src\tbb\semaphore.cpp"/><ClCompile Include="..\..\src\tbb\private_server.cpp"/><ClCompile Include="..\..\src\rml\client\rml_tbb.cpp"/><ClCompile Include="..\..\src\tbb\tbb_misc.cpp"/><ClCompile Include="..\..\src\tbb\tbb_misc_ex.cpp"/><ClCompile Include="..\..\src\tbb\task.cpp"/><ClCompile Include="..\..\src\tbb\task_group_context.cpp"/><ClCompile Include="..\..\src\tbb\governor.cpp"/><ClCompile Include="..\..\src\tbb\market.cpp"/><ClCompile Include="..\..\src\tbb\arena.cpp"/><ClCompile Include="..\..\src\tbb\scheduler.cpp"/><ClCompile Include="..\..\src\tbb\observer_proxy.cpp"/><ClCompile Include="..\..\src\tbb\tbb_statistics.cpp"/><ClCompile Include="..\..\src\tbb\tbb_main.cpp"/><ClCompile Include="..\..\src\old\concurrent_vector_v2.cpp"/><ClCompile Include="..\..\src\old\concurrent_queue_v2.cpp"/><ClCompile Include="..\..\src\old\spin_rw_mutex_v2.cpp"/><ClCompile Include="..\..\src\old\task_v2.cpp"/></ItemGroup>
 	<ItemGroup>
 		<ClInclude Include="..\..\include\tbb\internal\_concurrent_queue_impl.h"/>
 		<ClInclude Include="..\..\include\tbb\_tbb_windef.h"/>

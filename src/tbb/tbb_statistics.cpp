@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -34,14 +34,14 @@ namespace tbb {
 namespace internal {
 
 //! Human readable titles of statistics groups defined by statistics_groups enum.
-/** The order of this vector elements must correspond to the statistics_counters 
+/** The order of this vector elements must correspond to the statistics_counters
     structure layout. **/
-const char* StatGroupTitles[] = { 
+const char* StatGroupTitles[] = {
     "task objects", "tasks executed", "stealing attempts", "task proxies", "arena", "market", "priority ops", "prio ops details"
 };
 
 //! Human readable titles of statistics elements defined by statistics_counters struct.
-/** The order of this vector elements must correspond to the statistics_counters 
+/** The order of this vector elements must correspond to the statistics_counters
     structure layout (with NULLs interspersed to separate groups). **/
 const char* StatFieldTitles[] = {
     /*task objects*/        "active", "freed", "big", NULL,
@@ -55,7 +55,7 @@ const char* StatFieldTitles[] = {
 };
 
 //! Class for logging statistics
-/** There should be only one instance of this class. 
+/** There should be only one instance of this class.
     Results are written to a file "statistics.txt" in tab-separated format. */
 class statistics_logger {
 public:

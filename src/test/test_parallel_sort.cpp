@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -50,18 +50,18 @@ class Minimal {
 public:
     Minimal() {}
     void set_val(int i) { val = i; }
-    static bool CompareWith (const Minimal &a, const Minimal &b) { 
+    static bool CompareWith (const Minimal &a, const Minimal &b) {
         return (a.val < b.val);
     }
-    static bool AreEqual( Minimal &a,  Minimal &b) { 
-       return a.val == b.val; 
+    static bool AreEqual( Minimal &a,  Minimal &b) {
+       return a.val == b.val;
     }
 };
 
-//! Defines a comparison function object for Minimal 
+//! Defines a comparison function object for Minimal
 class MinimalCompare {
 public:
-    bool operator() (const Minimal &a, const Minimal &b) const { 
+    bool operator() (const Minimal &a, const Minimal &b) const {
         return Minimal::CompareWith(a,b);
     }
 };
@@ -73,9 +73,9 @@ bool Validate(RandomAccessIterator a, RandomAccessIterator b, size_t n) {
         ASSERT( a[i] == b[i], NULL );
     }
     return true;
-} 
+}
 
-//! A Validate specialized to string for debugging-only 
+//! A Validate specialized to string for debugging-only
 template<>
 bool Validate<std::string *>(std::string * a, std::string * b, size_t n) {
     for (size_t i = 0; i < n; i++) {
@@ -89,18 +89,18 @@ bool Validate<std::string *>(std::string * a, std::string * b, size_t n) {
     return true;
 }
 
-//! A Validate specialized to Minimal since it does not define an operator== 
+//! A Validate specialized to Minimal since it does not define an operator==
 template<>
 bool Validate<Minimal *>(Minimal *a, Minimal *b, size_t n) {
     for (size_t i = 0; i < n; i++) {
         ASSERT( Minimal::AreEqual(a[i],b[i]), NULL );
     }
     return true;
-} 
+}
 
-//! A Validate specialized to concurrent_vector<Minimal> since it does not define an operator== 
+//! A Validate specialized to concurrent_vector<Minimal> since it does not define an operator==
 template<>
-bool Validate<tbb::concurrent_vector<Minimal>::iterator>(tbb::concurrent_vector<Minimal>::iterator a, 
+bool Validate<tbb::concurrent_vector<Minimal>::iterator>(tbb::concurrent_vector<Minimal>::iterator a,
                                                          tbb::concurrent_vector<Minimal>::iterator b, size_t n) {
     for (size_t i = 0; i < n; i++) {
         ASSERT( Minimal::AreEqual(a[i],b[i]), NULL );
@@ -108,8 +108,8 @@ bool Validate<tbb::concurrent_vector<Minimal>::iterator>(tbb::concurrent_vector<
     return true;
 }
 
-//! used in Verbose mode for identifying which data set is being used 
-static std::string test_type; 
+//! used in Verbose mode for identifying which data set is being used
+static std::string test_type;
 
 //! The default initialization routine.
 /*! This routine assumes that you can assign to the elements from a float.
@@ -117,12 +117,12 @@ static std::string test_type;
     them according to the current data set (tracked by a local static variable).
     Returns true if a valid test has been setup, or false if there is no test to
     perform.
-*/ 
-   
+*/
+
 template < typename RandomAccessIterator, typename Compare >
 bool init_iter(RandomAccessIterator iter, RandomAccessIterator sorted_list, size_t n, const Compare &compare, bool reset) {
-    static char test_case = 0; 
-    const char num_cases = 3; 
+    static char test_case = 0;
+    const char num_cases = 3;
 
     if (reset) test_case = 0;
 
@@ -132,24 +132,24 @@ bool init_iter(RandomAccessIterator iter, RandomAccessIterator sorted_list, size
             case 0:
                 /* use sin to generate the values */
                 test_type = "sin";
-                for (size_t i = 0; i < n; i++) 
+                for (size_t i = 0; i < n; i++)
                     iter[i] = sorted_list[i] = static_cast<typename std::iterator_traits< RandomAccessIterator >::value_type>(sin(float(i)));
                 break;
             case 1:
-                /* presorted list */ 
+                /* presorted list */
                 test_type = "pre-sorted";
-                for (size_t i = 0; i < n; i++) 
+                for (size_t i = 0; i < n; i++)
                     iter[i] = sorted_list[i] = static_cast<typename std::iterator_traits< RandomAccessIterator >::value_type>(i);
                 break;
             case 2:
-                /* reverse-sorted list */ 
+                /* reverse-sorted list */
                 test_type = "reverse-sorted";
-                for (size_t i = 0; i < n; i++) 
+                for (size_t i = 0; i < n; i++)
                     iter[i] = sorted_list[i] = static_cast<typename std::iterator_traits< RandomAccessIterator >::value_type>(n - i);
                 break;
-        } 
+        }
 
-        // pre-sort sorted_list for later validity testing 
+        // pre-sort sorted_list for later validity testing
         std::sort(sorted_list, sorted_list + n, compare);
         test_case++;
         return true;
@@ -187,7 +187,7 @@ bool init_iter(T * iter, T * sorted_list, size_t n, const Compare &compare, bool
                 break;
         }
 
-        // pre-sort sorted_list for later validity testing 
+        // pre-sort sorted_list for later validity testing
         std::sort(sorted_list, sorted_list + n, compare);
         test_case++;
         return true;
@@ -196,14 +196,14 @@ bool init_iter(T * iter, T * sorted_list, size_t n, const Compare &compare, bool
 }
 
 
-//! The initialization routine specialized to the class Minimal 
+//! The initialization routine specialized to the class Minimal
 /*! Minimal cannot have floats assigned to it.  This function uses the set_val method
 */
 
 template < >
 bool init_iter(Minimal* iter, Minimal * sorted_list, size_t n, const MinimalCompare &compare, bool reset) {
     static char test_case = 0;
-    const char num_cases = 3; 
+    const char num_cases = 3;
 
     if (reset) test_case = 0;
 
@@ -218,22 +218,22 @@ bool init_iter(Minimal* iter, Minimal * sorted_list, size_t n, const MinimalComp
                 }
                 break;
             case 1:
-                /* presorted list */ 
+                /* presorted list */
                 test_type = "pre-sorted";
                 for (size_t i = 0; i < n; i++) {
-                    iter[i].set_val( int(i) ); 
+                    iter[i].set_val( int(i) );
                     sorted_list[i].set_val( int(i) );
                 }
                 break;
             case 2:
-                /* reverse-sorted list */ 
+                /* reverse-sorted list */
                 test_type = "reverse-sorted";
                 for (size_t i = 0; i < n; i++) {
-                    iter[i].set_val( int(n-i) ); 
+                    iter[i].set_val( int(n-i) );
                     sorted_list[i].set_val( int(n-i) );
                 }
                 break;
-        } 
+        }
         std::sort(sorted_list, sorted_list + n, compare);
         test_case++;
         return true;
@@ -241,12 +241,12 @@ bool init_iter(Minimal* iter, Minimal * sorted_list, size_t n, const MinimalComp
     return false;
 }
 
-//! The initialization routine specialized to the class concurrent_vector<Minimal> 
+//! The initialization routine specialized to the class concurrent_vector<Minimal>
 /*! Minimal cannot have floats assigned to it.  This function uses the set_val method
 */
 
 template < >
-bool init_iter(tbb::concurrent_vector<Minimal>::iterator iter, tbb::concurrent_vector<Minimal>::iterator sorted_list, 
+bool init_iter(tbb::concurrent_vector<Minimal>::iterator iter, tbb::concurrent_vector<Minimal>::iterator sorted_list,
                size_t n, const MinimalCompare &compare, bool reset) {
     static char test_case = 0;
     const char num_cases = 3;
@@ -287,15 +287,15 @@ bool init_iter(tbb::concurrent_vector<Minimal>::iterator iter, tbb::concurrent_v
     return false;
 }
 
-//! The initialization routine specialized to the class string 
-/*! strings are created from floats. 
+//! The initialization routine specialized to the class string
+/*! strings are created from floats.
 */
 
 template<>
 bool init_iter(std::string *iter, std::string *sorted_list, size_t n, const std::less<std::string> &compare, bool reset) {
     static char test_case = 0;
-    const char num_cases = 1; 
- 
+    const char num_cases = 1;
+
     if (reset) test_case = 0;
 
     if (test_case < num_cases) {
@@ -314,7 +314,7 @@ bool init_iter(std::string *iter, std::string *sorted_list, size_t n, const std:
                     sorted_list[i] = iter[i] = std::string(buffer);
                 }
                 break;
-        } 
+        }
         std::sort(sorted_list, sorted_list + n, compare);
         test_case++;
         return true;
@@ -322,14 +322,14 @@ bool init_iter(std::string *iter, std::string *sorted_list, size_t n, const std:
     return false;
 }
 
-//! The current number of threads in use (for Verbose only) 
+//! The current number of threads in use (for Verbose only)
 static size_t current_p;
 
-//! The current data type being sorted (for Verbose only) 
-static std::string current_type; 
+//! The current data type being sorted (for Verbose only)
+static std::string current_type;
 
 //! The default test routine.
-/*! Tests all data set sizes from 0 to N, all grainsizes from 0 to G=10, and selects from 
+/*! Tests all data set sizes from 0 to N, all grainsizes from 0 to G=10, and selects from
     all possible interfaces to parallel_sort depending on whether a scratch space and
     compare have been provided.
 */
@@ -337,18 +337,18 @@ template<typename RandomAccessIterator, typename Compare>
 bool parallel_sortTest(size_t n, RandomAccessIterator iter, RandomAccessIterator sorted_list, const Compare *comp) {
     bool passed = true;
 
-    Compare local_comp; 
+    Compare local_comp;
 
     init_iter(iter, sorted_list, n, local_comp, true);
     do {
-        REMARK("%s %s p=%llu n=%llu :",current_type.c_str(), test_type.c_str(), 
+        REMARK("%s %s p=%llu n=%llu :",current_type.c_str(), test_type.c_str(),
                    static_cast<unsigned long long>(current_p), static_cast<unsigned long long>(n));
         if (comp != NULL) {
             tbb::parallel_sort(iter, iter + n, local_comp );
          } else {
             tbb::parallel_sort(iter, iter + n );
          }
-        if (!Validate(iter, sorted_list, n)) 
+        if (!Validate(iter, sorted_list, n))
             passed = false;
         REMARK("passed\n");
     } while (init_iter(iter, sorted_list, n, local_comp, false));
@@ -378,17 +378,17 @@ bool parallel_sortTest(size_t n, Minimal * iter, Minimal * sorted_list, const Mi
 
 //! The test routine specialize to concurrent_vector of Minimal, since it does not have a less defined for it
 template<>
-bool parallel_sortTest(size_t n, tbb::concurrent_vector<Minimal>::iterator iter, 
+bool parallel_sortTest(size_t n, tbb::concurrent_vector<Minimal>::iterator iter,
                        tbb::concurrent_vector<Minimal>::iterator sorted_list, const MinimalCompare *compare) {
     bool passed = true;
 
     if (compare == NULL) return passed;
-    
+
     init_iter(iter, sorted_list, n, *compare, true);
     do {
         REMARK("%s %s p=%llu n=%llu :",current_type.c_str(), test_type.c_str(),
                     static_cast<unsigned long long>(current_p), static_cast<unsigned long long>(n));
-    
+
         tbb::parallel_sort(iter, iter + n, *compare );
 
         if (!Validate(iter, sorted_list, n))
@@ -403,13 +403,13 @@ bool parallel_sortTest(size_t n, tbb::concurrent_vector<Minimal>::iterator iter,
     by each type are tested.
 */
 void Flog() {
-    // For each type create: 
-    // the list to be sorted by parallel_sort (array) 
+    // For each type create:
+    // the list to be sorted by parallel_sort (array)
     // the list to be sort by STL sort (array_2)
     // and a less function object
 
     const size_t N = 50000;
-    
+
     Minimal *minimal_array = new Minimal[N];
     Minimal *minimal_array_2 = new Minimal[N];
     MinimalCompare minimal_less;
@@ -431,8 +431,8 @@ void Flog() {
     tbb::concurrent_vector<Minimal> minimal_cv2;
     minimal_cv1.grow_to_at_least(N);
     minimal_cv2.grow_to_at_least(N);
- 
- 
+
+
     // run the appropriate tests for each type
 
     current_type = "Minimal(less)";
@@ -443,18 +443,18 @@ void Flog() {
     parallel_sortTest(50000, minimal_array, minimal_array_2, &minimal_less);
 
     current_type = "float (no less)";
-    parallel_sortTest(0, float_array, float_array_2, static_cast<std::less<float> *>(NULL)); 
-    parallel_sortTest(1, float_array, float_array_2, static_cast<std::less<float> *>(NULL)); 
-    parallel_sortTest(10, float_array, float_array_2, static_cast<std::less<float> *>(NULL)); 
-    parallel_sortTest(9999, float_array, float_array_2, static_cast<std::less<float> *>(NULL)); 
-    parallel_sortTest(50000, float_array, float_array_2, static_cast<std::less<float> *>(NULL)); 
+    parallel_sortTest(0, float_array, float_array_2, static_cast<std::less<float> *>(NULL));
+    parallel_sortTest(1, float_array, float_array_2, static_cast<std::less<float> *>(NULL));
+    parallel_sortTest(10, float_array, float_array_2, static_cast<std::less<float> *>(NULL));
+    parallel_sortTest(9999, float_array, float_array_2, static_cast<std::less<float> *>(NULL));
+    parallel_sortTest(50000, float_array, float_array_2, static_cast<std::less<float> *>(NULL));
 
     current_type = "float (less)";
-    parallel_sortTest(0, float_array, float_array_2, &float_less); 
-    parallel_sortTest(1, float_array, float_array_2, &float_less); 
-    parallel_sortTest(10, float_array, float_array_2, &float_less); 
-    parallel_sortTest(9999, float_array, float_array_2, &float_less); 
-    parallel_sortTest(50000, float_array, float_array_2, &float_less); 
+    parallel_sortTest(0, float_array, float_array_2, &float_less);
+    parallel_sortTest(1, float_array, float_array_2, &float_less);
+    parallel_sortTest(10, float_array, float_array_2, &float_less);
+    parallel_sortTest(9999, float_array, float_array_2, &float_less);
+    parallel_sortTest(50000, float_array, float_array_2, &float_less);
 
     current_type = "concurrent_vector<float> (no less)";
     parallel_sortTest(0, float_cv1.begin(), float_cv2.begin(), static_cast<std::less<float> *>(NULL));
@@ -571,7 +571,7 @@ int TestMain () {
             // Test that all workers sleep when no work
             TestCPUUserTime(p);
         }
-    } 
+    }
     return Harness::Done;
 }
 

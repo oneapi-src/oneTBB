@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -134,7 +134,7 @@ public:
 
 #if HARNESS_EH_SIMPLE_MODE
 
-static void ThrowTestException () { 
+static void ThrowTestException () {
     ++g_ExceptionsThrown;
     throw test_exception(EXCEPTION_DESCR);
 }
@@ -144,10 +144,10 @@ static void ThrowTestException () {
 static void ThrowTestException ( intptr_t threshold ) {
     bool inMaster = (Harness::CurrentTid() == g_Master);
     if ( !g_ThrowException ||   // if we're not supposed to throw
-            (!g_Flog &&         // if we're not catching throw in bodies and 
+            (!g_Flog &&         // if we're not catching throw in bodies and
              (g_ExceptionInMaster ^ inMaster)) ) { // we're the master and not expected to throw
               // or are the master and the master is not the one to throw (??)
-        return; 
+        return;
     }
     while ( Existed() < threshold )
         __TBB_Yield();

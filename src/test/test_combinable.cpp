@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -119,9 +119,9 @@ class CombineEachHelper {
 public:
     CombineEachHelper(T& _result) : my_result(_result) {}
     void operator()(const T& new_bit) { my_result +=  new_bit; }
-    CombineEachHelper& operator=(const CombineEachHelper& other) { 
-        my_result =  other; 
-        return *this; 
+    CombineEachHelper& operator=(const CombineEachHelper& other) {
+        my_result =  other;
+        return *this;
     }
 private:
     T& my_result;
@@ -132,10 +132,10 @@ class CombineEachHelperCnt {
 public:
     CombineEachHelperCnt(T& _result, int& _nbuckets) : my_result(_result), nBuckets(_nbuckets) {}
     void operator()(const T& new_bit) { my_result +=  new_bit; ++nBuckets; }
-    CombineEachHelperCnt& operator=(const CombineEachHelperCnt& other) { 
-        my_result =  other.my_result; 
+    CombineEachHelperCnt& operator=(const CombineEachHelperCnt& other) {
+        my_result =  other.my_result;
         nBuckets = other.nBuckets;
-        return *this; 
+        return *this;
     }
 private:
     T& my_result;
@@ -147,7 +147,7 @@ class CombineEachVectorHelper {
 public:
     typedef std::vector<T, tbb::tbb_allocator<T> > ContainerType;
     CombineEachVectorHelper(T& _result) : my_result(_result) { }
-    void operator()(const ContainerType& new_bit) { 
+    void operator()(const ContainerType& new_bit) {
         for(typename ContainerType::const_iterator ci = new_bit.begin(); ci != new_bit.end(); ++ci) {
             my_result +=  *ci;
         }
@@ -168,12 +168,12 @@ void run_serial_scalar_tests(const char *test_name) {
 
     REMARK("Testing serial %s... ", test_name);
     for (int t = -1; t < REPETITIONS; ++t) {
-        if (Verbose && t == 0) t0 = tbb::tick_count::now(); 
+        if (Verbose && t == 0) t0 = tbb::tick_count::now();
         for (int i = 0; i < N; ++i) {
-            sum += 1; 
+            sum += 1;
         }
     }
- 
+
     double ResultValue = sum;
     ASSERT( EXPECTED_SUM == ResultValue, NULL);
     REMARK("done\nserial %s, 0, %g, %g\n", test_name, ResultValue, ( tbb::tick_count::now() - t0).seconds());
@@ -182,40 +182,40 @@ void run_serial_scalar_tests(const char *test_name) {
 
 template <typename T>
 class ParallelScalarBody: NoAssign {
-    
+
     tbb::combinable<T> &sums;
- 
+
 public:
 
     ParallelScalarBody ( tbb::combinable<T> &_sums ) : sums(_sums) { }
 
     void operator()( const tbb::blocked_range<int> &r ) const {
-        for (int i = r.begin(); i != r.end(); ++i) { 
+        for (int i = r.begin(); i != r.end(); ++i) {
             bool was_there;
             T& my_local = sums.local(was_there);
             if(!was_there) my_local = 0;
              my_local +=  1 ;
         }
     }
-   
+
 };
 
 // parallel body with no test for first access.
 template <typename T>
 class ParallelScalarBodyNoInit: NoAssign {
-    
+
     tbb::combinable<T> &sums;
- 
+
 public:
 
     ParallelScalarBodyNoInit ( tbb::combinable<T> &_sums ) : sums(_sums) { }
 
     void operator()( const tbb::blocked_range<int> &r ) const {
-        for (int i = r.begin(); i != r.end(); ++i) { 
+        for (int i = r.begin(); i != r.end(); ++i) {
              sums.local() +=  1 ;
         }
     }
-   
+
 };
 
 template< typename T >
@@ -223,12 +223,12 @@ void RunParallelScalarTests(const char *test_name) {
 
     tbb::task_scheduler_init init(tbb::task_scheduler_init::deferred);
 
-    for (int p = MinThread; p <= MaxThread; ++p) { 
+    for (int p = MinThread; p <= MaxThread; ++p) {
 
 
         if (p == 0) continue;
 
-        REMARK("Testing parallel %s on %d thread(s)... ", test_name, p); 
+        REMARK("Testing parallel %s on %d thread(s)... ", test_name, p);
         init.initialize(p);
 
         tbb::tick_count t0;
@@ -244,12 +244,12 @@ void RunParallelScalarTests(const char *test_name) {
         T combine_finit_sum(0);
 
         for (int t = -1; t < REPETITIONS; ++t) {
-            if (Verbose && t == 0) t0 = tbb::tick_count::now(); 
+            if (Verbose && t == 0) t0 = tbb::tick_count::now();
 
             tbb::combinable<T> sums;
             FunctorAddFinit<T> my_finit_decl;
             tbb::combinable<T> finit_combinable(my_finit_decl);
-                                    
+
 
             tbb::parallel_for( tbb::blocked_range<int>( 0, N, 10000 ), ParallelScalarBodyNoInit<T>( finit_combinable ) );
             tbb::parallel_for( tbb::blocked_range<int>( 0, N, 10000 ), ParallelScalarBody<T>( sums ) );
@@ -260,7 +260,7 @@ void RunParallelScalarTests(const char *test_name) {
 
             CombineEachHelper<T> my_helper(combine_each_sum);
             sums.combine_each(my_helper);
-           
+
             // test assignment
             tbb::combinable<T> assigned;
             assigned = sums;
@@ -275,7 +275,7 @@ void RunParallelScalarTests(const char *test_name) {
         ASSERT( EXPECTED_SUM == assign_sum, NULL);
         ASSERT( EXPECTED_SUM == combine_finit_sum, NULL);
 
-        REMARK("done\nparallel %s, %d, %g, %g\n", test_name, p, static_cast<double>(combine_sum), 
+        REMARK("done\nparallel %s, %d, %g, %g\n", test_name, p, static_cast<double>(combine_sum),
                                                       ( tbb::tick_count::now() - t0).seconds());
         init.terminate();
     }
@@ -284,9 +284,9 @@ void RunParallelScalarTests(const char *test_name) {
 
 template <typename T>
 class ParallelVectorForBody: NoAssign {
-    
+
     tbb::combinable< std::vector<T, tbb::tbb_allocator<T> > > &locals;
- 
+
 public:
 
     ParallelVectorForBody ( tbb::combinable< std::vector<T, tbb::tbb_allocator<T> > > &_locals ) : locals(_locals) { }
@@ -298,7 +298,7 @@ public:
             locals.local().push_back( one );
         }
     }
-   
+
 };
 
 template< typename T >
@@ -307,7 +307,7 @@ void RunParallelVectorTests(const char *test_name) {
     tbb::task_scheduler_init init(tbb::task_scheduler_init::deferred);
     typedef std::vector<T, tbb::tbb_allocator<T> > ContainerType;
 
-    for (int p = MinThread; p <= MaxThread; ++p) { 
+    for (int p = MinThread; p <= MaxThread; ++p) {
 
         if (p == 0) continue;
         REMARK("Testing parallel %s on %d thread(s)... ", test_name, p);
@@ -318,7 +318,7 @@ void RunParallelVectorTests(const char *test_name) {
         T sum3 = 0;
 
         for (int t = -1; t < REPETITIONS; ++t) {
-            if (Verbose && t == 0) t0 = tbb::tick_count::now(); 
+            if (Verbose && t == 0) t0 = tbb::tick_count::now();
             typedef typename tbb::combinable< ContainerType > CombinableType;
             CombinableType vs;
 
@@ -399,7 +399,7 @@ TestLocalAllocations( int nthread ) {
 }
 
 
-void 
+void
 RunParallelTests() {
     RunParallelScalarTests<int>("int");
     RunParallelScalarTests<double>("double");

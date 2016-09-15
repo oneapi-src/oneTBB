@@ -5,7 +5,7 @@
 Parallel raytracer / renderer that demonstrates the use of parallel_for.
 
 <P><I>
-This example includes software developed by John E. Stone.  See
+This example includes software developed by John E. Stone. See
 <A HREF=#copyright>here</A> for copyright information.
 </I></P>
 
@@ -27,11 +27,11 @@ The following versions of the example are provided:
 <DD>Parallel version that uses Intel&reg; Threading Building Blocks (Intel&reg; TBB) and blocked_range to parallelize
 	over tasks that are groups of scan-lines.
     <UL>
-    <LI>By default, this version uses one thread per available processor.  To change this
+    <LI>By default, this version uses one thread per available processor. To change this
 	default, set the TBB_NUM_THREADS environment variable to the desired number of threads before running.
     <LI>This version uses the preview feature: auto_range_partitioner.  No grain size is provided to blocked_range.
-        The blocked_range class uses a default grain size of 1 when none is provided.  However, the auto_range_partitioner 
-        controls the amount of range splitting dynamically at runtime, resulting in sub-ranges of varying sizes.  
+        The blocked_range class uses a default grain size of 1 when none is provided.  However, the auto_range_partitioner
+        controls the amount of range splitting dynamically at runtime, resulting in sub-ranges of varying sizes.
     </UL>
 <DT>tbb
 <DD>Parallel version that uses Intel TBB and blocked_range2d to parallelize
@@ -74,19 +74,21 @@ The following versions of the example are provided:
 <DT><A HREF="dat">dat</A>
 <DD>Contains data sets for running the example.
 <DT><A HREF="msvs">msvs</A>
-<DD>Contains Microsoft* Visual Studio* 2010 workspace for building and running the 
+<DD>Contains Microsoft* Visual Studio* 2010 workspace for building and running the
     example (Windows* systems only).<DT><A HREF="xcode">xcode</A>
-<DD>Contains Xcode* IDE workspace for building and running the example (OS X* 
+<DD>Contains Xcode* IDE workspace for building and running the example (OS X*
     systems only).
-<A HREF="android">android</A>
-<DD>Contains Eclipse* IDE workspace for building and running the example on Android* system. JNI part needs to be compiled by Android NDK.</DL> 
-
+<DT><A HREF="android">android</A>
+<DD>Contains Eclipse* IDE workspace for building and running the example on Android* system. JNI part needs to be compiled by Android NDK.
+<DT><A HREF="android_as">android_as</A>
+<DD>Contains project for building and running the example using Android* Studio* 1.5 and higher
+    with Android* NDK bundle and experimental Gradle* plugin 0.4.0.</DL>
 
 <H2>To Build</H2>
 General build directions can be found <A HREF=../../index.html#build>here</A>.
 
 <P>
-For Windows* systems Microsoft* Visual Studio* projects are provided for each of the above 
+For Windows* systems Microsoft* Visual Studio* projects are provided for each of the above
     example versions.
 </P>
 
@@ -132,7 +134,7 @@ named <TT>tachyon.&lt;<I>version</I>&gt;.exe</TT>.  To run these executables dir
 <DT><TT>tachyon.&lt;<I>version</I>&gt; <I>-h</I></TT>
 <DD>Prints the help for command line options
 <DT><TT>tachyon.&lt;<I>version</I>&gt; [<I>dataset</I>=value] [<I>boundthresh</I>=value] [<I>no-display-updating</I>] [<I>nobounding</I>] [<I>silent</I>]</TT>
-<DT><TT>tachyon.&lt;<I>version</I>&gt; [<I>dataset</I> [<I>boundthresh</I>]] [<I>no-display-updating</I>] [<I>nobounding</I>] [<I>silent</I>]</TT> 
+<DT><TT>tachyon.&lt;<I>version</I>&gt; [<I>dataset</I> [<I>boundthresh</I>]] [<I>no-display-updating</I>] [<I>nobounding</I>] [<I>silent</I>]</TT>
 <DD><I>dataset</I> is the path/name of one of the *.dat files in the <A HREF="dat">dat</A> directory for the example.<BR>
     <I>boundthresh</I> is a bounding threshold value.<BR>
     <I>no-display-updating</I> - disable run-time display updating.<BR>
@@ -172,7 +174,7 @@ While running with the GUI display turned on the following keyboard keys can be 
 <HR>
 <A HREF="../index.html">Up to parent directory</A>
 <p></p>
-Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.
 <P></P>
 Intel is a registered trademark or trademark of Intel Corporation
 or its subsidiaries in the United States and other countries.

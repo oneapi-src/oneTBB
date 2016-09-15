@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -85,13 +85,13 @@ public:
 #endif /* (choice of OS) */
         }
     };
-    
+
     //! Construct an absolute timestamp initialized to zero.
     tick_count() : my_count(0) {};
 
     //! Return current time.
     static tick_count now();
-    
+
     //! Subtract two timestamps to get the time interval between
     friend interval_t operator-( const tick_count& t1, const tick_count& t0 );
 

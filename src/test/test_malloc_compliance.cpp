@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -265,7 +265,7 @@ static void setSystemAllocs()
     Raligned_realloc=_aligned_realloc;
     Taligned_free=_aligned_free;
     Rposix_memalign=0;
-#elif  __APPLE__ || __sun || __ANDROID__ 
+#elif  __APPLE__ || __sun || __ANDROID__
 // OS X*, Solaris, and Android don't have posix_memalign
     Raligned_malloc=0;
     Raligned_realloc=0;

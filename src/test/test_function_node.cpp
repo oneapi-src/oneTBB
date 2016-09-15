@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -53,12 +53,12 @@ template<typename IO>
 struct pass_through {
     IO operator()(const IO& i) { return i; }
 };
-     
+
 template< typename InputType, typename OutputType, typename Body >
 void buffered_levels( size_t concurrency, Body body ) {
 
    // Do for lc = 1 to concurrency level
-   for ( size_t lc = 1; lc <= concurrency; ++lc ) { 
+   for ( size_t lc = 1; lc <= concurrency; ++lc ) {
    tbb::flow::graph g;
 
    // Set the execute_counter back to zero in the harness
@@ -71,7 +71,7 @@ void buffered_levels( size_t concurrency, Body body ) {
    // Create the function_node with the appropriate concurrency level, and use default buffering
    tbb::flow::function_node< InputType, OutputType > exe_node( g, lc, body );
    tbb::flow::function_node<InputType, InputType> pass_thru( g, tbb::flow::unlimited, pass_through<InputType>());
-   
+
    // Create a vector of identical exe_nodes and pass_thrus
    std::vector< tbb::flow::function_node< InputType, OutputType > > exe_vec(2, exe_node);
    std::vector< tbb::flow::function_node< InputType, InputType > > pass_thru_vec(2, pass_thru);
@@ -102,17 +102,17 @@ void buffered_levels( size_t concurrency, Body body ) {
 
             // Initialize the receivers so they know how many senders and messages to check for
             for (size_t r = 0; r < num_receivers; ++r ) {
-                 receivers[r].initialize_map( N, num_senders ); 
+                 receivers[r].initialize_map( N, num_senders );
             }
 
             // Do the test
             NativeParallelFor( (int)num_senders, parallel_put_until_limit<InputType>(senders) );
             g.wait_for_all();
 
-            // confirm that each sender was requested from N times 
+            // confirm that each sender was requested from N times
             for (size_t s = 0; s < num_senders; ++s ) {
                 size_t n = senders[s].my_received;
-                ASSERT( n == N, NULL ); 
+                ASSERT( n == N, NULL );
                 ASSERT( senders[s].my_receiver == &pass_thru_vec[node_idx], NULL );
             }
             // validate the receivers
@@ -149,7 +149,7 @@ struct inc_functor {
     int operator()( int i ) {
        ++global_execute_count;
        ++local_execute_count;
-       return i; 
+       return i;
     }
 
 };
@@ -158,13 +158,13 @@ template< typename InputType, typename OutputType >
 void buffered_levels_with_copy( size_t concurrency ) {
 
     // Do for lc = 1 to concurrency level
-    for ( size_t lc = 1; lc <= concurrency; ++lc ) { 
+    for ( size_t lc = 1; lc <= concurrency; ++lc ) {
         tbb::flow::graph g;
 
         inc_functor cf;
         cf.local_execute_count = Offset;
         global_execute_count = Offset;
-       
+
         tbb::flow::function_node< InputType, OutputType > exe_node( g, lc, cf );
 
         for (size_t num_receivers = 1; num_receivers <= MAX_NODES; ++num_receivers ) {
@@ -182,7 +182,7 @@ void buffered_levels_with_copy( size_t concurrency ) {
                 }
 
                 for (size_t r = 0; r < num_receivers; ++r ) {
-                    receivers[r].initialize_map( N, num_senders ); 
+                    receivers[r].initialize_map( N, num_senders );
                 }
 
                 NativeParallelFor( (int)num_senders, parallel_put_until_limit<InputType>(senders) );
@@ -190,7 +190,7 @@ void buffered_levels_with_copy( size_t concurrency ) {
 
                 for (size_t s = 0; s < num_senders; ++s ) {
                     size_t n = senders[s].my_received;
-                    ASSERT( n == N, NULL ); 
+                    ASSERT( n == N, NULL );
                     ASSERT( senders[s].my_receiver == &exe_node, NULL );
                 }
                 for (size_t r = 0; r < num_receivers; ++r ) {
@@ -211,14 +211,14 @@ void buffered_levels_with_copy( size_t concurrency ) {
 
         // validate that the local body matches the global execute_count and both are correct
         inc_functor body_copy = tbb::flow::copy_body<inc_functor>( exe_node );
-        const size_t expected_count = N/2 * MAX_NODES * MAX_NODES * ( MAX_NODES + 1 ) + MAX_NODES + Offset; 
+        const size_t expected_count = N/2 * MAX_NODES * MAX_NODES * ( MAX_NODES + 1 ) + MAX_NODES + Offset;
         size_t global_count = global_execute_count;
         size_t inc_count = body_copy.local_execute_count;
-        ASSERT( global_count == expected_count && global_count == inc_count, NULL ); 
+        ASSERT( global_count == expected_count && global_count == inc_count, NULL );
         g.reset(tbb::flow::rf_reset_bodies);
         body_copy = tbb::flow::copy_body<inc_functor>( exe_node );
         inc_count = body_copy.local_execute_count;
-        ASSERT( Offset == inc_count, "reset(rf_reset_bodies) did not reset functor" ); 
+        ASSERT( Offset == inc_count, "reset(rf_reset_bodies) did not reset functor" );
     }
 }
 
@@ -236,16 +236,16 @@ void run_buffered_levels( int c ) {
 //! Performs test on executable nodes with limited concurrency
 /** Theses tests check:
     1) that the nodes will accepts puts up to the concurrency limit,
-    2) the nodes do not exceed the concurrency limit even when run with more threads (this is checked in the harness_graph_executor), 
+    2) the nodes do not exceed the concurrency limit even when run with more threads (this is checked in the harness_graph_executor),
     3) the nodes will receive puts from multiple successors simultaneously,
     and 4) the nodes will send to multiple predecessors.
     There is no checking of the contents of the messages for corruption.
 */
-     
+
 template< typename InputType, typename OutputType, typename Body >
 void concurrency_levels( size_t concurrency, Body body ) {
 
-   for ( size_t lc = 1; lc <= concurrency; ++lc ) { 
+   for ( size_t lc = 1; lc <= concurrency; ++lc ) {
    tbb::flow::graph g;
 
    // Set the execute_counter back to zero in the harness
@@ -305,10 +305,10 @@ void concurrency_levels( size_t concurrency, Body body ) {
             // wait for graph to settle down
             g.wait_for_all();
 
-            // confirm that each sender was requested from N times 
+            // confirm that each sender was requested from N times
             for (size_t s = 0; s < num_senders; ++s ) {
                 size_t n = senders[s].my_received;
-                ASSERT( n == N, NULL ); 
+                ASSERT( n == N, NULL );
                 ASSERT( senders[s].my_receiver == &exe_node, NULL );
             }
             // confirm that each receivers got N * num_senders + the initial lc puts
@@ -343,7 +343,7 @@ void run_concurrency_levels( int c ) {
 }
 
 
-struct empty_no_assign { 
+struct empty_no_assign {
    empty_no_assign() {}
    empty_no_assign( int ) {}
    operator int() { return 0; }
@@ -390,11 +390,11 @@ void unlimited_concurrency( Body body ) {
             }
 
             NativeParallelFor( p, parallel_puts<InputType>(exe_node) );
-            g.wait_for_all(); 
+            g.wait_for_all();
 
             // 2) the nodes will receive puts from multiple predecessors simultaneously,
             size_t ec = harness_graph_executor<InputType, OutputType>::execute_count;
-            ASSERT( (int)ec == p*N, NULL ); 
+            ASSERT( (int)ec == p*N, NULL );
             for (size_t r = 0; r < num_receivers; ++r ) {
                 size_t c = receivers[r].my_count;
                 // 3) the nodes will send to multiple successors.
@@ -428,10 +428,10 @@ void test_function_node_with_continue_msg_as_input() {
 
     tbb::flow::function_node<tbb::flow::continue_msg, int, tbb::flow::rejecting> FN1( g, tbb::flow::serial, continue_msg_to_int(42));
     tbb::flow::function_node<tbb::flow::continue_msg, int, tbb::flow::rejecting> FN2( g, tbb::flow::serial, continue_msg_to_int(43));
-    
+
     tbb::flow::make_edge( Start, FN1 );
     tbb::flow::make_edge( Start, FN2 );
-    
+
     Start.try_put( tbb::flow::continue_msg() );
     g.wait_for_all();
 }
@@ -476,13 +476,13 @@ void test_extract() {
         ASSERT(b1.predecessor_count() == 0 && b1.successor_count() == 1, "b1 has incorrect counts");
         ASSERT(f0.predecessor_count() == 2 && f0.successor_count() == 1, "f0 has incorrect counts");
         ASSERT(q0.predecessor_count() == 1 && q0.successor_count() == 0, "q0 has incorrect counts");
-    
+
         /* b0         */
         /*   \        */
         /*    f0 - q0 */
         /*   /        */
         /* b1         */
-    
+
         b0.try_put(1);
         g.wait_for_all();
         ASSERT(my_count == 1, "function_node didn't fire");
@@ -491,15 +491,15 @@ void test_extract() {
         g.wait_for_all();
         ASSERT(my_count == 2, "function_node didn't fire");
         ASSERT(q0.try_get(cm), "function_node didn't forward");
-    
+
         b0.extract();
-    
+
         /* b0         */
         /*            */
         /*    f0 - q0 */
         /*   /        */
         /* b1         */
-    
+
         ASSERT(b0.predecessor_count() == 0 && b0.successor_count() == 0, "b0 has incorrect counts");
         ASSERT(b1.predecessor_count() == 0 && b1.successor_count() == 1, "b1 has incorrect counts");
         ASSERT(f0.predecessor_count() == 1 && f0.successor_count() == 1, "f0 has incorrect counts");
@@ -512,15 +512,15 @@ void test_extract() {
         g.wait_for_all();
         ASSERT(my_count == 3, "function_node didn't fire though it has only one predecessor");
         ASSERT(q0.try_get(cm), "function_node didn't forward second time");
-    
+
         f0.extract();
-    
+
         /* b0         */
         /*            */
         /*    f0   q0 */
         /*            */
         /* b1         */
-    
+
         ASSERT(b0.predecessor_count() == 0 && b0.successor_count() == 0, "b0 has incorrect counts");
         ASSERT(b1.predecessor_count() == 0 && b1.successor_count() == 0, "b1 has incorrect counts");
         ASSERT(f0.predecessor_count() == 0 && f0.successor_count() == 0, "f0 has incorrect counts");
@@ -533,24 +533,24 @@ void test_extract() {
         ASSERT(my_count == 3, "function_node didn't fire though it has only one predecessor");
         ASSERT(!q0.try_get(cm), "function_node forwarded though it shouldn't");
         make_edge(b0, f0);
-    
+
         /* b0         */
         /*   \        */
         /*    f0   q0 */
         /*            */
         /* b1         */
-    
+
         ASSERT(b0.predecessor_count() == 0 && b0.successor_count() == 1, "b0 has incorrect counts");
         ASSERT(b1.predecessor_count() == 0 && b1.successor_count() == 0, "b1 has incorrect counts");
         ASSERT(f0.predecessor_count() == 1 && f0.successor_count() == 0, "f0 has incorrect counts");
         ASSERT(q0.predecessor_count() == 0 && q0.successor_count() == 0, "q0 has incorrect counts");
-    
+
         b0.try_put(int());
         g.wait_for_all();
-    
+
         ASSERT(my_count == 4, "function_node didn't fire though it has only one predecessor");
         ASSERT(!q0.try_get(cm), "function_node forwarded though it shouldn't");
-    
+
         tbb::flow::make_edge(b1, f0);
         tbb::flow::make_edge(f0, q0);
         my_count = 0;
@@ -558,7 +558,7 @@ void test_extract() {
 }
 #endif
 
-int TestMain() { 
+int TestMain() {
     if( MinThread<1 ) {
         REPORT("number of threads must be positive\n");
         exit(1);

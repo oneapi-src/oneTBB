@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -43,7 +43,7 @@ struct final_scan_tag {
 //! @cond INTERNAL
 namespace internal {
 
-    //! Performs final scan for a leaf 
+    //! Performs final scan for a leaf
     /** @ingroup algorithms */
     template<typename Range, typename Body>
     class final_sum: public task {
@@ -61,7 +61,7 @@ namespace internal {
         }
         ~final_sum() {
             my_range.begin()->~Range();
-        }     
+        }
         void finish_construction( const Range& range_, Body* stuff_last_ ) {
             new( my_range.begin() ) Range(range_);
             my_stuff_last = stuff_last_;
@@ -73,7 +73,7 @@ namespace internal {
                 my_stuff_last->assign(my_body);
             return NULL;
         }
-    };       
+    };
 
     //! Split work to be done in the scan.
     /** @ingroup algorithms */
@@ -81,20 +81,20 @@ namespace internal {
     class sum_node: public task {
         typedef final_sum<Range,Body> final_sum_type;
     public:
-        final_sum_type *my_incoming; 
+        final_sum_type *my_incoming;
         final_sum_type *my_body;
         Body *my_stuff_last;
     private:
         final_sum_type *my_left_sum;
         sum_node *my_left;
-        sum_node *my_right;     
+        sum_node *my_right;
         bool my_left_is_final;
         Range my_range;
-        sum_node( const Range range_, bool left_is_final_ ) : 
-            my_left_sum(NULL), 
-            my_left(NULL), 
-            my_right(NULL), 
-            my_left_is_final(left_is_final_), 
+        sum_node( const Range range_, bool left_is_final_ ) :
+            my_left_sum(NULL),
+            my_left(NULL),
+            my_right(NULL),
+            my_left_is_final(left_is_final_),
             my_range(range_)
         {
             // Poison fields that will be set by second pass.
@@ -122,7 +122,7 @@ namespace internal {
                 task* b = c.create_child(Range(my_range,split()),*my_left_sum,my_right,my_left_sum,my_stuff_last);
                 task* a = my_left_is_final ? NULL : c.create_child(my_range,*my_body,my_left,my_incoming,NULL);
                 set_ref_count( (a!=NULL)+(b!=NULL) );
-                my_body = NULL; 
+                my_body = NULL;
                 if( a ) spawn(*b);
                 else a = b;
                 return a;
@@ -153,7 +153,7 @@ namespace internal {
             __TBB_ASSERT( my_result.ref_count()==(my_result.my_left!=NULL)+(my_result.my_right!=NULL), NULL );
             if( my_result.my_left )
                 my_result.my_left_is_final = false;
-            if( my_right_zombie && my_sum ) 
+            if( my_right_zombie && my_sum )
                 ((*my_sum)->my_body).reverse_join(my_result.my_left_sum->my_body);
             __TBB_ASSERT( !my_return_slot, NULL );
             if( my_right_zombie || my_result.my_right ) {
@@ -168,9 +168,9 @@ namespace internal {
             return NULL;
         }
 
-        finish_scan( sum_node_type*& return_slot_, final_sum_type** sum_, sum_node_type& result_ ) : 
+        finish_scan( sum_node_type*& return_slot_, final_sum_type** sum_, sum_node_type& result_ ) :
             my_sum(sum_),
-            my_return_slot(return_slot_), 
+            my_return_slot(return_slot_),
             my_right_zombie(NULL),
             my_result(result_)
         {
@@ -186,7 +186,7 @@ namespace internal {
         typedef final_sum<Range,Body> final_sum_type;
         final_sum_type* my_body;
         /** Non-null if caller is requesting total. */
-        final_sum_type** my_sum; 
+        final_sum_type** my_sum;
         sum_node_type** my_return_slot;
         /** Null if computing root. */
         sum_node_type* my_parent_sum;
@@ -267,20 +267,20 @@ namespace internal {
                 (my_body->my_body)( my_range, final_scan_tag() );
             else if( my_sum )
                 (my_body->my_body)( my_range, pre_scan_tag() );
-            if( my_sum ) 
+            if( my_sum )
                 *my_sum = my_body;
             __TBB_ASSERT( !*my_return_slot, NULL );
         } else {
             sum_node_type* result;
-            if( my_parent_sum ) 
+            if( my_parent_sum )
                 result = new(allocate_additional_child_of(*my_parent_sum)) sum_node_type(my_range,/*my_left_is_final=*/my_is_final);
             else
                 result = new(task::allocate_root()) sum_node_type(my_range,/*my_left_is_final=*/my_is_final);
             finish_pass1_type& c = *new( allocate_continuation()) finish_pass1_type(*my_return_slot,my_sum,*result);
             // Split off right child
             start_scan& b = *new( c.allocate_child() ) start_scan( /*my_return_slot=*/result->my_right, *this, result );
-            b.my_is_right_child = true;    
-            // Left child is recycling of *this.  Must recycle this before spawning b, 
+            b.my_is_right_child = true;
+            // Left child is recycling of *this.  Must recycle this before spawning b,
             // otherwise b might complete and decrement c.ref_count() to zero, which
             // would cause c.execute() to run prematurely.
             recycle_as_child_of(c);
@@ -290,11 +290,11 @@ namespace internal {
             my_return_slot = &result->my_left;
             my_is_right_child = false;
             next_task = this;
-            my_parent_sum = result; 
+            my_parent_sum = result;
             __TBB_ASSERT( !*my_return_slot, NULL );
         }
         return next_task;
-    } 
+    }
 } // namespace internal
 //! @endcond
 
@@ -307,10 +307,10 @@ namespace internal {
     - \code Body::~Body(); \endcode                 Destructor
     - \code void Body::operator()( const Range& r, pre_scan_tag ); \endcode
                                                     Preprocess iterations for range \c r
-    - \code void Body::operator()( const Range& r, final_scan_tag ); \endcode 
+    - \code void Body::operator()( const Range& r, final_scan_tag ); \endcode
                                                     Do final processing for iterations of range \c r
     - \code void Body::reverse_join( Body& a ); \endcode
-                                                    Merge preprocessing state of \c a into \c this, where \c a was 
+                                                    Merge preprocessing state of \c a into \c this, where \c a was
                                                     created earlier from \c b by b's splitting constructor
 **/
 

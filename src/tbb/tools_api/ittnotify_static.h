@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -73,6 +73,8 @@ ITT_STUBV(LIBITTAPI, void, thr_ignore,   (void),                             (IT
 ITT_STUBV(ITTAPI, void, enable_attach, (void), (ITT_NO_PARAMS), enable_attach, __itt_group_all, "no args")
 
 #else  /* __ITT_INTERNAL_INIT */
+
+ITT_STUBV(ITTAPI, void, detach, (void), (ITT_NO_PARAMS), detach, __itt_group_control | __itt_group_legacy, "no args")
 
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
 ITT_STUBV(ITTAPI, void, sync_createA, (void *addr, const char    *objtype, const char    *objname, int attribute), (ITT_FORMAT addr, objtype, objname, attribute), sync_createA, __itt_group_sync | __itt_group_fsync, "%p, \"%s\", \"%s\", %x")

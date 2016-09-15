@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -18,9 +18,34 @@
     reasons why the executable file might be covered by the GNU General Public License.
 */
 
+#import <Availability.h>
+#import <Foundation/Foundation.h>
+
+#if TARGET_OS_IPHONE
+
+#import <UIKit/UIKit.h>
+#import "tbbAppDelegate.h"
+
+void get_screen_resolution(int *x, int *y) {
+    // Getting landscape screen resolution in any case
+    CGRect imageRect = [[UIScreen mainScreen] bounds];
+    *x=imageRect.size.width>imageRect.size.height?imageRect.size.width:imageRect.size.height;
+    *y=imageRect.size.width<imageRect.size.height?imageRect.size.width:imageRect.size.height;
+    return;
+}
+
+int cocoa_main(int argc, char * argv[]) {
+    @autoreleasepool {
+        return UIApplicationMain(argc, argv, nil, NSStringFromClass([tbbAppDelegate class]));
+    }
+}
+
+#elif TARGET_OS_MAC
+
 #import <Cocoa/Cocoa.h>
 
 int cocoa_main(int argc, char *argv[])
 {
     return NSApplicationMain(argc, (const char **)argv);
 }
+#endif

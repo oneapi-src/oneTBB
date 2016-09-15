@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -34,7 +34,7 @@ using tbb::task;
 // that the stealing limiting heuristic used by the task scheduler does not
 // switch off stealing when a large amount of TLS data is reserved.
 #if _MSC_VER
-__declspec(thread) 
+__declspec(thread)
 #elif __linux__ || ((__MINGW32__ || __MINGW64__) && __TBB_GCC_VERSION >= 40500)
 __thread
 #endif

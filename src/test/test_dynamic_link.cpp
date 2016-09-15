@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -67,7 +67,7 @@ int TestMain () {
     ASSERT( Harness::GetAddress( Harness::OpenLibrary(NULL), "foo1" ) && Harness::GetAddress( Harness::OpenLibrary(NULL), "foo2" ),
             "The executable doesn't export its symbols. Is the -rdynamic switch set during linking?" );
 #endif /* !_WIN32 */
-    // We want to link (or fail to link) to the symbols available from the 
+    // We want to link (or fail to link) to the symbols available from the
     // executable so it doesn't matter what the library name is specified in
     // the dynamic_link call - let it be an empty string.
     // Generally speaking the test has sense only on Linux but on Windows it

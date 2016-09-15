@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -97,7 +97,7 @@ struct Body3 {
 
 template <typename E>
 void TestExceptionClassExports ( const E& exc, tbb::internal::exception_id eid ) {
-    // The assertion here serves to shut up warnings about "eid not used". 
+    // The assertion here serves to shut up warnings about "eid not used".
     ASSERT( eid<tbb::internal::eid_max, NULL );
 #if TBB_USE_EXCEPTIONS
     for ( int i = 0; i < 2; ++i ) {
@@ -153,12 +153,15 @@ static void TestPreviewNames() {
     TestTypeDefinitionPresence( aggregator );
     TestTypeDefinitionPresence( aggregator_ext<Handler> );
     TestTypeDefinitionPresence2(concurrent_lru_cache<int, int> );
+    #if __TBB_FLOW_GRAPH_CPP11_FEATURES
+    TestTypeDefinitionPresence2( flow::composite_node<tbb::flow::tuple<int>, tbb::flow::tuple<int> > );
+    #endif
     TestTypeDefinitionPresence( static_partitioner );
 }
 #endif
 
 #if __TBB_TEST_SECONDARY
-/* This mode is used to produce a secondary object file that is linked with 
+/* This mode is used to produce a secondary object file that is linked with
    the main one in order to detect "multiple definition" linker error.
 */
 void secondary()

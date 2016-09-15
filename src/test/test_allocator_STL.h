@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -26,7 +26,7 @@ template<typename Container>
 void TestSequence(const typename Container::allocator_type &a) {
     Container c(a);
     for( int i=0; i<1000; ++i )
-        c.push_back(i*i);    
+        c.push_back(i*i);
     typename Container::const_iterator p = c.begin();
     for( int i=0; i<1000; ++i ) {
         ASSERT( *p==i*i, NULL );
@@ -40,7 +40,7 @@ template<typename Set>
 void TestSet(const typename Set::allocator_type &a) {
     Set s(typename Set::key_compare(), a);
     typedef typename Set::value_type value_type;
-    for( int i=0; i<100; ++i ) 
+    for( int i=0; i<100; ++i )
         s.insert(value_type(3*i));
     for( int i=0; i<300; ++i ) {
         ASSERT( s.erase(i)==size_t(i%3==0), NULL );
@@ -51,7 +51,7 @@ template<typename Map>
 void TestMap(const typename Map::allocator_type &a) {
     Map m(typename Map::key_compare(), a);
     typedef typename Map::value_type value_type;
-    for( int i=0; i<100; ++i ) 
+    for( int i=0; i<100; ++i )
         m.insert(value_type(i,i*i));
     for( int i=0; i<100; ++i )
         ASSERT( m.find(i)->second==i*i, NULL );

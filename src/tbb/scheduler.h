@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -222,15 +222,15 @@ public: // almost every class in TBB uses generic_scheduler
 
     //! Get a task from the local pool.
     /** Called only by the pool owner.
-        Returns the pointer to the task or NULL if the pool is empty. 
+        Returns the pointer to the task or NULL if the pool is empty.
         In the latter case compacts the pool. **/
     task* get_task();
 
     //! Attempt to get a task from the mailbox.
-    /** Gets a task only if it has not been executed by its sender or a thief 
+    /** Gets a task only if it has not been executed by its sender or a thief
         that has stolen it from the sender's task pool. Otherwise returns NULL.
 
-        This method is intended to be used only by the thread extracting the proxy 
+        This method is intended to be used only by the thread extracting the proxy
         from its mailbox. (In contrast to local task pool, mailbox can be read only
         by its owner). **/
     task* get_mailbox_task();
@@ -284,13 +284,13 @@ public:
     void wait_until_empty();
 #endif
 
-    /*override*/ 
+    /*override*/
     void spawn( task& first, task*& next );
 
-    /*override*/ 
+    /*override*/
     void spawn_root_and_wait( task& first, task*& next );
 
-    /*override*/ 
+    /*override*/
     void enqueue( task&, void* reserved );
 
     void local_spawn( task& first, task*& next );
@@ -302,7 +302,7 @@ public:
 
     //! Allocate task object, either from the heap or a free list.
     /** Returns uninitialized task object with initialized prefix. */
-    task& allocate_task( size_t number_of_bytes, 
+    task& allocate_task( size_t number_of_bytes,
                        __TBB_CONTEXT_ARG(task* parent, task_group_context* context) );
 
     //! Put task on free list.
@@ -318,7 +318,7 @@ public:
 
     //! True if the scheduler is on the outermost dispatch level in a master thread.
     /** Returns true when this scheduler instance is associated with an application
-        thread, and is not executing any TBB task. This includes being in a TBB 
+        thread, and is not executing any TBB task. This includes being in a TBB
         dispatch loop (one of wait_for_all methods) invoked directly from that thread. **/
     inline bool master_outermost_level () const;
 
@@ -335,7 +335,7 @@ public:
     //! Special value used to mark my_return_list as not taking any more entries.
     static task* plugged_return_list() {return (task*)(intptr_t)(-1);}
 
-    //! Number of small tasks that have been allocated by this scheduler. 
+    //! Number of small tasks that have been allocated by this scheduler.
     __TBB_atomic intptr_t my_small_task_count;
 
     //! List of small tasks that have been returned to this scheduler by other schedulers.
@@ -346,8 +346,8 @@ public:
     /** Returns obtained task or NULL if all attempts fail. */
     virtual task* receive_or_steal_task( __TBB_atomic reference_count& completion_ref_count ) = 0;
 
-    //! Free a small task t that that was allocated by a different scheduler 
-    void free_nonlocal_small_task( task& t ); 
+    //! Free a small task t that that was allocated by a different scheduler
+    void free_nonlocal_small_task( task& t );
 
 #if __TBB_TASK_GROUP_CONTEXT
     //! Returns task group context used by this scheduler instance.
@@ -368,18 +368,18 @@ public:
     // TODO: check whether it can be deadly preempted and replace by spinning/sleeping mutex
     spin_mutex my_context_list_mutex;
 
-    //! Last state propagation epoch known to this thread 
+    //! Last state propagation epoch known to this thread
     /** Together with the_context_state_propagation_epoch constitute synchronization protocol
-        that keeps hot path of task group context construction destruction mostly 
+        that keeps hot path of task group context construction destruction mostly
         lock-free.
         When local epoch equals the global one, the state of task group contexts
         registered with this thread is consistent with that of the task group trees
         they belong to. **/
     uintptr_t my_context_state_propagation_epoch;
 
-    //! Flag indicating that a context is being destructed by its owner thread 
+    //! Flag indicating that a context is being destructed by its owner thread
     /** Together with my_nonlocal_ctx_list_update constitute synchronization protocol
-        that keeps hot path of context destruction (by the owner thread) mostly 
+        that keeps hot path of context destruction (by the owner thread) mostly
         lock-free. **/
     tbb::atomic<uintptr_t> my_local_ctx_list_update;
 
@@ -554,7 +554,7 @@ inline void generic_scheduler::deallocate_task( task& t ) {
 #if TBB_USE_ASSERT
     task_prefix& p = t.prefix();
     p.state = 0xFF;
-    p.extra_state = 0xFF; 
+    p.extra_state = 0xFF;
     poison_pointer(p.next);
 #endif /* TBB_USE_ASSERT */
     NFS_Free((char*)&t-task_prefix_reservation_size);
@@ -591,7 +591,7 @@ void generic_scheduler::commit_relocated_tasks ( size_t new_tail ) {
     __TBB_ASSERT( is_local_task_pool_quiescent(),
                   "Task pool must be locked when calling commit_relocated_tasks()" );
     __TBB_store_relaxed( my_arena_slot->head, 0 );
-    // Tail is updated last to minimize probability of a thread making arena 
+    // Tail is updated last to minimize probability of a thread making arena
     // snapshot being misguided into thinking that this task pool is empty.
     __TBB_store_relaxed( my_arena_slot->tail, new_tail );
     release_task_pool();
@@ -645,9 +645,12 @@ inline intptr_t generic_scheduler::effective_reference_priority () const {
     // a lower priority arena, they should use arena's priority as a reference, lest
     // be trapped in a futile spinning (because market's priority would prohibit
     // executing ANY tasks in this arena).
-    return !worker_outermost_level() || 
-            my_arena->my_num_workers_allotted < my_arena->num_workers_active()
-            ? *my_ref_top_priority : my_arena->my_top_priority;
+    return !worker_outermost_level() ||
+        (my_arena->my_num_workers_allotted < my_arena->num_workers_active()
+#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
+         && my_arena->my_mandatory_mode!=arena_base::global_mandatory
+#endif
+            ) ? *my_ref_top_priority : my_arena->my_top_priority;
 }
 
 inline void generic_scheduler::offload_task ( task& t, intptr_t /*priority*/ ) {

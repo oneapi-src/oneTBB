@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -37,11 +37,11 @@ public:
     typedef typename std::allocator<T>::pointer pointer;
     typedef typename std::allocator<T>::reference reference;
 #endif /* HARNESS_EXTENDED_STD_COMPLIANCE */
-   
+
     explicit InputIterator( T * ptr): my_ptr(ptr){}
-    
+
     T& operator* () { return *my_ptr; }
-    
+
     InputIterator& operator++ () { ++my_ptr; return *this; }
 
     bool operator== ( const InputIterator& r ) { return my_ptr == r.my_ptr; }
@@ -58,13 +58,13 @@ public:
     typedef typename std::allocator<T>::pointer pointer;
     typedef typename std::allocator<T>::reference reference;
 #endif /* HARNESS_EXTENDED_STD_COMPLIANCE */
-   
+
     explicit ForwardIterator ( T * ptr ) : my_ptr(ptr){}
-    
+
     ForwardIterator ( const ForwardIterator& r ) : my_ptr(r.my_ptr){}
-    
+
     T& operator* () { return *my_ptr; }
-    
+
     ForwardIterator& operator++ () { ++my_ptr; return *this; }
 
     bool operator== ( const ForwardIterator& r ) { return my_ptr == r.my_ptr; }

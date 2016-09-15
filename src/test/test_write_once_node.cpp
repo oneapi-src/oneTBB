@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@
 #include "tbb/task_scheduler_init.h"
 
 #define N 300
-#define T 4 
+#define T 4
 #define M 4
 
 template< typename R >
@@ -48,7 +48,7 @@ void simple_read_write_tests() {
         for (int i = 0; i < M; ++i) {
            tbb::flow::make_edge( n, r[i] );
         }
-      
+
         if ( t%2 ) {
             for (int i = 0; i < M; ++i) {
                  size_t c = r[i].my_count;
@@ -60,7 +60,7 @@ void simple_read_write_tests() {
             R v1(static_cast<R>(i));
 
             bool result = n.try_put( v1 );
-            if ( !(t%2) && i == 1 ) 
+            if ( !(t%2) && i == 1 )
                 ASSERT( result == true, NULL );
             else
                 ASSERT( result == false, NULL );
@@ -70,9 +70,9 @@ void simple_read_write_tests() {
             for (int j = 0; j < N; ++j ) {
                 R v2(0);
                 ASSERT( n.try_get( v2 ), NULL );
-                if ( t%2 ) 
+                if ( t%2 )
                     ASSERT( R(N+1) == v2, NULL );
-                else 
+                else
                     ASSERT( R(1) == v2, NULL );
             }
         }
@@ -152,7 +152,7 @@ void parallel_read_write_tests() {
     }
 }
 
-int TestMain() { 
+int TestMain() {
     simple_read_write_tests<int>();
     simple_read_write_tests<float>();
     for( int p=MinThread; p<=MaxThread; ++p ) {

@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -24,25 +24,25 @@
 /**
     This file defines parameters of the internal statistics collected by the TBB
     library (currently by the task scheduler only).
-    
-    Statistics is accumulated separately in each thread and is dumped when 
+
+    Statistics is accumulated separately in each thread and is dumped when
     the scheduler instance associated with the given  thread is destroyed.
     For apps with multiple master threads or with the same master repeatedly
     initializing and then deinitializing task scheduler this results in TBB
     workers statistics getting inseparably mixed.
-    
+
     Therefore statistics is accumulated in arena slots, and should be dumped
     when arena is destroyed. This separates statistics collected for each
     scheduler activity region in each master thread.
 
-    With the current RML implementation (TBB 2.2, 3.0) to avoid complete loss of 
-    statistics data during app shutdown (because of lazy workers deinitialization 
-    logic) set __TBB_STATISTICS_EARLY_DUMP macro to write the statistics at the 
-    moment a master thread deinitializes its scheduler. This may happen a little 
+    With the current RML implementation (TBB 2.2, 3.0) to avoid complete loss of
+    statistics data during app shutdown (because of lazy workers deinitialization
+    logic) set __TBB_STATISTICS_EARLY_DUMP macro to write the statistics at the
+    moment a master thread deinitializes its scheduler. This may happen a little
     earlier than the moment of arena destruction resulting in the following undesired
     (though usually tolerable) effects:
     - a few events related to unsuccessful stealing or thread pool activity may be lost,
-    - statistics may be substantially incomplete in case of FIFO tasks used in 
+    - statistics may be substantially incomplete in case of FIFO tasks used in
       the FAF mode.
 
     Macro __TBB_STATISTICS_STDOUT and global variable __TBB_ActiveStatisticsGroups
@@ -50,12 +50,12 @@
 
     To add new counter:
     1) Insert it into the appropriate group range in statistics_counters;
-    2) Insert the corresponding field title into StatFieldTitles (preserving 
+    2) Insert the corresponding field title into StatFieldTitles (preserving
        relative order of the fields).
 
     To add new counters group:
     1) Insert new group bit flag into statistics_groups;
-    2) Insert the new group title into StatGroupTitles (preserving 
+    2) Insert the new group title into StatGroupTitles (preserving
        relative order of the groups).
     3) Add counter belonging to the new group as described above
 **/
@@ -116,10 +116,10 @@ struct statistics_counters {
     typedef long counter_type;
 
     // Group: sg_task_allocation
-    // Counters in this group can have negative values as the tasks migrate across 
+    // Counters in this group can have negative values as the tasks migrate across
     // threads while the associated counters are updated in the current thread only
     // to avoid data races
-    
+
     //! Number of tasks allocated and not yet destroyed
     counter_type active_tasks;
     //! Number of task corpses stored for future reuse
@@ -127,14 +127,14 @@ struct statistics_counters {
     //! Number of big tasks allocated during the run
     /** To find total number of tasks malloc'd, compute (big_tasks+my_small_task_count) */
     counter_type big_tasks;
-    
+
     // Group: sg_task_execution
 
     //! Number of tasks executed
     counter_type tasks_executed;
     //! Number of elided spawns
     counter_type spawns_bypassed;
-    
+
     // Group: sg_stealing
 
     //! Number of tasks successfully stolen
@@ -153,7 +153,7 @@ struct statistics_counters {
     //! Number of affinitized tasks executed by the owner
     /** Goes as "revoked" in statistics printout. **/
     counter_type proxies_executed;
-    //! Number of affinitized tasks intercepted by thieves 
+    //! Number of affinitized tasks intercepted by thieves
     counter_type proxies_stolen;
     //! Number of proxy bypasses by thieves during stealing
     counter_type proxies_bypassed;

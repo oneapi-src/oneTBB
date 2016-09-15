@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -174,7 +174,11 @@ task* custom_scheduler<SchedulerTraits>::receive_or_steal_task( __TBB_atomic ref
             break; // exit stealing loop and return;
         }
         // Check if the resource manager requires our arena to relinquish some threads
-        if ( outermost_worker_level && my_arena->my_num_workers_allotted < my_arena->num_workers_active() ) {
+        if ( outermost_worker_level && (my_arena->my_num_workers_allotted < my_arena->num_workers_active()
+#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
+                 || my_arena->recall_by_mandatory_request()
+#endif
+                 ) ) {
 #if !__TBB_TASK_ARENA
             __TBB_ASSERT( is_worker(), NULL );
 #endif
@@ -438,7 +442,7 @@ void custom_scheduler<SchedulerTraits>::local_wait_for_all( task& parent, task* 
                         else {
                             // Mark arena as full to unlock arena priority level adjustment
                             // by arena::is_out_of_work(), and ensure worker's presence.
-                            my_arena->advertise_new_work<false>();
+                            my_arena->advertise_new_work<arena::wakeup>();
                         }
                         goto stealing_ground;
                     }

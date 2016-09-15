@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -69,11 +69,11 @@ int __TBB_load_ittnotify() {
 namespace tbb {
 
 #if DO_ITT_NOTIFY
-    const tchar 
+    const tchar
             *SyncType_GlobalLock = _T("TbbGlobalLock"),
             *SyncType_Scheduler = _T("%Constant")
             ;
-    const tchar 
+    const tchar
             *SyncObj_SchedulerInitialization = _T("TbbSchedulerInitialization"),
             *SyncObj_SchedulersList = _T("TbbSchedulersList"),
             *SyncObj_WorkerLifeCycleMgmt = _T("TBB Scheduler"),

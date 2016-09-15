@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -56,12 +56,12 @@ private:
         st_quit
     };
     atomic<state_t> my_state;
-    
+
     //! Associated server
-    private_server& my_server; 
+    private_server& my_server;
 
     //! Associated client
-    tbb_client& my_client; 
+    tbb_client& my_client;
 
     //! index used for avoiding the 64K aliasing problem
     const size_t my_index;
@@ -79,7 +79,7 @@ private:
 
     friend class private_server;
 
-    //! Actions executed by the associated thread 
+    //! Actions executed by the associated thread
     void run();
 
     //! Wake up associated thread (or launch a thread if there is none)
@@ -93,7 +93,7 @@ private:
     static void release_handle(thread_handle my_handle, bool join);
 
 protected:
-    private_worker( private_server& server, tbb_client& client, const size_t i ) : 
+    private_worker( private_server& server, tbb_client& client, const size_t i ) :
         my_server(server),
         my_client(client),
         my_index(i)
@@ -132,7 +132,7 @@ private:
 
     //! Number of jobs that could use their associated thread minus number of active threads.
     /** If negative, indicates oversubscription.
-        If positive, indicates that more threads should run. 
+        If positive, indicates that more threads should run.
         Can be lowered asynchronously, but must be raised only while holding my_asleep_list_mutex,
         because raising it impacts the invariant for sleeping threads. */
     atomic<int> my_slack;
@@ -158,7 +158,7 @@ private:
         which in turn each wake up two threads, etc. */
     void propagate_chain_reaction() {
         // First test of a double-check idiom.  Second test is inside wake_some(0).
-        if( my_asleep_list_root ) 
+        if( my_asleep_list_root )
             wake_some(0);
     }
 
@@ -169,13 +169,13 @@ private:
     void wake_some( int additional_slack );
 
     virtual ~private_server();
-    
+
     void remove_server_ref() {
         if( --my_ref_count==0 ) {
             my_client.acknowledge_close_connection();
             this->~private_server();
             tbb::cache_aligned_allocator<private_server>().deallocate( this, 1 );
-        } 
+        }
     }
 
     friend class private_worker;
@@ -184,7 +184,7 @@ public:
 
     /*override*/ version_type version() const {
         return 0;
-    } 
+    }
 
     /*override*/ void request_close_connection( bool /*exiting*/ ) {
         for( size_t i=0; i<my_n_thread; ++i )
@@ -266,7 +266,7 @@ void private_worker::run() {
     my_server.propagate_chain_reaction();
 
     // Transiting to st_normal here would require setting my_handle,
-    // which would create race with the launching thread and 
+    // which would create race with the launching thread and
     // complications in handle management on Windows.
 
     ::rml::job& j = *my_client.create_one_job();
@@ -322,11 +322,11 @@ inline void private_worker::wake_or_launch() {
 //------------------------------------------------------------------------
 // Methods of private_server
 //------------------------------------------------------------------------
-private_server::private_server( tbb_client& client ) : 
-    my_client(client), 
+private_server::private_server( tbb_client& client ) :
+    my_client(client),
     my_n_thread(client.max_job_count()),
     my_stack_size(client.min_stack_size()),
-    my_thread_array(NULL) 
+    my_thread_array(NULL)
 {
     my_ref_count = my_n_thread+1;
     my_slack = 0;
@@ -337,15 +337,15 @@ private_server::private_server( tbb_client& client ) :
     my_thread_array = tbb::cache_aligned_allocator<padded_private_worker>().allocate( my_n_thread );
     memset( my_thread_array, 0, sizeof(private_worker)*my_n_thread );
     for( size_t i=0; i<my_n_thread; ++i ) {
-        private_worker* t = new( &my_thread_array[i] ) padded_private_worker( *this, client, i ); 
+        private_worker* t = new( &my_thread_array[i] ) padded_private_worker( *this, client, i );
         t->my_next = my_asleep_list_root;
         my_asleep_list_root = t;
-    } 
+    }
 }
 
 private_server::~private_server() {
     __TBB_ASSERT( my_net_slack_requests==0, NULL );
-    for( size_t i=my_n_thread; i--; ) 
+    for( size_t i=my_n_thread; i--; )
         my_thread_array[i].~padded_private_worker();
     tbb::cache_aligned_allocator<padded_private_worker>().deallocate( my_thread_array, my_n_thread );
     tbb::internal::poison_pointer( my_thread_array );
@@ -396,7 +396,7 @@ void private_server::wake_some( int additional_slack ) {
         }
     }
 done:
-    while( w>wakee ) 
+    while( w>wakee )
         (*--w)->wake_or_launch();
 }
 

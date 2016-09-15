@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -636,7 +636,7 @@ namespace interface6 {
             }
             construct_by_args( P&& ... args ) : pack(std::forward<P>(args)...) {}
         };
-#endif 
+#endif
 
         // storage for initialization function pointer
         // TODO: consider removing the template parameter T here and in callback_leaf
@@ -708,7 +708,7 @@ namespace interface6 {
             ets_element() { is_built = false; }  // not currently-built
             U* value() { return my_space.begin(); }
             U* value_committed() { is_built = true; return my_space.begin(); }
-            ~ets_element() { 
+            ~ets_element() {
                 if(is_built) {
                     my_space.begin()->~U();
                     is_built = false;

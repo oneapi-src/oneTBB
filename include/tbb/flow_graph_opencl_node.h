@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -90,7 +90,7 @@ template< typename T, typename Factory >
 class receiver<dependency_msg<T, Factory>> {
 public:
     //! The predecessor type for this node
-    typedef sender<dependency_msg<T, Factory>> dependency_predecessor_type;
+    typedef sender<dependency_msg<T, Factory>> predecessor_type;
     typedef proxy_dependency_receiver<T, Factory> proxy;
 
     receiver() : my_ordinary_receiver( *this ) {}
@@ -104,10 +104,10 @@ public:
     virtual task *try_put_task( const dependency_msg<T, Factory>& ) = 0;
 
     //! Add a predecessor to the node
-    virtual bool register_predecessor( dependency_predecessor_type & ) { return false; }
+    virtual bool register_predecessor( predecessor_type & ) { return false; }
 
     //! Remove a predecessor from the node
-    virtual bool remove_predecessor( dependency_predecessor_type & ) { return false; }
+    virtual bool remove_predecessor( predecessor_type & ) { return false; }
 
 protected:
     //! put receiver back in initial state
@@ -117,6 +117,7 @@ private:
     class ordinary_receiver : public receiver < T >, tbb::internal::no_assign {
         //! The predecessor type for this node
         typedef sender<T> predecessor_type;
+        typedef sender<dependency_msg<T, Factory>> dependency_predecessor_type;
     public:
         ordinary_receiver(receiver<dependency_msg<T, Factory>>& owner) : my_owner(owner) {}
 
@@ -174,7 +175,7 @@ class proxy_dependency_sender;
 template< typename T, typename Factory >
 class proxy_dependency_receiver : public receiver < dependency_msg<T, Factory> >, tbb::internal::no_assign {
 public:
-    typedef sender<dependency_msg<T, Factory>> dependency_predecessor_type;
+    typedef sender<dependency_msg<T, Factory>> predecessor_type;
 
     proxy_dependency_receiver( receiver<T>& r ) : my_r( r ) {}
 
@@ -190,11 +191,11 @@ public:
     }
 
     //! Add a predecessor to the node
-    /* override */ bool register_predecessor( dependency_predecessor_type &s ) {
+    /* override */ bool register_predecessor( predecessor_type &s ) {
         return my_r.register_predecessor( s.ordinary_sender() );
     }
     //! Remove a predecessor from the node
-    /* override */ bool remove_predecessor( dependency_predecessor_type &s ) {
+    /* override */ bool remove_predecessor( predecessor_type &s ) {
         return my_r.remove_predecessor( s.ordinary_sender() );
     }
 protected:
@@ -216,14 +217,14 @@ public:
     sender() : my_ordinary_sender( *this ) {}
 
     //! The successor type for this sender
-    typedef receiver<dependency_msg<T, Factory>> dependency_successor_type;
+    typedef receiver<dependency_msg<T, Factory>> successor_type;
     typedef proxy_dependency_sender<T, Factory> proxy;
 
     //! Add a new successor to this node
-    virtual bool register_successor( dependency_successor_type &r ) = 0;
+    virtual bool register_successor( successor_type &r ) = 0;
 
     //! Removes a successor from this node
-    virtual bool remove_successor( dependency_successor_type &r ) = 0;
+    virtual bool remove_successor( successor_type &r ) = 0;
 
     //! Request an item from the sender
     virtual bool try_get( dependency_msg<T, Factory> & ) { return false; }
@@ -234,6 +235,7 @@ private:
     class ordinary_sender : public sender < T >, tbb::internal::no_assign {
         //! The successor type for this sender
         typedef receiver<T> successor_type;
+        typedef receiver<dependency_msg<T, Factory>> dependency_successor_type;
     public:
         ordinary_sender(sender<dependency_msg<T, Factory>>& owner) : my_owner(owner) {}
 
@@ -301,17 +303,17 @@ public:
 template< typename T, typename Factory >
 class proxy_dependency_sender : public sender < dependency_msg<T, Factory> >, tbb::internal::no_assign {
 public:
-    typedef receiver<dependency_msg<T, Factory>> dependency_successor_type;
+    typedef receiver<dependency_msg<T, Factory>> successor_type;
 
     proxy_dependency_sender( sender<T>& s ) : my_s( s ) {}
 
     //! Add a new successor to this node
-    /* override */ bool register_successor( dependency_successor_type &r ) {
+    /* override */ bool register_successor( successor_type &r ) {
         return my_s.register_successor( r.ordinary_receiver() );
     }
 
     //! Removes a successor from this node
-    /* override */ bool remove_successor( dependency_successor_type &r ) {
+    /* override */ bool remove_successor( successor_type &r ) {
         return my_s.remove_successor( r.ordinary_receiver() );
     }
 
@@ -407,13 +409,16 @@ std::string platform_info<std::string>( cl_platform_id p, cl_platform_info  i ) 
 
 
 class opencl_device {
+public:
     typedef size_t device_id_type;
     enum : device_id_type {
         unknown = device_id_type( -2 ),
         host = device_id_type( -1 )
     };
-public:
+
     opencl_device() : my_device_id( unknown ) {}
+
+    opencl_device( cl_device_id cl_d_id, device_id_type device_id ) : my_device_id( device_id ), my_cl_device_id( cl_d_id ) {}
 
     std::string platform_profile() const {
         return platform_info<std::string>( platform(), CL_PLATFORM_PROFILE );
@@ -510,6 +515,18 @@ public:
 
     cl_uint address_bits() const {
         return device_info<cl_uint>( my_cl_device_id, CL_DEVICE_ADDRESS_BITS );
+    }
+
+    cl_device_id device_id() const {
+        return my_cl_device_id;
+    }
+
+    cl_command_queue command_queue() const {
+        return my_cl_command_queue;
+    }
+
+    void set_command_queue( cl_command_queue cmd_queue ) {
+        my_cl_command_queue = cmd_queue;
     }
 
 private:
@@ -724,6 +741,8 @@ public:
         return my_host_ptr;
     }
 
+    Factory *factory() const { return my_factory; }
+
     dependency_msg<void*, Factory> send( opencl_device d, const cl_event *e );
     dependency_msg<void*, Factory> receive( const cl_event *e );
     virtual void map_memory( opencl_device, dependency_msg<void*, Factory> & ) = 0;
@@ -748,6 +767,14 @@ public:
         enforce_cl_retcode( err, "Failed to create an OpenCL buffer" );
     }
 
+    // The constructor for subbuffers.
+    opencl_buffer_impl( cl_mem m, size_t index, size_t size, Factory& f ) : opencl_memory<Factory>( f ), my_size( size ) {
+        cl_int err;
+        cl_buffer_region region = { index, size };
+        this->my_cl_mem = clCreateSubBuffer( m, 0, CL_BUFFER_CREATE_TYPE_REGION, &region, &err );
+        enforce_cl_retcode( err, "Failed to create an OpenCL subbuffer" );
+    }
+
     size_t size() const {
         return my_size;
     }
@@ -767,6 +794,9 @@ enum access_type {
     write_only,
     read_only
 };
+
+template <typename T, typename Factory = default_opencl_factory>
+class opencl_subbuffer;
 
 template <typename T, typename Factory = default_opencl_factory>
 class opencl_buffer {
@@ -823,7 +853,11 @@ public:
         else dependency.clear_event();
     }
 
+    opencl_subbuffer<T, Factory> subbuffer( size_t index, size_t size ) const;
 private:
+    // The constructor for subbuffers.
+    opencl_buffer( Factory &f, cl_mem m, size_t index, size_t size ) : my_impl( std::make_shared<impl_type>( m, index*sizeof(T), size*sizeof(T), f ) ) {}
+
     typedef opencl_buffer_impl<Factory> impl_type;
 
     std::shared_ptr<impl_type> my_impl;
@@ -834,7 +868,23 @@ private:
 
     template <typename>
     friend class opencl_factory;
+    template <typename, typename>
+    friend class opencl_subbuffer;
 };
+
+template <typename T, typename Factory>
+class opencl_subbuffer : public opencl_buffer<T, Factory> {
+    opencl_buffer<T, Factory> my_owner;
+public:
+    opencl_subbuffer() {}
+    opencl_subbuffer( const opencl_buffer<T, Factory> &owner, size_t index, size_t size ) :
+        opencl_buffer<T, Factory>( *owner.my_impl->factory(), owner.native_object(), index, size ), my_owner( owner ) {}
+};
+
+template <typename T, typename Factory>
+opencl_subbuffer<T, Factory> opencl_buffer<T, Factory>::subbuffer( size_t index, size_t size ) const {
+    return opencl_subbuffer<T, Factory>( *this, index, size );
+}
 
 
 template <typename DeviceFilter>
@@ -918,7 +968,7 @@ private:
 
     bool is_same_context( opencl_device::device_id_type d1, opencl_device::device_id_type d2 ) {
         __TBB_ASSERT( d1 != opencl_device::unknown && d2 != opencl_device::unknown, NULL );
-        // Currently, factory supports only one context so if the both devices are not host it means the are in the same context. 
+        // Currently, factory supports only one context so if the both devices are not host it means the are in the same context.
         if ( d1 != opencl_device::host && d2 != opencl_device::host )
             return true;
         return d1 == d2;
@@ -1014,7 +1064,7 @@ private:
 
 class opencl_foundation : tbb::internal::no_assign {
     struct default_device_selector_type {
-        opencl_device operator()( const opencl_device_list& devices ) { 
+        opencl_device operator()( const opencl_device_list& devices ) {
             return *devices.begin();
         }
     };
@@ -1653,20 +1703,20 @@ class opencl_node< tuple<Ports...>, JP, Factory > : public composite_node < tupl
         template <typename NDRange>
         NDRange ndrange_value( NDRange&& r, const kernel_input_tuple& ) const { return r; }
         template <int N>
-        typename tuple_element<N+1,kernel_input_tuple>::type::value_type ndrange_value( port_ref_impl<N,N>, const kernel_input_tuple& ip ) const { 
+        typename tuple_element<N+1,kernel_input_tuple>::type::value_type ndrange_value( port_ref_impl<N,N>, const kernel_input_tuple& ip ) const {
             // "+1" since get<0>(ip) is opencl_device.
             return get<N+1>(ip).data(false);
         }
         template <int N1,int N2>
-        void ndrange_value( port_ref_impl<N1,N2>, const kernel_input_tuple& ip ) const { 
+        void ndrange_value( port_ref_impl<N1,N2>, const kernel_input_tuple& ip ) const {
             __TBB_STATIC_ASSERT( N1==N2, "Do not use a port_ref range (e.g. port_ref<0,2>) as an argument for the set_ndranges routine" );
         }
         template <int N>
-        typename tuple_element<N+1,kernel_input_tuple>::type::value_type ndrange_value( port_ref_impl<N,N>(*)(), const kernel_input_tuple& ip ) const { 
+        typename tuple_element<N+1,kernel_input_tuple>::type::value_type ndrange_value( port_ref_impl<N,N>(*)(), const kernel_input_tuple& ip ) const {
             return ndrange_value(port_ref<N,N>(), ip);
         }
         template <int N1,int N2>
-        void ndrange_value( port_ref_impl<N1,N2>(*)(), const kernel_input_tuple& ip ) const { 
+        void ndrange_value( port_ref_impl<N1,N2>(*)(), const kernel_input_tuple& ip ) const {
             return ndrange_value(port_ref<N1,N2>(), ip);
         }
         // ------------------------------------------- //
@@ -1788,7 +1838,7 @@ class opencl_node< tuple<Ports...>, JP, Factory > : public composite_node < tupl
             set_args_func( opencl_kernel &k, const kernel_input_tuple &ip ) : my_opencl_kernel( k ), my_ip( ip ) {}
             // It is immpossible to use Args... because a function pointer cannot be casted to a function reference implicitly.
             // Allow the compiler to deduce types for function pointers automatically.
-            template <typename... A> 
+            template <typename... A>
             void operator()( A&&... a ) {
                 my_opencl_kernel.set_args<0>( my_ip, std::forward<A>( a )... );
             }
@@ -1801,7 +1851,7 @@ class opencl_node< tuple<Ports...>, JP, Factory > : public composite_node < tupl
         public:
             send_func( opencl_device d ) : my_device( d ) {}
             void operator()() {}
-            template <typename T, typename... Rest> 
+            template <typename T, typename... Rest>
             void operator()( T &&t, Rest&&... rest ) {
                 send_if_memory_object( my_device, std::forward<T>( t ) );
                 (*this)( std::forward<Rest>( rest )... );
@@ -2067,6 +2117,7 @@ using interface8::read_only;
 using interface8::read_write;
 using interface8::write_only;
 using interface8::opencl_buffer;
+using interface8::opencl_subbuffer;
 using interface8::opencl_device;
 using interface8::opencl_device_list;
 using interface8::opencl_program;

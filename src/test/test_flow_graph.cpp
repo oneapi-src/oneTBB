@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -66,13 +66,13 @@ bool functor_flag[F];
 
 struct set_functor {
     int my_i;
-    set_functor( int i ) : my_i(i) {} 
+    set_functor( int i ) : my_i(i) {}
     void operator()() { functor_flag[my_i] = true; }
 };
 
 struct return_functor {
     int my_i;
-    return_functor( int i ) : my_i(i) {} 
+    return_functor( int i ) : my_i(i) {}
     int operator()() { return my_i; }
 };
 
@@ -98,12 +98,12 @@ static void test_run() {
 
         for ( int j = 0; j < F; ++j ) {
             #if __TBB_LAMBDAS_PRESENT
-                h.run( [=]() { lambda_flag[j] = true; } );  
-                h.run( lambda_r, [=]() { return j; } );  
+                h.run( [=]() { lambda_flag[j] = true; } );
+                h.run( lambda_r, [=]() { return j; } );
             #endif
             h.run( set_functor(j) );
             h.run( functor_r, return_functor(j) );
-        } 
+        }
         h.wait_for_all();
         for ( int j = 0; j < F; ++j ) {
         #if __TBB_LAMBDAS_PRESENT
@@ -172,8 +172,8 @@ class AddRemoveBody : NoAssign {
     int nThreads;
     Harness::SpinBarrier &barrier;
 public:
-    AddRemoveBody(int nthr, Harness::SpinBarrier &barrier_, tbb::flow::graph& _g) : 
-        g(_g), nThreads(nthr), barrier(barrier_) 
+    AddRemoveBody(int nthr, Harness::SpinBarrier &barrier_, tbb::flow::graph& _g) :
+        g(_g), nThreads(nthr), barrier(barrier_)
     {}
     void operator()(const int /*threadID*/) const {
         my_int_buffer b(g);
@@ -194,7 +194,7 @@ public:
         for (tbb::flow::graph::iterator it = g.begin(); it != g.end(); ++it) {
             count++;
         }
-        ASSERT(count==nThreads, "error in iterator count"); 
+        ASSERT(count==nThreads, "error in iterator count");
         barrier.wait();  // wait until all threads are done counting
     } // initial node gets deleted
 };
@@ -206,7 +206,7 @@ void test_parallel(int nThreads) {
     NativeParallelFor(nThreads, body);
 }
 
-int TestMain() { 
+int TestMain() {
     if( MinThread<1 ) {
         REPORT("number of threads must be positive\n");
         exit(1);

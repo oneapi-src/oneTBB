@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -70,7 +70,7 @@ void spin_rw_mutex_v3::internal_acquire_reader()
         state_t s = const_cast<volatile state_t&>(state); // ensure reloading
         if( !(s & (WRITER|WRITER_PENDING)) ) { // no writer or write requests
             state_t t = (state_t)__TBB_FetchAndAddW( &state, (intptr_t) ONE_READER );
-            if( !( t&WRITER )) 
+            if( !( t&WRITER ))
                 break; // successfully stored increased number of readers
             // writer got there first, undo the increment
             __TBB_FetchAndAddW( &state, -(intptr_t)ONE_READER );

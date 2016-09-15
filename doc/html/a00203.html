@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::flow::interface8::async_node&lt; Input, Output, Policy, Allocator &gt;::try_put_functor Struct Reference</title>
+<title>tbb::internal::thread_closure_base Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,56 +33,45 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><a class="el" href="a00020.html">async_node</a></li><li class="navelem"><a class="el" href="a00203.html">try_put_functor</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00276.html">tbb</a></li><li class="navelem"><b>internal</b></li><li class="navelem"><a class="el" href="a00203.html">thread_closure_base</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-attribs">Public Attributes</a> &#124;
-<a href="a00401.html">List of all members</a>  </div>
+<a href="a00484.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::flow::interface8::async_node&lt; Input, Output, Policy, Allocator &gt;::try_put_functor Struct Reference</div>  </div>
+<div class="title">tbb::internal::thread_closure_base Struct Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
+<div class="dynheader">
+Inheritance diagram for tbb::internal::thread_closure_base:</div>
+<div class="dyncontent">
+ <div class="center">
+  <img src="a00203.png" usemap="#tbb::internal::thread_closure_base_map" alt=""/>
+  <map id="tbb::internal::thread_closure_base_map" name="tbb::internal::thread_closure_base_map">
+<area href="a00200.html" alt="tbb::internal::thread_closure_0&lt; F &gt;" shape="rect" coords="0,56,250,80"/>
+<area href="a00201.html" title="Structure used to pass user function with 1 argument to thread. " alt="tbb::internal::thread_closure_1&lt; F, X &gt;" shape="rect" coords="260,56,510,80"/>
+<area href="a00202.html" alt="tbb::internal::thread_closure_2&lt; F, X, Y &gt;" shape="rect" coords="520,56,770,80"/>
+</map>
+ </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:a13b4b066a3ca4e4952c070a2dc4cdc72"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a13b4b066a3ca4e4952c070a2dc4cdc72"></a>
-typedef <br class="typebreak"/>
-internal::multifunction_output<br class="typebreak"/>
-&lt; Output &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>output_port_type</b></td></tr>
-<tr class="separator:a13b4b066a3ca4e4952c070a2dc4cdc72"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:af0c7b8f0c49de8b06134fbcd72f04765"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af0c7b8f0c49de8b06134fbcd72f04765"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>try_put_functor</b> (output_port_type &amp;p, const Output &amp;v)</td></tr>
-<tr class="separator:af0c7b8f0c49de8b06134fbcd72f04765"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6461348d600617d4f13ccfc337be74e4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6461348d600617d4f13ccfc337be74e4"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>operator()</b> ()</td></tr>
-<tr class="separator:a6461348d600617d4f13ccfc337be74e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
-Public Attributes</h2></td></tr>
-<tr class="memitem:a76b9fa41ca3ac85b7921017646665853"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a76b9fa41ca3ac85b7921017646665853"></a>
-output_port_type *&#160;</td><td class="memItemRight" valign="bottom"><b>port</b></td></tr>
-<tr class="separator:a76b9fa41ca3ac85b7921017646665853"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a45d0a9d5b936c1949a66491a3bd0b55a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a45d0a9d5b936c1949a66491a3bd0b55a"></a>
-const Output *&#160;</td><td class="memItemRight" valign="bottom"><b>value</b></td></tr>
-<tr class="separator:a45d0a9d5b936c1949a66491a3bd0b55a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6701aa0ac17cb05c7a29856e58747578"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6701aa0ac17cb05c7a29856e58747578"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>result</b></td></tr>
-<tr class="separator:a6701aa0ac17cb05c7a29856e58747578"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a624f5a5a40051faf39444ad3a9f36df5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a624f5a5a40051faf39444ad3a9f36df5"></a>
+void *&#160;</td><td class="memItemRight" valign="bottom"><b>operator new</b> (size_t size)</td></tr>
+<tr class="separator:a624f5a5a40051faf39444ad3a9f36df5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a56e1bfd2ca46abcc3c3f265eff10360d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a56e1bfd2ca46abcc3c3f265eff10360d"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>operator delete</b> (void *ptr)</td></tr>
+<tr class="separator:a56e1bfd2ca46abcc3c3f265eff10360d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this struct was generated from the following file:<ul>
-<li><a class="el" href="a00229.html">flow_graph.h</a></li>
+<li>tbb_thread.h</li>
 </ul>
 </div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

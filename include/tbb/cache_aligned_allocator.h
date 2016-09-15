@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -76,7 +76,7 @@ public:
 
     pointer address(reference x) const {return &x;}
     const_pointer address(const_reference x) const {return &x;}
-    
+
     //! Allocate space for n objects, starting on a cache/sector line.
     pointer allocate( size_type n, const void* hint=0 ) {
         // The "hint" argument is always ignored in NFS_Allocate thus const_cast shouldn't hurt
@@ -115,7 +115,7 @@ public:
 
 //! Analogous to std::allocator<void>, as defined in ISO C++ Standard, Section 20.4.1
 /** @ingroup memory_allocation */
-template<> 
+template<>
 class cache_aligned_allocator<void> {
 public:
     typedef void* pointer;

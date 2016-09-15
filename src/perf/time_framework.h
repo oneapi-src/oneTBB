@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -143,7 +143,7 @@ class NanosecPerValue : public Tester {
         Timer timer;
         Tester::test(testn, threadn);
         // return time (ns) per value
-        return timer.get_time()*1000000.0/double(Tester::value);
+        return timer.get_time()*1e+9/double(Tester::value);
     }
 };
 

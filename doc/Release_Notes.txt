@@ -83,6 +83,11 @@ Software - Supported Compilers
         starting from gcc 4.1 and higher
     Xcode* 6.3 and higher and command line tools (OS X* only)
 
+Software - Supported Performance Analysis Tools
+
+    Intel(R) VTune(TM) Amplifier XE 2015 and higher.
+    Intel(R) Inspector XE 2015 and higher.
+    Intel(R) Advisor XE 2015 and higher.
 
 Known Issues
 ------------
@@ -162,14 +167,8 @@ Library Issues
         4.8.2, and 4.9.2), the destructor of a task_group might not
         throw missing_wait exception.
 
-    - On OS X* 10.11 some examples might fail to run via makefiles in
-        case System Integrity Protection is enabled. In such case
-        instead of `make <args>` use the following command:
-        `run_cmd="DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH" make <args>`
-        or run executables directly.
-
 ------------------------------------------------------------------------
-Copyright (C) 2005-2015 Intel Corporation.  All Rights Reserved.
+Copyright (C) 2005-2016 Intel Corporation.  All Rights Reserved.
 
 Intel, Xeon and Pentium are registered trademarks or trademarks of
 Intel Corporation or its subsidiaries in the United States and other countries.

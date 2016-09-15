@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -97,7 +97,7 @@ void test_serial_broadcasts() {
 
         for ( int r = 0; r < num_receivers; ++r ) {
             tbb::flow::make_edge( b, receivers[r] );
-        } 
+        }
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
         ASSERT( b.successor_count() == (size_t)num_receivers, NULL);
 #endif
@@ -111,9 +111,9 @@ void test_serial_broadcasts() {
                 ASSERT( receivers[r][n] == 1, NULL );
             }
             tbb::flow::remove_edge( b, receivers[r] );
-        } 
+        }
         ASSERT( b.try_put( (T)0 ), NULL );
-        for ( int r = 0; r < num_receivers; ++r ) 
+        for ( int r = 0; r < num_receivers; ++r )
             ASSERT( receivers[0][0] == 1, NULL ) ;
 
         delete [] receivers;
@@ -129,14 +129,14 @@ class native_body : private NoAssign {
 
 public:
 
-    native_body( tbb::flow::broadcast_node<T> &b ) : my_b(b) {} 
+    native_body( tbb::flow::broadcast_node<T> &b ) : my_b(b) {}
 
     void operator()(int) const {
         for (int n = 0; n < N; ++n ) {
             ASSERT( my_b.try_put( (T)n ), NULL );
         }
     }
- 
+
 };
 
 template< typename T >
@@ -146,7 +146,7 @@ void run_parallel_broadcasts(int p, tbb::flow::broadcast_node<T>& b) {
 
         for ( int r = 0; r < num_receivers; ++r ) {
             tbb::flow::make_edge( b, receivers[r] );
-        } 
+        }
 
         NativeParallelFor( p, native_body<T>( b ) );
 
@@ -155,9 +155,9 @@ void run_parallel_broadcasts(int p, tbb::flow::broadcast_node<T>& b) {
                 ASSERT( (int)receivers[r][n] == p, NULL );
             }
             tbb::flow::remove_edge( b, receivers[r] );
-        } 
+        }
         ASSERT( b.try_put( (T)0 ), NULL );
-        for ( int r = 0; r < num_receivers; ++r ) 
+        for ( int r = 0; r < num_receivers; ++r )
             ASSERT( (int)receivers[r][0] == p, NULL ) ;
 
         delete [] receivers;
@@ -171,7 +171,7 @@ void test_parallel_broadcasts(int p) {
     tbb::flow::graph g;
     tbb::flow::broadcast_node<T> b(g);
     run_parallel_broadcasts(p, b);
-    
+
     // test copy constructor
     tbb::flow::broadcast_node<T> b_copy(b);
     run_parallel_broadcasts(p, b_copy);
@@ -317,7 +317,7 @@ void test_extract() {
 }
 #endif  // TBB_PREVIEW_FLOW_GRAPH_FEATURES
 
-int TestMain() { 
+int TestMain() {
     if( MinThread<1 ) {
         REPORT("number of threads must be positive\n");
         exit(1);

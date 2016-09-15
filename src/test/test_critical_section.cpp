@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -41,11 +41,11 @@ struct BusyBody : NoAssign {
     bool test_throw;
 
     BusyBody( int nThread_, int workRatiox100_, tbb::enumerable_thread_specific<double> &locals_, int &unprotected_count_, bool test_throw_) :
-        locals(locals_), 
-        nThread(nThread_), 
-        WorkRatiox100(workRatiox100_), 
+        locals(locals_),
+        nThread(nThread_),
+        WorkRatiox100(workRatiox100_),
         unprotected_count(unprotected_count_),
-        test_throw(test_throw_) { 
+        test_throw(test_throw_) {
         sBarrier.initialize(nThread_);
     }
 
@@ -60,7 +60,7 @@ struct BusyBody : NoAssign {
             }
             cs.lock();
             ASSERT( !cs.try_lock(), "recursive try_lock must fail" );
-#if TBB_USE_EXCEPTIONS && !__TBB_THROW_ACROSS_MODULE_BOUNDARY_BROKEN 
+#if TBB_USE_EXCEPTIONS && !__TBB_THROW_ACROSS_MODULE_BOUNDARY_BROKEN
             if(test_throw && j == (nIters / 2)) {
                 bool was_caught = false,
                      unknown_exception = false;
@@ -96,11 +96,11 @@ struct BusyBodyScoped : NoAssign {
     bool test_throw;
 
     BusyBodyScoped( int nThread_, int workRatiox100_, tbb::enumerable_thread_specific<double> &locals_, int &unprotected_count_, bool test_throw_) :
-        locals(locals_), 
-        nThread(nThread_), 
-        WorkRatiox100(workRatiox100_), 
+        locals(locals_),
+        nThread(nThread_),
+        WorkRatiox100(workRatiox100_),
         unprotected_count(unprotected_count_),
-        test_throw(test_throw_) { 
+        test_throw(test_throw_) {
         sBarrier.initialize(nThread_);
     }
 
@@ -113,7 +113,7 @@ struct BusyBodyScoped : NoAssign {
             for(int i = 0; i < MAX_WORK * (100 - WorkRatiox100); i++) {
                 locals.local() += 1.0;
             }
-            { 
+            {
                 tbb::critical_section::scoped_lock my_lock(cs);
                 for(int i = 0; i < MAX_WORK * WorkRatiox100; i++) {
                     locals.local() += 1.0;
@@ -168,7 +168,7 @@ RunOneCriticalSectionTest(int nThreads, int csWorkRatio, bool test_throw) {
             // amount of time.  If non-zero, the difference is divided by the time, and the
             // negative log is taken.  If > 2, then the difference is on the order of 0.01*t
             // where T is the average time.  We aritrarily define this as "fair."
-            etsSigma = sqrt(etsSigmaSq/double(nThreads)); 
+            etsSigma = sqrt(etsSigmaSq/double(nThreads));
             etsMax -= etsAvg;  // max - a == delta1
             etsMin = etsAvg - etsMin;  // a - min == delta2
             if(etsMax < etsMin) etsMax = etsMin;

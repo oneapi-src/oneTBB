@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -77,7 +77,7 @@ void InitializeAndTerminate( int maxthread ) {
                     ASSERT(!arena.is_active(), "arena should not be active; it was terminated");
                     break;
                 }
-                case 0: {   
+                case 0: {
                     tbb::task_arena arena( 1 );
                     ASSERT(!arena.is_active(), "arena should not be active until initialized");
                     arena.initialize( std::rand() % maxthread + 1 ); // change the parameters
@@ -151,7 +151,7 @@ class ArenaObserver : public tbb::task_scheduler_observer {
         old_id.local() = 0;
     }
 public:
-    ArenaObserver(tbb::task_arena &a, int maxConcurrency, int numReservedSlots, int id) 
+    ArenaObserver(tbb::task_arena &a, int maxConcurrency, int numReservedSlots, int id)
         : tbb::task_scheduler_observer(a)
         , myId(id)
         , myMaxConcurrency(maxConcurrency)
@@ -558,6 +558,126 @@ void TestArenaConcurrency( int p ) {
 }
 
 //--------------------------------------------------//
+// Test creation/initialization of a task_arena that references an existing arena (aka attach).
+// This part of the test uses the knowledge of task_arena internals
+
+typedef tbb::interface7::internal::task_arena_base task_arena_internals;
+
+struct TaskArenaValidator : public task_arena_internals {
+    int my_slot_at_construction;
+    TaskArenaValidator( const task_arena_internals& other )
+    : task_arena_internals(other) /*copies the internal state of other*/ {
+        my_slot_at_construction = tbb::task_arena::current_thread_index();
+    }
+    // Inspect the internal state
+    int concurrency() { return my_max_concurrency; }
+    int reserved_for_masters() { return (int)my_master_slots; }
+
+    // This method should be called in task_arena::execute() for a captured arena
+    // by the same thread that created the validator.
+    void operator()() {
+        ASSERT( tbb::task_arena::current_thread_index()==my_slot_at_construction,
+                "Current thread index has changed since the validator construction" );
+    }
+};
+
+void ValidateAttachedArena( tbb::task_arena& arena, bool expect_activated,
+                            int expect_concurrency, int expect_masters ) {
+    ASSERT( arena.is_active()==expect_activated, "Unexpected activation state" );
+    if( arena.is_active() ) {
+        TaskArenaValidator validator( arena );
+        ASSERT( validator.concurrency()==expect_concurrency, "Unexpected arena size" );
+        ASSERT( validator.reserved_for_masters()==expect_masters, "Unexpected # of reserved slots" );
+        if( tbb::task_arena::current_thread_index()!=-1 ) {
+            // for threads already in arena, check that the thread index remains the same
+            arena.execute( validator );
+        }
+        // Ideally, there should be a check for having the same internal arena object,
+        // but that object is not easily accessible for implicit arenas.
+    }
+}
+
+struct TestAttachBody : NoAssign {
+    mutable int my_idx; // safe to modify and use within the NativeParallelFor functor
+    const int maxthread;
+    TestAttachBody( int max_thr ) : maxthread(max_thr) {}
+
+    // The functor body for NativeParallelFor
+    void operator()( int idx ) const {
+        my_idx = idx;
+        int default_threads = tbb::task_scheduler_init::default_num_threads();
+
+        tbb::task_arena arena = tbb::task_arena( tbb::task_arena::attach() );
+        ValidateAttachedArena( arena, false, -1, -1 ); // Nothing yet to attach to
+
+        { // attach to an arena created via task_scheduler_init
+            tbb::task_scheduler_init init( idx+1 );
+
+            tbb::task_arena arena2 = tbb::task_arena( tbb::task_arena::attach() );
+            ValidateAttachedArena( arena2, true, idx+1, 1 );
+
+            arena.initialize( tbb::task_arena::attach() );
+        }
+        ValidateAttachedArena( arena, true, idx+1, 1 );
+
+        arena.terminate();
+        ValidateAttachedArena( arena, false, -1, -1 );
+
+        // Check default behavior when attach cannot succeed
+        switch (idx%2) {
+        case 0:
+            { // construct as attached, then initialize
+                tbb::task_arena arena2 = tbb::task_arena( tbb::task_arena::attach() );
+                ValidateAttachedArena( arena2, false, -1, -1 );
+                arena2.initialize(); // must be initialized with default parameters
+                ValidateAttachedArena( arena2, true, default_threads, 1 );
+            }
+            break;
+        case 1:
+            { // default-construct, then initialize as attached
+                tbb::task_arena arena2;
+                ValidateAttachedArena( arena2, false, -1, -1 );
+                arena2.initialize( tbb::task_arena::attach() ); // must use default parameters
+                ValidateAttachedArena( arena2, true, default_threads, 1 );
+            }
+            break;
+        } // switch
+
+        // attach to an auto-initialized arena
+        tbb::empty_task& tsk = *new (tbb::task::allocate_root()) tbb::empty_task;
+        tbb::task::spawn_root_and_wait(tsk);
+        tbb::task_arena arena2 = tbb::task_arena( tbb::task_arena::attach() );
+        ValidateAttachedArena( arena2, true, default_threads, 1 );
+
+        // attach to another task_arena
+        arena.initialize( maxthread, min(maxthread,idx) );
+        arena.execute( *this );
+    }
+
+    // The functor body for task_arena::execute above
+    void operator()() const {
+        tbb::task_arena arena2 = tbb::task_arena( tbb::task_arena::attach() );
+        ValidateAttachedArena( arena2, true, maxthread, min(maxthread,my_idx) );
+    }
+
+    // The functor body for tbb::parallel_for
+    void operator()( const Range& r ) const {
+        for( int i = r.begin(); i<r.end(); ++i ) {
+            tbb::task_arena arena2 = tbb::task_arena( tbb::task_arena::attach() );
+            ValidateAttachedArena( arena2, true, maxthread+1, 1 ); // +1 to match initialization in TestMain
+        }
+    }
+};
+
+void TestAttach( int maxthread ) {
+    REMARK( "Testing attached task_arenas\n" );
+    // Externally concurrent, but no concurrency within a thread
+    NativeParallelFor( max(maxthread,4), TestAttachBody( maxthread ) );
+    // Concurrent within the current arena; may also serve as a stress test
+    tbb::parallel_for( Range(0,10000*maxthread), TestAttachBody( maxthread ) );
+}
+
+//--------------------------------------------------//
 // Test that task_arena::enqueue does not tolerate a non-const functor.
 // TODO: can it be reworked as SFINAE-based compile-time check?
 struct test_functor_t {
@@ -587,6 +707,7 @@ int TestMain () {
         TestArenaConcurrency( p );
     }
     TestArenaEntryConsistency();
+    TestAttach(MaxThread);
     TestConstantFunctorRequirement();
     return Harness::Done;
 }

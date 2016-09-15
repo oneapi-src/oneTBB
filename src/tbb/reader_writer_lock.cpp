@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -307,7 +307,7 @@ void reader_writer_lock::scoped_lock::internal_construct (reader_writer_lock& lo
     }
 }
 
-inline reader_writer_lock::scoped_lock::scoped_lock() : mutex(NULL), next(NULL) { 
+inline reader_writer_lock::scoped_lock::scoped_lock() : mutex(NULL), next(NULL) {
     status = waiting;
 }
 

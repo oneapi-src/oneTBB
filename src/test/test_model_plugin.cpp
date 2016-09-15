@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -172,7 +172,7 @@ int use_lot_of_tls() {
     pthread_key_t last_handles[10];
     pthread_key_t result;
     int setspecific_dummy=10;
-    while( pthread_key_create(&result, NULL)==0 
+    while( pthread_key_create(&result, NULL)==0
            && count < 4096 ) // Sun Solaris doesn't have any built-in limit, so we set something big enough
     {
         last_handles[++count%10] = result;

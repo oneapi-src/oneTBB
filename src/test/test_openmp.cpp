@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -20,7 +20,7 @@
 
 // Test mixing OpenMP and TBB
 
-/* SCR #471 
+/* SCR #471
  Below is workaround to compile test within environment of Intel Compiler
  but by Microsoft Compiler. So, there is wrong "omp.h" file included and
  manifest section is missed from .exe file - restoring here.
@@ -90,9 +90,9 @@ typedef short T;
 void SerialConvolve( T c[], const T a[], int m, const T b[], int n ) {
     for( int i=0; i<m+n-1; ++i ) {
         int start = i<n ? 0 : i-n+1;
-        int finish = i<m ? i+1 : m; 
+        int finish = i<m ? i+1 : m;
         T sum = 0;
-        for( int j=start; j<finish; ++j ) 
+        for( int j=start; j<finish; ++j )
             sum += a[j]*b[i-j];
         c[i] = sum;
     }
@@ -126,11 +126,11 @@ public:
     {}
     InnerBody( InnerBody& x, split ) :
         my_a(x.my_a), my_b(x.my_b), i(x.i), sum(0)
-    { 
+    {
     }
     void join( InnerBody& x ) {sum += x.sum;}
     void operator()( const blocked_range<int>& range ) {
-        for( int j=range.begin(); j!=range.end(); ++j ) 
+        for( int j=range.begin(); j!=range.end(); ++j )
             sum += my_a[j]*my_b[i-j];
     }
 };
@@ -142,13 +142,13 @@ public:
 //! Test OpenMMP loop around TBB loop
 void OpenMP_TBB_Convolve( T c[], const T a[], int m, const T b[], int n ) {
     REMARK("testing OpenMP loop around TBB loop\n");
-#pragma omp parallel 
+#pragma omp parallel
     {
         task_scheduler_init init;
 #pragma omp for
         for( int i=0; i<m+n-1; ++i ) {
             int start = i<n ? 0 : i-n+1;
-            int finish = i<m ? i+1 : m; 
+            int finish = i<m ? i+1 : m;
             InnerBody body(c,a,b,i);
             parallel_reduce( blocked_range<int>(start,finish,10), body );
             c[i] = body.sum;
@@ -169,10 +169,10 @@ public:
     void operator()( const blocked_range<int>& range ) const {
         for( int i=range.begin(); i!=range.end(); ++i ) {
             int start = i<n ? 0 : i-n+1;
-            int finish = i<m ? i+1 : m; 
+            int finish = i<m ? i+1 : m;
             T sum = 0;
 #pragma omp parallel for reduction(+:sum)
-            for( int j=start; j<finish; ++j ) 
+            for( int j=start; j<finish; ++j )
                 sum += my_a[j]*my_b[i-j];
             my_c[i] = sum;
         }

@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -247,8 +247,8 @@ void CheckIteratorComparison( V& u ) {
             ASSERT( (i>j)==(i_count>j_count), NULL );
             ASSERT( (i<=j)==(i_count<=j_count), NULL );
             ASSERT( (i>=j)==(i_count>=j_count), NULL );
-            ASSERT( !(i==i2), NULL ); 
-            ASSERT( i!=i2, NULL ); 
+            ASSERT( !(i==i2), NULL );
+            ASSERT( i!=i2, NULL );
             ++j;
             ++i2;
         }
@@ -1780,7 +1780,7 @@ int TestMain () {
     TestExceptionSafetyGuaranteesMoveConstructorWithUnEqualAllocatorExceptionInElementCtor<c_vector_type>();
     TestExceptionSafetyGuaranteesForMoveAssignOperatorWithUnEqualAllocatorMemoryFailure();
     TestExceptionSafetyGuaranteesForMoveAssignOperatorWithUnEqualAllocatorExceptionInElementCtor();
-    TestPushBackMoveExceptionSafety();    
+    TestPushBackMoveExceptionSafety();
 #if __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
     TestEmplaceBackExceptionSafety();
 #endif /*__TBB_CPP11_VARIADIC_TEMPLATES_PRESENT */

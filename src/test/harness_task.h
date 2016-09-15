@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -26,11 +26,11 @@ tbb::task* GetTaskPtr( int& counter ) {
     ++counter;
     return NULL;
 }
- 
+
 class TaskGenerator: public tbb::task {
     int m_ChildCount;
     int m_Depth;
-    
+
 public:
     TaskGenerator( int child_count, int _depth ) : m_ChildCount(child_count), m_Depth(_depth) {}
     ~TaskGenerator( ) { m_ChildCount = m_Depth = -125; }
@@ -40,7 +40,7 @@ public:
         if( m_Depth>0 ) {
             recycle_as_safe_continuation();
             set_ref_count( m_ChildCount+1 );
-            int k=0; 
+            int k=0;
             for( int j=0; j<m_ChildCount; ++j ) {
                 tbb::task& t = *new( allocate_child() ) TaskGenerator(m_ChildCount/2,m_Depth-1);
                 GetTaskPtr(k)->spawn(t);

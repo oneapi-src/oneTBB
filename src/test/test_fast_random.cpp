@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -19,8 +19,8 @@
 */
 
 /**
-    The test checks that for different ranges of random numbers (from 0 to 
-    [MinThread, MaxThread]) generated with different seeds the probability 
+    The test checks that for different ranges of random numbers (from 0 to
+    [MinThread, MaxThread]) generated with different seeds the probability
     of each number in the range deviates from the ideal random distribution
     by no more than AcceptableDeviation percent.
 **/
@@ -41,7 +41,7 @@ const double AcceptableDeviation = 2.1;
 //! Tolerable probability of failure to achieve tolerable distribution
 const double AcceptableProbabilityOfOutliers = 1e-5;
 //! Coefficient defining the length of random numbers series used to estimate the distribution
-/** Number of random values generated per each range element. I.e. the larger is 
+/** Number of random values generated per each range element. I.e. the larger is
     the range, the longer is the series of random values. **/
 const uintptr_t SeriesBaseLen = 100;
 //! Number of random numbers series to generate
@@ -175,7 +175,7 @@ int TestMain () {
     NumLowOutliers = NumHighOutliers = 0;
     // Parallelism is used in this test only to speed up the long serial checks
     // Essentially it is a loop over random number ranges
-    // Ideally tbb::parallel_for could be used to parallelize the outermost loop 
+    // Ideally tbb::parallel_for could be used to parallelize the outermost loop
     // in CheckDistributionBody, but it is not used to avoid unit test contamination.
     int P = tbb::tbb_thread::hardware_concurrency();
     enum {reproducibilitySeedsToTest=1000};

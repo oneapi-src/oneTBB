@@ -107,29 +107,29 @@
 	<PropertyGroup Label="UserMacros"/>
 	<PropertyGroup>
 		<_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
-		<OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)ia32\$(Configuration)\</OutDir>
-		<IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)ia32\$(Configuration)\</IntDir>
+		<OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+		<IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Platform)\$(ProjectName)\$(Configuration)\</IntDir>
 		<LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkIncremental>
-		<OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)intel64\$(Configuration)\</OutDir>
-		<IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)intel64\$(Configuration)\</IntDir>
+		<OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+		<IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)$(Platform)\$(ProjectName)\$(Configuration)\</IntDir>
 		<LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkIncremental>
-		<OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)ia32\$(Configuration)\</OutDir>
-		<IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)ia32\$(Configuration)\</IntDir>
+		<OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+		<IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Platform)\$(ProjectName)\$(Configuration)\</IntDir>
 		<LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
-		<OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)intel64\$(Configuration)\</OutDir>
-		<IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)intel64\$(Configuration)\</IntDir>
+		<OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+		<IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)$(Platform)\$(ProjectName)\$(Configuration)\</IntDir>
 		<LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
-		<OutDir Condition="'$(Configuration)|$(Platform)'=='Debug-MT|Win32'">$(SolutionDir)ia32\$(Configuration)\</OutDir>
-		<IntDir Condition="'$(Configuration)|$(Platform)'=='Debug-MT|Win32'">$(SolutionDir)ia32\$(Configuration)\</IntDir>
+		<OutDir Condition="'$(Configuration)|$(Platform)'=='Debug-MT|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+		<IntDir Condition="'$(Configuration)|$(Platform)'=='Debug-MT|Win32'">$(SolutionDir)$(Platform)\$(ProjectName)\$(Configuration)\</IntDir>
 		<LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug-MT|Win32'">false</LinkIncremental>
-		<OutDir Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">$(SolutionDir)intel64\$(Configuration)\</OutDir>
-		<IntDir Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">$(SolutionDir)intel64\$(Configuration)\</IntDir>
+		<OutDir Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+		<IntDir Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">$(SolutionDir)$(Platform)\$(ProjectName)\$(Configuration)\</IntDir>
 		<LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">false</LinkIncremental>
-		<OutDir Condition="'$(Configuration)|$(Platform)'=='Release-MT|Win32'">$(SolutionDir)ia32\$(Configuration)\</OutDir>
-		<IntDir Condition="'$(Configuration)|$(Platform)'=='Release-MT|Win32'">$(SolutionDir)ia32\$(Configuration)\</IntDir>
+		<OutDir Condition="'$(Configuration)|$(Platform)'=='Release-MT|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+		<IntDir Condition="'$(Configuration)|$(Platform)'=='Release-MT|Win32'">$(SolutionDir)$(Platform)\$(ProjectName)\$(Configuration)\</IntDir>
 		<LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release-MT|Win32'">false</LinkIncremental>
-		<OutDir Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">$(SolutionDir)intel64\$(Configuration)\</OutDir>
-		<IntDir Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">$(SolutionDir)intel64\$(Configuration)\</IntDir>
+		<OutDir Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+		<IntDir Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">$(SolutionDir)$(Platform)\$(ProjectName)\$(Configuration)\</IntDir>
 		<LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">false</LinkIncremental>
 		<CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug-MT|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
 		<CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug-MT|Win32'"/>
@@ -167,14 +167,11 @@
 			<AdditionalIncludeDirectories>.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 			<PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
 			<MinimalRebuild>true</MinimalRebuild>
-			<ExceptionHandling>
-			</ExceptionHandling>
 			<BasicRuntimeChecks>Default</BasicRuntimeChecks>
 			<RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-			<PrecompiledHeader>
-			</PrecompiledHeader>
 			<WarningLevel>Level4</WarningLevel>
 			<DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+			<ExceptionHandling>false</ExceptionHandling>
 		</ClCompile>
 		<Link>
 			<AdditionalOptions>/DLL /MAP /DEBUG /fixed:no /INCREMENTAL:NO  /DEF:"$(IntDir)tbbmalloc.def" %(AdditionalOptions)</AdditionalOptions>
@@ -196,17 +193,13 @@
 			<Optimization>Disabled</Optimization>
 			<AdditionalIncludeDirectories>.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 			<MinimalRebuild>false</MinimalRebuild>
-			<ExceptionHandling>
-			</ExceptionHandling>
 			<BasicRuntimeChecks>Default</BasicRuntimeChecks>
 			<RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-			<BufferSecurityCheck>false</BufferSecurityCheck>
 			<TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
-			<PrecompiledHeader>
-			</PrecompiledHeader>
 			<WarningLevel>Level4</WarningLevel>
 			<DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
 			<ShowIncludes>false</ShowIncludes>
+			<ExceptionHandling>false</ExceptionHandling>
 		</ClCompile>
 		<Link>
 			<AdditionalOptions>/nologo /DLL /MAP /DEBUG /fixed:no /INCREMENTAL:NO  /DEF:"$(IntDir)tbbmalloc.def" %(AdditionalOptions)</AdditionalOptions>
@@ -224,13 +217,10 @@
 			<AdditionalOptions> /c /MD /O2 /Zi /EHs- /Zc:forScope /Zc:wchar_t /D__TBB_LIB_NAME=tbb.lib /DDO_ITT_NOTIFY /GS /volatile:iso /DUSE_WINTHREAD /D_CRT_SECURE_NO_DEPRECATE /D_WIN32_WINNT=0x0502 /D__TBBMALLOC_BUILD=1 /I../../src /I../../src/rml/include /I../../include /I../../src/tbbmalloc /I../../src/tbbmalloc /I.</AdditionalOptions>
 			<AdditionalIncludeDirectories>.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 			<PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
-			<ExceptionHandling>
-			</ExceptionHandling>
 			<RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-			<PrecompiledHeader>
-			</PrecompiledHeader>
 			<WarningLevel>Level4</WarningLevel>
 			<DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+			<ExceptionHandling>false</ExceptionHandling>
 		</ClCompile>
 		<Link>
 			<AdditionalOptions>/nologo /DLL /MAP /DEBUG /fixed:no /INCREMENTAL:NO  /DEF:"$(IntDir)tbbmalloc.def" %(AdditionalOptions)</AdditionalOptions>
@@ -253,14 +243,10 @@
 			<AdditionalOptions> /c /MD /O2 /Zi /EHs- /Zc:forScope /Zc:wchar_t /D__TBB_LIB_NAME=tbb.lib /DDO_ITT_NOTIFY /GS /volatile:iso /DUSE_WINTHREAD /D_CRT_SECURE_NO_DEPRECATE /D_WIN32_WINNT=0x0502 /D__TBBMALLOC_BUILD=1 /I../../src /I../../src/rml/include /I../../include /I../../src/tbbmalloc /I../../src/tbbmalloc /I.</AdditionalOptions>
 			<AdditionalIncludeDirectories>.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 			<PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
-			<ExceptionHandling>
-			</ExceptionHandling>
 			<RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-			<BufferSecurityCheck>false</BufferSecurityCheck>
-			<PrecompiledHeader>
-			</PrecompiledHeader>
 			<WarningLevel>Level4</WarningLevel>
 			<DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+			<ExceptionHandling>false</ExceptionHandling>
 		</ClCompile>
 		<Link>
 			<AdditionalOptions>/nologo /DLL /MAP /DEBUG /fixed:no /INCREMENTAL:NO /DEF:"$(IntDir)tbbmalloc.def" %(AdditionalOptions)</AdditionalOptions>
@@ -282,14 +268,11 @@
 			<AdditionalIncludeDirectories>.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 			<PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
 			<MinimalRebuild>true</MinimalRebuild>
-			<ExceptionHandling>
-			</ExceptionHandling>
 			<BasicRuntimeChecks>Default</BasicRuntimeChecks>
 			<RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-			<PrecompiledHeader>
-			</PrecompiledHeader>
 			<WarningLevel>Level4</WarningLevel>
 			<DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+			<ExceptionHandling>false</ExceptionHandling>
 		</ClCompile>
 		<Link>
 			<AdditionalOptions>/DLL /MAP /DEBUG /fixed:no /INCREMENTAL:NO  /DEF:"$(IntDir)tbbmalloc.def" %(AdditionalOptions)</AdditionalOptions>
@@ -311,17 +294,13 @@
 			<Optimization>Disabled</Optimization>
 			<AdditionalIncludeDirectories>.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 			<MinimalRebuild>false</MinimalRebuild>
-			<ExceptionHandling>
-			</ExceptionHandling>
 			<BasicRuntimeChecks>Default</BasicRuntimeChecks>
 			<RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-			<BufferSecurityCheck>false</BufferSecurityCheck>
 			<TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
-			<PrecompiledHeader>
-			</PrecompiledHeader>
 			<WarningLevel>Level4</WarningLevel>
 			<DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
 			<ShowIncludes>false</ShowIncludes>
+			<ExceptionHandling>false</ExceptionHandling>
 		</ClCompile>
 		<Link>
 			<AdditionalOptions>/nologo /DLL /MAP /DEBUG /fixed:no /INCREMENTAL:NO  /DEF:"$(IntDir)tbbmalloc.def" %(AdditionalOptions)</AdditionalOptions>
@@ -339,13 +318,10 @@
 			<AdditionalOptions> /c /MT /O2 /Zi /EHs- /Zc:forScope /Zc:wchar_t /D__TBB_LIB_NAME=tbb.lib /DDO_ITT_NOTIFY /GS /volatile:iso /DUSE_WINTHREAD /D_CRT_SECURE_NO_DEPRECATE /D_WIN32_WINNT=0x0502 /D__TBBMALLOC_BUILD=1 /I../../src /I../../src/rml/include /I../../include /I../../src/tbbmalloc /I../../src/tbbmalloc /I.</AdditionalOptions>
 			<AdditionalIncludeDirectories>.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 			<PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
-			<ExceptionHandling>
-			</ExceptionHandling>
 			<RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-			<PrecompiledHeader>
-			</PrecompiledHeader>
 			<WarningLevel>Level4</WarningLevel>
 			<DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+			<ExceptionHandling>false</ExceptionHandling>
 		</ClCompile>
 		<Link>
 			<AdditionalOptions>/nologo /DLL /MAP /DEBUG /fixed:no /INCREMENTAL:NO  /DEF:"$(IntDir)tbbmalloc.def" %(AdditionalOptions)</AdditionalOptions>
@@ -355,8 +331,6 @@
 			<OptimizeReferences>true</OptimizeReferences>
 			<EnableCOMDATFolding>true</EnableCOMDATFolding>
 			<RandomizedBaseAddress>false</RandomizedBaseAddress>
-			<DataExecutionPrevention>
-			</DataExecutionPrevention>
 			<TargetMachine>MachineX86</TargetMachine>
 		</Link>
 	</ItemDefinitionGroup>
@@ -368,14 +342,10 @@
 			<AdditionalOptions> /c /MT /O2 /Zi /EHs- /Zc:forScope /Zc:wchar_t /D__TBB_LIB_NAME=tbb.lib /DDO_ITT_NOTIFY /GS /volatile:iso /DUSE_WINTHREAD /D_CRT_SECURE_NO_DEPRECATE /D_WIN32_WINNT=0x0502 /D__TBBMALLOC_BUILD=1 /I../../src /I../../src/rml/include /I../../include /I../../src/tbbmalloc /I../../src/tbbmalloc /I.</AdditionalOptions>
 			<AdditionalIncludeDirectories>.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 			<PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
-			<ExceptionHandling>
-			</ExceptionHandling>
 			<RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-			<BufferSecurityCheck>false</BufferSecurityCheck>
-			<PrecompiledHeader>
-			</PrecompiledHeader>
 			<WarningLevel>Level4</WarningLevel>
 			<DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+			<ExceptionHandling>false</ExceptionHandling>
 		</ClCompile>
 		<Link>
 			<AdditionalOptions>/nologo /DLL /MAP /DEBUG /fixed:no /INCREMENTAL:NO /DEF:"$(IntDir)tbbmalloc.def" %(AdditionalOptions)</AdditionalOptions>
@@ -394,24 +364,20 @@
 		<CustomBuild Include="..\..\src\tbb\intel64-masm\atomic_support.asm">
 			<ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-MT|Win32'">true</ExcludedFromBuild>
 			<Message Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">building atomic_support.obj</Message>
-			<Command Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">ml64 /Fo"intel64\Debug-MT\atomic_support.obj" /DUSE_FRAME_POINTER /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/atomic_support.asm
-</Command>
-			<Outputs Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">intel64\Debug-MT\atomic_support.obj;%(Outputs)</Outputs>
+			<Command Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">ml64 /Fo"$(IntDir)%(FileName).obj" /DUSE_FRAME_POINTER /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/atomic_support.asm</Command>
+			<Outputs Condition="'$(Configuration)|$(Platform)'=='Debug-MT|x64'">$(IntDir)%(FileName).obj;%(Outputs)</Outputs>
 			<ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
 			<Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">building atomic_support.obj</Message>
-			<Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ml64 /Fo"intel64\Debug\atomic_support.obj" /DUSE_FRAME_POINTER /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/atomic_support.asm
-</Command>
-			<Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">intel64\Debug\atomic_support.obj;%(Outputs)</Outputs>
+			<Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ml64 /Fo"$(IntDir)%(FileName).obj" /DUSE_FRAME_POINTER /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/atomic_support.asm</Command>
+			<Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(FileName).obj;%(Outputs)</Outputs>
 			<ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release-MT|Win32'">true</ExcludedFromBuild>
 			<Message Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">building atomic_support.obj</Message>
-			<Command Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">ml64 /Fo"intel64\Release-MT\atomic_support.obj"  /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/atomic_support.asm
-</Command>
-			<Outputs Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">intel64\Release-MT\atomic_support.obj;%(Outputs)</Outputs>
+			<Command Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">ml64 /Fo"$(IntDir)%(FileName).obj"  /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/atomic_support.asm</Command>
+			<Outputs Condition="'$(Configuration)|$(Platform)'=='Release-MT|x64'">$(IntDir)%(FileName).obj;%(Outputs)</Outputs>
 			<ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
 			<Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">building atomic_support.obj</Message>
-			<Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ml64 /Fo"intel64\Release\atomic_support.obj"  /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/atomic_support.asm
-</Command>
-			<Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">intel64\Release\atomic_support.obj;%(Outputs)</Outputs>
+			<Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ml64 /Fo"$(IntDir)%(FileName).obj"  /DEM64T=1 /c /Zi ../../src/tbb/intel64-masm/atomic_support.asm</Command>
+			<Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(FileName).obj;%(Outputs)</Outputs>
 		</CustomBuild>
 	</ItemGroup>
 	<ItemGroup>
@@ -493,13 +459,7 @@
 		</CustomBuild>
 	</ItemGroup>
 	<ItemGroup>
-		<ClCompile Include="..\..\src\tbbmalloc\backend.cpp"/>
-		<ClCompile Include="..\..\src\tbbmalloc\large_objects.cpp"/>
-		<ClCompile Include="..\..\src\tbbmalloc\backref.cpp"/>
-		<ClCompile Include="..\..\src\tbbmalloc\tbbmalloc.cpp"/>
-		<ClCompile Include="..\..\src\tbb\itt_notify.cpp"/>
-		<ClCompile Include="..\..\src\tbbmalloc\frontend.cpp"/>
-	</ItemGroup>
+		<ClCompile Include="..\..\src\tbbmalloc\backend.cpp"/><ClCompile Include="..\..\src\tbbmalloc\large_objects.cpp"/><ClCompile Include="..\..\src\tbbmalloc\backref.cpp"/><ClCompile Include="..\..\src\tbbmalloc\tbbmalloc.cpp"/><ClCompile Include="..\..\src\tbb\itt_notify.cpp"/><ClCompile Include="..\..\src\tbbmalloc\frontend.cpp"/></ItemGroup>
 	<ItemGroup>
 		<ClInclude Include="..\..\include\tbb\internal\_concurrent_queue_impl.h"/>
 		<ClInclude Include="..\..\include\tbb\_tbb_windef.h"/>

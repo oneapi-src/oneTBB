@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -20,7 +20,7 @@
 
 // Test correctness of forceful TBB initialization before any dynamic initialization
 // of static objects inside the library took place.
-namespace tbb { 
+namespace tbb {
 namespace internal {
     // Forward declaration of the TBB general initialization routine from task.cpp
     void DoOneTimeInitializations();
@@ -55,7 +55,7 @@ struct AbuseOneTask {
         // spawn_root_and_wait over empty list should vacuously succeed.
         tbb::task::spawn_root_and_wait(list);
 
-        // Check that spawn_root_and_wait fails on non-empty list. 
+        // Check that spawn_root_and_wait fails on non-empty list.
         list.push_back(*AbusedTask);
 
         // Try abusing recycle_as_continuation

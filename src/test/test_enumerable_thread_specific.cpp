@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -94,7 +94,7 @@ public:
 static size_t AlignMask = 0;  // set to cache-line-size - 1
 
 template<typename T>
-T& check_alignment(T& t, const char *aname) { 
+T& check_alignment(T& t, const char *aname) {
     if( !tbb::internal::is_aligned(&t, AlignMask)) {
         REPORT_ONCE("alignment error with %s allocator (%x)\n", aname, (int)size_t(&t) & (AlignMask-1));
     }
@@ -127,11 +127,11 @@ public:
     }
 };
 
-// MyThrower field of ThrowingConstructor will throw after a certain number of 
+// MyThrower field of ThrowingConstructor will throw after a certain number of
 // construction calls.  The constructor unwinder wshould unconstruct the instance
 // of check_type<int> that was constructed just before.
 class ThrowingConstructor {
-    check_type<int> m_checktype; 
+    check_type<int> m_checktype;
     Thrower m_throwing_field;
 public:
     int m_cnt;
@@ -549,7 +549,7 @@ void run_parallel_scalar_tests(const char *test_name, const char *allocator_name
                         ASSERT( !sums.empty(), NULL);
 
                         ASSERT(static_sums.empty(), NULL);
-                        tbb::parallel_for( tbb::blocked_range<int>( 0, N, RANGE_MIN ), 
+                        tbb::parallel_for( tbb::blocked_range<int>( 0, N, RANGE_MIN ),
                                 parallel_scalar_body<T,Allocator>( static_sums, allocator_name ) );
                         ASSERT( !static_sums.empty(), NULL);
 
@@ -721,7 +721,7 @@ void run_parallel_vector_tests(const char *test_name, const char *allocator_name
 template<typename T, template<class> class Allocator>
 void run_cross_type_vector_tests(const char *test_name) {
     tbb::tick_count t0;
-    const char* allocator_name = "default"; 
+    const char* allocator_name = "default";
     typedef std::vector<T, tbb::tbb_allocator<T> > container_type;
 
     for (int p = MinThread; p <= MaxThread; ++p) {

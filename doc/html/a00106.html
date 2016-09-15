@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>rml::MemPoolPolicy Struct Reference</title>
+<title>tbb::interface6::memory_pool_allocator&lt; void, P &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,63 +33,93 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00271.html">rml</a></li><li class="navelem"><a class="el" href="a00106.html">MemPoolPolicy</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00276.html">tbb</a></li><li class="navelem"><b>interface6</b></li><li class="navelem"><a class="el" href="a00106.html">memory_pool_allocator< void, P ></a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-attribs">Public Attributes</a> &#124;
-<a href="a00297.html">List of all members</a>  </div>
+<a href="#pro-attribs">Protected Attributes</a> &#124;
+<a href="#friends">Friends</a> &#124;
+<a href="a00465.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">rml::MemPoolPolicy Struct Reference</div>  </div>
+<div class="title">tbb::interface6::memory_pool_allocator&lt; void, P &gt; Class Template Reference<div class="ingroups"><a class="el" href="a00293.html">Memory Allocation</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
+
+<p>Analogous to std::allocator&lt;void&gt;, as defined in ISO C++ Standard, Section 20.4.1.  
+ <a href="a00106.html#details">More...</a></p>
+
+<p><code>#include &lt;memory_pool.h&gt;</code></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00153.html">rebind</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:adfe83ff52182f03fba338438e64e3721"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom">{ <b>TBBMALLOC_POOL_VERSION</b> = 1
- }</td></tr>
-<tr class="separator:adfe83ff52182f03fba338438e64e3721"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa4a3be261ace6f19c3c40ef2503c4984"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa4a3be261ace6f19c3c40ef2503c4984"></a>
+typedef P&#160;</td><td class="memItemRight" valign="bottom"><b>pool_type</b></td></tr>
+<tr class="separator:aa4a3be261ace6f19c3c40ef2503c4984"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afb58c3e8f2e0a8f9152eae641ee420fa"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afb58c3e8f2e0a8f9152eae641ee420fa"></a>
+typedef void *&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b></td></tr>
+<tr class="separator:afb58c3e8f2e0a8f9152eae641ee420fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5e53158493ed0d617460e8dd6534a525"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5e53158493ed0d617460e8dd6534a525"></a>
+typedef const void *&#160;</td><td class="memItemRight" valign="bottom"><b>const_pointer</b></td></tr>
+<tr class="separator:a5e53158493ed0d617460e8dd6534a525"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a676a2c2649d6ffc45466d94555d71df2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a676a2c2649d6ffc45466d94555d71df2"></a>
+typedef void&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b></td></tr>
+<tr class="separator:a676a2c2649d6ffc45466d94555d71df2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a73e485e36709acc04a9448eaa95bb666"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a73e485e36709acc04a9448eaa95bb666"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>MemPoolPolicy</b> (rawAllocType pAlloc_, rawFreeType pFree_, size_t granularity_=0, bool fixedPool_=false, bool keepAllMemory_=false)</td></tr>
-<tr class="separator:a73e485e36709acc04a9448eaa95bb666"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8e697e2d03e8f69de1728409bec4f7b5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8e697e2d03e8f69de1728409bec4f7b5"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>memory_pool_allocator</b> (pool_type &amp;pool)  throw ()</td></tr>
+<tr class="separator:a8e697e2d03e8f69de1728409bec4f7b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a001103c81ba25e645305f19a82db2e4a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a001103c81ba25e645305f19a82db2e4a"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>memory_pool_allocator</b> (const <a class="el" href="a00105.html">memory_pool_allocator</a> &amp;src)  throw ()</td></tr>
+<tr class="separator:a001103c81ba25e645305f19a82db2e4a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8d3db3082c1fa40ccb3997626f61e61e"><td class="memTemplParams" colspan="2"><a class="anchor" id="a8d3db3082c1fa40ccb3997626f61e61e"></a>
+template&lt;typename U &gt; </td></tr>
+<tr class="memitem:a8d3db3082c1fa40ccb3997626f61e61e"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>memory_pool_allocator</b> (const <a class="el" href="a00105.html">memory_pool_allocator</a>&lt; U, P &gt; &amp;src)  throw ()</td></tr>
+<tr class="separator:a8d3db3082c1fa40ccb3997626f61e61e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
-Public Attributes</h2></td></tr>
-<tr class="memitem:a0935ae38d632881a6d6cccb675cb6f27"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0935ae38d632881a6d6cccb675cb6f27"></a>
-rawAllocType&#160;</td><td class="memItemRight" valign="bottom"><b>pAlloc</b></td></tr>
-<tr class="separator:a0935ae38d632881a6d6cccb675cb6f27"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a221c0a53496a391c60d2f452fc9d76ae"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a221c0a53496a391c60d2f452fc9d76ae"></a>
-rawFreeType&#160;</td><td class="memItemRight" valign="bottom"><b>pFree</b></td></tr>
-<tr class="separator:a221c0a53496a391c60d2f452fc9d76ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac91fffeccd1f4255bbb5719f25785bce"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac91fffeccd1f4255bbb5719f25785bce"></a>
-size_t&#160;</td><td class="memItemRight" valign="bottom"><b>granularity</b></td></tr>
-<tr class="separator:ac91fffeccd1f4255bbb5719f25785bce"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaea7ca6973332913c839073822352046"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aaea7ca6973332913c839073822352046"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>version</b></td></tr>
-<tr class="separator:aaea7ca6973332913c839073822352046"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab00be5199577e8dd87f25c867a488aaf"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab00be5199577e8dd87f25c867a488aaf"></a>
-unsigned&#160;</td><td class="memItemRight" valign="bottom"><b>fixedPool</b>: 1</td></tr>
-<tr class="separator:ab00be5199577e8dd87f25c867a488aaf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afc2ea43e020580853224fa430736d38a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afc2ea43e020580853224fa430736d38a"></a>
-unsigned&#160;</td><td class="memItemRight" valign="bottom"><b>keepAllMemory</b>: 1</td></tr>
-<tr class="separator:afc2ea43e020580853224fa430736d38a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2fe8bde7ec5c0f347f5c8e648c92c612"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2fe8bde7ec5c0f347f5c8e648c92c612"></a>
-unsigned&#160;</td><td class="memItemRight" valign="bottom"><b>reserved</b>: 30</td></tr>
-<tr class="separator:a2fe8bde7ec5c0f347f5c8e648c92c612"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
+Protected Attributes</h2></td></tr>
+<tr class="memitem:a1e497d3d88dcb063ab6594eb4ad3dc35"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1e497d3d88dcb063ab6594eb4ad3dc35"></a>
+pool_type *&#160;</td><td class="memItemRight" valign="bottom"><b>my_pool</b></td></tr>
+<tr class="separator:a1e497d3d88dcb063ab6594eb4ad3dc35"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:a6c34ee2e5a57845f050b507cc516a005"><td class="memTemplParams" colspan="2"><a class="anchor" id="a6c34ee2e5a57845f050b507cc516a005"></a>
+template&lt;typename U , typename R &gt; </td></tr>
+<tr class="memitem:a6c34ee2e5a57845f050b507cc516a005"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><b>memory_pool_allocator</b></td></tr>
+<tr class="separator:a6c34ee2e5a57845f050b507cc516a005"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac8c26a64f4e012f2a9cf6035cf029905"><td class="memTemplParams" colspan="2"><a class="anchor" id="ac8c26a64f4e012f2a9cf6035cf029905"></a>
+template&lt;typename V , typename U , typename R &gt; </td></tr>
+<tr class="memitem:ac8c26a64f4e012f2a9cf6035cf029905"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><b>operator==</b> (const <a class="el" href="a00105.html">memory_pool_allocator</a>&lt; V, R &gt; &amp;a, const <a class="el" href="a00105.html">memory_pool_allocator</a>&lt; U, R &gt; &amp;b)</td></tr>
+<tr class="separator:ac8c26a64f4e012f2a9cf6035cf029905"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2f7230e5bc817e7512e18b5311b3371b"><td class="memTemplParams" colspan="2"><a class="anchor" id="a2f7230e5bc817e7512e18b5311b3371b"></a>
+template&lt;typename V , typename U , typename R &gt; </td></tr>
+<tr class="memitem:a2f7230e5bc817e7512e18b5311b3371b"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><b>operator!=</b> (const <a class="el" href="a00105.html">memory_pool_allocator</a>&lt; V, R &gt; &amp;a, const <a class="el" href="a00105.html">memory_pool_allocator</a>&lt; U, R &gt; &amp;b)</td></tr>
+<tr class="separator:a2f7230e5bc817e7512e18b5311b3371b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<hr/>The documentation for this struct was generated from the following file:<ul>
-<li><a class="el" href="a00251.html">scalable_allocator.h</a></li>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><h3>template&lt;typename P&gt;<br/>
+class tbb::interface6::memory_pool_allocator&lt; void, P &gt;</h3>
+
+<p>Analogous to std::allocator&lt;void&gt;, as defined in ISO C++ Standard, Section 20.4.1. </p>
+</div><hr/>The documentation for this class was generated from the following file:<ul>
+<li><a class="el" href="a00234.html">memory_pool.h</a></li>
 </ul>
 </div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

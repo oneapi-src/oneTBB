@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -62,11 +62,11 @@ private:
     FooBody() {++FooBodyCount;}
 public:
     ~FooBody() {
-        forked = 0xDEADBEEF; 
+        forked = 0xDEADBEEF;
         sum=0xDEADBEEF;
         join_count=0xDEADBEEF;
         --FooBodyCount;
-    } 
+    }
     FooBody( FooBody& other, tbb::split ) {
         ++FooBodyCount;
         ++ForkCount;
@@ -79,7 +79,7 @@ public:
     void join( FooBody& s ) {
         ASSERT( s.forked==1, NULL );
         ASSERT( this!=&s, NULL );
-        ASSERT( this==s.parent, NULL ); 
+        ASSERT( this==s.parent, NULL );
         ASSERT( end==s.begin, NULL );
         end = s.end;
         sum += s.sum;
@@ -105,7 +105,7 @@ public:
 void Flog( int nthread, bool interference=false ) {
     for (int mode = 0;  mode < 4; mode++) {
         tbb::tick_count T0 = tbb::tick_count::now();
-        long join_count = 0;        
+        long join_count = 0;
         tbb::affinity_partitioner ap;
         for( size_t i=0; i<=1000; ++i ) {
             FooBody f;
@@ -127,7 +127,7 @@ void Flog( int nthread, bool interference=false ) {
                 case 2:
                     tbb::parallel_reduce( MinimalRange(i), f, tbb::auto_partitioner() );
                     break;
-                case 3: 
+                case 3:
                     tbb::parallel_reduce( MinimalRange(i), f, ap );
                     break;
             }
@@ -177,8 +177,8 @@ void ParallelSum () {
     ValueType r1 = tbb::parallel_reduce( range, I, Accumulator(), Sum() );
     ASSERT( r1 == R, NULL );
 #if __TBB_LAMBDAS_PRESENT
-    ValueType r2 = tbb::parallel_reduce( range, I, 
-        [](const tbb::blocked_range<ValueType*>& r, ValueType value) -> ValueType { 
+    ValueType r2 = tbb::parallel_reduce( range, I,
+        [](const tbb::blocked_range<ValueType*>& r, ValueType value) -> ValueType {
             for ( ValueType* pv = r.begin(); pv != r.end(); ++pv )
                 value += *pv;
             return value;
@@ -227,7 +227,7 @@ void TestDeterministicReduction () {
         tbb::parallel_deterministic_reduce( range,body2 );
         ASSERT( body2.my_value == R, NULL );
 #if __TBB_LAMBDAS_PRESENT
-        Type r = tbb::parallel_deterministic_reduce( range, Type(), 
+        Type r = tbb::parallel_deterministic_reduce( range, Type(),
             [](const tbb::blocked_range<int>& br, Type value) -> Type {
                 Harness::ConcurrencyTracker ct;
                 for ( int ii = br.begin(); ii != br.end(); ++ii ) {

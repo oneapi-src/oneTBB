@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -129,7 +129,7 @@ public:
     concurrent_monitor() {__TBB_store_relaxed(epoch, 0);}
 
     //! dtor
-    ~concurrent_monitor() ; 
+    ~concurrent_monitor() ;
 
     //! prepare wait by inserting 'thr' into the wait queue
     void prepare_wait( thread_context& thr, uintptr_t ctx = 0 );
@@ -177,7 +177,7 @@ public:
 
     //! Abort any sleeping threads at the time of the call
     void abort_all() {atomic_fence(); abort_all_relaxed(); }
- 
+
     //! Abort any sleeping threads at the time of the call; Relaxed version
     void abort_all_relaxed();
 

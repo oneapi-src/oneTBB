@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -18,11 +18,11 @@
     reasons why the executable file might be covered by the GNU General Public License.
 */
 
-/* Regression test against a bug in TBB allocator manifested when 
+/* Regression test against a bug in TBB allocator manifested when
    dynamic library calls atexit() or registers dtors of static objects.
-   If the allocator is not initialized yet, we can get deadlock, 
+   If the allocator is not initialized yet, we can get deadlock,
    because allocator library has static object dtors as well, they
-   registered during allocator initialization, and atexit() is protected 
+   registered during allocator initialization, and atexit() is protected
    by non-recursive mutex in some versions of GLIBC.
  */
 

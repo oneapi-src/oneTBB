@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -20,7 +20,7 @@
 
 // Just the tracing portion of the harness.
 //
-// This header defines TRACE and TRACENL macros, which use REPORT like syntax and 
+// This header defines TRACE and TRACENL macros, which use REPORT like syntax and
 // are useful for duplicating trace output to the standard debug output on Windows.
 // It is possible to add the ability of automatic extending messages with additional
 // info (file, line, function, time, thread ID, ...).
@@ -88,7 +88,7 @@ namespace Harness {
         TbbHarnessReporter m_reporter;
 
     public:
-        enum  { 
+        enum  {
             prefix = 1,
             need_lf = 2
         };
@@ -113,7 +113,7 @@ namespace Harness {
             va_start (argptr, fmt);
             int len = vsnprintf (msg, MAX_TRACE_SIZE, msg_fmt, argptr);
             va_end (argptr);
-            if ( m_flags & need_lf &&  
+            if ( m_flags & need_lf &&
                  len < MAX_TRACE_SIZE - 1  &&  msg_fmt[len-1] != '\n' )
             {
                 msg[len] = '\n';
@@ -160,7 +160,7 @@ namespace Harness {
 #define REMARK  !Verbose ? (void)0 : TRACENL
 
 //! printf style remark macro
-/** Produces output only when invoked first time. 
+/** Produces output only when invoked first time.
     Only one instance of this macro is allowed per source code line. **/
 #define REMARK_ONCE (!Verbose || Harness::internal::not_the_first_call<__LINE__>()) ? (void)0 : TRACE
 

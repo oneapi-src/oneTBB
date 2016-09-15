@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -47,7 +47,7 @@ namespace internal {
      };
 
     //! Input and scheduling for a function node that takes a type Input as input
-    //  The only up-ref is apply_body_impl, which should implement the function 
+    //  The only up-ref is apply_body_impl, which should implement the function
     //  call and any handling of the result.
     template< typename Input, typename A, typename ImplType >
     class function_input_base : public receiver<Input>, tbb::internal::no_assign {
@@ -56,10 +56,10 @@ namespace internal {
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
             , add_blt_pred, del_blt_pred,
             blt_pred_cnt, blt_pred_cpy   // create vector copies of preds and succs
-#endif 
+#endif
         };
         typedef function_input_base<Input, A, ImplType> class_type;
-        
+
     public:
 
         //! The input type of this receiver
@@ -81,7 +81,7 @@ namespace internal {
             my_predecessors.set_owner(this);
             my_aggregator.initialize_handler(handler_type(this));
         }
-        
+
         //! Copy constructor
         function_input_base( const function_input_base& src, input_queue_type *q = NULL) :
             receiver<Input>(), tbb::internal::no_assign(),
@@ -96,10 +96,10 @@ namespace internal {
         // The queue is allocated by the constructor for {multi}function_node.
         // TODO: pass the graph_buffer_policy to the base so it can allocate the queue instead.
         // This would be an interface-breaking change.
-        virtual ~function_input_base() { 
+        virtual ~function_input_base() {
             if ( my_queue ) delete my_queue;
         }
-        
+
         //! Put to the node, returning a task if available
         virtual task * try_put_task( const input_type &t ) {
            if ( my_max_concurrency == 0 ) {
@@ -121,7 +121,7 @@ namespace internal {
             my_aggregator.execute(&op_data);
             return true;
         }
-        
+
         //! Removes src from the list of cached predecessors.
         /* override */ bool remove_predecessor( predecessor_type &src ) {
             operation_type op_data(rem_pred);
@@ -178,7 +178,7 @@ namespace internal {
         size_t my_concurrency;
         input_queue_type *my_queue;
         predecessor_cache<input_type, null_mutex > my_predecessors;
-        
+
         /*override*/void reset_receiver( reset_flags f) {
             if( f & rf_clear_edges) my_predecessors.clear();
             else
@@ -190,7 +190,7 @@ namespace internal {
 
         friend class apply_body_task_bypass< class_type, input_type >;
         friend class forward_task_bypass< class_type >;
-        
+
         class operation_type : public aggregated_operation< operation_type > {
         public:
             char type;
@@ -207,12 +207,12 @@ namespace internal {
                 type(char(t)), elem(const_cast<input_type*>(&e)) {}
             operation_type(op_type t) : type(char(t)), r(NULL) {}
         };
-        
+
         bool forwarder_busy;
         typedef internal::aggregating_functor<class_type, operation_type> handler_type;
         friend class internal::aggregating_functor<class_type, operation_type>;
         aggregator< handler_type, operation_type > my_aggregator;
-        
+
         void handle_operations(operation_type *op_list) {
             operation_type *tmp;
             while (op_list) {
@@ -257,7 +257,7 @@ namespace internal {
                             bool item_was_retrieved = false;
                             if ( my_queue )
                                 item_was_retrieved = my_queue->pop(i);
-                            else 
+                            else
                                 item_was_retrieved = my_predecessors.get_item(i);
                             if (item_was_retrieved) {
                                 ++my_concurrency;
@@ -292,7 +292,7 @@ namespace internal {
                 }
             }
         }
-        
+
         //! Put to the node, but return the task instead of enqueueing it
         void internal_try_put_task(operation_type *op) {
             __TBB_ASSERT(my_max_concurrency != 0, NULL);
@@ -301,7 +301,7 @@ namespace internal {
                task * new_task = create_body_task(*(op->elem));
                op->bypass_t = new_task;
                __TBB_store_with_release(op->status, SUCCEEDED);
-           } else if ( my_queue && my_queue->push(*(op->elem)) ) { 
+           } else if ( my_queue && my_queue->push(*(op->elem)) ) {
                op->bypass_t = SUCCESSFULLY_ENQUEUED;
                __TBB_store_with_release(op->status, SUCCEEDED);
            } else {
@@ -309,7 +309,7 @@ namespace internal {
                __TBB_store_with_release(op->status, FAILED);
            }
         }
-        
+
         //! Tries to spawn bodies if available and if concurrency allows
         void internal_forward(operation_type *op) {
             op->bypass_t = NULL;
@@ -332,7 +332,7 @@ namespace internal {
         }
 
         //! Applies the body to the provided input
-        //  then decides if more work is available 
+        //  then decides if more work is available
         task * apply_body_bypass( input_type &i ) {
             task * new_task = static_cast<ImplType *>(this)->apply_body_impl_bypass(i);
             if ( my_max_concurrency != 0 ) {
@@ -343,10 +343,10 @@ namespace internal {
             }
             return new_task;
         }
-        
+
         //! allocates a task to apply a body
         inline task * create_body_task( const input_type &input ) {
-            
+
             return (my_graph.is_active()) ?
                 new(task::allocate_additional_child_of(*(my_graph.root_task())))
                     apply_body_task_bypass < class_type, input_type >(*this, input) :
@@ -361,7 +361,7 @@ namespace internal {
                FLOW_SPAWN(*tp);
            }
        }
-        
+
        //! This is executed by an enqueued task, the "forwarder"
        task *forward_task() {
            operation_type op_data(try_fwd);
@@ -376,7 +376,7 @@ namespace internal {
            } while (op_data.status == SUCCEEDED);
            return rval;
        }
-        
+
        inline task *create_forward_task() {
            return (my_graph.is_active()) ?
                new(task::allocate_additional_child_of(*(my_graph.root_task()))) forward_task_bypass< class_type >(*this) :
@@ -413,7 +413,7 @@ namespace internal {
         }
 
         //! Copy constructor
-        function_input( const function_input& src, input_queue_type *q = NULL ) : 
+        function_input( const function_input& src, input_queue_type *q = NULL ) :
                 base_type(src, q),
                 my_body( src.my_init_body->clone() ),
                 my_init_body(src.my_init_body->clone() ) {
@@ -427,8 +427,8 @@ namespace internal {
         template< typename Body >
         Body copy_function_object() {
             function_body_type &body_ref = *this->my_body;
-            return dynamic_cast< internal::function_body_leaf<input_type, output_type, Body> & >(body_ref).get_body(); 
-        } 
+            return dynamic_cast< internal::function_body_leaf<input_type, output_type, Body> & >(body_ref).get_body();
+        }
 
         task * apply_body_impl_bypass( const input_type &i) {
 #if TBB_PREVIEW_FLOW_GRAPH_TRACE
@@ -438,7 +438,7 @@ namespace internal {
             output_type v = (*my_body)(i);
             tbb::internal::fgt_end_body( my_body );
             task * new_task = successors().try_put_task( v );
-#else       
+#else
             task * new_task = successors().try_put_task( (*my_body)(i) );
 #endif
             return new_task;
@@ -469,7 +469,7 @@ namespace internal {
             clear_element<N-1>::clear_this(p);
         }
         template<typename P> static bool this_empty(P &p) {
-            if(tbb::flow::get<N-1>(p).successors().empty()) 
+            if(tbb::flow::get<N-1>(p).successors().empty())
                 return clear_element<N-1>::this_empty(p);
             return false;
         }
@@ -501,7 +501,7 @@ namespace internal {
 #endif
 
     //! Implements methods for a function node that takes a type Input as input
-    //  and has a tuple of output ports specified.  
+    //  and has a tuple of output ports specified.
     template< typename Input, typename OutputPortSet, typename A>
     class multifunction_input : public function_input_base<Input, A, multifunction_input<Input,OutputPortSet,A> > {
     public:
@@ -526,7 +526,7 @@ namespace internal {
         }
 
         //! Copy constructor
-        multifunction_input( const multifunction_input& src, input_queue_type *q = NULL ) : 
+        multifunction_input( const multifunction_input& src, input_queue_type *q = NULL ) :
                 base_type(src, q),
                 my_body( src.my_init_body->clone() ),
                 my_init_body(src.my_init_body->clone() ) {
@@ -540,8 +540,8 @@ namespace internal {
         template< typename Body >
         Body copy_function_object() {
             multifunction_body_type &body_ref = *this->my_body;
-            return dynamic_cast< internal::multifunction_body_leaf<input_type, output_ports_type, Body> & >(body_ref).get_body(); 
-        } 
+            return dynamic_cast< internal::multifunction_body_leaf<input_type, output_ports_type, Body> & >(body_ref).get_body();
+        }
 
         // for multifunction nodes we do not have a single successor as such.  So we just tell
         // the task we were successful.
@@ -562,7 +562,7 @@ namespace internal {
         }
 #endif
 
-        /*override*/void reset(reset_flags f) { 
+        /*override*/void reset(reset_flags f) {
             base_type::reset_function_input_base(f);
             if(f & rf_clear_edges)clear_element<N>::clear_this(my_output_ports);
             if(f & rf_reset_bodies) {
@@ -582,7 +582,7 @@ namespace internal {
     // template to refer to an output port of a multifunction_node
     template<size_t N, typename MOP>
     typename tbb::flow::tuple_element<N, typename MOP::output_ports_type>::type &output_port(MOP &op) {
-        return tbb::flow::get<N>(op.output_ports()); 
+        return tbb::flow::get<N>(op.output_ports());
     }
 
 // helper structs for split_node
@@ -607,28 +607,28 @@ namespace internal {
     template< typename Output >
     class continue_input : public continue_receiver {
     public:
-        
+
         //! The input type of this receiver
         typedef continue_msg input_type;
-            
+
         //! The output type of this receiver
         typedef Output output_type;
         typedef function_body<input_type, output_type> function_body_type;
-        
+
         template< typename Body >
         continue_input( graph &g, Body& body )
-            : my_graph_ptr(&g), 
+            : my_graph_ptr(&g),
              my_body( new internal::function_body_leaf< input_type, output_type, Body>(body) ),
              my_init_body( new internal::function_body_leaf< input_type, output_type, Body>(body) ) { }
-        
+
         template< typename Body >
         continue_input( graph &g, int number_of_predecessors, Body& body )
-            : continue_receiver( number_of_predecessors ), my_graph_ptr(&g), 
+            : continue_receiver( number_of_predecessors ), my_graph_ptr(&g),
              my_body( new internal::function_body_leaf< input_type, output_type, Body>(body) ),
              my_init_body( new internal::function_body_leaf< input_type, output_type, Body>(body) )
         { }
 
-        continue_input( const continue_input& src ) : continue_receiver(src), 
+        continue_input( const continue_input& src ) : continue_receiver(src),
             my_graph_ptr(src.my_graph_ptr),
             my_body( src.my_init_body->clone() ),
             my_init_body( src.my_init_body->clone() ) {}
@@ -641,8 +641,8 @@ namespace internal {
         template< typename Body >
         Body copy_function_object() {
             function_body_type &body_ref = *my_body;
-            return dynamic_cast< internal::function_body_leaf<input_type, output_type, Body> & >(body_ref).get_body(); 
-        } 
+            return dynamic_cast< internal::function_body_leaf<input_type, output_type, Body> & >(body_ref).get_body();
+        }
 
         /*override*/void reset_receiver( reset_flags f) {
             continue_receiver::reset_receiver(f);
@@ -654,15 +654,15 @@ namespace internal {
         }
 
     protected:
-        
+
         graph* my_graph_ptr;
         function_body_type *my_body;
         function_body_type *my_init_body;
-        
-        virtual broadcast_cache<output_type > &successors() = 0; 
-        
+
+        virtual broadcast_cache<output_type > &successors() = 0;
+
         friend class apply_body_task_bypass< continue_input< Output >, continue_msg >;
-        
+
         //! Applies the body to the provided input
         task *apply_body_bypass( input_type ) {
 #if TBB_PREVIEW_FLOW_GRAPH_TRACE
@@ -672,15 +672,15 @@ namespace internal {
             output_type v = (*my_body)( continue_msg() );
             tbb::internal::fgt_end_body( my_body );
             return successors().try_put_task( v );
-#else   
+#else
             return successors().try_put_task( (*my_body)( continue_msg() ) );
 #endif
         }
-        
+
         //! Spawns a task that applies the body
         /* override */ task *execute( ) {
             return (my_graph_ptr->is_active()) ?
-                new ( task::allocate_additional_child_of( *(my_graph_ptr->root_task()) ) ) 
+                new ( task::allocate_additional_child_of( *(my_graph_ptr->root_task()) ) )
                     apply_body_task_bypass< continue_input< Output >, continue_msg >( *this, continue_msg() ) :
                 NULL;
         }
@@ -691,7 +691,7 @@ namespace internal {
     template< typename Output >
     class function_output : public sender<Output> {
     public:
-        
+
         template<int N> friend struct clear_element;
         typedef Output output_type;
         typedef receiver<output_type> successor_type;
@@ -700,18 +700,18 @@ namespace internal {
         typedef typename sender<output_type>::built_successors_type built_successors_type;
         typedef typename sender<output_type>::successor_list_type successor_list_type;
 #endif
-        
+
         function_output() { my_successors.set_owner(this); }
         function_output(const function_output & /*other*/) : sender<output_type>() {
             my_successors.set_owner(this);
         }
-        
+
         //! Adds a new successor to this node
         /* override */ bool register_successor( receiver<output_type> &r ) {
             successors().register_successor( r );
             return true;
         }
-        
+
         //! Removes a successor from this node
         /* override */ bool remove_successor( receiver<output_type> &r ) {
             successors().remove_successor( r );
@@ -748,11 +748,11 @@ namespace internal {
         // if task pointer is returned will always spawn and return true, else
         // return value will be bool returned from successors.try_put.
         task *try_put_task(const output_type &i) { return my_successors.try_put_task(i); }
-          
-        broadcast_cache_type &successors() { return my_successors; } 
+
+        broadcast_cache_type &successors() { return my_successors; }
     protected:
         broadcast_cache_type my_successors;
-        
+
     };  // function_output
 
     template< typename Output >
@@ -761,7 +761,7 @@ namespace internal {
         typedef Output output_type;
         typedef function_output<output_type> base_type;
         using base_type::my_successors;
-        
+
         multifunction_output() : base_type() {my_successors.set_owner(this);}
         multifunction_output( const multifunction_output &/*other*/) : base_type() { my_successors.set_owner(this); }
 

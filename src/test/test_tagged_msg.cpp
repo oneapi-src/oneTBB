@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -134,7 +134,7 @@ void RunTests() {
     ASSERT(ref_i == 4, "assign to i did not affect ref_i");
 
     ASSERT( z == 3, "Error retrieving value from i");
-    
+
     //updating and retrieving tags
     ASSERT(j.tag() == 2, "Error retrieving tag for j");
     j.set_tag(10);
@@ -144,7 +144,7 @@ void RunTests() {
     k.set_tag('b');
     ASSERT(k.tag() == 'b', "Error updating char tag");
 
-    tagged_msg_type double_tagged_msg(3, 8.0);  
+    tagged_msg_type double_tagged_msg(3, 8.0);
     ASSERT(is_a<double>(double_tagged_msg), "Wrong type for double_tagged_msg (== double)");
     ASSERT(!is_a<char>(double_tagged_msg), "Wrong type for double_tagged_msg (!= char)");
     ASSERT(!is_a<int>(double_tagged_msg), "Wrong type for double_tagged_msg (!= int)");
@@ -152,7 +152,7 @@ void RunTests() {
     ASSERT(is_a<double>(copytype), "Wrong type for double_tagged_msg (== double)");
     ASSERT(!is_a<char>(copytype), "Wrong type for double_tagged_msg (!= char)");
     ASSERT(!is_a<int>(copytype), "Wrong type for double_tagged_msg (!= int)");
-    tagged_msg_type default_tagged_msg;   
+    tagged_msg_type default_tagged_msg;
     ASSERT(!(is_a<double>(default_tagged_msg)), "wrong type for default ( != double)");
     ASSERT(!(is_a<int>(default_tagged_msg)), "wrong type for default ( != int)");
     ASSERT(!(is_a<bool>(default_tagged_msg)), "wrong type for default ( != bool)");

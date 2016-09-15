@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -68,7 +68,7 @@ void RunOneComparisonTest() {
     ASSERT(!(t_tuple((T1)2,(T2)1,(T3)1) == u_tuple((U1)1,(U2)1,(U3)1)),NULL);
     ASSERT(!(t_tuple((T1)1,(T2)2,(T3)1) == u_tuple((U1)1,(U2)1,(U3)1)),NULL);
     ASSERT(!(t_tuple((T1)1,(T2)1,(T3)2) == u_tuple((U1)1,(U2)1,(U3)1)),NULL);
-    
+
     ASSERT(!(t_tuple((T1)1,(T2)1,(T3)1) <  u_tuple((U1)1,(U2)1,(U3)1)),NULL);
     ASSERT(!(t_tuple((T1)1,(T2)1,(T3)1) >  u_tuple((U1)1,(U2)1,(U3)1)),NULL);
     ASSERT(!(t_tuple((T1)1,(T2)1,(T3)1) !=  u_tuple((U1)1,(U2)1,(U3)1)),NULL);
@@ -177,7 +177,7 @@ void RunTests() {
     ASSERT(!(mixed_tuple_left(1,2.f,1,1) == mixed_tuple_right(1.f,1,1,1)),NULL);
     ASSERT(!(mixed_tuple_left(1,1.f,2,1) == mixed_tuple_right(1.f,1,1,1)),NULL);
     ASSERT(!(mixed_tuple_left(1,1.f,1,2) == mixed_tuple_right(1.f,1,1,1)),NULL);
-    
+
     ASSERT(!(mixed_tuple_left(1,1.f,1,1) <  mixed_tuple_right(1.f,1,1,1)),NULL);
     ASSERT(!(mixed_tuple_left(1,1.f,1,1) >  mixed_tuple_right(1.f,1,1,1)),NULL);
     ASSERT(!(mixed_tuple_left(1,1.f,1,1) !=  mixed_tuple_right(1.f,1,1,1)),NULL);

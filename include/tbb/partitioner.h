@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -405,7 +405,7 @@ struct balancing_partition_type : unbalancing_partition_type<Mode> {
         if( !(self().my_divisor / Mode::my_partition::factor) ) { // if not from the top P tasks of binary tree
             self().my_divisor = 1; // TODO: replace by on-stack flag (partition_state's member)?
             if( t.is_stolen_task() && t.parent()->ref_count() >= 2 ) { // runs concurrently with the left task
-#if TBB_USE_EXCEPTIONS
+#if __TBB_USE_OPTIONAL_RTTI
                 // RTTI is available, check whether the cast is valid
                 __TBB_ASSERT(dynamic_cast<flag_task*>(t.parent()), 0);
                 // correctness of the cast relies on avoiding the root task for which:

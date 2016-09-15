@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -265,10 +265,10 @@ public:
 
     // methods remove the statement from all predecessors/successors liste in the edge
     // container.
-    template< typename S > void sender_extract( S &s ); 
-    template< typename R > void receiver_extract( R &r ); 
-    
-private: 
+    template< typename S > void sender_extract( S &s );
+    template< typename R > void receiver_extract( R &r );
+
+private:
     edge_list_type built_edges;
 };  // class edge_container
 }  // namespace internal
@@ -528,9 +528,15 @@ class graph : tbb::internal::no_copy {
         void operator()() const { graph_root_task->wait_for_all(); }
     };
 
-    void prepare_task_arena() {
-        my_task_arena = new tbb::task_arena(tbb::internal::attach());
-        if (!my_task_arena->is_active())
+    void prepare_task_arena( bool reinit = false ) {
+        if (reinit) {
+            __TBB_ASSERT( my_task_arena, NULL );
+            my_task_arena->terminate();
+            my_task_arena->initialize(tbb::task_arena::attach());
+        } else {
+            my_task_arena = new tbb::task_arena(tbb::task_arena::attach());
+        }
+        if (!my_task_arena->is_active()) // failed to attach
             my_task_arena->initialize(); // create a new, default-initialized arena
         __TBB_ASSERT(my_task_arena->is_active(), NULL);
     }
@@ -659,7 +665,7 @@ public:
     task * root_task() {
         return my_root_task;
     }
-    
+
     void set_active(bool a = true) {
        my_is_active = a;
     }
@@ -813,8 +819,7 @@ inline void graph::reset(  reset_flags f ) {
 #if __TBB_PREVIEW_ASYNC_NODE
     // Reattach the arena. Might be useful to run the graph in a particular task_arena
     // while not limiting graph lifetime to a single task_arena::execute() call.
-    delete my_task_arena;
-    prepare_task_arena();
+    prepare_task_arena( /*reinit=*/true );
 #endif
     set_active(true);
     // now spawn the tasks necessary to start the graph
@@ -1108,8 +1113,8 @@ public:
     typedef internal::function_input_queue<input_type, Allocator> input_queue_type;
     typedef internal::function_output<output_type> fOutput_type;
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
-    using typename fInput_type::predecessor_list_type;
-    using typename fOutput_type::successor_list_type;
+    typedef typename fInput_type::predecessor_list_type predecessor_list_type;
+    typedef typename fOutput_type::successor_list_type successor_list_type;
 #endif
     using fInput_type::my_predecessors;
 
@@ -1159,7 +1164,7 @@ protected:
     /*override*/void reset_node(reset_flags f) {
         fInput_type::reset_function_input(f);
         // TODO: use clear() instead.
-        if(f & rf_clear_edges) { 
+        if(f & rf_clear_edges) {
             successors().clear();
             my_predecessors.clear();
         }
@@ -1624,7 +1629,7 @@ public:
 
     typedef typename receiver<T>::built_predecessors_type built_predecessors_type;
 
-    /*override receiver*/ built_predecessors_type &built_predecessors() { return my_built_predecessors; } 
+    /*override receiver*/ built_predecessors_type &built_predecessors() { return my_built_predecessors; }
 
     /*override*/ void internal_add_built_predecessor( predecessor_type &p) {
         spin_mutex::scoped_lock l(pred_mutex);
@@ -1844,7 +1849,7 @@ protected:
 
     typedef typename receiver<T>::built_predecessors_type built_predecessors_type;
 
-    /*override receiver*/ built_predecessors_type &built_predecessors() { return my_built_predecessors; } 
+    /*override receiver*/ built_predecessors_type &built_predecessors() { return my_built_predecessors; }
 
     virtual void internal_add_built_pred(buffer_operation *op) {
         my_built_predecessors.add_edge(*(op->p));
@@ -2822,7 +2827,7 @@ protected:
         return rtask;
     }
 
-    /*override*/void reset_receiver(reset_flags /*f*/) { 
+    /*override*/void reset_receiver(reset_flags /*f*/) {
         __TBB_ASSERT(false,NULL);  // should never be called
     }
 
@@ -3457,7 +3462,7 @@ public:
 private:
 #if TBB_PREVIEW_FLOW_GRAPH_TRACE
     const char *my_type_name;
-#endif 
+#endif
     input_ports_type *my_input_ports;
     static const size_t NUM_INPUTS = sizeof...(InputTypes);
 
@@ -3613,12 +3618,12 @@ public:
 };
 
 template<typename Input, typename Ports, typename AsyncGateway, typename Body>
-class async_body { 
+class async_body {
 public:
     typedef AsyncGateway async_gateway_type;
 
     async_body(const Body &body, async_gateway_type *gateway) : my_body(body), my_async_gateway(gateway) { }
- 
+
     async_body(const async_body &other) : my_body(other.my_body), my_async_gateway(other.my_async_gateway) { }
 
     void operator()( const Input &v, Ports & ) {
@@ -3735,7 +3740,7 @@ public:
         typedef internal::multifunction_body<input_type, typename base_type::output_ports_type> mfn_body_type;
         typedef internal::async_body<Input, typename base_type::output_ports_type, async_gateway_type, Body> async_body_type;
         mfn_body_type &body_ref = *this->my_body;
-        async_body_type ab = dynamic_cast< internal::multifunction_body_leaf<input_type, typename base_type::output_ports_type, async_body_type> & >(body_ref).get_body(); 
+        async_body_type ab = dynamic_cast< internal::multifunction_body_leaf<input_type, typename base_type::output_ports_type, async_body_type> & >(body_ref).get_body();
         return ab.get_body();
     }
 
@@ -3770,7 +3775,7 @@ protected:
        base_type::reset_node(f);
     }
 
-}; 
+};
 
 #endif // __TBB_PREVIEW_ASYNC_NODE
 

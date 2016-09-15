@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -18,7 +18,7 @@
     reasons why the executable file might be covered by the GNU General Public License.
 */
 
-// Source file for miscellaneous entities that are infrequently referenced by 
+// Source file for miscellaneous entities that are infrequently referenced by
 // an executing program.
 
 #include "tbb/tbb_stddef.h"
@@ -94,7 +94,7 @@ void handle_perror( int error_code, const char* what ) {
 #endif /* !TBB_USE_EXCEPTIONS */
 }
 
-#if _WIN32||_WIN64 
+#if _WIN32||_WIN64
 void handle_win_error( int error_code ) {
     char buf[512];
 #if !__TBB_WIN8UI_SUPPORT
@@ -210,7 +210,7 @@ bool cpu_has_speculation() {
                            "cpuid\n"
                            "movl %%ebx, %0\n"
                            "movl %%esi, %%ebx\n"
-                           : "=a"(reg_ebx) : "0" (reg_eax), "c" (reg_ecx) : "esi", 
+                           : "=a"(reg_ebx) : "0" (reg_eax), "c" (reg_ecx) : "esi",
 #if __TBB_x86_64
                            "ebx",
 #endif
@@ -251,8 +251,8 @@ extern "C" void __TBB_machine_store8_slow_perf_warning( volatile void *ptr ) {
     const unsigned n = 4;
     static tbb::atomic<void*> cache[n];
     static tbb::atomic<unsigned> k;
-    for( unsigned i=0; i<n; ++i ) 
-        if( ptr==cache[i] ) 
+    for( unsigned i=0; i<n; ++i )
+        if( ptr==cache[i] )
             goto done;
     cache[(k++)%n] = const_cast<void*>(ptr);
     tbb::internal::runtime_warning( "atomic store on misaligned 8-byte location %p is slow", ptr );
@@ -263,7 +263,7 @@ done:;
 extern "C" void __TBB_machine_store8_slow( volatile void *ptr, int64_t value ) {
     for( tbb::internal::atomic_backoff b;;b.pause() ) {
         int64_t tmp = *(int64_t*)ptr;
-        if( __TBB_machine_cmpswp8(ptr,value,tmp)==tmp ) 
+        if( __TBB_machine_cmpswp8(ptr,value,tmp)==tmp )
             break;
     }
 }

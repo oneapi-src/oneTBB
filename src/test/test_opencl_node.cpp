@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -122,7 +122,7 @@ void TestArgumentPassing() {
     int stride_z = 64 * 64;
     ASSERT( stride_z * 64 < N, NULL );
     k.set_args( port_ref<0>(), BROKEN_FUNCTION_POINTER_DEDUCTION( port_ref<1> ), /* stride_x */ 1, /* stride_y */ 64, /* stride_z */ stride_z, /* dim */ 3, err, err_size );
-    k.set_ndranges( { 64, 64, 64 }, { 4, (int)min( maxSizes[1], 4 ), (int)min( maxSizes[2], 4 ) } );
+    k.set_ndranges( { 64, 64, 64 }, { 4, min( (int)maxSizes[1], 4 ), min( (int)maxSizes[2], 4 ) } );
     s.try_put( std::make_tuple( b1, b2, std::list<char>() ) );
     g.wait_for_all();
     ASSERT( err.data() == std::string( "Done" ), "Validation has failed" );
@@ -133,7 +133,7 @@ void TestArgumentPassing() {
     std::fill( b1.begin(), b1.end(), 5 );
     ASSERT( 2 * 64 * 64 < N, NULL );
     k.set_args( port_ref<0, 1>(), /* stride_x */ 2, /* stride_y */ 2 * 64, /* stride_z */ 2 * 64 * 64, /* dim */ 3, err, err_size );
-    k.set_ndranges( BROKEN_FUNCTION_POINTER_DEDUCTION( port_ref<2> ), BROKEN_INITIALIZER_LIST_DEDUCTION( { 4, (int)min( maxSizes[1], 4 ), min( (int)maxSizes[2], 4 ) } ) );
+    k.set_ndranges( BROKEN_FUNCTION_POINTER_DEDUCTION( port_ref<2> ), BROKEN_INITIALIZER_LIST_DEDUCTION( { 4, min( (int)maxSizes[1], 4 ), min( (int)maxSizes[2], 4 ) } ) );
     l.push_back( 64 ); l.push_back( 64 ); l.push_back( 64 );
     s.try_put( std::make_tuple( b1, b2, l ) );
     l.front() = 0; // Nothing should be changed
@@ -338,21 +338,23 @@ void LoopTest() {
 
 template <typename Factory>
 struct ConcurrencyTestBodyData {
-    typedef opencl_node< tuple<opencl_buffer<cl_char, Factory>, opencl_buffer<cl_short, Factory>>, queueing, Factory > NodeType;
+    typedef opencl_node< tuple<opencl_buffer<cl_char, Factory>, opencl_subbuffer<cl_short, Factory>>, queueing, Factory > NodeType;
     typedef std::vector< NodeType* > VectorType;
 
     Harness::SpinBarrier barrier;
     VectorType nodes;
-    function_node< opencl_buffer<cl_short, Factory> > validationNode;
+    function_node< opencl_subbuffer<cl_short, Factory> > validationNode;
     tbb::atomic<int> numChecks;
 
     ConcurrencyTestBodyData( opencl_graph &g, int numThreads ) : barrier( numThreads ), nodes(numThreads),
-        validationNode( g, unlimited, [numThreads, this]( const opencl_buffer<cl_short, Factory> &b ) {
+        validationNode( g, unlimited, [numThreads, this]( const opencl_subbuffer<cl_short, Factory> &b ) {
             ASSERT( std::all_of( b.begin(), b.end(), [numThreads]( cl_short c ) { return c == numThreads; } ), "Validation has failed" );
             --numChecks;
         } )
     {
         numChecks = 100;
+        // The test creates subbers in pairs so numChecks should be even.
+        ASSERT( numChecks % 2 == 0, NULL );
     }
 
     ~ConcurrencyTestBodyData() {
@@ -432,15 +434,43 @@ public:
             remove_edge( output_port<1>( *data->nodes.back() ), data->validationNode );
 
         data->barrier.wait();
+        if ( idx == 0 ) {
+            // The first node needs two buffers.
+           Harness::FastRandom rnd(42);
+            cl_uint alignment = 0;
+            for ( opencl_device d : filteredDevices ) {
+                cl_uint deviceAlignment;
+                d.info( CL_DEVICE_MEM_BASE_ADDR_ALIGN, deviceAlignment );
+                alignment = max( alignment, deviceAlignment );
+            }
+            alignment /= CHAR_BIT;
+            cl_uint alignmentMask = ~(alignment-1);
+            for ( int i = 0; i < numChecks; i += 2 ) {
+                for ( int j = 0; j < 2; ++j ) {
+                    opencl_buffer<cl_char, Factory> b1( f, N );
+                    std::fill( b1.begin(), b1.end(), 1 );
+                    input_port<0>( *n2 ).try_put( b1 );
+                }
 
-        for ( int i = 0; i < numChecks; ++i ) {
-            opencl_buffer<cl_char, Factory> b( f, N );
-            std::fill( b.begin(), b.end(), 1 );
-            input_port<0>( *n2 ).try_put( b );
-            if ( idx == 0 ) {
-                opencl_buffer<cl_short, Factory> b1( f, N );
-                std::fill( b1.begin(), b1.end(), 0 );
-                input_port<1>( *n2 ).try_put( b1 );
+                // The subbers are created in pairs from one big buffer
+                opencl_buffer<cl_short, Factory> b( f, 4*N );
+                size_t id0 = (rnd.get() % N) & alignmentMask;
+                opencl_subbuffer<cl_short, Factory> sb1( b, id0, N );
+                std::fill( sb1.begin(), sb1.end(), 0 );
+                input_port<1>( *n2 ).try_put( sb1 );
+
+                size_t id1 = (rnd.get() % N) & alignmentMask;
+                opencl_subbuffer<cl_short, Factory> sb2 = b.subbuffer( 2*N + id1, N );
+                std::fill( sb2.begin(), sb2.end(), 0 );
+                input_port<1>( *n2 ).try_put( sb2 );
+            }
+        } else {
+            // Other nodes need only one buffer each because input_port<1> is connected with
+            // output_port<1> of the previous node.
+            for ( int i = 0; i < numChecks; ++i ) {
+                opencl_buffer<cl_char, Factory> b( f, N );
+                std::fill( b.begin(), b.end(), 1 );
+                input_port<0>( *n2 ).try_put( b );
             }
         }
 
@@ -485,7 +515,7 @@ struct DeviceFilter {
             std::unordered_map<std::string, std::vector<opencl_device>> platforms;
             for ( opencl_device d : device_list ) platforms[d.platform_name()].push_back( d );
 
-            // Select a platform with maximum number of devices. 
+            // Select a platform with maximum number of devices.
             filteredDevices = std::max_element( platforms.begin(), platforms.end(),
                 []( const std::pair<std::string, std::vector<opencl_device>>& p1, const std::pair<std::string, std::vector<opencl_device>>& p2 ) {
                 return p1.second.size() < p2.second.size();

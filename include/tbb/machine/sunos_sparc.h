@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -30,7 +30,7 @@
 
 #define __TBB_WORDSIZE 8
 // Big endian is assumed for SPARC.
-// While hardware may support page-specific bi-endianness, only big endian pages may be exposed to TBB  
+// While hardware may support page-specific bi-endianness, only big endian pages may be exposed to TBB
 #define __TBB_ENDIANNESS __TBB_ENDIAN_BIG
 
 /** To those working on SPARC hardware. Consider relaxing acquire and release

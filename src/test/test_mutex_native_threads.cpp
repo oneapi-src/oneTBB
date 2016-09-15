@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -34,7 +34,7 @@ template<typename M>
 struct Counter {
     typedef M mutex_type;
     M mutex;
-    volatile long value; 
+    volatile long value;
     void flog_once( size_t mode );
 };
 
@@ -83,7 +83,7 @@ struct Invariant {
     bool is_okay() {
         return value_is( value[0] );
     }
-    void flog_once( size_t mode ); 
+    void flog_once( size_t mode );
 };
 
 template<typename M, long N>
@@ -159,7 +159,7 @@ struct Work: NoAssign {
     void operator()( int ) const {
         size_t step;
         while( (step=Order.fetch_and_add<tbb::acquire>(chunk))<TestSize )
-            for( size_t i=0; i<chunk && step<TestSize; ++i, ++step ) 
+            for( size_t i=0; i<chunk && step<TestSize; ++i, ++step )
                 state.flog_once(step);
     }
 };

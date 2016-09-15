@@ -1,4 +1,4 @@
-# Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+# Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 #
 # This file is part of Threading Building Blocks. Threading Building Blocks is free software;
 # you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -29,6 +29,8 @@ endif # icc
 
 ifeq ($(shell uname), Linux)
 LIBS+= -lrt 
+else ifeq ($(shell uname), Darwin)
+override CXXFLAGS += -Wl,-rpath,$(TBBROOT)/lib
 endif
 
 include ../../common/gui/Makefile.gmake
@@ -42,7 +44,7 @@ all:	release test
 resources:
 ifeq ($(UI),mac)
 	mkdir -p $(NAME).app/Contents/{MacOS,Resources/en.lproj}
-	cat ../../common/gui/xcode/tbbExample/Info.plist | sed -e "s/tbbExample/$(NAME)/" > $(NAME).app/Contents/Info.plist
+	cat ../../common/gui/xcode/tbbExample/tbbExample-Info.plist | sed -e "s/tbbExample/$(NAME)/" > $(NAME).app/Contents/Info.plist
 	cat ../../common/gui/xcode/tbbExample/launcher.sh | sed -e "s/tbbExample/$(NAME)/" > $(NAME).app/Contents/MacOS/launcher.sh
 	chmod +x $(NAME).app/Contents/MacOS/launcher.sh
 	cp ../../common/gui/xcode/tbbExample/PkgInfo $(NAME).app/Contents

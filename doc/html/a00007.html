@@ -34,17 +34,17 @@
 <div class="title">Requirements on iterators for parallel_sort </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>Requirements on value type <code>T</code> of <code>RandomAccessIterator</code> for <code>parallel_sort:</code> </p>
+<div class="textblock"><p>Requirements on the iterator type <code>It</code> and its value type <code>T</code> for <code>parallel_sort:</code> </p>
 <ul>
-<li><div class="fragment"><div class="line"><span class="keywordtype">void</span> swap( T&amp; x, T&amp; y ) </div>
-</div><!-- fragment --> Swaps <code>x</code> and <code>y</code> </li>
+<li><div class="fragment"><div class="line"><span class="keywordtype">void</span> iter_swap( It a, It b ) </div>
+</div><!-- fragment --> Swaps the values of the elements the given iterators <code>a</code> and <code>b</code> are pointing to. <code>It</code> should be a random access iterator.</li>
 <li><div class="fragment"><div class="line"><span class="keywordtype">bool</span> Compare::operator()( <span class="keyword">const</span> T&amp; x, <span class="keyword">const</span> T&amp; y ) </div>
 </div><!-- fragment --> True if x comes before y; </li>
 </ul>
 </div></div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

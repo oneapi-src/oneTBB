@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -88,7 +88,7 @@ class unpadded_mail_outbox {
 protected:
     typedef task_proxy*__TBB_atomic proxy_ptr;
 
-    //! Pointer to first task_proxy in mailbox, or NULL if box is empty. 
+    //! Pointer to first task_proxy in mailbox, or NULL if box is empty.
     proxy_ptr my_first;
 
     //! Pointer to pointer that will point to next item in the queue.  Never NULL.
@@ -135,9 +135,9 @@ public:
     /** Implementation is wait-free. */
     void push( task_proxy& t ) {
         __TBB_ASSERT(&t, NULL);
-        t.next_in_mailbox = NULL; 
+        t.next_in_mailbox = NULL;
         proxy_ptr * const link = (proxy_ptr *)__TBB_FetchAndStoreW(&my_last,(intptr_t)&t.next_in_mailbox);
-        // No release fence required for the next store, because there are no memory operations 
+        // No release fence required for the next store, because there are no memory operations
         // between the previous fully fenced atomic operation and the store.
         __TBB_store_relaxed(*link, &t);
     }
@@ -160,7 +160,7 @@ public:
         suppress_unused_warning(pad);
     }
 
-    //! Drain the mailbox 
+    //! Drain the mailbox
     intptr_t drain() {
         intptr_t k = 0;
         // No fences here because other threads have already quit.
@@ -168,7 +168,7 @@ public:
             my_first = t->next_in_mailbox;
             NFS_Free((char*)t - task_prefix_reservation_size);
         }
-        return k;  
+        return k;
     }
 
     //! True if thread that owns this mailbox is looking for work.
@@ -185,7 +185,7 @@ public:
     //! Construct unattached inbox
     mail_inbox() : my_putter(NULL) {}
 
-    //! Attach inbox to a corresponding outbox. 
+    //! Attach inbox to a corresponding outbox.
     void attach( mail_outbox& putter ) {
         my_putter = &putter;
     }
@@ -218,7 +218,7 @@ public:
 #if DO_ITT_NOTIFY
     //! Get pointer to corresponding outbox used for ITT_NOTIFY calls.
     void* outbox() const {return my_putter;}
-#endif /* DO_ITT_NOTIFY */ 
+#endif /* DO_ITT_NOTIFY */
 }; // class mail_inbox
 
 } // namespace internal

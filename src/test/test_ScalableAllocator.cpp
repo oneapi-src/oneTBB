@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -25,7 +25,7 @@
 
 #include "harness_assert.h"
 #if !__TBB_SOURCE_DIRECTLY_INCLUDED
-// harness_allocator.h requires atimics. We do not want dependency 
+// harness_allocator.h requires atimics. We do not want dependency
 // to TBB library to get atomics, so add rudimentary implementation of them.
 #include "harness_tbb_independence.h"
 #endif

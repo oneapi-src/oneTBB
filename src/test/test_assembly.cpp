@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -41,7 +41,7 @@ using tbb::internal::reference_count;
 //TODO: remove this function when atomic function __TBB_XXX are dropped
 //! Test __TBB_CompareAndSwapW
 static void TestCompareExchange() {
-    ASSERT( intptr_t(-10)<10, "intptr_t not a signed integral type?" ); 
+    ASSERT( intptr_t(-10)<10, "intptr_t not a signed integral type?" );
     REMARK("testing __TBB_CompareAndSwapW\n");
     for( intptr_t a=-10; a<10; ++a )
         for( intptr_t b=-10; b<10; ++b )
@@ -54,8 +54,8 @@ static void TestCompareExchange() {
                 intptr_t x = a;
 #endif
                 intptr_t y = __TBB_CompareAndSwapW(&x,b,c);
-                ASSERT( y==a, NULL ); 
-                if( a==c ) 
+                ASSERT( y==a, NULL );
+                if( a==c )
                     ASSERT( x==b, NULL );
                 else
                     ASSERT( x==a, NULL );
@@ -121,8 +121,8 @@ static void TestLog2() {
             if( uintptr_t k = i*j ) {
                 uintptr_t actual = __TBB_Log2(k);
                 const uintptr_t ONE = 1; // warning suppression again
-                ASSERT( k >= ONE<<actual, NULL );          
-                ASSERT( k>>1 < ONE<<actual, NULL );        
+                ASSERT( k >= ONE<<actual, NULL );
+                ASSERT( k>>1 < ONE<<actual, NULL );
             }
         }
     }

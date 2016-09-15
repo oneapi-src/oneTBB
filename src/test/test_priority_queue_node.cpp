@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -78,7 +78,7 @@ struct parallel_put_get : NoAssign {
     parallel_put_get( tbb::flow::priority_queue_node<T> &q ) : my_q(q) {}
     void operator()(int tid) const {
         for ( int i = 0; i < N; i+=C ) {
-            int j_end = ( N < i + C ) ? N : i + C; 
+            int j_end = ( N < i + C ) ? N : i + C;
             // dump about C values into the Q
             for ( int j = i; j < j_end; ++j ) {
                 ASSERT( my_q.try_put( T (N*tid + j ) ) == true, NULL );
@@ -115,23 +115,23 @@ int test_reservation(int) {
 
         T v=bogus_value, w=bogus_value;
         ASSERT( q.try_reserve(v) == true, NULL );
-        ASSERT( v == T(3), NULL ); 
+        ASSERT( v == T(3), NULL );
         ASSERT( q.try_release() == true, NULL );
         v = bogus_value;
         g.wait_for_all();
         ASSERT( q.try_reserve(v) == true, NULL );
-        ASSERT( v == T(3), NULL ); 
+        ASSERT( v == T(3), NULL );
         ASSERT( q.try_consume() == true, NULL );
         v = bogus_value;
         g.wait_for_all();
- 
+
         ASSERT( q.try_get(v) == true, NULL );
-        ASSERT( v == T(2), NULL ); 
+        ASSERT( v == T(2), NULL );
         v = bogus_value;
         g.wait_for_all();
 
         ASSERT( q.try_reserve(v) == true, NULL );
-        ASSERT( v == T(1), NULL ); 
+        ASSERT( v == T(1), NULL );
         ASSERT( q.try_reserve(w) == false, NULL );
         ASSERT( w == bogus_value, NULL );
         ASSERT( q.try_get(w) == false, NULL );
@@ -140,7 +140,7 @@ int test_reservation(int) {
         v = bogus_value;
         g.wait_for_all();
         ASSERT( q.try_reserve(v) == true, NULL );
-        ASSERT( v == T(1), NULL ); 
+        ASSERT( v == T(1), NULL );
         ASSERT( q.try_consume() == true, NULL );
         v = bogus_value;
         g.wait_for_all();
@@ -230,7 +230,7 @@ int test_parallel(int num_threads) {
 // Tests
 //
 // Predecessors cannot be registered
-// Empty Q rejects item requests 
+// Empty Q rejects item requests
 // Single serial sender, items in FIFO order
 // Chained Qs ( 2 & 3 ), single sender, items at last Q in FIFO order
 //
@@ -331,7 +331,7 @@ int test_serial() {
     return 0;
 }
 
-int TestMain() { 
+int TestMain() {
     tbb::tick_count start = tbb::tick_count::now(), stop;
     for (int p = 2; p <= 4; ++p) {
         tbb::task_scheduler_init init(p);
@@ -339,7 +339,7 @@ int TestMain() {
         test_reservation<int>(p);
         test_reservation<check_type<int> >(p);
         test_parallel<int>(p);
-    } 
+    }
     stop = tbb::tick_count::now();
     REMARK("Priority_Queue_Node Time=%6.6f\n", (stop-start).seconds());
     REMARK("Testing resets\n");

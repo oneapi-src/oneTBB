@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -40,64 +40,64 @@ template<typename InputType>
 void register_input_port(void *node, tbb::flow::receiver<InputType>* port, string_index name_index) {
     //TODO: Make fgt_internal_create_input_port a function template?
     fgt_internal_create_input_port( node, port, name_index);
-}    
+}
 
 template < typename PortsTuple, int N >
 struct fgt_internal_input_helper {
     static void register_port( void *node, PortsTuple &ports ) {
         register_input_port( node, &(tbb::flow::get<N-1>(ports)), static_cast<tbb::internal::string_index>(FLOW_INPUT_PORT_0 + N - 1) );
         fgt_internal_input_helper<PortsTuple, N-1>::register_port( node, ports );
-    } 
+    }
 };
 
 template < typename PortsTuple >
 struct fgt_internal_input_helper<PortsTuple, 1> {
     static void register_port( void *node, PortsTuple &ports ) {
         register_input_port( node, &(tbb::flow::get<0>(ports)), FLOW_INPUT_PORT_0 );
-    } 
+    }
 };
 
 template<typename OutputType>
 void register_output_port(void *node, tbb::flow::sender<OutputType>* port, string_index name_index) {
     //TODO: Make fgt_internal_create_output_port a function template?
     fgt_internal_create_output_port( node, static_cast<void *>(port), name_index);
-}    
+}
 
 template < typename PortsTuple, int N >
 struct fgt_internal_output_helper {
     static void register_port( void *node, PortsTuple &ports ) {
-        register_output_port( node, &(tbb::flow::get<N-1>(ports)), static_cast<tbb::internal::string_index>(FLOW_OUTPUT_PORT_0 + N - 1) ); 
+        register_output_port( node, &(tbb::flow::get<N-1>(ports)), static_cast<tbb::internal::string_index>(FLOW_OUTPUT_PORT_0 + N - 1) );
         fgt_internal_output_helper<PortsTuple, N-1>::register_port( node, ports );
-    } 
+    }
 };
 
 template < typename PortsTuple >
 struct fgt_internal_output_helper<PortsTuple,1> {
     static void register_port( void *node, PortsTuple &ports ) {
-        register_output_port( node, &(tbb::flow::get<0>(ports)), FLOW_OUTPUT_PORT_0 ); 
-    } 
+        register_output_port( node, &(tbb::flow::get<0>(ports)), FLOW_OUTPUT_PORT_0 );
+    }
 };
 
 template< typename NodeType >
 void fgt_multioutput_node_desc( const NodeType *node, const char *desc ) {
-    void *addr =  (void *)( static_cast< tbb::flow::receiver< typename NodeType::input_type > * >(const_cast< NodeType *>(node)) ); 
-    itt_metadata_str_add( ITT_DOMAIN_FLOW, addr, FLOW_NODE, FLOW_OBJECT_NAME, desc ); 
+    void *addr =  (void *)( static_cast< tbb::flow::receiver< typename NodeType::input_type > * >(const_cast< NodeType *>(node)) );
+    itt_metadata_str_add( ITT_DOMAIN_FLOW, addr, FLOW_NODE, FLOW_OBJECT_NAME, desc );
 }
 
 template< typename NodeType >
 void fgt_multiinput_multioutput_node_desc( const NodeType *node, const char *desc ) {
-    void *addr =  const_cast<NodeType *>(node); 
-    itt_metadata_str_add( ITT_DOMAIN_FLOW, addr, FLOW_NODE, FLOW_OBJECT_NAME, desc ); 
+    void *addr =  const_cast<NodeType *>(node);
+    itt_metadata_str_add( ITT_DOMAIN_FLOW, addr, FLOW_NODE, FLOW_OBJECT_NAME, desc );
 }
 
 template< typename NodeType >
 static inline void fgt_node_desc( const NodeType *node, const char *desc ) {
-    void *addr =  (void *)( static_cast< tbb::flow::sender< typename NodeType::output_type > * >(const_cast< NodeType *>(node)) ); 
-    itt_metadata_str_add( ITT_DOMAIN_FLOW, addr, FLOW_NODE, FLOW_OBJECT_NAME, desc ); 
+    void *addr =  (void *)( static_cast< tbb::flow::sender< typename NodeType::output_type > * >(const_cast< NodeType *>(node)) );
+    itt_metadata_str_add( ITT_DOMAIN_FLOW, addr, FLOW_NODE, FLOW_OBJECT_NAME, desc );
 }
 
 static inline void fgt_graph_desc( void *g, const char *desc ) {
-    itt_metadata_str_add( ITT_DOMAIN_FLOW, g, FLOW_GRAPH, FLOW_OBJECT_NAME, desc ); 
+    itt_metadata_str_add( ITT_DOMAIN_FLOW, g, FLOW_GRAPH, FLOW_OBJECT_NAME, desc );
 }
 
 static inline void fgt_body( void *node, void *body ) {
@@ -106,34 +106,34 @@ static inline void fgt_body( void *node, void *body ) {
 
 template< int N, typename PortsTuple >
 static inline void fgt_multioutput_node( string_index t, void *g, void *input_port, PortsTuple &ports ) {
-    itt_make_task_group( ITT_DOMAIN_FLOW, input_port, FLOW_NODE, g, FLOW_GRAPH, t ); 
-    fgt_internal_create_input_port( input_port, input_port, FLOW_INPUT_PORT_0 ); 
-    fgt_internal_output_helper<PortsTuple, N>::register_port( input_port, ports ); 
+    itt_make_task_group( ITT_DOMAIN_FLOW, input_port, FLOW_NODE, g, FLOW_GRAPH, t );
+    fgt_internal_create_input_port( input_port, input_port, FLOW_INPUT_PORT_0 );
+    fgt_internal_output_helper<PortsTuple, N>::register_port( input_port, ports );
 }
 
 template< int N, typename PortsTuple >
 static inline void fgt_multioutput_node_with_body( string_index t, void *g, void *input_port, PortsTuple &ports, void *body ) {
-    itt_make_task_group( ITT_DOMAIN_FLOW, input_port, FLOW_NODE, g, FLOW_GRAPH, t ); 
-    fgt_internal_create_input_port( input_port, input_port, FLOW_INPUT_PORT_0 ); 
-    fgt_internal_output_helper<PortsTuple, N>::register_port( input_port, ports ); 
+    itt_make_task_group( ITT_DOMAIN_FLOW, input_port, FLOW_NODE, g, FLOW_GRAPH, t );
+    fgt_internal_create_input_port( input_port, input_port, FLOW_INPUT_PORT_0 );
+    fgt_internal_output_helper<PortsTuple, N>::register_port( input_port, ports );
     fgt_body( input_port, body );
 }
 
 template< int N, typename PortsTuple >
 static inline void fgt_multiinput_node( string_index t, void *g, PortsTuple &ports, void *output_port) {
-    itt_make_task_group( ITT_DOMAIN_FLOW, output_port, FLOW_NODE, g, FLOW_GRAPH, t ); 
-    fgt_internal_create_output_port( output_port, output_port, FLOW_OUTPUT_PORT_0 ); 
-    fgt_internal_input_helper<PortsTuple, N>::register_port( output_port, ports ); 
+    itt_make_task_group( ITT_DOMAIN_FLOW, output_port, FLOW_NODE, g, FLOW_GRAPH, t );
+    fgt_internal_create_output_port( output_port, output_port, FLOW_OUTPUT_PORT_0 );
+    fgt_internal_input_helper<PortsTuple, N>::register_port( output_port, ports );
 }
 
 static inline void fgt_node( string_index t, void *g, void *output_port ) {
-    itt_make_task_group( ITT_DOMAIN_FLOW, output_port, FLOW_NODE, g, FLOW_GRAPH, t ); 
-    fgt_internal_create_output_port( output_port, output_port, FLOW_OUTPUT_PORT_0 ); 
+    itt_make_task_group( ITT_DOMAIN_FLOW, output_port, FLOW_NODE, g, FLOW_GRAPH, t );
+    fgt_internal_create_output_port( output_port, output_port, FLOW_OUTPUT_PORT_0 );
 }
 
 static inline void fgt_node_with_body( string_index t, void *g, void *output_port, void *body ) {
-    itt_make_task_group( ITT_DOMAIN_FLOW, output_port, FLOW_NODE, g, FLOW_GRAPH, t ); 
-    fgt_internal_create_output_port( output_port, output_port, FLOW_OUTPUT_PORT_0 ); 
+    itt_make_task_group( ITT_DOMAIN_FLOW, output_port, FLOW_NODE, g, FLOW_GRAPH, t );
+    fgt_internal_create_output_port( output_port, output_port, FLOW_OUTPUT_PORT_0 );
     fgt_body( output_port, body );
 }
 
@@ -145,13 +145,13 @@ static inline void fgt_node( string_index t, void *g, void *input_port, void *ou
 
 static inline void fgt_node_with_body( string_index t, void *g, void *input_port, void *output_port, void *body ) {
     fgt_node_with_body( t, g, output_port, body );
-    fgt_internal_create_input_port( output_port, input_port, FLOW_INPUT_PORT_0 ); 
+    fgt_internal_create_input_port( output_port, input_port, FLOW_INPUT_PORT_0 );
 }
 
 
 static inline void  fgt_node( string_index t, void *g, void *input_port, void *decrement_port, void *output_port ) {
     fgt_node( t, g, input_port, output_port );
-    fgt_internal_create_input_port( output_port, decrement_port, FLOW_INPUT_PORT_1 ); 
+    fgt_internal_create_input_port( output_port, decrement_port, FLOW_INPUT_PORT_1 );
 }
 
 static inline void fgt_make_edge( void *output_port, void *input_port ) {
@@ -163,7 +163,7 @@ static inline void fgt_remove_edge( void *output_port, void *input_port ) {
 }
 
 static inline void fgt_graph( void *g ) {
-    itt_make_task_group( ITT_DOMAIN_FLOW, g, FLOW_GRAPH, NULL, FLOW_NULL, FLOW_GRAPH ); 
+    itt_make_task_group( ITT_DOMAIN_FLOW, g, FLOW_GRAPH, NULL, FLOW_NULL, FLOW_GRAPH );
 }
 
 static inline void fgt_begin_body( void *body ) {
@@ -204,7 +204,7 @@ static inline void fgt_graph_desc( void * /*g*/, const char * /*desc*/ ) { }
 
 static inline void fgt_body( void * /*node*/, void * /*body*/ ) { }
 
-template< int N, typename PortsTuple > 
+template< int N, typename PortsTuple >
 static inline void fgt_multioutput_node( string_index /*t*/, void * /*g*/, void * /*input_port*/, PortsTuple & /*ports*/ ) { }
 
 template< int N, typename PortsTuple >
@@ -213,8 +213,8 @@ static inline void fgt_multioutput_node_with_body( string_index /*t*/, void * /*
 template< int N, typename PortsTuple >
 static inline void fgt_multiinput_node( string_index /*t*/, void * /*g*/, PortsTuple & /*ports*/, void * /*output_port*/ ) { }
 
-static inline void fgt_node( string_index /*t*/, void * /*g*/, void * /*output_port*/ ) { } 
-static inline void fgt_node( string_index /*t*/, void * /*g*/, void * /*input_port*/, void * /*output_port*/ ) { } 
+static inline void fgt_node( string_index /*t*/, void * /*g*/, void * /*output_port*/ ) { }
+static inline void fgt_node( string_index /*t*/, void * /*g*/, void * /*input_port*/, void * /*output_port*/ ) { }
 static inline void  fgt_node( string_index /*t*/, void * /*g*/, void * /*input_port*/, void * /*decrement_port*/, void * /*output_port*/ ) { }
 
 static inline void fgt_node_with_body( string_index /*t*/, void * /*g*/, void * /*output_port*/, void * /*body*/ ) { }

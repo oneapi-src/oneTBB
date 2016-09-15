@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -63,9 +63,9 @@ struct touches {
     int my_num_threads;
 
     touches( int num_threads ) : my_num_threads(num_threads) {
-        my_touches = new bool* [my_num_threads]; 
+        my_touches = new bool* [my_num_threads];
         for ( int p = 0; p < my_num_threads; ++p) {
-            my_touches[p] = new bool[N]; 
+            my_touches[p] = new bool[N];
             for ( int n = 0; n < N; ++n)
                 my_touches[p][n] = false;
         }
@@ -80,7 +80,7 @@ struct touches {
 
     bool check( T v ) {
         ASSERT ( my_touches[v/N][v%N] == false, NULL);
-        my_touches[v/N][v%N] = true; 
+        my_touches[v/N][v%N] = true;
         return true;
     }
 
@@ -123,7 +123,7 @@ struct parallel_put_get : NoAssign {
     void operator()(int tid) const {
 
         for ( int i = 0; i < N; i+=C ) {
-            int j_end = ( N < i + C ) ? N : i + C; 
+            int j_end = ( N < i + C ) ? N : i + C;
             // dump about C values into the buffer
             for ( int j = i; j < j_end; ++j ) {
                 ASSERT( my_b.try_put( T (N*tid + j ) ) == true, NULL );
@@ -155,7 +155,7 @@ int test_reservation() {
     b.try_put(T(1));
     b.try_put(T(2));
     b.try_put(T(3));
- 
+
     T v, vsum;
     ASSERT( b.try_reserve(v) == true, NULL );
     ASSERT( b.try_release() == true, NULL );
@@ -166,12 +166,12 @@ int test_reservation() {
     vsum += v;
     v = bogus_value;
     g.wait_for_all();
- 
+
     ASSERT( b.try_get(v) == true, NULL );
     vsum += v;
     v = bogus_value;
     g.wait_for_all();
-    
+
     ASSERT( b.try_reserve(v) == true, NULL );
     ASSERT( b.try_release() == true, NULL );
     v = bogus_value;
@@ -300,7 +300,7 @@ int test_parallel(int num_threads) {
 // Tests
 //
 // Predecessors cannot be registered
-// Empty buffer rejects item requests 
+// Empty buffer rejects item requests
 // Single serial sender, items in arbitrary order
 // Chained buffers ( 2 & 3 ), single sender, items at last buffer in arbitrary order
 //
@@ -426,13 +426,13 @@ int test_serial() {
     return 0;
 }
 
-int TestMain() { 
+int TestMain() {
     tbb::tick_count start = tbb::tick_count::now(), stop;
     for (int p = 2; p <= 4; ++p) {
         tbb::task_scheduler_init init(p);
         test_serial<int>();
         test_parallel<int>(p);
-    } 
+    }
     stop = tbb::tick_count::now();
     REMARK("Buffer_Node Time=%6.6f\n", (stop-start).seconds());
     test_resets<int,tbb::flow::buffer_node<int> >();

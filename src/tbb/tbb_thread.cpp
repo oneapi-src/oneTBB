@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -147,7 +147,7 @@ tbb_thread_v3::id thread_get_id_v3() {
     return tbb_thread_v3::id( pthread_self() );
 #endif // _WIN32||_WIN64
 }
-    
+
 void move_v3( tbb_thread_v3& t1, tbb_thread_v3& t2 )
 {
     if (t1.joinable())

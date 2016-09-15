@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -19,6 +19,28 @@
 */
 
 #import <Foundation/Foundation.h>
+
+#if TARGET_OS_IPHONE
+
+#import <UIKit/UIKit.h>
+#import "OpenGLES/ES2/gl.h"
+
+@interface OpenGLView : UIView {
+    NSTimer *timer;
+    CGRect imageRect;
+}
+
+@property (nonatomic, retain) NSTimer *timer;
+@property (nonatomic) CGRect imageRect;
+
+- (void) drawRect:(CGRect)rect;
+- (void) touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event;
+
+@end
+
+#elif TARGET_OS_MAC
+
+#import <Foundation/Foundation.h>
 #import <Cocoa/Cocoa.h>
 
 @interface OpenGLView : NSOpenGLView{
@@ -34,3 +56,5 @@
 - (void) viewDidEndLiveResize;
 
 @end
+
+#endif

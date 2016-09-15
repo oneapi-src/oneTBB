@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -248,13 +248,13 @@ void TestContextFpuEnvBody::operator()( const tbb::blocked_range<int> &r ) const
     int end = r.end();
     if ( end-1 == numModes ) {
         // For a default context our mode should be inherited.
-        tbb::task::spawn_root_and_wait( 
+        tbb::task::spawn_root_and_wait(
             *new( tbb::task::allocate_root() ) TestContextFpuEnvTask( arenaNum, mode, depth ) );
         AssertMode( newMode );
         end--;
     }
     for ( int i=r.begin(); i<end; ++i ) {
-        tbb::task::spawn_root_and_wait( 
+        tbb::task::spawn_root_and_wait(
             *new( tbb::task::allocate_root(*contexts[i]) ) TestContextFpuEnvTask( arenaNum, i, depth ) );
         AssertMode( newMode );
     }

@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -34,13 +34,13 @@ class test_push_receiver : public tbb::flow::receiver<T> {
 
 public:
 
-    test_push_receiver() {  
-        for (int i = 0; i < N; ++i ) 
+    test_push_receiver() {
+        for (int i = 0; i < N; ++i )
             my_counters[i] = 0;
     }
 
     int get_count( int i ) {
-       int v = my_counters[i]; 
+       int v = my_counters[i];
        return v;
     }
 
@@ -73,7 +73,7 @@ class source_body {
 
    tbb::atomic<int> my_count;
    int *ninvocations;
- 
+
 public:
 
    source_body() : ninvocations(NULL) { my_count = 0; }
@@ -86,7 +86,7 @@ public:
          return true;
       else
          return false;
-   } 
+   }
 
 };
 
@@ -97,15 +97,15 @@ class function_body {
 
 public:
 
-    function_body( tbb::atomic<int> *counters ) : my_counters(counters) {  
-        for (int i = 0; i < N; ++i ) 
+    function_body( tbb::atomic<int> *counters ) : my_counters(counters) {
+        for (int i = 0; i < N; ++i )
             my_counters[i] = 0;
     }
 
     bool operator()( T v ) {
         ++my_counters[(int)v];
         return true;
-    } 
+    }
 
 };
 
@@ -119,7 +119,7 @@ void test_single_dest() {
    tbb::flow::make_edge( src, dest );
    g.wait_for_all();
    for (int i = 0; i < N; ++i ) {
-       ASSERT( dest.get_count(i) == 1, NULL ); 
+       ASSERT( dest.get_count(i) == 1, NULL );
    }
 
    // push only
@@ -131,10 +131,10 @@ void test_single_dest() {
    g.wait_for_all();
    for (int i = 0; i < N; ++i ) {
        int v = counters3[i];
-       ASSERT( v == 1, NULL ); 
+       ASSERT( v == 1, NULL );
    }
 
-   // push & pull 
+   // push & pull
    tbb::flow::source_node<T> src2(g, source_body<T>() );
    tbb::atomic<int> counters2[N];
    function_body<T> b2( counters2 );
@@ -149,7 +149,7 @@ void test_single_dest() {
    g.wait_for_all();
    for (int i = 0; i < N; ++i ) {
        int v = counters2[i];
-       ASSERT( v == 1, NULL ); 
+       ASSERT( v == 1, NULL );
    }
 
    // test copy constructor
@@ -158,7 +158,7 @@ void test_single_dest() {
    ASSERT( src_copy.register_successor(dest_c), NULL );
    g.wait_for_all();
    for (int i = 0; i < N; ++i ) {
-       ASSERT( dest_c.get_count(i) == 1, NULL ); 
+       ASSERT( dest_c.get_count(i) == 1, NULL );
    }
 }
 
@@ -176,7 +176,7 @@ void test_reset() {
     //    check the array for each value.
     for (int i = 0; i < N; ++i ) {
         int v = counters3[i];
-        ASSERT( v == 1, NULL ); 
+        ASSERT( v == 1, NULL );
         counters3[i] = 0;
     }
     g.reset(tbb::flow::rf_reset_bodies);  // <-- re-initializes the counts.
@@ -185,7 +185,7 @@ void test_reset() {
     //    check output queue again.  Should be the same contents.
     for (int i = 0; i < N; ++i ) {
         int v = counters3[i];
-        ASSERT( v == 1, NULL ); 
+        ASSERT( v == 1, NULL );
         counters3[i] = 0;
     }
     g.reset();  // doesn't reset the source_node_body to initial state, but does spawn a task
@@ -195,7 +195,7 @@ void test_reset() {
     // array should be all zero
     for (int i = 0; i < N; ++i ) {
         int v = counters3[i];
-        ASSERT( v == 0, NULL ); 
+        ASSERT( v == 0, NULL );
     }
 
     remove_edge(src3, dest3);
@@ -205,7 +205,7 @@ void test_reset() {
     g.wait_for_all();
     for (int i = 0; i < N; ++i ) {
         int v = counters3[i];
-        ASSERT( v == 0, NULL ); 
+        ASSERT( v == 0, NULL );
     }
 
     // run graph
@@ -214,7 +214,7 @@ void test_reset() {
     // check output
     for (int i = 0; i < N; ++i ) {
         int v = counters3[i];
-        ASSERT( v == 1, NULL ); 
+        ASSERT( v == 1, NULL );
         counters3[i] = 0;
     }
     g.reset(tbb::flow::rf_reset_bodies);  // <-- reinitializes the counts
@@ -222,7 +222,7 @@ void test_reset() {
     g.wait_for_all();
     for (int i = 0; i < N; ++i ) {
         int v = counters3[i];
-        ASSERT( v == 0, NULL ); 
+        ASSERT( v == 0, NULL );
     }
 
     // start it up
@@ -230,7 +230,7 @@ void test_reset() {
     g.wait_for_all();
     for (int i = 0; i < N; ++i ) {
         int v = counters3[i];
-        ASSERT( v == 1, NULL ); 
+        ASSERT( v == 1, NULL );
         counters3[i] = 0;
     }
     g.reset();  // doesn't reset the source_node_body to initial state, and doesn't
@@ -240,14 +240,14 @@ void test_reset() {
     // array should be all zero
     for (int i = 0; i < N; ++i ) {
         int v = counters3[i];
-        ASSERT( v == 0, NULL ); 
+        ASSERT( v == 0, NULL );
     }
     src_inactive.activate();
     // source_node_body is already in final state, so source_node will not forward a message.
     g.wait_for_all();
     for (int i = 0; i < N; ++i ) {
         int v = counters3[i];
-        ASSERT( v == 0, NULL ); 
+        ASSERT( v == 0, NULL );
     }
 }
 
@@ -258,7 +258,7 @@ void test_extract() {
     tbb::flow::graph g;
     typedef tbb::flow::source_node<int> snode_type;
     typedef snode_type::successor_list_type successor_list_type;
-    snode_type s0(g, source_body<int>(counts), /*is_active*/false ); 
+    snode_type s0(g, source_body<int>(counts), /*is_active*/false );
     tbb::flow::join_node< tbb::flow::tuple<int,int>, tbb::flow::reserving > j0(g);
     tbb::flow::join_node< tbb::flow::tuple<int,int>, tbb::flow::reserving > j1(g);
     tbb::flow::join_node< tbb::flow::tuple<int,int>, tbb::flow::reserving > j2(g);
@@ -397,7 +397,7 @@ void test_extract() {
 }
 #endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
 
-int TestMain() { 
+int TestMain() {
     if( MinThread<1 ) {
         REPORT("number of threads must be positive\n");
         exit(1);

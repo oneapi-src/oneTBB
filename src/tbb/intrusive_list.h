@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -28,7 +28,7 @@ namespace internal {
 
 //! Data structure to be inherited by the types that can form intrusive lists.
 /** Intrusive list is formed by means of the member_intrusive_list<T> template class.
-    Note that type T must derive from intrusive_list_node either publicly or 
+    Note that type T must derive from intrusive_list_node either publicly or
     declare instantiation member_intrusive_list<T> as a friend.
     This class implements a limited subset of std::list interface. **/
 struct intrusive_list_node {
@@ -112,7 +112,7 @@ class intrusive_list_base {
     }; // intrusive_list_base::iterator_impl
 
     void assert_ok () const {
-        __TBB_ASSERT( (my_head.my_prev_node == &my_head && !my_size) || 
+        __TBB_ASSERT( (my_head.my_prev_node == &my_head && !my_size) ||
                       (my_head.my_next_node != &my_head && my_size >0), "intrusive_list_base corrupted" );
 #if TBB_USE_ASSERT >= 2
         size_t i = 0;
@@ -167,9 +167,9 @@ public:
     const_iterator end () const { return const_iterator(&my_head); }
 
     void push_front ( T& val ) {
-        __TBB_ASSERT( node(val).my_prev_node == &node(val) && node(val).my_next_node == &node(val), 
+        __TBB_ASSERT( node(val).my_prev_node == &node(val) && node(val).my_next_node == &node(val),
                     "Object with intrusive list node can be part of only one intrusive list simultaneously" );
-        // An object can be part of only one intrusive list at the given moment via the given node member 
+        // An object can be part of only one intrusive list at the given moment via the given node member
         node(val).my_prev_node = &my_head;
         node(val).my_next_node = my_head.my_next_node;
         my_head.my_next_node->my_prev_node = &node(val);
@@ -201,11 +201,11 @@ public:
 
 
 //! Double linked list of items of type T containing a member of type intrusive_list_node.
-/** NodePtr is a member pointer to the node data field. Class U is either T or 
+/** NodePtr is a member pointer to the node data field. Class U is either T or
     a base class of T containing the node member. Default values exist for the sake
     of a partial specialization working with inheritance case.
 
-    The list does not have ownership of its items. Its purpose is to avoid dynamic 
+    The list does not have ownership of its items. Its purpose is to avoid dynamic
     memory allocation when forming lists of existing objects.
 
     The class is not thread safe. **/
@@ -217,16 +217,16 @@ class memptr_intrusive_list : public intrusive_list_base<memptr_intrusive_list<T
     static intrusive_list_node& node ( T& val ) { return val.*NodePtr; }
 
     static T& item ( intrusive_list_node* node ) {
-        // Cannot use __TBB_offsetof (and consequently __TBB_get_object_ref) macro 
+        // Cannot use __TBB_offsetof (and consequently __TBB_get_object_ref) macro
         // with *NodePtr argument because gcc refuses to interpret pasted "->" and "*"
-        // as member pointer dereferencing operator, and explicit usage of ## in 
+        // as member pointer dereferencing operator, and explicit usage of ## in
         // __TBB_offsetof implementation breaks operations with normal member names.
         return *reinterpret_cast<T*>((char*)node - ((ptrdiff_t)&(reinterpret_cast<T*>(0x1000)->*NodePtr) - 0x1000));
     }
 }; // intrusive_list<T, U, NodePtr>
 
 //! Double linked list of items of type T that is derived from intrusive_list_node class.
-/** The list does not have ownership of its items. Its purpose is to avoid dynamic 
+/** The list does not have ownership of its items. Its purpose is to avoid dynamic
     memory allocation when forming lists of existing objects.
 
     The class is not thread safe. **/

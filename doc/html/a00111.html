@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::node Struct Reference</title>
+<title>tbb::mutex Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,71 +33,140 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><b>interface5</b></li><li class="navelem"><a class="el" href="a00048.html">concurrent_hash_map</a></li><li class="navelem"><a class="el" href="a00111.html">node</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00276.html">tbb</a></li><li class="navelem"><a class="el" href="a00111.html">mutex</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-attribs">Public Attributes</a> &#124;
-<a href="a00440.html">List of all members</a>  </div>
+<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
+<a href="#friends">Friends</a> &#124;
+<a href="a00314.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::node Struct Reference</div>  </div>
+<div class="title">tbb::mutex Class Reference<div class="ingroups"><a class="el" href="a00294.html">Synchronization</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
+
+<p>Wrapper around the platform's native reader-writer lock.  
+ <a href="a00111.html#details">More...</a></p>
+
+<p><code>#include &lt;mutex.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::node:</div>
+Inheritance diagram for tbb::mutex:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00111.png" usemap="#tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::node_map" alt=""/>
-  <map id="tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::node_map" name="tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::node_map">
+  <img src="a00111.png" usemap="#tbb::mutex_map" alt=""/>
+  <map id="tbb::mutex_map" name="tbb::mutex_map">
 </map>
  </div></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00171.html">scoped_lock</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The scoped locking pattern.  <a href="a00171.html#details">More...</a><br/></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:ad35737cbe356d6814f59abba680ab067"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><b>state_t</b> { <b>INITIALIZED</b> =0x1234, 
+<b>DESTROYED</b> =0x789A, 
+<b>HELD</b> =0x56CD
+ }</td></tr>
+<tr class="separator:ad35737cbe356d6814f59abba680ab067"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abbe0cd12246121753ace00a5a12a90b0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abbe0cd12246121753ace00a5a12a90b0"></a>
+typedef LPCRITICAL_SECTION&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00111.html#abbe0cd12246121753ace00a5a12a90b0">native_handle_type</a></td></tr>
+<tr class="memdesc:abbe0cd12246121753ace00a5a12a90b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return native_handle. <br/></td></tr>
+<tr class="separator:abbe0cd12246121753ace00a5a12a90b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0d992511dfc6f47295b10eb7fc0813d4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0d992511dfc6f47295b10eb7fc0813d4"></a>
+typedef pthread_mutex_t *&#160;</td><td class="memItemRight" valign="bottom"><b>native_handle_type</b></td></tr>
+<tr class="separator:a0d992511dfc6f47295b10eb7fc0813d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ace61f7bd9d097375f6e33fea4758fbf9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ace61f7bd9d097375f6e33fea4758fbf9"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>node</b> (const Key &amp;key)</td></tr>
-<tr class="separator:ace61f7bd9d097375f6e33fea4758fbf9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6755d387982f27a06d859811699e40b7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6755d387982f27a06d859811699e40b7"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>node</b> (const Key &amp;key, const T &amp;t)</td></tr>
-<tr class="separator:a6755d387982f27a06d859811699e40b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a61f7e6e835b09c4387fd0c8498fbf603"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a61f7e6e835b09c4387fd0c8498fbf603"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>node</b> (const Key &amp;key, T &amp;&amp;t)</td></tr>
-<tr class="separator:a61f7e6e835b09c4387fd0c8498fbf603"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac28d72d857eccf6e7cc06a9ee146d416"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac28d72d857eccf6e7cc06a9ee146d416"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>node</b> (value_type &amp;&amp;i)</td></tr>
-<tr class="separator:ac28d72d857eccf6e7cc06a9ee146d416"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae7c083b7efff342469789f487e3561ec"><td class="memTemplParams" colspan="2"><a class="anchor" id="ae7c083b7efff342469789f487e3561ec"></a>
-template&lt;typename... Args&gt; </td></tr>
-<tr class="memitem:ae7c083b7efff342469789f487e3561ec"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>node</b> (Args &amp;&amp;...args)</td></tr>
-<tr class="separator:ae7c083b7efff342469789f487e3561ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad7a5d977900af48a359f428658e2876b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad7a5d977900af48a359f428658e2876b"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>node</b> (value_type &amp;i)</td></tr>
-<tr class="separator:ad7a5d977900af48a359f428658e2876b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acbdc995156da4cf9b11561d006cf6821"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acbdc995156da4cf9b11561d006cf6821"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>node</b> (const value_type &amp;i)</td></tr>
-<tr class="separator:acbdc995156da4cf9b11561d006cf6821"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a15b3c8955eb1b104db439e9caf3737c3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a15b3c8955eb1b104db439e9caf3737c3"></a>
-void *&#160;</td><td class="memItemRight" valign="bottom"><b>operator new</b> (size_t, node_allocator_type &amp;a)</td></tr>
-<tr class="separator:a15b3c8955eb1b104db439e9caf3737c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa3115742612b79db574914741f2fff45"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa3115742612b79db574914741f2fff45"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>operator delete</b> (void *ptr, node_allocator_type &amp;a)</td></tr>
-<tr class="separator:aa3115742612b79db574914741f2fff45"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad1b280c954ffc8b8b3e63e4ee4144035"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad1b280c954ffc8b8b3e63e4ee4144035"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00111.html#ad1b280c954ffc8b8b3e63e4ee4144035">mutex</a> ()</td></tr>
+<tr class="memdesc:ad1b280c954ffc8b8b3e63e4ee4144035"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct unacquired mutex. <br/></td></tr>
+<tr class="separator:ad1b280c954ffc8b8b3e63e4ee4144035"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a95ff02ee699b34696001db4003c11a3a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a95ff02ee699b34696001db4003c11a3a"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00111.html#a95ff02ee699b34696001db4003c11a3a">lock</a> ()</td></tr>
+<tr class="memdesc:a95ff02ee699b34696001db4003c11a3a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Acquire lock. <br/></td></tr>
+<tr class="separator:a95ff02ee699b34696001db4003c11a3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a480283933106941125717499f9c5ad42"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00111.html#a480283933106941125717499f9c5ad42">try_lock</a> ()</td></tr>
+<tr class="memdesc:a480283933106941125717499f9c5ad42"><td class="mdescLeft">&#160;</td><td class="mdescRight">Try acquiring lock (non-blocking)  <a href="#a480283933106941125717499f9c5ad42">More...</a><br/></td></tr>
+<tr class="separator:a480283933106941125717499f9c5ad42"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a721eeae7ba16f8b92535f4534b583874"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a721eeae7ba16f8b92535f4534b583874"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00111.html#a721eeae7ba16f8b92535f4534b583874">unlock</a> ()</td></tr>
+<tr class="memdesc:a721eeae7ba16f8b92535f4534b583874"><td class="mdescLeft">&#160;</td><td class="mdescRight">Release lock. <br/></td></tr>
+<tr class="separator:a721eeae7ba16f8b92535f4534b583874"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af69874d93822c905bdea0ab9e5ca5b89"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af69874d93822c905bdea0ab9e5ca5b89"></a>
+<a class="el" href="a00111.html#abbe0cd12246121753ace00a5a12a90b0">native_handle_type</a>&#160;</td><td class="memItemRight" valign="bottom"><b>native_handle</b> ()</td></tr>
+<tr class="separator:af69874d93822c905bdea0ab9e5ca5b89"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0857c4596d7d5de09fe402ccd41d3e42"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0857c4596d7d5de09fe402ccd41d3e42"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00111.html#a0857c4596d7d5de09fe402ccd41d3e42">set_state</a> (state_t to)</td></tr>
+<tr class="memdesc:a0857c4596d7d5de09fe402ccd41d3e42"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the internal state. <br/></td></tr>
+<tr class="separator:a0857c4596d7d5de09fe402ccd41d3e42"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
-Public Attributes</h2></td></tr>
-<tr class="memitem:a6977520eaa2f1dee220f726c8a884b46"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6977520eaa2f1dee220f726c8a884b46"></a>
-value_type&#160;</td><td class="memItemRight" valign="bottom"><b>item</b></td></tr>
-<tr class="separator:a6977520eaa2f1dee220f726c8a884b46"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
+Static Public Attributes</h2></td></tr>
+<tr class="memitem:a2677d672446faa842de9de38b3aff80a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2677d672446faa842de9de38b3aff80a"></a>
+static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_rw_mutex</b> = false</td></tr>
+<tr class="separator:a2677d672446faa842de9de38b3aff80a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adf7e9e11c47cc869d219298232d6c0a1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adf7e9e11c47cc869d219298232d6c0a1"></a>
+static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_recursive_mutex</b> = false</td></tr>
+<tr class="separator:adf7e9e11c47cc869d219298232d6c0a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab729ebd784af412184653c4fa90468d0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab729ebd784af412184653c4fa90468d0"></a>
+static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_fair_mutex</b> = false</td></tr>
+<tr class="separator:ab729ebd784af412184653c4fa90468d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:afcf922650b2fd9d76b7b939d8511bbd8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afcf922650b2fd9d76b7b939d8511bbd8"></a>
+class&#160;</td><td class="memItemRight" valign="bottom"><b>scoped_lock</b></td></tr>
+<tr class="separator:afcf922650b2fd9d76b7b939d8511bbd8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<hr/>The documentation for this struct was generated from the following file:<ul>
-<li>concurrent_hash_map.h</li>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>Wrapper around the platform's native reader-writer lock. </p>
+<p>For testing purposes only. </p>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="a480283933106941125717499f9c5ad42"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool tbb::mutex::try_lock </td>
+          <td>(</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Try acquiring lock (non-blocking) </p>
+<p>Return true if lock acquired; false otherwise. </p>
+
+<p>References <a class="el" href="a00015.html#a3525dbbac0d4eaedfe18bc57b7760857">tbb::aligned_space&lt; T, N &gt;::begin()</a>.</p>
+
+<p>Referenced by <a class="el" href="a00171.html#a46f983371aa852d2427ce69f9a571f78">tbb::mutex::scoped_lock::try_acquire()</a>.</p>
+
+</div>
+</div>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li>mutex.h</li>
 </ul>
 </div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

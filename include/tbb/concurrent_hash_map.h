@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -791,7 +791,7 @@ public:
         swap(table);
     }
 
-    //! Move constructor 
+    //! Move constructor
     concurrent_hash_map( concurrent_hash_map &&table, const allocator_type &a )
         : internal::hash_map_base(), my_allocator(a)
     {
@@ -1349,7 +1349,12 @@ void concurrent_hash_map<Key,T,HashCompare,A>::rehash(size_type sz) {
     if( !reported && buckets >= 512 && ( 2*empty_buckets > current_size || 2*overpopulated_buckets > current_size ) ) {
         tbb::internal::runtime_warning(
             "Performance is not optimal because the hash function produces bad randomness in lower bits in %s.\nSize: %d  Empties: %d  Overlaps: %d",
-            typeid(*this).name(), current_size, empty_buckets, overpopulated_buckets );
+#if __TBB_USE_OPTIONAL_RTTI
+            typeid(*this).name(),
+#else
+            "concurrent_hash_map",
+#endif
+            current_size, empty_buckets, overpopulated_buckets );
         reported = true;
     }
 #endif
@@ -1400,7 +1405,12 @@ void concurrent_hash_map<Key,T,HashCompare,A>::clear() {
     if( !reported && buckets >= 512 && ( 2*empty_buckets > current_size || 2*overpopulated_buckets > current_size ) ) {
         tbb::internal::runtime_warning(
             "Performance is not optimal because the hash function produces bad randomness in lower bits in %s.\nSize: %d  Empties: %d  Overlaps: %d",
-            typeid(*this).name(), current_size, empty_buckets, overpopulated_buckets );
+#if __TBB_USE_OPTIONAL_RTTI
+            typeid(*this).name(),
+#else
+            "concurrent_hash_map",
+#endif
+            current_size, empty_buckets, overpopulated_buckets );
         reported = true;
     }
 #endif

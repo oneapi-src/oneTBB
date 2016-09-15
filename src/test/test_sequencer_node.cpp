@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -73,11 +73,11 @@ struct touches {
     int my_num_threads;
 
     touches( int num_threads ) : my_num_threads(num_threads) {
-        my_last_touch = new T[my_num_threads]; 
-        my_touches = new bool* [my_num_threads]; 
+        my_last_touch = new T[my_num_threads];
+        my_touches = new bool* [my_num_threads];
         for ( int p = 0; p < my_num_threads; ++p) {
             my_last_touch[p] = T(-1);
-            my_touches[p] = new bool[N]; 
+            my_touches[p] = new bool[N];
             for ( int n = 0; n < N; ++n)
                 my_touches[p][n] = false;
         }
@@ -100,8 +100,8 @@ struct touches {
             printf("Error: value seen in wrong order by local thread\n");
             return false;
         }
-        my_last_touch[tid] = v; 
-        my_touches[tid][v] = true; 
+        my_last_touch[tid] = v;
+        my_touches[tid][v] = true;
         return true;
     }
 
@@ -109,7 +109,7 @@ struct touches {
         bool *all_touches = new bool[N];
         for ( int n = 0; n < N; ++n)
             all_touches[n] = false;
-     
+
         for ( int p = 0; p < my_num_threads; ++p) {
             for ( int n = 0; n < N; ++n) {
                 if ( my_touches[p][n] == true ) {
@@ -141,7 +141,7 @@ struct parallel_gets : NoAssign {
     void operator()(int tid) const {
         for (int j = tid; j < N; j+=my_num_threads) {
             T v;
-            spin_try_get( my_q, v );    
+            spin_try_get( my_q, v );
             my_touches.check( tid, v );
         }
     }
@@ -154,10 +154,10 @@ struct parallel_put_get : NoAssign {
     tbb::flow::sequencer_node<T> &my_s1;
     tbb::flow::sequencer_node<T> &my_s2;
     int my_num_threads;
-    tbb::atomic< int > &my_counter;    
-    touches<T> &my_touches; 
+    tbb::atomic< int > &my_counter;
+    touches<T> &my_touches;
 
-    parallel_put_get( tbb::flow::sequencer_node<T> &s1, tbb::flow::sequencer_node<T> &s2, int num_threads, 
+    parallel_put_get( tbb::flow::sequencer_node<T> &s1, tbb::flow::sequencer_node<T> &s2, int num_threads,
                       tbb::atomic<int> &counter, touches<T> &t ) : my_s1(s1), my_s2(s2), my_num_threads(num_threads), my_counter(counter), my_touches(t) {}
 
     void operator()(int tid) const {
@@ -172,7 +172,7 @@ struct parallel_put_get : NoAssign {
 
             for (int i = i_start; i < i_end; ++i) {
                 T v;
-                spin_try_get( my_s2, v );    
+                spin_try_get( my_s2, v );
                 my_touches.check( tid, v );
             }
         }
@@ -180,7 +180,7 @@ struct parallel_put_get : NoAssign {
 
 };
 
-// 
+//
 // Tests
 //
 // multiple parallel senders, multiple receivers, properly sequenced (relative to receiver) at output
@@ -244,7 +244,7 @@ int test_parallel(int num_threads) {
 }
 
 
-// 
+//
 // Tests
 //
 // No predecessors can be registered
@@ -388,13 +388,13 @@ int test_serial() {
     return 0;
 }
 
-int TestMain() { 
+int TestMain() {
     tbb::tick_count start = tbb::tick_count::now(), stop;
     for (int p = 2; p <= 4; ++p) {
         tbb::task_scheduler_init init(p);
         test_serial<int>();
         test_parallel<int>(p);
-    } 
+    }
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
     test_buffer_extract<tbb::flow::sequencer_node<int> >().run_tests();
 #endif

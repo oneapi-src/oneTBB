@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -605,14 +605,14 @@ namespace internal {
         }
 
         void extract_receiver() {
-            item_buffer<T>::reset(); 
+            item_buffer<T>::reset();
             my_built_predecessors.receiver_extract(*this);
         }
 #endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
 
-        /*override*/void reset_receiver(reset_flags f) { 
+        /*override*/void reset_receiver(reset_flags f) {
             tbb::internal::suppress_unused_warning(f);
-            item_buffer<T>::reset(); 
+            item_buffer<T>::reset();
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
             if (f & rf_clear_edges)
                 my_built_predecessors.clear();
@@ -791,7 +791,7 @@ namespace internal {
 
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
         /*override*/built_predecessors_type &built_predecessors() { return my_built_predecessors; }
-        
+
         /*override*/void internal_add_built_predecessor(sender<input_type> &p) {
             key_matching_port_operation op_data(add_blt_pred);
             op_data.pred = &p;
@@ -831,9 +831,9 @@ namespace internal {
             my_built_predecessors.receiver_extract(*this);
         }
 #endif
-        /*override*/void reset_receiver(reset_flags f ) { 
+        /*override*/void reset_receiver(reset_flags f ) {
             tbb::internal::suppress_unused_warning(f);
-            buffer_type::reset(); 
+            buffer_type::reset();
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
            if (f & rf_clear_edges)
               my_built_predecessors.clear();

@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::strict_ppl::concurrent_queue&lt; T, A &gt; Class Template Reference</title>
+<title>tbb::interface5::concurrent_priority_queue&lt; T, Compare, A &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,167 +33,220 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><b>strict_ppl</b></li><li class="navelem"><a class="el" href="a00051.html">concurrent_queue</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00276.html">tbb</a></li><li class="navelem"><b>interface5</b></li><li class="navelem"><a class="el" href="a00051.html">concurrent_priority_queue</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#friends">Friends</a> &#124;
-<a href="a00487.html">List of all members</a>  </div>
+<a href="a00444.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::strict_ppl::concurrent_queue&lt; T, A &gt; Class Template Reference<div class="ingroups"><a class="el" href="a00290.html">Containers</a></div></div>  </div>
+<div class="title">tbb::interface5::concurrent_priority_queue&lt; T, Compare, A &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>A high-performance thread-safe non-blocking concurrent queue.  
+<p>Concurrent priority queue.  
  <a href="a00051.html#details">More...</a></p>
 
-<p><code>#include &lt;concurrent_queue.h&gt;</code></p>
-<div class="dynheader">
-Inheritance diagram for tbb::strict_ppl::concurrent_queue&lt; T, A &gt;:</div>
-<div class="dyncontent">
- <div class="center">
-  <img src="a00051.png" usemap="#tbb::strict_ppl::concurrent_queue&lt; T, A &gt;_map" alt=""/>
-  <map id="tbb::strict_ppl::concurrent_queue&lt; T, A &gt;_map" name="tbb::strict_ppl::concurrent_queue&lt; T, A &gt;_map">
-</map>
- </div></div>
+<p><code>#include &lt;concurrent_priority_queue.h&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:aeeee93a7ac2eecc80bbf3e857e900538"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aeeee93a7ac2eecc80bbf3e857e900538"></a>
-typedef T&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#aeeee93a7ac2eecc80bbf3e857e900538">value_type</a></td></tr>
-<tr class="memdesc:aeeee93a7ac2eecc80bbf3e857e900538"><td class="mdescLeft">&#160;</td><td class="mdescRight">Element type in the queue. <br/></td></tr>
-<tr class="separator:aeeee93a7ac2eecc80bbf3e857e900538"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab26ddf11b15d61ac87e6c1ae67af92a2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab26ddf11b15d61ac87e6c1ae67af92a2"></a>
-typedef T &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#ab26ddf11b15d61ac87e6c1ae67af92a2">reference</a></td></tr>
-<tr class="memdesc:ab26ddf11b15d61ac87e6c1ae67af92a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reference type. <br/></td></tr>
-<tr class="separator:ab26ddf11b15d61ac87e6c1ae67af92a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a478c2b7f763b2e821e01cc14e13baf4c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a478c2b7f763b2e821e01cc14e13baf4c"></a>
-typedef const T &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a478c2b7f763b2e821e01cc14e13baf4c">const_reference</a></td></tr>
-<tr class="memdesc:a478c2b7f763b2e821e01cc14e13baf4c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Const reference type. <br/></td></tr>
-<tr class="separator:a478c2b7f763b2e821e01cc14e13baf4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9f883e49afea16293ba92da779981bb8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9f883e49afea16293ba92da779981bb8"></a>
-typedef size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a9f883e49afea16293ba92da779981bb8">size_type</a></td></tr>
-<tr class="memdesc:a9f883e49afea16293ba92da779981bb8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Integral type for representing size of the queue. <br/></td></tr>
-<tr class="separator:a9f883e49afea16293ba92da779981bb8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a63b42d83a9ed13fc6741e0b4388b0e96"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a63b42d83a9ed13fc6741e0b4388b0e96"></a>
-typedef ptrdiff_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a63b42d83a9ed13fc6741e0b4388b0e96">difference_type</a></td></tr>
-<tr class="memdesc:a63b42d83a9ed13fc6741e0b4388b0e96"><td class="mdescLeft">&#160;</td><td class="mdescRight">Difference type for iterator. <br/></td></tr>
-<tr class="separator:a63b42d83a9ed13fc6741e0b4388b0e96"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acbdd1a5bd034358fb0774b322a66b1ed"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acbdd1a5bd034358fb0774b322a66b1ed"></a>
-typedef A&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#acbdd1a5bd034358fb0774b322a66b1ed">allocator_type</a></td></tr>
-<tr class="memdesc:acbdd1a5bd034358fb0774b322a66b1ed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allocator type. <br/></td></tr>
-<tr class="separator:acbdd1a5bd034358fb0774b322a66b1ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab1361aa7fd454fe593609be740ab8a4c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab1361aa7fd454fe593609be740ab8a4c"></a>
-typedef <br class="typebreak"/>
-internal::concurrent_queue_iterator<br class="typebreak"/>
-&lt; <a class="el" href="a00051.html">concurrent_queue</a>, T &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>iterator</b></td></tr>
-<tr class="separator:ab1361aa7fd454fe593609be740ab8a4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a674e375edf0a3463ae1cec5d6158593d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a674e375edf0a3463ae1cec5d6158593d"></a>
-typedef <br class="typebreak"/>
-internal::concurrent_queue_iterator<br class="typebreak"/>
-&lt; <a class="el" href="a00051.html">concurrent_queue</a>, const T &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>const_iterator</b></td></tr>
-<tr class="separator:a674e375edf0a3463ae1cec5d6158593d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2c75d97ae429019363ab6fd1a872512e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2c75d97ae429019363ab6fd1a872512e"></a>
+typedef T&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a2c75d97ae429019363ab6fd1a872512e">value_type</a></td></tr>
+<tr class="memdesc:a2c75d97ae429019363ab6fd1a872512e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Element type in the queue. <br/></td></tr>
+<tr class="separator:a2c75d97ae429019363ab6fd1a872512e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae4b7ed2ddc8ec6cc910f935c9d299c7a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae4b7ed2ddc8ec6cc910f935c9d299c7a"></a>
+typedef T &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#ae4b7ed2ddc8ec6cc910f935c9d299c7a">reference</a></td></tr>
+<tr class="memdesc:ae4b7ed2ddc8ec6cc910f935c9d299c7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reference type. <br/></td></tr>
+<tr class="separator:ae4b7ed2ddc8ec6cc910f935c9d299c7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0bd617fe8e4657777e86f0ae15d8094f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0bd617fe8e4657777e86f0ae15d8094f"></a>
+typedef const T &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a0bd617fe8e4657777e86f0ae15d8094f">const_reference</a></td></tr>
+<tr class="memdesc:a0bd617fe8e4657777e86f0ae15d8094f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Const reference type. <br/></td></tr>
+<tr class="separator:a0bd617fe8e4657777e86f0ae15d8094f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d3da9b47ec58e1c09e3550f702edcfc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7d3da9b47ec58e1c09e3550f702edcfc"></a>
+typedef size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a7d3da9b47ec58e1c09e3550f702edcfc">size_type</a></td></tr>
+<tr class="memdesc:a7d3da9b47ec58e1c09e3550f702edcfc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Integral type for representing size of the queue. <br/></td></tr>
+<tr class="separator:a7d3da9b47ec58e1c09e3550f702edcfc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae010b1fa9c0942504737228474b51a0b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae010b1fa9c0942504737228474b51a0b"></a>
+typedef ptrdiff_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#ae010b1fa9c0942504737228474b51a0b">difference_type</a></td></tr>
+<tr class="memdesc:ae010b1fa9c0942504737228474b51a0b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Difference type for iterator. <br/></td></tr>
+<tr class="separator:ae010b1fa9c0942504737228474b51a0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1d2cebf242fa83d88eebdc3ad6891fb1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1d2cebf242fa83d88eebdc3ad6891fb1"></a>
+typedef A&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a1d2cebf242fa83d88eebdc3ad6891fb1">allocator_type</a></td></tr>
+<tr class="memdesc:a1d2cebf242fa83d88eebdc3ad6891fb1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allocator type. <br/></td></tr>
+<tr class="separator:a1d2cebf242fa83d88eebdc3ad6891fb1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a49b2e16902577cd3174355be0fa684e5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a49b2e16902577cd3174355be0fa684e5"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a49b2e16902577cd3174355be0fa684e5">concurrent_queue</a> (const <a class="el" href="a00051.html#acbdd1a5bd034358fb0774b322a66b1ed">allocator_type</a> &amp;a=<a class="el" href="a00051.html#acbdd1a5bd034358fb0774b322a66b1ed">allocator_type</a>())</td></tr>
-<tr class="memdesc:a49b2e16902577cd3174355be0fa684e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct empty queue. <br/></td></tr>
-<tr class="separator:a49b2e16902577cd3174355be0fa684e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a43ac953152e60815c09fe4a4d4a623a9"><td class="memTemplParams" colspan="2"><a class="anchor" id="a43ac953152e60815c09fe4a4d4a623a9"></a>
+<tr class="memitem:a405be01bac4048f214797c287e2571a1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a405be01bac4048f214797c287e2571a1"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a405be01bac4048f214797c287e2571a1">concurrent_priority_queue</a> (const <a class="el" href="a00051.html#a1d2cebf242fa83d88eebdc3ad6891fb1">allocator_type</a> &amp;a=<a class="el" href="a00051.html#a1d2cebf242fa83d88eebdc3ad6891fb1">allocator_type</a>())</td></tr>
+<tr class="memdesc:a405be01bac4048f214797c287e2571a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new <a class="el" href="a00051.html" title="Concurrent priority queue. ">concurrent_priority_queue</a> with default capacity. <br/></td></tr>
+<tr class="separator:a405be01bac4048f214797c287e2571a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a43c3917ea8a19cf1fec947e29ad4ff3e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a43c3917ea8a19cf1fec947e29ad4ff3e"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a43c3917ea8a19cf1fec947e29ad4ff3e">concurrent_priority_queue</a> (<a class="el" href="a00051.html#a7d3da9b47ec58e1c09e3550f702edcfc">size_type</a> init_capacity, const <a class="el" href="a00051.html#a1d2cebf242fa83d88eebdc3ad6891fb1">allocator_type</a> &amp;a=<a class="el" href="a00051.html#a1d2cebf242fa83d88eebdc3ad6891fb1">allocator_type</a>())</td></tr>
+<tr class="memdesc:a43c3917ea8a19cf1fec947e29ad4ff3e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new <a class="el" href="a00051.html" title="Concurrent priority queue. ">concurrent_priority_queue</a> with init_sz capacity. <br/></td></tr>
+<tr class="separator:a43c3917ea8a19cf1fec947e29ad4ff3e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0cebee26cc0d00d4dcbb1c74e08029f7"><td class="memTemplParams" colspan="2"><a class="anchor" id="a0cebee26cc0d00d4dcbb1c74e08029f7"></a>
 template&lt;typename InputIterator &gt; </td></tr>
-<tr class="memitem:a43ac953152e60815c09fe4a4d4a623a9"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00051.html#a43ac953152e60815c09fe4a4d4a623a9">concurrent_queue</a> (InputIterator begin, InputIterator end, const <a class="el" href="a00051.html#acbdd1a5bd034358fb0774b322a66b1ed">allocator_type</a> &amp;a=<a class="el" href="a00051.html#acbdd1a5bd034358fb0774b322a66b1ed">allocator_type</a>())</td></tr>
-<tr class="memdesc:a43ac953152e60815c09fe4a4d4a623a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">[begin,end) constructor <br/></td></tr>
-<tr class="separator:a43ac953152e60815c09fe4a4d4a623a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae918807d098d5d5b41cc6d606fa2e7a1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae918807d098d5d5b41cc6d606fa2e7a1"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#ae918807d098d5d5b41cc6d606fa2e7a1">concurrent_queue</a> (const <a class="el" href="a00051.html">concurrent_queue</a> &amp;src, const <a class="el" href="a00051.html#acbdd1a5bd034358fb0774b322a66b1ed">allocator_type</a> &amp;a=<a class="el" href="a00051.html#acbdd1a5bd034358fb0774b322a66b1ed">allocator_type</a>())</td></tr>
-<tr class="memdesc:ae918807d098d5d5b41cc6d606fa2e7a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy constructor. <br/></td></tr>
-<tr class="separator:ae918807d098d5d5b41cc6d606fa2e7a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acc04574f4d7d41fd5cad779508394740"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acc04574f4d7d41fd5cad779508394740"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#acc04574f4d7d41fd5cad779508394740">concurrent_queue</a> (<a class="el" href="a00051.html">concurrent_queue</a> &amp;&amp;src)</td></tr>
-<tr class="memdesc:acc04574f4d7d41fd5cad779508394740"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move constructors. <br/></td></tr>
-<tr class="separator:acc04574f4d7d41fd5cad779508394740"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a22f35cb396178d494a3756d5700e2865"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a22f35cb396178d494a3756d5700e2865"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_queue</b> (<a class="el" href="a00051.html">concurrent_queue</a> &amp;&amp;src, const <a class="el" href="a00051.html#acbdd1a5bd034358fb0774b322a66b1ed">allocator_type</a> &amp;a)</td></tr>
-<tr class="separator:a22f35cb396178d494a3756d5700e2865"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa0056b242f280f5e25332ce998f9f670"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa0056b242f280f5e25332ce998f9f670"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#aa0056b242f280f5e25332ce998f9f670">~concurrent_queue</a> ()</td></tr>
-<tr class="memdesc:aa0056b242f280f5e25332ce998f9f670"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy queue. <br/></td></tr>
-<tr class="separator:aa0056b242f280f5e25332ce998f9f670"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9330ca6590980d80ef7b1ea3613a699a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9330ca6590980d80ef7b1ea3613a699a"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a9330ca6590980d80ef7b1ea3613a699a">push</a> (const T &amp;source)</td></tr>
-<tr class="memdesc:a9330ca6590980d80ef7b1ea3613a699a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enqueue an item at tail of queue. <br/></td></tr>
-<tr class="separator:a9330ca6590980d80ef7b1ea3613a699a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a40f743f7eb92bb709cb7feb86d340885"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a40f743f7eb92bb709cb7feb86d340885"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>push</b> (T &amp;&amp;source)</td></tr>
-<tr class="separator:a40f743f7eb92bb709cb7feb86d340885"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4647d9bf5fd03b0850ada381916e9728"><td class="memTemplParams" colspan="2"><a class="anchor" id="a4647d9bf5fd03b0850ada381916e9728"></a>
-template&lt;typename... Arguments&gt; </td></tr>
-<tr class="memitem:a4647d9bf5fd03b0850ada381916e9728"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>emplace</b> (Arguments &amp;&amp;...args)</td></tr>
-<tr class="separator:a4647d9bf5fd03b0850ada381916e9728"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aabb1acef18196fa11ed7db8e046c3943"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#aabb1acef18196fa11ed7db8e046c3943">try_pop</a> (T &amp;result)</td></tr>
-<tr class="memdesc:aabb1acef18196fa11ed7db8e046c3943"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attempt to dequeue an item from head of queue.  <a href="#aabb1acef18196fa11ed7db8e046c3943">More...</a><br/></td></tr>
-<tr class="separator:aabb1acef18196fa11ed7db8e046c3943"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aad4b253ba595637b0b146eb6565556f2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aad4b253ba595637b0b146eb6565556f2"></a>
-<a class="el" href="a00051.html#a9f883e49afea16293ba92da779981bb8">size_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#aad4b253ba595637b0b146eb6565556f2">unsafe_size</a> () const </td></tr>
-<tr class="memdesc:aad4b253ba595637b0b146eb6565556f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the number of items in the queue; thread unsafe. <br/></td></tr>
-<tr class="separator:aad4b253ba595637b0b146eb6565556f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeda3156929d0c250faed7b807ca6ab0e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aeda3156929d0c250faed7b807ca6ab0e"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#aeda3156929d0c250faed7b807ca6ab0e">empty</a> () const </td></tr>
-<tr class="memdesc:aeda3156929d0c250faed7b807ca6ab0e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Equivalent to size()==0. <br/></td></tr>
-<tr class="separator:aeda3156929d0c250faed7b807ca6ab0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad3384818fb6350a494d5ec62445e59ee"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad3384818fb6350a494d5ec62445e59ee"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#ad3384818fb6350a494d5ec62445e59ee">clear</a> ()</td></tr>
-<tr class="memdesc:ad3384818fb6350a494d5ec62445e59ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear the queue. not thread-safe. <br/></td></tr>
-<tr class="separator:ad3384818fb6350a494d5ec62445e59ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7f2b39f350281590b86db906eca6c480"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7f2b39f350281590b86db906eca6c480"></a>
-<a class="el" href="a00051.html#acbdd1a5bd034358fb0774b322a66b1ed">allocator_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a7f2b39f350281590b86db906eca6c480">get_allocator</a> () const </td></tr>
-<tr class="memdesc:a7f2b39f350281590b86db906eca6c480"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return allocator object. <br/></td></tr>
-<tr class="separator:a7f2b39f350281590b86db906eca6c480"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6658faeae3c10135a553fedadddde239"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6658faeae3c10135a553fedadddde239"></a>
-iterator&#160;</td><td class="memItemRight" valign="bottom"><b>unsafe_begin</b> ()</td></tr>
-<tr class="separator:a6658faeae3c10135a553fedadddde239"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa7593de5e76006ed3adef4d060f0009c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa7593de5e76006ed3adef4d060f0009c"></a>
-iterator&#160;</td><td class="memItemRight" valign="bottom"><b>unsafe_end</b> ()</td></tr>
-<tr class="separator:aa7593de5e76006ed3adef4d060f0009c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0f84b37020f4267f17c7e91acfc0c446"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0f84b37020f4267f17c7e91acfc0c446"></a>
-const_iterator&#160;</td><td class="memItemRight" valign="bottom"><b>unsafe_begin</b> () const </td></tr>
-<tr class="separator:a0f84b37020f4267f17c7e91acfc0c446"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a118a79d7e20cdbd807fa7fccc2a5b848"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a118a79d7e20cdbd807fa7fccc2a5b848"></a>
-const_iterator&#160;</td><td class="memItemRight" valign="bottom"><b>unsafe_end</b> () const </td></tr>
-<tr class="separator:a118a79d7e20cdbd807fa7fccc2a5b848"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
-Friends</h2></td></tr>
-<tr class="memitem:a1f5eec0de2e660ea5372d19393f0920b"><td class="memTemplParams" colspan="2"><a class="anchor" id="a1f5eec0de2e660ea5372d19393f0920b"></a>
-template&lt;typename Container , typename Value &gt; </td></tr>
-<tr class="memitem:a1f5eec0de2e660ea5372d19393f0920b"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><b>internal::concurrent_queue_iterator</b></td></tr>
-<tr class="separator:a1f5eec0de2e660ea5372d19393f0920b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0cebee26cc0d00d4dcbb1c74e08029f7"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00051.html#a0cebee26cc0d00d4dcbb1c74e08029f7">concurrent_priority_queue</a> (InputIterator begin, InputIterator end, const <a class="el" href="a00051.html#a1d2cebf242fa83d88eebdc3ad6891fb1">allocator_type</a> &amp;a=<a class="el" href="a00051.html#a1d2cebf242fa83d88eebdc3ad6891fb1">allocator_type</a>())</td></tr>
+<tr class="memdesc:a0cebee26cc0d00d4dcbb1c74e08029f7"><td class="mdescLeft">&#160;</td><td class="mdescRight">[begin,end) constructor <br/></td></tr>
+<tr class="separator:a0cebee26cc0d00d4dcbb1c74e08029f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaa8ac175143e12db29a014674a392b38"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aaa8ac175143e12db29a014674a392b38"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#aaa8ac175143e12db29a014674a392b38">concurrent_priority_queue</a> (std::initializer_list&lt; T &gt; init_list, const <a class="el" href="a00051.html#a1d2cebf242fa83d88eebdc3ad6891fb1">allocator_type</a> &amp;a=<a class="el" href="a00051.html#a1d2cebf242fa83d88eebdc3ad6891fb1">allocator_type</a>())</td></tr>
+<tr class="memdesc:aaa8ac175143e12db29a014674a392b38"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor from std::initializer_list. <br/></td></tr>
+<tr class="separator:aaa8ac175143e12db29a014674a392b38"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a332d26234f9c37a6b7ba269c648815d0"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a332d26234f9c37a6b7ba269c648815d0">concurrent_priority_queue</a> (const <a class="el" href="a00051.html">concurrent_priority_queue</a> &amp;src)</td></tr>
+<tr class="memdesc:a332d26234f9c37a6b7ba269c648815d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy constructor.  <a href="#a332d26234f9c37a6b7ba269c648815d0">More...</a><br/></td></tr>
+<tr class="separator:a332d26234f9c37a6b7ba269c648815d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa52cea369b6630699ee78cc42622be9d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#aa52cea369b6630699ee78cc42622be9d">concurrent_priority_queue</a> (const <a class="el" href="a00051.html">concurrent_priority_queue</a> &amp;src, const <a class="el" href="a00051.html#a1d2cebf242fa83d88eebdc3ad6891fb1">allocator_type</a> &amp;a)</td></tr>
+<tr class="memdesc:aa52cea369b6630699ee78cc42622be9d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy constructor with specific allocator.  <a href="#aa52cea369b6630699ee78cc42622be9d">More...</a><br/></td></tr>
+<tr class="separator:aa52cea369b6630699ee78cc42622be9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac0c3f41b10f04547f3438517c40cf8a5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="a00051.html">concurrent_priority_queue</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#ac0c3f41b10f04547f3438517c40cf8a5">operator=</a> (const <a class="el" href="a00051.html">concurrent_priority_queue</a> &amp;src)</td></tr>
+<tr class="memdesc:ac0c3f41b10f04547f3438517c40cf8a5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Assignment operator.  <a href="#ac0c3f41b10f04547f3438517c40cf8a5">More...</a><br/></td></tr>
+<tr class="separator:ac0c3f41b10f04547f3438517c40cf8a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae9ac965bbac3933c7db89f512adfcbcb"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#ae9ac965bbac3933c7db89f512adfcbcb">concurrent_priority_queue</a> (<a class="el" href="a00051.html">concurrent_priority_queue</a> &amp;&amp;src)</td></tr>
+<tr class="memdesc:ae9ac965bbac3933c7db89f512adfcbcb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move constructor.  <a href="#ae9ac965bbac3933c7db89f512adfcbcb">More...</a><br/></td></tr>
+<tr class="separator:ae9ac965bbac3933c7db89f512adfcbcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a14dd20a4673f77cff3eb6f269a888016"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a14dd20a4673f77cff3eb6f269a888016">concurrent_priority_queue</a> (<a class="el" href="a00051.html">concurrent_priority_queue</a> &amp;&amp;src, const <a class="el" href="a00051.html#a1d2cebf242fa83d88eebdc3ad6891fb1">allocator_type</a> &amp;a)</td></tr>
+<tr class="memdesc:a14dd20a4673f77cff3eb6f269a888016"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move constructor with specific allocator.  <a href="#a14dd20a4673f77cff3eb6f269a888016">More...</a><br/></td></tr>
+<tr class="separator:a14dd20a4673f77cff3eb6f269a888016"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9b21bd56aff8c412c5fcdd0d88b48c98"><td class="memItemLeft" align="right" valign="top"><a class="el" href="a00051.html">concurrent_priority_queue</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a9b21bd56aff8c412c5fcdd0d88b48c98">operator=</a> (<a class="el" href="a00051.html">concurrent_priority_queue</a> &amp;&amp;src)</td></tr>
+<tr class="memdesc:a9b21bd56aff8c412c5fcdd0d88b48c98"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move assignment operator.  <a href="#a9b21bd56aff8c412c5fcdd0d88b48c98">More...</a><br/></td></tr>
+<tr class="separator:a9b21bd56aff8c412c5fcdd0d88b48c98"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac64c7b627708f0d6b2e5421fb0d49150"><td class="memTemplParams" colspan="2"><a class="anchor" id="ac64c7b627708f0d6b2e5421fb0d49150"></a>
+template&lt;typename InputIterator &gt; </td></tr>
+<tr class="memitem:ac64c7b627708f0d6b2e5421fb0d49150"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00051.html#ac64c7b627708f0d6b2e5421fb0d49150">assign</a> (InputIterator begin, InputIterator end)</td></tr>
+<tr class="memdesc:ac64c7b627708f0d6b2e5421fb0d49150"><td class="mdescLeft">&#160;</td><td class="mdescRight">Assign the queue from [begin,end) range, not thread-safe. <br/></td></tr>
+<tr class="separator:ac64c7b627708f0d6b2e5421fb0d49150"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac1b3a945aac5a17c85d56756cc6aa3d1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac1b3a945aac5a17c85d56756cc6aa3d1"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#ac1b3a945aac5a17c85d56756cc6aa3d1">assign</a> (std::initializer_list&lt; T &gt; il)</td></tr>
+<tr class="memdesc:ac1b3a945aac5a17c85d56756cc6aa3d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Assign the queue from std::initializer_list, not thread-safe. <br/></td></tr>
+<tr class="separator:ac1b3a945aac5a17c85d56756cc6aa3d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7eaa05dcb74604e45e0e2c55e1e456e9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7eaa05dcb74604e45e0e2c55e1e456e9"></a>
+<a class="el" href="a00051.html">concurrent_priority_queue</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a7eaa05dcb74604e45e0e2c55e1e456e9">operator=</a> (std::initializer_list&lt; T &gt; il)</td></tr>
+<tr class="memdesc:a7eaa05dcb74604e45e0e2c55e1e456e9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Assign from std::initializer_list, not thread-safe. <br/></td></tr>
+<tr class="separator:a7eaa05dcb74604e45e0e2c55e1e456e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8dec2dd0e8b22af14f1753eaef1bf5eb"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a8dec2dd0e8b22af14f1753eaef1bf5eb">empty</a> () const </td></tr>
+<tr class="memdesc:a8dec2dd0e8b22af14f1753eaef1bf5eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if empty, false otherwise.  <a href="#a8dec2dd0e8b22af14f1753eaef1bf5eb">More...</a><br/></td></tr>
+<tr class="separator:a8dec2dd0e8b22af14f1753eaef1bf5eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d86ba200474b51ec99a6b917429c6bb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="a00051.html#a7d3da9b47ec58e1c09e3550f702edcfc">size_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a7d86ba200474b51ec99a6b917429c6bb">size</a> () const </td></tr>
+<tr class="memdesc:a7d86ba200474b51ec99a6b917429c6bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current number of elements contained in the queue.  <a href="#a7d86ba200474b51ec99a6b917429c6bb">More...</a><br/></td></tr>
+<tr class="separator:a7d86ba200474b51ec99a6b917429c6bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1bfa0e7269b3407d6bb5c706264d2406"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a1bfa0e7269b3407d6bb5c706264d2406">push</a> (<a class="el" href="a00051.html#a0bd617fe8e4657777e86f0ae15d8094f">const_reference</a> elem)</td></tr>
+<tr class="memdesc:a1bfa0e7269b3407d6bb5c706264d2406"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pushes elem onto the queue, increasing capacity of queue if necessary.  <a href="#a1bfa0e7269b3407d6bb5c706264d2406">More...</a><br/></td></tr>
+<tr class="separator:a1bfa0e7269b3407d6bb5c706264d2406"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a72ff26945c61b4ce3ce7ca0f9b9aaa48"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a72ff26945c61b4ce3ce7ca0f9b9aaa48">push</a> (<a class="el" href="a00051.html#a2c75d97ae429019363ab6fd1a872512e">value_type</a> &amp;&amp;elem)</td></tr>
+<tr class="memdesc:a72ff26945c61b4ce3ce7ca0f9b9aaa48"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pushes elem onto the queue, increasing capacity of queue if necessary.  <a href="#a72ff26945c61b4ce3ce7ca0f9b9aaa48">More...</a><br/></td></tr>
+<tr class="separator:a72ff26945c61b4ce3ce7ca0f9b9aaa48"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a278d208cd92e5aeccc9c7f6fc192e3ce"><td class="memTemplParams" colspan="2">template&lt;typename... Args&gt; </td></tr>
+<tr class="memitem:a278d208cd92e5aeccc9c7f6fc192e3ce"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00051.html#a278d208cd92e5aeccc9c7f6fc192e3ce">emplace</a> (Args &amp;&amp;...args)</td></tr>
+<tr class="memdesc:a278d208cd92e5aeccc9c7f6fc192e3ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new element using args as the arguments for its construction and pushes it onto the queue */.  <a href="#a278d208cd92e5aeccc9c7f6fc192e3ce">More...</a><br/></td></tr>
+<tr class="separator:a278d208cd92e5aeccc9c7f6fc192e3ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a954177b09e184cf3db47f1b180a7ef5e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a954177b09e184cf3db47f1b180a7ef5e">try_pop</a> (<a class="el" href="a00051.html#ae4b7ed2ddc8ec6cc910f935c9d299c7a">reference</a> elem)</td></tr>
+<tr class="memdesc:a954177b09e184cf3db47f1b180a7ef5e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets a reference to and removes highest priority element.  <a href="#a954177b09e184cf3db47f1b180a7ef5e">More...</a><br/></td></tr>
+<tr class="separator:a954177b09e184cf3db47f1b180a7ef5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2459166998a4103880d603b237c429e6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a2459166998a4103880d603b237c429e6">clear</a> ()</td></tr>
+<tr class="memdesc:a2459166998a4103880d603b237c429e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear the queue; not thread-safe.  <a href="#a2459166998a4103880d603b237c429e6">More...</a><br/></td></tr>
+<tr class="separator:a2459166998a4103880d603b237c429e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa6ee6d356e538b67a7cb4e242e6e36c9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#aa6ee6d356e538b67a7cb4e242e6e36c9">swap</a> (<a class="el" href="a00051.html">concurrent_priority_queue</a> &amp;q)</td></tr>
+<tr class="memdesc:aa6ee6d356e538b67a7cb4e242e6e36c9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Swap this queue with another; not thread-safe.  <a href="#aa6ee6d356e538b67a7cb4e242e6e36c9">More...</a><br/></td></tr>
+<tr class="separator:aa6ee6d356e538b67a7cb4e242e6e36c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a312e88e51246da4c516d35abbb30721a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a312e88e51246da4c516d35abbb30721a"></a>
+<a class="el" href="a00051.html#a1d2cebf242fa83d88eebdc3ad6891fb1">allocator_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a312e88e51246da4c516d35abbb30721a">get_allocator</a> () const </td></tr>
+<tr class="memdesc:a312e88e51246da4c516d35abbb30721a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return allocator object. <br/></td></tr>
+<tr class="separator:a312e88e51246da4c516d35abbb30721a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;typename T, typename A = cache_aligned_allocator&lt;T&gt;&gt;<br/>
-class tbb::strict_ppl::concurrent_queue&lt; T, A &gt;</h3>
+<div class="textblock"><h3>template&lt;typename T, typename Compare = std::less&lt;T&gt;, typename A = cache_aligned_allocator&lt;T&gt;&gt;<br/>
+class tbb::interface5::concurrent_priority_queue&lt; T, Compare, A &gt;</h3>
 
-<p>A high-performance thread-safe non-blocking concurrent queue. </p>
-<p>Multiple threads may each push and pop concurrently. Assignment construction is not allowed. </p>
-</div><h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="aabb1acef18196fa11ed7db8e046c3943"></a>
+<p>Concurrent priority queue. </p>
+</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a class="anchor" id="a332d26234f9c37a6b7ba269c648815d0"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , typename A  = cache_aligned_allocator&lt;T&gt;&gt; </div>
+template&lt;typename T , typename Compare  = std::less&lt;T&gt;, typename A  = cache_aligned_allocator&lt;T&gt;&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">bool <a class="el" href="a00051.html">tbb::strict_ppl::concurrent_queue</a>&lt; T, A &gt;::try_pop </td>
+          <td class="memname"><a class="el" href="a00051.html">tbb::interface5::concurrent_priority_queue</a>&lt; T, Compare, A &gt;::<a class="el" href="a00051.html">concurrent_priority_queue</a> </td>
           <td>(</td>
-          <td class="paramtype">T &amp;&#160;</td>
-          <td class="paramname"><em>result</em>)</td><td></td>
+          <td class="paramtype">const <a class="el" href="a00051.html">concurrent_priority_queue</a>&lt; T, Compare, A &gt; &amp;&#160;</td>
+          <td class="paramname"><em>src</em>)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">explicit</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Copy constructor. </p>
+<p>This operation is unsafe if there are pending concurrent operations on the src queue. </p>
+
+</div>
+</div>
+<a class="anchor" id="aa52cea369b6630699ee78cc42622be9d"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , typename Compare  = std::less&lt;T&gt;, typename A  = cache_aligned_allocator&lt;T&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="a00051.html">tbb::interface5::concurrent_priority_queue</a>&lt; T, Compare, A &gt;::<a class="el" href="a00051.html">concurrent_priority_queue</a> </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="a00051.html">concurrent_priority_queue</a>&lt; T, Compare, A &gt; &amp;&#160;</td>
+          <td class="paramname"><em>src</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="a00051.html#a1d2cebf242fa83d88eebdc3ad6891fb1">allocator_type</a> &amp;&#160;</td>
+          <td class="paramname"><em>a</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Copy constructor with specific allocator. </p>
+<p>This operation is unsafe if there are pending concurrent operations on the src queue. </p>
+
+</div>
+</div>
+<a class="anchor" id="ae9ac965bbac3933c7db89f512adfcbcb"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , typename Compare  = std::less&lt;T&gt;, typename A  = cache_aligned_allocator&lt;T&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="a00051.html">tbb::interface5::concurrent_priority_queue</a>&lt; T, Compare, A &gt;::<a class="el" href="a00051.html">concurrent_priority_queue</a> </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00051.html">concurrent_priority_queue</a>&lt; T, Compare, A &gt; &amp;&amp;&#160;</td>
+          <td class="paramname"><em>src</em>)</td><td></td>
           <td></td>
         </tr>
       </table>
@@ -204,18 +257,347 @@ template&lt;typename T , typename A  = cache_aligned_allocator&lt;T&gt;&gt; </di
 </table>
 </div><div class="memdoc">
 
-<p>Attempt to dequeue an item from head of queue. </p>
-<p>Does not wait for item to become available. Returns true if successful; false otherwise. </p>
+<p>Move constructor. </p>
+<p>This operation is unsafe if there are pending concurrent operations on the src queue. </p>
+
+</div>
+</div>
+<a class="anchor" id="a14dd20a4673f77cff3eb6f269a888016"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , typename Compare  = std::less&lt;T&gt;, typename A  = cache_aligned_allocator&lt;T&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="a00051.html">tbb::interface5::concurrent_priority_queue</a>&lt; T, Compare, A &gt;::<a class="el" href="a00051.html">concurrent_priority_queue</a> </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00051.html">concurrent_priority_queue</a>&lt; T, Compare, A &gt; &amp;&amp;&#160;</td>
+          <td class="paramname"><em>src</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="a00051.html#a1d2cebf242fa83d88eebdc3ad6891fb1">allocator_type</a> &amp;&#160;</td>
+          <td class="paramname"><em>a</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Move constructor with specific allocator. </p>
+<p>This operation is unsafe if there are pending concurrent operations on the src queue. </p>
+
+</div>
+</div>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="a2459166998a4103880d603b237c429e6"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , typename Compare  = std::less&lt;T&gt;, typename A  = cache_aligned_allocator&lt;T&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="a00051.html">tbb::interface5::concurrent_priority_queue</a>&lt; T, Compare, A &gt;::clear </td>
+          <td>(</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Clear the queue; not thread-safe. </p>
+<p>This operation is unsafe if there are pending concurrent operations on the queue. Resets size, effectively emptying queue; does not free space. May not clear elements added in pending operations. </p>
+
+</div>
+</div>
+<a class="anchor" id="a278d208cd92e5aeccc9c7f6fc192e3ce"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , typename Compare  = std::less&lt;T&gt;, typename A  = cache_aligned_allocator&lt;T&gt;&gt; </div>
+<div class="memtemplate">
+template&lt;typename... Args&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="a00051.html">tbb::interface5::concurrent_priority_queue</a>&lt; T, Compare, A &gt;::emplace </td>
+          <td>(</td>
+          <td class="paramtype">Args &amp;&amp;...&#160;</td>
+          <td class="paramname"><em>args</em>)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Constructs a new element using args as the arguments for its construction and pushes it onto the queue */. </p>
+<p>This operation can be safely used concurrently with other push, try_pop or emplace operations. </p>
+
+</div>
+</div>
+<a class="anchor" id="a8dec2dd0e8b22af14f1753eaef1bf5eb"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , typename Compare  = std::less&lt;T&gt;, typename A  = cache_aligned_allocator&lt;T&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool <a class="el" href="a00051.html">tbb::interface5::concurrent_priority_queue</a>&lt; T, Compare, A &gt;::empty </td>
+          <td>(</td>
+          <td class="paramname">)</td><td></td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns true if empty, false otherwise. </p>
+<p>Returned value may not reflect results of pending operations. This operation reads shared data and will trigger a race condition. </p>
+
+</div>
+</div>
+<a class="anchor" id="ac0c3f41b10f04547f3438517c40cf8a5"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , typename Compare  = std::less&lt;T&gt;, typename A  = cache_aligned_allocator&lt;T&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="a00051.html">concurrent_priority_queue</a>&amp; <a class="el" href="a00051.html">tbb::interface5::concurrent_priority_queue</a>&lt; T, Compare, A &gt;::operator= </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="a00051.html">concurrent_priority_queue</a>&lt; T, Compare, A &gt; &amp;&#160;</td>
+          <td class="paramname"><em>src</em>)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Assignment operator. </p>
+<p>This operation is unsafe if there are pending concurrent operations on the src queue. </p>
+
+</div>
+</div>
+<a class="anchor" id="a9b21bd56aff8c412c5fcdd0d88b48c98"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , typename Compare  = std::less&lt;T&gt;, typename A  = cache_aligned_allocator&lt;T&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="a00051.html">concurrent_priority_queue</a>&amp; <a class="el" href="a00051.html">tbb::interface5::concurrent_priority_queue</a>&lt; T, Compare, A &gt;::operator= </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00051.html">concurrent_priority_queue</a>&lt; T, Compare, A &gt; &amp;&amp;&#160;</td>
+          <td class="paramname"><em>src</em>)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Move assignment operator. </p>
+<p>This operation is unsafe if there are pending concurrent operations on the src queue. </p>
+
+</div>
+</div>
+<a class="anchor" id="a1bfa0e7269b3407d6bb5c706264d2406"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , typename Compare  = std::less&lt;T&gt;, typename A  = cache_aligned_allocator&lt;T&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="a00051.html">tbb::interface5::concurrent_priority_queue</a>&lt; T, Compare, A &gt;::push </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00051.html#a0bd617fe8e4657777e86f0ae15d8094f">const_reference</a>&#160;</td>
+          <td class="paramname"><em>elem</em>)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Pushes elem onto the queue, increasing capacity of queue if necessary. </p>
+<p>This operation can be safely used concurrently with other push, try_pop or emplace operations. </p>
+
+</div>
+</div>
+<a class="anchor" id="a72ff26945c61b4ce3ce7ca0f9b9aaa48"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , typename Compare  = std::less&lt;T&gt;, typename A  = cache_aligned_allocator&lt;T&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="a00051.html">tbb::interface5::concurrent_priority_queue</a>&lt; T, Compare, A &gt;::push </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00051.html#a2c75d97ae429019363ab6fd1a872512e">value_type</a> &amp;&amp;&#160;</td>
+          <td class="paramname"><em>elem</em>)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Pushes elem onto the queue, increasing capacity of queue if necessary. </p>
+<p>This operation can be safely used concurrently with other push, try_pop or emplace operations. </p>
+
+</div>
+</div>
+<a class="anchor" id="a7d86ba200474b51ec99a6b917429c6bb"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , typename Compare  = std::less&lt;T&gt;, typename A  = cache_aligned_allocator&lt;T&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="a00051.html#a7d3da9b47ec58e1c09e3550f702edcfc">size_type</a> <a class="el" href="a00051.html">tbb::interface5::concurrent_priority_queue</a>&lt; T, Compare, A &gt;::size </td>
+          <td>(</td>
+          <td class="paramname">)</td><td></td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the current number of elements contained in the queue. </p>
+<p>Returned value may not reflect results of pending operations. This operation reads shared data and will trigger a race condition. </p>
+
+</div>
+</div>
+<a class="anchor" id="aa6ee6d356e538b67a7cb4e242e6e36c9"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , typename Compare  = std::less&lt;T&gt;, typename A  = cache_aligned_allocator&lt;T&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="a00051.html">tbb::interface5::concurrent_priority_queue</a>&lt; T, Compare, A &gt;::swap </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00051.html">concurrent_priority_queue</a>&lt; T, Compare, A &gt; &amp;&#160;</td>
+          <td class="paramname"><em>q</em>)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Swap this queue with another; not thread-safe. </p>
+<p>This operation is unsafe if there are pending concurrent operations on the queue. </p>
+
+</div>
+</div>
+<a class="anchor" id="a954177b09e184cf3db47f1b180a7ef5e"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , typename Compare  = std::less&lt;T&gt;, typename A  = cache_aligned_allocator&lt;T&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool <a class="el" href="a00051.html">tbb::interface5::concurrent_priority_queue</a>&lt; T, Compare, A &gt;::try_pop </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00051.html#ae4b7ed2ddc8ec6cc910f935c9d299c7a">reference</a>&#160;</td>
+          <td class="paramname"><em>elem</em>)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Gets a reference to and removes highest priority element. </p>
+<p>If a highest priority element was found, sets elem and returns true, otherwise returns false. This operation can be safely used concurrently with other push, try_pop or emplace operations. </p>
 
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>concurrent_queue.h</li>
+<li>concurrent_priority_queue.h</li>
 </ul>
 </div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

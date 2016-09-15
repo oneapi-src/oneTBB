@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -51,7 +51,7 @@ void RunPForEachTests()
     sum = 0;
     size_t test_sum = 0;
 
-    for (size_t i =0; i < NUMBER_OF_ELEMENTS; i++) { 
+    for (size_t i =0; i < NUMBER_OF_ELEMENTS; i++) {
         test_vector[i] = i;
         test_sum += i;
     }
@@ -102,7 +102,7 @@ void TestExceptionsSupport()
     REMARK (__FUNCTION__);
     size_t test_vector[NUMBER_OF_ELEMENTS + 1];
 
-    for (size_t i = 0; i < NUMBER_OF_ELEMENTS; i++) { 
+    for (size_t i = 0; i < NUMBER_OF_ELEMENTS; i++) {
         test_vector[i] = i;
     }
 
@@ -128,14 +128,14 @@ class my_worker_pforeach_task : public tbb::task
 
     tbb::task* execute () {
         size_t test_vector[NUMBER_OF_ELEMENTS + 1];
-        for (size_t i = 0; i < NUMBER_OF_ELEMENTS; i++) { 
+        for (size_t i = 0; i < NUMBER_OF_ELEMENTS; i++) {
             test_vector[i] = i;
         }
         Iterator begin(&test_vector[0]);
         Iterator end(&test_vector[NUMBER_OF_ELEMENTS]);
 
         tbb::parallel_for_each(begin, end, (TestFunctionType)function_to_cancel);
-        
+
         return NULL;
     }
 public:

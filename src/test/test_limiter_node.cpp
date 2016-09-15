@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -103,14 +103,14 @@ struct put_body : NoAssign {
     tbb::flow::limiter_node<T> &my_lim;
     tbb::atomic<int> &my_accept_count;
 
-    put_body( tbb::flow::limiter_node<T> &lim, tbb::atomic<int> &accept_count ) : 
+    put_body( tbb::flow::limiter_node<T> &lim, tbb::atomic<int> &accept_count ) :
         my_lim(lim), my_accept_count(accept_count) {}
 
     void operator()( int ) const {
         for ( int i = 0; i < L; ++i ) {
             bool msg = my_lim.try_put( T(i) );
             if ( msg == true )
-               ++my_accept_count; 
+               ++my_accept_count;
         }
     }
 };
@@ -121,7 +121,7 @@ struct put_dec_body : NoAssign {
     tbb::flow::limiter_node<T> &my_lim;
     tbb::atomic<int> &my_accept_count;
 
-    put_dec_body( tbb::flow::limiter_node<T> &lim, tbb::atomic<int> &accept_count ) : 
+    put_dec_body( tbb::flow::limiter_node<T> &lim, tbb::atomic<int> &accept_count ) :
         my_lim(lim), my_accept_count(accept_count) {}
 
     void operator()( int ) const {
@@ -132,7 +132,7 @@ struct put_dec_body : NoAssign {
                 ++local_accept_count;
                 ++my_accept_count;
                 my_lim.decrement.try_put( tbb::flow::continue_msg() );
-            } 
+            }
         }
     }
 
@@ -166,11 +166,11 @@ void test_puts_with_decrements( int num_threads, tbb::flow::limiter_node< T >& l
 //
 // limiter only forwards below the limit, multiple parallel senders / single receiver
 // mutiple parallel senders that put to decrement at each accept, limiter accepts new messages
-// 
-// 
+//
+//
 template< typename T >
 int test_parallel(int num_threads) {
- 
+
    // test puts with no decrements
    for ( int i = 0; i < L; ++i ) {
        tbb::flow::graph g;
@@ -203,10 +203,10 @@ int test_parallel(int num_threads) {
 //
 // limiter only forwards below the limit, single sender / single receiver
 // at reject, a put to decrement, will cause next message to be accepted
-// 
+//
 template< typename T >
 int test_serial() {
- 
+
    // test puts with no decrements
    for ( int i = 0; i < L; ++i ) {
        tbb::flow::graph g;
@@ -369,7 +369,7 @@ void test_reserve_release_messages() {
     //edges
     make_edge(input_queue, limit);
     make_edge(limit, output_queue);
-    make_edge(broad,limit.decrement); 
+    make_edge(broad,limit.decrement);
 
     int list[4] = {19, 33, 72, 98}; //list to be put to the input queue
 
@@ -513,7 +513,7 @@ void test_extract() {
 }
 #endif  // TBB_PREVIEW_FLOW_GRAPH_FEATURES
 
-int TestMain() { 
+int TestMain() {
     for (int i = 1; i <= 8; ++i) {
         tbb::task_scheduler_init init(i);
         test_serial<int>();

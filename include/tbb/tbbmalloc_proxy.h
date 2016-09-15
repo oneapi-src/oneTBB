@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -19,15 +19,15 @@
 */
 
 /*
-Replacing the standard memory allocation routines in Microsoft* C/C++ RTL 
-(malloc/free, global new/delete, etc.) with the TBB memory allocator. 
+Replacing the standard memory allocation routines in Microsoft* C/C++ RTL
+(malloc/free, global new/delete, etc.) with the TBB memory allocator.
 
-Include the following header to a source of any binary which is loaded during 
+Include the following header to a source of any binary which is loaded during
 application startup
 
 #include "tbb/tbbmalloc_proxy.h"
 
-or add following parameters to the linker options for the binary which is 
+or add following parameters to the linker options for the binary which is
 loaded during application startup. It can be either exe-file or dll.
 
 For win32

@@ -2,6 +2,42 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 4.4 Update 3
+TBB_INTERFACE_VERSION == 9003
+
+Changes (w.r.t. Intel TBB 4.4 Update 2):
+
+- Modified parallel_sort to not require a default constructor for values
+    and to use iter_swap() for value swapping.
+- Added support for creating or initializing a task_arena instance that
+    is connected to the arena currently used by the thread.
+- graph/binpack example modified to use multifunction_node.
+- For performance analysis, use Intel(R) VTune(TM) Amplifier XE 2015
+    and higher; older versions are no longer supported.
+- Improved support for compilation with disabled RTTI, by omitting its use
+    in auxiliary code, such as assertions. However some functionality,
+    particularly the flow graph, does not work if RTTI is disabled.
+- The tachyon example for Android* can be built using Android Studio 1.5
+    and higher with experimental Gradle plugin 0.4.0.
+
+Preview Features:
+
+- Added class opencl_subbufer that allows using OpenCL* sub-buffer
+    objects with opencl_node.
+- Class global_control supports the value of 1 for
+    max_allowed_parallelism.
+
+Bugs fixed:
+
+- Fixed a race causing "TBB Warning: setaffinity syscall failed" message.
+- Fixed a compilation issue on OS X* with Intel(R) C++ Compiler 15.0.
+- Fixed a bug in queuing_rw_mutex::downgrade() that could temporarily
+    block new readers.
+- Fixed speculative_spin_rw_mutex to stop using the lazy subscription
+    technique due to its known flaws.
+- Fixed memory leaks in the tool support code.
+
+------------------------------------------------------------------------
 Intel TBB 4.4 Update 2
 TBB_INTERFACE_VERSION == 9002
 

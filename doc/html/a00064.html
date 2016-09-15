@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::flow::interface8::default_opencl_factory Class Reference</title>
+<title>tbb::internal::critical_section_v4 Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,47 +33,67 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><a class="el" href="a00064.html">default_opencl_factory</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00276.html">tbb</a></li><li class="navelem"><b>internal</b></li><li class="navelem"><a class="el" href="a00064.html">critical_section_v4</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="a00417.html">List of all members</a>  </div>
+<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
+<a href="a00478.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::flow::interface8::default_opencl_factory Class Reference</div>  </div>
+<div class="title">tbb::internal::critical_section_v4 Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 <div class="dynheader">
-Inheritance diagram for tbb::flow::interface8::default_opencl_factory:</div>
+Inheritance diagram for tbb::internal::critical_section_v4:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00064.png" usemap="#tbb::flow::interface8::default_opencl_factory_map" alt=""/>
-  <map id="tbb::flow::interface8::default_opencl_factory_map" name="tbb::flow::interface8::default_opencl_factory_map">
-<area href="a00123.html" alt="tbb::flow::interface8::opencl_factory&lt; default_opencl_factory_device_filter &gt;" shape="rect" coords="0,0,443,24"/>
+  <img src="a00064.png" usemap="#tbb::internal::critical_section_v4_map" alt=""/>
+  <map id="tbb::internal::critical_section_v4_map" name="tbb::internal::critical_section_v4_map">
 </map>
  </div></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00168.html">scoped_lock</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a52270144efe07f9d4fa8c9486c3e9427"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a52270144efe07f9d4fa8c9486c3e9427"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>default_opencl_factory</b> (<a class="el" href="a00125.html">opencl_graph</a> &amp;g)</td></tr>
-<tr class="separator:a52270144efe07f9d4fa8c9486c3e9427"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_methods_a00123"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_a00123')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="a00123.html">tbb::flow::interface8::opencl_factory&lt; default_opencl_factory_device_filter &gt;</a></td></tr>
-<tr class="memitem:a76e91c81ad0d6db57f485dd30621ce8b inherit pub_methods_a00123"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a76e91c81ad0d6db57f485dd30621ce8b"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_factory</b> (<a class="el" href="a00125.html">opencl_graph</a> &amp;g)</td></tr>
-<tr class="separator:a76e91c81ad0d6db57f485dd30621ce8b inherit pub_methods_a00123"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ade83ca9be5a4c0c9855978d6fbbc472c inherit pub_methods_a00123"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ade83ca9be5a4c0c9855978d6fbbc472c"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>init</b> (const <a class="el" href="a00121.html">opencl_device_list</a> &amp;device_list)</td></tr>
-<tr class="separator:ade83ca9be5a4c0c9855978d6fbbc472c inherit pub_methods_a00123"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab661617ca865c4af0f34e07276f73c9e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab661617ca865c4af0f34e07276f73c9e"></a>
+void __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><b>internal_construct</b> ()</td></tr>
+<tr class="separator:ab661617ca865c4af0f34e07276f73c9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afb1ccdfc59fdd3f5a3a8db17c56102e8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afb1ccdfc59fdd3f5a3a8db17c56102e8"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>lock</b> ()</td></tr>
+<tr class="separator:afb1ccdfc59fdd3f5a3a8db17c56102e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adbbd611ea04432e112b08e56251bc8b5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adbbd611ea04432e112b08e56251bc8b5"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>try_lock</b> ()</td></tr>
+<tr class="separator:adbbd611ea04432e112b08e56251bc8b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a081d4eae71879fd7dcf2c4ca9ea7fb67"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a081d4eae71879fd7dcf2c4ca9ea7fb67"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>unlock</b> ()</td></tr>
+<tr class="separator:a081d4eae71879fd7dcf2c4ca9ea7fb67"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
+Static Public Attributes</h2></td></tr>
+<tr class="memitem:a7a62f98ad578ec8ac01d88de55bd271c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7a62f98ad578ec8ac01d88de55bd271c"></a>
+static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_rw_mutex</b> = false</td></tr>
+<tr class="separator:a7a62f98ad578ec8ac01d88de55bd271c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a47f75eb62f02cbdee0d602dff38075e9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a47f75eb62f02cbdee0d602dff38075e9"></a>
+static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_recursive_mutex</b> = false</td></tr>
+<tr class="separator:a47f75eb62f02cbdee0d602dff38075e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a12f986c4c554db133c2ae657acf2a496"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a12f986c4c554db133c2ae657acf2a496"></a>
+static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_fair_mutex</b> = true</td></tr>
+<tr class="separator:a12f986c4c554db133c2ae657acf2a496"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>flow_graph_opencl_node.h</li>
+<li>critical_section.h</li>
 </ul>
 </div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

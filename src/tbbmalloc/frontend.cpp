@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -325,8 +325,9 @@ public:
     void putToLLOCache(TLSData *tls, void *object);
 };
 
-static char defaultMemPool_space[sizeof(MemoryPool)];
-static MemoryPool *defaultMemPool = (MemoryPool *)defaultMemPool_space;
+static intptr_t defaultMemPool_space[sizeof(MemoryPool)/sizeof(intptr_t) +
+                                     (sizeof(MemoryPool)%sizeof(intptr_t)? 1 : 0)];
+static MemoryPool *defaultMemPool = (MemoryPool*)defaultMemPool_space;
 const size_t MemoryPool::defaultGranularity;
 // zero-initialized
 MallocMutex  MemoryPool::memPoolListLock;
@@ -423,10 +424,10 @@ public:
             FreeObject *toFree = findObjectToFree(object);
             // check against head of freeList, as this is mostly
             // expected after double free
-            MALLOC_ASSERT(findObjectToFree(object) != freeList, msg);
+            MALLOC_ASSERT(toFree != freeList, msg);
             // check against head of publicFreeList, to detect double free
             // involiving foreign thread
-            MALLOC_ASSERT(findObjectToFree(object) != publicFreeList, msg);
+            MALLOC_ASSERT(toFree != publicFreeList, msg);
         }
 #else
         suppress_unused_warning(object);
@@ -1983,6 +1984,8 @@ static bool initMemoryManager()
              sizeof(Block), sizeof(uintptr_t) ));
     MALLOC_ASSERT( 2*blockHeaderAlignment == sizeof(Block), ASSERT_TEXT );
     MALLOC_ASSERT( sizeof(FreeObject) == sizeof(void*), ASSERT_TEXT );
+    MALLOC_ASSERT( isAligned(defaultMemPool, sizeof(intptr_t)),
+                   "Memory pool must be void*-aligned for atomic to work over aligned arguments.");
 
 #if USE_WINTHREAD
     const size_t granularity = 64*1024; // granulatity of VirtualAlloc

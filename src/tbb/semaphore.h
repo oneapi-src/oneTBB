@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -55,7 +55,7 @@ public:
     ~semaphore() {CloseHandle( sem );}
     //! wait/acquire
     void P() {WaitForSingleObjectEx( sem, INFINITE, FALSE );}
-    //! post/release 
+    //! post/release
     void V() {ReleaseSemaphore( sem, 1, NULL );}
 private:
     HANDLE sem;
@@ -75,14 +75,14 @@ public:
         __TBB_ASSERT_EX( ret==err_none, NULL );
     }
     //! wait/acquire
-    void P() { 
+    void P() {
         int ret;
         do {
             ret = semaphore_wait( sem );
         } while( ret==KERN_ABORTED );
         __TBB_ASSERT( ret==KERN_SUCCESS, "semaphore_wait() failed" );
     }
-    //! post/release 
+    //! post/release
     void V() { semaphore_signal( sem ); }
 private:
     semaphore_t sem;
@@ -109,7 +109,7 @@ public:
         while( sem_wait( &sem )!=0 )
             __TBB_ASSERT( errno==EINTR, NULL );
     }
-    //! post/release 
+    //! post/release
     void V() { sem_post( &sem ); }
 private:
     sem_t sem;
@@ -133,7 +133,7 @@ public:
     ~binary_semaphore() { CloseHandle( my_sem ); }
     //! wait/acquire
     void P() { WaitForSingleObjectEx( my_sem, INFINITE, FALSE ); }
-    //! post/release 
+    //! post/release
     void V() { SetEvent( my_sem ); }
 private:
     HANDLE my_sem;
@@ -154,7 +154,7 @@ public:
     ~binary_semaphore();
     //! wait/acquire
     void P();
-    //! post/release 
+    //! post/release
     void V();
 private:
     srwl_or_handle my_sem;
@@ -175,14 +175,14 @@ public:
         __TBB_ASSERT_EX( ret==err_none, NULL );
     }
     //! wait/acquire
-    void P() { 
+    void P() {
         int ret;
         do {
             ret = semaphore_wait( my_sem );
         } while( ret==KERN_ABORTED );
         __TBB_ASSERT( ret==KERN_SUCCESS, "semaphore_wait() failed" );
     }
-    //! post/release 
+    //! post/release
     void V() { semaphore_signal( my_sem ); }
 private:
     semaphore_t my_sem;
@@ -208,8 +208,8 @@ public:
             }
         }
     }
-    //! post/release 
-    void V() { 
+    //! post/release
+    void V() {
         __TBB_ASSERT( my_sem>=1, "multiple V()'s in a row?" );
         if( my_sem--!=1 ) {
             //if old value was 2
@@ -240,7 +240,7 @@ public:
         while( sem_wait( &my_sem )!=0 )
             __TBB_ASSERT( errno==EINTR, NULL );
     }
-    //! post/release 
+    //! post/release
     void V() { sem_post( &my_sem ); }
 private:
     sem_t my_sem;

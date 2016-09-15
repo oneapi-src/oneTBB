@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -18,7 +18,7 @@
     reasons why the executable file might be covered by the GNU General Public License.
 */
 
-/* Container implementations in this header are based on PPL implementations 
+/* Container implementations in this header are based on PPL implementations
    provided by Microsoft. */
 
 #ifndef __TBB__concurrent_unordered_impl_H
@@ -840,7 +840,7 @@ public:
         return my_solist.max_size();
     }
 
-    // Iterators 
+    // Iterators
     iterator begin() {
         return my_solist.begin();
     }
@@ -887,7 +887,7 @@ public:
             return my_midpoint_node != my_end_node;
         }
         //! Split range.
-        const_range_type( const_range_type &r, split ) : 
+        const_range_type( const_range_type &r, split ) :
             my_table(r.my_table), my_end_node(r.my_end_node)
         {
             r.my_end_node = my_begin_node = r.my_midpoint_node;
@@ -897,7 +897,7 @@ public:
             r.set_midpoint();
         }
         //! Init range with container and grainsize specified
-        const_range_type( const concurrent_unordered_base &a_table ) : 
+        const_range_type( const concurrent_unordered_base &a_table ) :
             my_table(a_table), my_begin_node(a_table.my_solist.begin()),
             my_end_node(a_table.my_solist.end())
         {
@@ -1085,7 +1085,7 @@ public:
         return const_cast<self_type*>(this)->internal_equal_range(key);
     }
 
-    // Bucket interface - for debugging 
+    // Bucket interface - for debugging
     size_type unsafe_bucket_count() const {
         return my_number_of_buckets;
     }
@@ -1138,7 +1138,7 @@ public:
             return end();
 
         raw_iterator it = get_bucket(bucket);
-    
+
         // Find the end of the bucket, denoted by the dummy element
         do ++it;
         while(it != my_solist.raw_end() && !it.get_node_ptr()->is_dummy());
@@ -1155,7 +1155,7 @@ public:
             return end();
 
         raw_const_iterator it = get_bucket(bucket);
-    
+
         // Find the end of the bucket, denoted by the dummy element
         do ++it;
         while(it != my_solist.raw_end() && !it.get_node_ptr()->is_dummy());
@@ -1291,10 +1291,10 @@ private:
             {
                  if (!pnode)
                      pnode = my_solist.create_node(order_key, tbb::internal::forward<ValueType>(value));
-            
+
                 // Try to insert 'pnode' between 'it' and 'where'
                 std::pair<iterator, bool> result = my_solist.try_insert(it, where, pnode, &new_count);
-                
+
                 if (result.second)
                 {
                     // Insertion succeeded, adjust the table size, if needed
@@ -1317,7 +1317,7 @@ private:
                     my_hash_compare(get_key(*where), get_key(value)) == 0)
             { // Element already in the list, return it
                  if (pnode)
-                     my_solist.destroy_node(pnode);            
+                     my_solist.destroy_node(pnode);
                 return std::pair<iterator, bool>(my_solist.get_iterator(where), false);
             }
             // Move the iterator forward

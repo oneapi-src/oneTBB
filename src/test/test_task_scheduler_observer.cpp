@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -357,7 +357,7 @@ void TestObserver( int M, int T, uintptr_t testMode ) {
     theTestMode = testMode;
     NativeParallelFor( M, TestBody(T) );
     // When T (number of threads in arena, i.e. master + workers) is less than P
-    // (hardware concurrency), more than T-1 workers can visit the same arena. This 
+    // (hardware concurrency), more than T-1 workers can visit the same arena. This
     // is possible in case of imbalance or when other arenas are activated/deactivated
     // concurrently).
     ASSERT( !theNumObservers, "Unexpected alive observer(s)" );

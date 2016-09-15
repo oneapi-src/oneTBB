@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -37,8 +37,13 @@ int cocoa_update=0;
 struct timeval g_time;
 
 video::video()
+#if __TBB_IOS
+    : red_mask(0xff), red_shift(0), green_mask(0xff00),
+      green_shift(8), blue_mask(0xff0000), blue_shift(16), depth(24)
+#else
     : red_mask(0xff0000), red_shift(16), green_mask(0xff00),
-      green_shift(8), blue_mask(0xff), blue_shift(0), depth(24)
+    green_shift(8), blue_mask(0xff), blue_shift(0), depth(24)
+#endif
 {
     assert(g_video == 0);
     g_video = this; title = "Video"; cocoa_update=1; updating = true; calc_fps = false;
@@ -136,7 +141,8 @@ void video::main_loop()
 //! Change window title
 void video::show_title()
 {
-    strncpy( window_title, title, WINDOW_TITLE_SIZE );
+    if(title)
+        strncpy( window_title, title, WINDOW_TITLE_SIZE );
     return;
 }
 

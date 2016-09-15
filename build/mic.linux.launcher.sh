@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+# Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 #
 # This file is part of Threading Building Blocks. Threading Building Blocks is free software;
 # you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -72,6 +72,7 @@ targetdir="`$RSH mktemp -d /tmp/tbbtestXXXXXX 2>/dev/null`" #
 hostdir="`mktemp -d /tmp/tbbtestXXXXXX 2>/dev/null`" #
 #
 function copy_files { #
+    [ $verbose ] && echo Going to copy $* #
     eval "cp $* $hostdir/ $SUPPRESS 2>/dev/null || exit \$?" #
     eval "$RCP $hostdir/* $MICDEV:$targetdir/ $SUPPRESS 2>/dev/null || exit \$?" #
     eval "rm $hostdir/* $SUPPRESS 2>/dev/null || exit \$?" #
@@ -100,8 +101,11 @@ fnamelist="" #
 # For example, go through MIC_LD_LIBRARY_PATH and add TBB libraries from the first
 # directory that contains tbb files
 mic_dir_list=`echo .:$MIC_LD_LIBRARY_PATH | tr : " "` #
+[ $verbose ] && echo Searching libraries in $mic_dir_list
 for name in $ldd_list; do # adds the first matched name in specified dirs
-    fnamelist+="`find $mic_dir_list -name $name -a -readable -print -quit 2>/dev/null` "||: #
+    found="`find -L $mic_dir_list -name $name -a -readable -print -quit 2>/dev/null` "||: #
+    [ $verbose ] && echo File $name: $found
+    fnamelist+=$found
 done #
 #
 # Remove extra spaces.

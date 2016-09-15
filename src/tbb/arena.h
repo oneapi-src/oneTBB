@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -46,7 +46,7 @@ class allocate_root_with_context_proxy;
 namespace internal {
 
 //! arena data except the array of slots
-/** Separated in order to simplify padding. 
+/** Separated in order to simplify padding.
     Intrusive list node base class is used by market to form a list of arenas. **/
 struct arena_base : padded<intrusive_list_node> {
     //! Number of workers that have been marked out by the resource manager to service the arena
@@ -84,9 +84,9 @@ struct arena_base : padded<intrusive_list_node> {
     unsigned my_max_num_workers;
 
     //! Current task pool state and estimate of available tasks amount.
-    /** The estimate is either 0 (SNAPSHOT_EMPTY) or infinity (SNAPSHOT_FULL). 
-        Special state is "busy" (any other unsigned value). 
-        Note that the implementation of arena::is_busy_or_empty() requires 
+    /** The estimate is either 0 (SNAPSHOT_EMPTY) or infinity (SNAPSHOT_FULL).
+        Special state is "busy" (any other unsigned value).
+        Note that the implementation of arena::is_busy_or_empty() requires
         my_pool_state to be unsigned. */
     tbb::atomic<uintptr_t> my_pool_state;
 
@@ -143,8 +143,16 @@ struct arena_base : padded<intrusive_list_node> {
     //! Number of reserved slots (can be occupied only by masters)
     unsigned my_num_reserved_slots;
 
-    //! Indicates if there is an oversubscribing worker created to service enqueued tasks.
-    bool my_mandatory_concurrency;
+#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
+    enum mandatory_mode {
+        no_mandatory,
+        local_mandatory,
+        global_mandatory
+    };
+
+    //! Is mandatory concurrency subject of per-arena set or global control?
+    mandatory_mode my_mandatory_mode;
+#endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
 
 #if __TBB_TASK_ARENA
     //! exit notifications after arena slot is released
@@ -159,8 +167,17 @@ struct arena_base : padded<intrusive_list_node> {
 
 class arena: public padded<arena_base>
 {
+    //! Restore priorities of arenas and task presence status of the arena, if new enqueued tasks found
+    void restore_priorities_if_need();
 public:
     typedef padded<arena_base> base_type;
+
+    //! type of work that advertised by advertise_new_work()
+    enum new_work_type {
+        work_spawned,
+        wakeup,
+        work_enqueued
+    };
 
     //! Constructor
     arena ( market&, unsigned max_num_workers, unsigned num_reserved_slots );
@@ -211,7 +228,7 @@ public:
     }
 
     //! If necessary, raise a flag that there is new job in arena.
-    template<bool Spawned> void advertise_new_work();
+    template<arena::new_work_type work_type> void advertise_new_work();
 
     //! Check if there is job anywhere in arena.
     /** Return true if no job or if arena is being cleaned up. */
@@ -246,6 +263,18 @@ public:
     intptr_t workers_task_node_count();
 #endif
 
+#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
+    //! Recall worker if global mandatory is enabled, but not for this arena
+    bool recall_by_mandatory_request() const {
+        return my_market->my_mandatory_num_requested && my_mandatory_mode==arena_base::no_mandatory;
+    }
+
+    //! Mandatory parallelism requested by this arena
+    bool mandatory_requested() const {
+        return my_num_workers_requested && my_market->my_mandatory_num_requested
+            && my_mandatory_mode!=arena_base::no_mandatory;
+    }
+#endif
     static const size_t out_of_arena = ~size_t(0);
     //! Tries to occupy a slot in the arena. On success, returns the slot index; if no slot is available, returns out_of_arena.
     template <bool as_worker>
@@ -322,39 +351,75 @@ inline void arena::on_thread_leaving ( ) {
     if ( modulo_power_of_two(my_references,ref_worker)==ref_param ) // may only be true with ref_external
         GATHER_STATISTIC( dump_arena_statistics() );
 #endif
+#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
+    // When there is no workers someone must free arena, as
+    // without workers, no one calls is_out_of_work().
+    // Skip workerless arenas because they have no demand for workers.
+    // TODO: consider more strict conditions for the cleanup,
+    // because it can create the demand of workers,
+    // but the arena can be already empty (and so ready for destroying)
+    if( ref_param==ref_external && my_num_slots != my_num_reserved_slots
+        && 0 == m->my_num_workers_soft_limit && my_mandatory_mode==no_mandatory ) {
+        bool is_out = false;
+#if !__TBB_TASK_PRIORITY
+        const int num_priority_levels = 1;
+#endif
+        for (int i=0; i<num_priority_levels; i++) {
+            is_out = is_out_of_work();
+            if (is_out)
+                break;
+        }
+        // We expect, that in worst case it's enough to have num_priority_levels-1
+        // calls to restore priorities and and yet another is_out_of_work() to conform
+        // that no work was found. But as market::set_active_num_workers() can be called
+        // concurrently, can't guarantee last is_out_of_work() return true.
+    }
+#endif
     if ( (my_references -= ref_param ) == 0 )
         m->try_destroy_arena( this, aba_epoch );
 }
 
-template<bool Spawned> void arena::advertise_new_work() {
-    if( !Spawned ) { // i.e. the work was enqueued
-        if( my_max_num_workers==0 ) {
+template<arena::new_work_type work_type> void arena::advertise_new_work() {
+    if( work_type == work_enqueued ) {
+#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
+        if( my_market->my_num_workers_soft_limit == 0 ) {
+            if( my_mandatory_mode!=global_mandatory ) {
+                if( my_market->mandatory_concurrency_enable( this ) ) {
+                    my_pool_state = SNAPSHOT_FULL;
+                    return;
+                }
+            }
+        } else if( my_max_num_workers==0 ) {
             my_max_num_workers = 1;
-            __TBB_ASSERT(!my_mandatory_concurrency, "");
-            my_mandatory_concurrency = true;
-            __TBB_ASSERT(!num_workers_active(), "");
+            __TBB_ASSERT(my_mandatory_mode==no_mandatory, "");
+            my_mandatory_mode = local_mandatory;
             my_pool_state = SNAPSHOT_FULL;
             my_market->adjust_demand( *this, 1 );
             return;
         }
-        // Local memory fence is required to avoid missed wakeups; see the comment below.
+#endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
+        // Local memory fence here and below is required to avoid missed wakeups; see the comment below.
         // Starvation resistant tasks require mandatory concurrency, so missed wakeups are unacceptable.
-        atomic_fence(); 
+        atomic_fence();
+    }
+    else if( work_type == wakeup ) {
+        __TBB_ASSERT(my_max_num_workers!=0, "Not expect mandatory concurrency request.");
+        atomic_fence();
     }
     // Double-check idiom that, in case of spawning, is deliberately sloppy about memory fences.
-    // Technically, to avoid missed wakeups, there should be a full memory fence between the point we 
-    // released the task pool (i.e. spawned task) and read the arena's state.  However, adding such a 
-    // fence might hurt overall performance more than it helps, because the fence would be executed 
-    // on every task pool release, even when stealing does not occur.  Since TBB allows parallelism, 
+    // Technically, to avoid missed wakeups, there should be a full memory fence between the point we
+    // released the task pool (i.e. spawned task) and read the arena's state.  However, adding such a
+    // fence might hurt overall performance more than it helps, because the fence would be executed
+    // on every task pool release, even when stealing does not occur.  Since TBB allows parallelism,
     // but never promises parallelism, the missed wakeup is not a correctness problem.
     pool_state_t snapshot = my_pool_state;
     if( is_busy_or_empty(snapshot) ) {
-        // Attempt to mark as full.  The compare_and_swap below is a little unusual because the 
+        // Attempt to mark as full.  The compare_and_swap below is a little unusual because the
         // result is compared to a value that can be different than the comparand argument.
         if( my_pool_state.compare_and_swap( SNAPSHOT_FULL, snapshot )==SNAPSHOT_EMPTY ) {
             if( snapshot!=SNAPSHOT_EMPTY ) {
-                // This thread read "busy" into snapshot, and then another thread transitioned 
-                // my_pool_state to "empty" in the meantime, which caused the compare_and_swap above 
+                // This thread read "busy" into snapshot, and then another thread transitioned
+                // my_pool_state to "empty" in the meantime, which caused the compare_and_swap above
                 // to fail.  Attempt to transition my_pool_state from "empty" to "full".
                 if( my_pool_state.compare_and_swap( SNAPSHOT_FULL, SNAPSHOT_EMPTY )!=SNAPSHOT_EMPTY ) {
                     // Some other thread transitioned my_pool_state from "empty", and hence became
@@ -364,19 +429,31 @@ template<bool Spawned> void arena::advertise_new_work() {
             }
             // This thread transitioned pool from empty to full state, and thus is responsible for
             // telling RML that there is work to do.
-            if( Spawned ) {
-                if( my_mandatory_concurrency ) {
-                    __TBB_ASSERT(my_max_num_workers==1, "");
-                    __TBB_ASSERT(!governor::local_scheduler()->is_worker(), "");
-                    // There was deliberate oversubscription on 1 core for sake of starvation-resistant tasks.
-                    // Now a single active thread (must be the master) supposedly starts a new parallel region
-                    // with relaxed sequential semantics, and oversubscription should be avoided.
-                    // Demand for workers has been decreased to 0 during SNAPSHOT_EMPTY, so just keep it.
-                    my_max_num_workers = 0;
-                    my_mandatory_concurrency = false;
+#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
+            if( work_type == work_spawned ) {
+                if( my_mandatory_mode!=no_mandatory ) {
+                    switch( my_mandatory_mode ) {
+                    case local_mandatory:
+                        __TBB_ASSERT(my_max_num_workers==1, "");
+                        __TBB_ASSERT(!governor::local_scheduler()->is_worker(), "");
+                        // There was deliberate oversubscription on 1 core for sake of starvation-resistant tasks.
+                        // Now a single active thread (must be the master) supposedly starts a new parallel region
+                        // with relaxed sequential semantics, and oversubscription should be avoided.
+                        // Demand for workers has been decreased to 0 during SNAPSHOT_EMPTY, so just keep it.
+                        my_max_num_workers = 0;
+                        my_mandatory_mode = no_mandatory;
+                        break;
+                    case global_mandatory:
+                        my_market->mandatory_concurrency_disable( this );
+                        restore_priorities_if_need();
+                        break;
+                    default:
+                        break;
+                    }
                     return;
                 }
             }
+#endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
             my_market->adjust_demand( *this, my_max_num_workers );
         }
     }

@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::flow::interface8::key_from_policy&lt; JP &gt; Struct Template Reference</title>
+<title>tbb::flow::interface8::join_node&lt; OutputTuple, reserving &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,34 +33,56 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><a class="el" href="a00099.html">key_from_policy</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00276.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><a class="el" href="a00099.html">join_node< OutputTuple, reserving ></a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
-<a href="a00424.html">List of all members</a>  </div>
+<a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="a00386.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::flow::interface8::key_from_policy&lt; JP &gt; Struct Template Reference</div>  </div>
+<div class="title">tbb::flow::interface8::join_node&lt; OutputTuple, reserving &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
+<div class="dynheader">
+Inheritance diagram for tbb::flow::interface8::join_node&lt; OutputTuple, reserving &gt;:</div>
+<div class="dyncontent">
+ <div class="center">
+  <img src="a00099.png" usemap="#tbb::flow::interface8::join_node&lt; OutputTuple, reserving &gt;_map" alt=""/>
+  <map id="tbb::flow::interface8::join_node&lt; OutputTuple, reserving &gt;_map" name="tbb::flow::interface8::join_node&lt; OutputTuple, reserving &gt;_map">
+</map>
+ </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a405c83617fe490487aa70b6bc0cd17b0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a405c83617fe490487aa70b6bc0cd17b0"></a>
-typedef size_t&#160;</td><td class="memItemRight" valign="bottom"><b>type</b></td></tr>
-<tr class="separator:a405c83617fe490487aa70b6bc0cd17b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae3ac217a9f5a3c9d0d00711c17e7460e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae3ac217a9f5a3c9d0d00711c17e7460e"></a>
-typedef std::false_type&#160;</td><td class="memItemRight" valign="bottom"><b>is_key_matching</b></td></tr>
-<tr class="separator:ae3ac217a9f5a3c9d0d00711c17e7460e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a83aeaec3c89deae563909f687528e3b4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a83aeaec3c89deae563909f687528e3b4"></a>
+typedef OutputTuple&#160;</td><td class="memItemRight" valign="bottom"><b>output_type</b></td></tr>
+<tr class="separator:a83aeaec3c89deae563909f687528e3b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8bdb730f33cc803cdee4512f24aaba31"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8bdb730f33cc803cdee4512f24aaba31"></a>
+typedef <br class="typebreak"/>
+unfolded_type::input_ports_type&#160;</td><td class="memItemRight" valign="bottom"><b>input_ports_type</b></td></tr>
+<tr class="separator:a8bdb730f33cc803cdee4512f24aaba31"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
+Public Member Functions</h2></td></tr>
+<tr class="memitem:ae1eaf2db3ea25872d000667b49227dec"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae1eaf2db3ea25872d000667b49227dec"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>join_node</b> (<a class="el" href="a00079.html">graph</a> &amp;g)</td></tr>
+<tr class="separator:ae1eaf2db3ea25872d000667b49227dec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5f6eedc63028ed91c4f6f1e77e2c0ae5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5f6eedc63028ed91c4f6f1e77e2c0ae5"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>join_node</b> (const <a class="el" href="a00096.html">join_node</a> &amp;other)</td></tr>
+<tr class="separator:a5f6eedc63028ed91c4f6f1e77e2c0ae5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a062c3fbc3c53f0ecb1e5f2f12cce1df7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a062c3fbc3c53f0ecb1e5f2f12cce1df7"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>set_name</b> (const char *name)</td></tr>
+<tr class="separator:a062c3fbc3c53f0ecb1e5f2f12cce1df7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<hr/>The documentation for this struct was generated from the following file:<ul>
-<li>flow_graph_opencl_node.h</li>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li><a class="el" href="a00231.html">flow_graph.h</a></li>
 </ul>
 </div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

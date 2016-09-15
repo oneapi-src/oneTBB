@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -50,8 +50,7 @@ public:
             __TBB_ASSERT_RELEASE((unsigned)value == value, "Stack size is limited to unsigned int range");
 #endif
         if (my_param==max_allowed_parallelism)
-            // TODO: support for serialization via max_allowed_parallelism==1
-            __TBB_ASSERT_RELEASE(my_value>1, "Values of 1 and 0 are not supported for max_allowed_parallelism.");
+            __TBB_ASSERT_RELEASE(my_value>0, "max_allowed_parallelism cannot be 0.");
         internal_create();
     }
 

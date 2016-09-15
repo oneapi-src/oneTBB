@@ -1,4 +1,4 @@
-# Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+# Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 #
 # This file is part of Threading Building Blocks. Threading Building Blocks is free software;
 # you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -20,10 +20,10 @@
 
 ifeq (icc,$(compiler))
   export COMPILER_VERSION := ICC: $(shell icc -V </dev/null 2>&1 | grep 'Version')
-  ifneq (,$(findstring IA-32, $(COMPILER_VERSION)))
+  ifneq (,$(findstring running on IA-32, $(COMPILER_VERSION)))
     export arch:=ia32
   else
-    ifneq (,$(findstring Intel(R) 64, $(COMPILER_VERSION)))
+    ifneq (,$(findstring running on Intel(R) 64, $(COMPILER_VERSION)))
       export arch:=intel64
     endif
   endif
@@ -48,23 +48,12 @@ ifndef arch
  endif
 endif
 
-ifeq (ios,$(target))
-  ifneq (armv7, $(arch))
-    $(error $(arch) not supported for target 'ios')
-  endif
-  export SDKROOT?=$(shell xcodebuild -sdk -version | grep -o -E '/.*SDKs/iPhoneOS.*' 2>/dev/null)
-  ifeq (,$(SDKROOT))
-    $(error iOS SDK not found)
-  endif
-  # next, use a single compiler include file for both iOS* and OS X* builds.
-  override target:=macos
-  export target
-endif
-
 ifndef runtime
- gcc_version:=$(shell gcc -dumpversion)
- os_version:=$(shell /usr/bin/sw_vers -productVersion)
- export runtime:=cc$(gcc_version)_os$(os_version)
+  clang_version:=$(shell clang -v 2>&1 >/dev/null | grep version | sed -e "s/.*version \(.*[0-9]\) .*/\1/")
+  ifndef os_version
+    os_version:=$(shell /usr/bin/sw_vers -productVersion)
+  endif
+  export runtime:=cc$(clang_version)_os$(os_version)
 endif
 
 native_compiler := clang

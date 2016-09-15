@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -60,7 +60,7 @@ class BasicBody : NoAssign {
     pq_t& pq;
     tbb::aggregator& agg;
 public:
-    BasicBody(pq_t& pq_, tbb::aggregator& agg_) : pq(pq_), agg(agg_) {}  
+    BasicBody(pq_t& pq_, tbb::aggregator& agg_) : pq(pq_), agg(agg_) {}
     void operator()(const int threadID) const {
         for (int i=0; i<N; ++i) agg.execute( push_fnobj(pq, threadID) );
         for (int i=0; i<N; ++i) agg.execute( pop_fnobj(pq) );
@@ -91,7 +91,7 @@ void TestBasicLambdaInterface(int nThreads) {
         for (int i=0; i<N; ++i)
             agg.execute( [&, threadID]() { my_pq.push(threadID); } );
         for (int i=0; i<N; ++i) {
-            agg.execute( [&]() { 
+            agg.execute( [&]() {
                 ASSERT(!my_pq.empty(), "queue should not be empty yet");
                 int elem = my_pq.top();
                 my_pq.pop();
@@ -106,7 +106,7 @@ void TestBasicLambdaInterface(int nThreads) {
 #endif /* __TBB_LAMBDAS_PRESENT */
 // End of code for testing basic interface using lambda expressions
 
-// Code for testing expert interface 
+// Code for testing expert interface
 class op_data : public tbb::aggregator_operation, NoAssign {
 public:
     const int tid;
@@ -162,7 +162,7 @@ void TestExpertInterface(int nThreads) {
         ASSERT(shared_data[i] == N, "wrong number of elements pushed");
     REMARK("Done testing aggregator expert interface.\n");
 }
-// End of code for testing expert interface 
+// End of code for testing expert interface
 
 int TestMain() {
     if (MinThread < 1)

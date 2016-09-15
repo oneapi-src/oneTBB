@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::interface5::concurrent_unordered_map&lt; Key, T, Hasher, Key_equality, Allocator &gt; Class Template Reference</title>
+<title>tbb::strict_ppl::concurrent_queue&lt; T, A &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,132 +33,189 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><b>interface5</b></li><li class="navelem"><a class="el" href="a00052.html">concurrent_unordered_map</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00276.html">tbb</a></li><li class="navelem"><b>strict_ppl</b></li><li class="navelem"><a class="el" href="a00052.html">concurrent_queue</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="a00444.html">List of all members</a>  </div>
+<a href="#friends">Friends</a> &#124;
+<a href="a00490.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::interface5::concurrent_unordered_map&lt; Key, T, Hasher, Key_equality, Allocator &gt; Class Template Reference</div>  </div>
+<div class="title">tbb::strict_ppl::concurrent_queue&lt; T, A &gt; Class Template Reference<div class="ingroups"><a class="el" href="a00292.html">Containers</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
+
+<p>A high-performance thread-safe non-blocking concurrent queue.  
+ <a href="a00052.html#details">More...</a></p>
+
+<p><code>#include &lt;concurrent_queue.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::interface5::concurrent_unordered_map&lt; Key, T, Hasher, Key_equality, Allocator &gt;:</div>
+Inheritance diagram for tbb::strict_ppl::concurrent_queue&lt; T, A &gt;:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00052.png" usemap="#tbb::interface5::concurrent_unordered_map&lt; Key, T, Hasher, Key_equality, Allocator &gt;_map" alt=""/>
-  <map id="tbb::interface5::concurrent_unordered_map&lt; Key, T, Hasher, Key_equality, Allocator &gt;_map" name="tbb::interface5::concurrent_unordered_map&lt; Key, T, Hasher, Key_equality, Allocator &gt;_map">
+  <img src="a00052.png" usemap="#tbb::strict_ppl::concurrent_queue&lt; T, A &gt;_map" alt=""/>
+  <map id="tbb::strict_ppl::concurrent_queue&lt; T, A &gt;_map" name="tbb::strict_ppl::concurrent_queue&lt; T, A &gt;_map">
 </map>
  </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a35d2ace709769b7059e8f8b2a144f8b9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a35d2ace709769b7059e8f8b2a144f8b9"></a>
-typedef Key&#160;</td><td class="memItemRight" valign="bottom"><b>key_type</b></td></tr>
-<tr class="separator:a35d2ace709769b7059e8f8b2a144f8b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9260034417dde6b3810347c5e347a9f8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9260034417dde6b3810347c5e347a9f8"></a>
-typedef base_type::value_type&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b></td></tr>
-<tr class="separator:a9260034417dde6b3810347c5e347a9f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8ece8ff3de51bc415d8fc1338f793cbf"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8ece8ff3de51bc415d8fc1338f793cbf"></a>
-typedef T&#160;</td><td class="memItemRight" valign="bottom"><b>mapped_type</b></td></tr>
-<tr class="separator:a8ece8ff3de51bc415d8fc1338f793cbf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afeef87b046af352e20cd92e56c0fcf34"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afeef87b046af352e20cd92e56c0fcf34"></a>
-typedef Hasher&#160;</td><td class="memItemRight" valign="bottom"><b>hasher</b></td></tr>
-<tr class="separator:afeef87b046af352e20cd92e56c0fcf34"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a21f5f2fbf3b1f721051c6b4c5fa2a735"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a21f5f2fbf3b1f721051c6b4c5fa2a735"></a>
-typedef Key_equality&#160;</td><td class="memItemRight" valign="bottom"><b>key_equal</b></td></tr>
-<tr class="separator:a21f5f2fbf3b1f721051c6b4c5fa2a735"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa15c94df26d89ef38daa7516df5e0729"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa15c94df26d89ef38daa7516df5e0729"></a>
-typedef hash_compare&#160;</td><td class="memItemRight" valign="bottom"><b>key_compare</b></td></tr>
-<tr class="separator:aa15c94df26d89ef38daa7516df5e0729"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1acd4ab50584a9dc55712e0e113583e2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1acd4ab50584a9dc55712e0e113583e2"></a>
-typedef base_type::allocator_type&#160;</td><td class="memItemRight" valign="bottom"><b>allocator_type</b></td></tr>
-<tr class="separator:a1acd4ab50584a9dc55712e0e113583e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7e29fb2f75cdec0746afdbed0b9c5451"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7e29fb2f75cdec0746afdbed0b9c5451"></a>
-typedef base_type::pointer&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b></td></tr>
-<tr class="separator:a7e29fb2f75cdec0746afdbed0b9c5451"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab5d26f7002e7810e4c02890a1d7bdc41"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab5d26f7002e7810e4c02890a1d7bdc41"></a>
-typedef base_type::const_pointer&#160;</td><td class="memItemRight" valign="bottom"><b>const_pointer</b></td></tr>
-<tr class="separator:ab5d26f7002e7810e4c02890a1d7bdc41"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a01e118e1e0bfe57083d8f76f4f848d2b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a01e118e1e0bfe57083d8f76f4f848d2b"></a>
-typedef base_type::reference&#160;</td><td class="memItemRight" valign="bottom"><b>reference</b></td></tr>
-<tr class="separator:a01e118e1e0bfe57083d8f76f4f848d2b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad1072935f6765abe3ec1b04f24f80deb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad1072935f6765abe3ec1b04f24f80deb"></a>
-typedef base_type::const_reference&#160;</td><td class="memItemRight" valign="bottom"><b>const_reference</b></td></tr>
-<tr class="separator:ad1072935f6765abe3ec1b04f24f80deb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae31360122b604d6735b12fc027f10924"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae31360122b604d6735b12fc027f10924"></a>
-typedef base_type::size_type&#160;</td><td class="memItemRight" valign="bottom"><b>size_type</b></td></tr>
-<tr class="separator:ae31360122b604d6735b12fc027f10924"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0f903f0ca898b0aa80e3a6b921b8f21a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0f903f0ca898b0aa80e3a6b921b8f21a"></a>
-typedef base_type::difference_type&#160;</td><td class="memItemRight" valign="bottom"><b>difference_type</b></td></tr>
-<tr class="separator:a0f903f0ca898b0aa80e3a6b921b8f21a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a267aff808d10aa0c437fd9261286467e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a267aff808d10aa0c437fd9261286467e"></a>
-typedef base_type::iterator&#160;</td><td class="memItemRight" valign="bottom"><b>iterator</b></td></tr>
-<tr class="separator:a267aff808d10aa0c437fd9261286467e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5c2d1a61d1e6ed09fb3df14270d61a01"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5c2d1a61d1e6ed09fb3df14270d61a01"></a>
-typedef base_type::const_iterator&#160;</td><td class="memItemRight" valign="bottom"><b>const_iterator</b></td></tr>
-<tr class="separator:a5c2d1a61d1e6ed09fb3df14270d61a01"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a744c0cf93efb5a134d6ddfb3a5fb75d3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a744c0cf93efb5a134d6ddfb3a5fb75d3"></a>
-typedef base_type::iterator&#160;</td><td class="memItemRight" valign="bottom"><b>local_iterator</b></td></tr>
-<tr class="separator:a744c0cf93efb5a134d6ddfb3a5fb75d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5df36261f0e5a1aea64235702fdacb62"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5df36261f0e5a1aea64235702fdacb62"></a>
-typedef base_type::const_iterator&#160;</td><td class="memItemRight" valign="bottom"><b>const_local_iterator</b></td></tr>
-<tr class="separator:a5df36261f0e5a1aea64235702fdacb62"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeeee93a7ac2eecc80bbf3e857e900538"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aeeee93a7ac2eecc80bbf3e857e900538"></a>
+typedef T&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00052.html#aeeee93a7ac2eecc80bbf3e857e900538">value_type</a></td></tr>
+<tr class="memdesc:aeeee93a7ac2eecc80bbf3e857e900538"><td class="mdescLeft">&#160;</td><td class="mdescRight">Element type in the queue. <br/></td></tr>
+<tr class="separator:aeeee93a7ac2eecc80bbf3e857e900538"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab26ddf11b15d61ac87e6c1ae67af92a2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab26ddf11b15d61ac87e6c1ae67af92a2"></a>
+typedef T &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00052.html#ab26ddf11b15d61ac87e6c1ae67af92a2">reference</a></td></tr>
+<tr class="memdesc:ab26ddf11b15d61ac87e6c1ae67af92a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reference type. <br/></td></tr>
+<tr class="separator:ab26ddf11b15d61ac87e6c1ae67af92a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a478c2b7f763b2e821e01cc14e13baf4c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a478c2b7f763b2e821e01cc14e13baf4c"></a>
+typedef const T &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00052.html#a478c2b7f763b2e821e01cc14e13baf4c">const_reference</a></td></tr>
+<tr class="memdesc:a478c2b7f763b2e821e01cc14e13baf4c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Const reference type. <br/></td></tr>
+<tr class="separator:a478c2b7f763b2e821e01cc14e13baf4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9f883e49afea16293ba92da779981bb8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9f883e49afea16293ba92da779981bb8"></a>
+typedef size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00052.html#a9f883e49afea16293ba92da779981bb8">size_type</a></td></tr>
+<tr class="memdesc:a9f883e49afea16293ba92da779981bb8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Integral type for representing size of the queue. <br/></td></tr>
+<tr class="separator:a9f883e49afea16293ba92da779981bb8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a63b42d83a9ed13fc6741e0b4388b0e96"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a63b42d83a9ed13fc6741e0b4388b0e96"></a>
+typedef ptrdiff_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00052.html#a63b42d83a9ed13fc6741e0b4388b0e96">difference_type</a></td></tr>
+<tr class="memdesc:a63b42d83a9ed13fc6741e0b4388b0e96"><td class="mdescLeft">&#160;</td><td class="mdescRight">Difference type for iterator. <br/></td></tr>
+<tr class="separator:a63b42d83a9ed13fc6741e0b4388b0e96"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acbdd1a5bd034358fb0774b322a66b1ed"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acbdd1a5bd034358fb0774b322a66b1ed"></a>
+typedef A&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00052.html#acbdd1a5bd034358fb0774b322a66b1ed">allocator_type</a></td></tr>
+<tr class="memdesc:acbdd1a5bd034358fb0774b322a66b1ed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allocator type. <br/></td></tr>
+<tr class="separator:acbdd1a5bd034358fb0774b322a66b1ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab1361aa7fd454fe593609be740ab8a4c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab1361aa7fd454fe593609be740ab8a4c"></a>
+typedef <br class="typebreak"/>
+internal::concurrent_queue_iterator<br class="typebreak"/>
+&lt; <a class="el" href="a00052.html">concurrent_queue</a>, T &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>iterator</b></td></tr>
+<tr class="separator:ab1361aa7fd454fe593609be740ab8a4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a674e375edf0a3463ae1cec5d6158593d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a674e375edf0a3463ae1cec5d6158593d"></a>
+typedef <br class="typebreak"/>
+internal::concurrent_queue_iterator<br class="typebreak"/>
+&lt; <a class="el" href="a00052.html">concurrent_queue</a>, const T &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>const_iterator</b></td></tr>
+<tr class="separator:a674e375edf0a3463ae1cec5d6158593d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:aeeabd4bffe47ad7a300ae896c06dc46c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aeeabd4bffe47ad7a300ae896c06dc46c"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_map</b> (size_type n_of_buckets=base_type::initial_bucket_number, const hasher &amp;_Hasher=hasher(), const key_equal &amp;_Key_equality=key_equal(), const allocator_type &amp;a=allocator_type())</td></tr>
-<tr class="separator:aeeabd4bffe47ad7a300ae896c06dc46c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad0e15127e237c29c923db83fb509f624"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad0e15127e237c29c923db83fb509f624"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_map</b> (const Allocator &amp;a)</td></tr>
-<tr class="separator:ad0e15127e237c29c923db83fb509f624"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab494f2ac22495884f64985fba6ade501"><td class="memTemplParams" colspan="2"><a class="anchor" id="ab494f2ac22495884f64985fba6ade501"></a>
-template&lt;typename Iterator &gt; </td></tr>
-<tr class="memitem:ab494f2ac22495884f64985fba6ade501"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>concurrent_unordered_map</b> (Iterator first, Iterator last, size_type n_of_buckets=base_type::initial_bucket_number, const hasher &amp;_Hasher=hasher(), const key_equal &amp;_Key_equality=key_equal(), const allocator_type &amp;a=allocator_type())</td></tr>
-<tr class="separator:ab494f2ac22495884f64985fba6ade501"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a788a7225915574c1a349abc0f1f653c7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a788a7225915574c1a349abc0f1f653c7"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00052.html#a788a7225915574c1a349abc0f1f653c7">concurrent_unordered_map</a> (std::initializer_list&lt; value_type &gt; il, size_type n_of_buckets=base_type::initial_bucket_number, const hasher &amp;_Hasher=hasher(), const key_equal &amp;_Key_equality=key_equal(), const allocator_type &amp;a=allocator_type())</td></tr>
-<tr class="memdesc:a788a7225915574c1a349abc0f1f653c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor from initializer_list. <br/></td></tr>
-<tr class="separator:a788a7225915574c1a349abc0f1f653c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1593b0f93256736d163cfbcc23c7de26"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1593b0f93256736d163cfbcc23c7de26"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_map</b> (const <a class="el" href="a00052.html">concurrent_unordered_map</a> &amp;table)</td></tr>
-<tr class="separator:a1593b0f93256736d163cfbcc23c7de26"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a47b4eec40fac7fb8b6a8023758c1a34c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a47b4eec40fac7fb8b6a8023758c1a34c"></a>
-<a class="el" href="a00052.html">concurrent_unordered_map</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="a00052.html">concurrent_unordered_map</a> &amp;table)</td></tr>
-<tr class="separator:a47b4eec40fac7fb8b6a8023758c1a34c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a53dcf022c4bd65f438b377a23a9c1bae"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a53dcf022c4bd65f438b377a23a9c1bae"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_map</b> (<a class="el" href="a00052.html">concurrent_unordered_map</a> &amp;&amp;table)</td></tr>
-<tr class="separator:a53dcf022c4bd65f438b377a23a9c1bae"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a73f8e707280b4e55a9ead393fbb012c8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a73f8e707280b4e55a9ead393fbb012c8"></a>
-<a class="el" href="a00052.html">concurrent_unordered_map</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="a00052.html">concurrent_unordered_map</a> &amp;&amp;table)</td></tr>
-<tr class="separator:a73f8e707280b4e55a9ead393fbb012c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2e1cce13f9fa458a616b424c84790c25"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2e1cce13f9fa458a616b424c84790c25"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_map</b> (const <a class="el" href="a00052.html">concurrent_unordered_map</a> &amp;table, const Allocator &amp;a)</td></tr>
-<tr class="separator:a2e1cce13f9fa458a616b424c84790c25"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab22288d418827a312aee4191bb6a7f11"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab22288d418827a312aee4191bb6a7f11"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_map</b> (<a class="el" href="a00052.html">concurrent_unordered_map</a> &amp;&amp;table, const Allocator &amp;a)</td></tr>
-<tr class="separator:ab22288d418827a312aee4191bb6a7f11"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae49177d89c80434a30aa346201abb986"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae49177d89c80434a30aa346201abb986"></a>
-mapped_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator[]</b> (const key_type &amp;key)</td></tr>
-<tr class="separator:ae49177d89c80434a30aa346201abb986"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af2e1ccbd986686ef2e93c880a965e861"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af2e1ccbd986686ef2e93c880a965e861"></a>
-mapped_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>at</b> (const key_type &amp;key)</td></tr>
-<tr class="separator:af2e1ccbd986686ef2e93c880a965e861"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a54173c11cd3bc91b491b3f83375868e4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a54173c11cd3bc91b491b3f83375868e4"></a>
-const mapped_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>at</b> (const key_type &amp;key) const </td></tr>
-<tr class="separator:a54173c11cd3bc91b491b3f83375868e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a49b2e16902577cd3174355be0fa684e5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a49b2e16902577cd3174355be0fa684e5"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00052.html#a49b2e16902577cd3174355be0fa684e5">concurrent_queue</a> (const <a class="el" href="a00052.html#acbdd1a5bd034358fb0774b322a66b1ed">allocator_type</a> &amp;a=<a class="el" href="a00052.html#acbdd1a5bd034358fb0774b322a66b1ed">allocator_type</a>())</td></tr>
+<tr class="memdesc:a49b2e16902577cd3174355be0fa684e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct empty queue. <br/></td></tr>
+<tr class="separator:a49b2e16902577cd3174355be0fa684e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a43ac953152e60815c09fe4a4d4a623a9"><td class="memTemplParams" colspan="2"><a class="anchor" id="a43ac953152e60815c09fe4a4d4a623a9"></a>
+template&lt;typename InputIterator &gt; </td></tr>
+<tr class="memitem:a43ac953152e60815c09fe4a4d4a623a9"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00052.html#a43ac953152e60815c09fe4a4d4a623a9">concurrent_queue</a> (InputIterator begin, InputIterator end, const <a class="el" href="a00052.html#acbdd1a5bd034358fb0774b322a66b1ed">allocator_type</a> &amp;a=<a class="el" href="a00052.html#acbdd1a5bd034358fb0774b322a66b1ed">allocator_type</a>())</td></tr>
+<tr class="memdesc:a43ac953152e60815c09fe4a4d4a623a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">[begin,end) constructor <br/></td></tr>
+<tr class="separator:a43ac953152e60815c09fe4a4d4a623a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae918807d098d5d5b41cc6d606fa2e7a1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae918807d098d5d5b41cc6d606fa2e7a1"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00052.html#ae918807d098d5d5b41cc6d606fa2e7a1">concurrent_queue</a> (const <a class="el" href="a00052.html">concurrent_queue</a> &amp;src, const <a class="el" href="a00052.html#acbdd1a5bd034358fb0774b322a66b1ed">allocator_type</a> &amp;a=<a class="el" href="a00052.html#acbdd1a5bd034358fb0774b322a66b1ed">allocator_type</a>())</td></tr>
+<tr class="memdesc:ae918807d098d5d5b41cc6d606fa2e7a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy constructor. <br/></td></tr>
+<tr class="separator:ae918807d098d5d5b41cc6d606fa2e7a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acc04574f4d7d41fd5cad779508394740"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acc04574f4d7d41fd5cad779508394740"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00052.html#acc04574f4d7d41fd5cad779508394740">concurrent_queue</a> (<a class="el" href="a00052.html">concurrent_queue</a> &amp;&amp;src)</td></tr>
+<tr class="memdesc:acc04574f4d7d41fd5cad779508394740"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move constructors. <br/></td></tr>
+<tr class="separator:acc04574f4d7d41fd5cad779508394740"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a22f35cb396178d494a3756d5700e2865"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a22f35cb396178d494a3756d5700e2865"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_queue</b> (<a class="el" href="a00052.html">concurrent_queue</a> &amp;&amp;src, const <a class="el" href="a00052.html#acbdd1a5bd034358fb0774b322a66b1ed">allocator_type</a> &amp;a)</td></tr>
+<tr class="separator:a22f35cb396178d494a3756d5700e2865"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa0056b242f280f5e25332ce998f9f670"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa0056b242f280f5e25332ce998f9f670"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00052.html#aa0056b242f280f5e25332ce998f9f670">~concurrent_queue</a> ()</td></tr>
+<tr class="memdesc:aa0056b242f280f5e25332ce998f9f670"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy queue. <br/></td></tr>
+<tr class="separator:aa0056b242f280f5e25332ce998f9f670"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9330ca6590980d80ef7b1ea3613a699a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9330ca6590980d80ef7b1ea3613a699a"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00052.html#a9330ca6590980d80ef7b1ea3613a699a">push</a> (const T &amp;source)</td></tr>
+<tr class="memdesc:a9330ca6590980d80ef7b1ea3613a699a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enqueue an item at tail of queue. <br/></td></tr>
+<tr class="separator:a9330ca6590980d80ef7b1ea3613a699a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a40f743f7eb92bb709cb7feb86d340885"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a40f743f7eb92bb709cb7feb86d340885"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>push</b> (T &amp;&amp;source)</td></tr>
+<tr class="separator:a40f743f7eb92bb709cb7feb86d340885"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4647d9bf5fd03b0850ada381916e9728"><td class="memTemplParams" colspan="2"><a class="anchor" id="a4647d9bf5fd03b0850ada381916e9728"></a>
+template&lt;typename... Arguments&gt; </td></tr>
+<tr class="memitem:a4647d9bf5fd03b0850ada381916e9728"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>emplace</b> (Arguments &amp;&amp;...args)</td></tr>
+<tr class="separator:a4647d9bf5fd03b0850ada381916e9728"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aabb1acef18196fa11ed7db8e046c3943"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00052.html#aabb1acef18196fa11ed7db8e046c3943">try_pop</a> (T &amp;result)</td></tr>
+<tr class="memdesc:aabb1acef18196fa11ed7db8e046c3943"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attempt to dequeue an item from head of queue.  <a href="#aabb1acef18196fa11ed7db8e046c3943">More...</a><br/></td></tr>
+<tr class="separator:aabb1acef18196fa11ed7db8e046c3943"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aad4b253ba595637b0b146eb6565556f2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aad4b253ba595637b0b146eb6565556f2"></a>
+<a class="el" href="a00052.html#a9f883e49afea16293ba92da779981bb8">size_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00052.html#aad4b253ba595637b0b146eb6565556f2">unsafe_size</a> () const </td></tr>
+<tr class="memdesc:aad4b253ba595637b0b146eb6565556f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the number of items in the queue; thread unsafe. <br/></td></tr>
+<tr class="separator:aad4b253ba595637b0b146eb6565556f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeda3156929d0c250faed7b807ca6ab0e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aeda3156929d0c250faed7b807ca6ab0e"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00052.html#aeda3156929d0c250faed7b807ca6ab0e">empty</a> () const </td></tr>
+<tr class="memdesc:aeda3156929d0c250faed7b807ca6ab0e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Equivalent to size()==0. <br/></td></tr>
+<tr class="separator:aeda3156929d0c250faed7b807ca6ab0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad3384818fb6350a494d5ec62445e59ee"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad3384818fb6350a494d5ec62445e59ee"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00052.html#ad3384818fb6350a494d5ec62445e59ee">clear</a> ()</td></tr>
+<tr class="memdesc:ad3384818fb6350a494d5ec62445e59ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear the queue. not thread-safe. <br/></td></tr>
+<tr class="separator:ad3384818fb6350a494d5ec62445e59ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7f2b39f350281590b86db906eca6c480"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7f2b39f350281590b86db906eca6c480"></a>
+<a class="el" href="a00052.html#acbdd1a5bd034358fb0774b322a66b1ed">allocator_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00052.html#a7f2b39f350281590b86db906eca6c480">get_allocator</a> () const </td></tr>
+<tr class="memdesc:a7f2b39f350281590b86db906eca6c480"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return allocator object. <br/></td></tr>
+<tr class="separator:a7f2b39f350281590b86db906eca6c480"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6658faeae3c10135a553fedadddde239"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6658faeae3c10135a553fedadddde239"></a>
+iterator&#160;</td><td class="memItemRight" valign="bottom"><b>unsafe_begin</b> ()</td></tr>
+<tr class="separator:a6658faeae3c10135a553fedadddde239"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa7593de5e76006ed3adef4d060f0009c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa7593de5e76006ed3adef4d060f0009c"></a>
+iterator&#160;</td><td class="memItemRight" valign="bottom"><b>unsafe_end</b> ()</td></tr>
+<tr class="separator:aa7593de5e76006ed3adef4d060f0009c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0f84b37020f4267f17c7e91acfc0c446"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0f84b37020f4267f17c7e91acfc0c446"></a>
+const_iterator&#160;</td><td class="memItemRight" valign="bottom"><b>unsafe_begin</b> () const </td></tr>
+<tr class="separator:a0f84b37020f4267f17c7e91acfc0c446"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a118a79d7e20cdbd807fa7fccc2a5b848"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a118a79d7e20cdbd807fa7fccc2a5b848"></a>
+const_iterator&#160;</td><td class="memItemRight" valign="bottom"><b>unsafe_end</b> () const </td></tr>
+<tr class="separator:a118a79d7e20cdbd807fa7fccc2a5b848"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:a1f5eec0de2e660ea5372d19393f0920b"><td class="memTemplParams" colspan="2"><a class="anchor" id="a1f5eec0de2e660ea5372d19393f0920b"></a>
+template&lt;typename Container , typename Value &gt; </td></tr>
+<tr class="memitem:a1f5eec0de2e660ea5372d19393f0920b"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><b>internal::concurrent_queue_iterator</b></td></tr>
+<tr class="separator:a1f5eec0de2e660ea5372d19393f0920b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><h3>template&lt;typename T, typename A = cache_aligned_allocator&lt;T&gt;&gt;<br/>
+class tbb::strict_ppl::concurrent_queue&lt; T, A &gt;</h3>
+
+<p>A high-performance thread-safe non-blocking concurrent queue. </p>
+<p>Multiple threads may each push and pop concurrently. Assignment construction is not allowed. </p>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="aabb1acef18196fa11ed7db8e046c3943"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , typename A  = cache_aligned_allocator&lt;T&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool <a class="el" href="a00052.html">tbb::strict_ppl::concurrent_queue</a>&lt; T, A &gt;::try_pop </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&#160;</td>
+          <td class="paramname"><em>result</em>)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Attempt to dequeue an item from head of queue. </p>
+<p>Does not wait for item to become available. Returns true if successful; false otherwise. </p>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>concurrent_unordered_map.h</li>
+<li>concurrent_queue.h</li>
 </ul>
 </div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

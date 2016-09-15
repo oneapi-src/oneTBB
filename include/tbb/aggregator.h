@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -70,13 +70,13 @@ public:
 class basic_handler {
 public:
     basic_handler() {}
-    void operator()(aggregator_operation* op_list) const { 
+    void operator()(aggregator_operation* op_list) const {
         while (op_list) {
             // ITT note: &(op_list->status) tag is used to cover accesses to the operation data.
             // The executing thread "acquires" the tag (see start()) and then performs
             // the associated operation w/o triggering a race condition diagnostics.
             // A thread that created the operation is waiting for its status (see execute_impl()),
-            // so when this thread is done with the operation, it will "release" the tag 
+            // so when this thread is done with the operation, it will "release" the tag
             // and update the status (see finish()) to give control back to the waiting thread.
             basic_operation_base& request = static_cast<basic_operation_base&>(*op_list);
             // IMPORTANT: need to advance op_list to op_list->next() before calling request.finish()
@@ -103,7 +103,7 @@ public:
     void process(aggregator_operation *op) { execute_impl(*op); }
 
  protected:
-    /** Place operation in mailbox, then either handle mailbox or wait for the operation 
+    /** Place operation in mailbox, then either handle mailbox or wait for the operation
         to be completed by a different thread. */
     void execute_impl(aggregator_operation& op) {
         aggregator_operation* res;
@@ -118,7 +118,7 @@ public:
         do {
             // ITT may flag the following line as a race; it is a false positive:
             // This is an atomic read; we don't provide itt_hide_load_word for atomics
-            op.my_next = res = mailbox; // NOT A RACE 
+            op.my_next = res = mailbox; // NOT A RACE
         } while (mailbox.compare_and_swap(&op, res) != res);
         if (!res) { // first in the list; handle the operations
             // ITT note: &mailbox tag covers access to the handler_busy flag, which this
@@ -162,8 +162,8 @@ public:
         // acquire fence not necessary here due to causality rule and surrounding atomics
         __TBB_store_with_release(handler_busy, uintptr_t(1));
 
-        // ITT note: &mailbox tag covers access to the handler_busy flag itself. 
-        // Capturing the state of the mailbox signifies that handler_busy has been 
+        // ITT note: &mailbox tag covers access to the handler_busy flag itself.
+        // Capturing the state of the mailbox signifies that handler_busy has been
         // set and a new active handler will now process that list's operations.
         call_itt_notify(releasing, &mailbox);
         // grab pending_operations

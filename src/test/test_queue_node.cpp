@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -71,14 +71,14 @@ struct touches {
     int my_num_threads;
 
     touches( int num_threads ) : my_num_threads(num_threads) {
-        my_last_touch = new T* [my_num_threads]; 
-        my_touches = new bool* [my_num_threads]; 
+        my_last_touch = new T* [my_num_threads];
+        my_touches = new bool* [my_num_threads];
         for ( int p = 0; p < my_num_threads; ++p) {
             my_last_touch[p] = new T[my_num_threads];
-            for ( int p2 = 0; p2 < my_num_threads; ++p2) 
+            for ( int p2 = 0; p2 < my_num_threads; ++p2)
                 my_last_touch[p][p2] = -1;
 
-            my_touches[p] = new bool[N*my_num_threads]; 
+            my_touches[p] = new bool[N*my_num_threads];
             for ( int n = 0; n < N*my_num_threads; ++n)
                 my_touches[p][n] = false;
         }
@@ -103,8 +103,8 @@ struct touches {
             printf("Error: value seen in wrong order by local thread\n");
             return false;
         }
-        my_last_touch[tid][v_tid] = v; 
-        my_touches[tid][v] = true; 
+        my_last_touch[tid][v_tid] = v;
+        my_touches[tid][v] = true;
         return true;
     }
 
@@ -112,7 +112,7 @@ struct touches {
         bool *all_touches = new bool[N*my_num_threads];
         for ( int n = 0; n < N*my_num_threads; ++n)
             all_touches[n] = false;
-     
+
         for ( int p = 0; p < my_num_threads; ++p) {
             for ( int n = 0; n < N*my_num_threads; ++n) {
                 if ( my_touches[p][n] == true ) {
@@ -161,7 +161,7 @@ struct parallel_put_get : NoAssign {
     void operator()(int tid) const {
 
         for ( int i = 0; i < N; i+=C ) {
-            int j_end = ( N < i + C ) ? N : i + C; 
+            int j_end = ( N < i + C ) ? N : i + C;
             // dump about C values into the Q
             for ( int j = i; j < j_end; ++j ) {
                 ASSERT( my_q.try_put( T (N*tid + j ) ) == true, NULL );
@@ -193,31 +193,31 @@ int test_reservation() {
     q.try_put(T(1));
     q.try_put(T(2));
     q.try_put(T(3));
- 
+
     T v;
     ASSERT( q.reserve_item(v) == true, NULL );
-    ASSERT( v == T(1), NULL ); 
+    ASSERT( v == T(1), NULL );
     ASSERT( q.release_reservation() == true, NULL );
     v = bogus_value;
     g.wait_for_all();
     ASSERT( q.reserve_item(v) == true, NULL );
-    ASSERT( v == T(1), NULL ); 
+    ASSERT( v == T(1), NULL );
     ASSERT( q.consume_reservation() == true, NULL );
     v = bogus_value;
     g.wait_for_all();
- 
+
     ASSERT( q.try_get(v) == true, NULL );
-    ASSERT( v == T(2), NULL ); 
+    ASSERT( v == T(2), NULL );
     v = bogus_value;
     g.wait_for_all();
-    
+
     ASSERT( q.reserve_item(v) == true, NULL );
-    ASSERT( v == T(3), NULL ); 
+    ASSERT( v == T(3), NULL );
     ASSERT( q.release_reservation() == true, NULL );
     v = bogus_value;
     g.wait_for_all();
     ASSERT( q.reserve_item(v) == true, NULL );
-    ASSERT( v == T(3), NULL ); 
+    ASSERT( v == T(3), NULL );
     ASSERT( q.consume_reservation() == true, NULL );
     v = bogus_value;
     g.wait_for_all();
@@ -333,7 +333,7 @@ int test_parallel(int num_threads) {
 // Tests
 //
 // Predecessors cannot be registered
-// Empty Q rejects item requests 
+// Empty Q rejects item requests
 // Single serial sender, items in FIFO order
 // Chained Qs ( 2 & 3 ), single sender, items at last Q in FIFO order
 //
@@ -446,7 +446,7 @@ int test_serial() {
     return 0;
 }
 
-int TestMain() { 
+int TestMain() {
     tbb::tick_count start = tbb::tick_count::now(), stop;
     for (int p = 2; p <= 4; ++p) {
         tbb::task_scheduler_init init(p);
@@ -454,7 +454,7 @@ int TestMain() {
         test_serial<check_type<int> >();
         test_parallel<int>(p);
         test_parallel<check_type<int> >(p);
-    } 
+    }
     stop = tbb::tick_count::now();
     REMARK("Queue_Node Time=%6.6f\n", (stop-start).seconds());
     REMARK("Testing resets\n");

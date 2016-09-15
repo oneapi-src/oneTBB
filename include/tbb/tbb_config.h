@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -48,6 +48,11 @@
     #define __TBB_CLANG_VERSION (__clang_major__ * 10000 + __clang_minor__ * 100 + __clang_patchlevel__)
 #endif
 
+/** Target OS is either iOS* or iOS* simulator **/
+#if __ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__
+    #define __TBB_IOS 1
+#endif
+
 /** Preprocessor symbols to determine HW architecture **/
 
 #if _WIN32||_WIN64
@@ -64,7 +69,9 @@
 #   if !__linux__ && !__APPLE__
 #       define __TBB_generic_os 1
 #   endif
-#   if __x86_64__
+#   if __TBB_IOS
+#       define __TBB_generic_arch 1
+#   elif __x86_64__
 #       define __TBB_x86_64 1
 #   elif __ia64__
 #       define __TBB_ipf 1
@@ -146,7 +153,7 @@
     #else
         #define __TBB_INITIALIZER_LISTS_PRESENT       __INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1400 && (_MSC_VER >= 1800 || __TBB_GCC_VERSION >= 40400 || _LIBCPP_VERSION)
     #endif
-    
+
     #define __TBB_CONSTEXPR_PRESENT                   __INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1400
     #define __TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT  __INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1200
     /** ICC seems to disable support of noexcept event in c++11 when compiling in compatibility mode for gcc <4.6 **/
@@ -183,8 +190,8 @@
 #elif __GNUC__
     #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT    __GXX_EXPERIMENTAL_CXX0X__
     #define __TBB_CPP11_RVALUE_REF_PRESENT            __GXX_EXPERIMENTAL_CXX0X__
-    /** __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4 here is a substitution for _GLIBCXX_ATOMIC_BUILTINS_4, which is a prerequisite 
-        for exception_ptr but cannot be used in this file because it is defined in a header, not by the compiler. 
+    /** __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4 here is a substitution for _GLIBCXX_ATOMIC_BUILTINS_4, which is a prerequisite
+        for exception_ptr but cannot be used in this file because it is defined in a header, not by the compiler.
         If the compiler has no atomic intrinsics, the C++ library should not expect those as well. **/
     #define __TBB_EXCEPTION_PTR_PRESENT               (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40404 && __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4)
     #define __TBB_STATIC_ASSERT_PRESENT               (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40300)
@@ -304,27 +311,35 @@
 #endif /* TBB_PEFORMANCE_WARNINGS */
 #endif /* TBB_USE_PERFORMANCE_WARNINGS */
 
-#if !defined(__EXCEPTIONS) && !defined(_CPPUNWIND) && !defined(__SUNPRO_CC) || defined(_XBOX)
+#if __TBB_DEFINE_MIC || defined(_XBOX)
+    #if TBB_USE_EXCEPTIONS
+        #error The platform does not properly support exception handling. Please do not set TBB_USE_EXCEPTIONS macro or set it to 0.
+    #elif !defined(TBB_USE_EXCEPTIONS)
+        #define TBB_USE_EXCEPTIONS 0
+    #endif
+#elif !(__EXCEPTIONS || defined(_CPPUNWIND) || __SUNPRO_CC)
     #if TBB_USE_EXCEPTIONS
         #error Compilation settings do not support exception handling. Please do not set TBB_USE_EXCEPTIONS macro or set it to 0.
     #elif !defined(TBB_USE_EXCEPTIONS)
         #define TBB_USE_EXCEPTIONS 0
     #endif
 #elif !defined(TBB_USE_EXCEPTIONS)
-    #if __TBB_DEFINE_MIC
-    #define TBB_USE_EXCEPTIONS 0
-    #else
     #define TBB_USE_EXCEPTIONS 1
-    #endif
-#elif TBB_USE_EXCEPTIONS && __TBB_DEFINE_MIC
-    #error Please do not set TBB_USE_EXCEPTIONS macro or set it to 0.
+#endif
+
+#if __clang__ && !__INTEL_COMPILER
+#define __TBB_USE_OPTIONAL_RTTI __has_feature(cxx_rtti)
+#elif defined(_CPPRTTI)
+#define __TBB_USE_OPTIONAL_RTTI 1
+#else
+#define __TBB_USE_OPTIONAL_RTTI (__GXX_RTTI || __RTTI || __INTEL_RTTI__)
 #endif
 
 #ifndef TBB_IMPLEMENT_CPP0X
 /** By default, use C++11 classes if available **/
     #if __clang__
-        /* Old versions of Intel Compiler do not have __has_include */
-        #if (__INTEL_COMPILER && __INTEL_COMPILER <= 1400) 
+        /* Old versions of Intel Compiler do not have __has_include or cannot use it in #define */
+        #if (__INTEL_COMPILER && (__INTEL_COMPILER < 1500 || __INTEL_COMPILER == 1500 && __INTEL_COMPILER_UPDATE <= 1))
             #define TBB_IMPLEMENT_CPP0X !(_LIBCPP_VERSION && (__cplusplus >= 201103L))
         #else
             #define TBB_IMPLEMENT_CPP0X (__cplusplus < 201103L || (!__has_include(<thread>) && !__has_include(<condition_variable>)))
@@ -444,6 +459,10 @@
     #define __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE 1
 #endif
 
+#ifndef __TBB_ENQUEUE_ENFORCED_CONCURRENCY
+    #define __TBB_ENQUEUE_ENFORCED_CONCURRENCY 1
+#endif
+
 #if !defined(__TBB_SURVIVE_THREAD_SWITCH) && \
           (_WIN32 || _WIN64 || __APPLE__ || (__linux__ && !__ANDROID__))
     #define __TBB_SURVIVE_THREAD_SWITCH 1
@@ -475,7 +494,7 @@
     #elif _MSC_VER == 1600
         #define __TBB_VARIADIC_MAX 10 // VS10 setting
     #else
-        #define __TBB_VARIADIC_MAX 15 
+        #define __TBB_VARIADIC_MAX 15
     #endif
 #endif
 
@@ -642,18 +661,18 @@
 // A compiler bug: a disabled copy constructor prevents use of the moving constructor
 #define __TBB_IF_NO_COPY_CTOR_MOVE_SEMANTICS_BROKEN (_MSC_VER && (__INTEL_COMPILER >= 1300 && __INTEL_COMPILER <= 1310) && !__INTEL_CXX11_MODE__)
 
-// MSVC 2013 and ICC 15 seems do not generate implicit move constructor for empty derived class while should
+// MSVC 2013 and ICC do not generate implicit move constructor for empty derived class
 #define __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_FOR_DERIVED_BROKEN  (__TBB_CPP11_RVALUE_REF_PRESENT &&  \
-      ( !__INTEL_COMPILER && _MSC_VER && _MSC_VER <= 1800 || __INTEL_COMPILER && __INTEL_COMPILER <= 1500 ))
+      ( !__INTEL_COMPILER && _MSC_VER && _MSC_VER <= 1800 || __INTEL_COMPILER && __INTEL_COMPILER <= 1600 ))
 
 #define __TBB_CPP11_DECLVAL_BROKEN (_MSC_VER == 1600 || (__GNUC__ && __TBB_GCC_VERSION < 40500) )
 
 // Intel C++ compiler has difficulties with copying std::pair with VC11 std::reference_wrapper being a const member
 #define __TBB_COPY_FROM_NON_CONST_REF_BROKEN (_MSC_VER == 1700 && __INTEL_COMPILER && __INTEL_COMPILER < 1600)
-//The implicit upcasting of the tuple of a reference of a derived class to a base class fails on icc 13.X 
+//The implicit upcasting of the tuple of a reference of a derived class to a base class fails on icc 13.X
 //if the system's gcc environment is 4.8
 #if (__INTEL_COMPILER >=1300 && __INTEL_COMPILER <=1310) && __TBB_GCC_VERSION>=40700 && __GXX_EXPERIMENTAL_CXX0X__
-    #define __TBB_UPCAST_OF_TUPLE_OF_REF_BROKEN 1 
+    #define __TBB_UPCAST_OF_TUPLE_OF_REF_BROKEN 1
 #endif
 
 /** End of __TBB_XXX_BROKEN macro section **/
@@ -664,6 +683,13 @@
 #endif
 
 #define __TBB_ATOMIC_CTORS     (__TBB_CONSTEXPR_PRESENT && __TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT && (!__TBB_ZERO_INIT_WITH_DEFAULTED_CTOR_BROKEN))
+
+// Many OS versions (Android 4.0.[0-3] for example) need workaround for dlopen to avoid non-recursive loader lock hang
+// Setting the workaround for all compile targets ($APP_PLATFORM) below Android 4.4 (android-19) 
+#if __ANDROID__ 
+#include <android/api-level.h>
+#define __TBB_USE_DLOPEN_REENTRANCY_WORKAROUND  (__ANDROID_API__ < 19)
+#endif
 
 #define __TBB_ALLOCATOR_CONSTRUCT_VARIADIC      (__TBB_CPP11_VARIADIC_TEMPLATES_PRESENT && __TBB_CPP11_RVALUE_REF_PRESENT)
 

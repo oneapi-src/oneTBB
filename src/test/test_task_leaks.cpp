@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -18,15 +18,15 @@
     reasons why the executable file might be covered by the GNU General Public License.
 */
 
-/*  The test uses "single produces multiple consumers" (SPMC )pattern to check 
-    if the memory of the tasks stolen by consumer threads is returned to the 
+/*  The test uses "single produces multiple consumers" (SPMC )pattern to check
+    if the memory of the tasks stolen by consumer threads is returned to the
     producer thread and is reused.
 
     The test consists of a series of iterations, which execute a task tree.
     the test fails is the memory consumption is not stabilized during some
     number of iterations.
 
-    After the memory consumption stabilized the memory state is perturbed by 
+    After the memory consumption stabilized the memory state is perturbed by
     switching producer thread, and the check is repeated.
 */
 
@@ -227,7 +227,7 @@ void TestTaskReclamation() {
     int     last_error_iteration = 0,
             producer_switch_iteration = 0,
             producer_switches = 0;
-    bool    switchProducer = false, 
+    bool    switchProducer = false,
             checkProducer = false;
     for( int i=0; i < MaxIterations; ++i ) {
         // These iterations check for excessive memory use and unreasonable task count

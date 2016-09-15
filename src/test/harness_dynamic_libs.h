@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -80,7 +80,7 @@ typedef void *LIBRARY_HANDLE;
 LIBRARY_HANDLE OpenLibrary(const char *name)
 {
 #if _WIN32 || _WIN64
-#if __TBB_WIN8UI_SUPPORT	
+#if __TBB_WIN8UI_SUPPORT
     TCHAR wlibrary[MAX_PATH];
     if ( MultiByteToWideChar(CP_UTF8, 0, name, -1, wlibrary, MAX_PATH) == 0 ) return false;
     return :: LoadPackagedLibrary( wlibrary, 0 );

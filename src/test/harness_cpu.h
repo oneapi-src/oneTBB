@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -22,7 +22,7 @@
 // This header is an optional part of the test harness.
 // It assumes that "harness_assert.h" has already been included.
 
-#if _WIN32 
+#if _WIN32
 #if !_XBOX
     #include <windows.h>
 #endif
@@ -33,7 +33,7 @@
 
 //! Return time (in seconds) spent by the current process in user mode.
 /*  Returns 0 if not implemented on platform. */
-static double GetCPUUserTime() { 
+static double GetCPUUserTime() {
 #if _XBOX || __TBB_WIN8UI_SUPPORT
     return 0;
 #elif _WIN32
@@ -51,7 +51,7 @@ static double GetCPUUserTime() {
     //   getrusage(RUSAGE_SELF, ...) that is used now only returns info for the calling thread;
     //   getrusage(RUSAGE_CHILDREN, ...) only counts for finished children threads;
     //   tms_utime and tms_cutime got with times(struct tms*) are equivalent to the above items;
-    //   finally, /proc/self/task/<task_id>/stat doesn't exist on older kernels 
+    //   finally, /proc/self/task/<task_id>/stat doesn't exist on older kernels
     //      and it isn't quite convenient to read it for every task_id.
 
     struct rusage resources;
@@ -87,7 +87,7 @@ static void TestCPUUserTime( int nthreads, int nactive = 1 ) {
     while( (usrtime_delta=GetCPUUserTime()-lastusrtime) < THRESHOLD ) {
         for ( int i = 0; i < 1000; ++i ) ++k; // do fake work without which user time can stall
         if ( (waittime_delta = (tbb::tick_count::now()-stamp).seconds()) > maximal_waittime ) {
-            REPORT( "Warning: %.2f sec elapsed but user mode time is still below its threshold (%g < %g)\n", 
+            REPORT( "Warning: %.2f sec elapsed but user mode time is still below its threshold (%g < %g)\n",
                     waittime_delta, usrtime_delta, THRESHOLD );
             break;
         }
@@ -96,7 +96,7 @@ static void TestCPUUserTime( int nthreads, int nactive = 1 ) {
 
     // Wait for workers to go sleep
     stamp = tbb::tick_count::now();
-    while( ((waittime_delta=(tbb::tick_count::now()-stamp).seconds()) < minimal_waittime) 
+    while( ((waittime_delta=(tbb::tick_count::now()-stamp).seconds()) < minimal_waittime)
             || ((usrtime_delta=GetCPUUserTime()-lastusrtime) < THRESHOLD) )
     {
         for ( int i = 0; i < 1000; ++i ) ++k; // do fake work without which user time can stall

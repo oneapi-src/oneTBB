@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+# Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 #
 # This file is part of Threading Building Blocks. Threading Building Blocks is free software;
 # you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -84,11 +84,11 @@ else #
 fi #
 # Find the TBB libraries and add them to the list.
 # Add TBB libraries from the current directory that contains libtbb* files
-files="$(/bin/ls libtbb* 2> /dev/null)" #
+files="$(ls libtbb* 2> /dev/null)" #
 [ -z "$files" ] || fnamelist="$fnamelist $files" #
 # Add any libraries built for specific tests.
 exeroot=${exename%\.*} #
-files="$(/bin/ls ${exeroot}*.so ${exeroot}*.so.* 2> /dev/null)" #
+files="$(ls ${exeroot}*.so ${exeroot}*.so.* 2> /dev/null)" #
 [ -z "$files" ] || fnamelist="$fnamelist $files" #
 # TODO: Add extra libraries from the Intel(R) Compiler for certain tests
 # found=$(echo $exename | egrep 'test_malloc_atexit\|test_malloc_lib_unload' 2> /dev/null)
@@ -137,6 +137,7 @@ for fullname in "$@"; do { #
 [ -z "$ldpreload" ] || run_prefix="LD_PRELOAD='$ldpreload' $run_prefix" #
 [ $verbose ] && echo Running $run_prefix ./$exename $* #
 run_env="$run_env cd $targetdir; export LD_LIBRARY_PATH=." #
+[ -z "$VIRTUAL_MACHINE" ] || run_env="$run_env; export VIRTUAL_MACHINE=$VIRTUAL_MACHINE" #
 # The return_code file is the best way found to return the status of the test execution when using adb shell.
 eval 'adb shell "$run_env; $run_prefix ./$exename $* || echo -n \$? >error_code"' "${OUTPUT}" #
 # Capture the return code string and remove the trailing \r from the return_code file contents

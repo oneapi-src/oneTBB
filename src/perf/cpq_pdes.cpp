@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -73,13 +73,12 @@ unsigned int one_us_iters = 429; // default value
 // if user wants to calibrate to microseconds on particular machine, call this at beginning of program
 // sets one_us_iters to number of iters to busy_wait for approx. 1 us
 void calibrate_busy_wait() {
-    tbb::tick_count t0, t1;
+    const unsigned niter = 1000000;
+    tbb::tick_count t0 = tbb::tick_count::now();
+    for (volatile unsigned int i=0; i<niter; ++i) continue;
+    tbb::tick_count t1 = tbb::tick_count::now();
 
-    t0 = tbb::tick_count::now();
-    for (volatile unsigned int i=0; i<1000000; ++i) continue;
-    t1 = tbb::tick_count::now();
-    
-    one_us_iters = (1000000.0/(t1-t0).seconds())*0.000001;
+    one_us_iters = (unsigned int)(niter/(t1-t0).seconds())*1e-6;
     printf("one_us_iters: %d\n", one_us_iters);
 }
 

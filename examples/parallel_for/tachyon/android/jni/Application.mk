@@ -1,4 +1,4 @@
-# Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+# Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 #
 # The source code contained or described herein and all documents related
 # to the source code ("Material") are owned by Intel Corporation or its
@@ -19,5 +19,5 @@
 APP_ABI:= all
 APP_STL:=gnustl_shared
 APP_GNUSTL_FORCE_CPP_FEATURES := exceptions rtti
-APP_PLATFORM:=android-15
-NDK_TOOLCHAIN_VERSION:=4.6
+APP_PLATFORM:=android-19
+NDK_TOOLCHAIN_VERSION:=4.9

@@ -1,4 +1,4 @@
-# Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+# Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 #
 # This file is part of Threading Building Blocks. Threading Building Blocks is free software;
 # you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -20,9 +20,12 @@ export tbb_root?=$(NDK_PROJECT_PATH)
 
 ifeq (armeabi-v7a,$(APP_ABI))
 	export SYSROOT:=$(NDK_ROOT)/platforms/$(APP_PLATFORM)/arch-arm
+else ifeq (arm64-v8a,$(APP_ABI))
+	export SYSROOT:=$(NDK_ROOT)/platforms/$(APP_PLATFORM)/arch-arm64
 else
 	export SYSROOT:=$(NDK_ROOT)/platforms/$(APP_PLATFORM)/arch-$(APP_ABI)
 endif
+
 ifeq (windows,$(tbb_os))
 	export CPATH_SEPARATOR :=;
 else

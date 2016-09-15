@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -48,7 +48,7 @@ static void TestHandlePerror() {
 #if TBB_USE_EXCEPTIONS
         REMARK("caught runtime_exception('%s')\n",e.what());
         ASSERT( memcmp(e.what(),"apple: ",7)==0, NULL );
-        ASSERT( strlen(strstr(e.what(), strerror(EAGAIN))), "bad error message?" ); 
+        ASSERT( strlen(strstr(e.what(), strerror(EAGAIN))), "bad error message?" );
 #endif /* TBB_USE_EXCEPTIONS */
         caught = true;
     }

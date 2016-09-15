@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -55,7 +55,7 @@ typedef void (*pointer_to_handler)();
 // prevent warnings from some compilers (g++ 4.1)
 #if __TBB_WEAK_SYMBOLS_PRESENT
 #define DLD(s,h) {#s, (pointer_to_handler*)(void*)(&h), (pointer_to_handler)&s}
-#else 
+#else
 #define DLD(s,h) {#s, (pointer_to_handler*)(void*)(&h)}
 #endif /* __TBB_WEAK_SYMBOLS_PRESENT */
 //! Association between a handler name and location of pointer to it.

@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -53,7 +53,7 @@ inline static void __TBB_machine_try_lock_elided_cancel()
 
 inline static void __TBB_machine_unlock_elided( volatile uint8_t* lk )
 {
-    __asm__ volatile (".byte " __TBB_STRINGIZE(__TBB_OP_XRELEASE)"; movb $0, %0" 
+    __asm__ volatile (".byte " __TBB_STRINGIZE(__TBB_OP_XRELEASE)"; movb $0, %0"
                       : "=m"(*lk) : "m"(*lk) : "memory" );
 }
 
@@ -92,7 +92,7 @@ inline static uint32_t __TBB_machine_begin_transaction()
 {
     uint32_t res = ~uint32_t(0);   // success value
     __asm__ volatile ("1: .byte  0xC7; .byte 0xF8;\n"           //  XBEGIN <abort-offset>
-                      "   .long  2f-1b-6\n"                     //  2f-1b == difference in addresses of start 
+                      "   .long  2f-1b-6\n"                     //  2f-1b == difference in addresses of start
                                                                 //  of XBEGIN and the MOVL
                                                                 //  2f - 1b - 6 == that difference minus the size of the
                                                                 //  XBEGIN instruction.  This is the abort offset to
@@ -105,7 +105,7 @@ inline static uint32_t __TBB_machine_begin_transaction()
 }
 
 /*!
- * Attempt to commit/end transaction 
+ * Attempt to commit/end transaction
  */
 inline static void __TBB_machine_end_transaction()
 {

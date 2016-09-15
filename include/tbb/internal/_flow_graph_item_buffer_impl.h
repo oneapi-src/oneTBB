@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -75,7 +75,7 @@ namespace internal {
         }
 
         // may be called with an empty slot or a slot that has already been constructed into.
-        void set_my_item(size_t i, const item_type &o) { 
+        void set_my_item(size_t i, const item_type &o) {
             if(item(i).second != no_item) {
                 destroy_item(i);
             }
@@ -135,7 +135,7 @@ namespace internal {
             v = get_my_item(my_tail-1);
         }
 
-        // following methods are for reservation of the front of a bufffer. 
+        // following methods are for reservation of the front of a bufffer.
         void reserve_item(size_type i) { __TBB_ASSERT(my_item_valid(i) && !my_item_reserved(i), "item cannot be reserved"); item(i).second = reserved_item; }
         void release_item(size_type i) { __TBB_ASSERT(my_item_reserved(i), "item is not reserved"); item(i).second = has_item; }
 
@@ -146,7 +146,7 @@ namespace internal {
         // grow_array doesn't work if we change my_tail when the old array is too small
         size_type size(size_t new_tail = 0) { return (new_tail ? new_tail : my_tail) - my_head; }
         size_type capacity() { return my_array_size; }
-        // sequencer_node does not use this method, so we don't 
+        // sequencer_node does not use this method, so we don't
         // need a version that passes in the new_tail value.
         bool buffer_full() { return size() >= capacity(); }
 
@@ -213,7 +213,7 @@ namespace internal {
                     if(my_item_valid(i))
                         destroy_item(i);
                 }
-                allocator_type().deallocate(my_array,my_array_size); 
+                allocator_type().deallocate(my_array,my_array_size);
             }
             my_array = NULL;
             if(reset_pointers) {
@@ -237,7 +237,7 @@ namespace internal {
     };
 
     //! item_buffer with reservable front-end.  NOTE: if reserving, do not
-    //* complete operation with pop_front(); use consume_front().  
+    //* complete operation with pop_front(); use consume_front().
     //* No synchronization built-in.
     template<typename T, typename A=cache_aligned_allocator<T> >
     class reservable_item_buffer : public item_buffer<T, A> {

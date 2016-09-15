@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -28,7 +28,7 @@
 
 #if __linux__ || __APPLE__ || __sun
 #include <unistd.h>
-#elif _WIN32 
+#elif _WIN32
 #include "tbb/machine/windows_api.h"
 #endif /* OS specific */
 #include <memory>
@@ -166,9 +166,8 @@ public:
     //! Destroy value at location pointed to by p.
     void destroy( pointer p ) {
         p->~value_type();
-#if _MSC_VER <= 1800 && defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+        // suppress "unreferenced parameter" warnings by MSVC up to and including 2015
         tbb::internal::suppress_unused_warning(p);
-#endif
     }
 
     friend bool operator==(arena const& lhs, arena const& rhs){
@@ -225,7 +224,7 @@ public:
     static_counting_allocator(const base_alloc_t& src) throw()
     : base_alloc_t(src) { }
 
-    static_counting_allocator(const static_counting_allocator& src) throw() 
+    static_counting_allocator(const static_counting_allocator& src) throw()
     : base_alloc_t(src) { }
 
     template<typename U, typename C>
@@ -529,7 +528,7 @@ public:
 
 //! Analogous to std::allocator<void>, as defined in ISO C++ Standard, Section 20.4.1
 /** @ingroup memory_allocation */
-template<template<typename T> class Allocator> 
+template<template<typename T> class Allocator>
 class debug_allocator<void, Allocator> : public Allocator<void> {
 public:
     typedef Allocator<void> base_allocator_type;

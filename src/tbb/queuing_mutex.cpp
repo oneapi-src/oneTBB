@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -75,7 +75,6 @@ bool queuing_mutex::scoped_lock::try_acquire( queuing_mutex& m )
 
     // Force acquire so that user's critical section receives correct values
     // from processor that was previously in the user's critical section.
-    // try_acquire should always have acquire semantic, even if failed.
     __TBB_load_with_acquire(going);
     mutex = &m;
     ITT_NOTIFY(sync_acquired, mutex);

@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -124,7 +124,7 @@ void RunCilkOnlyConcurrently ( tbb_sched_injection_mode_t sim ) {
     NativeParallelFor( P_outer, FibBody() );
 }
 
-void RunSandwich( bool sandwich ) { 
+void RunSandwich( bool sandwich ) {
     g_sandwich = sandwich;
     tbb::task_scheduler_init init(P_outer);
     int m = TBB_Fib(N);

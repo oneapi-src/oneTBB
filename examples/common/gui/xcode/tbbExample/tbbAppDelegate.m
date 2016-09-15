@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -18,12 +18,25 @@
     reasons why the executable file might be covered by the GNU General Public License.
 */
 
-//
-//  Created by Xcode* 4.3.2
-//
-
 #import "tbbAppDelegate.h"
-#import <pthread.h>
+
+#if TARGET_OS_IPHONE
+
+@implementation tbbAppDelegate
+
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
+{
+    return YES;
+}
+
+- (void)applicationDidEnterBackground:(UIApplication *)application
+{
+    exit(EXIT_SUCCESS);
+}
+
+@end
+
+#elif TARGET_OS_MAC
 
 @implementation tbbAppDelegate
 
@@ -49,3 +62,5 @@ extern int g_sizex, g_sizey;
 }
 
 @end
+
+#endif

@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -38,14 +38,14 @@
 
 
 class minimal_type {
-    template<typename T> 
+    template<typename T>
     friend struct place_wrapper;
 
     int value;
 
 public:
-    minimal_type() : value(-1) {} 
-    minimal_type(int v) : value(v) {} 
+    minimal_type() : value(-1) {}
+    minimal_type(int v) : value(v) {}
     minimal_type(const minimal_type &m) : value(m.value) { }
     minimal_type &operator=(const minimal_type &m) { value = m.value; return *this; }
 };
@@ -59,11 +59,11 @@ struct place_wrapper {
 
     place_wrapper( ) : value(0) {
         thread_id = tbb::this_tbb_thread::get_id();
-        task_ptr = &tbb::task::self(); 
+        task_ptr = &tbb::task::self();
     }
     place_wrapper( int v ) : value(v) {
         thread_id = tbb::this_tbb_thread::get_id();
-        task_ptr = &tbb::task::self(); 
+        task_ptr = &tbb::task::self();
     }
 
     place_wrapper( const place_wrapper<int> &v ) : value(v.value), thread_id(v.thread_id), task_ptr(v.task_ptr) { }
@@ -75,20 +75,20 @@ template<typename T1, typename T2>
 struct wrapper_helper {
     static void check(const T1 &, const T2 &) { }
 
-    static void copy_value(const T1 &in, T2 &out) { 
+    static void copy_value(const T1 &in, T2 &out) {
         out = in;
     }
 };
 
 template<typename T1, typename T2>
 struct wrapper_helper< place_wrapper<T1>, place_wrapper<T2> > {
-    static void check(const place_wrapper<T1> &a, const place_wrapper<T2> &b) { 
+    static void check(const place_wrapper<T1> &a, const place_wrapper<T2> &b) {
        REMARK("a.task_ptr == %p != b.task_ptr == %p\n", a.task_ptr, b.task_ptr);
        ASSERT( (a.thread_id != b.thread_id), "same thread used to execute adjacent nodes");
        ASSERT( (a.task_ptr != b.task_ptr), "same task used to execute adjacent nodes");
        return;
     }
-    static void copy_value(const place_wrapper<T1> &in, place_wrapper<T2> &out) { 
+    static void copy_value(const place_wrapper<T1> &in, place_wrapper<T2> &out) {
         out.value = in.value;
     }
 };
@@ -110,13 +110,13 @@ struct counting_async_body {
     }
 
     void operator()( const int &input, counting_async_gateway_type& my_node ) {
-        REMARK( "Body execution with input == %d\n", input); 
+        REMARK( "Body execution with input == %d\n", input);
         ++my_async_body_exec_count;
         ++async_body_exec_count;
         if ( input == -1 ) {
             bool result = tbb::task::self().group()->cancel_group_execution();
             REMARK( "Canceling graph execution\n" );
-            ASSERT( result == true, "attempted to cancel graph twice" );  
+            ASSERT( result == true, "attempted to cancel graph twice" );
             Harness::Sleep(50);
         }
         my_node.async_try_put(input);
@@ -144,7 +144,7 @@ void test_reset() {
     a.try_put(-1);
     for (int i = 0; i < N; ++i) {
        a.try_put(i);
-    } 
+    }
     g.wait_for_all();
     // should be canceled with only 1 item reaching the async_body and the counting receivers
     // and N items left in the node's queue
@@ -163,7 +163,7 @@ void test_reset() {
     REMARK( "N body executions\n" );
     for (int i = 0; i < N; ++i) {
        a.try_put(i);
-    } 
+    }
     g.wait_for_all();
     ASSERT( g.is_cancelled() == false, "task group not canceled" );
 
@@ -183,7 +183,7 @@ void test_reset() {
     g.reset(tbb::flow::rf_reset_bodies);
     for (int i = 0; i < N; ++i) {
        a.try_put(i);
-    } 
+    }
     g.wait_for_all();
     ASSERT( g.is_cancelled() == false, "task group not canceled" );
 
@@ -202,7 +202,7 @@ void test_reset() {
     g.reset(tbb::flow::rf_clear_edges);
     for (int i = 0; i < N; ++i) {
        a.try_put(i);
-    } 
+    }
     g.wait_for_all();
     ASSERT( g.is_cancelled() == false, "task group not canceled" );
 
@@ -225,7 +225,7 @@ void test_reset() {
 #endif
     for (int i = 0; i < N; ++i) {
        a.try_put(i);
-    } 
+    }
     g.wait_for_all();
     ASSERT( g.is_cancelled() == false, "task group not canceled" );
 
@@ -245,7 +245,7 @@ void test_reset() {
     g.reset(static_cast<tbb::flow::reset_flags>(tbb::flow::rf_reset_bodies|tbb::flow::rf_clear_edges));
     for (int i = 0; i < N; ++i) {
        a.try_put(i);
-    } 
+    }
     g.wait_for_all();
     ASSERT( g.is_cancelled() == false, "task group not canceled" );
 
@@ -368,15 +368,15 @@ struct basic_test {
         typedef typename async_node_type::async_gateway_type async_gateway_type;
     public:
         typedef async_activity<input_type, output_type> async_activity_type;
-    
+
         async_body_type( async_activity_type* aa ) : my_async_activity( aa ) { }
 
-        async_body_type( const async_body_type& other ) : my_async_activity( other.my_async_activity ) { } 
+        async_body_type( const async_body_type& other ) : my_async_activity( other.my_async_activity ) { }
 
         void operator()( const input_type &input, async_gateway_type& my_node ) {
             ++async_body_exec_count;
             my_async_activity->submit( input, my_node );
-            if ( my_async_activity->should_reserve_each_time() ) 
+            if ( my_async_activity->should_reserve_each_time() )
                 my_node.async_reserve();
         }
 
@@ -407,13 +407,13 @@ public:
         async_node_type offload_node( g, tbb::flow::unlimited, [&] (const input_type &input, async_gateway_type& my_node) {
             ++async_body_exec_count;
             my_async_activity.submit( input, my_node );
-            if ( my_async_activity.should_reserve_each_time() ) 
+            if ( my_async_activity.should_reserve_each_time() )
                 my_node.async_reserve();
         } );
 #else
         async_node_type offload_node( g, tbb::flow::unlimited, async_body_type( &my_async_activity ) );
 #endif
-            
+
         tbb::flow::function_node< output_type > end_node( g, tbb::flow::unlimited, end_body_type() );
 
         tbb::flow::make_edge( start_node, offload_node );
@@ -423,7 +423,7 @@ public:
         tbb::flow::make_edge( tbb::flow::output_port<0>(offload_node), end_node );
 #endif
         async_body_exec_count = 0;
-        async_activity_processed_msg_count = 0; 
+        async_activity_processed_msg_count = 0;
         end_body_exec_count = 0;
 
         if (async_expected_items != UNKNOWN_NUMBER_OF_ITEMS ) {
@@ -436,7 +436,7 @@ public:
         ASSERT( async_body_exec_count == NUMBER_OF_MSGS, "AsyncBody procesed wrong number of signals" );
         ASSERT( async_activity_processed_msg_count == NUMBER_OF_MSGS, "AsyncActivity processed wrong number of signals" );
         ASSERT( end_body_exec_count == NUMBER_OF_MSGS, "EndBody processed wrong number of signals");
-        REMARK("async_body_exec_count == %d == async_activity_processed_msg_count == %d == end_body_exec_count == %d\n", 
+        REMARK("async_body_exec_count == %d == async_activity_processed_msg_count == %d == end_body_exec_count == %d\n",
                 int(async_body_exec_count), int(async_activity_processed_msg_count), int(end_body_exec_count));
         return Harness::Done;
     }
@@ -510,10 +510,10 @@ struct spin_test {
         typedef typename async_node_type::async_gateway_type async_gateway_type;
     public:
         typedef async_activity<input_type, output_type> async_activity_type;
-    
+
         async_body_type( async_activity_type* aa ) : my_async_activity( aa ) { }
 
-        async_body_type( const async_body_type& other ) : my_async_activity( other.my_async_activity ) { } 
+        async_body_type( const async_body_type& other ) : my_async_activity( other.my_async_activity ) { }
 
         void operator()( const input_type &input, async_gateway_type& my_node ) {
             ++async_body_exec_count;
@@ -538,7 +538,7 @@ struct spin_test {
             ++end_body_exec_count;
             if (tbb::this_tbb_thread::get_id() == my_main_tid) {
                ++main_tid_count;
-            } 
+            }
             my_barrier->timed_wait_noerror(10);
         }
     };

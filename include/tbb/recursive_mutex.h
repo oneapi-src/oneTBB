@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -68,7 +68,7 @@ public:
   #if _WIN32||_WIN64
         DeleteCriticalSection(&impl);
   #else
-        pthread_mutex_destroy(&impl); 
+        pthread_mutex_destroy(&impl);
 
   #endif /* _WIN32||_WIN64 */
 #endif /* TBB_USE_ASSERT */
@@ -82,20 +82,20 @@ public:
         It also nicely provides the "node" for queuing locks. */
     class scoped_lock: internal::no_copy {
     public:
-        //! Construct lock that has not acquired a recursive_mutex. 
+        //! Construct lock that has not acquired a recursive_mutex.
         scoped_lock() : my_mutex(NULL) {};
 
         //! Acquire lock on given mutex.
         scoped_lock( recursive_mutex& mutex ) {
 #if TBB_USE_ASSERT
-            my_mutex = &mutex; 
+            my_mutex = &mutex;
 #endif /* TBB_USE_ASSERT */
             acquire( mutex );
         }
 
         //! Release lock (if lock is held).
         ~scoped_lock() {
-            if( my_mutex ) 
+            if( my_mutex )
                 release();
         }
 
@@ -153,7 +153,7 @@ public:
     static const bool is_fair_mutex = false;
 
     // C++0x compatibility interface
-    
+
     //! Acquire lock
     void lock() {
 #if TBB_USE_ASSERT
@@ -176,7 +176,7 @@ public:
 #if TBB_USE_ASSERT
         aligned_space<scoped_lock> tmp;
         return (new(tmp.begin()) scoped_lock)->internal_try_acquire(*this);
-#else        
+#else
   #if _WIN32||_WIN64
         return TryEnterCriticalSection(&impl)!=0;
   #else
@@ -229,6 +229,6 @@ private:
 
 __TBB_DEFINE_PROFILING_SET_NAME(recursive_mutex)
 
-} // namespace tbb 
+} // namespace tbb
 
 #endif /* __TBB_recursive_mutex_H */

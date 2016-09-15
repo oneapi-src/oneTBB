@@ -1,4 +1,4 @@
-# Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+# Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 #
 # This file is part of Threading Building Blocks. Threading Building Blocks is free software;
 # you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -144,6 +144,8 @@ endif
 
 ifeq ($(shell uname), Linux)
 LIBS += -lrt 
+else ifeq ($(shell uname), Darwin)
+override CXXFLAGS += -Wl,-rpath,$(TBBROOT)/lib
 endif
 
 SOURCE = ../../common/gui/$(UI)video.cpp src/trace.$(SVERSION).cpp src/main.cpp src/pthread.cpp src/tachyon_video.cpp src/api.cpp src/apigeom.cpp src/apitrigeom.cpp src/bndbox.cpp src/box.cpp src/camera.cpp src/coordsys.cpp src/cylinder.cpp src/extvol.cpp src/global.cpp src/grid.cpp src/imageio.cpp src/imap.cpp src/intersect.cpp src/jpeg.cpp src/light.cpp src/objbound.cpp src/parse.cpp src/plane.cpp src/ppm.cpp src/quadric.cpp src/render.cpp src/ring.cpp src/shade.cpp src/sphere.cpp src/texture.cpp src/tgafile.cpp src/trace_rest.cpp src/triangle.cpp src/ui.cpp src/util.cpp src/vector.cpp src/vol.cpp
@@ -166,7 +168,7 @@ light_test_one:
 $(EXE): $(SOURCE)
 ifeq ($(UI),mac)
 	mkdir -p $(APPRES)/en.lproj $(NAME)$(SUFFIX).app/Contents/MacOS
-	cp ../../common/gui/xcode/tbbExample/Info.plist $(NAME)$(SUFFIX).app/Contents
+	cp ../../common/gui/xcode/tbbExample/tbbExample-Info.plist $(NAME)$(SUFFIX).app/Contents/Info.plist
 	cp ../../common/gui/xcode/tbbExample/PkgInfo $(NAME)$(SUFFIX).app/Contents
 	cp ../../common/gui/xcode/tbbExample/en.lproj/* $(APPRES)/en.lproj
 	$(CXX_UI) $(MYCXXFLAGS) $(CXXFLAGS) -c $(MACUISOURCES)

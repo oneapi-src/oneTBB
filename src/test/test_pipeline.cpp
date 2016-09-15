@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -64,11 +64,11 @@ static unsigned out_of_order_count;
 
 class BaseFilter: public tbb::filter {
     bool* const my_done;
-    const bool my_is_last;  
+    const bool my_is_last;
     bool my_is_running;
 public:
     tbb::atomic<tbb::internal::Token> current_token;
-    BaseFilter( tbb::filter::mode type, bool done[], bool is_last ) : 
+    BaseFilter( tbb::filter::mode type, bool done[], bool is_last ) :
         filter(type),
         my_done(done),
         my_is_last(is_last),
@@ -78,7 +78,7 @@ public:
     virtual Buffer* get_buffer( void* item ) {
         current_token++;
         return static_cast<Buffer*>(item);
-    } 
+    }
     /*override*/void* operator()( void* item ) {
         Harness::ConcurrencyTracker ct;
         if( is_serial() )
@@ -87,7 +87,7 @@ public:
         Buffer* b = get_buffer(item);
         if( b ) {
             if( is_ordered() ) {
-                if( b->sequence_number == Buffer::unused ) 
+                if( b->sequence_number == Buffer::unused )
                     b->sequence_number = current_token-1;
                 else
                     ASSERT( b->sequence_number==current_token-1, "item arrived out of order" );
@@ -95,8 +95,8 @@ public:
                 if( b->sequence_number != current_token-1 && b->sequence_number != Buffer::unused )
                     out_of_order_count++;
             }
-            ASSERT( b->id < StreamSize, NULL ); 
-            ASSERT( !my_done[b->id], "duplicate processing of token?" ); 
+            ASSERT( b->id < StreamSize, NULL );
+            ASSERT( !my_done[b->id], "duplicate processing of token?" );
             ASSERT( b->is_busy, NULL );
             my_done[b->id] = true;
             if( my_is_last ) {
@@ -106,7 +106,7 @@ public:
             }
         }
         my_is_running = false;
-        return b;  
+        return b;
     }
 };
 
@@ -121,12 +121,12 @@ public:
     {}
     /*override*/Buffer* get_buffer( void* ) {
         unsigned long next_input;
-        unsigned free_buffer = 0; 
+        unsigned free_buffer = 0;
         { // lock protected scope
             tbb::spin_mutex::scoped_lock lock(input_lock);
             if( current_token>=StreamSize )
                 return NULL;
-            next_input = current_token++; 
+            next_input = current_token++;
             // once in a while, emulate waiting for input; this only makes sense for serial input
             if( is_serial() && WaitTest.required() )
                 WaitTest.probe( );
@@ -139,9 +139,9 @@ public:
                 }
         }
         ASSERT( free_buffer<my_number_of_tokens, "premature reuse of buffer" );
-        Buffer* b = &buffer[free_buffer]; 
-        ASSERT( &buffer[0] <= b, NULL ); 
-        ASSERT( b <= &buffer[MaxBuffer-1], NULL ); 
+        Buffer* b = &buffer[free_buffer];
+        ASSERT( &buffer[0] <= b, NULL );
+        ASSERT( b <= &buffer[MaxBuffer-1], NULL );
         ASSERT( b->id == Buffer::unused, NULL);
         b->id = next_input;
         ASSERT( b->sequence_number == Buffer::unused, NULL);
@@ -190,8 +190,8 @@ bool do_hacking_tests = true;
 const tbb::internal::Token tokens_before_wraparound = 0xF;
 
 void TestTrivialPipeline( unsigned nthread, unsigned number_of_filters ) {
-    // There are 3 filter types: parallel, serial_in_order and serial_out_of_order 
-    static const tbb::filter::mode filter_table[] = { tbb::filter::parallel, tbb::filter::serial_in_order, tbb::filter::serial_out_of_order}; 
+    // There are 3 filter types: parallel, serial_in_order and serial_out_of_order
+    static const tbb::filter::mode filter_table[] = { tbb::filter::parallel, tbb::filter::serial_in_order, tbb::filter::serial_out_of_order};
     const unsigned number_of_filter_types = sizeof(filter_table)/sizeof(filter_table[0]);
     REMARK( "testing with %lu threads and %lu filters\n", nthread, number_of_filters );
     ASSERT( number_of_filters<=MaxFilters, "too many filters" );
@@ -234,7 +234,7 @@ void TestTrivialPipeline( unsigned nthread, unsigned number_of_filters ) {
             }
         }
         // Account for clipping of parallelism.
-        if( parallelism_limit>nthread ) 
+        if( parallelism_limit>nthread )
             parallelism_limit = nthread;
         if( parallelism_limit>ntokens )
             parallelism_limit = (unsigned)ntokens;
@@ -259,7 +259,7 @@ void TestTrivialPipeline( unsigned nthread, unsigned number_of_filters ) {
                 StreamSize = StreamSize*8/3;
             }
         }
-        if( Harness::ConcurrencyTracker::PeakParallelism() < parallelism_limit ) 
+        if( Harness::ConcurrencyTracker::PeakParallelism() < parallelism_limit )
             REMARK( "nthread=%lu ntokens=%lu MaxParallelism=%lu parallelism_limit=%lu\n",
                 nthread, ntokens, Harness::ConcurrencyTracker::PeakParallelism(), parallelism_limit );
         for( unsigned i=0; i < number_of_filters; ++i ) {

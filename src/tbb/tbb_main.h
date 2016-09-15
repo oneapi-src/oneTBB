@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -33,7 +33,7 @@ void DoOneTimeInitializations ();
 // __TBB_InitOnce
 //------------------------------------------------------------------------
 
-//! Class that supports TBB initialization. 
+//! Class that supports TBB initialization.
 /** It handles acquisition and release of global resources (e.g. TLS) during startup and shutdown,
     as well as synchronization for DoOneTimeInitializations. */
 class __TBB_InitOnce {
@@ -53,7 +53,7 @@ class __TBB_InitOnce {
 
     //! Global initialization lock
     /** Scenarios are possible when tools interop has to be initialized before the
-        TBB itself. This imposes a requirement that the global initialization lock 
+        TBB itself. This imposes a requirement that the global initialization lock
         has to support valid static initialization, and does not issue any tool
         notifications in any build mode. **/
     static __TBB_atomic_flag InitializationLock;
@@ -65,8 +65,8 @@ public:
 
     static bool initialization_done() { return __TBB_load_with_acquire(InitializationDone); }
 
-    //! Add initial reference to resources. 
-    /** We assume that dynamic loading of the library prevents any other threads 
+    //! Add initial reference to resources.
+    /** We assume that dynamic loading of the library prevents any other threads
         from entering the library until this constructor has finished running. **/
     __TBB_InitOnce() { add_ref(); }
 
@@ -78,9 +78,9 @@ public:
         // start running, and thus no race on InitializationDone is possible.
         if( initialization_done() ) {
             // Remove an extra reference that was added in DoOneTimeInitializations.
-            remove_ref();  
+            remove_ref();
         }
-    } 
+    }
     //! Add reference to resources.  If first reference added, acquire the resources.
     static void add_ref();
 

@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -248,7 +248,6 @@ bool queuing_rw_mutex::scoped_lock::try_acquire( queuing_rw_mutex& m, bool write
         return false; // Someone already took the lock
     // Force acquire so that user's critical section receives correct values
     // from processor that was previously in the user's critical section.
-    // try_acquire should always have acquire semantic, even if failed.
     __TBB_load_with_acquire(my_going);
     my_mutex = &m;
     ITT_NOTIFY(sync_acquired, my_mutex);
@@ -367,20 +366,18 @@ bool queuing_rw_mutex::scoped_lock::downgrade_to_reader()
     __TBB_ASSERT( my_state==STATE_WRITER, "no sense to downgrade a reader" );
 
     ITT_NOTIFY(sync_releasing, my_mutex);
-
-    if( ! __TBB_load_with_acquire(my_next) ) {
-        my_state = STATE_READER;
-        if( this==my_mutex->q_tail ) {
+    my_state = STATE_READER;
+    if( ! __TBB_load_relaxed(my_next) ) {
+        // the following load of q_tail must not be reordered with setting STATE_READER above
+        if( this==my_mutex->q_tail.load<full_fence>() ) {
             unsigned short old_state = my_state.compare_and_swap<tbb::release>(STATE_ACTIVEREADER, STATE_READER);
-            if( old_state==STATE_READER ) {
-                // Downgrade completed
-                return true;
-            }
+            if( old_state==STATE_READER )
+                return true; // Downgrade completed
         }
         /* wait for the next to register */
         spin_wait_while_eq( my_next, (void*)NULL );
     }
-    scoped_lock *const n = __TBB_load_relaxed(my_next);
+    scoped_lock *const n = __TBB_load_with_acquire(my_next);
     __TBB_ASSERT( n, "still no successor at this point!" );
     if( n->my_state & STATE_COMBINED_WAITINGREADER )
         __TBB_store_with_release(n->my_going,1);

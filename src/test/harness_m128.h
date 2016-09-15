@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -28,7 +28,7 @@
 //  did not always provide proper stack alignment in destructors of such objects.
 
 #if (_MSC_VER>=1600)
-//TODO: handle /arch:AVX in the right way. 
+//TODO: handle /arch:AVX in the right way.
 #pragma warning (push)
 #pragma warning (disable: 4752)
 #endif
@@ -40,7 +40,7 @@ class ClassWithVectorType {
     __Mvec field[n];
     void init( int start );
 public:
-    ClassWithVectorType() {init(-n);} 
+    ClassWithVectorType() {init(-n);}
     ClassWithVectorType( int i ) {init(i);}
     void operator=( const ClassWithVectorType& src ) {
         __Mvec stack[n];
@@ -65,7 +65,7 @@ template<typename __Mvec>
 void ClassWithVectorType<__Mvec>::init( int start ) {
     __Mvec stack[n];
     for( int i=0; i<n; ++i ) {
-        // Declaring value as a one-element array instead of a scalar quites 
+        // Declaring value as a one-element array instead of a scalar quites
         // gratuitous warnings about possible use of "value" before it was set.
         __Mvec value[1];
         for( int j=0; j<F; ++j )

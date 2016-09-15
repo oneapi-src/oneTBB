@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -130,13 +130,13 @@ public:
         //! Release lock.
         void release() {
             __TBB_ASSERT( mutex, "lock is not acquired" );
-            spin_rw_mutex *m = mutex; 
+            spin_rw_mutex *m = mutex;
             mutex = NULL;
 #if TBB_USE_THREADING_TOOLS||TBB_USE_ASSERT
             if( is_writer ) m->internal_release_writer();
             else            m->internal_release_reader();
 #else
-            if( is_writer ) __TBB_AtomicAND( &m->state, READERS ); 
+            if( is_writer ) __TBB_AtomicAND( &m->state, READERS );
             else            __TBB_FetchAndAddWrelease( &m->state, -(intptr_t)ONE_READER);
 #endif /* TBB_USE_THREADING_TOOLS||TBB_USE_ASSERT */
         }
@@ -158,10 +158,10 @@ public:
         bool try_acquire( spin_rw_mutex& m, bool write = true ) {
             __TBB_ASSERT( !mutex, "holding mutex already" );
             bool result;
-            is_writer = write; 
+            is_writer = write;
             result = write? m.internal_try_acquire_writer()
                           : m.internal_try_acquire_reader();
-            if( result ) 
+            if( result )
                 mutex = &m;
             return result;
         }
@@ -196,7 +196,7 @@ public:
         if( state&WRITER ) internal_release_writer();
         else               internal_release_reader();
 #else
-        if( state&WRITER ) __TBB_AtomicAND( &state, READERS ); 
+        if( state&WRITER ) __TBB_AtomicAND( &state, READERS );
         else               __TBB_FetchAndAddWrelease( &state, -(intptr_t)ONE_READER);
 #endif /* TBB_USE_THREADING_TOOLS||TBB_USE_ASSERT */
     }
@@ -243,7 +243,7 @@ namespace interface8 {
     ensure atomicity of the critical sections. In particular, it uses
     Intel(R) Transactional Synchronization Extensions (Intel(R) TSX).
     Without such HW support, it behaves like a spin_rw_mutex.
-    It should be used for locking short critical sections where the lock is 
+    It should be used for locking short critical sections where the lock is
     contended but the data it protects are not.
     @ingroup synchronization */
 #if __TBB_TSX_AVAILABLE

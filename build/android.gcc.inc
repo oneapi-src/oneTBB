@@ -1,4 +1,4 @@
-# Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+# Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 #
 # This file is part of Threading Building Blocks. Threading Building Blocks is free software;
 # you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -45,14 +45,12 @@ ifeq ($(APP_PIE), false)
     PIE_FLAG=
 endif
 
-LINK_FLAGS = -Wl,-rpath-link=. -rdynamic $(PIE_FLAG)
+LINK_FLAGS = -Wl,-rpath-link=. -rdynamic 
 C_FLAGS = $(CPLUS_FLAGS)
 
-# gcc 4.4 and higher support C++11
-ifneq (,$(shell $(CPLUS) -dumpversion | egrep  "^(4\.[4-9]|[5-9])"))
-    # On Android/gcc 4.4.3, -std=c++0x causes ::int64_t and ::uint64_t to be undefined.
-    CPP11_FLAGS = -std=gnu++0x $(DEFINE_KEY)_TBB_CPP0X
-endif
+# Supported g++ versions support C++11
+# On Android/gcc 4.4.3, -std=c++0x causes ::int64_t and ::uint64_t to be undefined.
+CPP11_FLAGS = -std=c++11 $(DEFINE_KEY)_TBB_CPP0X
 
 ifeq ($(cfg), release)
     CPLUS_FLAGS = -O2
@@ -65,14 +63,6 @@ CPLUS_FLAGS += $(DEFINE_KEY)USE_PTHREAD $(DEFINE_KEY)_GLIBCXX_HAVE_FENV_H
 
 ifneq (,$(findstring $(arch),ia32 intel64))
     CPLUS_FLAGS += $(DEFINE_KEY)DO_ITT_NOTIFY
-endif
-
-ifneq (0, $(dlopen_workaround))
-    CPLUS_FLAGS += $(DEFINE_KEY)__TBB_USE_DLOPEN_REENTRANCY_WORKAROUND=1
-    CPLUS_FLAGS += $(DEFINE_KEY)__TBB_USE_DLOPEN_MAIN_PROGRAM_WORKAROUND=1
-else
-    CPLUS_FLAGS += $(DEFINE_KEY)__TBB_USE_DLOPEN_REENTRANCY_WORKAROUND=0
-    CPLUS_FLAGS += $(DEFINE_KEY)__TBB_USE_DLOPEN_MAIN_PROGRAM_WORKAROUND=0
 endif
 
 ifeq (0, $(dynamic_load))
@@ -95,15 +85,13 @@ ifeq (ia32,$(arch))
     # TODO: Determine best setting of -march and add to CPLUS_FLAGS
     CPLUS_FLAGS += -m32 
     LIB_LINK_FLAGS += -m32
-endif
-
-ifeq (intel64,$(arch))
+else ifeq (intel64,$(arch))
     CPLUS_FLAGS += -m64
     LIB_LINK_FLAGS += -m64
-endif
-
-ifeq (arm,$(findstring arm,$(arch)))
+else ifeq (arm,$(arch))
     CPLUS_FLAGS += -march=armv7-a $(DEFINE_KEY)TBB_USE_GCC_BUILTINS=1 $(DEFINE_KEY)__TBB_64BIT_ATOMICS=0
+else ifeq (arm64,$(arch))
+    CPLUS_FLAGS += -march=armv8-a
 endif
 
 #------------------------------------------------------------------------------

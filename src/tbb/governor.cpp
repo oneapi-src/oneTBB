@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -81,6 +81,7 @@ void governor::acquire_resources () {
 
 void governor::release_resources () {
     theRMLServerFactory.close();
+    destroy_process_mask();
 #if TBB_USE_ASSERT
     if( __TBB_InitOnce::initialization_done() && theTLS.get() ) 
         runtime_warning( "TBB is unloaded while tbb::task_scheduler_init object is alive?" );
@@ -186,7 +187,7 @@ generic_scheduler* governor::init_scheduler( int num_threads, stack_size_type st
             __TBB_ASSERT( s->my_ref_count == 1, "weakly initialized scheduler must have refcount equal to 1" );
             __TBB_ASSERT( !s->my_arena, "weakly initialized scheduler  must have no arena" );
             __TBB_ASSERT( s->my_auto_initialized, "weakly initialized scheduler is supposed to be auto-initialized" );
-            s->attach_arena( market::create_arena( default_num_threads(), 1, 0, true ), 0, /*is_master*/true );
+            s->attach_arena( market::create_arena( default_num_threads(), 1, 0 ), 0, /*is_master*/true );
             __TBB_ASSERT( s->my_arena_index == 0, "Master thread must occupy the first slot in its arena" );
             s->my_arena_slot->my_scheduler = s;
             s->my_arena->my_default_ctx = s->default_context(); // it also transfers implied ownership
@@ -199,10 +200,9 @@ generic_scheduler* governor::init_scheduler( int num_threads, stack_size_type st
         return s;
     }
     // Create new scheduler instance with arena
-    bool default_concurrency_requested = num_threads == task_scheduler_init::automatic;
-    if( default_concurrency_requested )
+    if( num_threads == task_scheduler_init::automatic )
         num_threads = default_num_threads();
-    arena *a = market::create_arena( num_threads, 1, stack_size, default_concurrency_requested );
+    arena *a = market::create_arena( num_threads, 1, stack_size );
     generic_scheduler* s = generic_scheduler::create_master( a );
     __TBB_ASSERT(s, "Somehow a local scheduler creation for a master thread failed");
     __TBB_ASSERT( is_set(s), NULL );
@@ -264,7 +264,7 @@ void governor::print_version_info () {
 }
 
 void governor::initialize_rml_factory () {
-    ::rml::factory::status_type res = theRMLServerFactory.open(); 
+    ::rml::factory::status_type res = theRMLServerFactory.open();
     UsePrivateRML = res != ::rml::factory::st_success;
 }
 
@@ -285,10 +285,10 @@ __cilk_tbb_retcode governor::stack_op_handler( __cilk_tbb_stack_op op, void* dat
         default:
             __TBB_ASSERT( 0, "invalid op" );
         case CILK_TBB_STACK_ADOPT: {
-            __TBB_ASSERT( !current && s->my_cilk_state==generic_scheduler::cs_limbo || 
+            __TBB_ASSERT( !current && s->my_cilk_state==generic_scheduler::cs_limbo ||
                           current==s && s->my_cilk_state==generic_scheduler::cs_running, "invalid adoption" );
 #if TBB_USE_ASSERT
-            if( current==s ) 
+            if( current==s )
                 runtime_warning( "redundant adoption of %p by thread %p\n", s, (void*)thread_id );
             s->my_cilk_state = generic_scheduler::cs_running;
 #endif /* TBB_USE_ASSERT */
@@ -296,7 +296,7 @@ __cilk_tbb_retcode governor::stack_op_handler( __cilk_tbb_stack_op op, void* dat
             break;
         }
         case CILK_TBB_STACK_ORPHAN: {
-            __TBB_ASSERT( current==s && s->my_cilk_state==generic_scheduler::cs_running, "invalid orphaning" ); 
+            __TBB_ASSERT( current==s && s->my_cilk_state==generic_scheduler::cs_running, "invalid orphaning" );
 #if TBB_USE_ASSERT
             s->my_cilk_state = generic_scheduler::cs_limbo;
 #endif /* TBB_USE_ASSERT */
@@ -304,14 +304,14 @@ __cilk_tbb_retcode governor::stack_op_handler( __cilk_tbb_stack_op op, void* dat
             break;
         }
         case CILK_TBB_STACK_RELEASE: {
-            __TBB_ASSERT( !current && s->my_cilk_state==generic_scheduler::cs_limbo || 
+            __TBB_ASSERT( !current && s->my_cilk_state==generic_scheduler::cs_limbo ||
                           current==s && s->my_cilk_state==generic_scheduler::cs_running, "invalid release" );
 #if TBB_USE_ASSERT
             s->my_cilk_state = generic_scheduler::cs_freed;
 #endif /* TBB_USE_ASSERT */
             s->my_cilk_unwatch_thunk.routine = NULL;
             auto_terminate( s );
-        } 
+        }
     }
     return 0;
 }
@@ -355,7 +355,7 @@ void task_scheduler_init::initialize( int number_of_threads, stack_size_type thr
                     : new_mode & propagation_mode_captured ? vt & ~task_group_context::exact_exception : vt;
             // Use least significant bit of the scheduler pointer to store previous mode.
             // This is necessary when components compiled with different compilers and/or
-            // TBB versions initialize the 
+            // TBB versions initialize the
             my_scheduler = static_cast<scheduler*>((generic_scheduler*)((uintptr_t)s | prev_mode));
         }
         else

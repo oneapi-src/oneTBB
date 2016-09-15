@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -27,11 +27,11 @@
 #include <sys/resource.h>
 #include <unistd.h>
 
-#elif __APPLE__
+#elif __APPLE__ && !__ARM_ARCH
 #include <unistd.h>
 #include <mach/mach.h>
 #include <AvailabilityMacros.h>
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_6 || __IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_8_0
 #include <mach/shared_region.h>
 #else
 #include <mach/shared_memory_server.h>
@@ -53,7 +53,7 @@ const size_t shared_size = 0;
 
 //! Return estimate of number of bytes of memory that this program is currently using.
 /* Returns 0 if not implemented on platform. */
-size_t GetMemoryUsage() { 
+size_t GetMemoryUsage() {
 #if _XBOX || __TBB_WIN8UI_SUPPORT
     return 0;
 #elif _WIN32
@@ -73,7 +73,7 @@ size_t GetMemoryUsage() {
     }
     fclose(statsfile);
     return total_mem*pagesize;
-#elif __APPLE__
+#elif __APPLE__ && !__ARM_ARCH
     kern_return_t status;
     task_basic_info info;
     mach_msg_type_number_t msg_type = TASK_BASIC_INFO_COUNT;
@@ -90,7 +90,7 @@ size_t GetMemoryUsage() {
 void UseStackSpace( size_t amount, char* top=0 ) {
     char x[1000];
     memset( x, -1, sizeof(x) );
-    if( !top ) 
+    if( !top )
         top = x;
     ASSERT( x<=top, "test assumes that stacks grow downwards" );
     if( size_t(top-x)<amount )

@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -54,9 +54,9 @@ class Base {
 protected:
     Base() : copy_throws(100) {++BaseCount;}
     Base( const Base& c ) : copy_throws(c.copy_throws) {
-        if( --copy_throws<=0 ) 
+        if( --copy_throws<=0 )
             __TBB_THROW(0);
-        ++BaseCount; 
+        ++BaseCount;
     }
     ~Base() {--BaseCount;}
 };
@@ -84,7 +84,7 @@ public:
     void operator()(){
         real_ids[0] = THIS_THREAD::get_id();
         init_barrier.wait();
-        
+
         sum.fetch_and_add(1);
     }
     void operator()(int num){
@@ -93,7 +93,7 @@ public:
 
         sum.fetch_and_add(num);
     }
-    void operator()(int num, Data<0> dx) { 
+    void operator()(int num, Data<0> dx) {
         real_ids[num] = THIS_THREAD::get_id();
 
         const double WAIT = .1;
@@ -138,7 +138,7 @@ void CheckRelations( const THREAD::id ids[], int n, bool duplicates_allowed ) {
             for( int k=0; k<n; ++k ) {
                 const THREAD::id z = ids[j];
                 ASSERT( !(x<y && y<z) || x<z, "< is not transitive" );
-            }    
+            }
         }
     }
 }
@@ -152,13 +152,13 @@ public:
 };
 
 #if TBB_USE_EXCEPTIONS
-void CheckExceptionSafety() { 
+void CheckExceptionSafety() {
     int original_count = BaseCount;
-    // d loops over number of copies before throw occurs 
+    // d loops over number of copies before throw occurs
     for( int d=1; d<=3; ++d ) {
         // Try all combinations of throw/nothrow for f, x, and y's copy constructor.
         for( int i=0; i<8; ++i ) {
-            { 
+            {
                 const AnotherThreadFunc f = AnotherThreadFunc();
                 if( i&1 ) f.copy_throws = d;
                 const Data<1> x(0);
@@ -167,7 +167,7 @@ void CheckExceptionSafety() {
                 if( i&4 ) y.copy_throws = d;
                 bool exception_caught = false;
                 for( int j=0; j<3; ++j ) {
-                    try { 
+                    try {
                         switch(j) {
                             case 0: {THREAD t(f); t.join();} break;
                             case 1: {THREAD t(f,x); t.join();} break;
@@ -175,7 +175,7 @@ void CheckExceptionSafety() {
                         }
                     } catch(...) {
                         exception_caught = true;
-                    } 
+                    }
                     ASSERT( !exception_caught||(i&((1<<(j+1))-1))!=0, NULL );
                 }
             }
@@ -199,13 +199,13 @@ void RunTests() {
     Data<0> d100(100), d1(1), d0(0);
     const THREAD::id id_zero;
     THREAD::id id0, uniq_ids[THRDS];
-    
+
     THREAD thrs[THRDS];
     THREAD thr;
     THREAD thr0(t);
     THREAD thr1(t, 2);
     THREAD thr2(t, 1, d100);
-    
+
     ASSERT( thr0.get_id() != id_zero, NULL );
     id0 = thr0.get_id();
     tbb::move(thrs[0], thr0);
@@ -270,11 +270,11 @@ void RunTests() {
     ASSERT( BaseCount==4, "object leak detected" );
 
 #if TBB_USE_EXCEPTIONS
-    CheckExceptionSafety(); 
+    CheckExceptionSafety();
 #endif
 
     // Note: all tests involving BaseCount should be put before the tests
-    // involing detached threads, because there is no way of knowing when 
+    // involing detached threads, because there is no way of knowing when
     // a detached thread destroys its arguments.
 
     THREAD thr_detach_0(t, d0);

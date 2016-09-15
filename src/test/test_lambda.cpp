@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -211,7 +211,7 @@ int TestMain () {
                                  return std::make_pair(x.first<y.first?x.first:y.first,
                                                        x.second>y.second?x.second:y.second);
                              });
-        ASSERT(minmax_result_c.first==0 && minmax_result_c.second==999, 
+        ASSERT(minmax_result_c.first==0 && minmax_result_c.second==999,
                "combinable w/lambda failed.\n");
         REMARK("passed.\n");
 

@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -41,7 +41,7 @@ typedef vector<value_type> bin;  // we use a simple vector to represent a bin
 // Our bin packers will be function nodes in the graph that take value_type items and
 // return a dummy value.  They will also implicitly send packed bins to the bin_buffer
 // node, and unused items back to the value_pool node:
-typedef function_node<value_type, continue_msg, rejecting> bin_packer;
+typedef multifunction_node<value_type, tuple<value_type, bin>, rejecting> bin_packer;
 // Items are placed into a pool that all bin packers grab from, represent by a queue_node:
 typedef queue_node<value_type> value_pool;
 // Packed bins are placed in this buffer waiting to be serially printed and/or accounted for:
@@ -72,34 +72,33 @@ bin_packer **bins;               // the array of bin packers
 
 // This class is the Body type for bin_packer
 class bin_filler {
+    typedef bin_packer::output_ports_type ports_type;
     bin my_bin;                   // the current bin that this bin_filler is packing
     size_type my_used;            // capacity of bin used by current contents (not to be confused with my_bin.size())
     size_type relax, relax_val;   // relaxation counter for determining when to settle for a non-full bin
     bin_packer* my_bin_packer;    // ptr to the bin packer that this body object is associated with
     size_type bin_index;          // index of the encapsulating bin packer in the global bins array
-    value_pool* the_value_pool;   // ptr to the pool of items to pack
-    bin_buffer* the_bin_buffer;   // ptr to the buffer of resulting bins
     value_type looking_for;       // the minimum size of item this bin_packer will accept
+    value_pool* the_value_pool;   // the queue of incoming values
     bool done;                    // flag to indicate that this binpacker has been deactivated
  public:
-    bin_filler(size_t bidx, value_pool* q, bin_buffer* r) :
-        my_used(0), relax(0), relax_val(0), my_bin_packer(NULL), bin_index(bidx), the_value_pool(q),
-        the_bin_buffer(r), looking_for(V), done(false) {}
-    continue_msg operator()(const value_type& item) {
+    bin_filler(size_t bidx, value_pool* _q) :
+        my_used(0), relax(0), relax_val(0), my_bin_packer(NULL), bin_index(bidx), looking_for(V), the_value_pool(_q), done(false) {}
+    void operator()(const value_type& item, ports_type& p) {
         if (!my_bin_packer) my_bin_packer = bins[bin_index];
-        if (done) the_value_pool->try_put(item); // this bin_packer is done packing items; put item back to pool
+        if (done) get<0>(p).try_put(item); // this bin_packer is done packing items; put item back to pool
         else if (item > V) { // signal that packed_sum has reached item_sum at some point
             size_type remaining = active_bins--;
             if (remaining == 1 && packed_sum == item_sum) { // this is the last bin and it has seen everything
                 // this bin_packer may not have seen everything, so stay active
-                if (my_used>0) the_bin_buffer->try_put(my_bin);
+                if (my_used>0) get<1>(p).try_put(my_bin);
                 my_bin.clear();
                 my_used = 0;
                 looking_for = V;
                 ++active_bins;
             }
             else if (remaining == 1) { // this is the last bin, but there are remaining items
-                the_value_pool->try_put(V+1); // send out signal
+                get<0>(p).try_put(V+1); // send out signal
                 ++active_bins;
             }
             else if (remaining > 1) { // this is not the last bin; deactivate
@@ -107,16 +106,16 @@ class bin_filler {
                     packed_sum -= my_used;
                     packed_items -= my_bin.size();
                     for (size_type i=0; i<my_bin.size(); ++i)
-                        the_value_pool->try_put(my_bin[i]);
+                        get<0>(p).try_put(my_bin[i]);
                     the_value_pool->remove_successor(*my_bin_packer); // deactivate
                     done = true;
-                    the_value_pool->try_put(V+1); // send out signal
+                    get<0>(p).try_put(V+1); // send out signal
                 }
                 else { // this bin is well-utilized; send out bin and deactivate
                     the_value_pool->remove_successor(*my_bin_packer); // build no more bins
                     done = true;
-                    if (my_used>0) the_bin_buffer->try_put(my_bin);
-                    the_value_pool->try_put(V+1); // send out signal
+                    if (my_used>0) get<1>(p).try_put(my_bin);
+                    get<0>(p).try_put(V+1); // send out signal
                 }
             }
         }
@@ -128,10 +127,10 @@ class bin_filler {
             looking_for = V-my_used;
             relax = 0;
             if (packed_sum == item_sum) {
-                the_value_pool->try_put(V+1); // send out signal
+                get<0>(p).try_put(V+1); // send out signal
             }
             if (my_used == V) {
-                the_bin_buffer->try_put(my_bin);
+                get<1>(p).try_put(my_bin);
                 my_bin.clear();
                 my_used = 0;
                 looking_for = V;
@@ -153,21 +152,20 @@ class bin_filler {
                     packed_sum -= my_used;
                     packed_items -= my_bin.size();
                     for (size_type i=0; i<my_bin.size(); ++i)
-                        the_value_pool->try_put(my_bin[i]);
+                        get<0>(p).try_put(my_bin[i]);
                     my_bin.clear();
                     my_used = 0;
                 }
                 else if (looking_for == 0 && (my_used >= V/(1+optimality*.1) || active_bins == 1)) {
                     // this bin_packer can't find items but is well-utilized, so send it out and reset
-                    the_bin_buffer->try_put(my_bin);
+                    get<1>(p).try_put(my_bin);
                     my_bin.clear();
                     my_used = 0;
                     looking_for = V;
                 }
             }
-            the_value_pool->try_put(item); // put unused item back to pool
+            get<0>(p).try_put(item); // put unused item back to pool
         }
-        return continue_msg();  // need to return something
     }
 };
 
@@ -226,7 +224,7 @@ public:
 int get_default_num_threads() {
     static int threads = 0;
     if (threads == 0)
-        threads = tbb::task_scheduler_init::default_num_threads();
+        threads = task_scheduler_init::default_num_threads();
     return threads;
 }
 
@@ -277,8 +275,10 @@ int main(int argc, char *argv[]) {
             bin_buffer the_bin_buffer(g);
             bins = new bin_packer*[num_bin_packers];
             for (int i=0; i<num_bin_packers; ++i) {
-                bins[i] = new bin_packer(g, 1, bin_filler(i, &the_value_pool, &the_bin_buffer));
+                bins[i] = new bin_packer(g, 1, bin_filler(i, &the_value_pool));
                 make_edge(the_value_pool, *(bins[i]));
+                make_edge(output_port<0>(*(bins[i])), the_value_pool);
+                make_edge(output_port<1>(*(bins[i])), the_bin_buffer);
             }
             bin_writer the_writer(g, 1, bin_printer());
             make_edge(the_bin_buffer, the_writer);
@@ -289,7 +289,7 @@ int main(int argc, char *argv[]) {
             }
             delete[] bins;
         }
-        utility::report_elapsed_time((tbb::tick_count::now() - start).seconds());
+        utility::report_elapsed_time((tick_count::now() - start).seconds());
         delete[] input_array;
         return 0;
     } catch(std::exception& e) {

@@ -33,28 +33,29 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><a class="el" href="a00157.html">recursive_mutex</a></li><li class="navelem"><a class="el" href="a00166.html">scoped_lock</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00276.html">tbb</a></li><li class="navelem"><a class="el" href="a00145.html">queuing_rw_mutex</a></li><li class="navelem"><a class="el" href="a00169.html">scoped_lock</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="headertitle">
-<div class="title">tbb::recursive_mutex::scoped_lock Member List</div>  </div>
+<div class="title">tbb::queuing_rw_mutex::scoped_lock Member List</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>This is the complete list of members for <a class="el" href="a00166.html">tbb::recursive_mutex::scoped_lock</a>, including all inherited members.</p>
+<p>This is the complete list of members for <a class="el" href="a00169.html">tbb::queuing_rw_mutex::scoped_lock</a>, including all inherited members.</p>
 <table class="directory">
-  <tr class="even"><td class="entry"><a class="el" href="a00166.html#ac5450ce6a5813f395afaa434384c6539">acquire</a>(recursive_mutex &amp;mutex)</td><td class="entry"><a class="el" href="a00166.html">tbb::recursive_mutex::scoped_lock</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr bgcolor="#f0f0f0"><td class="entry"><b>recursive_mutex</b> (defined in <a class="el" href="a00166.html">tbb::recursive_mutex::scoped_lock</a>)</td><td class="entry"><a class="el" href="a00166.html">tbb::recursive_mutex::scoped_lock</a></td><td class="entry"><span class="mlabel">friend</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="a00166.html#a2fe3246ffc26bdb5a58f33ca513b6c0f">release</a>()</td><td class="entry"><a class="el" href="a00166.html">tbb::recursive_mutex::scoped_lock</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr><td class="entry"><a class="el" href="a00166.html#a0a9962a3932cfbd0d12cb197494f951b">scoped_lock</a>()</td><td class="entry"><a class="el" href="a00166.html">tbb::recursive_mutex::scoped_lock</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="a00166.html#ab42cb541abb9647cac23b1db9a4db93d">scoped_lock</a>(recursive_mutex &amp;mutex)</td><td class="entry"><a class="el" href="a00166.html">tbb::recursive_mutex::scoped_lock</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr><td class="entry"><a class="el" href="a00166.html#a160bba506f4033980ddb69ab7a02c4fb">try_acquire</a>(recursive_mutex &amp;mutex)</td><td class="entry"><a class="el" href="a00166.html">tbb::recursive_mutex::scoped_lock</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="a00166.html#a90a966e19120aac99b36a3d6d04af1a2">~scoped_lock</a>()</td><td class="entry"><a class="el" href="a00166.html">tbb::recursive_mutex::scoped_lock</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="a00169.html#ab4bf2fb86d6a418f9ea36474eb8893f9">acquire</a>(queuing_rw_mutex &amp;m, bool write=true)</td><td class="entry"><a class="el" href="a00169.html">tbb::queuing_rw_mutex::scoped_lock</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="a00169.html#af0af63035147a3d8422f8c8d7b8d2629">downgrade_to_reader</a>()</td><td class="entry"><a class="el" href="a00169.html">tbb::queuing_rw_mutex::scoped_lock</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="a00169.html#a50fb02b77f02a01c74754d163157ec77">release</a>()</td><td class="entry"><a class="el" href="a00169.html">tbb::queuing_rw_mutex::scoped_lock</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="a00169.html#a1ae3792726dcff8da1f2c5366fb2b754">scoped_lock</a>()</td><td class="entry"><a class="el" href="a00169.html">tbb::queuing_rw_mutex::scoped_lock</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="a00169.html#af1b55ca1839c9c7c2cd779cd2dd9c474">scoped_lock</a>(queuing_rw_mutex &amp;m, bool write=true)</td><td class="entry"><a class="el" href="a00169.html">tbb::queuing_rw_mutex::scoped_lock</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr><td class="entry"><a class="el" href="a00169.html#a4843d40dddc37c1aa3444e27d35d2433">try_acquire</a>(queuing_rw_mutex &amp;m, bool write=true)</td><td class="entry"><a class="el" href="a00169.html">tbb::queuing_rw_mutex::scoped_lock</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="a00169.html#ae0f28ecfbbc5f8b3024cd47048b72b5b">upgrade_to_writer</a>()</td><td class="entry"><a class="el" href="a00169.html">tbb::queuing_rw_mutex::scoped_lock</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="a00169.html#a6cb16cc55f884bbbd5a69430c47b288f">~scoped_lock</a>()</td><td class="entry"><a class="el" href="a00169.html">tbb::queuing_rw_mutex::scoped_lock</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
 </table></div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

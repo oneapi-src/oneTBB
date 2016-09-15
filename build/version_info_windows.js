@@ -1,4 +1,4 @@
-// Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+// Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 //
 // This file is part of Threading Building Blocks. Threading Building Blocks is free software;
 // you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -40,7 +40,7 @@ WScript.echo( "#N \": BUILD_OS\\t\\t" +
 
 if ( WScript.Arguments(0).toLowerCase().match("gcc") ) {
     tmpExec = WshShell.Exec(WScript.Arguments(0) + " --version");
-    WScript.echo( "#N \": BUILD_COMPILER\\t" + 
+    WScript.echo( "#N \": BUILD_GCC\\t" + 
                   tmpExec.StdOut.ReadLine() + 
                   "\" ENDL \\" );
 

@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::flow::interface8::receiver&lt; dependency_msg&lt; T, Factory &gt; &gt; Class Template Reference</title>
+<title>tbb::tbb_allocator&lt; void &gt;::rebind&lt; U &gt; Struct Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,82 +33,31 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><a class="el" href="a00156.html">receiver< dependency_msg< T, Factory > ></a></li>  </ul>
+<li class="navelem"><a class="el" href="a00276.html">tbb</a></li><li class="navelem"><a class="el" href="a00195.html">tbb_allocator< void ></a></li><li class="navelem"><a class="el" href="a00156.html">rebind</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-types">Public Types</a> &#124;
-<a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pro-methods">Protected Member Functions</a> &#124;
-<a href="a00406.html">List of all members</a>  </div>
+<a href="a00348.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::flow::interface8::receiver&lt; dependency_msg&lt; T, Factory &gt; &gt; Class Template Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div>  </div>
+<div class="title">tbb::tbb_allocator&lt; void &gt;::rebind&lt; U &gt; Struct Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="dynheader">
-Inheritance diagram for tbb::flow::interface8::receiver&lt; dependency_msg&lt; T, Factory &gt; &gt;:</div>
-<div class="dyncontent">
- <div class="center">
-  <img src="a00156.png" usemap="#tbb::flow::interface8::receiver&lt; dependency_msg&lt; T, Factory &gt; &gt;_map" alt=""/>
-  <map id="tbb::flow::interface8::receiver&lt; dependency_msg&lt; T, Factory &gt; &gt;_map" name="tbb::flow::interface8::receiver&lt; dependency_msg&lt; T, Factory &gt; &gt;_map">
-<area href="a00139.html" alt="tbb::flow::interface8::proxy_dependency_receiver&lt; T, Factory &gt;" shape="rect" coords="0,56,382,80"/>
-</map>
- </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a007a3c86d384430151bbbf57903f20ea"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a007a3c86d384430151bbbf57903f20ea"></a>
-typedef <a class="el" href="a00174.html">sender</a>&lt; <a class="el" href="a00066.html">dependency_msg</a><br class="typebreak"/>
-&lt; T, Factory &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00156.html#a007a3c86d384430151bbbf57903f20ea">dependency_predecessor_type</a></td></tr>
-<tr class="memdesc:a007a3c86d384430151bbbf57903f20ea"><td class="mdescLeft">&#160;</td><td class="mdescRight">The predecessor type for this node. <br/></td></tr>
-<tr class="separator:a007a3c86d384430151bbbf57903f20ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4f83e2f90b89091b9d34205ce5e04437"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4f83e2f90b89091b9d34205ce5e04437"></a>
-typedef <br class="typebreak"/>
-<a class="el" href="a00139.html">proxy_dependency_receiver</a>&lt; T, <br class="typebreak"/>
-Factory &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>proxy</b></td></tr>
-<tr class="separator:a4f83e2f90b89091b9d34205ce5e04437"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
-Public Member Functions</h2></td></tr>
-<tr class="memitem:a6cdbdd65ef7d6f926df16625282317a9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6cdbdd65ef7d6f926df16625282317a9"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00156.html#a6cdbdd65ef7d6f926df16625282317a9">try_put</a> (const T &amp;t)</td></tr>
-<tr class="memdesc:a6cdbdd65ef7d6f926df16625282317a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Put an item to the receiver. <br/></td></tr>
-<tr class="separator:a6cdbdd65ef7d6f926df16625282317a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a26b8206e657b5c556ffb9be4f5e824f1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a26b8206e657b5c556ffb9be4f5e824f1"></a>
-virtual task *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00156.html#a26b8206e657b5c556ffb9be4f5e824f1">try_put_task</a> (const <a class="el" href="a00066.html">dependency_msg</a>&lt; T, Factory &gt; &amp;)=0</td></tr>
-<tr class="memdesc:a26b8206e657b5c556ffb9be4f5e824f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Put an item to the receiver. <br/></td></tr>
-<tr class="separator:a26b8206e657b5c556ffb9be4f5e824f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a653a465bde7a10beaaed58dca4b8e336"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a653a465bde7a10beaaed58dca4b8e336"></a>
-virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00156.html#a653a465bde7a10beaaed58dca4b8e336">register_predecessor</a> (<a class="el" href="a00156.html#a007a3c86d384430151bbbf57903f20ea">dependency_predecessor_type</a> &amp;)</td></tr>
-<tr class="memdesc:a653a465bde7a10beaaed58dca4b8e336"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a predecessor to the node. <br/></td></tr>
-<tr class="separator:a653a465bde7a10beaaed58dca4b8e336"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6f789800482e37df09f55c3ad2eb240a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6f789800482e37df09f55c3ad2eb240a"></a>
-virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00156.html#a6f789800482e37df09f55c3ad2eb240a">remove_predecessor</a> (<a class="el" href="a00156.html#a007a3c86d384430151bbbf57903f20ea">dependency_predecessor_type</a> &amp;)</td></tr>
-<tr class="memdesc:a6f789800482e37df09f55c3ad2eb240a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove a predecessor from the node. <br/></td></tr>
-<tr class="separator:a6f789800482e37df09f55c3ad2eb240a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9a2d15ccf89b298781bf81bbf2274165"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9a2d15ccf89b298781bf81bbf2274165"></a>
-ordinary_receiver &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>ordinary_receiver</b> ()</td></tr>
-<tr class="separator:a9a2d15ccf89b298781bf81bbf2274165"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
-Protected Member Functions</h2></td></tr>
-<tr class="memitem:a4752afee59a001733eb5330345316dcb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4752afee59a001733eb5330345316dcb"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00156.html#a4752afee59a001733eb5330345316dcb">reset_receiver</a> (reset_flags f=rf_reset_protocol)=0</td></tr>
-<tr class="memdesc:a4752afee59a001733eb5330345316dcb"><td class="mdescLeft">&#160;</td><td class="mdescRight">put receiver back in initial state <br/></td></tr>
-<tr class="separator:a4752afee59a001733eb5330345316dcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a841ac3a7ffc9f45c26fd180e15f87f90"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a841ac3a7ffc9f45c26fd180e15f87f90"></a>
-virtual bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_continue_receiver</b> ()</td></tr>
-<tr class="separator:a841ac3a7ffc9f45c26fd180e15f87f90"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8f3c27dc0f43be2eafdfe8c6f222c44c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8f3c27dc0f43be2eafdfe8c6f222c44c"></a>
+typedef <a class="el" href="a00194.html">tbb_allocator</a>&lt; U &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>other</b></td></tr>
+<tr class="separator:a8f3c27dc0f43be2eafdfe8c6f222c44c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<hr/>The documentation for this class was generated from the following file:<ul>
-<li>flow_graph_opencl_node.h</li>
+<hr/>The documentation for this struct was generated from the following file:<ul>
+<li>tbb_allocator.h</li>
 </ul>
 </div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

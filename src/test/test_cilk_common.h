@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -60,7 +60,7 @@ class FibTask: public tbb::task {
                 spawn (*new( allocate_child() ) FibTask(x,n-1));
                 spawn (*new( allocate_child() ) FibTask(y,n-2));
             }
-            wait_for_all(); 
+            wait_for_all();
             task* self1 = &task::self();
             ASSERT( self0 == self1, "failed to preserve TBB TLS" );
             result = x+y;

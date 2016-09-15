@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -20,6 +20,12 @@
 
 #include "tbb/tick_count.h"
 #include "harness_assert.h"
+#if __TBB_WIN8UI_SUPPORT
+    const char* GetEnv( const char* ) { return NULL; }
+#else
+    #include <cstdlib>
+    const char* GetEnv( const char* str ) { return std::getenv( str ); }
+#endif
 
 //! Assert that two times in seconds are very close.
 void AssertNear( double x, double y ) {
@@ -183,10 +189,14 @@ void TestResolution() {
 #include "tbb/tbb_thread.h"
 
 int TestMain () {
+    // Increased tolerance for Virtual Machines
+    double tolerance_multiplier = GetEnv( "VIRTUAL_MACHINE" ) ? 50. : 1.;
+    REMARK( "tolerance_multiplier = %g \n", tolerance_multiplier );
+
     tbb::tick_count t0 = tbb::tick_count::now();
-    TestSimpleDelay(/*ntrial=*/1000000,/*duration=*/0,    /*tolerance=*/2E-6);
+    TestSimpleDelay(/*ntrial=*/1000000,/*duration=*/0,    /*tolerance=*/2E-6 * tolerance_multiplier);
     tbb::tick_count t1 = tbb::tick_count::now();
-    TestSimpleDelay(/*ntrial=*/1000,   /*duration=*/0.001,/*tolerance=*/5E-6);
+    TestSimpleDelay(/*ntrial=*/1000,   /*duration=*/0.001,/*tolerance=*/5E-6 * tolerance_multiplier);
     tbb::tick_count t2 = tbb::tick_count::now();
     TestArithmetic(t0,t1,t2);
 

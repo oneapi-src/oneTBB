@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -361,7 +361,7 @@ namespace internal {
 #endif /* __TBB_CPP11_RVALUE_REF_PRESENT */
 
         ~initializer_list_wrapper() {
-            if ( my_begin ) 
+            if ( my_begin )
                 free( my_begin );
         }
 

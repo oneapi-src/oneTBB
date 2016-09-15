@@ -1,4 +1,4 @@
-# Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+# Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 #
 # This file is part of Threading Building Blocks. Threading Building Blocks is free software;
 # you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -86,26 +86,15 @@ ifeq (ppc32,$(arch))
     LIB_LINK_FLAGS += -arch ppc
 endif
 
-ifeq (armv7,$(arch))
-    CPLUS_FLAGS += -arch armv7 -miphoneos-version-min=8.0 -Wno-implicit-function-declaration -fembed-bitcode
-    LINK_FLAGS += -arch armv7 -miphoneos-version-min=8.0 -Wno-implicit-function-declaration -fembed-bitcode
-    LIB_LINK_FLAGS += -arch armv7 -miphoneos-version-min=8.0 -Wno-implicit-function-declaration -fembed-bitcode
-endif
-
-ifeq (armv7s,$(arch))
-    CPLUS_FLAGS += -arch armv7s -miphoneos-version-min=8.0 -Wno-implicit-function-declaration -fembed-bitcode
-    LINK_FLAGS += -arch armv7s -miphoneos-version-min=8.0 -Wno-implicit-function-declaration -fembed-bitcode
-    LIB_LINK_FLAGS += -arch armv7s -miphoneos-version-min=8.0 -Wno-implicit-function-declaration -fembed-bitcode
-endif
-
-ifeq (arm64,$(arch))
-    CPLUS_FLAGS += -arch arm64 -miphoneos-version-min=8.0 -Wno-implicit-function-declaration -fembed-bitcode
-    LINK_FLAGS += -arch arm64 -miphoneos-version-min=8.0 -Wno-implicit-function-declaration -fembed-bitcode
-    LIB_LINK_FLAGS += -arch arm64 -miphoneos-version-min=8.0 -Wno-implicit-function-declaration -fembed-bitcode
+ifeq ($(arch),$(filter $(arch),armv7 armv7s arm64))
+    CPLUS_FLAGS += -arch $(arch)
+    LINK_FLAGS += -arch $(arch)
+    LIB_LINK_FLAGS += -arch $(arch)
 endif
 
 ifdef SDKROOT
     CPLUS_FLAGS += -isysroot $(SDKROOT)
+    LINK_FLAGS += -L$(SDKROOT)/usr/lib/system -L$(SDKROOT)/usr/lib/
     LIB_LINK_FLAGS += -L$(SDKROOT)/usr/lib/system -L$(SDKROOT)/usr/lib/
 endif
 

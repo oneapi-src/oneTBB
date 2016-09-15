@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -32,7 +32,7 @@ class MinimalArgumentType {
     enum {
         DEAD=0xDEAD,
         LIVE=0x2718,
-        INITIALIZED=0x3141 
+        INITIALIZED=0x3141
     } my_state;
 public:
     ~MinimalArgumentType() {
@@ -50,7 +50,7 @@ public:
     long get_value() const {
         ASSERT( my_state==INITIALIZED, NULL );
         return my_value;
-    } 
+    }
 };
 
 class IntegerStream {
@@ -59,7 +59,7 @@ class IntegerStream {
 public:
     IntegerStream( long n ) : my_limit(n), my_index(0) {}
     bool pop_if_present( MinimalArgumentType& v ) {
-        if( my_index>=my_limit ) 
+        if( my_index>=my_limit )
             return false;
         v.set_value( my_index );
         my_index+=2;
@@ -82,11 +82,11 @@ public:
             value.set_value(i+1);
             my_while.add( value );
         }
-        for( int j=0; j<n; ++j )    
+        for( int j=0; j<n; ++j )
             c[i][j] = 0;
         for( int k=0; k<n; ++k ) {
             Element aik = a[i][k];
-            for( int j=0; j<n; ++j )    
+            for( int j=0; j<n; ++j )
                 c[i][j] += aik*b[k][j];
         }
     }
@@ -110,12 +110,12 @@ using namespace std;
 static long Iterations = 5;
 
 static void SerialMatrixMultiply( Element c[N][N], Element a[N][N], Element b[N][N], int n ) {
-    for( int i=0; i<n; ++i ) {   
-        for( int j=0; j<n; ++j )    
+    for( int i=0; i<n; ++i ) {
+        for( int j=0; j<n; ++j )
             c[i][j] = 0;
         for( int k=0; k<n; ++k ) {
             Element aik = a[i][k];
-            for( int j=0; j<n; ++j )    
+            for( int j=0; j<n; ++j )
                 c[i][j] += aik*b[k][j];
         }
     }
@@ -144,8 +144,8 @@ static void Run( int nthread, int n ) {
     SerialMatrixMultiply( D, A, B, n );
 
     // Check result
-    for( int i=0; i<n; ++i )   
-        for( int j=0; j<n; ++j )    
+    for( int i=0; i<n; ++i )
+        for( int j=0; j<n; ++j )
             ASSERT( C[i][j]==D[i][j], NULL );
     REMARK("time=%g\tnthread=%d\tn=%d\n",(t1-t0).seconds(),nthread,n);
 }

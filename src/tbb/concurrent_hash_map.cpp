@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -45,7 +45,7 @@ struct hash_map_segment_base {
 };
 
 bool hash_map_segment_base::internal_grow_predicate() const {
-    // Intel(R) Thread Checker considers the following reads to be races, so we hide them in the 
+    // Intel(R) Thread Checker considers the following reads to be races, so we hide them in the
     // library so that Intel(R) Thread Checker will ignore them.  The reads are used in a double-check
     // context, so the program is nonetheless correct despite the race.
     return my_logical_size >= my_physical_size && my_physical_size < max_physical_size;

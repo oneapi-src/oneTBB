@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -63,7 +63,7 @@ namespace Harness {
             return maxProcs;
 
 #if _WIN32||_WIN64
-        ASSERT( max_threads <= 64 , "LimitNumberOfThreads doesn't support max_threads to be more than 64 on Windows." ); 
+        ASSERT( max_threads <= 64 , "LimitNumberOfThreads doesn't support max_threads to be more than 64 on Windows." );
         DWORD_PTR mask = 1;
         for ( int i = 1; i < max_threads; ++i )
             mask |= mask << 1;

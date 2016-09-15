@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -22,6 +22,20 @@
 //  Created by Xcode* 4.3.2
 //
 
+#import <Foundation/Foundation.h>
+
+#if TARGET_OS_IPHONE
+
+#import <UIKit/UIKit.h>
+
+@interface tbbAppDelegate : UIResponder <UIApplicationDelegate>
+
+@property (strong, nonatomic) UIWindow *window;
+
+@end
+
+#elif TARGET_OS_MAC
+
 #import <Cocoa/Cocoa.h>
 
 @interface tbbAppDelegate : NSObject <NSApplicationDelegate>{
@@ -33,3 +47,5 @@
 - (BOOL) applicationShouldTerminateAfterLastWindowClosed:(NSApplication *) sender;
 
 @end
+
+#endif

@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -37,9 +37,6 @@ namespace internal {
     /** @ingroup task_scheduling */
     class arena;
     class task_scheduler_observer_v3;
-
-    //! Tag class used to indicate the "attaching" constructor
-    struct attach {};
 } // namespace internal
 //! @endcond
 
@@ -125,6 +122,19 @@ public:
 class task_arena : public internal::task_arena_base {
     friend class tbb::internal::task_scheduler_observer_v3;
     bool my_initialized;
+    void mark_initialized() {
+        __TBB_ASSERT( my_arena, "task_arena initialization is incomplete" );
+#if __TBB_TASK_GROUP_CONTEXT
+        __TBB_ASSERT( my_context, "task_arena initialization is incomplete" );
+#endif
+#if TBB_USE_THREADING_TOOLS
+        // Actual synchronization happens in internal_initialize & internal_attach.
+        // The race on setting my_initialized is benign, but should be hidden from Intel(R) Inspector
+        internal::as_atomic(my_initialized).fetch_and_store<release>(true);
+#else
+        my_initialized = true;
+#endif
+    }
 
 public:
     //! Creates task_arena with certain concurrency limits
@@ -144,8 +154,11 @@ public:
         , my_initialized(false)
     {}
 
+    //! Tag class used to indicate the "attaching" constructor
+    struct attach {};
+
     //! Creates an instance of task_arena attached to the current arena of the thread
-    task_arena( tbb::internal::attach )
+    task_arena( attach )
         : task_arena_base(automatic, 1) // use default settings if attach fails
         , my_initialized(false)
     {
@@ -157,22 +170,29 @@ public:
     inline void initialize() {
         if( !my_initialized ) {
             internal_initialize();
-#if TBB_USE_THREADING_TOOLS
-            // Threading tools respect lock prefix but report false-positive data-race via plain store
-            internal::as_atomic(my_initialized).fetch_and_store<release>(true);
-#else
-            my_initialized = true;
-#endif //TBB_USE_THREADING_TOOLS
+            mark_initialized();
         }
     }
 
     //! Overrides concurrency level and forces initialization of internal representation
     inline void initialize(int max_concurrency, unsigned reserved_for_masters = 1) {
+        // TODO: decide if this call must be thread-safe
         __TBB_ASSERT( !my_arena, "Impossible to modify settings of an already initialized task_arena");
         if( !my_initialized ) {
             my_max_concurrency = max_concurrency;
             my_master_slots = reserved_for_masters;
             initialize();
+        }
+    }
+
+    //! Attaches this instance to the current arena of the thread
+    inline void initialize(attach) {
+        // TODO: decide if this call must be thread-safe
+        __TBB_ASSERT( !my_arena, "Impossible to modify settings of an already initialized task_arena");
+        if( !my_initialized ) {
+            internal_attach();
+            if( !my_arena ) internal_initialize();
+            mark_initialized();
         }
     }
 
@@ -201,7 +221,6 @@ public:
     void enqueue( const F& f ) {
         initialize();
 #if __TBB_TASK_GROUP_CONTEXT
-        __TBB_ASSERT(my_context, NULL);
         internal_enqueue( *new( task::allocate_root(*my_context) ) internal::function_task<F>(f), 0 );
 #else
         internal_enqueue( *new( task::allocate_root() ) internal::function_task<F>(f), 0 );

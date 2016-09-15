@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::interface6::filter_t&lt; T, U &gt; Class Template Reference</title>
+<title>tbb::filter Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,67 +33,111 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><b>interface6</b></li><li class="navelem"><a class="el" href="a00071.html">filter_t</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00276.html">tbb</a></li><li class="navelem"><a class="el" href="a00071.html">filter</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#friends">Friends</a> &#124;
-<a href="a00467.html">List of all members</a>  </div>
+<a href="#pro-static-attribs">Static Protected Attributes</a> &#124;
+<a href="a00324.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::interface6::filter_t&lt; T, U &gt; Class Template Reference</div>  </div>
+<div class="title">tbb::filter Class Reference<div class="ingroups"><a class="el" href="a00291.html">Algorithms</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Class representing a chain of type-safe pipeline filters.  
+<p>A stage in a pipeline.  
  <a href="a00071.html#details">More...</a></p>
 
 <p><code>#include &lt;pipeline.h&gt;</code></p>
+<div class="dynheader">
+Inheritance diagram for tbb::filter:</div>
+<div class="dyncontent">
+ <div class="center">
+  <img src="a00071.png" usemap="#tbb::filter_map" alt=""/>
+  <map id="tbb::filter_map" name="tbb::filter_map">
+<area href="a00199.html" title="A stage in a pipeline served by a user thread. " alt="tbb::thread_bound_filter" shape="rect" coords="0,112,145,136"/>
+</map>
+ </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
-Public Member Functions</h2></td></tr>
-<tr class="memitem:a291e76dc7ae92a66109a102904836b62"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a291e76dc7ae92a66109a102904836b62"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>filter_t</b> (const <a class="el" href="a00071.html">filter_t</a>&lt; T, U &gt; &amp;rhs)</td></tr>
-<tr class="separator:a291e76dc7ae92a66109a102904836b62"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a86c29832da3f4941254b8dce9e1ff6f0"><td class="memTemplParams" colspan="2"><a class="anchor" id="a86c29832da3f4941254b8dce9e1ff6f0"></a>
-template&lt;typename Body &gt; </td></tr>
-<tr class="memitem:a86c29832da3f4941254b8dce9e1ff6f0"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>filter_t</b> (tbb::filter::mode mode, const Body &amp;body)</td></tr>
-<tr class="separator:a86c29832da3f4941254b8dce9e1ff6f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae765b59c54ca11f9cdb9f7f2c6c3bd68"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae765b59c54ca11f9cdb9f7f2c6c3bd68"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="a00071.html">filter_t</a>&lt; T, U &gt; &amp;rhs)</td></tr>
-<tr class="separator:ae765b59c54ca11f9cdb9f7f2c6c3bd68"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a445602c2d364b5bbcd8cc9e0b7f37376"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a445602c2d364b5bbcd8cc9e0b7f37376"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>clear</b> ()</td></tr>
-<tr class="separator:a445602c2d364b5bbcd8cc9e0b7f37376"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
-Friends</h2></td></tr>
-<tr class="memitem:a49b422a3c97d5dc848d177246de4c149"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a49b422a3c97d5dc848d177246de4c149"></a>
-class&#160;</td><td class="memItemRight" valign="bottom"><b>internal::pipeline_proxy</b></td></tr>
-<tr class="separator:a49b422a3c97d5dc848d177246de4c149"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a21460fde704da22caa222778f5abb140"><td class="memTemplParams" colspan="2"><a class="anchor" id="a21460fde704da22caa222778f5abb140"></a>
-template&lt;typename T_ , typename U_ , typename Body &gt; </td></tr>
-<tr class="memitem:a21460fde704da22caa222778f5abb140"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="a00071.html">filter_t</a>&lt; T_, U_ &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00071.html#a21460fde704da22caa222778f5abb140">make_filter</a> (tbb::filter::mode, const Body &amp;)</td></tr>
-<tr class="memdesc:a21460fde704da22caa222778f5abb140"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a filter to participate in parallel_pipeline. <br/></td></tr>
-<tr class="separator:a21460fde704da22caa222778f5abb140"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa80730e1b71fa4266ca0d1dc12da6caa"><td class="memTemplParams" colspan="2"><a class="anchor" id="aa80730e1b71fa4266ca0d1dc12da6caa"></a>
-template&lt;typename T_ , typename V_ , typename U_ &gt; </td></tr>
-<tr class="memitem:aa80730e1b71fa4266ca0d1dc12da6caa"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="a00071.html">filter_t</a>&lt; T_, U_ &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>operator&amp;</b> (const <a class="el" href="a00071.html">filter_t</a>&lt; T_, V_ &gt; &amp;, const <a class="el" href="a00071.html">filter_t</a>&lt; V_, U_ &gt; &amp;)</td></tr>
-<tr class="separator:aa80730e1b71fa4266ca0d1dc12da6caa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-static-attribs"></a>
+Static Protected Attributes</h2></td></tr>
+<tr class="memitem:ae9dab2e01b0963b341ab04b59eec1475"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae9dab2e01b0963b341ab04b59eec1475"></a>
+static const unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00071.html#ae9dab2e01b0963b341ab04b59eec1475">filter_is_serial</a> = 0x1</td></tr>
+<tr class="memdesc:ae9dab2e01b0963b341ab04b59eec1475"><td class="mdescLeft">&#160;</td><td class="mdescRight">The lowest bit 0 is for parallel vs. serial. <br/></td></tr>
+<tr class="separator:ae9dab2e01b0963b341ab04b59eec1475"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a091fcf6abc79edfa5c8bf01f742e2392"><td class="memItemLeft" align="right" valign="top">static const unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00071.html#a091fcf6abc79edfa5c8bf01f742e2392">filter_is_out_of_order</a> = 0x1&lt;&lt;4</td></tr>
+<tr class="memdesc:a091fcf6abc79edfa5c8bf01f742e2392"><td class="mdescLeft">&#160;</td><td class="mdescRight">4th bit distinguishes ordered vs unordered filters.  <a href="#a091fcf6abc79edfa5c8bf01f742e2392">More...</a><br/></td></tr>
+<tr class="separator:a091fcf6abc79edfa5c8bf01f742e2392"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1382f216bd094064a18eb48ecc43c86b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1382f216bd094064a18eb48ecc43c86b"></a>
+static const unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00071.html#a1382f216bd094064a18eb48ecc43c86b">filter_is_bound</a> = 0x1&lt;&lt;5</td></tr>
+<tr class="memdesc:a1382f216bd094064a18eb48ecc43c86b"><td class="mdescLeft">&#160;</td><td class="mdescRight">5th bit distinguishes thread-bound and regular filters. <br/></td></tr>
+<tr class="separator:a1382f216bd094064a18eb48ecc43c86b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6645ec56872b6ba2056dcaa467e292f7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6645ec56872b6ba2056dcaa467e292f7"></a>
+static const unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00071.html#a6645ec56872b6ba2056dcaa467e292f7">filter_may_emit_null</a> = 0x1&lt;&lt;6</td></tr>
+<tr class="memdesc:a6645ec56872b6ba2056dcaa467e292f7"><td class="mdescLeft">&#160;</td><td class="mdescRight">6th bit marks input filters emitting small objects <br/></td></tr>
+<tr class="separator:a6645ec56872b6ba2056dcaa467e292f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aab9689e23a96c6c9bf1c8caae74d92ee"><td class="memItemLeft" align="right" valign="top">static const unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00071.html#aab9689e23a96c6c9bf1c8caae74d92ee">exact_exception_propagation</a></td></tr>
+<tr class="memdesc:aab9689e23a96c6c9bf1c8caae74d92ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">7th bit defines exception propagation mode expected by the application.  <a href="#aab9689e23a96c6c9bf1c8caae74d92ee">More...</a><br/></td></tr>
+<tr class="separator:aab9689e23a96c6c9bf1c8caae74d92ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;typename T, typename U&gt;<br/>
-class tbb::interface6::filter_t&lt; T, U &gt;</h3>
+<div class="textblock"><p>A stage in a pipeline. </p>
+</div><h2 class="groupheader">Member Data Documentation</h2>
+<a class="anchor" id="aab9689e23a96c6c9bf1c8caae74d92ee"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const unsigned char tbb::filter::exact_exception_propagation</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">=</div>
+<div class="line"><span class="preprocessor">#if TBB_USE_CAPTURED_EXCEPTION</span></div>
+<div class="line"><span class="preprocessor">            0x0</span></div>
+</div><!-- fragment -->
+<p>7th bit defines exception propagation mode expected by the application. </p>
 
-<p>Class representing a chain of type-safe pipeline filters. </p>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
+</div>
+</div>
+<a class="anchor" id="a091fcf6abc79edfa5c8bf01f742e2392"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const unsigned char tbb::filter::filter_is_out_of_order = 0x1&lt;&lt;4</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>4th bit distinguishes ordered vs unordered filters. </p>
+<p>The bit was not set for parallel filters in TBB 2.1 and earlier, but is_ordered() function always treats parallel filters as out of order. </p>
+
+</div>
+</div>
+<hr/>The documentation for this class was generated from the following file:<ul>
 <li>pipeline.h</li>
 </ul>
 </div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

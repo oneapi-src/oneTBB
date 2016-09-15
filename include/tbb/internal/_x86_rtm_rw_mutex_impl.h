@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -58,7 +58,7 @@ public:
 private:
 #endif
     friend class interface7::internal::padded_mutex<x86_rtm_rw_mutex,true>;
-    class scoped_lock;   // should be private 
+    class scoped_lock;   // should be private
     friend class scoped_lock;
 private:
     //! @cond INTERNAL

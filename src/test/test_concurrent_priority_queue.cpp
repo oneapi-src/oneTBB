@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -85,8 +85,8 @@ class my_throwing_type : public my_data_type {
 public:
     static int throw_flag;
     my_throwing_type() : my_data_type() {}
-    my_throwing_type(const my_throwing_type& src) : my_data_type(src) { 
-        if (my_throwing_type::throw_flag) throw 42; 
+    my_throwing_type(const my_throwing_type& src) : my_data_type(src) {
+        if (my_throwing_type::throw_flag) throw 42;
         priority = src.priority;
     }
 };
@@ -122,7 +122,7 @@ class FillBody : NoAssign {
     T my_max, my_min;
     concurrent_priority_queue<T, C> *q;
     C less_than;
-public:  
+public:
     FillBody(int nThread_, T max_, T min_, concurrent_priority_queue<T, C> *q_) : nThread(nThread_), my_max(max_), my_min(min_), q(q_) {}
     void operator()(const int threadID) const {
         T elem = my_min + T(threadID);
@@ -162,8 +162,8 @@ class FloggerBody : NoAssign {
     int nThread;
     concurrent_priority_queue<T, C> *q;
 public:
-    FloggerBody(int nThread_, concurrent_priority_queue<T, C> *q_) : 
-        nThread(nThread_), q(q_) {}  
+    FloggerBody(int nThread_, concurrent_priority_queue<T, C> *q_) :
+        nThread(nThread_), q(q_) {}
     void operator()(const int threadID) const {
         T elem = T(threadID+1);
         for (size_t i=0; i<MAX_ITER; ++i) {
@@ -292,7 +292,7 @@ void TestAssignmentClearSwap() {
     qo = new cpq_type();
 
     REMARK("Testing assignment (1).\n");
-    *qo = *q; 
+    *qo = *q;
     REMARK("Assignment complete.\n");
     ASSERT(qo->size()==42, "FAILED assignment/size test.");
     ASSERT(!qo->empty(), "FAILED assignment/empty test.");
@@ -349,7 +349,7 @@ void TestSerialPushPop() {
     REMARK("Pushing complete.\n");
     ASSERT(q->size()==MAX_ITER, "FAILED push/size test.");
     ASSERT(!q->empty(), "FAILED push/empty test.");
-    
+
     REMARK("Testing serial pop.\n");
     while (!q->empty()) {
         ASSERT(q->try_pop(e), "FAILED pop test.");
@@ -378,7 +378,7 @@ void TestParallelPushPop(int nThreads, T t_max, T t_min, C /*compare*/) {
     qsize = q->size();
     ASSERT(q->size()==nThreads*MAX_ITER, "FAILED push/size test.");
     ASSERT(!q->empty(), "FAILED push/empty test.");
-    
+
     REMARK("Testing parallel pop.\n");
     NativeParallelFor(nThreads, emptier);
     REMARK("Popping complete.\n");
@@ -531,15 +531,15 @@ struct special_member_calls_t {
     size_t move_constructor_called_times;
     size_t copy_assignment_called_times;
     size_t move_assignment_called_times;
-    
+
     bool friend operator==(special_member_calls_t const& lhs, special_member_calls_t const& rhs){
-        return 
-                lhs.copy_constructor_called_times == rhs.copy_constructor_called_times 
+        return
+                lhs.copy_constructor_called_times == rhs.copy_constructor_called_times
              && lhs.move_constructor_called_times == rhs.move_constructor_called_times
              && lhs.copy_assignment_called_times == rhs.copy_assignment_called_times
              && lhs.move_assignment_called_times == rhs.move_assignment_called_times;
     }
-    
+
 };
 #if __TBB_CPP11_RVALUE_REF_PRESENT
 struct MoveOperationTracker {

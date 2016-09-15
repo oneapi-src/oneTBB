@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -789,7 +789,7 @@ public:
     static const char* name() {return "MyKeySecond<K,V>"; }
 };
 
-// The additional policy to differ message based key matching from usual key matching. 
+// The additional policy to differ message based key matching from usual key matching.
 // It only has sence for the test because join_node is created with the key_matching policy for the both cases.
 template <typename K, typename KHash = tbb::tbb_hash_compare<typename tbb::internal::strip<K>::type > >
 struct message_based_key_matching {};

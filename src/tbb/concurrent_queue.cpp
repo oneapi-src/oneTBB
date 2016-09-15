@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -168,7 +168,7 @@ public:
     #pragma warning( disable: 4146 )
 #endif
 
-static void* invalid_page;
+static void* static_invalid_page;
 
 //------------------------------------------------------------------------
 // micro_queue
@@ -328,15 +328,15 @@ void micro_queue::make_invalid( ticket k )
 {
     static concurrent_queue_base::page dummy = {static_cast<page*>((void*)1), 0};
     // mark it so that no more pushes are allowed.
-    invalid_page = &dummy;
+    static_invalid_page = &dummy;
     {
         spin_mutex::scoped_lock lock( page_mutex );
         tail_counter = k+concurrent_queue_rep::n_queue+1;
         if( page* q = tail_page )
-            q->next = static_cast<page*>(invalid_page);
+            q->next = static_cast<page*>(static_invalid_page);
         else
-            head_page = static_cast<page*>(invalid_page);
-        tail_page = static_cast<page*>(invalid_page);
+            head_page = static_cast<page*>(static_invalid_page);
+        tail_page = static_cast<page*>(static_invalid_page);
     }
     __TBB_RETHROW();
 }
@@ -540,7 +540,7 @@ void concurrent_queue_base_v3::internal_finish_clear() {
         page* tp = my_rep->array[i].tail_page;
         __TBB_ASSERT( my_rep->array[i].head_page==tp, "at most one page should remain" );
         if( tp!=NULL) {
-            if( tp!=invalid_page ) deallocate_page( tp );
+            if( tp!=static_invalid_page ) deallocate_page( tp );
             my_rep->array[i].tail_page = NULL;
         }
     }

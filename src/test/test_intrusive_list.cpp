@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -66,9 +66,9 @@ public:
 };
 
 typedef tbb::internal::intrusive_list<DataItemWithInheritedNode> IntrusiveList1;
-typedef tbb::internal::memptr_intrusive_list<DataItemWithMemberNodes, 
+typedef tbb::internal::memptr_intrusive_list<DataItemWithMemberNodes,
         DataItemWithMemberNodeBase, &DataItemWithMemberNodeBase::m_BaseNode> IntrusiveList2;
-typedef tbb::internal::memptr_intrusive_list<DataItemWithMemberNodes, 
+typedef tbb::internal::memptr_intrusive_list<DataItemWithMemberNodes,
         DataItemWithMemberNodes, &DataItemWithMemberNodes::m_Node> IntrusiveList3;
 
 const int NumElements = 256 * 1024;

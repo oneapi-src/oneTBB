@@ -1,6 +1,6 @@
 @echo off
 REM
-REM Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+REM Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 REM
 REM This file is part of Threading Building Blocks. Threading Building Blocks is free software;
 REM you can redistribute it and/or modify it under the terms of the GNU General Public License

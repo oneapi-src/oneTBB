@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -43,7 +43,7 @@ namespace std {
 
 // Default setting of TBB_USE_DEBUG
 #ifdef TBB_USE_DEBUG
-#    if TBB_USE_DEBUG 
+#    if TBB_USE_DEBUG
 #        if !defined(_DEBUG)
 #            pragma message(__FILE__ "(" __TBB_STRING(__LINE__) ") : Warning: Recommend using /MDd if compiling with TBB_USE_DEBUG!=0")
 #        endif

@@ -1,4 +1,4 @@
-# Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+# Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 #
 # This file is part of Threading Building Blocks. Threading Building Blocks is free software;
 # you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -92,7 +92,7 @@ endef
 LINK_FILES+=$(TEST_LIBS)
 # Rule for generating executable test
 %.$(TEST_EXT): %.$(OBJ) $(TEST_LIBS) $(TEST_PREREQUISITE) $(if $(use_proxy),$(PROXY.LIB))
-	$(call make-test-binary,$@,$< $(LINK_FILES))
+	$(call make-test-binary,$@,$< $(LINK_FILES) $(PIE_FLAG))
 
 # Rules for generating a test DLL
 %_dll.$(DLL): LINK_FLAGS += $(PIC_KEY) $(DYLIB_KEY)

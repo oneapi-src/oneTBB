@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -38,7 +38,7 @@ struct fake_continue_sender : public tbb::flow::sender<tbb::flow::continue_msg>
     typedef tbb::flow::receiver<tbb::flow::continue_msg> successor_type;
     // Define implementations of virtual methods that are abstract in the base class
     /*override*/ bool register_successor( successor_type& ) { return false; }
-    /*override*/ bool remove_successor( successor_type& )   { return false; }  
+    /*override*/ bool remove_successor( successor_type& )   { return false; }
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
     typedef tbb::flow::sender<tbb::flow::continue_msg>::built_successors_type built_successors_type;
     built_successors_type bst;
@@ -212,7 +212,7 @@ void test_concurrency(int num_threads) {
 }
 /*
  * Connection of two graphs is not currently supported, but works to some limited extent.
- * This test is included to check for backward compatibility. It checks that a continue_node 
+ * This test is included to check for backward compatibility. It checks that a continue_node
  * with predecessors in two different graphs receives the required
  * number of continue messages before it executes.
  */
@@ -245,7 +245,7 @@ void test_two_graphs(){
     start_h.try_put(continue_msg());
     g.wait_for_all();
     ASSERT(count==1, "Not all continue messages received");
- 
+
     //two try_puts from the graph that doesn't contain the node
     count=0;
     start_h.try_put(continue_msg());
@@ -278,13 +278,13 @@ void test_extract() {
         ASSERT(b1.predecessor_count() == 0 && b1.successor_count() == 1, "b1 has incorrect counts");
         ASSERT(c0.predecessor_count() == 2 && c0.successor_count() == 1, "c0 has incorrect counts");
         ASSERT(q0.predecessor_count() == 1 && q0.successor_count() == 0, "q0 has incorrect counts");
-    
+
         /* b0         */
         /*   \        */
         /*    c0 - q0 */
         /*   /        */
         /* b1         */
-    
+
         b0.try_put(tbb::flow::continue_msg());
         g.wait_for_all();
         ASSERT(my_count == 0, "continue_node fired too soon");
@@ -292,15 +292,15 @@ void test_extract() {
         g.wait_for_all();
         ASSERT(my_count == 1, "continue_node didn't fire");
         ASSERT(q0.try_get(cm), "continue_node didn't forward");
-    
+
         b0.extract();
-    
+
         /* b0         */
         /*            */
         /*    c0 - q0 */
         /*   /        */
         /* b1         */
-    
+
         ASSERT(b0.predecessor_count() == 0 && b0.successor_count() == 0, "b0 has incorrect counts");
         ASSERT(b1.predecessor_count() == 0 && b1.successor_count() == 1, "b1 has incorrect counts");
         ASSERT(c0.predecessor_count() == 1 && c0.successor_count() == 1, "c0 has incorrect counts");
@@ -313,15 +313,15 @@ void test_extract() {
         g.wait_for_all();
         ASSERT(my_count == 2, "continue_node didn't fire though it has only one predecessor");
         ASSERT(q0.try_get(cm), "continue_node didn't forward second time");
-    
+
         c0.extract();
-    
+
         /* b0         */
         /*            */
         /*    c0   q0 */
         /*            */
         /* b1         */
-    
+
         ASSERT(b0.predecessor_count() == 0 && b0.successor_count() == 0, "b0 has incorrect counts");
         ASSERT(b1.predecessor_count() == 0 && b1.successor_count() == 0, "b1 has incorrect counts");
         ASSERT(c0.predecessor_count() == 0 && c0.successor_count() == 0, "c0 has incorrect counts");
@@ -334,24 +334,24 @@ void test_extract() {
         ASSERT(my_count == 2, "continue didn't fire though it has only one predecessor");
         ASSERT(!q0.try_get(cm), "continue_node forwarded though it shouldn't");
         make_edge(b0, c0);
-    
+
         /* b0         */
         /*   \        */
         /*    c0   q0 */
         /*            */
         /* b1         */
-    
+
         ASSERT(b0.predecessor_count() == 0 && b0.successor_count() == 1, "b0 has incorrect counts");
         ASSERT(b1.predecessor_count() == 0 && b1.successor_count() == 0, "b1 has incorrect counts");
         ASSERT(c0.predecessor_count() == 1 && c0.successor_count() == 0, "c0 has incorrect counts");
         ASSERT(q0.predecessor_count() == 0 && q0.successor_count() == 0, "q0 has incorrect counts");
-    
+
         b0.try_put(tbb::flow::continue_msg());
         g.wait_for_all();
-    
+
         ASSERT(my_count == 3, "continue didn't fire though it has only one predecessor");
         ASSERT(!q0.try_get(cm), "continue_node forwarded though it shouldn't");
-    
+
         tbb::flow::make_edge(b1, c0);
         tbb::flow::make_edge(c0, q0);
         my_count = 0;

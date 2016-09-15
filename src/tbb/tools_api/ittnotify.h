@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -29,8 +29,7 @@
 The ITT API is used to annotate a user's program with additional information
 that can be used by correctness and performance tools. The user inserts
 calls in their program. Those calls generate information that is collected
-at runtime, and used by tools such as Intel(R) Parallel Amplifier and
-Intel(R) Parallel Inspector.
+at runtime, and used by Intel(R) Threading Tools.
 
 @section API Concepts
 The following general concepts are used throughout the API.
@@ -101,11 +100,17 @@ The same ID may not be reused for different instances, unless a previous
 #  define ITT_OS_MAC   3
 #endif /* ITT_OS_MAC */
 
+#ifndef ITT_OS_FREEBSD
+#  define ITT_OS_FREEBSD   4
+#endif /* ITT_OS_FREEBSD */
+
 #ifndef ITT_OS
 #  if defined WIN32 || defined _WIN32
 #    define ITT_OS ITT_OS_WIN
 #  elif defined( __APPLE__ ) && defined( __MACH__ )
 #    define ITT_OS ITT_OS_MAC
+#  elif defined( __FreeBSD__ )
+#    define ITT_OS ITT_OS_FREEBSD
 #  else
 #    define ITT_OS ITT_OS_LINUX
 #  endif
@@ -123,11 +128,17 @@ The same ID may not be reused for different instances, unless a previous
 #  define ITT_PLATFORM_MAC 3
 #endif /* ITT_PLATFORM_MAC */
 
+#ifndef ITT_PLATFORM_FREEBSD
+#  define ITT_PLATFORM_FREEBSD 4
+#endif /* ITT_PLATFORM_FREEBSD */
+
 #ifndef ITT_PLATFORM
 #  if ITT_OS==ITT_OS_WIN
 #    define ITT_PLATFORM ITT_PLATFORM_WIN
 #  elif ITT_OS==ITT_OS_MAC
 #    define ITT_PLATFORM ITT_PLATFORM_MAC
+#  elif ITT_OS==ITT_OS_FREEBSD
+#    define ITT_PLATFORM ITT_PLATFORM_FREEBSD
 #  else
 #    define ITT_PLATFORM ITT_PLATFORM_POSIX
 #  endif
@@ -151,7 +162,7 @@ The same ID may not be reused for different instances, unless a previous
 #  if ITT_PLATFORM==ITT_PLATFORM_WIN
 #    define CDECL __cdecl
 #  else /* ITT_PLATFORM==ITT_PLATFORM_WIN */
-#    if defined _M_IX86 || defined __i386__ 
+#    if defined _M_IX86 || defined __i386__
 #      define CDECL __attribute__ ((cdecl))
 #    else  /* _M_IX86 || __i386__ */
 #      define CDECL /* actual only on x86 platform */
@@ -164,7 +175,7 @@ The same ID may not be reused for different instances, unless a previous
 #    define STDCALL __stdcall
 #  else /* ITT_PLATFORM==ITT_PLATFORM_WIN */
 #    if defined _M_IX86 || defined __i386__
-#      define STDCALL __attribute__ ((stdcall)) 
+#      define STDCALL __attribute__ ((stdcall))
 #    else  /* _M_IX86 || __i386__ */
 #      define STDCALL /* supported only on x86 platform */
 #    endif /* _M_IX86 || __i386__ */
@@ -189,11 +200,12 @@ The same ID may not be reused for different instances, unless a previous
  * if no optimization level was specified.
  */
 #ifdef __STRICT_ANSI__
-#define ITT_INLINE           static inline
+#define ITT_INLINE           static
+#define ITT_INLINE_ATTRIBUTE __attribute__((unused))
 #else  /* __STRICT_ANSI__ */
 #define ITT_INLINE           static inline
+#define ITT_INLINE_ATTRIBUTE __attribute__((always_inline, unused))
 #endif /* __STRICT_ANSI__ */
-#define ITT_INLINE_ATTRIBUTE __attribute__ ((always_inline, unused))
 #endif /* ITT_PLATFORM==ITT_PLATFORM_WIN */
 /** @endcond */
 
@@ -304,25 +316,33 @@ extern "C" {
 void ITTAPI __itt_pause(void);
 /** @brief Resume collection */
 void ITTAPI __itt_resume(void);
+/** @brief Detach collection */
+void ITTAPI __itt_detach(void);
 
 /** @cond exclude_from_documentation */
 #ifndef INTEL_NO_MACRO_BODY
 #ifndef INTEL_NO_ITTNOTIFY_API
 ITT_STUBV(ITTAPI, void, pause,  (void))
 ITT_STUBV(ITTAPI, void, resume, (void))
+ITT_STUBV(ITTAPI, void, detach, (void))
 #define __itt_pause      ITTNOTIFY_VOID(pause)
 #define __itt_pause_ptr  ITTNOTIFY_NAME(pause)
 #define __itt_resume     ITTNOTIFY_VOID(resume)
 #define __itt_resume_ptr ITTNOTIFY_NAME(resume)
+#define __itt_detach     ITTNOTIFY_VOID(detach)
+#define __itt_detach_ptr ITTNOTIFY_NAME(detach)
 #else  /* INTEL_NO_ITTNOTIFY_API */
 #define __itt_pause()
 #define __itt_pause_ptr  0
 #define __itt_resume()
 #define __itt_resume_ptr 0
+#define __itt_detach()
+#define __itt_detach_ptr 0
 #endif /* INTEL_NO_ITTNOTIFY_API */
 #else  /* INTEL_NO_MACRO_BODY */
 #define __itt_pause_ptr  0
 #define __itt_resume_ptr 0
+#define __itt_detach_ptr 0
 #endif /* INTEL_NO_MACRO_BODY */
 /** @endcond */
 /** @} control group */
@@ -427,19 +447,19 @@ ITT_STUBV(ITTAPI, void, thread_ignore, (void))
  *********************************************************************/
 /** @{ */
 /**
- * @hideinitializer 
+ * @hideinitializer
  * @brief possible value for suppression mask
  */
 #define __itt_suppress_all_errors 0x7fffffff
 
 /**
- * @hideinitializer 
+ * @hideinitializer
  * @brief possible value for suppression mask (suppresses errors from threading analysis)
  */
 #define __itt_suppress_threading_errors 0x000000ff
 
 /**
- * @hideinitializer 
+ * @hideinitializer
  * @brief possible value for suppression mask (suppresses errors from memory analysis)
  */
 #define __itt_suppress_memory_errors 0x0000ff00
@@ -465,7 +485,7 @@ ITT_STUBV(ITTAPI, void, suppress_push, (unsigned int mask))
 /** @endcond */
 
 /**
- * @brief Undo the effects of the matching call to __itt_suppress_push  
+ * @brief Undo the effects of the matching call to __itt_suppress_push
  */
 void ITTAPI __itt_suppress_pop(void);
 
@@ -1595,13 +1615,13 @@ ITT_STUBV(ITTAPI, void, heap_record_memory_growth_end, (void))
  * @brief Specify the type of heap detection/reporting to modify.
  */
 /**
- * @hideinitializer 
+ * @hideinitializer
  * @brief Report on memory leaks.
  */
 #define __itt_heap_leaks 0x00000001
 
 /**
- * @hideinitializer 
+ * @hideinitializer
  * @brief Report on memory growth.
  */
 #define __itt_heap_growth 0x00000002
@@ -1678,7 +1698,7 @@ typedef struct ___itt_domain
  * @ingroup domains
  * @brief Create a domain.
  * Create domain using some domain name: the URI naming style is recommended.
- * Because the set of domains is expected to be static over the application's 
+ * Because the set of domains is expected to be static over the application's
  * execution time, there is no mechanism to destroy a domain.
  * Any domain can be accessed by any thread in the process, regardless of
  * which thread created the domain. This call is thread-safe.
@@ -1762,7 +1782,7 @@ static const __itt_id __itt_null = { 0, 0, 0 };
  * @ingroup ids
  * @brief A convenience function is provided to create an ID without domain control.
  * @brief This is a convenience function to initialize an __itt_id structure. This function
- * does not affect the trace collector runtime in any way. After you make the ID with this
+ * does not affect the collector runtime in any way. After you make the ID with this
  * function, you still must create it with the __itt_id_create function before using the ID
  * to identify a named entity.
  * @param[in] addr The address of object; high QWORD of the ID value.
@@ -1813,7 +1833,7 @@ ITT_STUBV(ITTAPI, void, id_create, (const __itt_domain *domain, __itt_id id))
  * @brief Destroy an instance of identifier.
  * This ends the lifetime of the current instance of the given ID value in the trace.
  * Any relationships that are established after this lifetime ends are invalid.
- * This call must be performed before the given ID value can be reused for a different 
+ * This call must be performed before the given ID value can be reused for a different
  * named entity instance.
  * @param[in] domain The domain controlling the execution of this call.
  * @param[in] id The ID to destroy.
@@ -1931,7 +1951,7 @@ ITT_STUB(ITTAPI, __itt_string_handle*, string_handle_create,  (const char    *na
 typedef unsigned long long __itt_timestamp;
 /** @endcond */
 
-static const __itt_timestamp __itt_timestamp_none = (__itt_timestamp)-1LL;
+#define __itt_timestamp_none ((__itt_timestamp)-1LL)
 
 /** @cond exclude_from_gpa_documentation */
 
@@ -2170,18 +2190,42 @@ void ITTAPI __itt_task_begin_fn(const __itt_domain *domain, __itt_id taskid, __i
  */
 void ITTAPI __itt_task_end(const __itt_domain *domain);
 
+/**
+ * @ingroup tasks
+ * @brief Begin an overlapped task instance.
+ * @param[in] domain The domain for this task.
+ * @param[in] taskid The identifier for this task instance, *cannot* be __itt_null.
+ * @param[in] parentid The parent of this task, or __itt_null.
+ * @param[in] name The name of this task.
+ */
+void ITTAPI __itt_task_begin_overlapped(const __itt_domain* domain, __itt_id taskid, __itt_id parentid, __itt_string_handle* name);
+
+/**
+ * @ingroup tasks
+ * @brief End an overlapped task instance.
+ * @param[in] domain The domain for this task
+ * @param[in] taskid Explicit ID of finished task
+ */
+void ITTAPI __itt_task_end_overlapped(const __itt_domain *domain, __itt_id taskid);
+
 /** @cond exclude_from_documentation */
 #ifndef INTEL_NO_MACRO_BODY
 #ifndef INTEL_NO_ITTNOTIFY_API
 ITT_STUBV(ITTAPI, void, task_begin,    (const __itt_domain *domain, __itt_id id, __itt_id parentid, __itt_string_handle *name))
 ITT_STUBV(ITTAPI, void, task_begin_fn, (const __itt_domain *domain, __itt_id id, __itt_id parentid, void* fn))
 ITT_STUBV(ITTAPI, void, task_end,      (const __itt_domain *domain))
+ITT_STUBV(ITTAPI, void, task_begin_overlapped, (const __itt_domain *domain, __itt_id taskid, __itt_id parentid, __itt_string_handle *name))
+ITT_STUBV(ITTAPI, void, task_end_overlapped,   (const __itt_domain *domain, __itt_id taskid))
 #define __itt_task_begin(d,x,y,z)    ITTNOTIFY_VOID_D3(task_begin,d,x,y,z)
 #define __itt_task_begin_ptr         ITTNOTIFY_NAME(task_begin)
 #define __itt_task_begin_fn(d,x,y,z) ITTNOTIFY_VOID_D3(task_begin_fn,d,x,y,z)
 #define __itt_task_begin_fn_ptr      ITTNOTIFY_NAME(task_begin_fn)
 #define __itt_task_end(d)            ITTNOTIFY_VOID_D0(task_end,d)
 #define __itt_task_end_ptr           ITTNOTIFY_NAME(task_end)
+#define __itt_task_begin_overlapped(d,x,y,z) ITTNOTIFY_VOID_D3(task_begin_overlapped,d,x,y,z)
+#define __itt_task_begin_overlapped_ptr      ITTNOTIFY_NAME(task_begin_overlapped)
+#define __itt_task_end_overlapped(d,x)       ITTNOTIFY_VOID_D1(task_end_overlapped,d,x)
+#define __itt_task_end_overlapped_ptr        ITTNOTIFY_NAME(task_end_overlapped)
 #else  /* INTEL_NO_ITTNOTIFY_API */
 #define __itt_task_begin(domain,id,parentid,name)
 #define __itt_task_begin_ptr    0
@@ -2189,11 +2233,17 @@ ITT_STUBV(ITTAPI, void, task_end,      (const __itt_domain *domain))
 #define __itt_task_begin_fn_ptr 0
 #define __itt_task_end(domain)
 #define __itt_task_end_ptr      0
+#define __itt_task_begin_overlapped(domain,taskid,parentid,name)
+#define __itt_task_begin_overlapped_ptr         0
+#define __itt_task_end_overlapped(domain,taskid)
+#define __itt_task_end_overlapped_ptr           0
 #endif /* INTEL_NO_ITTNOTIFY_API */
 #else  /* INTEL_NO_MACRO_BODY */
 #define __itt_task_begin_ptr    0
 #define __itt_task_begin_fn_ptr 0
 #define __itt_task_end_ptr      0
+#define __itt_task_begin_overlapped_ptr 0
+#define __itt_task_end_overlapped_ptr   0
 #endif /* INTEL_NO_MACRO_BODY */
 /** @endcond */
 /** @} tasks group */
@@ -2372,7 +2422,7 @@ ITT_STUBV(ITTAPI, void, metadata_add, (const __itt_domain *domain, __itt_id id, 
  * @param[in] id The identifier of the instance to which the metadata is to be added, or __itt_null to add to the current task
  * @param[in] key The name of the metadata
  * @param[in] data The metadata itself
- * @param[in] length The number of characters in the string, or -1 if the length is unknown but the string is null-terminated 
+ * @param[in] length The number of characters in the string, or -1 if the length is unknown but the string is null-terminated
 */
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
 void ITTAPI __itt_metadata_str_addA(const __itt_domain *domain, __itt_id id, __itt_string_handle *key, const char *data, size_t length);
@@ -2408,9 +2458,9 @@ ITT_STUBV(ITTAPI, void, metadata_str_add, (const __itt_domain *domain, __itt_id 
 #endif /* ITT_PLATFORM==ITT_PLATFORM_WIN */
 #else  /* INTEL_NO_ITTNOTIFY_API */
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
-#define __itt_metadata_str_addA(d,x,y,z,a) 
+#define __itt_metadata_str_addA(d,x,y,z,a)
 #define __itt_metadata_str_addA_ptr 0
-#define __itt_metadata_str_addW(d,x,y,z,a) 
+#define __itt_metadata_str_addW(d,x,y,z,a)
 #define __itt_metadata_str_addW_ptr 0
 #else /* ITT_PLATFORM==ITT_PLATFORM_WIN */
 #define __itt_metadata_str_add(d,x,y,z,a)
@@ -2434,7 +2484,7 @@ ITT_STUBV(ITTAPI, void, metadata_str_add, (const __itt_domain *domain, __itt_id 
  * @param[in] scope The scope of the instance to which the metadata is to be added
 
  * @param[in] id The identifier of the instance to which the metadata is to be added, or __itt_null to add to the current task
- 
+
  * @param[in] key The name of the metadata
  * @param[in] type The type of the metadata
  * @param[in] count The number of elements of the given type. If count == 0, no metadata will be added.
@@ -2467,7 +2517,7 @@ ITT_STUBV(ITTAPI, void, metadata_add_with_scope, (const __itt_domain *domain, __
 
  * @param[in] key The name of the metadata
  * @param[in] data The metadata itself
- * @param[in] length The number of characters in the string, or -1 if the length is unknown but the string is null-terminated 
+ * @param[in] length The number of characters in the string, or -1 if the length is unknown but the string is null-terminated
 */
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
 void ITTAPI __itt_metadata_str_add_with_scopeA(const __itt_domain *domain, __itt_scope scope, __itt_string_handle *key, const char *data, size_t length);
@@ -2503,9 +2553,9 @@ ITT_STUBV(ITTAPI, void, metadata_str_add_with_scope, (const __itt_domain *domain
 #endif /* ITT_PLATFORM==ITT_PLATFORM_WIN */
 #else  /* INTEL_NO_ITTNOTIFY_API */
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
-#define __itt_metadata_str_add_with_scopeA(d,x,y,z,a) 
+#define __itt_metadata_str_add_with_scopeA(d,x,y,z,a)
 #define __itt_metadata_str_add_with_scopeA_ptr  0
-#define __itt_metadata_str_add_with_scopeW(d,x,y,z,a) 
+#define __itt_metadata_str_add_with_scopeW(d,x,y,z,a)
 #define __itt_metadata_str_add_with_scopeW_ptr  0
 #else /* ITT_PLATFORM==ITT_PLATFORM_WIN */
 #define __itt_metadata_str_add_with_scope(d,x,y,z,a)
@@ -3091,9 +3141,9 @@ ITT_STUB(LIBITTAPI, int, event_end, (__itt_event event))
 
 /**
  * @enum __itt_av_data_type
- * @brief Defines types of arrays data (for C/C++ intrinsic types) 
+ * @brief Defines types of arrays data (for C/C++ intrinsic types)
  */
-typedef enum 
+typedef enum
 {
     __itt_e_first = 0,
     __itt_e_char = 0,  /* 1-byte integer */
@@ -3113,8 +3163,8 @@ typedef enum
  * @brief Save an array data to a file.
  * Output format is defined by the file extension. The csv and bmp formats are supported (bmp - for 2-dimensional array only).
  * @param[in] data - pointer to the array data
- * @param[in] rank - the rank of the array 
- * @param[in] dimensions - pointer to an array of integers, which specifies the array dimensions. 
+ * @param[in] rank - the rank of the array
+ * @param[in] dimensions - pointer to an array of integers, which specifies the array dimensions.
  * The size of dimensions must be equal to the rank
  * @param[in] type - the type of the array, specified as one of the __itt_av_data_type values (for intrinsic types)
  * @param[in] filePath - the file path; the output format is defined by the file extension
@@ -3215,16 +3265,6 @@ extern "C" {
 #endif /* __cplusplus */
 
 /**
- * @ingroup tasks
- * @brief Begin an overlapped task instance.
- * @param[in] domain The domain for this task.
- * @param[in] taskid The identifier for this task instance, *cannot* be __itt_null.
- * @param[in] parentid The parent of this task, or __itt_null.
- * @param[in] name The name of this task.
- */
-void ITTAPI __itt_task_begin_overlapped(const __itt_domain* domain, __itt_id taskid, __itt_id parentid, __itt_string_handle* name);
-
-/**
  * @ingroup clockdomain
  * @brief Begin an overlapped task instance.
  * @param[in] domain The domain for this task
@@ -3235,14 +3275,6 @@ void ITTAPI __itt_task_begin_overlapped(const __itt_domain* domain, __itt_id tas
  * @param[in] name The name of this task.
  */
 void ITTAPI __itt_task_begin_overlapped_ex(const __itt_domain* domain, __itt_clock_domain* clock_domain, unsigned long long timestamp, __itt_id taskid, __itt_id parentid, __itt_string_handle* name);
-
-/**
- * @ingroup tasks
- * @brief End an overlapped task instance.
- * @param[in] domain The domain for this task
- * @param[in] taskid Explicit ID of finished task
- */
-void ITTAPI __itt_task_end_overlapped(const __itt_domain *domain, __itt_id taskid);
 
 /**
  * @ingroup clockdomain
@@ -3257,30 +3289,19 @@ void ITTAPI __itt_task_end_overlapped_ex(const __itt_domain* domain, __itt_clock
 /** @cond exclude_from_documentation */
 #ifndef INTEL_NO_MACRO_BODY
 #ifndef INTEL_NO_ITTNOTIFY_API
-ITT_STUBV(ITTAPI, void, task_begin_overlapped,          (const __itt_domain *domain, __itt_id taskid, __itt_id parentid, __itt_string_handle *name))
 ITT_STUBV(ITTAPI, void, task_begin_overlapped_ex,       (const __itt_domain* domain, __itt_clock_domain* clock_domain, unsigned long long timestamp, __itt_id taskid, __itt_id parentid, __itt_string_handle* name))
-ITT_STUBV(ITTAPI, void, task_end_overlapped,            (const __itt_domain *domain, __itt_id taskid))
 ITT_STUBV(ITTAPI, void, task_end_overlapped_ex,         (const __itt_domain* domain, __itt_clock_domain* clock_domain, unsigned long long timestamp, __itt_id taskid))
-#define __itt_task_begin_overlapped(d,x,y,z)            ITTNOTIFY_VOID_D3(task_begin_overlapped,d,x,y,z)
-#define __itt_task_begin_overlapped_ptr                 ITTNOTIFY_NAME(task_begin_overlapped)
 #define __itt_task_begin_overlapped_ex(d,x,y,z,a,b)     ITTNOTIFY_VOID_D5(task_begin_overlapped_ex,d,x,y,z,a,b)
 #define __itt_task_begin_overlapped_ex_ptr              ITTNOTIFY_NAME(task_begin_overlapped_ex)
-#define __itt_task_end_overlapped(d,x)                  ITTNOTIFY_VOID_D1(task_end_overlapped,d,x)
-#define __itt_task_end_overlapped_ptr                   ITTNOTIFY_NAME(task_end_overlapped)
 #define __itt_task_end_overlapped_ex(d,x,y,z)           ITTNOTIFY_VOID_D3(task_end_overlapped_ex,d,x,y,z)
 #define __itt_task_end_overlapped_ex_ptr                ITTNOTIFY_NAME(task_end_overlapped_ex)
 #else  /* INTEL_NO_ITTNOTIFY_API */
-#define __itt_task_begin_overlapped(domain,taskid,parentid,name)
-#define __itt_task_begin_overlapped_ptr         0
 #define __itt_task_begin_overlapped_ex(domain,clock_domain,timestamp,taskid,parentid,name)
 #define __itt_task_begin_overlapped_ex_ptr      0
-#define __itt_task_end_overlapped(domain,taskid)
-#define __itt_task_end_overlapped_ptr           0
 #define __itt_task_end_overlapped_ex(domain,clock_domain,timestamp,taskid)
 #define __itt_task_end_overlapped_ex_ptr        0
 #endif /* INTEL_NO_ITTNOTIFY_API */
 #else  /* INTEL_NO_MACRO_BODY */
-#define __itt_task_begin_overlapped_ptr         0
 #define __itt_task_begin_overlapped_ex_ptr      0
 #define __itt_task_end_overlapped_ptr           0
 #define __itt_task_end_overlapped_ex_ptr        0

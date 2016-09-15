@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -34,11 +34,17 @@
 #  define ITT_OS_MAC   3
 #endif /* ITT_OS_MAC */
 
+#ifndef ITT_OS_FREEBSD
+#  define ITT_OS_FREEBSD   4
+#endif /* ITT_OS_FREEBSD */
+
 #ifndef ITT_OS
 #  if defined WIN32 || defined _WIN32
 #    define ITT_OS ITT_OS_WIN
 #  elif defined( __APPLE__ ) && defined( __MACH__ )
 #    define ITT_OS ITT_OS_MAC
+#  elif defined( __FreeBSD__ )
+#    define ITT_OS ITT_OS_FREEBSD
 #  else
 #    define ITT_OS ITT_OS_LINUX
 #  endif
@@ -56,11 +62,17 @@
 #  define ITT_PLATFORM_MAC 3
 #endif /* ITT_PLATFORM_MAC */
 
+#ifndef ITT_PLATFORM_FREEBSD
+#  define ITT_PLATFORM_FREEBSD 4
+#endif /* ITT_PLATFORM_FREEBSD */
+
 #ifndef ITT_PLATFORM
 #  if ITT_OS==ITT_OS_WIN
 #    define ITT_PLATFORM ITT_PLATFORM_WIN
 #  elif ITT_OS==ITT_OS_MAC
 #    define ITT_PLATFORM ITT_PLATFORM_MAC
+#  elif ITT_OS==ITT_OS_FREEBSD
+#    define ITT_PLATFORM ITT_PLATFORM_FREEBSD
 #  else
 #    define ITT_PLATFORM ITT_PLATFORM_POSIX
 #  endif
@@ -84,7 +96,7 @@
 #  if ITT_PLATFORM==ITT_PLATFORM_WIN
 #    define CDECL __cdecl
 #  else /* ITT_PLATFORM==ITT_PLATFORM_WIN */
-#    if defined _M_IX86 || defined __i386__ 
+#    if defined _M_IX86 || defined __i386__
 #      define CDECL __attribute__ ((cdecl))
 #    else  /* _M_IX86 || __i386__ */
 #      define CDECL /* actual only on x86 platform */
@@ -97,7 +109,7 @@
 #    define STDCALL __stdcall
 #  else /* ITT_PLATFORM==ITT_PLATFORM_WIN */
 #    if defined _M_IX86 || defined __i386__
-#      define STDCALL __attribute__ ((stdcall)) 
+#      define STDCALL __attribute__ ((stdcall))
 #    else  /* _M_IX86 || __i386__ */
 #      define STDCALL /* supported only on x86 platform */
 #    endif /* _M_IX86 || __i386__ */
@@ -122,11 +134,12 @@
  * if no optimization level was specified.
  */
 #ifdef __STRICT_ANSI__
-#define ITT_INLINE           static inline
+#define ITT_INLINE           static
+#define ITT_INLINE_ATTRIBUTE __attribute__((unused))
 #else  /* __STRICT_ANSI__ */
 #define ITT_INLINE           static inline
+#define ITT_INLINE_ATTRIBUTE __attribute__((always_inline, unused))
 #endif /* __STRICT_ANSI__ */
-#define ITT_INLINE_ATTRIBUTE __attribute__ ((always_inline, unused))
 #endif /* ITT_PLATFORM==ITT_PLATFORM_WIN */
 /** @endcond */
 
@@ -142,6 +155,10 @@
 #  define ITT_ARCH_ARM  4
 #endif /* ITT_ARCH_ARM */
 
+#ifndef ITT_ARCH_PPC64
+#  define ITT_ARCH_PPC64  5
+#endif /* ITT_ARCH_PPC64 */
+
 #ifndef ITT_ARCH
 #  if defined _M_IX86 || defined __i386__
 #    define ITT_ARCH ITT_ARCH_IA32
@@ -151,13 +168,19 @@
 #    define ITT_ARCH ITT_ARCH_IA64
 #  elif defined _M_ARM || __arm__
 #    define ITT_ARCH ITT_ARCH_ARM
+#  elif defined __powerpc64__
+#    define ITT_ARCH ITT_ARCH_PPC64
 #  endif
 #endif
 
 #ifdef __cplusplus
 #  define ITT_EXTERN_C extern "C"
+#  define ITT_EXTERN_C_BEGIN extern "C" {
+#  define ITT_EXTERN_C_END }
 #else
 #  define ITT_EXTERN_C /* nothing */
+#  define ITT_EXTERN_C_BEGIN /* nothing */
+#  define ITT_EXTERN_C_END /* nothing */
 #endif /* __cplusplus */
 
 #define ITT_TO_STR_AUX(x) #x
@@ -220,8 +243,8 @@ typedef pthread_mutex_t   mutex_t;
 #define __itt_unload_lib(handle)  FreeLibrary(handle)
 #define __itt_system_error()      (int)GetLastError()
 #define __itt_fstrcmp(s1, s2)     lstrcmpA(s1, s2)
-#define __itt_fstrlen(s)          lstrlenA(s)
-#define __itt_fstrcpyn(s1, s2, l) lstrcpynA(s1, s2, l)
+#define __itt_fstrnlen(s, l)      strnlen_s(s, l)
+#define __itt_fstrcpyn(s1, b, s2, l) strncpy_s(s1, b, s2, l)
 #define __itt_fstrdup(s)          _strdup(s)
 #define __itt_thread_id()         GetCurrentThreadId()
 #define __itt_thread_yield()      SwitchToThread()
@@ -261,8 +284,19 @@ ITT_INLINE long __itt_interlocked_increment(volatile long* ptr)
 #define __itt_unload_lib(handle)  dlclose(handle)
 #define __itt_system_error()      errno
 #define __itt_fstrcmp(s1, s2)     strcmp(s1, s2)
-#define __itt_fstrlen(s)          strlen(s)
-#define __itt_fstrcpyn(s1, s2, l) strncpy(s1, s2, l)
+
+/* makes customer code define safe APIs for SDL_STRNLEN_S and SDL_STRNCPY_S */
+#ifdef SDL_STRNLEN_S
+#define __itt_fstrnlen(s, l)      SDL_STRNLEN_S(s, l)
+#else
+#define __itt_fstrnlen(s, l)      strlen(s)
+#endif /* SDL_STRNLEN_S */
+#ifdef SDL_STRNCPY_S
+#define __itt_fstrcpyn(s1, b, s2, l) SDL_STRNCPY_S(s1, b, s2, l)
+#else
+#define __itt_fstrcpyn(s1, b, s2, l) strncpy(s1, s2, l)
+#endif /* SDL_STRNCPY_S */
+
 #define __itt_fstrdup(s)          strdup(s)
 #define __itt_thread_id()         pthread_self()
 #define __itt_thread_yield()      sched_yield()
@@ -284,7 +318,7 @@ ITT_INLINE long __TBB_machine_fetchadd4(volatile void* ptr, long addend)
                           : "memory");
     return result;
 }
-#elif ITT_ARCH==ITT_ARCH_ARM
+#elif ITT_ARCH==ITT_ARCH_ARM || ITT_ARCH==ITT_ARCH_PPC64
 #define __TBB_machine_fetchadd4(addr, val) __sync_fetch_and_add(addr, val)
 #endif /* ITT_ARCH==ITT_ARCH_IA64 */
 #ifndef ITT_SIMPLE_INIT
@@ -407,7 +441,7 @@ typedef struct ___itt_global
 #define NEW_DOMAIN_W(gptr,h,h_tail,name) { \
     h = (__itt_domain*)malloc(sizeof(__itt_domain)); \
     if (h != NULL) { \
-        h->flags  = 0;    /* domain is disabled by default */ \
+        h->flags  = 1;    /* domain is enabled by default */ \
         h->nameA  = NULL; \
         h->nameW  = name ? _wcsdup(name) : NULL; \
         h->extra1 = 0;    /* reserved */ \
@@ -423,7 +457,7 @@ typedef struct ___itt_global
 #define NEW_DOMAIN_A(gptr,h,h_tail,name) { \
     h = (__itt_domain*)malloc(sizeof(__itt_domain)); \
     if (h != NULL) { \
-        h->flags  = 0;    /* domain is disabled by default */ \
+        h->flags  = 1;    /* domain is enabled by default */ \
         h->nameA  = name ? __itt_fstrdup(name) : NULL; \
         h->nameW  = NULL; \
         h->extra1 = 0;    /* reserved */ \

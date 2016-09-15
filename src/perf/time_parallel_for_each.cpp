@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -49,7 +49,7 @@ void test( std::string testName, const int N, const int numRepeats ) {
         tbb::tick_count t0 = tbb::tick_count::now();
         tbb::parallel_for_each( v.begin(), v.end(), foo<Type> );
         tbb::tick_count t1 = tbb::tick_count::now();
-        times.push_back( (t1 - t0).seconds()*1000 );
+        times.push_back( (t1 - t0).seconds()*1e+3 );
     }
 
     std::sort( times.begin(), times.end() );

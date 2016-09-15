@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -116,7 +116,7 @@ public:
                 }
             }
         }
-        
+
         barrier.wait();
 
         // check caching correctness
@@ -125,7 +125,7 @@ public:
             for (int j=0; j<LARGE_MEM_SIZES_NUM-1; j++, curr++)
                 new (allocs+curr) AllocInfo(largeMemSizes[j]);
 
-            new (allocs+curr) 
+            new (allocs+curr)
                 AllocInfo((int)(4*minLargeObjectSize +
                                 2*minLargeObjectSize*(1.*rand()/RAND_MAX)));
             curr++;
@@ -143,7 +143,7 @@ int TestLargeObjCache::largeMemSizes[LARGE_MEM_SIZES_NUM];
 void TestLargeObjectCache()
 {
     for (int i=0; i<LARGE_MEM_SIZES_NUM; i++)
-        TestLargeObjCache::largeMemSizes[i] = 
+        TestLargeObjCache::largeMemSizes[i] =
             (int)(minLargeObjectSize + 2*minLargeObjectSize*(1.*rand()/RAND_MAX));
 
     for( int p=MaxThread; p>=MinThread; --p ) {
@@ -170,14 +170,14 @@ public:
         for (int i=0; i<ITERS; i++) {
             blocks1[i].sz = rand() % minLargeObjectSize;
             blocks1[i].ptr = StartupBlock::allocate(blocks1[i].sz);
-            ASSERT(blocks1[i].ptr && StartupBlock::msize(blocks1[i].ptr)>=blocks1[i].sz 
+            ASSERT(blocks1[i].ptr && StartupBlock::msize(blocks1[i].ptr)>=blocks1[i].sz
                    && 0==(uintptr_t)blocks1[i].ptr % sizeof(void*), NULL);
             memset(blocks1[i].ptr, i, blocks1[i].sz);
         }
         for (int i=0; i<ITERS; i++) {
             blocks2[i].sz = rand() % minLargeObjectSize;
             blocks2[i].ptr = StartupBlock::allocate(blocks2[i].sz);
-            ASSERT(blocks2[i].ptr && StartupBlock::msize(blocks2[i].ptr)>=blocks2[i].sz 
+            ASSERT(blocks2[i].ptr && StartupBlock::msize(blocks2[i].ptr)>=blocks2[i].sz
                    && 0==(uintptr_t)blocks2[i].ptr % sizeof(void*), NULL);
             memset(blocks2[i].ptr, i, blocks2[i].sz);
 
@@ -531,7 +531,7 @@ void TestObjectRecognition() {
 
     void* bufferLOH = scalable_malloc(2*slabSize + headersSize);
     ASSERT(bufferLOH, "Memory was not allocated");
-    LargeObjectHdr* falseLO = 
+    LargeObjectHdr* falseLO =
         (LargeObjectHdr*)alignUp((uintptr_t)bufferLOH + headersSize, slabSize);
     LargeObjectHdr* headerLO = (LargeObjectHdr*)falseLO-1;
     headerLO->memoryBlock = (LargeMemoryBlock*)bufferLOH;
@@ -549,7 +549,7 @@ void TestObjectRecognition() {
         for (int master = -10; master<10; master++) {
             falseBlock->backRefIdx.master = (uint16_t)master;
             headerLO->backRefIdx.master = (uint16_t)master;
-        
+
             for (int bl = -10; bl<BR_MAX_CNT+10; bl++) {
                 falseBlock->backRefIdx.offset = (uint16_t)bl;
                 headerLO->backRefIdx.offset = (uint16_t)bl;

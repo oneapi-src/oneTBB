@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -54,8 +54,8 @@ extern "C" {
 
 // Struct with original free() and _msize() pointers
 struct orig_ptrs {
-    void   (*orig_free) (void*);  
-    size_t (*orig_msize)(void*); 
+    void   (*orig_free) (void*);
+    size_t (*orig_msize)(void*);
 };
 
 #endif /* _TBB_malloc_proxy_H_ */

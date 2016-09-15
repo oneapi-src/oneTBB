@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -26,19 +26,21 @@ int MAX_TABLE_SIZE = 2000000;
 // Specify list of unique percents (5-30,100) to test against. Max 10 values
 #define UNIQUE_PERCENTS PERCENT(5); PERCENT(10); PERCENT(20); PERCENT(30); PERCENT(100)
 
+#define SECONDS_RATIO 1000000 // microseconds
+
 // enable/disable tests for:
 #define BOX1 "CHMap"
-#define BOX1TEST ValuePerSecond<Uniques<tbb::concurrent_hash_map<int,int> >, 1000000/*ns*/>
+#define BOX1TEST ValuePerSecond<Uniques<tbb::concurrent_hash_map<int,int> >, SECONDS_RATIO>
 #define BOX1HEADER "tbb/concurrent_hash_map.h"
 
 // enable/disable tests for:
 #define BOX2 "CUMap"
-#define BOX2TEST ValuePerSecond<Uniques<tbb::concurrent_unordered_map<int,int> >, 1000000/*ns*/>
+#define BOX2TEST ValuePerSecond<Uniques<tbb::concurrent_unordered_map<int,int> >, SECONDS_RATIO>
 #define BOX2HEADER "tbb/concurrent_unordered_map.h"
 
 // enable/disable tests for:
 //#define BOX3 "OLD"
-#define BOX3TEST ValuePerSecond<Uniques<tbb::concurrent_hash_map<int,int> >, 1000000/*ns*/>
+#define BOX3TEST ValuePerSecond<Uniques<tbb::concurrent_hash_map<int,int> >, SECONDS_RATIO>
 #define BOX3HEADER "tbb/concurrent_hash_map-5468.h"
 
 #define TBB_USE_THREADING_TOOLS 0
@@ -158,7 +160,7 @@ int main(int argc, char* argv[]) {
     test_sandbox the_test("time_hash_map_fill"/*, StatisticsCollector::ByThreads*/);
     srand(10101);
     UNIQUE_PERCENTS; // test the percents
-    the_test.report.SetTitle("Operations per nanosecond");
+    the_test.report.SetTitle("Operations per microsecond");
     the_test.report.SetRunInfo("Items", MAX_TABLE_SIZE);
     the_test.report.Print(StatisticsCollector::HTMLFile|StatisticsCollector::ExcelXML); // Write files
     return 0;

@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -48,7 +48,7 @@ public:
 
     void __TBB_EXPORTED_METHOD internal_construct();
 
-    critical_section_v4() { 
+    critical_section_v4() {
 #if _WIN32||_WIN64
         InitializeCriticalSectionEx( &my_impl, 4000, 0 );
 #else
@@ -60,7 +60,7 @@ public:
     ~critical_section_v4() {
         __TBB_ASSERT(my_tid == tbb_thread::id(), "Destroying a still-held critical section");
 #if _WIN32||_WIN64
-        DeleteCriticalSection(&my_impl); 
+        DeleteCriticalSection(&my_impl);
 #else
         pthread_mutex_destroy(&my_impl);
 #endif
@@ -79,7 +79,7 @@ public:
         }
     };
 
-    void lock() { 
+    void lock() {
         tbb_thread::id local_tid = this_tbb_thread::get_id();
         if(local_tid == my_tid) throw_exception( eid_improper_lock );
 #if _WIN32||_WIN64

@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -28,7 +28,7 @@ template<typename Tag>
 class AbstractValueType {
     AbstractValueType() {}
     int value;
-public: 
+public:
     template<typename OtherTag>
     friend AbstractValueType<OtherTag> MakeAbstractValueType( int i );
 
@@ -161,7 +161,7 @@ void ParallelTest() {
                              Array[l][m][n] = 0;
                         }
                     }
-                }   
+                }
             }
         }
     }
@@ -170,7 +170,7 @@ void ParallelTest() {
 #include "tbb/task_scheduler_init.h"
 
 int TestMain () {
-    SerialTest(); 
+    SerialTest();
     for( int p=MinThread; p<=MaxThread; ++p ) {
         tbb::task_scheduler_init init(p);
         ParallelTest();

@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -1236,7 +1236,7 @@ void TestFullness()
     TestFullQueue<tbb::concurrent_bounded_queue<Foo>,Foo>();
 }
 
-void TestClearWorks() 
+void TestClearWorks()
 {
     REMARK(" Test concurrent_queue::clear() works\n");
     TestClear<ConcQWithCapacity<Foo> >();
@@ -1264,7 +1264,7 @@ void TestQueueIteratorWorks()
 #endif
 class Empty;
 
-void TestQueueConstructors() 
+void TestQueueConstructors()
 {
     REMARK(" Test concurrent_queue's constructors work\n");
     TestConstructors<ConcQWithSizeWrapper<Bar>,Bar,BarIterator,ConcQWithSizeWrapper<BAR_EX>,BAR_EX>();
@@ -1385,7 +1385,7 @@ void TestAbort() {
             ASSERT(num_pushed == 0, "no elements should have been pushed to zero-sized queue");
             ASSERT((int)failed_pushes == nthreads, "All threads should have failed to push an element to zero-sized queue");
         }
-        
+
         REMARK("...testing pushing to small-sized queue\n");
         tbb::concurrent_bounded_queue<int> iq2;
         iq2.set_capacity(2);
@@ -1394,12 +1394,12 @@ void TestAbort() {
             SimplePushBody my_push_body2(&iq2, nthreads);
             NativeParallelFor( nthreads+1, my_push_body2 );
             ASSERT(num_pushed <= 2, "at most 2 elements should have been pushed to queue of size 2");
-            if (nthreads >= 2) 
+            if (nthreads >= 2)
                 ASSERT((int)failed_pushes == nthreads-2, "nthreads-2 threads should have failed to push an element to queue of size 2");
             int e;
             while (iq2.try_pop(e)) ;
         }
-        
+
         REMARK("...testing popping from small-sized queue\n");
         tbb::concurrent_bounded_queue<int> iq3;
         iq3.set_capacity(2);
@@ -1428,7 +1428,7 @@ void TestAbort() {
             SimplePushBody my_push_body2(&iq4, nthreads);
             NativeParallelFor( nthreads+1, my_push_body2 );
             ASSERT((int)num_pushed <= cap, "at most cap elements should have been pushed to queue of size cap");
-            if (nthreads >= cap) 
+            if (nthreads >= cap)
                 ASSERT((int)failed_pushes == nthreads-cap, "nthreads-cap threads should have failed to push an element to queue of size cap");
             SimplePopBody my_pop_body(&iq4, nthreads);
             NativeParallelFor( nthreads+1, my_pop_body);

@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -25,9 +25,9 @@ namespace tbb {
     namespace internal {
 
         //
-        // This is not under __TBB_ITT_STRUCTURE_API because these values are used directly in flow_graph.h.  
+        // This is not under __TBB_ITT_STRUCTURE_API because these values are used directly in flow_graph.h.
         //
-       
+
         // include list of index names
         #define TBB_STRING_RESOURCE(index_name,str) index_name,
         enum string_index {
@@ -47,7 +47,7 @@ namespace tbb {
         __itt_relation_is_continued_by,         /**< "A is continued by B" means that B assumes the dependencies of A (inverse of is_continuation_of) */
         __itt_relation_is_predecessor_to        /**< "A is predecessor to B" means that B cannot start until A completes (inverse of is_dependent_on) */
         };
-    
+
     }
 }
 
@@ -141,17 +141,17 @@ namespace tbb {
 #if __TBB_ITT_STRUCTURE_API
         enum itt_domain_enum { ITT_DOMAIN_FLOW=0 };
 
-        void __TBB_EXPORTED_FUNC itt_make_task_group_v7( itt_domain_enum domain, void *group, unsigned long long group_extra, 
-                                                         void *parent, unsigned long long parent_extra, string_index name_index ); 
-        void __TBB_EXPORTED_FUNC itt_metadata_str_add_v7( itt_domain_enum domain, void *addr, unsigned long long addr_extra, 
-                                                          string_index key, const char *value ); 
-        void __TBB_EXPORTED_FUNC itt_relation_add_v7( itt_domain_enum domain, void *addr0, unsigned long long addr0_extra, 
+        void __TBB_EXPORTED_FUNC itt_make_task_group_v7( itt_domain_enum domain, void *group, unsigned long long group_extra,
+                                                         void *parent, unsigned long long parent_extra, string_index name_index );
+        void __TBB_EXPORTED_FUNC itt_metadata_str_add_v7( itt_domain_enum domain, void *addr, unsigned long long addr_extra,
+                                                          string_index key, const char *value );
+        void __TBB_EXPORTED_FUNC itt_relation_add_v7( itt_domain_enum domain, void *addr0, unsigned long long addr0_extra,
                                                       itt_relation relation, void *addr1, unsigned long long addr1_extra );
-        void __TBB_EXPORTED_FUNC itt_task_begin_v7( itt_domain_enum domain, void *task, unsigned long long task_extra, 
+        void __TBB_EXPORTED_FUNC itt_task_begin_v7( itt_domain_enum domain, void *task, unsigned long long task_extra,
                                                     void *parent, unsigned long long parent_extra, string_index name_index );
         void __TBB_EXPORTED_FUNC itt_task_end_v7( itt_domain_enum domain );
 
-        void __TBB_EXPORTED_FUNC itt_region_begin_v9( itt_domain_enum domain, void *region, unsigned long long region_extra, 
+        void __TBB_EXPORTED_FUNC itt_region_begin_v9( itt_domain_enum domain, void *region, unsigned long long region_extra,
                                                       void *parent, unsigned long long parent_extra, string_index name_index );
         void __TBB_EXPORTED_FUNC itt_region_end_v9( itt_domain_enum domain, void *region, unsigned long long region_extra );
 #endif // __TBB_ITT_STRUCTURE_API
@@ -195,7 +195,7 @@ namespace tbb {
             __TBB_ASSERT(sizeof(T) == sizeof(void *), "Type must be word-sized.");
             itt_store_pointer_with_release_v3(&dst, (void *)src);
 #else
-            __TBB_store_with_release(dst, src); 
+            __TBB_store_with_release(dst, src);
 #endif // TBB_USE_THREADING_TOOLS
         }
 
@@ -244,22 +244,22 @@ namespace tbb {
 #endif // TBB_USE_THREADING_TOOLS
 
 #if __TBB_ITT_STRUCTURE_API
-        inline void itt_make_task_group( itt_domain_enum domain, void *group, unsigned long long group_extra, 
+        inline void itt_make_task_group( itt_domain_enum domain, void *group, unsigned long long group_extra,
                                          void *parent, unsigned long long parent_extra, string_index name_index ) {
-            itt_make_task_group_v7( domain, group, group_extra, parent, parent_extra, name_index ); 
+            itt_make_task_group_v7( domain, group, group_extra, parent, parent_extra, name_index );
         }
 
-        inline void itt_metadata_str_add( itt_domain_enum domain, void *addr, unsigned long long addr_extra, 
+        inline void itt_metadata_str_add( itt_domain_enum domain, void *addr, unsigned long long addr_extra,
                                           string_index key, const char *value ) {
-            itt_metadata_str_add_v7( domain, addr, addr_extra, key, value ); 
+            itt_metadata_str_add_v7( domain, addr, addr_extra, key, value );
         }
 
-        inline void itt_relation_add( itt_domain_enum domain, void *addr0, unsigned long long addr0_extra, 
+        inline void itt_relation_add( itt_domain_enum domain, void *addr0, unsigned long long addr0_extra,
                                       itt_relation relation, void *addr1, unsigned long long addr1_extra ) {
             itt_relation_add_v7( domain, addr0, addr0_extra, relation, addr1, addr1_extra );
         }
 
-        inline void itt_task_begin( itt_domain_enum domain, void *task, unsigned long long task_extra, 
+        inline void itt_task_begin( itt_domain_enum domain, void *task, unsigned long long task_extra,
                                                         void *parent, unsigned long long parent_extra, string_index name_index ) {
             itt_task_begin_v7( domain, task, task_extra, parent, parent_extra, name_index );
         }
@@ -268,7 +268,7 @@ namespace tbb {
             itt_task_end_v7( domain );
         }
 
-        inline void itt_region_begin( itt_domain_enum domain, void *region, unsigned long long region_extra, 
+        inline void itt_region_begin( itt_domain_enum domain, void *region, unsigned long long region_extra,
                                       void *parent, unsigned long long parent_extra, string_index name_index ) {
             itt_region_begin_v9( domain, region, region_extra, parent, parent_extra, name_index );
         }

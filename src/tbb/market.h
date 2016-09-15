@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -92,11 +92,16 @@ private:
     //! Number of workers that were requested by all arenas
     int my_total_demand;
 
+#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
+    //! How many times mandatory concurrency was requested from the market
+    int my_mandatory_num_requested;
+#endif
+
 #if __TBB_TASK_PRIORITY
     //! Highest priority among active arenas in the market.
     /** Arena priority level is its tasks highest priority (specified by arena's
         my_top_priority member).
-        Arena is active when it has outstanding request for workers. Note that 
+        Arena is active when it has outstanding request for workers. Note that
         inactive arena may have workers lingering there for some time. **/
     intptr_t my_global_top_priority;
 
@@ -151,8 +156,13 @@ private:
     size_t my_stack_size;
 
     //! Shutdown mode
-    bool join_workers;
+    bool my_join_workers;
 
+    //! The value indicating that the soft limit warning is unnecessary
+    static const unsigned skip_soft_limit_warning = ~0U;
+
+    //! Either workers soft limit to be reported via runtime_warning() or skip_soft_limit_warning
+    unsigned my_workers_soft_limit_to_report;
 #if __TBB_COUNT_TASK_NODES
     //! Net number of nodes that have been allocated from heap.
     /** Updated each time a scheduler or arena is destroyed. */
@@ -163,8 +173,7 @@ private:
     market ( unsigned workers_soft_limit, unsigned workers_hard_limit, size_t stack_size );
 
     //! Factory method creating new market object
-    static market& global_market ( bool is_public, unsigned max_num_workers = 0, size_t stack_size = 0,
-                                   bool default_concurrency_requested = false);
+    static market& global_market ( bool is_public, unsigned max_num_workers = 0, size_t stack_size = 0 );
 
     //! Destroys and deallocates market object created by market::create()
     void destroy ();
@@ -174,7 +183,7 @@ private:
     arena* arena_in_need ( arena* prev_arena );
 
     //! Recalculates the number of workers assigned to each arena at and below the specified priority.
-    /** The actual number of workers servicing a particular arena may temporarily 
+    /** The actual number of workers servicing a particular arena may temporarily
         deviate from the calculated value. **/
     void update_allotment ( intptr_t highest_affected_priority );
 
@@ -201,11 +210,11 @@ private:
 #else /* !__TBB_TASK_PRIORITY */
 
     //! Recalculates the number of workers assigned to each arena in the list.
-    /** The actual number of workers servicing a particular arena may temporarily 
+    /** The actual number of workers servicing a particular arena may temporarily
         deviate from the calculated value. **/
     void update_allotment () {
         if ( my_total_demand )
-            update_allotment( my_arenas, my_total_demand, (int)my_max_num_workers );
+            update_allotment( my_arenas, my_total_demand, (int)my_num_workers_soft_limit );
     }
 
     //! Returns next arena that needs more workers, or NULL.
@@ -256,7 +265,7 @@ public:
     //! Creates an arena object
     /** If necessary, also creates global market instance, and boosts its ref count.
         Each call to create_arena() must be matched by the call to arena::free_arena(). **/
-    static arena* create_arena ( int num_slots, int num_reserved_slots, size_t stack_size, bool default_concurrency_requested );
+    static arena* create_arena ( int num_slots, int num_reserved_slots, size_t stack_size );
 
     //! Removes the arena from the market's list
     void try_destroy_arena ( arena*, uintptr_t aba_epoch );
@@ -267,6 +276,17 @@ public:
     //! Decrements market's refcount and destroys it in the end
     void release ( bool is_public = false );
 
+#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
+    //! Imlpementation of mandatory concurrency enabling
+    bool mandatory_concurrency_enable_impl ( arena *a, bool *enabled = NULL );
+
+    //! Inform the master that there is an arena with mandatory concurrency
+    bool mandatory_concurrency_enable ( arena *a );
+
+    //! Inform the master that the arena is no more interested in mandatory concurrency
+    void mandatory_concurrency_disable ( arena *a );
+#endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
+
     //! Request that arena's need in workers should be adjusted.
     /** Concurrent invocations are possible only on behalf of different arenas. **/
     void adjust_demand ( arena&, int delta );
@@ -274,7 +294,7 @@ public:
     //! Wait workers termination
     void wait_workers ();
 
-    bool must_join_workers () const { return join_workers; }
+    bool must_join_workers () const { return my_join_workers; }
 
     //! Returns the requested stack size of worker threads.
     size_t worker_stack_size () const { return my_stack_size; }
@@ -310,11 +330,11 @@ public:
 #endif /* __TBB_TASK_GROUP_CONTEXT */
 
 #if __TBB_TASK_PRIORITY
-    //! Lowers arena's priority is not higher than newPriority 
-    /** Returns true if arena priority was actually elevated. **/ 
+    //! Lowers arena's priority is not higher than newPriority
+    /** Returns true if arena priority was actually elevated. **/
     bool lower_arena_priority ( arena& a, intptr_t new_priority, uintptr_t old_reload_epoch );
 
-    //! Makes sure arena's priority is not lower than newPriority 
+    //! Makes sure arena's priority is not lower than newPriority
     /** Returns true if arena priority was elevated. Also updates arena's bottom
         priority boundary if necessary.
 

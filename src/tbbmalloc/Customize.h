@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -200,7 +200,7 @@ namespace tbb {
 #if TBB_USE_THREADING_TOOLS
             call_itt_notify(releasing, &dst);
 #endif // TBB_USE_THREADING_TOOLS
-            FencedStore(*(intptr_t*)&dst, src); 
+            FencedStore(*(intptr_t*)&dst, src);
         }
 
         template <typename T>

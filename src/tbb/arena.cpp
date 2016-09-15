@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -137,12 +137,16 @@ void arena::process( generic_scheduler& s ) {
 
     for ( ;; ) {
         __TBB_ASSERT( is_alive(my_guard), NULL );
-        __TBB_ASSERT ( __TBB_load_relaxed(s.my_arena_slot->head) == __TBB_load_relaxed(s.my_arena_slot->tail),
-                       "Worker cannot leave arena while its task pool is not empty" );
+        __TBB_ASSERT( s.is_quiescent_local_task_pool_reset(),
+                      "Worker cannot leave arena while its task pool is not reset" );
         __TBB_ASSERT( s.my_arena_slot->task_pool == EmptyTaskPool, "Empty task pool is not marked appropriately" );
         // This check prevents relinquishing more than necessary workers because
         // of the non-atomicity of the decision making procedure
-        if (num_workers_active() > my_num_workers_allotted)
+        if ( num_workers_active() > my_num_workers_allotted
+#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
+             || recall_by_mandatory_request()
+#endif
+            )
             break;
         // Try to steal a task.
         // Passing reference count is technically unnecessary in this context,
@@ -220,7 +224,9 @@ arena::arena ( market& m, unsigned num_slots, unsigned num_reserved_slots ) {
     }
     my_task_stream.initialize(my_num_slots);
     ITT_SYNC_CREATE(&my_task_stream, SyncType_Scheduler, SyncObj_TaskStream);
-    my_mandatory_concurrency = false;
+#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
+    my_mandatory_mode = no_mandatory;
+#endif
 #if !__TBB_FP_CONTEXT
     my_cpu_ctl_env.get_env();
 #endif
@@ -242,6 +248,9 @@ void arena::free_arena () {
     __TBB_ASSERT( !my_references, "There are threads in the dying arena" );
     __TBB_ASSERT( !my_num_workers_requested && !my_num_workers_allotted, "Dying arena requests workers" );
     __TBB_ASSERT( my_pool_state == SNAPSHOT_EMPTY || !my_max_num_workers, "Inconsistent state of a dying arena" );
+#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
+    __TBB_ASSERT( my_mandatory_mode != global_mandatory, NULL );
+#endif
 #if !__TBB_STATISTICS_EARLY_DUMP
     GATHER_STATISTIC( dump_arena_statistics() );
 #endif
@@ -362,6 +371,37 @@ void arena::orphan_offloaded_tasks(generic_scheduler& s) {
 }
 #endif /* __TBB_TASK_PRIORITY */
 
+void arena::restore_priorities_if_need() {
+    // Check for the presence of enqueued tasks "lost" on some of
+    // priority levels because updating arena priority and switching
+    // arena into "populated" (FULL) state happen non-atomically.
+    // Imposing atomicity would require task::enqueue() to use a lock,
+    // which is unacceptable.
+#if __TBB_TASK_PRIORITY
+    bool switch_back = false;
+    for ( int p = 0; p < num_priority_levels; ++p ) {
+        if ( !my_task_stream.empty(p) ) {
+            switch_back = true;
+            break;
+        }
+    }
+#else
+    bool switch_back = !my_task_stream.empty(0);
+#endif /* __TBB_TASK_PRIORITY */
+    if ( switch_back ) {
+        advertise_new_work<work_enqueued>();
+#if __TBB_TASK_PRIORITY
+        // update_arena_priority() expects non-zero arena::my_num_workers_requested,
+        // so must be called after advertise_new_work<work_enqueued>()
+        for ( int p = 0; p < num_priority_levels; ++p )
+            if ( !my_task_stream.empty(p) ) {
+                if ( p < my_bottom_priority || p > my_top_priority )
+                    my_market->update_arena_priority(*this, p);
+            }
+#endif
+    }
+}
+
 bool arena::is_out_of_work() {
     // TODO: rework it to return at least a hint about where a task was found; better if the task itself.
     for(;;) {
@@ -465,26 +505,18 @@ bool arena::is_out_of_work() {
                                 // to avoid race with advertise_new_work.
                                 int current_demand = (int)my_max_num_workers;
                                 if( my_pool_state.compare_and_swap( SNAPSHOT_EMPTY, busy )==busy ) {
-                                    // This thread transitioned pool to empty state, and thus is
-                                    // responsible for telling RML that there is no other work to do.
-                                    my_market->adjust_demand( *this, -current_demand );
-#if __TBB_TASK_PRIORITY
-                                    // Check for the presence of enqueued tasks "lost" on some of
-                                    // priority levels because updating arena priority and switching
-                                    // arena into "populated" (FULL) state happen non-atomically.
-                                    // Imposing atomicity would require task::enqueue() to use a lock,
-                                    // which is unacceptable.
-                                    bool switch_back = false;
-                                    for ( int p = 0; p < num_priority_levels; ++p ) {
-                                        if ( !my_task_stream.empty(p) ) {
-                                            switch_back = true;
-                                            if ( p < my_bottom_priority || p > my_top_priority )
-                                                my_market->update_arena_priority(*this, p);
-                                        }
+#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
+                                    if( my_mandatory_mode==global_mandatory ) {
+                                        // adjust_demand() called inside, if needed
+                                        my_market->mandatory_concurrency_disable( this );
+                                    } else
+#endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
+                                    {
+                                        // This thread transitioned pool to empty state, and thus is
+                                        // responsible for telling RML that there is no other work to do.
+                                        my_market->adjust_demand( *this, -current_demand );
                                     }
-                                    if ( switch_back )
-                                        advertise_new_work</*Spawned*/false>();
-#endif /* __TBB_TASK_PRIORITY */
+                                    restore_priorities_if_need();
                                     return true;
                                 }
                                 return false;
@@ -548,7 +580,7 @@ void arena::enqueue_task( task& t, intptr_t prio, FastRandom &random )
     __TBB_ASSERT_EX(prio == 0, "the library is not configured to respect the task priority");
     my_task_stream.push( &t, 0, random );
 #endif /* !__TBB_TASK_PRIORITY */
-    advertise_new_work< /*Spawned=*/ false >();
+    advertise_new_work<work_enqueued>();
 #if __TBB_TASK_PRIORITY
     if ( p != my_top_priority )
         my_market->update_arena_priority( *this, p );
@@ -654,15 +686,11 @@ namespace internal {
 
 void task_arena_base::internal_initialize( ) {
     governor::one_time_init();
-    bool default_concurrency_requested = false;
-    if( my_max_concurrency < 1 ) {
+    if( my_max_concurrency < 1 )
         my_max_concurrency = (int)governor::default_num_threads();
-        default_concurrency_requested = true;
-    }
     __TBB_ASSERT( my_master_slots <= (unsigned)my_max_concurrency, "Number of slots reserved for master should not exceed arena concurrency");
     arena* new_arena = market::create_arena( my_max_concurrency, my_master_slots,
-                                              global_control::active_value(global_control::thread_stack_size),
-                                              default_concurrency_requested );
+                                              global_control::active_value(global_control::thread_stack_size) );
     // add an internal market reference; a public reference was added in create_arena
     market &m = market::global_market( /*is_public=*/false );
     // allocate default context for task_arena
@@ -742,7 +770,7 @@ class delegated_task : public task {
         __TBB_ASSERT(s.worker_outermost_level() || s.master_outermost_level(), "expected to be enqueued and received on the outermost level");
         // but this task can mimics outermost level, detect it
         if( s.master_outermost_level() && s.my_dummy_task->state() == task::executing ) {
-#if TBB_USE_EXCEPTIONS
+#if __TBB_USE_OPTIONAL_RTTI
             // RTTI is available, check whether the cast is valid
             __TBB_ASSERT(dynamic_cast<delegated_task*>(s.my_dummy_task), 0);
 #endif
@@ -871,7 +899,7 @@ class wait_task : public task {
             s->local_wait_for_all( *s->my_dummy_task, NULL );
             __TBB_ASSERT( !s->my_dispatching_task && !s->my_innermost_running_task, NULL );
             s->my_innermost_running_task = this;
-        } else s->my_arena->is_out_of_work(); // avoids starvation of internal_wait: issuing this task makes arena full
+         } else s->my_arena->is_out_of_work(); // avoids starvation of internal_wait: issuing this task makes arena full
         my_signal.V();
         return NULL;
     }

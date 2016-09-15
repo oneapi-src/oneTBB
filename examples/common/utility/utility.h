@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -134,9 +134,13 @@ namespace utility{
                     }
                 }
             }
+            template <typename t>
+            static bool is_null_c_str(t&){return false;}
+            static bool is_null_c_str(char* s){return s==NULL;}
             virtual std::string value()const{
                 std::stringstream str;
-                str<<target;
+                if (!is_null_c_str(target))
+                    str<<target;
                 return str.str();
             }
             virtual smart_ptr<type_base> clone() const {

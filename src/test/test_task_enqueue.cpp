@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -166,7 +166,7 @@ void TestEnqueue( int p ) {
 ////////////////////////////////////////////////////////////////////////////////
 // Tests for Fire-And-Forget scheduling functionality
 
-const int NumRepeats = 200;
+int NumRepeats = 200;
 const int MaxNumThreads = 16;
 static volatile bool Finished[MaxNumThreads] = {};
 
@@ -174,8 +174,8 @@ static volatile bool CanStart;
 
 //! Custom user task interface
 class ITask {
-public: 
-    virtual ~ITask() {} 
+public:
+    virtual ~ITask() {}
     virtual void Execute() = 0;
     virtual void Release() { delete this; }
 };
@@ -273,10 +273,10 @@ public:
 };
 
 //! Test for enqueuing children of the same root from different master threads
-void TestSharedRoot ( int p ) { 
+void TestSharedRoot ( int p ) {
     REMARK("Testing enqueuing siblings from different masters\n");
     tbb::task_scheduler_init init(p);
-    tbb::task *root =  new ( tbb::task::allocate_root() ) tbb::empty_task; 
+    tbb::task *root =  new ( tbb::task::allocate_root() ) tbb::empty_task;
     root->set_ref_count(1);
     for( int n = MinThread; n <= MaxThread; ++n ) {
         REMARK("%d masters, %d requested workers\r", n, p-1);
@@ -305,10 +305,10 @@ void TestDequeueByMaster () {
     REMARK("Testing task dequeuing by master\n");
     tbb::task_scheduler_init init(1);
     Harness::SpinBarrier bar(2);
-    tbb::task &r = *new ( tbb::task::allocate_root() ) tbb::empty_task; 
+    tbb::task &r = *new ( tbb::task::allocate_root() ) tbb::empty_task;
     r.set_ref_count(3);
-    tbb::task::enqueue( *new(r.allocate_child()) BlockingTask(bar) ); 
-    tbb::task::enqueue( *new(r.allocate_child()) BlockingTask(bar) ); 
+    tbb::task::enqueue( *new(r.allocate_child()) BlockingTask(bar) );
+    tbb::task::enqueue( *new(r.allocate_child()) BlockingTask(bar) );
     r.wait_for_all();
     tbb::task::destroy(r);
 }
@@ -325,7 +325,7 @@ struct Functor : NoAssign
 {
     Harness::SpinBarrier &my_barrier;
     Functor(Harness::SpinBarrier &a_barrier) : my_barrier(a_barrier) { }
-    void operator()(const tbb::blocked_range<int>& r) const 
+    void operator()(const tbb::blocked_range<int>& r) const
     {
         ASSERT(r.size() == 1, NULL);
         // allocate_root() uses current context of parallel_for which is destroyed when it finishes.
@@ -356,13 +356,26 @@ void TestWakeups()
         tbb::parallel_for(tbb::blocked_range<int>(0, NUM_TASKS), Functor(barrier)); // auto
 }
 
+#define TBB_PREVIEW_GLOBAL_CONTROL 1
+#include "tbb/global_control.h"
+
 int TestMain () {
+
     TestWakeups();         // 1st because requests oversubscription
-    TestCascadedEnqueue(); // needs oversubscription
-    TestDequeueByMaster(); // no oversubscription needed
-    for( int p=MinThread; p<=MaxThread; ++p ) {
-        TestEnqueue(p);
-        TestSharedRoot(p);
+    for (int i=0; i<2; i++) {
+        tbb::global_control *c = i?
+            new tbb::global_control(tbb::global_control::max_allowed_parallelism, 1) : NULL;
+        if (i) // decrease workload for max_allowed_parallelism == 1
+            NumRepeats = 10;
+
+        TestCascadedEnqueue(); // needs oversubscription
+        if (!c)
+            TestDequeueByMaster(); // no oversubscription needed
+        for( int p=MinThread; p<=MaxThread; ++p ) {
+            TestEnqueue(p);
+            TestSharedRoot(p);
+        }
+        delete c;
     }
     return Harness::Done;
 }

@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -157,7 +157,7 @@ void set_async_gateway(T *body, void *g) {
     body->set_async_gateway(static_cast<typename T::async_gateway_type *>(g));
 }
 
-void set_async_gateway(...) { }
+inline void set_async_gateway(...) { }
 #endif
 
     //! function_body that takes an Input and a set of output ports
@@ -181,7 +181,7 @@ void set_async_gateway(...) { }
             body(input, oset); // body may explicitly put() to one or more of oset.
         }
         B get_body() { return body; }
-		
+
 #if __TBB_PREVIEW_ASYNC_NODE
         /*override*/  void set_gateway(void *gateway) {
            set_async_gateway(&body, gateway);

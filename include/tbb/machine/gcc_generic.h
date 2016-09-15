@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -34,7 +34,7 @@
 #endif
 
 /** FPU control setting not available for non-Intel architectures on Android **/
-#if __ANDROID__ && __TBB_generic_arch 
+#if __ANDROID__ && __TBB_generic_arch
     #define __TBB_CPU_CTL_ENV_PRESENT 0
 #endif
 

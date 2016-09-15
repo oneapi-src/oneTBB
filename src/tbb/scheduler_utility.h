@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -35,7 +35,7 @@ class auto_empty_task {
     task* my_task;
     generic_scheduler* my_scheduler;
 public:
-    auto_empty_task ( __TBB_CONTEXT_ARG(generic_scheduler *s, task_group_context* context) ) 
+    auto_empty_task ( __TBB_CONTEXT_ARG(generic_scheduler *s, task_group_context* context) )
         : my_task( new(&s->allocate_task(sizeof(empty_task), __TBB_CONTEXT_ARG(NULL, context))) empty_task )
         , my_scheduler(s)
     {}
@@ -54,7 +54,7 @@ public:
 //! Vector that grows without reallocations, and stores items in the reverse order.
 /** Requires to initialize its first segment with a preallocated memory chunk
     (usually it is static array or an array allocated on the stack).
-    The second template parameter specifies maximal number of segments. Each next 
+    The second template parameter specifies maximal number of segments. Each next
     segment is twice as large as the previous one. **/
 template<typename T, size_t max_segments = 16>
 class fast_reverse_vector
@@ -91,7 +91,7 @@ public:
         m_cur_segment[--m_pos] = val;
     }
 
-    //! Copies the contents of the vector into the dst array. 
+    //! Copies the contents of the vector into the dst array.
     /** Can only be used when T is a POD type, as copying does not invoke copy constructors. **/
     void copy_memory ( T* dst ) const
     {
@@ -118,7 +118,7 @@ protected:
 
     //! Array of segments (has fixed size specified by the second template parameter)
     T       *m_segments[max_segments];
-    
+
     //! Number of segments (the size of m_segments)
     size_t  m_num_segments;
 

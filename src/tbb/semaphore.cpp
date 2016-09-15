@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -74,7 +74,7 @@ inline void init_concmon_module()
 binary_semaphore::binary_semaphore() {
     atomic_do_once( &init_concmon_module, concmon_module_inited );
 
-    __TBB_init_binsem( &my_sem.lock ); 
+    __TBB_init_binsem( &my_sem.lock );
     if( (uintptr_t)__TBB_init_binsem!=(uintptr_t)&init_binsem_using_event )
         P();
 }

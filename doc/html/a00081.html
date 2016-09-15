@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::internal::tbb_thread_v3::id Class Reference</title>
+<title>tbb::flow::interface8::graph_node Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,64 +33,98 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><b>internal</b></li><li class="navelem"><a class="el" href="a00196.html">tbb_thread_v3</a></li><li class="navelem"><a class="el" href="a00081.html">id</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00276.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><a class="el" href="a00081.html">graph_node</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pro-methods">Protected Member Functions</a> &#124;
+<a href="#pro-attribs">Protected Attributes</a> &#124;
 <a href="#friends">Friends</a> &#124;
-<a href="a00486.html">List of all members</a>  </div>
+<a href="a00369.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::internal::tbb_thread_v3::id Class Reference</div>  </div>
+<div class="title">tbb::flow::interface8::graph_node Class Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div>  </div>
 </div><!--header-->
 <div class="contents">
+
+<p>The base of all graph nodes.  
+ <a href="a00081.html#details">More...</a></p>
+
+<p><code>#include &lt;flow_graph.h&gt;</code></p>
+<div class="dynheader">
+Inheritance diagram for tbb::flow::interface8::graph_node:</div>
+<div class="dyncontent">
+ <div class="center">
+  <img src="a00081.png" usemap="#tbb::flow::interface8::graph_node_map" alt=""/>
+  <map id="tbb::flow::interface8::graph_node_map" name="tbb::flow::interface8::graph_node_map">
+<area href="a00110.html" alt="tbb::flow::interface8::multifunction_node&lt; indexer_node_output_type, kernel_input_tuple &gt;" shape="rect" coords="613,112,1216,136"/>
+<area href="a00110.html" alt="tbb::flow::interface8::multifunction_node&lt; Input, tuple&lt; Output &gt;, Policy, Allocator &gt;" shape="rect" coords="613,168,1216,192"/>
+<area href="a00110.html" alt="tbb::flow::interface8::multifunction_node&lt; kernel_input_tuple, output_tuple &gt;" shape="rect" coords="613,224,1216,248"/>
+<area href="a00110.html" alt="tbb::flow::interface8::multifunction_node&lt; TupleType, TupleType, rejecting, Allocator &gt;" shape="rect" coords="613,280,1216,304"/>
+<area href="a00032.html" title="Forwards messages of type T to all successors. " alt="tbb::flow::interface8::broadcast_node&lt; T &gt;" shape="rect" coords="613,336,1216,360"/>
+<area href="a00034.html" title="Forwards messages in arbitrary order. " alt="tbb::flow::interface8::buffer_node&lt; T, A &gt;" shape="rect" coords="613,392,1216,416"/>
+<area href="a00044.html" alt="tbb::flow::interface8::composite_node&lt; tbb::flow::tuple&lt; InputTypes...&gt;, tbb::flow::tuple&lt; OutputTypes...&gt; &gt;" shape="rect" coords="613,448,1216,472"/>
+<area href="a00045.html" alt="tbb::flow::interface8::composite_node&lt; tbb::flow::tuple&lt; InputTypes...&gt;, tbb::flow::tuple&lt;&gt; &gt;" shape="rect" coords="613,504,1216,528"/>
+<area href="a00046.html" alt="tbb::flow::interface8::composite_node&lt; tbb::flow::tuple&lt;&gt;, tbb::flow::tuple&lt; OutputTypes...&gt; &gt;" shape="rect" coords="613,560,1216,584"/>
+<area href="a00062.html" title="Implements an executable node that supports continue_msg -&gt; Output. " alt="tbb::flow::interface8::continue_node&lt; Output &gt;" shape="rect" coords="613,616,1216,640"/>
+<area href="a00077.html" title="Implements a function node that supports Input -&gt; Output. " alt="tbb::flow::interface8::function_node&lt; Input, Output, Policy, Allocator &gt;" shape="rect" coords="613,672,1216,696"/>
+<area href="a00103.html" title="Forwards messages only if the threshold has not been reached. " alt="tbb::flow::interface8::limiter_node&lt; T &gt;" shape="rect" coords="613,728,1216,752"/>
+<area href="a00110.html" title="implements a function node that supports Input -&gt; (set of outputs) " alt="tbb::flow::interface8::multifunction_node&lt; Input, Output, Policy, Allocator &gt;" shape="rect" coords="613,784,1216,808"/>
+<area href="a00134.html" alt="tbb::flow::interface8::overwrite_node&lt; T &gt;" shape="rect" coords="613,840,1216,864"/>
+<area href="a00179.html" title="An executable node that acts as a source, i.e. it has no predecessors. " alt="tbb::flow::interface8::source_node&lt; Output &gt;" shape="rect" coords="613,896,1216,920"/>
+</map>
+ </div></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
+Public Member Functions</h2></td></tr>
+<tr class="memitem:a01d89d46b5437dba06add102862ee690"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a01d89d46b5437dba06add102862ee690"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>graph_node</b> (<a class="el" href="a00079.html">graph</a> &amp;g)</td></tr>
+<tr class="separator:a01d89d46b5437dba06add102862ee690"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4d12531fde60dfa15e2c86ef57ae6a48"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4d12531fde60dfa15e2c86ef57ae6a48"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>set_name</b> (const char *name)=0</td></tr>
+<tr class="separator:a4d12531fde60dfa15e2c86ef57ae6a48"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa17755492654c786ec81eb77d950db16"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa17755492654c786ec81eb77d950db16"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>extract</b> ()=0</td></tr>
+<tr class="separator:aa17755492654c786ec81eb77d950db16"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
+Protected Member Functions</h2></td></tr>
+<tr class="memitem:a6af0327109bc0c864d0c6228113affc1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6af0327109bc0c864d0c6228113affc1"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>reset_node</b> (reset_flags f=rf_reset_protocol)=0</td></tr>
+<tr class="separator:a6af0327109bc0c864d0c6228113affc1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
+Protected Attributes</h2></td></tr>
+<tr class="memitem:add0e1e5aabc3cc184a0814752abef3bf"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="add0e1e5aabc3cc184a0814752abef3bf"></a>
+<a class="el" href="a00079.html">graph</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>my_graph</b></td></tr>
+<tr class="separator:add0e1e5aabc3cc184a0814752abef3bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acddc0494d8270126dfbec1fc1125265a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acddc0494d8270126dfbec1fc1125265a"></a>
+<a class="el" href="a00081.html">graph_node</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>next</b></td></tr>
+<tr class="separator:acddc0494d8270126dfbec1fc1125265a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a43f71ea7acfead3f6412b37cfa837329"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a43f71ea7acfead3f6412b37cfa837329"></a>
+<a class="el" href="a00081.html">graph_node</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>prev</b></td></tr>
+<tr class="separator:a43f71ea7acfead3f6412b37cfa837329"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
 Friends</h2></td></tr>
-<tr class="memitem:aa08381fcad9d2adc0bf8fb009ad38366"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa08381fcad9d2adc0bf8fb009ad38366"></a>
-class&#160;</td><td class="memItemRight" valign="bottom"><b>tbb_thread_v3</b></td></tr>
-<tr class="separator:aa08381fcad9d2adc0bf8fb009ad38366"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1ffa9d9b2f7e18d73535b2879ba64ae0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1ffa9d9b2f7e18d73535b2879ba64ae0"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator==</b> (<a class="el" href="a00081.html">tbb_thread_v3::id</a> x, <a class="el" href="a00081.html">tbb_thread_v3::id</a> y) __TBB_NOEXCEPT(true)</td></tr>
-<tr class="separator:a1ffa9d9b2f7e18d73535b2879ba64ae0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3be52bbc6138f2d2180d89d588b5c404"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3be52bbc6138f2d2180d89d588b5c404"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator!=</b> (<a class="el" href="a00081.html">tbb_thread_v3::id</a> x, <a class="el" href="a00081.html">tbb_thread_v3::id</a> y) __TBB_NOEXCEPT(true)</td></tr>
-<tr class="separator:a3be52bbc6138f2d2180d89d588b5c404"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5cd4a67d579d3ea07557ce6a632bdff0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5cd4a67d579d3ea07557ce6a632bdff0"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator&lt;</b> (<a class="el" href="a00081.html">tbb_thread_v3::id</a> x, <a class="el" href="a00081.html">tbb_thread_v3::id</a> y) __TBB_NOEXCEPT(true)</td></tr>
-<tr class="separator:a5cd4a67d579d3ea07557ce6a632bdff0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaf358e695ce2c3bc64029bb69b6b7841"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aaf358e695ce2c3bc64029bb69b6b7841"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator&lt;=</b> (<a class="el" href="a00081.html">tbb_thread_v3::id</a> x, <a class="el" href="a00081.html">tbb_thread_v3::id</a> y) __TBB_NOEXCEPT(true)</td></tr>
-<tr class="separator:aaf358e695ce2c3bc64029bb69b6b7841"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad9277ffe4c9b7cdd4687d0cab4bf8cd8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad9277ffe4c9b7cdd4687d0cab4bf8cd8"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator&gt;</b> (<a class="el" href="a00081.html">tbb_thread_v3::id</a> x, <a class="el" href="a00081.html">tbb_thread_v3::id</a> y) __TBB_NOEXCEPT(true)</td></tr>
-<tr class="separator:ad9277ffe4c9b7cdd4687d0cab4bf8cd8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9f559c30c06931effca0ee4a351d8fff"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9f559c30c06931effca0ee4a351d8fff"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator&gt;=</b> (<a class="el" href="a00081.html">tbb_thread_v3::id</a> x, <a class="el" href="a00081.html">tbb_thread_v3::id</a> y) __TBB_NOEXCEPT(true)</td></tr>
-<tr class="separator:a9f559c30c06931effca0ee4a351d8fff"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8dcf9ef009469428dc3752f54240eb69"><td class="memTemplParams" colspan="2"><a class="anchor" id="a8dcf9ef009469428dc3752f54240eb69"></a>
-template&lt;class charT , class traits &gt; </td></tr>
-<tr class="memitem:a8dcf9ef009469428dc3752f54240eb69"><td class="memTemplItemLeft" align="right" valign="top">std::basic_ostream&lt; charT, <br class="typebreak"/>
-traits &gt; &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>operator&lt;&lt;</b> (std::basic_ostream&lt; charT, traits &gt; &amp;out, <a class="el" href="a00081.html">tbb_thread_v3::id</a> <a class="el" href="a00081.html">id</a>)</td></tr>
-<tr class="separator:a8dcf9ef009469428dc3752f54240eb69"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0a77bf86c87119e219bb508d787d97da"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0a77bf86c87119e219bb508d787d97da"></a>
-<a class="el" href="a00081.html">tbb_thread_v3::id</a> <br class="typebreak"/>
-__TBB_EXPORTED_FUNC&#160;</td><td class="memItemRight" valign="bottom"><b>thread_get_id_v3</b> ()</td></tr>
-<tr class="separator:a0a77bf86c87119e219bb508d787d97da"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9245f821db4ab0e093ec5e7b7f02eb8b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9245f821db4ab0e093ec5e7b7f02eb8b"></a>
-size_t&#160;</td><td class="memItemRight" valign="bottom"><b>tbb_hasher</b> (const <a class="el" href="a00081.html">tbb_thread_v3::id</a> &amp;<a class="el" href="a00081.html">id</a>)</td></tr>
-<tr class="separator:a9245f821db4ab0e093ec5e7b7f02eb8b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af6fded011b60cda6876a33f68b2368ee"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af6fded011b60cda6876a33f68b2368ee"></a>
-<a class="el" href="a00081.html">id</a>&#160;</td><td class="memItemRight" valign="bottom"><b>atomic_compare_and_swap</b> (<a class="el" href="a00081.html">id</a> &amp;location, const <a class="el" href="a00081.html">id</a> &amp;value, const <a class="el" href="a00081.html">id</a> &amp;comparand)</td></tr>
-<tr class="separator:af6fded011b60cda6876a33f68b2368ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab8b0dbc1b36724e5e4635ac651c218cb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab8b0dbc1b36724e5e4635ac651c218cb"></a>
+class&#160;</td><td class="memItemRight" valign="bottom"><b>graph</b></td></tr>
+<tr class="separator:ab8b0dbc1b36724e5e4635ac651c218cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaa1d1a46765052516277dce8e9bdf63e"><td class="memTemplParams" colspan="2"><a class="anchor" id="aaa1d1a46765052516277dce8e9bdf63e"></a>
+template&lt;typename C , typename N &gt; </td></tr>
+<tr class="memitem:aaa1d1a46765052516277dce8e9bdf63e"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><b>graph_iterator</b></td></tr>
+<tr class="separator:aaa1d1a46765052516277dce8e9bdf63e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<hr/>The documentation for this class was generated from the following file:<ul>
-<li>tbb_thread.h</li>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>The base of all graph nodes. </p>
+</div><hr/>The documentation for this class was generated from the following file:<ul>
+<li><a class="el" href="a00231.html">flow_graph.h</a></li>
 </ul>
 </div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

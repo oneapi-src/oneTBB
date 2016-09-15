@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -65,14 +65,14 @@ public:
     task_scheduler_observer_v3() : my_proxy(NULL) { my_busy_count.store<relaxed>(0); }
 
     //! Entry notification
-    /** Invoked from inside observe(true) call and whenever a worker enters the arena 
+    /** Invoked from inside observe(true) call and whenever a worker enters the arena
         this observer is associated with. If a thread is already in the arena when
         the observer is activated, the entry notification is called before it
         executes the first stolen task.
 
         Obsolete semantics. For global observers it is called by a thread before
         the first steal since observation became enabled. **/
-    virtual void on_scheduler_entry( bool /*is_worker*/ ) {} 
+    virtual void on_scheduler_entry( bool /*is_worker*/ ) {}
 
     //! Exit notification
     /** Invoked from inside observe(false) call and whenever a worker leaves the

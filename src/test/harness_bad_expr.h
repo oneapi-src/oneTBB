@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -47,8 +47,8 @@ struct AssertionFailure {
     AssertionFailure( const char* filename, int line, const char* expression, const char* comment );
 };
 
-AssertionFailure::AssertionFailure( const char* filename, int line, const char* expression, const char* comment ) : 
-    message(comment) 
+AssertionFailure::AssertionFailure( const char* filename, int line, const char* expression, const char* comment ) :
+    message(comment)
 {
     ASSERT(filename,"missing filename");
     ASSERT(0<line,"line number must be positive");
@@ -68,7 +68,7 @@ void CheckAssertionFailure( int line, const char* expression, bool okay, const c
     } else if( !message ) {
         REPORT("Line %d, %s failed without a message\n", line, expression );
         abort();
-    } else if( strstr(message,substr)==0 ) {                            
+    } else if( strstr(message,substr)==0 ) {
         REPORT("Line %d, %s failed with message '%s' missing substring '%s'\n", __LINE__, expression, message, substr );
         abort();
     }

@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -18,8 +18,8 @@
     reasons why the executable file might be covered by the GNU General Public License.
 */
 
-#ifndef __TBB_pipeline_H 
-#define __TBB_pipeline_H 
+#ifndef __TBB_pipeline_H
+#define __TBB_pipeline_H
 
 #include "atomic.h"
 #include "task.h"
@@ -66,17 +66,17 @@ class filter: internal::no_copy {
 private:
     //! Value used to mark "not in pipeline"
     static filter* not_in_pipeline() {return reinterpret_cast<filter*>(intptr_t(-1));}
-protected:    
+protected:
     //! The lowest bit 0 is for parallel vs. serial
-    static const unsigned char filter_is_serial = 0x1; 
+    static const unsigned char filter_is_serial = 0x1;
 
     //! 4th bit distinguishes ordered vs unordered filters.
     /** The bit was not set for parallel filters in TBB 2.1 and earlier,
         but is_ordered() function always treats parallel filters as out of order. */
-    static const unsigned char filter_is_out_of_order = 0x1<<4;  
+    static const unsigned char filter_is_out_of_order = 0x1<<4;
 
     //! 5th bit distinguishes thread-bound and regular filters.
-    static const unsigned char filter_is_bound = 0x1<<5;  
+    static const unsigned char filter_is_bound = 0x1<<5;
 
     //! 6th bit marks input filters emitting small objects
     static const unsigned char filter_may_emit_null = 0x1<<6;
@@ -94,7 +94,7 @@ protected:
 public:
     enum mode {
         //! processes multiple items in parallel and in no particular order
-        parallel = current_version | filter_is_out_of_order, 
+        parallel = current_version | filter_is_out_of_order,
         //! processes items one at a time; all such filters process items in the same order
         serial_in_order = current_version | filter_is_serial,
         //! processes items one at a time and in no particular order
@@ -103,7 +103,7 @@ public:
         serial = serial_in_order
     };
 protected:
-    filter( bool is_serial_ ) : 
+    filter( bool is_serial_ ) :
         next_filter_in_pipeline(not_in_pipeline()),
         my_input_buffer(NULL),
         my_filter_mode(static_cast<unsigned char>((is_serial_ ? serial : parallel) | exact_exception_propagation)),
@@ -111,7 +111,7 @@ protected:
         my_pipeline(NULL),
         next_segment(NULL)
     {}
-    
+
     filter( mode filter_mode ) :
         next_filter_in_pipeline(not_in_pipeline()),
         my_input_buffer(NULL),
@@ -128,8 +128,8 @@ public:
     //! True if filter is serial.
     bool is_serial() const {
         return bool( my_filter_mode & filter_is_serial );
-    }  
-    
+    }
+
     //! True if filter must receive stream in order.
     bool is_ordered() const {
         return (my_filter_mode & (filter_is_out_of_order|filter_is_serial))==filter_is_serial;
@@ -141,7 +141,7 @@ public:
     }
 
     //! true if an input filter can emit null
-    bool object_may_be_null() { 
+    bool object_may_be_null() {
         return ( my_filter_mode & filter_may_emit_null ) == filter_may_emit_null;
     }
 
@@ -149,7 +149,7 @@ public:
     /** Returns NULL if filter is a sink. */
     virtual void* operator()( void* item ) = 0;
 
-    //! Destroy filter.  
+    //! Destroy filter.
     /** If the filter was added to a pipeline, the pipeline must be destroyed first. */
     virtual __TBB_EXPORTED_METHOD ~filter();
 
@@ -164,7 +164,7 @@ private:
     //! Pointer to next filter in the pipeline.
     filter* next_filter_in_pipeline;
 
-    //! has the filter not yet processed all the tokens it will ever see?  
+    //! has the filter not yet processed all the tokens it will ever see?
     //  (pipeline has not yet reached end_of_input or this filter has not yet
     //  seen the last token produced by input_filter)
     bool has_more_work();
@@ -205,19 +205,19 @@ public:
         end_of_stream
     };
 protected:
-    thread_bound_filter(mode filter_mode): 
+    thread_bound_filter(mode filter_mode):
          filter(static_cast<mode>(filter_mode | filter::filter_is_bound))
     {
         __TBB_ASSERT(filter_mode & filter::filter_is_serial, "thread-bound filters must be serial");
     }
 public:
-    //! If a data item is available, invoke operator() on that item.  
+    //! If a data item is available, invoke operator() on that item.
     /** This interface is non-blocking.
         Returns 'success' if an item was processed.
-        Returns 'item_not_available' if no item can be processed now 
-        but more may arrive in the future, or if token limit is reached. 
+        Returns 'item_not_available' if no item can be processed now
+        but more may arrive in the future, or if token limit is reached.
         Returns 'end_of_stream' if there are no more items to process. */
-    result_type __TBB_EXPORTED_METHOD try_process_item(); 
+    result_type __TBB_EXPORTED_METHOD try_process_item();
 
     //! Wait until a data item becomes available, and invoke operator() on that item.
     /** This interface is blocking.
@@ -238,7 +238,7 @@ public:
     //! Construct empty pipeline.
     __TBB_EXPORTED_METHOD pipeline();
 
-    /** Though the current implementation declares the destructor virtual, do not rely on this 
+    /** Though the current implementation declares the destructor virtual, do not rely on this
         detail.  The virtualness is deprecated and may disappear in future versions of TBB. */
     virtual __TBB_EXPORTED_METHOD ~pipeline();
 
@@ -276,7 +276,7 @@ private:
     //! Number of idle tokens waiting for input stage.
     atomic<internal::Token> input_tokens;
 
-    //! Global counter of tokens 
+    //! Global counter of tokens
     atomic<internal::Token> token_counter;
 
     //! False until fetch_input returns NULL.
@@ -390,13 +390,13 @@ class token_helper<T, false> {
     static pointer create_token(const value_type & source) {
         return source; }
     static value_type & token(pointer & t) { return t;}
-    static void * cast_to_void_ptr(pointer ref) { 
-        type_to_void_ptr_map mymap; 
+    static void * cast_to_void_ptr(pointer ref) {
+        type_to_void_ptr_map mymap;
         mymap.void_overlay = NULL;
-        mymap.actual_value = ref; 
-        return mymap.void_overlay; 
+        mymap.actual_value = ref;
+        return mymap.void_overlay;
     }
-    static pointer cast_from_void_ptr(void * ref) { 
+    static pointer cast_from_void_ptr(void * ref) {
         type_to_void_ptr_map mymap;
         mymap.void_overlay = ref;
         return mymap.actual_value;
@@ -428,7 +428,7 @@ public:
     concrete_filter(tbb::filter::mode filter_mode, const Body& body) : filter(filter_mode), my_body(body) {}
 };
 
-// input 
+// input
 template<typename U, typename Body>
 class concrete_filter<void,U,Body>: public filter {
     const Body& my_body;
@@ -447,7 +447,7 @@ class concrete_filter<void,U,Body>: public filter {
     }
 
 public:
-    concrete_filter(tbb::filter::mode filter_mode, const Body& body) : 
+    concrete_filter(tbb::filter::mode filter_mode, const Body& body) :
         filter(static_cast<tbb::filter::mode>(filter_mode | filter_may_emit_null)),
         my_body(body)
     {}
@@ -458,7 +458,7 @@ class concrete_filter<T,void,Body>: public filter {
     const Body& my_body;
     typedef token_helper<T, is_large_object<T>::value > t_helper;
     typedef typename t_helper::pointer t_pointer;
-   
+
     /*override*/ void* operator()(void* input) {
         t_pointer temp_input = t_helper::cast_from_void_ptr(input);
         my_body(t_helper::token(temp_input));
@@ -477,12 +477,12 @@ public:
 template<typename Body>
 class concrete_filter<void,void,Body>: public filter {
     const Body& my_body;
-    
+
     /** Override privately because it is always called virtually */
     /*override*/ void* operator()(void*) {
         flow_control control;
         my_body(control);
-        void* output = control.is_pipeline_stopped ? NULL : (void*)(intptr_t)-1; 
+        void* output = control.is_pipeline_stopped ? NULL : (void*)(intptr_t)-1;
         return output;
     }
 public:
@@ -496,7 +496,7 @@ class pipeline_proxy {
 public:
     pipeline_proxy( const filter_t<void,void>& filter_chain );
     ~pipeline_proxy() {
-        while( filter* f = my_pipe.filter_list ) 
+        while( filter* f = my_pipe.filter_list )
             delete f; // filter destructor removes it from the pipeline
     }
     tbb::pipeline* operator->() { return &my_pipe; }
@@ -515,14 +515,14 @@ protected:
 #endif
     }
 public:
-    //! Add concrete_filter to pipeline 
+    //! Add concrete_filter to pipeline
     virtual void add_to( pipeline& ) = 0;
     //! Increment reference count
     void add_ref() {++ref_count;}
     //! Decrement reference count and delete if it becomes zero.
     void remove_ref() {
         __TBB_ASSERT(ref_count>0,"ref_count underflow");
-        if( --ref_count==0 ) 
+        if( --ref_count==0 )
             delete this;
     }
     virtual ~filter_node() {
@@ -610,7 +610,7 @@ public:
         // Order of operations below carefully chosen so that reference counts remain correct
         // in unlikely event that remove_ref throws exception.
         filter_node* old = root;
-        root = rhs.root; 
+        root = rhs.root;
         if( root ) root->add_ref();
         if( old ) old->remove_ref();
     }

@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -66,7 +66,7 @@ int TestMain () {
     for( int p=MinThread; p<=MaxThread; ++p ) {
         REMARK("Testing on %d threads", p);
         Count = 0;
-        NativeParallelFor( p, Hammer<queuing_rw_mutex>(QRW_mutex) ); 
+        NativeParallelFor( p, Hammer<queuing_rw_mutex>(QRW_mutex) );
         Count = 0;
         NativeParallelFor( p, Hammer<spin_rw_mutex>(SRW_mutex) );
     }

@@ -1,4 +1,4 @@
-# Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+# Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 #
 # This file is part of Threading Building Blocks. Threading Building Blocks is free software;
 # you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -107,6 +107,7 @@ else
     endif
     ifeq ($(tbb_os),macos)
         export DYLD_LIBRARY_PATH := $(DYLD_LIBRARY_PATH):$(work_dir)_release:$(work_dir)_debug
+        override CXXFLAGS += -Wl,-rpath,$(work_dir)_release -Wl,-rpath,$(work_dir)_debug
     else
         export LD_LIBRARY_PATH := $(LD_LIBRARY_PATH):$(work_dir)_release:$(work_dir)_debug
         ifeq ($(findstring mic,$(offload) $(target)),mic)

@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -24,15 +24,15 @@
 #include "tbb_stddef.h"
 
 namespace tbb {
-    
+
 //! A rw mutex which does nothing
 /** A null_rw_mutex is a rw mutex that does nothing and simulates successful operation.
     @ingroup synchronization */
 class null_rw_mutex : internal::mutex_copy_deprecated_and_disabled {
-public:   
+public:
     //! Represents acquisition of a mutex.
-    class scoped_lock : internal::no_copy {   
-    public:   
+    class scoped_lock : internal::no_copy {
+    public:
         scoped_lock() {}
         scoped_lock( null_rw_mutex& , bool = true ) {}
         ~scoped_lock() {}
@@ -42,14 +42,14 @@ public:
         bool try_acquire( null_rw_mutex& , bool = true ) { return true; }
         void release() {}
     };
-  
+
     null_rw_mutex() {}
-    
-    // Mutex traits   
-    static const bool is_rw_mutex = true;   
+
+    // Mutex traits
+    static const bool is_rw_mutex = true;
     static const bool is_recursive_mutex = true;
     static const bool is_fair_mutex = true;
-};  
+};
 
 }
 

@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -37,17 +37,17 @@ class src_body{
     int finish;
     int step;
 public:
-    src_body(int f, int s) : start(1), finish(f), step(s) {} 
+    src_body(int f, int s) : start(1), finish(f), step(s) {}
     bool operator()(int &a) {
        a = start;
        if (start <= finish) {
            a = start;
            start+=step;
            return true;
-       } 
+       }
        else {
            return false;
-       };  
+       };
    }
 };
 
@@ -65,7 +65,7 @@ int operator()(int i){return i;}
 };
 
 template<int N, typename T1, typename T2>
-struct compare { 
+struct compare {
     static void compare_refs(T1 tuple1, T2 tuple2) {
     ASSERT( &tbb::flow::get<N>(tuple1) == &tbb::flow::get<N>(tuple2), "ports not set correctly");
     compare<N-1, T1, T2>::compare_refs(tuple1, tuple2);
@@ -73,7 +73,7 @@ struct compare {
 };
 
 template<typename T1, typename T2>
-struct compare<1, T1, T2> { 
+struct compare<1, T1, T2> {
     static void compare_refs(T1 tuple1, T2 tuple2) {
     ASSERT(&tbb::flow::get<0>(tuple1) == &tbb::flow::get<0>(tuple2), "port 0 not correctly set");
     }
@@ -82,10 +82,10 @@ struct compare<1, T1, T2> {
 void add_all_nodes (){
     tbb::flow::graph g;
 
-    typedef tbb::flow::tuple<tbb::flow::continue_msg, tbb::flow::tuple<int, int>, int, int, int, int, 
-                             int, int, int, int, int, int, int, int > InputTupleType; 
+    typedef tbb::flow::tuple<tbb::flow::continue_msg, tbb::flow::tuple<int, int>, int, int, int, int,
+                             int, int, int, int, int, int, int, int > InputTupleType;
 
-    typedef tbb::flow::tuple<tbb::flow::continue_msg, tbb::flow::tuple<int, int>, tbb::flow::tagged_msg<size_t, int, float>, 
+    typedef tbb::flow::tuple<tbb::flow::continue_msg, tbb::flow::tuple<int, int>, tbb::flow::tagged_msg<size_t, int, float>,
                              int, int, int, int, int, int, int, int, int, int, int, int >  OutputTupleType;
 
     typedef tbb::flow::tuple< > EmptyTupleType;
@@ -114,28 +114,28 @@ void add_all_nodes (){
     tbb::flow::overwrite_node<int> ovw(g);
     tbb::flow::sequencer_node<int> seq(g, seq_body());
 
-    #if !(__GNUC__==4 && __GNUC_MINOR__==4  && !defined(__clang__)) 
+    #if !(__GNUC__==4 && __GNUC_MINOR__==4  && !defined(__clang__))
     // upcasting of a tuple of reference from derived to base fails on gcc4.4 (and all icc in this environment)
     // if std::tie is used to create the tuple of references
-    auto input_tuple = std::tie(ct, s, m_fxn, fxn, bc, tbb::flow::input_port<0>(j), lim, q, tbb::flow::input_port<0>(ind), 
+    auto input_tuple = std::tie(ct, s, m_fxn, fxn, bc, tbb::flow::input_port<0>(j), lim, q, tbb::flow::input_port<0>(ind),
                                 pq, ovw, wo, bf, seq);
-    auto output_tuple = std::tie(ct,j, ind, fxn, src, bc, tbb::flow::output_port<0>(s), lim, tbb::flow::output_port<0>(m_fxn), 
+    auto output_tuple = std::tie(ct,j, ind, fxn, src, bc, tbb::flow::output_port<0>(s), lim, tbb::flow::output_port<0>(m_fxn),
                                  q, pq, ovw, wo, bf, seq );
     #else
-    input_output_type::input_ports_type input_tuple(ct, s, m_fxn, fxn, bc, tbb::flow::input_port<0>(j), lim, q, 
+    input_output_type::input_ports_type input_tuple(ct, s, m_fxn, fxn, bc, tbb::flow::input_port<0>(j), lim, q,
                                                     tbb::flow::input_port<0>(ind), pq, ovw, wo, bf, seq);
 
     input_output_type::output_ports_type output_tuple(ct,j, ind, fxn, src, bc, tbb::flow::output_port<0>(s),
                                                       lim, tbb::flow::output_port<0>(m_fxn), q, pq, ovw, wo, bf, seq);
     #endif
 
-    //composite_node with both input_ports and output_ports 
+    //composite_node with both input_ports and output_ports
     input_output_type a_node(g);
-    a_node.set_external_ports(input_tuple, output_tuple); 
-   
+    a_node.set_external_ports(input_tuple, output_tuple);
+
     a_node.add_visible_nodes(src, fxn, m_fxn, bc, lim, ind, s, ct, j, q, bf, pq, wo, ovw, seq);
     a_node.add_nodes(src, fxn, m_fxn, bc, lim, ind, s, ct, j, q, bf, pq, wo, ovw, seq);
-    
+
     auto a_node_input_ports_ptr = a_node.input_ports();
     compare<NUM_INPUTS-1, decltype(a_node_input_ports_ptr), decltype(input_tuple)>::compare_refs(a_node_input_ports_ptr, input_tuple);
     ASSERT (NUM_INPUTS == tbb::flow::tuple_size<decltype(a_node_input_ports_ptr)>::value, "not all declared input ports were bound to nodes");
@@ -145,7 +145,7 @@ void add_all_nodes (){
     ASSERT(NUM_OUTPUTS == tbb::flow::tuple_size<decltype(a_node_output_ports_ptr)>::value, "not all declared output ports were bound to nodes");
 
     //composite_node with only input_ports
-    input_only_type b_node(g); 
+    input_only_type b_node(g);
     b_node.set_external_ports(input_tuple);
 
     b_node.add_visible_nodes(src, fxn, m_fxn, bc, lim, ind, s, ct, j, q, bf, pq, wo, ovw, seq);
@@ -156,7 +156,7 @@ void add_all_nodes (){
     ASSERT (NUM_INPUTS == tbb::flow::tuple_size<decltype(b_node_input_ports_ptr)>::value, "not all declared input ports were bound to nodes");
 
     //composite_node with only output_ports
-    output_only_type c_node(g); 
+    output_only_type c_node(g);
     c_node.set_external_ports(output_tuple);
 
     c_node.add_visible_nodes(src, fxn, m_fxn, bc, lim, ind, s, ct, j, q, bf, pq, wo, ovw, seq);
@@ -176,7 +176,7 @@ struct tiny_node : public tbb::flow::composite_node< tbb::flow::tuple< int >, tb
 public:
     tiny_node(tbb::flow::graph &g, bool hidden = false) : base_type(g), f1(g, tbb::flow::unlimited, passthru_body() ), f2(g, tbb::flow::unlimited, passthru_body() ) {
         tbb::flow::make_edge( f1, f2 );
-        
+
         tbb::flow::tuple<tbb::flow::function_node< int, int >& > input_tuple(f1);
         tbb::flow::tuple<tbb::flow::function_node< int, int >& > output_tuple(f2);
         base_type::set_external_ports( input_tuple, output_tuple );
@@ -216,7 +216,7 @@ int test_tiny(bool hidden = false) {
 
     int i, j =0;
     q.try_get(i);
-    ASSERT( i == 1, "item did not go through graph");  
+    ASSERT( i == 1, "item did not go through graph");
     q.try_get(j);
     ASSERT( !j, "unexpected item in graph");
     g.wait_for_all();
@@ -227,20 +227,20 @@ int test_tiny(bool hidden = false) {
 
     tbb::flow::make_edge( t1 , f3 );
     tbb::flow::make_edge(f3, q);
-   
+
     f0.try_put(2);
     g.wait_for_all();
 
     q.try_get(i);
-    ASSERT( i == 2, "item did not go through graph after removal of edge");  
+    ASSERT( i == 2, "item did not go through graph after removal of edge");
     q.try_get(j);
     ASSERT( !j, "unexpected item in graph after removal of edge");
 
-    return 0; 
+    return 0;
 }
 
 class adder_node : public tbb::flow::composite_node< tbb::flow::tuple< int, int >, tbb::flow::tuple< int > > {
-public: 
+public:
     tbb::flow::join_node< tbb::flow::tuple< int, int >, tbb::flow::queueing > j;
     tbb::flow::function_node< tbb::flow::tuple< int, int >, int > f;
 private:
@@ -255,9 +255,9 @@ private:
 public:
     adder_node(tbb::flow::graph &g, bool hidden = false) : base_type(g), j(g), f(g, tbb::flow::unlimited, f_body() ) {
         tbb::flow::make_edge( j, f );
-        
+
         base_type::set_external_ports(base_type::input_ports_type(tbb::flow::input_port<0>(j), tbb::flow::input_port<1>(j)), base_type::output_ports_type(f));
-       
+
         if (hidden)
             base_type::add_nodes(j, f);
         else
@@ -269,7 +269,7 @@ public:
 struct square_body { int operator()(int v) { return v*v; } };
 struct cube_body { int operator()(int v) { return v*v*v; } };
 int adder_sum(int i) {
-    return (int)(pow(3*pow(i,3) + pow(i, 2),2)); 
+    return (int)(pow(3*pow(i,3) + pow(i, 2),2));
 }
 int test_adder(bool hidden = false) {
     tbb::flow::graph g;
@@ -299,7 +299,7 @@ int test_adder(bool hidden = false) {
 
     tbb::flow::function_node<int,int> s2(g, tbb::flow::unlimited, square_body());
     tbb::flow::queue_node<int> q(g);
- 
+
     tbb::flow::make_edge( s, tbb::flow::input_port<0>(a0) );
     tbb::flow::make_edge( c, tbb::flow::input_port<1>(a0) );
 
@@ -311,7 +311,7 @@ int test_adder(bool hidden = false) {
 
     tbb::flow::make_edge( tbb::flow::output_port<0>(a2), s2 );
     tbb::flow::make_edge( s2, q );
-      
+
     int sum_total=0;
     int result=0;
     for ( int i = 1; i < 4; ++i ) {
@@ -324,7 +324,7 @@ int test_adder(bool hidden = false) {
     int j;
     for ( int i = 1; i < 4; ++i ) {
         q.try_get(j);
-        result += j;  
+        result += j;
     }
     g.wait_for_all();
     ASSERT(result == sum_total, "the sum from the graph does not match the calculated value");
@@ -347,27 +347,27 @@ int test_adder(bool hidden = false) {
 
     for ( int i = 10; i < 20; ++i ) {
         q.try_get(j);
-        result += j;  
+        result += j;
     }
     g.wait_for_all();
     ASSERT(result == sum_total, "the new sum after the replacement of the nodes does not match the calculated value");
 
-    return 0; 
+    return 0;
 }
 
-/* 
+/*
                                               outer composite node (outer_node)
                                      |-------------------------------------------------------------------|
                                      |                                                                   |
                                      |  |------------------|  |------------------|  |------------------| |
-             |---------------------| |--| inner composite  | /| inner composite  | /| inner composite  | | |-------------------| 
+             |---------------------| |--| inner composite  | /| inner composite  | /| inner composite  | | |-------------------|
              |broadcast node(input)|/|  | node             |/ | node             |/ | node             |-+-| queue node(output)|
              |---------------------|\|  |(inner_node1)     |\ | (inner_node2)    |\ | (inner_node3)    | | |-------------------|
                                      |--|                  | \|                  | \|                  | |
                                      |  |------------------|  |------------------|  |------------------| |
                                      |                                                                   |
                                      |-------------------------------------------------------------------|
-                 
+
 */
 int test_nested_adder(bool hidden=false) {
     tbb::flow::graph g;
@@ -380,7 +380,7 @@ int test_nested_adder(bool hidden=false) {
     adder_node inner_node2(g, hidden);
     adder_node inner_node3(g, hidden);
 
-    outer_node.set_external_ports(base_type::input_ports_type(tbb::flow::input_port<0>(inner_node1), tbb::flow::input_port<1>(inner_node1)), base_type::output_ports_type(tbb::flow::output_port<0>(inner_node3))); 
+    outer_node.set_external_ports(base_type::input_ports_type(tbb::flow::input_port<0>(inner_node1), tbb::flow::input_port<1>(inner_node1)), base_type::output_ports_type(tbb::flow::output_port<0>(inner_node3)));
 
     ASSERT(&tbb::flow::input_port<0>(outer_node) == &tbb::flow::input_port<0>(inner_node1), "input port 0 of inner_node1 not bound to input port 0 in outer_node");
     ASSERT(&tbb::flow::input_port<1>(outer_node) == &tbb::flow::input_port<1>(inner_node1), "input port 1 of inner_node1 not bound to input port 1 in outer_node");
@@ -450,7 +450,7 @@ public:
             base_type::add_nodes(j,s,f);
         else
             base_type::add_visible_nodes(j,s,f);
-        
+
     }
 };
 
@@ -463,7 +463,7 @@ int test_prefix(bool hidden = false) {
     ASSERT(&tbb::flow::get<2>(p.input_ports()) == &tbb::flow::input_port<2>(p.j), "input port 2 of j is not bound to input port 2 of composite node p");
     ASSERT(&tbb::flow::input_port<3>(p.j) == &tbb::flow::input_port<3>(p.j), "input port 3 of j is not bound to input port 3 of composite node p");
     ASSERT(&tbb::flow::get<4>(p.input_ports()) == &tbb::flow::input_port<4>(p.j), "input port 4 of j is not bound to input port 4 of composite node p");
-    
+
 
     ASSERT(&tbb::flow::get<0>(p.output_ports()) == &tbb::flow::output_port<0>(p.s), "output port 0 of s is not bound to output port 0 of composite node p");
     ASSERT(&tbb::flow::output_port<1>(p.s) == &tbb::flow::output_port<1>(p.s), "output port 1 of s is not bound to output port 1 of composite node p");
@@ -495,7 +495,7 @@ int test_prefix(bool hidden = false) {
             g.wait_for_all();
         }
     }
-    return 0; 
+    return 0;
 }
 
 void input_only_output_only_composite(bool hidden) {
@@ -526,17 +526,17 @@ void input_only_output_only_composite(bool hidden) {
     a_in.set_external_ports(input_tuple);
     ASSERT(&tbb::flow::get<0>(a_in.input_ports()) == &f, "f not bound to input port 0 in composite_node a_in");
 
-    tbb::flow::tuple<src_type&> output_tuple(src); 
+    tbb::flow::tuple<src_type&> output_tuple(src);
     a_out.set_external_ports(output_tuple);
     ASSERT(&tbb::flow::get<0>(a_out.output_ports()) == &src, "src not bound to output port 0 in composite_node a_out");
-    
-    if(hidden) { 
-        a_in.add_nodes(f, que); 
-        a_out.add_nodes(src); 
+
+    if(hidden) {
+        a_in.add_nodes(f, que);
+        a_out.add_nodes(src);
     } else {
-        a_in.add_visible_nodes(f, que); 
+        a_in.add_visible_nodes(f, que);
         a_out.add_visible_nodes(src);
-    }    
+    }
 
     tbb::flow::make_edge(a_out, a_in);
     tbb::flow::make_edge(f, que);
@@ -550,7 +550,7 @@ void input_only_output_only_composite(bool hidden) {
     g.wait_for_all();
 }
 
-#endif // __TBB_FLOW_GRAPH_CPP11_FEATURES 
+#endif // __TBB_FLOW_GRAPH_CPP11_FEATURES
 
 int TestMain() {
 
@@ -567,10 +567,10 @@ int TestMain() {
     test_prefix(true);
     input_only_output_only_composite(true);
     input_only_output_only_composite(false);
-     
-    return Harness::Done; 
-#else 
-    return Harness::Skipped; 
-#endif 
+
+    return Harness::Done;
+#else
+    return Harness::Skipped;
+#endif
 
 }

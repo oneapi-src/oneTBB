@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -18,7 +18,7 @@
     reasons why the executable file might be covered by the GNU General Public License.
 */
 
-// Source file for miscellaneous entities that are infrequently referenced by 
+// Source file for miscellaneous entities that are infrequently referenced by
 // an executing program, and implementation of which requires dynamic linking.
 
 #include "tbb_misc.h"
@@ -85,14 +85,12 @@ static void get_thread_affinity_mask( size_t maskSize, basic_mask_t* threadMask 
 
 static basic_mask_t* process_mask;
 static int num_masks;
-struct process_mask_cleanup_helper {
-    ~process_mask_cleanup_helper() {
-        if( process_mask ) {
-            delete [] process_mask;
-        }
-     }
-};
-static process_mask_cleanup_helper process_mask_cleanup;
+
+void destroy_process_mask() {
+    if( process_mask ) {
+        delete [] process_mask;
+    }
+}
 
 #define curMaskSize sizeof(basic_mask_t) * num_masks
 affinity_helper::~affinity_helper() {
@@ -256,12 +254,12 @@ struct ProcessorGroupInfo {
     int         numProcsRunningTotal;   ///< Subtotal of processors in this and preceding groups
 
     //! Total number of processor groups in the system
-    static int NumGroups; 
+    static int NumGroups;
 
     //! Index of the group with a slot reserved for the first master thread
     /** In the context of multiple processor groups support current implementation
         defines "the first master thread" as the first thread to invoke
-        AvailableHwConcurrency(). 
+        AvailableHwConcurrency().
 
         TODO:   Implement a dynamic scheme remapping workers depending on the pending
                 master threads affinity. **/
@@ -281,7 +279,7 @@ struct TBB_GROUP_AFFINITY {
 
 static DWORD (WINAPI *TBB_GetActiveProcessorCount)( WORD groupIndex ) = NULL;
 static WORD (WINAPI *TBB_GetActiveProcessorGroupCount)() = NULL;
-static BOOL (WINAPI *TBB_SetThreadGroupAffinity)( HANDLE hThread, 
+static BOOL (WINAPI *TBB_SetThreadGroupAffinity)( HANDLE hThread,
                         const TBB_GROUP_AFFINITY* newAff, TBB_GROUP_AFFINITY *prevAff );
 static BOOL (WINAPI *TBB_GetThreadGroupAffinity)( HANDLE hThread, TBB_GROUP_AFFINITY* );
 
@@ -398,7 +396,7 @@ int AvailableHwConcurrency() {
 
 /* End of _WIN32||_WIN64 implementation */
 #else
-    #error AvailableHwConcurrency is not implemented for this OS 
+    #error AvailableHwConcurrency is not implemented for this OS
 #endif
 
 } // namespace internal

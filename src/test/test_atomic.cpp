@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -97,7 +97,7 @@ template<typename T, LoadStoreExpression E> tbb::atomic<T> TestStruct<T, E>::gCo
 //! Test compare_and_swap template members of class atomic<T> for memory_semantics=M
 template<typename T,tbb::memory_semantics M>
 void TestCompareAndSwapWithExplicitOrdering( T i, T j, T k ) {
-    ASSERT( i!=k, "values must be distinct" ); 
+    ASSERT( i!=k, "values must be distinct" );
     // Test compare_and_swap that should fail
     TestStruct<T> x(i);
     T old = x.counter.template compare_and_swap<M>( j, k );
@@ -717,9 +717,9 @@ void TestAtomicEnum() {
 enum class ScopedColor1 {ScopedRed,ScopedGreen,ScopedBlue=-1};
 // TODO: extend the test to cover 2 byte scoped enum as well
 #if __TBB_ICC_SCOPED_ENUM_WITH_UNDERLYING_TYPE_NEGATIVE_VALUE_BROKEN
-enum class ScopedColor2 : char {ScopedZero, ScopedOne,ScopedRed=42,ScopedGreen=-1,ScopedBlue=127};
+enum class ScopedColor2 : signed char {ScopedZero, ScopedOne,ScopedRed=42,ScopedGreen=-1,ScopedBlue=127};
 #else
-enum class ScopedColor2 : char {ScopedZero, ScopedOne,ScopedRed=-128,ScopedGreen=-1,ScopedBlue=127};
+enum class ScopedColor2 : signed char {ScopedZero, ScopedOne,ScopedRed=-128,ScopedGreen=-1,ScopedBlue=127};
 #endif
 
 // TODO: replace the hack of getting symbolic enum name with a better implementation
@@ -730,7 +730,7 @@ std::string to_string<ScopedColor1>(const ScopedColor1& a){
 }
 template<>
 std::string to_string<ScopedColor2>(const ScopedColor2& a){
-    return enum_strings[a==ScopedColor2::ScopedRed? 2 : 
+    return enum_strings[a==ScopedColor2::ScopedRed? 2 :
         a==ScopedColor2::ScopedGreen? 3 : a==ScopedColor2::ScopedBlue? 4 : (int)a ];
 }
 
@@ -1286,7 +1286,7 @@ public:
                     if( flag!=(T)-1 ) {
                         REPORT("ERROR: flag!=(T)-1 k=%d i=%d trial=%x type=%s (atomicity problem?)\n", k, i, trial, name );
                         ParallelError = true;
-                    } 
+                    }
                     if( !IsRelaxed(E) && message!=(T)-1 ) {
                         REPORT("ERROR: message!=(T)-1 k=%d i=%d trial=%x type=%s mode=%d (memory fence problem?)\n", k, i, trial, name, E );
                         ParallelError = true;

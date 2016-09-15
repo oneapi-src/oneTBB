@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -314,7 +314,7 @@ public:
                 max(stat.m_rangeNum, settings->thread_num) - min(stat.m_rangeNum, settings->thread_num);
             if (disparity > settings->above_threads_size_tolerance) {
                 REPORT("ERROR: '%s (f=%d|e=%d)': |#ranges(%llu)-#threads(%llu)|=%llu > %llu=tolerance\n",
-                    rangeName, int(settings->provide_feedback), int(settings->ensure_non_empty_size), stat.m_rangeNum, 
+                    rangeName, int(settings->provide_feedback), int(settings->ensure_non_empty_size), stat.m_rangeNum,
                     settings->thread_num, disparity, uint64_t(settings->above_threads_size_tolerance));
                 ASSERT(disparity <= settings->above_threads_size_tolerance, "Incorrect number of range "
                     "objects was created before work balancing phase started");

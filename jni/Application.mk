@@ -1,4 +1,4 @@
-# Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+# Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 #
 # This file is part of Threading Building Blocks. Threading Building Blocks is free software;
 # you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -23,23 +23,19 @@ export target?=android
 
 ifeq (ia32,$(arch))
     APP_ABI:=x86
-else 
-ifeq (intel64,$(arch))
+else ifeq (intel64,$(arch))
     APP_ABI:=x86_64
-else 
-ifeq (arm,$(arch))
+else ifeq (arm,$(arch))
     APP_ABI:=armeabi-v7a
-else 
+else ifeq (arm64,$(arch))
+    APP_ABI:=arm64-v8a
+else
     APP_ABI:=$(arch)
-endif
-endif
 endif
 
 APP_PLATFORM:=android-21
-NDK_TOOLCHAIN_VERSION:=4.9
-
-# Intel(R) C++ Compiler does not support ndk r10 version yet.
-ifeq (iccx86,$(compiler)$(APP_ABI))
-    APP_PLATFORM:=android-9
-    NDK_TOOLCHAIN_VERSION:=4.8
+ifneq ("","$(api_version)")
+    APP_PLATFORM:=$(api_version)
 endif
+
+NDK_TOOLCHAIN_VERSION:=4.9

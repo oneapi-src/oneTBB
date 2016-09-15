@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -18,7 +18,7 @@
     reasons why the executable file might be covered by the GNU General Public License.
 */
 
-/* The API to enable interoperability between Intel(R) Cilk(TM) Plus and 
+/* The API to enable interoperability between Intel(R) Cilk(TM) Plus and
    Intel(R) Threading Building Blocks. */
 
 #ifndef CILK_TBB_INTEROP_H
@@ -71,7 +71,7 @@ typedef __cilk_tbb_retcode (*__cilk_tbb_pfn_unwatch_stacks)(void *data);
       The thunk must be invoked on the thread doing the releasing,
       Must "happen before" the stack is used elsewhere.
 
-   When a non-empty stack is transferred between threads, the first thread must orphan it 
+   When a non-empty stack is transferred between threads, the first thread must orphan it
    and the second thread must adopt it.
 
    An empty stack can be transferred similarly, or simply released by the first thread.
@@ -85,7 +85,7 @@ typedef __cilk_tbb_retcode (*__cilk_tbb_pfn_unwatch_stacks)(void *data);
                 |     \     /                                  \     /     |
                 |      --<--                                    --<--      |
                 ^      RELEASE or                              ADOPT       V
-                 \     unwatch                                            / 
+                 \     unwatch                                            /
                   \                                                      /
                    --------------------------<---------------------------
                                           RELEASE
@@ -98,11 +98,11 @@ struct __cilk_tbb_stack_op_thunk {
 /* Thunk invoked by TBB when it is no longer interested in watching the stack bound to the current thread. */
 struct __cilk_tbb_unwatch_thunk {
     __cilk_tbb_pfn_unwatch_stacks routine;
-    void* data;      
+    void* data;
 };
 
 /* Defined by cilkrts, called by TBB.
-   Requests that cilkrts invoke __cilk_tbb_stack_op_thunk when it orphans a stack. 
+   Requests that cilkrts invoke __cilk_tbb_stack_op_thunk when it orphans a stack.
    cilkrts sets *u to a thunk that TBB should call when it is no longer interested in watching the stack. */
 CILK_EXPORT
 __cilk_tbb_retcode __cilkrts_watch_stack(struct __cilk_tbb_unwatch_thunk* u,

@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -20,7 +20,7 @@
 
 
 #if (_WIN32 || _WIN64)
-// As the test is intentionally build with /EHs-, suppress multiple VS2005's 
+// As the test is intentionally build with /EHs-, suppress multiple VS2005's
 // warnings like C4530: C++ exception handler used, but unwind semantics are not enabled
 #if defined(_MSC_VER) && !__INTEL_COMPILER
 /* ICC 10.1 and 11.0 generates code that uses std::_Raise_handler,
@@ -109,12 +109,12 @@ typedef unsigned __int64 uint64_t;
 #endif /* OS selection */
 
 #if _WIN32
-// On Windows, the trick with string "dependence on msvcpXX.dll" is necessary to create 
+// On Windows, the trick with string "dependence on msvcpXX.dll" is necessary to create
 // dependence on msvcpXX.dll, for sake of a regression test.
 // On Linux, C++ RTL headers are undesirable because of breaking strict ANSI mode.
 #if defined(_MSC_VER) && _MSC_VER >= 1300 && _MSC_VER <= 1310 && !defined(__INTEL_COMPILER)
 /* Fixing compilation error reported by VS2003 for exception class
-   when _HAS_EXCEPTIONS is 0: 
+   when _HAS_EXCEPTIONS is 0:
    bad_cast that inherited from exception is not in std namespace.
 */
 using namespace std;
@@ -153,7 +153,7 @@ struct LargeMemoryBlock : public BlockI {
     MemoryPool       *pool;          // owner pool
     LargeMemoryBlock *next,          // ptrs in list of cached blocks
                      *prev,
-                     *gPrev,         // in pool's global list 
+                     *gPrev,         // in pool's global list
                      *gNext;
     uintptr_t         age;           // age of block while in cache
     size_t            objectSize;    // the size requested by a client
@@ -166,7 +166,7 @@ struct LargeMemoryBlock : public BlockI {
 
 struct LargeObjectHdr {
     LargeMemoryBlock *memoryBlock;
-    /* Have to duplicate it here from CachedObjectHdr, 
+    /* Have to duplicate it here from CachedObjectHdr,
        as backreference must be checked without further pointer dereference.
        Points to LargeObjectHdr. */
     BackRefIdx       backRefIdx;

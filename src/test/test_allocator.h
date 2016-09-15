@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -22,7 +22,7 @@
 // Tests against requirements in 20.1.5 of ISO C++ Standard (1998).
 // Does not check for thread safety or false sharing issues.
 //
-// Tests for compatibility with the host's STL are in 
+// Tests for compatibility with the host's STL are in
 // test_Allocator_STL.h.  Those tests are in a separate file
 // because they bring in lots of STL headers, and the tests here
 // are supposed to work in the abscense of STL.
@@ -86,7 +86,7 @@ public:
 };
 #endif
 
-//! T is type and A is allocator for that type 
+//! T is type and A is allocator for that type
 template<typename T, typename A>
 void TestBasic( A& a ) {
     T x;
@@ -114,7 +114,7 @@ void TestBasic( A& a ) {
     --difference;
     ASSERT( difference<0, "not an signed integral type?" );
 
-    // "rebind" tested by our caller 
+    // "rebind" tested by our caller
 
     ASSERT( a.address(rx)==px, NULL );
 
@@ -131,8 +131,8 @@ void TestBasic( A& a ) {
 
     // Test hint argument. This can't be compiled when hint is void*, It should be const void*
     typename A::pointer a_ptr;
-    const void * const_hint = NULL;    
-    a_ptr = a.allocate (1, const_hint);    
+    const void * const_hint = NULL;
+    a_ptr = a.allocate (1, const_hint);
     a.deallocate(a_ptr, 1);
 
     // Test "a.deallocate(p,n)
@@ -145,9 +145,9 @@ void TestBasic( A& a ) {
 
     // Test "a.max_size()"
     AssertSameType( a.max_size(), typename A::size_type(0) );
-    // Following assertion catches case where max_size() is so large that computation of 
+    // Following assertion catches case where max_size() is so large that computation of
     // number of bytes for such an allocation would overflow size_type.
-    ASSERT( a.max_size()*typename A::size_type(sizeof(T))>=a.max_size(), "max_size larger than reasonable" ); 
+    ASSERT( a.max_size()*typename A::size_type(sizeof(T))>=a.max_size(), "max_size larger than reasonable" );
 
     // Test "a.construct(p,t)"
     int n = NumberOfFoo;
@@ -259,7 +259,7 @@ void Test(A &a) {
     // thread safety
     NativeParallelFor( 4, Body<A>(a) );
     ASSERT( NumberOfFoo==0, "Allocate/deallocate count mismatched" );
- 
+
     ASSERT( a==b, NULL );
     ASSERT( !(a!=b), NULL );
 }

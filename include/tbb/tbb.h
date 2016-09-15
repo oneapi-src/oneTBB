@@ -1,5 +1,5 @@
 /*
-    Copyright 2005-2015 Intel Corporation.  All Rights Reserved.
+    Copyright 2005-2016 Intel Corporation.  All Rights Reserved.
 
     This file is part of Threading Building Blocks. Threading Building Blocks is free software;
     you can redistribute it and/or modify it under the terms of the GNU General Public License
@@ -21,9 +21,9 @@
 #ifndef __TBB_tbb_H
 #define __TBB_tbb_H
 
-/** 
-    This header bulk-includes declarations or definitions of all the functionality 
-    provided by TBB (save for malloc dependent headers). 
+/**
+    This header bulk-includes declarations or definitions of all the functionality
+    provided by TBB (save for malloc dependent headers).
 
     If you use only a few TBB constructs, consider including specific headers only.
     Any header listed below can be included independently of others.
