@@ -1,0 +1,35 @@
+; Copyright (c) 2005-2016 Intel Corporation
+;
+; Licensed under the Apache License, Version 2.0 (the "License");
+; you may not use this file except in compliance with the License.
+; You may obtain a copy of the License at
+;
+;     http://www.apache.org/licenses/LICENSE-2.0
+;
+; Unless required by applicable law or agreed to in writing, software
+; distributed under the License is distributed on an "AS IS" BASIS,
+; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+; See the License for the specific language governing permissions and
+; limitations under the License.
+;
+;
+;
+;
+
+EXPORTS
+
+; MemoryAllocator.cpp
+scalable_calloc @1
+scalable_free @2
+scalable_malloc @3
+scalable_realloc @4
+scalable_posix_memalign @5
+scalable_aligned_malloc @6
+scalable_aligned_realloc @7
+scalable_aligned_free @8
+__TBB_malloc_safer_free @9
+__TBB_malloc_safer_realloc @10
+scalable_msize @11
+__TBB_malloc_safer_msize @12
+__TBB_malloc_safer_aligned_realloc @13
+__TBB_malloc_safer_aligned_msize @14

@@ -1,0 +1,127 @@
+------------------------------------------------------------------------
+Intel(R) Threading Building Blocks - Release Notes
+                   Version 2017
+------------------------------------------------------------------------
+
+
+System Requirements
+-------------------
+
+Intel(R) Threading Building Blocks (Intel(R) TBB) is available
+commercially (see http://software.intel.com/en-us/intel-tbb) as a
+binary distribution, and in open source, in both source and binary
+forms (see http://threadingbuildingblocks.org).
+
+When built from source, Intel(R) TBB is intended to be highly portable
+and so supports a wide variety of operating systems and platforms (see
+http://threadingbuildingblocks.org for more details).
+
+Binary distributions, including commercial distributions, are validated
+and officially supported for the hardware, software, operating systems
+and compilers listed here.
+
+Hardware - Recommended
+
+    Microsoft* Windows* Systems
+        Intel(R) Core(TM) processor family or higher
+        Intel(R) Xeon(R) processor family or higher
+        Intel(R) Xeon Phi(TM) processor family
+    Linux* Systems
+        Intel(R) Core(TM) processor family or higher
+        Intel(R) Xeon(R) processor family or higher
+        Intel(R) Xeon Phi(TM) processor family
+    OS X* Systems
+        Intel(R) Core(TM) processor family or higher
+    Android* Systems
+        Intel(R) Atom(TM) processor family
+
+Hardware - Supported
+
+    Intel(R) Pentium(R) 4 processor family and higher
+    Intel(R) Xeon Phi(TM) coprocessor
+    Intel(R) Atom(TM) processor family
+    Non Intel(R) processors compatible with the above processors
+
+Software - Minimum Requirements
+
+    Supported operating system (see below)
+    Supported compiler (see below)
+
+Software - Recommended
+
+    Intel(R) Parallel Studio XE 2016 and higher
+    Intel(R) System Studio 2016 and higher
+
+Software - Supported Operating Systems
+
+    Systems with Microsoft* Windows* operating systems
+        Microsoft* Windows* 10
+        Microsoft* Windows* 8, 8.1
+        Microsoft* Windows* 7 SP1
+        Microsoft* Windows* Server 2012 R2
+        Microsoft* Windows* Server 2012
+        Microsoft* Windows* Server 2008 R2 SP1
+        Microsoft* Windows* HPC Server 2008
+        Windows Embedded 8.x, 10
+    Systems with Linux* operating systems
+        CentOS 6.5, 7.1
+        Debian* 7, 8
+        Fedora* 20, 21, 22, 23
+        Intel(R) Cluster Ready
+        Red Hat* Enterprise Linux* 6, 7
+        SuSE* Linux* Enterprise Server 11, 12
+        Ubuntu* 12.04 LTS, 13.10, 14.04 LTS, 15.04, 16.04 LTS
+        WindRiver* Linux 7
+        Yocto 1.7, 1.9 (2.0), 2.1
+    Systems with OS X* operating systems
+        OS X* 10.10 and higher
+    Systems with Android* operating systems
+        Android* 5.x, 6.x
+
+Software - Supported Compilers
+
+    Intel(R) C++ Compiler 15.0 and higher
+    Microsoft* Visual C++ 11.0 (Microsoft* Visual Studio* 2012,
+        Windows* OS only) and higher
+    Microsoft* Windows* Software Development Kit for Windows* 8
+        and higher
+    For each supported Linux* operating system, the standard gcc
+        version provided with that operating system is supported,
+        starting from
+            GNU Compilers (gcc) 4.1 and higher
+            GNU C Library (glibc) version 2.4 and higher
+    Xcode* 6.3 and higher
+    Android* NDK r10e and higher
+
+Software - Supported Performance Analysis Tools
+
+    Intel(R) VTune(TM) Amplifier XE 2016 and higher.
+    Intel(R) Inspector XE 2016 and higher.
+    Intel(R) Advisor XE 2016 and higher.
+
+Known Issues
+------------
+
+Below is the list of known issues in this release of
+Intel(R) Threading Building Blocks (Intel(R) TBB).
+See the "Known Issues" appendix in the Intel(R) TBB Developer
+Reference for notes applicable to multiple releases of Intel(R) TBB.
+
+Library Issues
+
+    - If you build Intel(R) TBB from sources with GCC 6, specify
+        the -flifetime-dse=1 option to prevent crashes at runtime,
+        or use Intel(R) TBB makefiles that automatically set this option.
+
+------------------------------------------------------------------------
+(C) 2016 Intel Corporation
+
+Intel, the Intel logo, Intel Core, Xeon, Xeon Phi and Pentium are
+trademarks of Intel Corporation in the U.S. and/or other countries.
+
+* Other names and brands may be claimed as the property of others.
+
+Third Party and Open Source Licenses
+
+Content of some examples or binaries may be covered by various open-source
+licenses. See the index.html file in each respective folder for details.
