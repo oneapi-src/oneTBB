@@ -27,8 +27,6 @@
 #include "atomic.h" // for as_atomic
 #endif
 
-#if __TBB_TASK_ARENA
-
 namespace tbb {
 
 //! @cond INTERNAL
@@ -283,7 +281,5 @@ public:
 using interface7::task_arena;
 
 } // namespace tbb
-
-#endif /* __TBB_TASK_ARENA */
 
 #endif /* __TBB_task_arena_H */

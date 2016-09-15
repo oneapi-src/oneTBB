@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::flow::interface8::composite_node&lt; tbb::flow::tuple&lt; InputTypes...&gt;, tbb::flow::tuple&lt;&gt; &gt; Class Template Reference</title>
+<title>tbb::interface5::concurrent_unordered_set&lt; Key, Hasher, Key_equality, Allocator &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,99 +33,118 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00276.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><a class="el" href="a00045.html">composite_node< tbb::flow::tuple< InputTypes...>, tbb::flow::tuple<> ></a></li>  </ul>
+<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><b>interface5</b></li><li class="navelem"><a class="el" href="a00045.html">concurrent_unordered_set</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pro-methods">Protected Member Functions</a> &#124;
-<a href="a00400.html">List of all members</a>  </div>
+<a href="a00373.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::flow::interface8::composite_node&lt; tbb::flow::tuple&lt; InputTypes...&gt;, tbb::flow::tuple&lt;&gt; &gt; Class Template Reference</div>  </div>
+<div class="title">tbb::interface5::concurrent_unordered_set&lt; Key, Hasher, Key_equality, Allocator &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 <div class="dynheader">
-Inheritance diagram for tbb::flow::interface8::composite_node&lt; tbb::flow::tuple&lt; InputTypes...&gt;, tbb::flow::tuple&lt;&gt; &gt;:</div>
+Inheritance diagram for tbb::interface5::concurrent_unordered_set&lt; Key, Hasher, Key_equality, Allocator &gt;:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00045.png" usemap="#tbb::flow::interface8::composite_node&lt; tbb::flow::tuple&lt; InputTypes...&gt;, tbb::flow::tuple&lt;&gt; &gt;_map" alt=""/>
-  <map id="tbb::flow::interface8::composite_node&lt; tbb::flow::tuple&lt; InputTypes...&gt;, tbb::flow::tuple&lt;&gt; &gt;_map" name="tbb::flow::interface8::composite_node&lt; tbb::flow::tuple&lt; InputTypes...&gt;, tbb::flow::tuple&lt;&gt; &gt;_map">
-<area href="a00081.html" title="The base of all graph nodes. " alt="tbb::flow::interface8::graph_node" shape="rect" coords="0,56,515,80"/>
+  <img src="a00045.png" usemap="#tbb::interface5::concurrent_unordered_set&lt; Key, Hasher, Key_equality, Allocator &gt;_map" alt=""/>
+  <map id="tbb::interface5::concurrent_unordered_set&lt; Key, Hasher, Key_equality, Allocator &gt;_map" name="tbb::interface5::concurrent_unordered_set&lt; Key, Hasher, Key_equality, Allocator &gt;_map">
 </map>
  </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a11d850d39b117cb7d70e328aa3fc7e10"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a11d850d39b117cb7d70e328aa3fc7e10"></a>
-typedef tbb::flow::tuple<br class="typebreak"/>
-&lt; <a class="el" href="a00157.html">receiver</a>&lt; InputTypes &gt; &amp;... &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>input_ports_type</b></td></tr>
-<tr class="separator:a11d850d39b117cb7d70e328aa3fc7e10"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afad91155e1803ee686e5f42637594e7b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afad91155e1803ee686e5f42637594e7b"></a>
+typedef Key&#160;</td><td class="memItemRight" valign="bottom"><b>key_type</b></td></tr>
+<tr class="separator:afad91155e1803ee686e5f42637594e7b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a461fe414bf3ae73e7cc57e851ff592e4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a461fe414bf3ae73e7cc57e851ff592e4"></a>
+typedef base_type::value_type&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b></td></tr>
+<tr class="separator:a461fe414bf3ae73e7cc57e851ff592e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3a64703b55d07509d5c88810c2342ba5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3a64703b55d07509d5c88810c2342ba5"></a>
+typedef Key&#160;</td><td class="memItemRight" valign="bottom"><b>mapped_type</b></td></tr>
+<tr class="separator:a3a64703b55d07509d5c88810c2342ba5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6952de8a7ff93025c1065bb3e729da72"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6952de8a7ff93025c1065bb3e729da72"></a>
+typedef Hasher&#160;</td><td class="memItemRight" valign="bottom"><b>hasher</b></td></tr>
+<tr class="separator:a6952de8a7ff93025c1065bb3e729da72"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a376a7355aa091fff6a30689141407acd"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a376a7355aa091fff6a30689141407acd"></a>
+typedef Key_equality&#160;</td><td class="memItemRight" valign="bottom"><b>key_equal</b></td></tr>
+<tr class="separator:a376a7355aa091fff6a30689141407acd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acc450473249e39658c46596d8252eef0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acc450473249e39658c46596d8252eef0"></a>
+typedef hash_compare&#160;</td><td class="memItemRight" valign="bottom"><b>key_compare</b></td></tr>
+<tr class="separator:acc450473249e39658c46596d8252eef0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2010e490e8bfb13d9b969ec2fd5e4de4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2010e490e8bfb13d9b969ec2fd5e4de4"></a>
+typedef base_type::allocator_type&#160;</td><td class="memItemRight" valign="bottom"><b>allocator_type</b></td></tr>
+<tr class="separator:a2010e490e8bfb13d9b969ec2fd5e4de4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5a8c52d4a2b57b9b4b5d889e96d88f44"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5a8c52d4a2b57b9b4b5d889e96d88f44"></a>
+typedef base_type::pointer&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b></td></tr>
+<tr class="separator:a5a8c52d4a2b57b9b4b5d889e96d88f44"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a281276279a33ef1c5dfba5c196118ae7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a281276279a33ef1c5dfba5c196118ae7"></a>
+typedef base_type::const_pointer&#160;</td><td class="memItemRight" valign="bottom"><b>const_pointer</b></td></tr>
+<tr class="separator:a281276279a33ef1c5dfba5c196118ae7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aec3d473d0fa601d51f13efe605cd9862"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aec3d473d0fa601d51f13efe605cd9862"></a>
+typedef base_type::reference&#160;</td><td class="memItemRight" valign="bottom"><b>reference</b></td></tr>
+<tr class="separator:aec3d473d0fa601d51f13efe605cd9862"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab7da53912d0deffca91618b73ed4995f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab7da53912d0deffca91618b73ed4995f"></a>
+typedef base_type::const_reference&#160;</td><td class="memItemRight" valign="bottom"><b>const_reference</b></td></tr>
+<tr class="separator:ab7da53912d0deffca91618b73ed4995f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5808a50995fc228f114c3c93aeddf331"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5808a50995fc228f114c3c93aeddf331"></a>
+typedef base_type::size_type&#160;</td><td class="memItemRight" valign="bottom"><b>size_type</b></td></tr>
+<tr class="separator:a5808a50995fc228f114c3c93aeddf331"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7aaed1937820a90cb657a824e1391c1f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7aaed1937820a90cb657a824e1391c1f"></a>
+typedef base_type::difference_type&#160;</td><td class="memItemRight" valign="bottom"><b>difference_type</b></td></tr>
+<tr class="separator:a7aaed1937820a90cb657a824e1391c1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abb76557f1755f96dc2e78728cb231e57"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abb76557f1755f96dc2e78728cb231e57"></a>
+typedef base_type::iterator&#160;</td><td class="memItemRight" valign="bottom"><b>iterator</b></td></tr>
+<tr class="separator:abb76557f1755f96dc2e78728cb231e57"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a983d10264bc785a59b11dc94001e0042"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a983d10264bc785a59b11dc94001e0042"></a>
+typedef base_type::const_iterator&#160;</td><td class="memItemRight" valign="bottom"><b>const_iterator</b></td></tr>
+<tr class="separator:a983d10264bc785a59b11dc94001e0042"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acb12b4b1df9a7108a5193b0d3bbfc677"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acb12b4b1df9a7108a5193b0d3bbfc677"></a>
+typedef base_type::iterator&#160;</td><td class="memItemRight" valign="bottom"><b>local_iterator</b></td></tr>
+<tr class="separator:acb12b4b1df9a7108a5193b0d3bbfc677"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af111bc738ee2a1b4b1cf2967a1252322"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af111bc738ee2a1b4b1cf2967a1252322"></a>
+typedef base_type::const_iterator&#160;</td><td class="memItemRight" valign="bottom"><b>const_local_iterator</b></td></tr>
+<tr class="separator:af111bc738ee2a1b4b1cf2967a1252322"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ae77a8e5617f53a0ef808b29b4b3e30df"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae77a8e5617f53a0ef808b29b4b3e30df"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>composite_node</b> (<a class="el" href="a00079.html">graph</a> &amp;g, const char *type_name=&quot;composite_node&quot;)</td></tr>
-<tr class="separator:ae77a8e5617f53a0ef808b29b4b3e30df"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a23c2e4e9448c2313386ed8cb87e38fa8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a23c2e4e9448c2313386ed8cb87e38fa8"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>composite_node</b> (<a class="el" href="a00079.html">graph</a> &amp;g)</td></tr>
-<tr class="separator:a23c2e4e9448c2313386ed8cb87e38fa8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5603b3f944107830890198ca6cda9f5f"><td class="memTemplParams" colspan="2"><a class="anchor" id="a5603b3f944107830890198ca6cda9f5f"></a>
-template&lt;typename T &gt; </td></tr>
-<tr class="memitem:a5603b3f944107830890198ca6cda9f5f"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>set_external_ports</b> (T &amp;&amp;input_ports_tuple)</td></tr>
-<tr class="separator:a5603b3f944107830890198ca6cda9f5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af3a6fb8e9af4c6c62337de253755cea7"><td class="memTemplParams" colspan="2"><a class="anchor" id="af3a6fb8e9af4c6c62337de253755cea7"></a>
-template&lt;typename... NodeTypes&gt; </td></tr>
-<tr class="memitem:af3a6fb8e9af4c6c62337de253755cea7"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>add_visible_nodes</b> (const NodeTypes &amp;...n)</td></tr>
-<tr class="separator:af3a6fb8e9af4c6c62337de253755cea7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7aacaaac085676a76cda6c448b58bfc6"><td class="memTemplParams" colspan="2"><a class="anchor" id="a7aacaaac085676a76cda6c448b58bfc6"></a>
-template&lt;typename... NodeTypes&gt; </td></tr>
-<tr class="memitem:a7aacaaac085676a76cda6c448b58bfc6"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>add_nodes</b> (const NodeTypes &amp;...n)</td></tr>
-<tr class="separator:a7aacaaac085676a76cda6c448b58bfc6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a017cce6f0d365718564d647ed037f522"><td class="memTemplParams" colspan="2"><a class="anchor" id="a017cce6f0d365718564d647ed037f522"></a>
-template&lt;typename... Nodes&gt; </td></tr>
-<tr class="memitem:a017cce6f0d365718564d647ed037f522"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>add_nodes</b> (Nodes &amp;...)</td></tr>
-<tr class="separator:a017cce6f0d365718564d647ed037f522"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a17f86295a5efe554e2b33398323f5310"><td class="memTemplParams" colspan="2"><a class="anchor" id="a17f86295a5efe554e2b33398323f5310"></a>
-template&lt;typename... Nodes&gt; </td></tr>
-<tr class="memitem:a17f86295a5efe554e2b33398323f5310"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>add_visible_nodes</b> (Nodes &amp;...)</td></tr>
-<tr class="separator:a17f86295a5efe554e2b33398323f5310"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a102afe49855ac2ac636410b7c5150ac6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a102afe49855ac2ac636410b7c5150ac6"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>set_name</b> (const char *name)</td></tr>
-<tr class="separator:a102afe49855ac2ac636410b7c5150ac6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ade4374410063e680ff6678ffae123c95"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ade4374410063e680ff6678ffae123c95"></a>
-input_ports_type&#160;</td><td class="memItemRight" valign="bottom"><b>input_ports</b> ()</td></tr>
-<tr class="separator:ade4374410063e680ff6678ffae123c95"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a39b30c90a7b5a7923c56753c5c316f95"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a39b30c90a7b5a7923c56753c5c316f95"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>extract</b> ()</td></tr>
-<tr class="separator:a39b30c90a7b5a7923c56753c5c316f95"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_methods_a00081"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_a00081')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="a00081.html">tbb::flow::interface8::graph_node</a></td></tr>
-<tr class="memitem:a01d89d46b5437dba06add102862ee690 inherit pub_methods_a00081"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a01d89d46b5437dba06add102862ee690"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>graph_node</b> (<a class="el" href="a00079.html">graph</a> &amp;g)</td></tr>
-<tr class="separator:a01d89d46b5437dba06add102862ee690 inherit pub_methods_a00081"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
-Protected Member Functions</h2></td></tr>
-<tr class="memitem:a9019670bcea16a75df225ef61dc21c95"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9019670bcea16a75df225ef61dc21c95"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>reset_node</b> (reset_flags)</td></tr>
-<tr class="separator:a9019670bcea16a75df225ef61dc21c95"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
-Additional Inherited Members</h2></td></tr>
-<tr class="inherit_header pro_attribs_a00081"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_a00081')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="a00081.html">tbb::flow::interface8::graph_node</a></td></tr>
-<tr class="memitem:add0e1e5aabc3cc184a0814752abef3bf inherit pro_attribs_a00081"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="add0e1e5aabc3cc184a0814752abef3bf"></a>
-<a class="el" href="a00079.html">graph</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>my_graph</b></td></tr>
-<tr class="separator:add0e1e5aabc3cc184a0814752abef3bf inherit pro_attribs_a00081"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acddc0494d8270126dfbec1fc1125265a inherit pro_attribs_a00081"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acddc0494d8270126dfbec1fc1125265a"></a>
-<a class="el" href="a00081.html">graph_node</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>next</b></td></tr>
-<tr class="separator:acddc0494d8270126dfbec1fc1125265a inherit pro_attribs_a00081"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a43f71ea7acfead3f6412b37cfa837329 inherit pro_attribs_a00081"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a43f71ea7acfead3f6412b37cfa837329"></a>
-<a class="el" href="a00081.html">graph_node</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>prev</b></td></tr>
-<tr class="separator:a43f71ea7acfead3f6412b37cfa837329 inherit pro_attribs_a00081"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aad5e3bd7fa156e5d8aa81a8ff560d84e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aad5e3bd7fa156e5d8aa81a8ff560d84e"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_set</b> (size_type n_of_buckets=base_type::initial_bucket_number, const hasher &amp;a_hasher=hasher(), const key_equal &amp;a_keyeq=key_equal(), const allocator_type &amp;a=allocator_type())</td></tr>
+<tr class="separator:aad5e3bd7fa156e5d8aa81a8ff560d84e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2d307ae4ebb3e2d46b0a75713824d109"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2d307ae4ebb3e2d46b0a75713824d109"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_set</b> (const Allocator &amp;a)</td></tr>
+<tr class="separator:a2d307ae4ebb3e2d46b0a75713824d109"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afd4bc55194c4473e81398d8456a5c68a"><td class="memTemplParams" colspan="2"><a class="anchor" id="afd4bc55194c4473e81398d8456a5c68a"></a>
+template&lt;typename Iterator &gt; </td></tr>
+<tr class="memitem:afd4bc55194c4473e81398d8456a5c68a"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>concurrent_unordered_set</b> (Iterator first, Iterator last, size_type n_of_buckets=base_type::initial_bucket_number, const hasher &amp;a_hasher=hasher(), const key_equal &amp;a_keyeq=key_equal(), const allocator_type &amp;a=allocator_type())</td></tr>
+<tr class="separator:afd4bc55194c4473e81398d8456a5c68a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6f6d5ecff239ff13000848e925904fe7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6f6d5ecff239ff13000848e925904fe7"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00045.html#a6f6d5ecff239ff13000848e925904fe7">concurrent_unordered_set</a> (std::initializer_list&lt; value_type &gt; il, size_type n_of_buckets=base_type::initial_bucket_number, const hasher &amp;a_hasher=hasher(), const key_equal &amp;a_keyeq=key_equal(), const allocator_type &amp;a=allocator_type())</td></tr>
+<tr class="memdesc:a6f6d5ecff239ff13000848e925904fe7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor from initializer_list. <br/></td></tr>
+<tr class="separator:a6f6d5ecff239ff13000848e925904fe7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac3c68d5286d6ca29fba2b38c59bdbc66"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac3c68d5286d6ca29fba2b38c59bdbc66"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_set</b> (const <a class="el" href="a00045.html">concurrent_unordered_set</a> &amp;table)</td></tr>
+<tr class="separator:ac3c68d5286d6ca29fba2b38c59bdbc66"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a39097dddf99fd057919197b8293bd807"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a39097dddf99fd057919197b8293bd807"></a>
+<a class="el" href="a00045.html">concurrent_unordered_set</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="a00045.html">concurrent_unordered_set</a> &amp;table)</td></tr>
+<tr class="separator:a39097dddf99fd057919197b8293bd807"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9dde7a48af7449fde97d4449691207c5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9dde7a48af7449fde97d4449691207c5"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_set</b> (<a class="el" href="a00045.html">concurrent_unordered_set</a> &amp;&amp;table)</td></tr>
+<tr class="separator:a9dde7a48af7449fde97d4449691207c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a49ad03a5e20f90beac704325aaa6567f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a49ad03a5e20f90beac704325aaa6567f"></a>
+<a class="el" href="a00045.html">concurrent_unordered_set</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="a00045.html">concurrent_unordered_set</a> &amp;&amp;table)</td></tr>
+<tr class="separator:a49ad03a5e20f90beac704325aaa6567f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aecea62fe5c8beab0d7907dbc33ef583f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aecea62fe5c8beab0d7907dbc33ef583f"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_set</b> (const <a class="el" href="a00045.html">concurrent_unordered_set</a> &amp;table, const Allocator &amp;a)</td></tr>
+<tr class="separator:aecea62fe5c8beab0d7907dbc33ef583f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6ef0de826333371f1e9cb33349b35baf"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6ef0de826333371f1e9cb33349b35baf"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_set</b> (<a class="el" href="a00045.html">concurrent_unordered_set</a> &amp;&amp;table, const Allocator &amp;a)</td></tr>
+<tr class="separator:a6ef0de826333371f1e9cb33349b35baf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li><a class="el" href="a00231.html">flow_graph.h</a></li>
+<li>concurrent_unordered_set.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

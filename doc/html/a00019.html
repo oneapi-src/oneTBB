@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::flow::interface8::internal::async_gateway&lt; Output &gt; Class Template Reference</title>
+<title>tbb::bad_last_alloc Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,61 +33,41 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00276.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><b>internal</b></li><li class="navelem"><a class="el" href="a00019.html">async_gateway</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><a class="el" href="a00019.html">bad_last_alloc</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="a00435.html">List of all members</a>  </div>
+<a href="a00314.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::flow::interface8::internal::async_gateway&lt; Output &gt; Class Template Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div>  </div>
+<div class="title">tbb::bad_last_alloc Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Pure virtual template class that defines interface for async communication.  
+<p>Exception for concurrent containers.  
  <a href="a00019.html#details">More...</a></p>
 
-<p><code>#include &lt;flow_graph.h&gt;</code></p>
+<p><code>#include &lt;tbb_exception.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::flow::interface8::internal::async_gateway&lt; Output &gt;:</div>
+Inheritance diagram for tbb::bad_last_alloc:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00019.png" usemap="#tbb::flow::interface8::internal::async_gateway&lt; Output &gt;_map" alt=""/>
-  <map id="tbb::flow::interface8::internal::async_gateway&lt; Output &gt;_map" name="tbb::flow::interface8::internal::async_gateway&lt; Output &gt;_map">
-<area href="a00020.html" title="Implements async node. " alt="tbb::flow::interface8::async_node&lt; Input, Output, Policy, Allocator &gt;" shape="rect" coords="0,56,397,80"/>
+  <img src="a00019.png" usemap="#tbb::bad_last_alloc_map" alt=""/>
+  <map id="tbb::bad_last_alloc_map" name="tbb::bad_last_alloc_map">
 </map>
  </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:a504659293f45515f93e0054a80c1e92d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a504659293f45515f93e0054a80c1e92d"></a>
-typedef Output&#160;</td><td class="memItemRight" valign="bottom"><b>output_type</b></td></tr>
-<tr class="separator:a504659293f45515f93e0054a80c1e92d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a09b554a76f7480433ad32187afcdcc57"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a09b554a76f7480433ad32187afcdcc57"></a>
-virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00019.html#a09b554a76f7480433ad32187afcdcc57">async_try_put</a> (const output_type &amp;i)=0</td></tr>
-<tr class="memdesc:a09b554a76f7480433ad32187afcdcc57"><td class="mdescLeft">&#160;</td><td class="mdescRight">Submit signal from an asynchronous activity to FG. <br/></td></tr>
-<tr class="separator:a09b554a76f7480433ad32187afcdcc57"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a12a73a0513dad9310f0564bd63eedfac"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a12a73a0513dad9310f0564bd63eedfac"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00019.html#a12a73a0513dad9310f0564bd63eedfac">async_reserve</a> ()=0</td></tr>
-<tr class="memdesc:a12a73a0513dad9310f0564bd63eedfac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Increment reference count of graph to prevent premature return from wait_for_all. <br/></td></tr>
-<tr class="separator:a12a73a0513dad9310f0564bd63eedfac"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acdb52d362d2a136b1537b88dca6ece0a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acdb52d362d2a136b1537b88dca6ece0a"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00019.html#acdb52d362d2a136b1537b88dca6ece0a">async_commit</a> ()=0</td></tr>
-<tr class="memdesc:acdb52d362d2a136b1537b88dca6ece0a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decrement reference count of graph to allow return from wait_for_all. <br/></td></tr>
-<tr class="separator:acdb52d362d2a136b1537b88dca6ece0a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3dd95f1a9f15f50eed6a79c079b25d32"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3dd95f1a9f15f50eed6a79c079b25d32"></a>
+const char *&#160;</td><td class="memItemRight" valign="bottom"><b>what</b> () const   throw ()</td></tr>
+<tr class="separator:a3dd95f1a9f15f50eed6a79c079b25d32"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;typename Output&gt;<br/>
-class tbb::flow::interface8::internal::async_gateway&lt; Output &gt;</h3>
-
-<p>Pure virtual template class that defines interface for async communication. </p>
+<div class="textblock"><p>Exception for concurrent containers. </p>
 </div><hr/>The documentation for this class was generated from the following file:<ul>
-<li><a class="el" href="a00231.html">flow_graph.h</a></li>
+<li>tbb_exception.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

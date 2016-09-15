@@ -47,8 +47,6 @@ endif
 
 LINK_FLAGS = -Wl,-rpath-link=. -rdynamic 
 C_FLAGS = $(CPLUS_FLAGS)
- 
-CPP11_FLAGS = -std=c++11 $(DEFINE_KEY)_TBB_CPP0X
 
 ifeq ($(cfg), release)
     CPLUS_FLAGS = -O2
@@ -73,12 +71,6 @@ CPLUS_FLAGS    += --sysroot=$(SYSROOT)
 LIB_LINK_FLAGS += --sysroot=$(SYSROOT)
 # the -static-intel flag is to remove the need to copy Intel-specific libs to the device.
 LIBS           = -L$(CPLUS_LIB_PATH) -lgnustl_shared -static-intel
-
-# This causes CPP11_FLAGS to be issued twice for test_lambda.cpp
-# TODO: Fix this in general for all platforms once the correct strategy is determined.
-ifneq (00,$(lambdas)$(cpp0x))
-    CXX_ONLY_FLAGS += $(CPP11_FLAGS)
-endif
 
 ifeq (ia32,$(arch))
     # TODO: Determine best setting of -march and add to CPLUS_FLAGS

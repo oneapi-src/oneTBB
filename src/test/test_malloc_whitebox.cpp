@@ -26,10 +26,6 @@
 // iff __STDC_LIMIT_MACROS pre-defined
 #define __STDC_LIMIT_MACROS 1
 
-// To disable exceptions in <vector> and <list> on Windows*
-#undef _HAS_EXCEPTIONS
-#define _HAS_EXCEPTIONS _CPPUNWIND
-
 #define HARNESS_TBBMALLOC_THREAD_SHUTDOWN 1
 
 #include "harness.h"
@@ -44,11 +40,21 @@
 // help trigger rare race condition
 #define WhiteboxTestingYield() (__TBB_Yield(), __TBB_Yield(), __TBB_Yield(), __TBB_Yield())
 
+#if __INTEL_COMPILER && __TBB_MIC_OFFLOAD
+// 2571 is variable has not been declared with compatible "target" attribute
+// 3218 is class/struct may fail when offloaded because this field is misaligned
+//         or contains data that is misaligned
+    #pragma warning(push)
+    #pragma warning(disable:2571 3218)
+#endif
 #define protected public
 #define private public
 #include "../tbbmalloc/frontend.cpp"
 #undef protected
 #undef private
+#if __INTEL_COMPILER && __TBB_MIC_OFFLOAD
+    #pragma warning(pop)
+#endif
 #include "../tbbmalloc/backend.cpp"
 #include "../tbbmalloc/backref.cpp"
 
@@ -807,9 +813,9 @@ void TestCleanAllBuffers() {
 /*---------------------------------------------------------------------------*/
 /*------------------------- Large Object Cache tests ------------------------*/
 #if _MSC_VER==1600 || _MSC_VER==1500
-  // ignore C4275: non dll-interface class 'stdext::exception' used as
-  // base for dll-interface class 'std::bad_cast'
-  #pragma warning (disable: 4275)
+    // ignore C4275: non dll-interface class 'stdext::exception' used as
+    // base for dll-interface class 'std::bad_cast'
+    #pragma warning (disable: 4275)
 #endif
 #include <vector>
 #include <list>

@@ -40,9 +40,8 @@
     #include <unistd.h> // sysconf(_SC_PAGESIZE)
 #elif USE_WINTHREAD
     #define GetMyTID() GetCurrentThreadId()
-    #define TLS_ALLOC_FAILURE TLS_OUT_OF_INDEXES
 #if __TBB_WIN8UI_SUPPORT
-#include<thread>
+    #include<thread>
     #define TlsSetValue_func FlsSetValue
     #define TlsGetValue_func FlsGetValue
     #define TlsAlloc() FlsAlloc(NULL)
@@ -52,6 +51,7 @@
 #else
     #define TlsSetValue_func TlsSetValue
     #define TlsGetValue_func TlsGetValue
+    #define TLS_ALLOC_FAILURE TLS_OUT_OF_INDEXES
     inline void do_yield() {SwitchToThread();}
 #endif
 #else
@@ -2352,10 +2352,10 @@ static void *reallocAligned(MemoryPool *memPool, void *ptr,
         } else {
             copySize = lmb->objectSize;
 #if BACKEND_HAS_MREMAP
-            if ((result = (memPool->extMemPool.backend.remap(ptr, copySize, size,
+            if (void *r = memPool->extMemPool.remap(ptr, copySize, size,
                               alignment<largeObjectAlignment?
-                                        largeObjectAlignment : alignment))))
-                return result;
+                              largeObjectAlignment : alignment))
+                return r;
 #endif
             result = alignment ? allocateAligned(memPool, size, alignment) :
                 internalPoolMalloc(memPool, size);

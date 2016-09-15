@@ -405,12 +405,22 @@ private:
 
     //! A cache of predecessors that only supports try_get
     template< typename T, typename M=spin_mutex >
+#if __TBB_PREVIEW_ASYNC_MSG
+    // TODO: make predecessor_cache type T-independent when async_msg becomes regular feature
+    class predecessor_cache : public node_cache< untyped_sender, M > {
+#else
     class predecessor_cache : public node_cache< sender<T>, M > {
+#endif // __TBB_PREVIEW_ASYNC_MSG
     public:
         typedef M mutex_type;
         typedef T output_type;
+#if __TBB_PREVIEW_ASYNC_MSG
+        typedef untyped_sender predecessor_type;
+        typedef untyped_receiver successor_type;
+#else
         typedef sender<output_type> predecessor_type;
         typedef receiver<output_type> successor_type;
+#endif // __TBB_PREVIEW_ASYNC_MSG
 
         predecessor_cache( ) : my_owner( NULL ) { }
 
@@ -462,19 +472,25 @@ private:
     protected:
 
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
-        using node_cache< sender<T>, M >::my_built_predecessors;
+        using node_cache< predecessor_type, M >::my_built_predecessors;
 #endif
         successor_type *my_owner;
     };
 
     //! An cache of predecessors that supports requests and reservations
+    // TODO: make reservable_predecessor_cache type T-independent when async_msg becomes regular feature
     template< typename T, typename M=spin_mutex >
     class reservable_predecessor_cache : public predecessor_cache< T, M > {
     public:
         typedef M mutex_type;
         typedef T output_type;
+#if __TBB_PREVIEW_ASYNC_MSG
+        typedef untyped_sender predecessor_type;
+        typedef untyped_receiver successor_type;
+#else
         typedef sender<T> predecessor_type;
         typedef receiver<T> successor_type;
+#endif // __TBB_PREVIEW_ASYNC_MSG
 
         reservable_predecessor_cache( ) : reserved_src(NULL) { }
 
@@ -538,6 +554,7 @@ private:
 
 
     //! An abstract cache of successors
+    // TODO: make successor_cache type T-independent when async_msg becomes regular feature
     template<typename T, typename M=spin_rw_mutex >
     class successor_cache : tbb::internal::no_copy {
     protected:
@@ -545,15 +562,22 @@ private:
         typedef M mutex_type;
         mutex_type my_mutex;
 
+#if __TBB_PREVIEW_ASYNC_MSG
+        typedef untyped_receiver successor_type;
+        typedef untyped_receiver *pointer_type;
+        typedef untyped_sender owner_type;
+#else
         typedef receiver<T> successor_type;
         typedef receiver<T> *pointer_type;
+        typedef sender<T> owner_type;
+#endif // __TBB_PREVIEW_ASYNC_MSG
         typedef std::list< pointer_type > successors_type;
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
         edge_container<successor_type> my_built_successors;
 #endif
         successors_type my_successors;
 
-        sender<T> *my_owner;
+        owner_type *my_owner;
 
     public:
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
@@ -585,7 +609,7 @@ private:
 
         successor_cache( ) : my_owner(NULL) {}
 
-        void set_owner( sender<T> *owner ) { my_owner = owner; }
+        void set_owner( owner_type *owner ) { my_owner = owner; }
 
         virtual ~successor_cache() {}
 
@@ -617,7 +641,9 @@ private:
 #endif
         }
 
+#if !__TBB_PREVIEW_ASYNC_MSG
         virtual task * try_put_task( const T &t ) = 0;
+#endif // __TBB_PREVIEW_ASYNC_MSG
      };  // successor_cache<T>
 
     //! An abstract cache of successors, specialized to continue_msg
@@ -628,8 +654,13 @@ private:
         typedef spin_rw_mutex mutex_type;
         mutex_type my_mutex;
 
+#if __TBB_PREVIEW_ASYNC_MSG
+        typedef untyped_receiver successor_type;
+        typedef untyped_receiver *pointer_type;
+#else
         typedef receiver<continue_msg> successor_type;
         typedef receiver<continue_msg> *pointer_type;
+#endif // __TBB_PREVIEW_ASYNC_MSG
         typedef std::list< pointer_type > successors_type;
         successors_type my_successors;
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
@@ -708,11 +739,14 @@ private:
 #endif
         }
 
+#if !__TBB_PREVIEW_ASYNC_MSG
         virtual task * try_put_task( const continue_msg &t ) = 0;
+#endif // __TBB_PREVIEW_ASYNC_MSG
 
     };  // successor_cache< continue_msg >
 
     //! A cache of successors that are broadcast to
+    // TODO: make broadcast_cache type T-independent when async_msg becomes regular feature
     template<typename T, typename M=spin_rw_mutex>
     class broadcast_cache : public successor_cache<T, M> {
         typedef M mutex_type;
@@ -723,7 +757,12 @@ private:
         broadcast_cache( ) {}
 
         // as above, but call try_put_task instead, and return the last task we received (if any)
+#if __TBB_PREVIEW_ASYNC_MSG
+        template<typename X>
+        task * try_put_task( const X &t ) {
+#else
         /*override*/ task * try_put_task( const T &t ) {
+#endif // __TBB_PREVIEW_ASYNC_MSG
             task * last_task = NULL;
             bool upgraded = true;
             typename mutex_type::scoped_lock l(this->my_mutex, upgraded);
@@ -752,6 +791,7 @@ private:
     };
 
     //! A cache of successors that are put in a round-robin fashion
+    // TODO: make round_robin_cache type T-independent when async_msg becomes regular feature
     template<typename T, typename M=spin_rw_mutex >
     class round_robin_cache : public successor_cache<T, M> {
         typedef size_t size_type;
@@ -767,7 +807,12 @@ private:
             return this->my_successors.size();
         }
 
+#if __TBB_PREVIEW_ASYNC_MSG
+        template<typename X>
+        task * try_put_task( const X &t ) {
+#else
         /*override*/task *try_put_task( const T &t ) {
+#endif // __TBB_PREVIEW_ASYNC_MSG
             bool upgraded = true;
             typename mutex_type::scoped_lock l(this->my_mutex, upgraded);
             typename successors_type::iterator i = this->my_successors.begin();

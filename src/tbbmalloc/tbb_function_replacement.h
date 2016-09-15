@@ -74,4 +74,7 @@ const __int64 MAX_DISTANCE = (((__int64)1 << 31) - 1) - MAX_PROBE_SIZE;
 // The maximum number of distinct buffers in memory
 const ptrdiff_t MAX_NUM_BUFFERS = 256;
 
+// Expect JMP relative instruction in place of function
+#define PROCESS_JMP ((const char**)1)
+
 #endif //__TBB_function_replacement_H

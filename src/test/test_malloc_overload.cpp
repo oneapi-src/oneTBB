@@ -393,21 +393,21 @@ int TestMain() {
 #endif
     CheckFreeAligned();
 
-    BigStruct *f = new BigStruct;
-    scalableMallocCheckSize(f, sizeof(BigStruct));
-    delete f;
+    BigStruct *s1 = new BigStruct;
+    scalableMallocCheckSize(s1, sizeof(BigStruct));
+    delete s1;
 
-    f = new BigStruct[10];
-    scalableMallocCheckSize(f, 10*sizeof(BigStruct));
-    delete []f;
+    BigStruct *s2 = new BigStruct[10];
+    scalableMallocCheckSize(s2, 10*sizeof(BigStruct));
+    delete []s2;
 
-    f = new(std::nothrow) BigStruct;
-    scalableMallocCheckSize(f, sizeof(BigStruct));
-    delete f;
+    BigStruct *s3 = new(std::nothrow) BigStruct;
+    scalableMallocCheckSize(s3, sizeof(BigStruct));
+    delete s3;
 
-    f = new(std::nothrow) BigStruct[2];
-    scalableMallocCheckSize(f, 2*sizeof(BigStruct));
-    delete []f;
+    BigStruct *s4 = new(std::nothrow) BigStruct[2];
+    scalableMallocCheckSize(s4, 2*sizeof(BigStruct));
+    delete []s4;
 
 #if _WIN32
     std::string stdstring = "dependence on msvcpXX.dll";

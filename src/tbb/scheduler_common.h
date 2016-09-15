@@ -367,11 +367,8 @@ struct arena_slot : padded<arena_slot_line1>, padded<arena_slot_line2> {
 
     //! Deallocate task pool that was allocated by means of allocate_task_pool.
     void free_task_pool( ) {
-#if !__TBB_TASK_ARENA
-        __TBB_ASSERT( !task_pool /*TODO: == EmptyTaskPool*/, NULL);
-#else
-        //TODO: understand the assertion and modify
-#endif
+        // TODO: understand the assertion and modify
+        // __TBB_ASSERT( !task_pool /*TODO: == EmptyTaskPool*/, NULL);
         if( task_pool_ptr ) {
            __TBB_ASSERT( my_task_pool_size, NULL);
            NFS_Free( task_pool_ptr );

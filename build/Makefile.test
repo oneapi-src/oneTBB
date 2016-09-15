@@ -78,15 +78,6 @@ $(SCHEDULER_DIRECTLY_INCLUDED): LINK_TBB.LIB =
 $(SCHEDULER_DIRECTLY_INCLUDED): LINK_FILES += $(SCHEDULER_DEPENDENCIES)
 $(SCHEDULER_DIRECTLY_INCLUDED): $(SCHEDULER_DEPENDENCIES)
 
-# Tests that use some features of C++11
-TEST_TBB_CPP11 = test_lambda.$(TEST_EXT) test_cache_aligned_allocator_STL.$(TEST_EXT)
-
-ifneq (0,$(cpp0x))
-# Made CPP11 tests use NOSTRICT flags because -strict-ansi combined with
-# -std=c++0x on ICC 13.0 results in a compile error when stdlib is included
-$(TEST_TBB_CPP11):  CPLUS_FLAGS := $(CPLUS_FLAGS_NOSTRICT)
-endif
-
 # test_tbb_header detects "multiple definition" linker error using the test that covers the whole library
 TWICE_LINKED_TESTS = test_tbb_header.$(TEST_EXT) \
                      test_concurrent_unordered_set.$(TEST_EXT)
@@ -134,6 +125,7 @@ TEST_TBB_PLAIN.EXE = test_assembly.$(TEST_EXT)   \
 	test_mutex_native_threads.$(TEST_EXT)        \
 	test_rwm_upgrade_downgrade.$(TEST_EXT)       \
 	test_cache_aligned_allocator.$(TEST_EXT)     \
+        test_cache_aligned_allocator_STL.$(TEST_EXT) \
 	test_parallel_for.$(TEST_EXT)                \
 	test_parallel_reduce.$(TEST_EXT)             \
 	test_parallel_sort.$(TEST_EXT)               \
@@ -143,6 +135,7 @@ TEST_TBB_PLAIN.EXE = test_assembly.$(TEST_EXT)   \
 	test_pipeline.$(TEST_EXT)                    \
 	test_pipeline_with_tbf.$(TEST_EXT)           \
 	test_parallel_pipeline.$(TEST_EXT)           \
+        test_lambda.$(TEST_EXT)                      \
 	test_task_scheduler_init.$(TEST_EXT)         \
 	test_task_scheduler_observer.$(TEST_EXT)     \
 	test_task.$(TEST_EXT)                        \
@@ -202,9 +195,8 @@ TEST_TBB_PLAIN.EXE = test_assembly.$(TEST_EXT)   \
 	test_flow_graph_whitebox.$(TEST_EXT)         \
 	test_composite_node.$(TEST_EXT)              \
 	test_async_node.$(TEST_EXT)                  \
+	test_async_msg.$(TEST_EXT)                   \
 	test_tbb_version.$(TEST_EXT)                 # insert new files right above
-
-TEST_TBB_PLAIN.EXE += $(TEST_TBB_CPP11)
 
 # skip mode_plugin for now
 skip_tests += test_model_plugin

@@ -213,7 +213,7 @@ namespace internal {
     class reserving_port : public receiver<T> {
     public:
         typedef T input_type;
-        typedef sender<T> predecessor_type;
+        typedef typename receiver<input_type>::predecessor_type predecessor_type;
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
         typedef typename receiver<input_type>::predecessor_list_type predecessor_list_type;
         typedef typename receiver<input_type>::built_predecessors_type built_predecessors_type;
@@ -346,14 +346,14 @@ namespace internal {
         }
 
         //! Add a predecessor
-        bool register_predecessor( sender<T> &src ) {
+        bool register_predecessor( predecessor_type &src ) {
             reserving_port_operation op_data(src, reg_pred);
             my_aggregator.execute(&op_data);
             return op_data.status == SUCCEEDED;
         }
 
         //! Remove a predecessor
-        bool remove_predecessor( sender<T> &src ) {
+        bool remove_predecessor( predecessor_type &src ) {
             reserving_port_operation op_data(src, rem_pred);
             my_aggregator.execute(&op_data);
             return op_data.status == SUCCEEDED;
@@ -427,7 +427,7 @@ namespace internal {
     class queueing_port : public receiver<T>, public item_buffer<T> {
     public:
         typedef T input_type;
-        typedef sender<T> predecessor_type;
+        typedef typename receiver<input_type>::predecessor_type predecessor_type;
         typedef queueing_port<T> class_type;
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
         typedef typename receiver<input_type>::built_predecessors_type built_predecessors_type;
@@ -449,7 +449,7 @@ namespace internal {
             T my_val;
             T *my_arg;
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
-            sender<T> *pred;
+            predecessor_type *pred;
             size_t cnt_val;
             predecessor_list_type *plist;
 #endif
@@ -494,7 +494,7 @@ namespace internal {
                     break;
                 case get__item:
                     if(!this->buffer_empty()) {
-                        this->copy_front(*(current->my_arg));
+                        *(current->my_arg) = this->front();
                         __TBB_store_with_release(current->status, SUCCEEDED);
                     }
                     else {
@@ -580,13 +580,13 @@ namespace internal {
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
         /*override*/ built_predecessors_type &built_predecessors() { return my_built_predecessors; }
 
-        /*override*/void internal_add_built_predecessor(sender<T> &p) {
+        /*override*/void internal_add_built_predecessor(predecessor_type &p) {
             queueing_port_operation op_data(add_blt_pred);
             op_data.pred = &p;
             my_aggregator.execute(&op_data);
         }
 
-        /*override*/void internal_delete_built_predecessor(sender<T> &p) {
+        /*override*/void internal_delete_built_predecessor(predecessor_type &p) {
             queueing_port_operation op_data(del_blt_pred);
             op_data.pred = &p;
             my_aggregator.execute(&op_data);
@@ -622,7 +622,7 @@ namespace internal {
     private:
         forwarding_base *my_join;
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
-        edge_container<sender<T> > my_built_predecessors;
+        edge_container<predecessor_type> my_built_predecessors;
 #endif
     };  // queueing_port
 
@@ -655,7 +655,7 @@ namespace internal {
         typedef typename TraitsType::T input_type;
         typedef typename TraitsType::K key_type;
         typedef typename tbb::internal::strip<key_type>::type noref_key_type;
-        typedef sender<input_type> predecessor_type;
+        typedef typename receiver<input_type>::predecessor_type predecessor_type;
         typedef typename TraitsType::TtoK type_to_key_func_type;
         typedef typename TraitsType::KHash hash_compare_type;
         typedef hash_buffer< key_type, input_type, type_to_key_func_type, hash_compare_type > buffer_type;
@@ -792,13 +792,13 @@ namespace internal {
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
         /*override*/built_predecessors_type &built_predecessors() { return my_built_predecessors; }
 
-        /*override*/void internal_add_built_predecessor(sender<input_type> &p) {
+        /*override*/void internal_add_built_predecessor(predecessor_type &p) {
             key_matching_port_operation op_data(add_blt_pred);
             op_data.pred = &p;
             my_aggregator.execute(&op_data);
         }
 
-        /*override*/void internal_delete_built_predecessor(sender<input_type> &p) {
+        /*override*/void internal_delete_built_predecessor(predecessor_type &p) {
             key_matching_port_operation op_data(del_blt_pred);
             op_data.pred = &p;
             my_aggregator.execute(&op_data);
@@ -1148,7 +1148,7 @@ namespace internal {
                         __TBB_store_with_release(current->status, FAILED);
                     }
                     else {
-                        this->copy_front(*(current->my_output));
+                        *(current->my_output) = this->front();
                         __TBB_store_with_release(current->status, SUCCEEDED);
                     }
                     break;
@@ -1256,7 +1256,7 @@ namespace internal {
     public:
         typedef OutputTuple output_type;
 
-        typedef receiver<output_type> successor_type;
+        typedef typename sender<output_type>::successor_type successor_type;
         typedef join_node_FE<JP, InputTuple, OutputTuple> input_ports_type;
         using input_ports_type::tuple_build_may_succeed;
         using input_ports_type::try_to_make_tuple;

@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::final_scan_tag Struct Reference</title>
+<title>tbb::interface6::memory_pool&lt; Alloc &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,33 +33,49 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00276.html">tbb</a></li><li class="navelem"><a class="el" href="a00073.html">final_scan_tag</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><b>interface6</b></li><li class="navelem"><a class="el" href="a00073.html">memory_pool</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
-<a href="a00322.html">List of all members</a>  </div>
+<a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="a00390.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::final_scan_tag Struct Reference<div class="ingroups"><a class="el" href="a00291.html">Algorithms</a></div></div>  </div>
+<div class="title">tbb::interface6::memory_pool&lt; Alloc &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Used to indicate that the final scan is being performed.  
+<p>Thread-safe growable pool allocator for variable-size requests.  
  <a href="a00073.html#details">More...</a></p>
 
-<p><code>#include &lt;parallel_scan.h&gt;</code></p>
+<p><code>#include &lt;memory_pool.h&gt;</code></p>
+<div class="dynheader">
+Inheritance diagram for tbb::interface6::memory_pool&lt; Alloc &gt;:</div>
+<div class="dyncontent">
+ <div class="center">
+  <img src="a00073.png" usemap="#tbb::interface6::memory_pool&lt; Alloc &gt;_map" alt=""/>
+  <map id="tbb::interface6::memory_pool&lt; Alloc &gt;_map" name="tbb::interface6::memory_pool&lt; Alloc &gt;_map">
+</map>
+ </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
-Static Public Member Functions</h2></td></tr>
-<tr class="memitem:add2b3159a444aad51e3cf7ffe4d1d636"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="add2b3159a444aad51e3cf7ffe4d1d636"></a>
-static bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_final_scan</b> ()</td></tr>
-<tr class="separator:add2b3159a444aad51e3cf7ffe4d1d636"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
+Public Member Functions</h2></td></tr>
+<tr class="memitem:af4c36829a159eac04d630ac5a99b9354"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af4c36829a159eac04d630ac5a99b9354"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00073.html#af4c36829a159eac04d630ac5a99b9354">memory_pool</a> (const Alloc &amp;src=Alloc())</td></tr>
+<tr class="memdesc:af4c36829a159eac04d630ac5a99b9354"><td class="mdescLeft">&#160;</td><td class="mdescRight">construct pool with underlying allocator <br/></td></tr>
+<tr class="separator:af4c36829a159eac04d630ac5a99b9354"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad2c7645b39b7280b1b3cf393d05fbaf7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad2c7645b39b7280b1b3cf393d05fbaf7"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00073.html#ad2c7645b39b7280b1b3cf393d05fbaf7">~memory_pool</a> ()</td></tr>
+<tr class="memdesc:ad2c7645b39b7280b1b3cf393d05fbaf7"><td class="mdescLeft">&#160;</td><td class="mdescRight">destroy pool <br/></td></tr>
+<tr class="separator:ad2c7645b39b7280b1b3cf393d05fbaf7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Used to indicate that the final scan is being performed. </p>
-</div><hr/>The documentation for this struct was generated from the following file:<ul>
-<li>parallel_scan.h</li>
+<div class="textblock"><h3>template&lt;typename Alloc&gt;<br/>
+class tbb::interface6::memory_pool&lt; Alloc &gt;</h3>
+
+<p>Thread-safe growable pool allocator for variable-size requests. </p>
+</div><hr/>The documentation for this class was generated from the following file:<ul>
+<li><a class="el" href="a00197.html">memory_pool.h</a></li>
 </ul>
 </div><!-- contents -->
 <hr>

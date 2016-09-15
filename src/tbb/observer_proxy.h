@@ -122,8 +122,12 @@ class observer_proxy {
     //! Version
     char my_version;
 
+#if __TBB_ARENA_OBSERVER || __TBB_SLEEP_PERMISSION
     interface6::task_scheduler_observer* get_v6_observer();
+#endif
+#if __TBB_ARENA_OBSERVER
     bool is_global(); //TODO: move them back inline when un-CPF'ing
+#endif
 
     //! Constructs proxy for the given observer and adds it to the specified list.
     observer_proxy( task_scheduler_observer_v3& );

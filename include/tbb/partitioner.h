@@ -35,7 +35,7 @@
 #endif
 #ifndef __TBB_DEMAND_DEPTH_ADD
 // when imbalance is found range splits this value times more
-#define __TBB_DEMAND_DEPTH_ADD 2
+#define __TBB_DEMAND_DEPTH_ADD 1
 #endif
 #ifndef __TBB_STATIC_THRESHOLD
 // necessary number of clocks for the work to be distributed among all tasks

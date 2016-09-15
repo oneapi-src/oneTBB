@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::interface5::concurrent_unordered_map_traits&lt; Key, T, Hash_compare, Allocator, Allow_multimapping &gt; Class Template Reference</title>
+<title>tbb::flow::interface8::dependency_msg&lt; T, Factory &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,67 +33,76 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00276.html">tbb</a></li><li class="navelem"><b>interface5</b></li><li class="navelem"><a class="el" href="a00054.html">concurrent_unordered_map_traits</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><a class="el" href="a00054.html">dependency_msg</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a> &#124;
-<a href="#pro-types">Protected Types</a> &#124;
-<a href="#pro-methods">Protected Member Functions</a> &#124;
-<a href="#pro-static-methods">Static Protected Member Functions</a> &#124;
-<a href="#pro-attribs">Protected Attributes</a> &#124;
-<a href="a00445.html">List of all members</a>  </div>
+<a href="#pub-types">Public Types</a> &#124;
+<a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="a00329.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::interface5::concurrent_unordered_map_traits&lt; Key, T, Hash_compare, Allocator, Allow_multimapping &gt; Class Template Reference</div>  </div>
+<div class="title">tbb::flow::interface8::dependency_msg&lt; T, Factory &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
-Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00209.html">value_compare</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:ab01c10487547257703548fea8d2938b6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab01c10487547257703548fea8d2938b6"></a>
+typedef T&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b></td></tr>
+<tr class="separator:ab01c10487547257703548fea8d2938b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-types"></a>
-Protected Types</h2></td></tr>
-<tr class="memitem:a3a4d3aae580451e86649ce3a3ae38894"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom">{ <b>allow_multimapping</b> = Allow_multimapping
- }</td></tr>
-<tr class="separator:a3a4d3aae580451e86649ce3a3ae38894"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0c77b12f17473e24cda4b60b38e847fd"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0c77b12f17473e24cda4b60b38e847fd"></a>
-typedef std::pair&lt; const Key, T &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b></td></tr>
-<tr class="separator:a0c77b12f17473e24cda4b60b38e847fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a133cf0868239271387488f6067ce56ee"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a133cf0868239271387488f6067ce56ee"></a>
-typedef Key&#160;</td><td class="memItemRight" valign="bottom"><b>key_type</b></td></tr>
-<tr class="separator:a133cf0868239271387488f6067ce56ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afdf65dc261abb44bd733ebab0f54f01b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afdf65dc261abb44bd733ebab0f54f01b"></a>
-typedef Hash_compare&#160;</td><td class="memItemRight" valign="bottom"><b>hash_compare</b></td></tr>
-<tr class="separator:afdf65dc261abb44bd733ebab0f54f01b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5f015ac2f9770d8cd69d0656447b66ac"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5f015ac2f9770d8cd69d0656447b66ac"></a>
-typedef Allocator::template <br class="typebreak"/>
-rebind&lt; value_type &gt;::other&#160;</td><td class="memItemRight" valign="bottom"><b>allocator_type</b></td></tr>
-<tr class="separator:a5f015ac2f9770d8cd69d0656447b66ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
-Protected Member Functions</h2></td></tr>
-<tr class="memitem:ae9e1e3147bd444fb77c544ef7ecb5bef"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae9e1e3147bd444fb77c544ef7ecb5bef"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_map_traits</b> (const hash_compare &amp;hc)</td></tr>
-<tr class="separator:ae9e1e3147bd444fb77c544ef7ecb5bef"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-static-methods"></a>
-Static Protected Member Functions</h2></td></tr>
-<tr class="memitem:a561f2cf05060387c8282ad57f5c816ca"><td class="memTemplParams" colspan="2"><a class="anchor" id="a561f2cf05060387c8282ad57f5c816ca"></a>
-template&lt;class Type1 , class Type2 &gt; </td></tr>
-<tr class="memitem:a561f2cf05060387c8282ad57f5c816ca"><td class="memTemplItemLeft" align="right" valign="top">static const Key &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>get_key</b> (const std::pair&lt; Type1, Type2 &gt; &amp;value)</td></tr>
-<tr class="separator:a561f2cf05060387c8282ad57f5c816ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
-Protected Attributes</h2></td></tr>
-<tr class="memitem:ad8f108aa7fc21e9e38050a9d56e691b7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad8f108aa7fc21e9e38050a9d56e691b7"></a>
-hash_compare&#160;</td><td class="memItemRight" valign="bottom"><b>my_hash_compare</b></td></tr>
-<tr class="separator:ad8f108aa7fc21e9e38050a9d56e691b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
+Public Member Functions</h2></td></tr>
+<tr class="memitem:aed2869b018ca03b7a261702130aacbe7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aed2869b018ca03b7a261702130aacbe7"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>dependency_msg</b> (const T &amp;data)</td></tr>
+<tr class="separator:aed2869b018ca03b7a261702130aacbe7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a57f27f1be95fd85014c359f6f390405e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a57f27f1be95fd85014c359f6f390405e"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>dependency_msg</b> (<a class="el" href="a00094.html">opencl_graph</a> &amp;g, const T &amp;data)</td></tr>
+<tr class="separator:a57f27f1be95fd85014c359f6f390405e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aad8d861be34ff34848a7c4a67dda09da"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aad8d861be34ff34848a7c4a67dda09da"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>dependency_msg</b> (const T &amp;data, cl_event event)</td></tr>
+<tr class="separator:aad8d861be34ff34848a7c4a67dda09da"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6c52ca4f527d34052ea3fa801df86672"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6c52ca4f527d34052ea3fa801df86672"></a>
+T &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>data</b> (bool wait=true)</td></tr>
+<tr class="separator:a6c52ca4f527d34052ea3fa801df86672"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5ba69b97a06776827e61848693414752"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5ba69b97a06776827e61848693414752"></a>
+const T &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>data</b> (bool wait=true) const </td></tr>
+<tr class="separator:a5ba69b97a06776827e61848693414752"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a66243b57a60cfb4bdf1a5e734fadc7b0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a66243b57a60cfb4bdf1a5e734fadc7b0"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>dependency_msg</b> (const <a class="el" href="a00054.html">dependency_msg</a> &amp;dmsg)</td></tr>
+<tr class="separator:a66243b57a60cfb4bdf1a5e734fadc7b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2cccd6ca947999c15ebf650a98f32788"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2cccd6ca947999c15ebf650a98f32788"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>dependency_msg</b> (<a class="el" href="a00054.html">dependency_msg</a> &amp;&amp;dmsg)</td></tr>
+<tr class="separator:a2cccd6ca947999c15ebf650a98f32788"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd51d01a8d6f36a064b7edd5b016f0ea"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abd51d01a8d6f36a064b7edd5b016f0ea"></a>
+<a class="el" href="a00054.html">dependency_msg</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="a00054.html">dependency_msg</a> &amp;dmsg)</td></tr>
+<tr class="separator:abd51d01a8d6f36a064b7edd5b016f0ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adf64903cffe6baa0a050b596049f6382"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adf64903cffe6baa0a050b596049f6382"></a>
+cl_event const *&#160;</td><td class="memItemRight" valign="bottom"><b>get_event</b> () const </td></tr>
+<tr class="separator:adf64903cffe6baa0a050b596049f6382"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a919f2789626c8b2f626e6891c0a49423"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a919f2789626c8b2f626e6891c0a49423"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>set_event</b> (cl_event e) const </td></tr>
+<tr class="separator:a919f2789626c8b2f626e6891c0a49423"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2e8b213c4da93aeb76043f6fe7a5d57d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2e8b213c4da93aeb76043f6fe7a5d57d"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>set_graph</b> (graph &amp;g)</td></tr>
+<tr class="separator:a2e8b213c4da93aeb76043f6fe7a5d57d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae5dc70ed898045a223500c7738635ce4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae5dc70ed898045a223500c7738635ce4"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>clear_event</b> () const </td></tr>
+<tr class="separator:ae5dc70ed898045a223500c7738635ce4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a03636570f7011cd3a2dbcf5b8da2ea41"><td class="memTemplParams" colspan="2"><a class="anchor" id="a03636570f7011cd3a2dbcf5b8da2ea41"></a>
+template&lt;typename Callback &gt; </td></tr>
+<tr class="memitem:a03636570f7011cd3a2dbcf5b8da2ea41"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>register_callback</b> (Callback c) const </td></tr>
+<tr class="separator:a03636570f7011cd3a2dbcf5b8da2ea41"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a382718f32d3ca0672b6b725d388de916"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a382718f32d3ca0672b6b725d388de916"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>operator T &amp;</b> ()</td></tr>
+<tr class="separator:a382718f32d3ca0672b6b725d388de916"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af3bc7dee9f48f5709cfbbaa679757af5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af3bc7dee9f48f5709cfbbaa679757af5"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>operator const T &amp;</b> () const </td></tr>
+<tr class="separator:af3bc7dee9f48f5709cfbbaa679757af5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>concurrent_unordered_map.h</li>
+<li>flow_graph_opencl_node.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

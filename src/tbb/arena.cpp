@@ -121,10 +121,10 @@ void arena::process( generic_scheduler& s ) {
     my_cpu_ctl_env.set_env();
 #endif
 
-#if __TBB_SCHEDULER_OBSERVER
+#if __TBB_ARENA_OBSERVER
     __TBB_ASSERT( !s.my_last_local_observer, "There cannot be notified local observers when entering arena" );
     my_observers.notify_entry_observers( s.my_last_local_observer, /*worker=*/true );
-#endif /* __TBB_SCHEDULER_OBSERVER */
+#endif /* __TBB_ARENA_OBSERVER */
 
     // Task pool can be marked as non-empty if the worker occupies the slot left by a master.
     if ( s.my_arena_slot->task_pool != EmptyTaskPool ) {
@@ -160,10 +160,10 @@ void arena::process( generic_scheduler& s ) {
             s.local_wait_for_all(*s.my_dummy_task,t);
         }
     }
-#if __TBB_SCHEDULER_OBSERVER
+#if __TBB_ARENA_OBSERVER
     my_observers.notify_exit_observers( s.my_last_local_observer, /*worker=*/true );
     s.my_last_local_observer = NULL;
-#endif /* __TBB_SCHEDULER_OBSERVER */
+#endif /* __TBB_ARENA_OBSERVER */
 #if __TBB_TASK_PRIORITY
     if ( s.my_offloaded_tasks )
         orphan_offloaded_tasks( s );
@@ -205,9 +205,9 @@ arena::arena ( market& m, unsigned num_slots, unsigned num_reserved_slots ) {
     my_bottom_priority = my_top_priority = normalized_normal_priority;
 #endif /* __TBB_TASK_PRIORITY */
     my_aba_epoch = m.my_arenas_aba_epoch;
-#if __TBB_SCHEDULER_OBSERVER
+#if __TBB_ARENA_OBSERVER
     my_observers.my_arena = this;
-#endif /* __TBB_SCHEDULER_OBSERVER */
+#endif
     __TBB_ASSERT ( my_max_num_workers <= my_num_slots, NULL );
     // Construct slots. Mark internal synchronization elements for the tools.
     for( unsigned i = 0; i < my_num_slots; ++i ) {
@@ -258,11 +258,8 @@ void arena::free_arena () {
     intptr_t drained = 0;
     for ( unsigned i = 0; i < my_num_slots; ++i ) {
         __TBB_ASSERT( !my_slots[i].my_scheduler, "arena slot is not empty" );
-#if !__TBB_TASK_ARENA
-        __TBB_ASSERT( my_slots[i].task_pool == EmptyTaskPool, NULL );
-#else
-        //TODO: understand the assertion and modify
-#endif
+        // TODO: understand the assertion and modify
+        // __TBB_ASSERT( my_slots[i].task_pool == EmptyTaskPool, NULL );
         __TBB_ASSERT( my_slots[i].head == my_slots[i].tail, NULL ); // TODO: replace by is_quiescent_local_task_pool_empty
         my_slots[i].free_task_pool();
 #if __TBB_STATISTICS
@@ -280,10 +277,10 @@ void arena::free_arena () {
     my_default_ctx->~task_group_context();
     NFS_Free(my_default_ctx);
 #endif /* __TBB_TASK_GROUP_CONTEXT */
-#if __TBB_SCHEDULER_OBSERVER
+#if __TBB_ARENA_OBSERVER
     if ( !my_observers.empty() )
         my_observers.clear();
-#endif /* __TBB_SCHEDULER_OBSERVER */
+#endif /* __TBB_ARENA_OBSERVER */
     void* storage  = &mailbox(my_num_slots);
     __TBB_ASSERT( my_references == 0, NULL );
     __TBB_ASSERT( my_pool_state == SNAPSHOT_EMPTY || !my_max_num_workers, NULL );
@@ -331,11 +328,8 @@ void arena::dump_arena_statistics () {
 // 2. if it has any tasks at all, including those of lower priority (via tasks_present);
 // 3. if it is able to work with enqueued tasks (via dequeuing_possible).
 inline bool arena::may_have_tasks ( generic_scheduler* s, bool& tasks_present, bool& dequeuing_possible ) {
-    if ( !s
-#if __TBB_TASK_ARENA
-            || s->my_arena != this
-#endif
-            ) return false;
+    if ( !s || s->my_arena != this )
+        return false;
     dequeuing_possible |= s->worker_outermost_level();
     if ( s->my_pool_reshuffling_pending ) {
         // This primary task pool is nonempty and may contain tasks at the current
@@ -587,7 +581,6 @@ void arena::enqueue_task( task& t, intptr_t prio, FastRandom &random )
 #endif /* __TBB_TASK_PRIORITY */
 }
 
-#if __TBB_TASK_ARENA
 struct nested_arena_context : no_copy {
     generic_scheduler &my_scheduler;
     scheduler_state const my_orig_state;
@@ -648,7 +641,7 @@ void generic_scheduler::nested_arena_exit(nested_arena_context& c) {
     if( !my_is_worker && my_arena_index >= my_arena->my_num_reserved_slots ) my_arena->my_market->adjust_demand(*my_arena, 1);
 #if __TBB_ARENA_OBSERVER
     my_arena->my_observers.notify_exit_observers( my_last_local_observer, /*worker=*/false );
-#endif /* __TBB_SCHEDULER_OBSERVER */
+#endif /* __TBB_ARENA_OBSERVER */
 
 #if __TBB_TASK_PRIORITY
     if ( my_offloaded_tasks )
@@ -672,13 +665,11 @@ void generic_scheduler::wait_until_empty() {
     my_dummy_task->prefix().ref_count--;
 }
 
-#endif /* __TBB_TASK_ARENA */
-
 } // namespace internal
 } // namespace tbb
 
-#if __TBB_TASK_ARENA
 #include "scheduler_utility.h"
+#include "tbb/task_arena.h" // task_arena_base
 
 namespace tbb {
 namespace interface7 {
@@ -945,4 +936,3 @@ void task_arena_base::internal_wait() const {
 } // tbb::interfaceX::internal
 } // tbb::interfaceX
 } // tbb
-#endif /* __TBB_TASK_ARENA */

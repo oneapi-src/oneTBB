@@ -46,6 +46,7 @@
 
 #include "harness_assert.h"
 #include "harness.h"
+#include "test_container_move_support.h"
 
 #if __TBB_GCC_WARNING_SUPPRESSION_PRESENT
 #pragma GCC diagnostic ignored "-Wuninitialized"
@@ -80,7 +81,6 @@ public:
 
 //// functors for initialization and combine
 
-// Addition
 template <typename T>
 struct FunctorAddFinit {
     T operator()() { return 0; }
@@ -104,9 +104,6 @@ struct FunctorAddCombineRef {
         return left + right;
     }
 };
-
-template <typename T>
-T my_finit( ) { return 0; }
 
 template <typename T>
 T my_combine( T left, T right) { return left + right; }
@@ -152,34 +149,18 @@ public:
             my_result +=  *ci;
         }
     }
-    CombineEachVectorHelper& operator=(const CombineEachVectorHelper& other) { my_result=other.my_result; return *this;}
+    CombineEachVectorHelper& operator=(const CombineEachVectorHelper& other) {
+        my_result=other.my_result;
+        return *this;
+    }
+
 private:
     T& my_result;
 };
 
-
-
 //// end functors
 
-template< typename T >
-void run_serial_scalar_tests(const char *test_name) {
-    tbb::tick_count t0;
-    T sum = 0;
-
-    REMARK("Testing serial %s... ", test_name);
-    for (int t = -1; t < REPETITIONS; ++t) {
-        if (Verbose && t == 0) t0 = tbb::tick_count::now();
-        for (int i = 0; i < N; ++i) {
-            sum += 1;
-        }
-    }
-
-    double ResultValue = sum;
-    ASSERT( EXPECTED_SUM == ResultValue, NULL);
-    REMARK("done\nserial %s, 0, %g, %g\n", test_name, ResultValue, ( tbb::tick_count::now() - t0).seconds());
-}
-
-
+// parallel body with a test for first access
 template <typename T>
 class ParallelScalarBody: NoAssign {
 
@@ -200,7 +181,7 @@ public:
 
 };
 
-// parallel body with no test for first access.
+// parallel body with no test for first access
 template <typename T>
 class ParallelScalarBodyNoInit: NoAssign {
 
@@ -222,65 +203,79 @@ template< typename T >
 void RunParallelScalarTests(const char *test_name) {
 
     tbb::task_scheduler_init init(tbb::task_scheduler_init::deferred);
-
     for (int p = MinThread; p <= MaxThread; ++p) {
 
-
         if (p == 0) continue;
-
-        REMARK("Testing parallel %s on %d thread(s)... ", test_name, p);
+        REMARK("  Testing parallel %s on %d thread(s)...\n", test_name, p);
         init.initialize(p);
 
         tbb::tick_count t0;
-
-        T assign_sum(0);
-
         T combine_sum(0);
-
         T combine_ref_sum(0);
-
-        T combine_each_sum(0);
-
         T combine_finit_sum(0);
-
+        T combine_each_sum(0);
+        T copy_construct_sum(0);
+        T copy_assign_sum(0);
+#if __TBB_ETS_USE_CPP11
+        T move_construct_sum(0);
+        T move_assign_sum(0);
+#endif
         for (int t = -1; t < REPETITIONS; ++t) {
             if (Verbose && t == 0) t0 = tbb::tick_count::now();
 
+            // test uninitialized parallel combinable
             tbb::combinable<T> sums;
+            tbb::parallel_for( tbb::blocked_range<int>( 0, N, 10000 ), ParallelScalarBody<T>( sums ) );
+            combine_sum += sums.combine(my_combine<T>);
+            combine_ref_sum += sums.combine(my_combine_ref<T>);
+
+            // test parallel combinable preinitialized with a functor that returns 0
             FunctorAddFinit<T> my_finit_decl;
             tbb::combinable<T> finit_combinable(my_finit_decl);
-
-
             tbb::parallel_for( tbb::blocked_range<int>( 0, N, 10000 ), ParallelScalarBodyNoInit<T>( finit_combinable ) );
-            tbb::parallel_for( tbb::blocked_range<int>( 0, N, 10000 ), ParallelScalarBody<T>( sums ) );
+            combine_finit_sum += finit_combinable.combine(my_combine<T>);
 
-            // Use combine
-            combine_sum +=  sums.combine(my_combine<T>);
-            combine_ref_sum +=  sums.combine(my_combine_ref<T>);
-
+            // test another way of combining the elements using CombineEachHelper<T> functor
             CombineEachHelper<T> my_helper(combine_each_sum);
             sums.combine_each(my_helper);
 
-            // test assignment
+            // test copy constructor for parallel combinable
+            tbb::combinable<T> copy_constructed(sums);
+            copy_construct_sum += copy_constructed.combine(my_combine<T>);
+
+            // test copy assignment for uninitialized parallel combinable
             tbb::combinable<T> assigned;
             assigned = sums;
+            copy_assign_sum += assigned.combine(my_combine<T>);
 
-            assign_sum +=  assigned.combine(my_combine<T>);
+#if __TBB_ETS_USE_CPP11
+            // test move constructor for parallel combinable
+            tbb::combinable<T> moved1(std::move(sums));
+            move_construct_sum += moved1.combine(my_combine<T>);
 
-            combine_finit_sum += finit_combinable.combine(my_combine<T>);
+            // test move assignment for uninitialized parallel combinable
+            tbb::combinable<T> moved2;
+            moved2=std::move(finit_combinable);
+            move_assign_sum += moved2.combine(my_combine<T>);
+#endif
         }
-
+        // Here and below comparison for equality of float numbers succeeds
+        // as the rounding error doesn't accumulate and doesn't affect the comparison
         ASSERT( EXPECTED_SUM == combine_sum, NULL);
         ASSERT( EXPECTED_SUM == combine_ref_sum, NULL);
-        ASSERT( EXPECTED_SUM == assign_sum, NULL);
         ASSERT( EXPECTED_SUM == combine_finit_sum, NULL);
-
-        REMARK("done\nparallel %s, %d, %g, %g\n", test_name, p, static_cast<double>(combine_sum),
+        ASSERT( EXPECTED_SUM == combine_each_sum, NULL);
+        ASSERT( EXPECTED_SUM == copy_construct_sum, NULL);
+        ASSERT( EXPECTED_SUM == copy_assign_sum, NULL);
+#if __TBB_ETS_USE_CPP11
+        ASSERT( EXPECTED_SUM == move_construct_sum, NULL);
+        ASSERT( EXPECTED_SUM == move_assign_sum, NULL);
+#endif
+        REMARK("  done parallel %s, %d, %g, %g\n", test_name, p, static_cast<double>(combine_sum),
                                                       ( tbb::tick_count::now() - t0).seconds());
         init.terminate();
     }
 }
-
 
 template <typename T>
 class ParallelVectorForBody: NoAssign {
@@ -303,54 +298,168 @@ public:
 
 template< typename T >
 void RunParallelVectorTests(const char *test_name) {
-    tbb::tick_count t0;
+
     tbb::task_scheduler_init init(tbb::task_scheduler_init::deferred);
+
     typedef std::vector<T, tbb::tbb_allocator<T> > ContainerType;
 
     for (int p = MinThread; p <= MaxThread; ++p) {
 
         if (p == 0) continue;
-        REMARK("Testing parallel %s on %d thread(s)... ", test_name, p);
+        REMARK("  Testing parallel %s on %d thread(s)... \n", test_name, p);
         init.initialize(p);
 
-        T sum = 0;
-        T sum2 = 0;
-        T sum3 = 0;
-
+        tbb::tick_count t0;
+        T defaultConstructed_sum(0);
+        T copyConstructed_sum(0);
+        T copyAssigned_sum(0);
+#if __TBB_ETS_USE_CPP11
+        T moveConstructed_sum(0);
+        T moveAssigned_sum(0);
+#endif
         for (int t = -1; t < REPETITIONS; ++t) {
             if (Verbose && t == 0) t0 = tbb::tick_count::now();
+
             typedef typename tbb::combinable< ContainerType > CombinableType;
+
+            // test uninitialized parallel combinable
             CombinableType vs;
+            tbb::parallel_for( tbb::blocked_range<int> (0, N, 10000), ParallelVectorForBody<T>( vs ) );
+            CombineEachVectorHelper<T> MyCombineEach(defaultConstructed_sum);
+            vs.combine_each(MyCombineEach); // combine_each sums all elements of each vector into the result
 
-            tbb::parallel_for ( tbb::blocked_range<int> (0, N, 10000), ParallelVectorForBody<T>( vs ) );
-
-            // copy construct
-            CombinableType vs2(vs); // this causes an assertion failure, related to allocators...
-
-            // assign
-            CombinableType vs3;
-            vs3 = vs;
-
-            CombineEachVectorHelper<T> MyCombineEach(sum);
-            vs.combine_each(MyCombineEach);
-
-            CombineEachVectorHelper<T> MyCombineEach2(sum2);
+            // test copy constructor for parallel combinable with vectors
+            CombinableType vs2(vs);
+            CombineEachVectorHelper<T> MyCombineEach2(copyConstructed_sum);
             vs2.combine_each(MyCombineEach2);
 
-            CombineEachVectorHelper<T> MyCombineEach3(sum3);
-            vs2.combine_each(MyCombineEach3);
-            // combine_each sums all elements of each vector into the result.
+            // test copy assignment for uninitialized parallel combinable with vectors
+            CombinableType vs3;
+            vs3 = vs;
+            CombineEachVectorHelper<T> MyCombineEach3(copyAssigned_sum);
+            vs3.combine_each(MyCombineEach3);
+
+#if __TBB_ETS_USE_CPP11
+            // test move constructor for parallel combinable with vectors
+            CombinableType vs4(std::move(vs2));
+            CombineEachVectorHelper<T> MyCombineEach4(moveConstructed_sum);
+            vs4.combine_each(MyCombineEach4);
+
+            // test move assignment for uninitialized parallel combinable with vectors
+            vs4=std::move(vs3);
+            CombineEachVectorHelper<T> MyCombineEach5(moveAssigned_sum);
+            vs4.combine_each(MyCombineEach5);
+#endif
         }
 
-        double ResultValue = sum;
+        double ResultValue = defaultConstructed_sum;
         ASSERT( EXPECTED_SUM == ResultValue, NULL);
-        ResultValue = sum2;
+        ResultValue = copyConstructed_sum;
         ASSERT( EXPECTED_SUM == ResultValue, NULL);
-        ResultValue = sum3;
+        ResultValue = copyAssigned_sum;
         ASSERT( EXPECTED_SUM == ResultValue, NULL);
-        REMARK("done\nparallel %s, %d, %g, %g\n", test_name, p, ResultValue, ( tbb::tick_count::now() - t0).seconds());
+#if __TBB_ETS_USE_CPP11
+        ResultValue = moveConstructed_sum;
+        ASSERT( EXPECTED_SUM == ResultValue, NULL);
+        ResultValue = moveAssigned_sum;
+        ASSERT( EXPECTED_SUM == ResultValue, NULL);
+#endif
+        REMARK("  done parallel %s, %d, %g, %g\n", test_name, p, ResultValue, ( tbb::tick_count::now() - t0).seconds());
         init.terminate();
     }
+}
+
+void
+RunParallelTests() {
+    REMARK("Running RunParallelTests\n");
+    RunParallelScalarTests<int>("int");
+    RunParallelScalarTests<double>("double");
+    RunParallelScalarTests<minimal>("minimal");
+    RunParallelVectorTests<int>("std::vector<int, tbb::tbb_allocator<int> >");
+    RunParallelVectorTests<double>("std::vector<double, tbb::tbb_allocator<double> >");
+}
+
+template <typename T>
+void
+RunAssignmentAndCopyConstructorTest(const char *test_name) {
+    REMARK("  Testing assignment and copy construction for combinable<%s>...\n", test_name);
+
+    // test creation with finit function (combine returns finit return value if no threads have created locals)
+    FunctorAddFinit7<T> my_finit7_decl;
+    tbb::combinable<T> create1(my_finit7_decl);
+    ASSERT(7 == create1.combine(my_combine<T>), "Unexpected combine result for combinable object preinitialized with functor");
+
+    // test copy construction with function initializer
+    tbb::combinable<T> copy1(create1);
+    ASSERT(7 == copy1.combine(my_combine<T>), "Unexpected combine result for copy-constructed combinable object");
+
+    // test copy assignment with function initializer
+    FunctorAddFinit<T> my_finit_decl;
+    tbb::combinable<T> assign1(my_finit_decl);
+    assign1 = create1;
+    ASSERT(7 == assign1.combine(my_combine<T>), "Unexpected combine result for copy-assigned combinable object");
+
+#if __TBB_ETS_USE_CPP11
+    // test move construction with function initializer
+    tbb::combinable<T> move1(std::move(create1));
+    ASSERT(7 == move1.combine(my_combine<T>), "Unexpected combine result for move-constructed combinable object");
+
+    // test move assignment with function initializer
+    tbb::combinable<T> move2;
+    move2=std::move(copy1);
+    ASSERT(7 == move2.combine(my_combine<T>), "Unexpected combine result for move-assigned combinable object");
+#endif
+
+    REMARK("  done\n");
+
+}
+
+void
+RunAssignmentAndCopyConstructorTests() {
+    REMARK("Running assignment and copy constructor tests:\n");
+    RunAssignmentAndCopyConstructorTest<int>("int");
+    RunAssignmentAndCopyConstructorTest<double>("double");
+    RunAssignmentAndCopyConstructorTest<minimal>("minimal");
+}
+
+void
+RunMoveSemanticsForStateTrackableObjectTest() {
+    REMARK("Testing move assignment and move construction for combinable<Harness::StateTrackable>...\n");
+
+    tbb::combinable< Harness::StateTrackable<true> > create1;
+    ASSERT(create1.local().state == Harness::StateTrackable<true>::DefaultInitialized,
+           "Unexpected value in default combinable object");
+
+    // Copy constructing of the new combinable causes copying of stored values
+    tbb::combinable< Harness::StateTrackable<true> > copy1(create1);
+    ASSERT(copy1.local().state == Harness::StateTrackable<true>::CopyInitialized,
+           "Unexpected value in copy-constructed combinable object");
+
+    // Copy assignment also causes copying of stored values
+    tbb::combinable< Harness::StateTrackable<true> > copy2;
+    ASSERT(copy2.local().state == Harness::StateTrackable<true>::DefaultInitialized,
+           "Unexpected value in default combinable object");
+    copy2=create1;
+    ASSERT(copy2.local().state == Harness::StateTrackable<true>::CopyInitialized,
+           "Unexpected value in copy-assigned combinable object");
+
+#if __TBB_ETS_USE_CPP11
+    // Store some marked values in the initial combinable object
+    create1.local().state = static_cast<Harness::StateTrackable<true>::State>(1);
+
+    // Move constructing of the new combinable must not cause copying of stored values
+    tbb::combinable< Harness::StateTrackable<true> > move1(std::move(create1));
+    ASSERT(move1.local().state == 1, "Unexpected value in move-constructed combinable object");
+
+    // Move assignment must not cause copying of stored values
+    copy1=std::move(move1);
+    ASSERT(copy1.local().state == 1, "Unexpected value in move-assigned combinable object");
+
+    // Make the stored values valid again in order to delete StateTrackable object correctly
+    copy1.local().state = Harness::StateTrackable<true>::MoveAssigned;
+#endif
+
+    REMARK("done\n");
 }
 
 #include "harness_barrier.h"
@@ -362,7 +471,6 @@ struct Body : NoAssign {
     const int nthread;
     const int nIters;
     Body( int nthread_, int niters_ ) : nthread(nthread_), nIters(niters_) { sBarrier.initialize(nthread_); }
-
 
     void operator()(int thread_id ) const {
         bool existed;
@@ -398,43 +506,16 @@ TestLocalAllocations( int nthread ) {
     ASSERT(mySum == (nthread - 1) * nthread / 2, "Incorrect values in result");
 }
 
-
 void
-RunParallelTests() {
-    RunParallelScalarTests<int>("int");
-    RunParallelScalarTests<double>("double");
-    RunParallelScalarTests<minimal>("minimal");
-    RunParallelVectorTests<int>("std::vector<int, tbb::tbb_allocator<int> >");
-    RunParallelVectorTests<double>("std::vector<double, tbb::tbb_allocator<double> >");
-}
-
-template <typename T>
-void
-RunAssignmentAndCopyConstructorTest(const char *test_name) {
-    REMARK("Testing assignment and copy construction for %s\n", test_name);
-
-    // test creation with finit function (combine returns finit return value if no threads have created locals)
-    FunctorAddFinit7<T> my_finit7_decl;
-    tbb::combinable<T> create2(my_finit7_decl);
-    ASSERT(7 == create2.combine(my_combine<T>), NULL);
-
-    // test copy construction with function initializer
-    tbb::combinable<T> copy2(create2);
-    ASSERT(7 == copy2.combine(my_combine<T>), NULL);
-
-    // test copy assignment with function initializer
-    FunctorAddFinit<T> my_finit_decl;
-    tbb::combinable<T> assign2(my_finit_decl);
-    assign2 = create2;
-    ASSERT(7 == assign2.combine(my_combine<T>), NULL);
-}
-
-void
-RunAssignmentAndCopyConstructorTests() {
-    REMARK("Running assignment and copy constructor tests\n");
-    RunAssignmentAndCopyConstructorTest<int>("int");
-    RunAssignmentAndCopyConstructorTest<double>("double");
-    RunAssignmentAndCopyConstructorTest<minimal>("minimal");
+RunLocalAllocationsTests() {
+    REMARK("Testing local() allocations\n");
+    for(int i = 1 <= MinThread ? MinThread : 1; i <= MaxThread; ++i) {
+        REMARK("  Testing local() allocation with nthreads=%d...\n", i);
+        for(int j = 0; j < 100; ++j) {
+            TestLocalAllocations(i);
+        }
+        REMARK("  done\n");
+    }
 }
 
 int TestMain () {
@@ -442,12 +523,8 @@ int TestMain () {
         RunParallelTests();
     }
     RunAssignmentAndCopyConstructorTests();
-    for(int i = 1 <= MinThread ? MinThread : 1; i <= MaxThread; ++i) {
-        REMARK("Testing local() allocation with nthreads=%d\n", i);
-        for(int j = 0; j < 100; ++j) {
-            TestLocalAllocations(i);
-        }
-    }
+    RunMoveSemanticsForStateTrackableObjectTest();
+    RunLocalAllocationsTests();
     return Harness::Done;
 }
 

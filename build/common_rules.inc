@@ -51,7 +51,6 @@ CPLUS_FLAGS += $(DEFINE_KEY)__TBB_CPF_BUILD=1
 endif
 LINK_FLAGS += $(LDFLAGS)
 LIB_LINK_FLAGS += $(LDFLAGS)
-CPLUS_FLAGS_NOSTRICT = $(subst -strict-ansi,-ansi,$(CPLUS_FLAGS))
 
 LIB_LINK_CMD ?= $(CPLUS) $(PIC_KEY)
 ifeq ($(origin LIB_OUTPUT_KEY), undefined)
@@ -112,7 +111,8 @@ LINK_FILES+=$(TEST_LIBS)
 	$(ASM) $(ASM_FLAGS) -o $@ $*.tmp
 
 # Rule for generating .E file if needed for visual inspection
-# Note that due to mapping for ICL all uses of PREPROC_ONLY should be immediately followed by a file name
+# Note that ICL treats an argument after PREPROC_ONLY as a file to open,
+# so all uses of PREPROC_ONLY should be immediately followed by a file name
 %.E: %.cpp
 	$(CPLUS) $(CPLUS_FLAGS) $(CXX_ONLY_FLAGS) $(INCLUDES) $(PREPROC_ONLY) $< >$@
 

@@ -38,10 +38,6 @@ LIB_LINK_FLAGS = $(DYLIB_KEY) -Wl,-soname=$(BUILDING_LIBRARY)
 LIBS += -lpthread -lrt
 LINK_FLAGS = -Wl,-rpath-link=. -rdynamic
 C_FLAGS = $(CPLUS_FLAGS)
-# gcc 4.4 and higher support -std=c++0x
-ifneq (,$(shell gcc -dumpversion | egrep  "^(4\.[4-9]|[5-9])"))
-    CPP11_FLAGS = -std=c++0x -D_TBB_CPP0X
-endif
 
 # gcc 4.2 and higher support OpenMP
 ifneq (,$(shell gcc -dumpversion | egrep  "^(4\.[2-9]|[5-9])"))
@@ -58,10 +54,6 @@ ifeq ($(cfg), release)
 endif
 ifeq ($(cfg), debug)
         CPLUS_FLAGS = -DTBB_USE_DEBUG $(ITT_NOTIFY) -g -O0 -DUSE_PTHREAD
-endif
-
-ifneq (00,$(lambdas)$(cpp0x))
-    CXX_ONLY_FLAGS += $(CPP11_FLAGS)
 endif
 
 TBB_ASM.OBJ=

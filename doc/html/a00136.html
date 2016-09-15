@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::parallel_while&lt; Body &gt; Class Template Reference</title>
+<title>tbb::internal::critical_section_v4::scoped_lock Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,125 +33,34 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00276.html">tbb</a></li><li class="navelem"><a class="el" href="a00136.html">parallel_while</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><b>internal</b></li><li class="navelem"><a class="el" href="a00051.html">critical_section_v4</a></li><li class="navelem"><a class="el" href="a00136.html">scoped_lock</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="a00323.html">List of all members</a>  </div>
+<a href="a00402.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::parallel_while&lt; Body &gt; Class Template Reference<div class="ingroups"><a class="el" href="a00291.html">Algorithms</a></div></div>  </div>
+<div class="title">tbb::internal::critical_section_v4::scoped_lock Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-
-<p>Parallel iteration over a stream, with optional addition of more work.  
- <a href="a00136.html#details">More...</a></p>
-
-<p><code>#include &lt;parallel_while.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::parallel_while&lt; Body &gt;:</div>
+Inheritance diagram for tbb::internal::critical_section_v4::scoped_lock:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00136.png" usemap="#tbb::parallel_while&lt; Body &gt;_map" alt=""/>
-  <map id="tbb::parallel_while&lt; Body &gt;_map" name="tbb::parallel_while&lt; Body &gt;_map">
+  <img src="a00136.png" usemap="#tbb::internal::critical_section_v4::scoped_lock_map" alt=""/>
+  <map id="tbb::internal::critical_section_v4::scoped_lock_map" name="tbb::internal::critical_section_v4::scoped_lock_map">
 </map>
  </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:a2442f019427e608d46801376267e44a8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2442f019427e608d46801376267e44a8"></a>
-typedef Body::argument_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00136.html#a2442f019427e608d46801376267e44a8">value_type</a></td></tr>
-<tr class="memdesc:a2442f019427e608d46801376267e44a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type of items. <br/></td></tr>
-<tr class="separator:a2442f019427e608d46801376267e44a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a220a7307358aa36802c8754ea45ca385"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a220a7307358aa36802c8754ea45ca385"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00136.html#a220a7307358aa36802c8754ea45ca385">parallel_while</a> ()</td></tr>
-<tr class="memdesc:a220a7307358aa36802c8754ea45ca385"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct empty non-running parallel while. <br/></td></tr>
-<tr class="separator:a220a7307358aa36802c8754ea45ca385"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac2fd559c8a38639fa1ba97a0d5639ca8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac2fd559c8a38639fa1ba97a0d5639ca8"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00136.html#ac2fd559c8a38639fa1ba97a0d5639ca8">~parallel_while</a> ()</td></tr>
-<tr class="memdesc:ac2fd559c8a38639fa1ba97a0d5639ca8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor cleans up data members before returning. <br/></td></tr>
-<tr class="separator:ac2fd559c8a38639fa1ba97a0d5639ca8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a20607ba5faa958144787d980aa850c16"><td class="memTemplParams" colspan="2">template&lt;typename Stream &gt; </td></tr>
-<tr class="memitem:a20607ba5faa958144787d980aa850c16"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00136.html#a20607ba5faa958144787d980aa850c16">run</a> (Stream &amp;stream, const Body &amp;body)</td></tr>
-<tr class="memdesc:a20607ba5faa958144787d980aa850c16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Apply body.apply to each item in the stream.  <a href="#a20607ba5faa958144787d980aa850c16">More...</a><br/></td></tr>
-<tr class="separator:a20607ba5faa958144787d980aa850c16"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4861989d7f5e3111d264d4d6013e8fe1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00136.html#a4861989d7f5e3111d264d4d6013e8fe1">add</a> (const <a class="el" href="a00136.html#a2442f019427e608d46801376267e44a8">value_type</a> &amp;item)</td></tr>
-<tr class="memdesc:a4861989d7f5e3111d264d4d6013e8fe1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a work item while running.  <a href="#a4861989d7f5e3111d264d4d6013e8fe1">More...</a><br/></td></tr>
-<tr class="separator:a4861989d7f5e3111d264d4d6013e8fe1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3d2a294e9d790bdeba9ca3ff60e75d53"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3d2a294e9d790bdeba9ca3ff60e75d53"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>scoped_lock</b> (<a class="el" href="a00051.html">critical_section_v4</a> &amp;lock_me)</td></tr>
+<tr class="separator:a3d2a294e9d790bdeba9ca3ff60e75d53"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;typename Body&gt;<br/>
-class tbb::parallel_while&lt; Body &gt;</h3>
-
-<p>Parallel iteration over a stream, with optional addition of more work. </p>
-<p>The Body b has the requirement: <br/>
- "b(v)" <br/>
- "b.argument_type" <br/>
- where v is an argument_type </p>
-</div><h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="a4861989d7f5e3111d264d4d6013e8fe1"></a>
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename Body &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">void <a class="el" href="a00136.html">tbb::parallel_while</a>&lt; Body &gt;::add </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="a00136.html#a2442f019427e608d46801376267e44a8">value_type</a> &amp;&#160;</td>
-          <td class="paramname"><em>item</em>)</td><td></td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Add a work item while running. </p>
-<p>Should be executed only by body.apply or a thread spawned therefrom. </p>
-
-</div>
-</div>
-<a class="anchor" id="a20607ba5faa958144787d980aa850c16"></a>
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename Body &gt; </div>
-<div class="memtemplate">
-template&lt;typename Stream &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">void <a class="el" href="a00136.html">tbb::parallel_while</a>&lt; Body &gt;::run </td>
-          <td>(</td>
-          <td class="paramtype">Stream &amp;&#160;</td>
-          <td class="paramname"><em>stream</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const Body &amp;&#160;</td>
-          <td class="paramname"><em>body</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Apply body.apply to each item in the stream. </p>
-<p>A Stream s has the requirements <br/>
- "S::value_type" <br/>
- "s.pop_if_present(value) is convertible to bool </p>
-
-</div>
-</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>parallel_while.h</li>
+<li>critical_section.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

@@ -57,15 +57,10 @@ endif
 LIB_LINK_FLAGS = -shared -static-intel -Wl,-soname=$(BUILDING_LIBRARY)
 LIBS += -lpthread -lrt
 C_FLAGS = $(CPLUS_FLAGS)
-CPP11_FLAGS = -std=c++0x -D_TBB_CPP0X
 CILK_AVAILABLE = yes
 
 TBB_ASM.OBJ=
 MALLOC_ASM.OBJ=
-
-ifneq (00,$(lambdas)$(cpp0x))
-    CXX_ONLY_FLAGS += $(CPP11_FLAGS)
-endif
 
 CPLUS_FLAGS += -DHARNESS_INCOMPLETE_SOURCES=1 -D__TBB_MIC_NATIVE -DTBB_USE_EXCEPTIONS=0 -opt-streaming-stores never
 CPLUS += -mmic

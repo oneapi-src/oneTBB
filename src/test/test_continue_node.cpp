@@ -35,7 +35,7 @@ struct empty_no_assign : private NoAssign {
 // A class to use as a fake predecessor of continue_node
 struct fake_continue_sender : public tbb::flow::sender<tbb::flow::continue_msg>
 {
-    typedef tbb::flow::receiver<tbb::flow::continue_msg> successor_type;
+    typedef tbb::flow::sender<tbb::flow::continue_msg>::successor_type successor_type;
     // Define implementations of virtual methods that are abstract in the base class
     /*override*/ bool register_successor( successor_type& ) { return false; }
     /*override*/ bool remove_successor( successor_type& )   { return false; }

@@ -18,6 +18,7 @@
     reasons why the executable file might be covered by the GNU General Public License.
 */
 
+#define TBB_PREVIEW_FLOW_GRAPH_NODES 1
 #include "tbb/tbb_config.h"
 #include "../../common/utility/utility.h"
 

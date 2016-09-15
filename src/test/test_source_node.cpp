@@ -44,7 +44,7 @@ public:
        return v;
     }
 
-    typedef tbb::flow::sender<T> predecessor_type;
+    typedef typename tbb::flow::receiver<T>::predecessor_type predecessor_type;
 
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
     typedef typename tbb::flow::receiver<T>::built_predecessors_type built_predecessors_type;

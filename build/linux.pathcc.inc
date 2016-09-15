@@ -39,7 +39,6 @@ LIBS += -lstl -lpthread -lrt
 LINK_FLAGS = -Wl,-rpath-link=. -rdynamic
 C_FLAGS = $(CPLUS_FLAGS)
 
-CPP11_FLAGS = -std=c++0x -D_TBB_CPP0X
 OPENMP_FLAG = -openmp
 
 ifeq ($(cfg), release)
@@ -47,10 +46,6 @@ ifeq ($(cfg), release)
 endif
 ifeq ($(cfg), debug)
         CPLUS_FLAGS = -DTBB_USE_DEBUG $(ITT_NOTIFY) -g -O0 -DUSE_PTHREAD
-endif
-
-ifneq (00,$(lambdas)$(cpp0x))
-    CXX_ONLY_FLAGS += $(CPP11_FLAGS)
 endif
 
 TBB_ASM.OBJ=

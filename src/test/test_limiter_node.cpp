@@ -43,10 +43,11 @@ struct serial_receiver : public tbb::flow::receiver<T> {
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
     typedef typename tbb::flow::receiver<T>::built_predecessors_type built_predecessors_type;
     typedef typename tbb::flow::receiver<T>::predecessor_list_type predecessor_list_type;
+    typedef typename tbb::flow::receiver<T>::predecessor_type predecessor_type;
     built_predecessors_type bpt;
     built_predecessors_type &built_predecessors() { return bpt; }
-    void internal_add_built_predecessor( tbb::flow::sender<T> & ) { }
-    void internal_delete_built_predecessor( tbb::flow::sender<T> & ) { }
+    void internal_add_built_predecessor( predecessor_type & ) { }
+    void internal_delete_built_predecessor( predecessor_type & ) { }
     void copy_predecessors( predecessor_list_type & ) { }
     size_t predecessor_count() { return 0; }
 #endif
@@ -69,10 +70,11 @@ struct parallel_receiver : public tbb::flow::receiver<T> {
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
     typedef typename tbb::flow::receiver<T>::built_predecessors_type built_predecessors_type;
     typedef typename tbb::flow::receiver<T>::predecessor_list_type predecessor_list_type;
+    typedef typename tbb::flow::receiver<T>::predecessor_type predecessor_type;
     built_predecessors_type bpt;
     built_predecessors_type &built_predecessors() { return bpt; }
-    void internal_add_built_predecessor( tbb::flow::sender<T> & ) { }
-    void internal_delete_built_predecessor( tbb::flow::sender<T> & ) { }
+    void internal_add_built_predecessor( predecessor_type & ) { }
+    void internal_delete_built_predecessor( predecessor_type & ) { }
     void copy_predecessors( predecessor_list_type & ) { }
     size_t predecessor_count( ) { return 0; }
 #endif
@@ -81,15 +83,17 @@ struct parallel_receiver : public tbb::flow::receiver<T> {
 
 template< typename T >
 struct empty_sender : public tbb::flow::sender<T> {
-        /* override */ bool register_successor( tbb::flow::receiver<T> & ) { return false; }
-        /* override */ bool remove_successor( tbb::flow::receiver<T> & ) { return false; }
+        typedef typename tbb::flow::sender<T>::successor_type successor_type;
+
+        /* override */ bool register_successor( successor_type & ) { return false; }
+        /* override */ bool remove_successor( successor_type & ) { return false; }
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
         typedef typename tbb::flow::sender<T>::built_successors_type built_successors_type;
         typedef typename tbb::flow::sender<T>::successor_list_type successor_list_type;
         built_successors_type bst;
         built_successors_type &built_successors() { return bst; }
-        void    internal_add_built_successor( tbb::flow::receiver<T> & ) { }
-        void internal_delete_built_successor( tbb::flow::receiver<T> & ) { }
+        void    internal_add_built_successor( successor_type & ) { }
+        void internal_delete_built_successor( successor_type & ) { }
         void copy_successors( successor_list_type & ) { }
         size_t successor_count() { return 0; }
 #endif

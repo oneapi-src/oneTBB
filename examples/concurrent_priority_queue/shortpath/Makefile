@@ -22,15 +22,13 @@ PROG=shortpath
 ARGS=4 N=1000 start=0 end=999 verbose
 PERF_RUN_ARGS=auto N=1000 start=0 end=99 silent
 
-# The C++ compiler
+# icpc by default
 ifneq (,$(shell which icc 2>/dev/null))
-CXX=icc
-endif # which icc
-ifneq (,$(filter icc icpc,$(CXX)))
-ifneq (0,$(cpp0x))
-CXX0XFLAGS?=-std=c++0x -D_TBB_CPP0X
+    CXX=icpc
 endif
-endif # icc
+
+# autodetect C++11 support
+include ../../common/examples-common.inc
 
 ifeq ($(shell uname), Linux)
 ifeq ($(target), android)

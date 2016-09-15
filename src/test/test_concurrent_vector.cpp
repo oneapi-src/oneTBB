@@ -172,6 +172,9 @@ struct CheckElement {
 #include "tbb/parallel_for.h"
 #include "harness.h"
 
+//! Problem size
+const size_t N = 500000;
+
 //! Test parallel access by iterators
 void TestParallelFor( int nthread ) {
     typedef tbb::concurrent_vector<int> vector_t;

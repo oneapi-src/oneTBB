@@ -179,9 +179,6 @@ task* custom_scheduler<SchedulerTraits>::receive_or_steal_task( __TBB_atomic ref
                  || my_arena->recall_by_mandatory_request()
 #endif
                  ) ) {
-#if !__TBB_TASK_ARENA
-            __TBB_ASSERT( is_worker(), NULL );
-#endif
             if( SchedulerTraits::itt_possible && failure_count != -1 )
                 ITT_NOTIFY(sync_cancel, this);
             return NULL;
@@ -245,8 +242,10 @@ task* custom_scheduler<SchedulerTraits>::receive_or_steal_task( __TBB_atomic ref
             goto fail;
         // A task was successfully obtained somewhere
         __TBB_ASSERT(t,NULL);
-#if __TBB_SCHEDULER_OBSERVER
+#if __TBB_ARENA_OBSERVER
         my_arena->my_observers.notify_entry_observers( my_last_local_observer, is_worker() );
+#endif
+#if __TBB_SCHEDULER_OBSERVER
         the_global_observer_list.notify_entry_observers( my_last_global_observer, is_worker() );
 #endif /* __TBB_SCHEDULER_OBSERVER */
         if ( SchedulerTraits::itt_possible && failure_count != -1 ) {
@@ -629,13 +628,8 @@ done:
     if ( !ConcurrentWaitsEnabled(parent) ) {
         if ( parent.prefix().ref_count != parents_work_done ) {
             // This is a worker that was revoked by the market.
-#if __TBB_TASK_ARENA
             __TBB_ASSERT( worker_outermost_level(),
                 "Worker thread exits nested dispatch loop prematurely" );
-#else
-            __TBB_ASSERT( is_worker() && worker_outermost_level(),
-                "Worker thread exits nested dispatch loop prematurely" );
-#endif
             return;
         }
         parent.prefix().ref_count = 0;

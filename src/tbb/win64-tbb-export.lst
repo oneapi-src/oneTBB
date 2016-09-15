@@ -67,7 +67,6 @@ __TBB_SYMBOL( ?terminate@task_scheduler_init@tbb@@QEAAXXZ )
 __TBB_SYMBOL( ?observe@task_scheduler_observer_v3@internal@tbb@@QEAAX_N@Z )
 #endif /* __TBB_SCHEDULER_OBSERVER */
 
-#if __TBB_TASK_ARENA
 /* arena.cpp */
 __TBB_SYMBOL( ?internal_current_slot@task_arena_base@internal@interface7@tbb@@KAHXZ )
 __TBB_SYMBOL( ?internal_initialize@task_arena_base@internal@interface7@tbb@@IEAAXXZ )
@@ -76,7 +75,6 @@ __TBB_SYMBOL( ?internal_attach@task_arena_base@internal@interface7@tbb@@IEAAXXZ 
 __TBB_SYMBOL( ?internal_enqueue@task_arena_base@internal@interface7@tbb@@IEBAXAEAVtask@4@_J@Z )
 __TBB_SYMBOL( ?internal_execute@task_arena_base@internal@interface7@tbb@@IEBAXAEAVdelegate_base@234@@Z )
 __TBB_SYMBOL( ?internal_wait@task_arena_base@internal@interface7@tbb@@IEBAXXZ )
-#endif /* __TBB_TASK_ARENA */
 
 #if !TBB_NO_LEGACY
 // task_v2.cpp

@@ -129,9 +129,9 @@ void plugin_call(int maxthread)
 
 #else /* _USRDLL undefined */
 
-#define HARNESS_NO_ASSERT 1
 #include "harness.h"
 #include "harness_dynamic_libs.h"
+#include "harness_tls.h"
 
 extern "C" void plugin_call(int);
 
@@ -156,35 +156,6 @@ void report_error_in(const char* function_name)
 #endif
 }
 
-int use_lot_of_tls() {
-    int count = 0;
-#if _WIN32 || _WIN64
-    DWORD last_handles[10];
-    DWORD result;
-    result = TlsAlloc();
-    while( result!=TLS_OUT_OF_INDEXES ) {
-        last_handles[++count%10] = result;
-        result = TlsAlloc();
-    }
-    for( int i=0; i<10; ++i )
-        TlsFree(last_handles[i]);
-#else
-    pthread_key_t last_handles[10];
-    pthread_key_t result;
-    int setspecific_dummy=10;
-    while( pthread_key_create(&result, NULL)==0
-           && count < 4096 ) // Sun Solaris doesn't have any built-in limit, so we set something big enough
-    {
-        last_handles[++count%10] = result;
-        pthread_setspecific(result,&setspecific_dummy);
-    }
-    REMARK("Created %d keys\n", count);
-    for( int i=0; i<10; ++i )
-        pthread_key_delete(last_handles[i]);
-#endif
-    return count-10;
-}
-
 typedef void (*PLUGIN_CALL)(int);
 
 #if __linux__
@@ -197,8 +168,7 @@ int TestMain () {
 #if !RML_USE_WCRM
     PLUGIN_CALL my_plugin_call;
 
-    int tls_key_count = use_lot_of_tls();
-    REMARK("%d thread local objects allocated in advance\n", tls_key_count);
+    LimitTLSKeysTo limitTLS(10);
 
     Harness::LIBRARY_HANDLE hLib;
 #if _WIN32 || _WIN64

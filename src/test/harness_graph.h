@@ -302,8 +302,9 @@ struct harness_counting_receiver : public tbb::flow::receiver<T>, NoCopy {
     built_predecessors_type mbp;
     /*override*/ built_predecessors_type &built_predecessors() { return mbp; }
     typedef typename tbb::flow::receiver<T>::predecessor_list_type predecessor_list_type;
-    /*override*/void internal_add_built_predecessor(tbb::flow::sender<T> &) {}
-    /*override*/void internal_delete_built_predecessor(tbb::flow::sender<T> &) {}
+    typedef typename tbb::flow::receiver<T>::predecessor_type predecessor_type;
+    /*override*/void internal_add_built_predecessor(predecessor_type &) {}
+    /*override*/void internal_delete_built_predecessor(predecessor_type &) {}
     /*override*/void copy_predecessors(predecessor_list_type &) { }
     /*override*/size_t predecessor_count() { return 0; }
     /*override*/void clear_predecessors() { my_count = 0; };
@@ -368,8 +369,9 @@ struct harness_mapped_receiver : public tbb::flow::receiver<T>, NoCopy {
     built_predecessors_type mbp;
     /*override*/ built_predecessors_type &built_predecessors() { return mbp; }
     typedef typename tbb::flow::receiver<T>::predecessor_list_type predecessor_list_type;
-    /*override*/void internal_add_built_predecessor(tbb::flow::sender<T> &) {}
-    /*override*/void internal_delete_built_predecessor(tbb::flow::sender<T> &) {}
+    typedef typename tbb::flow::receiver<T>::predecessor_type predecessor_type;
+    /*override*/void internal_add_built_predecessor(predecessor_type &) {}
+    /*override*/void internal_delete_built_predecessor(predecessor_type &) {}
     /*override*/void copy_predecessors(predecessor_list_type &) { }
     /*override*/size_t predecessor_count() { return 0; }
     /*override*/void clear_predecessors() { my_count = 0; };
@@ -386,7 +388,7 @@ struct harness_mapped_receiver : public tbb::flow::receiver<T>, NoCopy {
 template< typename T >
 struct harness_counting_sender : public tbb::flow::sender<T>, NoCopy {
 
-    typedef tbb::flow::receiver<T> successor_type;
+    typedef typename tbb::flow::sender<T>::successor_type successor_type;
     tbb::atomic< successor_type * > my_receiver;
     tbb::atomic< size_t > my_count;
     tbb::atomic< size_t > my_received;

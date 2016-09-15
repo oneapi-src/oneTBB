@@ -38,14 +38,6 @@
     #pragma warning (disable: 4267)
 #endif /* _MSC_VER && _Wp64 */
 
-#if __INTEL_COMPILER
-#define __TBB_LAMBDAS_PRESENT ( _TBB_CPP0X && __INTEL_COMPILER > 1100 )
-#elif __GNUC__
-#define __TBB_LAMBDAS_PRESENT ( _TBB_CPP0X && __TBB_GCC_VERSION >= 40500 )
-#elif _MSC_VER
-#define __TBB_LAMBDAS_PRESENT ( _MSC_VER>=1600 )
-#endif
-
 using namespace std;
 using namespace tbb;
 
@@ -53,7 +45,7 @@ struct point {
     double x, y;
     point() {}
     point(double _x, double _y) : x(_x), y(_y) {}
-    point(const point& p) : x(p.x), y(p.y) {} 
+    point(const point& p) : x(p.x), y(p.y) {}
 };
 
 double get_distance(const point& p1, const point& p2) {
@@ -116,7 +108,7 @@ concurrent_priority_queue<vertex_rec, compare_f> open_set; // tentative vertices
 
 void shortpath_helper();
 
-#if !__TBB_LAMBDAS_PRESENT
+#if !__TBB_CPP11_LAMBDAS_PRESENT
 class shortpath_helper_functor {
 public:
     shortpath_helper_functor() {};
@@ -129,7 +121,7 @@ void shortpath() {
     g_distance[src] = 0.0; // src's distance from src is zero
     f_distance[src] = get_distance(vertices[src], vertices[dst]); // estimate distance from src to dst
     open_set.push(make_pair(src,f_distance[src])); // push src into open_set
-#if __TBB_LAMBDAS_PRESENT    
+#if __TBB_CPP11_LAMBDAS_PRESENT
     sp_group->run([](){ shortpath_helper(); });
 #else
     sp_group->run( shortpath_helper_functor() );
@@ -169,11 +161,11 @@ void shortpath_helper() {
                 open_set.push(make_pair(v,new_f_v));
                 size_t n_spawn = ++num_spawn;
                 if (n_spawn < max_spawn) {
-#if __TBB_LAMBDAS_PRESENT    
+#if __TBB_CPP11_LAMBDAS_PRESENT
                     sp_group->run([]{ shortpath_helper(); });
 #else
                     sp_group->run( shortpath_helper_functor() );
-#endif                
+#endif
                 }
                 else --num_spawn;
             }
@@ -219,9 +211,9 @@ int get_default_num_threads() {
     return threads;
 }
 
-#if !__TBB_LAMBDAS_PRESENT
+#if !__TBB_CPP11_LAMBDAS_PRESENT
 class gen_vertices {
-public: 
+public:
     gen_vertices() {}
     void operator() (blocked_range<size_t>& r) const {
         utility::FastRandom my_random((unsigned int)r.begin());
@@ -232,7 +224,7 @@ public:
 };
 
 class gen_edges {
-public: 
+public:
     gen_edges() {}
     void operator() (blocked_range<size_t>& r) const {
         utility::FastRandom my_random((unsigned int)r.begin());
@@ -246,7 +238,7 @@ public:
 };
 
 class reset_vertices {
-public: 
+public:
     reset_vertices() {}
     void operator() (blocked_range<size_t>& r) const {
         for (size_t i=r.begin(); i!=r.end(); ++i) {
@@ -266,8 +258,8 @@ void InitializeGraph() {
     f_distance.resize(N);
     locks = new spin_mutex[N];
     if (verbose) printf("Generating vertices...\n");
-#if __TBB_LAMBDAS_PRESENT
-    parallel_for(blocked_range<size_t>(0,N,64), 
+#if __TBB_CPP11_LAMBDAS_PRESENT
+    parallel_for(blocked_range<size_t>(0,N,64),
                  [&](blocked_range<size_t>& r) {
                      utility::FastRandom my_random(r.begin());
                      for (size_t i=r.begin(); i!=r.end(); ++i) {
@@ -278,8 +270,8 @@ void InitializeGraph() {
     parallel_for(blocked_range<size_t>(0,N,64), gen_vertices(), simple_partitioner());
 #endif
     if (verbose) printf("Generating edges...\n");
-#if __TBB_LAMBDAS_PRESENT
-    parallel_for(blocked_range<size_t>(0,N,64), 
+#if __TBB_CPP11_LAMBDAS_PRESENT
+    parallel_for(blocked_range<size_t>(0,N,64),
                  [&](blocked_range<size_t>& r) {
                      utility::FastRandom my_random(r.begin());
                      for (size_t i=r.begin(); i!=r.end(); ++i) {
@@ -307,8 +299,8 @@ void ReleaseGraph() {
 
 void ResetGraph() {
     task_scheduler_init init(get_default_num_threads());
-#if __TBB_LAMBDAS_PRESENT
-    parallel_for(blocked_range<size_t>(0,N), 
+#if __TBB_CPP11_LAMBDAS_PRESENT
+    parallel_for(blocked_range<size_t>(0,N),
                  [&](blocked_range<size_t>& r) {
                      for (size_t i=r.begin(); i!=r.end(); ++i) {
                          f_distance[i] = g_distance[i] = INF;
@@ -336,15 +328,15 @@ int main(int argc, char *argv[]) {
         if (silent) verbose = false;  // make silent override verbose
         else
             printf("shortpath will run with %d vertices to find shortest path between vertices"
-                   " %d and %d using %d:%d threads.\n", 
+                   " %d and %d using %d:%d threads.\n",
                    (int)N, (int)src, (int)dst, (int)threads.first, (int)threads.last);
-  
-        if (dst >= N) { 
-            if (verbose) 
+
+        if (dst >= N) {
+            if (verbose)
                 printf("end value %d is invalid for %d vertices; correcting to %d\n", (int)dst, (int)N, (int)N-1);
             dst = N-1;
         }
-        
+
         num_spawn = 0;
         max_spawn = N/grainsize;
         tick_count t0, t1;
@@ -357,12 +349,12 @@ int main(int argc, char *argv[]) {
             t1 = tick_count::now();
             if (!silent) {
                 if (predecessor[dst] != N) {
-                    printf("%d threads: [%6.6f] The shortest path from vertex %d to vertex %d is:", 
+                    printf("%d threads: [%6.6f] The shortest path from vertex %d to vertex %d is:",
                            (int)n_thr, (t1-t0).seconds(), (int)src, (int)dst);
                     print_path();
                 }
                 else {
-                    printf("%d threads: [%6.6f] There is no path from vertex %d to vertex %d\n", 
+                    printf("%d threads: [%6.6f] There is no path from vertex %d to vertex %d\n",
                            (int)n_thr, (t1-t0).seconds(), (int)src, (int)dst);
                 }
             } else

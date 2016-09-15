@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::queuing_mutex Class Reference</title>
+<title>tbb::flow::interface8::sender&lt; dependency_msg&lt; T, Factory &gt; &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,65 +33,69 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00276.html">tbb</a></li><li class="navelem"><a class="el" href="a00144.html">queuing_mutex</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><a class="el" href="a00144.html">sender< dependency_msg< T, Factory > ></a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
-<a href="a00327.html">List of all members</a>  </div>
+<a href="a00333.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::queuing_mutex Class Reference<div class="ingroups"><a class="el" href="a00294.html">Synchronization</a></div></div>  </div>
+<div class="title">tbb::flow::interface8::sender&lt; dependency_msg&lt; T, Factory &gt; &gt; Class Template Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div>  </div>
 </div><!--header-->
 <div class="contents">
-
-<p>Queuing mutex with local-only spinning.  
- <a href="a00144.html#details">More...</a></p>
-
-<p><code>#include &lt;queuing_mutex.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::queuing_mutex:</div>
+Inheritance diagram for tbb::flow::interface8::sender&lt; dependency_msg&lt; T, Factory &gt; &gt;:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00144.png" usemap="#tbb::queuing_mutex_map" alt=""/>
-  <map id="tbb::queuing_mutex_map" name="tbb::queuing_mutex_map">
+  <img src="a00144.png" usemap="#tbb::flow::interface8::sender&lt; dependency_msg&lt; T, Factory &gt; &gt;_map" alt=""/>
+  <map id="tbb::flow::interface8::sender&lt; dependency_msg&lt; T, Factory &gt; &gt;_map" name="tbb::flow::interface8::sender&lt; dependency_msg&lt; T, Factory &gt; &gt;_map">
+<area href="a00109.html" alt="tbb::flow::interface8::proxy_dependency_sender&lt; T, Factory &gt;" shape="rect" coords="0,56,373,80"/>
 </map>
  </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
-Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00165.html">scoped_lock</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The scoped locking pattern.  <a href="a00165.html#details">More...</a><br/></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a6916f2f7f9862f9afe9b718e93b0b68b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6916f2f7f9862f9afe9b718e93b0b68b"></a>
+typedef <a class="el" href="a00123.html">receiver</a><br class="typebreak"/>
+&lt; <a class="el" href="a00054.html">dependency_msg</a>&lt; T, Factory &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00144.html#a6916f2f7f9862f9afe9b718e93b0b68b">successor_type</a></td></tr>
+<tr class="memdesc:a6916f2f7f9862f9afe9b718e93b0b68b"><td class="mdescLeft">&#160;</td><td class="mdescRight">The successor type for this sender. <br/></td></tr>
+<tr class="separator:a6916f2f7f9862f9afe9b718e93b0b68b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6fb8a0afda62e103046a8d008adc7492"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6fb8a0afda62e103046a8d008adc7492"></a>
+typedef <br class="typebreak"/>
+<a class="el" href="a00109.html">proxy_dependency_sender</a>&lt; T, <br class="typebreak"/>
+Factory &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>proxy</b></td></tr>
+<tr class="separator:a6fb8a0afda62e103046a8d008adc7492"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a0e58fce2062ae349a30b320b7fdc9155"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0e58fce2062ae349a30b320b7fdc9155"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00144.html#a0e58fce2062ae349a30b320b7fdc9155">queuing_mutex</a> ()</td></tr>
-<tr class="memdesc:a0e58fce2062ae349a30b320b7fdc9155"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct unacquired mutex. <br/></td></tr>
-<tr class="separator:a0e58fce2062ae349a30b320b7fdc9155"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae475e98e804c75239748b293e7e0feff"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae475e98e804c75239748b293e7e0feff"></a>
-void __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><b>internal_construct</b> ()</td></tr>
-<tr class="separator:ae475e98e804c75239748b293e7e0feff"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
-Static Public Attributes</h2></td></tr>
-<tr class="memitem:a504f3af8a939468f1514604c0941bc62"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a504f3af8a939468f1514604c0941bc62"></a>
-static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_rw_mutex</b> = false</td></tr>
-<tr class="separator:a504f3af8a939468f1514604c0941bc62"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a47ad4cdac79581c01a66241e2e5c2c07"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a47ad4cdac79581c01a66241e2e5c2c07"></a>
-static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_recursive_mutex</b> = false</td></tr>
-<tr class="separator:a47ad4cdac79581c01a66241e2e5c2c07"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5b4833b97208bd699cba061dfc3057cc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5b4833b97208bd699cba061dfc3057cc"></a>
-static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_fair_mutex</b> = true</td></tr>
-<tr class="separator:a5b4833b97208bd699cba061dfc3057cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a207d2e4c50f8c2635cad79017ae918a6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a207d2e4c50f8c2635cad79017ae918a6"></a>
+virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00144.html#a207d2e4c50f8c2635cad79017ae918a6">register_successor</a> (<a class="el" href="a00144.html#a6916f2f7f9862f9afe9b718e93b0b68b">successor_type</a> &amp;r)=0</td></tr>
+<tr class="memdesc:a207d2e4c50f8c2635cad79017ae918a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a new successor to this node. <br/></td></tr>
+<tr class="separator:a207d2e4c50f8c2635cad79017ae918a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0320923715b9e0d98ce9d103c08a65b9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0320923715b9e0d98ce9d103c08a65b9"></a>
+virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00144.html#a0320923715b9e0d98ce9d103c08a65b9">remove_successor</a> (<a class="el" href="a00144.html#a6916f2f7f9862f9afe9b718e93b0b68b">successor_type</a> &amp;r)=0</td></tr>
+<tr class="memdesc:a0320923715b9e0d98ce9d103c08a65b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes a successor from this node. <br/></td></tr>
+<tr class="separator:a0320923715b9e0d98ce9d103c08a65b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeb6486b9ac27c8e7fa66a09dbf2c0c61"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aeb6486b9ac27c8e7fa66a09dbf2c0c61"></a>
+virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00144.html#aeb6486b9ac27c8e7fa66a09dbf2c0c61">try_get</a> (<a class="el" href="a00054.html">dependency_msg</a>&lt; T, Factory &gt; &amp;)</td></tr>
+<tr class="memdesc:aeb6486b9ac27c8e7fa66a09dbf2c0c61"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request an item from the sender. <br/></td></tr>
+<tr class="separator:aeb6486b9ac27c8e7fa66a09dbf2c0c61"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2a92a086f82fcd73e1a0df2834bd0784"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2a92a086f82fcd73e1a0df2834bd0784"></a>
+virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00144.html#a2a92a086f82fcd73e1a0df2834bd0784">try_reserve</a> (<a class="el" href="a00054.html">dependency_msg</a>&lt; T, Factory &gt; &amp;)</td></tr>
+<tr class="memdesc:a2a92a086f82fcd73e1a0df2834bd0784"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reserves an item in the sender. <br/></td></tr>
+<tr class="separator:a2a92a086f82fcd73e1a0df2834bd0784"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0172dfade96faa57e710669638355616"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0172dfade96faa57e710669638355616"></a>
+ordinary_sender &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>ordinary_sender</b> ()</td></tr>
+<tr class="separator:a0172dfade96faa57e710669638355616"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a55e8bab39488da80a7cf80c1260f312a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a55e8bab39488da80a7cf80c1260f312a"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>has_host_successors</b> ()</td></tr>
+<tr class="separator:a55e8bab39488da80a7cf80c1260f312a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Queuing mutex with local-only spinning. </p>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>queuing_mutex.h</li>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li>flow_graph_opencl_node.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

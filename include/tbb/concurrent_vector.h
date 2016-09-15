@@ -72,11 +72,11 @@ namespace tbb {
 template<typename T, class A = cache_aligned_allocator<T> >
 class concurrent_vector;
 
-template<typename Container, typename Value>
-class vector_iterator;
-
 //! @cond INTERNAL
 namespace internal {
+
+    template<typename Container, typename Value>
+    class vector_iterator;
 
     //! Bad allocation marker
     static void *const vector_allocation_error_flag = reinterpret_cast<void*>(size_t(63));

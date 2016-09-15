@@ -43,6 +43,8 @@ method can be found below.
 <LI>Build by using a <A HREF=#build_3>Makefile (Windows*, Linux* or OS X* systems)</A>.
 <LI>Build by using a <A HREF=#build_4>Eclipse* IDE project (Windows* systems only)</A>.
 <LI>Build by using a <A HREF=#build_5>Android* Studio* project (Windows* systems only)</A>.
+<LI>Setting up the environment for <A HREF=#env_1>Windows* systems</A>.
+<LI>Setting up the environment for <A HREF=#env_23>Linux* and OS X* systems</A>.
 </UL>
 
 <P>
@@ -132,10 +134,10 @@ Perform the following steps:
     <LI>Click "Finish".</LI>
     </OL>
 </LI>
-<LI>Press &lt;Ctrl-B&gt; or use "Project -> Build All" or "Project -> Build Project" to build the example.
+<LI>Press &lt;ctrl-B&gt; or use "Project -> Build All" or "Project -> Build Project" to build the example.
 <br><I>Note: Do not forget to set the "NDK location" in "Window -> Preferences -> Android -> NDK".</I></LI>
 <LI>Use "Run -> Run Configurations" to create a new deployment configuration for your project. Choose "Android Application" configuration type and "Always prompt to pick device" target selection mode.</LI>
-<LI>To run the example, press &lt;Ctrl-F11&gt; or use "Run -> Run" and select any compatible Android device.</LI>
+<LI>To run the example, press &lt;ctrl-F11&gt; or use "Run -> Run" and select any compatible Android device.</LI>
 </OL>
 
 <A name="build_5"><H4>To build by using a Android* Studio* project (Windows* systems only):</H4></A>
@@ -192,7 +194,7 @@ The environment may be set up, for a given type of shell window, by using one of
     <LI>[TBBROOT_detection_mode] argument represents TBBROOT path detection method. Its only possible value is 'auto_tbbroot'. In this case the environment variable TBBROOT is detected automatically by using the tbbvars script directory path.
     <LI>Environment setup need only be performed once per shell window to be used.
     <LI>Always source tbbvars.sh or tbbvars.csh rather than executing them directly.
-    <LI>If the arguments to the sourced script are ignored (consult docs for your shell) the alternative way to specify target is environment variables COMPILERVARS_ARCHITECTURE to pass <arch> to the script and COMPILERVARS_PLATFORM to pass <platform>.
+    <LI>If the arguments to the sourced script are ignored (consult documentation for your shell) the alternative way to specify target is environment variables COMPILERVARS_ARCHITECTURE to pass (arch) to the script and COMPILERVARS_PLATFORM to pass [platform].
     </SL></I>
 </DL>
 

@@ -27,6 +27,80 @@ namespace rml {
 namespace internal {
 
 
+/* The functor called by the aggregator for the operation list */
+template<typename Props>
+class CacheBinFunctor {
+    typename LargeObjectCacheImpl<Props>::CacheBin *const bin;
+    ExtMemoryPool *const extMemPool;
+    typename LargeObjectCacheImpl<Props>::BinBitMask *const bitMask;
+    const int idx;
+
+    LargeMemoryBlock *toRelease;
+    bool needCleanup;
+    uintptr_t currTime;
+
+    /* Do preprocessing under the operation list. */
+    /* All the OP_PUT_LIST operations are merged in the one operation.
+       All OP_GET operations are merged with the OP_PUT_LIST operations but
+       it demands the update of the moving average value in the bin.
+       Only the last OP_CLEAN_TO_THRESHOLD operation has sense.
+       The OP_CLEAN_ALL operation also should be performed only once.
+       Moreover it cancels the OP_CLEAN_TO_THRESHOLD operation. */
+    class OperationPreprocessor {
+        // TODO: remove the dependency on CacheBin.
+        typename LargeObjectCacheImpl<Props>::CacheBin *const  bin;
+
+        /* Contains the relative time in the operation list.
+           It counts in the reverse order since the aggregator also
+           provides operations in the reverse order. */
+        uintptr_t lclTime;
+
+        /* opGet contains only OP_GET operations which cannot be merge with OP_PUT operations
+           opClean contains all OP_CLEAN_TO_THRESHOLD and OP_CLEAN_ALL operations. */
+        CacheBinOperation *opGet, *opClean;
+        /* The time of the last OP_CLEAN_TO_THRESHOLD operations */
+        uintptr_t cleanTime;
+
+        /* lastGetOpTime - the time of the last OP_GET operation.
+           lastGet - the same meaning as CacheBin::lastGet */
+        uintptr_t lastGetOpTime, lastGet;
+
+        /* The total sum of all usedSize changes requested with CBOP_UPDATE_USED_SIZE operations. */
+        size_t updateUsedSize;
+
+        /* The list of blocks for the OP_PUT_LIST operation. */
+        LargeMemoryBlock *head, *tail;
+        int putListNum;
+
+        /* if the OP_CLEAN_ALL is requested. */
+        bool isCleanAll;
+
+        inline void commitOperation(CacheBinOperation *op) const;
+        inline void addOpToOpList(CacheBinOperation *op, CacheBinOperation **opList) const;
+        bool getFromPutList(CacheBinOperation* opGet, uintptr_t currTime);
+        void addToPutList( LargeMemoryBlock *head, LargeMemoryBlock *tail, int num );
+
+    public:
+        OperationPreprocessor(typename LargeObjectCacheImpl<Props>::CacheBin *bin) :
+            bin(bin), lclTime(0), opGet(NULL), opClean(NULL), cleanTime(0),
+            lastGetOpTime(0), updateUsedSize(0), head(NULL), isCleanAll(false)  {}
+        void operator()(CacheBinOperation* opList);
+        uintptr_t getTimeRange() const { return -lclTime; }
+
+        friend class CacheBinFunctor;
+    };
+
+public:
+    CacheBinFunctor(typename LargeObjectCacheImpl<Props>::CacheBin *bin, ExtMemoryPool *extMemPool,
+                    typename LargeObjectCacheImpl<Props>::BinBitMask *bitMask, int idx) :
+        bin(bin), extMemPool(extMemPool), bitMask(bitMask), idx(idx), toRelease(NULL), needCleanup(false) {}
+    void operator()(CacheBinOperation* opList);
+
+    bool isCleanupNeeded() const { return needCleanup; }
+    LargeMemoryBlock *getToRelease() const { return toRelease; }
+    uintptr_t getCurrTime() const { return currTime; }
+};
+
 // ---------------- Cache Bin Aggregator Operation Helpers ---------------- //
 // The list of possible operations.
 enum CacheBinOperationType {
@@ -35,7 +109,7 @@ enum CacheBinOperationType {
     CBOP_PUT_LIST,
     CBOP_CLEAN_TO_THRESHOLD,
     CBOP_CLEAN_ALL,
-    CBOP_DECR_USED_SIZE
+    CBOP_UPDATE_USED_SIZE
 };
 
 // The operation status list. CBST_NOWAIT can be specified for non-blocking operations.
@@ -69,8 +143,8 @@ struct OpCleanAll {
     LargeMemoryBlock **res;
 };
 
-struct OpDecrUsedSize {
-    static const CacheBinOperationType type = CBOP_DECR_USED_SIZE;
+struct OpUpdateUsedSize {
+    static const CacheBinOperationType type = CBOP_UPDATE_USED_SIZE;
     size_t size;
 };
 
@@ -80,7 +154,7 @@ private:
     OpPutList opPutList;
     OpCleanToThreshold opCleanToThreshold;
     OpCleanAll opCleanAll;
-    OpDecrUsedSize opDecrUsedSize;
+    OpUpdateUsedSize opUpdateUsedSize;
 };
 
 // Forward declarations
@@ -128,20 +202,20 @@ inline bool lessThanWithOverflow(intptr_t a, intptr_t b)
 
 /* ----------------------------------- Operation processing methods ------------------------------------ */
 
-template<typename Props> void LargeObjectCacheImpl<Props>::CacheBin::CacheBinFunctor::
+template<typename Props> void CacheBinFunctor<Props>::
     OperationPreprocessor::commitOperation(CacheBinOperation *op) const
 {
     FencedStore( (intptr_t&)(op->status), CBST_DONE );
 }
 
-template<typename Props> void LargeObjectCacheImpl<Props>::CacheBin::CacheBinFunctor::
+template<typename Props> void CacheBinFunctor<Props>::
     OperationPreprocessor::addOpToOpList(CacheBinOperation *op, CacheBinOperation **opList) const
 {
     op->next = *opList;
     *opList = op;
 }
 
-template<typename Props> bool LargeObjectCacheImpl<Props>::CacheBin::CacheBinFunctor::
+template<typename Props> bool CacheBinFunctor<Props>::
     OperationPreprocessor::getFromPutList(CacheBinOperation *opGet, uintptr_t currTime)
 {
     if ( head ) {
@@ -160,7 +234,7 @@ template<typename Props> bool LargeObjectCacheImpl<Props>::CacheBin::CacheBinFun
     return false;
 }
 
-template<typename Props> void LargeObjectCacheImpl<Props>::CacheBin::CacheBinFunctor::
+template<typename Props> void CacheBinFunctor<Props>::
     OperationPreprocessor::addToPutList(LargeMemoryBlock *h, LargeMemoryBlock *t, int num)
 {
     if ( head ) {
@@ -176,7 +250,7 @@ template<typename Props> void LargeObjectCacheImpl<Props>::CacheBin::CacheBinFun
     }
 }
 
-template<typename Props> void LargeObjectCacheImpl<Props>::CacheBin::CacheBinFunctor::
+template<typename Props> void CacheBinFunctor<Props>::
     OperationPreprocessor::operator()(CacheBinOperation* opList)
 {
     for ( CacheBinOperation *op = opList, *opNext; op; op = opNext ) {
@@ -232,8 +306,8 @@ template<typename Props> void LargeObjectCacheImpl<Props>::CacheBin::CacheBinFun
             }
             break;
 
-        case CBOP_DECR_USED_SIZE:
-            decrUsedSize += opCast<OpDecrUsedSize>(*op).size;
+        case CBOP_UPDATE_USED_SIZE:
+            updateUsedSize += opCast<OpUpdateUsedSize>(*op).size;
             commitOperation( op );
             break;
 
@@ -259,8 +333,7 @@ template<typename Props> void LargeObjectCacheImpl<Props>::CacheBin::CacheBinFun
     MALLOC_ASSERT( !( opGet && head ), "Not all put/get pairs are processed!" );
 }
 
-template<typename Props> void LargeObjectCacheImpl<Props>::CacheBin::
-    CacheBinFunctor::operator()(CacheBinOperation* opList)
+template<typename Props> void CacheBinFunctor<Props>::operator()(CacheBinOperation* opList)
 {
     MALLOC_ASSERT( opList, "Empty operation list is passed into operation handler." );
 
@@ -334,15 +407,15 @@ template<typename Props> void LargeObjectCacheImpl<Props>::CacheBin::
         }
     }
 
-    if ( size_t decrUsedSize = prep.decrUsedSize )
-        bin->updateUsedSize(-decrUsedSize, bitMask, idx);
+    if ( size_t size = prep.updateUsedSize )
+        bin->updateUsedSize(size, bitMask, idx);
 }
 /* ----------------------------------------------------------------------------------------------------- */
 /* --------------------------- Methods for creating and executing operations --------------------------- */
 template<typename Props> void LargeObjectCacheImpl<Props>::
     CacheBin::ExecuteOperation(CacheBinOperation *op, ExtMemoryPool *extMemPool, BinBitMask *bitMask, int idx, bool longLifeTime)
 {
-    CacheBinFunctor func( this, extMemPool, bitMask, idx );
+    CacheBinFunctor<Props> func( this, extMemPool, bitMask, idx );
     aggregator.execute( op, func, longLifeTime );
 
     if (  LargeMemoryBlock *toRelease = func.getToRelease() )
@@ -419,8 +492,8 @@ template<typename Props> bool LargeObjectCacheImpl<Props>::
 }
 
 template<typename Props> void LargeObjectCacheImpl<Props>::
-    CacheBin::decrUsedSize(ExtMemoryPool *extMemPool, size_t size, BinBitMask *bitMask, int idx) {
-    OpDecrUsedSize data = {size};
+    CacheBin::updateUsedSize(ExtMemoryPool *extMemPool, size_t size, BinBitMask *bitMask, int idx) {
+    OpUpdateUsedSize data = {size};
     CacheBinOperation op(data);
     ExecuteOperation( &op, extMemPool, bitMask, idx );
 }
@@ -707,11 +780,11 @@ LargeMemoryBlock *LargeObjectCacheImpl<Props>::get(ExtMemoryPool *extMemoryPool,
 }
 
 template<typename Props>
-void LargeObjectCacheImpl<Props>::rollbackCacheState(ExtMemoryPool *extMemPool, size_t size)
+void LargeObjectCacheImpl<Props>::updateCacheState(ExtMemoryPool *extMemPool, DecreaseOrIncrease op, size_t size)
 {
     int idx = sizeToIdx(size);
     MALLOC_ASSERT(idx<numBins, ASSERT_TEXT);
-    bin[idx].decrUsedSize(extMemPool, size, &bitMask, idx);
+    bin[idx].updateUsedSize(extMemPool, op==decrease? -size : size, &bitMask, idx);
 }
 
 #if __TBB_MALLOC_LOCACHE_STAT
@@ -728,6 +801,7 @@ void LargeObjectCache::reportStat(FILE *f)
 {
     largeCache.reportStat(f);
     hugeCache.reportStat(f);
+    fprintf(f, "cache time %lu\n", cacheCurrTime);
 }
 #endif
 
@@ -740,12 +814,18 @@ void LargeObjectCacheImpl<Props>::putList(ExtMemoryPool *extMemPool, LargeMemory
     bin[toBinIdx].putList(extMemPool, toCache, &bitMask, toBinIdx);
 }
 
-void LargeObjectCache::rollbackCacheState(size_t size)
+void LargeObjectCache::updateCacheState(DecreaseOrIncrease op, size_t size)
 {
     if (size < maxLargeSize)
-        largeCache.rollbackCacheState(extMemPool, size);
+        largeCache.updateCacheState(extMemPool, op, size);
     else if (size < maxHugeSize)
-        hugeCache.rollbackCacheState(extMemPool, size);
+        hugeCache.updateCacheState(extMemPool, op, size);
+}
+
+void LargeObjectCache::registerRealloc(size_t oldSize, size_t newSize)
+{
+    updateCacheState(decrease, oldSize);
+    updateCacheState(increase, newSize);
 }
 
 // return artificial bin index, it's used only during sorting and never saved
@@ -835,7 +915,7 @@ LargeMemoryBlock *ExtMemoryPool::mallocLargeObject(MemoryPool *pool, size_t allo
         lmb = backend.getLargeBlock(allocationSize);
         if (!lmb) {
             removeBackRef(backRefIdx);
-            loc.rollbackCacheState(allocationSize);
+            loc.updateCacheState(decrease, allocationSize);
             return NULL;
         }
         lmb->backRefIdx = backRefIdx;
@@ -875,6 +955,18 @@ bool ExtMemoryPool::hardCachesCleanup()
     return ret;
 }
 
+#if BACKEND_HAS_MREMAP
+void *ExtMemoryPool::remap(void *ptr, size_t oldSize, size_t newSize, size_t alignment)
+{
+    const size_t oldUnalignedSize = ((LargeObjectHdr*)ptr - 1)->memoryBlock->unalignedSize;
+    void *o = backend.remap(ptr, oldSize, newSize, alignment);
+    if (o) {
+        LargeMemoryBlock *lmb = ((LargeObjectHdr*)o - 1)->memoryBlock;
+        loc.registerRealloc(lmb->unalignedSize, oldUnalignedSize);
+    }
+    return o;
+}
+#endif /* BACKEND_HAS_MREMAP */
 
 /*********** End allocation of large objects **********/
 

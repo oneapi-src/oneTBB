@@ -38,6 +38,11 @@
 #include "task_arena.h"
 #endif
 
+#if __TBB_PREVIEW_ASYNC_MSG
+#include <vector>    // std::vector in internal::async_storage
+#include <memory>    // std::shared_ptr in async_msg
+#endif
+
 #if TBB_DEPRECATED_FLOW_ENQUEUE
 #define FLOW_SPAWN(a) tbb::task::enqueue((a))
 #else
@@ -84,10 +89,8 @@ namespace internal {
     template<typename T, typename M> class successor_cache;
     template<typename T, typename M> class broadcast_cache;
     template<typename T, typename M> class round_robin_cache;
-
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
-    template< typename C> class edge_container;
-#endif
+    template<typename T, typename M> class predecessor_cache;
+    template<typename T, typename M> class reservable_predecessor_cache;
 }
 
 //A generic null type
@@ -100,48 +103,6 @@ template< typename T > class sender;
 template< typename T > class receiver;
 class continue_receiver;
 
-//! Pure virtual template class that defines a sender of messages of type T
-template< typename T >
-class sender {
-public:
-    //! The output type of this sender
-    typedef T output_type;
-
-    //! The successor type for this node
-    typedef receiver<T> successor_type;
-
-    virtual ~sender() {}
-
-    //! Add a new successor to this node
-    virtual bool register_successor( successor_type &r ) = 0;
-
-    //! Removes a successor from this node
-    virtual bool remove_successor( successor_type &r ) = 0;
-
-    //! Request an item from the sender
-    virtual bool try_get( T & ) { return false; }
-
-    //! Reserves an item in the sender
-    virtual bool try_reserve( T & ) { return false; }
-
-    //! Releases the reserved item
-    virtual bool try_release( ) { return false; }
-
-    //! Consumes the reserved item
-    virtual bool try_consume( ) { return false; }
-
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
-    //! interface to record edges for traversal & deletion
-    typedef typename  internal::edge_container<successor_type> built_successors_type;
-    typedef typename  built_successors_type::edge_list_type successor_list_type;
-    virtual built_successors_type &built_successors()                   = 0;
-    virtual void    internal_add_built_successor( successor_type & )    = 0;
-    virtual void    internal_delete_built_successor( successor_type & ) = 0;
-    virtual void    copy_successors( successor_list_type &)             = 0;
-    virtual size_t  successor_count()                                   = 0;
-#endif
-};  // class sender<T>
-
 template< typename T > class limiter_node;  // needed for resetting decrementer
 template< typename R, typename B > class run_and_put_task;
 
@@ -153,80 +114,6 @@ enum reset_flags {
     rf_reset_bodies     = 1<<0,  // delete the current node body, reset to a copy of the initial node body.
     rf_clear_edges      = 1<<1   // delete edges
 };
-
-// enqueue left task if necessary.  Returns the non-enqueued task if there is one.
-static inline tbb::task *combine_tasks( tbb::task * left, tbb::task * right) {
-    // if no RHS task, don't change left.
-    if(right == NULL) return left;
-    // right != NULL
-    if(left == NULL) return right;
-    if(left == SUCCESSFULLY_ENQUEUED) return right;
-    // left contains a task
-    if(right != SUCCESSFULLY_ENQUEUED) {
-        // both are valid tasks
-        FLOW_SPAWN(*left);
-        return right;
-    }
-    return left;
-}
-
-//! Pure virtual template class that defines a receiver of messages of type T
-template< typename T >
-class receiver {
-public:
-    //! The input type of this receiver
-    typedef T input_type;
-
-    //! The predecessor type for this node
-    typedef sender<T> predecessor_type;
-
-    //! Destructor
-    virtual ~receiver() {}
-
-    //! Put an item to the receiver
-    bool try_put( const T& t ) {
-        task *res = try_put_task(t);
-        if (!res) return false;
-        if (res != SUCCESSFULLY_ENQUEUED) FLOW_SPAWN(*res);
-        return true;
-    }
-
-    //! put item to successor; return task to run the successor if possible.
-protected:
-    template< typename R, typename B > friend class run_and_put_task;
-    template<typename X, typename Y> friend class internal::broadcast_cache;
-    template<typename X, typename Y> friend class internal::round_robin_cache;
-    virtual task *try_put_task(const T& t) = 0;
-public:
-
-    //! Add a predecessor to the node
-    virtual bool register_predecessor( predecessor_type & ) { return false; }
-
-    //! Remove a predecessor from the node
-    virtual bool remove_predecessor( predecessor_type & ) { return false; }
-
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
-    typedef typename internal::edge_container<predecessor_type> built_predecessors_type;
-    typedef typename built_predecessors_type::edge_list_type predecessor_list_type;
-    virtual built_predecessors_type &built_predecessors()                  = 0;
-    virtual void   internal_add_built_predecessor( predecessor_type & )    = 0;
-    virtual void   internal_delete_built_predecessor( predecessor_type & ) = 0;
-    virtual void   copy_predecessors( predecessor_list_type & )            = 0;
-    virtual size_t predecessor_count()                                     = 0;
-#endif
-
-protected:
-    //! put receiver back in initial state
-    template<typename U> friend class limiter_node;
-    virtual void reset_receiver(reset_flags f = rf_reset_protocol) = 0;
-
-    template<typename TT, typename M> friend class internal::successor_cache;
-    virtual bool is_continue_receiver() { return false; }
-
-#if __TBB_PREVIEW_OPENCL_NODE
-    template< typename, typename > friend class proxy_dependency_receiver;
-#endif /* __TBB_PREVIEW_OPENCL_NODE */
-}; // class receiver<T>
 
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
 //* holder of edges both for caches and for those nodes which do not have predecessor caches.
@@ -265,14 +152,328 @@ public:
 
     // methods remove the statement from all predecessors/successors liste in the edge
     // container.
-    template< typename S > void sender_extract( S &s );
-    template< typename R > void receiver_extract( R &r );
+    template< typename S > void sender_extract( S &s ); 
+    template< typename R > void receiver_extract( R &r ); 
 
-private:
+private: 
     edge_list_type built_edges;
 };  // class edge_container
 }  // namespace internal
 #endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
+
+#if __TBB_PREVIEW_ASYNC_MSG
+
+#include "internal/_flow_graph_async_msg_impl.h"
+
+namespace internal {
+
+class untyped_receiver;
+
+class untyped_sender {
+    template< typename, typename > friend class internal::predecessor_cache;
+    template< typename, typename > friend class internal::reservable_predecessor_cache;
+public:
+    //! The successor type for this node
+    typedef untyped_receiver successor_type;
+
+    virtual ~untyped_sender() {}
+
+    // NOTE: Folowing part of PUBLIC section is copy-paste from original sender<T> class
+
+    // TODO: Prevent untyped successor registration
+
+    //! Add a new successor to this node
+    virtual bool register_successor( successor_type &r ) = 0;
+
+    //! Removes a successor from this node
+    virtual bool remove_successor( successor_type &r ) = 0;
+
+    //! Releases the reserved item
+    virtual bool try_release( ) { return false; }
+
+    //! Consumes the reserved item
+    virtual bool try_consume( ) { return false; }
+
+#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+    //! interface to record edges for traversal & deletion
+    typedef internal::edge_container<successor_type> built_successors_type;
+    typedef built_successors_type::edge_list_type successor_list_type;
+    virtual built_successors_type &built_successors()                   = 0;
+    virtual void    internal_add_built_successor( successor_type & )    = 0;
+    virtual void    internal_delete_built_successor( successor_type & ) = 0;
+    virtual void    copy_successors( successor_list_type &)             = 0;
+    virtual size_t  successor_count()                                   = 0;
+#endif
+protected:
+    //! Request an item from the sender
+    template< typename X >
+    bool try_get( X &t ) {
+        return try_get_wrapper( internal::async_helpers<X>::to_void_ptr(t), internal::async_helpers<X>::is_async_type );
+    }
+
+    //! Reserves an item in the sender
+    template< typename X >
+    bool try_reserve( X &t ) {
+        return try_reserve_wrapper( internal::async_helpers<X>::to_void_ptr(t), internal::async_helpers<X>::is_async_type );
+    }
+
+    virtual bool try_get_wrapper( void* p, bool is_async ) = 0;
+    virtual bool try_reserve_wrapper( void* p, bool is_async ) = 0;
+};
+
+class untyped_receiver  {
+    template< typename, typename > friend class run_and_put_task;
+    template< typename > friend class limiter_node;
+
+    template< typename, typename > friend class internal::broadcast_cache;
+    template< typename, typename > friend class internal::round_robin_cache;
+    template< typename, typename > friend class internal::successor_cache;
+
+#if __TBB_PREVIEW_OPENCL_NODE
+    template< typename, typename > friend class proxy_dependency_receiver;
+#endif /* __TBB_PREVIEW_OPENCL_NODE */
+public:
+    //! The predecessor type for this node
+    typedef untyped_sender predecessor_type;
+
+    //! Destructor
+    virtual ~untyped_receiver() {}
+
+    //! Put an item to the receiver
+    template<typename X>
+    bool try_put(const X& t) {
+        task *res = try_put_task(t);
+        if (!res) return false;
+        if (res != SUCCESSFULLY_ENQUEUED) FLOW_SPAWN(*res);
+        return true;
+    }
+
+    // NOTE: Folowing part of PUBLIC section is copy-paste from original receiver<T> class
+
+    // TODO: Prevent untyped predecessor registration
+
+    //! Add a predecessor to the node
+    virtual bool register_predecessor( predecessor_type & ) { return false; }
+
+    //! Remove a predecessor from the node
+    virtual bool remove_predecessor( predecessor_type & ) { return false; }
+
+#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+    typedef internal::edge_container<predecessor_type> built_predecessors_type;
+    typedef built_predecessors_type::edge_list_type predecessor_list_type;
+    virtual built_predecessors_type &built_predecessors()                  = 0;
+    virtual void   internal_add_built_predecessor( predecessor_type & )    = 0;
+    virtual void   internal_delete_built_predecessor( predecessor_type & ) = 0;
+    virtual void   copy_predecessors( predecessor_list_type & )            = 0;
+    virtual size_t predecessor_count()                                     = 0;
+#endif
+protected:
+    template<typename X>
+    task *try_put_task(const X& t) {
+        return try_put_task_wrapper( internal::async_helpers<X>::to_void_ptr(t), internal::async_helpers<X>::is_async_type );
+    }
+
+    virtual task* try_put_task_wrapper( const void* p, bool is_async ) = 0;
+
+    // NOTE: Folowing part of PROTECTED and PRIVATE sections is copy-paste from original receiver<T> class
+
+    //! put receiver back in initial state
+    virtual void reset_receiver(reset_flags f = rf_reset_protocol) = 0;
+
+    virtual bool is_continue_receiver() { return false; }
+};
+
+} // namespace internal
+
+//! Pure virtual template class that defines a sender of messages of type T
+template< typename T >
+class sender : public internal::untyped_sender {
+public:
+    //! The output type of this sender
+    typedef T output_type;
+
+    typedef typename internal::async_helpers<T>::filtered_type filtered_type;
+
+    //! Request an item from the sender
+    virtual bool try_get( T & ) { return false; }
+
+    //! Reserves an item in the sender
+    virtual bool try_reserve( T & ) { return false; }
+
+protected:
+    virtual bool try_get_wrapper( void* p, bool is_async ) {
+        // Both async OR both are NOT async
+        if ( internal::async_helpers<T>::is_async_type == is_async ) {
+            return try_get( internal::async_helpers<T>::from_void_ptr(p) );
+        }
+        // Else: this (T) is async OR incoming 't' is async
+        __TBB_ASSERT(false, "async_msg interface does not support 'pull' protocol in try_get()");
+        return false;
+    }
+
+    virtual bool try_reserve_wrapper( void* p, bool is_async ) {
+        // Both async OR both are NOT async
+        if ( internal::async_helpers<T>::is_async_type == is_async ) {
+            return try_reserve( internal::async_helpers<T>::from_void_ptr(p) );
+        }
+        // Else: this (T) is async OR incoming 't' is async
+        __TBB_ASSERT(false, "async_msg interface does not support 'pull' protocol in try_reserve()");
+        return false;
+    }
+};  // class sender<T>
+
+//! Pure virtual template class that defines a receiver of messages of type T
+template< typename T >
+class receiver : public internal::untyped_receiver {
+    template< typename > friend class internal::async_storage;
+    template< typename, typename > friend struct internal::async_helpers;
+public:
+    //! The input type of this receiver
+    typedef T input_type;
+
+    typedef typename internal::async_helpers<T>::filtered_type filtered_type;
+
+    //! Put an item to the receiver
+    bool try_put( const typename internal::async_helpers<T>::filtered_type& t ) {
+        return internal::untyped_receiver::try_put(t);
+    }
+
+    bool try_put( const typename internal::async_helpers<T>::async_type& t ) {
+        return internal::untyped_receiver::try_put(t);
+    }
+
+protected:
+    virtual task* try_put_task_wrapper( const void *p, bool is_async ) {
+        return internal::async_helpers<T>::try_put_task_wrapper_impl(this, p, is_async);
+    }
+
+    //! Put item to successor; return task to run the successor if possible.
+    virtual task *try_put_task(const T& t) = 0;
+
+}; // class receiver<T>
+
+#else // __TBB_PREVIEW_ASYNC_MSG
+
+//! Pure virtual template class that defines a sender of messages of type T
+template< typename T >
+class sender {
+public:
+    //! The output type of this sender
+    typedef T output_type;
+
+    //! The successor type for this node
+    typedef receiver<T> successor_type;
+
+    virtual ~sender() {}
+
+    // NOTE: Folowing part of PUBLIC section is partly copy-pasted in sender<T> under #if __TBB_PREVIEW_ASYNC_MSG
+
+    //! Add a new successor to this node
+    virtual bool register_successor( successor_type &r ) = 0;
+
+    //! Removes a successor from this node
+    virtual bool remove_successor( successor_type &r ) = 0;
+
+    //! Request an item from the sender
+    virtual bool try_get( T & ) { return false; }
+
+    //! Reserves an item in the sender
+    virtual bool try_reserve( T & ) { return false; }
+
+    //! Releases the reserved item
+    virtual bool try_release( ) { return false; }
+
+    //! Consumes the reserved item
+    virtual bool try_consume( ) { return false; }
+
+#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+    //! interface to record edges for traversal & deletion
+    typedef typename  internal::edge_container<successor_type> built_successors_type;
+    typedef typename  built_successors_type::edge_list_type successor_list_type;
+    virtual built_successors_type &built_successors()                   = 0;
+    virtual void    internal_add_built_successor( successor_type & )    = 0;
+    virtual void    internal_delete_built_successor( successor_type & ) = 0;
+    virtual void    copy_successors( successor_list_type &)             = 0;
+    virtual size_t  successor_count()                                   = 0;
+#endif
+};  // class sender<T>
+
+//! Pure virtual template class that defines a receiver of messages of type T
+template< typename T >
+class receiver {
+public:
+    //! The input type of this receiver
+    typedef T input_type;
+
+    //! The predecessor type for this node
+    typedef sender<T> predecessor_type;
+
+    //! Destructor
+    virtual ~receiver() {}
+
+    //! Put an item to the receiver
+    bool try_put( const T& t ) {
+        task *res = try_put_task(t);
+        if (!res) return false;
+        if (res != SUCCESSFULLY_ENQUEUED) FLOW_SPAWN(*res);
+        return true;
+    }
+
+    //! put item to successor; return task to run the successor if possible.
+protected:
+    template< typename R, typename B > friend class run_and_put_task;
+    template< typename X, typename Y > friend class internal::broadcast_cache;
+    template< typename X, typename Y > friend class internal::round_robin_cache;
+    virtual task *try_put_task(const T& t) = 0;
+public:
+    // NOTE: Folowing part of PUBLIC and PROTECTED sections is copy-pasted in receiver<T> under #if __TBB_PREVIEW_ASYNC_MSG
+
+    //! Add a predecessor to the node
+    virtual bool register_predecessor( predecessor_type & ) { return false; }
+
+    //! Remove a predecessor from the node
+    virtual bool remove_predecessor( predecessor_type & ) { return false; }
+
+#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+    typedef typename internal::edge_container<predecessor_type> built_predecessors_type;
+    typedef typename built_predecessors_type::edge_list_type predecessor_list_type;
+    virtual built_predecessors_type &built_predecessors()                  = 0;
+    virtual void   internal_add_built_predecessor( predecessor_type & )    = 0;
+    virtual void   internal_delete_built_predecessor( predecessor_type & ) = 0;
+    virtual void   copy_predecessors( predecessor_list_type & )            = 0;
+    virtual size_t predecessor_count()                                     = 0;
+#endif
+
+protected:
+    //! put receiver back in initial state
+    template<typename U> friend class limiter_node;
+    virtual void reset_receiver(reset_flags f = rf_reset_protocol) = 0;
+
+    template<typename TT, typename M> friend class internal::successor_cache;
+    virtual bool is_continue_receiver() { return false; }
+
+#if __TBB_PREVIEW_OPENCL_NODE
+    template< typename, typename > friend class proxy_dependency_receiver;
+#endif /* __TBB_PREVIEW_OPENCL_NODE */
+}; // class receiver<T>
+
+#endif // __TBB_PREVIEW_ASYNC_MSG
+
+// enqueue left task if necessary.  Returns the non-enqueued task if there is one.
+static inline tbb::task *combine_tasks( tbb::task * left, tbb::task * right) {
+    // if no RHS task, don't change left.
+    if(right == NULL) return left;
+    // right != NULL
+    if(left == NULL) return right;
+    if(left == SUCCESSFULLY_ENQUEUED) return right;
+    // left contains a task
+    if(right != SUCCESSFULLY_ENQUEUED) {
+        // both are valid tasks
+        FLOW_SPAWN(*left);
+        return right;
+    }
+    return left;
+}
 
 //! Base class for receivers of completion messages
 /** These receivers automatically reset, but cannot be explicitly waited on */
@@ -283,7 +484,7 @@ public:
     typedef continue_msg input_type;
 
     //! The predecessor type for this node
-    typedef sender< continue_msg > predecessor_type;
+    typedef receiver<input_type>::predecessor_type predecessor_type;
 
     //! Constructor
     continue_receiver( int number_of_predecessors = 0 ) {
@@ -754,7 +955,7 @@ void graph_iterator<C,N>::internal_forward() {
 }
 
 //! The base of all graph nodes.
-class graph_node : tbb::internal::no_assign {
+class graph_node : tbb::internal::no_copy {
     friend class graph;
     template<typename C, typename N>
     friend class graph_iterator;
@@ -842,7 +1043,7 @@ public:
     typedef Output output_type;
 
     //! The type of successors of this node
-    typedef receiver< Output > successor_type;
+    typedef typename sender<output_type>::successor_type successor_type;
 
     //Source node has no input type
     typedef null_type input_type;
@@ -1107,11 +1308,11 @@ class function_node : public graph_node, public internal::function_input<Input,O
 public:
     typedef Input input_type;
     typedef Output output_type;
-    typedef sender< input_type > predecessor_type;
-    typedef receiver< output_type > successor_type;
     typedef internal::function_input<input_type,output_type,Allocator> fInput_type;
     typedef internal::function_input_queue<input_type, Allocator> input_queue_type;
     typedef internal::function_output<output_type> fOutput_type;
+    typedef typename fInput_type::predecessor_type predecessor_type;
+    typedef typename fOutput_type::successor_type successor_type;
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
     typedef typename fInput_type::predecessor_list_type predecessor_list_type;
     typedef typename fOutput_type::successor_list_type successor_list_type;
@@ -1236,8 +1437,7 @@ protected:
 };  // multifunction_node
 
 //! split_node: accepts a tuple as input, forwards each element of the tuple to its
-//  successors.  The node has unlimited concurrency, so though it is marked as
-//  "rejecting" it does not reject inputs.
+//  successors.  The node has unlimited concurrency, so it does not reject inputs.
 template<typename TupleType, typename Allocator=cache_aligned_allocator<TupleType> >
 class split_node : public multifunction_node<TupleType, TupleType, rejecting, Allocator> {
     static const int N = tbb::flow::tuple_size<TupleType>::value;
@@ -1280,10 +1480,10 @@ protected:
 public:
     typedef continue_msg input_type;
     typedef Output output_type;
-    typedef sender< input_type > predecessor_type;
-    typedef receiver< output_type > successor_type;
     typedef internal::continue_input<Output> fInput_type;
     typedef internal::function_output<output_type> fOutput_type;
+    typedef typename fInput_type::predecessor_type predecessor_type;
+    typedef typename fOutput_type::successor_type successor_type;
 
     //! Constructor for executable node with continue_msg -> Output
     template <typename Body >
@@ -1348,8 +1548,8 @@ protected:
 public:
     typedef T input_type;
     typedef T output_type;
-    typedef sender< input_type > predecessor_type;
-    typedef receiver< output_type > successor_type;
+    typedef typename receiver<input_type>::predecessor_type predecessor_type;
+    typedef typename sender<output_type>::successor_type successor_type;
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
     typedef typename receiver<input_type>::built_predecessors_type built_predecessors_type;
     typedef typename sender<output_type>::built_successors_type built_successors_type;
@@ -1481,6 +1681,10 @@ protected:
     template<typename X, typename Y> friend class internal::round_robin_cache;
     /* override */ task * try_put_task( const input_type &v ) {
         spin_mutex::scoped_lock l( my_mutex );
+        return try_put_task_impl(v);
+    }
+
+    task * try_put_task_impl(const input_type &v) {
         my_buffer = v;
         my_buffer_is_valid = true;
         task * rtask = my_successors.try_put_task(v);
@@ -1510,8 +1714,8 @@ class write_once_node : public overwrite_node<T> {
 public:
     typedef T input_type;
     typedef T output_type;
-    typedef sender< input_type > predecessor_type;
-    typedef receiver< output_type > successor_type;
+    typedef typename receiver<input_type>::predecessor_type predecessor_type;
+    typedef typename sender<output_type>::successor_type successor_type;
 
     //! Constructor
     write_once_node(graph& g) : overwrite_node<T>(g) {
@@ -1539,15 +1743,7 @@ protected:
     template<typename X, typename Y> friend class internal::round_robin_cache;
     /* override */ task *try_put_task( const T &v ) {
         spin_mutex::scoped_lock l( this->my_mutex );
-        if ( this->my_buffer_is_valid ) {
-            return NULL;
-        } else {
-            this->my_buffer = v;
-            this->my_buffer_is_valid = true;
-            task *res = this->my_successors.try_put_task(v);
-            if (!res) res = SUCCESSFULLY_ENQUEUED;
-            return res;
-        }
+        return this->my_buffer_is_valid ? NULL : this->try_put_task_impl(v);
     }
 };
 
@@ -1559,8 +1755,8 @@ protected:
 public:
     typedef T input_type;
     typedef T output_type;
-    typedef sender< input_type > predecessor_type;
-    typedef receiver< output_type > successor_type;
+    typedef typename receiver<input_type>::predecessor_type predecessor_type;
+    typedef typename sender<output_type>::successor_type successor_type;
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
     typedef typename receiver<input_type>::predecessor_list_type predecessor_list_type;
     typedef typename sender<output_type>::successor_list_type successor_list_type;
@@ -1595,13 +1791,13 @@ public:
 #endif
 
     //! Adds a successor
-    virtual bool register_successor( receiver<T> &r ) {
+    virtual bool register_successor( successor_type &r ) {
         my_successors.register_successor( r );
         return true;
     }
 
     //! Removes s as a successor
-    virtual bool remove_successor( receiver<T> &r ) {
+    virtual bool remove_successor( successor_type &r ) {
         my_successors.remove_successor( r );
         return true;
     }
@@ -1689,8 +1885,8 @@ protected:
 public:
     typedef T input_type;
     typedef T output_type;
-    typedef sender< input_type > predecessor_type;
-    typedef receiver< output_type > successor_type;
+    typedef typename receiver<input_type>::predecessor_type predecessor_type;
+    typedef typename sender<output_type>::successor_type successor_type;
     typedef buffer_node<T, A> class_type;
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
     typedef typename receiver<input_type>::predecessor_list_type predecessor_list_type;
@@ -1752,19 +1948,26 @@ protected:
     internal::aggregator< handler_type, buffer_operation> my_aggregator;
 
     virtual void handle_operations(buffer_operation *op_list) {
+        handle_operations_impl(op_list, this);
+    }
+
+    template<typename derived_type>
+    void handle_operations_impl(buffer_operation *op_list, derived_type* derived) {
+        __TBB_ASSERT(static_cast<class_type*>(derived) == this, "'this' is not a base class for derived");
+
         buffer_operation *tmp = NULL;
         bool try_forwarding=false;
         while (op_list) {
             tmp = op_list;
             op_list = op_list->next;
             switch (tmp->type) {
-            case reg_succ: internal_reg_succ(tmp);  try_forwarding = true; break;
+            case reg_succ: internal_reg_succ(tmp); try_forwarding = true; break;
             case rem_succ: internal_rem_succ(tmp); break;
             case req_item: internal_pop(tmp); break;
             case res_item: internal_reserve(tmp); break;
-            case rel_res:  internal_release(tmp);  try_forwarding = true; break;
-            case con_res:  internal_consume(tmp);  try_forwarding = true; break;
-            case put_item: internal_push(tmp);  try_forwarding = (tmp->status == SUCCEEDED); break;
+            case rel_res:  internal_release(tmp); try_forwarding = true; break;
+            case con_res:  internal_consume(tmp); try_forwarding = true; break;
+            case put_item: internal_push(tmp); try_forwarding = (tmp->status == SUCCEEDED); break;
             case try_fwd_task: internal_forward_task(tmp); break;
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
             // edge recording
@@ -1779,6 +1982,9 @@ protected:
 #endif
             }
         }
+
+        derived->order();
+
         if (try_forwarding && !forwarder_busy) {
             if(this->my_graph.is_active()) {
                 forwarder_busy = true;
@@ -1883,26 +2089,42 @@ protected:
 
 #endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
 
+private:
+    void order() {}
+
+    bool is_item_valid() {
+        return this->my_item_valid(this->my_tail - 1);
+    }
+
+    void try_put_and_add_task(task*& last_task) {
+        task *new_task = my_successors.try_put_task(this->back());
+        if (new_task) {
+            last_task = combine_tasks(last_task, new_task);
+            this->destroy_back();
+        }
+    }
+
+protected:
     //! Tries to forward valid items to successors
     virtual void internal_forward_task(buffer_operation *op) {
-        if (this->my_reserved || !this->my_item_valid(this->my_tail-1)) {
+        internal_forward_task_impl(op, this);
+    }
+
+    template<typename derived_type>
+    void internal_forward_task_impl(buffer_operation *op, derived_type* derived) {
+        __TBB_ASSERT(static_cast<class_type*>(derived) == this, "'this' is not a base class for derived");
+
+        if (this->my_reserved || !derived->is_item_valid()) {
             __TBB_store_with_release(op->status, FAILED);
             this->forwarder_busy = false;
             return;
         }
-        T i_copy;
+        // Try forwarding, giving each successor a chance
         task * last_task = NULL;
         size_type counter = my_successors.size();
-        // Try forwarding, giving each successor a chance
-        while (counter>0 && !this->buffer_empty() && this->my_item_valid(this->my_tail-1)) {
-            this->copy_back(i_copy);
-            task *new_task = my_successors.try_put_task(i_copy);
-            if(new_task) {
-                last_task = combine_tasks(last_task, new_task);
-                this->destroy_back();
-            }
-            --counter;
-        }
+        for (; counter > 0 && derived->is_item_valid(); --counter)
+            derived->try_put_and_add_task(last_task);
+
         op->ltask = last_task;  // return task
         if (last_task && !counter) {
             __TBB_store_with_release(op->status, SUCCEEDED);
@@ -2152,35 +2374,28 @@ protected:
     typedef buffer_node<T, A> base_type;
     typedef typename base_type::size_type size_type;
     typedef typename base_type::buffer_operation queue_operation;
+    typedef queue_node class_type;
 
     enum op_stat {WAIT=0, SUCCEEDED, FAILED};
 
+private:
+    template<typename, typename> friend class buffer_node;
+
+    bool is_item_valid() {
+        return this->my_item_valid(this->my_head);
+    }
+
+    void try_put_and_add_task(task*& last_task) {
+        task *new_task = this->my_successors.try_put_task(this->front());
+        if (new_task) {
+            last_task = combine_tasks(last_task, new_task);
+            this->destroy_front();
+        }
+    }
+
+protected:
     /* override */ void internal_forward_task(queue_operation *op) {
-        if (this->my_reserved || !this->my_item_valid(this->my_head)) {
-            __TBB_store_with_release(op->status, FAILED);
-            this->forwarder_busy = false;
-            return;
-        }
-        T i_copy;
-        task *last_task = NULL;
-        size_type counter = this->my_successors.size();
-        // Keep trying to send items while there is at least one accepting successor
-        while (counter>0 && this->my_item_valid(this->my_head)) {
-            this->copy_front(i_copy);
-            task *new_task = this->my_successors.try_put_task(i_copy);
-            if(new_task) {
-                this->destroy_front();
-                last_task = combine_tasks(last_task, new_task);
-            }
-            --counter;
-        }
-        op->ltask = last_task;
-        if (last_task && !counter)
-            __TBB_store_with_release(op->status, SUCCEEDED);
-        else {
-            __TBB_store_with_release(op->status, FAILED);
-            this->forwarder_busy = false;
-        }
+        this->internal_forward_task_impl(op, this);
     }
 
     /* override */ void internal_pop(queue_operation *op) {
@@ -2209,8 +2424,8 @@ protected:
 public:
     typedef T input_type;
     typedef T output_type;
-    typedef sender< input_type > predecessor_type;
-    typedef receiver< output_type > successor_type;
+    typedef typename receiver<input_type>::predecessor_type predecessor_type;
+    typedef typename sender<output_type>::successor_type successor_type;
 
     //! Constructor
     queue_node( graph &g ) : base_type(g) {
@@ -2247,8 +2462,8 @@ class sequencer_node : public queue_node<T, A> {
 public:
     typedef T input_type;
     typedef T output_type;
-    typedef sender< input_type > predecessor_type;
-    typedef receiver< output_type > successor_type;
+    typedef typename receiver<input_type>::predecessor_type predecessor_type;
+    typedef typename sender<output_type>::successor_type successor_type;
 
     //! Constructor
     template< typename Sequencer >
@@ -2286,7 +2501,7 @@ private:
     /* override */ void internal_push(sequencer_operation *op) {
         size_type tag = (*my_sequencer)(*(op->elem));
 #if !TBB_DEPRECATED_SEQUENCER_DUPLICATES
-        if(tag < this->my_head) {
+        if (tag < this->my_head) {
             // have already emitted a message with this tag
             __TBB_store_with_release(op->status, FAILED);
             return;
@@ -2295,11 +2510,11 @@ private:
         // cannot modify this->my_tail now; the buffer would be inconsistent.
         size_t new_tail = (tag+1 > this->my_tail) ? tag+1 : this->my_tail;
 
-        if(this->size(new_tail) > this->capacity()) {
+        if (this->size(new_tail) > this->capacity()) {
             this->grow_my_array(this->size(new_tail));
         }
         this->my_tail = new_tail;
-        if(this->place_item(tag,*(op->elem))) {
+        if (this->place_item(tag, *(op->elem))) {
             __TBB_store_with_release(op->status, SUCCEEDED);
         }
         else {
@@ -2316,8 +2531,9 @@ public:
     typedef T input_type;
     typedef T output_type;
     typedef buffer_node<T,A> base_type;
-    typedef sender< input_type > predecessor_type;
-    typedef receiver< output_type > successor_type;
+    typedef priority_queue_node class_type;
+    typedef typename receiver<input_type>::predecessor_type predecessor_type;
+    typedef typename sender<output_type>::successor_type successor_type;
 
     //! Constructor
     priority_queue_node( graph &g ) : buffer_node<T, A>(g), mark(0) {
@@ -2353,80 +2569,13 @@ protected:
 
     enum op_stat {WAIT=0, SUCCEEDED, FAILED};
 
-    /* override */ void handle_operations(prio_operation *op_list) {
-        prio_operation *tmp = op_list /*, *pop_list*/ ;
-        bool try_forwarding=false;
-        while (op_list) {
-            tmp = op_list;
-            op_list = op_list->next;
-            switch (tmp->type) {
-            case buffer_node<T, A>::reg_succ: this->internal_reg_succ(tmp); try_forwarding = true; break;
-            case buffer_node<T, A>::rem_succ: this->internal_rem_succ(tmp); break;
-            case buffer_node<T, A>::put_item: internal_push(tmp); try_forwarding = true; break;
-            case buffer_node<T, A>::try_fwd_task: internal_forward_task(tmp); break;
-            case buffer_node<T, A>::rel_res: internal_release(tmp); try_forwarding = true; break;
-            case buffer_node<T, A>::con_res: internal_consume(tmp); try_forwarding = true; break;
-            case buffer_node<T, A>::req_item: internal_pop(tmp); break;
-            case buffer_node<T, A>::res_item: internal_reserve(tmp); break;
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
-            case buffer_node<T, A>::add_blt_succ: this->internal_add_built_succ(tmp); break;
-            case buffer_node<T, A>::del_blt_succ: this->internal_del_built_succ(tmp); break;
-            case buffer_node<T, A>::add_blt_pred: this->internal_add_built_pred(tmp); break;
-            case buffer_node<T, A>::del_blt_pred: this->internal_del_built_pred(tmp); break;
-            case buffer_node<T, A>::blt_succ_cnt: this->internal_succ_cnt(tmp); break;
-            case buffer_node<T, A>::blt_pred_cnt: this->internal_pred_cnt(tmp); break;
-            case buffer_node<T, A>::blt_succ_cpy: this->internal_copy_succs(tmp); break;
-            case buffer_node<T, A>::blt_pred_cpy: this->internal_copy_preds(tmp); break;
-#endif
-            }
-        }
-        // process pops!  for now, no special pop processing
-        // concurrent_priority_queue handles pushes first, then pops.
-        // that is the genesis of this comment
-        if (mark<this->my_tail) heapify();
-        __TBB_ASSERT(mark == this->my_tail, "mark unequal after heapify");
-        if (try_forwarding && !this->forwarder_busy) {  // could we also test for this->my_tail (queue non-empty)?
-            if(this->my_graph.is_active()) {
-                this->forwarder_busy = true;
-                task *new_task = new(task::allocate_additional_child_of(*(this->my_graph.root_task()))) internal::
-                        forward_task_bypass
-                        < buffer_node<input_type, A> >(*this);
-                // tmp should point to the last item handled by the aggregator.  This is the operation
-                // the handling thread enqueued.  So modifying that record will be okay.
-                tbb::task *tmp1 = tmp->ltask;
-                tmp->ltask = combine_tasks(tmp1, new_task);
-            }
-        }
-    }
-
     //! Tries to forward valid items to successors
     /* override */ void internal_forward_task(prio_operation *op) {
-        T i_copy;
-        task * last_task = NULL; // flagged when a successor accepts
-        size_type counter = this->my_successors.size();
+        this->internal_forward_task_impl(op, this);
+    }
 
-        if (this->my_reserved || this->my_tail == 0) {
-            __TBB_store_with_release(op->status, FAILED);
-            this->forwarder_busy = false;
-            return;
-        }
-        // Keep trying to send while there exists an accepting successor
-        while (counter>0 && this->my_tail > 0) {
-            prio_copy(i_copy);
-            task * new_task = this->my_successors.try_put_task(i_copy);
-            if ( new_task ) {
-                last_task = combine_tasks(last_task, new_task);
-                prio_pop();
-            }
-            --counter;
-        }
-        op->ltask = last_task;
-        if (last_task && !counter)
-            __TBB_store_with_release(op->status, SUCCEEDED);
-        else {
-            __TBB_store_with_release(op->status, FAILED);
-            this->forwarder_busy = false;
-        }
+    /* override */ void handle_operations(prio_operation *op_list) {
+        this->handle_operations_impl(op_list, this);
     }
 
     /* override */ void internal_push(prio_operation *op) {
@@ -2441,7 +2590,7 @@ protected:
             return;
         }
 
-        prio_copy(*(op->elem));
+        *(op->elem) = prio();
         __TBB_store_with_release(op->status, SUCCEEDED);
         prio_pop();
 
@@ -2454,7 +2603,7 @@ protected:
             return;
         }
         this->my_reserved = true;
-        prio_copy(*(op->elem));
+        *(op->elem) = prio();
         reserved_item = *(op->elem);
         __TBB_store_with_release(op->status, SUCCEEDED);
         prio_pop();
@@ -2472,6 +2621,27 @@ protected:
         this->my_reserved = false;
         reserved_item = input_type();
     }
+
+private:
+    template<typename, typename> friend class buffer_node;
+
+    void order() {
+        if (mark < this->my_tail) heapify();
+        __TBB_ASSERT(mark == this->my_tail, "mark unequal after heapify");
+    }
+
+    bool is_item_valid() {
+        return this->my_tail > 0;
+    }
+
+    void try_put_and_add_task(task*& last_task) {
+        task * new_task = this->my_successors.try_put_task(this->prio());
+        if (new_task) {
+            last_task = combine_tasks(last_task, new_task);
+            prio_pop();
+        }
+    }
+
 private:
     Compare compare;
     size_type mark;
@@ -2518,13 +2688,8 @@ private:
         __TBB_ASSERT(mark <= this->my_tail, "mark outside bounds after pop");
     }
 
-    void prio_copy(T &res) {
-        if (prio_use_tail()) {
-            res = this->get_my_item(this->my_tail - 1);
-        }
-        else {
-            res = this->get_my_item(0);
-        }
+    const T& prio() {
+        return this->get_my_item(prio_use_tail() ? this->my_tail-1 : 0);
     }
 
     // turn array into heap
@@ -2581,8 +2746,8 @@ protected:
 public:
     typedef T input_type;
     typedef T output_type;
-    typedef sender< input_type > predecessor_type;
-    typedef receiver< output_type > successor_type;
+    typedef typename receiver<input_type>::predecessor_type predecessor_type;
+    typedef typename sender<output_type>::successor_type successor_type;
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
     typedef typename receiver<input_type>::built_predecessors_type built_predecessors_type;
     typedef typename sender<output_type>::built_successors_type built_successors_type;
@@ -2715,7 +2880,7 @@ public:
 #endif
 
     //! Replace the current successor with this new successor
-    /* override */ bool register_successor( receiver<output_type> &r ) {
+    /* override */ bool register_successor( successor_type &r ) {
         spin_mutex::scoped_lock lock(my_mutex);
         bool was_empty = my_successors.empty();
         my_successors.register_successor(r);
@@ -2731,7 +2896,7 @@ public:
 
     //! Removes a successor from this node
     /** r.remove_predecessor(*this) is also called. */
-    /* override */ bool remove_successor( receiver<output_type> &r ) {
+    /* override */ bool remove_successor( successor_type &r ) {
         r.remove_predecessor(*this);
         my_successors.remove_successor(r);
         return true;
@@ -2741,11 +2906,11 @@ public:
     /*override*/ built_successors_type &built_successors() { return my_successors.built_successors(); }
     /*override*/ built_predecessors_type &built_predecessors() { return my_predecessors.built_predecessors(); }
 
-    /*override*/void internal_add_built_successor(receiver<output_type> &src) {
+    /*override*/void internal_add_built_successor(successor_type &src) {
         my_successors.internal_add_built_successor(src);
     }
 
-    /*override*/void internal_delete_built_successor(receiver<output_type> &src) {
+    /*override*/void internal_delete_built_successor(successor_type &src) {
         my_successors.internal_delete_built_successor(src);
     }
 
@@ -2755,11 +2920,11 @@ public:
         my_successors.copy_successors(v);
     }
 
-    /*override*/void internal_add_built_predecessor(sender<output_type> &src) {
+    /*override*/void internal_add_built_predecessor(predecessor_type &src) {
         my_predecessors.internal_add_built_predecessor(src);
     }
 
-    /*override*/void internal_delete_built_predecessor(sender<output_type> &src) {
+    /*override*/void internal_delete_built_predecessor(predecessor_type &src) {
         my_predecessors.internal_delete_built_predecessor(src);
     }
 
@@ -3272,9 +3437,12 @@ public:
 };
 #endif //variadic max 10
 
-//! Makes an edge between a single predecessor and a single successor
+#if __TBB_PREVIEW_ASYNC_MSG
+inline void internal_make_edge( internal::untyped_sender &p, internal::untyped_receiver &s ) {
+#else
 template< typename T >
-inline void make_edge( sender<T> &p, receiver<T> &s ) {
+inline void internal_make_edge( sender<T> &p, receiver<T> &s ) {
+#endif
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
     s.internal_add_built_predecessor(p);
     p.internal_add_built_successor(s);
@@ -3282,6 +3450,32 @@ inline void make_edge( sender<T> &p, receiver<T> &s ) {
     p.register_successor( s );
     tbb::internal::fgt_make_edge( &p, &s );
 }
+
+//! Makes an edge between a single predecessor and a single successor
+template< typename T >
+inline void make_edge( sender<T> &p, receiver<T> &s ) {
+    internal_make_edge( p, s );
+}
+
+#if __TBB_PREVIEW_ASYNC_MSG
+template< typename TS, typename TR,
+    typename = typename tbb::internal::enable_if<tbb::internal::is_same_type<TS, internal::untyped_sender>::value
+                                              || tbb::internal::is_same_type<TR, internal::untyped_receiver>::value>::type>
+inline void make_edge( TS &p, TR &s ) {
+    internal_make_edge( p, s );
+}
+
+template< typename T >
+inline void make_edge( sender<T> &p, receiver<typename T::async_msg_data_type> &s ) {
+    internal_make_edge( p, s );
+}
+
+template< typename T >
+inline void make_edge( sender<typename T::async_msg_data_type> &p, receiver<T> &s ) {
+    internal_make_edge( p, s );
+}
+
+#endif // __TBB_PREVIEW_ASYNC_MSG
 
 #if __TBB_FLOW_GRAPH_CPP11_FEATURES
 //Makes an edge from port 0 of a multi-output predecessor to port 0 of a multi-input successor.
@@ -3306,9 +3500,12 @@ inline void make_edge( sender<S>& output, V& input) {
 }
 #endif
 
-//! Removes an edge between a single predecessor and a single successor
+#if __TBB_PREVIEW_ASYNC_MSG
+inline void internal_remove_edge( internal::untyped_sender &p, internal::untyped_receiver &s ) {
+#else
 template< typename T >
-inline void remove_edge( sender<T> &p, receiver<T> &s ) {
+inline void internal_remove_edge( sender<T> &p, receiver<T> &s ) {
+#endif
     p.remove_successor( s );
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
     // TODO: should we try to remove p from the predecessor list of s, in case the edge is reversed?
@@ -3317,6 +3514,31 @@ inline void remove_edge( sender<T> &p, receiver<T> &s ) {
 #endif
     tbb::internal::fgt_remove_edge( &p, &s );
 }
+
+//! Removes an edge between a single predecessor and a single successor
+template< typename T >
+inline void remove_edge( sender<T> &p, receiver<T> &s ) {
+    internal_remove_edge( p, s );
+}
+
+#if __TBB_PREVIEW_ASYNC_MSG
+template< typename TS, typename TR,
+    typename = typename tbb::internal::enable_if<tbb::internal::is_same_type<TS, internal::untyped_sender>::value
+                                              || tbb::internal::is_same_type<TR, internal::untyped_receiver>::value>::type>
+inline void remove_edge( TS &p, TR &s ) {
+    internal_remove_edge( p, s );
+}
+
+template< typename T >
+inline void remove_edge( sender<T> &p, receiver<typename T::async_msg_data_type> &s ) {
+    internal_remove_edge( p, s );
+}
+
+template< typename T >
+inline void remove_edge( sender<typename T::async_msg_data_type> &p, receiver<T> &s ) {
+    internal_remove_edge( p, s );
+}
+#endif // __TBB_PREVIEW_ASYNC_MSG
 
 #if __TBB_FLOW_GRAPH_CPP11_FEATURES
 //Removes an edge between port 0 of a multi-output predecessor and port 0 of a multi-input successor.
@@ -3372,7 +3594,7 @@ Body copy_body( Node &n ) {
 template< typename InputTuple, typename OutputTuple > class composite_node;
 
 template< typename... InputTypes, typename... OutputTypes>
-class composite_node <tbb::flow::tuple<InputTypes...>, tbb::flow::tuple<OutputTypes...> > : public graph_node, tbb::internal::no_copy {
+class composite_node <tbb::flow::tuple<InputTypes...>, tbb::flow::tuple<OutputTypes...> > : public graph_node{
 
 public:
     typedef tbb::flow::tuple< receiver<InputTypes>&... > input_ports_type;
@@ -3455,7 +3677,7 @@ public:
 
 //composite_node with only input ports
 template< typename... InputTypes>
-class composite_node <tbb::flow::tuple<InputTypes...>, tbb::flow::tuple<> > : public graph_node, tbb::internal::no_copy {
+class composite_node <tbb::flow::tuple<InputTypes...>, tbb::flow::tuple<> > : public graph_node {
 public:
     typedef tbb::flow::tuple< receiver<InputTypes>&... > input_ports_type;
 
@@ -3526,7 +3748,7 @@ public:
 
 //composite_nodes with only output_ports
 template<typename... OutputTypes>
-class composite_node <tbb::flow::tuple<>, tbb::flow::tuple<OutputTypes...> > : public graph_node, tbb::internal::no_copy {
+class composite_node <tbb::flow::tuple<>, tbb::flow::tuple<OutputTypes...> > : public graph_node {
 public:
     typedef tbb::flow::tuple< sender<OutputTypes>&... > output_ports_type;
 
@@ -3652,8 +3874,8 @@ protected:
 public:
     typedef Input input_type;
     typedef Output output_type;
-    typedef sender< input_type > predecessor_type;
-    typedef receiver< output_type > successor_type;
+    typedef typename receiver<input_type>::predecessor_type predecessor_type;
+    typedef typename sender<output_type>::successor_type successor_type;
     typedef internal::async_gateway< output_type > async_gateway_type;
 
 protected:
@@ -3820,6 +4042,9 @@ protected:
 #endif
 #if __TBB_PREVIEW_ASYNC_NODE
     using interface8::async_node;
+#endif
+#if __TBB_PREVIEW_ASYNC_MSG
+    using interface8::async_msg;
 #endif
 } // flow
 } // tbb

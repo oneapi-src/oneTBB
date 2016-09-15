@@ -74,10 +74,6 @@ LIBS = -lpsapi
 
 LINK_FLAGS = -Wl,--enable-auto-import
 LIB_LINK_FLAGS = $(DYLIB_KEY)
-# gcc 4.4 and higher support -std=c++0x
-ifeq (ok,$(call detect_js,/minversion gcc 4.4))
-    CPP11_FLAGS = -std=c++0x -D_TBB_CPP0X
-endif
 
 # gcc 4.8 and later support RTM intrinsics, but require command line switch to enable them
 ifeq (ok,$(call detect_js,/minversion gcc 4.8))
@@ -89,10 +85,6 @@ ifeq ($(cfg), release)
 endif
 ifeq ($(cfg), debug)
         CPLUS_FLAGS = -g -O0 -DTBB_USE_DEBUG
-endif
-
-ifneq (00,$(lambdas)$(cpp0x))
-    CXX_ONLY_FLAGS += $(CPP11_FLAGS)
 endif
 
 CPLUS_FLAGS += -DUSE_WINTHREAD

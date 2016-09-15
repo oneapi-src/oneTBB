@@ -106,6 +106,7 @@ namespace internal {
             }
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
         typedef typename receiver<T>::predecessor_list_type predecessor_list_type;
+        typedef typename receiver<T>::predecessor_type predecessor_type;
 
         /*override*/ built_predecessors_type &built_predecessors() { return my_built_predecessors; }
 
@@ -113,11 +114,11 @@ namespace internal {
             spin_mutex::scoped_lock l(my_pred_mutex);
             return my_built_predecessors.edge_count();
         }
-        /*override*/void internal_add_built_predecessor(sender<T> &p) {
+        /*override*/void internal_add_built_predecessor(predecessor_type &p) {
             spin_mutex::scoped_lock l(my_pred_mutex);
             my_built_predecessors.add_edge(p);
         }
-        /*override*/void internal_delete_built_predecessor(sender<T> &p) {
+        /*override*/void internal_delete_built_predecessor(predecessor_type &p) {
             spin_mutex::scoped_lock l(my_pred_mutex);
             my_built_predecessors.delete_edge(p);
         }
@@ -175,7 +176,7 @@ namespace internal {
         static const size_t N = tbb::flow::tuple_size<InputTuple>::value;
         typedef OutputType output_type;
         typedef StructTypes tuple_types;
-        typedef receiver<output_type> successor_type;
+        typedef typename sender<output_type>::successor_type successor_type;
         typedef indexer_node_FE<InputTuple, output_type,StructTypes> input_ports_type;
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
         typedef typename sender<output_type>::built_successors_type built_successors_type;

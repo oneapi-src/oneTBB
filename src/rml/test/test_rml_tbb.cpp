@@ -194,7 +194,7 @@ void Initialize()
 
 int TestMain () {
     VerifyInitialization<MyFactory,MyClient>( MaxThread );
-    if ( default_concurrency<1 ) {
+    if ( server_concurrency<1 ) {
          REPORT("The test is not intended to run on 1 thread\n");
          return Harness::Skipped;
     }

@@ -185,10 +185,8 @@ concurrent_queue<T,A>::~concurrent_queue() {
 
 template<typename T, class A>
 void concurrent_queue<T,A>::clear() {
-    while( !empty() ) {
-        T value;
-        this->internal_try_pop(&value);
-    }
+    T value;
+    while( !empty() ) try_pop(value);
 }
 
 } // namespace strict_ppl
@@ -449,10 +447,8 @@ concurrent_bounded_queue<T,A>::~concurrent_bounded_queue() {
 
 template<typename T, class A>
 void concurrent_bounded_queue<T,A>::clear() {
-    while( !empty() ) {
-        T value;
-        internal_pop_if_present(&value);
-    }
+    T value;
+    while( try_pop(value) ) /*noop*/;
 }
 
 using strict_ppl::concurrent_queue;

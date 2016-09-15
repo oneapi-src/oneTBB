@@ -143,12 +143,47 @@ void TestTasksInThread()
         NativeParallelFor(2, RunInNativeThread(/*create_tsi=*/1==i));
 }
 
+#include "harness_memory.h"
+
+// check for memory leak during TBB task scheduler init/terminate life cycle
+// TODO: move to test_task_scheduler_init after workers waiting productization
+void TestSchedulerMemLeaks()
+{
+    const int ITERS = 10;
+    int it;
+
+    for (it=0; it<ITERS; it++) {
+        size_t memBefore = GetMemoryUsage();
+#if _MSC_VER && _DEBUG
+        // _CrtMemCheckpoint() and _CrtMemDifference are non-empty only in _DEBUG
+        _CrtMemState stateBefore, stateAfter, diffState;
+        _CrtMemCheckpoint(&stateBefore);
+#endif
+        for (int i=0; i<100; i++) {
+            tbb::task_scheduler_init sch(1, 0, /*wait_workers=*/true);
+            for (int k=0; k<10; k++) {
+                tbb::empty_task *t = new( tbb::task::allocate_root() ) tbb::empty_task();
+                tbb::task::enqueue(*t);
+            }
+        }
+#if _MSC_VER && _DEBUG
+        _CrtMemCheckpoint(&stateAfter);
+        int ret = _CrtMemDifference(&diffState, &stateBefore, &stateAfter);
+        ASSERT(!ret, "It must be no memory leaks at this point.");
+#endif
+        if (GetMemoryUsage() <= memBefore)
+            break;
+    }
+    ASSERT(it < ITERS, "Memory consumption has not stabilized. Memory Leak?");
+}
+
 int TestMain()
 {
     using namespace Harness;
 
     TestBlockNonblock();
     TestTasksInThread();
+    TestSchedulerMemLeaks();
 
     bool child = false;
 #if _WIN32||_WIN64

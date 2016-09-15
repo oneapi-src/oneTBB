@@ -19,9 +19,6 @@
 */
 
 #include "tbb/tbb_config.h"
-#if !__TBB_ARENA_OBSERVER
-    #error __TBB_ARENA_OBSERVER must be defined
-#endif
 
 #if __TBB_SCHEDULER_OBSERVER
 
@@ -50,14 +47,18 @@ struct check_observer_proxy_count {
 static check_observer_proxy_count the_check_observer_proxy_count;
 #endif /* TBB_USE_ASSERT */
 
+#if __TBB_ARENA_OBSERVER || __TBB_SLEEP_PERMISSION
 interface6::task_scheduler_observer* observer_proxy::get_v6_observer() {
     if(my_version != 6) return NULL;
     return static_cast<interface6::task_scheduler_observer*>(my_observer);
 }
+#endif
 
+#if __TBB_ARENA_OBSERVER
 bool observer_proxy::is_global() {
     return !get_v6_observer() || get_v6_observer()->my_context_tag == interface6::task_scheduler_observer::global_tag;
 }
+#endif /* __TBB_ARENA_OBSERVER */
 
 observer_proxy::observer_proxy( task_scheduler_observer_v3& tso )
     : my_list(NULL), my_next(NULL), my_prev(NULL), my_observer(&tso)
@@ -67,8 +68,12 @@ observer_proxy::observer_proxy( task_scheduler_observer_v3& tso )
 #endif /* TBB_USE_ASSERT */
     // 1 for observer
     my_ref_count = 1;
-    my_version = load<relaxed>(my_observer->my_busy_count)
-                 == interface6::task_scheduler_observer::v6_trait ? 6 : 0;
+    my_version =
+#if __TBB_ARENA_OBSERVER
+        load<relaxed>(my_observer->my_busy_count)
+                 == interface6::task_scheduler_observer::v6_trait ? 6 :
+#endif
+        0;
     __TBB_ASSERT( my_version >= 6 || !load<relaxed>(my_observer->my_busy_count), NULL );
 }
 
@@ -353,19 +358,17 @@ void task_scheduler_observer_v3::observe( bool enable ) {
         if( !my_proxy ) {
             my_proxy = new observer_proxy( *this );
             my_busy_count = 0; // proxy stores versioning information, clear it
+#if __TBB_ARENA_OBSERVER
             if ( !my_proxy->is_global() ) {
                 // Local observer activation
                 generic_scheduler* s = governor::local_scheduler_if_initialized();
-#if __TBB_TASK_ARENA
                 __TBB_ASSERT( my_proxy->get_v6_observer(), NULL );
                 intptr_t tag = my_proxy->get_v6_observer()->my_context_tag;
                 if( tag != interface6::task_scheduler_observer::implicit_tag ) { // explicit arena
                     task_arena *a = reinterpret_cast<task_arena*>(tag);
                     a->initialize();
                     my_proxy->my_list = &a->my_arena->my_observers;
-                } else
-#endif
-                {
+                } else {
                     if( !s ) s = governor::init_scheduler( task_scheduler_init::automatic, 0, true );
                     __TBB_ASSERT( __TBB_InitOnce::initialization_done(), NULL );
                     __TBB_ASSERT( s && s->my_arena, NULL );
@@ -375,7 +378,9 @@ void task_scheduler_observer_v3::observe( bool enable ) {
                 // Notify newly activated observer and other pending ones if it belongs to current arena
                 if(s && &s->my_arena->my_observers == my_proxy->my_list )
                     my_proxy->my_list->notify_entry_observers( s->my_last_local_observer, s->is_worker() );
-            } else {
+            } else
+#endif /* __TBB_ARENA_OBSERVER */
+            {
                 // Obsolete. Global observer activation
                 if( !__TBB_InitOnce::initialization_done() )
                     DoOneTimeInitializations();

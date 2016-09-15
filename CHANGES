@@ -2,6 +2,31 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 4.4 Update 4
+TBB_INTERFACE_VERSION == 9004
+
+Changes (w.r.t. Intel TBB 4.4 Update 3):
+
+- Removed a few cases of excessive user data copying in the flow graph.
+- Improved robustness of concurrent_bounded_queue::abort() in case of
+    simultaneous push and pop operations.
+
+Preview Features:
+
+- Added tbb::flow::async_msg, a special message type to support
+    communications between the flow graph and external asynchronous
+    activities.
+- async_node modified to support use with C++03 compilers.
+
+Bugs fixed:
+
+- Fixed a bug in dynamic memory allocation replacement for Windows* OS.
+- Fixed excessive memory consumption on Linux* OS caused by enabling
+    zero-copy realloc.
+- Fixed performance regression on Intel(R) Xeon Phi(tm) coprocessor with
+    auto_partitioner.
+
+------------------------------------------------------------------------
 Intel TBB 4.4 Update 3
 TBB_INTERFACE_VERSION == 9003
 

@@ -230,10 +230,10 @@ UINT CheckOpcodes( const char ** opcodes, void *inpAddr )
         if( result )
             return (UINT)(result/2-1);
     }
-    // TODO: to add more stuff to patterns
-    __TBB_ASSERT( false, "CheckOpcodes failed" );
+    // Impossibility to find opcodes in the dictionary is a serious issue,
+    // if we unable to call original function, that leads to leak or crash.
+    __TBB_ASSERT_RELEASE( false, "CheckOpcodes failed" );
 
-    // No matches found just do not store original calls
     return 0;
 }
 
@@ -252,8 +252,14 @@ static DWORD InsertTrampoline32(void *inpAddr, void *targetAddr, const char ** o
     UINT offset32;
     UCHAR *codePtr = (UCHAR *)inpAddr;
 
-    // If requested, store original function code
-    if ( storedAddr ){
+    if ( opcodes == PROCESS_JMP ){ // expecting JMP relative instruction "e9 00 00 00 00"
+        __TBB_ASSERT(*(char*)inpAddr == 0xE9, NULL);
+        __TBB_ASSERT(storedAddr, NULL);
+        // This is special case when system function consists of single near jump,
+        // so instead of moving it somewhere we use the target of the jump as original function.
+        unsigned offsetInJmp = *((unsigned*)((char*)inpAddr + 1));
+        *storedAddr = (void*)((uintptr_t)inpAddr + offsetInJmp + SIZE_OF_RELJUMP);
+    }else if ( storedAddr ){ // If requested, store original function code
         opcodesNumber = CheckOpcodes( opcodes, inpAddr );
         if( opcodesNumber >= SIZE_OF_RELJUMP ){
             UINT_PTR strdAddr = memProvider.GetLocation(srcAddr);
@@ -318,7 +324,14 @@ static DWORD InsertTrampoline64(void *inpAddr, void *targetAddr, const char ** o
     *locPtr = tgtAddr;
 
     // If requested, store original function code
-    if( storedAddr ){
+    if ( opcodes == PROCESS_JMP ){ // expecting JMP relative instruction "e9 00 00 00 00"
+        __TBB_ASSERT(*(char*)inpAddr == 0xE9, NULL);
+        __TBB_ASSERT(storedAddr, NULL);
+        // This is special case when system function consists of single near jump,
+        // so instead of moving it somewhere we use the target of the jump as original function.
+        unsigned offsetInJmp = *((unsigned*)((char*)inpAddr + 1));
+        *storedAddr = (void*)((uintptr_t)inpAddr + offsetInJmp + SIZE_OF_RELJUMP);
+    } else if( storedAddr ){
         opcodesNumber = CheckOpcodes( opcodes, inpAddr );
         if( opcodesNumber >= SIZE_OF_INDJUMP ){
             UINT_PTR strdAddr = memProvider.GetLocation(srcAddr);

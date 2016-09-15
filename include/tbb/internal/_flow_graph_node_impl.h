@@ -64,7 +64,7 @@ namespace internal {
 
         //! The input type of this receiver
         typedef Input input_type;
-        typedef sender<Input> predecessor_type;
+        typedef typename receiver<input_type>::predecessor_type predecessor_type;
         typedef predecessor_cache<input_type, null_mutex > predecessor_cache_type;
         typedef function_input_queue<input_type, A> input_queue_type;
         typedef typename A::template rebind< input_queue_type >::other queue_allocator_type;
@@ -694,7 +694,7 @@ namespace internal {
 
         template<int N> friend struct clear_element;
         typedef Output output_type;
-        typedef receiver<output_type> successor_type;
+        typedef typename sender<output_type>::successor_type successor_type;
         typedef broadcast_cache<output_type> broadcast_cache_type;
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
         typedef typename sender<output_type>::built_successors_type built_successors_type;
@@ -707,13 +707,13 @@ namespace internal {
         }
 
         //! Adds a new successor to this node
-        /* override */ bool register_successor( receiver<output_type> &r ) {
+        /* override */ bool register_successor( successor_type &r ) {
             successors().register_successor( r );
             return true;
         }
 
         //! Removes a successor from this node
-        /* override */ bool remove_successor( receiver<output_type> &r ) {
+        /* override */ bool remove_successor( successor_type &r ) {
             successors().remove_successor( r );
             return true;
         }
@@ -722,11 +722,11 @@ namespace internal {
         built_successors_type &built_successors() { return successors().built_successors(); }
 
 
-        /*override*/ void internal_add_built_successor( receiver<output_type> &r) {
+        /*override*/ void internal_add_built_successor( successor_type &r) {
             successors().internal_add_built_successor( r );
         }
 
-        /*override*/ void internal_delete_built_successor( receiver<output_type> &r) {
+        /*override*/ void internal_delete_built_successor( successor_type &r) {
             successors().internal_delete_built_successor( r );
         }
 

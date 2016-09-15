@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::interface5::reader_writer_lock::scoped_lock_read Class Reference</title>
+<title>tbb::zero_allocator&lt; T, Allocator &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,59 +33,93 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00276.html">tbb</a></li><li class="navelem"><b>interface5</b></li><li class="navelem"><a class="el" href="a00146.html">reader_writer_lock</a></li><li class="navelem"><a class="el" href="a00175.html">scoped_lock_read</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><a class="el" href="a00175.html">zero_allocator</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#friends">Friends</a> &#124;
-<a href="a00454.html">List of all members</a>  </div>
+<a href="a00310.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::interface5::reader_writer_lock::scoped_lock_read Class Reference</div>  </div>
+<div class="title">tbb::zero_allocator&lt; T, Allocator &gt; Class Template Reference<div class="ingroups"><a class="el" href="a00254.html">Memory Allocation</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>The scoped lock pattern for read locks.  
+<p>Meets "allocator" requirements of ISO C++ Standard, Section 20.1.5.  
  <a href="a00175.html#details">More...</a></p>
 
-<p><code>#include &lt;reader_writer_lock.h&gt;</code></p>
+<p><code>#include &lt;tbb_allocator.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::interface5::reader_writer_lock::scoped_lock_read:</div>
+Inheritance diagram for tbb::zero_allocator&lt; T, Allocator &gt;:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00175.png" usemap="#tbb::interface5::reader_writer_lock::scoped_lock_read_map" alt=""/>
-  <map id="tbb::interface5::reader_writer_lock::scoped_lock_read_map" name="tbb::interface5::reader_writer_lock::scoped_lock_read_map">
+  <img src="a00175.png" usemap="#tbb::zero_allocator&lt; T, Allocator &gt;_map" alt=""/>
+  <map id="tbb::zero_allocator&lt; T, Allocator &gt;_map" name="tbb::zero_allocator&lt; T, Allocator &gt;_map">
 </map>
  </div></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00121.html">rebind</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a62f27899a40c4bfaa6ba4313ffc833ef"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a62f27899a40c4bfaa6ba4313ffc833ef"></a>
+typedef Allocator&lt; T &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>base_allocator_type</b></td></tr>
+<tr class="separator:a62f27899a40c4bfaa6ba4313ffc833ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a906f5c2d47fff1bf4fd868a2441752d1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a906f5c2d47fff1bf4fd868a2441752d1"></a>
+typedef <br class="typebreak"/>
+base_allocator_type::value_type&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b></td></tr>
+<tr class="separator:a906f5c2d47fff1bf4fd868a2441752d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afb9458462ffca5d8734968862c9c4e6b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afb9458462ffca5d8734968862c9c4e6b"></a>
+typedef <br class="typebreak"/>
+base_allocator_type::pointer&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b></td></tr>
+<tr class="separator:afb9458462ffca5d8734968862c9c4e6b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2a08548bf83e153b40029de72738b60f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2a08548bf83e153b40029de72738b60f"></a>
+typedef <br class="typebreak"/>
+base_allocator_type::const_pointer&#160;</td><td class="memItemRight" valign="bottom"><b>const_pointer</b></td></tr>
+<tr class="separator:a2a08548bf83e153b40029de72738b60f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0afb88e128fc595c62f24e34f445d834"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0afb88e128fc595c62f24e34f445d834"></a>
+typedef <br class="typebreak"/>
+base_allocator_type::reference&#160;</td><td class="memItemRight" valign="bottom"><b>reference</b></td></tr>
+<tr class="separator:a0afb88e128fc595c62f24e34f445d834"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a28180fc12dc69c275983f6400526ba01"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a28180fc12dc69c275983f6400526ba01"></a>
+typedef <br class="typebreak"/>
+base_allocator_type::const_reference&#160;</td><td class="memItemRight" valign="bottom"><b>const_reference</b></td></tr>
+<tr class="separator:a28180fc12dc69c275983f6400526ba01"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8e741b3db82dfdce3f68cfd6d66901ce"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8e741b3db82dfdce3f68cfd6d66901ce"></a>
+typedef <br class="typebreak"/>
+base_allocator_type::size_type&#160;</td><td class="memItemRight" valign="bottom"><b>size_type</b></td></tr>
+<tr class="separator:a8e741b3db82dfdce3f68cfd6d66901ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aba68dc670e813a0c5c7f06e262b66187"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aba68dc670e813a0c5c7f06e262b66187"></a>
+typedef <br class="typebreak"/>
+base_allocator_type::difference_type&#160;</td><td class="memItemRight" valign="bottom"><b>difference_type</b></td></tr>
+<tr class="separator:aba68dc670e813a0c5c7f06e262b66187"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a9d3120a23016dabd4cc2683fa561ee5a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9d3120a23016dabd4cc2683fa561ee5a"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00175.html#a9d3120a23016dabd4cc2683fa561ee5a">scoped_lock_read</a> (<a class="el" href="a00146.html">reader_writer_lock</a> &amp;<a class="el" href="a00146.html#af92eb949fc491af8f7e350869ea0a0d1">lock</a>)</td></tr>
-<tr class="memdesc:a9d3120a23016dabd4cc2683fa561ee5a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct with blocking attempt to acquire read lock on the passed-in lock. <br/></td></tr>
-<tr class="separator:a9d3120a23016dabd4cc2683fa561ee5a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acf0e23fb4d3aeb6bde18d5d1236bd9d5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acf0e23fb4d3aeb6bde18d5d1236bd9d5"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00175.html#acf0e23fb4d3aeb6bde18d5d1236bd9d5">~scoped_lock_read</a> ()</td></tr>
-<tr class="memdesc:acf0e23fb4d3aeb6bde18d5d1236bd9d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor, releases the read lock. <br/></td></tr>
-<tr class="separator:acf0e23fb4d3aeb6bde18d5d1236bd9d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9eb8c7a64912a1c74ea76a01a20a1621"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9eb8c7a64912a1c74ea76a01a20a1621"></a>
-void *&#160;</td><td class="memItemRight" valign="bottom"><b>operator new</b> (size_t s)</td></tr>
-<tr class="separator:a9eb8c7a64912a1c74ea76a01a20a1621"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1a6c15dfdbe1bc7a6648ed836ebd8de6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1a6c15dfdbe1bc7a6648ed836ebd8de6"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>operator delete</b> (void *p)</td></tr>
-<tr class="separator:a1a6c15dfdbe1bc7a6648ed836ebd8de6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
-Friends</h2></td></tr>
-<tr class="memitem:afb01bc2e211c782503ef5088003f120f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afb01bc2e211c782503ef5088003f120f"></a>
-class&#160;</td><td class="memItemRight" valign="bottom"><b>reader_writer_lock</b></td></tr>
-<tr class="separator:afb01bc2e211c782503ef5088003f120f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9080a874dd20d0ca8e404683113990f2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9080a874dd20d0ca8e404683113990f2"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>zero_allocator</b> (const <a class="el" href="a00175.html">zero_allocator</a> &amp;a)  throw ()</td></tr>
+<tr class="separator:a9080a874dd20d0ca8e404683113990f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab417c217e597c6f412c5a630ba18bc32"><td class="memTemplParams" colspan="2"><a class="anchor" id="ab417c217e597c6f412c5a630ba18bc32"></a>
+template&lt;typename U &gt; </td></tr>
+<tr class="memitem:ab417c217e597c6f412c5a630ba18bc32"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>zero_allocator</b> (const <a class="el" href="a00175.html">zero_allocator</a>&lt; U &gt; &amp;a)  throw ()</td></tr>
+<tr class="separator:ab417c217e597c6f412c5a630ba18bc32"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1b9fe1273c2332e3c0b571d7bf1ba615"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1b9fe1273c2332e3c0b571d7bf1ba615"></a>
+pointer&#160;</td><td class="memItemRight" valign="bottom"><b>allocate</b> (const size_type n, const void *hint=0)</td></tr>
+<tr class="separator:a1b9fe1273c2332e3c0b571d7bf1ba615"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>The scoped lock pattern for read locks. </p>
+<div class="textblock"><h3>template&lt;typename T, template&lt; typename X &gt; class Allocator = tbb_allocator&gt;<br/>
+class tbb::zero_allocator&lt; T, Allocator &gt;</h3>
+
+<p>Meets "allocator" requirements of ISO C++ Standard, Section 20.1.5. </p>
+<p>The class is an adapter over an actual allocator that fills the allocation using memset function with template argument C as the value. The members are ordered the same way they are in section 20.4.1 of the ISO C++ standard. </p>
 </div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>reader_writer_lock.h</li>
+<li>tbb_allocator.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

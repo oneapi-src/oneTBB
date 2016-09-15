@@ -22,18 +22,18 @@ PROG=sudoku
 ARGS=4 input1 verbose
 PERF_RUN_ARGS=auto input1 silent
 
-# The C++ compiler
+# icpc by default
 ifneq (,$(shell which icc 2>/dev/null))
-CXX=icc
-endif # which icc
+    CXX=icpc
+endif
+
+# autodetect C++11 support
+include ../../common/examples-common.inc
 
 TBBLIB = -ltbb
 TBBLIB_DEBUG = -ltbb_debug
 
 ifneq (,$(filter icc icpc,$(CXX)))
-ifneq (0,$(cpp0x))
-CXX0XFLAGS?=-std=c++0x -D_TBB_CPP0X
-endif
 ifeq ($(offload), mic)
 override CXXFLAGS += -D__TBB_MIC_OFFLOAD=1
 # Replace -ltbb with -tbb in the offload mode

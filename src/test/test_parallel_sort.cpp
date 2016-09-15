@@ -170,20 +170,26 @@ bool init_iter(T * iter, T * sorted_list, size_t n, const Compare &compare, bool
             case 0:
                 /* use sin to generate the values */
                 test_type = "sin";
-                for (size_t i = 0; i < n; i++)
-                    iter[i] = sorted_list[i] = T(sin(float(i)));
+                for (size_t i = 0; i < n; i++) {
+                    iter[i] = T(sin(float(i)));
+                    sorted_list[i] = T(sin(float(i)));
+                }
                 break;
             case 1:
                 /* presorted list */
                 test_type = "pre-sorted";
-                for (size_t i = 0; i < n; i++)
-                    iter[i] = sorted_list[i] = T(i);
+                for (size_t i = 0; i < n; i++) {
+                    iter[i] = T(i);
+                    sorted_list[i] = T(i);
+                }
                 break;
             case 2:
                 /* reverse-sorted list */
                 test_type = "reverse-sorted";
-                for (size_t i = 0; i < n; i++)
-                    iter[i] = sorted_list[i] = T(n - i);
+                for (size_t i = 0; i < n; i++) {
+                    iter[i] = T(n - i);
+                    sorted_list[i] = T(n - i);
+                }
                 break;
         }
 

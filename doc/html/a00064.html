@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::internal::critical_section_v4 Class Reference</title>
+<title>tbb::interface9::global_control Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,62 +33,42 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00276.html">tbb</a></li><li class="navelem"><b>internal</b></li><li class="navelem"><a class="el" href="a00064.html">critical_section_v4</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><b>interface9</b></li><li class="navelem"><a class="el" href="a00064.html">global_control</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a> &#124;
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
-<a href="a00478.html">List of all members</a>  </div>
+<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
+<a href="a00400.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::internal::critical_section_v4 Class Reference</div>  </div>
+<div class="title">tbb::interface9::global_control Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="dynheader">
-Inheritance diagram for tbb::internal::critical_section_v4:</div>
-<div class="dyncontent">
- <div class="center">
-  <img src="a00064.png" usemap="#tbb::internal::critical_section_v4_map" alt=""/>
-  <map id="tbb::internal::critical_section_v4_map" name="tbb::internal::critical_section_v4_map">
-</map>
- </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
-Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00168.html">scoped_lock</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a04221b8e619bef332234db90d31f3e5e"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><b>parameter</b> { <b>max_allowed_parallelism</b>, 
+<b>thread_stack_size</b>, 
+<b>parameter_max</b>
+ }</td></tr>
+<tr class="separator:a04221b8e619bef332234db90d31f3e5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ab661617ca865c4af0f34e07276f73c9e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab661617ca865c4af0f34e07276f73c9e"></a>
-void __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><b>internal_construct</b> ()</td></tr>
-<tr class="separator:ab661617ca865c4af0f34e07276f73c9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afb1ccdfc59fdd3f5a3a8db17c56102e8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afb1ccdfc59fdd3f5a3a8db17c56102e8"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>lock</b> ()</td></tr>
-<tr class="separator:afb1ccdfc59fdd3f5a3a8db17c56102e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adbbd611ea04432e112b08e56251bc8b5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adbbd611ea04432e112b08e56251bc8b5"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>try_lock</b> ()</td></tr>
-<tr class="separator:adbbd611ea04432e112b08e56251bc8b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a081d4eae71879fd7dcf2c4ca9ea7fb67"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a081d4eae71879fd7dcf2c4ca9ea7fb67"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>unlock</b> ()</td></tr>
-<tr class="separator:a081d4eae71879fd7dcf2c4ca9ea7fb67"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5375ee43ca415f20f3c1f47db5220302"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5375ee43ca415f20f3c1f47db5220302"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>global_control</b> (parameter p, size_t value)</td></tr>
+<tr class="separator:a5375ee43ca415f20f3c1f47db5220302"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
-Static Public Attributes</h2></td></tr>
-<tr class="memitem:a7a62f98ad578ec8ac01d88de55bd271c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7a62f98ad578ec8ac01d88de55bd271c"></a>
-static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_rw_mutex</b> = false</td></tr>
-<tr class="separator:a7a62f98ad578ec8ac01d88de55bd271c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a47f75eb62f02cbdee0d602dff38075e9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a47f75eb62f02cbdee0d602dff38075e9"></a>
-static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_recursive_mutex</b> = false</td></tr>
-<tr class="separator:a47f75eb62f02cbdee0d602dff38075e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a12f986c4c554db133c2ae657acf2a496"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a12f986c4c554db133c2ae657acf2a496"></a>
-static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_fair_mutex</b> = true</td></tr>
-<tr class="separator:a12f986c4c554db133c2ae657acf2a496"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:a8451d931cfc205d896ca2da26fe123ff"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8451d931cfc205d896ca2da26fe123ff"></a>
+static size_t&#160;</td><td class="memItemRight" valign="bottom"><b>active_value</b> (parameter p)</td></tr>
+<tr class="separator:a8451d931cfc205d896ca2da26fe123ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>critical_section.h</li>
+<li>global_control.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

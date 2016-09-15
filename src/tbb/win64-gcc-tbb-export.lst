@@ -62,7 +62,6 @@ __TBB_SYMBOL( _ZTIN3tbb10empty_taskE )
 __TBB_SYMBOL( _ZTSN3tbb10empty_taskE )
 __TBB_SYMBOL( _ZTVN3tbb10empty_taskE )
 
-#if __TBB_TASK_ARENA
 /* arena.cpp */
 __TBB_SYMBOL( _ZN3tbb10interface78internal15task_arena_base19internal_initializeEv )
 __TBB_SYMBOL( _ZN3tbb10interface78internal15task_arena_base18internal_terminateEv )
@@ -71,7 +70,6 @@ __TBB_SYMBOL( _ZNK3tbb10interface78internal15task_arena_base16internal_enqueueER
 __TBB_SYMBOL( _ZNK3tbb10interface78internal15task_arena_base16internal_executeERNS1_13delegate_baseE )
 __TBB_SYMBOL( _ZNK3tbb10interface78internal15task_arena_base13internal_waitEv )
 __TBB_SYMBOL( _ZN3tbb10interface78internal15task_arena_base21internal_current_slotEv )
-#endif /* __TBB_TASK_ARENA */
 
 #if !TBB_NO_LEGACY
 /* task_v2.cpp */

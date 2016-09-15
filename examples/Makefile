@@ -36,9 +36,14 @@ ifeq ($(filter /% $(SLASH)%, $(subst :, ,$(tbb_root)) ),)
     export TBBROOT := $(tbb_root)
 endif
 
-ifneq (00,$(lambdas)$(cpp0x))
-	override CXXFLAGS += $(CPP11_FLAGS)
+override CXXFLAGS += $(CXX_STD_FLAGS)
+
+# give stdver priotity over autodetection
+ifneq (,$(stdver))
+    CXX0XFLAGS=-std=$(stdver) -D_TBB_CPP0X
 endif
+# empty CXX0XFLAGS exported as well, to have control over C++ autodetection
+export CXX0XFLAGS
 
 ifeq ($(tbb_os),windows)
     ifeq ($(UNIXMODE),1)

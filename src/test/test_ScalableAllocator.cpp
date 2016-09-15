@@ -106,7 +106,7 @@ static void *fixedBufGetMem(intptr_t pool_id, size_t &bytes)
 
     ((FixedPool*)pool_id)->used = true;
     bytes = ((FixedPool*)pool_id)->size;
-    return ((FixedPool*)pool_id)->buf;
+    return bytes? ((FixedPool*)pool_id)->buf : NULL;
 }
 #endif
 

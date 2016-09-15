@@ -112,127 +112,136 @@
    support added.
  */
 
-#if __INTEL_COMPILER
-    /** C++11 mode detection macros for Intel C++ compiler (enabled by -std=c++0x option):
-          __INTEL_CXX11_MODE__ for version >=13.0
-          __STDC_HOSTED__ for version >=12.0 on Windows,
-          __GXX_EXPERIMENTAL_CXX0X__ for version >=12.0 on Linux and OS X. **/
-    //  On Windows, C++11 features supported by Visual Studio 2010 and higher are enabled by default
-    #ifndef __INTEL_CXX11_MODE__
-        #define __INTEL_CXX11_MODE__ ((_MSC_VER && __STDC_HOSTED__) || __GXX_EXPERIMENTAL_CXX0X__)
-        // TODO: check if more conditions can be simplified with the above macro
-    #endif
-    #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT    (__INTEL_CXX11_MODE__ && __VARIADIC_TEMPLATES)
+/** C++11 mode detection macros for Intel C++ compiler (enabled by -std=c++XY option):
+    __INTEL_CXX11_MODE__ for version >=13.0 (not available for ICC 15.0 if -std=c++14 is used),
+    __STDC_HOSTED__ for version >=12.0 (useful only on Windows),
+    __GXX_EXPERIMENTAL_CXX0X__ for version >=12.0 on Linux and OS X*. **/
+#if __INTEL_COMPILER &&  !__INTEL_CXX11_MODE__
+    // __INTEL_CXX11_MODE__ is not set, try to deduce it
+    #define __INTEL_CXX11_MODE__ (__GXX_EXPERIMENTAL_CXX0X__ || (_MSC_VER && __STDC_HOSTED__))
+#endif
+
+#if __INTEL_COMPILER && (!_MSC_VER || __INTEL_CXX11_MODE__)
+    //  On Windows, C++11 features supported by Visual Studio 2010 and higher are enabled by default,
+    //  so in absense of /Qstd= use MSVC branch for __TBB_CPP11_* detection.
+    //  On other platforms, no -std= means C++03.
+
+    #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          (__INTEL_CXX11_MODE__ && __VARIADIC_TEMPLATES)
     // Both r-value reference support in compiler and std::move/std::forward
     // presence in C++ standard library is checked.
-    #define __TBB_CPP11_RVALUE_REF_PRESENT            ((__GXX_EXPERIMENTAL_CXX0X__ && (__TBB_GCC_VERSION >= 40300 || _LIBCPP_VERSION) || _MSC_VER >= 1600) && __INTEL_COMPILER >= 1200)
+    #define __TBB_CPP11_RVALUE_REF_PRESENT                  ((__GXX_EXPERIMENTAL_CXX0X__ && (__TBB_GCC_VERSION >= 40300 || _LIBCPP_VERSION) || _MSC_VER >= 1600) && __INTEL_COMPILER >= 1200)
     #if  _MSC_VER >= 1600
-        #define __TBB_EXCEPTION_PTR_PRESENT           ( __INTEL_COMPILER > 1300                                                \
-                                                      /*ICC 12.1 Upd 10 and 13 beta Upd 2 fixed exception_ptr linking  issue*/ \
-                                                      || (__INTEL_COMPILER == 1300 && __INTEL_COMPILER_BUILD_DATE >= 20120530) \
-                                                      || (__INTEL_COMPILER == 1210 && __INTEL_COMPILER_BUILD_DATE >= 20120410) )
+        #define __TBB_EXCEPTION_PTR_PRESENT                 ( __INTEL_COMPILER > 1300                                                \
+                                                            /*ICC 12.1 Upd 10 and 13 beta Upd 2 fixed exception_ptr linking  issue*/ \
+                                                            || (__INTEL_COMPILER == 1300 && __INTEL_COMPILER_BUILD_DATE >= 20120530) \
+                                                            || (__INTEL_COMPILER == 1210 && __INTEL_COMPILER_BUILD_DATE >= 20120410) )
     /** libstdc++ that comes with GCC 4.6 use C++11 features not supported by ICC 12.1.
      *  Because of that ICC 12.1 does not support C++11 mode with with gcc 4.6 (or higher),
      *  and therefore does not  define __GXX_EXPERIMENTAL_CXX0X__ macro **/
     #elif __TBB_GCC_VERSION >= 40404 && __TBB_GCC_VERSION < 40600
-        #define __TBB_EXCEPTION_PTR_PRESENT           (__GXX_EXPERIMENTAL_CXX0X__ && __INTEL_COMPILER >= 1200)
+        #define __TBB_EXCEPTION_PTR_PRESENT                 (__GXX_EXPERIMENTAL_CXX0X__ && __INTEL_COMPILER >= 1200)
     #elif __TBB_GCC_VERSION >= 40600
-        #define __TBB_EXCEPTION_PTR_PRESENT           (__GXX_EXPERIMENTAL_CXX0X__ && __INTEL_COMPILER >= 1300)
+        #define __TBB_EXCEPTION_PTR_PRESENT                 (__GXX_EXPERIMENTAL_CXX0X__ && __INTEL_COMPILER >= 1300)
     #elif _LIBCPP_VERSION
-        #define __TBB_EXCEPTION_PTR_PRESENT           __GXX_EXPERIMENTAL_CXX0X__
+        #define __TBB_EXCEPTION_PTR_PRESENT                 __GXX_EXPERIMENTAL_CXX0X__
     #else
-        #define __TBB_EXCEPTION_PTR_PRESENT           0
+        #define __TBB_EXCEPTION_PTR_PRESENT                 0
     #endif
-    #define __TBB_STATIC_ASSERT_PRESENT               (__INTEL_CXX11_MODE__ || _MSC_VER >= 1600)
-    #define __TBB_CPP11_TUPLE_PRESENT                 (_MSC_VER >= 1600 || (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40300))
+    #define __TBB_STATIC_ASSERT_PRESENT                     (__INTEL_CXX11_MODE__ || _MSC_VER >= 1600)
+    #define __TBB_CPP11_TUPLE_PRESENT                       (_MSC_VER >= 1600 || (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40300))
     #if (__clang__ && __INTEL_COMPILER > 1400)
         /* Older versions of Intel Compiler do not have __has_include */
         #if (__has_feature(__cxx_generalized_initializers__) && __has_include(<initializer_list>))
-            #define __TBB_INITIALIZER_LISTS_PRESENT   1
+            #define __TBB_INITIALIZER_LISTS_PRESENT         1
         #endif
     #else
-        #define __TBB_INITIALIZER_LISTS_PRESENT       __INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1400 && (_MSC_VER >= 1800 || __TBB_GCC_VERSION >= 40400 || _LIBCPP_VERSION)
+        #define __TBB_INITIALIZER_LISTS_PRESENT             __INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1400 && (_MSC_VER >= 1800 || __TBB_GCC_VERSION >= 40400 || _LIBCPP_VERSION)
     #endif
 
-    #define __TBB_CONSTEXPR_PRESENT                   __INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1400
-    #define __TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT  __INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1200
+    #define __TBB_CONSTEXPR_PRESENT                         __INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1400
+    #define __TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT        __INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1200
     /** ICC seems to disable support of noexcept event in c++11 when compiling in compatibility mode for gcc <4.6 **/
-    #define __TBB_NOEXCEPT_PRESENT                    __INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1300 && (__TBB_GCC_VERSION >= 40600 || _LIBCPP_VERSION || _MSC_VER)
-    #define __TBB_CPP11_STD_BEGIN_END_PRESENT         (_MSC_VER >= 1700 || __GXX_EXPERIMENTAL_CXX0X__ && __INTEL_COMPILER >= 1310 && (__TBB_GCC_VERSION >= 40600 || _LIBCPP_VERSION))
-    #define __TBB_CPP11_AUTO_PRESENT                  (_MSC_VER >= 1600 || __GXX_EXPERIMENTAL_CXX0X__ && __INTEL_COMPILER >= 1210)
-    #define __TBB_CPP11_DECLTYPE_PRESENT              (_MSC_VER >= 1600 || __GXX_EXPERIMENTAL_CXX0X__ && __INTEL_COMPILER >= 1210)
-    #define __TBB_CPP11_LAMBDAS_PRESENT               (__INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1200)
+    #define __TBB_NOEXCEPT_PRESENT                          __INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1300 && (__TBB_GCC_VERSION >= 40600 || _LIBCPP_VERSION || _MSC_VER)
+    #define __TBB_CPP11_STD_BEGIN_END_PRESENT               (_MSC_VER >= 1700 || __GXX_EXPERIMENTAL_CXX0X__ && __INTEL_COMPILER >= 1310 && (__TBB_GCC_VERSION >= 40600 || _LIBCPP_VERSION))
+    #define __TBB_CPP11_AUTO_PRESENT                        (_MSC_VER >= 1600 || __GXX_EXPERIMENTAL_CXX0X__ && __INTEL_COMPILER >= 1210)
+    #define __TBB_CPP11_DECLTYPE_PRESENT                    (_MSC_VER >= 1600 || __GXX_EXPERIMENTAL_CXX0X__ && __INTEL_COMPILER >= 1210)
+    #define __TBB_CPP11_LAMBDAS_PRESENT                     (__INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1200)
+    #define __TBB_CPP11_DEFAULT_FUNC_TEMPLATE_ARGS_PRESENT  (_MSC_VER >= 1800 || __GXX_EXPERIMENTAL_CXX0X__ && __INTEL_COMPILER >= 1210)
 #elif __clang__
 //TODO: these options need to be rechecked
 /** on OS X* the only way to get C++11 is to use clang. For library features (e.g. exception_ptr) libc++ is also
  *  required. So there is no need to check GCC version for clang**/
-    #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT    (__has_feature(__cxx_variadic_templates__))
-    #define __TBB_CPP11_RVALUE_REF_PRESENT            (__has_feature(__cxx_rvalue_references__) && (__TBB_GCC_VERSION >= 40300 || _LIBCPP_VERSION))
+    #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          (__has_feature(__cxx_variadic_templates__))
+    #define __TBB_CPP11_RVALUE_REF_PRESENT                  (__has_feature(__cxx_rvalue_references__) && (__TBB_GCC_VERSION >= 40300 || _LIBCPP_VERSION))
 /** TODO: extend exception_ptr related conditions to cover libstdc++ **/
-    #define __TBB_EXCEPTION_PTR_PRESENT               (__cplusplus >= 201103L && _LIBCPP_VERSION)
-    #define __TBB_STATIC_ASSERT_PRESENT               __has_feature(__cxx_static_assert__)
+    #define __TBB_EXCEPTION_PTR_PRESENT                     (__cplusplus >= 201103L && _LIBCPP_VERSION)
+    #define __TBB_STATIC_ASSERT_PRESENT                     __has_feature(__cxx_static_assert__)
     /**Clang (preprocessor) has problems with dealing with expression having __has_include in #ifs
      * used inside C++ code. (At least version that comes with OS X 10.8 : Apple LLVM version 4.2 (clang-425.0.28) (based on LLVM 3.2svn)) **/
     #if (__GXX_EXPERIMENTAL_CXX0X__ && __has_include(<tuple>))
-        #define __TBB_CPP11_TUPLE_PRESENT             1
+        #define __TBB_CPP11_TUPLE_PRESENT                   1
     #endif
     #if (__has_feature(__cxx_generalized_initializers__) && __has_include(<initializer_list>))
-        #define __TBB_INITIALIZER_LISTS_PRESENT       1
+        #define __TBB_INITIALIZER_LISTS_PRESENT             1
     #endif
-    #define __TBB_CONSTEXPR_PRESENT                   __has_feature(__cxx_constexpr__)
-    #define __TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT  (__has_feature(__cxx_defaulted_functions__) && __has_feature(__cxx_deleted_functions__))
+    #define __TBB_CONSTEXPR_PRESENT                         __has_feature(__cxx_constexpr__)
+    #define __TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT        (__has_feature(__cxx_defaulted_functions__) && __has_feature(__cxx_deleted_functions__))
     /**For some unknown reason  __has_feature(__cxx_noexcept) does not yield true for all cases. Compiler bug ? **/
-    #define __TBB_NOEXCEPT_PRESENT                    (__cplusplus >= 201103L)
-    #define __TBB_CPP11_STD_BEGIN_END_PRESENT         (__has_feature(__cxx_range_for__) && _LIBCPP_VERSION)
-    #define __TBB_CPP11_AUTO_PRESENT                  __has_feature(__cxx_auto_type__)
-    #define __TBB_CPP11_DECLTYPE_PRESENT              __has_feature(__cxx_decltype__)
-    #define __TBB_CPP11_LAMBDAS_PRESENT               __has_feature(cxx_lambdas)
+    #define __TBB_NOEXCEPT_PRESENT                          (__cplusplus >= 201103L)
+    #define __TBB_CPP11_STD_BEGIN_END_PRESENT               (__has_feature(__cxx_range_for__) && _LIBCPP_VERSION)
+    #define __TBB_CPP11_AUTO_PRESENT                        __has_feature(__cxx_auto_type__)
+    #define __TBB_CPP11_DECLTYPE_PRESENT                    __has_feature(__cxx_decltype__)
+    #define __TBB_CPP11_LAMBDAS_PRESENT                     __has_feature(cxx_lambdas)
+    #define __TBB_CPP11_DEFAULT_FUNC_TEMPLATE_ARGS_PRESENT  __has_feature(cxx_default_function_template_args)
 #elif __GNUC__
-    #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT    __GXX_EXPERIMENTAL_CXX0X__
-    #define __TBB_CPP11_RVALUE_REF_PRESENT            __GXX_EXPERIMENTAL_CXX0X__
+    #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          __GXX_EXPERIMENTAL_CXX0X__
+    #define __TBB_CPP11_RVALUE_REF_PRESENT                  __GXX_EXPERIMENTAL_CXX0X__
     /** __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4 here is a substitution for _GLIBCXX_ATOMIC_BUILTINS_4, which is a prerequisite
         for exception_ptr but cannot be used in this file because it is defined in a header, not by the compiler.
         If the compiler has no atomic intrinsics, the C++ library should not expect those as well. **/
-    #define __TBB_EXCEPTION_PTR_PRESENT               (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40404 && __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4)
-    #define __TBB_STATIC_ASSERT_PRESENT               (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40300)
-    #define __TBB_CPP11_TUPLE_PRESENT                 (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40300)
-    #define __TBB_INITIALIZER_LISTS_PRESENT           (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40400)
+    #define __TBB_EXCEPTION_PTR_PRESENT                     (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40404 && __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4)
+    #define __TBB_STATIC_ASSERT_PRESENT                     (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40300)
+    #define __TBB_CPP11_TUPLE_PRESENT                       (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40300)
+    #define __TBB_INITIALIZER_LISTS_PRESENT                 (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40400)
     /** gcc seems have to support constexpr from 4.4 but tests in (test_atomic) seeming reasonable fail to compile prior 4.6**/
-    #define __TBB_CONSTEXPR_PRESENT                   (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40400)
-    #define __TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT  (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40400)
-    #define __TBB_NOEXCEPT_PRESENT                    (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40600)
-    #define __TBB_CPP11_STD_BEGIN_END_PRESENT         (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40600)
-    #define __TBB_CPP11_AUTO_PRESENT                  (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40400)
-    #define __TBB_CPP11_DECLTYPE_PRESENT              (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40400)
-    #define __TBB_CPP11_LAMBDAS_PRESENT               (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40500)
+    #define __TBB_CONSTEXPR_PRESENT                         (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40400)
+    #define __TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT        (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40400)
+    #define __TBB_NOEXCEPT_PRESENT                          (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40600)
+    #define __TBB_CPP11_STD_BEGIN_END_PRESENT               (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40600)
+    #define __TBB_CPP11_AUTO_PRESENT                        (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40400)
+    #define __TBB_CPP11_DECLTYPE_PRESENT                    (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40400)
+    #define __TBB_CPP11_LAMBDAS_PRESENT                     (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40500)
+    #define __TBB_CPP11_DEFAULT_FUNC_TEMPLATE_ARGS_PRESENT  (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40300)
 #elif _MSC_VER
-    #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT    (_MSC_VER >= 1800)
-    #define __TBB_CPP11_RVALUE_REF_PRESENT            (_MSC_VER >= 1600)
-    #define __TBB_EXCEPTION_PTR_PRESENT               (_MSC_VER >= 1600)
-    #define __TBB_STATIC_ASSERT_PRESENT               (_MSC_VER >= 1600)
-    #define __TBB_CPP11_TUPLE_PRESENT                 (_MSC_VER >= 1600)
-    #define __TBB_INITIALIZER_LISTS_PRESENT           (_MSC_VER >= 1800)
-    #define __TBB_CONSTEXPR_PRESENT                   (_MSC_VER >= 1900)
-    #define __TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT  (_MSC_VER >= 1800)
-    #define __TBB_NOEXCEPT_PRESENT                    (_MSC_VER >= 1900)
-    #define __TBB_CPP11_STD_BEGIN_END_PRESENT         (_MSC_VER >= 1700)
-    #define __TBB_CPP11_AUTO_PRESENT                  (_MSC_VER >= 1600)
-    #define __TBB_CPP11_DECLTYPE_PRESENT              (_MSC_VER >= 1600)
-    #define __TBB_CPP11_LAMBDAS_PRESENT               (_MSC_VER >= 1600)
+    #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          (_MSC_VER >= 1800)
+    #define __TBB_CPP11_RVALUE_REF_PRESENT                  (_MSC_VER >= 1600)
+    #define __TBB_EXCEPTION_PTR_PRESENT                     (_MSC_VER >= 1600)
+    #define __TBB_STATIC_ASSERT_PRESENT                     (_MSC_VER >= 1600)
+    #define __TBB_CPP11_TUPLE_PRESENT                       (_MSC_VER >= 1600)
+    #define __TBB_INITIALIZER_LISTS_PRESENT                 (_MSC_VER >= 1800)
+    #define __TBB_CONSTEXPR_PRESENT                         (_MSC_VER >= 1900)
+    #define __TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT        (_MSC_VER >= 1800)
+    #define __TBB_NOEXCEPT_PRESENT                          (_MSC_VER >= 1900)
+    #define __TBB_CPP11_STD_BEGIN_END_PRESENT               (_MSC_VER >= 1700)
+    #define __TBB_CPP11_AUTO_PRESENT                        (_MSC_VER >= 1600)
+    #define __TBB_CPP11_DECLTYPE_PRESENT                    (_MSC_VER >= 1600)
+    #define __TBB_CPP11_LAMBDAS_PRESENT                     (_MSC_VER >= 1600)
+    #define __TBB_CPP11_DEFAULT_FUNC_TEMPLATE_ARGS_PRESENT  (_MSC_VER >= 1800)
 #else
-    #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT    0
-    #define __TBB_CPP11_RVALUE_REF_PRESENT            0
-    #define __TBB_EXCEPTION_PTR_PRESENT               0
-    #define __TBB_STATIC_ASSERT_PRESENT               0
-    #define __TBB_CPP11_TUPLE_PRESENT                 0
-    #define __TBB_INITIALIZER_LISTS_PRESENT           0
-    #define __TBB_CONSTEXPR_PRESENT                   0
-    #define __TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT  0
-    #define __TBB_NOEXCEPT_PRESENT                    0
-    #define __TBB_CPP11_STD_BEGIN_END_PRESENT         0
-    #define __TBB_CPP11_AUTO_PRESENT                  0
-    #define __TBB_CPP11_DECLTYPE_PRESENT              0
-    #define __TBB_CPP11_LAMBDAS_PRESENT               0
+    #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          0
+    #define __TBB_CPP11_RVALUE_REF_PRESENT                  0
+    #define __TBB_EXCEPTION_PTR_PRESENT                     0
+    #define __TBB_STATIC_ASSERT_PRESENT                     0
+    #define __TBB_CPP11_TUPLE_PRESENT                       0
+    #define __TBB_INITIALIZER_LISTS_PRESENT                 0
+    #define __TBB_CONSTEXPR_PRESENT                         0
+    #define __TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT        0
+    #define __TBB_NOEXCEPT_PRESENT                          0
+    #define __TBB_CPP11_STD_BEGIN_END_PRESENT               0
+    #define __TBB_CPP11_AUTO_PRESENT                        0
+    #define __TBB_CPP11_DECLTYPE_PRESENT                    0
+    #define __TBB_CPP11_LAMBDAS_PRESENT                     0
+    #define __TBB_CPP11_DEFAULT_FUNC_TEMPLATE_ARGS_PRESENT  0
 #endif
 
 // C++11 standard library features
@@ -413,15 +422,7 @@
     #error __TBB_FP_CONTEXT requires __TBB_TASK_GROUP_CONTEXT to be enabled
 #endif
 
-#ifndef __TBB_TASK_ARENA
-    #define __TBB_TASK_ARENA 1
-#endif /* __TBB_TASK_ARENA  */
-#if __TBB_TASK_ARENA
-    #define __TBB_RECYCLE_TO_ENQUEUE __TBB_BUILD // keep non-official
-    #if !__TBB_SCHEDULER_OBSERVER
-        #error __TBB_TASK_ARENA requires __TBB_SCHEDULER_OBSERVER to be enabled
-    #endif
-#endif /* __TBB_TASK_ARENA */
+#define __TBB_RECYCLE_TO_ENQUEUE __TBB_BUILD // keep non-official
 
 #ifndef __TBB_ARENA_OBSERVER
     #define __TBB_ARENA_OBSERVER ((__TBB_BUILD||TBB_PREVIEW_LOCAL_OBSERVER)&& __TBB_SCHEDULER_OBSERVER)
@@ -696,8 +697,10 @@
 #define __TBB_VARIADIC_PARALLEL_INVOKE          (TBB_PREVIEW_VARIADIC_PARALLEL_INVOKE && __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT && __TBB_CPP11_RVALUE_REF_PRESENT)
 #define __TBB_FLOW_GRAPH_CPP11_FEATURES         (__TBB_CPP11_VARIADIC_TEMPLATES_PRESENT \
                                                 && __TBB_CPP11_RVALUE_REF_PRESENT && __TBB_CPP11_AUTO_PRESENT) \
-                                                && __TBB_CPP11_VARIADIC_TUPLE_PRESENT && !__TBB_UPCAST_OF_TUPLE_OF_REF_BROKEN
+                                                && __TBB_CPP11_VARIADIC_TUPLE_PRESENT && __TBB_CPP11_DEFAULT_FUNC_TEMPLATE_ARGS_PRESENT \
+                                                && !__TBB_UPCAST_OF_TUPLE_OF_REF_BROKEN
 #define __TBB_PREVIEW_ASYNC_NODE (__TBB_FLOW_GRAPH_CPP11_FEATURES && TBB_PREVIEW_FLOW_GRAPH_NODES)
 #define __TBB_PREVIEW_OPENCL_NODE               (__TBB_FLOW_GRAPH_CPP11_FEATURES && TBB_PREVIEW_FLOW_GRAPH_NODES && !TBB_IMPLEMENT_CPP0X)
 #define __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING (TBB_PREVIEW_FLOW_GRAPH_FEATURES || __TBB_PREVIEW_OPENCL_NODE)
+#define __TBB_PREVIEW_ASYNC_MSG                 (TBB_PREVIEW_FLOW_GRAPH_FEATURES && __TBB_FLOW_GRAPH_CPP11_FEATURES)
 #endif /* __TBB_tbb_config_H */

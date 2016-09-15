@@ -121,8 +121,7 @@ public:
         r.my_end = my_begin = middle;
     }
 
-    RangeBase(RangeBase& r, proportional_split& p)
-        : RangeStatisticCollector(r, p) {
+    RangeBase(RangeBase& r, proportional_split& p) : RangeStatisticCollector(r, p) {
         *this = r;
         size_t original_size = r.size();
         T right = self().compute_right_part(r, p);

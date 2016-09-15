@@ -20,8 +20,9 @@
 
 // Test for function template parallel_for.h
 
-// Enable testing of serial subset.
+// These features are pure additions and thus can be always "on" in the test
 #define TBB_PREVIEW_SERIAL_SUBSET 1
+#define TBB_PREVIEW_STATIC_PARTITIONER 1
 #include "harness_defs.h"
 
 #if _MSC_VER
@@ -114,19 +115,20 @@ struct empty_partitioner_tag {};
 template <typename Flavor, typename Partitioner, typename Range, typename Body>
 struct Invoker;
 
+#if TBB_PREVIEW_SERIAL_SUBSET
 template <typename Range, typename Body>
 struct Invoker<serial_tag, empty_partitioner_tag, Range, Body> {
     void operator()( const Range& r, const Body& body, empty_partitioner_tag& ) {
         tbb::serial:: parallel_for( r, body );
     }
 };
-
 template <typename Partitioner, typename Range, typename Body>
 struct Invoker<serial_tag, Partitioner, Range, Body> {
     void operator()( const Range& r, const Body& body, Partitioner& p ) {
         tbb::serial:: parallel_for( r, body, p );
     }
 };
+#endif
 
 template <typename Range, typename Body>
 struct Invoker<parallel_tag, empty_partitioner_tag, Range, Body> {
@@ -145,6 +147,7 @@ struct Invoker<parallel_tag, Partitioner, Range, Body> {
 template <typename Flavor, typename Partitioner, typename T, typename Body>
 struct InvokerStep;
 
+#if TBB_PREVIEW_SERIAL_SUBSET
 template <typename T, typename Body>
 struct InvokerStep<serial_tag, empty_partitioner_tag, T, Body> {
     void operator()( const T& first, const T& last, const Body& f, empty_partitioner_tag& ) {
@@ -164,6 +167,7 @@ struct InvokerStep<serial_tag, Partitioner, T, Body> {
         tbb::serial:: parallel_for( first, last, step, f, p );
     }
 };
+#endif
 
 template <typename T, typename Body>
 struct InvokerStep<parallel_tag, empty_partitioner_tag, T, Body> {
@@ -525,6 +529,9 @@ void test() {
     const Body sync_body( sb );
     tbb::affinity_partitioner ap;
     tbb::parallel_for( range, sync_body, ap );
+#if TBB_PREVIEW_STATIC_PARTITIONER
+    tbb::parallel_for( range, sync_body, tbb::static_partitioner() );
+#endif
 }
 
 } // namespace uniform_distribution
@@ -603,6 +610,7 @@ int TestMain () {
             TestParallelForWithStepSupport<parallel_tag,unsigned long long>();
             TestParallelForWithStepSupport<parallel_tag,size_t>();
 
+#if TBB_PREVIEW_SERIAL_SUBSET
             // This is for testing serial implementation.
             if( p == MaxThread ) {
                 Flog<serial_tag,1>(p);
@@ -618,6 +626,7 @@ int TestMain () {
                 TestParallelForWithStepSupport<serial_tag,unsigned long long>();
                 TestParallelForWithStepSupport<serial_tag,size_t>();
             }
+#endif
 
 #if TBB_USE_EXCEPTIONS && !__TBB_THROW_ACROSS_MODULE_BOUNDARY_BROKEN
             TestExceptionsSupport();

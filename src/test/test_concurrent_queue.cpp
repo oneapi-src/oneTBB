@@ -25,6 +25,8 @@
 #include "harness.h"
 #include "harness_allocator.h"
 
+using tbb::internal::spin_wait_while;
+
 #include <vector>
 
 static tbb::atomic<long> FooConstructed;
@@ -713,7 +715,7 @@ void TestConstructors ()
 #endif /* TBB_USE_EXCEPTIONS */
 
 #if __TBB_CPP11_RVALUE_REF_PRESENT
-    // Testing work of move constructors
+    // Testing work of move constructors. TODO: merge into TestMoveConstructors?
     src_queue.clear();
 
     typedef typename CQ::size_type qsize_t;
@@ -788,24 +790,25 @@ void TestMoveConstructors() {
     const size_t size = 10;
     for( size_t i = 0; i < size; ++i )
         src_queue.push( T(i + (i ^ size)) );
-
     ASSERT( T::construction_num == 2 * size, NULL );
     ASSERT( T::destruction_num == size, NULL );
+
     const T* locations[size];
     typename CQ::const_iterator qit = src_queue.unsafe_begin();
     for( size_t i = 0; i < size; ++i, ++qit )
         locations[i] = &(*qit);
 
     // Ensuring allocation operation takes place during move when allocators are different
+    T::construction_num = T::destruction_num = 0;
     CQ dst_queue( std::move(src_queue), allocator<T>(1) );
-    ASSERT( T::construction_num == 2 * size + size, NULL );
-    ASSERT( T::destruction_num == 2 * size + size, NULL );
+    ASSERT( T::construction_num == size, NULL );
+    ASSERT( T::destruction_num == size+1, NULL ); // One item is used by the queue destructor
 
     TestQueueOperabilityAfterDataMove<T>( src_queue );
 
     qit = dst_queue.unsafe_begin();
     for( size_t i = 0; i < size; ++i, ++qit ) {
-        ASSERT( locations[i] != &(*qit), "item was not moved" );
+        ASSERT( locations[i] != &(*qit), "an item should have been copied but was not" );
         locations[i] = &(*qit);
     }
 
@@ -819,7 +822,7 @@ void TestMoveConstructors() {
 
     qit = dst_queue2.unsafe_begin();
     for( size_t i = 0; i < size; ++i, ++qit ) {
-        ASSERT( locations[i] == &(*qit), "item was moved" );
+        ASSERT( locations[i] == &(*qit), "an item should have been moved but was not" );
     }
 
     for( size_t i = 0; i < size; ++i) {
@@ -837,6 +840,7 @@ void TestMoveConstruction() {
     REMARK("Testing move constructors with specified allocators...");
     TestMoveConstructors< ConcQWithSizeWrapper< Bar, allocator<Bar> >, Bar >();
     TestMoveConstructors< tbb::concurrent_bounded_queue< Bar, allocator<Bar> >, Bar >();
+    // TODO: add tests with movable data
     REMARK(" work\n");
 }
 #endif /* __TBB_CPP11_RVALUE_REF_PRESENT */
@@ -1025,7 +1029,7 @@ void TestNegativeQueue( int nthread ) {
 }
 
 #if TBB_USE_EXCEPTIONS
-template<typename CQ,typename A1,typename A2,typename T>
+template<template<typename, typename> class CQ,typename A1,typename A2,typename T>
 void TestExceptionBody() {
     enum methods {
         m_push = 0,
@@ -1038,11 +1042,12 @@ void TestExceptionBody() {
     // Do test on queues of two different types at the same time to
     // catch problem with incorrect sharing between templates.
     {
-        CQ queue0;
-        tbb::concurrent_queue<int,A1> queue1;
+        CQ<T,A1> queue0;
+        CQ<int,A1> queue1;
         for( int i=0; i<2; ++i ) {
             bool caught = false;
             try {
+                // concurrent_queue internally rebinds the allocator to the one for 'char'
                 A2::init_counters();
                 A2::set_limits(N/2);
                 for( int k=0; k<N; k++ ) {
@@ -1063,9 +1068,9 @@ void TestExceptionBody() {
         int n_pushed=0, n_popped=0;
         for(int t = 0; t <= 1; t++)// exception type -- 0 : from allocator(), 1 : from Foo's constructor
         {
-            CQ queue_test;
+            CQ<T,A1> queue_test;
             for( int m=m_push; m<=m_pop; m++ ) {
-                // concurrent_queue internally rebinds the allocator to one with 'char'
+                // concurrent_queue internally rebinds the allocator to the one for 'char'
                 A2::init_counters();
 
                 if(t) MaxFooCount = MaxFooCount + 400;
@@ -1074,64 +1079,62 @@ void TestExceptionBody() {
                 try {
                     switch(m) {
                     case m_push:
-                            for( int k=0; k<N; k++ ) {
-                                push( queue_test, T(), k );
-                                n_pushed++;
-                            }
-                            break;
+                        for( int k=0; k<N; k++ ) {
+                            push( queue_test, T(), k );
+                            n_pushed++;
+                        }
+                        break;
                     case m_pop:
-                            n_popped=0;
-                            for( int k=0; k<n_pushed; k++ ) {
-                                T elt;
-                                queue_test.try_pop( elt );
-                                n_popped++;
-                            }
-                            n_pushed = 0;
-                            A2::set_limits();
-                            break;
+                        n_popped=0;
+                        for( int k=0; k<n_pushed; k++ ) {
+                            T elt;
+                            queue_test.try_pop( elt );
+                            n_popped++;
+                        }
+                        n_pushed = 0;
+                        A2::set_limits();
+                        break;
                     }
                     if( !t && m==m_push ) ASSERT(false, "should throw an exception");
                 } catch ( Foo_exception & ) {
+                    long tc = MaxFooCount;
+                    MaxFooCount = 0; // disable exception
                     switch(m) {
-                    case m_push: {
-                                ASSERT( ptrdiff_t(queue_test.size())==n_pushed, "incorrect queue size" );
-                                long tc = MaxFooCount;
-                                MaxFooCount = 0;
-                                for( int k=0; k<(int)tc; k++ ) {
-                                    push( queue_test, T(), k );
-                                    n_pushed++;
-                                }
-                                MaxFooCount = tc;
-                            }
-                            break;
+                    case m_push:
+                        ASSERT( ptrdiff_t(queue_test.size())==n_pushed, "incorrect queue size" );
+                        for( int k=0; k<(int)tc; k++ ) {
+                            push( queue_test, T(), k );
+                            n_pushed++;
+                        }
+                        break;
                     case m_pop:
-                            MaxFooCount = 0; // disable exception
-                            n_pushed -= (n_popped+1); // including one that threw an exception
-                            ASSERT( n_pushed>=0, "n_pushed cannot be less than 0" );
-                            for( int k=0; k<1000; k++ ) {
-                                push( queue_test, T(), k );
-                                n_pushed++;
-                            }
-                            ASSERT( !queue_test.empty(), "queue must not be empty" );
-                            ASSERT( ptrdiff_t(queue_test.size())==n_pushed, "queue size must be equal to n pushed" );
-                            for( int k=0; k<n_pushed; k++ ) {
-                                T elt;
-                                queue_test.try_pop( elt );
-                            }
-                            ASSERT( queue_test.empty(), "queue must be empty" );
-                            ASSERT( queue_test.size()==0, "queue must be empty" );
-                            break;
+                        n_pushed -= (n_popped+1); // including one that threw the exception
+                        ASSERT( n_pushed>=0, "n_pushed cannot be less than 0" );
+                        for( int k=0; k<1000; k++ ) {
+                            push( queue_test, T(), k );
+                            n_pushed++;
+                        }
+                        ASSERT( !queue_test.empty(), "queue must not be empty" );
+                        ASSERT( ptrdiff_t(queue_test.size())==n_pushed, "queue size must be equal to n pushed" );
+                        for( int k=0; k<n_pushed; k++ ) {
+                            T elt;
+                            queue_test.try_pop( elt );
+                        }
+                        ASSERT( queue_test.empty(), "queue must be empty" );
+                        ASSERT( queue_test.size()==0, "queue must be empty" );
+                        break;
                     }
+                    MaxFooCount = tc;
                 } catch ( std::bad_alloc & ) {
                     A2::set_limits(); // disable exception from allocator
                     size_t size = queue_test.size();
                     switch(m) {
                     case m_push:
-                            ASSERT( size>0, "incorrect queue size");
-                            break;
+                        ASSERT( size>0, "incorrect queue size");
+                        break;
                     case m_pop:
-                            if( !t ) ASSERT( false, "should not throw an exceptin" );
-                            break;
+                        if( !t ) ASSERT( false, "should not throw an exception" );
+                        break;
                     }
                 }
                 REMARK("... for t=%d and m=%d, exception test passed\n", t, m);
@@ -1149,8 +1152,8 @@ void TestExceptions() {
 #elif TBB_USE_EXCEPTIONS
     typedef static_counting_allocator<std::allocator<FooEx>, size_t> allocator_t;
     typedef static_counting_allocator<std::allocator<char>, size_t> allocator_char_t;
-    TestExceptionBody<ConcQWithSizeWrapper<FooEx, allocator_t>,allocator_t,allocator_char_t,FooEx>();
-    TestExceptionBody<tbb::concurrent_bounded_queue<FooEx, allocator_t>,allocator_t,allocator_char_t,FooEx>();
+    TestExceptionBody<ConcQWithSizeWrapper,allocator_t,allocator_char_t,FooEx>();
+    TestExceptionBody<tbb::concurrent_bounded_queue,allocator_t,allocator_char_t,FooEx>();
 #endif /* TBB_USE_EXCEPTIONS */
 }
 
@@ -1333,9 +1336,12 @@ class SimplePushBody {
     int max;
 public:
     SimplePushBody(tbb::concurrent_bounded_queue<int>* _q, int hi_thr) : q(_q), max(hi_thr) {}
+    bool operator()() { // predicate for spin_wait_while
+        return q->size()<max;
+    }
     void operator()(int thread_id) const {
         if (thread_id == max) {
-            Harness::Sleep(50);
+            spin_wait_while( *this );
             q->abort();
             return;
         }
@@ -1351,12 +1357,18 @@ public:
 class SimplePopBody {
     tbb::concurrent_bounded_queue<int>* q;
     int max;
+    int prefill;
 public:
-    SimplePopBody(tbb::concurrent_bounded_queue<int>* _q, int hi_thr) : q(_q), max(hi_thr) {}
+    SimplePopBody(tbb::concurrent_bounded_queue<int>* _q, int hi_thr, int nitems)
+    : q(_q), max(hi_thr), prefill(nitems) {}
+    bool operator()() { // predicate for spin_wait_while
+        // There should be `max` pops, and `prefill` should succeed
+        return q->size()>prefill-max;
+    }
     void operator()(int thread_id) const {
         int e;
         if (thread_id == max) {
-            Harness::Sleep(50);
+            spin_wait_while( *this );
             q->abort();
             return;
         }
@@ -1384,6 +1396,12 @@ void TestAbort() {
             NativeParallelFor( nthreads+1, my_push_body1 );
             ASSERT(num_pushed == 0, "no elements should have been pushed to zero-sized queue");
             ASSERT((int)failed_pushes == nthreads, "All threads should have failed to push an element to zero-sized queue");
+            // Do not test popping each time in order to test queue destruction with no previous pops
+            if (nthreads < (MaxThread+MinThread)/2) {
+                int e;
+                bool queue_empty = !iq1.try_pop(e);
+                ASSERT(queue_empty, "no elements should have been popped from zero-sized queue");
+            }
         }
 
         REMARK("...testing pushing to small-sized queue\n");
@@ -1407,8 +1425,8 @@ void TestAbort() {
             num_pushed = num_popped = failed_pushes = failed_pops = 0;
             iq3.push(42);
             iq3.push(42);
-            SimplePopBody my_pop_body(&iq3, nthreads);
-            NativeParallelFor( nthreads+1, my_pop_body);
+            SimplePopBody my_pop_body(&iq3, nthreads, 2);
+            NativeParallelFor( nthreads+1, my_pop_body );
             ASSERT(num_popped <= 2, "at most 2 elements should have been popped from queue of size 2");
             if (nthreads >= 2)
                 ASSERT((int)failed_pops == nthreads-2, "nthreads-2 threads should have failed to pop an element from queue of size 2");
@@ -1430,8 +1448,8 @@ void TestAbort() {
             ASSERT((int)num_pushed <= cap, "at most cap elements should have been pushed to queue of size cap");
             if (nthreads >= cap)
                 ASSERT((int)failed_pushes == nthreads-cap, "nthreads-cap threads should have failed to push an element to queue of size cap");
-            SimplePopBody my_pop_body(&iq4, nthreads);
-            NativeParallelFor( nthreads+1, my_pop_body);
+            SimplePopBody my_pop_body(&iq4, nthreads, (int)num_pushed);
+            NativeParallelFor( nthreads+1, my_pop_body );
             ASSERT((int)num_popped <= cap, "at most cap elements should have been popped from queue of size cap");
             if (nthreads >= cap)
                 ASSERT((int)failed_pops == nthreads-cap, "nthreads-cap threads should have failed to pop an element from queue of size cap");

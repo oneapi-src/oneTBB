@@ -45,9 +45,8 @@ Software - Minimum Requirements
 
 Software - Recommended
 
-    Intel(R) Parallel Studio XE 2015 Professional Edition
-    Intel(R) Parallel Studio XE 2016 Professional Edition
-    Intel(R) System Studio 2016
+    Intel(R) Parallel Studio XE 2015 Professional Edition and higher
+    Intel(R) System Studio 2016 and higher
 
 Software - Supported Operating Systems
 
@@ -168,10 +167,11 @@ Library Issues
         throw missing_wait exception.
 
 ------------------------------------------------------------------------
-Copyright (C) 2005-2016 Intel Corporation.  All Rights Reserved.
+(C) 2016 Intel Corporation
 
 Intel, Xeon and Pentium are registered trademarks or trademarks of
-Intel Corporation or its subsidiaries in the United States and other countries.
+Intel Corporation or its subsidiaries in the United States and other
+countries.
 
 * Other names and brands may be claimed as the property of others.
 

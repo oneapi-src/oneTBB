@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::tbb_allocator&lt; T &gt; Class Template Reference</title>
+<title>flow_graph.h File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -20,135 +20,131 @@
       <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="modules.html"><span>Modules</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
-      <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
-      <li><a href="files.html"><span>Files</span></a></li>
+      <li><a href="annotated.html"><span>Classes</span></a></li>
+      <li class="current"><a href="files.html"><span>Files</span></a></li>
     </ul>
   </div>
   <div id="navrow2" class="tabs2">
     <ul class="tablist">
-      <li><a href="annotated.html"><span>Class&#160;List</span></a></li>
-      <li><a href="hierarchy.html"><span>Class&#160;Hierarchy</span></a></li>
-      <li><a href="functions.html"><span>Class&#160;Members</span></a></li>
+      <li><a href="files.html"><span>File&#160;List</span></a></li>
+      <li><a href="globals.html"><span>File&#160;Members</span></a></li>
     </ul>
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00276.html">tbb</a></li><li class="navelem"><a class="el" href="a00194.html">tbb_allocator</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_525f2cc589630bacbdc3bb450847427e.html">tbb</a></li><li class="navelem"><a class="el" href="dir_b9976680b2be72d2d0b8fca1c31202a2.html">1.0</a></li><li class="navelem"><a class="el" href="dir_63fb2cc293d133785b96e521fa051167.html">include</a></li><li class="navelem"><a class="el" href="dir_87119f26c7695cbc270003e99bc7f49f.html">tbb</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
-<a href="#pub-types">Public Types</a> &#124;
-<a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
-<a href="a00345.html">List of all members</a>  </div>
+<a href="#namespaces">Namespaces</a> &#124;
+<a href="#namespaces">Constant Groups</a> &#124;
+<a href="#enum-members">Enumerations</a> &#124;
+<a href="#func-members">Functions</a> &#124;
+<a href="#var-members">Variables</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::tbb_allocator&lt; T &gt; Class Template Reference<div class="ingroups"><a class="el" href="a00293.html">Memory Allocation</a></div></div>  </div>
+<div class="title">flow_graph.h File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Meets "allocator" requirements of ISO C++ Standard, Section 20.1.5.  
- <a href="a00194.html#details">More...</a></p>
-
-<p><code>#include &lt;tbb_allocator.h&gt;</code></p>
+<p>The graph related classes and functions.  
+<a href="#details">More...</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00155.html">rebind</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00148.html">tbb::flow::interface8::internal::successor_cache&lt; T, M &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00026.html">tbb::flow::interface8::internal::broadcast_cache&lt; T, M &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00127.html">tbb::flow::interface8::internal::round_robin_cache&lt; T, M &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00107.html">tbb::flow::interface8::internal::predecessor_cache&lt; T, M &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00126.html">tbb::flow::interface8::internal::reservable_predecessor_cache&lt; T, M &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00083.html">tbb::flow::interface8::null_type</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00049.html">tbb::flow::interface8::continue_msg</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">An empty class used for messages that mean "I'm done".  <a href="a00049.html#details">More...</a><br/></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00143.html">tbb::flow::interface8::sender&lt; T &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pure virtual template class that defines a sender of messages of type T.  <a href="a00143.html#details">More...</a><br/></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00123.html">tbb::flow::interface8::receiver&lt; T &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pure virtual template class that defines a receiver of messages of type T.  <a href="a00123.html#details">More...</a><br/></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00072.html">tbb::flow::interface8::limiter_node&lt; T &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00128.html">tbb::flow::interface8::run_and_put_task&lt; R, B &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00055.html">tbb::flow::interface8::internal::edge_container&lt; C &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00170.html">tbb::flow::interface8::internal::untyped_sender</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00169.html">tbb::flow::interface8::internal::untyped_receiver</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00143.html">tbb::flow::interface8::sender&lt; T &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pure virtual template class that defines a sender of messages of type T.  <a href="a00143.html#details">More...</a><br/></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00123.html">tbb::flow::interface8::receiver&lt; T &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pure virtual template class that defines a receiver of messages of type T.  <a href="a00123.html#details">More...</a><br/></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00143.html">tbb::flow::interface8::sender&lt; T &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pure virtual template class that defines a sender of messages of type T.  <a href="a00143.html#details">More...</a><br/></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00123.html">tbb::flow::interface8::receiver&lt; T &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pure virtual template class that defines a receiver of messages of type T.  <a href="a00123.html#details">More...</a><br/></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00050.html">tbb::flow::interface8::continue_receiver</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base class for receivers of completion messages.  <a href="a00050.html#details">More...</a><br/></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:a60463a571d5c20f7762112367261ad94"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00194.html#a60463a571d5c20f7762112367261ad94">malloc_type</a> { <b>scalable</b>, 
-<b>standard</b>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
+Namespaces</h2></td></tr>
+<tr class="memitem:a00237"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00237.html">tbb</a></td></tr>
+<tr class="memdesc:a00237"><td class="mdescLeft">&#160;</td><td class="mdescRight">The namespace tbb contains all components of the library. <br/></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
+Constant Groups</h2></td></tr>
+<tr class="memitem:a00237"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00237.html">tbb</a></td></tr>
+<tr class="memdesc:a00237"><td class="mdescLeft">&#160;</td><td class="mdescRight">The namespace tbb contains all components of the library. <br/></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:a7bec4a3445fea3cd5974119730dea98f"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><b>concurrency</b> { <b>unlimited</b> = 0, 
+<b>serial</b> = 1
  }</td></tr>
-<tr class="memdesc:a60463a571d5c20f7762112367261ad94"><td class="mdescLeft">&#160;</td><td class="mdescRight">Specifies current allocator. <br/></td></tr>
-<tr class="separator:a60463a571d5c20f7762112367261ad94"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a26be966de4164e37002247c2c2266df9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a26be966de4164e37002247c2c2266df9"></a>
-typedef <br class="typebreak"/>
-internal::allocator_type&lt; T &gt;<br class="typebreak"/>
-::value_type&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b></td></tr>
-<tr class="separator:a26be966de4164e37002247c2c2266df9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a452a6c09408f425c9a005b5f2aad1761"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a452a6c09408f425c9a005b5f2aad1761"></a>
-typedef value_type *&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b></td></tr>
-<tr class="separator:a452a6c09408f425c9a005b5f2aad1761"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a63122d559635096a2618aecd1ba6664b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a63122d559635096a2618aecd1ba6664b"></a>
-typedef const value_type *&#160;</td><td class="memItemRight" valign="bottom"><b>const_pointer</b></td></tr>
-<tr class="separator:a63122d559635096a2618aecd1ba6664b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5ec6bd5e8cdd5b7abb99f5d72760c7a2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5ec6bd5e8cdd5b7abb99f5d72760c7a2"></a>
-typedef value_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>reference</b></td></tr>
-<tr class="separator:a5ec6bd5e8cdd5b7abb99f5d72760c7a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a24d98ce3ab908bc4b10d21dad6622364"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a24d98ce3ab908bc4b10d21dad6622364"></a>
-typedef const value_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>const_reference</b></td></tr>
-<tr class="separator:a24d98ce3ab908bc4b10d21dad6622364"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a812817d50e8df15df54998caec9892eb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a812817d50e8df15df54998caec9892eb"></a>
-typedef size_t&#160;</td><td class="memItemRight" valign="bottom"><b>size_type</b></td></tr>
-<tr class="separator:a812817d50e8df15df54998caec9892eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acba390757f664df03a15e933e3e34941"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acba390757f664df03a15e933e3e34941"></a>
-typedef ptrdiff_t&#160;</td><td class="memItemRight" valign="bottom"><b>difference_type</b></td></tr>
-<tr class="separator:acba390757f664df03a15e933e3e34941"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memdesc:a7bec4a3445fea3cd5974119730dea98f"><td class="mdescLeft">&#160;</td><td class="mdescRight">An enumeration the provides the two most common concurrency levels: unlimited and serial. <br/></td></tr>
+<tr class="separator:a7bec4a3445fea3cd5974119730dea98f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3a97dd9efeffa8dd4277bd09cfd3dba0"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><b>reset_flags</b> { <b>rf_reset_protocol</b> = 0, 
+<b>rf_reset_bodies</b> = 1&lt;&lt;0, 
+<b>rf_clear_edges</b> = 1&lt;&lt;1
+ }</td></tr>
+<tr class="separator:a3a97dd9efeffa8dd4277bd09cfd3dba0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
-Public Member Functions</h2></td></tr>
-<tr class="memitem:a8371538bc959f41f342012e363564aed"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8371538bc959f41f342012e363564aed"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>tbb_allocator</b> (const <a class="el" href="a00194.html">tbb_allocator</a> &amp;)  throw ()</td></tr>
-<tr class="separator:a8371538bc959f41f342012e363564aed"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9faff9ae2c2cd3ed2ca064b562224974"><td class="memTemplParams" colspan="2"><a class="anchor" id="a9faff9ae2c2cd3ed2ca064b562224974"></a>
-template&lt;typename U &gt; </td></tr>
-<tr class="memitem:a9faff9ae2c2cd3ed2ca064b562224974"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>tbb_allocator</b> (const <a class="el" href="a00194.html">tbb_allocator</a>&lt; U &gt; &amp;)  throw ()</td></tr>
-<tr class="separator:a9faff9ae2c2cd3ed2ca064b562224974"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac1370dbb1f06fed57273bddcae688255"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac1370dbb1f06fed57273bddcae688255"></a>
-pointer&#160;</td><td class="memItemRight" valign="bottom"><b>address</b> (reference x) const </td></tr>
-<tr class="separator:ac1370dbb1f06fed57273bddcae688255"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afb9c91d548d4a5affe3ec1de1c1b9327"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afb9c91d548d4a5affe3ec1de1c1b9327"></a>
-const_pointer&#160;</td><td class="memItemRight" valign="bottom"><b>address</b> (const_reference x) const </td></tr>
-<tr class="separator:afb9c91d548d4a5affe3ec1de1c1b9327"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afedd8a64eed9692083c708f419338e0c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afedd8a64eed9692083c708f419338e0c"></a>
-pointer&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00194.html#afedd8a64eed9692083c708f419338e0c">allocate</a> (size_type n, const void *=0)</td></tr>
-<tr class="memdesc:afedd8a64eed9692083c708f419338e0c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allocate space for n objects. <br/></td></tr>
-<tr class="separator:afedd8a64eed9692083c708f419338e0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a28e333e0fff56dd53c20b82cfee430ab"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a28e333e0fff56dd53c20b82cfee430ab"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00194.html#a28e333e0fff56dd53c20b82cfee430ab">deallocate</a> (pointer p, size_type)</td></tr>
-<tr class="memdesc:a28e333e0fff56dd53c20b82cfee430ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Free previously allocated block of memory. <br/></td></tr>
-<tr class="separator:a28e333e0fff56dd53c20b82cfee430ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0a2676fb8a2f931961d373b88848c93e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0a2676fb8a2f931961d373b88848c93e"></a>
-size_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00194.html#a0a2676fb8a2f931961d373b88848c93e">max_size</a> () const   throw ()</td></tr>
-<tr class="memdesc:a0a2676fb8a2f931961d373b88848c93e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Largest value for which method allocate might succeed. <br/></td></tr>
-<tr class="separator:a0a2676fb8a2f931961d373b88848c93e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af54fa3029e33cebe5ba64a8538306fdf"><td class="memTemplParams" colspan="2"><a class="anchor" id="af54fa3029e33cebe5ba64a8538306fdf"></a>
-template&lt;typename U , typename... Args&gt; </td></tr>
-<tr class="memitem:af54fa3029e33cebe5ba64a8538306fdf"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00194.html#af54fa3029e33cebe5ba64a8538306fdf">construct</a> (U *p, Args &amp;&amp;...args)</td></tr>
-<tr class="memdesc:af54fa3029e33cebe5ba64a8538306fdf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy-construct value at location pointed to by p. <br/></td></tr>
-<tr class="separator:af54fa3029e33cebe5ba64a8538306fdf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aefbb273663853a665e51dcfa053d12a0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aefbb273663853a665e51dcfa053d12a0"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>construct</b> (pointer p, value_type &amp;&amp;value)</td></tr>
-<tr class="separator:aefbb273663853a665e51dcfa053d12a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a694e266db657afba34ecb60111b2e2d3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a694e266db657afba34ecb60111b2e2d3"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>construct</b> (pointer p, const value_type &amp;value)</td></tr>
-<tr class="separator:a694e266db657afba34ecb60111b2e2d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac7b1b393a8ff3399079328c0971c1996"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac7b1b393a8ff3399079328c0971c1996"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00194.html#ac7b1b393a8ff3399079328c0971c1996">destroy</a> (pointer p)</td></tr>
-<tr class="memdesc:ac7b1b393a8ff3399079328c0971c1996"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy value at location pointed to by p. <br/></td></tr>
-<tr class="separator:ac7b1b393a8ff3399079328c0971c1996"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:ab6740d20f56c85f70196d40b183b9308"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab6740d20f56c85f70196d40b183b9308"></a>
+static tbb::task *&#160;</td><td class="memItemRight" valign="bottom"><b>tbb::flow::interface8::combine_tasks</b> (tbb::task *left, tbb::task *right)</td></tr>
+<tr class="separator:ab6740d20f56c85f70196d40b183b9308"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a44f9db9a75974b985b424a8e3a06c1cc"><td class="memTemplParams" colspan="2"><a class="anchor" id="a44f9db9a75974b985b424a8e3a06c1cc"></a>
+template&lt;typename K , typename T &gt; </td></tr>
+<tr class="memitem:a44f9db9a75974b985b424a8e3a06c1cc"><td class="memTemplItemLeft" align="right" valign="top">K&#160;</td><td class="memTemplItemRight" valign="bottom"><b>tbb::flow::key_from_message</b> (const T &amp;t)</td></tr>
+<tr class="separator:a44f9db9a75974b985b424a8e3a06c1cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
-Static Public Member Functions</h2></td></tr>
-<tr class="memitem:aa4606cff0156ec4237c1571204851bfb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa4606cff0156ec4237c1571204851bfb"></a>
-static <a class="el" href="a00194.html#a60463a571d5c20f7762112367261ad94">malloc_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00194.html#aa4606cff0156ec4237c1571204851bfb">allocator_type</a> ()</td></tr>
-<tr class="memdesc:aa4606cff0156ec4237c1571204851bfb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns current allocator. <br/></td></tr>
-<tr class="separator:aa4606cff0156ec4237c1571204851bfb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
+Variables</h2></td></tr>
+<tr class="memitem:a1bf5c7d35ad50b5be3daf7b27950bef8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1bf5c7d35ad50b5be3daf7b27950bef8"></a>
+static tbb::task *const&#160;</td><td class="memItemRight" valign="bottom"><b>tbb::flow::interface8::SUCCESSFULLY_ENQUEUED</b> = (task *)-1</td></tr>
+<tr class="separator:a1bf5c7d35ad50b5be3daf7b27950bef8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;typename T&gt;<br/>
-class tbb::tbb_allocator&lt; T &gt;</h3>
-
-<p>Meets "allocator" requirements of ISO C++ Standard, Section 20.1.5. </p>
-<p>The class selects the best memory allocation mechanism available from scalable_malloc and standard malloc. The members are ordered the same way they are in section 20.4.1 of the ISO C++ standard. </p>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>tbb_allocator.h</li>
-</ul>
-</div><!-- contents -->
+<div class="textblock"><p>The graph related classes and functions. </p>
+<p>There are some applications that best express dependencies as messages passed between nodes in a graph. These messages may contain data or simply act as signals that a predecessors has completed. The graph class and its associated node classes can be used to express such applications. </p>
+</div></div><!-- contents -->
 <hr>
 <p></p>
 Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.

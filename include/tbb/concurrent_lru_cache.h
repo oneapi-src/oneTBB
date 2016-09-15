@@ -126,8 +126,8 @@ private:
         }
         static handle_move_t move(handle_object& h){
             __TBB_ASSERT(h.my_cache_pointer,"move from the same object twice ?");
-            concurrent_lru_cache * cache_pointer = NULL;
-            std::swap(cache_pointer,h.my_cache_pointer);
+            concurrent_lru_cache * cache_pointer = h.my_cache_pointer;
+            h.my_cache_pointer = NULL;
             return handle_move_t(*cache_pointer,h.my_map_record_ref);
         }
     private:

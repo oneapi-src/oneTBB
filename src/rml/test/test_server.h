@@ -59,7 +59,7 @@ static bool TestSingleConnection;
 
 static size_t N_TestConnections;
 
-static int default_concurrency;
+static int server_concurrency;
 
 class MyJob: public ::rml::job {
 public:
@@ -388,7 +388,7 @@ void SimpleTest() {
         doc(0);
 #endif
     }
-    ASSERT( Harness::ConcurrencyTracker::PeakParallelism()>1 || default_concurrency==0, "No multiple connections exercised?" );
+    ASSERT( Harness::ConcurrencyTracker::PeakParallelism()>1 || server_concurrency==0, "No multiple connections exercised?" );
 #endif /* !TRIVIAL */
     // Let RML catch up.
     while( ClientConstructions!=ClientDestructions )
@@ -420,7 +420,7 @@ void VerifyInitialization( int n_thread ) {
                client->client_id(), n_thread, 0, 0);
     ASSERT( server, NULL );
     client->set_server( server );
-    default_concurrency = server->default_concurrency();
+    server_concurrency = server->default_concurrency();
 
     DoClientSpecificVerification( *server, n_thread );
 

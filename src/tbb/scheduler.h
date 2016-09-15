@@ -78,10 +78,12 @@ struct scheduler_state {
 #if __TBB_SCHEDULER_OBSERVER
     //! Last observer in the global observers list processed by this scheduler
     observer_proxy* my_last_global_observer;
+#endif
 
+#if __TBB_ARENA_OBSERVER
     //! Last observer in the local observers list processed by this scheduler
     observer_proxy* my_last_local_observer;
-#endif /* __TBB_SCHEDULER_OBSERVER */
+#endif
 #if __TBB_TASK_PRIORITY
     //! Latest known highest priority of tasks in the market or arena.
     /** Master threads currently tracks only tasks in their arenas, while workers
@@ -278,11 +280,9 @@ public:
 #endif /* TBB_USE_ASSERT <= 1 */
 
     void attach_arena( arena*, size_t index, bool is_master );
-#if __TBB_TASK_ARENA
     void nested_arena_entry( arena*, size_t, nested_arena_context &, bool as_worker );
     void nested_arena_exit( nested_arena_context & );
     void wait_until_empty();
-#endif
 
     /*override*/
     void spawn( task& first, task*& next );

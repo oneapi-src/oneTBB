@@ -26,14 +26,17 @@ ifneq (,$(shell which icpc 2>/dev/null))
 CXX=icpc
 endif # which icpc
 
+ifeq ($(shell uname), Darwin)
+override CXXFLAGS += -Wl,-rpath,$(TBBROOT)/lib  -Wl,-rpath,$(MKLROOT)/lib
+# MKL support
+override MKL_LIBS += -lmkl_core -lmkl_sequential -lmkl_intel
+else
 ifeq ($(shell uname), Linux)
 LIBS+= -lrt 
-else ifeq ($(shell uname), Darwin)
-override CXXFLAGS += -Wl,-rpath,$(TBBROOT)/lib
 endif
-
 # MKL support
 override MKL_LIBS += -lmkl_rt
+endif
 
 # C++0x support
 override CXXFLAGS += -std=c++0x

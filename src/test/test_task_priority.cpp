@@ -66,8 +66,8 @@ namespace tbb {
 }
 #endif /* __TBB_TASK_PRIORITY */
 
-tbb::priority_t Low = tbb::priority_normal,
-                High = tbb::priority_high;
+tbb::priority_t Low,
+                High;
 int PreemptionActivatorId = 1;
 
 enum Options {
@@ -580,6 +580,8 @@ int RunTests () {
     REMARK( "The number of threads: %d\n", P );
     if ( P < 3 )
         return Harness::Skipped;
+    Low = tbb::priority_normal;
+    High = tbb::priority_high;
     TestPeriodicConcurrentActivities();
     TestPrioritySwitchBetweenTwoMasters();
     Low = tbb::priority_low;

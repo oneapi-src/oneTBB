@@ -1059,9 +1059,11 @@ generic_scheduler* generic_scheduler::create_master( arena* a ) {
 #if _WIN32||_WIN64
     s->my_market->register_master( s->master_exec_resource );
 #endif /* _WIN32||_WIN64 */
-#if __TBB_SCHEDULER_OBSERVER
     // Process any existing observers.
+#if __TBB_ARENA_OBSERVER
     __TBB_ASSERT( !a || a->my_observers.empty(), "Just created arena cannot have any observers associated with it" );
+#endif
+#if __TBB_SCHEDULER_OBSERVER
     the_global_observer_list.notify_entry_observers( s->my_last_global_observer, /*worker=*/false );
 #endif /* __TBB_SCHEDULER_OBSERVER */
     return s;
@@ -1098,9 +1100,11 @@ void generic_scheduler::cleanup_master( bool needs_wait_workers ) {
             __TBB_ASSERT ( governor::is_set(this), "Other thread reused our TLS key during the task pool cleanup" );
         }
     }
-#if __TBB_SCHEDULER_OBSERVER
+#if __TBB_ARENA_OBSERVER
     if( a )
         a->my_observers.notify_exit_observers( my_last_local_observer, /*worker=*/false );
+#endif
+#if __TBB_SCHEDULER_OBSERVER
     the_global_observer_list.notify_exit_observers( my_last_global_observer, /*worker=*/false );
 #endif /* __TBB_SCHEDULER_OBSERVER */
 #if _WIN32||_WIN64

@@ -28,6 +28,9 @@ CPLUS = cl /nologo
 LINK_FLAGS = /link /nologo
 LIB_LINK_FLAGS=/link /nologo /DLL /MAP /DEBUG /fixed:no /INCREMENTAL:NO /DYNAMICBASE /NXCOMPAT
 
+# no possibility to select standard for the compiler
+CXX_STD_FLAGS =
+
 ifeq ($(arch), ia32)
 	LIB_LINK_FLAGS += /SAFESEH
 endif
@@ -99,7 +102,7 @@ endif
 
 CPLUS_FLAGS += /DUSE_WINTHREAD /D_CRT_SECURE_NO_DEPRECATE \
         /D_WIN32_WINNT=$(_WIN32_WINNT)
-C_FLAGS = $(CPLUS_FLAGS)
+C_FLAGS = $(subst $(EH_FLAGS),,$(CPLUS_FLAGS))
 
 #------------------------------------------------------------------------------
 # End of setting compiler flags.
@@ -133,11 +136,7 @@ endif
 #------------------------------------------------------------------------------
 # Setting tbbmalloc data.
 #------------------------------------------------------------------------------
-ifneq ($(target_ui), win8ui)
-M_CPLUS_FLAGS = $(subst $(EH_FLAGS),/EHs-,$(CPLUS_FLAGS))
-else
 M_CPLUS_FLAGS = $(CPLUS_FLAGS)
-endif
 #------------------------------------------------------------------------------
 # End of setting tbbmalloc data.
 #------------------------------------------------------------------------------

@@ -89,7 +89,7 @@ void concurrent_monitor::notify_one_relaxed() {
 void concurrent_monitor::notify_all_relaxed() {
     if( waitset_ec.empty() )
         return;
-    dllist_t temp;
+    waitset_t temp;
     const waitset_node_t* end;
     {
         tbb::spin_mutex::scoped_lock l( mutex_ec );
@@ -112,7 +112,7 @@ void concurrent_monitor::notify_all_relaxed() {
 void concurrent_monitor::abort_all_relaxed() {
     if( waitset_ec.empty() )
         return;
-    dllist_t temp;
+    waitset_t temp;
     const waitset_node_t* end;
     {
         tbb::spin_mutex::scoped_lock l( mutex_ec );

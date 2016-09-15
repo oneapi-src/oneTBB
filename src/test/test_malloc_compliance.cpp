@@ -214,9 +214,7 @@ public:
         {
             srand((UINT)time(NULL));
             FullLog=isVerbose;
-            rand();
         }
-    void InvariantDataRealloc(bool aligned); //realloc does not change data
     void NULLReturn(UINT MinSize, UINT MaxSize, int total_threads); // NULL pointer + check errno
     void UniquePointer(); // unique pointer - check with padding
     void AddrArifm(); // unique pointer - check with pointer arithmetic
@@ -253,6 +251,10 @@ struct RoundRobin: NoAssign {
 };
 
 bool CMemTest::firstTime = true;
+
+inline size_t choose_random_alignment() {
+    return sizeof(void*)<<(rand() % POWERS_OF_2);
+}
 
 static void setSystemAllocs()
 {
@@ -359,6 +361,68 @@ void CheckArgumentsOverflow()
     ASSERT_ERRNO(errno==ENOMEM, NULL);
 }
 
+void InvariantDataRealloc(bool aligned, size_t maxAllocSize, bool checkData)
+{
+    Harness::FastRandom fastRandom(1);
+    size_t size = 0, start = 0;
+    char *ptr = NULL,
+        // master to create copies and compare ralloc result against it
+        *master = (char*)Tmalloc(2*maxAllocSize);
+
+    ASSERT(master, NULL);
+    ASSERT(!(2*maxAllocSize%sizeof(unsigned short)),
+           "The loop below expects that 2*maxAllocSize contains sizeof(unsigned short)");
+    for (size_t k = 0; k<2*maxAllocSize; k+=sizeof(unsigned short))
+        *(unsigned short*)(master+k) = fastRandom.get();
+
+    for (int i=0; i<100; i++) {
+        // don't want sizeNew==0 here
+        const size_t sizeNew = fastRandom.get() % (maxAllocSize-1) + 1;
+        char *ptrNew = aligned?
+            (char*)Taligned_realloc(ptr, sizeNew, choose_random_alignment())
+            : (char*)Trealloc(ptr, sizeNew);
+        ASSERT(ptrNew, NULL);
+        // check that old data not changed
+        if (checkData)
+            ASSERT(!memcmp(ptrNew, master+start, min(size, sizeNew)), "broken data");
+
+        // prepare fresh data, copying them from random position in master
+        size = sizeNew;
+        ptr = ptrNew;
+        if (checkData) {
+            start = fastRandom.get() % maxAllocSize;
+            memcpy(ptr, master+start, size);
+        }
+    }
+    if (aligned)
+        Taligned_realloc(ptr, 0, choose_random_alignment());
+    else
+        Trealloc(ptr, 0);
+    Tfree(master);
+}
+
+#include "harness_memory.h"
+
+void CheckReallocLeak()
+{
+    int i;
+    const int ITER_TO_STABILITY = 10;
+    // do bootstrap
+    for (int k=0; k<3; k++)
+        InvariantDataRealloc(/*aligned=*/false, 128*MByte, /*checkData=*/false);
+    size_t prev = GetMemoryUsage(peakUsage);
+    // expect realloc to not increase peak memory consumption after ITER_TO_STABILITY-1 iterations
+    for (i=0; i<ITER_TO_STABILITY; i++) {
+        for (int k=0; k<3; k++)
+            InvariantDataRealloc(/*aligned=*/false, 128*MByte, /*checkData=*/false);
+        size_t curr = GetMemoryUsage(peakUsage);
+        if (prev == curr)
+            break;
+        prev = curr;
+    }
+    ASSERT(i < ITER_TO_STABILITY, "Can't stabilize memory consumption.");
+}
+
 HARNESS_EXPORT
 int main(int argc, char* argv[]) {
     argC=argc;
@@ -438,6 +502,7 @@ int main(int argc, char* argv[]) {
 #endif // _MSC_VER
 
     CheckArgumentsOverflow();
+    CheckReallocLeak();
     for( int p=MaxThread; p>=MinThread; --p ) {
         REMARK("testing with %d threads\n", p );
         for (int limit=0; limit<2; limit++) {
@@ -511,48 +576,6 @@ void* Taligned_realloc(void* memblock, size_t size, size_t alignment)
         ASSERT(0==((uintptr_t)ret & (alignment-1)),
                "allocation result should be aligned");
     return ret;
-}
-
-inline size_t choose_random_alignment() {
-    return sizeof(void*)<<(rand() % POWERS_OF_2);
-}
-
-void CMemTest::InvariantDataRealloc(bool aligned)
-{
-    const size_t MAX_ALLOC = 8*MByte;
-    Harness::FastRandom fastRandom(1);
-    size_t size = 0, start = 0;
-    char *ptr = NULL,
-        // master to create copies and compare ralloc result against it
-        *master = (char*)Tmalloc(2*MAX_ALLOC);
-
-    ASSERT(master, NULL);
-    __TBB_STATIC_ASSERT(!(2*MAX_ALLOC%sizeof(unsigned short)),
-                        "The loop below expects that 2*MAX_ALLOC contains sizeof(unsigned short)");
-    for (size_t k = 0; k<2*MAX_ALLOC; k+=sizeof(unsigned short))
-        *(unsigned short*)(master+k) = fastRandom.get();
-
-    for (int i=0; i<100; i++) {
-        // don't want sizeNew==0 here
-        const size_t sizeNew = rand() % (MAX_ALLOC-1) + 1;
-        char *ptrNew = aligned?
-            (char*)Taligned_realloc(ptr, sizeNew, choose_random_alignment())
-            : (char*)Trealloc(ptr, sizeNew);
-        ASSERT(ptrNew, NULL);
-        // check that old data not changed
-        ASSERT(!memcmp(ptrNew, master+start, min(size, sizeNew)), "broken data");
-
-        // prepare fresh data, copying them from random position in master
-        size = sizeNew;
-        ptr = ptrNew;
-        start = rand() % MAX_ALLOC;
-        memcpy(ptr, master+start, size);
-    }
-    if (aligned)
-        Taligned_realloc(ptr, 0, choose_random_alignment());
-    else
-        Trealloc(ptr, 0);
-    Tfree(master);
 }
 
 struct PtrSize {
@@ -1061,9 +1084,9 @@ void CMemTest::RunAllTests(int total_threads)
 {
     Zerofilling();
     Free_NULL();
-    InvariantDataRealloc(/*aligned=*/false);
+    InvariantDataRealloc(/*aligned=*/false, 8*MByte, /*checkData=*/true);
     if (Raligned_realloc)
-        InvariantDataRealloc(/*aligned=*/true);
+        InvariantDataRealloc(/*aligned=*/true, 8*MByte, /*checkData=*/true);
     TestAlignedParameters();
     UniquePointer();
     AddrArifm();

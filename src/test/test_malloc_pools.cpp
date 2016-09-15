@@ -23,6 +23,7 @@
 #define HARNESS_TBBMALLOC_THREAD_SHUTDOWN 1
 #include "harness.h"
 #include "harness_barrier.h"
+#include "harness_tls.h"
 #if !__TBB_SOURCE_DIRECTLY_INCLUDED
 #include "harness_tbb_independence.h"
 #endif
@@ -505,17 +506,20 @@ void TestPoolGranularity()
     }
 }
 
-static size_t putMemCalls, getMemCalls;
+static size_t putMemAll, getMemAll, getMemSuccessful;
 
-static void *getMemPolicy(intptr_t /*pool_id*/, size_t &bytes)
+static void *getMemMalloc(intptr_t /*pool_id*/, size_t &bytes)
 {
-    getMemCalls++;
-    return malloc(bytes);
+    getMemAll++;
+    void *p = malloc(bytes);
+    if (p)
+        getMemSuccessful++;
+    return p;
 }
 
-static int putMemPolicy(intptr_t /*pool_id*/, void *ptr, size_t /*bytes*/)
+static int putMemFree(intptr_t /*pool_id*/, void *ptr, size_t /*bytes*/)
 {
-    putMemCalls++;
+    putMemAll++;
     free(ptr);
     return 0;
 }
@@ -524,13 +528,13 @@ void TestPoolKeepTillDestroy()
 {
     const int ITERS = 50*1024;
     void *ptrs[2*ITERS+1];
-    rml::MemPoolPolicy pol(getMemPolicy, putMemPolicy);
+    rml::MemPoolPolicy pol(getMemMalloc, putMemFree);
     rml::MemoryPool *pool;
 
     // 1st create default pool that returns memory back to callback,
     // then use keepMemTillDestroy policy
     for (int keep=0; keep<2; keep++) {
-        getMemCalls = putMemCalls = 0;
+        getMemAll = putMemAll = 0;
         if (keep)
             pol.keepAllMemory = 1;
         pool_create_v1(0, &pol, &pool);
@@ -539,30 +543,31 @@ void TestPoolKeepTillDestroy()
             ptrs[i+1] = pool_malloc(pool, 10*1024);
         }
         ptrs[2*ITERS] = pool_malloc(pool, 8*1024*1024);
-        ASSERT(!putMemCalls, NULL);
+        ASSERT(!putMemAll, NULL);
         for (int i=0; i<2*ITERS; i++)
             pool_free(pool, ptrs[i]);
         pool_free(pool, ptrs[2*ITERS]);
-        size_t totalPutMemCalls = putMemCalls;
+        size_t totalPutMemCalls = putMemAll;
         if (keep)
-            ASSERT(!putMemCalls, NULL);
+            ASSERT(!putMemAll, NULL);
         else {
-            ASSERT(putMemCalls, NULL);
-            putMemCalls = 0;
+            ASSERT(putMemAll, NULL);
+            putMemAll = 0;
         }
-        size_t currGetCalls = getMemCalls;
-        pool_malloc(pool, 8*1024*1024);
+        size_t getCallsBefore = getMemAll;
+        void *p = pool_malloc(pool, 8*1024*1024);
+        ASSERT(p, NULL);
         if (keep)
-            ASSERT(currGetCalls == getMemCalls, "Must not lead to new getMem call");
-        size_t currPuts = putMemCalls;
+            ASSERT(getCallsBefore == getMemAll, "Must not lead to new getMem call");
+        size_t putCallsBefore = putMemAll;
         bool ok = pool_reset(pool);
         ASSERT(ok, NULL);
-        ASSERT(currPuts == putMemCalls, "Pool is not releasing memory during reset.");
+        ASSERT(putCallsBefore == putMemAll, "Pool is not releasing memory during reset.");
         ok = pool_destroy(pool);
         ASSERT(ok, NULL);
-        ASSERT(putMemCalls, NULL);
-        totalPutMemCalls += putMemCalls;
-        ASSERT(getMemCalls == totalPutMemCalls, "Memory leak detected.");
+        ASSERT(putMemAll, NULL);
+        totalPutMemCalls += putMemAll;
+        ASSERT(getMemAll == totalPutMemCalls, "Memory leak detected.");
     }
 
 }
@@ -618,65 +623,94 @@ void TestEntries()
     ASSERT(!fail, NULL);
 }
 
+rml::MemoryPool *CreateUsablePool(size_t size)
+{
+    using namespace rml;
+    MemoryPool *pool;
+    MemPoolPolicy okPolicy(getMemMalloc, putMemFree);
+
+    putMemAll = getMemAll = getMemSuccessful = 0;
+    MemPoolError res = pool_create_v1(0, &okPolicy, &pool);
+    if (res != POOL_OK) {
+        ASSERT(!getMemAll && !putMemAll, "No callbacks after fail.");
+        return NULL;
+    }
+    void *o = pool_malloc(pool, size);
+    if (!getMemSuccessful) {
+        // no memory from callback, valid reason to leave
+        ASSERT(!o, "The pool must be unusable.");
+        return NULL;
+    }
+    ASSERT(o, "Created pool must be useful.");
+    ASSERT(getMemSuccessful == 1 || getMemAll > getMemSuccessful,
+           "Multiple requests are allowed only when unsuccessful request occured.");
+    ASSERT(!putMemAll, NULL);
+    pool_free(pool, o);
+
+    return pool;
+}
+
+void CheckPoolLeaks(size_t poolsAlwaysAvailable)
+{
+    using namespace rml;
+    const size_t MAX_POOLS = 16*1000;
+    const int ITERS = 20, CREATED_STABLE = 3;
+    MemoryPool *pools[MAX_POOLS];
+    size_t created, maxCreated = MAX_POOLS;
+    int maxNotChangedCnt = 0;
+
+    // expecting that for ITERS runs, max number of pools that can be created
+    // can be stabilized and still stable CREATED_STABLE times
+    for (int j=0; j<ITERS && maxNotChangedCnt<CREATED_STABLE; j++) {
+        for (created=0; created<maxCreated; created++) {
+            MemoryPool *p = CreateUsablePool(1024);
+            if (!p)
+                break;
+            pools[created] = p;
+        }
+        ASSERT(created>=poolsAlwaysAvailable,
+               "Expect that the reasonable number of pools can be always created.");
+        for (size_t i=0; i<created; i++) {
+            bool ok = pool_destroy(pools[i]);
+            ASSERT(ok, NULL);
+        }
+        if (created < maxCreated) {
+            maxCreated = created;
+            maxNotChangedCnt = 0;
+        } else
+            maxNotChangedCnt++;
+    }
+    ASSERT(maxNotChangedCnt == CREATED_STABLE, "The number of created pools must be stabilized.");
+}
+
 void TestPoolCreation()
 {
     using namespace rml;
 
-    putMemCalls = getMemCalls = 0;
+    putMemAll = getMemAll = getMemSuccessful = 0;
 
-    MemPoolPolicy nullPolicy(NULL, putMemPolicy),
-        emptyFreePolicy(getMemPolicy, NULL),
-        okPolicy(getMemPolicy, putMemPolicy);
+    MemPoolPolicy nullPolicy(NULL, putMemFree),
+        emptyFreePolicy(getMemMalloc, NULL),
+        okPolicy(getMemMalloc, putMemFree);
     MemoryPool *pool;
 
     MemPoolError res = pool_create_v1(0, &nullPolicy, &pool);
     ASSERT(res==INVALID_POLICY, "pool with empty pAlloc can't be created");
     res = pool_create_v1(0, &emptyFreePolicy, &pool);
     ASSERT(res==INVALID_POLICY, "pool with empty pFree can't be created");
-    ASSERT(!putMemCalls && !getMemCalls, "no callback calls are expected");
+    ASSERT(!putMemAll && !getMemAll, "no callback calls are expected");
     res = pool_create_v1(0, &okPolicy, &pool);
     ASSERT(res==POOL_OK, NULL);
     bool ok = pool_destroy(pool);
     ASSERT(ok, NULL);
-    ASSERT(putMemCalls == getMemCalls, "no leaks after pool_destroy");
+    ASSERT(putMemAll == getMemSuccessful, "no leaks after pool_destroy");
 
-    // test creation of many pools
-    // each pool consumes ~2MB of address space, so limit number
-    // of pools on 32-bit systems
-    const size_t MAX_POOLS = 4==sizeof(void*)? 500 : 16*1000;
-    MemoryPool *pools[MAX_POOLS];
-    size_t created;
-
-    for (created=0; created<MAX_POOLS; created++) {
-        putMemCalls = getMemCalls = 0;
-        res = pool_create_v1(created, &okPolicy, pools+created);
-        if (res!=POOL_OK) {
-            ASSERT(!getMemCalls && !putMemCalls, "No leak after fail.");
-            break;
-        }
-        void *o = pool_malloc(pools[created], 1024);
-        ASSERT(o, "Created pool must be useful.");
-        ASSERT(1==getMemCalls && !putMemCalls, "Single callback request expected.");
-        pool_free(pools[created], o);
-    }
-    // 32 is guess for number of pools that is acceptable everywere
-    ASSERT(created>=32, "Expect that reasonable number of pools can be created at any system.");
-    for (size_t i=0; i<created; i++) {
-        ok = pool_destroy(pools[i]);
-        ASSERT(ok, NULL);
-    }
-    // check that failure during pool creation doesn't lead to leaks
-    for (size_t i=0; i<created; i++) {
-        res = pool_create_v1(i, &okPolicy, pools+i);
-        ASSERT(res==POOL_OK, "2nd iteration of pool creation must be possible.");
-        void *o = pool_malloc(pools[i], 1024);
-        ASSERT(o, "Created pool must be useful.");
-        pool_free(pools[i], o);
-    }
-    for (size_t i=0; i<created; i++) {
-        ok = pool_destroy(pools[i]);
-        ASSERT(ok, NULL);
-    }
+    // 32 is a guess for a number of pools that is acceptable everywere
+    CheckPoolLeaks(32);
+    // try to consume all but 16 TLS keys
+    LimitTLSKeysTo limitTLSTo(16);
+    // ...and check that we can create at least 16 pools
+    CheckPoolLeaks(16);
 }
 
 struct AllocatedObject {
@@ -727,25 +761,16 @@ void TestPoolDetection()
     }
 }
 
-
 void TestLazyBootstrap()
 {
-    rml::MemPoolPolicy pol(getMemPolicy, putMemPolicy);
-    rml::MemoryPool *pool;
+    rml::MemPoolPolicy pol(getMemMalloc, putMemFree);
     const size_t sizes[] = {8, 9*1024, 0};
 
     for (int i=0; sizes[i]; i++) {
-        putMemCalls = getMemCalls = 0;
-        pool_create_v1(0, &pol, &pool);
-        ASSERT(!putMemCalls && !getMemCalls,
-               "memory from the pool must not be requested during pool creation.");
-        void *o = pool_malloc(pool, sizes[i]);
-        ASSERT(o, "Created pool must be useful.");
-        ASSERT(1==getMemCalls && !putMemCalls, "Single callback request expected.");
-        pool_free(pool, o);
+        rml::MemoryPool *pool = CreateUsablePool(sizes[i]);
         bool ok = pool_destroy(pool);
         ASSERT(ok, NULL);
-        ASSERT(getMemCalls==putMemCalls, "No leak.");
+        ASSERT(getMemSuccessful == putMemAll, "No leak.");
     }
 }
 

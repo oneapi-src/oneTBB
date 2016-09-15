@@ -254,7 +254,7 @@ void TBBWork() {
             TBB_RunTime.server->adjust_job_count_estimate(-(TBB_MaxThread-1));
             ++CompletionCount;
         } else if( k>=0 ) {
-            for( int k=0; k<4; ++k ) {
+            for( int j=0; j<4; ++j ) {
                 OMP_Team team( *OMP_RunTime.server );
                 int n = OMP_RunTime.server->try_increase_load( OMP_ParallelRegionSize-1, /*strict=*/false );
                 team.barrier = 0;
@@ -305,7 +305,7 @@ int TestMain () {
 #if CHDIR_SUPPORT_BROKEN
     REPORT("Known issue: dynamic_link does not support current directory changing before its initialization.\n");
 #endif
-    for( int TBB_MaxThread=MinThread; TBB_MaxThread<=MaxThread; ++TBB_MaxThread ) {
+    for( TBB_MaxThread=MinThread; TBB_MaxThread<=MaxThread; ++TBB_MaxThread ) {
         REMARK("Testing with TBB_MaxThread=%d\n", TBB_MaxThread);
         TBB_RunTime.create_connection();
         OMP_RunTime.create_connection();

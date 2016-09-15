@@ -56,12 +56,6 @@ ifneq (,$(stdlib))
     LIB_LINK_FLAGS += -stdlib=$(stdlib)
 endif
 
-CPP11_FLAGS = -std=c++11 -D_TBB_CPP0X
-    
-ifneq (00,$(lambdas)$(cpp0x))
-    CXX_ONLY_FLAGS += $(CPP11_FLAGS)
-endif
-
 ifeq (intel64,$(arch))
     CPLUS_FLAGS += -m64 $(RTM_KEY)
     LINK_FLAGS += -m64

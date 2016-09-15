@@ -100,9 +100,6 @@ namespace Harness{
 tbb::atomic<size_t> FooCount;
 size_t MaxFooCount = 0;
 
-//! Problem size
-const size_t N = 500000;
-
 //! Exception for concurrent_container
 class Foo_exception : public std::bad_alloc {
 public:

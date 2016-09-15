@@ -51,29 +51,44 @@ const size_t shared_size = 0;
 
 #endif /* OS selection */
 
+enum MemoryStatType {
+    currentUsage,
+    peakUsage
+};
+
 //! Return estimate of number of bytes of memory that this program is currently using.
 /* Returns 0 if not implemented on platform. */
-size_t GetMemoryUsage() {
+size_t GetMemoryUsage(MemoryStatType stat = currentUsage) {
+    ASSERT(stat==currentUsage || stat==peakUsage, NULL);
 #if _XBOX || __TBB_WIN8UI_SUPPORT
     return 0;
 #elif _WIN32
     PROCESS_MEMORY_COUNTERS mem;
     bool status = GetProcessMemoryInfo(GetCurrentProcess(), &mem, sizeof(mem))!=0;
     ASSERT(status, NULL);
-    return mem.PagefileUsage;
+    return stat==currentUsage? mem.PagefileUsage : mem.PeakPagefileUsage;
 #elif __linux__
-    FILE* statsfile = fopen("/proc/self/statm","r");
-    size_t pagesize = getpagesize();
-    ASSERT(statsfile, NULL);
-    long total_mem;
-    int n = fscanf(statsfile,"%lu",&total_mem);
-    if( n!=1 ) {
-        REPORT("Warning: memory usage statistics wasn't obtained\n");
-        return 0;
+    long unsigned size = 0;
+    FILE *fst = fopen("/proc/self/status", "r");
+    ASSERT(fst, NULL);
+    const int BUF_SZ = 200;
+    char buf_stat[BUF_SZ];
+    const char *pattern = stat==peakUsage ? "VmPeak: %lu" : "VmSize: %lu";
+    while (NULL != fgets(buf_stat, BUF_SZ, fst)) {
+        if (1==sscanf(buf_stat, pattern, &size)) {
+            ASSERT(size, "Invalid value of memory consumption.");
+            break;
+        }
     }
-    fclose(statsfile);
-    return total_mem*pagesize;
+    // VmPeak is available in kernels staring 2.6.15
+    if (stat!=peakUsage || LinuxKernelVersion() >= 2006015)
+        ASSERT(size, "Invalid /proc/self/status format, pattern not found.");
+    fclose(fst);
+    return size*1024;
 #elif __APPLE__ && !__ARM_ARCH
+    // TODO: find how detect peak virtual memory size under OS X
+    if (stat == peakUsage)
+        return 0;
     kern_return_t status;
     task_basic_info info;
     mach_msg_type_number_t msg_type = TASK_BASIC_INFO_COUNT;

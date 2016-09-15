@@ -104,7 +104,7 @@
 
 //some compilers do not generate implicitly move constructor and assignment operator, as this feature (r-value reference 3.0) was added later
 #if __INTEL_COMPILER
-  #define __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN  (__TBB_CPP11_RVALUE_REF_PRESENT && (__INTEL_COMPILER < 1400 || __INTEL_COMPILER == 1600 && __INTEL_COMPILER_UPDATE <= 1))
+  #define __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN  (__TBB_CPP11_RVALUE_REF_PRESENT && (__INTEL_COMPILER < 1400 || __INTEL_COMPILER == 1600 && __INTEL_COMPILER_UPDATE <= 2))
 #elif __clang__
   #define __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN !__has_feature(cxx_implicit_moves)
 #else

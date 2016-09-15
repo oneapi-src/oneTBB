@@ -65,6 +65,7 @@ public:
 
     //! remove node 'n'
     inline void remove( node_t& n ) {
+        __TBB_ASSERT( count > 0, "attempt to remove an item from an empty list" );
         __TBB_store_relaxed(count, __TBB_load_relaxed(count) - 1);
         n.prev->next = n.next;
         n.next->prev = n.prev;
@@ -89,7 +90,6 @@ private:
 };
 
 typedef circular_doubly_linked_list_with_sentinel waitset_t;
-typedef circular_doubly_linked_list_with_sentinel dllist_t;
 typedef circular_doubly_linked_list_with_sentinel::node_t waitset_node_t;
 
 //! concurrent_monitor
@@ -208,7 +208,7 @@ template<typename P>
 void concurrent_monitor::notify_relaxed( const P& predicate ) {
         if( waitset_ec.empty() )
             return;
-        dllist_t temp;
+        waitset_t temp;
         waitset_node_t* nxt;
         const waitset_node_t* end = waitset_ec.end();
         {

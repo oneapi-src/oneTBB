@@ -48,10 +48,6 @@ endif
 LINK_FLAGS = -Wl,-rpath-link=. -rdynamic 
 C_FLAGS = $(CPLUS_FLAGS)
 
-# Supported g++ versions support C++11
-# On Android/gcc 4.4.3, -std=c++0x causes ::int64_t and ::uint64_t to be undefined.
-CPP11_FLAGS = -std=c++11 $(DEFINE_KEY)_TBB_CPP0X
-
 ifeq ($(cfg), release)
     CPLUS_FLAGS = -O2
 endif
@@ -74,12 +70,6 @@ endif
 CPLUS_FLAGS    += --sysroot=$(SYSROOT)
 LIB_LINK_FLAGS += --sysroot=$(SYSROOT)
 LIBS           = -L$(CPLUS_LIB_PATH) -lgnustl_shared
-
-# This causes CPP11_FLAGS to be issued twice for test_lambda.cpp
-# TODO: Fix this in general for all platforms once the correct strategy is determined.
-ifneq (00,$(lambdas)$(cpp0x))
-    CXX_ONLY_FLAGS += $(CPP11_FLAGS)
-endif
 
 ifeq (ia32,$(arch))
     # TODO: Determine best setting of -march and add to CPLUS_FLAGS

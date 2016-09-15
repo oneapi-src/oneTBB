@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::flow::interface8::key_from_policy&lt; key_matching&lt; Key &gt; &gt; Struct Template Reference</title>
+<title>tbb::parallel_do_feeder&lt; Item &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,29 +33,59 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00276.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><a class="el" href="a00102.html">key_from_policy< key_matching< Key > ></a></li>  </ul>
+<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><a class="el" href="a00102.html">parallel_do_feeder</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#pub-types">Public Types</a> &#124;
-<a href="a00428.html">List of all members</a>  </div>
+<a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#friends">Friends</a> &#124;
+<a href="a00281.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::flow::interface8::key_from_policy&lt; key_matching&lt; Key &gt; &gt; Struct Template Reference</div>  </div>
+<div class="title">tbb::parallel_do_feeder&lt; Item &gt; Class Template Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div>  </div>
 </div><!--header-->
 <div class="contents">
+
+<p>Class the user supplied algorithm body uses to add new tasks.  
+ <a href="a00102.html#details">More...</a></p>
+
+<p><code>#include &lt;parallel_do.h&gt;</code></p>
+<div class="dynheader">
+Inheritance diagram for tbb::parallel_do_feeder&lt; Item &gt;:</div>
+<div class="dyncontent">
+ <div class="center">
+  <img src="a00102.png" usemap="#tbb::parallel_do_feeder&lt; Item &gt;_map" alt=""/>
+  <map id="tbb::parallel_do_feeder&lt; Item &gt;_map" name="tbb::parallel_do_feeder&lt; Item &gt;_map">
+</map>
+ </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:a78b1493e9c95af404d1cdb149d74956e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a78b1493e9c95af404d1cdb149d74956e"></a>
-typedef Key&#160;</td><td class="memItemRight" valign="bottom"><b>type</b></td></tr>
-<tr class="separator:a78b1493e9c95af404d1cdb149d74956e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3db53e8c718c4cba3b9c9523c7889831"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3db53e8c718c4cba3b9c9523c7889831"></a>
-typedef std::true_type&#160;</td><td class="memItemRight" valign="bottom"><b>is_key_matching</b></td></tr>
-<tr class="separator:a3db53e8c718c4cba3b9c9523c7889831"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
+Public Member Functions</h2></td></tr>
+<tr class="memitem:ac095c6b1a32e9c0be010aa32875d7a63"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac095c6b1a32e9c0be010aa32875d7a63"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00102.html#ac095c6b1a32e9c0be010aa32875d7a63">add</a> (const Item &amp;item)</td></tr>
+<tr class="memdesc:ac095c6b1a32e9c0be010aa32875d7a63"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a work item to a running parallel_do. <br/></td></tr>
+<tr class="separator:ac095c6b1a32e9c0be010aa32875d7a63"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:ae5c8cc31bc27b79377687e3de76f480e"><td class="memTemplParams" colspan="2"><a class="anchor" id="ae5c8cc31bc27b79377687e3de76f480e"></a>
+template&lt;typename Body_ , typename Item_ &gt; </td></tr>
+<tr class="memitem:ae5c8cc31bc27b79377687e3de76f480e"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><b>internal::parallel_do_feeder_impl</b></td></tr>
+<tr class="separator:ae5c8cc31bc27b79377687e3de76f480e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<hr/>The documentation for this struct was generated from the following file:<ul>
-<li>flow_graph_opencl_node.h</li>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><h3>template&lt;typename Item&gt;<br/>
+class tbb::parallel_do_feeder&lt; Item &gt;</h3>
+
+<p>Class the user supplied algorithm body uses to add new tasks. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">Item</td><td>Work item type </td></tr>
+  </table>
+  </dd>
+</dl>
+</div><hr/>The documentation for this class was generated from the following file:<ul>
+<li>parallel_do.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

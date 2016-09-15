@@ -124,15 +124,16 @@ namespace internal {
             item(i).second = no_item;
         }
 
-        // returns a copy of the front
-        void copy_front(item_type &v) {
+        // returns the front element
+        const item_type& front() {
             __TBB_ASSERT(my_item_valid(my_head), "attempt to fetch head non-item");
-            v = get_my_item(my_head);
+            return get_my_item(my_head);
         }
-        // returns a copy of the back
-        void copy_back(item_type &v) {
-            __TBB_ASSERT(my_item_valid(my_tail-1), "attempt to fetch head non-item");
-            v = get_my_item(my_tail-1);
+
+        // returns  the back element
+        const item_type& back() {
+            __TBB_ASSERT(my_item_valid(my_tail-1), "attempt to fetch tail non-item");
+            return get_my_item(my_tail-1);
         }
 
         // following methods are for reservation of the front of a bufffer.
@@ -191,7 +192,7 @@ namespace internal {
             if (!my_item_valid(my_tail-1)) {
                 return false;
             }
-            copy_back(v);
+            v = this->back();
             destroy_back();
             return true;
         }
@@ -200,7 +201,7 @@ namespace internal {
             if(!my_item_valid(my_head)) {
                 return false;
             }
-            copy_front(v);
+            v = this->front();
             destroy_front();
             return true;
         }
@@ -251,10 +252,10 @@ namespace internal {
     protected:
 
         bool reserve_front(T &v) {
-            if(my_reserved || !my_item_valid(my_head)) return false;
+            if(my_reserved || !my_item_valid(this->my_head)) return false;
             my_reserved = true;
             // reserving the head
-            this->copy_front(v);
+            v = this->front();
             this->reserve_item(this->my_head);
             return true;
         }

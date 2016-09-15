@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::recursive_mutex::scoped_lock Class Reference</title>
+<title>tbb::flow::interface8::internal::untyped_sender Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,70 +33,114 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00276.html">tbb</a></li><li class="navelem"><a class="el" href="a00159.html">recursive_mutex</a></li><li class="navelem"><a class="el" href="a00170.html">scoped_lock</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><b>internal</b></li><li class="navelem"><a class="el" href="a00170.html">untyped_sender</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pro-methods">Protected Member Functions</a> &#124;
 <a href="#friends">Friends</a> &#124;
-<a href="a00332.html">List of all members</a>  </div>
+<a href="a00358.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::recursive_mutex::scoped_lock Class Reference</div>  </div>
+<div class="title">tbb::flow::interface8::internal::untyped_sender Class Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div>  </div>
 </div><!--header-->
 <div class="contents">
-
-<p>The scoped locking pattern.  
- <a href="a00170.html#details">More...</a></p>
-
-<p><code>#include &lt;recursive_mutex.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::recursive_mutex::scoped_lock:</div>
+Inheritance diagram for tbb::flow::interface8::internal::untyped_sender:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00170.png" usemap="#tbb::recursive_mutex::scoped_lock_map" alt=""/>
-  <map id="tbb::recursive_mutex::scoped_lock_map" name="tbb::recursive_mutex::scoped_lock_map">
+  <img src="a00170.png" usemap="#tbb::flow::interface8::internal::untyped_sender_map" alt=""/>
+  <map id="tbb::flow::interface8::internal::untyped_sender_map" name="tbb::flow::interface8::internal::untyped_sender_map">
+<area href="a00143.html" alt="tbb::flow::interface8::sender&lt; tbb::flow::interface8::dependency_msg&lt; T, Factory &gt; &gt;" shape="rect" coords="0,56,488,80"/>
+<area href="a00143.html" title="Pure virtual template class that defines a sender of messages of type T. " alt="tbb::flow::interface8::sender&lt; T &gt;" shape="rect" coords="498,56,986,80"/>
 </map>
  </div></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a5e1e9fa9285b26d5515b442a68e1d524"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5e1e9fa9285b26d5515b442a68e1d524"></a>
+typedef <a class="el" href="a00169.html">untyped_receiver</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00170.html#a5e1e9fa9285b26d5515b442a68e1d524">successor_type</a></td></tr>
+<tr class="memdesc:a5e1e9fa9285b26d5515b442a68e1d524"><td class="mdescLeft">&#160;</td><td class="mdescRight">The successor type for this node. <br/></td></tr>
+<tr class="separator:a5e1e9fa9285b26d5515b442a68e1d524"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac6a27a4c9032c36ae0ad61fe59c456d2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac6a27a4c9032c36ae0ad61fe59c456d2"></a>
+typedef <br class="typebreak"/>
+<a class="el" href="a00055.html">internal::edge_container</a><br class="typebreak"/>
+&lt; <a class="el" href="a00170.html#a5e1e9fa9285b26d5515b442a68e1d524">successor_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00170.html#ac6a27a4c9032c36ae0ad61fe59c456d2">built_successors_type</a></td></tr>
+<tr class="memdesc:ac6a27a4c9032c36ae0ad61fe59c456d2"><td class="mdescLeft">&#160;</td><td class="mdescRight">interface to record edges for traversal &amp; deletion <br/></td></tr>
+<tr class="separator:ac6a27a4c9032c36ae0ad61fe59c456d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad995604f726c8b7778d2a2a264dc833e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad995604f726c8b7778d2a2a264dc833e"></a>
+typedef <br class="typebreak"/>
+built_successors_type::edge_list_type&#160;</td><td class="memItemRight" valign="bottom"><b>successor_list_type</b></td></tr>
+<tr class="separator:ad995604f726c8b7778d2a2a264dc833e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a0a9962a3932cfbd0d12cb197494f951b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0a9962a3932cfbd0d12cb197494f951b"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00170.html#a0a9962a3932cfbd0d12cb197494f951b">scoped_lock</a> ()</td></tr>
-<tr class="memdesc:a0a9962a3932cfbd0d12cb197494f951b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct lock that has not acquired a <a class="el" href="a00159.html">recursive_mutex</a>. <br/></td></tr>
-<tr class="separator:a0a9962a3932cfbd0d12cb197494f951b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab42cb541abb9647cac23b1db9a4db93d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab42cb541abb9647cac23b1db9a4db93d"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00170.html#ab42cb541abb9647cac23b1db9a4db93d">scoped_lock</a> (<a class="el" href="a00159.html">recursive_mutex</a> &amp;<a class="el" href="a00111.html">mutex</a>)</td></tr>
-<tr class="memdesc:ab42cb541abb9647cac23b1db9a4db93d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Acquire lock on given mutex. <br/></td></tr>
-<tr class="separator:ab42cb541abb9647cac23b1db9a4db93d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a90a966e19120aac99b36a3d6d04af1a2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a90a966e19120aac99b36a3d6d04af1a2"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00170.html#a90a966e19120aac99b36a3d6d04af1a2">~scoped_lock</a> ()</td></tr>
-<tr class="memdesc:a90a966e19120aac99b36a3d6d04af1a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Release lock (if lock is held). <br/></td></tr>
-<tr class="separator:a90a966e19120aac99b36a3d6d04af1a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac5450ce6a5813f395afaa434384c6539"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac5450ce6a5813f395afaa434384c6539"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00170.html#ac5450ce6a5813f395afaa434384c6539">acquire</a> (<a class="el" href="a00159.html">recursive_mutex</a> &amp;<a class="el" href="a00111.html">mutex</a>)</td></tr>
-<tr class="memdesc:ac5450ce6a5813f395afaa434384c6539"><td class="mdescLeft">&#160;</td><td class="mdescRight">Acquire lock on given mutex. <br/></td></tr>
-<tr class="separator:ac5450ce6a5813f395afaa434384c6539"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a160bba506f4033980ddb69ab7a02c4fb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a160bba506f4033980ddb69ab7a02c4fb"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00170.html#a160bba506f4033980ddb69ab7a02c4fb">try_acquire</a> (<a class="el" href="a00159.html">recursive_mutex</a> &amp;<a class="el" href="a00111.html">mutex</a>)</td></tr>
-<tr class="memdesc:a160bba506f4033980ddb69ab7a02c4fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Try acquire lock on given <a class="el" href="a00159.html">recursive_mutex</a>. <br/></td></tr>
-<tr class="separator:a160bba506f4033980ddb69ab7a02c4fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2fe3246ffc26bdb5a58f33ca513b6c0f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2fe3246ffc26bdb5a58f33ca513b6c0f"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00170.html#a2fe3246ffc26bdb5a58f33ca513b6c0f">release</a> ()</td></tr>
-<tr class="memdesc:a2fe3246ffc26bdb5a58f33ca513b6c0f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Release lock. <br/></td></tr>
-<tr class="separator:a2fe3246ffc26bdb5a58f33ca513b6c0f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a228fd0c4c47b12aa774ba40fd47cfa08"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a228fd0c4c47b12aa774ba40fd47cfa08"></a>
+virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00170.html#a228fd0c4c47b12aa774ba40fd47cfa08">register_successor</a> (<a class="el" href="a00170.html#a5e1e9fa9285b26d5515b442a68e1d524">successor_type</a> &amp;r)=0</td></tr>
+<tr class="memdesc:a228fd0c4c47b12aa774ba40fd47cfa08"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a new successor to this node. <br/></td></tr>
+<tr class="separator:a228fd0c4c47b12aa774ba40fd47cfa08"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a70203aa12c9e27ad91c44f39747f66c5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a70203aa12c9e27ad91c44f39747f66c5"></a>
+virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00170.html#a70203aa12c9e27ad91c44f39747f66c5">remove_successor</a> (<a class="el" href="a00170.html#a5e1e9fa9285b26d5515b442a68e1d524">successor_type</a> &amp;r)=0</td></tr>
+<tr class="memdesc:a70203aa12c9e27ad91c44f39747f66c5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes a successor from this node. <br/></td></tr>
+<tr class="separator:a70203aa12c9e27ad91c44f39747f66c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aae9f9d7f64c05cf52927b117c60e650a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aae9f9d7f64c05cf52927b117c60e650a"></a>
+virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00170.html#aae9f9d7f64c05cf52927b117c60e650a">try_release</a> ()</td></tr>
+<tr class="memdesc:aae9f9d7f64c05cf52927b117c60e650a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Releases the reserved item. <br/></td></tr>
+<tr class="separator:aae9f9d7f64c05cf52927b117c60e650a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7cee570037e2bec3232e6b6c30378683"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7cee570037e2bec3232e6b6c30378683"></a>
+virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00170.html#a7cee570037e2bec3232e6b6c30378683">try_consume</a> ()</td></tr>
+<tr class="memdesc:a7cee570037e2bec3232e6b6c30378683"><td class="mdescLeft">&#160;</td><td class="mdescRight">Consumes the reserved item. <br/></td></tr>
+<tr class="separator:a7cee570037e2bec3232e6b6c30378683"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acb798d008568b8c59c68ef8c2b7ab7ee"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acb798d008568b8c59c68ef8c2b7ab7ee"></a>
+virtual <a class="el" href="a00170.html#ac6a27a4c9032c36ae0ad61fe59c456d2">built_successors_type</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>built_successors</b> ()=0</td></tr>
+<tr class="separator:acb798d008568b8c59c68ef8c2b7ab7ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a19ca66a4c9839c82478a0364ac3451d1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a19ca66a4c9839c82478a0364ac3451d1"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>internal_add_built_successor</b> (<a class="el" href="a00170.html#a5e1e9fa9285b26d5515b442a68e1d524">successor_type</a> &amp;)=0</td></tr>
+<tr class="separator:a19ca66a4c9839c82478a0364ac3451d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab9d75fe02c93766822a9890f25ba9423"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab9d75fe02c93766822a9890f25ba9423"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>internal_delete_built_successor</b> (<a class="el" href="a00170.html#a5e1e9fa9285b26d5515b442a68e1d524">successor_type</a> &amp;)=0</td></tr>
+<tr class="separator:ab9d75fe02c93766822a9890f25ba9423"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab97b38acb314afa55d724a45f3f333d7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab97b38acb314afa55d724a45f3f333d7"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>copy_successors</b> (successor_list_type &amp;)=0</td></tr>
+<tr class="separator:ab97b38acb314afa55d724a45f3f333d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae4a84b437a54cf31c6f83a7ff43ac5c3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae4a84b437a54cf31c6f83a7ff43ac5c3"></a>
+virtual size_t&#160;</td><td class="memItemRight" valign="bottom"><b>successor_count</b> ()=0</td></tr>
+<tr class="separator:ae4a84b437a54cf31c6f83a7ff43ac5c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
+Protected Member Functions</h2></td></tr>
+<tr class="memitem:ac4de35215255a7070d07c9d2289025f2"><td class="memTemplParams" colspan="2"><a class="anchor" id="ac4de35215255a7070d07c9d2289025f2"></a>
+template&lt;typename X &gt; </td></tr>
+<tr class="memitem:ac4de35215255a7070d07c9d2289025f2"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00170.html#ac4de35215255a7070d07c9d2289025f2">try_get</a> (X &amp;t)</td></tr>
+<tr class="memdesc:ac4de35215255a7070d07c9d2289025f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request an item from the sender. <br/></td></tr>
+<tr class="separator:ac4de35215255a7070d07c9d2289025f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acbe8fb9d63e74d9f3ae28b5c0ccb6381"><td class="memTemplParams" colspan="2"><a class="anchor" id="acbe8fb9d63e74d9f3ae28b5c0ccb6381"></a>
+template&lt;typename X &gt; </td></tr>
+<tr class="memitem:acbe8fb9d63e74d9f3ae28b5c0ccb6381"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00170.html#acbe8fb9d63e74d9f3ae28b5c0ccb6381">try_reserve</a> (X &amp;t)</td></tr>
+<tr class="memdesc:acbe8fb9d63e74d9f3ae28b5c0ccb6381"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reserves an item in the sender. <br/></td></tr>
+<tr class="separator:acbe8fb9d63e74d9f3ae28b5c0ccb6381"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6f452aafc6ae21e2f4d4bff47bcb0357"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6f452aafc6ae21e2f4d4bff47bcb0357"></a>
+virtual bool&#160;</td><td class="memItemRight" valign="bottom"><b>try_get_wrapper</b> (void *p, bool is_async)=0</td></tr>
+<tr class="separator:a6f452aafc6ae21e2f4d4bff47bcb0357"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad2b35c6931493e0ee1907c93cf100336"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad2b35c6931493e0ee1907c93cf100336"></a>
+virtual bool&#160;</td><td class="memItemRight" valign="bottom"><b>try_reserve_wrapper</b> (void *p, bool is_async)=0</td></tr>
+<tr class="separator:ad2b35c6931493e0ee1907c93cf100336"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
 Friends</h2></td></tr>
-<tr class="memitem:a1bdb637fe5c9412323bf92846b40682e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1bdb637fe5c9412323bf92846b40682e"></a>
-class&#160;</td><td class="memItemRight" valign="bottom"><b>recursive_mutex</b></td></tr>
-<tr class="separator:a1bdb637fe5c9412323bf92846b40682e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3cdf409b9c27b036b9cb0fd9ae00a4a8"><td class="memTemplParams" colspan="2"><a class="anchor" id="a3cdf409b9c27b036b9cb0fd9ae00a4a8"></a>
+template&lt;typename , typename &gt; </td></tr>
+<tr class="memitem:a3cdf409b9c27b036b9cb0fd9ae00a4a8"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><b>internal::predecessor_cache</b></td></tr>
+<tr class="separator:a3cdf409b9c27b036b9cb0fd9ae00a4a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3175bd06b97cbe15f7135fa6e0960d19"><td class="memTemplParams" colspan="2"><a class="anchor" id="a3175bd06b97cbe15f7135fa6e0960d19"></a>
+template&lt;typename , typename &gt; </td></tr>
+<tr class="memitem:a3175bd06b97cbe15f7135fa6e0960d19"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><b>internal::reservable_predecessor_cache</b></td></tr>
+<tr class="separator:a3175bd06b97cbe15f7135fa6e0960d19"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>The scoped locking pattern. </p>
-<p>It helps to avoid the common problem of forgetting to release lock. It also nicely provides the "node" for queuing locks. </p>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>recursive_mutex.h</li>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li><a class="el" href="a00194.html">flow_graph.h</a></li>
 </ul>
 </div><!-- contents -->
 <hr>

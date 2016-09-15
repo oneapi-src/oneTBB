@@ -34,9 +34,7 @@
 #include "observer_proxy.h"
 #include "market.h"
 #include "governor.h"
-#if __TBB_TASK_ARENA
 #include "concurrent_monitor.h"
-#endif
 
 namespace tbb {
 
@@ -90,10 +88,10 @@ struct arena_base : padded<intrusive_list_node> {
         my_pool_state to be unsigned. */
     tbb::atomic<uintptr_t> my_pool_state;
 
-#if __TBB_SCHEDULER_OBSERVER
+#if __TBB_ARENA_OBSERVER
     //! List of local observers attached to this arena.
     observer_list my_observers;
-#endif /* __TBB_SCHEDULER_OBSERVER */
+#endif
 
 #if __TBB_TASK_PRIORITY
     //! Lowest normalized priority of available spawned or enqueued tasks.
@@ -154,10 +152,8 @@ struct arena_base : padded<intrusive_list_node> {
     mandatory_mode my_mandatory_mode;
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
 
-#if __TBB_TASK_ARENA
     //! exit notifications after arena slot is released
     concurrent_monitor my_exit_monitors;
-#endif
 
 #if TBB_USE_ASSERT
     //! Used to trap accesses to the object after its destruction.

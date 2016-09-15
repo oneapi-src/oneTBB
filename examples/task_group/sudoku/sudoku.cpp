@@ -35,14 +35,6 @@
 
 #pragma warning(disable: 4996)
 
-#if __INTEL_COMPILER
-#define __TBB_LAMBDAS_PRESENT ( _TBB_CPP0X && __INTEL_COMPILER > 1100 )
-#elif __GNUC__
-#define __TBB_LAMBDAS_PRESENT ( _TBB_CPP0X && __TBB_GCC_VERSION >= 40500 )
-#elif _MSC_VER
-#define __TBB_LAMBDAS_PRESENT ( _MSC_VER>=1600 )
-#endif
-
 const unsigned BOARD_SIZE=81;
 const unsigned BOARD_DIM=9;
 
@@ -201,7 +193,7 @@ bool examine_potentials(board_element *b, bool *progress) {
     return valid_board(b);
 }
 
-#if !__TBB_LAMBDAS_PRESENT
+#if !__TBB_CPP11_LAMBDAS_PRESENT
 void partial_solve(board_element *b, unsigned first_potential_set);
 
 class PartialSolveBoard {
@@ -239,7 +231,7 @@ void partial_solve(board_element *b, unsigned first_potential_set) {
                 new_board = (board_element *)malloc(BOARD_SIZE*sizeof(board_element));
                 copy_board(b, new_board);
                 new_board[first_potential_set].solved_element = potential;
-#if __TBB_LAMBDAS_PRESENT
+#if __TBB_CPP11_LAMBDAS_PRESENT
                 g->run( [=]{ partial_solve(new_board, first_potential_set); } );
 #else
                 g->run(PartialSolveBoard(new_board, first_potential_set));

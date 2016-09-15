@@ -131,6 +131,10 @@ class MemoryPool;
 struct CacheBinOperation;
 extern const uint32_t minLargeObjectSize;
 
+enum DecreaseOrIncrease {
+    decrease, increase
+};
+
 class TLSKey {
     tls_key_t TLS_pointer_key;
 public:
@@ -257,9 +261,6 @@ class LargeObjectCacheImpl {
 private:
     // The number of bins to cache large objects.
     static const uint32_t numBins = (Props::MaxSize-Props::MinSize)/Props::CacheStep;
-
-    typedef BitMaskMax<numBins> BinBitMask;
-
     // Current sizes of used and cached objects. It's calculated while we are
     // traversing bins, and used for isLOCTooLarge() check at the same time.
     class BinsSummary {
@@ -275,6 +276,8 @@ private:
         }
         void reset() { usedSz = cachedSz = 0; }
     };
+public:
+    typedef BitMaskMax<numBins> BinBitMask;
 
     // 2-linked list of same-size cached blocks ordered by age (oldest on top)
     // TODO: are we really want the list to be 2-linked? This allows us
@@ -304,81 +307,29 @@ private:
   /* time of last get called for the bin */
         uintptr_t         lastGet;
 
-        /* The functor called by the aggregator for the operation list */
-        class CacheBinFunctor {
-            CacheBin *const bin;
-            ExtMemoryPool *const extMemPool;
-            BinBitMask *const bitMask;
-            const int idx;
-
-            LargeMemoryBlock *toRelease;
-            bool needCleanup;
-            uintptr_t currTime;
-
-            /* Do preprocessing under the operation list. */
-            /* All the OP_PUT_LIST operations are merged in the one operation.
-               All OP_GET operations are merged with the OP_PUT_LIST operations but
-               it demands the update of the moving average value in the bin.
-               Only the last OP_CLEAN_TO_THRESHOLD operation has sense.
-               The OP_CLEAN_ALL operation also should be performed only once.
-               Moreover it cancels the OP_CLEAN_TO_THRESHOLD operation. */
-            class OperationPreprocessor {
-                // TODO: remove the dependency on CacheBin.
-                CacheBin *const  bin;
-
-                /* Contains the relative time in the operation list.
-                   It counts in the reverse order since the aggregator also
-                   provides operations in the reverse order. */
-                uintptr_t lclTime;
-
-                /* opGet contains only OP_GET operations which cannot be merge with OP_PUT operations
-                   opClean contains all OP_CLEAN_TO_THRESHOLD and OP_CLEAN_ALL operations. */
-                CacheBinOperation *opGet, *opClean;
-                /* The time of the last OP_CLEAN_TO_THRESHOLD operations */
-                uintptr_t cleanTime;
-
-                /* lastGetOpTime - the time of the last OP_GET operation.
-                   lastGet - the same meaning as CacheBin::lastGet */
-                uintptr_t lastGetOpTime, lastGet;
-
-                /* The total sum of all usedSize decrements requested with CBOP_DECR_USED_SIZE operations. */
-                size_t decrUsedSize;
-
-                /* The list of blocks for the OP_PUT_LIST operation. */
-                LargeMemoryBlock *head, *tail;
-                int putListNum;
-
-                /* if the OP_CLEAN_ALL is requested. */
-                bool isCleanAll;
-
-                inline void commitOperation(CacheBinOperation *op) const;
-                inline void addOpToOpList(CacheBinOperation *op, CacheBinOperation **opList) const;
-                bool getFromPutList(CacheBinOperation* opGet, uintptr_t currTime);
-                void addToPutList( LargeMemoryBlock *head, LargeMemoryBlock *tail, int num );
-
-            public:
-                OperationPreprocessor(CacheBin *bin) :
-                    bin(bin), lclTime(0), opGet(NULL), opClean(NULL), cleanTime(0),
-                    lastGetOpTime(0), decrUsedSize(0), head(NULL), isCleanAll(false)  {}
-                void operator()(CacheBinOperation* opList);
-                uintptr_t getTimeRange() const { return -lclTime; }
-
-                friend class CacheBinFunctor;
-            };
-
-        public:
-            CacheBinFunctor(CacheBin *bin, ExtMemoryPool *extMemPool, BinBitMask *bitMask, int idx) :
-                bin(bin), extMemPool(extMemPool), bitMask(bitMask), idx(idx), toRelease(NULL), needCleanup(false) {}
-            void operator()(CacheBinOperation* opList);
-
-            bool isCleanupNeeded() const { return needCleanup; }
-            LargeMemoryBlock *getToRelease() const { return toRelease; }
-            uintptr_t getCurrTime() const { return currTime; }
-        };
-
         typename MallocAggregator<CacheBinOperation>::type aggregator;
 
         void ExecuteOperation(CacheBinOperation *op, ExtMemoryPool *extMemPool, BinBitMask *bitMask, int idx, bool longLifeTime = true);
+  /* should be placed in zero-initialized memory, ctor not needed. */
+        CacheBin();
+    public:
+        void init() { memset(this, 0, sizeof(CacheBin)); }
+        void putList(ExtMemoryPool *extMemPool, LargeMemoryBlock *head, BinBitMask *bitMask, int idx);
+        LargeMemoryBlock *get(ExtMemoryPool *extMemPool, size_t size, BinBitMask *bitMask, int idx);
+        bool cleanToThreshold(ExtMemoryPool *extMemPool, BinBitMask *bitMask, uintptr_t currTime, int idx);
+        bool releaseAllToBackend(ExtMemoryPool *extMemPool, BinBitMask *bitMask, int idx);
+        void updateUsedSize(ExtMemoryPool *extMemPool, size_t size, BinBitMask *bitMask, int idx);
+
+        void decreaseThreshold() {
+            if (ageThreshold)
+                ageThreshold = (ageThreshold + meanHitRange)/2;
+        }
+        void updateBinsSummary(BinsSummary *binsSummary) const {
+            binsSummary->update(usedSize, cachedSize);
+        }
+        size_t getSize() const { return cachedSize; }
+        size_t getUsedSize() const { return usedSize; }
+        size_t reportStat(int num, FILE *f);
   /* ---------- unsafe methods used with the aggregator ---------- */
         void forgetOutdatedState(uintptr_t currTime);
         LargeMemoryBlock *putList(LargeMemoryBlock *head, LargeMemoryBlock *tail, BinBitMask *bitMask, int idx, int num);
@@ -401,29 +352,8 @@ private:
         void updateCachedSize(size_t size) { cachedSize += size; }
         void setLastGet( uintptr_t newLastGet ) { lastGet = newLastGet; }
   /* -------------------------------------------------------- */
-
-  /* should be placed in zero-initialized memory, ctor not needed. */
-        CacheBin();
-    public:
-        void init() { memset(this, 0, sizeof(CacheBin)); }
-        void putList(ExtMemoryPool *extMemPool, LargeMemoryBlock *head, BinBitMask *bitMask, int idx);
-        LargeMemoryBlock *get(ExtMemoryPool *extMemPool, size_t size, BinBitMask *bitMask, int idx);
-        bool cleanToThreshold(ExtMemoryPool *extMemPool, BinBitMask *bitMask, uintptr_t currTime, int idx);
-        bool releaseAllToBackend(ExtMemoryPool *extMemPool, BinBitMask *bitMask, int idx);
-        void decrUsedSize(ExtMemoryPool *extMemPool, size_t size, BinBitMask *bitMask, int idx);
-
-        void decreaseThreshold() {
-            if (ageThreshold)
-                ageThreshold = (ageThreshold + meanHitRange)/2;
-        }
-        void updateBinsSummary(BinsSummary *binsSummary) const {
-            binsSummary->update(usedSize, cachedSize);
-        }
-        size_t getSize() const { return cachedSize; }
-        size_t getUsedSize() const { return usedSize; }
-        size_t reportStat(int num, FILE *f);
     };
-
+private:
     intptr_t     tooLargeLOC; // how many times LOC was "too large"
     // for fast finding of used bins and bins with non-zero usedSize;
     // indexed from the end, as we need largest 1st
@@ -441,7 +371,7 @@ public:
     void putList(ExtMemoryPool *extMemPool, LargeMemoryBlock *largeBlock);
     LargeMemoryBlock *get(ExtMemoryPool *extMemPool, size_t size);
 
-    void rollbackCacheState(ExtMemoryPool *extMemPool, size_t size);
+    void updateCacheState(ExtMemoryPool *extMemPool, DecreaseOrIncrease op, size_t size);
     bool regularCleanup(ExtMemoryPool *extMemPool, uintptr_t currAge, bool doThreshDecr);
     bool cleanAll(ExtMemoryPool *extMemPool);
     void reset() {
@@ -499,7 +429,7 @@ public:
     void putList(LargeMemoryBlock *head);
     LargeMemoryBlock *get(size_t size);
 
-    void rollbackCacheState(size_t size);
+    void updateCacheState(DecreaseOrIncrease op, size_t size);
     bool isCleanupNeededOnRange(uintptr_t range, uintptr_t currTime);
     bool doCleanup(uintptr_t currTime, bool doThreshDecr);
 
@@ -522,6 +452,7 @@ public:
 
     uintptr_t getCurrTime() { return (uintptr_t)AtomicIncrement((intptr_t&)cacheCurrTime); }
     uintptr_t getCurrTimeRange(uintptr_t range) { return (uintptr_t)AtomicAdd((intptr_t&)cacheCurrTime, range)+1; }
+    void registerRealloc(size_t oldSize, size_t newSize);
 };
 
 class BackRefIdx { // composite index to backreference array
@@ -929,6 +860,7 @@ struct ExtMemoryPool {
     bool softCachesCleanup();
     bool releaseAllLocalCaches();
     bool hardCachesCleanup();
+    void *remap(void *ptr, size_t oldSize, size_t newSize, size_t alignment);
     bool reset() {
         loc.reset();
         allLocalCaches.reset();

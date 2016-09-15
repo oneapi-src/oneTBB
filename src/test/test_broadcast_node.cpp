@@ -66,8 +66,9 @@ public:
     built_predecessors_type mbp;
     /*override*/ built_predecessors_type &built_predecessors() { return mbp; }
     typedef typename tbb::flow::receiver<T>::predecessor_list_type predecessor_list_type;
-    /*override*/void internal_add_built_predecessor(tbb::flow::sender<T> &) {}
-    /*override*/void internal_delete_built_predecessor(tbb::flow::sender<T> &) {}
+    typedef typename tbb::flow::receiver<T>::predecessor_type predecessor_type;
+    /*override*/void internal_add_built_predecessor(predecessor_type &) {}
+    /*override*/void internal_delete_built_predecessor(predecessor_type &) {}
     /*override*/void copy_predecessors(predecessor_list_type &) {}
     /*override*/size_t predecessor_count() { return 0; }
     /*override*/void clear_predecessors() { }

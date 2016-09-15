@@ -50,12 +50,6 @@ ifeq (libc++,$(stdlib))
     LIB_LINK_FLAGS += -stdlib=libc++
 endif
 
-CPP11_FLAGS = -std=c++11 -D_TBB_CPP0X
-
-ifneq (00,$(lambdas)$(cpp0x))
-    CXX_ONLY_FLAGS += $(CPP11_FLAGS)
-endif
-
 TBB_ASM.OBJ=
 MALLOC_ASM.OBJ=
 

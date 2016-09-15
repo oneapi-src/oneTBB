@@ -124,6 +124,10 @@ To perform different build and/or test operations, use the following steps.
     </ol>
     <DT><TT>make compiler=clang stdlib=libc++ <B>[</B>(above options or targets)<B>]</B></TT>
     <DD>Build and run as above, but use <TT>libc++</TT> as a standard c++ library for clang.
+    <DT><TT>make stdver=<B>{</B>c++11, c++14, ...<B>}</B> <B>[</B>(above options or targets)<B>]</B></TT>
+    <DD>Build and run as above, but additionally specify the version of the C++ standard or dialect to be used by
+      the compiler. The specified value of <TT>stdver</TT> will be used as a parameter to the appropriate
+      compiler option (such as <TT>-std</TT>); the behavior in case of unsupported value is compiler-specific.
     <DT><TT>make target_ui=win8ui [target_ui_mode=production] <B>[</B>(above options or targets)<B>]</B></TT>
     <DD>Build and run as above, but use API that is compliant with Windows Store* applications. 
     <TT>target_ui_mode=production</TT> is used to produce binaries that are compliant with Windows Store* application container. In later case they won't with Intel TBB unit tests but work only with Windows Store* applications. 
@@ -170,7 +174,7 @@ A subset or a superset of these steps may be required for porting to a given pla
 		and the scheduler yield function.  See <A HREF="../include/tbb/machine/mac_ppc.h">include/tbb/machine/mac_ppc.h</A>
 		for an example of a minimal implementation.
 	    <LI>More complex implementation examples can also be found in the
-		<A HREF="../include/tbb/machine>include/tbb/machine"</A> directory
+		<A HREF="../include/tbb/machine">include/tbb/machine</A> directory
 		that implement all the individual variants of synchronization operations that Intel TBB uses.
 		Such implementations are more verbose but may achieve better performance on a given architecture.
 	    <LI>In a given implementation, any synchronization operation that is not defined is implemented, by default,

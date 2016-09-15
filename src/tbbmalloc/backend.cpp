@@ -157,9 +157,14 @@ void *Backend::allocRawMem(size_t &size)
     }
 
     if ( res ) {
+        MALLOC_ASSERT(allocSize > 0, "Invalid size of an allocated region.");
         size = allocSize;
         if (!extMemPool->userPool())
             usedAddrRange.registerAlloc((uintptr_t)res, (uintptr_t)res+size);
+#if MALLOC_DEBUG
+        volatile size_t curTotalSize = totalMemSize; // to read global value once
+        MALLOC_ASSERT(curTotalSize+size > curTotalSize, "Overflow allocation size.");
+#endif
         AtomicAdd((intptr_t&)totalMemSize, size);
     }
 
@@ -169,6 +174,10 @@ void *Backend::allocRawMem(size_t &size)
 bool Backend::freeRawMem(void *object, size_t size)
 {
     bool fail;
+#if MALLOC_DEBUG
+    volatile size_t curTotalSize = totalMemSize; // to read global value once
+    MALLOC_ASSERT(curTotalSize-size < curTotalSize, "Negative allocation size.");
+#endif
     AtomicAdd((intptr_t&)totalMemSize, -size);
     if (extMemPool->userPool()) {
         MALLOC_ASSERT(!extMemPool->fixedPool, "No free for fixed-size pools.");
@@ -333,6 +342,7 @@ inline bool BackendSync::waitTillBlockReleased(intptr_t startModifiedCnt)
     for (intptr_t myBinsInFlyBlocks = FencedLoad(inFlyBlocks),
              myCoalescQInFlyBlocks = backend->blocksInCoalescing(); ;
          backoff.pause()) {
+        MALLOC_ASSERT(myBinsInFlyBlocks>=0 && myCoalescQInFlyBlocks>=0, NULL);
         intptr_t currBinsInFlyBlocks = FencedLoad(inFlyBlocks),
             currCoalescQInFlyBlocks = backend->blocksInCoalescing();
         WhiteboxTestingYield();
@@ -399,7 +409,8 @@ FreeBlock *CoalRequestQ::getAll()
 inline void CoalRequestQ::blockWasProcessed()
 {
     bkndSync->binsModified();
-    AtomicAdd(inFlyBlocks, -1);
+    int prev = AtomicAdd(inFlyBlocks, -1);
+    MALLOC_ASSERT(prev > 0, ASSERT_TEXT);
 }
 
 // Try to get a block from a bin.
@@ -1004,8 +1015,9 @@ void *Backend::remap(void *ptr, size_t oldSize, size_t newSize, size_t alignment
         || !isAligned(ptr, alignment) || alignment>extMemPool->granularity)
         return NULL;
     const LargeMemoryBlock* lmbOld = ((LargeObjectHdr *)ptr - 1)->memoryBlock;
+    const size_t oldUnalignedSize = lmbOld->unalignedSize;
     FreeBlock *oldFBlock = (FreeBlock *)lmbOld;
-    FreeBlock *right = oldFBlock->rightNeig(lmbOld->unalignedSize);
+    FreeBlock *right = oldFBlock->rightNeig(oldUnalignedSize);
     // in every region only one block can have LAST_REGION_BLOCK on right,
     // so don't need no synchronization
     if (!right->isLastRegionBlock())
@@ -1061,6 +1073,8 @@ void *Backend::remap(void *ptr, size_t oldSize, size_t newSize, size_t alignment
 
     usedAddrRange.registerFree((uintptr_t)oldRegion, (uintptr_t)oldRegion + oldRegionSize);
     usedAddrRange.registerAlloc((uintptr_t)region, (uintptr_t)region + requestSize);
+    AtomicAdd((intptr_t&)totalMemSize, region->allocSz - oldRegionSize);
+
     return object;
 }
 #endif /* BACKEND_HAS_MREMAP */
