@@ -74,7 +74,7 @@ static inline int64_t __TBB_machine_cmpswp8_OsX(volatile void *ptr, int64_t valu
 #if __TBB_UnknownArchitecture
 
 #ifndef __TBB_WORDSIZE
-#define __TBB_WORDSIZE 4
+#define __TBB_WORDSIZE __SIZEOF_POINTER__
 #endif
 
 #ifdef __TBB_ENDIANNESS

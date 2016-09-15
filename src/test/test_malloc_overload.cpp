@@ -29,7 +29,7 @@
 #undef  _HAS_EXCEPTIONS
 #define _HAS_EXCEPTIONS _CPPUNWIND
 #endif
-// to use strdup and putenv w/o warnings
+// to use strdup w/o warnings
 #define _CRT_NONSTDC_NO_DEPRECATE 1
 #endif // _WIN32 || _WIN64
 
@@ -327,17 +327,12 @@ int TestMain() {
     ASSERT(strcmp(pathCopy,getenv("PATH")) == 0, "strdup workaround does not work as expected.");
 #endif
     const char *newEnvName = "__TBBMALLOC_OVERLOAD_REGRESSION_TEST_FOR_REALLOC_AND_MSIZE";
-    char *newEnv = (char*)malloc(3 + strlen(newEnvName));
-
     ASSERT(!getenv(newEnvName), "Environment variable should not be used before.");
-    strcpy(newEnv, newEnvName);
-    strcat(newEnv, "=1");
-    int r = putenv(newEnv);
+    int r = Harness::SetEnv(newEnvName,"1");
     ASSERT(!r, NULL);
     char *path = getenv("PATH");
     ASSERT(path && 0==strcmp(path, pathCopy), "Environment was changed erroneously.");
     free(pathCopy);
-    free(newEnv);
 
     CheckStdFuncOverload(malloc, calloc, realloc, free);
 #if MALLOC_UNIXLIKE_OVERLOAD_ENABLED || MALLOC_ZONE_OVERLOAD_ENABLED

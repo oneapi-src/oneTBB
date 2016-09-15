@@ -22,9 +22,10 @@ ifeq (icc,$(compiler))
   export COMPILER_VERSION := ICC: $(shell icc -V </dev/null 2>&1 | grep 'Version')
   ifneq (,$(findstring IA-32, $(COMPILER_VERSION)))
     export arch:=ia32
-  endif
-  ifneq (,$(findstring Intel(R) 64, $(COMPILER_VERSION)))
-    export arch:=intel64
+  else
+    ifneq (,$(findstring Intel(R) 64, $(COMPILER_VERSION)))
+      export arch:=intel64
+    endif
   endif
   ifeq (,$(arch))
     $(warning "Unknown Intel compiler")
@@ -68,7 +69,7 @@ endif
 
 native_compiler := clang
 export compiler ?= clang
-debugger ?= gdb
+debugger ?= lldb
 
 export stdlib ?= libc++
 
@@ -113,3 +114,5 @@ MALLOCPROXY.LIB = $(MALLOCPROXY.DLL)
 LINK_MALLOCPROXY.LIB = $(MALLOCPROXY.LIB)
 
 TEST_LAUNCHER=sh $(tbb_root)/build/test_launcher.sh $(largs)
+
+OPENCL.LIB = -framework OpenCL

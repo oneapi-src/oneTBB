@@ -66,6 +66,7 @@ __TBB_SYMBOL( _ZTVN3tbb10empty_taskE )
 /* arena.cpp */
 __TBB_SYMBOL( _ZN3tbb10interface78internal15task_arena_base19internal_initializeEv )
 __TBB_SYMBOL( _ZN3tbb10interface78internal15task_arena_base18internal_terminateEv )
+__TBB_SYMBOL( _ZN3tbb10interface78internal15task_arena_base15internal_attachEv )
 __TBB_SYMBOL( _ZNK3tbb10interface78internal15task_arena_base16internal_enqueueERNS_4taskEl )
 __TBB_SYMBOL( _ZNK3tbb10interface78internal15task_arena_base16internal_executeERNS1_13delegate_baseE )
 __TBB_SYMBOL( _ZNK3tbb10interface78internal15task_arena_base13internal_waitEv )

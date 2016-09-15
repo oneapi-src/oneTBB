@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::internal::thread_closure_1&lt; F, X &gt; Struct Template Reference</title>
+<title>tbb::null_mutex::scoped_lock Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,70 +33,50 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><b>internal</b></li><li class="navelem"><a class="el" href="a00168.html">thread_closure_1</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><a class="el" href="a00112.html">null_mutex</a></li><li class="navelem"><a class="el" href="a00168.html">scoped_lock</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
-<a href="#pub-attribs">Public Attributes</a> &#124;
-<a href="a00419.html">List of all members</a>  </div>
+<a href="a00315.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::internal::thread_closure_1&lt; F, X &gt; Struct Template Reference</div>  </div>
+<div class="title">tbb::null_mutex::scoped_lock Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Structure used to pass user function with 1 argument to thread.  
+<p>Represents acquisition of a mutex.  
  <a href="a00168.html#details">More...</a></p>
 
-<p><code>#include &lt;tbb_thread.h&gt;</code></p>
+<p><code>#include &lt;null_mutex.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::internal::thread_closure_1&lt; F, X &gt;:</div>
+Inheritance diagram for tbb::null_mutex::scoped_lock:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00168.png" usemap="#tbb::internal::thread_closure_1&lt; F, X &gt;_map" alt=""/>
-  <map id="tbb::internal::thread_closure_1&lt; F, X &gt;_map" name="tbb::internal::thread_closure_1&lt; F, X &gt;_map">
-<area href="a00170.html" alt="tbb::internal::thread_closure_base" shape="rect" coords="0,0,232,24"/>
+  <img src="a00168.png" usemap="#tbb::null_mutex::scoped_lock_map" alt=""/>
+  <map id="tbb::null_mutex::scoped_lock_map" name="tbb::null_mutex::scoped_lock_map">
 </map>
  </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:afef38584bcf65f3f71700cfec80b8b18"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afef38584bcf65f3f71700cfec80b8b18"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>thread_closure_1</b> (const F &amp;f, const X &amp;x)</td></tr>
-<tr class="separator:afef38584bcf65f3f71700cfec80b8b18"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_methods_a00170"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_a00170')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="a00170.html">tbb::internal::thread_closure_base</a></td></tr>
-<tr class="memitem:a624f5a5a40051faf39444ad3a9f36df5 inherit pub_methods_a00170"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a624f5a5a40051faf39444ad3a9f36df5"></a>
-void *&#160;</td><td class="memItemRight" valign="bottom"><b>operator new</b> (size_t size)</td></tr>
-<tr class="separator:a624f5a5a40051faf39444ad3a9f36df5 inherit pub_methods_a00170"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a56e1bfd2ca46abcc3c3f265eff10360d inherit pub_methods_a00170"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a56e1bfd2ca46abcc3c3f265eff10360d"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>operator delete</b> (void *ptr)</td></tr>
-<tr class="separator:a56e1bfd2ca46abcc3c3f265eff10360d inherit pub_methods_a00170"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
-Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a33d533b3301c45708c6252d040f855a6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a33d533b3301c45708c6252d040f855a6"></a>
-static __TBB_NATIVE_THREAD_ROUTINE&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00168.html#a33d533b3301c45708c6252d040f855a6">start_routine</a> (void *c)</td></tr>
-<tr class="memdesc:a33d533b3301c45708c6252d040f855a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Routine passed to Windows's _beginthreadex by thread::internal_start() inside tbb.dll. <br/></td></tr>
-<tr class="separator:a33d533b3301c45708c6252d040f855a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
-Public Attributes</h2></td></tr>
-<tr class="memitem:a39a5a39b2a7513868944ffe7ffd89640"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a39a5a39b2a7513868944ffe7ffd89640"></a>
-F&#160;</td><td class="memItemRight" valign="bottom"><b>function</b></td></tr>
-<tr class="separator:a39a5a39b2a7513868944ffe7ffd89640"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a607886c68ca8bdd984b9b4f6ec744dea"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a607886c68ca8bdd984b9b4f6ec744dea"></a>
-X&#160;</td><td class="memItemRight" valign="bottom"><b>arg1</b></td></tr>
-<tr class="separator:a607886c68ca8bdd984b9b4f6ec744dea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af71834d1fc4c7406595e9df5b43ab7bb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af71834d1fc4c7406595e9df5b43ab7bb"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>scoped_lock</b> (<a class="el" href="a00112.html">null_mutex</a> &amp;)</td></tr>
+<tr class="separator:af71834d1fc4c7406595e9df5b43ab7bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d541c92b1678a7dde6a45783a02160f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7d541c92b1678a7dde6a45783a02160f"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>acquire</b> (<a class="el" href="a00112.html">null_mutex</a> &amp;)</td></tr>
+<tr class="separator:a7d541c92b1678a7dde6a45783a02160f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac5d4d5a4182091ea13fb5d38667f6449"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac5d4d5a4182091ea13fb5d38667f6449"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>try_acquire</b> (<a class="el" href="a00112.html">null_mutex</a> &amp;)</td></tr>
+<tr class="separator:ac5d4d5a4182091ea13fb5d38667f6449"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a21f848f83dfa6504381e3da4de7a9e00"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a21f848f83dfa6504381e3da4de7a9e00"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>release</b> ()</td></tr>
+<tr class="separator:a21f848f83dfa6504381e3da4de7a9e00"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;class F, class X&gt;<br/>
-struct tbb::internal::thread_closure_1&lt; F, X &gt;</h3>
-
-<p>Structure used to pass user function with 1 argument to thread. </p>
-</div><hr/>The documentation for this struct was generated from the following file:<ul>
-<li>tbb_thread.h</li>
+<div class="textblock"><p>Represents acquisition of a mutex. </p>
+</div><hr/>The documentation for this class was generated from the following file:<ul>
+<li>null_mutex.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::interface6::memory_pool_allocator&lt; void, P &gt; Class Template Reference</title>
+<title>tbb::flow::interface8::join_node&lt; OutputTuple, key_matching&lt; K, KHash &gt; &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,88 +33,87 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><b>interface6</b></li><li class="navelem"><a class="el" href="a00096.html">memory_pool_allocator< void, P ></a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><a class="el" href="a00096.html">join_node< OutputTuple, key_matching< K, KHash > ></a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pro-attribs">Protected Attributes</a> &#124;
-<a href="#friends">Friends</a> &#124;
-<a href="a00398.html">List of all members</a>  </div>
+<a href="a00386.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::interface6::memory_pool_allocator&lt; void, P &gt; Class Template Reference<div class="ingroups"><a class="el" href="a00258.html">Memory Allocation</a></div></div>  </div>
+<div class="title">tbb::flow::interface8::join_node&lt; OutputTuple, key_matching&lt; K, KHash &gt; &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-
-<p>Analogous to std::allocator&lt;void&gt;, as defined in ISO C++ Standard, Section 20.4.1.  
- <a href="a00096.html#details">More...</a></p>
-
-<p><code>#include &lt;memory_pool.h&gt;</code></p>
+<div class="dynheader">
+Inheritance diagram for tbb::flow::interface8::join_node&lt; OutputTuple, key_matching&lt; K, KHash &gt; &gt;:</div>
+<div class="dyncontent">
+ <div class="center">
+  <img src="a00096.png" usemap="#tbb::flow::interface8::join_node&lt; OutputTuple, key_matching&lt; K, KHash &gt; &gt;_map" alt=""/>
+  <map id="tbb::flow::interface8::join_node&lt; OutputTuple, key_matching&lt; K, KHash &gt; &gt;_map" name="tbb::flow::interface8::join_node&lt; OutputTuple, key_matching&lt; K, KHash &gt; &gt;_map">
+</map>
+ </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
-Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00121.html">rebind</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:aa4a3be261ace6f19c3c40ef2503c4984"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa4a3be261ace6f19c3c40ef2503c4984"></a>
-typedef P&#160;</td><td class="memItemRight" valign="bottom"><b>pool_type</b></td></tr>
-<tr class="separator:aa4a3be261ace6f19c3c40ef2503c4984"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afb58c3e8f2e0a8f9152eae641ee420fa"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afb58c3e8f2e0a8f9152eae641ee420fa"></a>
-typedef void *&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b></td></tr>
-<tr class="separator:afb58c3e8f2e0a8f9152eae641ee420fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5e53158493ed0d617460e8dd6534a525"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5e53158493ed0d617460e8dd6534a525"></a>
-typedef const void *&#160;</td><td class="memItemRight" valign="bottom"><b>const_pointer</b></td></tr>
-<tr class="separator:a5e53158493ed0d617460e8dd6534a525"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a676a2c2649d6ffc45466d94555d71df2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a676a2c2649d6ffc45466d94555d71df2"></a>
-typedef void&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b></td></tr>
-<tr class="separator:a676a2c2649d6ffc45466d94555d71df2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae64302b30918228a9ea6ac9b4d896262"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae64302b30918228a9ea6ac9b4d896262"></a>
+typedef OutputTuple&#160;</td><td class="memItemRight" valign="bottom"><b>output_type</b></td></tr>
+<tr class="separator:ae64302b30918228a9ea6ac9b4d896262"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae0c54e5defddb5fee0ab13b8aed62f1b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae0c54e5defddb5fee0ab13b8aed62f1b"></a>
+typedef <br class="typebreak"/>
+unfolded_type::input_ports_type&#160;</td><td class="memItemRight" valign="bottom"><b>input_ports_type</b></td></tr>
+<tr class="separator:ae0c54e5defddb5fee0ab13b8aed62f1b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a8e697e2d03e8f69de1728409bec4f7b5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8e697e2d03e8f69de1728409bec4f7b5"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>memory_pool_allocator</b> (pool_type &amp;pool)  throw ()</td></tr>
-<tr class="separator:a8e697e2d03e8f69de1728409bec4f7b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a001103c81ba25e645305f19a82db2e4a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a001103c81ba25e645305f19a82db2e4a"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>memory_pool_allocator</b> (const <a class="el" href="a00095.html">memory_pool_allocator</a> &amp;src)  throw ()</td></tr>
-<tr class="separator:a001103c81ba25e645305f19a82db2e4a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8d3db3082c1fa40ccb3997626f61e61e"><td class="memTemplParams" colspan="2"><a class="anchor" id="a8d3db3082c1fa40ccb3997626f61e61e"></a>
-template&lt;typename U &gt; </td></tr>
-<tr class="memitem:a8d3db3082c1fa40ccb3997626f61e61e"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>memory_pool_allocator</b> (const <a class="el" href="a00095.html">memory_pool_allocator</a>&lt; U, P &gt; &amp;src)  throw ()</td></tr>
-<tr class="separator:a8d3db3082c1fa40ccb3997626f61e61e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
-Protected Attributes</h2></td></tr>
-<tr class="memitem:a1e497d3d88dcb063ab6594eb4ad3dc35"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1e497d3d88dcb063ab6594eb4ad3dc35"></a>
-pool_type *&#160;</td><td class="memItemRight" valign="bottom"><b>my_pool</b></td></tr>
-<tr class="separator:a1e497d3d88dcb063ab6594eb4ad3dc35"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
-Friends</h2></td></tr>
-<tr class="memitem:a6c34ee2e5a57845f050b507cc516a005"><td class="memTemplParams" colspan="2"><a class="anchor" id="a6c34ee2e5a57845f050b507cc516a005"></a>
-template&lt;typename U , typename R &gt; </td></tr>
-<tr class="memitem:a6c34ee2e5a57845f050b507cc516a005"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><b>memory_pool_allocator</b></td></tr>
-<tr class="separator:a6c34ee2e5a57845f050b507cc516a005"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac8c26a64f4e012f2a9cf6035cf029905"><td class="memTemplParams" colspan="2"><a class="anchor" id="ac8c26a64f4e012f2a9cf6035cf029905"></a>
-template&lt;typename V , typename U , typename R &gt; </td></tr>
-<tr class="memitem:ac8c26a64f4e012f2a9cf6035cf029905"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><b>operator==</b> (const <a class="el" href="a00095.html">memory_pool_allocator</a>&lt; V, R &gt; &amp;a, const <a class="el" href="a00095.html">memory_pool_allocator</a>&lt; U, R &gt; &amp;b)</td></tr>
-<tr class="separator:ac8c26a64f4e012f2a9cf6035cf029905"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2f7230e5bc817e7512e18b5311b3371b"><td class="memTemplParams" colspan="2"><a class="anchor" id="a2f7230e5bc817e7512e18b5311b3371b"></a>
-template&lt;typename V , typename U , typename R &gt; </td></tr>
-<tr class="memitem:a2f7230e5bc817e7512e18b5311b3371b"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><b>operator!=</b> (const <a class="el" href="a00095.html">memory_pool_allocator</a>&lt; V, R &gt; &amp;a, const <a class="el" href="a00095.html">memory_pool_allocator</a>&lt; U, R &gt; &amp;b)</td></tr>
-<tr class="separator:a2f7230e5bc817e7512e18b5311b3371b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af55839fbd97da22aa07e91b8318ca61e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af55839fbd97da22aa07e91b8318ca61e"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>join_node</b> (<a class="el" href="a00078.html">graph</a> &amp;g)</td></tr>
+<tr class="separator:af55839fbd97da22aa07e91b8318ca61e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4fa6d8bffd97af4b6d138b9f24c96237"><td class="memTemplParams" colspan="2"><a class="anchor" id="a4fa6d8bffd97af4b6d138b9f24c96237"></a>
+template&lt;typename __TBB_B0 , typename __TBB_B1 &gt; </td></tr>
+<tr class="memitem:a4fa6d8bffd97af4b6d138b9f24c96237"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>join_node</b> (<a class="el" href="a00078.html">graph</a> &amp;g, __TBB_B0 b0, __TBB_B1 b1)</td></tr>
+<tr class="separator:a4fa6d8bffd97af4b6d138b9f24c96237"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7c80e5f05a49b26159555219002617ee"><td class="memTemplParams" colspan="2"><a class="anchor" id="a7c80e5f05a49b26159555219002617ee"></a>
+template&lt;typename __TBB_B0 , typename __TBB_B1 , typename __TBB_B2 &gt; </td></tr>
+<tr class="memitem:a7c80e5f05a49b26159555219002617ee"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>join_node</b> (<a class="el" href="a00078.html">graph</a> &amp;g, __TBB_B0 b0, __TBB_B1 b1, __TBB_B2 b2)</td></tr>
+<tr class="separator:a7c80e5f05a49b26159555219002617ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abe3d4e6df8d44b4fd78672ab2c8ed010"><td class="memTemplParams" colspan="2"><a class="anchor" id="abe3d4e6df8d44b4fd78672ab2c8ed010"></a>
+template&lt;typename __TBB_B0 , typename __TBB_B1 , typename __TBB_B2 , typename __TBB_B3 &gt; </td></tr>
+<tr class="memitem:abe3d4e6df8d44b4fd78672ab2c8ed010"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>join_node</b> (<a class="el" href="a00078.html">graph</a> &amp;g, __TBB_B0 b0, __TBB_B1 b1, __TBB_B2 b2, __TBB_B3 b3)</td></tr>
+<tr class="separator:abe3d4e6df8d44b4fd78672ab2c8ed010"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aee90fe4a67a5af68474c94aefd534b0e"><td class="memTemplParams" colspan="2"><a class="anchor" id="aee90fe4a67a5af68474c94aefd534b0e"></a>
+template&lt;typename __TBB_B0 , typename __TBB_B1 , typename __TBB_B2 , typename __TBB_B3 , typename __TBB_B4 &gt; </td></tr>
+<tr class="memitem:aee90fe4a67a5af68474c94aefd534b0e"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>join_node</b> (<a class="el" href="a00078.html">graph</a> &amp;g, __TBB_B0 b0, __TBB_B1 b1, __TBB_B2 b2, __TBB_B3 b3, __TBB_B4 b4)</td></tr>
+<tr class="separator:aee90fe4a67a5af68474c94aefd534b0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2ab2f841949e686c310bf69d23ef7bdc"><td class="memTemplParams" colspan="2"><a class="anchor" id="a2ab2f841949e686c310bf69d23ef7bdc"></a>
+template&lt;typename __TBB_B0 , typename __TBB_B1 , typename __TBB_B2 , typename __TBB_B3 , typename __TBB_B4 , typename __TBB_B5 &gt; </td></tr>
+<tr class="memitem:a2ab2f841949e686c310bf69d23ef7bdc"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>join_node</b> (<a class="el" href="a00078.html">graph</a> &amp;g, __TBB_B0 b0, __TBB_B1 b1, __TBB_B2 b2, __TBB_B3 b3, __TBB_B4 b4, __TBB_B5 b5)</td></tr>
+<tr class="separator:a2ab2f841949e686c310bf69d23ef7bdc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a075c676f406dda26387d0b622428c99d"><td class="memTemplParams" colspan="2"><a class="anchor" id="a075c676f406dda26387d0b622428c99d"></a>
+template&lt;typename __TBB_B0 , typename __TBB_B1 , typename __TBB_B2 , typename __TBB_B3 , typename __TBB_B4 , typename __TBB_B5 , typename __TBB_B6 &gt; </td></tr>
+<tr class="memitem:a075c676f406dda26387d0b622428c99d"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>join_node</b> (<a class="el" href="a00078.html">graph</a> &amp;g, __TBB_B0 b0, __TBB_B1 b1, __TBB_B2 b2, __TBB_B3 b3, __TBB_B4 b4, __TBB_B5 b5, __TBB_B6 b6)</td></tr>
+<tr class="separator:a075c676f406dda26387d0b622428c99d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac07f03e318045faa05a257e725d07112"><td class="memTemplParams" colspan="2"><a class="anchor" id="ac07f03e318045faa05a257e725d07112"></a>
+template&lt;typename __TBB_B0 , typename __TBB_B1 , typename __TBB_B2 , typename __TBB_B3 , typename __TBB_B4 , typename __TBB_B5 , typename __TBB_B6 , typename __TBB_B7 &gt; </td></tr>
+<tr class="memitem:ac07f03e318045faa05a257e725d07112"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>join_node</b> (<a class="el" href="a00078.html">graph</a> &amp;g, __TBB_B0 b0, __TBB_B1 b1, __TBB_B2 b2, __TBB_B3 b3, __TBB_B4 b4, __TBB_B5 b5, __TBB_B6 b6, __TBB_B7 b7)</td></tr>
+<tr class="separator:ac07f03e318045faa05a257e725d07112"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa62abb05c5ff22052639c830fd0a41cf"><td class="memTemplParams" colspan="2"><a class="anchor" id="aa62abb05c5ff22052639c830fd0a41cf"></a>
+template&lt;typename __TBB_B0 , typename __TBB_B1 , typename __TBB_B2 , typename __TBB_B3 , typename __TBB_B4 , typename __TBB_B5 , typename __TBB_B6 , typename __TBB_B7 , typename __TBB_B8 &gt; </td></tr>
+<tr class="memitem:aa62abb05c5ff22052639c830fd0a41cf"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>join_node</b> (<a class="el" href="a00078.html">graph</a> &amp;g, __TBB_B0 b0, __TBB_B1 b1, __TBB_B2 b2, __TBB_B3 b3, __TBB_B4 b4, __TBB_B5 b5, __TBB_B6 b6, __TBB_B7 b7, __TBB_B8 b8)</td></tr>
+<tr class="separator:aa62abb05c5ff22052639c830fd0a41cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7407160c64160e125c2c45db1d4e19d8"><td class="memTemplParams" colspan="2"><a class="anchor" id="a7407160c64160e125c2c45db1d4e19d8"></a>
+template&lt;typename __TBB_B0 , typename __TBB_B1 , typename __TBB_B2 , typename __TBB_B3 , typename __TBB_B4 , typename __TBB_B5 , typename __TBB_B6 , typename __TBB_B7 , typename __TBB_B8 , typename __TBB_B9 &gt; </td></tr>
+<tr class="memitem:a7407160c64160e125c2c45db1d4e19d8"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>join_node</b> (<a class="el" href="a00078.html">graph</a> &amp;g, __TBB_B0 b0, __TBB_B1 b1, __TBB_B2 b2, __TBB_B3 b3, __TBB_B4 b4, __TBB_B5 b5, __TBB_B6 b6, __TBB_B7 b7, __TBB_B8 b8, __TBB_B9 b9)</td></tr>
+<tr class="separator:a7407160c64160e125c2c45db1d4e19d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a80f675166e277a4f2b26683dbaa66046"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a80f675166e277a4f2b26683dbaa66046"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>join_node</b> (const <a class="el" href="a00095.html">join_node</a> &amp;other)</td></tr>
+<tr class="separator:a80f675166e277a4f2b26683dbaa66046"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:addaf368ee7ff602de3bbf72acc56d497"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="addaf368ee7ff602de3bbf72acc56d497"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>set_name</b> (const char *name)</td></tr>
+<tr class="separator:addaf368ee7ff602de3bbf72acc56d497"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;typename P&gt;<br/>
-class tbb::interface6::memory_pool_allocator&lt; void, P &gt;</h3>
-
-<p>Analogous to std::allocator&lt;void&gt;, as defined in ISO C++ Standard, Section 20.4.1. </p>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
-<li><a class="el" href="a00199.html">memory_pool.h</a></li>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li><a class="el" href="a00229.html">flow_graph.h</a></li>
 </ul>
 </div><!-- contents -->
 <hr>

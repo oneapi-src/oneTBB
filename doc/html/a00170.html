@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::internal::thread_closure_base Struct Reference</title>
+<title>tbb::null_rw_mutex::scoped_lock Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,40 +33,56 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><b>internal</b></li><li class="navelem"><a class="el" href="a00170.html">thread_closure_base</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><a class="el" href="a00113.html">null_rw_mutex</a></li><li class="navelem"><a class="el" href="a00170.html">scoped_lock</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="a00417.html">List of all members</a>  </div>
+<a href="a00317.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::internal::thread_closure_base Struct Reference</div>  </div>
+<div class="title">tbb::null_rw_mutex::scoped_lock Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
+
+<p>Represents acquisition of a mutex.  
+ <a href="a00170.html#details">More...</a></p>
+
+<p><code>#include &lt;null_rw_mutex.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::internal::thread_closure_base:</div>
+Inheritance diagram for tbb::null_rw_mutex::scoped_lock:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00170.png" usemap="#tbb::internal::thread_closure_base_map" alt=""/>
-  <map id="tbb::internal::thread_closure_base_map" name="tbb::internal::thread_closure_base_map">
-<area href="a00167.html" alt="tbb::internal::thread_closure_0&lt; F &gt;" shape="rect" coords="0,56,250,80"/>
-<area href="a00168.html" title="Structure used to pass user function with 1 argument to thread. " alt="tbb::internal::thread_closure_1&lt; F, X &gt;" shape="rect" coords="260,56,510,80"/>
-<area href="a00169.html" alt="tbb::internal::thread_closure_2&lt; F, X, Y &gt;" shape="rect" coords="520,56,770,80"/>
+  <img src="a00170.png" usemap="#tbb::null_rw_mutex::scoped_lock_map" alt=""/>
+  <map id="tbb::null_rw_mutex::scoped_lock_map" name="tbb::null_rw_mutex::scoped_lock_map">
 </map>
  </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a624f5a5a40051faf39444ad3a9f36df5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a624f5a5a40051faf39444ad3a9f36df5"></a>
-void *&#160;</td><td class="memItemRight" valign="bottom"><b>operator new</b> (size_t size)</td></tr>
-<tr class="separator:a624f5a5a40051faf39444ad3a9f36df5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a56e1bfd2ca46abcc3c3f265eff10360d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a56e1bfd2ca46abcc3c3f265eff10360d"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>operator delete</b> (void *ptr)</td></tr>
-<tr class="separator:a56e1bfd2ca46abcc3c3f265eff10360d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4b7f9a3976c7744a96e435e027c6262c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4b7f9a3976c7744a96e435e027c6262c"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>scoped_lock</b> (<a class="el" href="a00113.html">null_rw_mutex</a> &amp;, bool=true)</td></tr>
+<tr class="separator:a4b7f9a3976c7744a96e435e027c6262c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a251d45c5c42ac6c6006d0463c2173bc8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a251d45c5c42ac6c6006d0463c2173bc8"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>acquire</b> (<a class="el" href="a00113.html">null_rw_mutex</a> &amp;, bool=true)</td></tr>
+<tr class="separator:a251d45c5c42ac6c6006d0463c2173bc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a07ed8c0c225fec43b96dcec5b4d4380d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a07ed8c0c225fec43b96dcec5b4d4380d"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>upgrade_to_writer</b> ()</td></tr>
+<tr class="separator:a07ed8c0c225fec43b96dcec5b4d4380d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a899c14f8d077edd2fe7925bb82a94686"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a899c14f8d077edd2fe7925bb82a94686"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>downgrade_to_reader</b> ()</td></tr>
+<tr class="separator:a899c14f8d077edd2fe7925bb82a94686"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afdb10af455fa8730b1a9bc8d5ca16c41"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afdb10af455fa8730b1a9bc8d5ca16c41"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>try_acquire</b> (<a class="el" href="a00113.html">null_rw_mutex</a> &amp;, bool=true)</td></tr>
+<tr class="separator:afdb10af455fa8730b1a9bc8d5ca16c41"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a57d0613ea1614fe9c7daa0706e56efab"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a57d0613ea1614fe9c7daa0706e56efab"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>release</b> ()</td></tr>
+<tr class="separator:a57d0613ea1614fe9c7daa0706e56efab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<hr/>The documentation for this struct was generated from the following file:<ul>
-<li>tbb_thread.h</li>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>Represents acquisition of a mutex. </p>
+</div><hr/>The documentation for this class was generated from the following file:<ul>
+<li>null_rw_mutex.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

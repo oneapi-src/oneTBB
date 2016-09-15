@@ -18,17 +18,25 @@
     reasons why the executable file might be covered by the GNU General Public License.
 */
 
+#if _MSC_VER
+// Suppress "decorated name length exceeded, name was truncated" warning
+#if __INTEL_COMPILER
+    #pragma warning( disable: 2586 )
+#else
+    #pragma warning( disable: 4503 )
+#endif
+#endif
+
+#define TBB_PREVIEW_FLOW_GRAPH_FEATURES 1
 #include "harness.h"
+#include "harness_defs.h"
 #include "tbb/atomic.h"
 #include "harness_checktype.h"
 
 #include "tbb/flow_graph.h"
 #include "tbb/task_scheduler_init.h"
 
-#if _MSC_VER && !defined(__INTEL_COMPILER)
-    // name truncated warning
-    #pragma warning( disable: 4503 )
-#endif
+#define __TBB_MIC_OFFLOAD_TEST_COMPILATION_BROKEN __TBB_MIC_OFFLOAD
 
 const char *names[] = {
     "Adam", "Bruce", "Charles", "Daniel", "Evan", "Frederich", "George", "Hiram", "Ichabod",
@@ -100,6 +108,77 @@ struct MyKeySecond {
     operator int() const { return (int)my_value; }
 };
 
+template<typename K, typename V>
+struct MyMessageKeyWithoutKey {
+    V my_value;
+    K my_message_key;
+    MyMessageKeyWithoutKey(int i=0, int v = 0) : my_value((V)v), my_message_key(index_to_key<K>()(i)) {
+    }
+    void print_val() const {
+        REMARK("MyMessageKeyWithoutKey{");print_my_value(my_message_key); REMARK(","); print_my_value(my_value);REMARK("}");
+    }
+    operator int() const { return (int)my_value; }
+    const K& key() const {
+        return my_message_key;
+    }
+};
+
+template<typename K, typename V>
+struct MyMessageKeyWithBrokenKey {
+    V my_value;
+    K my_key;
+    K my_message_key;
+    MyMessageKeyWithBrokenKey(int i=0, int v = 0) : my_value((V)v), my_key(), my_message_key(index_to_key<K>()(i)) {
+    }
+    void print_val() const {
+        REMARK("MyMessageKeyWithBrokenKey{");print_my_value(my_message_key); REMARK(","); print_my_value(my_value);REMARK("}");
+    }
+    operator int() const { return (int)my_value; }
+    const K& key() const {
+        return my_message_key;
+    }
+
+};
+
+template<typename K, typename V>
+struct MyKeyWithBrokenMessageKey {
+    V my_value;
+    K my_key;
+    MyKeyWithBrokenMessageKey(int i=0, int v = 0) : my_value((V)v), my_key(index_to_key<K>()(i)) {
+    }
+    void print_val() const {
+        REMARK("MyKeyWithBrokenMessageKey{");print_my_value(my_key); REMARK(","); print_my_value(my_value);REMARK("}");
+    }
+    operator int() const { return (int)my_value; }
+    K key() const {
+        ASSERT(false, "The method should never be called");
+        return K();
+    }
+};
+
+template<typename K, typename V>
+struct MyMessageKeyWithoutKeyMethod {
+    V my_value;
+    K my_message_key;
+    MyMessageKeyWithoutKeyMethod(int i=0, int v = 0) : my_value((V)v), my_message_key(index_to_key<K>()(i)) {
+    }
+    void print_val() const {
+        REMARK("MyMessageKeyWithoutKeyMethod{");print_my_value(my_message_key); REMARK(","); print_my_value(my_value);REMARK("}");
+    }
+    operator int() const { return (int)my_value; }
+#if __TBB_COMPLICATED_ADL_BROKEN
+    const K& key() const { return my_message_key; }
+#endif
+    //K key() const; // Do not define
+};
+
+// Overload for MyMessageKeyWithoutKeyMethod
+template <typename K, typename V>
+K key_from_message(const MyMessageKeyWithoutKeyMethod<typename tbb::internal::strip<K>::type, V> &m) {
+    return m.my_message_key;
+}
+
+
 // pattern for creating values in the tag_matching and key_matching, given an integer and the index in the tuple
 template<typename TT, size_t INDEX>
 struct make_thingie {
@@ -108,17 +187,10 @@ struct make_thingie {
     }
 };
 
-template<typename K, typename V, size_t INDEX>
-struct make_thingie<MyKeyFirst<K,V>, INDEX> {
-    MyKeyFirst<K,V> operator()(int const &i) {
-        return MyKeyFirst<K,V>(i, i*(INDEX+1));
-    }
-};
-
-template<typename K, typename V, size_t INDEX>
-struct make_thingie<MyKeySecond<K,V>, INDEX> {
-    MyKeySecond<K,V> operator()(int const &i) {
-        return MyKeySecond<K,V>(i, i*(INDEX+1));
+template<template <typename, typename> class T, typename K, typename V, size_t INDEX>
+struct make_thingie<T<K,V>, INDEX> {
+    T<K,V> operator()(int const &i) {
+        return T<K,V>(i, i*(INDEX+1));
     }
 };
 
@@ -717,6 +789,11 @@ public:
     static const char* name() {return "MyKeySecond<K,V>"; }
 };
 
+// The additional policy to differ message based key matching from usual key matching. 
+// It only has sence for the test because join_node is created with the key_matching policy for the both cases.
+template <typename K, typename KHash = tbb::tbb_hash_compare<typename tbb::internal::strip<K>::type > >
+struct message_based_key_matching {};
+
 // test for key_matching
 template<class JP>
 struct is_key_matching_join {
@@ -725,6 +802,11 @@ struct is_key_matching_join {
 };
 template<class K, class KHash>
 struct is_key_matching_join<tbb::flow::key_matching<K,KHash> > {
+    static const bool value = true;
+    typedef K key_type;
+};
+template<class K, class KHash>
+struct is_key_matching_join<message_based_key_matching<K,KHash> > {
     static const bool value = true;
     typedef K key_type;
 };
@@ -791,7 +873,18 @@ public:
     }
 };
 
-// allocator for join_node.  This is specialized for tag_matching joins because they  require a variable number
+template <class JP>
+struct filter_out_message_based_key_matching {
+    typedef JP policy;
+};
+
+template <typename K, typename KHash>
+struct filter_out_message_based_key_matching<message_based_key_matching<K, KHash> > {
+    // To have message based key matching in join_node, the key_matchig policy should be specified.
+    typedef tbb::flow::key_matching<K, KHash> policy;
+};
+
+// allocator for join_node.  This is specialized for tag_matching and key_matching joins because they require a variable number
 // of tag_value methods passed to the constructor
 
 template<int N, typename JType, class JP>
@@ -1735,10 +1828,10 @@ static void test() {
 template<
       template<typename, class > class TestType,  // serial_test or parallel_test
       typename OutputTupleType,           // type of the output of the join
-      class J>                 // graph_buffer_policy (reserving, queueing or tag_matching)
+      class J>                 // graph_buffer_policy (reserving, queueing, tag_matching or key_matching)
 class generate_test {
 public:
-    typedef tbb::flow::join_node<OutputTupleType,J> join_node_type;
+    typedef tbb::flow::join_node<OutputTupleType,typename filter_out_message_based_key_matching<J>::policy> join_node_type;
     static void do_test() {
         TestType<join_node_type,J>::test();
     }
@@ -2188,15 +2281,15 @@ int TestMain() {
        generate_test<serial_test,tbb::flow::tuple<MyKeyFirst<int,double>,MyKeySecond<int,float> >,tbb::flow::key_matching<int> >::do_test();
        generate_test<serial_test,tbb::flow::tuple<MyKeyFirst<std::string,double>,MyKeySecond<std::string,float> >,tbb::flow::key_matching<std::string> >::do_test();
 #if MAX_TUPLE_TEST_SIZE >= 3
-       generate_test<serial_test,tbb::flow::tuple<MyKeyFirst<std::string,double>,MyKeySecond<std::string,float>, MyKeyFirst<std::string, int> >,tbb::flow::key_matching<std::string&> >::do_test();
+       generate_test<serial_test,tbb::flow::tuple<MyKeyFirst<std::string,double>,MyKeySecond<std::string,float>, MyKeyWithBrokenMessageKey<std::string, int> >,tbb::flow::key_matching<std::string&> >::do_test();
 #endif
 #if MAX_TUPLE_TEST_SIZE >= 7
        generate_test<serial_test,tbb::flow::tuple<
            MyKeyFirst<std::string,double>,
-           MyKeySecond<std::string,int>,
+           MyKeyWithBrokenMessageKey<std::string,int>,
            MyKeyFirst<std::string, int>,
            MyKeySecond<std::string,size_t>,
-           MyKeyFirst<std::string, int>,
+           MyKeyWithBrokenMessageKey<std::string, int>,
            MyKeySecond<std::string,short>,
            MyKeySecond<std::string,threebyte>
         > ,tbb::flow::key_matching<std::string&> >::do_test();
@@ -2210,15 +2303,54 @@ int TestMain() {
            MyKeyFirst<std::string,double>,
            MyKeySecond<std::string,int>,
            MyKeyFirst<std::string, int>,
-           MyKeySecond<std::string,size_t>,
-           MyKeyFirst<std::string, int>,
+           MyKeyWithBrokenMessageKey<std::string,size_t>,
+           MyKeyWithBrokenMessageKey<std::string, int>,
            MyKeySecond<std::string,short>,
            MyKeySecond<std::string,threebyte>,
            MyKeyFirst<std::string, int>,
            MyKeySecond<std::string,threebyte>,
-           MyKeySecond<std::string,size_t>
+           MyKeyWithBrokenMessageKey<std::string,size_t>
         > ,tbb::flow::key_matching<std::string&> >::do_test();
 #endif
+
+        REMARK("message based key_matching\n");
+       generate_test<serial_test,tbb::flow::tuple<MyMessageKeyWithBrokenKey<int,double>,MyMessageKeyWithoutKey<int,float> >,message_based_key_matching<int> >::do_test();
+       generate_test<serial_test,tbb::flow::tuple<MyMessageKeyWithoutKeyMethod<std::string,double>,MyMessageKeyWithBrokenKey<std::string,float> >,message_based_key_matching<std::string> >::do_test();
+#if !__TBB_MIC_OFFLOAD_TEST_COMPILATION_BROKEN
+#if MAX_TUPLE_TEST_SIZE >= 3
+       generate_test<serial_test,tbb::flow::tuple<MyMessageKeyWithoutKey<std::string,double>,MyMessageKeyWithoutKeyMethod<std::string,float>,MyMessageKeyWithBrokenKey<std::string, int> >,message_based_key_matching<std::string&> >::do_test();
+#endif
+#if MAX_TUPLE_TEST_SIZE >= 7
+       generate_test<serial_test,tbb::flow::tuple<
+           MyMessageKeyWithoutKey<std::string,double>,
+           MyMessageKeyWithoutKeyMethod<std::string,int>,
+           MyMessageKeyWithBrokenKey<std::string, int>,
+           MyMessageKeyWithoutKey<std::string,size_t>,
+           MyMessageKeyWithoutKeyMethod<std::string, int>,
+           MyMessageKeyWithBrokenKey<std::string,short>,
+           MyMessageKeyWithoutKey<std::string,threebyte>
+        > ,message_based_key_matching<std::string&> >::do_test();
+#endif
+
+       generate_test<parallel_test,tbb::flow::tuple<MyMessageKeyWithBrokenKey<int,double>,MyMessageKeyWithoutKey<int,float> >,message_based_key_matching<int> >::do_test();
+       generate_test<parallel_test,tbb::flow::tuple<MyMessageKeyWithoutKeyMethod<int,double>,MyMessageKeyWithBrokenKey<int,float> >,message_based_key_matching<int&> >::do_test();
+       generate_test<parallel_test,tbb::flow::tuple<MyMessageKeyWithoutKey<std::string,double>,MyMessageKeyWithoutKeyMethod<std::string,float> >,message_based_key_matching<std::string&> >::do_test();
+
+#if MAX_TUPLE_TEST_SIZE >= 10
+       generate_test<parallel_test,tbb::flow::tuple<
+           MyMessageKeyWithoutKeyMethod<std::string,double>,
+           MyMessageKeyWithBrokenKey<std::string,int>,
+           MyMessageKeyWithoutKey<std::string, int>,
+           MyMessageKeyWithoutKeyMethod<std::string,size_t>,
+           MyMessageKeyWithBrokenKey<std::string, int>,
+           MyMessageKeyWithoutKeyMethod<std::string,short>,
+           MyMessageKeyWithoutKeyMethod<std::string,threebyte>,
+           MyMessageKeyWithBrokenKey<std::string, int>,
+           MyMessageKeyWithoutKeyMethod<std::string,threebyte>,
+           MyMessageKeyWithBrokenKey<std::string,size_t>
+        > ,message_based_key_matching<std::string&> >::do_test();
+#endif
+#endif /* __TBB_MIC_OFFLOAD_TEST_COMPILATION_BROKEN */
 
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
    REMARK("test queueing extract\n");

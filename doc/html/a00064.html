@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::filter Class Reference</title>
+<title>tbb::flow::interface8::default_opencl_factory Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,106 +33,42 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><a class="el" href="a00064.html">filter</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><a class="el" href="a00064.html">default_opencl_factory</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#pro-static-attribs">Static Protected Attributes</a> &#124;
-<a href="a00289.html">List of all members</a>  </div>
+<a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="a00417.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::filter Class Reference<div class="ingroups"><a class="el" href="a00256.html">Algorithms</a></div></div>  </div>
+<div class="title">tbb::flow::interface8::default_opencl_factory Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-
-<p>A stage in a pipeline.  
- <a href="a00064.html#details">More...</a></p>
-
-<p><code>#include &lt;pipeline.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::filter:</div>
+Inheritance diagram for tbb::flow::interface8::default_opencl_factory:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00064.png" usemap="#tbb::filter_map" alt=""/>
-  <map id="tbb::filter_map" name="tbb::filter_map">
-<area href="a00166.html" title="A stage in a pipeline served by a user thread. " alt="tbb::thread_bound_filter" shape="rect" coords="0,112,145,136"/>
+  <img src="a00064.png" usemap="#tbb::flow::interface8::default_opencl_factory_map" alt=""/>
+  <map id="tbb::flow::interface8::default_opencl_factory_map" name="tbb::flow::interface8::default_opencl_factory_map">
+<area href="a00123.html" alt="tbb::flow::interface8::opencl_factory&lt; default_opencl_factory_device_filter &gt;" shape="rect" coords="0,0,443,24"/>
 </map>
  </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-static-attribs"></a>
-Static Protected Attributes</h2></td></tr>
-<tr class="memitem:ae9dab2e01b0963b341ab04b59eec1475"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae9dab2e01b0963b341ab04b59eec1475"></a>
-static const unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00064.html#ae9dab2e01b0963b341ab04b59eec1475">filter_is_serial</a> = 0x1</td></tr>
-<tr class="memdesc:ae9dab2e01b0963b341ab04b59eec1475"><td class="mdescLeft">&#160;</td><td class="mdescRight">The lowest bit 0 is for parallel vs. serial. <br/></td></tr>
-<tr class="separator:ae9dab2e01b0963b341ab04b59eec1475"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a091fcf6abc79edfa5c8bf01f742e2392"><td class="memItemLeft" align="right" valign="top">static const unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00064.html#a091fcf6abc79edfa5c8bf01f742e2392">filter_is_out_of_order</a> = 0x1&lt;&lt;4</td></tr>
-<tr class="memdesc:a091fcf6abc79edfa5c8bf01f742e2392"><td class="mdescLeft">&#160;</td><td class="mdescRight">4th bit distinguishes ordered vs unordered filters.  <a href="#a091fcf6abc79edfa5c8bf01f742e2392">More...</a><br/></td></tr>
-<tr class="separator:a091fcf6abc79edfa5c8bf01f742e2392"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1382f216bd094064a18eb48ecc43c86b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1382f216bd094064a18eb48ecc43c86b"></a>
-static const unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00064.html#a1382f216bd094064a18eb48ecc43c86b">filter_is_bound</a> = 0x1&lt;&lt;5</td></tr>
-<tr class="memdesc:a1382f216bd094064a18eb48ecc43c86b"><td class="mdescLeft">&#160;</td><td class="mdescRight">5th bit distinguishes thread-bound and regular filters. <br/></td></tr>
-<tr class="separator:a1382f216bd094064a18eb48ecc43c86b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6645ec56872b6ba2056dcaa467e292f7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6645ec56872b6ba2056dcaa467e292f7"></a>
-static const unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00064.html#a6645ec56872b6ba2056dcaa467e292f7">filter_may_emit_null</a> = 0x1&lt;&lt;6</td></tr>
-<tr class="memdesc:a6645ec56872b6ba2056dcaa467e292f7"><td class="mdescLeft">&#160;</td><td class="mdescRight">6th bit marks input filters emitting small objects <br/></td></tr>
-<tr class="separator:a6645ec56872b6ba2056dcaa467e292f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aab9689e23a96c6c9bf1c8caae74d92ee"><td class="memItemLeft" align="right" valign="top">static const unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00064.html#aab9689e23a96c6c9bf1c8caae74d92ee">exact_exception_propagation</a></td></tr>
-<tr class="memdesc:aab9689e23a96c6c9bf1c8caae74d92ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">7th bit defines exception propagation mode expected by the application.  <a href="#aab9689e23a96c6c9bf1c8caae74d92ee">More...</a><br/></td></tr>
-<tr class="separator:aab9689e23a96c6c9bf1c8caae74d92ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
+Public Member Functions</h2></td></tr>
+<tr class="memitem:a52270144efe07f9d4fa8c9486c3e9427"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a52270144efe07f9d4fa8c9486c3e9427"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>default_opencl_factory</b> (<a class="el" href="a00125.html">opencl_graph</a> &amp;g)</td></tr>
+<tr class="separator:a52270144efe07f9d4fa8c9486c3e9427"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_a00123"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_a00123')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="a00123.html">tbb::flow::interface8::opencl_factory&lt; default_opencl_factory_device_filter &gt;</a></td></tr>
+<tr class="memitem:a76e91c81ad0d6db57f485dd30621ce8b inherit pub_methods_a00123"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a76e91c81ad0d6db57f485dd30621ce8b"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_factory</b> (<a class="el" href="a00125.html">opencl_graph</a> &amp;g)</td></tr>
+<tr class="separator:a76e91c81ad0d6db57f485dd30621ce8b inherit pub_methods_a00123"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ade83ca9be5a4c0c9855978d6fbbc472c inherit pub_methods_a00123"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ade83ca9be5a4c0c9855978d6fbbc472c"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>init</b> (const <a class="el" href="a00121.html">opencl_device_list</a> &amp;device_list)</td></tr>
+<tr class="separator:ade83ca9be5a4c0c9855978d6fbbc472c inherit pub_methods_a00123"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>A stage in a pipeline. </p>
-</div><h2 class="groupheader">Member Data Documentation</h2>
-<a class="anchor" id="aab9689e23a96c6c9bf1c8caae74d92ee"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">const unsigned char tbb::filter::exact_exception_propagation</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">=</div>
-<div class="line"><span class="preprocessor">#if TBB_USE_CAPTURED_EXCEPTION</span></div>
-<div class="line"><span class="preprocessor">            0x0</span></div>
-</div><!-- fragment -->
-<p>7th bit defines exception propagation mode expected by the application. </p>
-
-</div>
-</div>
-<a class="anchor" id="a091fcf6abc79edfa5c8bf01f742e2392"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">const unsigned char tbb::filter::filter_is_out_of_order = 0x1&lt;&lt;4</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>4th bit distinguishes ordered vs unordered filters. </p>
-<p>The bit was not set for parallel filters in TBB 2.1 and earlier, but is_ordered() function always treats parallel filters as out of order. </p>
-
-</div>
-</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>pipeline.h</li>
+<li>flow_graph_opencl_node.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

@@ -43,7 +43,7 @@
 
 namespace tbb {
 namespace serial {
-namespace interface7 {
+namespace interface9 {
 
 // parallel_for serial annotated implementation
 
@@ -104,28 +104,37 @@ void start_for< Range, Body, Partitioner >::execute() {
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
 void parallel_for( const Range& range, const Body& body ) {
-    serial::interface7::start_for<Range,Body,const __TBB_DEFAULT_PARTITIONER>::run(range,body,__TBB_DEFAULT_PARTITIONER());
+    serial::interface9::start_for<Range,Body,const __TBB_DEFAULT_PARTITIONER>::run(range,body,__TBB_DEFAULT_PARTITIONER());
 }
 
 //! Parallel iteration over range with simple partitioner.
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
 void parallel_for( const Range& range, const Body& body, const simple_partitioner& partitioner ) {
-    serial::interface7::start_for<Range,Body,const simple_partitioner>::run(range,body,partitioner);
+    serial::interface9::start_for<Range,Body,const simple_partitioner>::run(range,body,partitioner);
 }
 
 //! Parallel iteration over range with auto_partitioner.
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
 void parallel_for( const Range& range, const Body& body, const auto_partitioner& partitioner ) {
-    serial::interface7::start_for<Range,Body,const auto_partitioner>::run(range,body,partitioner);
+    serial::interface9::start_for<Range,Body,const auto_partitioner>::run(range,body,partitioner);
 }
+
+#if TBB_PREVIEW_STATIC_PARTITIONER
+//! Parallel iteration over range with static_partitioner.
+/** @ingroup algorithms **/
+template<typename Range, typename Body>
+void parallel_for( const Range& range, const Body& body, const static_partitioner& partitioner ) {
+    serial::interface9::start_for<Range,Body,const static_partitioner>::run(range,body,partitioner);
+}
+#endif
 
 //! Parallel iteration over range with affinity_partitioner.
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
 void parallel_for( const Range& range, const Body& body, affinity_partitioner& partitioner ) {
-    serial::interface7::start_for<Range,Body,affinity_partitioner>::run(range,body,partitioner);
+    serial::interface9::start_for<Range,Body,affinity_partitioner>::run(range,body,partitioner);
 }
 
 //! Implementation of parallel iteration over stepped range of integers with explicit step and partitioner (ignored)
@@ -160,6 +169,13 @@ template <typename Index, typename Function>
 void parallel_for(Index first, Index last, Index step, const Function& f, const auto_partitioner& p) {
     parallel_for_impl<Index,Function,const auto_partitioner>(first, last, step, f, p);
 }
+#if TBB_PREVIEW_STATIC_PARTITIONER
+//! Parallel iteration over a range of integers with explicit step and static partitioner
+template <typename Index, typename Function>
+void parallel_for(Index first, Index last, Index step, const Function& f, const static_partitioner& p) {
+    parallel_for_impl<Index,Function,const static_partitioner>(first, last, step, f, p);
+}
+#endif
 //! Parallel iteration over a range of integers with explicit step and affinity partitioner
 template <typename Index, typename Function>
 void parallel_for(Index first, Index last, Index step, const Function& f, affinity_partitioner& p) {
@@ -181,20 +197,27 @@ template <typename Index, typename Function>
     void parallel_for(Index first, Index last, const Function& f, const auto_partitioner& p) {
     parallel_for_impl<Index,Function,const auto_partitioner>(first, last, static_cast<Index>(1), f, p);
 }
+#if TBB_PREVIEW_STATIC_PARTITIONER
+//! Parallel iteration over a range of integers with default step and static partitioner
+template <typename Index, typename Function>
+void parallel_for(Index first, Index last, const Function& f, const static_partitioner& p) {
+    parallel_for_impl<Index,Function,const static_partitioner>(first, last, static_cast<Index>(1), f, p);
+}
+#endif
 //! Parallel iteration over a range of integers with default step and affinity_partitioner
 template <typename Index, typename Function>
 void parallel_for(Index first, Index last, const Function& f, affinity_partitioner& p) {
     parallel_for_impl(first, last, static_cast<Index>(1), f, p);
 }
 
-} // namespace interface7
+} // namespace interfaceX
 
-using interface7::parallel_for;
+using interface9::parallel_for;
 
 } // namespace serial
 
 #ifndef __TBB_NORMAL_EXECUTION
-using serial::interface7::parallel_for;
+using serial::interface9::parallel_for;
 #endif
 
 } // namespace tbb

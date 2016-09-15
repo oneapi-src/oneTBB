@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::bad_last_alloc Class Reference</title>
+<title>tbb::atomic&lt; void * &gt; Struct Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,41 +33,50 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><a class="el" href="a00022.html">bad_last_alloc</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><a class="el" href="a00022.html">atomic< void * ></a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="a00318.html">List of all members</a>  </div>
+<a href="a00300.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::bad_last_alloc Class Reference</div>  </div>
+<div class="title">tbb::atomic&lt; void * &gt; Struct Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Exception for concurrent containers.  
+<p>Specialization for <a class="el" href="a00022.html" title="Specialization for atomic&lt;void*&gt;, for sake of not allowing arithmetic or operator-&gt;. ">atomic&lt;void*&gt;</a>, for sake of not allowing arithmetic or operator-&gt;.  
  <a href="a00022.html#details">More...</a></p>
 
-<p><code>#include &lt;tbb_exception.h&gt;</code></p>
+<p><code>#include &lt;atomic.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::bad_last_alloc:</div>
+Inheritance diagram for tbb::atomic&lt; void * &gt;:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00022.png" usemap="#tbb::bad_last_alloc_map" alt=""/>
-  <map id="tbb::bad_last_alloc_map" name="tbb::bad_last_alloc_map">
+  <img src="a00022.png" usemap="#tbb::atomic&lt; void * &gt;_map" alt=""/>
+  <map id="tbb::atomic&lt; void * &gt;_map" name="tbb::atomic&lt; void * &gt;_map">
 </map>
  </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a3dd95f1a9f15f50eed6a79c079b25d32"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3dd95f1a9f15f50eed6a79c079b25d32"></a>
-const char *&#160;</td><td class="memItemRight" valign="bottom"><b>what</b> () const   throw ()</td></tr>
-<tr class="separator:a3dd95f1a9f15f50eed6a79c079b25d32"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a744970055554db56a922b83dd1125dcf"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a744970055554db56a922b83dd1125dcf"></a>
+constexpr&#160;</td><td class="memItemRight" valign="bottom"><b>atomic</b> (void *arg)</td></tr>
+<tr class="separator:a744970055554db56a922b83dd1125dcf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3da2906b224154d9961054f07b2e310b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3da2906b224154d9961054f07b2e310b"></a>
+void *&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (void *rhs)</td></tr>
+<tr class="separator:a3da2906b224154d9961054f07b2e310b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8cb22d05fe655337f6129dc8f3ab6783"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8cb22d05fe655337f6129dc8f3ab6783"></a>
+<a class="el" href="a00021.html">atomic</a>&lt; void * &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="a00021.html">atomic</a>&lt; void * &gt; &amp;rhs)</td></tr>
+<tr class="separator:a8cb22d05fe655337f6129dc8f3ab6783"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Exception for concurrent containers. </p>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>tbb_exception.h</li>
+<div class="textblock"><h3>template&lt;&gt;<br/>
+struct tbb::atomic&lt; void * &gt;</h3>
+
+<p>Specialization for <a class="el" href="a00022.html" title="Specialization for atomic&lt;void*&gt;, for sake of not allowing arithmetic or operator-&gt;. ">atomic&lt;void*&gt;</a>, for sake of not allowing arithmetic or operator-&gt;. </p>
+</div><hr/>The documentation for this struct was generated from the following file:<ul>
+<li>atomic.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

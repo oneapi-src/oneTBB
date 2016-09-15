@@ -30,7 +30,7 @@
 #error Do not #include this internal file directly; use public TBB headers instead.
 #endif
 
-// included in namespace tbb::flow::interface8::internal
+// included in namespace tbb::flow::interfaceX::internal
 
 // elements in the table are a simple list; we need pointer to next element to
 // traverse the chain

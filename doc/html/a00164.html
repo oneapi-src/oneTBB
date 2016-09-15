@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::internal::tbb_exception_ptr Class Reference</title>
+<title>tbb::queuing_mutex::scoped_lock Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,77 +33,89 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><b>internal</b></li><li class="navelem"><a class="el" href="a00164.html">tbb_exception_ptr</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><a class="el" href="a00142.html">queuing_mutex</a></li><li class="navelem"><a class="el" href="a00164.html">scoped_lock</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
-<a href="a00416.html">List of all members</a>  </div>
+<a href="a00326.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::internal::tbb_exception_ptr Class Reference</div>  </div>
+<div class="title">tbb::queuing_mutex::scoped_lock Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Exception container that preserves the exact copy of the original exception.  
+<p>The scoped locking pattern.  
  <a href="a00164.html#details">More...</a></p>
 
-<p><code>#include &lt;tbb_exception.h&gt;</code></p>
+<p><code>#include &lt;queuing_mutex.h&gt;</code></p>
+<div class="dynheader">
+Inheritance diagram for tbb::queuing_mutex::scoped_lock:</div>
+<div class="dyncontent">
+ <div class="center">
+  <img src="a00164.png" usemap="#tbb::queuing_mutex::scoped_lock_map" alt=""/>
+  <map id="tbb::queuing_mutex::scoped_lock_map" name="tbb::queuing_mutex::scoped_lock_map">
+</map>
+ </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a38d3ca480e2758a67bcd7427b156daae"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00164.html#a38d3ca480e2758a67bcd7427b156daae">destroy</a> ()  throw ()</td></tr>
-<tr class="memdesc:a38d3ca480e2758a67bcd7427b156daae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroys this objects.  <a href="#a38d3ca480e2758a67bcd7427b156daae">More...</a><br/></td></tr>
-<tr class="separator:a38d3ca480e2758a67bcd7427b156daae"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1713aa9a6a3850049d34358397a8ed81"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1713aa9a6a3850049d34358397a8ed81"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00164.html#a1713aa9a6a3850049d34358397a8ed81">throw_self</a> ()</td></tr>
-<tr class="memdesc:a1713aa9a6a3850049d34358397a8ed81"><td class="mdescLeft">&#160;</td><td class="mdescRight">Throws the contained exception . <br/></td></tr>
-<tr class="separator:a1713aa9a6a3850049d34358397a8ed81"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
-Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a83d4cb04d89ed11b5e030fe4db2d5e5f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a83d4cb04d89ed11b5e030fe4db2d5e5f"></a>
-static <a class="el" href="a00164.html">tbb_exception_ptr</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>allocate</b> ()</td></tr>
-<tr class="separator:a83d4cb04d89ed11b5e030fe4db2d5e5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae54ded5f55ad39805e6cb967fc710346"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae54ded5f55ad39805e6cb967fc710346"></a>
-static <a class="el" href="a00164.html">tbb_exception_ptr</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>allocate</b> (const <a class="el" href="a00163.html">tbb_exception</a> &amp;tag)</td></tr>
-<tr class="separator:ae54ded5f55ad39805e6cb967fc710346"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abfbea91401d2594deb04ea331734171c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abfbea91401d2594deb04ea331734171c"></a>
-static <a class="el" href="a00164.html">tbb_exception_ptr</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00164.html#abfbea91401d2594deb04ea331734171c">allocate</a> (<a class="el" href="a00037.html">captured_exception</a> &amp;src)</td></tr>
-<tr class="memdesc:abfbea91401d2594deb04ea331734171c"><td class="mdescLeft">&#160;</td><td class="mdescRight">This overload uses move semantics (i.e. it empties src) <br/></td></tr>
-<tr class="separator:abfbea91401d2594deb04ea331734171c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0afe0107eb0aae613e726f67624d2fca"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00164.html#a0afe0107eb0aae613e726f67624d2fca">scoped_lock</a> ()</td></tr>
+<tr class="memdesc:a0afe0107eb0aae613e726f67624d2fca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct lock that has not acquired a mutex.  <a href="#a0afe0107eb0aae613e726f67624d2fca">More...</a><br/></td></tr>
+<tr class="separator:a0afe0107eb0aae613e726f67624d2fca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa82d9da0dcfe5b21f1c08473f8223105"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa82d9da0dcfe5b21f1c08473f8223105"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00164.html#aa82d9da0dcfe5b21f1c08473f8223105">scoped_lock</a> (<a class="el" href="a00142.html">queuing_mutex</a> &amp;m)</td></tr>
+<tr class="memdesc:aa82d9da0dcfe5b21f1c08473f8223105"><td class="mdescLeft">&#160;</td><td class="mdescRight">Acquire lock on given mutex. <br/></td></tr>
+<tr class="separator:aa82d9da0dcfe5b21f1c08473f8223105"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a469ec43836a8dd250ce0a22b02945630"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a469ec43836a8dd250ce0a22b02945630"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00164.html#a469ec43836a8dd250ce0a22b02945630">~scoped_lock</a> ()</td></tr>
+<tr class="memdesc:a469ec43836a8dd250ce0a22b02945630"><td class="mdescLeft">&#160;</td><td class="mdescRight">Release lock (if lock is held). <br/></td></tr>
+<tr class="separator:a469ec43836a8dd250ce0a22b02945630"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abf8aa7ccd48d54dcb53665700a17d02a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abf8aa7ccd48d54dcb53665700a17d02a"></a>
+void __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00164.html#abf8aa7ccd48d54dcb53665700a17d02a">acquire</a> (<a class="el" href="a00142.html">queuing_mutex</a> &amp;m)</td></tr>
+<tr class="memdesc:abf8aa7ccd48d54dcb53665700a17d02a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Acquire lock on given mutex. <br/></td></tr>
+<tr class="separator:abf8aa7ccd48d54dcb53665700a17d02a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab4800ba9e743cd91f152036a6689b0e9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab4800ba9e743cd91f152036a6689b0e9"></a>
+bool __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00164.html#ab4800ba9e743cd91f152036a6689b0e9">try_acquire</a> (<a class="el" href="a00142.html">queuing_mutex</a> &amp;m)</td></tr>
+<tr class="memdesc:ab4800ba9e743cd91f152036a6689b0e9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Acquire lock on given mutex if free (i.e. non-blocking) <br/></td></tr>
+<tr class="separator:ab4800ba9e743cd91f152036a6689b0e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaa065e48b428b8d43e9bb931ba9e6f6c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aaa065e48b428b8d43e9bb931ba9e6f6c"></a>
+void __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00164.html#aaa065e48b428b8d43e9bb931ba9e6f6c">release</a> ()</td></tr>
+<tr class="memdesc:aaa065e48b428b8d43e9bb931ba9e6f6c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Release lock. <br/></td></tr>
+<tr class="separator:aaa065e48b428b8d43e9bb931ba9e6f6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Exception container that preserves the exact copy of the original exception. </p>
-<p>This class can be used only when the appropriate runtime support (mandated by C++0x) is present </p>
-</div><h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="a38d3ca480e2758a67bcd7427b156daae"></a>
+<div class="textblock"><p>The scoped locking pattern. </p>
+<p>It helps to avoid the common problem of forgetting to release lock. It also nicely provides the "node" for queuing locks. </p>
+</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a class="anchor" id="a0afe0107eb0aae613e726f67624d2fca"></a>
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void tbb::internal::tbb_exception_ptr::destroy </td>
+          <td class="memname">tbb::queuing_mutex::scoped_lock::scoped_lock </td>
           <td>(</td>
           <td class="paramname">)</td><td></td>
           <td></td>
         </tr>
-        <tr>
-          <td align="right">throw </td><td>(</td><td colspan="2"></td>
-        </tr>
-        <tr>
-          <td align="right"></td><td>)</td><td></td><td></td>
-        </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
-<p>Destroys this objects. </p>
-<p>Note that objects of this type can be created only by the allocate() method. </p>
+<p>Construct lock that has not acquired a mutex. </p>
+<p>Equivalent to zero-initialization of *this. </p>
 
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>tbb_exception.h</li>
+<li>queuing_mutex.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

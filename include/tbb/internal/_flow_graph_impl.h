@@ -25,7 +25,7 @@
 #error Do not #include this internal file directly; use public TBB headers instead.
 #endif
 
-// included in namespace tbb::flow::interface8 (in flow_graph.h)
+// included in namespace tbb::flow::interfaceX (in flow_graph.h)
 
 namespace internal {
 
@@ -151,6 +151,15 @@ namespace internal {
         B body;
     };
 
+#if __TBB_PREVIEW_ASYNC_NODE
+template< typename T, typename = typename T::async_gateway_type >
+void set_async_gateway(T *body, void *g) {
+    body->set_async_gateway(static_cast<typename T::async_gateway_type *>(g));
+}
+
+void set_async_gateway(...) { }
+#endif
+
     //! function_body that takes an Input and a set of output ports
     template<typename Input, typename OutputSet>
     class multifunction_body : tbb::internal::no_assign {
@@ -158,10 +167,13 @@ namespace internal {
         virtual ~multifunction_body () {}
         virtual void operator()(const Input &/* input*/, OutputSet &/*oset*/) = 0;
         virtual multifunction_body* clone() = 0;
+#if __TBB_PREVIEW_ASYNC_NODE
+        virtual void set_gateway(void *gateway) = 0;
+#endif
     };
 
     //! leaf for multifunction.  OutputSet can be a std::tuple or a vector.
-    template<typename Input, typename OutputSet, typename B>
+    template<typename Input, typename OutputSet, typename B >
     class multifunction_body_leaf : public multifunction_body<Input, OutputSet> {
     public:
         multifunction_body_leaf(const B &_body) : body(_body) { }
@@ -169,9 +181,16 @@ namespace internal {
             body(input, oset); // body may explicitly put() to one or more of oset.
         }
         B get_body() { return body; }
+		
+#if __TBB_PREVIEW_ASYNC_NODE
+        /*override*/  void set_gateway(void *gateway) {
+           set_async_gateway(&body, gateway);
+        }
+#endif
         /*override*/ multifunction_body_leaf* clone() {
             return new multifunction_body_leaf<Input, OutputSet,B>(body);
         }
+
     private:
         B body;
     };
@@ -214,7 +233,7 @@ public:
     type_to_key_function_body_leaf( const B &_body ) : body(_body) { }
 
     /*override*/const Output& operator()(const Input &i) {
-        return const_cast<const Output&>(body(i));
+        return body(i);
     }
 
     B get_body() { return body; }
@@ -226,32 +245,6 @@ public:
 private:
     B body;
 };
-
-#if __TBB_PREVIEW_ASYNC_NODE
-
-    //! A functor that takes Input and submit it to Asynchronous Activity
-    template< typename Input, typename AsyncGateway >
-    class async_body : tbb::internal::no_assign {
-    public:
-        virtual ~async_body() {}
-        virtual void operator()(const Input &output, AsyncGateway& gateway) = 0;
-        virtual async_body* clone() = 0;
-    };
-
-    //! The leaf for async_body
-    template< typename Input, typename Body, typename AsyncGateway >
-    class async_body_leaf : public async_body< Input, AsyncGateway > {
-    public:
-        async_body_leaf( const Body &_body ) : body(_body) { }
-        /*override*/ void operator()(const Input &input, AsyncGateway& gateway) { body( input, gateway ); }
-        /*override*/ async_body_leaf* clone() {
-            return new async_body_leaf< Input, Body, AsyncGateway >(body);
-        }
-        Body get_body() { return body; }
-    private:
-        Body body;
-    };
-#endif
 
 // --------------------------- end of function_body containers ------------------------
 
@@ -293,7 +286,7 @@ private:
         }
     };
 
-    //! A task that calls a node's apply_body function with no input
+    //! A task that calls a node's apply_body_bypass function with no input
     template< typename NodeType >
     class source_task_bypass : public task {
 
@@ -442,7 +435,7 @@ private:
 
                 if (msg == false) {
                     // Relinquish ownership of the edge
-                    if ( my_owner)
+                    if (my_owner)
                         src->register_successor( *my_owner );
                 } else {
                     // Retain ownership of the edge
@@ -454,14 +447,14 @@ private:
 
         // If we are removing arcs (rf_clear_edges), call clear() rather than reset().
         void reset() {
-            if(my_owner) {
+            if (my_owner) {
                 for(;;) {
                     predecessor_type *src;
                     {
-                        if(this->internal_empty()) break;
+                        if (this->internal_empty()) break;
                         src = &this->internal_pop();
                     }
-                    src->register_successor( *my_owner);
+                    src->register_successor( *my_owner );
                 }
             }
         }

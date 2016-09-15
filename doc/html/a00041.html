@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::flow::interface8::composite_node&lt; tbb::flow::tuple&lt; InputTypes...&gt;, tbb::flow::tuple&lt;&gt; &gt; Class Template Reference</title>
+<title>tbb::combinable&lt; T &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,99 +33,64 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><a class="el" href="a00041.html">composite_node< tbb::flow::tuple< InputTypes...>, tbb::flow::tuple<> ></a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><a class="el" href="a00041.html">combinable</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pro-methods">Protected Member Functions</a> &#124;
-<a href="a00365.html">List of all members</a>  </div>
+<a href="a00308.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::flow::interface8::composite_node&lt; tbb::flow::tuple&lt; InputTypes...&gt;, tbb::flow::tuple&lt;&gt; &gt; Class Template Reference</div>  </div>
+<div class="title">tbb::combinable&lt; T &gt; Class Template Reference<div class="ingroups"><a class="el" href="a00290.html">Containers</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="dynheader">
-Inheritance diagram for tbb::flow::interface8::composite_node&lt; tbb::flow::tuple&lt; InputTypes...&gt;, tbb::flow::tuple&lt;&gt; &gt;:</div>
-<div class="dyncontent">
- <div class="center">
-  <img src="a00041.png" usemap="#tbb::flow::interface8::composite_node&lt; tbb::flow::tuple&lt; InputTypes...&gt;, tbb::flow::tuple&lt;&gt; &gt;_map" alt=""/>
-  <map id="tbb::flow::interface8::composite_node&lt; tbb::flow::tuple&lt; InputTypes...&gt;, tbb::flow::tuple&lt;&gt; &gt;_map" name="tbb::flow::interface8::composite_node&lt; tbb::flow::tuple&lt; InputTypes...&gt;, tbb::flow::tuple&lt;&gt; &gt;_map">
-<area href="a00074.html" title="The base of all graph nodes. " alt="tbb::flow::interface8::graph_node" shape="rect" coords="0,56,515,80"/>
-</map>
- </div></div>
+
+<p>Thread-local storage with optional reduction.  
+ <a href="a00041.html#details">More...</a></p>
+
+<p><code>#include &lt;combinable.h&gt;</code></p>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:a11d850d39b117cb7d70e328aa3fc7e10"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a11d850d39b117cb7d70e328aa3fc7e10"></a>
-typedef tbb::flow::tuple<br class="typebreak"/>
-&lt; <a class="el" href="a00126.html">receiver</a>&lt; InputTypes &gt; &amp;... &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>input_ports_type</b></td></tr>
-<tr class="separator:a11d850d39b117cb7d70e328aa3fc7e10"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ae77a8e5617f53a0ef808b29b4b3e30df"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae77a8e5617f53a0ef808b29b4b3e30df"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>composite_node</b> (<a class="el" href="a00072.html">graph</a> &amp;g, const char *type_name=&quot;composite_node&quot;)</td></tr>
-<tr class="separator:ae77a8e5617f53a0ef808b29b4b3e30df"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a23c2e4e9448c2313386ed8cb87e38fa8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a23c2e4e9448c2313386ed8cb87e38fa8"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>composite_node</b> (<a class="el" href="a00072.html">graph</a> &amp;g)</td></tr>
-<tr class="separator:a23c2e4e9448c2313386ed8cb87e38fa8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5603b3f944107830890198ca6cda9f5f"><td class="memTemplParams" colspan="2"><a class="anchor" id="a5603b3f944107830890198ca6cda9f5f"></a>
-template&lt;typename T &gt; </td></tr>
-<tr class="memitem:a5603b3f944107830890198ca6cda9f5f"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>set_external_ports</b> (T &amp;&amp;input_ports_tuple)</td></tr>
-<tr class="separator:a5603b3f944107830890198ca6cda9f5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af3a6fb8e9af4c6c62337de253755cea7"><td class="memTemplParams" colspan="2"><a class="anchor" id="af3a6fb8e9af4c6c62337de253755cea7"></a>
-template&lt;typename... NodeTypes&gt; </td></tr>
-<tr class="memitem:af3a6fb8e9af4c6c62337de253755cea7"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>add_visible_nodes</b> (const NodeTypes &amp;...n)</td></tr>
-<tr class="separator:af3a6fb8e9af4c6c62337de253755cea7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7aacaaac085676a76cda6c448b58bfc6"><td class="memTemplParams" colspan="2"><a class="anchor" id="a7aacaaac085676a76cda6c448b58bfc6"></a>
-template&lt;typename... NodeTypes&gt; </td></tr>
-<tr class="memitem:a7aacaaac085676a76cda6c448b58bfc6"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>add_nodes</b> (const NodeTypes &amp;...n)</td></tr>
-<tr class="separator:a7aacaaac085676a76cda6c448b58bfc6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a017cce6f0d365718564d647ed037f522"><td class="memTemplParams" colspan="2"><a class="anchor" id="a017cce6f0d365718564d647ed037f522"></a>
-template&lt;typename... Nodes&gt; </td></tr>
-<tr class="memitem:a017cce6f0d365718564d647ed037f522"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>add_nodes</b> (Nodes &amp;...)</td></tr>
-<tr class="separator:a017cce6f0d365718564d647ed037f522"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a17f86295a5efe554e2b33398323f5310"><td class="memTemplParams" colspan="2"><a class="anchor" id="a17f86295a5efe554e2b33398323f5310"></a>
-template&lt;typename... Nodes&gt; </td></tr>
-<tr class="memitem:a17f86295a5efe554e2b33398323f5310"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>add_visible_nodes</b> (Nodes &amp;...)</td></tr>
-<tr class="separator:a17f86295a5efe554e2b33398323f5310"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a102afe49855ac2ac636410b7c5150ac6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a102afe49855ac2ac636410b7c5150ac6"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>set_name</b> (const char *name)</td></tr>
-<tr class="separator:a102afe49855ac2ac636410b7c5150ac6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ade4374410063e680ff6678ffae123c95"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ade4374410063e680ff6678ffae123c95"></a>
-input_ports_type&#160;</td><td class="memItemRight" valign="bottom"><b>input_ports</b> ()</td></tr>
-<tr class="separator:ade4374410063e680ff6678ffae123c95"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a39b30c90a7b5a7923c56753c5c316f95"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a39b30c90a7b5a7923c56753c5c316f95"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>extract</b> ()</td></tr>
-<tr class="separator:a39b30c90a7b5a7923c56753c5c316f95"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_methods_a00074"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_a00074')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="a00074.html">tbb::flow::interface8::graph_node</a></td></tr>
-<tr class="memitem:a01d89d46b5437dba06add102862ee690 inherit pub_methods_a00074"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a01d89d46b5437dba06add102862ee690"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>graph_node</b> (<a class="el" href="a00072.html">graph</a> &amp;g)</td></tr>
-<tr class="separator:a01d89d46b5437dba06add102862ee690 inherit pub_methods_a00074"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
-Protected Member Functions</h2></td></tr>
-<tr class="memitem:a9019670bcea16a75df225ef61dc21c95"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9019670bcea16a75df225ef61dc21c95"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>reset_node</b> (reset_flags)</td></tr>
-<tr class="separator:a9019670bcea16a75df225ef61dc21c95"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
-Additional Inherited Members</h2></td></tr>
-<tr class="inherit_header pro_attribs_a00074"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_a00074')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="a00074.html">tbb::flow::interface8::graph_node</a></td></tr>
-<tr class="memitem:add0e1e5aabc3cc184a0814752abef3bf inherit pro_attribs_a00074"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="add0e1e5aabc3cc184a0814752abef3bf"></a>
-<a class="el" href="a00072.html">graph</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>my_graph</b></td></tr>
-<tr class="separator:add0e1e5aabc3cc184a0814752abef3bf inherit pro_attribs_a00074"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acddc0494d8270126dfbec1fc1125265a inherit pro_attribs_a00074"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acddc0494d8270126dfbec1fc1125265a"></a>
-<a class="el" href="a00074.html">graph_node</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>next</b></td></tr>
-<tr class="separator:acddc0494d8270126dfbec1fc1125265a inherit pro_attribs_a00074"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a43f71ea7acfead3f6412b37cfa837329 inherit pro_attribs_a00074"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a43f71ea7acfead3f6412b37cfa837329"></a>
-<a class="el" href="a00074.html">graph_node</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>prev</b></td></tr>
-<tr class="separator:a43f71ea7acfead3f6412b37cfa837329 inherit pro_attribs_a00074"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab3c539d5731faaafd81979b207a4fa1f"><td class="memTemplParams" colspan="2"><a class="anchor" id="ab3c539d5731faaafd81979b207a4fa1f"></a>
+template&lt;typename finit &gt; </td></tr>
+<tr class="memitem:ab3c539d5731faaafd81979b207a4fa1f"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>combinable</b> (finit _finit)</td></tr>
+<tr class="separator:ab3c539d5731faaafd81979b207a4fa1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a52f00cf262d768048db72ab73c8f3ca4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a52f00cf262d768048db72ab73c8f3ca4"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00041.html#a52f00cf262d768048db72ab73c8f3ca4">~combinable</a> ()</td></tr>
+<tr class="memdesc:a52f00cf262d768048db72ab73c8f3ca4"><td class="mdescLeft">&#160;</td><td class="mdescRight">destructor <br/></td></tr>
+<tr class="separator:a52f00cf262d768048db72ab73c8f3ca4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a376f44cba71450fc18ccddaad61b76cc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a376f44cba71450fc18ccddaad61b76cc"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>combinable</b> (const <a class="el" href="a00041.html">combinable</a> &amp;other)</td></tr>
+<tr class="separator:a376f44cba71450fc18ccddaad61b76cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab011fbe2f0600900b6e1b9760d82aead"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab011fbe2f0600900b6e1b9760d82aead"></a>
+<a class="el" href="a00041.html">combinable</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="a00041.html">combinable</a> &amp;other)</td></tr>
+<tr class="separator:ab011fbe2f0600900b6e1b9760d82aead"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8ecfe80161a59f04ffd9676e79701de6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8ecfe80161a59f04ffd9676e79701de6"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>clear</b> ()</td></tr>
+<tr class="separator:a8ecfe80161a59f04ffd9676e79701de6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae47f982dbd396d225f0f546e60690d42"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae47f982dbd396d225f0f546e60690d42"></a>
+T &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>local</b> ()</td></tr>
+<tr class="separator:ae47f982dbd396d225f0f546e60690d42"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2433d2b3b53b9979d0b3bb2a175abc9b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2433d2b3b53b9979d0b3bb2a175abc9b"></a>
+T &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>local</b> (bool &amp;exists)</td></tr>
+<tr class="separator:a2433d2b3b53b9979d0b3bb2a175abc9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3d564f6d480e0c7fe8e756d1de1cf0e2"><td class="memTemplParams" colspan="2"><a class="anchor" id="a3d564f6d480e0c7fe8e756d1de1cf0e2"></a>
+template&lt;typename combine_func_t &gt; </td></tr>
+<tr class="memitem:a3d564f6d480e0c7fe8e756d1de1cf0e2"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><b>combine</b> (combine_func_t f_combine)</td></tr>
+<tr class="separator:a3d564f6d480e0c7fe8e756d1de1cf0e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aadadee714004d977f0e95a479bfb80ac"><td class="memTemplParams" colspan="2"><a class="anchor" id="aadadee714004d977f0e95a479bfb80ac"></a>
+template&lt;typename combine_func_t &gt; </td></tr>
+<tr class="memitem:aadadee714004d977f0e95a479bfb80ac"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>combine_each</b> (combine_func_t f_combine)</td></tr>
+<tr class="separator:aadadee714004d977f0e95a479bfb80ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<hr/>The documentation for this class was generated from the following file:<ul>
-<li><a class="el" href="a00197.html">flow_graph.h</a></li>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><h3>template&lt;typename T&gt;<br/>
+class tbb::combinable&lt; T &gt;</h3>
+
+<p>Thread-local storage with optional reduction. </p>
+</div><hr/>The documentation for this class was generated from the following file:<ul>
+<li>combinable.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

@@ -2,6 +2,35 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 4.4 Update 2
+TBB_INTERFACE_VERSION == 9002
+
+Changes (w.r.t. Intel TBB 4.4 Update 1):
+
+- Improved interoperability with Intel(R) OpenMP RTL (libiomp) on Linux:
+    OpenMP affinity settings do not affect the default number of threads
+    used in the task scheduler. Intel(R) C++ Compiler 16.0 Update 1
+    or later is required.
+- Added a new flow graph example with different implementations of the
+    Cholesky Factorization algorithm.
+
+Preview Features:
+
+- Added template class opencl_node to the flow graph API. It allows a
+    flow graph to offload computations to OpenCL* devices.
+- Extended join_node to use type-specified message keys. It simplifies
+    the API of the node by obtaining message keys via functions
+    associated with the message type (instead of node ports).
+- Added static_partitioner that minimizes overhead of parallel_for and
+    parallel_reduce for well-balanced workloads.
+- Improved template class async_node in the flow graph API to support
+    user settable concurrency limits.
+
+Bugs fixed:
+
+- Fixed a possible crash in the GUI layer for library examples on Linux.
+
+------------------------------------------------------------------------
 Intel TBB 4.4 Update 1
 TBB_INTERFACE_VERSION == 9001
 

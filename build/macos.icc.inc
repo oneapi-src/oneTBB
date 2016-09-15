@@ -31,7 +31,6 @@ DYLIB_KEY = -dynamiclib
 EXPORT_KEY = -Wl,-exported_symbols_list,
 LIBDL = -ldl
 
-OPENMP_FLAG = -openmp
 LIBS = -lpthread
 LINK_FLAGS =
 LIB_LINK_FLAGS = -dynamiclib -static-intel -install_name @rpath/$(BUILDING_LIBRARY)
@@ -39,6 +38,12 @@ C_FLAGS = $(CPLUS_FLAGS)
 # ICC 11.0 and higher support -std=c++0x
 ifneq (,$(shell icc -dumpversion | egrep  "^1[1-9]\."))
     CPP11_FLAGS = -std=c++0x -D_TBB_CPP0X
+endif
+
+ifneq (,$(shell icc -dumpversion | egrep  "^1[6-9]\."))
+OPENMP_FLAG = -qopenmp
+else
+OPENMP_FLAG = -openmp
 endif
 
 # ICC 12.0 and higher provide Intel(R) Cilk(TM) Plus
@@ -63,10 +68,12 @@ ifneq (00,$(lambdas)$(cpp0x))
 endif
 
 # ICC 14.0 and higher support usage of libc++, clang standard library
+# Extending minimal deployment version of official binaries to unsupported 10.8
+# per customer requests. TODO: make a dedicated variable for this
 ifneq (,$(shell icc -dumpversion | egrep  "^1[4-9]\."))
 ifneq (,$(stdlib))
-    CPLUS_FLAGS    += -stdlib=$(stdlib)
-    LIB_LINK_FLAGS += -stdlib=$(stdlib)
+    CPLUS_FLAGS    += -stdlib=$(stdlib) -mmacosx-version-min=10.8
+    LIB_LINK_FLAGS += -stdlib=$(stdlib) -mmacosx-version-min=10.8
 endif
 endif
 

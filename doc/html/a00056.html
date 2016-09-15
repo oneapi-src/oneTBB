@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::const_accessor Class Reference</title>
+<title>tbb::interface5::concurrent_unordered_set&lt; Key, Hasher, Key_equality, Allocator &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,102 +33,118 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><b>interface5</b></li><li class="navelem"><a class="el" href="a00045.html">concurrent_hash_map</a></li><li class="navelem"><a class="el" href="a00056.html">const_accessor</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><b>interface5</b></li><li class="navelem"><a class="el" href="a00056.html">concurrent_unordered_set</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pro-methods">Protected Member Functions</a> &#124;
-<a href="#pro-attribs">Protected Attributes</a> &#124;
-<a href="#friends">Friends</a> &#124;
-<a href="a00375.html">List of all members</a>  </div>
+<a href="a00447.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::const_accessor Class Reference</div>  </div>
+<div class="title">tbb::interface5::concurrent_unordered_set&lt; Key, Hasher, Key_equality, Allocator &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-
-<p>Combines data access, locking, and garbage collection.  
- <a href="a00056.html#details">More...</a></p>
-
-<p><code>#include &lt;concurrent_hash_map.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::const_accessor:</div>
+Inheritance diagram for tbb::interface5::concurrent_unordered_set&lt; Key, Hasher, Key_equality, Allocator &gt;:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00056.png" usemap="#tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::const_accessor_map" alt=""/>
-  <map id="tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::const_accessor_map" name="tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::const_accessor_map">
-<area href="a00010.html" title="Allows write access to elements and combines data access, locking, and garbage collection. " alt="tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::accessor" shape="rect" coords="0,112,488,136"/>
+  <img src="a00056.png" usemap="#tbb::interface5::concurrent_unordered_set&lt; Key, Hasher, Key_equality, Allocator &gt;_map" alt=""/>
+  <map id="tbb::interface5::concurrent_unordered_set&lt; Key, Hasher, Key_equality, Allocator &gt;_map" name="tbb::interface5::concurrent_unordered_set&lt; Key, Hasher, Key_equality, Allocator &gt;_map">
 </map>
  </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:aa8ca5aef4ee14b7eddb64767b8cd5fda"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa8ca5aef4ee14b7eddb64767b8cd5fda"></a>
-typedef const <br class="typebreak"/>
-concurrent_hash_map::value_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00056.html#aa8ca5aef4ee14b7eddb64767b8cd5fda">value_type</a></td></tr>
-<tr class="memdesc:aa8ca5aef4ee14b7eddb64767b8cd5fda"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type of value. <br/></td></tr>
-<tr class="separator:aa8ca5aef4ee14b7eddb64767b8cd5fda"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afad91155e1803ee686e5f42637594e7b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afad91155e1803ee686e5f42637594e7b"></a>
+typedef Key&#160;</td><td class="memItemRight" valign="bottom"><b>key_type</b></td></tr>
+<tr class="separator:afad91155e1803ee686e5f42637594e7b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a461fe414bf3ae73e7cc57e851ff592e4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a461fe414bf3ae73e7cc57e851ff592e4"></a>
+typedef base_type::value_type&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b></td></tr>
+<tr class="separator:a461fe414bf3ae73e7cc57e851ff592e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3a64703b55d07509d5c88810c2342ba5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3a64703b55d07509d5c88810c2342ba5"></a>
+typedef Key&#160;</td><td class="memItemRight" valign="bottom"><b>mapped_type</b></td></tr>
+<tr class="separator:a3a64703b55d07509d5c88810c2342ba5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6952de8a7ff93025c1065bb3e729da72"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6952de8a7ff93025c1065bb3e729da72"></a>
+typedef Hasher&#160;</td><td class="memItemRight" valign="bottom"><b>hasher</b></td></tr>
+<tr class="separator:a6952de8a7ff93025c1065bb3e729da72"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a376a7355aa091fff6a30689141407acd"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a376a7355aa091fff6a30689141407acd"></a>
+typedef Key_equality&#160;</td><td class="memItemRight" valign="bottom"><b>key_equal</b></td></tr>
+<tr class="separator:a376a7355aa091fff6a30689141407acd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acc450473249e39658c46596d8252eef0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acc450473249e39658c46596d8252eef0"></a>
+typedef hash_compare&#160;</td><td class="memItemRight" valign="bottom"><b>key_compare</b></td></tr>
+<tr class="separator:acc450473249e39658c46596d8252eef0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2010e490e8bfb13d9b969ec2fd5e4de4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2010e490e8bfb13d9b969ec2fd5e4de4"></a>
+typedef base_type::allocator_type&#160;</td><td class="memItemRight" valign="bottom"><b>allocator_type</b></td></tr>
+<tr class="separator:a2010e490e8bfb13d9b969ec2fd5e4de4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5a8c52d4a2b57b9b4b5d889e96d88f44"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5a8c52d4a2b57b9b4b5d889e96d88f44"></a>
+typedef base_type::pointer&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b></td></tr>
+<tr class="separator:a5a8c52d4a2b57b9b4b5d889e96d88f44"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a281276279a33ef1c5dfba5c196118ae7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a281276279a33ef1c5dfba5c196118ae7"></a>
+typedef base_type::const_pointer&#160;</td><td class="memItemRight" valign="bottom"><b>const_pointer</b></td></tr>
+<tr class="separator:a281276279a33ef1c5dfba5c196118ae7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aec3d473d0fa601d51f13efe605cd9862"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aec3d473d0fa601d51f13efe605cd9862"></a>
+typedef base_type::reference&#160;</td><td class="memItemRight" valign="bottom"><b>reference</b></td></tr>
+<tr class="separator:aec3d473d0fa601d51f13efe605cd9862"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab7da53912d0deffca91618b73ed4995f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab7da53912d0deffca91618b73ed4995f"></a>
+typedef base_type::const_reference&#160;</td><td class="memItemRight" valign="bottom"><b>const_reference</b></td></tr>
+<tr class="separator:ab7da53912d0deffca91618b73ed4995f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5808a50995fc228f114c3c93aeddf331"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5808a50995fc228f114c3c93aeddf331"></a>
+typedef base_type::size_type&#160;</td><td class="memItemRight" valign="bottom"><b>size_type</b></td></tr>
+<tr class="separator:a5808a50995fc228f114c3c93aeddf331"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7aaed1937820a90cb657a824e1391c1f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7aaed1937820a90cb657a824e1391c1f"></a>
+typedef base_type::difference_type&#160;</td><td class="memItemRight" valign="bottom"><b>difference_type</b></td></tr>
+<tr class="separator:a7aaed1937820a90cb657a824e1391c1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abb76557f1755f96dc2e78728cb231e57"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abb76557f1755f96dc2e78728cb231e57"></a>
+typedef base_type::iterator&#160;</td><td class="memItemRight" valign="bottom"><b>iterator</b></td></tr>
+<tr class="separator:abb76557f1755f96dc2e78728cb231e57"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a983d10264bc785a59b11dc94001e0042"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a983d10264bc785a59b11dc94001e0042"></a>
+typedef base_type::const_iterator&#160;</td><td class="memItemRight" valign="bottom"><b>const_iterator</b></td></tr>
+<tr class="separator:a983d10264bc785a59b11dc94001e0042"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acb12b4b1df9a7108a5193b0d3bbfc677"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acb12b4b1df9a7108a5193b0d3bbfc677"></a>
+typedef base_type::iterator&#160;</td><td class="memItemRight" valign="bottom"><b>local_iterator</b></td></tr>
+<tr class="separator:acb12b4b1df9a7108a5193b0d3bbfc677"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af111bc738ee2a1b4b1cf2967a1252322"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af111bc738ee2a1b4b1cf2967a1252322"></a>
+typedef base_type::const_iterator&#160;</td><td class="memItemRight" valign="bottom"><b>const_local_iterator</b></td></tr>
+<tr class="separator:af111bc738ee2a1b4b1cf2967a1252322"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a6299b523d2ae8e2613f1bc160ca99b85"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6299b523d2ae8e2613f1bc160ca99b85"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00056.html#a6299b523d2ae8e2613f1bc160ca99b85">empty</a> () const </td></tr>
-<tr class="memdesc:a6299b523d2ae8e2613f1bc160ca99b85"><td class="mdescLeft">&#160;</td><td class="mdescRight">True if result is empty. <br/></td></tr>
-<tr class="separator:a6299b523d2ae8e2613f1bc160ca99b85"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a18390cb369369d72bdf7c867755b5190"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a18390cb369369d72bdf7c867755b5190"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00056.html#a18390cb369369d72bdf7c867755b5190">release</a> ()</td></tr>
-<tr class="memdesc:a18390cb369369d72bdf7c867755b5190"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set to null. <br/></td></tr>
-<tr class="separator:a18390cb369369d72bdf7c867755b5190"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8adf04e33e7c8c876ba849f26807713a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8adf04e33e7c8c876ba849f26807713a"></a>
-const_reference&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00056.html#a8adf04e33e7c8c876ba849f26807713a">operator*</a> () const </td></tr>
-<tr class="memdesc:a8adf04e33e7c8c876ba849f26807713a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return reference to associated value in hash table. <br/></td></tr>
-<tr class="separator:a8adf04e33e7c8c876ba849f26807713a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a28fa9b9e6c35d7e80217e69a7afe1ee5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a28fa9b9e6c35d7e80217e69a7afe1ee5"></a>
-const_pointer&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00056.html#a28fa9b9e6c35d7e80217e69a7afe1ee5">operator-&gt;</a> () const </td></tr>
-<tr class="memdesc:a28fa9b9e6c35d7e80217e69a7afe1ee5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return pointer to associated value in hash table. <br/></td></tr>
-<tr class="separator:a28fa9b9e6c35d7e80217e69a7afe1ee5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7b26d22d228cf0d8678c9b346c63752c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7b26d22d228cf0d8678c9b346c63752c"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00056.html#a7b26d22d228cf0d8678c9b346c63752c">const_accessor</a> ()</td></tr>
-<tr class="memdesc:a7b26d22d228cf0d8678c9b346c63752c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create empty result. <br/></td></tr>
-<tr class="separator:a7b26d22d228cf0d8678c9b346c63752c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afbc0c85a146c912b9a0f94a7695957c7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afbc0c85a146c912b9a0f94a7695957c7"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00056.html#afbc0c85a146c912b9a0f94a7695957c7">~const_accessor</a> ()</td></tr>
-<tr class="memdesc:afbc0c85a146c912b9a0f94a7695957c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy result after releasing the underlying reference. <br/></td></tr>
-<tr class="separator:afbc0c85a146c912b9a0f94a7695957c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
-Protected Member Functions</h2></td></tr>
-<tr class="memitem:a05b74d408d8cd7773f7b5edfef97da1b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a05b74d408d8cd7773f7b5edfef97da1b"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_writer</b> ()</td></tr>
-<tr class="separator:a05b74d408d8cd7773f7b5edfef97da1b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
-Protected Attributes</h2></td></tr>
-<tr class="memitem:ac9b96f45483ddbff95a95e8e666a8f28"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac9b96f45483ddbff95a95e8e666a8f28"></a>
-<a class="el" href="a00102.html">node</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>my_node</b></td></tr>
-<tr class="separator:ac9b96f45483ddbff95a95e8e666a8f28"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5034084f595666b47734f99a6eaefa9f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5034084f595666b47734f99a6eaefa9f"></a>
-hashcode_t&#160;</td><td class="memItemRight" valign="bottom"><b>my_hash</b></td></tr>
-<tr class="separator:a5034084f595666b47734f99a6eaefa9f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
-Friends</h2></td></tr>
-<tr class="memitem:a9a30829231c2a2f13cb12430992a0701"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9a30829231c2a2f13cb12430992a0701"></a>
-class&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_hash_map&lt; Key, T, HashCompare, Allocator &gt;</b></td></tr>
-<tr class="separator:a9a30829231c2a2f13cb12430992a0701"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab1dfccf6cc719ff15006a2b05cf70dd7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab1dfccf6cc719ff15006a2b05cf70dd7"></a>
-class&#160;</td><td class="memItemRight" valign="bottom"><b>accessor</b></td></tr>
-<tr class="separator:ab1dfccf6cc719ff15006a2b05cf70dd7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aad5e3bd7fa156e5d8aa81a8ff560d84e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aad5e3bd7fa156e5d8aa81a8ff560d84e"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_set</b> (size_type n_of_buckets=base_type::initial_bucket_number, const hasher &amp;a_hasher=hasher(), const key_equal &amp;a_keyeq=key_equal(), const allocator_type &amp;a=allocator_type())</td></tr>
+<tr class="separator:aad5e3bd7fa156e5d8aa81a8ff560d84e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2d307ae4ebb3e2d46b0a75713824d109"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2d307ae4ebb3e2d46b0a75713824d109"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_set</b> (const Allocator &amp;a)</td></tr>
+<tr class="separator:a2d307ae4ebb3e2d46b0a75713824d109"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afd4bc55194c4473e81398d8456a5c68a"><td class="memTemplParams" colspan="2"><a class="anchor" id="afd4bc55194c4473e81398d8456a5c68a"></a>
+template&lt;typename Iterator &gt; </td></tr>
+<tr class="memitem:afd4bc55194c4473e81398d8456a5c68a"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>concurrent_unordered_set</b> (Iterator first, Iterator last, size_type n_of_buckets=base_type::initial_bucket_number, const hasher &amp;a_hasher=hasher(), const key_equal &amp;a_keyeq=key_equal(), const allocator_type &amp;a=allocator_type())</td></tr>
+<tr class="separator:afd4bc55194c4473e81398d8456a5c68a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6f6d5ecff239ff13000848e925904fe7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6f6d5ecff239ff13000848e925904fe7"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00056.html#a6f6d5ecff239ff13000848e925904fe7">concurrent_unordered_set</a> (std::initializer_list&lt; value_type &gt; il, size_type n_of_buckets=base_type::initial_bucket_number, const hasher &amp;a_hasher=hasher(), const key_equal &amp;a_keyeq=key_equal(), const allocator_type &amp;a=allocator_type())</td></tr>
+<tr class="memdesc:a6f6d5ecff239ff13000848e925904fe7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor from initializer_list. <br/></td></tr>
+<tr class="separator:a6f6d5ecff239ff13000848e925904fe7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac3c68d5286d6ca29fba2b38c59bdbc66"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac3c68d5286d6ca29fba2b38c59bdbc66"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_set</b> (const <a class="el" href="a00056.html">concurrent_unordered_set</a> &amp;table)</td></tr>
+<tr class="separator:ac3c68d5286d6ca29fba2b38c59bdbc66"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a39097dddf99fd057919197b8293bd807"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a39097dddf99fd057919197b8293bd807"></a>
+<a class="el" href="a00056.html">concurrent_unordered_set</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="a00056.html">concurrent_unordered_set</a> &amp;table)</td></tr>
+<tr class="separator:a39097dddf99fd057919197b8293bd807"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9dde7a48af7449fde97d4449691207c5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9dde7a48af7449fde97d4449691207c5"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_set</b> (<a class="el" href="a00056.html">concurrent_unordered_set</a> &amp;&amp;table)</td></tr>
+<tr class="separator:a9dde7a48af7449fde97d4449691207c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a49ad03a5e20f90beac704325aaa6567f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a49ad03a5e20f90beac704325aaa6567f"></a>
+<a class="el" href="a00056.html">concurrent_unordered_set</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="a00056.html">concurrent_unordered_set</a> &amp;&amp;table)</td></tr>
+<tr class="separator:a49ad03a5e20f90beac704325aaa6567f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aecea62fe5c8beab0d7907dbc33ef583f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aecea62fe5c8beab0d7907dbc33ef583f"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_set</b> (const <a class="el" href="a00056.html">concurrent_unordered_set</a> &amp;table, const Allocator &amp;a)</td></tr>
+<tr class="separator:aecea62fe5c8beab0d7907dbc33ef583f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6ef0de826333371f1e9cb33349b35baf"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6ef0de826333371f1e9cb33349b35baf"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_set</b> (<a class="el" href="a00056.html">concurrent_unordered_set</a> &amp;&amp;table, const Allocator &amp;a)</td></tr>
+<tr class="separator:a6ef0de826333371f1e9cb33349b35baf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;typename Key, typename T, typename HashCompare = tbb_hash_compare&lt;Key&gt;, typename A = tbb_allocator&lt;std::pair&lt;Key, T&gt; &gt;&gt;<br/>
-class tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::const_accessor</h3>
-
-<p>Combines data access, locking, and garbage collection. </p>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>concurrent_hash_map.h</li>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li>concurrent_unordered_set.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

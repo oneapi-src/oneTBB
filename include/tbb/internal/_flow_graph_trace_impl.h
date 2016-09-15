@@ -37,7 +37,7 @@ static inline void fgt_internal_create_output_port( void *node, void *p, string_
 }
 
 template<typename InputType>
-void register_input_port(void *node, tbb::flow::interface8::receiver<InputType>* port, string_index name_index) {
+void register_input_port(void *node, tbb::flow::receiver<InputType>* port, string_index name_index) {
     //TODO: Make fgt_internal_create_input_port a function template?
     fgt_internal_create_input_port( node, port, name_index);
 }    
@@ -58,9 +58,9 @@ struct fgt_internal_input_helper<PortsTuple, 1> {
 };
 
 template<typename OutputType>
-void register_output_port(void *node, tbb::flow::interface8::sender<OutputType>* port, string_index name_index) {
+void register_output_port(void *node, tbb::flow::sender<OutputType>* port, string_index name_index) {
     //TODO: Make fgt_internal_create_output_port a function template?
-    fgt_internal_create_output_port( node, port, name_index);
+    fgt_internal_create_output_port( node, static_cast<void *>(port), name_index);
 }    
 
 template < typename PortsTuple, int N >
@@ -80,7 +80,7 @@ struct fgt_internal_output_helper<PortsTuple,1> {
 
 template< typename NodeType >
 void fgt_multioutput_node_desc( const NodeType *node, const char *desc ) {
-    void *addr =  (void *)( static_cast< tbb::flow::interface8::receiver< typename NodeType::input_type > * >(const_cast< NodeType *>(node)) ); 
+    void *addr =  (void *)( static_cast< tbb::flow::receiver< typename NodeType::input_type > * >(const_cast< NodeType *>(node)) ); 
     itt_metadata_str_add( ITT_DOMAIN_FLOW, addr, FLOW_NODE, FLOW_OBJECT_NAME, desc ); 
 }
 
@@ -92,7 +92,7 @@ void fgt_multiinput_multioutput_node_desc( const NodeType *node, const char *des
 
 template< typename NodeType >
 static inline void fgt_node_desc( const NodeType *node, const char *desc ) {
-    void *addr =  (void *)( static_cast< tbb::flow::interface8::sender< typename NodeType::output_type > * >(const_cast< NodeType *>(node)) ); 
+    void *addr =  (void *)( static_cast< tbb::flow::sender< typename NodeType::output_type > * >(const_cast< NodeType *>(node)) ); 
     itt_metadata_str_add( ITT_DOMAIN_FLOW, addr, FLOW_NODE, FLOW_OBJECT_NAME, desc ); 
 }
 
@@ -118,7 +118,6 @@ static inline void fgt_multioutput_node_with_body( string_index t, void *g, void
     fgt_internal_output_helper<PortsTuple, N>::register_port( input_port, ports ); 
     fgt_body( input_port, body );
 }
-
 
 template< int N, typename PortsTuple >
 static inline void fgt_multiinput_node( string_index t, void *g, PortsTuple &ports, void *output_port) {
@@ -168,11 +167,27 @@ static inline void fgt_graph( void *g ) {
 }
 
 static inline void fgt_begin_body( void *body ) {
-    itt_task_begin( ITT_DOMAIN_FLOW, body, FLOW_BODY, NULL, FLOW_NULL, FLOW_NULL );
+    itt_task_begin( ITT_DOMAIN_FLOW, body, FLOW_BODY, NULL, FLOW_NULL, FLOW_BODY );
 }
 
 static inline void fgt_end_body( void * ) {
     itt_task_end( ITT_DOMAIN_FLOW );
+}
+
+static inline void fgt_async_try_put_begin( void *node, void *port ) {
+    itt_task_begin( ITT_DOMAIN_FLOW, port, FLOW_OUTPUT_PORT, node, FLOW_NODE, FLOW_OUTPUT_PORT );
+}
+
+static inline void fgt_async_try_put_end( void *, void * ) {
+    itt_task_end( ITT_DOMAIN_FLOW );
+}
+
+static inline void fgt_async_reserve( void *node, void *graph ) {
+    itt_region_begin( ITT_DOMAIN_FLOW, node, FLOW_NODE, graph, FLOW_GRAPH, FLOW_NULL );
+}
+
+static inline void fgt_async_commit( void *node, void *graph ) {
+    itt_region_end( ITT_DOMAIN_FLOW, node, FLOW_NODE );
 }
 
 #else // TBB_PREVIEW_FLOW_GRAPH_TRACE
@@ -210,6 +225,10 @@ static inline void fgt_remove_edge( void * /*output_port*/, void * /*input_port*
 
 static inline void fgt_begin_body( void * /*body*/ ) { }
 static inline void fgt_end_body( void *  /*body*/) { }
+static inline void fgt_async_try_put_begin( void * /*node*/, void * /*port*/ ) { }
+static inline void fgt_async_try_put_end( void * /*node*/ , void * /*port*/ ) { }
+static inline void fgt_async_reserve( void * /*node*/, void * /*graph*/ ) { }
+static inline void fgt_async_commit( void * /*node*/, void * /*graph*/ ) { }
 
 #endif // TBB_PREVIEW_FLOW_GRAPH_TRACE
 

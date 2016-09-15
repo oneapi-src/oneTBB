@@ -25,7 +25,7 @@
 #error Do not #include this internal file directly; use public TBB headers instead.
 #endif
 
-// included in namespace tbb::flow::interface8
+// included in namespace tbb::flow::interfaceX
 
 namespace internal {
 
@@ -314,6 +314,66 @@ namespace internal {
                 PT<KeyTrait9> > type;
     };
 #endif
+
+#if __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
+    template< int... S > class sequence {};
+
+    template< int N, int... S >
+    struct make_sequence : make_sequence < N - 1, N - 1, S... > {};
+
+    template< int... S >
+    struct make_sequence < 0, S... > {
+        typedef sequence<S...> type;
+    };
+#endif /* __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT */
+
+#if __TBB_INITIALIZER_LISTS_PRESENT
+    // Until C++14 std::initializer_list does not guarantee life time of contained objects.
+    template <typename T>
+    class initializer_list_wrapper {
+    public:
+        typedef T value_type;
+        typedef const T& reference;
+        typedef const T& const_reference;
+        typedef size_t size_type;
+
+        typedef T* iterator;
+        typedef const T* const_iterator;
+
+        initializer_list_wrapper( std::initializer_list<T> il ) __TBB_NOEXCEPT( true ) : my_begin( static_cast<T*>(malloc( il.size()*sizeof( T ) )) ) {
+            iterator dst = my_begin;
+            for ( typename std::initializer_list<T>::const_iterator src = il.begin(); src != il.end(); ++src )
+                new (dst++) T( *src );
+            my_end = dst;
+        }
+
+        initializer_list_wrapper( const initializer_list_wrapper<T>& ilw ) __TBB_NOEXCEPT( true ) : my_begin( static_cast<T*>(malloc( ilw.size()*sizeof( T ) )) ) {
+            iterator dst = my_begin;
+            for ( typename std::initializer_list<T>::const_iterator src = ilw.begin(); src != ilw.end(); ++src )
+                new (dst++) T( *src );
+            my_end = dst;
+        }
+
+#if __TBB_CPP11_RVALUE_REF_PRESENT
+        initializer_list_wrapper( initializer_list_wrapper<T>&& ilw ) __TBB_NOEXCEPT( true ) : my_begin( ilw.my_begin ), my_end( ilw.my_end ) {
+            ilw.my_begin = ilw.my_end = NULL;
+        }
+#endif /* __TBB_CPP11_RVALUE_REF_PRESENT */
+
+        ~initializer_list_wrapper() {
+            if ( my_begin ) 
+                free( my_begin );
+        }
+
+        const_iterator begin() const __TBB_NOEXCEPT(true) { return my_begin; }
+        const_iterator end() const __TBB_NOEXCEPT(true) { return my_end; }
+        size_t size() const __TBB_NOEXCEPT(true) { return (size_t)(my_end - my_begin); }
+
+    private:
+        iterator my_begin;
+        iterator my_end;
+    };
+#endif /* __TBB_INITIALIZER_LISTS_PRESENT */
 
 //! type mimicking std::pair but with trailing fill to ensure each element of an array
 //* will have the correct alignment

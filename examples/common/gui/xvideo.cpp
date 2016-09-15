@@ -244,12 +244,13 @@ generic:
             goto fail;
         }
     }
-    // Note: It may be more efficient to adopt the server's byte order
-    //       and swap once per get_color() call instead of once per pixel.
-    const uint32_t probe = 0x03020100;
-    const bool big_endian = (((const char*)(&probe))[0]==0x03);
-    ximage->byte_order = big_endian ? MSBFirst : LSBFirst;
-
+    if( ximage ) {
+        // Note: It may be more efficient to adopt the server's byte order
+        //       and swap once per get_color() call instead of once per pixel.
+        const uint32_t probe = 0x03020100;
+        const bool big_endian = (((const char*)(&probe))[0]==0x03);
+        ximage->byte_order = big_endian ? MSBFirst : LSBFirst;
+    }
     printf("Note: using %s with %s visual for %d-bit color depth\n", vidstr, vis==DefaultVisual(dpy, theScreen)?"default":"non-default", dispdepth);
     running = true;
     return true;

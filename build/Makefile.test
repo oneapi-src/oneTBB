@@ -232,6 +232,15 @@ test_tbb_cilk:
 	@echo "Intel(R) Cilk(TM) Plus is not available"
 endif
 
+test_opencl_node.$(TEST_EXT): LIBS += $(OPENCL.LIB)
+
+ifeq (windows,$(tbb_os))
+ifneq (gcc,$(compiler))
+test_opencl_node.$(TEST_EXT): override CXXFLAGS += /bigobj
+test_join_node.$(TEST_EXT): override CXXFLAGS += /bigobj
+endif
+endif
+
 $(TEST_TBB_PLAIN.EXE): WARNING_KEY += $(TEST_WARNING_KEY)
 
 # Run tests that are in SCHEDULER_DIRECTLY_INCLUDED and TEST_TBB_PLAIN.EXE but not in skip_tests (which is specified by user)

@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::final_scan_tag Struct Reference</title>
+<title>tbb::flow::interface8::dependency_msg&lt; T, Factory &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,33 +33,76 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><a class="el" href="a00066.html">final_scan_tag</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><a class="el" href="a00066.html">dependency_msg</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
-<a href="a00287.html">List of all members</a>  </div>
+<a href="#pub-types">Public Types</a> &#124;
+<a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="a00404.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::final_scan_tag Struct Reference<div class="ingroups"><a class="el" href="a00256.html">Algorithms</a></div></div>  </div>
+<div class="title">tbb::flow::interface8::dependency_msg&lt; T, Factory &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-
-<p>Used to indicate that the final scan is being performed.  
- <a href="a00066.html#details">More...</a></p>
-
-<p><code>#include &lt;parallel_scan.h&gt;</code></p>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
-Static Public Member Functions</h2></td></tr>
-<tr class="memitem:add2b3159a444aad51e3cf7ffe4d1d636"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="add2b3159a444aad51e3cf7ffe4d1d636"></a>
-static bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_final_scan</b> ()</td></tr>
-<tr class="separator:add2b3159a444aad51e3cf7ffe4d1d636"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:ab01c10487547257703548fea8d2938b6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab01c10487547257703548fea8d2938b6"></a>
+typedef T&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b></td></tr>
+<tr class="separator:ab01c10487547257703548fea8d2938b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
+Public Member Functions</h2></td></tr>
+<tr class="memitem:aed2869b018ca03b7a261702130aacbe7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aed2869b018ca03b7a261702130aacbe7"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>dependency_msg</b> (const T &amp;data)</td></tr>
+<tr class="separator:aed2869b018ca03b7a261702130aacbe7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a57f27f1be95fd85014c359f6f390405e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a57f27f1be95fd85014c359f6f390405e"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>dependency_msg</b> (<a class="el" href="a00125.html">opencl_graph</a> &amp;g, const T &amp;data)</td></tr>
+<tr class="separator:a57f27f1be95fd85014c359f6f390405e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aad8d861be34ff34848a7c4a67dda09da"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aad8d861be34ff34848a7c4a67dda09da"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>dependency_msg</b> (const T &amp;data, cl_event event)</td></tr>
+<tr class="separator:aad8d861be34ff34848a7c4a67dda09da"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6c52ca4f527d34052ea3fa801df86672"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6c52ca4f527d34052ea3fa801df86672"></a>
+T &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>data</b> (bool wait=true)</td></tr>
+<tr class="separator:a6c52ca4f527d34052ea3fa801df86672"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5ba69b97a06776827e61848693414752"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5ba69b97a06776827e61848693414752"></a>
+const T &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>data</b> (bool wait=true) const </td></tr>
+<tr class="separator:a5ba69b97a06776827e61848693414752"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a66243b57a60cfb4bdf1a5e734fadc7b0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a66243b57a60cfb4bdf1a5e734fadc7b0"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>dependency_msg</b> (const <a class="el" href="a00066.html">dependency_msg</a> &amp;dmsg)</td></tr>
+<tr class="separator:a66243b57a60cfb4bdf1a5e734fadc7b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2cccd6ca947999c15ebf650a98f32788"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2cccd6ca947999c15ebf650a98f32788"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>dependency_msg</b> (<a class="el" href="a00066.html">dependency_msg</a> &amp;&amp;dmsg)</td></tr>
+<tr class="separator:a2cccd6ca947999c15ebf650a98f32788"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd51d01a8d6f36a064b7edd5b016f0ea"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abd51d01a8d6f36a064b7edd5b016f0ea"></a>
+<a class="el" href="a00066.html">dependency_msg</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="a00066.html">dependency_msg</a> &amp;dmsg)</td></tr>
+<tr class="separator:abd51d01a8d6f36a064b7edd5b016f0ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adf64903cffe6baa0a050b596049f6382"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adf64903cffe6baa0a050b596049f6382"></a>
+cl_event const *&#160;</td><td class="memItemRight" valign="bottom"><b>get_event</b> () const </td></tr>
+<tr class="separator:adf64903cffe6baa0a050b596049f6382"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a919f2789626c8b2f626e6891c0a49423"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a919f2789626c8b2f626e6891c0a49423"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>set_event</b> (cl_event e) const </td></tr>
+<tr class="separator:a919f2789626c8b2f626e6891c0a49423"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2e8b213c4da93aeb76043f6fe7a5d57d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2e8b213c4da93aeb76043f6fe7a5d57d"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>set_graph</b> (<a class="el" href="a00078.html">graph</a> &amp;g)</td></tr>
+<tr class="separator:a2e8b213c4da93aeb76043f6fe7a5d57d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae5dc70ed898045a223500c7738635ce4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae5dc70ed898045a223500c7738635ce4"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>clear_event</b> () const </td></tr>
+<tr class="separator:ae5dc70ed898045a223500c7738635ce4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a03636570f7011cd3a2dbcf5b8da2ea41"><td class="memTemplParams" colspan="2"><a class="anchor" id="a03636570f7011cd3a2dbcf5b8da2ea41"></a>
+template&lt;typename Callback &gt; </td></tr>
+<tr class="memitem:a03636570f7011cd3a2dbcf5b8da2ea41"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>register_callback</b> (Callback c) const </td></tr>
+<tr class="separator:a03636570f7011cd3a2dbcf5b8da2ea41"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a382718f32d3ca0672b6b725d388de916"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a382718f32d3ca0672b6b725d388de916"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>operator T &amp;</b> ()</td></tr>
+<tr class="separator:a382718f32d3ca0672b6b725d388de916"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af3bc7dee9f48f5709cfbbaa679757af5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af3bc7dee9f48f5709cfbbaa679757af5"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>operator const T &amp;</b> () const </td></tr>
+<tr class="separator:af3bc7dee9f48f5709cfbbaa679757af5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Used to indicate that the final scan is being performed. </p>
-</div><hr/>The documentation for this struct was generated from the following file:<ul>
-<li>parallel_scan.h</li>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li>flow_graph_opencl_node.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

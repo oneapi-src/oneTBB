@@ -143,6 +143,7 @@ public:
             __TBB_RETHROW();
         }
         if ( my_context.is_group_execution_cancelled() ) {
+            // TODO: the reset method is not thread-safe. Ensure the correct behavior.
             my_context.reset();
             return canceled;
         }

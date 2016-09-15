@@ -180,7 +180,7 @@ quit:
     // In contrast to earlier versions of TBB (before 3.0 U5) now it is possible
     // that arena may be temporarily left unpopulated by threads. See comments in
     // arena::on_thread_leaving() for more details.
-    on_thread_leaving</*is_master*/false>();
+    on_thread_leaving<ref_worker>();
 }
 
 arena::arena ( market& m, unsigned num_slots, unsigned num_reserved_slots ) {
@@ -193,10 +193,10 @@ arena::arena ( market& m, unsigned num_slots, unsigned num_reserved_slots ) {
     my_market = &m;
     my_limit = 1;
     // Two slots are mandatory: for the master, and for 1 worker (required to support starvation resistant tasks).
-    my_num_slots = num_slots_to_reserve(num_slots);
+    my_num_slots = num_arena_slots(num_slots);
     my_num_reserved_slots = num_reserved_slots;
     my_max_num_workers = num_slots-num_reserved_slots;
-    my_references = 1; // accounts for the master
+    my_references = ref_external; // accounts for the master
 #if __TBB_TASK_PRIORITY
     my_bottom_priority = my_top_priority = normalized_normal_priority;
 #endif /* __TBB_TASK_PRIORITY */
@@ -234,7 +234,7 @@ arena& arena::allocate_arena( market& m, unsigned num_slots, unsigned num_reserv
     unsigned char* storage = (unsigned char*)NFS_Allocate( 1, n, NULL );
     // Zero all slots to indicate that they are empty
     memset( storage, 0, n );
-    return *new( storage + num_slots_to_reserve(num_slots) * sizeof(mail_outbox) ) arena(m, num_slots, num_reserved_slots);
+    return *new( storage + num_arena_slots(num_slots) * sizeof(mail_outbox) ) arena(m, num_slots, num_reserved_slots);
 }
 
 void arena::free_arena () {
@@ -265,7 +265,7 @@ void arena::free_arena () {
 #if __TBB_COUNT_TASK_NODES
     my_market->update_task_node_count( -drained );
 #endif /* __TBB_COUNT_TASK_NODES */
-    my_market->release();
+    my_market->release(); // remove an internal reference
 #if __TBB_TASK_GROUP_CONTEXT
     __TBB_ASSERT( my_default_ctx, "Master thread never entered the arena?" );
     my_default_ctx->~task_group_context();
@@ -663,8 +663,8 @@ void task_arena_base::internal_initialize( ) {
     arena* new_arena = market::create_arena( my_max_concurrency, my_master_slots,
                                               global_control::active_value(global_control::thread_stack_size),
                                               default_concurrency_requested );
-    // increases market's ref count for task_arena
-    market &m = market::global_market();
+    // add an internal market reference; a public reference was added in create_arena
+    market &m = market::global_market( /*is_public=*/false );
     // allocate default context for task_arena
 #if __TBB_TASK_GROUP_CONTEXT
     new_arena->my_default_ctx = new ( NFS_Allocate(1, sizeof(task_group_context), NULL) )
@@ -673,11 +673,11 @@ void task_arena_base::internal_initialize( ) {
     new_arena->my_default_ctx->capture_fp_settings();
 #endif
 #endif /* __TBB_TASK_GROUP_CONTEXT */
-
-    if(as_atomic(my_arena).compare_and_swap(new_arena, NULL) != NULL) { // there is a race possible on my_initialized
-        __TBB_ASSERT(my_arena, NULL);                             // other thread was the first
-        m.release(/*is_public*/true);
-        new_arena->on_thread_leaving</*is_master*/true>(); // deallocate new arena
+    // threads might race to initialize the arena
+    if(as_atomic(my_arena).compare_and_swap(new_arena, NULL) != NULL) {
+        __TBB_ASSERT(my_arena, NULL); // another thread won the race
+        m.release(/*is_public*/true); // release public market reference
+        new_arena->on_thread_leaving<arena::ref_external>(); // destroy unneeded arena
 #if __TBB_TASK_GROUP_CONTEXT
         spin_wait_while_eq(my_context, (task_group_context*)NULL);
     } else {
@@ -691,15 +691,33 @@ void task_arena_base::internal_initialize( ) {
 
 void task_arena_base::internal_terminate( ) {
     if( my_arena ) {// task_arena was initialized
-#if __TBB_STATISTICS_EARLY_DUMP
-        GATHER_STATISTIC( my_arena->dump_arena_statistics() );
-#endif
-        my_arena->my_market->release( /*is_public*/true ); // remove market's public reference for task_arena
-        my_arena->on_thread_leaving</*is_master*/true>();
+        my_arena->my_market->release( /*is_public*/true );
+        my_arena->on_thread_leaving<arena::ref_external>();
         my_arena = 0;
 #if __TBB_TASK_GROUP_CONTEXT
         my_context = 0;
 #endif
+    }
+}
+
+void task_arena_base::internal_attach( ) {
+    __TBB_ASSERT(!my_arena, NULL);
+    generic_scheduler* s = governor::local_scheduler_if_initialized();
+    if( s && s->my_arena ) {
+        // There is an active arena to attach to.
+        // It's still used by s, so won't be destroyed right away.
+        my_arena = s->my_arena;
+        __TBB_ASSERT( my_arena->my_references > 0, NULL );
+        my_arena->my_references += arena::ref_external;
+#if __TBB_TASK_GROUP_CONTEXT
+        my_context = my_arena->my_default_ctx;
+        my_version_and_traits |= my_context->my_version_and_traits & exact_exception_flag;
+#endif
+        my_master_slots = my_arena->my_num_reserved_slots;
+        my_max_concurrency = my_master_slots + my_arena->my_max_num_workers;
+        __TBB_ASSERT(arena::num_arena_slots(my_max_concurrency)==my_arena->my_num_slots, NULL);
+        // increases market's ref count for task_arena
+        market::global_market( /*is_public=*/true );
     }
 }
 

@@ -150,6 +150,10 @@ namespace tbb {
         void __TBB_EXPORTED_FUNC itt_task_begin_v7( itt_domain_enum domain, void *task, unsigned long long task_extra, 
                                                     void *parent, unsigned long long parent_extra, string_index name_index );
         void __TBB_EXPORTED_FUNC itt_task_end_v7( itt_domain_enum domain );
+
+        void __TBB_EXPORTED_FUNC itt_region_begin_v9( itt_domain_enum domain, void *region, unsigned long long region_extra, 
+                                                      void *parent, unsigned long long parent_extra, string_index name_index );
+        void __TBB_EXPORTED_FUNC itt_region_end_v9( itt_domain_enum domain, void *region, unsigned long long region_extra );
 #endif // __TBB_ITT_STRUCTURE_API
 
         // two template arguments are to workaround /Wp64 warning with tbb::atomic specialized for unsigned type
@@ -262,6 +266,15 @@ namespace tbb {
 
         inline void itt_task_end( itt_domain_enum domain ) {
             itt_task_end_v7( domain );
+        }
+
+        inline void itt_region_begin( itt_domain_enum domain, void *region, unsigned long long region_extra, 
+                                      void *parent, unsigned long long parent_extra, string_index name_index ) {
+            itt_region_begin_v9( domain, region, region_extra, parent, parent_extra, name_index );
+        }
+
+        inline void itt_region_end( itt_domain_enum domain, void *region, unsigned long long region_extra  ) {
+            itt_region_end_v9( domain, region, region_extra );
         }
 #endif // __TBB_ITT_STRUCTURE_API
 

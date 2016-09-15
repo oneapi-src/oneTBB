@@ -330,17 +330,7 @@ namespace internal {
             __TBB_store_with_release(op->status, FAILED);
             forwarder_busy = false;
         }
-        
-        //! Applies the body to the provided input
-        //  then decides if more work is available 
-        void apply_body( input_type &i ) {
-            task *new_task = apply_body_bypass(i);
-            if(!new_task) return;
-            if(new_task == SUCCESSFULLY_ENQUEUED) return;
-            FLOW_SPAWN(*new_task);
-            return;
-        }
-        
+
         //! Applies the body to the provided input
         //  then decides if more work is available 
         task * apply_body_bypass( input_type &i ) {
@@ -354,7 +344,7 @@ namespace internal {
             return new_task;
         }
         
-        //! allocates a task to call apply_body( input )
+        //! allocates a task to apply a body
         inline task * create_body_task( const input_type &input ) {
             
             return (my_graph.is_active()) ?
@@ -363,7 +353,7 @@ namespace internal {
                 NULL;
         }
 
-       //! Spawns a task that calls apply_body( input )
+       //! Spawns a task that applies a body
        inline void spawn_body_task( const input_type &input ) {
            task* tp = create_body_task(input);
            // tp == NULL => g.reset(), which shouldn't occur in concurrent context
@@ -674,7 +664,7 @@ namespace internal {
         friend class apply_body_task_bypass< continue_input< Output >, continue_msg >;
         
         //! Applies the body to the provided input
-        /* override */ task *apply_body_bypass( input_type ) {
+        task *apply_body_bypass( input_type ) {
 #if TBB_PREVIEW_FLOW_GRAPH_TRACE
             // There is an extra copied needed to capture the
             // body execution without the try_put
@@ -697,73 +687,6 @@ namespace internal {
 
     };  // continue_input
 
-#if __TBB_PREVIEW_ASYNC_NODE
-
-    //! Implements methods for a async node that takes a type Input as input and 
-    //  submit it to Asynchronous activity
-    template < typename Input, typename A, typename AsyncGatewayType >
-    class async_input : public function_input_base<Input, A, async_input<Input, A, AsyncGatewayType> > {
-    public:
-        typedef Input input_type;
-        typedef AsyncGatewayType async_gateway_type;
-        typedef async_body< input_type, async_gateway_type > async_body_type;
-        typedef async_input< Input, A, async_gateway_type > my_class;
-        typedef function_input_base<Input, A, my_class> base_type;
-
-        // constructor
-        template<typename Body>
-        async_input( graph &g, Body& body ) : 
-            base_type( g, unlimited ),
-            my_body( new internal::async_body_leaf< input_type, Body, async_gateway_type >(body) ),
-            my_init_body( new internal::async_body_leaf< input_type, Body, async_gateway_type >(body) )
-        {
-        }
-
-        //! Copy constructor
-        async_input( const async_input& src ) : 
-            base_type( src ),
-            my_body( src.my_init_body->clone() ),
-            my_init_body(src.my_init_body->clone() ) {
-        }
-
-        ~async_input() {
-            delete my_body;
-            delete my_init_body;
-        }
-
-        template< typename Body >
-        Body copy_function_object() {
-            async_body_type &body_ref = *this->my_body;
-            return dynamic_cast< internal::async_body_leaf<input_type, Body, async_gateway_type> & >(body_ref).get_body(); 
-        }
-
-        task * apply_body_impl_bypass( const input_type &i) {
-            // TODO: This FGT instrumentation only captures the submission of the work
-            // but not the async thread activity.
-            // We will have to think about the best way to capture that.
-            tbb::internal::fgt_begin_body( my_body );
-            (*my_body)( i, async_gateway() );
-            tbb::internal::fgt_end_body( my_body );
-            return NULL;
-        }
-
-        virtual async_gateway_type& async_gateway() = 0;
-
-    protected:
-        void reset_async_input(reset_flags f) {
-            base_type::reset_function_input_base(f);
-            if(f & rf_reset_bodies) {
-                async_body_type *tmp  = my_init_body->clone();
-                delete my_body;
-                my_body = tmp;
-            }
-        }
-
-        async_body_type *my_body;
-        async_body_type *my_init_body;
-    };
-#endif // __TBB_PREVIEW_ASYNC_NODE
-        
     //! Implements methods for both executable and function nodes that puts Output to its successors
     template< typename Output >
     class function_output : public sender<Output> {

@@ -926,11 +926,19 @@ namespace test_move_in_shrink_to_fit_helpers {
         int i;
         dummy(int an_i) __TBB_NOTHROW : Harness::StateTrackable<>(0), i(an_i)  {};
 #if __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN
-        dummy(dummy &&src) __TBB_NOTHROW : Harness::StateTrackable<>(std::move(src)), i(src.i)  {};
-    //somehow magically this declaration make std::is_nothrow_move_constructible<pod>::value to works correctly on icc14+msvc2013
+        dummy(const dummy &src) __TBB_NOTHROW : Harness::StateTrackable<>(src), i(src.i)  {};
+        dummy(dummy &&src) __TBB_NOTHROW : Harness::StateTrackable<>(std::move(src)), i(src.i) {};
+
+        dummy& operator=(dummy &&src) __TBB_NOTHROW {
+            Harness::StateTrackable<>::operator=(std::move(src));
+            i = src.i;
+            return *this;
+        }
+
+        //somehow magically this declaration make std::is_nothrow_move_constructible<pod>::value to works correctly on icc14+msvc2013
         ~dummy() __TBB_NOTHROW {};
 #endif //__TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN
-        friend bool operator== ( const dummy & lhs, const dummy & rhs){ return lhs.i == rhs.i; }
+        friend bool operator== (const dummy &lhs, const dummy &rhs){ return lhs.i == rhs.i; }
     };
 }
 void TestSerialMoveInShrinkToFit(){
@@ -1676,14 +1684,14 @@ void TestTypes() {
     for ( int i=0; i<NUMBER; ++i ) intArr.push_back(i);
     TypeTester</*default_construction_present = */true>( intArr );
 
-#if __TBB_CPP11_REFERENCE_WRAPPER_PRESENT
+#if __TBB_CPP11_REFERENCE_WRAPPER_PRESENT && !__TBB_REFERENCE_WRAPPER_COMPILATION_BROKEN
     std::vector< std::reference_wrapper<int> > refArr;
     // The constructor of std::reference_wrapper<T> from T& is explicit in some versions of libstdc++.
     for ( int i=0; i<NUMBER; ++i ) refArr.push_back( std::reference_wrapper<int>(intArr[i]) );
     TypeTester</*default_construction_present = */false>( refArr );
 #else
     REPORT( "Known issue: C++11 reference wrapper tests are skipped.\n" );
-#endif /* __TBB_CPP11_REFERENCE_WRAPPER_PRESENT */
+#endif /* __TBB_CPP11_REFERENCE_WRAPPER_PRESENT && !__TBB_REFERENCE_WRAPPER_COMPILATION_BROKEN */
 
     std::vector< tbb::atomic<int> > tbbIntArr( NUMBER );
     for ( int i=0; i<NUMBER; ++i ) tbbIntArr[i] = i;

@@ -33,26 +33,29 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><a class="el" href="a00147.html">spin_mutex</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><a class="el" href="a00028.html">blocked_range2d</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="headertitle">
-<div class="title">tbb::spin_mutex Member List</div>  </div>
+<div class="title">tbb::blocked_range2d&lt; RowValue, ColValue &gt; Member List</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>This is the complete list of members for <a class="el" href="a00147.html">tbb::spin_mutex</a>, including all inherited members.</p>
+<p>This is the complete list of members for <a class="el" href="a00028.html">tbb::blocked_range2d&lt; RowValue, ColValue &gt;</a>, including all inherited members.</p>
 <table class="directory">
-  <tr class="even"><td class="entry"><a class="el" href="a00147.html#a4ec484f4df6ec5595ec821ef20bd6cd7">internal_construct</a>()</td><td class="entry"><a class="el" href="a00147.html">tbb::spin_mutex</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0"><td class="entry"><b>is_fair_mutex</b> (defined in <a class="el" href="a00147.html">tbb::spin_mutex</a>)</td><td class="entry"><a class="el" href="a00147.html">tbb::spin_mutex</a></td><td class="entry"><span class="mlabel">static</span></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>is_recursive_mutex</b> (defined in <a class="el" href="a00147.html">tbb::spin_mutex</a>)</td><td class="entry"><a class="el" href="a00147.html">tbb::spin_mutex</a></td><td class="entry"><span class="mlabel">static</span></td></tr>
-  <tr bgcolor="#f0f0f0"><td class="entry"><b>is_rw_mutex</b> (defined in <a class="el" href="a00147.html">tbb::spin_mutex</a>)</td><td class="entry"><a class="el" href="a00147.html">tbb::spin_mutex</a></td><td class="entry"><span class="mlabel">static</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="a00147.html#a8957e40b0781192419d01d28e5205ec4">lock</a>()</td><td class="entry"><a class="el" href="a00147.html">tbb::spin_mutex</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr bgcolor="#f0f0f0"><td class="entry"><b>scoped_lock</b> (defined in <a class="el" href="a00147.html">tbb::spin_mutex</a>)</td><td class="entry"><a class="el" href="a00147.html">tbb::spin_mutex</a></td><td class="entry"><span class="mlabel">friend</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="a00147.html#a6c96196965bf7df426311d282ad3c378">spin_mutex</a>()</td><td class="entry"><a class="el" href="a00147.html">tbb::spin_mutex</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr><td class="entry"><a class="el" href="a00147.html#a003ffb196d22bf22ca22142338b7eeab">try_lock</a>()</td><td class="entry"><a class="el" href="a00147.html">tbb::spin_mutex</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="a00147.html#adfcf8fe840aa73c08c2cadd570fd48fd">unlock</a>()</td><td class="entry"><a class="el" href="a00147.html">tbb::spin_mutex</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>blocked_range2d</b>(RowValue row_begin, RowValue row_end, typename row_range_type::size_type row_grainsize, ColValue col_begin, ColValue col_end, typename col_range_type::size_type col_grainsize) (defined in <a class="el" href="a00028.html">tbb::blocked_range2d&lt; RowValue, ColValue &gt;</a>)</td><td class="entry"><a class="el" href="a00028.html">tbb::blocked_range2d&lt; RowValue, ColValue &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr bgcolor="#f0f0f0"><td class="entry"><b>blocked_range2d</b>(RowValue row_begin, RowValue row_end, ColValue col_begin, ColValue col_end) (defined in <a class="el" href="a00028.html">tbb::blocked_range2d&lt; RowValue, ColValue &gt;</a>)</td><td class="entry"><a class="el" href="a00028.html">tbb::blocked_range2d&lt; RowValue, ColValue &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>blocked_range2d</b>(blocked_range2d &amp;r, split) (defined in <a class="el" href="a00028.html">tbb::blocked_range2d&lt; RowValue, ColValue &gt;</a>)</td><td class="entry"><a class="el" href="a00028.html">tbb::blocked_range2d&lt; RowValue, ColValue &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr bgcolor="#f0f0f0"><td class="entry"><b>blocked_range2d</b>(blocked_range2d &amp;r, proportional_split &amp;proportion) (defined in <a class="el" href="a00028.html">tbb::blocked_range2d&lt; RowValue, ColValue &gt;</a>)</td><td class="entry"><a class="el" href="a00028.html">tbb::blocked_range2d&lt; RowValue, ColValue &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>col_range_type</b> typedef (defined in <a class="el" href="a00028.html">tbb::blocked_range2d&lt; RowValue, ColValue &gt;</a>)</td><td class="entry"><a class="el" href="a00028.html">tbb::blocked_range2d&lt; RowValue, ColValue &gt;</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="a00028.html#af3bccfaf90126b285491096f78ca9473">cols</a>() const </td><td class="entry"><a class="el" href="a00028.html">tbb::blocked_range2d&lt; RowValue, ColValue &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>do_split</b>(blocked_range2d &amp;r, Split &amp;split_obj) (defined in <a class="el" href="a00028.html">tbb::blocked_range2d&lt; RowValue, ColValue &gt;</a>)</td><td class="entry"><a class="el" href="a00028.html">tbb::blocked_range2d&lt; RowValue, ColValue &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr><td class="entry"><a class="el" href="a00028.html#a5805972c8c41b2681d286f9c9771cf52">empty</a>() const </td><td class="entry"><a class="el" href="a00028.html">tbb::blocked_range2d&lt; RowValue, ColValue &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="a00028.html#ac84c6cc2ff8b0974ffa719fed804f586">is_divisible</a>() const </td><td class="entry"><a class="el" href="a00028.html">tbb::blocked_range2d&lt; RowValue, ColValue &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr><td class="entry"><a class="el" href="a00028.html#aa0519760654368000f7ebc87d9bfe898">is_splittable_in_proportion</a></td><td class="entry"><a class="el" href="a00028.html">tbb::blocked_range2d&lt; RowValue, ColValue &gt;</a></td><td class="entry"><span class="mlabel">static</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="a00028.html#ada609b296a9af0591cc34761b8538100">row_range_type</a> typedef</td><td class="entry"><a class="el" href="a00028.html">tbb::blocked_range2d&lt; RowValue, ColValue &gt;</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="a00028.html#a4f7299e74c40df57dee2433c07ce65ae">rows</a>() const </td><td class="entry"><a class="el" href="a00028.html">tbb::blocked_range2d&lt; RowValue, ColValue &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
 </table></div><!-- contents -->
 <hr>
 <p></p>

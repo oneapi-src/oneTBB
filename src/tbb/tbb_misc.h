@@ -252,12 +252,14 @@ inline void run_initializer( bool (*f)(), atomic<do_once_state>& state ) {
     public:
         affinity_helper() : threadMask(NULL), is_changed(0) {}
         ~affinity_helper();
-        void protect_affinity_mask();
+        void protect_affinity_mask( bool restore_process_mask  );
+        void dismiss();
     };
 #else
     class affinity_helper : no_copy {
     public:
-        void protect_affinity_mask() {}
+        void protect_affinity_mask( bool ) {}
+        void dismiss() {}
     };
 #endif /* __TBB_USE_OS_AFFINITY_SYSCALL */
 

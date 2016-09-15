@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::null_rw_mutex::scoped_lock Class Reference</title>
+<title>tbb::flow::interface8::proxy_dependency_receiver&lt; T, Factory &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,56 +33,85 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><a class="el" href="a00104.html">null_rw_mutex</a></li><li class="navelem"><a class="el" href="a00139.html">scoped_lock</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><a class="el" href="a00139.html">proxy_dependency_receiver</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="a00284.html">List of all members</a>  </div>
+<a href="#pro-methods">Protected Member Functions</a> &#124;
+<a href="a00405.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::null_rw_mutex::scoped_lock Class Reference</div>  </div>
+<div class="title">tbb::flow::interface8::proxy_dependency_receiver&lt; T, Factory &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-
-<p>Represents acquisition of a mutex.  
- <a href="a00139.html#details">More...</a></p>
-
-<p><code>#include &lt;null_rw_mutex.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::null_rw_mutex::scoped_lock:</div>
+Inheritance diagram for tbb::flow::interface8::proxy_dependency_receiver&lt; T, Factory &gt;:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00139.png" usemap="#tbb::null_rw_mutex::scoped_lock_map" alt=""/>
-  <map id="tbb::null_rw_mutex::scoped_lock_map" name="tbb::null_rw_mutex::scoped_lock_map">
+  <img src="a00139.png" usemap="#tbb::flow::interface8::proxy_dependency_receiver&lt; T, Factory &gt;_map" alt=""/>
+  <map id="tbb::flow::interface8::proxy_dependency_receiver&lt; T, Factory &gt;_map" name="tbb::flow::interface8::proxy_dependency_receiver&lt; T, Factory &gt;_map">
+<area href="a00156.html" alt="tbb::flow::interface8::receiver&lt; dependency_msg&lt; T, Factory &gt; &gt;" shape="rect" coords="0,0,382,24"/>
 </map>
  </div></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a99a59528e6c222e21a57f8d5d92769d7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a99a59528e6c222e21a57f8d5d92769d7"></a>
+typedef <a class="el" href="a00174.html">sender</a>&lt; <a class="el" href="a00066.html">dependency_msg</a><br class="typebreak"/>
+&lt; T, Factory &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>dependency_predecessor_type</b></td></tr>
+<tr class="separator:a99a59528e6c222e21a57f8d5d92769d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_types_a00156"><td colspan="2" onclick="javascript:toggleInherit('pub_types_a00156')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="a00156.html">tbb::flow::interface8::receiver&lt; dependency_msg&lt; T, Factory &gt; &gt;</a></td></tr>
+<tr class="memitem:a007a3c86d384430151bbbf57903f20ea inherit pub_types_a00156"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a007a3c86d384430151bbbf57903f20ea"></a>
+typedef <a class="el" href="a00174.html">sender</a>&lt; <a class="el" href="a00066.html">dependency_msg</a><br class="typebreak"/>
+&lt; T, Factory &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00156.html#a007a3c86d384430151bbbf57903f20ea">dependency_predecessor_type</a></td></tr>
+<tr class="memdesc:a007a3c86d384430151bbbf57903f20ea inherit pub_types_a00156"><td class="mdescLeft">&#160;</td><td class="mdescRight">The predecessor type for this node. <br/></td></tr>
+<tr class="separator:a007a3c86d384430151bbbf57903f20ea inherit pub_types_a00156"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4f83e2f90b89091b9d34205ce5e04437 inherit pub_types_a00156"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4f83e2f90b89091b9d34205ce5e04437"></a>
+typedef <br class="typebreak"/>
+<a class="el" href="a00139.html">proxy_dependency_receiver</a>&lt; T, <br class="typebreak"/>
+Factory &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>proxy</b></td></tr>
+<tr class="separator:a4f83e2f90b89091b9d34205ce5e04437 inherit pub_types_a00156"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a4b7f9a3976c7744a96e435e027c6262c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4b7f9a3976c7744a96e435e027c6262c"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>scoped_lock</b> (<a class="el" href="a00104.html">null_rw_mutex</a> &amp;, bool=true)</td></tr>
-<tr class="separator:a4b7f9a3976c7744a96e435e027c6262c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a251d45c5c42ac6c6006d0463c2173bc8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a251d45c5c42ac6c6006d0463c2173bc8"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>acquire</b> (<a class="el" href="a00104.html">null_rw_mutex</a> &amp;, bool=true)</td></tr>
-<tr class="separator:a251d45c5c42ac6c6006d0463c2173bc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a07ed8c0c225fec43b96dcec5b4d4380d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a07ed8c0c225fec43b96dcec5b4d4380d"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>upgrade_to_writer</b> ()</td></tr>
-<tr class="separator:a07ed8c0c225fec43b96dcec5b4d4380d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a899c14f8d077edd2fe7925bb82a94686"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a899c14f8d077edd2fe7925bb82a94686"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>downgrade_to_reader</b> ()</td></tr>
-<tr class="separator:a899c14f8d077edd2fe7925bb82a94686"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afdb10af455fa8730b1a9bc8d5ca16c41"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afdb10af455fa8730b1a9bc8d5ca16c41"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>try_acquire</b> (<a class="el" href="a00104.html">null_rw_mutex</a> &amp;, bool=true)</td></tr>
-<tr class="separator:afdb10af455fa8730b1a9bc8d5ca16c41"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a57d0613ea1614fe9c7daa0706e56efab"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a57d0613ea1614fe9c7daa0706e56efab"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>release</b> ()</td></tr>
-<tr class="separator:a57d0613ea1614fe9c7daa0706e56efab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:affe767e2fe4766d3ec6a8fdf9ab39336"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="affe767e2fe4766d3ec6a8fdf9ab39336"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>proxy_dependency_receiver</b> (<a class="el" href="a00155.html">receiver</a>&lt; T &gt; &amp;r)</td></tr>
+<tr class="separator:affe767e2fe4766d3ec6a8fdf9ab39336"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab74aaa080770d26b5b7a587833d8121e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab74aaa080770d26b5b7a587833d8121e"></a>
+task *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00139.html#ab74aaa080770d26b5b7a587833d8121e">try_put_task</a> (const <a class="el" href="a00066.html">dependency_msg</a>&lt; T, Factory &gt; &amp;d)</td></tr>
+<tr class="memdesc:ab74aaa080770d26b5b7a587833d8121e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Put an item to the receiver. <br/></td></tr>
+<tr class="separator:ab74aaa080770d26b5b7a587833d8121e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac50a0946d4aa1365b89f10bedef75f55"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac50a0946d4aa1365b89f10bedef75f55"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00139.html#ac50a0946d4aa1365b89f10bedef75f55">register_predecessor</a> (<a class="el" href="a00156.html#a007a3c86d384430151bbbf57903f20ea">dependency_predecessor_type</a> &amp;s)</td></tr>
+<tr class="memdesc:ac50a0946d4aa1365b89f10bedef75f55"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a predecessor to the node. <br/></td></tr>
+<tr class="separator:ac50a0946d4aa1365b89f10bedef75f55"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a141af546ed3bda03c273653c0b3b6e94"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a141af546ed3bda03c273653c0b3b6e94"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00139.html#a141af546ed3bda03c273653c0b3b6e94">remove_predecessor</a> (<a class="el" href="a00156.html#a007a3c86d384430151bbbf57903f20ea">dependency_predecessor_type</a> &amp;s)</td></tr>
+<tr class="memdesc:a141af546ed3bda03c273653c0b3b6e94"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove a predecessor from the node. <br/></td></tr>
+<tr class="separator:a141af546ed3bda03c273653c0b3b6e94"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_a00156"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_a00156')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="a00156.html">tbb::flow::interface8::receiver&lt; dependency_msg&lt; T, Factory &gt; &gt;</a></td></tr>
+<tr class="memitem:a6cdbdd65ef7d6f926df16625282317a9 inherit pub_methods_a00156"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6cdbdd65ef7d6f926df16625282317a9"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00156.html#a6cdbdd65ef7d6f926df16625282317a9">try_put</a> (const T &amp;t)</td></tr>
+<tr class="memdesc:a6cdbdd65ef7d6f926df16625282317a9 inherit pub_methods_a00156"><td class="mdescLeft">&#160;</td><td class="mdescRight">Put an item to the receiver. <br/></td></tr>
+<tr class="separator:a6cdbdd65ef7d6f926df16625282317a9 inherit pub_methods_a00156"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9a2d15ccf89b298781bf81bbf2274165 inherit pub_methods_a00156"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9a2d15ccf89b298781bf81bbf2274165"></a>
+ordinary_receiver &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>ordinary_receiver</b> ()</td></tr>
+<tr class="separator:a9a2d15ccf89b298781bf81bbf2274165 inherit pub_methods_a00156"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
+Protected Member Functions</h2></td></tr>
+<tr class="memitem:a7a36c7cd53b3b712fb893c8cbf90e592"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7a36c7cd53b3b712fb893c8cbf90e592"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00139.html#a7a36c7cd53b3b712fb893c8cbf90e592">reset_receiver</a> (reset_flags f=rf_reset_protocol)</td></tr>
+<tr class="memdesc:a7a36c7cd53b3b712fb893c8cbf90e592"><td class="mdescLeft">&#160;</td><td class="mdescRight">put receiver back in initial state <br/></td></tr>
+<tr class="separator:a7a36c7cd53b3b712fb893c8cbf90e592"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a01ffc43e3d9a343e00f49507ff42dc3f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a01ffc43e3d9a343e00f49507ff42dc3f"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_continue_receiver</b> ()</td></tr>
+<tr class="separator:a01ffc43e3d9a343e00f49507ff42dc3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Represents acquisition of a mutex. </p>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>null_rw_mutex.h</li>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li>flow_graph_opencl_node.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

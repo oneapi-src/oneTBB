@@ -66,6 +66,7 @@ __TBB_SYMBOL( _ZTVN3tbb10empty_taskE )
 /* arena.cpp */
 __TBB_SYMBOL( _ZN3tbb10interface78internal15task_arena_base19internal_initializeEv )
 __TBB_SYMBOL( _ZN3tbb10interface78internal15task_arena_base18internal_terminateEv )
+__TBB_SYMBOL( _ZN3tbb10interface78internal15task_arena_base15internal_attachEv )
 __TBB_SYMBOL( _ZNK3tbb10interface78internal15task_arena_base16internal_enqueueERNS_4taskEi )
 __TBB_SYMBOL( _ZNK3tbb10interface78internal15task_arena_base16internal_executeERNS1_13delegate_baseE )
 __TBB_SYMBOL( _ZNK3tbb10interface78internal15task_arena_base13internal_waitEv )
@@ -172,6 +173,8 @@ __TBB_SYMBOL( _ZN3tbb8internal23itt_metadata_str_add_v7ENS0_15itt_domain_enumEPv
 __TBB_SYMBOL( _ZN3tbb8internal19itt_relation_add_v7ENS0_15itt_domain_enumEPvyNS0_12itt_relationES2_y )
 __TBB_SYMBOL( _ZN3tbb8internal17itt_task_begin_v7ENS0_15itt_domain_enumEPvyS2_yNS0_12string_indexE )
 __TBB_SYMBOL( _ZN3tbb8internal15itt_task_end_v7ENS0_15itt_domain_enumE )
+__TBB_SYMBOL( _ZN3tbb8internal19itt_region_begin_v9ENS0_15itt_domain_enumEPvyS2_yNS0_12string_indexE )
+__TBB_SYMBOL( _ZN3tbb8internal17itt_region_end_v9ENS0_15itt_domain_enumEPvy )
 #endif
 
 /* pipeline.cpp */

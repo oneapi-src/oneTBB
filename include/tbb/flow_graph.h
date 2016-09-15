@@ -34,6 +34,10 @@
 #include "internal/_aggregator_impl.h"
 #include "tbb_profiling.h"
 
+#if __TBB_PREVIEW_ASYNC_NODE
+#include "task_arena.h"
+#endif
+
 #if TBB_DEPRECATED_FLOW_ENQUEUE
 #define FLOW_SPAWN(a) tbb::task::enqueue((a))
 #else
@@ -147,7 +151,7 @@ static tbb::task * const SUCCESSFULLY_ENQUEUED = (task *)-1;
 enum reset_flags {
     rf_reset_protocol   = 0,
     rf_reset_bodies     = 1<<0,  // delete the current node body, reset to a copy of the initial node body.
-    rf_clear_edges          = 1<<1   // delete edges
+    rf_clear_edges      = 1<<1   // delete edges
 };
 
 // enqueue left task if necessary.  Returns the non-enqueued task if there is one.
@@ -182,7 +186,7 @@ public:
     //! Put an item to the receiver
     bool try_put( const T& t ) {
         task *res = try_put_task(t);
-        if(!res) return false;
+        if (!res) return false;
         if (res != SUCCESSFULLY_ENQUEUED) FLOW_SPAWN(*res);
         return true;
     }
@@ -216,10 +220,13 @@ protected:
     template<typename U> friend class limiter_node;
     virtual void reset_receiver(reset_flags f = rf_reset_protocol) = 0;
 
-    template<typename TT, typename M>
-        friend class internal::successor_cache;
+    template<typename TT, typename M> friend class internal::successor_cache;
     virtual bool is_continue_receiver() { return false; }
-};  // class receiver<T>
+
+#if __TBB_PREVIEW_OPENCL_NODE
+    template< typename, typename > friend class proxy_dependency_receiver;
+#endif /* __TBB_PREVIEW_OPENCL_NODE */
+}; // class receiver<T>
 
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
 //* holder of edges both for caches and for those nodes which do not have predecessor caches.
@@ -336,7 +343,7 @@ public:
     }
 
 #endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
-    
+
 protected:
     template< typename R, typename B > friend class run_and_put_task;
     template<typename X, typename Y> friend class internal::broadcast_cache;
@@ -351,8 +358,7 @@ protected:
                 my_current_count = 0;
         }
         task * res = execute();
-        if(!res) return SUCCESSFULLY_ENQUEUED;
-        return res;
+        return res? res : SUCCESSFULLY_ENQUEUED;
     }
 
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
@@ -370,7 +376,7 @@ protected:
 
     /*override*/void reset_receiver( reset_flags f ) {
         my_current_count = 0;
-        if(f & rf_clear_edges) {
+        if (f & rf_clear_edges) {
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
             my_built_predecessors.clear();
 #endif
@@ -382,12 +388,22 @@ protected:
     /** This should be very fast or else spawn a task.  This is
         called while the sender is blocked in the try_put(). */
     virtual task * execute() = 0;
-    template<typename TT, typename M>
-        friend class internal::successor_cache;
+    template<typename TT, typename M> friend class internal::successor_cache;
     /*override*/ bool is_continue_receiver() { return true; }
 
 }; // class continue_receiver
 }  // interface8
+
+#if __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING
+    template <typename K, typename T>
+    K key_from_message( const T &t ) {
+        return t.key();
+    }
+#endif /* __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING */
+
+    using interface8::sender;
+    using interface8::receiver;
+    using interface8::continue_receiver;
 }  // flow
 }  // tbb
 
@@ -495,7 +511,7 @@ class graph : tbb::internal::no_copy {
         run_and_put_task( Receiver &r, Body& body ) : my_receiver(r), my_body(body) {}
         task *execute() {
             task *res = my_receiver.try_put_task( my_body() );
-            if(res == SUCCESSFULLY_ENQUEUED) res = NULL;
+            if (res == SUCCESSFULLY_ENQUEUED) res = NULL;
             return res;
         }
     private:
@@ -504,10 +520,28 @@ class graph : tbb::internal::no_copy {
     };
     typedef std::list<task *> task_list_type;
 
+#if __TBB_PREVIEW_ASYNC_NODE
+    class wait_functor {
+        task* graph_root_task;
+    public:
+        wait_functor( task* t ) : graph_root_task(t) {}
+        void operator()() const { graph_root_task->wait_for_all(); }
+    };
+
+    void prepare_task_arena() {
+        my_task_arena = new tbb::task_arena(tbb::internal::attach());
+        if (!my_task_arena->is_active())
+            my_task_arena->initialize(); // create a new, default-initialized arena
+        __TBB_ASSERT(my_task_arena->is_active(), NULL);
+    }
+#endif
+
 public:
     //! Constructs a graph with isolated task_group_context
-    explicit graph() : my_nodes(NULL), my_nodes_last(NULL)
-    {
+    graph() : my_nodes(NULL), my_nodes_last(NULL) {
+#if __TBB_PREVIEW_ASYNC_NODE
+        prepare_task_arena();
+#endif
         own_context = true;
         cancelled = false;
         caught_exception = false;
@@ -520,8 +554,10 @@ public:
 
     //! Constructs a graph with use_this_context as context
     explicit graph(task_group_context& use_this_context) :
-    my_context(&use_this_context), my_nodes(NULL), my_nodes_last(NULL)
-    {
+      my_context(&use_this_context), my_nodes(NULL), my_nodes_last(NULL) {
+#if __TBB_PREVIEW_ASYNC_NODE
+        prepare_task_arena();
+#endif
         own_context = false;
         my_root_task = ( new ( task::allocate_root(*my_context) ) empty_task );
         my_root_task->set_ref_count(1);
@@ -536,6 +572,9 @@ public:
         my_root_task->set_ref_count(0);
         task::destroy( *my_root_task );
         if (own_context) delete my_context;
+#if __TBB_PREVIEW_ASYNC_NODE
+        delete my_task_arena;
+#endif
     }
 
 #if TBB_PREVIEW_FLOW_GRAPH_TRACE
@@ -590,7 +629,11 @@ public:
 #if TBB_USE_EXCEPTIONS
             try {
 #endif
+#if __TBB_PREVIEW_ASYNC_NODE
+                my_task_arena->execute(wait_functor(my_root_task));
+#else
                 my_root_task->wait_for_all();
+#endif
                 cancelled = my_context->is_group_execution_cancelled();
 #if TBB_USE_EXCEPTIONS
             }
@@ -602,8 +645,13 @@ public:
                 throw;
             }
 #endif
-            my_context->reset();  // consistent with behavior in catch()
-            my_root_task->set_ref_count(1);
+            // TODO: the "if" condition below is just a work-around to support the concurrent wait
+            // mode. The cancelation and exception mechanisms are still broken in this mode.
+            // Consider using task group not to re-implement the same functionality.
+            if ( !(my_context->traits() & task_group_context::concurrent_wait) ) {
+                my_context->reset();  // consistent with behavior in catch()
+                my_root_task->set_ref_count(1);
+            }
         }
     }
 
@@ -662,13 +710,17 @@ private:
     bool my_is_active;
     task_list_type my_reset_task_list;
 
-
     graph_node *my_nodes, *my_nodes_last;
 
     spin_mutex nodelist_mutex;
     void register_node(graph_node *n);
     void remove_node(graph_node *n);
 
+#if __TBB_PREVIEW_ASYNC_NODE
+    template < typename Input, typename Output, typename Policy, typename Allocator >
+    friend class async_node;
+    task_arena* my_task_arena;
+#endif
 };  // class graph
 
 template <typename C, typename N>
@@ -758,6 +810,12 @@ inline void graph::reset(  reset_flags f ) {
         graph_node *my_p = &(*ii);
         my_p->reset_node(f);
     }
+#if __TBB_PREVIEW_ASYNC_NODE
+    // Reattach the arena. Might be useful to run the graph in a particular task_arena
+    // while not limiting graph lifetime to a single task_arena::execute() call.
+    delete my_task_arena;
+    prepare_task_arena();
+#endif
     set_active(true);
     // now spawn the tasks necessary to start the graph
     for(task_list_type::iterator rti = my_reset_task_list.begin(); rti != my_reset_task_list.end(); ++rti) {
@@ -973,7 +1031,7 @@ private:
     bool my_has_cached_item;
     output_type my_cached_item;
 
-    // used by apply_body, can invoke body of node.
+    // used by apply_body_bypass, can invoke body of node.
     bool try_reserve_apply_body(output_type &v) {
         spin_mutex::scoped_lock lock(my_mutex);
         if ( my_reserved ) {
@@ -1421,7 +1479,7 @@ protected:
         my_buffer = v;
         my_buffer_is_valid = true;
         task * rtask = my_successors.try_put_task(v);
-        if(!rtask) rtask = SUCCESSFULLY_ENQUEUED;
+        if (!rtask) rtask = SUCCESSFULLY_ENQUEUED;
         return rtask;
     }
 
@@ -1482,7 +1540,7 @@ protected:
             this->my_buffer = v;
             this->my_buffer_is_valid = true;
             task *res = this->my_successors.try_put_task(v);
-            if(!res) res = SUCCESSFULLY_ENQUEUED;
+            if (!res) res = SUCCESSFULLY_ENQUEUED;
             return res;
         }
     }
@@ -1601,7 +1659,7 @@ protected:
     //! build a task to run the successor if possible.  Default is old behavior.
     /*override*/ task *try_put_task(const T& t) {
         task *new_task = my_successors.try_put_task(t);
-        if(!new_task) new_task = SUCCESSFULLY_ENQUEUED;
+        if (!new_task) new_task = SUCCESSFULLY_ENQUEUED;
         return new_task;
     }
 
@@ -2558,7 +2616,7 @@ private:
                     return NULL;
             }
 
-        //SUCCESS 
+        //SUCCESS
         // if we can reserve and can put, we consume the reservation 
         // we increment the count and decrement the tries
         if ( (my_predecessors.try_reserve(v)) == true ){
@@ -2853,6 +2911,10 @@ private:
 public:
     typedef OutputTuple output_type;
     typedef typename unfolded_type::input_ports_type input_ports_type;
+
+#if __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING
+    join_node(graph &g) : unfolded_type(g) {}
+#endif  /* __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING */
 
     template<typename __TBB_B0, typename __TBB_B1>
     join_node(graph &g, __TBB_B0 b0, __TBB_B1 b1) : unfolded_type(g, b0, b1) {
@@ -3225,7 +3287,7 @@ inline void make_edge( T& output, V& input) {
 }
 
 //Makes an edge from port 0 of a multi-output predecessor to a receiver.
-template< typename T, typename R, 
+template< typename T, typename R,
           typename = typename T::output_ports_type >
 inline void make_edge( T& output, receiver<R>& input) {
      make_edge(get<0>(output.output_ports()), input);
@@ -3364,12 +3426,12 @@ public:
     }
 #endif
 
-    input_ports_type input_ports() { 
+    input_ports_type input_ports() {
          __TBB_ASSERT(my_input_ports, "input ports not set, call set_external_ports to set input ports");
          return *my_input_ports;
     }
 
-    output_ports_type output_ports() { 
+    output_ports_type output_ports() {
          __TBB_ASSERT(my_output_ports, "output ports not set, call set_external_ports to set output ports");
          return *my_output_ports;
     }
@@ -3440,7 +3502,7 @@ public:
     }
 #endif
 
-    input_ports_type input_ports() { 
+    input_ports_type input_ports() {
          __TBB_ASSERT(my_input_ports, "input ports not set, call set_external_ports to set input ports");
          return *my_input_ports;
     }
@@ -3511,7 +3573,7 @@ public:
     }
 #endif
 
-    output_ports_type output_ports() { 
+    output_ports_type output_ports() {
          __TBB_ASSERT(my_output_ports, "output ports not set, call set_external_ports to set output ports");
          return *my_output_ports;
     }
@@ -3538,53 +3600,117 @@ class async_gateway {
 public:
     typedef Output output_type;
 
-    //! Submit signal from Async Activity to FG
-    virtual bool async_try_put(const output_type &i ) = 0;
+    //! Submit signal from an asynchronous activity to FG
+    virtual bool async_try_put( const output_type &i ) = 0;
 
+    //! Increment reference count of graph to prevent premature return from wait_for_all
     virtual void async_reserve() = 0;
 
+    //! Decrement reference count of graph to allow return from wait_for_all
     virtual void async_commit() = 0;
 
     virtual ~async_gateway() {}
 };
+
+template<typename Input, typename Ports, typename AsyncGateway, typename Body>
+class async_body { 
+public:
+    typedef AsyncGateway async_gateway_type;
+
+    async_body(const Body &body, async_gateway_type *gateway) : my_body(body), my_async_gateway(gateway) { }
+ 
+    async_body(const async_body &other) : my_body(other.my_body), my_async_gateway(other.my_async_gateway) { }
+
+    void operator()( const Input &v, Ports & ) {
+        my_body(v, *my_async_gateway);
+    }
+
+    Body get_body() { return my_body; }
+
+    void set_async_gateway(async_gateway_type *gateway) {
+        my_async_gateway = gateway;
+    }
+
+private:
+    Body my_body;
+    async_gateway_type *my_async_gateway;
+};
+
 }
 
-//! Implements a async node
-template < typename Input, typename Output, typename Allocator=cache_aligned_allocator<Input> >
-class async_node : public graph_node, public internal::async_input<Input, Allocator, internal::async_gateway<Output> >, public internal::function_output<Output>, public internal::async_gateway<Output> {
+//! Implements async node
+template < typename Input, typename Output, typename Policy = queueing, typename Allocator=cache_aligned_allocator<Input> >
+class async_node : public multifunction_node< Input, tuple< Output >, Policy, Allocator >, public internal::async_gateway<Output>, public sender< Output > {
 protected:
-    using graph_node::my_graph;
+    typedef multifunction_node< Input, tuple< Output >, Policy, Allocator > base_type;
+
 public:
     typedef Input input_type;
     typedef Output output_type;
-    typedef async_node< input_type, output_type, Allocator > my_class;
     typedef sender< input_type > predecessor_type;
     typedef receiver< output_type > successor_type;
     typedef internal::async_gateway< output_type > async_gateway_type;
-    typedef internal::async_input<input_type, Allocator, async_gateway_type > async_input_type;
-    typedef internal::function_output<output_type> async_output_type;
 
+protected:
+    typedef typename internal::multifunction_input<Input, typename base_type::output_ports_type, Allocator> mfn_input_type;
 
-    //! Constructor
-    template< typename Body >
-    async_node( graph &g, Body body ) : 
-        graph_node( g ), async_input_type( g, body ) {
-        tbb::internal::fgt_node_with_body( tbb::internal::FLOW_ASYNC_NODE, &this->graph_node::my_graph,
-                                           static_cast<receiver<input_type> *>(this),
-                                           static_cast<sender<output_type> *>(this), this->my_body );
+    struct try_put_functor {
+        typedef internal::multifunction_output<Output> output_port_type;
+        output_port_type *port;
+        const Output *value;
+        bool result;
+        try_put_functor(output_port_type &p, const Output &v) : port(&p), value(&v), result(false) { }
+        void operator()() {
+            result = port->try_put(*value);
+        }
+    };
+
+public:
+    template<typename Body>
+    async_node( graph &g, size_t concurrency, Body body ) :
+        base_type( g, concurrency, internal::async_body<Input, typename base_type::output_ports_type, async_gateway_type, Body>(body, this) ) {
+        tbb::internal::fgt_multioutput_node<1>( tbb::internal::FLOW_ASYNC_NODE,
+                                                &this->graph_node::my_graph,
+                                                static_cast<receiver<input_type> *>(this),
+                                                this->output_ports() );
     }
 
-    //! Copy constructor
-    async_node( const async_node& src ) :
-        graph_node(src.graph_node::my_graph), async_input_type( src ), async_output_type(){
-        tbb::internal::fgt_node_with_body( tbb::internal::FLOW_ASYNC_NODE, &this->graph_node::my_graph,
-                                           static_cast<receiver<input_type> *>(this),
-                                           static_cast<sender<output_type> *>(this), this->my_body );
+    async_node( const async_node &other ) : base_type(other) {
+        typedef internal::multifunction_body<input_type, typename base_type::output_ports_type> mfn_body_type;
+        mfn_body_type &body_ref = *this->my_body;
+        body_ref.set_gateway(static_cast<async_gateway_type *>(this));
+        mfn_body_type &init_body_ref = *this->my_init_body;
+        init_body_ref.set_gateway(static_cast<async_gateway_type *>(this));
+        tbb::internal::fgt_multioutput_node<1>( tbb::internal::FLOW_ASYNC_NODE, &this->graph_node::my_graph, static_cast<receiver<input_type> *>(this), this->output_ports() );
     }
+
+    virtual ~async_node() {}
 
     /* override */ async_gateway_type& async_gateway() {
         return static_cast< async_gateway_type& >(*this);
-    }   
+    }
+
+    //! Implements async_gateway::async_try_put for an external activity to submit a message to FG
+    /*override*/ bool async_try_put(const output_type &i ) {
+        internal::multifunction_output<output_type> &port_0 = internal::output_port<0>(*this);
+        graph &g = this->graph_node::my_graph;
+        tbb::internal::fgt_async_try_put_begin(static_cast<receiver<input_type> *>(this), &port_0);
+        __TBB_ASSERT(g.my_task_arena && g.my_task_arena->is_active(), NULL);
+        try_put_functor tpf(port_0, i);
+        g.my_task_arena->execute(tpf);
+        tbb::internal::fgt_async_try_put_end(static_cast<receiver<input_type> *>(this), &port_0);
+        return tpf.result;
+    }
+
+    /*override*/ void async_reserve() {
+        this->graph_node::my_graph.increment_wait_count();
+        tbb::internal::fgt_async_reserve(static_cast<receiver<input_type> *>(this), &this->graph_node::my_graph);
+    }
+
+    /*override*/ void async_commit() {
+        this->graph_node::my_graph.decrement_wait_count();
+        tbb::internal::fgt_async_commit(static_cast<receiver<input_type> *>(this), &this->graph_node::my_graph);
+    }
 
 #if TBB_PREVIEW_FLOW_GRAPH_TRACE
     /* override */ void set_name( const char *name ) {
@@ -3592,44 +3718,59 @@ public:
     }
 #endif
 
-protected:
-    template< typename R, typename B > friend class run_and_put_task;
-    template<typename X, typename Y> friend class internal::broadcast_cache;
-    template<typename X, typename Y> friend class internal::round_robin_cache;
-    using async_input_type::try_put_task;
+    // Define sender< Output >
 
-    /*override*/void reset_node( reset_flags f) {
-        async_input_type::reset_async_input(f);
-        if(f & rf_clear_edges) successors().clear();
-        __TBB_ASSERT(!(f & rf_clear_edges) || successors().empty(), "function_node successors not empty");
-        __TBB_ASSERT(!(f & rf_clear_edges) || this->my_predecessors.empty(), "function_node predecessors not empty");
+    //! Add a new successor to this node
+    /* override */ bool register_successor( successor_type &r ) {
+        return internal::output_port<0>(*this).register_successor(r);
     }
+
+    //! Removes a successor from this node
+    /* override */  bool remove_successor( successor_type &r ) {
+        return internal::output_port<0>(*this).remove_successor(r);
+    }
+
+    template<typename Body>
+    Body copy_function_object() {
+        typedef internal::multifunction_body<input_type, typename base_type::output_ports_type> mfn_body_type;
+        typedef internal::async_body<Input, typename base_type::output_ports_type, async_gateway_type, Body> async_body_type;
+        mfn_body_type &body_ref = *this->my_body;
+        async_body_type ab = dynamic_cast< internal::multifunction_body_leaf<input_type, typename base_type::output_ports_type, async_body_type> & >(body_ref).get_body(); 
+        return ab.get_body();
+    }
+
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
-    /*override*/void extract() {
-        this->my_predecessors.built_predecessors().receiver_extract(*this);
-        successors().built_successors().sender_extract(*this);
+    //! interface to record edges for traversal & deletion
+    typedef typename  internal::edge_container<successor_type> built_successors_type;
+    typedef typename  built_successors_type::edge_list_type successor_list_type;
+    /* override */ built_successors_type &built_successors() {
+        return internal::output_port<0>(*this).built_successors();
+    }
+
+    /* override */ void    internal_add_built_successor( successor_type &r ) {
+        internal::output_port<0>(*this).internal_add_built_successor(r);
+    }
+
+    /* override */ void    internal_delete_built_successor( successor_type &r ) {
+        internal::output_port<0>(*this).internal_delete_built_successor(r);
+    }
+
+    /* override */ void    copy_successors( successor_list_type &l ) {
+        internal::output_port<0>(*this).copy_successors(l);
+    }
+
+    /* override */ size_t  successor_count() {
+        return internal::output_port<0>(*this).successor_count();
     }
 #endif
 
-    internal::broadcast_cache<output_type> &successors () { return async_output_type::my_successors; }
+protected:
 
-    //! Submit signal from Async Activity to FG
-    /*override*/ bool async_try_put(const output_type &i ) {
-        // TODO: enqueue a task to a FG arena
-        task *res = successors().try_put_task(i);
-        if(!res) return false;
-        if (res != SUCCESSFULLY_ENQUEUED) FLOW_SPAWN(*res);
-        return true;
+    /*override*/ void reset_node( reset_flags f) {
+       base_type::reset_node(f);
     }
 
-    /*override*/ void async_reserve() {
-        my_graph.increment_wait_count();
-    }
-
-    /*override*/ void async_commit() {
-        my_graph.decrement_wait_count();
-    }
-};
+}; 
 
 #endif // __TBB_PREVIEW_ASYNC_NODE
 
@@ -3643,9 +3784,6 @@ protected:
     using interface8::graph;
     using interface8::graph_node;
     using interface8::continue_msg;
-    using interface8::sender;
-    using interface8::receiver;
-    using interface8::continue_receiver;
 
     using interface8::source_node;
     using interface8::function_node;

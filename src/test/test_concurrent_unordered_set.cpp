@@ -100,12 +100,12 @@ void TestTypes( ) {
     for ( std::list< tbb::atomic<int> >::iterator it = arrTbb.begin(); it != arrTbb.end(); ++it, ++seq ) *it = seq;
     TestTypesSet</*defCtorPresent = */true>( arrTbb );
 
-#if __TBB_CPP11_REFERENCE_WRAPPER_PRESENT
+#if __TBB_CPP11_REFERENCE_WRAPPER_PRESENT && !__TBB_REFERENCE_WRAPPER_COMPILATION_BROKEN
     std::list< std::reference_wrapper<int> > arrRef;
     for ( std::list<int>::iterator it = arrInt.begin( ); it != arrInt.end( ); ++it )
         arrRef.push_back( std::reference_wrapper<int>(*it) );
     TestTypesSet</*defCtorPresent = */false>( arrRef );
-#endif /* __TBB_CPP11_REFERENCE_WRAPPER_PRESENT */
+#endif /* __TBB_CPP11_REFERENCE_WRAPPER_PRESENT && !__TBB_REFERENCE_WRAPPER_COMPILATION_BROKEN */
 
 #if __TBB_CPP11_SMART_POINTERS_PRESENT
     std::list< std::shared_ptr<int> > arrShr;

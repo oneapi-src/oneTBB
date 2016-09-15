@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::scalable_allocator&lt; void &gt;::rebind&lt; U &gt; Struct Template Reference</title>
+<title>tbb::flow::interface8::opencl_buffer&lt; T, Factory &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,26 +33,90 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><a class="el" href="a00132.html">scalable_allocator< void ></a></li><li class="navelem"><a class="el" href="a00118.html">rebind</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><a class="el" href="a00118.html">opencl_buffer</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
-<a href="a00301.html">List of all members</a>  </div>
+<a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#friends">Friends</a> &#124;
+<a href="a00414.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::scalable_allocator&lt; void &gt;::rebind&lt; U &gt; Struct Template Reference</div>  </div>
+<div class="title">tbb::flow::interface8::opencl_buffer&lt; T, Factory &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a37986044aa989f9c1f9edef6ab79435d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a37986044aa989f9c1f9edef6ab79435d"></a>
-typedef <a class="el" href="a00131.html">scalable_allocator</a>&lt; U &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>other</b></td></tr>
-<tr class="separator:a37986044aa989f9c1f9edef6ab79435d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa7fbadc577ee5fc031ffffef38535aba"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa7fbadc577ee5fc031ffffef38535aba"></a>
+typedef cl_mem&#160;</td><td class="memItemRight" valign="bottom"><b>native_object_type</b></td></tr>
+<tr class="separator:aa7fbadc577ee5fc031ffffef38535aba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa4a8113025ef9016ab20fef6b30f0d3c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa4a8113025ef9016ab20fef6b30f0d3c"></a>
+typedef <a class="el" href="a00118.html">opencl_buffer</a>&#160;</td><td class="memItemRight" valign="bottom"><b>memory_object_type</b></td></tr>
+<tr class="separator:aa4a8113025ef9016ab20fef6b30f0d3c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afe4505e7cae02a1c38e0031cce4d2211"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afe4505e7cae02a1c38e0031cce4d2211"></a>
+typedef Factory&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_factory_type</b></td></tr>
+<tr class="separator:afe4505e7cae02a1c38e0031cce4d2211"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a527615fc3e01dde9f7c6bafaeab83cae"><td class="memTemplParams" colspan="2"><a class="anchor" id="a527615fc3e01dde9f7c6bafaeab83cae"></a>
+template&lt;access_type a&gt; </td></tr>
+<tr class="memitem:a527615fc3e01dde9f7c6bafaeab83cae"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><b>iterator</b> = T *</td></tr>
+<tr class="separator:a527615fc3e01dde9f7c6bafaeab83cae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
+Public Member Functions</h2></td></tr>
+<tr class="memitem:a667f92789c0b790a647afbb8ff974953"><td class="memTemplParams" colspan="2"><a class="anchor" id="a667f92789c0b790a647afbb8ff974953"></a>
+template&lt;access_type a&gt; </td></tr>
+<tr class="memitem:a667f92789c0b790a647afbb8ff974953"><td class="memTemplItemLeft" align="right" valign="top">iterator&lt; a &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>access</b> () const </td></tr>
+<tr class="separator:a667f92789c0b790a647afbb8ff974953"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0c2063c05e78014a2290be021667b89a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0c2063c05e78014a2290be021667b89a"></a>
+T *&#160;</td><td class="memItemRight" valign="bottom"><b>data</b> () const </td></tr>
+<tr class="separator:a0c2063c05e78014a2290be021667b89a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6cf5ad938f23a83e323649f072590174"><td class="memTemplParams" colspan="2"><a class="anchor" id="a6cf5ad938f23a83e323649f072590174"></a>
+template&lt;access_type a = read_write&gt; </td></tr>
+<tr class="memitem:a6cf5ad938f23a83e323649f072590174"><td class="memTemplItemLeft" align="right" valign="top">iterator&lt; a &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>begin</b> () const </td></tr>
+<tr class="separator:a6cf5ad938f23a83e323649f072590174"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aadbe73967e1187cdd2b4a969b1f51809"><td class="memTemplParams" colspan="2"><a class="anchor" id="aadbe73967e1187cdd2b4a969b1f51809"></a>
+template&lt;access_type a = read_write&gt; </td></tr>
+<tr class="memitem:aadbe73967e1187cdd2b4a969b1f51809"><td class="memTemplItemLeft" align="right" valign="top">iterator&lt; a &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>end</b> () const </td></tr>
+<tr class="separator:aadbe73967e1187cdd2b4a969b1f51809"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af1fb95b1ade1cf743bb950b94c46453c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af1fb95b1ade1cf743bb950b94c46453c"></a>
+size_t&#160;</td><td class="memItemRight" valign="bottom"><b>size</b> () const </td></tr>
+<tr class="separator:af1fb95b1ade1cf743bb950b94c46453c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1781e710557102fd53b34ff90f06c47a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1781e710557102fd53b34ff90f06c47a"></a>
+T &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator[]</b> (ptrdiff_t k)</td></tr>
+<tr class="separator:a1781e710557102fd53b34ff90f06c47a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aec8afab085cd801346b37d185debd209"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aec8afab085cd801346b37d185debd209"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_buffer</b> (<a class="el" href="a00125.html">opencl_graph</a> &amp;g, size_t size)</td></tr>
+<tr class="separator:aec8afab085cd801346b37d185debd209"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a092a633c4bd84a4fec1658b9a96e0baa"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a092a633c4bd84a4fec1658b9a96e0baa"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_buffer</b> (Factory &amp;f, size_t size)</td></tr>
+<tr class="separator:a092a633c4bd84a4fec1658b9a96e0baa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab7298aa41e8e050b921691a198b86e7c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab7298aa41e8e050b921691a198b86e7c"></a>
+cl_mem&#160;</td><td class="memItemRight" valign="bottom"><b>native_object</b> () const </td></tr>
+<tr class="separator:ab7298aa41e8e050b921691a198b86e7c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af5c696b32bf4b78d4206ef5a5c7b8cbe"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af5c696b32bf4b78d4206ef5a5c7b8cbe"></a>
+const <a class="el" href="a00118.html">opencl_buffer</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>memory_object</b> () const </td></tr>
+<tr class="separator:af5c696b32bf4b78d4206ef5a5c7b8cbe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1d6f20e3cfd8823033e334ffd09425b0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1d6f20e3cfd8823033e334ffd09425b0"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>send</b> (<a class="el" href="a00120.html">opencl_device</a> device, <a class="el" href="a00066.html">dependency_msg</a>&lt; <a class="el" href="a00118.html">opencl_buffer</a>, Factory &gt; &amp;dependency) const </td></tr>
+<tr class="separator:a1d6f20e3cfd8823033e334ffd09425b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a337f2107ce9255307638ec3375f2f218"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a337f2107ce9255307638ec3375f2f218"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>receive</b> (const <a class="el" href="a00066.html">dependency_msg</a>&lt; <a class="el" href="a00118.html">opencl_buffer</a>, Factory &gt; &amp;dependency) const </td></tr>
+<tr class="separator:a337f2107ce9255307638ec3375f2f218"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:a357c187838aa075f23be7b8c86ddcbd3"><td class="memTemplParams" colspan="2"><a class="anchor" id="a357c187838aa075f23be7b8c86ddcbd3"></a>
+template&lt;typename &gt; </td></tr>
+<tr class="memitem:a357c187838aa075f23be7b8c86ddcbd3"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><b>opencl_factory</b></td></tr>
+<tr class="separator:a357c187838aa075f23be7b8c86ddcbd3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4e5bdf00651720250e564d13b624863c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4e5bdf00651720250e564d13b624863c"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator==</b> (const <a class="el" href="a00118.html">opencl_buffer</a>&lt; T, Factory &gt; &amp;lhs, const <a class="el" href="a00118.html">opencl_buffer</a>&lt; T, Factory &gt; &amp;rhs)</td></tr>
+<tr class="separator:a4e5bdf00651720250e564d13b624863c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<hr/>The documentation for this struct was generated from the following file:<ul>
-<li><a class="el" href="a00218.html">scalable_allocator.h</a></li>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li>flow_graph_opencl_node.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

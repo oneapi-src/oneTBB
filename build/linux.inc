@@ -136,3 +136,5 @@ RML.DLL = $(RML_NO_VERSION.DLL).1
 RML.LIB = $(RML_NO_VERSION.DLL)
 
 TEST_LAUNCHER=sh $(tbb_root)/build/test_launcher.sh $(largs)
+
+OPENCL.LIB = -lOpenCL

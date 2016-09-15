@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::internal::tbb_thread_v3 Class Reference</title>
+<title>tbb::spin_rw_mutex_v3::scoped_lock Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,117 +33,87 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><b>internal</b></li><li class="navelem"><a class="el" href="a00165.html">tbb_thread_v3</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><a class="el" href="a00179.html">spin_rw_mutex_v3</a></li><li class="navelem"><a class="el" href="a00165.html">scoped_lock</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a> &#124;
-<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
-<a href="#pub-attribs">Public Attributes</a> &#124;
+<a href="#pro-attribs">Protected Attributes</a> &#124;
 <a href="#friends">Friends</a> &#124;
-<a href="a00421.html">List of all members</a>  </div>
+<a href="a00338.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::internal::tbb_thread_v3 Class Reference</div>  </div>
+<div class="title">tbb::spin_rw_mutex_v3::scoped_lock Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Versioned thread class.  
+<p>The scoped locking pattern.  
  <a href="a00165.html#details">More...</a></p>
 
-<p><code>#include &lt;tbb_thread.h&gt;</code></p>
+<p><code>#include &lt;spin_rw_mutex.h&gt;</code></p>
+<div class="dynheader">
+Inheritance diagram for tbb::spin_rw_mutex_v3::scoped_lock:</div>
+<div class="dyncontent">
+ <div class="center">
+  <img src="a00165.png" usemap="#tbb::spin_rw_mutex_v3::scoped_lock_map" alt=""/>
+  <map id="tbb::spin_rw_mutex_v3::scoped_lock_map" name="tbb::spin_rw_mutex_v3::scoped_lock_map">
+</map>
+ </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
-Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00075.html">id</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:acf81b6411caec392fc62fdfbf72560ac"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acf81b6411caec392fc62fdfbf72560ac"></a>
-typedef HANDLE&#160;</td><td class="memItemRight" valign="bottom"><b>native_handle_type</b></td></tr>
-<tr class="separator:acf81b6411caec392fc62fdfbf72560ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a30e64e2a6bef43e2fd847e6c60a31207"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a30e64e2a6bef43e2fd847e6c60a31207"></a>
-typedef pthread_t&#160;</td><td class="memItemRight" valign="bottom"><b>native_handle_type</b></td></tr>
-<tr class="separator:a30e64e2a6bef43e2fd847e6c60a31207"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ad9acae61c47fad5cf88869061ead3022"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad9acae61c47fad5cf88869061ead3022"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>tbb_thread_v3</b> (const <a class="el" href="a00165.html">tbb_thread_v3</a> &amp;)</td></tr>
-<tr class="separator:ad9acae61c47fad5cf88869061ead3022"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a15b84e454eb0179e010b90a88baa0933"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a15b84e454eb0179e010b90a88baa0933"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00165.html#a15b84e454eb0179e010b90a88baa0933">tbb_thread_v3</a> () __TBB_NOEXCEPT(true)</td></tr>
-<tr class="memdesc:a15b84e454eb0179e010b90a88baa0933"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a thread object that does not represent a thread of execution. <br/></td></tr>
-<tr class="separator:a15b84e454eb0179e010b90a88baa0933"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9c5587ab76ca1aa98bae7fe69a459466"><td class="memTemplParams" colspan="2"><a class="anchor" id="a9c5587ab76ca1aa98bae7fe69a459466"></a>
-template&lt;class F &gt; </td></tr>
-<tr class="memitem:a9c5587ab76ca1aa98bae7fe69a459466"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00165.html#a9c5587ab76ca1aa98bae7fe69a459466">tbb_thread_v3</a> (F f)</td></tr>
-<tr class="memdesc:a9c5587ab76ca1aa98bae7fe69a459466"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an object and executes f() in a new thread. <br/></td></tr>
-<tr class="separator:a9c5587ab76ca1aa98bae7fe69a459466"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a672a5367e687635c869926bf8a986296"><td class="memTemplParams" colspan="2"><a class="anchor" id="a672a5367e687635c869926bf8a986296"></a>
-template&lt;class F , class X &gt; </td></tr>
-<tr class="memitem:a672a5367e687635c869926bf8a986296"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00165.html#a672a5367e687635c869926bf8a986296">tbb_thread_v3</a> (F f, X x)</td></tr>
-<tr class="memdesc:a672a5367e687635c869926bf8a986296"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an object and executes f(x) in a new thread. <br/></td></tr>
-<tr class="separator:a672a5367e687635c869926bf8a986296"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac3f57678f2a289084a6d275f8f8fbc62"><td class="memTemplParams" colspan="2"><a class="anchor" id="ac3f57678f2a289084a6d275f8f8fbc62"></a>
-template&lt;class F , class X , class Y &gt; </td></tr>
-<tr class="memitem:ac3f57678f2a289084a6d275f8f8fbc62"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00165.html#ac3f57678f2a289084a6d275f8f8fbc62">tbb_thread_v3</a> (F f, X x, Y y)</td></tr>
-<tr class="memdesc:ac3f57678f2a289084a6d275f8f8fbc62"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an object and executes f(x,y) in a new thread. <br/></td></tr>
-<tr class="separator:ac3f57678f2a289084a6d275f8f8fbc62"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa4f68564c30ee6f59bab29c3b3216623"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa4f68564c30ee6f59bab29c3b3216623"></a>
-<a class="el" href="a00165.html">tbb_thread_v3</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="a00165.html">tbb_thread_v3</a> &amp;x)</td></tr>
-<tr class="separator:aa4f68564c30ee6f59bab29c3b3216623"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab2e10af48f3f2482e9e7236f2e05714c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab2e10af48f3f2482e9e7236f2e05714c"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>swap</b> (<a class="el" href="a00165.html">tbb_thread_v3</a> &amp;t) __TBB_NOEXCEPT(true)</td></tr>
-<tr class="separator:ab2e10af48f3f2482e9e7236f2e05714c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4ddee0e2030f8fa947fd93f403178104"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4ddee0e2030f8fa947fd93f403178104"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>joinable</b> () const __TBB_NOEXCEPT(true)</td></tr>
-<tr class="separator:a4ddee0e2030f8fa947fd93f403178104"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a044c8727c51e921b0cc43a6b057eb559"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a044c8727c51e921b0cc43a6b057eb559"></a>
-void __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00165.html#a044c8727c51e921b0cc43a6b057eb559">join</a> ()</td></tr>
-<tr class="memdesc:a044c8727c51e921b0cc43a6b057eb559"><td class="mdescLeft">&#160;</td><td class="mdescRight">The completion of the thread represented by *this happens before <a class="el" href="a00165.html#a044c8727c51e921b0cc43a6b057eb559" title="The completion of the thread represented by *this happens before join() returns. ">join()</a> returns. <br/></td></tr>
-<tr class="separator:a044c8727c51e921b0cc43a6b057eb559"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a80a31a41708872af5557b907f129b19b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a80a31a41708872af5557b907f129b19b"></a>
-void __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00165.html#a80a31a41708872af5557b907f129b19b">detach</a> ()</td></tr>
-<tr class="memdesc:a80a31a41708872af5557b907f129b19b"><td class="mdescLeft">&#160;</td><td class="mdescRight">When <a class="el" href="a00165.html#a80a31a41708872af5557b907f129b19b" title="When detach() returns, *this no longer represents the possibly continuing thread of execution...">detach()</a> returns, *this no longer represents the possibly continuing thread of execution. <br/></td></tr>
-<tr class="separator:a80a31a41708872af5557b907f129b19b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae98915bfeccaa90d6f13add0ee1ab33a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae98915bfeccaa90d6f13add0ee1ab33a"></a>
-<a class="el" href="a00075.html">id</a>&#160;</td><td class="memItemRight" valign="bottom"><b>get_id</b> () const __TBB_NOEXCEPT(true)</td></tr>
-<tr class="separator:ae98915bfeccaa90d6f13add0ee1ab33a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a98e89e22e11fb6cab05f0f7839c79310"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a98e89e22e11fb6cab05f0f7839c79310"></a>
-native_handle_type&#160;</td><td class="memItemRight" valign="bottom"><b>native_handle</b> ()</td></tr>
-<tr class="separator:a98e89e22e11fb6cab05f0f7839c79310"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a285b355121772c874a7ecaaf4d347224"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00165.html#a285b355121772c874a7ecaaf4d347224">scoped_lock</a> ()</td></tr>
+<tr class="memdesc:a285b355121772c874a7ecaaf4d347224"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct lock that has not acquired a mutex.  <a href="#a285b355121772c874a7ecaaf4d347224">More...</a><br/></td></tr>
+<tr class="separator:a285b355121772c874a7ecaaf4d347224"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0a2e15358575f7651446bca13a5a2674"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0a2e15358575f7651446bca13a5a2674"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00165.html#a0a2e15358575f7651446bca13a5a2674">scoped_lock</a> (<a class="el" href="a00179.html">spin_rw_mutex</a> &amp;m, bool write=true)</td></tr>
+<tr class="memdesc:a0a2e15358575f7651446bca13a5a2674"><td class="mdescLeft">&#160;</td><td class="mdescRight">Acquire lock on given mutex. <br/></td></tr>
+<tr class="separator:a0a2e15358575f7651446bca13a5a2674"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5c27ca2e0c9db960a9a7430082ff7edd"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5c27ca2e0c9db960a9a7430082ff7edd"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00165.html#a5c27ca2e0c9db960a9a7430082ff7edd">~scoped_lock</a> ()</td></tr>
+<tr class="memdesc:a5c27ca2e0c9db960a9a7430082ff7edd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Release lock (if lock is held). <br/></td></tr>
+<tr class="separator:a5c27ca2e0c9db960a9a7430082ff7edd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6d49df365396ab314e78ba07c6b96433"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6d49df365396ab314e78ba07c6b96433"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00165.html#a6d49df365396ab314e78ba07c6b96433">acquire</a> (<a class="el" href="a00179.html">spin_rw_mutex</a> &amp;m, bool write=true)</td></tr>
+<tr class="memdesc:a6d49df365396ab314e78ba07c6b96433"><td class="mdescLeft">&#160;</td><td class="mdescRight">Acquire lock on given mutex. <br/></td></tr>
+<tr class="separator:a6d49df365396ab314e78ba07c6b96433"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afbe5de57eadc457518df7a1bb0d30c00"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00165.html#afbe5de57eadc457518df7a1bb0d30c00">upgrade_to_writer</a> ()</td></tr>
+<tr class="memdesc:afbe5de57eadc457518df7a1bb0d30c00"><td class="mdescLeft">&#160;</td><td class="mdescRight">Upgrade reader to become a writer.  <a href="#afbe5de57eadc457518df7a1bb0d30c00">More...</a><br/></td></tr>
+<tr class="separator:afbe5de57eadc457518df7a1bb0d30c00"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a99e279a995a51abfb87b865e886949f8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a99e279a995a51abfb87b865e886949f8"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00165.html#a99e279a995a51abfb87b865e886949f8">release</a> ()</td></tr>
+<tr class="memdesc:a99e279a995a51abfb87b865e886949f8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Release lock. <br/></td></tr>
+<tr class="separator:a99e279a995a51abfb87b865e886949f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa693c05221d977856a98270a255fe5df"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa693c05221d977856a98270a255fe5df"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00165.html#aa693c05221d977856a98270a255fe5df">downgrade_to_reader</a> ()</td></tr>
+<tr class="memdesc:aa693c05221d977856a98270a255fe5df"><td class="mdescLeft">&#160;</td><td class="mdescRight">Downgrade writer to become a reader. <br/></td></tr>
+<tr class="separator:aa693c05221d977856a98270a255fe5df"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abf17ada91882fd70f139c503c0220f16"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abf17ada91882fd70f139c503c0220f16"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00165.html#abf17ada91882fd70f139c503c0220f16">try_acquire</a> (<a class="el" href="a00179.html">spin_rw_mutex</a> &amp;m, bool write=true)</td></tr>
+<tr class="memdesc:abf17ada91882fd70f139c503c0220f16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Try acquire lock on given mutex. <br/></td></tr>
+<tr class="separator:abf17ada91882fd70f139c503c0220f16"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
-Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a23d7a420709b2e2b29b42dea897bd8bc"><td class="memItemLeft" align="right" valign="top">static unsigned __TBB_EXPORTED_FUNC&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00165.html#a23d7a420709b2e2b29b42dea897bd8bc">hardware_concurrency</a> () __TBB_NOEXCEPT(true)</td></tr>
-<tr class="memdesc:a23d7a420709b2e2b29b42dea897bd8bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">The number of hardware thread contexts.  <a href="#a23d7a420709b2e2b29b42dea897bd8bc">More...</a><br/></td></tr>
-<tr class="separator:a23d7a420709b2e2b29b42dea897bd8bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
-Public Attributes</h2></td></tr>
-<tr class="memitem:a7646cb0b0cc070a6dd962afbaaec3ec8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7646cb0b0cc070a6dd962afbaaec3ec8"></a>
-<a class="el" href="a00165.html">tbb_thread_v3</a>(<a class="el" href="a00165.html">tbb_thread_v3</a> <br class="typebreak"/>
-&amp;&amp;x) __TBB_NOEXCEPT(true) <br class="typebreak"/>
-<a class="el" href="a00165.html">tbb_thread_v3</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="a00165.html">tbb_thread_v3</a> &amp;&amp;x) __TBB_NOEXCEPT(true)</td></tr>
-<tr class="separator:a7646cb0b0cc070a6dd962afbaaec3ec8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
+Protected Attributes</h2></td></tr>
+<tr class="memitem:a8d70c5a2348e30a6979bfbf677328dc4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8d70c5a2348e30a6979bfbf677328dc4"></a>
+<a class="el" href="a00179.html">spin_rw_mutex</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00165.html#a8d70c5a2348e30a6979bfbf677328dc4">mutex</a></td></tr>
+<tr class="memdesc:a8d70c5a2348e30a6979bfbf677328dc4"><td class="mdescLeft">&#160;</td><td class="mdescRight">The pointer to the current mutex that is held, or NULL if no mutex is held. <br/></td></tr>
+<tr class="separator:a8d70c5a2348e30a6979bfbf677328dc4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acfd129dc5106ad1129ba803e67311050"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00165.html#acfd129dc5106ad1129ba803e67311050">is_writer</a></td></tr>
+<tr class="memdesc:acfd129dc5106ad1129ba803e67311050"><td class="mdescLeft">&#160;</td><td class="mdescRight">If mutex!=NULL, then is_writer is true if holding a writer lock, false if holding a reader lock.  <a href="#acfd129dc5106ad1129ba803e67311050">More...</a><br/></td></tr>
+<tr class="separator:acfd129dc5106ad1129ba803e67311050"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
 Friends</h2></td></tr>
-<tr class="memitem:a9b8a2643aa337c0ec7f68cc2797a10ba"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9b8a2643aa337c0ec7f68cc2797a10ba"></a>
-void __TBB_EXPORTED_FUNC&#160;</td><td class="memItemRight" valign="bottom"><b>move_v3</b> (<a class="el" href="a00165.html">tbb_thread_v3</a> &amp;t1, <a class="el" href="a00165.html">tbb_thread_v3</a> &amp;t2)</td></tr>
-<tr class="separator:a9b8a2643aa337c0ec7f68cc2797a10ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a190e47ee761e8647e79cdd3cccff618c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a190e47ee761e8647e79cdd3cccff618c"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>tbb::swap</b> (<a class="el" href="a00165.html">tbb_thread_v3</a> &amp;t1, <a class="el" href="a00165.html">tbb_thread_v3</a> &amp;t2) __TBB_NOEXCEPT(true)</td></tr>
-<tr class="separator:a190e47ee761e8647e79cdd3cccff618c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad3297bb1f91f2e12c4f3fb3e68f135bb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad3297bb1f91f2e12c4f3fb3e68f135bb"></a>
+class&#160;</td><td class="memItemRight" valign="bottom"><b>tbb::interface8::internal::x86_rtm_rw_mutex</b></td></tr>
+<tr class="separator:ad3297bb1f91f2e12c4f3fb3e68f135bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Versioned thread class. </p>
-</div><h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="a23d7a420709b2e2b29b42dea897bd8bc"></a>
+<div class="textblock"><p>The scoped locking pattern. </p>
+<p>It helps to avoid the common problem of forgetting to release lock. It also nicely provides the "node" for queuing locks. </p>
+</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a class="anchor" id="a285b355121772c874a7ecaaf4d347224"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -151,7 +121,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>tbb::swap</b> (<a cla
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static unsigned __TBB_EXPORTED_FUNC tbb::internal::tbb_thread_v3::hardware_concurrency </td>
+          <td class="memname">tbb::spin_rw_mutex_v3::scoped_lock::scoped_lock </td>
           <td>(</td>
           <td class="paramname">)</td><td></td>
           <td></td>
@@ -159,19 +129,73 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>tbb::swap</b> (<a cla
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>The number of hardware thread contexts. </p>
-<p>Before TBB 3.0 U4 this methods returned the number of logical CPU in the system. Currently on Windows, Linux and FreeBSD it returns the number of logical CPUs available to the current process in accordance with its affinity mask.</p>
-<p>NOTE: The return value of this method never changes after its first invocation. This means that changes in the process affinity mask that took place after this method was first invoked will not affect the number of worker threads in the TBB worker threads pool. </p>
+<p>Construct lock that has not acquired a mutex. </p>
+<p>Equivalent to zero-initialization of *this. </p>
+
+</div>
+</div>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="afbe5de57eadc457518df7a1bb0d30c00"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool tbb::spin_rw_mutex_v3::scoped_lock::upgrade_to_writer </td>
+          <td>(</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Upgrade reader to become a writer. </p>
+<p>Returns whether the upgrade happened without releasing and re-acquiring the lock </p>
+
+<p>References <a class="el" href="a00165.html#acfd129dc5106ad1129ba803e67311050">is_writer</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">Member Data Documentation</h2>
+<a class="anchor" id="acfd129dc5106ad1129ba803e67311050"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool tbb::spin_rw_mutex_v3::scoped_lock::is_writer</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>If mutex!=NULL, then is_writer is true if holding a writer lock, false if holding a reader lock. </p>
+<p>Not defined if not holding a lock. </p>
+
+<p>Referenced by <a class="el" href="a00165.html#a6d49df365396ab314e78ba07c6b96433">acquire()</a>, <a class="el" href="a00165.html#aa693c05221d977856a98270a255fe5df">downgrade_to_reader()</a>, <a class="el" href="a00165.html#a99e279a995a51abfb87b865e886949f8">release()</a>, <a class="el" href="a00165.html#abf17ada91882fd70f139c503c0220f16">try_acquire()</a>, and <a class="el" href="a00165.html#afbe5de57eadc457518df7a1bb0d30c00">upgrade_to_writer()</a>.</p>
 
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>tbb_thread.h</li>
+<li>spin_rw_mutex.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

@@ -51,6 +51,7 @@
     //TODO: use function attribute for weak symbols instead of the pragma.
     #pragma weak dlopen
     #pragma weak dlsym
+    #pragma weak dlclose
 #endif /* __TBB_WEAK_SYMBOLS_PRESENT && !__TBB_DYNAMIC_LOAD_ENABLED */
 
 #include "tbb/tbb_misc.h"
@@ -115,6 +116,7 @@ OPEN_INTERNAL_NAMESPACE
         (void) code;
     } // library_warning
 #endif /* !defined(DYNAMIC_LINK_WARNING) && !__TBB_WIN8UI_SUPPORT && __TBB_DYNAMIC_LOAD_ENABLED */
+
     static bool resolve_symbols( dynamic_link_handle module, const dynamic_link_descriptor descriptors[], size_t required )
     {
         if ( !module )
@@ -158,12 +160,10 @@ OPEN_INTERNAL_NAMESPACE
             return false;
         }
     }
-    void dynamic_unlink( dynamic_link_handle ) {
-    }
-    void dynamic_unlink_all() {
-    }
+    void dynamic_unlink( dynamic_link_handle ) {}
+    void dynamic_unlink_all() {}
 #else
-    #if __TBB_DYNAMIC_LOAD_ENABLED
+#if __TBB_DYNAMIC_LOAD_ENABLED
 /*
     There is a security issue on Windows: LoadLibrary() may load and execute malicious code.
     See http://www.microsoft.com/technet/security/advisory/2269637.mspx for details.
@@ -195,7 +195,7 @@ OPEN_INTERNAL_NAMESPACE
     static void atomic_once( void( *func ) (void), tbb::atomic< tbb::internal::do_once_state > &once_state ) {
         tbb::internal::atomic_do_once( func, once_state );
     }
-#define ATOMIC_ONCE_DECL( var ) tbb::atomic< tbb::internal::do_once_state > var
+    #define ATOMIC_ONCE_DECL( var ) tbb::atomic< tbb::internal::do_once_state > var
 #else
     static void pthread_assert( int error_code, const char* msg ) {
         LIBRARY_ASSERT( error_code == 0, msg );
@@ -233,7 +233,7 @@ OPEN_INTERNAL_NAMESPACE
     static void atomic_once( void( *func ) (), pthread_once_t &once_state ) {
         pthread_assert( pthread_once( &once_state, func ), "pthread_once failed" );
     }
-#define ATOMIC_ONCE_DECL( var ) pthread_once_t var = PTHREAD_ONCE_INIT
+    #define ATOMIC_ONCE_DECL( var ) pthread_once_t var = PTHREAD_ONCE_INIT
 #endif /* __USE_TBB_ATOMICS */
 
     struct handles_t {
@@ -378,7 +378,7 @@ OPEN_INTERNAL_NAMESPACE
         }
         return full_len;
     }
-    #endif  // __TBB_DYNAMIC_LOAD_ENABLED
+#endif  // __TBB_DYNAMIC_LOAD_ENABLED
 
     void init_dynamic_link_data() {
     #if __TBB_DYNAMIC_LOAD_ENABLED
@@ -416,28 +416,28 @@ OPEN_INTERNAL_NAMESPACE
     #endif /* __TBB_WEAK_SYMBOLS_PRESENT */
 
     void dynamic_unlink( dynamic_link_handle handle ) {
-        ::tbb::internal::suppress_unused_warning( handle );
-    #if __TBB_DYNAMIC_LOAD_ENABLED
+    #if !__TBB_DYNAMIC_LOAD_ENABLED /* only __TBB_WEAK_SYMBOLS_PRESENT is defined */
+        if ( !dlclose ) return;
+    #endif
         if ( handle ) {
             dlclose( handle );
         }
-    #endif /* __TBB_DYNAMIC_LOAD_ENABLED */
     }
 
     void dynamic_unlink_all() {
     #if __TBB_DYNAMIC_LOAD_ENABLED
         handles.free();
-    #endif /* __TBB_DYNAMIC_LOAD_ENABLED */
+    #endif
     }
 
 #if !_WIN32
-    static dynamic_link_handle pin_symbols( dynamic_link_handle library_handle, dynamic_link_descriptor desc, const dynamic_link_descriptor* descriptors, size_t required ) {
-        ::tbb::internal::suppress_unused_warning( desc, descriptors, required );
 #if __TBB_DYNAMIC_LOAD_ENABLED
+    static dynamic_link_handle pin_symbols( dynamic_link_descriptor desc, const dynamic_link_descriptor* descriptors, size_t required ) {
         // It is supposed that all symbols are from the only one library
         // The library has been loaded by another module and contains at least one requested symbol.
         // But after we obtained the symbol the library can be unloaded by another thread
         // invalidating our symbol. Therefore we need to pin the library in memory.
+        dynamic_link_handle library_handle = 0;
         Dl_info info;
         // Get library's name from earlier found symbol
         if ( dladdr( (void*)*desc.handler, &info ) ) {
@@ -457,13 +457,10 @@ OPEN_INTERNAL_NAMESPACE
                 DYNAMIC_LINK_WARNING( dl_lib_not_found, info.dli_fname, err );
             }
         }
-        else {
-            // The library have been unloaded by another thread
-            library_handle = 0;
-        }
-#endif /* __TBB_DYNAMIC_LOAD_ENABLED */
+        // else the library has been unloaded by another thread
         return library_handle;
     }
+#endif /* __TBB_DYNAMIC_LOAD_ENABLED */
 #endif /* !_WIN32 */
 
     static dynamic_link_handle global_symbols_link( const char* library, const dynamic_link_descriptor descriptors[], size_t required ) {
@@ -485,18 +482,27 @@ OPEN_INTERNAL_NAMESPACE
         // On Android dlopen( NULL ) returns NULL if it is called during dynamic module initialization.
         LIBRARY_ASSERT( library_handle, "The handle for the main program is NULL" );
     #endif
+    #if __TBB_DYNAMIC_LOAD_ENABLED
         // Check existence of the first symbol only, then use it to find the library and load all necessary symbols.
         pointer_to_handler handler;
         dynamic_link_descriptor desc;
         desc.name = descriptors[0].name;
         desc.handler = &handler;
-        if ( resolve_symbols( library_handle, &desc, 1 ) )
-            return pin_symbols( library_handle, desc, descriptors, required );
+        if ( resolve_symbols( library_handle, &desc, 1 ) ) {
+            dynamic_unlink( library_handle );
+            return pin_symbols( desc, descriptors, required );
+        }
+    #else  /* only __TBB_WEAK_SYMBOLS_PRESENT is defined */
+        if ( resolve_symbols( library_handle, descriptors, required ) )
+            return library_handle;
+    #endif
+        dynamic_unlink( library_handle );
 #endif /* _WIN32 */
         return 0;
     }
 
     static void save_library_handle( dynamic_link_handle src, dynamic_link_handle *dst ) {
+        LIBRARY_ASSERT( src, "The library handle to store must be non-zero" );
         if ( dst )
             *dst = src;
     #if __TBB_DYNAMIC_LOAD_ENABLED
@@ -553,8 +559,11 @@ OPEN_INTERNAL_NAMESPACE
         if ( !library_handle && ( flags & DYNAMIC_LINK_WEAK ) )
             return weak_symbol_link( descriptors, required );
 
-        save_library_handle( library_handle, handle );
-        return true;
+        if ( library_handle ) {
+            save_library_handle( library_handle, handle );
+            return true;
+        }
+        return false;
     }
 
 #endif /*__TBB_WIN8UI_SUPPORT*/
@@ -564,12 +573,8 @@ OPEN_INTERNAL_NAMESPACE
             *handle=0;
         return false;
     }
-
-    void dynamic_unlink( dynamic_link_handle ) {
-    }
-
-    void dynamic_unlink_all() {
-    }
+    void dynamic_unlink( dynamic_link_handle ) {}
+    void dynamic_unlink_all() {}
 #endif /* __TBB_WEAK_SYMBOLS_PRESENT || __TBB_DYNAMIC_LOAD_ENABLED */
 
 CLOSE_INTERNAL_NAMESPACE

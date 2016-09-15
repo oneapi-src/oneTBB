@@ -1028,7 +1028,8 @@ generic_scheduler* generic_scheduler::create_worker( market& m, size_t index ) {
 
 // TODO: make it a member method
 generic_scheduler* generic_scheduler::create_master( arena* a ) {
-    generic_scheduler* s = allocate_scheduler( market::global_market() ); // increases market's ref count
+    // add an internal market reference; the public reference is possibly added in create_arena
+    generic_scheduler* s = allocate_scheduler( market::global_market(/*is_public=*/false) );
     __TBB_ASSERT( !s->my_arena, NULL );
     __TBB_ASSERT( s->my_market, NULL );
     task& t = *s->my_dummy_task;
@@ -1080,11 +1081,6 @@ void generic_scheduler::cleanup_master( bool needs_wait_workers ) {
     arena* const a = my_arena;
     market * const m = my_market;
     __TBB_ASSERT( my_market, NULL );
-#if __TBB_SCHEDULER_OBSERVER
-    if( a )
-        a->my_observers.notify_exit_observers( my_last_local_observer, /*worker=*/false );
-    the_global_observer_list.notify_exit_observers( my_last_global_observer, /*worker=*/false );
-#endif /* __TBB_SCHEDULER_OBSERVER */
     if( a && is_task_pool_published() ) {
         acquire_task_pool();
         if ( my_arena_slot->task_pool == EmptyTaskPool ||
@@ -1102,15 +1098,20 @@ void generic_scheduler::cleanup_master( bool needs_wait_workers ) {
             __TBB_ASSERT ( governor::is_set(this), "Other thread reused our TLS key during the task pool cleanup" );
         }
     }
+#if __TBB_SCHEDULER_OBSERVER
+    if( a )
+        a->my_observers.notify_exit_observers( my_last_local_observer, /*worker=*/false );
+    the_global_observer_list.notify_exit_observers( my_last_global_observer, /*worker=*/false );
+#endif /* __TBB_SCHEDULER_OBSERVER */
 #if _WIN32||_WIN64
     m->unregister_master( master_exec_resource );
 #endif /* _WIN32||_WIN64 */
     if( a ) {
-    __TBB_ASSERT(a->my_slots+0 == my_arena_slot, NULL);
+        __TBB_ASSERT(a->my_slots+0 == my_arena_slot, NULL);
 #if __TBB_STATISTICS
         *my_arena_slot->my_counters += my_counters;
 #endif /* __TBB_STATISTICS */
-    __TBB_store_with_release(my_arena_slot->my_scheduler, (generic_scheduler*)NULL);
+        __TBB_store_with_release(my_arena_slot->my_scheduler, (generic_scheduler*)NULL);
     }
 #if __TBB_TASK_GROUP_CONTEXT
     else { // task_group_context ownership was not transferred to arena
@@ -1125,21 +1126,12 @@ void generic_scheduler::cleanup_master( bool needs_wait_workers ) {
     free_scheduler();
     // TODO: read global settings for the parameter at that point
     m->join_workers = needs_wait_workers;
-    if( a ) {
-#if __TBB_STATISTICS_EARLY_DUMP
-    // Resetting arena to EMPTY state (as earlier TBB versions did) should not be
-    // done here (or anywhere else in the master thread to that matter) because
-    // after introducing arena-per-master logic and fire-and-forget tasks doing
-    // so can result either in arena's premature destruction (at least without
-    // additional costly checks in workers) or in unnecessary arena state changes
-    // (and ensuing workers migration).
-    GATHER_STATISTIC( a->dump_arena_statistics() );
-#endif
-    a->on_thread_leaving</*is_master*/true>();
-    }
+    if( a )
+        a->on_thread_leaving<arena::ref_external>();
     if( needs_wait_workers )
-        m->wait_workers();
-    m->release( /*is_public*/ a != NULL ); // TODO: ideally, it should always be true
+        m->wait_workers(); // TODO: should it be done in case of attached task_arenas remaining?
+    // If there was an associated arena, it added a public market reference
+    m->release( /*is_public*/ a != NULL );
 }
 
 } // namespace internal

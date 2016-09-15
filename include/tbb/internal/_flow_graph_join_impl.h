@@ -1505,6 +1505,23 @@ namespace internal {
         unfolded_join_node(const unfolded_join_node &other) : base_type(other) {}
     };
 
+#if __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING
+    template <typename K, typename T>
+    struct key_from_message_body {
+        K operator()(const T& t) const {
+            using tbb::flow::key_from_message;
+            return key_from_message<K>(t);
+        }
+    };
+    // Adds const to reference type
+    template <typename K, typename T>
+    struct key_from_message_body<K&,T> {
+        const K& operator()(const T& t) const {
+            using tbb::flow::key_from_message;
+            return key_from_message<const K&>(t);
+        }
+    };
+#endif /* __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING */
     // key_matching unfolded_join_node.  This must be a separate specialization because the constructors
     // differ.
 
@@ -1522,6 +1539,14 @@ namespace internal {
         typedef typename internal::type_to_key_function_body<T1, K> *f1_p;
         typedef typename tbb::flow::tuple< f0_p, f1_p > func_initializer_type;
     public:
+#if __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING
+        unfolded_join_node(graph &g) : base_type(g,
+                func_initializer_type(
+                    new internal::type_to_key_function_body_leaf<T0, K, key_from_message_body<K,T0> >(key_from_message_body<K,T0>()),
+                    new internal::type_to_key_function_body_leaf<T1, K, key_from_message_body<K,T1> >(key_from_message_body<K,T1>())
+                    ) ) {
+        }
+#endif /* __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING */
         template<typename Body0, typename Body1>
         unfolded_join_node(graph &g, Body0 body0, Body1 body1) : base_type(g,
                 func_initializer_type(
@@ -1549,6 +1574,15 @@ namespace internal {
         typedef typename internal::type_to_key_function_body<T2, K> *f2_p;
         typedef typename tbb::flow::tuple< f0_p, f1_p, f2_p > func_initializer_type;
     public:
+#if __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING
+        unfolded_join_node(graph &g) : base_type(g,
+                func_initializer_type(
+                    new internal::type_to_key_function_body_leaf<T0, K, key_from_message_body<K,T0> >(key_from_message_body<K,T0>()),
+                    new internal::type_to_key_function_body_leaf<T1, K, key_from_message_body<K,T1> >(key_from_message_body<K,T1>()),
+                    new internal::type_to_key_function_body_leaf<T2, K, key_from_message_body<K,T2> >(key_from_message_body<K,T2>())
+                    ) ) {
+        }
+#endif /* __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING */
         template<typename Body0, typename Body1, typename Body2>
         unfolded_join_node(graph &g, Body0 body0, Body1 body1, Body2 body2) : base_type(g,
                 func_initializer_type(
@@ -1579,6 +1613,16 @@ namespace internal {
         typedef typename internal::type_to_key_function_body<T3, K> *f3_p;
         typedef typename tbb::flow::tuple< f0_p, f1_p, f2_p, f3_p > func_initializer_type;
     public:
+#if __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING
+        unfolded_join_node(graph &g) : base_type(g,
+                func_initializer_type(
+                    new internal::type_to_key_function_body_leaf<T0, K, key_from_message_body<K,T0> >(key_from_message_body<K,T0>()),
+                    new internal::type_to_key_function_body_leaf<T1, K, key_from_message_body<K,T1> >(key_from_message_body<K,T1>()),
+                    new internal::type_to_key_function_body_leaf<T2, K, key_from_message_body<K,T2> >(key_from_message_body<K,T2>()),
+                    new internal::type_to_key_function_body_leaf<T3, K, key_from_message_body<K,T3> >(key_from_message_body<K,T3>())
+                    ) ) {
+        }
+#endif /* __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING */
         template<typename Body0, typename Body1, typename Body2, typename Body3>
         unfolded_join_node(graph &g, Body0 body0, Body1 body1, Body2 body2, Body3 body3) : base_type(g,
                 func_initializer_type(
@@ -1612,6 +1656,17 @@ namespace internal {
         typedef typename internal::type_to_key_function_body<T4, K> *f4_p;
         typedef typename tbb::flow::tuple< f0_p, f1_p, f2_p, f3_p, f4_p > func_initializer_type;
     public:
+#if __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING
+        unfolded_join_node(graph &g) : base_type(g,
+                func_initializer_type(
+                    new internal::type_to_key_function_body_leaf<T0, K, key_from_message_body<K,T0> >(key_from_message_body<K,T0>()),
+                    new internal::type_to_key_function_body_leaf<T1, K, key_from_message_body<K,T1> >(key_from_message_body<K,T1>()),
+                    new internal::type_to_key_function_body_leaf<T2, K, key_from_message_body<K,T2> >(key_from_message_body<K,T2>()),
+                    new internal::type_to_key_function_body_leaf<T3, K, key_from_message_body<K,T3> >(key_from_message_body<K,T3>()),
+                    new internal::type_to_key_function_body_leaf<T4, K, key_from_message_body<K,T4> >(key_from_message_body<K,T4>())
+                    ) ) {
+        }
+#endif /* __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING */
         template<typename Body0, typename Body1, typename Body2, typename Body3, typename Body4>
         unfolded_join_node(graph &g, Body0 body0, Body1 body1, Body2 body2, Body3 body3, Body4 body4) : base_type(g,
                 func_initializer_type(
@@ -1649,6 +1704,18 @@ namespace internal {
         typedef typename internal::type_to_key_function_body<T5, K> *f5_p;
         typedef typename tbb::flow::tuple< f0_p, f1_p, f2_p, f3_p, f4_p, f5_p > func_initializer_type;
     public:
+#if __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING
+        unfolded_join_node(graph &g) : base_type(g,
+                func_initializer_type(
+                    new internal::type_to_key_function_body_leaf<T0, K, key_from_message_body<K,T0> >(key_from_message_body<K,T0>()),
+                    new internal::type_to_key_function_body_leaf<T1, K, key_from_message_body<K,T1> >(key_from_message_body<K,T1>()),
+                    new internal::type_to_key_function_body_leaf<T2, K, key_from_message_body<K,T2> >(key_from_message_body<K,T2>()),
+                    new internal::type_to_key_function_body_leaf<T3, K, key_from_message_body<K,T3> >(key_from_message_body<K,T3>()),
+                    new internal::type_to_key_function_body_leaf<T4, K, key_from_message_body<K,T4> >(key_from_message_body<K,T4>()),
+                    new internal::type_to_key_function_body_leaf<T5, K, key_from_message_body<K,T5> >(key_from_message_body<K,T5>())
+                    ) ) {
+        }
+#endif /* __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING */
         template<typename Body0, typename Body1, typename Body2, typename Body3, typename Body4, typename Body5>
         unfolded_join_node(graph &g, Body0 body0, Body1 body1, Body2 body2, Body3 body3, Body4 body4, Body5 body5)
                 : base_type(g, func_initializer_type(
@@ -1690,6 +1757,19 @@ namespace internal {
         typedef typename internal::type_to_key_function_body<T6, K> *f6_p;
         typedef typename tbb::flow::tuple< f0_p, f1_p, f2_p, f3_p, f4_p, f5_p, f6_p > func_initializer_type;
     public:
+#if __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING
+        unfolded_join_node(graph &g) : base_type(g,
+                func_initializer_type(
+                    new internal::type_to_key_function_body_leaf<T0, K, key_from_message_body<K,T0> >(key_from_message_body<K,T0>()),
+                    new internal::type_to_key_function_body_leaf<T1, K, key_from_message_body<K,T1> >(key_from_message_body<K,T1>()),
+                    new internal::type_to_key_function_body_leaf<T2, K, key_from_message_body<K,T2> >(key_from_message_body<K,T2>()),
+                    new internal::type_to_key_function_body_leaf<T3, K, key_from_message_body<K,T3> >(key_from_message_body<K,T3>()),
+                    new internal::type_to_key_function_body_leaf<T4, K, key_from_message_body<K,T4> >(key_from_message_body<K,T4>()),
+                    new internal::type_to_key_function_body_leaf<T5, K, key_from_message_body<K,T5> >(key_from_message_body<K,T5>()),
+                    new internal::type_to_key_function_body_leaf<T6, K, key_from_message_body<K,T6> >(key_from_message_body<K,T6>())
+                    ) ) {
+        }
+#endif /* __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING */
         template<typename Body0, typename Body1, typename Body2, typename Body3, typename Body4,
                  typename Body5, typename Body6>
         unfolded_join_node(graph &g, Body0 body0, Body1 body1, Body2 body2, Body3 body3, Body4 body4,
@@ -1735,6 +1815,20 @@ namespace internal {
         typedef typename internal::type_to_key_function_body<T7, K> *f7_p;
         typedef typename tbb::flow::tuple< f0_p, f1_p, f2_p, f3_p, f4_p, f5_p, f6_p, f7_p > func_initializer_type;
     public:
+#if __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING
+        unfolded_join_node(graph &g) : base_type(g,
+                func_initializer_type(
+                    new internal::type_to_key_function_body_leaf<T0, K, key_from_message_body<K,T0> >(key_from_message_body<K,T0>()),
+                    new internal::type_to_key_function_body_leaf<T1, K, key_from_message_body<K,T1> >(key_from_message_body<K,T1>()),
+                    new internal::type_to_key_function_body_leaf<T2, K, key_from_message_body<K,T2> >(key_from_message_body<K,T2>()),
+                    new internal::type_to_key_function_body_leaf<T3, K, key_from_message_body<K,T3> >(key_from_message_body<K,T3>()),
+                    new internal::type_to_key_function_body_leaf<T4, K, key_from_message_body<K,T4> >(key_from_message_body<K,T4>()),
+                    new internal::type_to_key_function_body_leaf<T5, K, key_from_message_body<K,T5> >(key_from_message_body<K,T5>()),
+                    new internal::type_to_key_function_body_leaf<T6, K, key_from_message_body<K,T6> >(key_from_message_body<K,T6>()),
+                    new internal::type_to_key_function_body_leaf<T7, K, key_from_message_body<K,T7> >(key_from_message_body<K,T7>())
+                    ) ) {
+        }
+#endif /* __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING */
         template<typename Body0, typename Body1, typename Body2, typename Body3, typename Body4,
                  typename Body5, typename Body6, typename Body7>
         unfolded_join_node(graph &g, Body0 body0, Body1 body1, Body2 body2, Body3 body3, Body4 body4,
@@ -1783,6 +1877,21 @@ namespace internal {
         typedef typename internal::type_to_key_function_body<T8, K> *f8_p;
         typedef typename tbb::flow::tuple< f0_p, f1_p, f2_p, f3_p, f4_p, f5_p, f6_p, f7_p, f8_p > func_initializer_type;
     public:
+#if __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING
+        unfolded_join_node(graph &g) : base_type(g,
+                func_initializer_type(
+                    new internal::type_to_key_function_body_leaf<T0, K, key_from_message_body<K,T0> >(key_from_message_body<K,T0>()),
+                    new internal::type_to_key_function_body_leaf<T1, K, key_from_message_body<K,T1> >(key_from_message_body<K,T1>()),
+                    new internal::type_to_key_function_body_leaf<T2, K, key_from_message_body<K,T2> >(key_from_message_body<K,T2>()),
+                    new internal::type_to_key_function_body_leaf<T3, K, key_from_message_body<K,T3> >(key_from_message_body<K,T3>()),
+                    new internal::type_to_key_function_body_leaf<T4, K, key_from_message_body<K,T4> >(key_from_message_body<K,T4>()),
+                    new internal::type_to_key_function_body_leaf<T5, K, key_from_message_body<K,T5> >(key_from_message_body<K,T5>()),
+                    new internal::type_to_key_function_body_leaf<T6, K, key_from_message_body<K,T6> >(key_from_message_body<K,T6>()),
+                    new internal::type_to_key_function_body_leaf<T7, K, key_from_message_body<K,T7> >(key_from_message_body<K,T7>()),
+                    new internal::type_to_key_function_body_leaf<T8, K, key_from_message_body<K,T8> >(key_from_message_body<K,T8>())
+                    ) ) {
+        }
+#endif /* __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING */
         template<typename Body0, typename Body1, typename Body2, typename Body3, typename Body4,
                  typename Body5, typename Body6, typename Body7, typename Body8>
         unfolded_join_node(graph &g, Body0 body0, Body1 body1, Body2 body2, Body3 body3, Body4 body4,
@@ -1834,6 +1943,22 @@ namespace internal {
         typedef typename internal::type_to_key_function_body<T9, K> *f9_p;
         typedef typename tbb::flow::tuple< f0_p, f1_p, f2_p, f3_p, f4_p, f5_p, f6_p, f7_p, f8_p, f9_p > func_initializer_type;
     public:
+#if __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING
+        unfolded_join_node(graph &g) : base_type(g,
+                func_initializer_type(
+                    new internal::type_to_key_function_body_leaf<T0, K, key_from_message_body<K,T0> >(key_from_message_body<K,T0>()),
+                    new internal::type_to_key_function_body_leaf<T1, K, key_from_message_body<K,T1> >(key_from_message_body<K,T1>()),
+                    new internal::type_to_key_function_body_leaf<T2, K, key_from_message_body<K,T2> >(key_from_message_body<K,T2>()),
+                    new internal::type_to_key_function_body_leaf<T3, K, key_from_message_body<K,T3> >(key_from_message_body<K,T3>()),
+                    new internal::type_to_key_function_body_leaf<T4, K, key_from_message_body<K,T4> >(key_from_message_body<K,T4>()),
+                    new internal::type_to_key_function_body_leaf<T5, K, key_from_message_body<K,T5> >(key_from_message_body<K,T5>()),
+                    new internal::type_to_key_function_body_leaf<T6, K, key_from_message_body<K,T6> >(key_from_message_body<K,T6>()),
+                    new internal::type_to_key_function_body_leaf<T7, K, key_from_message_body<K,T7> >(key_from_message_body<K,T7>()),
+                    new internal::type_to_key_function_body_leaf<T8, K, key_from_message_body<K,T8> >(key_from_message_body<K,T8>()),
+                    new internal::type_to_key_function_body_leaf<T9, K, key_from_message_body<K,T9> >(key_from_message_body<K,T9>())
+                    ) ) {
+        }
+#endif /* __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING */
         template<typename Body0, typename Body1, typename Body2, typename Body3, typename Body4,
             typename Body5, typename Body6, typename Body7, typename Body8, typename Body9>
         unfolded_join_node(graph &g, Body0 body0, Body1 body1, Body2 body2, Body3 body3, Body4 body4,

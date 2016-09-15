@@ -99,24 +99,29 @@ static unsigned calc_workers_soft_limit(unsigned workers_soft_limit, unsigned wo
     return workers_soft_limit;
 }
 
-market& market::global_market ( unsigned workers_soft_limit, size_t stack_size,
-                                bool default_concurrency_requested, bool is_public ) {
+market& market::global_market ( bool is_public, unsigned workers_soft_limit, size_t stack_size,
+                                bool default_concurrency_requested ) {
     global_market_mutex_type::scoped_lock lock( theMarketMutex );
     market *m = theMarket;
     if( m ) {
         ++m->my_ref_count;
-        if( is_public && 0==m->my_public_ref_count++ ) {
-            lock.release();
+        const unsigned old_public_count = is_public? m->my_public_ref_count++ : /*any non-zero value*/1;
+        lock.release();
+        if( old_public_count==0 ) {
             workers_soft_limit = calc_workers_soft_limit(workers_soft_limit, m->my_num_workers_hard_limit);
             set_active_num_workers( workers_soft_limit );
         }
         if( m->my_num_workers_soft_limit < workers_soft_limit && !default_concurrency_requested )
-            runtime_warning( "Max number of workers has been already set to %u. Newer request is for %u workers.\n"
-                    , m->my_num_workers_soft_limit, workers_soft_limit );
+            runtime_warning( "Max number of workers has been already set to %u. "
+                             "The request for %u workers is ignored.\n",
+                              m->my_num_workers_soft_limit, workers_soft_limit );
         if( m->my_stack_size < stack_size )
-            runtime_warning( "Newer master request for larger stack cannot be satisfied\n" );
+            runtime_warning( "Thread stack size has been already set to %u. "
+                             "The request for larger stack (%u) cannot be satisfied.\n",
+                              m->my_stack_size, stack_size );
     }
     else {
+        // TODO: A lot is done under theMarketMutex locked. Can anything be moved out?
         if( stack_size == 0 )
             stack_size = global_control::active_value(global_control::thread_stack_size);
         // Expecting that 4P is suitable for most applications.
@@ -218,7 +223,7 @@ void market::set_active_num_workers ( unsigned soft_limit ) {
     // Must be called outside of any locks
     if ( requested != old_requested )
         m->my_server->adjust_job_count_estimate( requested - old_requested );
-    // release my_ref_count for market, match ++m->my_ref_count above
+    // release internal market reference to match ++m->my_ref_count above
     m->release();
 }
 
@@ -229,8 +234,9 @@ bool governor::does_client_join_workers (const tbb::internal::rml::tbb_client &c
 arena* market::create_arena ( int num_slots, int num_reserved_slots, size_t stack_size, bool default_concurrency_requested ) {
     __TBB_ASSERT( num_slots > 0, NULL );
     __TBB_ASSERT( num_reserved_slots <= num_slots, NULL );
-    market &m = global_market( num_slots-num_reserved_slots, stack_size, default_concurrency_requested,
-                               /*is_public*/ true ); // increases market's public ref count
+    // Add public market reference for master thread/task_arena (that adds an internal reference in exchange).
+    market &m = global_market( /*is_public=*/true, num_slots-num_reserved_slots, stack_size,
+                               default_concurrency_requested ); 
 
     arena& a = arena::allocate_arena( m, num_slots, num_reserved_slots );
     // Add newly created arena into the existing market's list.
@@ -291,7 +297,7 @@ arena* market::arena_in_need ( arena_list_type &arenas, arena *&next ) {
         if ( ++it == arenas.end() )
             it = arenas.begin();
         if ( a.num_workers_active() < a.my_num_workers_allotted ) {
-            a.my_references += 2; // add a worker
+            a.my_references += arena::ref_worker;
             as_atomic(next) = &*it; // a subject for innocent data race under the reader lock
             // TODO: rework global round robin policy to local or random to avoid this write
             return &a;

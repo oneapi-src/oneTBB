@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::tick_count::interval_t Class Reference</title>
+<title>tbb::flow::interface8::indexer_node&lt; T0, T1, T2, T3 &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,69 +33,56 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><a class="el" href="a00171.html">tick_count</a></li><li class="navelem"><a class="el" href="a00087.html">interval_t</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><a class="el" href="a00087.html">indexer_node< T0, T1, T2, T3 ></a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#friends">Friends</a> &#124;
-<a href="a00327.html">List of all members</a>  </div>
+<a href="a00391.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::tick_count::interval_t Class Reference</div>  </div>
+<div class="title">tbb::flow::interface8::indexer_node&lt; T0, T1, T2, T3 &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-
-<p>Relative time interval.  
- <a href="a00087.html#details">More...</a></p>
-
-<p><code>#include &lt;tick_count.h&gt;</code></p>
+<div class="dynheader">
+Inheritance diagram for tbb::flow::interface8::indexer_node&lt; T0, T1, T2, T3 &gt;:</div>
+<div class="dyncontent">
+ <div class="center">
+  <img src="a00087.png" usemap="#tbb::flow::interface8::indexer_node&lt; T0, T1, T2, T3 &gt;_map" alt=""/>
+  <map id="tbb::flow::interface8::indexer_node&lt; T0, T1, T2, T3 &gt;_map" name="tbb::flow::interface8::indexer_node&lt; T0, T1, T2, T3 &gt;_map">
+</map>
+ </div></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a954417c1218683cda620b3f0983b8534"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a954417c1218683cda620b3f0983b8534"></a>
+typedef tuple&lt; T0, T1, T2, T3 &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>InputTuple</b></td></tr>
+<tr class="separator:a954417c1218683cda620b3f0983b8534"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6f4e46631dbdc6fc00301dd1c9702050"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6f4e46631dbdc6fc00301dd1c9702050"></a>
+typedef internal::tagged_msg<br class="typebreak"/>
+&lt; size_t, T0, T1, T2, T3 &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>output_type</b></td></tr>
+<tr class="separator:a6f4e46631dbdc6fc00301dd1c9702050"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a41e1ea703998225294fdc03401fdfe7a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a41e1ea703998225294fdc03401fdfe7a"></a>
+typedef <br class="typebreak"/>
+internal::unfolded_indexer_node<br class="typebreak"/>
+&lt; InputTuple &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>unfolded_type</b></td></tr>
+<tr class="separator:a41e1ea703998225294fdc03401fdfe7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a95e3e14750bebafe719856176e2737db"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a95e3e14750bebafe719856176e2737db"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00087.html#a95e3e14750bebafe719856176e2737db">interval_t</a> ()</td></tr>
-<tr class="memdesc:a95e3e14750bebafe719856176e2737db"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a time interval representing zero time duration. <br/></td></tr>
-<tr class="separator:a95e3e14750bebafe719856176e2737db"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a73b462297173f6bffa15bc5a86c30ef4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a73b462297173f6bffa15bc5a86c30ef4"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00087.html#a73b462297173f6bffa15bc5a86c30ef4">interval_t</a> (double sec)</td></tr>
-<tr class="memdesc:a73b462297173f6bffa15bc5a86c30ef4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a time interval representing sec seconds time duration. <br/></td></tr>
-<tr class="separator:a73b462297173f6bffa15bc5a86c30ef4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abe81446bbbb6b6e98d854b91acf47809"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abe81446bbbb6b6e98d854b91acf47809"></a>
-double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00087.html#abe81446bbbb6b6e98d854b91acf47809">seconds</a> () const </td></tr>
-<tr class="memdesc:abe81446bbbb6b6e98d854b91acf47809"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the length of a time interval in seconds. <br/></td></tr>
-<tr class="separator:abe81446bbbb6b6e98d854b91acf47809"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a19bf32f4541252daaa6b09fd33fa9177"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a19bf32f4541252daaa6b09fd33fa9177"></a>
-<a class="el" href="a00087.html">interval_t</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00087.html#a19bf32f4541252daaa6b09fd33fa9177">operator+=</a> (const <a class="el" href="a00087.html">interval_t</a> &amp;i)</td></tr>
-<tr class="memdesc:a19bf32f4541252daaa6b09fd33fa9177"><td class="mdescLeft">&#160;</td><td class="mdescRight">Accumulation operator. <br/></td></tr>
-<tr class="separator:a19bf32f4541252daaa6b09fd33fa9177"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3394d9f3678e6a4c3d6e1be840fe2ff2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3394d9f3678e6a4c3d6e1be840fe2ff2"></a>
-<a class="el" href="a00087.html">interval_t</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00087.html#a3394d9f3678e6a4c3d6e1be840fe2ff2">operator-=</a> (const <a class="el" href="a00087.html">interval_t</a> &amp;i)</td></tr>
-<tr class="memdesc:a3394d9f3678e6a4c3d6e1be840fe2ff2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Subtraction operator. <br/></td></tr>
-<tr class="separator:a3394d9f3678e6a4c3d6e1be840fe2ff2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
-Friends</h2></td></tr>
-<tr class="memitem:a68e741a8f6e2384027e93d1f654ad100"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a68e741a8f6e2384027e93d1f654ad100"></a>
-class&#160;</td><td class="memItemRight" valign="bottom"><b>tbb::tick_count</b></td></tr>
-<tr class="separator:a68e741a8f6e2384027e93d1f654ad100"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab5ceaed3ebf5a0d41088a5bc7c8dc653"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab5ceaed3ebf5a0d41088a5bc7c8dc653"></a>
-<a class="el" href="a00087.html">interval_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00087.html#ab5ceaed3ebf5a0d41088a5bc7c8dc653">operator-</a> (const <a class="el" href="a00171.html">tick_count</a> &amp;t1, const <a class="el" href="a00171.html">tick_count</a> &amp;t0)</td></tr>
-<tr class="memdesc:ab5ceaed3ebf5a0d41088a5bc7c8dc653"><td class="mdescLeft">&#160;</td><td class="mdescRight">Extract the intervals from the tick_counts and subtract them. <br/></td></tr>
-<tr class="separator:ab5ceaed3ebf5a0d41088a5bc7c8dc653"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac8910ee3b69f68eb905af787c273e9a8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac8910ee3b69f68eb905af787c273e9a8"></a>
-<a class="el" href="a00087.html">interval_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00087.html#ac8910ee3b69f68eb905af787c273e9a8">operator+</a> (const <a class="el" href="a00087.html">interval_t</a> &amp;i, const <a class="el" href="a00087.html">interval_t</a> &amp;j)</td></tr>
-<tr class="memdesc:ac8910ee3b69f68eb905af787c273e9a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add two intervals. <br/></td></tr>
-<tr class="separator:ac8910ee3b69f68eb905af787c273e9a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3d11133daa9a7d3c903d070293278f8f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3d11133daa9a7d3c903d070293278f8f"></a>
-<a class="el" href="a00087.html">interval_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00087.html#a3d11133daa9a7d3c903d070293278f8f">operator-</a> (const <a class="el" href="a00087.html">interval_t</a> &amp;i, const <a class="el" href="a00087.html">interval_t</a> &amp;j)</td></tr>
-<tr class="memdesc:a3d11133daa9a7d3c903d070293278f8f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Subtract two intervals. <br/></td></tr>
-<tr class="separator:a3d11133daa9a7d3c903d070293278f8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3a1f8c110c1fb694da65733f882600c2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3a1f8c110c1fb694da65733f882600c2"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>indexer_node</b> (<a class="el" href="a00078.html">graph</a> &amp;g)</td></tr>
+<tr class="separator:a3a1f8c110c1fb694da65733f882600c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9c69f602581aaaf80afc05051914298e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9c69f602581aaaf80afc05051914298e"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>indexer_node</b> (const <a class="el" href="a00083.html">indexer_node</a> &amp;other)</td></tr>
+<tr class="separator:a9c69f602581aaaf80afc05051914298e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab1d09f61e52f3c21a94d584c3f6e6252"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab1d09f61e52f3c21a94d584c3f6e6252"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>set_name</b> (const char *name)</td></tr>
+<tr class="separator:ab1d09f61e52f3c21a94d584c3f6e6252"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Relative time interval. </p>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>tick_count.h</li>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li><a class="el" href="a00229.html">flow_graph.h</a></li>
 </ul>
 </div><!-- contents -->
 <hr>

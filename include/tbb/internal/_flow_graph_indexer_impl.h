@@ -157,6 +157,9 @@ namespace internal {
         typedef OutputType output_type;
         typedef InputTuple input_type;
 
+        // Some versions of Intel C++ compiler fail to generate an implicit constructor for the class which has std::tuple as a member.
+        indexer_node_FE() : my_inputs() {}
+
         input_type &input_ports() { return my_inputs; }
     protected:
         input_type my_inputs;

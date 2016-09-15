@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::flow::interface8::indexer_node&lt; T0, T1, T2, T3 &gt; Class Template Reference</title>
+<title>tbb::internal::tbb_thread_v3::id Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,56 +33,59 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><a class="el" href="a00081.html">indexer_node< T0, T1, T2, T3 ></a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><b>internal</b></li><li class="navelem"><a class="el" href="a00196.html">tbb_thread_v3</a></li><li class="navelem"><a class="el" href="a00081.html">id</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#pub-types">Public Types</a> &#124;
-<a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="a00358.html">List of all members</a>  </div>
+<a href="#friends">Friends</a> &#124;
+<a href="a00486.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::flow::interface8::indexer_node&lt; T0, T1, T2, T3 &gt; Class Template Reference</div>  </div>
+<div class="title">tbb::internal::tbb_thread_v3::id Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="dynheader">
-Inheritance diagram for tbb::flow::interface8::indexer_node&lt; T0, T1, T2, T3 &gt;:</div>
-<div class="dyncontent">
- <div class="center">
-  <img src="a00081.png" usemap="#tbb::flow::interface8::indexer_node&lt; T0, T1, T2, T3 &gt;_map" alt=""/>
-  <map id="tbb::flow::interface8::indexer_node&lt; T0, T1, T2, T3 &gt;_map" name="tbb::flow::interface8::indexer_node&lt; T0, T1, T2, T3 &gt;_map">
-</map>
- </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:a954417c1218683cda620b3f0983b8534"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a954417c1218683cda620b3f0983b8534"></a>
-typedef tuple&lt; T0, T1, T2, T3 &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>InputTuple</b></td></tr>
-<tr class="separator:a954417c1218683cda620b3f0983b8534"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6f4e46631dbdc6fc00301dd1c9702050"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6f4e46631dbdc6fc00301dd1c9702050"></a>
-typedef internal::tagged_msg<br class="typebreak"/>
-&lt; size_t, T0, T1, T2, T3 &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>output_type</b></td></tr>
-<tr class="separator:a6f4e46631dbdc6fc00301dd1c9702050"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a41e1ea703998225294fdc03401fdfe7a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a41e1ea703998225294fdc03401fdfe7a"></a>
-typedef <br class="typebreak"/>
-internal::unfolded_indexer_node<br class="typebreak"/>
-&lt; InputTuple &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>unfolded_type</b></td></tr>
-<tr class="separator:a41e1ea703998225294fdc03401fdfe7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
-Public Member Functions</h2></td></tr>
-<tr class="memitem:a3a1f8c110c1fb694da65733f882600c2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3a1f8c110c1fb694da65733f882600c2"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>indexer_node</b> (<a class="el" href="a00072.html">graph</a> &amp;g)</td></tr>
-<tr class="separator:a3a1f8c110c1fb694da65733f882600c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9c69f602581aaaf80afc05051914298e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9c69f602581aaaf80afc05051914298e"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>indexer_node</b> (const <a class="el" href="a00077.html">indexer_node</a> &amp;other)</td></tr>
-<tr class="separator:a9c69f602581aaaf80afc05051914298e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab1d09f61e52f3c21a94d584c3f6e6252"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab1d09f61e52f3c21a94d584c3f6e6252"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>set_name</b> (const char *name)</td></tr>
-<tr class="separator:ab1d09f61e52f3c21a94d584c3f6e6252"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:aa08381fcad9d2adc0bf8fb009ad38366"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa08381fcad9d2adc0bf8fb009ad38366"></a>
+class&#160;</td><td class="memItemRight" valign="bottom"><b>tbb_thread_v3</b></td></tr>
+<tr class="separator:aa08381fcad9d2adc0bf8fb009ad38366"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1ffa9d9b2f7e18d73535b2879ba64ae0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1ffa9d9b2f7e18d73535b2879ba64ae0"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator==</b> (<a class="el" href="a00081.html">tbb_thread_v3::id</a> x, <a class="el" href="a00081.html">tbb_thread_v3::id</a> y) __TBB_NOEXCEPT(true)</td></tr>
+<tr class="separator:a1ffa9d9b2f7e18d73535b2879ba64ae0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3be52bbc6138f2d2180d89d588b5c404"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3be52bbc6138f2d2180d89d588b5c404"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator!=</b> (<a class="el" href="a00081.html">tbb_thread_v3::id</a> x, <a class="el" href="a00081.html">tbb_thread_v3::id</a> y) __TBB_NOEXCEPT(true)</td></tr>
+<tr class="separator:a3be52bbc6138f2d2180d89d588b5c404"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5cd4a67d579d3ea07557ce6a632bdff0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5cd4a67d579d3ea07557ce6a632bdff0"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator&lt;</b> (<a class="el" href="a00081.html">tbb_thread_v3::id</a> x, <a class="el" href="a00081.html">tbb_thread_v3::id</a> y) __TBB_NOEXCEPT(true)</td></tr>
+<tr class="separator:a5cd4a67d579d3ea07557ce6a632bdff0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaf358e695ce2c3bc64029bb69b6b7841"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aaf358e695ce2c3bc64029bb69b6b7841"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator&lt;=</b> (<a class="el" href="a00081.html">tbb_thread_v3::id</a> x, <a class="el" href="a00081.html">tbb_thread_v3::id</a> y) __TBB_NOEXCEPT(true)</td></tr>
+<tr class="separator:aaf358e695ce2c3bc64029bb69b6b7841"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad9277ffe4c9b7cdd4687d0cab4bf8cd8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad9277ffe4c9b7cdd4687d0cab4bf8cd8"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator&gt;</b> (<a class="el" href="a00081.html">tbb_thread_v3::id</a> x, <a class="el" href="a00081.html">tbb_thread_v3::id</a> y) __TBB_NOEXCEPT(true)</td></tr>
+<tr class="separator:ad9277ffe4c9b7cdd4687d0cab4bf8cd8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9f559c30c06931effca0ee4a351d8fff"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9f559c30c06931effca0ee4a351d8fff"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator&gt;=</b> (<a class="el" href="a00081.html">tbb_thread_v3::id</a> x, <a class="el" href="a00081.html">tbb_thread_v3::id</a> y) __TBB_NOEXCEPT(true)</td></tr>
+<tr class="separator:a9f559c30c06931effca0ee4a351d8fff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8dcf9ef009469428dc3752f54240eb69"><td class="memTemplParams" colspan="2"><a class="anchor" id="a8dcf9ef009469428dc3752f54240eb69"></a>
+template&lt;class charT , class traits &gt; </td></tr>
+<tr class="memitem:a8dcf9ef009469428dc3752f54240eb69"><td class="memTemplItemLeft" align="right" valign="top">std::basic_ostream&lt; charT, <br class="typebreak"/>
+traits &gt; &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>operator&lt;&lt;</b> (std::basic_ostream&lt; charT, traits &gt; &amp;out, <a class="el" href="a00081.html">tbb_thread_v3::id</a> <a class="el" href="a00081.html">id</a>)</td></tr>
+<tr class="separator:a8dcf9ef009469428dc3752f54240eb69"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0a77bf86c87119e219bb508d787d97da"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0a77bf86c87119e219bb508d787d97da"></a>
+<a class="el" href="a00081.html">tbb_thread_v3::id</a> <br class="typebreak"/>
+__TBB_EXPORTED_FUNC&#160;</td><td class="memItemRight" valign="bottom"><b>thread_get_id_v3</b> ()</td></tr>
+<tr class="separator:a0a77bf86c87119e219bb508d787d97da"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9245f821db4ab0e093ec5e7b7f02eb8b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9245f821db4ab0e093ec5e7b7f02eb8b"></a>
+size_t&#160;</td><td class="memItemRight" valign="bottom"><b>tbb_hasher</b> (const <a class="el" href="a00081.html">tbb_thread_v3::id</a> &amp;<a class="el" href="a00081.html">id</a>)</td></tr>
+<tr class="separator:a9245f821db4ab0e093ec5e7b7f02eb8b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af6fded011b60cda6876a33f68b2368ee"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af6fded011b60cda6876a33f68b2368ee"></a>
+<a class="el" href="a00081.html">id</a>&#160;</td><td class="memItemRight" valign="bottom"><b>atomic_compare_and_swap</b> (<a class="el" href="a00081.html">id</a> &amp;location, const <a class="el" href="a00081.html">id</a> &amp;value, const <a class="el" href="a00081.html">id</a> &amp;comparand)</td></tr>
+<tr class="separator:af6fded011b60cda6876a33f68b2368ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li><a class="el" href="a00197.html">flow_graph.h</a></li>
+<li>tbb_thread.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

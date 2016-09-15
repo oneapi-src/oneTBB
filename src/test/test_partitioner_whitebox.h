@@ -22,6 +22,9 @@
 
 #include <typeinfo>
 
+// enabling testing of preview features
+#define TBB_PREVIEW_STATIC_PARTITIONER 1
+
 #include "tbb/tbb_thread.h"
 #include "tbb/enumerable_thread_specific.h"
 
@@ -108,7 +111,7 @@ void my_affinity_partitioner_base_v3::resize( unsigned factor ) {
 
 } //namespace internal
 // simulate a subset of parallel_for
-namespace interface7 {
+namespace interface9 {
 namespace internal {
 
 // parallel_for algorithm that executes sequentially
@@ -215,11 +218,11 @@ public:
 };
 
 } //namespace internal
-} //namespace interface7
+} //namespace interfaceX
 } //namespace tbb
 
 namespace whitebox_simulation {
-using namespace tbb::interface7::internal;
+using namespace tbb::interface9::internal;
 template<typename Range, typename Body, typename Partitioner>
 void parallel_for( const Range& range, const Body& body, Partitioner& partitioner,
                    test_partitioner_utils::BinaryTree* tree = NULL) {
@@ -310,9 +313,9 @@ public:
             uint64_t disparity =
                 max(stat.m_rangeNum, settings->thread_num) - min(stat.m_rangeNum, settings->thread_num);
             if (disparity > settings->above_threads_size_tolerance) {
-                REPORT("ERROR: '%s (f=%d|e=%d)': |#ranges-#threads|=%llu > %llu=tolerance\n",
-                    rangeName, int(settings->provide_feedback), int(settings->ensure_non_empty_size),
-                    disparity, uint64_t(settings->above_threads_size_tolerance));
+                REPORT("ERROR: '%s (f=%d|e=%d)': |#ranges(%llu)-#threads(%llu)|=%llu > %llu=tolerance\n",
+                    rangeName, int(settings->provide_feedback), int(settings->ensure_non_empty_size), stat.m_rangeNum, 
+                    settings->thread_num, disparity, uint64_t(settings->above_threads_size_tolerance));
                 ASSERT(disparity <= settings->above_threads_size_tolerance, "Incorrect number of range "
                     "objects was created before work balancing phase started");
             }
@@ -360,7 +363,7 @@ public:
 protected:
     size_t m_parallel_group_thread_starting_index; // starting index of thread
 
-    template <typename Range, typename T>
+    template <typename Range, typename Partitioner, typename T>
     void test(use_case_settings_t& settings, T factors[], size_t (*rsgFunc)(T*, unsigned, size_t)
         = &default_range_size_generator<T>) const
     {
@@ -370,8 +373,8 @@ protected:
                 /*maximal size of range=*/ 0, /*minimal size of range was not rewritten yet=*/ false };
             Range range = Range(settings.range_begin, range_end, &stat, settings.provide_feedback,
                                 settings.ensure_non_empty_size);
-            tbb::affinity_partitioner ap;
-            test_case(range, SimpleBody(), ap, NULL);
+            Partitioner my_partitioner;
+            test_case(range, SimpleBody(), my_partitioner, NULL);
             size_t range_size = range_end - settings.range_begin;
             const char* rangeName = typeid(range).name();
             settings.checker(rangeName, range_size, &settings, stat);

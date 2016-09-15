@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::flow::interface8::internal::async_gateway&lt; Output &gt; Class Template Reference</title>
+<title>tbb::flow::interface8::internal::async_body&lt; Input, Ports, AsyncGateway, Body &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,59 +33,45 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><b>internal</b></li><li class="navelem"><a class="el" href="a00018.html">async_gateway</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><b>internal</b></li><li class="navelem"><a class="el" href="a00018.html">async_body</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="a00369.html">List of all members</a>  </div>
+<a href="a00433.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::flow::interface8::internal::async_gateway&lt; Output &gt; Class Template Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div>  </div>
+<div class="title">tbb::flow::interface8::internal::async_body&lt; Input, Ports, AsyncGateway, Body &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-
-<p>Pure virtual template class that defines interface for async communication.  
- <a href="a00018.html#details">More...</a></p>
-
-<p><code>#include &lt;flow_graph.h&gt;</code></p>
-<div class="dynheader">
-Inheritance diagram for tbb::flow::interface8::internal::async_gateway&lt; Output &gt;:</div>
-<div class="dyncontent">
- <div class="center">
-  <img src="a00018.png" usemap="#tbb::flow::interface8::internal::async_gateway&lt; Output &gt;_map" alt=""/>
-  <map id="tbb::flow::interface8::internal::async_gateway&lt; Output &gt;_map" name="tbb::flow::interface8::internal::async_gateway&lt; Output &gt;_map">
-<area href="a00019.html" title="Implements a async node. " alt="tbb::flow::interface8::async_node&lt; Input, Output, Allocator &gt;" shape="rect" coords="0,56,353,80"/>
-</map>
- </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a504659293f45515f93e0054a80c1e92d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a504659293f45515f93e0054a80c1e92d"></a>
-typedef Output&#160;</td><td class="memItemRight" valign="bottom"><b>output_type</b></td></tr>
-<tr class="separator:a504659293f45515f93e0054a80c1e92d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9a6e088b09d10bea8561e8cbb3160623"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9a6e088b09d10bea8561e8cbb3160623"></a>
+typedef AsyncGateway&#160;</td><td class="memItemRight" valign="bottom"><b>async_gateway_type</b></td></tr>
+<tr class="separator:a9a6e088b09d10bea8561e8cbb3160623"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a09b554a76f7480433ad32187afcdcc57"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a09b554a76f7480433ad32187afcdcc57"></a>
-virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00018.html#a09b554a76f7480433ad32187afcdcc57">async_try_put</a> (const output_type &amp;i)=0</td></tr>
-<tr class="memdesc:a09b554a76f7480433ad32187afcdcc57"><td class="mdescLeft">&#160;</td><td class="mdescRight">Submit signal from Async Activity to FG. <br/></td></tr>
-<tr class="separator:a09b554a76f7480433ad32187afcdcc57"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a12a73a0513dad9310f0564bd63eedfac"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a12a73a0513dad9310f0564bd63eedfac"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>async_reserve</b> ()=0</td></tr>
-<tr class="separator:a12a73a0513dad9310f0564bd63eedfac"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acdb52d362d2a136b1537b88dca6ece0a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acdb52d362d2a136b1537b88dca6ece0a"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>async_commit</b> ()=0</td></tr>
-<tr class="separator:acdb52d362d2a136b1537b88dca6ece0a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9359ad213a52a8356e9bb3ddd4e67d2c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9359ad213a52a8356e9bb3ddd4e67d2c"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>async_body</b> (const Body &amp;body, async_gateway_type *gateway)</td></tr>
+<tr class="separator:a9359ad213a52a8356e9bb3ddd4e67d2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1bae1164bc58b58e2427c0edc805f9ee"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1bae1164bc58b58e2427c0edc805f9ee"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>async_body</b> (const <a class="el" href="a00018.html">async_body</a> &amp;other)</td></tr>
+<tr class="separator:a1bae1164bc58b58e2427c0edc805f9ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2652ac28a7c212918c8aba5271124421"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2652ac28a7c212918c8aba5271124421"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>operator()</b> (const Input &amp;v, Ports &amp;)</td></tr>
+<tr class="separator:a2652ac28a7c212918c8aba5271124421"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a52c4b958e05662a2f561a21eb91cafe9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a52c4b958e05662a2f561a21eb91cafe9"></a>
+Body&#160;</td><td class="memItemRight" valign="bottom"><b>get_body</b> ()</td></tr>
+<tr class="separator:a52c4b958e05662a2f561a21eb91cafe9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab5b2db9ce9e33c7f7f74b6490b321d31"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab5b2db9ce9e33c7f7f74b6490b321d31"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>set_async_gateway</b> (async_gateway_type *gateway)</td></tr>
+<tr class="separator:ab5b2db9ce9e33c7f7f74b6490b321d31"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;typename Output&gt;<br/>
-class tbb::flow::interface8::internal::async_gateway&lt; Output &gt;</h3>
-
-<p>Pure virtual template class that defines interface for async communication. </p>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
-<li><a class="el" href="a00197.html">flow_graph.h</a></li>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li><a class="el" href="a00229.html">flow_graph.h</a></li>
 </ul>
 </div><!-- contents -->
 <hr>

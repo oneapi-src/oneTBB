@@ -1,0 +1,69 @@
+<HTML>
+<BODY>
+
+<H2>Overview</H2>
+This directory contains an example of several versions of Cholesky
+Factorization algorithm.
+<BR>
+<BR><B>dpotrf</B>: An implementation that calls the Intel&reg; Math Kernel Library (Intel&reg; MKL) dpotrf function to directly perform the factorization.  This can be a serial implementation or threaded implementation depending on the version of the Intel MKL library that is linked against.
+<BR>
+<BR><B>crout</B>: A serial implementation that uses the Crout-Cholesky algorithm for factorization.  The same approach is parallelized for the other Intel&reg; Threading Building Blocks (Intel&reg; TBB) based approaches below.
+<BR>
+<BR><B>depend</B>: A parallel version of Crout-Cholesky factorization that uses an Intel TBB flow graph.  This version uses a dependence graph made solely of continue_node objects. This an inspector-executor approach, where a loop nest that is similar to the serial implementation is used to create an unrolled version of the computation.  Where the Intel MKL calls would have been made in the original serial implementation of Crout-Cholesky, instead nodes are created and these nodes are linked by edges to the other nodes that they are dependent upon.  The resulting graph is relatively large, with a node for each instance of each Intel MKL call.  For example, there are many nodes that call dtrsm; one for each invocation of dtrsm in the serial implementation.  The is very little overhead in message management for this version and so it is often the highest performing.
+<BR>
+<BR><B>join</B>: A parallel version of Crout-Cholesky factorization that uses an Intel TBB flow graph.  This version uses a data flow approach. This is a small, compact graph that passes tiles along its edges.  There is one node per type of Intel MKL call, plus join_nodes that combine the inputs required for each call.  So for example, there is only a single node that applies all calls to dtrsm.  This node is invoked when the tiles that hold the inputs and outputs for an invocation are matched together in the tag-matching join_node that precedes it.   The tag represents the iteration values of the i, j, k loops in the serial implementation at that invocation of the call. There is some overhead in message matching and forwarding, so it may not perform as well as the dependence graph implementation.
+<BR>
+<BR>This sample code requires a recent Intel TBB library (one that supports the flow graph). And also the Intel MKL library.
+<H2>Files</H2>
+<DL>
+<DT><A HREF="cholesky.cpp">cholesky.cpp</A>
+<DD>Source code for example.
+<DT><A HREF="init.cpp">init.cpp</A>
+<DD>Source code for example.
+<DT><A HREF="cholesky.h">cholesky.h</A>
+<DD>Header file for example.
+<DT><A HREF="Makefile">Makefile</A>
+<DD>Makefile for building example.
+</DL>
+
+<H2>Directories</H2>
+<DL>
+<DT><A HREF="msvs">msvs</A> 
+<DD>Contains Microsoft* Visual Studio* 2010 workspace for building and running the 
+    example (Windows* systems only).
+<DT><A HREF="xcode">xcode</A>
+<DD>Contains Xcode* IDE workspace for building and running the example (OS X* 
+    systems only).</DL>
+
+<H2>To Build</H2>
+General build directions can be found <A HREF=../../index.html#build>here</A>.
+
+<H2>Usage</H2>
+<DL>
+<DT><TT>cholesky [<I>size=value</I>] [<I>blocksize=value</I>] [<I>num_trials=value</I>] [<I>output_prefix=value</I>] [<I>algorithm=value</I>] [<I>num_tbb_threads=value</I>] [<I>input_file=value</I>] [<I>-x</I>] [<I>-h</I>] [<I>size</I> [<I>blocksize</I> [<I>num_trials</I> [<I>output_prefix</I> [<I>algorithm</I> [<I>num_tbb_threads</I>]]]]]]</TT>
+<DD>where:
+<BR><I>size</I> - the row/column size of NxN matrix (size <= 46000)
+<BR><I>blocksize</I> - the block size; size must be a multiple of the blocksize
+<BR><I>num_trials</I> - the number of times to run each algorithm
+<BR><I>output_prefix</I> - if provided the prefix will be preappended to output files:
+                     <I>output_prefix_posdef.txt</I> and
+                     <I>output_prefix_X.txt</I>; where <I>X</I> is the algorithm used
+<BR>if <I>output_prefix</I> is not provided, no output will be written
+<BR><I>algorithm</I> - name of the used algorithm - can be dpotrf, crout, depend or join
+<BR><I>num_tbb_threads</I> - number of started TBB threads
+<BR><I>input_file</I> - if provided it will be read to get the input matrix
+<BR><I>-x</I> - skips all validation
+<BR><I>-h</I> - show this message
+</DL>
+
+<HR>
+<A HREF="../index.html">Up to parent directory</A>
+<p></p>
+Copyright &copy; 2005-2015 Intel Corporation.  All Rights Reserved.
+<P></P>
+Intel is a registered trademark or trademark of Intel Corporation
+or its subsidiaries in the United States and other countries.
+<p></p>
+* Other names and brands may be claimed as the property of others.
+</BODY>
+</HTML>

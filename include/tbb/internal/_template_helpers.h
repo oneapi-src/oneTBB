@@ -38,6 +38,8 @@ template<typename T> struct strip<T&>                 { typedef T type; };
 template<typename T> struct strip<const T&>           { typedef T type; };
 template<typename T> struct strip<volatile T&>        { typedef T type; };
 template<typename T> struct strip<const volatile T&>  { typedef T type; };
+//! Specialization for function pointers
+template<typename T> struct strip<T(&)()>             { typedef T(*type)(); };
 #if __TBB_CPP11_RVALUE_REF_PRESENT
 template<typename T> struct strip<T&&>                { typedef T type; };
 template<typename T> struct strip<const T&&>          { typedef T type; };

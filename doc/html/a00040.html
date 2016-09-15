@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::flow::interface8::composite_node&lt; tbb::flow::tuple&lt; InputTypes...&gt;, tbb::flow::tuple&lt; OutputTypes...&gt; &gt; Class Template Reference</title>
+<title>tbb::captured_exception Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,106 +33,174 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><a class="el" href="a00040.html">composite_node< tbb::flow::tuple< InputTypes...>, tbb::flow::tuple< OutputTypes...> ></a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><a class="el" href="a00040.html">captured_exception</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pro-methods">Protected Member Functions</a> &#124;
-<a href="a00364.html">List of all members</a>  </div>
+<a href="a00357.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::flow::interface8::composite_node&lt; tbb::flow::tuple&lt; InputTypes...&gt;, tbb::flow::tuple&lt; OutputTypes...&gt; &gt; Class Template Reference</div>  </div>
+<div class="title">tbb::captured_exception Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
+
+<p>This class is used by TBB to propagate information about unhandled exceptions into the root thread.  
+ <a href="a00040.html#details">More...</a></p>
+
+<p><code>#include &lt;tbb_exception.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::flow::interface8::composite_node&lt; tbb::flow::tuple&lt; InputTypes...&gt;, tbb::flow::tuple&lt; OutputTypes...&gt; &gt;:</div>
+Inheritance diagram for tbb::captured_exception:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00040.png" usemap="#tbb::flow::interface8::composite_node&lt; tbb::flow::tuple&lt; InputTypes...&gt;, tbb::flow::tuple&lt; OutputTypes...&gt; &gt;_map" alt=""/>
-  <map id="tbb::flow::interface8::composite_node&lt; tbb::flow::tuple&lt; InputTypes...&gt;, tbb::flow::tuple&lt; OutputTypes...&gt; &gt;_map" name="tbb::flow::interface8::composite_node&lt; tbb::flow::tuple&lt; InputTypes...&gt;, tbb::flow::tuple&lt; OutputTypes...&gt; &gt;_map">
-<area href="a00074.html" title="The base of all graph nodes. " alt="tbb::flow::interface8::graph_node" shape="rect" coords="0,56,603,80"/>
+  <img src="a00040.png" usemap="#tbb::captured_exception_map" alt=""/>
+  <map id="tbb::captured_exception_map" name="tbb::captured_exception_map">
+<area href="a00194.html" title="Interface to be implemented by all exceptions TBB recognizes and propagates across the threads..." alt="tbb::tbb_exception" shape="rect" coords="0,56,146,80"/>
 </map>
  </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:a858ade3ad43be5c81f613401737fc990"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a858ade3ad43be5c81f613401737fc990"></a>
-typedef tbb::flow::tuple<br class="typebreak"/>
-&lt; <a class="el" href="a00126.html">receiver</a>&lt; InputTypes &gt; &amp;... &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>input_ports_type</b></td></tr>
-<tr class="separator:a858ade3ad43be5c81f613401737fc990"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a55293583bde017fcb1d546536008fe1f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a55293583bde017fcb1d546536008fe1f"></a>
-typedef tbb::flow::tuple<br class="typebreak"/>
-&lt; <a class="el" href="a00144.html">sender</a>&lt; OutputTypes &gt; &amp;... &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>output_ports_type</b></td></tr>
-<tr class="separator:a55293583bde017fcb1d546536008fe1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ab63d89002cd2435e6c8e2f6b6d7ba7a3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab63d89002cd2435e6c8e2f6b6d7ba7a3"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>composite_node</b> (<a class="el" href="a00072.html">graph</a> &amp;g, const char *type_name=&quot;composite_node&quot;)</td></tr>
-<tr class="separator:ab63d89002cd2435e6c8e2f6b6d7ba7a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac6023ff4b2d90264179b210eb44c701f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac6023ff4b2d90264179b210eb44c701f"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>composite_node</b> (<a class="el" href="a00072.html">graph</a> &amp;g)</td></tr>
-<tr class="separator:ac6023ff4b2d90264179b210eb44c701f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7be23bc5e100296086a75763f95f9f45"><td class="memTemplParams" colspan="2"><a class="anchor" id="a7be23bc5e100296086a75763f95f9f45"></a>
-template&lt;typename T1 , typename T2 &gt; </td></tr>
-<tr class="memitem:a7be23bc5e100296086a75763f95f9f45"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>set_external_ports</b> (T1 &amp;&amp;input_ports_tuple, T2 &amp;&amp;output_ports_tuple)</td></tr>
-<tr class="separator:a7be23bc5e100296086a75763f95f9f45"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5a0c57959fed0938fb6f28fbeea5e7cf"><td class="memTemplParams" colspan="2"><a class="anchor" id="a5a0c57959fed0938fb6f28fbeea5e7cf"></a>
-template&lt;typename... NodeTypes&gt; </td></tr>
-<tr class="memitem:a5a0c57959fed0938fb6f28fbeea5e7cf"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>add_visible_nodes</b> (const NodeTypes &amp;...n)</td></tr>
-<tr class="separator:a5a0c57959fed0938fb6f28fbeea5e7cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aba9cb33663363fb0e34ccba46c79faaa"><td class="memTemplParams" colspan="2"><a class="anchor" id="aba9cb33663363fb0e34ccba46c79faaa"></a>
-template&lt;typename... NodeTypes&gt; </td></tr>
-<tr class="memitem:aba9cb33663363fb0e34ccba46c79faaa"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>add_nodes</b> (const NodeTypes &amp;...n)</td></tr>
-<tr class="separator:aba9cb33663363fb0e34ccba46c79faaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a16c89cf58818598ee50d37c8e044ee5a"><td class="memTemplParams" colspan="2"><a class="anchor" id="a16c89cf58818598ee50d37c8e044ee5a"></a>
-template&lt;typename... Nodes&gt; </td></tr>
-<tr class="memitem:a16c89cf58818598ee50d37c8e044ee5a"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>add_nodes</b> (Nodes &amp;...)</td></tr>
-<tr class="separator:a16c89cf58818598ee50d37c8e044ee5a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0a58a68a9f9185d000c7328c2c7c5788"><td class="memTemplParams" colspan="2"><a class="anchor" id="a0a58a68a9f9185d000c7328c2c7c5788"></a>
-template&lt;typename... Nodes&gt; </td></tr>
-<tr class="memitem:a0a58a68a9f9185d000c7328c2c7c5788"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>add_visible_nodes</b> (Nodes &amp;...)</td></tr>
-<tr class="separator:a0a58a68a9f9185d000c7328c2c7c5788"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a09577f7c1088266375b86cff4c5efc4b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a09577f7c1088266375b86cff4c5efc4b"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>set_name</b> (const char *name)</td></tr>
-<tr class="separator:a09577f7c1088266375b86cff4c5efc4b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad69157eb5be21df78777e35ea6d988ea"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad69157eb5be21df78777e35ea6d988ea"></a>
-input_ports_type&#160;</td><td class="memItemRight" valign="bottom"><b>input_ports</b> ()</td></tr>
-<tr class="separator:ad69157eb5be21df78777e35ea6d988ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a741695fd70d426c5853226932f644273"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a741695fd70d426c5853226932f644273"></a>
-output_ports_type&#160;</td><td class="memItemRight" valign="bottom"><b>output_ports</b> ()</td></tr>
-<tr class="separator:a741695fd70d426c5853226932f644273"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6c2775ce17971b36743ced21284797e4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6c2775ce17971b36743ced21284797e4"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>extract</b> ()</td></tr>
-<tr class="separator:a6c2775ce17971b36743ced21284797e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_methods_a00074"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_a00074')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="a00074.html">tbb::flow::interface8::graph_node</a></td></tr>
-<tr class="memitem:a01d89d46b5437dba06add102862ee690 inherit pub_methods_a00074"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a01d89d46b5437dba06add102862ee690"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>graph_node</b> (<a class="el" href="a00072.html">graph</a> &amp;g)</td></tr>
-<tr class="separator:a01d89d46b5437dba06add102862ee690 inherit pub_methods_a00074"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
-Protected Member Functions</h2></td></tr>
-<tr class="memitem:a87de5859d05f1409e26edf0038feb088"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a87de5859d05f1409e26edf0038feb088"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>reset_node</b> (reset_flags)</td></tr>
-<tr class="separator:a87de5859d05f1409e26edf0038feb088"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
-Additional Inherited Members</h2></td></tr>
-<tr class="inherit_header pro_attribs_a00074"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_a00074')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="a00074.html">tbb::flow::interface8::graph_node</a></td></tr>
-<tr class="memitem:add0e1e5aabc3cc184a0814752abef3bf inherit pro_attribs_a00074"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="add0e1e5aabc3cc184a0814752abef3bf"></a>
-<a class="el" href="a00072.html">graph</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>my_graph</b></td></tr>
-<tr class="separator:add0e1e5aabc3cc184a0814752abef3bf inherit pro_attribs_a00074"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acddc0494d8270126dfbec1fc1125265a inherit pro_attribs_a00074"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acddc0494d8270126dfbec1fc1125265a"></a>
-<a class="el" href="a00074.html">graph_node</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>next</b></td></tr>
-<tr class="separator:acddc0494d8270126dfbec1fc1125265a inherit pro_attribs_a00074"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a43f71ea7acfead3f6412b37cfa837329 inherit pro_attribs_a00074"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a43f71ea7acfead3f6412b37cfa837329"></a>
-<a class="el" href="a00074.html">graph_node</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>prev</b></td></tr>
-<tr class="separator:a43f71ea7acfead3f6412b37cfa837329 inherit pro_attribs_a00074"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a56f6c51b6d4f8ce31669457ff8f0c07f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a56f6c51b6d4f8ce31669457ff8f0c07f"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>captured_exception</b> (const <a class="el" href="a00040.html">captured_exception</a> &amp;src)</td></tr>
+<tr class="separator:a56f6c51b6d4f8ce31669457ff8f0c07f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab3d72662db6a2badffa95a649a6c0bdd"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab3d72662db6a2badffa95a649a6c0bdd"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>captured_exception</b> (const char *name_, const char *info)</td></tr>
+<tr class="separator:ab3d72662db6a2badffa95a649a6c0bdd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a78a66603238d40da9ec6a750b6a2425c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a78a66603238d40da9ec6a750b6a2425c"></a>
+<a class="el" href="a00040.html">captured_exception</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="a00040.html">captured_exception</a> &amp;src)</td></tr>
+<tr class="separator:a78a66603238d40da9ec6a750b6a2425c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abb221485cd260349efdef681f633a6a4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="a00040.html">captured_exception</a> <br class="typebreak"/>
+*__TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00040.html#abb221485cd260349efdef681f633a6a4">move</a> ()  throw ()</td></tr>
+<tr class="memdesc:abb221485cd260349efdef681f633a6a4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates and returns pointer to the deep copy of this exception object.  <a href="#abb221485cd260349efdef681f633a6a4">More...</a><br/></td></tr>
+<tr class="separator:abb221485cd260349efdef681f633a6a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3006b6825dda6c746d28fb748f5675de"><td class="memItemLeft" align="right" valign="top">void __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00040.html#a3006b6825dda6c746d28fb748f5675de">destroy</a> ()  throw ()</td></tr>
+<tr class="memdesc:a3006b6825dda6c746d28fb748f5675de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroys objects created by the <a class="el" href="a00040.html#abb221485cd260349efdef681f633a6a4" title="Creates and returns pointer to the deep copy of this exception object. ">move()</a> method.  <a href="#a3006b6825dda6c746d28fb748f5675de">More...</a><br/></td></tr>
+<tr class="separator:a3006b6825dda6c746d28fb748f5675de"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac9ae925678fcc0cc02a74df7d06b8d63"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00040.html#ac9ae925678fcc0cc02a74df7d06b8d63">throw_self</a> ()</td></tr>
+<tr class="memdesc:ac9ae925678fcc0cc02a74df7d06b8d63"><td class="mdescLeft">&#160;</td><td class="mdescRight">Throws this exception object.  <a href="#ac9ae925678fcc0cc02a74df7d06b8d63">More...</a><br/></td></tr>
+<tr class="separator:ac9ae925678fcc0cc02a74df7d06b8d63"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a23426113851b78d3f0069956afd21976"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a23426113851b78d3f0069956afd21976"></a>
+const char *__TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00040.html#a23426113851b78d3f0069956afd21976">name</a> () const   throw ()</td></tr>
+<tr class="memdesc:a23426113851b78d3f0069956afd21976"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns RTTI name of the originally intercepted exception. <br/></td></tr>
+<tr class="separator:a23426113851b78d3f0069956afd21976"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac97ee315d8613c803dae2f6d3e0b91a7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac97ee315d8613c803dae2f6d3e0b91a7"></a>
+const char *__TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00040.html#ac97ee315d8613c803dae2f6d3e0b91a7">what</a> () const   throw ()</td></tr>
+<tr class="memdesc:ac97ee315d8613c803dae2f6d3e0b91a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the result of originally intercepted exception's <a class="el" href="a00040.html#ac97ee315d8613c803dae2f6d3e0b91a7" title="Returns the result of originally intercepted exception&#39;s what() method. ">what()</a> method. <br/></td></tr>
+<tr class="separator:ac97ee315d8613c803dae2f6d3e0b91a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa72deb29316e8c08700f7e6afa4a48e8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa72deb29316e8c08700f7e6afa4a48e8"></a>
+void __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><b>set</b> (const char *<a class="el" href="a00040.html#a23426113851b78d3f0069956afd21976">name</a>, const char *info)  throw ()</td></tr>
+<tr class="separator:aa72deb29316e8c08700f7e6afa4a48e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0b160c0fc5d2fab90df2be96ea14088a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0b160c0fc5d2fab90df2be96ea14088a"></a>
+void __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><b>clear</b> ()  throw ()</td></tr>
+<tr class="separator:a0b160c0fc5d2fab90df2be96ea14088a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_a00194"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_a00194')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="a00194.html">tbb::tbb_exception</a></td></tr>
+<tr class="memitem:a6a973c37078afedf7d457ff4704bf8cd inherit pub_methods_a00194"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00194.html#a6a973c37078afedf7d457ff4704bf8cd">operator delete</a> (void *p)</td></tr>
+<tr class="separator:a6a973c37078afedf7d457ff4704bf8cd inherit pub_methods_a00194"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>This class is used by TBB to propagate information about unhandled exceptions into the root thread. </p>
+<p>Exception of this type is thrown by TBB in the root thread (thread that started a parallel algorithm ) if an unhandled exception was intercepted during the algorithm execution in one of the workers. </p>
+<dl class="section see"><dt>See Also</dt><dd><a class="el" href="a00194.html" title="Interface to be implemented by all exceptions TBB recognizes and propagates across the threads...">tbb::tbb_exception</a> </dd></dl>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="a3006b6825dda6c746d28fb748f5675de"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void __TBB_EXPORTED_METHOD tbb::captured_exception::destroy </td>
+          <td>(</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td align="right">throw </td><td>(</td><td colspan="2"></td>
+        </tr>
+        <tr>
+          <td align="right"></td><td>)</td><td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Destroys objects created by the <a class="el" href="a00040.html#abb221485cd260349efdef681f633a6a4" title="Creates and returns pointer to the deep copy of this exception object. ">move()</a> method. </p>
+<p>Frees memory and calls destructor for this exception object. Can and must be used only on objects created by the move method. </p>
+
+<p>Implements <a class="el" href="a00194.html#ad3bc09bf78c33f19a0bcdf882fdf9d41">tbb::tbb_exception</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="abb221485cd260349efdef681f633a6a4"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="a00040.html">captured_exception</a>* __TBB_EXPORTED_METHOD tbb::captured_exception::move </td>
+          <td>(</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td align="right">throw </td><td>(</td><td colspan="2"></td>
+        </tr>
+        <tr>
+          <td align="right"></td><td>)</td><td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Creates and returns pointer to the deep copy of this exception object. </p>
+<p>Move semantics is allowed. </p>
+
+<p>Implements <a class="el" href="a00194.html#a4bd4ba0d501021013d1473d21b020b69">tbb::tbb_exception</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="ac9ae925678fcc0cc02a74df7d06b8d63"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void tbb::captured_exception::throw_self </td>
+          <td>(</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Throws this exception object. </p>
+<p>Make sure that if you have several levels of derivation from this interface you implement or override this method on the most derived level. The implementation is as simple as "throw *this;". Failure to do this will result in exception of a base class type being thrown. </p>
+
+<p>Implements <a class="el" href="a00194.html#ae45c08d36c7ec7ae91785da3515a8828">tbb::tbb_exception</a>.</p>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li><a class="el" href="a00197.html">flow_graph.h</a></li>
+<li>tbb_exception.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

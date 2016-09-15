@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::interface5::reader_writer_lock::scoped_lock_read Class Reference</title>
+<title>tbb::queuing_rw_mutex Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,59 +33,70 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><b>interface5</b></li><li class="navelem"><a class="el" href="a00115.html">reader_writer_lock</a></li><li class="navelem"><a class="el" href="a00143.html">scoped_lock_read</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><a class="el" href="a00143.html">queuing_rw_mutex</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#friends">Friends</a> &#124;
-<a href="a00387.html">List of all members</a>  </div>
+<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
+<a href="a00327.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::interface5::reader_writer_lock::scoped_lock_read Class Reference</div>  </div>
+<div class="title">tbb::queuing_rw_mutex Class Reference<div class="ingroups"><a class="el" href="a00292.html">Synchronization</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>The scoped lock pattern for read locks.  
+<p>Queuing reader-writer mutex with local-only spinning.  
  <a href="a00143.html#details">More...</a></p>
 
-<p><code>#include &lt;reader_writer_lock.h&gt;</code></p>
+<p><code>#include &lt;queuing_rw_mutex.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::interface5::reader_writer_lock::scoped_lock_read:</div>
+Inheritance diagram for tbb::queuing_rw_mutex:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00143.png" usemap="#tbb::interface5::reader_writer_lock::scoped_lock_read_map" alt=""/>
-  <map id="tbb::interface5::reader_writer_lock::scoped_lock_read_map" name="tbb::interface5::reader_writer_lock::scoped_lock_read_map">
+  <img src="a00143.png" usemap="#tbb::queuing_rw_mutex_map" alt=""/>
+  <map id="tbb::queuing_rw_mutex_map" name="tbb::queuing_rw_mutex_map">
 </map>
  </div></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00167.html">scoped_lock</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The scoped locking pattern.  <a href="a00167.html#details">More...</a><br/></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a9d3120a23016dabd4cc2683fa561ee5a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9d3120a23016dabd4cc2683fa561ee5a"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00143.html#a9d3120a23016dabd4cc2683fa561ee5a">scoped_lock_read</a> (<a class="el" href="a00115.html">reader_writer_lock</a> &amp;<a class="el" href="a00115.html#af92eb949fc491af8f7e350869ea0a0d1">lock</a>)</td></tr>
-<tr class="memdesc:a9d3120a23016dabd4cc2683fa561ee5a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct with blocking attempt to acquire read lock on the passed-in lock. <br/></td></tr>
-<tr class="separator:a9d3120a23016dabd4cc2683fa561ee5a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acf0e23fb4d3aeb6bde18d5d1236bd9d5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acf0e23fb4d3aeb6bde18d5d1236bd9d5"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00143.html#acf0e23fb4d3aeb6bde18d5d1236bd9d5">~scoped_lock_read</a> ()</td></tr>
-<tr class="memdesc:acf0e23fb4d3aeb6bde18d5d1236bd9d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor, releases the read lock. <br/></td></tr>
-<tr class="separator:acf0e23fb4d3aeb6bde18d5d1236bd9d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9eb8c7a64912a1c74ea76a01a20a1621"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9eb8c7a64912a1c74ea76a01a20a1621"></a>
-void *&#160;</td><td class="memItemRight" valign="bottom"><b>operator new</b> (size_t s)</td></tr>
-<tr class="separator:a9eb8c7a64912a1c74ea76a01a20a1621"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1a6c15dfdbe1bc7a6648ed836ebd8de6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1a6c15dfdbe1bc7a6648ed836ebd8de6"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>operator delete</b> (void *p)</td></tr>
-<tr class="separator:a1a6c15dfdbe1bc7a6648ed836ebd8de6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a23de1ac415b6f54b778c8fd6ec6073e0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a23de1ac415b6f54b778c8fd6ec6073e0"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00143.html#a23de1ac415b6f54b778c8fd6ec6073e0">queuing_rw_mutex</a> ()</td></tr>
+<tr class="memdesc:a23de1ac415b6f54b778c8fd6ec6073e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct unacquired mutex. <br/></td></tr>
+<tr class="separator:a23de1ac415b6f54b778c8fd6ec6073e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae67fe828d7e07222e7876ef9fd780fcc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae67fe828d7e07222e7876ef9fd780fcc"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00143.html#ae67fe828d7e07222e7876ef9fd780fcc">~queuing_rw_mutex</a> ()</td></tr>
+<tr class="memdesc:ae67fe828d7e07222e7876ef9fd780fcc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor asserts if the mutex is acquired, i.e. q_tail is non-NULL. <br/></td></tr>
+<tr class="separator:ae67fe828d7e07222e7876ef9fd780fcc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afd032e7e13804cd4d1cd8fce60d773f8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afd032e7e13804cd4d1cd8fce60d773f8"></a>
+void __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><b>internal_construct</b> ()</td></tr>
+<tr class="separator:afd032e7e13804cd4d1cd8fce60d773f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
-Friends</h2></td></tr>
-<tr class="memitem:afb01bc2e211c782503ef5088003f120f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afb01bc2e211c782503ef5088003f120f"></a>
-class&#160;</td><td class="memItemRight" valign="bottom"><b>reader_writer_lock</b></td></tr>
-<tr class="separator:afb01bc2e211c782503ef5088003f120f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
+Static Public Attributes</h2></td></tr>
+<tr class="memitem:ae3dbfbf71bfa9c662a59688cd86bfbd7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae3dbfbf71bfa9c662a59688cd86bfbd7"></a>
+static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_rw_mutex</b> = true</td></tr>
+<tr class="separator:ae3dbfbf71bfa9c662a59688cd86bfbd7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae8c3ee1f5ab3af3954abeec1d165ea8e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae8c3ee1f5ab3af3954abeec1d165ea8e"></a>
+static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_recursive_mutex</b> = false</td></tr>
+<tr class="separator:ae8c3ee1f5ab3af3954abeec1d165ea8e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4704d512922b4b5d21c97901f9f7abd0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4704d512922b4b5d21c97901f9f7abd0"></a>
+static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_fair_mutex</b> = true</td></tr>
+<tr class="separator:a4704d512922b4b5d21c97901f9f7abd0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>The scoped lock pattern for read locks. </p>
+<div class="textblock"><p>Queuing reader-writer mutex with local-only spinning. </p>
+<p>Adapted from Krieger, Stumm, et al. pseudocode at <a href="http://www.eecg.toronto.edu/parallel/pubs_abs.html#Krieger_etal_ICPP93">http://www.eecg.toronto.edu/parallel/pubs_abs.html#Krieger_etal_ICPP93</a> </p>
 </div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>reader_writer_lock.h</li>
+<li>queuing_rw_mutex.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

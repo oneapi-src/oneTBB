@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::tbb_allocator&lt; T &gt; Class Template Reference</title>
+<title>tbb::scalable_allocator&lt; T &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,7 +33,7 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><a class="el" href="a00161.html">tbb_allocator</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><a class="el" href="a00161.html">scalable_allocator</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -41,112 +41,97 @@
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
-<a href="a00310.html">List of all members</a>  </div>
+<a href="a00331.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::tbb_allocator&lt; T &gt; Class Template Reference<div class="ingroups"><a class="el" href="a00258.html">Memory Allocation</a></div></div>  </div>
+<div class="title">tbb::scalable_allocator&lt; T &gt; Class Template Reference<div class="ingroups"><a class="el" href="a00291.html">Memory Allocation</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
 
 <p>Meets "allocator" requirements of ISO C++ Standard, Section 20.1.5.  
  <a href="a00161.html#details">More...</a></p>
 
-<p><code>#include &lt;tbb_allocator.h&gt;</code></p>
+<p><code>#include &lt;scalable_allocator.h&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00123.html">rebind</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00150.html">rebind</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a60463a571d5c20f7762112367261ad94"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00161.html#a60463a571d5c20f7762112367261ad94">malloc_type</a> { <b>scalable</b>, 
-<b>standard</b>
- }</td></tr>
-<tr class="memdesc:a60463a571d5c20f7762112367261ad94"><td class="mdescLeft">&#160;</td><td class="mdescRight">Specifies current allocator. <br/></td></tr>
-<tr class="separator:a60463a571d5c20f7762112367261ad94"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a26be966de4164e37002247c2c2266df9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a26be966de4164e37002247c2c2266df9"></a>
+<tr class="memitem:aa9171ca5fc6dc349ae95a28cd16b504c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa9171ca5fc6dc349ae95a28cd16b504c"></a>
 typedef <br class="typebreak"/>
 internal::allocator_type&lt; T &gt;<br class="typebreak"/>
 ::value_type&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b></td></tr>
-<tr class="separator:a26be966de4164e37002247c2c2266df9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a452a6c09408f425c9a005b5f2aad1761"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a452a6c09408f425c9a005b5f2aad1761"></a>
+<tr class="separator:aa9171ca5fc6dc349ae95a28cd16b504c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af5352e44d6bcde3d0bdf8368acd3c84c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af5352e44d6bcde3d0bdf8368acd3c84c"></a>
 typedef value_type *&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b></td></tr>
-<tr class="separator:a452a6c09408f425c9a005b5f2aad1761"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a63122d559635096a2618aecd1ba6664b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a63122d559635096a2618aecd1ba6664b"></a>
+<tr class="separator:af5352e44d6bcde3d0bdf8368acd3c84c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9722dbf8015bed6319bc16996d45546f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9722dbf8015bed6319bc16996d45546f"></a>
 typedef const value_type *&#160;</td><td class="memItemRight" valign="bottom"><b>const_pointer</b></td></tr>
-<tr class="separator:a63122d559635096a2618aecd1ba6664b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5ec6bd5e8cdd5b7abb99f5d72760c7a2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5ec6bd5e8cdd5b7abb99f5d72760c7a2"></a>
+<tr class="separator:a9722dbf8015bed6319bc16996d45546f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af3c8f5f07f47672c0c97fab799807728"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af3c8f5f07f47672c0c97fab799807728"></a>
 typedef value_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>reference</b></td></tr>
-<tr class="separator:a5ec6bd5e8cdd5b7abb99f5d72760c7a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a24d98ce3ab908bc4b10d21dad6622364"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a24d98ce3ab908bc4b10d21dad6622364"></a>
+<tr class="separator:af3c8f5f07f47672c0c97fab799807728"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4de1dd8be241f945d464cbef0dd6c5b8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4de1dd8be241f945d464cbef0dd6c5b8"></a>
 typedef const value_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>const_reference</b></td></tr>
-<tr class="separator:a24d98ce3ab908bc4b10d21dad6622364"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a812817d50e8df15df54998caec9892eb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a812817d50e8df15df54998caec9892eb"></a>
+<tr class="separator:a4de1dd8be241f945d464cbef0dd6c5b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac2376f6bacc6dcb3aa37f27a78681e89"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac2376f6bacc6dcb3aa37f27a78681e89"></a>
 typedef size_t&#160;</td><td class="memItemRight" valign="bottom"><b>size_type</b></td></tr>
-<tr class="separator:a812817d50e8df15df54998caec9892eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acba390757f664df03a15e933e3e34941"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acba390757f664df03a15e933e3e34941"></a>
+<tr class="separator:ac2376f6bacc6dcb3aa37f27a78681e89"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a751a0d5a410244226f62914cbde260ff"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a751a0d5a410244226f62914cbde260ff"></a>
 typedef ptrdiff_t&#160;</td><td class="memItemRight" valign="bottom"><b>difference_type</b></td></tr>
-<tr class="separator:acba390757f664df03a15e933e3e34941"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:a751a0d5a410244226f62914cbde260ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a8371538bc959f41f342012e363564aed"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8371538bc959f41f342012e363564aed"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>tbb_allocator</b> (const <a class="el" href="a00161.html">tbb_allocator</a> &amp;)  throw ()</td></tr>
-<tr class="separator:a8371538bc959f41f342012e363564aed"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9faff9ae2c2cd3ed2ca064b562224974"><td class="memTemplParams" colspan="2"><a class="anchor" id="a9faff9ae2c2cd3ed2ca064b562224974"></a>
+<tr class="memitem:a276a735dca4ba6abbe3b251d4c003ea7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a276a735dca4ba6abbe3b251d4c003ea7"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>scalable_allocator</b> (const <a class="el" href="a00161.html">scalable_allocator</a> &amp;)  throw ()</td></tr>
+<tr class="separator:a276a735dca4ba6abbe3b251d4c003ea7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae680426a4dfbd51a7447d12354679c6e"><td class="memTemplParams" colspan="2"><a class="anchor" id="ae680426a4dfbd51a7447d12354679c6e"></a>
 template&lt;typename U &gt; </td></tr>
-<tr class="memitem:a9faff9ae2c2cd3ed2ca064b562224974"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>tbb_allocator</b> (const <a class="el" href="a00161.html">tbb_allocator</a>&lt; U &gt; &amp;)  throw ()</td></tr>
-<tr class="separator:a9faff9ae2c2cd3ed2ca064b562224974"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac1370dbb1f06fed57273bddcae688255"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac1370dbb1f06fed57273bddcae688255"></a>
+<tr class="memitem:ae680426a4dfbd51a7447d12354679c6e"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>scalable_allocator</b> (const <a class="el" href="a00161.html">scalable_allocator</a>&lt; U &gt; &amp;)  throw ()</td></tr>
+<tr class="separator:ae680426a4dfbd51a7447d12354679c6e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a647d824ce9396c3c4cb4450b0c2b7b3c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a647d824ce9396c3c4cb4450b0c2b7b3c"></a>
 pointer&#160;</td><td class="memItemRight" valign="bottom"><b>address</b> (reference x) const </td></tr>
-<tr class="separator:ac1370dbb1f06fed57273bddcae688255"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afb9c91d548d4a5affe3ec1de1c1b9327"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afb9c91d548d4a5affe3ec1de1c1b9327"></a>
+<tr class="separator:a647d824ce9396c3c4cb4450b0c2b7b3c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab30cf9e0d0bef7ba8567edc6efb045e4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab30cf9e0d0bef7ba8567edc6efb045e4"></a>
 const_pointer&#160;</td><td class="memItemRight" valign="bottom"><b>address</b> (const_reference x) const </td></tr>
-<tr class="separator:afb9c91d548d4a5affe3ec1de1c1b9327"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afedd8a64eed9692083c708f419338e0c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afedd8a64eed9692083c708f419338e0c"></a>
-pointer&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00161.html#afedd8a64eed9692083c708f419338e0c">allocate</a> (size_type n, const void *=0)</td></tr>
-<tr class="memdesc:afedd8a64eed9692083c708f419338e0c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allocate space for n objects. <br/></td></tr>
-<tr class="separator:afedd8a64eed9692083c708f419338e0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a28e333e0fff56dd53c20b82cfee430ab"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a28e333e0fff56dd53c20b82cfee430ab"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00161.html#a28e333e0fff56dd53c20b82cfee430ab">deallocate</a> (pointer p, size_type)</td></tr>
-<tr class="memdesc:a28e333e0fff56dd53c20b82cfee430ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Free previously allocated block of memory. <br/></td></tr>
-<tr class="separator:a28e333e0fff56dd53c20b82cfee430ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0a2676fb8a2f931961d373b88848c93e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0a2676fb8a2f931961d373b88848c93e"></a>
-size_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00161.html#a0a2676fb8a2f931961d373b88848c93e">max_size</a> () const   throw ()</td></tr>
-<tr class="memdesc:a0a2676fb8a2f931961d373b88848c93e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Largest value for which method allocate might succeed. <br/></td></tr>
-<tr class="separator:a0a2676fb8a2f931961d373b88848c93e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af54fa3029e33cebe5ba64a8538306fdf"><td class="memTemplParams" colspan="2"><a class="anchor" id="af54fa3029e33cebe5ba64a8538306fdf"></a>
+<tr class="separator:ab30cf9e0d0bef7ba8567edc6efb045e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acf24945c12dc0586dfb1f8638daf7838"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acf24945c12dc0586dfb1f8638daf7838"></a>
+pointer&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00161.html#acf24945c12dc0586dfb1f8638daf7838">allocate</a> (size_type n, const void *=0)</td></tr>
+<tr class="memdesc:acf24945c12dc0586dfb1f8638daf7838"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allocate space for n objects. <br/></td></tr>
+<tr class="separator:acf24945c12dc0586dfb1f8638daf7838"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0632b19f25e5d5f86f18b3101925f488"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0632b19f25e5d5f86f18b3101925f488"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00161.html#a0632b19f25e5d5f86f18b3101925f488">deallocate</a> (pointer p, size_type)</td></tr>
+<tr class="memdesc:a0632b19f25e5d5f86f18b3101925f488"><td class="mdescLeft">&#160;</td><td class="mdescRight">Free previously allocated block of memory. <br/></td></tr>
+<tr class="separator:a0632b19f25e5d5f86f18b3101925f488"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afaa85d739b466699cf669116fd10d175"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afaa85d739b466699cf669116fd10d175"></a>
+size_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00161.html#afaa85d739b466699cf669116fd10d175">max_size</a> () const   throw ()</td></tr>
+<tr class="memdesc:afaa85d739b466699cf669116fd10d175"><td class="mdescLeft">&#160;</td><td class="mdescRight">Largest value for which method allocate might succeed. <br/></td></tr>
+<tr class="separator:afaa85d739b466699cf669116fd10d175"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0502de23b9ed7c1611703fe725cb4cd3"><td class="memTemplParams" colspan="2"><a class="anchor" id="a0502de23b9ed7c1611703fe725cb4cd3"></a>
 template&lt;typename U , typename... Args&gt; </td></tr>
-<tr class="memitem:af54fa3029e33cebe5ba64a8538306fdf"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00161.html#af54fa3029e33cebe5ba64a8538306fdf">construct</a> (U *p, Args &amp;&amp;...args)</td></tr>
-<tr class="memdesc:af54fa3029e33cebe5ba64a8538306fdf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy-construct value at location pointed to by p. <br/></td></tr>
-<tr class="separator:af54fa3029e33cebe5ba64a8538306fdf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aefbb273663853a665e51dcfa053d12a0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aefbb273663853a665e51dcfa053d12a0"></a>
+<tr class="memitem:a0502de23b9ed7c1611703fe725cb4cd3"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>construct</b> (U *p, Args &amp;&amp;...args)</td></tr>
+<tr class="separator:a0502de23b9ed7c1611703fe725cb4cd3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aecd5a33086abab6860105ef9856e2786"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aecd5a33086abab6860105ef9856e2786"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>construct</b> (pointer p, value_type &amp;&amp;value)</td></tr>
-<tr class="separator:aefbb273663853a665e51dcfa053d12a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a694e266db657afba34ecb60111b2e2d3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a694e266db657afba34ecb60111b2e2d3"></a>
+<tr class="separator:aecd5a33086abab6860105ef9856e2786"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a13115cd358c7be350dbeb5271181ae26"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a13115cd358c7be350dbeb5271181ae26"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>construct</b> (pointer p, const value_type &amp;value)</td></tr>
-<tr class="separator:a694e266db657afba34ecb60111b2e2d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac7b1b393a8ff3399079328c0971c1996"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac7b1b393a8ff3399079328c0971c1996"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00161.html#ac7b1b393a8ff3399079328c0971c1996">destroy</a> (pointer p)</td></tr>
-<tr class="memdesc:ac7b1b393a8ff3399079328c0971c1996"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy value at location pointed to by p. <br/></td></tr>
-<tr class="separator:ac7b1b393a8ff3399079328c0971c1996"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
-Static Public Member Functions</h2></td></tr>
-<tr class="memitem:aa4606cff0156ec4237c1571204851bfb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa4606cff0156ec4237c1571204851bfb"></a>
-static <a class="el" href="a00161.html#a60463a571d5c20f7762112367261ad94">malloc_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00161.html#aa4606cff0156ec4237c1571204851bfb">allocator_type</a> ()</td></tr>
-<tr class="memdesc:aa4606cff0156ec4237c1571204851bfb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns current allocator. <br/></td></tr>
-<tr class="separator:aa4606cff0156ec4237c1571204851bfb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:a13115cd358c7be350dbeb5271181ae26"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac79ddb098880d8bde6097ac11f641188"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac79ddb098880d8bde6097ac11f641188"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>destroy</b> (pointer p)</td></tr>
+<tr class="separator:ac79ddb098880d8bde6097ac11f641188"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><h3>template&lt;typename T&gt;<br/>
-class tbb::tbb_allocator&lt; T &gt;</h3>
+class tbb::scalable_allocator&lt; T &gt;</h3>
 
 <p>Meets "allocator" requirements of ISO C++ Standard, Section 20.1.5. </p>
-<p>The class selects the best memory allocation mechanism available from scalable_malloc and standard malloc. The members are ordered the same way they are in section 20.4.1 of the ISO C++ standard. </p>
+<p>The members are ordered the same way they are in section 20.4.1 of the ISO C++ standard. </p>
 </div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>tbb_allocator.h</li>
+<li><a class="el" href="a00251.html">scalable_allocator.h</a></li>
 </ul>
 </div><!-- contents -->
 <hr>

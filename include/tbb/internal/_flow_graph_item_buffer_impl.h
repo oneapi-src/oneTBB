@@ -27,7 +27,7 @@
 
 #include "tbb/internal/_flow_graph_types_impl.h"  // for aligned_pair
 
-// in namespace tbb::flow::interface8 (included in _flow_graph_node_impl.h)
+// in namespace tbb::flow::interfaceX (included in _flow_graph_node_impl.h)
 
     //! Expandable buffer of items.  The possible operations are push, pop,
     //* tests for empty and so forth.  No mutual exclusion is built in.

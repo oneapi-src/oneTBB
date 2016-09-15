@@ -51,18 +51,6 @@
 #include "tbb/task_scheduler_init.h"
 #include "harness_graph.h"
 
-#define BACKOFF_WAIT(ex,msg) \
-{ \
-    int wait_cnt = 0; \
-    tbb::internal::atomic_backoff backoff; \
-    do { \
-        backoff.pause(); \
-        ++wait_cnt; \
-    } \
-    while( (ex) && (wait_cnt < WAIT_MAX)); \
-    ASSERT(wait_cnt < WAIT_MAX, msg); \
-}
-
 template<typename T>
 struct receiverBody {
     tbb::flow::continue_msg operator()(const T &/*in*/) {
@@ -276,7 +264,7 @@ void TestFunctionNode() {
     qnode0.try_put(1);
     BACKOFF_WAIT(!serial_fn_state0,"rejecting function_node didn't start");
     qnode0.try_put(2);   // rejecting node should reject, reverse.
-    BACKOFF_WAIT(!fnode0.my_predecessors.empty(), "Missing predecessor ---");
+    BACKOFF_WAIT(fnode0.my_predecessors.empty(), "Missing predecessor ---");
     serial_fn_state0 = 2;   // release function_node body.
     g.wait_for_all();
     REMARK(" reset");

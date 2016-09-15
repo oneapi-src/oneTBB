@@ -87,9 +87,21 @@ ifeq (ppc32,$(arch))
 endif
 
 ifeq (armv7,$(arch))
-    CPLUS_FLAGS += -arch armv7
-    LINK_FLAGS += -arch armv7
-    LIB_LINK_FLAGS += -arch armv7
+    CPLUS_FLAGS += -arch armv7 -miphoneos-version-min=8.0 -Wno-implicit-function-declaration -fembed-bitcode
+    LINK_FLAGS += -arch armv7 -miphoneos-version-min=8.0 -Wno-implicit-function-declaration -fembed-bitcode
+    LIB_LINK_FLAGS += -arch armv7 -miphoneos-version-min=8.0 -Wno-implicit-function-declaration -fembed-bitcode
+endif
+
+ifeq (armv7s,$(arch))
+    CPLUS_FLAGS += -arch armv7s -miphoneos-version-min=8.0 -Wno-implicit-function-declaration -fembed-bitcode
+    LINK_FLAGS += -arch armv7s -miphoneos-version-min=8.0 -Wno-implicit-function-declaration -fembed-bitcode
+    LIB_LINK_FLAGS += -arch armv7s -miphoneos-version-min=8.0 -Wno-implicit-function-declaration -fembed-bitcode
+endif
+
+ifeq (arm64,$(arch))
+    CPLUS_FLAGS += -arch arm64 -miphoneos-version-min=8.0 -Wno-implicit-function-declaration -fembed-bitcode
+    LINK_FLAGS += -arch arm64 -miphoneos-version-min=8.0 -Wno-implicit-function-declaration -fembed-bitcode
+    LIB_LINK_FLAGS += -arch arm64 -miphoneos-version-min=8.0 -Wno-implicit-function-declaration -fembed-bitcode
 endif
 
 ifdef SDKROOT

@@ -133,8 +133,8 @@ Library Issues
         OMP_PROC_BIND, as well as programmatically setting thread
         affinity before Intel TBB task scheduler is initialized.
         An affinity mask set for a thread that initializes Intel TBB
-        limits the number of worker threads used by default in the task
-        scheduler.
+        may limit the number of worker threads used by default
+        in the task scheduler.
 
     - If an open source version of Intel TBB is installed to a system
         folder like /usr/lib64 on Linux OS, examples may fail to link

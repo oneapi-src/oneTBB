@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::internal::thread_closure_2&lt; F, X, Y &gt; Struct Template Reference</title>
+<title>tbb::interface5::reader_writer_lock::scoped_lock Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,63 +33,60 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><b>internal</b></li><li class="navelem"><a class="el" href="a00169.html">thread_closure_2</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><b>interface5</b></li><li class="navelem"><a class="el" href="a00144.html">reader_writer_lock</a></li><li class="navelem"><a class="el" href="a00169.html">scoped_lock</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
-<a href="#pub-attribs">Public Attributes</a> &#124;
-<a href="a00420.html">List of all members</a>  </div>
+<a href="#friends">Friends</a> &#124;
+<a href="a00450.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::internal::thread_closure_2&lt; F, X, Y &gt; Struct Template Reference</div>  </div>
+<div class="title">tbb::interface5::reader_writer_lock::scoped_lock Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
+
+<p>The scoped lock pattern for write locks.  
+ <a href="a00169.html#details">More...</a></p>
+
+<p><code>#include &lt;reader_writer_lock.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::internal::thread_closure_2&lt; F, X, Y &gt;:</div>
+Inheritance diagram for tbb::interface5::reader_writer_lock::scoped_lock:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00169.png" usemap="#tbb::internal::thread_closure_2&lt; F, X, Y &gt;_map" alt=""/>
-  <map id="tbb::internal::thread_closure_2&lt; F, X, Y &gt;_map" name="tbb::internal::thread_closure_2&lt; F, X, Y &gt;_map">
-<area href="a00170.html" alt="tbb::internal::thread_closure_base" shape="rect" coords="0,0,250,24"/>
+  <img src="a00169.png" usemap="#tbb::interface5::reader_writer_lock::scoped_lock_map" alt=""/>
+  <map id="tbb::interface5::reader_writer_lock::scoped_lock_map" name="tbb::interface5::reader_writer_lock::scoped_lock_map">
 </map>
  </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:aa5f65ba1d019063487f425021ca2ba59"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa5f65ba1d019063487f425021ca2ba59"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>thread_closure_2</b> (const F &amp;f, const X &amp;x, const Y &amp;y)</td></tr>
-<tr class="separator:aa5f65ba1d019063487f425021ca2ba59"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_methods_a00170"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_a00170')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="a00170.html">tbb::internal::thread_closure_base</a></td></tr>
-<tr class="memitem:a624f5a5a40051faf39444ad3a9f36df5 inherit pub_methods_a00170"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a624f5a5a40051faf39444ad3a9f36df5"></a>
-void *&#160;</td><td class="memItemRight" valign="bottom"><b>operator new</b> (size_t size)</td></tr>
-<tr class="separator:a624f5a5a40051faf39444ad3a9f36df5 inherit pub_methods_a00170"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a56e1bfd2ca46abcc3c3f265eff10360d inherit pub_methods_a00170"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a56e1bfd2ca46abcc3c3f265eff10360d"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>operator delete</b> (void *ptr)</td></tr>
-<tr class="separator:a56e1bfd2ca46abcc3c3f265eff10360d inherit pub_methods_a00170"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaed982d8c3f1e84298f9842063694f3c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aaed982d8c3f1e84298f9842063694f3c"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00169.html#aaed982d8c3f1e84298f9842063694f3c">scoped_lock</a> (<a class="el" href="a00144.html">reader_writer_lock</a> &amp;<a class="el" href="a00144.html#af92eb949fc491af8f7e350869ea0a0d1">lock</a>)</td></tr>
+<tr class="memdesc:aaed982d8c3f1e84298f9842063694f3c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct with blocking attempt to acquire write lock on the passed-in lock. <br/></td></tr>
+<tr class="separator:aaed982d8c3f1e84298f9842063694f3c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a41e77cf094ed30b0a9a39ee217c3653b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a41e77cf094ed30b0a9a39ee217c3653b"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00169.html#a41e77cf094ed30b0a9a39ee217c3653b">~scoped_lock</a> ()</td></tr>
+<tr class="memdesc:a41e77cf094ed30b0a9a39ee217c3653b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor, releases the write lock. <br/></td></tr>
+<tr class="separator:a41e77cf094ed30b0a9a39ee217c3653b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5bca00f4788ed8f635a8383a25a10ec8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5bca00f4788ed8f635a8383a25a10ec8"></a>
+void *&#160;</td><td class="memItemRight" valign="bottom"><b>operator new</b> (size_t s)</td></tr>
+<tr class="separator:a5bca00f4788ed8f635a8383a25a10ec8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3ef0de25ee6d7897198fcf09471bf24f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3ef0de25ee6d7897198fcf09471bf24f"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>operator delete</b> (void *p)</td></tr>
+<tr class="separator:a3ef0de25ee6d7897198fcf09471bf24f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
-Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a29003179f98d768622c72b9ab5cfe8f6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a29003179f98d768622c72b9ab5cfe8f6"></a>
-static __TBB_NATIVE_THREAD_ROUTINE&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00169.html#a29003179f98d768622c72b9ab5cfe8f6">start_routine</a> (void *c)</td></tr>
-<tr class="memdesc:a29003179f98d768622c72b9ab5cfe8f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Routine passed to Windows's _beginthreadex by thread::internal_start() inside tbb.dll. <br/></td></tr>
-<tr class="separator:a29003179f98d768622c72b9ab5cfe8f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
-Public Attributes</h2></td></tr>
-<tr class="memitem:a247bf0a01f8a390031b71c9b85fb8b24"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a247bf0a01f8a390031b71c9b85fb8b24"></a>
-F&#160;</td><td class="memItemRight" valign="bottom"><b>function</b></td></tr>
-<tr class="separator:a247bf0a01f8a390031b71c9b85fb8b24"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a36f694b6dcc91c92b09d3deee24e4732"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a36f694b6dcc91c92b09d3deee24e4732"></a>
-X&#160;</td><td class="memItemRight" valign="bottom"><b>arg1</b></td></tr>
-<tr class="separator:a36f694b6dcc91c92b09d3deee24e4732"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a47f0e53fc6b9026d9529a3bf1cc4fa72"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a47f0e53fc6b9026d9529a3bf1cc4fa72"></a>
-Y&#160;</td><td class="memItemRight" valign="bottom"><b>arg2</b></td></tr>
-<tr class="separator:a47f0e53fc6b9026d9529a3bf1cc4fa72"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:afb01bc2e211c782503ef5088003f120f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afb01bc2e211c782503ef5088003f120f"></a>
+class&#160;</td><td class="memItemRight" valign="bottom"><b>reader_writer_lock</b></td></tr>
+<tr class="separator:afb01bc2e211c782503ef5088003f120f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<hr/>The documentation for this struct was generated from the following file:<ul>
-<li>tbb_thread.h</li>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>The scoped lock pattern for write locks. </p>
+<p>Scoped locks help avoid the common problem of forgetting to release the lock. This type also serves as the node for queuing locks. </p>
+</div><hr/>The documentation for this class was generated from the following file:<ul>
+<li>reader_writer_lock.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

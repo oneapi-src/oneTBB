@@ -48,7 +48,12 @@ ifneq (,$(codecov))
     CPLUS_FLAGS += -prof-genx
 endif
 
+ifneq (,$(shell icc -dumpversion | egrep  "^1[6-9]\."))
+OPENMP_FLAG = -qopenmp
+else
 OPENMP_FLAG = -openmp
+endif
+
 LIB_LINK_FLAGS = -shared -static-intel -Wl,-soname=$(BUILDING_LIBRARY)
 LIBS += -lpthread -lrt
 C_FLAGS = $(CPLUS_FLAGS)

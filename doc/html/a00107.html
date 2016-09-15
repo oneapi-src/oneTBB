@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::parallel_do_feeder&lt; Item &gt; Class Template Reference</title>
+<title>tbb::missing_wait Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,59 +33,41 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><a class="el" href="a00107.html">parallel_do_feeder</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><a class="el" href="a00107.html">missing_wait</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#friends">Friends</a> &#124;
-<a href="a00285.html">List of all members</a>  </div>
+<a href="a00354.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::parallel_do_feeder&lt; Item &gt; Class Template Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div>  </div>
+<div class="title">tbb::missing_wait Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Class the user supplied algorithm body uses to add new tasks.  
+<p>Exception for missing wait on <a class="el" href="a00181.html">structured_task_group</a>.  
  <a href="a00107.html#details">More...</a></p>
 
-<p><code>#include &lt;parallel_do.h&gt;</code></p>
+<p><code>#include &lt;tbb_exception.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::parallel_do_feeder&lt; Item &gt;:</div>
+Inheritance diagram for tbb::missing_wait:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00107.png" usemap="#tbb::parallel_do_feeder&lt; Item &gt;_map" alt=""/>
-  <map id="tbb::parallel_do_feeder&lt; Item &gt;_map" name="tbb::parallel_do_feeder&lt; Item &gt;_map">
+  <img src="a00107.png" usemap="#tbb::missing_wait_map" alt=""/>
+  <map id="tbb::missing_wait_map" name="tbb::missing_wait_map">
 </map>
  </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ac095c6b1a32e9c0be010aa32875d7a63"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac095c6b1a32e9c0be010aa32875d7a63"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00107.html#ac095c6b1a32e9c0be010aa32875d7a63">add</a> (const Item &amp;item)</td></tr>
-<tr class="memdesc:ac095c6b1a32e9c0be010aa32875d7a63"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a work item to a running parallel_do. <br/></td></tr>
-<tr class="separator:ac095c6b1a32e9c0be010aa32875d7a63"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
-Friends</h2></td></tr>
-<tr class="memitem:ae5c8cc31bc27b79377687e3de76f480e"><td class="memTemplParams" colspan="2"><a class="anchor" id="ae5c8cc31bc27b79377687e3de76f480e"></a>
-template&lt;typename Body_ , typename Item_ &gt; </td></tr>
-<tr class="memitem:ae5c8cc31bc27b79377687e3de76f480e"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><b>internal::parallel_do_feeder_impl</b></td></tr>
-<tr class="separator:ae5c8cc31bc27b79377687e3de76f480e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abfa0b14450e89cab85092b188ac86fd6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abfa0b14450e89cab85092b188ac86fd6"></a>
+const char *&#160;</td><td class="memItemRight" valign="bottom"><b>what</b> () const   throw ()</td></tr>
+<tr class="separator:abfa0b14450e89cab85092b188ac86fd6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;typename Item&gt;<br/>
-class tbb::parallel_do_feeder&lt; Item &gt;</h3>
-
-<p>Class the user supplied algorithm body uses to add new tasks. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">Item</td><td>Work item type </td></tr>
-  </table>
-  </dd>
-</dl>
+<div class="textblock"><p>Exception for missing wait on <a class="el" href="a00181.html">structured_task_group</a>. </p>
 </div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>parallel_do.h</li>
+<li>tbb_exception.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

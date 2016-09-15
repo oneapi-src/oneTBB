@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::thread_bound_filter Class Reference</title>
+<title>tbb::recursive_mutex::scoped_lock Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,120 +33,70 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><a class="el" href="a00166.html">thread_bound_filter</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><a class="el" href="a00157.html">recursive_mutex</a></li><li class="navelem"><a class="el" href="a00166.html">scoped_lock</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pro-methods">Protected Member Functions</a> &#124;
-<a href="a00290.html">List of all members</a>  </div>
+<a href="#friends">Friends</a> &#124;
+<a href="a00330.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::thread_bound_filter Class Reference<div class="ingroups"><a class="el" href="a00256.html">Algorithms</a></div></div>  </div>
+<div class="title">tbb::recursive_mutex::scoped_lock Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>A stage in a pipeline served by a user thread.  
+<p>The scoped locking pattern.  
  <a href="a00166.html#details">More...</a></p>
 
-<p><code>#include &lt;pipeline.h&gt;</code></p>
+<p><code>#include &lt;recursive_mutex.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::thread_bound_filter:</div>
+Inheritance diagram for tbb::recursive_mutex::scoped_lock:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00166.png" usemap="#tbb::thread_bound_filter_map" alt=""/>
-  <map id="tbb::thread_bound_filter_map" name="tbb::thread_bound_filter_map">
-<area href="a00064.html" title="A stage in a pipeline. " alt="tbb::filter" shape="rect" coords="0,56,145,80"/>
+  <img src="a00166.png" usemap="#tbb::recursive_mutex::scoped_lock_map" alt=""/>
+  <map id="tbb::recursive_mutex::scoped_lock_map" name="tbb::recursive_mutex::scoped_lock_map">
 </map>
  </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:a2425d6944a22a57c906945df57290e9d"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><b>result_type</b> { <b>success</b>, 
-<b>item_not_available</b>, 
-<b>end_of_stream</b>
- }</td></tr>
-<tr class="separator:a2425d6944a22a57c906945df57290e9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a12cfa43c620066a8783529cc8519c6f9"><td class="memItemLeft" align="right" valign="top">result_type __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00166.html#a12cfa43c620066a8783529cc8519c6f9">try_process_item</a> ()</td></tr>
-<tr class="memdesc:a12cfa43c620066a8783529cc8519c6f9"><td class="mdescLeft">&#160;</td><td class="mdescRight">If a data item is available, invoke operator() on that item.  <a href="#a12cfa43c620066a8783529cc8519c6f9">More...</a><br/></td></tr>
-<tr class="separator:a12cfa43c620066a8783529cc8519c6f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac99258407f382d84568a510075074fc7"><td class="memItemLeft" align="right" valign="top">result_type __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00166.html#ac99258407f382d84568a510075074fc7">process_item</a> ()</td></tr>
-<tr class="memdesc:ac99258407f382d84568a510075074fc7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait until a data item becomes available, and invoke operator() on that item.  <a href="#ac99258407f382d84568a510075074fc7">More...</a><br/></td></tr>
-<tr class="separator:ac99258407f382d84568a510075074fc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0a9962a3932cfbd0d12cb197494f951b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0a9962a3932cfbd0d12cb197494f951b"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00166.html#a0a9962a3932cfbd0d12cb197494f951b">scoped_lock</a> ()</td></tr>
+<tr class="memdesc:a0a9962a3932cfbd0d12cb197494f951b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct lock that has not acquired a <a class="el" href="a00157.html">recursive_mutex</a>. <br/></td></tr>
+<tr class="separator:a0a9962a3932cfbd0d12cb197494f951b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab42cb541abb9647cac23b1db9a4db93d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab42cb541abb9647cac23b1db9a4db93d"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00166.html#ab42cb541abb9647cac23b1db9a4db93d">scoped_lock</a> (<a class="el" href="a00157.html">recursive_mutex</a> &amp;<a class="el" href="a00110.html">mutex</a>)</td></tr>
+<tr class="memdesc:ab42cb541abb9647cac23b1db9a4db93d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Acquire lock on given mutex. <br/></td></tr>
+<tr class="separator:ab42cb541abb9647cac23b1db9a4db93d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a90a966e19120aac99b36a3d6d04af1a2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a90a966e19120aac99b36a3d6d04af1a2"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00166.html#a90a966e19120aac99b36a3d6d04af1a2">~scoped_lock</a> ()</td></tr>
+<tr class="memdesc:a90a966e19120aac99b36a3d6d04af1a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Release lock (if lock is held). <br/></td></tr>
+<tr class="separator:a90a966e19120aac99b36a3d6d04af1a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac5450ce6a5813f395afaa434384c6539"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac5450ce6a5813f395afaa434384c6539"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00166.html#ac5450ce6a5813f395afaa434384c6539">acquire</a> (<a class="el" href="a00157.html">recursive_mutex</a> &amp;<a class="el" href="a00110.html">mutex</a>)</td></tr>
+<tr class="memdesc:ac5450ce6a5813f395afaa434384c6539"><td class="mdescLeft">&#160;</td><td class="mdescRight">Acquire lock on given mutex. <br/></td></tr>
+<tr class="separator:ac5450ce6a5813f395afaa434384c6539"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a160bba506f4033980ddb69ab7a02c4fb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a160bba506f4033980ddb69ab7a02c4fb"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00166.html#a160bba506f4033980ddb69ab7a02c4fb">try_acquire</a> (<a class="el" href="a00157.html">recursive_mutex</a> &amp;<a class="el" href="a00110.html">mutex</a>)</td></tr>
+<tr class="memdesc:a160bba506f4033980ddb69ab7a02c4fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Try acquire lock on given <a class="el" href="a00157.html">recursive_mutex</a>. <br/></td></tr>
+<tr class="separator:a160bba506f4033980ddb69ab7a02c4fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2fe3246ffc26bdb5a58f33ca513b6c0f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2fe3246ffc26bdb5a58f33ca513b6c0f"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00166.html#a2fe3246ffc26bdb5a58f33ca513b6c0f">release</a> ()</td></tr>
+<tr class="memdesc:a2fe3246ffc26bdb5a58f33ca513b6c0f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Release lock. <br/></td></tr>
+<tr class="separator:a2fe3246ffc26bdb5a58f33ca513b6c0f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
-Protected Member Functions</h2></td></tr>
-<tr class="memitem:a5f236956f85f28c783127c949e902610"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5f236956f85f28c783127c949e902610"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>thread_bound_filter</b> (mode filter_mode)</td></tr>
-<tr class="separator:a5f236956f85f28c783127c949e902610"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
-Additional Inherited Members</h2></td></tr>
-<tr class="inherit_header pro_static_attribs_a00064"><td colspan="2" onclick="javascript:toggleInherit('pro_static_attribs_a00064')"><img src="closed.png" alt="-"/>&#160;Static Protected Attributes inherited from <a class="el" href="a00064.html">tbb::filter</a></td></tr>
-<tr class="memitem:ae9dab2e01b0963b341ab04b59eec1475 inherit pro_static_attribs_a00064"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae9dab2e01b0963b341ab04b59eec1475"></a>
-static const unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00064.html#ae9dab2e01b0963b341ab04b59eec1475">filter_is_serial</a> = 0x1</td></tr>
-<tr class="memdesc:ae9dab2e01b0963b341ab04b59eec1475 inherit pro_static_attribs_a00064"><td class="mdescLeft">&#160;</td><td class="mdescRight">The lowest bit 0 is for parallel vs. serial. <br/></td></tr>
-<tr class="separator:ae9dab2e01b0963b341ab04b59eec1475 inherit pro_static_attribs_a00064"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a091fcf6abc79edfa5c8bf01f742e2392 inherit pro_static_attribs_a00064"><td class="memItemLeft" align="right" valign="top">static const unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00064.html#a091fcf6abc79edfa5c8bf01f742e2392">filter_is_out_of_order</a> = 0x1&lt;&lt;4</td></tr>
-<tr class="memdesc:a091fcf6abc79edfa5c8bf01f742e2392 inherit pro_static_attribs_a00064"><td class="mdescLeft">&#160;</td><td class="mdescRight">4th bit distinguishes ordered vs unordered filters.  <a href="#a091fcf6abc79edfa5c8bf01f742e2392">More...</a><br/></td></tr>
-<tr class="separator:a091fcf6abc79edfa5c8bf01f742e2392 inherit pro_static_attribs_a00064"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1382f216bd094064a18eb48ecc43c86b inherit pro_static_attribs_a00064"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1382f216bd094064a18eb48ecc43c86b"></a>
-static const unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00064.html#a1382f216bd094064a18eb48ecc43c86b">filter_is_bound</a> = 0x1&lt;&lt;5</td></tr>
-<tr class="memdesc:a1382f216bd094064a18eb48ecc43c86b inherit pro_static_attribs_a00064"><td class="mdescLeft">&#160;</td><td class="mdescRight">5th bit distinguishes thread-bound and regular filters. <br/></td></tr>
-<tr class="separator:a1382f216bd094064a18eb48ecc43c86b inherit pro_static_attribs_a00064"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6645ec56872b6ba2056dcaa467e292f7 inherit pro_static_attribs_a00064"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6645ec56872b6ba2056dcaa467e292f7"></a>
-static const unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00064.html#a6645ec56872b6ba2056dcaa467e292f7">filter_may_emit_null</a> = 0x1&lt;&lt;6</td></tr>
-<tr class="memdesc:a6645ec56872b6ba2056dcaa467e292f7 inherit pro_static_attribs_a00064"><td class="mdescLeft">&#160;</td><td class="mdescRight">6th bit marks input filters emitting small objects <br/></td></tr>
-<tr class="separator:a6645ec56872b6ba2056dcaa467e292f7 inherit pro_static_attribs_a00064"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aab9689e23a96c6c9bf1c8caae74d92ee inherit pro_static_attribs_a00064"><td class="memItemLeft" align="right" valign="top">static const unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00064.html#aab9689e23a96c6c9bf1c8caae74d92ee">exact_exception_propagation</a></td></tr>
-<tr class="memdesc:aab9689e23a96c6c9bf1c8caae74d92ee inherit pro_static_attribs_a00064"><td class="mdescLeft">&#160;</td><td class="mdescRight">7th bit defines exception propagation mode expected by the application.  <a href="#aab9689e23a96c6c9bf1c8caae74d92ee">More...</a><br/></td></tr>
-<tr class="separator:aab9689e23a96c6c9bf1c8caae74d92ee inherit pro_static_attribs_a00064"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:a1bdb637fe5c9412323bf92846b40682e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1bdb637fe5c9412323bf92846b40682e"></a>
+class&#160;</td><td class="memItemRight" valign="bottom"><b>recursive_mutex</b></td></tr>
+<tr class="separator:a1bdb637fe5c9412323bf92846b40682e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>A stage in a pipeline served by a user thread. </p>
-</div><h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="ac99258407f382d84568a510075074fc7"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">result_type __TBB_EXPORTED_METHOD tbb::thread_bound_filter::process_item </td>
-          <td>(</td>
-          <td class="paramname">)</td><td></td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Wait until a data item becomes available, and invoke operator() on that item. </p>
-<p>This interface is blocking. Returns 'success' if an item was processed. Returns 'end_of_stream' if there are no more items to process. Never returns 'item_not_available', as it blocks until another return condition applies. </p>
-
-</div>
-</div>
-<a class="anchor" id="a12cfa43c620066a8783529cc8519c6f9"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">result_type __TBB_EXPORTED_METHOD tbb::thread_bound_filter::try_process_item </td>
-          <td>(</td>
-          <td class="paramname">)</td><td></td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>If a data item is available, invoke operator() on that item. </p>
-<p>This interface is non-blocking. Returns 'success' if an item was processed. Returns 'item_not_available' if no item can be processed now but more may arrive in the future, or if token limit is reached. Returns 'end_of_stream' if there are no more items to process. </p>
-
-</div>
-</div>
-<hr/>The documentation for this class was generated from the following file:<ul>
-<li>pipeline.h</li>
+<div class="textblock"><p>The scoped locking pattern. </p>
+<p>It helps to avoid the common problem of forgetting to release lock. It also nicely provides the "node" for queuing locks. </p>
+</div><hr/>The documentation for this class was generated from the following file:<ul>
+<li>recursive_mutex.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

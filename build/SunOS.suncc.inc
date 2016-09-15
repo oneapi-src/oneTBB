@@ -33,6 +33,8 @@ tbb_strict=0
 
 CPLUS = CC
 CONLY = cc
+
+OPENMP_FLAG = -xopenmp
 LIB_LINK_FLAGS = -G -R . -M$(tbb_root)/build/suncc.map.pause
 LINK_FLAGS += -M$(tbb_root)/build/suncc.map.pause
 LIBS = -lpthread -lrt -R .

@@ -71,13 +71,18 @@ stressed() { echo Doing stress testing. Press Ctrl-C to terminate #
 repeated() { #
     i=0; while [ "$i" -lt $repeat ]; do i=`expr $i + 1`; echo $i of $repeat:; $*; done #
 } #
+# DYLD_LIBRARY_PATH can be purged on OS X 10.11, set it again
+if [ `uname` = 'Darwin' -a -z "$DYLD_LIBRARY_PATH" ] ; then #
+    DYLD_LIBRARY_PATH=. #
+    export DYLD_LIBRARY_PATH #
+fi #
 # Run the command line passed via parameters
 [ $verbose ] && echo Running $run_prefix $* #
 if [ -n "$LD_PRELOAD" ] ; then #
     export LD_PRELOAD #
 elif [ -n "$DYLD_INSERT_LIBRARIES" ] ; then #
     export DYLD_INSERT_LIBRARIES #
-fi
+fi #
 exec 4>&1 # extracting exit code of the first command in pipeline needs duplicated stdout
 # custom redirection needs eval, otherwise shell cannot parse it
 err=`eval '( $run_prefix $* || echo \$? >&3; )' ${OUTPUT} 3>&1 >&4` #

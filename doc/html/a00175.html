@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::interface5::concurrent_unordered_map_traits&lt; Key, T, Hash_compare, Allocator, Allow_multimapping &gt;::value_compare Class Reference</title>
+<title>tbb::flow::interface8::sender&lt; dependency_msg&lt; T, Factory &gt; &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,51 +33,69 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><b>interface5</b></li><li class="navelem"><a class="el" href="a00050.html">concurrent_unordered_map_traits</a></li><li class="navelem"><a class="el" href="a00175.html">value_compare</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><a class="el" href="a00175.html">sender< dependency_msg< T, Factory > ></a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pro-attribs">Protected Attributes</a> &#124;
-<a href="#friends">Friends</a> &#124;
-<a href="a00379.html">List of all members</a>  </div>
+<a href="a00408.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::interface5::concurrent_unordered_map_traits&lt; Key, T, Hash_compare, Allocator, Allow_multimapping &gt;::value_compare Class Reference</div>  </div>
+<div class="title">tbb::flow::interface8::sender&lt; dependency_msg&lt; T, Factory &gt; &gt; Class Template Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div>  </div>
 </div><!--header-->
 <div class="contents">
 <div class="dynheader">
-Inheritance diagram for tbb::interface5::concurrent_unordered_map_traits&lt; Key, T, Hash_compare, Allocator, Allow_multimapping &gt;::value_compare:</div>
+Inheritance diagram for tbb::flow::interface8::sender&lt; dependency_msg&lt; T, Factory &gt; &gt;:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00175.png" usemap="#tbb::interface5::concurrent_unordered_map_traits&lt; Key, T, Hash_compare, Allocator, Allow_multimapping &gt;::value_compare_map" alt=""/>
-  <map id="tbb::interface5::concurrent_unordered_map_traits&lt; Key, T, Hash_compare, Allocator, Allow_multimapping &gt;::value_compare_map" name="tbb::interface5::concurrent_unordered_map_traits&lt; Key, T, Hash_compare, Allocator, Allow_multimapping &gt;::value_compare_map">
+  <img src="a00175.png" usemap="#tbb::flow::interface8::sender&lt; dependency_msg&lt; T, Factory &gt; &gt;_map" alt=""/>
+  <map id="tbb::flow::interface8::sender&lt; dependency_msg&lt; T, Factory &gt; &gt;_map" name="tbb::flow::interface8::sender&lt; dependency_msg&lt; T, Factory &gt; &gt;_map">
+<area href="a00140.html" alt="tbb::flow::interface8::proxy_dependency_sender&lt; T, Factory &gt;" shape="rect" coords="0,56,373,80"/>
 </map>
  </div></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a9fcd3aaf103d9538a2155c36689900d4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9fcd3aaf103d9538a2155c36689900d4"></a>
+typedef <a class="el" href="a00155.html">receiver</a><br class="typebreak"/>
+&lt; <a class="el" href="a00066.html">dependency_msg</a>&lt; T, Factory &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00175.html#a9fcd3aaf103d9538a2155c36689900d4">dependency_successor_type</a></td></tr>
+<tr class="memdesc:a9fcd3aaf103d9538a2155c36689900d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">The successor type for this sender. <br/></td></tr>
+<tr class="separator:a9fcd3aaf103d9538a2155c36689900d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6fb8a0afda62e103046a8d008adc7492"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6fb8a0afda62e103046a8d008adc7492"></a>
+typedef <br class="typebreak"/>
+<a class="el" href="a00140.html">proxy_dependency_sender</a>&lt; T, <br class="typebreak"/>
+Factory &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>proxy</b></td></tr>
+<tr class="separator:a6fb8a0afda62e103046a8d008adc7492"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ab45af27d6a7ce27dfdd5cd86b9e242a4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab45af27d6a7ce27dfdd5cd86b9e242a4"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator()</b> (const value_type &amp;left, const value_type &amp;right) const </td></tr>
-<tr class="separator:ab45af27d6a7ce27dfdd5cd86b9e242a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a950d35402dcfda797180cfa504e62696"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a950d35402dcfda797180cfa504e62696"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>value_compare</b> (const hash_compare &amp;comparator)</td></tr>
-<tr class="separator:a950d35402dcfda797180cfa504e62696"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
-Protected Attributes</h2></td></tr>
-<tr class="memitem:a9f3947368607fd396df7f112f79abc1f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9f3947368607fd396df7f112f79abc1f"></a>
-hash_compare&#160;</td><td class="memItemRight" valign="bottom"><b>my_hash_compare</b></td></tr>
-<tr class="separator:a9f3947368607fd396df7f112f79abc1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
-Friends</h2></td></tr>
-<tr class="memitem:af8b0853dc699e83103d36df2c881aa67"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af8b0853dc699e83103d36df2c881aa67"></a>
-class&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_map_traits&lt; Key, T, Hash_compare, Allocator, Allow_multimapping &gt;</b></td></tr>
-<tr class="separator:af8b0853dc699e83103d36df2c881aa67"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a95e75dd9dff5a89dcb839128544d2ab0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a95e75dd9dff5a89dcb839128544d2ab0"></a>
+virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00175.html#a95e75dd9dff5a89dcb839128544d2ab0">register_successor</a> (<a class="el" href="a00175.html#a9fcd3aaf103d9538a2155c36689900d4">dependency_successor_type</a> &amp;r)=0</td></tr>
+<tr class="memdesc:a95e75dd9dff5a89dcb839128544d2ab0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a new successor to this node. <br/></td></tr>
+<tr class="separator:a95e75dd9dff5a89dcb839128544d2ab0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1c983e110296b3611b47475084623e76"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1c983e110296b3611b47475084623e76"></a>
+virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00175.html#a1c983e110296b3611b47475084623e76">remove_successor</a> (<a class="el" href="a00175.html#a9fcd3aaf103d9538a2155c36689900d4">dependency_successor_type</a> &amp;r)=0</td></tr>
+<tr class="memdesc:a1c983e110296b3611b47475084623e76"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes a successor from this node. <br/></td></tr>
+<tr class="separator:a1c983e110296b3611b47475084623e76"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeb6486b9ac27c8e7fa66a09dbf2c0c61"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aeb6486b9ac27c8e7fa66a09dbf2c0c61"></a>
+virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00175.html#aeb6486b9ac27c8e7fa66a09dbf2c0c61">try_get</a> (<a class="el" href="a00066.html">dependency_msg</a>&lt; T, Factory &gt; &amp;)</td></tr>
+<tr class="memdesc:aeb6486b9ac27c8e7fa66a09dbf2c0c61"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request an item from the sender. <br/></td></tr>
+<tr class="separator:aeb6486b9ac27c8e7fa66a09dbf2c0c61"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2a92a086f82fcd73e1a0df2834bd0784"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2a92a086f82fcd73e1a0df2834bd0784"></a>
+virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00175.html#a2a92a086f82fcd73e1a0df2834bd0784">try_reserve</a> (<a class="el" href="a00066.html">dependency_msg</a>&lt; T, Factory &gt; &amp;)</td></tr>
+<tr class="memdesc:a2a92a086f82fcd73e1a0df2834bd0784"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reserves an item in the sender. <br/></td></tr>
+<tr class="separator:a2a92a086f82fcd73e1a0df2834bd0784"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0172dfade96faa57e710669638355616"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0172dfade96faa57e710669638355616"></a>
+ordinary_sender &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>ordinary_sender</b> ()</td></tr>
+<tr class="separator:a0172dfade96faa57e710669638355616"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a55e8bab39488da80a7cf80c1260f312a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a55e8bab39488da80a7cf80c1260f312a"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>has_host_successors</b> ()</td></tr>
+<tr class="separator:a55e8bab39488da80a7cf80c1260f312a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>concurrent_unordered_map.h</li>
+<li>flow_graph_opencl_node.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

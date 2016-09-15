@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::tbb_allocator&lt; void &gt;::rebind&lt; U &gt; Struct Template Reference</title>
+<title>tbb::flow::interface8::opencl_buffer_impl&lt; Factory &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,26 +33,91 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><a class="el" href="a00162.html">tbb_allocator< void ></a></li><li class="navelem"><a class="el" href="a00119.html">rebind</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><a class="el" href="a00119.html">opencl_buffer_impl</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#pub-types">Public Types</a> &#124;
-<a href="a00313.html">List of all members</a>  </div>
+<a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#friends">Friends</a> &#124;
+<a href="a00402.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::tbb_allocator&lt; void &gt;::rebind&lt; U &gt; Struct Template Reference</div>  </div>
+<div class="title">tbb::flow::interface8::opencl_buffer_impl&lt; Factory &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
+<div class="dynheader">
+Inheritance diagram for tbb::flow::interface8::opencl_buffer_impl&lt; Factory &gt;:</div>
+<div class="dyncontent">
+ <div class="center">
+  <img src="a00119.png" usemap="#tbb::flow::interface8::opencl_buffer_impl&lt; Factory &gt;_map" alt=""/>
+  <map id="tbb::flow::interface8::opencl_buffer_impl&lt; Factory &gt;_map" name="tbb::flow::interface8::opencl_buffer_impl&lt; Factory &gt;_map">
+<area href="a00126.html" alt="tbb::flow::interface8::opencl_memory&lt; Factory &gt;" shape="rect" coords="0,0,303,24"/>
+</map>
+ </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:a8f3c27dc0f43be2eafdfe8c6f222c44c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8f3c27dc0f43be2eafdfe8c6f222c44c"></a>
-typedef <a class="el" href="a00161.html">tbb_allocator</a>&lt; U &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>other</b></td></tr>
-<tr class="separator:a8f3c27dc0f43be2eafdfe8c6f222c44c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
+Public Member Functions</h2></td></tr>
+<tr class="memitem:aefa71e2769c25e679e7e9b1104629c79"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aefa71e2769c25e679e7e9b1104629c79"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_buffer_impl</b> (size_t size, Factory &amp;f)</td></tr>
+<tr class="separator:aefa71e2769c25e679e7e9b1104629c79"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a71efae0005e1e0406a71decc0d48f5d4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a71efae0005e1e0406a71decc0d48f5d4"></a>
+size_t&#160;</td><td class="memItemRight" valign="bottom"><b>size</b> () const </td></tr>
+<tr class="separator:a71efae0005e1e0406a71decc0d48f5d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7a52ac2c06f45f39ba0b83e80e345409"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7a52ac2c06f45f39ba0b83e80e345409"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>map_memory</b> (<a class="el" href="a00120.html">opencl_device</a> device, <a class="el" href="a00066.html">dependency_msg</a>&lt; void *, Factory &gt; &amp;dmsg)</td></tr>
+<tr class="separator:a7a52ac2c06f45f39ba0b83e80e345409"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_a00126"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_a00126')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="a00126.html">tbb::flow::interface8::opencl_memory&lt; Factory &gt;</a></td></tr>
+<tr class="memitem:aef26ad19ff2a8b8a654b9c320448b909 inherit pub_methods_a00126"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aef26ad19ff2a8b8a654b9c320448b909"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_memory</b> (Factory &amp;f)</td></tr>
+<tr class="separator:aef26ad19ff2a8b8a654b9c320448b909 inherit pub_methods_a00126"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0a79ff33e937aa1340850347c8a1d5f2 inherit pub_methods_a00126"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0a79ff33e937aa1340850347c8a1d5f2"></a>
+cl_mem&#160;</td><td class="memItemRight" valign="bottom"><b>get_cl_mem</b> () const </td></tr>
+<tr class="separator:a0a79ff33e937aa1340850347c8a1d5f2 inherit pub_methods_a00126"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3a8930ac2c1e6fcc20a052f5ee9e4389 inherit pub_methods_a00126"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3a8930ac2c1e6fcc20a052f5ee9e4389"></a>
+void *&#160;</td><td class="memItemRight" valign="bottom"><b>get_host_ptr</b> ()</td></tr>
+<tr class="separator:a3a8930ac2c1e6fcc20a052f5ee9e4389 inherit pub_methods_a00126"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a913d84627cce6fce992810251b94f35a inherit pub_methods_a00126"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a913d84627cce6fce992810251b94f35a"></a>
+<a class="el" href="a00066.html">dependency_msg</a>&lt; void *, Factory &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>send</b> (<a class="el" href="a00120.html">opencl_device</a> d, const cl_event *e)</td></tr>
+<tr class="separator:a913d84627cce6fce992810251b94f35a inherit pub_methods_a00126"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4772aea9060f0d5efb0f08ff03e6447a inherit pub_methods_a00126"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4772aea9060f0d5efb0f08ff03e6447a"></a>
+<a class="el" href="a00066.html">dependency_msg</a>&lt; void *, Factory &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>receive</b> (const cl_event *e)</td></tr>
+<tr class="separator:a4772aea9060f0d5efb0f08ff03e6447a inherit pub_methods_a00126"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:a6560a38156dede308dcb1703a057c1b9"><td class="memTemplParams" colspan="2"><a class="anchor" id="a6560a38156dede308dcb1703a057c1b9"></a>
+template&lt;typename , typename &gt; </td></tr>
+<tr class="memitem:a6560a38156dede308dcb1703a057c1b9"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><b>opencl_buffer</b></td></tr>
+<tr class="separator:a6560a38156dede308dcb1703a057c1b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
+Additional Inherited Members</h2></td></tr>
+<tr class="inherit_header pro_attribs_a00126"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_a00126')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="a00126.html">tbb::flow::interface8::opencl_memory&lt; Factory &gt;</a></td></tr>
+<tr class="memitem:a380fff4e6ba76f5466c6e89a896e55c0 inherit pro_attribs_a00126"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a380fff4e6ba76f5466c6e89a896e55c0"></a>
+cl_mem&#160;</td><td class="memItemRight" valign="bottom"><b>my_cl_mem</b></td></tr>
+<tr class="separator:a380fff4e6ba76f5466c6e89a896e55c0 inherit pro_attribs_a00126"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4c63e94738ced85497645028e155a412 inherit pro_attribs_a00126"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4c63e94738ced85497645028e155a412"></a>
+<a class="el" href="a00021.html">tbb::atomic</a><br class="typebreak"/>
+&lt; opencl_device::device_id_type &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>my_curr_device_id</b></td></tr>
+<tr class="separator:a4c63e94738ced85497645028e155a412 inherit pro_attribs_a00126"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a31d9d2b94d98b6ccf311d7f48a874629 inherit pro_attribs_a00126"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a31d9d2b94d98b6ccf311d7f48a874629"></a>
+void *&#160;</td><td class="memItemRight" valign="bottom"><b>my_host_ptr</b></td></tr>
+<tr class="separator:a31d9d2b94d98b6ccf311d7f48a874629 inherit pro_attribs_a00126"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adec97a8d1e6c684d0194429d32c78329 inherit pro_attribs_a00126"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adec97a8d1e6c684d0194429d32c78329"></a>
+Factory *&#160;</td><td class="memItemRight" valign="bottom"><b>my_factory</b></td></tr>
+<tr class="separator:adec97a8d1e6c684d0194429d32c78329 inherit pro_attribs_a00126"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3e73a31d439e3a589d5926221cbadc09 inherit pro_attribs_a00126"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3e73a31d439e3a589d5926221cbadc09"></a>
+<a class="el" href="a00178.html">tbb::spin_mutex</a>&#160;</td><td class="memItemRight" valign="bottom"><b>my_sending_lock</b></td></tr>
+<tr class="separator:a3e73a31d439e3a589d5926221cbadc09 inherit pro_attribs_a00126"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afa943498f52121866d203227153ada46 inherit pro_attribs_a00126"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afa943498f52121866d203227153ada46"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>my_sending_event_present</b></td></tr>
+<tr class="separator:afa943498f52121866d203227153ada46 inherit pro_attribs_a00126"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a30e14deb304bba7daa551e8507a498b8 inherit pro_attribs_a00126"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a30e14deb304bba7daa551e8507a498b8"></a>
+cl_event&#160;</td><td class="memItemRight" valign="bottom"><b>my_sending_event</b></td></tr>
+<tr class="separator:a30e14deb304bba7daa551e8507a498b8 inherit pro_attribs_a00126"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<hr/>The documentation for this struct was generated from the following file:<ul>
-<li>tbb_allocator.h</li>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li>flow_graph_opencl_node.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

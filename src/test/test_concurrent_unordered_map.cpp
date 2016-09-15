@@ -257,7 +257,7 @@ void TestTypes() {
     }
     TestTypesMap</*defCtorPresent = */true>( arrIntTbb );
 
-#if __TBB_CPP11_REFERENCE_WRAPPER_PRESENT
+#if __TBB_CPP11_REFERENCE_WRAPPER_PRESENT && !__TBB_REFERENCE_WRAPPER_COMPILATION_BROKEN
     std::list< std::pair<const std::reference_wrapper<const int>, int> > arrRefInt;
     for ( std::list< std::pair<const int, int> >::iterator it = arrIntInt.begin(); it != arrIntInt.end(); ++it )
         arrRefInt.push_back( std::make_pair( std::reference_wrapper<const int>( it->first ), it->second ) );
@@ -269,7 +269,7 @@ void TestTypes() {
         arrIntRef.push_back( std::pair<const int, std::reference_wrapper<int> >( it->first, std::reference_wrapper<int>( it->second ) ) );
     }
     TestTypesMap</*defCtorPresent = */false>( arrIntRef );
-#endif /* __TBB_CPP11_REFERENCE_WRAPPER_PRESENT */
+#endif /* __TBB_CPP11_REFERENCE_WRAPPER_PRESENT && !__TBB_REFERENCE_WRAPPER_COMPILATION_BROKEN */
 
 #if __TBB_CPP11_SMART_POINTERS_PRESENT
     std::list< std::pair< const std::shared_ptr<int>, std::shared_ptr<int> > > arrShrShr;

@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::queuing_rw_mutex::scoped_lock Class Reference</title>
+<title>tbb::parallel_while&lt; Body &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,115 +33,125 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><a class="el" href="a00114.html">queuing_rw_mutex</a></li><li class="navelem"><a class="el" href="a00134.html">scoped_lock</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><a class="el" href="a00134.html">parallel_while</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="a00295.html">List of all members</a>  </div>
+<a href="a00321.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::queuing_rw_mutex::scoped_lock Class Reference</div>  </div>
+<div class="title">tbb::parallel_while&lt; Body &gt; Class Template Reference<div class="ingroups"><a class="el" href="a00289.html">Algorithms</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>The scoped locking pattern.  
+<p>Parallel iteration over a stream, with optional addition of more work.  
  <a href="a00134.html#details">More...</a></p>
 
-<p><code>#include &lt;queuing_rw_mutex.h&gt;</code></p>
+<p><code>#include &lt;parallel_while.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::queuing_rw_mutex::scoped_lock:</div>
+Inheritance diagram for tbb::parallel_while&lt; Body &gt;:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00134.png" usemap="#tbb::queuing_rw_mutex::scoped_lock_map" alt=""/>
-  <map id="tbb::queuing_rw_mutex::scoped_lock_map" name="tbb::queuing_rw_mutex::scoped_lock_map">
+  <img src="a00134.png" usemap="#tbb::parallel_while&lt; Body &gt;_map" alt=""/>
+  <map id="tbb::parallel_while&lt; Body &gt;_map" name="tbb::parallel_while&lt; Body &gt;_map">
 </map>
  </div></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a2442f019427e608d46801376267e44a8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2442f019427e608d46801376267e44a8"></a>
+typedef Body::argument_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00134.html#a2442f019427e608d46801376267e44a8">value_type</a></td></tr>
+<tr class="memdesc:a2442f019427e608d46801376267e44a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type of items. <br/></td></tr>
+<tr class="separator:a2442f019427e608d46801376267e44a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a1ae3792726dcff8da1f2c5366fb2b754"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00134.html#a1ae3792726dcff8da1f2c5366fb2b754">scoped_lock</a> ()</td></tr>
-<tr class="memdesc:a1ae3792726dcff8da1f2c5366fb2b754"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct lock that has not acquired a mutex.  <a href="#a1ae3792726dcff8da1f2c5366fb2b754">More...</a><br/></td></tr>
-<tr class="separator:a1ae3792726dcff8da1f2c5366fb2b754"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af1b55ca1839c9c7c2cd779cd2dd9c474"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af1b55ca1839c9c7c2cd779cd2dd9c474"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00134.html#af1b55ca1839c9c7c2cd779cd2dd9c474">scoped_lock</a> (<a class="el" href="a00114.html">queuing_rw_mutex</a> &amp;m, bool write=true)</td></tr>
-<tr class="memdesc:af1b55ca1839c9c7c2cd779cd2dd9c474"><td class="mdescLeft">&#160;</td><td class="mdescRight">Acquire lock on given mutex. <br/></td></tr>
-<tr class="separator:af1b55ca1839c9c7c2cd779cd2dd9c474"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6cb16cc55f884bbbd5a69430c47b288f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6cb16cc55f884bbbd5a69430c47b288f"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00134.html#a6cb16cc55f884bbbd5a69430c47b288f">~scoped_lock</a> ()</td></tr>
-<tr class="memdesc:a6cb16cc55f884bbbd5a69430c47b288f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Release lock (if lock is held). <br/></td></tr>
-<tr class="separator:a6cb16cc55f884bbbd5a69430c47b288f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab4bf2fb86d6a418f9ea36474eb8893f9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab4bf2fb86d6a418f9ea36474eb8893f9"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00134.html#ab4bf2fb86d6a418f9ea36474eb8893f9">acquire</a> (<a class="el" href="a00114.html">queuing_rw_mutex</a> &amp;m, bool write=true)</td></tr>
-<tr class="memdesc:ab4bf2fb86d6a418f9ea36474eb8893f9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Acquire lock on given mutex. <br/></td></tr>
-<tr class="separator:ab4bf2fb86d6a418f9ea36474eb8893f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4843d40dddc37c1aa3444e27d35d2433"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4843d40dddc37c1aa3444e27d35d2433"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00134.html#a4843d40dddc37c1aa3444e27d35d2433">try_acquire</a> (<a class="el" href="a00114.html">queuing_rw_mutex</a> &amp;m, bool write=true)</td></tr>
-<tr class="memdesc:a4843d40dddc37c1aa3444e27d35d2433"><td class="mdescLeft">&#160;</td><td class="mdescRight">Acquire lock on given mutex if free (i.e. non-blocking) <br/></td></tr>
-<tr class="separator:a4843d40dddc37c1aa3444e27d35d2433"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a50fb02b77f02a01c74754d163157ec77"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a50fb02b77f02a01c74754d163157ec77"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00134.html#a50fb02b77f02a01c74754d163157ec77">release</a> ()</td></tr>
-<tr class="memdesc:a50fb02b77f02a01c74754d163157ec77"><td class="mdescLeft">&#160;</td><td class="mdescRight">Release lock. <br/></td></tr>
-<tr class="separator:a50fb02b77f02a01c74754d163157ec77"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae0f28ecfbbc5f8b3024cd47048b72b5b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00134.html#ae0f28ecfbbc5f8b3024cd47048b72b5b">upgrade_to_writer</a> ()</td></tr>
-<tr class="memdesc:ae0f28ecfbbc5f8b3024cd47048b72b5b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Upgrade reader to become a writer.  <a href="#ae0f28ecfbbc5f8b3024cd47048b72b5b">More...</a><br/></td></tr>
-<tr class="separator:ae0f28ecfbbc5f8b3024cd47048b72b5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af0af63035147a3d8422f8c8d7b8d2629"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af0af63035147a3d8422f8c8d7b8d2629"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00134.html#af0af63035147a3d8422f8c8d7b8d2629">downgrade_to_reader</a> ()</td></tr>
-<tr class="memdesc:af0af63035147a3d8422f8c8d7b8d2629"><td class="mdescLeft">&#160;</td><td class="mdescRight">Downgrade writer to become a reader. <br/></td></tr>
-<tr class="separator:af0af63035147a3d8422f8c8d7b8d2629"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a220a7307358aa36802c8754ea45ca385"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a220a7307358aa36802c8754ea45ca385"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00134.html#a220a7307358aa36802c8754ea45ca385">parallel_while</a> ()</td></tr>
+<tr class="memdesc:a220a7307358aa36802c8754ea45ca385"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct empty non-running parallel while. <br/></td></tr>
+<tr class="separator:a220a7307358aa36802c8754ea45ca385"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac2fd559c8a38639fa1ba97a0d5639ca8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac2fd559c8a38639fa1ba97a0d5639ca8"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00134.html#ac2fd559c8a38639fa1ba97a0d5639ca8">~parallel_while</a> ()</td></tr>
+<tr class="memdesc:ac2fd559c8a38639fa1ba97a0d5639ca8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor cleans up data members before returning. <br/></td></tr>
+<tr class="separator:ac2fd559c8a38639fa1ba97a0d5639ca8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a20607ba5faa958144787d980aa850c16"><td class="memTemplParams" colspan="2">template&lt;typename Stream &gt; </td></tr>
+<tr class="memitem:a20607ba5faa958144787d980aa850c16"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00134.html#a20607ba5faa958144787d980aa850c16">run</a> (Stream &amp;stream, const Body &amp;body)</td></tr>
+<tr class="memdesc:a20607ba5faa958144787d980aa850c16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Apply body.apply to each item in the stream.  <a href="#a20607ba5faa958144787d980aa850c16">More...</a><br/></td></tr>
+<tr class="separator:a20607ba5faa958144787d980aa850c16"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4861989d7f5e3111d264d4d6013e8fe1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00134.html#a4861989d7f5e3111d264d4d6013e8fe1">add</a> (const <a class="el" href="a00134.html#a2442f019427e608d46801376267e44a8">value_type</a> &amp;item)</td></tr>
+<tr class="memdesc:a4861989d7f5e3111d264d4d6013e8fe1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a work item while running.  <a href="#a4861989d7f5e3111d264d4d6013e8fe1">More...</a><br/></td></tr>
+<tr class="separator:a4861989d7f5e3111d264d4d6013e8fe1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>The scoped locking pattern. </p>
-<p>It helps to avoid the common problem of forgetting to release lock. It also nicely provides the "node" for queuing locks. </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a class="anchor" id="a1ae3792726dcff8da1f2c5366fb2b754"></a>
+<div class="textblock"><h3>template&lt;typename Body&gt;<br/>
+class tbb::parallel_while&lt; Body &gt;</h3>
+
+<p>Parallel iteration over a stream, with optional addition of more work. </p>
+<p>The Body b has the requirement: <br/>
+ "b(v)" <br/>
+ "b.argument_type" <br/>
+ where v is an argument_type </p>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="a4861989d7f5e3111d264d4d6013e8fe1"></a>
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
+<div class="memtemplate">
+template&lt;typename Body &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">tbb::queuing_rw_mutex::scoped_lock::scoped_lock </td>
+          <td class="memname">void <a class="el" href="a00134.html">tbb::parallel_while</a>&lt; Body &gt;::add </td>
           <td>(</td>
-          <td class="paramname">)</td><td></td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Construct lock that has not acquired a mutex. </p>
-<p>Equivalent to zero-initialization of *this. </p>
-
-</div>
-</div>
-<h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="ae0f28ecfbbc5f8b3024cd47048b72b5b"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool tbb::queuing_rw_mutex::scoped_lock::upgrade_to_writer </td>
-          <td>(</td>
-          <td class="paramname">)</td><td></td>
+          <td class="paramtype">const <a class="el" href="a00134.html#a2442f019427e608d46801376267e44a8">value_type</a> &amp;&#160;</td>
+          <td class="paramname"><em>item</em>)</td><td></td>
           <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Upgrade reader to become a writer. </p>
-<p>Returns whether the upgrade happened without releasing and re-acquiring the lock </p>
+<p>Add a work item while running. </p>
+<p>Should be executed only by body.apply or a thread spawned therefrom. </p>
+
+</div>
+</div>
+<a class="anchor" id="a20607ba5faa958144787d980aa850c16"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename Body &gt; </div>
+<div class="memtemplate">
+template&lt;typename Stream &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="a00134.html">tbb::parallel_while</a>&lt; Body &gt;::run </td>
+          <td>(</td>
+          <td class="paramtype">Stream &amp;&#160;</td>
+          <td class="paramname"><em>stream</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Body &amp;&#160;</td>
+          <td class="paramname"><em>body</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Apply body.apply to each item in the stream. </p>
+<p>A Stream s has the requirements <br/>
+ "S::value_type" <br/>
+ "s.pop_if_present(value) is convertible to bool </p>
 
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>queuing_rw_mutex.h</li>
+<li>parallel_while.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

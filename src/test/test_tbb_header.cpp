@@ -31,6 +31,7 @@
 #define TBB_PREVIEW_VARIADIC_PARALLEL_INVOKE 1
 #define TBB_PREVIEW_FLOW_GRAPH_NODES 1
 #define TBB_PREVIEW_GLOBAL_CONTROL 1
+#define TBB_PREVIEW_STATIC_PARTITIONER 1
 #endif
 
 #include "harness_defs.h"
@@ -152,6 +153,7 @@ static void TestPreviewNames() {
     TestTypeDefinitionPresence( aggregator );
     TestTypeDefinitionPresence( aggregator_ext<Handler> );
     TestTypeDefinitionPresence2(concurrent_lru_cache<int, int> );
+    TestTypeDefinitionPresence( static_partitioner );
 }
 #endif
 
@@ -257,6 +259,10 @@ int TestMain ()
     TestTypeDefinitionPresence( tick_count );
 #if TBB_PREVIEW_GLOBAL_CONTROL
     TestTypeDefinitionPresence( global_control );
+#endif
+#if TBB_PREVIEW_STATIC_PARTITIONER
+    TestFuncDefinitionPresence( parallel_for, (int, int, int, const Body1&, const tbb::static_partitioner&), void );
+    TestFuncDefinitionPresence( parallel_reduce, (const tbb::blocked_range<int>&, Body2&, const tbb::static_partitioner&), void );
 #endif
 
 #if __TBB_CPF_BUILD

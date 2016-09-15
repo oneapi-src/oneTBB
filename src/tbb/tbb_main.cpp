@@ -350,7 +350,7 @@ void itt_relation_add_v7( itt_domain_enum domain, void *addr0, unsigned long lon
 }
 
 void itt_task_begin_v7( itt_domain_enum domain, void *task, unsigned long long task_extra, 
-                        void *parent, unsigned long long parent_extra, string_index /* name_index */ ) {
+                        void *parent, unsigned long long parent_extra, string_index name_index ) {
     if ( __itt_domain *d = get_itt_domain( domain ) ) {
         __itt_id task_id = itt_null_id;
         __itt_id parent_id = itt_null_id;
@@ -358,13 +358,35 @@ void itt_task_begin_v7( itt_domain_enum domain, void *task, unsigned long long t
         if ( parent ) {
             itt_id_make( &parent_id, parent, parent_extra );
         }
-        ITTNOTIFY_VOID_D3(task_begin, d, task_id, parent_id, NULL );
+        __itt_string_handle *n = ITT_get_string_handle(name_index);
+        ITTNOTIFY_VOID_D3(task_begin, d, task_id, parent_id, n );
     }
 }
 
 void itt_task_end_v7( itt_domain_enum domain ) {
     if ( __itt_domain *d = get_itt_domain( domain ) ) {
         ITTNOTIFY_VOID_D0(task_end, d);
+    }
+}
+
+void itt_region_begin_v9( itt_domain_enum domain, void *region, unsigned long long region_extra, 
+                          void *parent, unsigned long long parent_extra, string_index /* name_index */ ) {
+    if ( __itt_domain *d = get_itt_domain( domain ) ) {
+        __itt_id region_id = itt_null_id;
+        __itt_id parent_id = itt_null_id;
+        itt_id_make( &region_id, region, region_extra );
+        if ( parent ) {
+            itt_id_make( &parent_id, parent, parent_extra );
+        }
+        ITTNOTIFY_VOID_D3(region_begin, d, region_id, parent_id, NULL );
+    }
+}
+
+void itt_region_end_v9( itt_domain_enum domain, void *region, unsigned long long region_extra ) {
+    if ( __itt_domain *d = get_itt_domain( domain ) ) {
+        __itt_id region_id = itt_null_id;
+        itt_id_make( &region_id, region, region_extra );
+        ITTNOTIFY_VOID_D1( region_end, d, region_id );
     }
 }
 
@@ -383,6 +405,11 @@ void itt_task_begin_v7( itt_domain_enum domain, void *task, unsigned long long t
                         void * /*parent*/, unsigned long long /* parent_extra */, string_index /* name_index */ ) { }
 
 void itt_task_end_v7( itt_domain_enum domain ) { }
+
+void itt_region_begin_v9( itt_domain_enum domain, void *region, unsigned long long region_extra, 
+                          void *parent, unsigned long long parent_extra, string_index /* name_index */ ) { }
+
+void itt_region_end_v9( itt_domain_enum domain, void *region, unsigned long long region_extra ) { }
 
 #endif // DO_ITT_NOTIFY
 

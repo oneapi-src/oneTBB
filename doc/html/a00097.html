@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>rml::MemPoolPolicy Struct Reference</title>
+<title>tbb::flow::interface8::join_node&lt; OutputTuple, queueing &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,58 +33,51 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00238.html">rml</a></li><li class="navelem"><a class="el" href="a00097.html">MemPoolPolicy</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><a class="el" href="a00097.html">join_node< OutputTuple, queueing ></a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-attribs">Public Attributes</a> &#124;
-<a href="a00264.html">List of all members</a>  </div>
+<a href="a00385.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">rml::MemPoolPolicy Struct Reference</div>  </div>
+<div class="title">tbb::flow::interface8::join_node&lt; OutputTuple, queueing &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
+<div class="dynheader">
+Inheritance diagram for tbb::flow::interface8::join_node&lt; OutputTuple, queueing &gt;:</div>
+<div class="dyncontent">
+ <div class="center">
+  <img src="a00097.png" usemap="#tbb::flow::interface8::join_node&lt; OutputTuple, queueing &gt;_map" alt=""/>
+  <map id="tbb::flow::interface8::join_node&lt; OutputTuple, queueing &gt;_map" name="tbb::flow::interface8::join_node&lt; OutputTuple, queueing &gt;_map">
+</map>
+ </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a2a8905fe8598b18ff8195e3484178d2c"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom">{ <b>TBBMALLOC_POOL_VERSION</b> = 1
- }</td></tr>
-<tr class="separator:a2a8905fe8598b18ff8195e3484178d2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a68f8f33117846d6034bbfedc3725b384"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a68f8f33117846d6034bbfedc3725b384"></a>
+typedef OutputTuple&#160;</td><td class="memItemRight" valign="bottom"><b>output_type</b></td></tr>
+<tr class="separator:a68f8f33117846d6034bbfedc3725b384"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9ddc52b5e5242e22119f142f4fbfcb0d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9ddc52b5e5242e22119f142f4fbfcb0d"></a>
+typedef <br class="typebreak"/>
+unfolded_type::input_ports_type&#160;</td><td class="memItemRight" valign="bottom"><b>input_ports_type</b></td></tr>
+<tr class="separator:a9ddc52b5e5242e22119f142f4fbfcb0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a73e485e36709acc04a9448eaa95bb666"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a73e485e36709acc04a9448eaa95bb666"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>MemPoolPolicy</b> (rawAllocType pAlloc_, rawFreeType pFree_, size_t granularity_=0, bool fixedPool_=false, bool keepAllMemory_=false)</td></tr>
-<tr class="separator:a73e485e36709acc04a9448eaa95bb666"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
-Public Attributes</h2></td></tr>
-<tr class="memitem:a0935ae38d632881a6d6cccb675cb6f27"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0935ae38d632881a6d6cccb675cb6f27"></a>
-rawAllocType&#160;</td><td class="memItemRight" valign="bottom"><b>pAlloc</b></td></tr>
-<tr class="separator:a0935ae38d632881a6d6cccb675cb6f27"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a221c0a53496a391c60d2f452fc9d76ae"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a221c0a53496a391c60d2f452fc9d76ae"></a>
-rawFreeType&#160;</td><td class="memItemRight" valign="bottom"><b>pFree</b></td></tr>
-<tr class="separator:a221c0a53496a391c60d2f452fc9d76ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac91fffeccd1f4255bbb5719f25785bce"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac91fffeccd1f4255bbb5719f25785bce"></a>
-size_t&#160;</td><td class="memItemRight" valign="bottom"><b>granularity</b></td></tr>
-<tr class="separator:ac91fffeccd1f4255bbb5719f25785bce"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaea7ca6973332913c839073822352046"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aaea7ca6973332913c839073822352046"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>version</b></td></tr>
-<tr class="separator:aaea7ca6973332913c839073822352046"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab00be5199577e8dd87f25c867a488aaf"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab00be5199577e8dd87f25c867a488aaf"></a>
-unsigned&#160;</td><td class="memItemRight" valign="bottom"><b>fixedPool</b>: 1</td></tr>
-<tr class="separator:ab00be5199577e8dd87f25c867a488aaf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afc2ea43e020580853224fa430736d38a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afc2ea43e020580853224fa430736d38a"></a>
-unsigned&#160;</td><td class="memItemRight" valign="bottom"><b>keepAllMemory</b>: 1</td></tr>
-<tr class="separator:afc2ea43e020580853224fa430736d38a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2fe8bde7ec5c0f347f5c8e648c92c612"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2fe8bde7ec5c0f347f5c8e648c92c612"></a>
-unsigned&#160;</td><td class="memItemRight" valign="bottom"><b>reserved</b>: 30</td></tr>
-<tr class="separator:a2fe8bde7ec5c0f347f5c8e648c92c612"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a48464cf89820dd48e3a3bcb9721d521f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a48464cf89820dd48e3a3bcb9721d521f"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>join_node</b> (<a class="el" href="a00078.html">graph</a> &amp;g)</td></tr>
+<tr class="separator:a48464cf89820dd48e3a3bcb9721d521f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad29e3b8a61a0d191c5c4e7416193b985"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad29e3b8a61a0d191c5c4e7416193b985"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>join_node</b> (const <a class="el" href="a00095.html">join_node</a> &amp;other)</td></tr>
+<tr class="separator:ad29e3b8a61a0d191c5c4e7416193b985"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a903730293ea813b1065ce645b5a0ca90"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a903730293ea813b1065ce645b5a0ca90"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>set_name</b> (const char *name)</td></tr>
+<tr class="separator:a903730293ea813b1065ce645b5a0ca90"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<hr/>The documentation for this struct was generated from the following file:<ul>
-<li><a class="el" href="a00218.html">scalable_allocator.h</a></li>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li><a class="el" href="a00229.html">flow_graph.h</a></li>
 </ul>
 </div><!-- contents -->
 <hr>

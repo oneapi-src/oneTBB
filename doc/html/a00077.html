@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::flow::interface8::indexer_node&lt; T0, T1, T2, T3, T4, T5, T6, T7, T8, T9 &gt; Class Template Reference</title>
+<title>tbb::interface9::global_control Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,58 +33,42 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><a class="el" href="a00077.html">indexer_node</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><b>interface9</b></li><li class="navelem"><a class="el" href="a00077.html">global_control</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="a00354.html">List of all members</a>  </div>
+<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
+<a href="a00474.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::flow::interface8::indexer_node&lt; T0, T1, T2, T3, T4, T5, T6, T7, T8, T9 &gt; Class Template Reference</div>  </div>
+<div class="title">tbb::interface9::global_control Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="dynheader">
-Inheritance diagram for tbb::flow::interface8::indexer_node&lt; T0, T1, T2, T3, T4, T5, T6, T7, T8, T9 &gt;:</div>
-<div class="dyncontent">
- <div class="center">
-  <img src="a00077.png" usemap="#tbb::flow::interface8::indexer_node&lt; T0, T1, T2, T3, T4, T5, T6, T7, T8, T9 &gt;_map" alt=""/>
-  <map id="tbb::flow::interface8::indexer_node&lt; T0, T1, T2, T3, T4, T5, T6, T7, T8, T9 &gt;_map" name="tbb::flow::interface8::indexer_node&lt; T0, T1, T2, T3, T4, T5, T6, T7, T8, T9 &gt;_map">
-</map>
- </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a784e0f90a575168a3dfa84e5cae54972"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a784e0f90a575168a3dfa84e5cae54972"></a>
-typedef tuple&lt; T0, T1, T2, T3, <br class="typebreak"/>
-T4, T5, T6, T7, T8, T9 &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>InputTuple</b></td></tr>
-<tr class="separator:a784e0f90a575168a3dfa84e5cae54972"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7a8afd034bbb3d0ca709abd2d9781edc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7a8afd034bbb3d0ca709abd2d9781edc"></a>
-typedef internal::tagged_msg<br class="typebreak"/>
-&lt; size_t, T0, T1, T2, T3, T4, <br class="typebreak"/>
-T5, T6, T7, T8, T9 &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>output_type</b></td></tr>
-<tr class="separator:a7a8afd034bbb3d0ca709abd2d9781edc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adf6a49d97e04f3e88ef62c1edf4d4f62"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adf6a49d97e04f3e88ef62c1edf4d4f62"></a>
-typedef <br class="typebreak"/>
-internal::unfolded_indexer_node<br class="typebreak"/>
-&lt; InputTuple &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>unfolded_type</b></td></tr>
-<tr class="separator:adf6a49d97e04f3e88ef62c1edf4d4f62"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a04221b8e619bef332234db90d31f3e5e"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><b>parameter</b> { <b>max_allowed_parallelism</b>, 
+<b>thread_stack_size</b>, 
+<b>parameter_max</b>
+ }</td></tr>
+<tr class="separator:a04221b8e619bef332234db90d31f3e5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a9d9b93c610e5fdb52187150ace74d29e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9d9b93c610e5fdb52187150ace74d29e"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>indexer_node</b> (<a class="el" href="a00072.html">graph</a> &amp;g)</td></tr>
-<tr class="separator:a9d9b93c610e5fdb52187150ace74d29e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0e43f058646bf2a63e2bf72965e7abe2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0e43f058646bf2a63e2bf72965e7abe2"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>indexer_node</b> (const <a class="el" href="a00077.html">indexer_node</a> &amp;other)</td></tr>
-<tr class="separator:a0e43f058646bf2a63e2bf72965e7abe2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aedffe6ad01512b7c5da5a193ea5ae436"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aedffe6ad01512b7c5da5a193ea5ae436"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>set_name</b> (const char *name)</td></tr>
-<tr class="separator:aedffe6ad01512b7c5da5a193ea5ae436"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5375ee43ca415f20f3c1f47db5220302"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5375ee43ca415f20f3c1f47db5220302"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>global_control</b> (parameter p, size_t value)</td></tr>
+<tr class="separator:a5375ee43ca415f20f3c1f47db5220302"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:a8451d931cfc205d896ca2da26fe123ff"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8451d931cfc205d896ca2da26fe123ff"></a>
+static size_t&#160;</td><td class="memItemRight" valign="bottom"><b>active_value</b> (parameter p)</td></tr>
+<tr class="separator:a8451d931cfc205d896ca2da26fe123ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li><a class="el" href="a00197.html">flow_graph.h</a></li>
+<li>global_control.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

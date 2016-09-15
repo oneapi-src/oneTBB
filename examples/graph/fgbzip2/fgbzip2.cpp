@@ -21,7 +21,7 @@
 #include "tbb/tbb_config.h"
 #include "../../common/utility/utility.h"
 
-#if __TBB_CPP11_LAMBDAS_PRESENT
+#if __TBB_PREVIEW_ASYNC_NODE && __TBB_CPP11_LAMBDAS_PRESENT
 
 #include <iostream>
 #include <fstream>
@@ -180,7 +180,7 @@ void fgCompressionAsyncIO( std::ifstream& inputStream, std::ofstream& outputStre
 
     tbb::flow::graph g;
 
-    async_file_reader_node file_reader( g, [&ioActivity]( const tbb::flow::continue_msg& msg, async_file_reader_node::async_gateway_type& asyncGateway ) {
+    async_file_reader_node file_reader( g, tbb::flow::unlimited, [&ioActivity]( const tbb::flow::continue_msg& msg, async_file_reader_node::async_gateway_type& asyncGateway ) {
             ioActivity.start_read( asyncGateway );
         } );
 
@@ -190,7 +190,7 @@ void fgCompressionAsyncIO( std::ifstream& inputStream, std::ofstream& outputStre
             return buffer.seq_id;
         });
 
-    async_file_writer_node output_writer( g, [&ioActivity](const buffer_t& buffer, async_file_writer_node::async_gateway_type& asyncGateway ) {
+    async_file_writer_node output_writer( g, tbb::flow::unlimited, [&ioActivity](const buffer_t& buffer, async_file_writer_node::async_gateway_type& asyncGateway ) {
             ioActivity.write( buffer );
         });
 
@@ -307,4 +307,4 @@ int main() {
     utility::report_skipped();
     return 0;
 }
-#endif /* __TBB_CPP11_LAMBDAS_PRESENT */
+#endif /* __TBB_PREVIEW_ASYNC_NODE && __TBB_CPP11_LAMBDAS_PRESENT */

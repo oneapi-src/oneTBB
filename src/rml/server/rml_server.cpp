@@ -1526,7 +1526,7 @@ void tbb_connection_v2::adjust_job_count_estimate( int delta ) {
                 // No unrealized threads left.
                 break;
             // Eagerly start the thread off.
-            fpa.protect_affinity_mask();
+            fpa.protect_affinity_mask( /*restore_process_mask=*/true );
             my_thread_map.bind_one_thread( *this, *k );
             server_thread& t = k->thread();
             __TBB_ASSERT( !t.link, NULL );

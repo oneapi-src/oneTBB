@@ -78,6 +78,8 @@ void RunOneComparisonTest() {
 
 }
 
+#include "harness_defs.h"
+
 void RunTests() {
 
 #if __TESTING_STD_TUPLE__
@@ -158,6 +160,7 @@ void RunTests() {
     ASSERT(int_tuple_type(1,1,1) >= int_tuple_type(1,0,0),NULL);
     ASSERT(int_tuple_type(0,1,1) >= int_tuple_type(0,1,1),NULL);
 
+#if !__TBB_TUPLE_COMPARISON_COMPILATION_BROKEN
     typedef tuple<int,float,double,char> mixed_tuple_left;
     typedef tuple<float,int,char,double> mixed_tuple_right;
 
@@ -186,6 +189,7 @@ void RunTests() {
     RunOneComparisonTest<double,float,char,float,double,int>();
     RunOneComparisonTest<int,float,char,short,char,short>();
     RunOneComparisonTest<double,float,short,float,char,int>();
+#endif /* __TBB_TUPLE_COMPARISON_COMPILATION_BROKEN */
 
 
     // the following should result in a syntax error

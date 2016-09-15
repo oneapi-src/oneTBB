@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::null_mutex Class Reference</title>
+<title>tbb::interface6::memory_pool&lt; Alloc &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,55 +33,49 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><a class="el" href="a00103.html">null_mutex</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><b>interface6</b></li><li class="navelem"><a class="el" href="a00103.html">memory_pool</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a> &#124;
-<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
-<a href="a00281.html">List of all members</a>  </div>
+<a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="a00464.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::null_mutex Class Reference<div class="ingroups"><a class="el" href="a00259.html">Synchronization</a></div></div>  </div>
+<div class="title">tbb::interface6::memory_pool&lt; Alloc &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>A mutex which does nothing.  
+<p>Thread-safe growable pool allocator for variable-size requests.  
  <a href="a00103.html#details">More...</a></p>
 
-<p><code>#include &lt;null_mutex.h&gt;</code></p>
+<p><code>#include &lt;memory_pool.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::null_mutex:</div>
+Inheritance diagram for tbb::interface6::memory_pool&lt; Alloc &gt;:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00103.png" usemap="#tbb::null_mutex_map" alt=""/>
-  <map id="tbb::null_mutex_map" name="tbb::null_mutex_map">
+  <img src="a00103.png" usemap="#tbb::interface6::memory_pool&lt; Alloc &gt;_map" alt=""/>
+  <map id="tbb::interface6::memory_pool&lt; Alloc &gt;_map" name="tbb::interface6::memory_pool&lt; Alloc &gt;_map">
 </map>
  </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
-Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00133.html">scoped_lock</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents acquisition of a mutex.  <a href="a00133.html#details">More...</a><br/></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
-Static Public Attributes</h2></td></tr>
-<tr class="memitem:a20ed8301299d9ec166588401269d1788"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a20ed8301299d9ec166588401269d1788"></a>
-static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_rw_mutex</b> = false</td></tr>
-<tr class="separator:a20ed8301299d9ec166588401269d1788"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a49bd7f5da83382e39f898d06cbf0e23e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a49bd7f5da83382e39f898d06cbf0e23e"></a>
-static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_recursive_mutex</b> = true</td></tr>
-<tr class="separator:a49bd7f5da83382e39f898d06cbf0e23e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae4684b268ff379a69cd1fe93718ee7fc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae4684b268ff379a69cd1fe93718ee7fc"></a>
-static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_fair_mutex</b> = true</td></tr>
-<tr class="separator:ae4684b268ff379a69cd1fe93718ee7fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
+Public Member Functions</h2></td></tr>
+<tr class="memitem:af4c36829a159eac04d630ac5a99b9354"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af4c36829a159eac04d630ac5a99b9354"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00103.html#af4c36829a159eac04d630ac5a99b9354">memory_pool</a> (const Alloc &amp;src=Alloc())</td></tr>
+<tr class="memdesc:af4c36829a159eac04d630ac5a99b9354"><td class="mdescLeft">&#160;</td><td class="mdescRight">construct pool with underlying allocator <br/></td></tr>
+<tr class="separator:af4c36829a159eac04d630ac5a99b9354"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad2c7645b39b7280b1b3cf393d05fbaf7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad2c7645b39b7280b1b3cf393d05fbaf7"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00103.html#ad2c7645b39b7280b1b3cf393d05fbaf7">~memory_pool</a> ()</td></tr>
+<tr class="memdesc:ad2c7645b39b7280b1b3cf393d05fbaf7"><td class="mdescLeft">&#160;</td><td class="mdescRight">destroy pool <br/></td></tr>
+<tr class="separator:ad2c7645b39b7280b1b3cf393d05fbaf7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>A mutex which does nothing. </p>
-<p>A <a class="el" href="a00103.html" title="A mutex which does nothing. ">null_mutex</a> does no operation and simulates success. </p>
+<div class="textblock"><h3>template&lt;typename Alloc&gt;<br/>
+class tbb::interface6::memory_pool&lt; Alloc &gt;</h3>
+
+<p>Thread-safe growable pool allocator for variable-size requests. </p>
 </div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>null_mutex.h</li>
+<li><a class="el" href="a00232.html">memory_pool.h</a></li>
 </ul>
 </div><!-- contents -->
 <hr>

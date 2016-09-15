@@ -37,6 +37,9 @@ namespace internal {
     /** @ingroup task_scheduling */
     class arena;
     class task_scheduler_observer_v3;
+
+    //! Tag class used to indicate the "attaching" constructor
+    struct attach {};
 } // namespace internal
 //! @endcond
 
@@ -98,8 +101,9 @@ protected:
         , my_version_and_traits(default_flags)
         {}
 
-    void __TBB_EXPORTED_METHOD internal_initialize( );
-    void __TBB_EXPORTED_METHOD internal_terminate( );
+    void __TBB_EXPORTED_METHOD internal_initialize();
+    void __TBB_EXPORTED_METHOD internal_terminate();
+    void __TBB_EXPORTED_METHOD internal_attach();
     void __TBB_EXPORTED_METHOD internal_enqueue( task&, intptr_t ) const;
     void __TBB_EXPORTED_METHOD internal_execute( delegate_base& ) const;
     void __TBB_EXPORTED_METHOD internal_wait() const;
@@ -139,6 +143,15 @@ public:
         : task_arena_base(s.my_max_concurrency, s.my_master_slots)
         , my_initialized(false)
     {}
+
+    //! Creates an instance of task_arena attached to the current arena of the thread
+    task_arena( tbb::internal::attach )
+        : task_arena_base(automatic, 1) // use default settings if attach fails
+        , my_initialized(false)
+    {
+        internal_attach();
+        if( my_arena ) my_initialized = true;
+    }
 
     //! Forces allocation of the resources for the task_arena as specified in constructor arguments
     inline void initialize() {

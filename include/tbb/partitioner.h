@@ -64,8 +64,12 @@ namespace tbb {
 
 class auto_partitioner;
 class simple_partitioner;
+#if TBB_PREVIEW_STATIC_PARTITIONER
+class static_partitioner;
+#endif
 class affinity_partitioner;
-namespace interface7 {
+
+namespace interface9 {
     namespace internal {
         class affinity_partition_type;
     }
@@ -77,7 +81,7 @@ size_t __TBB_EXPORTED_FUNC get_initial_auto_partitioner_divisor();
 //! Defines entry point for affinity partitioner into tbb run-time library.
 class affinity_partitioner_base_v3: no_copy {
     friend class tbb::affinity_partitioner;
-    friend class tbb::interface7::internal::affinity_partition_type;
+    friend class tbb::interface9::internal::affinity_partition_type;
     //! Array that remembers affinities of tree positions to affinity_id.
     /** NULL if my_size==0. */
     affinity_id* my_array;
@@ -109,12 +113,12 @@ template<typename Range, typename Body, typename Partitioner> class start_scan;
 } //< namespace internal @endcond
 
 namespace serial {
-namespace interface7 {
+namespace interface9 {
 template<typename Range, typename Body, typename Partitioner> class start_for;
 }
 }
 
-namespace interface7 {
+namespace interface9 {
 //! @cond INTERNAL
 namespace internal {
 using namespace tbb::internal;
@@ -226,9 +230,13 @@ struct partition_type_base {
     depth_t max_depth() { return 0; }
     void align_depth(depth_t) { }
     template <typename Range> split_type get_split() { return split(); }
-
-    // common function blocks
     Partition& self() { return *static_cast<Partition*>(this); } // CRTP helper
+
+    template<typename StartType, typename Range>
+    void work_balance(StartType &start, Range &range) {
+        start.run_body( range ); // simple partitioner goes always here
+    }
+
     template<typename StartType, typename Range>
     void execute(StartType &start, Range &range) {
         // The algorithm in a few words ([]-denotes calls to decision methods of partitioner):
@@ -246,93 +254,66 @@ struct partition_type_base {
                 } while ( range.is_divisible() && self().is_divisible() );
             }
         }
-        if( !range.is_divisible() || !self().max_depth() )
-            start.run_body( range ); // simple partitioner goes always here
-        else { // do range pool
-            internal::range_vector<Range, Partition::range_pool_size> range_pool(range);
-            do {
-                range_pool.split_to_fill(self().max_depth()); // fill range pool
-                if( self().check_for_demand( start ) ) {
-                    if( range_pool.size() > 1 ) {
-                        start.offer_work( range_pool.front(), range_pool.front_depth() );
-                        range_pool.pop_front();
-                        continue;
-                    }
-                    if( range_pool.is_divisible(self().max_depth()) ) // was not enough depth to fork a task
-                        continue; // note: next split_to_fill() should split range at least once
-                }
-                start.run_body( range_pool.back() );
-                range_pool.pop_back();
-            } while( !range_pool.empty() && !start.is_cancelled() );
-        }
+        self().work_balance(start, range);
     }
 };
 
-//! Provides default methods for auto (adaptive) partition objects.
+//! Provides default splitting strategy for partition objects.
 template <typename Partition>
-struct adaptive_partition_type_base : partition_type_base<Partition> {
+struct adaptive_mode : partition_type_base<Partition> {
+    typedef Partition my_partition;
+    using partition_type_base<Partition>::self; // CRTP helper to get access to derived classes
     size_t my_divisor;
-    depth_t my_max_depth;
+    // For affinity_partitioner, my_divisor indicates the number of affinity array indices the task reserves.
+    // A task which has only one index must produce the right split without reserved index in order to avoid
+    // it to be overwritten in note_affinity() of the created (right) task.
+    // I.e. a task created deeper than the affinity array can remember must not save its affinity (LIFO order)
     static const unsigned factor = 1;
-    adaptive_partition_type_base() : my_max_depth(__TBB_INIT_DEPTH) {
-        my_divisor = tbb::internal::get_initial_auto_partitioner_divisor() / 4 * Partition::factor;
-        __TBB_ASSERT(my_divisor, "initial value of get_initial_auto_partitioner_divisor() is not valid");
+    adaptive_mode() : my_divisor(tbb::internal::get_initial_auto_partitioner_divisor() / 4 * my_partition::factor) {}
+    adaptive_mode(adaptive_mode &src, split) : my_divisor(do_split(src, split())) {}
+    adaptive_mode(adaptive_mode &src, const proportional_split& split_obj) : my_divisor(do_split(src, split_obj)) {}
+    /*! Override do_split methods in order to specify splitting strategy */
+    size_t do_split(adaptive_mode &src, split) {
+        return src.my_divisor /= 2u;
     }
-    adaptive_partition_type_base(adaptive_partition_type_base &src, split) {
-        my_max_depth = src.my_max_depth;
-#if TBB_USE_ASSERT
-        size_t old_divisor = src.my_divisor;
-#endif
-
-#if __TBB_INITIAL_TASK_IMBALANCE
-        if( src.my_divisor <= 1 ) my_divisor = 0;
-        else my_divisor = src.my_divisor = (src.my_divisor + 1u) / 2u;
-#else
-        my_divisor = src.my_divisor / 2u;
-        src.my_divisor = src.my_divisor - my_divisor; // TODO: check the effect separately
-        if (my_divisor) src.my_max_depth += static_cast<depth_t>(__TBB_Log2(src.my_divisor / my_divisor));
-#endif
-        // For affinity_partitioner, my_divisor indicates the number of affinity array indices the task reserves.
-        // A task which has only one index must produce the right split without reserved index in order to avoid
-        // it to be overwritten in note_affinity() of the created (right) task.
-        // I.e. a task created deeper than the affinity array can remember must not save its affinity (LIFO order)
-        __TBB_ASSERT( (old_divisor <= 1 && my_divisor == 0) ||
-                      (old_divisor > 1 && my_divisor != 0), NULL);
-    }
-    adaptive_partition_type_base(adaptive_partition_type_base &src, const proportional_split& split_obj) {
-        my_max_depth = src.my_max_depth;
+    size_t do_split(adaptive_mode &src, const proportional_split& split_obj) {
 #if __TBB_ENABLE_RANGE_FEEDBACK
-        my_divisor = size_t(float(src.my_divisor) * float(split_obj.right())
-                            / float(split_obj.left() + split_obj.right()));
+        size_t portion = size_t(float(src.my_divisor) * float(split_obj.right())
+                                / float(split_obj.left() + split_obj.right()) + 0.5f);
 #else
-        my_divisor = split_obj.right() * Partition::factor;
+        size_t portion = split_obj.right() * my_partition::factor;
 #endif
-        src.my_divisor -= my_divisor;
-    }
-    bool check_being_stolen( task &t) { // part of old should_execute_range()
-        if( !my_divisor ) { // if not from the top P tasks of binary tree
-            my_divisor = 1; // TODO: replace by on-stack flag (partition_state's member)?
-            if( t.is_stolen_task() && t.parent()->ref_count() >= 2 ) { // runs concurrently with the left task
-#if TBB_USE_EXCEPTIONS
-                // RTTI is available, check whether the cast is valid
-                __TBB_ASSERT(dynamic_cast<flag_task*>(t.parent()), 0);
-                // correctness of the cast relies on avoiding the root task for which:
-                // - initial value of my_divisor != 0 (protected by separate assertion)
-                // - is_stolen_task() always returns false for the root task.
+        portion = (portion + my_partition::factor/2) & (0ul - my_partition::factor);
+#if __TBB_ENABLE_RANGE_FEEDBACK
+        /** Corner case handling */
+        if (!portion)
+            portion = my_partition::factor;
+        else if (portion == src.my_divisor)
+            portion = src.my_divisor - my_partition::factor;
 #endif
-                flag_task::mark_task_stolen(t);
-                if( !my_max_depth ) my_max_depth++;
-                my_max_depth += __TBB_DEMAND_DEPTH_ADD;
-                return true;
-            }
-        }
-        return false;
+        src.my_divisor -= portion;
+        return portion;
     }
-    void align_depth(depth_t base) {
-        __TBB_ASSERT(base <= my_max_depth, 0);
-        my_max_depth -= base;
+    bool is_divisible() { // part of old should_execute_range()
+        return my_divisor > my_partition::factor;
     }
-    depth_t max_depth() { return my_max_depth; }
+};
+
+//! Provides default linear indexing of partitioner's sequence
+template <typename Partition>
+struct linear_affinity_mode : adaptive_mode<Partition> {
+    using adaptive_mode<Partition>::my_divisor;
+    size_t my_head;
+    using adaptive_mode<Partition>::self;
+    linear_affinity_mode() : adaptive_mode<Partition>(), my_head(0) {}
+    linear_affinity_mode(linear_affinity_mode &src, split) : adaptive_mode<Partition>(src, split())
+        , my_head(src.my_head + src.my_divisor) {}
+    linear_affinity_mode(linear_affinity_mode &src, const proportional_split& split_obj) : adaptive_mode<Partition>(src, split_obj)
+        , my_head(src.my_head + src.my_divisor) {}
+    void set_affinity( task &t ) {
+        if( my_divisor )
+            t.set_affinity( affinity_id(my_head) + 1 );
+    }
 };
 
 //! Class determines whether template parameter has static boolean constant
@@ -354,93 +335,132 @@ public:
     static const bool value = (sizeof(decide<Range>(0)) == sizeof(yes));
 };
 
-//! Provides default methods for affinity (adaptive) partition objects.
-class affinity_partition_type : public adaptive_partition_type_base<affinity_partition_type> {
-    static const unsigned factor_power = 4;
-    enum {
-        start = 0,
-        run,
-        pass
-    } my_delay;
+//! Provides default methods for non-balancing partition objects.
+template<class Mode>
+struct unbalancing_partition_type : Mode {
+    using Mode::self;
+    unbalancing_partition_type() : Mode() {}
+    unbalancing_partition_type(unbalancing_partition_type& p, split) : Mode(p, split()) {}
+    unbalancing_partition_type(unbalancing_partition_type& p, const proportional_split& split_obj) : Mode(p, split_obj) {}
+#if _MSC_VER && !defined(__INTEL_COMPILER)
+    // Suppress "conditional expression is constant" warning.
+    #pragma warning( push )
+    #pragma warning( disable: 4127 )
+#endif
+    template <typename Range>
+    proportional_split get_split() {
+        if (is_splittable_in_proportion<Range>::value) {
+            size_t size = self().my_divisor / Mode::my_partition::factor;
+#if __TBB_NONUNIFORM_TASK_CREATION
+            size_t right = (size + 2) / 3;
+#else
+            size_t right = size / 2;
+#endif
+            size_t left = size - right;
+            return proportional_split(left, right);
+        } else {
+            return proportional_split(1, 1);
+        }
+    }
+#if _MSC_VER && !defined(__INTEL_COMPILER)
+    #pragma warning( pop )
+#endif // warning 4127 is back
+};
+
+/*! Determine work-balance phase implementing splitting & stealing actions */
+template<class Mode>
+struct balancing_partition_type : unbalancing_partition_type<Mode> {
+    using Mode::self;
 #ifdef __TBB_USE_MACHINE_TIME_STAMPS
     tbb::internal::machine_tsc_t my_dst_tsc;
 #endif
-    size_t my_begin;
-    tbb::internal::affinity_id* my_array;
-public:
-    static const unsigned factor = 1 << factor_power; // number of slots in affinity array per task
-    typedef proportional_split split_type;
-
-    affinity_partition_type( tbb::internal::affinity_partitioner_base_v3& ap )
-        : adaptive_partition_type_base<affinity_partition_type>(), my_delay(start)
+    enum {
+        begin = 0,
+        run,
+        pass
+    } my_delay;
+    depth_t my_max_depth;
+    static const unsigned range_pool_size = __TBB_RANGE_POOL_CAPACITY;
+    balancing_partition_type(): unbalancing_partition_type<Mode>()
 #ifdef __TBB_USE_MACHINE_TIME_STAMPS
         , my_dst_tsc(0)
 #endif
-    {
-        __TBB_ASSERT( (factor&(factor-1))==0, "factor must be power of two" );
-        ap.resize(factor);
-        my_array = ap.my_array;
-        my_begin = 0;
-        my_max_depth = factor_power + 1; // the first factor_power ranges will be spawned, and >=1 ranges should be left
-        __TBB_ASSERT( my_max_depth < __TBB_RANGE_POOL_CAPACITY, 0 );
-    }
-    affinity_partition_type(affinity_partition_type& p, split)
-        : adaptive_partition_type_base<affinity_partition_type>(p, split()),
-          my_delay(pass),
+        , my_delay(begin)
+        , my_max_depth(__TBB_INIT_DEPTH) {}
+    balancing_partition_type(balancing_partition_type& p, split)
+        : unbalancing_partition_type<Mode>(p, split())
 #ifdef __TBB_USE_MACHINE_TIME_STAMPS
-          my_dst_tsc(0),
+        , my_dst_tsc(0)
 #endif
-          my_array(p.my_array) {
-        // the sum of the divisors represents original value of p.my_divisor before split
-        __TBB_ASSERT(my_divisor + p.my_divisor <= factor, NULL);
-        my_begin = p.my_begin + p.my_divisor;
-    }
-    affinity_partition_type(affinity_partition_type& p, const proportional_split& split_obj)
-        : adaptive_partition_type_base<affinity_partition_type>(p, split_obj),
-          my_delay(start),
+        , my_delay(pass)
+        , my_max_depth(p.my_max_depth) {}
+    balancing_partition_type(balancing_partition_type& p, const proportional_split& split_obj)
+        : unbalancing_partition_type<Mode>(p, split_obj)
 #ifdef __TBB_USE_MACHINE_TIME_STAMPS
-          my_dst_tsc(0),
+        , my_dst_tsc(0)
 #endif
-          my_array(p.my_array) {
-        size_t total_divisor = my_divisor + p.my_divisor;
-        __TBB_ASSERT(total_divisor % factor == 0, NULL);
-        my_divisor = (my_divisor + factor/2) & (0u - factor);
-#if __TBB_ENABLE_RANGE_FEEDBACK
-        if (!my_divisor)
-            my_divisor = factor;
-        else if (my_divisor == total_divisor)
-            my_divisor = total_divisor - factor;
+        , my_delay(begin)
+        , my_max_depth(p.my_max_depth) {}
+    bool check_being_stolen( task &t) { // part of old should_execute_range()
+        if( !(self().my_divisor / Mode::my_partition::factor) ) { // if not from the top P tasks of binary tree
+            self().my_divisor = 1; // TODO: replace by on-stack flag (partition_state's member)?
+            if( t.is_stolen_task() && t.parent()->ref_count() >= 2 ) { // runs concurrently with the left task
+#if TBB_USE_EXCEPTIONS
+                // RTTI is available, check whether the cast is valid
+                __TBB_ASSERT(dynamic_cast<flag_task*>(t.parent()), 0);
+                // correctness of the cast relies on avoiding the root task for which:
+                // - initial value of my_divisor != 0 (protected by separate assertion)
+                // - is_stolen_task() always returns false for the root task.
 #endif
-        p.my_divisor = total_divisor - my_divisor;
-        __TBB_ASSERT(my_divisor && p.my_divisor, NULL);
-        my_begin = p.my_begin + p.my_divisor;
-    }
-    void set_affinity( task &t ) {
-        if( my_divisor ) {
-            if( !my_array[my_begin] )
-                // TODO: consider code reuse for static_paritioner
-                t.set_affinity( affinity_id(my_begin / factor + 1) );
-            else
-                t.set_affinity( my_array[my_begin] );
+                flag_task::mark_task_stolen(t);
+                if( !my_max_depth ) my_max_depth++;
+                my_max_depth += __TBB_DEMAND_DEPTH_ADD;
+                return true;
+            }
         }
+        return false;
     }
-    void note_affinity( task::affinity_id id ) {
-        if( my_divisor )
-            my_array[my_begin] = id;
+    depth_t max_depth() { return my_max_depth; }
+    void align_depth(depth_t base) {
+        __TBB_ASSERT(base <= my_max_depth, 0);
+        my_max_depth -= base;
+    }
+    template<typename StartType, typename Range>
+    void work_balance(StartType &start, Range &range) {
+        if( !range.is_divisible() || !self().max_depth() ) {
+            start.run_body( range ); // simple partitioner goes always here
+        }
+        else { // do range pool
+            internal::range_vector<Range, range_pool_size> range_pool(range);
+            do {
+                range_pool.split_to_fill(self().max_depth()); // fill range pool
+                if( self().check_for_demand( start ) ) {
+                    if( range_pool.size() > 1 ) {
+                        start.offer_work( range_pool.front(), range_pool.front_depth() );
+                        range_pool.pop_front();
+                        continue;
+                    }
+                    if( range_pool.is_divisible(self().max_depth()) ) // was not enough depth to fork a task
+                        continue; // note: next split_to_fill() should split range at least once
+                }
+                start.run_body( range_pool.back() );
+                range_pool.pop_back();
+            } while( !range_pool.empty() && !start.is_cancelled() );
+        }
     }
     bool check_for_demand( task &t ) {
         if( pass == my_delay ) {
-            if( my_divisor > 1 ) // produce affinitized tasks while they have slot in array
+            if( self().my_divisor > 1 ) // produce affinitized tasks while they have slot in array
                 return true; // do not do my_max_depth++ here, but be sure range_pool is splittable once more
-            else if( my_divisor && my_max_depth ) { // make balancing task
-                my_divisor = 0; // once for each task; depth will be decreased in align_depth()
+            else if( self().my_divisor && my_max_depth ) { // make balancing task
+                self().my_divisor = 0; // once for each task; depth will be decreased in align_depth()
                 return true;
             }
             else if( flag_task::is_peer_stolen(t) ) {
                 my_max_depth += __TBB_DEMAND_DEPTH_ADD;
                 return true;
             }
-        } else if( start == my_delay ) {
+        } else if( begin == my_delay ) {
 #ifndef __TBB_USE_MACHINE_TIME_STAMPS
             my_delay = pass;
 #else
@@ -449,6 +469,7 @@ public:
         } else if( run == my_delay ) {
             if( __TBB_time_stamp() < my_dst_tsc ) {
                 __TBB_ASSERT(my_max_depth > 0, NULL);
+                 my_max_depth--; // increase granularity since tasks seem having too small work
                 return false;
             }
             my_delay = pass;
@@ -457,45 +478,16 @@ public:
         }
         return false;
     }
-    bool is_divisible() { // part of old should_execute_range()
-        return my_divisor > factor;
-    }
-
-#if _MSC_VER && !defined(__INTEL_COMPILER)
-    // Suppress "conditional expression is constant" warning.
-    #pragma warning( push )
-    #pragma warning( disable: 4127 )
-#endif
-    template <typename Range>
-    split_type get_split() {
-        if (is_splittable_in_proportion<Range>::value) {
-            size_t size = my_divisor / factor;
-#if __TBB_NONUNIFORM_TASK_CREATION
-            size_t right = (size + 2) / 3;
-#else
-            size_t right = size / 2;
-#endif
-            size_t left = size - right;
-            return split_type(left, right);
-        } else {
-            return split_type(1, 1);
-        }
-    }
-#if _MSC_VER && !defined(__INTEL_COMPILER)
-    #pragma warning( pop )
-#endif // warning 4127 is back
-
-    static const unsigned range_pool_size = __TBB_RANGE_POOL_CAPACITY;
 };
 
-class auto_partition_type: public adaptive_partition_type_base<auto_partition_type> {
+class auto_partition_type: public balancing_partition_type<adaptive_mode<auto_partition_type> > {
 public:
-    auto_partition_type( const auto_partitioner& ) {
+    auto_partition_type( const auto_partitioner& )
+        : balancing_partition_type<adaptive_mode<auto_partition_type> >() {
         my_divisor *= __TBB_INITIAL_CHUNKS;
     }
     auto_partition_type( auto_partition_type& src, split)
-      : adaptive_partition_type_base<auto_partition_type>(src, split()) {}
-
+        : balancing_partition_type<adaptive_mode<auto_partition_type> >(src, split()) {}
     bool is_divisible() { // part of old should_execute_range()
         if( my_divisor > 1 ) return true;
         if( my_divisor && my_max_depth ) { // can split the task. TODO: on-stack flag instead
@@ -511,8 +503,6 @@ public:
             return true;
         } else return false;
     }
-
-    static const unsigned range_pool_size = __TBB_RANGE_POOL_CAPACITY;
 };
 
 class simple_partition_type: public partition_type_base<simple_partition_type> {
@@ -527,7 +517,58 @@ public:
             start.offer_work( split_obj );
         start.run_body( range );
     }
-    //static const unsigned range_pool_size = 1; - not necessary because execute() is overridden
+};
+
+#if TBB_PREVIEW_STATIC_PARTITIONER
+#ifndef __TBB_STATIC_PARTITIONER_BASE_TYPE
+#define __TBB_STATIC_PARTITIONER_BASE_TYPE unbalancing_partition_type
+#endif
+class static_partition_type : public __TBB_STATIC_PARTITIONER_BASE_TYPE<linear_affinity_mode<static_partition_type> > {
+public:
+    typedef proportional_split split_type;
+    static_partition_type( const static_partitioner& )
+        : __TBB_STATIC_PARTITIONER_BASE_TYPE<linear_affinity_mode<static_partition_type> >() {}
+    static_partition_type( static_partition_type& p, split )
+        : __TBB_STATIC_PARTITIONER_BASE_TYPE<linear_affinity_mode<static_partition_type> >(p, split()) {}
+    static_partition_type( static_partition_type& p, const proportional_split& split_obj )
+        : __TBB_STATIC_PARTITIONER_BASE_TYPE<linear_affinity_mode<static_partition_type> >(p, split_obj) {}
+};
+#undef __TBB_STATIC_PARTITIONER_BASE_TYPE
+#endif
+
+class affinity_partition_type : public balancing_partition_type<linear_affinity_mode<affinity_partition_type> > {
+    static const unsigned factor_power = 4; // TODO: get a unified formula based on number of computing units
+    tbb::internal::affinity_id* my_array;
+public:
+    static const unsigned factor = 1 << factor_power; // number of slots in affinity array per task
+    typedef proportional_split split_type;
+    affinity_partition_type( tbb::internal::affinity_partitioner_base_v3& ap )
+        : balancing_partition_type<linear_affinity_mode<affinity_partition_type> >() {
+        __TBB_ASSERT( (factor&(factor-1))==0, "factor must be power of two" );
+        ap.resize(factor);
+        my_array = ap.my_array;
+        my_max_depth = factor_power + 1;
+        __TBB_ASSERT( my_max_depth < __TBB_RANGE_POOL_CAPACITY, 0 );
+    }
+    affinity_partition_type(affinity_partition_type& p, split)
+        : balancing_partition_type<linear_affinity_mode<affinity_partition_type> >(p, split())
+        , my_array(p.my_array) {}
+    affinity_partition_type(affinity_partition_type& p, const proportional_split& split_obj)
+        : balancing_partition_type<linear_affinity_mode<affinity_partition_type> >(p, split_obj)
+        , my_array(p.my_array) {}
+    void set_affinity( task &t ) {
+        if( my_divisor ) {
+            if( !my_array[my_head] )
+                // TODO: consider new ideas with my_array for both affinity and static partitioner's, then code reuse
+                t.set_affinity( affinity_id(my_head / factor + 1) );
+            else
+                t.set_affinity( my_array[my_head] );
+        }
+    }
+    void note_affinity( task::affinity_id id ) {
+        if( my_divisor )
+            my_array[my_head] = id;
+    }
 };
 
 //! Backward-compatible partition for auto and affinity partition objects.
@@ -560,9 +601,9 @@ class simple_partitioner {
 public:
     simple_partitioner() {}
 private:
-    template<typename Range, typename Body, typename Partitioner> friend class serial::interface7::start_for;
-    template<typename Range, typename Body, typename Partitioner> friend class interface7::internal::start_for;
-    template<typename Range, typename Body, typename Partitioner> friend class interface7::internal::start_reduce;
+    template<typename Range, typename Body, typename Partitioner> friend class serial::interface9::start_for;
+    template<typename Range, typename Body, typename Partitioner> friend class interface9::internal::start_for;
+    template<typename Range, typename Body, typename Partitioner> friend class interface9::internal::start_reduce;
     template<typename Range, typename Body, typename Partitioner> friend class internal::start_scan;
     // backward compatibility
     class partition_type: public internal::partition_type_base {
@@ -572,10 +613,10 @@ private:
         partition_type( const partition_type&, split ) {}
     };
     // new implementation just extends existing interface
-    typedef interface7::internal::simple_partition_type task_partition_type;
+    typedef interface9::internal::simple_partition_type task_partition_type;
 
     // TODO: consider to make split_type public
-    typedef interface7::internal::simple_partition_type::split_type split_type;
+    typedef interface9::internal::simple_partition_type::split_type split_type;
 };
 
 //! An auto partitioner
@@ -587,18 +628,38 @@ public:
     auto_partitioner() {}
 
 private:
-    template<typename Range, typename Body, typename Partitioner> friend class serial::interface7::start_for;
-    template<typename Range, typename Body, typename Partitioner> friend class interface7::internal::start_for;
-    template<typename Range, typename Body, typename Partitioner> friend class interface7::internal::start_reduce;
+    template<typename Range, typename Body, typename Partitioner> friend class serial::interface9::start_for;
+    template<typename Range, typename Body, typename Partitioner> friend class interface9::internal::start_for;
+    template<typename Range, typename Body, typename Partitioner> friend class interface9::internal::start_reduce;
     template<typename Range, typename Body, typename Partitioner> friend class internal::start_scan;
     // backward compatibility
-    typedef interface7::internal::old_auto_partition_type partition_type;
+    typedef interface9::internal::old_auto_partition_type partition_type;
     // new implementation just extends existing interface
-    typedef interface7::internal::auto_partition_type task_partition_type;
+    typedef interface9::internal::auto_partition_type task_partition_type;
 
     // TODO: consider to make split_type public
-    typedef interface7::internal::auto_partition_type::split_type split_type;
+    typedef interface9::internal::auto_partition_type::split_type split_type;
 };
+
+#if TBB_PREVIEW_STATIC_PARTITIONER
+//! A static partitioner
+class static_partitioner {
+public:
+    static_partitioner() {}
+private:
+    template<typename Range, typename Body, typename Partitioner> friend class serial::interface9::start_for;
+    template<typename Range, typename Body, typename Partitioner> friend class interface9::internal::start_for;
+    template<typename Range, typename Body, typename Partitioner> friend class interface9::internal::start_reduce;
+    template<typename Range, typename Body, typename Partitioner> friend class internal::start_scan;
+    // backward compatibility
+    typedef interface9::internal::old_auto_partition_type partition_type;
+    // new implementation just extends existing interface
+    typedef interface9::internal::static_partition_type task_partition_type;
+
+    // TODO: consider to make split_type public
+    typedef interface9::internal::static_partition_type::split_type split_type;
+};
+#endif
 
 //! An affinity partitioner
 class affinity_partitioner: internal::affinity_partitioner_base_v3 {
@@ -606,17 +667,17 @@ public:
     affinity_partitioner() {}
 
 private:
-    template<typename Range, typename Body, typename Partitioner> friend class serial::interface7::start_for;
-    template<typename Range, typename Body, typename Partitioner> friend class interface7::internal::start_for;
-    template<typename Range, typename Body, typename Partitioner> friend class interface7::internal::start_reduce;
+    template<typename Range, typename Body, typename Partitioner> friend class serial::interface9::start_for;
+    template<typename Range, typename Body, typename Partitioner> friend class interface9::internal::start_for;
+    template<typename Range, typename Body, typename Partitioner> friend class interface9::internal::start_reduce;
     template<typename Range, typename Body, typename Partitioner> friend class internal::start_scan;
     // backward compatibility - for parallel_scan only
-    typedef interface7::internal::old_auto_partition_type partition_type;
+    typedef interface9::internal::old_auto_partition_type partition_type;
     // new implementation just extends existing interface
-    typedef interface7::internal::affinity_partition_type task_partition_type;
+    typedef interface9::internal::affinity_partition_type task_partition_type;
 
     // TODO: consider to make split_type public
-    typedef interface7::internal::affinity_partition_type::split_type split_type;
+    typedef interface9::internal::affinity_partition_type::split_type split_type;
 };
 
 } // namespace tbb

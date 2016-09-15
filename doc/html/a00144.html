@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::flow::interface8::sender&lt; T &gt; Class Template Reference</title>
+<title>tbb::interface5::reader_writer_lock Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,110 +33,191 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00241.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface8</b></li><li class="navelem"><a class="el" href="a00144.html">sender</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><b>interface5</b></li><li class="navelem"><a class="el" href="a00144.html">reader_writer_lock</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="a00328.html">List of all members</a>  </div>
+<a href="#friends">Friends</a> &#124;
+<a href="a00449.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::flow::interface8::sender&lt; T &gt; Class Template Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div>  </div>
+<div class="title">tbb::interface5::reader_writer_lock Class Reference<div class="ingroups"><a class="el" href="a00292.html">Synchronization</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Pure virtual template class that defines a sender of messages of type T.  
+<p>Writer-preference reader-writer lock with local-only spinning on readers.  
  <a href="a00144.html#details">More...</a></p>
 
-<p><code>#include &lt;flow_graph.h&gt;</code></p>
+<p><code>#include &lt;reader_writer_lock.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::flow::interface8::sender&lt; T &gt;:</div>
+Inheritance diagram for tbb::interface5::reader_writer_lock:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00144.png" usemap="#tbb::flow::interface8::sender&lt; T &gt;_map" alt=""/>
-  <map id="tbb::flow::interface8::sender&lt; T &gt;_map" name="tbb::flow::interface8::sender&lt; T &gt;_map">
-<area href="a00030.html" title="Forwards messages of type T to all successors. " alt="tbb::flow::interface8::broadcast_node&lt; T &gt;" shape="rect" coords="0,56,352,80"/>
-<area href="a00032.html" title="Forwards messages in arbitrary order. " alt="tbb::flow::interface8::buffer_node&lt; T, A &gt;" shape="rect" coords="362,56,714,80"/>
-<area href="a00093.html" title="Forwards messages only if the threshold has not been reached. " alt="tbb::flow::interface8::limiter_node&lt; T &gt;" shape="rect" coords="724,56,1076,80"/>
-<area href="a00106.html" alt="tbb::flow::interface8::overwrite_node&lt; T &gt;" shape="rect" coords="1086,56,1438,80"/>
-<area href="a00111.html" title="Forwards messages in priority order. " alt="tbb::flow::interface8::priority_queue_node&lt; T, Compare, A &gt;" shape="rect" coords="181,112,533,136"/>
-<area href="a00112.html" title="Forwards messages in FIFO order. " alt="tbb::flow::interface8::queue_node&lt; T, A &gt;" shape="rect" coords="543,112,895,136"/>
-<area href="a00177.html" alt="tbb::flow::interface8::write_once_node&lt; T &gt;" shape="rect" coords="1086,112,1438,136"/>
-<area href="a00145.html" title="Forwards messages in sequence order. " alt="tbb::flow::interface8::sequencer_node&lt; T, A &gt;" shape="rect" coords="543,168,895,192"/>
+  <img src="a00144.png" usemap="#tbb::interface5::reader_writer_lock_map" alt=""/>
+  <map id="tbb::interface5::reader_writer_lock_map" name="tbb::interface5::reader_writer_lock_map">
 </map>
  </div></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00169.html">scoped_lock</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The scoped lock pattern for write locks.  <a href="a00169.html#details">More...</a><br/></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00173.html">scoped_lock_read</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The scoped lock pattern for read locks.  <a href="a00173.html#details">More...</a><br/></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a3dfb7b8e2d3a99304528a189c9e6149f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3dfb7b8e2d3a99304528a189c9e6149f"></a>
-typedef T&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00144.html#a3dfb7b8e2d3a99304528a189c9e6149f">output_type</a></td></tr>
-<tr class="memdesc:a3dfb7b8e2d3a99304528a189c9e6149f"><td class="mdescLeft">&#160;</td><td class="mdescRight">The output type of this sender. <br/></td></tr>
-<tr class="separator:a3dfb7b8e2d3a99304528a189c9e6149f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af744e95e5ebca2cf9341cc6db56606f2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af744e95e5ebca2cf9341cc6db56606f2"></a>
-typedef <a class="el" href="a00126.html">receiver</a>&lt; T &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00144.html#af744e95e5ebca2cf9341cc6db56606f2">successor_type</a></td></tr>
-<tr class="memdesc:af744e95e5ebca2cf9341cc6db56606f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">The successor type for this node. <br/></td></tr>
-<tr class="separator:af744e95e5ebca2cf9341cc6db56606f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a97c0e383b47530e2b87c2aa05097e0b1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a97c0e383b47530e2b87c2aa05097e0b1"></a>
-typedef <br class="typebreak"/>
-<a class="el" href="a00061.html">internal::edge_container</a><br class="typebreak"/>
-&lt; <a class="el" href="a00144.html#af744e95e5ebca2cf9341cc6db56606f2">successor_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00144.html#a97c0e383b47530e2b87c2aa05097e0b1">built_successors_type</a></td></tr>
-<tr class="memdesc:a97c0e383b47530e2b87c2aa05097e0b1"><td class="mdescLeft">&#160;</td><td class="mdescRight">interface to record edges for traversal &amp; deletion <br/></td></tr>
-<tr class="separator:a97c0e383b47530e2b87c2aa05097e0b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7d27e46e39c584cc4070ae7d76f2993d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7d27e46e39c584cc4070ae7d76f2993d"></a>
-typedef <br class="typebreak"/>
-built_successors_type::edge_list_type&#160;</td><td class="memItemRight" valign="bottom"><b>successor_list_type</b></td></tr>
-<tr class="separator:a7d27e46e39c584cc4070ae7d76f2993d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a29bbf9ca21c12b313d9fa5326feaf3ed"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00144.html#a29bbf9ca21c12b313d9fa5326feaf3ed">status_t</a> { <b>waiting_nonblocking</b>, 
+<b>waiting</b>, 
+<b>active</b>, 
+<b>invalid</b>
+ }</td></tr>
+<tr class="memdesc:a29bbf9ca21c12b313d9fa5326feaf3ed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Status type for nodes associated with lock instances.  <a href="a00144.html#a29bbf9ca21c12b313d9fa5326feaf3ed">More...</a><br/></td></tr>
+<tr class="separator:a29bbf9ca21c12b313d9fa5326feaf3ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:af27dee0fad51ae6a878a2ac16fcdf613"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af27dee0fad51ae6a878a2ac16fcdf613"></a>
-virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00144.html#af27dee0fad51ae6a878a2ac16fcdf613">register_successor</a> (<a class="el" href="a00144.html#af744e95e5ebca2cf9341cc6db56606f2">successor_type</a> &amp;r)=0</td></tr>
-<tr class="memdesc:af27dee0fad51ae6a878a2ac16fcdf613"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a new successor to this node. <br/></td></tr>
-<tr class="separator:af27dee0fad51ae6a878a2ac16fcdf613"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0a81bc1f9509206c0a64517b6fb6ed70"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0a81bc1f9509206c0a64517b6fb6ed70"></a>
-virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00144.html#a0a81bc1f9509206c0a64517b6fb6ed70">remove_successor</a> (<a class="el" href="a00144.html#af744e95e5ebca2cf9341cc6db56606f2">successor_type</a> &amp;r)=0</td></tr>
-<tr class="memdesc:a0a81bc1f9509206c0a64517b6fb6ed70"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes a successor from this node. <br/></td></tr>
-<tr class="separator:a0a81bc1f9509206c0a64517b6fb6ed70"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8fc2cbd52623d2e39f5a190069e47bb1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8fc2cbd52623d2e39f5a190069e47bb1"></a>
-virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00144.html#a8fc2cbd52623d2e39f5a190069e47bb1">try_get</a> (T &amp;)</td></tr>
-<tr class="memdesc:a8fc2cbd52623d2e39f5a190069e47bb1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request an item from the sender. <br/></td></tr>
-<tr class="separator:a8fc2cbd52623d2e39f5a190069e47bb1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa2853285daf7fef4620c0a0ac179c71f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa2853285daf7fef4620c0a0ac179c71f"></a>
-virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00144.html#aa2853285daf7fef4620c0a0ac179c71f">try_reserve</a> (T &amp;)</td></tr>
-<tr class="memdesc:aa2853285daf7fef4620c0a0ac179c71f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reserves an item in the sender. <br/></td></tr>
-<tr class="separator:aa2853285daf7fef4620c0a0ac179c71f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab67fe0635a4a968d181192822004a3e7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab67fe0635a4a968d181192822004a3e7"></a>
-virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00144.html#ab67fe0635a4a968d181192822004a3e7">try_release</a> ()</td></tr>
-<tr class="memdesc:ab67fe0635a4a968d181192822004a3e7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Releases the reserved item. <br/></td></tr>
-<tr class="separator:ab67fe0635a4a968d181192822004a3e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a13e2049bf72f85040379a6b03b9e4d86"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a13e2049bf72f85040379a6b03b9e4d86"></a>
-virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00144.html#a13e2049bf72f85040379a6b03b9e4d86">try_consume</a> ()</td></tr>
-<tr class="memdesc:a13e2049bf72f85040379a6b03b9e4d86"><td class="mdescLeft">&#160;</td><td class="mdescRight">Consumes the reserved item. <br/></td></tr>
-<tr class="separator:a13e2049bf72f85040379a6b03b9e4d86"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a33802bda0c3a109adb850d4f72ef6565"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a33802bda0c3a109adb850d4f72ef6565"></a>
-virtual <a class="el" href="a00144.html#a97c0e383b47530e2b87c2aa05097e0b1">built_successors_type</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>built_successors</b> ()=0</td></tr>
-<tr class="separator:a33802bda0c3a109adb850d4f72ef6565"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae7bf4ab9217c3a928b3d3b5d555560b4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae7bf4ab9217c3a928b3d3b5d555560b4"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>internal_add_built_successor</b> (<a class="el" href="a00144.html#af744e95e5ebca2cf9341cc6db56606f2">successor_type</a> &amp;)=0</td></tr>
-<tr class="separator:ae7bf4ab9217c3a928b3d3b5d555560b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a927549c3169aa8364a118fc9bfd7c029"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a927549c3169aa8364a118fc9bfd7c029"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>internal_delete_built_successor</b> (<a class="el" href="a00144.html#af744e95e5ebca2cf9341cc6db56606f2">successor_type</a> &amp;)=0</td></tr>
-<tr class="separator:a927549c3169aa8364a118fc9bfd7c029"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9d1388d49bed1317f30ad821329b1312"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9d1388d49bed1317f30ad821329b1312"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>copy_successors</b> (successor_list_type &amp;)=0</td></tr>
-<tr class="separator:a9d1388d49bed1317f30ad821329b1312"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a388b9c98a85533b18f3d81d9cca45669"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a388b9c98a85533b18f3d81d9cca45669"></a>
-virtual size_t&#160;</td><td class="memItemRight" valign="bottom"><b>successor_count</b> ()=0</td></tr>
-<tr class="separator:a388b9c98a85533b18f3d81d9cca45669"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abceda6c50b0c36eacbef51f4682742f3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abceda6c50b0c36eacbef51f4682742f3"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00144.html#abceda6c50b0c36eacbef51f4682742f3">reader_writer_lock</a> ()</td></tr>
+<tr class="memdesc:abceda6c50b0c36eacbef51f4682742f3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new <a class="el" href="a00144.html" title="Writer-preference reader-writer lock with local-only spinning on readers. ">reader_writer_lock</a>. <br/></td></tr>
+<tr class="separator:abceda6c50b0c36eacbef51f4682742f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeee96b648c7b5ff6126c8a2e13ec7241"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aeee96b648c7b5ff6126c8a2e13ec7241"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00144.html#aeee96b648c7b5ff6126c8a2e13ec7241">~reader_writer_lock</a> ()</td></tr>
+<tr class="memdesc:aeee96b648c7b5ff6126c8a2e13ec7241"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructs a <a class="el" href="a00144.html" title="Writer-preference reader-writer lock with local-only spinning on readers. ">reader_writer_lock</a> object. <br/></td></tr>
+<tr class="separator:aeee96b648c7b5ff6126c8a2e13ec7241"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af92eb949fc491af8f7e350869ea0a0d1"><td class="memItemLeft" align="right" valign="top">void __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00144.html#af92eb949fc491af8f7e350869ea0a0d1">lock</a> ()</td></tr>
+<tr class="memdesc:af92eb949fc491af8f7e350869ea0a0d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Acquires the <a class="el" href="a00144.html" title="Writer-preference reader-writer lock with local-only spinning on readers. ">reader_writer_lock</a> for write.  <a href="#af92eb949fc491af8f7e350869ea0a0d1">More...</a><br/></td></tr>
+<tr class="separator:af92eb949fc491af8f7e350869ea0a0d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1739e842af52925a2d4a7e821b9b3b8d"><td class="memItemLeft" align="right" valign="top">bool __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00144.html#a1739e842af52925a2d4a7e821b9b3b8d">try_lock</a> ()</td></tr>
+<tr class="memdesc:a1739e842af52925a2d4a7e821b9b3b8d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tries to acquire the <a class="el" href="a00144.html" title="Writer-preference reader-writer lock with local-only spinning on readers. ">reader_writer_lock</a> for write.  <a href="#a1739e842af52925a2d4a7e821b9b3b8d">More...</a><br/></td></tr>
+<tr class="separator:a1739e842af52925a2d4a7e821b9b3b8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6fd4fcdf0e5c0425d1cc736d644f234f"><td class="memItemLeft" align="right" valign="top">void __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00144.html#a6fd4fcdf0e5c0425d1cc736d644f234f">lock_read</a> ()</td></tr>
+<tr class="memdesc:a6fd4fcdf0e5c0425d1cc736d644f234f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Acquires the <a class="el" href="a00144.html" title="Writer-preference reader-writer lock with local-only spinning on readers. ">reader_writer_lock</a> for read.  <a href="#a6fd4fcdf0e5c0425d1cc736d644f234f">More...</a><br/></td></tr>
+<tr class="separator:a6fd4fcdf0e5c0425d1cc736d644f234f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9c7aa04e00202c9a1197cb6d870cabb4"><td class="memItemLeft" align="right" valign="top">bool __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00144.html#a9c7aa04e00202c9a1197cb6d870cabb4">try_lock_read</a> ()</td></tr>
+<tr class="memdesc:a9c7aa04e00202c9a1197cb6d870cabb4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tries to acquire the <a class="el" href="a00144.html" title="Writer-preference reader-writer lock with local-only spinning on readers. ">reader_writer_lock</a> for read.  <a href="#a9c7aa04e00202c9a1197cb6d870cabb4">More...</a><br/></td></tr>
+<tr class="separator:a9c7aa04e00202c9a1197cb6d870cabb4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4c55c4dbde63e950fdc843c9b01a174f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4c55c4dbde63e950fdc843c9b01a174f"></a>
+void __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00144.html#a4c55c4dbde63e950fdc843c9b01a174f">unlock</a> ()</td></tr>
+<tr class="memdesc:a4c55c4dbde63e950fdc843c9b01a174f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Releases the <a class="el" href="a00144.html" title="Writer-preference reader-writer lock with local-only spinning on readers. ">reader_writer_lock</a>. <br/></td></tr>
+<tr class="separator:a4c55c4dbde63e950fdc843c9b01a174f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:afcf922650b2fd9d76b7b939d8511bbd8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afcf922650b2fd9d76b7b939d8511bbd8"></a>
+class&#160;</td><td class="memItemRight" valign="bottom"><b>scoped_lock</b></td></tr>
+<tr class="separator:afcf922650b2fd9d76b7b939d8511bbd8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a578ccbc6ecbc6d32cb45ccfdc0ed4ee6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a578ccbc6ecbc6d32cb45ccfdc0ed4ee6"></a>
+class&#160;</td><td class="memItemRight" valign="bottom"><b>scoped_lock_read</b></td></tr>
+<tr class="separator:a578ccbc6ecbc6d32cb45ccfdc0ed4ee6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;typename T&gt;<br/>
-class tbb::flow::interface8::sender&lt; T &gt;</h3>
+<div class="textblock"><p>Writer-preference reader-writer lock with local-only spinning on readers. </p>
+<p>Loosely adapted from Mellor-Crummey and Scott pseudocode at <a href="http://www.cs.rochester.edu/research/synchronization/pseudocode/rw.html#s_wp">http://www.cs.rochester.edu/research/synchronization/pseudocode/rw.html#s_wp</a> </p>
+</div><h2 class="groupheader">Member Enumeration Documentation</h2>
+<a class="anchor" id="a29bbf9ca21c12b313d9fa5326feaf3ed"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="a00144.html#a29bbf9ca21c12b313d9fa5326feaf3ed">tbb::interface5::reader_writer_lock::status_t</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
 
-<p>Pure virtual template class that defines a sender of messages of type T. </p>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
-<li><a class="el" href="a00197.html">flow_graph.h</a></li>
+<p>Status type for nodes associated with lock instances. </p>
+<p>waiting_nonblocking: the wait state for nonblocking lock instances; for writes, these transition straight to active states; for reads, these are unused.</p>
+<p>waiting: the start and spin state for all lock instances; these will transition to active state when appropriate. Non-blocking write locks transition from this state to waiting_nonblocking immediately.</p>
+<p>active: the active state means that the lock instance holds the lock; it will transition to invalid state during node deletion</p>
+<p>invalid: the end state for all nodes; this is set in the destructor so if we encounter this state, we are looking at memory that has already been freed</p>
+<p>The state diagrams below describe the status transitions. Single arrows indicate that the thread that owns the node is responsible for the transition; double arrows indicate that any thread could make the transition.</p>
+<p>State diagram for <a class="el" href="a00169.html" title="The scoped lock pattern for write locks. ">scoped_lock</a> status:</p>
+<p>waiting -------&mdash;&gt; waiting_nonblocking | _____________/ | V V V active --------------&mdash;&gt; invalid</p>
+<p>State diagram for <a class="el" href="a00173.html" title="The scoped lock pattern for read locks. ">scoped_lock_read</a> status:</p>
+<p>waiting | V active --------------&mdash;&gt;invalid </p>
+
+</div>
+</div>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="af92eb949fc491af8f7e350869ea0a0d1"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void __TBB_EXPORTED_METHOD tbb::interface5::reader_writer_lock::lock </td>
+          <td>(</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Acquires the <a class="el" href="a00144.html" title="Writer-preference reader-writer lock with local-only spinning on readers. ">reader_writer_lock</a> for write. </p>
+<p>If the lock is currently held in write mode by another context, the writer will block by spinning on a local variable. Exceptions thrown: <a class="el" href="a00082.html" title="Exception for PPL locks. ">improper_lock</a> The context tries to acquire a <a class="el" href="a00144.html" title="Writer-preference reader-writer lock with local-only spinning on readers. ">reader_writer_lock</a> that it already has write ownership of. </p>
+
+</div>
+</div>
+<a class="anchor" id="a6fd4fcdf0e5c0425d1cc736d644f234f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void __TBB_EXPORTED_METHOD tbb::interface5::reader_writer_lock::lock_read </td>
+          <td>(</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Acquires the <a class="el" href="a00144.html" title="Writer-preference reader-writer lock with local-only spinning on readers. ">reader_writer_lock</a> for read. </p>
+<p>If the lock is currently held by a writer, this reader will block and wait until the writers are done. Exceptions thrown: <a class="el" href="a00082.html" title="Exception for PPL locks. ">improper_lock</a> The context tries to acquire a <a class="el" href="a00144.html" title="Writer-preference reader-writer lock with local-only spinning on readers. ">reader_writer_lock</a> that it already has write ownership of. </p>
+
+</div>
+</div>
+<a class="anchor" id="a1739e842af52925a2d4a7e821b9b3b8d"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool __TBB_EXPORTED_METHOD tbb::interface5::reader_writer_lock::try_lock </td>
+          <td>(</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Tries to acquire the <a class="el" href="a00144.html" title="Writer-preference reader-writer lock with local-only spinning on readers. ">reader_writer_lock</a> for write. </p>
+<p>This function does not block. Return Value: True or false, depending on whether the lock is acquired or not. If the lock is already held by this acquiring context, <a class="el" href="a00144.html#a1739e842af52925a2d4a7e821b9b3b8d" title="Tries to acquire the reader_writer_lock for write. ">try_lock()</a> returns false. </p>
+
+</div>
+</div>
+<a class="anchor" id="a9c7aa04e00202c9a1197cb6d870cabb4"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool __TBB_EXPORTED_METHOD tbb::interface5::reader_writer_lock::try_lock_read </td>
+          <td>(</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Tries to acquire the <a class="el" href="a00144.html" title="Writer-preference reader-writer lock with local-only spinning on readers. ">reader_writer_lock</a> for read. </p>
+<p>This function does not block. Return Value: True or false, depending on whether the lock is acquired or not. </p>
+
+</div>
+</div>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li>reader_writer_lock.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

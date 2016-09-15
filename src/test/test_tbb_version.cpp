@@ -55,7 +55,9 @@ int TestMain() {
 
 #if defined (_WIN32) || defined (_WIN64)
 #define TEST_SYSTEM_COMMAND "test_tbb_version.exe @"
-#define putenv _putenv
+#elif __APPLE__
+// DYLD_LIBRARY_PATH is purged for OS X 10.11, set it again
+#define TEST_SYSTEM_COMMAND "DYLD_LIBRARY_PATH=. ./test_tbb_version.exe @"
 #else
 #define TEST_SYSTEM_COMMAND "./test_tbb_version.exe @"
 #endif
@@ -163,7 +165,7 @@ int main(int argc, char *argv[] ) {
 
         //Setting TBB_VERSION in case it is not set
         if ( !getenv("TBB_VERSION") ){
-            putenv(const_cast<char*>("TBB_VERSION=1"));
+            Harness::SetEnv("TBB_VERSION","1");
         }
 
         if( ( system(TEST_SYSTEM_COMMAND) ) != 0 ){
@@ -238,7 +240,7 @@ int main(int argc, char *argv[] ) {
 void initialize_strings_vector(std::vector <string_pair>* vector)
 {
     vector->push_back(string_pair("TBB: VERSION\t\t4.4", required));          // check TBB_VERSION
-    vector->push_back(string_pair("TBB: INTERFACE VERSION\t9001", required)); // check TBB_INTERFACE_VERSION
+    vector->push_back(string_pair("TBB: INTERFACE VERSION\t9002", required)); // check TBB_INTERFACE_VERSION
     vector->push_back(string_pair("TBB: BUILD_DATE", required));
     vector->push_back(string_pair("TBB: BUILD_HOST", required));
     vector->push_back(string_pair("TBB: BUILD_OS", required));

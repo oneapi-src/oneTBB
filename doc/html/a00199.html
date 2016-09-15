@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>memory_pool.h File Reference</title>
+<title>tbb::internal::thread_closure_1&lt; F, X &gt; Struct Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -20,73 +20,84 @@
       <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="modules.html"><span>Modules</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
-      <li><a href="annotated.html"><span>Classes</span></a></li>
-      <li class="current"><a href="files.html"><span>Files</span></a></li>
+      <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
+      <li><a href="files.html"><span>Files</span></a></li>
     </ul>
   </div>
   <div id="navrow2" class="tabs2">
     <ul class="tablist">
-      <li><a href="files.html"><span>File&#160;List</span></a></li>
-      <li><a href="globals.html"><span>File&#160;Members</span></a></li>
+      <li><a href="annotated.html"><span>Class&#160;List</span></a></li>
+      <li><a href="hierarchy.html"><span>Class&#160;Hierarchy</span></a></li>
+      <li><a href="functions.html"><span>Class&#160;Members</span></a></li>
     </ul>
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_525f2cc589630bacbdc3bb450847427e.html">tbb</a></li><li class="navelem"><a class="el" href="dir_b9976680b2be72d2d0b8fca1c31202a2.html">1.0</a></li><li class="navelem"><a class="el" href="dir_63fb2cc293d133785b96e521fa051167.html">include</a></li><li class="navelem"><a class="el" href="dir_87119f26c7695cbc270003e99bc7f49f.html">tbb</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00274.html">tbb</a></li><li class="navelem"><b>internal</b></li><li class="navelem"><a class="el" href="a00199.html">thread_closure_1</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a> &#124;
-<a href="#namespaces">Namespaces</a> &#124;
-<a href="#namespaces">Constant Groups</a> &#124;
-<a href="#func-members">Functions</a>  </div>
+<a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
+<a href="#pub-attribs">Public Attributes</a> &#124;
+<a href="a00483.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">memory_pool.h File Reference</div>  </div>
+<div class="title">tbb::internal::thread_closure_1&lt; F, X &gt; Struct Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
+
+<p>Structure used to pass user function with 1 argument to thread.  
+ <a href="a00199.html#details">More...</a></p>
+
+<p><code>#include &lt;tbb_thread.h&gt;</code></p>
+<div class="dynheader">
+Inheritance diagram for tbb::internal::thread_closure_1&lt; F, X &gt;:</div>
+<div class="dyncontent">
+ <div class="center">
+  <img src="a00199.png" usemap="#tbb::internal::thread_closure_1&lt; F, X &gt;_map" alt=""/>
+  <map id="tbb::internal::thread_closure_1&lt; F, X &gt;_map" name="tbb::internal::thread_closure_1&lt; F, X &gt;_map">
+<area href="a00201.html" alt="tbb::internal::thread_closure_base" shape="rect" coords="0,0,232,24"/>
+</map>
+ </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
-Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00095.html">tbb::interface6::memory_pool_allocator&lt; T, P &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Meets "allocator" requirements of ISO C++ Standard, Section 20.1.5.  <a href="a00095.html#details">More...</a><br/></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00122.html">tbb::interface6::memory_pool_allocator&lt; T, P &gt;::rebind&lt; U &gt;</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00096.html">tbb::interface6::memory_pool_allocator&lt; void, P &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Analogous to std::allocator&lt;void&gt;, as defined in ISO C++ Standard, Section 20.4.1.  <a href="a00096.html#details">More...</a><br/></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00121.html">tbb::interface6::memory_pool_allocator&lt; void, P &gt;::rebind&lt; U &gt;</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00094.html">tbb::interface6::memory_pool&lt; Alloc &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Thread-safe growable pool allocator for variable-size requests.  <a href="a00094.html#details">More...</a><br/></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00067.html">tbb::interface6::fixed_pool</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
+Public Member Functions</h2></td></tr>
+<tr class="memitem:afef38584bcf65f3f71700cfec80b8b18"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afef38584bcf65f3f71700cfec80b8b18"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>thread_closure_1</b> (const F &amp;f, const X &amp;x)</td></tr>
+<tr class="separator:afef38584bcf65f3f71700cfec80b8b18"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_a00201"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_a00201')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="a00201.html">tbb::internal::thread_closure_base</a></td></tr>
+<tr class="memitem:a624f5a5a40051faf39444ad3a9f36df5 inherit pub_methods_a00201"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a624f5a5a40051faf39444ad3a9f36df5"></a>
+void *&#160;</td><td class="memItemRight" valign="bottom"><b>operator new</b> (size_t size)</td></tr>
+<tr class="separator:a624f5a5a40051faf39444ad3a9f36df5 inherit pub_methods_a00201"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a56e1bfd2ca46abcc3c3f265eff10360d inherit pub_methods_a00201"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a56e1bfd2ca46abcc3c3f265eff10360d"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>operator delete</b> (void *ptr)</td></tr>
+<tr class="separator:a56e1bfd2ca46abcc3c3f265eff10360d inherit pub_methods_a00201"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
-Namespaces</h2></td></tr>
-<tr class="memitem:a00241"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00241.html">tbb</a></td></tr>
-<tr class="memdesc:a00241"><td class="mdescLeft">&#160;</td><td class="mdescRight">The namespace tbb contains all components of the library. <br/></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:a33d533b3301c45708c6252d040f855a6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a33d533b3301c45708c6252d040f855a6"></a>
+static __TBB_NATIVE_THREAD_ROUTINE&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00199.html#a33d533b3301c45708c6252d040f855a6">start_routine</a> (void *c)</td></tr>
+<tr class="memdesc:a33d533b3301c45708c6252d040f855a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Routine passed to Windows's _beginthreadex by thread::internal_start() inside tbb.dll. <br/></td></tr>
+<tr class="separator:a33d533b3301c45708c6252d040f855a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
-Constant Groups</h2></td></tr>
-<tr class="memitem:a00241"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00241.html">tbb</a></td></tr>
-<tr class="memdesc:a00241"><td class="mdescLeft">&#160;</td><td class="mdescRight">The namespace tbb contains all components of the library. <br/></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
-Functions</h2></td></tr>
-<tr class="memitem:a21dc513d4407872bb3b257870c6d77b2"><td class="memTemplParams" colspan="2"><a class="anchor" id="a21dc513d4407872bb3b257870c6d77b2"></a>
-template&lt;typename T , typename U , typename P &gt; </td></tr>
-<tr class="memitem:a21dc513d4407872bb3b257870c6d77b2"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><b>tbb::interface6::operator==</b> (const memory_pool_allocator&lt; T, P &gt; &amp;a, const memory_pool_allocator&lt; U, P &gt; &amp;b)</td></tr>
-<tr class="separator:a21dc513d4407872bb3b257870c6d77b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aed6a6d87d04444c2619b6f0136ab0702"><td class="memTemplParams" colspan="2"><a class="anchor" id="aed6a6d87d04444c2619b6f0136ab0702"></a>
-template&lt;typename T , typename U , typename P &gt; </td></tr>
-<tr class="memitem:aed6a6d87d04444c2619b6f0136ab0702"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><b>tbb::interface6::operator!=</b> (const memory_pool_allocator&lt; T, P &gt; &amp;a, const memory_pool_allocator&lt; U, P &gt; &amp;b)</td></tr>
-<tr class="separator:aed6a6d87d04444c2619b6f0136ab0702"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
+Public Attributes</h2></td></tr>
+<tr class="memitem:a39a5a39b2a7513868944ffe7ffd89640"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a39a5a39b2a7513868944ffe7ffd89640"></a>
+F&#160;</td><td class="memItemRight" valign="bottom"><b>function</b></td></tr>
+<tr class="separator:a39a5a39b2a7513868944ffe7ffd89640"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a607886c68ca8bdd984b9b4f6ec744dea"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a607886c68ca8bdd984b9b4f6ec744dea"></a>
+X&#160;</td><td class="memItemRight" valign="bottom"><b>arg1</b></td></tr>
+<tr class="separator:a607886c68ca8bdd984b9b4f6ec744dea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><h3>template&lt;class F, class X&gt;<br/>
+struct tbb::internal::thread_closure_1&lt; F, X &gt;</h3>
+
+<p>Structure used to pass user function with 1 argument to thread. </p>
+</div><hr/>The documentation for this struct was generated from the following file:<ul>
+<li>tbb_thread.h</li>
+</ul>
 </div><!-- contents -->
 <hr>
 <p></p>

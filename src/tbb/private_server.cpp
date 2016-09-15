@@ -301,7 +301,7 @@ inline void private_worker::wake_or_launch() {
 #elif USE_PTHREAD
         {
         affinity_helper fpa;
-        fpa.protect_affinity_mask();
+        fpa.protect_affinity_mask( /*restore_process_mask=*/true );
         my_handle = thread_monitor::launch( thread_routine, this, my_server.my_stack_size );
         // Implicit destruction of fpa resets original affinity mask.
         }

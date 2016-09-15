@@ -33,7 +33,7 @@
 #include "tbb/task.h"
 #include "tbb/task_scheduler_init.h"
 
-#define WAIT_MAX 100000
+#define WAIT_MAX 2000000
 #define BACKOFF_WAIT(ex,msg) \
 { \
     int wait_cnt = 0; \

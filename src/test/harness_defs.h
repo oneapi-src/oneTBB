@@ -88,7 +88,7 @@
 #endif
 
 //MSVC 2013 is unable to properly resolve call to overloaded operator= with std::initializer_list argument for std::pair list elements
-#define __TBB_CPP11_INIT_LIST_ASSIGN_OP_RESOLUTION_BROKEN (_MSC_FULL_VER <= 180030723 && _MSC_VER && !__INTEL_COMPILER)
+#define __TBB_CPP11_INIT_LIST_ASSIGN_OP_RESOLUTION_BROKEN (_MSC_VER <= 1800 && _MSC_VER && !__INTEL_COMPILER)
 //MSVC 2013 is unable to manage lifetime of temporary objects passed to a std::initializer_list constructor properly
 #define __TBB_CPP11_INIT_LIST_TEMP_OBJS_LIFETIME_BROKEN (_MSC_FULL_VER < 180030501 && _MSC_VER && !__INTEL_COMPILER)
 //Implementation of C++11 std::placeholders in libstdc++ coming with gcc prior to 4.5 reveals bug in Intel Compiler 13 causing "multiple definition" link errors.
@@ -99,12 +99,17 @@
 #define __TBB_ICC_SCOPED_ENUM_WITH_UNDERLYING_TYPE_ATOMIC_LOAD_BROKEN ( TBB_USE_ICC_BUILTINS && !__TBB_DEBUG && __INTEL_COMPILER && __INTEL_COMPILER <= 1500 )
 //Unable to use constexpr member functions to initialize compile time constants
 #define __TBB_CONSTEXPR_MEMBER_FUNCTION_BROKEN (__INTEL_COMPILER == 1500)
+// MSVC 2015 does not do compile-time initialization of static variables with constexpr constructors in debug mode
+#define __TBB_STATIC_CONSTEXPR_INIT_BROKEN (_MSC_VER==1900 && !__INTEL_COMPILER && _DEBUG)
+
 //some compilers do not generate implicitly move constructor and assignment operator, as this feature (r-value reference 3.0) was added later
-#if __clang__ &&  !__INTEL_COMPILER
+#if __INTEL_COMPILER
+  #define __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN  (__TBB_CPP11_RVALUE_REF_PRESENT && (__INTEL_COMPILER < 1400 || __INTEL_COMPILER == 1600 && __INTEL_COMPILER_UPDATE <= 1))
+#elif __clang__
   #define __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN !__has_feature(cxx_implicit_moves)
 #else
-  #define __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN  (__TBB_CPP11_RVALUE_REF_PRESENT && ( !__INTEL_COMPILER && _MSC_VER && _MSC_VER <=1800 || __INTEL_COMPILER && __INTEL_COMPILER < 1400))
-#endif
+  #define __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN (__TBB_CPP11_RVALUE_REF_PRESENT && _MSC_VER && _MSC_VER <=1800)
+#endif /* __INTEL_COMPILER */
 
 #if __GNUC__ && __ANDROID__
   #define __TBB_EXCEPTION_TYPE_INFO_BROKEN ( __TBB_GCC_VERSION < 40600 )
@@ -128,6 +133,19 @@
 #if __TBB_LIBSTDCPP_EXCEPTION_HEADERS_BROKEN
   #define _EXCEPTION_PTR_H /* prevents exception_ptr.h inclusion */
   #define _GLIBCXX_NESTED_EXCEPTION_H /* prevents nested_exception.h inclusion */
+#endif
+
+// TODO: Investigate the cases that require this macro.
+#define __TBB_COMPLICATED_ADL_BROKEN ( __TBB_GCC_VERSION && __TBB_GCC_VERSION < 40400 )
+
+// Intel Compiler fails to compile the comparison of tuples in some cases
+#if __INTEL_COMPILER && __INTEL_COMPILER < 1600 || __INTEL_COMPILER == 1600 && __INTEL_COMPILER_UPDATE <= 1
+  #define __TBB_TUPLE_COMPARISON_COMPILATION_BROKEN (__TBB_GCC_VERSION >= 40800 && __TBB_GCC_VERSION <= 50101 || __MIC__)
+#endif
+
+// Intel Compiler fails to compile std::reference in some cases
+#if __INTEL_COMPILER && __INTEL_COMPILER < 1600 || __INTEL_COMPILER == 1600 && __INTEL_COMPILER_UPDATE <= 1
+  #define __TBB_REFERENCE_WRAPPER_COMPILATION_BROKEN (__TBB_GCC_VERSION >= 40800 && __TBB_GCC_VERSION <= 50101 || __MIC__)
 #endif
 
 // The tuple-based tests with more inputs take a long time to compile.  If changes

@@ -52,9 +52,10 @@ struct arena_base : padded<intrusive_list_node> {
     //! Number of workers that have been marked out by the resource manager to service the arena
     unsigned my_num_workers_allotted;   // heavy use in stealing loop
 
-    //! References of the arena
-    /** Counts workers and master references separately. Bit 0 indicates reference from implicit
-        master or explicit task_arena; the next bits contain number of workers servicing the arena.*/
+    //! Reference counter for the arena.
+    /** Worker and master references are counted separately: first several bits are for references
+        from master threads or explicit task_arenas (see arena::ref_external_bits below);
+        the rest counts the number of workers servicing the arena. */
     atomic<unsigned> my_references;     // heavy use in stealing loop
 
 #if __TBB_TASK_PRIORITY
@@ -167,12 +168,12 @@ public:
     //! Allocate an instance of arena.
     static arena& allocate_arena( market&, unsigned num_slots, unsigned num_reserved_slots );
 
-    static int unsigned num_slots_to_reserve ( unsigned num_slots ) {
+    static int unsigned num_arena_slots ( unsigned num_slots ) {
         return max(2u, num_slots);
     }
 
     static int allocation_size ( unsigned max_num_workers ) {
-        return sizeof(base_type) + num_slots_to_reserve(max_num_workers) * (sizeof(mail_outbox) + sizeof(arena_slot));
+        return sizeof(base_type) + num_arena_slots(max_num_workers) * (sizeof(mail_outbox) + sizeof(arena_slot));
     }
 
     //! Get reference to mailbox corresponding to given affinity_id.
@@ -194,12 +195,19 @@ public:
     //! At least one task has been offered for stealing since the last snapshot started
     static const pool_state_t SNAPSHOT_FULL = pool_state_t(-1);
 
+    //! The number of least significant bits for external references
+    static const unsigned ref_external_bits = 12; // up to 4095 external and 1M workers
+
+    //! Reference increment values for externals and workers
+    static const unsigned ref_external = 1;
+    static const unsigned ref_worker   = 1<<ref_external_bits;
+
     //! No tasks to steal or snapshot is being taken.
     static bool is_busy_or_empty( pool_state_t s ) { return s < SNAPSHOT_FULL; }
 
     //! The number of workers active in the arena.
     unsigned num_workers_active( ) {
-        return my_references >> 1;
+        return my_references >> ref_external_bits;
     }
 
     //! If necessary, raise a flag that there is new job in arena.
@@ -216,7 +224,7 @@ public:
     void process( generic_scheduler& );
 
     //! Notification that worker or master leaves its arena
-    template<bool is_master>
+    template<unsigned ref_param>
     inline void on_thread_leaving ( );
 
 #if __TBB_STATISTICS
@@ -249,7 +257,7 @@ public:
     arena_slot my_slots[1];
 }; // class arena
 
-template<bool is_master>
+template<unsigned ref_param>
 inline void arena::on_thread_leaving ( ) {
     //
     // Implementation of arena destruction synchronization logic contained various
@@ -264,6 +272,11 @@ inline void arena::on_thread_leaving ( ) {
     // to RML for threads, the arena object is destroyed only when both the last
     // thread is leaving it and arena's state is EMPTY (that is its master thread
     // left and it does not contain any work).
+    // Thus resetting arena to EMPTY state (as earlier TBB versions did) should not
+    // be done here (or anywhere else in the master thread to that matter); doing so
+    // can result either in arena's premature destruction (at least without
+    // additional costly checks in workers) or in unnecessary arena state changes
+    // (and ensuing workers migration).
     //
     // A worker that checks for work presence and transitions arena to the EMPTY
     // state (in snapshot taking procedure arena::is_out_of_work()) updates
@@ -302,8 +315,14 @@ inline void arena::on_thread_leaving ( ) {
     //
     uintptr_t aba_epoch = my_aba_epoch;
     market* m = my_market;
-    __TBB_ASSERT(my_references > int(!is_master), "broken arena reference counter");
-    if ( (my_references -= is_master? 1:2 ) == 0 ) // worker's counter starts from bit 1
+    __TBB_ASSERT(my_references >= ref_param, "broken arena reference counter");
+#if __TBB_STATISTICS_EARLY_DUMP
+    // While still holding a reference to the arena, compute how many external references are left.
+    // If just one, dump statistics.
+    if ( modulo_power_of_two(my_references,ref_worker)==ref_param ) // may only be true with ref_external
+        GATHER_STATISTIC( dump_arena_statistics() );
+#endif
+    if ( (my_references -= ref_param ) == 0 )
         m->try_destroy_arena( this, aba_epoch );
 }
 

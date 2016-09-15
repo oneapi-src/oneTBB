@@ -163,8 +163,8 @@ private:
     market ( unsigned workers_soft_limit, unsigned workers_hard_limit, size_t stack_size );
 
     //! Factory method creating new market object
-    static market& global_market ( unsigned max_num_workers = 0, size_t stack_size = 0,
-                                   bool default_concurrency_requested = false, bool is_public = false );
+    static market& global_market ( bool is_public, unsigned max_num_workers = 0, size_t stack_size = 0,
+                                   bool default_concurrency_requested = false);
 
     //! Destroys and deallocates market object created by market::create()
     void destroy ();

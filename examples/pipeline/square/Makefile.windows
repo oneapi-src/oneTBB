@@ -29,7 +29,7 @@ CXX2 = $(CXX1:icl.exe-=icl.exe)
 CXX  = $(CXX2:-=cl.exe)
 
 # The C++ compiler options
-MYCXXFLAGS = /TP /EHsc /W3 /nologo /D _CONSOLE /D _MBCS /D WIN32 $(CXXFLAGS) /D _CRT_SECURE_NO_DEPRECATE /arch:sse2
+MYCXXFLAGS = /TP /EHsc /W3 /nologo /D _CONSOLE /D _MBCS /D WIN32 $(CXXFLAGS) /D _CRT_SECURE_NO_DEPRECATE
 MYLDFLAGS =/INCREMENTAL:NO /NOLOGO /DEBUG /FIXED:NO $(LDFLAGS)
 SOURCES = square.cpp gen_input.cpp
 

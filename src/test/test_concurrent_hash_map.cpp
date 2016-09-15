@@ -1263,7 +1263,7 @@ void TestCPP11Types() {
     for ( int i=0; i<NUMBER; ++i ) arrIntInt.push_back( int_int_t(i, NUMBER-i) );
     TypeTester</*default_construction_present = */true>( arrIntInt );
 
-#if __TBB_CPP11_REFERENCE_WRAPPER_PRESENT
+#if __TBB_CPP11_REFERENCE_WRAPPER_PRESENT && !__TBB_REFERENCE_WRAPPER_COMPILATION_BROKEN
     typedef std::pair<const std::reference_wrapper<const int>, int> ref_int_t;
     std::list<ref_int_t> arrRefInt;
     for ( std::list<int_int_t>::iterator it = arrIntInt.begin(); it != arrIntInt.end(); ++it )
@@ -1277,7 +1277,7 @@ void TestCPP11Types() {
     TypeTester</*default_construction_present = */false>( arrIntRef );
 #else
     REPORT("Known issue: C++11 reference wrapper tests are skipped.\n");
-#endif /* __TBB_CPP11_REFERENCE_WRAPPER_PRESENT */
+#endif /* __TBB_CPP11_REFERENCE_WRAPPER_PRESENT && !__TBB_REFERENCE_WRAPPER_COMPILATION_BROKEN*/
 
     typedef std::pair< const int, tbb::atomic<int> > int_tbb_t;
     std::list<int_tbb_t> arrIntTbb;

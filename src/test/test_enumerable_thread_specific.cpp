@@ -695,7 +695,8 @@ void run_parallel_vector_tests(const char *test_name, const char *allocator_name
             T minus_one;
             test_helper<T>::set(minus_one, -1);
             // Set ETS to construct "local" vectors pre-occupied with 25 "minus_one"s
-            ets_type vvs(25, minus_one, tbb::tbb_allocator<T>());
+            // Cast 25 to size_type to prevent Intel Compiler SFINAE compilation issues with gcc 5.
+            ets_type vvs( typename container_type::size_type(25), minus_one, tbb::tbb_allocator<T>() );
             ASSERT( vvs.empty(), NULL );
             tbb::parallel_for ( tbb::blocked_range<int> (0, N, RANGE_MIN), parallel_vector_for_body<T,Allocator>( vvs, allocator_name ) );
             ASSERT( !vvs.empty(), NULL );

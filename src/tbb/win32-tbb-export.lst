@@ -76,6 +76,7 @@ __TBB_SYMBOL( ?observe@task_scheduler_observer_v3@internal@tbb@@QAEX_N@Z )
 __TBB_SYMBOL( ?internal_current_slot@task_arena_base@internal@interface7@tbb@@KAHXZ )
 __TBB_SYMBOL( ?internal_initialize@task_arena_base@internal@interface7@tbb@@IAEXXZ )
 __TBB_SYMBOL( ?internal_terminate@task_arena_base@internal@interface7@tbb@@IAEXXZ )
+__TBB_SYMBOL( ?internal_attach@task_arena_base@internal@interface7@tbb@@IAEXXZ )
 __TBB_SYMBOL( ?internal_enqueue@task_arena_base@internal@interface7@tbb@@IBEXAAVtask@4@H@Z )
 __TBB_SYMBOL( ?internal_execute@task_arena_base@internal@interface7@tbb@@IBEXAAVdelegate_base@234@@Z )
 __TBB_SYMBOL( ?internal_wait@task_arena_base@internal@interface7@tbb@@IBEXXZ )
@@ -140,6 +141,8 @@ __TBB_SYMBOL( ?itt_metadata_str_add_v7@internal@tbb@@YAXW4itt_domain_enum@12@PAX
 __TBB_SYMBOL( ?itt_relation_add_v7@internal@tbb@@YAXW4itt_domain_enum@12@PAX_KW4itt_relation@12@12@Z )
 __TBB_SYMBOL( ?itt_task_begin_v7@internal@tbb@@YAXW4itt_domain_enum@12@PAX_K12W4string_index@12@@Z )
 __TBB_SYMBOL( ?itt_task_end_v7@internal@tbb@@YAXW4itt_domain_enum@12@@Z )
+__TBB_SYMBOL( ?itt_region_begin_v9@internal@tbb@@YAXW4itt_domain_enum@12@PAX_K12W4string_index@12@@Z )
+__TBB_SYMBOL( ?itt_region_end_v9@internal@tbb@@YAXW4itt_domain_enum@12@PAX_K@Z )
 #endif
 
 // pipeline.cpp

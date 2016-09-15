@@ -1109,7 +1109,7 @@ void TestLOC() {
 int TestMain () {
     scalable_allocation_mode(USE_HUGE_PAGES, 0);
 #if !_XBOX && !__TBB_WIN8UI_SUPPORT
-    putenv((char*)"TBB_MALLOC_USE_HUGE_PAGES=yes");
+    Harness::SetEnv("TBB_MALLOC_USE_HUGE_PAGES","yes");
 #endif
     checkNoHugePages();
     // backreference requires that initialization was done
