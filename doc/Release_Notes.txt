@@ -169,9 +169,8 @@ Library Issues
 ------------------------------------------------------------------------
 (C) 2016 Intel Corporation
 
-Intel, Xeon and Pentium are registered trademarks or trademarks of
-Intel Corporation or its subsidiaries in the United States and other
-countries.
+Intel, the Intel logo, Intel Core, Xeon, Xeon Phi and Pentium are
+trademarks of Intel Corporation in the U.S. and/or other countries.
 
 * Other names and brands may be claimed as the property of others.
 

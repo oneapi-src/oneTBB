@@ -252,7 +252,7 @@
 // GCC supported some of type properties since 4.7
 #define __TBB_CPP11_IS_COPY_CONSTRUCTIBLE_PRESENT   (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40700 || __TBB_CPP11_TYPE_PROPERTIES_PRESENT)
 
-// In GCC and MSVC, implementation of std::move_if_noexcept is not aligned with noexcept
+// In GCC, std::move_if_noexcept appeared later than noexcept
 #define __TBB_MOVE_IF_NOEXCEPT_PRESENT           (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40700 || _MSC_VER >= 1900 || __clang__ && _LIBCPP_VERSION && __TBB_NOEXCEPT_PRESENT)
 //TODO: Probably more accurate way is to analyze version of stdlibc++ via__GLIBCXX__ instead of __TBB_GCC_VERSION
 #define __TBB_ALLOCATOR_TRAITS_PRESENT              (__cplusplus >= 201103L && _LIBCPP_VERSION  || _MSC_VER >= 1700 ||                                             \
@@ -552,7 +552,7 @@
 #endif
 
 #if (_WIN32||_WIN64) && __INTEL_COMPILER == 1110
-    /** That's a bug in Intel compiler 11.1.044/IA-32/Windows, that leads to a worker thread crash on the thread's startup. **/
+    /** That's a bug in Intel(R) C++ Compiler 11.1.044/IA-32 architecture/Windows* OS, that leads to a worker thread crash on the thread's startup. **/
     #define __TBB_ICL_11_1_CODE_GEN_BROKEN 1
 #endif
 
@@ -585,7 +585,7 @@
 #endif /* __FreeBSD__ */
 
 #if (__linux__ || __APPLE__) && __i386__ && defined(__INTEL_COMPILER)
-    /** The Intel compiler for IA-32 (Linux|OS X) crashes or generates
+    /** The Intel(R) C++ Compiler for IA-32 architecture (Linux* OS|OS X*) crashes or generates
         incorrect code when __asm__ arguments have a cast to volatile. **/
     #define __TBB_ICC_ASM_VOLATILE_BROKEN 1
 #endif
@@ -639,11 +639,12 @@
     #define __TBB_GCC_CAS8_BUILTIN_INLINING_BROKEN 1
 #endif
 
-#if __TBB_x86_32 && (__linux__ || __APPLE__ || _WIN32 || __sun || __ANDROID__) &&  (__INTEL_COMPILER || (__GNUC__==3 && __GNUC_MINOR__==3 )||(__MINGW32__ ) && (__GNUC__==4 && __GNUC_MINOR__==5 ) || __SUNPRO_CC)
-    // Some compilers for IA-32 fail to provide 8-byte alignment of objects on the stack,
-    // even if the object specifies 8-byte alignment.  On such platforms, the IA-32 implementation
-    // of 64 bit atomics (e.g. atomic<long long>) use different tactics depending upon
-    // whether the object is properly aligned or not.
+#if __TBB_x86_32 && ( __INTEL_COMPILER || (__GNUC__==5 && __GNUC_MINOR__==2 && __GXX_EXPERIMENTAL_CXX0X__) \
+    || (__GNUC__==3 && __GNUC_MINOR__==3) || (__MINGW32__ && __GNUC__==4 && __GNUC_MINOR__==5) || __SUNPRO_CC )
+    // Some compilers for IA-32 architecture fail to provide 8-byte alignment of objects on the stack,
+    // even if the object specifies 8-byte alignment. On such platforms, the implementation
+    // of 64 bit atomics for IA-32 architecture (e.g. atomic<long long>) use different tactics
+    // depending upon whether the object is properly aligned or not.
     #define __TBB_FORCE_64BIT_ALIGNMENT_BROKEN 1
 #else
     #define __TBB_FORCE_64BIT_ALIGNMENT_BROKEN 0
@@ -662,9 +663,17 @@
 // A compiler bug: a disabled copy constructor prevents use of the moving constructor
 #define __TBB_IF_NO_COPY_CTOR_MOVE_SEMANTICS_BROKEN (_MSC_VER && (__INTEL_COMPILER >= 1300 && __INTEL_COMPILER <= 1310) && !__INTEL_CXX11_MODE__)
 
-// MSVC 2013 and ICC do not generate implicit move constructor for empty derived class
-#define __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_FOR_DERIVED_BROKEN  (__TBB_CPP11_RVALUE_REF_PRESENT &&  \
-      ( !__INTEL_COMPILER && _MSC_VER && _MSC_VER <= 1800 || __INTEL_COMPILER && __INTEL_COMPILER <= 1600 ))
+#if __TBB_CPP11_RVALUE_REF_PRESENT
+//Some compilers added implicit generation of move constructor & assignment operator in a later version
+#if _MSC_VER
+  // Covers Intel C++ Compiler for Windows, which has compatible behavior
+  #define __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN  (_MSC_VER <= 1800)
+#elif __INTEL_COMPILER
+  #define __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN  (__INTEL_COMPILER < 1400 || __INTEL_COMPILER==1600)
+#elif __clang__
+  #define __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN  (!__has_feature(cxx_implicit_moves))
+#endif
+#endif /* __TBB_CPP11_RVALUE_REF_PRESENT */
 
 #define __TBB_CPP11_DECLVAL_BROKEN (_MSC_VER == 1600 || (__GNUC__ && __TBB_GCC_VERSION < 40500) )
 
@@ -686,8 +695,8 @@
 #define __TBB_ATOMIC_CTORS     (__TBB_CONSTEXPR_PRESENT && __TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT && (!__TBB_ZERO_INIT_WITH_DEFAULTED_CTOR_BROKEN))
 
 // Many OS versions (Android 4.0.[0-3] for example) need workaround for dlopen to avoid non-recursive loader lock hang
-// Setting the workaround for all compile targets ($APP_PLATFORM) below Android 4.4 (android-19) 
-#if __ANDROID__ 
+// Setting the workaround for all compile targets ($APP_PLATFORM) below Android 4.4 (android-19)
+#if __ANDROID__
 #include <android/api-level.h>
 #define __TBB_USE_DLOPEN_REENTRANCY_WORKAROUND  (__ANDROID_API__ < 19)
 #endif

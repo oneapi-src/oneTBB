@@ -282,18 +282,18 @@ public:
     template<typename U, typename... Args>
     void construct(U *p, Args&&... args)
         { ::new((void *)p) U(std::forward<Args>(args)...); }
-#else // __TBB_ALLOCATOR_CONSTRUCT_VARIADIC
+#else /* __TBB_ALLOCATOR_CONSTRUCT_VARIADIC */
 #if __TBB_CPP11_RVALUE_REF_PRESENT
     void construct( pointer p, value_type&& value ) { ::new((void*)(p)) value_type( std::move( value ) ); }
 #endif
     void construct( pointer p, const value_type& value ) {::new((void*)(p)) value_type(value);}
-#endif // __TBB_ALLOCATOR_CONSTRUCT_VARIADIC
+#endif /* __TBB_ALLOCATOR_CONSTRUCT_VARIADIC */
     void destroy( pointer p ) {p->~value_type();}
 };
 
 #if _MSC_VER && !defined(__INTEL_COMPILER)
     #pragma warning (pop)
-#endif // warning 4100 is back
+#endif /* warning 4100 is back */
 
 //! Analogous to std::allocator<void>, as defined in ISO C++ Standard, Section 20.4.1
 /** @ingroup memory_allocation */
@@ -336,6 +336,6 @@ inline bool operator!=( const scalable_allocator<T>&, const scalable_allocator<U
 
 #if !defined(__cplusplus) && __ICC==1100
     #pragma warning (pop)
-#endif // ICC 11.0 warning 991 is back
+#endif /* ICC 11.0 warning 991 is back */
 
 #endif /* __TBB_scalable_allocator_H */

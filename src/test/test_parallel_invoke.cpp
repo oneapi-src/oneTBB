@@ -84,7 +84,7 @@ TEST_FUNCTOR(9)
 #define INIT_TEST function_counter = 0;
 
 #define VALIDATE_INVOKE_RUN(number_of_args, test_type) \
-    ASSERT( (size_t)function_counter == (size_t)(1 << number_of_args) - 1, "parallel_invoke called with " #number_of_args " arguments didn't process all " #test_type);
+    ASSERT( size_t(function_counter) == (size_t(1) << number_of_args) - 1, "parallel_invoke called with " #number_of_args " arguments didn't process all " #test_type);
 
 // Calls parallel_invoke for different number of arguments
 // It can be called with and without user context
@@ -235,7 +235,7 @@ void TestExceptionHandling()
 {
     REMARK (__FUNCTION__);
     for( size_t n = 2; n <= 10; ++n ) {
-        for( exception_mask = 1; exception_mask < (size_t) (1 << n); ++exception_mask ) {
+        for( exception_mask = 1; exception_mask < (size_t(1) << n); ++exception_mask ) {
             ResetEhGlobals();
             TRY();
                 REMARK("Calling parallel_invoke, number of functions = %d, exception_mask = %d\n", n, exception_mask);

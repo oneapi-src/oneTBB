@@ -319,7 +319,7 @@ retry:
             __TBB_store_relaxed(my_prev, pred);
             acquire_internal_lock();
 
-            __TBB_store_with_release(pred->my_next,reinterpret_cast<scoped_lock *>(NULL));
+            __TBB_store_with_release(pred->my_next,static_cast<scoped_lock *>(NULL));
 
             if( !__TBB_load_relaxed(my_next) && this != my_mutex->q_tail.compare_and_swap<tbb::release>(pred, this) ) {
                 spin_wait_while_eq( my_next, (void*)NULL );

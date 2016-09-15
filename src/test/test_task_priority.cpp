@@ -298,6 +298,7 @@ void TestPrioritySwitchBetweenTwoMasters () {
         REPORT_ONCE( "Known issue: TestPrioritySwitchBetweenTwoMasters is skipped for big number of threads\n" );
         return;
     }
+    tbb::task_scheduler_init init; // keeps the market alive to reduce the amount of TBB warnings
     REMARK( "Stress tests: %s / %s \n", Low == tbb::priority_low ? "Low" : "Normal", High == tbb::priority_normal ? "Normal" : "High" );
     PrepareGlobals( 2 );
     for ( int i = 0; i < TestSwitchBetweenMastersRepeats; ++i ) {
@@ -401,6 +402,7 @@ void TestPeriodicConcurrentActivities () {
 void TestPriorityAssertions () {
 #if TRY_BAD_EXPR_ENABLED && __TBB_TASK_PRIORITY
     REMARK( "TestPriorityAssertions\n" );
+    tbb::task_scheduler_init init; // to avoid autoinit that'd affect subsequent tests
     tbb::priority_t bad_low_priority = tbb::priority_t( tbb::priority_low - 1 ),
                     bad_high_priority = tbb::priority_t( tbb::priority_high + 1 );
     tbb::task_group_context ctx;
@@ -546,6 +548,31 @@ void TestSetPriority() {
 }
 }//namespace test_propagation
 
+// TODO: consider common helper for empty bodies, e.g. Harness::DummyBody.
+struct NestedParFor {
+    void operator()(int) const {
+        for (volatile int i = 0; i < 1000; ++i);
+    }
+};
+
+struct OuterParFor {
+    void operator()(int) const {
+        tbb::affinity_partitioner ap;
+        tbb::task_group_context ctx;
+        ctx.set_priority(tbb::priority_high);
+        tbb::parallel_for(0, 100, NestedParFor(), ap, ctx);
+    }
+};
+
+// Test priorities with affinity tasks.
+void TestAffinityTasks() {
+    REMARK("Test priorities with affinity tasks\n");
+    tbb::task_scheduler_init init;
+    tbb::affinity_partitioner ap;
+    for (int i = 0; i < 10; ++i)
+        tbb::parallel_for(0, 100, OuterParFor(), ap);
+}
+
 namespace regression {
 // This is a regression test for a bug with task_group_context used from a thread that created its local scheduler but not the implicit arena
 class TestTGContext {
@@ -594,6 +621,7 @@ int RunTests () {
     TestPrioritySwitchBetweenTwoMasters();
     PreemptionActivatorId = 1;
     TestPrioritySwitchBetweenTwoMasters();
+    TestAffinityTasks();
     regression::TestTGContextOnNewThread();
 
     return Harness::Done;

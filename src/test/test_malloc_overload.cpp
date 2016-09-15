@@ -186,6 +186,11 @@ const uint32_t minLargeObjectSize = fittingSize5 + 1;
 
 static void scalableMallocCheckSize(void *object, size_t size)
 {
+#if __APPLE__ && __clang__ && __TBB_CLANG_VERSION == 70300
+// This prevents Clang 703.0.29 under OS X from throwing out the
+// calls to new & delete in CheckNewDeleteOverload().
+    static void *v = object;
+#endif
     ASSERT(object, NULL);
     if (size >= minLargeObjectSize) {
         LargeMemoryBlock *lmb = ((LargeObjectHdr*)object-1)->memoryBlock;
@@ -200,10 +205,6 @@ static void scalableMallocCheckSize(void *object, size_t size)
     ASSERT(size<8 || _aligned_msize(object,8,0) >= size, NULL);
 #endif
 }
-
-struct BigStruct {
-    char f[minLargeObjectSize];
-};
 
 void CheckStdFuncOverload(void *(*malloc_p)(size_t), void *(*calloc_p)(size_t, size_t),
                           void *(*realloc_p)(void *, size_t), void (*free_p)(void *))
@@ -307,6 +308,30 @@ void TestZoneOverload() {
 #define TestZoneOverload()
 #endif
 
+struct BigStruct {
+    char f[minLargeObjectSize];
+};
+
+void CheckNewDeleteOverload() {
+    BigStruct *s1, *s2, *s3, *s4;
+
+    s1 = new BigStruct;
+    scalableMallocCheckSize(s1, sizeof(BigStruct));
+    delete s1;
+
+    s2 = new BigStruct[10];
+    scalableMallocCheckSize(s2, 10*sizeof(BigStruct));
+    delete []s2;
+
+    s3 = new(std::nothrow) BigStruct;
+    scalableMallocCheckSize(s3, sizeof(BigStruct));
+    delete s3;
+
+    s4 = new(std::nothrow) BigStruct[2];
+    scalableMallocCheckSize(s4, 2*sizeof(BigStruct));
+    delete []s4;
+}
+
 int TestMain() {
     void *ptr, *ptr1;
 
@@ -393,22 +418,7 @@ int TestMain() {
 #endif
     CheckFreeAligned();
 
-    BigStruct *s1 = new BigStruct;
-    scalableMallocCheckSize(s1, sizeof(BigStruct));
-    delete s1;
-
-    BigStruct *s2 = new BigStruct[10];
-    scalableMallocCheckSize(s2, 10*sizeof(BigStruct));
-    delete []s2;
-
-    BigStruct *s3 = new(std::nothrow) BigStruct;
-    scalableMallocCheckSize(s3, sizeof(BigStruct));
-    delete s3;
-
-    BigStruct *s4 = new(std::nothrow) BigStruct[2];
-    scalableMallocCheckSize(s4, 2*sizeof(BigStruct));
-    delete []s4;
-
+    CheckNewDeleteOverload();
 #if _WIN32
     std::string stdstring = "dependence on msvcpXX.dll";
     ASSERT(strcmp(stdstring.c_str(), "dependence on msvcpXX.dll") == 0, NULL);

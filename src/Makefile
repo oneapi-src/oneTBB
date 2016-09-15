@@ -94,6 +94,9 @@ else
 	@$(MAKE) -C "$(work_dir)_$(cfg)"  -r -f $(tbb_root)/build/Makefile.test $@
 endif
 
+python_%: tbb_release
+	bash -c ". $(work_dir)_release$(SLASH)tbbvars.sh && $(MAKE) -rC '$(full_tbb_root)/python' CXX=$(compiler) $(subst python_,,$@)"
+
 .PHONY: test_release test_debug test_release_no_depends test_debug_no_depends
 .PHONY: tbb_release tbb_debug tbb_test_release tbb_test_debug tbb_test_release_no_depends tbb_test_debug_no_depends
 # do not delete double-space after -C option

@@ -561,7 +561,7 @@ inline task* generic_scheduler::prepare_for_spawning( task* t ) {
         // Mark proxy as present in both locations (sender's task pool and destination mailbox)
         proxy.task_and_tag = intptr_t(t) | task_proxy::location_mask;
 #if __TBB_TASK_PRIORITY
-        proxy.prefix().context = t->prefix().context;
+        poison_pointer( proxy.prefix().context );
 #endif /* __TBB_TASK_PRIORITY */
         ITT_NOTIFY( sync_releasing, proxy.outbox );
         // Mail the proxy - after this point t may be destroyed by another thread at any moment.
@@ -683,84 +683,46 @@ task* generic_scheduler::winnow_task_pool () {
     // the corresponding checking sequence in arena::is_out_of_work() is not atomic
     // anyway, fences aren't used, so that not to penalize warmer path.
     auto_indicator indicator(my_pool_reshuffling_pending);
-    // The purpose of the synchronization algorithm here is for the owner thread
-    // to avoid locking task pool most of the time.
-#if __TBB_TODO
-    // Just locking the task pool unconditionally would produce simpler code,
+
+    // Locking the task pool unconditionally produces simpler code,
     // scalability of which should not suffer unless priority jitter takes place.
-    // Since priority jitter is nocuous by itself, we may want to evaluate
-    // applicability of the simpler variant...
-    // Non-blocking variant also prevent us from relocating remaining tasks to
-    // the beginning of the task pool, not sure if it makes much sense.
-#endif
+    // TODO: consider the synchronization algorithm here is for the owner thread
+    // to avoid locking task pool most of the time.
+    acquire_task_pool();
     size_t T0 = __TBB_load_relaxed(my_arena_slot->tail);
-    __TBB_store_relaxed( my_arena_slot->tail, __TBB_load_relaxed(my_arena_slot->head) - 1 );
-    atomic_fence();
-    size_t H = __TBB_load_relaxed(my_arena_slot->head);
-    size_t T = __TBB_load_relaxed(my_arena_slot->tail);
-    __TBB_ASSERT( (intptr_t)T <= (intptr_t)T0, NULL);
-    __TBB_ASSERT( (intptr_t)H >= (intptr_t)T || (H == T0 && T == T0), NULL );
-    bool acquired = false;
-    if ( H == T ) {
-        // Either no contention with thieves during arbitration protocol execution or ...
-        if ( H >= T0 ) {
-            // ... the task pool got empty
-            reset_task_pool_and_leave( /*locked=*/false );
-            return NULL;
+    size_t H0 = __TBB_load_relaxed(my_arena_slot->head);
+    size_t dst = 0;
+    for ( size_t src = H0; src < T0; ++src ) {
+        task *curr = my_arena_slot->task_pool_ptr[src];
+        // We cannot offload a proxy task (check the priority of it) because it can be already consumed.
+        if ( !is_proxy(*curr) ) {
+            intptr_t p = priority(*curr);
+            if ( p < *my_ref_top_priority ) {
+                offload_task( *curr, p );
+                continue;
+            }
         }
-    }
-    else {
-        // Contention with thieves detected. Now without taking lock it is impossible
-        // to define the current head value because of its jitter caused by continuing
-        // stealing attempts (the pool is not locked so far).
-        acquired = true;
-        acquire_task_pool();
-        H = __TBB_load_relaxed(my_arena_slot->head);
-        if ( H >= T0 ) {
-            reset_task_pool_and_leave( /*locked=*/true );
-            return NULL;
-        }
-    }
-    size_t src,
-           dst = T0;
-    // Find the first task to offload.
-    for ( src = H; src < T0; ++src ) {
-        task &t = *my_arena_slot->task_pool_ptr[src];
-        intptr_t p = priority(t);
-        if ( p < *my_ref_top_priority ) {
-            // Position of the first offloaded task will be the starting point
-            // for relocation of subsequent tasks that survive winnowing.
-            dst = src;
-            offload_task( t, p );
-            break;
-        }
-    }
-    for ( ++src; src < T0; ++src ) {
-        task &t = *my_arena_slot->task_pool_ptr[src];
-        intptr_t p = priority(t);
-        if ( p < *my_ref_top_priority )
-            offload_task( t, p );
-        else
-            my_arena_slot->task_pool_ptr[dst++] = &t;
+        my_arena_slot->task_pool_ptr[dst++] = curr;
     }
     __TBB_ASSERT( T0 >= dst, NULL );
-    task *t = H < dst ? my_arena_slot->task_pool_ptr[--dst] : NULL;
-    if ( H == dst ) {
-        // No tasks remain the primary pool
-        reset_task_pool_and_leave( acquired );
+
+    task *t = NULL;
+    while ( !t && dst ) {
+        t = my_arena_slot->task_pool_ptr[--dst];
+        __TBB_ASSERT( !is_poisoned(t), NULL );
+        poison_pointer( my_arena_slot->task_pool_ptr[dst] );
+        if ( is_proxy(*t) )
+            t = consume_proxy( *t );
     }
-    else if ( acquired ) {
-        __TBB_ASSERT( !is_poisoned(my_arena_slot->task_pool_ptr[H]), NULL );
-        __TBB_store_relaxed( my_arena_slot->tail, dst );
+    if (dst) {
+        __TBB_store_relaxed(my_arena_slot->head, 0);
+        __TBB_store_relaxed(my_arena_slot->tail, dst);
         release_task_pool();
+    } else {
+        reset_task_pool_and_leave(/*locked = */true);
     }
-    else {
-        __TBB_ASSERT( !is_poisoned(my_arena_slot->task_pool_ptr[H]), NULL );
-        // Release fence is necessary to make sure possibly relocated task pointers
-        // become visible to potential thieves
-        __TBB_store_with_release( my_arena_slot->tail, dst );
-    }
-    my_arena_slot->fill_with_canary_pattern( dst, T0 );
+    // Choose max(dst, H0) because ranges [0,dst) and [H0,T0) can overlap.
+    my_arena_slot->fill_with_canary_pattern(max(dst, H0), T0);
     assert_task_pool_valid();
     return t;
 }
@@ -774,13 +736,14 @@ task* generic_scheduler::reload_tasks ( task*& offloaded_tasks, task**& offloade
     task *t;
     while ( (t = *link) ) {
         task** next_ptr = &t->prefix().next_offloaded;
+        __TBB_ASSERT( !is_proxy(*t), "The proxy tasks cannot be offloaded" );
         if ( priority(*t) >= top_priority ) {
             tasks.push_back( t );
             // Note that owner is an alias of next_offloaded. Thus the following
             // assignment overwrites *next_ptr
             task* next = *next_ptr;
             t->prefix().owner = this;
-            __TBB_ASSERT( t->prefix().state == task::ready || t->prefix().extra_state == es_task_proxy, NULL );
+            __TBB_ASSERT( t->prefix().state == task::ready, NULL );
             *link = next;
         }
         else {
@@ -852,6 +815,24 @@ task* generic_scheduler::reload_tasks () {
 }
 #endif /* __TBB_TASK_PRIORITY */
 
+inline task* generic_scheduler::consume_proxy( task &proxy ) {
+    __TBB_ASSERT( is_proxy(proxy), NULL );
+    task_proxy &tp = static_cast<task_proxy&>(proxy);
+    task *result = tp.extract_task<task_proxy::pool_bit>();
+    if (!result) {
+        // Proxy was empty, so it's our responsibility to free it
+        free_task<small_task>(tp);
+        return NULL;
+    }
+    GATHER_STATISTIC(++my_counters.proxies_executed);
+    // Following assertion should be true because TBB 2.0 tasks never specify affinity, and hence are not proxied.
+    __TBB_ASSERT(is_version_3_task(*result), "backwards compatibility with TBB 2.0 broken");
+    // Task affinity has changed.
+    my_innermost_running_task = result;
+    result->note_affinity(my_affinity_id);
+    return result;
+}
+
 inline task* generic_scheduler::get_task() {
     __TBB_ASSERT( is_task_pool_published(), NULL );
     task* result = NULL;
@@ -885,22 +866,10 @@ retry:
         poison_pointer( my_arena_slot->task_pool_ptr[T] );
     }
     if( result && is_proxy(*result) ) {
-        task_proxy &tp = *(task_proxy*)result;
-        result = tp.extract_task<task_proxy::pool_bit>();
-        if( !result ) {
-            // Proxy was empty, so it's our responsibility to free it
-            free_task<small_task>(tp);
-            if ( is_task_pool_published() )
+        result = consume_proxy(*result );
+        // The task can be grabbed when a thief backs off. As a result, the pool can be reset.
+        if ( !result && is_task_pool_published() )
                 goto retry;
-            __TBB_ASSERT( is_quiescent_local_task_pool_reset(), NULL );
-            return NULL;
-        }
-        GATHER_STATISTIC( ++my_counters.proxies_executed );
-        // Following assertion should be true because TBB 2.0 tasks never specify affinity, and hence are not proxied.
-        __TBB_ASSERT( is_version_3_task(*result), "backwards compatibility with TBB 2.0 broken" );
-        // Task affinity has changed.
-        my_innermost_running_task = result;
-        result->note_affinity(my_affinity_id);
     }
     __TBB_ASSERT( result || is_quiescent_local_task_pool_reset(), NULL );
     return result;
@@ -1200,7 +1169,7 @@ void generic_scheduler::cleanup_master( bool needs_wait_workers ) {
     enough information for the main thread on IA-64 architecture (RSE spill area
     and memory stack are allocated as two separate discontinuous chunks of memory),
     and there is no portable way to discern the main and the secondary threads.
-    Thus for OS X* and IA-64 Linux architecture we use the TBB worker stack size for
+    Thus for OS X* and IA-64 architecture for Linux* OS we use the TBB worker stack size for
     all threads and use the current stack top as the stack base. This simplified
     approach is based on the following assumptions:
     1) If the default stack size is insufficient for the user app needs, the

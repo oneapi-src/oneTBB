@@ -43,11 +43,11 @@ class allocate_root_with_context_proxy;
 
 namespace internal {
 
-//! arena data except the array of slots
+//! The structure of an arena, except the array of slots.
 /** Separated in order to simplify padding.
     Intrusive list node base class is used by market to form a list of arenas. **/
 struct arena_base : padded<intrusive_list_node> {
-    //! Number of workers that have been marked out by the resource manager to service the arena
+    //! The number of workers that have been marked out by the resource manager to service the arena.
     unsigned my_num_workers_allotted;   // heavy use in stealing loop
 
     //! Reference counter for the arena.
@@ -57,29 +57,26 @@ struct arena_base : padded<intrusive_list_node> {
     atomic<unsigned> my_references;     // heavy use in stealing loop
 
 #if __TBB_TASK_PRIORITY
-    //! Highest priority of recently spawned or enqueued tasks.
+    //! The highest priority of recently spawned or enqueued tasks.
     volatile intptr_t my_top_priority;  // heavy use in stealing loop
 #endif /* !__TBB_TASK_PRIORITY */
 
-    //! Maximal number of currently busy slots.
+    //! The maximal number of currently busy slots.
     atomic<unsigned> my_limit;          // heavy use in stealing loop
 
-    //! Task pool for the tasks scheduled via task::enqueue() method
+    //! Task pool for the tasks scheduled via task::enqueue() method.
     /** Such scheduling guarantees eventual execution even if
         - new tasks are constantly coming (by extracting scheduled tasks in
           relaxed FIFO order);
-        - the enqueuing thread does not call any of wait_for_all methods. **/
-#if __TBB_TASK_PRIORITY
+        - the enqueuing thread does not call any of wait_for_all methods.
+        Depending on __TBB_TASK_PRIORITY, num_priority_levels can be 1 or more. **/
     task_stream<num_priority_levels> my_task_stream; // heavy use in stealing loop
-#else /* !__TBB_TASK_PRIORITY */
-    task_stream<1>                   my_task_stream; // heavy use in stealing loop
-#endif /* !__TBB_TASK_PRIORITY */
 
-    //! Number of workers that are currently requested from the resource manager
-    int my_num_workers_requested;
-
-    //! Number of workers requested by the master thread owning the arena
+    //! The number of workers requested by the master thread owning the arena.
     unsigned my_max_num_workers;
+
+    //! The number of workers that are currently requested from the resource manager.
+    int my_num_workers_requested;
 
     //! Current task pool state and estimate of available tasks amount.
     /** The estimate is either 0 (SNAPSHOT_EMPTY) or infinity (SNAPSHOT_FULL).
@@ -89,12 +86,12 @@ struct arena_base : padded<intrusive_list_node> {
     tbb::atomic<uintptr_t> my_pool_state;
 
 #if __TBB_ARENA_OBSERVER
-    //! List of local observers attached to this arena.
+    //! The list of local observers attached to this arena.
     observer_list my_observers;
 #endif
 
 #if __TBB_TASK_PRIORITY
-    //! Lowest normalized priority of available spawned or enqueued tasks.
+    //! The lowest normalized priority of available spawned or enqueued tasks.
     intptr_t my_bottom_priority;
 
     //! Tracks events that may bring tasks in offload areas to the top priority level.
@@ -102,13 +99,13 @@ struct arena_base : padded<intrusive_list_node> {
         is elevated to the current arena's top level. **/
     uintptr_t my_reload_epoch;
 
-    //! List of offloaded tasks abandoned by workers revoked by the market
+    //! The list of offloaded tasks abandoned by workers revoked by the market.
     task* my_orphaned_tasks;
 
     //! Counter used to track the occurrence of recent orphaning and re-sharing operations.
     tbb::atomic<uintptr_t> my_abandonment_epoch;
 
-    //! Highest priority level containing enqueued tasks
+    //! The highest priority level containing enqueued tasks.
     /** It being greater than 0 means that high priority enqueued tasks had to be
         bypassed because all workers were blocked in nested dispatch loops and
         were unable to progress at then current priority level. **/
@@ -117,10 +114,10 @@ struct arena_base : padded<intrusive_list_node> {
 
     // Below are rarely modified members
 
-    //! Market owning this arena
+    //! The market that owns this arena.
     market* my_market;
 
-    //! ABA prevention marker
+    //! ABA prevention marker.
     uintptr_t my_aba_epoch;
 
 #if !__TBB_FP_CONTEXT
@@ -135,24 +132,25 @@ struct arena_base : padded<intrusive_list_node> {
     task_group_context* my_default_ctx;
 #endif /* __TBB_TASK_GROUP_CONTEXT */
 
-    //! Number of slots in the arena
+    //! The number of slots in the arena.
     unsigned my_num_slots;
 
-    //! Number of reserved slots (can be occupied only by masters)
+    //! The number of reserved slots (can be occupied only by masters).
     unsigned my_num_reserved_slots;
 
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-    enum mandatory_mode {
-        no_mandatory,
-        local_mandatory,
-        global_mandatory
+    //! Possible states for the concurrency mode of an arena.
+    enum concurrency_mode {
+        cm_normal =  0,     // arena is served by workers as usual
+        cm_enforced_local,  // arena needs an extra worker despite the arena limit
+        cm_enforced_global  // arena needs an extra worker despite a global limit
     };
 
-    //! Is mandatory concurrency subject of per-arena set or global control?
-    mandatory_mode my_mandatory_mode;
+    //! The concurrency mode of an arena.
+    concurrency_mode my_concurrency_mode;
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
 
-    //! exit notifications after arena slot is released
+    //! Waiting object for master threads that cannot join the arena.
     concurrent_monitor my_exit_monitors;
 
 #if TBB_USE_ASSERT
@@ -163,12 +161,12 @@ struct arena_base : padded<intrusive_list_node> {
 
 class arena: public padded<arena_base>
 {
-    //! Restore priorities of arenas and task presence status of the arena, if new enqueued tasks found
-    void restore_priorities_if_need();
+    //! If enqueued tasks found, restore arena priority and task presence status
+    void restore_priority_if_need();
 public:
     typedef padded<arena_base> base_type;
 
-    //! type of work that advertised by advertise_new_work()
+    //! Types of work advertised by advertise_new_work()
     enum new_work_type {
         work_spawned,
         wakeup,
@@ -185,8 +183,8 @@ public:
         return max(2u, num_slots);
     }
 
-    static int allocation_size ( unsigned max_num_workers ) {
-        return sizeof(base_type) + num_arena_slots(max_num_workers) * (sizeof(mail_outbox) + sizeof(arena_slot));
+    static int allocation_size ( unsigned num_slots ) {
+        return sizeof(base_type) + num_slots * (sizeof(mail_outbox) + sizeof(arena_slot));
     }
 
     //! Get reference to mailbox corresponding to given affinity_id.
@@ -259,16 +257,19 @@ public:
     intptr_t workers_task_node_count();
 #endif
 
+    //! Check for the presence of enqueued tasks at all priority levels
+    bool has_enqueued_tasks();
+
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
     //! Recall worker if global mandatory is enabled, but not for this arena
     bool recall_by_mandatory_request() const {
-        return my_market->my_mandatory_num_requested && my_mandatory_mode==arena_base::no_mandatory;
+        return my_market->my_mandatory_num_requested && my_concurrency_mode==cm_normal;
     }
 
-    //! Mandatory parallelism requested by this arena
-    bool mandatory_requested() const {
-        return my_num_workers_requested && my_market->my_mandatory_num_requested
-            && my_mandatory_mode!=arena_base::no_mandatory;
+    //! The arena is currently in an enforced concurrency mode
+    bool must_have_concurrency() const {
+        return my_num_workers_requested &&
+               ( my_concurrency_mode==cm_enforced_local || my_concurrency_mode==cm_enforced_global );
     }
 #endif
     static const size_t out_of_arena = ~size_t(0);
@@ -355,11 +356,8 @@ inline void arena::on_thread_leaving ( ) {
     // because it can create the demand of workers,
     // but the arena can be already empty (and so ready for destroying)
     if( ref_param==ref_external && my_num_slots != my_num_reserved_slots
-        && 0 == m->my_num_workers_soft_limit && my_mandatory_mode==no_mandatory ) {
+        && 0 == m->my_num_workers_soft_limit && my_concurrency_mode==cm_normal ) {
         bool is_out = false;
-#if !__TBB_TASK_PRIORITY
-        const int num_priority_levels = 1;
-#endif
         for (int i=0; i<num_priority_levels; i++) {
             is_out = is_out_of_work();
             if (is_out)
@@ -379,7 +377,7 @@ template<arena::new_work_type work_type> void arena::advertise_new_work() {
     if( work_type == work_enqueued ) {
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
         if( my_market->my_num_workers_soft_limit == 0 ) {
-            if( my_mandatory_mode!=global_mandatory ) {
+            if( my_concurrency_mode!=cm_enforced_global ) {
                 if( my_market->mandatory_concurrency_enable( this ) ) {
                     my_pool_state = SNAPSHOT_FULL;
                     return;
@@ -387,19 +385,19 @@ template<arena::new_work_type work_type> void arena::advertise_new_work() {
             }
         } else if( my_max_num_workers==0 ) {
             my_max_num_workers = 1;
-            __TBB_ASSERT(my_mandatory_mode==no_mandatory, "");
-            my_mandatory_mode = local_mandatory;
+            __TBB_ASSERT(my_concurrency_mode==cm_normal, NULL);
+            my_concurrency_mode = cm_enforced_local;
             my_pool_state = SNAPSHOT_FULL;
             my_market->adjust_demand( *this, 1 );
             return;
         }
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
         // Local memory fence here and below is required to avoid missed wakeups; see the comment below.
-        // Starvation resistant tasks require mandatory concurrency, so missed wakeups are unacceptable.
+        // Starvation resistant tasks require concurrency, so missed wakeups are unacceptable.
         atomic_fence();
     }
     else if( work_type == wakeup ) {
-        __TBB_ASSERT(my_max_num_workers!=0, "Not expect mandatory concurrency request.");
+        __TBB_ASSERT(my_max_num_workers!=0, "Unexpected worker wakeup request");
         atomic_fence();
     }
     // Double-check idiom that, in case of spawning, is deliberately sloppy about memory fences.
@@ -424,12 +422,12 @@ template<arena::new_work_type work_type> void arena::advertise_new_work() {
                 }
             }
             // This thread transitioned pool from empty to full state, and thus is responsible for
-            // telling RML that there is work to do.
+            // telling the market that there is work to do.
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
             if( work_type == work_spawned ) {
-                if( my_mandatory_mode!=no_mandatory ) {
-                    switch( my_mandatory_mode ) {
-                    case local_mandatory:
+                if( my_concurrency_mode!=cm_normal ) {
+                    switch( my_concurrency_mode ) {
+                    case cm_enforced_local:
                         __TBB_ASSERT(my_max_num_workers==1, "");
                         __TBB_ASSERT(!governor::local_scheduler()->is_worker(), "");
                         // There was deliberate oversubscription on 1 core for sake of starvation-resistant tasks.
@@ -437,11 +435,11 @@ template<arena::new_work_type work_type> void arena::advertise_new_work() {
                         // with relaxed sequential semantics, and oversubscription should be avoided.
                         // Demand for workers has been decreased to 0 during SNAPSHOT_EMPTY, so just keep it.
                         my_max_num_workers = 0;
-                        my_mandatory_mode = no_mandatory;
+                        my_concurrency_mode = cm_normal;
                         break;
-                    case global_mandatory:
+                    case cm_enforced_global:
                         my_market->mandatory_concurrency_disable( this );
-                        restore_priorities_if_need();
+                        restore_priority_if_need();
                         break;
                     default:
                         break;

@@ -49,6 +49,12 @@ extern "C" void MallocInitializeITT();
 namespace tbb {
 namespace internal {
 int __TBB_load_ittnotify() {
+#if !(_WIN32||_WIN64)
+    // tool_api crashes without dlopen, check that it's present. Common case
+    // for lack of dlopen is static binaries, i.e. ones build with -static.
+    if (dlopen == NULL)
+        return 0;
+#endif
     return __itt_init_ittlib(NULL,          // groups for:
       (__itt_group_id)(__itt_group_sync     // prepare/cancel/acquired/releasing
                        | __itt_group_thread // name threads

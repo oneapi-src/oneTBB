@@ -120,6 +120,8 @@ inline void assert_priority_valid ( intptr_t p ) {
 inline intptr_t& priority ( task& t ) {
     return t.prefix().context->my_priority;
 }
+#else /* __TBB_TASK_PRIORITY */
+static const intptr_t num_priority_levels = 1;
 #endif /* __TBB_TASK_PRIORITY */
 
 //! Mutex type for global locks in the scheduler

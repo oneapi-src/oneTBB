@@ -142,7 +142,7 @@ public:
     }
 #endif //# __TBB_INITIALIZER_LISTS_PRESENT
 
-#if __TBB_CPP11_RVALUE_REF_PRESENT && __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_FOR_DERIVED_BROKEN
+#if __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN
     concurrent_unordered_map(const concurrent_unordered_map& table)
         : base_type(table)
     {
@@ -162,7 +162,7 @@ public:
     {
         return static_cast<concurrent_unordered_map&>(base_type::operator=(std::move(table)));
     }
-#endif //__TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_FOR_DERIVED_BROKEN
+#endif //__TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN
 
     concurrent_unordered_map(const concurrent_unordered_map& table, const Allocator& a)
         : base_type(table, a)
@@ -283,7 +283,7 @@ public:
     }
 #endif //# __TBB_INITIALIZER_LISTS_PRESENT
 
-#if __TBB_CPP11_RVALUE_REF_PRESENT && __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_FOR_DERIVED_BROKEN
+#if __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN
     concurrent_unordered_multimap(const concurrent_unordered_multimap& table)
         : base_type(table)
     {
@@ -303,7 +303,7 @@ public:
     {
         return static_cast<concurrent_unordered_multimap&>(base_type::operator=(std::move(table)));
     }
-#endif //__TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_FOR_DERIVED_BROKEN
+#endif //__TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN
 
     concurrent_unordered_multimap(const concurrent_unordered_multimap& table, const Allocator& a)
         : base_type(table, a)

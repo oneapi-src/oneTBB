@@ -227,9 +227,6 @@ private:
     void assert_market_valid () const {}
 #endif /* !__TBB_TASK_PRIORITY */
 
-    //! Returns number of masters doing computational (CPU-intensive) work
-    int num_active_masters () { return 1; }  // APM TODO: replace with a real mechanism
-
     ////////////////////////////////////////////////////////////////////////////////
     // Helpers to unify code branches dependent on priority feature presence
 
@@ -239,7 +236,7 @@ private:
 
     arena* arena_in_need ( arena_list_type &arenas, arena *&next );
 
-    static void update_allotment ( arena_list_type& arenas, int total_demand, int max_workers );
+    static int update_allotment ( arena_list_type& arenas, int total_demand, int max_workers );
 
 
     ////////////////////////////////////////////////////////////////////////////////

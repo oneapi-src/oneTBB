@@ -102,15 +102,6 @@
 // MSVC 2015 does not do compile-time initialization of static variables with constexpr constructors in debug mode
 #define __TBB_STATIC_CONSTEXPR_INIT_BROKEN (_MSC_VER==1900 && !__INTEL_COMPILER && _DEBUG)
 
-//some compilers do not generate implicitly move constructor and assignment operator, as this feature (r-value reference 3.0) was added later
-#if __INTEL_COMPILER
-  #define __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN  (__TBB_CPP11_RVALUE_REF_PRESENT && (__INTEL_COMPILER < 1400 || __INTEL_COMPILER == 1600 && __INTEL_COMPILER_UPDATE <= 2))
-#elif __clang__
-  #define __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN !__has_feature(cxx_implicit_moves)
-#else
-  #define __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN (__TBB_CPP11_RVALUE_REF_PRESENT && _MSC_VER && _MSC_VER <=1800)
-#endif /* __INTEL_COMPILER */
-
 #if __GNUC__ && __ANDROID__
   #define __TBB_EXCEPTION_TYPE_INFO_BROKEN ( __TBB_GCC_VERSION < 40600 )
 #elif _MSC_VER

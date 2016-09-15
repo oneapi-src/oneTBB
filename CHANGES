@@ -2,6 +2,27 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 4.4 Update 5
+TBB_INTERFACE_VERSION == 9005
+
+Changes (w.r.t. Intel TBB 4.4 Update 4):
+
+- Modified graph/fgbzip2 example to remove unnecessary data queuing.
+
+Preview Features:
+
+- Added a Python* module which is able to replace Python's thread pool 
+    class with the implementation based on Intel TBB task scheduler.
+
+Bugs fixed:
+
+- Fixed the implementation of 64-bit tbb::atomic for IA-32 architecture
+    to work correctly with GCC 5.2 in C++11/14 mode.
+- Fixed a possible crash when tasks with affinity (e.g. specified via
+    affinity_partitioner) are used simultaneously with task priority
+    changes.
+
+------------------------------------------------------------------------
 Intel TBB 4.4 Update 4
 TBB_INTERFACE_VERSION == 9004
 

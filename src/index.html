@@ -44,6 +44,8 @@ This directory contains the source code and unit tests for Intel&reg; Threading 
     <dd>Enables warnings as errors.
     <dt><tt>make examples/{target}</tt>
     <dd>Invokes examples/Makefile with specified target.
+    <dt><tt>make python_{target} [compiler={icl, icc}]</tt>
+    <dd>Invokes Makefile with the specified target in <a href="../python/index.html">python</a> directory. E.g. 'python_install' target builds and installs the module into Python.
     <dt><tt>make clean_release clean_debug clean_examples</tt>
     <dd>Removes release or debug build directories, or cleans all examples.
     <dt><tt>make test_no_depends</tt>

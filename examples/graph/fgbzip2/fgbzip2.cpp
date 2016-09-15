@@ -54,6 +54,10 @@ struct buffer_t {
     bool operator==( const buffer_t& other ) {
         return (this == &other) || (seq_id == other.seq_id && len == other.len && b == other.b);
     }
+
+    bool operator!=(const buffer_t& other) {
+        return !(*this == other);
+    }
 };
 
 buffer_t dummyBuffer = {0};
@@ -106,28 +110,13 @@ public:
     IOActivity( std::ifstream& inputStream, std::ofstream& output, size_t chunkSize ) :
         my_inputStream(inputStream), my_outputStream(output), my_chunkSize(chunkSize),
         my_fileWriter( [this]() {
-            std::priority_queue< buffer_t, std::vector<buffer_t>, buffer_comp > my_outputQueue;
-            size_t my_nextOutputId = 0;
-
-            while( true ) {
-                buffer_t buffer;
-                my_writeQueue.pop( buffer );
-                if( buffer == dummyBuffer ) break;
-                if( buffer.seq_id == my_nextOutputId ) {
-                    my_outputStream.write( buffer.b, buffer.len );
-                    delete[] buffer.b;
-                    ++my_nextOutputId;
-                    while( !my_outputQueue.empty() && my_outputQueue.top().seq_id == my_nextOutputId ) {
-                        buffer = my_outputQueue.top();
-                        my_outputQueue.pop();
-                        my_outputStream.write( buffer.b, buffer.len );
-                        delete[] buffer.b;
-                        ++my_nextOutputId;
-                    }
-                } else {
-                    my_outputQueue.push( buffer );
-                }
-            }
+            buffer_t buffer;
+            my_writeQueue.pop(buffer);
+            while (buffer != dummyBuffer) {
+                my_outputStream.write(buffer.b, buffer.len);
+                delete[] buffer.b;
+                my_writeQueue.pop(buffer);
+            };
         }) 
     {}
 
@@ -191,7 +180,8 @@ void fgCompressionAsyncIO( std::ifstream& inputStream, std::ofstream& outputStre
             return buffer.seq_id;
         });
 
-    async_file_writer_node output_writer( g, tbb::flow::unlimited, [&ioActivity](const buffer_t& buffer, async_file_writer_node::async_gateway_type& asyncGateway ) {
+    // The node is serial to preserve the right order of buffers set by the preceding sequencer_node
+    async_file_writer_node output_writer( g, tbb::flow::serial, [&ioActivity](const buffer_t& buffer, async_file_writer_node::async_gateway_type& asyncGateway ) {
             ioActivity.write( buffer );
         });
 

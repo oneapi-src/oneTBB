@@ -70,7 +70,10 @@ ifeq (ia64,$(arch))
 # strict-ansi does not work with <signal.h> on RHEL 4 AS
     CPLUS_FLAGS += $(PIC_KEY) $(if $(findstring cc3.,$(runtime)),-ansi,-strict-ansi)
 else
-    CPLUS_FLAGS += -strict-ansi
+# For ICC 16 and older, -strict-ansi does not work with GNU C++ library headers
+# in std=c++14 mode, use -ansi for them
+# egrep returns 0 or 1, compare it in concatenation
+    CPLUS_FLAGS += $(if $(findstring c++14_1,$(stdver)_$(shell icc -dumpversion| egrep -c "^1[1-6]\.")),-ansi,-strict-ansi)
 endif
 
 ifneq (,$(codecov))

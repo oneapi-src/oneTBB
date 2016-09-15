@@ -225,7 +225,7 @@ arena::arena ( market& m, unsigned num_slots, unsigned num_reserved_slots ) {
     my_task_stream.initialize(my_num_slots);
     ITT_SYNC_CREATE(&my_task_stream, SyncType_Scheduler, SyncObj_TaskStream);
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-    my_mandatory_mode = no_mandatory;
+    my_concurrency_mode = cm_normal;
 #endif
 #if !__TBB_FP_CONTEXT
     my_cpu_ctl_env.get_env();
@@ -236,7 +236,7 @@ arena& arena::allocate_arena( market& m, unsigned num_slots, unsigned num_reserv
     __TBB_ASSERT( sizeof(base_type) + sizeof(arena_slot) == sizeof(arena), "All arena data fields must go to arena_base" );
     __TBB_ASSERT( sizeof(base_type) % NFS_GetLineSize() == 0, "arena slots area misaligned: wrong padding" );
     __TBB_ASSERT( sizeof(mail_outbox) == NFS_MaxLineSize, "Mailbox padding is wrong" );
-    size_t n = allocation_size(num_slots);
+    size_t n = allocation_size(num_arena_slots(num_slots));
     unsigned char* storage = (unsigned char*)NFS_Allocate( 1, n, NULL );
     // Zero all slots to indicate that they are empty
     memset( storage, 0, n );
@@ -249,7 +249,7 @@ void arena::free_arena () {
     __TBB_ASSERT( !my_num_workers_requested && !my_num_workers_allotted, "Dying arena requests workers" );
     __TBB_ASSERT( my_pool_state == SNAPSHOT_EMPTY || !my_max_num_workers, "Inconsistent state of a dying arena" );
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-    __TBB_ASSERT( my_mandatory_mode != global_mandatory, NULL );
+    __TBB_ASSERT( my_concurrency_mode != cm_enforced_global, NULL );
 #endif
 #if !__TBB_STATISTICS_EARLY_DUMP
     GATHER_STATISTIC( dump_arena_statistics() );
@@ -286,7 +286,7 @@ void arena::free_arena () {
     __TBB_ASSERT( my_pool_state == SNAPSHOT_EMPTY || !my_max_num_workers, NULL );
     this->~arena();
 #if TBB_USE_ASSERT > 1
-    memset( storage, 0, allocation_size(my_max_num_workers) );
+    memset( storage, 0, allocation_size(my_num_slots) );
 #endif /* TBB_USE_ASSERT */
     NFS_Free( storage );
 }
@@ -365,24 +365,21 @@ void arena::orphan_offloaded_tasks(generic_scheduler& s) {
 }
 #endif /* __TBB_TASK_PRIORITY */
 
-void arena::restore_priorities_if_need() {
+bool arena::has_enqueued_tasks() {
+    // Look for enqueued tasks at all priority levels
+    for ( int p = 0; p < num_priority_levels; ++p )
+        if ( !my_task_stream.empty(p) )
+            return true;
+    return false;
+}
+
+void arena::restore_priority_if_need() {
     // Check for the presence of enqueued tasks "lost" on some of
     // priority levels because updating arena priority and switching
     // arena into "populated" (FULL) state happen non-atomically.
     // Imposing atomicity would require task::enqueue() to use a lock,
     // which is unacceptable.
-#if __TBB_TASK_PRIORITY
-    bool switch_back = false;
-    for ( int p = 0; p < num_priority_levels; ++p ) {
-        if ( !my_task_stream.empty(p) ) {
-            switch_back = true;
-            break;
-        }
-    }
-#else
-    bool switch_back = !my_task_stream.empty(0);
-#endif /* __TBB_TASK_PRIORITY */
-    if ( switch_back ) {
+    if ( has_enqueued_tasks() ) {
         advertise_new_work<work_enqueued>();
 #if __TBB_TASK_PRIORITY
         // update_arena_priority() expects non-zero arena::my_num_workers_requested,
@@ -500,17 +497,17 @@ bool arena::is_out_of_work() {
                                 int current_demand = (int)my_max_num_workers;
                                 if( my_pool_state.compare_and_swap( SNAPSHOT_EMPTY, busy )==busy ) {
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-                                    if( my_mandatory_mode==global_mandatory ) {
+                                    if( my_concurrency_mode==cm_enforced_global  ) {
                                         // adjust_demand() called inside, if needed
                                         my_market->mandatory_concurrency_disable( this );
                                     } else
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
                                     {
                                         // This thread transitioned pool to empty state, and thus is
-                                        // responsible for telling RML that there is no other work to do.
+                                        // responsible for telling the market that there is no work to do.
                                         my_market->adjust_demand( *this, -current_demand );
                                     }
-                                    restore_priorities_if_need();
+                                    restore_priority_if_need();
                                     return true;
                                 }
                                 return false;

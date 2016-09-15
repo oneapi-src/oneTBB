@@ -399,7 +399,10 @@ void TestExceptions() {
         my_throwing_type::throw_flag = 1;
         cpq_ex_test_type q;
     } catch(...) {
+#if !(_MSC_VER==1900)
         ASSERT(false, "FAILED: allocating empty queue should not throw exception.\n");
+        // VS2015 warns about the code in this catch block being unreachable
+#endif
     }
     // Allocate small queue should not throw for reasonably sized type
     try {

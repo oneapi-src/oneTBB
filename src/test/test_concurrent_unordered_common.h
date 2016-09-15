@@ -781,13 +781,14 @@ struct unordered_move_traits_base {
 };
 
 template<typename container_traits>
-void test_rvalue_ref_support(const char* /*container_name*/){
+void test_rvalue_ref_support(const char* container_name){
     TestMoveConstructor<container_traits>();
     TestMoveAssignOperator<container_traits>();
 #if TBB_USE_EXCEPTIONS
     TestExceptionSafetyGuaranteesMoveConstructorWithUnEqualAllocatorMemoryFailure<container_traits>();
     TestExceptionSafetyGuaranteesMoveConstructorWithUnEqualAllocatorExceptionInElementCtor<container_traits>();
 #endif //TBB_USE_EXCEPTIONS
+    REMARK("passed -- %s move support tests\n", container_name);
 }
 #endif //__TBB_CPP11_RVALUE_REF_PRESENT
 

@@ -228,6 +228,11 @@ public: // almost every class in TBB uses generic_scheduler
         In the latter case compacts the pool. **/
     task* get_task();
 
+    //! Extract a task from the proxy.
+    /** Returns the pointer to the extracted task or NULL if the proxy is empty.
+        In the latter case deallocates the proxy. **/
+    task* consume_proxy( task& proxy );
+
     //! Attempt to get a task from the mailbox.
     /** Gets a task only if it has not been executed by its sender or a thief
         that has stolen it from the sender's task pool. Otherwise returns NULL.
@@ -325,8 +330,8 @@ public:
     //! True if the scheduler is on the outermost dispatch level in a worker thread.
     inline bool worker_outermost_level () const;
 
-    //! Returns number of worker threads in the arena this thread belongs to.
-    unsigned number_of_workers_in_my_arena();
+    //! Returns the concurrency limit of the current arena.
+    unsigned max_threads_in_arena();
 
 #if __TBB_COUNT_TASK_NODES
     intptr_t get_task_node_count( bool count_arena_workers = false );
@@ -544,9 +549,9 @@ inline bool generic_scheduler::is_worker() {
     return my_is_worker;
 }
 
-inline unsigned generic_scheduler::number_of_workers_in_my_arena() {
+inline unsigned generic_scheduler::max_threads_in_arena() {
     __TBB_ASSERT(my_arena, NULL);
-    return my_arena->my_max_num_workers;
+    return my_arena->my_num_slots;
 }
 
 //! Return task object to the memory allocator.
@@ -648,13 +653,14 @@ inline intptr_t generic_scheduler::effective_reference_priority () const {
     return !worker_outermost_level() ||
         (my_arena->my_num_workers_allotted < my_arena->num_workers_active()
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-         && my_arena->my_mandatory_mode!=arena_base::global_mandatory
+         && my_arena->my_concurrency_mode!=arena_base::cm_enforced_global
 #endif
             ) ? *my_ref_top_priority : my_arena->my_top_priority;
 }
 
 inline void generic_scheduler::offload_task ( task& t, intptr_t /*priority*/ ) {
     GATHER_STATISTIC( ++my_counters.prio_tasks_offloaded );
+    __TBB_ASSERT( !is_proxy(t), "The proxy task cannot be offloaded" );
     __TBB_ASSERT( my_offloaded_task_list_tail_link && !*my_offloaded_task_list_tail_link, NULL );
 #if TBB_USE_ASSERT
     t.prefix().state = task::ready;

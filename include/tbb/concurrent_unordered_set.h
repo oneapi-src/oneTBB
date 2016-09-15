@@ -119,7 +119,7 @@ public:
     }
 #endif //# __TBB_INITIALIZER_LISTS_PRESENT
 
-#if __TBB_CPP11_RVALUE_REF_PRESENT && __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_FOR_DERIVED_BROKEN
+#if __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN
     concurrent_unordered_set(const concurrent_unordered_set& table)
         : base_type(table)
     {
@@ -139,7 +139,7 @@ public:
     {
         return static_cast<concurrent_unordered_set&>(base_type::operator=(std::move(table)));
     }
-#endif //__TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_FOR_DERIVED_BROKEN
+#endif //__TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN
 
     concurrent_unordered_set(const concurrent_unordered_set& table, const Allocator& a)
         : base_type(table, a)
@@ -225,7 +225,7 @@ public:
     }
 #endif //# __TBB_INITIALIZER_LISTS_PRESENT
 
-#if __TBB_CPP11_RVALUE_REF_PRESENT && __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_FOR_DERIVED_BROKEN
+#if __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN
    concurrent_unordered_multiset(const concurrent_unordered_multiset& table)
         : base_type(table)
     {
@@ -245,7 +245,7 @@ public:
     {
         return static_cast<concurrent_unordered_multiset&>(base_type::operator=(std::move(table)));
     }
-#endif //__TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_FOR_DERIVED_BROKEN
+#endif //__TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN
 
     concurrent_unordered_multiset(const concurrent_unordered_multiset& table, const Allocator& a)
         : base_type(table, a)

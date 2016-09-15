@@ -45,6 +45,8 @@ To port Intel TBB to a new platform, operating system or architecture, see the <
 <LI>GNU make utility. On Windows OS, if a UNIX* emulator is used to run GNU make,
     it should be able to run Windows OS utilities and commands. On Linux OS, OS X, etc.,
     shell commands issued by GNU make should execute in a Bourne or BASH compatible shell.
+    In the following examples, replace <TT>make</TT> with the correct GNU make command for
+    your system (for example, <TT>gmake</TT>). GNU make version 3.80 and more recent are supported.
 </OL>
 
 <P>
@@ -57,7 +59,7 @@ On systems that support both 64-bit and 32-bit libraries, these steps build the 
 <LI>Change to the <A HREF="../index.html">top-level directory</A> of the installed software.
 <LI>If using the Intel&reg; C++ compiler, make sure the appropriate compiler is available in your PATH
     (e.g., by sourcing the appropriate iccvars script for the compiler to be used).
-<LI>Invoke GNU make using no arguments, for example, 'gmake'.
+<LI>Invoke GNU make using no arguments, for example, <TT>make</TT>.
 </OL>
 
 <P>
@@ -68,15 +70,15 @@ or related systems that support both 64-bit and 32-bit libraries), perform the f
 <LI>Change to the <A HREF="../index.html">top-level directory</A> of the installed software.
 <LI>If using the Intel&reg; C++ compiler, make sure the appropriate compiler is available in your PATH
     (e.g., by sourcing the appropriate iccvars script for the compiler to be used).
-<LI>Invoke GNU make as follows, 'gmake arch=ia32'.
+<LI>Explicitly specify the architecture when invoking GNU make, e.g. <TT>make arch=ia32</TT>.
 </OL>
 
 <P>The default make target will build the release and debug versions of the Intel TBB library.</P>
 <P>Other targets are available in the top-level Makefile. You might find the following targets useful:
 <UL>
-<LI>'make test' will build and run Intel TBB <A HREF="../src/test">unit-tests</A>;
-<LI>'make examples' will build and run Intel TBB <A HREF="../examples/index.html">examples</A>;
-<LI>'make all' will do all of the above.
+<LI><TT>make test</TT> will build and run Intel TBB <A HREF="../src/test">unit-tests</A>;
+<LI><TT>make examples</TT> will build and run Intel TBB <A HREF="../examples/index.html">examples</A>;
+<LI><TT>make all</TT> will do all of the above.
 </UL>
 See also the list of other targets below.
 </P>
@@ -100,9 +102,9 @@ To perform different build and/or test operations, use the following steps.
 <LI>Invoke GNU make by using one or more of the following commands.
     <DL>
     <DT><TT>make</TT>
-    <DD>Default build.  Equivalent to 'make tbb tbbmalloc'.
+    <DD>Default build.  Equivalent to <TT>make tbb tbbmalloc</TT>.
     <DT><TT>make all</TT>
-    <DD>Equivalent to 'make tbb tbbmalloc test examples'.
+    <DD>Equivalent to <TT>make tbb tbbmalloc test examples</TT>.
     <DT><TT>cd src;make release</TT>
     <DD>Build and test release libraries only.
     <DT><TT>cd src;make debug</TT>
@@ -114,7 +116,9 @@ To perform different build and/or test operations, use the following steps.
     <DT><TT>make test</TT>
     <DD>Compile and run unit-tests
     <DT><TT>make examples</TT>
-    <DD>Build libraries and run all examples, like doing 'make debug clean release' from <A HREF="../examples/Makefile">the general example Makefile</A>.
+    <DD>Build libraries and run all examples, like doing <TT>make debug clean release</TT> from <A HREF="../examples/Makefile">the general example Makefile</A>.
+    <DT><TT>make python</TT>
+    <DD>Build, install, and test Python* API for Intel TBB. See <A HREF="../python/index.html">details here</A>.
     <DT><TT>make compiler=<B>{</B>icl, icc, gcc, clang<B>}</B> <B>[</B>(above options or targets)<B>]</B></TT>
     <DD>Build and run as above, but use specified compilers instead of default, native compilers
     <ol>
@@ -137,7 +141,7 @@ To perform different build and/or test operations, use the following steps.
     <DD>Build and run as above, but build libraries for the selected ABI.
         Might be useful for cross-compilation; ensure proper environment is set before running this command.
     <DT><TT>make tbb_root=<B>{</B>(Intel TBB directory)<B>}</B> <B>[</B>(above options or targets)<B>]</B></TT>
-    <DD>Build and run as above; for use when invoking 'make' from a directory other than the <A HREF="../index.html">top-level directory</A>.
+    <DD>Build and run as above; for use when invoking <TT>make</TT> from a directory other than the <A HREF="../index.html">top-level directory</A>.
     <DT><TT>make tbb_build_dir=<B>{</B>(build directory)<B>}</B> <B>[</B>(above options or targets)<B>]</B></TT>
     <DD>Build and run as above, but place the built libraries in the specified directory, rather than in the default sub-directory within the build/ directory. This command might have troubles with the build in case the sources installed to the directory with spaces in the path.
     <DT><TT>make tbb_build_prefix=<B>{</B>(build sub-directory)<B>}</B> <B>[</B>(above options or targets)<B>]</B></TT>
@@ -229,8 +233,7 @@ See the Makefile infrastructure files for examples.
 <P></P>
 Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.
 <P></P>
-Intel and Itanium are registered trademarks or trademarks of Intel Corporation or its
-subsidiaries in the United States and other countries.
+Intel, the Intel logo and Itanium are trademarks of Intel Corporation in the U.S. and/or other countries.
 <p></p>
 * Other names and brands may be claimed as the property of others.
 </BODY>

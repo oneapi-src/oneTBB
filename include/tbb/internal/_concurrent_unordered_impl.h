@@ -708,7 +708,7 @@ protected:
           my_allocator(a), my_maximum_bucket_size((float) initial_bucket_load)
     {
         if( n_of_buckets == 0) ++n_of_buckets;
-        my_number_of_buckets = 1<<__TBB_Log2((uintptr_t)n_of_buckets*2-1); // round up to power of 2
+        my_number_of_buckets = size_type(1)<<__TBB_Log2((uintptr_t)n_of_buckets*2-1); // round up to power of 2
         internal_init();
     }
 
@@ -1194,7 +1194,7 @@ public:
         size_type current_buckets = my_number_of_buckets;
         if (current_buckets >= buckets)
             return;
-        my_number_of_buckets = 1<<__TBB_Log2((uintptr_t)buckets*2-1); // round up to power of 2
+        my_number_of_buckets = size_type(1)<<__TBB_Log2((uintptr_t)buckets*2-1); // round up to power of 2
     }
 
 private:

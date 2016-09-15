@@ -230,10 +230,6 @@ void print_my_value(std::string const &i) {
     REMARK("\"%s\"", i.c_str());
 }
 
-#if defined(_MSC_VER) && _MSC_VER < 1600
-    #pragma warning (disable : 4503) //disabling the "decorated name length exceeded" warning for VS2008 and earlier
-#endif
-
 //
 // Tests
 //

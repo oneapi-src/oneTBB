@@ -17,7 +17,7 @@
 # reasons why the executable file might be covered by the GNU General Public License.
 
 # detect if a compiler can support C++11
-# if CXX0XFLAGS already set, do not change it
+# If CXX0XFLAGS already set, do not change it
 ifneq (,$(findstring $(CXX), icc icpc clang++))
     # every supported icc or clang is OK
     CXX0XFLAGS ?= -std=c++0x

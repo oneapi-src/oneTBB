@@ -927,10 +927,10 @@ void TestSerialGrowByWithMoveIterators(){
 namespace test_move_in_shrink_to_fit_helpers {
     struct dummy : Harness::StateTrackable<>{
         int i;
-        dummy(int an_i) __TBB_NOTHROW : Harness::StateTrackable<>(0), i(an_i)  {};
+        dummy(int an_i) __TBB_NOTHROW : Harness::StateTrackable<>(0), i(an_i) {}
 #if __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN
-        dummy(const dummy &src) __TBB_NOTHROW : Harness::StateTrackable<>(src), i(src.i)  {};
-        dummy(dummy &&src) __TBB_NOTHROW : Harness::StateTrackable<>(std::move(src)), i(src.i) {};
+        dummy(const dummy &src) __TBB_NOTHROW : Harness::StateTrackable<>(src), i(src.i) {}
+        dummy(dummy &&src) __TBB_NOTHROW : Harness::StateTrackable<>(std::move(src)), i(src.i) {}
 
         dummy& operator=(dummy &&src) __TBB_NOTHROW {
             Harness::StateTrackable<>::operator=(std::move(src));
@@ -939,7 +939,7 @@ namespace test_move_in_shrink_to_fit_helpers {
         }
 
         //somehow magically this declaration make std::is_nothrow_move_constructible<pod>::value to works correctly on icc14+msvc2013
-        ~dummy() __TBB_NOTHROW {};
+        ~dummy() __TBB_NOTHROW {}
 #endif //__TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN
         friend bool operator== (const dummy &lhs, const dummy &rhs){ return lhs.i == rhs.i; }
     };

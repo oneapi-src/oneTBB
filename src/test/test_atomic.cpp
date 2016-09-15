@@ -613,8 +613,8 @@ void TestAlignment( const char* name ) {
 }
 
 #if _MSC_VER && !defined(__INTEL_COMPILER)
-    // unary minus operator applied to unsigned type, result still unsigned
-    #pragma warning( disable: 4146 )
+    #pragma warning( disable: 4146 ) // unary minus operator applied to unsigned type, result still unsigned
+    #pragma warning( disable: 4334 ) // result of 32-bit shift implicitly converted to 64 bits
 #endif
 
 /** T is an integral type. */

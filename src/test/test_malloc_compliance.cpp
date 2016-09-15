@@ -732,7 +732,7 @@ void CMemTest::NULLReturn(UINT MinSize, UINT MaxSize, int total_threads)
 
     /* There is a bug in the specific version of GLIBC (2.5-12) shipped
        with RHEL5 that leads to erroneous working of the test
-       on Intel64 and IPF systems when setrlimit-related part is enabled.
+       on Intel(R) 64 and Itanium(R) architecture when setrlimit-related part is enabled.
        Switching to GLIBC 2.5-18 from RHEL5.1 resolved the issue.
      */
     if (perProcessLimits)
