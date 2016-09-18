@@ -52,7 +52,6 @@ else()
     set(CMAKE_CXX_STANDARD "11") ## Default to cmake standard version 11 if not previously set
   endif()
 endif()
-message(STATUS "Building with CMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}")
 
 foreach(p
     CMP048  ##NEW project() behavior for setting VERSION variable
@@ -86,7 +85,8 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     "MinSizeRel" "RelWithDebInfo")
 endif()
 
-include_directories(include src src/rml/include ${CMAKE_CURRENT_BINARY_DIR})
+
+include_directories(src include src/rml/include ${CMAKE_CURRENT_BINARY_DIR})
 
 option(TBB_BUILD_SHARED          "Build TBB shared library" ON)
 option(TBB_BUILD_STATIC          "Build TBB static library" ON)
@@ -139,7 +139,6 @@ if (UNIX)
   check_cxx_compiler_flag ("-mrtm" SUPPORTS_MRTM)
   if (SUPPORTS_MRTM)
     set (CMAKE_CXX_FLAGS "-mrtm ${CMAKE_CXX_FLAGS}")
-    message(STATUS "NOTE: Using -mrtm flag for compiler")
   endif ()
 endif()
 
@@ -193,10 +192,15 @@ if (NOT TBB_USE_GLIBCXX_VERSION AND UNIX AND NOT APPLE)
   if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     # using Clang
     string(REPLACE "." "0" TBB_USE_GLIBCXX_VERSION ${CMAKE_CXX_COMPILER_VERSION})
+  elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    # Do nothing using GCC
+  elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+    # Do nothing when using Intel C++
+  elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    # Do nothgin when using Visual Studio C++
   endif()
 endif()
-
-if (TBB_USE_GLIBCXX_VERSION)
+if(TBB_USE_GLIBCXX_VERSION)
    add_definitions(-DTBB_USE_GLIBCXX_VERSION=${TBB_USE_GLIBCXX_VERSION})
 endif()
 
