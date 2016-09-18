@@ -422,7 +422,6 @@ if (TBB_BUILD_TESTS)
 
   macro (tbb_add_test testname)
     add_executable (test_${testname} EXCLUDE_FROM_ALL src/test/test_${testname}.cpp)
-    set_target_properties( test_${testname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/testbin )
 
     add_dependencies (tests test_${testname})
     if (TBB_BUILD_SHARED)
