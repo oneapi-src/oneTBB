@@ -69,6 +69,9 @@ foreach(p
 endforeach()
 
 project (tbb CXX)
+#
+# enable language features that may affect other settings
+enable_language(CXX)
 
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -128,19 +131,19 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 if (UNIX)
-  add_definitions (-DUSE_PTHREAD)
-
   check_cxx_compiler_flag ("-mrtm" SUPPORTS_MRTM)
   if (SUPPORTS_MRTM)
     set (CMAKE_CXX_FLAGS "-mrtm ${CMAKE_CXX_FLAGS}")
   endif ()
+endif()
 
+if (UNIX)
+  add_definitions (-DUSE_PTHREAD)
 elseif(WIN32)
   if (MSVC)
     #pragma comment( linker, "/nodefaultlib:tbb_debug.lib" )
     set (CMAKE_DEBUG_POSTFIX "_debug")
-
-    cmake_minimum_required (VERSION 3.1)
+    cmake_minimum_required (VERSION 3.1 FATAL_ERROR)
     enable_language(ASM_MASM)
     set(CMAKE_CXX_FLAGS "/GS- /Zc:wchar_t /Zc:forScope /DUSE_WINTHREAD ${CMAKE_CXX_FLAGS}")
     set(CMAKE_CXX_FLAGS "/D_CRT_SECURE_NO_DEPRECATE /D_WIN32_WINNT=0x0600 ${CMAKE_CXX_FLAGS}")
@@ -352,7 +355,7 @@ configure_file (build/version_string.ver.in version_string.ver @ONLY)
 
 
 if (TBB_BUILD_TESTS)
-  enable_language (C)
+  enable_language (C) ## Needed for testing, Only enable C language for testing
   enable_testing ()
 
   find_library (LIBRT_LIBRARIES rt)
