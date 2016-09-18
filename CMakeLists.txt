@@ -68,6 +68,11 @@ foreach(p
   endif()
 endforeach()
 
+########
+########
+## Now start configuring the project itself
+########
+########
 project (tbb CXX)
 #
 # enable language features that may affect other settings
@@ -134,6 +139,7 @@ if (UNIX)
   check_cxx_compiler_flag ("-mrtm" SUPPORTS_MRTM)
   if (SUPPORTS_MRTM)
     set (CMAKE_CXX_FLAGS "-mrtm ${CMAKE_CXX_FLAGS}")
+    message(STATUS "NOTE: Using -mrtm flag for compiler")
   endif ()
 endif()
 
@@ -509,3 +515,4 @@ if (TBB_BUILD_TESTS)
   tbb_add_test (write_once_node)
   tbb_add_test (yield)
 endif ()
+
