@@ -1,4 +1,59 @@
-cmake_minimum_required (VERSION 2.8)
+#
+# CMake buld configuration for tbb
+#
+if(DEFINED CMAKE_CXX_STANDARD AND (NOT ${CMAKE_CXX_STANDARD} EQUAL "98" ))
+  cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR) ## 3.2.0 needed for AppleClang CXX11 finding
+else()
+  cmake_minimum_required (VERSION 2.8.7 FATAL_ERROR)
+endif()
+
+if("${CMAKE_VERSION}" VERSION_LESS 3.2.0)
+  message(STATUS "NOTE: CMake version 3.2.0 or greater will provide more complete build support features.")
+endif()
+
+#
+# enable language features that may affect other settings
+# including the ability to try_compile when searching for C++11
+enable_language(CXX)
+#
+# Try to force compilers support CXX 11 by default
+#
+# NOTE: Linking libraries compiled with different standards conformance
+#       may result in errors at runtime.  This is particularly true
+#       on some mac build environments where the
+#       standard template library is defaulted to versions with
+#       different ABI based on the the CXX standard choosen.
+#       It is recommended that all applications (i.e. downstream
+#       applications that depend on this build of tbb) use
+#       the same compiler standard conformance as when tbb
+#       as built.
+#
+#
+#
+include (CheckCXXCompilerFlag)
+if("${CMAKE_VERSION}" VERSION_LESS 3.2.0) #Fallback for old versions of cmake
+  if(NOT CMAKE_CXX_STANDARD OR "${CMAKE_CXX_STANDARD}" LESS "98")
+    ## Use unreliable method for propagating and configuring for
+    #  cmake instrospection with c++11 features
+    check_cxx_compiler_flag ("-std=c++11" SUPPORTS_STDCXX11)
+    if (SUPPORTS_STDCXX11)
+      set (CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+      set(CMAKE_CXX_STANDARD "11") ## Default to cmake standard version 11 if not previously set
+    else()
+      set(CMAKE_CXX_STANDARD "98") ## Default to cmake standard version 98 if -std=c++11 not supported
+    endif ()
+   endif()
+else()
+  ## In recent versions of cmake, it is recommended
+  ## to use CMAKE_CXX_STANDARD, which will allow for
+  ## 98,11,or 14 as options currently, and provides
+  ## extensive compiler specific feature support.
+  if(NOT CMAKE_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD "11") ## Default to cmake standard version 11 if not previously set
+  endif()
+endif()
+message(STATUS "Building with CMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}")
+
 foreach(p
     CMP048  ##NEW project() behavior for setting VERSION variable
     CMP0025 # CMake 3.0 AppleClang vs. regular Clang
@@ -15,7 +70,6 @@ endforeach()
 
 project (tbb CXX)
 
-include (CheckCXXCompilerFlag)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "Setting build type to 'Release' as none was specified.")
@@ -75,11 +129,6 @@ endif()
 
 if (UNIX)
   add_definitions (-DUSE_PTHREAD)
-
-  check_cxx_compiler_flag ("-std=c++11" SUPPORTS_STDCXX11)
-  if (SUPPORTS_STDCXX11)
-    set (CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
-  endif ()
 
   check_cxx_compiler_flag ("-mrtm" SUPPORTS_MRTM)
   if (SUPPORTS_MRTM)
