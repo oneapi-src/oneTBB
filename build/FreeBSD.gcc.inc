@@ -34,6 +34,13 @@ LIB_LINK_FLAGS = -shared
 LIBS = -lpthread 
 C_FLAGS = $(CPLUS_FLAGS)
 
+# gcc 6.0 and later have -flifetime-dse option that controls
+# elimination of stores done outside the object lifetime
+ifneq (,$(shell gcc -dumpversion | egrep  "^([6-9])"))
+    # keep pre-contruction stores for zero initialization
+    DSE_KEY = -flifetime-dse=1
+endif
+
 ifeq ($(cfg), release)
         CPLUS_FLAGS = -g -O2 -DUSE_PTHREAD
 endif

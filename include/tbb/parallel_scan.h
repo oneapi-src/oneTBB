@@ -233,6 +233,7 @@ namespace internal {
                     range_,
                     *temp_body,
                     partitioner_ );
+                temp_body->my_body.reverse_join(body_);
                 task::spawn_root_and_wait( pass1 );
                 if( root ) {
                     root->my_body = temp_body;

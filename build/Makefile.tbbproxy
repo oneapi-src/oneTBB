@@ -33,7 +33,7 @@ VPATH += $(PROXY_ROOT) $(PROXY_SOURCE_ROOT)
 CPLUS_FLAGS += $(DEFINE_KEY)__TBB_DLL_NAME=$(TBB.DLL)
 CPLUS_FLAGS += $(DEFINE_KEY)__TBB_LST=$(TBB.LST)
 CPLUS_FLAGS += $(foreach dir,$(VPATH),$(INCLUDE_KEY)$(dir))
-CPLUS_FLAGS += $(PIC_KEY)
+CPLUS_FLAGS += $(PIC_KEY) $(DSE_KEY)
 
 include $(tbb_root)/build/common_rules.inc
 

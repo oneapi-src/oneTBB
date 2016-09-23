@@ -78,7 +78,7 @@ R_CPLUS_FLAGS =  $(subst DO_ITT_NOTIFY,DO_ITT_NOTIFY=0,$(CPLUS_FLAGS)) $(WARNING
 		 $(DEFINE_KEY)TBB_USE_THREADING_TOOLS=0 $(DEFINE_KEY)__TBB_RML_STATIC=1 $(DEFINE_KEY)__TBB_NO_IMPLICIT_LINKAGE=1
 
 %.$(OBJ): %.cpp
-	$(CPLUS) $(COMPILE_ONLY) $(R_CPLUS_FLAGS) $(PIC_KEY) $(INCLUDES) $<
+	$(CPLUS) $(COMPILE_ONLY) $(R_CPLUS_FLAGS) $(PIC_KEY) $(DSE_KEY) $(INCLUDES) $<
 
 ifeq (linux,$(tbb_os))
 omp_dynamic_link.$(OBJ): CPLUS_FLAGS+=-fno-exceptions
@@ -89,7 +89,7 @@ tbb_misc_rml.$(OBJ): version_string.ver
 RML_TEST.OBJ = test_job_automaton.$(OBJ) test_thread_monitor.$(OBJ) test_rml_tbb.$(OBJ) test_rml_omp.$(OBJ) test_rml_mixed.$(OBJ)
 
 $(RML_TBB_DEP): %_rml.$(OBJ): %.cpp
-	$(CPLUS) $(COMPILE_ONLY) $(OUTPUTOBJ_KEY)$@ $(R_CPLUS_FLAGS) $(PIC_KEY) $(INCLUDES) $<
+	$(CPLUS) $(COMPILE_ONLY) $(OUTPUTOBJ_KEY)$@ $(R_CPLUS_FLAGS) $(PIC_KEY) $(DSE_KEY) $(INCLUDES) $<
 
 $(RML_TEST.OBJ): %.$(OBJ): %.cpp
 	$(CPLUS) $(COMPILE_ONLY) $(R_CPLUS_FLAGS) $(PIC_KEY) $(T_INCLUDES) $<

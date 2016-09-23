@@ -344,19 +344,19 @@ protected:
 };
 
 template<size_t padd>
-struct Padding {
+struct PaddingImpl {
     size_t       __padding[padd];
 };
 
 template<>
-struct Padding<0> {
+struct PaddingImpl<0> {
 };
 
-class LocalBlockFields : public GlobalBlockFields {
-protected:
-    Padding<(blockHeaderAlignment -
-             sizeof(GlobalBlockFields))/sizeof(size_t)> pad_local;
+template<int N>
+struct Padding : PaddingImpl<N/sizeof(size_t)> {};
 
+class LocalBlockFields : public GlobalBlockFields, Padding<blockHeaderAlignment - sizeof(GlobalBlockFields)>  {
+protected:
     Block       *next;
     Block       *previous;        /* Use double linked list to speed up removal */
     FreeObject  *bumpPtr;         /* Bump pointer moves from the end to the beginning of a block */
@@ -378,9 +378,11 @@ protected:
     friend Block *MemoryPool::getEmptyBlock(size_t size);
 };
 
-class Block : public LocalBlockFields {
-    Padding<(2*blockHeaderAlignment -
-             sizeof(LocalBlockFields))/sizeof(size_t)> pad_public;
+// Use inheritance to guarantee that a user data start on next cache line.
+// Can't use member for it, because when LocalBlockFields already on cache line,
+// we must have no additional memory consumption for all compilers.
+class Block : public LocalBlockFields,
+              Padding<2*blockHeaderAlignment - sizeof(LocalBlockFields)> {
 public:
     bool empty() const { return allocatedCount==0 && publicFreeList==NULL; }
     inline FreeObject* allocate();
@@ -802,6 +804,19 @@ static inline unsigned int highestBitPos(unsigned int n)
     return pos;
 }
 
+template<bool Is32Bit>
+unsigned int getSmallObjectIndex(unsigned int size)
+{
+    return (size-1)>>3;
+}
+template<>
+unsigned int getSmallObjectIndex</*Is32Bit=*/false>(unsigned int size)
+{
+    // For 64-bit malloc, 16 byte alignment is needed except for bin 0.
+    unsigned int result = (size-1)>>3;
+    if (result) result |= 1; // 0,1,3,5,7; bins 2,4,6 are not aligned to 16 bytes
+    return result;
+}
 /*
  * Depending on indexRequest, for a given size return either the index into the bin
  * for objects of this size, or the actual size of objects in this bin.
@@ -809,9 +824,10 @@ static inline unsigned int highestBitPos(unsigned int n)
 template<bool indexRequest>
 static unsigned int getIndexOrObjectSize (unsigned int size)
 {
-    if (size <= maxSmallObjectSize) { // selection from 4/8/16/24/32/40/48/56/64
-         /* Index 0 holds up to 8 bytes, Index 1 16 and so forth */
-        return indexRequest ? (size - 1) >> 3 : alignUp(size,8);
+    if (size <= maxSmallObjectSize) { // selection from 8/16/24/32/40/48/56/64
+        unsigned int index = getSmallObjectIndex</*Is32Bit=*/(sizeof(size_t)<=4)>( size );
+         /* Bin 0 is for 8 bytes, bin 1 is for 16, and so forth */
+        return indexRequest ? index : (index+1)<<3;
     }
     else if (size <= maxSegregatedObjectSize ) { // 80/96/112/128 / 160/192/224/256 / 320/384/448/512 / 640/768/896/1024
         unsigned int order = highestBitPos(size-1); // which group of bin sizes?
@@ -849,12 +865,12 @@ static unsigned int getIndexOrObjectSize (unsigned int size)
 
 static unsigned int getIndex (unsigned int size)
 {
-    return getIndexOrObjectSize</*indexRequest*/true>(size);
+    return getIndexOrObjectSize</*indexRequest=*/true>(size);
 }
 
 static unsigned int getObjectSize (unsigned int size)
 {
-    return getIndexOrObjectSize</*indexRequest*/false>(size);
+    return getIndexOrObjectSize</*indexRequest=*/false>(size);
 }
 
 

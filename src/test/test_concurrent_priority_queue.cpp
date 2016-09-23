@@ -808,9 +808,10 @@ void TestMoveSupportInPushPop() {
     ASSERT(o.value1 == 8 && o.value2 == 8, "Unexpected data popped; possible emplace() failure.");
     ASSERT(!q2.try_pop(o), "The queue should be empty.");
 
+    //TODO: revise this test
     concurrent_priority_queue<ForwardInEmplaceTester> q3;
     ASSERT( ForwardInEmplaceTester::moveCtorCalled == false, NULL );
-    q3.emplace( tbb::internal::move( ForwardInEmplaceTester(5) ), 2 );
+    q3.emplace( ForwardInEmplaceTester(5), 2 );
     ASSERT( ForwardInEmplaceTester::moveCtorCalled == true, "Not used std::forward in emplace()?" );
     ForwardInEmplaceTester obj( 0 );
     q3.try_pop( obj );

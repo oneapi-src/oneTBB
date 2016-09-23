@@ -639,7 +639,7 @@
     #define __TBB_GCC_CAS8_BUILTIN_INLINING_BROKEN 1
 #endif
 
-#if __TBB_x86_32 && ( __INTEL_COMPILER || (__GNUC__==5 && __GNUC_MINOR__==2 && __GXX_EXPERIMENTAL_CXX0X__) \
+#if __TBB_x86_32 && ( __INTEL_COMPILER || (__GNUC__==5 && __GNUC_MINOR__>=2 && __GXX_EXPERIMENTAL_CXX0X__) \
     || (__GNUC__==3 && __GNUC_MINOR__==3) || (__MINGW32__ && __GNUC__==4 && __GNUC_MINOR__==5) || __SUNPRO_CC )
     // Some compilers for IA-32 architecture fail to provide 8-byte alignment of objects on the stack,
     // even if the object specifies 8-byte alignment. On such platforms, the implementation
@@ -665,11 +665,10 @@
 
 #if __TBB_CPP11_RVALUE_REF_PRESENT
 //Some compilers added implicit generation of move constructor & assignment operator in a later version
-#if _MSC_VER
-  // Covers Intel C++ Compiler for Windows, which has compatible behavior
+#if __INTEL_COMPILER
+  #define __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN  (__INTEL_COMPILER < 1400 || __INTEL_COMPILER==1600 || _MSC_VER <= 1800)
+#elif _MSC_VER
   #define __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN  (_MSC_VER <= 1800)
-#elif __INTEL_COMPILER
-  #define __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN  (__INTEL_COMPILER < 1400 || __INTEL_COMPILER==1600)
 #elif __clang__
   #define __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN  (!__has_feature(cxx_implicit_moves))
 #endif

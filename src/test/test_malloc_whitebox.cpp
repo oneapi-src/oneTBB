@@ -203,24 +203,33 @@ public:
 
 #endif /* MALLOC_CHECK_RECURSION */
 
+#include <deque>
+
+template<int ITERS>
 class BackRefWork: NoAssign {
     struct TestBlock {
-        intptr_t   data;
         BackRefIdx idx;
+        char       data;
+        TestBlock(BackRefIdx idx_) : idx(idx_) {}
     };
-    static const int ITERS = 2*BR_MAX_CNT+2;
 public:
     BackRefWork() {}
     void operator()(int) const {
-        TestBlock blocks[ITERS];
+        size_t cnt;
+        // it's important to not invalidate pointers to the contents of the container
+        std::deque<TestBlock> blocks;
 
-        for (int i=0; i<ITERS; i++) {
-            blocks[i].idx = BackRefIdx::newBackRef(/*largeObj=*/false);
-            setBackRef(blocks[i].idx, &blocks[i].data);
+        // for ITERS==0 consume all available backrefs
+        for (cnt=0; !ITERS || cnt<ITERS; cnt++) {
+            BackRefIdx idx = BackRefIdx::newBackRef(/*largeObj=*/false);
+            if (idx.isInvalid())
+                break;
+            blocks.push_back(TestBlock(idx));
+            setBackRef(blocks.back().idx, &blocks.back().data);
         }
-        for (int i=0; i<ITERS; i++)
+        for (int i=0; i<cnt; i++)
             ASSERT((Block*)&blocks[i].data == getBackRef(blocks[i].idx), NULL);
-        for (int i=ITERS-1; i>=0; i--)
+        for (int i=cnt-1; i>=0; i--)
             removeBackRef(blocks[i].idx);
     }
 };
@@ -306,14 +315,14 @@ void TestBackRef() {
 
     beforeNumBackRef = allocatedBackRefCount();
     for( int p=MaxThread; p>=MinThread; --p )
-        NativeParallelFor( p, BackRefWork() );
+        NativeParallelFor( p, BackRefWork<2*BR_MAX_CNT+2>() );
     afterNumBackRef = allocatedBackRefCount();
     ASSERT(beforeNumBackRef==afterNumBackRef, "backreference leak detected");
 
     // lastUsed marks peak resource consumption. As we allocate below the mark,
     // it must not move up, otherwise there is a resource leak.
     int sustLastUsed = backRefMaster->lastUsed;
-    NativeParallelFor( 1, BackRefWork() );
+    NativeParallelFor( 1, BackRefWork<2*BR_MAX_CNT+2>() );
     ASSERT(sustLastUsed == backRefMaster->lastUsed, "backreference leak detected");
 
     // check leak of back references while per-thread caches are in use
@@ -333,6 +342,10 @@ void TestBackRef() {
     // seems valid BackRefIdx for large objects, and thus trigger the bug.
     TestInvalidBackrefs::initBarrier(MaxThread);
     NativeParallelFor( MaxThread, TestInvalidBackrefs() );
+    // Consume all available backrefs and check they work correctly.
+    // For now test 32-bit machines only, because for 64-bit memory consumption is too high.
+    if (sizeof(uintptr_t) == 4)
+        NativeParallelFor( MaxThread, BackRefWork<0>() );
 }
 
 void *getMem(intptr_t /*pool_id*/, size_t &bytes)
@@ -525,7 +538,7 @@ void TestObjectRecognition() {
     unsigned falseObjectSize = 113; // unsigned is the type expected by getObjectSize
     size_t obtainedSize;
 
-    ASSERT(sizeof(BackRefIdx)==4, "Unexpected size of BackRefIdx");
+    ASSERT(sizeof(BackRefIdx)==sizeof(uintptr_t), "Unexpected size of BackRefIdx");
     ASSERT(getObjectSize(falseObjectSize)!=falseObjectSize, "Error in test: bad choice for false object size");
 
     void* mem = scalable_malloc(2*slabSize);
@@ -1112,6 +1125,30 @@ void TestLOC() {
 }
 /*---------------------------------------------------------------------------*/
 
+void *findCacheLine(void *p) {
+    return (void*)alignDown((uintptr_t)p, estimatedCacheLineSize);
+}
+
+// test that internals of Block are at expected cache lines
+void TestSlabAlignment() {
+    const size_t min_sz = 8;
+    const int space = 2*16*1024; // fill at least 2 slabs
+    void *ptrs[space / min_sz];  // the worst case is min_sz byte object
+
+    for (size_t sz = min_sz; sz <= 64; sz *= 2) {
+        for (int i = 0; i < space/sz; i++) {
+            ptrs[i] = scalable_malloc(sz);
+            Block *block = (Block *)alignDown(ptrs[i], slabSize);
+            MALLOC_ASSERT(findCacheLine(&block->isFull) != findCacheLine(ptrs[i]),
+                          "A user object must not share a cache line with slab control structures.");
+            MALLOC_ASSERT(findCacheLine(&block->next) != findCacheLine(&block->nextPrivatizable),
+                          "GlobalBlockFields and LocalBlockFields must be on different cache lines.");
+        }
+        for (int i = 0; i < space/sz; i++)
+            scalable_free(ptrs[i]);
+    }
+}
+
 int TestMain () {
     scalable_allocation_mode(USE_HUGE_PAGES, 0);
 #if !_XBOX && !__TBB_WIN8UI_SUPPORT
@@ -1140,5 +1177,6 @@ int TestMain () {
     TestHeapLimit();
     TestCleanAllBuffers();
     TestLOC();
+    TestSlabAlignment();
     return Harness::Done;
 }

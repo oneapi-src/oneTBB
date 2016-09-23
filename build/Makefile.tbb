@@ -36,7 +36,7 @@ default_tbb: $(TBB.DLL)
 
 VPATH = $(tbb_root)/src/tbb/$(ASSEMBLY_SOURCE) $(tbb_root)/src/tbb $(tbb_root)/src/old $(tbb_root)/src/rml/client
 
-CPLUS_FLAGS += $(PIC_KEY) $(DEFINE_KEY)__TBB_BUILD=1
+CPLUS_FLAGS += $(PIC_KEY) $(DSE_KEY) $(DEFINE_KEY)__TBB_BUILD=1
 
 # suppress warnings for build of itt_notify by GCC3
 ifneq (,$(findstring gcc_cc3., $(compiler)_$(runtime)))

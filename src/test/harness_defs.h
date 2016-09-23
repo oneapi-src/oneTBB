@@ -130,8 +130,8 @@
 #define __TBB_COMPLICATED_ADL_BROKEN ( __TBB_GCC_VERSION && __TBB_GCC_VERSION < 40400 )
 
 // Intel Compiler fails to compile the comparison of tuples in some cases
-#if __INTEL_COMPILER && __INTEL_COMPILER < 1600 || __INTEL_COMPILER == 1600 && __INTEL_COMPILER_UPDATE <= 1
-  #define __TBB_TUPLE_COMPARISON_COMPILATION_BROKEN (__TBB_GCC_VERSION >= 40800 && __TBB_GCC_VERSION <= 50101 || __MIC__)
+#if __INTEL_COMPILER && __INTEL_COMPILER < 1700
+  #define __TBB_TUPLE_COMPARISON_COMPILATION_BROKEN (__TBB_GCC_VERSION >= 40800 || __MIC__)
 #endif
 
 // Intel Compiler fails to compile std::reference in some cases

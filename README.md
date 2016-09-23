@@ -1,4 +1,4 @@
-# Intel(R) Threading Building Blocks 4.4 Update 5
+# Intel(R) Threading Building Blocks 4.4 Update 6
 
 Intel(R) Threading Building Blocks (Intel(R) TBB) lets you easily write parallel C++ programs that take
 full advantage of multicore performance, that are portable, composable and have future-proof scalability.
@@ -8,7 +8,7 @@ Here are the latest [Changes] (CHANGES) and [Release Notes]
 (doc/Release_Notes.txt) (contains system requirements and known issues).
 
 ## Licensing
-Intel(R) TBB 4.4 Update 5 is licensed under [GPLv2] (COPYING) with the runtime exception.
+Intel(R) TBB 4.4 Update 6 is licensed under [GPLv2] (COPYING) with the runtime exception.
 
 ## Documentation
 * Intel(R) TBB [tutorial] (https://software.intel.com/en-us/tbb-tutorial)

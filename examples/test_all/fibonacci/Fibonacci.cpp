@@ -71,6 +71,8 @@ struct Matrix2x2
     }
     Matrix2x2 operator * (const Matrix2x2 &to) const; //< Multiply two Matrices
 };
+//! Identity matrix
+static const Matrix2x2 MatrixIdentity(1, 0, 0, 1);
 //! Default matrix to multiply
 static const Matrix2x2 Matrix1110(1, 1, 1, 0);
 //! Raw arrays matrices multiply
@@ -417,35 +419,52 @@ value parallel_reduceFib(int n)
 
 //! Functor for parallel_scan
 struct parallel_scanFibBody {
-    Matrix2x2 sum;
-    int first;  // flag to make one less operation for first range
-    //! Constructor fills sum with initial matrix
-    parallel_scanFibBody() : sum( Matrix1110 ), first(1) {}
+    /** Though parallel_scan is usually used to accumulate running sums,
+        it can be used to accumulate running products too. */
+    Matrix2x2 product;
+    /** Pointer to output sequence */
+    value* const output;
+    //! Constructor sets product to identity matrix
+    parallel_scanFibBody(value* output_) : product( MatrixIdentity ), output(output_) {}
     //! Splitting constructor
-    parallel_scanFibBody( parallel_scanFibBody &b, split) : sum( Matrix1110 ), first(1) {}
-    //! Join point
+    parallel_scanFibBody( parallel_scanFibBody &b, split) : product( MatrixIdentity ), output(b.output) {}
+    //! Method for merging summary information from a, which was split off from *this, into *this.
     void reverse_join( parallel_scanFibBody &a ) {
-        sum = sum * a.sum;
+        // When using non-commutative reduction operation, reverse_join
+        // should put argument "a" on the left side of the operation.
+        // The reversal from the argument order is why the method is
+        // called "reverse_join" instead of "join".
+        product = a.product * product;
     }
-    //! Assign point
+    //! Method for assigning final result back to original body.
     void assign( parallel_scanFibBody &b ) {
-        sum = b.sum;
+        product = b.product;
     }
-    //! Process multiplications. For two tags
-    template<typename T>
-    void operator()( const blocked_range<int> &r, T) {
-        // see tag.is_final_scan() for what tag is used
-        for( int k = r.begin() + first; k < r.end(); ++k )
-            sum = sum * Matrix1110;
-        first = 0; // reset flag, because this method can be reused for next range
+    //! Compute matrix running product.
+    /** Tag indicates whether is is the final scan over the range, or
+        just a helper "prescan" that is computing a partial reduction. */
+    template<typename Tag>
+    void operator()( const blocked_range<int> &r, Tag tag) {
+        for( int k = r.begin(); k < r.end(); ++k ) {
+            // Code performs an "exclusive" scan, which outputs a value *before* updating the product.
+            // For an "inclusive" scan, output the value after the update.
+            if( tag.is_final_scan() )
+                output[k] = product.v[0][1];
+            product = product * Matrix1110;
+        }
     }
 };
 //! Root function
 value parallel_scanFib(int n)
 {
-    parallel_scanFibBody b;
-    parallel_scan(blocked_range<int>(1/*one less, because body skip first*/, n, 3), b);
-    return b.sum.v[0][0];
+    value* output = new value[n];
+    parallel_scanFibBody b(output);
+    parallel_scan(blocked_range<int>(0, n, 3), b);
+    // output[0..n-1] now contains the Fibonacci sequence (modulo integer wrap-around).
+    // Check the last two values for correctness.
+    assert( n<2 || output[n-2]+output[n-1]==b.product.v[0][1] );
+    delete[] output;
+    return b.product.v[0][1];
 }
 
 // *** Raw tasks *** //

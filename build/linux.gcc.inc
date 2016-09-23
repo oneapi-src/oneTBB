@@ -49,6 +49,13 @@ ifneq (,$(shell gcc -dumpversion | egrep  "^(4\.[8-9]|[5-9])"))
     RTM_KEY = -mrtm
 endif
 
+# gcc 6.0 and later have -flifetime-dse option that controls
+# elimination of stores done outside the object lifetime
+ifneq (,$(shell gcc -dumpversion | egrep  "^([6-9])"))
+    # keep pre-contruction stores for zero initialization
+    DSE_KEY = -flifetime-dse=1
+endif
+
 ifeq ($(cfg), release)
         CPLUS_FLAGS = $(ITT_NOTIFY) -g -O2 -DUSE_PTHREAD
 endif
