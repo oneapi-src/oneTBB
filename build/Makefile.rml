@@ -16,6 +16,9 @@
 #
 #
 
+# TODO: investigate why version_string.ver is not complete when $(RML_SERVER.OBJ) is being compiled.
+.NOTPARALLEL:
+
 tbb_root ?= $(TBBROOT)
 BUILDING_PHASE=1
 TEST_RESOURCE = $(RML.RES)
@@ -84,7 +87,7 @@ ifeq (linux,$(tbb_os))
 omp_dynamic_link.$(OBJ): CPLUS_FLAGS+=-fno-exceptions
 endif
 
-tbb_misc_rml.$(OBJ): version_string.ver
+tbb_misc_rml.$(OBJ) $(RML_SERVER.OBJ): version_string.ver
 
 RML_TEST.OBJ = test_job_automaton.$(OBJ) test_thread_monitor.$(OBJ) test_rml_tbb.$(OBJ) test_rml_omp.$(OBJ) test_rml_mixed.$(OBJ)
 
@@ -102,6 +105,7 @@ LIB_LINK_FLAGS += $(EXPORT_KEY)rml.def
 $(RML.DLL): rml.def
 endif
 
+$(RML.DLL): CPLUS_FLAGS += $(SDL_FLAGS)
 $(RML.DLL): BUILDING_LIBRARY = $(RML.DLL)
 $(RML.DLL): $(RML_TBB_DEP) $(RML_SERVER.OBJ) $(RML.RES) $(RML_NO_VERSION.DLL) $(RML_ASM.OBJ)
 	$(LIB_LINK_CMD) $(LIB_OUTPUT_KEY)$(RML.DLL) $(RML_SERVER.OBJ) $(RML_TBB_DEP) $(RML_ASM.OBJ) $(RML.RES) $(LIB_LINK_LIBS) $(LIB_LINK_FLAGS)

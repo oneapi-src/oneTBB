@@ -60,10 +60,12 @@ template<class W>          struct is_same_type<W,W> { static const bool value = 
 template<typename T> struct is_ref { static const bool value = false; };
 template<typename U> struct is_ref<U&> { static const bool value = true; };
 
-#if __TBB_CPP11_RVALUE_REF_PRESENT && __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
-
+#if __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
 //! std::void_t internal implementation (to avoid GCC < 4.7 "template aliases" absence)
 template<typename...> struct void_t { typedef void type; };
+#endif
+
+#if __TBB_CPP11_RVALUE_REF_PRESENT && __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
 
 //! Allows to store a function parameter pack as a variable and later pass it to another function
 template< typename... Types >

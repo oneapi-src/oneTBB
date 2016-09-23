@@ -31,6 +31,7 @@ typedef enum {
     TBBMALLOC_INTERNAL_SOURCE_INCLUDED = 65536
 } AllocationModeInternalParam;
 
+void MallocInitializeITT();
 void __TBB_mallocProcessShutdownNotification();
 #if _WIN32||_WIN64
 void __TBB_mallocThreadShutdownNotification();

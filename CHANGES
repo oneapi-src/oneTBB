@@ -2,6 +2,19 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 2017 Update 1
+TBB_INTERFACE_VERSION == 9101
+
+Changes (w.r.t. Intel TBB 2017):
+
+Bugs fixed:
+
+- Fixed dynamic memory allocation replacement failures on Windows* 10
+    Anniversary Update.
+- Fixed emplace() method of concurrent unordered containers to not
+    require a copy constructor.
+
+------------------------------------------------------------------------
 Intel TBB 2017
 TBB_INTERFACE_VERSION == 9100
 
@@ -75,6 +88,26 @@ Bugs fixed:
 Open-source contributions integrated:
 
 - Enabling use of C++11 'override' keyword by Raf Schietekat.
+
+------------------------------------------------------------------------
+Intel TBB 4.4 Update 6
+TBB_INTERFACE_VERSION == 9006
+
+Changes (w.r.t. Intel TBB 4.4 Update 5):
+
+- For 64-bit platforms, quadrupled the worst-case limit on the amount
+    of memory the Intel TBB allocator can handle.
+
+Bugs fixed:
+
+- Fixed a memory corruption in the memory allocator when it meets
+    internal limits.
+- Fixed the memory allocator on 64-bit platforms to align memory
+    to 16 bytes by default for all allocations bigger than 8 bytes.
+- Fixed parallel_scan to provide correct result if the initial value
+    of an accumulator is not the operation identity value.
+- As a workaround for crashes in the Intel TBB library compiled with
+    GCC 6, added -flifetime-dse=1 to compilation options on Linux* OS.
 
 ------------------------------------------------------------------------
 Intel TBB 4.4 Update 5

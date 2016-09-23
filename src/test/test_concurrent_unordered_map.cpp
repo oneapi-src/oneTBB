@@ -282,6 +282,15 @@ void TestTypes() {
     std::list< std::pair< const std::weak_ptr<int>, std::weak_ptr<int> > > arrWkWk;
     std::copy( arrShrShr.begin(), arrShrShr.end(), std::back_inserter( arrWkWk ) );
     TestTypesMap</*defCtorPresent = */true>( arrWkWk );
+
+#if __TBB_CPP11_RVALUE_REF_PRESENT && __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
+    // Regression test for a problem with excessive requirements of emplace()
+    test_emplace_insert<tbb::concurrent_unordered_map< int*, test::unique_ptr<int> >,
+                        tbb::internal::false_type>( new int, new int );
+    test_emplace_insert<tbb::concurrent_unordered_multimap< int*, test::unique_ptr<int> >,
+                        tbb::internal::false_type>( new int, new int );
+#endif
+
 #else
     REPORT( "Known issue: C++11 smart pointer tests are skipped.\n" );
 #endif /* __TBB_CPP11_SMART_POINTERS_PRESENT */
@@ -303,6 +312,7 @@ int TestMain() {
     { Check<MyCheckedMap::value_type> checkit; test_basic<MyCheckedMap>( "concurrent unordered map (checked)" ); }
     { Check<MyCheckedMap::value_type> checkit; test_concurrent<MyCheckedMap>( "concurrent unordered map (checked)" ); }
     test_basic<MyCheckedStateMap>("concurrent unordered map (checked state of elements)", tbb::internal::true_type());
+    test_concurrent<MyCheckedStateMap>("concurrent unordered map (checked state of elements)");
 
     { Check<MyCheckedMultiMap::value_type> checkit; test_basic<MyCheckedMultiMap>( "concurrent unordered MultiMap (checked)" ); }
     { Check<MyCheckedMultiMap::value_type> checkit; test_concurrent<MyCheckedMultiMap>( "concurrent unordered MultiMap (checked)" ); }

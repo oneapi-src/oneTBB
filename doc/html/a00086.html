@@ -52,8 +52,6 @@
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00069.html">kernel</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00102.html">range</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
@@ -67,9 +65,9 @@ typedef <a class="el" href="a00084.html">opencl_device</a>&#160;</td><td class="
 <tr class="memitem:abff39774d3730a68f41655c508330787"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abff39774d3730a68f41655c508330787"></a>
 typedef <a class="el" href="a00069.html">kernel</a>&#160;</td><td class="memItemRight" valign="bottom"><b>kernel_type</b></td></tr>
 <tr class="separator:abff39774d3730a68f41655c508330787"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a648113cbd90d8294f15de55ed20ee31f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a648113cbd90d8294f15de55ed20ee31f"></a>
-typedef <a class="el" href="a00102.html">range</a>&#160;</td><td class="memItemRight" valign="bottom"><b>range_type</b></td></tr>
-<tr class="separator:a648113cbd90d8294f15de55ed20ee31f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a21edc0bf4c4187d231a33ab037d98446"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a21edc0bf4c4187d231a33ab037d98446"></a>
+typedef <a class="el" href="a00095.html">opencl_range</a>&#160;</td><td class="memItemRight" valign="bottom"><b>range_type</b></td></tr>
+<tr class="separator:a21edc0bf4c4187d231a33ab037d98446"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -81,7 +79,7 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>init</b> (const <a cl
 <tr class="separator:a388b83e950cd43581da1aef8033ea914"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac1c47c68f91720aaf37e7faf2ef2628d"><td class="memTemplParams" colspan="2"><a class="anchor" id="ac1c47c68f91720aaf37e7faf2ef2628d"></a>
 template&lt;typename... Args&gt; </td></tr>
-<tr class="memitem:ac1c47c68f91720aaf37e7faf2ef2628d"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>send_kernel</b> (<a class="el" href="a00084.html">opencl_device</a> device, const <a class="el" href="a00069.html">kernel_type</a> &amp;<a class="el" href="a00069.html">kernel</a>, const <a class="el" href="a00102.html">range_type</a> &amp;work_size, Args &amp;...args)</td></tr>
+<tr class="memitem:ac1c47c68f91720aaf37e7faf2ef2628d"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>send_kernel</b> (<a class="el" href="a00084.html">opencl_device</a> device, const <a class="el" href="a00069.html">kernel_type</a> &amp;<a class="el" href="a00069.html">kernel</a>, const <a class="el" href="a00095.html">range_type</a> &amp;work_size, Args &amp;...args)</td></tr>
 <tr class="separator:ac1c47c68f91720aaf37e7faf2ef2628d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac2f834bb6c81d620258c1784b8e2b8b4"><td class="memTemplParams" colspan="2"><a class="anchor" id="ac2f834bb6c81d620258c1784b8e2b8b4"></a>
 template&lt;typename T , typename... Rest&gt; </td></tr>

@@ -69,7 +69,7 @@ std::string PathToFile(const std::string& fileName) {
     return prefix + "/src/test/" + fileName;
 }
 
-typedef tbb::flow::default_opencl_factory::range_type OCLRange;
+typedef tbb::flow::opencl_range OCLRange;
 
 void TestArgumentPassing() {
     REMARK( "TestArgumentPassing: " );
@@ -223,7 +223,9 @@ public:
     device_selector( const device_selector& ) : my_state( COPY_INITIALIZED ) {}
     device_selector( device_selector&& ) : my_state( COPY_INITIALIZED ) {}
     ~device_selector() { my_state = DELETED; }
-    opencl_device operator()( default_opencl_factory &f ) {
+
+    template <typename D>
+    opencl_device operator()( opencl_factory<D> &f ) {
         ASSERT( my_state == COPY_INITIALIZED, NULL );
         ASSERT( ! f.devices().empty(), NULL );
         return *( f.devices().begin() );
@@ -499,7 +501,7 @@ public:
 
 const int concurrencyTestNumRepeats = 10;
 
-template <typename Factory = default_opencl_factory>
+template <typename Factory = interface9::default_opencl_factory>
 void ConcurrencyTest( const std::vector<opencl_device> &filteredDevices ) {
     const int numThreads = min( tbb::task_scheduler_init::default_num_threads(), 8 );
     for ( int i = 0; i < concurrencyTestNumRepeats; ++i ) {

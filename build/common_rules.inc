@@ -149,7 +149,7 @@ $(TBB.MANIFEST):
 version_string.ver: $(TBB.MANIFEST)
 	$(MAKE_VERSIONS)
 	cmd /C "echo #define TBB_MANIFEST 1 >> version_string.ver"
-# TODO: fix parallel build by writting to a temporary file and rename it when complete
+# TODO: fix parallel build by writing to a temporary file and rename it when complete
 else
 # TODO: make version strings directly representative for all the libraries
 version_string.ver:

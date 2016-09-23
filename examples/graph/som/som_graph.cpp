@@ -49,7 +49,7 @@
 #include "tbb/flow_graph.h"
 #include "tbb/blocked_range2d.h"
 #include "tbb/tick_count.h"
-#include "../examples/common/utility/utility.h"
+#include "../../common/utility/utility.h"
 
 #define RED 0
 #define GREEN 1

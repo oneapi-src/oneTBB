@@ -117,3 +117,4 @@ double bm_queue_node(tbb::flow::graph& g, int nIter)
         first_queue.try_put(v);
     g.wait_for_all();
     return (tbb::tick_count::now() - t0).seconds();
+}

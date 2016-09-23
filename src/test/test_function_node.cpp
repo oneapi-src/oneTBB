@@ -400,6 +400,10 @@ void unlimited_concurrency( Body body ) {
                 // 3) the nodes will send to multiple successors.
                 ASSERT( (int)c == p*N, NULL );
             }
+            for (size_t r = 0; r < num_receivers; ++r ) {
+                tbb::flow::remove_edge( exe_node, receivers[r] );
+            }
+            delete [] receivers;
         }
     }
 }

@@ -26,7 +26,7 @@ OUTPUTOBJ_KEY = -o #
 PIC_KEY = -fPIC
 WARNING_AS_ERROR_KEY = -Werror
 WARNING_KEY = -Wall
-SDL_FLAGS = -fPIE -fPIC -fstack-protector -D_FORTIFY_SOURCE=2 -Wformat -Wformat-security
+SDL_FLAGS = -fPIE -fPIC -fstack-protector -Wformat -Wformat-security
 TEST_WARNING_KEY = -Wshadow -Wcast-qual -Woverloaded-virtual -Wnon-virtual-dtor -Wextra
 
 WARNING_SUPPRESS = -Wno-parentheses -Wno-non-virtual-dtor
@@ -50,13 +50,13 @@ LINK_FLAGS = -Wl,-rpath-link=. -rdynamic
 C_FLAGS = $(CPLUS_FLAGS)
 
 ifeq ($(cfg), release)
+    SDL_FLAGS += -D_FORTIFY_SOURCE=2
     CPLUS_FLAGS = -O2
 endif
 ifeq ($(cfg), debug)
     CPLUS_FLAGS = -g -O0 $(DEFINE_KEY)TBB_USE_DEBUG
 endif
 
-CPLUS_FLAGS += $(SDL_FLAGS)
 CPLUS_FLAGS += $(DEFINE_KEY)USE_PTHREAD $(DEFINE_KEY)_GLIBCXX_HAVE_FENV_H
 
 ifneq (,$(findstring $(arch),ia32 intel64))

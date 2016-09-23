@@ -21,8 +21,6 @@
 #include "TypeDefinitions.h" // Customize.h and proxy.h get included
 #include "tbbmalloc_internal_api.h"
 
-#include "../tbb/itt_notify.h" // for __TBB_load_ittnotify()
-
 #include "../tbb/tbb_assert_impl.h" // Out-of-line TBB assertion handling routines are instantiated here.
 
 #undef UNICODE
@@ -35,13 +33,6 @@
 
 namespace rml {
 namespace internal {
-
-/** Caller is responsible for ensuring this routine is called exactly once. */
-extern "C" void MallocInitializeITT() {
-#if DO_ITT_NOTIFY
-    tbb::internal::__TBB_load_ittnotify();
-#endif
-}
 
 #if TBB_USE_DEBUG
 #define DEBUG_SUFFIX "_debug"

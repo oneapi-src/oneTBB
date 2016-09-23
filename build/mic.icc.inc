@@ -29,11 +29,12 @@ DYLIB_KEY = -shared -Wl,-soname=$@
 EXPORT_KEY = -Wl,--version-script,
 NOINTRINSIC_KEY = -fno-builtin
 LIBDL = -ldl
-
+SDL_FLAGS = -fstack-protector -Wformat -Wformat-security
 CPLUS = icpc
 CONLY = icc
 
 ifeq (release,$(cfg))
+    SDL_FLAGS += -D_FORTIFY_SOURCE=2
     CPLUS_FLAGS = -O2 -g -DUSE_PTHREAD
 else
     CPLUS_FLAGS = -O0 -g -DUSE_PTHREAD -DTBB_USE_DEBUG
@@ -49,7 +50,7 @@ else
 OPENMP_FLAG = -openmp
 endif
 
-LIB_LINK_FLAGS = -shared -static-intel -Wl,-soname=$(BUILDING_LIBRARY)
+LIB_LINK_FLAGS = -shared -static-intel -Wl,-soname=$(BUILDING_LIBRARY) -z relro -z now
 LIBS += -lpthread -lrt
 C_FLAGS = $(CPLUS_FLAGS)
 CILK_AVAILABLE = yes

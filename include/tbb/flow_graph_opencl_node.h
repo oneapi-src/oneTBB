@@ -90,7 +90,7 @@ class dependency_msg;
 
 inline void enforce_cl_retcode( cl_int err, std::string msg ) {
     if ( err != CL_SUCCESS ) {
-        std::cerr << msg << " error code: " << err << std::endl;
+        std::cerr << msg << "; error code: " << err << std::endl;
         throw msg;
     }
 }
@@ -719,6 +719,33 @@ typename std::enable_if<is_memory_object_type<T>::value>::type receive_if_memory
 template <typename T>
 typename std::enable_if<!is_memory_object_type<T>::value>::type  receive_if_memory_object( const T& ) {}
 
+class opencl_range {
+public:
+    typedef size_t range_index_type;
+    typedef std::array<range_index_type, 3> nd_range_type;
+
+    template <typename G = std::initializer_list<int>, typename L = std::initializer_list<int>,
+        typename = typename std::enable_if<!std::is_same<typename std::decay<G>::type, opencl_range>::value>::type>
+    opencl_range(G&& global_work = std::initializer_list<int>({ 0 }), L&& local_work = std::initializer_list<int>({ 0, 0, 0 })) {
+        auto g_it = global_work.begin();
+        auto l_it = local_work.begin();
+        my_global_work_size = { size_t(-1), size_t(-1), size_t(-1) };
+        // my_local_work_size is still uninitialized
+        for (int s = 0; s < 3 && g_it != global_work.end(); ++g_it, ++l_it, ++s) {
+            __TBB_ASSERT(l_it != local_work.end(), "global_work & local_work must have same size");
+            my_global_work_size[s] = *g_it;
+            my_local_work_size[s] = *l_it;
+        }
+    }
+
+    const nd_range_type& global_range() const { return my_global_work_size; }
+    const nd_range_type& local_range() const { return my_local_work_size; }
+
+private:
+    nd_range_type my_global_work_size;
+    nd_range_type my_local_work_size;
+};
+
 template <typename DeviceFilter>
 class opencl_factory {
 public:
@@ -767,36 +794,9 @@ public:
 
     typedef kernel kernel_type;
 
-    class range {
-    public:
-        typedef size_t range_index_type;
-        typedef std::array<range_index_type, 3> nd_range_type;
-
-        template <typename G = std::initializer_list<int>, typename L = std::initializer_list<int>,
-            typename = typename std::enable_if<!std::is_same<typename std::decay<G>::type, range>::value>::type>
-        range(G&& global_work = std::initializer_list<int>({ 0 }), L&& local_work = std::initializer_list<int>({ 0, 0, 0 })) {
-            auto g_it = global_work.begin();
-            auto l_it = local_work.begin();
-            my_global_work_size = { size_t(-1), size_t(-1), size_t(-1) };
-            // my_local_work_size is still uninitialized
-            for (int s = 0; s < 3 && g_it != global_work.end(); ++g_it, ++l_it, ++s) {
-                __TBB_ASSERT(l_it != local_work.end(), "global_work & local_work must have same size");
-                my_global_work_size[s] = *g_it;
-                my_local_work_size[s] = *l_it;
-            }
-        }
-
-        const nd_range_type& global_range() const { return my_global_work_size; }
-        const nd_range_type& local_range() const { return my_local_work_size; }
-
-    private:
-        nd_range_type my_global_work_size;
-        nd_range_type my_local_work_size;
-    };
-
     // 'range_type' enables kernel_executor with range support
     // it affects expectations for enqueue_kernel(.....) interface method
-    typedef range range_type;
+    typedef opencl_range range_type;
 
     opencl_factory( opencl_graph &g ) : my_graph( g ) {}
     ~opencl_factory() {
@@ -1515,7 +1515,7 @@ using interface9::opencl_program;
 using interface9::opencl_program_type;
 using interface9::dependency_msg;
 using interface9::opencl_factory;
-using interface9::default_opencl_factory;
+using interface9::opencl_range;
 
 } // namespace flow
 } // namespace tbb

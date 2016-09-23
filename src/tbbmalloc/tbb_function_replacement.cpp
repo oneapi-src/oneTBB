@@ -190,13 +190,12 @@ size_t compareStrings( const char *str1, const char *str2 )
    return str1Length;
 }
 
-// Check function prologue with know prologues from the dictionary
+// Check function prologue with known prologues from the dictionary
 // opcodes - dictionary
 // inpAddr - pointer to function prologue
 // Dictionary contains opcodes for several full asm instructions
 // + one opcode byte for the next asm instruction for safe address processing
-// RETURN: number of bytes for safe bytes replacement
-// (matched_pattern/2-1)
+// RETURN: number of bytes for safe bytes replacement (matched_pattern/2-1)
 UINT CheckOpcodes( const char ** opcodes, void *inpAddr, bool abortOnError )
 {
     static size_t opcodesStringsCount = 0;
@@ -253,16 +252,15 @@ static DWORD InsertTrampoline32(void *inpAddr, void *targetAddr, const char ** o
     UINT offset32;
     UCHAR *codePtr = (UCHAR *)inpAddr;
 
-    if ( opcodes == PROCESS_JMP ){ // expecting JMP relative instruction "e9 00 00 00 00"
-        __TBB_ASSERT(*(char*)inpAddr == 0xE9, NULL);
-        __TBB_ASSERT(storedAddr, NULL);
-        // This is special case when system function consists of single near jump,
-        // so instead of moving it somewhere we use the target of the jump as original function.
-        unsigned offsetInJmp = *((unsigned*)((char*)inpAddr + 1));
-        *storedAddr = (void*)((uintptr_t)inpAddr + offsetInJmp + SIZE_OF_RELJUMP);
-    }else if ( storedAddr ){ // If requested, store original function code
-        opcodesNumber = CheckOpcodes( opcodes, inpAddr, /*abortOnError=*/true );
-        if( opcodesNumber >= SIZE_OF_RELJUMP ){
+    if ( storedAddr ){ // If requested, store original function code
+        if ( *codePtr == 0xE9 ){ // JMP relative instruction
+            // For the special case when a system function consists of a single near jump,
+            // instead of moving it somewhere we use the target of the jump as the original function.
+            unsigned offsetInJmp = *(unsigned*)(codePtr + 1);
+            *storedAddr = (void*)(srcAddr + offsetInJmp + SIZE_OF_RELJUMP);
+        }else{
+            opcodesNumber = CheckOpcodes( opcodes, inpAddr, /*abortOnError=*/true );
+            __TBB_ASSERT_RELEASE( opcodesNumber >= SIZE_OF_RELJUMP, "Incorrect bytecode pattern?" );
             UINT_PTR strdAddr = memProvider.GetLocation(srcAddr);
             if (!strdAddr)
                 return 0;
@@ -277,9 +275,6 @@ static DWORD InsertTrampoline32(void *inpAddr, void *targetAddr, const char ** o
             offset32 = (UINT)((offset & 0xFFFFFFFF));
             *((UCHAR*)*storedAddr+opcodesNumber) = 0xE9;
             memcpy(((UCHAR*)*storedAddr+opcodesNumber+1), &offset32, sizeof(offset32));
-        }else{
-            // No matches found just do not store original calls
-            *storedAddr = NULL;
         }
     }
 
@@ -324,17 +319,15 @@ static DWORD InsertTrampoline64(void *inpAddr, void *targetAddr, const char ** o
     UINT_PTR *locPtr = (UINT_PTR *)Addrint2Ptr(location);
     *locPtr = tgtAddr;
 
-    // If requested, store original function code
-    if ( opcodes == PROCESS_JMP ){ // expecting JMP relative instruction "e9 00 00 00 00"
-        __TBB_ASSERT(*(char*)inpAddr == 0xE9, NULL);
-        __TBB_ASSERT(storedAddr, NULL);
-        // This is special case when system function consists of single near jump,
-        // so instead of moving it somewhere we use the target of the jump as original function.
-        unsigned offsetInJmp = *((unsigned*)((char*)inpAddr + 1));
-        *storedAddr = (void*)((uintptr_t)inpAddr + offsetInJmp + SIZE_OF_RELJUMP);
-    } else if( storedAddr ){
-        opcodesNumber = CheckOpcodes( opcodes, inpAddr, /*abortOnError=*/true );
-        if( opcodesNumber >= SIZE_OF_INDJUMP ){
+    if ( storedAddr ){ // If requested, store original function code
+        if ( *codePtr == 0xE9 ){ // JMP relative instruction
+            // For the special case when a system function consists of a single near jump,
+            // instead of moving it somewhere we use the target of the jump as the original function.
+            unsigned offsetInJmp = *(unsigned*)(codePtr + 1);
+            *storedAddr = (void*)(srcAddr + offsetInJmp + SIZE_OF_RELJUMP);
+        }else{
+            opcodesNumber = CheckOpcodes( opcodes, inpAddr, /*abortOnError=*/true );
+            __TBB_ASSERT_RELEASE( opcodesNumber >= SIZE_OF_INDJUMP, "Incorrect bytecode pattern?" );
             UINT_PTR strdAddr = memProvider.GetLocation(srcAddr);
             if (!strdAddr)
                 return 0;
@@ -349,9 +342,6 @@ static DWORD InsertTrampoline64(void *inpAddr, void *targetAddr, const char ** o
             offset32 = (UINT)((offset & 0xFFFFFFFF));
             *((UCHAR*)*storedAddr+opcodesNumber) = 0xE9;
             memcpy(((UCHAR*)*storedAddr+opcodesNumber+1), &offset32, sizeof(offset32));
-        }else{
-            // No matches found just do not store original calls
-            *storedAddr = NULL;
         }
     }
 
@@ -481,7 +471,7 @@ FRR_TYPE ReplaceFunctionW(const wchar_t *dllName, const char *funcName, FUNCPTR 
     return FRR_OK;
 }
 
-bool IsFunctionKnown(HMODULE module, const char *funcName, const char **opcodes)
+bool IsPrologueKnown(HMODULE module, const char *funcName, const char **opcodes)
 {
     FARPROC inpFunc = GetProcAddress(module, funcName);
     if (!inpFunc)

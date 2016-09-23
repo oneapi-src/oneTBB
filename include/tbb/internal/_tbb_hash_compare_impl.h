@@ -47,6 +47,7 @@ public:
     }
 
     bool operator()(const Key& key1, const Key& key2) const {
+        // TODO: get rid of the result invertion
         return (!my_key_compare_object(key1, key2));
     }
 

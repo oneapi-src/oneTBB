@@ -110,6 +110,7 @@ void run_continue_nodes( int p, tbb::flow::graph& g, tbb::flow::continue_node< O
             tbb::flow::remove_edge( n, receivers[r] );
         }
 #endif
+        delete [] receivers;
     }
 }
 
@@ -175,6 +176,10 @@ void continue_nodes_with_copy( ) {
                 // 3) the nodes will send to multiple successors.
                 ASSERT( (int)c == p, NULL );
             }
+            for (size_t r = 0; r < num_receivers; ++r ) {
+                tbb::flow::remove_edge( exe_node, receivers[r] );
+            }
+            delete [] receivers;
         }
 
         // validate that the local body matches the global execute_count and both are correct

@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::parallel_while&lt; Body &gt; Class Template Reference</title>
+<title>tbb::flow::interface9::opencl_subbuffer&lt; T, Factory &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,125 +33,95 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00228.html">tbb</a></li><li class="navelem"><a class="el" href="a00096.html">parallel_while</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00228.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface9</b></li><li class="navelem"><a class="el" href="a00096.html">opencl_subbuffer</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="a00277.html">List of all members</a>  </div>
+<a href="a00333.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::parallel_while&lt; Body &gt; Class Template Reference<div class="ingroups"><a class="el" href="a00246.html">Algorithms</a></div></div>  </div>
+<div class="title">tbb::flow::interface9::opencl_subbuffer&lt; T, Factory &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-
-<p>Parallel iteration over a stream, with optional addition of more work.  
- <a href="a00096.html#details">More...</a></p>
-
-<p><code>#include &lt;parallel_while.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::parallel_while&lt; Body &gt;:</div>
+Inheritance diagram for tbb::flow::interface9::opencl_subbuffer&lt; T, Factory &gt;:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00096.png" usemap="#tbb::parallel_while&lt; Body &gt;_map" alt=""/>
-  <map id="tbb::parallel_while&lt; Body &gt;_map" name="tbb::parallel_while&lt; Body &gt;_map">
+  <img src="a00096.png" usemap="#tbb::flow::interface9::opencl_subbuffer&lt; T, Factory &gt;_map" alt=""/>
+  <map id="tbb::flow::interface9::opencl_subbuffer&lt; T, Factory &gt;_map" name="tbb::flow::interface9::opencl_subbuffer&lt; T, Factory &gt;_map">
+<area href="a00082.html" alt="tbb::flow::interface9::opencl_buffer&lt; T, Factory &gt;" shape="rect" coords="0,0,310,24"/>
 </map>
  </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:a2442f019427e608d46801376267e44a8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2442f019427e608d46801376267e44a8"></a>
-typedef Body::argument_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00096.html#a2442f019427e608d46801376267e44a8">value_type</a></td></tr>
-<tr class="memdesc:a2442f019427e608d46801376267e44a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type of items. <br/></td></tr>
-<tr class="separator:a2442f019427e608d46801376267e44a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a220a7307358aa36802c8754ea45ca385"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a220a7307358aa36802c8754ea45ca385"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00096.html#a220a7307358aa36802c8754ea45ca385">parallel_while</a> ()</td></tr>
-<tr class="memdesc:a220a7307358aa36802c8754ea45ca385"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct empty non-running parallel while. <br/></td></tr>
-<tr class="separator:a220a7307358aa36802c8754ea45ca385"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac2fd559c8a38639fa1ba97a0d5639ca8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac2fd559c8a38639fa1ba97a0d5639ca8"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00096.html#ac2fd559c8a38639fa1ba97a0d5639ca8">~parallel_while</a> ()</td></tr>
-<tr class="memdesc:ac2fd559c8a38639fa1ba97a0d5639ca8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor cleans up data members before returning. <br/></td></tr>
-<tr class="separator:ac2fd559c8a38639fa1ba97a0d5639ca8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a20607ba5faa958144787d980aa850c16"><td class="memTemplParams" colspan="2">template&lt;typename Stream &gt; </td></tr>
-<tr class="memitem:a20607ba5faa958144787d980aa850c16"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00096.html#a20607ba5faa958144787d980aa850c16">run</a> (Stream &amp;stream, const Body &amp;body)</td></tr>
-<tr class="memdesc:a20607ba5faa958144787d980aa850c16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Apply body.apply to each item in the stream.  <a href="#a20607ba5faa958144787d980aa850c16">More...</a><br/></td></tr>
-<tr class="separator:a20607ba5faa958144787d980aa850c16"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4861989d7f5e3111d264d4d6013e8fe1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00096.html#a4861989d7f5e3111d264d4d6013e8fe1">add</a> (const <a class="el" href="a00096.html#a2442f019427e608d46801376267e44a8">value_type</a> &amp;item)</td></tr>
-<tr class="memdesc:a4861989d7f5e3111d264d4d6013e8fe1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a work item while running.  <a href="#a4861989d7f5e3111d264d4d6013e8fe1">More...</a><br/></td></tr>
-<tr class="separator:a4861989d7f5e3111d264d4d6013e8fe1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a11f6b0a4f1fd2f8d6dc25f25b280b558"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a11f6b0a4f1fd2f8d6dc25f25b280b558"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_subbuffer</b> (const <a class="el" href="a00082.html">opencl_buffer</a>&lt; T, Factory &gt; &amp;owner, size_t index, size_t size)</td></tr>
+<tr class="separator:a11f6b0a4f1fd2f8d6dc25f25b280b558"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_a00082"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_a00082')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="a00082.html">tbb::flow::interface9::opencl_buffer&lt; T, Factory &gt;</a></td></tr>
+<tr class="memitem:a209b471453aca40e5ffbf062a6f3dfee inherit pub_methods_a00082"><td class="memTemplParams" colspan="2"><a class="anchor" id="a209b471453aca40e5ffbf062a6f3dfee"></a>
+template&lt;access_type a&gt; </td></tr>
+<tr class="memitem:a209b471453aca40e5ffbf062a6f3dfee inherit pub_methods_a00082"><td class="memTemplItemLeft" align="right" valign="top">iterator&lt; a &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>access</b> () const </td></tr>
+<tr class="separator:a209b471453aca40e5ffbf062a6f3dfee inherit pub_methods_a00082"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af09de2dced1e886b62af2edaa301395b inherit pub_methods_a00082"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af09de2dced1e886b62af2edaa301395b"></a>
+T *&#160;</td><td class="memItemRight" valign="bottom"><b>data</b> () const </td></tr>
+<tr class="separator:af09de2dced1e886b62af2edaa301395b inherit pub_methods_a00082"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad6ea4442b535df396143ae64072f928b inherit pub_methods_a00082"><td class="memTemplParams" colspan="2"><a class="anchor" id="ad6ea4442b535df396143ae64072f928b"></a>
+template&lt;access_type a = read_write&gt; </td></tr>
+<tr class="memitem:ad6ea4442b535df396143ae64072f928b inherit pub_methods_a00082"><td class="memTemplItemLeft" align="right" valign="top">iterator&lt; a &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>begin</b> () const </td></tr>
+<tr class="separator:ad6ea4442b535df396143ae64072f928b inherit pub_methods_a00082"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aee44f9e698559edd86118bd8f1358c82 inherit pub_methods_a00082"><td class="memTemplParams" colspan="2"><a class="anchor" id="aee44f9e698559edd86118bd8f1358c82"></a>
+template&lt;access_type a = read_write&gt; </td></tr>
+<tr class="memitem:aee44f9e698559edd86118bd8f1358c82 inherit pub_methods_a00082"><td class="memTemplItemLeft" align="right" valign="top">iterator&lt; a &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>end</b> () const </td></tr>
+<tr class="separator:aee44f9e698559edd86118bd8f1358c82 inherit pub_methods_a00082"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab17dc630609091d82ac1bd0ac028098b inherit pub_methods_a00082"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab17dc630609091d82ac1bd0ac028098b"></a>
+size_t&#160;</td><td class="memItemRight" valign="bottom"><b>size</b> () const </td></tr>
+<tr class="separator:ab17dc630609091d82ac1bd0ac028098b inherit pub_methods_a00082"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac60e4a4d13d7545c78b3dfbcc4e03837 inherit pub_methods_a00082"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac60e4a4d13d7545c78b3dfbcc4e03837"></a>
+T &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator[]</b> (ptrdiff_t k)</td></tr>
+<tr class="separator:ac60e4a4d13d7545c78b3dfbcc4e03837 inherit pub_methods_a00082"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a13106604ac7fed4eb395499a250c4f26 inherit pub_methods_a00082"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a13106604ac7fed4eb395499a250c4f26"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_buffer</b> (<a class="el" href="a00088.html">opencl_graph</a> &amp;g, size_t size)</td></tr>
+<tr class="separator:a13106604ac7fed4eb395499a250c4f26 inherit pub_methods_a00082"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adb232dffc9a5708ba6e46e59278cb2b9 inherit pub_methods_a00082"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adb232dffc9a5708ba6e46e59278cb2b9"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_buffer</b> (Factory &amp;f, size_t size)</td></tr>
+<tr class="separator:adb232dffc9a5708ba6e46e59278cb2b9 inherit pub_methods_a00082"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9a443f7d24e2130eb8d4a654b8a45d9c inherit pub_methods_a00082"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9a443f7d24e2130eb8d4a654b8a45d9c"></a>
+cl_mem&#160;</td><td class="memItemRight" valign="bottom"><b>native_object</b> () const </td></tr>
+<tr class="separator:a9a443f7d24e2130eb8d4a654b8a45d9c inherit pub_methods_a00082"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad71cf551ab19e9ed23460f7616c85290 inherit pub_methods_a00082"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad71cf551ab19e9ed23460f7616c85290"></a>
+const <a class="el" href="a00082.html">opencl_buffer</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>memory_object</b> () const </td></tr>
+<tr class="separator:ad71cf551ab19e9ed23460f7616c85290 inherit pub_methods_a00082"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5546d9c6648342b56dc77ad4aa6c02af inherit pub_methods_a00082"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5546d9c6648342b56dc77ad4aa6c02af"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>send</b> (<a class="el" href="a00084.html">opencl_device</a> device, <a class="el" href="a00053.html">dependency_msg</a>&lt; <a class="el" href="a00082.html">opencl_buffer</a>, Factory &gt; &amp;dependency) const </td></tr>
+<tr class="separator:a5546d9c6648342b56dc77ad4aa6c02af inherit pub_methods_a00082"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a41ee26bde7f0cadd98203403450aa978 inherit pub_methods_a00082"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a41ee26bde7f0cadd98203403450aa978"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>receive</b> (const <a class="el" href="a00053.html">dependency_msg</a>&lt; <a class="el" href="a00082.html">opencl_buffer</a>, Factory &gt; &amp;dependency) const </td></tr>
+<tr class="separator:a41ee26bde7f0cadd98203403450aa978 inherit pub_methods_a00082"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a804d5eb9c6912c1e36c078ce4032de7c inherit pub_methods_a00082"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a804d5eb9c6912c1e36c078ce4032de7c"></a>
+<a class="el" href="a00096.html">opencl_subbuffer</a>&lt; T, Factory &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>subbuffer</b> (size_t index, size_t size) const </td></tr>
+<tr class="separator:a804d5eb9c6912c1e36c078ce4032de7c inherit pub_methods_a00082"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
+Additional Inherited Members</h2></td></tr>
+<tr class="inherit_header pub_types_a00082"><td colspan="2" onclick="javascript:toggleInherit('pub_types_a00082')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="a00082.html">tbb::flow::interface9::opencl_buffer&lt; T, Factory &gt;</a></td></tr>
+<tr class="memitem:a54db0ee83c4e3de8ccd479c34a4d35b9 inherit pub_types_a00082"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a54db0ee83c4e3de8ccd479c34a4d35b9"></a>
+typedef cl_mem&#160;</td><td class="memItemRight" valign="bottom"><b>native_object_type</b></td></tr>
+<tr class="separator:a54db0ee83c4e3de8ccd479c34a4d35b9 inherit pub_types_a00082"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a91c4c176a0d017854dc0d3a687af1031 inherit pub_types_a00082"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a91c4c176a0d017854dc0d3a687af1031"></a>
+typedef <a class="el" href="a00082.html">opencl_buffer</a>&#160;</td><td class="memItemRight" valign="bottom"><b>memory_object_type</b></td></tr>
+<tr class="separator:a91c4c176a0d017854dc0d3a687af1031 inherit pub_types_a00082"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aad92f18cff1f39e34bc6c8bb0c56e7a9 inherit pub_types_a00082"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aad92f18cff1f39e34bc6c8bb0c56e7a9"></a>
+typedef Factory&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_factory_type</b></td></tr>
+<tr class="separator:aad92f18cff1f39e34bc6c8bb0c56e7a9 inherit pub_types_a00082"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab381b037311c4d248ee8fc15a29559d2 inherit pub_types_a00082"><td class="memTemplParams" colspan="2"><a class="anchor" id="ab381b037311c4d248ee8fc15a29559d2"></a>
+template&lt;access_type a&gt; </td></tr>
+<tr class="memitem:ab381b037311c4d248ee8fc15a29559d2 inherit pub_types_a00082"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><b>iterator</b> = T *</td></tr>
+<tr class="separator:ab381b037311c4d248ee8fc15a29559d2 inherit pub_types_a00082"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;typename Body&gt;<br/>
-class tbb::parallel_while&lt; Body &gt;</h3>
-
-<p>Parallel iteration over a stream, with optional addition of more work. </p>
-<p>The Body b has the requirement: <br/>
- "b(v)" <br/>
- "b.argument_type" <br/>
- where v is an argument_type </p>
-</div><h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="a4861989d7f5e3111d264d4d6013e8fe1"></a>
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename Body &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">void <a class="el" href="a00096.html">tbb::parallel_while</a>&lt; Body &gt;::add </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="a00096.html#a2442f019427e608d46801376267e44a8">value_type</a> &amp;&#160;</td>
-          <td class="paramname"><em>item</em>)</td><td></td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Add a work item while running. </p>
-<p>Should be executed only by body.apply or a thread spawned therefrom. </p>
-
-</div>
-</div>
-<a class="anchor" id="a20607ba5faa958144787d980aa850c16"></a>
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename Body &gt; </div>
-<div class="memtemplate">
-template&lt;typename Stream &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">void <a class="el" href="a00096.html">tbb::parallel_while</a>&lt; Body &gt;::run </td>
-          <td>(</td>
-          <td class="paramtype">Stream &amp;&#160;</td>
-          <td class="paramname"><em>stream</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const Body &amp;&#160;</td>
-          <td class="paramname"><em>body</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Apply body.apply to each item in the stream. </p>
-<p>A Stream s has the requirements <br/>
- "S::value_type" <br/>
- "s.pop_if_present(value) is convertible to bool </p>
-
-</div>
-</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>parallel_while.h</li>
+<li>flow_graph_opencl_node.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

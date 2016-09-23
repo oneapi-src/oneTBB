@@ -23,6 +23,7 @@
 tbb_root ?= "$(TBBROOT)"
 BUILDING_PHASE=1
 include $(tbb_root)/build/common.inc
+CPLUS_FLAGS += $(SDL_FLAGS)
 DEBUG_SUFFIX=$(findstring _debug,_$(cfg))
 
 #------------------------------------------------------------

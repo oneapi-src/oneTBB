@@ -293,6 +293,7 @@ int test_parallel(int num_threads) {
     ASSERT( b_copy.try_get( j ) == false, NULL );
     ASSERT( j == bogus_value, NULL );
 
+    delete [] next_value;
     return 0;
 }
 

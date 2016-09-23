@@ -27,17 +27,14 @@ CXX1 = $(TBB_CXX)-
 CXX2 = $(CXX1:icl.exe-=icl.exe)
 CXX  = $(CXX2:-=cl.exe)
 
-# MKL support
-# MKL_LIBS = mkl_rt.lib
-ifeq ($(TBB_TARGET_ARCH), ia32)
-MKL_LIBS =  mkl_core.lib mkl_sequential.lib mkl_intel_c.lib
-else
-MKL_LIBS =  mkl_core.lib mkl_sequential.lib mkl_intel_lp64.lib
-endif
-
 # The C++ compiler options
 MYCXXFLAGS = /TP /EHsc /W3 /nologo /D _CONSOLE /D _MBCS /D WIN32 /D _WIN32_WINNT=0x0501 $(CXXFLAGS)
 MYLDFLAGS = /INCREMENTAL:NO /NOLOGO /DEBUG /FIXED:NO $(LDFLAGS)
+
+# MKL support
+MKL_LIBS1 = $(TBB_TARGET_ARCH)
+MKL_LIBS2 = $(MKL_LIBS1:ia32=mkl_core.lib mkl_sequential.lib mkl_intel_c.lib)
+MKL_LIBS  = $(MKL_LIBS2:intel64=mkl_core.lib mkl_sequential.lib mkl_intel_lp64.lib)
 
 all: release test
 release: compiler_check

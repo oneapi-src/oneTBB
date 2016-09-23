@@ -45,7 +45,7 @@ typedef void (*FUNCPTR)();
 FRR_TYPE ReplaceFunctionA(const char *dllName, const char *funcName, FUNCPTR newFunc, const char ** opcodes, FUNCPTR* origFunc=NULL);
 FRR_TYPE ReplaceFunctionW(const wchar_t *dllName, const char *funcName, FUNCPTR newFunc, const char ** opcodes, FUNCPTR* origFunc=NULL);
 
-bool IsFunctionKnown(HMODULE module, const char *funcName, const char **opcodes);
+bool IsPrologueKnown(HMODULE module, const char *funcName, const char **opcodes);
 
 // Utilities to convert between ADDRESS and LPVOID
 union Int2Ptr {
@@ -75,8 +75,5 @@ const __int64 MAX_DISTANCE = (((__int64)1 << 31) - 1) - MAX_PROBE_SIZE;
 
 // The maximum number of distinct buffers in memory
 const ptrdiff_t MAX_NUM_BUFFERS = 256;
-
-// Expect JMP relative instruction in place of function
-#define PROCESS_JMP ((const char**)1)
 
 #endif //__TBB_function_replacement_H

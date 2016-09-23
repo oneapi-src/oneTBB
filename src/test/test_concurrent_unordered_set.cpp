@@ -115,6 +115,15 @@ void TestTypes( ) {
     std::list< std::weak_ptr<int> > arrWk;
     std::copy( arrShr.begin( ), arrShr.end( ), std::back_inserter( arrWk ) );
     TestTypesSet</*defCtorPresent = */true>( arrWk );
+
+#if __TBB_CPP11_RVALUE_REF_PRESENT && __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
+    // Regression test for a problem with excessive requirements of emplace()
+    test_emplace_insert<tbb::concurrent_unordered_set< test::unique_ptr<int> >,
+                        tbb::internal::false_type>( new int, new int );
+    test_emplace_insert<tbb::concurrent_unordered_multiset< test::unique_ptr<int> >,
+                        tbb::internal::false_type>( new int, new int );
+#endif
+
 #else
     REPORT( "Known issue: C++11 smart pointer tests are skipped.\n" );
 #endif /* __TBB_CPP11_SMART_POINTERS_PRESENT */
@@ -164,6 +173,7 @@ int TestMain() {
     { Check<MyCheckedSet::value_type> checkit; test_basic<MyCheckedSet>( "concurrent_unordered_set (checked)" ); }
     { Check<MyCheckedSet::value_type> checkit; test_concurrent<MyCheckedSet>( "concurrent unordered set (checked)" ); }
     test_basic<MyCheckedStateSet>("concurrent unordered set (checked element state)", tbb::internal::true_type());
+    test_concurrent<MyCheckedStateSet>("concurrent unordered set (checked element state)");
 
     { Check<MyCheckedMultiSet::value_type> checkit; test_basic<MyCheckedMultiSet>("concurrent_unordered_multiset (checked)"); }
     { Check<MyCheckedMultiSet::value_type> checkit; test_concurrent<MyCheckedMultiSet>( "concurrent unordered multiset (checked)" ); }

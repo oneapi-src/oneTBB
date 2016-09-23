@@ -29,17 +29,20 @@ DYLIB_KEY = -shared
 EXPORT_KEY = -Wl,--version-script,
 NOINTRINSIC_KEY = -fno-builtin
 LIBDL = -ldl
-SDL_FLAGS += -fstack-protector -D_FORTIFY_SOURCE=2 -Wformat -Wformat-security
+ifneq (,$(shell icc -dumpversion | egrep "1[2-9]\."))
+SDL_FLAGS = -fstack-protector -Wformat -Wformat-security
+endif
+
 CPLUS = icpc
 CONLY = icc
 
 ITT_NOTIFY = -DDO_ITT_NOTIFY
 ifeq (release,$(cfg))
+SDL_FLAGS += -D_FORTIFY_SOURCE=2
 CPLUS_FLAGS = $(ITT_NOTIFY) -O2 -g -DUSE_PTHREAD
 else
 CPLUS_FLAGS = $(ITT_NOTIFY) -O0 -g -DUSE_PTHREAD -DTBB_USE_DEBUG
 endif
-CPLUS_FLAGS += $(SDL_FLAGS)
 
 LIB_LINK_FLAGS = -shared -static-intel -Wl,-soname=$(BUILDING_LIBRARY) -z relro -z now
 LIBS += -lpthread -lrt

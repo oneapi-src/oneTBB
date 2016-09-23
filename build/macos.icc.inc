@@ -27,7 +27,10 @@ OUTPUTOBJ_KEY = -o #
 PIC_KEY = -fPIC
 WARNING_AS_ERROR_KEY = -Werror
 WARNING_KEY = -w1
-SDL_FLAGS=-fstack-protector -D_FORTIFY_SOURCE=2 -Wformat -Wformat-security
+ifneq (,$(shell icc -dumpversion | egrep "1[2-9]\."))
+SDL_FLAGS = -fstack-protector -Wformat -Wformat-security
+endif
+
 DYLIB_KEY = -dynamiclib
 EXPORT_KEY = -Wl,-exported_symbols_list,
 LIBDL = -ldl
@@ -49,12 +52,12 @@ ifneq (,$(shell icc -dumpversion | egrep  "^1[2-9]\."))
 endif
 
 ifeq ($(cfg), release)
+    SDL_FLAGS += -D_FORTIFY_SOURCE=2
     CPLUS_FLAGS = -g -O2 -fno-omit-frame-pointer
 else
     CPLUS_FLAGS = -g -O0 -DTBB_USE_DEBUG
 endif
 
-CPLUS_FLAGS += $(SDL_FLAGS)
 CPLUS_FLAGS += -DUSE_PTHREAD
 
 ifneq (,$(codecov))

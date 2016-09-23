@@ -70,6 +70,8 @@ struct ValueFactory {
     static V make(const K &value) { return V(value, value); }
     static Kstrip key(const V &value) { return value.first; }
     static Kstrip get(const V &value) { return (Kstrip)value.second; }
+    template< typename U >
+    static U convert(const V &value) { return U(value.second); }
 };
 
 // generator for cuset
@@ -78,10 +80,17 @@ struct ValueFactory<T, T> {
     static T make(const T &value) { return value; }
     static T key(const T &value) { return value; }
     static T get(const T &value) { return value; }
+    template< typename U >
+    static U convert(const T &value) { return U(value); }
 };
 
 template <typename T>
-struct Value : ValueFactory<typename T::key_type, typename T::value_type> {};
+struct Value : ValueFactory<typename T::key_type, typename T::value_type> {
+    template<typename U>
+    static bool compare( const typename T::iterator& it, U val ) {
+        return (Value::template convert<U>(*it) == val);
+    }
+};
 
 #if _MSC_VER
 #pragma warning(disable: 4189) // warning 4189 -- local variable is initialized but not referenced
@@ -148,34 +157,35 @@ void check_value_state(/* typename do_check_element_state =*/ tbb::internal::fal
 #define ASSERT_VALUE_STATE(do_check_element_state,state,value) check_value_state<state>(do_check_element_state,value,__FILE__,__LINE__)
 
 #if __TBB_CPP11_RVALUE_REF_PRESENT
-template<typename T, typename do_check_element_state>
-void test_rvalue_insert()
+template<typename T, typename do_check_element_state, typename V>
+void test_rvalue_insert(V v1, V v2)
 {
     typedef T container_t;
 
     container_t cont;
 
-    std::pair<typename container_t::iterator, bool> ins = cont.insert(Value<container_t>::make(1));
-    ASSERT(ins.second == true && Value<container_t>::get(*(ins.first)) == 1, "Element 1 has not been inserted properly");
+    std::pair<typename container_t::iterator, bool> ins = cont.insert(Value<container_t>::make(v1));
+    ASSERT(ins.second == true && Value<container_t>::get(*(ins.first)) == v1, "Element 1 has not been inserted properly");
     ASSERT_VALUE_STATE(do_check_element_state(),Harness::StateTrackableBase::MoveInitialized,*ins.first);
 
-    typename container_t::iterator it2 = cont.insert(ins.first, Value<container_t>::make(2));
-    ASSERT(Value<container_t>::get(*(it2)) == 2, "Element 2 has not been inserted properly");
+    typename container_t::iterator it2 = cont.insert(ins.first, Value<container_t>::make(v2));
+    ASSERT(Value<container_t>::get(*(it2)) == v2, "Element 2 has not been inserted properly");
     ASSERT_VALUE_STATE(do_check_element_state(),Harness::StateTrackableBase::MoveInitialized,*it2);
 
 }
 #if __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
+// The test does not use variadic templates, but emplace() does.
 
 namespace emplace_helpers {
 template<typename container_t, typename arg_t, typename value_t>
 std::pair<typename container_t::iterator, bool> call_emplace_impl(container_t& c, arg_t&& k, value_t *){
-    //this a set
+    // this is a set
     return c.emplace(std::forward<arg_t>(k));
 }
 
 template<typename container_t, typename arg_t, typename first_t, typename second_t>
 std::pair<typename container_t::iterator, bool> call_emplace_impl(container_t& c, arg_t&& k, std::pair<first_t, second_t> *){
-    //this is a map
+    // this is a map
     return c.emplace(k, std::forward<arg_t>(k));
 }
 
@@ -187,13 +197,13 @@ std::pair<typename container_t::iterator, bool> call_emplace(container_t& c, arg
 
 template<typename container_t, typename arg_t, typename value_t>
 typename container_t::iterator call_emplace_hint_impl(container_t& c, typename container_t::const_iterator hint, arg_t&& k, value_t *){
-    //this a set
+    // this is a set
     return c.emplace_hint(hint, std::forward<arg_t>(k));
 }
 
 template<typename container_t, typename arg_t, typename first_t, typename second_t>
 typename container_t::iterator call_emplace_hint_impl(container_t& c, typename container_t::const_iterator hint, arg_t&& k, std::pair<first_t, second_t> *){
-    //this is a map
+    // this is a map
     return c.emplace_hint(hint, k, std::forward<arg_t>(k));
 }
 
@@ -203,18 +213,17 @@ typename container_t::iterator call_emplace_hint(container_t& c, typename contai
     return call_emplace_hint_impl(c, hint, std::forward<arg_t>(k), selector);
 }
 }
-template<typename T, typename do_check_element_state>
-void test_emplace_insert(){
+template<typename T, typename do_check_element_state, typename V>
+void test_emplace_insert(V v1, V v2){
     typedef T container_t;
-
     container_t cont;
 
-    std::pair<typename container_t::iterator, bool> ins = emplace_helpers::call_emplace(cont, 1);
-    ASSERT(ins.second == true && Value<container_t>::get(*(ins.first)) == 1, "Element 1 has not been inserted properly");
+    std::pair<typename container_t::iterator, bool> ins = emplace_helpers::call_emplace(cont, v1);
+    ASSERT(ins.second == true && Value<container_t>::compare(ins.first, v1), "Element 1 has not been inserted properly");
     ASSERT_VALUE_STATE(do_check_element_state(),Harness::StateTrackableBase::DirectInitialized,*ins.first);
 
-    typename container_t::iterator it2 = emplace_helpers::call_emplace_hint(cont, ins.first, 2);
-    ASSERT(Value<container_t>::get(*(it2)) == 2, "Element 2 has not been inserted properly");
+    typename container_t::iterator it2 = emplace_helpers::call_emplace_hint(cont, ins.first, v2);
+    ASSERT(Value<container_t>::compare(it2, v2), "Element 2 has not been inserted properly");
     ASSERT_VALUE_STATE(do_check_element_state(),Harness::StateTrackableBase::DirectInitialized,*it2);
 }
 #endif //__TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
@@ -246,9 +255,9 @@ void test_basic(const char * str, do_check_element_state)
     ASSERT(ins.second == true && Value<T>::get(*(ins.first)) == 1, "Element 1 has not been inserted properly");
 
 #if __TBB_CPP11_RVALUE_REF_PRESENT
-    test_rvalue_insert<T,do_check_element_state>();
+    test_rvalue_insert<T,do_check_element_state>(1,2);
 #if __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
-    test_emplace_insert<T,do_check_element_state>();
+    test_emplace_insert<T,do_check_element_state>(1,2);
 #endif // __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
 #endif // __TBB_CPP11_RVALUE_REF_PRESENT
 
@@ -686,6 +695,17 @@ public:
 };
 
 #if __TBB_CPP11_SMART_POINTERS_PRESENT
+// For the sake of simplified testing, make unique_ptr implicitly convertible to/from the pointer
+namespace test {
+    template<typename T>
+    class unique_ptr : public std::unique_ptr<T> {
+    public:
+        typedef typename std::unique_ptr<T>::pointer pointer;
+        unique_ptr( pointer p ) : std::unique_ptr<T>(p) {}
+        operator pointer() const { return this->get(); }
+    };
+}
+
 namespace tbb {
     template<> class tbb_hash< std::shared_ptr<int> > {
     public:
@@ -702,6 +722,14 @@ namespace tbb {
     template<> class tbb_hash< const std::weak_ptr<int> > {
     public:
         size_t operator()( const std::weak_ptr<int>& key ) const { return tbb_hasher( *key.lock( ) ); }
+    };
+    template<> class tbb_hash< test::unique_ptr<int> > {
+    public:
+        size_t operator()( const test::unique_ptr<int>& key ) const { return tbb_hasher( *key ); }
+    };
+    template<> class tbb_hash< const test::unique_ptr<int> > {
+    public:
+        size_t operator()( const test::unique_ptr<int>& key ) const { return tbb_hasher( *key ); }
     };
 }
 #endif /* __TBB_CPP11_SMART_POINTERS_PRESENT */

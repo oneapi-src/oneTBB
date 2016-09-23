@@ -71,9 +71,9 @@ typedef <a class="el" href="a00084.html">opencl_device</a>&#160;</td><td class="
 <tr class="memitem:abff39774d3730a68f41655c508330787 inherit pub_types_a00086"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abff39774d3730a68f41655c508330787"></a>
 typedef kernel&#160;</td><td class="memItemRight" valign="bottom"><b>kernel_type</b></td></tr>
 <tr class="separator:abff39774d3730a68f41655c508330787 inherit pub_types_a00086"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a648113cbd90d8294f15de55ed20ee31f inherit pub_types_a00086"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a648113cbd90d8294f15de55ed20ee31f"></a>
-typedef range&#160;</td><td class="memItemRight" valign="bottom"><b>range_type</b></td></tr>
-<tr class="separator:a648113cbd90d8294f15de55ed20ee31f inherit pub_types_a00086"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a21edc0bf4c4187d231a33ab037d98446 inherit pub_types_a00086"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a21edc0bf4c4187d231a33ab037d98446"></a>
+typedef <a class="el" href="a00095.html">opencl_range</a>&#160;</td><td class="memItemRight" valign="bottom"><b>range_type</b></td></tr>
+<tr class="separator:a21edc0bf4c4187d231a33ab037d98446 inherit pub_types_a00086"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -88,7 +88,7 @@ Public Member Functions</h2></td></tr>
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>init</b> (const <a class="el" href="a00085.html">opencl_device_list</a> &amp;device_list)</td></tr>
 <tr class="separator:a388b83e950cd43581da1aef8033ea914 inherit pub_methods_a00086"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac1c47c68f91720aaf37e7faf2ef2628d inherit pub_methods_a00086"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac1c47c68f91720aaf37e7faf2ef2628d"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>send_kernel</b> (<a class="el" href="a00084.html">opencl_device</a> device, const kernel_type &amp;kernel, const range_type &amp;work_size, Args &amp;...args)</td></tr>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>send_kernel</b> (<a class="el" href="a00084.html">opencl_device</a> device, const kernel_type &amp;kernel, const <a class="el" href="a00095.html">range_type</a> &amp;work_size, Args &amp;...args)</td></tr>
 <tr class="separator:ac1c47c68f91720aaf37e7faf2ef2628d inherit pub_methods_a00086"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac2f834bb6c81d620258c1784b8e2b8b4 inherit pub_methods_a00086"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac2f834bb6c81d620258c1784b8e2b8b4"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>send_data</b> (<a class="el" href="a00084.html">opencl_device</a> device, T &amp;t, Rest &amp;...args)</td></tr>
