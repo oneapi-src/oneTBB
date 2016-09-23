@@ -2,7 +2,7 @@
 # CMake buld configuration for tbb
 #
 if(DEFINED CMAKE_CXX_STANDARD AND (NOT ${CMAKE_CXX_STANDARD} EQUAL "98" ))
-  cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR) ## 3.2.0 needed for AppleClang CXX11 finding
+  cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR) ## 3.2.0 needed for AppleClang CXX11 detection
 else()
   cmake_minimum_required (VERSION 2.8.7 FATAL_ERROR)
 endif()
