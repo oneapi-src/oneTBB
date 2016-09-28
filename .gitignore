@@ -1,0 +1,57 @@
+/.ninja_deps
+/.ninja_log
+/build.ninja
+/rules.ninja
+CMakeCache.txt
+CMakeFiles
+libtbb.dylib
+libtbb.so
+libtbb_static.a
+libtbbmalloc.dylib
+libtbbmalloc.so
+libtbbmalloc_proxy.dylib
+libtbbmalloc_proxy.so
+libtbbmalloc_proxy_static.a
+libtbbmalloc_static.a
+tbb.def
+tbbmalloc.def
+version_string.ver
+#Ignore the build and release directories created with Makefile builds
+build/*_debug/
+build/*_release/
+
+*.[oa]
+# Compiled Static libraries
+*.a
+*.config
+*.dylib
+*.la
+*.lai
+*.lo
+*.nhdr
+*.nii.gz
+*.nrrd
+# Compiled Object files
+*.o
+*.obj
+*.orig
+*.pyc
+*.raw
+*.sample
+*.slo
+# Compiled Dynamic libraries
+*.so
+*.swp
+*ExternalSources*
+# emacs backups
+*~
+.emacs.desktop
+# Mac resource files
+.DS_Store
+._*
+.clang_complete
+.idea
+.svn
+CMakeCache.txt
+CMakeFiles/*
+crash*
