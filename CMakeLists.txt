@@ -211,6 +211,9 @@ endif()
 if(CMAKE_COMPILER_IS_GNUCC)
   # Quench a warning on GCC
   set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/src/tbb/governor.cpp COMPILE_FLAGS "-Wno-missing-field-initializers ")
+elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+  # Quench a warning on Clang
+  set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/src/tbb/itt_notify.cpp COMPILE_FLAGS "-Wno-varargs ")
 elseif(MSVC)
   # Quench a warning on MSVC
   set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/src/tbb/scheduler.cpp COMPILE_FLAGS "/wd4458 ")
