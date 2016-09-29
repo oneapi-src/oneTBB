@@ -1,0 +1,49 @@
+language: cpp
+sudo: false
+
+matrix:
+  include:
+    - os: linux
+      compiler: gcc-4.8
+      script:
+        - CXXFLAGS="-mno-rtm" cmake -DCMAKE_CXX_COMPILER=g++-4.8 .
+        - make -j2
+        - make tests -j2 && ctest -j2 --output-on-failure --timeout 500
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-4.8
+            - g++-4.8-multilib
+            - g++-multilib
+    - os: osx
+      compiler: clang
+      script:
+        - cmake .
+        - make -j2
+        - make tests -j2 && ctest -j2 --output-on-failure --timeout 500
+    - os: linux
+      compiler: x86_64-w64-mingw32-g++
+      script:
+        - cmake -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ -DCMAKE_TOOLCHAIN_FILE=build/mingw_cross_toolchain.cmake -DGNU_HOST=x86_64-w64-mingw32 .
+        - make -j2
+        - make tests -j2
+      addons:
+        apt:
+          packages:
+            - g++-mingw-w64-x86-64
+            - gcc-mingw-w64-x86-64
+            - binutils-mingw-w64-x86-64
+    - os: linux
+      compiler: i686-w64-mingw32-g++
+      script:
+        - cmake -DCMAKE_CXX_COMPILER=i686-w64-mingw32-g++ -DCMAKE_TOOLCHAIN_FILE=build/mingw_cross_toolchain.cmake -DGNU_HOST=i686-w64-mingw32 .
+        - make -j2
+        - make tests -j2
+      addons:
+        apt:
+          packages:
+            - g++-mingw-w64-i686
+            - gcc-mingw-w64-i686
+            - binutils-mingw-w64-i686
