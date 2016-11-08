@@ -554,7 +554,7 @@ struct ParallelTraverseBody: NoAssign {
     {}
     void operator()( const RangeType& range ) const {
         for( typename RangeType::iterator i = range.begin(); i!=range.end(); ++i ) {
-            int k = Value<ContainerType>::key(*i);
+            int k = static_cast<int>(Value<ContainerType>::key(*i));
             ASSERT( k == Value<ContainerType>::get(*i), NULL );
             ASSERT( 0<=k && k<n, NULL );
             array[k]++;

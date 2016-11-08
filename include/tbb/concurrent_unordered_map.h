@@ -115,12 +115,10 @@ public:
         const hasher& _Hasher = hasher(), const key_equal& _Key_equality = key_equal(),
         const allocator_type& a = allocator_type())
         : base_type(n_of_buckets, key_compare(_Hasher, _Key_equality), a)
-    {
-    }
+    {}
 
     concurrent_unordered_map(const Allocator& a) : base_type(base_type::initial_bucket_number, key_compare(), a)
-    {
-    }
+    {}
 
     template <typename Iterator>
     concurrent_unordered_map(Iterator first, Iterator last, size_type n_of_buckets = base_type::initial_bucket_number,
@@ -142,11 +140,11 @@ public:
     }
 #endif //# __TBB_INITIALIZER_LISTS_PRESENT
 
-#if __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN
+#if __TBB_CPP11_RVALUE_REF_PRESENT
+#if !__TBB_IMPLICIT_MOVE_PRESENT
     concurrent_unordered_map(const concurrent_unordered_map& table)
         : base_type(table)
-    {
-    }
+    {}
 
     concurrent_unordered_map& operator=(const concurrent_unordered_map& table)
     {
@@ -155,25 +153,22 @@ public:
 
     concurrent_unordered_map(concurrent_unordered_map&& table)
         : base_type(std::move(table))
-    {
-    }
+    {}
 
     concurrent_unordered_map& operator=(concurrent_unordered_map&& table)
     {
         return static_cast<concurrent_unordered_map&>(base_type::operator=(std::move(table)));
     }
-#endif //__TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN
+#endif //!__TBB_IMPLICIT_MOVE_PRESENT
+
+    concurrent_unordered_map(concurrent_unordered_map&& table, const Allocator& a) : base_type(std::move(table), a)
+    {}
+#endif //__TBB_CPP11_RVALUE_REF_PRESENT
 
     concurrent_unordered_map(const concurrent_unordered_map& table, const Allocator& a)
         : base_type(table, a)
-    {
-    }
+    {}
 
-#if __TBB_CPP11_RVALUE_REF_PRESENT
-    concurrent_unordered_map(concurrent_unordered_map&& table, const Allocator& a) : base_type(std::move(table), a)
-    {
-    }
-#endif
     // Observers
     mapped_type& operator[](const key_type& key)
     {
@@ -256,12 +251,10 @@ public:
         const hasher& _Hasher = hasher(), const key_equal& _Key_equality = key_equal(),
         const allocator_type& a = allocator_type())
         : base_type(n_of_buckets, key_compare(_Hasher, _Key_equality), a)
-    {
-    }
+    {}
 
     concurrent_unordered_multimap(const Allocator& a) : base_type(base_type::initial_bucket_number, key_compare(), a)
-    {
-    }
+    {}
 
     template <typename Iterator>
     concurrent_unordered_multimap(Iterator first, Iterator last, size_type n_of_buckets = base_type::initial_bucket_number,
@@ -283,11 +276,11 @@ public:
     }
 #endif //# __TBB_INITIALIZER_LISTS_PRESENT
 
-#if __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN
+#if __TBB_CPP11_RVALUE_REF_PRESENT
+#if !__TBB_IMPLICIT_MOVE_PRESENT
     concurrent_unordered_multimap(const concurrent_unordered_multimap& table)
         : base_type(table)
-    {
-    }
+    {}
 
     concurrent_unordered_multimap& operator=(const concurrent_unordered_multimap& table)
     {
@@ -296,25 +289,21 @@ public:
 
     concurrent_unordered_multimap(concurrent_unordered_multimap&& table)
         : base_type(std::move(table))
-    {
-    }
+    {}
 
     concurrent_unordered_multimap& operator=(concurrent_unordered_multimap&& table)
     {
         return static_cast<concurrent_unordered_multimap&>(base_type::operator=(std::move(table)));
     }
-#endif //__TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN
+#endif //!__TBB_IMPLICIT_MOVE_PRESENT
+
+    concurrent_unordered_multimap(concurrent_unordered_multimap&& table, const Allocator& a) : base_type(std::move(table), a)
+    {}
+#endif //__TBB_CPP11_RVALUE_REF_PRESENT
 
     concurrent_unordered_multimap(const concurrent_unordered_multimap& table, const Allocator& a)
         : base_type(table, a)
-    {
-    }
-
-#if __TBB_CPP11_RVALUE_REF_PRESENT
-    concurrent_unordered_multimap(concurrent_unordered_multimap&& table, const Allocator& a) : base_type(std::move(table), a)
-    {
-    }
-#endif
+    {}
 };
 } // namespace interface5
 

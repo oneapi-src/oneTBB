@@ -38,6 +38,7 @@ if ("%VS90COMNTOOLS%")  NEQ ("") set vc_dir=vc9
 if ("%VS100COMNTOOLS%") NEQ ("") set vc_dir=vc10
 if ("%VS110COMNTOOLS%") NEQ ("") set vc_dir=vc11
 if ("%VS120COMNTOOLS%") NEQ ("") set vc_dir=vc12
+if ("%VS140COMNTOOLS%") NEQ ("") set vc_dir=vc14
 
 :: Are we standalone/oss or inside compiler?
 if exist "%TBBROOT%\bin\%arch%\%vc_dir%\tbb%postfix%.dll" set interim_path=bin\%arch%

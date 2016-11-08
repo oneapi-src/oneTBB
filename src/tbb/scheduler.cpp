@@ -97,7 +97,8 @@ generic_scheduler::generic_scheduler( market& m )
     __TBB_ASSERT( !my_arena_index, "constructor expects the memory being zero-initialized" );
     __TBB_ASSERT( governor::is_set(NULL), "scheduler is already initialized for this thread" );
 
-    my_dummy_task = &allocate_task( sizeof(task), __TBB_CONTEXT_ARG(NULL, &the_dummy_context) );
+    my_innermost_running_task = my_dummy_task = &allocate_task( sizeof(task), __TBB_CONTEXT_ARG(NULL, &the_dummy_context) );
+    my_properties.outermost = true;
 #if __TBB_TASK_PRIORITY
     my_ref_top_priority = &m.my_global_top_priority;
     my_ref_reload_epoch = &m.my_global_reload_epoch;
@@ -111,7 +112,6 @@ generic_scheduler::generic_scheduler( market& m )
 #endif /* __TBB_TASK_GROUP_CONTEXT */
     ITT_SYNC_CREATE(&my_dummy_task->prefix().ref_count, SyncType_Scheduler, SyncObj_WorkerLifeCycleMgmt);
     ITT_SYNC_CREATE(&my_return_list, SyncType_Scheduler, SyncObj_TaskReturnList);
-    init_stack_info();
 }
 
 #if _MSC_VER && !defined(__INTEL_COMPILER)
@@ -1153,7 +1153,9 @@ generic_scheduler* generic_scheduler::create_worker( market& m, size_t index ) {
     __TBB_ASSERT(index, "workers should have index > 0");
     s->my_arena_index = index; // index is not a real slot in arena yet
     s->my_dummy_task->prefix().ref_count = 2;
-    s->my_is_worker = true;
+    s->my_properties.type = scheduler_properties::worker;
+    // Do not call init_stack_info before the scheduler is set as master or worker.
+    s->init_stack_info();
     governor::sign_on(s);
     return s;
 }
@@ -1165,8 +1167,7 @@ generic_scheduler* generic_scheduler::create_master( arena* a ) {
     __TBB_ASSERT( !s->my_arena, NULL );
     __TBB_ASSERT( s->my_market, NULL );
     task& t = *s->my_dummy_task;
-    s->my_innermost_running_task = &t;
-    s->my_dispatching_task = &t;
+    s->my_properties.type = scheduler_properties::master;
     t.prefix().ref_count = 1;
 #if __TBB_TASK_GROUP_CONTEXT
     t.prefix().context = new ( NFS_Allocate(1, sizeof(task_group_context), NULL) )
@@ -1174,11 +1175,12 @@ generic_scheduler* generic_scheduler::create_master( arena* a ) {
 #if __TBB_FP_CONTEXT
     s->default_context()->capture_fp_settings();
 #endif
+    // Do not call init_stack_info before the scheduler is set as master or worker.
+    s->init_stack_info();
     context_state_propagation_mutex_type::scoped_lock lock(the_context_state_propagation_mutex);
     s->my_market->my_masters.push_front( *s );
     lock.release();
 #endif /* __TBB_TASK_GROUP_CONTEXT */
-    s->my_is_worker = false;
     if( a ) {
     // Master thread always occupies the first slot
         s->attach_arena( a, /*index*/0, /*is_master*/true );

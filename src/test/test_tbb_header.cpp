@@ -33,6 +33,45 @@
 #define TBB_PREVIEW_GLOBAL_CONTROL 1
 #endif
 
+#if __TBB_TEST_SECONDARY
+    // Test _DEBUG macro custom definitions.
+    #if TBB_USE_DEBUG
+        #ifdef _DEBUG
+            #undef _DEBUG
+        #endif /* _DEBUG */
+        // Check that empty value successfully enables the debug mode.
+        #define _DEBUG
+        static bool isDebugExpected = true;
+    #else
+        // Check that zero value does not enable the debug mode.
+        #define _DEBUG 0x0
+        static bool isDebugExpected = false;
+    #endif /* TBB_USE_DEBUG */
+    #define DO_TEST_DEBUG_MACRO 1
+#else
+    // Test default definitions of _DEBUG.
+    #if _DEBUG
+        static bool isDebugExpected = true;
+        #define DO_TEST_DEBUG_MACRO 1
+    #elif _MSC_VER
+        // for MSVC, _DEBUG not defined indicates a release mode.
+        static bool isDebugExpected = false;
+        #define DO_TEST_DEBUG_MACRO 1
+    #endif /* _DEBUG */
+#endif /* __TBB_TEST_SECONDARY */
+
+#if DO_TEST_DEBUG_MACRO
+// Reset TBB_USE_DEBUG defined in makefiles.
+#undef TBB_USE_DEBUG
+#endif /* DO_TEST_DEBUG_MACRO */
+#include "tbb/tbb_config.h"
+
+#if !TBB_USE_DEBUG && defined(_DEBUG)
+// TBB_USE_DEBUG is 0 but _DEBUG is defined, it means that _DEBUG is 0
+// MSVC C++ headers consider any definition of _DEBUG, including 0, as debug mode
+#undef _DEBUG
+#endif /* !TBB_USE_DEBUG && defined(_DEBUG) */
+
 #include "harness_defs.h"
 #if !(__TBB_TEST_SECONDARY && __TBB_CPP11_STD_PLACEHOLDERS_LINKAGE_BROKEN)
 
@@ -163,8 +202,10 @@ static void TestPreviewNames() {
 /* This mode is used to produce a secondary object file that is linked with
    the main one in order to detect "multiple definition" linker error.
 */
-void secondary()
+#include "harness_assert.h"
+bool Secondary()
 #else
+bool Secondary();
 int TestMain ()
 #endif
 {
@@ -268,9 +309,19 @@ int TestMain ()
 #if __TBB_CPF_BUILD
     TestPreviewNames();
 #endif
-#if !__TBB_TEST_SECONDARY
+#ifdef DO_TEST_DEBUG_MACRO
+#if TBB_USE_DEBUG
+    ASSERT( isDebugExpected, "Debug mode is observed while release mode is expected." );
+#else
+    ASSERT( !isDebugExpected, "Release mode is observed while debug mode is expected." );
+#endif /* TBB_USE_DEBUG */
+#endif /* DO_TEST_DEBUG_MACRO */
+#if __TBB_TEST_SECONDARY
+    return true;
+#else
     TestExceptionClassesExports();
+    Secondary();
     return Harness::Done;
-#endif
+#endif /* __TBB_TEST_SECONDARY */
 }
 #endif //!(__TBB_TEST_SECONDARY && __TBB_CPP11_STD_PLACEHOLDERS_LINKING_BROKEN)

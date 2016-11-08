@@ -175,6 +175,9 @@ task* custom_scheduler<SchedulerTraits>::receive_or_steal_task( __TBB_ISOLATION_
                 ITT_NOTIFY(sync_acquired, &completion_ref_count);
             }
             __TBB_ASSERT( !t, NULL );
+            // A worker thread in its outermost dispatch loop (i.e. its execution stack is empty) should
+            // exit it either when there is no more work in the current arena, or when revoked by the market.
+            __TBB_ASSERT( !outermost_worker_level, NULL );
             __TBB_control_consistency_helper(); // on ref_count
             break; // exit stealing loop and return;
         }
@@ -367,6 +370,7 @@ template<typename SchedulerTraits>
 void custom_scheduler<SchedulerTraits>::local_wait_for_all( task& parent, task* child ) {
     __TBB_ASSERT( governor::is_set(this), NULL );
     __TBB_ASSERT( parent.ref_count() >= (child && child->parent() == &parent ? 2 : 1), "ref_count is too small" );
+    __TBB_ASSERT( my_innermost_running_task, NULL );
     assert_task_pool_valid();
     // Using parent's refcount in sync_prepare (in the stealing loop below) is
     // a workaround for TP. We need to name it here to display correctly in Ampl.
@@ -392,14 +396,16 @@ void custom_scheduler<SchedulerTraits>::local_wait_for_all( task& parent, task* 
     // must be replaced with the one local to this arena.
     volatile uintptr_t *old_ref_reload_epoch = my_ref_reload_epoch;
 #endif /* __TBB_TASK_PRIORITY */
-    task* old_dispatching_task = my_dispatching_task;
-    my_dispatching_task = my_innermost_running_task;
+    task* old_innermost_running_task = my_innermost_running_task;
+    scheduler_properties old_properties = my_properties;
+    // Remove outermost property to indicate nested level.
+    __TBB_ASSERT( my_properties.outermost || my_innermost_running_task!=my_dummy_task, "The outermost property should be set out of a dispatch loop" );
+    my_properties.outermost &= my_innermost_running_task==my_dummy_task;
 #if __TBB_TASK_ISOLATION
-    isolation_tag isolation = my_innermost_running_task ? my_innermost_running_task->prefix().isolation : no_isolation;
+    isolation_tag isolation = my_innermost_running_task->prefix().isolation;
 #endif /* __TBB_TASK_ISOLATION */
     if( master_outermost_level() ) {
         // We are in the outermost task dispatch loop of a master thread or a worker which mimics master
-        __TBB_ASSERT( !is_worker() || my_dispatching_task != old_dispatching_task, NULL );
         quit_point = &parent == my_dummy_task ? all_local_work_done : parents_work_done;
     } else {
         quit_point = parents_work_done;
@@ -567,8 +573,7 @@ void custom_scheduler<SchedulerTraits>::local_wait_for_all( task& parent, task* 
             }
             if ( is_task_pool_published() ) {
                 t = get_task( __TBB_ISOLATION_EXPR( isolation ) );
-            }
-            else {
+            } else {
                 __TBB_ASSERT( is_quiescent_local_task_pool_reset(), NULL );
                 break;
             }
@@ -592,8 +597,8 @@ stealing_ground:
         if ( quit_point == all_local_work_done ) {
             __TBB_ASSERT( !is_task_pool_published() && is_quiescent_local_task_pool_reset(), NULL );
             __TBB_ASSERT( !worker_outermost_level(), NULL );
-            my_innermost_running_task = my_dispatching_task;
-            my_dispatching_task = old_dispatching_task;
+            my_innermost_running_task = old_innermost_running_task;
+            my_properties = old_properties;
 #if __TBB_TASK_PRIORITY
             my_ref_top_priority = old_ref_top_priority;
             if(my_ref_reload_epoch != old_ref_reload_epoch)
@@ -602,9 +607,6 @@ stealing_ground:
 #endif /* __TBB_TASK_PRIORITY */
             return;
         }
-        // Dispatching task pointer is NULL *iff* this is a worker thread in its outermost
-        // dispatch loop (i.e. its execution stack is empty). In this case it should exit it
-        // either when there is no more work in the current arena, or when revoked by the market.
         
         t = receive_or_steal_task( __TBB_ISOLATION_ARG( parent.prefix().ref_count, isolation ) );
         if ( !t )
@@ -641,8 +643,8 @@ stealing_ground:
     __TBB_ASSERT( false, "Must never get here too" );
 #endif /* TBB_USE_EXCEPTIONS */
 done:
-    my_innermost_running_task = my_dispatching_task;
-    my_dispatching_task = old_dispatching_task;
+    my_innermost_running_task = old_innermost_running_task;
+    my_properties = old_properties;
 #if __TBB_TASK_PRIORITY
     my_ref_top_priority = old_ref_top_priority;
     if(my_ref_reload_epoch != old_ref_reload_epoch)

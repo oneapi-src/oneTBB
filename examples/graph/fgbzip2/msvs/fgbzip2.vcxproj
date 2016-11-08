@@ -204,7 +204,7 @@
     <ClCompile Include="..\randtable.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\index.html" />
+    <None Include="..\readme.html" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\bzlib.h" />

@@ -2,6 +2,20 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 2017 Update 2
+TBB_INTERFACE_VERSION == 9102
+
+Changes (w.r.t. Intel TBB 2017 Update 1):
+
+- Removed the long-outdated support for Xbox* consoles.
+
+Bugs fixed:
+
+- Fixed the issue with task_arena::execute() not being processed when
+    the calling thread cannot join the arena.
+- Fixed dynamic memory allocation replacement failure on macOS* 10.12.
+
+------------------------------------------------------------------------
 Intel TBB 2017 Update 1
 TBB_INTERFACE_VERSION == 9101
 

@@ -23,9 +23,7 @@
 // It assumes that "harness_assert.h" has already been included.
 
 #if _WIN32
-#if !_XBOX
     #include <windows.h>
-#endif
 #else
     #include <sys/time.h>
     #include <sys/resource.h>
@@ -34,7 +32,7 @@
 //! Return time (in seconds) spent by the current process in user mode.
 /*  Returns 0 if not implemented on platform. */
 static double GetCPUUserTime() {
-#if _XBOX || __TBB_WIN8UI_SUPPORT
+#if __TBB_WIN8UI_SUPPORT
     return 0;
 #elif _WIN32
     FILETIME my_times[4];

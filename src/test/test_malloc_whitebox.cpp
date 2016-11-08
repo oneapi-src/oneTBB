@@ -1152,7 +1152,7 @@ void TestSlabAlignment() {
 
 int TestMain () {
     scalable_allocation_mode(USE_HUGE_PAGES, 0);
-#if !_XBOX && !__TBB_WIN8UI_SUPPORT
+#if !__TBB_WIN8UI_SUPPORT
     Harness::SetEnv("TBB_MALLOC_USE_HUGE_PAGES","yes");
 #endif
     checkNoHugePages();

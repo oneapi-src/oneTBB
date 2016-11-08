@@ -47,6 +47,19 @@ struct nested_arena_context;
 #define EmptyTaskPool ((task**)0)
 #define LockedTaskPool ((task**)~(intptr_t)0)
 
+//! Bit-field representing properties of a sheduler
+struct scheduler_properties {
+    static const bool worker = false;
+    static const bool master = true;
+    //! Indicates that a scheduler acts as a master or a worker.
+    bool type : 1;
+    //! Indicates that a scheduler is on outermost level.
+    /**  Note that the explicit execute method will set this property. **/
+    bool outermost : 1;
+    //! Reserved bits
+    unsigned char : 6;
+};
+
 struct scheduler_state {
     //! Index of the arena slot the scheduler occupies now, or occupied last time.
     size_t my_arena_index; // TODO: make it unsigned and pair with my_affinity_id to fit into cache line
@@ -57,13 +70,8 @@ struct scheduler_state {
     //! The arena that I own (if master) or am servicing at the moment (if worker)
     arena* my_arena;
 
-    //! Innermost task whose task::execute() is running.
+    //! Innermost task whose task::execute() is running. A dummy task on the outermost level.
     task* my_innermost_running_task;
-
-    //! Task, in the context of which the current TBB dispatch loop is running.
-    /** Outside of or in the outermost dispatch loop (not in a nested call to
-        wait_for_all) it is my_dummy_task for master threads, and NULL for workers. **/
-    task* my_dispatching_task;
 
     mail_inbox my_inbox;
 
@@ -72,8 +80,11 @@ struct scheduler_state {
         TODO: how are id's being garbage collected?
         TODO: master thread may enter arena and leave and then reenter.
                 We want to give it the same affinity_id upon reentry, if practical.
+        TODO: investigate if it makes sense to merge this field into scheduler_properties.
       */
     affinity_id my_affinity_id;
+
+    scheduler_properties my_properties;
 
 #if __TBB_SCHEDULER_OBSERVER
     //! Last observer in the global observers list processed by this scheduler
@@ -93,7 +104,6 @@ struct scheduler_state {
     //! Pointer to market's (for workers) or current arena's (for the master) reload epoch counter.
     volatile uintptr_t *my_ref_reload_epoch;
 #endif /* __TBB_TASK_PRIORITY */
-    bool my_is_worker;
 };
 
 //! Work stealing task scheduler.
@@ -290,7 +300,7 @@ public:
 #endif /* TBB_USE_ASSERT <= 1 */
 
     void attach_arena( arena*, size_t index, bool is_master );
-    void nested_arena_entry( arena*, size_t, nested_arena_context &, bool as_worker );
+    void nested_arena_entry( arena*, size_t, nested_arena_context &, bool );
     void nested_arena_exit( nested_arena_context & );
     void wait_until_empty();
 
@@ -321,7 +331,10 @@ public:
     inline void deallocate_task( task& t );
 
     //! True if running on a worker thread, false otherwise.
-    inline bool is_worker();
+    inline bool is_worker() const;
+
+    //! True if the scheduler is on the outermost dispatch level.
+    inline bool outermost_level() const;
 
     //! True if the scheduler is on the outermost dispatch level in a master thread.
     /** Returns true when this scheduler instance is associated with an application
@@ -531,12 +544,16 @@ inline bool generic_scheduler::is_quiescent_local_task_pool_reset () const {
     return __TBB_load_relaxed(my_arena_slot->head) == 0 && __TBB_load_relaxed(my_arena_slot->tail) == 0;
 }
 
+inline bool generic_scheduler::outermost_level () const {
+    return my_properties.outermost;
+}
+
 inline bool generic_scheduler::master_outermost_level () const {
-    return my_dispatching_task == my_dummy_task;
+    return !is_worker() && outermost_level();
 }
 
 inline bool generic_scheduler::worker_outermost_level () const {
-    return !my_dispatching_task;
+    return is_worker() && outermost_level();
 }
 
 #if __TBB_TASK_GROUP_CONTEXT
@@ -551,8 +568,8 @@ inline void generic_scheduler::attach_mailbox( affinity_id id ) {
     my_affinity_id = id;
 }
 
-inline bool generic_scheduler::is_worker() {
-    return my_is_worker;
+inline bool generic_scheduler::is_worker() const {
+    return my_properties.type == scheduler_properties::worker;
 }
 
 inline unsigned generic_scheduler::max_threads_in_arena() {

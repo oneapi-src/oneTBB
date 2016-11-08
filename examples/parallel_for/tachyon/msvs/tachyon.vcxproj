@@ -444,7 +444,7 @@
   <ItemGroup>
     <None Include="..\msvs\gui.ico" />
     <None Include="..\msvs\small.ico" />
-    <None Include="..\index.html" />
+    <None Include="..\readme.html" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\msvs\gui.rc" />

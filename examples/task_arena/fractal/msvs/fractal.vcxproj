@@ -439,7 +439,7 @@
   <ItemGroup>
     <None Include="gui.ico" />
     <None Include="small.ico" />
-    <None Include="..\index.html" />
+    <None Include="..\readme.html" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="gui.rc" />

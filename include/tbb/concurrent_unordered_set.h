@@ -94,12 +94,10 @@ public:
     explicit concurrent_unordered_set(size_type n_of_buckets = base_type::initial_bucket_number, const hasher& a_hasher = hasher(),
         const key_equal& a_keyeq = key_equal(), const allocator_type& a = allocator_type())
         : base_type(n_of_buckets, key_compare(a_hasher, a_keyeq), a)
-    {
-    }
+    {}
 
     concurrent_unordered_set(const Allocator& a) : base_type(base_type::initial_bucket_number, key_compare(), a)
-    {
-    }
+    {}
 
     template <typename Iterator>
     concurrent_unordered_set(Iterator first, Iterator last, size_type n_of_buckets = base_type::initial_bucket_number, const hasher& a_hasher = hasher(),
@@ -111,7 +109,7 @@ public:
 
 #if __TBB_INITIALIZER_LISTS_PRESENT
     //! Constructor from initializer_list
-   concurrent_unordered_set(std::initializer_list<value_type> il, size_type n_of_buckets = base_type::initial_bucket_number, const hasher& a_hasher = hasher(),
+    concurrent_unordered_set(std::initializer_list<value_type> il, size_type n_of_buckets = base_type::initial_bucket_number, const hasher& a_hasher = hasher(),
         const key_equal& a_keyeq = key_equal(), const allocator_type& a = allocator_type())
         : base_type(n_of_buckets, key_compare(a_hasher, a_keyeq), a)
     {
@@ -119,11 +117,11 @@ public:
     }
 #endif //# __TBB_INITIALIZER_LISTS_PRESENT
 
-#if __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN
+#if __TBB_CPP11_RVALUE_REF_PRESENT
+#if !__TBB_IMPLICIT_MOVE_PRESENT
     concurrent_unordered_set(const concurrent_unordered_set& table)
         : base_type(table)
-    {
-    }
+    {}
 
     concurrent_unordered_set& operator=(const concurrent_unordered_set& table)
     {
@@ -132,26 +130,22 @@ public:
 
     concurrent_unordered_set(concurrent_unordered_set&& table)
         : base_type(std::move(table))
-    {
-    }
+    {}
 
     concurrent_unordered_set& operator=(concurrent_unordered_set&& table)
     {
         return static_cast<concurrent_unordered_set&>(base_type::operator=(std::move(table)));
     }
-#endif //__TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN
+#endif //!__TBB_IMPLICIT_MOVE_PRESENT
+
+    concurrent_unordered_set(concurrent_unordered_set&& table, const Allocator& a)
+        : base_type(std::move(table), a)
+    {}
+#endif //__TBB_CPP11_RVALUE_REF_PRESENT
 
     concurrent_unordered_set(const concurrent_unordered_set& table, const Allocator& a)
         : base_type(table, a)
-    {
-    }
-
-#if __TBB_CPP11_RVALUE_REF_PRESENT
-    concurrent_unordered_set(concurrent_unordered_set&& table, const Allocator& a)
-        : base_type(std::move(table), a)
-    {
-    }
-#endif //__TBB_CPP11_RVALUE_REF_PRESENT
+    {}
 
 };
 
@@ -199,12 +193,10 @@ public:
         const hasher& _Hasher = hasher(), const key_equal& _Key_equality = key_equal(),
         const allocator_type& a = allocator_type())
         : base_type(n_of_buckets, key_compare(_Hasher, _Key_equality), a)
-    {
-    }
+    {}
 
     concurrent_unordered_multiset(const Allocator& a) : base_type(base_type::initial_bucket_number, key_compare(), a)
-    {
-    }
+    {}
 
     template <typename Iterator>
     concurrent_unordered_multiset(Iterator first, Iterator last, size_type n_of_buckets = base_type::initial_bucket_number,
@@ -217,7 +209,7 @@ public:
 
 #if __TBB_INITIALIZER_LISTS_PRESENT
     //! Constructor from initializer_list
-   concurrent_unordered_multiset(std::initializer_list<value_type> il, size_type n_of_buckets = base_type::initial_bucket_number, const hasher& a_hasher = hasher(),
+    concurrent_unordered_multiset(std::initializer_list<value_type> il, size_type n_of_buckets = base_type::initial_bucket_number, const hasher& a_hasher = hasher(),
         const key_equal& a_keyeq = key_equal(), const allocator_type& a = allocator_type())
         : base_type(n_of_buckets, key_compare(a_hasher, a_keyeq), a)
     {
@@ -225,39 +217,36 @@ public:
     }
 #endif //# __TBB_INITIALIZER_LISTS_PRESENT
 
-#if __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN
-   concurrent_unordered_multiset(const concurrent_unordered_multiset& table)
+#if __TBB_CPP11_RVALUE_REF_PRESENT
+#if !__TBB_IMPLICIT_MOVE_PRESENT
+    concurrent_unordered_multiset(const concurrent_unordered_multiset& table)
         : base_type(table)
-    {
-    }
+    {}
 
-   concurrent_unordered_multiset& operator=(const concurrent_unordered_multiset& table)
+    concurrent_unordered_multiset& operator=(const concurrent_unordered_multiset& table)
     {
         return static_cast<concurrent_unordered_multiset&>(base_type::operator=(table));
     }
 
-   concurrent_unordered_multiset(concurrent_unordered_multiset&& table)
+    concurrent_unordered_multiset(concurrent_unordered_multiset&& table)
         : base_type(std::move(table))
-    {
-    }
+    {}
 
-   concurrent_unordered_multiset& operator=(concurrent_unordered_multiset&& table)
+    concurrent_unordered_multiset& operator=(concurrent_unordered_multiset&& table)
     {
         return static_cast<concurrent_unordered_multiset&>(base_type::operator=(std::move(table)));
     }
-#endif //__TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN
+#endif //!__TBB_IMPLICIT_MOVE_PRESENT
 
-    concurrent_unordered_multiset(const concurrent_unordered_multiset& table, const Allocator& a)
-        : base_type(table, a)
-    {
-    }
-
-#if __TBB_CPP11_RVALUE_REF_PRESENT
     concurrent_unordered_multiset(concurrent_unordered_multiset&& table, const Allocator& a)
         : base_type(std::move(table), a)
     {
     }
 #endif //__TBB_CPP11_RVALUE_REF_PRESENT
+
+    concurrent_unordered_multiset(const concurrent_unordered_multiset& table, const Allocator& a)
+        : base_type(table, a)
+    {}
 };
 } // namespace interface5
 

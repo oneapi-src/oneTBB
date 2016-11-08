@@ -42,7 +42,7 @@ const size_t shared_size = SHARED_TEXT_REGION_SIZE+SHARED_DATA_REGION_SIZE;
 const size_t shared_size = 0;
 #endif
 
-#elif _WIN32 && !_XBOX && !__TBB_WIN8UI_SUPPORT
+#elif _WIN32 && !__TBB_WIN8UI_SUPPORT
 #include <windows.h>
 #include <psapi.h>
 #if _MSC_VER
@@ -60,7 +60,7 @@ enum MemoryStatType {
 /* Returns 0 if not implemented on platform. */
 size_t GetMemoryUsage(MemoryStatType stat = currentUsage) {
     ASSERT(stat==currentUsage || stat==peakUsage, NULL);
-#if _XBOX || __TBB_WIN8UI_SUPPORT
+#if __TBB_WIN8UI_SUPPORT
     return 0;
 #elif _WIN32
     PROCESS_MEMORY_COUNTERS mem;

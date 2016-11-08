@@ -23,7 +23,7 @@ bin_dir="$PWD"  #
 cd "$tbb_root"  # keep this comments here
 tbb_root="$PWD" # to make it unsensible
 cd "$bin_dir"   # to EOL encoding
-[ -f ./tbbvars.sh ] || cat >./tbbvars.sh <<EOF
+cat >./tbbvars.sh <<EOF
 #!/bin/bash
 export TBBROOT="${tbb_root}" #
 tbb_bin="${bin_dir}" #
@@ -44,7 +44,7 @@ else #
 fi #
 ${TBB_CUSTOM_VARS_SH} #
 EOF
-[ -f ./tbbvars.csh ] || cat >./tbbvars.csh <<EOF
+cat >./tbbvars.csh <<EOF
 #!/bin/csh
 setenv TBBROOT "${tbb_root}" #
 setenv tbb_bin "${bin_dir}" #

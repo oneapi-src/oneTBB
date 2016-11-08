@@ -114,7 +114,7 @@ void add_all_nodes (){
     tbb::flow::overwrite_node<int> ovw(g);
     tbb::flow::sequencer_node<int> seq(g, seq_body());
 
-#if __TBB_GLIBCXX_VERSION/100 != 404 || __clang__
+#if !__TBB_UPCAST_OF_TUPLE_OF_REF_BROKEN || __clang__
     auto input_tuple = std::tie(ct, s, m_fxn, fxn, bc, tbb::flow::input_port<0>(j), lim, q, tbb::flow::input_port<0>(ind),
                                 pq, ovw, wo, bf, seq);
     auto output_tuple = std::tie(ct,j, ind, fxn, src, bc, tbb::flow::output_port<0>(s), lim, tbb::flow::output_port<0>(m_fxn),

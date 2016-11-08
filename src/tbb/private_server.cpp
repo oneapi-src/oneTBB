@@ -221,10 +221,6 @@ __attribute__((force_align_arg_pointer))
 __RML_DECL_THREAD_ROUTINE private_worker::thread_routine( void* arg ) {
     private_worker* self = static_cast<private_worker*>(arg);
     AVOID_64K_ALIASING( self->my_index );
-#if _XBOX
-    int HWThreadIndex = __TBB_XBOX360_GetHardwareThreadIndex(i);
-    XSetThreadProcessor(GetCurrentThread(), HWThreadIndex);
-#endif
     self->run();
     return 0;
 }

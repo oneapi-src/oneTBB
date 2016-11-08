@@ -147,7 +147,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="..\imageEffects.cl" />
-    <None Include="..\index.html" />
+    <None Include="..\readme.html" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\lodepng.cpp" />

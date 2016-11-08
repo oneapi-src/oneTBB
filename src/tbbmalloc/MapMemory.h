@@ -82,7 +82,7 @@ int UnmapMemory(void *area, size_t bytes)
     return ret;
 }
 
-#elif (_WIN32 || _WIN64) && !_XBOX && !__TBB_WIN8UI_SUPPORT
+#elif (_WIN32 || _WIN64) && !__TBB_WIN8UI_SUPPORT
 #include <windows.h>
 
 #define MEMORY_MAPPING_USES_MALLOC 0

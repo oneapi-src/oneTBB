@@ -590,7 +590,7 @@ private:
             , my_args_pack( std::forward<Args>(args)... )
         {}
 
-        args_storage( const args_storage_base &k ) : args_storage_base( k ), my_args_pack( k.my_args_pack ) {}
+        args_storage( const args_storage &k ) : args_storage_base( k ), my_args_pack( k.my_args_pack ) {}
 
         args_storage( const args_storage_base &k, Args&&... args ) : args_storage_base( k ), my_args_pack( std::forward<Args>(args)... ) {}
 
@@ -657,17 +657,9 @@ private:
     };
 
     template <typename... Args>
-    args_storage_base *make_args_storage( const kernel_type& kernel, StreamFactory &f, Args&&... args ) const {
+    args_storage_base *make_args_storage(const args_storage_base& storage, Args&&... args) const {
         // In this variadic template convert all simple types 'T' into 'async_msg_type<T>'
-        return new args_storage< typename wrap_to_async<Args>::type... >(
-            kernel, f, typename wrap_to_async<Args>::type( std::forward<Args>(args) )... );
-    }
-
-    template <typename... Args>
-    args_storage_base *make_args_storage( const args_storage_base& storage, Args&&... args ) const {
-        // In this variadic template convert all simple types 'T' into 'async_msg_type<T>'
-        return new args_storage< typename wrap_to_async<Args>::type... >(
-            storage, typename wrap_to_async<Args>::type( std::forward<Args>(args) )... );
+        return new args_storage<Args...>(storage, std::forward<Args>(args)...);
     }
 
     void notify_new_device( device_type d ) {
@@ -689,7 +681,7 @@ public:
         , my_join_node( g )
         , my_kernel_node( g, serial, kernel_body( *this ) )
         // By default, streaming_node maps all its ports to the kernel arguments on a one-to-one basis.
-        , my_args_storage( make_args_storage( kernel, f, port_ref<0, NUM_INPUTS - 1>() ) )
+        , my_args_storage( make_args_storage( args_storage<>(kernel, f), port_ref<0, NUM_INPUTS - 1>() ) )
     {
         base_type::set_external_ports( get_input_ports(), get_output_ports() );
         make_edges();
@@ -715,7 +707,7 @@ public:
         , my_device_selector_node( node.my_graph, serial, device_selector_body( my_device_selector ) )
         , my_join_node( std::move( node.my_join_node ) )
         , my_kernel_node( node.my_graph, serial, kernel_body( *this ) )
-        , my_args_storage( node.my_oargs_storage )
+        , my_args_storage( node.my_args_storage )
     {
         base_type::set_external_ports( get_input_ports(), get_output_ports() );
         make_edges();
@@ -731,7 +723,7 @@ public:
     template <typename... Args>
     void set_args( Args&&... args ) {
         // Copy the base class of args_storage and create new storage for "Args...".
-        args_storage_base * const new_args_storage = make_args_storage( *my_args_storage, std::forward<Args>( args )... );
+        args_storage_base * const new_args_storage = make_args_storage( *my_args_storage, typename wrap_to_async<Args>::type(std::forward<Args>(args))...);
         delete my_args_storage;
         my_args_storage = new_args_storage;
     }

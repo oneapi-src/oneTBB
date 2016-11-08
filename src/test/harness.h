@@ -90,10 +90,6 @@ int TestMain ();
         #pragma warning (pop)
         #pragma comment (lib, "dbghelp.lib")
     #endif
-    #if _XBOX
-        #undef HARNESS_NO_PARSE_COMMAND_LINE
-        #define HARNESS_NO_PARSE_COMMAND_LINE 1
-    #endif
     #if __TBB_WIN8UI_SUPPORT
         #include <thread>
     #endif

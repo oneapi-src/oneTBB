@@ -985,6 +985,91 @@ void TestIsolatedExecute() {
 }
 #endif /* __TBB_TASK_ISOLATION */
 //--------------------------------------------------//
+//--------------------------------------------------//
+class TestMultipleWaitsArenaWait {
+public:
+    TestMultipleWaitsArenaWait( int idx, int bunch_size, int num_tasks, tbb::task** waiters, tbb::atomic<int>& processed )
+        : my_idx( idx ), my_bunch_size( bunch_size ), my_num_tasks(num_tasks), my_waiters( waiters ), my_processed( processed ) {}
+    void operator()() const {
+        ++my_processed;
+        // Wait for all tasks
+        if ( my_idx < my_num_tasks )
+            my_waiters[my_idx]->wait_for_all();
+        // Signal waiting tasks
+        if ( my_idx >= my_bunch_size )
+            my_waiters[my_idx-my_bunch_size]->decrement_ref_count();
+    }
+private:
+    int my_idx;
+    int my_bunch_size;
+    int my_num_tasks;
+    tbb::task** my_waiters;
+    tbb::atomic<int>& my_processed;
+};
+
+class TestMultipleWaitsThreadBody {
+public:
+    TestMultipleWaitsThreadBody( int bunch_size, int num_tasks, tbb::task_arena& a, tbb::task** waiters, tbb::atomic<int>& processed )
+        : my_bunch_size( bunch_size ), my_num_tasks( num_tasks ), my_arena( a ), my_waiters( waiters ), my_processed( processed ) {}
+    void operator()( int idx ) const {
+        my_arena.execute( TestMultipleWaitsArenaWait( idx, my_bunch_size, my_num_tasks, my_waiters, my_processed ) );
+        --my_processed;
+    }
+private:
+    int my_bunch_size;
+    int my_num_tasks;
+    tbb::task_arena& my_arena;
+    tbb::task** my_waiters;
+    tbb::atomic<int>& my_processed;
+};
+
+#include "tbb/tbb_thread.h"
+
+void TestMultipleWaits( int num_threads, int num_bunches, int bunch_size ) {
+    tbb::task_arena a( num_threads );
+    const int num_tasks = (num_bunches-1)*bunch_size;
+    tbb::task** tasks = new tbb::task*[num_tasks];
+    for ( int i = 0; i<num_tasks; ++i )
+        tasks[i] = new (tbb::task::allocate_root()) tbb::empty_task();
+    tbb::atomic<int> processed;
+    processed = 0;
+    for ( int repeats = 0; repeats<10; ++repeats ) {
+        int idx = 0;
+        for ( int bunch = 0; bunch < num_bunches-1; ++bunch ) {
+            // Sync with the previous bunch of tasks to prevent "false" nested dependicies (when a nested task waits for an outer task).
+            while ( processed < bunch*bunch_size ) __TBB_Yield();
+            // Run the bunch of threads/tasks that depend on the next bunch of threads/tasks.
+            for ( int i = 0; i<bunch_size; ++i ) {
+                tasks[idx]->set_ref_count( 2 );
+                tbb::tbb_thread( TestMultipleWaitsThreadBody( bunch_size, num_tasks, a, tasks, processed ), idx++ ).detach();
+            }
+        }
+        // No sync because the threads of the last bunch do not call wait_for_all.
+        // Run the last bunch of threads.
+        for ( int i = 0; i<bunch_size; ++i )
+            tbb::tbb_thread( TestMultipleWaitsThreadBody( bunch_size, num_tasks, a, tasks, processed ), idx++ ).detach();
+        while ( processed ) __TBB_Yield();
+    }
+    for ( int i = 0; i<num_tasks; ++i )
+        tbb::task::destroy( *tasks[i] );
+    delete[] tasks;
+}
+
+void TestMultipleWaits() {
+    REMARK( "Testing multiple waits\n" );
+    // Limit the number of threads to prevent heavy oversubscription.
+    const int max_threads = min( 16, tbb::task_scheduler_init::default_num_threads() );
+
+    Harness::FastRandom rnd(1234);
+    for ( int threads = 1; threads <= max_threads; threads += max( threads/2, 1 ) ) {
+        for ( int i = 0; i<3; ++i ) {
+            const int num_bunches = 3 + rnd.get()%3;
+            const int bunch_size = max_threads + rnd.get()%max_threads;
+            TestMultipleWaits( threads, num_bunches, bunch_size );
+        }
+    }
+}
+//--------------------------------------------------//
 int TestMain () {
 #if __TBB_TASK_ISOLATION
     TestIsolatedExecute();
@@ -1002,6 +1087,6 @@ int TestMain () {
     TestArenaEntryConsistency();
     TestAttach(MaxThread);
     TestConstantFunctorRequirement();
-
+    TestMultipleWaits();
     return Harness::Done;
 }

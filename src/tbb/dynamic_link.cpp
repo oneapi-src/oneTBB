@@ -514,35 +514,33 @@ OPEN_INTERNAL_NAMESPACE
     dynamic_link_handle dynamic_load( const char* library, const dynamic_link_descriptor descriptors[], size_t required ) {
     ::tbb::internal::suppress_unused_warning( library, descriptors, required );
     #if __TBB_DYNAMIC_LOAD_ENABLED
-    #if _XBOX
-        return LoadLibrary (library);
-    #else /* _XBOX */
-        size_t const len = PATH_MAX + 1;
-        char path[ len ];
-        size_t rc = abs_path( library, path, len );
-        if ( 0 < rc && rc < len ) {
-    #if _WIN32
-            // Prevent Windows from displaying silly message boxes if it fails to load library
-            // (e.g. because of MS runtime problems - one of those crazy manifest related ones)
-            UINT prev_mode = SetErrorMode (SEM_FAILCRITICALERRORS);
-    #endif /* _WIN32 */
-            dynamic_link_handle library_handle = dlopen( path, RTLD_LAZY );
-    #if _WIN32
-            SetErrorMode (prev_mode);
-    #endif /* _WIN32 */
-            if( library_handle ) {
-                if( !resolve_symbols( library_handle, descriptors, required ) ) {
-                    // The loaded library does not contain all the expected entry points
-                    dynamic_unlink( library_handle );
-                    library_handle = NULL;
-                }
-            } else
-                DYNAMIC_LINK_WARNING( dl_lib_not_found, path, dlerror() );
-            return library_handle;
-        } else if ( rc>=len )
-                DYNAMIC_LINK_WARNING( dl_buff_too_small );
-                // rc == 0 means failing of init_ap_data so the warning has already been issued.
-    #endif /* _XBOX */
+
+    size_t const len = PATH_MAX + 1;
+    char path[ len ];
+    size_t rc = abs_path( library, path, len );
+    if ( 0 < rc && rc < len ) {
+#if _WIN32
+        // Prevent Windows from displaying silly message boxes if it fails to load library
+        // (e.g. because of MS runtime problems - one of those crazy manifest related ones)
+        UINT prev_mode = SetErrorMode (SEM_FAILCRITICALERRORS);
+#endif /* _WIN32 */
+        dynamic_link_handle library_handle = dlopen( path, RTLD_LAZY );
+#if _WIN32
+        SetErrorMode (prev_mode);
+#endif /* _WIN32 */
+        if( library_handle ) {
+            if( !resolve_symbols( library_handle, descriptors, required ) ) {
+                // The loaded library does not contain all the expected entry points
+                dynamic_unlink( library_handle );
+                library_handle = NULL;
+            }
+        } else
+            DYNAMIC_LINK_WARNING( dl_lib_not_found, path, dlerror() );
+        return library_handle;
+    } else if ( rc>=len )
+            DYNAMIC_LINK_WARNING( dl_buff_too_small );
+            // rc == 0 means failing of init_ap_data so the warning has already been issued.
+
     #endif /* __TBB_DYNAMIC_LOAD_ENABLED */
         return 0;
     }

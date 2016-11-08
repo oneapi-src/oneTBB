@@ -668,10 +668,10 @@ int main(int argc, char *argv[]) {
     algmap_t algmap;
 
     // Init algorithms
-    algmap["dpotrf"] = new algorithm_dpotrf;
-    algmap["crout"] = new algorithm_crout;
-    algmap["depend"] = new algorithm_depend;
-    algmap["join"] = new algorithm_join;
+    algmap.insert(std::pair<std::string, algorithm *>("dpotrf", new algorithm_dpotrf));
+    algmap.insert(std::pair<std::string, algorithm *>("crout", new algorithm_crout));
+    algmap.insert(std::pair<std::string, algorithm *>("depend", new algorithm_depend));
+    algmap.insert(std::pair<std::string, algorithm *>("join", new algorithm_join));
 
     if ( !process_args( argc, argv ) ) {
         printf( "ERROR: Invalid arguments. Run: %s -h\n", argv[0] );
@@ -698,9 +698,10 @@ int main(int argc, char *argv[]) {
         }
     }
     else {
-        algorithm* const alg = algmap[g_alg_name];
+        algmap_t::iterator alg_iter = algmap.find(g_alg_name);
 
-        if ( alg != NULL ) {
+        if ( alg_iter != algmap.end() ) {
+            algorithm* const alg = alg_iter->second;
             (*alg)( A, g_n, g_b, g_num_trials );
         }
         else {

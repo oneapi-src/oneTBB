@@ -142,6 +142,7 @@
     // Both r-value reference support in compiler and std::move/std::forward
     // presence in C++ standard library is checked.
     #define __TBB_CPP11_RVALUE_REF_PRESENT                  ((_MSC_VER >= 1600 || __GXX_EXPERIMENTAL_CXX0X__ && (__TBB_GLIBCXX_VERSION >= 40300 || _LIBCPP_VERSION)) && __INTEL_COMPILER >= 1200)
+    #define __TBB_IMPLICIT_MOVE_PRESENT                     (__INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1400 && (_MSC_VER >= 1900 || __TBB_GCC_VERSION >= 40600 || __clang__))
     #if  _MSC_VER >= 1600
         #define __TBB_EXCEPTION_PTR_PRESENT                 ( __INTEL_COMPILER > 1300                                                \
                                                             /*ICC 12.1 Upd 10 and 13 beta Upd 2 fixed exception_ptr linking  issue*/ \
@@ -187,6 +188,7 @@
  *  required. So there is no need to check GCC version for clang**/
     #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          __has_feature(__cxx_variadic_templates__)
     #define __TBB_CPP11_RVALUE_REF_PRESENT                  (__has_feature(__cxx_rvalue_references__) && (_LIBCPP_VERSION || __TBB_GLIBCXX_VERSION >= 40300))
+    #define __TBB_IMPLICIT_MOVE_PRESENT                     __has_feature(cxx_implicit_moves)
 /** TODO: extend exception_ptr related conditions to cover libstdc++ **/
     #define __TBB_EXCEPTION_PTR_PRESENT                     (__cplusplus >= 201103L && (_LIBCPP_VERSION || __TBB_GLIBCXX_VERSION >= 40600))
     #define __TBB_STATIC_ASSERT_PRESENT                     __has_feature(__cxx_static_assert__)
@@ -213,6 +215,7 @@
     #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          __GXX_EXPERIMENTAL_CXX0X__
     #define __TBB_CPP11_VARIADIC_FIXED_LENGTH_EXP_PRESENT   (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40700)
     #define __TBB_CPP11_RVALUE_REF_PRESENT                  __GXX_EXPERIMENTAL_CXX0X__
+    #define __TBB_IMPLICIT_MOVE_PRESENT                     (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40600)
     /** __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4 here is a substitution for _GLIBCXX_ATOMIC_BUILTINS_4, which is a prerequisite
         for exception_ptr but cannot be used in this file because it is defined in a header, not by the compiler.
         If the compiler has no atomic intrinsics, the C++ library should not expect those as well. **/
@@ -234,6 +237,7 @@
 #elif _MSC_VER
     #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          (_MSC_VER >= 1800)
     #define __TBB_CPP11_RVALUE_REF_PRESENT                  (_MSC_VER >= 1600)
+    #define __TBB_IMPLICIT_MOVE_PRESENT                     (_MSC_VER >= 1900)
     #define __TBB_EXCEPTION_PTR_PRESENT                     (_MSC_VER >= 1600)
     #define __TBB_STATIC_ASSERT_PRESENT                     (_MSC_VER >= 1600)
     #define __TBB_CPP11_TUPLE_PRESENT                       (_MSC_VER >= 1600)
@@ -251,6 +255,7 @@
 #else
     #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          0
     #define __TBB_CPP11_RVALUE_REF_PRESENT                  0
+    #define __TBB_IMPLICIT_MOVE_PRESENT                     0
     #define __TBB_EXCEPTION_PTR_PRESENT                     0
     #define __TBB_STATIC_ASSERT_PRESENT                     0
     #define __TBB_CPP11_TUPLE_PRESENT                       0
@@ -272,8 +277,8 @@
 #ifndef __TBB_CPP11_VARIADIC_FIXED_LENGTH_EXP_PRESENT
 #define __TBB_CPP11_VARIADIC_FIXED_LENGTH_EXP_PRESENT       __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
 #endif
-
 #define __TBB_CPP11_VARIADIC_TUPLE_PRESENT          (!_MSC_VER || _MSC_VER >=1800)
+
 #define __TBB_CPP11_TYPE_PROPERTIES_PRESENT         (_LIBCPP_VERSION || _MSC_VER >= 1700 || (__TBB_GLIBCXX_VERSION >= 50000 && __GXX_EXPERIMENTAL_CXX0X__))
 #define __TBB_TR1_TYPE_PROPERTIES_IN_STD_PRESENT    (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GLIBCXX_VERSION >= 40300 || _MSC_VER >= 1600)
 // GCC supported some of type properties since 4.7
@@ -326,11 +331,32 @@
 
 #define __TBB_TSX_INTRINSICS_PRESENT ((__RTM__ || _MSC_VER>=1700 || __INTEL_COMPILER>=1300) && !__TBB_DEFINE_MIC && !__ANDROID__)
 
-/** User controlled TBB features & modes **/
+/** Macro helpers **/
+#define __TBB_CONCAT_AUX(A,B) A##B
+// The additional level of indirection is needed to expand macros A and B (not to get the AB macro).
+// See [cpp.subst] and [cpp.concat] for more details.
+#define __TBB_CONCAT(A,B) __TBB_CONCAT_AUX(A,B)
+// The IGNORED argument and comma are needed to always have 2 arguments (even when A is empty).
+#define __TBB_IS_MACRO_EMPTY(A,IGNORED) __TBB_CONCAT_AUX(__TBB_MACRO_EMPTY,A)
+#define __TBB_MACRO_EMPTY 1
 
+/** User controlled TBB features & modes **/
 #ifndef TBB_USE_DEBUG
+/*
+There are four cases that are supported:
+  1. "_DEBUG is undefined" means "no debug";
+  2. "_DEBUG defined to something that is evaluated to 0 (the "garbage" is also evaluated to 0 [cpp.cond])" means "no debug";
+  3. "_DEBUG defined to something that is evaluated to non-zero value" means "debug";
+  4. "_DEBUG defined to nothing (empty)" means "debug".
+*/
 #ifdef _DEBUG
+// Check if _DEBUG is empty.
+#define __TBB_IS__DEBUG_EMPTY (__TBB_IS_MACRO_EMPTY(_DEBUG,)==__TBB_MACRO_EMPTY)
+#if __TBB_IS__DEBUG_EMPTY
+#define TBB_USE_DEBUG 1
+#else
 #define TBB_USE_DEBUG _DEBUG
+#endif /* __TBB_IS__DEBUG_EMPTY */
 #else
 #define TBB_USE_DEBUG 0
 #endif
@@ -352,7 +378,7 @@
 #endif /* TBB_PEFORMANCE_WARNINGS */
 #endif /* TBB_USE_PERFORMANCE_WARNINGS */
 
-#if __TBB_DEFINE_MIC || defined(_XBOX)
+#if __TBB_DEFINE_MIC
     #if TBB_USE_EXCEPTIONS
         #error The platform does not properly support exception handling. Please do not set TBB_USE_EXCEPTIONS macro or set it to 0.
     #elif !defined(TBB_USE_EXCEPTIONS)
@@ -582,8 +608,6 @@
     /** Macro controlling EH usages in TBB tests.
         Some older versions of glibc crash when exception handling happens concurrently. **/
     #define __TBB_THROW_ACROSS_MODULE_BOUNDARY_BROKEN 1
-#else
-    #define __TBB_THROW_ACROSS_MODULE_BOUNDARY_BROKEN 0
 #endif
 
 #if (_WIN32||_WIN64) && __INTEL_COMPILER == 1110
@@ -600,8 +624,6 @@
     /** MinGW has a bug with stack alignment for routines invoked from MS RTLs.
         Since GCC 4.2, the bug can be worked around via a special attribute. **/
     #define __TBB_SSE_STACK_ALIGNMENT_BROKEN 1
-#else
-    #define __TBB_SSE_STACK_ALIGNMENT_BROKEN 0
 #endif
 
 #if __TBB_GCC_VERSION==40300 && !__INTEL_COMPILER && !__clang__
@@ -645,8 +667,6 @@
    GCC can ignore 'throw' since 4.6; but with ICC the issue still exists.
  */
     #define __TBB_LIBSTDCPP_EXCEPTION_HEADERS_BROKEN 1
-#else
-    #define __TBB_LIBSTDCPP_EXCEPTION_HEADERS_BROKEN 0
 #endif
 
 #if __INTEL_COMPILER==1300 && __TBB_GLIBCXX_VERSION>=40700 && defined(__GXX_EXPERIMENTAL_CXX0X__)
@@ -656,8 +676,6 @@
  *  - for now it is not possible to check version of any standard library in this file
  */
     #define __TBB_ICC_13_0_CPP11_STDLIB_SUPPORT_BROKEN 1
-#else
-    #define __TBB_ICC_13_0_CPP11_STDLIB_SUPPORT_BROKEN 0
 #endif
 
 #if (__GNUC__==4 && __GNUC_MINOR__==4 ) && !defined(__INTEL_COMPILER) && !defined(__clang__)
@@ -682,6 +700,7 @@
     // depending upon whether the object is properly aligned or not.
     #define __TBB_FORCE_64BIT_ALIGNMENT_BROKEN 1
 #else
+    // Define to 0 explicitly because the macro is used in a compiled code of test_atomic
     #define __TBB_FORCE_64BIT_ALIGNMENT_BROKEN 0
 #endif
 
@@ -698,25 +717,15 @@
 // A compiler bug: a disabled copy constructor prevents use of the moving constructor
 #define __TBB_IF_NO_COPY_CTOR_MOVE_SEMANTICS_BROKEN (_MSC_VER && (__INTEL_COMPILER >= 1300 && __INTEL_COMPILER <= 1310) && !__INTEL_CXX11_MODE__)
 
-#if __TBB_CPP11_RVALUE_REF_PRESENT
-//Some compilers added implicit generation of move constructor & assignment operator in a later version
-#if __INTEL_COMPILER
-  #define __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN  (__INTEL_COMPILER < 1400 || __INTEL_COMPILER==1600 || _MSC_VER <= 1800)
-#elif _MSC_VER
-  #define __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN  (_MSC_VER <= 1800)
-#elif __clang__
-  #define __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN  (!__has_feature(cxx_implicit_moves))
-#endif
-#endif /* __TBB_CPP11_RVALUE_REF_PRESENT */
-
 #define __TBB_CPP11_DECLVAL_BROKEN (_MSC_VER == 1600 || (__GNUC__ && __TBB_GCC_VERSION < 40500) )
 
 // Intel C++ compiler has difficulties with copying std::pair with VC11 std::reference_wrapper being a const member
 #define __TBB_COPY_FROM_NON_CONST_REF_BROKEN (_MSC_VER == 1700 && __INTEL_COMPILER && __INTEL_COMPILER < 1600)
-//The implicit upcasting of the tuple of a reference of a derived class to a base class fails on icc 13.X
-//if the system's gcc environment is 4.8
-#if (__INTEL_COMPILER >=1300 && __INTEL_COMPILER <=1310) && __TBB_GLIBCXX_VERSION>=40700 && __GXX_EXPERIMENTAL_CXX0X__
-    #define __TBB_UPCAST_OF_TUPLE_OF_REF_BROKEN 1
+
+// The implicit upcasting of the tuple of a reference of a derived class to a base class fails on icc 13.X if the system's gcc environment is 4.8
+// Also in gcc 4.4 standard library the implementation of the tuple<&> conversion (tuple<A&> a = tuple<B&>, B is inherited from A) is broken.
+#if __GXX_EXPERIMENTAL_CXX0X__ && ((__INTEL_COMPILER >=1300 && __INTEL_COMPILER <=1310 && __TBB_GLIBCXX_VERSION>=40700) || (__TBB_GLIBCXX_VERSION < 40500))
+#define __TBB_UPCAST_OF_TUPLE_OF_REF_BROKEN 1
 #endif
 
 /** End of __TBB_XXX_BROKEN macro section **/
@@ -743,7 +752,7 @@
                                                 && __TBB_CPP11_VARIADIC_TUPLE_PRESENT && __TBB_CPP11_DEFAULT_FUNC_TEMPLATE_ARGS_PRESENT \
                                                 && !__TBB_UPCAST_OF_TUPLE_OF_REF_BROKEN
 #define __TBB_PREVIEW_STREAMING_NODE            (__TBB_CPP11_VARIADIC_FIXED_LENGTH_EXP_PRESENT && __TBB_FLOW_GRAPH_CPP11_FEATURES \
-                                                && TBB_PREVIEW_FLOW_GRAPH_NODES && !TBB_IMPLEMENT_CPP0X)
+                                                && TBB_PREVIEW_FLOW_GRAPH_NODES && !TBB_IMPLEMENT_CPP0X && !__TBB_UPCAST_OF_TUPLE_OF_REF_BROKEN)
 #define __TBB_PREVIEW_OPENCL_NODE               __TBB_PREVIEW_STREAMING_NODE
 #define __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING (TBB_PREVIEW_FLOW_GRAPH_FEATURES || __TBB_PREVIEW_OPENCL_NODE)
 #define __TBB_PREVIEW_ASYNC_MSG                 (TBB_PREVIEW_FLOW_GRAPH_FEATURES && __TBB_FLOW_GRAPH_CPP11_FEATURES)

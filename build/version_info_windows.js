@@ -93,5 +93,3 @@ WScript.echo( "#define __TBB_DATETIME \"" + date.toUTCString() + "\"" );
 WScript.echo( "#define __TBB_VERSION_YMD " + date.getUTCFullYear() + ", " + 
               (date.getUTCMonth() > 8 ? (date.getUTCMonth()+1):("0"+(date.getUTCMonth()+1))) + 
               (date.getUTCDate() > 9 ? date.getUTCDate():("0"+date.getUTCDate())) );
-
-

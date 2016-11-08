@@ -928,7 +928,7 @@ namespace test_move_in_shrink_to_fit_helpers {
     struct dummy : Harness::StateTrackable<>{
         int i;
         dummy(int an_i) __TBB_NOTHROW : Harness::StateTrackable<>(0), i(an_i) {}
-#if __TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN
+#if !__TBB_IMPLICIT_MOVE_PRESENT || __TBB_NOTHROW_MOVE_MEMBERS_IMPLICIT_GENERATION_BROKEN
         dummy(const dummy &src) __TBB_NOTHROW : Harness::StateTrackable<>(src), i(src.i) {}
         dummy(dummy &&src) __TBB_NOTHROW : Harness::StateTrackable<>(std::move(src)), i(src.i) {}
 
@@ -940,7 +940,7 @@ namespace test_move_in_shrink_to_fit_helpers {
 
         //somehow magically this declaration make std::is_nothrow_move_constructible<pod>::value to works correctly on icc14+msvc2013
         ~dummy() __TBB_NOTHROW {}
-#endif //__TBB_CPP11_IMPLICIT_MOVE_MEMBERS_GENERATION_BROKEN
+#endif //!__TBB_IMPLICIT_MOVE_PRESENT || __TBB_NOTHROW_MOVE_MEMBERS_IMPLICIT_GENERATION_BROKEN
         friend bool operator== (const dummy &lhs, const dummy &rhs){ return lhs.i == rhs.i; }
     };
 }
@@ -1054,11 +1054,7 @@ void TestFindPrimes() {
     double t2 = TimeFindPrimes( tbb::task_scheduler_init::automatic );
 
     // Time parallel run that is very likely oversubscribed.
-#if _XBOX
-    double t128 = TimeFindPrimes(32);  //XBOX360 can't handle too many threads
-#else
     double t128 = TimeFindPrimes(128);
-#endif
     REMARK("TestFindPrimes: t2==%g t128=%g k=%g\n", t2, t128, t128/t2);
 
     // We allow the 128-thread run a little extra time to allow for thread overhead.

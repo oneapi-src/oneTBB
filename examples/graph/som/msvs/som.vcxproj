@@ -209,7 +209,7 @@
     <ClInclude Include="..\som.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\index.html" />
+    <None Include="..\readme.html" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

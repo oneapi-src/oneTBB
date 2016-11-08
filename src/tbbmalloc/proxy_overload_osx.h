@@ -50,6 +50,8 @@
 
 #include <AvailabilityMacros.h>
 #include <malloc/malloc.h>
+#include <mach/mach.h>
+#include <stdlib.h>
 
 static kern_return_t enumerator(task_t, void *, unsigned, vm_address_t,
                                 memory_reader_t, vm_range_recorder_t)
@@ -119,7 +121,7 @@ static size_t impl_pressure_relief(struct _malloc_zone_t *, size_t goal)
     return 0;
 }
 
-static malloc_zone_t *system_zone;
+static malloc_zone_t *system_zone = NULL;
 
 struct DoMallocReplacement {
     DoMallocReplacement() {
@@ -157,11 +159,30 @@ struct DoMallocReplacement {
 
         // make sure that default purgeable zone is initialized
         malloc_default_purgeable_zone();
-        // after unregistration of system zone, our zone became default
+        void* ptr = malloc(1);
+        // get all registered memory zones
+        unsigned zcount = 0;
+        malloc_zone_t** zone_array = NULL;
+        kern_return_t errorcode = malloc_get_all_zones(mach_task_self(),NULL,(vm_address_t**)&zone_array,&zcount);
+        if (!errorcode && zone_array && zcount>0) {
+            // find the zone that allocated ptr
+            for (unsigned i=0; i<zcount; ++i) {
+                malloc_zone_t* z = zone_array[i];
+                if (z && z->size(z,ptr)>0) { // the right one is found
+                    system_zone = z;
+                    break;
+                }
+            }
+        }
+        free(ptr);
+
         malloc_zone_register(&zone);
-        system_zone = malloc_default_zone();
-        malloc_zone_unregister(system_zone);
-        malloc_zone_register(system_zone);
+        if (system_zone) {
+            // after unregistration of the system zone, the last registered (i.e. our) zone becomes the default
+            malloc_zone_unregister(system_zone);
+            // register the system zone back
+            malloc_zone_register(system_zone);
+        }
     }
 };
 
