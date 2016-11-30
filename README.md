@@ -11,11 +11,11 @@ full advantage of multicore performance, that are portable, composable and have 
 
 ## Repository Content
 This is an official Intel(R) TBB public GitHub repository. All source and binary packages starting from Intel(R) TBB 4.4
-can be found at the [Release page] (https://github.com/01org/tbb/releases). Packages with older versions of Intel(R) TBB can be found
-at the [Intel(R) TBB open source site] (https://www.threadingbuildingblocks.org/)
+can be found at the [Release page] (https://github.com/01org/tbb/releases). Links to the packages with older versions of 
+Intel(R) TBB can be found in the [download.md] (download.md) file.
 
 ## Repository Structure
-The Master branch is empty and contains only README.md.
+The Master branch is empty and contains only README.md and download.md files.
 
 tbb_\<major_version\> - branch for the new major version. All minor versions of the major release will be committed in this branch.
 
@@ -23,6 +23,9 @@ For example:
 * Intel(R) TBB 2017 initial release goes to branch tbb_2017.
 * Intel(R) TBB 2017 Update 1 will go to branch tbb_2017 too.
 * Intel(R) TBB 2018 initial release will go to branch tbb_2018.
+
+## Сontact engineering team
+* [E-mail us.] (mailto:inteltbbdevelopers@intel.com)
 
 ------------------------------------------------------------------------
 Intel and the Intel logo are trademarks of Intel Corporation or its subsidiaries in the U.S. and/or other countries.
