@@ -71,7 +71,7 @@ endif
 CPLUS_FLAGS    += --sysroot=$(SYSROOT)
 LIB_LINK_FLAGS += --sysroot=$(SYSROOT)
 LIBS           = -L$(CPLUS_LIB_PATH) -lc++_shared
-ifneq (,$(findstring r12, $(ndk_version)))
+ifneq (,$(findstring $(ndk_version),r12 r12b r13 r13b))
     LIBS +=  -lc++abi
     ifeq (arm,$(arch))
         LIBS += -lunwind 

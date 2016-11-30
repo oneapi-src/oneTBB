@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::queuing_rw_mutex Class Reference</title>
+<title>tbb::parallel_while&lt; Body &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,70 +33,125 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00228.html">tbb</a></li><li class="navelem"><a class="el" href="a00102.html">queuing_rw_mutex</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00234.html">tbb</a></li><li class="navelem"><a class="el" href="a00102.html">parallel_while</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a> &#124;
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
-<a href="a00283.html">List of all members</a>  </div>
+<a href="a00284.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::queuing_rw_mutex Class Reference<div class="ingroups"><a class="el" href="a00249.html">Synchronization</a></div></div>  </div>
+<div class="title">tbb::parallel_while&lt; Body &gt; Class Template Reference<div class="ingroups"><a class="el" href="a00253.html">Algorithms</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Queuing reader-writer mutex with local-only spinning.  
+<p>Parallel iteration over a stream, with optional addition of more work.  
  <a href="a00102.html#details">More...</a></p>
 
-<p><code>#include &lt;queuing_rw_mutex.h&gt;</code></p>
+<p><code>#include &lt;parallel_while.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::queuing_rw_mutex:</div>
+Inheritance diagram for tbb::parallel_while&lt; Body &gt;:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00102.png" usemap="#tbb::queuing_rw_mutex_map" alt=""/>
-  <map id="tbb::queuing_rw_mutex_map" name="tbb::queuing_rw_mutex_map">
+  <img src="a00102.png" usemap="#tbb::parallel_while&lt; Body &gt;_map" alt=""/>
+  <map id="tbb::parallel_while&lt; Body &gt;_map" name="tbb::parallel_while&lt; Body &gt;_map">
 </map>
  </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
-Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00132.html">scoped_lock</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The scoped locking pattern.  <a href="a00132.html#details">More...</a><br/></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a2442f019427e608d46801376267e44a8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2442f019427e608d46801376267e44a8"></a>
+typedef Body::argument_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00102.html#a2442f019427e608d46801376267e44a8">value_type</a></td></tr>
+<tr class="memdesc:a2442f019427e608d46801376267e44a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type of items. <br/></td></tr>
+<tr class="separator:a2442f019427e608d46801376267e44a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a23de1ac415b6f54b778c8fd6ec6073e0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a23de1ac415b6f54b778c8fd6ec6073e0"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00102.html#a23de1ac415b6f54b778c8fd6ec6073e0">queuing_rw_mutex</a> ()</td></tr>
-<tr class="memdesc:a23de1ac415b6f54b778c8fd6ec6073e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct unacquired mutex. <br/></td></tr>
-<tr class="separator:a23de1ac415b6f54b778c8fd6ec6073e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae67fe828d7e07222e7876ef9fd780fcc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae67fe828d7e07222e7876ef9fd780fcc"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00102.html#ae67fe828d7e07222e7876ef9fd780fcc">~queuing_rw_mutex</a> ()</td></tr>
-<tr class="memdesc:ae67fe828d7e07222e7876ef9fd780fcc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor asserts if the mutex is acquired, i.e. q_tail is non-NULL. <br/></td></tr>
-<tr class="separator:ae67fe828d7e07222e7876ef9fd780fcc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afd032e7e13804cd4d1cd8fce60d773f8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afd032e7e13804cd4d1cd8fce60d773f8"></a>
-void __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><b>internal_construct</b> ()</td></tr>
-<tr class="separator:afd032e7e13804cd4d1cd8fce60d773f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
-Static Public Attributes</h2></td></tr>
-<tr class="memitem:ae3dbfbf71bfa9c662a59688cd86bfbd7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae3dbfbf71bfa9c662a59688cd86bfbd7"></a>
-static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_rw_mutex</b> = true</td></tr>
-<tr class="separator:ae3dbfbf71bfa9c662a59688cd86bfbd7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae8c3ee1f5ab3af3954abeec1d165ea8e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae8c3ee1f5ab3af3954abeec1d165ea8e"></a>
-static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_recursive_mutex</b> = false</td></tr>
-<tr class="separator:ae8c3ee1f5ab3af3954abeec1d165ea8e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4704d512922b4b5d21c97901f9f7abd0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4704d512922b4b5d21c97901f9f7abd0"></a>
-static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_fair_mutex</b> = true</td></tr>
-<tr class="separator:a4704d512922b4b5d21c97901f9f7abd0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a220a7307358aa36802c8754ea45ca385"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a220a7307358aa36802c8754ea45ca385"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00102.html#a220a7307358aa36802c8754ea45ca385">parallel_while</a> ()</td></tr>
+<tr class="memdesc:a220a7307358aa36802c8754ea45ca385"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct empty non-running parallel while. <br/></td></tr>
+<tr class="separator:a220a7307358aa36802c8754ea45ca385"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac2fd559c8a38639fa1ba97a0d5639ca8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac2fd559c8a38639fa1ba97a0d5639ca8"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00102.html#ac2fd559c8a38639fa1ba97a0d5639ca8">~parallel_while</a> ()</td></tr>
+<tr class="memdesc:ac2fd559c8a38639fa1ba97a0d5639ca8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor cleans up data members before returning. <br/></td></tr>
+<tr class="separator:ac2fd559c8a38639fa1ba97a0d5639ca8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a20607ba5faa958144787d980aa850c16"><td class="memTemplParams" colspan="2">template&lt;typename Stream &gt; </td></tr>
+<tr class="memitem:a20607ba5faa958144787d980aa850c16"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00102.html#a20607ba5faa958144787d980aa850c16">run</a> (Stream &amp;stream, const Body &amp;body)</td></tr>
+<tr class="memdesc:a20607ba5faa958144787d980aa850c16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Apply body.apply to each item in the stream.  <a href="#a20607ba5faa958144787d980aa850c16">More...</a><br/></td></tr>
+<tr class="separator:a20607ba5faa958144787d980aa850c16"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4861989d7f5e3111d264d4d6013e8fe1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00102.html#a4861989d7f5e3111d264d4d6013e8fe1">add</a> (const <a class="el" href="a00102.html#a2442f019427e608d46801376267e44a8">value_type</a> &amp;item)</td></tr>
+<tr class="memdesc:a4861989d7f5e3111d264d4d6013e8fe1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a work item while running.  <a href="#a4861989d7f5e3111d264d4d6013e8fe1">More...</a><br/></td></tr>
+<tr class="separator:a4861989d7f5e3111d264d4d6013e8fe1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Queuing reader-writer mutex with local-only spinning. </p>
-<p>Adapted from Krieger, Stumm, et al. pseudocode at <a href="http://www.eecg.toronto.edu/parallel/pubs_abs.html#Krieger_etal_ICPP93">http://www.eecg.toronto.edu/parallel/pubs_abs.html#Krieger_etal_ICPP93</a> </p>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>queuing_rw_mutex.h</li>
+<div class="textblock"><h3>template&lt;typename Body&gt;<br/>
+class tbb::parallel_while&lt; Body &gt;</h3>
+
+<p>Parallel iteration over a stream, with optional addition of more work. </p>
+<p>The Body b has the requirement: <br/>
+ "b(v)" <br/>
+ "b.argument_type" <br/>
+ where v is an argument_type </p>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="a4861989d7f5e3111d264d4d6013e8fe1"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename Body &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="a00102.html">tbb::parallel_while</a>&lt; Body &gt;::add </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="a00102.html#a2442f019427e608d46801376267e44a8">value_type</a> &amp;&#160;</td>
+          <td class="paramname"><em>item</em>)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Add a work item while running. </p>
+<p>Should be executed only by body.apply or a thread spawned therefrom. </p>
+
+</div>
+</div>
+<a class="anchor" id="a20607ba5faa958144787d980aa850c16"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename Body &gt; </div>
+<div class="memtemplate">
+template&lt;typename Stream &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="a00102.html">tbb::parallel_while</a>&lt; Body &gt;::run </td>
+          <td>(</td>
+          <td class="paramtype">Stream &amp;&#160;</td>
+          <td class="paramname"><em>stream</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Body &amp;&#160;</td>
+          <td class="paramname"><em>body</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Apply body.apply to each item in the stream. </p>
+<p>A Stream s has the requirements <br/>
+ "S::value_type" <br/>
+ "s.pop_if_present(value) is convertible to bool </p>
+
+</div>
+</div>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li>parallel_while.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

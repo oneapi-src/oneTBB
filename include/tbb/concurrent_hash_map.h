@@ -333,9 +333,10 @@ namespace interface5 {
 
         void advance_to_next_bucket() { // TODO?: refactor to iterator_base class
             size_t k = my_index+1;
-            while( my_bucket && k <= my_map->my_mask ) {
+            __TBB_ASSERT( my_bucket, "advancing an invalid iterator?");
+            while( k <= my_map->my_mask ) {
                 // Following test uses 2's-complement wizardry
-                if( k& (k-2) ) // not the beginning of a segment
+                if( k&(k-2) ) // not the beginning of a segment
                     ++my_bucket;
                 else my_bucket = my_map->get_bucket( k );
                 my_node = static_cast<node*>( my_bucket->node_list );

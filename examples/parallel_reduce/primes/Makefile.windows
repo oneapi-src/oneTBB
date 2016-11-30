@@ -45,7 +45,7 @@ test:
 perf_build: release
 
 perf_run:
-	./$(PROG) $(PERF_RUN_ARGS)
+	$(PROG) $(PERF_RUN_ARGS)
 
 compiler_check:
 	@echo compiler_test>compiler_test && @$(CXX) /E compiler_test >nul 2>&1  || echo "$(CXX) command not found. Check if CXX=$(CXX) is set properly"

@@ -499,7 +499,7 @@ public:
     }
 };
 
-const int concurrencyTestNumRepeats = 10;
+const int concurrencyTestNumRepeats = 5;
 
 template <typename Factory = interface9::default_opencl_factory>
 void ConcurrencyTest( const std::vector<opencl_device> &filteredDevices ) {
@@ -695,9 +695,11 @@ void PrecompiledKernelTest() {
         i2[i] = v2[i] = float( 2 * i );
     }
 
-    opencl_program<> p( g, opencl_program_type::PRECOMPILED, PathToFile( "test_opencl_precompiled_kernel_gpu.clbin" ) );
-    opencl_node < tuple<opencl_buffer<float>, opencl_buffer<float> > > k1( g, p.get_kernel( "custom_subtractor" ) );
-    k1.set_range( { BROKEN_INITIALIZER_LIST_DEDUCTION({ N }) } );
+    std::string path_to_file = PathToFile(std::string("test_opencl_precompiled_kernel_gpu_") + std::to_string((*it).address_bits()) + std::string(".ir"));
+
+    opencl_program<> p(g, opencl_program_type::PRECOMPILED, path_to_file);
+    opencl_node < tuple<opencl_buffer<float>, opencl_buffer<float> > > k1(g, p.get_kernel("custom_subtractor"));
+    k1.set_range({ BROKEN_INITIALIZER_LIST_DEDUCTION({ N }) });
 
     input_port<0>(k1).try_put( b1 );
     input_port<1>(k1).try_put( b2 );

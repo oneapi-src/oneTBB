@@ -133,6 +133,13 @@
     #define __INTEL_CXX11_MODE__ (__GXX_EXPERIMENTAL_CXX0X__ || (_MSC_VER && __STDC_HOSTED__))
 #endif
 
+// Intel(R) C++ Compiler offloading API to the Intel(R) Graphics Technology presence macro
+// TODO: add support for ICC 15.00 _GFX_enqueue API and then decrease Intel compiler supported version
+// TODO: add linux support and restict it with (__linux__ && __TBB_x86_64 && !__ANDROID__) macro
+#if __INTEL_COMPILER >= 1600 && _WIN32
+#define __TBB_GFX_PRESENT 1
+#endif
+
 #if __INTEL_COMPILER && (!_MSC_VER || __INTEL_CXX11_MODE__)
     //  On Windows, C++11 features supported by Visual Studio 2010 and higher are enabled by default,
     //  so in absence of /Qstd= use MSVC branch for __TBB_CPP11_* detection.
@@ -182,6 +189,8 @@
     #define __TBB_CPP11_DEFAULT_FUNC_TEMPLATE_ARGS_PRESENT  (_MSC_VER >= 1800 || __GXX_EXPERIMENTAL_CXX0X__ && __INTEL_COMPILER >= 1210)
     #define __TBB_OVERRIDE_PRESENT                          (__INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1400)
     #define __TBB_ALIGNAS_PRESENT                           (__INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1500)
+
+    #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            (__INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1210)
 #elif __clang__
 /** TODO: these options need to be rechecked **/
 /** on OS X* the only way to get C++11 is to use clang. For library features (e.g. exception_ptr) libc++ is also
@@ -211,6 +220,7 @@
     #define __TBB_CPP11_DEFAULT_FUNC_TEMPLATE_ARGS_PRESENT  __has_feature(cxx_default_function_template_args)
     #define __TBB_OVERRIDE_PRESENT                          __has_feature(cxx_override_control)
     #define __TBB_ALIGNAS_PRESENT                           __has_feature(cxx_alignas)
+    #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            __has_feature(cxx_alias_templates)
 #elif __GNUC__
     #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          __GXX_EXPERIMENTAL_CXX0X__
     #define __TBB_CPP11_VARIADIC_FIXED_LENGTH_EXP_PRESENT   (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40700)
@@ -234,6 +244,7 @@
     #define __TBB_CPP11_DEFAULT_FUNC_TEMPLATE_ARGS_PRESENT  (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40300)
     #define __TBB_OVERRIDE_PRESENT                          (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40700)
     #define __TBB_ALIGNAS_PRESENT                           (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40800)
+    #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40700)
 #elif _MSC_VER
     #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          (_MSC_VER >= 1800)
     #define __TBB_CPP11_RVALUE_REF_PRESENT                  (_MSC_VER >= 1600)
@@ -252,6 +263,7 @@
     #define __TBB_CPP11_DEFAULT_FUNC_TEMPLATE_ARGS_PRESENT  (_MSC_VER >= 1800)
     #define __TBB_OVERRIDE_PRESENT                          (_MSC_VER >= 1700)
     #define __TBB_ALIGNAS_PRESENT                           (_MSC_VER >= 1900)
+    #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            (_MSC_VER >= 1800)
 #else
     #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          0
     #define __TBB_CPP11_RVALUE_REF_PRESENT                  0
@@ -270,6 +282,7 @@
     #define __TBB_CPP11_DEFAULT_FUNC_TEMPLATE_ARGS_PRESENT  0
     #define __TBB_OVERRIDE_PRESENT                          0
     #define __TBB_ALIGNAS_PRESENT                           0
+    #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            0
 #endif
 
 // C++11 standard library features
@@ -289,6 +302,8 @@
 #define __TBB_ALLOCATOR_TRAITS_PRESENT     (__cplusplus >= 201103L && _LIBCPP_VERSION  || _MSC_VER >= 1700 ||  \
                                             __GXX_EXPERIMENTAL_CXX0X__ && __TBB_GLIBCXX_VERSION >= 40700 && !(__TBB_GLIBCXX_VERSION == 40700 && __TBB_DEFINE_MIC))
 #define __TBB_MAKE_EXCEPTION_PTR_PRESENT   (__TBB_EXCEPTION_PTR_PRESENT && (_MSC_VER >= 1700 || __TBB_GLIBCXX_VERSION >= 40600 || _LIBCPP_VERSION))
+
+#define __TBB_CPP11_FUTURE_PRESENT (_MSC_VER >= 1700 || __TBB_GLIBCXX_VERSION >= 40600 && _GXX_EXPERIMENTAL_CXX0X__ || _LIBCPP_VERSION)
 
 // std::swap is in <utility> only since C++11, though MSVC had it at least since VS2005
 #if _MSC_VER>=1400 || _LIBCPP_VERSION || __GXX_EXPERIMENTAL_CXX0X__
@@ -753,7 +768,11 @@ There are four cases that are supported:
                                                 && !__TBB_UPCAST_OF_TUPLE_OF_REF_BROKEN
 #define __TBB_PREVIEW_STREAMING_NODE            (__TBB_CPP11_VARIADIC_FIXED_LENGTH_EXP_PRESENT && __TBB_FLOW_GRAPH_CPP11_FEATURES \
                                                 && TBB_PREVIEW_FLOW_GRAPH_NODES && !TBB_IMPLEMENT_CPP0X && !__TBB_UPCAST_OF_TUPLE_OF_REF_BROKEN)
-#define __TBB_PREVIEW_OPENCL_NODE               __TBB_PREVIEW_STREAMING_NODE
+#define __TBB_PREVIEW_OPENCL_NODE               (__TBB_PREVIEW_STREAMING_NODE && __TBB_CPP11_TEMPLATE_ALIASES_PRESENT)
 #define __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING (TBB_PREVIEW_FLOW_GRAPH_FEATURES || __TBB_PREVIEW_OPENCL_NODE)
 #define __TBB_PREVIEW_ASYNC_MSG                 (TBB_PREVIEW_FLOW_GRAPH_FEATURES && __TBB_FLOW_GRAPH_CPP11_FEATURES)
+
+#define __TBB_PREVIEW_GFX_FACTORY               (__TBB_GFX_PRESENT && TBB_PREVIEW_FLOW_GRAPH_FEATURES && !__TBB_MIC_OFFLOAD \
+                                                && __TBB_FLOW_GRAPH_CPP11_FEATURES && __TBB_CPP11_TEMPLATE_ALIASES_PRESENT \
+                                                && __TBB_CPP11_FUTURE_PRESENT)
 #endif /* __TBB_tbb_config_H */

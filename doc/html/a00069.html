@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::flow::interface9::opencl_factory&lt; DeviceFilter &gt;::kernel Class Reference</title>
+<title>tbb::flow::interface9::graph_proxy Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,46 +33,47 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00228.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface9</b></li><li class="navelem"><a class="el" href="a00086.html">opencl_factory</a></li><li class="navelem"><a class="el" href="a00069.html">kernel</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00234.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface9</b></li><li class="navelem"><a class="el" href="a00069.html">graph_proxy</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#friends">Friends</a> &#124;
-<a href="a00326.html">List of all members</a>  </div>
+<a href="a00327.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::flow::interface9::opencl_factory&lt; DeviceFilter &gt;::kernel Class Reference</div>  </div>
+<div class="title">tbb::flow::interface9::graph_proxy Class Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div>  </div>
 </div><!--header-->
 <div class="contents">
+
+<p>Pure virtual template classes that define interfaces for async communication.  
+ <a href="a00069.html#details">More...</a></p>
+
+<p><code>#include &lt;flow_graph_abstractions.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::flow::interface9::opencl_factory&lt; DeviceFilter &gt;::kernel:</div>
+Inheritance diagram for tbb::flow::interface9::graph_proxy:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00069.png" usemap="#tbb::flow::interface9::opencl_factory&lt; DeviceFilter &gt;::kernel_map" alt=""/>
-  <map id="tbb::flow::interface9::opencl_factory&lt; DeviceFilter &gt;::kernel_map" name="tbb::flow::interface9::opencl_factory&lt; DeviceFilter &gt;::kernel_map">
+  <img src="a00069.png" usemap="#tbb::flow::interface9::graph_proxy_map" alt=""/>
+  <map id="tbb::flow::interface9::graph_proxy_map" name="tbb::flow::interface9::graph_proxy_map">
+<area href="a00120.html" alt="tbb::flow::interface9::receiver_gateway&lt; Input &gt;" shape="rect" coords="0,56,280,80"/>
 </map>
  </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:acd2ea1fd04a1c93194135e80366e39b5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acd2ea1fd04a1c93194135e80366e39b5"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>kernel</b> (const <a class="el" href="a00069.html">kernel</a> &amp;k)</td></tr>
-<tr class="separator:acd2ea1fd04a1c93194135e80366e39b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
-Friends</h2></td></tr>
-<tr class="memitem:a357c187838aa075f23be7b8c86ddcbd3"><td class="memTemplParams" colspan="2"><a class="anchor" id="a357c187838aa075f23be7b8c86ddcbd3"></a>
-template&lt;typename DeviceFilter_ &gt; </td></tr>
-<tr class="memitem:a357c187838aa075f23be7b8c86ddcbd3"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><b>opencl_factory</b></td></tr>
-<tr class="separator:a357c187838aa075f23be7b8c86ddcbd3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a083a3933f9cd414d4b5cabb4c5c3ad7c"><td class="memTemplParams" colspan="2"><a class="anchor" id="a083a3933f9cd414d4b5cabb4c5c3ad7c"></a>
-template&lt;typename Factory &gt; </td></tr>
-<tr class="memitem:a083a3933f9cd414d4b5cabb4c5c3ad7c"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><b>opencl_program</b></td></tr>
-<tr class="separator:a083a3933f9cd414d4b5cabb4c5c3ad7c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a89db56a08929f4d3e45d27838cec3272"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a89db56a08929f4d3e45d27838cec3272"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00069.html#a89db56a08929f4d3e45d27838cec3272">reserve_wait</a> ()=0</td></tr>
+<tr class="memdesc:a89db56a08929f4d3e45d27838cec3272"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inform a graph that messages may come from outside, to prevent premature graph completion. <br/></td></tr>
+<tr class="separator:a89db56a08929f4d3e45d27838cec3272"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5f751c4f3a0b5be4f97b2b857aaecea0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5f751c4f3a0b5be4f97b2b857aaecea0"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00069.html#a5f751c4f3a0b5be4f97b2b857aaecea0">release_wait</a> ()=0</td></tr>
+<tr class="memdesc:a5f751c4f3a0b5be4f97b2b857aaecea0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inform a graph that a previous call to reserve_wait is no longer in effect. <br/></td></tr>
+<tr class="separator:a5f751c4f3a0b5be4f97b2b857aaecea0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<hr/>The documentation for this class was generated from the following file:<ul>
-<li>flow_graph_opencl_node.h</li>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>Pure virtual template classes that define interfaces for async communication. </p>
+</div><hr/>The documentation for this class was generated from the following file:<ul>
+<li>flow_graph_abstractions.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

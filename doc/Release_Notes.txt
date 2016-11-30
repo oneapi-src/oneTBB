@@ -113,6 +113,11 @@ Library Issues
         the -flifetime-dse=1 option to prevent crashes at runtime,
         or use Intel(R) TBB makefiles that automatically set this option.
 
+    - The current implementation of gfx_factory does not allow memory
+        buffer objects to be used concurrently. As a result, several
+        streaming nodes customized with gfx_factory cannot be connected
+        with each other directly.
+
 ------------------------------------------------------------------------
 (C) 2016 Intel Corporation
 

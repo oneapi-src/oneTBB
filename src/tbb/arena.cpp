@@ -646,7 +646,7 @@ void generic_scheduler::nested_arena_exit(nested_arena_context& c) {
     // Free the master slot.
     __TBB_ASSERT(my_arena->my_slots[my_arena_index].my_scheduler, "A slot is already empty");
     __TBB_store_with_release(my_arena->my_slots[my_arena_index].my_scheduler, (generic_scheduler*)NULL);
-    my_arena->my_exit_monitors.notify_all_relaxed(); // TODO: fix concurrent monitor to use notify_one (test MultipleMastersPart4 fails)
+    my_arena->my_exit_monitors.notify_one(); // do not relax!
 }
 
 void generic_scheduler::wait_until_empty() {
@@ -783,7 +783,7 @@ class delegated_task : public task {
         // potential exception was already registered. It must happen before the notification
         __TBB_ASSERT(my_root->ref_count()==2, NULL);
         __TBB_store_with_release(my_root->prefix().ref_count, 1); // must precede the wakeup
-        my_monitor.notify_relaxed(*this);
+        my_monitor.notify(*this); // do not relax, it needs a fence!
     }
 public:
     delegated_task( internal::delegate_base & d, concurrent_monitor & s, task * t )
@@ -833,13 +833,14 @@ void task_arena_base::internal_execute( internal::delegate_base& d) const {
         my_arena->enqueue_task( *new( task::allocate_root(__TBB_CONTEXT_ARG1(exec_context)) )
                                 delegated_task(d, my_arena->my_exit_monitors, &root),
                                 0, s->my_random ); // TODO: priority?
+        size_t index2 = arena::out_of_arena;
         do {
             my_arena->my_exit_monitors.prepare_wait(waiter, (uintptr_t)&d);
             if( __TBB_load_with_acquire(root.prefix().ref_count) < 2 ) {
                 my_arena->my_exit_monitors.cancel_wait(waiter);
                 break;
             }
-            size_t index2 = my_arena->occupy_free_slot</*as_worker*/false>( *s );
+            index2 = my_arena->occupy_free_slot</*as_worker*/false>( *s );
             if( index2 != arena::out_of_arena ) {
                 my_arena->my_exit_monitors.cancel_wait(waiter);
                 nested_arena_context scope(s, my_arena, index2, scheduler_properties::master);
@@ -852,6 +853,11 @@ void task_arena_base::internal_execute( internal::delegate_base& d) const {
             }
             my_arena->my_exit_monitors.commit_wait(waiter);
         } while( __TBB_load_with_acquire(root.prefix().ref_count) == 2 );
+        if( index2==arena::out_of_arena ) {
+            // notify a waiting thread even if this thread did not enter arena,
+            // in case it was woken by a leaving thread but did not need to enter
+            my_arena->my_exit_monitors.notify_one(); // do not relax!
+        }
 #if TBB_USE_EXCEPTIONS
         // process possible exception
         if( task_group_context::exception_container_type *pe = exec_context.my_exception )

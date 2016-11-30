@@ -949,7 +949,6 @@ typename graph_iterator<C,N>::pointer graph_iterator<C,N>::operator->() const {
     return current_node;
 }
 
-
 template <typename C, typename N>
 void graph_iterator<C,N>::internal_forward() {
     if (current_node) current_node = current_node->next;
@@ -1028,7 +1027,6 @@ inline void graph::reset( reset_flags f ) {
     }
     my_reset_task_list.clear();
 }
-
 
 #include "internal/_flow_graph_node_impl.h"
 
@@ -1371,7 +1369,6 @@ protected:
 
 };  // class function_node
 
-
 //! implements a function node that supports Input -> (set of outputs)
 // Output is a tuple of output types.
 template < typename Input, typename Output, typename Policy = queueing, typename Allocator=cache_aligned_allocator<Input> >
@@ -1576,7 +1573,6 @@ protected:
         if(f & rf_clear_edges)successors().clear();
         __TBB_ASSERT(!(f & rf_clear_edges) || successors().empty(), "continue_node not reset");
     }
-
 };  // continue_node
 
 template< typename T >
@@ -2393,8 +2389,6 @@ protected:
         }
         forwarder_busy = false;
     }
-
-
 };  // buffer_node
 
 //! Forwards messages in FIFO order
@@ -2577,7 +2571,6 @@ public:
         tbb::internal::fgt_node_desc( this, name );
     }
 #endif
-
 
 protected:
 

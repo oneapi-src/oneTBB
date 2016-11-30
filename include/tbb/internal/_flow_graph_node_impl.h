@@ -50,7 +50,7 @@ namespace internal {
          }
 
          void pop() {
-             return this->destroy_front();
+             this->destroy_front();
          }
 
          bool push( T& t ) {

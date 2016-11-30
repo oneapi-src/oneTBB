@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::zero_allocator&lt; T, Allocator &gt; Class Template Reference</title>
+<title>tbb::flow::interface9::internal::untyped_sender Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,93 +33,113 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00228.html">tbb</a></li><li class="navelem"><a class="el" href="a00165.html">zero_allocator</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00234.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface9</b></li><li class="navelem"><b>internal</b></li><li class="navelem"><a class="el" href="a00165.html">untyped_sender</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="a00303.html">List of all members</a>  </div>
+<a href="#pro-methods">Protected Member Functions</a> &#124;
+<a href="#friends">Friends</a> &#124;
+<a href="a00354.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::zero_allocator&lt; T, Allocator &gt; Class Template Reference<div class="ingroups"><a class="el" href="a00248.html">Memory Allocation</a></div></div>  </div>
+<div class="title">tbb::flow::interface9::internal::untyped_sender Class Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div>  </div>
 </div><!--header-->
 <div class="contents">
-
-<p>Meets "allocator" requirements of ISO C++ Standard, Section 20.1.5.  
- <a href="a00165.html#details">More...</a></p>
-
-<p><code>#include &lt;tbb_allocator.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::zero_allocator&lt; T, Allocator &gt;:</div>
+Inheritance diagram for tbb::flow::interface9::internal::untyped_sender:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00165.png" usemap="#tbb::zero_allocator&lt; T, Allocator &gt;_map" alt=""/>
-  <map id="tbb::zero_allocator&lt; T, Allocator &gt;_map" name="tbb::zero_allocator&lt; T, Allocator &gt;_map">
+  <img src="a00165.png" usemap="#tbb::flow::interface9::internal::untyped_sender_map" alt=""/>
+  <map id="tbb::flow::interface9::internal::untyped_sender_map" name="tbb::flow::interface9::internal::untyped_sender_map">
+<area href="a00139.html" title="Pure virtual template class that defines a sender of messages of type T. " alt="tbb::flow::interface9::sender&lt; T &gt;" shape="rect" coords="0,56,266,80"/>
 </map>
  </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
-Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00104.html">rebind</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a62f27899a40c4bfaa6ba4313ffc833ef"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a62f27899a40c4bfaa6ba4313ffc833ef"></a>
-typedef Allocator&lt; T &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>base_allocator_type</b></td></tr>
-<tr class="separator:a62f27899a40c4bfaa6ba4313ffc833ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a906f5c2d47fff1bf4fd868a2441752d1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a906f5c2d47fff1bf4fd868a2441752d1"></a>
+<tr class="memitem:a7b4e68e6917207283f5c621e7053c7ea"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7b4e68e6917207283f5c621e7053c7ea"></a>
+typedef <a class="el" href="a00164.html">untyped_receiver</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00165.html#a7b4e68e6917207283f5c621e7053c7ea">successor_type</a></td></tr>
+<tr class="memdesc:a7b4e68e6917207283f5c621e7053c7ea"><td class="mdescLeft">&#160;</td><td class="mdescRight">The successor type for this node. <br/></td></tr>
+<tr class="separator:a7b4e68e6917207283f5c621e7053c7ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0d674709d3783ec5b42eb243069fed73"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0d674709d3783ec5b42eb243069fed73"></a>
 typedef <br class="typebreak"/>
-base_allocator_type::value_type&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b></td></tr>
-<tr class="separator:a906f5c2d47fff1bf4fd868a2441752d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afb9458462ffca5d8734968862c9c4e6b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afb9458462ffca5d8734968862c9c4e6b"></a>
+<a class="el" href="a00056.html">internal::edge_container</a><br class="typebreak"/>
+&lt; <a class="el" href="a00165.html#a7b4e68e6917207283f5c621e7053c7ea">successor_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00165.html#a0d674709d3783ec5b42eb243069fed73">built_successors_type</a></td></tr>
+<tr class="memdesc:a0d674709d3783ec5b42eb243069fed73"><td class="mdescLeft">&#160;</td><td class="mdescRight">interface to record edges for traversal &amp; deletion <br/></td></tr>
+<tr class="separator:a0d674709d3783ec5b42eb243069fed73"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab2b4041678d97545a6785d8d3fad01d0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab2b4041678d97545a6785d8d3fad01d0"></a>
 typedef <br class="typebreak"/>
-base_allocator_type::pointer&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b></td></tr>
-<tr class="separator:afb9458462ffca5d8734968862c9c4e6b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2a08548bf83e153b40029de72738b60f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2a08548bf83e153b40029de72738b60f"></a>
-typedef <br class="typebreak"/>
-base_allocator_type::const_pointer&#160;</td><td class="memItemRight" valign="bottom"><b>const_pointer</b></td></tr>
-<tr class="separator:a2a08548bf83e153b40029de72738b60f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0afb88e128fc595c62f24e34f445d834"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0afb88e128fc595c62f24e34f445d834"></a>
-typedef <br class="typebreak"/>
-base_allocator_type::reference&#160;</td><td class="memItemRight" valign="bottom"><b>reference</b></td></tr>
-<tr class="separator:a0afb88e128fc595c62f24e34f445d834"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a28180fc12dc69c275983f6400526ba01"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a28180fc12dc69c275983f6400526ba01"></a>
-typedef <br class="typebreak"/>
-base_allocator_type::const_reference&#160;</td><td class="memItemRight" valign="bottom"><b>const_reference</b></td></tr>
-<tr class="separator:a28180fc12dc69c275983f6400526ba01"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8e741b3db82dfdce3f68cfd6d66901ce"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8e741b3db82dfdce3f68cfd6d66901ce"></a>
-typedef <br class="typebreak"/>
-base_allocator_type::size_type&#160;</td><td class="memItemRight" valign="bottom"><b>size_type</b></td></tr>
-<tr class="separator:a8e741b3db82dfdce3f68cfd6d66901ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aba68dc670e813a0c5c7f06e262b66187"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aba68dc670e813a0c5c7f06e262b66187"></a>
-typedef <br class="typebreak"/>
-base_allocator_type::difference_type&#160;</td><td class="memItemRight" valign="bottom"><b>difference_type</b></td></tr>
-<tr class="separator:aba68dc670e813a0c5c7f06e262b66187"><td class="memSeparator" colspan="2">&#160;</td></tr>
+built_successors_type::edge_list_type&#160;</td><td class="memItemRight" valign="bottom"><b>successor_list_type</b></td></tr>
+<tr class="separator:ab2b4041678d97545a6785d8d3fad01d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a9080a874dd20d0ca8e404683113990f2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9080a874dd20d0ca8e404683113990f2"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>zero_allocator</b> (const <a class="el" href="a00165.html">zero_allocator</a> &amp;a)  throw ()</td></tr>
-<tr class="separator:a9080a874dd20d0ca8e404683113990f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab417c217e597c6f412c5a630ba18bc32"><td class="memTemplParams" colspan="2"><a class="anchor" id="ab417c217e597c6f412c5a630ba18bc32"></a>
-template&lt;typename U &gt; </td></tr>
-<tr class="memitem:ab417c217e597c6f412c5a630ba18bc32"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>zero_allocator</b> (const <a class="el" href="a00165.html">zero_allocator</a>&lt; U &gt; &amp;a)  throw ()</td></tr>
-<tr class="separator:ab417c217e597c6f412c5a630ba18bc32"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1b9fe1273c2332e3c0b571d7bf1ba615"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1b9fe1273c2332e3c0b571d7bf1ba615"></a>
-pointer&#160;</td><td class="memItemRight" valign="bottom"><b>allocate</b> (const size_type n, const void *hint=0)</td></tr>
-<tr class="separator:a1b9fe1273c2332e3c0b571d7bf1ba615"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2298076f4c5e52a6c9c8a8e6fbfbd9de"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2298076f4c5e52a6c9c8a8e6fbfbd9de"></a>
+virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00165.html#a2298076f4c5e52a6c9c8a8e6fbfbd9de">register_successor</a> (<a class="el" href="a00165.html#a7b4e68e6917207283f5c621e7053c7ea">successor_type</a> &amp;r)=0</td></tr>
+<tr class="memdesc:a2298076f4c5e52a6c9c8a8e6fbfbd9de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a new successor to this node. <br/></td></tr>
+<tr class="separator:a2298076f4c5e52a6c9c8a8e6fbfbd9de"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a32affec91647eba02f826f18f43e02e5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a32affec91647eba02f826f18f43e02e5"></a>
+virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00165.html#a32affec91647eba02f826f18f43e02e5">remove_successor</a> (<a class="el" href="a00165.html#a7b4e68e6917207283f5c621e7053c7ea">successor_type</a> &amp;r)=0</td></tr>
+<tr class="memdesc:a32affec91647eba02f826f18f43e02e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes a successor from this node. <br/></td></tr>
+<tr class="separator:a32affec91647eba02f826f18f43e02e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac81ea252a8397324c865b035f67903ee"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac81ea252a8397324c865b035f67903ee"></a>
+virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00165.html#ac81ea252a8397324c865b035f67903ee">try_release</a> ()</td></tr>
+<tr class="memdesc:ac81ea252a8397324c865b035f67903ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Releases the reserved item. <br/></td></tr>
+<tr class="separator:ac81ea252a8397324c865b035f67903ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acfb8e3669932e5866fb6afa603ff8250"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acfb8e3669932e5866fb6afa603ff8250"></a>
+virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00165.html#acfb8e3669932e5866fb6afa603ff8250">try_consume</a> ()</td></tr>
+<tr class="memdesc:acfb8e3669932e5866fb6afa603ff8250"><td class="mdescLeft">&#160;</td><td class="mdescRight">Consumes the reserved item. <br/></td></tr>
+<tr class="separator:acfb8e3669932e5866fb6afa603ff8250"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9cc32ffab2489f9d70edab006ee2df83"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9cc32ffab2489f9d70edab006ee2df83"></a>
+virtual <a class="el" href="a00165.html#a0d674709d3783ec5b42eb243069fed73">built_successors_type</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>built_successors</b> ()=0</td></tr>
+<tr class="separator:a9cc32ffab2489f9d70edab006ee2df83"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac288603db6720be86ebf6cc1e9e4c5fd"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac288603db6720be86ebf6cc1e9e4c5fd"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>internal_add_built_successor</b> (<a class="el" href="a00165.html#a7b4e68e6917207283f5c621e7053c7ea">successor_type</a> &amp;)=0</td></tr>
+<tr class="separator:ac288603db6720be86ebf6cc1e9e4c5fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ace0532a9e923b5e733938db6adb7767c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ace0532a9e923b5e733938db6adb7767c"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>internal_delete_built_successor</b> (<a class="el" href="a00165.html#a7b4e68e6917207283f5c621e7053c7ea">successor_type</a> &amp;)=0</td></tr>
+<tr class="separator:ace0532a9e923b5e733938db6adb7767c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a99384060eefdb259344dca4070146594"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a99384060eefdb259344dca4070146594"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>copy_successors</b> (successor_list_type &amp;)=0</td></tr>
+<tr class="separator:a99384060eefdb259344dca4070146594"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a37871aa7dc631508ceb0e08ad052f596"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a37871aa7dc631508ceb0e08ad052f596"></a>
+virtual size_t&#160;</td><td class="memItemRight" valign="bottom"><b>successor_count</b> ()=0</td></tr>
+<tr class="separator:a37871aa7dc631508ceb0e08ad052f596"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
+Protected Member Functions</h2></td></tr>
+<tr class="memitem:a3c422ea58b7f11b6cc536539000a556e"><td class="memTemplParams" colspan="2"><a class="anchor" id="a3c422ea58b7f11b6cc536539000a556e"></a>
+template&lt;typename X &gt; </td></tr>
+<tr class="memitem:a3c422ea58b7f11b6cc536539000a556e"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00165.html#a3c422ea58b7f11b6cc536539000a556e">try_get</a> (X &amp;t)</td></tr>
+<tr class="memdesc:a3c422ea58b7f11b6cc536539000a556e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request an item from the sender. <br/></td></tr>
+<tr class="separator:a3c422ea58b7f11b6cc536539000a556e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad48b26c7dec4845e1cb374e9f1c59fea"><td class="memTemplParams" colspan="2"><a class="anchor" id="ad48b26c7dec4845e1cb374e9f1c59fea"></a>
+template&lt;typename X &gt; </td></tr>
+<tr class="memitem:ad48b26c7dec4845e1cb374e9f1c59fea"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00165.html#ad48b26c7dec4845e1cb374e9f1c59fea">try_reserve</a> (X &amp;t)</td></tr>
+<tr class="memdesc:ad48b26c7dec4845e1cb374e9f1c59fea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reserves an item in the sender. <br/></td></tr>
+<tr class="separator:ad48b26c7dec4845e1cb374e9f1c59fea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a17b4154442ad56d01de962120dd4329e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a17b4154442ad56d01de962120dd4329e"></a>
+virtual bool&#160;</td><td class="memItemRight" valign="bottom"><b>try_get_wrapper</b> (void *p, bool is_async)=0</td></tr>
+<tr class="separator:a17b4154442ad56d01de962120dd4329e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0d18a17d1738a6dd0aa8ffee8a5a22d4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0d18a17d1738a6dd0aa8ffee8a5a22d4"></a>
+virtual bool&#160;</td><td class="memItemRight" valign="bottom"><b>try_reserve_wrapper</b> (void *p, bool is_async)=0</td></tr>
+<tr class="separator:a0d18a17d1738a6dd0aa8ffee8a5a22d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:a3cdf409b9c27b036b9cb0fd9ae00a4a8"><td class="memTemplParams" colspan="2"><a class="anchor" id="a3cdf409b9c27b036b9cb0fd9ae00a4a8"></a>
+template&lt;typename , typename &gt; </td></tr>
+<tr class="memitem:a3cdf409b9c27b036b9cb0fd9ae00a4a8"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><b>internal::predecessor_cache</b></td></tr>
+<tr class="separator:a3cdf409b9c27b036b9cb0fd9ae00a4a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3175bd06b97cbe15f7135fa6e0960d19"><td class="memTemplParams" colspan="2"><a class="anchor" id="a3175bd06b97cbe15f7135fa6e0960d19"></a>
+template&lt;typename , typename &gt; </td></tr>
+<tr class="memitem:a3175bd06b97cbe15f7135fa6e0960d19"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><b>internal::reservable_predecessor_cache</b></td></tr>
+<tr class="separator:a3175bd06b97cbe15f7135fa6e0960d19"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;typename T, template&lt; typename X &gt; class Allocator = tbb_allocator&gt;<br/>
-class tbb::zero_allocator&lt; T, Allocator &gt;</h3>
-
-<p>Meets "allocator" requirements of ISO C++ Standard, Section 20.1.5. </p>
-<p>The class is an adapter over an actual allocator that fills the allocation using memset function with template argument C as the value. The members are ordered the same way they are in section 20.4.1 of the ISO C++ standard. </p>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>tbb_allocator.h</li>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li><a class="el" href="a00189.html">flow_graph.h</a></li>
 </ul>
 </div><!-- contents -->
 <hr>

@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::null_mutex Class Reference</title>
+<title>rml::MemPoolPolicy Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,55 +33,58 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00228.html">tbb</a></li><li class="navelem"><a class="el" href="a00079.html">null_mutex</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00231.html">rml</a></li><li class="navelem"><a class="el" href="a00079.html">MemPoolPolicy</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a> &#124;
-<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
-<a href="a00271.html">List of all members</a>  </div>
+<a href="#pub-types">Public Types</a> &#124;
+<a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-attribs">Public Attributes</a> &#124;
+<a href="a00261.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::null_mutex Class Reference<div class="ingroups"><a class="el" href="a00249.html">Synchronization</a></div></div>  </div>
+<div class="title">rml::MemPoolPolicy Struct Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-
-<p>A mutex which does nothing.  
- <a href="a00079.html#details">More...</a></p>
-
-<p><code>#include &lt;null_mutex.h&gt;</code></p>
-<div class="dynheader">
-Inheritance diagram for tbb::null_mutex:</div>
-<div class="dyncontent">
- <div class="center">
-  <img src="a00079.png" usemap="#tbb::null_mutex_map" alt=""/>
-  <map id="tbb::null_mutex_map" name="tbb::null_mutex_map">
-</map>
- </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
-Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00131.html">scoped_lock</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents acquisition of a mutex.  <a href="a00131.html#details">More...</a><br/></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:afec5c1b4036a54bbae8678e469e5b2bc"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom">{ <b>TBBMALLOC_POOL_VERSION</b> = 1
+ }</td></tr>
+<tr class="separator:afec5c1b4036a54bbae8678e469e5b2bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
-Static Public Attributes</h2></td></tr>
-<tr class="memitem:a20ed8301299d9ec166588401269d1788"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a20ed8301299d9ec166588401269d1788"></a>
-static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_rw_mutex</b> = false</td></tr>
-<tr class="separator:a20ed8301299d9ec166588401269d1788"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a49bd7f5da83382e39f898d06cbf0e23e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a49bd7f5da83382e39f898d06cbf0e23e"></a>
-static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_recursive_mutex</b> = true</td></tr>
-<tr class="separator:a49bd7f5da83382e39f898d06cbf0e23e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae4684b268ff379a69cd1fe93718ee7fc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae4684b268ff379a69cd1fe93718ee7fc"></a>
-static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_fair_mutex</b> = true</td></tr>
-<tr class="separator:ae4684b268ff379a69cd1fe93718ee7fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
+Public Member Functions</h2></td></tr>
+<tr class="memitem:a73e485e36709acc04a9448eaa95bb666"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a73e485e36709acc04a9448eaa95bb666"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>MemPoolPolicy</b> (rawAllocType pAlloc_, rawFreeType pFree_, size_t granularity_=0, bool fixedPool_=false, bool keepAllMemory_=false)</td></tr>
+<tr class="separator:a73e485e36709acc04a9448eaa95bb666"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
+Public Attributes</h2></td></tr>
+<tr class="memitem:a0935ae38d632881a6d6cccb675cb6f27"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0935ae38d632881a6d6cccb675cb6f27"></a>
+rawAllocType&#160;</td><td class="memItemRight" valign="bottom"><b>pAlloc</b></td></tr>
+<tr class="separator:a0935ae38d632881a6d6cccb675cb6f27"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a221c0a53496a391c60d2f452fc9d76ae"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a221c0a53496a391c60d2f452fc9d76ae"></a>
+rawFreeType&#160;</td><td class="memItemRight" valign="bottom"><b>pFree</b></td></tr>
+<tr class="separator:a221c0a53496a391c60d2f452fc9d76ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac91fffeccd1f4255bbb5719f25785bce"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac91fffeccd1f4255bbb5719f25785bce"></a>
+size_t&#160;</td><td class="memItemRight" valign="bottom"><b>granularity</b></td></tr>
+<tr class="separator:ac91fffeccd1f4255bbb5719f25785bce"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaea7ca6973332913c839073822352046"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aaea7ca6973332913c839073822352046"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>version</b></td></tr>
+<tr class="separator:aaea7ca6973332913c839073822352046"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab00be5199577e8dd87f25c867a488aaf"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab00be5199577e8dd87f25c867a488aaf"></a>
+unsigned&#160;</td><td class="memItemRight" valign="bottom"><b>fixedPool</b>: 1</td></tr>
+<tr class="separator:ab00be5199577e8dd87f25c867a488aaf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afc2ea43e020580853224fa430736d38a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afc2ea43e020580853224fa430736d38a"></a>
+unsigned&#160;</td><td class="memItemRight" valign="bottom"><b>keepAllMemory</b>: 1</td></tr>
+<tr class="separator:afc2ea43e020580853224fa430736d38a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2fe8bde7ec5c0f347f5c8e648c92c612"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2fe8bde7ec5c0f347f5c8e648c92c612"></a>
+unsigned&#160;</td><td class="memItemRight" valign="bottom"><b>reserved</b>: 30</td></tr>
+<tr class="separator:a2fe8bde7ec5c0f347f5c8e648c92c612"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>A mutex which does nothing. </p>
-<p>A <a class="el" href="a00079.html" title="A mutex which does nothing. ">null_mutex</a> does no operation and simulates success. </p>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>null_mutex.h</li>
+<hr/>The documentation for this struct was generated from the following file:<ul>
+<li><a class="el" href="a00213.html">scalable_allocator.h</a></li>
 </ul>
 </div><!-- contents -->
 <hr>

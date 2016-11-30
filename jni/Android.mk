@@ -32,8 +32,15 @@ else
 	export CPATH_SEPARATOR :=:
 endif
 
+export ANDROID_NDK_ROOT:=$(NDK_ROOT)
+export ndk_version:=$(lastword $(subst -, ,$(ANDROID_NDK_ROOT)))
+
 ifeq (clang,$(compiler))
+	ifneq (,$(findstring r13,$(ndk_version)))
+	TBB_RTL :=llvm-libc++
+	else
 	TBB_RTL :=llvm-libc++/libcxx
+	endif
 	TBB_RTL_LIB :=llvm-libc++
 	TBB_RTL_FILE :=libc++_shared.so
 else
@@ -48,7 +55,6 @@ LIB_STL_ANDROID_DIR := $(NDK_ROOT)/sources/cxx-stl/$(TBB_RTL_LIB)/libs/$(APP_ABI
 #LIB_STL_ANDROID is required to be set up for copying Android specific library to a device next to test
 export LIB_STL_ANDROID := $(LIB_STL_ANDROID_DIR)/$(TBB_RTL_FILE)
 export CPLUS_LIB_PATH := $(SYSROOT)/usr/lib -L$(LIB_STL_ANDROID_DIR)
-export ANDROID_NDK_ROOT:=$(NDK_ROOT)
 export target_os_version:=$(APP_PLATFORM)
 export tbb_tool_prefix:=$(TOOLCHAIN_PREFIX)
 export TARGET_CXX

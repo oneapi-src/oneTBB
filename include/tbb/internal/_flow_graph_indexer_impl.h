@@ -124,7 +124,7 @@ namespace internal {
         }
         void copy_predecessors( predecessor_list_type &v) __TBB_override {
             spin_mutex::scoped_lock l(my_pred_mutex);
-            return my_built_predecessors.copy_edges(v);
+            my_built_predecessors.copy_edges(v);
         }
 #endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
     protected:

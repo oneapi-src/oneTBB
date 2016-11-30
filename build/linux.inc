@@ -99,7 +99,7 @@ SONAME_SUFFIX =$(shell grep TBB_COMPATIBLE_INTERFACE_VERSION $(tbb_root)/include
 ifeq ($(arch),ia64)
         def_prefix = lin64ipf
 endif
-ifeq ($(arch),sparc)
+ifeq ($(arch),sparc s390x)
         def_prefix = lin64
 endif
 ifeq ($(arch),armv7)

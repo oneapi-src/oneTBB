@@ -51,4 +51,4 @@ compiler_check:
 perf_build:	release
 
 perf_run:
-	./$(PROG) $(PERF_RUN_ARGS)
+	$(PROG) $(PERF_RUN_ARGS)

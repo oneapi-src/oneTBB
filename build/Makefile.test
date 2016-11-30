@@ -225,6 +225,7 @@ ifdef CILK_AVAILABLE
 # The issue reveals itself if a version of binutils is prior to 2.17
 ifeq (linux_icc,$(tbb_os)_$(compiler))
 test_cilk_interop.$(TEST_EXT): LIBS += -lcilkrts
+test_gfx_factory.$(TEST_EXT): LIBS += -lcilkrts
 endif
 test_tbb_cilk: test_cilk_interop.$(TEST_EXT)
 	$(run_cmd) ./test_cilk_interop.$(TEST_EXT) $(args)

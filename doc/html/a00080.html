@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::null_rw_mutex Class Reference</title>
+<title>tbb::missing_wait Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,55 +33,41 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00228.html">tbb</a></li><li class="navelem"><a class="el" href="a00080.html">null_rw_mutex</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00234.html">tbb</a></li><li class="navelem"><a class="el" href="a00080.html">missing_wait</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a> &#124;
-<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
-<a href="a00273.html">List of all members</a>  </div>
+<a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="a00317.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::null_rw_mutex Class Reference<div class="ingroups"><a class="el" href="a00249.html">Synchronization</a></div></div>  </div>
+<div class="title">tbb::missing_wait Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>A rw mutex which does nothing.  
+<p>Exception for missing wait on <a class="el" href="a00142.html">structured_task_group</a>.  
  <a href="a00080.html#details">More...</a></p>
 
-<p><code>#include &lt;null_rw_mutex.h&gt;</code></p>
+<p><code>#include &lt;tbb_exception.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::null_rw_mutex:</div>
+Inheritance diagram for tbb::missing_wait:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00080.png" usemap="#tbb::null_rw_mutex_map" alt=""/>
-  <map id="tbb::null_rw_mutex_map" name="tbb::null_rw_mutex_map">
+  <img src="a00080.png" usemap="#tbb::missing_wait_map" alt=""/>
+  <map id="tbb::missing_wait_map" name="tbb::missing_wait_map">
 </map>
  </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
-Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00127.html">scoped_lock</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents acquisition of a mutex.  <a href="a00127.html#details">More...</a><br/></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
-Static Public Attributes</h2></td></tr>
-<tr class="memitem:a2a676977ac67532f5f35f849ec7eac8c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2a676977ac67532f5f35f849ec7eac8c"></a>
-static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_rw_mutex</b> = true</td></tr>
-<tr class="separator:a2a676977ac67532f5f35f849ec7eac8c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab153992db6e44aee96ce8c1b2d495c94"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab153992db6e44aee96ce8c1b2d495c94"></a>
-static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_recursive_mutex</b> = true</td></tr>
-<tr class="separator:ab153992db6e44aee96ce8c1b2d495c94"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab8500b8a645b1c03221fd1fb4156fa78"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab8500b8a645b1c03221fd1fb4156fa78"></a>
-static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_fair_mutex</b> = true</td></tr>
-<tr class="separator:ab8500b8a645b1c03221fd1fb4156fa78"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
+Public Member Functions</h2></td></tr>
+<tr class="memitem:a04602f54c8ae5d83a5410ebc0a5adf80"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a04602f54c8ae5d83a5410ebc0a5adf80"></a>
+const char *&#160;</td><td class="memItemRight" valign="bottom"><b>what</b> () const __TBB_override  throw ()</td></tr>
+<tr class="separator:a04602f54c8ae5d83a5410ebc0a5adf80"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>A rw mutex which does nothing. </p>
-<p>A <a class="el" href="a00080.html" title="A rw mutex which does nothing. ">null_rw_mutex</a> is a rw mutex that does nothing and simulates successful operation. </p>
+<div class="textblock"><p>Exception for missing wait on <a class="el" href="a00142.html">structured_task_group</a>. </p>
 </div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>null_rw_mutex.h</li>
+<li>tbb_exception.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

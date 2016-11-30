@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::mutex Class Reference</title>
+<title>tbb::interface6::memory_pool_allocator&lt; T, P &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,7 +33,7 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00228.html">tbb</a></li><li class="navelem"><a class="el" href="a00077.html">mutex</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00234.html">tbb</a></li><li class="navelem"><b>interface6</b></li><li class="navelem"><a class="el" href="a00077.html">memory_pool_allocator</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -41,126 +41,131 @@
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
+<a href="#pro-types">Protected Types</a> &#124;
+<a href="#pro-attribs">Protected Attributes</a> &#124;
 <a href="#friends">Friends</a> &#124;
-<a href="a00269.html">List of all members</a>  </div>
+<a href="a00382.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::mutex Class Reference<div class="ingroups"><a class="el" href="a00249.html">Synchronization</a></div></div>  </div>
+<div class="title">tbb::interface6::memory_pool_allocator&lt; T, P &gt; Class Template Reference<div class="ingroups"><a class="el" href="a00255.html">Memory Allocation</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Wrapper around the platform's native lock.  
+<p>Meets "allocator" requirements of ISO C++ Standard, Section 20.1.5.  
  <a href="a00077.html#details">More...</a></p>
 
-<p><code>#include &lt;mutex.h&gt;</code></p>
-<div class="dynheader">
-Inheritance diagram for tbb::mutex:</div>
-<div class="dyncontent">
- <div class="center">
-  <img src="a00077.png" usemap="#tbb::mutex_map" alt=""/>
-  <map id="tbb::mutex_map" name="tbb::mutex_map">
-</map>
- </div></div>
+<p><code>#include &lt;memory_pool.h&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00123.html">scoped_lock</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The scoped locking pattern.  <a href="a00123.html#details">More...</a><br/></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00116.html">rebind</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:ad35737cbe356d6814f59abba680ab067"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><b>state_t</b> { <b>INITIALIZED</b> =0x1234, 
-<b>DESTROYED</b> =0x789A, 
-<b>HELD</b> =0x56CD
- }</td></tr>
-<tr class="separator:ad35737cbe356d6814f59abba680ab067"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abbe0cd12246121753ace00a5a12a90b0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abbe0cd12246121753ace00a5a12a90b0"></a>
-typedef LPCRITICAL_SECTION&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00077.html#abbe0cd12246121753ace00a5a12a90b0">native_handle_type</a></td></tr>
-<tr class="memdesc:abbe0cd12246121753ace00a5a12a90b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return native_handle. <br/></td></tr>
-<tr class="separator:abbe0cd12246121753ace00a5a12a90b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0d992511dfc6f47295b10eb7fc0813d4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0d992511dfc6f47295b10eb7fc0813d4"></a>
-typedef pthread_mutex_t *&#160;</td><td class="memItemRight" valign="bottom"><b>native_handle_type</b></td></tr>
-<tr class="separator:a0d992511dfc6f47295b10eb7fc0813d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6202050e0edbded0b0534ea4be9547e0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6202050e0edbded0b0534ea4be9547e0"></a>
+typedef <br class="typebreak"/>
+tbb::internal::allocator_type<br class="typebreak"/>
+&lt; T &gt;::value_type&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b></td></tr>
+<tr class="separator:a6202050e0edbded0b0534ea4be9547e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a07450f397df1af8096f31bfa8f2e1722"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a07450f397df1af8096f31bfa8f2e1722"></a>
+typedef value_type *&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b></td></tr>
+<tr class="separator:a07450f397df1af8096f31bfa8f2e1722"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a972521ed466cc8140d386331a25e895a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a972521ed466cc8140d386331a25e895a"></a>
+typedef const value_type *&#160;</td><td class="memItemRight" valign="bottom"><b>const_pointer</b></td></tr>
+<tr class="separator:a972521ed466cc8140d386331a25e895a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a83b91759effc3a452fc565ac3bb45613"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a83b91759effc3a452fc565ac3bb45613"></a>
+typedef value_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>reference</b></td></tr>
+<tr class="separator:a83b91759effc3a452fc565ac3bb45613"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a15abe537e2dad4132c956c08d9d0a27e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a15abe537e2dad4132c956c08d9d0a27e"></a>
+typedef const value_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>const_reference</b></td></tr>
+<tr class="separator:a15abe537e2dad4132c956c08d9d0a27e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac20767f3b7a8fcdc1aff0b0874245d3a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac20767f3b7a8fcdc1aff0b0874245d3a"></a>
+typedef size_t&#160;</td><td class="memItemRight" valign="bottom"><b>size_type</b></td></tr>
+<tr class="separator:ac20767f3b7a8fcdc1aff0b0874245d3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a23267e855e2427b401b99ce4b547f83e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a23267e855e2427b401b99ce4b547f83e"></a>
+typedef ptrdiff_t&#160;</td><td class="memItemRight" valign="bottom"><b>difference_type</b></td></tr>
+<tr class="separator:a23267e855e2427b401b99ce4b547f83e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ad1b280c954ffc8b8b3e63e4ee4144035"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad1b280c954ffc8b8b3e63e4ee4144035"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00077.html#ad1b280c954ffc8b8b3e63e4ee4144035">mutex</a> ()</td></tr>
-<tr class="memdesc:ad1b280c954ffc8b8b3e63e4ee4144035"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct unacquired mutex. <br/></td></tr>
-<tr class="separator:ad1b280c954ffc8b8b3e63e4ee4144035"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a95ff02ee699b34696001db4003c11a3a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a95ff02ee699b34696001db4003c11a3a"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00077.html#a95ff02ee699b34696001db4003c11a3a">lock</a> ()</td></tr>
-<tr class="memdesc:a95ff02ee699b34696001db4003c11a3a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Acquire lock. <br/></td></tr>
-<tr class="separator:a95ff02ee699b34696001db4003c11a3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a480283933106941125717499f9c5ad42"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00077.html#a480283933106941125717499f9c5ad42">try_lock</a> ()</td></tr>
-<tr class="memdesc:a480283933106941125717499f9c5ad42"><td class="mdescLeft">&#160;</td><td class="mdescRight">Try acquiring lock (non-blocking)  <a href="#a480283933106941125717499f9c5ad42">More...</a><br/></td></tr>
-<tr class="separator:a480283933106941125717499f9c5ad42"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a721eeae7ba16f8b92535f4534b583874"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a721eeae7ba16f8b92535f4534b583874"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00077.html#a721eeae7ba16f8b92535f4534b583874">unlock</a> ()</td></tr>
-<tr class="memdesc:a721eeae7ba16f8b92535f4534b583874"><td class="mdescLeft">&#160;</td><td class="mdescRight">Release lock. <br/></td></tr>
-<tr class="separator:a721eeae7ba16f8b92535f4534b583874"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af69874d93822c905bdea0ab9e5ca5b89"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af69874d93822c905bdea0ab9e5ca5b89"></a>
-<a class="el" href="a00077.html#abbe0cd12246121753ace00a5a12a90b0">native_handle_type</a>&#160;</td><td class="memItemRight" valign="bottom"><b>native_handle</b> ()</td></tr>
-<tr class="separator:af69874d93822c905bdea0ab9e5ca5b89"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0857c4596d7d5de09fe402ccd41d3e42"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0857c4596d7d5de09fe402ccd41d3e42"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00077.html#a0857c4596d7d5de09fe402ccd41d3e42">set_state</a> (state_t to)</td></tr>
-<tr class="memdesc:a0857c4596d7d5de09fe402ccd41d3e42"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the internal state. <br/></td></tr>
-<tr class="separator:a0857c4596d7d5de09fe402ccd41d3e42"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a384be31e682a3b86b5b11e635232c9c5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a384be31e682a3b86b5b11e635232c9c5"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>memory_pool_allocator</b> (pool_type &amp;pool)  throw ()</td></tr>
+<tr class="separator:a384be31e682a3b86b5b11e635232c9c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa2b4cf16b566e40ddb196c371e5ae96e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa2b4cf16b566e40ddb196c371e5ae96e"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>memory_pool_allocator</b> (const <a class="el" href="a00077.html">memory_pool_allocator</a> &amp;src)  throw ()</td></tr>
+<tr class="separator:aa2b4cf16b566e40ddb196c371e5ae96e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad32ad8245399fbdb38a0a41e912d86d9"><td class="memTemplParams" colspan="2"><a class="anchor" id="ad32ad8245399fbdb38a0a41e912d86d9"></a>
+template&lt;typename U &gt; </td></tr>
+<tr class="memitem:ad32ad8245399fbdb38a0a41e912d86d9"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>memory_pool_allocator</b> (const <a class="el" href="a00077.html">memory_pool_allocator</a>&lt; U, P &gt; &amp;src)  throw ()</td></tr>
+<tr class="separator:ad32ad8245399fbdb38a0a41e912d86d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a55653a8c539901be6ca24a120a5d7b72"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a55653a8c539901be6ca24a120a5d7b72"></a>
+pointer&#160;</td><td class="memItemRight" valign="bottom"><b>address</b> (reference x) const </td></tr>
+<tr class="separator:a55653a8c539901be6ca24a120a5d7b72"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8a3e4236f6e1266f126dac557906ce2c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8a3e4236f6e1266f126dac557906ce2c"></a>
+const_pointer&#160;</td><td class="memItemRight" valign="bottom"><b>address</b> (const_reference x) const </td></tr>
+<tr class="separator:a8a3e4236f6e1266f126dac557906ce2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a10b9888883a3dbd66e87c4a7f874ef28"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a10b9888883a3dbd66e87c4a7f874ef28"></a>
+pointer&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00077.html#a10b9888883a3dbd66e87c4a7f874ef28">allocate</a> (size_type n, const void *=0)</td></tr>
+<tr class="memdesc:a10b9888883a3dbd66e87c4a7f874ef28"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allocate space for n objects. <br/></td></tr>
+<tr class="separator:a10b9888883a3dbd66e87c4a7f874ef28"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9fcf288f2d653972d1bdc0c65abebed4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9fcf288f2d653972d1bdc0c65abebed4"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00077.html#a9fcf288f2d653972d1bdc0c65abebed4">deallocate</a> (pointer p, size_type)</td></tr>
+<tr class="memdesc:a9fcf288f2d653972d1bdc0c65abebed4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Free previously allocated block of memory. <br/></td></tr>
+<tr class="separator:a9fcf288f2d653972d1bdc0c65abebed4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2bded8e3fb2cec32b48771e7a1bbb838"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2bded8e3fb2cec32b48771e7a1bbb838"></a>
+size_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00077.html#a2bded8e3fb2cec32b48771e7a1bbb838">max_size</a> () const   throw ()</td></tr>
+<tr class="memdesc:a2bded8e3fb2cec32b48771e7a1bbb838"><td class="mdescLeft">&#160;</td><td class="mdescRight">Largest value for which method allocate might succeed. <br/></td></tr>
+<tr class="separator:a2bded8e3fb2cec32b48771e7a1bbb838"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac51b34ef90ecabdd2e0483e25603a15b"><td class="memTemplParams" colspan="2"><a class="anchor" id="ac51b34ef90ecabdd2e0483e25603a15b"></a>
+template&lt;typename U , typename... Args&gt; </td></tr>
+<tr class="memitem:ac51b34ef90ecabdd2e0483e25603a15b"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00077.html#ac51b34ef90ecabdd2e0483e25603a15b">construct</a> (U *p, Args &amp;&amp;...args)</td></tr>
+<tr class="memdesc:ac51b34ef90ecabdd2e0483e25603a15b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy-construct value at location pointed to by p. <br/></td></tr>
+<tr class="separator:ac51b34ef90ecabdd2e0483e25603a15b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8be8f1b38d4b1b6bea2d83f611bf66e7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8be8f1b38d4b1b6bea2d83f611bf66e7"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>construct</b> (pointer p, value_type &amp;&amp;value)</td></tr>
+<tr class="separator:a8be8f1b38d4b1b6bea2d83f611bf66e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:affac76f7742c4d8ea6345e0aad82792a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="affac76f7742c4d8ea6345e0aad82792a"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>construct</b> (pointer p, const value_type &amp;value)</td></tr>
+<tr class="separator:affac76f7742c4d8ea6345e0aad82792a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2223b6469f88aadc432a4b3f88728d0f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2223b6469f88aadc432a4b3f88728d0f"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00077.html#a2223b6469f88aadc432a4b3f88728d0f">destroy</a> (pointer p)</td></tr>
+<tr class="memdesc:a2223b6469f88aadc432a4b3f88728d0f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy value at location pointed to by p. <br/></td></tr>
+<tr class="separator:a2223b6469f88aadc432a4b3f88728d0f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
-Static Public Attributes</h2></td></tr>
-<tr class="memitem:a2677d672446faa842de9de38b3aff80a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2677d672446faa842de9de38b3aff80a"></a>
-static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_rw_mutex</b> = false</td></tr>
-<tr class="separator:a2677d672446faa842de9de38b3aff80a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adf7e9e11c47cc869d219298232d6c0a1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adf7e9e11c47cc869d219298232d6c0a1"></a>
-static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_recursive_mutex</b> = false</td></tr>
-<tr class="separator:adf7e9e11c47cc869d219298232d6c0a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab729ebd784af412184653c4fa90468d0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab729ebd784af412184653c4fa90468d0"></a>
-static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_fair_mutex</b> = false</td></tr>
-<tr class="separator:ab729ebd784af412184653c4fa90468d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-types"></a>
+Protected Types</h2></td></tr>
+<tr class="memitem:aecd858782faee0fb5fa707671cfc49aa"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aecd858782faee0fb5fa707671cfc49aa"></a>
+typedef P&#160;</td><td class="memItemRight" valign="bottom"><b>pool_type</b></td></tr>
+<tr class="separator:aecd858782faee0fb5fa707671cfc49aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
+Protected Attributes</h2></td></tr>
+<tr class="memitem:a0fbd737811d556f1d2898d3722e85f32"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0fbd737811d556f1d2898d3722e85f32"></a>
+pool_type *&#160;</td><td class="memItemRight" valign="bottom"><b>my_pool</b></td></tr>
+<tr class="separator:a0fbd737811d556f1d2898d3722e85f32"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
 Friends</h2></td></tr>
-<tr class="memitem:afcf922650b2fd9d76b7b939d8511bbd8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afcf922650b2fd9d76b7b939d8511bbd8"></a>
-class&#160;</td><td class="memItemRight" valign="bottom"><b>scoped_lock</b></td></tr>
-<tr class="separator:afcf922650b2fd9d76b7b939d8511bbd8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6c34ee2e5a57845f050b507cc516a005"><td class="memTemplParams" colspan="2"><a class="anchor" id="a6c34ee2e5a57845f050b507cc516a005"></a>
+template&lt;typename U , typename R &gt; </td></tr>
+<tr class="memitem:a6c34ee2e5a57845f050b507cc516a005"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><b>memory_pool_allocator</b></td></tr>
+<tr class="separator:a6c34ee2e5a57845f050b507cc516a005"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac8c26a64f4e012f2a9cf6035cf029905"><td class="memTemplParams" colspan="2"><a class="anchor" id="ac8c26a64f4e012f2a9cf6035cf029905"></a>
+template&lt;typename V , typename U , typename R &gt; </td></tr>
+<tr class="memitem:ac8c26a64f4e012f2a9cf6035cf029905"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><b>operator==</b> (const <a class="el" href="a00077.html">memory_pool_allocator</a>&lt; V, R &gt; &amp;a, const <a class="el" href="a00077.html">memory_pool_allocator</a>&lt; U, R &gt; &amp;b)</td></tr>
+<tr class="separator:ac8c26a64f4e012f2a9cf6035cf029905"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2f7230e5bc817e7512e18b5311b3371b"><td class="memTemplParams" colspan="2"><a class="anchor" id="a2f7230e5bc817e7512e18b5311b3371b"></a>
+template&lt;typename V , typename U , typename R &gt; </td></tr>
+<tr class="memitem:a2f7230e5bc817e7512e18b5311b3371b"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><b>operator!=</b> (const <a class="el" href="a00077.html">memory_pool_allocator</a>&lt; V, R &gt; &amp;a, const <a class="el" href="a00077.html">memory_pool_allocator</a>&lt; U, R &gt; &amp;b)</td></tr>
+<tr class="separator:a2f7230e5bc817e7512e18b5311b3371b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Wrapper around the platform's native lock. </p>
-</div><h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="a480283933106941125717499f9c5ad42"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool tbb::mutex::try_lock </td>
-          <td>(</td>
-          <td class="paramname">)</td><td></td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
+<div class="textblock"><h3>template&lt;typename T, typename P = internal::pool_base&gt;<br/>
+class tbb::interface6::memory_pool_allocator&lt; T, P &gt;</h3>
 
-<p>Try acquiring lock (non-blocking) </p>
-<p>Return true if lock acquired; false otherwise. </p>
-
-<p>References <a class="el" href="a00014.html#a3525dbbac0d4eaedfe18bc57b7760857">tbb::aligned_space&lt; T, N &gt;::begin()</a>.</p>
-
-<p>Referenced by <a class="el" href="a00123.html#a46f983371aa852d2427ce69f9a571f78">tbb::mutex::scoped_lock::try_acquire()</a>.</p>
-
-</div>
-</div>
-<hr/>The documentation for this class was generated from the following file:<ul>
-<li>mutex.h</li>
+<p>Meets "allocator" requirements of ISO C++ Standard, Section 20.1.5. </p>
+</div><hr/>The documentation for this class was generated from the following file:<ul>
+<li><a class="el" href="a00194.html">memory_pool.h</a></li>
 </ul>
 </div><!-- contents -->
 <hr>

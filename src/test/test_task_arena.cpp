@@ -986,6 +986,61 @@ void TestIsolatedExecute() {
 #endif /* __TBB_TASK_ISOLATION */
 //--------------------------------------------------//
 //--------------------------------------------------//
+
+class TestDelegatedSpawnWaitBody : NoAssign {
+    tbb::task_arena &my_a;
+    Harness::SpinBarrier &my_b1, &my_b2;
+
+    struct Spawner : NoAssign {
+        tbb::task* const a_task;
+        Spawner(tbb::task* const t) : a_task(t) {}
+        void operator()() const {
+            tbb::task::spawn( *new(a_task->allocate_child()) tbb::empty_task );
+        }
+    };
+
+    struct Waiter : NoAssign {
+        tbb::task* const a_task;
+        Waiter(tbb::task* const t) : a_task(t) {}
+        void operator()() const {
+            a_task->wait_for_all();
+        }
+    };
+
+public:
+    TestDelegatedSpawnWaitBody( tbb::task_arena &a, Harness::SpinBarrier &b1, Harness::SpinBarrier &b2)
+        : my_a(a), my_b1(b1), my_b2(b2) {}
+    // NativeParallelFor's functor
+    void operator()(int idx) const {
+        if ( idx==0 ) { // thread 0 works in the arena, thread 1 waits for it (to prevent test hang)
+            for( int i=0; i<2; ++i ) my_a.enqueue(*this); // tasks to sync with workers
+            tbb::empty_task* root_task = new(tbb::task::allocate_root()) tbb::empty_task;
+            root_task->set_ref_count(100001);
+            my_b1.timed_wait(10); // sync with the workers
+            for( int i=0; i<100000; ++i) {
+                my_a.execute(Spawner(root_task));
+            }
+            my_a.execute(Waiter(root_task));
+            tbb::task::destroy(*root_task);
+        }
+        my_b2.timed_wait(10); // sync both threads
+    }
+    // Arena's functor
+    void operator()() const {
+        my_b1.timed_wait(10); // sync with the arena master
+    }
+};
+
+void TestDelegatedSpawnWait() {
+    // Regression test for a bug with missed wakeup notification from a delegated task
+    REMARK( "Testing delegated spawn & wait\n" );
+    tbb::task_arena a(2,0);
+    a.initialize();
+    Harness::SpinBarrier barrier1(3), barrier2(2);
+    NativeParallelFor( 2, TestDelegatedSpawnWaitBody(a, barrier1, barrier2) );
+    a.debug_wait_until_empty();
+}
+
 class TestMultipleWaitsArenaWait {
 public:
     TestMultipleWaitsArenaWait( int idx, int bunch_size, int num_tasks, tbb::task** waiters, tbb::atomic<int>& processed )
@@ -1087,6 +1142,7 @@ int TestMain () {
     TestArenaEntryConsistency();
     TestAttach(MaxThread);
     TestConstantFunctorRequirement();
+    TestDelegatedSpawnWait();
     TestMultipleWaits();
     return Harness::Done;
 }

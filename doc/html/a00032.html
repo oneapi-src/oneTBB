@@ -33,13 +33,13 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00228.html">tbb</a></li><li class="navelem"><a class="el" href="a00032.html">captured_exception</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00234.html">tbb</a></li><li class="navelem"><a class="el" href="a00032.html">captured_exception</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="a00313.html">List of all members</a>  </div>
+<a href="a00320.html">List of all members</a>  </div>
   <div class="headertitle">
 <div class="title">tbb::captured_exception Class Reference</div>  </div>
 </div><!--header-->
@@ -55,7 +55,7 @@ Inheritance diagram for tbb::captured_exception:</div>
  <div class="center">
   <img src="a00032.png" usemap="#tbb::captured_exception_map" alt=""/>
   <map id="tbb::captured_exception_map" name="tbb::captured_exception_map">
-<area href="a00150.html" title="Interface to be implemented by all exceptions TBB recognizes and propagates across the threads..." alt="tbb::tbb_exception" shape="rect" coords="0,56,146,80"/>
+<area href="a00155.html" title="Interface to be implemented by all exceptions TBB recognizes and propagates across the threads..." alt="tbb::tbb_exception" shape="rect" coords="0,56,146,80"/>
 </map>
  </div></div>
 <table class="memberdecls">
@@ -94,14 +94,14 @@ void __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><b
 <tr class="memitem:a0b160c0fc5d2fab90df2be96ea14088a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0b160c0fc5d2fab90df2be96ea14088a"></a>
 void __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><b>clear</b> ()  throw ()</td></tr>
 <tr class="separator:a0b160c0fc5d2fab90df2be96ea14088a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_methods_a00150"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_a00150')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="a00150.html">tbb::tbb_exception</a></td></tr>
-<tr class="memitem:a6a973c37078afedf7d457ff4704bf8cd inherit pub_methods_a00150"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00150.html#a6a973c37078afedf7d457ff4704bf8cd">operator delete</a> (void *p)</td></tr>
-<tr class="separator:a6a973c37078afedf7d457ff4704bf8cd inherit pub_methods_a00150"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_a00155"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_a00155')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="a00155.html">tbb::tbb_exception</a></td></tr>
+<tr class="memitem:a6a973c37078afedf7d457ff4704bf8cd inherit pub_methods_a00155"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00155.html#a6a973c37078afedf7d457ff4704bf8cd">operator delete</a> (void *p)</td></tr>
+<tr class="separator:a6a973c37078afedf7d457ff4704bf8cd inherit pub_methods_a00155"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>This class is used by TBB to propagate information about unhandled exceptions into the root thread. </p>
 <p>Exception of this type is thrown by TBB in the root thread (thread that started a parallel algorithm ) if an unhandled exception was intercepted during the algorithm execution in one of the workers. </p>
-<dl class="section see"><dt>See Also</dt><dd><a class="el" href="a00150.html" title="Interface to be implemented by all exceptions TBB recognizes and propagates across the threads...">tbb::tbb_exception</a> </dd></dl>
+<dl class="section see"><dt>See Also</dt><dd><a class="el" href="a00155.html" title="Interface to be implemented by all exceptions TBB recognizes and propagates across the threads...">tbb::tbb_exception</a> </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a class="anchor" id="abfc1220a6f9da0361082a3f3ad80cdc9"></a>
 <div class="memitem">
@@ -133,7 +133,7 @@ void __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><b
 <p>Destroys objects created by the <a class="el" href="a00032.html#a3b75205c631b51a00faf98c9e107f78a" title="Creates and returns pointer to the deep copy of this exception object. ">move()</a> method. </p>
 <p>Frees memory and calls destructor for this exception object. Can and must be used only on objects created by the move method. </p>
 
-<p>Implements <a class="el" href="a00150.html#ad3bc09bf78c33f19a0bcdf882fdf9d41">tbb::tbb_exception</a>.</p>
+<p>Implements <a class="el" href="a00155.html#ad3bc09bf78c33f19a0bcdf882fdf9d41">tbb::tbb_exception</a>.</p>
 
 </div>
 </div>
@@ -167,7 +167,7 @@ void __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><b
 <p>Creates and returns pointer to the deep copy of this exception object. </p>
 <p>Move semantics is allowed. </p>
 
-<p>Implements <a class="el" href="a00150.html#a4bd4ba0d501021013d1473d21b020b69">tbb::tbb_exception</a>.</p>
+<p>Implements <a class="el" href="a00155.html#a4bd4ba0d501021013d1473d21b020b69">tbb::tbb_exception</a>.</p>
 
 </div>
 </div>
@@ -195,7 +195,7 @@ void __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><b
 <p>Throws this exception object. </p>
 <p>Make sure that if you have several levels of derivation from this interface you implement or override this method on the most derived level. The implementation is as simple as "throw *this;". Failure to do this will result in exception of a base class type being thrown. </p>
 
-<p>Implements <a class="el" href="a00150.html#ae45c08d36c7ec7ae91785da3515a8828">tbb::tbb_exception</a>.</p>
+<p>Implements <a class="el" href="a00155.html#ae45c08d36c7ec7ae91785da3515a8828">tbb::tbb_exception</a>.</p>
 
 </div>
 </div>

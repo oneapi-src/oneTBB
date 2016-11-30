@@ -2,6 +2,25 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 2017 Update 3
+TBB_INTERFACE_VERSION == 9103
+
+Changes (w.r.t. Intel TBB 2017 Update 2):
+
+- Added support for Android* 7.0 and Android* NDK r13, r13b.
+
+Preview Features:
+
+- Added template class gfx_factory to the flow graph API. It implements
+    the Factory concept for streaming_node to offload computations to
+    Intel(R) processor graphics.
+
+Bugs fixed:
+
+- Fixed a possible deadlock caused by missed wakeup signals in
+    task_arena::execute().
+
+------------------------------------------------------------------------
 Intel TBB 2017 Update 2
 TBB_INTERFACE_VERSION == 9102
 

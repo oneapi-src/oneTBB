@@ -29,8 +29,7 @@ ifeq (64,$(findstring 64,$(arch)))
     def_prefix = lin64
 endif
 
-ifdef ANDROID_NDK_ROOT
-    ndk_version:= $(lastword $(subst -, ,$(ANDROID_NDK_ROOT)))
+ifdef ndk_version
     $(warning "NDK version $(ndk_version)")
 else
     $(warning "NDK version not set in environment, using \'unknown\' instead.")

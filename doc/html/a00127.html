@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::null_rw_mutex::scoped_lock Class Reference</title>
+<title>tbb::scalable_allocator&lt; void &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,56 +33,48 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00228.html">tbb</a></li><li class="navelem"><a class="el" href="a00080.html">null_rw_mutex</a></li><li class="navelem"><a class="el" href="a00127.html">scoped_lock</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00234.html">tbb</a></li><li class="navelem"><a class="el" href="a00127.html">scalable_allocator< void ></a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="a00274.html">List of all members</a>  </div>
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#pub-types">Public Types</a> &#124;
+<a href="a00296.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::null_rw_mutex::scoped_lock Class Reference</div>  </div>
+<div class="title">tbb::scalable_allocator&lt; void &gt; Class Template Reference<div class="ingroups"><a class="el" href="a00255.html">Memory Allocation</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Represents acquisition of a mutex.  
+<p>Analogous to std::allocator&lt;void&gt;, as defined in ISO C++ Standard, Section 20.4.1.  
  <a href="a00127.html#details">More...</a></p>
 
-<p><code>#include &lt;null_rw_mutex.h&gt;</code></p>
-<div class="dynheader">
-Inheritance diagram for tbb::null_rw_mutex::scoped_lock:</div>
-<div class="dyncontent">
- <div class="center">
-  <img src="a00127.png" usemap="#tbb::null_rw_mutex::scoped_lock_map" alt=""/>
-  <map id="tbb::null_rw_mutex::scoped_lock_map" name="tbb::null_rw_mutex::scoped_lock_map">
-</map>
- </div></div>
+<p><code>#include &lt;scalable_allocator.h&gt;</code></p>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
-Public Member Functions</h2></td></tr>
-<tr class="memitem:a4b7f9a3976c7744a96e435e027c6262c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4b7f9a3976c7744a96e435e027c6262c"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>scoped_lock</b> (<a class="el" href="a00080.html">null_rw_mutex</a> &amp;, bool=true)</td></tr>
-<tr class="separator:a4b7f9a3976c7744a96e435e027c6262c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a251d45c5c42ac6c6006d0463c2173bc8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a251d45c5c42ac6c6006d0463c2173bc8"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>acquire</b> (<a class="el" href="a00080.html">null_rw_mutex</a> &amp;, bool=true)</td></tr>
-<tr class="separator:a251d45c5c42ac6c6006d0463c2173bc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a07ed8c0c225fec43b96dcec5b4d4380d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a07ed8c0c225fec43b96dcec5b4d4380d"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>upgrade_to_writer</b> ()</td></tr>
-<tr class="separator:a07ed8c0c225fec43b96dcec5b4d4380d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a899c14f8d077edd2fe7925bb82a94686"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a899c14f8d077edd2fe7925bb82a94686"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>downgrade_to_reader</b> ()</td></tr>
-<tr class="separator:a899c14f8d077edd2fe7925bb82a94686"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afdb10af455fa8730b1a9bc8d5ca16c41"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afdb10af455fa8730b1a9bc8d5ca16c41"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>try_acquire</b> (<a class="el" href="a00080.html">null_rw_mutex</a> &amp;, bool=true)</td></tr>
-<tr class="separator:afdb10af455fa8730b1a9bc8d5ca16c41"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a57d0613ea1614fe9c7daa0706e56efab"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a57d0613ea1614fe9c7daa0706e56efab"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>release</b> ()</td></tr>
-<tr class="separator:a57d0613ea1614fe9c7daa0706e56efab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00111.html">rebind</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a4220fdea504929811e9c083da3ec24cd"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4220fdea504929811e9c083da3ec24cd"></a>
+typedef void *&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b></td></tr>
+<tr class="separator:a4220fdea504929811e9c083da3ec24cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2ae27d63cd7df1dc8d2a47c89aad8bba"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2ae27d63cd7df1dc8d2a47c89aad8bba"></a>
+typedef const void *&#160;</td><td class="memItemRight" valign="bottom"><b>const_pointer</b></td></tr>
+<tr class="separator:a2ae27d63cd7df1dc8d2a47c89aad8bba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a968aea700a5f30ad613a84a474b00ba4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a968aea700a5f30ad613a84a474b00ba4"></a>
+typedef void&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b></td></tr>
+<tr class="separator:a968aea700a5f30ad613a84a474b00ba4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Represents acquisition of a mutex. </p>
+<div class="textblock"><h3>template&lt;&gt;<br/>
+class tbb::scalable_allocator&lt; void &gt;</h3>
+
+<p>Analogous to std::allocator&lt;void&gt;, as defined in ISO C++ Standard, Section 20.4.1. </p>
 </div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>null_rw_mutex.h</li>
+<li><a class="el" href="a00213.html">scalable_allocator.h</a></li>
 </ul>
 </div><!-- contents -->
 <hr>
