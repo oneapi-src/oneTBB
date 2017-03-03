@@ -28,7 +28,7 @@ The files here are not intended to be used directly.  See below for usage.
 <DT>&lt;os&gt;.&lt;compiler&gt;.inc
 <DD>Compiler-specific Makefile for a particular &lt;os&gt; / &lt;compiler&gt; combination.
 <DT>*.sh
-<DD>Infrastructure utilities for Linux* OS, OS X*, and UNIX*-related operating systems.
+<DD>Infrastructure utilities for Linux* OS, macOS*, and UNIX*-related operating systems.
 <DT>*.js, *.bat
 <DD>Infrastructure utilities for Windows* OS.
 </DL>
@@ -43,7 +43,7 @@ To port Intel TBB to a new platform, operating system or architecture, see the <
 <LI>C++ compiler for the platform, operating system and architecture of interest.
     Either the native compiler for your system, or, optionally, the appropriate Intel&reg; C++ compiler, may be used.
 <LI>GNU make utility. On Windows OS, if a UNIX* emulator is used to run GNU make,
-    it should be able to run Windows OS utilities and commands. On Linux OS, OS X, etc.,
+    it should be able to run Windows OS utilities and commands. On Linux OS, macOS, etc.,
     shell commands issued by GNU make should execute in a Bourne or BASH compatible shell.
     In the following examples, replace <TT>make</TT> with the correct GNU make command for
     your system (for example, <TT>gmake</TT>). GNU make version 3.80 and more recent are supported.
@@ -53,7 +53,7 @@ To port Intel TBB to a new platform, operating system or architecture, see the <
 Intel TBB libraries can be built by performing the following steps.
 On systems that support only one ABI (e.g., 32-bit), these steps build the libraries for that ABI.
 On systems that support both 64-bit and 32-bit libraries, these steps build the 64-bit libraries
-(Linux OS, OS X, and related systems) or whichever ABI is selected in the development environment (Windows OS).
+(Linux OS, macOS, and related systems) or whichever ABI is selected in the development environment (Windows OS).
 </P>
 <OL>
 <LI>Change to the <A HREF="../index.html">top-level directory</A> of the installed software.
@@ -63,7 +63,7 @@ On systems that support both 64-bit and 32-bit libraries, these steps build the 
 </OL>
 
 <P>
-To build Intel TBB libraries for other than the default ABI (e.g., to build 32-bit libraries on Linux OS, OS X,
+To build Intel TBB libraries for other than the default ABI (e.g., to build 32-bit libraries on Linux OS, macOS,
 or related systems that support both 64-bit and 32-bit libraries), perform the following steps:
 </P>
 <OL>
@@ -88,7 +88,7 @@ See also the list of other targets below.
 By default, the libraries will be built in sub-directories within the build/ directory.
 The sub-directories are named according to the operating system, architecture, compiler and software environment used
 (the sub-directory names also distinguish release vs. debug libraries).  On Linux OS, the software environment comprises
-the GCC, libc and kernel version used.  On OS X, the software environment comprises the GCC and OS version used.
+the GCC, libc and kernel version used.  On macOS, the software environment comprises the GCC and OS version used.
 On Windows OS, the software environment comprises the Microsoft* Visual Studio* version used.
 See below for how to change the default build directory.
 </P>
@@ -124,7 +124,7 @@ To perform different build and/or test operations, use the following steps.
     <DT><TT>make compiler=<B>{</B>icl, icc, gcc, clang<B>}</B> <B>[</B>(above options or targets)<B>]</B></TT>
     <DD>Build and run as above, but use specified compilers instead of default, native compilers
     <ol>
-        <li><tt><b> {</b>icl, icc<b>}</b> </tt> - to use Intel&reg; compilers (<tt>icl</tt> on Windows OS,  <tt>icc</tt>  on Linux OS or OS X). </li>
+        <li><tt><b> {</b>icl, icc<b>}</b> </tt> - to use Intel&reg; compilers (<tt>icl</tt> on Windows OS,  <tt>icc</tt>  on Linux OS or macOS). </li>
         <li><tt>gcc</tt>  - to use g++ (e.g. MinGW on Windows OS)</li>
         <li><tt>clang</tt> - to use Clang compiler</li>
     </ol>
@@ -233,7 +233,7 @@ See the Makefile infrastructure files for examples.
 <HR>
 <A HREF="../index.html">Up to parent directory</A>
 <P></P>
-Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2017 Intel Corporation.  All Rights Reserved.
 <P></P>
 Intel, the Intel logo and Itanium are trademarks of Intel Corporation or its subsidiaries in the U.S. and/or other countries.
 <p></p>

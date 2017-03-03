@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -185,9 +185,9 @@ inline color_t video::get_color(colorcomp_t red, colorcomp_t green, colorcomp_t 
 }
 
 inline drawing_area::drawing_area(int x, int y, int sizex, int sizey, const drawing_memory &dmem)
-    : start_x(x), start_y(y), size_x(sizex), size_y(sizey), pixel_depth(dmem.pixel_depth),
-    base_index(y*dmem.sizex + x), max_index(dmem.sizex*dmem.sizey), index_stride(dmem.sizex),
-    ptr32(reinterpret_cast<unsigned int*>(dmem.my_address))
+    : base_index(y*dmem.sizex + x), max_index(dmem.sizex*dmem.sizey), index_stride(dmem.sizex),
+    pixel_depth(dmem.pixel_depth), ptr32(reinterpret_cast<unsigned int*>(dmem.my_address)),
+    start_x(x), start_y(y), size_x(sizex), size_y(sizey)
 {
     assert(x < dmem.sizex); assert(y < dmem.sizey);
     assert(x+sizex <= dmem.sizex); assert(y+sizey <= dmem.sizey);

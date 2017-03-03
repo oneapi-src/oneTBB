@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -404,7 +404,7 @@ class ConcurrencyTestBody : NoAssign {
             const opencl_device_list& devices = f.devices();
             ASSERT( filteredDevices.size() == devices.size(), "Incorrect list of devices" );
             std::vector<opencl_device>::const_iterator it = filteredDevices.cbegin();
-            for ( opencl_device d : devices ) ASSERT( d == *it++, "Incorrect list of devices" );
+            for ( auto d = devices.begin(); d != devices.end(); ++d ) ASSERT( (*d) == *it++, "Incorrect list of devices" );
             --num_checks;
             return *(devices.begin() + cnt++ % devices.size());
         }
@@ -457,9 +457,9 @@ public:
             // The first node needs two buffers.
            Harness::FastRandom rnd(42);
             cl_uint alignment = 0;
-            for ( opencl_device d : filteredDevices ) {
+            for (  auto d = filteredDevices.begin(); d != filteredDevices.end(); ++d ) {
                 cl_uint deviceAlignment;
-                d.info( CL_DEVICE_MEM_BASE_ADDR_ALIGN, deviceAlignment );
+                (*d).info( CL_DEVICE_MEM_BASE_ADDR_ALIGN, deviceAlignment );
                 alignment = max( alignment, deviceAlignment );
             }
             alignment /= CHAR_BIT;
@@ -532,7 +532,9 @@ struct DeviceFilter {
         case MAX_DEVICES:
         {
             std::unordered_map<std::string, std::vector<opencl_device>> platforms;
-            for ( opencl_device d : device_list ) platforms[d.platform_name()].push_back( d );
+            for (auto d = device_list.begin(); d != device_list.end(); ++d) {
+                platforms[(*d).platform_name()].push_back(*d);
+            }
 
             // Select a platform with maximum number of devices.
             filteredDevices = std::max_element( platforms.begin(), platforms.end(),
@@ -542,8 +544,8 @@ struct DeviceFilter {
 
             if ( !numRuns ) {
                 REMARK( "  Chosen devices from the same platform (%s):\n", filteredDevices[0].platform_name().c_str() );
-                for ( opencl_device d : filteredDevices ) {
-                    REMARK( "    %s\n", d.name().c_str() );
+                for ( auto d = filteredDevices.begin(); d != filteredDevices.end(); d++ ) {
+                    REMARK( "    %s\n", (*d).name().c_str() );
                 }
             }
 
@@ -563,7 +565,7 @@ struct DeviceFilter {
             ASSERT( false, NULL );
         }
         opencl_device_list dl;
-        for ( opencl_device d : filteredDevices ) dl.add( d );
+        for ( auto d = filteredDevices.begin(); d != filteredDevices.end(); ++d ) dl.add( *d );
 
         ++numRuns;
 
@@ -620,18 +622,18 @@ void SpirKernelTest() {
 
     const opencl_device_list devices = opencl_graph().available_devices();
 
-    for( opencl_device d : devices ) {
-        if( !d.extension_available( "cl_khr_spir" ) ) {
-            REMARK( "  Extension 'cl_khr_spir' is not available on the device '%s'\n", d.name().c_str() );
+    for( auto d = devices.begin(); d != devices.end(); d++ ) {
+        if( !(*d).extension_available( "cl_khr_spir" ) ) {
+            REMARK( "  Extension 'cl_khr_spir' is not available on the device '%s'\n", (*d).name().c_str() );
             continue;
         }
         opencl_graph g;
-        bool init = g.opencl_factory().init( { d } );
+        bool init = g.opencl_factory().init( { *d } );
         ASSERT( init, "It should be the first initialization" );
 
         std::string path_to_file = PathToFile(std::string("test_opencl_kernel_") +
-                                              std::to_string(d.address_bits()) + std::string(".spir") );
-        REMARK("  Using SPIR file '%s' on device '%s'\n", path_to_file.c_str(), d.name().c_str());
+                                              std::to_string((*d).address_bits()) + std::string(".spir") );
+        REMARK("  Using SPIR file '%s' on device '%s'\n", path_to_file.c_str(), (*d).name().c_str());
         const int N = 1 * 1024 * 1024;
         opencl_buffer<float> b1( g, N ), b2( g, N );
         std::vector<float> v1( N ), v2( N );

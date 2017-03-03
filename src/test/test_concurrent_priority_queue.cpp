@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -28,9 +28,6 @@
 #include "harness_allocator.h"
 #include <vector>
 #include "test_container_move_support.h"
-
-// std::is_copy_constructible<T>::value returns 'true' for non copyable type when MSVC compiler is used.
-#define __TBB_IS_COPY_CONSTRUCTIBLE_BROKEN ( _MSC_VER && (_MSC_VER <= 1700 || _MSC_VER <= 1800 && !__INTEL_COMPILER) )
 
 #if _MSC_VER==1500 && !__INTEL_COMPILER
     // VS2008/VC9 seems to have an issue; limits pull in math.h

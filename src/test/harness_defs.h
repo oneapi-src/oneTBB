@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -148,7 +148,8 @@
 #endif
 
 // Intel Compiler fails to generate non-throwing move members for a class inherited from template
-#define __TBB_NOTHROW_MOVE_MEMBERS_IMPLICIT_GENERATION_BROKEN (__INTEL_COMPILER==1600 || __INTEL_COMPILER==1700)
+#define __TBB_NOTHROW_MOVE_MEMBERS_IMPLICIT_GENERATION_BROKEN \
+    (__INTEL_COMPILER==1700 || __INTEL_COMPILER==1600 || __INTEL_COMPILER==1500 && __INTEL_COMPILER_UPDATE>3)
 
 // The tuple-based tests with more inputs take a long time to compile.  If changes
 // are made to the tuple implementation or any switch that controls it, or if testing
@@ -180,6 +181,9 @@
         #define TBB_PREVIEW_FLOW_GRAPH_FEATURES 1
     #endif
 #endif
+
+// std::is_copy_constructible<T>::value returns 'true' for non copyable type when MSVC compiler is used.
+#define __TBB_IS_COPY_CONSTRUCTIBLE_BROKEN ( _MSC_VER && (_MSC_VER <= 1700 || _MSC_VER <= 1800 && !__INTEL_COMPILER) )
 
 namespace Harness {
     //! Utility template function to prevent "unused" warnings by various compilers.

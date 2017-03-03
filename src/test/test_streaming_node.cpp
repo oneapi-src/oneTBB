@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -126,7 +126,8 @@ private:
 
     int doDeviceWork() {
         int result = 0;
-        for (int arg : arguments_list) result += arg;
+        for (int i = 0; i < arguments_list.size(); i++)
+            result += arguments_list[i];
         return result;
     }
 

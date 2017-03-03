@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -76,11 +76,10 @@ static color_t render_one_pixel (int x, int y, unsigned int *local_mbox, unsigne
                                  int startx, int stopx, int starty, int stopy)
 {
     /* private vars moved inside loop */
-    ray primary, sample;
-    color col, avcol;
+    ray primary;
+    color col;
     int R,G,B;
     intersectstruct local_intersections;
-    int alias;
     /* end private */
 
     primary = camray(&scene, x, y);

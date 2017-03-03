@@ -1,4 +1,4 @@
-# Copyright (c) 2005-2016 Intel Corporation
+# Copyright (c) 2005-2017 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,14 +29,14 @@ ifndef arch
 endif
 
 ifndef runtime
-        gcc_version:=$(shell gcc -dumpversion)
+        clang_version:=$(shell clang -v 2>&1 | grep version | sed "s/.*version \([0-9]*\.[0-9]*\).*/\1/")
         os_version:=$(shell uname -r)
         os_kernel_version:=$(shell uname -r | sed -e 's/-.*$$//')
-        export runtime:=cc$(gcc_version)_kernel$(os_kernel_version)
+        export runtime:=cc$(clang_version)_kernel$(os_kernel_version)
 endif
 
-native_compiler := gcc
-export compiler ?= gcc
+native_compiler := clang
+export compiler ?= clang
 debugger ?= gdb
 
 CMD=$(SHELL) -c

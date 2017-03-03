@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -187,7 +187,7 @@ void* Taligned_realloc(void* memblock, size_t size, size_t alignment);
 bool error_occurred = false;
 
 #if __APPLE__
-// Tests that use the variables are skipped on OS X*
+// Tests that use the variables are skipped on macOS*
 #else
 const size_t COUNT_ELEM_CALLOC = 2;
 const int COUNT_TESTS = 1000;
@@ -272,7 +272,7 @@ static void setSystemAllocs()
     Taligned_free=_aligned_free;
     Rposix_memalign=0;
 #elif  __APPLE__ || __sun || __ANDROID__
-// OS X*, Solaris, and Android don't have posix_memalign
+// macOS, Solaris*, and Android* don't have posix_memalign
     Raligned_malloc=0;
     Raligned_realloc=0;
     Taligned_free=0;
@@ -470,7 +470,7 @@ int main(int argc, char* argv[]) {
 #endif
     //-------------------------------------
 #if __APPLE__
-    /* Skip due to lack of memory limit enforcing under OS X*. */
+    /* Skip due to lack of memory limit enforcing under macOS. */
 #else
     limitMem(200);
     ReallocParam();
@@ -1125,7 +1125,7 @@ void CMemTest::RunAllTests(int total_threads)
     UniquePointer();
     AddrArifm();
 #if __APPLE__
-    REPORT("Known issue: some tests are skipped on OS X*\n");
+    REPORT("Known issue: some tests are skipped on macOS\n");
 #else
     NULLReturn(1*MByte,100*MByte,total_threads);
 #endif

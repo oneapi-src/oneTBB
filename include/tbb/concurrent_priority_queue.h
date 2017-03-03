@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -374,7 +374,7 @@ class concurrent_priority_queue {
                     compare(data[0], data[data.size()-1])) {
                     // there are newly pushed elems and the last one
                     // is higher than top
-                    *(tmp->elem) = move(data[data.size()-1]);
+                    *(tmp->elem) = tbb::internal::move(data[data.size()-1]);
                     __TBB_store_with_release(my_size, my_size-1);
                     itt_store_word_with_release(tmp->status, uintptr_t(SUCCEEDED));
                     data.pop_back();
@@ -390,7 +390,7 @@ class concurrent_priority_queue {
                     if (tmp->type == PUSH_OP) {
                         push_back_helper(*(tmp->elem), typename internal::use_element_copy_constructor<value_type>::type());
                     } else {
-                        data.push_back(move(*(tmp->elem)));
+                        data.push_back(tbb::internal::move(*(tmp->elem)));
                     }
                     __TBB_store_with_release(my_size, my_size + 1);
                     itt_store_word_with_release(tmp->status, uintptr_t(SUCCEEDED));
@@ -414,13 +414,13 @@ class concurrent_priority_queue {
                     compare(data[0], data[data.size()-1])) {
                     // there are newly pushed elems and the last one is
                     // higher than top
-                    *(tmp->elem) = move(data[data.size()-1]);
+                    *(tmp->elem) = tbb::internal::move(data[data.size()-1]);
                     __TBB_store_with_release(my_size, my_size-1);
                     itt_store_word_with_release(tmp->status, uintptr_t(SUCCEEDED));
                     data.pop_back();
                 }
                 else { // extract top and push last element down heap
-                    *(tmp->elem) = move(data[0]);
+                    *(tmp->elem) = tbb::internal::move(data[0]);
                     __TBB_store_with_release(my_size, my_size-1);
                     itt_store_word_with_release(tmp->status, uintptr_t(SUCCEEDED));
                     reheap();
@@ -440,14 +440,14 @@ class concurrent_priority_queue {
         for (; mark<data.size(); ++mark) {
             // for each unheapified element under size
             size_type cur_pos = mark;
-            value_type to_place = move(data[mark]);
+            value_type to_place = tbb::internal::move(data[mark]);
             do { // push to_place up the heap
                 size_type parent = (cur_pos-1)>>1;
                 if (!compare(data[parent], to_place)) break;
-                data[cur_pos] = move(data[parent]);
+                data[cur_pos] = tbb::internal::move(data[parent]);
                 cur_pos = parent;
             } while( cur_pos );
-            data[cur_pos] = move(to_place);
+            data[cur_pos] = tbb::internal::move(to_place);
         }
     }
 
@@ -462,12 +462,12 @@ class concurrent_priority_queue {
                 ++target;
             // target now has the higher priority child
             if (compare(data[target], data[data.size()-1])) break;
-            data[cur_pos] = move(data[target]);
+            data[cur_pos] = tbb::internal::move(data[target]);
             cur_pos = target;
             child = (cur_pos<<1)+1;
         }
         if (cur_pos != data.size()-1)
-            data[cur_pos] = move(data[data.size()-1]);
+            data[cur_pos] = tbb::internal::move(data[data.size()-1]);
         data.pop_back();
         if (mark > data.size()) mark = data.size();
     }

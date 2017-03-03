@@ -2,6 +2,25 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 2017 Update 4
+TBB_INTERFACE_VERSION == 9104
+
+Changes (w.r.t. Intel TBB 2017 Update 3):
+
+- Added support for C++11 move semantics in parallel_do.
+- Added support for FreeBSD* 11.
+
+Changes affecting backward compatibility:
+
+- Minimal compiler versions required for support of C++11 move semantics
+    raised to GCC 4.5, VS 2012, and Intel(R) C++ Compiler 14.0.
+
+Bugs fixed:
+
+- The workaround for crashes in the library compiled with GCC 6
+    (-flifetime-dse=1) was extended to Windows*.
+
+------------------------------------------------------------------------
 Intel TBB 2017 Update 3
 TBB_INTERFACE_VERSION == 9103
 
@@ -19,6 +38,10 @@ Bugs fixed:
 
 - Fixed a possible deadlock caused by missed wakeup signals in
     task_arena::execute().
+
+Open-source contributions integrated:
+
+- A build fix for Linux* s390x platform by Jerry J.
 
 ------------------------------------------------------------------------
 Intel TBB 2017 Update 2

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -42,8 +42,8 @@ struct RunOptions{
     // number of time to repeat calculation
     NumberType repeatNumber;
 
-    RunOptions(utility::thread_number_range threads, NumberType grainSize, NumberType n, bool silentFlag, NumberType repeatNumber)
-        : threads(threads), grainSize(grainSize), n(n), silentFlag(silentFlag), repeatNumber(repeatNumber)
+    RunOptions(utility::thread_number_range threads_, NumberType grainSize_, NumberType n_, bool silentFlag_, NumberType repeatNumber_)
+        : threads(threads_), silentFlag(silentFlag_), n(n_), grainSize(grainSize_), repeatNumber(repeatNumber_)
     {}
 };
 

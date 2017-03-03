@@ -1,4 +1,4 @@
-# Copyright (c) 2005-2016 Intel Corporation
+# Copyright (c) 2005-2017 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -78,13 +78,13 @@ else # ! X
     APPRES = $(NAME)$(SUFFIX).app/Contents/Resources
     EXE = $(NAME)$(SUFFIX).app/Contents/MacOS/$(NAME)$(SUFFIX)
 
-  else # ! OS X*
+  else # ! macOS*
 
     EXE = $(NAME)$(SUFFIX)
     ifeq (,$(strip $(UI)))
        UI = con
        $(warning Note: no graphics output capability detected, building for console output.)
     endif
-  endif # OS X*
+  endif # macOS
 endif # X
 endif # Windows vs. other

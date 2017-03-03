@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ static inline int __TBB_macos_available_cpu() {
 
 static inline int64_t __TBB_machine_cmpswp8_OsX(volatile void *ptr, int64_t value, int64_t comparand)
 {
-    __TBB_ASSERT( tbb::internal::is_aligned(ptr,8), "address not properly aligned for OS X* atomics");
+    __TBB_ASSERT( tbb::internal::is_aligned(ptr,8), "address not properly aligned for macOS* atomics");
     int64_t* address = (int64_t*)ptr;
     while( !OSAtomicCompareAndSwap64Barrier(comparand, value, address) ){
 #if __TBB_WORDSIZE==8
@@ -99,7 +99,7 @@ static inline int64_t __TBB_machine_cmpswp8_OsX(volatile void *ptr, int64_t valu
 
 static inline int32_t __TBB_machine_cmpswp4(volatile void *ptr, int32_t value, int32_t comparand)
 {
-    __TBB_ASSERT( tbb::internal::is_aligned(ptr,4), "address not properly aligned for OS X* atomics");
+    __TBB_ASSERT( tbb::internal::is_aligned(ptr,4), "address not properly aligned for macOS atomics");
     int32_t* address = (int32_t*)ptr;
     while( !OSAtomicCompareAndSwap32Barrier(comparand, value, address) ){
         int32_t snapshot = *address;
@@ -110,13 +110,13 @@ static inline int32_t __TBB_machine_cmpswp4(volatile void *ptr, int32_t value, i
 
 static inline int32_t __TBB_machine_fetchadd4(volatile void *ptr, int32_t addend)
 {
-    __TBB_ASSERT( tbb::internal::is_aligned(ptr,4), "address not properly aligned for OS X* atomics");
+    __TBB_ASSERT( tbb::internal::is_aligned(ptr,4), "address not properly aligned for macOS atomics");
     return OSAtomicAdd32Barrier(addend, (int32_t*)ptr) - addend;
 }
 
 static inline int64_t __TBB_machine_fetchadd8(volatile void *ptr, int64_t addend)
 {
-    __TBB_ASSERT( tbb::internal::is_aligned(ptr,8), "address not properly aligned for OS X* atomics");
+    __TBB_ASSERT( tbb::internal::is_aligned(ptr,8), "address not properly aligned for macOS atomics");
     return OSAtomicAdd64Barrier(addend, (int64_t*)ptr) - addend;
 }
 

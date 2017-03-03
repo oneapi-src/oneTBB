@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ void HugePagesStatus::printStatus() {
 
 void HugePagesStatus::doPrintStatus(bool state, const char *stateName)
 {
-    // Under OS X* fprintf/snprintf acquires an internal lock, so when
+    // Under macOS* fprintf/snprintf acquires an internal lock, so when
     // 1st allocation is done under the lock, we got a deadlock.
     // Do not use fprintf etc during initialization.
     fputs("TBBmalloc: huge pages\t", stderr);

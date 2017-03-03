@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -801,8 +801,8 @@ public:
     opencl_factory( opencl_graph &g ) : my_graph( g ) {}
     ~opencl_factory() {
         if ( my_devices.size() ) {
-            for ( opencl_device d : my_devices ) {
-                enforce_cl_retcode( clReleaseCommandQueue( d.my_cl_command_queue ), "Failed to release a command queue" );
+            for ( auto d = my_devices.begin(); d != my_devices.end(); ++d ) {
+                enforce_cl_retcode( clReleaseCommandQueue( (*d).my_cl_command_queue ), "Failed to release a command queue" );
             }
             enforce_cl_retcode( clReleaseContext( my_cl_context ), "Failed to release a context" );
         }
@@ -1131,12 +1131,14 @@ public:
 
         std::vector<cl_device_id> devices(num_all_devices);
         std::vector<cl_device_id>::iterator devices_it = devices.begin();
-        for (cl_platform_id p : platforms) {
-            enforce_cl_retcode(clGetDeviceIDs(p, CL_DEVICE_TYPE_ALL, (cl_uint)std::distance(devices_it, devices.end()), &*devices_it, &num_devices), "clGetDeviceIDs failed");
+        for (auto p = platforms.begin(); p != platforms.end(); ++p) {
+            enforce_cl_retcode(clGetDeviceIDs((*p), CL_DEVICE_TYPE_ALL, (cl_uint)std::distance(devices_it, devices.end()), &*devices_it, &num_devices), "clGetDeviceIDs failed");
             devices_it += num_devices;
         }
 
-        for (cl_device_id d : devices) my_devices.add(opencl_device(d));
+        for (auto d = devices.begin(); d != devices.end(); ++d) {
+            my_devices.add(opencl_device((*d)));
+        }
     }
 
     default_opencl_factory &get_default_opencl_factory() {
@@ -1190,7 +1192,9 @@ void opencl_factory<DeviceFilter>::init_once() {
         enforce_cl_retcode( it->platform() == platform_id ? CL_SUCCESS : CL_INVALID_PLATFORM, "All devices should be in the same platform" );
 
     std::vector<cl_device_id> cl_device_ids;
-    for ( opencl_device d : my_devices ) cl_device_ids.push_back( d.my_cl_device_id );
+    for (auto d = my_devices.begin(); d != my_devices.end(); ++d) {
+        cl_device_ids.push_back((*d).my_cl_device_id);
+    }
 
     cl_context_properties context_properties[3] = { CL_CONTEXT_PLATFORM, (cl_context_properties)platform_id, (cl_context_properties)NULL };
     cl_int err;
@@ -1202,23 +1206,23 @@ void opencl_factory<DeviceFilter>::init_once() {
     my_cl_context = ctx;
 
     size_t device_counter = 0;
-    for ( opencl_device &d : my_devices ) {
-        d.my_device_id = device_counter++;
+    for ( auto d = my_devices.begin(); d != my_devices.end(); d++ ) {
+        (*d).my_device_id = device_counter++;
         cl_int err2;
         cl_command_queue cq;
 #if CL_VERSION_2_0
-        if ( d.major_version() >= 2 ) {
-            if ( d.out_of_order_exec_mode_on_host_present() ) {
+        if ( (*d).major_version() >= 2 ) {
+            if ( (*d).out_of_order_exec_mode_on_host_present() ) {
                 cl_queue_properties props[] = { CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0 };
-                cq = clCreateCommandQueueWithProperties( ctx, d.my_cl_device_id, props, &err2 );
+                cq = clCreateCommandQueueWithProperties( ctx, (*d).my_cl_device_id, props, &err2 );
             } else {
                 cl_queue_properties props[] = { 0 };
-                cq = clCreateCommandQueueWithProperties( ctx, d.my_cl_device_id, props, &err2 );
+                cq = clCreateCommandQueueWithProperties( ctx, (*d).my_cl_device_id, props, &err2 );
             }
         } else
 #endif
         {
-            cl_command_queue_properties props = d.out_of_order_exec_mode_on_host_present() ? CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE : 0;
+            cl_command_queue_properties props = (*d).out_of_order_exec_mode_on_host_present() ? CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE : 0;
             // Suppress "declared deprecated" warning for the next line.
 #if __TBB_GCC_WARNING_SUPPRESSION_PRESENT
 #pragma GCC diagnostic push
@@ -1232,7 +1236,7 @@ void opencl_factory<DeviceFilter>::init_once() {
 #pragma warning (disable: 4996)
 #endif
 #endif
-            cq = clCreateCommandQueue( ctx, d.my_cl_device_id, props, &err2 );
+            cq = clCreateCommandQueue( ctx, (*d).my_cl_device_id, props, &err2 );
 #if _MSC_VER || __INTEL_COMPILER
 #pragma warning( pop )
 #endif
@@ -1241,7 +1245,7 @@ void opencl_factory<DeviceFilter>::init_once() {
 #endif
         }
         enforce_cl_retcode( err2, "Failed to create command queue" );
-        d.my_cl_command_queue = cq;
+        (*d).my_cl_command_queue = cq;
     }
 }
 
@@ -1337,18 +1341,18 @@ private:
             std::string str = std::string( "Failed to build program: " ) + name;
             if ( err == CL_BUILD_PROGRAM_FAILURE ) {
                 const opencl_device_list &devices = f.devices();
-                for ( opencl_device d : devices ) {
-                    std::cerr << "Build log for device: " << d.name() << std::endl;
+                for ( auto d = devices.begin(); d != devices.end(); ++d ) {
+                    std::cerr << "Build log for device: " << (*d).name() << std::endl;
                     size_t log_size;
                     cl_int query_err = clGetProgramBuildInfo(
-                        program, d.my_cl_device_id, CL_PROGRAM_BUILD_LOG, 0, NULL,
+                        program, (*d).my_cl_device_id, CL_PROGRAM_BUILD_LOG, 0, NULL,
                         &log_size );
                     enforce_cl_retcode( query_err, "Failed to get build log size" );
                     if( log_size ) {
                         std::vector<char> output;
                         output.resize( log_size );
                         query_err = clGetProgramBuildInfo(
-                            program, d.my_cl_device_id, CL_PROGRAM_BUILD_LOG,
+                            program, (*d).my_cl_device_id, CL_PROGRAM_BUILD_LOG,
                             output.size(), output.data(), NULL );
                         enforce_cl_retcode( query_err, "Failed to get build output" );
                         std::cerr << output.data() << std::endl;
@@ -1417,8 +1421,10 @@ private:
                                                        bin_statuses.data(), &err );
             if( err != CL_SUCCESS ) {
                 std::string statuses_str;
-                for( cl_int st : bin_statuses )
-                    statuses_str += std::to_string( st );
+                for (auto st = bin_statuses.begin(); st != bin_statuses.end(); ++st) {
+                    statuses_str += std::to_string((*st));
+                }
+
                 enforce_cl_retcode( err, std::string( "Failed to create program, error " + std::to_string( err ) + " : " ) + my_arg_str +
                                     std::string( ", binary_statuses = " ) + statuses_str );
             }

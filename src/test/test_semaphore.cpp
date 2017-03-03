@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -235,7 +235,7 @@ void FilterBase::Produce(const int /*tid*/) {
         if(totTokens)
             nextBuffer[curToken&(MAX_TOKENS-1)] = curToken*3+1;
         else
-            nextBuffer[curToken&(MAX_TOKENS-1)] = (unsigned)NULL;
+            nextBuffer[curToken&(MAX_TOKENS-1)] = 0;
         ++curToken;
         Harness::Sleep(myWait);
         unsigned temp = ++otherTokens;

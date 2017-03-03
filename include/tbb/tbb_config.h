@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@
  */
 #define __TBB_TODO 0
 
-/*Check which standard library we use on OS X.*/
+/*Check which standard library we use on macOS*.*/
 /*__TBB_SYMBOL is defined only while processing exported symbols list where C++ is not allowed.*/
 #if !defined(__TBB_SYMBOL) && (__APPLE__ || __ANDROID__)
     #include <cstddef>
@@ -124,10 +124,10 @@
    support added.
  */
 
-/** C++11 mode detection macros for Intel C++ compiler (enabled by -std=c++XY option):
+/** C++11 mode detection macros for Intel(R) C++ compiler (enabled by -std=c++XY option):
     __INTEL_CXX11_MODE__ for version >=13.0 (not available for ICC 15.0 if -std=c++14 is used),
     __STDC_HOSTED__ for version >=12.0 (useful only on Windows),
-    __GXX_EXPERIMENTAL_CXX0X__ for version >=12.0 on Linux and OS X*. **/
+    __GXX_EXPERIMENTAL_CXX0X__ for version >=12.0 on Linux and macOS. **/
 #if __INTEL_COMPILER &&  !__INTEL_CXX11_MODE__
     // __INTEL_CXX11_MODE__ is not set, try to deduce it
     #define __INTEL_CXX11_MODE__ (__GXX_EXPERIMENTAL_CXX0X__ || (_MSC_VER && __STDC_HOSTED__))
@@ -148,7 +148,7 @@
     #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          (__INTEL_CXX11_MODE__ && __VARIADIC_TEMPLATES)
     // Both r-value reference support in compiler and std::move/std::forward
     // presence in C++ standard library is checked.
-    #define __TBB_CPP11_RVALUE_REF_PRESENT                  ((_MSC_VER >= 1600 || __GXX_EXPERIMENTAL_CXX0X__ && (__TBB_GLIBCXX_VERSION >= 40300 || _LIBCPP_VERSION)) && __INTEL_COMPILER >= 1200)
+    #define __TBB_CPP11_RVALUE_REF_PRESENT                  ((_MSC_VER >= 1700 || __GXX_EXPERIMENTAL_CXX0X__ && (__TBB_GLIBCXX_VERSION >= 40500 || _LIBCPP_VERSION)) && __INTEL_COMPILER >= 1400)
     #define __TBB_IMPLICIT_MOVE_PRESENT                     (__INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1400 && (_MSC_VER >= 1900 || __TBB_GCC_VERSION >= 40600 || __clang__))
     #if  _MSC_VER >= 1600
         #define __TBB_EXCEPTION_PTR_PRESENT                 ( __INTEL_COMPILER > 1300                                                \
@@ -177,7 +177,6 @@
     #else
         #define __TBB_INITIALIZER_LISTS_PRESENT             (__INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1400 && (_MSC_VER >= 1800 || __TBB_GLIBCXX_VERSION >= 40400 || _LIBCPP_VERSION))
     #endif
-
     #define __TBB_CONSTEXPR_PRESENT                         (__INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1400)
     #define __TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT        (__INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1200)
     /** ICC seems to disable support of noexcept event in c++11 when compiling in compatibility mode for gcc <4.6 **/
@@ -189,14 +188,13 @@
     #define __TBB_CPP11_DEFAULT_FUNC_TEMPLATE_ARGS_PRESENT  (_MSC_VER >= 1800 || __GXX_EXPERIMENTAL_CXX0X__ && __INTEL_COMPILER >= 1210)
     #define __TBB_OVERRIDE_PRESENT                          (__INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1400)
     #define __TBB_ALIGNAS_PRESENT                           (__INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1500)
-
     #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            (__INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1210)
 #elif __clang__
 /** TODO: these options need to be rechecked **/
-/** on OS X* the only way to get C++11 is to use clang. For library features (e.g. exception_ptr) libc++ is also
+/** on macOS the only way to get C++11 is to use clang. For library features (e.g. exception_ptr) libc++ is also
  *  required. So there is no need to check GCC version for clang**/
     #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          __has_feature(__cxx_variadic_templates__)
-    #define __TBB_CPP11_RVALUE_REF_PRESENT                  (__has_feature(__cxx_rvalue_references__) && (_LIBCPP_VERSION || __TBB_GLIBCXX_VERSION >= 40300))
+    #define __TBB_CPP11_RVALUE_REF_PRESENT                  (__has_feature(__cxx_rvalue_references__) && (_LIBCPP_VERSION || __TBB_GLIBCXX_VERSION >= 40500))
     #define __TBB_IMPLICIT_MOVE_PRESENT                     __has_feature(cxx_implicit_moves)
 /** TODO: extend exception_ptr related conditions to cover libstdc++ **/
     #define __TBB_EXCEPTION_PTR_PRESENT                     (__cplusplus >= 201103L && (_LIBCPP_VERSION || __TBB_GLIBCXX_VERSION >= 40600))
@@ -224,7 +222,7 @@
 #elif __GNUC__
     #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          __GXX_EXPERIMENTAL_CXX0X__
     #define __TBB_CPP11_VARIADIC_FIXED_LENGTH_EXP_PRESENT   (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40700)
-    #define __TBB_CPP11_RVALUE_REF_PRESENT                  __GXX_EXPERIMENTAL_CXX0X__
+    #define __TBB_CPP11_RVALUE_REF_PRESENT                  (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40500)
     #define __TBB_IMPLICIT_MOVE_PRESENT                     (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40600)
     /** __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4 here is a substitution for _GLIBCXX_ATOMIC_BUILTINS_4, which is a prerequisite
         for exception_ptr but cannot be used in this file because it is defined in a header, not by the compiler.
@@ -246,8 +244,11 @@
     #define __TBB_ALIGNAS_PRESENT                           (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40800)
     #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40700)
 #elif _MSC_VER
+    // These definitions are also used with Intel Compiler in "default" mode; see a comment above.
+
     #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          (_MSC_VER >= 1800)
-    #define __TBB_CPP11_RVALUE_REF_PRESENT                  (_MSC_VER >= 1600)
+    // Contains a workaround for ICC 13
+    #define __TBB_CPP11_RVALUE_REF_PRESENT                  (_MSC_VER >= 1700 && (!__INTEL_COMPILER || __INTEL_COMPILER >= 1400))
     #define __TBB_IMPLICIT_MOVE_PRESENT                     (_MSC_VER >= 1900)
     #define __TBB_EXCEPTION_PTR_PRESENT                     (_MSC_VER >= 1600)
     #define __TBB_STATIC_ASSERT_PRESENT                     (_MSC_VER >= 1600)
@@ -657,7 +658,7 @@ There are four cases that are supported:
 #endif /* __FreeBSD__ */
 
 #if (__linux__ || __APPLE__) && __i386__ && defined(__INTEL_COMPILER)
-    /** The Intel(R) C++ Compiler for IA-32 architecture (Linux* OS|OS X*) crashes or generates
+    /** The Intel(R) C++ Compiler for IA-32 architecture (Linux* OS|macOS) crashes or generates
         incorrect code when __asm__ arguments have a cast to volatile. **/
     #define __TBB_ICC_ASM_VOLATILE_BROKEN 1
 #endif

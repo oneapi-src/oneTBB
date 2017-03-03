@@ -30,7 +30,7 @@ Hardware - Recommended
         Intel(R) Core(TM) processor family or higher
         Intel(R) Xeon(R) processor family or higher
         Intel(R) Xeon Phi(TM) processor family
-    OS X* Systems
+    macOS* Systems
         Intel(R) Core(TM) processor family or higher
     Android* Systems
         Intel(R) Atom(TM) processor family
@@ -73,8 +73,9 @@ Software - Supported Operating Systems
         Ubuntu* 12.04 LTS, 13.10, 14.04 LTS, 15.04, 16.04 LTS
         WindRiver* Linux 7
         Yocto 1.7, 1.9 (2.0), 2.1
-    Systems with OS X* operating systems
+    Systems with OS X* or macOS* operating systems
         OS X* 10.10 and higher
+        macOS* 10.12 and higher
     Systems with Android* operating systems
         Android* 5.x, 6.x
 
@@ -119,7 +120,7 @@ Library Issues
         with each other directly.
 
 ------------------------------------------------------------------------
-(C) 2016 Intel Corporation
+(C) 2017 Intel Corporation
 
 Intel, the Intel logo, Intel Core, Xeon, Xeon Phi and Pentium are
 trademarks of Intel Corporation in the U.S. and/or other countries.

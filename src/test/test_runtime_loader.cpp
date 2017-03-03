@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -196,7 +196,7 @@ int TestMain() {
                     // Check what?
                 }
 
-                // There was a problem on Linux* OS, and still a problem on OS X*.
+                // There was a problem on Linux* OS, and still a problem on macOS*.
                 SAY( "Throw an exception." );
                 // Iterate through all the ids first.
                 for ( int id = 1; id < tbb::internal::eid_max; ++ id ) {
