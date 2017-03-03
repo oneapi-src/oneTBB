@@ -33,13 +33,13 @@ ifneq (,$(stdver))
 endif
 
 ifeq ($(arch), ia32)
-	LIB_LINK_FLAGS += /SAFESEH
+    LIB_LINK_FLAGS += /SAFESEH
 endif
 
 ifeq ($(runtime), vc_mt)
-	MS_CRT_KEY = /MT$(if $(findstring debug,$(cfg)),d)
+    MS_CRT_KEY = /MT$(if $(findstring debug,$(cfg)),d)
 else
-	MS_CRT_KEY = /MD$(if $(findstring debug,$(cfg)),d)
+    MS_CRT_KEY = /MD$(if $(findstring debug,$(cfg)),d)
 endif
 EH_FLAGS = /EHsc /GR
 
@@ -71,6 +71,7 @@ DEFINE_KEY = /D
 OUTPUT_KEY = /Fe
 OUTPUTOBJ_KEY = /Fo
 WARNING_AS_ERROR_KEY = /WX
+BIGOBJ_KEY = /bigobj
 
 ifeq ($(runtime),vc7.1)
         WARNING_KEY = /W3

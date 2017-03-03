@@ -117,7 +117,7 @@ public:
         : base_type(n_of_buckets, key_compare(_Hasher, _Key_equality), a)
     {}
 
-    concurrent_unordered_map(const Allocator& a) : base_type(base_type::initial_bucket_number, key_compare(), a)
+    explicit concurrent_unordered_map(const Allocator& a) : base_type(base_type::initial_bucket_number, key_compare(), a)
     {}
 
     template <typename Iterator>
@@ -253,7 +253,7 @@ public:
         : base_type(n_of_buckets, key_compare(_Hasher, _Key_equality), a)
     {}
 
-    concurrent_unordered_multimap(const Allocator& a) : base_type(base_type::initial_bucket_number, key_compare(), a)
+    explicit concurrent_unordered_multimap(const Allocator& a) : base_type(base_type::initial_bucket_number, key_compare(), a)
     {}
 
     template <typename Iterator>

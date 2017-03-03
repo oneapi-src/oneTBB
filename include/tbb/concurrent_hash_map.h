@@ -766,7 +766,7 @@ public:
     };
 
     //! Construct empty table.
-    concurrent_hash_map( const allocator_type &a = allocator_type() )
+    explicit concurrent_hash_map( const allocator_type &a = allocator_type() )
         : internal::hash_map_base(), my_allocator(a)
     {}
 

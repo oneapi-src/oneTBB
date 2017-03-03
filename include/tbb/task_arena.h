@@ -168,7 +168,7 @@ public:
     struct attach {};
 
     //! Creates an instance of task_arena attached to the current arena of the thread
-    task_arena( attach )
+    explicit task_arena( attach )
         : task_arena_base(automatic, 1) // use default settings if attach fails
         , my_initialized(false)
     {

@@ -23,6 +23,9 @@
 #endif
 #include "tbb/mutex.h"
 #include "itt_notify.h"
+#if __TBB_TSX_AVAILABLE
+#include "governor.h" // for speculation_enabled()
+#endif
 
 namespace tbb {
     void mutex::scoped_lock::internal_acquire( mutex& m ) {
@@ -138,6 +141,10 @@ void mutex::internal_destroy() {
     state = DESTROYED;
 #else
     int error_code = pthread_mutex_destroy(&impl);
+#if __TBB_TSX_AVAILABLE
+    // For processors with speculative execution, skip the error code check due to glibc bug #16657
+    if( tbb::internal::governor::speculation_enabled() ) return;
+#endif
     __TBB_ASSERT_EX(!error_code,"mutex: pthread_mutex_destroy failed");
 #endif /* _WIN32||_WIN64 */
 }

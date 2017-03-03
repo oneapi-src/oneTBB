@@ -170,7 +170,7 @@ void market::destroy () {
     if ( my_task_node_count )
         runtime_warning( "Leaked %ld task objects\n", (long)my_task_node_count );
 #endif /* __TBB_COUNT_TASK_NODES */
-    this->~market();
+    this->market::~market(); // qualified to suppress warning
     NFS_Free( this );
     __TBB_InitOnce::remove_ref();
 }

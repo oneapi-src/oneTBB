@@ -86,7 +86,7 @@ setup(  name        ="TBB",
                          "extended with standard Pool implementation and monkey-patching",
         url         ="https://software.intel.com/en-us/intel-tbb",
         author      ="Intel Corporation",
-        author_email="tbbdevelopers@intel.com",
+        author_email="inteltbbdevelopers@intel.com",
         license     ="Dual license: Apache or Proprietary",
         version     ="0.1",
         classifiers =[

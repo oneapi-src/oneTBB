@@ -496,7 +496,7 @@ public:
     typedef receiver<input_type>::predecessor_type predecessor_type;
 
     //! Constructor
-    continue_receiver( int number_of_predecessors = 0 ) {
+    explicit continue_receiver( int number_of_predecessors = 0 ) {
         my_predecessor_count = my_initial_predecessor_count = number_of_predecessors;
         my_current_count = 0;
     }
@@ -963,7 +963,7 @@ protected:
     graph& my_graph;
     graph_node *next, *prev;
 public:
-    graph_node(graph& g) : my_graph(g) {
+    explicit graph_node(graph& g) : my_graph(g) {
         my_graph.register_node(this);
     }
     virtual ~graph_node() {
@@ -1450,7 +1450,7 @@ public:
             TupleType // the tuple providing the types
         >::type  output_ports_type;
 
-    split_node(graph &g) : graph_node(g)
+    explicit split_node(graph &g) : graph_node(g)
     {
         tbb::internal::fgt_multioutput_node<N>(tbb::internal::FLOW_SPLIT_NODE, &this->my_graph,
             static_cast<receiver<input_type> *>(this), this->output_ports());
@@ -1589,7 +1589,7 @@ public:
     typedef typename sender<output_type>::successor_list_type successor_list_type;
 #endif
 
-    overwrite_node(graph &g) : graph_node(g), my_buffer_is_valid(false) {
+    explicit overwrite_node(graph &g) : graph_node(g), my_buffer_is_valid(false) {
         my_successors.set_owner( this );
         tbb::internal::fgt_node( tbb::internal::FLOW_OVERWRITE_NODE, &this->my_graph,
                                  static_cast<receiver<input_type> *>(this), static_cast<sender<output_type> *>(this) );
@@ -1750,7 +1750,7 @@ public:
     typedef typename sender<output_type>::successor_type successor_type;
 
     //! Constructor
-    write_once_node(graph& g) : overwrite_node<T>(g) {
+    explicit write_once_node(graph& g) : overwrite_node<T>(g) {
         tbb::internal::fgt_node( tbb::internal::FLOW_WRITE_ONCE_NODE, &(this->my_graph),
                                  static_cast<receiver<input_type> *>(this),
                                  static_cast<sender<output_type> *>(this) );
@@ -1799,7 +1799,7 @@ private:
 #endif
 public:
 
-    broadcast_node(graph& g) : graph_node(g) {
+    explicit broadcast_node(graph& g) : graph_node(g) {
         my_successors.set_owner( this );
         tbb::internal::fgt_node( tbb::internal::FLOW_BROADCAST_NODE, &this->my_graph,
                                  static_cast<receiver<input_type> *>(this), static_cast<sender<output_type> *>(this) );
@@ -2198,7 +2198,7 @@ protected:
 
 public:
     //! Constructor
-    buffer_node( graph &g ) : graph_node(g), internal::reservable_item_buffer<T>(),
+    explicit buffer_node( graph &g ) : graph_node(g), internal::reservable_item_buffer<T>(),
         forwarder_busy(false) {
         my_successors.set_owner(this);
         my_aggregator.initialize_handler(handler_type(this));
@@ -2450,7 +2450,7 @@ public:
     typedef typename sender<output_type>::successor_type successor_type;
 
     //! Constructor
-    queue_node( graph &g ) : base_type(g) {
+    explicit queue_node( graph &g ) : base_type(g) {
         tbb::internal::fgt_node( tbb::internal::FLOW_QUEUE_NODE, &(this->my_graph),
                                  static_cast<receiver<input_type> *>(this),
                                  static_cast<sender<output_type> *>(this) );
@@ -2553,7 +2553,7 @@ public:
     typedef typename sender<output_type>::successor_type successor_type;
 
     //! Constructor
-    priority_queue_node( graph &g ) : buffer_node<T, A>(g), mark(0) {
+    explicit priority_queue_node( graph &g ) : buffer_node<T, A>(g), mark(0) {
         tbb::internal::fgt_node( tbb::internal::FLOW_PRIORITY_QUEUE_NODE, &(this->my_graph),
                                  static_cast<receiver<input_type> *>(this),
                                  static_cast<sender<output_type> *>(this) );
@@ -3042,7 +3042,7 @@ private:
 public:
     typedef OutputTuple output_type;
     typedef typename unfolded_type::input_ports_type input_ports_type;
-    join_node(graph &g) : unfolded_type(g) {
+    explicit join_node(graph &g) : unfolded_type(g) {
         tbb::internal::fgt_multiinput_node<N>( tbb::internal::FLOW_JOIN_NODE_RESERVING, &this->my_graph,
                                             this->input_ports(), static_cast< sender< output_type > *>(this) );
     }
@@ -3067,7 +3067,7 @@ private:
 public:
     typedef OutputTuple output_type;
     typedef typename unfolded_type::input_ports_type input_ports_type;
-    join_node(graph &g) : unfolded_type(g) {
+    explicit join_node(graph &g) : unfolded_type(g) {
         tbb::internal::fgt_multiinput_node<N>( tbb::internal::FLOW_JOIN_NODE_QUEUEING, &this->my_graph,
                                             this->input_ports(), static_cast< sender< output_type > *>(this) );
     }

@@ -100,12 +100,14 @@ $(TWICE_LINKED_TESTS): LINK_FILES+=$(@:.$(TEST_EXT)=_secondary.$(OBJ))
 test_dynamic_link%.$(TEST_EXT): LINK_TBB.LIB =
 test_dynamic_link.$(TEST_EXT): LIBS += $(LIBDL)
 
-TEST_BIG_OBJ = test_opencl_node.$(TEST_EXT) test_join_node.$(TEST_EXT) test_atomic.$(TEST_EXT)
-
-ifeq (windows_windows,$(tbb_os)_$(target))
-ifneq (gcc,$(compiler))
-$(TEST_BIG_OBJ): override CXXFLAGS += /bigobj
-endif
+# Resolving issue with the number of sections that an object file can contain
+ifneq (,$(BIGOBJ_KEY))
+TEST_BIGOBJ = test_opencl_node.$(TEST_EXT)      \
+    test_join_node.$(TEST_EXT)                  \
+    test_atomic.$(TEST_EXT)                     \
+    test_concurrent_unordered_set.$(TEST_EXT)   \
+    test_concurrent_unordered_map.$(TEST_EXT)
+$(TEST_BIGOBJ): override CXXFLAGS += $(BIGOBJ_KEY)
 endif
 
 # TODO: remove repetition of .$(TEST_EXT) in the list bellow

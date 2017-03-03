@@ -764,7 +764,7 @@ class concurrent_queue_iterator: public concurrent_queue_iterator_base_v3<typena
 public:
 #endif
     //! Construct iterator pointing to head of queue.
-    concurrent_queue_iterator( const concurrent_queue_base_v3<Value>& queue ) :
+    explicit concurrent_queue_iterator( const concurrent_queue_base_v3<typename tbb_remove_cv<Value>::type>& queue ) :
         concurrent_queue_iterator_base_v3<typename tbb_remove_cv<Value>::type>(queue)
     {
     }
@@ -772,6 +772,8 @@ public:
 public:
     concurrent_queue_iterator() {}
 
+    /** If Value==Container::value_type, then this routine is the copy constructor.
+        If Value==const Container::value_type, then this routine is a conversion constructor. */
     concurrent_queue_iterator( const concurrent_queue_iterator<Container,typename Container::value_type>& other ) :
         concurrent_queue_iterator_base_v3<typename tbb_remove_cv<Value>::type>(other)
     {}
@@ -1023,7 +1025,7 @@ public:
 #endif
 
     //! Construct iterator pointing to head of queue.
-    concurrent_queue_iterator( const concurrent_queue_base_v3& queue ) :
+    explicit concurrent_queue_iterator( const concurrent_queue_base_v3& queue ) :
         concurrent_queue_iterator_base_v3(queue,__TBB_offsetof(concurrent_queue_base_v3::padded_page<Value>,last))
     {
     }

@@ -43,7 +43,7 @@ namespace tbb {
         combinable() { }
 
         template <typename finit>
-        combinable( finit _finit) : my_ets(_finit) { }
+        explicit combinable( finit _finit) : my_ets(_finit) { }
 
         //! destructor
         ~combinable() { }

@@ -2,6 +2,31 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 2017 Update 5
+TBB_INTERFACE_VERSION == 9105
+
+Changes (w.r.t. Intel TBB 2017 Update 4):
+
+- Added support for Microsoft* Visual Studio* 2017.
+- Added graph/matmult example to demonstrate support for compute offload
+    to Intel(R) Graphics Technology in the flow graph API.
+- The "compiler" build option now allows to specify a full path to the
+    compiler.
+
+Changes affecting backward compatibility:
+
+- Constructors for many classes, including graph nodes, concurrent
+    containers, thread-local containers, etc., are declared explicit and
+    cannot be used for implicit conversions anymore.
+
+Bugs fixed:
+
+- Added a workaround for bug 16657 in the GNU C Library (glibc)
+    affecting the debug version of tbb::mutex.
+- Fixed a crash in pool_identify() called for an object allocated in
+    another thread.
+
+------------------------------------------------------------------------
 Intel TBB 2017 Update 4
 TBB_INTERFACE_VERSION == 9104
 
@@ -2288,7 +2313,8 @@ Packaging:
     are provided separately on Intel(R) Premier.
 
 ------------------------------------------------------------------------
-Intel and Cilk are registered trademarks or trademarks of Intel Corporation or its
-subsidiaries in the United States and other countries.
+Intel, the Intel logo, Xeon, Intel Xeon Phi, and Cilk are registered
+trademarks or trademarks of Intel Corporation or its subsidiaries in
+the United States and other countries.
 
 * Other names and brands may be claimed as the property of others.

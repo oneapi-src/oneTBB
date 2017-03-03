@@ -745,7 +745,7 @@ public:
             x = x*a + 1;
             return r;
         }
-        FastRandom( unsigned seed ) {
+        explicit FastRandom( unsigned seed ) {
             x = seed;
             a = Primes[seed % (sizeof(Primes) / sizeof(Primes[0]))];
         }
@@ -787,7 +787,7 @@ public:
     class DummyBody {
         int m_numIters;
     public:
-        DummyBody( int iters ) : m_numIters( iters ) {}
+        explicit DummyBody( int iters ) : m_numIters( iters ) {}
         void operator()( int ) const {
             for ( volatile int i = 0; i < m_numIters; ++i ) {}
         }

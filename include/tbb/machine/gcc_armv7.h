@@ -83,7 +83,7 @@ static inline int32_t __TBB_machine_cmpswp4(volatile void *ptr, int32_t value, i
         "it         eq\n"
         "strexeq    %0, %5, [%3]\n"
         : "=&r" (res), "=&r" (oldval), "+Qo" (*(volatile int32_t*)ptr)
-        : "r" ((int32_t *)ptr), "Ir" (comparand), "r" (value)
+        : "r" ((volatile int32_t *)ptr), "Ir" (comparand), "r" (value)
         : "cc");
     } while (res);
 
@@ -116,7 +116,7 @@ static inline int64_t __TBB_machine_cmpswp8(volatile void *ptr, int64_t value, i
             "it         eq\n"
             "strexdeq   %0, %5, %H5, [%3]"
         : "=&r" (res), "=&r" (oldval), "+Qo" (*(volatile int64_t*)ptr)
-        : "r" ((int64_t *)ptr), "r" (comparand), "r" (value)
+        : "r" ((volatile int64_t *)ptr), "r" (comparand), "r" (value)
         : "cc");
     } while (res);
 
@@ -139,7 +139,7 @@ static inline int32_t __TBB_machine_fetchadd4(volatile void* ptr, int32_t addend
 "       cmp     %1, #0\n"
 "       bne     1b\n"
     : "=&r" (result), "=&r" (tmp), "+Qo" (*(volatile int32_t*)ptr), "=&r"(tmp2)
-    : "r" ((int32_t *)ptr), "Ir" (addend)
+    : "r" ((volatile int32_t *)ptr), "Ir" (addend)
     : "cc");
 
     __TBB_full_memory_fence();
@@ -162,7 +162,7 @@ static inline int64_t __TBB_machine_fetchadd8(volatile void *ptr, int64_t addend
 "       cmp     %1, #0\n"
 "       bne     1b"
     : "=&r" (result), "=&r" (tmp), "+Qo" (*(volatile int64_t*)ptr), "=&r"(tmp2)
-    : "r" ((int64_t *)ptr), "r" (addend)
+    : "r" ((volatile int64_t *)ptr), "r" (addend)
     : "cc");
 
 

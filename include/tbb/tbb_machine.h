@@ -923,7 +923,7 @@ inline __TBB_Flag __TBB_LockByte( __TBB_atomic_flag& flag ) {
 #define __TBB_UnlockByte(addr) __TBB_store_with_release((addr),0)
 #endif
 
-// lock primitives with TSX
+// lock primitives with Intel(R) Transactional Synchronization Extensions (Intel(R) TSX)
 #if ( __TBB_x86_32 || __TBB_x86_64 )  /* only on ia32/intel64 */
 inline void __TBB_TryLockByteElidedCancel() { __TBB_machine_try_lock_elided_cancel(); }
 

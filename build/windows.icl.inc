@@ -81,6 +81,7 @@ DYLIB_KEY = /DLL
 EXPORT_KEY = /DEF:
 NODEFAULTLIB_KEY = /Zl
 NOINTRINSIC_KEY = /Oi-
+BIGOBJ_KEY = /bigobj
 
 
 ifneq (,$(codecov))

@@ -18,7 +18,7 @@
 
 */
 
-// Header that includes TSX-specific test functions
+// Header that includes Intel(R) Transactional Synchronization Extensions (Intel(R) TSX) specific test functions
 
 #if __TBB_TSX_AVAILABLE
 #define __TBB_TSX_TESTING_ENABLED_FOR_THIS_COMPILER (__INTEL_COMPILER || __GNUC__ || _MSC_VER || __SUNPRO_CC)

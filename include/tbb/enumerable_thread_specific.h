@@ -859,17 +859,17 @@ namespace interface6 {
                   , typename = typename internal::enable_if<internal::is_callable_no_args<typename internal::strip<Finit>::type>::value>::type
 #endif
         >
-        enumerable_thread_specific( Finit finit ) : my_construct_callback(
+        explicit enumerable_thread_specific( Finit finit ) : my_construct_callback(
             internal::callback_leaf<T,internal::construct_by_finit<T,Finit> >::make( tbb::internal::move(finit) )
         ){}
 
         //! Constructor with exemplar. Each local instance of T is copy-constructed from the exemplar.
-        enumerable_thread_specific( const T& exemplar ) : my_construct_callback(
+        explicit enumerable_thread_specific( const T& exemplar ) : my_construct_callback(
             internal::callback_leaf<T,internal::construct_by_exemplar<T> >::make( exemplar )
         ){}
 
 #if __TBB_ETS_USE_CPP11
-        enumerable_thread_specific( T&& exemplar ) : my_construct_callback(
+        explicit enumerable_thread_specific( T&& exemplar ) : my_construct_callback(
             internal::callback_leaf<T,internal::construct_by_exemplar<T> >::make( std::move(exemplar) )
         ){}
 
@@ -1088,7 +1088,7 @@ namespace interface6 {
         flattened2d( const Container &c, typename Container::const_iterator b, typename Container::const_iterator e ) :
             my_container(const_cast<Container*>(&c)), my_begin(b), my_end(e) { }
 
-        flattened2d( const Container &c ) :
+        explicit flattened2d( const Container &c ) :
             my_container(const_cast<Container*>(&c)), my_begin(c.begin()), my_end(c.end()) { }
 
         iterator begin() { return iterator(*my_container) = my_begin; }

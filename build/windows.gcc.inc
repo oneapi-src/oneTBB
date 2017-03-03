@@ -65,6 +65,7 @@ DYLIB_KEY = -shared
 LIBDL =
 EXPORT_KEY = -Wl,--version-script,
 LIBS = -lpsapi
+BIGOBJ_KEY = -Wa,-mbig-obj
 
 #------------------------------------------------------------------------------
 # End of compiler-specific variables

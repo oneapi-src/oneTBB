@@ -70,7 +70,7 @@ Software - Supported Operating Systems
         Intel(R) Cluster Ready
         Red Hat* Enterprise Linux* 6, 7
         SuSE* Linux* Enterprise Server 11, 12
-        Ubuntu* 12.04 LTS, 13.10, 14.04 LTS, 15.04, 16.04 LTS
+        Ubuntu* 12.04 LTS, 14.04 LTS, 15.04, 16.04 LTS
         WindRiver* Linux 7
         Yocto 1.7, 1.9 (2.0), 2.1
     Systems with OS X* or macOS* operating systems
@@ -122,8 +122,9 @@ Library Issues
 ------------------------------------------------------------------------
 (C) 2017 Intel Corporation
 
-Intel, the Intel logo, Intel Core, Xeon, Xeon Phi and Pentium are
-trademarks of Intel Corporation in the U.S. and/or other countries.
+Intel, the Intel logo, Intel Core, Intel Atom, Xeon, Intel Xeon Phi and
+Pentium are trademarks of Intel Corporation in the U.S. and/or other
+countries.
 
 * Other names and brands may be claimed as the property of others.
 
