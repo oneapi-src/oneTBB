@@ -64,7 +64,8 @@ _tbb = Extension("_TBB", ["tbb.i"],
               ['-I' + os.path.join(tbb_root, 'include')] if not use_compiler_tbb else []),
         extra_compile_args=compile_flags + tbb_flag,
         extra_link_args=tbb_flag,
-        libraries   =['tbb'] if not use_compiler_tbb else [],
+        libraries   =(['tbb'] if not use_compiler_tbb else []) +
+                     (['irml'] if platform.system() == "Linux" else []),   # TODO: why do we need this?
         library_dirs=[os.path.join(tbb_root, 'lib', 'intel64', 'gcc4.4'),  # for Linux
                       os.path.join(tbb_root, 'lib'),                       # for MacOS
                       os.path.join(tbb_root, 'lib', 'intel64', 'vc_mt'),   # for Windows

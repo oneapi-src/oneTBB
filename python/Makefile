@@ -19,13 +19,17 @@
 all: release test
 
 clean:
+	$(MAKE) -C rml clean
 	python setup.py clean
 	-rm -rf build/ tbb_wrap.* _TBB.* *.pyc TBB.py*
 
-release: TBB.py
+release: rml_release TBB.py
 
 TBB.py: tbb.i tbb.src.py setup.py
 	python setup.py build_ext -f --inplace
+
+rml_release:
+	$(MAKE) -C rml -r release
 
 test: TBB.py
 	python TBB.py test

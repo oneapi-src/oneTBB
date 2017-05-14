@@ -70,6 +70,7 @@
 # The methods of a Pool object use all these concepts and expose
 # them to their caller in a very simple way.
 
+import os
 import sys
 import threading
 import traceback
@@ -640,9 +641,11 @@ class OrderedResultCollector(AbstractResultCollector):
                 else:
                     self._to_notify._set_value(lst)
 
+libirml = "libirml.so.1"
 
 def _test(arg=None):
     """Some tests"""
+    ctypes.CDLL(libirml)
     if arg == "-v":
         def say(*x):
             print(*x)
@@ -651,7 +654,7 @@ def _test(arg=None):
             pass
     say("Start Pool testing")
     import time
-    
+
     get_tid = lambda: threading.current_thread().ident
 
     def return42():
@@ -786,6 +789,92 @@ def _test(arg=None):
 
 # End of david's derived file content
 
+import multiprocessing.pool;
+import ctypes;
+
+ipc_disabled = False
+
+def tbb_process_pool_worker27(inqueue, outqueue, initializer=None, initargs=(),
+                            maxtasks=None):
+    from multiprocessing.pool import worker
+    worker(inqueue, outqueue, initializer, initargs, maxtasks)
+    if not ipc_disabled:
+        try:
+            librml = ctypes.CDLL(libirml)
+            librml.release_resources()
+        except:
+            print("Warning: Can not load libirml.so.1", file=sys.stderr)
+
+class TBBProcessPool27(multiprocessing.pool.Pool):
+    def _repopulate_pool(self):
+        """Bring the number of pool processes up to the specified number,
+        for use after reaping workers which have exited.
+        """
+        from multiprocessing.util import debug
+
+        for i in range(self._processes - len(self._pool)):
+            w = self.Process(target=tbb_process_pool_worker27,
+                             args=(self._inqueue, self._outqueue,
+                                   self._initializer,
+                                   self._initargs, self._maxtasksperchild)
+                            )
+            self._pool.append(w)
+            w.name = w.name.replace('Process', 'PoolWorker')
+            w.daemon = True
+            w.start()
+            debug('added worker')
+
+    def __del__(self):
+        self.close()
+        for p in self._pool:
+            p.join()
+
+    def __exit__(self):
+        self.close()
+        for p in self._pool:
+            p.join()
+
+def tbb_process_pool_worker35(inqueue, outqueue, initializer=None, initargs=(),
+                            maxtasks=None, wrap_exception=False):
+    from multiprocessing.pool import worker
+    worker(inqueue, outqueue, initializer, initargs, maxtasks, wrap_exception)
+    if not ipc_disabled:
+        try:
+            librml = ctypes.CDLL(libirml)
+            librml.release_resources()
+        except:
+            print("Warning: Can not load libirml.so.1", file=sys.stderr)
+
+class TBBProcessPool35(multiprocessing.pool.Pool):
+    def _repopulate_pool(self):
+        """Bring the number of pool processes up to the specified number,
+        for use after reaping workers which have exited.
+        """
+        from multiprocessing.util import debug
+
+        for i in range(self._processes - len(self._pool)):
+            w = self.Process(target=tbb_process_pool_worker35,
+                             args=(self._inqueue, self._outqueue,
+                                   self._initializer,
+                                   self._initargs, self._maxtasksperchild,
+                                   self._wrap_exception)
+                            )
+            self._pool.append(w)
+            w.name = w.name.replace('Process', 'PoolWorker')
+            w.daemon = True
+            w.start()
+            debug('added worker')
+
+    def __del__(self):
+        self.close()
+        for p in self._pool:
+            p.join()
+
+    def __exit__(self):
+        self.close()
+        for p in self._pool:
+            p.join()
+
 class Monkey:
     """
     Context manager which replaces standard multiprocessing.pool.ThreadPool
@@ -796,20 +885,35 @@ class Monkey:
             run_my_numpy_code()
 
     """
-    _items = {'ThreadPool': None}
+    _items   = {'ThreadPool'  : None,
+                'Pool' : None}
+    _modules = {'ThreadPool'  : None,
+                'Pool' : None}
 
     def __init__(self):
         pass
+
+    def _patch(self, class_name, module_name, object):
+        self._modules[class_name] = __import__(module_name, globals(),
+                                               locals(), [class_name])
+        if self._modules[class_name] == None:
+            return
+        oldattr = getattr(self._modules[class_name], class_name, None)
+        if oldattr == None:
+            self._modules[class_name] = None
+            return
+        self._items[class_name] = oldattr
+        setattr(self._modules[class_name], class_name, object)
 
     def __enter__(self):
         import os
         self.env = os.getenv('MKL_THREADING_LAYER')
         os.environ['MKL_THREADING_LAYER'] = 'TBB'
-        self.module = __import__('multiprocessing.pool', globals(), locals(), self._items.keys())
-        for name in self._items.keys():
-            oldattr = getattr(self.module, name)
-            self._items[name] = oldattr
-            setattr(self.module, name, Pool)
+        if sys.version_info.major == 2 and sys.version_info.minor >= 7:
+            self._patch("Pool", "multiprocessing.pool", TBBProcessPool27)
+        elif sys.version_info.major == 3 and sys.version_info.minor >= 5:
+            self._patch("Pool", "multiprocessing.pool", TBBProcessPool35)
+        self._patch("ThreadPool", "multiprocessing.pool", Pool)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -819,21 +923,68 @@ class Monkey:
         else:
             os.environ['MKL_THREADING_LAYER'] = self.env
         for name in self._items.keys():
-            setattr(self.module, name, self._items[name])
+            setattr(self._modules[name], name, self._items[name])
 
+def init_sem_name():
+    try:
+        librml = ctypes.CDLL(libirml)
+        librml.set_active_sem_name()
+        librml.set_stop_sem_name()
+    except Exception as e:
+        print("Warning: Can not initialize name of shared semaphores", file=sys.stderr)
+        print(e)
+
+import atexit
+
+def tbb_atexit():
+    if not ipc_disabled:
+        try:
+            librml = ctypes.CDLL(libirml)
+            librml.release_semaphores()
+        except:
+            print("Warning: Can not release shared semaphores", file=sys.stderr)
 
 def _main():
     # Run the module specified as the next command line argument
     # python -m TBB user_app.py
     del sys.argv[0]  # shift arguments
-    if len(sys.argv) < 1:
+
+    atexit.register(tbb_atexit)
+    init_sem_name()
+
+    done = False
+    while len(sys.argv) > 0:
+        if sys.argv[0] == "-d":
+            del sys.argv[0]
+            os.environ["IPC_DISABLE"] = "1"
+            global ipc_disabled
+            ipc_disabled = True
+        elif sys.argv[0] == "-m":
+            if len(sys.argv) > 1:
+                del sys.argv[0]
+                if '_' + sys.argv[0] in globals():
+                    globals()['_' + sys.argv[0]](*sys.argv[1])
+                else:
+                    import runpy
+                    with Monkey():
+                        runpy.run_module(sys.argv[0], run_name='__main__')
+                done = True
+                break
+            else:
+                print("Incorrent usage of -m option", file=sys.stderr)
+                break
+        else:
+            if '_' + sys.argv[0] in globals():
+                globals()['_' + sys.argv[0]](*sys.argv[1:])
+            else:
+                import runpy
+                with Monkey():
+                    runpy.run_path(sys.argv[0], run_name='__main__')
+            done = True
+            break
+
+    if not done:
         print("No file name specified for execution", file=sys.stderr)
-    elif '_' + sys.argv[0] in globals():
-        globals()['_' + sys.argv[0]](*sys.argv[1:])
-    else:
-        import runpy
-        with Monkey():
-            runpy.run_path(sys.argv[0], run_name='__main__')
 
 
 if __name__ == "__main__":

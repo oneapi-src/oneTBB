@@ -4,16 +4,22 @@
 </H2>
 
 <H2>Overview</H2>
-It is a preview Python* module which unlocks opportunities for additional performance in multi-threaded Python programs by enabling threading composability
+It is a preview Python* module which unlocks opportunities for additional performance in multi-threaded and multiprocess Python programs by enabling threading composability
 between two or more thread-enabled libraries like Numpy, Scipy, Sklearn, Dask, Joblib, and etc.
 <p></p>
-The biggest improvement can be achieved when a task pool like the ThreadPool from the Python standard library or libraries like Dask or Joblib (used in multi-threading mode)
+The biggest improvement can be achieved when a task pool like the ThreadPool or Pool from the Python standard library or libraries like Dask or Joblib (used either in multi-threading or multi-processing mode)
 execute tasks calling compute-intensive functions of Numpy/Scipy/Sklearn/PyDAAL which in turn are parallelized using Intel&reg; Math Kernel Library or/and Intel&reg; TBB.
 <p></p>
 The module implements Pool class with the standard interface using Intel&reg; TBB which can be used to replace Python's ThreadPool.
 Thanks to the monkey-patching technique implemented in class Monkey, no source code change is needed in order to enable threading composability in Python programs.
 <p></p>
 For more information and examples, please refer to <A HREF="http://software.intel.com/en-us/blogs/2016/04/04/unleash-parallel-performance-of-python-programs">online blog</A>.
+
+<H2>Directories</H2>
+<DL>
+<DT><A HREF="rml">rml</A>
+<DD>The folder contains needed sources to build the plugin with cross-process dynamic thread scheduler implementation.
+</DL>
 
 <H2>Files</H2>
 <DL>
@@ -28,7 +34,13 @@ For more information and examples, please refer to <A HREF="http://software.inte
 </DL>
 
 <A NAME=build><H2>Build and install</H2></A>
-Prior to building it, please set up the environment using corresponding tbbvars script, e.g. `source tbbvars.sh intel64`
+Prior to building it, please do the following first:
+<UL>
+<LI>Download this source package;</LI>
+<LI>Build Intel&reg; TBB (for more informantion, please refer to <A HREF="../index.html">documentation</A>);</LI>
+<LI>Set up the environment using generated tbbvars.sh script that can be found in $TBBROOT/build/*_release/ or $TBBROOT/build/*_debug/ folders.</LI>
+
+</UL>
 <DL>
 <DT><TT>make</TT>
 <DD>Default build and run. Equivalent to 'make release test'.
@@ -51,7 +63,9 @@ Please note, CXX=icl works on Windows only with Intel&reg; Distribution for Pyth
 <DT><TT>pydoc TBB</TT>
 <DD>Read built-in documentation for Python interfaces.
 <DT><TT>python -m TBB your_script.py</TT>
-<DD>Run your_script.py in context of `with TBB.Monkey():` when Intel TBB is enabled.
+<DD>Run your_script.py in context of `with TBB.Monkey():` when Intel&reg; TBB is enabled. By default both multi-threading and multi-processing cases will be covered.</DD>
+<DT><TT>python -m TBB -d your_script.py</TT>
+<DD>Run your_script.py in context of `with TBB.Monkey():` when Intel&reg; TBB is enabled but in multi-threading mode only.</DD>
 </DL>
 
 <H2>System Requirements</H2>
