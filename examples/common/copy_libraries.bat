@@ -34,11 +34,13 @@ if ("%TBBROOT%") == ("") set TBBROOT=%~d0%~p0..\..\
 
 :: Getting vs folders in case vc_mt binaries are not provided
 :: ordered from oldest to newest, so we end with newest available version
-if ("%VS90COMNTOOLS%")  NEQ ("") set vc_dir=vc9
-if ("%VS100COMNTOOLS%") NEQ ("") set vc_dir=vc10
 if ("%VS110COMNTOOLS%") NEQ ("") set vc_dir=vc11
 if ("%VS120COMNTOOLS%") NEQ ("") set vc_dir=vc12
 if ("%VS140COMNTOOLS%") NEQ ("") set vc_dir=vc14
+:: To use Microsoft* Visual Studio* 2017 IDE, make sure the variable VS150COMNTOOLS is set in your IDE instance.
+:: If it is not, try running Microsoft Visual Studio 2017 from Microsoft* Developer Command Prompt* for VS 2017.
+:: For details, see https://developercommunity.visualstudio.com/content/problem/730/vs154-env-var-vs150comntools-missing-from-build-sy.html
+if ("%VS150COMNTOOLS%") NEQ ("") set vc_dir=vc14
 
 :: Are we standalone/oss or inside compiler?
 if exist "%TBBROOT%\bin\%arch%\%vc_dir%\tbb%postfix%.dll" set interim_path=bin\%arch%

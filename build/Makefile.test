@@ -71,6 +71,7 @@ SCHEDULER_DIRECTLY_INCLUDED = test_task_leaks.$(TEST_EXT) \
 # Necessary to locate version_string.ver referenced from directly included tbb_misc.cpp
 INCLUDES += $(INCLUDE_KEY). $(INCLUDE_TEST_HEADERS)
 
+$(SCHEDULER_DIRECTLY_INCLUDED): CPLUS_FLAGS += $(DSE_KEY)
 $(SCHEDULER_DIRECTLY_INCLUDED): WARNING_KEY += $(WARNING_SUPPRESS)
 $(SCHEDULER_DIRECTLY_INCLUDED): LIBS += $(LIBDL)
 #tbb.lib must not be linked to scheduler white box tests in order to not violate ODR
@@ -106,7 +107,8 @@ TEST_BIGOBJ = test_opencl_node.$(TEST_EXT)      \
     test_join_node.$(TEST_EXT)                  \
     test_atomic.$(TEST_EXT)                     \
     test_concurrent_unordered_set.$(TEST_EXT)   \
-    test_concurrent_unordered_map.$(TEST_EXT)
+    test_concurrent_unordered_map.$(TEST_EXT)   \
+    test_join_node.$(TEST_EXT)
 $(TEST_BIGOBJ): override CXXFLAGS += $(BIGOBJ_KEY)
 endif
 

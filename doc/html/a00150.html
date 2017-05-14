@@ -33,18 +33,17 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00234.html">tbb</a></li><li class="navelem"><a class="el" href="a00150.html">task_scheduler_init</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00233.html">tbb</a></li><li class="navelem"><a class="el" href="a00150.html">task_scheduler_init</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
-<a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="#pub-static-attribs">Static Public Attributes</a> &#124;
-<a href="a00305.html">List of all members</a>  </div>
+<a href="a00304.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::task_scheduler_init Class Reference<div class="ingroups"><a class="el" href="a00258.html">Task Scheduling</a></div></div>  </div>
+<div class="title">tbb::task_scheduler_init Class Reference<div class="ingroups"><a class="el" href="a00257.html">Task Scheduling</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
 
@@ -66,19 +65,25 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a485028b867bffef5829209330e79e64c"><td class="memItemLeft" align="right" valign="top">void __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00150.html#a485028b867bffef5829209330e79e64c">initialize</a> (int number_of_threads=<a class="el" href="a00150.html#a945886f5ef48300a8ebff2d077c166b1">automatic</a>)</td></tr>
 <tr class="memdesc:a485028b867bffef5829209330e79e64c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Ensure that scheduler exists for this thread.  <a href="#a485028b867bffef5829209330e79e64c">More...</a><br/></td></tr>
 <tr class="separator:a485028b867bffef5829209330e79e64c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0f5294f74b123a646a1762c68d11e39a"><td class="memItemLeft" align="right" valign="top">void __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00150.html#a0f5294f74b123a646a1762c68d11e39a">initialize</a> (int number_of_threads, stack_size_type <a class="el" href="a00150.html#a8310e807e1199d0f23b3a57aeb4fde51">thread_stack_size</a>)</td></tr>
+<tr class="memitem:a0f5294f74b123a646a1762c68d11e39a"><td class="memItemLeft" align="right" valign="top">void __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00150.html#a0f5294f74b123a646a1762c68d11e39a">initialize</a> (int number_of_threads, stack_size_type thread_stack_size)</td></tr>
 <tr class="memdesc:a0f5294f74b123a646a1762c68d11e39a"><td class="mdescLeft">&#160;</td><td class="mdescRight">The overloaded method with stack size parameter.  <a href="#a0f5294f74b123a646a1762c68d11e39a">More...</a><br/></td></tr>
 <tr class="separator:a0f5294f74b123a646a1762c68d11e39a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a15d5dca7f79c5769bb96f674e4da0c04"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a15d5dca7f79c5769bb96f674e4da0c04"></a>
 void __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00150.html#a15d5dca7f79c5769bb96f674e4da0c04">terminate</a> ()</td></tr>
 <tr class="memdesc:a15d5dca7f79c5769bb96f674e4da0c04"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inverse of method initialize. <br/></td></tr>
 <tr class="separator:a15d5dca7f79c5769bb96f674e4da0c04"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa772e5a1bd18b171d335f41b58acd2b9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa772e5a1bd18b171d335f41b58acd2b9"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>if</b> (wait_workers_in_terminate) my_scheduler</td></tr>
-<tr class="separator:aa772e5a1bd18b171d335f41b58acd2b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7d748f4a1f99884f081919feb3bca275"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7d748f4a1f99884f081919feb3bca275"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>initialize</b> (number_of_threads, <a class="el" href="a00150.html#a8310e807e1199d0f23b3a57aeb4fde51">thread_stack_size</a>)</td></tr>
-<tr class="separator:a7d748f4a1f99884f081919feb3bca275"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae261cf6c54a3689ef4e2c079fe0f67d0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae261cf6c54a3689ef4e2c079fe0f67d0"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00150.html#ae261cf6c54a3689ef4e2c079fe0f67d0">blocking_terminate</a> ()</td></tr>
+<tr class="memdesc:ae261cf6c54a3689ef4e2c079fe0f67d0"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="a00150.html#a15d5dca7f79c5769bb96f674e4da0c04" title="Inverse of method initialize. ">terminate()</a> that waits for worker threads termination. Throws exception on error. <br/></td></tr>
+<tr class="separator:ae261cf6c54a3689ef4e2c079fe0f67d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2721ff874fb21f97b470d14a5ec151f3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2721ff874fb21f97b470d14a5ec151f3"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00150.html#a2721ff874fb21f97b470d14a5ec151f3">blocking_terminate</a> (const std::nothrow_t &amp;) __TBB_NOEXCEPT(true)</td></tr>
+<tr class="memdesc:a2721ff874fb21f97b470d14a5ec151f3"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="a00150.html#a15d5dca7f79c5769bb96f674e4da0c04" title="Inverse of method initialize. ">terminate()</a> that waits for worker threads termination. Returns false on error. <br/></td></tr>
+<tr class="separator:a2721ff874fb21f97b470d14a5ec151f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8b2657d9b7c39fede2d19507d0e94688"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8b2657d9b7c39fede2d19507d0e94688"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00150.html#a8b2657d9b7c39fede2d19507d0e94688">task_scheduler_init</a> (int number_of_threads=<a class="el" href="a00150.html#a945886f5ef48300a8ebff2d077c166b1">automatic</a>, stack_size_type thread_stack_size=0)</td></tr>
+<tr class="memdesc:a8b2657d9b7c39fede2d19507d0e94688"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shorthand for default constructor followed by call to initialize(number_of_threads). <br/></td></tr>
+<tr class="separator:a8b2657d9b7c39fede2d19507d0e94688"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a20b121334ec39c1d91bd4fe9a51892b0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a20b121334ec39c1d91bd4fe9a51892b0"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00150.html#a20b121334ec39c1d91bd4fe9a51892b0">~task_scheduler_init</a> ()</td></tr>
 <tr class="memdesc:a20b121334ec39c1d91bd4fe9a51892b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy scheduler for this thread if thread has no other live task_scheduler_inits. <br/></td></tr>
@@ -93,17 +98,6 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:aa0c0d46ec09bedc1ee876aa8aa87c3d1"><td class="memItemLeft" align="right" valign="top">static int __TBB_EXPORTED_FUNC&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00150.html#aa0c0d46ec09bedc1ee876aa8aa87c3d1">default_num_threads</a> ()</td></tr>
 <tr class="memdesc:aa0c0d46ec09bedc1ee876aa8aa87c3d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of threads TBB scheduler would create if initialized by default.  <a href="#aa0c0d46ec09bedc1ee876aa8aa87c3d1">More...</a><br/></td></tr>
 <tr class="separator:aa0c0d46ec09bedc1ee876aa8aa87c3d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
-Public Attributes</h2></td></tr>
-<tr class="memitem:a8310e807e1199d0f23b3a57aeb4fde51"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8310e807e1199d0f23b3a57aeb4fde51"></a>
-<a class="el" href="a00150.html">task_scheduler_init</a>(int <br class="typebreak"/>
-number_of_threads=<a class="el" href="a00150.html#a945886f5ef48300a8ebff2d077c166b1">automatic</a>, <br class="typebreak"/>
-stack_size_type <br class="typebreak"/>
-thread_stack_size=0, bool <br class="typebreak"/>
-wait_workers_in_terminate=false)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00150.html#a8310e807e1199d0f23b3a57aeb4fde51">thread_stack_size</a> = TBB_USE_CAPTURED_EXCEPTION ? propagation_mode_captured : propagation_mode_exact</td></tr>
-<tr class="memdesc:a8310e807e1199d0f23b3a57aeb4fde51"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shorthand for default constructor followed by call to initialize(number_of_threads). <br/></td></tr>
-<tr class="separator:a8310e807e1199d0f23b3a57aeb4fde51"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
@@ -168,6 +162,8 @@ static const int&#160;</td><td class="memItemRight" valign="bottom"><a class="el
 <p>Ensure that scheduler exists for this thread. </p>
 <p>A value of -1 lets TBB decide on the number of threads, which is usually maximal hardware concurrency for this process, that is the number of logical CPUs on the machine (possibly limited by the processor affinity mask of this process (Windows) or of this thread (Linux, FreeBSD). It is preferable option for production code because it helps to avoid nasty surprises when several TBB based components run side-by-side or in a nested fashion inside the same process.</p>
 <p>The number_of_threads is ignored if any other task_scheduler_inits currently exist. A thread may construct multiple task_scheduler_inits. Doing so does no harm because the underlying scheduler is reference counted. </p>
+
+<p>Referenced by <a class="el" href="a00150.html#a8b2657d9b7c39fede2d19507d0e94688">task_scheduler_init()</a>.</p>
 
 </div>
 </div>

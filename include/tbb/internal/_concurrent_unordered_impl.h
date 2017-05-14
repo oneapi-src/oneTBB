@@ -668,7 +668,6 @@ protected:
     typedef typename Traits::value_type value_type;
     typedef typename Traits::key_type key_type;
     typedef typename Traits::hash_compare hash_compare;
-    typedef typename Traits::value_compare value_compare;
     typedef typename Traits::allocator_type allocator_type;
     typedef typename hash_compare::hasher hasher;
     typedef typename hash_compare::key_equal key_equal;

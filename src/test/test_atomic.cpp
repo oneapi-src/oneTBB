@@ -97,7 +97,7 @@ template<typename T, LoadStoreExpression E> tbb::atomic<T> TestStruct<T, E>::gCo
 //! Test compare_and_swap template members of class atomic<T> for memory_semantics=M
 template<typename T,tbb::memory_semantics M>
 void TestCompareAndSwapWithExplicitOrdering( T i, T j, T k ) {
-    ASSERT( i!=k, "values must be distinct" );
+    ASSERT( i!=k && i!=j, "values must be distinct" );
     // Test compare_and_swap that should fail
     TestStruct<T> x(i);
     T old = x.counter.template compare_and_swap<M>( j, k );
@@ -112,7 +112,7 @@ void TestCompareAndSwapWithExplicitOrdering( T i, T j, T k ) {
 //! i, j, k must be different values
 template<typename T>
 void TestCompareAndSwap( T i, T j, T k ) {
-    ASSERT( i!=k, "values must be distinct" );
+    ASSERT( i!=k && i!=j, "values must be distinct" );
     // Test compare_and_swap that should fail
     TestStruct<T> x(i);
     T old = x.counter.compare_and_swap( j, k );
@@ -622,11 +622,12 @@ template<typename T>
 void TestAtomicInteger( const char* name ) {
     REMARK("testing atomic<%s> (size=%d)\n",name,sizeof(tbb::atomic<T>));
     TestAlignment<T>(name);
-    TestOperations<T>(0L,T(-T(1)),T(1));
+    TestOperations<T>(0L, T(-T(1)), T(1));
     for( int k=0; k<int(sizeof(long))*8-1; ++k ) {
-        TestOperations<T>(T(1L<<k),T(~(1L<<k)),T(1-(1L<<k)));
-        TestOperations<T>(T(-1L<<k),T(~(-1L<<k)),T(1-(-1L<<k)));
-        TestFetchAndAdd<T>(T(-1L<<k));
+        const long p = 1L<<k;
+        TestOperations<T>(T(p), T(~(p)), T(1-(p)));
+        TestOperations<T>(T(-(p)), T(~(-(p))), T(1-(-(p))));
+        TestFetchAndAdd<T>(T(-(p)));
     }
     TestParallel<T>( name );
 }
@@ -687,8 +688,8 @@ void TestAtomicPointerToTypeOfUnknownSize( const char* name ) {
 
 void TestAtomicBool() {
     REMARK("testing atomic<bool>\n");
-    TestOperations<bool>(true,true,false);
-    TestOperations<bool>(false,false,true);
+    TestOperations<bool>(false,true,true);
+    TestOperations<bool>(true,false,false);
     TestParallel<bool>( "bool" );
 }
 

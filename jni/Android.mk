@@ -34,9 +34,11 @@ endif
 
 export ANDROID_NDK_ROOT:=$(NDK_ROOT)
 export ndk_version:=$(lastword $(subst -, ,$(ANDROID_NDK_ROOT)))
+ndk_version:= $(firstword $(subst /, ,$(ndk_version)))
+ndk_version:= $(firstword $(subst \, ,$(ndk_version)))
 
 ifeq (clang,$(compiler))
-	ifneq (,$(findstring r13,$(ndk_version)))
+	ifneq (,$(findstring $(ndk_version),r13 r13b r14))
 	TBB_RTL :=llvm-libc++
 	else
 	TBB_RTL :=llvm-libc++/libcxx

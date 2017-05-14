@@ -45,8 +45,6 @@ protected:
     concurrent_unordered_set_traits() : my_hash_compare() {}
     concurrent_unordered_set_traits(const hash_compare& hc) : my_hash_compare(hc) {}
 
-    typedef hash_compare value_compare;
-
     static const Key& get_key(const value_type& value) {
         return value;
     }
@@ -59,8 +57,8 @@ class concurrent_unordered_set : public internal::concurrent_unordered_base< con
 {
     // Base type definitions
     typedef internal::hash_compare<Key, Hasher, Key_equality> hash_compare;
-    typedef internal::concurrent_unordered_base< concurrent_unordered_set_traits<Key, hash_compare, Allocator, false> > base_type;
-    typedef concurrent_unordered_set_traits<Key, internal::hash_compare<Key, Hasher, Key_equality>, Allocator, false> traits_type;
+    typedef concurrent_unordered_set_traits<Key, hash_compare, Allocator, false> traits_type;
+    typedef internal::concurrent_unordered_base< traits_type > base_type;
 #if __TBB_EXTRA_DEBUG
 public:
 #endif

@@ -367,7 +367,7 @@ There are four cases that are supported:
 */
 #ifdef _DEBUG
 // Check if _DEBUG is empty.
-#define __TBB_IS__DEBUG_EMPTY (__TBB_IS_MACRO_EMPTY(_DEBUG,)==__TBB_MACRO_EMPTY)
+#define __TBB_IS__DEBUG_EMPTY (__TBB_IS_MACRO_EMPTY(_DEBUG,IGNORED)==__TBB_MACRO_EMPTY)
 #if __TBB_IS__DEBUG_EMPTY
 #define TBB_USE_DEBUG 1
 #else

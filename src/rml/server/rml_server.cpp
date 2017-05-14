@@ -182,8 +182,8 @@ class omp_dispatch_type {
 public:
     omp_dispatch_type() {job=NULL;}
     void consume();
-    void produce( omp_client& c, job_type& j, void* cookie_, omp_client::size_type index_ PRODUCE_ARG( omp_connection_v2& s )) {
-        __TBB_ASSERT( &j, NULL );
+    void produce( omp_client& c, job_type* j, void* cookie_, omp_client::size_type index_ PRODUCE_ARG( omp_connection_v2& s )) {
+        __TBB_ASSERT( j, NULL );
         __TBB_ASSERT( !job, "job already set" );
         client = &c;
 #if TBB_USE_ASSERT
@@ -192,7 +192,7 @@ public:
         cookie = cookie_;
         index = index_;
         // Must be last
-        job = &j;
+        job = j;
     }
 };
 
@@ -260,7 +260,7 @@ public:
 
     //! Synchronization routine
     inline rml::job* wait_for_job() {
-        if( !my_job ) my_job = &my_job_automaton.wait_for_job();
+        if( !my_job ) my_job = my_job_automaton.wait_for_job();
         return my_job;
     }
 
@@ -541,11 +541,11 @@ struct thread_map_base {
         }
         /** Shortly after when a connection is established, it is possible for the server
             to grab a server_thread that has not yet created a job object for that server. */
-        rml::job& wait_for_job() const {
+        rml::job* wait_for_job() const {
             if( !my_job ) {
-                my_job = &my_automaton.wait_for_job();
+                my_job = my_automaton.wait_for_job();
             }
-            return *my_job;
+            return my_job;
         }
     private:
         server_thread* my_thread;
@@ -1343,11 +1343,11 @@ void thread_map::remove_client_ref() {
 template<typename Connection>
 void make_job( Connection& c, typename Connection::server_thread_type& t ) {
     if( t.my_job_automaton.try_acquire() ) {
-        rml::job& j = *t.my_client.create_one_job();
-        __TBB_ASSERT( &j!=NULL, "client:::create_one_job returned NULL" );
-        __TBB_ASSERT( (intptr_t(&j)&1)==0, "client::create_one_job returned misaligned job" );
+        rml::job* j = t.my_client.create_one_job();
+        __TBB_ASSERT( j!=NULL, "client:::create_one_job returned NULL" );
+        __TBB_ASSERT( (intptr_t(j)&1)==0, "client::create_one_job returned misaligned job" );
         t.my_job_automaton.set_and_release( j );
-        c.set_scratch_ptr( j, (void*) &t );
+        c.set_scratch_ptr( *j, (void*) &t );
     }
 }
 #endif /* RML_USE_WCRM */
@@ -1494,13 +1494,13 @@ tbb_connection_v2::~tbb_connection_v2() {
 template<typename Server, typename Client>
 void generic_connection<Server,Client>::make_job( server_thread& t, job_automaton& ja ) {
     if( ja.try_acquire() ) {
-        rml::job& j = *client().create_one_job();
-        __TBB_ASSERT( &j!=NULL, "client:::create_one_job returned NULL" );
-        __TBB_ASSERT( (intptr_t(&j)&1)==0, "client::create_one_job returned misaligned job" );
+        rml::job* j = client().create_one_job();
+        __TBB_ASSERT( j!=NULL, "client:::create_one_job returned NULL" );
+        __TBB_ASSERT( (intptr_t(j)&1)==0, "client::create_one_job returned misaligned job" );
         ja.set_and_release( j );
         __TBB_ASSERT( t.my_conn && t.my_ja && t.my_job==NULL, NULL );
-        t.my_job  = &j;
-        set_scratch_ptr( j, (void*) &t );
+        t.my_job  = j;
+        set_scratch_ptr( *j, (void*) &t );
     }
 }
 
@@ -1626,7 +1626,7 @@ activate_threads:
             thr->get_virtual_processor()->Activate( thr );
         job* j = thr->wait_for_job();
         array[i] = j;
-        thr->omp_data.produce( client(), *j, cookie, i PRODUCE_ARG(*this) );
+        thr->omp_data.produce( client(), j, cookie, i PRODUCE_ARG(*this) );
     }
 
     if( index==request_size )
@@ -1649,7 +1649,7 @@ activate_threads:
         thr->get_virtual_processor()->Activate( thr );
         job* j = thr->wait_for_job();
         array[index] = j;
-        thr->omp_data.produce( client(), *j, cookie, index PRODUCE_ARG(*this) );
+        thr->omp_data.produce( client(), j, cookie, index PRODUCE_ARG(*this) );
         ++index;
     }
 }
@@ -1794,8 +1794,8 @@ void omp_connection_v2::get_threads( size_type request_size, void* cookie, job* 
             server_thread& t = k->wait_for_thread();
             if( t.try_grab_for( ts_omp_busy ) ) {
                 // The preincrement instead of post-increment of index is deliberate.
-                job& j = k->wait_for_job();
-                array[index] = &j;
+                job* j = k->wait_for_job();
+                array[index] = j;
                 t.omp_dispatch.produce( client(), j, cookie, index PRODUCE_ARG(*this) );
                 if( ++index==request_size )
                     return;
@@ -1814,8 +1814,8 @@ void omp_connection_v2::get_threads( size_type request_size, void* cookie, job* 
             my_thread_map.bind_one_thread( *this, *k );
             server_thread& t = k->thread();
             if( t.try_grab_for( ts_omp_busy ) ) {
-                job& j = k->wait_for_job();
-                array[index] = &j;
+                job* j = k->wait_for_job();
+                array[index] = j;
                 // The preincrement instead of post-increment of index is deliberate.
                 t.omp_dispatch.produce( client(), j, cookie, index PRODUCE_ARG(*this) );
                 if( ++index==request_size )

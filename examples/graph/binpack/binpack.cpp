@@ -25,19 +25,20 @@
 #include <string>
 #include <iostream>
 #include <cmath>
+#include <vector>
 #include "tbb/atomic.h"
 #include "tbb/task_scheduler_init.h"
 #include "tbb/tick_count.h"
 #include "tbb/flow_graph.h"
 #include "../../common/utility/utility.h"
 
-using namespace std;
-using namespace tbb;
+using tbb::tick_count;
+using tbb::task_scheduler_init;
 using namespace tbb::flow;
 
-typedef size_t size_type;        // to represent non-zero indices, capacities, etc.
-typedef size_t value_type;       // the type of items we are attempting to pack into bins
-typedef vector<value_type> bin;  // we use a simple vector to represent a bin
+typedef size_t size_type;             // to represent non-zero indices, capacities, etc.
+typedef size_t value_type;            // the type of items we are attempting to pack into bins
+typedef std::vector<value_type> bin;  // we use a simple vector to represent a bin
 // Our bin packers will be function nodes in the graph that take value_type items and
 // return a dummy value.  They will also implicitly send packed bins to the bin_buffer
 // node, and unused items back to the value_pool node:
@@ -196,10 +197,10 @@ public:
         value_type sum=0;
         ++B;
         if (verbose)
-            cout << "[ ";
+            std::cout << "[ ";
         for (size_type i=0; i<b.size(); ++i) {
             if (verbose)
-                cout << b[i] << " ";
+                std::cout << b[i] << " ";
             sum+=b[i];
             ++item_count;
         }
@@ -208,14 +209,14 @@ public:
         avg += sum;
         running_count += sum;
         if (verbose)
-        cout << "]=" << sum << "; Done/Packed/Total cap: " << running_count << "/" << packed_sum << "/" << item_sum
-             << " items:" << item_count << "/" << packed_items << "/" << N << " B=" << B << endl;
+        std::cout << "]=" << sum << "; Done/Packed/Total cap: " << running_count << "/" << packed_sum << "/" << item_sum
+             << " items:" << item_count << "/" << packed_items << "/" << N << " B=" << B << std::endl;
         if (item_count == N) { // should be the last; print stats
             avg = avg/(double)B;
             if (!silent)
-                cout << "SUMMARY: #Bins used: " << B << "; Avg size: " << avg << "; Max size: " << my_max
+                std::cout << "SUMMARY: #Bins used: " << B << "; Avg size: " << avg << "; Max size: " << my_max
                      << "; Min size: " << my_min << "\n         Lower bound on optimal #bins: " << min_B
-                     << "; Start #bins: " << num_bin_packers << endl;
+                     << "; Start #bins: " << num_bin_packers << std::endl;
         }
         return continue_msg();  // need to return something
     }
@@ -265,7 +266,7 @@ int main(int argc, char *argv[]) {
             if (num_bin_packers == -1) num_bin_packers = p;
             active_bins = num_bin_packers;
             if (!silent)
-                cout << "binpack running with " << item_sum << " capacity over " << N << " items, optimality="
+                std::cout << "binpack running with " << item_sum << " capacity over " << N << " items, optimality="
                      << optimality << ", " << num_bin_packers << " bins of capacity=" << V << " on " << p
                      << " threads.\n";
             graph g;
@@ -293,7 +294,7 @@ int main(int argc, char *argv[]) {
         delete[] input_array;
         return 0;
     } catch(std::exception& e) {
-        cerr<<"error occurred. error text is :\"" <<e.what()<<"\"\n";
+        std::cerr<<"error occurred. error text is :\"" <<e.what()<<"\"\n";
         return 1;
     }
 }

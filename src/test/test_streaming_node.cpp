@@ -31,13 +31,13 @@
 #endif
 
 #include <iostream>
-#include <thread>
 
 #include "harness.h"
 #include "harness_assert.h"
 
 #include "tbb/concurrent_queue.h"
 #include "tbb/flow_graph.h"
+#include "tbb/tbb_thread.h"
 
 using namespace tbb::flow;
 
@@ -126,7 +126,7 @@ private:
 
     int doDeviceWork() {
         int result = 0;
-        for (int i = 0; i < arguments_list.size(); i++)
+        for (size_t i = 0; i < arguments_list.size(); i++)
             result += arguments_list[i];
         return result;
     }
@@ -702,7 +702,7 @@ private:
     tbb::concurrent_bounded_queue<my_task>   myQueue;
     int                                      myQueueSum;
     user_async_msg<int>                      myMsg;
-    std::thread                              myThread;
+    tbb::tbb_thread                          myThread;
 
     static user_async_activity*              s_Activity;
 };

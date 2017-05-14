@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>Memory Allocation</title>
+<title>Synchronization</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,345 +28,88 @@
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
-<a href="#func-members">Functions</a>  </div>
+<a href="#typedef-members">Typedefs</a>  </div>
   <div class="headertitle">
-<div class="title">Memory Allocation</div>  </div>
+<div class="title">Synchronization</div>  </div>
 </div><!--header-->
 <div class="contents">
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00014.html">tbb::aligned_space&lt; T, N &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Block of space aligned sufficiently to construct an array T with N elements.  <a href="a00014.html#details">More...</a><br/></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00015.html">tbb::atomic&lt; T &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Primary template for atomic.  <a href="a00015.html#details">More...</a><br/></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00027.html">tbb::cache_aligned_allocator&lt; T &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Meets "allocator" requirements of ISO C++ Standard, Section 20.1.5.  <a href="a00027.html#details">More...</a><br/></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00082.html">tbb::mutex</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wrapper around the platform's native lock.  <a href="a00082.html#details">More...</a><br/></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00028.html">tbb::cache_aligned_allocator&lt; void &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Analogous to std::allocator&lt;void&gt;, as defined in ISO C++ Standard, Section 20.4.1.  <a href="a00028.html#details">More...</a><br/></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00084.html">tbb::null_mutex</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A mutex which does nothing.  <a href="a00084.html#details">More...</a><br/></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00077.html">tbb::interface6::memory_pool_allocator&lt; T, P &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Meets "allocator" requirements of ISO C++ Standard, Section 20.1.5.  <a href="a00077.html#details">More...</a><br/></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00085.html">tbb::null_rw_mutex</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A rw mutex which does nothing.  <a href="a00085.html#details">More...</a><br/></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00078.html">tbb::interface6::memory_pool_allocator&lt; void, P &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Analogous to std::allocator&lt;void&gt;, as defined in ISO C++ Standard, Section 20.4.1.  <a href="a00078.html#details">More...</a><br/></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00106.html">tbb::queuing_mutex</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Queuing mutex with local-only spinning.  <a href="a00106.html#details">More...</a><br/></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00126.html">tbb::scalable_allocator&lt; T &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Meets "allocator" requirements of ISO C++ Standard, Section 20.1.5.  <a href="a00126.html#details">More...</a><br/></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00107.html">tbb::queuing_rw_mutex</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Queuing reader-writer mutex with local-only spinning.  <a href="a00107.html#details">More...</a><br/></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00127.html">tbb::scalable_allocator&lt; void &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Analogous to std::allocator&lt;void&gt;, as defined in ISO C++ Standard, Section 20.4.1.  <a href="a00127.html#details">More...</a><br/></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00108.html">tbb::interface5::reader_writer_lock</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writer-preference reader-writer lock with local-only spinning on readers.  <a href="a00108.html#details">More...</a><br/></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00153.html">tbb::tbb_allocator&lt; T &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Meets "allocator" requirements of ISO C++ Standard, Section 20.1.5.  <a href="a00153.html#details">More...</a><br/></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00121.html">tbb::recursive_mutex</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00154.html">tbb::tbb_allocator&lt; void &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Analogous to std::allocator&lt;void&gt;, as defined in ISO C++ Standard, Section 20.4.1.  <a href="a00154.html#details">More...</a><br/></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00140.html">tbb::spin_mutex</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A lock that occupies a single byte.  <a href="a00140.html#details">More...</a><br/></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00170.html">tbb::zero_allocator&lt; T, Allocator &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Meets "allocator" requirements of ISO C++ Standard, Section 20.1.5.  <a href="a00170.html#details">More...</a><br/></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00171.html">tbb::zero_allocator&lt; void, Allocator &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Analogous to std::allocator&lt;void&gt;, as defined in ISO C++ Standard, Section 20.4.1.  <a href="a00171.html#details">More...</a><br/></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fast, unfair, spinning reader-writer lock with backoff and writer-preference.  <a href="a00141.html#details">More...</a><br/></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
-Functions</h2></td></tr>
-<tr class="memitem:ga2a5bdc71439a70b20f2eadf6e1a489e1"><td class="memItemLeft" align="right" valign="top">void *__TBB_EXPORTED_FUNC&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00255.html#ga2a5bdc71439a70b20f2eadf6e1a489e1">scalable_malloc</a> (size_t size)</td></tr>
-<tr class="separator:ga2a5bdc71439a70b20f2eadf6e1a489e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga2ad3952b8c4dd7d293e02ae18fc37b84"><td class="memItemLeft" align="right" valign="top">void __TBB_EXPORTED_FUNC&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00255.html#ga2ad3952b8c4dd7d293e02ae18fc37b84">scalable_free</a> (void *ptr)</td></tr>
-<tr class="separator:ga2ad3952b8c4dd7d293e02ae18fc37b84"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga40d6e0bc19cdfa3005b2b935c62077a1"><td class="memItemLeft" align="right" valign="top">void *__TBB_EXPORTED_FUNC&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00255.html#ga40d6e0bc19cdfa3005b2b935c62077a1">scalable_realloc</a> (void *ptr, size_t size)</td></tr>
-<tr class="separator:ga40d6e0bc19cdfa3005b2b935c62077a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga3b4ff39555cd9e929fce2958325cd8ea"><td class="memItemLeft" align="right" valign="top">void *__TBB_EXPORTED_FUNC&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00255.html#ga3b4ff39555cd9e929fce2958325cd8ea">scalable_calloc</a> (size_t nobj, size_t size)</td></tr>
-<tr class="separator:ga3b4ff39555cd9e929fce2958325cd8ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gaf117b4994f719d539804da8dd115e28c"><td class="memItemLeft" align="right" valign="top">int __TBB_EXPORTED_FUNC&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00255.html#gaf117b4994f719d539804da8dd115e28c">scalable_posix_memalign</a> (void **memptr, size_t alignment, size_t size)</td></tr>
-<tr class="separator:gaf117b4994f719d539804da8dd115e28c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga903307de17bc1611515f8e6ae782a3d6"><td class="memItemLeft" align="right" valign="top">void *__TBB_EXPORTED_FUNC&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00255.html#ga903307de17bc1611515f8e6ae782a3d6">scalable_aligned_malloc</a> (size_t size, size_t alignment)</td></tr>
-<tr class="separator:ga903307de17bc1611515f8e6ae782a3d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gaa07391c54330b2e4dd1743ae9c9c4f2d"><td class="memItemLeft" align="right" valign="top">void *__TBB_EXPORTED_FUNC&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00255.html#gaa07391c54330b2e4dd1743ae9c9c4f2d">scalable_aligned_realloc</a> (void *ptr, size_t size, size_t alignment)</td></tr>
-<tr class="separator:gaa07391c54330b2e4dd1743ae9c9c4f2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gad9aa7595581a7bc5be193d7e034c8f61"><td class="memItemLeft" align="right" valign="top">void __TBB_EXPORTED_FUNC&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00255.html#gad9aa7595581a7bc5be193d7e034c8f61">scalable_aligned_free</a> (void *ptr)</td></tr>
-<tr class="separator:gad9aa7595581a7bc5be193d7e034c8f61"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga2b718206e50acb6392b86e4877d98213"><td class="memItemLeft" align="right" valign="top">size_t __TBB_EXPORTED_FUNC&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00255.html#ga2b718206e50acb6392b86e4877d98213">scalable_msize</a> (void *ptr)</td></tr>
-<tr class="separator:ga2b718206e50acb6392b86e4877d98213"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga7f5029970f72ebbffee896c46a23958e"><td class="memItemLeft" align="right" valign="top">int __TBB_EXPORTED_FUNC&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00255.html#ga7f5029970f72ebbffee896c46a23958e">scalable_allocation_mode</a> (int param, intptr_t value)</td></tr>
-<tr class="separator:ga7f5029970f72ebbffee896c46a23958e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gabe5acd876b4d89bf89787c4e779c2518"><td class="memItemLeft" align="right" valign="top">int __TBB_EXPORTED_FUNC&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00255.html#gabe5acd876b4d89bf89787c4e779c2518">scalable_allocation_command</a> (int cmd, void *param)</td></tr>
-<tr class="separator:gabe5acd876b4d89bf89787c4e779c2518"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
+Typedefs</h2></td></tr>
+<tr class="memitem:ga69722571e9e4406693c4a1379f0b47eb"><td class="memItemLeft" align="right" valign="top">typedef <br class="typebreak"/>
+interface7::internal::padded_mutex<br class="typebreak"/>
+&lt; interface7::internal::x86_eliding_mutex, <br class="typebreak"/>
+false &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00255.html#ga69722571e9e4406693c4a1379f0b47eb">tbb::speculative_spin_mutex</a></td></tr>
+<tr class="memdesc:ga69722571e9e4406693c4a1379f0b47eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">A cross-platform spin mutex with speculative lock acquisition.  <a href="#ga69722571e9e4406693c4a1379f0b47eb">More...</a><br/></td></tr>
+<tr class="separator:ga69722571e9e4406693c4a1379f0b47eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga97d0da95fd4f92af12de15e1a8b5c780"><td class="memItemLeft" align="right" valign="top">typedef <br class="typebreak"/>
+interface7::internal::padded_mutex<br class="typebreak"/>
+&lt; tbb::interface8::internal::x86_rtm_rw_mutex, <br class="typebreak"/>
+true &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00255.html#ga97d0da95fd4f92af12de15e1a8b5c780">tbb::interface8::speculative_spin_rw_mutex</a></td></tr>
+<tr class="memdesc:ga97d0da95fd4f92af12de15e1a8b5c780"><td class="mdescLeft">&#160;</td><td class="mdescRight">A cross-platform spin reader/writer mutex with speculative lock acquisition.  <a href="#ga97d0da95fd4f92af12de15e1a8b5c780">More...</a><br/></td></tr>
+<tr class="separator:ga97d0da95fd4f92af12de15e1a8b5c780"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<h2 class="groupheader">Function Documentation</h2>
-<a class="anchor" id="gad9aa7595581a7bc5be193d7e034c8f61"></a>
+<h2 class="groupheader">Typedef Documentation</h2>
+<a class="anchor" id="ga69722571e9e4406693c4a1379f0b47eb"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void __TBB_EXPORTED_FUNC scalable_aligned_free </td>
-          <td>(</td>
-          <td class="paramtype">void *&#160;</td>
-          <td class="paramname"><em>ptr</em>)</td><td></td>
-          <td></td>
+          <td class="memname">typedef interface7::internal::padded_mutex&lt; spin_mutex, false &gt; <a class="el" href="a00255.html#ga69722571e9e4406693c4a1379f0b47eb">tbb::speculative_spin_mutex</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>The "_aligned_free" analogue. </p>
+
+<p>A cross-platform spin mutex with speculative lock acquisition. </p>
+<p>On platforms with proper HW support, this lock may speculatively execute its critical sections, using HW mechanisms to detect real data races and ensure atomicity of the critical sections. In particular, it uses Intel(R) Transactional Synchronization Extensions (Intel(R) TSX). Without such HW support, it behaves like a <a class="el" href="a00140.html" title="A lock that occupies a single byte. ">spin_mutex</a>. It should be used for locking short critical sections where the lock is contended but the data it protects are not. If zero-initialized, the mutex is considered unheld. </p>
 
 </div>
 </div>
-<a class="anchor" id="ga903307de17bc1611515f8e6ae782a3d6"></a>
+<a class="anchor" id="ga97d0da95fd4f92af12de15e1a8b5c780"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void* __TBB_EXPORTED_FUNC scalable_aligned_malloc </td>
-          <td>(</td>
-          <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>size</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>alignment</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
+          <td class="memname">typedef interface7::internal::padded_mutex&lt; <a class="el" href="a00141.html">tbb::spin_rw_mutex</a>, true &gt; <a class="el" href="a00255.html#ga97d0da95fd4f92af12de15e1a8b5c780">tbb::interface8::speculative_spin_rw_mutex</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>The "_aligned_malloc" analogue. </p>
 
-</div>
-</div>
-<a class="anchor" id="gaa07391c54330b2e4dd1743ae9c9c4f2d"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void* __TBB_EXPORTED_FUNC scalable_aligned_realloc </td>
-          <td>(</td>
-          <td class="paramtype">void *&#160;</td>
-          <td class="paramname"><em>ptr</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>size</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>alignment</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>The "_aligned_realloc" analogue. </p>
-
-</div>
-</div>
-<a class="anchor" id="gabe5acd876b4d89bf89787c4e779c2518"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int __TBB_EXPORTED_FUNC scalable_allocation_command </td>
-          <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>cmd</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">void *&#160;</td>
-          <td class="paramname"><em>param</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Call TBB allocator-specific commands. </p>
-
-</div>
-</div>
-<a class="anchor" id="ga7f5029970f72ebbffee896c46a23958e"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int __TBB_EXPORTED_FUNC scalable_allocation_mode </td>
-          <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>param</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">intptr_t&#160;</td>
-          <td class="paramname"><em>value</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Set TBB allocator-specific allocation modes. </p>
-
-</div>
-</div>
-<a class="anchor" id="ga3b4ff39555cd9e929fce2958325cd8ea"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void* __TBB_EXPORTED_FUNC scalable_calloc </td>
-          <td>(</td>
-          <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>nobj</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>size</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>The "calloc" analogue complementing scalable_malloc. </p>
-
-</div>
-</div>
-<a class="anchor" id="ga2ad3952b8c4dd7d293e02ae18fc37b84"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void __TBB_EXPORTED_FUNC scalable_free </td>
-          <td>(</td>
-          <td class="paramtype">void *&#160;</td>
-          <td class="paramname"><em>ptr</em>)</td><td></td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>The "free" analogue to discard a previously allocated piece of memory. </p>
-
-<p>Referenced by <a class="el" href="a00126.html#a0632b19f25e5d5f86f18b3101925f488">tbb::scalable_allocator&lt; T &gt;::deallocate()</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="ga2a5bdc71439a70b20f2eadf6e1a489e1"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void* __TBB_EXPORTED_FUNC scalable_malloc </td>
-          <td>(</td>
-          <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>size</em>)</td><td></td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>The "malloc" analogue to allocate block of memory of size bytes. </p>
-
-<p>Referenced by <a class="el" href="a00126.html#acf24945c12dc0586dfb1f8638daf7838">tbb::scalable_allocator&lt; T &gt;::allocate()</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="ga2b718206e50acb6392b86e4877d98213"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">size_t __TBB_EXPORTED_FUNC scalable_msize </td>
-          <td>(</td>
-          <td class="paramtype">void *&#160;</td>
-          <td class="paramname"><em>ptr</em>)</td><td></td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>The analogue of <em>msize/malloc_size/malloc_usable_size. Returns the usable size of a memory block previously allocated by scalable</em>*, or 0 (zero) if ptr does not point to such a block. </p>
-
-</div>
-</div>
-<a class="anchor" id="gaf117b4994f719d539804da8dd115e28c"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int __TBB_EXPORTED_FUNC scalable_posix_memalign </td>
-          <td>(</td>
-          <td class="paramtype">void **&#160;</td>
-          <td class="paramname"><em>memptr</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>alignment</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>size</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>The "posix_memalign" analogue. </p>
-
-</div>
-</div>
-<a class="anchor" id="ga40d6e0bc19cdfa3005b2b935c62077a1"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void* __TBB_EXPORTED_FUNC scalable_realloc </td>
-          <td>(</td>
-          <td class="paramtype">void *&#160;</td>
-          <td class="paramname"><em>ptr</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>size</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>The "realloc" analogue complementing scalable_malloc. </p>
+<p>A cross-platform spin reader/writer mutex with speculative lock acquisition. </p>
+<p>On platforms with proper HW support, this lock may speculatively execute its critical sections, using HW mechanisms to detect real data races and ensure atomicity of the critical sections. In particular, it uses Intel(R) Transactional Synchronization Extensions (Intel(R) TSX). Without such HW support, it behaves like a spin_rw_mutex. It should be used for locking short critical sections where the lock is contended but the data it protects are not. </p>
 
 </div>
 </div>

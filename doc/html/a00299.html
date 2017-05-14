@@ -33,24 +33,34 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00234.html">tbb</a></li><li class="navelem"><a class="el" href="a00140.html">spin_mutex</a></li><li class="navelem"><a class="el" href="a00128.html">scoped_lock</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00233.html">tbb</a></li><li class="navelem"><a class="el" href="a00141.html">spin_rw_mutex_v3</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="headertitle">
-<div class="title">tbb::spin_mutex::scoped_lock Member List</div>  </div>
+<div class="title">tbb::spin_rw_mutex_v3 Member List</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>This is the complete list of members for <a class="el" href="a00128.html">tbb::spin_mutex::scoped_lock</a>, including all inherited members.</p>
+<p>This is the complete list of members for <a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a>, including all inherited members.</p>
 <table class="directory">
-  <tr class="even"><td class="entry"><a class="el" href="a00128.html#a7c702117f08ae82d034a98b3d5510ffc">acquire</a>(spin_mutex &amp;m)</td><td class="entry"><a class="el" href="a00128.html">tbb::spin_mutex::scoped_lock</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr><td class="entry"><a class="el" href="a00128.html#a7e801b0c28fd8395fec400b96acc5c34">release</a>()</td><td class="entry"><a class="el" href="a00128.html">tbb::spin_mutex::scoped_lock</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="a00128.html#a4287be975cf2448c95f068b065c45107">scoped_lock</a>()</td><td class="entry"><a class="el" href="a00128.html">tbb::spin_mutex::scoped_lock</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr><td class="entry"><a class="el" href="a00128.html#a73f7381a9a112b9f5a856b1face525fb">scoped_lock</a>(spin_mutex &amp;m)</td><td class="entry"><a class="el" href="a00128.html">tbb::spin_mutex::scoped_lock</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>spin_mutex</b> (defined in <a class="el" href="a00128.html">tbb::spin_mutex::scoped_lock</a>)</td><td class="entry"><a class="el" href="a00128.html">tbb::spin_mutex::scoped_lock</a></td><td class="entry"><span class="mlabel">friend</span></td></tr>
-  <tr><td class="entry"><a class="el" href="a00128.html#a76acbd67c74906f6ea33a1de6fd443ce">try_acquire</a>(spin_mutex &amp;m)</td><td class="entry"><a class="el" href="a00128.html">tbb::spin_mutex::scoped_lock</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="a00128.html#a9940d6e494466d9c53846ed347d79d83">~scoped_lock</a>()</td><td class="entry"><a class="el" href="a00128.html">tbb::spin_mutex::scoped_lock</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>BUSY</b> (defined in <a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a>)</td><td class="entry"><a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a></td><td class="entry"><span class="mlabel">protected</span><span class="mlabel">static</span></td></tr>
+  <tr bgcolor="#f0f0f0"><td class="entry"><b>is_fair_mutex</b> (defined in <a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a>)</td><td class="entry"><a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a></td><td class="entry"><span class="mlabel">static</span></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>is_recursive_mutex</b> (defined in <a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a>)</td><td class="entry"><a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a></td><td class="entry"><span class="mlabel">static</span></td></tr>
+  <tr bgcolor="#f0f0f0"><td class="entry"><b>is_rw_mutex</b> (defined in <a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a>)</td><td class="entry"><a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a></td><td class="entry"><span class="mlabel">static</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="a00141.html#a51e207646300a4c242bb4aaa4e04e9b8">lock</a>()</td><td class="entry"><a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr><td class="entry"><a class="el" href="a00141.html#aa0e3bb644e9021d0f80ee36b03f228e4">lock_read</a>()</td><td class="entry"><a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>ONE_READER</b> (defined in <a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a>)</td><td class="entry"><a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a></td><td class="entry"><span class="mlabel">protected</span><span class="mlabel">static</span></td></tr>
+  <tr bgcolor="#f0f0f0"><td class="entry"><b>READERS</b> (defined in <a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a>)</td><td class="entry"><a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a></td><td class="entry"><span class="mlabel">protected</span><span class="mlabel">static</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="a00141.html#ad30fc1ffa0a2b8134e177e02c5821d7f">spin_rw_mutex_v3</a>()</td><td class="entry"><a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr><td class="entry"><a class="el" href="a00141.html#aa28625051072472ccd8a2b19405d6fb3">state</a></td><td class="entry"><a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>state_t</b> typedef (defined in <a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a>)</td><td class="entry"><a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
+  <tr><td class="entry"><a class="el" href="a00141.html#ab6ec20b1ec43a49c8c2908984e35b5e8">try_lock</a>()</td><td class="entry"><a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="a00141.html#ac932f65b0b66320688e7957ce9c3e2c1">try_lock_read</a>()</td><td class="entry"><a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr><td class="entry"><a class="el" href="a00141.html#ab04321ed2cdf12ac5825c54591028fc0">unlock</a>()</td><td class="entry"><a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>WRITER</b> (defined in <a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a>)</td><td class="entry"><a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a></td><td class="entry"><span class="mlabel">protected</span><span class="mlabel">static</span></td></tr>
+  <tr bgcolor="#f0f0f0"><td class="entry"><b>WRITER_PENDING</b> (defined in <a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a>)</td><td class="entry"><a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a></td><td class="entry"><span class="mlabel">protected</span><span class="mlabel">static</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="a00141.html#acc7cf2e4b14d3a2a591a3552d74ba99d">~spin_rw_mutex_v3</a>()</td><td class="entry"><a class="el" href="a00141.html">tbb::spin_rw_mutex_v3</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
 </table></div><!-- contents -->
 <hr>
 <p></p>

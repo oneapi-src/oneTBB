@@ -41,7 +41,7 @@ else
 endif
 
 ifneq (,$(codecov))
-    CPLUS_FLAGS += -prof-genx
+    CPLUS_FLAGS += -prof-gen=srcpos
 endif
 
 ifneq (,$(shell icc -dumpversion | egrep  "^1[6-9]\."))

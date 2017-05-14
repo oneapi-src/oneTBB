@@ -30,8 +30,6 @@ ifeq (64,$(findstring 64,$(arch)))
 endif
 
 ifdef ndk_version
-    ndk_version:= $(firstword $(subst /, ,$(ndk_version)))
-    ndk_version:= $(firstword $(subst \, ,$(ndk_version)))
     $(warning "NDK version $(ndk_version)")
 else
     $(warning "NDK version not set in environment, using \'unknown\' instead.")

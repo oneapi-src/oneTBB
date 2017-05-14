@@ -42,7 +42,7 @@ class MyClient: public ClientBase<tbb::internal::rml::tbb_client> {
     tbb::atomic<int> counter;
     tbb::atomic<int> gate;
     void process( job& j ) __TBB_override {
-        do_process(j);
+        do_process(&j);
         //wait until the gate is open.
         while( gate==0 )
             Harness::Sleep(1);
@@ -128,7 +128,7 @@ void FireUpJobs( MyServer& server, MyClient& client, int n_thread, int n_extra, 
                 for( int k=0; k<n_thread; ++k ) 
                     if( client.job_array[k].processing_count!=0 ) 
                         ++n;
-                    if( n>=expected ) break;
+                if( n>=expected ) break;
                 server.yield();
             }
 #if RML_USE_WCRM

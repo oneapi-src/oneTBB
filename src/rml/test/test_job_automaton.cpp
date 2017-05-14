@@ -69,8 +69,8 @@ void State::exercise( bool is_owner ) {
         Cover(0);
         if( ja.try_acquire() ) {
             Cover(1);
-            ++job_created; 
-            ja.set_and_release(job);
+            ++job_created;
+            ja.set_and_release(&job);
             Cover(2);
             if( ja.try_acquire() ) {
                 Cover(3);
@@ -92,7 +92,7 @@ void State::exercise( bool is_owner ) {
     } else {
         // Using extra bit of DelayMask for choosing whether to run wait_for_job or not.
         if( DelayMask&1<<N ) {
-            rml::job* j= &ja.wait_for_job(); 
+            rml::job* j= ja.wait_for_job();
             if( j!=&job ) REPORT("%p\n",j);
             ASSERT( j==&job, NULL );
             job_received = true;

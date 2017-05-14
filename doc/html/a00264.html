@@ -33,21 +33,32 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00234.html">tbb</a></li><li class="navelem"><a class="el" href="a00016.html">atomic< void * ></a></li>  </ul>
+<li class="navelem"><a class="el" href="a00233.html">tbb</a></li><li class="navelem"><a class="el" href="a00022.html">blocked_range</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="headertitle">
-<div class="title">tbb::atomic&lt; void * &gt; Member List</div>  </div>
+<div class="title">tbb::blocked_range&lt; Value &gt; Member List</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>This is the complete list of members for <a class="el" href="a00016.html">tbb::atomic&lt; void * &gt;</a>, including all inherited members.</p>
+<p>This is the complete list of members for <a class="el" href="a00022.html">tbb::blocked_range&lt; Value &gt;</a>, including all inherited members.</p>
 <table class="directory">
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>atomic</b>()=default (defined in <a class="el" href="a00016.html">tbb::atomic&lt; void * &gt;</a>)</td><td class="entry"><a class="el" href="a00016.html">tbb::atomic&lt; void * &gt;</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0"><td class="entry"><b>atomic</b>(void *arg) (defined in <a class="el" href="a00016.html">tbb::atomic&lt; void * &gt;</a>)</td><td class="entry"><a class="el" href="a00016.html">tbb::atomic&lt; void * &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>operator=</b>(void *rhs) (defined in <a class="el" href="a00016.html">tbb::atomic&lt; void * &gt;</a>)</td><td class="entry"><a class="el" href="a00016.html">tbb::atomic&lt; void * &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr bgcolor="#f0f0f0"><td class="entry"><b>operator=</b>(const atomic&lt; void * &gt; &amp;rhs) (defined in <a class="el" href="a00016.html">tbb::atomic&lt; void * &gt;</a>)</td><td class="entry"><a class="el" href="a00016.html">tbb::atomic&lt; void * &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="a00022.html#ae225fa10454b0fa33533dfb56f5060a2">begin</a>() const </td><td class="entry"><a class="el" href="a00022.html">tbb::blocked_range&lt; Value &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr><td class="entry"><a class="el" href="a00022.html#aad176ab2cbd0bd73c3c2065761af3ccc">blocked_range</a>()</td><td class="entry"><a class="el" href="a00022.html">tbb::blocked_range&lt; Value &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="a00022.html#a49a97576004711b7159170fcaf488e4e">blocked_range</a>(Value begin_, Value end_, size_type grainsize_=1)</td><td class="entry"><a class="el" href="a00022.html">tbb::blocked_range&lt; Value &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr><td class="entry"><a class="el" href="a00022.html#a75cae12286f4d5492970ea630a9783b9">blocked_range</a>(blocked_range &amp;r, split)</td><td class="entry"><a class="el" href="a00022.html">tbb::blocked_range&lt; Value &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="a00022.html#a1f53fbb10b8b04a515f382704b00ed14">blocked_range</a>(blocked_range &amp;r, proportional_split &amp;proportion)</td><td class="entry"><a class="el" href="a00022.html">tbb::blocked_range&lt; Value &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr bgcolor="#f0f0f0"><td class="entry"><b>blocked_range2d</b> (defined in <a class="el" href="a00022.html">tbb::blocked_range&lt; Value &gt;</a>)</td><td class="entry"><a class="el" href="a00022.html">tbb::blocked_range&lt; Value &gt;</a></td><td class="entry"><span class="mlabel">friend</span></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>blocked_range3d</b> (defined in <a class="el" href="a00022.html">tbb::blocked_range&lt; Value &gt;</a>)</td><td class="entry"><a class="el" href="a00022.html">tbb::blocked_range&lt; Value &gt;</a></td><td class="entry"><span class="mlabel">friend</span></td></tr>
+  <tr><td class="entry"><a class="el" href="a00022.html#ad56ca70af46acf8870b4970d8a809791">const_iterator</a> typedef</td><td class="entry"><a class="el" href="a00022.html">tbb::blocked_range&lt; Value &gt;</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="a00022.html#a59dec03416b3fefbf69600f798177710">empty</a>() const </td><td class="entry"><a class="el" href="a00022.html">tbb::blocked_range&lt; Value &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr><td class="entry"><a class="el" href="a00022.html#a99f829599d3e51b181a30b4cd57b06c6">end</a>() const </td><td class="entry"><a class="el" href="a00022.html">tbb::blocked_range&lt; Value &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="a00022.html#ab408f3cf90c85fa9203df5641a2f9bb1">grainsize</a>() const </td><td class="entry"><a class="el" href="a00022.html">tbb::blocked_range&lt; Value &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr><td class="entry"><a class="el" href="a00022.html#ad90ad1db0d4d9a301ef1c9e17712e8a0">is_divisible</a>() const </td><td class="entry"><a class="el" href="a00022.html">tbb::blocked_range&lt; Value &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="a00022.html#ae2b0210e2468092b408123adeb54b01c">is_splittable_in_proportion</a></td><td class="entry"><a class="el" href="a00022.html">tbb::blocked_range&lt; Value &gt;</a></td><td class="entry"><span class="mlabel">static</span></td></tr>
+  <tr><td class="entry"><a class="el" href="a00022.html#a347ef8caa40edca3b7f475f182281140">size</a>() const </td><td class="entry"><a class="el" href="a00022.html">tbb::blocked_range&lt; Value &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="a00022.html#a89b300cecd9d617e4ee801c786756e55">size_type</a> typedef</td><td class="entry"><a class="el" href="a00022.html">tbb::blocked_range&lt; Value &gt;</a></td><td class="entry"></td></tr>
 </table></div><!-- contents -->
 <hr>
 <p></p>

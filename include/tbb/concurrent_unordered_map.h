@@ -45,22 +45,6 @@ protected:
     concurrent_unordered_map_traits() : my_hash_compare() {}
     concurrent_unordered_map_traits(const hash_compare& hc) : my_hash_compare(hc) {}
 
-    class value_compare : public std::binary_function<value_type, value_type, bool>
-    {
-        friend class concurrent_unordered_map_traits<Key, T, Hash_compare, Allocator, Allow_multimapping>;
-
-    public:
-        bool operator()(const value_type& left, const value_type& right) const
-        {
-            return (my_hash_compare(left.first, right.first));
-        }
-
-        value_compare(const hash_compare& comparator) : my_hash_compare(comparator) {}
-
-    protected:
-        hash_compare my_hash_compare;    // the comparator predicate for keys
-    };
-
     template<class Type1, class Type2>
     static const Key& get_key(const std::pair<Type1, Type2>& value) {
         return (value.first);

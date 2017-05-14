@@ -216,14 +216,14 @@ inline bool is_alive( uintptr_t v ) { return v != venom; }
 
 /** Logically, this method should be a member of class task.
     But we do not want to publish it, so it is here instead. */
-inline void assert_task_valid( const task& task ) {
-    __TBB_ASSERT( &task!=NULL, NULL );
+inline void assert_task_valid( const task* task ) {
+    __TBB_ASSERT( task!=NULL, NULL );
     __TBB_ASSERT( !is_poisoned(&task), NULL );
-    __TBB_ASSERT( (uintptr_t)&task % task_alignment == 0, "misaligned task" );
+    __TBB_ASSERT( (uintptr_t)task % task_alignment == 0, "misaligned task" );
 #if __TBB_RECYCLE_TO_ENQUEUE
-    __TBB_ASSERT( (unsigned)task.state()<=(unsigned)task::to_enqueue, "corrupt task (invalid state)" );
+    __TBB_ASSERT( (unsigned)task->state()<=(unsigned)task::to_enqueue, "corrupt task (invalid state)" );
 #else
-    __TBB_ASSERT( (unsigned)task.state()<=(unsigned)task::recycle, "corrupt task (invalid state)" );
+    __TBB_ASSERT( (unsigned)task->state()<=(unsigned)task::recycle, "corrupt task (invalid state)" );
 #endif
 }
 
@@ -233,7 +233,7 @@ inline void assert_task_valid( const task& task ) {
     the variable used as its argument may be undefined in release builds. **/
 #define poison_value(g) ((void)0)
 
-inline void assert_task_valid( const task& ) {}
+inline void assert_task_valid( const task* ) {}
 
 #endif /* !TBB_USE_ASSERT */
 

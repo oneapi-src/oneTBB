@@ -87,8 +87,8 @@ public:
 
     //! Transition 1-->ptr
     /** Should only be called by owner. */
-    void set_and_release( rml::job& job ) {
-        intptr_t value = reinterpret_cast<intptr_t>(&job);
+    void set_and_release( rml::job* job ) {
+        intptr_t value = reinterpret_cast<intptr_t>(job);
         __TBB_ASSERT( (value&1)==0, "job misaligned" );
         __TBB_ASSERT( value!=0, "null job" );
         __TBB_ASSERT( my_job==1, "already set, or not marked busy?" );
@@ -122,7 +122,7 @@ public:
     }
 
     /** Called by non-owner to wait for transition to ptr. */
-    rml::job& wait_for_job() const {
+    rml::job* wait_for_job() const {
         intptr_t snapshot;
         for(;;) {
             snapshot = my_job;
@@ -130,7 +130,7 @@ public:
             __TBB_Yield();
         }
         __TBB_ASSERT( snapshot!=-1, "wait on plugged job_automaton" );
-        return *reinterpret_cast<rml::job*>(snapshot&~1);
+        return reinterpret_cast<rml::job*>(snapshot&~1);
     }
 };
 

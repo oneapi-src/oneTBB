@@ -270,7 +270,8 @@ void arena::free_arena () {
 #if __TBB_COUNT_TASK_NODES
     my_market->update_task_node_count( -drained );
 #endif /* __TBB_COUNT_TASK_NODES */
-    my_market->release(); // remove an internal reference
+    // remove an internal reference
+    my_market->release( /*is_public=*/false, /*blocking_terminate=*/false );
 #if __TBB_TASK_GROUP_CONTEXT
     __TBB_ASSERT( my_default_ctx, "Master thread never entered the arena?" );
     my_default_ctx->~task_group_context();
@@ -672,7 +673,7 @@ void task_arena_base::internal_initialize( ) {
         my_max_concurrency = (int)governor::default_num_threads();
     __TBB_ASSERT( my_master_slots <= (unsigned)my_max_concurrency, "Number of slots reserved for master should not exceed arena concurrency");
     arena* new_arena = market::create_arena( my_max_concurrency, my_master_slots,
-                                              global_control::active_value(global_control::thread_stack_size) );
+                                             global_control::active_value(global_control::thread_stack_size) );
     // add an internal market reference; a public reference was added in create_arena
     market &m = market::global_market( /*is_public=*/false );
     // allocate default context for task_arena
@@ -686,7 +687,8 @@ void task_arena_base::internal_initialize( ) {
     // threads might race to initialize the arena
     if(as_atomic(my_arena).compare_and_swap(new_arena, NULL) != NULL) {
         __TBB_ASSERT(my_arena, NULL); // another thread won the race
-        m.release(/*is_public*/true); // release public market reference
+        // release public market reference
+        m.release( /*is_public*/true, /*blocking_terminate=*/false );
         new_arena->on_thread_leaving<arena::ref_external>(); // destroy unneeded arena
 #if __TBB_TASK_GROUP_CONTEXT
         spin_wait_while_eq(my_context, (task_group_context*)NULL);
@@ -701,7 +703,7 @@ void task_arena_base::internal_initialize( ) {
 
 void task_arena_base::internal_terminate( ) {
     if( my_arena ) {// task_arena was initialized
-        my_arena->my_market->release( /*is_public*/true );
+        my_arena->my_market->release( /*is_public*/true, /*blocking_terminate=*/false );
         my_arena->on_thread_leaving<arena::ref_external>();
         my_arena = 0;
 #if __TBB_TASK_GROUP_CONTEXT

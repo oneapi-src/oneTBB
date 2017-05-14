@@ -75,7 +75,7 @@ public:
         ASSERT( !t.info[index].ran, "duplicate index?" );
         t.info[index].job = &j;
         t.info[index].ran = true;
-        do_process(j);
+        do_process(&j);
         if( index==1 && nesting.level<nesting.limit ) {
             DoOneConnection<MyFactory,MyClient> doc(MaxThread,Nesting(nesting.level+1,nesting.limit),0,false);
             doc(0);

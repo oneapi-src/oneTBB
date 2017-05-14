@@ -141,13 +141,13 @@ public:
 
     //! Push task_proxy onto the mailbox queue of another thread.
     /** Implementation is wait-free. */
-    void push( task_proxy& t ) {
-        __TBB_ASSERT(&t, NULL);
-        t.next_in_mailbox = NULL;
-        proxy_ptr * const link = (proxy_ptr *)__TBB_FetchAndStoreW(&my_last,(intptr_t)&t.next_in_mailbox);
+    void push( task_proxy* t ) {
+        __TBB_ASSERT(t, NULL);
+        t->next_in_mailbox = NULL;
+        proxy_ptr * const link = (proxy_ptr *)__TBB_FetchAndStoreW(&my_last,(intptr_t)&t->next_in_mailbox);
         // No release fence required for the next store, because there are no memory operations
         // between the previous fully fenced atomic operation and the store.
-        __TBB_store_relaxed(*link, &t);
+        __TBB_store_relaxed(*link, t);
     }
 
     //! Return true if mailbox is empty

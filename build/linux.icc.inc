@@ -81,7 +81,7 @@ endif
 
 ifneq (,$(codecov))
 # no tool support for code coverage, need profile data generation
-    ITT_NOTIFY = -prof-genx
+    ITT_NOTIFY = -prof-gen=srcpos
 endif
 
 #------------------------------------------------------------------------------

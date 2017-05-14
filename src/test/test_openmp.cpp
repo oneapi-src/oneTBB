@@ -218,10 +218,11 @@ T expected[M+N], actual[M+N];
 
 template <class Func>
 void RunTest( Func F, int m, int n, int p, bool wait_workers = false ) {
-    task_scheduler_init init( p, 0, wait_workers );
+    task_scheduler_init init( p );
     memset( actual, -1, (m+n)*sizeof(T) );
     F( actual, A, m, B, n );
     ASSERT( memcmp(actual, expected, (m+n-1)*sizeof(T))==0, NULL );
+    wait_workers? init.blocking_terminate() : init.terminate();
 }
 
 int TestMain () {

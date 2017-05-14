@@ -110,7 +110,7 @@ class custom_scheduler: private generic_scheduler {
         if( bypass_slot==NULL )
             bypass_slot = &s;
         else
-            local_spawn( s, s.prefix().next );
+            local_spawn( &s, s.prefix().next );
     }
 
 public:
@@ -447,7 +447,7 @@ void custom_scheduler<SchedulerTraits>::local_wait_for_all( task& parent, task* 
                 __TBB_ASSERT( isolation == no_isolation || isolation == t->prefix().isolation,
                     "A task from another isolated region is going to be executed" );
 #endif /* __TBB_TASK_ISOLATION */
-                assert_task_valid(*t);
+                assert_task_valid(t);
 #if __TBB_TASK_GROUP_CONTEXT && TBB_USE_ASSERT
                 assert_context_valid(t->prefix().context);
                 if ( !t->prefix().context->my_cancellation_requested )
@@ -543,7 +543,7 @@ void custom_scheduler<SchedulerTraits>::local_wait_for_all( task& parent, task* 
                         __TBB_ASSERT( t_next != t, "a task returned from method execute() can not be recycled in another way" );
                         t->prefix().state = task::allocated;
                         reset_extra_state(t);
-                        local_spawn( *t, t->prefix().next );
+                        local_spawn( t, t->prefix().next );
                         assert_task_pool_valid();
                         break;
                     case task::allocated:

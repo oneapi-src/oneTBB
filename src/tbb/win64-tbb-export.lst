@@ -63,6 +63,7 @@ __TBB_SYMBOL( ?default_num_threads@task_scheduler_init@tbb@@SAHXZ )
 __TBB_SYMBOL( ?initialize@task_scheduler_init@tbb@@QEAAXH_K@Z )
 __TBB_SYMBOL( ?initialize@task_scheduler_init@tbb@@QEAAXH@Z )
 __TBB_SYMBOL( ?terminate@task_scheduler_init@tbb@@QEAAXXZ )
+__TBB_SYMBOL( ?internal_blocking_terminate@task_scheduler_init@tbb@@AEAA_N_N@Z )
 #if __TBB_SCHEDULER_OBSERVER
 __TBB_SYMBOL( ?observe@task_scheduler_observer_v3@internal@tbb@@QEAAX_N@Z )
 #endif /* __TBB_SCHEDULER_OBSERVER */

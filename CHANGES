@@ -2,6 +2,25 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 2017 Update 6
+TBB_INTERFACE_VERSION == 9106
+
+Changes (w.r.t. Intel TBB 2017 Update 5):
+
+- Added support for Android* NDK r14.
+
+Preview Features:
+
+- Added a blocking terminate extension to the task_scheduler_init class
+    that allows an object to wait for termination of worker threads.
+
+Bugs fixed:
+
+- Fixed compilation and testing issues with MinGW (GCC 6).
+- Fixed compilation with /std:c++latest option of VS 2017
+    (https://github.com/01org/tbb/issues/13).
+
+------------------------------------------------------------------------
 Intel TBB 2017 Update 5
 TBB_INTERFACE_VERSION == 9105
 

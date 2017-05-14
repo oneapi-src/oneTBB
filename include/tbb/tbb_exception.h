@@ -97,9 +97,9 @@ enum exception_id {
     eid_user_abort,
     eid_reserved1,
 #if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
-    // This id is used only inside library and only for support of CPF functionality.
+    // This id is used only from inside the library and only for support of CPF functionality.
     // So, if we drop the functionality, eid_reserved1 can be safely renamed and reused.
-    eid_blocking_sch_init = eid_reserved1,
+    eid_blocking_thread_join_impossible = eid_reserved1,
 #endif
     eid_bad_tagged_msg_cast,
     //! The last enumerator tracks the number of defined IDs. It must remain the last one.

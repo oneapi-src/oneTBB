@@ -61,7 +61,7 @@ endif
 CPLUS_FLAGS += -DUSE_PTHREAD
 
 ifneq (,$(codecov))
-    CPLUS_FLAGS += -prof-genx
+    CPLUS_FLAGS += -prof-gen=srcpos
 endif
 
 # ICC 14.0 and higher support usage of libc++, clang standard library
