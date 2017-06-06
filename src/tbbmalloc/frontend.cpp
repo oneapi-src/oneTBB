@@ -3019,10 +3019,11 @@ extern "C" int scalable_posix_memalign(void **memptr, size_t alignment, size_t s
 
 extern "C" void * scalable_aligned_malloc(size_t size, size_t alignment)
 {
-    if (!isPowerOfTwo(alignment) || 0==size) {
+    if (!isPowerOfTwo(alignment)) {
         errno = EINVAL;
         return NULL;
     }
+    if (!size) size = sizeof(size_t);
     void *tmp = allocateAligned(defaultMemPool, size, alignment);
     if (!tmp) errno = ENOMEM;
     return tmp;
