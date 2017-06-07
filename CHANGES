@@ -2,6 +2,26 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 2017 Update 7
+TBB_INTERFACE_VERSION == 9107
+
+Changes (w.r.t. Intel TBB 2017 Update 6):
+
+- In the huge pages mode, the memory allocator now is also able to use
+    transparent huge pages.
+
+Preview Features:
+
+- Added support for Intel TBB integration into CMake-aware
+    projects, with valuable guidance and feedback provided by Brad King
+    (Kitware).
+
+Bugs fixed:
+
+- Fixed scalable_allocation_command(TBBMALLOC_CLEAN_ALL_BUFFERS, 0)
+    to process memory left after exited threads.
+
+------------------------------------------------------------------------
 Intel TBB 2017 Update 6
 TBB_INTERFACE_VERSION == 9106
 

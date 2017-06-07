@@ -582,6 +582,116 @@ void test() {
 
 } // namespace various_range_implementations
 
+#include <map>
+#include <utility>
+#include "tbb/task_arena.h"
+#include "tbb/enumerable_thread_specific.h"
+
+namespace parallel_for_within_task_arena {
+
+using namespace test_partitioner_utils::TestRanges;
+using tbb::split;
+using tbb::proportional_split;
+
+class BlockedRangeWhitebox;
+
+typedef std::pair<size_t, size_t> range_borders;
+typedef std::multimap<BlockedRangeWhitebox*, range_borders> MapType;
+typedef tbb::enumerable_thread_specific<MapType> ETSType;
+ETSType ets;
+
+class BlockedRangeWhitebox : public BlockedRange {
+public:
+    static const bool is_splittable_in_proportion = true;
+    BlockedRangeWhitebox(size_t _begin, size_t _end)
+        : BlockedRange(_begin, _end, NULL, false, false) { }
+
+    BlockedRangeWhitebox(BlockedRangeWhitebox& r, proportional_split& p)
+        :BlockedRange(r, p) {
+        update_ets(r);
+        update_ets(*this);
+    }
+
+    BlockedRangeWhitebox(BlockedRangeWhitebox& r, split)
+        :BlockedRange(r, split()) { }
+
+    void update_ets(BlockedRangeWhitebox& range) {
+        std::pair<MapType::iterator, MapType::iterator> equal_range = ets.local().equal_range(&range);
+        for (MapType::iterator it = equal_range.first; it != equal_range.second;++it) {
+            if (it->second.first <= range.begin() && range.end() <= it->second.second) {
+                ASSERT(!(it->second.first == range.begin() && it->second.second == range.end()), "Only one border of the range should be equal to the original");
+                it->second.first = range.begin();
+                it->second.second = range.end();
+                return;
+            }
+        }
+        ets.local().insert(std::make_pair<BlockedRangeWhitebox*, range_borders>(&range, range_borders(range.begin(), range.end())));
+    }
+};
+
+template <typename Partitioner>
+struct ArenaBody {
+    size_t range_begin;
+    size_t range_end;
+
+    ArenaBody(size_t _range_begin, size_t _range_end)
+        :range_begin(_range_begin), range_end(_range_end) { }
+
+    void operator()() const {
+        Partitioner my_partitioner;
+        tbb::parallel_for(BlockedRangeWhitebox(range_begin, range_end), test_partitioner_utils::SimpleBody(), my_partitioner);
+    }
+};
+
+struct CombineBody {
+    MapType operator()(MapType x, const MapType& y) const {
+        x.insert(y.begin(), y.end());
+        for (MapType::iterator it = x.begin(); it != x.end();++it)
+            for (MapType::iterator internal_it = x.begin(); internal_it != x.end(); ++internal_it) {
+                if (it != internal_it && internal_it->second.first <= it->second.first && it->second.second <= internal_it->second.second) {
+                    x.erase(internal_it);
+                    break;
+                }
+            }
+        return x;
+    }
+};
+
+range_borders combine_range(const MapType& map) {
+    range_borders result_range = map.begin()->second;
+    for (MapType::const_iterator it = map.begin(); it != map.end(); it++)
+        result_range = range_borders((std::min)(result_range.first, it->second.first), (std::max)(result_range.second, it->second.second));
+    return result_range;
+}
+
+template <typename Partitioner>
+void test_body() {
+    for (unsigned int num_threads = tbb::tbb_thread::hardware_concurrency() / 4 + 1; num_threads < tbb::tbb_thread::hardware_concurrency(); num_threads *= 2)
+        for (size_t range_begin = 0, range_end = num_threads * 10 - 1, i = 0; i < 3; range_begin += num_threads, range_end += num_threads + 1, ++i) {
+            ets = ETSType(MapType());
+            tbb::task_arena limited(num_threads);
+            limited.execute(ArenaBody<Partitioner>(range_begin, range_end));
+            MapType combined_map = ets.combine(CombineBody());
+            range_borders result_borders = combine_range(combined_map);
+            ASSERT(result_borders.first == range_begin, "Restored range begin does not match initial one");
+            ASSERT(result_borders.second == range_end, "Restored range end does not match initial one");
+            ASSERT((combined_map.size() == num_threads), "Incorrect number or post-proportional split ranges");
+            size_t expected_size = (range_end - range_begin) / num_threads;
+            for (MapType::iterator it = combined_map.begin(); it != combined_map.end(); ++it) {
+                size_t size = it->second.second - it->second.first;
+                ASSERT((size == expected_size || size == expected_size + 1), "Incorrect post-proportional range size");
+            }
+        }
+
+}
+
+void test() {
+    test_body<tbb::affinity_partitioner>();
+    test_body<tbb::static_partitioner>();
+}
+
+} // namespace parallel_for_within_task_arena
+
 int TestMain () {
     if( MinThread<1 ) {
         REPORT("number of threads must be positive\n");
@@ -654,6 +764,7 @@ int TestMain () {
 
     various_range_implementations::test();
     interaction_with_range_and_partitioner::test();
+    parallel_for_within_task_arena::test();
     return Harness::Done;
 }
 

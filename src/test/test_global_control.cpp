@@ -81,14 +81,22 @@ void RunWorkersLimited(int tsi_max_threads, size_t parallelism, bool wait)
     Harness::ExactConcurrencyLevel::check(expected_threads);
 }
 
+class blocking_task_scheduler_init {
+    tbb::task_scheduler_init init;
+public:
+    blocking_task_scheduler_init(int num_threads = tbb::task_scheduler_init::automatic) : init(num_threads) {}
+    ~blocking_task_scheduler_init() {
+        bool ok = init.blocking_terminate(std::nothrow);
+        ASSERT(ok, "blocking_terminate has failed");
+    }
+};
+
 void TSI_and_RunWorkers(int tsi_max_threads, size_t parallelism, size_t max_value)
 {
-    tbb::task_scheduler_init tsi(tsi_max_threads);
+    blocking_task_scheduler_init tsi(tsi_max_threads);
     size_t active = tbb::global_control::active_value(tbb::global_control::max_allowed_parallelism);
     ASSERT(active == max(2U, max_value), "active_value must not be changed by task_scheduler_init");
     RunWorkersLimited(tsi_max_threads, parallelism, /*wait=*/false);
-    bool ok = tsi.blocking_terminate(std::nothrow);
-    ASSERT(ok, NULL);
 }
 
 #include "tbb/tbb_thread.h"
@@ -127,7 +135,7 @@ void TestWorkers(size_t curr_par)
 void TestWorkersConstraints() {
     const size_t max_parallelism =
         tbb::global_control::active_value(tbb::global_control::max_allowed_parallelism);
-    tbb::task_scheduler_init tsi;
+    blocking_task_scheduler_init tsi;
     if (max_parallelism > 3) {
         tbb::global_control c(tbb::global_control::max_allowed_parallelism, max_parallelism-1);
         ASSERT(max_parallelism-1 ==
@@ -146,8 +154,6 @@ void TestWorkersConstraints() {
         for (size_t num=limit_par; num>1; num--)
             RunWorkersLimited(tbb::task_scheduler_init::automatic, num, wait==1);
     }
-    bool ok = tsi.blocking_terminate(std::nothrow);
-    ASSERT(ok, NULL);
 }
 
 struct DummyBody {
@@ -168,11 +174,9 @@ struct SetUseRun: NoAssign {
     void operator()( int id ) const {
         if (id == 0) {
             for (int i=0; i<10; i++) {
-                tbb::task_scheduler_init tsi;
+                blocking_task_scheduler_init tsi;
                 RunParallelWork();
                 barr->timed_wait(BARRIER_TIMEOUT);
-                bool ok = tsi.blocking_terminate(std::nothrow);
-                ASSERT(ok, NULL);
             }
         } else {
             for (int i=0; i<10; i++) {
@@ -367,7 +371,7 @@ public:
 void TestTaskEnqueue()
 {
     {
-        tbb::task_scheduler_init tsi(20);
+        blocking_task_scheduler_init tsi(20);
         tbb::atomic<int> flag;
         tbb::atomic<bool> taskDoneFlag;
         flag = 0;
@@ -384,11 +388,9 @@ void TestTaskEnqueue()
         tbb::task::enqueue(*t);
         while(!flag)
             __TBB_Yield();
-        bool ok = tsi.blocking_terminate(std::nothrow);
-        ASSERT(ok, NULL);
     }
     {
-        tbb::task_scheduler_init tsi(1);
+        blocking_task_scheduler_init tsi(1);
         tbb::atomic<int> flag;
         tbb::atomic<bool> taskDoneFlag;
         flag = 0;
@@ -404,11 +406,9 @@ void TestTaskEnqueue()
         tbb::task::enqueue(*t);
         while(!flag)
             __TBB_Yield();
-        bool ok = tsi.blocking_terminate(std::nothrow);
-        ASSERT(ok, NULL);
     }
     {
-        tbb::task_scheduler_init tsi(2);
+        blocking_task_scheduler_init tsi(2);
         tbb::atomic<int> flag;
         flag = 0;
 
@@ -418,11 +418,9 @@ void TestTaskEnqueue()
         tbb::task::enqueue(*t);
         while(!flag)
             __TBB_Yield();
-        bool ok = tsi.blocking_terminate(std::nothrow);
-        ASSERT(ok, NULL);
     }
     {
-        tbb::task_scheduler_init tsi(2);
+        blocking_task_scheduler_init tsi(2);
         tbb::atomic<int> flag;
         flag = 0;
 
@@ -432,14 +430,12 @@ void TestTaskEnqueue()
 
         while(!flag)
             __TBB_Yield();
-        bool ok = tsi.blocking_terminate(std::nothrow);
-        ASSERT(ok, NULL);
     }
 
     tbb::global_control c(tbb::global_control::max_allowed_parallelism, 1);
 
     { // check that enqueue() guarantee mandatory parallelism
-        tbb::task_scheduler_init tsi(1);
+        blocking_task_scheduler_init tsi(1);
         tbb::atomic<int> flag;
         flag = 0;
 
@@ -447,14 +443,12 @@ void TestTaskEnqueue()
         tbb::task::enqueue(*t);
         while(!flag)
             __TBB_Yield();
-        bool ok = tsi.blocking_terminate(std::nothrow);
-        ASSERT(ok, NULL);
     }
     {
         tbb::atomic<int> flag;
         flag = 0;
         {
-            tbb::task_scheduler_init tsi(1);
+            blocking_task_scheduler_init tsi(1);
 
             for (int i=0; i<10; i++) {
                 FFTask* t = new( tbb::task::allocate_root() ) FFTask(&flag);
@@ -465,38 +459,32 @@ void TestTaskEnqueue()
                 tbb::task::enqueue(*t);
 #endif
             }
-            bool ok = tsi.blocking_terminate(std::nothrow);
-            ASSERT(ok, NULL);
         }
         ASSERT(flag==10, "The tasks must be terminated when task_scheduler_init destroyed.");
     }
     const unsigned threads = 2;
     {
-        tbb::task_scheduler_init tsi(1);
+        blocking_task_scheduler_init tsi(1);
         Harness::SpinBarrier barr1(threads), barr2(threads);
         RunWorkersLimited(1, 1, false);
 
         NativeParallelFor( threads, ParallelForRun(&barr1, &barr2) );
-        bool ok = tsi.blocking_terminate(std::nothrow);
-        ASSERT(ok, NULL);
     }
 
     tbb::atomic<int> counter;
     counter = 0;
     {
-        tbb::task_scheduler_init tsi(1);
+        blocking_task_scheduler_init tsi(1);
         Harness::SpinBarrier barr(threads);
         RunWorkersLimited(1, 1, false);
 
         NativeParallelFor( threads, FFTasksRun(&barr, &counter) );
-        bool ok = tsi.blocking_terminate(std::nothrow);
-        ASSERT(ok, NULL);
     }
     ASSERT(counter == threads*FFTasksRun::ITERS, "All tasks must be done when task_scheduler_init destroyed.");
     counter = 0;
     { // an enqueued task can enqueue other tasks and calls parallel_for
         tbb::atomic<bool> signalToLeave;
-        tbb::task_scheduler_init tsi(1);
+        blocking_task_scheduler_init tsi(1);
 
         signalToLeave = false;
         WorkAndEnqueueTask *t = new( tbb::task::allocate_root() )
@@ -506,8 +494,6 @@ void TestTaskEnqueue()
 
         while (!signalToLeave)
             __TBB_Yield();
-        bool ok = tsi.blocking_terminate(std::nothrow);
-        ASSERT(ok, NULL);
     }
     ASSERT(counter == WorkAndEnqueueTask::ENQUEUE_TASKS, "All tasks must be done when task_scheduler_init destroyed.");
 }
@@ -603,7 +589,7 @@ void TestConcurrentArenas()
     Harness::SpinBarrier barrier(2);
     tbb::global_control c(tbb::global_control::max_allowed_parallelism, 1);
     {
-        tbb::task_scheduler_init tsi(2);
+        blocking_task_scheduler_init tsi(2);
         ArenaObserver observer;
         observer.observe(true);
 
@@ -617,18 +603,14 @@ void TestConcurrentArenas()
 
         // check that without mandatory parallelism, still have 0 worker threads
         Harness::ExactConcurrencyLevel::check(1);
-        bool ok = tsi.blocking_terminate(std::nothrow);
-        ASSERT(ok, NULL);
     }
     tbb::atomic<int> counter;
     counter = 0;
     {
-        tbb::task_scheduler_init tsi(1);
+        blocking_task_scheduler_init tsi(1);
         tbb::task_arena arena(2);
 
         NativeParallelFor( 2, ArenaUserRun(&arena, &barrier, &counter) );
-        bool ok = tsi.blocking_terminate(std::nothrow);
-        ASSERT(ok, NULL);
     }
     ASSERT(counter == 2*ArenaUserRun::ENQUEUE_TASKS, "All tasks must be done.");
 }
@@ -640,7 +622,7 @@ void TestParallelismRestored()
     counter = 0;
     {
         const int P = 4;
-        tbb::task_scheduler_init tsi(P);
+        blocking_task_scheduler_init tsi(P);
         {
             tbb::global_control s(tbb::global_control::max_allowed_parallelism, 1);
             Harness::ExactConcurrencyLevel::check(1);
@@ -652,8 +634,6 @@ void TestParallelismRestored()
         }
         // global control is off, check that concurrency P is available
         Harness::ExactConcurrencyLevel::check(P);
-        bool ok = tsi.blocking_terminate(std::nothrow);
-        ASSERT(ok, NULL);
     }
     ASSERT(counter==TASKS, "The tasks must be executed at this point.");
 }
@@ -695,10 +675,8 @@ void TestNoUnwantedEnforced()
 {
     Harness::SpinBarrier barrier(2);
     tbb::global_control c(tbb::global_control::max_allowed_parallelism, 1);
-    tbb::task_scheduler_init tsi(4);
+    blocking_task_scheduler_init tsi(4);
     NativeParallelFor( 2, NoUnwantedEnforcedRun(&barrier) );
-    bool ok = tsi.blocking_terminate(std::nothrow);
-    ASSERT(ok, NULL);
 }
 
 class TestMultipleControlsRun {
@@ -742,11 +720,9 @@ public:
 // still keep parallelism under control
 void TestMultipleControls()
 {
-    tbb::task_scheduler_init tsi(2); // to prevent autoinitialization
+    blocking_task_scheduler_init tsi(2); // to prevent autoinitialization
     Harness::SpinBarrier barrier(2);
     NativeParallelFor( 2, TestMultipleControlsRun(&barrier) );
-    bool ok = tsi.blocking_terminate(std::nothrow);
-    ASSERT(ok, NULL);
 }
 
 // enqueued tasks with priority below current must not be forgotten,
@@ -776,8 +752,6 @@ void TestForgottenEnqueuedTasks()
     }
     r.wait_for_all();
     tbb::task::destroy(r);
-    bool ok = tsi.blocking_terminate(std::nothrow);
-    ASSERT(ok, NULL);
 }
 
 int TestMain()

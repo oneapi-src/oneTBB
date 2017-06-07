@@ -38,7 +38,7 @@ ndk_version:= $(firstword $(subst /, ,$(ndk_version)))
 ndk_version:= $(firstword $(subst \, ,$(ndk_version)))
 
 ifeq (clang,$(compiler))
-	ifneq (,$(findstring $(ndk_version),r13 r13b r14))
+	ifneq (,$(findstring $(ndk_version),r13 r13b r14 r14b))
 	TBB_RTL :=llvm-libc++
 	else
 	TBB_RTL :=llvm-libc++/libcxx

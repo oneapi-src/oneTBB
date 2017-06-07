@@ -303,7 +303,7 @@ void mat_multiplication() {
     //Verify correctness
     make_edge(validation_join_n, mat_validation_n);
 
-    // Set args for gfx kernel.
+    // Set args for GFX kernel.
     // Default behaviour if not set.
     gpu_slm_mat_mult_n.set_args(tbb::flow::port_ref<0, 2>);
 

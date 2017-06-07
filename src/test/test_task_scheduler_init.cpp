@@ -36,7 +36,9 @@
     #pragma warning (disable: 4530)
 #endif
 
+#if TBB_USE_EXCEPTIONS
 #include <stdexcept>
+#endif
 
 #if !TBB_USE_EXCEPTIONS && _MSC_VER
     #pragma warning (pop)
@@ -80,7 +82,7 @@ void InitializeAndTerminate( int maxthread ) {
                 default: {
                     tbb::task_scheduler_init init( threads );
                     ASSERT(init.is_active(), NULL);
-                    ASSERT(ArenaConcurrency()==(threads==1)?2:threads, NULL);
+                    ASSERT(ArenaConcurrency()==(threads==1?2:threads), NULL);
                     if (test_mandatory_parallelism)
                         Harness::ExactConcurrencyLevel::check(threads, Harness::ExactConcurrencyLevel::Serialize);
                     if(i&0x20) tbb::task::enqueue( (*new( tbb::task::allocate_root() ) TaskGenerator(2,6)) ); // a work deferred to workers
@@ -89,7 +91,7 @@ void InitializeAndTerminate( int maxthread ) {
                 case 0: {
                     tbb::task_scheduler_init init;
                     ASSERT(init.is_active(), NULL);
-                    ASSERT(ArenaConcurrency()==(DefaultThreads==1)?2:init.default_num_threads(), NULL);
+                    ASSERT(ArenaConcurrency()==(DefaultThreads==1?2:init.default_num_threads()), NULL);
                     if (test_mandatory_parallelism)
                         Harness::ExactConcurrencyLevel::check(init.default_num_threads(), Harness::ExactConcurrencyLevel::Serialize);
                     if(i&0x40) tbb::task::enqueue( (*new( tbb::task::allocate_root() ) TaskGenerator(3,5)) ); // a work deferred to workers
@@ -100,7 +102,7 @@ void InitializeAndTerminate( int maxthread ) {
                     ASSERT(!init.is_active(), "init should not be active; initialization was deferred");
                     init.initialize( threads );
                     ASSERT(init.is_active(), NULL);
-                    ASSERT(ArenaConcurrency()==(threads==1)?2:threads, NULL);
+                    ASSERT(ArenaConcurrency()==(threads==1?2:threads), NULL);
                     if (test_mandatory_parallelism)
                         Harness::ExactConcurrencyLevel::check(threads, Harness::ExactConcurrencyLevel::Serialize);
                     init.terminate();
@@ -110,7 +112,7 @@ void InitializeAndTerminate( int maxthread ) {
                 case 2: {
                     tbb::task_scheduler_init init( tbb::task_scheduler_init::automatic );
                     ASSERT(init.is_active(), NULL);
-                    ASSERT(ArenaConcurrency()==(DefaultThreads==1)?2:init.default_num_threads(), NULL);
+                    ASSERT(ArenaConcurrency()==(DefaultThreads==1?2:init.default_num_threads()), NULL);
                     if (test_mandatory_parallelism)
                         Harness::ExactConcurrencyLevel::check(init.default_num_threads(), Harness::ExactConcurrencyLevel::Serialize);
                     break;
@@ -252,18 +254,18 @@ namespace TestBlockingTerminateNS {
 
 #if TBB_USE_EXCEPTIONS
     template <typename F>
-    void TestException( F f ) {
+    void TestException( F &f ) {
         Harness::suppress_unused_warning( f );
         bool caught = false;
         try {
             f();
             ASSERT( false, NULL );
         }
-        catch ( std::runtime_error ) {
+        catch ( const std::runtime_error& ) {
             caught = true;
         }
 #if TBB_USE_CAPTURED_EXCEPTION
-        catch ( tbb::captured_exception ) {
+        catch ( const tbb::captured_exception& ) {
             caught = true;
         }
 #endif
@@ -274,13 +276,14 @@ namespace TestBlockingTerminateNS {
     }
 
     class ExceptionTest1 {
+        tbb::task_scheduler_init tsi1;
         int myIndex;
     public:
         ExceptionTest1( int index ) : myIndex( index ) {}
 
-        void operator()() const {
-            tbb::task_scheduler_init tsi[2];
-            tsi[myIndex].blocking_terminate();
+        void operator()() {
+            tbb::task_scheduler_init tsi2;
+            (myIndex == 0 ? tsi1 : tsi2).blocking_terminate();
             ASSERT( false, "Blocking terminate did not throw the exception" );
         }
     };
@@ -316,9 +319,11 @@ namespace TestBlockingTerminateNS {
             ASSERT( res2, NULL );
         }
 #if TBB_USE_EXCEPTIONS
-        TestException( ExceptionTest1(0) );
-        TestException( ExceptionTest1(1) );
-        TestException( ExceptionTest2() );
+        ExceptionTest1 Test1(0), Test2(1);
+        TestException( Test1 );
+        TestException( Test2 );
+        ExceptionTest2 Test3;
+        TestException( Test3 );
 #endif
     }
 }

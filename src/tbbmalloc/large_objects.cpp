@@ -950,6 +950,7 @@ bool ExtMemoryPool::hardCachesCleanup()
     // thread-local caches must be cleaned before LOC,
     // because object from thread-local cache can be released to LOC
     bool ret = releaseAllLocalCaches();
+    ret |= orphanedBlocks.cleanup(&backend);
     ret |= loc.cleanAll();
     ret |= backend.clean();
     return ret;

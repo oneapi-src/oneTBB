@@ -164,26 +164,26 @@ void RunTests() {
     typedef tuple<int,float,double,char> mixed_tuple_left;
     typedef tuple<float,int,char,double> mixed_tuple_right;
 
-    ASSERT(mixed_tuple_left(1,1.f,1,1) == mixed_tuple_right(1.f,1,1,1),NULL);
-    ASSERT(mixed_tuple_left(1,0.f,1,1) <  mixed_tuple_right(1.f,1,1,1),NULL);
-    ASSERT(mixed_tuple_left(1,1.f,1,1) >  mixed_tuple_right(1.f,1,0,1),NULL);
-    ASSERT(mixed_tuple_left(1,1.f,1,0) != mixed_tuple_right(1.f,1,1,1),NULL);
-    ASSERT(mixed_tuple_left(1,0.f,1,1) <= mixed_tuple_right(1.f,1,0,1),NULL);
-    ASSERT(mixed_tuple_left(1,0.f,0,1) <= mixed_tuple_right(1.f,0,0,1),NULL);
-    ASSERT(mixed_tuple_left(1,1.f,1,0) >= mixed_tuple_right(1.f,0,1,1),NULL);
-    ASSERT(mixed_tuple_left(0,1.f,1,0) >= mixed_tuple_right(0.f,1,1,0),NULL);
+    ASSERT(mixed_tuple_left(1,1.f,1,char(1)) == mixed_tuple_right(1.f,1,char(1),1),NULL);
+    ASSERT(mixed_tuple_left(1,0.f,1,char(1)) <  mixed_tuple_right(1.f,1,char(1),1),NULL);
+    ASSERT(mixed_tuple_left(1,1.f,1,char(1)) >  mixed_tuple_right(1.f,1,char(0),1),NULL);
+    ASSERT(mixed_tuple_left(1,1.f,1,char(0)) != mixed_tuple_right(1.f,1,char(1),1),NULL);
+    ASSERT(mixed_tuple_left(1,0.f,1,char(1)) <= mixed_tuple_right(1.f,1,char(0),1),NULL);
+    ASSERT(mixed_tuple_left(1,0.f,0,char(1)) <= mixed_tuple_right(1.f,0,char(0),1),NULL);
+    ASSERT(mixed_tuple_left(1,1.f,1,char(0)) >= mixed_tuple_right(1.f,0,char(1),1),NULL);
+    ASSERT(mixed_tuple_left(0,1.f,1,char(0)) >= mixed_tuple_right(0.f,1,char(1),0),NULL);
 
-    ASSERT(!(mixed_tuple_left(2,1.f,1,1) == mixed_tuple_right(1.f,1,1,1)),NULL);
-    ASSERT(!(mixed_tuple_left(1,2.f,1,1) == mixed_tuple_right(1.f,1,1,1)),NULL);
-    ASSERT(!(mixed_tuple_left(1,1.f,2,1) == mixed_tuple_right(1.f,1,1,1)),NULL);
-    ASSERT(!(mixed_tuple_left(1,1.f,1,2) == mixed_tuple_right(1.f,1,1,1)),NULL);
+    ASSERT(!(mixed_tuple_left(2,1.f,1,char(1)) == mixed_tuple_right(1.f,1,char(1),1)),NULL);
+    ASSERT(!(mixed_tuple_left(1,2.f,1,char(1)) == mixed_tuple_right(1.f,1,char(1),1)),NULL);
+    ASSERT(!(mixed_tuple_left(1,1.f,2,char(1)) == mixed_tuple_right(1.f,1,char(1),1)),NULL);
+    ASSERT(!(mixed_tuple_left(1,1.f,1,char(2)) == mixed_tuple_right(1.f,1,char(1),1)),NULL);
 
-    ASSERT(!(mixed_tuple_left(1,1.f,1,1) <  mixed_tuple_right(1.f,1,1,1)),NULL);
-    ASSERT(!(mixed_tuple_left(1,1.f,1,1) >  mixed_tuple_right(1.f,1,1,1)),NULL);
-    ASSERT(!(mixed_tuple_left(1,1.f,1,1) !=  mixed_tuple_right(1.f,1,1,1)),NULL);
+    ASSERT(!(mixed_tuple_left(1,1.f,1,char(1)) <  mixed_tuple_right(1.f,1,char(1),1)),NULL);
+    ASSERT(!(mixed_tuple_left(1,1.f,1,char(1)) >  mixed_tuple_right(1.f,1,char(1),1)),NULL);
+    ASSERT(!(mixed_tuple_left(1,1.f,1,char(1)) != mixed_tuple_right(1.f,1,char(1),1)),NULL);
 
-    ASSERT(mixed_tuple_left(1,1.f,1,1) <= mixed_tuple_right(1.f,1,1,1),NULL);
-    ASSERT(mixed_tuple_left(1,1.f,1,1) >= mixed_tuple_right(1.f,1,1,1),NULL);
+    ASSERT(mixed_tuple_left(1,1.f,1,char(1)) <= mixed_tuple_right(1.f,1,char(1),1),NULL);
+    ASSERT(mixed_tuple_left(1,1.f,1,char(1)) >= mixed_tuple_right(1.f,1,char(1),1),NULL);
 
     RunOneComparisonTest<int,float,char,float,char,int>();
     RunOneComparisonTest<double,float,char,float,double,int>();

@@ -204,11 +204,11 @@ generic_scheduler* governor::init_scheduler( int num_threads, stack_size_type st
     return s;
 }
 
-bool governor::terminate_scheduler( generic_scheduler* s, const task_scheduler_init* tsi_ptr, bool blocking_terminate ) {
+bool governor::terminate_scheduler( generic_scheduler* s, const task_scheduler_init* tsi_ptr, bool blocking ) {
     bool ok = false;
     __TBB_ASSERT( is_set(s), "Attempt to terminate non-local scheduler instance" );
     if (0 == --(s->my_ref_count)) {
-        ok = s->cleanup_master( blocking_terminate );
+        ok = s->cleanup_master( blocking );
         __TBB_ASSERT( is_set(NULL), "cleanup_master has not cleared its TLS slot" );
     }
     return ok;
@@ -337,7 +337,7 @@ void task_scheduler_init::initialize( int number_of_threads, stack_size_type thr
     }
 }
 
-bool task_scheduler_init::internal_terminate( bool blocking_terminate ) {
+bool task_scheduler_init::internal_terminate( bool blocking ) {
 #if __TBB_TASK_GROUP_CONTEXT && TBB_USE_EXCEPTIONS
     uintptr_t prev_mode = (uintptr_t)my_scheduler & propagation_mode_exact;
     my_scheduler = (scheduler*)((uintptr_t)my_scheduler & ~(uintptr_t)propagation_mode_exact);
@@ -352,7 +352,7 @@ bool task_scheduler_init::internal_terminate( bool blocking_terminate ) {
                                         : vt & ~task_group_context::exact_exception;
     }
 #endif /* __TBB_TASK_GROUP_CONTEXT && TBB_USE_EXCEPTIONS */
-    return governor::terminate_scheduler(s, this, blocking_terminate);
+    return governor::terminate_scheduler(s, this, blocking);
 }
 
 void task_scheduler_init::terminate() {

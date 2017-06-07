@@ -77,11 +77,11 @@ namespace runtime_loader {
 // Print message to stderr. Do not call it directly, use say() or tell() instead.
 static void _say( char const * format, va_list args ) {
     /*
-        On Linux Intel 64, vsnprintf() modifies args argument, so vsnprintf() crashes if it
-        is called for the second time with the same args. To prevent the crash, we have to
-        pass a fresh intact copy of args to vsnprintf() each time.
+        On 64-bit Linux* OS, vsnprintf() modifies args argument,
+        so vsnprintf() crashes if it is called for the second time with the same args.
+        To prevent the crash, we have to pass a fresh intact copy of args to vsnprintf() each time.
 
-        On Windows, unfortunately, standard va_copy() macro is not available. However, it
+        On Windows* OS, unfortunately, standard va_copy() macro is not available. However, it
         seems vsnprintf() does not modify args argument.
     */
     #if ! ( _WIN32 || _WIN64 )
@@ -351,8 +351,7 @@ static tbb::runtime_loader::error_code _load( char const * dll_name, int min_ver
     tbb::runtime_loader::error_code code = tbb::runtime_loader::ec_ok;
 
     /*
-        If these variables declared at the first usage, Intel compiler (on Windows IA-32) isues
-        warning(s):
+        If these variables declared at the first usage, Intel C++ Compiler may issue warning(s):
             transfer of control [goto error] bypasses initialization of: ...
         Declaring variables at the beginning of the function eliminates warnings.
     */

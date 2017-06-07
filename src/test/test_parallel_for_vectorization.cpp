@@ -25,9 +25,9 @@
 // 2. "#pragma ivdep" has a peculiarity which also can be used for detection of
 // successful vectorization. See the comment below.
 
-// For now, only Intel(R) C++ Compiler 12.0 and later is supported. Also, no
+// For now, only Intel(R) C++ Compiler 14.0 and later is supported. Also, no
 // sense to run the test in debug mode.
-#define HARNESS_SKIP_TEST ( __INTEL_COMPILER < 1200  || TBB_USE_DEBUG )
+#define HARNESS_SKIP_TEST ( __INTEL_COMPILER < 1400  || TBB_USE_DEBUG )
 
 // __TBB_ASSERT_ON_VECTORIZATION_FAILURE enables "pragma always assert" for
 // Intel(R) C++ Compiler.

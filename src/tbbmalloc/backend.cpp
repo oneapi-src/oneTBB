@@ -142,21 +142,22 @@ void *Backend::allocRawMem(size_t &size)
         allocSize = alignUpGeneric(size, extMemPool->granularity);
         res = (*extMemPool->rawAlloc)(extMemPool->poolId, allocSize);
     } else {
+        // check if alignment to huge page size is recommended
+        size_t hugePageSize = hugePages.recommendedGranularity();
+        allocSize = alignUpGeneric(size, hugePageSize? hugePageSize : extMemPool->granularity);
         // try to get them at 1st allocation and still use, if successful
         // if 1st try is unsuccessful, no more trying
         if (FencedLoad(hugePages.enabled)) {
-            allocSize = alignUpGeneric(size, hugePages.getSize());
+            MALLOC_ASSERT(hugePageSize, "Inconsistent state of HugePagesStatus");
             res = getRawMemory(allocSize, /*hugePages=*/true);
             hugePages.registerAllocation(res);
         }
 
-        if ( !res ) {
-            allocSize = alignUpGeneric(size, extMemPool->granularity);
+        if (!res)
             res = getRawMemory(allocSize, /*hugePages=*/false);
-        }
     }
 
-    if ( res ) {
+    if (res) {
         MALLOC_ASSERT(allocSize > 0, "Invalid size of an allocated region.");
         size = allocSize;
         if (!extMemPool->userPool())
@@ -239,7 +240,7 @@ struct MemRegion {
     MemRegion *next,      // keep all regions in any pool to release all them on
               *prev;      // pool destroying, 2-linked list to release individual
                           // regions.
-    size_t     allocSz,   // got from poll callback
+    size_t     allocSz,   // got from pool callback
                blockSz;   // initial and maximal inner block size
     MemRegionType type;
 };
@@ -760,7 +761,7 @@ FreeBlock *Backend::askMemFromOS(size_t blockSize, intptr_t startModifiedCnt,
             return (FreeBlock*)VALID_BLOCK_IN_BIN;
         }
 
-        if ( blockSize < quiteSmall ) {
+        if (blockSize < quiteSmall) {
             // For this size of blocks, add NUM_OF_REG "advance" regions in bin,
             // and return one as a result.
             // TODO: add to bin first, because other threads can use them right away.
@@ -1207,7 +1208,7 @@ bool Backend::coalescAndPutList(FreeBlock *list, bool forceCoalescQDrop,
         bool needAddToBin = true;
 
         if (toRet->blockInBin) {
-            // is it stay in same bin?
+            // Does it stay in same bin?
             if (toRet->myBin == bin && toRet->aligned == toAligned)
                 needAddToBin = false;
             else {
@@ -1216,7 +1217,7 @@ bool Backend::coalescAndPutList(FreeBlock *list, bool forceCoalescQDrop,
             }
         }
 
-        // not stay in same bin, or bin-less, add it
+        // Does not stay in same bin, or bin-less; add it
         if (needAddToBin) {
             toRet->prev = toRet->next = toRet->nextToFree = NULL;
             toRet->myBin = NO_BIN;
@@ -1279,7 +1280,7 @@ FreeBlock *Backend::findBlockInRegion(MemRegion *region, size_t exactBlockSize)
 
     MALLOC_STATIC_ASSERT(sizeof(LastFreeBlock) % sizeof(uintptr_t) == 0,
         "Atomic applied on LastFreeBlock, and we put it at the end of region, that"
-        " is uintptr_t-aligned, so no unaligned atomic opeartions are possible.");
+        " is uintptr_t-aligned, so no unaligned atomic operations are possible.");
      // right bound is slab-aligned, keep LastFreeBlock after it
     if (region->type==MEMREG_FLEXIBLE_SIZE) {
         fBlock = (FreeBlock *)alignUp((uintptr_t)region + sizeof(MemRegion),
@@ -1455,8 +1456,10 @@ bool Backend::destroy()
 
 bool Backend::clean()
 {
+    scanCoalescQ(/*forceCoalescQDrop=*/false);
+
     bool res = false;
-    // We can have several blocks, occupaing whole region,
+    // We can have several blocks occupying a whole region,
     // because such regions are added in advance (see askMemFromOS() and reset()),
     // and never used. Release them all.
     for (int i = advRegBins.getMinUsedBin(0); i != -1; i = advRegBins.getMinUsedBin(i+1)) {
@@ -1465,8 +1468,6 @@ bool Backend::clean()
         if (i == freeLargeBins.getMinNonemptyBin(i))
             res |= freeLargeBins.tryReleaseRegions(i, this);
     }
-
-    scanCoalescQ(/*forceCoalescQDrop=*/false);
 
     return res;
 }

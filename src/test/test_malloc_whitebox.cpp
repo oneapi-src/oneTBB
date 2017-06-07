@@ -774,54 +774,51 @@ void checkNoHugePages()
 }
 
 /*---------------------------------------------------------------------------*/
-// The regression test against a bug in TBBMALLOC_CLEAN_ALL_BUFFERS allocation
-// command. When cleanup is requested the backend should process the queue of
-// postponed coalescing requests otherwise not all unsued memory might be
-// deallocated.
+// The regression test against bugs in TBBMALLOC_CLEAN_ALL_BUFFERS allocation command.
+// The idea is to allocate and deallocate a set of objects randomly in parallel.
+// For large sizes (16K), it forces conflicts in backend during coalescing.
+// For small sizes (4K), it forces cross-thread deallocations and then orphaned slabs.
+// Global cleanup should process orphaned slabs and the queue of postponed coalescing
+// requests, otherwise it will not be able to unmap all unused memory.
 
-const size_t alloc_size = 16*1024;
-const int total_alloc_size = 100 * 1024 * 1024;
-const int num_allocs = total_alloc_size / alloc_size;
+const int num_allocs = 10*1024;
 void *ptrs[num_allocs];
+tbb::atomic<int> alloc_counter;
 
-tbb::atomic<int> deallocs_counter;
-
-struct TestCleanAllBuffersDeallocate : public SimpleBarrier {
+template<int AllocSize>
+struct TestCleanAllBuffersBody : public SimpleBarrier {
     void operator() ( int ) const {
         barrier.wait();
-        for( int i = deallocs_counter++; i < num_allocs; i = deallocs_counter++ )
-           scalable_free( ptrs[i] );
+        for( int i = alloc_counter++; i < num_allocs; i = alloc_counter++ ) {
+           ptrs[i] = scalable_malloc( AllocSize );
+           ASSERT( ptrs[i] != NULL, "scalable_malloc returned zero." );
+        }
+        barrier.wait();
+        for( int i = --alloc_counter; i >= 0; i = --alloc_counter )
+           if (i<num_allocs) scalable_free( ptrs[i] );
     }
 };
 
-// The idea is to allocate a set of objects and then deallocate them in random
-// order in parallel to force occurring conflicts in backend during coalescing.
-// Thus if the backend does not check the queue of postponed coalescing
-// requests it will not be able to unmap all memory and a memory leak will be
-// observed.
+template<int AllocSize>
 void TestCleanAllBuffers() {
     const int num_threads = 8;
     // Clean up if something was allocated before the test
     scalable_allocation_command(TBBMALLOC_CLEAN_ALL_BUFFERS,0);
 
     size_t memory_in_use_before = getMemSize();
-    for ( int i=0; i<num_allocs; ++i ) {
-        ptrs[i] = scalable_malloc( alloc_size );
-        ASSERT( ptrs[i] != NULL, "scalable_malloc has return zero." );
-    }
-    deallocs_counter = 0;
-    TestCleanAllBuffersDeallocate::initBarrier(num_threads);
-    NativeParallelFor(num_threads, TestCleanAllBuffersDeallocate());
-    // TODO: reproduce the conditions for bug reproduction more reliably
+    alloc_counter = 0;
+    TestCleanAllBuffersBody<AllocSize>::initBarrier(num_threads);
+    NativeParallelFor(num_threads, TestCleanAllBuffersBody<AllocSize>());
+    // TODO: reproduce the bug conditions more reliably
     if ( defaultMemPool->extMemPool.backend.coalescQ.blocksToFree == NULL )
         REMARK( "Warning: The queue of postponed coalescing requests is empty. Unable to create the condition for bug reproduction.\n" );
-    ASSERT( scalable_allocation_command(TBBMALLOC_CLEAN_ALL_BUFFERS,0) == TBBMALLOC_OK, "The cleanup request has not cleaned anything." );
+    int result = scalable_allocation_command(TBBMALLOC_CLEAN_ALL_BUFFERS,0);
+    ASSERT( result == TBBMALLOC_OK, "The cleanup request has not cleaned anything." );
     size_t memory_in_use_after = getMemSize();
 
-    REMARK( "memory_in_use_before = %ld\nmemory_in_use_after = %ld\n", memory_in_use_before, memory_in_use_after );
-
     size_t memory_leak = memory_in_use_after - memory_in_use_before;
-    ASSERT( memory_leak == 0, "The backend has not processed the queue of postponed coalescing requests during cleanup." );
+    REMARK( "memory_in_use_before = %ld\nmemory_in_use_after = %ld\n", memory_in_use_before, memory_in_use_after );
+    ASSERT( memory_leak == 0, "Cleanup was unable to release all allocated memory." );
 }
 /*---------------------------------------------------------------------------*/
 /*------------------------- Large Object Cache tests ------------------------*/
@@ -1161,6 +1158,8 @@ int TestMain () {
     checkNoHugePages();
     // to succeed, leak detection must be the 1st memory-intensive test
     TestBackRef();
+    TestCleanAllBuffers<4*1024>();
+    TestCleanAllBuffers<16*1024>();
     TestPools();
     TestBackend();
 
@@ -1176,7 +1175,6 @@ int TestMain () {
     TestObjectRecognition();
     TestBitMask();
     TestHeapLimit();
-    TestCleanAllBuffers();
     TestLOC();
     TestSlabAlignment();
     return Harness::Done;

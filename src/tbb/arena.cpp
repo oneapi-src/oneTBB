@@ -672,8 +672,7 @@ void task_arena_base::internal_initialize( ) {
     if( my_max_concurrency < 1 )
         my_max_concurrency = (int)governor::default_num_threads();
     __TBB_ASSERT( my_master_slots <= (unsigned)my_max_concurrency, "Number of slots reserved for master should not exceed arena concurrency");
-    arena* new_arena = market::create_arena( my_max_concurrency, my_master_slots,
-                                             global_control::active_value(global_control::thread_stack_size) );
+    arena* new_arena = market::create_arena( my_max_concurrency, my_master_slots, 0 );
     // add an internal market reference; a public reference was added in create_arena
     market &m = market::global_market( /*is_public=*/false );
     // allocate default context for task_arena
@@ -688,7 +687,7 @@ void task_arena_base::internal_initialize( ) {
     if(as_atomic(my_arena).compare_and_swap(new_arena, NULL) != NULL) {
         __TBB_ASSERT(my_arena, NULL); // another thread won the race
         // release public market reference
-        m.release( /*is_public*/true, /*blocking_terminate=*/false );
+        m.release( /*is_public=*/true, /*blocking_terminate=*/false );
         new_arena->on_thread_leaving<arena::ref_external>(); // destroy unneeded arena
 #if __TBB_TASK_GROUP_CONTEXT
         spin_wait_while_eq(my_context, (task_group_context*)NULL);
@@ -703,7 +702,7 @@ void task_arena_base::internal_initialize( ) {
 
 void task_arena_base::internal_terminate( ) {
     if( my_arena ) {// task_arena was initialized
-        my_arena->my_market->release( /*is_public*/true, /*blocking_terminate=*/false );
+        my_arena->my_market->release( /*is_public=*/true, /*blocking_terminate=*/false );
         my_arena->on_thread_leaving<arena::ref_external>();
         my_arena = 0;
 #if __TBB_TASK_GROUP_CONTEXT

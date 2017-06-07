@@ -750,6 +750,16 @@ public:
             a = Primes[seed % (sizeof(Primes) / sizeof(Primes[0]))];
         }
     };
+    template<typename T>
+    class FastRandomBody {
+        FastRandom r;
+    public:
+        explicit FastRandomBody( unsigned seed ) : r(seed) {}
+        // Depending on the input type T the result distribution formed from this operator()
+        // might possess different characteristics than the original one used in FastRandom instance.
+        T operator()() { return T(r.get()); }
+    };
+
     int SetEnv( const char *envname, const char *envval ) {
         ASSERT( envname && envval, "Harness::SetEnv() requires two valid C strings" );
 #if __TBB_WIN8UI_SUPPORT

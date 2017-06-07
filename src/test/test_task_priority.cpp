@@ -547,7 +547,7 @@ void TestSetPriority() {
     for (int t = 0; t < 2; ++t)
         for (int i = first; i <= last; ++i) {
             REMARK("\r                    \rTask %i... ", i);
-            ASSERT(g_trees[t][i]->priority() == expected_priority[t][i]? tbb::priority_high : tbb::priority_normal, NULL);
+            ASSERT(g_trees[t][i]->priority() == (expected_priority[t][i]? tbb::priority_high : tbb::priority_normal), NULL);
             REMARK("OK");
         }
     REMARK("\r                    \r");

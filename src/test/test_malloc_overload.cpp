@@ -186,9 +186,8 @@ const uint32_t minLargeObjectSize = fittingSize5 + 1;
 
 static void scalableMallocCheckSize(void *object, size_t size)
 {
-#if __APPLE__ && __clang__ && __TBB_CLANG_VERSION >= 70300 && __TBB_CLANG_VERSION <= 80000
-// This prevents Clang 703.0.29 and later under macOS* from throwing out the
-// calls to new & delete in CheckNewDeleteOverload().
+#if __clang__
+// This prevents Clang from throwing out the calls to new & delete in CheckNewDeleteOverload().
     static void *v = object;
 #endif
     ASSERT(object, NULL);

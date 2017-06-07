@@ -32,7 +32,7 @@
 #define __TBB_TEST_SKIP_PIC_MODE 0
 #endif
 
-// no need to test gcc builtins mode on ICC
+// no need to test GCC builtins mode on ICC
 #define __TBB_TEST_SKIP_GCC_BUILTINS_MODE ( __TBB_TEST_BUILTINS && (!__TBB_GCC_BUILTIN_ATOMICS_PRESENT || __INTEL_COMPILER) )
 
 #define __TBB_TEST_SKIP_ICC_BUILTINS_MODE ( __TBB_TEST_BUILTINS && !__TBB_ICC_BUILTIN_ATOMICS_PRESENT )
@@ -78,7 +78,7 @@
 #define __TBB_TEST_SKIP_LAMBDA (__TBB_ICC_13_0_CPP11_STDLIB_SUPPORT_BROKEN || !__TBB_CPP11_LAMBDAS_PRESENT)
 
 #if __GNUC__ && __ANDROID__
-  /** Android GCC does not support _thread keyword **/
+  /** On Android* OS, GCC does not support _thread keyword **/
   #define __TBB_THREAD_LOCAL_VARIABLES_PRESENT 0
 #else
   #define __TBB_THREAD_LOCAL_VARIABLES_PRESENT 1
@@ -96,12 +96,12 @@
 //MSVC 2013 is unable to manage lifetime of temporary objects passed to a std::initializer_list constructor properly
 #define __TBB_CPP11_INIT_LIST_TEMP_OBJS_LIFETIME_BROKEN (_MSC_FULL_VER < 180030501 && _MSC_VER && !__INTEL_COMPILER)
 
-//Implementation of C++11 std::placeholders in libstdc++ coming with gcc prior to 4.5 reveals bug in Intel Compiler 13 causing "multiple definition" link errors.
+//Implementation of C++11 std::placeholders in libstdc++ coming with GCC prior to 4.5 reveals bug in Intel(R) C++ Compiler 13 causing "multiple definition" link errors.
 #define __TBB_CPP11_STD_PLACEHOLDERS_LINKAGE_BROKEN ((__INTEL_COMPILER == 1300 || __INTEL_COMPILER == 1310 )&& __GXX_EXPERIMENTAL_CXX0X__ && __TBB_GLIBCXX_VERSION < 40500)
 
-// Intel(R) Compiler have an issue when a scoped enum with a specified underlying type has negative values.
+// Intel C++ Compiler has an issue when a scoped enum with a specified underlying type has negative values.
 #define __TBB_ICC_SCOPED_ENUM_WITH_UNDERLYING_TYPE_NEGATIVE_VALUE_BROKEN ( _MSC_VER && !__TBB_DEBUG && __INTEL_COMPILER && __INTEL_COMPILER <= 1500 )
-// Intel(R) Compiler have an issue with __atomic_load_explicit from a scoped enum with a specified underlying type.
+// Intel C++ Compiler has an issue with __atomic_load_explicit from a scoped enum with a specified underlying type.
 #define __TBB_ICC_SCOPED_ENUM_WITH_UNDERLYING_TYPE_ATOMIC_LOAD_BROKEN ( TBB_USE_ICC_BUILTINS && !__TBB_DEBUG && __INTEL_COMPILER && __INTEL_COMPILER <= 1500 )
 
 //Unable to use constexpr member functions to initialize compile time constants
@@ -137,17 +137,17 @@
 // TODO: Investigate the cases that require this macro.
 #define __TBB_COMPLICATED_ADL_BROKEN ( __GNUC__ && __TBB_GCC_VERSION < 40400 )
 
-// Intel Compiler fails to compile the comparison of tuples in some cases
+// Intel C++ Compiler fails to compile the comparison of tuples in some cases
 #if __INTEL_COMPILER && __INTEL_COMPILER < 1700
   #define __TBB_TUPLE_COMPARISON_COMPILATION_BROKEN (__TBB_GLIBCXX_VERSION >= 40800 || __MIC__)
 #endif
 
-// Intel Compiler fails to compile std::reference in some cases
+// Intel C++ Compiler fails to compile std::reference in some cases
 #if __INTEL_COMPILER && __INTEL_COMPILER < 1600 || __INTEL_COMPILER == 1600 && __INTEL_COMPILER_UPDATE <= 1
   #define __TBB_REFERENCE_WRAPPER_COMPILATION_BROKEN (__TBB_GLIBCXX_VERSION >= 40800 && __TBB_GLIBCXX_VERSION <= 50101 || __MIC__)
 #endif
 
-// Intel Compiler fails to generate non-throwing move members for a class inherited from template
+// Intel C++ Compiler fails to generate non-throwing move members for a class inherited from template
 #define __TBB_NOTHROW_MOVE_MEMBERS_IMPLICIT_GENERATION_BROKEN \
     (__INTEL_COMPILER==1700 || __INTEL_COMPILER==1600 || __INTEL_COMPILER==1500 && __INTEL_COMPILER_UPDATE>3)
 

@@ -184,10 +184,12 @@ bool market::release ( bool is_public, bool blocking_terminate ) {
             __TBB_ASSERT( is_public, "Only an object with a public reference can request the blocking terminate" );
             while ( my_public_ref_count == 1 && my_ref_count > 1 ) {
                 lock.release();
-                // To guarantee that request_close_connection() is called by master, we need to wait till all references
-                // are released. Re-read my_public_ref_count to limit waiting if new masters are created.
-                // TODO: revise why weak scheduler needs the market's pointer and try to remove this wait.
-                // Note that market should know about its schedulers for cancelation/exception/priority propagation,
+                // To guarantee that request_close_connection() is called by the last master, we need to wait till all
+                // references are released. Re-read my_public_ref_count to limit waiting if new masters are created.
+                // Theoretically, new private references to the market can be added during waiting making it potentially
+                // endless.
+                // TODO: revise why the weak scheduler needs market's pointer and try to remove this wait.
+                // Note that the market should know about its schedulers for cancelation/exception/priority propagation,
                 // see e.g. task_group_context::cancel_group_execution()
                 while ( __TBB_load_with_acquire( my_public_ref_count ) == 1 && __TBB_load_with_acquire( my_ref_count ) > 1 )
                     __TBB_Yield();
@@ -202,13 +204,6 @@ bool market::release ( bool is_public, bool blocking_terminate ) {
         if ( --my_ref_count == 0 ) {
             __TBB_ASSERT( !my_public_ref_count, NULL );
             do_release = true;
-            // Currently weak scheduler keeps pointer to market and no public reference,
-            // so we must not clear theMarket when only my_public_ref_count == 0. Cleaning
-            // theMarket when my_ref_count == 0 leads to a situation when new references to
-            // market can be added during my_ref_count>1 waiting, so it can be no limit on waiting.
-            // TODO: revise why weak scheduler needs the market's pointer and try to clean theMarket
-            // when my_public_ref_count == 0. Market should know about its schedulers for
-            // cancelation/exception/priority propagation, see e.g. task_group_context::cancel_group_execution()
             theMarket = NULL;
         }
     }

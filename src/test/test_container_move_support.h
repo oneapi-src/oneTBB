@@ -495,7 +495,7 @@ struct memory_locations {
 void TestMemoryLocaionsHelper(){
     const size_t test_sequence_len =  15;
     std::vector<char> source(test_sequence_len, 0);
-    std::generate_n(source.begin(), source.size(), std::rand);
+    std::generate_n(source.begin(), source.size(), Harness::FastRandomBody<char>(1));
 
     memory_locations source_memory_locations((source));
 

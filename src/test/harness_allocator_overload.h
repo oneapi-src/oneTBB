@@ -26,9 +26,9 @@
 
 // Skip configurations with unsupported system malloc overload:
 // skip unsupported MSVCs, WIN8UI and MINGW (it doesn't define _MSC_VER),
-// no support for MSVC 2015 in debug for now,
+// no support for MSVC 2015 and greater in debug for now,
 // don't use defined(_MSC_VER), because result of using defined() in macro expansion is undefined
-#define MALLOC_WINDOWS_OVERLOAD_ENABLED ((_WIN32||_WIN64) && !__TBB_WIN8UI_SUPPORT && _MSC_VER >= 1500 && !(_MSC_VER == 1900 && _DEBUG))
+#define MALLOC_WINDOWS_OVERLOAD_ENABLED ((_WIN32||_WIN64) && !__TBB_WIN8UI_SUPPORT && _MSC_VER >= 1500 && !(_MSC_VER >= 1900 && _DEBUG))
 
 // Skip configurations with unsupported system malloc overload:
 // * overload via linking with -lmalloc_proxy is broken in offload,

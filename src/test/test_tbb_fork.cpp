@@ -24,10 +24,6 @@
 #include "tbb/cache_aligned_allocator.h"
 #include "tbb/parallel_for.h"
 
-#if TBB_USE_EXCEPTIONS
-#include <exception>
-#endif
-
 #define HARNESS_DEFAULT_MIN_THREADS (tbb::task_scheduler_init::default_num_threads())
 #define HARNESS_DEFAULT_MAX_THREADS (4*tbb::task_scheduler_init::default_num_threads())
 #if __bg__
@@ -230,21 +226,6 @@ void TestAutoInit()
     NativeParallelFor(1, RunInNativeThread(/*create_tsi=*/true, /*blocking=*/true));
 }
 
-#if TBB_USE_EXCEPTIONS
-void TestExceptions()
-{
-    tbb::task_scheduler_init schBlock(2);
-    try {
-        tbb::task_scheduler_init schBlock1(2);
-        schBlock1.blocking_terminate();
-        ASSERT(0, "Blocking terminate for nested scheduler is impossible.");
-    } catch (std::exception&) {}
-    schBlock.blocking_terminate();
-}
-#else
-void TestExceptions() { }
-#endif
-
 int TestMain()
 {
     using namespace Harness;
@@ -341,7 +322,6 @@ int TestMain()
 #endif // _WIN32||_WIN64
         }
     }
-    TestExceptions();
     // auto initialization at this point
     TestAutoInit();
 

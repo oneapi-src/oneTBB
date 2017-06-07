@@ -389,10 +389,17 @@ public:
 
     dependency_msg& operator=(const dependency_msg &dmsg) {
         async_msg<T>::operator =(dmsg);
+
+        // Release original event
+        if ( my_is_event )
+            enforce_cl_retcode( clReleaseEvent( my_event ), "Failed to retain an event" );
+
         my_data = dmsg.my_data;
         my_event = dmsg.my_event;
         my_is_event = dmsg.my_is_event;
         my_graph = dmsg.my_graph;
+
+        // Retain copied event
         if ( my_is_event )
             enforce_cl_retcode( clRetainEvent( my_event ), "Failed to retain an event" );
 

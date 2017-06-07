@@ -160,7 +160,7 @@ private:
 class gfx_factory {
 private:
 
-    // Wrapper for gfx kernel which is just a function
+    // Wrapper for GFX kernel which is just a function
     class func_wrapper {
     public:
 

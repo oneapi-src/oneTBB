@@ -27,9 +27,6 @@
 #include "../tbb/tbb_version.h"
 #include "../tbb/itt_notify.h" // for __TBB_load_ittnotify()
 
-//! Define the main synchronization method
-#define FINE_GRAIN_LOCKS
-
 #if USE_PTHREAD
     #define TlsSetValue_func pthread_setspecific
     #define TlsGetValue_func pthread_getspecific
@@ -88,11 +85,6 @@ bool RecursiveMallocCallProtector::noRecursion() {
  * Block::objectSize value used to mark blocks allocated by startupAlloc
  */
 const uint16_t startupAllocObjSizeMark = ~(uint16_t)0;
-
-/*
- * This number of bins in the TLS that leads to blocks that we can allocate in.
- */
-const uint32_t numBlockBinLimit = 31;
 
 /*
  * The following constant is used to define the size of struct Block, the block header.
@@ -260,35 +252,6 @@ inline void TLSKey::setThreadMallocTLS( TLSData * newvalue ) {
 class Bin;
 class StartupBlock;
 
-class LifoList {
-public:
-    inline LifoList();
-    inline void push(Block *block);
-    inline Block *pop();
-
-private:
-    Block *top;
-#ifdef FINE_GRAIN_LOCKS
-    MallocMutex lock;
-#endif /* FINE_GRAIN_LOCKS     */
-};
-
-/*
- * When a block that is not completely free is returned for reuse by other threads
- * this is where the block goes.
- *
- * LifoList assumes zero initialization; so below its constructors are omitted,
- * to avoid linking with C++ libraries on Linux.
- */
-
-class OrphanedBlocks {
-    LifoList bins[numBlockBinLimit];
-public:
-    Block *get(TLSData *tls, unsigned int size);
-    void put(Bin *bin, Block *block);
-    void reset();
-};
-
 class MemoryPool {
     // if no explicit grainsize, expect to see malloc in user's pAlloc
     // and set reasonable low granularity
@@ -303,7 +266,6 @@ public:
     MemoryPool    *next,
                   *prev;
     ExtMemoryPool  extMemPool;
-    OrphanedBlocks orphanedBlocks;
     BootStrapBlocks bootStrapBlocks;
 
     bool init(intptr_t poolId, const MemPoolPolicy* memPoolPolicy);
@@ -370,10 +332,11 @@ protected:
     uint16_t     objectSize;
     bool         isFull;
 
-    friend void *BootStrapBlocks::allocate(MemoryPool *, size_t);
     friend class FreeBlockPool;
     friend class StartupBlock;
     friend class LifoList;
+    friend void *BootStrapBlocks::allocate(MemoryPool *, size_t);
+    friend bool OrphanedBlocks::cleanup(Backend*);
     friend Block *MemoryPool::getEmptyBlock(size_t);
 };
 
@@ -391,10 +354,10 @@ public:
     void freePublicObject(FreeObject *objectToFree);
     inline void freeOwnObject(void *object);
     void makeEmpty();
-    void privatizePublicFreeList();
+    void privatizePublicFreeList( bool cleanup = false );
     void restoreBumpPtr();
     void privatizeOrphaned(TLSData *tls, unsigned index);
-    void shareOrphaned(const Bin *bin, unsigned index);
+    void shareOrphaned(intptr_t binTag, unsigned index);
     unsigned int getSize() const {
         MALLOC_ASSERT(isStartupAllocObject() || objectSize<minLargeObjectSize,
                       "Invalid object size");
@@ -936,7 +899,6 @@ inline bool isNotForUse( void* ptr )
 
 /********* End rough utility code  **************/
 
-#ifdef FINE_GRAIN_LOCKS
 /* LifoList assumes zero initialization so a vector of it can be created
  * by just allocating some space with no call to constructor.
  * On Linux, it seems to be necessary to avoid linking with C++ libraries.
@@ -958,18 +920,26 @@ void LifoList::push(Block *block)
 Block *LifoList::pop()
 {
     Block *block=NULL;
-    if (!top) goto done;
-    {
+    if (top) {
         MallocMutex::scoped_lock scoped_cs(lock);
-        if (!top) goto done;
-        block = top;
-        top = block->next;
+        if (top) {
+            block = top;
+            top = block->next;
+        }
     }
-done:
     return block;
 }
 
-#endif /* FINE_GRAIN_LOCKS     */
+Block *LifoList::grab()
+{
+    Block *block = NULL;
+    if (top) {
+        MallocMutex::scoped_lock scoped_cs(lock);
+        block = top;
+        top = NULL;
+    }
+    return block;
+}
 
 /********* Thread and block related code      *************/
 
@@ -1122,7 +1092,6 @@ bool MemoryPool::reset()
     extMemPool.delayRegionsReleasing(true);
 
     bootStrapBlocks.reset();
-    orphanedBlocks.reset();
     extMemPool.lmbList.releaseAll</*poolDestroy=*/false>(&extMemPool.backend);
     if (!extMemPool.reset())
         return false;
@@ -1160,7 +1129,7 @@ bool MemoryPool::destroy()
         // for user pool, because it's just about to be released. But for system
         // pool restoring, we do not want to do zeroing of it on subsequent reload.
         bootStrapBlocks.reset();
-        orphanedBlocks.reset();
+        extMemPool.orphanedBlocks.reset();
     }
     return extMemPool.destroy();
 }
@@ -1401,11 +1370,12 @@ void Block::freePublicObject (FreeObject *objectToFree)
     STAT_increment(ownerTid, getIndex(objectSize), freeByOtherThread);
 }
 
-void Block::privatizePublicFreeList()
+void Block::privatizePublicFreeList( bool cleanup )
 {
     FreeObject *temp, *localPublicFreeList;
 
-    MALLOC_ASSERT( isOwnedByCurrentThread(), ASSERT_TEXT );
+    // During cleanup of orphaned blocks, the calling thread is not registered as the owner 
+    MALLOC_ASSERT( cleanup || isOwnedByCurrentThread(), ASSERT_TEXT );
 #if FREELIST_NONBLOCKING
     temp = publicFreeList;
     do {
@@ -1426,8 +1396,10 @@ void Block::privatizePublicFreeList()
 #endif
     MALLOC_ITT_SYNC_ACQUIRED(&publicFreeList);
 
-    MALLOC_ASSERT( localPublicFreeList && localPublicFreeList==temp, ASSERT_TEXT ); // there should be something in publicFreeList!
-    if( !isNotForUse(temp) ) { // return/getPartialBlock could set it to UNUSABLE
+     // there should be something in publicFreeList, unless called by cleanup of orphaned blocks
+    MALLOC_ASSERT( cleanup || localPublicFreeList, ASSERT_TEXT );
+    MALLOC_ASSERT( localPublicFreeList==temp, ASSERT_TEXT );
+    if( isSolidPtr(temp) ) { // return/getPartialBlock could set it to UNUSABLE
         MALLOC_ASSERT( allocatedCount <= (slabSize-sizeof(Block))/objectSize, ASSERT_TEXT );
         /* other threads did not change the counter freeing our blocks */
         allocatedCount--;
@@ -1465,14 +1437,14 @@ void Block::privatizeOrphaned(TLSData *tls, unsigned index)
     MALLOC_ASSERT( !isNotForUse(publicFreeList), ASSERT_TEXT );
 }
 
-void Block::shareOrphaned(const Bin *bin, unsigned index)
+void Block::shareOrphaned(intptr_t binTag, unsigned index)
 {
-    MALLOC_ASSERT( bin, ASSERT_TEXT );
+    MALLOC_ASSERT( binTag, ASSERT_TEXT );
     STAT_increment(getThreadId(), index, freeBlockPublic);
     markOrphaned();
     // need to set publicFreeList to non-zero, so other threads
     // will not change nextPrivatizable and it can be zeroed.
-    if ((intptr_t)nextPrivatizable==(intptr_t)bin) {
+    if ((intptr_t)nextPrivatizable==binTag) {
         void* oldval;
 #if FREELIST_NONBLOCKING
         oldval = (void*)AtomicCompareExchange((intptr_t&)publicFreeList, (intptr_t)UNUSABLE, 0);
@@ -1486,10 +1458,11 @@ void Block::shareOrphaned(const Bin *bin, unsigned index)
 #endif
         if ( oldval!=NULL ) {
             // another thread freed an object; we need to wait until it finishes.
-            // I believe there is no need for exponential backoff, as the wait here is not for a lock;
+            // There is no need for exponential backoff, as the wait here is not for a lock;
             // but need to yield, so the thread we wait has a chance to run.
+            // TODO: add a pause to also be friendly to hyperthreads
             int count = 256;
-            while( (intptr_t)const_cast<Block* volatile &>(nextPrivatizable)==(intptr_t)bin ) {
+            while( (intptr_t)const_cast<Block* volatile &>(nextPrivatizable)==binTag ) {
                 if (--count==0) {
                     do_yield();
                     count = 256;
@@ -1552,10 +1525,10 @@ Block *OrphanedBlocks::get(TLSData *tls, unsigned int size)
     return block;
 }
 
-void OrphanedBlocks::put(Bin* bin, Block *block)
+void OrphanedBlocks::put(intptr_t binTag, Block *block)
 {
     unsigned int index = getIndex(block->getSize());
-    block->shareOrphaned(bin, index);
+    block->shareOrphaned(binTag, index);
     MALLOC_ITT_SYNC_RELEASING(bins+index);
     bins[index].push(block);
 }
@@ -1564,6 +1537,32 @@ void OrphanedBlocks::reset()
 {
     for (uint32_t i=0; i<numBlockBinLimit; i++)
         new (bins+i) LifoList();
+}
+
+bool OrphanedBlocks::cleanup(Backend* backend)
+{
+    bool result = false;
+    for (uint32_t i=0; i<numBlockBinLimit; i++) {
+        Block* block = bins[i].grab();
+        MALLOC_ITT_SYNC_ACQUIRED(bins+i);
+        while (block) {
+            Block* next = block->next;
+            block->privatizePublicFreeList( /*cleanup=*/true );
+            if (block->empty()) {
+                block->makeEmpty();
+                // slab blocks in user's pools do not have valid backRefIdx
+                if (!backend->inUserPool())
+                    removeBackRef(*(block->getBackRefIdx()));
+                backend->putSlabBlock(block);
+                result = true;
+            } else {
+                MALLOC_ITT_SYNC_RELEASING(bins+i);
+                bins[i].push(block);
+            }
+            block = next;
+        }
+    }
+    return result;
 }
 
 FreeBlockPool::ResOfGet FreeBlockPool::getBlock()
@@ -1709,7 +1708,7 @@ void TLSData::release(MemoryPool *mPool)
                 /* we destroy the thread, so not use its block pool */
                 mPool->returnEmptyBlock(threadlessBlock, /*poolTheBlock=*/false);
             } else {
-                mPool->orphanedBlocks.put(bin+index, threadlessBlock);
+                mPool->extMemPool.orphanedBlocks.put(intptr_t(bin+index), threadlessBlock);
             }
             threadlessBlock = threadBlock;
         }
@@ -1720,7 +1719,7 @@ void TLSData::release(MemoryPool *mPool)
                 /* we destroy the thread, so not use its block pool */
                 mPool->returnEmptyBlock(threadlessBlock, /*poolTheBlock=*/false);
             } else {
-                mPool->orphanedBlocks.put(bin+index, threadlessBlock);
+                mPool->extMemPool.orphanedBlocks.put(intptr_t(bin+index), threadlessBlock);
             }
             threadlessBlock = threadBlock;
         }
@@ -1880,7 +1879,7 @@ bool GetBoolEnvironmentVariable(const char *) { return false; }
 #else
 bool GetBoolEnvironmentVariable(const char *name)
 {
-    if( const char* s = getenv(name) )
+    if (const char* s = getenv(name))
         return strcmp(s,"0") != 0;
     return false;
 }
@@ -1890,6 +1889,7 @@ void AllocControlledMode::initReadEnv(const char *envName, intptr_t defaultVal)
 {
     if (!setDone) {
 #if !__TBB_WIN8UI_SUPPORT
+    // TODO: use strtol to get the actual value of the envirable
         const char *envVal = getenv(envName);
         if (envVal && !strcmp(envVal, "1"))
             val = 1;
@@ -2541,13 +2541,13 @@ static void *internalPoolMalloc(MemoryPool* memPool, size_t size)
     /*
      * no suitable own blocks, try to get a partial block that some other thread has discarded.
      */
-    mallocBlock = memPool->orphanedBlocks.get(tls, size);
+    mallocBlock = memPool->extMemPool.orphanedBlocks.get(tls, size);
     while (mallocBlock) {
         bin->pushTLSBin(mallocBlock);
         bin->setActiveBlock(mallocBlock); // TODO: move under the below condition?
         if( FreeObject *result = mallocBlock->allocate() )
             return result;
-        mallocBlock = memPool->orphanedBlocks.get(tls, size);
+        mallocBlock = memPool->extMemPool.orphanedBlocks.get(tls, size);
     }
 
     /*
