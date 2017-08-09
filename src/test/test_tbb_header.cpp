@@ -277,6 +277,7 @@ int TestMain ()
     TestTypeDefinitionPresence( task_handle<Body> );
 #endif /* __TBB_TASK_GROUP_CONTEXT */
     TestTypeDefinitionPresence( blocked_range3d<int> );
+    TestTypeDefinitionPresence( blocked_range4d<int> );
     TestFuncDefinitionPresence( parallel_invoke, (const Body&, const Body&), void );
     TestFuncDefinitionPresence( parallel_do, (int*, int*, const Body1&), void );
     TestFuncDefinitionPresence( parallel_for_each, (int*, int*, const Body1&), void );

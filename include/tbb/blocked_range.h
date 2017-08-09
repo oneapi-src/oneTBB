@@ -152,6 +152,9 @@ private:
 
     template<typename RowValue, typename ColValue, typename PageValue>
     friend class blocked_range3d;
+
+    template<typename RowValue, typename ColValue, typename PageValue, typename BookValue>
+    friend class blocked_range4d;
 };
 
 } // namespace tbb

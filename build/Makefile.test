@@ -125,6 +125,7 @@ TEST_TBB_PLAIN.EXE = test_assembly.$(TEST_EXT)   \
 	test_blocked_range.$(TEST_EXT)               \
 	test_blocked_range2d.$(TEST_EXT)             \
 	test_blocked_range3d.$(TEST_EXT)             \
+	test_blocked_range4d.$(TEST_EXT)             \
 	test_concurrent_queue.$(TEST_EXT)            \
 	test_concurrent_vector.$(TEST_EXT)           \
 	test_concurrent_unordered_set.$(TEST_EXT)    \
