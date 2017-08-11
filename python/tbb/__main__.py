@@ -1,3 +1,4 @@
+#
 # Copyright (c) 2005-2017 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,32 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-#
-#
-#
 
-all: release test
 
-clean:
-	$(MAKE) -rf rml/Makefile tbb_root=.. clean
-	python setup.py clean
-	-rm -rf build/ tbb_wrap.* _TBB.* *.pyc TBB.py*
-
-release: rml_release TBB.py
-
-TBB.py: tbb.i tbb.src.py setup.py
-	python setup.py build_ext -f --inplace
-
-ipc-rml:
-	$(MAKE) -rf rml/Makefile tbb_root=.. rml_dll cfg=release
-
-test: TBB.py
-	python TBB.py test
-
-install:
-	python setup.py install
-
-test-install:
-	@echo Testing installed module
-	python -m TBB test
+from . import _main
+from sys import exit
+exit(_main())

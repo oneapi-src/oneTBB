@@ -58,7 +58,7 @@ else:
     tbb_flag = ['-tbb'] if use_compiler_tbb else []
     compile_flags = ['-std=c++11', '-Wno-unused-variable']
 
-_tbb = Extension("_TBB", ["tbb.i"],
+_tbb = Extension("tbb._api", ["tbb/api.i"],
         include_dirs=[os.path.join(tbb_root, 'include')] if not use_compiler_tbb else [],
         swig_opts   =['-c++', '-O', '-threads'] + (  # add '-builtin' later
               ['-I' + os.path.join(tbb_root, 'include')] if not use_compiler_tbb else []),
@@ -99,11 +99,9 @@ setup(  name        ="TBB",
             'Intended Audience :: Other Audience',
             'Intended Audience :: Science/Research',
             'License :: OSI Approved :: Apache Software License',
-            'License :: Other/Proprietary License',
             'Operating System :: MacOS :: MacOS X',
             'Operating System :: Microsoft :: Windows',
-            'Operating System :: POSIX',
-            'Operating System :: Unix',
+            'Operating System :: POSIX :: Linux',
             'Programming Language :: Python',
             'Programming Language :: Python :: 2',
             'Programming Language :: Python :: 3',
@@ -111,8 +109,9 @@ setup(  name        ="TBB",
             'Topic :: System :: Hardware :: Symmetric Multi-processing',
             'Topic :: Software Development :: Libraries',
           ],
-        keywords='tbb multiprocessing multithreading composable parallelism',
+        keywords='TBB multiprocessing multithreading composable parallelism',
         ext_modules=[_tbb],
+        packages=['tbb'],
         py_modules=['TBB'],
         cmdclass={'build': TBBBuild}
 )

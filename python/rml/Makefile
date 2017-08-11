@@ -16,74 +16,136 @@
 #
 #
 
-TBB_ROOT = ../..
-BUILDING_PHASE:=0
-tbb_root = $(TBB_ROOT)
-include $(TBB_ROOT)/build/common.inc
 
-INCS += -I $(TBB_ROOT)/src
-INCS += -I $(TBB_ROOT)/include
-INCS += -I $(TBB_ROOT)/src/rml/include
-INCS += -I .
+.NOTPARALLEL:
 
-SRCS += ipc_server.cpp
-SRCS += ipc_utils.cpp
-SRCS += $(TBB_ROOT)/src/tbb/cache_aligned_allocator.cpp
-SRCS += $(TBB_ROOT)/src/tbb/dynamic_link.cpp
-SRCS += $(TBB_ROOT)/src/tbb/tbb_misc.cpp
-SRCS += $(TBB_ROOT)/src/tbb/tbb_misc_ex.cpp
+tbb_root ?= ../..
+BUILDING_PHASE=0
+TEST_RESOURCE = $(RML.RES)
+include $(tbb_root)/build/common.inc
+DEBUG_SUFFIX=$(findstring _debug,_$(cfg))
 
-OBJS += ipc_server.o
-OBJS += ipc_utils.o
-OBJS += cache_aligned_allocator.o
-OBJS += dynamic_link.o
-OBJS += tbb_misc.o
-OBJS += tbb_misc_ex.o
-
-CFLAGS = -c -fpic -lpthread -DUSE_PTHREAD
-CFLAGS_DEBUG = -O0 -g -DTBB_USE_DEBUG
-CFLAGS_RELEASE = -O2
-
-.PHONY: all clean
-
-all: release debug
-
-clean:
-	-rm -rf *.o *.so* version_string.ver
-	-rm -rf $(work_dir)_release/libirml*
-	-rm -rf $(work_dir)_debug/libirml*
-
-mkdir_release:
-	$(shell $(MD) "$(work_dir)_release" >$(NUL) 2>$(NUL))
-	@echo Created $(work_dir)_release directory
-
-mkdir_debug:
-	$(shell $(MD) "$(work_dir)_debug" >$(NUL) 2>$(NUL))
-	@echo Created $(work_dir)_debug directory
-
-ifeq ($(OS), Linux)
-debug: libirml_debug
-release: libirml_release
-else
-debug:
-release:
+ifeq (android,$(target))
+$(error "RML is not supported on Android")
 endif
 
-libirml_debug: BUILDING_LIBRARY = libirml_debug.so.1
-libirml_debug: mkdir_debug libirml_debug.o
-	$(CXX) $(LIB_LINK_FLAGS) -o $(work_dir)_debug/libirml_debug.so.1 $(OBJS)
-	echo "INPUT (libirml_debug.so.1) > "$(work_dir)_debug/libirml_debug.so
+.PHONY: default_rml rml rml_test clean
 
-libirml_debug.o: $(SRCS) version_info
-	$(CXX) $(CFLAGS) $(CFLAGS_DEBUG) $(INCS) $(SRCS)
+# default target
+default_rml: rml rml_test
 
-libirml_release: BUILDING_LIBRARY = libirml.so.1
-libirml_release: mkdir_release libirml_release.o
-	$(CXX) $(LIB_LINK_FLAGS) -o $(work_dir)_release/libirml.so.1 $(OBJS)
-	echo "INPUT (libirml.so.1)" > $(work_dir)_release/libirml.so
+RML_ROOT ?= $(tbb_root)/src/rml
+RML_SERVER_ROOT = $(RML_ROOT)/server
+# TODO: new API needs to be added for this server, exposing everything
+RML.DEF =
 
-libirml_release.o: $(SRCS) version_info
-	$(CXX) $(CFLAGS) $(CFLAGS_RELEASE) $(INCS) $(SRCS)
+VPATH = $(tbb_root)/src/tbb $(tbb_root)/src/tbb/$(ASSEMBLY_SOURCE)
+VPATH += $(tbb_root)/python/rml $(RML_ROOT)/test $(tbb_root)/src/test
 
-version_info:
-	$(MAKE_VERSIONS)
+include $(tbb_root)/build/common_rules.inc
+
+#--------------------------------------------------------------------------
+# Define rules for making the RML server shared library and client objects.
+#--------------------------------------------------------------------------
+
+# Object files that make up RML server
+RML_SERVER.OBJ = ipc_server.$(OBJ)
+
+# Object files that RML clients need
+RML_TBB_CLIENT.OBJ ?= ipc_utils.$(OBJ)
+RML.OBJ = $(RML_SERVER.OBJ) $(RML_TBB_CLIENT.OBJ)
+ifeq (windows,$(tbb_os))
+RML_ASM.OBJ = $(if $(findstring intel64,$(arch)),$(TBB_ASM.OBJ))
+endif
+ifeq (linux,$(tbb_os))
+RML_ASM.OBJ = $(if $(findstring ia64,$(arch)),$(TBB_ASM.OBJ))
+endif
+
+RML_TBB_DEP= cache_aligned_allocator_rml.$(OBJ) dynamic_link_rml.$(OBJ) tbb_misc_rml.$(OBJ) tbb_misc_ex_rml.$(OBJ)
+TBB_DEP_NON_RML_TEST?= cache_aligned_allocator_rml.$(OBJ) dynamic_link_rml.$(OBJ) $(RML_ASM.OBJ) tbb_misc_rml.$(OBJ) tbb_misc_ex_rml.$(OBJ)
+ifeq ($(cfg),debug)
+RML_TBB_DEP+= spin_mutex_rml.$(OBJ)
+TBB_DEP_RML_TEST?= $(RML_ASM.OBJ) tbb_misc_rml.$(OBJ)
+else
+TBB_DEP_RML_TEST?= $(RML_ASM.OBJ)
+endif
+LIBS += $(LIBDL)
+
+INCLUDES += $(INCLUDE_KEY)$(RML_ROOT)/include $(INCLUDE_KEY).
+T_INCLUDES = $(INCLUDES) $(INCLUDE_KEY)$(tbb_root)/src/test $(INCLUDE_KEY)$(RML_SERVER_ROOT)
+
+# Suppress superfluous warnings for RML compilation
+R_CPLUS_FLAGS =  $(subst DO_ITT_NOTIFY,DO_ITT_NOTIFY=0,$(CPLUS_FLAGS)) $(WARNING_SUPPRESS) \
+		 $(DEFINE_KEY)TBB_USE_THREADING_TOOLS=0 $(DEFINE_KEY)__TBB_RML_STATIC=1 $(DEFINE_KEY)__TBB_NO_IMPLICIT_LINKAGE=1
+
+%.$(OBJ): %.cpp
+	$(CPLUS) $(COMPILE_ONLY) $(R_CPLUS_FLAGS) $(PIC_KEY) $(DSE_KEY) $(INCLUDES) $<
+
+tbb_misc_rml.$(OBJ) $(RML_SERVER.OBJ): version_string.ver
+
+RML_TEST.OBJ = test_job_automaton.$(OBJ) test_thread_monitor.$(OBJ) test_rml_tbb.$(OBJ)
+
+$(RML_TBB_DEP): %_rml.$(OBJ): %.cpp
+	$(CPLUS) $(COMPILE_ONLY) $(OUTPUTOBJ_KEY)$@ $(R_CPLUS_FLAGS) $(PIC_KEY) $(DSE_KEY) $(INCLUDES) $<
+
+$(RML_TEST.OBJ): %.$(OBJ): %.cpp
+	$(CPLUS) $(COMPILE_ONLY) $(R_CPLUS_FLAGS) $(PIC_KEY) $(T_INCLUDES) $<
+
+ifneq (,$(RML.DEF))
+rml.def: $(RML.DEF)
+	$(CPLUS) $(PREPROC_ONLY) $< $(CPLUS_FLAGS) $(INCLUDES) > $@
+
+LIB_LINK_FLAGS += $(EXPORT_KEY)rml.def
+$(RML.DLL): rml.def
+endif
+
+$(RML.DLL): CPLUS_FLAGS += $(SDL_FLAGS)
+$(RML.DLL): BUILDING_LIBRARY = $(RML.DLL)
+$(RML.DLL): $(RML_TBB_DEP) $(RML.OBJ) $(RML.RES) $(RML_NO_VERSION.DLL) $(RML_ASM.OBJ)
+	$(LIB_LINK_CMD) $(LIB_OUTPUT_KEY)$(RML.DLL) $(RML.OBJ) $(RML_TBB_DEP) $(RML_ASM.OBJ) $(RML.RES) $(LIB_LINK_LIBS) $(LIB_LINK_FLAGS)
+
+ifneq (,$(RML_NO_VERSION.DLL))
+$(RML_NO_VERSION.DLL):
+	echo "INPUT ($(RML.DLL))" > $(RML_NO_VERSION.DLL)
+endif
+
+rml: rml_dll
+rml_dll: $(RML.DLL)
+
+#------------------------------------------------------
+# End of rules for making the RML server shared library
+#------------------------------------------------------
+
+#------------------------------------------------------
+# Define rules for making the RML unit tests
+#------------------------------------------------------
+
+add_debug=$(basename $(1))_debug$(suffix $(1))
+cross_suffix=$(if $(crosstest),$(if $(DEBUG_SUFFIX),$(subst _debug,,$(1)),$(call add_debug,$(1))),$(1))
+
+RML_TESTS = test_job_automaton.$(TEST_EXT) test_thread_monitor.$(TEST_EXT)
+RML_CUSTOM_TESTS = test_rml_tbb.$(TEST_EXT)
+
+test_rml_tbb.$(TEST_EXT): test_rml_tbb.$(OBJ) $(RML_TBB_CLIENT.OBJ) $(TBB_DEP_RML_TEST)
+	$(CPLUS) $(OUTPUT_KEY)$@ $(CPLUS_FLAGS) test_rml_tbb.$(OBJ) $(RML_TBB_CLIENT.OBJ) $(TBB_DEP_RML_TEST) $(LIBS) $(LINK_FLAGS)
+
+$(RML_TESTS): %.$(TEST_EXT): %.$(OBJ) $(TBB_DEP_NON_RML_TEST)
+	$(CPLUS) $(OUTPUT_KEY)$@ $(CPLUS_FLAGS) $< $(TBB_DEP_NON_RML_TEST) $(LIBS) $(LINK_FLAGS)
+
+### run_cmd is usually empty
+rml_test: $(call cross_suffix,$(RML.DLL)) $(TEST_PREREQUISITE) $(RML_TESTS) $(RML_CUSTOM_TESTS)
+	$(run_cmd) ./test_job_automaton.$(TEST_EXT) $(args)
+	$(run_cmd) ./test_thread_monitor.$(TEST_EXT) $(args)
+	$(run_cmd) ./test_rml_tbb.$(TEST_EXT) $(args)
+
+#------------------------------------------------------
+# End of rules for making the TBBMalloc unit tests
+#------------------------------------------------------
+
+# Include automatically generated dependencies
+-include *.d
+
+clean:
+	-rm -rf *.o *.so* *.d *.def version_string.ver
+	-rm -rf $(work_dir)_release/libirml*
+	-rm -rf $(work_dir)_debug/libirml*

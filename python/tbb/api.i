@@ -18,50 +18,19 @@
 #
 #
 
-
-# Based on the software developed by:
-# Copyright (c) 2008,2016 david decotigny (Pool of threads)
-# Copyright (c) 2006-2008, R Oudkerk (multiprocessing.Pool)
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-# 3. Neither the name of author nor the names of any contributors may be
-#    used to endorse or promote products derived from this software
-#    without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-# SUCH DAMAGE.
-#
-
-from __future__ import print_function
+__all__ = ["task_arena", "task_group", "task_scheduler_init", "global_control", "default_num_threads"]
 %}
 %begin %{
 /* Defines Python wrappers for Intel(R) Threading Building Blocks (Intel TBB).*/
 %}
-%module TBB
+%module api
 
 #if SWIG_VERSION < 0x030001
 #error SWIG version 3.0.6 or newer is required for correct functioning
 #endif
 
 %{
+#define TBB_PREVIEW_GLOBAL_CONTROL 1
 #include <tbb/tbb.h>
 using namespace tbb;
 
@@ -140,7 +109,21 @@ namespace tbb {
         };
     };
 
-}
+    class global_control {
+    public:
+        enum parameter {
+            max_allowed_parallelism,
+            thread_stack_size,
+            parameter_max // insert new parameters above this point
+        };
+        global_control(parameter param, size_t value);
+        ~global_control();
+        static size_t active_value(parameter param);
+    };
 
-// Python part of the module
-%pythoncode "tbb.src.py"
+} // tbb
+
+// Additional definitions for Python part of the module
+%pythoncode %{
+default_num_threads = task_scheduler_init_default_num_threads
+%}

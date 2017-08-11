@@ -33,12 +33,12 @@
 namespace rml {
 namespace internal {
 
-static const char* IPC_DISABLE_VAR_NAME = "IPC_DISABLE";
+static const char* IPC_ENABLE_VAR_NAME = "IPC_ENABLE";
 
 typedef versioned_object::version_type version_type;
 
 extern "C" factory::status_type __RML_open_factory(factory& f, version_type& server_version, version_type client_version) {
-    if( tbb::internal::rml::get_disable_flag( IPC_DISABLE_VAR_NAME ) ) {
+    if( !tbb::internal::rml::get_enable_flag( IPC_ENABLE_VAR_NAME ) ) {
         return factory::st_incompatible;
     }
 
@@ -181,25 +181,38 @@ extern "C" void release_resources() {
 }
 
 extern "C" void release_semaphores() {
-    char* sem_name = get_active_sem_name();
+    int status = 0;
+    char* sem_name = NULL;
+
+    sem_name = get_active_sem_name();
     if( sem_name==NULL ) {
-        runtime_warning("Can not release RML semaphore");
+        runtime_warning("Can not get RML semaphore name");
         return;
     }
-    if( sem_unlink( sem_name )!=0 ) {
-        runtime_warning("Can not release RML semaphore");
-        return;
+    status = sem_unlink( sem_name );
+    if( status!=0 ) {
+        if( errno==ENOENT ) {
+            /* There is no semaphore with the given name, nothing to do */
+        } else {
+            runtime_warning("Can not release RML semaphore");
+            return;
+        }
     }
     delete[] sem_name;
 
     sem_name = get_stop_sem_name();
     if( sem_name==NULL ) {
-        runtime_warning( "Can not release RML semaphore" );
+        runtime_warning( "Can not get RML semaphore name" );
         return;
     }
-    if( sem_unlink( sem_name )!=0 ) {
-        runtime_warning( "Can not release RML semaphore" );
-        return;
+    status = sem_unlink( sem_name );
+    if( status!=0 ) {
+        if( errno==ENOENT ) {
+            /* There is no semaphore with the given name, nothing to do */
+        } else {
+            runtime_warning("Can not release RML semaphore");
+            return;
+        }
     }
     delete[] sem_name;
 }

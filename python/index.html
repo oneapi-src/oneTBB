@@ -19,6 +19,8 @@ For more information and examples, please refer to <A HREF="http://software.inte
 <DL>
 <DT><A HREF="rml">rml</A>
 <DD>The folder contains needed sources to build the plugin with cross-process dynamic thread scheduler implementation.
+<DT><A HREF="tbb">tbb</A>
+<DD>The folder contains Python module sources.
 </DL>
 
 <H2>Files</H2>
@@ -27,10 +29,8 @@ For more information and examples, please refer to <A HREF="http://software.inte
 <DD>Standard Python setup script.
 <DT><A HREF="Makefile">Makefile</A>
 <DD>Makefile for building, installing, and testing. See below.
-<DT><A HREF="tbb.i">tbb.i</A>
-<DD>SWIG interface description file.
-<DT><A HREF="tbb.src.py">tbb.src.py</A>
-<DD>Python part of module implementation.
+<DT><A HREF="TBB.py">TBB.py</A>
+<DD>Alternative entry point for Python module.
 </DL>
 
 <A NAME=build><H2>Build and install</H2></A>
@@ -60,12 +60,15 @@ Please note, CXX=icl works on Windows only with Intel&reg; Distribution for Pyth
 
 <H2>Command-line interface</H2>
 <DL>
-<DT><TT>pydoc TBB</TT>
-<DD>Read built-in documentation for Python interfaces.
-<DT><TT>python -m TBB your_script.py</TT>
-<DD>Run your_script.py in context of `with TBB.Monkey():` when Intel&reg; TBB is enabled. By default both multi-threading and multi-processing cases will be covered.</DD>
-<DT><TT>python -m TBB -d your_script.py</TT>
-<DD>Run your_script.py in context of `with TBB.Monkey():` when Intel&reg; TBB is enabled but in multi-threading mode only.</DD>
+<DT><TT>python -m tbb -h</TT>
+<DD>Print documentation on command-line interface</DD>
+<DT><TT>pydoc tbb</TT>
+<DD>Read built-in documentation for Python interfaces.</DD>
+<DT><TT>python-tbb your_script.py</TT>
+<DT><TT>python -m tbb your_script.py</TT>
+<DD>Run your_script.py in context of `with tbb.Monkey():` when Intel&reg; TBB is enabled. By default only multi-threading will be covered.</DD>
+<DT><TT>python -m tbb --ipc your_script.py</TT>
+<DD>Run your_script.py in context of `with tbb.Monkey():` when Intel&reg; TBB enabled in both multi-threading and multi-processing modes.</DD>
 </DL>
 
 <H2>System Requirements</H2>

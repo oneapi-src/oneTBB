@@ -121,7 +121,7 @@ int get_num_threads(const char* env_var) {
     return num_threads;
 }
 
-bool get_disable_flag(const char* env_var) {
+bool get_enable_flag(const char* env_var) {
     if( env_var==NULL ) {
         return false;
     }
