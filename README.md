@@ -7,8 +7,8 @@ full advantage of multicore performance, that are portable, composable and have 
 
 ## Release Information
 Here are the latest [Changes](CHANGES) and [Release Notes](doc/Release_Notes.txt) (contains system requirements and known issues).
-This release provides additional TBB examples for workshops, conferences etc.
-examples/ppopp17 – examples for PPoPP 2017
+This release provides additional TBB examples for workshops, conferences etc.  
+examples/ppopp17 – examples for PPoPP 2017  
 examples/europar17 – examples for Euro-Par 2017 
 
 
