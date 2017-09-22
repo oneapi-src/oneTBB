@@ -2,6 +2,17 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 2017 Update 8
+TBB_INTERFACE_VERSION == 9108
+
+Changes (w.r.t. Intel TBB 2017 Update 7):
+
+Bugs fixed:
+
+- Fixed an assertion failure in debug tbbmalloc binaries when
+    TBBMALLOC_CLEAN_ALL_BUFFERS is used.
+
+------------------------------------------------------------------------
 Intel TBB 2017 Update 7
 TBB_INTERFACE_VERSION == 9107
 

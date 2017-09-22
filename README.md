@@ -1,5 +1,5 @@
-# Intel(R) Threading Building Blocks 2017 Update 7
-[![Stable release](https://img.shields.io/badge/version-2017_U7-green.svg)](https://github.com/01org/tbb/releases/tag/2017_U7)
+# Intel(R) Threading Building Blocks 2017 Update 8
+[![Stable release](https://img.shields.io/badge/version-2017_U8-green.svg)](https://github.com/01org/tbb/releases/tag/2017_U8)
 [![Apache License Version 2.0](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE)
 
 Intel(R) Threading Building Blocks (Intel(R) TBB) lets you easily write parallel C++ programs that take

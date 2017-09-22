@@ -81,6 +81,15 @@ bool RecursiveMallocCallProtector::noRecursion() {
 
 #endif // MALLOC_CHECK_RECURSION
 
+/** Support for handling the special UNUSABLE pointer state **/
+const intptr_t UNUSABLE = 0x1;
+inline bool isSolidPtr( void* ptr ) {
+    return (UNUSABLE|(intptr_t)ptr)!=UNUSABLE;
+}
+inline bool isNotForUse( void* ptr ) {
+    return (intptr_t)ptr==UNUSABLE;
+}
+
 /*
  * Block::objectSize value used to mark blocks allocated by startupAlloc
  */
@@ -346,14 +355,14 @@ protected:
 class Block : public LocalBlockFields,
               Padding<2*blockHeaderAlignment - sizeof(LocalBlockFields)> {
 public:
-    bool empty() const { return allocatedCount==0 && publicFreeList==NULL; }
+    bool empty() const { return allocatedCount==0 && !isSolidPtr(publicFreeList); }
     inline FreeObject* allocate();
     inline FreeObject *allocateFromFreeList();
     inline bool emptyEnoughToUse();
     bool freeListNonNull() { return freeList; }
     void freePublicObject(FreeObject *objectToFree);
     inline void freeOwnObject(void *object);
-    void makeEmpty();
+    void reset();
     void privatizePublicFreeList( bool cleanup = false );
     void restoreBumpPtr();
     void privatizeOrphaned(TLSData *tls, unsigned index);
@@ -390,7 +399,7 @@ public:
             // expected after double free
             MALLOC_ASSERT(toFree != freeList, msg);
             // check against head of publicFreeList, to detect double free
-            // involiving foreign thread
+            // involving foreign thread
             MALLOC_ASSERT(toFree != publicFreeList, msg);
         }
 #else
@@ -887,16 +896,6 @@ void BootStrapBlocks::reset()
 static MallocMutex publicFreeListLock; // lock for changes of publicFreeList
 #endif
 
-const uintptr_t UNUSABLE = 0x1;
-inline bool isSolidPtr( void* ptr )
-{
-    return (UNUSABLE|(uintptr_t)ptr)!=UNUSABLE;
-}
-inline bool isNotForUse( void* ptr )
-{
-    return (uintptr_t)ptr==UNUSABLE;
-}
-
 /********* End rough utility code  **************/
 
 /* LifoList assumes zero initialization so a vector of it can be created
@@ -1034,7 +1033,7 @@ Block *MemoryPool::getEmptyBlock(size_t size)
 
 void MemoryPool::returnEmptyBlock(Block *block, bool poolTheBlock)
 {
-    block->makeEmpty();
+    block->reset();
     if (poolTheBlock) {
         extMemPool.tlsPointerKey.getThreadMallocTLS()->freeSlabBlocks.returnBlock(block);
     }
@@ -1310,7 +1309,7 @@ void Block::freeOwnObject(void *object)
     else
         STAT_increment(getThreadId(), getIndex(objectSize), freeToActiveBlock);
 #endif
-    if (allocatedCount==0 && publicFreeList==NULL) {
+    if (empty()) {
         // The bump pointer is about to be restored for the block,
         // no need to find objectToFree here (this is costly).
 
@@ -1373,6 +1372,7 @@ void Block::freePublicObject (FreeObject *objectToFree)
 void Block::privatizePublicFreeList( bool cleanup )
 {
     FreeObject *temp, *localPublicFreeList;
+    const intptr_t endMarker = cleanup? UNUSABLE : 0;
 
     // During cleanup of orphaned blocks, the calling thread is not registered as the owner 
     MALLOC_ASSERT( cleanup || isOwnedByCurrentThread(), ASSERT_TEXT );
@@ -1380,9 +1380,8 @@ void Block::privatizePublicFreeList( bool cleanup )
     temp = publicFreeList;
     do {
         localPublicFreeList = temp;
-        temp = (FreeObject*)AtomicCompareExchange(
-                                (intptr_t&)publicFreeList,
-                                0, (intptr_t)localPublicFreeList);
+        temp = (FreeObject*)AtomicCompareExchange( (intptr_t&)publicFreeList,
+                                        endMarker, (intptr_t)localPublicFreeList);
         // no backoff necessary because trying to make change, not waiting for a change
     } while( temp != localPublicFreeList );
 #else
@@ -1390,16 +1389,16 @@ void Block::privatizePublicFreeList( bool cleanup )
     {
         MallocMutex::scoped_lock scoped_cs(publicFreeListLock);
         localPublicFreeList = publicFreeList;
-        publicFreeList = NULL;
+        publicFreeList = endMarker;
     }
     temp = localPublicFreeList;
 #endif
     MALLOC_ITT_SYNC_ACQUIRED(&publicFreeList);
 
-     // there should be something in publicFreeList, unless called by cleanup of orphaned blocks
-    MALLOC_ASSERT( cleanup || localPublicFreeList, ASSERT_TEXT );
+     // publicFreeList must have been UNUSABLE (possible for orphaned blocks) or valid, but not NULL
+    MALLOC_ASSERT( localPublicFreeList!=NULL, ASSERT_TEXT );
     MALLOC_ASSERT( localPublicFreeList==temp, ASSERT_TEXT );
-    if( isSolidPtr(temp) ) { // return/getPartialBlock could set it to UNUSABLE
+    if( isSolidPtr(temp) ) {
         MALLOC_ASSERT( allocatedCount <= (slabSize-sizeof(Block))/objectSize, ASSERT_TEXT );
         /* other threads did not change the counter freeing our blocks */
         allocatedCount--;
@@ -1447,13 +1446,13 @@ void Block::shareOrphaned(intptr_t binTag, unsigned index)
     if ((intptr_t)nextPrivatizable==binTag) {
         void* oldval;
 #if FREELIST_NONBLOCKING
-        oldval = (void*)AtomicCompareExchange((intptr_t&)publicFreeList, (intptr_t)UNUSABLE, 0);
+        oldval = (void*)AtomicCompareExchange((intptr_t&)publicFreeList, UNUSABLE, 0);
 #else
         STAT_increment(getThreadId(), ThreadCommonCounters, lockPublicFreeList);
         {
             MallocMutex::scoped_lock scoped_cs(publicFreeListLock);
             if ( (oldval=publicFreeList)==NULL )
-                (uintptr_t&)(publicFreeList) = UNUSABLE;
+                (intptr_t&)(publicFreeList) = UNUSABLE;
         }
 #endif
         if ( oldval!=NULL ) {
@@ -1478,7 +1477,7 @@ void Block::shareOrphaned(intptr_t binTag, unsigned index)
     // it is caller responsibility to ensure that the list of blocks
     // formed by nextPrivatizable pointers is kept consistent if required.
     // if only called from thread shutdown code, it does not matter.
-    (uintptr_t&)(nextPrivatizable) = UNUSABLE;
+    (intptr_t&)(nextPrivatizable) = UNUSABLE;
 }
 
 void Block::cleanBlockHeader()
@@ -1549,7 +1548,7 @@ bool OrphanedBlocks::cleanup(Backend* backend)
             Block* next = block->next;
             block->privatizePublicFreeList( /*cleanup=*/true );
             if (block->empty()) {
-                block->makeEmpty();
+                block->reset();
                 // slab blocks in user's pools do not have valid backRefIdx
                 if (!backend->inUserPool())
                     removeBackRef(*(block->getBackRefIdx()));
@@ -1626,12 +1625,12 @@ bool FreeBlockPool::externalCleanup()
     return nonEmpty;
 }
 
-/* We have a block give it back to the malloc block manager */
-void Block::makeEmpty()
+/* Prepare the block for returning to FreeBlockPool */
+void Block::reset()
 {
     // it is caller's responsibility to ensure no data is lost before calling this
     MALLOC_ASSERT( allocatedCount==0, ASSERT_TEXT );
-    MALLOC_ASSERT( publicFreeList==NULL, ASSERT_TEXT );
+    MALLOC_ASSERT( !isSolidPtr(publicFreeList), ASSERT_TEXT );
     if (!isStartupAllocObject())
         STAT_increment(getThreadId(), getIndex(objectSize), freeBlockBack);
 

@@ -490,9 +490,9 @@ private:
 };
 
 void TestArenaEntryConsistency() {
-    REMARK("test arena entry consistency\n" );
+    REMARK("test arena entry consistency\n");
 
-    tbb::task_arena a(2,1);
+    tbb::task_arena a(2, 1);
     tbb::atomic<int> c;
     ForEachArenaEntryBody body(a, c);
 
@@ -500,7 +500,7 @@ void TestArenaEntryConsistency() {
     a.initialize(); // capture FP settings to arena
     fp_scope.setNextFPMode();
 
-    for(int i = 0; i < 100; i++) // not less than 32 = 2^5 of entry types
+    for (int i = 0; i < 100; i++) // not less than 32 = 2^5 of entry types
         body.test(i);
 }
 
@@ -545,8 +545,8 @@ public:
     }
 };
 
-void TestArenaConcurrency( int p ) {
-    for ( int reserved = 0; reserved <= p; ++reserved ) {
+void TestArenaConcurrency( int p, int reserved = 0, int step = 1) {
+    for (; reserved <= p; reserved += step) {
         REMARK("TestArenaConcurrency: %d slots, %d reserved\n", p, reserved);
         tbb::task_arena a( p, reserved );
         { // Check concurrency with worker & reserved master threads.
@@ -1139,21 +1139,73 @@ void TestSmallStackSize() {
     }
 }
 //--------------------------------------------------//
+void TestConcurrentFunctionality(int min_thread_num = MinThread, int max_thread_num = MaxThread) {
+    InitializeAndTerminate(max_thread_num);
+    for (int p = min_thread_num; p <= max_thread_num; ++p) {
+        REMARK("testing with %d threads\n", p);
+        TestConcurrentArenas(p);
+        TestMultipleMasters(p);
+        TestArenaConcurrency(p);
+    }
+}
+//--------------------------------------------------//
+struct DefaultCreatedWorkersAmountBody {
+    int my_threadnum;
+    DefaultCreatedWorkersAmountBody(int threadnum) : my_threadnum(threadnum) {}
+    void operator()(int) const {
+        ASSERT(my_threadnum == tbb::this_task_arena::max_concurrency(), "concurrency level is not equal specified threadnum");
+        ASSERT(tbb::this_task_arena::current_thread_index() < tbb::this_task_arena::max_concurrency(), "amount of created threads is more than specified by default");
+        local_id.local() = 1;
+        Harness::Sleep(1);
+    }
+};
+
+struct NativeParallelForBody {
+    int my_thread_num;
+    int iterations;
+    NativeParallelForBody(int thread_num, int multiplier = 100) : my_thread_num(thread_num), iterations(multiplier * thread_num) {}
+    void operator()(int idx) const {
+        ASSERT(idx == 0, "more than 1 thread is going to reset TLS");
+        ResetTLS();
+        tbb::parallel_for(0, iterations, DefaultCreatedWorkersAmountBody(my_thread_num), tbb::simple_partitioner());
+        ASSERT(local_id.size() == size_t(my_thread_num), "amount of created threads is not equal to default num");
+    }
+};
+
+void TestDefaultCreatedWorkersAmount() {
+    NativeParallelFor(1, NativeParallelForBody(tbb::task_scheduler_init::default_num_threads()));
+}
+
+void TestAbilityToCreateWorkers(int thread_num) {
+    tbb::task_scheduler_init init_market_with_necessary_amount_plus_one(thread_num);
+    // Checks only some part of reserved-master threads amount:
+    // 0 and 1 reserved threads are important cases but it is also needed
+    // to collect some statistic data with other amount and to not consume
+    // whole test sesion time checking each amount
+    TestArenaConcurrency(thread_num - 1, 0, int(thread_num / 2.72));
+    TestArenaConcurrency(thread_num, 1, int(thread_num / 3.14));
+}
+
+void TestDefaultWorkersLimit() {
+    TestDefaultCreatedWorkersAmount();
+    // Shared RML might limit the number of workers even if you specify the limits
+    // by the reason of (default_concurrency==max_concurrency) for shared RML
+#ifndef RML_USE_WCRM
+    TestAbilityToCreateWorkers(256);
+#endif
+}
+//--------------------------------------------------//
+
 int TestMain () {
 #if __TBB_TASK_ISOLATION
     TestIsolatedExecute();
 #endif /* __TBB_TASK_ISOLATION */
     TestSmallStackSize();
+    TestDefaultWorkersLimit();
     // The test uses up to MaxThread workers (in arenas with no master thread),
     // so the runtime should be initialized appropriately.
-    tbb::task_scheduler_init init_market_p_plus_one(MaxThread+1);
-    InitializeAndTerminate(MaxThread);
-    for( int p=MinThread; p<=MaxThread; ++p ) {
-        REMARK("testing with %d threads\n", p );
-        TestConcurrentArenas( p );
-        TestMultipleMasters( p );
-        TestArenaConcurrency( p );
-    }
+    tbb::task_scheduler_init init_market_p_plus_one(MaxThread + 1);
+    TestConcurrentFunctionality();
     TestArenaEntryConsistency();
     TestAttach(MaxThread);
     TestConstantFunctorRequirement();

@@ -18,7 +18,6 @@
 #
 #
 
-
 # Based on the software developed by:
 # Copyright (c) 2008,2016 david decotigny (Pool of threads)
 # Copyright (c) 2006-2008, R Oudkerk (multiprocessing.Pool)

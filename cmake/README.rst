@@ -36,7 +36,7 @@ Use cases of Intel TBB integration into CMake-aware projects
 ------------------------------------------------------------
 There are two types of Intel TBB packages:
  * Binary packages with pre-built binaries for Windows* OS, Linux* OS and macOS*. They are available on the releases page of the Github repository: https://github.com/01org/tbb/releases. The main purpose of the binary package integration is the ability to build Intel TBB header files and binaries into your CMake-aware project.
- * A source package is also available to download from the release page via the “Source code” link. In addition, it can be cloned from the repository by ``git clone https://github.com/01org/tbb.git``. The main purpose of the source package integration is to allow you to do a custom build of the Intel TBB library from the source files and then build that into your CMake-aware project.
+ * A source package is also available to download from the release page via the "Source code" link. In addition, it can be cloned from the repository by ``git clone https://github.com/01org/tbb.git``. The main purpose of the source package integration is to allow you to do a custom build of the Intel TBB library from the source files and then build that into your CMake-aware project.
 
 There are four types of CMake modules that can be used to integrate Intel TBB: `TBBConfig`, `TBBGet`, `TBBMakeConfig` and `TBBBuild`. See `Technical documentation for CMake modules`_ section for additional details.
 
