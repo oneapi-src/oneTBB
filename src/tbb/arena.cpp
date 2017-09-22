@@ -25,6 +25,7 @@
 #include "arena.h"
 #include "itt_notify.h"
 #include "semaphore.h"
+#include "tbb/internal/_flow_graph_impl.h"
 
 #include <functional>
 
@@ -821,51 +822,73 @@ void task_arena_base::internal_execute(internal::delegate_base& d) const {
     if (!same_arena) {
         index1 = my_arena->occupy_free_slot</* as_worker*/false>(*s);
         if (index1 == arena::out_of_arena) {
-            concurrent_monitor::thread_context waiter;
+
+#if __TBB_USE_OPTIONAL_RTTI
+            // Workaround for the bug inside graph. If the thread can not occupy arena slot during task_arena::execute()
+            // and all aggregator operations depend on this task completion (all other threads are inside arena already)
+            // deadlock appears, because enqueued task will never enter arena.
+            // Workaround: check if the task came from graph via RTTI (casting to graph::spawn_functor)
+            // and enqueue this task with non-blocking internal_enqueue method.
+            // TODO: have to change behaviour later in next GOLD release (maybe to add new library entry point - try_execute)
+            typedef tbb::flow::interface10::graph::spawn_functor graph_funct;
+            internal::delegated_function< graph_funct, void >* deleg_funct =
+                    dynamic_cast< internal::delegated_function< graph_funct, void>* >(&d);
+
+            if (deleg_funct) {
+                internal_enqueue(*new(task::allocate_root(*my_context)) 
+                    internal::function_task< internal::strip< graph_funct >::type >
+                        (internal::forward< graph_funct >(deleg_funct->my_func)), 0);
+                return;
+            } else {
+#endif
+                concurrent_monitor::thread_context waiter;
 #if __TBB_TASK_GROUP_CONTEXT
-            task_group_context exec_context(task_group_context::isolated, my_version_and_traits & exact_exception_flag);
+                task_group_context exec_context(task_group_context::isolated, my_version_and_traits & exact_exception_flag);
 #if __TBB_FP_CONTEXT
-            exec_context.copy_fp_settings(*my_context);
+                exec_context.copy_fp_settings(*my_context);
 #endif
 #endif
-            auto_empty_task root(__TBB_CONTEXT_ARG(s, &exec_context));
-            root.prefix().ref_count = 2;
-            my_arena->enqueue_task(*new(task::allocate_root(__TBB_CONTEXT_ARG1(exec_context)))
-                delegated_task(d, my_arena->my_exit_monitors, &root),
-                0, s->my_random); // TODO: priority?
-            size_t index2 = arena::out_of_arena;
-            do {
-                my_arena->my_exit_monitors.prepare_wait(waiter, (uintptr_t)&d);
-                if (__TBB_load_with_acquire(root.prefix().ref_count) < 2) {
-                    my_arena->my_exit_monitors.cancel_wait(waiter);
-                    break;
-                }
-                index2 = my_arena->occupy_free_slot</*as_worker*/false>(*s);
-                if (index2 != arena::out_of_arena) {
-                    my_arena->my_exit_monitors.cancel_wait(waiter);
-                    nested_arena_context scope(s, my_arena, index2, scheduler_properties::master, same_arena);
-                    s->local_wait_for_all(root, NULL);
+                auto_empty_task root(__TBB_CONTEXT_ARG(s, &exec_context));
+                root.prefix().ref_count = 2;
+                my_arena->enqueue_task(*new(task::allocate_root(__TBB_CONTEXT_ARG1(exec_context)))
+                    delegated_task(d, my_arena->my_exit_monitors, &root),
+                    0, s->my_random); // TODO: priority?
+                size_t index2 = arena::out_of_arena;
+                do {
+                    my_arena->my_exit_monitors.prepare_wait(waiter, (uintptr_t)&d);
+                    if (__TBB_load_with_acquire(root.prefix().ref_count) < 2) {
+                        my_arena->my_exit_monitors.cancel_wait(waiter);
+                        break;
+                    }
+                    index2 = my_arena->occupy_free_slot</*as_worker*/false>(*s);
+                    if (index2 != arena::out_of_arena) {
+                        my_arena->my_exit_monitors.cancel_wait(waiter);
+                        nested_arena_context scope(s, my_arena, index2, scheduler_properties::master, same_arena);
+                        s->local_wait_for_all(root, NULL);
 #if TBB_USE_EXCEPTIONS
-                    __TBB_ASSERT(!exec_context.my_exception, NULL); // exception can be thrown above, not deferred
+                        __TBB_ASSERT(!exec_context.my_exception, NULL); // exception can be thrown above, not deferred
 #endif
-                    __TBB_ASSERT(root.prefix().ref_count == 0, NULL);
-                    break;
+                        __TBB_ASSERT(root.prefix().ref_count == 0, NULL);
+                        break;
+                    }
+                    my_arena->my_exit_monitors.commit_wait(waiter);
+                } while (__TBB_load_with_acquire(root.prefix().ref_count) == 2);
+                if (index2 == arena::out_of_arena) {
+                    // notify a waiting thread even if this thread did not enter arena,
+                    // in case it was woken by a leaving thread but did not need to enter
+                    my_arena->my_exit_monitors.notify_one(); // do not relax!
                 }
-                my_arena->my_exit_monitors.commit_wait(waiter);
-            } while (__TBB_load_with_acquire(root.prefix().ref_count) == 2);
-            if (index2 == arena::out_of_arena) {
-                // notify a waiting thread even if this thread did not enter arena,
-                // in case it was woken by a leaving thread but did not need to enter
-                my_arena->my_exit_monitors.notify_one(); // do not relax!
-            }
 #if TBB_USE_EXCEPTIONS
-            // process possible exception
-            if (task_group_context::exception_container_type *pe = exec_context.my_exception)
-                TbbRethrowException(pe);
+                // process possible exception
+                if (task_group_context::exception_container_type *pe = exec_context.my_exception)
+                    TbbRethrowException(pe);
 #endif
-            return;
-        }
-    }
+                return;
+#if __TBB_USE_OPTIONAL_RTTI
+            } // if task came from graph
+#endif
+        } // if (index1 == arena::out_of_arena)
+    } // if (!same_arena)
 
     cpu_ctl_env_helper cpu_ctl_helper;
     cpu_ctl_helper.set_env(__TBB_CONTEXT_ARG1(my_context));

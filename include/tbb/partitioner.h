@@ -122,6 +122,7 @@ namespace internal {
 using namespace tbb::internal;
 template<typename Range, typename Body, typename Partitioner> class start_for;
 template<typename Range, typename Body, typename Partitioner> class start_reduce;
+template<typename Range, typename Body, typename Partitioner> class start_deterministic_reduce;
 
 //! Join task node that contains shared flag for stealing feedback
 class flag_task: public task {
@@ -595,6 +596,7 @@ private:
     template<typename Range, typename Body, typename Partitioner> friend class serial::interface9::start_for;
     template<typename Range, typename Body, typename Partitioner> friend class interface9::internal::start_for;
     template<typename Range, typename Body, typename Partitioner> friend class interface9::internal::start_reduce;
+    template<typename Range, typename Body, typename Partitioner> friend class interface9::internal::start_deterministic_reduce;
     template<typename Range, typename Body, typename Partitioner> friend class internal::start_scan;
     // backward compatibility
     class partition_type: public internal::partition_type_base {
@@ -640,6 +642,7 @@ private:
     template<typename Range, typename Body, typename Partitioner> friend class serial::interface9::start_for;
     template<typename Range, typename Body, typename Partitioner> friend class interface9::internal::start_for;
     template<typename Range, typename Body, typename Partitioner> friend class interface9::internal::start_reduce;
+    template<typename Range, typename Body, typename Partitioner> friend class interface9::internal::start_deterministic_reduce;
     template<typename Range, typename Body, typename Partitioner> friend class internal::start_scan;
     // backward compatibility
     typedef interface9::internal::old_auto_partition_type partition_type;

@@ -213,67 +213,71 @@ public:
             my_left_body.join( my_right_body );
             return NULL;
         }
-        template<typename Range,typename Body_>
+        template<typename Range,typename Body_, typename Partitioner>
         friend class start_deterministic_reduce;
     };
 
     //! Task type used to split the work of parallel_deterministic_reduce.
     /** @ingroup algorithms */
-    template<typename Range, typename Body>
+    template<typename Range, typename Body, typename Partitioner>
     class start_deterministic_reduce: public task {
         typedef finish_deterministic_reduce<Body> finish_type;
         Body &my_body;
         Range my_range;
+        typename Partitioner::task_partition_type my_partition;
         task* execute() __TBB_override;
 
         //! Constructor used for root task
-        start_deterministic_reduce( const Range& range, Body& body ) :
+        start_deterministic_reduce( const Range& range, Body& body, Partitioner& partitioner ) :
             my_body( body ),
-            my_range( range )
+            my_range( range ),
+            my_partition( partitioner )
         {
         }
         //! Splitting constructor used to generate children.
         /** parent_ becomes left child.  Newly constructed object is right child. */
         start_deterministic_reduce( start_deterministic_reduce& parent_, finish_type& c ) :
             my_body( c.my_right_body ),
-            my_range( parent_.my_range, split() )
+            my_range( parent_.my_range, split() ),
+            my_partition( parent_.my_partition, split() )
         {
         }
 
 public:
-        static void run( const Range& range, Body& body ) {
+        static void run( const Range& range, Body& body, Partitioner& partitioner ) {
             if( !range.empty() ) {
 #if !__TBB_TASK_GROUP_CONTEXT || TBB_JOIN_OUTER_TASK_GROUP
-                task::spawn_root_and_wait( *new(task::allocate_root()) start_deterministic_reduce(range,&body) );
+                task::spawn_root_and_wait( *new(task::allocate_root()) start_deterministic_reduce(range,&body,partitioner) );
 #else
                 // Bound context prevents exceptions from body to affect nesting or sibling algorithms,
                 // and allows users to handle exceptions safely by wrapping parallel_for in the try-block.
                 task_group_context context;
-                task::spawn_root_and_wait( *new(task::allocate_root(context)) start_deterministic_reduce(range,body) );
+                task::spawn_root_and_wait( *new(task::allocate_root(context)) start_deterministic_reduce(range,body,partitioner) );
 #endif /* __TBB_TASK_GROUP_CONTEXT && !TBB_JOIN_OUTER_TASK_GROUP */
             }
         }
 #if __TBB_TASK_GROUP_CONTEXT
-        static void run( const Range& range, Body& body, task_group_context& context ) {
+        static void run( const Range& range, Body& body, Partitioner& partitioner, task_group_context& context ) {
             if( !range.empty() )
-                task::spawn_root_and_wait( *new(task::allocate_root(context)) start_deterministic_reduce(range,body) );
+                task::spawn_root_and_wait( *new(task::allocate_root(context)) start_deterministic_reduce(range,body,partitioner) );
         }
 #endif /* __TBB_TASK_GROUP_CONTEXT */
+
+        void offer_work( typename Partitioner::split_type& ) {
+            task* tasks[2];
+            allocate_sibling(static_cast<task*>(this), tasks, sizeof(start_deterministic_reduce), sizeof(finish_type));
+            new((void*)tasks[0]) finish_type(my_body);
+            new((void*)tasks[1]) start_deterministic_reduce(*this, *static_cast<finish_type*>(tasks[0]));
+            spawn(*tasks[1]);
+        }
+
+        void run_body( Range &r ) { my_body(r); }
     };
 
-    template<typename Range, typename Body>
-    task* start_deterministic_reduce<Range,Body>::execute() {
-        if( !my_range.is_divisible() ) {
-            my_body( my_range );
-            return NULL;
-        } else {
-            finish_type& c = *new( allocate_continuation() ) finish_type( my_body );
-            recycle_as_child_of(c);
-            c.set_ref_count(2);
-            start_deterministic_reduce& b = *new( c.allocate_child() ) start_deterministic_reduce( *this, c );
-            task::spawn(b);
-            return this;
-        }
+    template<typename Range, typename Body, typename Partitioner>
+    task* start_deterministic_reduce<Range,Body, Partitioner>::execute() {
+        my_partition.execute(*this, my_range);
+        return NULL;
     }
 } // namespace internal
 //! @endcond
@@ -521,44 +525,108 @@ Value parallel_reduce( const Range& range, const Value& identity, const RealBody
 }
 #endif /* __TBB_TASK_GROUP_CONTEXT */
 
-//! Parallel iteration with deterministic reduction and default partitioner.
+//! Parallel iteration with deterministic reduction and default simple partitioner.
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
 void parallel_deterministic_reduce( const Range& range, Body& body ) {
-    internal::start_deterministic_reduce<Range,Body>::run( range, body );
+    internal::start_deterministic_reduce<Range, Body, const simple_partitioner>::run(range, body, simple_partitioner());
+}
+
+//! Parallel iteration with deterministic reduction and simple partitioner.
+/** @ingroup algorithms **/
+template<typename Range, typename Body>
+void parallel_deterministic_reduce( const Range& range, Body& body, const simple_partitioner& partitioner ) {
+    internal::start_deterministic_reduce<Range, Body, const simple_partitioner>::run(range, body, partitioner);
+}
+
+//! Parallel iteration with deterministic reduction and static partitioner.
+/** @ingroup algorithms **/
+template<typename Range, typename Body>
+void parallel_deterministic_reduce( const Range& range, Body& body, const static_partitioner& partitioner ) {
+    internal::start_deterministic_reduce<Range, Body, const static_partitioner>::run(range, body, partitioner);
 }
 
 #if __TBB_TASK_GROUP_CONTEXT
-//! Parallel iteration with deterministic reduction, simple partitioner and user-supplied context.
+//! Parallel iteration with deterministic reduction, default simple partitioner and user-supplied context.
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
 void parallel_deterministic_reduce( const Range& range, Body& body, task_group_context& context ) {
-    internal::start_deterministic_reduce<Range,Body>::run( range, body, context );
+    internal::start_deterministic_reduce<Range,Body, const simple_partitioner>::run( range, body, simple_partitioner(), context );
+}
+
+//! Parallel iteration with deterministic reduction, simple partitioner and user-supplied context.
+/** @ingroup algorithms **/
+template<typename Range, typename Body>
+void parallel_deterministic_reduce( const Range& range, Body& body, const simple_partitioner& partitioner, task_group_context& context ) {
+    internal::start_deterministic_reduce<Range, Body, const simple_partitioner>::run(range, body, partitioner, context);
+}
+
+//! Parallel iteration with deterministic reduction, static partitioner and user-supplied context.
+/** @ingroup algorithms **/
+template<typename Range, typename Body>
+void parallel_deterministic_reduce( const Range& range, Body& body, const static_partitioner& partitioner, task_group_context& context ) {
+    internal::start_deterministic_reduce<Range, Body, const static_partitioner>::run(range, body, partitioner, context);
 }
 #endif /* __TBB_TASK_GROUP_CONTEXT */
 
 /** parallel_reduce overloads that work with anonymous function objects
     (see also \ref parallel_reduce_lambda_req "requirements on parallel_reduce anonymous function objects"). **/
 
-//! Parallel iteration with deterministic reduction and default partitioner.
+//! Parallel iteration with deterministic reduction and default simple partitioner.
+// TODO: consider making static_partitioner the default
 /** @ingroup algorithms **/
 template<typename Range, typename Value, typename RealBody, typename Reduction>
 Value parallel_deterministic_reduce( const Range& range, const Value& identity, const RealBody& real_body, const Reduction& reduction ) {
+    return parallel_deterministic_reduce(range, identity, real_body, reduction, simple_partitioner());
+}
+
+//! Parallel iteration with deterministic reduction and simple partitioner.
+/** @ingroup algorithms **/
+template<typename Range, typename Value, typename RealBody, typename Reduction>
+Value parallel_deterministic_reduce( const Range& range, const Value& identity, const RealBody& real_body, const Reduction& reduction, const simple_partitioner& partitioner ) {
     internal::lambda_reduce_body<Range,Value,RealBody,Reduction> body(identity, real_body, reduction);
-    internal::start_deterministic_reduce<Range,internal::lambda_reduce_body<Range,Value,RealBody,Reduction> >
-                          ::run(range, body);
+    internal::start_deterministic_reduce<Range,internal::lambda_reduce_body<Range,Value,RealBody,Reduction>, const simple_partitioner>
+                          ::run(range, body, partitioner);
     return body.result();
 }
 
+//! Parallel iteration with deterministic reduction and static partitioner.
+/** @ingroup algorithms **/
+template<typename Range, typename Value, typename RealBody, typename Reduction>
+Value parallel_deterministic_reduce( const Range& range, const Value& identity, const RealBody& real_body, const Reduction& reduction, const static_partitioner& partitioner ) {
+    internal::lambda_reduce_body<Range, Value, RealBody, Reduction> body(identity, real_body, reduction);
+    internal::start_deterministic_reduce<Range, internal::lambda_reduce_body<Range, Value, RealBody, Reduction>, const static_partitioner>
+        ::run(range, body, partitioner);
+    return body.result();
+}
 #if __TBB_TASK_GROUP_CONTEXT
+//! Parallel iteration with deterministic reduction, default simple partitioner and user-supplied context.
+/** @ingroup algorithms **/
+template<typename Range, typename Value, typename RealBody, typename Reduction>
+Value parallel_deterministic_reduce( const Range& range, const Value& identity, const RealBody& real_body, const Reduction& reduction,
+    task_group_context& context ) {
+    return parallel_deterministic_reduce(range, identity, real_body, reduction, simple_partitioner(), context);
+}
+
 //! Parallel iteration with deterministic reduction, simple partitioner and user-supplied context.
 /** @ingroup algorithms **/
 template<typename Range, typename Value, typename RealBody, typename Reduction>
 Value parallel_deterministic_reduce( const Range& range, const Value& identity, const RealBody& real_body, const Reduction& reduction,
-                       task_group_context& context ) {
-    internal::lambda_reduce_body<Range,Value,RealBody,Reduction> body(identity, real_body, reduction);
-    internal::start_deterministic_reduce<Range,internal::lambda_reduce_body<Range,Value,RealBody,Reduction> >
-                          ::run( range, body, context );
+    const simple_partitioner& partitioner, task_group_context& context ) {
+    internal::lambda_reduce_body<Range, Value, RealBody, Reduction> body(identity, real_body, reduction);
+    internal::start_deterministic_reduce<Range, internal::lambda_reduce_body<Range, Value, RealBody, Reduction>, const simple_partitioner>
+        ::run(range, body, partitioner, context);
+    return body.result();
+}
+
+//! Parallel iteration with deterministic reduction, static partitioner and user-supplied context.
+/** @ingroup algorithms **/
+template<typename Range, typename Value, typename RealBody, typename Reduction>
+Value parallel_deterministic_reduce( const Range& range, const Value& identity, const RealBody& real_body, const Reduction& reduction,
+    const static_partitioner& partitioner, task_group_context& context ) {
+    internal::lambda_reduce_body<Range, Value, RealBody, Reduction> body(identity, real_body, reduction);
+    internal::start_deterministic_reduce<Range, internal::lambda_reduce_body<Range, Value, RealBody, Reduction>, const static_partitioner>
+        ::run(range, body, partitioner, context);
     return body.result();
 }
 #endif /* __TBB_TASK_GROUP_CONTEXT */

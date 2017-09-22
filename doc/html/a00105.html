@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::flow::interface10::opencl_range Class Reference</title>
+<title>tbb::parallel_while&lt; Body &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,44 +33,125 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00239.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface10</b></li><li class="navelem"><a class="el" href="a00105.html">opencl_range</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><a class="el" href="a00105.html">parallel_while</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="a00350.html">List of all members</a>  </div>
+<a href="a00288.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::flow::interface10::opencl_range Class Reference</div>  </div>
+<div class="title">tbb::parallel_while&lt; Body &gt; Class Template Reference<div class="ingroups"><a class="el" href="a00257.html">Algorithms</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
+
+<p>Parallel iteration over a stream, with optional addition of more work.  
+ <a href="a00105.html#details">More...</a></p>
+
+<p><code>#include &lt;parallel_while.h&gt;</code></p>
+<div class="dynheader">
+Inheritance diagram for tbb::parallel_while&lt; Body &gt;:</div>
+<div class="dyncontent">
+ <div class="center">
+  <img src="a00105.png" usemap="#tbb::parallel_while&lt; Body &gt;_map" alt=""/>
+  <map id="tbb::parallel_while&lt; Body &gt;_map" name="tbb::parallel_while&lt; Body &gt;_map">
+</map>
+ </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:ac096f58fdc32351a11d7bc3926ef5251"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac096f58fdc32351a11d7bc3926ef5251"></a>
-typedef size_t&#160;</td><td class="memItemRight" valign="bottom"><b>range_index_type</b></td></tr>
-<tr class="separator:ac096f58fdc32351a11d7bc3926ef5251"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a757f32424b3588cf9147b281d0bb2f55"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a757f32424b3588cf9147b281d0bb2f55"></a>
-typedef std::array<br class="typebreak"/>
-&lt; range_index_type, 3 &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>nd_range_type</b></td></tr>
-<tr class="separator:a757f32424b3588cf9147b281d0bb2f55"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2442f019427e608d46801376267e44a8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2442f019427e608d46801376267e44a8"></a>
+typedef Body::argument_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00105.html#a2442f019427e608d46801376267e44a8">value_type</a></td></tr>
+<tr class="memdesc:a2442f019427e608d46801376267e44a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type of items. <br/></td></tr>
+<tr class="separator:a2442f019427e608d46801376267e44a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a24ad17ef536995e48d97364068dad332"><td class="memTemplParams" colspan="2"><a class="anchor" id="a24ad17ef536995e48d97364068dad332"></a>
-template&lt;typename G  = std::initializer_list&lt;int&gt;, typename L  = std::initializer_list&lt;int&gt;, typename  = typename std::enable_if&lt;!std::is_same&lt;typename std::decay&lt;G&gt;::type, opencl_range&gt;::value&gt;::type&gt; </td></tr>
-<tr class="memitem:a24ad17ef536995e48d97364068dad332"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>opencl_range</b> (G &amp;&amp;global_work=std::initializer_list&lt; int &gt;({0}), L &amp;&amp;local_work=std::initializer_list&lt; int &gt;({0, 0, 0}))</td></tr>
-<tr class="separator:a24ad17ef536995e48d97364068dad332"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a191c3c9373afde6abd1819c164a10e69"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a191c3c9373afde6abd1819c164a10e69"></a>
-const nd_range_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>global_range</b> () const </td></tr>
-<tr class="separator:a191c3c9373afde6abd1819c164a10e69"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a91080d6d64ece228c447980ca7b7d4a5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a91080d6d64ece228c447980ca7b7d4a5"></a>
-const nd_range_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>local_range</b> () const </td></tr>
-<tr class="separator:a91080d6d64ece228c447980ca7b7d4a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a220a7307358aa36802c8754ea45ca385"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a220a7307358aa36802c8754ea45ca385"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00105.html#a220a7307358aa36802c8754ea45ca385">parallel_while</a> ()</td></tr>
+<tr class="memdesc:a220a7307358aa36802c8754ea45ca385"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct empty non-running parallel while. <br/></td></tr>
+<tr class="separator:a220a7307358aa36802c8754ea45ca385"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac2fd559c8a38639fa1ba97a0d5639ca8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac2fd559c8a38639fa1ba97a0d5639ca8"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00105.html#ac2fd559c8a38639fa1ba97a0d5639ca8">~parallel_while</a> ()</td></tr>
+<tr class="memdesc:ac2fd559c8a38639fa1ba97a0d5639ca8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor cleans up data members before returning. <br/></td></tr>
+<tr class="separator:ac2fd559c8a38639fa1ba97a0d5639ca8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a20607ba5faa958144787d980aa850c16"><td class="memTemplParams" colspan="2">template&lt;typename Stream &gt; </td></tr>
+<tr class="memitem:a20607ba5faa958144787d980aa850c16"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00105.html#a20607ba5faa958144787d980aa850c16">run</a> (Stream &amp;stream, const Body &amp;body)</td></tr>
+<tr class="memdesc:a20607ba5faa958144787d980aa850c16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Apply body.apply to each item in the stream.  <a href="#a20607ba5faa958144787d980aa850c16">More...</a><br/></td></tr>
+<tr class="separator:a20607ba5faa958144787d980aa850c16"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4861989d7f5e3111d264d4d6013e8fe1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00105.html#a4861989d7f5e3111d264d4d6013e8fe1">add</a> (const <a class="el" href="a00105.html#a2442f019427e608d46801376267e44a8">value_type</a> &amp;item)</td></tr>
+<tr class="memdesc:a4861989d7f5e3111d264d4d6013e8fe1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a work item while running.  <a href="#a4861989d7f5e3111d264d4d6013e8fe1">More...</a><br/></td></tr>
+<tr class="separator:a4861989d7f5e3111d264d4d6013e8fe1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><h3>template&lt;typename Body&gt;<br/>
+class tbb::parallel_while&lt; Body &gt;</h3>
+
+<p>Parallel iteration over a stream, with optional addition of more work. </p>
+<p>The Body b has the requirement: <br/>
+ "b(v)" <br/>
+ "b.argument_type" <br/>
+ where v is an argument_type </p>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="a4861989d7f5e3111d264d4d6013e8fe1"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename Body &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="a00105.html">tbb::parallel_while</a>&lt; Body &gt;::add </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="a00105.html#a2442f019427e608d46801376267e44a8">value_type</a> &amp;&#160;</td>
+          <td class="paramname"><em>item</em>)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Add a work item while running. </p>
+<p>Should be executed only by body.apply or a thread spawned therefrom. </p>
+
+</div>
+</div>
+<a class="anchor" id="a20607ba5faa958144787d980aa850c16"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename Body &gt; </div>
+<div class="memtemplate">
+template&lt;typename Stream &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="a00105.html">tbb::parallel_while</a>&lt; Body &gt;::run </td>
+          <td>(</td>
+          <td class="paramtype">Stream &amp;&#160;</td>
+          <td class="paramname"><em>stream</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Body &amp;&#160;</td>
+          <td class="paramname"><em>body</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Apply body.apply to each item in the stream. </p>
+<p>A Stream s has the requirements <br/>
+ "S::value_type" <br/>
+ "s.pop_if_present(value) is convertible to bool </p>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>flow_graph_opencl_node.h</li>
+<li>parallel_while.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

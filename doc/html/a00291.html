@@ -33,22 +33,29 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00239.html">tbb</a></li><li class="navelem"><a class="el" href="a00107.html">parallel_while</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><a class="el" href="a00106.html">pipeline</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="headertitle">
-<div class="title">tbb::parallel_while&lt; Body &gt; Member List</div>  </div>
+<div class="title">tbb::pipeline Member List</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>This is the complete list of members for <a class="el" href="a00107.html">tbb::parallel_while&lt; Body &gt;</a>, including all inherited members.</p>
+<p>This is the complete list of members for <a class="el" href="a00106.html">tbb::pipeline</a>, including all inherited members.</p>
 <table class="directory">
-  <tr class="even"><td class="entry"><a class="el" href="a00107.html#a4861989d7f5e3111d264d4d6013e8fe1">add</a>(const value_type &amp;item)</td><td class="entry"><a class="el" href="a00107.html">tbb::parallel_while&lt; Body &gt;</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="a00107.html#a220a7307358aa36802c8754ea45ca385">parallel_while</a>()</td><td class="entry"><a class="el" href="a00107.html">tbb::parallel_while&lt; Body &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="a00107.html#a20607ba5faa958144787d980aa850c16">run</a>(Stream &amp;stream, const Body &amp;body)</td><td class="entry"><a class="el" href="a00107.html">tbb::parallel_while&lt; Body &gt;</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="a00107.html#a2442f019427e608d46801376267e44a8">value_type</a> typedef</td><td class="entry"><a class="el" href="a00107.html">tbb::parallel_while&lt; Body &gt;</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="a00107.html#ac2fd559c8a38639fa1ba97a0d5639ca8">~parallel_while</a>()</td><td class="entry"><a class="el" href="a00107.html">tbb::parallel_while&lt; Body &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="a00106.html#a8eb83014bd53b184e0ed50f120ca310b">add_filter</a>(filter &amp;filter_)</td><td class="entry"><a class="el" href="a00106.html">tbb::pipeline</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="a00106.html#ae53edbda1771eeaa254d78ae6100a762">clear</a>()</td><td class="entry"><a class="el" href="a00106.html">tbb::pipeline</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>filter</b> (defined in <a class="el" href="a00106.html">tbb::pipeline</a>)</td><td class="entry"><a class="el" href="a00106.html">tbb::pipeline</a></td><td class="entry"><span class="mlabel">friend</span></td></tr>
+  <tr bgcolor="#f0f0f0"><td class="entry"><b>internal::pipeline_cleaner</b> (defined in <a class="el" href="a00106.html">tbb::pipeline</a>)</td><td class="entry"><a class="el" href="a00106.html">tbb::pipeline</a></td><td class="entry"><span class="mlabel">friend</span></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>internal::pipeline_root_task</b> (defined in <a class="el" href="a00106.html">tbb::pipeline</a>)</td><td class="entry"><a class="el" href="a00106.html">tbb::pipeline</a></td><td class="entry"><span class="mlabel">friend</span></td></tr>
+  <tr bgcolor="#f0f0f0"><td class="entry"><b>internal::stage_task</b> (defined in <a class="el" href="a00106.html">tbb::pipeline</a>)</td><td class="entry"><a class="el" href="a00106.html">tbb::pipeline</a></td><td class="entry"><span class="mlabel">friend</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="a00106.html#afe7b7bd9b2617c2b69170675a478b2bd">pipeline</a>()</td><td class="entry"><a class="el" href="a00106.html">tbb::pipeline</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="a00106.html#ac9ee9080cfc080c40a7ee7cb03a62637">run</a>(size_t max_number_of_live_tokens)</td><td class="entry"><a class="el" href="a00106.html">tbb::pipeline</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="a00106.html#a270dba81f7dd9935be7f3d69db907ff4">run</a>(size_t max_number_of_live_tokens, tbb::task_group_context &amp;context)</td><td class="entry"><a class="el" href="a00106.html">tbb::pipeline</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0"><td class="entry"><b>tbb::interface6::internal::pipeline_proxy</b> (defined in <a class="el" href="a00106.html">tbb::pipeline</a>)</td><td class="entry"><a class="el" href="a00106.html">tbb::pipeline</a></td><td class="entry"><span class="mlabel">friend</span></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>thread_bound_filter</b> (defined in <a class="el" href="a00106.html">tbb::pipeline</a>)</td><td class="entry"><a class="el" href="a00106.html">tbb::pipeline</a></td><td class="entry"><span class="mlabel">friend</span></td></tr>
+  <tr><td class="entry"><a class="el" href="a00106.html#ac3a7b33217b3f3bb0682ec3a40fd2c39">~pipeline</a>()</td><td class="entry"><a class="el" href="a00106.html">tbb::pipeline</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
 </table></div><!-- contents -->
 <hr>
 <p></p>

@@ -32,12 +32,14 @@ namespace tbb {
 /** @ingroup algorithms */
 struct pre_scan_tag {
     static bool is_final_scan() {return false;}
+    operator bool() {return is_final_scan();}
 };
 
 //! Used to indicate that the final scan is being performed.
 /** @ingroup algorithms */
 struct final_scan_tag {
     static bool is_final_scan() {return true;}
+    operator bool() {return is_final_scan();}
 };
 
 //! @cond INTERNAL
@@ -227,7 +229,6 @@ namespace internal {
             if( !range_.empty() ) {
                 typedef internal::start_scan<Range,Body,Partitioner> start_pass1_type;
                 internal::sum_node<Range,Body>* root = NULL;
-                typedef internal::final_sum<Range,Body> final_sum_type;
                 final_sum_type* temp_body = new(task::allocate_root()) final_sum_type( body_ );
                 start_pass1_type& pass1 = *new(task::allocate_root()) start_pass1_type(
                     /*my_return_slot=*/root,
@@ -297,6 +298,43 @@ namespace internal {
         }
         return next_task;
     }
+
+    template<typename Range, typename Value, typename Scan, typename ReverseJoin>
+    class lambda_scan_body : no_assign {
+        Value               my_sum;
+        const Value&        identity_element;
+        const Scan&         my_scan;
+        const ReverseJoin&  my_reverse_join;
+    public:
+        lambda_scan_body( const Value& identity, const Scan& scan, const ReverseJoin& rev_join)
+            : my_sum(identity)
+            , identity_element(identity)
+            , my_scan(scan)
+            , my_reverse_join(rev_join) {}
+
+        lambda_scan_body( lambda_scan_body& b, split )
+            : my_sum(b.identity_element)
+            , identity_element(b.identity_element)
+            , my_scan(b.my_scan)
+            , my_reverse_join(b.my_reverse_join) {}
+
+        template<typename Tag>
+        void operator()( const Range& r, Tag tag ) {
+            my_sum = my_scan(r, my_sum, tag);
+        }
+
+        void reverse_join( lambda_scan_body& a ) {
+            my_sum = my_reverse_join(a.my_sum, my_sum);
+        }
+
+        void assign( lambda_scan_body& b ) {
+            my_sum = b.my_sum;
+        }
+
+        Value result() const {
+            return my_sum;
+        }
+    };
 } // namespace internal
 //! @endcond
 
@@ -340,6 +378,34 @@ template<typename Range, typename Body>
 void parallel_scan( const Range& range, Body& body, const auto_partitioner& partitioner ) {
     internal::start_scan<Range,Body,auto_partitioner>::run(range,body,partitioner);
 }
+
+//! Parallel prefix with default partitioner
+/** @ingroup algorithms **/
+template<typename Range, typename Value, typename Scan, typename ReverseJoin>
+Value parallel_scan( const Range& range, const Value& identity, const Scan& scan, const ReverseJoin& reverse_join ) {
+    internal::lambda_scan_body<Range, Value, Scan, ReverseJoin> body(identity, scan, reverse_join);
+    tbb::parallel_scan(range,body,__TBB_DEFAULT_PARTITIONER());
+    return body.result();
+}
+
+//! Parallel prefix with simple_partitioner
+/** @ingroup algorithms **/
+template<typename Range, typename Value, typename Scan, typename ReverseJoin>
+Value parallel_scan( const Range& range, const Value& identity, const Scan& scan, const ReverseJoin& reverse_join, const simple_partitioner& partitioner ) {
+    internal::lambda_scan_body<Range, Value, Scan, ReverseJoin> body(identity, scan, reverse_join);
+    tbb::parallel_scan(range,body,partitioner);
+    return body.result();
+}
+
+//! Parallel prefix with auto_partitioner
+/** @ingroup algorithms **/
+template<typename Range, typename Value, typename Scan, typename ReverseJoin>
+Value parallel_scan( const Range& range, const Value& identity, const Scan& scan, const ReverseJoin& reverse_join, const auto_partitioner& partitioner ) {
+    internal::lambda_scan_body<Range, Value, Scan, ReverseJoin> body(identity, scan, reverse_join);
+    tbb::parallel_scan(range,body,partitioner);
+    return body.result();
+}
+
 //@}
 
 } // namespace tbb

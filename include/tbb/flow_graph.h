@@ -88,75 +88,52 @@ namespace flow {
 //! An enumeration the provides the two most common concurrency levels: unlimited and serial
 enum concurrency { unlimited = 0, serial = 1 };
 
-namespace internal {
-static tbb::task * const SUCCESSFULLY_ENQUEUED = (task *)-1;
-}
-
 namespace interface10 {
 
-using tbb::flow::internal::SUCCESSFULLY_ENQUEUED;
-
-class graph;
-
-namespace internal {
-    template<typename T, typename M> class successor_cache;
-    template<typename T, typename M> class broadcast_cache;
-    template<typename T, typename M> class round_robin_cache;
-    template<typename T, typename M> class predecessor_cache;
-    template<typename T, typename M> class reservable_predecessor_cache;
-
-    void activate_graph(graph& g);
-    void deactivate_graph(graph& g);
-    bool is_graph_active(graph& g);
-    void spawn_in_graph_arena(graph& g, tbb::task& arena_task);
-    void add_task_to_graph_reset_list(graph& g, task *tp);
-    template<typename F> void execute_in_graph_arena(graph& g, F& f);
-}
-
-//A generic null type
+//! A generic null type
 struct null_type {};
 
 //! An empty class used for messages that mean "I'm done"
 class continue_msg {};
 
+//! Forward declaration section
 template< typename T > class sender;
 template< typename T > class receiver;
 class continue_receiver;
-
 template< typename T > class limiter_node;  // needed for resetting decrementer
 template< typename R, typename B > class run_and_put_task;
 
-// flags to modify the behavior of the graph reset().  Can be combined.
-enum reset_flags {
-    rf_reset_protocol   = 0,
-    rf_reset_bodies     = 1<<0,  // delete the current node body, reset to a copy of the initial node body.
-    rf_clear_edges      = 1<<1   // delete edges
-};
+namespace internal {
+
+template<typename T, typename M> class successor_cache;
+template<typename T, typename M> class broadcast_cache;
+template<typename T, typename M> class round_robin_cache;
+template<typename T, typename M> class predecessor_cache;
+template<typename T, typename M> class reservable_predecessor_cache;
 
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
-//* holder of edges both for caches and for those nodes which do not have predecessor caches.
+// Holder of edges both for caches and for those nodes which do not have predecessor caches.
 // C == receiver< ... > or sender< ... >, depending.
-namespace internal {
 template<typename C>
 class edge_container {
 
 public:
     typedef std::list<C *, tbb::tbb_allocator<C *> > edge_list_type;
 
-    void add_edge( C &s) {
-        built_edges.push_back( &s );
+    void add_edge(C &s) {
+        built_edges.push_back(&s);
     }
 
-    void delete_edge( C &s) {
-        for ( typename edge_list_type::iterator i = built_edges.begin(); i != built_edges.end(); ++i ) {
-            if ( *i == &s )  {
+    void delete_edge(C &s) {
+        for (typename edge_list_type::iterator i = built_edges.begin(); i != built_edges.end(); ++i) {
+            if (*i == &s) {
                 (void)built_edges.erase(i);
                 return;  // only remove one predecessor per request
             }
         }
     }
 
-    void copy_edges( edge_list_type &v) {
+    void copy_edges(edge_list_type &v) {
         v = built_edges;
     }
 
@@ -170,335 +147,26 @@ public:
 
     // methods remove the statement from all predecessors/successors liste in the edge
     // container.
-    template< typename S > void sender_extract( S &s ); 
-    template< typename R > void receiver_extract( R &r ); 
+    template< typename S > void sender_extract(S &s);
+    template< typename R > void receiver_extract(R &r);
 
-private: 
+private:
     edge_list_type built_edges;
 };  // class edge_container
-}  // namespace internal
 #endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
 
-class graph_node;
+} // namespace internal
 
-template <typename GraphContainerType, typename GraphNodeType>
-class graph_iterator {
-    friend class graph;
-    friend class graph_node;
-public:
-    typedef size_t size_type;
-    typedef GraphNodeType value_type;
-    typedef GraphNodeType* pointer;
-    typedef GraphNodeType& reference;
-    typedef const GraphNodeType& const_reference;
-    typedef std::forward_iterator_tag iterator_category;
+} // namespace interface10
+} // namespace flow
+} // namespace tbb
 
-    //! Default constructor
-    graph_iterator() : my_graph(NULL), current_node(NULL) {}
+//! The graph class
+#include "internal/_flow_graph_impl.h"
 
-    //! Copy constructor
-    graph_iterator(const graph_iterator& other) :
-        my_graph(other.my_graph), current_node(other.current_node)
-    {}
-
-    //! Assignment
-    graph_iterator& operator=(const graph_iterator& other) {
-        if (this != &other) {
-            my_graph = other.my_graph;
-            current_node = other.current_node;
-        }
-        return *this;
-    }
-
-    //! Dereference
-    reference operator*() const;
-
-    //! Dereference
-    pointer operator->() const;
-
-    //! Equality
-    bool operator==(const graph_iterator& other) const {
-        return ((my_graph == other.my_graph) && (current_node == other.current_node));
-    }
-
-    //! Inequality
-    bool operator!=(const graph_iterator& other) const { return !(operator==(other)); }
-
-    //! Pre-increment
-    graph_iterator& operator++() {
-        internal_forward();
-        return *this;
-    }
-
-    //! Post-increment
-    graph_iterator operator++(int) {
-        graph_iterator result = *this;
-        operator++();
-        return result;
-    }
-
-private:
-    // the graph over which we are iterating
-    GraphContainerType *my_graph;
-    // pointer into my_graph's my_nodes list
-    pointer current_node;
-
-    //! Private initializing constructor for begin() and end() iterators
-    graph_iterator(GraphContainerType *g, bool begin);
-    void internal_forward();
-};  // class graph_iterator
-
-    //! The graph class
-    /** This class serves as a handle to the graph */
-class graph : tbb::internal::no_copy, public graph_proxy {
-    friend class graph_node;
-
-    template< typename Body >
-    class run_task : public task {
-    public:
-        run_task(Body& body) : my_body(body) {}
-        task *execute() __TBB_override {
-            my_body();
-            return NULL;
-        }
-    private:
-        Body my_body;
-    };
-
-    template< typename Receiver, typename Body >
-    class run_and_put_task : public task {
-    public:
-        run_and_put_task(Receiver &r, Body& body) : my_receiver(r), my_body(body) {}
-        task *execute() __TBB_override {
-            task *res = my_receiver.try_put_task(my_body());
-            if (res == SUCCESSFULLY_ENQUEUED) res = NULL;
-            return res;
-        }
-    private:
-        Receiver &my_receiver;
-        Body my_body;
-    };
-    typedef std::list<task *> task_list_type;
-
-    class wait_functor {
-        task* graph_root_task;
-    public:
-        wait_functor(task* t) : graph_root_task(t) {}
-        void operator()() const { graph_root_task->wait_for_all(); }
-    };
-
-    //! A functor that spawns a task
-    class spawn_functor : tbb::internal::no_assign {
-        tbb::task& task;
-    public:
-        spawn_functor(tbb::task& t) : task(t) {}
-        void operator()() const {
-            FLOW_SPAWN(task);
-        }
-    };
-
-    void prepare_task_arena(bool reinit = false) {
-        if (reinit) {
-            __TBB_ASSERT(my_task_arena, "task arena is NULL");
-            my_task_arena->terminate();
-            my_task_arena->initialize(tbb::task_arena::attach());
-        }
-        else {
-            __TBB_ASSERT(my_task_arena == NULL, "task arena is not NULL");
-            my_task_arena = new tbb::task_arena(tbb::task_arena::attach());
-        }
-        if (!my_task_arena->is_active()) // failed to attach
-            my_task_arena->initialize(); // create a new, default-initialized arena
-        __TBB_ASSERT(my_task_arena->is_active(), "task arena is not active");
-    }
-
-public:
-    //! Constructs a graph with isolated task_group_context
-    graph();
-
-    //! Constructs a graph with use_this_context as context
-    explicit graph(task_group_context& use_this_context);
-
-    //! Destroys the graph.
-    /** Calls wait_for_all, then destroys the root task and context. */
-    ~graph() {
-        wait_for_all();
-        my_root_task->set_ref_count(0);
-        task::destroy(*my_root_task);
-        if (own_context) delete my_context;
-        delete my_task_arena;
-    }
-
-#if TBB_PREVIEW_FLOW_GRAPH_TRACE
-    void set_name(const char *name);
-#endif
-
-    void increment_wait_count() {
-        reserve_wait();
-    }
-
-    void decrement_wait_count() {
-        release_wait();
-    }
-
-    //! Used to register that an external entity may still interact with the graph.
-    /** The graph will not return from wait_for_all until a matching number of decrement_wait_count calls
-    is made. */
-    void reserve_wait() __TBB_override;
-
-    //! Deregisters an external entity that may have interacted with the graph.
-    /** The graph will not return from wait_for_all until all the number of decrement_wait_count calls
-    matches the number of increment_wait_count calls. */
-    void release_wait() __TBB_override;
-
-    //! Spawns a task that runs a body and puts its output to a specific receiver
-    /** The task is spawned as a child of the graph. This is useful for running tasks
-    that need to block a wait_for_all() on the graph.  For example a one-off source. */
-    template< typename Receiver, typename Body >
-    void run(Receiver &r, Body body) {
-        if (internal::is_graph_active(*this)) {
-            task* rtask = new (task::allocate_additional_child_of(*root_task()))
-                run_and_put_task< Receiver, Body >(r, body);
-            my_task_arena->execute(spawn_functor(*rtask));
-        }
-    }
-
-    //! Spawns a task that runs a function object
-    /** The task is spawned as a child of the graph. This is useful for running tasks
-    that need to block a wait_for_all() on the graph. For example a one-off source. */
-    template< typename Body >
-    void run(Body body) {
-        if (internal::is_graph_active(*this)) {
-            task* rtask = new (task::allocate_additional_child_of(*root_task())) run_task< Body >(body);
-            my_task_arena->execute(spawn_functor(*rtask));
-        }
-    }
-
-    //! Wait until graph is idle and decrement_wait_count calls equals increment_wait_count calls.
-    /** The waiting thread will go off and steal work while it is block in the wait_for_all. */
-    void wait_for_all() {
-        cancelled = false;
-        caught_exception = false;
-        if (my_root_task) {
-#if TBB_USE_EXCEPTIONS
-            try {
-#endif
-                my_task_arena->execute(wait_functor(my_root_task));
-                cancelled = my_context->is_group_execution_cancelled();
-#if TBB_USE_EXCEPTIONS
-            }
-            catch (...) {
-                my_root_task->set_ref_count(1);
-                my_context->reset();
-                caught_exception = true;
-                cancelled = true;
-                throw;
-            }
-#endif
-            // TODO: the "if" condition below is just a work-around to support the concurrent wait
-            // mode. The cancellation and exception mechanisms are still broken in this mode.
-            // Consider using task group not to re-implement the same functionality.
-            if (!(my_context->traits() & task_group_context::concurrent_wait)) {
-                my_context->reset();  // consistent with behavior in catch()
-                my_root_task->set_ref_count(1);
-            }
-        }
-    }
-
-    //! Returns the root task of the graph
-    task * root_task() {
-        return my_root_task;
-    }
-
-    // ITERATORS
-    template<typename C, typename N>
-    friend class graph_iterator;
-
-    // Graph iterator typedefs
-    typedef graph_iterator<graph, graph_node> iterator;
-    typedef graph_iterator<const graph, const graph_node> const_iterator;
-
-    // Graph iterator constructors
-    //! start iterator
-    iterator begin() { return iterator(this, true); }
-    //! end iterator
-    iterator end() { return iterator(this, false); }
-    //! start const iterator
-    const_iterator begin() const { return const_iterator(this, true); }
-    //! end const iterator
-    const_iterator end() const { return const_iterator(this, false); }
-    //! start const iterator
-    const_iterator cbegin() const { return const_iterator(this, true); }
-    //! end const iterator
-    const_iterator cend() const { return const_iterator(this, false); }
-
-    //! return status of graph execution
-    bool is_cancelled() { return cancelled; }
-    bool exception_thrown() { return caught_exception; }
-
-    // thread-unsafe state reset.
-    void reset(reset_flags f = rf_reset_protocol);
-
-private:
-    task *my_root_task;
-    task_group_context *my_context;
-    bool own_context;
-    bool cancelled;
-    bool caught_exception;
-    bool my_is_active;
-    task_list_type my_reset_task_list;
-
-    graph_node *my_nodes, *my_nodes_last;
-
-    spin_mutex nodelist_mutex;
-    void register_node(graph_node *n);
-    void remove_node(graph_node *n);
-
-    task_arena* my_task_arena;
-
-    friend void internal::activate_graph(graph& g);
-    friend void internal::deactivate_graph(graph& g);
-    friend bool internal::is_graph_active(graph& g);
-    friend void internal::spawn_in_graph_arena(graph& g, tbb::task& arena_task);
-    friend void internal::add_task_to_graph_reset_list(graph& g, task *tp);
-    template<typename F> friend void internal::execute_in_graph_arena(graph& g, F& f);
-
-};  // class graph
-
-namespace internal {
-
-inline void activate_graph(graph& g) {
-    g.my_is_active = true;
-}
-
-inline void deactivate_graph(graph& g) {
-    g.my_is_active = false;
-}
-
-inline bool is_graph_active(graph& g) {
-    return g.my_is_active;
-}
-
-//! Executes custom functor inside graph arena
-template<typename F>
-inline void execute_in_graph_arena(graph& g, F& f) {
-    if (is_graph_active(g)) {
-        __TBB_ASSERT(g.my_task_arena && g.my_task_arena->is_active(), NULL);
-        g.my_task_arena->execute(f);
-    }
-}
-
-//! Spawns a task inside graph arena
-inline void spawn_in_graph_arena(graph& g, tbb::task& arena_task) {
-    graph::spawn_functor s_fn(arena_task);
-    execute_in_graph_arena(g, s_fn);
-}
-
-inline void add_task_to_graph_reset_list(graph& g, task *tp) {
-    g.my_reset_task_list.push_back(tp);
-}
-
-}
+namespace tbb {
+namespace flow {
+namespace interface10 {
 
 // enqueue left task if necessary. Returns the non-enqueued task if there is one.
 static inline tbb::task *combine_tasks(graph& g, tbb::task * left, tbb::task * right) {
@@ -1039,7 +707,8 @@ namespace tbb {
 namespace flow {
 namespace interface10 {
 
-#include "internal/_flow_graph_impl.h"
+#include "internal/_flow_graph_body_impl.h"
+#include "internal/_flow_graph_cache_impl.h"
 #include "internal/_flow_graph_types_impl.h"
 #if __TBB_PREVIEW_ASYNC_MSG
 #include "internal/_flow_graph_async_msg_impl.h"
@@ -1068,35 +737,6 @@ template <typename C, typename N>
 void graph_iterator<C,N>::internal_forward() {
     if (current_node) current_node = current_node->next;
 }
-
-//! The base of all graph nodes.
-class graph_node : tbb::internal::no_copy {
-    friend class graph;
-    template<typename C, typename N>
-    friend class graph_iterator;
-protected:
-    graph& my_graph;
-    graph_node *next, *prev;
-public:
-    explicit graph_node(graph& g) : my_graph(g) {
-        my_graph.register_node(this);
-    }
-    virtual ~graph_node() {
-        my_graph.remove_node(this);
-    }
-
-#if TBB_PREVIEW_FLOW_GRAPH_TRACE
-    virtual void set_name( const char *name ) = 0;
-#endif
-
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
-    virtual void extract( ) = 0;
-#endif
-
-protected:
-    // performs the reset on an individual node.
-    virtual void reset_node(reset_flags f=rf_reset_protocol) = 0;
-};  // class graph_node
 
 //! Constructs a graph with isolated task_group_context
 inline graph::graph() : my_nodes(NULL), my_nodes_last(NULL), my_task_arena(NULL) {
@@ -1754,7 +1394,7 @@ public:
                                  static_cast<receiver<input_type> *>(this), static_cast<sender<output_type> *>(this) );
     }
 
-    // Copy constructor; doesn't take anything from src; default won't work
+    //! Copy constructor; doesn't take anything from src; default won't work
     overwrite_node( const overwrite_node& src ) :
         graph_node(src.my_graph), receiver<T>(), sender<T>(), my_buffer_is_valid(false)
     {
@@ -1771,17 +1411,33 @@ public:
     }
 #endif
 
-    bool register_successor( successor_type &s ) __TBB_override {
+   bool register_successor( successor_type &s ) __TBB_override {
         spin_mutex::scoped_lock l( my_mutex );
-        if (my_buffer_is_valid && internal::is_graph_active(this->my_graph)) {
+        if (my_buffer_is_valid && internal::is_graph_active( my_graph )) {
             // We have a valid value that must be forwarded immediately.
-            if ( s.try_put( my_buffer ) || !s.register_predecessor( *this  ) ) {
+            bool ret = s.try_put( my_buffer );
+#if TBB_PREVIEW_RESERVABLE_OVERWRITE_NODE
+            if ( ret ) {
+                // We add the successor that accepted our put
+                my_successors.register_successor( s );
+            } else {
+                // In case of reservation a race between the moment of reservation and register_successor can appear,
+                // because failed reserve does not mean that register_successor is not ready to put a message immediately. 
+                // We have some sort of infinite loop: reserving node tries to set pull state for the edge,
+                // but overwrite_node tries to return push state back. That is why we have to break this loop with task creation.
+                task *rtask = new ( task::allocate_additional_child_of( *( my_graph.root_task() ) ) )
+                    register_predecessor_task( *this, s );
+                internal::spawn_in_graph_arena( my_graph, *rtask );
+            }
+#else
+            if ( ret || !s.register_predecessor( *this  ) ) {
                 // We add the successor: it accepted our put or it rejected it but won't let us become a predecessor
                 my_successors.register_successor( s );
             } else {
                 // We don't add the successor: it rejected our put and we became its predecessor instead
                 return false;
             }
+#endif
         } else {
             // No valid value yet, just add as successor
             my_successors.register_successor( s );
@@ -1834,7 +1490,7 @@ public:
         return my_built_predecessors.edge_count();
     }
 
-    void copy_predecessors(predecessor_list_type &v) __TBB_override {
+    void copy_predecessors( predecessor_list_type &v ) __TBB_override {
         spin_mutex::scoped_lock l( my_mutex );
         my_built_predecessors.copy_edges(v);
     }
@@ -1856,6 +1512,19 @@ public:
         return false;
     }
 
+#if TBB_PREVIEW_RESERVABLE_OVERWRITE_NODE
+    //! Reserves an item
+    bool try_reserve( T &v ) __TBB_override {
+        return try_get(v);
+    }
+
+    //! Releases the reserved item
+    bool try_release() __TBB_override { return true; }
+
+    //! Consumes the reserved item
+    bool try_consume() __TBB_override { return true; }
+#endif
+ 
     bool is_valid() {
        spin_mutex::scoped_lock l( my_mutex );
        return my_buffer_is_valid;
@@ -1867,6 +1536,7 @@ public:
     }
 
 protected:
+
     template< typename R, typename B > friend class run_and_put_task;
     template<typename X, typename Y> friend class internal::broadcast_cache;
     template<typename X, typename Y> friend class internal::round_robin_cache;
@@ -1886,6 +1556,24 @@ protected:
     graph& graph_reference() __TBB_override {
         return my_graph;
     }
+
+#if TBB_PREVIEW_RESERVABLE_OVERWRITE_NODE
+    //! Breaks an infinite loop between the node reservation and register_successor call
+    struct register_predecessor_task : public task {
+        register_predecessor_task(sender<T>& owner, receiver<T>& succ) :
+            o(owner), s(succ) {};
+
+        tbb::task* execute() __TBB_override {
+            if (!s.register_predecessor(o)) {
+                o.register_successor(s);
+            }
+            return NULL;
+        }
+
+        sender<T>& o;
+        receiver<T>& s;
+    };
+#endif
 
     spin_mutex my_mutex;
     internal::broadcast_cache< input_type, null_rw_mutex > my_successors;
@@ -1909,18 +1597,19 @@ class write_once_node : public overwrite_node<T> {
 public:
     typedef T input_type;
     typedef T output_type;
+    typedef overwrite_node<T> base_type;
     typedef typename receiver<input_type>::predecessor_type predecessor_type;
     typedef typename sender<output_type>::successor_type successor_type;
 
     //! Constructor
-    explicit write_once_node(graph& g) : overwrite_node<T>(g) {
+    explicit write_once_node(graph& g) : base_type(g) {
         tbb::internal::fgt_node( tbb::internal::FLOW_WRITE_ONCE_NODE, &(this->my_graph),
                                  static_cast<receiver<input_type> *>(this),
                                  static_cast<sender<output_type> *>(this) );
     }
 
     //! Copy constructor: call base class copy constructor
-    write_once_node( const write_once_node& src ) : overwrite_node<T>(src) {
+    write_once_node( const write_once_node& src ) : base_type(src) {
         tbb::internal::fgt_node( tbb::internal::FLOW_WRITE_ONCE_NODE, &(this->my_graph),
                                  static_cast<receiver<input_type> *>(this),
                                  static_cast<sender<output_type> *>(this) );

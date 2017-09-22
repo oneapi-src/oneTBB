@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::scalable_allocator&lt; void &gt; Class Template Reference</title>
+<title>tbb::recursive_mutex::scoped_lock Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,48 +33,70 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00239.html">tbb</a></li><li class="navelem"><a class="el" href="a00132.html">scalable_allocator< void ></a></li>  </ul>
+<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><a class="el" href="a00124.html">recursive_mutex</a></li><li class="navelem"><a class="el" href="a00132.html">scoped_lock</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a> &#124;
-<a href="#pub-types">Public Types</a> &#124;
-<a href="a00303.html">List of all members</a>  </div>
+<a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#friends">Friends</a> &#124;
+<a href="a00297.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::scalable_allocator&lt; void &gt; Class Template Reference<div class="ingroups"><a class="el" href="a00262.html">Memory Allocation</a></div></div>  </div>
+<div class="title">tbb::recursive_mutex::scoped_lock Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Analogous to std::allocator&lt;void&gt;, as defined in ISO C++ Standard, Section 20.4.1.  
+<p>The scoped locking pattern.  
  <a href="a00132.html#details">More...</a></p>
 
-<p><code>#include &lt;scalable_allocator.h&gt;</code></p>
+<p><code>#include &lt;recursive_mutex.h&gt;</code></p>
+<div class="dynheader">
+Inheritance diagram for tbb::recursive_mutex::scoped_lock:</div>
+<div class="dyncontent">
+ <div class="center">
+  <img src="a00132.png" usemap="#tbb::recursive_mutex::scoped_lock_map" alt=""/>
+  <map id="tbb::recursive_mutex::scoped_lock_map" name="tbb::recursive_mutex::scoped_lock_map">
+</map>
+ </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
-Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00123.html">rebind</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
+Public Member Functions</h2></td></tr>
+<tr class="memitem:a0a9962a3932cfbd0d12cb197494f951b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0a9962a3932cfbd0d12cb197494f951b"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00132.html#a0a9962a3932cfbd0d12cb197494f951b">scoped_lock</a> ()</td></tr>
+<tr class="memdesc:a0a9962a3932cfbd0d12cb197494f951b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct lock that has not acquired a <a class="el" href="a00124.html">recursive_mutex</a>. <br/></td></tr>
+<tr class="separator:a0a9962a3932cfbd0d12cb197494f951b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab42cb541abb9647cac23b1db9a4db93d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab42cb541abb9647cac23b1db9a4db93d"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00132.html#ab42cb541abb9647cac23b1db9a4db93d">scoped_lock</a> (<a class="el" href="a00124.html">recursive_mutex</a> &amp;<a class="el" href="a00086.html">mutex</a>)</td></tr>
+<tr class="memdesc:ab42cb541abb9647cac23b1db9a4db93d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Acquire lock on given mutex. <br/></td></tr>
+<tr class="separator:ab42cb541abb9647cac23b1db9a4db93d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a90a966e19120aac99b36a3d6d04af1a2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a90a966e19120aac99b36a3d6d04af1a2"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00132.html#a90a966e19120aac99b36a3d6d04af1a2">~scoped_lock</a> ()</td></tr>
+<tr class="memdesc:a90a966e19120aac99b36a3d6d04af1a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Release lock (if lock is held). <br/></td></tr>
+<tr class="separator:a90a966e19120aac99b36a3d6d04af1a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac5450ce6a5813f395afaa434384c6539"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac5450ce6a5813f395afaa434384c6539"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00132.html#ac5450ce6a5813f395afaa434384c6539">acquire</a> (<a class="el" href="a00124.html">recursive_mutex</a> &amp;<a class="el" href="a00086.html">mutex</a>)</td></tr>
+<tr class="memdesc:ac5450ce6a5813f395afaa434384c6539"><td class="mdescLeft">&#160;</td><td class="mdescRight">Acquire lock on given mutex. <br/></td></tr>
+<tr class="separator:ac5450ce6a5813f395afaa434384c6539"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a160bba506f4033980ddb69ab7a02c4fb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a160bba506f4033980ddb69ab7a02c4fb"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00132.html#a160bba506f4033980ddb69ab7a02c4fb">try_acquire</a> (<a class="el" href="a00124.html">recursive_mutex</a> &amp;<a class="el" href="a00086.html">mutex</a>)</td></tr>
+<tr class="memdesc:a160bba506f4033980ddb69ab7a02c4fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Try acquire lock on given <a class="el" href="a00124.html">recursive_mutex</a>. <br/></td></tr>
+<tr class="separator:a160bba506f4033980ddb69ab7a02c4fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2fe3246ffc26bdb5a58f33ca513b6c0f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2fe3246ffc26bdb5a58f33ca513b6c0f"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00132.html#a2fe3246ffc26bdb5a58f33ca513b6c0f">release</a> ()</td></tr>
+<tr class="memdesc:a2fe3246ffc26bdb5a58f33ca513b6c0f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Release lock. <br/></td></tr>
+<tr class="separator:a2fe3246ffc26bdb5a58f33ca513b6c0f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:a4220fdea504929811e9c083da3ec24cd"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4220fdea504929811e9c083da3ec24cd"></a>
-typedef void *&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b></td></tr>
-<tr class="separator:a4220fdea504929811e9c083da3ec24cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2ae27d63cd7df1dc8d2a47c89aad8bba"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2ae27d63cd7df1dc8d2a47c89aad8bba"></a>
-typedef const void *&#160;</td><td class="memItemRight" valign="bottom"><b>const_pointer</b></td></tr>
-<tr class="separator:a2ae27d63cd7df1dc8d2a47c89aad8bba"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a968aea700a5f30ad613a84a474b00ba4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a968aea700a5f30ad613a84a474b00ba4"></a>
-typedef void&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b></td></tr>
-<tr class="separator:a968aea700a5f30ad613a84a474b00ba4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:a1bdb637fe5c9412323bf92846b40682e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1bdb637fe5c9412323bf92846b40682e"></a>
+class&#160;</td><td class="memItemRight" valign="bottom"><b>recursive_mutex</b></td></tr>
+<tr class="separator:a1bdb637fe5c9412323bf92846b40682e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;&gt;<br/>
-class tbb::scalable_allocator&lt; void &gt;</h3>
-
-<p>Analogous to std::allocator&lt;void&gt;, as defined in ISO C++ Standard, Section 20.4.1. </p>
+<div class="textblock"><p>The scoped locking pattern. </p>
+<p>It helps to avoid the common problem of forgetting to release lock. It also nicely provides the "node" for queuing locks. </p>
 </div><hr/>The documentation for this class was generated from the following file:<ul>
-<li><a class="el" href="a00217.html">scalable_allocator.h</a></li>
+<li>recursive_mutex.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

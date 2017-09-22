@@ -72,6 +72,8 @@
   #define __TBB_SCOPED_ENUM_PRESENT ( _MSC_VER >= 1700 )
 #endif
 
+#define __TBB_CPP14_GENERIC_LAMBDAS_PRESENT  (__cpp_generic_lambdas >= 201304 )
+
 #define __TBB_TEST_SKIP_LAMBDA (__TBB_ICC_13_0_CPP11_STDLIB_SUPPORT_BROKEN || !__TBB_CPP11_LAMBDAS_PRESENT)
 
 #if __GNUC__ && __ANDROID__

@@ -18,6 +18,10 @@
 
 */
 
+#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#define TBB_PREVIEW_RESERVABLE_OVERWRITE_NODE 1
+#endif
+
 #include "harness_graph.h"
 
 #include "tbb/flow_graph.h"
@@ -150,6 +154,9 @@ int TestMain() {
         tbb::task_scheduler_init init(p);
         parallel_read_write_tests<int>();
         parallel_read_write_tests<float>();
+#if TBB_PREVIEW_RESERVABLE_OVERWRITE_NODE
+        test_reserving_nodes<tbb::flow::overwrite_node, int>();
+#endif
     }
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
     test_extract_on_node<tbb::flow::overwrite_node, int>();

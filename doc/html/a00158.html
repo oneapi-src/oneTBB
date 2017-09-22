@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::tbb_allocator&lt; T &gt; Class Template Reference</title>
+<title>tbb::tbb_exception Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,120 +33,186 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00239.html">tbb</a></li><li class="navelem"><a class="el" href="a00158.html">tbb_allocator</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><a class="el" href="a00158.html">tbb_exception</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a> &#124;
-<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
-<a href="a00313.html">List of all members</a>  </div>
+<a href="a00323.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::tbb_allocator&lt; T &gt; Class Template Reference<div class="ingroups"><a class="el" href="a00262.html">Memory Allocation</a></div></div>  </div>
+<div class="title">tbb::tbb_exception Class Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Meets "allocator" requirements of ISO C++ Standard, Section 20.1.5.  
+<p>Interface to be implemented by all exceptions TBB recognizes and propagates across the threads.  
  <a href="a00158.html#details">More...</a></p>
 
-<p><code>#include &lt;tbb_allocator.h&gt;</code></p>
+<p><code>#include &lt;tbb_exception.h&gt;</code></p>
+<div class="dynheader">
+Inheritance diagram for tbb::tbb_exception:</div>
+<div class="dyncontent">
+ <div class="center">
+  <img src="a00158.png" usemap="#tbb::tbb_exception_map" alt=""/>
+  <map id="tbb::tbb_exception_map" name="tbb::tbb_exception_map">
+<area href="a00036.html" title="This class is used by TBB to propagate information about unhandled exceptions into the root thread..." alt="tbb::captured_exception" shape="rect" coords="0,112,248,136"/>
+<area href="a00085.html" title="Template that can be used to implement exception that transfers arbitrary ExceptionData to the root t..." alt="tbb::movable_exception&lt; ExceptionData &gt;" shape="rect" coords="258,112,506,136"/>
+</map>
+ </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
-Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00117.html">rebind</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:a60463a571d5c20f7762112367261ad94"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00158.html#a60463a571d5c20f7762112367261ad94">malloc_type</a> { <b>scalable</b>, 
-<b>standard</b>
- }</td></tr>
-<tr class="memdesc:a60463a571d5c20f7762112367261ad94"><td class="mdescLeft">&#160;</td><td class="mdescRight">Specifies current allocator. <br/></td></tr>
-<tr class="separator:a60463a571d5c20f7762112367261ad94"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a26be966de4164e37002247c2c2266df9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a26be966de4164e37002247c2c2266df9"></a>
-typedef <br class="typebreak"/>
-internal::allocator_type&lt; T &gt;<br class="typebreak"/>
-::value_type&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b></td></tr>
-<tr class="separator:a26be966de4164e37002247c2c2266df9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a452a6c09408f425c9a005b5f2aad1761"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a452a6c09408f425c9a005b5f2aad1761"></a>
-typedef value_type *&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b></td></tr>
-<tr class="separator:a452a6c09408f425c9a005b5f2aad1761"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a63122d559635096a2618aecd1ba6664b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a63122d559635096a2618aecd1ba6664b"></a>
-typedef const value_type *&#160;</td><td class="memItemRight" valign="bottom"><b>const_pointer</b></td></tr>
-<tr class="separator:a63122d559635096a2618aecd1ba6664b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5ec6bd5e8cdd5b7abb99f5d72760c7a2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5ec6bd5e8cdd5b7abb99f5d72760c7a2"></a>
-typedef value_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>reference</b></td></tr>
-<tr class="separator:a5ec6bd5e8cdd5b7abb99f5d72760c7a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a24d98ce3ab908bc4b10d21dad6622364"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a24d98ce3ab908bc4b10d21dad6622364"></a>
-typedef const value_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>const_reference</b></td></tr>
-<tr class="separator:a24d98ce3ab908bc4b10d21dad6622364"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a812817d50e8df15df54998caec9892eb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a812817d50e8df15df54998caec9892eb"></a>
-typedef size_t&#160;</td><td class="memItemRight" valign="bottom"><b>size_type</b></td></tr>
-<tr class="separator:a812817d50e8df15df54998caec9892eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acba390757f664df03a15e933e3e34941"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acba390757f664df03a15e933e3e34941"></a>
-typedef ptrdiff_t&#160;</td><td class="memItemRight" valign="bottom"><b>difference_type</b></td></tr>
-<tr class="separator:acba390757f664df03a15e933e3e34941"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a8371538bc959f41f342012e363564aed"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8371538bc959f41f342012e363564aed"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>tbb_allocator</b> (const <a class="el" href="a00158.html">tbb_allocator</a> &amp;)  throw ()</td></tr>
-<tr class="separator:a8371538bc959f41f342012e363564aed"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9faff9ae2c2cd3ed2ca064b562224974"><td class="memTemplParams" colspan="2"><a class="anchor" id="a9faff9ae2c2cd3ed2ca064b562224974"></a>
-template&lt;typename U &gt; </td></tr>
-<tr class="memitem:a9faff9ae2c2cd3ed2ca064b562224974"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>tbb_allocator</b> (const <a class="el" href="a00158.html">tbb_allocator</a>&lt; U &gt; &amp;)  throw ()</td></tr>
-<tr class="separator:a9faff9ae2c2cd3ed2ca064b562224974"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac1370dbb1f06fed57273bddcae688255"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac1370dbb1f06fed57273bddcae688255"></a>
-pointer&#160;</td><td class="memItemRight" valign="bottom"><b>address</b> (reference x) const </td></tr>
-<tr class="separator:ac1370dbb1f06fed57273bddcae688255"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afb9c91d548d4a5affe3ec1de1c1b9327"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afb9c91d548d4a5affe3ec1de1c1b9327"></a>
-const_pointer&#160;</td><td class="memItemRight" valign="bottom"><b>address</b> (const_reference x) const </td></tr>
-<tr class="separator:afb9c91d548d4a5affe3ec1de1c1b9327"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afedd8a64eed9692083c708f419338e0c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afedd8a64eed9692083c708f419338e0c"></a>
-pointer&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00158.html#afedd8a64eed9692083c708f419338e0c">allocate</a> (size_type n, const void *=0)</td></tr>
-<tr class="memdesc:afedd8a64eed9692083c708f419338e0c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allocate space for n objects. <br/></td></tr>
-<tr class="separator:afedd8a64eed9692083c708f419338e0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a28e333e0fff56dd53c20b82cfee430ab"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a28e333e0fff56dd53c20b82cfee430ab"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00158.html#a28e333e0fff56dd53c20b82cfee430ab">deallocate</a> (pointer p, size_type)</td></tr>
-<tr class="memdesc:a28e333e0fff56dd53c20b82cfee430ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Free previously allocated block of memory. <br/></td></tr>
-<tr class="separator:a28e333e0fff56dd53c20b82cfee430ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0a2676fb8a2f931961d373b88848c93e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0a2676fb8a2f931961d373b88848c93e"></a>
-size_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00158.html#a0a2676fb8a2f931961d373b88848c93e">max_size</a> () const   throw ()</td></tr>
-<tr class="memdesc:a0a2676fb8a2f931961d373b88848c93e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Largest value for which method allocate might succeed. <br/></td></tr>
-<tr class="separator:a0a2676fb8a2f931961d373b88848c93e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af54fa3029e33cebe5ba64a8538306fdf"><td class="memTemplParams" colspan="2"><a class="anchor" id="af54fa3029e33cebe5ba64a8538306fdf"></a>
-template&lt;typename U , typename... Args&gt; </td></tr>
-<tr class="memitem:af54fa3029e33cebe5ba64a8538306fdf"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00158.html#af54fa3029e33cebe5ba64a8538306fdf">construct</a> (U *p, Args &amp;&amp;...args)</td></tr>
-<tr class="memdesc:af54fa3029e33cebe5ba64a8538306fdf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy-construct value at location pointed to by p. <br/></td></tr>
-<tr class="separator:af54fa3029e33cebe5ba64a8538306fdf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aefbb273663853a665e51dcfa053d12a0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aefbb273663853a665e51dcfa053d12a0"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>construct</b> (pointer p, value_type &amp;&amp;value)</td></tr>
-<tr class="separator:aefbb273663853a665e51dcfa053d12a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a694e266db657afba34ecb60111b2e2d3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a694e266db657afba34ecb60111b2e2d3"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>construct</b> (pointer p, const value_type &amp;value)</td></tr>
-<tr class="separator:a694e266db657afba34ecb60111b2e2d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac7b1b393a8ff3399079328c0971c1996"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac7b1b393a8ff3399079328c0971c1996"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00158.html#ac7b1b393a8ff3399079328c0971c1996">destroy</a> (pointer p)</td></tr>
-<tr class="memdesc:ac7b1b393a8ff3399079328c0971c1996"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy value at location pointed to by p. <br/></td></tr>
-<tr class="separator:ac7b1b393a8ff3399079328c0971c1996"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
-Static Public Member Functions</h2></td></tr>
-<tr class="memitem:aa4606cff0156ec4237c1571204851bfb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa4606cff0156ec4237c1571204851bfb"></a>
-static <a class="el" href="a00158.html#a60463a571d5c20f7762112367261ad94">malloc_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00158.html#aa4606cff0156ec4237c1571204851bfb">allocator_type</a> ()</td></tr>
-<tr class="memdesc:aa4606cff0156ec4237c1571204851bfb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns current allocator. <br/></td></tr>
-<tr class="separator:aa4606cff0156ec4237c1571204851bfb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4bd4ba0d501021013d1473d21b020b69"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="a00158.html">tbb_exception</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00158.html#a4bd4ba0d501021013d1473d21b020b69">move</a> ()=0  throw ()</td></tr>
+<tr class="memdesc:a4bd4ba0d501021013d1473d21b020b69"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates and returns pointer to the deep copy of this exception object.  <a href="#a4bd4ba0d501021013d1473d21b020b69">More...</a><br/></td></tr>
+<tr class="separator:a4bd4ba0d501021013d1473d21b020b69"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad3bc09bf78c33f19a0bcdf882fdf9d41"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00158.html#ad3bc09bf78c33f19a0bcdf882fdf9d41">destroy</a> ()=0  throw ()</td></tr>
+<tr class="memdesc:ad3bc09bf78c33f19a0bcdf882fdf9d41"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroys objects created by the <a class="el" href="a00158.html#a4bd4ba0d501021013d1473d21b020b69" title="Creates and returns pointer to the deep copy of this exception object. ">move()</a> method.  <a href="#ad3bc09bf78c33f19a0bcdf882fdf9d41">More...</a><br/></td></tr>
+<tr class="separator:ad3bc09bf78c33f19a0bcdf882fdf9d41"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae45c08d36c7ec7ae91785da3515a8828"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00158.html#ae45c08d36c7ec7ae91785da3515a8828">throw_self</a> ()=0</td></tr>
+<tr class="memdesc:ae45c08d36c7ec7ae91785da3515a8828"><td class="mdescLeft">&#160;</td><td class="mdescRight">Throws this exception object.  <a href="#ae45c08d36c7ec7ae91785da3515a8828">More...</a><br/></td></tr>
+<tr class="separator:ae45c08d36c7ec7ae91785da3515a8828"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a282bb7dce5f157d044d14d50cd6ff35c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a282bb7dce5f157d044d14d50cd6ff35c"></a>
+virtual const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00158.html#a282bb7dce5f157d044d14d50cd6ff35c">name</a> () const =0  throw ()</td></tr>
+<tr class="memdesc:a282bb7dce5f157d044d14d50cd6ff35c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns RTTI name of the originally intercepted exception. <br/></td></tr>
+<tr class="separator:a282bb7dce5f157d044d14d50cd6ff35c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa6739787c42d80943e18913cce47f42f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa6739787c42d80943e18913cce47f42f"></a>
+virtual const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00158.html#aa6739787c42d80943e18913cce47f42f">what</a> () const __TBB_override=0  throw ()</td></tr>
+<tr class="memdesc:aa6739787c42d80943e18913cce47f42f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the result of originally intercepted exception's <a class="el" href="a00158.html#aa6739787c42d80943e18913cce47f42f" title="Returns the result of originally intercepted exception&#39;s what() method. ">what()</a> method. <br/></td></tr>
+<tr class="separator:aa6739787c42d80943e18913cce47f42f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6a973c37078afedf7d457ff4704bf8cd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00158.html#a6a973c37078afedf7d457ff4704bf8cd">operator delete</a> (void *p)</td></tr>
+<tr class="separator:a6a973c37078afedf7d457ff4704bf8cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;typename T&gt;<br/>
-class tbb::tbb_allocator&lt; T &gt;</h3>
+<div class="textblock"><p>Interface to be implemented by all exceptions TBB recognizes and propagates across the threads. </p>
+<p>If an unhandled exception of the type derived from <a class="el" href="a00158.html" title="Interface to be implemented by all exceptions TBB recognizes and propagates across the threads...">tbb::tbb_exception</a> is intercepted by the TBB scheduler in one of the worker threads, it is delivered to and re-thrown in the root thread. The root thread is the thread that has started the outermost algorithm or root task sharing the same <a class="el" href="a00150.html">task_group_context</a> with the guilty algorithm/task (the one that threw the exception first).</p>
+<p>Note: when documentation mentions workers with respect to exception handling, masters are implied as well, because they are completely equivalent in this context. Consequently a root thread can be master or worker thread.</p>
+<p>NOTE: In case of nested algorithms or complex task hierarchies when the nested levels share (explicitly or by means of implicit inheritance) the task group context of the outermost level, the exception may be (re-)thrown multiple times (ultimately - in each worker on each nesting level) before reaching the root thread at the outermost level. IMPORTANT: if you intercept an exception derived from this class on a nested level, you must re-throw it in the catch block by means of the "throw;" operator.</p>
+<p>TBB provides two implementations of this interface: <a class="el" href="a00036.html" title="This class is used by TBB to propagate information about unhandled exceptions into the root thread...">tbb::captured_exception</a> and template class <a class="el" href="a00085.html" title="Template that can be used to implement exception that transfers arbitrary ExceptionData to the root t...">tbb::movable_exception</a>. See their declarations for more info. </p>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="ad3bc09bf78c33f19a0bcdf882fdf9d41"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual void tbb::tbb_exception::destroy </td>
+          <td>(</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td align="right">throw </td><td>(</td><td colspan="2"></td>
+        </tr>
+        <tr>
+          <td align="right"></td><td>)</td><td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
-<p>Meets "allocator" requirements of ISO C++ Standard, Section 20.1.5. </p>
-<p>The class selects the best memory allocation mechanism available from scalable_malloc and standard malloc. The members are ordered the same way they are in section 20.4.1 of the ISO C++ standard. </p>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>tbb_allocator.h</li>
+<p>Destroys objects created by the <a class="el" href="a00158.html#a4bd4ba0d501021013d1473d21b020b69" title="Creates and returns pointer to the deep copy of this exception object. ">move()</a> method. </p>
+<p>Frees memory and calls destructor for this exception object. Can and must be used only on objects created by the move method. </p>
+
+<p>Implemented in <a class="el" href="a00085.html#aa4be7e2bf375edcb218fb5d7ed8e279b">tbb::movable_exception&lt; ExceptionData &gt;</a>, and <a class="el" href="a00036.html#abfc1220a6f9da0361082a3f3ad80cdc9">tbb::captured_exception</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a4bd4ba0d501021013d1473d21b020b69"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual <a class="el" href="a00158.html">tbb_exception</a>* tbb::tbb_exception::move </td>
+          <td>(</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td align="right">throw </td><td>(</td><td colspan="2"></td>
+        </tr>
+        <tr>
+          <td align="right"></td><td>)</td><td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Creates and returns pointer to the deep copy of this exception object. </p>
+<p>Move semantics is allowed. </p>
+
+<p>Implemented in <a class="el" href="a00085.html#a46eee42a3279007f48c9e8f11d074d16">tbb::movable_exception&lt; ExceptionData &gt;</a>, and <a class="el" href="a00036.html#a3b75205c631b51a00faf98c9e107f78a">tbb::captured_exception</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a6a973c37078afedf7d457ff4704bf8cd"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void tbb::tbb_exception::operator delete </td>
+          <td>(</td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>p</em>)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Operator delete is provided only to allow using existing smart pointers with TBB exception objects obtained as the result of applying <a class="el" href="a00158.html#a4bd4ba0d501021013d1473d21b020b69" title="Creates and returns pointer to the deep copy of this exception object. ">move()</a> operation on an exception thrown out of TBB scheduler.</p>
+<p>When overriding method <a class="el" href="a00158.html#a4bd4ba0d501021013d1473d21b020b69" title="Creates and returns pointer to the deep copy of this exception object. ">move()</a> make sure to override operator delete as well if memory is allocated not by TBB's scalable allocator. </p>
+
+</div>
+</div>
+<a class="anchor" id="ae45c08d36c7ec7ae91785da3515a8828"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual void tbb::tbb_exception::throw_self </td>
+          <td>(</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Throws this exception object. </p>
+<p>Make sure that if you have several levels of derivation from this interface you implement or override this method on the most derived level. The implementation is as simple as "throw *this;". Failure to do this will result in exception of a base class type being thrown. </p>
+
+<p>Implemented in <a class="el" href="a00085.html#a0e9ac8a4468eb0ff3b2bb246b806a10e">tbb::movable_exception&lt; ExceptionData &gt;</a>, and <a class="el" href="a00036.html#a6df0d3a1943ca6f84a9a9aca25e9633d">tbb::captured_exception</a>.</p>
+
+</div>
+</div>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li>tbb_exception.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

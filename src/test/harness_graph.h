@@ -1024,4 +1024,46 @@ void test_output_ports_return_ref(NodeType& mop_node) {
     ASSERT(&output_ports1 == &output_ports2, "output_ports() should return reference");
 }
 
+template< template <typename> class ReservingNodeType, typename DataType, bool DoClear >
+class harness_reserving_body : NoAssign {
+    ReservingNodeType<DataType> &my_reserving_node;
+    tbb::flow::buffer_node<DataType> &my_buffer_node;
+public:
+    harness_reserving_body(ReservingNodeType<DataType> &reserving_node, tbb::flow::buffer_node<DataType> &bn) : my_reserving_node(reserving_node), my_buffer_node(bn) {}
+    void operator()(DataType i) const {
+        my_reserving_node.try_put(i);
+        if (DoClear) my_reserving_node.clear();
+        my_buffer_node.try_put(i);
+        my_reserving_node.try_put(i);
+    }
+};
+
+template< template <typename> class ReservingNodeType, typename DataType >
+void test_reserving_nodes() {
+    const int N = 300;
+ 
+    tbb::flow::graph g;
+
+    ReservingNodeType<DataType> reserving_n(g);
+
+    tbb::flow::buffer_node<DataType> buffering_n(g);
+    tbb::flow::join_node< tbb::flow::tuple<DataType, DataType>, tbb::flow::reserving > join_n(g);
+    harness_counting_receiver< tbb::flow::tuple<DataType, DataType> > end_receiver(g);
+
+    tbb::flow::make_edge(reserving_n, tbb::flow::input_port<0>(join_n));
+    tbb::flow::make_edge(buffering_n, tbb::flow::input_port<1>(join_n));
+    tbb::flow::make_edge(join_n, end_receiver);
+
+    NativeParallelFor(N, harness_reserving_body<ReservingNodeType, DataType, false>(reserving_n, buffering_n));
+    g.wait_for_all();
+
+    ASSERT(end_receiver.my_count == N, NULL);
+
+    // Should not hang
+    NativeParallelFor(N, harness_reserving_body<ReservingNodeType, DataType, true>(reserving_n, buffering_n));
+    g.wait_for_all();
+
+    ASSERT(end_receiver.my_count == 2 * N, NULL);
+}
+
 #endif

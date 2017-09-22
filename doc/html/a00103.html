@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::flow::interface10::opencl_node&lt; tuple&lt; Ports...&gt;, JP, Factory &gt; Class Template Reference</title>
+<title>tbb::flow::interface10::opencl_range Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,45 +33,41 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00239.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface10</b></li><li class="navelem"><a class="el" href="a00103.html">opencl_node< tuple< Ports...>, JP, Factory ></a></li>  </ul>
+<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface10</b></li><li class="navelem"><a class="el" href="a00103.html">opencl_range</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="a00351.html">List of all members</a>  </div>
+<a href="a00345.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::flow::interface10::opencl_node&lt; tuple&lt; Ports...&gt;, JP, Factory &gt; Class Template Reference</div>  </div>
+<div class="title">tbb::flow::interface10::opencl_range Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="dynheader">
-Inheritance diagram for tbb::flow::interface10::opencl_node&lt; tuple&lt; Ports...&gt;, JP, Factory &gt;:</div>
-<div class="dyncontent">
- <div class="center">
-  <img src="a00103.png" usemap="#tbb::flow::interface10::opencl_node&lt; tuple&lt; Ports...&gt;, JP, Factory &gt;_map" alt=""/>
-  <map id="tbb::flow::interface10::opencl_node&lt; tuple&lt; Ports...&gt;, JP, Factory &gt;_map" name="tbb::flow::interface10::opencl_node&lt; tuple&lt; Ports...&gt;, JP, Factory &gt;_map">
-</map>
- </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a10d80c9707b89b8d3d96f0e7a7b11d35"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a10d80c9707b89b8d3d96f0e7a7b11d35"></a>
-typedef base_type::kernel_type&#160;</td><td class="memItemRight" valign="bottom"><b>kernel_type</b></td></tr>
-<tr class="separator:a10d80c9707b89b8d3d96f0e7a7b11d35"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac096f58fdc32351a11d7bc3926ef5251"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac096f58fdc32351a11d7bc3926ef5251"></a>
+typedef size_t&#160;</td><td class="memItemRight" valign="bottom"><b>range_index_type</b></td></tr>
+<tr class="separator:ac096f58fdc32351a11d7bc3926ef5251"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a757f32424b3588cf9147b281d0bb2f55"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a757f32424b3588cf9147b281d0bb2f55"></a>
+typedef std::array<br class="typebreak"/>
+&lt; range_index_type, 3 &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>nd_range_type</b></td></tr>
+<tr class="separator:a757f32424b3588cf9147b281d0bb2f55"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:aef536f96cdf0e008b87892a2523842b0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aef536f96cdf0e008b87892a2523842b0"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_node</b> (<a class="el" href="a00073.html">graph</a> &amp;g, const kernel_type &amp;kernel)</td></tr>
-<tr class="separator:aef536f96cdf0e008b87892a2523842b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeac46cd85f792eaf66b33ee4e3691251"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aeac46cd85f792eaf66b33ee4e3691251"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_node</b> (<a class="el" href="a00073.html">graph</a> &amp;g, const kernel_type &amp;kernel, Factory &amp;f)</td></tr>
-<tr class="separator:aeac46cd85f792eaf66b33ee4e3691251"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac9a8f3aaddd6830f2b823813cf5d6c2e"><td class="memTemplParams" colspan="2"><a class="anchor" id="ac9a8f3aaddd6830f2b823813cf5d6c2e"></a>
-template&lt;typename DeviceSelector &gt; </td></tr>
-<tr class="memitem:ac9a8f3aaddd6830f2b823813cf5d6c2e"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>opencl_node</b> (<a class="el" href="a00073.html">graph</a> &amp;g, const kernel_type &amp;kernel, DeviceSelector d, Factory &amp;f)</td></tr>
-<tr class="separator:ac9a8f3aaddd6830f2b823813cf5d6c2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a24ad17ef536995e48d97364068dad332"><td class="memTemplParams" colspan="2"><a class="anchor" id="a24ad17ef536995e48d97364068dad332"></a>
+template&lt;typename G  = std::initializer_list&lt;int&gt;, typename L  = std::initializer_list&lt;int&gt;, typename  = typename std::enable_if&lt;!std::is_same&lt;typename std::decay&lt;G&gt;::type, opencl_range&gt;::value&gt;::type&gt; </td></tr>
+<tr class="memitem:a24ad17ef536995e48d97364068dad332"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>opencl_range</b> (G &amp;&amp;global_work=std::initializer_list&lt; int &gt;({0}), L &amp;&amp;local_work=std::initializer_list&lt; int &gt;({0, 0, 0}))</td></tr>
+<tr class="separator:a24ad17ef536995e48d97364068dad332"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a191c3c9373afde6abd1819c164a10e69"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a191c3c9373afde6abd1819c164a10e69"></a>
+const nd_range_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>global_range</b> () const </td></tr>
+<tr class="separator:a191c3c9373afde6abd1819c164a10e69"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a91080d6d64ece228c447980ca7b7d4a5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a91080d6d64ece228c447980ca7b7d4a5"></a>
+const nd_range_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>local_range</b> () const </td></tr>
+<tr class="separator:a91080d6d64ece228c447980ca7b7d4a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>flow_graph_opencl_node.h</li>

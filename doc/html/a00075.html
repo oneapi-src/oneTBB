@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::flow::interface10::graph_proxy Class Reference</title>
+<title>tbb::improper_lock Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,48 +33,41 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00239.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface10</b></li><li class="navelem"><a class="el" href="a00075.html">graph_proxy</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><a class="el" href="a00075.html">improper_lock</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="a00336.html">List of all members</a>  </div>
+<a href="a00319.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::flow::interface10::graph_proxy Class Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div>  </div>
+<div class="title">tbb::improper_lock Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Pure virtual template classes that define interfaces for async communication.  
+<p>Exception for PPL locks.  
  <a href="a00075.html#details">More...</a></p>
 
-<p><code>#include &lt;flow_graph_abstractions.h&gt;</code></p>
+<p><code>#include &lt;tbb_exception.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::flow::interface10::graph_proxy:</div>
+Inheritance diagram for tbb::improper_lock:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00075.png" usemap="#tbb::flow::interface10::graph_proxy_map" alt=""/>
-  <map id="tbb::flow::interface10::graph_proxy_map" name="tbb::flow::interface10::graph_proxy_map">
-<area href="a00073.html" title="The graph class. " alt="tbb::flow::interface10::graph" shape="rect" coords="0,56,287,80"/>
-<area href="a00125.html" alt="tbb::flow::interface10::receiver_gateway&lt; Input &gt;" shape="rect" coords="297,56,584,80"/>
+  <img src="a00075.png" usemap="#tbb::improper_lock_map" alt=""/>
+  <map id="tbb::improper_lock_map" name="tbb::improper_lock_map">
 </map>
  </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a49a9be5db28923f84cfc468d39139fb3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a49a9be5db28923f84cfc468d39139fb3"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00075.html#a49a9be5db28923f84cfc468d39139fb3">reserve_wait</a> ()=0</td></tr>
-<tr class="memdesc:a49a9be5db28923f84cfc468d39139fb3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inform a graph that messages may come from outside, to prevent premature graph completion. <br/></td></tr>
-<tr class="separator:a49a9be5db28923f84cfc468d39139fb3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad4e11378739911c10db09ba71abe7c1a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad4e11378739911c10db09ba71abe7c1a"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00075.html#ad4e11378739911c10db09ba71abe7c1a">release_wait</a> ()=0</td></tr>
-<tr class="memdesc:ad4e11378739911c10db09ba71abe7c1a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inform a graph that a previous call to reserve_wait is no longer in effect. <br/></td></tr>
-<tr class="separator:ad4e11378739911c10db09ba71abe7c1a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a21c70e6c3868a93a7cd0e725d411da50"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a21c70e6c3868a93a7cd0e725d411da50"></a>
+const char *&#160;</td><td class="memItemRight" valign="bottom"><b>what</b> () const __TBB_override  throw ()</td></tr>
+<tr class="separator:a21c70e6c3868a93a7cd0e725d411da50"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Pure virtual template classes that define interfaces for async communication. </p>
+<div class="textblock"><p>Exception for PPL locks. </p>
 </div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>flow_graph_abstractions.h</li>
+<li>tbb_exception.h</li>
 </ul>
 </div><!-- contents -->
 <hr>

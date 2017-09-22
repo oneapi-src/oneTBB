@@ -140,7 +140,8 @@ market& market::global_market ( bool is_public, unsigned workers_requested, size
         // The requested number of threads is intentionally not considered in
         // computation of the hard limit, in order to separate responsibilities
         // and avoid complicated interactions between global_control and task_scheduler_init.
-        const unsigned workers_hard_limit = max(factor*governor::default_num_threads(), app_parallelism_limit());
+        // The market guarantees that at least 256 threads might be created.
+        const unsigned workers_hard_limit = max(max(factor*governor::default_num_threads(), 256u), app_parallelism_limit());
         const unsigned workers_soft_limit = calc_workers_soft_limit(workers_requested, workers_hard_limit);
         // Create the global market instance
         size_t size = sizeof(market);
@@ -695,9 +696,9 @@ void market::process( job& j ) {
         // Workers leave market because there is no arena in need. It can happen earlier than
         // adjust_job_count_estimate() decreases my_slack and RML can put this thread to sleep.
         // It might result in a busy-loop checking for my_slack<0 and calling this method instantly.
-        // first_interval>0 and the pause refines this spinning.
+        // first_interval>0 and the yield refines this spinning.
         if( i > 0 )
-            prolonged_pause();
+            __TBB_Yield();
         else
 #if !__TBB_SLEEP_PERMISSION
             break;

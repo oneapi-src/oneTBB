@@ -513,16 +513,16 @@ There are four cases that are supported:
     #define __TBB_TASK_ISOLATION 1
 #endif /* __TBB_TASK_ISOLATION */
 
-#if TBB_PREVIEW_FLOW_GRAPH_TRACE
-// Users of flow-graph trace need to explicitly link against the preview library.  This
-// prevents the linker from implicitly linking an application with a preview version of
-// TBB and unexpectedly bringing in other community preview features, which might change
-// the behavior of the application.
+#if TBB_PREVIEW_FLOW_GRAPH_TRACE || TBB_PREVIEW_ALGORITHM_TRACE
+// Users of flow-graph and algorithm trace need to explicitly link against the preview 
+// library. This prevents the linker from implicitly linking an application with a preview 
+// version of TBB and unexpectedly bringing in other community preview features, which 
+// might change the behavior of the application.
 #define __TBB_NO_IMPLICIT_LINKAGE 1
 #endif /* TBB_PREVIEW_FLOW_GRAPH_TRACE */
 
 #ifndef __TBB_ITT_STRUCTURE_API
-#define __TBB_ITT_STRUCTURE_API ( !__TBB_DEFINE_MIC && (__TBB_CPF_BUILD || TBB_PREVIEW_FLOW_GRAPH_TRACE) )
+#define __TBB_ITT_STRUCTURE_API ( !__TBB_DEFINE_MIC && (__TBB_CPF_BUILD || TBB_PREVIEW_FLOW_GRAPH_TRACE || TBB_PREVIEW_ALGORITHM_TRACE) )
 #endif
 
 #if TBB_USE_EXCEPTIONS && !__TBB_TASK_GROUP_CONTEXT

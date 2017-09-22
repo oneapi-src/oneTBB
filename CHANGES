@@ -2,6 +2,26 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 2018 Update 1
+TBB_INTERFACE_VERSION == 10001
+
+Changes (w.r.t. Intel TBB 2018):
+
+- Added lambda-friendly overloads for parallel_scan.
+- Added support of static and simple partitioners in
+    parallel_deterministic_reduce.
+
+Preview Features:
+
+- Added initial support for Flow Graph Analyzer to parallel_for.
+- Added reservation support in overwrite_node and write_once_node.
+
+Bugs fixed:
+
+- Fixed a potential deadlock scenario in the flow graph that affected
+    Intel TBB 2018.
+
+------------------------------------------------------------------------
 Intel TBB 2018
 TBB_INTERFACE_VERSION == 10000
 
@@ -19,7 +39,7 @@ Changes (w.r.t. Intel TBB 2017 Update 7):
     move-only functors.
 - A flow graph now spawns all tasks into the same task arena,
     and waiting for graph completion also happens in that arena.
-- Improved support for Flow Graph Advisor in async_node, opencl_node,
+- Improved support for Flow Graph Analyzer in async_node, opencl_node,
     and composite_node.
 - Added support for Android* NDK r15, r15b.
 - Added support for Universal Windows Platform.
@@ -51,6 +71,17 @@ Bugs fixed:
 - Fixed this_task_arena::isolate() function to work correctly with
     parallel_invoke and parallel_do algorithms.
 - Fixed a memory leak in composite_node.
+- Fixed an assertion failure in debug tbbmalloc binaries when
+    TBBMALLOC_CLEAN_ALL_BUFFERS is used.
+
+------------------------------------------------------------------------
+Intel TBB 2017 Update 8
+TBB_INTERFACE_VERSION == 9108
+
+Changes (w.r.t. Intel TBB 2017 Update 7):
+
+Bugs fixed:
+
 - Fixed an assertion failure in debug tbbmalloc binaries when
     TBBMALLOC_CLEAN_ALL_BUFFERS is used.
 

@@ -19,7 +19,7 @@
 #
 # Usage:
 #   include(TBBMakeConfig.cmake)
-#   tbb_make_config(TBB_ROOT <tbb_root> SYSTEM_NAME <system_name> CONFIG_DIR <var_to_store_config_dir> [CONFIG_FOR_SOURCE TBB_RELEASE_DIR <tbb_release_dir> TBB_DEBUG_DIR <tbb_debug_dir>])
+#   tbb_make_config(TBB_ROOT <tbb_root> SYSTEM_NAME <system_name> CONFIG_DIR <var_to_store_config_dir> [SAVE_TO] [CONFIG_FOR_SOURCE TBB_RELEASE_DIR <tbb_release_dir> TBB_DEBUG_DIR <tbb_debug_dir>])
 #
 
 include(CMakeParseArguments)
@@ -29,7 +29,7 @@ include(CMakeParseArguments)
 set(_tbb_cmake_module_path ${CMAKE_CURRENT_LIST_DIR})
 
 function(tbb_make_config)
-    set(oneValueArgs TBB_ROOT SYSTEM_NAME CONFIG_DIR TBB_RELEASE_DIR TBB_DEBUG_DIR)
+    set(oneValueArgs TBB_ROOT SYSTEM_NAME CONFIG_DIR SAVE_TO TBB_RELEASE_DIR TBB_DEBUG_DIR)
     set(options CONFIG_FOR_SOURCE)
     cmake_parse_arguments(tbb_MK "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -38,7 +38,12 @@ function(tbb_make_config)
         set(tbb_system_name ${tbb_MK_SYSTEM_NAME})
     endif()
 
-    file(MAKE_DIRECTORY ${tbb_MK_TBB_ROOT}/cmake)
+    set(tbb_config_dir ${tbb_MK_TBB_ROOT}/cmake)
+    if (tbb_MK_SAVE_TO)
+        set(tbb_config_dir ${tbb_MK_SAVE_TO})
+    endif()
+
+    file(MAKE_DIRECTORY ${tbb_config_dir})
 
     set(TBB_DEFAULT_COMPONENTS tbb tbbmalloc tbbmalloc_proxy)
 
@@ -142,6 +147,8 @@ endif()")
         set(TBB_LIB_PREFIX "lib")
         set(TBB_LIB_EXT "so")
         set(TBB_CHOOSE_COMPILER_SUBDIR "set(_tbb_compiler_subdir .)")
+    else()
+        message(FATAL_ERROR "Unsupported OS name: ${tbb_system_name}")
     endif()
 
     file(READ "${tbb_MK_TBB_ROOT}/include/tbb/tbb_stddef.h" _tbb_stddef)
@@ -155,8 +162,8 @@ endif()")
     else()
         set(_tbb_config_template TBBConfig.cmake.in)
     endif()
-    configure_file(${_tbb_cmake_module_path}/templates/${_tbb_config_template}   ${tbb_MK_TBB_ROOT}/cmake/TBBConfig.cmake @ONLY)
-    configure_file(${_tbb_cmake_module_path}/templates/TBBConfigVersion.cmake.in ${tbb_MK_TBB_ROOT}/cmake/TBBConfigVersion.cmake @ONLY)
+    configure_file(${_tbb_cmake_module_path}/templates/${_tbb_config_template}   ${tbb_config_dir}/TBBConfig.cmake @ONLY)
+    configure_file(${_tbb_cmake_module_path}/templates/TBBConfigVersion.cmake.in ${tbb_config_dir}/TBBConfigVersion.cmake @ONLY)
 
-    set(${tbb_MK_CONFIG_DIR} ${tbb_MK_TBB_ROOT}/cmake PARENT_SCOPE)
+    set(${tbb_MK_CONFIG_DIR} ${tbb_config_dir} PARENT_SCOPE)
 endfunction()

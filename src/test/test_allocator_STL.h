@@ -119,7 +119,7 @@ void TestAllocatorWithSTL(const Allocator &a = Allocator() ) {
     TestMap<std::map     <int, int, std::less<int>, Acii> >(a);
     TestMap<std::multimap<int, int, std::less<int>, Acii> >(a);
 
-#if _MSC_VER
+#if _MSC_VER && _CPPLIB_VER < 650
     // Test compatibility with Microsoft's implementation of std::allocator for some cases that
     // are undefined according to the ISO standard but permitted by Microsoft.
     TestSequence<std::deque <const int,Aci> >(a);

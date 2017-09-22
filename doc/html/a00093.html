@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::flow::interface10::opencl_async_msg&lt; T, Factory &gt; Class Template Reference</title>
+<title>tbb::flow::interface10::opencl_buffer_impl&lt; Factory &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,83 +33,94 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00239.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface10</b></li><li class="navelem"><a class="el" href="a00093.html">opencl_async_msg</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface10</b></li><li class="navelem"><a class="el" href="a00093.html">opencl_buffer_impl</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pro-methods">Protected Member Functions</a> &#124;
-<a href="a00345.html">List of all members</a>  </div>
+<a href="#friends">Friends</a> &#124;
+<a href="a00342.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::flow::interface10::opencl_async_msg&lt; T, Factory &gt; Class Template Reference</div>  </div>
+<div class="title">tbb::flow::interface10::opencl_buffer_impl&lt; Factory &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 <div class="dynheader">
-Inheritance diagram for tbb::flow::interface10::opencl_async_msg&lt; T, Factory &gt;:</div>
+Inheritance diagram for tbb::flow::interface10::opencl_buffer_impl&lt; Factory &gt;:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00093.png" usemap="#tbb::flow::interface10::opencl_async_msg&lt; T, Factory &gt;_map" alt=""/>
-  <map id="tbb::flow::interface10::opencl_async_msg&lt; T, Factory &gt;_map" name="tbb::flow::interface10::opencl_async_msg&lt; T, Factory &gt;_map">
-<area href="a00017.html" alt="tbb::flow::interface10::async_msg&lt; T &gt;" shape="rect" coords="0,0,326,24"/>
+  <img src="a00093.png" usemap="#tbb::flow::interface10::opencl_buffer_impl&lt; Factory &gt;_map" alt=""/>
+  <map id="tbb::flow::interface10::opencl_buffer_impl&lt; Factory &gt;_map" name="tbb::flow::interface10::opencl_buffer_impl&lt; Factory &gt;_map">
+<area href="a00097.html" alt="tbb::flow::interface10::opencl_memory&lt; Factory &gt;" shape="rect" coords="0,0,310,24"/>
 </map>
  </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:aa3c63f3f5da681da27e2aa133f8bffd2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa3c63f3f5da681da27e2aa133f8bffd2"></a>
-typedef T&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b></td></tr>
-<tr class="separator:aa3c63f3f5da681da27e2aa133f8bffd2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:aadd4b2e6518cf36405fd47ac87db7f19"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aadd4b2e6518cf36405fd47ac87db7f19"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_async_msg</b> (const T &amp;data)</td></tr>
-<tr class="separator:aadd4b2e6518cf36405fd47ac87db7f19"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4371b06eb85a3abaf7ba0ca3d66bc5cc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4371b06eb85a3abaf7ba0ca3d66bc5cc"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_async_msg</b> (const T &amp;data, cl_event event)</td></tr>
-<tr class="separator:a4371b06eb85a3abaf7ba0ca3d66bc5cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac8a163f1a440bcddf34dc8b06eb61b21"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac8a163f1a440bcddf34dc8b06eb61b21"></a>
-T &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>data</b> (bool wait=true)</td></tr>
-<tr class="separator:ac8a163f1a440bcddf34dc8b06eb61b21"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae47837a584dc42f4c7bd44dad7708e9d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae47837a584dc42f4c7bd44dad7708e9d"></a>
-const T &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>data</b> (bool wait=true) const </td></tr>
-<tr class="separator:ae47837a584dc42f4c7bd44dad7708e9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a46fe2dd1ef8547701e58e14a483e0de3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a46fe2dd1ef8547701e58e14a483e0de3"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_async_msg</b> (const <a class="el" href="a00093.html">opencl_async_msg</a> &amp;dmsg)</td></tr>
-<tr class="separator:a46fe2dd1ef8547701e58e14a483e0de3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa70010c232651e11ff07e88991717745"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa70010c232651e11ff07e88991717745"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_async_msg</b> (<a class="el" href="a00093.html">opencl_async_msg</a> &amp;&amp;dmsg)</td></tr>
-<tr class="separator:aa70010c232651e11ff07e88991717745"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a384293c9b08c51e87164e1e4fffbeddf"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a384293c9b08c51e87164e1e4fffbeddf"></a>
-<a class="el" href="a00093.html">opencl_async_msg</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="a00093.html">opencl_async_msg</a> &amp;dmsg)</td></tr>
-<tr class="separator:a384293c9b08c51e87164e1e4fffbeddf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae07788102cdb52b24ffa3c60bf35b561"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae07788102cdb52b24ffa3c60bf35b561"></a>
-cl_event const *&#160;</td><td class="memItemRight" valign="bottom"><b>get_event</b> () const </td></tr>
-<tr class="separator:ae07788102cdb52b24ffa3c60bf35b561"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a030a92451783a9c07287983339b927d4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a030a92451783a9c07287983339b927d4"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>set_event</b> (cl_event e) const </td></tr>
-<tr class="separator:a030a92451783a9c07287983339b927d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a93064e1bfa9bb387c650faa75401981a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a93064e1bfa9bb387c650faa75401981a"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>clear_event</b> () const </td></tr>
-<tr class="separator:a93064e1bfa9bb387c650faa75401981a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af267060e5a040c3db3c26ae16e088914"><td class="memTemplParams" colspan="2"><a class="anchor" id="af267060e5a040c3db3c26ae16e088914"></a>
-template&lt;typename Callback &gt; </td></tr>
-<tr class="memitem:af267060e5a040c3db3c26ae16e088914"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>register_callback</b> (Callback c) const </td></tr>
-<tr class="separator:af267060e5a040c3db3c26ae16e088914"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac1c1cf1accbc0f7b9b2e9104dcfdc0c9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac1c1cf1accbc0f7b9b2e9104dcfdc0c9"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>operator T &amp;</b> ()</td></tr>
-<tr class="separator:ac1c1cf1accbc0f7b9b2e9104dcfdc0c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae6c7c0102d601788ff6c54f34b066293"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae6c7c0102d601788ff6c54f34b066293"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>operator const T &amp;</b> () const </td></tr>
-<tr class="separator:ae6c7c0102d601788ff6c54f34b066293"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9eb47e63b791c3a7303d39b11b07426c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9eb47e63b791c3a7303d39b11b07426c"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_buffer_impl</b> (size_t size, Factory &amp;f)</td></tr>
+<tr class="separator:a9eb47e63b791c3a7303d39b11b07426c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3dd302f13fcf4d4d2991622994c889d5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3dd302f13fcf4d4d2991622994c889d5"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_buffer_impl</b> (cl_mem m, size_t index, size_t size, Factory &amp;f)</td></tr>
+<tr class="separator:a3dd302f13fcf4d4d2991622994c889d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a04b6504c149f284e8c023e85767d94af"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a04b6504c149f284e8c023e85767d94af"></a>
+size_t&#160;</td><td class="memItemRight" valign="bottom"><b>size</b> () const </td></tr>
+<tr class="separator:a04b6504c149f284e8c023e85767d94af"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5e286d72cca9546685491ac801f22011"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5e286d72cca9546685491ac801f22011"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>map_memory</b> (<a class="el" href="a00094.html">opencl_device</a> device, <a class="el" href="a00091.html">opencl_async_msg</a>&lt; void *, Factory &gt; &amp;dmsg) __TBB_override</td></tr>
+<tr class="separator:a5e286d72cca9546685491ac801f22011"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_a00097"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_a00097')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="a00097.html">tbb::flow::interface10::opencl_memory&lt; Factory &gt;</a></td></tr>
+<tr class="memitem:a49b698e30ef6c1d61567b5b4a6154011 inherit pub_methods_a00097"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a49b698e30ef6c1d61567b5b4a6154011"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_memory</b> (Factory &amp;f)</td></tr>
+<tr class="separator:a49b698e30ef6c1d61567b5b4a6154011 inherit pub_methods_a00097"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afbc1f16b817e3e3447972755790dee9a inherit pub_methods_a00097"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afbc1f16b817e3e3447972755790dee9a"></a>
+cl_mem&#160;</td><td class="memItemRight" valign="bottom"><b>get_cl_mem</b> () const </td></tr>
+<tr class="separator:afbc1f16b817e3e3447972755790dee9a inherit pub_methods_a00097"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaddceaa2aca7b20a7b50211c197a13e4 inherit pub_methods_a00097"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aaddceaa2aca7b20a7b50211c197a13e4"></a>
+void *&#160;</td><td class="memItemRight" valign="bottom"><b>get_host_ptr</b> ()</td></tr>
+<tr class="separator:aaddceaa2aca7b20a7b50211c197a13e4 inherit pub_methods_a00097"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0253a1634ffe97391bd03bea316b9a96 inherit pub_methods_a00097"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0253a1634ffe97391bd03bea316b9a96"></a>
+Factory *&#160;</td><td class="memItemRight" valign="bottom"><b>factory</b> () const </td></tr>
+<tr class="separator:a0253a1634ffe97391bd03bea316b9a96 inherit pub_methods_a00097"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac8a9939b7b7b075bf61bef86fe329637 inherit pub_methods_a00097"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac8a9939b7b7b075bf61bef86fe329637"></a>
+<a class="el" href="a00091.html">opencl_async_msg</a>&lt; void *, Factory &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>receive</b> (const cl_event *e)</td></tr>
+<tr class="separator:ac8a9939b7b7b075bf61bef86fe329637 inherit pub_methods_a00097"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a02033b43f73ac54a43d583491c4dff10 inherit pub_methods_a00097"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a02033b43f73ac54a43d583491c4dff10"></a>
+<a class="el" href="a00091.html">opencl_async_msg</a>&lt; void *, Factory &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>send</b> (<a class="el" href="a00094.html">opencl_device</a> device, const cl_event *e)</td></tr>
+<tr class="separator:a02033b43f73ac54a43d583491c4dff10 inherit pub_methods_a00097"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
-Protected Member Functions</h2></td></tr>
-<tr class="memitem:a15d3b949f1ce48860a05fb3e0a537907"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a15d3b949f1ce48860a05fb3e0a537907"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>finalize</b> () const __TBB_override</td></tr>
-<tr class="separator:a15d3b949f1ce48860a05fb3e0a537907"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:a6560a38156dede308dcb1703a057c1b9"><td class="memTemplParams" colspan="2"><a class="anchor" id="a6560a38156dede308dcb1703a057c1b9"></a>
+template&lt;typename , typename &gt; </td></tr>
+<tr class="memitem:a6560a38156dede308dcb1703a057c1b9"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><b>opencl_buffer</b></td></tr>
+<tr class="separator:a6560a38156dede308dcb1703a057c1b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
+Additional Inherited Members</h2></td></tr>
+<tr class="inherit_header pro_attribs_a00097"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_a00097')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="a00097.html">tbb::flow::interface10::opencl_memory&lt; Factory &gt;</a></td></tr>
+<tr class="memitem:ac31c58c66af5a41aef80409209a69ff8 inherit pro_attribs_a00097"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac31c58c66af5a41aef80409209a69ff8"></a>
+cl_mem&#160;</td><td class="memItemRight" valign="bottom"><b>my_cl_mem</b></td></tr>
+<tr class="separator:ac31c58c66af5a41aef80409209a69ff8 inherit pro_attribs_a00097"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0fffcf5942aaa88ef5c9eb07f42402d5 inherit pro_attribs_a00097"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0fffcf5942aaa88ef5c9eb07f42402d5"></a>
+<a class="el" href="a00019.html">tbb::atomic</a><br class="typebreak"/>
+&lt; opencl_device::device_id_type &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>my_curr_device_id</b></td></tr>
+<tr class="separator:a0fffcf5942aaa88ef5c9eb07f42402d5 inherit pro_attribs_a00097"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aff8f9c238a49c19b3c4a05ff79641570 inherit pro_attribs_a00097"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aff8f9c238a49c19b3c4a05ff79641570"></a>
+void *&#160;</td><td class="memItemRight" valign="bottom"><b>my_host_ptr</b></td></tr>
+<tr class="separator:aff8f9c238a49c19b3c4a05ff79641570 inherit pro_attribs_a00097"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a519ad1b638e5208a03947f13da666d03 inherit pro_attribs_a00097"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a519ad1b638e5208a03947f13da666d03"></a>
+Factory *&#160;</td><td class="memItemRight" valign="bottom"><b>my_factory</b></td></tr>
+<tr class="separator:a519ad1b638e5208a03947f13da666d03 inherit pro_attribs_a00097"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9a9ed1f969879f90f00d8214ac1a236f inherit pro_attribs_a00097"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9a9ed1f969879f90f00d8214ac1a236f"></a>
+<a class="el" href="a00143.html">tbb::spin_mutex</a>&#160;</td><td class="memItemRight" valign="bottom"><b>my_sending_lock</b></td></tr>
+<tr class="separator:a9a9ed1f969879f90f00d8214ac1a236f inherit pro_attribs_a00097"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a179edb1d281d792a725312c41f40510d inherit pro_attribs_a00097"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a179edb1d281d792a725312c41f40510d"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>my_sending_event_present</b></td></tr>
+<tr class="separator:a179edb1d281d792a725312c41f40510d inherit pro_attribs_a00097"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a806cf9699c54646ec18b2647c136eb6d inherit pro_attribs_a00097"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a806cf9699c54646ec18b2647c136eb6d"></a>
+cl_event&#160;</td><td class="memItemRight" valign="bottom"><b>my_sending_event</b></td></tr>
+<tr class="separator:a806cf9699c54646ec18b2647c136eb6d inherit pro_attribs_a00097"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>flow_graph_opencl_node.h</li>

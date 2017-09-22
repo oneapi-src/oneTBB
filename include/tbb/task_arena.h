@@ -96,6 +96,8 @@ class delegated_function<F,void> : public delegate_base {
 public:
     delegated_function(F& f) : my_func(f) {}
     void consume_result() const {}
+    
+    friend class task_arena_base;
 };
 
 class task_arena_base {
