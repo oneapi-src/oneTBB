@@ -31,4 +31,4 @@ echo '#N": BUILD_LD'"\t\t"`ld -v 2>&1 | grep 'version'`'" ENDL \'
 echo '#N": BUILD_TARGET'"\t$arch on $runtime"'" ENDL \'
 echo '#N": BUILD_COMMAND'"\t"$*'" ENDL \'
 echo ""
-echo "#define __TBB_DATETIME \""`date -u`"\""
+echo "#define __TBB_DATETIME \""`date -u -r $(dirname $0)/../CHANGES`"\""
