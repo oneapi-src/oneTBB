@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -193,7 +193,8 @@ void *pool_aligned_realloc(MemoryPool* mPool, void *ptr, size_t size, size_t ali
 bool  pool_reset(MemoryPool* memPool);
 bool  pool_free(MemoryPool *memPool, void *object);
 MemoryPool *pool_identify(void *object);
-}
+
+} // namespace rml
 
 #include <new>      /* To use new with the placement argument */
 

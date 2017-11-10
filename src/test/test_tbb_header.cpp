@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -64,6 +64,7 @@
 // Reset TBB_USE_DEBUG defined in makefiles.
 #undef TBB_USE_DEBUG
 #endif /* DO_TEST_DEBUG_MACRO */
+#define __TBB_CONFIG_PREPROC_ONLY _MSC_VER // For MSVC, prevent including standard headers in tbb_config.h
 #include "tbb/tbb_config.h"
 
 #if !TBB_USE_DEBUG && defined(_DEBUG)
@@ -73,16 +74,11 @@
 #endif /* !TBB_USE_DEBUG && defined(_DEBUG) */
 
 #include "harness_defs.h"
-#if !(__TBB_TEST_SECONDARY && __TBB_CPP11_STD_PLACEHOLDERS_LINKAGE_BROKEN)
-
 #if _MSC_VER
 #pragma warning (disable : 4503)      // decorated name length exceeded, name was truncated
-#if !TBB_USE_EXCEPTIONS
-    // Suppress "C++ exception handler used, but unwind semantics are not enabled" warning in STL headers
-    #pragma warning (push)
-    #pragma warning (disable: 4530)
 #endif
-#endif
+
+#if !(__TBB_TEST_SECONDARY && __TBB_CPP11_STD_PLACEHOLDERS_LINKAGE_BROKEN)
 
 #include "tbb/tbb.h"
 
@@ -127,11 +123,6 @@ struct Body3 {
 // Test if all the necessary symbols are exported for the exceptions thrown by TBB.
 // Missing exports result either in link error or in runtime assertion failure.
 #include <stdexcept>
-
-#if !TBB_USE_EXCEPTIONS && _MSC_VER
-    #pragma warning (pop)
-#endif
-
 
 template <typename E>
 void TestExceptionClassExports ( const E& exc, tbb::internal::exception_id eid ) {

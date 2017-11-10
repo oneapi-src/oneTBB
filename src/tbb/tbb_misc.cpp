@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -31,21 +31,10 @@
 #include <cstdio>
 #include <cstdlib>
 #include <stdexcept>
+#include <cstring>
 
 #if _WIN32||_WIN64
 #include "tbb/machine/windows_api.h"
-#endif
-
-#if !TBB_USE_EXCEPTIONS && _MSC_VER
-    // Suppress "C++ exception handler used, but unwind semantics are not enabled" warning in STL headers
-    #pragma warning (push)
-    #pragma warning (disable: 4530)
-#endif
-
-#include <cstring>
-
-#if !TBB_USE_EXCEPTIONS && _MSC_VER
-    #pragma warning (pop)
 #endif
 
 #define __TBB_STD_RETHROW_EXCEPTION_POSSIBLY_BROKEN                             \
@@ -150,7 +139,7 @@ void throw_exception_v4 ( exception_id eid ) {
     case eid_user_abort: DO_THROW( user_abort, () );
     case eid_bad_tagged_msg_cast: DO_THROW( runtime_error, ("Illegal tagged_msg cast") );
 #if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
-    case eid_blocking_sch_init: DO_THROW( runtime_error, ("Nesting of blocking termination is impossible") );
+    case eid_blocking_thread_join_impossible: DO_THROW( runtime_error, ("Blocking terminate failed") );
 #endif
     default: break;
     }

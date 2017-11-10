@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -111,7 +111,7 @@ enum dynamic_link_error_t {
     dl_success = 0,
     dl_lib_not_found,     // char const * lib, dlerr_t err
     dl_sym_not_found,     // char const * sym, dlerr_t err
-                          // Note: dlerr_t depends on OS: it is char const * on Linux* and OS X*, int on Windows*.
+                          // Note: dlerr_t depends on OS: it is char const * on Linux* and macOS*, int on Windows*.
     dl_sys_fail,          // char const * func, int err
     dl_buff_too_small     // none
 }; // dynamic_link_error_t

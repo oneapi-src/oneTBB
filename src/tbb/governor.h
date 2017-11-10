@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -64,13 +64,6 @@ private:
 
     static bool UsePrivateRML;
 
-    //! Instance of task_scheduler_init that requested blocking termination.
-    static const task_scheduler_init *BlockingTSI;
-
-#if TBB_USE_ASSERT
-    static bool IsBlockingTerminationInProgress;
-#endif
-
     // Flags for runtime-specific conditions
     static bool is_speculation_enabled;
     static bool is_rethrow_broken;
@@ -98,13 +91,13 @@ public:
     //! Processes scheduler initialization request (possibly nested) in a master thread
     /** If necessary creates new instance of arena and/or local scheduler.
         The auto_init argument specifies if the call is due to automatic initialization. **/
-    static generic_scheduler* init_scheduler( int num_threads, stack_size_type stack_size, bool auto_init = false );
+    static generic_scheduler* init_scheduler( int num_threads, stack_size_type stack_size, bool auto_init );
 
     //! Automatic initialization of scheduler in a master thread with default settings without arena
     static generic_scheduler* init_scheduler_weak();
 
     //! Processes scheduler termination request (possibly nested) in a master thread
-    static void terminate_scheduler( generic_scheduler* s, const task_scheduler_init *tsi_ptr );
+    static bool terminate_scheduler( generic_scheduler* s, const task_scheduler_init *tsi_ptr, bool blocking );
 
     //! Register TBB scheduler instance in thread-local storage.
     static void sign_on( generic_scheduler* s );
@@ -132,7 +125,7 @@ public:
         Note that auto-initialized scheduler instance is destroyed only when its thread terminates. **/
     static generic_scheduler* local_scheduler () {
         uintptr_t v = theTLS.get();
-        return (v&1) ? tls_scheduler_of(v) : init_scheduler( task_scheduler_init::automatic, 0, true );
+        return (v&1) ? tls_scheduler_of(v) : init_scheduler( task_scheduler_init::automatic, 0, /*auto_init=*/true );
     }
 
     static generic_scheduler* local_scheduler_weak () {
@@ -154,9 +147,6 @@ public:
     static void initialize_rml_factory ();
 
     static bool does_client_join_workers (const tbb::internal::rml::tbb_client &client);
-
-    //! Must be called before init_scheduler
-    static void setBlockingTerminate(const task_scheduler_init *tsi);
 
 #if __TBB_SURVIVE_THREAD_SWITCH
     static __cilk_tbb_retcode stack_op_handler( __cilk_tbb_stack_op op, void* );

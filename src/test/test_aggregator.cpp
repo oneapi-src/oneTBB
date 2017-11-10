@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ void TestBasicInterface(int nThreads) {
 
 
 // Code for testing basic interface using lambda expressions
-#if __TBB_LAMBDAS_PRESENT
+#if __TBB_CPP11_LAMBDAS_PRESENT
 void TestBasicLambdaInterface(int nThreads) {
     pq_t my_pq;
     tbb::aggregator agg;
@@ -103,7 +103,7 @@ void TestBasicLambdaInterface(int nThreads) {
         ASSERT(shared_data[i] == N, "wrong number of elements pushed");
     REMARK("Done testing aggregator basic lambda interface.\n");
 }
-#endif /* __TBB_LAMBDAS_PRESENT */
+#endif /* __TBB_CPP11_LAMBDAS_PRESENT */
 // End of code for testing basic interface using lambda expressions
 
 // Code for testing expert interface
@@ -174,9 +174,9 @@ int TestMain() {
         while (N <= 100) {
             REMARK("Testing with N=%d\n", N);
             TestBasicInterface(p);
-#if __TBB_LAMBDAS_PRESENT
+#if __TBB_CPP11_LAMBDAS_PRESENT
             TestBasicLambdaInterface(p);
-#endif /* __TBB_LAMBDAS_PRESENT */
+#endif
             TestExpertInterface(p);
             N = N ? N*10 : 1;
         }

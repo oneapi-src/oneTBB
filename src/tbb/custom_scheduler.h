@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -110,7 +110,7 @@ class custom_scheduler: private generic_scheduler {
         if( bypass_slot==NULL )
             bypass_slot = &s;
         else
-            local_spawn( s, s.prefix().next );
+            local_spawn( &s, s.prefix().next );
     }
 
 public:
@@ -423,8 +423,16 @@ void custom_scheduler<SchedulerTraits>::local_wait_for_all( task& parent, task* 
     }
 
     cpu_ctl_env_helper cpu_ctl_helper;
-    if ( t )
+    if ( t ) {
         cpu_ctl_helper.set_env( __TBB_CONTEXT_ARG1(t->prefix().context) );
+#if __TBB_TASK_ISOLATION
+        if ( isolation != no_isolation ) {
+            __TBB_ASSERT( t->prefix().isolation == no_isolation, NULL );
+            // Propagate the isolation to the task executed without spawn.
+            t->prefix().isolation = isolation;
+        }
+#endif /* __TBB_TASK_ISOLATION */
+    }
 
 #if TBB_USE_EXCEPTIONS
     // Infinite safeguard EH loop
@@ -447,7 +455,7 @@ void custom_scheduler<SchedulerTraits>::local_wait_for_all( task& parent, task* 
                 __TBB_ASSERT( isolation == no_isolation || isolation == t->prefix().isolation,
                     "A task from another isolated region is going to be executed" );
 #endif /* __TBB_TASK_ISOLATION */
-                assert_task_valid(*t);
+                assert_task_valid(t);
 #if __TBB_TASK_GROUP_CONTEXT && TBB_USE_ASSERT
                 assert_context_valid(t->prefix().context);
                 if ( !t->prefix().context->my_cancellation_requested )
@@ -522,6 +530,7 @@ void custom_scheduler<SchedulerTraits>::local_wait_for_all( task& parent, task* 
                         if( s )
                             tally_completion_of_predecessor( *s, __TBB_ISOLATION_ARG( t_next, t->prefix().isolation ) );
                         free_task<no_hint>( *t );
+                        poison_pointer( my_innermost_running_task );
                         assert_task_pool_valid();
                         break;
                     }
@@ -543,7 +552,7 @@ void custom_scheduler<SchedulerTraits>::local_wait_for_all( task& parent, task* 
                         __TBB_ASSERT( t_next != t, "a task returned from method execute() can not be recycled in another way" );
                         t->prefix().state = task::allocated;
                         reset_extra_state(t);
-                        local_spawn( *t, t->prefix().next );
+                        local_spawn( t, t->prefix().next );
                         assert_task_pool_valid();
                         break;
                     case task::allocated:

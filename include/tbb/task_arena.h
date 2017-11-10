@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -23,9 +23,11 @@
 
 #include "task.h"
 #include "tbb_exception.h"
+#include "internal/_template_helpers.h"
 #if TBB_USE_THREADING_TOOLS
 #include "atomic.h" // for as_atomic
 #endif
+#include "aligned_space.h"
 
 namespace tbb {
 
@@ -55,14 +57,47 @@ public:
     virtual ~delegate_base() {}
 };
 
-template<typename F>
+// If decltype is availabe, the helper detects the return type of functor of specified type,
+// otherwise it defines the void type.
+template <typename F>
+struct return_type_or_void {
+#if __TBB_CPP11_DECLTYPE_PRESENT && !__TBB_CPP11_DECLTYPE_OF_FUNCTION_RETURN_TYPE_BROKEN
+    typedef decltype(declval<F>()()) type;
+#else
+    typedef void type;
+#endif
+};
+
+template<typename F, typename R>
 class delegated_function : public delegate_base {
+    F &my_func;
+    tbb::aligned_space<R> my_return_storage;
+    // The function should be called only once.
+    void operator()() const __TBB_override {
+        new (my_return_storage.begin()) R(my_func());
+    }
+public:
+    delegated_function(F& f) : my_func(f) {}
+    // The function can be called only after operator() and only once.
+    R consume_result() const {
+        return tbb::internal::move(*(my_return_storage.begin()));
+    }
+    ~delegated_function() {
+        my_return_storage.begin()->~R();
+    }
+};
+
+template<typename F>
+class delegated_function<F,void> : public delegate_base {
     F &my_func;
     void operator()() const __TBB_override {
         my_func();
     }
 public:
-    delegated_function ( F& f ) : my_func(f) {}
+    delegated_function(F& f) : my_func(f) {}
+    void consume_result() const {}
+    
+    friend class task_arena_base;
 };
 
 class task_arena_base {
@@ -119,6 +154,13 @@ public:
 
 #if __TBB_TASK_ISOLATION
 void __TBB_EXPORTED_FUNC isolate_within_arena( delegate_base& d, intptr_t reserved = 0 );
+
+template<typename R, typename F>
+R isolate_impl(F& f) {
+    delegated_function<F, R> d(f);
+    isolate_within_arena(d);
+    return d.consume_result();
+}
 #endif /* __TBB_TASK_ISOLATION */
 } // namespace internal
 //! @endcond
@@ -146,6 +188,31 @@ class task_arena : public internal::task_arena_base {
 #endif
     }
 
+    template<typename F>
+    void enqueue_impl( __TBB_FORWARDING_REF(F) f
+#if __TBB_TASK_PRIORITY
+        , priority_t p = priority_t(0)
+#endif
+    ) {
+#if !__TBB_TASK_PRIORITY
+        intptr_t p = 0;
+#endif
+        initialize();
+#if __TBB_TASK_GROUP_CONTEXT
+        internal_enqueue(*new(task::allocate_root(*my_context)) internal::function_task< typename internal::strip<F>::type >(internal::forward<F>(f)), p);
+#else
+        internal_enqueue(*new(task::allocate_root()) internal::function_task< typename internal::strip<F>::type >(internal::forward<F>(f)), p);
+#endif /* __TBB_TASK_GROUP_CONTEXT */
+    }
+
+    template<typename R, typename F>
+    R execute_impl(F& f) {
+        initialize();
+        internal::delegated_function<F, R> d(f);
+        internal_execute(d);
+        return d.consume_result();
+    }
+
 public:
     //! Creates task_arena with certain concurrency limits
     /** Sets up settings only, real construction is deferred till the first method invocation
@@ -168,7 +235,7 @@ public:
     struct attach {};
 
     //! Creates an instance of task_arena attached to the current arena of the thread
-    task_arena( attach )
+    explicit task_arena( attach )
         : task_arena_base(automatic, 1) // use default settings if attach fails
         , my_initialized(false)
     {
@@ -187,7 +254,7 @@ public:
     //! Overrides concurrency level and forces initialization of internal representation
     inline void initialize(int max_concurrency_, unsigned reserved_for_masters = 1) {
         // TODO: decide if this call must be thread-safe
-        __TBB_ASSERT( !my_arena, "Impossible to modify settings of an already initialized task_arena");
+        __TBB_ASSERT(!my_arena, "Impossible to modify settings of an already initialized task_arena");
         if( !my_initialized ) {
             my_max_concurrency = max_concurrency_;
             my_master_slots = reserved_for_masters;
@@ -198,10 +265,10 @@ public:
     //! Attaches this instance to the current arena of the thread
     inline void initialize(attach) {
         // TODO: decide if this call must be thread-safe
-        __TBB_ASSERT( !my_arena, "Impossible to modify settings of an already initialized task_arena");
+        __TBB_ASSERT(!my_arena, "Impossible to modify settings of an already initialized task_arena");
         if( !my_initialized ) {
             internal_attach();
-            if( !my_arena ) internal_initialize();
+            if ( !my_arena ) internal_initialize();
             mark_initialized();
         }
     }
@@ -227,49 +294,52 @@ public:
 
     //! Enqueues a task into the arena to process a functor, and immediately returns.
     //! Does not require the calling thread to join the arena
+
+#if __TBB_CPP11_RVALUE_REF_PRESENT
+    template<typename F>
+    void enqueue( F&& f ) {
+        enqueue_impl(std::forward<F>(f));
+    }
+#else
     template<typename F>
     void enqueue( const F& f ) {
-        initialize();
-#if __TBB_TASK_GROUP_CONTEXT
-        internal_enqueue( *new( task::allocate_root(*my_context) ) internal::function_task<F>(f), 0 );
-#else
-        internal_enqueue( *new( task::allocate_root() ) internal::function_task<F>(f), 0 );
-#endif
+        enqueue_impl(f);
     }
+#endif
 
 #if __TBB_TASK_PRIORITY
     //! Enqueues a task with priority p into the arena to process a functor f, and immediately returns.
     //! Does not require the calling thread to join the arena
     template<typename F>
-    void enqueue( const F& f, priority_t p ) {
-        __TBB_ASSERT( p == priority_low || p == priority_normal || p == priority_high, "Invalid priority level value" );
-        initialize();
-#if __TBB_TASK_GROUP_CONTEXT
-        internal_enqueue( *new( task::allocate_root(*my_context) ) internal::function_task<F>(f), (intptr_t)p );
-#else
-        internal_enqueue( *new( task::allocate_root() ) internal::function_task<F>(f), (intptr_t)p );
-#endif
+#if __TBB_CPP11_RVALUE_REF_PRESENT
+    void enqueue( F&& f, priority_t p ) {
+        __TBB_ASSERT(p == priority_low || p == priority_normal || p == priority_high, "Invalid priority level value");
+        enqueue_impl(std::forward<F>(f), p);
     }
+#else
+    void enqueue( const F& f, priority_t p ) {
+        __TBB_ASSERT(p == priority_low || p == priority_normal || p == priority_high, "Invalid priority level value");
+        enqueue_impl(f,p);
+    }
+#endif
 #endif// __TBB_TASK_PRIORITY
 
-    //! Joins the arena and executes a functor, then returns
+    //! Joins the arena and executes a mutable functor, then returns
     //! If not possible to join, wraps the functor into a task, enqueues it and waits for task completion
     //! Can decrement the arena demand for workers, causing a worker to leave and free a slot to the calling thread
+    //! Since C++11, the method returns the value returned by functor (prior to C++11 it returns void).
     template<typename F>
-    void execute(F& f) {
-        initialize();
-        internal::delegated_function<F> d(f);
-        internal_execute( d );
+    typename internal::return_type_or_void<F>::type execute(F& f) {
+        return execute_impl<typename internal::return_type_or_void<F>::type>(f);
     }
 
-    //! Joins the arena and executes a functor, then returns
+    //! Joins the arena and executes a constant functor, then returns
     //! If not possible to join, wraps the functor into a task, enqueues it and waits for task completion
     //! Can decrement the arena demand for workers, causing a worker to leave and free a slot to the calling thread
+    //! Since C++11, the method returns the value returned by functor (prior to C++11 it returns void).
     template<typename F>
-    void execute(const F& f) {
-        initialize();
-        internal::delegated_function<const F> d(f);
-        internal_execute( d );
+    typename internal::return_type_or_void<F>::type execute(const F& f) {
+        return execute_impl<typename internal::return_type_or_void<F>::type>(f);
     }
 
 #if __TBB_EXTRA_DEBUG
@@ -297,14 +367,21 @@ public:
 
 #if __TBB_TASK_ISOLATION
 namespace this_task_arena {
+    //! Executes a mutable functor in isolation within the current task arena.
+    //! Since C++11, the method returns the value returned by functor (prior to C++11 it returns void).
     template<typename F>
-    void isolate( const F& f ) {
-        internal::delegated_function<const F> d(f);
-        internal::isolate_within_arena( d );
+    typename internal::return_type_or_void<F>::type isolate(F& f) {
+        return internal::isolate_impl<typename internal::return_type_or_void<F>::type>(f);
+    }
+
+    //! Executes a constant functor in isolation within the current task arena.
+    //! Since C++11, the method returns the value returned by functor (prior to C++11 it returns void).
+    template<typename F>
+    typename internal::return_type_or_void<F>::type isolate(const F& f) {
+        return internal::isolate_impl<typename internal::return_type_or_void<F>::type>(f);
     }
 }
 #endif /* __TBB_TASK_ISOLATION */
-
 } // namespace interfaceX
 
 using interface7::task_arena;
@@ -325,7 +402,6 @@ namespace this_task_arena {
     inline int max_concurrency() {
         return tbb::task_arena::internal_max_concurrency(NULL);
     }
-
 } // namespace this_task_arena
 
 } // namespace tbb

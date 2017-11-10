@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,12 +18,12 @@
 
 */
 
-#include "harness_defs.h"
-#if !(__TBB_TEST_SECONDARY && __TBB_CPP11_STD_PLACEHOLDERS_LINKAGE_BROKEN)
-
 #if _MSC_VER
 #define _SCL_SECURE_NO_WARNINGS
 #endif
+
+#include "harness_defs.h"
+#if !(__TBB_TEST_SECONDARY && __TBB_CPP11_STD_PLACEHOLDERS_LINKAGE_BROKEN)
 
 #define __TBB_EXTRA_DEBUG 1
 #include "tbb/concurrent_unordered_set.h"

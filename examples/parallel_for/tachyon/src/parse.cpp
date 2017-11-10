@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@
     SUCH DAMAGE.
 */
 
-/* 
+/*
  * parse.cpp - an UltraLame (tm) parser for simple data files...
  */
 
@@ -90,7 +90,7 @@ static int stringcmp(const char * a, const char * b) {
   s=strlen(a);
   l=strlen(b);
 
-  if (s != l) 
+  if (s != l)
     return 1;
 
   for (i=0; i<s; i++) {
@@ -103,13 +103,13 @@ static int stringcmp(const char * a, const char * b) {
 
 static void reset_tex_table(void) {
   apitexture apitex;
-  
-  numtextures=0; 
+
+  numtextures=0;
   memset(&textable, 0, sizeof(textable));
 
   apitex.col.r=1.0;
-  apitex.col.g=1.0; 
-  apitex.col.b=1.0; 
+  apitex.col.g=1.0;
+  apitex.col.b=1.0;
   apitex.ambient=0.1;
   apitex.diffuse=0.9;
   apitex.specular=0.0;
@@ -121,7 +121,7 @@ static void reset_tex_table(void) {
 
 static errcode add_texture(void * tex, char name[TEXNAMELEN]) {
   textable[numtextures].tex=tex;
-  strcpy(textable[numtextures].name, name); 
+  strcpy(textable[numtextures].name, name);
 
   numtextures++;
   if (numtextures > NUMTEXS) {
@@ -135,13 +135,13 @@ static errcode add_texture(void * tex, char name[TEXNAMELEN]) {
 
 static void * find_texture(char name[TEXNAMELEN]) {
   int i;
-  
+
   for (i=0; i<numtextures; i++) {
-    if (strcmp(name, textable[i].name) == 0) 
-	return textable[i].tex;	
+    if (strcmp(name, textable[i].name) == 0)
+    return textable[i].tex;
   }
   fprintf(stderr, "Undefined texture '%s', using default. \n",name);
-  return(defaulttex.tex); 
+  return(defaulttex.tex);
 }
 
 apiflt degtorad(apiflt deg) {
@@ -163,7 +163,7 @@ static void InitRot3d(RotMat * rot, apiflt x, apiflt y, apiflt z) {
   rot->rx1=cos(y)*cos(z);
   rot->rx2=sin(x)*sin(y)*cos(z) - cos(x)*sin(z);
   rot->rx3=sin(x)*sin(z) + cos(x)*cos(z)*sin(y);
-  
+
   rot->ry1=cos(y)*sin(z);
   rot->ry2=cos(x)*cos(z) + sin(x)*sin(y)*sin(z);
   rot->ry3=cos(x)*sin(y)*sin(z) - sin(x)*cos(z);
@@ -178,7 +178,7 @@ static void Rotate3d(RotMat * rot, vector * vec) {
   tmp.x=(vec->x*(rot->rx1) + vec->y*(rot->rx2) + vec->z*(rot->rx3));
   tmp.y=(vec->x*(rot->ry1) + vec->y*(rot->ry2) + vec->z*(rot->ry3));
   tmp.z=(vec->x*(rot->rz1) + vec->y*(rot->rz2) + vec->z*(rot->rz3));
-  *vec=tmp; 
+  *vec=tmp;
 }
 
 static void Scale3d(vector * scale, vector * vec) {
@@ -209,8 +209,8 @@ static errcode GetString(FILE * dfile, const char * string) {
 unsigned int readmodel(char * modelfile, SceneHandle scene) {
   FILE * dfile;
   errcode rc;
- 
-  reset_tex_table(); 
+
+  reset_tex_table();
   dfile=NULL;
 
   dfile=fopen(modelfile,"r");
@@ -218,9 +218,11 @@ unsigned int readmodel(char * modelfile, SceneHandle scene) {
     return PARSEBADFILE;
   }
 
-  rc = GetScenedefs(dfile, scene); 
-  if (rc != PARSENOERR)
+  rc = GetScenedefs(dfile, scene);
+  if (rc != PARSENOERR) {
+    fclose(dfile);
     return rc;
+  }
 
   scenebackcol.r = 0.0; /* default background is black */
   scenebackcol.g = 0.0;
@@ -229,7 +231,7 @@ unsigned int readmodel(char * modelfile, SceneHandle scene) {
   numobjectsparsed=0;
   while ((rc = GetObject(dfile, scene)) == PARSENOERR) {
     numobjectsparsed++;
-  } 
+  }
   fclose(dfile);
 
   if (rc == PARSEEOF)
@@ -250,16 +252,16 @@ static errcode GetScenedefs(FILE * dfile, SceneHandle scene) {
   float a,b,c;
   errcode rc = PARSENOERR;
 
-  rc |= GetString(dfile, "BEGIN_SCENE"); 
+  rc |= GetString(dfile, "BEGIN_SCENE");
 
   rc |= GetString(dfile, "OUTFILE");
-  fscanf(dfile, "%s", outfilename); 
+  fscanf(dfile, "%s", outfilename);
 #ifdef _WIN32
   if (strcmp (outfilename, "/dev/null") == 0) {
     strcpy (outfilename, "NUL:");
   }
 #endif
- 
+
   rc |= GetString(dfile, "RESOLUTION");
   fscanf(dfile, "%d %d", &xres, &yres);
 
@@ -275,7 +277,7 @@ static errcode GetScenedefs(FILE * dfile, SceneHandle scene) {
   zoom=a;
 
   rc |= GetString(dfile, "ASPECTRATIO");
-  fscanf(dfile, "%f", &b);  
+  fscanf(dfile, "%f", &b);
   aspectratio=b;
 
   rc |= GetString(dfile, "ANTIALIASING");
@@ -313,14 +315,14 @@ static errcode GetScenedefs(FILE * dfile, SceneHandle scene) {
 
 static errcode GetObject(FILE * dfile, SceneHandle scene) {
   char objtype[80];
- 
+
   fscanf(dfile, "%s", objtype);
   if (!stringcmp(objtype, "END_SCENE")) {
     return PARSEEOF; /* end parsing */
   }
   if (!stringcmp(objtype, "TEXDEF")) {
     return GetTexDef(dfile);
-  }	
+  }
   if (!stringcmp(objtype, "TEXALIAS")) {
     return GetTexAlias(dfile);
   }
@@ -373,8 +375,8 @@ static errcode GetObject(FILE * dfile, SceneHandle scene) {
 
 static errcode GetVector(FILE * dfile, vector * v1) {
   float a, b, c;
-  
-  fscanf(dfile, "%f %f %f", &a, &b, &c); 
+
+  fscanf(dfile, "%f %f %f", &a, &b, &c);
   v1->x=a;
   v1->y=b;
   v1->z=c;
@@ -384,9 +386,9 @@ static errcode GetVector(FILE * dfile, vector * v1) {
 
 static errcode GetColor(FILE * dfile, color * c1) {
   float r, g, b;
-  int rc; 
+  int rc;
 
-  rc = GetString(dfile, "COLOR"); 
+  rc = GetString(dfile, "COLOR");
   fscanf(dfile, "%f %f %f", &r, &g, &b);
   c1->r=r;
   c1->g=g;
@@ -399,7 +401,7 @@ static errcode GetTexDef(FILE * dfile) {
   char texname[TEXNAMELEN];
 
   fscanf(dfile, "%s", texname);
-  add_texture(GetTexBody(dfile), texname); 
+  add_texture(GetTexBody(dfile), texname);
 
   return PARSENOERR;
 }
@@ -410,7 +412,7 @@ static errcode GetTexAlias(FILE * dfile) {
 
   fscanf(dfile, "%s", texname);
   fscanf(dfile, "%s", aliasname);
-  add_texture(find_texture(aliasname), texname); 
+  add_texture(find_texture(aliasname), texname);
 
   return PARSENOERR;
 }
@@ -421,7 +423,7 @@ static errcode GetTexture(FILE * dfile, void ** tex) {
   errcode rc = PARSENOERR;
 
   fscanf(dfile, "%s", tmp);
-  if (!stringcmp("TEXTURE", tmp)) {	
+  if (!stringcmp("TEXTURE", tmp)) {
     *tex = GetTexBody(dfile);
   }
   else
@@ -434,11 +436,11 @@ void * GetTexBody(FILE * dfile) {
   char tmp[255];
   float a,b,c,d, phong, phongexp, phongtype;
   apitexture tex;
-  void * voidtex; 
+  void * voidtex;
   errcode rc;
 
   rc = GetString(dfile, "AMBIENT");
-  fscanf(dfile, "%f", &a); 
+  fscanf(dfile, "%f", &a);
   tex.ambient=a;
 
   rc |= GetString(dfile, "DIFFUSE");
@@ -450,7 +452,7 @@ void * GetTexBody(FILE * dfile) {
   tex.specular=c;
 
   rc |= GetString(dfile, "OPACITY");
-  fscanf(dfile, "%f", &d);  
+  fscanf(dfile, "%f", &d);
   tex.opacity=d;
 
   fscanf(dfile, "%s", tmp);
@@ -464,24 +466,24 @@ void * GetTexBody(FILE * dfile) {
     }
     else {
       phongtype = RT_PHONG_PLASTIC;
-    } 
+    }
 
     fscanf(dfile, "%f", &phong);
     GetString(dfile, "PHONG_SIZE");
     fscanf(dfile, "%f", &phongexp);
     fscanf(dfile, "%s", tmp);
-  }     
-  else { 
+  }
+  else {
     phong = 0.0;
     phongexp = 100.0;
     phongtype = RT_PHONG_PLASTIC;
   }
-  
+
   fscanf(dfile, "%f %f %f", &a, &b, &c);
   tex.col.r = a;
   tex.col.g = b;
   tex.col.b = c;
- 
+
   rc |= GetString(dfile, "TEXFUNC");
   fscanf(dfile, "%d", &tex.texturefunc);
   if (tex.texturefunc >= 7) {    /* if its an image map, we need a filename */
@@ -512,19 +514,19 @@ static errcode GetLight(FILE * dfile) {
   apiflt rad;
   vector ctr;
   apitexture tex;
-  float a; 
+  float a;
   errcode rc;
 
-  memset(&tex, 0, sizeof(apitexture)); 
+  memset(&tex, 0, sizeof(apitexture));
 
-  rc = GetString(dfile,"CENTER"); 
-  rc |= GetVector(dfile, &ctr); 
+  rc = GetString(dfile,"CENTER");
+  rc |= GetVector(dfile, &ctr);
   rc |= GetString(dfile,"RAD");
-  fscanf(dfile,"%f",&a);  /* read in radius */ 
+  fscanf(dfile,"%f",&a);  /* read in radius */
   rad=a;
 
   rc |= GetColor(dfile, &tex.col);
-  
+
   rt_light(rt_texture(&tex), ctr, rad);
 
   return rc;
@@ -532,7 +534,7 @@ static errcode GetLight(FILE * dfile) {
 
 static errcode GetBackGnd(FILE * dfile) {
   float r,g,b;
-  
+
   fscanf(dfile, "%f %f %f", &r, &g, &b);
 
   scenebackcol.r=r;
@@ -558,7 +560,7 @@ static errcode GetCylinder(FILE * dfile) {
   rad=a;
 
   rc |= GetTexture(dfile, &tex);
-  rt_cylinder(tex, ctr, axis, rad); 
+  rt_cylinder(tex, ctr, axis, rad);
 
   return rc;
 }
@@ -577,7 +579,7 @@ static errcode GetFCylinder(FILE * dfile) {
   rc |= GetVector(dfile, &pnt2);
 
   ctr=pnt1;
-  axis.x=pnt2.x - pnt1.x; 
+  axis.x=pnt2.x - pnt1.x;
   axis.y=pnt2.y - pnt1.y;
   axis.z=pnt2.z - pnt1.z;
 
@@ -586,11 +588,11 @@ static errcode GetFCylinder(FILE * dfile) {
   rad=a;
 
   rc |= GetTexture(dfile, &tex);
-  rt_fcylinder(tex, ctr, axis, rad); 
+  rt_fcylinder(tex, ctr, axis, rad);
 
   return rc;
 }
- 
+
 static errcode GetPolyCylinder(FILE * dfile) {
   apiflt rad;
   vector * temp;
@@ -606,20 +608,20 @@ static errcode GetPolyCylinder(FILE * dfile) {
 
   for (i=0; i<numpts; i++) {
     rc |= GetVector(dfile, &temp[i]);
-  }         
+  }
 
   rc |= GetString(dfile, "RAD");
   fscanf(dfile, "%f", &a);
   rad=a;
 
   rc |= GetTexture(dfile, &tex);
-  rt_polycylinder(tex, temp, numpts, rad); 
+  rt_polycylinder(tex, temp, numpts, rad);
 
   free(temp);
 
   return rc;
 }
- 
+
 
 static errcode GetSphere(FILE * dfile) {
   apiflt rad;
@@ -627,15 +629,15 @@ static errcode GetSphere(FILE * dfile) {
   void * tex;
   float a;
   errcode rc;
- 
+
   rc = GetString(dfile,"CENTER");
-  rc |= GetVector(dfile, &ctr); 
+  rc |= GetVector(dfile, &ctr);
   rc |= GetString(dfile, "RAD");
-  fscanf(dfile,"%f",&a); 
+  fscanf(dfile,"%f",&a);
   rad=a;
 
-  rc |= GetTexture(dfile, &tex); 
- 
+  rc |= GetTexture(dfile, &tex);
+
   rt_sphere(tex, ctr, rad);
 
   return rc;
@@ -660,11 +662,11 @@ static errcode GetPlane(FILE * dfile) {
 
 static errcode GetVol(FILE * dfile) {
   vector min, max;
-  int x,y,z;  
+  int x,y,z;
   char fname[255];
   void * tex;
   errcode rc;
- 
+
   rc = GetString(dfile, "MIN");
   rc |= GetVector(dfile, &min);
   rc |= GetString(dfile, "MAX");
@@ -672,10 +674,10 @@ static errcode GetVol(FILE * dfile) {
   rc |= GetString(dfile, "DIM");
   fscanf(dfile, "%d %d %d ", &x, &y, &z);
   rc |= GetString(dfile, "FILE");
-  fscanf(dfile, "%s", fname);  
+  fscanf(dfile, "%s", fname);
   rc |= GetTexture(dfile, &tex);
- 
-  rt_scalarvol(tex, min, max, x, y, z, fname, NULL); 
+
+  rt_scalarvol(tex, min, max, x, y, z, fname, NULL);
 
   return rc;
 }
@@ -702,7 +704,7 @@ static errcode GetRing(FILE * dfile) {
   void * tex;
   float a,b;
   errcode rc;
- 
+
   rc = GetString(dfile, "CENTER");
   rc |= GetVector(dfile, &ctr);
   rc |= GetString(dfile, "NORMAL");
@@ -712,7 +714,7 @@ static errcode GetRing(FILE * dfile) {
   rc |= GetString(dfile, "OUTER");
   fscanf(dfile, " %f ", &b);
   rc |= GetTexture(dfile, &tex);
- 
+
   rt_ring(tex, ctr, normal, a, b);
 
   return rc;
@@ -752,7 +754,7 @@ static errcode GetSTri(FILE * dfile) {
 
   rc |= GetString(dfile, "V2");
   rc |= GetVector(dfile, &v2);
-  
+
   rc |= GetString(dfile, "N0");
   rc |= GetVector(dfile, &n0);
 
@@ -763,7 +765,7 @@ static errcode GetSTri(FILE * dfile) {
   rc |= GetVector(dfile, &n2);
 
   rc |= GetTexture(dfile, &tex);
-  
+
   rt_stri(tex, v0, v1, v2, n0, n1, n2);
 
   return rc;
@@ -781,7 +783,7 @@ static errcode GetLandScape(FILE * dfile) {
   fscanf(dfile, "%d %d", &m, &n);
 
   rc |= GetString(dfile, "SCALE");
-  fscanf(dfile, "%f %f", &a, &b);   
+  fscanf(dfile, "%f %f", &a, &b);
   wx=a;
   wy=b;
 
@@ -807,13 +809,13 @@ static errcode GetTPolyFile(FILE * dfile) {
 
   totalpolys=0;
 
-  rc = GetString(dfile, "SCALE"); 
+  rc = GetString(dfile, "SCALE");
   rc |= GetVector(dfile, &scale);
 
   rc |= GetString(dfile, "ROT");
   rc |= GetVector(dfile, &rot);
 
-  degvectoradvec(&rot); 
+  degvectoradvec(&rot);
   InitRot3d(&RotA, rot.x, rot.y, rot.z);
 
   rc |= GetString(dfile, "CENTER");
@@ -834,8 +836,8 @@ static errcode GetTPolyFile(FILE * dfile) {
     if (v != 3) { break; }
 
     totalpolys++;
-    v=0; 
-     
+    v=0;
+
     rc |= GetVector(ifp, &v0);
     rc |= GetVector(ifp, &v1);
     rc |= GetVector(ifp, &v2);
@@ -844,9 +846,9 @@ static errcode GetTPolyFile(FILE * dfile) {
     Scale3d(&scale, &v1);
     Scale3d(&scale, &v2);
 
-    Rotate3d(&RotA, &v0); 
-    Rotate3d(&RotA, &v1); 
-    Rotate3d(&RotA, &v2); 
+    Rotate3d(&RotA, &v0);
+    Rotate3d(&RotA, &v1);
+    Rotate3d(&RotA, &v2);
 
     Trans3d(&ctr, &v0);
     Trans3d(&ctr, &v1);

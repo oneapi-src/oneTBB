@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 
 */
 
-const unsigned MByte = 1024*1024;
 bool __tbb_test_errno = false;
 
 #define __STDC_LIMIT_MACROS 1 // to get SIZE_MAX from stdint.h
@@ -37,6 +36,9 @@ int TestMain() {
 }
 #else /* __TBB_WIN8UI_SUPPORT	 */
 
+#include "harness_defs.h"
+#include "harness_report.h"
+
 #if _WIN32 || _WIN64
 /* _WIN32_WINNT should be defined at the very beginning,
    because other headers might include <windows.h>
@@ -45,7 +47,6 @@ int TestMain() {
 #define _WIN32_WINNT 0x0501
 #include "tbb/machine/windows_api.h"
 #include <stdio.h>
-#include "harness_report.h"
 
 #if _MSC_VER && defined(_MT) && defined(_DLL)
     #pragma comment(lib, "version.lib")  // to use GetFileVersionInfo*
@@ -82,7 +83,6 @@ void limitMem( size_t limit )
 #include <errno.h>
 #include <sys/types.h>  // uint64_t on FreeBSD, needed for rlim_t
 #include <stdint.h>     // SIZE_MAX
-#include "harness_report.h"
 
 void limitMem( size_t limit )
 {
@@ -131,17 +131,7 @@ extern "C" void *__cdecl _aligned_malloc(size_t,size_t);
 #endif
 #endif
 
-#if !TBB_USE_EXCEPTIONS && _MSC_VER
-    // Suppress "C++ exception handler used, but unwind semantics are not enabled" warning in STL headers
-    #pragma warning (push)
-    #pragma warning (disable: 4530)
-#endif
-
 #include <vector>
-
-#if !TBB_USE_EXCEPTIONS && _MSC_VER
-    #pragma warning (pop)
-#endif
 
 const int COUNT_ELEM = 25000;
 const size_t MAX_SIZE = 1000;
@@ -187,7 +177,7 @@ void* Taligned_realloc(void* memblock, size_t size, size_t alignment);
 bool error_occurred = false;
 
 #if __APPLE__
-// Tests that use the variables are skipped on OS X*
+// Tests that use the variables are skipped on macOS*
 #else
 const size_t COUNT_ELEM_CALLOC = 2;
 const int COUNT_TESTS = 1000;
@@ -272,7 +262,7 @@ static void setSystemAllocs()
     Taligned_free=_aligned_free;
     Rposix_memalign=0;
 #elif  __APPLE__ || __sun || __ANDROID__
-// OS X*, Solaris, and Android don't have posix_memalign
+// macOS, Solaris*, and Android* don't have posix_memalign
     Raligned_malloc=0;
     Raligned_realloc=0;
     Taligned_free=0;
@@ -470,7 +460,7 @@ int main(int argc, char* argv[]) {
 #endif
     //-------------------------------------
 #if __APPLE__
-    /* Skip due to lack of memory limit enforcing under OS X*. */
+    /* Skip due to lack of memory limit enforcing under macOS. */
 #else
     limitMem(200);
     ReallocParam();
@@ -1125,7 +1115,7 @@ void CMemTest::RunAllTests(int total_threads)
     UniquePointer();
     AddrArifm();
 #if __APPLE__
-    REPORT("Known issue: some tests are skipped on OS X*\n");
+    REPORT("Known issue: some tests are skipped on macOS\n");
 #else
     NULLReturn(1*MByte,100*MByte,total_threads);
 #endif

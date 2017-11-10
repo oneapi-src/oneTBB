@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -28,6 +28,55 @@ namespace tbb {
 
 #if TBB_PREVIEW_FLOW_GRAPH_TRACE
 
+static inline void fgt_internal_alias_input_port( void *node, void *p, string_index name_index ) {
+    itt_make_task_group( ITT_DOMAIN_FLOW, p, FLOW_INPUT_PORT, node, FLOW_NODE, name_index );
+    itt_relation_add( ITT_DOMAIN_FLOW, node, FLOW_NODE, __itt_relation_is_parent_of, p, FLOW_INPUT_PORT );
+}
+
+static inline void fgt_internal_alias_output_port( void *node, void *p, string_index name_index ) {
+    itt_make_task_group( ITT_DOMAIN_FLOW, p, FLOW_OUTPUT_PORT, node, FLOW_NODE, name_index );
+    itt_relation_add( ITT_DOMAIN_FLOW, node, FLOW_NODE, __itt_relation_is_parent_of, p, FLOW_OUTPUT_PORT );
+}
+
+template<typename InputType>
+void alias_input_port(void *node, tbb::flow::receiver<InputType>* port, string_index name_index) {
+    // TODO: Make fgt_internal_alias_input_port a function template?
+    fgt_internal_alias_input_port( node, port, name_index);
+}
+
+template < typename PortsTuple, int N >
+struct fgt_internal_input_alias_helper {
+    static void alias_port( void *node, PortsTuple &ports ) {
+        alias_input_port( node, &(tbb::flow::get<N-1>(ports)), static_cast<tbb::internal::string_index>(FLOW_INPUT_PORT_0 + N - 1) );
+        fgt_internal_input_alias_helper<PortsTuple, N-1>::alias_port( node, ports );
+    }
+};
+
+template < typename PortsTuple >
+struct fgt_internal_input_alias_helper<PortsTuple, 0> {
+    static void alias_port( void * /* node */, PortsTuple & /* ports */ ) { }
+};
+
+template<typename OutputType>
+void alias_output_port(void *node, tbb::flow::sender<OutputType>* port, string_index name_index) {
+    // TODO: Make fgt_internal_alias_output_port a function template?
+    fgt_internal_alias_output_port( node, static_cast<void *>(port), name_index);
+}
+
+template < typename PortsTuple, int N >
+struct fgt_internal_output_alias_helper {
+    static void alias_port( void *node, PortsTuple &ports ) {
+        alias_output_port( node, &(tbb::flow::get<N-1>(ports)), static_cast<tbb::internal::string_index>(FLOW_OUTPUT_PORT_0 + N - 1) );
+        fgt_internal_output_alias_helper<PortsTuple, N-1>::alias_port( node, ports );
+    }
+};
+
+template < typename PortsTuple >
+struct fgt_internal_output_alias_helper<PortsTuple, 0> {
+    static void alias_port( void * /*node*/, PortsTuple &/*ports*/ ) {
+    }
+};
+
 static inline void fgt_internal_create_input_port( void *node, void *p, string_index name_index ) {
     itt_make_task_group( ITT_DOMAIN_FLOW, p, FLOW_INPUT_PORT, node, FLOW_NODE, name_index );
 }
@@ -38,7 +87,7 @@ static inline void fgt_internal_create_output_port( void *node, void *p, string_
 
 template<typename InputType>
 void register_input_port(void *node, tbb::flow::receiver<InputType>* port, string_index name_index) {
-    //TODO: Make fgt_internal_create_input_port a function template?
+    // TODO: Make fgt_internal_create_input_port a function template?
     fgt_internal_create_input_port( node, port, name_index);
 }
 
@@ -59,7 +108,7 @@ struct fgt_internal_input_helper<PortsTuple, 1> {
 
 template<typename OutputType>
 void register_output_port(void *node, tbb::flow::sender<OutputType>* port, string_index name_index) {
-    //TODO: Make fgt_internal_create_output_port a function template?
+    // TODO: Make fgt_internal_create_output_port a function template?
     fgt_internal_create_output_port( node, static_cast<void *>(port), name_index);
 }
 
@@ -126,6 +175,10 @@ static inline void fgt_multiinput_node( string_index t, void *g, PortsTuple &por
     fgt_internal_input_helper<PortsTuple, N>::register_port( output_port, ports );
 }
 
+static inline void fgt_multiinput_multioutput_node( string_index t, void *n, void *g ) {
+    itt_make_task_group( ITT_DOMAIN_FLOW, n, FLOW_NODE, g, FLOW_GRAPH, t );
+}
+
 static inline void fgt_node( string_index t, void *g, void *output_port ) {
     itt_make_task_group( ITT_DOMAIN_FLOW, output_port, FLOW_NODE, g, FLOW_GRAPH, t );
     fgt_internal_create_output_port( output_port, output_port, FLOW_OUTPUT_PORT_0 );
@@ -190,6 +243,14 @@ static inline void fgt_async_commit( void *node, void *graph ) {
     itt_region_end( ITT_DOMAIN_FLOW, node, FLOW_NODE );
 }
 
+static inline void fgt_reserve_wait( void *graph ) {
+    itt_region_begin( ITT_DOMAIN_FLOW, graph, FLOW_GRAPH, NULL, FLOW_NULL, FLOW_NULL );
+}
+
+static inline void fgt_release_wait( void *graph ) {
+    itt_region_end( ITT_DOMAIN_FLOW, graph, FLOW_GRAPH );
+}
+
 #else // TBB_PREVIEW_FLOW_GRAPH_TRACE
 
 static inline void fgt_graph( void * /*g*/ ) { }
@@ -213,6 +274,8 @@ static inline void fgt_multioutput_node_with_body( string_index /*t*/, void * /*
 template< int N, typename PortsTuple >
 static inline void fgt_multiinput_node( string_index /*t*/, void * /*g*/, PortsTuple & /*ports*/, void * /*output_port*/ ) { }
 
+static inline void fgt_multiinput_multioutput_node( string_index /*t*/, void * /*node*/, void * /*graph*/ ) { }
+
 static inline void fgt_node( string_index /*t*/, void * /*g*/, void * /*output_port*/ ) { }
 static inline void fgt_node( string_index /*t*/, void * /*g*/, void * /*input_port*/, void * /*output_port*/ ) { }
 static inline void  fgt_node( string_index /*t*/, void * /*g*/, void * /*input_port*/, void * /*decrement_port*/, void * /*output_port*/ ) { }
@@ -225,10 +288,13 @@ static inline void fgt_remove_edge( void * /*output_port*/, void * /*input_port*
 
 static inline void fgt_begin_body( void * /*body*/ ) { }
 static inline void fgt_end_body( void *  /*body*/) { }
+
 static inline void fgt_async_try_put_begin( void * /*node*/, void * /*port*/ ) { }
 static inline void fgt_async_try_put_end( void * /*node*/ , void * /*port*/ ) { }
 static inline void fgt_async_reserve( void * /*node*/, void * /*graph*/ ) { }
 static inline void fgt_async_commit( void * /*node*/, void * /*graph*/ ) { }
+static inline void fgt_reserve_wait( void * /*graph*/ ) { }
+static inline void fgt_release_wait( void * /*graph*/ ) { }
 
 #endif // TBB_PREVIEW_FLOW_GRAPH_TRACE
 

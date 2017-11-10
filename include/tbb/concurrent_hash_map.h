@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,21 +22,10 @@
 #define __TBB_concurrent_hash_map_H
 
 #include "tbb_stddef.h"
-
-#if !TBB_USE_EXCEPTIONS && _MSC_VER
-    // Suppress "C++ exception handler used, but unwind semantics are not enabled" warning in STL headers
-    #pragma warning (push)
-    #pragma warning (disable: 4530)
-#endif
-
 #include <iterator>
 #include <utility>      // Need std::pair
 #include <cstring>      // Need std::memset
 #include __TBB_STD_SWAP_HEADER
-
-#if !TBB_USE_EXCEPTIONS && _MSC_VER
-    #pragma warning (pop)
-#endif
 
 #include "cache_aligned_allocator.h"
 #include "tbb_allocator.h"
@@ -766,7 +755,7 @@ public:
     };
 
     //! Construct empty table.
-    concurrent_hash_map( const allocator_type &a = allocator_type() )
+    explicit concurrent_hash_map( const allocator_type &a = allocator_type() )
         : internal::hash_map_base(), my_allocator(a)
     {}
 

@@ -1,4 +1,4 @@
-# Copyright (c) 2005-2016 Intel Corporation
+# Copyright (c) 2005-2017 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ override CXXFLAGS += $(CXX_STD_FLAGS)
 
 # give stdver priotity over autodetection
 ifneq (,$(stdver))
-    CXX0XFLAGS=-std=$(stdver) -D_TBB_CPP0X
+    CXX0XFLAGS=-std=$(stdver)
 endif
 # empty CXX0XFLAGS exported as well, to have control over C++ autodetection
 export CXX0XFLAGS

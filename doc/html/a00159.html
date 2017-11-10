@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::internal::thread_closure_0&lt; F &gt; Struct Template Reference</title>
+<title>tbb::internal::tbb_exception_ptr Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,61 +33,82 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00234.html">tbb</a></li><li class="navelem"><b>internal</b></li><li class="navelem"><a class="el" href="a00159.html">thread_closure_0</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><b>internal</b></li><li class="navelem"><a class="el" href="a00159.html">tbb_exception_ptr</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
-<a href="#pub-attribs">Public Attributes</a> &#124;
-<a href="a00404.html">List of all members</a>  </div>
+<a href="a00406.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::internal::thread_closure_0&lt; F &gt; Struct Template Reference</div>  </div>
+<div class="title">tbb::internal::tbb_exception_ptr Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="dynheader">
-Inheritance diagram for tbb::internal::thread_closure_0&lt; F &gt;:</div>
-<div class="dyncontent">
- <div class="center">
-  <img src="a00159.png" usemap="#tbb::internal::thread_closure_0&lt; F &gt;_map" alt=""/>
-  <map id="tbb::internal::thread_closure_0&lt; F &gt;_map" name="tbb::internal::thread_closure_0&lt; F &gt;_map">
-<area href="a00162.html" alt="tbb::internal::thread_closure_base" shape="rect" coords="0,0,214,24"/>
-</map>
- </div></div>
+
+<p>Exception container that preserves the exact copy of the original exception.  
+ <a href="a00159.html#details">More...</a></p>
+
+<p><code>#include &lt;tbb_exception.h&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a538aa9db5b40cf64cdafc0af0649a7f2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a538aa9db5b40cf64cdafc0af0649a7f2"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>thread_closure_0</b> (const F &amp;f)</td></tr>
-<tr class="separator:a538aa9db5b40cf64cdafc0af0649a7f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_methods_a00162"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_a00162')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="a00162.html">tbb::internal::thread_closure_base</a></td></tr>
-<tr class="memitem:a624f5a5a40051faf39444ad3a9f36df5 inherit pub_methods_a00162"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a624f5a5a40051faf39444ad3a9f36df5"></a>
-void *&#160;</td><td class="memItemRight" valign="bottom"><b>operator new</b> (size_t size)</td></tr>
-<tr class="separator:a624f5a5a40051faf39444ad3a9f36df5 inherit pub_methods_a00162"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a56e1bfd2ca46abcc3c3f265eff10360d inherit pub_methods_a00162"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a56e1bfd2ca46abcc3c3f265eff10360d"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>operator delete</b> (void *ptr)</td></tr>
-<tr class="separator:a56e1bfd2ca46abcc3c3f265eff10360d inherit pub_methods_a00162"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a38d3ca480e2758a67bcd7427b156daae"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00159.html#a38d3ca480e2758a67bcd7427b156daae">destroy</a> ()  throw ()</td></tr>
+<tr class="memdesc:a38d3ca480e2758a67bcd7427b156daae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroys this objects.  <a href="#a38d3ca480e2758a67bcd7427b156daae">More...</a><br/></td></tr>
+<tr class="separator:a38d3ca480e2758a67bcd7427b156daae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1713aa9a6a3850049d34358397a8ed81"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1713aa9a6a3850049d34358397a8ed81"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00159.html#a1713aa9a6a3850049d34358397a8ed81">throw_self</a> ()</td></tr>
+<tr class="memdesc:a1713aa9a6a3850049d34358397a8ed81"><td class="mdescLeft">&#160;</td><td class="mdescRight">Throws the contained exception . <br/></td></tr>
+<tr class="separator:a1713aa9a6a3850049d34358397a8ed81"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a4b9e7370103f473212ccb10e65d676fb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4b9e7370103f473212ccb10e65d676fb"></a>
-static __TBB_NATIVE_THREAD_ROUTINE&#160;</td><td class="memItemRight" valign="bottom"><b>start_routine</b> (void *c)</td></tr>
-<tr class="separator:a4b9e7370103f473212ccb10e65d676fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
-Public Attributes</h2></td></tr>
-<tr class="memitem:aff55f3266cccfbb2d296aa9b07239ce8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aff55f3266cccfbb2d296aa9b07239ce8"></a>
-F&#160;</td><td class="memItemRight" valign="bottom"><b>function</b></td></tr>
-<tr class="separator:aff55f3266cccfbb2d296aa9b07239ce8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a83d4cb04d89ed11b5e030fe4db2d5e5f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a83d4cb04d89ed11b5e030fe4db2d5e5f"></a>
+static <a class="el" href="a00159.html">tbb_exception_ptr</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>allocate</b> ()</td></tr>
+<tr class="separator:a83d4cb04d89ed11b5e030fe4db2d5e5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae54ded5f55ad39805e6cb967fc710346"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae54ded5f55ad39805e6cb967fc710346"></a>
+static <a class="el" href="a00159.html">tbb_exception_ptr</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>allocate</b> (const <a class="el" href="a00158.html">tbb_exception</a> &amp;tag)</td></tr>
+<tr class="separator:ae54ded5f55ad39805e6cb967fc710346"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abfbea91401d2594deb04ea331734171c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abfbea91401d2594deb04ea331734171c"></a>
+static <a class="el" href="a00159.html">tbb_exception_ptr</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00159.html#abfbea91401d2594deb04ea331734171c">allocate</a> (<a class="el" href="a00036.html">captured_exception</a> &amp;src)</td></tr>
+<tr class="memdesc:abfbea91401d2594deb04ea331734171c"><td class="mdescLeft">&#160;</td><td class="mdescRight">This overload uses move semantics (i.e. it empties src) <br/></td></tr>
+<tr class="separator:abfbea91401d2594deb04ea331734171c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<hr/>The documentation for this struct was generated from the following file:<ul>
-<li>tbb_thread.h</li>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>Exception container that preserves the exact copy of the original exception. </p>
+<p>This class can be used only when the appropriate runtime support (mandated by C++11) is present </p>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="a38d3ca480e2758a67bcd7427b156daae"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void tbb::internal::tbb_exception_ptr::destroy </td>
+          <td>(</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td align="right">throw </td><td>(</td><td colspan="2"></td>
+        </tr>
+        <tr>
+          <td align="right"></td><td>)</td><td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Destroys this objects. </p>
+<p>Note that objects of this type can be created only by the allocate() method. </p>
+
+</div>
+</div>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li>tbb_exception.h</li>
 </ul>
 </div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2017 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

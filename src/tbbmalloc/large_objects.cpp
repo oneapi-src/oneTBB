@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -950,6 +950,7 @@ bool ExtMemoryPool::hardCachesCleanup()
     // thread-local caches must be cleaned before LOC,
     // because object from thread-local cache can be released to LOC
     bool ret = releaseAllLocalCaches();
+    ret |= orphanedBlocks.cleanup(&backend);
     ret |= loc.cleanAll();
     ret |= backend.clean();
     return ret;

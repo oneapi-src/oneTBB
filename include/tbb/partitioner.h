@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -122,6 +122,7 @@ namespace internal {
 using namespace tbb::internal;
 template<typename Range, typename Body, typename Partitioner> class start_for;
 template<typename Range, typename Body, typename Partitioner> class start_reduce;
+template<typename Range, typename Body, typename Partitioner> class start_deterministic_reduce;
 
 //! Join task node that contains shared flag for stealing feedback
 class flag_task: public task {
@@ -256,11 +257,29 @@ struct partition_type_base {
     }
 };
 
+//! Class determines whether template parameter has static boolean constant
+//! 'is_splittable_in_proportion' initialized with value of 'true' or not.
+/** If template parameter has such field that has been initialized with non-zero
+*  value then class field will be set to 'true', otherwise - 'false'
+*/
+template <typename Range>
+class is_splittable_in_proportion {
+private:
+    typedef char yes[1];
+    typedef char no[2];
+
+    template <typename range_type> static yes& decide(typename enable_if<range_type::is_splittable_in_proportion>::type *);
+    template <typename range_type> static no& decide(...);
+public:
+    // equals to 'true' if and only if static const variable 'is_splittable_in_proportion' of template parameter
+    // initialized with the value of 'true'
+    static const bool value = (sizeof(decide<Range>(0)) == sizeof(yes));
+};
+
 //! Provides default splitting strategy for partition objects.
 template <typename Partition>
 struct adaptive_mode : partition_type_base<Partition> {
     typedef Partition my_partition;
-    using partition_type_base<Partition>::self; // CRTP helper to get access to derived classes
     size_t my_divisor;
     // For affinity_partitioner, my_divisor indicates the number of affinity array indices the task reserves.
     // A task which has only one index must produce the right split without reserved index in order to avoid
@@ -269,12 +288,22 @@ struct adaptive_mode : partition_type_base<Partition> {
     static const unsigned factor = 1;
     adaptive_mode() : my_divisor(tbb::internal::get_initial_auto_partitioner_divisor() / 4 * my_partition::factor) {}
     adaptive_mode(adaptive_mode &src, split) : my_divisor(do_split(src, split())) {}
-    adaptive_mode(adaptive_mode &src, const proportional_split& split_obj) : my_divisor(do_split(src, split_obj)) {}
     /*! Override do_split methods in order to specify splitting strategy */
     size_t do_split(adaptive_mode &src, split) {
         return src.my_divisor /= 2u;
     }
-    size_t do_split(adaptive_mode &src, const proportional_split& split_obj) {
+};
+
+//! Provides proportional splitting strategy for partition objects
+template <typename Partition>
+struct proportional_mode : adaptive_mode<Partition> {
+    typedef Partition my_partition;
+    using partition_type_base<Partition>::self; // CRTP helper to get access to derived classes
+
+    proportional_mode() : adaptive_mode<Partition>() {}
+    proportional_mode(proportional_mode &src, split) : adaptive_mode<Partition>(src, split()) {}
+    proportional_mode(proportional_mode &src, const proportional_split& split_obj) { self().my_divisor = do_split(src, split_obj); }
+    size_t do_split(proportional_mode &src, const proportional_split& split_obj) {
 #if __TBB_ENABLE_RANGE_FEEDBACK
         size_t portion = size_t(float(src.my_divisor) * float(split_obj.right())
                                 / float(split_obj.left() + split_obj.right()) + 0.5f);
@@ -293,53 +322,8 @@ struct adaptive_mode : partition_type_base<Partition> {
         return portion;
     }
     bool is_divisible() { // part of old should_execute_range()
-        return my_divisor > my_partition::factor;
+        return self().my_divisor > my_partition::factor;
     }
-};
-
-//! Provides default linear indexing of partitioner's sequence
-template <typename Partition>
-struct linear_affinity_mode : adaptive_mode<Partition> {
-    using adaptive_mode<Partition>::my_divisor;
-    size_t my_head;
-    using adaptive_mode<Partition>::self;
-    linear_affinity_mode() : adaptive_mode<Partition>(), my_head(0) {}
-    linear_affinity_mode(linear_affinity_mode &src, split) : adaptive_mode<Partition>(src, split())
-        , my_head(src.my_head + src.my_divisor) {}
-    linear_affinity_mode(linear_affinity_mode &src, const proportional_split& split_obj) : adaptive_mode<Partition>(src, split_obj)
-        , my_head(src.my_head + src.my_divisor) {}
-    void set_affinity( task &t ) {
-        if( my_divisor )
-            t.set_affinity( affinity_id(my_head) + 1 );
-    }
-};
-
-//! Class determines whether template parameter has static boolean constant
-//! 'is_splittable_in_proportion' initialized with value of 'true' or not.
-/** If template parameter has such field that has been initialized with non-zero
- *  value then class field will be set to 'true', otherwise - 'false'
- */
-template <typename Range>
-class is_splittable_in_proportion {
-private:
-    typedef char yes[1];
-    typedef char no [2];
-
-    template <typename range_type> static yes& decide(typename enable_if<range_type::is_splittable_in_proportion>::type *);
-    template <typename range_type> static no& decide(...);
-public:
-    // equals to 'true' if and only if static const variable 'is_splittable_in_proportion' of template parameter
-    // initialized with the value of 'true'
-    static const bool value = (sizeof(decide<Range>(0)) == sizeof(yes));
-};
-
-//! Provides default methods for non-balancing partition objects.
-template<class Mode>
-struct unbalancing_partition_type : Mode {
-    using Mode::self;
-    unbalancing_partition_type() : Mode() {}
-    unbalancing_partition_type(unbalancing_partition_type& p, split) : Mode(p, split()) {}
-    unbalancing_partition_type(unbalancing_partition_type& p, const proportional_split& split_obj) : Mode(p, split_obj) {}
 #if _MSC_VER && !defined(__INTEL_COMPILER)
     // Suppress "conditional expression is constant" warning.
     #pragma warning( push )
@@ -348,7 +332,7 @@ struct unbalancing_partition_type : Mode {
     template <typename Range>
     proportional_split get_split() {
         if (is_splittable_in_proportion<Range>::value) {
-            size_t size = self().my_divisor / Mode::my_partition::factor;
+            size_t size = self().my_divisor / my_partition::factor;
 #if __TBB_NONUNIFORM_TASK_CREATION
             size_t right = (size + 2) / 3;
 #else
@@ -365,9 +349,25 @@ struct unbalancing_partition_type : Mode {
 #endif // warning 4127 is back
 };
 
+//! Provides default linear indexing of partitioner's sequence
+template <typename Partition>
+struct linear_affinity_mode : proportional_mode<Partition> {
+    size_t my_head;
+    using proportional_mode<Partition>::self;
+    linear_affinity_mode() : proportional_mode<Partition>(), my_head(0) {}
+    linear_affinity_mode(linear_affinity_mode &src, split) : proportional_mode<Partition>(src, split())
+        , my_head(src.my_head + src.my_divisor) {}
+    linear_affinity_mode(linear_affinity_mode &src, const proportional_split& split_obj) : proportional_mode<Partition>(src, split_obj)
+        , my_head(src.my_head + src.my_divisor) {}
+    void set_affinity( task &t ) {
+        if( self().my_divisor )
+            t.set_affinity( affinity_id(my_head) + 1 );
+    }
+};
+
 /*! Determine work-balance phase implementing splitting & stealing actions */
 template<class Mode>
-struct balancing_partition_type : unbalancing_partition_type<Mode> {
+struct dynamic_grainsize_mode : Mode {
     using Mode::self;
 #ifdef __TBB_USE_MACHINE_TIME_STAMPS
     tbb::internal::machine_tsc_t my_dst_tsc;
@@ -379,21 +379,21 @@ struct balancing_partition_type : unbalancing_partition_type<Mode> {
     } my_delay;
     depth_t my_max_depth;
     static const unsigned range_pool_size = __TBB_RANGE_POOL_CAPACITY;
-    balancing_partition_type(): unbalancing_partition_type<Mode>()
+    dynamic_grainsize_mode(): Mode()
 #ifdef __TBB_USE_MACHINE_TIME_STAMPS
         , my_dst_tsc(0)
 #endif
         , my_delay(begin)
         , my_max_depth(__TBB_INIT_DEPTH) {}
-    balancing_partition_type(balancing_partition_type& p, split)
-        : unbalancing_partition_type<Mode>(p, split())
+    dynamic_grainsize_mode(dynamic_grainsize_mode& p, split)
+        : Mode(p, split())
 #ifdef __TBB_USE_MACHINE_TIME_STAMPS
         , my_dst_tsc(0)
 #endif
         , my_delay(pass)
         , my_max_depth(p.my_max_depth) {}
-    balancing_partition_type(balancing_partition_type& p, const proportional_split& split_obj)
-        : unbalancing_partition_type<Mode>(p, split_obj)
+    dynamic_grainsize_mode(dynamic_grainsize_mode& p, const proportional_split& split_obj)
+        : Mode(p, split_obj)
 #ifdef __TBB_USE_MACHINE_TIME_STAMPS
         , my_dst_tsc(0)
 #endif
@@ -478,14 +478,14 @@ struct balancing_partition_type : unbalancing_partition_type<Mode> {
     }
 };
 
-class auto_partition_type: public balancing_partition_type<adaptive_mode<auto_partition_type> > {
+class auto_partition_type: public dynamic_grainsize_mode<adaptive_mode<auto_partition_type> > {
 public:
     auto_partition_type( const auto_partitioner& )
-        : balancing_partition_type<adaptive_mode<auto_partition_type> >() {
+        : dynamic_grainsize_mode<adaptive_mode<auto_partition_type> >() {
         my_divisor *= __TBB_INITIAL_CHUNKS;
     }
     auto_partition_type( auto_partition_type& src, split)
-        : balancing_partition_type<adaptive_mode<auto_partition_type> >(src, split()) {}
+        : dynamic_grainsize_mode<adaptive_mode<auto_partition_type> >(src, split()) {}
     bool is_divisible() { // part of old should_execute_range()
         if( my_divisor > 1 ) return true;
         if( my_divisor && my_max_depth ) { // can split the task. TODO: on-stack flag instead
@@ -517,25 +517,25 @@ public:
     }
 };
 
-class static_partition_type : public unbalancing_partition_type<linear_affinity_mode<static_partition_type> > {
+class static_partition_type : public linear_affinity_mode<static_partition_type> {
 public:
     typedef proportional_split split_type;
     static_partition_type( const static_partitioner& )
-        : unbalancing_partition_type<linear_affinity_mode<static_partition_type> >() {}
+        : linear_affinity_mode<static_partition_type>() {}
     static_partition_type( static_partition_type& p, split )
-        : unbalancing_partition_type<linear_affinity_mode<static_partition_type> >(p, split()) {}
+        : linear_affinity_mode<static_partition_type>(p, split()) {}
     static_partition_type( static_partition_type& p, const proportional_split& split_obj )
-        : unbalancing_partition_type<linear_affinity_mode<static_partition_type> >(p, split_obj) {}
+        : linear_affinity_mode<static_partition_type>(p, split_obj) {}
 };
 
-class affinity_partition_type : public balancing_partition_type<linear_affinity_mode<affinity_partition_type> > {
+class affinity_partition_type : public dynamic_grainsize_mode<linear_affinity_mode<affinity_partition_type> > {
     static const unsigned factor_power = 4; // TODO: get a unified formula based on number of computing units
     tbb::internal::affinity_id* my_array;
 public:
     static const unsigned factor = 1 << factor_power; // number of slots in affinity array per task
     typedef proportional_split split_type;
     affinity_partition_type( tbb::internal::affinity_partitioner_base_v3& ap )
-        : balancing_partition_type<linear_affinity_mode<affinity_partition_type> >() {
+        : dynamic_grainsize_mode<linear_affinity_mode<affinity_partition_type> >() {
         __TBB_ASSERT( (factor&(factor-1))==0, "factor must be power of two" );
         ap.resize(factor);
         my_array = ap.my_array;
@@ -543,10 +543,10 @@ public:
         __TBB_ASSERT( my_max_depth < __TBB_RANGE_POOL_CAPACITY, 0 );
     }
     affinity_partition_type(affinity_partition_type& p, split)
-        : balancing_partition_type<linear_affinity_mode<affinity_partition_type> >(p, split())
+        : dynamic_grainsize_mode<linear_affinity_mode<affinity_partition_type> >(p, split())
         , my_array(p.my_array) {}
     affinity_partition_type(affinity_partition_type& p, const proportional_split& split_obj)
-        : balancing_partition_type<linear_affinity_mode<affinity_partition_type> >(p, split_obj)
+        : dynamic_grainsize_mode<linear_affinity_mode<affinity_partition_type> >(p, split_obj)
         , my_array(p.my_array) {}
     void set_affinity( task &t ) {
         if( my_divisor ) {
@@ -596,6 +596,7 @@ private:
     template<typename Range, typename Body, typename Partitioner> friend class serial::interface9::start_for;
     template<typename Range, typename Body, typename Partitioner> friend class interface9::internal::start_for;
     template<typename Range, typename Body, typename Partitioner> friend class interface9::internal::start_reduce;
+    template<typename Range, typename Body, typename Partitioner> friend class interface9::internal::start_deterministic_reduce;
     template<typename Range, typename Body, typename Partitioner> friend class internal::start_scan;
     // backward compatibility
     class partition_type: public internal::partition_type_base {
@@ -641,6 +642,7 @@ private:
     template<typename Range, typename Body, typename Partitioner> friend class serial::interface9::start_for;
     template<typename Range, typename Body, typename Partitioner> friend class interface9::internal::start_for;
     template<typename Range, typename Body, typename Partitioner> friend class interface9::internal::start_reduce;
+    template<typename Range, typename Body, typename Partitioner> friend class interface9::internal::start_deterministic_reduce;
     template<typename Range, typename Body, typename Partitioner> friend class internal::start_scan;
     // backward compatibility
     typedef interface9::internal::old_auto_partition_type partition_type;

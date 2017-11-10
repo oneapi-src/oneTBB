@@ -1,4 +1,4 @@
-# Copyright (c) 2005-2016 Intel Corporation
+# Copyright (c) 2005-2017 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ SONAME_SUFFIX =$(shell grep TBB_COMPATIBLE_INTERFACE_VERSION $(tbb_root)/include
 ifeq ($(arch),ia64)
         def_prefix = lin64ipf
 endif
-ifeq ($(arch),sparc s390x)
+ifneq (,$(findstring $(arch),sparc s390x))
         def_prefix = lin64
 endif
 ifeq ($(arch),armv7)

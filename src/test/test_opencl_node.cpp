@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -69,14 +69,23 @@ std::string PathToFile(const std::string& fileName) {
     return prefix + "/src/test/" + fileName;
 }
 
+// Global test variables and types
 typedef tbb::flow::opencl_range OCLRange;
+struct test_default_device_filter {
+    opencl_device_list operator()(const opencl_device_list &devices) {
+        opencl_device_list dl;
+        dl.add(*devices.begin());
+        return dl;
+    }
+};
+typedef opencl_factory<test_default_device_filter> DefaultFactoryType;
 
 void TestArgumentPassing() {
     REMARK( "TestArgumentPassing: " );
-    opencl_graph g;
 
+    graph g;
     opencl_node <tuple<opencl_buffer<int>, opencl_buffer<int>, OCLRange>> k( g,
-        opencl_program<>( g, PathToFile( "test_opencl_node.cl" ) ).get_kernel( "TestArgumentPassing" ) );
+        opencl_program<>( PathToFile( "test_opencl_node.cl" ) ).get_kernel( "TestArgumentPassing" ) );
     split_node <tuple<opencl_buffer<int>, opencl_buffer<int>, OCLRange>> s( g );
 
     make_edge( output_port<0>( s ), input_port<0>( k ) );
@@ -84,10 +93,10 @@ void TestArgumentPassing() {
     make_edge( output_port<2>( s ), input_port<2>( k ) );
 
     const int N = 1 * 1024 * 1024;
-    opencl_buffer<int> b1( g, N ), b2( g, N );
+    opencl_buffer<int> b1( N ), b2( N );
 
     const int err_size = 128;
-    opencl_buffer<char> err( g, err_size );
+    opencl_buffer<char> err( err_size );
 
     OCLRange l;
 
@@ -101,7 +110,7 @@ void TestArgumentPassing() {
     ASSERT( std::all_of( b2.begin(), b2.end(), []( int c ) { return c == 1; } ), "Validation has failed" );
 
     // By default, the first device is used.
-    opencl_device d = *g.available_devices().begin();
+    opencl_device d = *interface10::opencl_info::available_devices().begin();
     std::array<size_t, 3> maxSizes = d.max_work_item_sizes();
 
     *err.data() = 0; ASSERT( err.data() != std::string( "Done" ), NULL );
@@ -164,10 +173,9 @@ void TestArgumentPassing() {
 
 void SimpleDependencyTest() {
     REMARK( "SimpleDependencyTest: " );
-    opencl_graph g;
 
     const int N = 1 * 1024 * 1024;
-    opencl_buffer<float> b1( g, N ), b2( g, N ), b3( g, N );
+    opencl_buffer<float> b1( N ), b2( N ), b3( N );
     std::vector<float> v1( N ), v2( N ), v3( N );
 
     auto i1 = b1.access<write_only>();
@@ -178,11 +186,12 @@ void SimpleDependencyTest() {
         i2[i] = v2[i] = float( 2 * i );
     }
 
-    opencl_program<> p( g, PathToFile("test_opencl_node.cl") ) ;
-    opencl_node <tuple<opencl_buffer<float>, opencl_buffer<float>>> k1( g, p.get_kernel( "Sum" ) );
+    graph g;
+    opencl_program<> p( PathToFile("test_opencl_node.cl") ) ;
+    opencl_node< tuple<opencl_buffer<float>, opencl_buffer<float>> > k1( g, p.get_kernel( "Sum" ) );
     k1.set_range( { BROKEN_INITIALIZER_LIST_DEDUCTION({ N }), BROKEN_INITIALIZER_LIST_DEDUCTION({ 16 }) } );
 
-    opencl_node <tuple<opencl_buffer<float>, opencl_buffer<float>>> k2( g, p.get_kernel( "Sqr" ) );
+    opencl_node < tuple<opencl_buffer<float>, opencl_buffer<float>> > k2( g, p.get_kernel( "Sqr" ) );
     k2.set_range( { BROKEN_INITIALIZER_LIST_DEDUCTION({ N }), BROKEN_INITIALIZER_LIST_DEDUCTION({ 16 }) } );
 
     make_edge( output_port<1>( k1 ), input_port<0>( k2 ) );
@@ -234,15 +243,16 @@ public:
 
 void BroadcastTest() {
     REMARK( "BroadcastTest: " );
-    opencl_graph g;
+
+    graph g;
 
     const int N = 1 * 1024;
-    opencl_buffer<cl_int> b( g, N );
+    opencl_buffer<cl_int> b( N );
 
     const int numNodes = 4 * tbb::task_scheduler_init::default_num_threads();
     typedef opencl_node <tuple<opencl_buffer<cl_int>, opencl_buffer<cl_int>>> NodeType;
     std::vector<NodeType> nodes( numNodes, NodeType( g,
-        opencl_program<>( g, PathToFile("test_opencl_node.cl") ).get_kernel( "BroadcastTest" ),
+        opencl_program<>( PathToFile("test_opencl_node.cl") ).get_kernel( "BroadcastTest" ),
         device_selector() ) );
 
     for ( std::vector<NodeType>::iterator it = nodes.begin(); it != nodes.end(); ++it )
@@ -252,7 +262,7 @@ void BroadcastTest() {
     for ( auto &x : nodes ) make_edge( bc, x );
 
     std::vector<opencl_buffer<cl_int>> res;
-    for ( int i = 0; i < numNodes; ++i ) res.emplace_back( g, N );
+    for ( int i = 0; i < numNodes; ++i ) res.emplace_back( N );
 
     for ( cl_int r = 1; r < 100; ++r ) {
         std::fill( b.begin(), b.end(), r );
@@ -269,14 +279,14 @@ void BroadcastTest() {
 
 void DiamondDependencyTest() {
     REMARK( "DiamondDependencyTest: " );
-    opencl_graph g;
 
     const int N = 1 * 1024 * 1024;
-    opencl_buffer<cl_short> b( g, N );
-    opencl_buffer<cl_int> b1( g, N ), b2( g, N );
+    opencl_buffer<cl_short> b( N );
+    opencl_buffer<cl_int> b1( N ), b2( N );
 
+    graph g;
     device_selector d;
-    opencl_program<> p( g, PathToFile("test_opencl_node.cl") );
+    opencl_program<> p( PathToFile("test_opencl_node.cl") );
     opencl_node <tuple<opencl_buffer<cl_short>, cl_short>> k0( g, p.get_kernel( "DiamondDependencyTestFill" ), d );
     k0.set_range( { BROKEN_INITIALIZER_LIST_DEDUCTION({ N }) } );
     opencl_node <tuple<opencl_buffer<cl_short>, opencl_buffer<cl_int>>> k1( g, p.get_kernel( "DiamondDependencyTestSquare" ) );
@@ -310,24 +320,24 @@ void DiamondDependencyTest() {
 
 void LoopTest() {
     REMARK( "LoopTest: " );
-    opencl_graph g;
 
     const int N = 1 * 1024;
-    opencl_buffer<cl_long> b1( g, N ), b2( g, N );
+    opencl_buffer<cl_long> b1( N ), b2( N );
 
     std::fill( b1.begin(), b1.end(), 0 );
     std::fill( b2.begin(), b2.end(), 1 );
 
+    graph g;
     opencl_node <tuple<opencl_buffer<cl_long>, opencl_buffer<cl_long>>> k( g,
-        opencl_program<>( g, PathToFile("test_opencl_node.cl") ).get_kernel( "LoopTestIter" ) );
+        opencl_program<>( PathToFile("test_opencl_node.cl") ).get_kernel( "LoopTestIter" ) );
     k.set_range( { BROKEN_INITIALIZER_LIST_DEDUCTION({ N }) } );
 
     make_edge( output_port<1>( k ), input_port<1>( k ) );
 
     const cl_long numIters = 1000;
     cl_long iter = 0;
-    typedef multifunction_node < dependency_msg<opencl_buffer<cl_long>>, tuple < opencl_buffer<cl_long>, dependency_msg<opencl_buffer<cl_long>> > > multinode;
-    multinode mf( g, serial, [&iter, numIters]( const dependency_msg<opencl_buffer<cl_long>> &b, multinode::output_ports_type& op ) {
+    typedef multifunction_node < opencl_buffer<cl_long>, tuple < opencl_buffer<cl_long>, opencl_buffer<cl_long> > > multinode;
+    multinode mf( g, serial, [&iter, numIters]( const opencl_buffer<cl_long> &b, multinode::output_ports_type& op ) {
         if ( ++iter < numIters ) get<1>( op ).try_put( b );
         else get<0>( op ).try_put( b );
     } );
@@ -363,7 +373,7 @@ struct ConcurrencyTestBodyData {
     function_node< opencl_subbuffer<cl_short, Factory> > validationNode;
     tbb::atomic<int> numChecks;
 
-    ConcurrencyTestBodyData( opencl_graph &g, int numThreads ) : barrier( numThreads ), nodes(numThreads),
+    ConcurrencyTestBodyData( graph &g, int numThreads ) : barrier( numThreads ), nodes(numThreads),
         validationNode( g, unlimited, [numThreads, this]( const opencl_subbuffer<cl_short, Factory> &b ) {
             ASSERT( std::all_of( b.begin(), b.end(), [numThreads]( cl_short c ) { return c == numThreads; } ), "Validation has failed" );
             --numChecks;
@@ -382,7 +392,7 @@ struct ConcurrencyTestBodyData {
 
 template <typename Factory>
 class ConcurrencyTestBody : NoAssign {
-    opencl_graph &g;
+    graph &g;
     std::shared_ptr<ConcurrencyTestBodyData<Factory>> data;
     Factory &f;
     const std::vector<opencl_device> &filteredDevices;
@@ -404,7 +414,7 @@ class ConcurrencyTestBody : NoAssign {
             const opencl_device_list& devices = f.devices();
             ASSERT( filteredDevices.size() == devices.size(), "Incorrect list of devices" );
             std::vector<opencl_device>::const_iterator it = filteredDevices.cbegin();
-            for ( opencl_device d : devices ) ASSERT( d == *it++, "Incorrect list of devices" );
+            for ( auto d = devices.begin(); d != devices.end(); ++d ) ASSERT( (*d) == *it++, "Incorrect list of devices" );
             --num_checks;
             return *(devices.begin() + cnt++ % devices.size());
         }
@@ -415,7 +425,7 @@ class ConcurrencyTestBody : NoAssign {
     };
 
 public:
-    ConcurrencyTestBody( opencl_graph &g_, int numThreads, Factory &f_, const std::vector<opencl_device> &filteredDevices_ )
+    ConcurrencyTestBody( graph &g_, int numThreads, Factory &f_, const std::vector<opencl_device> &filteredDevices_ )
         : g( g_ )
         , data( std::make_shared<ConcurrencyTestBodyData<Factory>>( g, numThreads ) )
         , f( f_ )
@@ -457,9 +467,9 @@ public:
             // The first node needs two buffers.
            Harness::FastRandom rnd(42);
             cl_uint alignment = 0;
-            for ( opencl_device d : filteredDevices ) {
+            for (  auto d = filteredDevices.begin(); d != filteredDevices.end(); ++d ) {
                 cl_uint deviceAlignment;
-                d.info( CL_DEVICE_MEM_BASE_ADDR_ALIGN, deviceAlignment );
+                (*d).info( CL_DEVICE_MEM_BASE_ADDR_ALIGN, deviceAlignment );
                 alignment = max( alignment, deviceAlignment );
             }
             alignment /= CHAR_BIT;
@@ -501,14 +511,14 @@ public:
 
 const int concurrencyTestNumRepeats = 5;
 
-template <typename Factory = interface9::default_opencl_factory>
+template <typename Factory = DefaultFactoryType>
 void ConcurrencyTest( const std::vector<opencl_device> &filteredDevices ) {
     const int numThreads = min( tbb::task_scheduler_init::default_num_threads(), 8 );
     for ( int i = 0; i < concurrencyTestNumRepeats; ++i ) {
         tbb::task_group_context ctx( tbb::task_group_context::isolated, tbb::task_group_context::default_traits | tbb::task_group_context::concurrent_wait );
-        opencl_graph g( ctx );
+        graph g( ctx );
         opencl_device_list dl;
-        Factory f( g );
+        Factory f;
         ConcurrencyTestBody<Factory> body( g, numThreads, f, filteredDevices );
         NativeParallelFor( numThreads, body );
     }
@@ -532,7 +542,9 @@ struct DeviceFilter {
         case MAX_DEVICES:
         {
             std::unordered_map<std::string, std::vector<opencl_device>> platforms;
-            for ( opencl_device d : device_list ) platforms[d.platform_name()].push_back( d );
+            for (auto d = device_list.begin(); d != device_list.end(); ++d) {
+                platforms[(*d).platform_name()].push_back(*d);
+            }
 
             // Select a platform with maximum number of devices.
             filteredDevices = std::max_element( platforms.begin(), platforms.end(),
@@ -542,8 +554,8 @@ struct DeviceFilter {
 
             if ( !numRuns ) {
                 REMARK( "  Chosen devices from the same platform (%s):\n", filteredDevices[0].platform_name().c_str() );
-                for ( opencl_device d : filteredDevices ) {
-                    REMARK( "    %s\n", d.name().c_str() );
+                for ( auto d = filteredDevices.begin(); d != filteredDevices.end(); d++ ) {
+                    REMARK( "    %s\n", (*d).name().c_str() );
                 }
             }
 
@@ -563,7 +575,7 @@ struct DeviceFilter {
             ASSERT( false, NULL );
         }
         opencl_device_list dl;
-        for ( opencl_device d : filteredDevices ) dl.add( d );
+        for ( auto d = filteredDevices.begin(); d != filteredDevices.end(); ++d ) dl.add( *d );
 
         ++numRuns;
 
@@ -590,9 +602,10 @@ void CustomFactoryTest() {
     ASSERT( DeviceFilter<MAX_DEVICES>::numRuns == concurrencyTestNumRepeats, NULL );
 
     REMARK( "  One device tests:\n" );
-    opencl_graph g;
-    for ( int i = 0; i < (int)g.available_devices().size(); ++i ) {
-        opencl_device_list::const_iterator it = g.available_devices().begin();
+    graph g;
+    opencl_device_list all_devices = interface10::opencl_info::available_devices();
+    for ( int i = 0; i < (int)all_devices.size(); ++i ) {
+        opencl_device_list::const_iterator it = all_devices.begin();
         std::advance( it, i );
         REMARK( "    %s: ", it->name().c_str() );
         DeviceFilter<ONE_DEVICE>::numRuns = 0;
@@ -609,8 +622,7 @@ void CustomFactoryTest() {
 void DefaultConcurrencyTest() {
     REMARK( "DefaultConcurrencyTest: " );
     // By default, the first device is selected.
-    opencl_graph g;
-    ConcurrencyTest( { *g.available_devices().begin() } );
+    ConcurrencyTest( { *interface10::opencl_info::available_devices().begin() } );
     REMARK( "done\n" );
 }
 
@@ -618,22 +630,25 @@ void DefaultConcurrencyTest() {
 void SpirKernelTest() {
     REMARK( "SpirKernelTest:\n" );
 
-    const opencl_device_list devices = opencl_graph().available_devices();
+    const opencl_device_list devices = interface10::opencl_info::available_devices();
 
-    for( opencl_device d : devices ) {
-        if( !d.extension_available( "cl_khr_spir" ) ) {
-            REMARK( "  Extension 'cl_khr_spir' is not available on the device '%s'\n", d.name().c_str() );
+    for( auto d = devices.begin(); d != devices.end(); d++ ) {
+        if( !(*d).extension_available( "cl_khr_spir" ) ) {
+            REMARK( "  Extension 'cl_khr_spir' is not available on the device '%s'\n", (*d).name().c_str() );
             continue;
         }
-        opencl_graph g;
-        bool init = g.opencl_factory().init( { d } );
+
+        graph g;
+        DefaultFactoryType factory;
+
+        bool init = factory.init( { *d } );
         ASSERT( init, "It should be the first initialization" );
 
         std::string path_to_file = PathToFile(std::string("test_opencl_kernel_") +
-                                              std::to_string(d.address_bits()) + std::string(".spir") );
-        REMARK("  Using SPIR file '%s' on device '%s'\n", path_to_file.c_str(), d.name().c_str());
+                                              std::to_string((*d).address_bits()) + std::string(".spir") );
+        REMARK("  Using SPIR file '%s' on device '%s'\n", path_to_file.c_str(), (*d).name().c_str());
         const int N = 1 * 1024 * 1024;
-        opencl_buffer<float> b1( g, N ), b2( g, N );
+        opencl_buffer<float, DefaultFactoryType> b1( factory, N ), b2( factory, N );
         std::vector<float> v1( N ), v2( N );
 
         auto i1 = b1.access<write_only>();
@@ -644,8 +659,9 @@ void SpirKernelTest() {
             i2[i] = v2[i] = float( 2 * i );
         }
 
-        opencl_node < tuple<opencl_buffer<float>, opencl_buffer<float> > > k1( g,
-            opencl_program<>( g, opencl_program_type::SPIR, path_to_file ).get_kernel( "custom_summer" ) );
+        typedef opencl_node< tuple<opencl_buffer<float, DefaultFactoryType>, opencl_buffer<float, DefaultFactoryType> >, queueing, DefaultFactoryType > OpenCLNodeType;
+
+        OpenCLNodeType k1( g, opencl_program<DefaultFactoryType>( factory, opencl_program_type::SPIR, path_to_file ).get_kernel( "custom_summer" ), factory );
         k1.set_range( { BROKEN_INITIALIZER_LIST_DEDUCTION({ N }) } );
 
         input_port<0>(k1).try_put( b1 );
@@ -666,8 +682,10 @@ void SpirKernelTest() {
 void PrecompiledKernelTest() {
     REMARK( "PrecompiledKernelTest:\n" );
 
-    opencl_graph g;
-    const opencl_device_list &devices = g.available_devices();
+    graph g;
+    DefaultFactoryType factory;
+
+    const opencl_device_list devices = interface10::opencl_info::available_devices();
     opencl_device_list::const_iterator it = std::find_if(
         devices.cbegin(), devices.cend(),
         []( const opencl_device &d ) {
@@ -679,12 +697,12 @@ void PrecompiledKernelTest() {
         REPORT( "Known issue: there is no device in the system that supports the precompiled GPU kernel.\n" );
         return;
     }
-    bool init = g.opencl_factory().init( { *it } );
+    bool init = factory.init( { *it } );
     ASSERT( init, "It should be the first initialization" );
-    REMARK( "  Device name '%s', %s\n", it->name().c_str(), it->version().c_str() );
+    REMARK( "  Device name '%s', %s:", it->name().c_str(), it->version().c_str() );
 
     const int N = 1 * 1024 * 1024;
-    opencl_buffer<float> b1( g, N ), b2( g, N );
+    opencl_buffer<float, DefaultFactoryType> b1( factory, N ), b2( factory, N );
     std::vector<float> v1( N ), v2( N );
 
     auto i1 = b1.access<write_only>();
@@ -697,8 +715,8 @@ void PrecompiledKernelTest() {
 
     std::string path_to_file = PathToFile(std::string("test_opencl_precompiled_kernel_gpu_") + std::to_string((*it).address_bits()) + std::string(".ir"));
 
-    opencl_program<> p(g, opencl_program_type::PRECOMPILED, path_to_file);
-    opencl_node < tuple<opencl_buffer<float>, opencl_buffer<float> > > k1(g, p.get_kernel("custom_subtractor"));
+    opencl_program<DefaultFactoryType> p( factory, opencl_program_type::PRECOMPILED, path_to_file);
+    opencl_node < tuple<opencl_buffer<float, DefaultFactoryType>, opencl_buffer<float, DefaultFactoryType> >, queueing, DefaultFactoryType > k1(g, p.get_kernel("custom_subtractor"), factory);
     k1.set_range({ BROKEN_INITIALIZER_LIST_DEDUCTION({ N }) });
 
     input_port<0>(k1).try_put( b1 );
@@ -712,7 +730,7 @@ void PrecompiledKernelTest() {
     }
 
     ASSERT( memcmp( &b2[0], &v2[0], N*sizeof( float ) ) == 0, "Validation has failed" );
-    REMARK( "done\n" );
+    REMARK( " done\n" );
 }
 
 /*
@@ -737,7 +755,7 @@ struct BufferWithKey : public opencl_buffer<int> {
 
     // TODO: investigate why defaul ctor is required
     BufferWithKey() {}
-    BufferWithKey( opencl_graph &g, size_t N, int idx ) : opencl_buffer<int>( g, N ), my_idx( idx ) {}
+    BufferWithKey( size_t N, int idx ) : opencl_buffer<int>( N ), my_idx( idx ) {}
     const KeyType& key() const { return my_key; }
 };
 
@@ -763,12 +781,12 @@ bool KeyMatchingTest() {
     const int N = 1000;
     const int numMessages = 100;
 
-    opencl_graph g;
+    graph g;
     broadcast_node<int> b( g );
 
-    // Use dependency_msg's to have non-blocking map to host
-    function_node<int, dependency_msg<BufferWithKey<Key>>>
-        bufGenerator1( g, unlimited, [&g, N]( int i ) { return dependency_msg<BufferWithKey<Key>>( g, BufferWithKey<Key>( g, N, i ) ); } ),
+    // Use opencl_async_msg's to have non-blocking map to host
+    function_node<int, opencl_async_msg<BufferWithKey<Key>>>
+        bufGenerator1( g, unlimited, [N]( int i ) { return opencl_async_msg<BufferWithKey<Key>>( BufferWithKey<Key >(N, i) ); } ),
         bufGenerator2 = bufGenerator1;
 
     function_node<BufferWithKey<Key>, BufferWithKey<Key>>
@@ -776,7 +794,7 @@ bool KeyMatchingTest() {
         bufFiller2 = bufFiller1;
 
     opencl_node< tuple< BufferWithKey<Key>, BufferWithKey<Key> >, JP > k( g,
-        opencl_program<>( g, PathToFile( "test_opencl_node.cl" ) ).get_kernel( "Mul" ) );
+        opencl_program<>( PathToFile( "test_opencl_node.cl" ) ).get_kernel( "Mul" ) );
     k.set_range( { BROKEN_INITIALIZER_LIST_DEDUCTION({ N }) } );
 
     bool success = true;

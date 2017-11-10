@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -34,18 +34,7 @@
 #include "../tbb_profiling.h"
 #include <new>
 #include __TBB_STD_SWAP_HEADER
-
-#if !TBB_USE_EXCEPTIONS && _MSC_VER
-    // Suppress "C++ exception handler used, but unwind semantics are not enabled" warning in STL headers
-    #pragma warning (push)
-    #pragma warning (disable: 4530)
-#endif
-
 #include <iterator>
-
-#if !TBB_USE_EXCEPTIONS && _MSC_VER
-    #pragma warning (pop)
-#endif
 
 namespace tbb {
 
@@ -281,15 +270,15 @@ bool micro_queue<T>::pop( void* dst, ticket k, concurrent_queue_base_v3<T>& base
     call_itt_notify(acquired, &head_counter);
     if( tail_counter==k ) spin_wait_while_eq( tail_counter, k );
     call_itt_notify(acquired, &tail_counter);
-    page& p = *head_page;
-    __TBB_ASSERT( &p, NULL );
+    page *p = head_page;
+    __TBB_ASSERT( p, NULL );
     size_t index = modulo_power_of_two( k/concurrent_queue_rep_base::n_queue, base.my_rep->items_per_page );
     bool success = false;
     {
-        micro_queue_pop_finalizer<T> finalizer( *this, base, k+concurrent_queue_rep_base::n_queue, index==base.my_rep->items_per_page-1 ? &p : NULL );
-        if( p.mask & uintptr_t(1)<<index ) {
+        micro_queue_pop_finalizer<T> finalizer( *this, base, k+concurrent_queue_rep_base::n_queue, index==base.my_rep->items_per_page-1 ? p : NULL );
+        if( p->mask & uintptr_t(1)<<index ) {
             success = true;
-            assign_and_destroy_item( dst, p, index );
+            assign_and_destroy_item( dst, *p, index );
         } else {
             --base.my_rep->n_invalid_entries;
         }
@@ -764,7 +753,7 @@ class concurrent_queue_iterator: public concurrent_queue_iterator_base_v3<typena
 public:
 #endif
     //! Construct iterator pointing to head of queue.
-    concurrent_queue_iterator( const concurrent_queue_base_v3<Value>& queue ) :
+    explicit concurrent_queue_iterator( const concurrent_queue_base_v3<typename tbb_remove_cv<Value>::type>& queue ) :
         concurrent_queue_iterator_base_v3<typename tbb_remove_cv<Value>::type>(queue)
     {
     }
@@ -772,6 +761,8 @@ public:
 public:
     concurrent_queue_iterator() {}
 
+    /** If Value==Container::value_type, then this routine is the copy constructor.
+        If Value==const Container::value_type, then this routine is a conversion constructor. */
     concurrent_queue_iterator( const concurrent_queue_iterator<Container,typename Container::value_type>& other ) :
         concurrent_queue_iterator_base_v3<typename tbb_remove_cv<Value>::type>(other)
     {}
@@ -1023,7 +1014,7 @@ public:
 #endif
 
     //! Construct iterator pointing to head of queue.
-    concurrent_queue_iterator( const concurrent_queue_base_v3& queue ) :
+    explicit concurrent_queue_iterator( const concurrent_queue_base_v3& queue ) :
         concurrent_queue_iterator_base_v3(queue,__TBB_offsetof(concurrent_queue_base_v3::padded_page<Value>,last))
     {
     }

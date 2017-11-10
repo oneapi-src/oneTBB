@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -547,7 +547,7 @@ void TestSetPriority() {
     for (int t = 0; t < 2; ++t)
         for (int i = first; i <= last; ++i) {
             REMARK("\r                    \rTask %i... ", i);
-            ASSERT(g_trees[t][i]->priority() == expected_priority[t][i]? tbb::priority_high : tbb::priority_normal, NULL);
+            ASSERT(g_trees[t][i]->priority() == (expected_priority[t][i]? tbb::priority_high : tbb::priority_normal), NULL);
             REMARK("OK");
         }
     REMARK("\r                    \r");

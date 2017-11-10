@@ -1,6 +1,6 @@
 %pythonbegin %{
 #
-# Copyright (c) 2005-2016 Intel Corporation
+# Copyright (c) 2016-2017 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 #
 #
 #
-
 
 # Based on the software developed by:
 # Copyright (c) 2008,2016 david decotigny (Pool of threads)

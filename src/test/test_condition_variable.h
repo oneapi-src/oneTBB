@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,12 +18,6 @@
 
 */
 
-#if !TBB_USE_EXCEPTIONS && _MSC_VER
-    // Suppress "C++ exception handler used, but unwind semantics are not enabled" warning in STL headers
-    #pragma warning (push)
-    #pragma warning (disable: 4530)
-#endif
-
 #include "tbb/compat/condition_variable"
 #include "tbb/mutex.h"
 #include "tbb/recursive_mutex.h"
@@ -33,10 +27,6 @@
 #include <stdexcept>
 
 #include "harness.h"
-
-#if !TBB_USE_EXCEPTIONS && _MSC_VER
-    #pragma warning (pop)
-#endif
 
 #if TBB_IMPLEMENT_CPP0X
 // This test deliberately avoids a "using tbb" statement,

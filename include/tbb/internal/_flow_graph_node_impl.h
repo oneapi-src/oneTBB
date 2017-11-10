@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ namespace internal {
 
         //! Constructor for function_input_base
         function_input_base( graph &g, size_t max_concurrency, input_queue_type *q = NULL)
-            : my_graph_ptr(&g), my_max_concurrency(max_concurrency), my_concurrency(0),
+            : my_graph_ref(g), my_max_concurrency(max_concurrency), my_concurrency(0),
               my_queue(q), forwarder_busy(false) {
             my_predecessors.set_owner(this);
             my_aggregator.initialize_handler(handler_type(this));
@@ -96,7 +96,7 @@ namespace internal {
         //! Copy constructor
         function_input_base( const function_input_base& src, input_queue_type *q = NULL) :
             receiver<Input>(), tbb::internal::no_assign(),
-            my_graph_ptr(src.my_graph_ptr), my_max_concurrency(src.my_max_concurrency),
+            my_graph_ref(src.my_graph_ref), my_max_concurrency(src.my_max_concurrency),
             my_concurrency(0), my_queue(q), forwarder_busy(false)
         {
             my_predecessors.set_owner(this);
@@ -184,7 +184,7 @@ namespace internal {
             forwarder_busy = false;
         }
 
-        graph* my_graph_ptr;
+        graph& my_graph_ref;
         const size_t my_max_concurrency;
         size_t my_concurrency;
         input_queue_type *my_queue;
@@ -195,6 +195,10 @@ namespace internal {
             else
                 my_predecessors.reset();
             __TBB_ASSERT(!(f & rf_clear_edges) || my_predecessors.empty(), "function_input_base reset failed");
+        }
+
+        graph& graph_reference() __TBB_override {
+            return my_graph_ref;
         }
 
     private:
@@ -244,7 +248,7 @@ namespace internal {
             //! Spawns a task that applies a body
             // task == NULL => g.reset(), which shouldn't occur in concurrent context
             if(spawn && new_task) {
-                FLOW_SPAWN(*new_task);
+                internal::spawn_in_graph_arena(graph_reference(), *new_task);
                 new_task = SUCCESSFULLY_ENQUEUED;
             }
 
@@ -348,8 +352,9 @@ namespace internal {
             if ( my_max_concurrency != 0 ) {
                 operation_type op_data(app_body_bypass);  // tries to pop an item or get_item, enqueues another apply_body
                 my_aggregator.execute(&op_data);
+                // workaround for icc bug
                 tbb::task *ttask = op_data.bypass_t;
-                new_task = combine_tasks(new_task, ttask);
+                new_task = combine_tasks(my_graph_ref, new_task, ttask);
             }
             return new_task;
         }
@@ -357,8 +362,8 @@ namespace internal {
         //! allocates a task to apply a body
         inline task * create_body_task( const input_type &input ) {
 
-            return (my_graph_ptr->is_active()) ?
-                new(task::allocate_additional_child_of(*(my_graph_ptr->root_task())))
+            return (internal::is_graph_active(my_graph_ref)) ?
+                new(task::allocate_additional_child_of(*(my_graph_ref.root_task())))
                     apply_body_task_bypass < class_type, input_type >(*this, input) :
                 NULL;
         }
@@ -371,16 +376,17 @@ namespace internal {
                op_data.status = WAIT;
                my_aggregator.execute(&op_data);
                if(op_data.status == SUCCEEDED) {
+                    // workaround for icc bug
                    tbb::task *ttask = op_data.bypass_t;
-                   rval = combine_tasks(rval, ttask);
+                   rval = combine_tasks(my_graph_ref, rval, ttask);
                }
            } while (op_data.status == SUCCEEDED);
            return rval;
        }
 
        inline task *create_forward_task() {
-           return (my_graph_ptr->is_active()) ?
-               new(task::allocate_additional_child_of(*(my_graph_ptr->root_task()))) forward_task_bypass< class_type >(*this) :
+           return (internal::is_graph_active(my_graph_ref)) ?
+               new(task::allocate_additional_child_of(*(my_graph_ref.root_task()))) forward_task_bypass< class_type >(*this) :
                NULL;
        }
 
@@ -388,7 +394,7 @@ namespace internal {
        inline void spawn_forward_task() {
            task* tp = create_forward_task();
            if(tp) {
-               FLOW_SPAWN(*tp);
+               internal::spawn_in_graph_arena(graph_reference(), *tp);
            }
        }
     };  // function_input_base
@@ -586,21 +592,31 @@ namespace internal {
         return tbb::flow::get<N>(op.output_ports());
     }
 
-// helper structs for split_node
+    inline void check_task_and_spawn(graph& g, task* t) {
+        if (t && t != SUCCESSFULLY_ENQUEUED) {
+            internal::spawn_in_graph_arena(g, *t);
+        }
+    }
+
+    // helper structs for split_node
     template<int N>
     struct emit_element {
         template<typename T, typename P>
-        static void emit_this(const T &t, P &p) {
-            (void)tbb::flow::get<N-1>(p).try_put(tbb::flow::get<N-1>(t));
-            emit_element<N-1>::emit_this(t,p);
+        static task* emit_this(graph& g, const T &t, P &p) {
+            // TODO: consider to collect all the tasks in task_list and spawn them all at once
+            task* last_task = tbb::flow::get<N-1>(p).try_put_task(tbb::flow::get<N-1>(t));
+            check_task_and_spawn(g, last_task);
+            return emit_element<N-1>::emit_this(g,t,p);
         }
     };
 
     template<>
     struct emit_element<1> {
         template<typename T, typename P>
-        static void emit_this(const T &t, P &p) {
-            (void)tbb::flow::get<0>(p).try_put(tbb::flow::get<0>(t));
+        static task* emit_this(graph& g, const T &t, P &p) {
+            task* last_task = tbb::flow::get<0>(p).try_put_task(tbb::flow::get<0>(t));
+            check_task_and_spawn(g, last_task);
+            return SUCCESSFULLY_ENQUEUED;
         }
     };
 
@@ -618,19 +634,19 @@ namespace internal {
 
         template< typename Body >
         continue_input( graph &g, Body& body )
-            : my_graph_ptr(&g),
+            : my_graph_ref(g),
              my_body( new internal::function_body_leaf< input_type, output_type, Body>(body) ),
              my_init_body( new internal::function_body_leaf< input_type, output_type, Body>(body) ) { }
 
         template< typename Body >
         continue_input( graph &g, int number_of_predecessors, Body& body )
-            : continue_receiver( number_of_predecessors ), my_graph_ptr(&g),
+            : continue_receiver( number_of_predecessors ), my_graph_ref(g),
              my_body( new internal::function_body_leaf< input_type, output_type, Body>(body) ),
              my_init_body( new internal::function_body_leaf< input_type, output_type, Body>(body) )
         { }
 
         continue_input( const continue_input& src ) : continue_receiver(src),
-            my_graph_ptr(src.my_graph_ptr),
+            my_graph_ref(src.my_graph_ref),
             my_body( src.my_init_body->clone() ),
             my_init_body( src.my_init_body->clone() ) {}
 
@@ -656,7 +672,7 @@ namespace internal {
 
     protected:
 
-        graph* my_graph_ptr;
+        graph& my_graph_ref;
         function_body_type *my_body;
         function_body_type *my_init_body;
 
@@ -680,10 +696,14 @@ namespace internal {
 
         //! Spawns a task that applies the body
         task *execute( ) __TBB_override {
-            return (my_graph_ptr->is_active()) ?
-                new ( task::allocate_additional_child_of( *(my_graph_ptr->root_task()) ) )
+            return (internal::is_graph_active(my_graph_ref)) ?
+                new ( task::allocate_additional_child_of( *(my_graph_ref.root_task()) ) )
                     apply_body_task_bypass< continue_input< Output >, continue_msg >( *this, continue_msg() ) :
                 NULL;
+        }
+
+        graph& graph_reference() __TBB_override {
+            return my_graph_ref;
         }
 
     };  // continue_input
@@ -769,11 +789,22 @@ namespace internal {
         multifunction_output( const multifunction_output &/*other*/) : base_type() { my_successors.set_owner(this); }
 
         bool try_put(const output_type &i) {
-            task *res = my_successors.try_put_task(i);
+            task *res = try_put_task(i);
             if(!res) return false;
-            if(res != SUCCESSFULLY_ENQUEUED) FLOW_SPAWN(*res);
+            if(res != SUCCESSFULLY_ENQUEUED) {
+                FLOW_SPAWN(*res); // TODO: Spawn task inside arena
+            }
             return true;
         }
+
+    protected:
+
+        task* try_put_task(const output_type &i) {
+            return my_successors.try_put_task(i);
+        }
+
+        template <int N> friend struct emit_element;
+
     };  // multifunction_output
 
 //composite_node

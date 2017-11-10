@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -48,8 +48,8 @@ struct timeval g_time;
 
 video::video()
     // OpenGL* RGBA byte order for little-endian CPU
-    : red_mask(0xff), red_shift(0), green_mask(0xff00),
-      green_shift(8), blue_mask(0xff0000), blue_shift(16), depth(24)
+    : depth(24), red_shift(0), green_shift(8), blue_shift(16),
+      red_mask(0xff), green_mask(0xff00), blue_mask(0xff0000)
 {
     assert(g_video == 0);
     g_video = this; title = "Video"; updating = calc_fps = false;
@@ -124,8 +124,8 @@ void video::show_title()
 ///////////////////////////////////////////// public methods of video class ///////////////////////
 
 drawing_area::drawing_area(int x, int y, int sizex, int sizey)
-    : start_x(x), start_y(y), size_x(sizex), size_y(sizey), pixel_depth(24),
-    base_index(y*g_sizex + x), max_index(g_sizex*g_sizey), index_stride(g_sizex), ptr32(g_pImg)
+    : base_index(y*g_sizex + x), max_index(g_sizex*g_sizey), index_stride(g_sizex),
+      pixel_depth(24), ptr32(g_pImg), start_x(x), start_y(y), size_x(sizex), size_y(sizey)
 {
     assert(x < g_sizex); assert(y < g_sizey);
     assert(x+sizex <= g_sizex); assert(y+sizey <= g_sizey);

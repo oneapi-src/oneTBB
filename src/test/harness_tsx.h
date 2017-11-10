@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 
 */
 
-// Header that includes TSX-specific test functions
+// Header that includes Intel(R) Transactional Synchronization Extensions (Intel(R) TSX) specific test functions
 
 #if __TBB_TSX_AVAILABLE
 #define __TBB_TSX_TESTING_ENABLED_FOR_THIS_COMPILER (__INTEL_COMPILER || __GNUC__ || _MSC_VER || __SUNPRO_CC)

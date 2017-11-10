@@ -1,4 +1,4 @@
-# Copyright (c) 2005-2016 Intel Corporation
+# Copyright (c) 2005-2017 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ endif
 
 ifneq (,$(codecov))
 # no tool support for code coverage, need profile data generation
-    ITT_NOTIFY = -prof-genx
+    ITT_NOTIFY = -prof-gen=srcpos
 endif
 
 #------------------------------------------------------------------------------

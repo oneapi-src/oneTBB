@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,8 +18,13 @@
 
 */
 
+#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#define TBB_PREVIEW_RESERVABLE_OVERWRITE_NODE 1
+#endif
+
 #include "harness_graph.h"
 
+#include "tbb/flow_graph.h"
 #include "tbb/task_scheduler_init.h"
 
 #define N 300
@@ -33,7 +38,7 @@ void simple_read_write_tests() {
 
     for ( int t = 0; t < T; ++t ) {
         R v0(0);
-        harness_counting_receiver<R> r[M];
+        std::vector< harness_counting_receiver<R> > r(M, harness_counting_receiver<R>(g));
 
         ASSERT( n.is_valid() == false, NULL );
         ASSERT( n.try_get( v0 ) == false, NULL );
@@ -120,7 +125,7 @@ void parallel_read_write_tests() {
 
     for (size_t node_idx=0; node_idx<wo_vec.size(); ++node_idx) {
     for ( int t = 0; t < T; ++t ) {
-        harness_counting_receiver<R> r[M];
+        std::vector< harness_counting_receiver<R> > r(M, harness_counting_receiver<R>(g));
 
         for (int i = 0; i < M; ++i) {
            tbb::flow::make_edge( wo_vec[node_idx], r[i] );
@@ -159,6 +164,9 @@ int TestMain() {
         tbb::task_scheduler_init init(p);
         parallel_read_write_tests<int>();
         parallel_read_write_tests<float>();
+#if TBB_PREVIEW_RESERVABLE_OVERWRITE_NODE
+        test_reserving_nodes<tbb::flow::write_once_node, int>();
+#endif
     }
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
     test_extract_on_node<tbb::flow::write_once_node, int>();

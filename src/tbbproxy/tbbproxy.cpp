@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -77,11 +77,11 @@ namespace runtime_loader {
 // Print message to stderr. Do not call it directly, use say() or tell() instead.
 static void _say( char const * format, va_list args ) {
     /*
-        On Linux Intel 64, vsnprintf() modifies args argument, so vsnprintf() crashes if it
-        is called for the second time with the same args. To prevent the crash, we have to
-        pass a fresh intact copy of args to vsnprintf() each time.
+        On 64-bit Linux* OS, vsnprintf() modifies args argument,
+        so vsnprintf() crashes if it is called for the second time with the same args.
+        To prevent the crash, we have to pass a fresh intact copy of args to vsnprintf() each time.
 
-        On Windows, unfortunately, standard va_copy() macro is not available. However, it
+        On Windows* OS, unfortunately, standard va_copy() macro is not available. However, it
         seems vsnprintf() does not modify args argument.
     */
     #if ! ( _WIN32 || _WIN64 )
@@ -95,12 +95,13 @@ static void _say( char const * format, va_list args ) {
         va_end( _args );
     #endif
     char * buf = reinterpret_cast< char * >( malloc( len + 1 ) );
-    if ( buf == NULL ) {
-        abort();
-    } // if
-    vsnprintf( buf, len + 1, format, args );
-    fprintf( stderr, "TBB: %s\n", buf );
-    free( buf );
+    if ( buf != NULL ) {
+        vsnprintf( buf, len + 1, format, args );
+        fprintf( stderr, "TBB: %s\n", buf );
+        free( buf );
+    } else {
+        fprintf( stderr, "TBB: Not enough memory for message: %s\n", format );
+    }
 } // _say
 
 
@@ -351,8 +352,7 @@ static tbb::runtime_loader::error_code _load( char const * dll_name, int min_ver
     tbb::runtime_loader::error_code code = tbb::runtime_loader::ec_ok;
 
     /*
-        If these variables declared at the first usage, Intel compiler (on Windows IA-32) isues
-        warning(s):
+        If these variables declared at the first usage, Intel C++ Compiler may issue warning(s):
             transfer of control [goto error] bypasses initialization of: ...
         Declaring variables at the beginning of the function eliminates warnings.
     */
@@ -520,6 +520,8 @@ static tbb::runtime_loader::error_code load( tbb::runtime_loader::error_mode mod
             free( buffer );
             buflen = len;
             buffer = (char*)malloc( buflen );
+            if( !buffer )
+                return error( mode, tbb::runtime_loader::ec_no_lib, "Not enough memory." );
         }
         cat_file( path[i], tbb_dll_name, buffer, buflen );
         __TBB_ASSERT(strstr(buffer,tbb_dll_name), "Name concatenation error");

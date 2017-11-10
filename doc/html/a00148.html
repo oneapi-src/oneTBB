@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::task_handle&lt; F &gt; Class Template Reference</title>
+<title>tbb::task_group Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,48 +33,88 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00234.html">tbb</a></li><li class="navelem"><a class="el" href="a00148.html">task_handle</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><a class="el" href="a00148.html">task_group</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#friends">Friends</a> &#124;
-<a href="a00302.html">List of all members</a>  </div>
+<a href="a00307.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::task_handle&lt; F &gt; Class Template Reference</div>  </div>
+<div class="title">tbb::task_group Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 <div class="dynheader">
-Inheritance diagram for tbb::task_handle&lt; F &gt;:</div>
+Inheritance diagram for tbb::task_group:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00148.png" usemap="#tbb::task_handle&lt; F &gt;_map" alt=""/>
-  <map id="tbb::task_handle&lt; F &gt;_map" name="tbb::task_handle&lt; F &gt;_map">
+  <img src="a00148.png" usemap="#tbb::task_group_map" alt=""/>
+  <map id="tbb::task_group_map" name="tbb::task_group_map">
+<area href="a00149.html" alt="tbb::internal::task_group_base" shape="rect" coords="0,56,179,80"/>
 </map>
  </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a1e213e12e1c2d789c22e56901b53b1d2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1e213e12e1c2d789c22e56901b53b1d2"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>task_handle</b> (const F &amp;f)</td></tr>
-<tr class="separator:a1e213e12e1c2d789c22e56901b53b1d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab09a19aa92286d48cc42d3e9cd60b5d8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab09a19aa92286d48cc42d3e9cd60b5d8"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>operator()</b> () const </td></tr>
-<tr class="separator:ab09a19aa92286d48cc42d3e9cd60b5d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abe756667c1272f714ad388aa31f2d29e"><td class="memTemplParams" colspan="2"><a class="anchor" id="abe756667c1272f714ad388aa31f2d29e"></a>
+template&lt;typename F &gt; </td></tr>
+<tr class="memitem:abe756667c1272f714ad388aa31f2d29e"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>run</b> (<a class="el" href="a00151.html">task_handle</a>&lt; F &gt; &amp;h)</td></tr>
+<tr class="separator:abe756667c1272f714ad388aa31f2d29e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4ef4629d2e629237a87f8d600fb8b281"><td class="memTemplParams" colspan="2"><a class="anchor" id="a4ef4629d2e629237a87f8d600fb8b281"></a>
+template&lt;typename F &gt; </td></tr>
+<tr class="memitem:a4ef4629d2e629237a87f8d600fb8b281"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>run</b> (F &amp;&amp;f)</td></tr>
+<tr class="separator:a4ef4629d2e629237a87f8d600fb8b281"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6355cce7750b1367fb98924af151e8b2"><td class="memTemplParams" colspan="2"><a class="anchor" id="a6355cce7750b1367fb98924af151e8b2"></a>
+template&lt;typename F &gt; </td></tr>
+<tr class="memitem:a6355cce7750b1367fb98924af151e8b2"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>run</b> (const F &amp;f)</td></tr>
+<tr class="separator:a6355cce7750b1367fb98924af151e8b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeef1b473ff0edaf3f356722b13e877b0"><td class="memTemplParams" colspan="2"><a class="anchor" id="aeef1b473ff0edaf3f356722b13e877b0"></a>
+template&lt;typename F &gt; </td></tr>
+<tr class="memitem:aeef1b473ff0edaf3f356722b13e877b0"><td class="memTemplItemLeft" align="right" valign="top">task_group_status&#160;</td><td class="memTemplItemRight" valign="bottom"><b>run_and_wait</b> (const F &amp;f)</td></tr>
+<tr class="separator:aeef1b473ff0edaf3f356722b13e877b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a543903ef748fd10eb864c27a2e8ac18b"><td class="memTemplParams" colspan="2"><a class="anchor" id="a543903ef748fd10eb864c27a2e8ac18b"></a>
+template&lt;typename F &gt; </td></tr>
+<tr class="memitem:a543903ef748fd10eb864c27a2e8ac18b"><td class="memTemplItemLeft" align="right" valign="top">task_group_status&#160;</td><td class="memTemplItemRight" valign="bottom"><b>run_and_wait</b> (<a class="el" href="a00151.html">task_handle</a>&lt; F &gt; &amp;h)</td></tr>
+<tr class="separator:a543903ef748fd10eb864c27a2e8ac18b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_a00149"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_a00149')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="a00149.html">tbb::internal::task_group_base</a></td></tr>
+<tr class="memitem:ac846a7be5035e1f5c929bda05e1b4401 inherit pub_methods_a00149"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac846a7be5035e1f5c929bda05e1b4401"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>task_group_base</b> (uintptr_t traits=0)</td></tr>
+<tr class="separator:ac846a7be5035e1f5c929bda05e1b4401 inherit pub_methods_a00149"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8d8398153ad19d83a629aeb46991620b inherit pub_methods_a00149"><td class="memTemplParams" colspan="2"><a class="anchor" id="a8d8398153ad19d83a629aeb46991620b"></a>
+template&lt;typename F &gt; </td></tr>
+<tr class="memitem:a8d8398153ad19d83a629aeb46991620b inherit pub_methods_a00149"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>run</b> (<a class="el" href="a00151.html">task_handle</a>&lt; F &gt; &amp;h)</td></tr>
+<tr class="separator:a8d8398153ad19d83a629aeb46991620b inherit pub_methods_a00149"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9a05d8b3350796df951c701978cec816 inherit pub_methods_a00149"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9a05d8b3350796df951c701978cec816"></a>
+task_group_status&#160;</td><td class="memItemRight" valign="bottom"><b>wait</b> ()</td></tr>
+<tr class="separator:a9a05d8b3350796df951c701978cec816 inherit pub_methods_a00149"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a91b0943033a9e802cea00ac4af9e4ae2 inherit pub_methods_a00149"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a91b0943033a9e802cea00ac4af9e4ae2"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_canceling</b> ()</td></tr>
+<tr class="separator:a91b0943033a9e802cea00ac4af9e4ae2 inherit pub_methods_a00149"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2c2b1b967f4d1924cf15c19e3854ff2f inherit pub_methods_a00149"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2c2b1b967f4d1924cf15c19e3854ff2f"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>cancel</b> ()</td></tr>
+<tr class="separator:a2c2b1b967f4d1924cf15c19e3854ff2f inherit pub_methods_a00149"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
-Friends</h2></td></tr>
-<tr class="memitem:a70a59090420eb9c76bd067b3ed3f1e72"><td class="memTemplParams" colspan="2"><a class="anchor" id="a70a59090420eb9c76bd067b3ed3f1e72"></a>
-template&lt;typename _F &gt; </td></tr>
-<tr class="memitem:a70a59090420eb9c76bd067b3ed3f1e72"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><b>internal::task_handle_task</b></td></tr>
-<tr class="separator:a70a59090420eb9c76bd067b3ed3f1e72"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abe85fe1f158cb2a40cd7203854b9460a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abe85fe1f158cb2a40cd7203854b9460a"></a>
-class&#160;</td><td class="memItemRight" valign="bottom"><b>task_group</b></td></tr>
-<tr class="separator:abe85fe1f158cb2a40cd7203854b9460a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2913777f78e95f9ea09d788b12db6b62"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2913777f78e95f9ea09d788b12db6b62"></a>
-class&#160;</td><td class="memItemRight" valign="bottom"><b>structured_task_group</b></td></tr>
-<tr class="separator:a2913777f78e95f9ea09d788b12db6b62"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
+Additional Inherited Members</h2></td></tr>
+<tr class="inherit_header pro_methods_a00149"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_a00149')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="a00149.html">tbb::internal::task_group_base</a></td></tr>
+<tr class="memitem:a4efe5bdeaa3c874a36e7d95d76ad1367 inherit pro_methods_a00149"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4efe5bdeaa3c874a36e7d95d76ad1367"></a>
+task &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>owner</b> ()</td></tr>
+<tr class="separator:a4efe5bdeaa3c874a36e7d95d76ad1367 inherit pro_methods_a00149"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aef3561e83c11cde7299a34db1064f420 inherit pro_methods_a00149"><td class="memTemplParams" colspan="2"><a class="anchor" id="aef3561e83c11cde7299a34db1064f420"></a>
+template&lt;typename F &gt; </td></tr>
+<tr class="memitem:aef3561e83c11cde7299a34db1064f420 inherit pro_methods_a00149"><td class="memTemplItemLeft" align="right" valign="top">task_group_status&#160;</td><td class="memTemplItemRight" valign="bottom"><b>internal_run_and_wait</b> (F &amp;f)</td></tr>
+<tr class="separator:aef3561e83c11cde7299a34db1064f420 inherit pro_methods_a00149"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4f1ecc025eae93b49c2b136526f46795 inherit pro_methods_a00149"><td class="memTemplParams" colspan="2"><a class="anchor" id="a4f1ecc025eae93b49c2b136526f46795"></a>
+template&lt;typename Task , typename F &gt; </td></tr>
+<tr class="memitem:a4f1ecc025eae93b49c2b136526f46795 inherit pro_methods_a00149"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>internal_run</b> (__TBB_FORWARDING_REF(F) f)</td></tr>
+<tr class="separator:a4f1ecc025eae93b49c2b136526f46795 inherit pro_methods_a00149"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pro_attribs_a00149"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_a00149')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="a00149.html">tbb::internal::task_group_base</a></td></tr>
+<tr class="memitem:a60fb257f34f63428032f93e9b3b50a89 inherit pro_attribs_a00149"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a60fb257f34f63428032f93e9b3b50a89"></a>
+empty_task *&#160;</td><td class="memItemRight" valign="bottom"><b>my_root</b></td></tr>
+<tr class="separator:a60fb257f34f63428032f93e9b3b50a89 inherit pro_attribs_a00149"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afa2bb3845517c6b2f9e29a4e3b08a62d inherit pro_attribs_a00149"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afa2bb3845517c6b2f9e29a4e3b08a62d"></a>
+<a class="el" href="a00150.html">task_group_context</a>&#160;</td><td class="memItemRight" valign="bottom"><b>my_context</b></td></tr>
+<tr class="separator:afa2bb3845517c6b2f9e29a4e3b08a62d inherit pro_attribs_a00149"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>task_group.h</li>
@@ -82,7 +122,7 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>structured_task_grou
 </div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2017 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

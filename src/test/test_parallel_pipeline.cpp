@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -381,7 +381,7 @@ void fill_chain( filter_chain &my_chain, mode_array *filter_type, input_filter<t
 void run_function_spec() {
     ASSERT(!filter_node_count, NULL);
     REMARK("Testing < void, void > (single filter in pipeline)");
-#if __TBB_LAMBDAS_PRESENT
+#if __TBB_CPP11_LAMBDAS_PRESENT
     REMARK( " ( + lambdas)");
 #endif
     REMARK("\n");
@@ -393,7 +393,7 @@ void run_function_spec() {
         resetCounters();
         tbb::parallel_pipeline( n_tokens, one_filter );
         // no need to check counters
-#if __TBB_LAMBDAS_PRESENT
+#if __TBB_CPP11_LAMBDAS_PRESENT
         tbb::atomic<int> counter;
         counter = max_counter;
         // Construct filter using lambda-syntax when parallel_pipeline() is being run;
@@ -483,7 +483,7 @@ void run_filter_set(
     ASSERT(filter_node_count==cnt, "scope ended but filter nodes not deleted?");
 }
 
-#if __TBB_LAMBDAS_PRESENT
+#if __TBB_CPP11_LAMBDAS_PRESENT
 template <typename t1, typename t2>
 void run_lambdas_test( mode_array *filter_type ) {
     tbb::atomic<int> counter;
@@ -574,7 +574,7 @@ template<typename type1, typename type2>
 void run_function(const char *l1, const char *l2) {
     ASSERT(!filter_node_count, NULL);
     REMARK("Testing < %s, %s >", l1, l2 );
-#if __TBB_LAMBDAS_PRESENT
+#if __TBB_CPP11_LAMBDAS_PRESENT
     REMARK( " ( + lambdas)");
 #endif
     check_intbuffer = (!strcmp(l1,"int") && !strcmp(l2,"int"));
@@ -620,7 +620,7 @@ void run_function(const char *l1, const char *l2) {
         run_filter_set<type1,type2*>(i_filter, rp_m_filter, p_o_filter, filter_type, assert_secondpointer);
         run_filter_set<type1*,type2*>(p_i_filter, pp_m_filter, p_o_filter, filter_type, assert_allpointer);
 
-#if __TBB_LAMBDAS_PRESENT
+#if __TBB_CPP11_LAMBDAS_PRESENT
         run_lambdas_test<type1,type2>(filter_type);
 #endif
     }

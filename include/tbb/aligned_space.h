@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -36,10 +36,10 @@ private:
     element_type array[(sizeof(T)*N+sizeof(element_type)-1)/sizeof(element_type)];
 public:
     //! Pointer to beginning of array
-    T* begin() {return internal::punned_cast<T*>(this);}
+    T* begin() const {return internal::punned_cast<T*>(this);}
 
     //! Pointer to one past last element in array.
-    T* end() {return begin()+N;}
+    T* end() const {return begin()+N;}
 };
 
 } // namespace tbb

@@ -370,7 +370,7 @@
 				to the command prompt environment/window normally used on your system:
 				<ul>
 					<li>cmd.exe command prompt window for Windows* systems
-					<li>sh, bash, csh, ksh, etc. (or compatible) shell window for Windows*, Linux*or OS X* systems
+					<li>sh, bash, csh, ksh, etc. (or compatible) shell window for Windows*, Linux* or macOS* systems
 				</ul>
 			</div>
 			<p>
@@ -397,15 +397,15 @@
 					<li><i>(arch)</i> argument represents target architecture. Its possible values are 'ia32' or 'intel64'.
 					<li><i>[vs]</i> argument represents target version of Microsoft* Visual Studio*. Its possible values are:
 					<ul class='circ'>
-					<li><i>'vs&lt;msvs_version&gt;'</i> - to use TBB with Microsoft* Visual Studio* <i>&lt;msvs_version&gt;</i> runtime DLLs, e.g.: <code>tbbvars&nbsp;intel64&nbsp;vs2015</code>
+					<li><i>'vs&lt;msvs_version&gt;'</i> - to use Intel TBB library with Microsoft* Visual Studio* <i>&lt;msvs_version&gt;</i> runtime DLLs, e.g.: <code>tbbvars&nbsp;intel64&nbsp;vs2015</code>
 						<br><i>Note:</i> for the most up to date supported versions of Microsoft* Visual Studio*, see the <a href="http://software.intel.com/en-us/articles/intel-threading-building-blocks-release-notes">release notes.</a>
-					<li><i>'all'</i> - to use TBB statically linked with Microsoft Visual C++ runtime.
+					<li><i>'all'</i> - to use Intel TBB binaries statically linked with Microsoft Visual C++ runtime.
 						<br>If <i>[vs]</i> is not set the <i>'all'</i> value will be used by default.
 					</ul>
 				</dl>
 			</div>
 			<br>
-			<div class="h4-alike">To set up the environment for Linux* OS and OS X*:</div>
+			<div class="h4-alike">To set up the environment for Linux* OS and macOS*:</div>
 			<input type="checkbox">
 			<div class="show-hide">
 				<p>
@@ -453,13 +453,13 @@ source &lt;<i>installdir</i>&gt;/bin/tbbvars.csh (arch) [platform [TBBROOT_detec
 			</ol>
 			</div>
 			<br>
-			<div class="h4-alike">To build by using a Xcode* IDE project (OS X* systems):</div>
+			<div class="h4-alike">To build by using a Xcode* IDE project (macOS* systems):</div>
 			<input type="checkbox">
 			<div class="show-hide">
 			<br>
 			<div class="note">
-				Note: Xcode project instructions are not applicable for the Intel TBB Sample Bundle for Intel&reg; System Studio
-				because Intel System Studio does not support OS X. For additional information, see the
+				Note: Xcode* project instructions are not applicable for the Intel TBB Sample Bundle for Intel&reg; System Studio
+				because Intel System Studio does not support macOS*. For additional information, see the
 				<a href="https://software.intel.com/en-us/articles/intel-system-studio-release-notes">Release Notes</a>.
 			</div>
 			<ol>
@@ -475,7 +475,7 @@ source &lt;<i>installdir</i>&gt;/bin/tbbvars.csh (arch) [platform [TBBROOT_detec
 			</ol>
 			</div>
 			<br>
-			<div class="h4-alike">To build by using a Makefile (Windows*, Linux* or OS X* systems):</div>
+			<div class="h4-alike">To build by using a Makefile (Windows*, Linux* or macOS* systems):</div>
 			<input type="checkbox">
 			<div class="show-hide">
 			<ol>
@@ -485,14 +485,14 @@ source &lt;<i>installdir</i>&gt;/bin/tbbvars.csh (arch) [platform [TBBROOT_detec
 					defined for use with Microsoft* Visual Studio*. Such shell can be invoked from the Start menu, under Microsoft* Visual Studio*, Microsoft* Visual Studio Tools*, Microsoft* Visual Studio* Command Prompt.</li>
 				</ul>
 			<li>Set up the environment in this shell window for use with Intel TBB.
-				<br>See above for how to set up the environment for Windows*, Linux* or OS X* systems.
+				<br>See above for how to set up the environment for Windows*, Linux* or macOS* systems.
 			<li>Unless you installed Intel TBB yourself, you may not have write permissions to the directory
 				containing the example. In this case, make a copy of the example, and use the copy for the following steps.
 			<li>In the shell window, navigate to the directory for the example
 				(or to the directory for the copy of the example if you made one in the previous step).
 			<li>Use one or more of the following commands to build and run the example.
 				Here, make refers to the make command normally used on your system: this could be
-				nmake, gmake, or make on Windows* systems, or make or gmake on Linux* or OS X* systems.
+				nmake, gmake, or make on Windows* systems, or make or gmake on Linux* or macOS* systems.
 				<dl>
 				<dt><tt>make</tt>
 				<dd>Default build and run. Equivalent to 'make release test'.
@@ -503,7 +503,7 @@ source &lt;<i>installdir</i>&gt;/bin/tbbvars.csh (arch) [platform [TBBROOT_detec
 				<dt><tt>make test</tt>
 				<dd>Run an executable previously produced by one of the above commands.
 				<dt><tt>make <b>[</b>(above options or targets)<b>]</b> CXX=<b>{</b>icl, icc<b>}</b></tt>
-				<dd>Build and run as above, but use Intel&reg; C++ Compiler instead of default, native compilers (e.g., icl instead of cl.exe on Windows* systems, or icc instead of g++ on Linux* or OS X* systems).
+				<dd>Build and run as above, but use Intel&reg; C++ Compiler instead of default, native compilers (e.g., icl instead of cl.exe on Windows* systems, or icc instead of g++ on Linux* or macOS* systems).
 				<dt><tt>make <b>[</b>(above options or targets)<b>]</b> offload=mic</tt>
 				<dd>Build and run the offload version of an example for Intel&reg; Many Integrated Core (Intel&reg; MIC) Architecture.
 					<br>
@@ -566,7 +566,7 @@ source &lt;<i>installdir</i>&gt;/bin/tbbvars.csh (arch) [platform [TBBROOT_detec
 			<p>
 				Intel and the Intel logo are trademarks of Intel Corporation in the U.S. and/or other countries.
 				<br>* Other names and brands may be claimed as the property of others. 
-				<br>&copy; 2016, Intel Corporation
+				<br>&copy; 2017, Intel Corporation
 			</p>
 		</div>
 	</div>	

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #if __TBB_FLOW_GRAPH_CPP11_FEATURES
 
 #include "tbb/flow_graph.h"
+#include "harness_graph.h"
 #include <tuple>
 #include <cmath>
 #include <vector>
@@ -114,7 +115,7 @@ void add_all_nodes (){
     tbb::flow::overwrite_node<int> ovw(g);
     tbb::flow::sequencer_node<int> seq(g, seq_body());
 
-#if !__TBB_UPCAST_OF_TUPLE_OF_REF_BROKEN || __clang__
+#if !__TBB_UPCAST_OF_TUPLE_OF_REF_BROKEN
     auto input_tuple = std::tie(ct, s, m_fxn, fxn, bc, tbb::flow::input_port<0>(j), lim, q, tbb::flow::input_port<0>(ind),
                                 pq, ovw, wo, bf, seq);
     auto output_tuple = std::tie(ct,j, ind, fxn, src, bc, tbb::flow::output_port<0>(s), lim, tbb::flow::output_port<0>(m_fxn),
@@ -199,6 +200,9 @@ int test_tiny(bool hidden = false) {
     tiny_node t1(g, hidden);
     ASSERT(&tbb::flow::get<0>(t1.input_ports()) == &t1.f1, "f1 not bound to input port 0 in composite_node t1");
     ASSERT(&tbb::flow::get<0>(t1.output_ports()) == &t1.f2, "f2 not bound to output port 0 in composite_node t1");
+
+    test_input_ports_return_ref(t1);
+    test_output_ports_return_ref(t1);
 
     tiny_node t2(g, hidden);
     ASSERT(&tbb::flow::input_port<0>(t2) == &t2.f1, "f1 not bound to input port 0 in composite_node t2");

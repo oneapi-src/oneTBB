@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -202,6 +202,8 @@ struct harness_graph_multifunction_executor {
     static tbb::atomic<size_t> current_executors;
     static size_t max_executors;
 
+    static inline void empty_func( const InputType&, ports_type& ) {
+    }
 
     static inline void func( const InputType &v, ports_type &p ) {
         size_t c; // Declaration separate from initialization to avoid ICC internal error on IA-64 architecture
@@ -273,13 +275,14 @@ size_t harness_graph_multifunction_executor<InputType, OutputTuple>::max_executo
 
 //! Counts the number of puts received
 template< typename T >
-struct harness_counting_receiver : public tbb::flow::receiver<T>, NoCopy {
+struct harness_counting_receiver : public tbb::flow::receiver<T> {
 
     tbb::atomic< size_t > my_count;
     T max_value;
     size_t num_copies;
+    tbb::flow::graph& my_graph;
 
-    harness_counting_receiver() : num_copies(1) {
+    harness_counting_receiver(tbb::flow::graph& g) : num_copies(1), my_graph(g) {
        my_count = 0;
     }
 
@@ -287,6 +290,10 @@ struct harness_counting_receiver : public tbb::flow::receiver<T>, NoCopy {
        my_count = 0;
        max_value = m;
        num_copies = c;
+    }
+
+    tbb::flow::graph& graph_reference() __TBB_override {
+        return my_graph;
     }
 
     tbb::task *try_put_task( const T & ) __TBB_override {
@@ -322,8 +329,9 @@ struct harness_mapped_receiver : public tbb::flow::receiver<T>, NoCopy {
     size_t num_copies;
     typedef tbb::concurrent_unordered_map< T, tbb::atomic< size_t > > map_type;
     map_type *my_map;
+    tbb::flow::graph& my_graph;
 
-    harness_mapped_receiver() : my_map(NULL) {
+    harness_mapped_receiver(tbb::flow::graph& g) : my_map(NULL), my_graph(g) {
        my_count = 0;
     }
 
@@ -352,6 +360,10 @@ struct harness_mapped_receiver : public tbb::flow::receiver<T>, NoCopy {
           ++my_count;
       }
       return const_cast<tbb::task *>(SUCCESSFULLY_ENQUEUED);
+    }
+
+    tbb::flow::graph& graph_reference() __TBB_override {
+        return my_graph;
     }
 
     void validate() {
@@ -997,6 +1009,61 @@ void test_extract_on_node() {
 }
 
 #endif  // TBB_PREVIEW_FLOW_GRAPH_FEATURES
+
+template<typename NodeType>
+void test_input_ports_return_ref(NodeType& mip_node) {
+    typename NodeType::input_ports_type& input_ports1 = mip_node.input_ports();
+    typename NodeType::input_ports_type& input_ports2 = mip_node.input_ports();
+    ASSERT(&input_ports1 == &input_ports2, "input_ports() should return reference");
+}
+
+template<typename NodeType>
+void test_output_ports_return_ref(NodeType& mop_node) {
+    typename NodeType::output_ports_type& output_ports1 = mop_node.output_ports();
+    typename NodeType::output_ports_type& output_ports2 = mop_node.output_ports();
+    ASSERT(&output_ports1 == &output_ports2, "output_ports() should return reference");
+}
+
+template< template <typename> class ReservingNodeType, typename DataType, bool DoClear >
+class harness_reserving_body : NoAssign {
+    ReservingNodeType<DataType> &my_reserving_node;
+    tbb::flow::buffer_node<DataType> &my_buffer_node;
+public:
+    harness_reserving_body(ReservingNodeType<DataType> &reserving_node, tbb::flow::buffer_node<DataType> &bn) : my_reserving_node(reserving_node), my_buffer_node(bn) {}
+    void operator()(DataType i) const {
+        my_reserving_node.try_put(i);
+        if (DoClear) my_reserving_node.clear();
+        my_buffer_node.try_put(i);
+        my_reserving_node.try_put(i);
+    }
+};
+
+template< template <typename> class ReservingNodeType, typename DataType >
+void test_reserving_nodes() {
+    const int N = 300;
+ 
+    tbb::flow::graph g;
+
+    ReservingNodeType<DataType> reserving_n(g);
+
+    tbb::flow::buffer_node<DataType> buffering_n(g);
+    tbb::flow::join_node< tbb::flow::tuple<DataType, DataType>, tbb::flow::reserving > join_n(g);
+    harness_counting_receiver< tbb::flow::tuple<DataType, DataType> > end_receiver(g);
+
+    tbb::flow::make_edge(reserving_n, tbb::flow::input_port<0>(join_n));
+    tbb::flow::make_edge(buffering_n, tbb::flow::input_port<1>(join_n));
+    tbb::flow::make_edge(join_n, end_receiver);
+
+    NativeParallelFor(N, harness_reserving_body<ReservingNodeType, DataType, false>(reserving_n, buffering_n));
+    g.wait_for_all();
+
+    ASSERT(end_receiver.my_count == N, NULL);
+
+    // Should not hang
+    NativeParallelFor(N, harness_reserving_body<ReservingNodeType, DataType, true>(reserving_n, buffering_n));
+    g.wait_for_all();
+
+    ASSERT(end_receiver.my_count == 2 * N, NULL);
+}
+
 #endif
-
-

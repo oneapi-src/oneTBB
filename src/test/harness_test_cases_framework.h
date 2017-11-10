@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -28,16 +28,13 @@
 #undef DO_ITT_NOTIFY
 
 #include "harness.h"
-//#include "harness_report.h"
 #include "harness_assert.h"
-//#include "harness_allocator.h"
 #include "tbb/tbb_stddef.h"
 
 #include <cstdlib>
 
 #include <vector>
 #include <algorithm>
-
 #include <string>
 #include <sstream>
 #include <iostream>
@@ -48,6 +45,7 @@ namespace test_framework{
         test_class()();
     }
 
+#if TBB_USE_EXCEPTIONS
     struct assertion_failure:std::exception{
         const char* my_filename;
         int my_line;
@@ -67,6 +65,8 @@ namespace test_framework{
     void throw_assertion_failure(const char* filename, int line, const char* expression, const char * comment){
         throw assertion_failure(filename, line, expression, comment);
     }
+#endif // TBB_USE_EXCEPTIONS
+
     class test_suite{
         typedef void(*run_test_function_pointer_type)();
         typedef std::pair<std::string, run_test_function_pointer_type> tc_record_pair;
@@ -80,12 +80,16 @@ namespace test_framework{
             std::stringstream str;
             size_t failed=0;
             for (size_t i=0;i<test_cases.size();++i){
+#if TBB_USE_EXCEPTIONS
                 try{
                     (test_cases[i].second)();
                 }catch(std::exception& e){
                     failed++;
                     str<<"test case \""<<test_cases[i].first<<"\" failed with exception. what():\""<<e.what()<<"\""<<std::endl;
                 }
+#else
+                    (test_cases[i].second)();
+#endif
             }
             if (!silent) {
                 str<<test_cases.size()<<" test cases are run; "<<failed<<" failed"<<std::endl;
@@ -220,9 +224,11 @@ namespace test_framework_unit_tests{
 }
 
 int TestMain (){
+#if TBB_USE_EXCEPTIONS
     SetHarnessErrorProcessing(test_framework::throw_assertion_failure);
     //TODO: deal with assertions during stack unwinding
     //tbb::set_assertion_handler( test_framework::throw_assertion_failure );
+#endif
     {
         test_framework_unit_tests::run_all_test();
     }

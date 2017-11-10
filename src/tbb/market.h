@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -271,7 +271,7 @@ public:
     void detach_arena ( arena& );
 
     //! Decrements market's refcount and destroys it in the end
-    void release ( bool is_public = false );
+    bool release ( bool is_public, bool blocking_terminate );
 
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
     //! Imlpementation of mandatory concurrency enabling
@@ -288,9 +288,7 @@ public:
     /** Concurrent invocations are possible only on behalf of different arenas. **/
     void adjust_demand ( arena&, int delta );
 
-    //! Wait workers termination
-    void wait_workers ();
-
+    //! Used when RML asks for join mode during workers termination.
     bool must_join_workers () const { return my_join_workers; }
 
     //! Returns the requested stack size of worker threads.

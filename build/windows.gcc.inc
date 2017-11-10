@@ -1,4 +1,4 @@
-# Copyright (c) 2005-2016 Intel Corporation
+# Copyright (c) 2005-2017 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -65,6 +65,7 @@ DYLIB_KEY = -shared
 LIBDL =
 EXPORT_KEY = -Wl,--version-script,
 LIBS = -lpsapi
+BIGOBJ_KEY = -Wa,-mbig-obj
 
 #------------------------------------------------------------------------------
 # End of compiler-specific variables
@@ -78,6 +79,13 @@ LIB_LINK_FLAGS = $(DYLIB_KEY)
 # gcc 4.8 and later support RTM intrinsics, but require command line switch to enable them
 ifeq (ok,$(call detect_js,/minversion gcc 4.8))
     RTM_KEY = -mrtm
+endif
+
+# gcc 6.0 and later have -flifetime-dse option that controls
+# elimination of stores done outside the object lifetime
+ifeq (ok,$(call detect_js,/minversion gcc 6.0))
+    # keep pre-contruction stores for zero initialization
+    DSE_KEY = -flifetime-dse=1
 endif
 
 ifeq ($(cfg), release)

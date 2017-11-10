@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@
 // 2. "#pragma ivdep" has a peculiarity which also can be used for detection of
 // successful vectorization. See the comment below.
 
-// For now, only Intel(R) C++ Compiler 12.0 and later is supported. Also, no
+// For now, only Intel(R) C++ Compiler 14.0 and later is supported. Also, no
 // sense to run the test in debug mode.
-#define HARNESS_SKIP_TEST ( __INTEL_COMPILER < 1200  || TBB_USE_DEBUG )
+#define HARNESS_SKIP_TEST ( __INTEL_COMPILER < 1400  || TBB_USE_DEBUG )
 
 // __TBB_ASSERT_ON_VECTORIZATION_FAILURE enables "pragma always assert" for
 // Intel(R) C++ Compiler.
@@ -38,12 +38,14 @@
 #include "harness.h"
 #include "harness_assert.h"
 
+#include <algorithm>
+
 class Body : NoAssign {
-    int &sum;
+    int *out_, *in_;
 public:
-    Body( int& s ) : sum(s) {}
+    Body( int* out, int *in ) : out_(out), in_(in) {}
     void operator() ( int i ) const {
-        sum += i / i;
+        out_[i] = in_[i] + 1;
     }
 };
 
@@ -51,17 +53,23 @@ int TestMain () {
     // Should be big enough that the partitioner generated at least a one range
     // with a size greater than 1. See the comment below.
     const int N = 10000;
-    int sum = 1;
     tbb::task_scheduler_init init(1);
-    tbb::parallel_for( 1, N, Body(sum) );
+    int array1[N];
+    std::fill( array1, array1+N, 0 );
+    // Use the same array (with a shift) for both input and output
+    tbb::parallel_for( 0, N-1, Body(array1+1, array1) );
+
+    int array2[N];
+    std::fill( array2, array2+N, 0 );
+    Body b(array2+1, array2);
+    for ( int i=0; i<N-1; ++i )
+        b(i);
 
     // The ppl-style parallel_for implementation has pragma ivdep before the
-    // range loop. This pragma suppresses the dependency about "sum" in "Body".
-    // Thus the vectorizer should generate code which just add to "sum" only
-    // one iteration of the range (despite the real number of iterations in the
-    // range). So "sum" is just number of calls of "Body". And it should be
-    // less than N if at least one range was greater than 1.
-    ASSERT( sum < N, "The loop was not vectorized." );
+    // range loop. This pragma suppresses the dependency of overlapping arrays
+    // in "Body". Thus the vectorizer should generate code that produces incorrect
+    // results.
+    ASSERT( !std::equal( array1, array1+N, array2 ), "The loop was not vectorized." );
 
     return  Harness::Done;
 }

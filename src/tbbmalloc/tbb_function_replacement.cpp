@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -346,8 +346,8 @@ static DWORD InsertTrampoline64(void *inpAddr, void *targetAddr, const char ** o
     }
 
     // Fill the buffer
-     offset = location - srcAddr - SIZE_OF_INDJUMP;
-     offset32 = (UINT)(offset & 0xFFFFFFFF);
+    offset = location - srcAddr - SIZE_OF_INDJUMP;
+    offset32 = (UINT)(offset & 0xFFFFFFFF);
     *(codePtr) = 0xFF;
     *(codePtr+1) = 0x25;
     memcpy(codePtr+2, &offset32, sizeof(offset32));

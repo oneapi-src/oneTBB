@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ int scalarvol_bbox(void * obj, vector * min, vector * max) {
   return 1;
 }
 
-void * newscalarvol(void * intex, vector min, vector max, 
+void * newscalarvol(void * intex, vector min, vector max,
                     int xs, int ys, int zs, char * fname, scalarvol * invol) {
   box * bx;
   texture * tx, * tex;
@@ -128,7 +128,7 @@ void * newscalarvol(void * intex, vector min, vector max,
 color VoxelColor(flt scalar) {
   color col;
 
-  if (scalar > 1.0) 
+  if (scalar > 1.0)
     scalar = 1.0;
 
   if (scalar < 0.0)
@@ -153,30 +153,30 @@ color VoxelColor(flt scalar) {
   }
 
   return col;
-} 
+}
 
 color scalar_volume_texture(vector * hit, texture * tex, ray * ry) {
   color col, col2;
   box * bx;
   flt a, tx1, tx2, ty1, ty2, tz1, tz2;
   flt tnear, tfar;
-  flt t, tdist, dt, sum, tt; 
+  flt t, tdist, dt, sum, tt;
   vector pnt, bln;
   scalarvol * vol;
-  flt scalar, transval; 
+  flt scalar, transval;
   int x, y, z;
   unsigned char * ptr;
 
   bx=(box *) tex->obj;
   vol=(scalarvol *)bx->tex->img;
-   
+
   col.r=0.0;
   col.g=0.0;
   col.b=0.0;
- 
+
   tnear= -FHUGE;
   tfar= FHUGE;
- 
+
   if (ry->d.x == 0.0) {
     if ((ry->o.x < bx->min.x) || (ry->o.x > bx->max.x)) return col;
   }
@@ -189,7 +189,7 @@ color scalar_volume_texture(vector * hit, texture * tex, ray * ry) {
   }
   if (tnear > tfar) return col;
   if (tfar < 0.0) return col;
- 
+
  if (ry->d.y == 0.0) {
     if ((ry->o.y < bx->min.y) || (ry->o.y > bx->max.y)) return col;
   }
@@ -202,7 +202,7 @@ color scalar_volume_texture(vector * hit, texture * tex, ray * ry) {
   }
   if (tnear > tfar) return col;
   if (tfar < 0.0) return col;
- 
+
   if (ry->d.z == 0.0) {
     if ((ry->o.z < bx->min.z) || (ry->o.z > bx->max.z)) return col;
   }
@@ -215,17 +215,17 @@ color scalar_volume_texture(vector * hit, texture * tex, ray * ry) {
   }
   if (tnear > tfar) return col;
   if (tfar < 0.0) return col;
- 
+
   if (tnear < 0.0) tnear=0.0;
- 
+
   tdist=sqrt((flt) (vol->xres*vol->xres + vol->yres*vol->yres + vol->zres*vol->zres));
-  tt = (vol->opacity / tdist); 
+  tt = (vol->opacity / tdist);
 
   bln.x=fabs(bx->min.x - bx->max.x);
   bln.y=fabs(bx->min.y - bx->max.y);
   bln.z=fabs(bx->min.z - bx->max.z);
-  
-  dt=sqrt(bln.x*bln.x + bln.y*bln.y + bln.z*bln.z) / tdist; 
+
+  dt=sqrt(bln.x*bln.x + bln.y*bln.y + bln.z*bln.z) / tdist;
   sum=0.0;
 
   /* move the volume residency check out of loop.. */
@@ -233,23 +233,23 @@ color scalar_volume_texture(vector * hit, texture * tex, ray * ry) {
     LoadVol(vol);
     vol->loaded=1;
   }
- 
+
   for (t=tnear; t<=tfar; t+=dt) {
     pnt.x=((ry->o.x + (ry->d.x * t)) - bx->min.x) / bln.x;
     pnt.y=((ry->o.y + (ry->d.y * t)) - bx->min.y) / bln.y;
     pnt.z=((ry->o.z + (ry->d.z * t)) - bx->min.z) / bln.z;
- 
+
     x=(int) ((vol->xres - 1.5) * pnt.x + 0.5);
     y=(int) ((vol->yres - 1.5) * pnt.y + 0.5);
     z=(int) ((vol->zres - 1.5) * pnt.z + 0.5);
-   
+
     ptr = vol->data + ((vol->xres * vol->yres * z) + (vol->xres * y) + x);
-   
+
     scalar = (flt) ((flt) 1.0 * ((int) ptr[0])) / 255.0;
 
-    sum += tt * scalar; 
+    sum += tt * scalar;
 
-    transval = tt * scalar; 
+    transval = tt * scalar;
 
     col2 = VoxelColor(scalar);
 
@@ -258,39 +258,39 @@ color scalar_volume_texture(vector * hit, texture * tex, ray * ry) {
       col.g += transval * col2.g;
       col.b += transval * col2.b;
       if (sum < 0.0) sum=0.0;
-    }  
-    else { 
+    }
+    else {
       sum=1.0;
     }
   }
 
-  if (sum < 1.0) {      /* spawn transmission rays / refraction */    
+  if (sum < 1.0) {      /* spawn transmission rays / refraction */
     color transcol;
 
     transcol = shade_transmission(ry, hit, 1.0 - sum);
 
-    col.r += transcol.r; /* add the transmitted ray  */    
+    col.r += transcol.r; /* add the transmitted ray  */
     col.g += transcol.g; /* to the diffuse and       */
-    col.b += transcol.b; /* transmission total..     */  
+    col.b += transcol.b; /* transmission total..     */
   }
 
   return col;
 }
 
-void LoadVol(scalarvol * vol) { 
+void LoadVol(scalarvol * vol) {
   FILE * dfile;
   size_t status;
   char msgtxt[2048];
- 
+
   dfile=fopen(vol->name, "r");
   if (dfile==NULL) {
     char msgtxt[2048];
-    sprintf(msgtxt, "Vol: can't open %s for input!!! Aborting\n",vol->name); 
+    sprintf(msgtxt, "Vol: can't open %s for input!!! Aborting\n",vol->name);
     rt_ui_message(MSG_ERR, msgtxt);
     rt_ui_message(MSG_ABORT, "Rendering Aborted.");
     exit(1);
-  }  
- 
+  }
+
   sprintf(msgtxt, "loading %dx%dx%d volume set from %s",
       vol->xres, vol->yres, vol->zres, vol->name);
   rt_ui_message(MSG_0, msgtxt);
@@ -298,4 +298,5 @@ void LoadVol(scalarvol * vol) {
   vol->data = (unsigned char *)rt_getmem(vol->xres * vol->yres * vol->zres);
 
   status=fread(vol->data, 1, (vol->xres * vol->yres * vol->zres), dfile);
+  fclose(dfile);
 }

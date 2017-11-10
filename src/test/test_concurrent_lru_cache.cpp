@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,12 +22,6 @@
     #pragma warning (disable: 4503) // Suppress "decorated name length exceeded, name was truncated" warning
 #endif
 
-#include "harness_test_cases_framework.h"
-#include "harness.h"
-#include "harness_barrier.h"
-
-#include <utility>
-
 #ifdef TEST_COARSE_GRAINED_LOCK_IMPLEMENTATION
     #include "../perf/coarse_grained_raii_lru_cache.h"
     #define selected_raii_lru_cache_impl coarse_grained_raii_lru_cache
@@ -36,6 +30,12 @@
     #include "tbb/concurrent_lru_cache.h"
     #define selected_raii_lru_cache_impl tbb::concurrent_lru_cache
 #endif
+
+#include "harness_test_cases_framework.h"
+#include "harness.h"
+#include "harness_barrier.h"
+
+#include <utility>
 
 #include "tbb/task_scheduler_init.h"
 
@@ -174,6 +174,11 @@ struct get_lru_cache_type{
 
 };
 
+// these includes are needed for test_task_handle_mv_sem*
+#include <vector>
+#include <string>
+#include <functional>
+
 namespace serial_tests{
     using namespace helpers;
     namespace usability{
@@ -189,22 +194,79 @@ namespace serial_tests{
             (void)value;
         }
     }
-    namespace behaviour{
-        namespace helpers{
-            template <size_t id> struct tag{};
+    namespace behaviour {
+        namespace helpers {
+            template <size_t id> struct tag {};
             template< typename tag, typename value_and_key_type>
-            struct call_counting_function{
+            struct call_counting_function {
                 static int calls_count;
-                static value_and_key_type _(value_and_key_type key){
+                static value_and_key_type _(value_and_key_type key) {
                     ++calls_count;
                     return key;
                 }
             };
             template< typename tag, typename value_and_key_type>
-            int call_counting_function<tag,value_and_key_type>::calls_count = 0;
-
-
+            int call_counting_function<tag, value_and_key_type>::calls_count = 0;
         }
+
+        using std::string;
+        struct mv_sem_fixture {
+            struct item_init{
+                static string init(string key) {
+                    return key;
+                }
+            };
+            typedef tbb::concurrent_lru_cache<string, string> cache_type;
+            typedef cache_type::handle handle_type;
+            cache_type cache;
+            mv_sem_fixture() : cache((&item_init::init), 1) {};
+
+            handle_type default_ctor_check;
+        };
+
+        TEST_CASE_WITH_FIXTURE(test_task_handle_mv_sem, mv_sem_fixture) {
+            handle_type handle;
+            handle_type foobar = handle_type();
+
+            //c++03 : handle_move_t assignment
+            handle = cache["handle"];
+
+            //c++03 : init ctor from handle_move_t
+            handle_type foo = cache["bar"];
+
+            //c++03 : init ctor from handle_move_t
+            handle_type handle1(move(handle));
+
+            //c++03 : handle_move_t assignment
+            handle = move(handle1);
+
+            ASSERT(!handle_type(), "user-defined to-bool conversion does not work");
+            ASSERT(handle, "user-defined to-bool conversion does not work");
+
+            handle = handle_type();
+        }
+
+        TEST_CASE_WITH_FIXTURE(test_task_handle_mv_sem_certain_case, mv_sem_fixture) {
+            // there is no way to use handle_object as vector argument in C++03
+            // because argument must meet requirements of CopyAssignable and
+            // CopyConstructible (C++ documentation)
+#if __TBB_CPP11_RVALUE_REF_PRESENT
+            // retain handle_object to keep an item in the cache if it is still active without aging
+            handle_type sheep = cache["sheep"];
+            handle_type horse = cache["horse"];
+            handle_type bull = cache["bull"];
+
+            std::vector<handle_type> animals;
+            animals.reserve(5);
+            animals.emplace_back(std::move(sheep));
+            animals.emplace_back(std::move(horse));
+            animals[0] = std::move(bull);
+            // after resize() vec will be full of default constructed handlers with null pointers
+            // on item in cache and on cache which item belongs to
+            animals.resize(10);
+#endif /* __TBB_CPP11_RVALUE_REF_PRESENT */
+        }
+
         TEST_CASE_WITH_FIXTURE(test_cache_returns_only_values_from_value_function,empty_fixture){
             struct dummy_function{static int _(int /*key*/){return 0xDEADBEEF;}};
             typedef get_lru_cache_type::apply<int,int>::type cache_type;

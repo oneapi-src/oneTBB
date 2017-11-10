@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 
 */
 
-#include "harness_defs.h"
 #include "tbb/parallel_sort.h"
 #include "tbb/task_scheduler_init.h"
 #include "tbb/concurrent_vector.h"
@@ -26,22 +25,11 @@
 #include <math.h>
 #include <vector>
 #include <exception>
-
-#if !TBB_USE_EXCEPTIONS && _MSC_VER
-    // Suppress "C++ exception handler used, but unwind semantics are not enabled" warning in STL headers
-    #pragma warning (push)
-    #pragma warning (disable: 4530)
-#endif
-
 #include <algorithm>
 #include <iterator>
 #include <functional>
 #include <string>
 #include <cstring>
-
-#if !TBB_USE_EXCEPTIONS && _MSC_VER
-    #pragma warning (pop)
-#endif
 
 /** Has tightly controlled interface so that we can verify
     that parallel_sort uses only the required interface. */

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -186,9 +186,8 @@ const uint32_t minLargeObjectSize = fittingSize5 + 1;
 
 static void scalableMallocCheckSize(void *object, size_t size)
 {
-#if __APPLE__ && __clang__ && __TBB_CLANG_VERSION >= 70300 && __TBB_CLANG_VERSION <= 80000
-// This prevents Clang 703.0.29 and later under OS X from throwing out the
-// calls to new & delete in CheckNewDeleteOverload().
+#if __clang__
+// This prevents Clang from throwing out the calls to new & delete in CheckNewDeleteOverload().
     static void *v = object;
 #endif
     ASSERT(object, NULL);
@@ -255,7 +254,7 @@ void CheckPvalloc(void *(*pvalloc_p)(size_t), void (*free_p)(void*))
 
 #endif // MALLOC_UNIXLIKE_OVERLOAD_ENABLED || MALLOC_ZONE_OVERLOAD_ENABLED
 
-// regression test: on OS X scalable_free() treated small aligned object,
+// regression test: on macOS scalable_free() treated small aligned object,
 // placed in large block, as small block
 void CheckFreeAligned() {
     size_t sz[] = {8, 4*1024, 16*1024, 0};

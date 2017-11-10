@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -30,19 +30,9 @@
 #include "tbb/tbb_allocator.h"
 #include "tbb/tbb_thread.h"
 
-#if !TBB_USE_EXCEPTIONS && _MSC_VER
-    // Suppress "C++ exception handler used, but unwind semantics are not enabled" warning in STL headers
-    #pragma warning (push)
-    #pragma warning (disable: 4530)
-#endif
-
 #include <cstring>
 #include <vector>
 #include <utility>
-
-#if !TBB_USE_EXCEPTIONS && _MSC_VER
-    #pragma warning (pop)
-#endif
 
 #include "harness_assert.h"
 #include "harness.h"
@@ -445,15 +435,15 @@ RunMoveSemanticsForStateTrackableObjectTest() {
 
 #if __TBB_ETS_USE_CPP11
     // Store some marked values in the initial combinable object
-    create1.local().state = static_cast<Harness::StateTrackable<true>::State>(1);
+    create1.local().state = Harness::StateTrackableBase::Unspecified;
 
     // Move constructing of the new combinable must not cause copying of stored values
     tbb::combinable< Harness::StateTrackable<true> > move1(std::move(create1));
-    ASSERT(move1.local().state == 1, "Unexpected value in move-constructed combinable object");
+    ASSERT(move1.local().state == Harness::StateTrackableBase::Unspecified, "Unexpected value in move-constructed combinable object");
 
     // Move assignment must not cause copying of stored values
     copy1=std::move(move1);
-    ASSERT(copy1.local().state == 1, "Unexpected value in move-assigned combinable object");
+    ASSERT(copy1.local().state == Harness::StateTrackableBase::Unspecified, "Unexpected value in move-assigned combinable object");
 
     // Make the stored values valid again in order to delete StateTrackable object correctly
     copy1.local().state = Harness::StateTrackable<true>::MoveAssigned;

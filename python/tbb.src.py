@@ -1,6 +1,6 @@
 
 #
-# Copyright (c) 2005-2016 Intel Corporation
+# Copyright (c) 2016-2017 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ import traceback
 
 __all__ = ["Pool", "Monkey", "task_arena", "task_group", "task_scheduler_init"]
 __doc__ = """
-Python API to Intel(R) Threading Building Blocks library (Intel TBB)
+Python API to Intel(R) Threading Building Blocks library (Intel(R) TBB)
 extended with standard Pool implementation and monkey-patching.
 
 Command-line interface:
@@ -790,7 +790,7 @@ class Monkey:
     """
     Context manager which replaces standard multiprocessing.pool.ThreadPool
     implementation with TBB.Pool using monkey-patching. It also enables TBB
-    threading for Intel MKL. For example:
+    threading for Intel(R) Math Kernel Library (Intel(R) MKL). For example:
 
         with TBB.Monkey():
             run_my_numpy_code()

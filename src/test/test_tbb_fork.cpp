@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ static TidTableType tidTable;
 
 #include "tbb/tick_count.h"
 
-static void SigHandler(int) { }
+void SigHandler(int) { }
 
 #endif // _WIN32||_WIN64
 
@@ -98,6 +98,12 @@ public:
     AllocTask() {}
 };
 
+void CallParallelFor()
+{
+    tbb::parallel_for(tbb::blocked_range<int>(0, 10000, 1), AllocTask(),
+                      tbb::simple_partitioner());
+}
+
 /* Regression test against data race between termination of workers
    and setting blocking terination mode in main thread. */
 class RunWorkersBody : NoAssign {
@@ -105,9 +111,12 @@ class RunWorkersBody : NoAssign {
 public:
     RunWorkersBody(bool waitWorkers) : wait_workers(waitWorkers) {}
     void operator()(const int /*threadID*/) const {
-        tbb::task_scheduler_init sch(MaxThread, 0, wait_workers);
-        tbb::parallel_for(tbb::blocked_range<int>(0, 10000, 1), AllocTask(),
-                          tbb::simple_partitioner());
+        tbb::task_scheduler_init sch(MaxThread);
+        CallParallelFor();
+        if (wait_workers) {
+            bool ok = sch.blocking_terminate(std::nothrow);
+            ASSERT(ok, NULL);
+        }
     }
 };
 
@@ -121,26 +130,32 @@ void TestBlockNonblock()
 }
 
 class RunInNativeThread : NoAssign {
-    bool create_tsi;
+    bool create_tsi,
+        blocking;
 public:
-    RunInNativeThread(bool create_tsi_) : create_tsi(create_tsi_) {}
+    RunInNativeThread(bool create_tsi_, bool blocking_) :
+        create_tsi(create_tsi_), blocking(blocking_) {}
     void operator()(const int /*threadID*/) const {
         // nested TSI or auto-initialized TSI can be terminated when
         // wait_workers is true (deferred TSI means auto-initialization)
-        tbb::task_scheduler_init tsi(create_tsi? 2 :
-                                     tbb::task_scheduler_init::deferred);
-        tbb::parallel_for(tbb::blocked_range<int>(0, 10000, 1), AllocTask(),
-                              tbb::simple_partitioner());
+        tbb::task_scheduler_init tsi(create_tsi? 2 : tbb::task_scheduler_init::deferred);
+        CallParallelFor();
+        if (blocking) {
+            bool ok = tsi.blocking_terminate(std::nothrow);
+            // all usages are nested
+            ASSERT(!ok, "Nested blocking terminate must fail.");
+        }
     }
 };
 
 void TestTasksInThread()
 {
-    tbb::task_scheduler_init sch(2, 0, /*wait_workers=*/true);
-    tbb::parallel_for(tbb::blocked_range<int>(0, 10000, 1), AllocTask(),
-                      tbb::simple_partitioner());
+    tbb::task_scheduler_init sch(2);
+    CallParallelFor();
     for (int i=0; i<2; i++)
-        NativeParallelFor(2, RunInNativeThread(/*create_tsi=*/1==i));
+        NativeParallelFor(2, RunInNativeThread(/*create_tsi=*/1==i, /*blocking=*/false));
+    bool ok = sch.blocking_terminate(std::nothrow);
+    ASSERT(ok, NULL);
 }
 
 #include "harness_memory.h"
@@ -160,11 +175,13 @@ void TestSchedulerMemLeaks()
         _CrtMemCheckpoint(&stateBefore);
 #endif
         for (int i=0; i<100; i++) {
-            tbb::task_scheduler_init sch(1, 0, /*wait_workers=*/true);
+            tbb::task_scheduler_init sch(1);
             for (int k=0; k<10; k++) {
                 tbb::empty_task *t = new( tbb::task::allocate_root() ) tbb::empty_task();
                 tbb::task::enqueue(*t);
             }
+            bool ok = sch.blocking_terminate(std::nothrow);
+            ASSERT(ok, NULL);
         }
 #if _MSC_VER && _DEBUG
         _CrtMemCheckpoint(&stateAfter);
@@ -177,10 +194,43 @@ void TestSchedulerMemLeaks()
     ASSERT(it < ITERS, "Memory consumption has not stabilized. Memory Leak?");
 }
 
+void TestNestingTSI()
+{
+    // nesting with and without blocking is possible
+    for (int i=0; i<2; i++) {
+        tbb::task_scheduler_init schBlock(2);
+        CallParallelFor();
+        tbb::task_scheduler_init schBlock1(2);
+        CallParallelFor();
+        if (i)
+            schBlock1.terminate();
+        else {
+            bool ok = schBlock1.blocking_terminate(std::nothrow);
+            ASSERT(!ok, "Nested blocking terminate must fail.");
+        }
+        bool ok = schBlock.blocking_terminate(std::nothrow);
+        ASSERT(ok, NULL);
+    }
+    {
+        tbb::task_scheduler_init schBlock(2);
+        NativeParallelFor(1, RunInNativeThread(/*create_tsi=*/true, /*blocking=*/true));
+        bool ok = schBlock.blocking_terminate(std::nothrow);
+        ASSERT(ok, NULL);
+    }
+}
+
+void TestAutoInit()
+{
+    CallParallelFor(); // autoinit
+    // creation of blocking scheduler is possible, but one is not block
+    NativeParallelFor(1, RunInNativeThread(/*create_tsi=*/true, /*blocking=*/true));
+}
+
 int TestMain()
 {
     using namespace Harness;
 
+    TestNestingTSI();
     TestBlockNonblock();
     TestTasksInThread();
     TestSchedulerMemLeaks();
@@ -211,13 +261,15 @@ int TestMain()
             if (!child)
                 REMARK("\rThreads %d %d ", threads, i);
             {
-                tbb::task_scheduler_init sch(threads, 0, /*wait_workers=*/true);
+                tbb::task_scheduler_init sch(threads);
+                bool ok = sch.blocking_terminate(std::nothrow);
+                ASSERT(ok, NULL);
             }
-            tbb::task_scheduler_init sch(threads, 0, /*wait_workers=*/true);
+            tbb::task_scheduler_init sch(threads);
 
-            tbb::parallel_for(tbb::blocked_range<int>(0, 10000, 1), AllocTask(),
-                              tbb::simple_partitioner());
-            sch.terminate();
+            CallParallelFor();
+            bool ok = sch.blocking_terminate(std::nothrow);
+            ASSERT(ok, NULL);
 
 #if _WIN32||_WIN64
             // check that there is no alive threads after terminate()
@@ -270,17 +322,8 @@ int TestMain()
 #endif // _WIN32||_WIN64
         }
     }
-    REMARK("\n");
-#if TBB_USE_EXCEPTIONS
-    REMARK("Testing exceptions\n");
-    try {
-        {
-            tbb::task_scheduler_init schBlock(2, 0, /*wait_workers=*/true);
-            tbb::task_scheduler_init schBlock1(2, 0, /*wait_workers=*/true);
-        }
-        ASSERT(0, "Nesting of blocking schedulers is impossible.");
-    } catch (...) {}
-#endif
+    // auto initialization at this point
+    TestAutoInit();
 
     return Harness::Done;
 }

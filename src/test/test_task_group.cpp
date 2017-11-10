@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -472,7 +472,7 @@ void TestTaskHandle2 () {
     FIB_TEST_EPILOGUE(g_Sum);
 }
 
-#if __TBB_LAMBDAS_PRESENT
+#if __TBB_CPP11_LAMBDAS_PRESENT
 //------------------------------------------------------------------------
 // Test for a mixed tree of task groups.
 // The chores are specified as lambdas
@@ -506,7 +506,7 @@ void TestFibWithMakeTask () {
     rg.run_and_wait( h2 );
     ASSERT( sum == 2 * F, NULL );
 }
-#endif /* __TBB_LAMBDAS_PRESENT */
+#endif /* __TBB_CPP11_LAMBDAS_PRESENT */
 
 
 //------------------------------------------------------------------------
@@ -810,17 +810,127 @@ void TestStructuredWait () {
     sg.wait();
 }
 
-struct test_functor_t {
+struct TestFunctor {
     void operator()() { ASSERT( false, "Non-const operator called" ); }
     void operator()() const { /* library requires this overload only */ }
 };
 
 void TestConstantFunctorRequirement() {
     tbb::task_group g;
-    test_functor_t tf;
+    TestFunctor tf;
     g.run( tf ); g.wait();
     g.run_and_wait( tf );
 }
+//------------------------------------------------------------------------
+#if __TBB_CPP11_RVALUE_REF_PRESENT
+namespace TestMoveSemanticsNS {
+    struct TestFunctor {
+        void operator()() const {};
+    };
+
+    struct MoveOnlyFunctor : MoveOnly, TestFunctor {
+        MoveOnlyFunctor() : MoveOnly() {};
+        MoveOnlyFunctor(MoveOnlyFunctor&& other) : MoveOnly(std::move(other)) {};
+    };
+
+    struct MovePreferableFunctor : Movable, TestFunctor {
+        MovePreferableFunctor() : Movable() {};
+        MovePreferableFunctor(MovePreferableFunctor&& other) : Movable(std::move(other)) {};
+        MovePreferableFunctor(const MovePreferableFunctor& other) : Movable(other) {};
+    };
+
+    struct NoMoveNoCopyFunctor : NoCopy, TestFunctor {
+        NoMoveNoCopyFunctor() : NoCopy() {};
+        // mv ctor is not allowed as cp ctor from parent NoCopy
+    private:
+        NoMoveNoCopyFunctor(NoMoveNoCopyFunctor&&);
+    };
+
+    void TestFunctorsWithinTaskHandles() {
+        // working with task_handle rvalues is not supported in task_group
+
+        tbb::task_group tg;
+        MovePreferableFunctor mpf;
+        typedef tbb::task_handle<MoveOnlyFunctor> th_mv_only_type;
+        typedef tbb::task_handle<MovePreferableFunctor> th_mv_pref_type;
+
+        th_mv_only_type th_mv_only = th_mv_only_type(MoveOnlyFunctor());
+        tg.run_and_wait(th_mv_only);
+
+        th_mv_only_type th_mv_only1 = th_mv_only_type(MoveOnlyFunctor());
+        tg.run(th_mv_only1);
+        tg.wait();
+
+        th_mv_pref_type th_mv_pref = th_mv_pref_type(mpf);
+        tg.run_and_wait(th_mv_pref);
+        ASSERT(mpf.alive, "object was moved when was passed by lval");
+        mpf.Reset();
+
+        th_mv_pref_type th_mv_pref1 = th_mv_pref_type(std::move(mpf));
+        tg.run_and_wait(th_mv_pref1);
+        ASSERT(!mpf.alive, "object was copied when was passed by rval");
+        mpf.Reset();
+
+        th_mv_pref_type th_mv_pref2 = th_mv_pref_type(mpf);
+        tg.run(th_mv_pref2);
+        tg.wait();
+        ASSERT(mpf.alive, "object was moved when was passed by lval");
+        mpf.Reset();
+
+        th_mv_pref_type th_mv_pref3 = th_mv_pref_type(std::move(mpf));
+        tg.run(th_mv_pref3);
+        tg.wait();
+        ASSERT(!mpf.alive, "object was copied when was passed by rval");
+        mpf.Reset();
+    }
+
+    void TestBareFunctors() {
+        tbb::task_group tg;
+        MovePreferableFunctor mpf;
+        // run_and_wait() doesn't have any copies or moves of arguments inside the impl
+        tg.run_and_wait( NoMoveNoCopyFunctor() );
+
+        tg.run( MoveOnlyFunctor() );
+        tg.wait();
+
+        tg.run( mpf );
+        tg.wait();
+        ASSERT(mpf.alive, "object was moved when was passed by lval");
+        mpf.Reset();
+
+        tg.run( std::move(mpf) );
+        tg.wait();
+        ASSERT(!mpf.alive, "object was copied when was passed by rval");
+        mpf.Reset();
+    }
+
+    void TestMakeTask() {
+        MovePreferableFunctor mpf;
+
+        tbb::make_task( MoveOnly() );
+
+        tbb::make_task( mpf );
+        ASSERT(mpf.alive, "object was moved when was passed by lval");
+        mpf.Reset();
+
+        tbb::make_task( std::move(mpf) );
+        ASSERT(!mpf.alive, "object was copied when was passed by rval");
+        mpf.Reset();
+    }
+}
+#endif /* __TBB_CPP11_RVALUE_REF_PRESENT */
+
+void TestMoveSemantics() {
+#if __TBB_CPP11_RVALUE_REF_PRESENT
+    TestMoveSemanticsNS::TestBareFunctors();
+    TestMoveSemanticsNS::TestFunctorsWithinTaskHandles();
+    TestMoveSemanticsNS::TestMakeTask();
+#else
+    REPORT("Known issue: move support tests are skipped.\n");
+#endif
+}
+//------------------------------------------------------------------------
+
 
 int TestMain () {
     REMARK ("Testing %s task_group functionality\n", TBBTEST_USE_TBB ? "TBB" : "PPL");
@@ -846,7 +956,7 @@ int TestMain () {
         TestTaskHandle();
         TestTaskHandle2<Concurrency::task_group>();
         TestTaskHandle2<Concurrency::structured_task_group>();
-#if __TBB_LAMBDAS_PRESENT
+#if __TBB_CPP11_LAMBDAS_PRESENT
         TestFibWithLambdas();
         TestFibWithMakeTask();
 #endif
@@ -871,6 +981,7 @@ int TestMain () {
 #if __TBB_THROW_ACROSS_MODULE_BOUNDARY_BROKEN
     REPORT("Known issue: exception handling tests are skipped.\n");
 #endif
+    TestMoveSemantics();
     return Harness::Done;
 }
 

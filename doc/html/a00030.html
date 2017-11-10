@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::flow::interface9::callback&lt; Callback, T &gt; Class Template Reference</title>
+<title>tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::bucket_accessor Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,43 +33,61 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00234.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface9</b></li><li class="navelem"><a class="el" href="a00030.html">callback</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><b>interface5</b></li><li class="navelem"><a class="el" href="a00040.html">concurrent_hash_map</a></li><li class="navelem"><a class="el" href="a00030.html">bucket_accessor</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="a00338.html">List of all members</a>  </div>
+<a href="a00364.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::flow::interface9::callback&lt; Callback, T &gt; Class Template Reference</div>  </div>
+<div class="title">tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::bucket_accessor Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
+
+<p>bucket accessor is to find, rehash, acquire a lock, and access a bucket  
+ <a href="a00030.html#details">More...</a></p>
+
+<p><code>#include &lt;concurrent_hash_map.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::flow::interface9::callback&lt; Callback, T &gt;:</div>
+Inheritance diagram for tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::bucket_accessor:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00030.png" usemap="#tbb::flow::interface9::callback&lt; Callback, T &gt;_map" alt=""/>
-  <map id="tbb::flow::interface9::callback&lt; Callback, T &gt;_map" name="tbb::flow::interface9::callback&lt; Callback, T &gt;_map">
-<area href="a00031.html" alt="tbb::flow::interface9::callback_base" shape="rect" coords="0,56,263,80"/>
+  <img src="a00030.png" usemap="#tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::bucket_accessor_map" alt=""/>
+  <map id="tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::bucket_accessor_map" name="tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::bucket_accessor_map">
 </map>
  </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:af315d63ace9c432a0b03e818115fec18"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af315d63ace9c432a0b03e818115fec18"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>callback</b> (graph &amp;g, Callback c, const T &amp;t)</td></tr>
-<tr class="separator:af315d63ace9c432a0b03e818115fec18"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0d80c268cef66f86bc973a26b936abcb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0d80c268cef66f86bc973a26b936abcb"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>call</b> () __TBB_override</td></tr>
-<tr class="separator:a0d80c268cef66f86bc973a26b936abcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab8dc51ef88ff53cc6cc4e40e2c2818eb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab8dc51ef88ff53cc6cc4e40e2c2818eb"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>bucket_accessor</b> (<a class="el" href="a00040.html">concurrent_hash_map</a> *base, const hashcode_t h, bool writer=false)</td></tr>
+<tr class="separator:ab8dc51ef88ff53cc6cc4e40e2c2818eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0d7d8f3d101bb18056b8e5d4d2c8b079"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0d7d8f3d101bb18056b8e5d4d2c8b079"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00030.html#a0d7d8f3d101bb18056b8e5d4d2c8b079">acquire</a> (<a class="el" href="a00040.html">concurrent_hash_map</a> *base, const hashcode_t h, bool writer=false)</td></tr>
+<tr class="memdesc:a0d7d8f3d101bb18056b8e5d4d2c8b079"><td class="mdescLeft">&#160;</td><td class="mdescRight">find a bucket by masked hashcode, optionally rehash, and acquire the lock <br/></td></tr>
+<tr class="separator:a0d7d8f3d101bb18056b8e5d4d2c8b079"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaa8167e2961330435fd23eb92127805c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aaa8167e2961330435fd23eb92127805c"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00030.html#aaa8167e2961330435fd23eb92127805c">is_writer</a> ()</td></tr>
+<tr class="memdesc:aaa8167e2961330435fd23eb92127805c"><td class="mdescLeft">&#160;</td><td class="mdescRight">check whether bucket is locked for write <br/></td></tr>
+<tr class="separator:aaa8167e2961330435fd23eb92127805c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a16e714a5e77dbf8daf81973df30722d4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a16e714a5e77dbf8daf81973df30722d4"></a>
+bucket *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00030.html#a16e714a5e77dbf8daf81973df30722d4">operator()</a> ()</td></tr>
+<tr class="memdesc:a16e714a5e77dbf8daf81973df30722d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">get bucket pointer <br/></td></tr>
+<tr class="separator:a16e714a5e77dbf8daf81973df30722d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<hr/>The documentation for this class was generated from the following file:<ul>
-<li>flow_graph_opencl_node.h</li>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><h3>template&lt;typename Key, typename T, typename HashCompare = tbb_hash_compare&lt;Key&gt;, typename A = tbb_allocator&lt;std::pair&lt;Key, T&gt; &gt;&gt;<br/>
+class tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::bucket_accessor</h3>
+
+<p>bucket accessor is to find, rehash, acquire a lock, and access a bucket </p>
+</div><hr/>The documentation for this class was generated from the following file:<ul>
+<li>concurrent_hash_map.h</li>
 </ul>
 </div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2017 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

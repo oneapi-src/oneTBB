@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -27,18 +27,7 @@
 #include "concurrent_monitor.h"
 #include "itt_notify.h"
 #include <new>
-
-#if !TBB_USE_EXCEPTIONS && _MSC_VER
-    // Suppress "C++ exception handler used, but unwind semantics are not enabled" warning in STL headers
-    #pragma warning (push)
-    #pragma warning (disable: 4530)
-#endif
-
 #include <cstring>   // for memset()
-
-#if !TBB_USE_EXCEPTIONS && _MSC_VER
-    #pragma warning (pop)
-#endif
 
 using namespace std;
 
@@ -248,17 +237,17 @@ bool micro_queue::pop( void* dst, ticket k, concurrent_queue_base& base ) {
     k &= -concurrent_queue_rep::n_queue;
     spin_wait_until_eq( head_counter, k );
     spin_wait_while_eq( tail_counter, k );
-    page& p = *head_page;
-    __TBB_ASSERT( &p, NULL );
+    page *p = head_page;
+    __TBB_ASSERT( p, NULL );
     size_t index = modulo_power_of_two( k/concurrent_queue_rep::n_queue, base.items_per_page );
     bool success = false;
     {
-        micro_queue_pop_finalizer finalizer( *this, base, k+concurrent_queue_rep::n_queue, index==base.items_per_page-1 ? &p : NULL );
-        if( p.mask & uintptr_t(1)<<index ) {
+        micro_queue_pop_finalizer finalizer( *this, base, k+concurrent_queue_rep::n_queue, index==base.items_per_page-1 ? p : NULL );
+        if( p->mask & uintptr_t(1)<<index ) {
             success = true;
             ITT_NOTIFY( sync_acquired, dst );
             ITT_NOTIFY( sync_acquired, head_page );
-            base.assign_and_destroy_item( dst, p, index );
+            base.assign_and_destroy_item( dst, *p, index );
             ITT_NOTIFY( sync_releasing, head_page );
         } else {
             --base.my_rep->n_invalid_entries;

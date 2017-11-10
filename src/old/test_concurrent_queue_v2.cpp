@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -195,28 +195,27 @@ void TestPushPop( int prefill, ptrdiff_t capacity, int nthread ) {
 
 template<typename Iterator1, typename Iterator2>
 void TestIteratorAux( Iterator1 i, Iterator2 j, int size ) {
-    // Now test iteration
-    Iterator1 old_i;
+    Iterator1 old_i; // assigned at first iteration below
     for( int k=0; k<size; ++k ) {
         ASSERT( i!=j, NULL );
         ASSERT( !(i==j), NULL );
-        Foo f;
+        // Test "->"
+        ASSERT( k+1==i->serial, NULL );
         if( k&1 ) {
-            // Test pre-increment
-            f = *old_i++;
+            // Test post-increment
+            Foo f = *old_i++;
+            ASSERT( k+1==f.serial, NULL );
             // Test assignment
             i = old_i;
         } else {
-            // Test post-increment
-            f=*i++;
+            // Test pre-increment
             if( k<size-1 ) {
-                // Test "->"
-                ASSERT( k+2==i->serial, NULL );
-            }
+                Foo f = *++i;
+                ASSERT( k+2==f.serial, NULL );
+            } else ++i;
             // Test assignment
             old_i = i;
         }
-        ASSERT( k+1==f.serial, NULL );
     }
     ASSERT( !(i!=j), NULL );
     ASSERT( i==j, NULL );

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,22 +18,29 @@
 
 */
 
-#include "tbb/task_scheduler_init.h"
-#include <cstdlib>
-#include "harness_assert.h"
-
-#include <cstdio>
-
-#if !TBB_USE_EXCEPTIONS && _MSC_VER
-    // Suppress "C++ exception handler used, but unwind semantics are not enabled" warning in STL headers
-    #pragma warning (push)
-    #pragma warning (disable: 4530)
+// We want to test waiting for workers feature with non-preview binaries. However,
+// we want to have some testing of task_scheduler_init without this macro.
+#if !__TBB_CPF_BUILD
+#define TBB_PREVIEW_WAITING_FOR_WORKERS 1
 #endif
 
+#include "tbb/task_scheduler_init.h"
+#include <cstdlib>
+#include <cstdio>
+#if TBB_USE_EXCEPTIONS
 #include <stdexcept>
+#endif
 
-#if !TBB_USE_EXCEPTIONS && _MSC_VER
-    #pragma warning (pop)
+#include "harness_assert.h"
+#if _MSC_VER
+#pragma warning (push)
+    // MSVC discovers that ASSERT(false) inside TestBlockingTerminateNS::ExceptionTest2::Body makes the code
+    // in parallel_for after the body call unreachable. So supress the warning.
+#pragma warning (disable: 4702)
+#endif
+#include "tbb/parallel_for.h"
+#if _MSC_VER
+#pragma warning (pop)
 #endif
 
 #include "harness_concurrency_tracker.h"
@@ -63,7 +70,7 @@ void InitializeAndTerminate( int maxthread ) {
                 default: {
                     tbb::task_scheduler_init init( threads );
                     ASSERT(init.is_active(), NULL);
-                    ASSERT(ArenaConcurrency()==(threads==1)?2:threads, NULL);
+                    ASSERT(ArenaConcurrency()==(threads==1?2:threads), NULL);
                     if (test_mandatory_parallelism)
                         Harness::ExactConcurrencyLevel::check(threads, Harness::ExactConcurrencyLevel::Serialize);
                     if(i&0x20) tbb::task::enqueue( (*new( tbb::task::allocate_root() ) TaskGenerator(2,6)) ); // a work deferred to workers
@@ -72,7 +79,7 @@ void InitializeAndTerminate( int maxthread ) {
                 case 0: {
                     tbb::task_scheduler_init init;
                     ASSERT(init.is_active(), NULL);
-                    ASSERT(ArenaConcurrency()==(DefaultThreads==1)?2:init.default_num_threads(), NULL);
+                    ASSERT(ArenaConcurrency()==(DefaultThreads==1?2:init.default_num_threads()), NULL);
                     if (test_mandatory_parallelism)
                         Harness::ExactConcurrencyLevel::check(init.default_num_threads(), Harness::ExactConcurrencyLevel::Serialize);
                     if(i&0x40) tbb::task::enqueue( (*new( tbb::task::allocate_root() ) TaskGenerator(3,5)) ); // a work deferred to workers
@@ -83,7 +90,7 @@ void InitializeAndTerminate( int maxthread ) {
                     ASSERT(!init.is_active(), "init should not be active; initialization was deferred");
                     init.initialize( threads );
                     ASSERT(init.is_active(), NULL);
-                    ASSERT(ArenaConcurrency()==(threads==1)?2:threads, NULL);
+                    ASSERT(ArenaConcurrency()==(threads==1?2:threads), NULL);
                     if (test_mandatory_parallelism)
                         Harness::ExactConcurrencyLevel::check(threads, Harness::ExactConcurrencyLevel::Serialize);
                     init.terminate();
@@ -93,7 +100,7 @@ void InitializeAndTerminate( int maxthread ) {
                 case 2: {
                     tbb::task_scheduler_init init( tbb::task_scheduler_init::automatic );
                     ASSERT(init.is_active(), NULL);
-                    ASSERT(ArenaConcurrency()==(DefaultThreads==1)?2:init.default_num_threads(), NULL);
+                    ASSERT(ArenaConcurrency()==(DefaultThreads==1?2:init.default_num_threads()), NULL);
                     if (test_mandatory_parallelism)
                         Harness::ExactConcurrencyLevel::check(init.default_num_threads(), Harness::ExactConcurrencyLevel::Serialize);
                     break;
@@ -151,6 +158,170 @@ void TestNoWorkerSurplus () {
     NativeParallelFor( 1, TestNoWorkerSurplusRun() );
 }
 
+#if TBB_PREVIEW_WAITING_FOR_WORKERS
+#include "tbb/task_group.h"
+#include "tbb/task_arena.h"
+
+namespace TestBlockingTerminateNS {
+    struct EmptyBody {
+        void operator()() const {}
+        void operator()( int ) const {}
+    };
+
+    struct TestAutoInitBody {
+        void operator()( int ) const {
+            tbb::parallel_for( 0, 100, EmptyBody() );
+        }
+    };
+
+    static tbb::atomic<int> gSeed;
+    static tbb::atomic<int> gNumSuccesses;
+
+    class TestMultpleWaitBody {
+        bool myAutoInit;
+    public:
+        TestMultpleWaitBody( bool autoInit = false ) : myAutoInit( autoInit ) {}
+        void operator()( int ) const {
+            tbb::task_scheduler_init init( tbb::task_scheduler_init::deferred );
+            if ( !myAutoInit )
+                init.initialize( tbb::task_scheduler_init::automatic );
+            Harness::FastRandom rnd( ++gSeed );
+            // In case of auto init sub-tests we skip
+            //  - case #4 to avoid recursion
+            //  - case #5 because it is explicit initialization
+            const int numCases = myAutoInit ? 4 : 6;
+            switch ( rnd.get() % numCases ) {
+            case 0: {
+                tbb::task_arena a;
+                a.enqueue( EmptyBody() );
+                break;
+            }
+            case 1: {
+                tbb::task_group tg;
+                tg.run( EmptyBody() );
+                tg.wait();
+                break;
+            }
+            case 2:
+                tbb::parallel_for( 0, 100, EmptyBody() );
+                break;
+            case 3:
+                /* do nothing */
+                break;
+            case 4:
+                // Create and join several threads with auto initialized scheduler.
+                NativeParallelFor( rnd.get() % 5 + 1, TestMultpleWaitBody( true ) );
+                break;
+            case 5:
+                {
+                    tbb::task_scheduler_init init2;
+                    bool res = init2.blocking_terminate( std::nothrow );
+                    ASSERT( !res, NULL );
+                }
+                break;
+            }
+            if ( !myAutoInit && init.blocking_terminate( std::nothrow ) )
+                ++gNumSuccesses;
+        }
+    };
+
+    void TestMultpleWait() {
+        const int minThreads = 1;
+        const int maxThreads = 16;
+        const int numRepeats = 5;
+        // Initialize seed with different values on different machines.
+        gSeed = tbb::task_scheduler_init::default_num_threads();
+        for ( int repeats = 0; repeats<numRepeats; ++repeats ) {
+            for ( int threads = minThreads; threads<maxThreads; ++threads ) {
+                gNumSuccesses = 0;
+                NativeParallelFor( threads, TestMultpleWaitBody() );
+                ASSERT( gNumSuccesses > 0, "At least one blocking terminate must return 'true'" );
+            }
+        }
+    }
+
+#if TBB_USE_EXCEPTIONS
+    template <typename F>
+    void TestException( F &f ) {
+        Harness::suppress_unused_warning( f );
+        bool caught = false;
+        try {
+            f();
+            ASSERT( false, NULL );
+        }
+        catch ( const std::runtime_error& ) {
+            caught = true;
+        }
+#if TBB_USE_CAPTURED_EXCEPTION
+        catch ( const tbb::captured_exception& ) {
+            caught = true;
+        }
+#endif
+        catch ( ... ) {
+            ASSERT( false, NULL );
+        }
+        ASSERT( caught, NULL );
+    }
+
+    class ExceptionTest1 {
+        tbb::task_scheduler_init tsi1;
+        int myIndex;
+    public:
+        ExceptionTest1( int index ) : myIndex( index ) {}
+
+        void operator()() {
+            tbb::task_scheduler_init tsi2;
+            (myIndex == 0 ? tsi1 : tsi2).blocking_terminate();
+            ASSERT( false, "Blocking terminate did not throw the exception" );
+        }
+    };
+
+    struct ExceptionTest2 {
+        class Body {
+            Harness::SpinBarrier& myBarrier;
+        public:
+            Body( Harness::SpinBarrier& barrier ) : myBarrier( barrier ) {}
+            void operator()( int ) const {
+                myBarrier.wait();
+                tbb::task_scheduler_init init;
+                init.blocking_terminate();
+                ASSERT( false, "Blocking terminate did not throw the exception inside the parallel region" );
+            }
+        };
+        void operator()() {
+            const int numThreads = 4;
+            tbb::task_scheduler_init init( numThreads );
+            Harness::SpinBarrier barrier( numThreads );
+            tbb::parallel_for( 0, numThreads, Body( barrier ) );
+            ASSERT( false, "Parallel loop did not throw the exception" );
+        }
+    };
+#endif /* TBB_USE_EXCEPTIONS */
+
+    void TestExceptions() {
+        for ( int i = 0; i<2; ++i ) {
+            tbb::task_scheduler_init tsi[2];
+            bool res1 = tsi[i].blocking_terminate( std::nothrow );
+            ASSERT( !res1, NULL );
+            bool res2 = tsi[1-i].blocking_terminate( std::nothrow );
+            ASSERT( res2, NULL );
+        }
+#if TBB_USE_EXCEPTIONS
+        ExceptionTest1 Test1(0), Test2(1);
+        TestException( Test1 );
+        TestException( Test2 );
+        ExceptionTest2 Test3;
+        TestException( Test3 );
+#endif
+    }
+}
+
+void TestBlockingTerminate() {
+    TestBlockingTerminateNS::TestExceptions();
+    TestBlockingTerminateNS::TestMultpleWait();
+}
+#endif /* TBB_PREVIEW_WAITING_FOR_WORKERS */
+
 int TestMain () {
     // Do not use tbb::task_scheduler_init directly in the scope of main's body,
     // as a static variable, or as a member of a static variable.
@@ -193,5 +364,8 @@ int TestMain () {
         NativeParallelFor( p, ThreadedInit() );
     }
     AssertExplicitInitIsNotSupplanted();
+#if TBB_PREVIEW_WAITING_FOR_WORKERS
+    TestBlockingTerminate();
+#endif
     return Harness::Done;
 }

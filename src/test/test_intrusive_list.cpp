@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -76,6 +76,8 @@ const int NumElements = 256 * 1024;
 //! Iterates through the list forward and backward checking the validity of values stored by the list nodes
 template<class List, class Iterator>
 void CheckListNodes ( List& il, int valueStep ) {
+    ASSERT( il.size()==unsigned(NumElements/valueStep), "Wrong size of the list" );
+    ASSERT( !il.empty(), "Incorrect result of empty() or the list is corrupted" );
     int i;
     Iterator it = il.begin();
     for ( i = valueStep - 1; it != il.end(); ++it, i += valueStep ) {
@@ -101,16 +103,23 @@ void TestListOperations () {
     iterator it = il.begin();
     for ( ; it != il.end(); ++it ) {
         Item &item = *it;
-        it = il.erase( it );
+        it = il.erase( it ); // also advances the iterator
         delete &item;
     }
     CheckListNodes<List, iterator>( il, 2 );
     for ( it = il.begin(); it != il.end(); ++it ) {
         Item &item = *it;
-        il.remove( *it++ );
+        il.remove( *it++ ); // extra advance here as well
         delete &item;
     }
     CheckListNodes<List, iterator>( il, 4 );
+    for ( it = il.begin(); it != il.end(); ) {
+        Item &item = *it++; // the iterator advances only here
+        il.remove( item );
+        delete &item;
+    }
+    ASSERT( il.size()==0, "The list has wrong size or not all items were removed" );
+    ASSERT( il.empty(), "Incorrect result of empty() or not all items were removed" );
 }
 
 #include "harness_bad_expr.h"

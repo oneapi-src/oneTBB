@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 
 #include "harness_graph.h"
 #include "harness_barrier.h"
+#include "tbb/flow_graph.h"
 #include "tbb/task_scheduler_init.h"
 
 const int T = 4;
@@ -59,7 +60,7 @@ static void test_wait_count() {
 
 const int F = 100;
 
-#if __TBB_LAMBDAS_PRESENT
+#if __TBB_CPP11_LAMBDAS_PRESENT
 bool lambda_flag[F];
 #endif
 bool functor_flag[F];
@@ -81,23 +82,23 @@ static void test_run() {
     for (int i = 0; i < T; ++i ) {
 
         // Create receivers and flag arrays
-        #if __TBB_LAMBDAS_PRESENT
-        harness_mapped_receiver<int> lambda_r;
+        #if __TBB_CPP11_LAMBDAS_PRESENT
+        harness_mapped_receiver<int> lambda_r(h);
         lambda_r.initialize_map( F, 1 );
         #endif
-        harness_mapped_receiver<int> functor_r;
+        harness_mapped_receiver<int> functor_r(h);
         functor_r.initialize_map( F, 1 );
 
         // Initialize flag arrays
         for (int j = 0; j < F; ++j ) {
-            #if __TBB_LAMBDAS_PRESENT
+            #if __TBB_CPP11_LAMBDAS_PRESENT
             lambda_flag[j] = false;
             #endif
             functor_flag[j] = false;
         }
 
         for ( int j = 0; j < F; ++j ) {
-            #if __TBB_LAMBDAS_PRESENT
+            #if __TBB_CPP11_LAMBDAS_PRESENT
                 h.run( [=]() { lambda_flag[j] = true; } );
                 h.run( lambda_r, [=]() { return j; } );
             #endif
@@ -106,12 +107,12 @@ static void test_run() {
         }
         h.wait_for_all();
         for ( int j = 0; j < F; ++j ) {
-        #if __TBB_LAMBDAS_PRESENT
+        #if __TBB_CPP11_LAMBDAS_PRESENT
             ASSERT( lambda_flag[i] == true, NULL );
         #endif
             ASSERT( functor_flag[i] == true, NULL );
         }
-        #if __TBB_LAMBDAS_PRESENT
+        #if __TBB_CPP11_LAMBDAS_PRESENT
         lambda_r.validate();
         #endif
         functor_r.validate();
@@ -206,6 +207,158 @@ void test_parallel(int nThreads) {
     NativeParallelFor(nThreads, body);
 }
 
+/*
+ * Functors for graph arena spawn tests
+ */
+
+inline void check_arena(tbb::task_arena* a) {
+    ASSERT(a->max_concurrency() == 2, NULL);
+    ASSERT(tbb::this_task_arena::max_concurrency() == 1, NULL);
+}
+
+struct run_functor {
+    tbb::task_arena* my_a;
+    int return_value;
+    run_functor(tbb::task_arena* a) : my_a(a), return_value(1) {}
+    int operator()() {
+        check_arena(my_a);
+        return return_value;
+    }
+};
+
+template < typename T >
+struct function_body {
+    tbb::task_arena* my_a;
+    function_body(tbb::task_arena* a) : my_a(a) {}
+    tbb::flow::continue_msg operator()(const T& /*arg*/) {
+        check_arena(my_a);
+        return tbb::flow::continue_msg();
+    }
+};
+
+typedef tbb::flow::multifunction_node< int, tbb::flow::tuple< int > > mf_node;
+
+struct multifunction_body {
+    tbb::task_arena* my_a;
+    multifunction_body(tbb::task_arena* a) : my_a(a) {}
+    void operator()(const int& /*arg*/, mf_node::output_ports_type& /*outports*/) {
+        check_arena(my_a);
+    }
+};
+
+struct source_body {
+    tbb::task_arena* my_a;
+    int counter;
+    source_body(tbb::task_arena* a) : my_a(a), counter(0) {}
+    bool operator()(const int& /*i*/) {
+        check_arena(my_a);
+        if (counter < 1) {
+          ++counter;
+          return true;
+       }
+       return false;
+    }
+};
+
+struct run_test_functor : tbb::internal::no_assign {
+    tbb::task_arena* fg_arena;
+    tbb::flow::graph& my_graph;
+
+    run_test_functor(tbb::task_arena* a, tbb::flow::graph& g) : fg_arena(a), my_graph(g) {}
+    void operator()() const {
+        harness_mapped_receiver<int> functor_r(my_graph);
+        functor_r.initialize_map(F, 1);
+
+        my_graph.run(run_functor(fg_arena));
+        my_graph.run(functor_r, run_functor(fg_arena));
+
+        my_graph.wait_for_all();
+    }
+};
+
+struct nodes_test_functor : tbb::internal::no_assign {
+    tbb::task_arena* fg_arena;
+    tbb::flow::graph& my_graph;
+
+    nodes_test_functor(tbb::task_arena* a, tbb::flow::graph& g) : fg_arena(a), my_graph(g) {}
+    void operator()() const {
+
+        // Define test nodes
+        // Continue, function, source nodes
+        tbb::flow::continue_node< tbb::flow::continue_msg > c_n(my_graph, function_body<tbb::flow::continue_msg>(fg_arena));
+        tbb::flow::function_node< int > f_n(my_graph, tbb::flow::unlimited, function_body<int>(fg_arena));
+        tbb::flow::source_node< int > s_n(my_graph, source_body(fg_arena), false);
+
+        // Multifunction node
+        mf_node m_n(my_graph, tbb::flow::unlimited, multifunction_body(fg_arena));
+
+        // Join node
+        tbb::flow::function_node< tbb::flow::tuple< int, int > > join_f_n(my_graph, tbb::flow::unlimited, function_body< tbb::flow::tuple< int, int > >(fg_arena));
+        tbb::flow::join_node< tbb::flow::tuple< int, int > > j_n(my_graph);
+        make_edge(j_n, join_f_n);
+
+        // Split node
+        tbb::flow::function_node< int > split_f_n1 = f_n;
+        tbb::flow::function_node< int > split_f_n2 = f_n;
+        tbb::flow::split_node< tbb::flow::tuple< int, int > > sp_n(my_graph);
+        make_edge(tbb::flow::output_port<0>(sp_n), split_f_n1);
+        make_edge(tbb::flow::output_port<1>(sp_n), split_f_n2);
+
+        // Overwrite node
+        tbb::flow::function_node< int > ow_f_n = f_n;
+        tbb::flow::overwrite_node< int > ow_n(my_graph);
+        make_edge(ow_n, ow_f_n);
+
+        // Write once node
+        tbb::flow::function_node< int > w_f_n = f_n;
+        tbb::flow::write_once_node< int > w_n(my_graph);
+        make_edge(w_n, w_f_n);
+
+        // Buffer node
+        tbb::flow::function_node< int > buf_f_n = f_n;
+        tbb::flow::buffer_node< int > buf_n(my_graph);
+        make_edge(w_n, buf_f_n);
+
+        // Limiter node
+        tbb::flow::function_node< int > l_f_n = f_n;
+        tbb::flow::limiter_node< int > l_n(my_graph, 1);
+        make_edge(l_n, l_f_n);
+
+        // Execute nodes
+        c_n.try_put( tbb::flow::continue_msg() );
+        f_n.try_put(1);
+        m_n.try_put(1);
+        s_n.activate();
+
+        tbb::flow::input_port<0>(j_n).try_put(1);
+        tbb::flow::input_port<1>(j_n).try_put(1);
+
+        tbb::flow::tuple< int, int > sp_tuple(1, 1);
+        sp_n.try_put(sp_tuple);
+
+        ow_n.try_put(1);
+        w_n.try_put(1);
+        buf_n.try_put(1);
+        l_n.try_put(1);
+
+        my_graph.wait_for_all();
+    }
+};
+
+void test_graph_arena() {
+    // There is only one thread for execution (master thread).
+    // So, if graph's tasks get spawned in different arena
+    // master thread won't be able to find them in its own arena.
+    // In this case test should hang.
+    tbb::task_scheduler_init init(1);
+
+    tbb::flow::graph g;
+    tbb::task_arena fg_arena;
+    fg_arena.initialize(2);
+    fg_arena.execute(run_test_functor(&fg_arena, g));
+    fg_arena.execute(nodes_test_functor(&fg_arena, g));
+}
+
 int TestMain() {
     if( MinThread<1 ) {
         REPORT("number of threads must be positive\n");
@@ -218,6 +371,6 @@ int TestMain() {
        test_iterator();
        test_parallel(p);
    }
+   test_graph_arena();
    return Harness::Done;
 }
-

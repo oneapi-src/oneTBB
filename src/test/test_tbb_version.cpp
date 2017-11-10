@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -31,20 +31,9 @@ int TestMain() {
 
 #include <stdio.h>
 #include <stdlib.h>
-
-#if !TBB_USE_EXCEPTIONS && _MSC_VER
-    // Suppress "C++ exception handler used, but unwind semantics are not enabled" warning in STL headers
-    #pragma warning (push)
-    #pragma warning (disable: 4530)
-#endif
-
 #include <vector>
 #include <string>
 #include <utility>
-
-#if !TBB_USE_EXCEPTIONS && _MSC_VER
-    #pragma warning (pop)
-#endif
 
 #include "tbb/task_scheduler_init.h"
 
@@ -239,8 +228,8 @@ int main(int argc, char *argv[] ) {
 // Fill dictionary with version strings for platforms
 void initialize_strings_vector(std::vector <string_pair>* vector)
 {
-    vector->push_back(string_pair("TBB: VERSION\t\t2017.0", required));       // check TBB_VERSION
-    vector->push_back(string_pair("TBB: INTERFACE VERSION\t9103", required)); // check TBB_INTERFACE_VERSION
+    vector->push_back(string_pair("TBB: VERSION\t\t2018.0", required));       // check TBB_VERSION
+    vector->push_back(string_pair("TBB: INTERFACE VERSION\t10001", required)); // check TBB_INTERFACE_VERSION
     vector->push_back(string_pair("TBB: BUILD_DATE", required));
     vector->push_back(string_pair("TBB: BUILD_HOST", required));
     vector->push_back(string_pair("TBB: BUILD_OS", required));

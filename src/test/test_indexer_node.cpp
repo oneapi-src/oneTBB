@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 
 */
 
-#include "harness.h"
+#include "harness_graph.h"
 #include "tbb/flow_graph.h"
 
 //
@@ -707,6 +707,8 @@ static void test() {
     tbb::flow::graph g;
     static const int ELEMS = 3;
     IType* my_indexer = new IType(g); //makeIndexer<IType>::create(g);
+
+    test_input_ports_return_ref(*my_indexer);
 
     serial_queue_helper<SIZE, IType>::print_remark(); REMARK(" >\n");
 

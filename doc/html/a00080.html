@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::missing_wait Class Reference</title>
+<title>tbb::interface6::memory_pool&lt; Alloc &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,46 +33,54 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00234.html">tbb</a></li><li class="navelem"><a class="el" href="a00080.html">missing_wait</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><b>interface6</b></li><li class="navelem"><a class="el" href="a00080.html">memory_pool</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="a00317.html">List of all members</a>  </div>
+<a href="a00390.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::missing_wait Class Reference</div>  </div>
+<div class="title">tbb::interface6::memory_pool&lt; Alloc &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Exception for missing wait on <a class="el" href="a00142.html">structured_task_group</a>.  
+<p>Thread-safe growable pool allocator for variable-size requests.  
  <a href="a00080.html#details">More...</a></p>
 
-<p><code>#include &lt;tbb_exception.h&gt;</code></p>
+<p><code>#include &lt;memory_pool.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::missing_wait:</div>
+Inheritance diagram for tbb::interface6::memory_pool&lt; Alloc &gt;:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00080.png" usemap="#tbb::missing_wait_map" alt=""/>
-  <map id="tbb::missing_wait_map" name="tbb::missing_wait_map">
+  <img src="a00080.png" usemap="#tbb::interface6::memory_pool&lt; Alloc &gt;_map" alt=""/>
+  <map id="tbb::interface6::memory_pool&lt; Alloc &gt;_map" name="tbb::interface6::memory_pool&lt; Alloc &gt;_map">
 </map>
  </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a04602f54c8ae5d83a5410ebc0a5adf80"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a04602f54c8ae5d83a5410ebc0a5adf80"></a>
-const char *&#160;</td><td class="memItemRight" valign="bottom"><b>what</b> () const __TBB_override  throw ()</td></tr>
-<tr class="separator:a04602f54c8ae5d83a5410ebc0a5adf80"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af4c36829a159eac04d630ac5a99b9354"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af4c36829a159eac04d630ac5a99b9354"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00080.html#af4c36829a159eac04d630ac5a99b9354">memory_pool</a> (const Alloc &amp;src=Alloc())</td></tr>
+<tr class="memdesc:af4c36829a159eac04d630ac5a99b9354"><td class="mdescLeft">&#160;</td><td class="mdescRight">construct pool with underlying allocator <br/></td></tr>
+<tr class="separator:af4c36829a159eac04d630ac5a99b9354"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad2c7645b39b7280b1b3cf393d05fbaf7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad2c7645b39b7280b1b3cf393d05fbaf7"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00080.html#ad2c7645b39b7280b1b3cf393d05fbaf7">~memory_pool</a> ()</td></tr>
+<tr class="memdesc:ad2c7645b39b7280b1b3cf393d05fbaf7"><td class="mdescLeft">&#160;</td><td class="mdescRight">destroy pool <br/></td></tr>
+<tr class="separator:ad2c7645b39b7280b1b3cf393d05fbaf7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Exception for missing wait on <a class="el" href="a00142.html">structured_task_group</a>. </p>
+<div class="textblock"><h3>template&lt;typename Alloc&gt;<br/>
+class tbb::interface6::memory_pool&lt; Alloc &gt;</h3>
+
+<p>Thread-safe growable pool allocator for variable-size requests. </p>
 </div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>tbb_exception.h</li>
+<li><a class="el" href="a00196.html">memory_pool.h</a></li>
 </ul>
 </div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2017 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

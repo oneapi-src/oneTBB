@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,11 +22,11 @@
 #define __TBB_tbb_stddef_H
 
 // Marketing-driven product version
-#define TBB_VERSION_MAJOR 2017
+#define TBB_VERSION_MAJOR 2018
 #define TBB_VERSION_MINOR 0
 
 // Engineering-focused interface version
-#define TBB_INTERFACE_VERSION 9103
+#define TBB_INTERFACE_VERSION 10001
 #define TBB_INTERFACE_VERSION_MAJOR TBB_INTERFACE_VERSION/1000
 
 // The oldest major interface version still supported
@@ -278,7 +278,7 @@ void __TBB_EXPORTED_FUNC handle_perror( int error_code, const char* aux_info );
     inline bool __TBB_false() { return false; }
     #define __TBB_TRY
     #define __TBB_CATCH(e) if ( tbb::internal::__TBB_false() )
-    #define __TBB_THROW(e) ((void)0)
+    #define __TBB_THROW(e) tbb::internal::suppress_unused_warning(e)
     #define __TBB_RETHROW() ((void)0)
 #endif /* !TBB_USE_EXCEPTIONS */
 
@@ -423,16 +423,23 @@ private:
 // Following is a set of classes and functions typically used in compile-time "metaprogramming".
 // TODO: move all that to a separate header
 
-#if __TBB_ALLOCATOR_TRAITS_PRESENT
-#include <memory> //for allocator_traits
+#if __TBB_ALLOCATOR_TRAITS_PRESENT || __TBB_CPP11_SMART_POINTERS_PRESENT
+#include <memory> // for allocator_traits, unique_ptr
 #endif
 
-#if __TBB_CPP11_RVALUE_REF_PRESENT || _LIBCPP_VERSION
-#include <utility> // for std::move
+#if __TBB_CPP11_RVALUE_REF_PRESENT || __TBB_CPP11_DECLTYPE_PRESENT || _LIBCPP_VERSION
+#include <utility> // for std::move, std::forward, std::declval
 #endif
 
 namespace tbb {
 namespace internal {
+
+#if __TBB_CPP11_SMART_POINTERS_PRESENT && __TBB_CPP11_RVALUE_REF_PRESENT && __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
+    template<typename T, typename... Args>
+    std::unique_ptr<T> make_unique(Args&&... args) {
+        return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+    }
+#endif
 
 //! Class for determining type of std::allocator<T>::value_type.
 template<typename T>

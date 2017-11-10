@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -44,22 +44,6 @@ protected:
 
     concurrent_unordered_map_traits() : my_hash_compare() {}
     concurrent_unordered_map_traits(const hash_compare& hc) : my_hash_compare(hc) {}
-
-    class value_compare : public std::binary_function<value_type, value_type, bool>
-    {
-        friend class concurrent_unordered_map_traits<Key, T, Hash_compare, Allocator, Allow_multimapping>;
-
-    public:
-        bool operator()(const value_type& left, const value_type& right) const
-        {
-            return (my_hash_compare(left.first, right.first));
-        }
-
-        value_compare(const hash_compare& comparator) : my_hash_compare(comparator) {}
-
-    protected:
-        hash_compare my_hash_compare;    // the comparator predicate for keys
-    };
 
     template<class Type1, class Type2>
     static const Key& get_key(const std::pair<Type1, Type2>& value) {
@@ -117,7 +101,7 @@ public:
         : base_type(n_of_buckets, key_compare(_Hasher, _Key_equality), a)
     {}
 
-    concurrent_unordered_map(const Allocator& a) : base_type(base_type::initial_bucket_number, key_compare(), a)
+    explicit concurrent_unordered_map(const Allocator& a) : base_type(base_type::initial_bucket_number, key_compare(), a)
     {}
 
     template <typename Iterator>
@@ -253,7 +237,7 @@ public:
         : base_type(n_of_buckets, key_compare(_Hasher, _Key_equality), a)
     {}
 
-    concurrent_unordered_multimap(const Allocator& a) : base_type(base_type::initial_bucket_number, key_compare(), a)
+    explicit concurrent_unordered_multimap(const Allocator& a) : base_type(base_type::initial_bucket_number, key_compare(), a)
     {}
 
     template <typename Iterator>

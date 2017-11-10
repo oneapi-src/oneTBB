@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -43,94 +43,64 @@
 namespace tbb {
 namespace flow {
 
-namespace interface9 {
-
-class opencl_foundation;
-class opencl_device_list;
-
-template <typename Factory>
-class opencl_buffer_impl;
-
-template <typename Factory>
-class opencl_program;
-
-class default_opencl_factory;
-
-class opencl_graph : public graph {
-public:
-    //! Constructs a graph with isolated task_group_context
-    opencl_graph() : my_opencl_foundation( NULL ) {}
-    //! Constructs a graph with an user context
-    explicit opencl_graph( task_group_context& context ) : graph( context ), my_opencl_foundation( NULL ) {}
-    //! Destroys a graph
-    ~opencl_graph();
-    //! Available devices
-    const opencl_device_list& available_devices();
-    default_opencl_factory& opencl_factory();
-protected:
-    opencl_foundation *my_opencl_foundation;
-    opencl_foundation &get_opencl_foundation();
-
-    template <typename T, typename Factory>
-    friend class opencl_buffer;
-    template <cl_channel_order channel_order, cl_channel_type channel_type, typename Factory>
-    friend class opencl_image2d;
-    template<typename... Args>
-    friend class opencl_node;
-    template <typename DeviceFilter>
-    friend class opencl_factory;
-};
+namespace interface10 {
 
 template <typename DeviceFilter>
 class opencl_factory;
 
-template <typename T, typename Factory>
-class dependency_msg;
+namespace opencl_info {
+class default_opencl_factory;
+}
 
+template <typename Factory>
+class opencl_program;
 
-inline void enforce_cl_retcode( cl_int err, std::string msg ) {
-    if ( err != CL_SUCCESS ) {
+inline void enforce_cl_retcode(cl_int err, std::string msg) {
+    if (err != CL_SUCCESS) {
         std::cerr << msg << "; error code: " << err << std::endl;
         throw msg;
     }
 }
 
 template <typename T>
-T event_info( cl_event e, cl_event_info i ) {
+T event_info(cl_event e, cl_event_info i) {
     T res;
-    enforce_cl_retcode( clGetEventInfo( e, i, sizeof( res ), &res, NULL ), "Failed to get OpenCL event information" );
+    enforce_cl_retcode(clGetEventInfo(e, i, sizeof(res), &res, NULL), "Failed to get OpenCL event information");
     return res;
 }
 
 template <typename T>
-T device_info( cl_device_id d, cl_device_info i ) {
+T device_info(cl_device_id d, cl_device_info i) {
     T res;
-    enforce_cl_retcode( clGetDeviceInfo( d, i, sizeof( res ), &res, NULL ), "Failed to get OpenCL device information" );
+    enforce_cl_retcode(clGetDeviceInfo(d, i, sizeof(res), &res, NULL), "Failed to get OpenCL device information");
     return res;
 }
-template <>
-std::string device_info<std::string>( cl_device_id d, cl_device_info i ) {
-    size_t required;
-    enforce_cl_retcode( clGetDeviceInfo( d, i, 0, NULL, &required ), "Failed to get OpenCL device information" );
 
-    char *buff = (char*)alloca( required );
-    enforce_cl_retcode( clGetDeviceInfo( d, i, required, buff, NULL ), "Failed to get OpenCL device information" );
+template <>
+inline std::string device_info<std::string>(cl_device_id d, cl_device_info i) {
+    size_t required;
+    enforce_cl_retcode(clGetDeviceInfo(d, i, 0, NULL, &required), "Failed to get OpenCL device information");
+
+    char *buff = (char*)alloca(required);
+    enforce_cl_retcode(clGetDeviceInfo(d, i, required, buff, NULL), "Failed to get OpenCL device information");
 
     return buff;
 }
+
 template <typename T>
-T platform_info( cl_platform_id p, cl_platform_info i ) {
+T platform_info(cl_platform_id p, cl_platform_info i) {
     T res;
-    enforce_cl_retcode( clGetPlatformInfo( p, i, sizeof( res ), &res, NULL ), "Failed to get OpenCL platform information" );
+    enforce_cl_retcode(clGetPlatformInfo(p, i, sizeof(res), &res, NULL), "Failed to get OpenCL platform information");
     return res;
 }
-template <>
-std::string platform_info<std::string>( cl_platform_id p, cl_platform_info  i ) {
-    size_t required;
-    enforce_cl_retcode( clGetPlatformInfo( p, i, 0, NULL, &required ), "Failed to get OpenCL platform information" );
 
-    char *buff = (char*)alloca( required );
-    enforce_cl_retcode( clGetPlatformInfo( p, i, required, buff, NULL ), "Failed to get OpenCL platform information" );
+template <>
+inline std::string platform_info<std::string>(cl_platform_id p, cl_platform_info  i) {
+    size_t required;
+    enforce_cl_retcode(clGetPlatformInfo(p, i, 0, NULL, &required), "Failed to get OpenCL platform information");
+
+    char *buff = (char*)alloca(required);
+    enforce_cl_retcode(clGetPlatformInfo(p, i, required, buff, NULL), "Failed to get OpenCL platform information");
 
     return buff;
 }
@@ -144,9 +114,11 @@ public:
         host = device_id_type( -1 )
     };
 
-    opencl_device() : my_device_id( unknown ) {}
+    opencl_device() : my_device_id( unknown ), my_cl_device_id( NULL ), my_cl_command_queue( NULL ) {}
 
-    opencl_device( cl_device_id cl_d_id, device_id_type device_id ) : my_device_id( device_id ), my_cl_device_id( cl_d_id ) {}
+    opencl_device( cl_device_id d_id ) : my_device_id( unknown ), my_cl_device_id( d_id ), my_cl_command_queue( NULL ) {}
+
+    opencl_device( cl_device_id cl_d_id, device_id_type device_id ) : my_device_id( device_id ), my_cl_device_id( cl_d_id ), my_cl_command_queue( NULL ) {}
 
     std::string platform_profile() const {
         return platform_info<std::string>( platform(), CL_PLATFORM_PROFILE );
@@ -258,7 +230,6 @@ public:
     }
 
 private:
-    opencl_device( cl_device_id d_id ) : my_device_id( unknown ), my_cl_device_id( d_id ) {}
 
     cl_platform_id platform() const {
         return device_info<cl_platform_id>( my_cl_device_id, CL_DEVICE_PLATFORM );
@@ -276,7 +247,6 @@ private:
     friend class opencl_memory;
     template <typename Factory>
     friend class opencl_program;
-    friend class opencl_foundation;
 
 #if TBB_USE_ASSERT
     template <typename T, typename Factory>
@@ -303,9 +273,65 @@ public:
     const_iterator end() const { return my_container.end(); }
     const_iterator cbegin() const { return my_container.cbegin(); }
     const_iterator cend() const { return my_container.cend(); }
+
 private:
     container_type my_container;
 };
+
+namespace internal {
+
+// Retrieve all OpenCL devices from machine
+inline opencl_device_list find_available_devices() {
+    opencl_device_list opencl_devices;
+
+    cl_uint num_platforms;
+    enforce_cl_retcode(clGetPlatformIDs(0, NULL, &num_platforms), "clGetPlatformIDs failed");
+
+    std::vector<cl_platform_id> platforms(num_platforms);
+    enforce_cl_retcode(clGetPlatformIDs(num_platforms, platforms.data(), NULL), "clGetPlatformIDs failed");
+
+    cl_uint num_devices;
+    std::vector<cl_platform_id>::iterator platforms_it = platforms.begin();
+    cl_uint num_all_devices = 0;
+    while (platforms_it != platforms.end()) {
+        cl_int err = clGetDeviceIDs(*platforms_it, CL_DEVICE_TYPE_ALL, 0, NULL, &num_devices);
+        if (err == CL_DEVICE_NOT_FOUND) {
+            platforms_it = platforms.erase(platforms_it);
+        }
+        else {
+            enforce_cl_retcode(err, "clGetDeviceIDs failed");
+            num_all_devices += num_devices;
+            ++platforms_it;
+        }
+    }
+
+    std::vector<cl_device_id> devices(num_all_devices);
+    std::vector<cl_device_id>::iterator devices_it = devices.begin();
+    for (auto p = platforms.begin(); p != platforms.end(); ++p) {
+        enforce_cl_retcode(clGetDeviceIDs((*p), CL_DEVICE_TYPE_ALL, (cl_uint)std::distance(devices_it, devices.end()), &*devices_it, &num_devices), "clGetDeviceIDs failed");
+        devices_it += num_devices;
+    }
+
+    for (auto d = devices.begin(); d != devices.end(); ++d) {
+        opencl_devices.add(opencl_device((*d)));
+    }
+
+    return opencl_devices;
+}
+
+} // namespace internal
+
+// TODO: consider this namespace as public API
+namespace opencl_info {
+
+    inline const opencl_device_list& available_devices() {
+        // Static storage for all available OpenCL devices on machine
+        static const opencl_device_list my_devices = internal::find_available_devices();
+        return my_devices;
+    }
+
+} // namespace opencl_info
+
 
 class callback_base : tbb::internal::no_copy {
 public:
@@ -315,41 +341,30 @@ public:
 
 template <typename Callback, typename T>
 class callback : public callback_base {
-    graph &my_graph;
     Callback my_callback;
     T my_data;
 public:
-    callback( graph &g, Callback c, const T& t ) : my_graph( g ), my_callback( c ), my_data( t ) {
-        // Extend the graph lifetime until the callback completion.
-        my_graph.increment_wait_count();
-    }
-    ~callback() {
-        // Release the reference to the graph.
-        my_graph.decrement_wait_count();
-    }
+    callback( Callback c, const T& t ) : my_callback( c ), my_data( t ) {}
+
     void call() __TBB_override {
         my_callback( my_data );
     }
 };
 
-template <typename T, typename Factory = default_opencl_factory>
-class dependency_msg : public async_msg<T> {
+template <typename T, typename Factory = opencl_info::default_opencl_factory>
+class opencl_async_msg : public async_msg<T> {
 public:
     typedef T value_type;
 
-    dependency_msg() : my_callback_flag_ptr( std::make_shared< tbb::atomic<bool>>() ) {
+    opencl_async_msg() : my_callback_flag_ptr( std::make_shared< tbb::atomic<bool>>() ) {
         my_callback_flag_ptr->store<tbb::relaxed>(false);
     }
 
-    explicit dependency_msg( const T& data ) : my_data(data), my_callback_flag_ptr( std::make_shared<tbb::atomic<bool>>() ) {
+    explicit opencl_async_msg( const T& data ) : my_data(data), my_callback_flag_ptr( std::make_shared<tbb::atomic<bool>>() ) {
         my_callback_flag_ptr->store<tbb::relaxed>(false);
     }
 
-    dependency_msg( opencl_graph &g, const T& data ) : my_data(data), my_graph(&g), my_callback_flag_ptr( std::make_shared<tbb::atomic<bool>>() ) {
-        my_callback_flag_ptr->store<tbb::relaxed>(false);
-    }
-
-    dependency_msg( const T& data, cl_event event ) : my_data(data), my_event(event), my_is_event(true), my_callback_flag_ptr( std::make_shared<tbb::atomic<bool>>() ) {
+    opencl_async_msg( const T& data, cl_event event ) : my_data(data), my_event(event), my_is_event(true), my_callback_flag_ptr( std::make_shared<tbb::atomic<bool>>() ) {
         my_callback_flag_ptr->store<tbb::relaxed>(false);
         enforce_cl_retcode( clRetainEvent( my_event ), "Failed to retain an event" );
     }
@@ -372,27 +387,33 @@ public:
         return my_data;
     }
 
-    dependency_msg( const dependency_msg &dmsg ) : async_msg<T>(dmsg),
-        my_data(dmsg.my_data), my_event(dmsg.my_event), my_is_event( dmsg.my_is_event ), my_graph( dmsg.my_graph ),
+    opencl_async_msg( const opencl_async_msg &dmsg ) : async_msg<T>(dmsg),
+        my_data(dmsg.my_data), my_event(dmsg.my_event), my_is_event( dmsg.my_is_event ),
         my_callback_flag_ptr(dmsg.my_callback_flag_ptr)
     {
         if ( my_is_event )
             enforce_cl_retcode( clRetainEvent( my_event ), "Failed to retain an event" );
     }
 
-    dependency_msg( dependency_msg &&dmsg ) : async_msg<T>(std::move(dmsg)),
-        my_data(std::move(dmsg.my_data)), my_event(dmsg.my_event), my_is_event(dmsg.my_is_event), my_graph(dmsg.my_graph),
+    opencl_async_msg( opencl_async_msg &&dmsg ) : async_msg<T>(std::move(dmsg)),
+        my_data(std::move(dmsg.my_data)), my_event(dmsg.my_event), my_is_event(dmsg.my_is_event),
         my_callback_flag_ptr( std::move(dmsg.my_callback_flag_ptr) )
     {
         dmsg.my_is_event = false;
     }
 
-    dependency_msg& operator=(const dependency_msg &dmsg) {
+    opencl_async_msg& operator=(const opencl_async_msg &dmsg) {
         async_msg<T>::operator =(dmsg);
+
+        // Release original event
+        if ( my_is_event )
+            enforce_cl_retcode( clReleaseEvent( my_event ), "Failed to retain an event" );
+
         my_data = dmsg.my_data;
         my_event = dmsg.my_event;
         my_is_event = dmsg.my_is_event;
-        my_graph = dmsg.my_graph;
+
+        // Retain copied event
         if ( my_is_event )
             enforce_cl_retcode( clRetainEvent( my_event ), "Failed to retain an event" );
 
@@ -400,7 +421,7 @@ public:
         return *this;
     }
 
-    ~dependency_msg() {
+    ~opencl_async_msg() {
         if ( my_is_event )
             enforce_cl_retcode( clReleaseEvent( my_event ), "Failed to release an event" );
     }
@@ -418,10 +439,6 @@ public:
         clRetainEvent( my_event );
     }
 
-    void set_graph( graph &g ) {
-        my_graph = &g;
-    }
-
     void clear_event() const {
         if ( my_is_event ) {
             enforce_cl_retcode( clFlush( event_info<cl_command_queue>( my_event, CL_EVENT_COMMAND_QUEUE ) ), "Failed to flush an OpenCL command queue" );
@@ -433,8 +450,7 @@ public:
     template <typename Callback>
     void register_callback( Callback c ) const {
         __TBB_ASSERT( my_is_event, "The OpenCL event is not set" );
-        __TBB_ASSERT( my_graph, "The graph is not set" );
-        enforce_cl_retcode( clSetEventCallback( my_event, CL_COMPLETE, register_callback_func, new callback<Callback, T>( *my_graph, c, my_data ) ), "Failed to set an OpenCL callback" );
+        enforce_cl_retcode( clSetEventCallback( my_event, CL_COMPLETE, register_callback_func, new callback<Callback, T>( c, my_data ) ), "Failed to set an OpenCL callback" );
     }
 
     operator T&() { return data(); }
@@ -446,7 +462,7 @@ protected:
     void finalize() const __TBB_override {
         receive_if_memory_object(*this);
         if (! my_callback_flag_ptr->fetch_and_store(true)) {
-            dependency_msg a(*this);
+            opencl_async_msg a(*this);
             if (my_is_event) {
                 register_callback([a](const T& t) mutable {
                     a.set(t);
@@ -472,13 +488,12 @@ private:
     T my_data;
     mutable cl_event my_event;
     mutable bool my_is_event = false;
-    graph *my_graph = NULL;
 
     std::shared_ptr< tbb::atomic<bool> > my_callback_flag_ptr;
 };
 
 template <typename K, typename T, typename Factory>
-K key_from_message( const dependency_msg<T, Factory> &dmsg ) {
+K key_from_message( const opencl_async_msg<T, Factory> &dmsg ) {
     using tbb::flow::key_from_message;
     const T &t = dmsg.data( false );
     __TBB_STATIC_ASSERT( true, "" );
@@ -504,7 +519,7 @@ public:
 
     void* get_host_ptr() {
         if ( !my_host_ptr ) {
-            dependency_msg<void*, Factory> d = receive( NULL );
+            opencl_async_msg<void*, Factory> d = receive( NULL );
             d.data();
             __TBB_ASSERT( d.data() == my_host_ptr, NULL );
         }
@@ -513,9 +528,55 @@ public:
 
     Factory *factory() const { return my_factory; }
 
-    dependency_msg<void*, Factory> send( opencl_device d, const cl_event *e );
-    dependency_msg<void*, Factory> receive( const cl_event *e );
-    virtual void map_memory( opencl_device, dependency_msg<void*, Factory> & ) = 0;
+    opencl_async_msg<void*, Factory> receive(const cl_event *e) {
+        opencl_async_msg<void*, Factory> d;
+        if (e) { 
+            d = opencl_async_msg<void*, Factory>(my_host_ptr, *e);
+        } else { 
+            d = opencl_async_msg<void*, Factory>(my_host_ptr); 
+        }
+
+        // Concurrent receives are prohibited so we do not worry about synchronization.
+        if (my_curr_device_id.load<tbb::relaxed>() != opencl_device::host) {
+            map_memory(*my_factory->devices().begin(), d);
+            my_curr_device_id.store<tbb::relaxed>(opencl_device::host);
+            my_host_ptr = d.data(false);
+        }
+        // Release the sending event
+        if (my_sending_event_present) {
+            enforce_cl_retcode(clReleaseEvent(my_sending_event), "Failed to release an event");
+            my_sending_event_present = false;
+        }
+        return d;
+    }
+
+    opencl_async_msg<void*, Factory> send(opencl_device device, const cl_event *e) {
+        opencl_device::device_id_type device_id = device.my_device_id;
+        if (!my_factory->is_same_context(my_curr_device_id.load<tbb::acquire>(), device_id)) {
+            {
+                tbb::spin_mutex::scoped_lock lock(my_sending_lock);
+                if (!my_factory->is_same_context(my_curr_device_id.load<tbb::relaxed>(), device_id)) {
+                    __TBB_ASSERT(my_host_ptr, "The buffer has not been mapped");
+                    opencl_async_msg<void*, Factory> d(my_host_ptr);
+                    my_factory->enqueue_unmap_buffer(device, *this, d);
+                    my_sending_event = *d.get_event();
+                    my_sending_event_present = true;
+                    enforce_cl_retcode(clRetainEvent(my_sending_event), "Failed to retain an event");
+                    my_host_ptr = NULL;
+                    my_curr_device_id.store<tbb::release>(device_id);
+                }
+            }
+            __TBB_ASSERT(my_sending_event_present, NULL);
+        }
+
+        // !e means that buffer has come from the host
+        if (!e && my_sending_event_present) e = &my_sending_event;
+
+        __TBB_ASSERT(!my_host_ptr, "The buffer has not been unmapped");
+        return e ? opencl_async_msg<void*, Factory>(NULL, *e) : opencl_async_msg<void*, Factory>(NULL);
+    }
+
+    virtual void map_memory( opencl_device, opencl_async_msg<void*, Factory> & ) = 0;
 protected:
     cl_mem my_cl_mem;
     tbb::atomic<opencl_device::device_id_type> my_curr_device_id;
@@ -549,8 +610,8 @@ public:
         return my_size;
     }
 
-    void map_memory( opencl_device device, dependency_msg<void*, Factory> &dmsg ) __TBB_override {
-        this->my_factory->enque_map_buffer( device, *this, dmsg );
+    void map_memory( opencl_device device, opencl_async_msg<void*, Factory> &dmsg ) __TBB_override {
+        this->my_factory->enqueue_map_buffer( device, *this, dmsg );
     }
 
 #if TBB_USE_ASSERT
@@ -565,10 +626,10 @@ enum access_type {
     read_only
 };
 
-template <typename T, typename Factory = default_opencl_factory>
+template <typename T, typename Factory = opencl_info::default_opencl_factory>
 class opencl_subbuffer;
 
-template <typename T, typename Factory = default_opencl_factory>
+template <typename T, typename Factory = opencl_info::default_opencl_factory>
 class opencl_buffer {
 public:
     typedef cl_mem native_object_type;
@@ -597,7 +658,7 @@ public:
     T& operator[] ( ptrdiff_t k ) { return begin()[k]; }
 
     opencl_buffer() {}
-    opencl_buffer( opencl_graph &g, size_t size );
+    opencl_buffer( size_t size );
     opencl_buffer( Factory &f, size_t size ) : my_impl( std::make_shared<impl_type>( size*sizeof(T), f ) ) {}
 
     cl_mem native_object() const {
@@ -608,16 +669,16 @@ public:
         return *this;
     }
 
-    void send( opencl_device device, dependency_msg<opencl_buffer, Factory> &dependency ) const {
+    void send( opencl_device device, opencl_async_msg<opencl_buffer, Factory> &dependency ) const {
         __TBB_ASSERT( dependency.data( /*wait = */false ) == *this, NULL );
-        dependency_msg<void*, Factory> d = my_impl->send( device, dependency.get_event() );
+        opencl_async_msg<void*, Factory> d = my_impl->send( device, dependency.get_event() );
         const cl_event *e = d.get_event();
         if ( e ) dependency.set_event( *e );
         else dependency.clear_event();
     }
-    void receive( const dependency_msg<opencl_buffer, Factory> &dependency ) const {
+    void receive( const opencl_async_msg<opencl_buffer, Factory> &dependency ) const {
         __TBB_ASSERT( dependency.data( /*wait = */false ) == *this, NULL );
-        dependency_msg<void*, Factory> d = my_impl->receive( dependency.get_event() );
+        opencl_async_msg<void*, Factory> d = my_impl->receive( dependency.get_event() );
         const cl_event *e = d.get_event();
         if ( e ) dependency.set_event( *e );
         else dependency.clear_event();
@@ -683,11 +744,11 @@ typename std::enable_if<!is_native_object_type<T>::value, T>::type get_native_ob
 
 // send_if_memory_object checks if the T type has memory_object_type and call the send method for the object.
 template <typename T, typename Factory>
-typename std::enable_if<is_memory_object_type<T>::value>::type send_if_memory_object( opencl_device device, dependency_msg<T, Factory> &dmsg ) {
+typename std::enable_if<is_memory_object_type<T>::value>::type send_if_memory_object( opencl_device device, opencl_async_msg<T, Factory> &dmsg ) {
     const T &t = dmsg.data( false );
     typedef typename T::memory_object_type mem_obj_t;
     mem_obj_t mem_obj = t.memory_object();
-    dependency_msg<mem_obj_t, Factory> d( mem_obj );
+    opencl_async_msg<mem_obj_t, Factory> d( mem_obj );
     if ( dmsg.get_event() ) d.set_event( *dmsg.get_event() );
     mem_obj.send( device, d );
     if ( d.get_event() ) dmsg.set_event( *d.get_event() );
@@ -697,7 +758,7 @@ template <typename T>
 typename std::enable_if<is_memory_object_type<T>::value>::type send_if_memory_object( opencl_device device, T &t ) {
     typedef typename T::memory_object_type mem_obj_t;
     mem_obj_t mem_obj = t.memory_object();
-    dependency_msg<mem_obj_t, typename mem_obj_t::opencl_factory_type> dmsg( mem_obj );
+    opencl_async_msg<mem_obj_t, typename mem_obj_t::opencl_factory_type> dmsg( mem_obj );
     mem_obj.send( device, dmsg );
 }
 
@@ -706,11 +767,11 @@ typename std::enable_if<!is_memory_object_type<T>::value>::type send_if_memory_o
 
 // receive_if_memory_object checks if the T type has memory_object_type and call the receive method for the object.
 template <typename T, typename Factory>
-typename std::enable_if<is_memory_object_type<T>::value>::type receive_if_memory_object( const dependency_msg<T, Factory> &dmsg ) {
+typename std::enable_if<is_memory_object_type<T>::value>::type receive_if_memory_object( const opencl_async_msg<T, Factory> &dmsg ) {
     const T &t = dmsg.data( false );
     typedef typename T::memory_object_type mem_obj_t;
     mem_obj_t mem_obj = t.memory_object();
-    dependency_msg<mem_obj_t, Factory> d( mem_obj );
+    opencl_async_msg<mem_obj_t, Factory> d( mem_obj );
     if ( dmsg.get_event() ) d.set_event( *dmsg.get_event() );
     mem_obj.receive( d );
     if ( d.get_event() ) dmsg.set_event( *d.get_event() );
@@ -749,7 +810,7 @@ private:
 template <typename DeviceFilter>
 class opencl_factory {
 public:
-    template<typename T> using async_msg_type = dependency_msg<T, opencl_factory<DeviceFilter>>;
+    template<typename T> using async_msg_type = opencl_async_msg<T, opencl_factory<DeviceFilter>>;
     typedef opencl_device device_type;
 
     class kernel : tbb::internal::no_assign {
@@ -798,11 +859,11 @@ public:
     // it affects expectations for enqueue_kernel(.....) interface method
     typedef opencl_range range_type;
 
-    opencl_factory( opencl_graph &g ) : my_graph( g ) {}
+    opencl_factory() {}
     ~opencl_factory() {
         if ( my_devices.size() ) {
-            for ( opencl_device d : my_devices ) {
-                enforce_cl_retcode( clReleaseCommandQueue( d.my_cl_command_queue ), "Failed to release a command queue" );
+            for ( auto d = my_devices.begin(); d != my_devices.end(); ++d ) {
+                enforce_cl_retcode( clReleaseCommandQueue( (*d).my_cl_command_queue ), "Failed to release a command queue" );
             }
             enforce_cl_retcode( clReleaseContext( my_cl_context ), "Failed to release a context" );
         }
@@ -820,7 +881,7 @@ public:
 
 private:
     template <typename Factory>
-    void enque_map_buffer( opencl_device device, opencl_buffer_impl<Factory> &buffer, dependency_msg<void*, Factory>& dmsg ) {
+    void enqueue_map_buffer( opencl_device device, opencl_buffer_impl<Factory> &buffer, opencl_async_msg<void*, Factory>& dmsg ) {
         cl_event const* e1 = dmsg.get_event();
         cl_event e2;
         cl_int err;
@@ -834,7 +895,7 @@ private:
 
 
     template <typename Factory>
-    void enque_unmap_buffer( opencl_device device, opencl_memory<Factory> &memory, dependency_msg<void*, Factory>& dmsg ) {
+    void enqueue_unmap_buffer( opencl_device device, opencl_memory<Factory> &memory, opencl_async_msg<void*, Factory>& dmsg ) {
         cl_event const* e1 = dmsg.get_event();
         cl_event e2;
         enforce_cl_retcode(
@@ -852,7 +913,7 @@ private:
     }
 
     template <size_t NUM_ARGS, typename T, typename F>
-    void process_one_arg( const kernel_type& kernel, std::array<cl_event, NUM_ARGS>& events, int& num_events, int& place, const dependency_msg<T, F>& msg ) {
+    void process_one_arg( const kernel_type& kernel, std::array<cl_event, NUM_ARGS>& events, int& num_events, int& place, const opencl_async_msg<T, F>& msg ) {
         __TBB_ASSERT((static_cast<typename std::array<cl_event, NUM_ARGS>::size_type>(num_events) < events.size()), NULL);
 
         const cl_event * const e = msg.get_event();
@@ -876,9 +937,8 @@ private:
     void update_one_arg( cl_event, T& ) {}
 
     template <typename T, typename F>
-    void update_one_arg( cl_event e, dependency_msg<T, F>& msg ) {
+    void update_one_arg( cl_event e, opencl_async_msg<T, F>& msg ) {
         msg.set_event( e );
-        msg.set_graph( my_graph );
     }
 
     template <typename T, typename ...Rest>
@@ -938,7 +998,7 @@ private:
     }
 
     template <typename T, typename F>
-    bool get_event_from_one_arg( cl_event& e, const dependency_msg<T, F>& msg) {
+    bool get_event_from_one_arg( cl_event& e, const opencl_async_msg<T, F>& msg) {
         cl_event const *e_ptr = msg.get_event();
 
         if ( e_ptr != NULL ) {
@@ -1021,205 +1081,51 @@ private:
         return my_cl_context;
     }
 
-    void init_once();
-
-    std::once_flag my_once_flag;
-    opencl_device_list my_devices;
-    cl_context my_cl_context;
-    opencl_graph &my_graph;
-
-    tbb::spin_mutex my_devices_mutex;
-
-    template <typename Factory>
-    friend class opencl_program;
-    template <typename Factory>
-    friend class opencl_buffer_impl;
-    template <typename Factory>
-    friend class opencl_memory;
-};
-
-template <typename Factory>
-dependency_msg<void*, Factory> opencl_memory<Factory>::receive( const cl_event *e ) {
-    dependency_msg<void*, Factory> d = e ? dependency_msg<void*, Factory>( my_host_ptr, *e ) : dependency_msg<void*, Factory>( my_host_ptr );
-    // Concurrent receives are prohibited so we do not worry about synchronization.
-    if ( my_curr_device_id.load<tbb::relaxed>() != opencl_device::host ) {
-        map_memory( *my_factory->devices().begin(), d );
-        my_curr_device_id.store<tbb::relaxed>( opencl_device::host );
-        my_host_ptr = d.data( false );
-    }
-    // Release the sending event
-    if ( my_sending_event_present ) {
-        enforce_cl_retcode( clReleaseEvent( my_sending_event ), "Failed to release an event" );
-        my_sending_event_present = false;
-    }
-    return d;
-}
-
-template <typename Factory>
-dependency_msg<void*, Factory> opencl_memory<Factory>::send( opencl_device device, const cl_event *e ) {
-    opencl_device::device_id_type device_id = device.my_device_id;
-    if ( !my_factory->is_same_context( my_curr_device_id.load<tbb::acquire>(), device_id ) ) {
+    void init_once() {
         {
-            tbb::spin_mutex::scoped_lock lock( my_sending_lock );
-            if ( !my_factory->is_same_context( my_curr_device_id.load<tbb::relaxed>(), device_id ) ) {
-                __TBB_ASSERT( my_host_ptr, "The buffer has not been mapped" );
-                dependency_msg<void*, Factory> d( my_host_ptr );
-                my_factory->enque_unmap_buffer( device, *this, d );
-                my_sending_event = *d.get_event();
-                my_sending_event_present = true;
-                enforce_cl_retcode( clRetainEvent( my_sending_event ), "Failed to retain an event" );
-                my_host_ptr = NULL;
-                my_curr_device_id.store<tbb::release>(device_id);
-            }
-        }
-        __TBB_ASSERT( my_sending_event_present, NULL );
-    }
-
-    // !e means that buffer has come from the host
-    if ( !e && my_sending_event_present ) e = &my_sending_event;
-
-    __TBB_ASSERT( !my_host_ptr, "The buffer has not been unmapped" );
-    return e ? dependency_msg<void*, Factory>( NULL, *e ) : dependency_msg<void*, Factory>( NULL );
-}
-
-struct default_opencl_factory_device_filter {
-    opencl_device_list operator()( const opencl_device_list &devices ) {
-        opencl_device_list dl;
-        dl.add( *devices.begin() );
-        return dl;
-    }
-};
-
-class default_opencl_factory : public opencl_factory < default_opencl_factory_device_filter > {
-public:
-    template<typename T> using async_msg_type = dependency_msg<T, default_opencl_factory>;
-    
-    default_opencl_factory( opencl_graph &g ) : opencl_factory( g ) {}
-private:
-    default_opencl_factory( const default_opencl_factory& );
-    default_opencl_factory& operator=(const default_opencl_factory&);
-};
-
-class opencl_foundation : tbb::internal::no_assign {
-    struct default_device_selector_type {
-        opencl_device operator()( default_opencl_factory& f ) {
-            __TBB_ASSERT( ! f.devices().empty(), "No available devices" );
-            return *( f.devices().begin() );
-        }
-    };
-public:
-    opencl_foundation(opencl_graph &g) : my_default_opencl_factory(g), my_default_device_selector() {
-        cl_uint num_platforms;
-        enforce_cl_retcode(clGetPlatformIDs(0, NULL, &num_platforms), "clGetPlatformIDs failed");
-
-        std::vector<cl_platform_id> platforms(num_platforms);
-        enforce_cl_retcode(clGetPlatformIDs(num_platforms, platforms.data(), NULL), "clGetPlatformIDs failed");
-
-        cl_uint num_devices;
-        std::vector<cl_platform_id>::iterator platforms_it = platforms.begin();
-        cl_uint num_all_devices = 0;
-        while (platforms_it != platforms.end()) {
-            cl_int err = clGetDeviceIDs(*platforms_it, CL_DEVICE_TYPE_ALL, 0, NULL, &num_devices);
-            if (err == CL_DEVICE_NOT_FOUND) {
-                platforms_it = platforms.erase(platforms_it);
-            } else {
-                enforce_cl_retcode(err, "clGetDeviceIDs failed");
-                num_all_devices += num_devices;
-                ++platforms_it;
-            }
+            tbb::spin_mutex::scoped_lock lock(my_devices_mutex);
+            if (!my_devices.size())
+                my_devices = DeviceFilter()( opencl_info::available_devices() );
         }
 
-        std::vector<cl_device_id> devices(num_all_devices);
-        std::vector<cl_device_id>::iterator devices_it = devices.begin();
-        for (cl_platform_id p : platforms) {
-            enforce_cl_retcode(clGetDeviceIDs(p, CL_DEVICE_TYPE_ALL, (cl_uint)std::distance(devices_it, devices.end()), &*devices_it, &num_devices), "clGetDeviceIDs failed");
-            devices_it += num_devices;
+        enforce_cl_retcode(my_devices.size() ? CL_SUCCESS : CL_INVALID_DEVICE, "No devices in the device list");
+        cl_platform_id platform_id = my_devices.begin()->platform();
+        for (opencl_device_list::iterator it = ++my_devices.begin(); it != my_devices.end(); ++it)
+            enforce_cl_retcode(it->platform() == platform_id ? CL_SUCCESS : CL_INVALID_PLATFORM, "All devices should be in the same platform");
+
+        std::vector<cl_device_id> cl_device_ids;
+        for (auto d = my_devices.begin(); d != my_devices.end(); ++d) {
+            cl_device_ids.push_back((*d).my_cl_device_id);
         }
 
-        for (cl_device_id d : devices) my_devices.add(opencl_device(d));
-    }
+        cl_context_properties context_properties[3] = { CL_CONTEXT_PLATFORM, (cl_context_properties)platform_id, (cl_context_properties)NULL };
+        cl_int err;
+        cl_context ctx = clCreateContext(context_properties,
+            (cl_uint)cl_device_ids.size(),
+            cl_device_ids.data(),
+            NULL, NULL, &err);
+        enforce_cl_retcode(err, "Failed to create context");
+        my_cl_context = ctx;
 
-    default_opencl_factory &get_default_opencl_factory() {
-        return my_default_opencl_factory;
-    }
-
-    const opencl_device_list &get_all_devices() {
-        return my_devices;
-    }
-
-    default_device_selector_type get_default_device_selector() { return my_default_device_selector; }
-
-private:
-    default_opencl_factory my_default_opencl_factory;
-    opencl_device_list my_devices;
-
-    const default_device_selector_type my_default_device_selector;
-};
-
-opencl_foundation &opencl_graph::get_opencl_foundation() {
-    opencl_foundation* INITIALIZATION = (opencl_foundation*)1;
-    if ( my_opencl_foundation <= INITIALIZATION ) {
-        if ( tbb::internal::as_atomic( my_opencl_foundation ).compare_and_swap( INITIALIZATION, NULL ) == 0 ) {
-            my_opencl_foundation = new opencl_foundation( *this );
-        }
-        else {
-            tbb::internal::spin_wait_while_eq( my_opencl_foundation, INITIALIZATION );
-        }
-    }
-
-    __TBB_ASSERT( my_opencl_foundation > INITIALIZATION, "opencl_foundation is not initialized");
-    return *my_opencl_foundation;
-}
-
-opencl_graph::~opencl_graph() {
-    if ( my_opencl_foundation )
-        delete my_opencl_foundation;
-}
-
-template <typename DeviceFilter>
-void opencl_factory<DeviceFilter>::init_once() {
-        {
-            tbb::spin_mutex::scoped_lock lock( my_devices_mutex );
-            if ( !my_devices.size() )
-                my_devices = DeviceFilter()(my_graph.get_opencl_foundation().get_all_devices());
-        }
-
-    enforce_cl_retcode( my_devices.size() ? CL_SUCCESS : CL_INVALID_DEVICE, "No devices in the device list" );
-    cl_platform_id platform_id = my_devices.begin()->platform();
-    for ( opencl_device_list::iterator it = ++my_devices.begin(); it != my_devices.end(); ++it )
-        enforce_cl_retcode( it->platform() == platform_id ? CL_SUCCESS : CL_INVALID_PLATFORM, "All devices should be in the same platform" );
-
-    std::vector<cl_device_id> cl_device_ids;
-    for ( opencl_device d : my_devices ) cl_device_ids.push_back( d.my_cl_device_id );
-
-    cl_context_properties context_properties[3] = { CL_CONTEXT_PLATFORM, (cl_context_properties)platform_id, (cl_context_properties)NULL };
-    cl_int err;
-    cl_context ctx = clCreateContext( context_properties,
-        (cl_uint)cl_device_ids.size(),
-        cl_device_ids.data(),
-        NULL, NULL, &err );
-    enforce_cl_retcode( err, "Failed to create context" );
-    my_cl_context = ctx;
-
-    size_t device_counter = 0;
-    for ( opencl_device &d : my_devices ) {
-        d.my_device_id = device_counter++;
-        cl_int err2;
-        cl_command_queue cq;
+        size_t device_counter = 0;
+        for (auto d = my_devices.begin(); d != my_devices.end(); d++) {
+            (*d).my_device_id = device_counter++;
+            cl_int err2;
+            cl_command_queue cq;
 #if CL_VERSION_2_0
-        if ( d.major_version() >= 2 ) {
-            if ( d.out_of_order_exec_mode_on_host_present() ) {
-                cl_queue_properties props[] = { CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0 };
-                cq = clCreateCommandQueueWithProperties( ctx, d.my_cl_device_id, props, &err2 );
-            } else {
-                cl_queue_properties props[] = { 0 };
-                cq = clCreateCommandQueueWithProperties( ctx, d.my_cl_device_id, props, &err2 );
-            }
-        } else
+            if ((*d).major_version() >= 2) {
+                if ((*d).out_of_order_exec_mode_on_host_present()) {
+                    cl_queue_properties props[] = { CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0 };
+                    cq = clCreateCommandQueueWithProperties(ctx, (*d).my_cl_device_id, props, &err2);
+                } else {
+                    cl_queue_properties props[] = { 0 };
+                    cq = clCreateCommandQueueWithProperties(ctx, (*d).my_cl_device_id, props, &err2);
+                }
+            } else
 #endif
-        {
-            cl_command_queue_properties props = d.out_of_order_exec_mode_on_host_present() ? CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE : 0;
-            // Suppress "declared deprecated" warning for the next line.
+            {
+                cl_command_queue_properties props = (*d).out_of_order_exec_mode_on_host_present() ? CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE : 0;
+                // Suppress "declared deprecated" warning for the next line.
 #if __TBB_GCC_WARNING_SUPPRESSION_PRESENT
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -1232,38 +1138,82 @@ void opencl_factory<DeviceFilter>::init_once() {
 #pragma warning (disable: 4996)
 #endif
 #endif
-            cq = clCreateCommandQueue( ctx, d.my_cl_device_id, props, &err2 );
+                cq = clCreateCommandQueue(ctx, (*d).my_cl_device_id, props, &err2);
 #if _MSC_VER || __INTEL_COMPILER
 #pragma warning( pop )
 #endif
 #if __TBB_GCC_WARNING_SUPPRESSION_PRESENT
 #pragma GCC diagnostic pop
 #endif
+            }
+            enforce_cl_retcode(err2, "Failed to create command queue");
+            (*d).my_cl_command_queue = cq;
         }
-        enforce_cl_retcode( err2, "Failed to create command queue" );
-        d.my_cl_command_queue = cq;
     }
+
+    std::once_flag my_once_flag;
+    opencl_device_list my_devices;
+    cl_context my_cl_context;
+
+    tbb::spin_mutex my_devices_mutex;
+
+    template <typename Factory>
+    friend class opencl_program;
+    template <typename Factory>
+    friend class opencl_buffer_impl;
+    template <typename Factory>
+    friend class opencl_memory;
+}; // class opencl_factory
+
+// TODO: consider this namespace as public API
+namespace opencl_info {
+
+// Default types
+
+template <typename Factory>
+struct default_device_selector {
+    opencl_device operator()(Factory& f) {
+        __TBB_ASSERT(!f.devices().empty(), "No available devices");
+        return *(f.devices().begin());
+    }
+};
+
+struct default_device_filter {
+    opencl_device_list operator()(const opencl_device_list &devices) {
+        opencl_device_list dl;
+        dl.add(*devices.begin());
+        return dl;
+    }
+};
+
+class default_opencl_factory : public opencl_factory < default_device_filter >, tbb::internal::no_copy {
+public:
+    template<typename T> using async_msg_type = opencl_async_msg<T, default_opencl_factory>;
+
+    friend default_opencl_factory& default_factory();
+
+private:
+    default_opencl_factory() = default;
+};
+
+inline default_opencl_factory& default_factory() {
+    static default_opencl_factory default_factory;
+    return default_factory;
 }
 
-const opencl_device_list &opencl_graph::available_devices() {
-    return get_opencl_foundation().get_all_devices();
-}
-
-default_opencl_factory &opencl_graph::opencl_factory() {
-    return get_opencl_foundation().get_default_opencl_factory();
-}
+} // namespace opencl_info
 
 template <typename T, typename Factory>
-opencl_buffer<T, Factory>::opencl_buffer( opencl_graph &g, size_t size ) : my_impl( std::make_shared<impl_type>( size*sizeof(T), g.get_opencl_foundation().get_default_opencl_factory() ) ) {}
+opencl_buffer<T, Factory>::opencl_buffer( size_t size ) : my_impl( std::make_shared<impl_type>( size*sizeof(T), opencl_info::default_factory() ) ) {}
 
-    
+
 enum class opencl_program_type {
     SOURCE,
     PRECOMPILED,
     SPIR
 };
 
-template <typename Factory = default_opencl_factory>
+template <typename Factory = opencl_info::default_opencl_factory>
 class opencl_program : tbb::internal::no_assign {
 public:
     typedef typename Factory::kernel_type kernel_type;
@@ -1272,10 +1222,10 @@ public:
     opencl_program( Factory& factory, const char* program_name ) : opencl_program( factory, std::string( program_name ) ) {}
     opencl_program( Factory& factory, const std::string& program_name ) : opencl_program( factory, opencl_program_type::SOURCE, program_name ) {}
 
-    opencl_program( opencl_graph& graph, opencl_program_type type, const std::string& program_name ) : opencl_program( graph.opencl_factory(), type, program_name ) {}
-    opencl_program( opencl_graph& graph, const char* program_name ) : opencl_program( graph.opencl_factory(), program_name ) {}
-    opencl_program( opencl_graph& graph, const std::string& program_name ) : opencl_program( graph.opencl_factory(), program_name ) {}
-    opencl_program( opencl_graph& graph, opencl_program_type type ) : opencl_program( graph.opencl_factory(), type ) {}
+    opencl_program( opencl_program_type type, const std::string& program_name ) : opencl_program( opencl_info::default_factory(), type, program_name ) {}
+    opencl_program( const char* program_name ) : opencl_program( opencl_info::default_factory(), program_name ) {}
+    opencl_program( const std::string& program_name ) : opencl_program( opencl_info::default_factory(), program_name ) {}
+    opencl_program( opencl_program_type type ) : opencl_program( opencl_info::default_factory(), type ) {}
 
     opencl_program( const opencl_program &src ) : my_factory( src.my_factory ), my_type( src.type ), my_arg_str( src.my_arg_str ), my_cl_program( src.my_cl_program ) {
         // Set my_do_once_flag to the called state.
@@ -1337,18 +1287,18 @@ private:
             std::string str = std::string( "Failed to build program: " ) + name;
             if ( err == CL_BUILD_PROGRAM_FAILURE ) {
                 const opencl_device_list &devices = f.devices();
-                for ( opencl_device d : devices ) {
-                    std::cerr << "Build log for device: " << d.name() << std::endl;
+                for ( auto d = devices.begin(); d != devices.end(); ++d ) {
+                    std::cerr << "Build log for device: " << (*d).name() << std::endl;
                     size_t log_size;
                     cl_int query_err = clGetProgramBuildInfo(
-                        program, d.my_cl_device_id, CL_PROGRAM_BUILD_LOG, 0, NULL,
+                        program, (*d).my_cl_device_id, CL_PROGRAM_BUILD_LOG, 0, NULL,
                         &log_size );
                     enforce_cl_retcode( query_err, "Failed to get build log size" );
                     if( log_size ) {
                         std::vector<char> output;
                         output.resize( log_size );
                         query_err = clGetProgramBuildInfo(
-                            program, d.my_cl_device_id, CL_PROGRAM_BUILD_LOG,
+                            program, (*d).my_cl_device_id, CL_PROGRAM_BUILD_LOG,
                             output.size(), output.data(), NULL );
                         enforce_cl_retcode( query_err, "Failed to get build output" );
                         std::cerr << output.data() << std::endl;
@@ -1417,8 +1367,10 @@ private:
                                                        bin_statuses.data(), &err );
             if( err != CL_SUCCESS ) {
                 std::string statuses_str;
-                for( cl_int st : bin_statuses )
-                    statuses_str += std::to_string( st );
+                for (auto st = bin_statuses.begin(); st != bin_statuses.end(); ++st) {
+                    statuses_str += std::to_string((*st));
+                }
+
                 enforce_cl_retcode( err, std::string( "Failed to create program, error " + std::to_string( err ) + " : " ) + my_arg_str +
                                     std::string( ", binary_statuses = " ) + statuses_str );
             }
@@ -1454,68 +1406,73 @@ class opencl_node< tuple<Ports...>, JP, Factory > : public streaming_node< tuple
 public:
     typedef typename base_type::kernel_type kernel_type;
 
-    opencl_node( opencl_graph &g, const kernel_type& kernel )
-        : base_type( g, kernel, g.get_opencl_foundation().get_default_device_selector(), g.get_opencl_foundation().get_default_opencl_factory() )
-    {}
+    opencl_node( graph &g, const kernel_type& kernel )
+        : base_type( g, kernel, opencl_info::default_device_selector< opencl_info::default_opencl_factory >(), opencl_info::default_factory() )
+    {
+        tbb::internal::fgt_multiinput_multioutput_node( tbb::internal::FLOW_OPENCL_NODE, this, &this->my_graph );
+    }
 
-    opencl_node( opencl_graph &g, const kernel_type& kernel, Factory &f )
-        : base_type( g, kernel, g.get_opencl_foundation().get_default_device_selector(), f )
-    {}
+    opencl_node( graph &g, const kernel_type& kernel, Factory &f )
+        : base_type( g, kernel, opencl_info::default_device_selector <Factory >(), f )
+    {
+        tbb::internal::fgt_multiinput_multioutput_node( tbb::internal::FLOW_OPENCL_NODE, this, &this->my_graph );
+    }
 
     template <typename DeviceSelector>
-    opencl_node( opencl_graph &g, const kernel_type& kernel, DeviceSelector d, Factory &f)
+    opencl_node( graph &g, const kernel_type& kernel, DeviceSelector d, Factory &f)
         : base_type( g, kernel, d, f)
-    {}
+    {
+        tbb::internal::fgt_multiinput_multioutput_node( tbb::internal::FLOW_OPENCL_NODE, this, &this->my_graph );
+    }
 };
 
 template<typename JP, typename... Ports>
-class opencl_node< tuple<Ports...>, JP > : public opencl_node < tuple<Ports...>, JP, default_opencl_factory > {
-    typedef opencl_node < tuple<Ports...>, JP, default_opencl_factory > base_type;
+class opencl_node< tuple<Ports...>, JP > : public opencl_node < tuple<Ports...>, JP, opencl_info::default_opencl_factory > {
+    typedef opencl_node < tuple<Ports...>, JP, opencl_info::default_opencl_factory > base_type;
 public:
     typedef typename base_type::kernel_type kernel_type;
 
-    opencl_node( opencl_graph &g, const kernel_type& kernel )
-        : base_type( g, kernel, g.get_opencl_foundation().get_default_device_selector(), g.get_opencl_foundation().get_default_opencl_factory() )
+    opencl_node( graph &g, const kernel_type& kernel )
+        : base_type( g, kernel, opencl_info::default_device_selector< opencl_info::default_opencl_factory >(), opencl_info::default_factory() )
     {}
 
     template <typename DeviceSelector>
-    opencl_node( opencl_graph &g, const kernel_type& kernel, DeviceSelector d )
-        : base_type( g, kernel, d, g.get_opencl_foundation().get_default_opencl_factory() )
+    opencl_node( graph &g, const kernel_type& kernel, DeviceSelector d )
+        : base_type( g, kernel, d, opencl_info::default_factory() )
     {}
 };
 
 template<typename... Ports>
-class opencl_node< tuple<Ports...> > : public opencl_node < tuple<Ports...>, queueing, default_opencl_factory > {
-    typedef opencl_node < tuple<Ports...>, queueing, default_opencl_factory > base_type;
+class opencl_node< tuple<Ports...> > : public opencl_node < tuple<Ports...>, queueing, opencl_info::default_opencl_factory > {
+    typedef opencl_node < tuple<Ports...>, queueing, opencl_info::default_opencl_factory > base_type;
 public:
     typedef typename base_type::kernel_type kernel_type;
 
-    opencl_node( opencl_graph &g, const kernel_type& kernel )
-        : base_type( g, kernel, g.get_opencl_foundation().get_default_device_selector(), g.get_opencl_foundation().get_default_opencl_factory() )
+    opencl_node( graph &g, const kernel_type& kernel )
+        : base_type( g, kernel, opencl_info::default_device_selector< opencl_info::default_opencl_factory >(), opencl_info::default_factory() )
     {}
 
     template <typename DeviceSelector>
-    opencl_node( opencl_graph &g, const kernel_type& kernel, DeviceSelector d )
-        : base_type( g, kernel, d, g.get_opencl_foundation().get_default_opencl_factory() )
+    opencl_node( graph &g, const kernel_type& kernel, DeviceSelector d )
+        : base_type( g, kernel, d, opencl_info::default_factory() )
     {}
 };
 
-} // namespace interface9
+} // namespace interface10
 
-using interface9::opencl_graph;
-using interface9::opencl_node;
-using interface9::read_only;
-using interface9::read_write;
-using interface9::write_only;
-using interface9::opencl_buffer;
-using interface9::opencl_subbuffer;
-using interface9::opencl_device;
-using interface9::opencl_device_list;
-using interface9::opencl_program;
-using interface9::opencl_program_type;
-using interface9::dependency_msg;
-using interface9::opencl_factory;
-using interface9::opencl_range;
+using interface10::opencl_node;
+using interface10::read_only;
+using interface10::read_write;
+using interface10::write_only;
+using interface10::opencl_buffer;
+using interface10::opencl_subbuffer;
+using interface10::opencl_device;
+using interface10::opencl_device_list;
+using interface10::opencl_program;
+using interface10::opencl_program_type;
+using interface10::opencl_async_msg;
+using interface10::opencl_factory;
+using interface10::opencl_range;
 
 } // namespace flow
 } // namespace tbb

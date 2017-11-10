@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -118,7 +118,7 @@ void QueuingMutex::ScopedLock::Acquire( QueuingMutex& m, size_t test_mode )
         case 0:
             mutex->waitq.wait( QueuingMutex_Until(going), QueuingMutex_Context(this) );
             break;
-#if __TBB_LAMBDAS_PRESENT
+#if __TBB_CPP11_LAMBDAS_PRESENT
         case 1:
             mutex->waitq.wait( [&](){ return going!=0ul; }, [=]() { return (uintptr_t)this; } );
             break;
@@ -219,7 +219,7 @@ retry:
         case 0:
             mutex->waitq.wait( SpinMutex_Until(mutex), SpinMutex_Context(this) );
             break;
-#if __TBB_LAMBDAS_PRESENT
+#if __TBB_CPP11_LAMBDAS_PRESENT
         case 1:
             mutex->waitq.wait( [&](){ return mutex->flag==0; }, [=]() { return (uintptr_t)this; } );
             break;

@@ -359,7 +359,7 @@
 				<dt><a href="msvs/">msvs</a>
 				<dd>Contains Microsoft* Visual Studio* workspace for building and running the example with the Intel&reg; C++ Compiler (Windows* systems only).
 				<dt><a href="xcode/">xcode</a>
-				<dd>Contains Xcode* IDE workspace for building and running the example (OS X* systems only).
+				<dd>Contains Xcode* IDE workspace for building and running the example (macOS* systems only).
 			</dl>
 			<p>For information about the minimum supported version of IDE, see <a href="http://software.intel.com/en-us/articles/intel-threading-building-blocks-release-notes">release notes.</a></p>
 		</div>
@@ -381,7 +381,7 @@
 				<dt><tt>binpack <i>-h</i></tt>
 				<dd>Prints the help for command line options
 				<dt><tt>binpack [<i>#threads</i>=value] [<i>verbose</i>] [<i>silent</i>] [<i>N</i>=value] [<i>V</i>=value] [<i>#packers</i>=value] [<i>optimality</i>=value] [<i>#threads</i>]</tt>
-				<dd><tt><i>#threads</i></tt> is the number of threads to use; a range of the form <i>low</i>[:<i>high</i>] where low and optional high are non-negative integers, or 'auto' for the TBB default.<br>
+				<dd><tt><i>#threads</i></tt> is the number of threads to use; a range of the form <i>low</i>[:<i>high</i>] where low and optional high are non-negative integers, or 'auto' for a platform-specific default number.<br>
 					<tt><i>verbose</i></tt> print diagnostic output to screen<br>
 					<tt><i>silent</i></tt> limits output to timing info; overrides verbose<br>
 					<tt><i>N</i></tt> number of values to pack<br>
@@ -406,7 +406,7 @@
 			<p>
 				Intel and the Intel logo are trademarks of Intel Corporation in the U.S. and/or other countries.
 				<br>* Other names and brands may be claimed as the property of others. 
-				<br>&copy; 2016, Intel Corporation
+				<br>&copy; 2017, Intel Corporation
 			</p>
 		</div>
 	</div>	

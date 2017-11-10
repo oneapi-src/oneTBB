@@ -1,4 +1,4 @@
-# Copyright (c) 2005-2016 Intel Corporation
+# Copyright (c) 2005-2017 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,12 +34,14 @@ endif
 
 export ANDROID_NDK_ROOT:=$(NDK_ROOT)
 export ndk_version:=$(lastword $(subst -, ,$(ANDROID_NDK_ROOT)))
+ndk_version:= $(firstword $(subst /, ,$(ndk_version)))
+ndk_version:= $(firstword $(subst \, ,$(ndk_version)))
 
 ifeq (clang,$(compiler))
-	ifneq (,$(findstring r13,$(ndk_version)))
-	TBB_RTL :=llvm-libc++
+	ifeq (,$(findstring $(ndk_version),ifeq (,$(findstring $(ndk_version),$(foreach v, 7 8 9 10 11 12,r$(v) r$(v)b r$(v)c r$(v)d r$(v)e)))))
+		TBB_RTL :=llvm-libc++
 	else
-	TBB_RTL :=llvm-libc++/libcxx
+		TBB_RTL :=llvm-libc++/libcxx
 	endif
 	TBB_RTL_LIB :=llvm-libc++
 	TBB_RTL_FILE :=libc++_shared.so

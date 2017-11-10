@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -32,15 +32,20 @@ const int N = 1000;
 using tbb::flow::internal::SUCCESSFULLY_ENQUEUED;
 
 template< typename T >
-struct serial_receiver : public tbb::flow::receiver<T> {
+struct serial_receiver : public tbb::flow::receiver<T>, NoAssign {
    T next_value;
+   tbb::flow::graph& my_graph;
 
-   serial_receiver() : next_value(T(0)) {}
+   serial_receiver(tbb::flow::graph& g) : next_value(T(0)), my_graph(g) {}
 
    tbb::task *try_put_task( const T &v ) __TBB_override {
        ASSERT( next_value++  == v, NULL );
        return const_cast<tbb::task *>(SUCCESSFULLY_ENQUEUED);
    }
+
+    tbb::flow::graph& graph_reference() __TBB_override {
+        return my_graph;
+    }
 
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
     typedef typename tbb::flow::receiver<T>::built_predecessors_type built_predecessors_type;
@@ -58,16 +63,21 @@ struct serial_receiver : public tbb::flow::receiver<T> {
 };
 
 template< typename T >
-struct parallel_receiver : public tbb::flow::receiver<T> {
+struct parallel_receiver : public tbb::flow::receiver<T>, NoAssign {
 
-   tbb::atomic<int> my_count;
+    tbb::atomic<int> my_count;
+    tbb::flow::graph& my_graph;
 
-   parallel_receiver() { my_count = 0; }
+    parallel_receiver(tbb::flow::graph& g) : my_graph(g) { my_count = 0; }
 
-   tbb::task *try_put_task( const T &/*v*/ ) __TBB_override {
+    tbb::task *try_put_task( const T &/*v*/ ) __TBB_override {
        ++my_count;
        return const_cast<tbb::task *>(tbb::flow::internal::SUCCESSFULLY_ENQUEUED);
-   }
+    }
+
+    tbb::flow::graph& graph_reference() __TBB_override {
+        return my_graph;
+    }
 
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
     typedef typename tbb::flow::receiver<T>::built_predecessors_type built_predecessors_type;
@@ -144,8 +154,8 @@ struct put_dec_body : NoAssign {
 };
 
 template< typename T >
-void test_puts_with_decrements( int num_threads, tbb::flow::limiter_node< T >& lim ) {
-    parallel_receiver<T> r;
+void test_puts_with_decrements( int num_threads, tbb::flow::limiter_node< T >& lim , tbb::flow::graph& g) {
+    parallel_receiver<T> r(g);
     empty_sender< tbb::flow::continue_msg > s;
     tbb::atomic<int> accept_count;
     accept_count = 0;
@@ -155,7 +165,7 @@ void test_puts_with_decrements( int num_threads, tbb::flow::limiter_node< T >& l
     ASSERT(lim.decrement.predecessor_count() == 1, NULL);
     ASSERT(lim.successor_count() == 1, NULL);
     ASSERT(lim.predecessor_count() == 0, NULL);
-    typename tbb::flow::interface9::internal::decrementer<tbb::flow::limiter_node<T> >::predecessor_list_type dec_preds;
+    typename tbb::flow::interface10::internal::decrementer<tbb::flow::limiter_node<T> >::predecessor_list_type dec_preds;
     lim.decrement.copy_predecessors(dec_preds);
     ASSERT(dec_preds.size() == 1, NULL);
 #endif
@@ -180,7 +190,7 @@ int test_parallel(int num_threads) {
    for ( int i = 0; i < L; ++i ) {
        tbb::flow::graph g;
        tbb::flow::limiter_node< T > lim(g, i);
-       parallel_receiver<T> r;
+       parallel_receiver<T> r(g);
        tbb::atomic<int> accept_count;
        accept_count = 0;
        tbb::flow::make_edge( lim, r );
@@ -195,9 +205,9 @@ int test_parallel(int num_threads) {
    for ( int i = 1; i < L; ++i ) {
        tbb::flow::graph g;
        tbb::flow::limiter_node< T > lim(g, i);
-       test_puts_with_decrements(num_threads, lim);
+       test_puts_with_decrements(num_threads, lim, g);
        tbb::flow::limiter_node< T > lim_copy( lim );
-       test_puts_with_decrements(num_threads, lim_copy);
+       test_puts_with_decrements(num_threads, lim_copy, g);
    }
 
    return 0;
@@ -216,7 +226,7 @@ int test_serial() {
    for ( int i = 0; i < L; ++i ) {
        tbb::flow::graph g;
        tbb::flow::limiter_node< T > lim(g, i);
-       serial_receiver<T> r;
+       serial_receiver<T> r(g);
        tbb::flow::make_edge( lim, r );
        for ( int j = 0; j < L; ++j ) {
            bool msg = lim.try_put( T(j) );
@@ -229,7 +239,7 @@ int test_serial() {
    for ( int i = 1; i < L; ++i ) {
        tbb::flow::graph g;
        tbb::flow::limiter_node< T > lim(g, i);
-       serial_receiver<T> r;
+       serial_receiver<T> r(g);
        empty_sender< tbb::flow::continue_msg > s;
        tbb::flow::make_edge( lim, r );
        tbb::flow::make_edge(s, lim.decrement);

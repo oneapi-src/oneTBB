@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -165,15 +165,16 @@ namespace internal {
     //! Memory prefix to a task object.
     /** This class is internal to the library.
         Do not reference it directly, except within the library itself.
-        Fields are ordered in way that preserves backwards compatibility and yields
-        good packing on typical 32-bit and 64-bit platforms. New fields should be
-        added at the beginning for backward compatibility with accesses to the task
-        prefix inlined into application code.
+        Fields are ordered in way that preserves backwards compatibility and yields good packing on
+        typical 32-bit and 64-bit platforms. New fields should be added at the beginning for
+        backward compatibility with accesses to the task prefix inlined into application code. To
+        prevent ODR violation, the class shall have the same layout in all application translation
+        units. If some fields are conditional (e.g. enabled by preview macros) and might get
+        skipped, use reserved fields to adjust the layout.
 
-        In case task prefix size exceeds 32 or 64 bytes on IA32 and Intel64
-        architectures correspondingly, consider dynamic setting of task_alignment
-        and task_prefix_reservation_size based on the maximal operand size supported
-        by the current CPU.
+        In case task prefix size exceeds 32 or 64 bytes on IA32 and Intel64 architectures
+        correspondingly, consider dynamic setting of task_alignment and task_prefix_reservation_size
+        based on the maximal operand size supported by the current CPU.
 
         @ingroup task_scheduling */
     class task_prefix {
@@ -190,6 +191,8 @@ namespace internal {
 #if __TBB_TASK_ISOLATION
         //! The tag used for task isolation.
         isolation_tag isolation;
+#else
+        intptr_t reserved_space_for_task_isolation_tag;
 #endif /* __TBB_TASK_ISOLATION */
 
 #if __TBB_TASK_GROUP_CONTEXT
@@ -928,6 +931,9 @@ namespace internal {
         }
     public:
         function_task( const F& f ) : my_func(f) {}
+#if __TBB_CPP11_RVALUE_REF_PRESENT
+        function_task( F&& f ) : my_func( std::move(f) ) {}
+#endif
     };
 } // namespace internal
 //! @endcond

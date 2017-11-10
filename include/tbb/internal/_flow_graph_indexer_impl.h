@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -43,11 +43,11 @@ namespace internal {
     template<typename TupleTypes,int N>
     struct indexer_helper {
         template<typename IndexerNodeBaseType, typename PortTuple>
-        static inline void set_indexer_node_pointer(PortTuple &my_input, IndexerNodeBaseType *p) {
+        static inline void set_indexer_node_pointer(PortTuple &my_input, IndexerNodeBaseType *p, graph& g) {
             typedef typename tuple_element<N-1, TupleTypes>::type T;
             task *(*indexer_node_put_task)(const T&, void *) = do_try_put<IndexerNodeBaseType, T, N-1>;
-            tbb::flow::get<N-1>(my_input).set_up(p, indexer_node_put_task);
-            indexer_helper<TupleTypes,N-1>::template set_indexer_node_pointer<IndexerNodeBaseType,PortTuple>(my_input, p);
+            tbb::flow::get<N-1>(my_input).set_up(p, indexer_node_put_task, g);
+            indexer_helper<TupleTypes,N-1>::template set_indexer_node_pointer<IndexerNodeBaseType,PortTuple>(my_input, p, g);
         }
         template<typename InputTuple>
         static inline void reset_inputs(InputTuple &my_input, reset_flags f) {
@@ -66,10 +66,10 @@ namespace internal {
     template<typename TupleTypes>
     struct indexer_helper<TupleTypes,1> {
         template<typename IndexerNodeBaseType, typename PortTuple>
-        static inline void set_indexer_node_pointer(PortTuple &my_input, IndexerNodeBaseType *p) {
+        static inline void set_indexer_node_pointer(PortTuple &my_input, IndexerNodeBaseType *p, graph& g) {
             typedef typename tuple_element<0, TupleTypes>::type T;
             task *(*indexer_node_put_task)(const T&, void *) = do_try_put<IndexerNodeBaseType, T, 0>;
-            tbb::flow::get<0>(my_input).set_up(p, indexer_node_put_task);
+            tbb::flow::get<0>(my_input).set_up(p, indexer_node_put_task, g);
         }
         template<typename InputTuple>
         static inline void reset_inputs(InputTuple &my_input, reset_flags f) {
@@ -94,16 +94,18 @@ namespace internal {
         typedef typename receiver<T>::built_predecessors_type built_predecessors_type;
         built_predecessors_type my_built_predecessors;
 #endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
+        graph* my_graph;
     public:
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
-        indexer_input_port() : my_pred_mutex() {}
-        indexer_input_port( const indexer_input_port & /*other*/ ) : receiver<T>(), my_pred_mutex() {
+        indexer_input_port() : my_pred_mutex(), my_graph(NULL) {}
+        indexer_input_port( const indexer_input_port & other) : receiver<T>(), my_pred_mutex(), my_graph(other.my_graph) {
         }
 #endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
-        void set_up(void *p, forward_function_ptr f) {
-                my_indexer_ptr = p;
-                my_try_put_task = f;
-            }
+        void set_up(void* p, forward_function_ptr f, graph& g) {
+            my_indexer_ptr = p;
+            my_try_put_task = f;
+            my_graph = &g;
+        }
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
         typedef typename receiver<T>::predecessor_list_type predecessor_list_type;
         typedef typename receiver<T>::predecessor_type predecessor_type;
@@ -135,6 +137,10 @@ namespace internal {
             return my_try_put_task(v, my_indexer_ptr);
         }
 
+        graph& graph_reference() __TBB_override {
+            return *my_graph;
+        }
+
     public:
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
         void reset_receiver(reset_flags f) __TBB_override { if(f&rf_clear_edges) my_built_predecessors.clear(); }
@@ -154,7 +160,7 @@ namespace internal {
         typedef OutputType output_type;
         typedef InputTuple input_type;
 
-        // Some versions of Intel C++ compiler fail to generate an implicit constructor for the class which has std::tuple as a member.
+        // Some versions of Intel(R) C++ Compiler fail to generate an implicit constructor for the class which has std::tuple as a member.
         indexer_node_FE() : my_inputs() {}
 
         input_type &input_ports() { return my_inputs; }
@@ -257,13 +263,13 @@ namespace internal {
         // ---------- end aggregator -----------
     public:
         indexer_node_base(graph& g) : graph_node(g), input_ports_type() {
-            indexer_helper<StructTypes,N>::set_indexer_node_pointer(this->my_inputs, this);
+            indexer_helper<StructTypes,N>::set_indexer_node_pointer(this->my_inputs, this, g);
             my_successors.set_owner(this);
             my_aggregator.initialize_handler(handler_type(this));
         }
 
         indexer_node_base(const indexer_node_base& other) : graph_node(other.my_graph), input_ports_type(), sender<output_type>() {
-            indexer_helper<StructTypes,N>::set_indexer_node_pointer(this->my_inputs, this);
+            indexer_helper<StructTypes,N>::set_indexer_node_pointer(this->my_inputs, this, other.my_graph);
             my_successors.set_owner(this);
             my_aggregator.initialize_handler(handler_type(this));
         }

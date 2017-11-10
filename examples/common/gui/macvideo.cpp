@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -38,11 +38,11 @@ struct timeval g_time;
 
 video::video()
 #if __TBB_IOS
-    : red_mask(0xff), red_shift(0), green_mask(0xff00),
-      green_shift(8), blue_mask(0xff0000), blue_shift(16), depth(24)
+    : depth(24), red_shift(0), green_shift(8), blue_shift(16),
+    red_mask(0xff), green_mask(0xff00), blue_mask(0xff0000)
 #else
-    : red_mask(0xff0000), red_shift(16), green_mask(0xff00),
-    green_shift(8), blue_mask(0xff), blue_shift(0), depth(24)
+    : depth(24), red_shift(16), green_shift(8), blue_shift(0),
+    red_mask(0xff0000), green_mask(0xff00), blue_mask(0xff)
 #endif
 {
     assert(g_video == 0);
@@ -70,10 +70,10 @@ void video::terminate()
 {
     if(calc_fps) {
         double fps = g_fps;
-		struct timezone tz; struct timeval end_time; gettimeofday(&end_time, &tz);
-		fps /= (end_time.tv_sec+1.0*end_time.tv_usec/1000000.0) - (g_time.tv_sec+1.0*g_time.tv_usec/1000000.0);
+        struct timezone tz; struct timeval end_time; gettimeofday(&end_time, &tz);
+        fps /= (end_time.tv_sec+1.0*end_time.tv_usec/1000000.0) - (g_time.tv_sec+1.0*g_time.tv_usec/1000000.0);
         printf("%s: %.1f fps\n", title, fps);
-  	}
+    }
     g_video = 0; running = false;
     if(g_pImg) { delete[] g_pImg; g_pImg = 0; }
 }
@@ -87,9 +87,9 @@ video::~video()
 bool video::next_frame()
 {
     if(calc_fps){
-	    if(!g_fps) {
-		    struct timezone tz; gettimeofday(&g_time, &tz);
-	    }
+        if(!g_fps) {
+            struct timezone tz; gettimeofday(&g_time, &tz);
+        }
         g_fps++;
     }
     struct timezone tz; struct timeval now_time; gettimeofday(&now_time, &tz);
@@ -97,7 +97,7 @@ bool video::next_frame()
     if( sec>1 ){
         if(calc_fps) {
             memcpy(&g_time, &now_time, sizeof(g_time));
-            int fps; 
+            int fps;
             fps = g_fps/sec;
             cocoa_update = (int)updating;
             snprintf(window_title,WINDOW_TITLE_SIZE, "%s%s: %d fps", title, updating?"":" (no updating)", int(fps));
@@ -119,7 +119,7 @@ extern "C" void on_mouse_func(int x, int y, int k)
     g_video->on_mouse(x, y, k);
     return;
 }
- 
+
 extern "C" void on_key_func(int x)
 {
     g_video->on_key(x);
@@ -149,8 +149,8 @@ void video::show_title()
 ///////////////////////////////////////////// public methods of video class ///////////////////////
 
 drawing_area::drawing_area(int x, int y, int sizex, int sizey)
-    : start_x(x), start_y(y), size_x(sizex), size_y(sizey), pixel_depth(24),
-    base_index(y*g_sizex + x), max_index(g_sizex*g_sizey), index_stride(g_sizex), ptr32(g_pImg)
+    : base_index(y*g_sizex + x), max_index(g_sizex*g_sizey), index_stride(g_sizex),
+    pixel_depth(24), ptr32(g_pImg), start_x(x), start_y(y), size_x(sizex), size_y(sizey)
 {
     assert(x < g_sizex); assert(y < g_sizey);
     assert(x+sizex <= g_sizex); assert(y+sizey <= g_sizey);
@@ -158,7 +158,7 @@ drawing_area::drawing_area(int x, int y, int sizex, int sizey)
     index = base_index; // current index
 }
 
-void drawing_area::update() 
+void drawing_area::update()
 {
-    //nothing to do, updating via timer in cocoa part. 
+    //nothing to do, updating via timer in cocoa part.
 }

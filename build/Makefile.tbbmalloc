@@ -1,4 +1,4 @@
-# Copyright (c) 2005-2016 Intel Corporation
+# Copyright (c) 2005-2017 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ $(MALLOC.DLL): tbbmalloc.def
 endif
 
 $(MALLOC.DLL) $(MALLOCPROXY.DLL): CPLUS_FLAGS += $(SDL_FLAGS)
-$(MALLOC.DLL) $(MALLOCPROXY.DLL): M_CPLUS_FLAGS += $(SLD_FLAGS)
+$(MALLOC.DLL) $(MALLOCPROXY.DLL): M_CPLUS_FLAGS += $(SDL_FLAGS)
 $(MALLOC.DLL): BUILDING_LIBRARY = $(MALLOC.DLL)
 $(MALLOC.DLL): $(MALLOC.OBJ) $(MALLOC.RES) $(MALLOC_NO_VERSION.DLL)
 	$(subst $(CPLUS),$(CONLY),$(LIB_LINK_CMD)) $(LIB_OUTPUT_KEY)$(MALLOC.DLL) $(MALLOC.OBJ) $(MALLOC.RES) $(LIB_LINK_LIBS) $(MALLOC_LINK_FLAGS)
@@ -147,6 +147,12 @@ endif
 # -----------------------------------------------------
 
 # ------------ Set test specific variables ------------
+# TODO: implement accurate warning suppression for tests to unify with Makefile.test.
+$(MALLOC_TESTS): CPLUS_FLAGS += $(TEST_WARNING_KEY) $(if $(no_exceptions),$(DEFINE_KEY)__TBB_TEST_NO_EXCEPTIONS=1)
+$(MALLOC_TESTS): M_CPLUS_FLAGS += $(TEST_WARNING_KEY) $(if $(no_exceptions),$(DEFINE_KEY)__TBB_TEST_NO_EXCEPTIONS=1)
+$(MALLOC_TESTS): INCLUDES += $(INCLUDE_TEST_HEADERS)
+$(MALLOC_TESTS): M_INCLUDES += $(INCLUDE_TEST_HEADERS)
+
 ifeq (windows.gcc,$(tbb_os).$(compiler))
 test_malloc_overload.$(TEST_EXT): LIBS += $(MALLOCPROXY.LIB)
 endif
@@ -158,8 +164,6 @@ MALLOC_NO_LIB_TESTS =     test_malloc_whitebox.$(TEST_EXT) test_malloc_lib_unloa
 MALLOC_LINK_PROXY_TESTS = test_malloc_overload_proxy.$(TEST_EXT)
 MALLOC_ADD_DLL_TESTS =    test_malloc_lib_unload.$(TEST_EXT) test_malloc_used_by_lib.$(TEST_EXT) \
         test_malloc_atexit.$(TEST_EXT)
-
-# TODO: implement accurate warning suppression for tests to unify with Makefile.test.
 
 $(MALLOC_M_CPLUS_TESTS): CPLUS_FLAGS=$(M_CPLUS_FLAGS)
 $(MALLOC_M_CPLUS_TESTS): INCLUDES=$(M_INCLUDES)
@@ -198,8 +202,8 @@ test_malloc_whitebox.$(TEST_EXT): LINK_FILES+=$(MALLOC_ASM.OBJ)
 
 # Some _dll targets need to restore variables since they are changed by parent
 # target-specific rule of its .exe targets
-test_malloc_lib_unload_dll.$(DLL): CPLUS_FLAGS=$(ORIG_CPLUS_FLAGS)
-test_malloc_lib_unload_dll.$(DLL): INCLUDES=$(ORIG_INCLUDES)
+test_malloc_lib_unload_dll.$(DLL): CPLUS_FLAGS=$(ORIG_CPLUS_FLAGS) $(if $(no_exceptions),$(DEFINE_KEY)__TBB_TEST_NO_EXCEPTIONS=1)
+test_malloc_lib_unload_dll.$(DLL): INCLUDES=$(ORIG_INCLUDES) $(INCLUDE_TEST_HEADERS)
 
 test_malloc_used_by_lib_dll.$(DLL): CPLUS_FLAGS=$(subst /MT,/LD,$(M_CPLUS_FLAGS))
 test_malloc_used_by_lib_dll.$(DLL): LINK_FILES+=$(ORIG_LINK_MALLOC.LIB)

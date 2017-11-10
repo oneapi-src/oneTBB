@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::cache_aligned_allocator&lt; T &gt; Class Template Reference</title>
+<title>tbb::blocked_range2d&lt; RowValue, ColValue &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,112 +33,85 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00234.html">tbb</a></li><li class="navelem"><a class="el" href="a00027.html">cache_aligned_allocator</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><a class="el" href="a00027.html">blocked_range2d</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="a00268.html">List of all members</a>  </div>
+<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
+<a href="a00270.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::cache_aligned_allocator&lt; T &gt; Class Template Reference<div class="ingroups"><a class="el" href="a00255.html">Memory Allocation</a></div></div>  </div>
+<div class="title">tbb::blocked_range2d&lt; RowValue, ColValue &gt; Class Template Reference<div class="ingroups"><a class="el" href="a00257.html">Algorithms</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Meets "allocator" requirements of ISO C++ Standard, Section 20.1.5.  
+<p>A 2-dimensional range that models the Range concept.  
  <a href="a00027.html#details">More...</a></p>
 
-<p><code>#include &lt;cache_aligned_allocator.h&gt;</code></p>
+<p><code>#include &lt;blocked_range2d.h&gt;</code></p>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
-Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00113.html">rebind</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a7aba3042b0a1c934879d5299f0c20e7e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7aba3042b0a1c934879d5299f0c20e7e"></a>
-typedef <br class="typebreak"/>
-internal::allocator_type&lt; T &gt;<br class="typebreak"/>
-::value_type&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b></td></tr>
-<tr class="separator:a7aba3042b0a1c934879d5299f0c20e7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6fabbb51a8fd7b270b94fc4d9548847b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6fabbb51a8fd7b270b94fc4d9548847b"></a>
-typedef value_type *&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b></td></tr>
-<tr class="separator:a6fabbb51a8fd7b270b94fc4d9548847b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a35edf40f1bb3418f61e7d33c9f796824"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a35edf40f1bb3418f61e7d33c9f796824"></a>
-typedef const value_type *&#160;</td><td class="memItemRight" valign="bottom"><b>const_pointer</b></td></tr>
-<tr class="separator:a35edf40f1bb3418f61e7d33c9f796824"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac9f2f6c7ca74e1f3968d838eec2c4dcb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac9f2f6c7ca74e1f3968d838eec2c4dcb"></a>
-typedef value_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>reference</b></td></tr>
-<tr class="separator:ac9f2f6c7ca74e1f3968d838eec2c4dcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af50d27e385aea41dbb8a9cd0734f1c84"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af50d27e385aea41dbb8a9cd0734f1c84"></a>
-typedef const value_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>const_reference</b></td></tr>
-<tr class="separator:af50d27e385aea41dbb8a9cd0734f1c84"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a51eed827a49fd636d1d6c73908f9635b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a51eed827a49fd636d1d6c73908f9635b"></a>
-typedef size_t&#160;</td><td class="memItemRight" valign="bottom"><b>size_type</b></td></tr>
-<tr class="separator:a51eed827a49fd636d1d6c73908f9635b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8bf47c52cdeee1bc0dcd410cc97faeec"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8bf47c52cdeee1bc0dcd410cc97faeec"></a>
-typedef ptrdiff_t&#160;</td><td class="memItemRight" valign="bottom"><b>difference_type</b></td></tr>
-<tr class="separator:a8bf47c52cdeee1bc0dcd410cc97faeec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ada609b296a9af0591cc34761b8538100"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ada609b296a9af0591cc34761b8538100"></a>
+typedef <a class="el" href="a00026.html">blocked_range</a>&lt; RowValue &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00027.html#ada609b296a9af0591cc34761b8538100">row_range_type</a></td></tr>
+<tr class="memdesc:ada609b296a9af0591cc34761b8538100"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type for size of an iteration range. <br/></td></tr>
+<tr class="separator:ada609b296a9af0591cc34761b8538100"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9820ed2f2560633d18bf35cece8b6493"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9820ed2f2560633d18bf35cece8b6493"></a>
+typedef <a class="el" href="a00026.html">blocked_range</a>&lt; ColValue &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>col_range_type</b></td></tr>
+<tr class="separator:a9820ed2f2560633d18bf35cece8b6493"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a11b1921251262137671599e99fbe8d4e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a11b1921251262137671599e99fbe8d4e"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>cache_aligned_allocator</b> (const <a class="el" href="a00027.html">cache_aligned_allocator</a> &amp;)  throw ()</td></tr>
-<tr class="separator:a11b1921251262137671599e99fbe8d4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab5a78cc56dcc0851117b3c88bb3af16a"><td class="memTemplParams" colspan="2"><a class="anchor" id="ab5a78cc56dcc0851117b3c88bb3af16a"></a>
-template&lt;typename U &gt; </td></tr>
-<tr class="memitem:ab5a78cc56dcc0851117b3c88bb3af16a"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>cache_aligned_allocator</b> (const <a class="el" href="a00027.html">cache_aligned_allocator</a>&lt; U &gt; &amp;)  throw ()</td></tr>
-<tr class="separator:ab5a78cc56dcc0851117b3c88bb3af16a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a39aa68042abff22210f801eab98f6dfa"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a39aa68042abff22210f801eab98f6dfa"></a>
-pointer&#160;</td><td class="memItemRight" valign="bottom"><b>address</b> (reference x) const </td></tr>
-<tr class="separator:a39aa68042abff22210f801eab98f6dfa"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5bd8fe0e5de894404c8b868b37a0fe53"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5bd8fe0e5de894404c8b868b37a0fe53"></a>
-const_pointer&#160;</td><td class="memItemRight" valign="bottom"><b>address</b> (const_reference x) const </td></tr>
-<tr class="separator:a5bd8fe0e5de894404c8b868b37a0fe53"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a99d05096f80877849cb31d80247e0f85"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a99d05096f80877849cb31d80247e0f85"></a>
-pointer&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00027.html#a99d05096f80877849cb31d80247e0f85">allocate</a> (size_type n, const void *hint=0)</td></tr>
-<tr class="memdesc:a99d05096f80877849cb31d80247e0f85"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allocate space for n objects, starting on a cache/sector line. <br/></td></tr>
-<tr class="separator:a99d05096f80877849cb31d80247e0f85"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7f7310e046c4b6b8618864de8e27a471"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7f7310e046c4b6b8618864de8e27a471"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00027.html#a7f7310e046c4b6b8618864de8e27a471">deallocate</a> (pointer p, size_type)</td></tr>
-<tr class="memdesc:a7f7310e046c4b6b8618864de8e27a471"><td class="mdescLeft">&#160;</td><td class="mdescRight">Free block of memory that starts on a cache line. <br/></td></tr>
-<tr class="separator:a7f7310e046c4b6b8618864de8e27a471"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4b945b3180ea3dfe16dfa048f4591c6d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4b945b3180ea3dfe16dfa048f4591c6d"></a>
-size_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00027.html#a4b945b3180ea3dfe16dfa048f4591c6d">max_size</a> () const   throw ()</td></tr>
-<tr class="memdesc:a4b945b3180ea3dfe16dfa048f4591c6d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Largest value for which method allocate might succeed. <br/></td></tr>
-<tr class="separator:a4b945b3180ea3dfe16dfa048f4591c6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab316f80a66b991801b4ec4ea88b852d9"><td class="memTemplParams" colspan="2"><a class="anchor" id="ab316f80a66b991801b4ec4ea88b852d9"></a>
-template&lt;typename U , typename... Args&gt; </td></tr>
-<tr class="memitem:ab316f80a66b991801b4ec4ea88b852d9"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00027.html#ab316f80a66b991801b4ec4ea88b852d9">construct</a> (U *p, Args &amp;&amp;...args)</td></tr>
-<tr class="memdesc:ab316f80a66b991801b4ec4ea88b852d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy-construct value at location pointed to by p. <br/></td></tr>
-<tr class="separator:ab316f80a66b991801b4ec4ea88b852d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac5b39984a3eee60e5bf0f10ef609dc4c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac5b39984a3eee60e5bf0f10ef609dc4c"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>construct</b> (pointer p, value_type &amp;&amp;value)</td></tr>
-<tr class="separator:ac5b39984a3eee60e5bf0f10ef609dc4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5086d395a952eb13eb7d72bb0cb26937"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5086d395a952eb13eb7d72bb0cb26937"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>construct</b> (pointer p, const value_type &amp;value)</td></tr>
-<tr class="separator:a5086d395a952eb13eb7d72bb0cb26937"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af2fd054d055403d4ea669fd3af661cc8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af2fd054d055403d4ea669fd3af661cc8"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00027.html#af2fd054d055403d4ea669fd3af661cc8">destroy</a> (pointer p)</td></tr>
-<tr class="memdesc:af2fd054d055403d4ea669fd3af661cc8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy value at location pointed to by p. <br/></td></tr>
-<tr class="separator:af2fd054d055403d4ea669fd3af661cc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5aa4e2c389c4b833937fcad66efe2b6a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5aa4e2c389c4b833937fcad66efe2b6a"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>blocked_range2d</b> (RowValue row_begin, RowValue row_end, typename <a class="el" href="a00026.html#a89b300cecd9d617e4ee801c786756e55">row_range_type::size_type</a> row_grainsize, ColValue col_begin, ColValue col_end, typename <a class="el" href="a00026.html#a89b300cecd9d617e4ee801c786756e55">col_range_type::size_type</a> col_grainsize)</td></tr>
+<tr class="separator:a5aa4e2c389c4b833937fcad66efe2b6a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaf45f93921022437fdcb500585768a5e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aaf45f93921022437fdcb500585768a5e"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>blocked_range2d</b> (RowValue row_begin, RowValue row_end, ColValue col_begin, ColValue col_end)</td></tr>
+<tr class="separator:aaf45f93921022437fdcb500585768a5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5805972c8c41b2681d286f9c9771cf52"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5805972c8c41b2681d286f9c9771cf52"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00027.html#a5805972c8c41b2681d286f9c9771cf52">empty</a> () const </td></tr>
+<tr class="memdesc:a5805972c8c41b2681d286f9c9771cf52"><td class="mdescLeft">&#160;</td><td class="mdescRight">True if range is empty. <br/></td></tr>
+<tr class="separator:a5805972c8c41b2681d286f9c9771cf52"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac84c6cc2ff8b0974ffa719fed804f586"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac84c6cc2ff8b0974ffa719fed804f586"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00027.html#ac84c6cc2ff8b0974ffa719fed804f586">is_divisible</a> () const </td></tr>
+<tr class="memdesc:ac84c6cc2ff8b0974ffa719fed804f586"><td class="mdescLeft">&#160;</td><td class="mdescRight">True if range is divisible into two pieces. <br/></td></tr>
+<tr class="separator:ac84c6cc2ff8b0974ffa719fed804f586"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af0e752d01b661b01c9a473473bea43fc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af0e752d01b661b01c9a473473bea43fc"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>blocked_range2d</b> (<a class="el" href="a00027.html">blocked_range2d</a> &amp;r, split)</td></tr>
+<tr class="separator:af0e752d01b661b01c9a473473bea43fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9ebbf0fa580c0553ec2e3c5997b9799c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9ebbf0fa580c0553ec2e3c5997b9799c"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>blocked_range2d</b> (<a class="el" href="a00027.html">blocked_range2d</a> &amp;r, proportional_split &amp;proportion)</td></tr>
+<tr class="separator:a9ebbf0fa580c0553ec2e3c5997b9799c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4f7299e74c40df57dee2433c07ce65ae"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4f7299e74c40df57dee2433c07ce65ae"></a>
+const <a class="el" href="a00027.html#ada609b296a9af0591cc34761b8538100">row_range_type</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00027.html#a4f7299e74c40df57dee2433c07ce65ae">rows</a> () const </td></tr>
+<tr class="memdesc:a4f7299e74c40df57dee2433c07ce65ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">The rows of the iteration space. <br/></td></tr>
+<tr class="separator:a4f7299e74c40df57dee2433c07ce65ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af3bccfaf90126b285491096f78ca9473"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af3bccfaf90126b285491096f78ca9473"></a>
+const <a class="el" href="a00026.html">col_range_type</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00027.html#af3bccfaf90126b285491096f78ca9473">cols</a> () const </td></tr>
+<tr class="memdesc:af3bccfaf90126b285491096f78ca9473"><td class="mdescLeft">&#160;</td><td class="mdescRight">The columns of the iteration space. <br/></td></tr>
+<tr class="separator:af3bccfaf90126b285491096f78ca9473"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
+Static Public Attributes</h2></td></tr>
+<tr class="memitem:aa0519760654368000f7ebc87d9bfe898"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa0519760654368000f7ebc87d9bfe898"></a>
+static const bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00027.html#aa0519760654368000f7ebc87d9bfe898">is_splittable_in_proportion</a> = true</td></tr>
+<tr class="memdesc:aa0519760654368000f7ebc87d9bfe898"><td class="mdescLeft">&#160;</td><td class="mdescRight">Static field to support proportional split. <br/></td></tr>
+<tr class="separator:aa0519760654368000f7ebc87d9bfe898"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;typename T&gt;<br/>
-class tbb::cache_aligned_allocator&lt; T &gt;</h3>
+<div class="textblock"><h3>template&lt;typename RowValue, typename ColValue = RowValue&gt;<br/>
+class tbb::blocked_range2d&lt; RowValue, ColValue &gt;</h3>
 
-<p>Meets "allocator" requirements of ISO C++ Standard, Section 20.1.5. </p>
-<p>The members are ordered the same way they are in section 20.4.1 of the ISO C++ standard. </p>
+<p>A 2-dimensional range that models the Range concept. </p>
 </div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>cache_aligned_allocator.h</li>
+<li>blocked_range2d.h</li>
 </ul>
 </div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2017 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

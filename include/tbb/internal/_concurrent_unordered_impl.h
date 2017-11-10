@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -29,22 +29,12 @@
 
 #include "../tbb_stddef.h"
 
-#if !TBB_USE_EXCEPTIONS && _MSC_VER
-    // Suppress "C++ exception handler used, but unwind semantics are not enabled" warning in STL headers
-    #pragma warning (push)
-    #pragma warning (disable: 4530)
-#endif
-
 #include <iterator>
 #include <utility>      // Need std::pair
 #include <functional>   // Need std::equal_to (in ../concurrent_unordered_*.h)
 #include <string>       // For tbb_hasher
 #include <cstring>      // Need std::memset
 #include __TBB_STD_SWAP_HEADER
-
-#if !TBB_USE_EXCEPTIONS && _MSC_VER
-    #pragma warning (pop)
-#endif
 
 #include "../atomic.h"
 #include "../tbb_exception.h"
@@ -668,7 +658,6 @@ protected:
     typedef typename Traits::value_type value_type;
     typedef typename Traits::key_type key_type;
     typedef typename Traits::hash_compare hash_compare;
-    typedef typename Traits::value_compare value_compare;
     typedef typename Traits::allocator_type allocator_type;
     typedef typename hash_compare::hasher hasher;
     typedef typename hash_compare::key_equal key_equal;
@@ -1210,8 +1199,8 @@ private:
 
     // Initialize the hash and keep the first bucket open
     void internal_init() {
-        // Allocate an array of segment pointers
-        memset(my_buckets, 0, pointers_per_table * sizeof(void *));
+        // Initialize the array of segment pointers
+        memset(my_buckets, 0, sizeof(my_buckets));
 
         // Initialize bucket 0
         raw_iterator dummy_node = my_solist.raw_begin();

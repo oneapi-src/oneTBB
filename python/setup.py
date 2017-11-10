@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2005-2016 Intel Corporation
+# Copyright (c) 2016-2017 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 #
 #
 #
-
 
 # System imports
 from __future__ import print_function
@@ -86,8 +85,8 @@ setup(  name        ="TBB",
                          "extended with standard Pool implementation and monkey-patching",
         url         ="https://software.intel.com/en-us/intel-tbb",
         author      ="Intel Corporation",
-        author_email="tbbdevelopers@intel.com",
-        license     ="Dual license: Apache or Proprietary",
+        author_email="inteltbbdevelopers@intel.com",
+        license     ="Dual license: Apache or Intel Simplified Software License",
         version     ="0.1",
         classifiers =[
             'Development Status :: 4 - Beta',
@@ -98,7 +97,7 @@ setup(  name        ="TBB",
             'Intended Audience :: Other Audience',
             'Intended Audience :: Science/Research',
             'License :: OSI Approved :: Apache Software License',
-            'License :: Other/Proprietary License',
+            'License :: Other/Intel Simplified Software License',
             'Operating System :: MacOS :: MacOS X',
             'Operating System :: Microsoft :: Windows',
             'Operating System :: POSIX',

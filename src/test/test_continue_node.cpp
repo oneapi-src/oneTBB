@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 
 #include "harness_graph.h"
 
+#include "tbb/flow_graph.h"
 #include "tbb/task_scheduler_init.h"
 
 #define N 1000
@@ -74,7 +75,7 @@ void run_continue_nodes( int p, tbb::flow::graph& g, tbb::flow::continue_node< O
     }
 
     for (size_t num_receivers = 1; num_receivers <= MAX_NODES; ++num_receivers ) {
-        harness_counting_receiver<OutputType> *receivers = new harness_counting_receiver<OutputType>[num_receivers];
+        std::vector< harness_counting_receiver<OutputType> > receivers(num_receivers, harness_counting_receiver<OutputType>(g));
         harness_graph_executor<tbb::flow::continue_msg, OutputType>::execute_count = 0;
 
         for (size_t r = 0; r < num_receivers; ++r ) {
@@ -110,7 +111,6 @@ void run_continue_nodes( int p, tbb::flow::graph& g, tbb::flow::continue_node< O
             tbb::flow::remove_edge( n, receivers[r] );
         }
 #endif
-        delete [] receivers;
     }
 }
 
@@ -161,7 +161,7 @@ void continue_nodes_with_copy( ) {
         }
 
         for (size_t num_receivers = 1; num_receivers <= MAX_NODES; ++num_receivers ) {
-            harness_counting_receiver<OutputType> *receivers = new harness_counting_receiver<OutputType>[num_receivers];
+            std::vector< harness_counting_receiver<OutputType> > receivers(num_receivers, harness_counting_receiver<OutputType>(g));
 
             for (size_t r = 0; r < num_receivers; ++r ) {
                 tbb::flow::make_edge( exe_node, receivers[r] );
@@ -179,7 +179,6 @@ void continue_nodes_with_copy( ) {
             for (size_t r = 0; r < num_receivers; ++r ) {
                 tbb::flow::remove_edge( exe_node, receivers[r] );
             }
-            delete [] receivers;
         }
 
         // validate that the local body matches the global execute_count and both are correct
@@ -199,7 +198,7 @@ void continue_nodes_with_copy( ) {
 template< typename OutputType >
 void run_continue_nodes() {
     harness_graph_executor< tbb::flow::continue_msg, OutputType>::max_executors = 0;
-    #if __TBB_LAMBDAS_PRESENT
+    #if __TBB_CPP11_LAMBDAS_PRESENT
     continue_nodes<OutputType>( []( tbb::flow::continue_msg i ) -> OutputType { return harness_graph_executor<tbb::flow::continue_msg, OutputType>::func(i); } );
     #endif
     continue_nodes<OutputType>( &harness_graph_executor<tbb::flow::continue_msg, OutputType>::func );

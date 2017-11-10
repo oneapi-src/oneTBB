@@ -1,4 +1,4 @@
-# Copyright (c) 2005-2016 Intel Corporation
+# Copyright (c) 2005-2017 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,11 +27,17 @@ CXX1 = $(TBB_CXX)-
 CXX2 = $(CXX1:icl.exe-=icl.exe)
 CXX  = $(CXX2:-=cl.exe)
 
-MYCXXFLAGS = /TP /EHsc /W3 /nologo /D _CONSOLE /D _MBCS /D WIN32 $(offload:mic=/D__TBB_MIC_OFFLOAD /Qdiag-disable:3335,3440,3441) $(CXXFLAGS)
+offload1 = $(offload)+
+OFFLOADFLAGS1 = $(offload1:mic+=/Qoffload-arch=mic)
+OFFLOADFLAGS2 = $(OFFLOADFLAGS1:mic-avx512+=/Qoffload-arch=mic-avx512)
+offload2 = $(offload:mic-avx512=mic)
+OFFLOADFLAGS = $(OFFLOADFLAGS2:+=) $(offload2:mic=/D__TBB_MIC_OFFLOAD /Qdiag-disable:3335,3440,3441)
+
+MYCXXFLAGS = /EHsc /W3 /nologo /D _CONSOLE /D _MBCS /D WIN32 $(OFFLOADFLAGS) $(CXXFLAGS)
 MYLDFLAGS =/INCREMENTAL:NO /NOLOGO /DEBUG /FIXED:NO $(LDFLAGS)
 
-TBB_MIC_LIB = $(offload:mic=/Qtbb)
-TBB_DEBUG_MIC_LIB = $(offload:mic=/Qoffload-option,mic,link,"-ltbb_debug")
+TBB_MIC_LIB = $(offload2:mic=/Qtbb)
+TBB_DEBUG_MIC_LIB = $(offload2:mic=/Qoffload-option,mic,link,"-ltbb_debug")
 
 all: release test
 release: compiler_check

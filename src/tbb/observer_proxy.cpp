@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -369,7 +369,8 @@ void task_scheduler_observer_v3::observe( bool enable ) {
                     a->initialize();
                     my_proxy->my_list = &a->my_arena->my_observers;
                 } else {
-                    if( !s ) s = governor::init_scheduler( task_scheduler_init::automatic, 0, true );
+                    if( !s )
+                        s = governor::init_scheduler( task_scheduler_init::automatic, 0, true );
                     __TBB_ASSERT( __TBB_InitOnce::initialization_done(), NULL );
                     __TBB_ASSERT( s && s->my_arena, NULL );
                     my_proxy->my_list = &s->my_arena->my_observers;

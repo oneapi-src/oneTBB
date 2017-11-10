@@ -1,4 +1,4 @@
-# Copyright (c) 2005-2016 Intel Corporation
+# Copyright (c) 2005-2017 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,11 +30,11 @@ endif # icc
 TBBLIB = -ltbb
 TBBLIB_DEBUG = -ltbb_debug
 
-ifeq ($(offload), mic)
-override CXXFLAGS += -opt-report-phase:offload -D__TBB_MIC_OFFLOAD=1
+ifneq (,$(findstring mic, $(offload)))
+override CXXFLAGS += -qoffload-arch=$(offload) -qopt-report-phase:offload -D__TBB_MIC_OFFLOAD=1
 # Replace -ltbb with -tbb in the offload mode
 TBBLIB = -tbb
-TBBLIB_DEBUG += -offload-option,mic,ld,"-ltbb_debug"
+TBBLIB_DEBUG += -qoffload-option,mic,ld,"-ltbb_debug"
 endif
 
 ifeq ($(shell uname), Linux)

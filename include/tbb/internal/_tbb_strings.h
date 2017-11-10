@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -65,3 +65,7 @@ TBB_STRING_RESOURCE(FLOW_NULL, "null")
 TBB_STRING_RESOURCE(FLOW_INDEXER_NODE, "indexer_node")
 TBB_STRING_RESOURCE(FLOW_COMPOSITE_NODE, "composite_node")
 TBB_STRING_RESOURCE(FLOW_ASYNC_NODE, "async_node")
+TBB_STRING_RESOURCE(FLOW_OPENCL_NODE, "opencl_node")
+// TODO: Drop following string prefix "tbb_" here and in FGA's collector
+TBB_STRING_RESOURCE(FGT_ALGORITHM, "tbb_algorithm")
+TBB_STRING_RESOURCE(FGT_PARALLEL_FOR, "tbb_parallel_for")

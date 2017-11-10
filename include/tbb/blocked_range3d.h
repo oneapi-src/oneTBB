@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -49,8 +49,7 @@ public:
         my_pages(page_begin,page_end),
         my_rows(row_begin,row_end),
         my_cols(col_begin,col_end)
-    {
-    }
+    {}
 
     blocked_range3d( PageValue page_begin, PageValue page_end, typename page_range_type::size_type page_grainsize,
                      RowValue  row_begin,  RowValue row_end,   typename row_range_type::size_type row_grainsize,
@@ -58,8 +57,7 @@ public:
         my_pages(page_begin,page_end,page_grainsize),
         my_rows(row_begin,row_end,row_grainsize),
         my_cols(col_begin,col_end,col_grainsize)
-    {
-    }
+    {}
 
     //! True if range is empty
     bool empty() const {
@@ -94,24 +92,6 @@ public:
     }
 #endif /* __TBB_USE_PROPORTIONAL_SPLIT_IN_BLOCKED_RANGES */
 
-    template <typename Split>
-    void do_split( blocked_range3d& r, Split& split_obj)
-    {
-        if ( my_pages.size()*double(my_rows.grainsize()) < my_rows.size()*double(my_pages.grainsize()) ) {
-            if ( my_rows.size()*double(my_cols.grainsize()) < my_cols.size()*double(my_rows.grainsize()) ) {
-                my_cols.my_begin = col_range_type::do_split(r.my_cols, split_obj);
-            } else {
-                my_rows.my_begin = row_range_type::do_split(r.my_rows, split_obj);
-            }
-	} else {
-            if ( my_pages.size()*double(my_cols.grainsize()) < my_cols.size()*double(my_pages.grainsize()) ) {
-                my_cols.my_begin = col_range_type::do_split(r.my_cols, split_obj);
-            } else {
-                my_pages.my_begin = page_range_type::do_split(r.my_pages, split_obj);
-            }
-        }
-    }
-
     //! The pages of the iteration space
     const page_range_type& pages() const {return my_pages;}
 
@@ -121,6 +101,25 @@ public:
     //! The columns of the iteration space
     const col_range_type& cols() const {return my_cols;}
 
+private:
+
+    template <typename Split>
+    void do_split( blocked_range3d& r, Split& split_obj)
+    {
+        if ( my_pages.size()*double(my_rows.grainsize()) < my_rows.size()*double(my_pages.grainsize()) ) {
+            if ( my_rows.size()*double(my_cols.grainsize()) < my_cols.size()*double(my_rows.grainsize()) ) {
+                my_cols.my_begin = col_range_type::do_split(r.my_cols, split_obj);
+            } else {
+                my_rows.my_begin = row_range_type::do_split(r.my_rows, split_obj);
+            }
+        } else {
+            if ( my_pages.size()*double(my_cols.grainsize()) < my_cols.size()*double(my_pages.grainsize()) ) {
+                my_cols.my_begin = col_range_type::do_split(r.my_cols, split_obj);
+            } else {
+                my_pages.my_begin = page_range_type::do_split(r.my_pages, split_obj);
+            }
+        }
+    }
 };
 
 } // namespace tbb

@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::internal::thread_closure_2&lt; F, X, Y &gt; Struct Template Reference</title>
+<title>tbb::thread_bound_filter Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,68 +33,125 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00234.html">tbb</a></li><li class="navelem"><b>internal</b></li><li class="navelem"><a class="el" href="a00161.html">thread_closure_2</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><a class="el" href="a00161.html">thread_bound_filter</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
-<a href="#pub-attribs">Public Attributes</a> &#124;
-<a href="a00406.html">List of all members</a>  </div>
+<a href="#pro-methods">Protected Member Functions</a> &#124;
+<a href="a00290.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::internal::thread_closure_2&lt; F, X, Y &gt; Struct Template Reference</div>  </div>
+<div class="title">tbb::thread_bound_filter Class Reference<div class="ingroups"><a class="el" href="a00257.html">Algorithms</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
+
+<p>A stage in a pipeline served by a user thread.  
+ <a href="a00161.html#details">More...</a></p>
+
+<p><code>#include &lt;pipeline.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::internal::thread_closure_2&lt; F, X, Y &gt;:</div>
+Inheritance diagram for tbb::thread_bound_filter:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00161.png" usemap="#tbb::internal::thread_closure_2&lt; F, X, Y &gt;_map" alt=""/>
-  <map id="tbb::internal::thread_closure_2&lt; F, X, Y &gt;_map" name="tbb::internal::thread_closure_2&lt; F, X, Y &gt;_map">
-<area href="a00162.html" alt="tbb::internal::thread_closure_base" shape="rect" coords="0,0,250,24"/>
+  <img src="a00161.png" usemap="#tbb::thread_bound_filter_map" alt=""/>
+  <map id="tbb::thread_bound_filter_map" name="tbb::thread_bound_filter_map">
+<area href="a00063.html" title="A stage in a pipeline. " alt="tbb::filter" shape="rect" coords="0,56,145,80"/>
 </map>
  </div></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a2425d6944a22a57c906945df57290e9d"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><b>result_type</b> { <b>success</b>, 
+<b>item_not_available</b>, 
+<b>end_of_stream</b>
+ }</td></tr>
+<tr class="separator:a2425d6944a22a57c906945df57290e9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:aa5f65ba1d019063487f425021ca2ba59"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa5f65ba1d019063487f425021ca2ba59"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>thread_closure_2</b> (const F &amp;f, const X &amp;x, const Y &amp;y)</td></tr>
-<tr class="separator:aa5f65ba1d019063487f425021ca2ba59"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_methods_a00162"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_a00162')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="a00162.html">tbb::internal::thread_closure_base</a></td></tr>
-<tr class="memitem:a624f5a5a40051faf39444ad3a9f36df5 inherit pub_methods_a00162"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a624f5a5a40051faf39444ad3a9f36df5"></a>
-void *&#160;</td><td class="memItemRight" valign="bottom"><b>operator new</b> (size_t size)</td></tr>
-<tr class="separator:a624f5a5a40051faf39444ad3a9f36df5 inherit pub_methods_a00162"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a56e1bfd2ca46abcc3c3f265eff10360d inherit pub_methods_a00162"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a56e1bfd2ca46abcc3c3f265eff10360d"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>operator delete</b> (void *ptr)</td></tr>
-<tr class="separator:a56e1bfd2ca46abcc3c3f265eff10360d inherit pub_methods_a00162"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a12cfa43c620066a8783529cc8519c6f9"><td class="memItemLeft" align="right" valign="top">result_type __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00161.html#a12cfa43c620066a8783529cc8519c6f9">try_process_item</a> ()</td></tr>
+<tr class="memdesc:a12cfa43c620066a8783529cc8519c6f9"><td class="mdescLeft">&#160;</td><td class="mdescRight">If a data item is available, invoke operator() on that item.  <a href="#a12cfa43c620066a8783529cc8519c6f9">More...</a><br/></td></tr>
+<tr class="separator:a12cfa43c620066a8783529cc8519c6f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac99258407f382d84568a510075074fc7"><td class="memItemLeft" align="right" valign="top">result_type __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00161.html#ac99258407f382d84568a510075074fc7">process_item</a> ()</td></tr>
+<tr class="memdesc:ac99258407f382d84568a510075074fc7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait until a data item becomes available, and invoke operator() on that item.  <a href="#ac99258407f382d84568a510075074fc7">More...</a><br/></td></tr>
+<tr class="separator:ac99258407f382d84568a510075074fc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
-Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a29003179f98d768622c72b9ab5cfe8f6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a29003179f98d768622c72b9ab5cfe8f6"></a>
-static __TBB_NATIVE_THREAD_ROUTINE&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00161.html#a29003179f98d768622c72b9ab5cfe8f6">start_routine</a> (void *c)</td></tr>
-<tr class="memdesc:a29003179f98d768622c72b9ab5cfe8f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Routine passed to Windows's _beginthreadex by thread::internal_start() inside tbb.dll. <br/></td></tr>
-<tr class="separator:a29003179f98d768622c72b9ab5cfe8f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
+Protected Member Functions</h2></td></tr>
+<tr class="memitem:a5f236956f85f28c783127c949e902610"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5f236956f85f28c783127c949e902610"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>thread_bound_filter</b> (mode filter_mode)</td></tr>
+<tr class="separator:a5f236956f85f28c783127c949e902610"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
-Public Attributes</h2></td></tr>
-<tr class="memitem:a247bf0a01f8a390031b71c9b85fb8b24"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a247bf0a01f8a390031b71c9b85fb8b24"></a>
-F&#160;</td><td class="memItemRight" valign="bottom"><b>function</b></td></tr>
-<tr class="separator:a247bf0a01f8a390031b71c9b85fb8b24"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a36f694b6dcc91c92b09d3deee24e4732"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a36f694b6dcc91c92b09d3deee24e4732"></a>
-X&#160;</td><td class="memItemRight" valign="bottom"><b>arg1</b></td></tr>
-<tr class="separator:a36f694b6dcc91c92b09d3deee24e4732"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a47f0e53fc6b9026d9529a3bf1cc4fa72"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a47f0e53fc6b9026d9529a3bf1cc4fa72"></a>
-Y&#160;</td><td class="memItemRight" valign="bottom"><b>arg2</b></td></tr>
-<tr class="separator:a47f0e53fc6b9026d9529a3bf1cc4fa72"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
+Additional Inherited Members</h2></td></tr>
+<tr class="inherit_header pro_static_attribs_a00063"><td colspan="2" onclick="javascript:toggleInherit('pro_static_attribs_a00063')"><img src="closed.png" alt="-"/>&#160;Static Protected Attributes inherited from <a class="el" href="a00063.html">tbb::filter</a></td></tr>
+<tr class="memitem:ae9dab2e01b0963b341ab04b59eec1475 inherit pro_static_attribs_a00063"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae9dab2e01b0963b341ab04b59eec1475"></a>
+static const unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00063.html#ae9dab2e01b0963b341ab04b59eec1475">filter_is_serial</a> = 0x1</td></tr>
+<tr class="memdesc:ae9dab2e01b0963b341ab04b59eec1475 inherit pro_static_attribs_a00063"><td class="mdescLeft">&#160;</td><td class="mdescRight">The lowest bit 0 is for parallel vs. serial. <br/></td></tr>
+<tr class="separator:ae9dab2e01b0963b341ab04b59eec1475 inherit pro_static_attribs_a00063"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a091fcf6abc79edfa5c8bf01f742e2392 inherit pro_static_attribs_a00063"><td class="memItemLeft" align="right" valign="top">static const unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00063.html#a091fcf6abc79edfa5c8bf01f742e2392">filter_is_out_of_order</a> = 0x1&lt;&lt;4</td></tr>
+<tr class="memdesc:a091fcf6abc79edfa5c8bf01f742e2392 inherit pro_static_attribs_a00063"><td class="mdescLeft">&#160;</td><td class="mdescRight">4th bit distinguishes ordered vs unordered filters.  <a href="#a091fcf6abc79edfa5c8bf01f742e2392">More...</a><br/></td></tr>
+<tr class="separator:a091fcf6abc79edfa5c8bf01f742e2392 inherit pro_static_attribs_a00063"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1382f216bd094064a18eb48ecc43c86b inherit pro_static_attribs_a00063"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1382f216bd094064a18eb48ecc43c86b"></a>
+static const unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00063.html#a1382f216bd094064a18eb48ecc43c86b">filter_is_bound</a> = 0x1&lt;&lt;5</td></tr>
+<tr class="memdesc:a1382f216bd094064a18eb48ecc43c86b inherit pro_static_attribs_a00063"><td class="mdescLeft">&#160;</td><td class="mdescRight">5th bit distinguishes thread-bound and regular filters. <br/></td></tr>
+<tr class="separator:a1382f216bd094064a18eb48ecc43c86b inherit pro_static_attribs_a00063"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6645ec56872b6ba2056dcaa467e292f7 inherit pro_static_attribs_a00063"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6645ec56872b6ba2056dcaa467e292f7"></a>
+static const unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00063.html#a6645ec56872b6ba2056dcaa467e292f7">filter_may_emit_null</a> = 0x1&lt;&lt;6</td></tr>
+<tr class="memdesc:a6645ec56872b6ba2056dcaa467e292f7 inherit pro_static_attribs_a00063"><td class="mdescLeft">&#160;</td><td class="mdescRight">6th bit marks input filters emitting small objects <br/></td></tr>
+<tr class="separator:a6645ec56872b6ba2056dcaa467e292f7 inherit pro_static_attribs_a00063"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aab9689e23a96c6c9bf1c8caae74d92ee inherit pro_static_attribs_a00063"><td class="memItemLeft" align="right" valign="top">static const unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00063.html#aab9689e23a96c6c9bf1c8caae74d92ee">exact_exception_propagation</a></td></tr>
+<tr class="memdesc:aab9689e23a96c6c9bf1c8caae74d92ee inherit pro_static_attribs_a00063"><td class="mdescLeft">&#160;</td><td class="mdescRight">7th bit defines exception propagation mode expected by the application.  <a href="#aab9689e23a96c6c9bf1c8caae74d92ee">More...</a><br/></td></tr>
+<tr class="separator:aab9689e23a96c6c9bf1c8caae74d92ee inherit pro_static_attribs_a00063"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<hr/>The documentation for this struct was generated from the following file:<ul>
-<li>tbb_thread.h</li>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>A stage in a pipeline served by a user thread. </p>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="ac99258407f382d84568a510075074fc7"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">result_type __TBB_EXPORTED_METHOD tbb::thread_bound_filter::process_item </td>
+          <td>(</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Wait until a data item becomes available, and invoke operator() on that item. </p>
+<p>This interface is blocking. Returns 'success' if an item was processed. Returns 'end_of_stream' if there are no more items to process. Never returns 'item_not_available', as it blocks until another return condition applies. </p>
+
+</div>
+</div>
+<a class="anchor" id="a12cfa43c620066a8783529cc8519c6f9"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">result_type __TBB_EXPORTED_METHOD tbb::thread_bound_filter::try_process_item </td>
+          <td>(</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>If a data item is available, invoke operator() on that item. </p>
+<p>This interface is non-blocking. Returns 'success' if an item was processed. Returns 'item_not_available' if no item can be processed now but more may arrive in the future, or if token limit is reached. Returns 'end_of_stream' if there are no more items to process. </p>
+
+</div>
+</div>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li>pipeline.h</li>
 </ul>
 </div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2017 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

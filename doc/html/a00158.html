@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::thread_bound_filter Class Reference</title>
+<title>tbb::tbb_exception Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,125 +33,191 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00234.html">tbb</a></li><li class="navelem"><a class="el" href="a00158.html">thread_bound_filter</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><a class="el" href="a00158.html">tbb_exception</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pro-methods">Protected Member Functions</a> &#124;
-<a href="a00286.html">List of all members</a>  </div>
+<a href="a00323.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::thread_bound_filter Class Reference<div class="ingroups"><a class="el" href="a00253.html">Algorithms</a></div></div>  </div>
+<div class="title">tbb::tbb_exception Class Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>A stage in a pipeline served by a user thread.  
+<p>Interface to be implemented by all exceptions TBB recognizes and propagates across the threads.  
  <a href="a00158.html#details">More...</a></p>
 
-<p><code>#include &lt;pipeline.h&gt;</code></p>
+<p><code>#include &lt;tbb_exception.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::thread_bound_filter:</div>
+Inheritance diagram for tbb::tbb_exception:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00158.png" usemap="#tbb::thread_bound_filter_map" alt=""/>
-  <map id="tbb::thread_bound_filter_map" name="tbb::thread_bound_filter_map">
-<area href="a00059.html" title="A stage in a pipeline. " alt="tbb::filter" shape="rect" coords="0,56,145,80"/>
+  <img src="a00158.png" usemap="#tbb::tbb_exception_map" alt=""/>
+  <map id="tbb::tbb_exception_map" name="tbb::tbb_exception_map">
+<area href="a00036.html" title="This class is used by TBB to propagate information about unhandled exceptions into the root thread..." alt="tbb::captured_exception" shape="rect" coords="0,112,248,136"/>
+<area href="a00085.html" title="Template that can be used to implement exception that transfers arbitrary ExceptionData to the root t..." alt="tbb::movable_exception&lt; ExceptionData &gt;" shape="rect" coords="258,112,506,136"/>
 </map>
  </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:a2425d6944a22a57c906945df57290e9d"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><b>result_type</b> { <b>success</b>, 
-<b>item_not_available</b>, 
-<b>end_of_stream</b>
- }</td></tr>
-<tr class="separator:a2425d6944a22a57c906945df57290e9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a12cfa43c620066a8783529cc8519c6f9"><td class="memItemLeft" align="right" valign="top">result_type __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00158.html#a12cfa43c620066a8783529cc8519c6f9">try_process_item</a> ()</td></tr>
-<tr class="memdesc:a12cfa43c620066a8783529cc8519c6f9"><td class="mdescLeft">&#160;</td><td class="mdescRight">If a data item is available, invoke operator() on that item.  <a href="#a12cfa43c620066a8783529cc8519c6f9">More...</a><br/></td></tr>
-<tr class="separator:a12cfa43c620066a8783529cc8519c6f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac99258407f382d84568a510075074fc7"><td class="memItemLeft" align="right" valign="top">result_type __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00158.html#ac99258407f382d84568a510075074fc7">process_item</a> ()</td></tr>
-<tr class="memdesc:ac99258407f382d84568a510075074fc7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait until a data item becomes available, and invoke operator() on that item.  <a href="#ac99258407f382d84568a510075074fc7">More...</a><br/></td></tr>
-<tr class="separator:ac99258407f382d84568a510075074fc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
-Protected Member Functions</h2></td></tr>
-<tr class="memitem:a5f236956f85f28c783127c949e902610"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5f236956f85f28c783127c949e902610"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>thread_bound_filter</b> (mode filter_mode)</td></tr>
-<tr class="separator:a5f236956f85f28c783127c949e902610"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
-Additional Inherited Members</h2></td></tr>
-<tr class="inherit_header pro_static_attribs_a00059"><td colspan="2" onclick="javascript:toggleInherit('pro_static_attribs_a00059')"><img src="closed.png" alt="-"/>&#160;Static Protected Attributes inherited from <a class="el" href="a00059.html">tbb::filter</a></td></tr>
-<tr class="memitem:ae9dab2e01b0963b341ab04b59eec1475 inherit pro_static_attribs_a00059"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae9dab2e01b0963b341ab04b59eec1475"></a>
-static const unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00059.html#ae9dab2e01b0963b341ab04b59eec1475">filter_is_serial</a> = 0x1</td></tr>
-<tr class="memdesc:ae9dab2e01b0963b341ab04b59eec1475 inherit pro_static_attribs_a00059"><td class="mdescLeft">&#160;</td><td class="mdescRight">The lowest bit 0 is for parallel vs. serial. <br/></td></tr>
-<tr class="separator:ae9dab2e01b0963b341ab04b59eec1475 inherit pro_static_attribs_a00059"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a091fcf6abc79edfa5c8bf01f742e2392 inherit pro_static_attribs_a00059"><td class="memItemLeft" align="right" valign="top">static const unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00059.html#a091fcf6abc79edfa5c8bf01f742e2392">filter_is_out_of_order</a> = 0x1&lt;&lt;4</td></tr>
-<tr class="memdesc:a091fcf6abc79edfa5c8bf01f742e2392 inherit pro_static_attribs_a00059"><td class="mdescLeft">&#160;</td><td class="mdescRight">4th bit distinguishes ordered vs unordered filters.  <a href="#a091fcf6abc79edfa5c8bf01f742e2392">More...</a><br/></td></tr>
-<tr class="separator:a091fcf6abc79edfa5c8bf01f742e2392 inherit pro_static_attribs_a00059"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1382f216bd094064a18eb48ecc43c86b inherit pro_static_attribs_a00059"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1382f216bd094064a18eb48ecc43c86b"></a>
-static const unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00059.html#a1382f216bd094064a18eb48ecc43c86b">filter_is_bound</a> = 0x1&lt;&lt;5</td></tr>
-<tr class="memdesc:a1382f216bd094064a18eb48ecc43c86b inherit pro_static_attribs_a00059"><td class="mdescLeft">&#160;</td><td class="mdescRight">5th bit distinguishes thread-bound and regular filters. <br/></td></tr>
-<tr class="separator:a1382f216bd094064a18eb48ecc43c86b inherit pro_static_attribs_a00059"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6645ec56872b6ba2056dcaa467e292f7 inherit pro_static_attribs_a00059"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6645ec56872b6ba2056dcaa467e292f7"></a>
-static const unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00059.html#a6645ec56872b6ba2056dcaa467e292f7">filter_may_emit_null</a> = 0x1&lt;&lt;6</td></tr>
-<tr class="memdesc:a6645ec56872b6ba2056dcaa467e292f7 inherit pro_static_attribs_a00059"><td class="mdescLeft">&#160;</td><td class="mdescRight">6th bit marks input filters emitting small objects <br/></td></tr>
-<tr class="separator:a6645ec56872b6ba2056dcaa467e292f7 inherit pro_static_attribs_a00059"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aab9689e23a96c6c9bf1c8caae74d92ee inherit pro_static_attribs_a00059"><td class="memItemLeft" align="right" valign="top">static const unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00059.html#aab9689e23a96c6c9bf1c8caae74d92ee">exact_exception_propagation</a></td></tr>
-<tr class="memdesc:aab9689e23a96c6c9bf1c8caae74d92ee inherit pro_static_attribs_a00059"><td class="mdescLeft">&#160;</td><td class="mdescRight">7th bit defines exception propagation mode expected by the application.  <a href="#aab9689e23a96c6c9bf1c8caae74d92ee">More...</a><br/></td></tr>
-<tr class="separator:aab9689e23a96c6c9bf1c8caae74d92ee inherit pro_static_attribs_a00059"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4bd4ba0d501021013d1473d21b020b69"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="a00158.html">tbb_exception</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00158.html#a4bd4ba0d501021013d1473d21b020b69">move</a> ()=0  throw ()</td></tr>
+<tr class="memdesc:a4bd4ba0d501021013d1473d21b020b69"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates and returns pointer to the deep copy of this exception object.  <a href="#a4bd4ba0d501021013d1473d21b020b69">More...</a><br/></td></tr>
+<tr class="separator:a4bd4ba0d501021013d1473d21b020b69"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad3bc09bf78c33f19a0bcdf882fdf9d41"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00158.html#ad3bc09bf78c33f19a0bcdf882fdf9d41">destroy</a> ()=0  throw ()</td></tr>
+<tr class="memdesc:ad3bc09bf78c33f19a0bcdf882fdf9d41"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroys objects created by the <a class="el" href="a00158.html#a4bd4ba0d501021013d1473d21b020b69" title="Creates and returns pointer to the deep copy of this exception object. ">move()</a> method.  <a href="#ad3bc09bf78c33f19a0bcdf882fdf9d41">More...</a><br/></td></tr>
+<tr class="separator:ad3bc09bf78c33f19a0bcdf882fdf9d41"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae45c08d36c7ec7ae91785da3515a8828"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00158.html#ae45c08d36c7ec7ae91785da3515a8828">throw_self</a> ()=0</td></tr>
+<tr class="memdesc:ae45c08d36c7ec7ae91785da3515a8828"><td class="mdescLeft">&#160;</td><td class="mdescRight">Throws this exception object.  <a href="#ae45c08d36c7ec7ae91785da3515a8828">More...</a><br/></td></tr>
+<tr class="separator:ae45c08d36c7ec7ae91785da3515a8828"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a282bb7dce5f157d044d14d50cd6ff35c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a282bb7dce5f157d044d14d50cd6ff35c"></a>
+virtual const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00158.html#a282bb7dce5f157d044d14d50cd6ff35c">name</a> () const =0  throw ()</td></tr>
+<tr class="memdesc:a282bb7dce5f157d044d14d50cd6ff35c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns RTTI name of the originally intercepted exception. <br/></td></tr>
+<tr class="separator:a282bb7dce5f157d044d14d50cd6ff35c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa6739787c42d80943e18913cce47f42f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa6739787c42d80943e18913cce47f42f"></a>
+virtual const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00158.html#aa6739787c42d80943e18913cce47f42f">what</a> () const __TBB_override=0  throw ()</td></tr>
+<tr class="memdesc:aa6739787c42d80943e18913cce47f42f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the result of originally intercepted exception's <a class="el" href="a00158.html#aa6739787c42d80943e18913cce47f42f" title="Returns the result of originally intercepted exception&#39;s what() method. ">what()</a> method. <br/></td></tr>
+<tr class="separator:aa6739787c42d80943e18913cce47f42f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6a973c37078afedf7d457ff4704bf8cd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00158.html#a6a973c37078afedf7d457ff4704bf8cd">operator delete</a> (void *p)</td></tr>
+<tr class="separator:a6a973c37078afedf7d457ff4704bf8cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>A stage in a pipeline served by a user thread. </p>
+<div class="textblock"><p>Interface to be implemented by all exceptions TBB recognizes and propagates across the threads. </p>
+<p>If an unhandled exception of the type derived from <a class="el" href="a00158.html" title="Interface to be implemented by all exceptions TBB recognizes and propagates across the threads...">tbb::tbb_exception</a> is intercepted by the TBB scheduler in one of the worker threads, it is delivered to and re-thrown in the root thread. The root thread is the thread that has started the outermost algorithm or root task sharing the same <a class="el" href="a00150.html">task_group_context</a> with the guilty algorithm/task (the one that threw the exception first).</p>
+<p>Note: when documentation mentions workers with respect to exception handling, masters are implied as well, because they are completely equivalent in this context. Consequently a root thread can be master or worker thread.</p>
+<p>NOTE: In case of nested algorithms or complex task hierarchies when the nested levels share (explicitly or by means of implicit inheritance) the task group context of the outermost level, the exception may be (re-)thrown multiple times (ultimately - in each worker on each nesting level) before reaching the root thread at the outermost level. IMPORTANT: if you intercept an exception derived from this class on a nested level, you must re-throw it in the catch block by means of the "throw;" operator.</p>
+<p>TBB provides two implementations of this interface: <a class="el" href="a00036.html" title="This class is used by TBB to propagate information about unhandled exceptions into the root thread...">tbb::captured_exception</a> and template class <a class="el" href="a00085.html" title="Template that can be used to implement exception that transfers arbitrary ExceptionData to the root t...">tbb::movable_exception</a>. See their declarations for more info. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="ac99258407f382d84568a510075074fc7"></a>
+<a class="anchor" id="ad3bc09bf78c33f19a0bcdf882fdf9d41"></a>
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">result_type __TBB_EXPORTED_METHOD tbb::thread_bound_filter::process_item </td>
+          <td class="memname">virtual void tbb::tbb_exception::destroy </td>
+          <td>(</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td align="right">throw </td><td>(</td><td colspan="2"></td>
+        </tr>
+        <tr>
+          <td align="right"></td><td>)</td><td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Destroys objects created by the <a class="el" href="a00158.html#a4bd4ba0d501021013d1473d21b020b69" title="Creates and returns pointer to the deep copy of this exception object. ">move()</a> method. </p>
+<p>Frees memory and calls destructor for this exception object. Can and must be used only on objects created by the move method. </p>
+
+<p>Implemented in <a class="el" href="a00085.html#aa4be7e2bf375edcb218fb5d7ed8e279b">tbb::movable_exception&lt; ExceptionData &gt;</a>, and <a class="el" href="a00036.html#abfc1220a6f9da0361082a3f3ad80cdc9">tbb::captured_exception</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a4bd4ba0d501021013d1473d21b020b69"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual <a class="el" href="a00158.html">tbb_exception</a>* tbb::tbb_exception::move </td>
+          <td>(</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td align="right">throw </td><td>(</td><td colspan="2"></td>
+        </tr>
+        <tr>
+          <td align="right"></td><td>)</td><td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Creates and returns pointer to the deep copy of this exception object. </p>
+<p>Move semantics is allowed. </p>
+
+<p>Implemented in <a class="el" href="a00085.html#a46eee42a3279007f48c9e8f11d074d16">tbb::movable_exception&lt; ExceptionData &gt;</a>, and <a class="el" href="a00036.html#a3b75205c631b51a00faf98c9e107f78a">tbb::captured_exception</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a6a973c37078afedf7d457ff4704bf8cd"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void tbb::tbb_exception::operator delete </td>
+          <td>(</td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>p</em>)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Operator delete is provided only to allow using existing smart pointers with TBB exception objects obtained as the result of applying <a class="el" href="a00158.html#a4bd4ba0d501021013d1473d21b020b69" title="Creates and returns pointer to the deep copy of this exception object. ">move()</a> operation on an exception thrown out of TBB scheduler.</p>
+<p>When overriding method <a class="el" href="a00158.html#a4bd4ba0d501021013d1473d21b020b69" title="Creates and returns pointer to the deep copy of this exception object. ">move()</a> make sure to override operator delete as well if memory is allocated not by TBB's scalable allocator. </p>
+
+</div>
+</div>
+<a class="anchor" id="ae45c08d36c7ec7ae91785da3515a8828"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual void tbb::tbb_exception::throw_self </td>
           <td>(</td>
           <td class="paramname">)</td><td></td>
           <td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
-<p>Wait until a data item becomes available, and invoke operator() on that item. </p>
-<p>This interface is blocking. Returns 'success' if an item was processed. Returns 'end_of_stream' if there are no more items to process. Never returns 'item_not_available', as it blocks until another return condition applies. </p>
+<p>Throws this exception object. </p>
+<p>Make sure that if you have several levels of derivation from this interface you implement or override this method on the most derived level. The implementation is as simple as "throw *this;". Failure to do this will result in exception of a base class type being thrown. </p>
 
-</div>
-</div>
-<a class="anchor" id="a12cfa43c620066a8783529cc8519c6f9"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">result_type __TBB_EXPORTED_METHOD tbb::thread_bound_filter::try_process_item </td>
-          <td>(</td>
-          <td class="paramname">)</td><td></td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>If a data item is available, invoke operator() on that item. </p>
-<p>This interface is non-blocking. Returns 'success' if an item was processed. Returns 'item_not_available' if no item can be processed now but more may arrive in the future, or if token limit is reached. Returns 'end_of_stream' if there are no more items to process. </p>
+<p>Implemented in <a class="el" href="a00085.html#a0e9ac8a4468eb0ff3b2bb246b806a10e">tbb::movable_exception&lt; ExceptionData &gt;</a>, and <a class="el" href="a00036.html#a6df0d3a1943ca6f84a9a9aca25e9633d">tbb::captured_exception</a>.</p>
 
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>pipeline.h</li>
+<li>tbb_exception.h</li>
 </ul>
 </div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2017 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -21,24 +21,19 @@
 #ifndef __TBB_SERIAL_parallel_for_H
 #define __TBB_SERIAL_parallel_for_H
 
-#if !TBB_USE_EXCEPTIONS && _MSC_VER
-    // Suppress "C++ exception handler used, but unwind semantics are not enabled" warning in STL headers
-    #pragma warning (push)
-    #pragma warning (disable: 4530)
-#endif
-
-#include <stdexcept>
-#include <string> // required to construct std exception classes
-
-#if !TBB_USE_EXCEPTIONS && _MSC_VER
-    #pragma warning (pop)
-#endif
-
 #include "tbb_annotate.h"
 
 #ifndef __TBB_NORMAL_EXECUTION
 #include "tbb/blocked_range.h"
 #include "tbb/partitioner.h"
+#endif
+
+#if TBB_USE_EXCEPTIONS
+#include <stdexcept>
+#include <string> // required to construct std exception classes
+#else
+#include <cstdlib>
+#include <iostream>
 #endif
 
 namespace tbb {
@@ -138,9 +133,14 @@ void parallel_for( const Range& range, const Body& body, affinity_partitioner& p
 //! Implementation of parallel iteration over stepped range of integers with explicit step and partitioner (ignored)
 template <typename Index, typename Function, typename Partitioner>
 void parallel_for_impl(Index first, Index last, Index step, const Function& f, Partitioner& ) {
-    if (step <= 0 )
+    if (step <= 0 ) {
+#if TBB_USE_EXCEPTIONS
         throw std::invalid_argument( "nonpositive_step" );
-    else if (last > first) {
+#else
+        std::cerr << "nonpositive step in a call to parallel_for" << std::endl;
+        std::abort();
+#endif
+    } else if (last > first) {
         // Above "else" avoids "potential divide by zero" warning on some platforms
         ANNOTATE_SITE_BEGIN( tbb_parallel_for );
         for( Index i = first; i < last; i = i + step ) {

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -43,10 +43,6 @@ basic_tls<uintptr_t> governor::theTLS;
 unsigned governor::DefaultNumberOfThreads;
 rml::tbb_factory governor::theRMLServerFactory;
 bool governor::UsePrivateRML;
-const task_scheduler_init *governor::BlockingTSI;
-#if TBB_USE_ASSERT
-bool governor::IsBlockingTerminationInProgress;
-#endif
 bool governor::is_speculation_enabled;
 bool governor::is_rethrow_broken;
 

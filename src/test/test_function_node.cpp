@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 
 #include "harness_graph.h"
 
+#include "tbb/flow_graph.h"
 #include "tbb/task_scheduler_init.h"
 #include "tbb/spin_rw_mutex.h"
 
@@ -85,9 +86,13 @@ void buffered_levels( size_t concurrency, Body body ) {
    // For num_receivers = 1 to MAX_NODES
    for (size_t num_receivers = 1; num_receivers <= MAX_NODES; ++num_receivers ) {
         // Create num_receivers counting receivers and connect the exe_vec[node_idx] to them.
-        harness_mapped_receiver<OutputType> *receivers = new harness_mapped_receiver<OutputType>[num_receivers];
+        std::vector< harness_mapped_receiver<OutputType>* > receivers(num_receivers);
+        for (size_t i = 0; i < num_receivers; i++) {
+            receivers[i] = new harness_mapped_receiver<OutputType>(g);
+        }
+
         for (size_t r = 0; r < num_receivers; ++r ) {
-            tbb::flow::make_edge( exe_vec[node_idx], receivers[r] );
+            tbb::flow::make_edge( exe_vec[node_idx], *receivers[r] );
         }
 
         // Do the test with varying numbers of senders
@@ -102,7 +107,7 @@ void buffered_levels( size_t concurrency, Body body ) {
 
             // Initialize the receivers so they know how many senders and messages to check for
             for (size_t r = 0; r < num_receivers; ++r ) {
-                 receivers[r].initialize_map( N, num_senders );
+                 receivers[r]->initialize_map( N, num_senders );
             }
 
             // Do the test
@@ -117,20 +122,24 @@ void buffered_levels( size_t concurrency, Body body ) {
             }
             // validate the receivers
             for (size_t r = 0; r < num_receivers; ++r ) {
-                receivers[r].validate();
+                receivers[r]->validate();
             }
             delete [] senders;
         }
         for (size_t r = 0; r < num_receivers; ++r ) {
-            tbb::flow::remove_edge( exe_vec[node_idx], receivers[r] );
+            tbb::flow::remove_edge( exe_vec[node_idx], *receivers[r] );
         }
         ASSERT( exe_vec[node_idx].try_put( InputType() ) == true, NULL );
         g.wait_for_all();
         for (size_t r = 0; r < num_receivers; ++r ) {
             // since it's detached, nothing should have changed
-            receivers[r].validate();
+            receivers[r]->validate();
         }
-        delete [] receivers;
+
+        for (size_t i = 0; i < num_receivers; i++) {
+            delete receivers[i];
+        }
+
     } // for num_receivers
     } // for node_idx
     } // for concurrency level lc
@@ -168,9 +177,14 @@ void buffered_levels_with_copy( size_t concurrency ) {
         tbb::flow::function_node< InputType, OutputType > exe_node( g, lc, cf );
 
         for (size_t num_receivers = 1; num_receivers <= MAX_NODES; ++num_receivers ) {
-           harness_mapped_receiver<OutputType> *receivers = new harness_mapped_receiver<OutputType>[num_receivers];
+
+           std::vector< harness_mapped_receiver<OutputType>* > receivers(num_receivers);
+           for (size_t i = 0; i < num_receivers; i++) {
+               receivers[i] = new harness_mapped_receiver<OutputType>(g);
+           }
+
            for (size_t r = 0; r < num_receivers; ++r ) {
-               tbb::flow::make_edge( exe_node, receivers[r] );
+               tbb::flow::make_edge( exe_node, *receivers[r] );
             }
 
             harness_counting_sender<InputType> *senders = NULL;
@@ -182,7 +196,7 @@ void buffered_levels_with_copy( size_t concurrency ) {
                 }
 
                 for (size_t r = 0; r < num_receivers; ++r ) {
-                    receivers[r].initialize_map( N, num_senders );
+                    receivers[r]->initialize_map( N, num_senders );
                 }
 
                 NativeParallelFor( (int)num_senders, parallel_put_until_limit<InputType>(senders) );
@@ -194,19 +208,22 @@ void buffered_levels_with_copy( size_t concurrency ) {
                     ASSERT( senders[s].my_receiver == &exe_node, NULL );
                 }
                 for (size_t r = 0; r < num_receivers; ++r ) {
-                    receivers[r].validate();
+                    receivers[r]->validate();
                 }
                 delete [] senders;
             }
             for (size_t r = 0; r < num_receivers; ++r ) {
-                tbb::flow::remove_edge( exe_node, receivers[r] );
+                tbb::flow::remove_edge( exe_node, *receivers[r] );
             }
             ASSERT( exe_node.try_put( InputType() ) == true, NULL );
             g.wait_for_all();
             for (size_t r = 0; r < num_receivers; ++r ) {
-                receivers[r].validate();
+                receivers[r]->validate();
             }
-            delete [] receivers;
+
+            for (size_t i = 0; i < num_receivers; i++) {
+                delete receivers[i];
+            }
         }
 
         // validate that the local body matches the global execute_count and both are correct
@@ -224,7 +241,7 @@ void buffered_levels_with_copy( size_t concurrency ) {
 
 template< typename InputType, typename OutputType >
 void run_buffered_levels( int c ) {
-    #if __TBB_LAMBDAS_PRESENT
+    #if __TBB_CPP11_LAMBDAS_PRESENT
     buffered_levels<InputType,OutputType>( c, []( InputType i ) -> OutputType { return harness_graph_executor<InputType, OutputType>::func(i); } );
     #endif
     buffered_levels<InputType,OutputType>( c, &harness_graph_executor<InputType, OutputType>::func );
@@ -246,96 +263,95 @@ template< typename InputType, typename OutputType, typename Body >
 void concurrency_levels( size_t concurrency, Body body ) {
 
    for ( size_t lc = 1; lc <= concurrency; ++lc ) {
-   tbb::flow::graph g;
+       tbb::flow::graph g;
 
-   // Set the execute_counter back to zero in the harness
-   harness_graph_executor<InputType, OutputType>::execute_count = 0;
-   // Set the number of current executors to zero.
-   harness_graph_executor<InputType, OutputType>::current_executors = 0;
-   // Set the max allowed executors to lc. There is a check in the functor to make sure this is never exceeded.
-   harness_graph_executor<InputType, OutputType>::max_executors = lc;
+       // Set the execute_counter back to zero in the harness
+       harness_graph_executor<InputType, OutputType>::execute_count = 0;
+       // Set the number of current executors to zero.
+       harness_graph_executor<InputType, OutputType>::current_executors = 0;
+       // Set the max allowed executors to lc. There is a check in the functor to make sure this is never exceeded.
+       harness_graph_executor<InputType, OutputType>::max_executors = lc;
 
-   typedef tbb::flow::function_node< InputType, OutputType, tbb::flow::rejecting > fnode_type;
-   fnode_type exe_node( g, lc, body );
+       typedef tbb::flow::function_node< InputType, OutputType, tbb::flow::rejecting > fnode_type;
+       fnode_type exe_node( g, lc, body );
 
-   for (size_t num_receivers = 1; num_receivers <= MAX_NODES; ++num_receivers ) {
+       for (size_t num_receivers = 1; num_receivers <= MAX_NODES; ++num_receivers ) {
 
-        harness_counting_receiver<OutputType> *receivers = new harness_counting_receiver<OutputType>[num_receivers];
+            std::vector< harness_counting_receiver<OutputType> > receivers(num_receivers, harness_counting_receiver<OutputType>(g));
 
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
-        ASSERT(exe_node.successor_count() == 0, NULL);
-        ASSERT(exe_node.predecessor_count() == 0, NULL);
+            ASSERT(exe_node.successor_count() == 0, NULL);
+            ASSERT(exe_node.predecessor_count() == 0, NULL);
 #endif
 
-        for (size_t r = 0; r < num_receivers; ++r ) {
-            tbb::flow::make_edge( exe_node, receivers[r] );
-        }
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
-        ASSERT(exe_node.successor_count() == num_receivers, NULL);
-        typename fnode_type::successor_list_type my_succs;
-        exe_node.copy_successors(my_succs);
-        ASSERT(my_succs.size() == num_receivers, NULL);
-        typename fnode_type::predecessor_list_type my_preds;
-        exe_node.copy_predecessors(my_preds);
-        ASSERT(my_preds.size() == 0, NULL);
-#endif
-
-        harness_counting_sender<InputType> *senders = NULL;
-
-        for (size_t num_senders = 1; num_senders <= MAX_NODES; ++num_senders ) {
-            senders = new harness_counting_sender<InputType>[num_senders];
-            {
-                // Exclusively lock m to prevent exe_node from finishing
-                tbb::spin_rw_mutex::scoped_lock l( harness_graph_executor<InputType, OutputType>::template mutex_holder<tbb::spin_rw_mutex>::mutex );
-
-                // put to lc level, it will accept and then block at m
-                for ( size_t c = 0 ; c < lc ; ++c ) {
-                    ASSERT( exe_node.try_put( InputType() ) == true, NULL );
-                }
-                // it only accepts to lc level
-                ASSERT( exe_node.try_put( InputType() ) == false, NULL );
-
-                for (size_t s = 0; s < num_senders; ++s ) {
-                   // register a sender
-                   senders[s].my_limit = N;
-                   exe_node.register_predecessor( senders[s] );
-                }
-
-            } // release lock at end of scope, setting the exe node free to continue
-            // wait for graph to settle down
-            g.wait_for_all();
-
-            // confirm that each sender was requested from N times
-            for (size_t s = 0; s < num_senders; ++s ) {
-                size_t n = senders[s].my_received;
-                ASSERT( n == N, NULL );
-                ASSERT( senders[s].my_receiver == &exe_node, NULL );
-            }
-            // confirm that each receivers got N * num_senders + the initial lc puts
             for (size_t r = 0; r < num_receivers; ++r ) {
-                size_t n = receivers[r].my_count;
-                ASSERT( n == num_senders*N+lc, NULL );
-                receivers[r].my_count = 0;
+                tbb::flow::make_edge( exe_node, receivers[r] );
             }
-            delete [] senders;
-        }
-        for (size_t r = 0; r < num_receivers; ++r ) {
-            tbb::flow::remove_edge( exe_node, receivers[r] );
-        }
-        ASSERT( exe_node.try_put( InputType() ) == true, NULL );
-        g.wait_for_all();
-        for (size_t r = 0; r < num_receivers; ++r ) {
-            ASSERT( int(receivers[r].my_count) == 0, NULL );
-        }
-        delete [] receivers;
-    }
+#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+            ASSERT(exe_node.successor_count() == num_receivers, NULL);
+            typename fnode_type::successor_list_type my_succs;
+            exe_node.copy_successors(my_succs);
+            ASSERT(my_succs.size() == num_receivers, NULL);
+            typename fnode_type::predecessor_list_type my_preds;
+            exe_node.copy_predecessors(my_preds);
+            ASSERT(my_preds.size() == 0, NULL);
+#endif
 
+            harness_counting_sender<InputType> *senders = NULL;
+
+            for (size_t num_senders = 1; num_senders <= MAX_NODES; ++num_senders ) {
+                senders = new harness_counting_sender<InputType>[num_senders];
+                {
+                    // Exclusively lock m to prevent exe_node from finishing
+                    tbb::spin_rw_mutex::scoped_lock l( harness_graph_executor<InputType, OutputType>::template mutex_holder<tbb::spin_rw_mutex>::mutex );
+
+                    // put to lc level, it will accept and then block at m
+                    for ( size_t c = 0 ; c < lc ; ++c ) {
+                        ASSERT( exe_node.try_put( InputType() ) == true, NULL );
+                    }
+                    // it only accepts to lc level
+                    ASSERT( exe_node.try_put( InputType() ) == false, NULL );
+
+                    for (size_t s = 0; s < num_senders; ++s ) {
+                       // register a sender
+                       senders[s].my_limit = N;
+                       exe_node.register_predecessor( senders[s] );
+                    }
+
+                } // release lock at end of scope, setting the exe node free to continue
+                // wait for graph to settle down
+                g.wait_for_all();
+
+                // confirm that each sender was requested from N times
+                for (size_t s = 0; s < num_senders; ++s ) {
+                    size_t n = senders[s].my_received;
+                    ASSERT( n == N, NULL );
+                    ASSERT( senders[s].my_receiver == &exe_node, NULL );
+                }
+                // confirm that each receivers got N * num_senders + the initial lc puts
+                for (size_t r = 0; r < num_receivers; ++r ) {
+                    size_t n = receivers[r].my_count;
+                    ASSERT( n == num_senders*N+lc, NULL );
+                    receivers[r].my_count = 0;
+                }
+                delete [] senders;
+            }
+            for (size_t r = 0; r < num_receivers; ++r ) {
+                tbb::flow::remove_edge( exe_node, receivers[r] );
+            }
+            ASSERT( exe_node.try_put( InputType() ) == true, NULL );
+            g.wait_for_all();
+            for (size_t r = 0; r < num_receivers; ++r ) {
+                ASSERT( int(receivers[r].my_count) == 0, NULL );
+            }
+        }
     }
 }
 
+
 template< typename InputType, typename OutputType >
 void run_concurrency_levels( int c ) {
-    #if __TBB_LAMBDAS_PRESENT
+    #if __TBB_CPP11_LAMBDAS_PRESENT
     concurrency_levels<InputType,OutputType>( c, []( InputType i ) -> OutputType { return harness_graph_executor<InputType, OutputType>::template tfunc<tbb::spin_rw_mutex>(i); } );
     #endif
     concurrency_levels<InputType,OutputType>( c, &harness_graph_executor<InputType, OutputType>::template tfunc<tbb::spin_rw_mutex> );
@@ -382,7 +398,7 @@ void unlimited_concurrency( Body body ) {
 
         for (size_t num_receivers = 1; num_receivers <= MAX_NODES; ++num_receivers ) {
 
-            harness_counting_receiver<OutputType> *receivers = new harness_counting_receiver<OutputType>[num_receivers];
+            std::vector< harness_counting_receiver<OutputType> > receivers(num_receivers, harness_counting_receiver<OutputType>(g));
             harness_graph_executor<InputType, OutputType>::execute_count = 0;
 
             for (size_t r = 0; r < num_receivers; ++r ) {
@@ -403,15 +419,14 @@ void unlimited_concurrency( Body body ) {
             for (size_t r = 0; r < num_receivers; ++r ) {
                 tbb::flow::remove_edge( exe_node, receivers[r] );
             }
-            delete [] receivers;
+            }
         }
     }
-}
 
 template< typename InputType, typename OutputType >
 void run_unlimited_concurrency() {
     harness_graph_executor<InputType, OutputType>::max_executors = 0;
-    #if __TBB_LAMBDAS_PRESENT
+    #if __TBB_CPP11_LAMBDAS_PRESENT
     unlimited_concurrency<InputType,OutputType>( []( InputType i ) -> OutputType { return harness_graph_executor<InputType, OutputType>::func(i); } );
     #endif
     unlimited_concurrency<InputType,OutputType>( &harness_graph_executor<InputType, OutputType>::func );

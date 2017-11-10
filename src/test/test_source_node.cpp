@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -28,13 +28,14 @@
 const int N = 1000;
 
 template< typename T >
-class test_push_receiver : public tbb::flow::receiver<T> {
+class test_push_receiver : public tbb::flow::receiver<T>, NoAssign {
 
     tbb::atomic<int> my_counters[N];
+    tbb::flow::graph& my_graph;
 
 public:
 
-    test_push_receiver() {
+    test_push_receiver(tbb::flow::graph& g) : my_graph(g) {
         for (int i = 0; i < N; ++i )
             my_counters[i] = 0;
     }
@@ -61,6 +62,10 @@ public:
        int i = (int)v;
        ++my_counters[i];
        return const_cast<tbb::task *>(SUCCESSFULLY_ENQUEUED);
+    }
+
+    tbb::flow::graph& graph_reference() __TBB_override {
+        return my_graph;
     }
 
     void reset_receiver(tbb::flow::reset_flags /*f*/) __TBB_override {}
@@ -113,7 +118,7 @@ void test_single_dest() {
    // push only
    tbb::flow::graph g;
    tbb::flow::source_node<T> src(g, source_body<T>() );
-   test_push_receiver<T> dest;
+   test_push_receiver<T> dest(g);
    tbb::flow::make_edge( src, dest );
    g.wait_for_all();
    for (int i = 0; i < N; ++i ) {
@@ -152,7 +157,7 @@ void test_single_dest() {
 
    // test copy constructor
    tbb::flow::source_node<T> src_copy(src);
-   test_push_receiver<T> dest_c;
+   test_push_receiver<T> dest_c(g);
    ASSERT( src_copy.register_successor(dest_c), NULL );
    g.wait_for_all();
    for (int i = 0; i < N; ++i ) {

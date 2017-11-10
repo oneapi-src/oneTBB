@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="DDDebug|Win32">
       <Configuration>DDDebug</Configuration>
@@ -46,49 +46,49 @@
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DDRelease|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DDDebug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DDRelease|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -184,7 +184,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>tbb_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(TBBROOT)\lib\ia32\vc_mt;$(TBBROOT)\lib\ia32\vc10;$(SolutionDir)\..\..\..\..\lib\ia32\vc_mt;$(SolutionDir)\..\..\..\..\lib\ia32\vc10;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(TBBROOT)\lib\ia32\vc_mt;$(TBBROOT)\lib\ia32\vc12;$(SolutionDir)\..\..\..\..\lib\ia32\vc_mt;$(SolutionDir)\..\..\..\..\lib\ia32\vc12;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
@@ -213,7 +213,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>tbb_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(TBBROOT)\lib\intel64\vc_mt;$(TBBROOT)\lib\intel64\vc10;$(SolutionDir)\..\..\..\..\lib\intel64\vc_mt;$(SolutionDir)\..\..\..\..\lib\intel64\vc10;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(TBBROOT)\lib\intel64\vc_mt;$(TBBROOT)\lib\intel64\vc12;$(SolutionDir)\..\..\..\..\lib\intel64\vc_mt;$(SolutionDir)\..\..\..\..\lib\intel64\vc12;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX64</TargetMachine>
@@ -240,7 +240,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>tbb.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(TBBROOT)\lib\ia32\vc_mt;$(TBBROOT)\lib\ia32\vc10;$(SolutionDir)\..\..\..\..\lib\ia32\vc_mt;$(SolutionDir)\..\..\..\..\lib\ia32\vc10;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(TBBROOT)\lib\ia32\vc_mt;$(TBBROOT)\lib\ia32\vc12;$(SolutionDir)\..\..\..\..\lib\ia32\vc_mt;$(SolutionDir)\..\..\..\..\lib\ia32\vc12;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -272,7 +272,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>tbb.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(TBBROOT)\lib\intel64\vc_mt;$(TBBROOT)\lib\intel64\vc10;$(SolutionDir)\..\..\..\..\lib\intel64\vc_mt;$(SolutionDir)\..\..\..\..\lib\intel64\vc10;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(TBBROOT)\lib\intel64\vc_mt;$(TBBROOT)\lib\intel64\vc12;$(SolutionDir)\..\..\..\..\lib\intel64\vc_mt;$(SolutionDir)\..\..\..\..\lib\intel64\vc12;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -304,7 +304,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>tbb.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(TBBROOT)\lib\ia32\vc_mt;$(TBBROOT)\lib\ia32\vc10;$(SolutionDir)\..\..\..\..\lib\ia32\vc_mt;$(SolutionDir)\..\..\..\..\lib\ia32\vc10;$(DXSDK_DIR)\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(TBBROOT)\lib\ia32\vc_mt;$(TBBROOT)\lib\ia32\vc12;$(SolutionDir)\..\..\..\..\lib\ia32\vc_mt;$(SolutionDir)\..\..\..\..\lib\ia32\vc12;$(DXSDK_DIR)\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -339,7 +339,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>tbb.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(TBBROOT)\lib\intel64\vc_mt;$(TBBROOT)\lib\intel64\vc10;$(SolutionDir)\..\..\..\..\lib\intel64\vc_mt;$(SolutionDir)\..\..\..\..\lib\intel64\vc10;$(DXSDK_DIR)\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(TBBROOT)\lib\intel64\vc_mt;$(TBBROOT)\lib\intel64\vc12;$(SolutionDir)\..\..\..\..\lib\intel64\vc_mt;$(SolutionDir)\..\..\..\..\lib\intel64\vc12;$(DXSDK_DIR)\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -370,7 +370,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>tbb_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(TBBROOT)\lib\ia32\vc_mt;$(TBBROOT)\lib\ia32\vc10;$(SolutionDir)\..\..\..\..\lib\ia32\vc_mt;$(SolutionDir)\..\..\..\..\lib\ia32\vc10;$(DXSDK_DIR)\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(TBBROOT)\lib\ia32\vc_mt;$(TBBROOT)\lib\ia32\vc12;$(SolutionDir)\..\..\..\..\lib\ia32\vc_mt;$(SolutionDir)\..\..\..\..\lib\ia32\vc12;$(DXSDK_DIR)\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
@@ -402,7 +402,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>tbb_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(TBBROOT)\lib\intel64\vc_mt;$(TBBROOT)\lib\intel64\vc10;$(SolutionDir)\..\..\..\..\lib\intel64\vc_mt;$(SolutionDir)\..\..\..\..\lib\intel64\vc10;$(DXSDK_DIR)\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(TBBROOT)\lib\intel64\vc_mt;$(TBBROOT)\lib\intel64\vc12;$(SolutionDir)\..\..\..\..\lib\intel64\vc_mt;$(SolutionDir)\..\..\..\..\lib\intel64\vc12;$(DXSDK_DIR)\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX64</TargetMachine>

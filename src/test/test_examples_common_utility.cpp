@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@
 #endif
 
 #include "harness_defs.h" // for suppress_unused_warning
+
+#if TBB_USE_EXCEPTIONS
 #include "harness_assert.h"
 #include "../../examples/common/utility/utility.h"
 #include <sstream>
@@ -578,9 +580,11 @@ void run_high_level_api_tests(){
     thread_range_tests::post_process_troika_value_with_ladder_step();
     thread_range_tests::test_print_content();
 }
+#endif // TBB_USE_EXCEPTIONS
 
 #include "harness.h"
 int TestMain(){
+#if TBB_USE_EXCEPTIONS
     Harness::suppress_unused_warning(utility::thread_number_range_desc);
     try{
         run_implementation_unit_tests();
@@ -591,5 +595,8 @@ int TestMain(){
         ASSERT(false,str.str().c_str());
     }
     return Harness::Done;
-
+#else
+    REPORT("Known issue: the test cannot work with exceptions disabled\n");
+    return Harness::Done;
+#endif
 }

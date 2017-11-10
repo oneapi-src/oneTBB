@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -45,14 +45,14 @@ namespace internal {
         virtual void internal_add_copy( const Item& item ) = 0;
 #if __TBB_CPP11_RVALUE_REF_PRESENT
         virtual void internal_add_move( Item&& item ) = 0;
-#endif /* __TBB_CPP11_RVALUE_REF_PRESENT */
+#endif
         template<typename Body_, typename Item_> friend class internal::parallel_do_feeder_impl;
     public:
         //! Add a work item to a running parallel_do.
         void add( const Item& item ) {internal_add_copy(item);}
 #if __TBB_CPP11_RVALUE_REF_PRESENT
         void add( Item&& item ) {internal_add_move(std::move(item));}
-#endif /* __TBB_CPP11_RVALUE_REF_PRESENT */
+#endif
     };
 
 //! @cond INTERNAL
@@ -67,19 +67,26 @@ namespace internal {
     {
         typedef parallel_do_feeder<Item> Feeder;
         template<typename A1, typename A2, typename CvItem >
-        static void internal_call( const Body& obj, A1& arg1, A2&, void (Body::*)(CvItem) const ) {
+        static void internal_call( const Body& obj, __TBB_FORWARDING_REF(A1) arg1, A2&, void (Body::*)(CvItem) const ) {
+            obj(tbb::internal::forward<A1>(arg1));
+        }
+        template<typename A1, typename A2, typename CvItem >
+        static void internal_call( const Body& obj, __TBB_FORWARDING_REF(A1) arg1, A2& arg2, void (Body::*)(CvItem, parallel_do_feeder<Item>&) const ) {
+            obj(tbb::internal::forward<A1>(arg1), arg2);
+        }
+        template<typename A1, typename A2, typename CvItem >
+        static void internal_call( const Body& obj, __TBB_FORWARDING_REF(A1) arg1, A2&, void (Body::*)(CvItem&) const ) {
             obj(arg1);
         }
         template<typename A1, typename A2, typename CvItem >
-        static void internal_call( const Body& obj, A1& arg1, A2& arg2, void (Body::*)(CvItem, parallel_do_feeder<Item>&) const ) {
+        static void internal_call( const Body& obj, __TBB_FORWARDING_REF(A1) arg1, A2& arg2, void (Body::*)(CvItem&, parallel_do_feeder<Item>&) const ) {
             obj(arg1, arg2);
         }
-
     public:
-        template<typename A1, typename A2 >
-        static void call( const Body& obj, A1& arg1, A2& arg2 )
+        template<typename A1, typename A2>
+        static void call( const Body& obj, __TBB_FORWARDING_REF(A1) arg1, A2& arg2 )
         {
-            internal_call( obj, arg1, arg2, &Body::operator() );
+            internal_call( obj, tbb::internal::forward<A1>(arg1), arg2, &Body::operator() );
         }
     };
 
@@ -102,12 +109,11 @@ namespace internal {
         do_iteration_task( Item&& value, feeder_type& feeder ) :
             my_value(std::move(value)), my_feeder(feeder)
         {}
-#endif /* __TBB_CPP11_RVALUE_REF_PRESENT */
+#endif
 
         task* execute() __TBB_override
         {
-            // TODO: use move semantics for my_value
-            parallel_do_operator_selector<Body, Item>::call(*my_feeder.my_body, my_value, my_feeder);
+            parallel_do_operator_selector<Body, Item>::call(*my_feeder.my_body, tbb::internal::move(my_value), my_feeder);
             return NULL;
         }
 
@@ -143,17 +149,34 @@ namespace internal {
     template<class Body, typename Item>
     class parallel_do_feeder_impl : public parallel_do_feeder<Item>
     {
-        void internal_add_copy( const Item& item ) __TBB_override
-        {
+#if __TBB_CPP11_RVALUE_REF_PRESENT
+        //Avoiding use of copy constructor in a virtual method if the type does not support it
+        void internal_add_copy_impl(std::true_type, const Item& item) {
             typedef do_iteration_task<Body, Item> iteration_type;
             iteration_type& t = *new (task::allocate_additional_child_of(*my_barrier)) iteration_type(item, *this);
             task::spawn(t);
         }
-#if __TBB_CPP11_RVALUE_REF_PRESENT
+        void internal_add_copy_impl(std::false_type, const Item&) {
+            __TBB_ASSERT(false, "Overloading for r-value reference doesn't work or it's not movable and not copyable object");
+        }
+        void internal_add_copy( const Item& item ) __TBB_override
+        {
+#if __TBB_CPP11_IS_COPY_CONSTRUCTIBLE_PRESENT
+            internal_add_copy_impl(typename std::is_copy_constructible<Item>::type(), item);
+#else
+            internal_add_copy_impl(std::true_type(), item);
+#endif
+        }
         void internal_add_move( Item&& item ) __TBB_override
         {
             typedef do_iteration_task<Body, Item> iteration_type;
             iteration_type& t = *new (task::allocate_additional_child_of(*my_barrier)) iteration_type(std::move(item), *this);
+            task::spawn(t);
+        }
+#else /* ! __TBB_CPP11_RVALUE_REF_PRESENT */
+        void internal_add_copy(const Item& item) __TBB_override {
+            typedef do_iteration_task<Body, Item> iteration_type;
+            iteration_type& t = *new (task::allocate_additional_child_of(*my_barrier)) iteration_type(item, *this);
             task::spawn(t);
         }
 #endif /* __TBB_CPP11_RVALUE_REF_PRESENT */
@@ -240,13 +263,18 @@ namespace internal {
 
         task* execute() __TBB_override
         {
-            typedef do_iteration_task_iter<Item*, Body, Item> iteration_type;
+#if __TBB_CPP11_RVALUE_REF_PRESENT
+            typedef std::move_iterator<Item*> Item_iterator;
+#else
+            typedef Item* Item_iterator;
+#endif
+            typedef do_iteration_task_iter<Item_iterator, Body, Item> iteration_type;
             __TBB_ASSERT( my_size>0, NULL );
             task_list list;
             task* t;
             size_t k=0;
             for(;;) {
-                t = new( allocate_child() ) iteration_type( my_arg.begin() + k, my_feeder );
+                t = new( allocate_child() ) iteration_type( Item_iterator(my_arg.begin() + k), my_feeder );
                 if( ++k==my_size ) break;
                 list.push_back(*t);
             }
@@ -411,13 +439,13 @@ namespace internal {
     void select_parallel_do( Iterator first, Iterator last, const Body& body, void (Body::*)(Item) const
 #if __TBB_TASK_GROUP_CONTEXT
         , task_group_context& context
-#endif // __TBB_TASK_GROUP_CONTEXT
+#endif
         )
     {
         run_parallel_do<Iterator, Body, typename ::tbb::internal::strip<Item>::type>( first, last, body
 #if __TBB_TASK_GROUP_CONTEXT
             , context
-#endif // __TBB_TASK_GROUP_CONTEXT
+#endif
             );
     }
 
@@ -428,13 +456,13 @@ namespace internal {
     void select_parallel_do( Iterator first, Iterator last, const Body& body, void (Body::*)(Item, parallel_do_feeder<_Item>&) const
 #if __TBB_TASK_GROUP_CONTEXT
         , task_group_context& context
-#endif // __TBB_TASK_GROUP_CONTEXT
+#endif
         )
     {
         run_parallel_do<Iterator, Body, typename ::tbb::internal::strip<Item>::type>( first, last, body
 #if __TBB_TASK_GROUP_CONTEXT
             , context
-#endif // __TBB_TASK_GROUP_CONTEXT
+#endif
             );
     }
 
@@ -473,11 +501,11 @@ void parallel_do( Iterator first, Iterator last, const Body& body )
         return;
 #if __TBB_TASK_GROUP_CONTEXT
     task_group_context context;
-#endif // __TBB_TASK_GROUP_CONTEXT
+#endif
     interface9::internal::select_parallel_do( first, last, body, &Body::operator()
 #if __TBB_TASK_GROUP_CONTEXT
         , context
-#endif // __TBB_TASK_GROUP_CONTEXT
+#endif
         );
 }
 

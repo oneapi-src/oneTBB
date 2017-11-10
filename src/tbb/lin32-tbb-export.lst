@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ __TBB_SYMBOL( _ZN3tbb19task_scheduler_init19default_num_threadsEv )
 __TBB_SYMBOL( _ZN3tbb19task_scheduler_init10initializeEij )
 __TBB_SYMBOL( _ZN3tbb19task_scheduler_init10initializeEi )
 __TBB_SYMBOL( _ZN3tbb19task_scheduler_init9terminateEv )
+__TBB_SYMBOL( _ZN3tbb19task_scheduler_init27internal_blocking_terminateEb )
 #if __TBB_SCHEDULER_OBSERVER
 __TBB_SYMBOL( _ZN3tbb8internal26task_scheduler_observer_v37observeEb )
 #endif /* __TBB_SCHEDULER_OBSERVER */
@@ -72,7 +73,7 @@ __TBB_SYMBOL( _ZNK3tbb10interface78internal15task_arena_base13internal_waitEv )
 __TBB_SYMBOL( _ZN3tbb10interface78internal15task_arena_base21internal_current_slotEv )
 __TBB_SYMBOL( _ZN3tbb10interface78internal15task_arena_base24internal_max_concurrencyEPKNS0_10task_arenaE )
 #if __TBB_TASK_ISOLATION
- __TBB_SYMBOL( _ZN3tbb10interface78internal20isolate_within_arenaERNS1_13delegate_baseEi )
+__TBB_SYMBOL( _ZN3tbb10interface78internal20isolate_within_arenaERNS1_13delegate_baseEi )
 #endif /* __TBB_TASK_ISOLATION */
 
 #if !TBB_NO_LEGACY

@@ -1,4 +1,4 @@
-# Copyright (c) 2005-2016 Intel Corporation
+# Copyright (c) 2005-2017 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,11 +38,11 @@ LINK_FLAGS = /link /nologo
 LIB_LINK_FLAGS= /link /nologo /DLL /MAP /DEBUG /fixed:no /INCREMENTAL:NO /DYNAMICBASE /NXCOMPAT
 
 ifeq ($(arch), ia32)
-	LIB_LINK_FLAGS += /SAFESEH
+    LIB_LINK_FLAGS += /SAFESEH
 endif
 
 ifneq (,$(stdver))
-    CXX_STD_FLAGS = /Qstd=$(stdver) /D_TBB_CPP0X
+    CXX_STD_FLAGS = /Qstd=$(stdver)
 endif
 
 # ICC 12.0 and higher provide Intel(R) Cilk(TM) Plus
@@ -50,12 +50,17 @@ ifeq (ok,$(call detect_js,/minversion icl 12))
     CILK_AVAILABLE = yes
 endif
 
+# ICC 17.0.4 and higher provide support for VS2017
+ifeq (ok,$(call detect_js,/minversion icl 17 4))
+    VS2017_SUPPORT = yes
+endif
+
 ifeq ($(runtime), vc_mt)
     MS_CRT_KEY = /MT$(if $(findstring debug,$(cfg)),d)
 else
     MS_CRT_KEY = /MD$(if $(findstring debug,$(cfg)),d)
 endif
-EH_FLAGS = /EHsc /GR
+EH_FLAGS = $(if $(no_exceptions),/EHs-,/EHsc /GR)
 
 ifeq ($(cfg), release)
     CPLUS_FLAGS = $(MS_CRT_KEY) /O2 /Zi $(EH_FLAGS) /Zc:forScope /Zc:wchar_t /D__TBB_LIB_NAME=$(TBB.LIB)
@@ -77,10 +82,13 @@ OUTPUT_KEY = /Fe
 OUTPUTOBJ_KEY = /Fo
 WARNING_AS_ERROR_KEY = /WX
 WARNING_KEY = /W3
+WARNING_SUPPRESS = $(if $(no_exceptions),/wd583)
 DYLIB_KEY = /DLL
 EXPORT_KEY = /DEF:
 NODEFAULTLIB_KEY = /Zl
 NOINTRINSIC_KEY = /Oi-
+BIGOBJ_KEY = /bigobj
+INCLUDE_TEST_HEADERS = /FI$(tbb_root)/src/test/harness_preload.h
 
 
 ifneq (,$(codecov))
@@ -121,7 +129,12 @@ ifeq ($(VCCOMPAT_FLAG),)
         VCCOMPAT_FLAG := $(if $(findstring vc12, $(VCVERSION)),/Qvc12)
 endif
 ifeq ($(VCCOMPAT_FLAG),)
-        VCCOMPAT_FLAG := $(if $(findstring vc14, $(VCVERSION)),/Qvc14)
+    VCCOMPAT_FLAG := $(if $(findstring vc14, $(VCVERSION)),/Qvc14)
+    ifeq ($(VS2017_SUPPORT),yes)
+        ifneq (,$(findstring vc14.1, $(VCVERSION)))
+            VCCOMPAT_FLAG := /Qvc14.1
+        endif
+    endif
 endif
 ifeq ($(VCCOMPAT_FLAG),)
         $(error VC version not detected correctly: $(VCVERSION) )

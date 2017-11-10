@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@
 #include "tbb/queuing_mutex.h"
 #include "tbb/queuing_rw_mutex.h"
 #include "tbb/spin_rw_mutex.h"
+#include "tbb/mutex.h"
+
 #include "tbb/tick_count.h"
 #include "tbb/atomic.h"
 
@@ -211,6 +213,7 @@ int TestMain () {
         Test<tbb::queuing_mutex>( "queuing_mutex", p );
         Test<tbb::queuing_rw_mutex>( "queuing_rw_mutex", p );
         Test<tbb::spin_rw_mutex>( "spin_rw_mutex", p );
+        Test<tbb::mutex>( "mutex", p );
         TestReaderWriter<tbb::queuing_rw_mutex>( "queuing_rw_mutex", p );
         TestReaderWriter<tbb::spin_rw_mutex>( "spin_rw_mutex", p );
     }

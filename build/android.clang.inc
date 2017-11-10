@@ -1,4 +1,4 @@
-# Copyright (c) 2005-2016 Intel Corporation
+# Copyright (c) 2005-2017 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ endif
 CPLUS_FLAGS    += --sysroot=$(SYSROOT)
 LIB_LINK_FLAGS += --sysroot=$(SYSROOT)
 LIBS           = -L$(CPLUS_LIB_PATH) -lc++_shared
-ifneq (,$(findstring $(ndk_version),r12 r12b r13 r13b))
+ifeq (,$(findstring $(ndk_version),$(foreach v, 7 8 9 10 11,r$(v) r$(v)b r$(v)c r$(v)d r$(v)e)))
     LIBS +=  -lc++abi
     ifeq (arm,$(arch))
         LIBS += -lunwind 

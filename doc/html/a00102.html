@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::parallel_while&lt; Body &gt; Class Template Reference</title>
+<title>tbb::flow::interface10::opencl_program&lt; Factory &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,130 +33,83 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00234.html">tbb</a></li><li class="navelem"><a class="el" href="a00102.html">parallel_while</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface10</b></li><li class="navelem"><a class="el" href="a00102.html">opencl_program</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="a00284.html">List of all members</a>  </div>
+<a href="#friends">Friends</a> &#124;
+<a href="a00335.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::parallel_while&lt; Body &gt; Class Template Reference<div class="ingroups"><a class="el" href="a00253.html">Algorithms</a></div></div>  </div>
+<div class="title">tbb::flow::interface10::opencl_program&lt; Factory &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-
-<p>Parallel iteration over a stream, with optional addition of more work.  
- <a href="a00102.html#details">More...</a></p>
-
-<p><code>#include &lt;parallel_while.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::parallel_while&lt; Body &gt;:</div>
+Inheritance diagram for tbb::flow::interface10::opencl_program&lt; Factory &gt;:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00102.png" usemap="#tbb::parallel_while&lt; Body &gt;_map" alt=""/>
-  <map id="tbb::parallel_while&lt; Body &gt;_map" name="tbb::parallel_while&lt; Body &gt;_map">
+  <img src="a00102.png" usemap="#tbb::flow::interface10::opencl_program&lt; Factory &gt;_map" alt=""/>
+  <map id="tbb::flow::interface10::opencl_program&lt; Factory &gt;_map" name="tbb::flow::interface10::opencl_program&lt; Factory &gt;_map">
 </map>
  </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a2442f019427e608d46801376267e44a8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2442f019427e608d46801376267e44a8"></a>
-typedef Body::argument_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00102.html#a2442f019427e608d46801376267e44a8">value_type</a></td></tr>
-<tr class="memdesc:a2442f019427e608d46801376267e44a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type of items. <br/></td></tr>
-<tr class="separator:a2442f019427e608d46801376267e44a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8d3995abd89b7933f9155a71b468329f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8d3995abd89b7933f9155a71b468329f"></a>
+typedef Factory::kernel_type&#160;</td><td class="memItemRight" valign="bottom"><b>kernel_type</b></td></tr>
+<tr class="separator:a8d3995abd89b7933f9155a71b468329f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a220a7307358aa36802c8754ea45ca385"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a220a7307358aa36802c8754ea45ca385"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00102.html#a220a7307358aa36802c8754ea45ca385">parallel_while</a> ()</td></tr>
-<tr class="memdesc:a220a7307358aa36802c8754ea45ca385"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct empty non-running parallel while. <br/></td></tr>
-<tr class="separator:a220a7307358aa36802c8754ea45ca385"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac2fd559c8a38639fa1ba97a0d5639ca8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac2fd559c8a38639fa1ba97a0d5639ca8"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00102.html#ac2fd559c8a38639fa1ba97a0d5639ca8">~parallel_while</a> ()</td></tr>
-<tr class="memdesc:ac2fd559c8a38639fa1ba97a0d5639ca8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor cleans up data members before returning. <br/></td></tr>
-<tr class="separator:ac2fd559c8a38639fa1ba97a0d5639ca8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a20607ba5faa958144787d980aa850c16"><td class="memTemplParams" colspan="2">template&lt;typename Stream &gt; </td></tr>
-<tr class="memitem:a20607ba5faa958144787d980aa850c16"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00102.html#a20607ba5faa958144787d980aa850c16">run</a> (Stream &amp;stream, const Body &amp;body)</td></tr>
-<tr class="memdesc:a20607ba5faa958144787d980aa850c16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Apply body.apply to each item in the stream.  <a href="#a20607ba5faa958144787d980aa850c16">More...</a><br/></td></tr>
-<tr class="separator:a20607ba5faa958144787d980aa850c16"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4861989d7f5e3111d264d4d6013e8fe1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00102.html#a4861989d7f5e3111d264d4d6013e8fe1">add</a> (const <a class="el" href="a00102.html#a2442f019427e608d46801376267e44a8">value_type</a> &amp;item)</td></tr>
-<tr class="memdesc:a4861989d7f5e3111d264d4d6013e8fe1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a work item while running.  <a href="#a4861989d7f5e3111d264d4d6013e8fe1">More...</a><br/></td></tr>
-<tr class="separator:a4861989d7f5e3111d264d4d6013e8fe1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aba6fe821c084403ed21fc7ae20f6fe77"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aba6fe821c084403ed21fc7ae20f6fe77"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_program</b> (Factory &amp;factory, opencl_program_type type, const std::string &amp;program_name)</td></tr>
+<tr class="separator:aba6fe821c084403ed21fc7ae20f6fe77"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab7ea8bee6439e9cd71aa017b2d80ad04"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab7ea8bee6439e9cd71aa017b2d80ad04"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_program</b> (Factory &amp;factory, const char *program_name)</td></tr>
+<tr class="separator:ab7ea8bee6439e9cd71aa017b2d80ad04"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab065ffc8d739872373e76f5fa2feddf1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab065ffc8d739872373e76f5fa2feddf1"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_program</b> (Factory &amp;factory, const std::string &amp;program_name)</td></tr>
+<tr class="separator:ab065ffc8d739872373e76f5fa2feddf1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5d553a0a47923e9febbff7e2fcf527fd"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5d553a0a47923e9febbff7e2fcf527fd"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_program</b> (opencl_program_type type, const std::string &amp;program_name)</td></tr>
+<tr class="separator:a5d553a0a47923e9febbff7e2fcf527fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a673eda1eee74b84795f1f54cad6a7c3e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a673eda1eee74b84795f1f54cad6a7c3e"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_program</b> (const char *program_name)</td></tr>
+<tr class="separator:a673eda1eee74b84795f1f54cad6a7c3e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6ff9429c5ae7799272dfb1d79adf055d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6ff9429c5ae7799272dfb1d79adf055d"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_program</b> (const std::string &amp;program_name)</td></tr>
+<tr class="separator:a6ff9429c5ae7799272dfb1d79adf055d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a400e941b0e338907e001dc46dfdbf735"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a400e941b0e338907e001dc46dfdbf735"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_program</b> (opencl_program_type type)</td></tr>
+<tr class="separator:a400e941b0e338907e001dc46dfdbf735"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abee242124a40c35771d4ec1135e86d15"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abee242124a40c35771d4ec1135e86d15"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_program</b> (const <a class="el" href="a00102.html">opencl_program</a> &amp;src)</td></tr>
+<tr class="separator:abee242124a40c35771d4ec1135e86d15"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a420dfd39624af3d089ac9589373ebb82"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a420dfd39624af3d089ac9589373ebb82"></a>
+kernel_type&#160;</td><td class="memItemRight" valign="bottom"><b>get_kernel</b> (const std::string &amp;k) const </td></tr>
+<tr class="separator:a420dfd39624af3d089ac9589373ebb82"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:a357c187838aa075f23be7b8c86ddcbd3"><td class="memTemplParams" colspan="2"><a class="anchor" id="a357c187838aa075f23be7b8c86ddcbd3"></a>
+template&lt;typename DeviceFilter &gt; </td></tr>
+<tr class="memitem:a357c187838aa075f23be7b8c86ddcbd3"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><b>opencl_factory</b></td></tr>
+<tr class="separator:a357c187838aa075f23be7b8c86ddcbd3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae5c7df2a18ff72b1c110470e8e28d8b7"><td class="memTemplParams" colspan="2"><a class="anchor" id="ae5c7df2a18ff72b1c110470e8e28d8b7"></a>
+template&lt;typename DeviceFilter &gt; </td></tr>
+<tr class="memitem:ae5c7df2a18ff72b1c110470e8e28d8b7"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><b>opencl_factory&lt; DeviceFilter &gt;::kernel</b></td></tr>
+<tr class="separator:ae5c7df2a18ff72b1c110470e8e28d8b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;typename Body&gt;<br/>
-class tbb::parallel_while&lt; Body &gt;</h3>
-
-<p>Parallel iteration over a stream, with optional addition of more work. </p>
-<p>The Body b has the requirement: <br/>
- "b(v)" <br/>
- "b.argument_type" <br/>
- where v is an argument_type </p>
-</div><h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="a4861989d7f5e3111d264d4d6013e8fe1"></a>
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename Body &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">void <a class="el" href="a00102.html">tbb::parallel_while</a>&lt; Body &gt;::add </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="a00102.html#a2442f019427e608d46801376267e44a8">value_type</a> &amp;&#160;</td>
-          <td class="paramname"><em>item</em>)</td><td></td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Add a work item while running. </p>
-<p>Should be executed only by body.apply or a thread spawned therefrom. </p>
-
-</div>
-</div>
-<a class="anchor" id="a20607ba5faa958144787d980aa850c16"></a>
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename Body &gt; </div>
-<div class="memtemplate">
-template&lt;typename Stream &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">void <a class="el" href="a00102.html">tbb::parallel_while</a>&lt; Body &gt;::run </td>
-          <td>(</td>
-          <td class="paramtype">Stream &amp;&#160;</td>
-          <td class="paramname"><em>stream</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const Body &amp;&#160;</td>
-          <td class="paramname"><em>body</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Apply body.apply to each item in the stream. </p>
-<p>A Stream s has the requirements <br/>
- "S::value_type" <br/>
- "s.pop_if_present(value) is convertible to bool </p>
-
-</div>
-</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>parallel_while.h</li>
+<li>flow_graph_opencl_node.h</li>
 </ul>
 </div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2017 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

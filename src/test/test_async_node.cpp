@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -121,7 +121,8 @@ void test_reset() {
     counting_async_node_type a(g, tbb::flow::serial, counting_async_body() );
 
     const int R = 3;
-    harness_counting_receiver<int> r[R];
+    std::vector< harness_counting_receiver<int> > r(R, harness_counting_receiver<int>(g));
+
     for (int i = 0; i < R; ++i) {
 #if __TBB_FLOW_GRAPH_CPP11_FEATURES
         tbb::flow::make_edge(a, r[i]);
@@ -252,7 +253,7 @@ void test_reset() {
 }
 
 template< typename Input, typename Output >
-class async_activity {
+class async_activity : NoAssign {
 public:
     typedef Input input_type;
     typedef Output output_type;
@@ -350,7 +351,7 @@ struct basic_test {
         }
     };
 
-#if !__TBB_LAMBDAS_PRESENT
+#if !__TBB_CPP11_LAMBDAS_PRESENT
     class async_body_type {
         typedef Input input_type;
         typedef Output output_type;
@@ -393,7 +394,7 @@ public:
         async_activity<input_type, output_type> my_async_activity(async_expected_items);
         tbb::flow::graph g;
         tbb::flow::function_node< int, input_type > start_node( g, tbb::flow::unlimited, start_body_type() );
-#if __TBB_LAMBDAS_PRESENT
+#if __TBB_CPP11_LAMBDAS_PRESENT
         async_node_type offload_node(g, tbb::flow::unlimited, [&] (const input_type &input, gateway_type& gateway) {
             ++async_body_exec_count;
             my_async_activity.submit(input, gateway);
@@ -437,10 +438,11 @@ int test_copy_ctor() {
     const int N = NUMBER_OF_MSGS;
     async_body_exec_count = 0;
 
-    harness_counting_receiver<int> r1;
-    harness_counting_receiver<int> r2;
-
     tbb::flow::graph g;
+
+    harness_counting_receiver<int> r1(g);
+    harness_counting_receiver<int> r2(g);
+
     counting_async_node_type a(g, tbb::flow::unlimited, counting_async_body() );
     counting_async_node_type b(a);
 #if __TBB_FLOW_GRAPH_CPP11_FEATURES
@@ -492,7 +494,7 @@ struct spin_test {
         }
     };
 
-#if !__TBB_LAMBDAS_PRESENT
+#if !__TBB_CPP11_LAMBDAS_PRESENT
     class async_body_type {
         typedef Input input_type;
         typedef Output output_type;
@@ -540,7 +542,7 @@ struct spin_test {
         Harness::SpinBarrier spin_barrier(nthreads);
         tbb::flow::graph g;
         tbb::flow::function_node< int, input_type > start_node( g, tbb::flow::unlimited, start_body_type() );
-#if __TBB_LAMBDAS_PRESENT
+#if __TBB_CPP11_LAMBDAS_PRESENT
         async_node_type offload_node(g, tbb::flow::unlimited, [&](const input_type &input, gateway_type& gateway) {
             ++async_body_exec_count;
             my_async_activity.submit(input, gateway);

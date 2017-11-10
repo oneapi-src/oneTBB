@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -94,7 +94,7 @@ struct FixedPool {
     void  *buf;
     size_t size;
     bool   used;
-    FixedPool(void *buf, size_t size) : buf(buf), size(size), used(false) {}
+    FixedPool(void *a_buf, size_t a_size) : buf(a_buf), size(a_size), used(false) {}
 };
 
 static void *fixedBufGetMem(intptr_t pool_id, size_t &bytes)

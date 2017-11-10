@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -100,12 +100,12 @@ void allocate_root_with_context_proxy::free( task& task ) const {
 // Methods of allocate_continuation_proxy
 //------------------------------------------------------------------------
 task& allocate_continuation_proxy::allocate( size_t size ) const {
-    task& t = *((task*)this);
+    task* t = (task*)this;
     assert_task_valid(t);
     generic_scheduler* s = governor::local_scheduler_weak();
-    task* parent = t.parent();
-    t.prefix().parent = NULL;
-    return s->allocate_task( size, __TBB_CONTEXT_ARG(parent, t.prefix().context) );
+    task* parent = t->parent();
+    t->prefix().parent = NULL;
+    return s->allocate_task( size, __TBB_CONTEXT_ARG(parent, t->prefix().context) );
 }
 
 void allocate_continuation_proxy::free( task& mytask ) const {
@@ -118,10 +118,10 @@ void allocate_continuation_proxy::free( task& mytask ) const {
 // Methods of allocate_child_proxy
 //------------------------------------------------------------------------
 task& allocate_child_proxy::allocate( size_t size ) const {
-    task& t = *((task*)this);
+    task* t = (task*)this;
     assert_task_valid(t);
     generic_scheduler* s = governor::local_scheduler_weak();
-    return s->allocate_task( size, __TBB_CONTEXT_ARG(&t, t.prefix().context) );
+    return s->allocate_task( size, __TBB_CONTEXT_ARG(t, t->prefix().context) );
 }
 
 void allocate_child_proxy::free( task& mytask ) const {
@@ -239,7 +239,7 @@ void task::spawn_and_wait_for_all( task_list& list ) {
     task* t = list.first;
     if( t ) {
         if( &t->prefix().next!=list.next_ptr )
-            s->local_spawn( *t->prefix().next, *list.next_ptr );
+            s->local_spawn( t->prefix().next, *list.next_ptr );
         list.clear();
     }
     s->local_wait_for_all( *this, t );

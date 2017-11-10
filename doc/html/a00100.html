@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::flow::interface9::opencl_range Class Reference</title>
+<title>tbb::flow::interface10::opencl_node&lt; tuple&lt; Ports...&gt;, JP &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,41 +33,43 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00234.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface9</b></li><li class="navelem"><a class="el" href="a00100.html">opencl_range</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface10</b></li><li class="navelem"><a class="el" href="a00100.html">opencl_node< tuple< Ports...>, JP ></a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="a00342.html">List of all members</a>  </div>
+<a href="a00347.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::flow::interface9::opencl_range Class Reference</div>  </div>
+<div class="title">tbb::flow::interface10::opencl_node&lt; tuple&lt; Ports...&gt;, JP &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
+<div class="dynheader">
+Inheritance diagram for tbb::flow::interface10::opencl_node&lt; tuple&lt; Ports...&gt;, JP &gt;:</div>
+<div class="dyncontent">
+ <div class="center">
+  <img src="a00100.png" usemap="#tbb::flow::interface10::opencl_node&lt; tuple&lt; Ports...&gt;, JP &gt;_map" alt=""/>
+  <map id="tbb::flow::interface10::opencl_node&lt; tuple&lt; Ports...&gt;, JP &gt;_map" name="tbb::flow::interface10::opencl_node&lt; tuple&lt; Ports...&gt;, JP &gt;_map">
+<area href="a00098.html" alt="tbb::flow::interface10::opencl_node&lt; tuple&lt; Ports...&gt;, JP, opencl_info::default_opencl_factory &gt;" shape="rect" coords="0,0,553,24"/>
+</map>
+ </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a9b4ef3112be7fd32e5f4ae209c70d48d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9b4ef3112be7fd32e5f4ae209c70d48d"></a>
-typedef size_t&#160;</td><td class="memItemRight" valign="bottom"><b>range_index_type</b></td></tr>
-<tr class="separator:a9b4ef3112be7fd32e5f4ae209c70d48d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab51d567ea5ba593070a60429370b1453"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab51d567ea5ba593070a60429370b1453"></a>
-typedef std::array<br class="typebreak"/>
-&lt; range_index_type, 3 &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>nd_range_type</b></td></tr>
-<tr class="separator:ab51d567ea5ba593070a60429370b1453"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7e935e7ba97a2d0d9c2b5efe1b36086a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7e935e7ba97a2d0d9c2b5efe1b36086a"></a>
+typedef base_type::kernel_type&#160;</td><td class="memItemRight" valign="bottom"><b>kernel_type</b></td></tr>
+<tr class="separator:a7e935e7ba97a2d0d9c2b5efe1b36086a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a8417788bb8a202488a37cf72f18247d9"><td class="memTemplParams" colspan="2"><a class="anchor" id="a8417788bb8a202488a37cf72f18247d9"></a>
-template&lt;typename G  = std::initializer_list&lt;int&gt;, typename L  = std::initializer_list&lt;int&gt;, typename  = typename std::enable_if&lt;!std::is_same&lt;typename std::decay&lt;G&gt;::type, opencl_range&gt;::value&gt;::type&gt; </td></tr>
-<tr class="memitem:a8417788bb8a202488a37cf72f18247d9"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>opencl_range</b> (G &amp;&amp;global_work=std::initializer_list&lt; int &gt;({0}), L &amp;&amp;local_work=std::initializer_list&lt; int &gt;({0, 0, 0}))</td></tr>
-<tr class="separator:a8417788bb8a202488a37cf72f18247d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5f8614ff83745ba7b9448d6242a4b082"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5f8614ff83745ba7b9448d6242a4b082"></a>
-const nd_range_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>global_range</b> () const </td></tr>
-<tr class="separator:a5f8614ff83745ba7b9448d6242a4b082"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4dca9170631f970849a898466f13a491"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4dca9170631f970849a898466f13a491"></a>
-const nd_range_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>local_range</b> () const </td></tr>
-<tr class="separator:a4dca9170631f970849a898466f13a491"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a01e42b38b2605b5b0ea20e1442123b54"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a01e42b38b2605b5b0ea20e1442123b54"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>opencl_node</b> (graph &amp;g, const kernel_type &amp;kernel)</td></tr>
+<tr class="separator:a01e42b38b2605b5b0ea20e1442123b54"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a04f4c143fb2ed48e1917bf7af88cac9a"><td class="memTemplParams" colspan="2"><a class="anchor" id="a04f4c143fb2ed48e1917bf7af88cac9a"></a>
+template&lt;typename DeviceSelector &gt; </td></tr>
+<tr class="memitem:a04f4c143fb2ed48e1917bf7af88cac9a"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>opencl_node</b> (graph &amp;g, const kernel_type &amp;kernel, DeviceSelector d)</td></tr>
+<tr class="separator:a04f4c143fb2ed48e1917bf7af88cac9a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>flow_graph_opencl_node.h</li>
@@ -75,7 +77,7 @@ const nd_range_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>
 </div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2017 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

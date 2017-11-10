@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2016 Intel Corporation
+    Copyright (c) 2005-2017 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@
 
 #define COLLECT_STATISTICS ( MALLOC_DEBUG && MALLOCENV_COLLECT_STATISTICS )
 #ifndef USE_INTERNAL_TID
-#define USE_INTERNAL_TID COLLECT_STATISTICS
+#define USE_INTERNAL_TID COLLECT_STATISTICS || MALLOC_TRACE
 #endif
 
 #include "Statistics.h"
@@ -118,9 +118,15 @@ const unsigned cacheCleanupFreq = 256;
  */
 const size_t largeObjectAlignment = estimatedCacheLineSize;
 
+/*
+ * This number of bins in the TLS that leads to blocks that we can allocate in.
+ */
+const uint32_t numBlockBinLimit = 31;
+
 /********** End of numeric parameters controlling allocations *********/
 
 class BlockI;
+class Block;
 struct LargeMemoryBlock;
 struct ExtMemoryPool;
 struct MemRegion;
@@ -238,6 +244,35 @@ public:
     bool cleanup(ExtMemoryPool *extPool, bool cleanOnlyUnused);
     void markUnused();
     void reset() { head = NULL; }
+};
+
+class LifoList {
+public:
+    inline LifoList();
+    inline void push(Block *block);
+    inline Block *pop();
+    inline Block *grab();
+
+private:
+    Block *top;
+    MallocMutex lock;
+};
+
+/*
+ * When a block that is not completely free is returned for reuse by other threads
+ * this is where the block goes.
+ *
+ * LifoList assumes zero initialization; so below its constructors are omitted,
+ * to avoid linking with C++ libraries on Linux.
+ */
+
+class OrphanedBlocks {
+    LifoList bins[numBlockBinLimit];
+public:
+    Block *get(TLSData *tls, unsigned int size);
+    void put(intptr_t binTag, Block *block);
+    void reset();
+    bool cleanup(Backend* backend);
 };
 
 /* cache blocks in range [MinSize; MaxSize) in bins with CacheStep
@@ -853,10 +888,11 @@ struct ExtMemoryPool {
     Backend           backend;
     LargeObjectCache  loc;
     AllLocalCaches    allLocalCaches;
+    OrphanedBlocks    orphanedBlocks;
 
     intptr_t          poolId;
-    // To find all large objects. This used during user pool destruction,
-    // to release all backreferencies in large blocks (slab blocks do not have them).
+    // To find all large objects. Used during user pool destruction,
+    // to release all backreferences in large blocks (slab blocks do not have them).
     AllLargeBlocksList lmbList;
     // Callbacks to be used instead of MapMemory/UnmapMemory.
     rawAllocType      rawAlloc;
@@ -883,6 +919,7 @@ struct ExtMemoryPool {
     bool reset() {
         loc.reset();
         allLocalCaches.reset();
+        orphanedBlocks.reset();
         bool ret = tlsPointerKey.destroy();
         backend.reset();
         return ret;
@@ -934,6 +971,7 @@ class AllocControlledMode {
     intptr_t val;
     bool     setDone;
 public:
+    bool ready() const { return setDone; }
     intptr_t get() const {
         MALLOC_ASSERT(setDone, ASSERT_TEXT);
         return val;
@@ -970,9 +1008,14 @@ public:
     // region is releasing, to find can it release some huge pages or not.
     intptr_t    wasObserved;
 
-    size_t getSize() const {
-        MALLOC_ASSERT(pageSize, ASSERT_TEXT);
-        return pageSize;
+    // If memory mapping size is a multiple of huge page size, some OS kernels
+    // can use huge pages transparently (i.e. even if not explicitly enabled).
+    // Use this when huge pages are requested.
+    size_t recommendedGranularity() const {
+        if (requestedMode.ready())
+            return requestedMode.get()? pageSize : 0;
+        else
+            return 2048*1024; // the mode is not yet known; assume typical 2MB huge pages
     }
     void printStatus();
     void registerAllocation(bool available);
