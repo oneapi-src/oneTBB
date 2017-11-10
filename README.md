@@ -1,31 +1,32 @@
-# Intel(R) Threading Building Blocks
+# Intel(R) Threading Building Blocks 2017 Update 3
+[![Apache License Version 2.0](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE)
 
 Intel(R) Threading Building Blocks (Intel(R) TBB) lets you easily write parallel C++ programs that take
 full advantage of multicore performance, that are portable, composable and have future-proof scalability.
 
-## Intel(R) TBB Distribution
-* Commercial version: [https://software.intel.com/en-us/intel-tbb] (https://software.intel.com/en-us/intel-tbb)
-* Community licensing: [https://software.intel.com/sites/campaigns/nest/] (https://software.intel.com/sites/campaigns/nest/)
-* Open source version: [https://www.threadingbuildingblocks.org/] (https://www.threadingbuildingblocks.org/)
-* Intel(R) TBB for Python\*: [http://anaconda.org/intel/tbb] (http://anaconda.org/intel/tbb)
+## Release Information
+Here are the latest [Changes](CHANGES) and [Release Notes](doc/Release_Notes.txt) (contains system requirements and known issues).
 
-## Repository Content
-This is an official Intel(R) TBB public GitHub repository. All source and binary packages starting from Intel(R) TBB 4.4
-can be found at the [Release page] (https://github.com/01org/tbb/releases). Links to the packages with older versions of 
-Intel(R) TBB can be found in the [download.md] (download.md) file.
+## tbb_tutorials branch information
+This release provides additional TBB examples for workshops, conferences, etc.
+* [examples/ppopp17](examples/ppopp17) – examples for [PPoPP 2017](https://ppopp17.sigplan.org/home)
+* [examples/europar17](examples/europar17) – examples for [Euro-Par 2017](http://europar2017.usc.es/)
 
-## Repository Structure
-The Master branch is empty and contains only README.md and download.md files.
+## Documentation
+* Intel(R) TBB [tutorial](https://software.intel.com/en-us/tbb-tutorial)
+* Intel(R) TBB general documentation: [stable](https://software.intel.com/en-us/tbb-documentation)
+and [latest](https://www.threadingbuildingblocks.org/docs/help/index.htm)
 
-tbb_\<major_version\> - branch for the new major version. All minor versions of the major release will be committed in this branch.
+## Support
+Please report issues and suggestions via
+[GitHub issues](https://github.com/01org/tbb/issues) or start a topic on the
+[Intel(R) TBB forum](http://software.intel.com/en-us/forums/intel-threading-building-blocks/).
 
-For example:
-* Intel(R) TBB 2017 initial release goes to branch tbb_2017.
-* Intel(R) TBB 2017 Update 1 will go to branch tbb_2017 too.
-* Intel(R) TBB 2018 initial release will go to branch tbb_2018.
+## How to Contribute
+Please, read the instructions on the official [Intel(R) TBB open source site](https://www.threadingbuildingblocks.org/submit-contribution).
 
 ## Сontact engineering team
-* [E-mail us.] (mailto:inteltbbdevelopers@intel.com)
+* [E-mail us.](mailto:inteltbbdevelopers@intel.com)
 
 ------------------------------------------------------------------------
 Intel and the Intel logo are trademarks of Intel Corporation or its subsidiaries in the U.S. and/or other countries.

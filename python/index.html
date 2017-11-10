@@ -1,0 +1,75 @@
+<HTML>
+<BODY>
+<H2>Python* API for Intel&reg; Threading Building Blocks (Intel&reg; TBB).
+</H2>
+
+<H2>Overview</H2>
+It is a preview Python* module which unlocks opportunities for additional performance in multi-threaded Python programs by enabling threading composability
+between two or more thread-enabled libraries like Numpy, Scipy, Sklearn, Dask, Joblib, and etc.
+<p></p>
+The biggest improvement can be achieved when a task pool like the ThreadPool from the Python standard library or libraries like Dask or Joblib (used in multi-threading mode)
+execute tasks calling compute-intensive functions of Numpy/Scipy/Sklearn/PyDAAL which in turn are parallelized using Intel&reg; Math Kernel Library or/and Intel&reg; TBB.
+<p></p>
+The module implements Pool class with the standard interface using Intel&reg; TBB which can be used to replace Python's ThreadPool.
+Thanks to the monkey-patching technique implemented in class Monkey, no source code change is needed in order to enable threading composability in Python programs.
+<p></p>
+For more information and examples, please refer to <A HREF="http://software.intel.com/en-us/blogs/2016/04/04/unleash-parallel-performance-of-python-programs">online blog</A>.
+
+<H2>Files</H2>
+<DL>
+<DT><A HREF="setup.py">setup.py</A>
+<DD>Standard Python setup script.
+<DT><A HREF="Makefile">Makefile</A>
+<DD>Makefile for building, installing, and testing. See below.
+<DT><A HREF="tbb.i">tbb.i</A>
+<DD>SWIG interface description file.
+<DT><A HREF="tbb.src.py">tbb.src.py</A>
+<DD>Python part of module implementation.
+</DL>
+
+<A NAME=build><H2>Build and install</H2></A>
+Prior to building it, please set up the environment using corresponding tbbvars script, e.g. `source tbbvars.sh intel64`
+<DL>
+<DT><TT>make</TT>
+<DD>Default build and run. Equivalent to 'make release test'.
+<DT><TT>make release</TT>
+<DD>Compile and link against the release version of Intel TBB runtime library. The resulting executable is left in the directory for the example.
+<DT><TT>make test</TT>
+<DD>Run local build of the module previously produced by one of the above commands.
+<DT><TT>make install</TT>
+<DD>Install module into Python.
+<DT><TT>make <B>[</B>(above options or targets)<B>]</B> CXX=<B>{</B>icl, icc<B>}</B></TT>
+<DD>Build and run as above, but use Intel&reg; C++ compiler instead of default, native compilers
+(e.g., icl instead of cl.exe on Windows* systems, or icc instead of g++ on Linux* or OS X* systems).
+Please note, CXX=icl works on Windows only with Intel&reg; Distribution for Python*.
+<DT><TT>make clean</TT>
+<DD>Remove any intermediate files produced by the above commands.
+</DL>
+
+<H2>Command-line interface</H2>
+<DL>
+<DT><TT>pydoc TBB</TT>
+<DD>Read built-in documentation for Python interfaces.
+<DT><TT>python -m TBB your_script.py</TT>
+<DD>Run your_script.py in context of `with TBB.Monkey():` when Intel TBB is enabled.
+</DL>
+
+<H2>System Requirements</H2>
+The Python module was not tested on older versions of Python thus we require at least Python versions 2.7 and 3.5 or higher.<BR>
+SWIG must be of version 3.0.6 or higher<BR>
+OS versions:
+Microsoft* Windows* Server 2012,
+Microsoft* Windows* 10,
+Ubuntu* 14.04 LTS,
+Red Hat* Enterprise Linux* 7.
+<HR>
+<A href="../index.html">Up to parent directory</A>
+<p></p>
+Copyright &copy; 2005-2016 Intel Corporation.  All Rights Reserved.
+<P></P>
+Intel is a registered trademark or trademark of Intel Corporation
+or its subsidiaries in the United States and other countries.
+<p></p>
+* Other names and brands may be claimed as the property of others.
+</BODY>
+</HTML>
