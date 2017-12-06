@@ -2,6 +2,32 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 2018 Update 2
+TBB_INTERFACE_VERSION == 10002
+
+Changes (w.r.t. Intel TBB 2018 Update 1):
+
+- Added support for Android* NDK r16, macOS* 10.13, Fedora* 26.
+- Binaries for Universal Windows Driver (vc14_uwd) now link with static
+    Microsoft* runtime libraries, and are only available in commercial
+    releases.
+- Extended flow graph documentation with more code samples.
+
+Preview Features:
+
+- Added a Python* module for multi-processing computations in numeric
+    Python* libraries.
+
+Bugs fixed:
+
+- Fixed constructors of concurrent_hash_map to be exception-safe.
+- Fixed auto-initialization in the main thread to be cleaned up at
+    shutdown.
+- Fixed a crash when tbbmalloc_proxy is used together with dbghelp.
+- Fixed static_partitioner to assign tasks properly in case of nested
+    parallelism.
+
+------------------------------------------------------------------------
 Intel TBB 2018 Update 1
 TBB_INTERFACE_VERSION == 10001
 

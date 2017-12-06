@@ -68,8 +68,20 @@ ifeq (0, $(dynamic_load))
 endif
 
 # Paths to the NDK prebuilt tools and libraries
-CPLUS_FLAGS    += --sysroot=$(SYSROOT)
+ifneq (,$(findstring $(ndk_version),r16 r16b))
+    # Since Android* NDK r16 another sysroot and isystem paths have to be specified
+    CPLUS_FLAGS += --sysroot=$(NDK_ROOT)/sysroot -isystem $(NDK_ROOT)/sysroot/usr/include/$(TRIPLE) 
+    # Android* version flag required since r16
+    CPLUS_FLAGS += -D__ANDROID_API__=$(API_LEVEL)
+else
+    CPLUS_FLAGS += --sysroot=$(SYSROOT)
+endif
+
+# Library sysroot flag
 LIB_LINK_FLAGS += --sysroot=$(SYSROOT)
+# Flag for test executables
+LINK_FLAGS     += --sysroot=$(SYSROOT)
+
 LIBS           = -L$(CPLUS_LIB_PATH) -lc++_shared
 ifeq (,$(findstring $(ndk_version),$(foreach v, 7 8 9 10 11,r$(v) r$(v)b r$(v)c r$(v)d r$(v)e)))
     LIBS +=  -lc++abi

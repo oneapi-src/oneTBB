@@ -43,7 +43,7 @@ using namespace std;
 namespace tbb {
 
 namespace internal {
-    class concurrent_vector_base_v3::helper :no_assign {
+class concurrent_vector_base_v3::helper :no_assign {
 public:
     //! memory page size
     static const size_type page_size = 4096;
@@ -197,7 +197,7 @@ public:
                 func( begin, n );
         }
     };
-};
+}; // class helper
 
 void concurrent_vector_base_v3::helper::extend_segment_table(concurrent_vector_base_v3 &v, concurrent_vector_base_v3::size_type start) {
     if( start > segment_size(pointers_per_short_table) ) start = segment_size(pointers_per_short_table);

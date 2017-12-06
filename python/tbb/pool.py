@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 #
 # Copyright (c) 2016-2017 Intel Corporation
 #
@@ -73,19 +73,13 @@
 import sys
 import threading
 import traceback
+from .api import *
 
-__all__ = ["Pool", "Monkey", "task_arena", "task_group", "task_scheduler_init"]
+__all__ = ["Pool", "TimeoutError"]
 __doc__ = """
-Python API to Intel(R) Threading Building Blocks library (Intel(R) TBB)
-extended with standard Pool implementation and monkey-patching.
-
-Command-line interface:
-$ python -m TBB $your_script.py
-
-Runs your_script.py in context of `with Monkey():`
+Standard Python Pool implementation based on Python API
+for Intel(R) Threading Building Blocks library (Intel(R) TBB)
 """
-
-default_num_threads = task_scheduler_init_default_num_threads
 
 
 class TimeoutError(Exception):
@@ -96,7 +90,7 @@ class TimeoutError(Exception):
 class Pool(object):
     """
     The Pool class provides standard multiprocessing.Pool interface
-    which is mapped onto Intel TBB tasks executing in its thread pool
+    which is mapped onto Intel(R) TBB tasks executing in its thread pool
     """
 
     def __init__(self, nworkers=0, name="Pool"):
@@ -639,202 +633,3 @@ class OrderedResultCollector(AbstractResultCollector):
                     self._to_notify._set_exception()
                 else:
                     self._to_notify._set_value(lst)
-
-
-def _test(arg=None):
-    """Some tests"""
-    if arg == "-v":
-        def say(*x):
-            print(*x)
-    else:
-        def say(*x):
-            pass
-    say("Start Pool testing")
-    import time
-    
-    get_tid = lambda: threading.current_thread().ident
-
-    def return42():
-        return 42
-
-    def f(x):
-        return x * x
-
-    def work(mseconds):
-        res = str(mseconds)
-        if mseconds < 0:
-            mseconds = -mseconds
-        say("[%d] Start to work for %fms..." % (get_tid(), mseconds*10))
-        time.sleep(mseconds/100.)
-        say("[%d] Work done (%fms)." % (get_tid(), mseconds*10))
-        return res
-
-    ### Test copy/pasted from multiprocessing
-    pool = Pool(4)  # start worker threads
-
-    # edge cases
-    assert pool.map(return42, []) == []
-    assert pool.apply_async(return42, []).get() == 42
-    assert pool.apply(return42, []) == 42
-    assert list(pool.imap(return42, iter([]))) == []
-    assert list(pool.imap_unordered(return42, iter([]))) == []
-    assert pool.map_async(return42, []).get() == []
-    assert list(pool.imap_async(return42, iter([])).get()) == []
-    assert list(pool.imap_unordered_async(return42, iter([])).get()) == []
-
-    # basic tests
-    result = pool.apply_async(f, (10,))  # evaluate "f(10)" asynchronously
-    assert result.get(timeout=1) == 100  # ... unless slow computer
-    assert list(pool.map(f, range(10))) == list(map(f, range(10)))
-    it = pool.imap(f, range(10))
-    assert next(it) == 0
-    assert next(it) == 1
-    assert next(it) == 4
-
-    # Test apply_sync exceptions
-    result = pool.apply_async(time.sleep, (3,))
-    try:
-        say(result.get(timeout=1))  # raises `TimeoutError`
-    except TimeoutError:
-        say("Good. Got expected timeout exception.")
-    else:
-        assert False, "Expected exception !"
-    assert result.get() is None  # sleep() returns None
-
-    def cb(s):
-        say("Result ready: %s" % s)
-
-    # Test imap()
-    assert list(pool.imap(work, range(10, 3, -1), chunksize=4)) == list(map(
-        str, range(10, 3, -1)))
-
-    # Test imap_unordered()
-    assert sorted(pool.imap_unordered(work, range(10, 3, -1))) == sorted(map(
-        str, range(10, 3, -1)))
-
-    # Test map_async()
-    result = pool.map_async(work, range(10), callback=cb)
-    try:
-        result.get(timeout=0.01)  # raises `TimeoutError`
-    except TimeoutError:
-        say("Good. Got expected timeout exception.")
-    else:
-        assert False, "Expected exception !"
-    say(result.get())
-
-    # Test imap_async()
-    result = pool.imap_async(work, range(3, 10), callback=cb)
-    try:
-        result.get(timeout=0.01)  # raises `TimeoutError`
-    except TimeoutError:
-        say("Good. Got expected timeout exception.")
-    else:
-        assert False, "Expected exception !"
-    for i in result.get():
-        say("Item:", i)
-    say("### Loop again:")
-    for i in result.get():
-        say("Item2:", i)
-
-    # Test imap_unordered_async()
-    result = pool.imap_unordered_async(work, range(10, 3, -1), callback=cb)
-    try:
-        say(result.get(timeout=0.01))  # raises `TimeoutError`
-    except TimeoutError:
-        say("Good. Got expected timeout exception.")
-    else:
-        assert False, "Expected exception !"
-    for i in result.get():
-        say("Item1:", i)
-    for i in result.get():
-        say("Item2:", i)
-    r = result.get()
-    for i in r:
-        say("Item3:", i)
-    for i in r:
-        say("Item4:", i)
-    for i in r:
-        say("Item5:", i)
-
-    #
-    # The case for the exceptions
-    #
-
-    # Exceptions in imap_unordered_async()
-    result = pool.imap_unordered_async(work, range(2, -10, -1), callback=cb)
-    time.sleep(3)
-    try:
-        for i in result.get():
-            say("Got item:", i)
-    except (IOError, ValueError):
-        say("Good. Got expected exception")
-
-    # Exceptions in imap_async()
-    result = pool.imap_async(work, range(2, -10, -1), callback=cb)
-    time.sleep(3)
-    try:
-        for i in result.get():
-            say("Got item:", i)
-    except (IOError, ValueError):
-        say("Good. Got expected exception")
-
-    # Stop the test: need to stop the pool !!!
-    pool.terminate()
-    pool.join()
-    print("done")
-
-
-# End of david's derived file content
-
-class Monkey:
-    """
-    Context manager which replaces standard multiprocessing.pool.ThreadPool
-    implementation with TBB.Pool using monkey-patching. It also enables TBB
-    threading for Intel(R) Math Kernel Library (Intel(R) MKL). For example:
-
-        with TBB.Monkey():
-            run_my_numpy_code()
-
-    """
-    _items = {'ThreadPool': None}
-
-    def __init__(self):
-        pass
-
-    def __enter__(self):
-        import os
-        self.env = os.getenv('MKL_THREADING_LAYER')
-        os.environ['MKL_THREADING_LAYER'] = 'TBB'
-        self.module = __import__('multiprocessing.pool', globals(), locals(), self._items.keys())
-        for name in self._items.keys():
-            oldattr = getattr(self.module, name)
-            self._items[name] = oldattr
-            setattr(self.module, name, Pool)
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        import os
-        if self.env is None:
-            del os.environ['MKL_THREADING_LAYER']
-        else:
-            os.environ['MKL_THREADING_LAYER'] = self.env
-        for name in self._items.keys():
-            setattr(self.module, name, self._items[name])
-
-
-def _main():
-    # Run the module specified as the next command line argument
-    # python -m TBB user_app.py
-    del sys.argv[0]  # shift arguments
-    if len(sys.argv) < 1:
-        print("No file name specified for execution", file=sys.stderr)
-    elif '_' + sys.argv[0] in globals():
-        globals()['_' + sys.argv[0]](*sys.argv[1:])
-    else:
-        import runpy
-        with Monkey():
-            runpy.run_path(sys.argv[0], run_name='__main__')
-
-
-if __name__ == "__main__":
-    sys.exit(_main())

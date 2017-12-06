@@ -641,28 +641,27 @@ void generic_scheduler::nested_arena_entry(arena* a, size_t slot_index) {
     attach_arena( a, slot_index, /*is_master*/true );
     __TBB_ASSERT( my_arena == a, NULL );
     governor::assume_scheduler( this );
-#if __TBB_ARENA_OBSERVER
-    my_last_local_observer = 0; // TODO: try optimize number of calls
-    my_arena->my_observers.notify_entry_observers( my_last_local_observer, /*worker=*/false );
-#endif
     // TODO? ITT_NOTIFY(sync_acquired, a->my_slots + index);
     // TODO: it requires market to have P workers (not P-1)
     // TODO: a preempted worker should be excluded from assignment to other arenas e.g. my_slack--
     if( !is_worker() && slot_index >= my_arena->my_num_reserved_slots )
         my_arena->my_market->adjust_demand(*my_arena, -1);
+#if __TBB_ARENA_OBSERVER
+    my_last_local_observer = 0; // TODO: try optimize number of calls
+    my_arena->my_observers.notify_entry_observers( my_last_local_observer, /*worker=*/false );
+#endif
 }
 
 void generic_scheduler::nested_arena_exit() {
-    if( !is_worker() && my_arena_index >= my_arena->my_num_reserved_slots )
-        my_arena->my_market->adjust_demand(*my_arena, 1);
 #if __TBB_ARENA_OBSERVER
     my_arena->my_observers.notify_exit_observers( my_last_local_observer, /*worker=*/false );
 #endif /* __TBB_ARENA_OBSERVER */
-
 #if __TBB_TASK_PRIORITY
     if ( my_offloaded_tasks )
         my_arena->orphan_offloaded_tasks( *this );
 #endif
+    if( !is_worker() && my_arena_index >= my_arena->my_num_reserved_slots )
+        my_arena->my_market->adjust_demand(*my_arena, 1);
     // Free the master slot.
     __TBB_ASSERT(my_arena->my_slots[my_arena_index].my_scheduler, "A slot is already empty");
     __TBB_store_with_release(my_arena->my_slots[my_arena_index].my_scheduler, (generic_scheduler*)NULL);

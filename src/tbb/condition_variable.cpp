@@ -141,8 +141,18 @@ static const dynamic_link_descriptor CondVarLinkTable[] = {
 void init_condvar_module()
 {
     __TBB_ASSERT( (uintptr_t)__TBB_init_condvar==(uintptr_t)&init_condvar_using_event, NULL );
-    if( dynamic_link( "Kernel32.dll", CondVarLinkTable, 4 ) )
+#if __TBB_WIN8UI_SUPPORT
+    // We expect condition variables to be always available for Windows* store applications,
+    // so there is no need to check presense and use alternative implementation.
+    __TBB_init_condvar = (void (WINAPI *)(PCONDITION_VARIABLE))&InitializeConditionVariable;
+    __TBB_condvar_wait = (BOOL(WINAPI *)(PCONDITION_VARIABLE, LPCRITICAL_SECTION, DWORD))&SleepConditionVariableCS;
+    __TBB_condvar_notify_one = (void (WINAPI *)(PCONDITION_VARIABLE))&WakeConditionVariable;
+    __TBB_condvar_notify_all = (void (WINAPI *)(PCONDITION_VARIABLE))&WakeAllConditionVariable;
+    __TBB_destroy_condvar = (void (WINAPI *)(PCONDITION_VARIABLE))&destroy_condvar_noop;
+#else
+    if (dynamic_link("Kernel32.dll", CondVarLinkTable, 4))
         __TBB_destroy_condvar = (void (WINAPI *)(PCONDITION_VARIABLE))&destroy_condvar_noop;
+#endif
 }
 #endif /* _WIN32||_WIN64 */
 

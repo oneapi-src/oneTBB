@@ -22,6 +22,7 @@
 #define _TBB_tbb_main_H
 
 #include "tbb/atomic.h"
+#include "governor.h"
 
 namespace tbb {
 
@@ -73,6 +74,7 @@ public:
     //! Remove the initial reference to resources.
     /** This is not necessarily the last reference if other threads are still running. **/
     ~__TBB_InitOnce() {
+        governor::terminate_auto_initialized_scheduler(); // TLS dtor not called for the main thread
         remove_ref();
         // We assume that InitializationDone is not set after file-scope destructors
         // start running, and thus no race on InitializationDone is possible.

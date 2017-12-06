@@ -18,50 +18,31 @@
 #
 #
 
-# Based on the software developed by:
-# Copyright (c) 2008,2016 david decotigny (Pool of threads)
-# Copyright (c) 2006-2008, R Oudkerk (multiprocessing.Pool)
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-# 3. Neither the name of author nor the names of any contributors may be
-#    used to endorse or promote products derived from this software
-#    without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-# SUCH DAMAGE.
-#
 
-from __future__ import print_function
+__all__ = ["task_arena", "task_group", "task_scheduler_init", "global_control", "default_num_threads"]
 %}
 %begin %{
 /* Defines Python wrappers for Intel(R) Threading Building Blocks (Intel TBB).*/
 %}
-%module TBB
+%module api
 
 #if SWIG_VERSION < 0x030001
 #error SWIG version 3.0.6 or newer is required for correct functioning
 #endif
 
 %{
+#define TBB_PREVIEW_GLOBAL_CONTROL 1
+#define TBB_PREVIEW_WAITING_FOR_WORKERS 1
 #include <tbb/tbb.h>
+#include <tbb/compat/condition_variable>
+#if TBB_IMPLEMENT_CPP0X
+namespace std { using tbb::mutex; }
+#define unique_ptr auto_ptr
+#else
+#include <condition_variable>
+#include <mutex>
+#include <memory>
+#endif
 using namespace tbb;
 
 class PyCaller : public swig::SwigPtr_PyObject {
@@ -91,7 +72,46 @@ struct ArenaPyCaller {
     }
 };
 
+struct barrier_data {
+    std::condition_variable event;
+    std::mutex m;
+    int worker_threads, full_threads;
+};
+
+class barrier_task : public tbb::task {
+    barrier_data &b;
+public:
+    barrier_task(barrier_data &d) : b(d) {}
+    /*override*/ tbb::task *execute() {
+        std::unique_lock<std::mutex> lock(b.m);
+        if(++b.worker_threads >= b.full_threads)
+            b.event.notify_all();
+        else while(b.worker_threads < b.full_threads)
+            b.event.wait(lock);
+        return NULL;
+    }
+};
+
+void _concurrency_barrier(int threads = tbb::task_scheduler_init::automatic) {
+    if(threads == task_scheduler_init::automatic)
+        threads = task_scheduler_init::default_num_threads();
+    if(threads < 2)
+        return;
+    std::unique_ptr<global_control> g(
+        (global_control::active_value(global_control::max_allowed_parallelism) < unsigned(threads))?
+            new global_control(global_control::max_allowed_parallelism, threads) : NULL);
+    barrier_data b;
+    b.worker_threads = 0;
+    b.full_threads = threads-1;
+    for(int i = 0; i < b.full_threads; i++)
+        tbb::task::enqueue( *new( tbb::task::allocate_root() ) barrier_task(b) );
+    std::unique_lock<std::mutex> lock(b.m);
+    b.event.wait(lock);
+};
+
 %}
+
+void _concurrency_barrier(int threads = tbb::task_scheduler_init::automatic);
 
 namespace tbb {
     class task_scheduler_init {
@@ -100,13 +120,14 @@ namespace tbb {
         static const int automatic = -1;
         //! Argument to initialize() or constructor that causes initialization to be deferred.
         static const int deferred = -2;
-        task_scheduler_init( int max_threads=automatic, 
+        task_scheduler_init( int max_threads=automatic,
                              size_t thread_stack_size=0 );
         ~task_scheduler_init();
         void initialize( int max_threads=automatic );
         void terminate();
         static int default_num_threads();
         bool is_active() const;
+        void blocking_terminate();
     };
 
     class task_arena {
@@ -139,7 +160,21 @@ namespace tbb {
         };
     };
 
-}
+    class global_control {
+    public:
+        enum parameter {
+            max_allowed_parallelism,
+            thread_stack_size,
+            parameter_max // insert new parameters above this point
+        };
+        global_control(parameter param, size_t value);
+        ~global_control();
+        static size_t active_value(parameter param);
+    };
 
-// Python part of the module
-%pythoncode "tbb.src.py"
+} // tbb
+
+// Additional definitions for Python part of the module
+%pythoncode %{
+default_num_threads = task_scheduler_init_default_num_threads
+%}

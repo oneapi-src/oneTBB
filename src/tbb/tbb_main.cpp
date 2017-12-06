@@ -241,12 +241,16 @@ void DoOneTimeInitializations() {
 
 #if (_WIN32||_WIN64) && !__TBB_SOURCE_DIRECTLY_INCLUDED
 //! Windows "DllMain" that handles startup and shutdown of dynamic library.
-extern "C" bool WINAPI DllMain( HANDLE /*hinstDLL*/, DWORD reason, LPVOID /*lpvReserved*/ ) {
+extern "C" bool WINAPI DllMain( HANDLE /*hinstDLL*/, DWORD reason, LPVOID lpvReserved ) {
     switch( reason ) {
         case DLL_PROCESS_ATTACH:
             __TBB_InitOnce::add_ref();
             break;
         case DLL_PROCESS_DETACH:
+            // Since THREAD_DETACH is not called for the main thread, call auto-termination
+            // here as well - but not during process shutdown (due to risk of a deadlock).
+            if( lpvReserved==NULL ) // library unload
+                governor::terminate_auto_initialized_scheduler();
             __TBB_InitOnce::remove_ref();
             // It is assumed that InitializationDone is not set after DLL_PROCESS_DETACH,
             // and thus no race on InitializationDone is possible.

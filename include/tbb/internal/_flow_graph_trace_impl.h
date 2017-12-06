@@ -88,7 +88,10 @@ static inline void fgt_internal_create_output_port( void *node, void *p, string_
 template<typename InputType>
 void register_input_port(void *node, tbb::flow::receiver<InputType>* port, string_index name_index) {
     // TODO: Make fgt_internal_create_input_port a function template?
-    fgt_internal_create_input_port( node, port, name_index);
+    // In C++03 dependent name lookup from the template definition context
+    // works only for function declarations with external linkage:
+    // http://www.open-std.org/JTC1/SC22/WG21/docs/cwg_defects.html#561
+    fgt_internal_create_input_port(node, static_cast<void*>(port), name_index);
 }
 
 template < typename PortsTuple, int N >
@@ -239,7 +242,7 @@ static inline void fgt_async_reserve( void *node, void *graph ) {
     itt_region_begin( ITT_DOMAIN_FLOW, node, FLOW_NODE, graph, FLOW_GRAPH, FLOW_NULL );
 }
 
-static inline void fgt_async_commit( void *node, void *graph ) {
+static inline void fgt_async_commit( void *node, void */*graph*/) {
     itt_region_end( ITT_DOMAIN_FLOW, node, FLOW_NODE );
 }
 

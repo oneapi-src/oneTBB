@@ -34,7 +34,6 @@
 #include "internal/_aggregator_impl.h"
 #include "tbb_profiling.h"
 #include "task_arena.h"
-#include "flow_graph_abstractions.h"
 
 #if __TBB_PREVIEW_ASYNC_MSG
 #include <vector>    // std::vector in internal::async_storage
@@ -761,7 +760,15 @@ inline graph::graph(task_group_context& use_this_context) :
     my_is_active = true;
 }
 
-inline  void graph::reserve_wait() {
+inline graph::~graph() {
+    wait_for_all();
+    my_root_task->set_ref_count(0);
+    tbb::task::destroy(*my_root_task);
+    if (own_context) delete my_context;
+    delete my_task_arena;
+}
+
+inline void graph::reserve_wait() {
     if (my_root_task) {
         my_root_task->increment_ref_count();
         tbb::internal::fgt_reserve_wait(this);
@@ -821,11 +828,31 @@ inline void graph::reset( reset_flags f ) {
     my_reset_task_list.clear();
 }
 
+inline graph::iterator graph::begin() { return iterator(this, true); }
+
+inline graph::iterator graph::end() { return iterator(this, false); }
+
+inline graph::const_iterator graph::begin() const { return const_iterator(this, true); }
+
+inline graph::const_iterator graph::end() const { return const_iterator(this, false); }
+
+inline graph::const_iterator graph::cbegin() const { return const_iterator(this, true); }
+
+inline graph::const_iterator graph::cend() const { return const_iterator(this, false); }
+
 #if TBB_PREVIEW_FLOW_GRAPH_TRACE
 inline void graph::set_name(const char *name) {
     tbb::internal::fgt_graph_desc(this, name);
 }
 #endif
+
+inline graph_node::graph_node(graph& g) : my_graph(g) {
+    my_graph.register_node(this);
+}
+
+inline graph_node::~graph_node() {
+    my_graph.remove_node(this);
+}
 
 #include "internal/_flow_graph_node_impl.h"
 

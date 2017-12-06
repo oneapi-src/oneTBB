@@ -145,5 +145,7 @@ public:
 int TestMain() {
     uniform_iterations_distribution::test<ParallelBody <tbb::affinity_partitioner> >();
     uniform_iterations_distribution::test<ParallelBody <tbb::static_partitioner> >();
+    uniform_iterations_distribution::test_task_affinity<tbb::affinity_partitioner>();
+    uniform_iterations_distribution::test_task_affinity<tbb::static_partitioner>();
     return Harness::Done;
 }

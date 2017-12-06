@@ -18,13 +18,18 @@
 #
 #
 
+
 # System imports
 from __future__ import print_function
+from glob import glob
 import platform
 import os
 
 from distutils.core import *
 from distutils.command.build import build
+
+rundir = os.getcwd()
+os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
 if any(i in os.environ for i in ["CC", "CXX"]):
     if "CC" not in os.environ:
@@ -33,17 +38,18 @@ if any(i in os.environ for i in ["CC", "CXX"]):
         os.environ['CXX'] = os.environ['CC']
     if platform.system() == 'Linux':
         os.environ['LDSHARED'] = os.environ['CXX'] + " -shared"
+    print("Environment specifies CC=%s CXX=%s"%(os.environ['CC'], os.environ['CXX']))
 
 intel_compiler = os.getenv('CC', '') in ['icl', 'icpc', 'icc']
 try:
     tbb_root = os.environ['TBBROOT']
     print("Using TBBROOT=", tbb_root)
 except:
-    tbb_root = '.'
+    tbb_root = '..'
     if not intel_compiler:
         print("Warning: TBBROOT env var is not set and Intel's compiler is not used. It might lead\n"
               "    !!!: to compile/link problems. Source tbbvars.sh/.csh file to set environment")
-use_compiler_tbb = intel_compiler and tbb_root == '.'
+use_compiler_tbb = intel_compiler and tbb_root == '..'
 if use_compiler_tbb:
     print("Using Intel TBB from Intel's compiler")
 if platform.system() == 'Windows':
@@ -52,21 +58,24 @@ if platform.system() == 'Windows':
         os.environ['MSSdk'] = '1'
         print("Using compiler settings from environment")
     tbb_flag = ['/Qtbb'] if use_compiler_tbb else []
+    tbb_flag += ['/EHsc'] # for Python 2
     compile_flags = ['/Qstd=c++11'] if intel_compiler else []
 else:
     tbb_flag = ['-tbb'] if use_compiler_tbb else []
     compile_flags = ['-std=c++11', '-Wno-unused-variable']
 
-_tbb = Extension("_TBB", ["tbb.i"],
+_tbb = Extension("tbb._api", ["tbb/api.i"],
         include_dirs=[os.path.join(tbb_root, 'include')] if not use_compiler_tbb else [],
         swig_opts   =['-c++', '-O', '-threads'] + (  # add '-builtin' later
               ['-I' + os.path.join(tbb_root, 'include')] if not use_compiler_tbb else []),
         extra_compile_args=compile_flags + tbb_flag,
         extra_link_args=tbb_flag,
-        libraries   =['tbb'] if not use_compiler_tbb else [],
-        library_dirs=[os.path.join(tbb_root, 'lib', 'intel64', 'gcc4.4'),  # for Linux
-                      os.path.join(tbb_root, 'lib'),                       # for MacOS
-                      os.path.join(tbb_root, 'lib', 'intel64', 'vc_mt'),   # for Windows
+        libraries   =(['tbb'] if not use_compiler_tbb else []) +
+                     (['irml'] if platform.system() == "Linux" else []),   # TODO: why do we need this?
+        library_dirs=[ rundir,                                              # for custom-builds
+                       os.path.join(tbb_root, 'lib', 'intel64', 'gcc4.4'),  # for Linux
+                       os.path.join(tbb_root, 'lib'),                       # for MacOS
+                       os.path.join(tbb_root, 'lib', 'intel64', 'vc_mt'),   # for Windows
                      ] if not use_compiler_tbb else [],
         language    ='c++',
         )
@@ -86,7 +95,7 @@ setup(  name        ="TBB",
         url         ="https://software.intel.com/en-us/intel-tbb",
         author      ="Intel Corporation",
         author_email="inteltbbdevelopers@intel.com",
-        license     ="Dual license: Apache or Intel Simplified Software License",
+        license     ="Dual license: Apache or Proprietary",
         version     ="0.1",
         classifiers =[
             'Development Status :: 4 - Beta',
@@ -97,11 +106,9 @@ setup(  name        ="TBB",
             'Intended Audience :: Other Audience',
             'Intended Audience :: Science/Research',
             'License :: OSI Approved :: Apache Software License',
-            'License :: Other/Intel Simplified Software License',
             'Operating System :: MacOS :: MacOS X',
             'Operating System :: Microsoft :: Windows',
-            'Operating System :: POSIX',
-            'Operating System :: Unix',
+            'Operating System :: POSIX :: Linux',
             'Programming Language :: Python',
             'Programming Language :: Python :: 2',
             'Programming Language :: Python :: 3',
@@ -109,8 +116,9 @@ setup(  name        ="TBB",
             'Topic :: System :: Hardware :: Symmetric Multi-processing',
             'Topic :: Software Development :: Libraries',
           ],
-        keywords='tbb multiprocessing multithreading composable parallelism',
+        keywords='TBB multiprocessing multithreading composable parallelism',
         ext_modules=[_tbb],
+        packages=['tbb'],
         py_modules=['TBB'],
         cmdclass={'build': TBBBuild}
 )

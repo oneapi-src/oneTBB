@@ -26,7 +26,7 @@
 #define TBB_VERSION_MINOR 0
 
 // Engineering-focused interface version
-#define TBB_INTERFACE_VERSION 10001
+#define TBB_INTERFACE_VERSION 10002
 #define TBB_INTERFACE_VERSION_MAJOR TBB_INTERFACE_VERSION/1000
 
 // The oldest major interface version still supported
@@ -155,8 +155,8 @@ namespace tbb {
 
 #if TBB_USE_ASSERT
 
-    //! Assert that x is true.
-    /** If x is false, print assertion failure message.
+    //! Assert that predicate is true.
+    /** If predicate is false, print assertion failure message.
         If the comment argument is not NULL, it is printed as part of the failure message.
         The comment argument has no other effect. */
     #define __TBB_ASSERT(predicate,message) __TBB_ASSERT_RELEASE(predicate,message)

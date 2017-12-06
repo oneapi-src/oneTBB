@@ -175,9 +175,17 @@
     #endif
 #endif
 
-#ifndef TBB_PREVIEW_FLOW_GRAPH_FEATURES
-    #if __TBB_CPF_BUILD
+#if __TBB_CPF_BUILD
+    #ifndef  TBB_PREVIEW_FLOW_GRAPH_FEATURES
         #define TBB_PREVIEW_FLOW_GRAPH_FEATURES 1
+    #endif
+    #if __TBB_ITT_STRUCTURE_API
+        #ifndef TBB_PREVIEW_FLOW_GRAPH_TRACE
+            #define TBB_PREVIEW_FLOW_GRAPH_TRACE 1
+        #endif
+        #ifndef TBB_PREVIEW_ALGORITHM_TRACE
+            #define TBB_PREVIEW_ALGORITHM_TRACE 1
+        #endif
     #endif
 #endif
 
