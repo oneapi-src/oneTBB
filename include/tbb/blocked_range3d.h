@@ -61,7 +61,7 @@ public:
 
     //! True if range is empty
     bool empty() const {
-        // Yes, it is a logical OR here, not AND.
+        // Range is empty if at least one dimension is empty.
         return my_pages.empty() || my_rows.empty() || my_cols.empty();
     }
 

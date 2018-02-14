@@ -44,7 +44,7 @@ else
     CPLUS_FLAGS = -g -O0 -DTBB_USE_DEBUG
 endif
 
-CPLUS_FLAGS += -DUSE_PTHREAD
+CPLUS_FLAGS += -DUSE_PTHREAD $(ITT_NOTIFY)
 
 # For Clang, we add the option to support RTM intrinsics *iff* xtest is found in <immintrin.h>
 ifneq (,$(shell grep xtest `echo "\#include<immintrin.h>" | clang -E -M - 2>&1 | grep immintrin.h` 2>/dev/null))
@@ -57,12 +57,14 @@ ifneq (,$(stdlib))
 endif
 
 ifeq (intel64,$(arch))
+    ITT_NOTIFY = -DDO_ITT_NOTIFY
     CPLUS_FLAGS += -m64 $(RTM_KEY)
     LINK_FLAGS += -m64
     LIB_LINK_FLAGS += -m64
 endif
 
 ifeq (ia32,$(arch))
+    ITT_NOTIFY = -DDO_ITT_NOTIFY
     CPLUS_FLAGS += -m32 $(RTM_KEY)
     LINK_FLAGS += -m32
     LIB_LINK_FLAGS += -m32

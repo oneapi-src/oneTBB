@@ -54,7 +54,7 @@ copy "%TBBROOT%\%interim_path%\%vc_dir%\tbbmalloc%postfix%.pdb" "%output_dir%"
 copy "%TBBROOT%\%interim_lib_path%\%vc_dir%\tbb%postfix%.lib" "%output_dir%"
 
 :: Copying DAT-file
-echo Using DAT-file %dat_file% 
+echo Using DAT-file %dat_file%
 if exist %dat_file% copy %dat_file% "%output_dir%\Assets\balls.dat"
 
 goto end

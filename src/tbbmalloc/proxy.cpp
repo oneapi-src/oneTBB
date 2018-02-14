@@ -337,13 +337,23 @@ void* __TBB_malloc_safer__aligned_realloc_##CRTLIB( void *ptr, size_t size, size
     return __TBB_malloc_safer_aligned_realloc( ptr, size, aligment, &func_ptrs );                    \
 }
 
-// Limit is 30 bytes/60 symbols per line, * can be used to match any digit in bytecodes.
-// Purpose of the pattern is to mark an instruction bound, it should consist of several
-// full instructions plus one more byte. It's not required for the patterns to be unique
-// (i.e., it's OK to have same pattern for unrelated functions).
+// Only for ucrtbase: substitution for _o_free
+void (*orig__o_free)(void*);
+void __TBB_malloc__o_free(void *ptr)
+{
+    __TBB_malloc_safer_free( ptr, orig__o_free );
+}
+
+// Size limit is MAX_PATTERN_SIZE (28) byte codes / 56 symbols per line.
+// * can be used to match any digit in byte codes.
+// # followed by several * indicate a relative address that needs to be corrected.
+// Purpose of the pattern is to mark an instruction bound; it should consist of several
+// full instructions plus one extra byte code. It's not required for the patterns
+// to be unique (i.e., it's OK to have same pattern for unrelated functions).
 // TODO: use hot patch prologues if exist
 const char* known_bytecodes[] = {
 #if _WIN64
+//  "========================================================" - 56 symbols
     "4883EC284885C974",       // release free()
     "4883EC284885C975",       // release _msize()
     "4885C974375348",         // release free() 8.0.50727.42, 10.0
@@ -354,12 +364,14 @@ const char* known_bytecodes[] = {
     "48894C24084883EC28BA",   // debug prologue
     "4C894424184889542410",   // debug _aligned_msize() 10.0
     "48894C24084883EC2848",   // debug _aligned_free 10.0
+    "488BD1488D0D#*******E9", // _o_free(), ucrtbase.dll
  #if __TBB_OVERLOAD_OLD_MSVCR
     "48895C2408574883EC3049", // release _aligned_msize 9.0
     "4883EC384885C975",       // release _msize() 9.0
     "4C8BC1488B0DA6E4040033", // an old win64 SDK
  #endif
 #else // _WIN32
+//  "========================================================" - 56 symbols
     "8BFF558BEC8B",           // multiple
     "8BFF558BEC83",           // release free() & _msize() 10.0.40219.325, _msize() ucrtbase.dll
     "8BFF558BECFF",           // release _aligned_msize ucrtbase.dll
@@ -641,8 +653,13 @@ void doMallocReplacement()
         {
             ReplaceFunctionWithStore( modules_to_replace[j].name, c_routines_to_replace[i]._func, c_routines_to_replace[i]._fptr, NULL, NULL,  c_routines_to_replace[i]._on_error );
         }
-        // ucrtbase.dll does not export operator new/delete.
-        if ( strcmp(modules_to_replace[j].name, "ucrtbase.dll") == 0 ){
+        if ( strcmp(modules_to_replace[j].name, "ucrtbase.dll") == 0 ) {
+            // If _o_free function is present and patchable, redirect it to tbbmalloc as well
+            // This prevents issues with other _o_* functions which might allocate memory with malloc
+            if ( IsPrologueKnown(GetModuleHandle("ucrtbase.dll"), "_o_free", known_bytecodes) ) {
+                ReplaceFunctionWithStore( "ucrtbase.dll", "_o_free", (FUNCPTR)__TBB_malloc__o_free, known_bytecodes, (FUNCPTR*)&orig__o_free,  FRR_FAIL );
+            }
+            // ucrtbase.dll does not export operator new/delete, so skip the rest of the loop.
             continue;
         }
 

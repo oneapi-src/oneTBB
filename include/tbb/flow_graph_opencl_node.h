@@ -457,7 +457,7 @@ public:
     operator const T&() const { return data(); }
 
 protected:
-    // Overridden in this derived class to inform that 
+    // Overridden in this derived class to inform that
     // async calculation chain is over
     void finalize() const __TBB_override {
         receive_if_memory_object(*this);
@@ -530,10 +530,10 @@ public:
 
     opencl_async_msg<void*, Factory> receive(const cl_event *e) {
         opencl_async_msg<void*, Factory> d;
-        if (e) { 
+        if (e) {
             d = opencl_async_msg<void*, Factory>(my_host_ptr, *e);
-        } else { 
-            d = opencl_async_msg<void*, Factory>(my_host_ptr); 
+        } else {
+            d = opencl_async_msg<void*, Factory>(my_host_ptr);
         }
 
         // Concurrent receives are prohibited so we do not worry about synchronization.

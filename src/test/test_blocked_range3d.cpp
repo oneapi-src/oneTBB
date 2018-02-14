@@ -70,22 +70,22 @@ static void SerialTest() {
     typedef AbstractValueType<RowTag> row_type;
     typedef AbstractValueType<ColTag> col_type;
     typedef tbb::blocked_range3d<page_type,row_type,col_type> range_type;
-    for( int pagex=-4; pagex<4; ++pagex ) {
-        for( int pagey=pagex; pagey<4; ++pagey ) {
-            page_type pagei = MakeAbstractValueType<PageTag>(pagex);
-            page_type pagej = MakeAbstractValueType<PageTag>(pagey);
-            for( int pageg=1; pageg<4; ++pageg ) {
-                for( int rowx=-4; rowx<4; ++rowx ) {
-                    for( int rowy=rowx; rowy<4; ++rowy ) {
-                        row_type rowi = MakeAbstractValueType<RowTag>(rowx);
-                        row_type rowj = MakeAbstractValueType<RowTag>(rowy);
-                        for( int rowg=1; rowg<4; ++rowg ) {
-                            for( int colx=-4; colx<4; ++colx ) {
-                                for( int coly=colx; coly<4; ++coly ) {
-                                    col_type coli = MakeAbstractValueType<ColTag>(colx);
-                                    col_type colj = MakeAbstractValueType<ColTag>(coly);
-                                    for( int colg=1; colg<4; ++colg ) {
-                                        range_type r( pagei, pagej, pageg, rowi, rowj, rowg, coli, colj, colg );
+    for( int page_x=-4; page_x<4; ++page_x ) {
+        for( int page_y=page_x; page_y<4; ++page_y ) {
+            page_type page_i = MakeAbstractValueType<PageTag>(page_x);
+            page_type page_j = MakeAbstractValueType<PageTag>(page_y);
+            for( int page_grain=1; page_grain<4; ++page_grain ) {
+                for( int row_x=-4; row_x<4; ++row_x ) {
+                    for( int row_y=row_x; row_y<4; ++row_y ) {
+                        row_type row_i = MakeAbstractValueType<RowTag>(row_x);
+                        row_type row_j = MakeAbstractValueType<RowTag>(row_y);
+                        for( int row_grain=1; row_grain<4; ++row_grain ) {
+                            for( int col_x=-4; col_x<4; ++col_x ) {
+                                for( int col_y=col_x; col_y<4; ++col_y ) {
+                                    col_type col_i = MakeAbstractValueType<ColTag>(col_x);
+                                    col_type col_j = MakeAbstractValueType<ColTag>(col_y);
+                                    for( int col_grain=1; col_grain<4; ++col_grain ) {
+                                        range_type r( page_i, page_j, page_grain, row_i, row_j, row_grain, col_i, col_j, col_grain );
                                         AssertSameType( r.is_divisible(), true );
 
                                         AssertSameType( r.empty(), true );
@@ -94,13 +94,13 @@ static void SerialTest() {
                                         AssertSameType( static_cast<range_type::row_range_type::const_iterator*>(0), static_cast<row_type*>(0) );
                                         AssertSameType( static_cast<range_type::col_range_type::const_iterator*>(0), static_cast<col_type*>(0) );
 
-                                        AssertSameType( r.pages(), tbb::blocked_range<page_type>( pagei, pagej, 1 ));
-                                        AssertSameType( r.rows(), tbb::blocked_range<row_type>( rowi, rowj, 1 ));
-                                        AssertSameType( r.cols(), tbb::blocked_range<col_type>( coli, colj, 1 ));
+                                        AssertSameType( r.pages(), tbb::blocked_range<page_type>( page_i, page_j, 1 ));
+                                        AssertSameType( r.rows(), tbb::blocked_range<row_type>( row_i, row_j, 1 ));
+                                        AssertSameType( r.cols(), tbb::blocked_range<col_type>( col_i, col_j, 1 ));
 
-                                        ASSERT( r.empty()==(pagex==pagey||rowx==rowy||colx==coly), NULL );
+                                        ASSERT( r.empty()==(page_x==page_y||row_x==row_y||col_x==col_y), NULL );
 
-                                        ASSERT( r.is_divisible()==(pagey-pagex>pageg||rowy-rowx>rowg||coly-colx>colg), NULL );
+                                        ASSERT( r.is_divisible()==(page_y-page_x>page_grain||row_y-row_x>row_grain||col_y-col_x>col_grain), NULL );
 
                                         if( r.is_divisible() ) {
                                             range_type r2(r,tbb::split());

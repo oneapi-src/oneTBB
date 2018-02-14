@@ -16,23 +16,33 @@
 #
 #
 
-all: release test
+tbb_root?=..
+include $(tbb_root)/build/common.inc
+.PHONY: all release test install test-install
+
+export TBBROOT=$(abspath $(tbb_root))
+SRC=$(tbb_root)/python/*.py $(tbb_root)/python/tbb/*
+PY_SETUP=python $(tbb_root)/python/setup.py
+
+all: install test
 
 clean:
-	python setup.py clean
-	-rm -rf build/ tbb_wrap.* _TBB.* *.pyc TBB.py*
+	$(PY_SETUP) clean -b$(CURDIR)
 
-release: TBB.py
+release: CC=$(compiler)
+release: $(SRC) rml
+	$(PY_SETUP) build -b$(CURDIR) -f check
 
-TBB.py: tbb.i tbb.src.py setup.py
-	python setup.py build_ext -f --inplace
+install: CC=$(compiler)
+install: $(SRC) rml
+	$(PY_SETUP) build -b$(CURDIR) install
 
-test: TBB.py
-	python TBB.py test
+test:
+	python -m tbb test
 
-install:
-	python setup.py install
-
-test-install:
-	@echo Testing installed module
-	python -m TBB test
+rml:
+ifeq (linux,$(tbb_os))
+	$(MAKE) -C "$(work_dir)_release" -rf $(tbb_root)/python/rml/Makefile cfg=release rml
+rml_%:
+	$(MAKE) -C "$(work_dir)_release" -rf $(tbb_root)/python/rml/Makefile cfg=release $(subst rml_,,$@)
+endif

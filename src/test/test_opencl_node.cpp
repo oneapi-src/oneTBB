@@ -477,7 +477,7 @@ public:
             for ( int i = 0; i < numChecks; i += 2 ) {
                 for ( int j = 0; j < 2; ++j ) {
                     opencl_buffer<cl_char, Factory> b1( f, N );
-                    std::fill( b1.begin(), b1.end(), 1 );
+                    std::fill( b1.begin(), b1.end(), cl_char(1) );
                     input_port<0>( *n2 ).try_put( b1 );
                 }
 
@@ -485,12 +485,12 @@ public:
                 opencl_buffer<cl_short, Factory> b( f, 4*N );
                 size_t id0 = (rnd.get() % N) & alignmentMask;
                 opencl_subbuffer<cl_short, Factory> sb1( b, id0, N );
-                std::fill( sb1.begin(), sb1.end(), 0 );
+                std::fill( sb1.begin(), sb1.end(), cl_short(0) );
                 input_port<1>( *n2 ).try_put( sb1 );
 
                 size_t id1 = (rnd.get() % N) & alignmentMask;
                 opencl_subbuffer<cl_short, Factory> sb2 = b.subbuffer( 2*N + id1, N );
-                std::fill( sb2.begin(), sb2.end(), 0 );
+                std::fill( sb2.begin(), sb2.end(), cl_short(0) );
                 input_port<1>( *n2 ).try_put( sb2 );
             }
         } else {
@@ -498,7 +498,7 @@ public:
             // output_port<1> of the previous node.
             for ( int i = 0; i < numChecks; ++i ) {
                 opencl_buffer<cl_char, Factory> b( f, N );
-                std::fill( b.begin(), b.end(), 1 );
+                std::fill( b.begin(), b.end(), cl_char(1) );
                 input_port<0>( *n2 ).try_put( b );
             }
         }

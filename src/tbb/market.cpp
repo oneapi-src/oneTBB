@@ -329,7 +329,7 @@ void market::try_destroy_arena ( arena* a, uintptr_t aba_epoch ) {
     assert_market_valid();
 #if __TBB_TASK_PRIORITY
     // scan all priority levels, not only in [my_global_bottom_priority;my_global_top_priority]
-    // range, because arena to be destoyed can have no outstanding request for workers
+    // range, because arena to be destroyed can have no outstanding request for workers
     for ( int p = num_priority_levels-1; p >= 0; --p ) {
         priority_level_info &pl = my_priority_levels[p];
         arena_list_type &my_arenas = pl.arenas;

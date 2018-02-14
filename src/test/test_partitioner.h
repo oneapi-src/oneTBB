@@ -29,6 +29,7 @@
 #endif
 #include "tbb/tbb_stddef.h"
 #include "harness.h"
+#include <vector>
 
 namespace test_partitioner_utils {
 
@@ -346,6 +347,9 @@ public:
         visualize_node(m_root);
     }
 
+    bool operator ==(const BinaryTree& other_tree) const { return compare_nodes(m_root, other_tree.m_root); }
+    void fill_leafs(std::vector<TreeNode*>& leafs) const { fill_leafs_impl(m_root, leafs); }
+
 private:
     TreeNode *m_root;
 
@@ -430,6 +434,20 @@ private:
             visualize_node(node->m_left, indent + 1);
         if (node->m_right)
             visualize_node(node->m_right, indent + 1);
+    }
+
+    bool compare_nodes(TreeNode* node1, TreeNode* node2) const {
+        if (node1 == NULL && node2 == NULL) return true;
+        if (node1 == NULL || node2 == NULL) return false;
+        return are_nodes_equal(node1, node2) && compare_nodes(node1->m_left, node2->m_left)
+            && compare_nodes(node1->m_right, node2->m_right);
+    }
+
+    void fill_leafs_impl(TreeNode* node, std::vector<TreeNode*>& leafs) const {
+        if (node->m_left == NULL && node->m_right == NULL)
+            leafs.push_back(node);
+        if (node->m_left != NULL) fill_leafs_impl(node->m_left, leafs);
+        if (node->m_right != NULL) fill_leafs_impl(node->m_right, leafs);
     }
 };
 

@@ -43,6 +43,11 @@ else
 endif
 EH_FLAGS = $(if $(no_exceptions),/EHs-,/EHsc /GR)
 
+# UWD binaries have to use static CRT linkage
+ifeq ($(target_app), uwd)
+    MS_CRT_KEY = /MT$(if $(findstring debug,$(cfg)),d)
+endif
+
 ifeq ($(cfg), release)
         CPLUS_FLAGS = $(MS_CRT_KEY) /O2 /Zi $(EH_FLAGS) /Zc:forScope /Zc:wchar_t /D__TBB_LIB_NAME=$(TBB.LIB)
         ASM_FLAGS =
@@ -54,17 +59,20 @@ endif
 
 ZW_KEY = /ZW:nostdlib
 
-ifneq (,$(filter win8ui,$(target_app) $(target_ui)))
-        CPLUS_FLAGS += $(ZW_KEY) /D "_UNICODE" /D "UNICODE" /D "WINAPI_FAMILY=WINAPI_FAMILY_APP"
+# These flags are general for Windows* universal applications
+ifneq (,$(target_app))
+    CPLUS_FLAGS += $(ZW_KEY) /D "_UNICODE" /D "UNICODE" /D "WINAPI_FAMILY=WINAPI_FAMILY_APP"
+endif
+
+ifeq ($(target_app), win8ui)
         _WIN32_WINNT = 0x0602
-else ifneq (,$(filter uwp,$(target_app) $(target_ui)))
-        CPLUS_FLAGS += $(ZW_KEY) /D "_UNICODE" /D "UNICODE" /D "WINAPI_FAMILY=WINAPI_FAMILY_APP"
+else ifneq (,$(filter $(target_app),uwp uwd))
         _WIN32_WINNT = 0x0A00
         LIB_LINK_FLAGS += /NODEFAULTLIB:kernel32.lib OneCore.lib
 else
         CPLUS_FLAGS += /DDO_ITT_NOTIFY
 endif
-ifneq (,$(filter store,$(target_mode) $(target_ui_mode)))
+ifeq ($(target_mode), store)
 #       it is necessary to source vcvars with 'store' argument in production
         LIB_LINK_FLAGS += /APPCONTAINER
 endif

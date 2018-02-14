@@ -208,7 +208,6 @@ typedef local_counting_allocator<std::allocator<MyData> > MyAllocator;
 typedef tbb::concurrent_hash_map<MyKey,MyData,MyHashCompare,MyAllocator> MyTable;
 typedef tbb::concurrent_hash_map<MyKey,MyData2,MyHashCompare> MyTable2;
 typedef tbb::concurrent_hash_map<MyKey,MyData,YourHashCompare> YourTable;
-typedef tbb::concurrent_hash_map<MyKey,MyData,MyHashCompare,MyAllocator> MyTable;
 
 template<typename MyTable>
 inline void CheckAllocator(MyTable &table, size_t expected_allocs, size_t expected_frees, bool exact = true) {

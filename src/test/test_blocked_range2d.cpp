@@ -68,25 +68,25 @@ static void SerialTest() {
     typedef AbstractValueType<RowTag> row_type;
     typedef AbstractValueType<ColTag> col_type;
     typedef tbb::blocked_range2d<row_type,col_type> range_type;
-    for( int rowx=-10; rowx<10; ++rowx ) {
-        for( int rowy=rowx; rowy<10; ++rowy ) {
-            row_type rowi = MakeAbstractValueType<RowTag>(rowx);
-            row_type rowj = MakeAbstractValueType<RowTag>(rowy);
-            for( int rowg=1; rowg<10; ++rowg ) {
-                for( int colx=-10; colx<10; ++colx ) {
-                    for( int coly=colx; coly<10; ++coly ) {
-                        col_type coli = MakeAbstractValueType<ColTag>(colx);
-                        col_type colj = MakeAbstractValueType<ColTag>(coly);
-                        for( int colg=1; colg<10; ++colg ) {
-                            range_type r( rowi, rowj, rowg, coli, colj, colg );
+    for( int row_x=-10; row_x<10; ++row_x ) {
+        for( int row_y=row_x; row_y<10; ++row_y ) {
+            row_type row_i = MakeAbstractValueType<RowTag>(row_x);
+            row_type row_j = MakeAbstractValueType<RowTag>(row_y);
+            for( int row_grain=1; row_grain<10; ++row_grain ) {
+                for( int col_x=-10; col_x<10; ++col_x ) {
+                    for( int col_y=col_x; col_y<10; ++col_y ) {
+                        col_type col_i = MakeAbstractValueType<ColTag>(col_x);
+                        col_type col_j = MakeAbstractValueType<ColTag>(col_y);
+                        for( int col_grain=1; col_grain<10; ++col_grain ) {
+                            range_type r( row_i, row_j, row_grain, col_i, col_j, col_grain );
                             AssertSameType( r.is_divisible(), true );
                             AssertSameType( r.empty(), true );
                             AssertSameType( static_cast<range_type::row_range_type::const_iterator*>(0), static_cast<row_type*>(0) );
                             AssertSameType( static_cast<range_type::col_range_type::const_iterator*>(0), static_cast<col_type*>(0) );
-                            AssertSameType( r.rows(), tbb::blocked_range<row_type>( rowi, rowj, 1 ));
-                            AssertSameType( r.cols(), tbb::blocked_range<col_type>( coli, colj, 1 ));
-                            ASSERT( r.empty()==(rowx==rowy||colx==coly), NULL );
-                            ASSERT( r.is_divisible()==(rowy-rowx>rowg||coly-colx>colg), NULL );
+                            AssertSameType( r.rows(), tbb::blocked_range<row_type>( row_i, row_j, 1 ));
+                            AssertSameType( r.cols(), tbb::blocked_range<col_type>( col_i, col_j, 1 ));
+                            ASSERT( r.empty()==(row_x==row_y||col_x==col_y), NULL );
+                            ASSERT( r.is_divisible()==(row_y-row_x>row_grain||col_y-col_x>col_grain), NULL );
                             if( r.is_divisible() ) {
                                 range_type r2(r,tbb::split());
                                 if( GetValueOf(r2.rows().begin())==GetValueOf(r.rows().begin()) ) {

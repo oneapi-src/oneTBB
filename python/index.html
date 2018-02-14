@@ -4,10 +4,10 @@
 </H2>
 
 <H2>Overview</H2>
-It is a preview Python* module which unlocks opportunities for additional performance in multi-threaded Python programs by enabling threading composability
+It is a preview Python* module which unlocks opportunities for additional performance in multi-threaded and multiprocess Python programs by enabling threading composability
 between two or more thread-enabled libraries like Numpy, Scipy, Sklearn, Dask, Joblib, and etc.
 <p></p>
-The biggest improvement can be achieved when a task pool like the ThreadPool from the Python standard library or libraries like Dask or Joblib (used in multi-threading mode)
+The biggest improvement can be achieved when a task pool like the ThreadPool or Pool from the Python standard library or libraries like Dask or Joblib (used either in multi-threading or multi-processing mode)
 execute tasks calling compute-intensive functions of Numpy/Scipy/Sklearn/PyDAAL which in turn are parallelized using Intel&reg; Math Kernel Library or/and Intel&reg; TBB.
 <p></p>
 The module implements Pool class with the standard interface using Intel&reg; TBB which can be used to replace Python's ThreadPool.
@@ -15,43 +15,52 @@ Thanks to the monkey-patching technique implemented in class Monkey, no source c
 <p></p>
 For more information and examples, please refer to <A HREF="http://software.intel.com/en-us/blogs/2016/04/04/unleash-parallel-performance-of-python-programs">online blog</A>.
 
+<H2>Directories</H2>
+<DL>
+<DT><A HREF="rml">rml</A>
+<DD>The folder contains sources for building the plugin with cross-process dynamic thread scheduler implementation.
+<DT><A HREF="tbb">tbb</A>
+<DD>The folder contains Python module sources.
+</DL>
+
 <H2>Files</H2>
 <DL>
 <DT><A HREF="setup.py">setup.py</A>
 <DD>Standard Python setup script.
 <DT><A HREF="Makefile">Makefile</A>
-<DD>Makefile for building, installing, and testing. See below.
-<DT><A HREF="tbb.i">tbb.i</A>
-<DD>SWIG interface description file.
-<DT><A HREF="tbb.src.py">tbb.src.py</A>
-<DD>Python part of module implementation.
+<DD>Internal Makefile for building, installing, and testing. See below.
+<DT><A HREF="TBB.py">TBB.py</A>
+<DD>Alternative entry point for Python module.
 </DL>
 
 <A NAME=build><H2>Build and install</H2></A>
-Prior to building it, please set up the environment using corresponding tbbvars script, e.g. `source tbbvars.sh intel64`
+For accessing targets defined in python/Makefile, please use
+<A HREF="../src/index.html">src/Makefile</A>
+instead and build runtime libraries before working with Python.
 <DL>
-<DT><TT>make</TT>
-<DD>Default build and run. Equivalent to 'make release test'.
-<DT><TT>make release</TT>
-<DD>Compile and link against the release version of Intel TBB runtime library. The resulting executable is left in the directory for the example.
-<DT><TT>make test</TT>
-<DD>Run local build of the module previously produced by one of the above commands.
-<DT><TT>make install</TT>
-<DD>Install module into Python.
-<DT><TT>make <B>[</B>(above options or targets)<B>]</B> CXX=<B>{</B>icl, icc<B>}</B></TT>
-<DD>Build and run as above, but use Intel&reg; C++ compiler instead of default, native compilers
-(e.g., icl instead of cl.exe on Windows* systems, or icc instead of g++ on Linux* or macOS* systems).
-Please note, CXX=icl works on Windows only with Intel&reg; Distribution for Python*.
-<DT><TT>make clean</TT>
-<DD>Remove any intermediate files produced by the above commands.
+<DT><TT>make -C ../src python_all</TT>
+<DD>Install and test as described below.
+<DT><TT>make -C ../src python_install</TT>
+<DD>Install module into Python environment.
+<DT><TT>make -C ../src python_test</TT>
+<DD>Test installed Intel&reg; TBB module for Python.
+<DT><TT>make -C ../src python_release</TT>
+<DD>Recompile Python module. Result is located in Intel&reg; TBB build directory.
+<DT><TT>make  -C ../src python_clean</TT>
+<DD>Remove any intermediate files produced by the commands above. Does not remove installed module.
 </DL>
 
 <H2>Command-line interface</H2>
 <DL>
-<DT><TT>pydoc TBB</TT>
-<DD>Read built-in documentation for Python interfaces.
-<DT><TT>python -m TBB your_script.py</TT>
-<DD>Run your_script.py in context of `with TBB.Monkey():` when Intel TBB is enabled.
+<DT><TT>python -m tbb -h</TT>
+<DD>Print documentation on command-line interface</DD>
+<DT><TT>pydoc tbb</TT>
+<DD>Read built-in documentation for Python interfaces.</DD>
+<DT><TT>python-tbb your_script.py</TT>
+<DT><TT>python -m tbb your_script.py</TT>
+<DD>Run your_script.py in context of `with tbb.Monkey():` when Intel&reg; TBB is enabled. By default only multi-threading will be covered.</DD>
+<DT><TT>python -m tbb --ipc your_script.py</TT>
+<DD>Run your_script.py in context of `with tbb.Monkey():` when Intel&reg; TBB enabled in both multi-threading and multi-processing modes.</DD>
 </DL>
 
 <H2>System Requirements</H2>

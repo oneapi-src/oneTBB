@@ -50,13 +50,11 @@ rml: mkdir
 	$(MAKE) -C "$(work_dir)_debug"  -r -f $(tbb_root)/build/Makefile.rml cfg=debug
 	$(MAKE) -C "$(work_dir)_release"  -r -f $(tbb_root)/build/Makefile.rml cfg=release
 
-
 examples: tbb tbbmalloc
 	$(MAKE) -C examples -r -f Makefile tbb_root=.. release test
 
-python: mkdir
-	$(MAKE) -C "$(work_dir)_release"  -r -f $(tbb_root)/build/Makefile.tbb cfg=release
-	bash -c ". $(work_dir)_release$(SLASH)tbbvars.sh && $(MAKE) -rC '$(full_tbb_root)/python' CXX=$(compiler) install test-install"
+python: tbb
+	$(MAKE) -C "$(work_dir)_release" -rf $(tbb_root)/python/Makefile install
 
 .PHONY: clean clean_examples mkdir info
 

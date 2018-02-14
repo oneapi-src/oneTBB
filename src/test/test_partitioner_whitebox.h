@@ -28,6 +28,7 @@
 #include "string.h"
 #include "harness_assert.h"
 #include "test_partitioner.h"
+#include <numeric>
 
 #if TBB_USE_DEBUG
 // reducing number of simulations due to test timeout
@@ -39,6 +40,11 @@ const size_t max_simulated_threads = 640;
 typedef tbb::enumerable_thread_specific<size_t> ThreadNumsType;
 size_t g_threadNumInitialValue = 10;
 ThreadNumsType g_threadNums(g_threadNumInitialValue);
+
+namespace whitebox_simulation {
+size_t whitebox_thread_index = 0;
+test_partitioner_utils::BinaryTree reference_tree;
+}
 
 // simulate a subset of task.h
 namespace tbb {
@@ -64,9 +70,16 @@ private:
     fake_task *my_parent;
     affinity_id my_affinity;
 };
+namespace task_arena {
+static const int not_initialized = -2;//should match corresponding value in task_arena.h
+}//namespace task_arena
+namespace this_task_arena {
+inline int current_thread_index() { return (int)whitebox_simulation::whitebox_thread_index; }
 }
+}//namespace tbb
 
 #define __TBB_task_H
+#define __TBB_task_arena_H
 #define get_initial_auto_partitioner_divisor my_get_initial_auto_partitioner_divisor
 #define affinity_partitioner_base_v3 my_affinity_partitioner_base_v3
 #define task fake_task
@@ -391,6 +404,68 @@ void test() {
     }
     NativeParallelFor(max_simulated_threads - parallel_group_thread_starting_index,
         ParallelTestBody(parallel_group_thread_starting_index));
+}
+
+namespace task_affinity_whitebox {
+size_t range_begin = 0;
+size_t range_end = 20;
+}
+
+template<typename Partitioner>
+void check_tree(const test_partitioner_utils::BinaryTree&);
+
+template<>
+void check_tree<tbb::affinity_partitioner>(const test_partitioner_utils::BinaryTree& tree) {
+    ASSERT(tree == whitebox_simulation::reference_tree,
+        "affinity_partitioner distributes tasks differently from run to run");
+}
+
+template<>
+void check_tree<tbb::static_partitioner>(const test_partitioner_utils::BinaryTree& tree) {
+    std::vector<test_partitioner_utils::TreeNode* > tree_leafs;
+    tree.fill_leafs(tree_leafs);
+    typedef std::vector<size_t> Slots;
+    Slots affinity_slots(tree_leafs.size() + 1, 0);
+
+    for (std::vector<test_partitioner_utils::TreeNode*>::iterator i = tree_leafs.begin(); i != tree_leafs.end(); ++i) {
+        affinity_slots[(*i)->m_affinity]++;
+        if ((*i)->m_affinity == 0)
+            ASSERT((*i)->m_range_begin == task_affinity_whitebox::range_begin,
+                "Task with affinity 0 was executed with wrong range");
+    }
+
+    typedef std::iterator_traits<Slots::iterator>::difference_type slots_difference_type;
+    ASSERT(std::count(affinity_slots.begin(), affinity_slots.end(), size_t(0)) == slots_difference_type(1),
+        "static_partitioner incorrectly distributed tasks by threads");
+    ASSERT(std::count(affinity_slots.begin(), affinity_slots.end(), size_t(1)) == slots_difference_type(g_threadNums.local()),
+        "static_partitioner incorrectly distributed tasks by threads");
+    ASSERT(affinity_slots[tbb::this_task_arena::current_thread_index() + 1] == 0,
+        "static_partitioner incorrectly assigns task with 0 affinity");
+    ASSERT(std::accumulate(affinity_slots.begin(), affinity_slots.end(), size_t(0)) == g_threadNums.local(),
+        "static_partitioner has created more tasks than the number of threads");
+}
+
+template<typename Partitioner>
+void test_task_affinity() {
+    using namespace task_affinity_whitebox;
+    test_partitioner_utils::SimpleBody body;
+    for (size_t p = 1; p <= 50; ++p) {
+        g_threadNums.local() = p;
+        whitebox_simulation::whitebox_thread_index = 0;
+        test_partitioner_utils::TestRanges::BlockedRange range(range_begin, range_end, /*statData*/NULL,
+                                            /*provide_feedback*/false, /*ensure_non_empty_size*/false);
+        Partitioner partitioner;
+        whitebox_simulation::reference_tree = test_partitioner_utils::BinaryTree();
+        whitebox_simulation::parallel_for(range, body, partitioner, &(whitebox_simulation::reference_tree));
+        while (whitebox_simulation::whitebox_thread_index < p) {
+            test_partitioner_utils::BinaryTree tree;
+            whitebox_simulation::parallel_for(range, body, partitioner, &tree);
+            check_tree<Partitioner>(tree);
+            whitebox_simulation::whitebox_thread_index++;
+        }
+        range_begin++;
+        range_end += 2;
+    }
 }
 
 } /* namespace uniform_iterations_distribution */

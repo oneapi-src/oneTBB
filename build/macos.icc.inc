@@ -58,7 +58,8 @@ else
     CPLUS_FLAGS = -g -O0 -DTBB_USE_DEBUG
 endif
 
-CPLUS_FLAGS += -DUSE_PTHREAD
+ITT_NOTIFY = -DDO_ITT_NOTIFY
+CPLUS_FLAGS += -DUSE_PTHREAD $(ITT_NOTIFY)
 
 ifneq (,$(codecov))
     CPLUS_FLAGS += -prof-gen=srcpos

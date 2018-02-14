@@ -206,13 +206,7 @@ public:
 
     //! Destroys the graph.
     /** Calls wait_for_all, then destroys the root task and context. */
-    ~graph() {
-        wait_for_all();
-        my_root_task->set_ref_count(0);
-        tbb::task::destroy(*my_root_task);
-        if (own_context) delete my_context;
-        delete my_task_arena;
-    }
+    ~graph();
 
 #if TBB_PREVIEW_FLOW_GRAPH_TRACE
     void set_name(const char *name);
@@ -305,17 +299,17 @@ public:
 
     // Graph iterator constructors
     //! start iterator
-    iterator begin() { return iterator(this, true); }
+    iterator begin();
     //! end iterator
-    iterator end() { return iterator(this, false); }
+    iterator end();
     //! start const iterator
-    const_iterator begin() const { return const_iterator(this, true); }
+    const_iterator begin() const;
     //! end const iterator
-    const_iterator end() const { return const_iterator(this, false); }
+    const_iterator end() const;
     //! start const iterator
-    const_iterator cbegin() const { return const_iterator(this, true); }
+    const_iterator cbegin() const;
     //! end const iterator
-    const_iterator cend() const { return const_iterator(this, false); }
+    const_iterator cend() const;
 
     //! return status of graph execution
     bool is_cancelled() { return cancelled; }
@@ -361,12 +355,9 @@ protected:
     graph& my_graph;
     graph_node *next, *prev;
 public:
-    explicit graph_node(graph& g) : my_graph(g) {
-        my_graph.register_node(this);
-    }
-    virtual ~graph_node() {
-        my_graph.remove_node(this);
-    }
+    explicit graph_node(graph& g);
+    
+    virtual ~graph_node();
 
 #if TBB_PREVIEW_FLOW_GRAPH_TRACE
     virtual void set_name(const char *name) = 0;

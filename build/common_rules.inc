@@ -63,7 +63,14 @@ ifeq ($(origin LIB_LINK_LIBS), undefined)
     LIB_LINK_LIBS = $(LIBDL) $(LIBS)
 endif
 
+# Define C & C++ compilers according to platform defaults or CXX & CC environment variables
+ifneq (,$(findstring environment, $(origin CXX)))
+CPLUS = $(CXX)
+endif
 CONLY ?= $(CPLUS)
+ifneq (,$(findstring environment, $(origin CC)))
+CONLY = $(CC)
+endif
 
 # The most generic rules
 #$(1) - is the target pattern
