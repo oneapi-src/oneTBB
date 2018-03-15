@@ -9,9 +9,12 @@ Here are the latest [Changes](CHANGES) and [Release Notes](doc/Release_Notes.txt
 
 ## tbb_tutorials branch information
 This release provides additional TBB examples for workshops, conferences, etc.
-* [examples/sc17_hands_on](examples/sc17_hands_on) and [examples/sc17_hetero](examples/sc17_hetero) – examples for [SC 17](https://sc17.supercomputing.org/)
-    * SC17 hands-on exercises depend on OpenCV 3.1.0, exercise 2 requires a video file (sc17_hands_on/input/input.avi) that is not part of this branch
-    * SC17 hetero exercises 3,4 + 5 depend on OpenCL\*
+Head revision contains tutorials for all events and code base for the latest event. To get tutorials with original code base, please use specific tags.
+
+*  [SC 17](https://sc17.supercomputing.org/) - code base: TBB 2018 U1 - tag: [tutorials_sc17](https://github.com/01org/tbb/tree/tutorials_sc17)
+    * [doc/sc17_slides](doc/sc17_slides)
+    * [examples/sc17_hands_on](examples/sc17_hands_on): exercises depend on OpenCV 3.1.0, exercise 2 requires a video file (sc17_hands_on/input/input.avi) that is not part of this branch
+    * [examples/sc17_hetero](examples/sc17_hetero): exercises 3, 4 and 5 depend on OpenCL\*
 
 ## Documentation
 * Intel(R) TBB [tutorial](https://software.intel.com/en-us/tbb-tutorial)
