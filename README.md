@@ -8,6 +8,21 @@ full advantage of multicore performance, that are portable, composable and have 
 ## Release Information
 Here are the latest [Changes](CHANGES) and [Release Notes](doc/Release_Notes.txt) (contains system requirements and known issues).
 
+## tbb_tutorials branch information
+This release provides additional TBB examples for workshops, conferences, etc.
+Head revision contains tutorials for all events and code base for the latest event. To get tutorials with original code base, please use specific tags.
+
+*  [PPoPP 2018](https://ppopp18.sigplan.org/) - code base: TBB 2018 U2 - tag: [tutorials_ppopp18](https://github.com/01org/tbb/tree/tutorials_ppopp18)
+    * [examples/ppopp18](examples/ppopp18): exercises 3, 4 and 5 depend on OpenCL\* (lab2)
+*  [SC 17](https://sc17.supercomputing.org/) - code base: TBB 2018 U1 - tag: [tutorials_sc17](https://github.com/01org/tbb/tree/tutorials_sc17)
+    * [doc/sc17_slides](doc/sc17_slides)
+    * [examples/sc17_hands_on](examples/sc17_hands_on): exercises depend on OpenCV 3.1.0, exercise 2 requires a video file (sc17_hands_on/input/input.avi) that is not part of this branch
+    * [examples/sc17_hetero](examples/sc17_hetero): exercises 3, 4 and 5 depend on OpenCL\*
+*  [EURO-PAR 2017](https://europar2017.usc.es/) - code base: TBB 2017 U3 - tag: [tutorials_europar17](https://github.com/01org/tbb/tree/tutorials_europar17)
+    * [examples/europar17](examples/europar17)
+*  [PPoPP 2017](https://ppopp18.sigplan.org/) - code base: TBB 2017 U3 - tag: [tutorials_ppopp17](https://github.com/01org/tbb/tree/tutorials_ppopp17)
+    * [examples/ppopp17](examples/ppopp17)
+
 ## Documentation
 * Intel(R) TBB [tutorial](https://software.intel.com/en-us/tbb-tutorial)
 * Intel(R) TBB general documentation: [stable](https://software.intel.com/en-us/tbb-documentation)
