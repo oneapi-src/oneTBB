@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::flow::interface10::callback&lt; Callback, T &gt; Class Template Reference</title>
+<title>tbb::cache_aligned_allocator&lt; void &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,43 +33,53 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface10</b></li><li class="navelem"><a class="el" href="a00034.html">callback</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00240.html">tbb</a></li><li class="navelem"><a class="el" href="a00034.html">cache_aligned_allocator< void ></a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="a00339.html">List of all members</a>  </div>
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#pub-types">Public Types</a> &#124;
+<a href="a00277.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::flow::interface10::callback&lt; Callback, T &gt; Class Template Reference</div>  </div>
+<div class="title">tbb::cache_aligned_allocator&lt; void &gt; Class Template Reference<div class="ingroups"><a class="el" href="a00262.html">Memory Allocation</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="dynheader">
-Inheritance diagram for tbb::flow::interface10::callback&lt; Callback, T &gt;:</div>
-<div class="dyncontent">
- <div class="center">
-  <img src="a00034.png" usemap="#tbb::flow::interface10::callback&lt; Callback, T &gt;_map" alt=""/>
-  <map id="tbb::flow::interface10::callback&lt; Callback, T &gt;_map" name="tbb::flow::interface10::callback&lt; Callback, T &gt;_map">
-<area href="a00035.html" alt="tbb::flow::interface10::callback_base" shape="rect" coords="0,56,270,80"/>
-</map>
- </div></div>
+
+<p>Analogous to std::allocator&lt;void&gt;, as defined in ISO C++ Standard, Section 20.4.1.  
+ <a href="a00034.html#details">More...</a></p>
+
+<p><code>#include &lt;cache_aligned_allocator.h&gt;</code></p>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
-Public Member Functions</h2></td></tr>
-<tr class="memitem:a4dc2b032a93148fd48a7034532328e18"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4dc2b032a93148fd48a7034532328e18"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>callback</b> (Callback c, const T &amp;t)</td></tr>
-<tr class="separator:a4dc2b032a93148fd48a7034532328e18"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa0b459c3cb4e56835c06434ee769c156"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa0b459c3cb4e56835c06434ee769c156"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>call</b> () __TBB_override</td></tr>
-<tr class="separator:aa0b459c3cb4e56835c06434ee769c156"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00116.html">rebind</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a630325567e2ede3937a0d2e0f2da6a3f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a630325567e2ede3937a0d2e0f2da6a3f"></a>
+typedef void *&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b></td></tr>
+<tr class="separator:a630325567e2ede3937a0d2e0f2da6a3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a36f63efa0a37d205705b9d5944432864"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a36f63efa0a37d205705b9d5944432864"></a>
+typedef const void *&#160;</td><td class="memItemRight" valign="bottom"><b>const_pointer</b></td></tr>
+<tr class="separator:a36f63efa0a37d205705b9d5944432864"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af7f973d0bb12319600505cf9c1fb35b0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af7f973d0bb12319600505cf9c1fb35b0"></a>
+typedef void&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b></td></tr>
+<tr class="separator:af7f973d0bb12319600505cf9c1fb35b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<hr/>The documentation for this class was generated from the following file:<ul>
-<li>flow_graph_opencl_node.h</li>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><h3>template&lt;&gt;<br/>
+class tbb::cache_aligned_allocator&lt; void &gt;</h3>
+
+<p>Analogous to std::allocator&lt;void&gt;, as defined in ISO C++ Standard, Section 20.4.1. </p>
+</div><hr/>The documentation for this class was generated from the following file:<ul>
+<li>cache_aligned_allocator.h</li>
 </ul>
 </div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2017 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2018 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2017 Intel Corporation
+    Copyright (c) 2005-2018 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -90,9 +90,23 @@ protected:
 
     template<typename F>
     task_group_status internal_run_and_wait( F& f ) {
+        class ref_count_guard : internal::no_copy {
+            task& my_task;
+        public:
+            ref_count_guard( task& t ) : my_task(t) {
+                my_task.increment_ref_count();
+            }
+            ~ref_count_guard() {
+                my_task.decrement_ref_count();
+            }
+        };
         __TBB_TRY {
-            if ( !my_context.is_group_execution_cancelled() )
+            if ( !my_context.is_group_execution_cancelled() ) {
+                // We need to increase the reference count of the root task to notify waiters that
+                // this task group has some work in progress.
+                ref_count_guard guard(*my_root);
                 f();
+            }
         } __TBB_CATCH( ... ) {
             my_context.register_pending_exception();
         }

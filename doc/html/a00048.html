@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::interface5::concurrent_unordered_set&lt; Key, Hasher, Key_equality, Allocator &gt; Class Template Reference</title>
+<title>tbb::interface5::concurrent_unordered_multimap&lt; Key, T, Hasher, Key_equality, Allocator &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,123 +33,123 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><b>interface5</b></li><li class="navelem"><a class="el" href="a00048.html">concurrent_unordered_set</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00240.html">tbb</a></li><li class="navelem"><b>interface5</b></li><li class="navelem"><a class="el" href="a00048.html">concurrent_unordered_multimap</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="a00373.html">List of all members</a>  </div>
+<a href="a00374.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::interface5::concurrent_unordered_set&lt; Key, Hasher, Key_equality, Allocator &gt; Class Template Reference</div>  </div>
+<div class="title">tbb::interface5::concurrent_unordered_multimap&lt; Key, T, Hasher, Key_equality, Allocator &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 <div class="dynheader">
-Inheritance diagram for tbb::interface5::concurrent_unordered_set&lt; Key, Hasher, Key_equality, Allocator &gt;:</div>
+Inheritance diagram for tbb::interface5::concurrent_unordered_multimap&lt; Key, T, Hasher, Key_equality, Allocator &gt;:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00048.png" usemap="#tbb::interface5::concurrent_unordered_set&lt; Key, Hasher, Key_equality, Allocator &gt;_map" alt=""/>
-  <map id="tbb::interface5::concurrent_unordered_set&lt; Key, Hasher, Key_equality, Allocator &gt;_map" name="tbb::interface5::concurrent_unordered_set&lt; Key, Hasher, Key_equality, Allocator &gt;_map">
+  <img src="a00048.png" usemap="#tbb::interface5::concurrent_unordered_multimap&lt; Key, T, Hasher, Key_equality, Allocator &gt;_map" alt=""/>
+  <map id="tbb::interface5::concurrent_unordered_multimap&lt; Key, T, Hasher, Key_equality, Allocator &gt;_map" name="tbb::interface5::concurrent_unordered_multimap&lt; Key, T, Hasher, Key_equality, Allocator &gt;_map">
 </map>
  </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:afad91155e1803ee686e5f42637594e7b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afad91155e1803ee686e5f42637594e7b"></a>
+<tr class="memitem:a13c740f45a112984c9a0c6d0d0a1a4d8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a13c740f45a112984c9a0c6d0d0a1a4d8"></a>
 typedef Key&#160;</td><td class="memItemRight" valign="bottom"><b>key_type</b></td></tr>
-<tr class="separator:afad91155e1803ee686e5f42637594e7b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a461fe414bf3ae73e7cc57e851ff592e4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a461fe414bf3ae73e7cc57e851ff592e4"></a>
+<tr class="separator:a13c740f45a112984c9a0c6d0d0a1a4d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1b89d9eeca4d1c194433b40671da2bf2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1b89d9eeca4d1c194433b40671da2bf2"></a>
 typedef base_type::value_type&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b></td></tr>
-<tr class="separator:a461fe414bf3ae73e7cc57e851ff592e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3a64703b55d07509d5c88810c2342ba5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3a64703b55d07509d5c88810c2342ba5"></a>
-typedef Key&#160;</td><td class="memItemRight" valign="bottom"><b>mapped_type</b></td></tr>
-<tr class="separator:a3a64703b55d07509d5c88810c2342ba5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6952de8a7ff93025c1065bb3e729da72"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6952de8a7ff93025c1065bb3e729da72"></a>
+<tr class="separator:a1b89d9eeca4d1c194433b40671da2bf2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a627d86449ed7299d1baa4b09b6dd93f6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a627d86449ed7299d1baa4b09b6dd93f6"></a>
+typedef T&#160;</td><td class="memItemRight" valign="bottom"><b>mapped_type</b></td></tr>
+<tr class="separator:a627d86449ed7299d1baa4b09b6dd93f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8485b8d61b666ac6ddd81e1d4b286d5e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8485b8d61b666ac6ddd81e1d4b286d5e"></a>
 typedef Hasher&#160;</td><td class="memItemRight" valign="bottom"><b>hasher</b></td></tr>
-<tr class="separator:a6952de8a7ff93025c1065bb3e729da72"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a376a7355aa091fff6a30689141407acd"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a376a7355aa091fff6a30689141407acd"></a>
+<tr class="separator:a8485b8d61b666ac6ddd81e1d4b286d5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a72a124e1c8c64499677e58171a7b9383"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a72a124e1c8c64499677e58171a7b9383"></a>
 typedef Key_equality&#160;</td><td class="memItemRight" valign="bottom"><b>key_equal</b></td></tr>
-<tr class="separator:a376a7355aa091fff6a30689141407acd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acc450473249e39658c46596d8252eef0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acc450473249e39658c46596d8252eef0"></a>
+<tr class="separator:a72a124e1c8c64499677e58171a7b9383"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6ecb30201df0bd885fbba309b2392bd4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6ecb30201df0bd885fbba309b2392bd4"></a>
 typedef hash_compare&#160;</td><td class="memItemRight" valign="bottom"><b>key_compare</b></td></tr>
-<tr class="separator:acc450473249e39658c46596d8252eef0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2010e490e8bfb13d9b969ec2fd5e4de4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2010e490e8bfb13d9b969ec2fd5e4de4"></a>
+<tr class="separator:a6ecb30201df0bd885fbba309b2392bd4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaeeee0c045e0003b85f60a6851d1d827"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aaeeee0c045e0003b85f60a6851d1d827"></a>
 typedef base_type::allocator_type&#160;</td><td class="memItemRight" valign="bottom"><b>allocator_type</b></td></tr>
-<tr class="separator:a2010e490e8bfb13d9b969ec2fd5e4de4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5a8c52d4a2b57b9b4b5d889e96d88f44"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5a8c52d4a2b57b9b4b5d889e96d88f44"></a>
+<tr class="separator:aaeeee0c045e0003b85f60a6851d1d827"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a029187ffe49ae876f41dfca39fe6f288"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a029187ffe49ae876f41dfca39fe6f288"></a>
 typedef base_type::pointer&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b></td></tr>
-<tr class="separator:a5a8c52d4a2b57b9b4b5d889e96d88f44"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a281276279a33ef1c5dfba5c196118ae7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a281276279a33ef1c5dfba5c196118ae7"></a>
+<tr class="separator:a029187ffe49ae876f41dfca39fe6f288"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a55c029b4a58d1201e08ef5ba14fc0a66"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a55c029b4a58d1201e08ef5ba14fc0a66"></a>
 typedef base_type::const_pointer&#160;</td><td class="memItemRight" valign="bottom"><b>const_pointer</b></td></tr>
-<tr class="separator:a281276279a33ef1c5dfba5c196118ae7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aec3d473d0fa601d51f13efe605cd9862"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aec3d473d0fa601d51f13efe605cd9862"></a>
+<tr class="separator:a55c029b4a58d1201e08ef5ba14fc0a66"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac4613be39e17bc83cf85d3b90a13fa09"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac4613be39e17bc83cf85d3b90a13fa09"></a>
 typedef base_type::reference&#160;</td><td class="memItemRight" valign="bottom"><b>reference</b></td></tr>
-<tr class="separator:aec3d473d0fa601d51f13efe605cd9862"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab7da53912d0deffca91618b73ed4995f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab7da53912d0deffca91618b73ed4995f"></a>
+<tr class="separator:ac4613be39e17bc83cf85d3b90a13fa09"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0b9ef2bc9a8574b16ef678e838ff4e96"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0b9ef2bc9a8574b16ef678e838ff4e96"></a>
 typedef base_type::const_reference&#160;</td><td class="memItemRight" valign="bottom"><b>const_reference</b></td></tr>
-<tr class="separator:ab7da53912d0deffca91618b73ed4995f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5808a50995fc228f114c3c93aeddf331"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5808a50995fc228f114c3c93aeddf331"></a>
+<tr class="separator:a0b9ef2bc9a8574b16ef678e838ff4e96"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a49038d8ed5f392bce440d7906b39ee53"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a49038d8ed5f392bce440d7906b39ee53"></a>
 typedef base_type::size_type&#160;</td><td class="memItemRight" valign="bottom"><b>size_type</b></td></tr>
-<tr class="separator:a5808a50995fc228f114c3c93aeddf331"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7aaed1937820a90cb657a824e1391c1f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7aaed1937820a90cb657a824e1391c1f"></a>
+<tr class="separator:a49038d8ed5f392bce440d7906b39ee53"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a517a0b94b44d429f7f23b6d9f5366b36"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a517a0b94b44d429f7f23b6d9f5366b36"></a>
 typedef base_type::difference_type&#160;</td><td class="memItemRight" valign="bottom"><b>difference_type</b></td></tr>
-<tr class="separator:a7aaed1937820a90cb657a824e1391c1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abb76557f1755f96dc2e78728cb231e57"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abb76557f1755f96dc2e78728cb231e57"></a>
+<tr class="separator:a517a0b94b44d429f7f23b6d9f5366b36"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a494392b2f3400393ae2696a70e2411f4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a494392b2f3400393ae2696a70e2411f4"></a>
 typedef base_type::iterator&#160;</td><td class="memItemRight" valign="bottom"><b>iterator</b></td></tr>
-<tr class="separator:abb76557f1755f96dc2e78728cb231e57"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a983d10264bc785a59b11dc94001e0042"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a983d10264bc785a59b11dc94001e0042"></a>
+<tr class="separator:a494392b2f3400393ae2696a70e2411f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2460242ba39d70a0473eac4ee62b898c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2460242ba39d70a0473eac4ee62b898c"></a>
 typedef base_type::const_iterator&#160;</td><td class="memItemRight" valign="bottom"><b>const_iterator</b></td></tr>
-<tr class="separator:a983d10264bc785a59b11dc94001e0042"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acb12b4b1df9a7108a5193b0d3bbfc677"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acb12b4b1df9a7108a5193b0d3bbfc677"></a>
+<tr class="separator:a2460242ba39d70a0473eac4ee62b898c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a75ad2607efde410d591002203deb65e6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a75ad2607efde410d591002203deb65e6"></a>
 typedef base_type::iterator&#160;</td><td class="memItemRight" valign="bottom"><b>local_iterator</b></td></tr>
-<tr class="separator:acb12b4b1df9a7108a5193b0d3bbfc677"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af111bc738ee2a1b4b1cf2967a1252322"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af111bc738ee2a1b4b1cf2967a1252322"></a>
+<tr class="separator:a75ad2607efde410d591002203deb65e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab7647068dd628f35d3e3f7ed161b3fc0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab7647068dd628f35d3e3f7ed161b3fc0"></a>
 typedef base_type::const_iterator&#160;</td><td class="memItemRight" valign="bottom"><b>const_local_iterator</b></td></tr>
-<tr class="separator:af111bc738ee2a1b4b1cf2967a1252322"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:ab7647068dd628f35d3e3f7ed161b3fc0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:aad5e3bd7fa156e5d8aa81a8ff560d84e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aad5e3bd7fa156e5d8aa81a8ff560d84e"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_set</b> (size_type n_of_buckets=base_type::initial_bucket_number, const hasher &amp;a_hasher=hasher(), const key_equal &amp;a_keyeq=key_equal(), const allocator_type &amp;a=allocator_type())</td></tr>
-<tr class="separator:aad5e3bd7fa156e5d8aa81a8ff560d84e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2d307ae4ebb3e2d46b0a75713824d109"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2d307ae4ebb3e2d46b0a75713824d109"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_set</b> (const Allocator &amp;a)</td></tr>
-<tr class="separator:a2d307ae4ebb3e2d46b0a75713824d109"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afd4bc55194c4473e81398d8456a5c68a"><td class="memTemplParams" colspan="2"><a class="anchor" id="afd4bc55194c4473e81398d8456a5c68a"></a>
+<tr class="memitem:a4ea5780bcc8664253e2180987bc775d0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4ea5780bcc8664253e2180987bc775d0"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_multimap</b> (size_type n_of_buckets=base_type::initial_bucket_number, const hasher &amp;_Hasher=hasher(), const key_equal &amp;_Key_equality=key_equal(), const allocator_type &amp;a=allocator_type())</td></tr>
+<tr class="separator:a4ea5780bcc8664253e2180987bc775d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae2fe78524a0f0cd268194cf2461e3ab0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae2fe78524a0f0cd268194cf2461e3ab0"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_multimap</b> (const Allocator &amp;a)</td></tr>
+<tr class="separator:ae2fe78524a0f0cd268194cf2461e3ab0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a174ad09d37e0f648e06ded3abfa65bed"><td class="memTemplParams" colspan="2"><a class="anchor" id="a174ad09d37e0f648e06ded3abfa65bed"></a>
 template&lt;typename Iterator &gt; </td></tr>
-<tr class="memitem:afd4bc55194c4473e81398d8456a5c68a"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>concurrent_unordered_set</b> (Iterator first, Iterator last, size_type n_of_buckets=base_type::initial_bucket_number, const hasher &amp;a_hasher=hasher(), const key_equal &amp;a_keyeq=key_equal(), const allocator_type &amp;a=allocator_type())</td></tr>
-<tr class="separator:afd4bc55194c4473e81398d8456a5c68a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6f6d5ecff239ff13000848e925904fe7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6f6d5ecff239ff13000848e925904fe7"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00048.html#a6f6d5ecff239ff13000848e925904fe7">concurrent_unordered_set</a> (std::initializer_list&lt; value_type &gt; il, size_type n_of_buckets=base_type::initial_bucket_number, const hasher &amp;a_hasher=hasher(), const key_equal &amp;a_keyeq=key_equal(), const allocator_type &amp;a=allocator_type())</td></tr>
-<tr class="memdesc:a6f6d5ecff239ff13000848e925904fe7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor from initializer_list. <br/></td></tr>
-<tr class="separator:a6f6d5ecff239ff13000848e925904fe7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac3c68d5286d6ca29fba2b38c59bdbc66"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac3c68d5286d6ca29fba2b38c59bdbc66"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_set</b> (const <a class="el" href="a00048.html">concurrent_unordered_set</a> &amp;table)</td></tr>
-<tr class="separator:ac3c68d5286d6ca29fba2b38c59bdbc66"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a39097dddf99fd057919197b8293bd807"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a39097dddf99fd057919197b8293bd807"></a>
-<a class="el" href="a00048.html">concurrent_unordered_set</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="a00048.html">concurrent_unordered_set</a> &amp;table)</td></tr>
-<tr class="separator:a39097dddf99fd057919197b8293bd807"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9dde7a48af7449fde97d4449691207c5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9dde7a48af7449fde97d4449691207c5"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_set</b> (<a class="el" href="a00048.html">concurrent_unordered_set</a> &amp;&amp;table)</td></tr>
-<tr class="separator:a9dde7a48af7449fde97d4449691207c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a49ad03a5e20f90beac704325aaa6567f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a49ad03a5e20f90beac704325aaa6567f"></a>
-<a class="el" href="a00048.html">concurrent_unordered_set</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="a00048.html">concurrent_unordered_set</a> &amp;&amp;table)</td></tr>
-<tr class="separator:a49ad03a5e20f90beac704325aaa6567f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6ef0de826333371f1e9cb33349b35baf"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6ef0de826333371f1e9cb33349b35baf"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_set</b> (<a class="el" href="a00048.html">concurrent_unordered_set</a> &amp;&amp;table, const Allocator &amp;a)</td></tr>
-<tr class="separator:a6ef0de826333371f1e9cb33349b35baf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aecea62fe5c8beab0d7907dbc33ef583f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aecea62fe5c8beab0d7907dbc33ef583f"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_set</b> (const <a class="el" href="a00048.html">concurrent_unordered_set</a> &amp;table, const Allocator &amp;a)</td></tr>
-<tr class="separator:aecea62fe5c8beab0d7907dbc33ef583f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a174ad09d37e0f648e06ded3abfa65bed"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>concurrent_unordered_multimap</b> (Iterator first, Iterator last, size_type n_of_buckets=base_type::initial_bucket_number, const hasher &amp;_Hasher=hasher(), const key_equal &amp;_Key_equality=key_equal(), const allocator_type &amp;a=allocator_type())</td></tr>
+<tr class="separator:a174ad09d37e0f648e06ded3abfa65bed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5957d29e5fa9f8c53538de3f7a41ebc9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5957d29e5fa9f8c53538de3f7a41ebc9"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00048.html#a5957d29e5fa9f8c53538de3f7a41ebc9">concurrent_unordered_multimap</a> (std::initializer_list&lt; value_type &gt; il, size_type n_of_buckets=base_type::initial_bucket_number, const hasher &amp;_Hasher=hasher(), const key_equal &amp;_Key_equality=key_equal(), const allocator_type &amp;a=allocator_type())</td></tr>
+<tr class="memdesc:a5957d29e5fa9f8c53538de3f7a41ebc9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor from initializer_list. <br/></td></tr>
+<tr class="separator:a5957d29e5fa9f8c53538de3f7a41ebc9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aacf347cd41c61dd026e844fa9311130c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aacf347cd41c61dd026e844fa9311130c"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_multimap</b> (const <a class="el" href="a00048.html">concurrent_unordered_multimap</a> &amp;table)</td></tr>
+<tr class="separator:aacf347cd41c61dd026e844fa9311130c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a58939ac30bfced4b6e2cf0377c1b7d71"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a58939ac30bfced4b6e2cf0377c1b7d71"></a>
+<a class="el" href="a00048.html">concurrent_unordered_multimap</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="a00048.html">concurrent_unordered_multimap</a> &amp;table)</td></tr>
+<tr class="separator:a58939ac30bfced4b6e2cf0377c1b7d71"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac339429f4f36730ff3614cb7fcb257cb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac339429f4f36730ff3614cb7fcb257cb"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_multimap</b> (<a class="el" href="a00048.html">concurrent_unordered_multimap</a> &amp;&amp;table)</td></tr>
+<tr class="separator:ac339429f4f36730ff3614cb7fcb257cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5e9a928751361cec49b26afa38018208"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5e9a928751361cec49b26afa38018208"></a>
+<a class="el" href="a00048.html">concurrent_unordered_multimap</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="a00048.html">concurrent_unordered_multimap</a> &amp;&amp;table)</td></tr>
+<tr class="separator:a5e9a928751361cec49b26afa38018208"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a040b7c942e77cca30b0ab423ae7a2d87"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a040b7c942e77cca30b0ab423ae7a2d87"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_multimap</b> (<a class="el" href="a00048.html">concurrent_unordered_multimap</a> &amp;&amp;table, const Allocator &amp;a)</td></tr>
+<tr class="separator:a040b7c942e77cca30b0ab423ae7a2d87"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a34148bd7279ce189a6c0c26380df0a2a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a34148bd7279ce189a6c0c26380df0a2a"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_multimap</b> (const <a class="el" href="a00048.html">concurrent_unordered_multimap</a> &amp;table, const Allocator &amp;a)</td></tr>
+<tr class="separator:a34148bd7279ce189a6c0c26380df0a2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>concurrent_unordered_set.h</li>
+<li>concurrent_unordered_map.h</li>
 </ul>
 </div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2017 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2018 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

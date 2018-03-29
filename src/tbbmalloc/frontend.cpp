@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2017 Intel Corporation
+    Copyright (c) 2005-2018 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -281,7 +281,7 @@ public:
     static void initDefaultPool();
     bool reset();
     bool destroy();
-    void processThreadShutdown(TLSData *tlsData);
+    void onThreadShutdown(TLSData *tlsData);
 
     inline TLSData *getTLS(bool create);
     void clearTLS() { extMemPool.tlsPointerKey.setThreadMallocTLS(NULL); }
@@ -1056,7 +1056,7 @@ bool ExtMemoryPool::init(intptr_t poolId, rawAllocType rawAlloc,
     this->keepAllMemory = keepAllMemory;
     this->fixedPool = fixedPool;
     this->delayRegsReleasing = false;
-    if (! initTLS())
+    if (!initTLS())
         return false;
     loc.init(this);
     backend.init(this);
@@ -1133,11 +1133,13 @@ bool MemoryPool::destroy()
     return extMemPool.destroy();
 }
 
-void MemoryPool::processThreadShutdown(TLSData *tlsData)
+void MemoryPool::onThreadShutdown(TLSData *tlsData)
 {
-    tlsData->release(this);
-    bootStrapBlocks.free(tlsData);
-    clearTLS();
+    if (tlsData) { // might be called for "empty" TLS
+        tlsData->release(this);
+        bootStrapBlocks.free(tlsData);
+        clearTLS();
+    }
 }
 
 #if MALLOC_DEBUG
@@ -1933,8 +1935,8 @@ class ShutdownSync {
     static const intptr_t skipDtor = INTPTR_MIN/2;
 public:
     void init() { flag = 0; }
-/* Suppose that 2*abs(skipDtor) or more threads never call threadExitStart()
-   simultaneously, so flag is never becomes negative because of that. */
+/* Suppose that 2*abs(skipDtor) or more threads never call threadDtorStart()
+   simultaneously, so flag never becomes negative because of that. */
     bool threadDtorStart() {
         if (flag < 0)
             return false;
@@ -2771,40 +2773,60 @@ static unsigned int threadGoingDownCount = 0;
  * from the malloc blocks and replace them with a NULL thread id.
  *
  * For pthreads, the function is set as a callback in pthread_key_create for TLS bin.
- * For non-NULL keys it will be automatically called at thread exit with the key value
- * as the argument.
+ * It will be automatically called at thread exit with the key value as the argument,
+ * unless that value is NULL.
+ * For Windows, it is called from DllMain( DLL_THREAD_DETACH ).
  *
- * for Windows, it should be called directly e.g. from DllMain
+ * However neither of the above is called for the main process thread, so the routine
+ * also needs to be called during the process shutdown.
+ *
 */
-void mallocThreadShutdownNotification(void* arg)
+// TODO: Consider making this function part of class MemoryPool.
+void doThreadShutdownNotification(TLSData* tls, bool main_thread)
 {
-    // Check whether TLS has been initialized
-    if (!isMallocInitialized()) return;
-
     TRACEF(( "[ScalableMalloc trace] Thread id %d blocks return start %d\n",
              getThreadId(),  threadGoingDownCount++ ));
-#if USE_WINTHREAD
-    suppress_unused_warning(arg);
-    MallocMutex::scoped_lock lock(MemoryPool::memPoolListLock);
-    // The routine is called once per thread, need to walk through all pools on Windows
-    for (MemoryPool *memPool = defaultMemPool; memPool; memPool = memPool->next)
-        if (TLSData *tls = memPool->getTLS(/*create=*/false))
-            memPool->processThreadShutdown(tls);
-#else
-    if (!shutdownSync.threadDtorStart()) return;
-    // The routine is called for each memPool, gets memPool from TLSData.
-    TLSData *tls = (TLSData*)arg;
-    tls->getMemPool()->processThreadShutdown(tls);
-    shutdownSync.threadDtorDone();
+
+#if USE_PTHREAD
+    if (tls) {
+        if (!shutdownSync.threadDtorStart()) return;
+        tls->getMemPool()->onThreadShutdown(tls);
+        shutdownSync.threadDtorDone();
+    } else
 #endif
+    {
+        suppress_unused_warning(tls); // not used on Windows
+        // The default pool is safe to use at this point:
+        //   on Linux, only the main thread can go here before destroying defaultMemPool;
+        //   on Windows, shutdown is synchronized via loader lock and isMallocInitialized().
+        // See also __TBB_mallocProcessShutdownNotification()
+        defaultMemPool->onThreadShutdown(defaultMemPool->getTLS(/*create=*/false));
+        // Take lock to walk through other pools; but waiting might be dangerous at this point
+        // (e.g. on Windows the main thread might deadlock)
+        bool locked;
+        MallocMutex::scoped_lock lock(MemoryPool::memPoolListLock, /*wait=*/!main_thread, &locked);
+        if (locked) { // the list is safe to process
+            for (MemoryPool *memPool = defaultMemPool->next; memPool; memPool = memPool->next)
+                memPool->onThreadShutdown(memPool->getTLS(/*create=*/false));
+        }
+    }
 
     TRACEF(( "[ScalableMalloc trace] Thread id %d blocks return end\n", getThreadId() ));
 }
 
-#if USE_WINTHREAD
+#if USE_PTHREAD
+void mallocThreadShutdownNotification(void* arg)
+{
+    // The routine is called for each pool (as TLS dtor) on each thread, except for the main thread
+    if (!isMallocInitialized()) return;
+    doThreadShutdownNotification((TLSData*)arg, false);
+}
+#else
 extern "C" void __TBB_mallocThreadShutdownNotification()
 {
-    mallocThreadShutdownNotification(NULL);
+    // The routine is called once per thread on Windows
+    if (!isMallocInitialized()) return;
+    doThreadShutdownNotification(NULL, false);
 }
 #endif
 
@@ -2812,6 +2834,7 @@ extern "C" void __TBB_mallocProcessShutdownNotification()
 {
     if (!isMallocInitialized()) return;
 
+    doThreadShutdownNotification(NULL, /*main_thread=*/true);
 #if  __TBB_MALLOC_LOCACHE_STAT
     printf("cache hit ratio %f, size hit %f\n",
            1.*cacheHits/mallocCalls, 1.*memHitKB/memAllocKB);

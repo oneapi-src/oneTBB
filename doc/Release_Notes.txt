@@ -123,7 +123,7 @@ Library Issues
         with each other directly.
 
 ------------------------------------------------------------------------
-(C) 2017 Intel Corporation
+(C) 2018 Intel Corporation
 
 Intel, the Intel logo, Intel Core, Intel Atom, Xeon, Intel Xeon Phi and
 Pentium are trademarks of Intel Corporation in the U.S. and/or other

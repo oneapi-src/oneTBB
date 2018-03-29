@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::null_rw_mutex Class Reference</title>
+<title>tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::node Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,60 +33,71 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><a class="el" href="a00089.html">null_rw_mutex</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00240.html">tbb</a></li><li class="navelem"><b>interface5</b></li><li class="navelem"><a class="el" href="a00042.html">concurrent_hash_map</a></li><li class="navelem"><a class="el" href="a00089.html">node</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a> &#124;
-<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
-<a href="a00284.html">List of all members</a>  </div>
+<a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-attribs">Public Attributes</a> &#124;
+<a href="a00370.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::null_rw_mutex Class Reference<div class="ingroups"><a class="el" href="a00260.html">Synchronization</a></div></div>  </div>
+<div class="title">tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::node Struct Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-
-<p>A rw mutex which does nothing.  
- <a href="a00089.html#details">More...</a></p>
-
-<p><code>#include &lt;null_rw_mutex.h&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for tbb::null_rw_mutex:</div>
+Inheritance diagram for tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::node:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="a00089.png" usemap="#tbb::null_rw_mutex_map" alt=""/>
-  <map id="tbb::null_rw_mutex_map" name="tbb::null_rw_mutex_map">
+  <img src="a00089.png" usemap="#tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::node_map" alt=""/>
+  <map id="tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::node_map" name="tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::node_map">
 </map>
  </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
-Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00136.html">scoped_lock</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents acquisition of a mutex.  <a href="a00136.html#details">More...</a><br/></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
+Public Member Functions</h2></td></tr>
+<tr class="memitem:ace61f7bd9d097375f6e33fea4758fbf9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ace61f7bd9d097375f6e33fea4758fbf9"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>node</b> (const Key &amp;key)</td></tr>
+<tr class="separator:ace61f7bd9d097375f6e33fea4758fbf9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6755d387982f27a06d859811699e40b7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6755d387982f27a06d859811699e40b7"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>node</b> (const Key &amp;key, const T &amp;t)</td></tr>
+<tr class="separator:a6755d387982f27a06d859811699e40b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a61f7e6e835b09c4387fd0c8498fbf603"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a61f7e6e835b09c4387fd0c8498fbf603"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>node</b> (const Key &amp;key, T &amp;&amp;t)</td></tr>
+<tr class="separator:a61f7e6e835b09c4387fd0c8498fbf603"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac28d72d857eccf6e7cc06a9ee146d416"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac28d72d857eccf6e7cc06a9ee146d416"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>node</b> (value_type &amp;&amp;i)</td></tr>
+<tr class="separator:ac28d72d857eccf6e7cc06a9ee146d416"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae7c083b7efff342469789f487e3561ec"><td class="memTemplParams" colspan="2"><a class="anchor" id="ae7c083b7efff342469789f487e3561ec"></a>
+template&lt;typename... Args&gt; </td></tr>
+<tr class="memitem:ae7c083b7efff342469789f487e3561ec"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>node</b> (Args &amp;&amp;...args)</td></tr>
+<tr class="separator:ae7c083b7efff342469789f487e3561ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad7a5d977900af48a359f428658e2876b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad7a5d977900af48a359f428658e2876b"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>node</b> (value_type &amp;i)</td></tr>
+<tr class="separator:ad7a5d977900af48a359f428658e2876b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acbdc995156da4cf9b11561d006cf6821"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acbdc995156da4cf9b11561d006cf6821"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>node</b> (const value_type &amp;i)</td></tr>
+<tr class="separator:acbdc995156da4cf9b11561d006cf6821"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a15b3c8955eb1b104db439e9caf3737c3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a15b3c8955eb1b104db439e9caf3737c3"></a>
+void *&#160;</td><td class="memItemRight" valign="bottom"><b>operator new</b> (size_t, node_allocator_type &amp;a)</td></tr>
+<tr class="separator:a15b3c8955eb1b104db439e9caf3737c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa3115742612b79db574914741f2fff45"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa3115742612b79db574914741f2fff45"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>operator delete</b> (void *ptr, node_allocator_type &amp;a)</td></tr>
+<tr class="separator:aa3115742612b79db574914741f2fff45"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
-Static Public Attributes</h2></td></tr>
-<tr class="memitem:a2a676977ac67532f5f35f849ec7eac8c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2a676977ac67532f5f35f849ec7eac8c"></a>
-static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_rw_mutex</b> = true</td></tr>
-<tr class="separator:a2a676977ac67532f5f35f849ec7eac8c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab153992db6e44aee96ce8c1b2d495c94"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab153992db6e44aee96ce8c1b2d495c94"></a>
-static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_recursive_mutex</b> = true</td></tr>
-<tr class="separator:ab153992db6e44aee96ce8c1b2d495c94"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab8500b8a645b1c03221fd1fb4156fa78"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab8500b8a645b1c03221fd1fb4156fa78"></a>
-static const bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_fair_mutex</b> = true</td></tr>
-<tr class="separator:ab8500b8a645b1c03221fd1fb4156fa78"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
+Public Attributes</h2></td></tr>
+<tr class="memitem:a6977520eaa2f1dee220f726c8a884b46"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6977520eaa2f1dee220f726c8a884b46"></a>
+value_type&#160;</td><td class="memItemRight" valign="bottom"><b>item</b></td></tr>
+<tr class="separator:a6977520eaa2f1dee220f726c8a884b46"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>A rw mutex which does nothing. </p>
-<p>A <a class="el" href="a00089.html" title="A rw mutex which does nothing. ">null_rw_mutex</a> is a rw mutex that does nothing and simulates successful operation. </p>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>null_rw_mutex.h</li>
+<hr/>The documentation for this struct was generated from the following file:<ul>
+<li>concurrent_hash_map.h</li>
 </ul>
 </div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2017 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2018 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

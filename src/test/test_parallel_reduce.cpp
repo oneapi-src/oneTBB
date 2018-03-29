@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2017 Intel Corporation
+    Copyright (c) 2005-2018 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -169,7 +169,7 @@ struct Accumulator {
 
 class ParallelSumTester: public NoAssign {
 public:
-    ParallelSumTester() {
+    ParallelSumTester() : m_range(NULL, NULL) {
         m_array = new ValueType[unsigned(N)];
         for ( ValueType i = 0; i < N; ++i )
             m_array[i] = i + 1;
@@ -425,33 +425,52 @@ void test() {
     test_partitioner_utils::SimpleReduceBody body;
     tbb::affinity_partitioner ap;
 
-    parallel_reduce(Range1(true, false), body, ap);
+    parallel_reduce(Range1(/*assert_in_split*/ true, /*assert_in_proportional_split*/ false), body, ap);
     parallel_reduce(Range2(true, false), body, ap);
     parallel_reduce(Range3(true, false), body, ap);
     parallel_reduce(Range4(false, true), body, ap);
     parallel_reduce(Range5(false, true), body, ap);
     parallel_reduce(Range6(false, true), body, ap);
 
-    parallel_reduce(Range1(true, false), body, tbb::static_partitioner());
+    parallel_reduce(Range1(/*assert_in_split*/ true, /*assert_in_proportional_split*/ false),
+                           body, tbb::static_partitioner());
     parallel_reduce(Range2(true, false), body, tbb::static_partitioner());
     parallel_reduce(Range3(true, false), body, tbb::static_partitioner());
     parallel_reduce(Range4(false, true), body, tbb::static_partitioner());
     parallel_reduce(Range5(false, true), body, tbb::static_partitioner());
     parallel_reduce(Range6(false, true), body, tbb::static_partitioner());
 
-    parallel_reduce(Range1(false, true), body, tbb::simple_partitioner());
+    parallel_reduce(Range1(/*assert_in_split*/ false, /*assert_in_proportional_split*/ true),
+                           body, tbb::simple_partitioner());
     parallel_reduce(Range2(false, true), body, tbb::simple_partitioner());
     parallel_reduce(Range3(false, true), body, tbb::simple_partitioner());
     parallel_reduce(Range4(false, true), body, tbb::simple_partitioner());
     parallel_reduce(Range5(false, true), body, tbb::simple_partitioner());
     parallel_reduce(Range6(false, true), body, tbb::simple_partitioner());
 
-    parallel_reduce(Range1(false, true), body, tbb::auto_partitioner());
+    parallel_reduce(Range1(/*assert_in_split*/ false, /*assert_in_proportional_split*/ true),
+                           body, tbb::auto_partitioner());
     parallel_reduce(Range2(false, true), body, tbb::auto_partitioner());
     parallel_reduce(Range3(false, true), body, tbb::auto_partitioner());
     parallel_reduce(Range4(false, true), body, tbb::auto_partitioner());
     parallel_reduce(Range5(false, true), body, tbb::auto_partitioner());
     parallel_reduce(Range6(false, true), body, tbb::auto_partitioner());
+
+    parallel_deterministic_reduce(Range1(/*assert_in_split*/true, /*assert_in_proportional_split*/ false),
+                                         body, tbb::static_partitioner());
+    parallel_deterministic_reduce(Range2(true, false), body, tbb::static_partitioner());
+    parallel_deterministic_reduce(Range3(true, false), body, tbb::static_partitioner());
+    parallel_deterministic_reduce(Range4(false, true), body, tbb::static_partitioner());
+    parallel_deterministic_reduce(Range5(false, true), body, tbb::static_partitioner());
+    parallel_deterministic_reduce(Range6(false, true), body, tbb::static_partitioner());
+
+    parallel_deterministic_reduce(Range1(/*assert_in_split*/false, /*assert_in_proportional_split*/ true),
+                                         body, tbb::simple_partitioner());
+    parallel_deterministic_reduce(Range2(false, true), body, tbb::simple_partitioner());
+    parallel_deterministic_reduce(Range3(false, true), body, tbb::simple_partitioner());
+    parallel_deterministic_reduce(Range4(false, true), body, tbb::simple_partitioner());
+    parallel_deterministic_reduce(Range5(false, true), body, tbb::simple_partitioner());
+    parallel_deterministic_reduce(Range6(false, true), body, tbb::simple_partitioner());
 }
 
 } // interaction_with_range_and_partitioner

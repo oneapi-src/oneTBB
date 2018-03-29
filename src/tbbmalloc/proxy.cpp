@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2017 Intel Corporation
+    Copyright (c) 2005-2018 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -343,6 +343,12 @@ void __TBB_malloc__o_free(void *ptr)
 {
     __TBB_malloc_safer_free( ptr, orig__o_free );
 }
+// Only for ucrtbase: substitution for _free_base
+void(*orig__free_base)(void*);
+void __TBB_malloc__free_base(void *ptr)
+{
+    __TBB_malloc_safer_free(ptr, orig__free_base);
+}
 
 // Size limit is MAX_PATTERN_SIZE (28) byte codes / 56 symbols per line.
 // * can be used to match any digit in byte codes.
@@ -658,6 +664,10 @@ void doMallocReplacement()
             // This prevents issues with other _o_* functions which might allocate memory with malloc
             if ( IsPrologueKnown(GetModuleHandle("ucrtbase.dll"), "_o_free", known_bytecodes) ) {
                 ReplaceFunctionWithStore( "ucrtbase.dll", "_o_free", (FUNCPTR)__TBB_malloc__o_free, known_bytecodes, (FUNCPTR*)&orig__o_free,  FRR_FAIL );
+            }
+            // Similarly for _free_base
+            if (IsPrologueKnown(GetModuleHandle("ucrtbase.dll"), "_free_base", known_bytecodes)) {
+                ReplaceFunctionWithStore("ucrtbase.dll", "_free_base", (FUNCPTR)__TBB_malloc__free_base, known_bytecodes, (FUNCPTR*)&orig__free_base, FRR_FAIL);
             }
             // ucrtbase.dll does not export operator new/delete, so skip the rest of the loop.
             continue;

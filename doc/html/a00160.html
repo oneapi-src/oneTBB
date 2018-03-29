@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::internal::tbb_thread_v3 Class Reference</title>
+<title>tbb::tbb_exception Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,117 +33,63 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><b>internal</b></li><li class="navelem"><a class="el" href="a00160.html">tbb_thread_v3</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00240.html">tbb</a></li><li class="navelem"><a class="el" href="a00160.html">tbb_exception</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a> &#124;
-<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
-<a href="#pub-attribs">Public Attributes</a> &#124;
-<a href="#friends">Friends</a> &#124;
-<a href="a00411.html">List of all members</a>  </div>
+<a href="a00326.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::internal::tbb_thread_v3 Class Reference</div>  </div>
+<div class="title">tbb::tbb_exception Class Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Versioned thread class.  
+<p>Interface to be implemented by all exceptions TBB recognizes and propagates across the threads.  
  <a href="a00160.html#details">More...</a></p>
 
-<p><code>#include &lt;tbb_thread.h&gt;</code></p>
+<p><code>#include &lt;tbb_exception.h&gt;</code></p>
+<div class="dynheader">
+Inheritance diagram for tbb::tbb_exception:</div>
+<div class="dyncontent">
+ <div class="center">
+  <img src="a00160.png" usemap="#tbb::tbb_exception_map" alt=""/>
+  <map id="tbb::tbb_exception_map" name="tbb::tbb_exception_map">
+<area href="a00038.html" title="This class is used by TBB to propagate information about unhandled exceptions into the root thread..." alt="tbb::captured_exception" shape="rect" coords="0,112,248,136"/>
+<area href="a00087.html" title="Template that can be used to implement exception that transfers arbitrary ExceptionData to the root t..." alt="tbb::movable_exception&lt; ExceptionData &gt;" shape="rect" coords="258,112,506,136"/>
+</map>
+ </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
-Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00074.html">id</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:acf81b6411caec392fc62fdfbf72560ac"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acf81b6411caec392fc62fdfbf72560ac"></a>
-typedef HANDLE&#160;</td><td class="memItemRight" valign="bottom"><b>native_handle_type</b></td></tr>
-<tr class="separator:acf81b6411caec392fc62fdfbf72560ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a30e64e2a6bef43e2fd847e6c60a31207"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a30e64e2a6bef43e2fd847e6c60a31207"></a>
-typedef pthread_t&#160;</td><td class="memItemRight" valign="bottom"><b>native_handle_type</b></td></tr>
-<tr class="separator:a30e64e2a6bef43e2fd847e6c60a31207"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ad9acae61c47fad5cf88869061ead3022"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad9acae61c47fad5cf88869061ead3022"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>tbb_thread_v3</b> (const <a class="el" href="a00160.html">tbb_thread_v3</a> &amp;)</td></tr>
-<tr class="separator:ad9acae61c47fad5cf88869061ead3022"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a15b84e454eb0179e010b90a88baa0933"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a15b84e454eb0179e010b90a88baa0933"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00160.html#a15b84e454eb0179e010b90a88baa0933">tbb_thread_v3</a> () __TBB_NOEXCEPT(true)</td></tr>
-<tr class="memdesc:a15b84e454eb0179e010b90a88baa0933"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a thread object that does not represent a thread of execution. <br/></td></tr>
-<tr class="separator:a15b84e454eb0179e010b90a88baa0933"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9c5587ab76ca1aa98bae7fe69a459466"><td class="memTemplParams" colspan="2"><a class="anchor" id="a9c5587ab76ca1aa98bae7fe69a459466"></a>
-template&lt;class F &gt; </td></tr>
-<tr class="memitem:a9c5587ab76ca1aa98bae7fe69a459466"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00160.html#a9c5587ab76ca1aa98bae7fe69a459466">tbb_thread_v3</a> (F f)</td></tr>
-<tr class="memdesc:a9c5587ab76ca1aa98bae7fe69a459466"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an object and executes f() in a new thread. <br/></td></tr>
-<tr class="separator:a9c5587ab76ca1aa98bae7fe69a459466"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a672a5367e687635c869926bf8a986296"><td class="memTemplParams" colspan="2"><a class="anchor" id="a672a5367e687635c869926bf8a986296"></a>
-template&lt;class F , class X &gt; </td></tr>
-<tr class="memitem:a672a5367e687635c869926bf8a986296"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00160.html#a672a5367e687635c869926bf8a986296">tbb_thread_v3</a> (F f, X x)</td></tr>
-<tr class="memdesc:a672a5367e687635c869926bf8a986296"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an object and executes f(x) in a new thread. <br/></td></tr>
-<tr class="separator:a672a5367e687635c869926bf8a986296"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac3f57678f2a289084a6d275f8f8fbc62"><td class="memTemplParams" colspan="2"><a class="anchor" id="ac3f57678f2a289084a6d275f8f8fbc62"></a>
-template&lt;class F , class X , class Y &gt; </td></tr>
-<tr class="memitem:ac3f57678f2a289084a6d275f8f8fbc62"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="a00160.html#ac3f57678f2a289084a6d275f8f8fbc62">tbb_thread_v3</a> (F f, X x, Y y)</td></tr>
-<tr class="memdesc:ac3f57678f2a289084a6d275f8f8fbc62"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an object and executes f(x,y) in a new thread. <br/></td></tr>
-<tr class="separator:ac3f57678f2a289084a6d275f8f8fbc62"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa4f68564c30ee6f59bab29c3b3216623"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa4f68564c30ee6f59bab29c3b3216623"></a>
-<a class="el" href="a00160.html">tbb_thread_v3</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="a00160.html">tbb_thread_v3</a> &amp;x)</td></tr>
-<tr class="separator:aa4f68564c30ee6f59bab29c3b3216623"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab2e10af48f3f2482e9e7236f2e05714c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab2e10af48f3f2482e9e7236f2e05714c"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>swap</b> (<a class="el" href="a00160.html">tbb_thread_v3</a> &amp;t) __TBB_NOEXCEPT(true)</td></tr>
-<tr class="separator:ab2e10af48f3f2482e9e7236f2e05714c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4ddee0e2030f8fa947fd93f403178104"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4ddee0e2030f8fa947fd93f403178104"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>joinable</b> () const __TBB_NOEXCEPT(true)</td></tr>
-<tr class="separator:a4ddee0e2030f8fa947fd93f403178104"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a044c8727c51e921b0cc43a6b057eb559"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a044c8727c51e921b0cc43a6b057eb559"></a>
-void __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00160.html#a044c8727c51e921b0cc43a6b057eb559">join</a> ()</td></tr>
-<tr class="memdesc:a044c8727c51e921b0cc43a6b057eb559"><td class="mdescLeft">&#160;</td><td class="mdescRight">The completion of the thread represented by *this happens before <a class="el" href="a00160.html#a044c8727c51e921b0cc43a6b057eb559" title="The completion of the thread represented by *this happens before join() returns. ">join()</a> returns. <br/></td></tr>
-<tr class="separator:a044c8727c51e921b0cc43a6b057eb559"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a80a31a41708872af5557b907f129b19b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a80a31a41708872af5557b907f129b19b"></a>
-void __TBB_EXPORTED_METHOD&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00160.html#a80a31a41708872af5557b907f129b19b">detach</a> ()</td></tr>
-<tr class="memdesc:a80a31a41708872af5557b907f129b19b"><td class="mdescLeft">&#160;</td><td class="mdescRight">When <a class="el" href="a00160.html#a80a31a41708872af5557b907f129b19b" title="When detach() returns, *this no longer represents the possibly continuing thread of execution...">detach()</a> returns, *this no longer represents the possibly continuing thread of execution. <br/></td></tr>
-<tr class="separator:a80a31a41708872af5557b907f129b19b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae98915bfeccaa90d6f13add0ee1ab33a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae98915bfeccaa90d6f13add0ee1ab33a"></a>
-<a class="el" href="a00074.html">id</a>&#160;</td><td class="memItemRight" valign="bottom"><b>get_id</b> () const __TBB_NOEXCEPT(true)</td></tr>
-<tr class="separator:ae98915bfeccaa90d6f13add0ee1ab33a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a98e89e22e11fb6cab05f0f7839c79310"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a98e89e22e11fb6cab05f0f7839c79310"></a>
-native_handle_type&#160;</td><td class="memItemRight" valign="bottom"><b>native_handle</b> ()</td></tr>
-<tr class="separator:a98e89e22e11fb6cab05f0f7839c79310"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
-Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a23d7a420709b2e2b29b42dea897bd8bc"><td class="memItemLeft" align="right" valign="top">static unsigned __TBB_EXPORTED_FUNC&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00160.html#a23d7a420709b2e2b29b42dea897bd8bc">hardware_concurrency</a> () __TBB_NOEXCEPT(true)</td></tr>
-<tr class="memdesc:a23d7a420709b2e2b29b42dea897bd8bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">The number of hardware thread contexts.  <a href="#a23d7a420709b2e2b29b42dea897bd8bc">More...</a><br/></td></tr>
-<tr class="separator:a23d7a420709b2e2b29b42dea897bd8bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
-Public Attributes</h2></td></tr>
-<tr class="memitem:a7646cb0b0cc070a6dd962afbaaec3ec8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7646cb0b0cc070a6dd962afbaaec3ec8"></a>
-<a class="el" href="a00160.html">tbb_thread_v3</a>(<a class="el" href="a00160.html">tbb_thread_v3</a> <br class="typebreak"/>
-&amp;&amp;x) __TBB_NOEXCEPT(true) <br class="typebreak"/>
-<a class="el" href="a00160.html">tbb_thread_v3</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="a00160.html">tbb_thread_v3</a> &amp;&amp;x) __TBB_NOEXCEPT(true)</td></tr>
-<tr class="separator:a7646cb0b0cc070a6dd962afbaaec3ec8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
-Friends</h2></td></tr>
-<tr class="memitem:a9b8a2643aa337c0ec7f68cc2797a10ba"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9b8a2643aa337c0ec7f68cc2797a10ba"></a>
-void __TBB_EXPORTED_FUNC&#160;</td><td class="memItemRight" valign="bottom"><b>move_v3</b> (<a class="el" href="a00160.html">tbb_thread_v3</a> &amp;t1, <a class="el" href="a00160.html">tbb_thread_v3</a> &amp;t2)</td></tr>
-<tr class="separator:a9b8a2643aa337c0ec7f68cc2797a10ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a190e47ee761e8647e79cdd3cccff618c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a190e47ee761e8647e79cdd3cccff618c"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>tbb::swap</b> (<a class="el" href="a00160.html">tbb_thread_v3</a> &amp;t1, <a class="el" href="a00160.html">tbb_thread_v3</a> &amp;t2) __TBB_NOEXCEPT(true)</td></tr>
-<tr class="separator:a190e47ee761e8647e79cdd3cccff618c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4bd4ba0d501021013d1473d21b020b69"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="a00160.html">tbb_exception</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00160.html#a4bd4ba0d501021013d1473d21b020b69">move</a> ()=0  throw ()</td></tr>
+<tr class="memdesc:a4bd4ba0d501021013d1473d21b020b69"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates and returns pointer to the deep copy of this exception object.  <a href="#a4bd4ba0d501021013d1473d21b020b69">More...</a><br/></td></tr>
+<tr class="separator:a4bd4ba0d501021013d1473d21b020b69"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad3bc09bf78c33f19a0bcdf882fdf9d41"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00160.html#ad3bc09bf78c33f19a0bcdf882fdf9d41">destroy</a> ()=0  throw ()</td></tr>
+<tr class="memdesc:ad3bc09bf78c33f19a0bcdf882fdf9d41"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroys objects created by the <a class="el" href="a00160.html#a4bd4ba0d501021013d1473d21b020b69" title="Creates and returns pointer to the deep copy of this exception object. ">move()</a> method.  <a href="#ad3bc09bf78c33f19a0bcdf882fdf9d41">More...</a><br/></td></tr>
+<tr class="separator:ad3bc09bf78c33f19a0bcdf882fdf9d41"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae45c08d36c7ec7ae91785da3515a8828"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00160.html#ae45c08d36c7ec7ae91785da3515a8828">throw_self</a> ()=0</td></tr>
+<tr class="memdesc:ae45c08d36c7ec7ae91785da3515a8828"><td class="mdescLeft">&#160;</td><td class="mdescRight">Throws this exception object.  <a href="#ae45c08d36c7ec7ae91785da3515a8828">More...</a><br/></td></tr>
+<tr class="separator:ae45c08d36c7ec7ae91785da3515a8828"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a282bb7dce5f157d044d14d50cd6ff35c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a282bb7dce5f157d044d14d50cd6ff35c"></a>
+virtual const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00160.html#a282bb7dce5f157d044d14d50cd6ff35c">name</a> () const =0  throw ()</td></tr>
+<tr class="memdesc:a282bb7dce5f157d044d14d50cd6ff35c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns RTTI name of the originally intercepted exception. <br/></td></tr>
+<tr class="separator:a282bb7dce5f157d044d14d50cd6ff35c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa6739787c42d80943e18913cce47f42f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa6739787c42d80943e18913cce47f42f"></a>
+virtual const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00160.html#aa6739787c42d80943e18913cce47f42f">what</a> () const __TBB_override=0  throw ()</td></tr>
+<tr class="memdesc:aa6739787c42d80943e18913cce47f42f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the result of originally intercepted exception's <a class="el" href="a00160.html#aa6739787c42d80943e18913cce47f42f" title="Returns the result of originally intercepted exception&#39;s what() method. ">what()</a> method. <br/></td></tr>
+<tr class="separator:aa6739787c42d80943e18913cce47f42f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6a973c37078afedf7d457ff4704bf8cd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00160.html#a6a973c37078afedf7d457ff4704bf8cd">operator delete</a> (void *p)</td></tr>
+<tr class="separator:a6a973c37078afedf7d457ff4704bf8cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Versioned thread class. </p>
+<div class="textblock"><p>Interface to be implemented by all exceptions TBB recognizes and propagates across the threads. </p>
+<p>If an unhandled exception of the type derived from <a class="el" href="a00160.html" title="Interface to be implemented by all exceptions TBB recognizes and propagates across the threads...">tbb::tbb_exception</a> is intercepted by the TBB scheduler in one of the worker threads, it is delivered to and re-thrown in the root thread. The root thread is the thread that has started the outermost algorithm or root task sharing the same <a class="el" href="a00152.html">task_group_context</a> with the guilty algorithm/task (the one that threw the exception first).</p>
+<p>Note: when documentation mentions workers with respect to exception handling, masters are implied as well, because they are completely equivalent in this context. Consequently a root thread can be master or worker thread.</p>
+<p>NOTE: In case of nested algorithms or complex task hierarchies when the nested levels share (explicitly or by means of implicit inheritance) the task group context of the outermost level, the exception may be (re-)thrown multiple times (ultimately - in each worker on each nesting level) before reaching the root thread at the outermost level. IMPORTANT: if you intercept an exception derived from this class on a nested level, you must re-throw it in the catch block by means of the "throw;" operator.</p>
+<p>TBB provides two implementations of this interface: <a class="el" href="a00038.html" title="This class is used by TBB to propagate information about unhandled exceptions into the root thread...">tbb::captured_exception</a> and template class <a class="el" href="a00087.html" title="Template that can be used to implement exception that transfers arbitrary ExceptionData to the root t...">tbb::movable_exception</a>. See their declarations for more info. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="a23d7a420709b2e2b29b42dea897bd8bc"></a>
+<a class="anchor" id="ad3bc09bf78c33f19a0bcdf882fdf9d41"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -151,7 +97,101 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>tbb::swap</b> (<a cla
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static unsigned __TBB_EXPORTED_FUNC tbb::internal::tbb_thread_v3::hardware_concurrency </td>
+          <td class="memname">virtual void tbb::tbb_exception::destroy </td>
+          <td>(</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td align="right">throw </td><td>(</td><td colspan="2"></td>
+        </tr>
+        <tr>
+          <td align="right"></td><td>)</td><td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Destroys objects created by the <a class="el" href="a00160.html#a4bd4ba0d501021013d1473d21b020b69" title="Creates and returns pointer to the deep copy of this exception object. ">move()</a> method. </p>
+<p>Frees memory and calls destructor for this exception object. Can and must be used only on objects created by the move method. </p>
+
+<p>Implemented in <a class="el" href="a00087.html#aa4be7e2bf375edcb218fb5d7ed8e279b">tbb::movable_exception&lt; ExceptionData &gt;</a>, and <a class="el" href="a00038.html#abfc1220a6f9da0361082a3f3ad80cdc9">tbb::captured_exception</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a4bd4ba0d501021013d1473d21b020b69"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual <a class="el" href="a00160.html">tbb_exception</a>* tbb::tbb_exception::move </td>
+          <td>(</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td align="right">throw </td><td>(</td><td colspan="2"></td>
+        </tr>
+        <tr>
+          <td align="right"></td><td>)</td><td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Creates and returns pointer to the deep copy of this exception object. </p>
+<p>Move semantics is allowed. </p>
+
+<p>Implemented in <a class="el" href="a00087.html#a46eee42a3279007f48c9e8f11d074d16">tbb::movable_exception&lt; ExceptionData &gt;</a>, and <a class="el" href="a00038.html#a3b75205c631b51a00faf98c9e107f78a">tbb::captured_exception</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a6a973c37078afedf7d457ff4704bf8cd"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void tbb::tbb_exception::operator delete </td>
+          <td>(</td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>p</em>)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Operator delete is provided only to allow using existing smart pointers with TBB exception objects obtained as the result of applying <a class="el" href="a00160.html#a4bd4ba0d501021013d1473d21b020b69" title="Creates and returns pointer to the deep copy of this exception object. ">move()</a> operation on an exception thrown out of TBB scheduler.</p>
+<p>When overriding method <a class="el" href="a00160.html#a4bd4ba0d501021013d1473d21b020b69" title="Creates and returns pointer to the deep copy of this exception object. ">move()</a> make sure to override operator delete as well if memory is allocated not by TBB's scalable allocator. </p>
+
+</div>
+</div>
+<a class="anchor" id="ae45c08d36c7ec7ae91785da3515a8828"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual void tbb::tbb_exception::throw_self </td>
           <td>(</td>
           <td class="paramname">)</td><td></td>
           <td></td>
@@ -159,24 +199,25 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>tbb::swap</b> (<a cla
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>The number of hardware thread contexts. </p>
-<p>Before TBB 3.0 U4 this methods returned the number of logical CPU in the system. Currently on Windows, Linux and FreeBSD it returns the number of logical CPUs available to the current process in accordance with its affinity mask.</p>
-<p>NOTE: The return value of this method never changes after its first invocation. This means that changes in the process affinity mask that took place after this method was first invoked will not affect the number of worker threads in the TBB worker threads pool. </p>
+<p>Throws this exception object. </p>
+<p>Make sure that if you have several levels of derivation from this interface you implement or override this method on the most derived level. The implementation is as simple as "throw *this;". Failure to do this will result in exception of a base class type being thrown. </p>
+
+<p>Implemented in <a class="el" href="a00087.html#a0e9ac8a4468eb0ff3b2bb246b806a10e">tbb::movable_exception&lt; ExceptionData &gt;</a>, and <a class="el" href="a00038.html#a6df0d3a1943ca6f84a9a9aca25e9633d">tbb::captured_exception</a>.</p>
 
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>tbb_thread.h</li>
+<li>tbb_exception.h</li>
 </ul>
 </div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2017 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2018 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

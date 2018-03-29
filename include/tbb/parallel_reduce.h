@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2017 Intel Corporation
+    Copyright (c) 2005-2018 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -236,10 +236,10 @@ public:
         }
         //! Splitting constructor used to generate children.
         /** parent_ becomes left child.  Newly constructed object is right child. */
-        start_deterministic_reduce( start_deterministic_reduce& parent_, finish_type& c ) :
+        start_deterministic_reduce( start_deterministic_reduce& parent_, finish_type& c, typename Partitioner::split_type& split_obj ) :
             my_body( c.my_right_body ),
-            my_range( parent_.my_range, split() ),
-            my_partition( parent_.my_partition, split() )
+            my_range( parent_.my_range, split_obj ),
+            my_partition( parent_.my_partition, split_obj )
         {
         }
 
@@ -263,11 +263,11 @@ public:
         }
 #endif /* __TBB_TASK_GROUP_CONTEXT */
 
-        void offer_work( typename Partitioner::split_type& ) {
+        void offer_work( typename Partitioner::split_type& split_obj) {
             task* tasks[2];
             allocate_sibling(static_cast<task*>(this), tasks, sizeof(start_deterministic_reduce), sizeof(finish_type));
             new((void*)tasks[0]) finish_type(my_body);
-            new((void*)tasks[1]) start_deterministic_reduce(*this, *static_cast<finish_type*>(tasks[0]));
+            new((void*)tasks[1]) start_deterministic_reduce(*this, *static_cast<finish_type*>(tasks[0]), split_obj);
             spawn(*tasks[1]);
         }
 

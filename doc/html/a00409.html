@@ -33,27 +33,30 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><b>internal</b></li><li class="navelem"><a class="el" href="a00163.html">thread_closure_1</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00240.html">tbb</a></li><li class="navelem"><b>internal</b></li><li class="navelem"><a class="el" href="a00157.html">task_scheduler_observer_v3</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="headertitle">
-<div class="title">tbb::internal::thread_closure_1&lt; F, X &gt; Member List</div>  </div>
+<div class="title">tbb::internal::task_scheduler_observer_v3 Member List</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>This is the complete list of members for <a class="el" href="a00163.html">tbb::internal::thread_closure_1&lt; F, X &gt;</a>, including all inherited members.</p>
+<p>This is the complete list of members for <a class="el" href="a00157.html">tbb::internal::task_scheduler_observer_v3</a>, including all inherited members.</p>
 <table class="directory">
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>arg1</b> (defined in <a class="el" href="a00163.html">tbb::internal::thread_closure_1&lt; F, X &gt;</a>)</td><td class="entry"><a class="el" href="a00163.html">tbb::internal::thread_closure_1&lt; F, X &gt;</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0"><td class="entry"><b>function</b> (defined in <a class="el" href="a00163.html">tbb::internal::thread_closure_1&lt; F, X &gt;</a>)</td><td class="entry"><a class="el" href="a00163.html">tbb::internal::thread_closure_1&lt; F, X &gt;</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>operator delete</b>(void *ptr) (defined in <a class="el" href="a00165.html">tbb::internal::thread_closure_base</a>)</td><td class="entry"><a class="el" href="a00165.html">tbb::internal::thread_closure_base</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr bgcolor="#f0f0f0"><td class="entry"><b>operator new</b>(size_t size) (defined in <a class="el" href="a00165.html">tbb::internal::thread_closure_base</a>)</td><td class="entry"><a class="el" href="a00165.html">tbb::internal::thread_closure_base</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="a00163.html#a33d533b3301c45708c6252d040f855a6">start_routine</a>(void *c)</td><td class="entry"><a class="el" href="a00163.html">tbb::internal::thread_closure_1&lt; F, X &gt;</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">static</span></td></tr>
-  <tr bgcolor="#f0f0f0"><td class="entry"><b>thread_closure_1</b>(const F &amp;f, const X &amp;x) (defined in <a class="el" href="a00163.html">tbb::internal::thread_closure_1&lt; F, X &gt;</a>)</td><td class="entry"><a class="el" href="a00163.html">tbb::internal::thread_closure_1&lt; F, X &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>interface6::task_scheduler_observer</b> (defined in <a class="el" href="a00157.html">tbb::internal::task_scheduler_observer_v3</a>)</td><td class="entry"><a class="el" href="a00157.html">tbb::internal::task_scheduler_observer_v3</a></td><td class="entry"><span class="mlabel">friend</span></td></tr>
+  <tr><td class="entry"><a class="el" href="a00157.html#a31abaf256f7172f010cfb2259c7787bb">is_observing</a>() const </td><td class="entry"><a class="el" href="a00157.html">tbb::internal::task_scheduler_observer_v3</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="a00157.html#a40209b347e3c82bb5bfda05941304309">observe</a>(bool state=true)</td><td class="entry"><a class="el" href="a00157.html">tbb::internal::task_scheduler_observer_v3</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0"><td class="entry"><b>observer_list</b> (defined in <a class="el" href="a00157.html">tbb::internal::task_scheduler_observer_v3</a>)</td><td class="entry"><a class="el" href="a00157.html">tbb::internal::task_scheduler_observer_v3</a></td><td class="entry"><span class="mlabel">friend</span></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>observer_proxy</b> (defined in <a class="el" href="a00157.html">tbb::internal::task_scheduler_observer_v3</a>)</td><td class="entry"><a class="el" href="a00157.html">tbb::internal::task_scheduler_observer_v3</a></td><td class="entry"><span class="mlabel">friend</span></td></tr>
+  <tr><td class="entry"><a class="el" href="a00157.html#af4282a27725fbe86052bb785bdd9c5d3">on_scheduler_entry</a>(bool)</td><td class="entry"><a class="el" href="a00157.html">tbb::internal::task_scheduler_observer_v3</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">virtual</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="a00157.html#a657e90f833568e217b807d0122fa7668">on_scheduler_exit</a>(bool)</td><td class="entry"><a class="el" href="a00157.html">tbb::internal::task_scheduler_observer_v3</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">virtual</span></td></tr>
+  <tr><td class="entry"><a class="el" href="a00157.html#a25bffb05efaaab36bc58590969e29745">task_scheduler_observer_v3</a>()</td><td class="entry"><a class="el" href="a00157.html">tbb::internal::task_scheduler_observer_v3</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="a00157.html#a151e475ebba39172fcc13f43bed426cc">~task_scheduler_observer_v3</a>()</td><td class="entry"><a class="el" href="a00157.html">tbb::internal::task_scheduler_observer_v3</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">virtual</span></td></tr>
 </table></div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2017 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2018 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

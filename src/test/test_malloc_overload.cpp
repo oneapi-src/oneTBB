@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2017 Intel Corporation
+    Copyright (c) 2005-2018 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -307,6 +307,16 @@ void TestZoneOverload() {
 #define TestZoneOverload()
 #endif
 
+#if _WIN32
+// regression test: certain MSVC runtime functions use "public" allocation functions
+// but internal free routines, causing crashes if tbbmalloc_proxy does not intercept the latter.
+void TestRuntimeRoutines() {
+    system("rem should be a safe command to call");
+}
+#else
+#define TestRuntimeRoutines()
+#endif
+
 struct BigStruct {
     char f[minLargeObjectSize];
 };
@@ -423,6 +433,7 @@ int TestMain() {
     ASSERT(strcmp(stdstring.c_str(), "dependency on msvcpXX.dll") == 0, NULL);
 #endif
     TestZoneOverload();
+    TestRuntimeRoutines();
 
     return Harness::Done;
 }

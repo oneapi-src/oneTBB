@@ -2,6 +2,27 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 2018 Update 3
+TBB_INTERFACE_VERSION == 10003
+
+Changes (w.r.t. Intel TBB 2018 Update 2):
+
+Preview Features:
+
+- Added template class blocked_rangeNd for a generic multi-dimensional
+    range (requires C++11). Inspired by a contribution from Jeff Hammond.
+
+Bugs fixed:
+
+- Fixed a crash with dynamic memory allocation replacement on
+    Windows* for applications using system() function.
+- Fixed parallel_deterministic_reduce to split range correctly when used
+     with static_partitioner.
+- Fixed a synchronization issue in task_group::run_and_wait() which
+    caused a simultaneous call to task_group::wait() to return
+    prematurely.
+
+------------------------------------------------------------------------
 Intel TBB 2018 Update 2
 TBB_INTERFACE_VERSION == 10002
 

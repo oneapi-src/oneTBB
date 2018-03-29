@@ -134,8 +134,8 @@ To perform different build and/or test operations, use the following steps.
     <DD>Build and run as above, but additionally specify the version of the C++ standard or dialect to be used by
       the compiler. The specified value of <TT>stdver</TT> will be used as a parameter to the appropriate
       compiler option (such as <TT>-std</TT>); the behavior in case of unsupported value is compiler-specific.
-    <DT><TT>make target_app=<B>{</B>win8ui, uwp<B>}</B> [target_mode=store] <B>[</B>(above options or targets)<B>]</B></TT>
-    <DD>Build and run as above, but use API that is compliant with Universal Windows* applications. Use <TT>win8ui</TT> option, if you want to use Intel TBB in Windows* 8 Universal application and <TT>uwp</TT> in case of Windows* 10 Universal Windows application.
+    <DT><TT>make target_app=<B>{</B>win8ui, uwp, uwd<B>}</B> [target_mode=store] <B>[</B>(above options or targets)<B>]</B></TT>
+    <DD>Build and run as above, but use API that is compliant with Universal Windows* applications. Use <TT>win8ui</TT> option, if you want to use Intel TBB in Windows* 8 Universal application, <TT>uwp</TT> in case of Windows* 10 Universal Windows application and <TT>uwd</TT> for the usage inside Universal Windows* driver.
     <TT>target_mode=store</TT> is used to produce binaries that are compliant with Windows Store* application container. In later case they won't work with Intel TBB unit tests but work only with Windows Store* applications.
     <DT><TT>ndk-build target=android <B>[</B>(above options or targets)<B>]</B></TT>
     <DD>Build and run as above, but build libraries for Android* OS by Android NDK that should be installed. Makefiles were tested with revision 8.
@@ -233,7 +233,7 @@ See the Makefile infrastructure files for examples.
 <HR>
 <A HREF="../index.html">Up to parent directory</A>
 <P></P>
-Copyright &copy; 2005-2017 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2018 Intel Corporation.  All Rights Reserved.
 <P></P>
 Intel, the Intel logo and Itanium are trademarks of Intel Corporation or its subsidiaries in the U.S. and/or other countries.
 <p></p>

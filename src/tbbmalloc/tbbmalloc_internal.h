@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2017 Intel Corporation
+    Copyright (c) 2005-2018 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -102,7 +102,7 @@ void suppress_unused_warning( const T& ) {}
 /********** Various numeric parameters controlling allocations ********/
 
 /*
- * smabSize - the size of a block for allocation of small objects,
+ * slabSize - the size of a block for allocation of small objects,
  * it must be larger than maxSegregatedObjectSize.
  */
 const uintptr_t slabSize = 16*1024;

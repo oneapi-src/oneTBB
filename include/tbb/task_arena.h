@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2017 Intel Corporation
+    Copyright (c) 2005-2018 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@ class delegated_function<F,void> : public delegate_base {
 public:
     delegated_function(F& f) : my_func(f) {}
     void consume_result() const {}
-    
+
     friend class task_arena_base;
 };
 

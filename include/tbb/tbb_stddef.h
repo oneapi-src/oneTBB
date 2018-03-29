@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2017 Intel Corporation
+    Copyright (c) 2005-2018 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@
 #define TBB_VERSION_MINOR 0
 
 // Engineering-focused interface version
-#define TBB_INTERFACE_VERSION 10002
+#define TBB_INTERFACE_VERSION 10003
 #define TBB_INTERFACE_VERSION_MAJOR TBB_INTERFACE_VERSION/1000
 
 // The oldest major interface version still supported
@@ -533,7 +533,7 @@ struct STATIC_ASSERTION_FAILED<true>; //intentionally left undefined to cause co
 //! @endcond
 }} // namespace tbb::internal
 
-#if    __TBB_STATIC_ASSERT_PRESENT
+#if __TBB_STATIC_ASSERT_PRESENT
 #define __TBB_STATIC_ASSERT(condition,msg) static_assert(condition,msg)
 #else
 //please note condition is intentionally inverted to get a bit more understandable error msg

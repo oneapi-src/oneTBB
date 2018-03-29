@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::interface9::global_control Class Reference</title>
+<title>tbb::flow::interface9::gfx_buffer&lt; T &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,47 +33,72 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><b>interface9</b></li><li class="navelem"><a class="el" href="a00072.html">global_control</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00240.html">tbb</a></li><li class="navelem"><b>flow</b></li><li class="navelem"><b>interface9</b></li><li class="navelem"><a class="el" href="a00072.html">gfx_buffer</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
-<a href="a00400.html">List of all members</a>  </div>
+<a href="a00360.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::interface9::global_control Class Reference</div>  </div>
+<div class="title">tbb::flow::interface9::gfx_buffer&lt; T &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a04221b8e619bef332234db90d31f3e5e"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><b>parameter</b> { <b>max_allowed_parallelism</b>, 
-<b>thread_stack_size</b>, 
-<b>parameter_max</b>
- }</td></tr>
-<tr class="separator:a04221b8e619bef332234db90d31f3e5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a201b594a833fcd334ca256d6fbbceaa2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a201b594a833fcd334ca256d6fbbceaa2"></a>
+typedef std::vector&lt; T &gt;::iterator&#160;</td><td class="memItemRight" valign="bottom"><b>iterator</b></td></tr>
+<tr class="separator:a201b594a833fcd334ca256d6fbbceaa2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac35ff3055f507c9de417f1be90b801bf"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac35ff3055f507c9de417f1be90b801bf"></a>
+typedef std::vector&lt; T &gt;<br class="typebreak"/>
+::const_iterator&#160;</td><td class="memItemRight" valign="bottom"><b>const_iterator</b></td></tr>
+<tr class="separator:ac35ff3055f507c9de417f1be90b801bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a458b3a7e4674b4f70405049bce00939c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a458b3a7e4674b4f70405049bce00939c"></a>
+typedef std::size_t&#160;</td><td class="memItemRight" valign="bottom"><b>size_type</b></td></tr>
+<tr class="separator:a458b3a7e4674b4f70405049bce00939c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a5375ee43ca415f20f3c1f47db5220302"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5375ee43ca415f20f3c1f47db5220302"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>global_control</b> (parameter p, size_t value)</td></tr>
-<tr class="separator:a5375ee43ca415f20f3c1f47db5220302"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
-Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a8451d931cfc205d896ca2da26fe123ff"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8451d931cfc205d896ca2da26fe123ff"></a>
-static size_t&#160;</td><td class="memItemRight" valign="bottom"><b>active_value</b> (parameter p)</td></tr>
-<tr class="separator:a8451d931cfc205d896ca2da26fe123ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a008bcf0693109dcd376871bcff0378bd"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a008bcf0693109dcd376871bcff0378bd"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>gfx_buffer</b> (size_type size)</td></tr>
+<tr class="separator:a008bcf0693109dcd376871bcff0378bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a919ae73a47d2ef2809fb65e10c9e0145"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a919ae73a47d2ef2809fb65e10c9e0145"></a>
+T *&#160;</td><td class="memItemRight" valign="bottom"><b>data</b> ()</td></tr>
+<tr class="separator:a919ae73a47d2ef2809fb65e10c9e0145"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a17627787221944d6cc7154a2863582b2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a17627787221944d6cc7154a2863582b2"></a>
+const T *&#160;</td><td class="memItemRight" valign="bottom"><b>data</b> () const </td></tr>
+<tr class="separator:a17627787221944d6cc7154a2863582b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad7dd0d1242b09bd3532cc8953f8551d1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad7dd0d1242b09bd3532cc8953f8551d1"></a>
+size_type&#160;</td><td class="memItemRight" valign="bottom"><b>size</b> () const </td></tr>
+<tr class="separator:ad7dd0d1242b09bd3532cc8953f8551d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae3b0ac3d0426f0492806b2031e561352"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae3b0ac3d0426f0492806b2031e561352"></a>
+const_iterator&#160;</td><td class="memItemRight" valign="bottom"><b>cbegin</b> () const </td></tr>
+<tr class="separator:ae3b0ac3d0426f0492806b2031e561352"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a11a2e545a8538312360d69d95ff07269"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a11a2e545a8538312360d69d95ff07269"></a>
+const_iterator&#160;</td><td class="memItemRight" valign="bottom"><b>cend</b> () const </td></tr>
+<tr class="separator:a11a2e545a8538312360d69d95ff07269"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3637182841db17a6e7a56d819ddb94d2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3637182841db17a6e7a56d819ddb94d2"></a>
+iterator&#160;</td><td class="memItemRight" valign="bottom"><b>begin</b> ()</td></tr>
+<tr class="separator:a3637182841db17a6e7a56d819ddb94d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a28b98e880f24b77243ac8c4c22b63177"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a28b98e880f24b77243ac8c4c22b63177"></a>
+iterator&#160;</td><td class="memItemRight" valign="bottom"><b>end</b> ()</td></tr>
+<tr class="separator:a28b98e880f24b77243ac8c4c22b63177"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a743acfba864a10b8dad3c119db735425"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a743acfba864a10b8dad3c119db735425"></a>
+T &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator[]</b> (size_type pos)</td></tr>
+<tr class="separator:a743acfba864a10b8dad3c119db735425"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2146f49b0d2f5d87b7b6721babcd42e6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2146f49b0d2f5d87b7b6721babcd42e6"></a>
+const T &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator[]</b> (size_type pos) const </td></tr>
+<tr class="separator:a2146f49b0d2f5d87b7b6721babcd42e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>global_control.h</li>
+<li>gfx_factory.h</li>
 </ul>
 </div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2017 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2018 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

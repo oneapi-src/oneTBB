@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.4"/>
-<title>tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::const_accessor Class Reference</title>
+<title>tbb::interface5::concurrent_unordered_set_traits&lt; Key, Hash_compare, Allocator, Allow_multimapping &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -33,107 +33,65 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="a00237.html">tbb</a></li><li class="navelem"><b>interface5</b></li><li class="navelem"><a class="el" href="a00040.html">concurrent_hash_map</a></li><li class="navelem"><a class="el" href="a00051.html">const_accessor</a></li>  </ul>
+<li class="navelem"><a class="el" href="a00240.html">tbb</a></li><li class="navelem"><b>interface5</b></li><li class="navelem"><a class="el" href="a00051.html">concurrent_unordered_set_traits</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#pub-types">Public Types</a> &#124;
-<a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pro-types">Protected Types</a> &#124;
 <a href="#pro-methods">Protected Member Functions</a> &#124;
+<a href="#pro-static-methods">Static Protected Member Functions</a> &#124;
 <a href="#pro-attribs">Protected Attributes</a> &#124;
-<a href="#friends">Friends</a> &#124;
-<a href="a00366.html">List of all members</a>  </div>
+<a href="a00375.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::const_accessor Class Reference</div>  </div>
+<div class="title">tbb::interface5::concurrent_unordered_set_traits&lt; Key, Hash_compare, Allocator, Allow_multimapping &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-
-<p>Combines data access, locking, and garbage collection.  
- <a href="a00051.html#details">More...</a></p>
-
-<p><code>#include &lt;concurrent_hash_map.h&gt;</code></p>
-<div class="dynheader">
-Inheritance diagram for tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::const_accessor:</div>
-<div class="dyncontent">
- <div class="center">
-  <img src="a00051.png" usemap="#tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::const_accessor_map" alt=""/>
-  <map id="tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::const_accessor_map" name="tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::const_accessor_map">
-<area href="a00009.html" title="Allows write access to elements and combines data access, locking, and garbage collection. " alt="tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::accessor" shape="rect" coords="0,112,488,136"/>
-</map>
- </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:aa8ca5aef4ee14b7eddb64767b8cd5fda"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa8ca5aef4ee14b7eddb64767b8cd5fda"></a>
-typedef const <br class="typebreak"/>
-concurrent_hash_map::value_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#aa8ca5aef4ee14b7eddb64767b8cd5fda">value_type</a></td></tr>
-<tr class="memdesc:aa8ca5aef4ee14b7eddb64767b8cd5fda"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type of value. <br/></td></tr>
-<tr class="separator:aa8ca5aef4ee14b7eddb64767b8cd5fda"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
-Public Member Functions</h2></td></tr>
-<tr class="memitem:a6299b523d2ae8e2613f1bc160ca99b85"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6299b523d2ae8e2613f1bc160ca99b85"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a6299b523d2ae8e2613f1bc160ca99b85">empty</a> () const </td></tr>
-<tr class="memdesc:a6299b523d2ae8e2613f1bc160ca99b85"><td class="mdescLeft">&#160;</td><td class="mdescRight">True if result is empty. <br/></td></tr>
-<tr class="separator:a6299b523d2ae8e2613f1bc160ca99b85"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a18390cb369369d72bdf7c867755b5190"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a18390cb369369d72bdf7c867755b5190"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a18390cb369369d72bdf7c867755b5190">release</a> ()</td></tr>
-<tr class="memdesc:a18390cb369369d72bdf7c867755b5190"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set to null. <br/></td></tr>
-<tr class="separator:a18390cb369369d72bdf7c867755b5190"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8adf04e33e7c8c876ba849f26807713a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8adf04e33e7c8c876ba849f26807713a"></a>
-const_reference&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a8adf04e33e7c8c876ba849f26807713a">operator*</a> () const </td></tr>
-<tr class="memdesc:a8adf04e33e7c8c876ba849f26807713a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return reference to associated value in hash table. <br/></td></tr>
-<tr class="separator:a8adf04e33e7c8c876ba849f26807713a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a28fa9b9e6c35d7e80217e69a7afe1ee5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a28fa9b9e6c35d7e80217e69a7afe1ee5"></a>
-const_pointer&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a28fa9b9e6c35d7e80217e69a7afe1ee5">operator-&gt;</a> () const </td></tr>
-<tr class="memdesc:a28fa9b9e6c35d7e80217e69a7afe1ee5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return pointer to associated value in hash table. <br/></td></tr>
-<tr class="separator:a28fa9b9e6c35d7e80217e69a7afe1ee5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7b26d22d228cf0d8678c9b346c63752c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7b26d22d228cf0d8678c9b346c63752c"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#a7b26d22d228cf0d8678c9b346c63752c">const_accessor</a> ()</td></tr>
-<tr class="memdesc:a7b26d22d228cf0d8678c9b346c63752c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create empty result. <br/></td></tr>
-<tr class="separator:a7b26d22d228cf0d8678c9b346c63752c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afbc0c85a146c912b9a0f94a7695957c7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afbc0c85a146c912b9a0f94a7695957c7"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00051.html#afbc0c85a146c912b9a0f94a7695957c7">~const_accessor</a> ()</td></tr>
-<tr class="memdesc:afbc0c85a146c912b9a0f94a7695957c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy result after releasing the underlying reference. <br/></td></tr>
-<tr class="separator:afbc0c85a146c912b9a0f94a7695957c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-types"></a>
+Protected Types</h2></td></tr>
+<tr class="memitem:a10fca95c59a7c0542d2d6bc1b8306e1c"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom">{ <b>allow_multimapping</b> = Allow_multimapping
+ }</td></tr>
+<tr class="separator:a10fca95c59a7c0542d2d6bc1b8306e1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a935ab6e249964c5a7e1caffd308bf008"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a935ab6e249964c5a7e1caffd308bf008"></a>
+typedef Key&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b></td></tr>
+<tr class="separator:a935ab6e249964c5a7e1caffd308bf008"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8b1d770b7db20b5d0d51af0b910aebb2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8b1d770b7db20b5d0d51af0b910aebb2"></a>
+typedef Key&#160;</td><td class="memItemRight" valign="bottom"><b>key_type</b></td></tr>
+<tr class="separator:a8b1d770b7db20b5d0d51af0b910aebb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3c1ef314e63eb78db91ce99cb8617b87"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3c1ef314e63eb78db91ce99cb8617b87"></a>
+typedef Hash_compare&#160;</td><td class="memItemRight" valign="bottom"><b>hash_compare</b></td></tr>
+<tr class="separator:a3c1ef314e63eb78db91ce99cb8617b87"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a453126bb05d3c798914cb91852e0b3a5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a453126bb05d3c798914cb91852e0b3a5"></a>
+typedef Allocator::template <br class="typebreak"/>
+rebind&lt; value_type &gt;::other&#160;</td><td class="memItemRight" valign="bottom"><b>allocator_type</b></td></tr>
+<tr class="separator:a453126bb05d3c798914cb91852e0b3a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:a05b74d408d8cd7773f7b5edfef97da1b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a05b74d408d8cd7773f7b5edfef97da1b"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_writer</b> ()</td></tr>
-<tr class="separator:a05b74d408d8cd7773f7b5edfef97da1b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a958c02e4dbd967575a9f03290bb0cad3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a958c02e4dbd967575a9f03290bb0cad3"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_unordered_set_traits</b> (const hash_compare &amp;hc)</td></tr>
+<tr class="separator:a958c02e4dbd967575a9f03290bb0cad3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-static-methods"></a>
+Static Protected Member Functions</h2></td></tr>
+<tr class="memitem:a3f4bfe96ddb3db04d4701e06611fc73d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3f4bfe96ddb3db04d4701e06611fc73d"></a>
+static const Key &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>get_key</b> (const value_type &amp;value)</td></tr>
+<tr class="separator:a3f4bfe96ddb3db04d4701e06611fc73d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
-<tr class="memitem:ac9b96f45483ddbff95a95e8e666a8f28"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac9b96f45483ddbff95a95e8e666a8f28"></a>
-<a class="el" href="a00087.html">node</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>my_node</b></td></tr>
-<tr class="separator:ac9b96f45483ddbff95a95e8e666a8f28"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5034084f595666b47734f99a6eaefa9f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5034084f595666b47734f99a6eaefa9f"></a>
-hashcode_t&#160;</td><td class="memItemRight" valign="bottom"><b>my_hash</b></td></tr>
-<tr class="separator:a5034084f595666b47734f99a6eaefa9f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
-Friends</h2></td></tr>
-<tr class="memitem:a9a30829231c2a2f13cb12430992a0701"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9a30829231c2a2f13cb12430992a0701"></a>
-class&#160;</td><td class="memItemRight" valign="bottom"><b>concurrent_hash_map&lt; Key, T, HashCompare, Allocator &gt;</b></td></tr>
-<tr class="separator:a9a30829231c2a2f13cb12430992a0701"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab1dfccf6cc719ff15006a2b05cf70dd7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab1dfccf6cc719ff15006a2b05cf70dd7"></a>
-class&#160;</td><td class="memItemRight" valign="bottom"><b>accessor</b></td></tr>
-<tr class="separator:ab1dfccf6cc719ff15006a2b05cf70dd7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae134f56adf668d7bd31f7ee8fb36ead5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae134f56adf668d7bd31f7ee8fb36ead5"></a>
+hash_compare&#160;</td><td class="memItemRight" valign="bottom"><b>my_hash_compare</b></td></tr>
+<tr class="separator:ae134f56adf668d7bd31f7ee8fb36ead5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;typename Key, typename T, typename HashCompare = tbb_hash_compare&lt;Key&gt;, typename A = tbb_allocator&lt;std::pair&lt;Key, T&gt; &gt;&gt;<br/>
-class tbb::interface5::concurrent_hash_map&lt; Key, T, HashCompare, A &gt;::const_accessor</h3>
-
-<p>Combines data access, locking, and garbage collection. </p>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>concurrent_hash_map.h</li>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li>concurrent_unordered_set.h</li>
 </ul>
 </div><!-- contents -->
 <hr>
 <p></p>
-Copyright &copy; 2005-2017 Intel Corporation.  All Rights Reserved.
+Copyright &copy; 2005-2018 Intel Corporation.  All Rights Reserved.
 <p></p>
 Intel, Pentium, Intel Xeon, Itanium, Intel XScale and VTune are
 registered trademarks or trademarks of Intel Corporation or its

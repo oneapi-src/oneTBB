@@ -482,6 +482,7 @@
     <ClInclude Include="..\..\include\tbb\blocked_range.h" />
     <ClInclude Include="..\..\include\tbb\blocked_range2d.h" />
     <ClInclude Include="..\..\include\tbb\blocked_range3d.h" />
+    <ClInclude Include="..\..\include\tbb\blocked_rangeNd.h" />
     <ClInclude Include="..\..\include\tbb\cache_aligned_allocator.h" />
     <ClInclude Include="..\..\include\tbb\combinable.h" />
     <ClInclude Include="..\..\include\tbb\concurrent_hash_map.h" />

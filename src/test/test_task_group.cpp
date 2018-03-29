@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2017 Intel Corporation
+    Copyright (c) 2005-2018 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -227,12 +227,44 @@ public:
     void operator() ( uint_t idx ) const { m_pImpl->Run(idx); }
 };
 
+class RunAndWaitSyncronizationTestBody {
+    Harness::SpinBarrier& m_barrier;
+    tbb::atomic<bool>& m_completed;
+    tbb::task_group& m_tg;
+public:
+    RunAndWaitSyncronizationTestBody(Harness::SpinBarrier& barrier, tbb::atomic<bool>& completed, tbb::task_group& tg)
+        : m_barrier(barrier), m_completed(completed), m_tg(tg) {}
+
+    void operator()() const {
+        m_barrier.wait();
+        for (volatile int i = 0; i < 100000; ++i) {}
+        m_completed = true;
+    }
+
+    void operator()(int id) const {
+        if (id == 0) {
+            m_tg.run_and_wait(*this);
+        } else {
+            m_barrier.wait();
+            m_tg.wait();
+            ASSERT(m_completed, "A concurrent waiter has left the wait method earlier than work has finished");
+        }
+    }
+};
+
 void TestParallelSpawn () {
     NativeParallelFor( g_MaxConcurrency, SharedGroupBody(g_MaxConcurrency) );
 }
 
 void TestParallelWait () {
     NativeParallelFor( g_MaxConcurrency, SharedGroupBody(g_MaxConcurrency, ParallelWait) );
+
+    Harness::SpinBarrier barrier(g_MaxConcurrency);
+    tbb::atomic<bool> completed;
+    completed = false;
+    tbb::task_group tg;
+    RunAndWaitSyncronizationTestBody b(barrier, completed, tg);
+    NativeParallelFor( g_MaxConcurrency, b );
 }
 
 // Tests non-stack-bound task group (the group that is allocated by one thread and destroyed by the other)
