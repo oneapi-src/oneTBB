@@ -94,7 +94,7 @@ else
 	@$(MAKE) -C "$(work_dir)_$(cfg)"  -r -f $(tbb_root)/build/Makefile.test $@
 endif
 
-python_%:
+python_%: mkdir_release
 	$(MAKE) -C "$(work_dir)_release" -rf $(tbb_root)/python/Makefile $(subst python_,,$@)
 
 .PHONY: test_release test_debug test_release_no_depends test_debug_no_depends
