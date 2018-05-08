@@ -26,10 +26,7 @@
 #error Do not include this file directly; include tbb_machine.h instead
 #endif
 
-//TODO: is ARMv7 is the only version ever to support?
-#if !(__ARM_ARCH_7A__)
-#error compilation requires an ARMv7-a architecture.
-#endif
+#if __ARM_ARCH_7A__
 
 #include <sys/param.h>
 #include <unistd.h>
@@ -171,15 +168,6 @@ static inline int64_t __TBB_machine_fetchadd8(volatile void *ptr, int64_t addend
     return result;
 }
 
-inline void __TBB_machine_pause (int32_t delay )
-{
-    while(delay>0)
-    {
-	__TBB_compiler_fence();
-        delay--;
-    }
-}
-
 namespace tbb {
 namespace internal {
     template <typename T, size_t S>
@@ -205,7 +193,6 @@ namespace internal {
 
 #define __TBB_CompareAndSwap4(P,V,C) __TBB_machine_cmpswp4(P,V,C)
 #define __TBB_CompareAndSwap8(P,V,C) __TBB_machine_cmpswp8(P,V,C)
-#define __TBB_Pause(V) __TBB_machine_pause(V)
 
 // Use generics for some things
 #define __TBB_USE_GENERIC_PART_WORD_CAS                         1
@@ -215,3 +202,19 @@ namespace internal {
 #define __TBB_USE_GENERIC_HALF_FENCED_LOAD_STORE                1
 #define __TBB_USE_GENERIC_DWORD_LOAD_STORE                      1
 #define __TBB_USE_GENERIC_SEQUENTIAL_CONSISTENCY_LOAD_STORE     1
+#elif defined __aarch64__
+// Generic gcc implementations are fine for ARMv8-a except __TBB_PAUSE.
+#include "gcc_generic.h"
+#else
+#error compilation requires an ARMv7-a or ARMv8-a architecture.
+#endif // __ARM_ARCH_7A__
+
+inline void __TBB_machine_pause (int32_t delay)
+{
+    while(delay>0)
+    {
+        __asm__ __volatile__("yield" ::: "memory");
+        delay--;
+    }
+}
+#define __TBB_Pause(V) __TBB_machine_pause(V)
