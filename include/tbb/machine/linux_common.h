@@ -31,18 +31,37 @@
 
 #if defined(SYS_futex)
 
+/*
+ * Note that this header is included not only on Linux. Some BSD systems may also support futexes,
+ * but provide the definitions in other headers. For backward compatibility we also support
+ * systems that don't provide any header but support futexes, as indicated by the SYS_futex macro.
+ */
 #define __TBB_USE_FUTEX 1
+
+#if defined(__linux__)
+#include <linux/futex.h>
+#elif defined(__OpenBSD__)
+#include <sys/futex.h>
+#elif defined(__has_include)
+#if __has_include(<sys/futex.h>)
+#include <sys/futex.h>
+#endif
+#endif
+
 #include <limits.h>
 #include <errno.h>
-// Unfortunately, some versions of Linux do not have a header that defines FUTEX_WAIT and FUTEX_WAKE.
 
-#ifdef FUTEX_WAIT
+#if defined(FUTEX_WAIT_PRIVATE)
+#define __TBB_FUTEX_WAIT FUTEX_WAIT_PRIVATE
+#elif defined(FUTEX_WAIT)
 #define __TBB_FUTEX_WAIT FUTEX_WAIT
 #else
 #define __TBB_FUTEX_WAIT 0
 #endif
 
-#ifdef FUTEX_WAKE
+#if defined(FUTEX_WAKE_PRIVATE)
+#define __TBB_FUTEX_WAKE FUTEX_WAKE_PRIVATE
+#elif defined(FUTEX_WAKE)
 #define __TBB_FUTEX_WAKE FUTEX_WAKE
 #else
 #define __TBB_FUTEX_WAKE 1
