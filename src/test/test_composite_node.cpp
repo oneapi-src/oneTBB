@@ -502,6 +502,10 @@ int test_prefix(bool hidden = false) {
     return 0;
 }
 
+struct input_only_output_only_seq {
+    int operator()(int i){ return (i + 3) / 4 - 1;}
+};
+
 void input_only_output_only_composite(bool hidden) {
     tbb::flow::graph g;
 #if TBB_PREVIEW_FLOW_GRAPH_TRACE
@@ -514,6 +518,7 @@ void input_only_output_only_composite(bool hidden) {
     typedef tbb::flow::source_node<int> src_type;
     typedef tbb::flow::queue_node<int> q_type;
     typedef tbb::flow::function_node<int, int> f_type;
+    typedef tbb::flow::sequencer_node<int> sequencer_type;
 
     int num = 0;
     int finish=1000;
@@ -526,6 +531,10 @@ void input_only_output_only_composite(bool hidden) {
     q_type que(g);
     f_type f(g, 1, passthru_body());
 
+    // Sequencer_node is needed, because serial function_node guarantees only serial body execution,
+    // not a sequential order of messages dispatch
+    sequencer_type seq(g, input_only_output_only_seq());
+
     tbb::flow::tuple<f_type& > input_tuple(f);
     a_in.set_external_ports(input_tuple);
     ASSERT(&tbb::flow::get<0>(a_in.input_ports()) == &f, "f not bound to input port 0 in composite_node a_in");
@@ -535,15 +544,16 @@ void input_only_output_only_composite(bool hidden) {
     ASSERT(&tbb::flow::get<0>(a_out.output_ports()) == &src, "src not bound to output port 0 in composite_node a_out");
 
     if(hidden) {
-        a_in.add_nodes(f, que);
+        a_in.add_nodes(f, seq, que);
         a_out.add_nodes(src);
     } else {
-        a_in.add_visible_nodes(f, que);
+        a_in.add_visible_nodes(f, seq, que);
         a_out.add_visible_nodes(src);
     }
 
     tbb::flow::make_edge(a_out, a_in);
-    tbb::flow::make_edge(f, que);
+    tbb::flow::make_edge(f, seq);
+    tbb::flow::make_edge(seq, que);
     src.activate();
     g.wait_for_all();
 

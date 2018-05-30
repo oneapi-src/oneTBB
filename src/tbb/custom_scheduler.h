@@ -422,9 +422,9 @@ void custom_scheduler<SchedulerTraits>::local_wait_for_all( task& parent, task* 
 #endif /* __TBB_TASK_PRIORITY */
     }
 
-    cpu_ctl_env_helper cpu_ctl_helper;
+    context_guard_helper</*report_tasks=*/SchedulerTraits::itt_possible> context_guard;
     if ( t ) {
-        cpu_ctl_helper.set_env( __TBB_CONTEXT_ARG1(t->prefix().context) );
+        context_guard.set_ctx( __TBB_CONTEXT_ARG1(t->prefix().context) );
 #if __TBB_TASK_ISOLATION
         if ( isolation != no_isolation ) {
             __TBB_ASSERT( t->prefix().isolation == no_isolation, NULL );
@@ -590,7 +590,7 @@ void custom_scheduler<SchedulerTraits>::local_wait_for_all( task& parent, task* 
 
             if ( !t ) break;
 
-            cpu_ctl_helper.set_env( __TBB_CONTEXT_ARG1(t->prefix().context) );
+            context_guard.set_ctx( __TBB_CONTEXT_ARG1(t->prefix().context) );
         }; // end of local task pool retrieval loop
 
 #if __TBB_TASK_PRIORITY
@@ -624,7 +624,7 @@ stealing_ground:
         // The user can capture another the FPU settings to the context so the
         // cached data in the helper can be out-of-date and we cannot do fast
         // check.
-        cpu_ctl_helper.set_env( __TBB_CONTEXT_ARG1(t->prefix().context) );
+        context_guard.set_ctx( __TBB_CONTEXT_ARG1(t->prefix().context) );
     } // end of infinite stealing loop
 #if TBB_USE_EXCEPTIONS
     __TBB_ASSERT( false, "Must never get here" );
@@ -688,7 +688,7 @@ done:
             // On Windows, FPU control settings changed in the helper destructor are not visible
             // outside a catch block. So restore the default settings manually before rethrowing
             // the exception.
-            cpu_ctl_helper.restore_default();
+            context_guard.restore_default();
             TbbRethrowException( pe );
         }
     }

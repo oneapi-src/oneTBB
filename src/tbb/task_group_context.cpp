@@ -200,6 +200,9 @@ task_group_context::~task_group_context () {
 }
 
 void task_group_context::init () {
+#if __TBB_ITT_STRUCTURE_API
+    ITT_TASK_GROUP(this, ( (my_name >= 0 && my_name < NUM_STRINGS) ? my_name : internal::CUSTOM_CTX ), NULL);
+#endif
     __TBB_STATIC_ASSERT ( sizeof(my_version_and_traits) >= 4, "Layout of my_version_and_traits must be reconsidered on this platform" );
     __TBB_STATIC_ASSERT ( sizeof(task_group_context) == 2 * NFS_MaxLineSize, "Context class has wrong size - check padding and members alignment" );
     __TBB_ASSERT ( (uintptr_t(this) & (sizeof(my_cancellation_requested) - 1)) == 0, "Context is improperly aligned" );

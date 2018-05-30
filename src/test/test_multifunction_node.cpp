@@ -169,7 +169,7 @@ void buffered_levels_with_copy( size_t concurrency ) {
         tbb::flow::multifunction_node< InputType, OutputTuple > exe_node( g, lc, cf );
 
         for (size_t num_receivers = 1; num_receivers <= MAX_NODES; ++num_receivers ) {
-           
+
             std::vector< harness_mapped_receiver<OutputType>* > receivers(num_receivers);
             for (size_t i = 0; i < num_receivers; i++) {
                 receivers[i] = new harness_mapped_receiver<OutputType>(g);
@@ -693,7 +693,9 @@ int TestMain() {
     }
     test_ports_return_references<tbb::flow::queueing>();
     test_ports_return_references<tbb::flow::rejecting>();
-
+#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
+    lightweight_testing::test<tbb::flow::multifunction_node>(10);
+#endif
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
     test_extract<tbb::flow::rejecting>();
     test_extract<tbb::flow::queueing>();

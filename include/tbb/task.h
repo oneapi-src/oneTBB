@@ -420,12 +420,16 @@ private:
     intptr_t my_priority;
 #endif /* __TBB_TASK_PRIORITY */
 
+    //! Decription of algorithm for scheduler based instrumentation.
+    internal::string_index my_name;
+
     //! Trailing padding protecting accesses to frequently used members from false sharing
     /** \sa _leading_padding **/
     char _trailing_padding[internal::NFS_MaxLineSize - 2 * sizeof(uintptr_t) - 2 * sizeof(void*)
 #if __TBB_TASK_PRIORITY
-                            - sizeof(intptr_t)
+                           - sizeof(intptr_t)
 #endif /* __TBB_TASK_PRIORITY */
+                           - sizeof(internal::string_index)
                           ];
 
 public:
@@ -462,6 +466,16 @@ public:
                          uintptr_t t = default_traits )
         : my_kind(relation_with_parent)
         , my_version_and_traits(2 | t)
+        , my_name(internal::CUSTOM_CTX)
+    {
+        init();
+    }
+
+    // Custom constructor for instrumentation of tbb algorithm
+    task_group_context ( internal::string_index name )
+        : my_kind(bound)
+        , my_version_and_traits(2 | default_traits)
+        , my_name(name)
     {
         init();
     }

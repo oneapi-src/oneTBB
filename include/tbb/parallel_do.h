@@ -26,6 +26,7 @@
 #include "task.h"
 #include "aligned_space.h"
 #include <iterator>
+#include "internal/_tbb_trace_impl.h"
 
 namespace tbb {
 namespace interface9 {
@@ -500,7 +501,7 @@ void parallel_do( Iterator first, Iterator last, const Body& body )
     if ( first == last )
         return;
 #if __TBB_TASK_GROUP_CONTEXT
-    task_group_context context;
+    task_group_context context(internal::PARALLEL_DO);
 #endif
     interface9::internal::select_parallel_do( first, last, body, &Body::operator()
 #if __TBB_TASK_GROUP_CONTEXT

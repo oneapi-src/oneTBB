@@ -691,37 +691,82 @@ inline void generic_scheduler::offload_task ( task& t, intptr_t /*priority*/ ) {
 }
 #endif /* __TBB_TASK_PRIORITY */
 
+#if __TBB_FP_CONTEXT || __TBB_TASK_GROUP_CONTEXT
+//! Helper class for tracking floating point context and task group context switches
+/** Assuming presence of an itt collector, in addition to keeping track of floating
+    point context, this class emits itt events to indicate begin and end of task group
+    context execution **/
+template <bool report_tasks>
+class context_guard_helper {
+#if __TBB_ITT_STRUCTURE_API
+    const task_group_context *curr_ctx;
+#endif
 #if __TBB_FP_CONTEXT
-class cpu_ctl_env_helper {
     cpu_ctl_env guard_cpu_ctl_env;
     cpu_ctl_env curr_cpu_ctl_env;
+#endif
 public:
-    cpu_ctl_env_helper() {
+    context_guard_helper()
+#if __TBB_ITT_STRUCTURE_API
+        : curr_ctx(NULL)
+#endif
+    {
+#if __TBB_FP_CONTEXT
         guard_cpu_ctl_env.get_env();
         curr_cpu_ctl_env = guard_cpu_ctl_env;
+#endif
     }
-    ~cpu_ctl_env_helper() {
+    ~context_guard_helper() {
+#if __TBB_FP_CONTEXT
         if ( curr_cpu_ctl_env != guard_cpu_ctl_env )
             guard_cpu_ctl_env.set_env();
+#endif
+#if __TBB_ITT_STRUCTURE_API
+        if (report_tasks && curr_ctx)
+            ITT_TASK_END;
+#endif
     }
-    void set_env( const task_group_context *ctx ) {
+    void set_ctx( const task_group_context *ctx ) {
         generic_scheduler::assert_context_valid(ctx);
+#if __TBB_FP_CONTEXT
         const cpu_ctl_env &ctl = *punned_cast<cpu_ctl_env*>(&ctx->my_cpu_ctl_env);
-        if ( ctl != curr_cpu_ctl_env ) {
-            curr_cpu_ctl_env = ctl;
-            curr_cpu_ctl_env.set_env();
+#endif
+#if __TBB_ITT_STRUCTURE_API
+        if(ctx != curr_ctx) {
+#endif
+#if __TBB_FP_CONTEXT
+            if ( ctl != curr_cpu_ctl_env ) {
+                curr_cpu_ctl_env = ctl;
+                curr_cpu_ctl_env.set_env();
+            }
+#endif
+#if __TBB_ITT_STRUCTURE_API
+            // if task group context was active, report end of current execution frame.
+            if (report_tasks) {
+                if (curr_ctx)
+                    ITT_TASK_END;
+                // reporting begin of new task group context execution frame.
+                // using address of task group context object to group tasks (parent).
+                // id of task execution frame is NULL and reserved for future use.
+                ITT_TASK_BEGIN(ctx,ctx->my_name,NULL);
+                curr_ctx = ctx;
+            }
         }
+#endif
     }
     void restore_default() {
+#if __TBB_FP_CONTEXT
         if ( curr_cpu_ctl_env != guard_cpu_ctl_env ) {
             guard_cpu_ctl_env.set_env();
             curr_cpu_ctl_env = guard_cpu_ctl_env;
         }
+#endif
     }
 };
 #else
-struct cpu_ctl_env_helper {
-    void set_env( __TBB_CONTEXT_ARG1(task_group_context *) ) {}
+template <bool T>
+struct context_guard_helper {
+    void set_ctx( __TBB_CONTEXT_ARG1(task_group_context *) ) {}
     void restore_default() {}
 };
 #endif /* __TBB_FP_CONTEXT */

@@ -80,12 +80,58 @@ struct test_default_device_filter {
 };
 typedef opencl_factory<test_default_device_filter> DefaultFactoryType;
 
+struct test_default_device_selector {
+public:
+    template <typename DeviceFilter>
+    tbb::flow::opencl_device operator()(tbb::flow::opencl_factory<DeviceFilter>& f) {
+        // This is the device filter result
+        const tbb::flow::opencl_device_list &devices = f.devices();
+
+        // Get total number of available platforms:
+        cl_uint num_of_platforms = 0;
+        clGetPlatformIDs(0, 0, &num_of_platforms);
+        cl_platform_id* platforms = new cl_platform_id[num_of_platforms];
+
+        // Get IDs for all platforms:
+        clGetPlatformIDs(num_of_platforms, platforms, 0);
+
+        // By default device filter selects the first platform
+        cl_uint selected_platform_index = 0;
+        cl_platform_id platform = platforms[selected_platform_index];
+
+        // Count the number of plaform devices and compare with selector list
+        cl_uint device_count;
+        clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, NULL, &device_count);
+        // It should be the same
+        ASSERT(device_count == devices.size(), "Default device filter returned not all devices from the platform");
+
+        // Retrieve device ids from the platform
+        cl_device_id* queuered_devices = (cl_device_id*) malloc(sizeof(cl_device_id) * device_count);
+        clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, device_count, queuered_devices, NULL);
+
+        // Compare retrieved device ids with defaults
+        for (unsigned int i = 0; i < device_count; i++) {
+            cl_device_id searched_id = queuered_devices[i];
+
+            tbb::flow::opencl_device_list::const_iterator it = std::find_if(devices.cbegin(), devices.cend(),
+                [&searched_id](const tbb::flow::opencl_device &d) {
+                    return d.device_id() == searched_id;
+            });
+
+            ASSERT(it != devices.cend(), "Devices parsed from the first platform and filtered devices are not the same");
+        }
+
+        return *(f.devices().begin());
+    }
+};
+
 void TestArgumentPassing() {
     REMARK( "TestArgumentPassing: " );
 
     graph g;
+    test_default_device_selector test_device_selector;
     opencl_node <tuple<opencl_buffer<int>, opencl_buffer<int>, OCLRange>> k( g,
-        opencl_program<>( PathToFile( "test_opencl_node.cl" ) ).get_kernel( "TestArgumentPassing" ) );
+        opencl_program<>( PathToFile( "test_opencl_node.cl" ) ).get_kernel( "TestArgumentPassing" ), test_device_selector );
     split_node <tuple<opencl_buffer<int>, opencl_buffer<int>, OCLRange>> s( g );
 
     make_edge( output_port<0>( s ), input_port<0>( k ) );
@@ -841,6 +887,8 @@ void KeyMatchingTest() {
 }
 
 int TestMain() {
+
+
     TestArgumentPassing();
 
     SimpleDependencyTest();

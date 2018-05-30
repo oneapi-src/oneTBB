@@ -362,6 +362,40 @@ void test_extract() {
 }
 #endif
 
+#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
+struct lightweight_policy_body {
+    const tbb::tbb_thread::id my_thread_id;
+    tbb::atomic<int> my_count;
+
+    lightweight_policy_body() : my_thread_id(tbb::this_tbb_thread::get_id()) {
+        my_count = 0;
+    }
+    void operator()(tbb::flow::continue_msg) {
+        ++my_count;
+        tbb::tbb_thread::id body_thread_id = tbb::this_tbb_thread::get_id();
+        ASSERT(body_thread_id == my_thread_id, "Body executed as not lightweight");
+    }
+};
+
+void test_lightweight_policy() {
+    tbb::flow::graph g;
+    tbb::flow::continue_node<tbb::flow::continue_msg, tbb::flow::lightweight> node1(g, lightweight_policy_body());
+    tbb::flow::continue_node<tbb::flow::continue_msg, tbb::flow::lightweight> node2(g, lightweight_policy_body());
+
+    tbb::flow::make_edge(node1, node2);
+    const int n = 10;
+    for(size_t i = 0; i < n; ++i) {
+        node1.try_put(tbb::flow::continue_msg());
+    }
+    g.wait_for_all();
+
+    lightweight_policy_body body1 = tbb::flow::copy_body<lightweight_policy_body>(node1);
+    lightweight_policy_body body2 = tbb::flow::copy_body<lightweight_policy_body>(node2);
+    ASSERT(int(body1.my_count) == n, "Body of the first node needs to be executed N times");
+    ASSERT(int(body2.my_count) == n, "Body of the second node needs to be executed N times");
+}
+#endif
+
 int TestMain() {
     if( MinThread<1 ) {
         REPORT("number of threads must be positive\n");
@@ -371,6 +405,9 @@ int TestMain() {
        test_concurrency(p);
    }
    test_two_graphs();
+#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
+   test_lightweight_policy();
+#endif
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
    test_extract();
 #endif

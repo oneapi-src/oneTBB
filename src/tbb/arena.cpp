@@ -889,8 +889,8 @@ void task_arena_base::internal_execute(internal::delegate_base& d) const {
         } // if (index1 == arena::out_of_arena)
     } // if (!same_arena)
 
-    cpu_ctl_env_helper cpu_ctl_helper;
-    cpu_ctl_helper.set_env(__TBB_CONTEXT_ARG1(my_context));
+    context_guard_helper</*report_tasks=*/false> context_guard;
+    context_guard.set_ctx(__TBB_CONTEXT_ARG1(my_context));
 #if TBB_USE_EXCEPTIONS
     try {
 #endif
@@ -900,7 +900,7 @@ void task_arena_base::internal_execute(internal::delegate_base& d) const {
 #if TBB_USE_EXCEPTIONS
     }
     catch (...) {
-        cpu_ctl_helper.restore_default(); // TODO: is it needed on Windows?
+        context_guard.restore_default(); // TODO: is it needed on Windows?
         if (my_version_and_traits & exact_exception_flag) throw;
         else {
             task_group_context exception_container(task_group_context::isolated,

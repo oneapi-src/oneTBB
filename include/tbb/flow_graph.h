@@ -34,6 +34,7 @@
 #include "internal/_aggregator_impl.h"
 #include "tbb_profiling.h"
 #include "task_arena.h"
+#include "internal/_tbb_trace_impl.h"
 
 #if __TBB_PREVIEW_ASYNC_MSG
 #include <vector>    // std::vector in internal::async_storage
@@ -743,7 +744,7 @@ inline graph::graph() : my_nodes(NULL), my_nodes_last(NULL), my_task_arena(NULL)
     own_context = true;
     cancelled = false;
     caught_exception = false;
-    my_context = new task_group_context();
+    my_context = new task_group_context(tbb::internal::FLOW_TASKS);
     my_root_task = (new (task::allocate_root(*my_context)) empty_task);
     my_root_task->set_ref_count(1);
     tbb::internal::fgt_graph(this);
@@ -1113,32 +1114,22 @@ private:
     }
 };  // class source_node
 
-template<typename T>
-struct allocate_buffer {
-    static const bool value = false;
-};
-
-template<>
-struct allocate_buffer<queueing> {
-    static const bool value = true;
-};
-
 //! Implements a function node that supports Input -> Output
 template < typename Input, typename Output = continue_msg, typename Policy = queueing, typename Allocator=cache_aligned_allocator<Input> >
-class function_node : public graph_node, public internal::function_input<Input,Output,Allocator>, public internal::function_output<Output> {
+class function_node : public graph_node, public internal::function_input<Input,Output,Policy,Allocator>, public internal::function_output<Output> {
 public:
     typedef Input input_type;
     typedef Output output_type;
-    typedef internal::function_input<input_type,output_type,Allocator> fInput_type;
+    typedef internal::function_input<input_type,output_type,Policy,Allocator> input_impl_type;
     typedef internal::function_input_queue<input_type, Allocator> input_queue_type;
     typedef internal::function_output<output_type> fOutput_type;
-    typedef typename fInput_type::predecessor_type predecessor_type;
+    typedef typename input_impl_type::predecessor_type predecessor_type;
     typedef typename fOutput_type::successor_type successor_type;
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
-    typedef typename fInput_type::predecessor_list_type predecessor_list_type;
+    typedef typename input_impl_type::predecessor_list_type predecessor_list_type;
     typedef typename fOutput_type::successor_list_type successor_list_type;
 #endif
-    using fInput_type::my_predecessors;
+    using input_impl_type::my_predecessors;
 
     //! Constructor
     // input_queue_type is allocated here, but destroyed in the function_input_base.
@@ -1146,8 +1137,7 @@ public:
     // be done in one place.  This would be an interface-breaking change.
     template< typename Body >
     function_node( graph &g, size_t concurrency, Body body ) :
-        graph_node(g), fInput_type(g, concurrency, body, allocate_buffer<Policy>::value ?
-               new input_queue_type( ) : NULL ) {
+        graph_node(g), input_impl_type(g, concurrency, body) {
         tbb::internal::fgt_node_with_body( tbb::internal::FLOW_FUNCTION_NODE, &this->my_graph,
                 static_cast<receiver<input_type> *>(this), static_cast<sender<output_type> *>(this), this->my_body );
     }
@@ -1155,7 +1145,7 @@ public:
     //! Copy constructor
     function_node( const function_node& src ) :
         graph_node(src.my_graph),
-        fInput_type(src, allocate_buffer<Policy>::value ? new input_queue_type : NULL),
+        input_impl_type(src),
         fOutput_type() {
         tbb::internal::fgt_node_with_body( tbb::internal::FLOW_FUNCTION_NODE, &this->my_graph,
                 static_cast<receiver<input_type> *>(this), static_cast<sender<output_type> *>(this), this->my_body );
@@ -1178,12 +1168,12 @@ protected:
     template< typename R, typename B > friend class run_and_put_task;
     template<typename X, typename Y> friend class internal::broadcast_cache;
     template<typename X, typename Y> friend class internal::round_robin_cache;
-    using fInput_type::try_put_task;
+    using input_impl_type::try_put_task;
 
     internal::broadcast_cache<output_type> &successors () __TBB_override { return fOutput_type::my_successors; }
 
     void reset_node(reset_flags f) __TBB_override {
-        fInput_type::reset_function_input(f);
+        input_impl_type::reset_function_input(f);
         // TODO: use clear() instead.
         if(f & rf_clear_edges) {
             successors().clear();
@@ -1208,6 +1198,7 @@ class multifunction_node :
             internal::multifunction_output,  // wrap this around each element
             Output // the tuple providing the types
         >::type,
+        Policy,
         Allocator
     > {
 protected:
@@ -1216,22 +1207,22 @@ public:
     typedef Input input_type;
     typedef null_type output_type;
     typedef typename internal::wrap_tuple_elements<N,internal::multifunction_output, Output>::type output_ports_type;
-    typedef internal::multifunction_input<input_type, output_ports_type, Allocator> fInput_type;
+    typedef internal::multifunction_input<input_type, output_ports_type, Policy, Allocator> input_impl_type;
     typedef internal::function_input_queue<input_type, Allocator> input_queue_type;
 private:
-    typedef typename internal::multifunction_input<input_type, output_ports_type, Allocator> base_type;
-    using fInput_type::my_predecessors;
+    typedef typename internal::multifunction_input<input_type, output_ports_type, Policy, Allocator> base_type;
+    using input_impl_type::my_predecessors;
 public:
     template<typename Body>
     multifunction_node( graph &g, size_t concurrency, Body body ) :
-        graph_node(g), base_type(g,concurrency, body,  allocate_buffer<Policy>::value ? new input_queue_type : NULL) {
+        graph_node(g), base_type(g,concurrency, body) {
         tbb::internal::fgt_multioutput_node_with_body<N>( tbb::internal::FLOW_MULTIFUNCTION_NODE,
                 &this->my_graph, static_cast<receiver<input_type> *>(this),
                 this->output_ports(), this->my_body );
     }
 
     multifunction_node( const multifunction_node &other) :
-        graph_node(other.my_graph), base_type(other,  allocate_buffer<Policy>::value ? new input_queue_type : NULL) {
+        graph_node(other.my_graph), base_type(other) {
         tbb::internal::fgt_multioutput_node_with_body<N>( tbb::internal::FLOW_MULTIFUNCTION_NODE,
                 &this->my_graph, static_cast<receiver<input_type> *>(this),
                 this->output_ports(), this->my_body );
@@ -1336,20 +1327,34 @@ private:
 };
 
 //! Implements an executable node that supports continue_msg -> Output
-template <typename Output>
-class continue_node : public graph_node, public internal::continue_input<Output>, public internal::function_output<Output> {
+template <typename Output
+#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
+        , typename Policy = internal::Policy<void>
+#endif
+         >
+class continue_node : public graph_node, public internal::continue_input<Output
+#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
+                             , Policy
+#endif
+                             >,
+                      public internal::function_output<Output> {
 public:
     typedef continue_msg input_type;
     typedef Output output_type;
-    typedef internal::continue_input<Output> fInput_type;
+    typedef internal::continue_input<Output
+#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
+                                    , Policy
+#endif
+                                    > input_impl_type;
+
     typedef internal::function_output<output_type> fOutput_type;
-    typedef typename fInput_type::predecessor_type predecessor_type;
+    typedef typename input_impl_type::predecessor_type predecessor_type;
     typedef typename fOutput_type::successor_type successor_type;
 
     //! Constructor for executable node with continue_msg -> Output
     template <typename Body >
     continue_node( graph &g, Body body ) :
-        graph_node(g), internal::continue_input<output_type>( g, body ) {
+        graph_node(g), input_impl_type( g, body ) {
         tbb::internal::fgt_node_with_body( tbb::internal::FLOW_CONTINUE_NODE, &this->my_graph,
                                            static_cast<receiver<input_type> *>(this),
                                            static_cast<sender<output_type> *>(this), this->my_body );
@@ -1359,7 +1364,7 @@ public:
     //! Constructor for executable node with continue_msg -> Output
     template <typename Body >
     continue_node( graph &g, int number_of_predecessors, Body body ) :
-        graph_node(g), internal::continue_input<output_type>( g, number_of_predecessors, body ) {
+        graph_node(g), input_impl_type( g, number_of_predecessors, body ) {
         tbb::internal::fgt_node_with_body( tbb::internal::FLOW_CONTINUE_NODE, &this->my_graph,
                                            static_cast<receiver<input_type> *>(this),
                                            static_cast<sender<output_type> *>(this), this->my_body );
@@ -1367,7 +1372,7 @@ public:
 
     //! Copy constructor
     continue_node( const continue_node& src ) :
-        graph_node(src.my_graph), internal::continue_input<output_type>(src),
+        graph_node(src.my_graph), input_impl_type(src),
         internal::function_output<Output>() {
         tbb::internal::fgt_node_with_body( tbb::internal::FLOW_CONTINUE_NODE, &this->my_graph,
                                            static_cast<receiver<input_type> *>(this),
@@ -1382,7 +1387,7 @@ public:
 
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
     void extract() __TBB_override {
-        fInput_type::my_built_predecessors.receiver_extract(*this);
+        input_impl_type::my_built_predecessors.receiver_extract(*this);
         successors().built_successors().sender_extract(*this);
     }
 #endif
@@ -1391,11 +1396,11 @@ protected:
     template< typename R, typename B > friend class run_and_put_task;
     template<typename X, typename Y> friend class internal::broadcast_cache;
     template<typename X, typename Y> friend class internal::round_robin_cache;
-    using fInput_type::try_put_task;
+    using input_impl_type::try_put_task;
     internal::broadcast_cache<output_type> &successors () __TBB_override { return fOutput_type::my_successors; }
 
     void reset_node(reset_flags f) __TBB_override {
-        fInput_type::reset_receiver(f);
+        input_impl_type::reset_receiver(f);
         if(f & rf_clear_edges)successors().clear();
         __TBB_ASSERT(!(f & rf_clear_edges) || successors().empty(), "continue_node not reset");
     }
@@ -1449,7 +1454,7 @@ public:
                 my_successors.register_successor( s );
             } else {
                 // In case of reservation a race between the moment of reservation and register_successor can appear,
-                // because failed reserve does not mean that register_successor is not ready to put a message immediately. 
+                // because failed reserve does not mean that register_successor is not ready to put a message immediately.
                 // We have some sort of infinite loop: reserving node tries to set pull state for the edge,
                 // but overwrite_node tries to return push state back. That is why we have to break this loop with task creation.
                 task *rtask = new ( task::allocate_additional_child_of( *( my_graph.root_task() ) ) )
@@ -1551,7 +1556,7 @@ public:
     //! Consumes the reserved item
     bool try_consume() __TBB_override { return true; }
 #endif
- 
+
     bool is_valid() {
        spin_mutex::scoped_lock l( my_mutex );
        return my_buffer_is_valid;
@@ -1734,7 +1739,7 @@ public:
 
     typedef typename receiver<T>::built_predecessors_type built_predecessors_type;
 
-    built_predecessors_type &built_predecessors() __TBB_override { return my_built_predecessors; } 
+    built_predecessors_type &built_predecessors() __TBB_override { return my_built_predecessors; }
 
     void internal_add_built_predecessor( predecessor_type &p) __TBB_override {
         spin_mutex::scoped_lock l(pred_mutex);
@@ -1970,7 +1975,7 @@ protected:
 
     typedef typename receiver<T>::built_predecessors_type built_predecessors_type;
 
-    built_predecessors_type &built_predecessors() __TBB_override { return my_built_predecessors; } 
+    built_predecessors_type &built_predecessors() __TBB_override { return my_built_predecessors; }
 
     virtual void internal_add_built_pred(buffer_operation *op) {
         my_built_predecessors.add_edge(*(op->p));
@@ -3748,7 +3753,7 @@ public:
     typedef async_body_base<Gateway> base_type;
     typedef Gateway gateway_type;
 
-    async_body(const Body &body, gateway_type *gateway) 
+    async_body(const Body &body, gateway_type *gateway)
         : base_type(gateway), my_body(body) { }
 
     void operator()( const Input &v, Ports & ) {
@@ -3764,10 +3769,16 @@ private:
 }
 
 //! Implements async node
-template < typename Input, typename Output, typename Policy = queueing, typename Allocator=cache_aligned_allocator<Input> >
+template < typename Input, typename Output,
+#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
+           typename Policy = queueing_lightweight,
+#else
+           typename Policy = queueing,
+#endif
+           typename Allocator=cache_aligned_allocator<Input> >
 class async_node : public multifunction_node< Input, tuple< Output >, Policy, Allocator >, public sender< Output > {
     typedef multifunction_node< Input, tuple< Output >, Policy, Allocator > base_type;
-    typedef typename internal::multifunction_input<Input, typename base_type::output_ports_type, Allocator> mfn_input_type;
+    typedef typename internal::multifunction_input<Input, typename base_type::output_ports_type, Policy, Allocator> mfn_input_type;
 
 public:
     typedef Input input_type;

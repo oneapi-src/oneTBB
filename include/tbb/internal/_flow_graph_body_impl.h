@@ -33,11 +33,48 @@ typedef tbb::internal::uint64_t tag_value;
 
 using tbb::internal::strip;
 
+#if __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
+
+template<typename ... Policies> struct Policy {};
+
+template<typename ... Policies> struct has_policy;
+
+template<typename ExpectedPolicy, typename FirstPolicy, typename ...Policies>
+struct has_policy<ExpectedPolicy, FirstPolicy, Policies...> :
+    tbb::internal::bool_constant<has_policy<ExpectedPolicy, FirstPolicy>::value ||
+                                 has_policy<ExpectedPolicy, Policies...>::value> {};
+
+template<typename ExpectedPolicy, typename SinglePolicy>
+struct has_policy<ExpectedPolicy, SinglePolicy> :
+    tbb::internal::bool_constant<tbb::internal::is_same_type<ExpectedPolicy, SinglePolicy>::value> {};
+
+template<typename ExpectedPolicy, typename ...Policies>
+struct has_policy<ExpectedPolicy, Policy<Policies...> > : has_policy<ExpectedPolicy, Policies...> {};
+
+#else
+
+template<typename P1, typename P2 = void> struct Policy {};
+
+template<typename ExpectedPolicy, typename SinglePolicy>
+struct has_policy : tbb::internal::bool_constant<tbb::internal::is_same_type<ExpectedPolicy, SinglePolicy>::value> {};
+
+template<typename ExpectedPolicy, typename P>
+struct has_policy<ExpectedPolicy, Policy<P> > : has_policy<ExpectedPolicy, P> {};
+
+template<typename ExpectedPolicy, typename P1, typename P2>
+struct has_policy<ExpectedPolicy, Policy<P1, P2> > :
+    tbb::internal::bool_constant<has_policy<ExpectedPolicy, P1>::value || has_policy<ExpectedPolicy, P2>::value> {};
+
+#endif
+
 namespace graph_policy_namespace {
 
     struct rejecting { };
     struct reserving { };
     struct queueing  { };
+#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
+    struct lightweight  { };
+#endif
 
     // K == type of field used for key-matching.  Each tag-matching port will be provided
     // functor that, given an object accepted by the port, will return the
@@ -52,6 +89,11 @@ namespace graph_policy_namespace {
     // old tag_matching join's new specifier
     typedef key_matching<tag_value> tag_matching;
 
+#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
+    // Aliases for Policy combinations
+    typedef interface10::internal::Policy<queueing, lightweight> queueing_lightweight;
+    typedef interface10::internal::Policy<rejecting, lightweight>  rejecting_lightweight;
+#endif
 } // namespace graph_policy_namespace
 
 // -------------- function_body containers ----------------------

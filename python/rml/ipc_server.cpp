@@ -104,7 +104,7 @@ static const char* IPC_ACTIVE_SEM_VAR_NAME = "IPC_ACTIVE_SEMAPHORE";
 static const char* IPC_STOP_SEM_VAR_NAME = "IPC_STOP_SEMAPHORE";
 static const mode_t IPC_SEM_MODE = 0660;
 
-static tbb::atomic<unsigned> my_global_thread_count;
+static tbb::atomic<int> my_global_thread_count;
 
 char* get_active_sem_name() {
     char* value = getenv( IPC_ACTIVE_SEM_VAR_NAME );
@@ -149,7 +149,7 @@ extern "C" void set_active_sem_name() {
     char* sem_name = mktemp( templ );
     if( sem_name!=NULL ) {
         int status = setenv( IPC_ACTIVE_SEM_VAR_NAME, sem_name, 1 );
-        __TBB_ASSERT( status==0, NULL );
+        __TBB_ASSERT_EX( status==0, NULL );
     }
     delete[] templ;
 }
@@ -162,7 +162,7 @@ extern "C" void set_stop_sem_name() {
     char* sem_name = mktemp( templ );
     if( sem_name!=NULL ) {
         int status = setenv( IPC_STOP_SEM_VAR_NAME, sem_name, 1 );
-        __TBB_ASSERT( status==0, NULL );
+        __TBB_ASSERT_EX( status==0, NULL );
     }
     delete[] templ;
 }
@@ -809,9 +809,9 @@ ipc_server::ipc_server(tbb_client& client) :
     my_client( client ),
     my_stack_size( client.min_stack_size() ),
     my_thread_array(NULL),
+    my_join_workers(false),
     my_waker(NULL),
-    my_stopper(NULL),
-    my_join_workers(false)
+    my_stopper(NULL)
 {
     my_ref_count = 1;
     my_slack = 0;

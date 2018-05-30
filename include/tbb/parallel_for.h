@@ -58,7 +58,7 @@ namespace internal {
             my_body(body),
             my_partition(partitioner)
         {
-            tbb::internal::fgt_algorithm(tbb::internal::FGT_PARALLEL_FOR, this, NULL); 
+            tbb::internal::fgt_algorithm(tbb::internal::PARALLEL_FOR_TASK, this, NULL);
         }
         //! Splitting constructor used to generate children.
         /** parent_ becomes left child.  Newly constructed object is right child. */
@@ -68,7 +68,7 @@ namespace internal {
             my_partition(parent_.my_partition, split_obj)
         {
             my_partition.set_affinity(*this);
-            tbb::internal::fgt_algorithm(tbb::internal::FGT_PARALLEL_FOR, this, (void *)&parent_); 
+            tbb::internal::fgt_algorithm(tbb::internal::PARALLEL_FOR_TASK, this, (void *)&parent_);
         }
         //! Construct right child from the given range as response to the demand.
         /** parent_ remains left child.  Newly constructed object is right child. */
@@ -79,7 +79,7 @@ namespace internal {
         {
             my_partition.set_affinity(*this);
             my_partition.align_depth( d );
-            tbb::internal::fgt_algorithm(tbb::internal::FGT_PARALLEL_FOR, this, (void *)&parent_); 
+            tbb::internal::fgt_algorithm(tbb::internal::PARALLEL_FOR_TASK, this, (void *)&parent_);
         }
         static void run(  const Range& range, const Body& body, Partitioner& partitioner ) {
             if( !range.empty() ) {
@@ -88,13 +88,13 @@ namespace internal {
 #else
                 // Bound context prevents exceptions from body to affect nesting or sibling algorithms,
                 // and allows users to handle exceptions safely by wrapping parallel_for in the try-block.
-                task_group_context context;
+                task_group_context context(PARALLEL_FOR);
                 start_for& a = *new(task::allocate_root(context)) start_for(range,body,partitioner);
 #endif /* __TBB_TASK_GROUP_CONTEXT && !TBB_JOIN_OUTER_TASK_GROUP */
 		// REGION BEGIN
-                fgt_begin_algorithm( tbb::internal::FGT_PARALLEL_FOR, (void*)&a );
+                fgt_begin_algorithm( tbb::internal::PARALLEL_FOR_TASK, (void*)&context );
                 task::spawn_root_and_wait(a);
-                fgt_end_algorithm( (void*)&a );
+                fgt_end_algorithm( (void*)&context );
 		// REGION END
             }
         }
@@ -103,16 +103,16 @@ namespace internal {
             if( !range.empty() ) {
                 start_for& a = *new(task::allocate_root(context)) start_for(range,body,partitioner);
 		// REGION BEGIN
-                fgt_begin_algorithm( tbb::internal::FGT_PARALLEL_FOR, (void*)&a );
+                fgt_begin_algorithm( tbb::internal::PARALLEL_FOR_TASK, (void*)&context );
                 task::spawn_root_and_wait(a);
-                fgt_end_algorithm( (void*)&a );
+                fgt_end_algorithm( (void*)&context );
 		// END REGION
             }
         }
 #endif /* __TBB_TASK_GROUP_CONTEXT */
         //! Run body for range, serves as callback for partitioner
         void run_body( Range &r ) { 
-            fgt_alg_begin_body( tbb::internal::FGT_PARALLEL_FOR, (void *)const_cast<Body*>(&(this->my_body)), (void*)this );
+            fgt_alg_begin_body( tbb::internal::PARALLEL_FOR_TASK, (void *)const_cast<Body*>(&(this->my_body)), (void*)this );
             my_body( r ); 
             fgt_alg_end_body( (void *)const_cast<Body*>(&(this->my_body)) );
         }

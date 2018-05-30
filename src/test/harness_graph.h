@@ -26,12 +26,16 @@
 #define harness_graph_H
 
 #include "harness.h"
+#include "harness_barrier.h"
 #include "tbb/flow_graph.h"
 #include "tbb/null_rw_mutex.h"
 #include "tbb/atomic.h"
 #include "tbb/concurrent_unordered_map.h"
 #include "tbb/task.h"
 #include "tbb/task_scheduler_init.h"
+#include "tbb/compat/condition_variable"
+#include "tbb/mutex.h"
+#include "tbb/tbb_thread.h"
 
 using tbb::flow::internal::SUCCESSFULLY_ENQUEUED;
 
@@ -1041,7 +1045,7 @@ public:
 template< template <typename> class ReservingNodeType, typename DataType >
 void test_reserving_nodes() {
     const int N = 300;
- 
+
     tbb::flow::graph g;
 
     ReservingNodeType<DataType> reserving_n(g);
@@ -1065,5 +1069,166 @@ void test_reserving_nodes() {
 
     ASSERT(end_receiver.my_count == 2 * N, NULL);
 }
+
+#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
+namespace lightweight_testing {
+
+typedef tbb::flow::tuple<int, int> output_tuple_type;
+
+template<typename NodeType>
+class native_loop_body : NoAssign {
+    NodeType& my_node;
+public:
+    native_loop_body(NodeType& node) : my_node(node) {}
+
+    void operator()(int) const {
+        tbb::tbb_thread::id this_id = tbb::this_tbb_thread::get_id();
+        my_node.try_put(this_id);
+    }
+};
+
+class concurrency_checker_body {
+public:
+    tbb::atomic<int> my_body_count;
+
+    concurrency_checker_body() {
+        my_body_count = 0;
+    }
+
+    template<typename gateway_type>
+    void operator()(const tbb::tbb_thread::id& input, gateway_type&) {
+        increase_and_check(input);
+    }
+
+    output_tuple_type operator()(const tbb::tbb_thread::id& input) {
+        increase_and_check(input);
+        return output_tuple_type();
+    }
+
+private:
+    void increase_and_check(const tbb::tbb_thread::id& input) {
+        ++my_body_count;
+        tbb::tbb_thread::id body_thread_id = tbb::this_tbb_thread::get_id();
+        ASSERT(input == body_thread_id, "Body executed as not lightweight");
+    }
+};
+
+template<typename NodeType>
+void test_unlimited_lightweight_execution(const int& N) {
+    tbb::flow::graph g;
+    NodeType node(g, tbb::flow::unlimited, concurrency_checker_body());
+
+    NativeParallelFor(N, native_loop_body<NodeType>(node));
+    g.wait_for_all();
+
+    concurrency_checker_body body = tbb::flow::copy_body<concurrency_checker_body>(node);
+    ASSERT(int(body.my_body_count) == N, "Body needs to be executed N times");
+}
+
+// Using TBB implementation of condition variable
+// not to include std header, which has problems with old GCC
+using tbb::interface5::condition_variable;
+using tbb::interface5::unique_lock;
+
+tbb::mutex m;
+condition_variable lightweight_condition;
+bool work_submitted;
+bool lightweight_work_processed;
+
+template<typename NodeType>
+class native_loop_limited_body : NoAssign {
+    NodeType& my_node;
+    Harness::SpinBarrier& my_barrier;
+public:
+    native_loop_limited_body(NodeType& node, Harness::SpinBarrier& barrier):
+        my_node(node), my_barrier(barrier) {}
+    void operator()(int) const {
+        tbb::tbb_thread::id this_id = tbb::this_tbb_thread::get_id();
+        my_node.try_put(this_id);
+        if(!lightweight_work_processed) {
+            my_barrier.wait();
+            work_submitted = true;
+            lightweight_condition.notify_all();
+        }
+    }
+};
+
+struct condition_predicate {
+    bool operator()() {
+        return work_submitted;
+    }
+};
+
+class limited_lightweight_checker_body {
+public:
+    tbb::atomic<int> my_body_count;
+    tbb::atomic<int> my_lightweight_count;
+    tbb::atomic<int> my_task_count;
+    limited_lightweight_checker_body() {
+        my_body_count = 0;
+        my_lightweight_count = 0;
+        my_task_count = 0;
+    }
+private:
+    void increase_and_check(const tbb::tbb_thread::id& input) {
+        ++my_body_count;
+        bool is_task = tbb::task::self().state() == tbb::task::executing;
+        if(is_task) {
+            ++my_task_count;
+        } else {
+            unique_lock<tbb::mutex> lock(m);
+            lightweight_condition.wait(lock, condition_predicate());
+            ++my_lightweight_count;
+            lightweight_work_processed = true;
+        }
+    }
+public:
+    template<typename gateway_type>
+    void operator()(const tbb::tbb_thread::id& input, gateway_type&) {
+        increase_and_check(input);
+    }
+    output_tuple_type operator()(const tbb::tbb_thread::id& input) {
+        increase_and_check(input);
+        return output_tuple_type();
+    }
+};
+
+template<typename NodeType>
+void test_limited_lightweight_execution(const int& N, size_t concurrency) {
+    ASSERT(concurrency != tbb::flow::unlimited,
+           "Test for limited concurrency cannot be called with unlimited concurrency argument");
+    tbb::flow::graph g;
+    NodeType node(g, concurrency, limited_lightweight_checker_body());
+    // Execute first body as lightweight, then wait for all other threads to fill internal buffer.
+    // Then unblock the lightweightd thread and check if other body executions are inside tbb task.
+    Harness::SpinBarrier barrier(N - concurrency);
+    NativeParallelFor(N, native_loop_limited_body<NodeType>(node, barrier));
+    g.wait_for_all();
+    limited_lightweight_checker_body body = tbb::flow::copy_body<limited_lightweight_checker_body>(node);
+    ASSERT(int(body.my_body_count) == N, "Body needs to be executed N times");
+    ASSERT(int(body.my_lightweight_count) == concurrency, "Body needs to be executed as lightweight once");
+    ASSERT(int(body.my_task_count) == N - concurrency, "Body needs to be executed as not lightweight N - 1 times");
+    work_submitted = false;
+    lightweight_work_processed = false;
+}
+
+template<typename NodeType>
+void test_lightweight(const int& N) {
+    test_unlimited_lightweight_execution<NodeType>(N);
+    test_limited_lightweight_execution<NodeType>(N, tbb::flow::serial);
+    test_limited_lightweight_execution<NodeType>(N, (std::min)(size_t(tbb::tbb_thread::hardware_concurrency() / 2),
+                                                             size_t(N/2)));
+}
+
+template<template<typename, typename, typename, typename> class NodeType>
+void test(const int& N) {
+    typedef tbb::tbb_thread::id input_type;
+    typedef tbb::cache_aligned_allocator<input_type> allocator_type;
+    typedef NodeType<input_type, output_tuple_type, tbb::flow::queueing_lightweight, allocator_type> node_type;
+    test_lightweight<node_type>(N);
+}
+
+}
+#endif // __TBB_PREVIEW_LIGHTWEIGHT_POLICY
 
 #endif

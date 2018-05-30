@@ -25,6 +25,9 @@
 #include "tbb/flow_graph.h"
 #include "tbb/task.h"
 #include "tbb/tbb_thread.h"
+#include "tbb/mutex.h"
+#include "tbb/compat/condition_variable"
+
 #include <string>
 
 class minimal_type {
@@ -89,7 +92,8 @@ tbb::atomic<int> async_body_exec_count;
 tbb::atomic<int> async_activity_processed_msg_count;
 tbb::atomic<int> end_body_exec_count;
 
-typedef tbb::flow::async_node< int, int > counting_async_node_type;
+// queueing required in test_reset for testing of cancelation
+typedef tbb::flow::async_node< int, int, tbb::flow::queueing > counting_async_node_type;
 typedef counting_async_node_type::gateway_type counting_gateway_type;
 
 struct counting_async_body {
@@ -600,6 +604,11 @@ int TestMain() {
     run_tests<int, int>();
     run_tests<minimal_type, minimal_type>();
     run_tests<int, minimal_type>();
+
+#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
+    lightweight_testing::test<tbb::flow::async_node>(NUMBER_OF_MSGS);
+#endif
+
     test_reset();
     test_copy_ctor();
     test_for_spin_avoidance();
