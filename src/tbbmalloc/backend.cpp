@@ -43,58 +43,12 @@ namespace internal {
 /* assume MapMemory and UnmapMemory are customized */
 #endif
 
-void* getRawMemory (size_t size, bool hugePages) {
-    return MapMemory(size, hugePages);
+void* getRawMemory (size_t size, PageType pageType) {
+    return MapMemory(size, pageType);
 }
 
 int freeRawMemory (void *object, size_t size) {
     return UnmapMemory(object, size);
-}
-
-void HugePagesStatus::registerAllocation(bool gotPage)
-{
-    if (gotPage) {
-        if (!wasObserved)
-            FencedStore(wasObserved, 1);
-    } else
-        FencedStore(enabled, 0);
-    // reports huge page status only once
-    if (needActualStatusPrint
-        && AtomicCompareExchange(needActualStatusPrint, 0, 1))
-        doPrintStatus(gotPage, "available");
-}
-
-void HugePagesStatus::registerReleasing(void* addr, size_t size)
-{
-    // We: 1) got huge page at least once,
-    // 2) something that looks like a huge page is been released,
-    // and 3) user requested huge pages,
-    // so a huge page might be available at next allocation.
-    // TODO: keep page status in regions and use exact check here
-    if (FencedLoad(wasObserved) && size>=pageSize && isAligned(addr, pageSize))
-        FencedStore(enabled, requestedMode.get());
-}
-
-void HugePagesStatus::printStatus() {
-    doPrintStatus(requestedMode.get(), "requested");
-    if (requestedMode.get()) { // report actual status iff requested
-        if (pageSize)
-            FencedStore(needActualStatusPrint, 1);
-        else
-            doPrintStatus(/*state=*/false, "available");
-    }
-}
-
-void HugePagesStatus::doPrintStatus(bool state, const char *stateName)
-{
-    // Under macOS* fprintf/snprintf acquires an internal lock, so when
-    // 1st allocation is done under the lock, we got a deadlock.
-    // Do not use fprintf etc during initialization.
-    fputs("TBBmalloc: huge pages\t", stderr);
-    if (!state)
-        fputs("not ", stderr);
-    fputs(stateName, stderr);
-    fputs("\n", stderr);
 }
 
 #if CHECK_ALLOCATION_RANGE
@@ -127,34 +81,42 @@ void Backend::UsedAddressRange::registerFree(uintptr_t left, uintptr_t right)
 }
 #endif // CHECK_ALLOCATION_RANGE
 
+// Initialized in frontend inside defaultMemPool
+extern HugePagesStatus hugePages;
+
 void *Backend::allocRawMem(size_t &size)
 {
     void *res = NULL;
     size_t allocSize;
 
     if (extMemPool->userPool()) {
-        if (extMemPool->fixedPool && bootsrapMemDone==FencedLoad(bootsrapMemStatus))
+        if (extMemPool->fixedPool && bootsrapMemDone == FencedLoad(bootsrapMemStatus))
             return NULL;
-        MALLOC_ASSERT(bootsrapMemStatus!=bootsrapMemNotDone,
+        MALLOC_ASSERT(bootsrapMemStatus != bootsrapMemNotDone,
                       "Backend::allocRawMem() called prematurely?");
         // TODO: support for raw mem not aligned at sizeof(uintptr_t)
         // memory from fixed pool is asked once and only once
         allocSize = alignUpGeneric(size, extMemPool->granularity);
         res = (*extMemPool->rawAlloc)(extMemPool->poolId, allocSize);
     } else {
-        // check if alignment to huge page size is recommended
-        size_t hugePageSize = hugePages.recommendedGranularity();
-        allocSize = alignUpGeneric(size, hugePageSize? hugePageSize : extMemPool->granularity);
-        // try to get them at 1st allocation and still use, if successful
-        // if 1st try is unsuccessful, no more trying
-        if (FencedLoad(hugePages.enabled)) {
-            MALLOC_ASSERT(hugePageSize, "Inconsistent state of HugePagesStatus");
-            res = getRawMemory(allocSize, /*hugePages=*/true);
-            hugePages.registerAllocation(res);
+        // Align allocation on page size
+        size_t pageSize = hugePages.isEnabled ? hugePages.getGranularity() : extMemPool->granularity;
+        allocSize = alignUpGeneric(size, pageSize);
+
+        // If user requested huge pages and they are available, try to use preallocated ones firstly.
+        // If there are none, lets check transparent huge pages support and use them instead.
+        if (hugePages.isEnabled) {
+            if (hugePages.isHPAvailable) {
+                res = getRawMemory(allocSize, PREALLOCATED_HUGE_PAGE);
+            }
+            if (!res && hugePages.isTHPAvailable) {
+                res = getRawMemory(allocSize, TRANSPARENT_HUGE_PAGE);
+            }
         }
 
-        if (!res)
-            res = getRawMemory(allocSize, /*hugePages=*/false);
+        if (!res) {
+            res = getRawMemory(allocSize, REGULAR);
+        }
     }
 
     if (res) {
@@ -185,7 +147,6 @@ bool Backend::freeRawMem(void *object, size_t size)
         fail = (*extMemPool->rawFree)(extMemPool->poolId, object, size);
     } else {
         usedAddrRange.registerFree((uintptr_t)object, (uintptr_t)object + size);
-        hugePages.registerReleasing(object, size);
         fail = freeRawMemory(object, size);
     }
     // TODO: use result in all freeRawMem() callers
@@ -690,7 +651,7 @@ FreeBlock *Backend::splitAlignedBlock(FreeBlock *fBlock, int num, size_t size,
 
 inline size_t Backend::getMaxBinnedSize() const
 {
-    return hugePages.wasObserved && !inUserPool()?
+    return hugePages.isEnabled && !inUserPool() ?
         maxBinned_HugePage : maxBinned_SmallPage;
 }
 
@@ -938,7 +899,7 @@ void *Backend::getBackRefSpace(size_t size, bool *rawMemUsed)
     // This block is released only at shutdown, so it can prevent
     // a entire region releasing when it's received from the backend,
     // so prefer getRawMemory using.
-    if (void *ret = getRawMemory(size, /*hugePages=*/false)) {
+    if (void *ret = getRawMemory(size, REGULAR)) {
         *rawMemUsed = true;
         return ret;
     }

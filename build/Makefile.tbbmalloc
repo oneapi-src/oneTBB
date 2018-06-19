@@ -175,6 +175,12 @@ $(MALLOC_ADD_DLL_TESTS): %.$(TEST_EXT): %_dll.$(DLL)
 $(MALLOC_ADD_DLL_TESTS): TEST_LIBS+=$(@:.$(TEST_EXT)=_dll.$(LIBEXT))
 endif
 
+# test_malloc_pure_c is intended to be compiled by CONLY
+# compiler. Hence cannot include any C++-compiler options.
+# TODO: separate C and C++ compiler options (i.e. C_FLAGS and CPLUS_FLAGS).
+test_malloc_pure_c.$(TEST_EXT): CPLUS_FLAGS := $(subst -Woverloaded-virtual,,$(CPLUS_FLAGS))
+test_malloc_pure_c.$(TEST_EXT): CPLUS_FLAGS := $(subst -Wnon-virtual-dtor,,$(CPLUS_FLAGS))
+
 test_malloc_over%.$(TEST_EXT): CPLUS_FLAGS=$(subst /MT,/MD,$(M_CPLUS_FLAGS))
 test_malloc_over%.$(TEST_EXT): INCLUDES=$(M_INCLUDES)
 test_malloc_overload_proxy.$(TEST_EXT): LINK_FLAGS+=$(LIBDL)

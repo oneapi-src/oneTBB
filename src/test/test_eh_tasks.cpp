@@ -724,7 +724,7 @@ public:
         s_Barrier.wait( Shuffler() );
         for ( int i = begin; i < end; ++i ) {
             s_Contexts[i]->tbb::task_group_context::~task_group_context();
-            memset( s_Contexts[i], 0, sizeof(tbb::task_group_context) );
+            memset( static_cast<void*>(s_Contexts[i]), 0, sizeof(tbb::task_group_context) );
         }
         s_ExitBarrier.wait();
     }

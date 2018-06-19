@@ -514,7 +514,7 @@ concurrent_queue_base_v3<T>::concurrent_queue_base_v3() {
     __TBB_ASSERT( (size_t)&my_rep->head_counter % NFS_GetLineSize()==0, "alignment error" );
     __TBB_ASSERT( (size_t)&my_rep->tail_counter % NFS_GetLineSize()==0, "alignment error" );
     __TBB_ASSERT( (size_t)&my_rep->array % NFS_GetLineSize()==0, "alignment error" );
-    memset(my_rep,0,sizeof(concurrent_queue_rep<T>));
+    memset(static_cast<void*>(my_rep),0,sizeof(concurrent_queue_rep<T>));
     my_rep->item_size = item_size;
     my_rep->items_per_page = item_size<=  8 ? 32 :
                              item_size<= 16 ? 16 :

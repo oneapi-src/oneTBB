@@ -298,7 +298,7 @@ void TestParallelForWithStepSupport()
 #if TBB_USE_EXCEPTIONS && !__TBB_THROW_ACROSS_MODULE_BOUNDARY_BROKEN
     try{
         tbb::parallel_for(static_cast<T>(1), static_cast<T>(100), static_cast<T>(0), TestFunctor<T>());  // should cause std::invalid_argument
-    }catch(std::invalid_argument){
+    }catch(std::invalid_argument&){
         return;
     }
     catch ( ... ) {

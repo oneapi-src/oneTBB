@@ -281,4 +281,55 @@ namespace tbb {
     } // namespace internal
 } // namespace tbb
 
+#if TBB_PREVIEW_FLOW_GRAPH_TRACE
+#include <string>
+
+namespace tbb {
+namespace profiling {
+namespace interface10 {
+
+#if TBB_USE_THREADING_TOOLS && !(TBB_USE_THREADING_TOOLS == 2)
+class event {
+/** This class supports user event traces through itt.
+    Common use-case is tagging data flow graph tasks (data-id)
+    and visualization by Intel Advisor Flow Graph Analyzer (FGA)  **/
+//  TODO: Replace implementation by itt user event api.
+
+    const std::string my_name;
+
+    static void emit_trace(const std::string &input) {
+        itt_metadata_str_add( tbb::internal::ITT_DOMAIN_FLOW, NULL, tbb::internal::FLOW_NULL, tbb::internal::USER_EVENT, ( "FGA::DATAID::" + input ).c_str() );
+    }
+
+public:
+    event(const std::string &input)
+              : my_name( input )
+    { }
+
+    void emit() {
+        emit_trace(my_name);
+    }
+
+    static void emit(const std::string &description) {
+        emit_trace(description);
+    }
+
+};
+#else // TBB_USE_THREADING_TOOLS && !(TBB_USE_THREADING_TOOLS == 2)
+// Using empty struct if user event tracing is disabled:
+struct event {
+    event(const std::string &) { }
+
+    void emit() { }
+
+    static void emit(const std::string &) { }
+};
+#endif // TBB_USE_THREADING_TOOLS && !(TBB_USE_THREADING_TOOLS == 2)
+
+} // interfaceX
+using interface10::event;
+} // namespace profiling
+} // namespace tbb
+#endif // TBB_PREVIEW_FLOW_GRAPH_TRACE
+
 #endif /* __TBB_profiling_H */

@@ -125,7 +125,7 @@ void TestSmallFixedSizePool()
    so it requires at least 16KB. Requirement of 9KB allocation is more modest.
 */
             allocated = pool.malloc( 16 ) || pool.malloc( 9*1024 );
-        } catch (std::invalid_argument) {
+        } catch (std::invalid_argument&) {
             ASSERT(!sz, "expect std::invalid_argument for zero-sized pool only");
         } catch (...) {
             ASSERT(0, "wrong exception type;");
@@ -156,7 +156,7 @@ void TestSmallFixedSizePool()
     try {
         tbb::fixed_pool pool(NULL, 10*1024*1024);
         ASSERT(0, "Useless allocator with no memory must not be created");
-    } catch (std::invalid_argument) {
+    } catch (std::invalid_argument&) {
     } catch (...) {
         ASSERT(0, "wrong exception type; expected invalid_argument");
     }

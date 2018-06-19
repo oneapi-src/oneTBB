@@ -74,7 +74,7 @@ namespace internal {
     //! Exception helper function
     template<typename T>
     void handle_unconstructed_elements(T* array, size_t n_of_elements){
-        std::memset( array, 0, n_of_elements * sizeof( T ) );
+        std::memset( static_cast<void*>(array), 0, n_of_elements * sizeof( T ) );
     }
 
     //! Base class of concurrent vector implementation.
@@ -1293,8 +1293,8 @@ void concurrent_vector<T, A>::move_array_if_noexcept( void* dst, const void* src
 template<typename T, class A>
 template<typename I>
 void concurrent_vector<T, A>::copy_range( void* dst, const void* p_type_erased_iterator, size_type n ){
-    I & iterator ((*const_cast<I*>(static_cast<const I*>(p_type_erased_iterator))));
-    internal_loop_guide loop(n, dst); loop.iterate(iterator);
+    internal_loop_guide loop(n, dst);
+    loop.iterate( *(static_cast<I*>(const_cast<void*>(p_type_erased_iterator))) );
 }
 
 template<typename T, class A>

@@ -1,5 +1,5 @@
-# Intel(R) Threading Building Blocks 2018 Update 4
-[![Stable release](https://img.shields.io/badge/version-2018_U4-green.svg)](https://github.com/01org/tbb/releases/tag/2018_U4)
+# Intel(R) Threading Building Blocks 2018 Update 5
+[![Stable release](https://img.shields.io/badge/version-2018_U5-green.svg)](https://github.com/01org/tbb/releases/tag/2018_U5)
 [![Apache License Version 2.0](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE)
 
 Intel(R) Threading Building Blocks (Intel(R) TBB) lets you easily write parallel C++ programs that take
@@ -7,6 +7,8 @@ full advantage of multicore performance, that are portable, composable and have 
 
 ## Release Information
 Here are the latest [Changes](CHANGES) and [Release Notes](doc/Release_Notes.txt) (contains system requirements and known issues).
+
+Since [2018 U5](https://github.com/01org/tbb/releases/tag/2018_U5) TBB binary packages include [Parallel STL](https://github.com/intel/parallelstl) as a high-level component.
 
 ## Documentation
 * Intel(R) TBB [tutorial](https://software.intel.com/en-us/tbb-tutorial)

@@ -465,7 +465,7 @@ public:
     task_group_context ( kind_type relation_with_parent = bound,
                          uintptr_t t = default_traits )
         : my_kind(relation_with_parent)
-        , my_version_and_traits(2 | t)
+        , my_version_and_traits(3 | t)
         , my_name(internal::CUSTOM_CTX)
     {
         init();
@@ -474,7 +474,7 @@ public:
     // Custom constructor for instrumentation of tbb algorithm
     task_group_context ( internal::string_index name )
         : my_kind(bound)
-        , my_version_and_traits(2 | default_traits)
+        , my_version_and_traits(3 | default_traits)
         , my_name(name)
     {
         init();

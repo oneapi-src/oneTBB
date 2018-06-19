@@ -1170,7 +1170,7 @@ public:
         my_task_count = 0;
     }
 private:
-    void increase_and_check(const tbb::tbb_thread::id& input) {
+    void increase_and_check(const tbb::tbb_thread::id& /*input*/) {
         ++my_body_count;
         bool is_task = tbb::task::self().state() == tbb::task::executing;
         if(is_task) {

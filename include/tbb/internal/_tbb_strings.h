@@ -76,3 +76,5 @@ TBB_STRING_RESOURCE(PARALLEL_SORT, "tbb_parallel_sort")
 TBB_STRING_RESOURCE(CUSTOM_CTX, "tbb_custom")
 TBB_STRING_RESOURCE(FLOW_TASKS, "tbb_flow_graph")
 TBB_STRING_RESOURCE(PARALLEL_FOR_TASK, "tbb_parallel_for_task")
+// TODO: Drop following string prefix "fgt_" here and in FGA's collector
+TBB_STRING_RESOURCE(USER_EVENT, "fgt_user_event")

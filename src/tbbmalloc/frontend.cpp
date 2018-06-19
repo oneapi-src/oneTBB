@@ -277,8 +277,9 @@ public:
     ExtMemoryPool  extMemPool;
     BootStrapBlocks bootStrapBlocks;
 
-    bool init(intptr_t poolId, const MemPoolPolicy* memPoolPolicy);
     static void initDefaultPool();
+
+    bool init(intptr_t poolId, const MemPoolPolicy* memPoolPolicy);
     bool reset();
     bool destroy();
     void onThreadShutdown(TLSData *tlsData);
@@ -1901,28 +1902,6 @@ void AllocControlledMode::initReadEnv(const char *envName, intptr_t defaultVal)
     }
 }
 
-void MemoryPool::initDefaultPool()
-{
-    long long unsigned hugePageSize = 0;
-#if __linux__
-    if (FILE *f = fopen("/proc/meminfo", "r")) {
-        const int READ_BUF_SIZE = 100;
-        char buf[READ_BUF_SIZE];
-        MALLOC_STATIC_ASSERT(sizeof(hugePageSize) >= 8,
-              "At least 64 bits required for keeping page size/numbers.");
-
-        while (fgets(buf, READ_BUF_SIZE, f)) {
-            if (1 == sscanf(buf, "Hugepagesize: %llu kB", &hugePageSize)) {
-                hugePageSize *= 1024;
-                break;
-            }
-        }
-        fclose(f);
-    }
-#endif
-    hugePages.init(hugePageSize);
-}
-
 #if USE_PTHREAD && (__TBB_SOURCE_DIRECTLY_INCLUDED || __TBB_USE_DLOPEN_REENTRANCY_WORKAROUND)
 
 /* Decrease race interval between dynamic library unloading and pthread key
@@ -1985,6 +1964,10 @@ extern "C" void MallocInitializeITT() {
     if (!usedBySrcIncluded)
         tbb::internal::__TBB_load_ittnotify();
 #endif
+}
+
+void MemoryPool::initDefaultPool() {
+    hugePages.init();
 }
 
 /*

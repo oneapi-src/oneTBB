@@ -635,7 +635,7 @@ void test_concurrent(const char *tablename, bool asymptotic = false) {
 
     if(!asymptotic) {
         AtomicByte* array = new AtomicByte[items];
-        memset( array, 0, items*sizeof(AtomicByte) );
+        memset( static_cast<void*>(array), 0, items*sizeof(AtomicByte) );
 
         typename T::range_type r = table.range();
         std::pair<intptr_t,intptr_t> p = CheckRecursiveRange<T,typename T::iterator>(r);
@@ -644,7 +644,7 @@ void test_concurrent(const char *tablename, bool asymptotic = false) {
         CheckRange( array, items, T::allow_multimapping, (nThreads - 1)/2 );
 
         const T &const_table = table;
-        memset( array, 0, items*sizeof(AtomicByte) );
+        memset( static_cast<void*>(array), 0, items*sizeof(AtomicByte) );
         typename T::const_range_type cr = const_table.range();
         ASSERT((nItemsInserted == CheckRecursiveRange<T,typename T::const_iterator>(cr).first), NULL);
         tbb::parallel_for( cr, ParallelTraverseBody<T, typename T::const_range_type>( array, items ));
