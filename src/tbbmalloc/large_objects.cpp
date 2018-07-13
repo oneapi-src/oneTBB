@@ -292,7 +292,7 @@ template<typename Props> void CacheBinFunctor<Props>::
                     num += 1;
 
                     STAT_increment(getThreadId(), ThreadCommonCounters, cacheLargeObj);
-                } while (( curr = curr->next ));
+                } while ((curr = curr->next) != NULL);
 
                 LargeMemoryBlock *tail = prev;
                 addToPutList(head, tail, num);
@@ -401,7 +401,7 @@ template<typename Props> void CacheBinFunctor<Props>::operator()(CacheBinOperati
         CacheBinOperation *opNext = opClean->next;
         prep.commitOperation( opClean );
 
-        while (( opClean = opNext )) {
+        while ((opClean = opNext) != NULL) {
             opNext = opClean->next;
             prep.commitOperation(opClean);
         }

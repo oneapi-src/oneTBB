@@ -2201,7 +2201,7 @@ LargeMemoryBlock *LocalLOCImpl<LOW_MARK, HIGH_MARK>::get(size_t size)
     if (size > MAX_TOTAL_SIZE)
         return NULL;
 
-    if (!head || !(localHead = (LargeMemoryBlock*)AtomicFetchStore(&head, 0))) {
+    if (!head || (localHead = (LargeMemoryBlock*)AtomicFetchStore(&head, 0)) == NULL) {
         // do not restore totalSize, numOfBlocks and tail at this point,
         // as they are used only in put(), where they must be restored
         return NULL;
@@ -2662,8 +2662,10 @@ rml::MemPoolError pool_create_v1(intptr_t pool_id, const MemPoolPolicy *policy,
         return UNSUPPORTED_POLICY;
     }
     if (!isMallocInitialized())
-        if (!doInitialization())
+        if (!doInitialization()) {
+	    *pool = NULL;
             return NO_MEMORY;
+	}
     rml::internal::MemoryPool *memPool =
         (rml::internal::MemoryPool*)internalMalloc((sizeof(rml::internal::MemoryPool)));
     if (!memPool) {

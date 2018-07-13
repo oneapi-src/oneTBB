@@ -130,7 +130,7 @@ void Backend::UsedAddressRange::registerFree(uintptr_t left, uintptr_t right)
 void *Backend::allocRawMem(size_t &size)
 {
     void *res = NULL;
-    size_t allocSize;
+    size_t allocSize = 0;
 
     if (extMemPool->userPool()) {
         if (extMemPool->fixedPool && bootsrapMemDone==FencedLoad(bootsrapMemStatus))
