@@ -775,7 +775,12 @@ extern "C" BOOL WINAPI DllMain( HINSTANCE hInst, DWORD callReason, LPVOID reserv
 #if !__TBB_WIN8UI_SUPPORT
         if (!tbb::internal::GetBoolEnvironmentVariable("TBB_MALLOC_DISABLE_REPLACEMENT"))
         {
-            doMallocReplacement();
+            char pinEnvVariable[50];
+            bool enable = true;
+            if (GetEnvironmentVariable("TBBMALLOC_PROXY_ENABLE", pinEnvVariable, 50))
+                enable = !(pinEnvVariable[0] == '0' && pinEnvVariable[1] == '\0');
+            if (enable)
+                doMallocReplacement();
         }
 #endif // !__TBB_WIN8UI_SUPPORT
     }
