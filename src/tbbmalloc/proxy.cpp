@@ -596,8 +596,6 @@ bool BytecodesAreKnown(const unicode_char_t *dllName)
         return false;
     for (int i=0; funcName[i]; i++)
         if (! IsPrologueKnown(module, funcName[i], known_bytecodes)) {
-            fprintf(stderr, "TBBmalloc: skip allocation functions replacement in " WCHAR_SPEC
-                    ": unknown prologue for function " WCHAR_SPEC "\n", dllName, funcName[i]);
             return false;
         }
     return true;

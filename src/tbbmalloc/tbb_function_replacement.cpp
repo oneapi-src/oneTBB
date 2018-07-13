@@ -189,13 +189,43 @@ size_t compareStrings( const char *str1, const char *str2 )
    return 1;
 }
 
+static void AddHookInfo(HMODULE module, const char *funcName,
+			const char *opcodeString, bool failed)
+{
+    if (!module || !funcName)
+	return;
+
+    const HANDLE heap = GetProcessHeap();
+    char *buf = nullptr;
+    int n = GetEnvironmentVariable("TBBMALLOC_PROXY_HOOK_FAILURE", nullptr, 0) + 1024*2;
+    buf = (char*)HeapAlloc(heap, /*flags*/0, n);
+    if (!buf)
+	return;
+    buf[0] = '\0';
+
+    char dllName[1024];
+    GetModuleFileName(module, dllName, 1024);
+
+    GetEnvironmentVariable("TBBMALLOC_PROXY_HOOK_FAILURE", buf, n);
+    strcat(buf, failed ? "-" : "+");
+    strcat(buf, dllName);
+    strcat(buf, "!");
+    strcat(buf, funcName);
+    strcat(buf, ":");
+    strcat(buf, opcodeString);
+    strcat(buf, "\n");
+    SetEnvironmentVariable("TBBMALLOC_PROXY_HOOK_FAILURE", buf);
+
+    HeapFree(heap, /*flags*/0, buf);
+}
+
 // Check function prologue with known prologues from the dictionary
 // opcodes - dictionary
 // inpAddr - pointer to function prologue
 // Dictionary contains opcodes for several full asm instructions
 // + one opcode byte for the next asm instruction for safe address processing
 // RETURN: 1 + the index of the matched pattern, or 0 if no match found.
-static UINT CheckOpcodes( const char ** opcodes, void *inpAddr, bool abortOnError )
+static UINT CheckOpcodes( const char ** opcodes, void *inpAddr, bool abortOnError, HMODULE module = nullptr, const char *funcName = nullptr )
 {
     static size_t opcodesStringsCount = 0;
     static size_t maxOpcodesLength = 0;
@@ -225,13 +255,19 @@ static UINT CheckOpcodes( const char ** opcodes, void *inpAddr, bool abortOnErro
     // Compare translated opcodes with patterns
     for( UINT idx=0; idx<opcodesStringsCount; ++idx ){
         result = compareStrings( opcodes[idx],opcodeString );
-        if( result )
+        if( result ){
+	    static bool verbose = (GetEnvironmentVariable("TBBMALLOC_PROXY_VERBOSE", nullptr, 0) > 0);
+	    if (verbose)
+		AddHookInfo(module, funcName, opcodeString, /*failed*/false);
             return idx+1; // avoid 0 which indicates a failure
+	}
     }
     if (abortOnError) {
         // Impossibility to find opcodes in the dictionary is a serious issue,
         // as if we unable to call original function, leak or crash is expected result.
         __TBB_ASSERT_RELEASE( false, "CheckOpcodes failed" );
+    } else {
+	AddHookInfo(module, funcName, opcodeString, /*failed*/true);
     }
     return 0;
 }
@@ -498,7 +534,7 @@ bool IsPrologueKnown(HMODULE module, const char *funcName, const char **opcodes)
     FARPROC inpFunc = GetProcAddress(module, funcName);
     if (!inpFunc)
         return false;
-    return CheckOpcodes( opcodes, (void*)inpFunc, /*abortOnError=*/false ) != 0;
+    return CheckOpcodes( opcodes, (void*)inpFunc, /*abortOnError=*/false, module, funcName ) != 0;
 }
 
 #endif /* !__TBB_WIN8UI_SUPPORT && defined(_WIN32) */
