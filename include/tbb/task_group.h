@@ -91,13 +91,13 @@ protected:
     template<typename F>
     task_group_status internal_run_and_wait( F& f ) {
         class ref_count_guard : internal::no_copy {
-            task& my_task;
+            task* my_task;
         public:
-            ref_count_guard( task& t ) : my_task(t) {
-                my_task.increment_ref_count();
+            ref_count_guard( task& t ) : my_task(&t) {
+                my_task->increment_ref_count();
             }
             ~ref_count_guard() {
-                my_task.decrement_ref_count();
+                my_task->decrement_ref_count();
             }
         };
         __TBB_TRY {
