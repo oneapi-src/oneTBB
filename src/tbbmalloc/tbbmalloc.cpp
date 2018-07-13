@@ -75,7 +75,7 @@ void init_tbbmalloc() {
 
 #if !__TBB_SOURCE_DIRECTLY_INCLUDED
 #if USE_WINTHREAD
-extern "C" BOOL WINAPI DllMain( HINSTANCE /*hInst*/, DWORD callReason, LPVOID )
+extern "C" BOOL WINAPI DllMain( HINSTANCE /*hInst*/, DWORD callReason, LPVOID reserved)
 {
 
     if (callReason==DLL_THREAD_DETACH)
@@ -84,7 +84,9 @@ extern "C" BOOL WINAPI DllMain( HINSTANCE /*hInst*/, DWORD callReason, LPVOID )
     }
     else if (callReason==DLL_PROCESS_DETACH)
     {
-        __TBB_mallocProcessShutdownNotification();
+	// Don't do anything if the entire process is exiting
+	if (!reserved)
+	    __TBB_mallocProcessShutdownNotification();
     }
     return TRUE;
 }
