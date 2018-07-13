@@ -285,6 +285,12 @@ public:
 
 //! @cond INTERNAL
 namespace internal {
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4180)
+#endif
+
     using interface9::internal::start_reduce;
     using interface9::internal::start_deterministic_reduce;
     //! Auxiliary class for parallel_reduce; for internal use only.
@@ -332,6 +338,10 @@ namespace internal {
             return my_value;
         }
     };
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 } // namespace internal
 //! @endcond
