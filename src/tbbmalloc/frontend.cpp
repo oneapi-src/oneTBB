@@ -146,7 +146,7 @@ public:
         int status = pthread_key_create( &Tid_key, NULL );
         if ( status ) {
             fprintf (stderr, "The memory manager cannot create tls key during initialization; exiting \n");
-            exit(1);
+            abort();
         }
 #endif /* USE_WINTHREAD */
     }
@@ -159,7 +159,7 @@ public:
 #endif /* USE_WINTHREAD */
             if ( status ) {
                 fprintf (stderr, "The memory manager cannot delete tls key; exiting \n");
-                exit(1);
+                abort();
             }
             Tid_key = 0;
         }
