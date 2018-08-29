@@ -34,7 +34,6 @@
 #include "internal/_aggregator_impl.h"
 #include "tbb_profiling.h"
 #include "task_arena.h"
-#include "internal/_tbb_trace_impl.h"
 
 #if __TBB_PREVIEW_ASYNC_MSG
 #include <vector>    // std::vector in internal::async_storage
@@ -111,7 +110,7 @@ template<typename T, typename M> class round_robin_cache;
 template<typename T, typename M> class predecessor_cache;
 template<typename T, typename M> class reservable_predecessor_cache;
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
 // Holder of edges both for caches and for those nodes which do not have predecessor caches.
 // C == receiver< ... > or sender< ... >, depending.
 template<typename C>
@@ -153,7 +152,7 @@ public:
 private:
     edge_list_type built_edges;
 };  // class edge_container
-#endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
+#endif  /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
 
 } // namespace internal
 
@@ -301,7 +300,7 @@ public:
     //! Consumes the reserved item
     virtual bool try_consume( ) { return false; }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     //! interface to record edges for traversal & deletion
     typedef internal::edge_container<successor_type> built_successors_type;
     typedef built_successors_type::edge_list_type successor_list_type;
@@ -310,7 +309,7 @@ public:
     virtual void    internal_delete_built_successor( successor_type & ) = 0;
     virtual void    copy_successors( successor_list_type &)             = 0;
     virtual size_t  successor_count()                                   = 0;
-#endif
+#endif /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
 protected:
     //! Request an item from the sender
     template< typename X >
@@ -365,7 +364,7 @@ public:
     //! Remove a predecessor from the node
     virtual bool remove_predecessor( predecessor_type & ) { return false; }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     typedef internal::edge_container<predecessor_type> built_predecessors_type;
     typedef built_predecessors_type::edge_list_type predecessor_list_type;
     virtual built_predecessors_type &built_predecessors()                  = 0;
@@ -373,7 +372,7 @@ public:
     virtual void   internal_delete_built_predecessor( predecessor_type & ) = 0;
     virtual void   copy_predecessors( predecessor_list_type & )            = 0;
     virtual size_t predecessor_count()                                     = 0;
-#endif
+#endif /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
 protected:
     template<typename X>
     task *try_put_task(const X& t) {
@@ -495,7 +494,7 @@ public:
     //! Consumes the reserved item
     virtual bool try_consume( ) { return false; }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     //! interface to record edges for traversal & deletion
     typedef typename  internal::edge_container<successor_type> built_successors_type;
     typedef typename  built_successors_type::edge_list_type successor_list_type;
@@ -504,7 +503,7 @@ public:
     virtual void    internal_delete_built_successor( successor_type & ) = 0;
     virtual void    copy_successors( successor_list_type &)             = 0;
     virtual size_t  successor_count()                                   = 0;
-#endif
+#endif /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
 };  // class sender<T>
 
 //! Pure virtual template class that defines a receiver of messages of type T
@@ -544,7 +543,7 @@ public:
     //! Remove a predecessor from the node
     virtual bool remove_predecessor( predecessor_type & ) { return false; }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     typedef typename internal::edge_container<predecessor_type> built_predecessors_type;
     typedef typename built_predecessors_type::edge_list_type predecessor_list_type;
     virtual built_predecessors_type &built_predecessors()                  = 0;
@@ -552,7 +551,7 @@ public:
     virtual void   internal_delete_built_predecessor( predecessor_type & ) = 0;
     virtual void   copy_predecessors( predecessor_list_type & )            = 0;
     virtual size_t predecessor_count()                                     = 0;
-#endif
+#endif /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
 
 protected:
     //! put receiver back in initial state
@@ -609,7 +608,7 @@ public:
         return true;
     }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     typedef internal::edge_container<predecessor_type> built_predecessors_type;
     typedef built_predecessors_type::edge_list_type predecessor_list_type;
     built_predecessors_type &built_predecessors() __TBB_override { return my_built_predecessors; }
@@ -634,7 +633,7 @@ public:
         return my_built_predecessors.edge_count();
     }
 
-#endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
+#endif  /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
 
 protected:
     template< typename R, typename B > friend class run_and_put_task;
@@ -653,7 +652,7 @@ protected:
         return res? res : SUCCESSFULLY_ENQUEUED;
     }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     // continue_receiver must contain its own built_predecessors because it does
     // not have a node_cache.
     built_predecessors_type my_built_predecessors;
@@ -669,7 +668,7 @@ protected:
     void reset_receiver( reset_flags f ) __TBB_override {
         my_current_count = 0;
         if (f & rf_clear_edges) {
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
             my_built_predecessors.clear();
 #endif
             my_predecessor_count = my_initial_predecessor_count;
@@ -870,7 +869,7 @@ public:
     //Source node has no input type
     typedef null_type input_type;
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     typedef typename sender<output_type>::built_successors_type built_successors_type;
     typedef typename sender<output_type>::successor_list_type successor_list_type;
 #endif
@@ -925,7 +924,7 @@ public:
         return true;
     }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
 
     built_successors_type &built_successors() __TBB_override { return my_successors.built_successors(); }
 
@@ -948,7 +947,7 @@ public:
         spin_mutex::scoped_lock l(my_mutex);
         my_successors.copy_successors(v);
     }
-#endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
+#endif  /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
 
     //! Request an item from the node
     bool try_get( output_type &v ) __TBB_override {
@@ -1020,7 +1019,7 @@ public:
         return dynamic_cast< internal::source_body_leaf<output_type, Body> & >(body_ref).get_body();
     }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     void extract( ) __TBB_override {
         my_successors.built_successors().sender_extract(*this);   // removes "my_owner" == this from each successor
         my_active = init_my_active;
@@ -1125,7 +1124,7 @@ public:
     typedef internal::function_output<output_type> fOutput_type;
     typedef typename input_impl_type::predecessor_type predecessor_type;
     typedef typename fOutput_type::successor_type successor_type;
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     typedef typename input_impl_type::predecessor_list_type predecessor_list_type;
     typedef typename fOutput_type::successor_list_type successor_list_type;
 #endif
@@ -1157,7 +1156,7 @@ public:
     }
 #endif
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     void extract( ) __TBB_override {
         my_predecessors.built_predecessors().receiver_extract(*this);
         successors().built_successors().sender_extract(*this);
@@ -1234,7 +1233,7 @@ public:
     }
 #endif
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     void extract( ) __TBB_override {
         my_predecessors.built_predecessors().receiver_extract(*this);
         base_type::extract();
@@ -1254,7 +1253,7 @@ class split_node : public graph_node, public receiver<TupleType> {
 public:
     typedef TupleType input_type;
     typedef Allocator allocator_type;
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     typedef typename base_type::predecessor_type predecessor_type;
     typedef typename base_type::predecessor_list_type predecessor_list_type;
     typedef internal::predecessor_cache<input_type, null_mutex > predecessor_cache_type;
@@ -1302,7 +1301,7 @@ protected:
     graph& graph_reference() __TBB_override {
         return my_graph;
     }
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
 private: //! split_node doesn't use this "predecessors" functionality; so, we have "dummies" here;
     void extract() __TBB_override {}
 
@@ -1320,33 +1319,20 @@ private: //! split_node doesn't use this "predecessors" functionality; so, we ha
 
     //! dummy member
     built_predecessors_type my_predessors;
-#endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
+#endif  /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
 
 private:
     output_ports_type my_output_ports;
 };
 
 //! Implements an executable node that supports continue_msg -> Output
-template <typename Output
-#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
-        , typename Policy = internal::Policy<void>
-#endif
-         >
-class continue_node : public graph_node, public internal::continue_input<Output
-#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
-                             , Policy
-#endif
-                             >,
+template <typename Output, typename Policy = internal::Policy<void> >
+class continue_node : public graph_node, public internal::continue_input<Output, Policy>,
                       public internal::function_output<Output> {
 public:
     typedef continue_msg input_type;
     typedef Output output_type;
-    typedef internal::continue_input<Output
-#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
-                                    , Policy
-#endif
-                                    > input_impl_type;
-
+    typedef internal::continue_input<Output, Policy> input_impl_type;
     typedef internal::function_output<output_type> fOutput_type;
     typedef typename input_impl_type::predecessor_type predecessor_type;
     typedef typename fOutput_type::successor_type successor_type;
@@ -1385,7 +1371,7 @@ public:
     }
 #endif
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     void extract() __TBB_override {
         input_impl_type::my_built_predecessors.receiver_extract(*this);
         successors().built_successors().sender_extract(*this);
@@ -1406,263 +1392,6 @@ protected:
     }
 };  // continue_node
 
-template< typename T >
-class overwrite_node : public graph_node, public receiver<T>, public sender<T> {
-public:
-    typedef T input_type;
-    typedef T output_type;
-    typedef typename receiver<input_type>::predecessor_type predecessor_type;
-    typedef typename sender<output_type>::successor_type successor_type;
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
-    typedef typename receiver<input_type>::built_predecessors_type built_predecessors_type;
-    typedef typename sender<output_type>::built_successors_type built_successors_type;
-    typedef typename receiver<input_type>::predecessor_list_type predecessor_list_type;
-    typedef typename sender<output_type>::successor_list_type successor_list_type;
-#endif
-
-    explicit overwrite_node(graph &g) : graph_node(g), my_buffer_is_valid(false) {
-        my_successors.set_owner( this );
-        tbb::internal::fgt_node( tbb::internal::FLOW_OVERWRITE_NODE, &this->my_graph,
-                                 static_cast<receiver<input_type> *>(this), static_cast<sender<output_type> *>(this) );
-    }
-
-    //! Copy constructor; doesn't take anything from src; default won't work
-    overwrite_node( const overwrite_node& src ) :
-        graph_node(src.my_graph), receiver<T>(), sender<T>(), my_buffer_is_valid(false)
-    {
-        my_successors.set_owner( this );
-        tbb::internal::fgt_node( tbb::internal::FLOW_OVERWRITE_NODE, &this->my_graph,
-                                 static_cast<receiver<input_type> *>(this), static_cast<sender<output_type> *>(this) );
-    }
-
-    ~overwrite_node() {}
-
-#if TBB_PREVIEW_FLOW_GRAPH_TRACE
-    void set_name( const char *name ) __TBB_override {
-        tbb::internal::fgt_node_desc( this, name );
-    }
-#endif
-
-   bool register_successor( successor_type &s ) __TBB_override {
-        spin_mutex::scoped_lock l( my_mutex );
-        if (my_buffer_is_valid && internal::is_graph_active( my_graph )) {
-            // We have a valid value that must be forwarded immediately.
-            bool ret = s.try_put( my_buffer );
-#if TBB_PREVIEW_RESERVABLE_OVERWRITE_NODE
-            if ( ret ) {
-                // We add the successor that accepted our put
-                my_successors.register_successor( s );
-            } else {
-                // In case of reservation a race between the moment of reservation and register_successor can appear,
-                // because failed reserve does not mean that register_successor is not ready to put a message immediately.
-                // We have some sort of infinite loop: reserving node tries to set pull state for the edge,
-                // but overwrite_node tries to return push state back. That is why we have to break this loop with task creation.
-                task *rtask = new ( task::allocate_additional_child_of( *( my_graph.root_task() ) ) )
-                    register_predecessor_task( *this, s );
-                internal::spawn_in_graph_arena( my_graph, *rtask );
-            }
-#else
-            if ( ret || !s.register_predecessor( *this  ) ) {
-                // We add the successor: it accepted our put or it rejected it but won't let us become a predecessor
-                my_successors.register_successor( s );
-            } else {
-                // We don't add the successor: it rejected our put and we became its predecessor instead
-                return false;
-            }
-#endif
-        } else {
-            // No valid value yet, just add as successor
-            my_successors.register_successor( s );
-        }
-        return true;
-    }
-
-    bool remove_successor( successor_type &s ) __TBB_override {
-        spin_mutex::scoped_lock l( my_mutex );
-        my_successors.remove_successor(s);
-        return true;
-    }
-
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
-    built_predecessors_type &built_predecessors() __TBB_override { return my_built_predecessors; }
-    built_successors_type   &built_successors()   __TBB_override { return my_successors.built_successors(); }
-
-    void internal_add_built_successor( successor_type &s) __TBB_override {
-        spin_mutex::scoped_lock l( my_mutex );
-        my_successors.internal_add_built_successor(s);
-    }
-
-    void internal_delete_built_successor( successor_type &s) __TBB_override {
-        spin_mutex::scoped_lock l( my_mutex );
-        my_successors.internal_delete_built_successor(s);
-    }
-
-    size_t successor_count() __TBB_override {
-        spin_mutex::scoped_lock l( my_mutex );
-        return my_successors.successor_count();
-    }
-
-    void copy_successors(successor_list_type &v) __TBB_override {
-        spin_mutex::scoped_lock l( my_mutex );
-        my_successors.copy_successors(v);
-    }
-
-    void internal_add_built_predecessor( predecessor_type &p) __TBB_override {
-        spin_mutex::scoped_lock l( my_mutex );
-        my_built_predecessors.add_edge(p);
-    }
-
-    void internal_delete_built_predecessor( predecessor_type &p) __TBB_override {
-        spin_mutex::scoped_lock l( my_mutex );
-        my_built_predecessors.delete_edge(p);
-    }
-
-    size_t predecessor_count() __TBB_override {
-        spin_mutex::scoped_lock l( my_mutex );
-        return my_built_predecessors.edge_count();
-    }
-
-    void copy_predecessors( predecessor_list_type &v ) __TBB_override {
-        spin_mutex::scoped_lock l( my_mutex );
-        my_built_predecessors.copy_edges(v);
-    }
-
-    void extract() __TBB_override {
-        my_buffer_is_valid = false;
-        built_successors().sender_extract(*this);
-        built_predecessors().receiver_extract(*this);
-    }
-
-#endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
-
-    bool try_get( input_type &v ) __TBB_override {
-        spin_mutex::scoped_lock l( my_mutex );
-        if ( my_buffer_is_valid ) {
-            v = my_buffer;
-            return true;
-        }
-        return false;
-    }
-
-#if TBB_PREVIEW_RESERVABLE_OVERWRITE_NODE
-    //! Reserves an item
-    bool try_reserve( T &v ) __TBB_override {
-        return try_get(v);
-    }
-
-    //! Releases the reserved item
-    bool try_release() __TBB_override { return true; }
-
-    //! Consumes the reserved item
-    bool try_consume() __TBB_override { return true; }
-#endif
-
-    bool is_valid() {
-       spin_mutex::scoped_lock l( my_mutex );
-       return my_buffer_is_valid;
-    }
-
-    void clear() {
-       spin_mutex::scoped_lock l( my_mutex );
-       my_buffer_is_valid = false;
-    }
-
-protected:
-
-    template< typename R, typename B > friend class run_and_put_task;
-    template<typename X, typename Y> friend class internal::broadcast_cache;
-    template<typename X, typename Y> friend class internal::round_robin_cache;
-    task * try_put_task( const input_type &v ) __TBB_override {
-        spin_mutex::scoped_lock l( my_mutex );
-        return try_put_task_impl(v);
-    }
-
-    task * try_put_task_impl(const input_type &v) {
-        my_buffer = v;
-        my_buffer_is_valid = true;
-        task * rtask = my_successors.try_put_task(v);
-        if (!rtask) rtask = SUCCESSFULLY_ENQUEUED;
-        return rtask;
-    }
-
-    graph& graph_reference() __TBB_override {
-        return my_graph;
-    }
-
-#if TBB_PREVIEW_RESERVABLE_OVERWRITE_NODE
-    //! Breaks an infinite loop between the node reservation and register_successor call
-    struct register_predecessor_task : public task {
-        register_predecessor_task(sender<T>& owner, receiver<T>& succ) :
-            o(owner), s(succ) {};
-
-        tbb::task* execute() __TBB_override {
-            if (!s.register_predecessor(o)) {
-                o.register_successor(s);
-            }
-            return NULL;
-        }
-
-        sender<T>& o;
-        receiver<T>& s;
-    };
-#endif
-
-    spin_mutex my_mutex;
-    internal::broadcast_cache< input_type, null_rw_mutex > my_successors;
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
-    internal::edge_container<predecessor_type> my_built_predecessors;
-#endif
-    input_type my_buffer;
-    bool my_buffer_is_valid;
-    void reset_receiver(reset_flags /*f*/) __TBB_override {}
-
-    void reset_node( reset_flags f) __TBB_override {
-        my_buffer_is_valid = false;
-       if (f&rf_clear_edges) {
-           my_successors.clear();
-       }
-    }
-};  // overwrite_node
-
-template< typename T >
-class write_once_node : public overwrite_node<T> {
-public:
-    typedef T input_type;
-    typedef T output_type;
-    typedef overwrite_node<T> base_type;
-    typedef typename receiver<input_type>::predecessor_type predecessor_type;
-    typedef typename sender<output_type>::successor_type successor_type;
-
-    //! Constructor
-    explicit write_once_node(graph& g) : base_type(g) {
-        tbb::internal::fgt_node( tbb::internal::FLOW_WRITE_ONCE_NODE, &(this->my_graph),
-                                 static_cast<receiver<input_type> *>(this),
-                                 static_cast<sender<output_type> *>(this) );
-    }
-
-    //! Copy constructor: call base class copy constructor
-    write_once_node( const write_once_node& src ) : base_type(src) {
-        tbb::internal::fgt_node( tbb::internal::FLOW_WRITE_ONCE_NODE, &(this->my_graph),
-                                 static_cast<receiver<input_type> *>(this),
-                                 static_cast<sender<output_type> *>(this) );
-    }
-
-#if TBB_PREVIEW_FLOW_GRAPH_TRACE
-    void set_name( const char *name ) __TBB_override {
-        tbb::internal::fgt_node_desc( this, name );
-    }
-#endif
-
-protected:
-    template< typename R, typename B > friend class run_and_put_task;
-    template<typename X, typename Y> friend class internal::broadcast_cache;
-    template<typename X, typename Y> friend class internal::round_robin_cache;
-    task *try_put_task( const T &v ) __TBB_override {
-        spin_mutex::scoped_lock l( this->my_mutex );
-        return this->my_buffer_is_valid ? NULL : this->try_put_task_impl(v);
-    }
-};
-
 //! Forwards messages of type T to all successors
 template <typename T>
 class broadcast_node : public graph_node, public receiver<T>, public sender<T> {
@@ -1671,13 +1400,13 @@ public:
     typedef T output_type;
     typedef typename receiver<input_type>::predecessor_type predecessor_type;
     typedef typename sender<output_type>::successor_type successor_type;
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     typedef typename receiver<input_type>::predecessor_list_type predecessor_list_type;
     typedef typename sender<output_type>::successor_list_type successor_list_type;
 #endif
 private:
     internal::broadcast_cache<input_type> my_successors;
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     internal::edge_container<predecessor_type> my_built_predecessors;
     spin_mutex pred_mutex;  // serialize accesses on edge_container
 #endif
@@ -1716,7 +1445,7 @@ public:
         return true;
     }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     typedef typename sender<T>::built_successors_type built_successors_type;
 
     built_successors_type &built_successors() __TBB_override { return my_successors.built_successors(); }
@@ -1765,7 +1494,7 @@ public:
         my_built_predecessors.receiver_extract(*this);
         my_successors.built_successors().sender_extract(*this);
     }
-#endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
+#endif  /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
 
 protected:
     template< typename R, typename B > friend class run_and_put_task;
@@ -1787,7 +1516,7 @@ protected:
     void reset_node(reset_flags f) __TBB_override {
         if (f&rf_clear_edges) {
            my_successors.clear();
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
            my_built_predecessors.clear();
 #endif
         }
@@ -1804,7 +1533,7 @@ public:
     typedef typename receiver<input_type>::predecessor_type predecessor_type;
     typedef typename sender<output_type>::successor_type successor_type;
     typedef buffer_node<T, A> class_type;
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     typedef typename receiver<input_type>::predecessor_list_type predecessor_list_type;
     typedef typename sender<output_type>::successor_list_type successor_list_type;
 #endif
@@ -1812,14 +1541,14 @@ protected:
     typedef size_t size_type;
     internal::round_robin_cache< T, null_rw_mutex > my_successors;
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     internal::edge_container<predecessor_type> my_built_predecessors;
 #endif
 
     friend class internal::forward_task_bypass< buffer_node< T, A > >;
 
     enum op_type {reg_succ, rem_succ, req_item, res_item, rel_res, con_res, put_item, try_fwd_task
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
         , add_blt_succ, del_blt_succ,
         add_blt_pred, del_blt_pred,
         blt_succ_cnt, blt_pred_cnt,
@@ -1831,7 +1560,7 @@ protected:
     class buffer_operation : public internal::aggregated_operation< buffer_operation > {
     public:
         char type;
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
         task * ltask;
         union {
             input_type *elem;
@@ -1848,7 +1577,7 @@ protected:
 #endif
         buffer_operation(const T& e, op_type t) : type(char(t))
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
                                                   , ltask(NULL), elem(const_cast<T*>(&e))
 #else
                                                   , elem(const_cast<T*>(&e)) , ltask(NULL)
@@ -1884,7 +1613,7 @@ protected:
             case con_res:  internal_consume(tmp); try_forwarding = true; break;
             case put_item: try_forwarding = internal_push(tmp); break;
             case try_fwd_task: internal_forward_task(tmp); break;
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
             // edge recording
             case add_blt_succ: internal_add_built_succ(tmp); break;
             case del_blt_succ: internal_del_built_succ(tmp); break;
@@ -1958,7 +1687,7 @@ protected:
         __TBB_store_with_release(op->status, internal::SUCCEEDED);
     }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     typedef typename sender<T>::built_successors_type built_successors_type;
 
     built_successors_type &built_successors() __TBB_override { return my_successors.built_successors(); }
@@ -2007,7 +1736,7 @@ protected:
         __TBB_store_with_release(op->status, internal::SUCCEEDED);
     }
 
-#endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
+#endif  /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
 
 private:
     void order() {}
@@ -2131,7 +1860,7 @@ public:
         return true;
     }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     void internal_add_built_successor( successor_type &r) __TBB_override {
         buffer_operation op_data(add_blt_succ);
         op_data.r = &r;
@@ -2180,7 +1909,7 @@ public:
         my_aggregator.execute(&op_data);
     }
 
-#endif
+#endif /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
 
     //! Removes a successor.
     /** Removes successor r from the list of successors.
@@ -2268,7 +1997,7 @@ protected:
 
     void reset_receiver(reset_flags /*f*/) __TBB_override { }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
 public:
     void extract() __TBB_override {
         my_built_predecessors.receiver_extract(*this);
@@ -2282,7 +2011,7 @@ protected:
         // TODO: just clear structures
         if (f&rf_clear_edges) {
             my_successors.clear();
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
             my_built_predecessors.clear();
 #endif
         }
@@ -2664,7 +2393,7 @@ public:
     typedef T output_type;
     typedef typename receiver<input_type>::predecessor_type predecessor_type;
     typedef typename sender<output_type>::successor_type successor_type;
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     typedef typename receiver<input_type>::built_predecessors_type built_predecessors_type;
     typedef typename sender<output_type>::built_successors_type built_successors_type;
     typedef typename receiver<input_type>::predecessor_list_type predecessor_list_type;
@@ -2820,7 +2549,7 @@ public:
         return true;
     }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     built_successors_type &built_successors() __TBB_override { return my_successors.built_successors(); }
     built_predecessors_type &built_predecessors() __TBB_override { return my_predecessors.built_predecessors(); }
 
@@ -2858,7 +2587,7 @@ public:
         my_predecessors.built_predecessors().receiver_extract(*this);
         decrement.built_predecessors().receiver_extract(decrement);
     }
-#endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
+#endif  /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
 
     //! Adds src to the list of cached predecessors.
     bool register_predecessor( predecessor_type &src ) __TBB_override {
@@ -3116,7 +2845,7 @@ public:
     }
 
 #if TBB_PREVIEW_FLOW_GRAPH_TRACE
-     void set_name( const char *name ) {
+     void set_name( const char *name ) __TBB_override {
         tbb::internal::fgt_node_desc( this, name );
     }
 #endif
@@ -3141,7 +2870,7 @@ public:
     }
 
 #if TBB_PREVIEW_FLOW_GRAPH_TRACE
-     void set_name( const char *name ) {
+     void set_name( const char *name ) __TBB_override {
         tbb::internal::fgt_node_desc( this, name );
     }
 #endif
@@ -3166,7 +2895,7 @@ public:
     }
 
 #if TBB_PREVIEW_FLOW_GRAPH_TRACE
-        void set_name( const char *name ) {
+    void set_name( const char *name ) __TBB_override {
         tbb::internal::fgt_node_desc( this, name );
     }
 #endif
@@ -3367,7 +3096,7 @@ inline void internal_make_edge( internal::untyped_sender &p, internal::untyped_r
 template< typename T >
 inline void internal_make_edge( sender<T> &p, receiver<T> &s ) {
 #endif
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     s.internal_add_built_predecessor(p);
     p.internal_add_built_successor(s);
 #endif
@@ -3431,7 +3160,7 @@ template< typename T >
 inline void internal_remove_edge( sender<T> &p, receiver<T> &s ) {
 #endif
     p.remove_successor( s );
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     // TODO: should we try to remove p from the predecessor list of s, in case the edge is reversed?
     p.internal_delete_built_successor(s);
     s.internal_delete_built_predecessor(p);
@@ -3486,7 +3215,7 @@ inline void remove_edge( sender<S>& output, V& input) {
 }
 #endif
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
 template<typename C >
 template< typename S >
 void internal::edge_container<C>::sender_extract( S &s ) {
@@ -3504,7 +3233,7 @@ void internal::edge_container<C>::receiver_extract( R &r ) {
         remove_edge(**i, r);
     }
 }
-#endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
+#endif  /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
 
 //! Returns a copy of the body from a function or continue node
 template< typename Body, typename Node >
@@ -3525,9 +3254,6 @@ public:
     typedef tbb::flow::tuple< sender<OutputTypes>&... > output_ports_type;
 
 private:
-#if TBB_PREVIEW_FLOW_GRAPH_TRACE
-    const char *my_type_name;
-#endif
     std::unique_ptr<input_ports_type> my_input_ports;
     std::unique_ptr<output_ports_type> my_output_ports;
 
@@ -3539,38 +3265,32 @@ protected:
 
 public:
 #if TBB_PREVIEW_FLOW_GRAPH_TRACE
-    composite_node( graph &g, const char *type_name ) : graph_node(g), my_type_name(type_name) {
+    composite_node( graph &g, const char *type_name = "composite_node" ) : graph_node(g) {
         tbb::internal::fgt_multiinput_multioutput_node( tbb::internal::FLOW_COMPOSITE_NODE, this, &this->my_graph );
-        tbb::internal::fgt_multiinput_multioutput_node_desc( this, my_type_name );
+        tbb::internal::fgt_multiinput_multioutput_node_desc( this, type_name );
     }
-#endif
+#else
     composite_node( graph &g ) : graph_node(g) {
         tbb::internal::fgt_multiinput_multioutput_node( tbb::internal::FLOW_COMPOSITE_NODE, this, &this->my_graph );
     }
-
-   template<typename T1, typename T2>
-   void set_external_ports(T1&& input_ports_tuple, T2&& output_ports_tuple) {
-       __TBB_STATIC_ASSERT(NUM_INPUTS == tbb::flow::tuple_size<input_ports_type>::value, "number of arguments does not match number of input ports");
-       __TBB_STATIC_ASSERT(NUM_OUTPUTS == tbb::flow::tuple_size<output_ports_type>::value, "number of arguments does not match number of output ports");
-       my_input_ports = tbb::internal::make_unique<input_ports_type>(std::forward<T1>(input_ports_tuple));
-       my_output_ports = tbb::internal::make_unique<output_ports_type>(std::forward<T2>(output_ports_tuple));
-
-#if TBB_PREVIEW_FLOW_GRAPH_TRACE
-      tbb::internal::fgt_internal_input_alias_helper<T1, NUM_INPUTS>::alias_port( this, input_ports_tuple);
-      tbb::internal::fgt_internal_output_alias_helper<T2, NUM_OUTPUTS>::alias_port( this, output_ports_tuple);
 #endif
-   }
 
-#if TBB_PREVIEW_FLOW_GRAPH_TRACE
+    template<typename T1, typename T2>
+    void set_external_ports(T1&& input_ports_tuple, T2&& output_ports_tuple) {
+        __TBB_STATIC_ASSERT(NUM_INPUTS == tbb::flow::tuple_size<input_ports_type>::value, "number of arguments does not match number of input ports");
+        __TBB_STATIC_ASSERT(NUM_OUTPUTS == tbb::flow::tuple_size<output_ports_type>::value, "number of arguments does not match number of output ports");
+        my_input_ports = tbb::internal::make_unique<input_ports_type>(std::forward<T1>(input_ports_tuple));
+        my_output_ports = tbb::internal::make_unique<output_ports_type>(std::forward<T2>(output_ports_tuple));
+
+        tbb::internal::fgt_internal_input_alias_helper<T1, NUM_INPUTS>::alias_port( this, input_ports_tuple);
+        tbb::internal::fgt_internal_output_alias_helper<T2, NUM_OUTPUTS>::alias_port( this, output_ports_tuple);
+    }
+
     template< typename... NodeTypes >
     void add_visible_nodes(const NodeTypes&... n) { internal::add_nodes_impl(this, true, n...); }
 
     template< typename... NodeTypes >
     void add_nodes(const NodeTypes&... n) { internal::add_nodes_impl(this, false, n...); }
-#else
-    template<typename... Nodes> void add_nodes(Nodes&...) { }
-    template<typename... Nodes> void add_visible_nodes(Nodes&...) { }
-#endif
 
 #if TBB_PREVIEW_FLOW_GRAPH_TRACE
     void set_name( const char *name ) __TBB_override {
@@ -3588,7 +3308,7 @@ public:
          return *my_output_ports;
     }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     void extract() __TBB_override {
         __TBB_ASSERT(false, "Current composite_node implementation does not support extract");
     }
@@ -3602,9 +3322,6 @@ public:
     typedef tbb::flow::tuple< receiver<InputTypes>&... > input_ports_type;
 
 private:
-#if TBB_PREVIEW_FLOW_GRAPH_TRACE
-    const char *my_type_name;
-#endif
     std::unique_ptr<input_ports_type> my_input_ports;
     static const size_t NUM_INPUTS = sizeof...(InputTypes);
 
@@ -3613,12 +3330,14 @@ protected:
 
 public:
 #if TBB_PREVIEW_FLOW_GRAPH_TRACE
-    composite_node( graph &g, const char *type_name = "composite_node") : graph_node(g), my_type_name(type_name) {
-        tbb::internal::itt_make_task_group( tbb::internal::ITT_DOMAIN_FLOW, this, tbb::internal::FLOW_NODE, &g, tbb::internal::FLOW_GRAPH, tbb::internal::FLOW_COMPOSITE_NODE );
-        tbb::internal::fgt_multiinput_multioutput_node_desc( this, my_type_name );
+    composite_node( graph &g, const char *type_name = "composite_node") : graph_node(g) {
+        tbb::internal::fgt_composite( this, &g );
+        tbb::internal::fgt_multiinput_multioutput_node_desc( this, type_name );
     }
 #else
-    composite_node( graph &g) : graph_node(g) {}
+    composite_node( graph &g ) : graph_node(g) {
+        tbb::internal::fgt_composite( this, &g );
+    }
 #endif
 
    template<typename T>
@@ -3627,21 +3346,14 @@ public:
 
        my_input_ports = tbb::internal::make_unique<input_ports_type>(std::forward<T>(input_ports_tuple));
 
-#if TBB_PREVIEW_FLOW_GRAPH_TRACE
-      tbb::internal::fgt_internal_input_alias_helper<T, NUM_INPUTS>::alias_port( this, std::forward<T>(input_ports_tuple));
-#endif
+       tbb::internal::fgt_internal_input_alias_helper<T, NUM_INPUTS>::alias_port( this, std::forward<T>(input_ports_tuple));
    }
 
-#if TBB_PREVIEW_FLOW_GRAPH_TRACE
     template< typename... NodeTypes >
     void add_visible_nodes(const NodeTypes&... n) { internal::add_nodes_impl(this, true, n...); }
 
     template< typename... NodeTypes >
     void add_nodes( const NodeTypes&... n) { internal::add_nodes_impl(this, false, n...); }
-#else
-    template<typename... Nodes> void add_nodes(Nodes&...) {}
-    template<typename... Nodes> void add_visible_nodes(Nodes&...) {}
-#endif
 
 #if TBB_PREVIEW_FLOW_GRAPH_TRACE
     void set_name( const char *name ) __TBB_override {
@@ -3654,7 +3366,7 @@ public:
          return *my_input_ports;
     }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     void extract() __TBB_override {
         __TBB_ASSERT(false, "Current composite_node implementation does not support extract");
     }
@@ -3669,9 +3381,6 @@ public:
     typedef tbb::flow::tuple< sender<OutputTypes>&... > output_ports_type;
 
 private:
-#if TBB_PREVIEW_FLOW_GRAPH_TRACE
-    const char *my_type_name;
-#endif
     std::unique_ptr<output_ports_type> my_output_ports;
     static const size_t NUM_OUTPUTS = sizeof...(OutputTypes);
 
@@ -3680,12 +3389,14 @@ protected:
 
 public:
 #if TBB_PREVIEW_FLOW_GRAPH_TRACE
-    composite_node( graph &g, const char *type_name = "composite_node") : graph_node(g), my_type_name(type_name) {
-        tbb::internal::itt_make_task_group( tbb::internal::ITT_DOMAIN_FLOW, this, tbb::internal::FLOW_NODE, &g, tbb::internal::FLOW_GRAPH, tbb::internal::FLOW_COMPOSITE_NODE );
-        tbb::internal::fgt_multiinput_multioutput_node_desc( this, my_type_name );
+    composite_node( graph &g, const char *type_name = "composite_node") : graph_node(g) {
+        tbb::internal::fgt_composite( this, &g );
+        tbb::internal::fgt_multiinput_multioutput_node_desc( this, type_name );
     }
 #else
-    composite_node( graph &g) : graph_node(g) {}
+    composite_node( graph &g ) : graph_node(g) {
+        tbb::internal::fgt_composite( this, &g );
+    }
 #endif
 
    template<typename T>
@@ -3694,21 +3405,14 @@ public:
 
        my_output_ports = tbb::internal::make_unique<output_ports_type>(std::forward<T>(output_ports_tuple));
 
-#if TBB_PREVIEW_FLOW_GRAPH_TRACE
-      tbb::internal::fgt_internal_output_alias_helper<T, NUM_OUTPUTS>::alias_port( this, std::forward<T>(output_ports_tuple));
-#endif
+       tbb::internal::fgt_internal_output_alias_helper<T, NUM_OUTPUTS>::alias_port( this, std::forward<T>(output_ports_tuple));
    }
 
-#if TBB_PREVIEW_FLOW_GRAPH_TRACE
     template<typename... NodeTypes >
     void add_visible_nodes(const NodeTypes&... n) { internal::add_nodes_impl(this, true, n...); }
 
     template<typename... NodeTypes >
     void add_nodes(const NodeTypes&... n) { internal::add_nodes_impl(this, false, n...); }
-#else
-    template<typename... Nodes> void add_nodes(Nodes&...) {}
-    template<typename... Nodes> void add_visible_nodes(Nodes&...) {}
-#endif
 
 #if TBB_PREVIEW_FLOW_GRAPH_TRACE
     void set_name( const char *name ) __TBB_override {
@@ -3721,7 +3425,7 @@ public:
          return *my_output_ports;
     }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     void extract() __TBB_override {
         __TBB_ASSERT(false, "Current composite_node implementation does not support extract");
     }
@@ -3770,11 +3474,7 @@ private:
 
 //! Implements async node
 template < typename Input, typename Output,
-#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
            typename Policy = queueing_lightweight,
-#else
-           typename Policy = queueing,
-#endif
            typename Allocator=cache_aligned_allocator<Input> >
 class async_node : public multifunction_node< Input, tuple< Output >, Policy, Allocator >, public sender< Output > {
     typedef multifunction_node< Input, tuple< Output >, Policy, Allocator > base_type;
@@ -3861,7 +3561,7 @@ public:
 
 #if TBB_PREVIEW_FLOW_GRAPH_TRACE
     void set_name( const char *name ) __TBB_override {
-            tbb::internal::fgt_multioutput_node_desc( this, name );
+        tbb::internal::fgt_multioutput_node_desc( this, name );
     }
 #endif
 
@@ -3886,7 +3586,7 @@ public:
         return ab.get_body();
     }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     //! interface to record edges for traversal & deletion
     typedef typename  internal::edge_container<successor_type> built_successors_type;
     typedef typename  built_successors_type::edge_list_type successor_list_type;
@@ -3909,7 +3609,7 @@ public:
     size_t  successor_count() __TBB_override {
         return internal::output_port<0>(*this).successor_count();
     }
-#endif
+#endif /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
 
 protected:
 
@@ -3922,6 +3622,256 @@ protected:
 #include "internal/_flow_graph_streaming_node.h"
 #endif // __TBB_PREVIEW_STREAMING_NODE
 
+} // interfaceX
+
+
+namespace interface10a {
+
+using namespace interface10;
+namespace internal = interface10::internal;
+
+template< typename T >
+class overwrite_node : public graph_node, public receiver<T>, public sender<T> {
+public:
+    typedef T input_type;
+    typedef T output_type;
+    typedef typename receiver<input_type>::predecessor_type predecessor_type;
+    typedef typename sender<output_type>::successor_type successor_type;
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
+    typedef typename receiver<input_type>::built_predecessors_type built_predecessors_type;
+    typedef typename sender<output_type>::built_successors_type built_successors_type;
+    typedef typename receiver<input_type>::predecessor_list_type predecessor_list_type;
+    typedef typename sender<output_type>::successor_list_type successor_list_type;
+#endif
+
+    explicit overwrite_node(graph &g) : graph_node(g), my_buffer_is_valid(false) {
+        my_successors.set_owner( this );
+        tbb::internal::fgt_node( tbb::internal::FLOW_OVERWRITE_NODE, &this->my_graph,
+                                 static_cast<receiver<input_type> *>(this), static_cast<sender<output_type> *>(this) );
+    }
+
+    //! Copy constructor; doesn't take anything from src; default won't work
+    overwrite_node( const overwrite_node& src ) :
+        graph_node(src.my_graph), receiver<T>(), sender<T>(), my_buffer_is_valid(false)
+    {
+        my_successors.set_owner( this );
+        tbb::internal::fgt_node( tbb::internal::FLOW_OVERWRITE_NODE, &this->my_graph,
+                                 static_cast<receiver<input_type> *>(this), static_cast<sender<output_type> *>(this) );
+    }
+
+    ~overwrite_node() {}
+
+#if TBB_PREVIEW_FLOW_GRAPH_TRACE
+    void set_name( const char *name ) __TBB_override {
+        tbb::internal::fgt_node_desc( this, name );
+    }
+#endif
+
+   bool register_successor( successor_type &s ) __TBB_override {
+        spin_mutex::scoped_lock l( my_mutex );
+        if (my_buffer_is_valid && internal::is_graph_active( my_graph )) {
+            // We have a valid value that must be forwarded immediately.
+            bool ret = s.try_put( my_buffer );
+            if ( ret ) {
+                // We add the successor that accepted our put
+                my_successors.register_successor( s );
+            } else {
+                // In case of reservation a race between the moment of reservation and register_successor can appear,
+                // because failed reserve does not mean that register_successor is not ready to put a message immediately.
+                // We have some sort of infinite loop: reserving node tries to set pull state for the edge,
+                // but overwrite_node tries to return push state back. That is why we have to break this loop with task creation.
+                task *rtask = new ( task::allocate_additional_child_of( *( my_graph.root_task() ) ) )
+                    register_predecessor_task( *this, s );
+                internal::spawn_in_graph_arena( my_graph, *rtask );
+            }
+        } else {
+            // No valid value yet, just add as successor
+            my_successors.register_successor( s );
+        }
+        return true;
+    }
+
+    bool remove_successor( successor_type &s ) __TBB_override {
+        spin_mutex::scoped_lock l( my_mutex );
+        my_successors.remove_successor(s);
+        return true;
+    }
+
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
+    built_predecessors_type &built_predecessors() __TBB_override { return my_built_predecessors; }
+    built_successors_type   &built_successors()   __TBB_override { return my_successors.built_successors(); }
+
+    void internal_add_built_successor( successor_type &s) __TBB_override {
+        spin_mutex::scoped_lock l( my_mutex );
+        my_successors.internal_add_built_successor(s);
+    }
+
+    void internal_delete_built_successor( successor_type &s) __TBB_override {
+        spin_mutex::scoped_lock l( my_mutex );
+        my_successors.internal_delete_built_successor(s);
+    }
+
+    size_t successor_count() __TBB_override {
+        spin_mutex::scoped_lock l( my_mutex );
+        return my_successors.successor_count();
+    }
+
+    void copy_successors(successor_list_type &v) __TBB_override {
+        spin_mutex::scoped_lock l( my_mutex );
+        my_successors.copy_successors(v);
+    }
+
+    void internal_add_built_predecessor( predecessor_type &p) __TBB_override {
+        spin_mutex::scoped_lock l( my_mutex );
+        my_built_predecessors.add_edge(p);
+    }
+
+    void internal_delete_built_predecessor( predecessor_type &p) __TBB_override {
+        spin_mutex::scoped_lock l( my_mutex );
+        my_built_predecessors.delete_edge(p);
+    }
+
+    size_t predecessor_count() __TBB_override {
+        spin_mutex::scoped_lock l( my_mutex );
+        return my_built_predecessors.edge_count();
+    }
+
+    void copy_predecessors( predecessor_list_type &v ) __TBB_override {
+        spin_mutex::scoped_lock l( my_mutex );
+        my_built_predecessors.copy_edges(v);
+    }
+
+    void extract() __TBB_override {
+        my_buffer_is_valid = false;
+        built_successors().sender_extract(*this);
+        built_predecessors().receiver_extract(*this);
+    }
+
+#endif  /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
+
+    bool try_get( input_type &v ) __TBB_override {
+        spin_mutex::scoped_lock l( my_mutex );
+        if ( my_buffer_is_valid ) {
+            v = my_buffer;
+            return true;
+        }
+        return false;
+    }
+
+    //! Reserves an item
+    bool try_reserve( T &v ) __TBB_override {
+        return try_get(v);
+    }
+
+    //! Releases the reserved item
+    bool try_release() __TBB_override { return true; }
+
+    //! Consumes the reserved item
+    bool try_consume() __TBB_override { return true; }
+
+    bool is_valid() {
+       spin_mutex::scoped_lock l( my_mutex );
+       return my_buffer_is_valid;
+    }
+
+    void clear() {
+       spin_mutex::scoped_lock l( my_mutex );
+       my_buffer_is_valid = false;
+    }
+
+protected:
+
+    template< typename R, typename B > friend class run_and_put_task;
+    template<typename X, typename Y> friend class internal::broadcast_cache;
+    template<typename X, typename Y> friend class internal::round_robin_cache;
+    task * try_put_task( const input_type &v ) __TBB_override {
+        spin_mutex::scoped_lock l( my_mutex );
+        return try_put_task_impl(v);
+    }
+
+    task * try_put_task_impl(const input_type &v) {
+        my_buffer = v;
+        my_buffer_is_valid = true;
+        task * rtask = my_successors.try_put_task(v);
+        if (!rtask) rtask = SUCCESSFULLY_ENQUEUED;
+        return rtask;
+    }
+
+    graph& graph_reference() __TBB_override {
+        return my_graph;
+    }
+
+    //! Breaks an infinite loop between the node reservation and register_successor call
+    struct register_predecessor_task : public task {
+        register_predecessor_task(predecessor_type& owner, successor_type& succ) :
+            o(owner), s(succ) {};
+
+        tbb::task* execute() __TBB_override {
+            if (!s.register_predecessor(o)) {
+                o.register_successor(s);
+            }
+            return NULL;
+        }
+
+        predecessor_type& o;
+        successor_type& s;
+    };
+
+    spin_mutex my_mutex;
+    internal::broadcast_cache< input_type, null_rw_mutex > my_successors;
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
+    internal::edge_container<predecessor_type> my_built_predecessors;
+#endif
+    input_type my_buffer;
+    bool my_buffer_is_valid;
+    void reset_receiver(reset_flags /*f*/) __TBB_override {}
+
+    void reset_node( reset_flags f) __TBB_override {
+        my_buffer_is_valid = false;
+       if (f&rf_clear_edges) {
+           my_successors.clear();
+       }
+    }
+};  // overwrite_node
+
+template< typename T >
+class write_once_node : public overwrite_node<T> {
+public:
+    typedef T input_type;
+    typedef T output_type;
+    typedef overwrite_node<T> base_type;
+    typedef typename receiver<input_type>::predecessor_type predecessor_type;
+    typedef typename sender<output_type>::successor_type successor_type;
+
+    //! Constructor
+    explicit write_once_node(graph& g) : base_type(g) {
+        tbb::internal::fgt_node( tbb::internal::FLOW_WRITE_ONCE_NODE, &(this->my_graph),
+                                 static_cast<receiver<input_type> *>(this),
+                                 static_cast<sender<output_type> *>(this) );
+    }
+
+    //! Copy constructor: call base class copy constructor
+    write_once_node( const write_once_node& src ) : base_type(src) {
+        tbb::internal::fgt_node( tbb::internal::FLOW_WRITE_ONCE_NODE, &(this->my_graph),
+                                 static_cast<receiver<input_type> *>(this),
+                                 static_cast<sender<output_type> *>(this) );
+    }
+
+#if TBB_PREVIEW_FLOW_GRAPH_TRACE
+    void set_name( const char *name ) __TBB_override {
+        tbb::internal::fgt_node_desc( this, name );
+    }
+#endif
+
+protected:
+    template< typename R, typename B > friend class run_and_put_task;
+    template<typename X, typename Y> friend class internal::broadcast_cache;
+    template<typename X, typename Y> friend class internal::round_robin_cache;
+    task *try_put_task( const T &v ) __TBB_override {
+        spin_mutex::scoped_lock l( this->my_mutex );
+        return this->my_buffer_is_valid ? NULL : this->try_put_task_impl(v);
+    }
+};
 } // interfaceX
 
     using interface10::reset_flags;
@@ -3943,8 +3893,8 @@ protected:
     using interface10::internal::cast_to;
     using interface10::internal::is_a;
     using interface10::continue_node;
-    using interface10::overwrite_node;
-    using interface10::write_once_node;
+    using interface10a::overwrite_node;
+    using interface10a::write_once_node;
     using interface10::broadcast_node;
     using interface10::buffer_node;
     using interface10::queue_node;

@@ -605,9 +605,7 @@ int TestMain() {
     run_tests<minimal_type, minimal_type>();
     run_tests<int, minimal_type>();
 
-#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
     lightweight_testing::test<tbb::flow::async_node>(NUMBER_OF_MSGS);
-#endif
 
     test_reset();
     test_copy_ctor();

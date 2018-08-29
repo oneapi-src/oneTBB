@@ -18,6 +18,10 @@
 
 */
 
+#if __TBB_CPF_BUILD
+#define TBB_DEPRECATED_FLOW_NODE_EXTRACTION 1
+#endif
+
 #include "test_join_node.h"
 
 static tbb::atomic<int> output_count;

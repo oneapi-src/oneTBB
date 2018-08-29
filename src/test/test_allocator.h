@@ -161,7 +161,7 @@ void TestBasic( A& a ) {
     a.deallocate(p,1);
 
 #if TBB_USE_EXCEPTIONS
-    size_t too_big = (~size_t(0) - 1024*1024)/sizeof(T);
+    volatile size_t too_big = (~size_t(0) - 1024*1024)/sizeof(T);
     bool exception_caught = false;
     typename A::pointer p1 = NULL;
     try {

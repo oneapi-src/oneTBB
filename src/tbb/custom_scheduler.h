@@ -538,6 +538,7 @@ void custom_scheduler<SchedulerTraits>::local_wait_for_all( task& parent, task* 
                     case task::recycle: // set by recycle_as_safe_continuation()
                         t->prefix().state = task::allocated;
 #if __TBB_RECYCLE_TO_ENQUEUE
+                        __TBB_fallthrough;
                     case task::to_enqueue: // set by recycle_to_enqueue()
 #endif
                         __TBB_ASSERT( t_next != t, "a task returned from method execute() can not be recycled in another way" );

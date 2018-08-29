@@ -24,10 +24,6 @@
 namespace tbb {
     namespace internal {
 
-        //
-        // This is not under __TBB_ITT_STRUCTURE_API because these values are used directly in flow_graph.h.
-        //
-
         // include list of index names
         #define TBB_STRING_RESOURCE(index_name,str) index_name,
         enum string_index {
@@ -138,7 +134,6 @@ namespace tbb {
         void __TBB_EXPORTED_FUNC itt_store_pointer_with_release_v3(void *dst, void *src);
         void* __TBB_EXPORTED_FUNC itt_load_pointer_with_acquire_v3(const void *src);
         void* __TBB_EXPORTED_FUNC itt_load_pointer_v3( const void* src );
-#if __TBB_ITT_STRUCTURE_API
         enum itt_domain_enum { ITT_DOMAIN_FLOW=0, ITT_DOMAIN_MAIN=1, ITT_DOMAIN_ALGO=2, ITT_NUM_DOMAINS };
 
         void __TBB_EXPORTED_FUNC itt_make_task_group_v7( itt_domain_enum domain, void *group, unsigned long long group_extra,
@@ -154,7 +149,6 @@ namespace tbb {
         void __TBB_EXPORTED_FUNC itt_region_begin_v9( itt_domain_enum domain, void *region, unsigned long long region_extra,
                                                       void *parent, unsigned long long parent_extra, string_index name_index );
         void __TBB_EXPORTED_FUNC itt_region_end_v9( itt_domain_enum domain, void *region, unsigned long long region_extra );
-#endif // __TBB_ITT_STRUCTURE_API
 
         // two template arguments are to workaround /Wp64 warning with tbb::atomic specialized for unsigned type
         template <typename T, typename U>
@@ -238,12 +232,6 @@ namespace tbb {
             call_itt_notify_v5((int)t, ptr);
         }
 
-#else
-        inline void call_itt_notify(notify_type /*t*/, void * /*ptr*/) {}
-
-#endif // TBB_USE_THREADING_TOOLS
-
-#if __TBB_ITT_STRUCTURE_API
         inline void itt_make_task_group( itt_domain_enum domain, void *group, unsigned long long group_extra,
                                          void *parent, unsigned long long parent_extra, string_index name_index ) {
             itt_make_task_group_v7( domain, group, group_extra, parent, parent_extra, name_index );
@@ -276,7 +264,28 @@ namespace tbb {
         inline void itt_region_end( itt_domain_enum domain, void *region, unsigned long long region_extra  ) {
             itt_region_end_v9( domain, region, region_extra );
         }
-#endif // __TBB_ITT_STRUCTURE_API
+#else
+        inline void call_itt_notify(notify_type /*t*/, void* /*ptr*/) {}
+
+        inline void itt_make_task_group( itt_domain_enum /*domain*/, void* /*group*/, unsigned long long /*group_extra*/,
+                                         void* /*parent*/, unsigned long long /*parent_extra*/, string_index /*name_index*/ ) {}
+
+        inline void itt_metadata_str_add( itt_domain_enum /*domain*/, void* /*addr*/, unsigned long long /*addr_extra*/,
+                                          string_index /*key*/, const char* /*value*/ ) {}
+
+        inline void itt_relation_add( itt_domain_enum /*domain*/, void* /*addr0*/, unsigned long long /*addr0_extra*/,
+                                      itt_relation /*relation*/, void* /*addr1*/, unsigned long long /*addr1_extra*/ ) {}
+
+        inline void itt_task_begin( itt_domain_enum /*domain*/, void* /*task*/, unsigned long long /*task_extra*/,
+                                    void* /*parent*/, unsigned long long /*parent_extra*/, string_index /*name_index*/ ) {}
+
+        inline void itt_task_end( itt_domain_enum /*domain*/ ) {}
+
+        inline void itt_region_begin( itt_domain_enum /*domain*/, void* /*region*/, unsigned long long /*region_extra*/,
+                                      void* /*parent*/, unsigned long long /*parent_extra*/, string_index /*name_index*/ ) {}
+
+        inline void itt_region_end( itt_domain_enum /*domain*/, void* /*region*/, unsigned long long /*region_extra*/ ) {}
+#endif // TBB_USE_THREADING_TOOLS
 
     } // namespace internal
 } // namespace tbb

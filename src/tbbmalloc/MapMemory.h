@@ -149,7 +149,7 @@ void* MapMemory (size_t bytes, PageType pageType)
         }
         default:
         {
-            MALLOC_ASSERT(NULL, "Unknown page type");
+            MALLOC_ASSERT(false, "Unknown page type");
         }
     }
 

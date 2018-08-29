@@ -20,6 +20,11 @@
 
 // have to expose the reset_node method to be able to reset a function_body
 #include "harness.h"
+
+#if __TBB_CPF_BUILD
+#define TBB_DEPRECATED_FLOW_NODE_EXTRACTION 1
+#endif
+
 #include "harness_graph.h"
 #include "tbb/flow_graph.h"
 #include "tbb/task.h"
@@ -47,7 +52,7 @@ public:
 
     typedef typename tbb::flow::receiver<T>::predecessor_type predecessor_type;
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     typedef typename tbb::flow::receiver<T>::built_predecessors_type built_predecessors_type;
     typedef typename tbb::flow::receiver<T>::predecessor_list_type predecessor_list_type;
     built_predecessors_type bpt;
@@ -143,7 +148,7 @@ void test_single_dest() {
    function_body<T> b2( counters2 );
    tbb::flow::function_node<T,bool> dest2(g, tbb::flow::serial, b2 );
    tbb::flow::make_edge( src2, dest2 );
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
    ASSERT(src2.successor_count() == 1, NULL);
    typename tbb::flow::source_node<T>::successor_list_type my_succs;
    src2.copy_successors(my_succs);
@@ -254,7 +259,7 @@ void test_reset() {
     }
 }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
 void test_extract() {
     int counts = 0;
     tbb::flow::tuple<int,int> dont_care;
@@ -398,7 +403,7 @@ void test_extract() {
     g.wait_for_all();
     ASSERT(!q1.try_get(dont_care), "extract of successor did not remove pred link");
 }
-#endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
+#endif  /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
 
 int TestMain() {
     if( MinThread<1 ) {
@@ -411,7 +416,7 @@ int TestMain() {
         test_single_dest<float>();
     }
     test_reset();
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     test_extract();
 #endif
     return Harness::Done;

@@ -97,7 +97,7 @@ public:
     static generic_scheduler* init_scheduler_weak();
 
     //! Processes scheduler termination request (possibly nested) in a master thread
-    static bool terminate_scheduler( generic_scheduler* s, const task_scheduler_init *tsi_ptr, bool blocking );
+    static bool terminate_scheduler( generic_scheduler* s, bool blocking );
 
     //! Register TBB scheduler instance in thread-local storage.
     static void sign_on( generic_scheduler* s );

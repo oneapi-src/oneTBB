@@ -698,7 +698,7 @@ inline void generic_scheduler::offload_task ( task& t, intptr_t /*priority*/ ) {
     context execution **/
 template <bool report_tasks>
 class context_guard_helper {
-#if __TBB_ITT_STRUCTURE_API
+#if __TBB_TASK_GROUP_CONTEXT
     const task_group_context *curr_ctx;
 #endif
 #if __TBB_FP_CONTEXT
@@ -707,7 +707,7 @@ class context_guard_helper {
 #endif
 public:
     context_guard_helper()
-#if __TBB_ITT_STRUCTURE_API
+#if __TBB_TASK_GROUP_CONTEXT
         : curr_ctx(NULL)
 #endif
     {
@@ -721,7 +721,7 @@ public:
         if ( curr_cpu_ctl_env != guard_cpu_ctl_env )
             guard_cpu_ctl_env.set_env();
 #endif
-#if __TBB_ITT_STRUCTURE_API
+#if __TBB_TASK_GROUP_CONTEXT
         if (report_tasks && curr_ctx)
             ITT_TASK_END;
 #endif
@@ -731,7 +731,7 @@ public:
 #if __TBB_FP_CONTEXT
         const cpu_ctl_env &ctl = *punned_cast<cpu_ctl_env*>(&ctx->my_cpu_ctl_env);
 #endif
-#if __TBB_ITT_STRUCTURE_API
+#if __TBB_TASK_GROUP_CONTEXT
         if(ctx != curr_ctx) {
 #endif
 #if __TBB_FP_CONTEXT
@@ -740,7 +740,7 @@ public:
                 curr_cpu_ctl_env.set_env();
             }
 #endif
-#if __TBB_ITT_STRUCTURE_API
+#if __TBB_TASK_GROUP_CONTEXT
             // if task group context was active, report end of current execution frame.
             if (report_tasks) {
                 if (curr_ctx)

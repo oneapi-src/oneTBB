@@ -18,6 +18,10 @@
 
 */
 
+#if __TBB_CPF_BUILD
+#define TBB_DEPRECATED_FLOW_NODE_EXTRACTION 1
+#endif
+
 #include "test_join_node.h"
 
 int TestMain() {
@@ -62,10 +66,6 @@ int TestMain() {
         MyKeyWithBrokenMessageKey<std::string, size_t>
     >, tbb::flow::key_matching<std::string&> >::do_test();
 #endif
-
-    REMARK("message based key_matching\n");
-    generate_test<serial_test, tbb::flow::tuple<MyMessageKeyWithBrokenKey<int, double>, MyMessageKeyWithoutKey<int, float> >, message_based_key_matching<int> >::do_test();
-    generate_test<serial_test, tbb::flow::tuple<MyMessageKeyWithoutKeyMethod<std::string, double>, MyMessageKeyWithBrokenKey<std::string, float> >, message_based_key_matching<std::string> >::do_test();
 
     return Harness::Done;
 }

@@ -64,7 +64,7 @@ namespace internal {
     template< typename Input, typename Policy, typename A, typename ImplType >
     class function_input_base : public receiver<Input>, tbb::internal::no_assign {
         enum op_type {reg_pred, rem_pred, try_fwd, tryput_bypass, app_body_bypass, occupy_concurrency
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
             , add_blt_pred, del_blt_pred,
             blt_pred_cnt, blt_pred_cpy   // create vector copies of preds and succs
 #endif
@@ -82,7 +82,7 @@ namespace internal {
         __TBB_STATIC_ASSERT(!((internal::has_policy<queueing, Policy>::value) && (internal::has_policy<rejecting, Policy>::value)),
                               "queueing and rejecting policies can't be specified simultaneously");
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
         typedef typename predecessor_cache_type::built_predecessors_type built_predecessors_type;
         typedef typename receiver<input_type>::predecessor_list_type predecessor_list_type;
 #endif
@@ -117,11 +117,7 @@ namespace internal {
         }
 
         task* try_put_task( const input_type& t) __TBB_override {
-#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
             return try_put_task_impl(t, internal::has_policy<lightweight, Policy>());
-#else
-            return try_put_task_impl(t);
-#endif
         }
 
         //! Adds src to the list of cached predecessors.
@@ -140,7 +136,7 @@ namespace internal {
             return true;
         }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
         //! Adds to list of predecessors added by make_edge
         void internal_add_built_predecessor( predecessor_type &src) __TBB_override {
             operation_type op_data(add_blt_pred);
@@ -170,7 +166,7 @@ namespace internal {
         built_predecessors_type &built_predecessors() __TBB_override {
             return my_predecessors.built_predecessors();
         }
-#endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
+#endif  /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
 
     protected:
 
@@ -217,10 +213,10 @@ namespace internal {
             union {
                 input_type *elem;
                 predecessor_type *r;
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
                 size_t cnt_val;
                 predecessor_list_type *predv;
-#endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
+#endif  /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
             };
             tbb::task *bypass_t;
             operation_type(const input_type& e, op_type t) :
@@ -290,7 +286,7 @@ namespace internal {
                         __TBB_store_with_release(tmp->status, FAILED);
                     }
                     break;
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
                 case add_blt_pred: {
                          my_predecessors.internal_add_built_predecessor(*(tmp->r));
                         __TBB_store_with_release(tmp->status, SUCCEEDED);
@@ -308,7 +304,7 @@ namespace internal {
                     my_predecessors.copy_predecessors( *(tmp->predv) );
                     __TBB_store_with_release(tmp->status, SUCCEEDED);
                     break;
-#endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
+#endif  /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
                 }
             }
         }
@@ -352,8 +348,7 @@ namespace internal {
             return NULL;
         }
 
-#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
-        task* try_put_task_impl( const input_type& t, tbb::internal::true_type ) {
+        task* try_put_task_impl( const input_type& t, /*lightweight=*/tbb::internal::true_type ) {
             if( my_max_concurrency == 0 ) {
                 return apply_body_bypass(t);
             } else {
@@ -366,10 +361,7 @@ namespace internal {
             }
         }
 
-        task* try_put_task_impl( const input_type& t, tbb::internal::false_type ) {
-#else
-        task* try_put_task_impl( const input_type& t ) {
-#endif
+        task* try_put_task_impl( const input_type& t, /*lightweight=*/tbb::internal::false_type ) {
             if( my_max_concurrency == 0 ) {
                 return create_body_task(t);
             } else {
@@ -462,29 +454,28 @@ namespace internal {
         }
 
         output_type apply_body_impl( const input_type& i) {
-#if TBB_PREVIEW_FLOW_GRAPH_TRACE
             // There is an extra copied needed to capture the
             // body execution without the try_put
             tbb::internal::fgt_begin_body( my_body );
             output_type v = (*my_body)(i);
             tbb::internal::fgt_end_body( my_body );
             return v;
-#else
-            return (*my_body)(i);
-#endif
         }
 
         //TODO: consider moving into the base class
         task * apply_body_impl_bypass( const input_type &i) {
             output_type v = apply_body_impl(i);
             task* postponed_task = NULL;
-#if !__TBB_PREVIEW_LIGHTWEIGHT_POLICY
+#if TBB_DEPRECATED_MESSAGE_FLOW_ORDER
             task* successor_task = successors().try_put_task(v);
 #endif
             if(base_type::my_max_concurrency != 0) {
                 postponed_task = base_type::try_get_postponed_task(i);
             }
-#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
+#if TBB_DEPRECATED_MESSAGE_FLOW_ORDER
+            graph& g = base_type::my_graph_ref;
+            return combine_tasks(g, successor_task, postponed_task);
+#else
             // postponed_task is either NULL or the pointer to TBB task
             if(postponed_task) {
                 // spawn task to make it available for other workers
@@ -492,16 +483,22 @@ namespace internal {
                 internal::spawn_in_graph_arena(base_type::graph_reference(), *postponed_task);
             }
             task* successor_task = successors().try_put_task(v);
-            if( internal::has_policy<lightweight, Policy>::value && !successor_task ) {
-                // Return confirmative status since current
-                // node's body has been executed anyway
-                successor_task = SUCCESSFULLY_ENQUEUED;
+#if _MSC_VER && !__INTEL_COMPILER
+#pragma warning (push)
+#pragma warning (disable: 4127)  /* suppress conditional expression is constant */
+#endif
+            if(internal::has_policy<lightweight, Policy>::value) {
+#if _MSC_VER && !__INTEL_COMPILER
+#pragma warning (pop)
+#endif
+                if(!successor_task) {
+                    // Return confirmative status since current
+                    // node's body has been executed anyway
+                    successor_task = SUCCESSFULLY_ENQUEUED;
+                }
             }
             return successor_task;
-#else
-            graph& g = base_type::my_graph_ref;
-            return combine_tasks(g, successor_task, postponed_task);
-#endif
+#endif /* TBB_DEPRECATED_MESSAGE_FLOW_ORDER */
         }
 
     protected:
@@ -544,7 +541,7 @@ namespace internal {
         }
     };
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     // helper templates to extract the output ports of an multifunction_node from graph
     template<int N> struct extract_element {
         template<typename P> static void extract_this(P &p) {
@@ -619,7 +616,7 @@ namespace internal {
         output_ports_type &output_ports(){ return my_output_ports; }
 
     protected:
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
         void extract() {
             extract_element<N>::extract_this(my_output_ports);
         }
@@ -677,11 +674,7 @@ namespace internal {
     };
 
     //! Implements methods for an executable node that takes continue_msg as input
-    template< typename Output
-#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
-            , typename Policy
-#endif
-            >
+    template< typename Output, typename Policy>
     class continue_input : public continue_receiver {
     public:
 
@@ -691,11 +684,7 @@ namespace internal {
         //! The output type of this receiver
         typedef Output output_type;
         typedef function_body<input_type, output_type> function_body_type;
-        typedef continue_input<output_type
-#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
-                             , Policy
-#endif
-                             > class_type;
+        typedef continue_input<output_type, Policy> class_type;
 
         template< typename Body >
         continue_input( graph &g, Body& body )
@@ -747,30 +736,32 @@ namespace internal {
 
         //! Applies the body to the provided input
         task *apply_body_bypass( input_type ) {
-#if TBB_PREVIEW_FLOW_GRAPH_TRACE
             // There is an extra copied needed to capture the
             // body execution without the try_put
             tbb::internal::fgt_begin_body( my_body );
             output_type v = (*my_body)( continue_msg() );
             tbb::internal::fgt_end_body( my_body );
             return successors().try_put_task( v );
-#else
-            return successors().try_put_task( (*my_body)( continue_msg() ) );
-#endif
         }
 
         task* execute() __TBB_override {
             if(!internal::is_graph_active(my_graph_ref)) {
                 return NULL;
             }
-#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
+#if _MSC_VER && !__INTEL_COMPILER
+#pragma warning (push)
+#pragma warning (disable: 4127)  /* suppress conditional expression is constant */
+#endif
             if(internal::has_policy<lightweight, Policy>::value) {
+#if _MSC_VER && !__INTEL_COMPILER
+#pragma warning (pop)
+#endif
                 return apply_body_bypass( continue_msg() );
             }
-            else
-#endif
+            else {
                 return new ( task::allocate_additional_child_of( *(my_graph_ref.root_task()) ) )
                        apply_body_task_bypass< class_type, continue_msg >( *this, continue_msg() );
+            }
         }
 
         graph& graph_reference() __TBB_override {
@@ -787,7 +778,7 @@ namespace internal {
         typedef Output output_type;
         typedef typename sender<output_type>::successor_type successor_type;
         typedef broadcast_cache<output_type> broadcast_cache_type;
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
         typedef typename sender<output_type>::built_successors_type built_successors_type;
         typedef typename sender<output_type>::successor_list_type successor_list_type;
 #endif
@@ -809,7 +800,7 @@ namespace internal {
             return true;
         }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
         built_successors_type &built_successors() __TBB_override { return successors().built_successors(); }
 
 
@@ -828,7 +819,7 @@ namespace internal {
         void  copy_successors( successor_list_type &v) __TBB_override {
             successors().copy_successors(v);
         }
-#endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
+#endif  /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
 
         // for multifunction_node.  The function_body that implements
         // the node will have an input and an output tuple of ports.  To put
@@ -878,7 +869,7 @@ namespace internal {
     };  // multifunction_output
 
 //composite_node
-#if TBB_PREVIEW_FLOW_GRAPH_TRACE && __TBB_FLOW_GRAPH_CPP11_FEATURES
+#if __TBB_FLOW_GRAPH_CPP11_FEATURES
     template<typename CompositeType>
     void add_nodes_impl(CompositeType*, bool) {}
 
@@ -886,10 +877,7 @@ namespace internal {
     void add_nodes_impl(CompositeType *c_node, bool visible, const NodeType1& n1, const NodeTypes&... n) {
         void *addr = const_cast<NodeType1 *>(&n1);
 
-        if(visible)
-            tbb::internal::itt_relation_add( tbb::internal::ITT_DOMAIN_FLOW, c_node, tbb::internal::FLOW_NODE, tbb::internal::__itt_relation_is_parent_of, addr, tbb::internal::FLOW_NODE );
-        else
-            tbb::internal::itt_relation_add( tbb::internal::ITT_DOMAIN_FLOW, addr, tbb::internal::FLOW_NODE, tbb::internal::__itt_relation_is_child_of, c_node, tbb::internal::FLOW_NODE );
+        fgt_alias_port(c_node, addr, visible);
         add_nodes_impl(c_node, visible, n...);
     }
 #endif

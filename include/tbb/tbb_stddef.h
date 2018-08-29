@@ -22,11 +22,11 @@
 #define __TBB_tbb_stddef_H
 
 // Marketing-driven product version
-#define TBB_VERSION_MAJOR 2018
+#define TBB_VERSION_MAJOR 2019
 #define TBB_VERSION_MINOR 0
 
 // Engineering-focused interface version
-#define TBB_INTERFACE_VERSION 10005
+#define TBB_INTERFACE_VERSION 11000
 #define TBB_INTERFACE_VERSION_MAJOR TBB_INTERFACE_VERSION/1000
 
 // The oldest major interface version still supported
@@ -244,6 +244,14 @@ const size_t NFS_MaxLineSize = 128;
 #define __TBB_override override
 #else
 #define __TBB_override // formal comment only
+#endif
+
+#if __TBB_CPP17_FALLTHROUGH_PRESENT
+#define __TBB_fallthrough [[fallthrough]]
+#elif __TBB_FALLTHROUGH_PRESENT
+#define __TBB_fallthrough __attribute__ ((fallthrough))
+#else
+#define __TBB_fallthrough
 #endif
 
 template<class T, size_t S, size_t R>

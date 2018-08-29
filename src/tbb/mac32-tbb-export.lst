@@ -191,7 +191,6 @@ __TBB_SYMBOL( _ZN3tbb8internal33itt_store_pointer_with_release_v3EPvS1_ )
 __TBB_SYMBOL( _ZN3tbb8internal18call_itt_notify_v5EiPv )
 __TBB_SYMBOL( _ZN3tbb8internal19itt_load_pointer_v3EPKv )
 __TBB_SYMBOL( _ZN3tbb8internal20itt_set_sync_name_v3EPvPKc )
-#if __TBB_ITT_STRUCTURE_API
 __TBB_SYMBOL( _ZN3tbb8internal22itt_make_task_group_v7ENS0_15itt_domain_enumEPvyS2_yNS0_12string_indexE )
 __TBB_SYMBOL( _ZN3tbb8internal23itt_metadata_str_add_v7ENS0_15itt_domain_enumEPvyNS0_12string_indexEPKc )
 __TBB_SYMBOL( _ZN3tbb8internal19itt_relation_add_v7ENS0_15itt_domain_enumEPvyNS0_12itt_relationES2_y )
@@ -199,7 +198,6 @@ __TBB_SYMBOL( _ZN3tbb8internal17itt_task_begin_v7ENS0_15itt_domain_enumEPvyS2_yN
 __TBB_SYMBOL( _ZN3tbb8internal15itt_task_end_v7ENS0_15itt_domain_enumE )
 __TBB_SYMBOL( _ZN3tbb8internal19itt_region_begin_v9ENS0_15itt_domain_enumEPvyS2_yNS0_12string_indexE )
 __TBB_SYMBOL( _ZN3tbb8internal17itt_region_end_v9ENS0_15itt_domain_enumEPvy )
-#endif
 
 // pipeline.cpp
 __TBB_SYMBOL( _ZTIN3tbb6filterE )

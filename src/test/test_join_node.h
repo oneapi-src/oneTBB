@@ -30,7 +30,6 @@
 #endif
 #endif
 
-#define TBB_PREVIEW_FLOW_GRAPH_FEATURES 1
 #include "harness_graph.h"
 #include "harness_checktype.h"
 
@@ -354,7 +353,7 @@ TestTaggedBuffers() {
     hash_buffer_test<std::string&, MyKeySecond<std::string, double> >("MyKeySecond<std::string,double> with std::string&");
 }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
 template< typename T, typename NODE_TYPE >
 class test_join_base_extract : NoAssign {
 protected:
@@ -1802,7 +1801,7 @@ void test_input_port_policies<tbb::flow::reserving>() {
     // attach jn to oq0, oq1
     tbb::flow::make_edge(jn, oq0);
     tbb::flow::make_edge(jn, oq1);
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     ASSERT(jn.successor_count()==2, NULL);
     JType::successor_list_type my_succs;
     jn.copy_successors(my_succs);
@@ -1811,7 +1810,7 @@ void test_input_port_policies<tbb::flow::reserving>() {
     // attach iq0, iq1 to jn
     tbb::flow::make_edge(iq0, tbb::flow::get<0>(jn.input_ports()));
     tbb::flow::make_edge(iq1, tbb::flow::get<1>(jn.input_ports()));
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     ASSERT(tbb::flow::get<0>(jn.input_ports()).predecessor_count()==1, NULL);
     tbb::flow::tuple_element<0, JType::input_type>::type::predecessor_list_type my_0preds;
     tbb::flow::input_port<0>(jn).copy_predecessors(my_0preds);
@@ -1897,7 +1896,7 @@ void test_input_port_policies<tbb::flow::queueing>() {
     // attach jn to oq0, oq1
     tbb::flow::make_edge(jn, oq0);
     tbb::flow::make_edge(jn, oq1);
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     ASSERT(jn.successor_count()==2, NULL);
     JType::successor_list_type my_succs;
     jn.copy_successors(my_succs);
@@ -1906,7 +1905,7 @@ void test_input_port_policies<tbb::flow::queueing>() {
     // attach iq0, iq1 to jn
     tbb::flow::make_edge(iq0, tbb::flow::get<0>(jn.input_ports()));
     tbb::flow::make_edge(iq1, tbb::flow::get<1>(jn.input_ports()));
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     ASSERT(tbb::flow::get<0>(jn.input_ports()).predecessor_count()==1, NULL);
     tbb::flow::tuple_element<0, JType::input_type>::type::predecessor_list_type my_0preds;
     tbb::flow::input_port<0>(jn).copy_predecessors(my_0preds);
@@ -2000,7 +1999,7 @@ void test_input_port_policies<tbb::flow::tag_matching>() {
         // attach testJoinNode to checkTupleQueue0, checkTupleQueue1
         tbb::flow::make_edge(testJoinNode, checkTupleQueue0);
         tbb::flow::make_edge(testJoinNode, checkTupleQueue1);
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
         ASSERT(testJoinNode.successor_count()==2, NULL);
         JoinNodeType::successor_list_type my_succs;
         testJoinNode.copy_successors(my_succs);
@@ -2009,7 +2008,7 @@ void test_input_port_policies<tbb::flow::tag_matching>() {
         // attach intInputQueue, checkInputQueue to testJoinNode
         tbb::flow::make_edge(intInputQueue, tbb::flow::input_port<0>(testJoinNode));
         tbb::flow::make_edge(checkInputQueue, tbb::flow::input_port<1>(testJoinNode));
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
         ASSERT(tbb::flow::input_port<0>(testJoinNode).predecessor_count()==1, NULL);
         tbb::flow::tuple_element<0, JoinNodeType::input_type>::type::predecessor_list_type my_0preds;
         tbb::flow::input_port<0>(testJoinNode).copy_predecessors(my_0preds);
@@ -2147,7 +2146,7 @@ void test_main() {
 #endif
     }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     REMARK(policy_name<Policy>().msg_end());
     test_join_extract<int, tbb::flow::join_node< tbb::flow::tuple<int, int>, Policy> >().run_tests();
 #endif

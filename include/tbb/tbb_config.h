@@ -139,6 +139,9 @@
     some "good enough" compilers might be excluded. **/
 #define __TBB_CPP11_PRESENT (__cplusplus >= 201103L || _MSC_VER >= 1900)
 
+#define __TBB_CPP17_FALLTHROUGH_PRESENT (__cplusplus >= 201703L)
+#define __TBB_FALLTHROUGH_PRESENT       (__TBB_GCC_VERSION >= 70000 && !__INTEL_COMPILER)
+
 /** C++11 mode detection macros for Intel(R) C++ Compiler (enabled by -std=c++XY option):
     __INTEL_CXX11_MODE__ for version >=13.0 (not available for ICC 15.0 if -std=c++14 is used),
     __STDC_HOSTED__ for version >=12.0 (useful only on Windows),
@@ -331,6 +334,8 @@
                                                             && (__TBB_GLIBCXX_VERSION>=40500 || __TBB_GLIBCXX_VERSION>=40400 && __TBB_USE_OPTIONAL_RTTI)) )
 
 #define __TBB_CPP11_FUTURE_PRESENT                          (_MSC_VER >= 1700 || __TBB_GLIBCXX_VERSION >= 40600 && _GXX_EXPERIMENTAL_CXX0X__ || _LIBCPP_VERSION)
+
+#define __TBB_CPP11_GET_NEW_HANDLER_PRESENT                 (_LIBCPP_VERSION || _MSC_VER >= 1900 || (__TBB_GLIBCXX_VERSION >= 40900 && __GXX_EXPERIMENTAL_CXX0X__))
 
 // std::swap is in <utility> only since C++11, though MSVC had it at least since VS2005
 #if _MSC_VER>=1400 || _LIBCPP_VERSION || __GXX_EXPERIMENTAL_CXX0X__
@@ -527,19 +532,6 @@ There are four cases that are supported:
 #ifndef __TBB_TASK_ISOLATION
     #define __TBB_TASK_ISOLATION 1
 #endif /* __TBB_TASK_ISOLATION */
-
-#if (TBB_PREVIEW_FLOW_GRAPH_TRACE || TBB_PREVIEW_ALGORITHM_TRACE)
-// Users of flow-graph and algorithm trace need to explicitly link against the preview
-// library. This prevents the linker from implicitly linking an application with a preview
-// version of TBB and unexpectedly bringing in other community preview features, which
-// might change the behavior of the application.
-#define __TBB_NO_IMPLICIT_LINKAGE 1
-#endif /* TBB_PREVIEW_FLOW_GRAPH_TRACE */
-
-#ifndef __TBB_ITT_STRUCTURE_API
-#define __TBB_ITT_STRUCTURE_API ( (__TBB_CPF_BUILD || TBB_PREVIEW_FLOW_GRAPH_TRACE || TBB_PREVIEW_ALGORITHM_TRACE) \
-                                  && !(__TBB_DEFINE_MIC || __MINGW64__ || __MINGW32__) )
-#endif
 
 #if TBB_USE_EXCEPTIONS && !__TBB_TASK_GROUP_CONTEXT
     #error TBB_USE_EXCEPTIONS requires __TBB_TASK_GROUP_CONTEXT to be enabled
@@ -787,9 +779,5 @@ There are four cases that are supported:
 #define __TBB_PREVIEW_GFX_FACTORY               (__TBB_GFX_PRESENT && TBB_PREVIEW_FLOW_GRAPH_FEATURES && !__TBB_MIC_OFFLOAD \
                                                 && __TBB_FLOW_GRAPH_CPP11_FEATURES && __TBB_CPP11_TEMPLATE_ALIASES_PRESENT \
                                                 && __TBB_CPP11_FUTURE_PRESENT)
-
-#ifndef __TBB_PREVIEW_LIGHTWEIGHT_POLICY
-#define __TBB_PREVIEW_LIGHTWEIGHT_POLICY TBB_PREVIEW_FLOW_GRAPH_FEATURES
-#endif
 
 #endif /* __TBB_tbb_config_H */

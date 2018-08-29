@@ -602,7 +602,7 @@ public:
             my_scheduler.my_innermost_running_task = my_orig_state.my_innermost_running_task;
         } else {
             my_scheduler.nested_arena_exit();
-            static_cast<scheduler_state&>(my_scheduler) = my_orig_state; // restore arena settings 
+            static_cast<scheduler_state&>(my_scheduler) = my_orig_state; // restore arena settings
 #if __TBB_TASK_PRIORITY
             my_scheduler.my_local_reload_epoch = *my_orig_state.my_ref_reload_epoch;
 #endif
@@ -775,7 +775,7 @@ class delegated_task : public task {
             task * orig_dummy;
             task_group_context * orig_ctx;
             scheduler_properties orig_props;
-            outermost_context(delegated_task *_t, generic_scheduler &_s) 
+            outermost_context(delegated_task *_t, generic_scheduler &_s)
                 : t(_t), s(_s), orig_dummy(s.my_dummy_task), orig_props(s.my_properties) {
                 __TBB_ASSERT(s.my_innermost_running_task == t, NULL);
 #if __TBB_TASK_GROUP_CONTEXT
@@ -834,12 +834,12 @@ void task_arena_base::internal_execute(internal::delegate_base& d) const {
                     dynamic_cast< internal::delegated_function< graph_funct, void>* >(&d);
 
             if (deleg_funct) {
-                internal_enqueue(*new(task::allocate_root(*my_context)) 
+                internal_enqueue(*new(task::allocate_root(*my_context))
                     internal::function_task< internal::strip< graph_funct >::type >
                         (internal::forward< graph_funct >(deleg_funct->my_func)), 0);
                 return;
             } else {
-#endif
+#endif /*  __TBB_USE_OPTIONAL_RTTI */
                 concurrent_monitor::thread_context waiter;
 #if __TBB_TASK_GROUP_CONTEXT
                 task_group_context exec_context(task_group_context::isolated, my_version_and_traits & exact_exception_flag);
@@ -981,7 +981,7 @@ public:
 };
 
 void isolate_within_arena( delegate_base& d, intptr_t reserved ) {
-    __TBB_ASSERT( reserved == 0, NULL );
+    __TBB_ASSERT_EX( reserved == 0, NULL );
     // TODO: Decide what to do if the scheduler is not initialized. Is there a use case for it?
     generic_scheduler* s = governor::local_scheduler_weak();
     __TBB_ASSERT( s, "this_task_arena::isolate() needs an initialized scheduler" );

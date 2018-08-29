@@ -32,7 +32,7 @@
 #include <stdarg.h>
 #include <string.h>
 
-#define INTEL_NO_MACRO_BODY 
+#define INTEL_NO_MACRO_BODY
 #define INTEL_ITTNOTIFY_API_PRIVATE
 #include "ittnotify.h"
 #include "legacy/ittnotify.h"
@@ -378,7 +378,7 @@ static __itt_string_handle* ITTAPI ITT_VERSIONIZE(ITT_JOIN(_N_(string_handle_cre
     {
         if (h->strW != NULL && !wcscmp(h->strW, name)) break;
     }
-    if (h == NULL) 
+    if (h == NULL)
     {
         NEW_STRING_HANDLE_W(&_N_(_ittapi_global),h,h_tail,name);
     }
@@ -940,6 +940,7 @@ ITT_EXTERN_C int _N_(init_ittlib)(const char* lib_name, __itt_group_id init_grou
                         switch (lib_version) {
                         case 0:
                             groups = __itt_group_legacy;
+                            /* Falls through */
                         case 1:
                             /* Fill all pointers from dynamic library */
                             for (i = 0; _N_(_ittapi_global).api_list_ptr[i].name != NULL; i++)

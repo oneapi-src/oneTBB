@@ -61,7 +61,7 @@ namespace internal {
 static int (*libiomp_try_restoring_original_mask)();
 // Table for mapping to libiomp entry points
 static const dynamic_link_descriptor iompLinkTable[] = {
-    { "kmp_set_thread_affinity_mask_initial", (pointer_to_handler*)(void*)(&libiomp_try_restoring_original_mask) }
+    DLD_NOWEAK( kmp_set_thread_affinity_mask_initial, libiomp_try_restoring_original_mask )
 };
 #endif
 

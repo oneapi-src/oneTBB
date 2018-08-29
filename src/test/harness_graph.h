@@ -279,7 +279,7 @@ size_t harness_graph_multifunction_executor<InputType, OutputTuple>::max_executo
 
 //! Counts the number of puts received
 template< typename T >
-struct harness_counting_receiver : public tbb::flow::receiver<T> {
+struct harness_counting_receiver : public tbb::flow::receiver<T>, NoAssign {
 
     tbb::atomic< size_t > my_count;
     T max_value;
@@ -310,7 +310,7 @@ struct harness_counting_receiver : public tbb::flow::receiver<T> {
         ASSERT( n == num_copies*max_value, NULL );
     }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     typedef typename tbb::flow::receiver<T>::built_predecessors_type built_predecessors_type;
     built_predecessors_type mbp;
     built_predecessors_type &built_predecessors() __TBB_override { return mbp; }
@@ -381,7 +381,7 @@ struct harness_mapped_receiver : public tbb::flow::receiver<T>, NoCopy {
             ASSERT( n == num_copies*max_value, NULL );
         }
     }
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     typedef typename tbb::flow::receiver<T>::built_predecessors_type built_predecessors_type;
     built_predecessors_type mbp;
     built_predecessors_type &built_predecessors() __TBB_override { return mbp; }
@@ -433,7 +433,7 @@ struct harness_counting_sender : public tbb::flow::sender<T>, NoCopy {
         return true;
     }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     typedef typename tbb::flow::sender<T>::successor_list_type successor_list_type;
     typedef typename tbb::flow::sender<T>::built_successors_type built_successors_type;
     built_successors_type bst;
@@ -528,7 +528,7 @@ struct serial_continue_body {
     }
 };
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
 
 
 // walk two lists via iterator, match elements of each, in possibly-different ordder, and
@@ -556,7 +556,7 @@ found_it:
     }
     return true;
 }
-#endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
+#endif  /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
 
 template<typename T, typename BufferType>
 void test_resets() {
@@ -672,7 +672,7 @@ void test_resets() {
     }
 }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
 
 template< typename NODE_TYPE >
 class test_buffer_base_extract {
@@ -1012,7 +1012,7 @@ void test_extract_on_node() {
     }
 }
 
-#endif  // TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#endif  // TBB_DEPRECATED_FLOW_NODE_EXTRACTION
 
 template<typename NodeType>
 void test_input_ports_return_ref(NodeType& mip_node) {
@@ -1036,7 +1036,16 @@ public:
     harness_reserving_body(ReservingNodeType<DataType> &reserving_node, tbb::flow::buffer_node<DataType> &bn) : my_reserving_node(reserving_node), my_buffer_node(bn) {}
     void operator()(DataType i) const {
         my_reserving_node.try_put(i);
-        if (DoClear) my_reserving_node.clear();
+#if _MSC_VER && !__INTEL_COMPILER
+#pragma warning (push)
+#pragma warning (disable: 4127)  /* suppress conditional expression is constant */
+#endif
+        if (DoClear) {
+#if _MSC_VER && !__INTEL_COMPILER
+#pragma warning (pop)
+#endif
+            my_reserving_node.clear();
+        }
         my_buffer_node.try_put(i);
         my_reserving_node.try_put(i);
     }
@@ -1044,7 +1053,7 @@ public:
 
 template< template <typename> class ReservingNodeType, typename DataType >
 void test_reserving_nodes() {
-    const int N = 300;
+    const size_t N = 300;
 
     tbb::flow::graph g;
 
@@ -1070,7 +1079,6 @@ void test_reserving_nodes() {
     ASSERT(end_receiver.my_count == 2 * N, NULL);
 }
 
-#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
 namespace lightweight_testing {
 
 typedef tbb::flow::tuple<int, int> output_tuple_type;
@@ -1089,7 +1097,7 @@ public:
 
 class concurrency_checker_body {
 public:
-    tbb::atomic<int> my_body_count;
+    tbb::atomic<unsigned> my_body_count;
 
     concurrency_checker_body() {
         my_body_count = 0;
@@ -1114,7 +1122,7 @@ private:
 };
 
 template<typename NodeType>
-void test_unlimited_lightweight_execution(const int& N) {
+void test_unlimited_lightweight_execution(unsigned N) {
     tbb::flow::graph g;
     NodeType node(g, tbb::flow::unlimited, concurrency_checker_body());
 
@@ -1122,7 +1130,7 @@ void test_unlimited_lightweight_execution(const int& N) {
     g.wait_for_all();
 
     concurrency_checker_body body = tbb::flow::copy_body<concurrency_checker_body>(node);
-    ASSERT(int(body.my_body_count) == N, "Body needs to be executed N times");
+    ASSERT(body.my_body_count == N, "Body needs to be executed N times");
 }
 
 // Using TBB implementation of condition variable
@@ -1161,9 +1169,9 @@ struct condition_predicate {
 
 class limited_lightweight_checker_body {
 public:
-    tbb::atomic<int> my_body_count;
-    tbb::atomic<int> my_lightweight_count;
-    tbb::atomic<int> my_task_count;
+    tbb::atomic<unsigned> my_body_count;
+    tbb::atomic<unsigned> my_lightweight_count;
+    tbb::atomic<unsigned> my_task_count;
     limited_lightweight_checker_body() {
         my_body_count = 0;
         my_lightweight_count = 0;
@@ -1194,7 +1202,7 @@ public:
 };
 
 template<typename NodeType>
-void test_limited_lightweight_execution(const int& N, size_t concurrency) {
+void test_limited_lightweight_execution(unsigned N, unsigned concurrency) {
     ASSERT(concurrency != tbb::flow::unlimited,
            "Test for limited concurrency cannot be called with unlimited concurrency argument");
     tbb::flow::graph g;
@@ -1205,23 +1213,22 @@ void test_limited_lightweight_execution(const int& N, size_t concurrency) {
     NativeParallelFor(N, native_loop_limited_body<NodeType>(node, barrier));
     g.wait_for_all();
     limited_lightweight_checker_body body = tbb::flow::copy_body<limited_lightweight_checker_body>(node);
-    ASSERT(int(body.my_body_count) == N, "Body needs to be executed N times");
-    ASSERT(int(body.my_lightweight_count) == concurrency, "Body needs to be executed as lightweight once");
-    ASSERT(int(body.my_task_count) == N - concurrency, "Body needs to be executed as not lightweight N - 1 times");
+    ASSERT(body.my_body_count == N, "Body needs to be executed N times");
+    ASSERT(body.my_lightweight_count == concurrency, "Body needs to be executed as lightweight once");
+    ASSERT(body.my_task_count == N - concurrency, "Body needs to be executed as not lightweight N - 1 times");
     work_submitted = false;
     lightweight_work_processed = false;
 }
 
 template<typename NodeType>
-void test_lightweight(const int& N) {
+void test_lightweight(unsigned N) {
     test_unlimited_lightweight_execution<NodeType>(N);
     test_limited_lightweight_execution<NodeType>(N, tbb::flow::serial);
-    test_limited_lightweight_execution<NodeType>(N, (std::min)(size_t(tbb::tbb_thread::hardware_concurrency() / 2),
-                                                             size_t(N/2)));
+    test_limited_lightweight_execution<NodeType>(N, (std::min)(tbb::tbb_thread::hardware_concurrency() / 2, N/2));
 }
 
 template<template<typename, typename, typename, typename> class NodeType>
-void test(const int& N) {
+void test(unsigned N) {
     typedef tbb::tbb_thread::id input_type;
     typedef tbb::cache_aligned_allocator<input_type> allocator_type;
     typedef NodeType<input_type, output_tuple_type, tbb::flow::queueing_lightweight, allocator_type> node_type;
@@ -1229,6 +1236,5 @@ void test(const int& N) {
 }
 
 }
-#endif // __TBB_PREVIEW_LIGHTWEIGHT_POLICY
 
 #endif

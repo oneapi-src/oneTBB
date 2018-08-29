@@ -18,6 +18,10 @@
 
 */
 
+#if __TBB_CPF_BUILD
+#define TBB_DEPRECATED_FLOW_NODE_EXTRACTION 1
+#endif
+
 #include "harness_graph.h"
 
 #include "tbb/flow_graph.h"
@@ -279,7 +283,7 @@ void concurrency_levels( size_t concurrency, Body body ) {
 
             std::vector< harness_counting_receiver<OutputType> > receivers(num_receivers, harness_counting_receiver<OutputType>(g));
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
             ASSERT(exe_node.successor_count() == 0, NULL);
             ASSERT(exe_node.predecessor_count() == 0, NULL);
 #endif
@@ -287,7 +291,7 @@ void concurrency_levels( size_t concurrency, Body body ) {
             for (size_t r = 0; r < num_receivers; ++r ) {
                 tbb::flow::make_edge( exe_node, receivers[r] );
             }
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
             ASSERT(exe_node.successor_count() == num_receivers, NULL);
             typename fnode_type::successor_list_type my_succs;
             exe_node.copy_successors(my_succs);
@@ -470,7 +474,7 @@ void test_concurrency(int num_threads) {
     test_function_node_with_continue_msg_as_input();
 }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
 struct add_to_counter {
     int* counter;
     add_to_counter(int& var):counter(&var){}
@@ -585,10 +589,8 @@ int TestMain() {
     for( int p=MinThread; p<=MaxThread; ++p ) {
        test_concurrency(p);
    }
-#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
    lightweight_testing::test<tbb::flow::function_node>(10);
-#endif
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     test_extract<tbb::flow::rejecting>();
     test_extract<tbb::flow::queueing>();
 #endif

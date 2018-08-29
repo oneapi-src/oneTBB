@@ -930,7 +930,7 @@ void TestExceptions() {
                     ASSERT( MyDataCount==100, "data leak?" );
                     ASSERT( size>=100, NULL );
                     CheckAllocator(victim, 100+t, t);
-                    /* Falls through. */
+                    __TBB_fallthrough;
                 case ctor_copy:
                     CheckTable(src, 1000);
                     break;

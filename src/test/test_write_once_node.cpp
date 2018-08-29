@@ -18,8 +18,8 @@
 
 */
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
-#define TBB_PREVIEW_RESERVABLE_OVERWRITE_NODE 1
+#if __TBB_CPF_BUILD
+#define TBB_DEPRECATED_FLOW_NODE_EXTRACTION 1
 #endif
 
 #include "harness_graph.h"
@@ -48,7 +48,7 @@ void simple_read_write_tests() {
             ASSERT( n.is_valid() == true, NULL );
             ASSERT( n.try_get( v0 ) == true, NULL );
             ASSERT( v0 == R(N+1), NULL );
-       }
+        }
 
         for (int i = 0; i < M; ++i) {
            tbb::flow::make_edge( n, r[i] );
@@ -164,11 +164,9 @@ int TestMain() {
         tbb::task_scheduler_init init(p);
         parallel_read_write_tests<int>();
         parallel_read_write_tests<float>();
-#if TBB_PREVIEW_RESERVABLE_OVERWRITE_NODE
-        test_reserving_nodes<tbb::flow::write_once_node, int>();
-#endif
+        test_reserving_nodes<tbb::flow::write_once_node, size_t>();
     }
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     test_extract_on_node<tbb::flow::write_once_node, int>();
 #endif
     return Harness::Done;

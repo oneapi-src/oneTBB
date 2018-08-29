@@ -310,7 +310,7 @@ static int MaxThread = HARNESS_DEFAULT_MAX_THREADS;
     A single number m is interpreted as if written m:m.
     The numbers must be non-negative.
     Clients often treat the value 0 as "run sequentially." */
-static void ParseCommandLine( int argc, char* argv[] ) {
+inline void ParseCommandLine( int argc, char* argv[] ) {
     if( !argc ) REPORT("Command line with 0 arguments\n");
     int i = 1;
     if( i<argc ) {

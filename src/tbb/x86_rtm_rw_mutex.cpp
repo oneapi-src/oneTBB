@@ -94,6 +94,7 @@ void x86_rtm_rw_mutex::internal_release(x86_rtm_rw_mutex::scoped_lock& s) {
         break;
     case RTM_not_in_mutex:
         __TBB_ASSERT(false, "RTM_not_in_mutex, but in release");
+        break;
     default:
         __TBB_ASSERT(false, "invalid transaction_state");
     }

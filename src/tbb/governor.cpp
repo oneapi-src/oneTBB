@@ -52,7 +52,7 @@ static __cilk_tbb_retcode (*watch_stack_handler)(struct __cilk_tbb_unwatch_thunk
 
 //! Table describing how to link the handlers.
 static const dynamic_link_descriptor CilkLinkTable[] = {
-    { "__cilkrts_watch_stack", (pointer_to_handler*)(void*)(&watch_stack_handler) }
+    DLD_NOWEAK(__cilkrts_watch_stack, watch_stack_handler)
 };
 
 static atomic<do_once_state> cilkrts_load_state;
@@ -204,7 +204,7 @@ generic_scheduler* governor::init_scheduler( int num_threads, stack_size_type st
     return s;
 }
 
-bool governor::terminate_scheduler( generic_scheduler* s, const task_scheduler_init* tsi_ptr, bool blocking ) {
+bool governor::terminate_scheduler( generic_scheduler* s, bool blocking ) {
     bool ok = false;
     __TBB_ASSERT( is_set(s), "Attempt to terminate non-local scheduler instance" );
     if (0 == --(s->my_ref_count)) {
@@ -257,11 +257,8 @@ __cilk_tbb_retcode governor::stack_op_handler( __cilk_tbb_stack_op op, void* dat
 #else
     uintptr_t thread_id = uintptr_t(pthread_self());
 #endif
-
 #endif /* TBB_USE_ASSERT */
     switch( op ) {
-        default:
-            __TBB_ASSERT( 0, "invalid op" );
         case CILK_TBB_STACK_ADOPT: {
             __TBB_ASSERT( !current && s->my_cilk_state==generic_scheduler::cs_limbo ||
                           current==s && s->my_cilk_state==generic_scheduler::cs_running, "invalid adoption" );
@@ -289,7 +286,10 @@ __cilk_tbb_retcode governor::stack_op_handler( __cilk_tbb_stack_op op, void* dat
 #endif /* TBB_USE_ASSERT */
             s->my_cilk_unwatch_thunk.routine = NULL;
             auto_terminate( s );
+            break;
         }
+        default:
+            __TBB_ASSERT(0, "invalid op");
     }
     return 0;
 }
@@ -352,7 +352,7 @@ bool task_scheduler_init::internal_terminate( bool blocking ) {
                                         : vt & ~task_group_context::exact_exception;
     }
 #endif /* __TBB_TASK_GROUP_CONTEXT && TBB_USE_EXCEPTIONS */
-    return governor::terminate_scheduler(s, this, blocking);
+    return governor::terminate_scheduler(s, blocking);
 }
 
 void task_scheduler_init::terminate() {

@@ -26,7 +26,18 @@
 namespace tbb {
     namespace internal {
 
-#if TBB_PREVIEW_FLOW_GRAPH_TRACE
+#if TBB_USE_THREADING_TOOLS
+
+static inline void fgt_alias_port(void *node, void *p, bool visible) {
+    if(visible)
+        itt_relation_add( ITT_DOMAIN_FLOW, node, FLOW_NODE, __itt_relation_is_parent_of, p, FLOW_NODE );
+    else
+        itt_relation_add( ITT_DOMAIN_FLOW, p, FLOW_NODE, __itt_relation_is_child_of, node, FLOW_NODE );
+}
+
+static inline void fgt_composite ( void *node, void *graph ) {
+    itt_make_task_group( ITT_DOMAIN_FLOW, node, FLOW_NODE, graph, FLOW_GRAPH, FLOW_COMPOSITE_NODE );
+}
 
 static inline void fgt_internal_alias_input_port( void *node, void *p, string_index name_index ) {
     itt_make_task_group( ITT_DOMAIN_FLOW, p, FLOW_INPUT_PORT, node, FLOW_NODE, name_index );
@@ -242,7 +253,7 @@ static inline void fgt_async_reserve( void *node, void *graph ) {
     itt_region_begin( ITT_DOMAIN_FLOW, node, FLOW_NODE, graph, FLOW_GRAPH, FLOW_NULL );
 }
 
-static inline void fgt_async_commit( void *node, void */*graph*/) {
+static inline void fgt_async_commit( void *node, void * /*graph*/) {
     itt_region_end( ITT_DOMAIN_FLOW, node, FLOW_NODE );
 }
 
@@ -254,7 +265,11 @@ static inline void fgt_release_wait( void *graph ) {
     itt_region_end( ITT_DOMAIN_FLOW, graph, FLOW_GRAPH );
 }
 
-#else // TBB_PREVIEW_FLOW_GRAPH_TRACE
+#else // TBB_USE_THREADING_TOOLS
+
+static inline void fgt_alias_port(void * /*node*/, void * /*p*/, bool /*visible*/ ) { }
+
+static inline void fgt_composite ( void * /*node*/, void * /*graph*/ ) { }
 
 static inline void fgt_graph( void * /*g*/ ) { }
 
@@ -299,7 +314,20 @@ static inline void fgt_async_commit( void * /*node*/, void * /*graph*/ ) { }
 static inline void fgt_reserve_wait( void * /*graph*/ ) { }
 static inline void fgt_release_wait( void * /*graph*/ ) { }
 
-#endif // TBB_PREVIEW_FLOW_GRAPH_TRACE
+template< typename NodeType >
+void fgt_multiinput_multioutput_node_desc( const NodeType * /*node*/, const char * /*desc*/ ) { }
+
+template < typename PortsTuple, int N >
+struct fgt_internal_input_alias_helper {
+    static void alias_port( void * /*node*/, PortsTuple & /*ports*/ ) { }
+};
+
+template < typename PortsTuple, int N >
+struct fgt_internal_output_alias_helper {
+    static void alias_port( void * /*node*/, PortsTuple & /*ports*/ ) { }
+};
+
+#endif // TBB_USE_THREADING_TOOLS
 
     } // namespace internal
 } // namespace tbb

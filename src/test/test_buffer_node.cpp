@@ -19,14 +19,15 @@
 */
 
 #include "harness.h"
-#include "tbb/flow_graph.h"
+
+#if __TBB_CPF_BUILD
+#define TBB_DEPRECATED_FLOW_NODE_EXTRACTION 1
+#endif
+
+#include "harness_graph.h"
+
 #include "tbb/task_scheduler_init.h"
 #include "tbb/tick_count.h"
-#include "harness_graph.h"
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
-#include <vector>
-#include <algorithm>
-#endif
 
 #define N 1000
 #define C 10
@@ -346,7 +347,7 @@ int test_serial() {
     ASSERT( j == bogus_value, NULL );
 
     tbb::flow::make_edge(b, b2);
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     ASSERT( b.successor_count() == 1, NULL);
     ASSERT( b.predecessor_count() == 0, NULL);
     ASSERT( b2.successor_count() == 0, NULL);
@@ -438,7 +439,7 @@ int TestMain() {
     REMARK("Buffer_Node Time=%6.6f\n", (stop-start).seconds());
     test_resets<int,tbb::flow::buffer_node<int> >();
     test_resets<float,tbb::flow::buffer_node<float> >();
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     test_buffer_extract<tbb::flow::buffer_node<int> >().run_tests();
 #endif
     return Harness::Done;

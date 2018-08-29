@@ -356,14 +356,14 @@ protected:
     graph_node *next, *prev;
 public:
     explicit graph_node(graph& g);
-    
+
     virtual ~graph_node();
 
 #if TBB_PREVIEW_FLOW_GRAPH_TRACE
     virtual void set_name(const char *name) = 0;
 #endif
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     virtual void extract() = 0;
 #endif
 

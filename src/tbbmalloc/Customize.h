@@ -29,7 +29,7 @@
 #define MALLOC_DEBUG TBB_USE_DEBUG
 #endif
 
-#include "tbb/tbb_machine.h"
+#include "Synchronize.h"
 
 #if DO_ITT_NOTIFY
 #include "tbb/itt_notify.h"
@@ -45,88 +45,6 @@
 #define MALLOC_ITT_SYNC_CANCEL(pointer) ((void)0)
 #define MALLOC_ITT_FINI_ITTLIB()        ((void)0)
 #endif
-
-//! Stripped down version of spin_mutex.
-/** Instances of MallocMutex must be declared in memory that is zero-initialized.
-    There are no constructors.  This is a feature that lets it be
-    used in situations where the mutex might be used while file-scope constructors
-    are running.
-
-    There are no methods "acquire" or "release".  The scoped_lock must be used
-    in a strict block-scoped locking pattern.  Omitting these methods permitted
-    further simplification. */
-class MallocMutex : tbb::internal::no_copy {
-    __TBB_atomic_flag flag;
-
-public:
-    class scoped_lock : tbb::internal::no_copy {
-        MallocMutex& mutex;
-        bool taken;
-    public:
-        scoped_lock( MallocMutex& m ) : mutex(m), taken(true) { __TBB_LockByte(m.flag); }
-        scoped_lock( MallocMutex& m, bool block, bool *locked ) : mutex(m), taken(false) {
-            if (block) {
-                __TBB_LockByte(m.flag);
-                taken = true;
-            } else {
-                taken = __TBB_TryLockByte(m.flag);
-            }
-            if (locked) *locked = taken;
-        }
-        ~scoped_lock() {
-            if (taken) __TBB_UnlockByte(mutex.flag);
-        }
-    };
-    friend class scoped_lock;
-};
-
-// TODO: use signed/unsigned in atomics more consistently
-inline intptr_t AtomicIncrement( volatile intptr_t& counter ) {
-    return __TBB_FetchAndAddW( &counter, 1 )+1;
-}
-
-inline uintptr_t AtomicAdd( volatile intptr_t& counter, intptr_t value ) {
-    return __TBB_FetchAndAddW( &counter, value );
-}
-
-inline intptr_t AtomicCompareExchange( volatile intptr_t& location, intptr_t new_value, intptr_t comparand) {
-    return __TBB_CompareAndSwapW( &location, new_value, comparand );
-}
-
-inline uintptr_t AtomicFetchStore(volatile void* location, uintptr_t value) {
-    return __TBB_FetchAndStoreW(location, value);
-}
-
-inline void AtomicOr(volatile void *operand, uintptr_t addend) {
-    __TBB_AtomicOR(operand, addend);
-}
-
-inline void AtomicAnd(volatile void *operand, uintptr_t addend) {
-    __TBB_AtomicAND(operand, addend);
-}
-
-inline intptr_t FencedLoad( const volatile intptr_t &location ) {
-    return __TBB_load_with_acquire(location);
-}
-
-inline void FencedStore( volatile intptr_t &location, intptr_t value ) {
-    __TBB_store_with_release(location, value);
-}
-
-inline void SpinWaitWhileEq(const volatile intptr_t &location, const intptr_t value) {
-    tbb::internal::spin_wait_while_eq(location, value);
-}
-
-class AtomicBackoff {
-    tbb::internal::atomic_backoff backoff;
-public:
-    AtomicBackoff() {}
-    void pause() { backoff.pause(); }
-};
-
-inline void SpinWaitUntilEq(const volatile intptr_t &location, const intptr_t value) {
-    tbb::internal::spin_wait_until_eq(location, value);
-}
 
 inline intptr_t BitScanRev(uintptr_t x) {
     return !x? -1 : __TBB_Log2(x);

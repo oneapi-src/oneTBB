@@ -21,6 +21,11 @@
 // TO DO: Add overlapping put / receive tests
 
 #include "harness.h"
+
+#if __TBB_CPF_BUILD
+#define TBB_DEPRECATED_FLOW_NODE_EXTRACTION 1
+#endif
+
 #include "tbb/flow_graph.h"
 #include "harness_checktype.h"
 #include "tbb/task_scheduler_init.h"
@@ -345,7 +350,7 @@ int TestMain() {
     REMARK("Testing resets\n");
     test_resets<int,tbb::flow::priority_queue_node<int> >();
     test_resets<float,tbb::flow::priority_queue_node<float> >();
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     test_buffer_extract<tbb::flow::priority_queue_node<int> >().run_tests();
 #endif
     return Harness::Done;

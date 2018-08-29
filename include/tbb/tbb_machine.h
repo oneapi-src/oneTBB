@@ -227,7 +227,7 @@ template<> struct atomic_selector<8> {
         #include "machine/linux_intel64.h"
     #endif
 
-#elif __linux__ || __FreeBSD__ || __NetBSD__
+#elif __linux__ || __FreeBSD__ || __NetBSD__ || __OpenBSD__
 
     #if (TBB_USE_GCC_BUILTINS && __TBB_GCC_BUILTIN_ATOMICS_PRESENT)
         #include "machine/gcc_generic.h"

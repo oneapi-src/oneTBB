@@ -1202,7 +1202,7 @@ void TestExceptions() {
                 switch(m) {
                 case reserve:
                     if(t) ASSERT(false, NULL);
-                    /* Falls through. */
+                    __TBB_fallthrough;
                 case assign_nt:
                 case assign_ir:
                     if(!t) {

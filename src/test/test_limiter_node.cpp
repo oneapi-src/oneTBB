@@ -19,7 +19,8 @@
 */
 
 #include "harness.h"
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if __TBB_CPF_BUILD
+#define TBB_DEPRECATED_FLOW_NODE_EXTRACTION 1
 #include "harness_graph.h"
 #endif
 #include "tbb/flow_graph.h"
@@ -47,7 +48,7 @@ struct serial_receiver : public tbb::flow::receiver<T>, NoAssign {
         return my_graph;
     }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     typedef typename tbb::flow::receiver<T>::built_predecessors_type built_predecessors_type;
     typedef typename tbb::flow::receiver<T>::predecessor_list_type predecessor_list_type;
     typedef typename tbb::flow::receiver<T>::predecessor_type predecessor_type;
@@ -79,7 +80,7 @@ struct parallel_receiver : public tbb::flow::receiver<T>, NoAssign {
         return my_graph;
     }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     typedef typename tbb::flow::receiver<T>::built_predecessors_type built_predecessors_type;
     typedef typename tbb::flow::receiver<T>::predecessor_list_type predecessor_list_type;
     typedef typename tbb::flow::receiver<T>::predecessor_type predecessor_type;
@@ -99,7 +100,7 @@ struct empty_sender : public tbb::flow::sender<T> {
 
         bool register_successor( successor_type & ) __TBB_override { return false; }
         bool remove_successor( successor_type & ) __TBB_override { return false; }
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
         typedef typename tbb::flow::sender<T>::built_successors_type built_successors_type;
         typedef typename tbb::flow::sender<T>::successor_list_type successor_list_type;
         built_successors_type bst;
@@ -161,7 +162,7 @@ void test_puts_with_decrements( int num_threads, tbb::flow::limiter_node< T >& l
     accept_count = 0;
     tbb::flow::make_edge( lim, r );
     tbb::flow::make_edge(s, lim.decrement);
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     ASSERT(lim.decrement.predecessor_count() == 1, NULL);
     ASSERT(lim.successor_count() == 1, NULL);
     ASSERT(lim.predecessor_count() == 0, NULL);
@@ -323,7 +324,7 @@ test_multifunction_to_limiter(int _max, int _nparallel) {
     tbb::flow::make_edge(tbb::flow::output_port<DECREMENT_OUTPUT>(mf_node), lim_node.decrement);
     tbb::flow::make_edge(lim_node, fn_node);
     tbb::flow::make_edge(fn_node, mf_node);
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     REMARK("pred cnt == %d\n",(int)(lim_node.predecessor_count()));
     REMARK("succ cnt == %d\n",(int)(lim_node.successor_count()));
     tbb::flow::limiter_node<int>::successor_list_type my_succs;
@@ -417,7 +418,7 @@ void test_reserve_release_messages() {
   }
 }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
 void test_extract() {
     tbb::flow::graph g;
     int j;
@@ -526,7 +527,7 @@ void test_extract() {
     }
 
 }
-#endif  // TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#endif  // TBB_DEPRECATED_FLOW_NODE_EXTRACTION
 
 int TestMain() {
     for (int i = 1; i <= 8; ++i) {
@@ -539,7 +540,7 @@ int TestMain() {
     test_multifunction_to_limiter(300,13);
     test_multifunction_to_limiter(3000,1);
     test_reserve_release_messages();
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     test_extract();
 #endif
    return Harness::Done;

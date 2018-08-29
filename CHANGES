@@ -2,6 +2,39 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 2019
+TBB_INTERFACE_VERSION == 11000
+
+Changes (w.r.t. Intel TBB 2018 Update 5):
+
+- Lightweight policy for functional nodes in the flow graph is now
+    a fully supported feature.
+- Reservation support in flow::write_once_node and flow::overwrite_node
+    is now a fully supported feature.
+- Support for Flow Graph Analyzer and improvements for
+    Intel(R) VTune(TM) Amplifier become a regular feature enabled by
+    TBB_USE_THREADING_TOOLS macro.
+- Added support for std::new_handler in the replacement functions for
+    global operator new.
+- Added C++14 constructors to concurrent unordered containers.
+- Added tbb::counting_iterator and tbb::zip_iterator.
+- Fixed multiple -Wextra warnings in TBB source files.
+
+Preview Features:
+
+- Extracting nodes from a flow graph is deprecated and disabled by
+    default. To enable, use TBB_DEPRECATED_FLOW_NODE_EXTRACTION macro.
+
+Changes affecting backward compatibility:
+
+- Due to internal changes in the flow graph classes, recompilation is
+    recommended for all binaries that use the flow graph.
+
+Open-source contributions integrated:
+
+- Added support for OpenBSD by Anthony J. Bentley.
+
+------------------------------------------------------------------------
 Intel TBB 2018 Update 5
 TBB_INTERFACE_VERSION == 10005
 

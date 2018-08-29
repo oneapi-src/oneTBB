@@ -27,7 +27,7 @@ WARNING_AS_ERROR_KEY = -Werror
 WARNING_KEY = -Wall
 TEST_WARNING_KEY = -Wshadow -Wcast-qual -Woverloaded-virtual -Wnon-virtual-dtor
 
-WARNING_SUPPRESS = -Wno-parentheses -Wno-non-virtual-dtor
+WARNING_SUPPRESS = -Wno-parentheses
 DYLIB_KEY = -shared
 EXPORT_KEY = -Wl,--version-script,
 LIBDL = -ldl
@@ -51,13 +51,14 @@ endif
 
 # gcc 4.0 and later have -Wextra that is used by some our customers.
 ifneq (,$(shell gcc -dumpversion | egrep  "^([4-9])"))
-    TEST_WARNING_KEY += -Wextra
+    WARNING_KEY += -Wextra
 endif
 
-# gcc 5.0 and later have -Wsuggest-override option
-# enable it via a pre-included header in order to limit to C++11 and above
+# gcc 5.0 and later have -Wsuggest-override and -Wno-sized-deallocation options
 ifneq (,$(shell gcc -dumpversion | egrep  "^([5-9])"))
+    # enable -Wsuggest-override via a pre-included header in order to limit to C++11 and above
     INCLUDE_TEST_HEADERS = -include $(tbb_root)/src/test/harness_preload.h
+    WARNING_SUPPRESS += -Wno-sized-deallocation
 endif
 
 # gcc 6.0 and later have -flifetime-dse option that controls

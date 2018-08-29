@@ -57,12 +57,12 @@ class node_cache {
 
     void clear() {
         while( !my_q.empty()) (void)my_q.pop();
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
         my_built_predecessors.clear();
 #endif
     }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     typedef edge_container<T> built_predecessors_type;
     built_predecessors_type &built_predecessors() { return my_built_predecessors; }
 
@@ -86,14 +86,14 @@ class node_cache {
         typename mutex_type::scoped_lock lock(my_mutex);
         return (size_t)(my_built_predecessors.edge_count());
     }
-#endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
+#endif  /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
 
 protected:
 
     typedef M mutex_type;
     mutex_type my_mutex;
     std::queue< T * > my_q;
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     built_predecessors_type my_built_predecessors;
 #endif
 
@@ -189,7 +189,7 @@ public:
 
 protected:
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     using node_cache< predecessor_type, M >::my_built_predecessors;
 #endif
     successor_type *my_owner;
@@ -290,7 +290,7 @@ protected:
     typedef sender<T> owner_type;
 #endif // __TBB_PREVIEW_ASYNC_MSG
     typedef std::list< pointer_type > successors_type;
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     edge_container<successor_type> my_built_successors;
 #endif
     successors_type my_successors;
@@ -298,7 +298,7 @@ protected:
     owner_type *my_owner;
 
 public:
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     typedef typename edge_container<successor_type>::edge_list_type successor_list_type;
 
     edge_container<successor_type> &built_successors() { return my_built_successors; }
@@ -323,7 +323,7 @@ public:
         return my_built_successors.edge_count();
     }
 
-#endif /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
+#endif /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
 
     successor_cache( ) : my_owner(NULL) {}
 
@@ -354,7 +354,7 @@ public:
 
     void clear() {
         my_successors.clear();
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
         my_built_successors.clear();
 #endif
     }
@@ -381,7 +381,7 @@ protected:
 #endif // __TBB_PREVIEW_ASYNC_MSG
     typedef std::list< pointer_type > successors_type;
     successors_type my_successors;
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     edge_container<successor_type> my_built_successors;
     typedef edge_container<successor_type>::edge_list_type successor_list_type;
 #endif
@@ -390,7 +390,7 @@ protected:
 
 public:
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
 
     edge_container<successor_type> &built_successors() { return my_built_successors; }
 
@@ -414,7 +414,7 @@ public:
         return my_built_successors.edge_count();
     }
 
-#endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
+#endif  /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
 
     successor_cache( ) : my_owner(NULL) {}
 
@@ -452,7 +452,7 @@ public:
 
     void clear() {
         my_successors.clear();
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
         my_built_successors.clear();
 #endif
     }

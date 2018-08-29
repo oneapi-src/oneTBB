@@ -72,9 +72,7 @@ namespace graph_policy_namespace {
     struct rejecting { };
     struct reserving { };
     struct queueing  { };
-#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
     struct lightweight  { };
-#endif
 
     // K == type of field used for key-matching.  Each tag-matching port will be provided
     // functor that, given an object accepted by the port, will return the
@@ -89,11 +87,10 @@ namespace graph_policy_namespace {
     // old tag_matching join's new specifier
     typedef key_matching<tag_value> tag_matching;
 
-#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
     // Aliases for Policy combinations
     typedef interface10::internal::Policy<queueing, lightweight> queueing_lightweight;
     typedef interface10::internal::Policy<rejecting, lightweight>  rejecting_lightweight;
-#endif
+
 } // namespace graph_policy_namespace
 
 // -------------- function_body containers ----------------------

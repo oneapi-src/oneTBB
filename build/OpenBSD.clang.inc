@@ -16,4 +16,4 @@
 #
 #
 
-include $(tbb_root)/build/BSD.inc
+include $(tbb_root)/build/BSD.clang.inc

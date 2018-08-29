@@ -26,7 +26,6 @@
 #include "task.h"
 #include "aligned_space.h"
 #include <iterator>
-#include "internal/_tbb_trace_impl.h"
 
 namespace tbb {
 namespace interface9 {

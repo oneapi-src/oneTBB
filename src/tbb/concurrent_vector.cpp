@@ -337,11 +337,9 @@ concurrent_vector_base_v3::size_type concurrent_vector_base_v3::internal_capacit
 }
 
 void concurrent_vector_base_v3::internal_throw_exception(size_type t) const {
-    switch(t) {
-        case 0: throw_exception(eid_out_of_range);
-        case 1: throw_exception(eid_segment_range_error);
-        case 2: throw_exception(eid_index_range_error);
-    }
+    exception_id ids[] = { eid_out_of_range, eid_segment_range_error, eid_index_range_error };
+    __TBB_ASSERT(t < sizeof(ids) / sizeof(exception_id), NULL);
+    throw_exception(ids[t]);
 }
 
 void concurrent_vector_base_v3::internal_reserve( size_type n, size_type element_size, size_type max_size ) {

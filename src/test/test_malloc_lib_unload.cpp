@@ -155,10 +155,10 @@ struct Run {
             REPORT("Can't load " MALLOCLIB_NAME1 " or " MALLOCLIB_NAME2 "\n");
             exit(1);
         }
-        (FunctionAddress&)malloc_ptr = GetAddress(lib, "scalable_malloc");
-        (FunctionAddress&)free_ptr = GetAddress(lib, "scalable_free");
-        (FunctionAddress&)aligned_malloc_ptr = GetAddress(lib, "scalable_aligned_malloc");
-        (FunctionAddress&)aligned_free_ptr = GetAddress(lib, "scalable_aligned_free");
+        GetAddress(lib, "scalable_malloc", malloc_ptr);
+        GetAddress(lib, "scalable_free", free_ptr);
+        GetAddress(lib, "scalable_aligned_malloc", aligned_malloc_ptr);
+        GetAddress(lib, "scalable_aligned_free", aligned_free_ptr);
 
         for (size_t sz = 1024; sz <= 10*1024 ; sz*=10) {
             void *p1 = aligned_malloc_ptr(sz, 16);

@@ -33,6 +33,12 @@
 #pragma warning (disable: 4752)
 #endif
 
+#if __TBB_GCC_WARNING_SUPPRESSION_PRESENT && __TBB_GCC_WARNING_IGNORED_ATTRIBUTES_PRESENT
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-attributes"
+#endif
+
+
 template<typename __Mvec>
 class ClassWithVectorType {
     static const int n = 16;
@@ -107,6 +113,10 @@ bool have_AVX() {
 #include <xmmintrin.h>
 #define HAVE_m128 1
 typedef ClassWithVectorType<__m128> ClassWithSSE;
+#endif
+
+#if __TBB_GCC_WARNING_SUPPRESSION_PRESENT && __TBB_GCC_WARNING_IGNORED_ATTRIBUTES_PRESENT
+#pragma GCC diagnostic pop
 #endif
 
 #if (_MSC_VER>=1600)

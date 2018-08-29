@@ -215,7 +215,6 @@ public:
     typedef tbb::flow::source_node<TType> source_type;
     static const int N = tbb::flow::tuple_size<TType>::value;
     static void test() {
-        TType v;
         source_type* all_source_nodes[MaxNSources];
         sink_node_helper<N,SType>::print_parallel_remark();
         REMARK(" >\n");

@@ -37,6 +37,9 @@ __TBB_malloc_safer_aligned_realloc;
 __TBB_malloc_safer_free;
 __TBB_malloc_safer_msize;
 __TBB_malloc_safer_realloc;
+/* For tbbmalloc proxy to use MallocMutex with new_handler feature */
+__TBB_machine_lockbyte;
+__TBB_machine_trylockbyte;
 
 /* memory pool stuff */
 _ZN3rml11pool_createElPKNS_13MemPoolPolicyE;

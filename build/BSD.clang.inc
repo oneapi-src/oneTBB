@@ -24,18 +24,18 @@ OUTPUT_KEY = -o #
 OUTPUTOBJ_KEY = -o #
 PIC_KEY = -fPIC
 WARNING_AS_ERROR_KEY = -Werror
-WARNING_KEY = -Wall -Wextra
-TEST_WARNING_KEY = -Wshadow -Wcast-qual -Woverloaded-virtual -Wnon-virtual-dtor
+WARNING_KEY = -Wall
+TEST_WARNING_KEY = -Wextra -Wshadow -Wcast-qual -Woverloaded-virtual -Wnon-virtual-dtor
 WARNING_SUPPRESS = -Wno-parentheses -Wno-non-virtual-dtor -Wno-dangling-else
 DYLIB_KEY = -shared
 EXPORT_KEY = -Wl,--version-script,
-LIBDL = -ldl
+LIBDL =
 
 CPLUS = clang++
 CONLY = clang
 LIB_LINK_FLAGS = $(DYLIB_KEY) -Wl,-soname=$(BUILDING_LIBRARY)
-LIBS += -lpthread -lrt
-LINK_FLAGS = -Wl,-rpath-link=. -rdynamic
+LIBS += -lpthread
+LINK_FLAGS = -Wl,-rpath-link=. -Wl,-rpath=. -rdynamic
 C_FLAGS = $(CPLUS_FLAGS)
 
 ifeq ($(cfg), release)
@@ -48,11 +48,6 @@ endif
 ifneq (,$(stdlib))
     CPLUS_FLAGS    += -stdlib=$(stdlib)
     LIB_LINK_FLAGS += -stdlib=$(stdlib)
-endif
-
-ifneq (,$(gcc_version))
-    # TODO: do not assume that GCC minor and patchlevel versions are always single-digit.
-    CPLUS_FLAGS += -DTBB_USE_GLIBCXX_VERSION=$(subst .,0,$(gcc_version))
 endif
 
 TBB_ASM.OBJ=

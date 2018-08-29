@@ -18,6 +18,10 @@
 
 */
 
+#if __TBB_CPF_BUILD
+#define TBB_DEPRECATED_FLOW_NODE_EXTRACTION 1
+#endif
+
 #include "harness_graph.h"
 #include "tbb/flow_graph.h"
 
@@ -29,7 +33,7 @@
     #pragma warning (disable : 4503) //disabling the "decorated name length exceeded" warning for VS2008 and earlier
 #endif
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
 template< typename T >
 class test_indexer_extract {
 protected:
@@ -464,12 +468,12 @@ public:
         for(int i=0; i < nInputs; ++i) {
             my_source_node_type *new_node = new my_source_node_type(g, source_body<IT>((IT)(ELEM+1), i, nInputs));
             tbb::flow::make_edge(*new_node, tbb::flow::input_port<ELEM-1>(my_indexer));
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
             ASSERT(new_node->successor_count() == 1, NULL);
 #endif
             all_source_nodes[ELEM-1][i] = (void *)new_node;
         }
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
         ASSERT(tbb::flow::input_port<ELEM-1>(my_indexer).predecessor_count() == (size_t)nInputs, NULL);
 #endif
         // add the next source_node
@@ -657,7 +661,7 @@ void test_one_serial( IType &my_indexer, tbb::flow::graph &g) {
     q3_input_type v;
 
     tbb::flow::make_edge(my_indexer, q3);
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     ASSERT(my_indexer.successor_count() == 1, NULL);
     ASSERT(tbb::flow::input_port<0>(my_indexer).predecessor_count() == 0, NULL);
 #endif
@@ -877,7 +881,7 @@ int TestMain() {
        generate_test<parallel_test, float, double, int, double, double, long, int, float, long>::do_test();
 #endif
    }
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
    test_indexer_extract<int>().run_tests();
 #endif
    return Harness::Done;

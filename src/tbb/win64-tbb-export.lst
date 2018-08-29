@@ -133,7 +133,6 @@ __TBB_SYMBOL( ?itt_store_pointer_with_release_v3@internal@tbb@@YAXPEAX0@Z )
 __TBB_SYMBOL( ?call_itt_notify_v5@internal@tbb@@YAXHPEAX@Z )
 __TBB_SYMBOL( ?itt_load_pointer_v3@internal@tbb@@YAPEAXPEBX@Z )
 __TBB_SYMBOL( ?itt_set_sync_name_v3@internal@tbb@@YAXPEAXPEB_W@Z )
-#if __TBB_ITT_STRUCTURE_API
 __TBB_SYMBOL( ?itt_make_task_group_v7@internal@tbb@@YAXW4itt_domain_enum@12@PEAX_K12W4string_index@12@@Z )
 __TBB_SYMBOL( ?itt_metadata_str_add_v7@internal@tbb@@YAXW4itt_domain_enum@12@PEAX_KW4string_index@12@PEBD@Z )
 __TBB_SYMBOL( ?itt_relation_add_v7@internal@tbb@@YAXW4itt_domain_enum@12@PEAX_KW4itt_relation@12@12@Z )
@@ -141,7 +140,6 @@ __TBB_SYMBOL( ?itt_task_begin_v7@internal@tbb@@YAXW4itt_domain_enum@12@PEAX_K12W
 __TBB_SYMBOL( ?itt_task_end_v7@internal@tbb@@YAXW4itt_domain_enum@12@@Z )
 __TBB_SYMBOL( ?itt_region_begin_v9@internal@tbb@@YAXW4itt_domain_enum@12@PEAX_K12W4string_index@12@@Z )
 __TBB_SYMBOL( ?itt_region_end_v9@internal@tbb@@YAXW4itt_domain_enum@12@PEAX_K@Z )
-#endif
 
 // pipeline.cpp
 __TBB_SYMBOL( ??_7pipeline@tbb@@6B@ )

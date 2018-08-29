@@ -143,8 +143,6 @@ void Scheduler_OneTimeInitialization ( bool itt_present );
 
 #if DO_ITT_NOTIFY
 
-#if __TBB_ITT_STRUCTURE_API
-
 static __itt_domain *tbb_domains[ITT_NUM_DOMAINS] = {};
 
 struct resource_string {
@@ -191,16 +189,12 @@ static void ITT_init() {
     ITT_init_strings();
 }
 
-#endif // __TBB_ITT_STRUCTURE_API
-
 /** Thread-unsafe lazy one-time initialization of tools interop.
     Used by both dummy handlers and general TBB one-time initialization routine. **/
 void ITT_DoUnsafeOneTimeInitialization () {
     if ( !ITT_InitializationDone ) {
         ITT_Present = (__TBB_load_ittnotify()!=0);
-#if __TBB_ITT_STRUCTURE_API
         if (ITT_Present) ITT_init();
-#endif
         ITT_InitializationDone = true;
         ITT_SYNC_CREATE(&market::theMarketMutex, SyncType_GlobalLock, SyncObj_SchedulerInitialization);
     }
@@ -294,8 +288,6 @@ void call_itt_notify_v5(int t, void *ptr) {
 #else
 void call_itt_notify_v5(int /*t*/, void* /*ptr*/) {}
 #endif
-
-#if __TBB_ITT_STRUCTURE_API
 
 #if DO_ITT_NOTIFY
 const __itt_id itt_null_id = {0, 0, 0};
@@ -401,28 +393,26 @@ void itt_region_end_v9( itt_domain_enum domain, void *region, unsigned long long
 
 #else // DO_ITT_NOTIFY
 
-void itt_make_task_group_v7( itt_domain_enum domain, void *group, unsigned long long group_extra,
-                             void *parent, unsigned long long parent_extra, string_index name_index ) { }
+void itt_make_task_group_v7( itt_domain_enum /*domain*/, void* /*group*/, unsigned long long /*group_extra*/,
+                             void* /*parent*/, unsigned long long /*parent_extra*/, string_index /*name_index*/ ) { }
 
-void itt_metadata_str_add_v7( itt_domain_enum domain, void *addr, unsigned long long addr_extra,
-                              string_index key, const char *value ) { }
+void itt_metadata_str_add_v7( itt_domain_enum /*domain*/, void* /*addr*/, unsigned long long /*addr_extra*/,
+                              string_index /*key*/, const char* /*value*/ ) { }
 
-void itt_relation_add_v7( itt_domain_enum domain, void *addr0, unsigned long long addr0_extra,
-                          itt_relation relation, void *addr1, unsigned long long addr1_extra ) { }
+void itt_relation_add_v7( itt_domain_enum /*domain*/, void* /*addr0*/, unsigned long long /*addr0_extra*/,
+                          itt_relation /*relation*/, void* /*addr1*/, unsigned long long /*addr1_extra*/ ) { }
 
-void itt_task_begin_v7( itt_domain_enum domain, void *task, unsigned long long task_extra,
-                        void * /*parent*/, unsigned long long /* parent_extra */, string_index /* name_index */ ) { }
+void itt_task_begin_v7( itt_domain_enum /*domain*/, void* /*task*/, unsigned long long /*task_extra*/,
+                        void* /*parent*/, unsigned long long /*parent_extra*/, string_index /*name_index*/ ) { }
 
-void itt_task_end_v7( itt_domain_enum domain ) { }
+void itt_task_end_v7( itt_domain_enum /*domain*/ ) { }
 
-void itt_region_begin_v9( itt_domain_enum domain, void *region, unsigned long long region_extra,
-                          void *parent, unsigned long long parent_extra, string_index /* name_index */ ) { }
+void itt_region_begin_v9( itt_domain_enum /*domain*/, void* /*region*/, unsigned long long /*region_extra*/,
+                          void* /*parent*/, unsigned long long /*parent_extra*/, string_index /*name_index*/ ) { }
 
-void itt_region_end_v9( itt_domain_enum domain, void *region, unsigned long long region_extra ) { }
+void itt_region_end_v9( itt_domain_enum /*domain*/, void* /*region*/, unsigned long long /*region_extra*/ ) { }
 
 #endif // DO_ITT_NOTIFY
-
-#endif // __TBB_ITT_STRUCTURE_API
 
 void* itt_load_pointer_v3( const void* src ) {
     //TODO: replace this with __TBB_load_relaxed

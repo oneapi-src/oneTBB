@@ -18,6 +18,14 @@
 
 */
 
+// Message based key matching is a preview feature
+#define TBB_PREVIEW_FLOW_GRAPH_FEATURES 1
+
+// This preview feature depends on
+// TBB_PREVIEW_FLOW_GRAPH_FEATURES macro, and should not accidentaly be dependent on
+// this deprecated feature
+#define TBB_DEPRECATED_FLOW_NODE_EXTRACTION 0
+
 #include "test_join_node.h"
 
 int TestMain() {
@@ -28,6 +36,8 @@ int TestMain() {
 #endif
 
 #if !__TBB_MIC_OFFLOAD_TEST_COMPILATION_BROKEN
+    generate_test<serial_test, tbb::flow::tuple<MyMessageKeyWithBrokenKey<int, double>, MyMessageKeyWithoutKey<int, float> >, message_based_key_matching<int> >::do_test();
+    generate_test<serial_test, tbb::flow::tuple<MyMessageKeyWithoutKeyMethod<std::string, double>, MyMessageKeyWithBrokenKey<std::string, float> >, message_based_key_matching<std::string> >::do_test();
 #if MAX_TUPLE_TEST_SIZE >= 3
     generate_test<serial_test, tbb::flow::tuple<MyMessageKeyWithoutKey<std::string, double>, MyMessageKeyWithoutKeyMethod<std::string, float>, MyMessageKeyWithBrokenKey<std::string, int> >, message_based_key_matching<std::string&> >::do_test();
 #endif
@@ -62,6 +72,9 @@ int TestMain() {
     >, message_based_key_matching<std::string&> >::do_test();
 #endif
 #endif /* __TBB_MIC_OFFLOAD_TEST_COMPILATION_BROKEN */
+
+    generate_test<serial_test, tbb::flow::tuple<MyMessageKeyWithBrokenKey<int, double>, MyMessageKeyWithoutKey<int, float> >, message_based_key_matching<int> >::do_test();
+    generate_test<serial_test, tbb::flow::tuple<MyMessageKeyWithoutKeyMethod<std::string, double>, MyMessageKeyWithBrokenKey<std::string, float> >, message_based_key_matching<std::string> >::do_test();
 
     return Harness::Done;
 }

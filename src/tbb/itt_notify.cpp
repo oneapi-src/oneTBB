@@ -59,9 +59,7 @@ int __TBB_load_ittnotify() {
       (__itt_group_id)(__itt_group_sync     // prepare/cancel/acquired/releasing
                        | __itt_group_thread // name threads
                        | __itt_group_stitch // stack stitching
-#if __TBB_CPF_BUILD
                        | __itt_group_structure
-#endif
                            ));
 }
 

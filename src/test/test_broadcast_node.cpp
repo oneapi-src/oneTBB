@@ -19,9 +19,13 @@
 */
 
 #include "harness.h"
+
+#if __TBB_CPF_BUILD
+#define TBB_DEPRECATED_FLOW_NODE_EXTRACTION 1
+#endif
+
 #include "tbb/flow_graph.h"
 #include "tbb/task.h"
-
 #include "tbb/atomic.h"
 
 const int N = 1000;
@@ -66,7 +70,7 @@ public:
         return my_graph;
     }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     typedef typename tbb::flow::receiver<T>::built_predecessors_type built_predecessors_type;
     built_predecessors_type mbp;
     built_predecessors_type &built_predecessors() __TBB_override { return mbp; }
@@ -89,7 +93,7 @@ void test_serial_broadcasts() {
 
     for ( int num_receivers = 1; num_receivers < R; ++num_receivers ) {
         std::vector< counting_array_receiver<T> > receivers(num_receivers, counting_array_receiver<T>(g));
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
         ASSERT(b.successor_count() == 0, NULL);
         ASSERT(b.predecessor_count() == 0, NULL);
         typename tbb::flow::broadcast_node<T>::successor_list_type my_succs;
@@ -103,7 +107,7 @@ void test_serial_broadcasts() {
         for ( int r = 0; r < num_receivers; ++r ) {
             tbb::flow::make_edge( b, receivers[r] );
         }
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
         ASSERT( b.successor_count() == (size_t)num_receivers, NULL);
 #endif
 
@@ -216,7 +220,7 @@ void test_resets() {
     ASSERT(!q0.try_get(j), "edge between nodes not removed");
 }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
 void test_extract() {
     int dont_care;
     tbb::flow::graph g;
@@ -314,7 +318,7 @@ void test_extract() {
     }
     ASSERT(!q0.try_get(dont_care), "extra message in queue");
 }
-#endif  // TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#endif  // TBB_DEPRECATED_FLOW_NODE_EXTRACTION
 
 int TestMain() {
     if( MinThread<1 ) {
@@ -334,7 +338,7 @@ int TestMain() {
 
    test_resets<int>();
    test_resets<float>();
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
    test_extract();
 #endif
 

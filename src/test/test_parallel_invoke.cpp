@@ -93,9 +93,6 @@ template <typename F0, typename F1, typename F2, typename F3, typename F4, typen
 void call_parallel_invoke( size_t n, F0& f0, F1& f1, F2& f2, F3& f3, F4 &f4, F5 &f5,
                           F6& f6, F7 &f7, F8 &f8, F9 &f9, tbb::task_group_context* context) {
     switch(n) {
-    default:
-        ASSERT(false, "number of arguments must be between 2 and 10");
-        /* Falls through. */
     case 2:
         if (context)
             tbb::parallel_invoke (f0, f1, *context);
@@ -150,6 +147,8 @@ void call_parallel_invoke( size_t n, F0& f0, F1& f1, F2& f2, F3& f3, F4 &f4, F5 
         else
             tbb::parallel_invoke (f0, f1, f2, f3, f4, f5, f6, f7, f8, f9);
         break;
+    default:
+        ASSERT(false, "number of arguments must be between 2 and 10");
     }
 }
 

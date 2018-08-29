@@ -909,12 +909,28 @@ void TypeTester( const std::list<typename Table::value_type> &lst ) {
     Table c1;
     c1.insert( lst.begin(), lst.end() );
     Examine<defCtorPresent>( c1, lst );
+
+    typename Table::size_type initial_bucket_number = 8;
+    typename Table::allocator_type allocator;
+    typename Table::hasher hasher;
 #if __TBB_INITIALIZER_LISTS_PRESENT && !__TBB_CPP11_INIT_LIST_TEMP_OBJS_LIFETIME_BROKEN
     // Constructor from an initializer_list.
     typename std::list<typename Table::value_type>::const_iterator it = lst.begin();
     Table c2( { *it++, *it++, *it++ } );
     c2.insert( it, lst.end( ) );
     Examine<defCtorPresent>( c2, lst );
+
+    it = lst.begin();
+    // Constructor from an initializer_list, default hasher and key equality and non-default allocator
+    Table c2_alloc( { *it++, *it++, *it++ }, initial_bucket_number, allocator);
+    c2_alloc.insert( it, lst.end() );
+    Examine<defCtorPresent>( c2_alloc, lst );
+
+    it = lst.begin();
+    // Constructor from an initializer_list, default key equality and non-default hasher and allocator
+    Table c2_hash_alloc( { *it++, *it++, *it++ }, initial_bucket_number, hasher, allocator );
+    c2_hash_alloc.insert( it, lst.end() );
+    Examine<defCtorPresent>( c2_hash_alloc, lst );
 #endif
     // Copying constructor.
     Table c3( c1 );
@@ -930,12 +946,32 @@ void TypeTester( const std::list<typename Table::value_type> &lst ) {
     Table c6( lst.size() );
     c6.insert( lst.begin(), lst.end() );
     Examine<defCtorPresent>( c6, lst );
+
+    // Construction empty table with n preallocated buckets, default hasher and key equality and non-default allocator
+    Table c6_alloc( lst.size(), allocator );
+    c6_alloc.insert( lst.begin(), lst.end() );
+    Examine<defCtorPresent>( c6_alloc, lst );
+
+    // Construction empty table with n preallocated buckets, default key equality and non-default hasher and allocator
+    Table c6_hash_alloc( lst.size(), hasher, allocator );
+    c6_hash_alloc.insert( lst.begin(), lst.end() );
+    Examine<defCtorPresent>( c6_hash_alloc, lst );
+
     TableDebugAlloc c7( lst.size( ) );
     c7.insert( lst.begin(), lst.end() );
     Examine<defCtorPresent>( c7, lst );
     // Construction with a copying iteration range and a given allocator instance.
     Table c8( c1.begin(), c1.end() );
     Examine<defCtorPresent>( c8, lst );
+
+    // Construction with a copying iteration range, default hasher and key equality and non-default allocator
+    Table c8_alloc( c1.begin(), c1.end(), initial_bucket_number, allocator );
+    Examine<defCtorPresent>( c8_alloc, lst );
+
+    // Construction with a copying iteration range, default key equality and non-default hasher and allocator
+    Table c8_hash_alloc( c1.begin(), c1.end(), initial_bucket_number, hasher, allocator );
+    Examine<defCtorPresent>( c8_hash_alloc, lst);
+
     typename TableDebugAlloc::allocator_type a;
     TableDebugAlloc c9( a );
     c9.insert( c7.begin(), c7.end() );

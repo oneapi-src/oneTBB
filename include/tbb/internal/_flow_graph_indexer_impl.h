@@ -54,7 +54,7 @@ namespace internal {
             indexer_helper<TupleTypes,N-1>::reset_inputs(my_input, f);
             tbb::flow::get<N-1>(my_input).reset_receiver(f);
         }
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
         template<typename InputTuple>
         static inline void extract(InputTuple &my_input) {
             indexer_helper<TupleTypes,N-1>::extract(my_input);
@@ -75,7 +75,7 @@ namespace internal {
         static inline void reset_inputs(InputTuple &my_input, reset_flags f) {
             tbb::flow::get<0>(my_input).reset_receiver(f);
         }
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
         template<typename InputTuple>
         static inline void extract(InputTuple &my_input) {
             tbb::flow::get<0>(my_input).extract_receiver();
@@ -89,24 +89,24 @@ namespace internal {
         void* my_indexer_ptr;
         typedef task* (* forward_function_ptr)(T const &, void* );
         forward_function_ptr my_try_put_task;
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
         spin_mutex my_pred_mutex;
         typedef typename receiver<T>::built_predecessors_type built_predecessors_type;
         built_predecessors_type my_built_predecessors;
-#endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
+#endif  /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
         graph* my_graph;
     public:
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
         indexer_input_port() : my_pred_mutex(), my_graph(NULL) {}
         indexer_input_port( const indexer_input_port & other) : receiver<T>(), my_pred_mutex(), my_graph(other.my_graph) {
         }
-#endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
+#endif  /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
         void set_up(void* p, forward_function_ptr f, graph& g) {
             my_indexer_ptr = p;
             my_try_put_task = f;
             my_graph = &g;
         }
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
         typedef typename receiver<T>::predecessor_list_type predecessor_list_type;
         typedef typename receiver<T>::predecessor_type predecessor_type;
 
@@ -128,7 +128,7 @@ namespace internal {
             spin_mutex::scoped_lock l(my_pred_mutex);
             my_built_predecessors.copy_edges(v);
         }
-#endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
+#endif  /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
     protected:
         template< typename R, typename B > friend class run_and_put_task;
         template<typename X, typename Y> friend class internal::broadcast_cache;
@@ -142,13 +142,13 @@ namespace internal {
         }
 
     public:
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
         void reset_receiver(reset_flags f) __TBB_override { if(f&rf_clear_edges) my_built_predecessors.clear(); }
 #else
         void reset_receiver(reset_flags /*f*/) __TBB_override { }
 #endif
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
         void extract_receiver() { my_built_predecessors.receiver_extract(*this); }
 #endif
     };
@@ -180,7 +180,7 @@ namespace internal {
         typedef StructTypes tuple_types;
         typedef typename sender<output_type>::successor_type successor_type;
         typedef indexer_node_FE<InputTuple, output_type,StructTypes> input_ports_type;
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
         typedef typename sender<output_type>::built_successors_type built_successors_type;
         typedef typename sender<output_type>::successor_list_type successor_list_type;
 #endif
@@ -188,7 +188,7 @@ namespace internal {
     private:
         // ----------- Aggregator ------------
         enum op_type { reg_succ, rem_succ, try__put_task
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
             , add_blt_succ, del_blt_succ,
              blt_succ_cnt, blt_succ_cpy
 #endif
@@ -202,7 +202,7 @@ namespace internal {
                 output_type const *my_arg;
                 successor_type *my_succ;
                 task *bypass_t;
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
                 size_t cnt_val;
                 successor_list_type *succv;
 #endif
@@ -239,7 +239,7 @@ namespace internal {
                         __TBB_store_with_release(current->status, SUCCEEDED);  // return of try_put_task actual return value
                     }
                     break;
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
                 case add_blt_succ:
                     my_successors.internal_add_built_successor(*(current->my_succ));
                     __TBB_store_with_release(current->status, SUCCEEDED);
@@ -256,7 +256,7 @@ namespace internal {
                     my_successors.copy_successors(*(current->succv));
                     __TBB_store_with_release(current->status, SUCCEEDED);
                     break;
-#endif  /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
+#endif  /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
                 }
             }
         }
@@ -292,7 +292,7 @@ namespace internal {
             return op_data.bypass_t;
         }
 
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
 
         built_successors_type &built_successors() __TBB_override { return my_successors.built_successors(); }
 
@@ -321,7 +321,7 @@ namespace internal {
             my_successors.built_successors().sender_extract(*this);
             indexer_helper<StructTypes,N>::extract(this->my_inputs);
         }
-#endif /* TBB_PREVIEW_FLOW_GRAPH_FEATURES */
+#endif /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
     protected:
         void reset_node(reset_flags f) __TBB_override {
             if(f & rf_clear_edges) {
