@@ -139,16 +139,19 @@ class ThreadId {
         return result;
     }
 public:
-    static void init() {
+    static bool init() {
 #if USE_WINTHREAD
         Tid_key = TlsAlloc();
+        if (Tid_key == TLS_ALLOC_FAILURE)
+            return false;
 #else
         int status = pthread_key_create( &Tid_key, NULL );
         if ( status ) {
-            fprintf (stderr, "The memory manager cannot create tls key during initialization; exiting \n");
-            exit(1);
+            fprintf (stderr, "The memory manager cannot create tls key during initialization\n");
+            return false;
         }
 #endif /* USE_WINTHREAD */
+        return true;
     }
     static void destroy() {
         if( Tid_key ) {
@@ -157,10 +160,8 @@ public:
 #else
             int status = pthread_key_delete( Tid_key );
 #endif /* USE_WINTHREAD */
-            if ( status ) {
-                fprintf (stderr, "The memory manager cannot delete tls key; exiting \n");
-                exit(1);
-            }
+            if ( status )
+                fprintf (stderr, "The memory manager cannot delete tls key\n");
             Tid_key = 0;
         }
     }
@@ -203,7 +204,7 @@ public:
 #else
     bool isCurrentThreadId() const { return GetCurrentThreadId() == tid; }
 #endif
-    static void init() {}
+    static bool init() { return true; }
     static void destroy() {}
 };
 
@@ -1993,9 +1994,8 @@ static bool initMemoryManager()
         extMemPool.init(0, NULL, NULL, granularity,
                         /*keepAllMemory=*/false, /*fixedPool=*/false);
 // TODO: extMemPool.init() to not allocate memory
-    if (!initOk || !initBackRefMaster(&defaultMemPool->extMemPool.backend))
+    if (!initOk || !initBackRefMaster(&defaultMemPool->extMemPool.backend) || !ThreadId::init())
         return false;
-    ThreadId::init();      // Create keys for thread id
     MemoryPool::initDefaultPool();
     // init() is required iff initMemoryManager() is called
     // after mallocProcessShutdownNotification()
@@ -2184,7 +2184,7 @@ LargeMemoryBlock *LocalLOCImpl<LOW_MARK, HIGH_MARK>::get(size_t size)
     if (size > MAX_TOTAL_SIZE)
         return NULL;
 
-    if (!head || !(localHead = (LargeMemoryBlock*)AtomicFetchStore(&head, 0))) {
+    if (!head || (localHead = (LargeMemoryBlock*)AtomicFetchStore(&head, 0)) == NULL) {
         // do not restore totalSize, numOfBlocks and tail at this point,
         // as they are used only in put(), where they must be restored
         return NULL;
@@ -2645,8 +2645,10 @@ rml::MemPoolError pool_create_v1(intptr_t pool_id, const MemPoolPolicy *policy,
         return UNSUPPORTED_POLICY;
     }
     if (!isMallocInitialized())
-        if (!doInitialization())
+        if (!doInitialization()) {
+            *pool = NULL;
             return NO_MEMORY;
+        }
     rml::internal::MemoryPool *memPool =
         (rml::internal::MemoryPool*)internalMalloc((sizeof(rml::internal::MemoryPool)));
     if (!memPool) {
@@ -2813,11 +2815,14 @@ extern "C" void __TBB_mallocThreadShutdownNotification()
 }
 #endif
 
-extern "C" void __TBB_mallocProcessShutdownNotification()
+extern "C" void __TBB_mallocProcessShutdownNotification(bool windows_process_dying)
 {
     if (!isMallocInitialized()) return;
 
-    doThreadShutdownNotification(NULL, /*main_thread=*/true);
+    // Don't clean allocator internals if the entire process is exiting
+    if (!windows_process_dying) {
+        doThreadShutdownNotification(NULL, /*main_thread=*/true);
+    }
 #if  __TBB_MALLOC_LOCACHE_STAT
     printf("cache hit ratio %f, size hit %f\n",
            1.*cacheHits/mallocCalls, 1.*memHitKB/memAllocKB);

@@ -32,7 +32,7 @@ typedef enum {
 } AllocationModeInternalParam;
 
 void MallocInitializeITT();
-void __TBB_mallocProcessShutdownNotification();
+void __TBB_mallocProcessShutdownNotification(bool);
 #if _WIN32||_WIN64
 void __TBB_mallocThreadShutdownNotification();
 #endif

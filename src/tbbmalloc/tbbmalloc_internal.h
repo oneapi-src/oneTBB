@@ -520,7 +520,7 @@ private:
     uint16_t largeObj:1;  // is this object "large"?
     uint16_t offset  :15; // offset from beginning of BackRefBlock
 public:
-    BackRefIdx() : master(invalid) {}
+    BackRefIdx() : master(invalid), largeObj(0), offset(0) {}
     bool isInvalid() const { return master == invalid; }
     bool isLargeObject() const { return largeObj; }
     master_t getMaster() const { return master; }

@@ -87,7 +87,7 @@ extern HugePagesStatus hugePages;
 void *Backend::allocRawMem(size_t &size)
 {
     void *res = NULL;
-    size_t allocSize;
+    size_t allocSize = 0;
 
     if (extMemPool->userPool()) {
         if (extMemPool->fixedPool && bootsrapMemDone == FencedLoad(bootsrapMemStatus))
@@ -101,6 +101,7 @@ void *Backend::allocRawMem(size_t &size)
     } else {
         // Align allocation on page size
         size_t pageSize = hugePages.isEnabled ? hugePages.getGranularity() : extMemPool->granularity;
+        MALLOC_ASSERT(pageSize, "Page size cannot be zero.");
         allocSize = alignUpGeneric(size, pageSize);
 
         // If user requested huge pages and they are available, try to use preallocated ones firstly.

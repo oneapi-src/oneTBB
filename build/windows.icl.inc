@@ -33,7 +33,7 @@ cfg ?= release
 #------------------------------------------------------------------------------
 # Setting compiler flags.
 #------------------------------------------------------------------------------
-CPLUS = icl /nologo $(VCCOMPAT_FLAG)
+CPLUS ?= icl /nologo $(VCCOMPAT_FLAG)
 LINK_FLAGS = /link /nologo
 LIB_LINK_FLAGS= /link /nologo /DLL /MAP /DEBUG /fixed:no /INCREMENTAL:NO /DYNAMICBASE /NXCOMPAT
 

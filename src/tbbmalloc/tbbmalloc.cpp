@@ -75,16 +75,15 @@ void init_tbbmalloc() {
 
 #if !__TBB_SOURCE_DIRECTLY_INCLUDED
 #if USE_WINTHREAD
-extern "C" BOOL WINAPI DllMain( HINSTANCE /*hInst*/, DWORD callReason, LPVOID )
+extern "C" BOOL WINAPI DllMain( HINSTANCE /*hInst*/, DWORD callReason, LPVOID lpvReserved)
 {
-
     if (callReason==DLL_THREAD_DETACH)
     {
         __TBB_mallocThreadShutdownNotification();
     }
     else if (callReason==DLL_PROCESS_DETACH)
     {
-        __TBB_mallocProcessShutdownNotification();
+        __TBB_mallocProcessShutdownNotification(lpvReserved != NULL);
     }
     return TRUE;
 }
@@ -98,7 +97,7 @@ struct RegisterProcessShutdownNotification {
     }
 #endif /* !__TBB_USE_DLOPEN_REENTRANCY_WORKAROUND */
     ~RegisterProcessShutdownNotification() {
-        __TBB_mallocProcessShutdownNotification();
+        __TBB_mallocProcessShutdownNotification(false);
     }
 };
 

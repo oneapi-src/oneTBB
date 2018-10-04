@@ -49,7 +49,7 @@
     }}}
 #endif
 
-#if _MSC_VER>=1600 && (!__INTEL_COMPILER || __INTEL_COMPILER>=1310)
+#if __TBB_MSVC_PART_WORD_INTERLOCKED_INTRINSICS_PRESENT
     // S is the operand size in bytes, B is the suffix for intrinsics for that size
     #define __TBB_MACHINE_DEFINE_ATOMICS(S,B,T,U)                                           \
     __pragma(intrinsic( _InterlockedCompareExchange##B ))                                   \
@@ -75,8 +75,7 @@
     #endif
 
     #undef __TBB_MACHINE_DEFINE_ATOMICS
-    #define __TBB_ATOMIC_PRIMITIVES_DEFINED
-#endif /*_MSC_VER>=1600*/
+#endif /* __TBB_MSVC_PART_WORD_INTERLOCKED_INTRINSICS_PRESENT */
 
 #if _MSC_VER>=1300 || __INTEL_COMPILER>=1100
     #pragma intrinsic(_ReadWriteBarrier)

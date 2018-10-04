@@ -529,17 +529,6 @@ void range_sort_test() {
     for(itor a=v.begin(); a<v.end()-1; ++a) ASSERT(*a >= *(a+1), "v not sorted");
     v.clear();
 
-    // const range checks
-    rand_vec(v);
-    tbb::parallel_sort(tbb::blocked_range<std::vector<int>::iterator>(v.begin(), v.end()));
-    for(itor a=v.begin(); a<v.end()-1; ++a) ASSERT(*a <= *(a+1), "v not sorted");
-    v.clear();
-
-    rand_vec(v);
-    tbb::parallel_sort(tbb::blocked_range<std::vector<int>::iterator>(v.begin(), v.end()), std::greater<int>());
-    for(itor a=v.begin(); a<v.end()-1; ++a) ASSERT(*a >= *(a+1), "v not sorted");
-    v.clear();
-
     // array tests
     int arr[elements];
     for(int i=0; i<elements; ++i) arr[i] = rand()%(elements*10);

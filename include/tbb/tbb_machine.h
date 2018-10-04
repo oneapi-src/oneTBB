@@ -788,7 +788,7 @@ struct __TBB_machine_type_with_alignment_##PowerOf2 { \
 #endif
 
 /* Now declare types aligned to useful powers of two */
-// TODO: Is __TBB_DefineTypeWithAlignment(8) needed on 32 bit platforms?
+__TBB_DefineTypeWithAlignment(8) // i386 ABI says that uint64_t is aligned on 4 bytes  
 __TBB_DefineTypeWithAlignment(16)
 __TBB_DefineTypeWithAlignment(32)
 __TBB_DefineTypeWithAlignment(64)
@@ -802,7 +802,7 @@ template<size_t N> struct type_with_alignment;
 template<> struct type_with_alignment<1> { char member; };
 template<> struct type_with_alignment<2> { uint16_t member; };
 template<> struct type_with_alignment<4> { uint32_t member; };
-template<> struct type_with_alignment<8> { uint64_t member; };
+template<> struct type_with_alignment<8> { __TBB_machine_type_with_alignment_8 member; };
 template<> struct type_with_alignment<16> {__TBB_machine_type_with_alignment_16 member; };
 template<> struct type_with_alignment<32> {__TBB_machine_type_with_alignment_32 member; };
 template<> struct type_with_alignment<64> {__TBB_machine_type_with_alignment_64 member; };

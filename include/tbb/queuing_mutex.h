@@ -46,6 +46,7 @@ public:
         //! Initialize fields to mean "no lock held".
         void initialize() {
             mutex = NULL;
+            going = 0;
 #if TBB_USE_ASSERT
             internal::poison_pointer(next);
 #endif /* TBB_USE_ASSERT */

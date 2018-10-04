@@ -23,7 +23,7 @@
 
 /**
     This header bulk-includes declarations or definitions of all the functionality
-    provided by TBB (save for malloc dependent headers).
+    provided by TBB (save for tbbmalloc and 3rd party dependent headers).
 
     If you use only a few TBB constructs, consider including specific headers only.
     Any header listed below can be included independently of others.
@@ -37,6 +37,9 @@
 #include "blocked_range.h"
 #include "blocked_range2d.h"
 #include "blocked_range3d.h"
+#if TBB_PREVIEW_BLOCKED_RANGE_ND
+#include "blocked_rangeNd.h"
+#endif
 #include "cache_aligned_allocator.h"
 #include "combinable.h"
 #include "concurrent_hash_map.h"
@@ -54,6 +57,7 @@
 #if TBB_PREVIEW_GLOBAL_CONTROL
 #include "global_control.h"
 #endif
+#include "iterators.h"
 #include "mutex.h"
 #include "null_mutex.h"
 #include "null_rw_mutex.h"

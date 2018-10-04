@@ -1132,8 +1132,7 @@ public:
         ASSERT( raw_space<=reinterpret_cast<char*>(y), "y starts before raw_space" );
         ASSERT( reinterpret_cast<char*>(y+1) <= raw_space+sizeof(raw_space), "y starts after raw_space" );
         ASSERT( !(aligned ^ tbb::internal::is_aligned(y,sizeof(T))), "y is not aligned as it required" );
-        new (y) tbb::atomic<T> ();
-        return *y;
+        return *(new (y) tbb::atomic<T>());
     }
 };
 

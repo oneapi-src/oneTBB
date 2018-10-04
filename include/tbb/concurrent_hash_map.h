@@ -604,8 +604,8 @@ protected:
     static node* allocate_node_emplace_construct(node_allocator_type& allocator, Args&&... args){
         return  new( allocator ) node(std::forward<Args>(args)...);
     }
-#endif //#if __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
-#endif
+#endif //__TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
+#endif //__TBB_CPP11_RVALUE_REF_PRESENT
 
     static node* allocate_node_default_construct(node_allocator_type& allocator, const Key &key, const T * ){
         return  new( allocator ) node(key);
@@ -1407,7 +1407,7 @@ void concurrent_hash_map<Key,T,HashCompare,A>::clear() {
         reported = true;
     }
 #endif
-#endif//TBB_USE_ASSERT || TBB_USE_PERFORMANCE_WARNINGS || __TBB_STATISTICS
+#endif // TBB_USE_ASSERT || TBB_USE_PERFORMANCE_WARNINGS || __TBB_STATISTICS
     my_size = 0;
     segment_index_t s = segment_index_of( m );
     __TBB_ASSERT( s+1 == pointers_per_table || !my_table[s+1], "wrong mask or concurrent grow" );

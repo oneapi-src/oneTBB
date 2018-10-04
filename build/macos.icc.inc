@@ -16,8 +16,8 @@
 #
 #
 
-CPLUS = icpc
-CONLY = icc
+CPLUS ?= icpc
+CONLY ?= icc
 COMPILE_ONLY = -c -MMD
 PREPROC_ONLY = -E -x c++
 INCLUDE_KEY = -I

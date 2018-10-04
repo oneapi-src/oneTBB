@@ -106,22 +106,16 @@ __TBB_MACHINE_DEFINE_ATOMICS(8,int64_t)
 
 #undef __TBB_MACHINE_DEFINE_ATOMICS
 
-namespace tbb{ namespace internal { namespace gcc_builtins {
-    inline int clz(unsigned int x){ return __builtin_clz(x);};
-    inline int clz(unsigned long int x){ return __builtin_clzl(x);};
-    inline int clz(unsigned long long int x){ return __builtin_clzll(x);};
-}}}
-//gcc __builtin_clz builtin count _number_ of leading zeroes
-static inline intptr_t __TBB_machine_lg( uintptr_t x ) {
-    return sizeof(x)*8 - tbb::internal::gcc_builtins::clz(x) -1 ;
-}
-
-
 typedef unsigned char __TBB_Flag;
 typedef __TBB_atomic __TBB_Flag __TBB_atomic_flag;
 
 #if __TBB_GCC_VERSION < 40700
 // Use __sync_* builtins
+
+// Use generic machine_load_store functions if there are no builtin atomics
+#define __TBB_USE_GENERIC_HALF_FENCED_LOAD_STORE            1
+#define __TBB_USE_GENERIC_RELAXED_LOAD_STORE                1
+#define __TBB_USE_GENERIC_SEQUENTIAL_CONSISTENCY_LOAD_STORE 1
 
 static inline void __TBB_machine_or( volatile void *ptr, uintptr_t addend ) {
     __sync_fetch_and_or(reinterpret_cast<volatile uintptr_t *>(ptr),addend);
@@ -158,6 +152,59 @@ inline void __TBB_machine_unlock_byte( __TBB_atomic_flag &flag ) {
     __atomic_clear(&flag,__ATOMIC_RELEASE);
 }
 
+namespace tbb { namespace internal {
+
+/** GCC atomic operation intrinsics might miss compiler fence.
+    Adding it after load-with-acquire, before store-with-release, and
+    on both sides of sequentially consistent operations is sufficient for correctness. **/
+
+template <typename T, int MemOrder>
+inline T __TBB_machine_atomic_load( const volatile T& location) {
+    if (MemOrder == __ATOMIC_SEQ_CST) __TBB_compiler_fence();
+    T value = __atomic_load_n(&location, MemOrder);
+    if (MemOrder != __ATOMIC_RELAXED) __TBB_compiler_fence();
+    return value;
+}
+
+template <typename T, int MemOrder>
+inline void __TBB_machine_atomic_store( volatile T& location, T value) {
+    if (MemOrder != __ATOMIC_RELAXED) __TBB_compiler_fence();
+    __atomic_store_n(&location, value, MemOrder);
+    if (MemOrder == __ATOMIC_SEQ_CST) __TBB_compiler_fence();
+}
+
+template <typename T, size_t S>
+struct machine_load_store {
+    static T load_with_acquire ( const volatile T& location ) {
+        return __TBB_machine_atomic_load<T, __ATOMIC_ACQUIRE>(location);
+    }
+    static void store_with_release ( volatile T &location, T value ) {
+        __TBB_machine_atomic_store<T, __ATOMIC_RELEASE>(location, value);
+    }
+};
+
+template <typename T, size_t S>
+struct machine_load_store_relaxed {
+    static inline T load ( const volatile T& location ) {
+        return __TBB_machine_atomic_load<T, __ATOMIC_RELAXED>(location);
+    }
+    static inline void store ( volatile T& location, T value ) {
+        __TBB_machine_atomic_store<T, __ATOMIC_RELAXED>(location, value);
+    }
+};
+
+template <typename T, size_t S>
+struct machine_load_store_seq_cst {
+    static T load ( const volatile T& location ) {
+        return __TBB_machine_atomic_load<T, __ATOMIC_SEQ_CST>(location);
+    }
+    static void store ( volatile T &location, T value ) {
+        __TBB_machine_atomic_store<T, __ATOMIC_SEQ_CST>(location, value);
+    }
+};
+
+}} // namespace tbb::internal
+
 #endif // __TBB_GCC_VERSION < 40700
 
 // Machine specific atomic operations
@@ -167,18 +214,24 @@ inline void __TBB_machine_unlock_byte( __TBB_atomic_flag &flag ) {
 #define __TBB_TryLockByte   __TBB_machine_try_lock_byte
 #define __TBB_UnlockByte    __TBB_machine_unlock_byte
 
-// Definition of other functions
-#define __TBB_Log2(V)           __TBB_machine_lg(V)
+// __builtin_clz counts the number of leading zeroes
+namespace tbb{ namespace internal { namespace gcc_builtins {
+    inline int clz(unsigned int x){ return __builtin_clz(x); };
+    inline int clz(unsigned long int x){ return __builtin_clzl(x); };
+    inline int clz(unsigned long long int x){ return __builtin_clzll(x); };
+}}}
+// logarithm is the index of the most significant non-zero bit
+static inline intptr_t __TBB_machine_lg( uintptr_t x ) {
+    // If P is a power of 2 and x<P, then (P-1)-x == (P-1) XOR x
+    return (sizeof(x)*8 - 1) ^ tbb::internal::gcc_builtins::clz(x);
+}
 
-// TODO: implement with __atomic_* builtins where available
-#define __TBB_USE_GENERIC_HALF_FENCED_LOAD_STORE            1
-#define __TBB_USE_GENERIC_RELAXED_LOAD_STORE                1
-#define __TBB_USE_GENERIC_SEQUENTIAL_CONSISTENCY_LOAD_STORE 1
+#define __TBB_Log2(V)  __TBB_machine_lg(V)
 
 #if __TBB_WORDSIZE==4
     #define __TBB_USE_GENERIC_DWORD_LOAD_STORE              1
 #endif
 
 #if __TBB_x86_32 || __TBB_x86_64
-#include "gcc_itsx.h"
+#include "gcc_ia32_common.h"
 #endif

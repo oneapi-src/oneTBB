@@ -515,7 +515,7 @@ public:
 
     pointer allocate(const size_type n, const void *hint = 0 ) {
         pointer ptr = base_allocator_type::allocate( n, hint );
-        std::memset( ptr, 0xE3E3E3E3, n * sizeof(value_type) );
+        std::memset( (void*)ptr, 0xE3E3E3E3, n * sizeof(value_type) );
         return ptr;
     }
 };

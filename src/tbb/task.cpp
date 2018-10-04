@@ -31,8 +31,6 @@
 
 namespace tbb {
 
-using namespace std;
-
 namespace internal {
 
 //------------------------------------------------------------------------

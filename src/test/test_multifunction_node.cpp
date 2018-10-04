@@ -501,13 +501,13 @@ void test_ports_return_references() {
 #if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
 // the integer received indicates which output ports should succeed and which should fail
 // on try_put().
-typedef tbb::flow::multifunction_node<int, tbb::flow::tuple<int, int> > mf_node;
+typedef tbb::flow::multifunction_node<int, tbb::flow::tuple<int, int> > mf_node_type;
 
 struct add_to_counter {
     int my_invocations;
     int *counter;
     add_to_counter(int& var):counter(&var){ my_invocations = 0;}
-    void operator()(const int &i, mf_node::output_ports_type &outports) {
+    void operator()(const int &i, mf_node_type::output_ports_type &outports) {
         *counter+=1;
         ++my_invocations;
         if(i & 0x1) {

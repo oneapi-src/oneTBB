@@ -366,9 +366,9 @@ void test_extract() {
 }
 #endif
 
-struct lightweight_policy_body {
+struct lightweight_policy_body : NoAssign {
     const tbb::tbb_thread::id my_thread_id;
-    tbb::atomic<int> my_count;
+    tbb::atomic<size_t> my_count;
 
     lightweight_policy_body() : my_thread_id(tbb::this_tbb_thread::get_id()) {
         my_count = 0;
@@ -386,7 +386,7 @@ void test_lightweight_policy() {
     tbb::flow::continue_node<tbb::flow::continue_msg, tbb::flow::lightweight> node2(g, lightweight_policy_body());
 
     tbb::flow::make_edge(node1, node2);
-    const int n = 10;
+    const size_t n = 10;
     for(size_t i = 0; i < n; ++i) {
         node1.try_put(tbb::flow::continue_msg());
     }
@@ -394,8 +394,8 @@ void test_lightweight_policy() {
 
     lightweight_policy_body body1 = tbb::flow::copy_body<lightweight_policy_body>(node1);
     lightweight_policy_body body2 = tbb::flow::copy_body<lightweight_policy_body>(node2);
-    ASSERT(int(body1.my_count) == n, "Body of the first node needs to be executed N times");
-    ASSERT(int(body2.my_count) == n, "Body of the second node needs to be executed N times");
+    ASSERT(body1.my_count == n, "Body of the first node needs to be executed N times");
+    ASSERT(body2.my_count == n, "Body of the second node needs to be executed N times");
 }
 
 int TestMain() {

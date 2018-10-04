@@ -16,6 +16,8 @@
 #
 #
 
+CPLUS ?= pathCC
+CONLY ?= pathcc
 COMPILE_ONLY = -c -MMD
 PREPROC_ONLY = -E -x c++
 INCLUDE_KEY = -I
@@ -32,8 +34,6 @@ DYLIB_KEY = -shared
 EXPORT_KEY = -Wl,--version-script,
 LIBDL = -ldl
 
-CPLUS = pathCC
-CONLY = pathcc
 LIB_LINK_FLAGS = $(DYLIB_KEY) -Wl,-soname=$(BUILDING_LIBRARY)
 LIBS += -lstl -lpthread -lrt
 LINK_FLAGS = -Wl,-rpath-link=. -rdynamic

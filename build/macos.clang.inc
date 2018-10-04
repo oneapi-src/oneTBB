@@ -16,8 +16,8 @@
 #
 #
 
-CPLUS = clang++
-CONLY = clang
+CPLUS ?= clang++
+CONLY ?= clang
 COMPILE_ONLY = -c -MMD
 PREPROC_ONLY = -E -x c++
 INCLUDE_KEY = -I
@@ -47,7 +47,7 @@ endif
 CPLUS_FLAGS += -DUSE_PTHREAD $(ITT_NOTIFY)
 
 # For Clang, we add the option to support RTM intrinsics *iff* xtest is found in <immintrin.h>
-ifneq (,$(shell grep xtest `echo "\#include<immintrin.h>" | clang -E -M - 2>&1 | grep immintrin.h` 2>/dev/null))
+ifneq (,$(shell grep xtest `echo "\#include<immintrin.h>" | $(CONLY) -E -M - 2>&1 | grep immintrin.h` 2>/dev/null))
     RTM_KEY = -mrtm
 endif
 

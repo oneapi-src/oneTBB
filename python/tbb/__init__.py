@@ -57,6 +57,7 @@ def _test(arg=None):
     import platform
     if platform.system() == "Linux":
         ctypes.CDLL(libirml)
+        assert 256 == os.system("ldd "+_api.__file__+"| grep -E 'libimf|libsvml|libintlc'")
     from .test import test
     test(arg)
     print("done")

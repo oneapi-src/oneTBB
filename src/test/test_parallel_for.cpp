@@ -394,14 +394,15 @@ struct SSE_Functor {
 //! Test that parallel_for works with stack-allocated __m128
 template<typename ClassWithVectorType>
 void TestVectorTypes() {
-    ClassWithVectorType Array1[N], Array2[N];
-    for( int i=0; i<N; ++i ) {
+	const int aSize = 300;
+    ClassWithVectorType Array1[aSize], Array2[aSize];
+    for( int i=0; i<aSize; ++i ) {
         // VC8 does not properly align a temporary value; to work around, use explicit variable
         ClassWithVectorType foo(i);
         Array1[i] = foo;
     }
-    tbb::parallel_for( tbb::blocked_range<int>(0,N), SSE_Functor<ClassWithVectorType>(Array1, Array2) );
-    for( int i=0; i<N; ++i ) {
+    tbb::parallel_for( tbb::blocked_range<int>(0,aSize), SSE_Functor<ClassWithVectorType>(Array1, Array2) );
+    for( int i=0; i<aSize; ++i ) {
         ClassWithVectorType foo(i);
         ASSERT( Array2[i]==foo, NULL ) ;
     }

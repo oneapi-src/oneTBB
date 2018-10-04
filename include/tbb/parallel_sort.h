@@ -233,24 +233,10 @@ void parallel_sort(Range& rng, const Compare& comp) {
     parallel_sort(tbb::internal::first(rng), tbb::internal::last(rng), comp);
 }
 
-//! Sorts the data in const rng using the given comparator
-/** @ingroup algorithms **/
-template<typename Range, typename Compare>
-void parallel_sort(const Range& rng, const Compare& comp) {
-    parallel_sort(tbb::internal::first(rng), tbb::internal::last(rng), comp);
-}
-
 //! Sorts the data in rng with a default comparator \c std::less<RandomAccessIterator>
 /** @ingroup algorithms **/
 template<typename Range>
 void parallel_sort(Range& rng) {
-    parallel_sort(tbb::internal::first(rng), tbb::internal::last(rng));
-}
-
-//! Sorts the data in const rng with a default comparator \c std::less<RandomAccessIterator>
-/** @ingroup algorithms **/
-template<typename Range>
-void parallel_sort(const Range& rng) {
     parallel_sort(tbb::internal::first(rng), tbb::internal::last(rng));
 }
 

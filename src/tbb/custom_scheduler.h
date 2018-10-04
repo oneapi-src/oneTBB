@@ -216,9 +216,9 @@ task* custom_scheduler<SchedulerTraits>::receive_or_steal_task( __TBB_ISOLATION_
             GATHER_STATISTIC( ++my_counters.mails_received );
         }
         // Check if there are tasks in starvation-resistant stream.
-        // Only allowed at the outermost dispatch level.
-        else if ( outermost_dispatch_level && !my_arena->my_task_stream.empty(p)
-                  && (t = my_arena->my_task_stream.pop( p, my_arena_slot->hint_for_pop)) ) {
+        // Only allowed at the outermost dispatch level without isolation.
+        else if (__TBB_ISOLATION_EXPR(isolation == no_isolation &&) outermost_dispatch_level &&
+            !my_arena->my_task_stream.empty(p) && (t = my_arena->my_task_stream.pop( p, my_arena_slot->hint_for_pop)) ) {
             ITT_NOTIFY(sync_acquired, &my_arena->my_task_stream);
             // just proceed with the obtained task
         }

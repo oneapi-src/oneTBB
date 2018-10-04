@@ -18,6 +18,8 @@
 
 ####### Detections and Commands ###############################################
 
+CPLUS ?= xlc++_r
+CONLY ?= xlc_r
 COMPILE_ONLY = -c
 PREPROC_ONLY = -E -qsourcetype=c
 INCLUDE_KEY = -I
@@ -34,8 +36,6 @@ DYLIB_KEY = -qmkshrobj
 EXPORT_KEY = -Wl,--version-script,
 LIBDL = -ldl
 
-CPLUS = xlc++_r
-CONLY = xlc_r
 LIB_LINK_FLAGS = $(DYLIB_KEY) -Wl,-soname=$(BUILDING_LIBRARY)
 LIBS = -lpthread -lrt
 C_FLAGS = $(CPLUS_FLAGS)

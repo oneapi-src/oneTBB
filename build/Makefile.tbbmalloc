@@ -138,7 +138,8 @@ MALLOC_TESTS = test_ScalableAllocator.$(TEST_EXT) \
                test_malloc_pure_c.$(TEST_EXT) \
                test_malloc_whitebox.$(TEST_EXT) \
                test_malloc_used_by_lib.$(TEST_EXT) \
-               test_malloc_lib_unload.$(TEST_EXT)
+               test_malloc_lib_unload.$(TEST_EXT) \
+               test_malloc_shutdown_hang.$(TEST_EXT)
 ifneq (,$(MALLOCPROXY.DLL))
 MALLOC_TESTS += test_malloc_overload.$(TEST_EXT) \
                 test_malloc_overload_proxy.$(TEST_EXT) \
@@ -212,6 +213,17 @@ test_malloc_lib_unload_dll.$(DLL): INCLUDES=$(ORIG_INCLUDES) $(INCLUDE_TEST_HEAD
 test_malloc_used_by_lib_dll.$(DLL): CPLUS_FLAGS:=$(subst /MT,/LD,$(M_CPLUS_FLAGS))
 test_malloc_used_by_lib_dll.$(DLL): LINK_FILES+=$(ORIG_LINK_MALLOC.LIB)
 test_malloc_used_by_lib_dll.$(DLL): LIBDL=
+
+# The test needs both tbb and tbbmalloc.
+# For static build LINK_TBB.LIB is resolved in tbb.a static lib name (Linux), which cannot be found (dynamic tbb is used only).
+# In order to link properly, have to define LINK_TBB.LIB ourselves except for Windows where linkage with *.lib file expected.
+ifdef extra_inc
+ifneq ($(tbb_os),windows)
+DYNAMIC_TBB_LIB=$(LIBPREF)tbb$(CPF_SUFFIX)$(DEBUG_SUFFIX).$(DLL)
+endif
+endif
+test_malloc_shutdown_hang.$(TEST_EXT): LINK_FILES += $(if $(DYNAMIC_TBB_LIB), $(DYNAMIC_TBB_LIB), $(LINK_TBB.LIB))
+
 # -----------------------------------------------------
 
 # ---- The list of TBBMalloc test running commands ----
@@ -235,6 +247,7 @@ endif
 	$(run_cmd) ./test_malloc_regression.$(TEST_EXT) $(args)
 	$(run_cmd) ./test_malloc_init_shutdown.$(TEST_EXT) $(args)
 	$(run_cmd) ./test_malloc_pure_c.$(TEST_EXT) $(args)
+	$(run_cmd) ./test_malloc_shutdown_hang.$(TEST_EXT)
 # -----------------------------------------------------
 
 #------------------------------------------------------

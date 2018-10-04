@@ -24,7 +24,7 @@
 #------------------------------------------------------------------------------
 # Setting compiler flags.
 #------------------------------------------------------------------------------
-CPLUS = cl /nologo
+CPLUS ?= cl /nologo
 LINK_FLAGS = /link /nologo
 LIB_LINK_FLAGS=/link /nologo /DLL /MAP /DEBUG /fixed:no /INCREMENTAL:NO /DYNAMICBASE /NXCOMPAT
 

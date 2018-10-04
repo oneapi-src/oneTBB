@@ -315,7 +315,7 @@
 #ifndef __TBB_CPP11_VARIADIC_FIXED_LENGTH_EXP_PRESENT
 #define __TBB_CPP11_VARIADIC_FIXED_LENGTH_EXP_PRESENT       __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
 #endif
-#define __TBB_CPP11_VARIADIC_TUPLE_PRESENT                  (!_MSC_VER || _MSC_VER >=1800)
+#define __TBB_CPP11_VARIADIC_TUPLE_PRESENT                  (!_MSC_VER || _MSC_VER >= 1800)
 
 #define __TBB_CPP11_TYPE_PROPERTIES_PRESENT                 (_LIBCPP_VERSION || _MSC_VER >= 1700 || (__TBB_GLIBCXX_VERSION >= 50000 && __GXX_EXPERIMENTAL_CXX0X__))
 #define __TBB_TR1_TYPE_PROPERTIES_IN_STD_PRESENT            (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GLIBCXX_VERSION >= 40300 || _MSC_VER >= 1600)
@@ -331,11 +331,13 @@
 // Due to libc++ limitations in C++03 mode, do not pass rvalues to std::make_shared()
 #define __TBB_CPP11_SMART_POINTERS_PRESENT                  ( _MSC_VER >= 1600 || _LIBCPP_VERSION   \
                                                             || ((__cplusplus >= 201103L || __GXX_EXPERIMENTAL_CXX0X__)  \
-                                                            && (__TBB_GLIBCXX_VERSION>=40500 || __TBB_GLIBCXX_VERSION>=40400 && __TBB_USE_OPTIONAL_RTTI)) )
+                                                            && (__TBB_GLIBCXX_VERSION >= 40500 || __TBB_GLIBCXX_VERSION >= 40400 && __TBB_USE_OPTIONAL_RTTI)) )
 
-#define __TBB_CPP11_FUTURE_PRESENT                          (_MSC_VER >= 1700 || __TBB_GLIBCXX_VERSION >= 40600 && _GXX_EXPERIMENTAL_CXX0X__ || _LIBCPP_VERSION)
+#define __TBB_CPP11_FUTURE_PRESENT                          (_MSC_VER >= 1700 || __TBB_GLIBCXX_VERSION >= 40600 && __GXX_EXPERIMENTAL_CXX0X__ || _LIBCPP_VERSION)
 
-#define __TBB_CPP11_GET_NEW_HANDLER_PRESENT                 (_LIBCPP_VERSION || _MSC_VER >= 1900 || (__TBB_GLIBCXX_VERSION >= 40900 && __GXX_EXPERIMENTAL_CXX0X__))
+#define __TBB_CPP11_GET_NEW_HANDLER_PRESENT                 (_MSC_VER >= 1900 || __TBB_GLIBCXX_VERSION >= 40900 && __GXX_EXPERIMENTAL_CXX0X__ || _LIBCPP_VERSION)
+
+#define __TBB_CPP17_UNCAUGHT_EXCEPTIONS_PRESENT             (_MSC_VER >= 1900 || __GLIBCXX__ && __cpp_lib_uncaught_exceptions || _LIBCPP_VERSION >= 3700)
 
 // std::swap is in <utility> only since C++11, though MSVC had it at least since VS2005
 #if _MSC_VER>=1400 || _LIBCPP_VERSION || __GXX_EXPERIMENTAL_CXX0X__
@@ -371,9 +373,19 @@
     #define __TBB_GCC_BUILTIN_ATOMICS_PRESENT 1
 #endif
 
+#if __TBB_GCC_VERSION >= 70000 && !__INTEL_COMPILER && !__clang__
+    // After GCC7 there was possible reordering problem in generic atomic load/store operations.
+    // So always using builtins.
+    #define TBB_USE_GCC_BUILTINS 1
+#endif
+
 #if __INTEL_COMPILER >= 1200
     /** built-in C++11 style atomics available in ICC since 12.0 **/
     #define __TBB_ICC_BUILTIN_ATOMICS_PRESENT 1
+#endif
+
+#if _MSC_VER>=1600 && (!__INTEL_COMPILER || __INTEL_COMPILER>=1310)
+    #define __TBB_MSVC_PART_WORD_INTERLOCKED_INTRINSICS_PRESENT 1
 #endif
 
 #define __TBB_TSX_INTRINSICS_PRESENT ((__RTM__ || _MSC_VER>=1700 || __INTEL_COMPILER>=1300) && !__TBB_DEFINE_MIC && !__ANDROID__)
@@ -668,7 +680,7 @@ There are four cases that are supported:
     #define __TBB_ICC_ASM_VOLATILE_BROKEN 1
 #endif
 
-#if !__INTEL_COMPILER && (_MSC_VER || __GNUC__==3 && __GNUC_MINOR__<=2)
+#if !__INTEL_COMPILER && (_MSC_VER && _MSC_VER < 1700 || __GNUC__==3 && __GNUC_MINOR__<=2)
     /** Bug in GCC 3.2 and MSVC compilers that sometimes return 0 for __alignof(T)
         when T has not yet been instantiated. **/
     #define __TBB_ALIGNOF_NOT_INSTANTIATED_TYPES_BROKEN 1

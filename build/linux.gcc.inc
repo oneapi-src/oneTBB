@@ -16,6 +16,8 @@
 #
 #
 
+CPLUS ?= g++
+CONLY ?= gcc
 COMPILE_ONLY = -c -MMD
 PREPROC_ONLY = -E -x c++
 INCLUDE_KEY = -I
@@ -32,30 +34,28 @@ DYLIB_KEY = -shared
 EXPORT_KEY = -Wl,--version-script,
 LIBDL = -ldl
 
-CPLUS = g++
-CONLY = gcc
 LIB_LINK_FLAGS = $(DYLIB_KEY) -Wl,-soname=$(BUILDING_LIBRARY)
 LIBS += -lpthread -lrt
 LINK_FLAGS = -Wl,-rpath-link=. -rdynamic
 C_FLAGS = $(CPLUS_FLAGS)
 
 # gcc 4.2 and higher support OpenMP
-ifneq (,$(shell gcc -dumpversion | egrep  "^(4\.[2-9]|[5-9])"))
+ifneq (,$(shell $(CONLY) -dumpversion | egrep  "^(4\.[2-9]|[5-9])"))
     OPENMP_FLAG = -fopenmp
 endif
 
 # gcc 4.8 and later support RTM intrinsics, but require command line switch to enable them
-ifneq (,$(shell gcc -dumpversion | egrep  "^(4\.[8-9]|[5-9])"))
+ifneq (,$(shell $(CONLY) -dumpversion | egrep  "^(4\.[8-9]|[5-9])"))
     RTM_KEY = -mrtm
 endif
 
 # gcc 4.0 and later have -Wextra that is used by some our customers.
-ifneq (,$(shell gcc -dumpversion | egrep  "^([4-9])"))
+ifneq (,$(shell $(CONLY) -dumpversion | egrep  "^([4-9])"))
     WARNING_KEY += -Wextra
 endif
 
 # gcc 5.0 and later have -Wsuggest-override and -Wno-sized-deallocation options
-ifneq (,$(shell gcc -dumpversion | egrep  "^([5-9])"))
+ifneq (,$(shell $(CONLY) -dumpversion | egrep  "^([5-9])"))
     # enable -Wsuggest-override via a pre-included header in order to limit to C++11 and above
     INCLUDE_TEST_HEADERS = -include $(tbb_root)/src/test/harness_preload.h
     WARNING_SUPPRESS += -Wno-sized-deallocation
@@ -63,7 +63,7 @@ endif
 
 # gcc 6.0 and later have -flifetime-dse option that controls
 # elimination of stores done outside the object lifetime
-ifneq (,$(shell gcc -dumpversion | egrep  "^([6-9])"))
+ifneq (,$(shell $(CONLY) -dumpversion | egrep  "^([6-9])"))
     # keep pre-contruction stores for zero initialization
     DSE_KEY = -flifetime-dse=1
 endif

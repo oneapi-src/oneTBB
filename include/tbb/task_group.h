@@ -82,6 +82,16 @@ public:
 };
 
 class task_group_base : internal::no_copy {
+    class ref_count_guard : internal::no_copy {
+        task& my_task;
+    public:
+        ref_count_guard(task& t) : my_task(t) {
+            my_task.increment_ref_count();
+        }
+        ~ref_count_guard() {
+            my_task.decrement_ref_count();
+        }
+    };
 protected:
     empty_task* my_root;
     task_group_context my_context;
@@ -90,16 +100,6 @@ protected:
 
     template<typename F>
     task_group_status internal_run_and_wait( F& f ) {
-        class ref_count_guard : internal::no_copy {
-            task& my_task;
-        public:
-            ref_count_guard( task& t ) : my_task(t) {
-                my_task.increment_ref_count();
-            }
-            ~ref_count_guard() {
-                my_task.decrement_ref_count();
-            }
-        };
         __TBB_TRY {
             if ( !my_context.is_group_execution_cancelled() ) {
                 // We need to increase the reference count of the root task to notify waiters that
@@ -128,7 +128,11 @@ public:
 
     ~task_group_base() __TBB_NOEXCEPT(false) {
         if( my_root->ref_count() > 1 ) {
+#if __TBB_CPP17_UNCAUGHT_EXCEPTIONS_PRESENT
+            bool stack_unwinding_in_progress = std::uncaught_exceptions() > 0;
+#else
             bool stack_unwinding_in_progress = std::uncaught_exception();
+#endif
             // Always attempt to do proper cleanup to avoid inevitable memory corruption
             // in case of missing wait (for the sake of better testability & debuggability)
             if ( !is_canceling() )

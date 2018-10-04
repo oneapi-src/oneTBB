@@ -38,8 +38,6 @@
     #pragma warning (disable: 4267)
 #endif
 
-using namespace std;
-
 namespace tbb {
 
 namespace internal {

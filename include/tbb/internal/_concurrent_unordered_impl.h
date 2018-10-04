@@ -727,8 +727,10 @@ protected:
 
 #if __TBB_CPP11_RVALUE_REF_PRESENT
     concurrent_unordered_base(concurrent_unordered_base&& right)
-        : Traits(right.my_hash_compare), my_solist(right.get_allocator()), my_allocator(right.get_allocator())
+        : Traits(right.my_hash_compare), my_solist(right.get_allocator()), my_allocator(right.get_allocator()),
+          my_maximum_bucket_size(float(initial_bucket_load))
     {
+        my_number_of_buckets = initial_bucket_number;
         internal_init();
         swap(right);
     }
@@ -740,6 +742,8 @@ protected:
 
         internal_init();
         if (a == right.get_allocator()){
+            my_number_of_buckets = initial_bucket_number;
+            my_maximum_bucket_size = float(initial_bucket_load);
             this->swap(right);
         }else{
             my_maximum_bucket_size = right.my_maximum_bucket_size;

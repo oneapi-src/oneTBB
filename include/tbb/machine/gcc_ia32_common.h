@@ -21,10 +21,10 @@
 #ifndef __TBB_machine_gcc_ia32_common_H
 #define __TBB_machine_gcc_ia32_common_H
 
+#ifndef __TBB_Log2
 //TODO: Add a higher-level function, e.g. tbb::internal::log2(), into tbb_stddef.h, which
 //uses __TBB_Log2 and contains the assert and remove the assert from here and all other
 //platform-specific headers.
-//TODO: Check if use of gcc intrinsic gives a better chance for cross call optimizations
 template <typename T>
 static inline intptr_t __TBB_machine_lg( T x ) {
     __TBB_ASSERT(x>0, "The logarithm of a non-positive value is undefined.");
@@ -33,6 +33,7 @@ static inline intptr_t __TBB_machine_lg( T x ) {
     return j;
 }
 #define __TBB_Log2(V)  __TBB_machine_lg(V)
+#endif /* !__TBB_Log2 */
 
 #ifndef __TBB_Pause
 //TODO: check if raising a ratio of pause instructions to loop control instructions

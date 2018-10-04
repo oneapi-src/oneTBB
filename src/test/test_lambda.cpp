@@ -18,6 +18,8 @@
 
 */
 
+#define NOMINMAX
+
 #include "harness_defs.h"
 #if __TBB_TEST_SKIP_LAMBDA
 
@@ -29,7 +31,6 @@ int TestMain() {
 
 #else /*__TBB_TEST_SKIP_LAMBDA*/
 
-#define NOMINMAX
 #include "tbb/tbb.h"
 #include "tbb/combinable.h"
 #include <cstdio>

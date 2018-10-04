@@ -49,7 +49,7 @@ PROXY.LIB =
 # Compiler-specific variables
 #------------------------------------------------------------------------------
 
-CPLUS = g++
+CPLUS ?= g++
 COMPILE_ONLY = -c -MMD
 PREPROC_ONLY = -E -x c++
 INCLUDE_KEY = -I

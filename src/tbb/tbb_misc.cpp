@@ -46,8 +46,6 @@
 #include <cxxabi.h>
 #endif
 
-using namespace std;
-
 namespace tbb {
 
 const char* bad_last_alloc::what() const throw() { return "bad allocation in previous or concurrent attempt"; }
@@ -65,7 +63,7 @@ namespace internal {
         fprintf (stderr, "Exception %s with message %s would've been thrown, "  \
             "if exception handling were not disabled. Aborting.\n", exc_name, msg); \
         fflush(stderr); \
-        abort();
+        std::abort();
     #define DO_THROW(exc, init_args) PRINT_ERROR_AND_ABORT(#exc, #init_args)
 #endif /* !TBB_USE_EXCEPTIONS */
 
@@ -88,7 +86,7 @@ void handle_perror( int error_code, const char* what ) {
     // Ensure that buffer ends in terminator.
     buf[sizeof(buf)-1] = 0;
 #if TBB_USE_EXCEPTIONS
-    throw runtime_error(buf);
+    throw std::runtime_error(buf);
 #else
     PRINT_ERROR_AND_ABORT( "runtime_error", buf);
 #endif /* !TBB_USE_EXCEPTIONS */
@@ -105,7 +103,7 @@ void handle_win_error( int error_code ) {
     sprintf_s((char*)&buf, 512, "error code %d", error_code);
 #endif
 #if TBB_USE_EXCEPTIONS
-    throw runtime_error(buf);
+    throw std::runtime_error(buf);
 #else
     PRINT_ERROR_AND_ABORT( "runtime_error", buf);
 #endif /* !TBB_USE_EXCEPTIONS */
@@ -119,27 +117,27 @@ void throw_bad_last_alloc_exception_v4() {
 void throw_exception_v4 ( exception_id eid ) {
     __TBB_ASSERT ( eid > 0 && eid < eid_max, "Unknown exception ID" );
     switch ( eid ) {
-    case eid_bad_alloc: DO_THROW( bad_alloc, () );
+    case eid_bad_alloc: DO_THROW(std::bad_alloc, () );
     case eid_bad_last_alloc: DO_THROW( bad_last_alloc, () );
-    case eid_nonpositive_step: DO_THROW( invalid_argument, ("Step must be positive") );
-    case eid_out_of_range: DO_THROW( out_of_range, ("Index out of requested size range") );
-    case eid_segment_range_error: DO_THROW( range_error, ("Index out of allocated segment slots") );
-    case eid_index_range_error: DO_THROW( range_error, ("Index is not allocated") );
+    case eid_nonpositive_step: DO_THROW(std::invalid_argument, ("Step must be positive") );
+    case eid_out_of_range: DO_THROW(std::out_of_range, ("Index out of requested size range") );
+    case eid_segment_range_error: DO_THROW(std::range_error, ("Index out of allocated segment slots") );
+    case eid_index_range_error: DO_THROW(std::range_error, ("Index is not allocated") );
     case eid_missing_wait: DO_THROW( missing_wait, () );
     case eid_invalid_multiple_scheduling: DO_THROW( invalid_multiple_scheduling, () );
     case eid_improper_lock: DO_THROW( improper_lock, () );
-    case eid_possible_deadlock: DO_THROW( runtime_error, ("Resource deadlock would occur") );
-    case eid_operation_not_permitted: DO_THROW( runtime_error, ("Operation not permitted") );
-    case eid_condvar_wait_failed: DO_THROW( runtime_error, ("Wait on condition variable failed") );
-    case eid_invalid_load_factor: DO_THROW( out_of_range, ("Invalid hash load factor") );
-    case eid_reserved: DO_THROW( out_of_range, ("[backward compatibility] Invalid number of buckets") );
-    case eid_invalid_swap: DO_THROW( invalid_argument, ("swap() is invalid on non-equal allocators") );
-    case eid_reservation_length_error: DO_THROW( length_error, ("reservation size exceeds permitted max size") );
-    case eid_invalid_key: DO_THROW( out_of_range, ("invalid key") );
+    case eid_possible_deadlock: DO_THROW(std::runtime_error, ("Resource deadlock would occur") );
+    case eid_operation_not_permitted: DO_THROW(std::runtime_error, ("Operation not permitted") );
+    case eid_condvar_wait_failed: DO_THROW(std::runtime_error, ("Wait on condition variable failed") );
+    case eid_invalid_load_factor: DO_THROW(std::out_of_range, ("Invalid hash load factor") );
+    case eid_reserved: DO_THROW(std::out_of_range, ("[backward compatibility] Invalid number of buckets") );
+    case eid_invalid_swap: DO_THROW(std::invalid_argument, ("swap() is invalid on non-equal allocators") );
+    case eid_reservation_length_error: DO_THROW(std::length_error, ("reservation size exceeds permitted max size") );
+    case eid_invalid_key: DO_THROW(std::out_of_range, ("invalid key") );
     case eid_user_abort: DO_THROW( user_abort, () );
-    case eid_bad_tagged_msg_cast: DO_THROW( runtime_error, ("Illegal tagged_msg cast") );
+    case eid_bad_tagged_msg_cast: DO_THROW(std::runtime_error, ("Illegal tagged_msg cast") );
 #if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
-    case eid_blocking_thread_join_impossible: DO_THROW( runtime_error, ("Blocking terminate failed") );
+    case eid_blocking_thread_join_impossible: DO_THROW(std::runtime_error, ("Blocking terminate failed") );
 #endif
     default: break;
     }
@@ -195,7 +193,7 @@ bool gcc_rethrow_exception_broken() { return false; }
 bool GetBoolEnvironmentVariable( const char * ) { return false;}
 #else  /* __TBB_WIN8UI_SUPPORT */
 bool GetBoolEnvironmentVariable( const char * name ) {
-    if( const char* s = getenv(name) )
+    if( const char* s = std::getenv(name) )
         return strcmp(s,"0") != 0;
     return false;
 }

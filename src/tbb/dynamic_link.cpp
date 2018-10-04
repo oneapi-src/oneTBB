@@ -362,21 +362,20 @@ OPEN_INTERNAL_NAMESPACE
         in  len  -- Size of buffer.
         ret      -- 0         -- Error occurred.
                     > len     -- Buffer too short, required size returned.
-                    otherwise -- Ok, number of characters (not counting terminating null) written to
-                    buffer.
+                    otherwise -- Ok, number of characters (incl. terminating null) written to buffer.
     */
     static size_t abs_path( char const * name, char * path, size_t len ) {
-        if ( !ap_data._len )
+        if ( ap_data._len == 0 )
             return 0;
 
         size_t name_len = strlen( name );
         size_t full_len = name_len+ap_data._len;
         if ( full_len < len ) {
-            strncpy( path, ap_data._path, ap_data._len );
-            strncpy( path+ap_data._len, name, name_len );
-            path[full_len] = 0;
+            __TBB_ASSERT(ap_data._path[ap_data._len] == 0, NULL);
+            strcpy( path, ap_data._path );
+            strcat( path, name );
         }
-        return full_len;
+        return full_len+1; // +1 for null character
     }
 #endif  // __TBB_DYNAMIC_LOAD_ENABLED
 
@@ -512,37 +511,37 @@ OPEN_INTERNAL_NAMESPACE
     }
 
     dynamic_link_handle dynamic_load( const char* library, const dynamic_link_descriptor descriptors[], size_t required ) {
-    ::tbb::internal::suppress_unused_warning( library, descriptors, required );
-    #if __TBB_DYNAMIC_LOAD_ENABLED
+        ::tbb::internal::suppress_unused_warning( library, descriptors, required );
+#if __TBB_DYNAMIC_LOAD_ENABLED
 
-    size_t const len = PATH_MAX + 1;
-    char path[ len ];
-    size_t rc = abs_path( library, path, len );
-    if ( 0 < rc && rc < len ) {
+        size_t const len = PATH_MAX + 1;
+        char path[ len ];
+        size_t rc = abs_path( library, path, len );
+        if ( 0 < rc && rc <= len ) {
 #if _WIN32
-        // Prevent Windows from displaying silly message boxes if it fails to load library
-        // (e.g. because of MS runtime problems - one of those crazy manifest related ones)
-        UINT prev_mode = SetErrorMode (SEM_FAILCRITICALERRORS);
+            // Prevent Windows from displaying silly message boxes if it fails to load library
+            // (e.g. because of MS runtime problems - one of those crazy manifest related ones)
+            UINT prev_mode = SetErrorMode (SEM_FAILCRITICALERRORS);
 #endif /* _WIN32 */
-        dynamic_link_handle library_handle = dlopen( path, RTLD_LAZY );
+            dynamic_link_handle library_handle = dlopen( path, RTLD_LAZY );
 #if _WIN32
-        SetErrorMode (prev_mode);
+            SetErrorMode (prev_mode);
 #endif /* _WIN32 */
-        if( library_handle ) {
-            if( !resolve_symbols( library_handle, descriptors, required ) ) {
-                // The loaded library does not contain all the expected entry points
-                dynamic_unlink( library_handle );
-                library_handle = NULL;
-            }
-        } else
-            DYNAMIC_LINK_WARNING( dl_lib_not_found, path, dlerror() );
-        return library_handle;
-    } else if ( rc>=len )
-            DYNAMIC_LINK_WARNING( dl_buff_too_small );
-            // rc == 0 means failing of init_ap_data so the warning has already been issued.
+            if( library_handle ) {
+                if( !resolve_symbols( library_handle, descriptors, required ) ) {
+                    // The loaded library does not contain all the expected entry points
+                    dynamic_unlink( library_handle );
+                    library_handle = NULL;
+                }
+            } else
+                DYNAMIC_LINK_WARNING( dl_lib_not_found, path, dlerror() );
+            return library_handle;
+        } else if ( rc>len )
+                DYNAMIC_LINK_WARNING( dl_buff_too_small );
+                // rc == 0 means failing of init_ap_data so the warning has already been issued.
 
-    #endif /* __TBB_DYNAMIC_LOAD_ENABLED */
-        return 0;
+#endif /* __TBB_DYNAMIC_LOAD_ENABLED */
+            return 0;
     }
 
     bool dynamic_link( const char* library, const dynamic_link_descriptor descriptors[], size_t required, dynamic_link_handle *handle, int flags ) {

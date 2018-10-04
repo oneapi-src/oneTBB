@@ -185,11 +185,20 @@ struct AsynchronousWork : NoAssign {
 // Test that task_arenas might be created and used from multiple application threads.
 // Also tests arena observers. The parameter p is the index of an app thread running this test.
 void TestConcurrentArenasFunc(int idx) {
+    // A regression test for observer activation order:
+    // check that arena observer can be activated before local observer
+    struct LocalObserver : public tbb::task_scheduler_observer {
+        LocalObserver() : tbb::task_scheduler_observer(/*local=*/true) { observe(true); }
+    };
     tbb::task_arena a1;
     a1.initialize(1,0);
     ArenaObserver o1(a1, 1, 0, idx*2+1); // the last argument is a "unique" observer/arena id for the test
+    ASSERT(o1.is_observing(), "Arena observer has not been activated");
+    LocalObserver lo;
+    ASSERT(lo.is_observing(), "Local observer has not been activated");
     tbb::task_arena a2(2,1);
     ArenaObserver o2(a2, 2, 1, idx*2+2);
+    ASSERT(o2.is_observing(), "Arena observer has not been activated");
     Harness::SpinBarrier barrier(2);
     AsynchronousWork work(barrier);
     a1.enqueue(work); // put async work
@@ -879,9 +888,8 @@ namespace TestIsolatedExecuteNS {
         for ( int i = 0; i < 5; ++i ) {
             HeavyMixTestBody b( random, isolated_level, 1, false );
             b( 0 );
-            REMARK( "\rHeavyMixTest: %d of 10", i+1 );
+            REMARK( "." );
         }
-        REMARK( "\n" );
     }
     //--------------------------------------------------//
     struct ContinuationTestReduceBody : NoAssign {
@@ -976,9 +984,68 @@ namespace TestIsolatedExecuteNS {
         tbb::this_task_arena::isolate(body);
         ASSERT(body.state == 0x93682a12, "The wrong state");
     }
+
+    class TestEnqueueTask : public tbb::task {
+        bool enqueued;
+        tbb::enumerable_thread_specific<bool>& executed;
+        tbb::atomic<int>& completed;
+    public:
+        static const int N = 100;
+
+        TestEnqueueTask(bool enq, tbb::enumerable_thread_specific<bool>& exe, tbb::atomic<int>& c)
+            : enqueued(enq), executed(exe), completed(c) {}
+        tbb::task* execute() __TBB_override {
+            if (enqueued) {
+                executed.local() = true;
+                ++completed;
+                __TBB_Yield();
+            } else {
+                parent()->add_ref_count(N);
+                for (int i = 0; i < N; ++i)
+                    tbb::task::enqueue(*new (parent()->allocate_child()) TestEnqueueTask(true, executed, completed));
+            }
+            return NULL;
+        }
+    };
+
+    class TestEnqueueIsolateBody : NoCopy {
+        tbb::enumerable_thread_specific<bool>& executed;
+        tbb::atomic<int>& completed;
+    public:
+        TestEnqueueIsolateBody(tbb::enumerable_thread_specific<bool>& exe, tbb::atomic<int>& c)
+            : executed(exe), completed(c) {}
+        void operator()() {
+            tbb::task::spawn_root_and_wait(*new (tbb::task::allocate_root()) TestEnqueueTask(false, executed, completed));
+        }
+    };
+
+    void TestEnqueue() {
+        tbb::enumerable_thread_specific<bool> executed(false);
+        tbb::atomic<int> completed;
+
+        // Check that the main thread can process enqueued tasks.
+        completed = 0;
+        TestEnqueueIsolateBody b1(executed, completed);
+        b1();
+        if (!executed.local())
+            REPORT("Warning: No one enqueued task has executed by the main thread.\n");
+
+        executed.local() = false;
+        completed = 0;
+        const int N = 100;
+        // Create enqueued tasks out of isolation.
+        for (int i = 0; i < N; ++i)
+            tbb::task::enqueue(*new (tbb::task::allocate_root()) TestEnqueueTask(true, executed, completed));
+        TestEnqueueIsolateBody b2(executed, completed);
+        tbb::this_task_arena::isolate(b2);
+        ASSERT(executed.local() == false, "An enqueued task was executed within isolate.");
+
+        while (completed < TestEnqueueTask::N + N) __TBB_Yield();
+    }
 }
 
 void TestIsolatedExecute() {
+    REMARK("TestIsolatedExecute");
     // At least 3 threads (owner + 2 thieves) are required to reproduce a situation when the owner steals outer
     // level task on a nested level. If we have only one thief then it will execute outer level tasks first and
     // the owner will not have a possibility to steal outer level tasks.
@@ -986,15 +1053,17 @@ void TestIsolatedExecute() {
     {
         // Too many threads require too many work to reproduce the stealing from outer level.
         tbb::task_scheduler_init init( max(num_threads, 7) );
-        TestIsolatedExecuteNS::TwoLoopsTest();
-        TestIsolatedExecuteNS::HeavyMixTest();
-        TestIsolatedExecuteNS::ContinuationTest();
-        TestIsolatedExecuteNS::ExceptionTest();
+        REMARK("."); TestIsolatedExecuteNS::TwoLoopsTest();
+        REMARK("."); TestIsolatedExecuteNS::HeavyMixTest();
+        REMARK("."); TestIsolatedExecuteNS::ContinuationTest();
+        REMARK("."); TestIsolatedExecuteNS::ExceptionTest();
     }
     tbb::task_scheduler_init init(num_threads);
-    TestIsolatedExecuteNS::HeavyMixTest();
-    TestIsolatedExecuteNS::ContinuationTest();
-    TestIsolatedExecuteNS::TestNonConstBody();
+    REMARK("."); TestIsolatedExecuteNS::HeavyMixTest();
+    REMARK("."); TestIsolatedExecuteNS::ContinuationTest();
+    REMARK("."); TestIsolatedExecuteNS::TestNonConstBody();
+    REMARK("."); TestIsolatedExecuteNS::TestEnqueue();
+    REMARK("\rTestIsolatedExecute: done                                                  \n");
 }
 #endif /* __TBB_TASK_ISOLATION */
 //--------------------------------------------------//

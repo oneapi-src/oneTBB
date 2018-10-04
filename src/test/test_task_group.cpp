@@ -227,7 +227,7 @@ public:
     void operator() ( uint_t idx ) const { m_pImpl->Run(idx); }
 };
 
-class RunAndWaitSyncronizationTestBody {
+class RunAndWaitSyncronizationTestBody : NoAssign {
     Harness::SpinBarrier& m_barrier;
     tbb::atomic<bool>& m_completed;
     tbb::task_group& m_tg;

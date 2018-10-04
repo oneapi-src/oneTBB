@@ -38,8 +38,6 @@
 #define __TBB_EXPORTED_FUNC
 #endif
 
-using namespace std;
-
 #if __TBBMALLOC_BUILD
 namespace rml { namespace internal {
 #else
@@ -72,7 +70,7 @@ namespace tbb {
                         _CrtDbgBreak();
 #else
                 fflush(stderr);
-                abort();
+                std::abort();
 #endif
             }
         }

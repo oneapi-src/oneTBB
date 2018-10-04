@@ -56,6 +56,9 @@ examples: tbb tbbmalloc
 python: tbb
 	$(MAKE) -C "$(work_dir)_release" -rf $(tbb_root)/python/Makefile install
 
+doxygen:
+	doxygen Doxyfile
+
 .PHONY: clean clean_examples mkdir info
 
 clean: clean_examples

@@ -90,9 +90,6 @@ public:
     class scoped_lock : internal::no_copy {
 #if __TBB_TSX_AVAILABLE
         friend class tbb::interface8::internal::x86_rtm_rw_mutex;
-        // helper methods for x86_rtm_rw_mutex
-        spin_rw_mutex *internal_get_mutex() const { return mutex; }
-        void internal_set_mutex(spin_rw_mutex* m) { mutex = m; }
 #endif
     public:
         //! Construct lock that has not acquired a mutex.
@@ -121,7 +118,7 @@ public:
         //! Upgrade reader to become a writer.
         /** Returns whether the upgrade happened without releasing and re-acquiring the lock */
         bool upgrade_to_writer() {
-            __TBB_ASSERT( mutex, "lock is not acquired" );
+            __TBB_ASSERT( mutex, "mutex is not acquired" );
             __TBB_ASSERT( !is_writer, "not a reader" );
             is_writer = true;
             return mutex->internal_upgrade();
@@ -129,7 +126,7 @@ public:
 
         //! Release lock.
         void release() {
-            __TBB_ASSERT( mutex, "lock is not acquired" );
+            __TBB_ASSERT( mutex, "mutex is not acquired" );
             spin_rw_mutex *m = mutex;
             mutex = NULL;
 #if TBB_USE_THREADING_TOOLS||TBB_USE_ASSERT
@@ -143,7 +140,7 @@ public:
 
         //! Downgrade writer to become a reader.
         bool downgrade_to_reader() {
-            __TBB_ASSERT( mutex, "lock is not acquired" );
+            __TBB_ASSERT( mutex, "mutex is not acquired" );
             __TBB_ASSERT( is_writer, "not a writer" );
 #if TBB_USE_THREADING_TOOLS||TBB_USE_ASSERT
             mutex->internal_downgrade();

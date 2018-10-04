@@ -16,6 +16,8 @@
 #
 #
 
+CPLUS ?= icpc
+CONLY ?= icc
 COMPILE_ONLY = -c -MMD
 PREPROC_ONLY = -E -x c++
 INCLUDE_KEY = -I
@@ -32,9 +34,6 @@ LIBDL = -ldl
 ifneq (,$(shell icc -dumpversion | egrep "1[2-9]\."))
 SDL_FLAGS = -fstack-protector -Wformat -Wformat-security
 endif
-
-CPLUS = icpc
-CONLY = icc
 
 ITT_NOTIFY = -DDO_ITT_NOTIFY
 ifeq (release,$(cfg))

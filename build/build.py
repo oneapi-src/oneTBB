@@ -93,10 +93,14 @@ tbb_names = ["tbb", "tbbmalloc", "tbbmalloc_proxy"]
 
 ##############################################################
 
+def system(arg):
+    print('$ ', arg)
+    return os.system(arg)
+
 def run_make(arg):
-    if os.system('%s -j %s'% (args.make_tool, arg)) != 0:
+    if system('%s -j %s'% (args.make_tool, arg)) != 0:
        print("\nBummer. Running serial build in order to recover the log and have a chance to fix the build")
-       assert os.system('%s %s'% (args.make_tool, arg)) == 0
+       assert system('%s %s'% (args.make_tool, arg)) == 0
 
 os.chdir(args.tbbroot)
 if args.prebuilt:
@@ -180,10 +184,10 @@ for f, dest in filemap.items():
     install_cp(f, dest)
 
 if args.install_python: # Python part
-    paths = [os.path.abspath(d) for d in (args.prefix, irml_dir, lib_dir, inc_dir)]
+    paths = [os.path.abspath(d) for d in [args.prefix, inc_dir, irml_dir, lib_dir]+release_dirs]
     os.environ["TBBROOT"] = paths[0]
     # all the paths must be relative to python/ directory or be absolute
-    assert os.system('python python/setup.py build -b%s build_ext -L%s:%s -I%s install -f'% \
-        (paths[1], paths[2], paths[1], paths[3])) == 0 # add install location? windows needs pythnon/Library location separation
+    assert system('python python/setup.py build -b%s build_ext -I%s -L%s install -f'% \
+        (paths[2], paths[1], ':'.join(paths[2:]))) == 0
 
 print("done")

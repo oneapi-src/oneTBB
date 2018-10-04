@@ -16,6 +16,8 @@
 #
 #
 
+CPLUS ?= icpc
+CONLY ?= icc
 COMPILE_ONLY = -c -MMD
 PREPROC_ONLY = -E -x c++
 INCLUDE_KEY = -I
@@ -30,8 +32,6 @@ EXPORT_KEY = -Wl,--version-script,
 NOINTRINSIC_KEY = -fno-builtin
 LIBDL = -ldl
 SDL_FLAGS = -fstack-protector -Wformat -Wformat-security
-CPLUS = icpc
-CONLY = icc
 
 ifeq (release,$(cfg))
     SDL_FLAGS += -D_FORTIFY_SOURCE=2

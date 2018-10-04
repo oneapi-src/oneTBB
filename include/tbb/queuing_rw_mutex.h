@@ -55,6 +55,8 @@ public:
         //! Initialize fields to mean "no lock held".
         void initialize() {
             my_mutex = NULL;
+            my_internal_lock = 0;
+            my_going = 0;
 #if TBB_USE_ASSERT
             my_state = 0xFF; // Set to invalid state
             internal::poison_pointer(my_next);

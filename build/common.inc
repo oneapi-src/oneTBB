@@ -54,6 +54,14 @@ ifdef cpp0x
     override cpp0x=
 endif
 
+# Define C & C++ compilers according to platform defaults or CXX & CC environment variables
+ifneq (,$(findstring environment, $(origin CXX)))
+    CPLUS = $(CXX)
+endif
+ifneq (,$(findstring environment, $(origin CC)))
+    CONLY = $(CC)
+endif
+
 ifneq (,$(stdver))
     ifeq (,$(findstring ++, $(stdver)))
         $(warning "Warning: unexpected stdver=$(stdver) is used.")
