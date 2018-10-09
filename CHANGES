@@ -2,6 +2,17 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 2018 Update 6
+TBB_INTERFACE_VERSION == 10006
+
+Changes (w.r.t. Intel TBB 2018 Update 5):
+
+Bugs fixed:
+
+- Fixed an issue with dynamic memory allocation replacement on Windows*
+    occurred for some versions of ucrtbase.dll.
+
+------------------------------------------------------------------------
 Intel TBB 2018 Update 5
 TBB_INTERFACE_VERSION == 10005
 
