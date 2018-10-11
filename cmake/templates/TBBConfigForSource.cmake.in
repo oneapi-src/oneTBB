@@ -46,7 +46,7 @@ foreach (_tbb_component ${TBB_FIND_COMPONENTS})
     set(_tbb_debug_lib "@TBB_DEBUG_DIR@/@TBB_LIB_PREFIX@${_tbb_component}_debug.@TBB_LIB_EXT@")
 
     if (EXISTS "${_tbb_release_lib}" OR EXISTS "${_tbb_debug_lib}")
-        add_library(TBB::${_tbb_component} SHARED IMPORTED)
+        add_library(TBB::${_tbb_component} SHARED IMPORTED GLOBAL)
         set_target_properties(TBB::${_tbb_component} PROPERTIES
                               INTERFACE_INCLUDE_DIRECTORIES "${_tbb_root}/include"@TBB_COMPILE_DEFINITIONS@)
 
