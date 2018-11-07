@@ -36,9 +36,9 @@ concurrent_monitor::~concurrent_monitor() {
 void concurrent_monitor::prepare_wait( thread_context& thr, uintptr_t ctx ) {
     if( !thr.ready )
         thr.init();
-    // this is good place to pump previous spurious wakeup
-    else if( thr.spurious ) {
-        thr.spurious = false;
+    // this is good place to pump previous skipped wakeup
+    else if( thr.skipped_wakeup ) {
+        thr.skipped_wakeup = false;
         thr.semaphore().P();
     }
     thr.context = ctx;
@@ -52,18 +52,17 @@ void concurrent_monitor::prepare_wait( thread_context& thr, uintptr_t ctx ) {
 }
 
 void concurrent_monitor::cancel_wait( thread_context& thr ) {
-    // spurious wakeup will be pumped in the following prepare_wait()
-    thr.spurious = true;
+    // possible skipped wakeup will be pumped in the following prepare_wait()
+    thr.skipped_wakeup = true;
     // try to remove node from waitset
     bool th_in_waitset = thr.in_waitset;
     if( th_in_waitset ) {
         tbb::spin_mutex::scoped_lock l( mutex_ec );
         if (thr.in_waitset) {
-            // successfully removed from waitset,
-            // so there will be no spurious wakeup
-            thr.in_waitset = false;
-            thr.spurious = false;
             waitset_ec.remove( (waitset_t::node_t&)thr );
+            // node is removed from waitset, so there will be no wakeup
+            thr.in_waitset = false;
+            thr.skipped_wakeup = false;
         }
     }
 }

@@ -759,9 +759,19 @@ public:
         : internal::hash_map_base(), my_allocator(a)
     {}
 
+    explicit concurrent_hash_map( const HashCompare& compare, const allocator_type& a = allocator_type() )
+        : internal::hash_map_base(), my_allocator(a), my_hash_compare(compare)
+    {}
+
     //! Construct empty table with n preallocated buckets. This number serves also as initial concurrency level.
     concurrent_hash_map( size_type n, const allocator_type &a = allocator_type() )
-        : my_allocator(a)
+        : internal::hash_map_base(), my_allocator(a)
+    {
+        reserve( n );
+    }
+
+    concurrent_hash_map( size_type n, const HashCompare& compare, const allocator_type& a = allocator_type() )
+        : internal::hash_map_base(), my_allocator(a), my_hash_compare(compare)
     {
         reserve( n );
     }
@@ -800,7 +810,16 @@ public:
     //! Construction with copying iteration range and given allocator instance
     template<typename I>
     concurrent_hash_map( I first, I last, const allocator_type &a = allocator_type() )
-        : my_allocator(a)
+        : internal::hash_map_base(), my_allocator(a)
+    {
+        call_clear_on_leave scope_guard(this);
+        internal_copy(first, last, std::distance(first, last));
+        scope_guard.dismiss();
+    }
+
+    template<typename I>
+    concurrent_hash_map( I first, I last, const HashCompare& compare, const allocator_type& a = allocator_type() )
+        : internal::hash_map_base(), my_allocator(a), my_hash_compare(compare)
     {
         call_clear_on_leave scope_guard(this);
         internal_copy(first, last, std::distance(first, last));
@@ -810,7 +829,15 @@ public:
 #if __TBB_INITIALIZER_LISTS_PRESENT
     //! Construct empty table with n preallocated buckets. This number serves also as initial concurrency level.
     concurrent_hash_map( std::initializer_list<value_type> il, const allocator_type &a = allocator_type() )
-        : my_allocator(a)
+        : internal::hash_map_base(), my_allocator(a)
+    {
+        call_clear_on_leave scope_guard(this);
+        internal_copy(il.begin(), il.end(), il.size());
+        scope_guard.dismiss();
+    }
+
+    concurrent_hash_map( std::initializer_list<value_type> il, const HashCompare& compare, const allocator_type& a = allocator_type() )
+        : internal::hash_map_base(), my_allocator(a), my_hash_compare(compare)
     {
         call_clear_on_leave scope_guard(this);
         internal_copy(il.begin(), il.end(), il.size());

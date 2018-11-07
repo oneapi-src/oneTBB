@@ -100,13 +100,13 @@ public:
     class thread_context : waitset_node_t, no_copy {
         friend class concurrent_monitor;
     public:
-        thread_context() : spurious(false), aborted(false), ready(false), context(0) {
+        thread_context() : skipped_wakeup(false), aborted(false), ready(false), context(0) {
             epoch = 0;
             in_waitset = false;
         }
         ~thread_context() {
             if (ready) {
-                if( spurious ) semaphore().P();
+                if( skipped_wakeup ) semaphore().P();
                 semaphore().~binary_semaphore();
             }
         }
@@ -119,7 +119,7 @@ public:
         tbb::aligned_space<binary_semaphore> sema;
         __TBB_atomic unsigned epoch;
         tbb::atomic<bool> in_waitset;
-        bool  spurious;
+        bool  skipped_wakeup;
         bool  aborted;
         bool  ready;
         uintptr_t context;

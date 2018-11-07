@@ -1156,6 +1156,25 @@ private:
     };
 };
 
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+// Deduction guide for the constructor from two iterators
+template<typename I,
+         typename T = typename std::iterator_traits<I>::value_type,
+         typename A = cache_aligned_allocator<T>
+> concurrent_vector(I, I, const A& = A())
+-> concurrent_vector<T, A>;
+
+// Deduction guide for the constructor from a vector and allocator
+template<typename T, typename A1, typename A2>
+concurrent_vector(const concurrent_vector<T, A1> &, const A2 &)
+-> concurrent_vector<T, A2>;
+
+// Deduction guide for the constructor from an initializer_list
+template<typename T, typename A = cache_aligned_allocator<T>
+> concurrent_vector(std::initializer_list<T>, const A& = A())
+-> concurrent_vector<T, A>;
+#endif /* __TBB_CPP17_DEDUCTION_GUIDES_PRESENT */
+
 #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
 #pragma warning (push)
 #pragma warning (disable: 4701) // potentially uninitialized local variable "old"

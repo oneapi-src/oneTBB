@@ -309,7 +309,11 @@ int TestMain ()
     TestFuncDefinitionPresence( parallel_do, (const intarray&, const Body1a&, tbb::task_group_context&), void );
     TestFuncDefinitionPresence( parallel_for_each, (const intarray&, const Body1&, tbb::task_group_context&), void );
     TestFuncDefinitionPresence( parallel_for, (int, int, const Body1&, const tbb::auto_partitioner&, tbb::task_group_context&), void );
+    TestFuncDefinitionPresence( parallel_for, (int, int, const Body1&, tbb::task_group_context&), void );
     TestFuncDefinitionPresence( parallel_reduce, (const tbb::blocked_range<int>&, Body2&, const tbb::auto_partitioner&, tbb::task_group_context&), void );
+    TestFuncDefinitionPresence( parallel_reduce, (const tbb::blocked_range<int>&, Body2&, tbb::task_group_context&), void );
+    TestFuncDefinitionPresence( parallel_deterministic_reduce, (const tbb::blocked_range<int>&, Body2&, const tbb::simple_partitioner&, tbb::task_group_context&), void );
+    TestFuncDefinitionPresence( parallel_deterministic_reduce, (const tbb::blocked_range<int>&, Body2&, tbb::task_group_context&), void );
 #endif /* __TBB_TASK_GROUP_CONTEXT */
     TestTypeDefinitionPresence( proportional_split );
 

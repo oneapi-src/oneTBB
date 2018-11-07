@@ -393,6 +393,13 @@ void parallel_reduce( const Range& range, Body& body, affinity_partitioner& part
 }
 
 #if __TBB_TASK_GROUP_CONTEXT
+//! Parallel iteration with reduction, default partitioner and user-supplied context.
+/** @ingroup algorithms **/
+template<typename Range, typename Body>
+void parallel_reduce( const Range& range, Body& body, task_group_context& context ) {
+    internal::start_reduce<Range,Body,const __TBB_DEFAULT_PARTITIONER>::run( range, body, __TBB_DEFAULT_PARTITIONER(), context );
+}
+
 //! Parallel iteration with reduction, simple partitioner and user-supplied context.
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
@@ -480,6 +487,17 @@ Value parallel_reduce( const Range& range, const Value& identity, const RealBody
 }
 
 #if __TBB_TASK_GROUP_CONTEXT
+//! Parallel iteration with reduction, default partitioner and user-supplied context.
+/** @ingroup algorithms **/
+template<typename Range, typename Value, typename RealBody, typename Reduction>
+Value parallel_reduce( const Range& range, const Value& identity, const RealBody& real_body, const Reduction& reduction,
+                       task_group_context& context ) {
+    internal::lambda_reduce_body<Range,Value,RealBody,Reduction> body(identity, real_body, reduction);
+    internal::start_reduce<Range,internal::lambda_reduce_body<Range,Value,RealBody,Reduction>,const __TBB_DEFAULT_PARTITIONER>
+                          ::run( range, body, __TBB_DEFAULT_PARTITIONER(), context );
+    return body.result();
+}
+
 //! Parallel iteration with reduction, simple partitioner and user-supplied context.
 /** @ingroup algorithms **/
 template<typename Range, typename Value, typename RealBody, typename Reduction>

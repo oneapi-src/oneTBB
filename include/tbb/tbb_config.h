@@ -56,13 +56,23 @@
 #endif
 
 #if __clang__
-    /** according to clang documentation, version can be vendor specific **/
+    // according to clang documentation, version can be vendor specific
     #define __TBB_CLANG_VERSION (__clang_major__ * 10000 + __clang_minor__ * 100 + __clang_patchlevel__)
 #endif
 
 /** Target OS is either iOS* or iOS* simulator **/
 #if __ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__
     #define __TBB_IOS 1
+#endif
+
+#if __APPLE__
+    #if __INTEL_COMPILER && __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ > 1099 \
+                         && __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 101000
+        // ICC does not correctly set the macro if -mmacosx-min-version is not specified
+        #define __TBB_MACOS_TARGET_VERSION  (100000 + 10*(__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ - 1000))
+    #else
+        #define __TBB_MACOS_TARGET_VERSION  __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__
+    #endif
 #endif
 
 /** Preprocessor symbols to determine HW architecture **/
@@ -208,6 +218,7 @@
     #define __TBB_ALIGNAS_PRESENT                           (__INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1500)
     #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            (__INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1210)
     #define __TBB_CPP14_INTEGER_SEQUENCE_PRESENT            (__cplusplus >= 201402L)
+    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            __INTEL_COMPILER > 1900
 #elif __clang__
 /** TODO: these options need to be rechecked **/
     #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          __has_feature(__cxx_variadic_templates__)
@@ -237,6 +248,7 @@
     #define __TBB_ALIGNAS_PRESENT                           __has_feature(cxx_alignas)
     #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            __has_feature(cxx_alias_templates)
     #define __TBB_CPP14_INTEGER_SEQUENCE_PRESENT            (__cplusplus >= 201402L)
+    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            (__has_feature(__cpp_deduction_guides))
 #elif __GNUC__
     #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          __GXX_EXPERIMENTAL_CXX0X__
     #define __TBB_CPP11_VARIADIC_FIXED_LENGTH_EXP_PRESENT   (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40700)
@@ -262,6 +274,7 @@
     #define __TBB_ALIGNAS_PRESENT                           (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40800)
     #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40700)
     #define __TBB_CPP14_INTEGER_SEQUENCE_PRESENT            (__cplusplus >= 201402L     && __TBB_GCC_VERSION >= 50000)
+    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            (__cpp_deduction_guides >= 201606)
 #elif _MSC_VER
     // These definitions are also used with Intel C++ Compiler in "default" mode (__INTEL_CXX11_MODE__ == 0);
     // see a comment in "__INTEL_COMPILER" section above.
@@ -286,6 +299,7 @@
     #define __TBB_ALIGNAS_PRESENT                           (_MSC_VER >= 1900)
     #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            (_MSC_VER >= 1800)
     #define __TBB_CPP14_INTEGER_SEQUENCE_PRESENT            (_MSC_VER >= 1900)
+    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            (_MSVC_LANG >= 201703L)
 #else
     #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          0
     #define __TBB_CPP11_RVALUE_REF_PRESENT                  0
@@ -306,6 +320,7 @@
     #define __TBB_ALIGNAS_PRESENT                           0
     #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            0
     #define __TBB_CPP14_INTEGER_SEQUENCE_PRESENT            (__cplusplus >= 201402L)
+    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            0
 #endif
 
 // C++11 standard library features
@@ -337,7 +352,8 @@
 
 #define __TBB_CPP11_GET_NEW_HANDLER_PRESENT                 (_MSC_VER >= 1900 || __TBB_GLIBCXX_VERSION >= 40900 && __GXX_EXPERIMENTAL_CXX0X__ || _LIBCPP_VERSION)
 
-#define __TBB_CPP17_UNCAUGHT_EXCEPTIONS_PRESENT             (_MSC_VER >= 1900 || __GLIBCXX__ && __cpp_lib_uncaught_exceptions || _LIBCPP_VERSION >= 3700)
+#define __TBB_CPP17_UNCAUGHT_EXCEPTIONS_PRESENT             (_MSC_VER >= 1900 || __GLIBCXX__ && __cpp_lib_uncaught_exceptions \
+                                                            || _LIBCPP_VERSION >= 3700 && (!__TBB_MACOS_TARGET_VERSION || __TBB_MACOS_TARGET_VERSION >= 101200))
 
 // std::swap is in <utility> only since C++11, though MSVC had it at least since VS2005
 #if _MSC_VER>=1400 || _LIBCPP_VERSION || __GXX_EXPERIMENTAL_CXX0X__

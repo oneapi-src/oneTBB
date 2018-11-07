@@ -1146,7 +1146,6 @@ void TestSlabAlignment() {
     }
 }
 
-#include "harness.h"
 #include "harness_memory.h"
 
 // TODO: Consider adding Huge Pages support on macOS (special mmap flag).
@@ -1206,7 +1205,7 @@ void TestTHP() {
     if ((newSystemTHPCount - currentSystemTHPCount) < allocCount
             && (newSystemTHPAllocatedSize - currentSystemTHPAllocatedSize) / (2 * 1024) < allocCount) {
         REPORT( "Warning: the system didn't allocate needed amount of THPs.\n" );
-    } 
+    }
 
     // Test memory unmap
     for (int i = 0; i < allocCount; i++) {
@@ -1215,6 +1214,75 @@ void TestTHP() {
     }
 }
 #endif // __linux__
+
+inline size_t getStabilizedMemUsage() {
+    for (int i = 0; i < 3; i++) GetMemoryUsage();
+    return GetMemoryUsage();
+}
+
+inline void* reallocAndRetrieve(void* origPtr, size_t reallocSize, size_t& origBlockSize, size_t& reallocBlockSize) {
+    rml::internal::LargeMemoryBlock* origLmb = ((rml::internal::LargeObjectHdr *)origPtr - 1)->memoryBlock;
+    origBlockSize = origLmb->unalignedSize;
+
+    void* reallocPtr = rml::internal::reallocAligned(defaultMemPool, origPtr, reallocSize, 0);
+
+    // Retrieved reallocated block information
+    rml::internal::LargeMemoryBlock* reallocLmb = ((rml::internal::LargeObjectHdr *)reallocPtr - 1)->memoryBlock;
+    reallocBlockSize = reallocLmb->unalignedSize;
+
+    return reallocPtr;
+}
+
+void TestReallocDecreasing() {
+
+    /* Testing that actual reallocation happens for large objects that do not fit the backend cache
+       but decrease in size by a factor of >= 2. */
+
+    size_t startSize = 100 * 1024 * 1024;
+    size_t maxBinnedSize = defaultMemPool->extMemPool.backend.getMaxBinnedSize();
+    void*  origPtr = scalable_malloc(startSize);
+    void*  reallocPtr = NULL;
+
+    // Realloc on 1MB less size
+    size_t origBlockSize = 42;
+    size_t reallocBlockSize = 43;
+    reallocPtr = reallocAndRetrieve(origPtr, startSize - 1 * 1024 * 1024, origBlockSize, reallocBlockSize);
+    MALLOC_ASSERT(origBlockSize == reallocBlockSize, "Reallocated block size shouldn't change");
+    MALLOC_ASSERT(reallocPtr == origPtr, "Original pointer shouldn't change");
+
+    // Repeated decreasing reallocation while max cache bin size reached
+    size_t reallocSize = (startSize / 2) - 1000; // exact realloc
+    while(reallocSize > maxBinnedSize) {
+
+        // Prevent huge/large objects caching 
+        defaultMemPool->extMemPool.loc.cleanAll();
+        // Prevent local large object caching
+        TLSData *tls = defaultMemPool->getTLS(/*create=*/false);
+        tls->lloc.externalCleanup(&defaultMemPool->extMemPool);
+
+        size_t sysMemUsageBefore = getStabilizedMemUsage();
+        size_t totalMemSizeBefore = defaultMemPool->extMemPool.backend.getTotalMemSize();
+
+        reallocPtr = reallocAndRetrieve(origPtr, reallocSize, origBlockSize, reallocBlockSize);
+
+        MALLOC_ASSERT(origBlockSize > reallocBlockSize, "Reallocated block size should descrease.");
+
+        size_t sysMemUsageAfter = getStabilizedMemUsage();
+        size_t totalMemSizeAfter = defaultMemPool->extMemPool.backend.getTotalMemSize();
+
+        // Prevent false checking when backend caching occurred or could not read system memory usage info
+        if (totalMemSizeBefore > totalMemSizeAfter && sysMemUsageAfter != 0 && sysMemUsageBefore != 0) {
+            MALLOC_ASSERT(sysMemUsageBefore > sysMemUsageAfter, "Memory were not released");
+        }
+
+        origPtr = reallocPtr;
+        reallocSize = (reallocSize / 2) - 1000; // exact realloc
+    }
+    scalable_free(reallocPtr);
+
+    /* TODO: Decreasing reallocation of large objects that fit backend cache */
+    /* TODO: Small objects decreasing reallocation test */
+}
 
 int TestMain () {
     scalable_allocation_mode(USE_HUGE_PAGES, 0);
@@ -1246,6 +1314,7 @@ int TestMain () {
     TestHeapLimit();
     TestLOC();
     TestSlabAlignment();
+    TestReallocDecreasing();
 
 #if __linux__
     if (isTHPEnabledOnMachine()) {

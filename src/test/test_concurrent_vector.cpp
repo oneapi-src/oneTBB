@@ -1701,6 +1701,55 @@ void TestTypes() {
 #endif /* __TBB_CPP11_SMART_POINTERS_PRESENT */
 }
 
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+template <template <typename...> typename TVector>
+void TestDeductionGuides() {
+    using ComplexType = const std::string*;
+    std::vector<ComplexType> v;
+    std::string s = "s";
+    auto l = {ComplexType(&s), ComplexType(&s)};
+
+    // check TVector(InputIterator, InputIterator)
+    TVector v1(v.begin(), v.end());
+    static_assert(std::is_same<decltype(v1), TVector<ComplexType>>::value);
+
+    // check TVector(InputIterator, InputIterator, Alocator)
+    TVector v2(v.begin(), v.end(), std::allocator<ComplexType>());
+    static_assert(std::is_same<decltype(v2),
+       TVector<ComplexType, std::allocator<ComplexType>>>::value);
+
+    // check TVector(std::initializer_list<T>)
+    TVector v3(l);
+    static_assert(std::is_same<decltype(v3),
+        TVector<ComplexType>>::value);
+
+    // check TVector(std::initializer_list, Alocator)
+    TVector v4(l, std::allocator<ComplexType>());
+    static_assert(std::is_same<decltype(v4), TVector<ComplexType, std::allocator<ComplexType>>>::value);
+
+    // check TVector(TVector&)
+    TVector v5(v1);
+    static_assert(std::is_same<decltype(v5), TVector<ComplexType>>::value);
+
+    // check TVector(TVector&, Allocator)
+    TVector v6(v5, std::allocator<ComplexType>());
+    static_assert(std::is_same<decltype(v6), TVector<ComplexType, std::allocator<ComplexType>>>::value);
+
+    // check TVector(TVector&&)
+    TVector v7(std::move(v1));
+    static_assert(std::is_same<decltype(v7), decltype(v1)>::value);
+
+    // check TVector(TVector&&, Allocator)
+    TVector v8(std::move(v5), std::allocator<ComplexType>());
+    static_assert(std::is_same<decltype(v8), TVector<ComplexType, std::allocator<ComplexType>>>::value);
+
+    // check TVector(TVector&, Allocator)
+    TVector v9(v1, std::allocator<ComplexType>());
+    static_assert(std::is_same<decltype(v9), TVector<ComplexType, std::allocator<ComplexType>>>::value);
+
+}
+#endif
+
 int TestMain () {
     if( MinThread<1 ) {
         REPORT("ERROR: MinThread=%d, but must be at least 1\n",MinThread); MinThread = 1;
@@ -1780,6 +1829,9 @@ int TestMain () {
 #endif /*__TBB_CPP11_RVALUE_REF_PRESENT */
 #endif /* TBB_USE_EXCEPTIONS */
     TestTypes();
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+    TestDeductionGuides<tbb::concurrent_vector>();
+#endif
     ASSERT( !FooCount, NULL );
     REMARK("sizeof(concurrent_vector<int>) == %d\n", (int)sizeof(tbb::concurrent_vector<int>));
     return Harness::Done;

@@ -78,7 +78,7 @@ public:
         friend class thread_monitor;
         tbb::atomic<size_t> my_epoch;
     };
-    thread_monitor() : spurious(false), my_sema() {
+    thread_monitor() : skipped_wakeup(false), my_sema() {
         my_cookie.my_epoch = 0;
         ITT_SYNC_CREATE(&my_sema, SyncType_RML, SyncObj_ThreadMonitor);
         in_wait = false;
@@ -129,9 +129,9 @@ public:
     //! Detach thread
     static void detach_thread(handle_type handle);
 private:
-    cookie my_cookie;
-    tbb::atomic<bool>   in_wait;
-    bool   spurious;
+    cookie my_cookie; // epoch counter
+    tbb::atomic<bool> in_wait;
+    bool skipped_wakeup;
     tbb::internal::binary_semaphore my_sema;
 #if USE_PTHREAD
     static void check( int error_code, const char* routine );
@@ -244,24 +244,25 @@ inline void thread_monitor::notify() {
 }
 
 inline void thread_monitor::prepare_wait( cookie& c ) {
-    if( spurious ) {
-        spurious = false;
-        //  consumes a spurious posted signal. don't wait on my_sema.
-        my_sema.P();
+    if( skipped_wakeup ) {
+        // Lazily consume a signal that was skipped due to cancel_wait
+        skipped_wakeup = false;
+        my_sema.P(); // does not really wait on the semaphore
     }
     c = my_cookie;
-    in_wait = true;
-   __TBB_full_memory_fence();
+    in_wait.store<tbb::full_fence>( true );
 }
 
 inline void thread_monitor::commit_wait( cookie& c ) {
-    bool do_it = ( c.my_epoch == my_cookie.my_epoch);
+    bool do_it = ( c.my_epoch == my_cookie.my_epoch );
     if( do_it ) my_sema.P();
     else        cancel_wait();
 }
 
 inline void thread_monitor::cancel_wait() {
-    spurious = ! in_wait.fetch_and_store( false );
+    // if not in_wait, then some thread has sent us a signal;
+    // it will be consumed by the next prepare_wait call
+    skipped_wakeup = ! in_wait.fetch_and_store( false );
 }
 
 } // namespace internal

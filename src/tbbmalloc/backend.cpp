@@ -650,7 +650,7 @@ FreeBlock *Backend::splitAlignedBlock(FreeBlock *fBlock, int num, size_t size,
     return fBlock;
 }
 
-inline size_t Backend::getMaxBinnedSize() const
+size_t Backend::getMaxBinnedSize() const
 {
     return hugePages.isEnabled && !inUserPool() ?
         maxBinned_HugePage : maxBinned_SmallPage;

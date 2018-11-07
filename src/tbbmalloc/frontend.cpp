@@ -2340,7 +2340,7 @@ static void *allocateAligned(MemoryPool *memPool, size_t size, size_t alignment)
 }
 
 static void *reallocAligned(MemoryPool *memPool, void *ptr,
-                            size_t size, size_t alignment = 0)
+                            size_t newSize, size_t alignment = 0)
 {
     void *result;
     size_t copySize;
@@ -2348,32 +2348,46 @@ static void *reallocAligned(MemoryPool *memPool, void *ptr,
     if (isLargeObject<ourMem>(ptr)) {
         LargeMemoryBlock* lmb = ((LargeObjectHdr *)ptr - 1)->memoryBlock;
         copySize = lmb->unalignedSize-((uintptr_t)ptr-(uintptr_t)lmb);
-        if (size <= copySize && (0==alignment || isAligned(ptr, alignment))) {
-            lmb->objectSize = size;
-            return ptr;
-        } else {
-            copySize = lmb->objectSize;
-#if BACKEND_HAS_MREMAP
-            if (void *r = memPool->extMemPool.remap(ptr, copySize, size,
-                              alignment<largeObjectAlignment?
-                              largeObjectAlignment : alignment))
-                return r;
-#endif
-            result = alignment ? allocateAligned(memPool, size, alignment) :
-                internalPoolMalloc(memPool, size);
+
+        // Apply different strategies if size decreases
+        if (newSize <= copySize && (0 == alignment || isAligned(ptr, alignment))) {
+
+            // For huge objects (that do not fit in backend cache), keep the same space unless
+            // the new size is at least twice smaller
+            bool isMemoryBlockHuge = copySize > memPool->extMemPool.backend.getMaxBinnedSize();
+            size_t threshold = isMemoryBlockHuge ? copySize / 2 : 0;
+            if (newSize > threshold) {
+                lmb->objectSize = newSize;
+                return ptr;
+            }
+            // TODO: For large objects suitable for the backend cache,
+            // split out the excessive part and put it to the backend.
         }
+        // Reallocate for real
+        copySize = lmb->objectSize;
+#if BACKEND_HAS_MREMAP
+        if (void *r = memPool->extMemPool.remap(ptr, copySize, newSize,
+                          alignment < largeObjectAlignment ? largeObjectAlignment : alignment))
+            return r;
+#endif
+        result = alignment ? allocateAligned(memPool, newSize, alignment) :
+            internalPoolMalloc(memPool, newSize);
+
     } else {
         Block* block = (Block *)alignDown(ptr, slabSize);
         copySize = block->findObjectSize(ptr);
-        if (size <= copySize && (0==alignment || isAligned(ptr, alignment))) {
+
+        // TODO: Move object to another bin if size decreases and the current bin is "empty enough".
+        // Currently, in case of size decreasing, old pointer is returned
+        if (newSize <= copySize && (0==alignment || isAligned(ptr, alignment))) {
             return ptr;
         } else {
-            result = alignment ? allocateAligned(memPool, size, alignment) :
-                internalPoolMalloc(memPool, size);
+            result = alignment ? allocateAligned(memPool, newSize, alignment) :
+                internalPoolMalloc(memPool, newSize);
         }
     }
     if (result) {
-        memcpy(result, ptr, copySize<size? copySize: size);
+        memcpy(result, ptr, copySize < newSize ? copySize : newSize);
         internalPoolFree(memPool, ptr, 0);
     }
     return result;
@@ -2602,6 +2616,7 @@ static size_t internalMsize(void* ptr)
     if (ptr) {
         MALLOC_ASSERT(isRecognized(ptr), "Invalid pointer in scalable_msize detected.");
         if (isLargeObject<ourMem>(ptr)) {
+            // TODO: return the maximum memory size, that can be written to this object 
             LargeMemoryBlock* lmb = ((LargeObjectHdr*)ptr - 1)->memoryBlock;
             return lmb->objectSize;
         } else

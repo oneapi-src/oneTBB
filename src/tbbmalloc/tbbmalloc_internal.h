@@ -847,7 +847,7 @@ public:
         memSoftLimit = softLimit;
         releaseCachesToLimit();
     }
-    inline size_t getMaxBinnedSize() const;
+    size_t getMaxBinnedSize() const;
 
     bool ptrCanBeValid(void *ptr) const { return usedAddrRange.inRange(ptr); }
 

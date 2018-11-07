@@ -275,6 +275,7 @@ void private_worker::run() {
             // Check/set the invariant for sleeping
             if( my_state!=st_quit && my_server.try_insert_in_asleep_list(*this) ) {
                 my_thread_monitor.commit_wait(c);
+                __TBB_ASSERT( my_state==st_quit || !my_next, "Thread monitor missed a spurious wakeup?" );
                 my_server.propagate_chain_reaction();
             } else {
                 // Invariant broken
@@ -310,8 +311,10 @@ inline void private_worker::wake_or_launch() {
             release_handle(my_handle, governor::does_client_join_workers(my_client));
         }
     }
-    else
+    else {
+        __TBB_ASSERT( !my_next, "Should not wake a thread while it's still in asleep list" );
         my_thread_monitor.notify();
+    }
 }
 
 //------------------------------------------------------------------------
@@ -390,8 +393,11 @@ void private_server::wake_some( int additional_slack ) {
         }
     }
 done:
-    while( w>wakee )
-        (*--w)->wake_or_launch();
+    while( w>wakee ) {
+        private_worker* ww = *--w;
+        ww->my_next = NULL;
+        ww->wake_or_launch();
+    }
 }
 
 void private_server::adjust_job_count_estimate( int delta ) {

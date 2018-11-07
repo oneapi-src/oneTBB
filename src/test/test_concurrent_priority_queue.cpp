@@ -1063,6 +1063,50 @@ void TestTypes() {
 #endif /* __TBB_CPP11_SMART_POINTERS_PRESENT */
 }
 
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+template <template <typename...>typename TQueue>
+void TestDeductionGuides() {
+    using ComplexType = const std::string*;
+    std::string s("s");
+    std::vector<ComplexType> v;
+    auto l = {ComplexType(&s), ComplexType(&s) };
+
+    // check TQueue(InputIterator, InputIterator)
+    TQueue q1(v.begin(), v.end());
+    static_assert(std::is_same<decltype(q1), TQueue<ComplexType>>::value);
+
+    // check TQueue(InputIterator, InputIterator, Allocator)
+    TQueue q2(v.begin(), v.end(), std::allocator<ComplexType>());
+    static_assert(std::is_same<decltype(q2), TQueue<ComplexType, std::less<ComplexType>,
+        std::allocator<ComplexType>>>::value);
+
+    // check TQueue(std::initializer_list)
+    TQueue q3(l);
+    static_assert(std::is_same<decltype(q3), TQueue<ComplexType>>::value);
+
+    // check TQueue(std::initializer_list, Allocator)
+    TQueue q4(l, std::allocator<ComplexType>());
+    static_assert(std::is_same<decltype(q4), TQueue<ComplexType, std::less<ComplexType>,
+        std::allocator<ComplexType>>>::value);
+
+    // check TQueue(TQueue &)
+    TQueue q5(q1);
+    static_assert(std::is_same<decltype(q5), decltype(q5)>::value);
+
+    // check TQueue(TQueue &, Allocator)
+    TQueue q6(q4, std::allocator<ComplexType>());
+    static_assert(std::is_same<decltype(q6), decltype(q4)>::value);
+
+    // check TQueue(TQueue &&)
+    TQueue q7(std::move(q1));
+    static_assert(std::is_same<decltype(q7), decltype(q1)>::value);
+
+    // check TQueue(TQueue &&, Allocator)
+    TQueue q8(std::move(q4), std::allocator<ComplexType>());
+    static_assert(std::is_same<decltype(q8), decltype(q4)>::value);
+}
+#endif
+
 int TestMain() {
     if (MinThread < 1)
         MinThread = 1;
@@ -1075,6 +1119,10 @@ int TestMain() {
 #endif
 
     TestTypes();
+
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+    TestDeductionGuides<tbb::concurrent_priority_queue>();
+#endif
 
 #if __TBB_CPP11_RVALUE_REF_PRESENT
     TestgMoveConstructor();

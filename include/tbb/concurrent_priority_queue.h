@@ -121,7 +121,7 @@ class concurrent_priority_queue {
 
     //! Copy constructor
     /** This operation is unsafe if there are pending concurrent operations on the src queue. */
-    explicit concurrent_priority_queue(const concurrent_priority_queue& src) : mark(src.mark),
+    concurrent_priority_queue(const concurrent_priority_queue& src) : mark(src.mark),
         my_size(src.my_size), data(src.data.begin(), src.data.end(), src.data.get_allocator())
     {
         my_aggregator.initialize_handler(my_functor_t(this));
@@ -481,6 +481,14 @@ class concurrent_priority_queue {
     }
 };
 
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+// Deduction guide for the constructor from two iterators
+template<typename InputIterator,
+         typename T = typename std::iterator_traits<InputIterator>::value_type,
+         typename A = cache_aligned_allocator<T>
+> concurrent_priority_queue(InputIterator, InputIterator, const A& = A())
+-> concurrent_priority_queue<T, std::less<T>, A>;
+#endif /* __TBB_CPP17_DEDUCTION_GUIDES_PRESENT */
 } // namespace interface5
 
 using interface5::concurrent_priority_queue;

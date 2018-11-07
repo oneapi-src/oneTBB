@@ -92,7 +92,7 @@ Software - Supported Compilers
             GNU Compilers (gcc) 4.1 - 7.1
             GNU C Library (glibc) version 2.4 - 2.19
     Xcode* 7.0 - 9.1
-    Android* NDK r10e - r16
+    Android* NDK r10e - r17b
 
 Software - Supported Performance Analysis Tools
 

@@ -165,6 +165,25 @@ void TestProportionalSplitOverflow()
     REMARK("OK\n");
 }
 #endif /* __TBB_USE_PROPORTIONAL_SPLIT_IN_BLOCKED_RANGES */
+
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+void TestDeductionGuides() {
+    std::vector<const int *> v;
+
+    // check blocked_range(Value, Value, size_t)
+    tbb::blocked_range r1(v.begin(), v.end());
+    static_assert(std::is_same<decltype(r1), tbb::blocked_range<decltype(v)::iterator>>::value);
+
+    // check blocked_range(blocked_range &)
+    tbb::blocked_range r2(r1);
+    static_assert(std::is_same<decltype(r2), decltype(r1)>::value);
+
+    // check blocked_range(blocked_range &&)
+    tbb::blocked_range r3(std::move(r1));
+    static_assert(std::is_same<decltype(r3), decltype(r1)>::value);
+}
+#endif
+
 //------------------------------------------------------------------------
 // Test driver
 #include "tbb/task_scheduler_init.h"
@@ -184,5 +203,8 @@ int TestMain () {
         TestProportionalSplitOverflow();
     #endif
 
+    #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+        TestDeductionGuides();
+    #endif
     return Harness::Done;
 }

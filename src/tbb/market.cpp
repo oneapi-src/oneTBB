@@ -360,10 +360,10 @@ void market::try_destroy_arena ( arena* a, uintptr_t aba_epoch ) {
 }
 
 /** This method must be invoked under my_arenas_list_mutex. **/
-arena* market::arena_in_need ( arena_list_type &arenas, arena *&next ) {
+arena* market::arena_in_need ( arena_list_type &arenas, arena *hint ) {
     if ( arenas.empty() )
         return NULL;
-    arena_list_type::iterator it = next;
+    arena_list_type::iterator it = hint;
     __TBB_ASSERT( it != arenas.end(), NULL );
     do {
         arena& a = *it;
@@ -375,11 +375,9 @@ arena* market::arena_in_need ( arena_list_type &arenas, arena *&next ) {
 #endif
             ) {
             a.my_references += arena::ref_worker;
-            as_atomic(next) = &*it; // a subject for innocent data race under the reader lock
-            // TODO: rework global round robin policy to local or random to avoid this write
             return &a;
         }
-    } while ( it != next );
+    } while ( it != hint );
     return NULL;
 }
 
@@ -415,6 +413,16 @@ int market::update_allotment ( arena_list_type& arenas, int workers_demand, int 
     return assigned;
 }
 
+/** This method must be invoked under my_arenas_list_mutex. **/
+bool market::is_arena_in_list( arena_list_type &arenas, arena *a ) {
+    if ( a ) {
+        for ( arena_list_type::iterator it = arenas.begin(); it != arenas.end(); ++it )
+            if ( a == &*it )
+                return true;
+    }
+    return false;
+}
+
 #if __TBB_TASK_PRIORITY
 inline void market::update_global_top_priority ( intptr_t newPriority ) {
     GATHER_STATISTIC( ++governor::local_scheduler_if_initialized()->my_counters.market_prio_switches );
@@ -432,21 +440,29 @@ inline void market::reset_global_priority () {
     update_global_top_priority(normalized_normal_priority);
 }
 
-arena* market::arena_in_need ( arena* prev_arena )
-{
-    suppress_unused_warning(prev_arena);
+arena* market::arena_in_need ( arena* prev_arena ) {
     if( as_atomic(my_total_demand) <= 0 )
         return NULL;
     arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex, /*is_writer=*/false);
     assert_market_valid();
     int p = my_global_top_priority;
     arena *a = NULL;
-    do {
-        priority_level_info &pl = my_priority_levels[p];
+
+    // Checks if arena is alive or not
+    if ( is_arena_in_list( my_priority_levels[p].arenas, prev_arena ) ) {
+        a = arena_in_need( my_priority_levels[p].arenas, prev_arena );
+    }
+
+    while ( !a && p >= my_global_bottom_priority ) {
+        priority_level_info &pl = my_priority_levels[p--];
         a = arena_in_need( pl.arenas, pl.next_arena );
+        if ( a ) {
+            as_atomic(pl.next_arena) = a; // a subject for innocent data race under the reader lock
+            // TODO: rework global round robin policy to local or random to avoid this write
+        }
         // TODO: When refactoring task priority code, take into consideration the
         // __TBB_TRACK_PRIORITY_LEVEL_SATURATION sections from earlier versions of TBB
-    } while ( !a && --p >= my_global_bottom_priority );
+    }
     return a;
 }
 
@@ -681,7 +697,8 @@ void market::adjust_demand ( arena& a, int delta ) {
 
 void market::process( job& j ) {
     generic_scheduler& s = static_cast<generic_scheduler&>(j);
-    arena *a = NULL;
+    // s.my_arena can be dead. Don't access it until arena_in_need is called
+    arena *a = s.my_arena;
     __TBB_ASSERT( governor::is_set(&s), NULL );
     enum {
         query_interval = 1000,
@@ -691,6 +708,7 @@ void market::process( job& j ) {
         while ( (a = arena_in_need(a)) )
         {
             a->process(s);
+            a = NULL; // To avoid double checks in arena_in_need
             i = first_interval;
         }
         // Workers leave market because there is no arena in need. It can happen earlier than

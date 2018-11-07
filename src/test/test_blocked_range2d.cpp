@@ -136,6 +136,26 @@ void ParallelTest() {
     }
 }
 
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+#include <vector>
+void TestDeductionGuides() {
+    std::vector<const unsigned long *> v;
+    std::vector<double> v2;
+
+    // check blocked_range2d(RowValue, RowValue, size_t, ColValue, ColValue, size_t)
+    tbb::blocked_range2d r1(v.begin(), v.end(), 2, v2.begin(), v2.end(), 2);
+    static_assert(std::is_same<decltype(r1), tbb::blocked_range2d<decltype(v)::iterator, decltype(v2)::iterator>>::value);
+
+    // check blocked_range2d(blocked_range2d &)
+    tbb::blocked_range2d r2(r1);
+    static_assert(std::is_same<decltype(r2), decltype(r1)>::value);
+
+    // check blocked_range2d(blocked_range2d &&)
+    tbb::blocked_range2d r3(std::move(r1));
+    static_assert(std::is_same<decltype(r3), decltype(r1)>::value);
+}
+#endif
+
 #include "tbb/task_scheduler_init.h"
 
 int TestMain () {
@@ -144,5 +164,9 @@ int TestMain () {
         tbb::task_scheduler_init init(p);
         ParallelTest();
     }
+
+    #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+        TestDeductionGuides();
+    #endif
     return Harness::Done;
 }

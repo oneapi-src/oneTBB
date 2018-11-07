@@ -2,6 +2,30 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 2019 Update 2
+TBB_INTERFACE_VERSION == 11002
+
+Changes (w.r.t. Intel TBB 2019 Update 1):
+
+- Added constructors with HashCompare argument to concurrent_hash_map
+    (https://github.com/01org/tbb/pull/63).
+- Added overloads for parallel_reduce with default partitioner and
+    user-supplied context.
+- Added deduction guides for tbb containers: concurrent_vector,
+    concurrent_queue, concurrent_bounded_queue,
+    concurrent_priority_queue.
+- Reallocation of memory objects >1MB now copies and frees memory if
+    the size is decreased twice or more, trading performance off for
+    reduced memory usage.
+- After a period of sleep, TBB worker threads now prefer returning to
+    their last used task arena.
+
+Bugs fixed:
+
+- Fixed compilation of task_group.h when targeting macOS* 10.11 or
+    earlier (https://github.com/conda-forge/tbb-feedstock/issues/42).
+
+------------------------------------------------------------------------
 Intel TBB 2019 Update 1
 TBB_INTERFACE_VERSION == 11001
 
@@ -27,6 +51,9 @@ Bugs fixed:
     observer.
 - Fixed compilation of task_group.h by Visual C++* 15.7 with
     /permissive- option (https://github.com/01org/tbb/issues/53).
+- Fixed tbb4py to avoid dependency on Intel(R) C++ Compiler shared
+    libraries.
+- Fixed compilation for Anaconda environment with GCC 7.3 and higher.
 
 ------------------------------------------------------------------------
 Intel TBB 2019
