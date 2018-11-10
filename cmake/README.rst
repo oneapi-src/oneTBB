@@ -30,7 +30,7 @@ Visit our `forum <https://software.intel.com/en-us/forums/intel-threading-buildi
 Release Notes
 -------------
 * Minimum supported CMake version: ``3.0.0``.
-* Intel TBB versioning via `find_package <https://cmake.org/cmake/help/latest/command/find_package.html>`_ has restricted functionality: compatibility of update numbers (as well as interface versions) is not checked. Supported versioning: ``find_package(TBB <major>.<minor> ...)``. Intel TBB interface version can be obtained in the customer project via the ``TBB_INTERFACE_VERSION`` variable.
+* Intel TBB versioning via `find_package <https://cmake.org/cmake/help/latest/command/find_package.html>`_ has restricted functionality: compatibility of update numbers (as well as interface versions) is not checked. Supported versioning: ``find_package(TBB <major>.<minor>[<.interface>] ...)``. Intel TBB interface version can be obtained in the customer project via the ``TBB_INTERFACE_VERSION`` variable.
 
 Use cases of Intel TBB integration into CMake-aware projects
 ------------------------------------------------------------

@@ -155,7 +155,7 @@ endif()")
     string(REGEX REPLACE ".*#define TBB_VERSION_MAJOR ([0-9]+).*" "\\1" _tbb_ver_major "${_tbb_stddef}")
     string(REGEX REPLACE ".*#define TBB_VERSION_MINOR ([0-9]+).*" "\\1" _tbb_ver_minor "${_tbb_stddef}")
     string(REGEX REPLACE ".*#define TBB_INTERFACE_VERSION ([0-9]+).*" "\\1" TBB_INTERFACE_VERSION "${_tbb_stddef}")
-    set(TBB_VERSION "${_tbb_ver_major}.${_tbb_ver_minor}")
+    set(TBB_VERSION "${_tbb_ver_major}.${_tbb_ver_minor}.${TBB_INTERFACE_VERSION}")
 
     if (tbb_MK_CONFIG_FOR_SOURCE)
         set(_tbb_config_template TBBConfigForSource.cmake.in)
