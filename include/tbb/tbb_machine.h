@@ -337,6 +337,10 @@ template<> struct atomic_selector<8> {
     }
 #endif
 
+#ifndef __TBB_LongYield
+#define __TBB_LongYield() __TBB_Yield()
+#endif
+
 namespace tbb {
 
 //! Sequentially consistent full memory fence.
@@ -351,14 +355,17 @@ class atomic_backoff : no_copy {
     /** Should be equal to approximately the number of "pause" instructions
         that take the same time as an context switch. Must be a power of two.*/
     static const int32_t LOOPS_BEFORE_YIELD = 16;
+    //! The number of time slice yields before switching to a long yield
+    static const int32_t LOOPS_BEFORE_LONGYIELD = 4;
     int32_t count;
+    int32_t yield_count;
 public:
     // In many cases, an object of this type is initialized eagerly on hot path,
     // as in for(atomic_backoff b; ; b.pause()) { /*loop body*/ }
     // For this reason, the construction cost must be very small!
-    atomic_backoff() : count(1) {}
+    atomic_backoff() : count(1), yield_count(0) {}
     // This constructor pauses immediately; do not use on hot paths!
-    atomic_backoff( bool ) : count(1) { pause(); }
+    atomic_backoff( bool ) : count(1), yield_count(0) { pause(); }
 
     //! Pause for a while.
     void pause() {
@@ -366,9 +373,13 @@ public:
             __TBB_Pause(count);
             // Pause twice as long the next time.
             count*=2;
-        } else {
+        } else if( yield_count < LOOPS_BEFORE_LONGYIELD ) {
             // Pause is so long that we might as well yield CPU to scheduler.
+            ++yield_count;
             __TBB_Yield();
+        } else {
+            // Pause is even longer, so we might as well deschedule the thread to avoid burning CPU
+            __TBB_LongYield();
         }
     }
 
@@ -386,6 +397,7 @@ public:
 
     void reset() {
         count = 1;
+        yield_count = 0;
     }
 };
 

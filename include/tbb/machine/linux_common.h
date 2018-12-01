@@ -25,6 +25,9 @@
 #include <sched.h>
 #define __TBB_Yield()  sched_yield()
 
+#include <time.h>
+#define __TBB_LongYield()  { struct ::timespec __ts = {}; ::nanosleep(&__ts, 0); }
+
 #include <unistd.h>
 /* Futex definitions */
 #include <sys/syscall.h>
