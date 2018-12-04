@@ -28,7 +28,11 @@
 
 #include "scheduler_common.h"
 #include "intrusive_list.h"
+#if __TBB_PREVIEW_CRITICAL_TASKS && __TBB_CPF_BUILD
+#include "task_stream_extended.h"
+#else
 #include "task_stream.h"
+#endif
 #include "../rml/include/rml_tbb.h"
 #include "mailbox.h"
 #include "observer_proxy.h"
@@ -70,7 +74,20 @@ struct arena_base : padded<intrusive_list_node> {
           relaxed FIFO order);
         - the enqueuing thread does not call any of wait_for_all methods.
         Depending on __TBB_TASK_PRIORITY, num_priority_levels can be 1 or more. **/
+#if __TBB_PREVIEW_CRITICAL_TASKS && __TBB_CPF_BUILD
+    task_stream<num_priority_levels, front_accessor> my_task_stream; // heavy use in stealing loop
+#else
     task_stream<num_priority_levels> my_task_stream; // heavy use in stealing loop
+#endif
+
+#if __TBB_PREVIEW_CRITICAL_TASKS
+    //! Task pool for the tasks with critical property set.
+    /** Critical tasks are scheduled for execution ahead of other sources (including local task pool
+        and even bypassed tasks) unless the thread already executes a critical task in an outer
+        dispatch loop **/
+    // used on the hot path of the task dispatch loop
+    task_stream<1, back_nonnull_accessor> my_critical_task_stream;
+#endif
 
     //! The number of workers requested by the master thread owning the arena.
     unsigned my_max_num_workers;
@@ -448,6 +465,7 @@ template<arena::new_work_type work_type> void arena::advertise_new_work() {
                 }
             }
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
+            // TODO: investigate adjusting of arena's demand by a single worker.
             my_market->adjust_demand( *this, my_max_num_workers );
         }
     }

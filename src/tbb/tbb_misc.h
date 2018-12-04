@@ -83,9 +83,6 @@ void MoveThreadIntoProcessorGroup( void* hThread, int groupIndex );
 //! Throws std::runtime_error with what() returning error_code description prefixed with aux_info
 void handle_win_error( int error_code );
 
-//! True if environment variable with given name is set and not 0; otherwise false.
-bool GetBoolEnvironmentVariable( const char * name );
-
 //! Prints TBB version information on stderr
 void PrintVersion();
 

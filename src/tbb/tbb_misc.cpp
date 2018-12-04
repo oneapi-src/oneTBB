@@ -189,16 +189,6 @@ void fix_broken_rethrow() {}
 bool gcc_rethrow_exception_broken() { return false; }
 #endif /* __TBB_STD_RETHROW_EXCEPTION_POSSIBLY_BROKEN */
 
-#if __TBB_WIN8UI_SUPPORT
-bool GetBoolEnvironmentVariable( const char * ) { return false;}
-#else  /* __TBB_WIN8UI_SUPPORT */
-bool GetBoolEnvironmentVariable( const char * name ) {
-    if( const char* s = std::getenv(name) )
-        return strcmp(s,"0") != 0;
-    return false;
-}
-#endif /* __TBB_WIN8UI_SUPPORT */
-
 /** The leading "\0" is here so that applying "strings" to the binary delivers a clean result. */
 static const char VersionString[] = "\0" TBB_VERSION_STRINGS;
 

@@ -23,6 +23,7 @@
 #define TBB_PREVIEW_RUNTIME_LOADER 1
 #include "tbb/runtime_loader.h"
 #include "tbb/tbb_stddef.h"
+#include "tbb_environment.h"
 
 // C standard headers.
 #include <cctype>            // isspace
@@ -109,8 +110,7 @@ static void _say( char const * format, va_list args ) {
 // To enable printing, the variable must be set and not empty.
 // Do not call it directly, use tell() instead.
 static void _tell( char const * format, va_list args ) {
-    char const * var = getenv( "TBB_VERSION" );
-    if ( var != NULL && var[ 0 ] != 0 ) {
+    if ( tbb::internal::GetBoolEnvironmentVariable("TBB_VERSION") ) {
         _say( format, args );
     } // if
 } // _tell

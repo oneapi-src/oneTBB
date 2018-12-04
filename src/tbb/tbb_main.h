@@ -23,6 +23,7 @@
 
 #include "tbb/atomic.h"
 #include "governor.h"
+#include "tbb_environment.h"
 
 namespace tbb {
 

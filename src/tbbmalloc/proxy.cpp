@@ -41,6 +41,7 @@
 
 #include "proxy.h"
 #include "tbb/tbb_config.h"
+#include "tbb/tbb_environment.h"
 
 #if !defined(__EXCEPTIONS) && !defined(_CPPUNWIND) && !defined(__SUNPRO_CC)
     #if TBB_USE_EXCEPTIONS
@@ -773,15 +774,10 @@ extern "C" BOOL WINAPI DllMain( HINSTANCE hInst, DWORD callReason, LPVOID reserv
 
     if ( callReason==DLL_PROCESS_ATTACH && reserved && hInst ) {
 #if !__TBB_WIN8UI_SUPPORT
-#if TBBMALLOC_USE_TBB_FOR_ALLOCATOR_ENV_CONTROLLED
-        char pinEnvVariable[50];
-        if( GetEnvironmentVariable("TBBMALLOC_USE_TBB_FOR_ALLOCATOR", pinEnvVariable, 50))
+        if (!tbb::internal::GetBoolEnvironmentVariable("TBB_MALLOC_DISABLE_REPLACEMENT"))
         {
             doMallocReplacement();
         }
-#else
-        doMallocReplacement();
-#endif
 #endif // !__TBB_WIN8UI_SUPPORT
     }
 

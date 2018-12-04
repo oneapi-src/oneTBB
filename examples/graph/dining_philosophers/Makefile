@@ -45,6 +45,9 @@ release: dining_philosophers.cpp
 debug:  dining_philosophers.cpp
 	$(CXX) -O0 -D_CONSOLE -g -DTBB_USE_DEBUG $(CXXFLAGS) -o $(PROG) $^ -ltbb_debug $(LIBS)
 
+profile: override CXXFLAGS += -DTBB_USE_THREADING_TOOLS -g
+profile: release
+
 clean:
 	rm -f $(PROG) *.o *.d
 

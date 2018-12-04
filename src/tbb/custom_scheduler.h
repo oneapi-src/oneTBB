@@ -109,6 +109,12 @@ class custom_scheduler: private generic_scheduler {
 #endif /*__TBB_RECYCLE_TO_ENQUEUE*/
         if( bypass_slot==NULL )
             bypass_slot = &s;
+#if __TBB_PREVIEW_CRITICAL_TASKS
+        else if( internal::is_critical( s ) ) {
+            local_spawn( bypass_slot, bypass_slot->prefix().next );
+            bypass_slot = &s;
+        }
+#endif /* __TBB_PREVIEW_CRITICAL_TASKS */
         else
             local_spawn( &s, s.prefix().next );
     }
@@ -218,7 +224,13 @@ task* custom_scheduler<SchedulerTraits>::receive_or_steal_task( __TBB_ISOLATION_
         // Check if there are tasks in starvation-resistant stream.
         // Only allowed at the outermost dispatch level without isolation.
         else if (__TBB_ISOLATION_EXPR(isolation == no_isolation &&) outermost_dispatch_level &&
-            !my_arena->my_task_stream.empty(p) && (t = my_arena->my_task_stream.pop( p, my_arena_slot->hint_for_pop)) ) {
+                 !my_arena->my_task_stream.empty(p) && (
+#if __TBB_PREVIEW_CRITICAL_TASKS && __TBB_CPF_BUILD
+                     t = my_arena->my_task_stream.pop( p, subsequent_lane_selector(my_arena_slot->hint_for_pop) )
+#else
+                     t = my_arena->my_task_stream.pop( p, my_arena_slot->hint_for_pop )
+#endif
+                 ) ) {
             ITT_NOTIFY(sync_acquired, &my_arena->my_task_stream);
             // just proceed with the obtained task
         }
@@ -229,38 +241,16 @@ task* custom_scheduler<SchedulerTraits>::receive_or_steal_task( __TBB_ISOLATION_
             // just proceed with the obtained task
         }
 #endif /* __TBB_TASK_PRIORITY */
-        else if ( can_steal_here && n ) {
-            // Try to steal a task from a random victim.
-            size_t k = my_random.get() % n;
-            arena_slot* victim = &my_arena->my_slots[k];
-            // The following condition excludes the master that might have
-            // already taken our previous place in the arena from the list .
-            // of potential victims. But since such a situation can take
-            // place only in case of significant oversubscription, keeping
-            // the checks simple seems to be preferable to complicating the code.
-            if( k >= my_arena_index )
-                ++victim;               // Adjusts random distribution to exclude self
-            task **pool = victim->task_pool;
-            if( pool == EmptyTaskPool || !(t = steal_task( __TBB_ISOLATION_ARG(*victim, isolation) )) )
-                goto fail;
-            if( is_proxy(*t) ) {
-                task_proxy &tp = *(task_proxy*)t;
-                t = tp.extract_task<task_proxy::pool_bit>();
-                if ( !t ) {
-                    // Proxy was empty, so it's our responsibility to free it
-                    free_task<no_cache_small_task>(tp);
-                    goto fail;
-                }
-                GATHER_STATISTIC( ++my_counters.proxies_stolen );
-            }
-            t->prefix().extra_state |= es_task_is_stolen;
-            if( is_version_3_task(*t) ) {
-                my_innermost_running_task = t;
-                t->prefix().owner = this;
-                t->note_affinity( my_affinity_id );
-            }
-            GATHER_STATISTIC( ++my_counters.steals_committed );
-        } // end of stealing branch
+        else if ( can_steal_here && n && (t = steal_task( __TBB_ISOLATION_EXPR(isolation) )) ) {
+            // just proceed with the obtained task
+        }
+#if __TBB_PREVIEW_CRITICAL_TASKS
+        else if( (t = get_critical_task( __TBB_ISOLATION_EXPR(isolation) )) ) {
+            __TBB_ASSERT( internal::is_critical(*t), "Received task must be critical one" );
+            ITT_NOTIFY(sync_acquired, &my_arena->my_critical_task_stream);
+            // just proceed with the obtained task
+        }
+#endif // __TBB_PREVIEW_CRITICAL_TASKS
         else
             goto fail;
         // A task was successfully obtained somewhere
@@ -433,7 +423,6 @@ void custom_scheduler<SchedulerTraits>::local_wait_for_all( task& parent, task* 
         }
 #endif /* __TBB_TASK_ISOLATION */
     }
-
 #if TBB_USE_EXCEPTIONS
     // Infinite safeguard EH loop
     for (;;) {
@@ -463,33 +452,53 @@ void custom_scheduler<SchedulerTraits>::local_wait_for_all( task& parent, task* 
                 // TODO: make the assert stronger by prohibiting allocated state.
                 __TBB_ASSERT( 1L<<t->state() & (1L<<task::allocated|1L<<task::ready|1L<<task::reexecute), NULL );
                 assert_task_pool_valid();
+#if __TBB_PREVIEW_CRITICAL_TASKS
+                // TODO: check performance and optimize if needed for added conditions on the
+                // hot-path.
+                if( !internal::is_critical(*t) ) {
+                    if( task* critical_task = get_critical_task( __TBB_ISOLATION_EXPR(isolation) ) ) {
+                        __TBB_ASSERT( internal::is_critical(*critical_task),
+                                      "Received task must be critical one" );
+                        ITT_NOTIFY(sync_acquired, &my_arena->my_critical_task_stream);
+                        t->prefix().state = task::allocated;
+                        my_innermost_running_task = t; // required during spawn to propagate isolation
+                        local_spawn(t, t->prefix().next);
+                        t = critical_task;
+                    } else {
+#endif /* __TBB_PREVIEW_CRITICAL_TASKS */
 #if __TBB_TASK_PRIORITY
-                intptr_t p = priority(*t);
-                if ( p != *my_ref_top_priority && (t->prefix().extra_state & es_task_enqueued) == 0) {
-                    assert_priority_valid(p);
-                    if ( p != my_arena->my_top_priority ) {
-                        my_market->update_arena_priority( *my_arena, p );
-                    }
-                    if ( p < effective_reference_priority() ) {
-                        if ( !my_offloaded_tasks ) {
-                            my_offloaded_task_list_tail_link = &t->prefix().next_offloaded;
-                            // Erase possible reference to the owner scheduler (next_offloaded is a union member)
-                            *my_offloaded_task_list_tail_link = NULL;
+                        intptr_t p = priority(*t);
+                        if ( p != *my_ref_top_priority
+                             && (t->prefix().extra_state & es_task_enqueued) == 0 ) {
+                            assert_priority_valid(p);
+                            if ( p != my_arena->my_top_priority ) {
+                                my_market->update_arena_priority( *my_arena, p );
+                            }
+                            if ( p < effective_reference_priority() ) {
+                                if ( !my_offloaded_tasks ) {
+                                    my_offloaded_task_list_tail_link = &t->prefix().next_offloaded;
+                                    // Erase possible reference to the owner scheduler
+                                    // (next_offloaded is a union member)
+                                    *my_offloaded_task_list_tail_link = NULL;
+                                }
+                                offload_task( *t, p );
+                                if ( is_task_pool_published() ) {
+                                    t = winnow_task_pool( __TBB_ISOLATION_EXPR( isolation ) );
+                                    if ( t )
+                                        continue;
+                                } else {
+                                    // Mark arena as full to unlock arena priority level adjustment
+                                    // by arena::is_out_of_work(), and ensure worker's presence.
+                                    my_arena->advertise_new_work<arena::wakeup>();
+                                }
+                                goto stealing_ground;
+                            }
                         }
-                        offload_task( *t, p );
-                        if ( is_task_pool_published() ) {
-                            t = winnow_task_pool( __TBB_ISOLATION_EXPR( isolation ) );
-                            if ( t )
-                                continue;
-                        } else {
-                            // Mark arena as full to unlock arena priority level adjustment
-                            // by arena::is_out_of_work(), and ensure worker's presence.
-                            my_arena->advertise_new_work<arena::wakeup>();
-                        }
-                        goto stealing_ground;
-                    }
-                }
 #endif /* __TBB_TASK_PRIORITY */
+#if __TBB_PREVIEW_CRITICAL_TASKS
+                    }
+                } // if is not critical
+#endif
                 task* t_next = NULL;
                 my_innermost_running_task = t;
                 t->prefix().owner = this;
@@ -506,11 +515,14 @@ void custom_scheduler<SchedulerTraits>::local_wait_for_all( task& parent, task* 
                     GATHER_STATISTIC( my_counters.avg_market_prio += my_market->my_global_top_priority );
 #endif /* __TBB_TASK_PRIORITY */
                     ITT_STACK(SchedulerTraits::itt_possible, callee_enter, t->prefix().context->itt_caller);
+#if __TBB_PREVIEW_CRITICAL_TASKS
+                    internal::critical_task_count_guard tc_guard(my_properties, *t);
+#endif
                     t_next = t->execute();
                     ITT_STACK(SchedulerTraits::itt_possible, callee_leave, t->prefix().context->itt_caller);
                     if (t_next) {
                         __TBB_ASSERT( t_next->state()==task::allocated,
-                                "if task::execute() returns task, it must be marked as allocated" );
+                                      "if task::execute() returns task, it must be marked as allocated" );
                         reset_extra_state(t_next);
                         __TBB_ISOLATION_EXPR( t_next->prefix().isolation = t->prefix().isolation );
 #if TBB_USE_ASSERT
@@ -518,7 +530,7 @@ void custom_scheduler<SchedulerTraits>::local_wait_for_all( task& parent, task* 
                         if (next_affinity != 0 && next_affinity != my_affinity_id)
                             GATHER_STATISTIC( ++my_counters.affinity_ignored );
 #endif
-                    }
+                    } // if there is bypassed task
                 }
                 assert_task_pool_valid();
                 switch( t->state() ) {
@@ -621,7 +633,6 @@ stealing_ground:
         t = receive_or_steal_task( __TBB_ISOLATION_ARG( parent.prefix().ref_count, isolation ) );
         if ( !t )
             goto done;
-
         // The user can capture another the FPU settings to the context so the
         // cached data in the helper can be out-of-date and we cannot do fast
         // check.

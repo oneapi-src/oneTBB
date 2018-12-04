@@ -29,7 +29,7 @@ endif # which icpc
 ifeq ($(shell uname), Darwin)
 override CXXFLAGS += -Wl,-rpath,$(TBBROOT)/lib  -Wl,-rpath,$(MKLROOT)/lib
 # MKL support
-override MKL_LIBS += -lmkl_core -lmkl_sequential -lmkl_intel
+override MKL_LIBS += -lmkl_intel_lp64 -lmkl_sequential -lmkl_core
 else
 ifeq ($(shell uname), Linux)
 LIBS+= -lrt 
@@ -48,6 +48,9 @@ release: *.cpp
 
 debug: *.cpp
 	$(CXX) -O0 -g -DTBB_USE_DEBUG $(CXXFLAGS) -o $(PROG) $^ -ltbb_debug $(MKL_LIBS) $(LIBS)
+
+profile: override CXXFLAGS += -DTBB_USE_THREADING_TOOLS -g
+profile: release
 
 clean:
 	$(RM) $(PROG) *.o *.d

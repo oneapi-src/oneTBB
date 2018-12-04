@@ -161,8 +161,8 @@ static resource_string strings_for_itt[] = {
 #undef TBB_STRING_RESOURCE
 
 static __itt_string_handle *ITT_get_string_handle(int idx) {
-    __TBB_ASSERT(idx >= 0, NULL);
-    return idx < NUM_STRINGS ? strings_for_itt[idx].itt_str_handle : NULL;
+    __TBB_ASSERT( idx >= 0 && idx < NUM_STRINGS, "string handle out of valid range");
+    return (idx >= 0 && idx < NUM_STRINGS) ? strings_for_itt[idx].itt_str_handle : NULL;
 }
 
 static void ITT_init_domains() {

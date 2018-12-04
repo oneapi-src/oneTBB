@@ -44,6 +44,9 @@ release:
 debug:
 	$(CXX) -O0 -g -DTBB_USE_DEBUG *.cpp $(CXXFLAGS) -o $(PROG) -ltbb_debug $(LIBS)  $(CXX0XFLAGS)
 
+profile: override CXXFLAGS += -DTBB_USE_THREADING_TOOLS -g
+profile: release
+
 clean:
 	$(RM) $(PROG) *.o *.d
 

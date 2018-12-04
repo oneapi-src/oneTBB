@@ -218,12 +218,19 @@ arena::arena ( market& m, unsigned num_slots, unsigned num_reserved_slots ) {
         mailbox(i+1).construct();
         ITT_SYNC_CREATE(&mailbox(i+1), SyncType_Scheduler, SyncObj_Mailbox);
         my_slots[i].hint_for_pop = i;
+#if __TBB_PREVIEW_CRITICAL_TASKS
+        my_slots[i].hint_for_critical = i;
+#endif
 #if __TBB_STATISTICS
         my_slots[i].my_counters = new ( NFS_Allocate(1, sizeof(statistics_counters), NULL) ) statistics_counters;
 #endif /* __TBB_STATISTICS */
     }
     my_task_stream.initialize(my_num_slots);
     ITT_SYNC_CREATE(&my_task_stream, SyncType_Scheduler, SyncObj_TaskStream);
+#if __TBB_PREVIEW_CRITICAL_TASKS
+    my_critical_task_stream.initialize(my_num_slots);
+    ITT_SYNC_CREATE(&my_critical_task_stream, SyncType_Scheduler, SyncObj_CriticalTaskStream);
+#endif
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
     my_concurrency_mode = cm_normal;
 #endif
@@ -268,6 +275,9 @@ void arena::free_arena () {
         drained += mailbox(i+1).drain();
     }
     __TBB_ASSERT( my_task_stream.drain()==0, "Not all enqueued tasks were executed");
+#if __TBB_PREVIEW_CRITICAL_TASKS
+    __TBB_ASSERT( my_critical_task_stream.drain()==0, "Not all critical tasks were executed");
+#endif
 #if __TBB_COUNT_TASK_NODES
     my_market->update_task_node_count( -drained );
 #endif /* __TBB_COUNT_TASK_NODES */
@@ -431,6 +441,10 @@ bool arena::is_out_of_work() {
                     }
                     __TBB_ASSERT( k <= n, NULL );
                     bool work_absent = k == n;
+#if __TBB_PREVIEW_CRITICAL_TASKS
+                    bool no_critical_tasks = my_critical_task_stream.empty(0);
+                    work_absent &= no_critical_tasks;
+#endif
 #if __TBB_TASK_PRIORITY
                     // Variable tasks_present indicates presence of tasks at any priority
                     // level, while work_absent refers only to the current priority.
@@ -560,17 +574,48 @@ void arena::enqueue_task( task& t, intptr_t prio, FastRandom &random )
     }
     __TBB_ASSERT(t.prefix().affinity==affinity_id(0), "affinity is ignored for enqueued tasks");
 #endif /* TBB_USE_ASSERT */
+#if __TBB_PREVIEW_CRITICAL_TASKS
+    if( prio == internal::priority_critical || internal::is_critical( t ) ) {
+        // TODO: consider using of 'scheduler::handled_as_critical'
+        internal::make_critical( t );
+#if __TBB_TASK_ISOLATION
+        generic_scheduler* s = governor::local_scheduler_if_initialized();
+        __TBB_ASSERT( s, "Scheduler must be initialized at this moment" );
+        // propagate isolation level to critical task
+        t.prefix().isolation = s->my_innermost_running_task->prefix().isolation;
+#endif
+        ITT_NOTIFY(sync_releasing, &my_critical_task_stream);
+        if( !s || !s->my_arena_slot ) {
+            // Either scheduler is not initialized or it is not attached to the arena, use random
+            // lane for the task.
+            my_critical_task_stream.push( &t, 0, internal::random_lane_selector(random) );
+        } else {
+            unsigned& lane = s->my_arena_slot->hint_for_critical;
+            my_critical_task_stream.push( &t, 0, tbb::internal::subsequent_lane_selector(lane) );
+        }
+        advertise_new_work<work_spawned>();
+        return;
+    }
+#endif /* __TBB_PREVIEW_CRITICAL_TASKS */
 
     ITT_NOTIFY(sync_releasing, &my_task_stream);
 #if __TBB_TASK_PRIORITY
     intptr_t p = prio ? normalize_priority(priority_t(prio)) : normalized_normal_priority;
     assert_priority_valid(p);
+#if __TBB_PREVIEW_CRITICAL_TASKS && __TBB_CPF_BUILD
+    my_task_stream.push( &t, p, internal::random_lane_selector(random) );
+#else
     my_task_stream.push( &t, p, random );
+#endif
     if ( p != my_top_priority )
         my_market->update_arena_priority( *this, p );
 #else /* !__TBB_TASK_PRIORITY */
     __TBB_ASSERT_EX(prio == 0, "the library is not configured to respect the task priority");
+#if __TBB_PREVIEW_CRITICAL_TASKS && __TBB_CPF_BUILD
+    my_task_stream.push( &t, 0, internal::random_lane_selector(random) );
+#else
     my_task_stream.push( &t, 0, random );
+#endif
 #endif /* !__TBB_TASK_PRIORITY */
     advertise_new_work<work_enqueued>();
 #if __TBB_TASK_PRIORITY
@@ -620,6 +665,9 @@ private:
         my_scheduler.my_properties.outermost = true;
         my_scheduler.my_properties.type = type;
         my_scheduler.my_innermost_running_task = my_scheduler.my_dummy_task;
+#if __TBB_PREVIEW_CRITICAL_TASKS
+        my_scheduler.my_properties.has_taken_critical_task = false;
+#endif
 #if __TBB_TASK_GROUP_CONTEXT
         // Save dummy's context and replace it by arena's context
         my_orig_ctx = my_scheduler.my_dummy_task->prefix().context;

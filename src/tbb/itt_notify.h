@@ -85,6 +85,9 @@ namespace tbb {
             *SyncObj_Mailbox,
             *SyncObj_TaskReturnList,
             *SyncObj_TaskStream,
+#if __TBB_PREVIEW_CRITICAL_TASKS
+            *SyncObj_CriticalTaskStream,
+#endif
             *SyncObj_ContextsList
             ;
 

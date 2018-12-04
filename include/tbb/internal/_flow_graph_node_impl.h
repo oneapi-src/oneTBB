@@ -88,21 +88,23 @@ namespace internal {
 #endif
 
         //! Constructor for function_input_base
-        function_input_base( graph &g, size_t max_concurrency)
-            : my_graph_ref(g), my_max_concurrency(max_concurrency), my_concurrency(0),
-              my_queue(!internal::has_policy<rejecting, Policy>::value ? new input_queue_type() : NULL),
-            forwarder_busy(false)
+        function_input_base(
+            graph &g, __TBB_FLOW_GRAPH_PRIORITY_ARG1(size_t max_concurrency, node_priority_t priority)
+        ) : my_graph_ref(g), my_max_concurrency(max_concurrency)
+          , __TBB_FLOW_GRAPH_PRIORITY_ARG1(my_concurrency(0), my_priority(priority))
+          , my_queue(!internal::has_policy<rejecting, Policy>::value ? new input_queue_type() : NULL)
+          , forwarder_busy(false)
         {
             my_predecessors.set_owner(this);
             my_aggregator.initialize_handler(handler_type(this));
         }
 
         //! Copy constructor
-        function_input_base( const function_input_base& src) :
-            receiver<Input>(), tbb::internal::no_assign(),
-            my_graph_ref(src.my_graph_ref), my_max_concurrency(src.my_max_concurrency),
-            my_concurrency(0), my_queue(src.my_queue ? new input_queue_type() : NULL),
-            forwarder_busy(false)
+        function_input_base( const function_input_base& src)
+            : receiver<Input>(), tbb::internal::no_assign()
+            , my_graph_ref(src.my_graph_ref), my_max_concurrency(src.my_max_concurrency)
+            , __TBB_FLOW_GRAPH_PRIORITY_ARG1(my_concurrency(0), my_priority(src.my_priority))
+            , my_queue(src.my_queue ? new input_queue_type() : NULL), forwarder_busy(false)
         {
             my_predecessors.set_owner(this);
             my_aggregator.initialize_handler(handler_type(this));
@@ -182,6 +184,7 @@ namespace internal {
         graph& my_graph_ref;
         const size_t my_max_concurrency;
         size_t my_concurrency;
+        __TBB_FLOW_GRAPH_PRIORITY_EXPR( node_priority_t my_priority; )
         input_queue_type *my_queue;
         predecessor_cache<input_type, null_mutex > my_predecessors;
 
@@ -326,7 +329,7 @@ namespace internal {
            }
         }
 
-        //! Tries to spawn bodies if available and if concurrency allows
+        //! Creates tasks for postponed messages if available and if concurrency allows
         void internal_forward(operation_type *op) {
             op->bypass_t = NULL;
             if (my_concurrency < my_max_concurrency || !my_max_concurrency)
@@ -377,23 +380,23 @@ namespace internal {
 
         //! allocates a task to apply a body
         inline task * create_body_task( const input_type &input ) {
-
             return (internal::is_graph_active(my_graph_ref)) ?
-                new(task::allocate_additional_child_of(*(my_graph_ref.root_task())))
-                    apply_body_task_bypass < class_type, input_type >(*this, input) :
-                NULL;
+                new( task::allocate_additional_child_of(*(my_graph_ref.root_task())) )
+                apply_body_task_bypass < class_type, input_type >(
+                    *this, __TBB_FLOW_GRAPH_PRIORITY_ARG1(input, my_priority))
+                : NULL;
         }
 
        //! This is executed by an enqueued task, the "forwarder"
-       task *forward_task() {
+       task* forward_task() {
            operation_type op_data(try_fwd);
-           task *rval = NULL;
+           task* rval = NULL;
            do {
                op_data.status = WAIT;
                my_aggregator.execute(&op_data);
                if(op_data.status == SUCCEEDED) {
-                    // workaround for icc bug
-                   tbb::task *ttask = op_data.bypass_t;
+                   task* ttask = op_data.bypass_t;
+                   __TBB_ASSERT( ttask && ttask != SUCCESSFULLY_ENQUEUED, NULL );
                    rval = combine_tasks(my_graph_ref, rval, ttask);
                }
            } while (op_data.status == SUCCEEDED);
@@ -402,8 +405,9 @@ namespace internal {
 
        inline task *create_forward_task() {
            return (internal::is_graph_active(my_graph_ref)) ?
-               new(task::allocate_additional_child_of(*(my_graph_ref.root_task()))) forward_task_bypass< class_type >(*this) :
-               NULL;
+               new( task::allocate_additional_child_of(*(my_graph_ref.root_task())) )
+               forward_task_bypass< class_type >( __TBB_FLOW_GRAPH_PRIORITY_ARG1(*this, my_priority) )
+               : NULL;
        }
 
        //! Spawns a task that calls forward()
@@ -429,10 +433,12 @@ namespace internal {
 
         // constructor
         template<typename Body>
-        function_input( graph &g, size_t max_concurrency, Body& body ) :
-            base_type(g, max_concurrency),
-            my_body( new internal::function_body_leaf< input_type, output_type, Body>(body) ),
-            my_init_body( new internal::function_body_leaf< input_type, output_type, Body>(body) ) {
+        function_input(
+            graph &g, size_t max_concurrency,
+            __TBB_FLOW_GRAPH_PRIORITY_ARG1(Body& body, node_priority_t priority)
+        ) : base_type(g, __TBB_FLOW_GRAPH_PRIORITY_ARG1(max_concurrency, priority))
+          , my_body( new internal::function_body_leaf< input_type, output_type, Body>(body) )
+          , my_init_body( new internal::function_body_leaf< input_type, output_type, Body>(body) ) {
         }
 
         //! Copy constructor
@@ -465,21 +471,21 @@ namespace internal {
         //TODO: consider moving into the base class
         task * apply_body_impl_bypass( const input_type &i) {
             output_type v = apply_body_impl(i);
-            task* postponed_task = NULL;
 #if TBB_DEPRECATED_MESSAGE_FLOW_ORDER
             task* successor_task = successors().try_put_task(v);
 #endif
-            if(base_type::my_max_concurrency != 0) {
+            task* postponed_task = NULL;
+            if( base_type::my_max_concurrency != 0 ) {
                 postponed_task = base_type::try_get_postponed_task(i);
+                __TBB_ASSERT( !postponed_task || postponed_task != SUCCESSFULLY_ENQUEUED, NULL );
             }
 #if TBB_DEPRECATED_MESSAGE_FLOW_ORDER
             graph& g = base_type::my_graph_ref;
             return combine_tasks(g, successor_task, postponed_task);
 #else
-            // postponed_task is either NULL or the pointer to TBB task
-            if(postponed_task) {
-                // spawn task to make it available for other workers
-                // since we do not know successors' execution policy
+            if( postponed_task ) {
+                // make the task available for other workers since we do not know successors'
+                // execution policy
                 internal::spawn_in_graph_arena(base_type::graph_reference(), *postponed_task);
             }
             task* successor_task = successors().try_put_task(v);
@@ -572,13 +578,11 @@ namespace internal {
 
         // constructor
         template<typename Body>
-        multifunction_input(
-                graph &g,
-                size_t max_concurrency,
-                Body& body) :
-            base_type(g, max_concurrency),
-            my_body( new internal::multifunction_body_leaf<input_type, output_ports_type, Body>(body) ),
-            my_init_body( new internal::multifunction_body_leaf<input_type, output_ports_type, Body>(body) ) {
+        multifunction_input(graph &g, size_t max_concurrency,
+                            __TBB_FLOW_GRAPH_PRIORITY_ARG1(Body& body, node_priority_t priority)
+        ) : base_type(g, __TBB_FLOW_GRAPH_PRIORITY_ARG1(max_concurrency, priority))
+          , my_body( new internal::multifunction_body_leaf<input_type, output_ports_type, Body>(body) )
+          , my_init_body( new internal::multifunction_body_leaf<input_type, output_ports_type, Body>(body) ) {
         }
 
         //! Copy constructor
@@ -687,16 +691,20 @@ namespace internal {
         typedef continue_input<output_type, Policy> class_type;
 
         template< typename Body >
-        continue_input( graph &g, Body& body )
-            : my_graph_ref(g),
-             my_body( new internal::function_body_leaf< input_type, output_type, Body>(body) ),
-             my_init_body( new internal::function_body_leaf< input_type, output_type, Body>(body) ) { }
+        continue_input( graph &g, __TBB_FLOW_GRAPH_PRIORITY_ARG1(Body& body, node_priority_t priority) )
+            : continue_receiver(__TBB_FLOW_GRAPH_PRIORITY_ARG1(/*number_of_predecessors=*/0, priority))
+            , my_graph_ref(g)
+            , my_body( new internal::function_body_leaf< input_type, output_type, Body>(body) )
+            , my_init_body( new internal::function_body_leaf< input_type, output_type, Body>(body) )
+            { }
 
         template< typename Body >
-        continue_input( graph &g, int number_of_predecessors, Body& body )
-            : continue_receiver( number_of_predecessors ), my_graph_ref(g),
-             my_body( new internal::function_body_leaf< input_type, output_type, Body>(body) ),
-             my_init_body( new internal::function_body_leaf< input_type, output_type, Body>(body) )
+        continue_input( graph &g, int number_of_predecessors,
+                        __TBB_FLOW_GRAPH_PRIORITY_ARG1(Body& body, node_priority_t priority)
+        ) : continue_receiver( __TBB_FLOW_GRAPH_PRIORITY_ARG1(number_of_predecessors, priority) )
+          , my_graph_ref(g)
+          , my_body( new internal::function_body_leaf< input_type, output_type, Body>(body) )
+          , my_init_body( new internal::function_body_leaf< input_type, output_type, Body>(body) )
         { }
 
         continue_input( const continue_input& src ) : continue_receiver(src),
@@ -760,7 +768,8 @@ namespace internal {
             }
             else {
                 return new ( task::allocate_additional_child_of( *(my_graph_ref.root_task()) ) )
-                       apply_body_task_bypass< class_type, continue_msg >( *this, continue_msg() );
+                       apply_body_task_bypass< class_type, continue_msg >(
+                           *this, __TBB_FLOW_GRAPH_PRIORITY_ARG1(continue_msg(), my_priority) );
             }
         }
 

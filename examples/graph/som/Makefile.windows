@@ -37,6 +37,8 @@ release:
 	$(CXX) ./som_graph.cpp ./som.cpp /MD /O2 /D NDEBUG $(MYCXXFLAGS) /link tbb.lib $(LIBS) $(MYLDFLAGS) /OUT:$(PROG).exe
 debug: 
 	$(CXX) ./som_graph.cpp ./som.cpp /MDd /Od /Zi /D _DEBUG $(MYCXXFLAGS) /link tbb_debug.lib $(LIBS) $(MYLDFLAGS) /OUT:$(PROG).exe
+profile: 
+	$(CXX) ./som_graph.cpp ./som.cpp /MD /O2 /Zi /D NDEBUG $(MYCXXFLAGS) /D TBB_USE_THREADING_TOOLS /link tbb.lib $(LIBS) $(MYLDFLAGS) /OUT:$(PROG).exe
 clean:
 	@cmd.exe /C del $(PROG).exe *.obj *.?db *.manifest
 test:

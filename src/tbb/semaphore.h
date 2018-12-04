@@ -21,6 +21,7 @@
 #ifndef __TBB_tbb_semaphore_H
 #define __TBB_tbb_semaphore_H
 
+#include <tbb/atomic.h>
 #include "tbb/tbb_stddef.h"
 
 #if _WIN32||_WIN64

@@ -197,14 +197,7 @@
     #endif
     #define __TBB_STATIC_ASSERT_PRESENT                     (__INTEL_CXX11_MODE__ || _MSC_VER >= 1600)
     #define __TBB_CPP11_TUPLE_PRESENT                       (_MSC_VER >= 1600 || __GXX_EXPERIMENTAL_CXX0X__ && (__TBB_GLIBCXX_VERSION >= 40300 || _LIBCPP_VERSION))
-    #if (__clang__ && __INTEL_COMPILER > 1400)
-        /* Older versions of Intel C++ Compiler do not have __has_include */
-        #if (__has_feature(__cxx_generalized_initializers__) && __has_include(<initializer_list>))
-            #define __TBB_INITIALIZER_LISTS_PRESENT         1
-        #endif
-    #else
-        #define __TBB_INITIALIZER_LISTS_PRESENT             (__INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1400 && (_MSC_VER >= 1800 || __TBB_GLIBCXX_VERSION >= 40400 || _LIBCPP_VERSION))
-    #endif
+    #define __TBB_INITIALIZER_LISTS_PRESENT                 (__INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1400 && (_MSC_VER >= 1800 || __TBB_GLIBCXX_VERSION >= 40400 || _LIBCPP_VERSION))
     #define __TBB_CONSTEXPR_PRESENT                         (__INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1400)
     #define __TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT        (__INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1200)
     /** ICC seems to disable support of noexcept event in c++11 when compiling in compatibility mode for gcc <4.6 **/
@@ -219,6 +212,7 @@
     #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            (__INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1210)
     #define __TBB_CPP14_INTEGER_SEQUENCE_PRESENT            (__cplusplus >= 201402L)
     #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            __INTEL_COMPILER > 1900
+    #define __TBB_CPP17_INVOKE_RESULT_PRESENT               (__cplusplus >= 201703L)
 #elif __clang__
 /** TODO: these options need to be rechecked **/
     #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          __has_feature(__cxx_variadic_templates__)
@@ -249,6 +243,7 @@
     #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            __has_feature(cxx_alias_templates)
     #define __TBB_CPP14_INTEGER_SEQUENCE_PRESENT            (__cplusplus >= 201402L)
     #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            (__has_feature(__cpp_deduction_guides))
+    #define __TBB_CPP17_INVOKE_RESULT_PRESENT               (__has_feature(__cpp_lib_is_invocable))
 #elif __GNUC__
     #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          __GXX_EXPERIMENTAL_CXX0X__
     #define __TBB_CPP11_VARIADIC_FIXED_LENGTH_EXP_PRESENT   (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40700)
@@ -275,6 +270,7 @@
     #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40700)
     #define __TBB_CPP14_INTEGER_SEQUENCE_PRESENT            (__cplusplus >= 201402L     && __TBB_GCC_VERSION >= 50000)
     #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            (__cpp_deduction_guides >= 201606)
+    #define __TBB_CPP17_INVOKE_RESULT_PRESENT               (__cplusplus >= 201703L     && __TBB_GCC_VERSION >= 70000)
 #elif _MSC_VER
     // These definitions are also used with Intel C++ Compiler in "default" mode (__INTEL_CXX11_MODE__ == 0);
     // see a comment in "__INTEL_COMPILER" section above.
@@ -300,6 +296,7 @@
     #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            (_MSC_VER >= 1800)
     #define __TBB_CPP14_INTEGER_SEQUENCE_PRESENT            (_MSC_VER >= 1900)
     #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            (_MSVC_LANG >= 201703L)
+    #define __TBB_CPP17_INVOKE_RESULT_PRESENT               (__TBB_MSVC_CPP_VER >= 201703L && _MSC_VER >= 1914)
 #else
     #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          0
     #define __TBB_CPP11_RVALUE_REF_PRESENT                  0
@@ -321,6 +318,7 @@
     #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            0
     #define __TBB_CPP14_INTEGER_SEQUENCE_PRESENT            (__cplusplus >= 201402L)
     #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            0
+    #define __TBB_CPP17_INVOKE_RESULT_PRESENT               0
 #endif
 
 // C++11 standard library features
@@ -807,5 +805,14 @@ There are four cases that are supported:
 #define __TBB_PREVIEW_GFX_FACTORY               (__TBB_GFX_PRESENT && TBB_PREVIEW_FLOW_GRAPH_FEATURES && !__TBB_MIC_OFFLOAD \
                                                 && __TBB_FLOW_GRAPH_CPP11_FEATURES && __TBB_CPP11_TEMPLATE_ALIASES_PRESENT \
                                                 && __TBB_CPP11_FUTURE_PRESENT)
+
+
+#ifndef __TBB_PREVIEW_FLOW_GRAPH_PRIORITIES
+#define __TBB_PREVIEW_FLOW_GRAPH_PRIORITIES     TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#endif
+
+#ifndef __TBB_PREVIEW_CRITICAL_TASKS
+#define __TBB_PREVIEW_CRITICAL_TASKS            (__TBB_CPF_BUILD || __TBB_PREVIEW_FLOW_GRAPH_PRIORITIES)
+#endif
 
 #endif /* __TBB_tbb_config_H */

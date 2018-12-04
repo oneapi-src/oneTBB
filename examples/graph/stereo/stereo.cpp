@@ -43,7 +43,7 @@ static const int redChannelOffset = 0;
 static const int greenChannelOffset = 1;
 static const int blueChannelOffset = 2;
 static const int channelsPerPixel = 4;
-static const int channelIncreaseValue = 10;
+static const unsigned int channelIncreaseValue = 10;
 
 void applyLeftImageEffect(utils::image_buffer& image) {
     const int heighBase = channelsPerPixel * image.width;
@@ -54,7 +54,8 @@ void applyLeftImageEffect(utils::image_buffer& image) {
         const int heightOffset = heighBase * y;
         for (unsigned int x = 0; x < image.width; x++) {
             int pixelOffset = heightOffset + channelsPerPixel * x + redChannelOffset;
-            buffer[pixelOffset] += channelIncreaseValue;
+            unsigned int pixelValue = buffer[pixelOffset] + channelIncreaseValue;
+            buffer[pixelOffset] = utils::convert_uchar_sat(pixelValue);
         }
     }
 }
@@ -68,7 +69,8 @@ void applyRightImageEffect(utils::image_buffer& image) {
         const int heightOffset = heighBase * y;
         for (unsigned int x = 0; x < image.width; x++) {
             const int pixelOffset = heightOffset + channelsPerPixel * x + blueChannelOffset;
-            buffer[pixelOffset] += channelIncreaseValue;
+            unsigned int pixelValue = buffer[pixelOffset] + channelIncreaseValue;
+            buffer[pixelOffset] = utils::convert_uchar_sat(pixelValue);
         }
     }
 }

@@ -50,6 +50,9 @@ endif
 debug:  $(SRCFILES)
 	$(CXX) -g -O0 -DTBB_USE_DEBUG -D_DEBUG $(CXXFLAGS) -o $(EXE) $(SRCFILES) -ltbb_debug -ltbbmalloc_debug $(LIBS)
 
+profile: override CXXFLAGS += -DTBB_USE_THREADING_TOOLS -g
+profile: release
+
 clean:
 	$(RM) $(EXE) *.o *.d
 

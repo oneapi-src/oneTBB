@@ -162,6 +162,12 @@ namespace internal {
         void __TBB_EXPORTED_METHOD free( task& ) const;
     };
 
+#if __TBB_PREVIEW_CRITICAL_TASKS
+    // TODO: move to class methods when critical task API becomes public
+    void make_critical( task& t );
+    bool is_critical( task& t );
+#endif
+
     //! Memory prefix to a task object.
     /** This class is internal to the library.
         Do not reference it directly, except within the library itself.
@@ -187,6 +193,10 @@ namespace internal {
         friend class internal::allocate_child_proxy;
         friend class internal::allocate_continuation_proxy;
         friend class internal::allocate_additional_child_of_proxy;
+#if __TBB_PREVIEW_CRITICAL_TASKS
+        friend void make_critical( task& );
+        friend bool is_critical( task& );
+#endif
 
 #if __TBB_TASK_ISOLATION
         //! The tag used for task isolation.
@@ -274,6 +284,10 @@ namespace internal {
 #if __TBB_TASK_PRIORITY
 namespace internal {
     static const int priority_stride_v4 = INT_MAX / 4;
+#if __TBB_PREVIEW_CRITICAL_TASKS
+    // TODO: move into priority_t enum when critical tasks become public feature
+    static const int priority_critical = priority_stride_v4 * 3 + priority_stride_v4 / 3 * 2;
+#endif
 }
 
 enum priority_t {
@@ -797,7 +811,12 @@ public:
 #if __TBB_TASK_PRIORITY
     //! Enqueue task for starvation-resistant execution on the specified priority level.
     static void enqueue( task& t, priority_t p ) {
-        __TBB_ASSERT( p == priority_low || p == priority_normal || p == priority_high, "Invalid priority level value" );
+#if __TBB_PREVIEW_CRITICAL_TASKS
+        __TBB_ASSERT(p == priority_low || p == priority_normal || p == priority_high
+                     || p == internal::priority_critical, "Invalid priority level value");
+#else
+        __TBB_ASSERT(p == priority_low || p == priority_normal || p == priority_high, "Invalid priority level value");
+#endif
         t.prefix().owner->enqueue( t, (void*)p );
     }
 #endif /* __TBB_TASK_PRIORITY */
@@ -920,7 +939,18 @@ private:
     internal::task_prefix& prefix( internal::version_tag* = NULL ) const {
         return reinterpret_cast<internal::task_prefix*>(const_cast<task*>(this))[-1];
     }
+#if __TBB_PREVIEW_CRITICAL_TASKS
+    friend void internal::make_critical( task& );
+    friend bool internal::is_critical( task& );
+#endif
 }; // class task
+
+#if __TBB_PREVIEW_CRITICAL_TASKS
+namespace internal {
+inline void make_critical( task& t ) { t.prefix().extra_state |= 0x8; }
+inline bool is_critical( task& t ) { return bool((t.prefix().extra_state & 0x8) != 0); }
+} // namespace internal
+#endif /* __TBB_PREVIEW_CRITICAL_TASKS */
 
 //! task that does nothing.  Useful for synchronization.
 /** @ingroup task_scheduling */

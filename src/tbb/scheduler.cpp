@@ -98,6 +98,9 @@ generic_scheduler::generic_scheduler( market& m )
     __TBB_ASSERT( governor::is_set(NULL), "scheduler is already initialized for this thread" );
 
     my_innermost_running_task = my_dummy_task = &allocate_task( sizeof(task), __TBB_CONTEXT_ARG(NULL, &the_dummy_context) );
+#if __TBB_PREVIEW_CRITICAL_TASKS
+    my_properties.has_taken_critical_task = false;
+#endif
     my_properties.outermost = true;
 #if __TBB_TASK_PRIORITY
     my_ref_top_priority = &m.my_global_top_priority;
@@ -260,6 +263,9 @@ void generic_scheduler::cleanup_local_context_list () {
 
 void generic_scheduler::free_scheduler() {
     __TBB_ASSERT( !my_arena_slot, NULL );
+#if __TBB_PREVIEW_CRITICAL_TASKS
+    __TBB_ASSERT( !my_properties.has_taken_critical_task, "Critical tasks miscount." );
+#endif
 #if __TBB_TASK_GROUP_CONTEXT
     cleanup_local_context_list();
 #endif /* __TBB_TASK_GROUP_CONTEXT */
@@ -591,6 +597,22 @@ inline task* generic_scheduler::prepare_for_spawning( task* t ) {
     return t;
 }
 
+#if __TBB_PREVIEW_CRITICAL_TASKS
+bool generic_scheduler::handled_as_critical( task& t ) {
+    if( !internal::is_critical( t ) )
+        return false;
+#if __TBB_TASK_ISOLATION
+    t.prefix().isolation = my_innermost_running_task->prefix().isolation;
+#endif
+    ITT_NOTIFY(sync_releasing, &my_arena->my_critical_task_stream);
+    __TBB_ASSERT( my_arena, "Must be attached to the arena." );
+    __TBB_ASSERT( my_arena_slot, "Must occupy a slot in the attached arena" );
+    my_arena->my_critical_task_stream.push(
+        &t, 0, tbb::internal::subsequent_lane_selector(my_arena_slot->hint_for_critical) );
+    return true;
+}
+#endif /* __TBB_PREVIEW_CRITICAL_TASKS */
+
 /** Conceptually, this method should be a member of class scheduler.
     But doing so would force us to publish class scheduler in the headers. */
 void generic_scheduler::local_spawn( task* first, task*& next ) {
@@ -609,9 +631,16 @@ void generic_scheduler::local_spawn( task* first, task*& next ) {
         // change the implementation of the task_list class). But since such changes
         // may affect the binary compatibility, we postpone them for a while.
 #endif
-        size_t T = prepare_task_pool( 1 );
-        my_arena_slot->task_pool_ptr[T] = prepare_for_spawning( first );
-        commit_spawned_tasks( T + 1 );
+#if __TBB_PREVIEW_CRITICAL_TASKS
+        if( !handled_as_critical( *first ) )
+#endif
+        {
+            size_t T = prepare_task_pool( 1 );
+            my_arena_slot->task_pool_ptr[T] = prepare_for_spawning( first );
+            commit_spawned_tasks( T + 1 );
+            if ( !is_task_pool_published() )
+                publish_task_pool();
+        }
     }
     else {
         // Task list is being spawned
@@ -634,17 +663,21 @@ void generic_scheduler::local_spawn( task* first, task*& next ) {
             // So milk it while it is alive.
             bool end = &t->prefix().next == &next;
             t_next = t->prefix().next;
-            tasks.push_back( prepare_for_spawning(t) );
+#if __TBB_PREVIEW_CRITICAL_TASKS
+            if( !handled_as_critical( *t ) )
+#endif
+                tasks.push_back( prepare_for_spawning(t) );
             if( end )
                 break;
         }
-        size_t num_tasks = tasks.size();
-        size_t T = prepare_task_pool( num_tasks );
-        tasks.copy_memory( my_arena_slot->task_pool_ptr + T );
-        commit_spawned_tasks( T + num_tasks );
+        if( size_t num_tasks = tasks.size() ) {
+            size_t T = prepare_task_pool( num_tasks );
+            tasks.copy_memory( my_arena_slot->task_pool_ptr + T );
+            commit_spawned_tasks( T + num_tasks );
+            if ( !is_task_pool_published() )
+                publish_task_pool();
+        }
     }
-    if ( !is_task_pool_published() )
-        publish_task_pool();
     my_arena->advertise_new_work<arena::work_spawned>();
     assert_task_pool_valid();
 }
@@ -1039,7 +1072,42 @@ inline task* generic_scheduler::get_task( __TBB_ISOLATION_EXPR( isolation_tag is
     return result;
 } // generic_scheduler::get_task
 
-task* generic_scheduler::steal_task( __TBB_ISOLATION_ARG( arena_slot& victim_slot, isolation_tag isolation ) ) {
+task* generic_scheduler::steal_task( __TBB_ISOLATION_EXPR(isolation_tag isolation) ) {
+    // Try to steal a task from a random victim.
+    size_t k = my_random.get() % (my_arena->my_limit-1);
+    arena_slot* victim = &my_arena->my_slots[k];
+    // The following condition excludes the master that might have
+    // already taken our previous place in the arena from the list .
+    // of potential victims. But since such a situation can take
+    // place only in case of significant oversubscription, keeping
+    // the checks simple seems to be preferable to complicating the code.
+    if( k >= my_arena_index )
+        ++victim;               // Adjusts random distribution to exclude self
+    task **pool = victim->task_pool;
+    task *t = NULL;
+    if( pool == EmptyTaskPool || !(t = steal_task_from( __TBB_ISOLATION_ARG(*victim, isolation) )) )
+        return NULL;
+    if( is_proxy(*t) ) {
+        task_proxy &tp = *(task_proxy*)t;
+        t = tp.extract_task<task_proxy::pool_bit>();
+        if ( !t ) {
+            // Proxy was empty, so it's our responsibility to free it
+            free_task<no_cache_small_task>(tp);
+            return NULL;
+        }
+        GATHER_STATISTIC( ++my_counters.proxies_stolen );
+    }
+    t->prefix().extra_state |= es_task_is_stolen;
+    if( is_version_3_task(*t) ) {
+        my_innermost_running_task = t;
+        t->prefix().owner = this;
+        t->note_affinity( my_affinity_id );
+    }
+    GATHER_STATISTIC( ++my_counters.steals_committed );
+    return t;
+}
+
+task* generic_scheduler::steal_task_from( __TBB_ISOLATION_ARG( arena_slot& victim_slot, isolation_tag isolation ) ) {
     task** victim_pool = lock_task_pool( &victim_slot );
     if ( !victim_pool )
         return NULL;
@@ -1103,6 +1171,31 @@ unlock:
         my_arena->advertise_new_work<arena::wakeup>();
     return result;
 }
+
+#if __TBB_PREVIEW_CRITICAL_TASKS
+// Retrieves critical task respecting isolation level, if provided. The rule is:
+// 1) If no outer critical task and no isolation => take any critical task
+// 2) If working on an outer critical task and no isolation => cannot take any critical task
+// 3) If no outer critical task but isolated => respect isolation
+// 4) If working on an outer critical task and isolated => respect isolation
+task* generic_scheduler::get_critical_task( __TBB_ISOLATION_EXPR(isolation_tag isolation) ) {
+    __TBB_ASSERT( my_arena && my_arena_slot, "Must be attached to arena" );
+    if( my_arena->my_critical_task_stream.empty(0) )
+        return NULL;
+    task* critical_task = NULL;
+    // To keep some LIFO-ness, start search with the lane that was used during push operation.
+    unsigned& start_lane = my_arena_slot->hint_for_critical;
+#if __TBB_TASK_ISOLATION
+    if( isolation != no_isolation ) {
+        critical_task = my_arena->my_critical_task_stream.pop_specific( 0, start_lane, isolation );
+    } else
+#endif
+    if( !my_properties.has_taken_critical_task ) {
+        critical_task = my_arena->my_critical_task_stream.pop( 0, preceding_lane_selector(start_lane) );
+    }
+    return critical_task;
+}
+#endif
 
 task* generic_scheduler::get_mailbox_task( __TBB_ISOLATION_EXPR( isolation_tag isolation ) ) {
     __TBB_ASSERT( my_affinity_id>0, "not in arena" );

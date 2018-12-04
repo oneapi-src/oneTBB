@@ -168,6 +168,10 @@ enum task_extra_state {
     es_version_1_task = 0,
     //! Tag for v3 tasks (i.e. tasks in TBB 2.1-2.2)
     es_version_3_task = 1,
+#if __TBB_PREVIEW_CRITICAL_TASKS
+    //! Tag for critical tasks
+    es_task_critical = 0x8,
+#endif
     //! Tag for enqueued tasks
     es_task_enqueued = 0x10,
     //! Tag for v3 task_proxy.
@@ -346,6 +350,11 @@ struct arena_slot_line2 {
     //! Hint provided for operations with the container of starvation-resistant tasks.
     /** Modified by the owner thread (during these operations). **/
     unsigned hint_for_pop;
+
+#if __TBB_PREVIEW_CRITICAL_TASKS
+    //! Similar to 'hint_for_pop' but for critical tasks.
+    unsigned hint_for_critical;
+#endif
 
     //! Index of the element following the last ready task in the deque.
     /** Modified by the owner thread. **/

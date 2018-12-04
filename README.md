@@ -1,5 +1,5 @@
-# Threading Building Blocks 2019 Update 2
-[![Stable release](https://img.shields.io/badge/version-2019_U2-green.svg)](https://github.com/01org/tbb/releases/tag/2019_U2)
+# Threading Building Blocks 2019 Update 3
+[![Stable release](https://img.shields.io/badge/version-2019_U3-green.svg)](https://github.com/01org/tbb/releases/tag/2019_U3)
 [![Apache License Version 2.0](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE)
 
 Threading Building Blocks (TBB) lets you easily write parallel C++ programs that take
@@ -21,7 +21,9 @@ Please report issues and suggestions via
 [TBB forum](http://software.intel.com/en-us/forums/intel-threading-building-blocks/).
 
 ## How to Contribute
-Please, read the instructions on the official [TBB open source site](https://www.threadingbuildingblocks.org/submit-contribution).
+To contribute to TBB, please open a GitHub pull request (preferred) or send us a patch by e-mail.
+Threading Building Blocks is licensed under [Apache License, Version 2.0](LICENSE).
+By its terms, contributions submitted to the project are also done under that license.
 
 ## Engineering team contacts
 * [E-mail us.](mailto:inteltbbdevelopers@intel.com)

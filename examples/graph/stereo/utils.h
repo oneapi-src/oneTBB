@@ -25,6 +25,10 @@
 
 namespace utils {
 
+    inline unsigned char convert_uchar_sat(unsigned int v) {
+        return static_cast<unsigned char>(v < UCHAR_MAX ? v : UCHAR_MAX);
+    }
+
     struct image_buffer {
         unsigned int width, height;
         std::shared_ptr< std::vector<unsigned char> > buffer; // smart pointer to the vector of raw pixels in RGBA format, 4 bytes per pixel

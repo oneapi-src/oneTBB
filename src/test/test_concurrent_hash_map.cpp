@@ -629,10 +629,9 @@ public:
 
 class RemoveFromTable: NoAssign {
     MyTable& my_table;
-    const int my_nthread;
     const int my_m;
 public:
-    RemoveFromTable( MyTable& table, int nthread, int m ) : my_table(table), my_nthread(nthread), my_m(m) {}
+    RemoveFromTable( MyTable& table, int m ) : my_table(table), my_m(m) {}
     void operator()(int) const {
         for( int i=0; i<my_m; ++i ) {
             bool b;
@@ -667,7 +666,7 @@ void TestConcurrency( int nthread ) {
 
         EraseCount = 0;
         t0 = tbb::tick_count::now();
-        NativeParallelFor( nthread, RemoveFromTable(table,nthread,m) );
+        NativeParallelFor( nthread, RemoveFromTable(table,m) );
         t1 = tbb::tick_count::now();
         REMARK("time for %u deletions = %g with %d threads\n",unsigned(EraseCount),(t1-t0).seconds(),nthread);
         ASSERT( MyDataCount==0, "memory leak detected" );

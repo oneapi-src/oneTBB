@@ -25,6 +25,7 @@
 #include <string.h>   /* for memset */
 
 #include "../tbb/tbb_version.h"
+#include "../tbb/tbb_environment.h"
 #include "../tbb/itt_notify.h" // for __TBB_load_ittnotify()
 
 #if USE_PTHREAD
@@ -1877,17 +1878,6 @@ static MallocMutex initMutex;
     delivers a clean result. */
 static char VersionString[] = "\0" TBBMALLOC_VERSION_STRINGS;
 
-#if __TBB_WIN8UI_SUPPORT
-bool GetBoolEnvironmentVariable(const char *) { return false; }
-#else
-bool GetBoolEnvironmentVariable(const char *name)
-{
-    if (const char* s = getenv(name))
-        return strcmp(s,"0") != 0;
-    return false;
-}
-#endif
-
 void AllocControlledMode::initReadEnv(const char *envName, intptr_t defaultVal)
 {
     if (!setDone) {
@@ -2004,6 +1994,10 @@ static bool initMemoryManager()
     initStatisticsCollection();
 #endif
     return true;
+}
+
+static bool GetBoolEnvironmentVariable(const char* name) {
+    return tbb::internal::GetBoolEnvironmentVariable(name);
 }
 
 //! Ensures that initMemoryManager() is called once and only once.

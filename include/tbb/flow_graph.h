@@ -580,15 +580,18 @@ public:
     typedef receiver<input_type>::predecessor_type predecessor_type;
 
     //! Constructor
-    explicit continue_receiver( int number_of_predecessors = 0 ) {
+    explicit continue_receiver(
+        __TBB_FLOW_GRAPH_PRIORITY_ARG1(int number_of_predecessors, node_priority_t priority)) {
         my_predecessor_count = my_initial_predecessor_count = number_of_predecessors;
         my_current_count = 0;
+        __TBB_FLOW_GRAPH_PRIORITY_EXPR( my_priority = priority; )
     }
 
     //! Copy constructor
     continue_receiver( const continue_receiver& src ) : receiver<continue_msg>() {
         my_predecessor_count = my_initial_predecessor_count = src.my_initial_predecessor_count;
         my_current_count = 0;
+        __TBB_FLOW_GRAPH_PRIORITY_EXPR( my_priority = src.my_priority; )
     }
 
     //! Increments the trigger threshold
@@ -661,6 +664,7 @@ protected:
     int my_predecessor_count;
     int my_current_count;
     int my_initial_predecessor_count;
+    __TBB_FLOW_GRAPH_PRIORITY_EXPR( node_priority_t my_priority; )
     // the friend declaration in the base class did not eliminate the "protected class"
     // error in gcc 4.1.2
     template<typename U> friend class limiter_node;
@@ -823,7 +827,7 @@ inline void graph::reset( reset_flags f ) {
     internal::activate_graph(*this);
     // now spawn the tasks necessary to start the graph
     for(task_list_type::iterator rti = my_reset_task_list.begin(); rti != my_reset_task_list.end(); ++rti) {
-        my_task_arena->execute(graph::spawn_functor(*(*rti)));
+        internal::spawn_in_graph_arena(*this, *(*rti));
     }
     my_reset_task_list.clear();
 }
@@ -1135,8 +1139,10 @@ public:
     // TODO: pass the graph_buffer_policy to the function_input_base so it can all
     // be done in one place.  This would be an interface-breaking change.
     template< typename Body >
-    function_node( graph &g, size_t concurrency, Body body ) :
-        graph_node(g), input_impl_type(g, concurrency, body) {
+    function_node(
+        graph &g, size_t concurrency,
+        __TBB_FLOW_GRAPH_PRIORITY_ARG1( Body body, node_priority_t priority = tbb::flow::internal::no_priority )
+    ) : graph_node(g), input_impl_type(g, concurrency, __TBB_FLOW_GRAPH_PRIORITY_ARG1(body, priority)) {
         tbb::internal::fgt_node_with_body( tbb::internal::FLOW_FUNCTION_NODE, &this->my_graph,
                 static_cast<receiver<input_type> *>(this), static_cast<sender<output_type> *>(this), this->my_body );
     }
@@ -1213,11 +1219,15 @@ private:
     using input_impl_type::my_predecessors;
 public:
     template<typename Body>
-    multifunction_node( graph &g, size_t concurrency, Body body ) :
-        graph_node(g), base_type(g,concurrency, body) {
-        tbb::internal::fgt_multioutput_node_with_body<N>( tbb::internal::FLOW_MULTIFUNCTION_NODE,
-                &this->my_graph, static_cast<receiver<input_type> *>(this),
-                this->output_ports(), this->my_body );
+    multifunction_node(
+        graph &g, size_t concurrency,
+        __TBB_FLOW_GRAPH_PRIORITY_ARG1( Body body, node_priority_t priority = tbb::flow::internal::no_priority )
+    ) : graph_node(g), base_type(g, concurrency, __TBB_FLOW_GRAPH_PRIORITY_ARG1(body, priority)) {
+        tbb::internal::fgt_multioutput_node_with_body<N>(
+            tbb::internal::FLOW_MULTIFUNCTION_NODE,
+            &this->my_graph, static_cast<receiver<input_type> *>(this),
+            this->output_ports(), this->my_body
+        );
     }
 
     multifunction_node( const multifunction_node &other) :
@@ -1339,18 +1349,22 @@ public:
 
     //! Constructor for executable node with continue_msg -> Output
     template <typename Body >
-    continue_node( graph &g, Body body ) :
-        graph_node(g), input_impl_type( g, body ) {
+    continue_node(
+        graph &g,
+        __TBB_FLOW_GRAPH_PRIORITY_ARG1( Body body, node_priority_t priority = tbb::flow::internal::no_priority )
+    ) : graph_node(g), input_impl_type( g, __TBB_FLOW_GRAPH_PRIORITY_ARG1(body, priority) ) {
         tbb::internal::fgt_node_with_body( tbb::internal::FLOW_CONTINUE_NODE, &this->my_graph,
                                            static_cast<receiver<input_type> *>(this),
                                            static_cast<sender<output_type> *>(this), this->my_body );
     }
 
-
     //! Constructor for executable node with continue_msg -> Output
     template <typename Body >
-    continue_node( graph &g, int number_of_predecessors, Body body ) :
-        graph_node(g), input_impl_type( g, number_of_predecessors, body ) {
+    continue_node(
+        graph &g, int number_of_predecessors,
+        __TBB_FLOW_GRAPH_PRIORITY_ARG1( Body body, node_priority_t priority = tbb::flow::internal::no_priority )
+    ) : graph_node(g)
+      , input_impl_type(g, number_of_predecessors, __TBB_FLOW_GRAPH_PRIORITY_ARG1(body, priority)) {
         tbb::internal::fgt_node_with_body( tbb::internal::FLOW_CONTINUE_NODE, &this->my_graph,
                                            static_cast<receiver<input_type> *>(this),
                                            static_cast<sender<output_type> *>(this), this->my_body );
@@ -3494,6 +3508,7 @@ private:
     struct try_put_functor {
         typedef internal::multifunction_output<Output> output_port_type;
         output_port_type *port;
+        // TODO: pass value by copy since we do not want to block asynchronous thread.
         const Output *value;
         bool result;
         try_put_functor(output_port_type &p, const Output &v) : port(&p), value(&v), result(false) { }
@@ -3539,11 +3554,18 @@ private:
 
 public:
     template<typename Body>
-    async_node( graph &g, size_t concurrency, Body body ) :
-        base_type( g, concurrency, internal::async_body<Input, typename base_type::output_ports_type, gateway_type, Body>(body, &my_gateway) ), my_gateway(self()) {
-        tbb::internal::fgt_multioutput_node_with_body<1>( tbb::internal::FLOW_ASYNC_NODE,
-                &this->my_graph, static_cast<receiver<input_type> *>(this),
-                this->output_ports(), this->my_body );
+    async_node(
+        graph &g, size_t concurrency,
+        __TBB_FLOW_GRAPH_PRIORITY_ARG1( Body body, node_priority_t priority = tbb::flow::internal::no_priority )
+    ) : base_type(
+        g, concurrency,
+        internal::async_body<Input, typename base_type::output_ports_type, gateway_type, Body>
+        (body, &my_gateway) __TBB_FLOW_GRAPH_PRIORITY_ARG0(priority) ), my_gateway(self()) {
+        tbb::internal::fgt_multioutput_node_with_body<1>(
+            tbb::internal::FLOW_ASYNC_NODE,
+            &this->my_graph, static_cast<receiver<input_type> *>(this),
+            this->output_ports(), this->my_body
+        );
     }
 
     async_node( const async_node &other ) : base_type(other), sender<Output>(), my_gateway(self()) {
@@ -3802,7 +3824,8 @@ protected:
     }
 
     //! Breaks an infinite loop between the node reservation and register_successor call
-    struct register_predecessor_task : public task {
+    struct register_predecessor_task : public graph_task {
+
         register_predecessor_task(predecessor_type& owner, successor_type& succ) :
             o(owner), s(succ) {};
 
@@ -3919,6 +3942,11 @@ protected:
     using interface10::port_ref;
     using interface10::streaming_node;
 #endif // __TBB_PREVIEW_STREAMING_NODE
+#if __TBB_PREVIEW_FLOW_GRAPH_PRIORITIES
+    using internal::node_priority_t;
+    using internal::no_priority;
+#endif
+
 
 } // flow
 } // tbb

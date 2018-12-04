@@ -88,6 +88,9 @@ namespace tbb {
             *SyncObj_Mailbox = _T("TBB Scheduler"),
             *SyncObj_TaskReturnList = _T("TBB Scheduler"),
             *SyncObj_TaskStream = _T("TBB Scheduler"),
+#if __TBB_PREVIEW_CRITICAL_TASKS
+            *SyncObj_CriticalTaskStream = _T("TBB Scheduler"),
+#endif
             *SyncObj_ContextsList = _T("TBB Scheduler")
             ;
 #endif /* DO_ITT_NOTIFY */

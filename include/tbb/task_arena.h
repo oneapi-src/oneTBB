@@ -313,12 +313,22 @@ public:
     template<typename F>
 #if __TBB_CPP11_RVALUE_REF_PRESENT
     void enqueue( F&& f, priority_t p ) {
+#if __TBB_PREVIEW_CRITICAL_TASKS
+        __TBB_ASSERT(p == priority_low || p == priority_normal || p == priority_high
+                     || p == internal::priority_critical, "Invalid priority level value");
+#else
         __TBB_ASSERT(p == priority_low || p == priority_normal || p == priority_high, "Invalid priority level value");
+#endif
         enqueue_impl(std::forward<F>(f), p);
     }
 #else
     void enqueue( const F& f, priority_t p ) {
+#if __TBB_PREVIEW_CRITICAL_TASKS
+        __TBB_ASSERT(p == priority_low || p == priority_normal || p == priority_high
+                     || p == internal::priority_critical, "Invalid priority level value");
+#else
         __TBB_ASSERT(p == priority_low || p == priority_normal || p == priority_high, "Invalid priority level value");
+#endif
         enqueue_impl(f,p);
     }
 #endif

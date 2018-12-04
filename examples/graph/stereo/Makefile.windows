@@ -44,6 +44,8 @@ release:
 	$(CXX) *.cpp /MD /O2 /D NDEBUG $(MYCXXFLAGS) /link $(TBBLIB) $(OPENCL_LIB) $(MYLDFLAGS) /OUT:$(PROG).exe
 debug:
 	$(CXX) *.cpp /MDd /Od /Zi /D TBB_USE_DEBUG /D _DEBUG $(MYCXXFLAGS) /link $(TBBLIB_DEBUG) $(OPENCL_LIB) $(MYLDFLAGS) /OUT:$(PROG).exe
+profile: 
+	$(CXX) *.cpp /MD /O2 /Zi /D NDEBUG $(MYCXXFLAGS) /D TBB_USE_THREADING_TOOLS /link $(TBBLIB) $(OPENCL_LIB) $(MYLDFLAGS) /OUT:$(PROG).exe
 clean:
 	@cmd.exe /C del $(PROG).exe *.obj *.?db *.manifest
 test:

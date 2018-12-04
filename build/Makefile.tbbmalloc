@@ -143,6 +143,7 @@ MALLOC_TESTS = test_ScalableAllocator.$(TEST_EXT) \
 ifneq (,$(MALLOCPROXY.DLL))
 MALLOC_TESTS += test_malloc_overload.$(TEST_EXT) \
                 test_malloc_overload_proxy.$(TEST_EXT) \
+                test_malloc_overload_disable.$(TEST_EXT) \
                 test_malloc_atexit.$(TEST_EXT) \
                 test_malloc_new_handler.$(TEST_EXT)
 endif
@@ -236,6 +237,7 @@ ifneq (,$(MALLOCPROXY.DLL))
 	$(run_cmd) ./test_malloc_atexit.$(TEST_EXT) $(args)
 	$(run_cmd) $(TEST_LAUNCHER) -l $(MALLOCPROXY.DLL) ./test_malloc_overload.$(TEST_EXT) $(args)
 	$(run_cmd) $(TEST_LAUNCHER) ./test_malloc_overload_proxy.$(TEST_EXT) $(args)
+	$(run_cmd) ./test_malloc_overload_disable.$(TEST_EXT) $(args)
 	$(run_cmd) $(TEST_LAUNCHER) ./test_malloc_new_handler.$(TEST_EXT) $(args)
 endif
 	$(run_cmd) $(TEST_LAUNCHER) ./test_malloc_lib_unload.$(TEST_EXT) $(args)
