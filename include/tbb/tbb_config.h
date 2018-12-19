@@ -295,7 +295,7 @@
     #define __TBB_ALIGNAS_PRESENT                           (_MSC_VER >= 1900)
     #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            (_MSC_VER >= 1800)
     #define __TBB_CPP14_INTEGER_SEQUENCE_PRESENT            (_MSC_VER >= 1900)
-    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            (_MSVC_LANG >= 201703L)
+    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            (_MSVC_LANG >= 201703L && _MSC_VER >= 1914)
     #define __TBB_CPP17_INVOKE_RESULT_PRESENT               (__TBB_MSVC_CPP_VER >= 201703L && _MSC_VER >= 1914)
 #else
     #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          0
