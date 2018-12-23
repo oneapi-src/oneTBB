@@ -18,40 +18,13 @@
 
 ####### Detections and Commands ###############################################
 
-ifeq (icc,$(compiler))
-  export COMPILER_VERSION := ICC: $(shell icc -V </dev/null 2>&1 | grep 'Version')
-  ifneq (,$(findstring running on IA-32, $(COMPILER_VERSION)))
-    export arch:=ia32
-  else
-    ifneq (,$(findstring running on Intel(R) 64, $(COMPILER_VERSION)))
-      export arch:=intel64
-    else
-      ifneq (,$(findstring IA-64, $(COMPILER_VERSION)))
-        export arch:=ia64
-      endif
-    endif
-  endif
-  ifeq (,$(arch))
-    $(warning "Unknown Intel compiler")
-  endif
-endif
-
 ifndef arch
         uname_m:=$(shell uname -m)
         ifeq ($(uname_m),i686)
                 export arch:=ia32
         endif
-        ifeq ($(uname_m),ia64)
-                export arch:=ia64
-        endif
         ifeq ($(uname_m),x86_64)
                 export arch:=intel64
-        endif
-        ifeq ($(uname_m),sparc64)
-                export arch:=sparc
-        endif
-        ifeq ($(uname_m),armv7l)
-                export arch:=armv7
         endif
         ifndef arch
                 export arch:=$(uname_m)
@@ -96,15 +69,6 @@ MALLOC_DLL?=$(DLL)
 LIBEXT = so
 SONAME_SUFFIX =$(shell grep TBB_COMPATIBLE_INTERFACE_VERSION $(tbb_root)/include/tbb/tbb_stddef.h | egrep -o [0-9.]+)
 
-ifeq ($(arch),ia64)
-        def_prefix = lin64ipf
-endif
-ifneq (,$(findstring $(arch),sparc s390x))
-        def_prefix = lin64
-endif
-ifeq ($(arch),armv7)
-        def_prefix = lin32
-endif
 ifeq (,$(def_prefix))
     ifeq (64,$(findstring 64,$(arch)))
             def_prefix = lin64

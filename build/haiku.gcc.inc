@@ -77,11 +77,6 @@ endif
 TBB_ASM.OBJ=
 MALLOC_ASM.OBJ=
 
-ifeq (ia64,$(arch))
-# Position-independent code (PIC) is a must on IA-64 architecture, even for regular (not shared) executables
-    CPLUS_FLAGS += $(PIC_KEY)
-endif
-
 ifeq (intel64,$(arch))
     ITT_NOTIFY = -DDO_ITT_NOTIFY
     CPLUS_FLAGS += -m64 $(RTM_KEY)
@@ -92,32 +87,6 @@ ifeq (ia32,$(arch))
     ITT_NOTIFY = -DDO_ITT_NOTIFY
     CPLUS_FLAGS += -m32 -march=pentium4 $(RTM_KEY)
     LIB_LINK_FLAGS += -m32
-endif
-
-ifeq (ppc64,$(arch))
-    CPLUS_FLAGS += -m64
-    LIB_LINK_FLAGS += -m64
-endif
-
-ifeq (ppc32,$(arch))
-    CPLUS_FLAGS += -m32
-    LIB_LINK_FLAGS += -m32
-endif
-
-ifeq (bg,$(arch))
-    CPLUS = $(firstword $(notdir $(shell which powerpc{64,32,}-bg{z..a}-linux-g++ 2>/dev/null)))
-    CONLY = $(firstword $(notdir $(shell which powerpc{64,32,}-bg{z..a}-linux-gcc 2>/dev/null)))
-endif
-
-# for some gcc versions on Solaris, -m64 may imply V9, but perhaps not everywhere (TODO: verify)
-ifeq (sparc,$(arch))
-    CPLUS_FLAGS    += -mcpu=v9 -m64
-    LIB_LINK_FLAGS += -mcpu=v9 -m64
-endif
-
-# automatically generate "IT" instructions when compiling for Thumb ISA
-ifeq (armv7,$(arch))
-    CPLUS_FLAGS    += -Wa,-mimplicit-it=thumb
 endif
 
 #------------------------------------------------------------------------------
