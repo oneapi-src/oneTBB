@@ -106,9 +106,14 @@ $(RML.DLL): BUILDING_LIBRARY = $(RML.DLL)
 $(RML.DLL): $(RML_TBB_DEP) $(RML.OBJ) $(RML.RES) $(RML_NO_VERSION.DLL) $(RML_ASM.OBJ)
 	$(LIB_LINK_CMD) $(LIB_OUTPUT_KEY)$(RML.DLL) $(RML.OBJ) $(RML_TBB_DEP) $(RML_ASM.OBJ) $(RML.RES) $(LIB_LINK_LIBS) $(LIB_LINK_FLAGS)
 
+UNAME := $(shell uname)
 ifneq (,$(RML_NO_VERSION.DLL))
 $(RML_NO_VERSION.DLL):
+ifeq (haiku,$(tbb_os))
+	ln -s $(RML.DLL) $(RML_NO_VERSION.DLL)
+else
 	echo "INPUT ($(RML.DLL))" > $(RML_NO_VERSION.DLL)
+endif
 endif
 
 rml: rml_dll

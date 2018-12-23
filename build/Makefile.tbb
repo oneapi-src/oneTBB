@@ -108,7 +108,12 @@ $(TBB.DLL): $(TBB.OBJ) $(TBB.RES) tbbvars.sh $(TBB_NO_VERSION.DLL)
 
 ifneq (,$(TBB_NO_VERSION.DLL))
 $(TBB_NO_VERSION.DLL):
+ifeq (haiku,$(tbb_os))
+	ln -s $(TBB.DLL) $(TBB_NO_VERSION.DLL)
+else
 	echo "INPUT ($(TBB.DLL))" > $(TBB_NO_VERSION.DLL)
+endif
+
 endif
 
 #clean:

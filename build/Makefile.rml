@@ -112,7 +112,11 @@ $(RML.DLL): $(RML_TBB_DEP) $(RML_SERVER.OBJ) $(RML.RES) $(RML_NO_VERSION.DLL) $(
 
 ifneq (,$(RML_NO_VERSION.DLL))
 $(RML_NO_VERSION.DLL):
+ifeq (haiku,$(tbb_os))
+	ln -s $(RML.DLL) $(RML_NO_VERSION.DLL)
+else
 	echo "INPUT ($(RML.DLL))" > $(RML_NO_VERSION.DLL)
+endif
 endif
 
 rml: $(RML.DLL) $(RML_TBB_CLIENT.OBJ) $(RML_OMP_CLIENT.OBJ)

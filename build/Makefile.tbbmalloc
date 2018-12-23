@@ -104,12 +104,20 @@ endif
 
 ifneq (,$(MALLOC_NO_VERSION.DLL))
 $(MALLOC_NO_VERSION.DLL):
+ifeq (haiku,$(tbb_os))
+	ln -s $(MALLOC.DLL) $(MALLOC_NO_VERSION.DLL)
+else
 	echo "INPUT ($(MALLOC.DLL))" > $(MALLOC_NO_VERSION.DLL)
+endif
 endif
 
 ifneq (,$(MALLOCPROXY_NO_VERSION.DLL))
 $(MALLOCPROXY_NO_VERSION.DLL):
+ifeq (haiku,$(tbb_os))
+	ln -s $(MALLOCPROXY.DLL) $(MALLOCPROXY_NO_VERSION.DLL)
+else
 	echo "INPUT ($(MALLOCPROXY.DLL))" > $(MALLOCPROXY_NO_VERSION.DLL)
+endif
 endif
 
 malloc: $(MALLOC.DLL) $(MALLOCPROXY.DLL)
