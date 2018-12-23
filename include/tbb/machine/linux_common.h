@@ -29,7 +29,6 @@
 #ifndef __HAIKU__
 /* Futex definitions */
 #include <sys/syscall.h>
-#endif
 
 #if defined(SYS_futex)
 /* This header file is included for Linux and some other systems that may support futexes.*/
@@ -109,3 +108,5 @@ inline int futex_wakeup_all( void *futex ) {
 } /* namespace tbb */
 
 #endif /* SYS_futex */
+
+#endif /* __HAIKU__ */
