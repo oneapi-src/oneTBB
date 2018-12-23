@@ -104,11 +104,7 @@ ifeq ($(cfg),debug)
 endif
 
 ASSEMBLY_SOURCE=$(arch)-gas
-ifeq (ia64,$(arch))
-    ASM_FLAGS += -xexplicit
-    TBB_ASM.OBJ += atomic_support.o lock_byte.o log2.o pause.o ia64_misc.o
-    MALLOC_ASM.OBJ += atomic_support.o lock_byte.o pause.o log2.o
-endif
+
 #------------------------------------------------------------------------------
 # End of setting assembler data.
 #------------------------------------------------------------------------------
