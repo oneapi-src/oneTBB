@@ -26,8 +26,10 @@
 #define __TBB_Yield()  sched_yield()
 
 #include <unistd.h>
+#ifndef __HAIKU__
 /* Futex definitions */
 #include <sys/syscall.h>
+#endif
 
 #if defined(SYS_futex)
 /* This header file is included for Linux and some other systems that may support futexes.*/

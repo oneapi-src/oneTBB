@@ -509,7 +509,7 @@ There are four cases that are supported:
 
 /** __TBB_WEAK_SYMBOLS_PRESENT denotes that the system supports the weak symbol mechanism **/
 #ifndef __TBB_WEAK_SYMBOLS_PRESENT
-#define __TBB_WEAK_SYMBOLS_PRESENT ( !_WIN32 && !__APPLE__ && !__sun && (__TBB_GCC_VERSION >= 40000 || __INTEL_COMPILER ) )
+#define __TBB_WEAK_SYMBOLS_PRESENT ( !__HAIKU__ && !_WIN32 && !__APPLE__ && !__sun && (__TBB_GCC_VERSION >= 40000 || __INTEL_COMPILER ) )
 #endif
 
 /** __TBB_DYNAMIC_LOAD_ENABLED describes the system possibility to load shared libraries at run time **/

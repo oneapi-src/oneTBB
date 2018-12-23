@@ -36,6 +36,9 @@ ifndef tbb_os
   ifeq ($(OS), Darwin)
     export tbb_os=macos
   endif
+  ifeq ($(OS), Haiku)
+    export tbb_os=haiku
+  endif
 
 endif # !tbb_os
 

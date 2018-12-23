@@ -25,7 +25,7 @@
 #include "tbb/tbb_machine.h"
 #include "tbb/atomic.h"     // For atomic_xxx definitions
 
-#if __linux__ || __FreeBSD__
+#if __linux__ || __FreeBSD__ || __HAIKU__
 #include <sys/param.h>  // __FreeBSD_version
 #if __FreeBSD_version >= 701000
 #include <sys/cpuset.h>

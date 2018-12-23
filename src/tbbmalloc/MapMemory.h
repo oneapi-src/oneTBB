@@ -32,7 +32,7 @@ void *ErrnoPreservingMalloc(size_t bytes)
     return ret;
 }
 
-#if __linux__ || __APPLE__ || __sun || __FreeBSD__
+#if __linux__ || __APPLE__ || __sun || __FreeBSD__ || __HAIKU__
 
 #if __sun && !defined(_XPG4_2)
  // To have void* as mmap's 1st argument

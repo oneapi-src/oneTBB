@@ -36,7 +36,7 @@
 #include "tbb/task.h"
 #include "tbb/atomic.h"
 
-#if  __linux__ || __APPLE__ || __FreeBSD__ || __NetBSD__
+#if  __linux__ || __APPLE__ || __FreeBSD__ || __NetBSD__ || __HAIKU__
     #include <sys/resource.h>
 #endif
 
