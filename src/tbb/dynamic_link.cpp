@@ -32,7 +32,7 @@
     #include <malloc.h>
 
     // Unify system calls
-    #define dlopen( name, flags )   LoadLibrary( name )
+    #define dlopen( name, flags )   LoadLibraryA( name )
     #define dlsym( handle, name )   GetProcAddress( handle, name )
     #define dlclose( handle )       ( ! FreeLibrary( handle ) )
     #define dlerror()               GetLastError()
@@ -268,21 +268,21 @@ OPEN_INTERNAL_NAMESPACE
     #if _WIN32
         // Get handle of our DLL first.
         HMODULE handle;
-        BOOL brc = GetModuleHandleEx(
+        BOOL brc = GetModuleHandleExA(
             GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
             (LPCSTR)( & dynamic_link ), // any function inside the library can be used for the address
             & handle
             );
         if ( !brc ) { // Error occurred.
             int err = GetLastError();
-            DYNAMIC_LINK_WARNING( dl_sys_fail, "GetModuleHandleEx", err );
+            DYNAMIC_LINK_WARNING( dl_sys_fail, "GetModuleHandleExA", err );
             return;
         }
         // Now get path to our DLL.
-        DWORD drc = GetModuleFileName( handle, ap_data._path, static_cast< DWORD >( PATH_MAX ) );
+        DWORD drc = GetModuleFileNameA( handle, ap_data._path, static_cast< DWORD >( PATH_MAX ) );
         if ( drc == 0 ) { // Error occurred.
             int err = GetLastError();
-            DYNAMIC_LINK_WARNING( dl_sys_fail, "GetModuleFileName", err );
+            DYNAMIC_LINK_WARNING( dl_sys_fail, "GetModuleFileNameA", err );
             return;
         }
         if ( drc >= PATH_MAX ) { // Buffer too short.
@@ -466,7 +466,7 @@ OPEN_INTERNAL_NAMESPACE
         ::tbb::internal::suppress_unused_warning( library );
         dynamic_link_handle library_handle;
 #if _WIN32
-        if ( GetModuleHandleEx( 0, library, &library_handle ) ) {
+        if ( GetModuleHandleExA( 0, library, &library_handle ) ) {
             if ( resolve_symbols( library_handle, descriptors, required ) )
                 return library_handle;
             else
