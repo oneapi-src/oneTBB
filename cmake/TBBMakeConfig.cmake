@@ -19,8 +19,16 @@
 #
 # Usage:
 #   include(TBBMakeConfig.cmake)
-#   tbb_make_config(TBB_ROOT <tbb_root> SYSTEM_NAME <system_name> CONFIG_DIR <var_to_store_config_dir> [SAVE_TO] [CONFIG_FOR_SOURCE TBB_RELEASE_DIR <tbb_release_dir> TBB_DEBUG_DIR <tbb_debug_dir>])
+#   tbb_make_config(TBB_ROOT <tbb_root> SYSTEM_NAME <system_name> CONFIG_DIR <var_to_store_config_dir> [SAVE_TO] [CONFIG_FOR_SOURCE TBB_RELEASE_DIR <tbb_release_dir> TBB_DEBUG_DIR <tbb_debug_dir> | TBB_BUILD_DIR <base of installed binaries>])
 #
+# TBB_ROOT                                   <- The source code
+# SYSTEM_NAME                                <- The system name for the binaries (i.e. Darwin/Linux/Windows/Android)
+# CONFIG_DIR                                 <- (output variable) variable name for where the config dir is located
+# SAVE_TO                                    <- Relative path where the cmake TBBConfig.cmake package files go
+# CONFIG_FOR_SOURCE                          <- Reference the source from TBBConfig.cmake  (mutually exclusive of TBB_BUILD_DIR)
+#      TBB_RELEASE_DIR                               | Source build release binaries directory
+#      TBB_DEBUG_DIR                                 | Source build debug binaries directory
+# TBB_BUILD_DIR:PATH                         <- Where installed packages are located (mutually exclusive of CONFIG_FOR_SOURCE)
 
 include(CMakeParseArguments)
 
@@ -29,7 +37,7 @@ include(CMakeParseArguments)
 set(_tbb_cmake_module_path ${CMAKE_CURRENT_LIST_DIR})
 
 function(tbb_make_config)
-    set(oneValueArgs TBB_ROOT SYSTEM_NAME CONFIG_DIR SAVE_TO TBB_RELEASE_DIR TBB_DEBUG_DIR)
+    set(oneValueArgs TBB_ROOT SYSTEM_NAME CONFIG_DIR SAVE_TO TBB_RELEASE_DIR TBB_DEBUG_DIR TBB_BUILD_DIR)
     set(options CONFIG_FOR_SOURCE)
     cmake_parse_arguments(tbb_MK "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -37,30 +45,31 @@ function(tbb_make_config)
     if (tbb_MK_SYSTEM_NAME)
         set(tbb_system_name ${tbb_MK_SYSTEM_NAME})
     endif()
+    include(${CMAKE_CURRENT_LIST_DIR}/TBBPlatformDefaults.cmake)
 
-    set(tbb_config_dir ${tbb_MK_TBB_ROOT}/cmake)
+    set(_tbb_config_dir ${tbb_MK_TBB_ROOT}/cmake)
     if (tbb_MK_SAVE_TO)
-        set(tbb_config_dir ${tbb_MK_SAVE_TO})
+        set(_tbb_config_dir ${tbb_MK_SAVE_TO})
     endif()
-
-    file(MAKE_DIRECTORY ${tbb_config_dir})
+    if(NOT IS_ABSOLUTE ${_tbb_config_dir})
+      set(_tbb_config_dir ${CMAKE_CURRENT_BINARY_DIR}/${_tbb_config_dir})
+    endif()
+    file(MAKE_DIRECTORY ${_tbb_config_dir})
 
     set(TBB_DEFAULT_COMPONENTS tbb tbbmalloc tbbmalloc_proxy)
 
     if (tbb_MK_CONFIG_FOR_SOURCE)
         set(TBB_RELEASE_DIR ${tbb_MK_TBB_RELEASE_DIR})
         set(TBB_DEBUG_DIR ${tbb_MK_TBB_DEBUG_DIR})
-    endif()
-
-    if (tbb_system_name STREQUAL "Linux")
-        set(TBB_SHARED_LIB_DIR "lib")
-        set(TBB_X32_SUBDIR "ia32")
-        set(TBB_X64_SUBDIR "intel64")
-        set(TBB_LIB_PREFIX "lib")
-        set(TBB_LIB_EXT "so.2")
-
-        # Note: multiline variable
-        set(TBB_CHOOSE_COMPILER_SUBDIR "if (CMAKE_CXX_COMPILER_LOADED)
+        set(TBB_ROOT ${tbb_MK_TBB_ROOT})
+        set(TBB_CONFIG_FOR_SOURCE ON)
+        if(tbb_MK_TBB_BUILD_DIR)
+            message(FATAL_ERROR "TBB_BUILD_DIR and CONFIG_FOR_SOURCE are mutually exclusive.  Only use one. :${CONFIG_FOR_SOURCE}:${TBB_BUILD_DIR}:")
+        endif()
+        if (tbb_system_name STREQUAL "Linux")
+            # Note: multiline variable
+            set(TBB_CHOOSE_COMPILER_SUBDIR "
+if (CMAKE_CXX_COMPILER_LOADED)
     set(_tbb_compiler_id \${CMAKE_CXX_COMPILER_ID})
     set(_tbb_compiler_ver \${CMAKE_CXX_COMPILER_VERSION})
 elseif (CMAKE_C_COMPILER_LOADED)
@@ -79,7 +88,7 @@ if (NOT _tbb_compiler_id STREQUAL \"GNU\")
 endif()
 
 set(_tbb_compiler_subdir gcc4.1)
-foreach (_tbb_gcc_version 4.1 4.4 4.7)
+foreach (_tbb_gcc_version 4.1 4.4 4.7 5.0 5.4 6.0 7.0 7.5 8.0 9.0 ${CMAKE_CXX_COMPILER_VERSION})
     if (NOT _tbb_compiler_ver VERSION_LESS \${_tbb_gcc_version})
         set(_tbb_compiler_subdir gcc\${_tbb_gcc_version})
     endif()
@@ -88,15 +97,9 @@ endforeach()
 unset(_tbb_compiler_id)
 unset(_tbb_compiler_ver)")
 
-    elseif (tbb_system_name STREQUAL "Windows")
-        set(TBB_SHARED_LIB_DIR "bin")
-        set(TBB_X32_SUBDIR "ia32")
-        set(TBB_X64_SUBDIR "intel64")
-        set(TBB_LIB_PREFIX "")
-        set(TBB_LIB_EXT "dll")
-
-        # Note: multiline variable
-        set(TBB_CHOOSE_COMPILER_SUBDIR "if (NOT MSVC)
+        elseif (tbb_system_name STREQUAL "Windows")
+            # Note: multiline variable
+            set(TBB_CHOOSE_COMPILER_SUBDIR "if (NOT MSVC)
     message(FATAL_ERROR \"This Intel TBB package is intended to be used only in the project with MSVC\")
 endif()
 
@@ -119,37 +122,34 @@ if (WINDOWS_STORE)
     set(_tbb_compiler_subdir \${_tbb_compiler_subdir}_ui)
 endif()")
 
-        if (tbb_MK_CONFIG_FOR_SOURCE)
-            set(TBB_IMPLIB_RELEASE "\nIMPORTED_IMPLIB_RELEASE \"${tbb_MK_TBB_RELEASE_DIR}/\${_tbb_component}.lib\"")
-            set(TBB_IMPLIB_DEBUG "\nIMPORTED_IMPLIB_DEBUG \"${tbb_MK_TBB_DEBUG_DIR}/\${_tbb_component}_debug.lib\"")
-        else()
-            # Note: multiline variable
-            set(TBB_IMPLIB "
-                              IMPORTED_IMPLIB_RELEASE       \"\${_tbb_root}/lib/\${_tbb_arch_subdir}/\${_tbb_compiler_subdir}/\${_tbb_component}.lib\"
-                              IMPORTED_IMPLIB_DEBUG         \"\${_tbb_root}/lib/\${_tbb_arch_subdir}/\${_tbb_compiler_subdir}/\${_tbb_component}_debug.lib\"")
-        endif()
+            if (tbb_MK_CONFIG_FOR_SOURCE)
+                set(TBB_IMPLIB_RELEASE "\nIMPORTED_IMPLIB_RELEASE \"${tbb_MK_TBB_RELEASE_DIR}/\${_tbb_component}.lib\"")
+                set(TBB_IMPLIB_DEBUG "\nIMPORTED_IMPLIB_DEBUG \"${tbb_MK_TBB_DEBUG_DIR}/\${_tbb_component}_debug.lib\"")
+            else()
+                # Note: multiline variable
+                set(TBB_IMPLIB "
+                                  IMPORTED_IMPLIB_RELEASE       \"\${_tbb_root}/lib/\${_tbb_arch_subdir}/\${_tbb_compiler_subdir}/\${_tbb_component}.lib\"
+                                  IMPORTED_IMPLIB_DEBUG         \"\${_tbb_root}/lib/\${_tbb_arch_subdir}/\${_tbb_compiler_subdir}/\${_tbb_component}_debug.lib\"")
+            endif()
 
-        # Note: multiline variable
-        # tbb/internal/_tbb_windef.h (included via tbb/tbb_stddef.h) does implicit linkage of some .lib files, use a special define to avoid it
-        set(TBB_COMPILE_DEFINITIONS "
-                              INTERFACE_COMPILE_DEFINITIONS \"__TBB_NO_IMPLICIT_LINKAGE=1\"")
-    elseif (tbb_system_name STREQUAL "Darwin")
-        set(TBB_SHARED_LIB_DIR "lib")
-        set(TBB_X32_SUBDIR ".")
-        set(TBB_X64_SUBDIR ".")
-        set(TBB_LIB_PREFIX "lib")
-        set(TBB_LIB_EXT "dylib")
-        set(TBB_CHOOSE_COMPILER_SUBDIR "set(_tbb_compiler_subdir .)")
-    elseif (tbb_system_name STREQUAL "Android")
-        set(TBB_SHARED_LIB_DIR "lib")
-        set(TBB_X32_SUBDIR ".")
-        set(TBB_X64_SUBDIR "x86_64")
-        set(TBB_LIB_PREFIX "lib")
-        set(TBB_LIB_EXT "so")
-        set(TBB_CHOOSE_COMPILER_SUBDIR "set(_tbb_compiler_subdir .)")
+            # Note: multiline variable
+            # tbb/internal/_tbb_windef.h (included via tbb/tbb_stddef.h) does implicit linkage of some .lib files, use a special define to avoid it
+            set(TBB_COMPILE_DEFINITIONS "
+                                  INTERFACE_COMPILE_DEFINITIONS \"__TBB_NO_IMPLICIT_LINKAGE=1\"")
+        elseif (tbb_system_name STREQUAL "Darwin")
+            set(TBB_CHOOSE_COMPILER_SUBDIR "set(_tbb_compiler_subdir .)")
+        elseif (tbb_system_name STREQUAL "Android")
+            set(TBB_CHOOSE_COMPILER_SUBDIR "set(_tbb_compiler_subdir .)")
+        else()
+            message(FATAL_ERROR "Unsupported OS name: ${tbb_system_name}")
+        endif()
     else()
-        message(FATAL_ERROR "Unsupported OS name: ${tbb_system_name}")
+        set(TBB_CONFIG_FOR_SOURCE OFF)
+        file(RELATIVE_PATH TBB_CONFIG_TO_LIB_RELATIVE_PATH  ${_tbb_config_dir} ${tbb_MK_TBB_BUILD_DIR} )
+        # message(STATUS "RELATIVE PATH FROM:${_tbb_config_dir}: to:${tbb_MK_TBB_BUILD_DIR}: is :${TBB_CONFIG_TO_LIB_RELATIVE_PATH}:" )
+        set(TBB_CHOOSE_COMPILER_SUBDIR "set(_tbb_compiler_subdir .)") ## NOTE _tbb_compiler_subdir is not supported for install dirs
     endif()
+
 
     file(READ "${tbb_MK_TBB_ROOT}/include/tbb/tbb_stddef.h" _tbb_stddef)
     string(REGEX REPLACE ".*#define TBB_VERSION_MAJOR ([0-9]+).*" "\\1" _tbb_ver_major "${_tbb_stddef}")
@@ -157,13 +157,8 @@ endif()")
     string(REGEX REPLACE ".*#define TBB_INTERFACE_VERSION ([0-9]+).*" "\\1" TBB_INTERFACE_VERSION "${_tbb_stddef}")
     set(TBB_VERSION "${_tbb_ver_major}.${_tbb_ver_minor}")
 
-    if (tbb_MK_CONFIG_FOR_SOURCE)
-        set(_tbb_config_template TBBConfigForSource.cmake.in)
-    else()
-        set(_tbb_config_template TBBConfig.cmake.in)
-    endif()
-    configure_file(${_tbb_cmake_module_path}/templates/${_tbb_config_template}   ${tbb_config_dir}/TBBConfig.cmake @ONLY)
-    configure_file(${_tbb_cmake_module_path}/templates/TBBConfigVersion.cmake.in ${tbb_config_dir}/TBBConfigVersion.cmake @ONLY)
+    configure_file(${_tbb_cmake_module_path}/templates/TBBConfig.cmake.in        ${_tbb_config_dir}/TBBConfig.cmake @ONLY)
+    configure_file(${_tbb_cmake_module_path}/templates/TBBConfigVersion.cmake.in ${_tbb_config_dir}/TBBConfigVersion.cmake @ONLY)
 
-    set(${tbb_MK_CONFIG_DIR} ${tbb_config_dir} PARENT_SCOPE)
+    set(${tbb_MK_CONFIG_DIR} ${_tbb_config_dir} PARENT_SCOPE)
 endfunction()

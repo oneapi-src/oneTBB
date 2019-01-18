@@ -42,4 +42,4 @@ endif()
 include(${CMAKE_CURRENT_LIST_DIR}/TBBMakeConfig.cmake)
 tbb_make_config(TBB_ROOT ${TBB_ROOT} CONFIG_DIR tbb_config_dir SYSTEM_NAME ${TBB_OS} ${tbb_conf_gen_save_to_param})
 
-message(STATUS "TBBConfig files were created in ${tbb_config_dir}")
+message(STATUS "TBBConfig files were created in ${_tbb_config_dir}")

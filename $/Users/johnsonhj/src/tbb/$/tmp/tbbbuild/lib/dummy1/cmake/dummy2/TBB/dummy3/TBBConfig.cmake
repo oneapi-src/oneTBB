@@ -20,7 +20,7 @@
 # Handling of TBB_VERSION is in TBBConfigVersion.cmake.
 
 if (NOT TBB_FIND_COMPONENTS)
-    set(TBB_FIND_COMPONENTS "@TBB_DEFAULT_COMPONENTS@")
+    set(TBB_FIND_COMPONENTS "tbb;tbbmalloc;tbbmalloc_proxy")
     foreach (_tbb_component ${TBB_FIND_COMPONENTS})
         set(TBB_FIND_REQUIRED_${_tbb_component} 1)
     endforeach()
@@ -36,30 +36,54 @@ if (NOT _tbbmalloc_proxy_ix EQUAL -1)
     endif()
 endif()
 
-set(TBB_INTERFACE_VERSION @TBB_INTERFACE_VERSION@)
+set(TBB_INTERFACE_VERSION 11003)
 
-get_filename_component(_tbb_root "${CMAKE_CURRENT_LIST_FILE}" PATH)
-get_filename_component(_tbb_root "${_tbb_root}" PATH)
+set(TBB_CONFIG_FOR_SOURCE OFF)
+if( TBB_CONFIG_FOR_SOURCE ) # When TBB_CONFIG_FOR_SOURCE:BOOL=ON hard-code the binary directies from source build directories.
+  get_filename_component(_tbb_release_lib_dir ""  ABSOLUTE)
+  get_filename_component(_tbb_debug_lib_dir   ""    ABSOLUTE)
+  get_filename_component(_tbb_include_dir     "/include" ABSOLUTE)
+else()
+  set(_tbb_compiler_subdir .)
+  set(_tbb_x32_subdir .)
+  set(_tbb_x64_subdir .)
+
+  if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set(_tbb_arch_subdir ${_tbb_x64_subdir})
+  else()
+    set(_tbb_arch_subdir ${_tbb_x32_subdir})
+  endif()
+  unset(_tbb_x32_subdir)
+  unset(_tbb_x64_subdir)
+
+  set(_tbb_config_to_lib_relative_path "${CMAKE_CURRENT_LIST_DIR}/../../../../../../../../../../../../../tmp/tbbbuild")
+  get_filename_component(_tbb_release_lib_dir "${_tbb_config_to_lib_relative_path}/lib/${_tbb_arch_subdir}/${_tbb_compiler_subdir}" ABSOLUTE)
+  get_filename_component(_tbb_debug_lib_dir   "${_tbb_config_to_lib_relative_path}/lib/${_tbb_arch_subdir}/${_tbb_compiler_subdir}" ABSOLUTE)
+  get_filename_component(_tbb_include_dir     "${_tbb_config_to_lib_relative_path}/include"  ABSOLUTE)
+
+  unset(_tbb_arch_subdir)
+  unset(_tbb_compiler_subdir)
+endif()
 
 foreach (_tbb_component ${TBB_FIND_COMPONENTS})
-    set(_tbb_release_lib "@TBB_RELEASE_DIR@/@TBB_LIB_PREFIX@${_tbb_component}.@TBB_LIB_EXT@")
-    set(_tbb_debug_lib "@TBB_DEBUG_DIR@/@TBB_LIB_PREFIX@${_tbb_component}_debug.@TBB_LIB_EXT@")
+    set(_tbb_release_lib "${_tbb_release_lib_dir}/lib${_tbb_component}.dylib")
+    set(_tbb_debug_lib     "${_tbb_debug_lib_dir}/lib${_tbb_component}_debug.dylib")
 
     if (EXISTS "${_tbb_release_lib}" OR EXISTS "${_tbb_debug_lib}")
         add_library(TBB::${_tbb_component} SHARED IMPORTED)
         set_target_properties(TBB::${_tbb_component} PROPERTIES
-                              INTERFACE_INCLUDE_DIRECTORIES "${_tbb_root}/include"@TBB_COMPILE_DEFINITIONS@)
+                              INTERFACE_INCLUDE_DIRECTORIES "${_tbb_include_dir}")
 
 
         if (EXISTS "${_tbb_release_lib}")
             set_target_properties(TBB::${_tbb_component} PROPERTIES
-                                  IMPORTED_LOCATION_RELEASE "${_tbb_release_lib}"@TBB_IMPLIB_RELEASE@)
+                                  IMPORTED_LOCATION_RELEASE "${_tbb_release_lib}")
             set_property(TARGET TBB::${_tbb_component} APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
         endif()
 
         if (EXISTS "${_tbb_debug_lib}")
             set_target_properties(TBB::${_tbb_component} PROPERTIES
-                                  IMPORTED_LOCATION_DEBUG "${_tbb_debug_lib}"@TBB_IMPLIB_DEBUG@)
+                                  IMPORTED_LOCATION_DEBUG "${_tbb_debug_lib}")
             set_property(TARGET TBB::${_tbb_component} APPEND PROPERTY IMPORTED_CONFIGURATIONS DEBUG)
         endif()
 
@@ -71,7 +95,12 @@ foreach (_tbb_component ${TBB_FIND_COMPONENTS})
         list(APPEND TBB_IMPORTED_TARGETS TBB::${_tbb_component})
         set(TBB_${_tbb_component}_FOUND 1)
     elseif (TBB_FIND_REQUIRED AND TBB_FIND_REQUIRED_${_tbb_component})
-        message(FATAL_ERROR "Missed required Intel TBB component: ${_tbb_component}")
+        message(STATUS "Missed required Intel TBB component: ${_tbb_component} in ${_tbb_release_lib} or ${_tbb_debug_lib_dir}")
+                              # Do not use FATAL_ERROR message as that
+                              # breaks find_package(TBB QUIET) behavior
+        set(TBB_FOUND FALSE)  # Set TBB_FOUND considered to be NOT FOUND if
+                              # required components missing
+        set(TBB_${_tbb_component}_FOUND 0)
     endif()
 endforeach()
 
@@ -80,3 +109,6 @@ unset(_tbbmalloc_ix)
 unset(_tbb_lib_path)
 unset(_tbb_release_lib)
 unset(_tbb_debug_lib)
+unset(_tbb_release_lib_dir)
+unset(_tbb_debug_lib_dir)
+unset(_tbb_include_dir)

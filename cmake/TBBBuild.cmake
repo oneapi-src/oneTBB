@@ -19,7 +19,7 @@
 #
 # Usage:
 #  include(TBBBuild.cmake)
-#  tbb_build(ROOT <tbb_root> MAKE_ARGS <arg1> [... <argN>])
+#  tbb_build(TBB_ROOT <tbb_root> MAKE_ARGS <arg1> [... <argN>])
 #  find_package(TBB <options>)
 #
 
@@ -33,10 +33,12 @@ set(_tbb_cmake_module_path ${CMAKE_CURRENT_LIST_DIR})
 # Builds Intel TBB.
 #
 # Parameters:
-#  TBB_ROOT   <directory> - path to Intel TBB root directory (with sources);
+#  TBB_ROOT   <directory> - path to Intel TBB root directory (with sources);  #store <variable>-NOTFOUND otherwise.
+#  SYSTEM_NAME            - The system name for the binaries (i.e. Darwin/Linux/Windows/Android)
 #  MAKE_ARGS  <list>      - user-defined arguments to be passed to make-tool;
-#  CONFIG_DIR <variable>  - store location of the created TBBConfig if the build was ok, store <variable>-NOTFOUND otherwise.
-#
+#  CONFIG_DIR <variable>  - store location of the created TBBConfig if the build was ok in the specified variable
+#  TBB_CMAKE_PACKAGE_CONFIG_DIR:PATH - The path to use for defining where teh package config dir should be. ${TBB_DIR}/cmake
+#  CONFIG_FOR_INSTALL     - Whether to config to point to the install directory (ON) or the source directory (OFF)
 function(tbb_build)
     # NOTE: internal function are used to hide them from user.
 
@@ -111,8 +113,9 @@ function(tbb_build)
     #  RELEASE_DIR <variable> - store normalized (CMake) path to release directory
     #  DEBUG_DIR   <variable> - store normalized (CMake) path to debug directory
     #
+    #
     function(tbb_get_build_paths_from_make_args)
-        set(oneValueArgs RELEASE_DIR DEBUG_DIR)
+        set(oneValueArgs RELEASE_DIR DEBUG_DIR BUILD_DIR)
         set(multiValueArgs MAKE_ARGS)
         cmake_parse_arguments(tbb_GBPFMA "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -132,27 +135,31 @@ function(tbb_build)
 
         set(${tbb_GBPFMA_RELEASE_DIR} ${tbb_release_dir} PARENT_SCOPE)
         set(${tbb_GBPFMA_DEBUG_DIR} ${tbb_debug_dir} PARENT_SCOPE)
+        set(${tbb_GBPFMA_BUILD_DIR} ${tbb_build_dir} PARENT_SCOPE)
     endfunction()
 
     # -------------------- #
     # Function entry point #
     # -------------------- #
-    set(oneValueArgs TBB_ROOT CONFIG_DIR)
+    set(options CONFIG_FOR_INSTALL)
+    set(oneValueArgs TBB_ROOT SYSTEM_NAME CONFIG_DIR TBB_CMAKE_PACKAGE_CONFIG_DIR)
     set(multiValueArgs MAKE_ARGS)
     cmake_parse_arguments(tbb_build "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if (NOT EXISTS "${tbb_build_TBB_ROOT}/Makefile" OR NOT EXISTS "${tbb_build_TBB_ROOT}/src")
         message(STATUS "Intel TBB can not be built: Makefile or src directory was not found in ${tbb_build_TBB_ROOT}")
-        set(${tbb_build_CONFIG_DIR} ${tbb_build_CONFIG_DIR}-NOTFOUND PARENT_SCOPE)
+        set(${tbb_build_TBB_ROOT} ${tbb_build_TBB_ROOT}-NOTFOUND PARENT_SCOPE)
         return()
     endif()
-
-    set(make_tool_name make)
-    if (CMAKE_SYSTEM_NAME MATCHES "Windows")
-        set(make_tool_name gmake)
-    elseif (CMAKE_SYSTEM_NAME MATCHES "Android")
-        set(make_tool_name ndk-build)
+    if ( NOT tbb_build_TBB_CMAKE_PACKAGE_CONFIG_DIR )
+        set(tbb_build_TBB_CMAKE_PACKAGE_CONFIG_DIR ${tbb_build_TBB_ROOT}/cmake )
     endif()
+
+    set(tbb_system_name ${CMAKE_SYSTEM_NAME})
+    if (tbb_build_SYSTEM_NAME)
+        set(tbb_system_name ${tbb_build_SYSTEM_NAME})
+    endif()
+    include(${CMAKE_CURRENT_LIST_DIR}/TBBPlatformDefaults.cmake)
 
     find_program(TBB_MAKE_TOOL ${make_tool_name} DOC "Make-tool to build Intel TBB.")
     mark_as_advanced(TBB_MAKE_TOOL)
@@ -183,15 +190,28 @@ function(tbb_build)
 
     tbb_get_build_paths_from_make_args(MAKE_ARGS ${tbb_make_args}
                                        RELEASE_DIR tbb_release_dir
-                                       DEBUG_DIR tbb_debug_dir)
+                                       DEBUG_DIR tbb_debug_dir
+                                       BUILD_DIR tbb_build_dir)
 
     include(${_tbb_cmake_module_path}/TBBMakeConfig.cmake)
-    tbb_make_config(TBB_ROOT ${tbb_build_TBB_ROOT}
-                    SYSTEM_NAME ${CMAKE_SYSTEM_NAME}
-                    CONFIG_DIR tbb_config_dir
-                    CONFIG_FOR_SOURCE
+    if (tbb_build_CONFIG_FOR_INSTALL )
+        message(STATUS "Generating TBBConfig.cmake for installed reference")
+        tbb_make_config(TBB_ROOT ${tbb_build_TBB_ROOT}
+                TBB_BUILD_DIR ${tbb_build_dir}
+                SYSTEM_NAME ${CMAKE_SYSTEM_NAME}
+                CONFIG_DIR tbb_config_dir
+                SAVE_TO    ${tbb_build_TBB_CMAKE_PACKAGE_CONFIG_DIR}
+                )
+    else()
+        message(STATUS "Generating TBBConfig.cmake for source reference")
+        tbb_make_config(TBB_ROOT ${tbb_build_TBB_ROOT}
+                SYSTEM_NAME ${CMAKE_SYSTEM_NAME}
+                CONFIG_DIR tbb_config_dir
+                SAVE_TO    ${tbb_build_TBB_CMAKE_PACKAGE_CONFIG_DIR}
+                CONFIG_FOR_SOURCE
                     TBB_RELEASE_DIR ${tbb_release_dir}
-                    TBB_DEBUG_DIR ${tbb_debug_dir})
-
-    set(${tbb_build_CONFIG_DIR} ${tbb_config_dir} PARENT_SCOPE)
+                    TBB_DEBUG_DIR ${tbb_debug_dir}
+        )
+    endif()
+    set(${tbb_build_CONFIG_DIR} ${tbb_build_TBB_CMAKE_PACKAGE_CONFIG_DIR} PARENT_SCOPE)
 endfunction()

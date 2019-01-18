@@ -287,11 +287,11 @@ function(tbb_get)
     if (NOT tbb_get_SOURCE_CODE)
         set(tbb_config_dir ${tbb_root}/cmake)
 
-        if (NOT EXISTS "${tbb_config_dir}")
+        if (NOT EXISTS "${_tbb_config_dir}")
             tbb_make_config(TBB_ROOT ${tbb_root} CONFIG_DIR tbb_config_dir)
         endif()
 
-        set(${tbb_get_CONFIG_DIR} ${tbb_config_dir} PARENT_SCOPE)
+        set(${tbb_get_CONFIG_DIR} ${_tbb_config_dir} PARENT_SCOPE)
     endif()
 
     set(${tbb_get_TBB_ROOT} ${tbb_root} PARENT_SCOPE)

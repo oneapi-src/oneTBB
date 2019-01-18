@@ -245,11 +245,18 @@ Provides the following functions:
   ====================================  ====================================
                      Parameter                       Description
   ====================================  ====================================
-  ``TBB_ROOT <variable>``               path to Intel TBB root
+  ``TBB_ROOT <variable>``               path to Intel TBB root source code
+  ``SAVE_TO <relative path>``           Relative path where the cmake TBBConfig.cmake package files are created
   ``CONFIG_DIR <variable>``             a variable to store location of the created configuration files
   ``SYSTEM_NAME Linux|Windows|Darwin``  operating system name of the binary Intel TBB package,
                                         value of `CMAKE_SYSTEM_NAME <https://cmake.org/cmake/help/latest/variable/CMAKE_SYSTEM_NAME.html>`_ is used by default
+  ``TBB_BUILD_DIR <path>``              Where installed packages are located (mutually exclusive of CONFIG_FOR_SOURCE)
+  ``CONFIG_FOR_SOURCE``                 Reference the source from TBBConfig.cmake  (mutually exclusive of TBB_BUILD_DIR)
+  ``   TBB_RELEASE_DIR <path>``         Source build release binaries directory
+  ``   TBB_DEBUG_DIR   <path>``         Source build debug binaries directory
+
   ====================================  ====================================
+
 
 TBBBuild
 ^^^^^^^^
@@ -263,9 +270,12 @@ Provides the following functions:
   =====================================  ====================================
                 Parameter                             Description
   =====================================  ====================================
-  ``TBB_ROOT <variable>``                path to Intel TBB root
+  ``TBB_ROOT <directory>``               path to Intel TBB root source code
+  ``SYSTEM_NAME <string>``               The system name for the binaries (i.e. Darwin/Linux/Windows/Android)
   ``CONFIG_DIR <variable>``              a variable to store location of the created configuration files,
                                          ``<variable>-NOTFOUND`` will be provided in case ``tbb_build`` is unsuccessful
+  ``TBB_CMAKE_PACKAGE_CONFIG_DIR<path>`` The path to use for defining where teh package config dir should be.
+  ``CONFIG_FOR_INSTALL``                 Whether to config to point to the install directory (ON) or the source directory (OFF)
   ``MAKE_ARGS <custom_make_arguments>``  custom arguments to be passed to ``make`` tool.
 
                                          The following arguments are always passed with automatically detected values to
@@ -276,7 +286,6 @@ Provides the following functions:
                                            - ``tbb_build_prefix=<tbb_build_prefix>``
                                            - ``-j<n>``
   =====================================  ====================================
-
 
 ------------
 
