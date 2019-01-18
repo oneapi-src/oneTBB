@@ -74,7 +74,12 @@ foreach (_tbb_component ${TBB_FIND_COMPONENTS})
         list(APPEND TBB_IMPORTED_TARGETS TBB::${_tbb_component})
         set(TBB_${_tbb_component}_FOUND 1)
     elseif (TBB_FIND_REQUIRED AND TBB_FIND_REQUIRED_${_tbb_component})
-        message(FATAL_ERROR "Missed required Intel TBB component: ${_tbb_component}")
+        message(STATUS "Missed required Intel TBB component: ${_tbb_component}")
+                              # Do not use FATAL_ERROR message as that
+                              # breaks find_package(TBB QUIET) behavior
+        set(TBB_FOUND FALSE)  # Set TBB_FOUND considered to be NOT FOUND if
+                              # required components missing
+        set(TBB_${_tbb_component}_FOUND 0)
     endif()
 endforeach()
 
