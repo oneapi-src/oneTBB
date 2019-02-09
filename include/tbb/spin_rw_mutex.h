@@ -123,7 +123,14 @@ public:
             is_writer = true;
             return mutex->internal_upgrade();
         }
-
+        //! Upgrade writer if currently a reader
+        /** Returns whether the upgrade happened without releasing and re-acquiring the lock */
+	    bool upgrade_to_writer_if_reader() {
+		    if (is_writer) {
+				return true;
+			}
+			return upgrade_to_writer();
+        }
         //! Release lock.
         void release() {
             __TBB_ASSERT( mutex, "mutex is not acquired" );
