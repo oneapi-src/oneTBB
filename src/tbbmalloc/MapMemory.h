@@ -85,11 +85,74 @@ int UnmapMemory(void *area, size_t bytes)
 #elif (_WIN32 || _WIN64) && !__TBB_WIN8UI_SUPPORT
 #include <windows.h>
 
+bool useLargePages = false;
+
+// #pragma comment(lib, "Advapi32.lib")
+bool TryEnableLargePageSupport()
+{
+    // Large pages require memory locking privilege
+    bool privilegeSuccess = false;
+    TOKEN_PRIVILEGES priv;
+    priv.PrivilegeCount = 1;
+
+    DWORD error;
+    if (!LookupPrivilegeValue(nullptr, SE_LOCK_MEMORY_NAME, &priv.Privileges[0].Luid))
+    {
+        error = GetLastError();
+        //printf("LookupPrivilegeValue failed when enabling SE_LOCK_MEMORY_NAME privilege, 0x%x\n", error);
+    }
+    else
+    {
+        priv.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+        HANDLE hToken;
+        if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY | TOKEN_ADJUST_PRIVILEGES, &hToken))
+        {
+            error = GetLastError();
+            //WrtLog(IQCSLog::WarningLevel,
+            //       str(format("[LargePageSupport] OpenProcessToken failed when enabling SE_LOCK_MEMORY_NAME privilege with error %1%") % error));
+        }
+        else
+        {
+            if (!AdjustTokenPrivileges(hToken, FALSE, &priv, 0, nullptr, nullptr))
+            {
+                error = GetLastError();
+                //WrtLog(
+                //    IQCSLog::WarningLevel,
+                //    str(format("[LargePageSupport] AdjustTokenPrivileges failed when enabling SE_LOCK_MEMORY_NAME privilege with error %1%") % error));
+            }
+            // Adjusting privilege can fail even if AdjustTokenPrivileges returns true
+            else if (GetLastError() != 0)
+            {
+                error = GetLastError();
+                //WrtLog(
+                //    IQCSLog::WarningLevel,
+                //    str(format("[LargePageSupport] AdjustTokenPrivileges failed when enabling SE_LOCK_MEMORY_NAME privilege with error %1%") % error));
+            }
+            else
+            {
+                privilegeSuccess = true;
+            }
+            CloseHandle(hToken);
+        }
+    }
+
+    return privilegeSuccess;
+}
+
+void initMapMemory()
+{
+    useLargePages = TryEnableLargePageSupport();
+}
+
 #define MEMORY_MAPPING_USES_MALLOC 0
 void* MapMemory (size_t bytes, bool)
 {
+    // printf("VirtualAlloc %u bytes, use large pages = %u\n", bytes, useLargePages);
     /* Is VirtualAlloc thread safe? */
-    return VirtualAlloc(NULL, bytes, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+    DWORD allocationType = useLargePages ? MEM_LARGE_PAGES | MEM_RESERVE | MEM_COMMIT : MEM_RESERVE | MEM_COMMIT;
+
+
+    return VirtualAlloc(NULL, bytes, allocationType, PAGE_READWRITE);
 }
 
 int UnmapMemory(void *area, size_t /*bytes*/)

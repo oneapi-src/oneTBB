@@ -132,6 +132,8 @@ void *Backend::allocRawMem(size_t &size)
     void *res = NULL;
     size_t allocSize;
 
+    initMapMemory();
+
     if (extMemPool->userPool()) {
         if (extMemPool->fixedPool && bootsrapMemDone==FencedLoad(bootsrapMemStatus))
             return NULL;
