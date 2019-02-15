@@ -1975,7 +1975,7 @@ static bool initMemoryManager()
                    "Memory pool must be void*-aligned for atomic to work over aligned arguments.");
 
 #if USE_WINTHREAD
-    const size_t granularity = 64*1024; // granulatity of VirtualAlloc
+    const size_t granularity = 2*1024*1024; // granulatity of VirtualAlloc
 #else
     // POSIX.1-2001-compliant way to get page size
     const size_t granularity = sysconf(_SC_PAGESIZE);

@@ -173,11 +173,48 @@ int UnmapMemory(void *area, size_t bytes)
 #elif (_WIN32 || _WIN64) && !__TBB_WIN8UI_SUPPORT
 #include <windows.h>
 
+bool TryEnableLargePageSupport()
+{
+    // Large pages require memory locking privilege
+    TOKEN_PRIVILEGES priv;
+    priv.PrivilegeCount = 1;
+
+    DWORD error;
+    if (!LookupPrivilegeValue(nullptr, SE_LOCK_MEMORY_NAME, &priv.Privileges[0].Luid))
+    {
+        return false;
+    }
+    else
+    {
+        priv.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+        HANDLE hToken;
+        if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY | TOKEN_ADJUST_PRIVILEGES, &hToken))
+        {
+            return false;
+        }
+        else
+        {
+            if (AdjustTokenPrivileges(hToken, FALSE, &priv, 0, nullptr, nullptr) == TRUE && GetLastError() != 0)
+            {
+                return true;
+            }
+
+            CloseHandle(hToken);
+        }
+    }
+
+    return false;
+}
+
 #define MEMORY_MAPPING_USES_MALLOC 0
 void* MapMemory (size_t bytes, PageType)
 {
+    static const bool useLagePages = TryEnableLargePageSupport();
+
     /* Is VirtualAlloc thread safe? */
-    return VirtualAlloc(NULL, bytes, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+    DWORD allocationType = useLargePages ? MEM_LARGE_PAGES | MEM_RESERVE | MEM_COMMIT : MEM_RESERVE | MEM_COMMIT;
+
+    return VirtualAlloc(NULL, bytes, allocationType, PAGE_READWRITE);
 }
 
 int UnmapMemory(void *area, size_t /*bytes*/)
