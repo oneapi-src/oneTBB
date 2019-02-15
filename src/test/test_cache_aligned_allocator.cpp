@@ -54,7 +54,7 @@ void Test_NFS_Allocate_Throws() {
     try {
         // Try allocating more memory than left in the address space; should cause std::bad_alloc
         (void) NFS_Allocate( 1, ~size_t(0) - itemsize*nitems + NFS_GetLineSize(), NULL);
-    } catch( std::bad_alloc ) {
+    } catch( std::bad_alloc& ) {
         exception_caught = true;
     } catch( ... ) {
         ASSERT( __TBB_EXCEPTION_TYPE_INFO_BROKEN, "Unexpected exception type (std::bad_alloc was expected)" );

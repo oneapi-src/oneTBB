@@ -353,7 +353,7 @@ concurrent_queue_base_v3::concurrent_queue_base_v3( size_t item_sz ) {
     __TBB_ASSERT( is_aligned(&my_rep->head_counter, NFS_GetLineSize()), "alignment error" );
     __TBB_ASSERT( is_aligned(&my_rep->tail_counter, NFS_GetLineSize()), "alignment error" );
     __TBB_ASSERT( is_aligned(&my_rep->array, NFS_GetLineSize()), "alignment error" );
-    memset(my_rep,0,sizeof(concurrent_queue_rep));
+    memset(static_cast<void*>(my_rep),0,sizeof(concurrent_queue_rep));
     new ( &my_rep->items_avail ) concurrent_monitor();
     new ( &my_rep->slots_avail ) concurrent_monitor();
     this->item_size = item_sz;

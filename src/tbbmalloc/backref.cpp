@@ -159,7 +159,7 @@ void BackRefMaster::initEmptyBackRefBlock(BackRefBlock *newBl)
 
 bool BackRefMaster::requestNewSpace()
 {
-    bool rawMemUsed;
+    bool isRawMemUsed;
     MALLOC_STATIC_ASSERT(!(blockSpaceSize % BackRefBlock::bytes),
                          "Must request space for whole number of blocks.");
 
@@ -172,7 +172,7 @@ bool BackRefMaster::requestNewSpace()
     if (listForUse) // double check that only one block is available
         return true;
     BackRefBlock *newBl =
-        (BackRefBlock*)backend->getBackRefSpace(blockSpaceSize, &rawMemUsed);
+        (BackRefBlock*)backend->getBackRefSpace(blockSpaceSize, &isRawMemUsed);
     if (!newBl) return false;
 
     // touch a page for the 1st time without taking masterMutex ...
@@ -184,7 +184,7 @@ bool BackRefMaster::requestNewSpace()
 
     const size_t numOfUnusedIdxs = backRefMaster->dataSz - lastUsed - 1;
     if (numOfUnusedIdxs <= 0) { // no space in master under lock, roll back
-        backend->putBackRefSpace(newBl, blockSpaceSize, rawMemUsed);
+        backend->putBackRefSpace(newBl, blockSpaceSize, isRawMemUsed);
         return false;
     }
     // It's possible that only part of newBl is used, due to lack of indices in master.
@@ -193,7 +193,7 @@ bool BackRefMaster::requestNewSpace()
 
     // use the first block in the batch to maintain the list of "raw" memory
     // to be released at shutdown
-    if (rawMemUsed) {
+    if (isRawMemUsed) {
         newBl->nextRawMemBlock = backRefMaster->allRawMemBlocks;
         backRefMaster->allRawMemBlocks = newBl;
     }

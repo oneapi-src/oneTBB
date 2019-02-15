@@ -99,6 +99,15 @@ extern intptr_t memAllocKB, memHitKB;
 template<typename T>
 void suppress_unused_warning( const T& ) {}
 
+/********** Various global default constants ********/
+
+/*
+ * Default huge page size
+ */
+static const size_t HUGE_PAGE_SIZE = 2 * 1024 * 1024;
+
+/********** End of global default constatns *********/
+
 /********** Various numeric parameters controlling allocations ********/
 
 /*
@@ -875,6 +884,168 @@ private:
                 freeAlignedBins;
 };
 
+// An TBB allocator mode that can be controlled by user
+// via API/environment variable. Must be placed in zero-initialized memory.
+// External synchronization assumed.
+// TODO: TBB_VERSION support
+class AllocControlledMode {
+    intptr_t val;
+    bool     setDone;
+public:
+    bool ready() const { return setDone; }
+    intptr_t get() const {
+        MALLOC_ASSERT(setDone, ASSERT_TEXT);
+        return val;
+    }
+    void set(intptr_t newVal) { // note set() can be called before init()
+        val = newVal;
+        setDone = true;
+    }
+    // envName - environment variable to get controlled mode
+    void initReadEnv(const char *envName, intptr_t defaultVal);
+};
+
+// Page type to be used inside MapMemory.
+// Regular (4KB aligned), Huge and Transparent Huge Pages (2MB aligned).
+enum PageType {
+    REGULAR = 0,
+    PREALLOCATED_HUGE_PAGE,
+    TRANSPARENT_HUGE_PAGE
+};
+
+// init() and printStatus() is called only under global initialization lock.
+// Race is possible between registerAllocation() and registerReleasing(),
+// harm is that up to single huge page releasing is missed (because failure
+// to get huge page is registered only 1st time), that is negligible.
+// setMode is also can be called concurrently.
+// Object must reside in zero-initialized memory
+// TODO: can we check for huge page presence during every 10th mmap() call
+// in case huge page is released by another process?
+class HugePagesStatus {
+private:
+    AllocControlledMode requestedMode; // changed only by user
+                                       // to keep enabled and requestedMode consistent
+    MallocMutex setModeLock;
+    size_t      pageSize;
+    intptr_t    needActualStatusPrint;
+
+    static void doPrintStatus(bool state, const char *stateName) {
+        // Under macOS* fprintf/snprintf acquires an internal lock, so when
+        // 1st allocation is done under the lock, we got a deadlock.
+        // Do not use fprintf etc during initialization.
+        fputs("TBBmalloc: huge pages\t", stderr);
+        if (!state)
+            fputs("not ", stderr);
+        fputs(stateName, stderr);
+        fputs("\n", stderr);
+    }
+
+    void parseSystemMemInfo() {
+        bool hpAvailable  = false;
+        bool thpAvailable = false;
+        unsigned long long hugePageSize = 0;
+
+#if __linux__
+        // Check huge pages existense
+        unsigned long long meminfoHugePagesTotal = 0;
+
+        parseFileItem meminfoItems[] = {
+            // Parse system huge page size
+            { "Hugepagesize: %llu kB", hugePageSize },
+            // Check if there are preallocated huge pages on the system
+            // https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt
+            { "HugePages_Total: %llu", meminfoHugePagesTotal } };
+
+        parseFile</*BUFF_SIZE=*/100>("/proc/meminfo", meminfoItems);
+
+        // Double check another system information regarding preallocated
+        // huge pages if there are no information in /proc/meminfo
+        unsigned long long vmHugePagesTotal = 0;
+
+        parseFileItem vmItem[] = { { "%llu", vmHugePagesTotal } };
+
+        // We parse a counter number, it can't be huge
+        parseFile</*BUFF_SIZE=*/100>("/proc/sys/vm/nr_hugepages", vmItem);
+
+        if (meminfoHugePagesTotal > 0 || vmHugePagesTotal > 0) {
+            MALLOC_ASSERT(hugePageSize != 0, "Huge Page size can't be zero if we found preallocated.");
+
+            // Any non zero value clearly states that there are preallocated
+            // huge pages on the system
+            hpAvailable = true;
+        }
+
+        // Check if there is transparent huge pages support on the system
+        unsigned long long thpPresent = 'n';
+        parseFileItem thpItem[] = { { "[alwa%cs] madvise never\n", thpPresent } };
+        parseFile</*BUFF_SIZE=*/100>("/sys/kernel/mm/transparent_hugepage/enabled", thpItem);
+
+        if (thpPresent == 'y') {
+            MALLOC_ASSERT(hugePageSize != 0, "Huge Page size can't be zero if we found thp existence.");
+            thpAvailable = true;
+        }
+#endif
+        MALLOC_ASSERT(!pageSize, "Huge page size can't be set twice. Double initialization.");
+
+        // Initialize object variables
+        pageSize       = hugePageSize * 1024; // was read in KB from meminfo
+        isHPAvailable  = hpAvailable;
+        isTHPAvailable = thpAvailable;
+    }
+
+public:
+
+    // System information
+    bool isHPAvailable;
+    bool isTHPAvailable;
+
+    // User defined value
+    bool isEnabled;
+
+    void init() {
+        parseSystemMemInfo();
+        MallocMutex::scoped_lock lock(setModeLock);
+        requestedMode.initReadEnv("TBB_MALLOC_USE_HUGE_PAGES", 0);
+        isEnabled = (isHPAvailable || isTHPAvailable) && requestedMode.get();
+    }
+
+    // Could be set from user code at any place.
+    // If we didn't call init() at this place, isEnabled will be false
+    void setMode(intptr_t newVal) {
+        MallocMutex::scoped_lock lock(setModeLock);
+        requestedMode.set(newVal);
+        isEnabled = (isHPAvailable || isTHPAvailable) && newVal;
+    }
+
+    bool isRequested() const {
+        return requestedMode.ready() ? requestedMode.get() : false;
+    }
+
+    void reset() {
+        pageSize = needActualStatusPrint = 0;
+        isEnabled = isHPAvailable = isTHPAvailable = false;
+    }
+
+    // If memory mapping size is a multiple of huge page size, some OS kernels
+    // can use huge pages transparently. Use this when huge pages are requested.
+    size_t getGranularity() const {
+        if (requestedMode.ready())
+            return requestedMode.get() ? pageSize : 0;
+        else
+            return HUGE_PAGE_SIZE; // the mode is not yet known; assume typical 2MB huge pages
+    }
+
+    void printStatus() {
+        doPrintStatus(requestedMode.get(), "requested");
+        if (requestedMode.get()) { // report actual status iff requested
+            if (pageSize)
+                FencedStore(needActualStatusPrint, 1);
+            else
+                doPrintStatus(/*state=*/false, "available");
+        }
+    }
+};
+
 class AllLargeBlocksList {
     MallocMutex       largeObjLock;
     LargeMemoryBlock *loHead;
@@ -963,86 +1134,6 @@ struct FreeObject {
     FreeObject  *next;
 };
 
-// An TBB allocator mode that can be controlled by user
-// via API/environment variable. Must be placed in zero-initialized memory.
-// External synchronization assumed.
-// TODO: TBB_VERSION support
-class AllocControlledMode {
-    intptr_t val;
-    bool     setDone;
-public:
-    bool ready() const { return setDone; }
-    intptr_t get() const {
-        MALLOC_ASSERT(setDone, ASSERT_TEXT);
-        return val;
-    }
-    void set(intptr_t newVal) { // note set() can be called before init()
-        val = newVal;
-        setDone = true;
-    }
-    // envName - environment variable to get controlled mode
-    void initReadEnv(const char *envName, intptr_t defaultVal);
-};
-
-// init() and printStatus() is called only under global initialization lock.
-// Race is possible between registerAllocation() and registerReleasing(),
-// harm is that up to single huge page releasing is missed (because failure
-// to get huge page is registered only 1st time), that is negligible.
-// setMode is also can be called concurrently.
-// Object must reside in zero-initialized memory
-// TODO: can we check for huge page presence during every 10th mmap() call
-// in case huge page is released by another process?
-class HugePagesStatus {
-private:
-    AllocControlledMode requestedMode; // changed only by user
-               // to keep enabled and requestedMode consistent
-    MallocMutex setModeLock;
-    size_t      pageSize;
-    intptr_t    needActualStatusPrint;
-
-    static void doPrintStatus(bool state, const char *stateName);
-public:
-    // both variables are changed only inside HugePagesStatus
-    intptr_t    enabled;
-    // Have we got huge pages at all? It's used when large hugepage-aligned
-    // region is releasing, to find can it release some huge pages or not.
-    intptr_t    wasObserved;
-
-    // If memory mapping size is a multiple of huge page size, some OS kernels
-    // can use huge pages transparently (i.e. even if not explicitly enabled).
-    // Use this when huge pages are requested.
-    size_t recommendedGranularity() const {
-        if (requestedMode.ready())
-            return requestedMode.get()? pageSize : 0;
-        else
-            return 2048*1024; // the mode is not yet known; assume typical 2MB huge pages
-    }
-    void printStatus();
-    void registerAllocation(bool available);
-    void registerReleasing(void* addr, size_t size);
-
-    void init(size_t hugePageSize) {
-        MALLOC_ASSERT(!hugePageSize || isPowerOfTwo(hugePageSize),
-                      "Only memory pages of a power-of-two size are supported.");
-        MALLOC_ASSERT(!pageSize, "Huge page size can't be set twice.");
-        pageSize = hugePageSize;
-
-        MallocMutex::scoped_lock lock(setModeLock);
-        requestedMode.initReadEnv("TBB_MALLOC_USE_HUGE_PAGES", 0);
-        enabled = pageSize && requestedMode.get();
-    }
-    void setMode(intptr_t newVal) {
-        MallocMutex::scoped_lock lock(setModeLock);
-        requestedMode.set(newVal);
-        enabled = pageSize && newVal;
-    }
-    void reset() {
-        pageSize = 0;
-        needActualStatusPrint = enabled = wasObserved = 0;
-    }
-};
-
-extern HugePagesStatus hugePages;
 
 /******* A helper class to support overriding malloc with scalable_malloc *******/
 #if MALLOC_CHECK_RECURSION

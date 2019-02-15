@@ -108,6 +108,10 @@ namespace tbb {
 #define ITT_STACK(precond, name, obj)      ((void)0)
 #endif /* !__TBB_TASK_GROUP_CONTEXT */
 
+#define ITT_TASK_GROUP(obj,name,parent)     itt_make_task_group_v7(internal::ITT_DOMAIN_MAIN,(void*)(obj),ALGORITHM,(void*)(parent),(parent!=NULL) ? ALGORITHM : FLOW_NULL,name)
+#define ITT_TASK_BEGIN(obj,name,id)         itt_task_begin_v7(internal::ITT_DOMAIN_MAIN,(void*)(id),ALGORITHM,(void*)(obj),ALGORITHM,name)
+#define ITT_TASK_END                        itt_task_end_v7(internal::ITT_DOMAIN_MAIN)
+
 #else /* !DO_ITT_NOTIFY */
 
 #define ITT_NOTIFY(name,obj)            ((void)0)
@@ -117,6 +121,10 @@ namespace tbb {
 #define ITT_SYNC_RENAME(obj, name)      ((void)0)
 #define ITT_STACK_CREATE(obj)           ((void)0)
 #define ITT_STACK(precond, name, obj)   ((void)0)
+
+#define ITT_TASK_GROUP(type,name,parent)    ((void)0)
+#define ITT_TASK_BEGIN(type,name,id)        ((void)0)
+#define ITT_TASK_END                        ((void)0)
 
 #endif /* !DO_ITT_NOTIFY */
 

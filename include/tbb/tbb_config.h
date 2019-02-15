@@ -528,7 +528,7 @@ There are four cases that are supported:
     #define __TBB_TASK_ISOLATION 1
 #endif /* __TBB_TASK_ISOLATION */
 
-#if TBB_PREVIEW_FLOW_GRAPH_TRACE || TBB_PREVIEW_ALGORITHM_TRACE
+#if (TBB_PREVIEW_FLOW_GRAPH_TRACE || TBB_PREVIEW_ALGORITHM_TRACE)
 // Users of flow-graph and algorithm trace need to explicitly link against the preview
 // library. This prevents the linker from implicitly linking an application with a preview
 // version of TBB and unexpectedly bringing in other community preview features, which
@@ -787,4 +787,9 @@ There are four cases that are supported:
 #define __TBB_PREVIEW_GFX_FACTORY               (__TBB_GFX_PRESENT && TBB_PREVIEW_FLOW_GRAPH_FEATURES && !__TBB_MIC_OFFLOAD \
                                                 && __TBB_FLOW_GRAPH_CPP11_FEATURES && __TBB_CPP11_TEMPLATE_ALIASES_PRESENT \
                                                 && __TBB_CPP11_FUTURE_PRESENT)
+
+#ifndef __TBB_PREVIEW_LIGHTWEIGHT_POLICY
+#define __TBB_PREVIEW_LIGHTWEIGHT_POLICY TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#endif
+
 #endif /* __TBB_tbb_config_H */

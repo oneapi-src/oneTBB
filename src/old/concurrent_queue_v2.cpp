@@ -210,7 +210,7 @@ concurrent_queue_base::concurrent_queue_base( size_t item_sz ) {
     __TBB_ASSERT( (size_t)&my_rep->head_counter % NFS_GetLineSize()==0, "alignment error" );
     __TBB_ASSERT( (size_t)&my_rep->tail_counter % NFS_GetLineSize()==0, "alignment error" );
     __TBB_ASSERT( (size_t)&my_rep->array % NFS_GetLineSize()==0, "alignment error" );
-    memset(my_rep,0,sizeof(concurrent_queue_rep));
+    memset(static_cast<void*>(my_rep),0,sizeof(concurrent_queue_rep));
     this->item_size = item_sz;
 }
 

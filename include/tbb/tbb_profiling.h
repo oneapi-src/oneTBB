@@ -139,7 +139,7 @@ namespace tbb {
         void* __TBB_EXPORTED_FUNC itt_load_pointer_with_acquire_v3(const void *src);
         void* __TBB_EXPORTED_FUNC itt_load_pointer_v3( const void* src );
 #if __TBB_ITT_STRUCTURE_API
-        enum itt_domain_enum { ITT_DOMAIN_FLOW=0 };
+        enum itt_domain_enum { ITT_DOMAIN_FLOW=0, ITT_DOMAIN_MAIN=1, ITT_DOMAIN_ALGO=2, ITT_NUM_DOMAINS };
 
         void __TBB_EXPORTED_FUNC itt_make_task_group_v7( itt_domain_enum domain, void *group, unsigned long long group_extra,
                                                          void *parent, unsigned long long parent_extra, string_index name_index );
@@ -280,5 +280,56 @@ namespace tbb {
 
     } // namespace internal
 } // namespace tbb
+
+#if TBB_PREVIEW_FLOW_GRAPH_TRACE
+#include <string>
+
+namespace tbb {
+namespace profiling {
+namespace interface10 {
+
+#if TBB_USE_THREADING_TOOLS && !(TBB_USE_THREADING_TOOLS == 2)
+class event {
+/** This class supports user event traces through itt.
+    Common use-case is tagging data flow graph tasks (data-id)
+    and visualization by Intel Advisor Flow Graph Analyzer (FGA)  **/
+//  TODO: Replace implementation by itt user event api.
+
+    const std::string my_name;
+
+    static void emit_trace(const std::string &input) {
+        itt_metadata_str_add( tbb::internal::ITT_DOMAIN_FLOW, NULL, tbb::internal::FLOW_NULL, tbb::internal::USER_EVENT, ( "FGA::DATAID::" + input ).c_str() );
+    }
+
+public:
+    event(const std::string &input)
+              : my_name( input )
+    { }
+
+    void emit() {
+        emit_trace(my_name);
+    }
+
+    static void emit(const std::string &description) {
+        emit_trace(description);
+    }
+
+};
+#else // TBB_USE_THREADING_TOOLS && !(TBB_USE_THREADING_TOOLS == 2)
+// Using empty struct if user event tracing is disabled:
+struct event {
+    event(const std::string &) { }
+
+    void emit() { }
+
+    static void emit(const std::string &) { }
+};
+#endif // TBB_USE_THREADING_TOOLS && !(TBB_USE_THREADING_TOOLS == 2)
+
+} // interfaceX
+using interface10::event;
+} // namespace profiling
+} // namespace tbb
+#endif // TBB_PREVIEW_FLOW_GRAPH_TRACE
 
 #endif /* __TBB_profiling_H */

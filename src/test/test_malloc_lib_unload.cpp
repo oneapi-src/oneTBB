@@ -187,22 +187,26 @@ int TestMain () {
 
     // warm-up run
     NativeParallelFor( 1, Run() );
-    /* 1st call to GetMemoryUsage() allocate some memory,
-       but it seems memory consumption stabilized after this.
-     */
-    GetMemoryUsage();
-    std::size_t memory_in_use = GetMemoryUsage();
-    ASSERT(memory_in_use == GetMemoryUsage(),
-           "Memory consumption should not increase after 1st GetMemoryUsage() call");
 
-    // expect that memory consumption stabilized after several runs
-    for (i=0; i<3; i++) {
-        std::size_t memory_in_use = GetMemoryUsage();
-        for (int j=0; j<10; j++)
-            NativeParallelFor( 1, Run() );
-        memory_leak = GetMemoryUsage() - memory_in_use;
-        if (memory_leak == 0)  // possibly too strong?
-            break;
+    {
+      /* 1st call to GetMemoryUsage() allocate some memory,
+         but it seems memory consumption stabilized after this.
+      */
+      GetMemoryUsage();
+      std::size_t memory_in_use = GetMemoryUsage();
+      ASSERT(memory_in_use == GetMemoryUsage(),
+             "Memory consumption should not increase after 1st GetMemoryUsage() call");
+    }
+    {
+        // expect that memory consumption stabilized after several runs
+        for (i=0; i<3; i++) {
+            std::size_t memory_in_use = GetMemoryUsage();
+            for (int j=0; j<10; j++)
+                NativeParallelFor( 1, Run() );
+            memory_leak = GetMemoryUsage() - memory_in_use;
+            if (memory_leak == 0)  // possibly too strong?
+                break;
+        }
     }
     if(3==i) {
         // not stabilized, could be leak

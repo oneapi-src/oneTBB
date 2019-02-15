@@ -2,6 +2,59 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 2018 Update 6
+TBB_INTERFACE_VERSION == 10006
+
+Changes (w.r.t. Intel TBB 2018 Update 5):
+
+Bugs fixed:
+
+- Fixed an issue with dynamic memory allocation replacement on Windows*
+    occurred for some versions of ucrtbase.dll.
+
+------------------------------------------------------------------------
+Intel TBB 2018 Update 5
+TBB_INTERFACE_VERSION == 10005
+
+Changes (w.r.t. Intel TBB 2018 Update 4):
+
+Preview Features:
+
+- Added user event tracing API for Intel(R) VTune(TM) Amplifier and
+    Flow Graph Analyzer.
+
+Bugs fixed:
+
+- Fixed the memory allocator to properly support transparent huge pages.
+- Removed dynamic exception specifications in tbbmalloc_proxy for C++11
+    and later (https://github.com/01org/tbb/issues/41).
+- Added -flifetime-dse=1 option when building with GCC on macOS*
+    (https://github.com/01org/tbb/issues/60).
+
+Open-source contributions integrated:
+
+- Added ARMv8 support by Siddhesh Poyarekar.
+- Avoid GCC warnings for clearing an object of non-trivial type
+    (https://github.com/01org/tbb/issues/54) by Daniel Arndt.
+
+------------------------------------------------------------------------
+Intel TBB 2018 Update 4
+TBB_INTERFACE_VERSION == 10004
+
+Changes (w.r.t. Intel TBB 2018 Update 3):
+
+Preview Features:
+
+- Improved support for Flow Graph Analyzer and Intel(R) VTune(TM)
+    Amplifier in the task scheduler and generic parallel algorithms.
+- Default device set for opencl_node now includes all the devices from
+    the first available OpenCL* platform.
+- Added lightweight policy for functional nodes in the flow graph. It
+    indicates that the node body has little work and should, if possible,
+    be executed immediately upon receiving a message, avoiding task
+    scheduling overhead.
+
+------------------------------------------------------------------------
 Intel TBB 2018 Update 3
 TBB_INTERFACE_VERSION == 10003
 

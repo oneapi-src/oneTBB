@@ -121,19 +121,19 @@ public:
     opencl_device( cl_device_id cl_d_id, device_id_type device_id ) : my_device_id( device_id ), my_cl_device_id( cl_d_id ), my_cl_command_queue( NULL ) {}
 
     std::string platform_profile() const {
-        return platform_info<std::string>( platform(), CL_PLATFORM_PROFILE );
+        return platform_info<std::string>( platform_id(), CL_PLATFORM_PROFILE );
     }
     std::string platform_version() const {
-        return platform_info<std::string>( platform(), CL_PLATFORM_VERSION );
+        return platform_info<std::string>( platform_id(), CL_PLATFORM_VERSION );
     }
     std::string platform_name() const {
-        return platform_info<std::string>( platform(), CL_PLATFORM_NAME );
+        return platform_info<std::string>( platform_id(), CL_PLATFORM_NAME );
     }
     std::string platform_vendor() const {
-        return platform_info<std::string>( platform(), CL_PLATFORM_VENDOR );
+        return platform_info<std::string>( platform_id(), CL_PLATFORM_VENDOR );
     }
     std::string platform_extensions() const {
-        return platform_info<std::string>( platform(), CL_PLATFORM_EXTENSIONS );
+        return platform_info<std::string>( platform_id(), CL_PLATFORM_EXTENSIONS );
     }
 
     template <typename T>
@@ -229,11 +229,11 @@ public:
         my_cl_command_queue = cmd_queue;
     }
 
-private:
-
-    cl_platform_id platform() const {
+    cl_platform_id platform_id() const {
         return device_info<cl_platform_id>( my_cl_device_id, CL_DEVICE_PLATFORM );
     }
+
+private:
 
     device_id_type my_device_id;
     cl_device_id my_cl_device_id;
@@ -1089,9 +1089,9 @@ private:
         }
 
         enforce_cl_retcode(my_devices.size() ? CL_SUCCESS : CL_INVALID_DEVICE, "No devices in the device list");
-        cl_platform_id platform_id = my_devices.begin()->platform();
+        cl_platform_id platform_id = my_devices.begin()->platform_id();
         for (opencl_device_list::iterator it = ++my_devices.begin(); it != my_devices.end(); ++it)
-            enforce_cl_retcode(it->platform() == platform_id ? CL_SUCCESS : CL_INVALID_PLATFORM, "All devices should be in the same platform");
+            enforce_cl_retcode(it->platform_id() == platform_id ? CL_SUCCESS : CL_INVALID_PLATFORM, "All devices should be in the same platform");
 
         std::vector<cl_device_id> cl_device_ids;
         for (auto d = my_devices.begin(); d != my_devices.end(); ++d) {
@@ -1181,7 +1181,12 @@ struct default_device_selector {
 struct default_device_filter {
     opencl_device_list operator()(const opencl_device_list &devices) {
         opencl_device_list dl;
-        dl.add(*devices.begin());
+        cl_platform_id platform_id = devices.begin()->platform_id();
+        for (opencl_device_list::const_iterator it = devices.cbegin(); it != devices.cend(); ++it) {
+            if (it->platform_id() == platform_id) {
+                dl.add(*it);
+            }
+        }
         return dl;
     }
 };

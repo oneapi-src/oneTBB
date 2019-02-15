@@ -171,7 +171,7 @@ void TestBasic( A& a ) {
         DisableStderr disableStderr;
 #endif
         p1 = a.allocate(too_big);
-    } catch ( std::bad_alloc ) {
+    } catch ( std::bad_alloc& ) {
         exception_caught = true;
     }
     ASSERT( exception_caught, "allocate expected to throw bad_alloc" );

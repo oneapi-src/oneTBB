@@ -226,10 +226,10 @@ public:
             blocks.push_back(TestBlock(idx));
             setBackRef(blocks.back().idx, &blocks.back().data);
         }
-        for (int i=0; i<cnt; i++)
+        for (size_t i=0; i<cnt; i++)
             ASSERT((Block*)&blocks[i].data == getBackRef(blocks[i].idx), NULL);
-        for (int i=cnt-1; i>=0; i--)
-            removeBackRef(blocks[i].idx);
+        for (size_t i=cnt; i>0; i--)
+            removeBackRef(blocks[i-1].idx);
     }
 };
 
@@ -394,16 +394,16 @@ int putMallocMem(intptr_t /*pool_id*/, void *ptr, size_t bytes)
 }
 
 class StressLOCacheWork: NoAssign {
-    rml::MemoryPool *mallocPool;
+    rml::MemoryPool *my_mallocPool;
 public:
-    StressLOCacheWork(rml::MemoryPool *mallocPool) : mallocPool(mallocPool) {}
+    StressLOCacheWork(rml::MemoryPool *mallocPool) : my_mallocPool(mallocPool) {}
     void operator()(int) const {
         for (size_t sz=minLargeObjectSize; sz<1*1024*1024;
              sz+=LargeObjectCache::largeBlockCacheStep) {
-            void *ptr = pool_malloc(mallocPool, sz);
+            void *ptr = pool_malloc(my_mallocPool, sz);
             ASSERT(ptr, "Memory was not allocated");
             memset(ptr, sz, sz);
-            pool_free(mallocPool, ptr);
+            pool_free(my_mallocPool, ptr);
         }
     }
 };
@@ -768,7 +768,7 @@ void TestHeapLimit()
 
 void checkNoHugePages()
 {
-    ASSERT(!hugePages.enabled, "scalable_allocation_mode "
+    ASSERT(!hugePages.isEnabled, "scalable_allocation_mode "
            "must have priority over environment variable");
 }
 
@@ -1130,21 +1130,91 @@ void *findCacheLine(void *p) {
 void TestSlabAlignment() {
     const size_t min_sz = 8;
     const int space = 2*16*1024; // fill at least 2 slabs
-    void *ptrs[space / min_sz];  // the worst case is min_sz byte object
+    void *pointers[space / min_sz];  // the worst case is min_sz byte object
 
     for (size_t sz = min_sz; sz <= 64; sz *= 2) {
-        for (int i = 0; i < space/sz; i++) {
-            ptrs[i] = scalable_malloc(sz);
-            Block *block = (Block *)alignDown(ptrs[i], slabSize);
-            MALLOC_ASSERT(findCacheLine(&block->isFull) != findCacheLine(ptrs[i]),
+        for (size_t i = 0; i < space/sz; i++) {
+            pointers[i] = scalable_malloc(sz);
+            Block *block = (Block *)alignDown(pointers[i], slabSize);
+            MALLOC_ASSERT(findCacheLine(&block->isFull) != findCacheLine(pointers[i]),
                           "A user object must not share a cache line with slab control structures.");
             MALLOC_ASSERT(findCacheLine(&block->next) != findCacheLine(&block->nextPrivatizable),
                           "GlobalBlockFields and LocalBlockFields must be on different cache lines.");
         }
-        for (int i = 0; i < space/sz; i++)
-            scalable_free(ptrs[i]);
+        for (size_t i = 0; i < space/sz; i++)
+            scalable_free(pointers[i]);
     }
 }
+
+#include "harness.h"
+#include "harness_memory.h"
+
+// TODO: Consider adding Huge Pages support on macOS (special mmap flag).
+// Transparent Huge pages support could be enabled by different system parsing mechanism,
+// because there is no /proc/meminfo on macOS
+#if __linux__
+void TestTHP() {
+    // Get backend from default memory pool
+    rml::internal::Backend *backend = &(defaultMemPool->extMemPool.backend);
+
+    // Configure malloc to use huge pages
+    scalable_allocation_mode(USE_HUGE_PAGES, 1);
+    MALLOC_ASSERT(hugePages.isEnabled, "Huge pages should be enabled via scalable_allocation_mode");
+
+    const int HUGE_PAGE_SIZE = 2 * 1024 * 1024;
+
+    // allocCount transparent huge pages should be allocated
+    const int allocCount = 10;
+
+    // Allocate huge page aligned memory regions to track system
+    // counters for transparent huge pages
+    void*  allocPtrs[allocCount];
+
+    // Wait for the system to update process memory info files after other tests
+    Harness::Sleep(4000);
+
+    // Parse system info regarding current THP status
+    size_t currentSystemTHPCount = getSystemTHPCount();
+    size_t currentSystemTHPAllocatedSize = getSystemTHPAllocatedSize();
+
+    for (int i = 0; i < allocCount; i++) {
+        // Allocation size have to be aligned on page size
+        size_t allocSize = HUGE_PAGE_SIZE - (i * 1000);
+
+        // Map memory
+        allocPtrs[i] = backend->allocRawMem(allocSize);
+
+        MALLOC_ASSERT(allocPtrs[i], "Allocation not succeded.");
+        MALLOC_ASSERT(allocSize == HUGE_PAGE_SIZE,
+            "Allocation size have to be aligned on Huge Page size internaly.");
+
+        // First touch policy - no real pages allocated by OS without accessing the region
+        memset(allocPtrs[i], 1, allocSize);
+
+        MALLOC_ASSERT(isAligned(allocPtrs[i], HUGE_PAGE_SIZE),
+            "The pointer returned by scalable_malloc is not alligned on huge page size.");
+    }
+
+    // Wait for the system to update process memory info files after allocations
+    Harness::Sleep(4000);
+
+    // Generaly, kernel tries to allocate transparent huge pages, but sometimes it cannot do this
+    // (tested on SLES 11/12), so consider this system info checks as a remark.
+    // Also, some systems can allocate more memory then needed in background (tested on Ubuntu 14.04)
+    size_t newSystemTHPCount = getSystemTHPCount();
+    size_t newSystemTHPAllocatedSize = getSystemTHPAllocatedSize();
+    if ((newSystemTHPCount - currentSystemTHPCount) < allocCount
+            && (newSystemTHPAllocatedSize - currentSystemTHPAllocatedSize) / (2 * 1024) < allocCount) {
+        REPORT( "Warning: the system didn't allocate needed amount of THPs.\n" );
+    } 
+
+    // Test memory unmap
+    for (int i = 0; i < allocCount; i++) {
+        MALLOC_ASSERT(backend->freeRawMem(allocPtrs[i], HUGE_PAGE_SIZE),
+                "Something went wrong during raw memory free");
+    }
+}
+#endif // __linux__
 
 int TestMain () {
     scalable_allocation_mode(USE_HUGE_PAGES, 0);
@@ -1176,5 +1246,14 @@ int TestMain () {
     TestHeapLimit();
     TestLOC();
     TestSlabAlignment();
+
+#if __linux__
+    if (isTHPEnabledOnMachine()) {
+        TestTHP();
+    } else {
+        REMARK("Transparent Huge Pages is not supported on the system - skipped the test\n");
+    }
+#endif
     return Harness::Done;
 }
+

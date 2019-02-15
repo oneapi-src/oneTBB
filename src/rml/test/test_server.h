@@ -93,7 +93,7 @@ public:
     }
     ~MyJob() {
         // Overwrite so that accidental use after destruction can be detected.
-        memset(this,-1,sizeof(*this));
+        memset(static_cast<void*>(this),-1,sizeof(*this));
     }
 };
 

@@ -585,7 +585,9 @@ int TestMain() {
     for( int p=MinThread; p<=MaxThread; ++p ) {
        test_concurrency(p);
    }
-
+#if __TBB_PREVIEW_LIGHTWEIGHT_POLICY
+   lightweight_testing::test<tbb::flow::function_node>(10);
+#endif
 #if TBB_PREVIEW_FLOW_GRAPH_FEATURES
     test_extract<tbb::flow::rejecting>();
     test_extract<tbb::flow::queueing>();

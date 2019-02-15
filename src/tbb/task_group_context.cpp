@@ -200,6 +200,16 @@ task_group_context::~task_group_context () {
 }
 
 void task_group_context::init () {
+#if __TBB_ITT_STRUCTURE_API
+    internal::string_index name = internal::CUSTOM_CTX;
+    // Check version of task group context to avoid reporting misleading identifier.
+    if( ( my_version_and_traits & version_mask ) >= 3 ) {
+        __TBB_ASSERT ( my_name >= 0 && my_name < NUM_STRINGS, "Context description out of valid range" );
+        name = my_name;
+    }
+    ITT_TASK_GROUP(this, name, NULL);
+    suppress_unused_warning(name); // in case if ITT_TASK_GROUP is no-op.
+#endif
     __TBB_STATIC_ASSERT ( sizeof(my_version_and_traits) >= 4, "Layout of my_version_and_traits must be reconsidered on this platform" );
     __TBB_STATIC_ASSERT ( sizeof(task_group_context) == 2 * NFS_MaxLineSize, "Context class has wrong size - check padding and members alignment" );
     __TBB_ASSERT ( (uintptr_t(this) & (sizeof(my_cancellation_requested) - 1)) == 0, "Context is improperly aligned" );

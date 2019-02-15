@@ -145,7 +145,7 @@ void Scheduler_OneTimeInitialization ( bool itt_present );
 
 #if __TBB_ITT_STRUCTURE_API
 
-static __itt_domain *fgt_domain = NULL;
+static __itt_domain *tbb_domains[ITT_NUM_DOMAINS] = {};
 
 struct resource_string {
     const char *str;
@@ -168,8 +168,12 @@ static __itt_string_handle *ITT_get_string_handle(int idx) {
 }
 
 static void ITT_init_domains() {
-    fgt_domain = __itt_domain_create( _T("tbb.flow") );
-    fgt_domain->flags = 1;
+    tbb_domains[ITT_DOMAIN_MAIN] = __itt_domain_create( _T("tbb") );
+    tbb_domains[ITT_DOMAIN_MAIN]->flags = 1;
+    tbb_domains[ITT_DOMAIN_FLOW] = __itt_domain_create( _T("tbb.flow") );
+    tbb_domains[ITT_DOMAIN_FLOW]->flags = 1;
+    tbb_domains[ITT_DOMAIN_ALGO] = __itt_domain_create( _T("tbb.algorithm") );
+    tbb_domains[ITT_DOMAIN_ALGO]->flags = 1;
 }
 
 static void ITT_init_strings() {
@@ -294,11 +298,13 @@ void call_itt_notify_v5(int /*t*/, void* /*ptr*/) {}
 #if __TBB_ITT_STRUCTURE_API
 
 #if DO_ITT_NOTIFY
-
 const __itt_id itt_null_id = {0, 0, 0};
 
 static inline __itt_domain* get_itt_domain( itt_domain_enum idx ) {
-    return ( idx == ITT_DOMAIN_FLOW ) ? fgt_domain : NULL;
+    if (tbb_domains[idx] == NULL) {
+        ITT_DoOneTimeInitialization();
+    }
+    return tbb_domains[idx];
 }
 
 static inline void itt_id_make(__itt_id *id, void* addr, unsigned long long extra) {
@@ -355,7 +361,9 @@ void itt_task_begin_v7( itt_domain_enum domain, void *task, unsigned long long t
     if ( __itt_domain *d = get_itt_domain( domain ) ) {
         __itt_id task_id = itt_null_id;
         __itt_id parent_id = itt_null_id;
-        itt_id_make( &task_id, task, task_extra );
+        if ( task ) {
+            itt_id_make( &task_id, task, task_extra );
+        }
         if ( parent ) {
             itt_id_make( &parent_id, parent, parent_extra );
         }

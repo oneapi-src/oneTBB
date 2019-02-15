@@ -378,7 +378,7 @@ static bool InsertTrampoline(void *inpAddr, void *targetAddr, const char ** opco
     if (!VirtualProtect(inpAddr, MAX_PROBE_SIZE, PAGE_EXECUTE_WRITECOPY, &origProt))
         return FALSE;
 
-    UINT opcodeIdx = 0;
+    const char* pattern = NULL;
     if ( origFunc ){ // Need to store original function code
         UCHAR * const codePtr = (UCHAR *)inpAddr;
         if ( *codePtr == 0xE9 ){ // JMP relative instruction
@@ -389,12 +389,12 @@ static bool InsertTrampoline(void *inpAddr, void *targetAddr, const char ** opco
             origFunc = NULL; // now it must be ignored by InsertTrampoline32/64
         } else {
             // find the right opcode pattern
-            opcodeIdx = CheckOpcodes( opcodes, inpAddr, /*abortOnError=*/true );
+            UINT opcodeIdx = CheckOpcodes( opcodes, inpAddr, /*abortOnError=*/true );
             __TBB_ASSERT( opcodeIdx > 0, "abortOnError ignored in CheckOpcodes?" );
+            pattern = opcodes[opcodeIdx-1];  // -1 compensates for +1 in CheckOpcodes
         }
     }
 
-    const char* pattern = opcodeIdx>0? opcodes[opcodeIdx-1]: NULL; // -1 compensates for +1 in CheckOpcodes
     probeSize = InsertTrampoline32(inpAddr, targetAddr, pattern, origFunc);
     if (!probeSize)
         probeSize = InsertTrampoline64(inpAddr, targetAddr, pattern, origFunc);

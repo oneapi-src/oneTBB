@@ -298,7 +298,8 @@ namespace initialization_tests {
         tbb::aligned_space<atomic_t> non_zeroed_storage;
         enum {fill_value = 0xFF };
         test_initialization_fixture(){
-            memset(non_zeroed_storage.begin(),fill_value,sizeof(non_zeroed_storage));
+            memset(static_cast<void*>(non_zeroed_storage.begin()),fill_value,
+                   sizeof(non_zeroed_storage));
             ASSERT( char(fill_value)==*(reinterpret_cast<char*>(non_zeroed_storage.begin()))
                     ,"failed to fill the storage; memset error?");
         }
