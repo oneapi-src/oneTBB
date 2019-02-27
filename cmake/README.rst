@@ -256,7 +256,7 @@ The use case is applicable for package maintainers who create own TBB packages a
 
  The package is packed from ``/my/package/content`` directory.
 
- ``cmake -DINSTALL_DIR=/my/package/content/lib/cmake/TBB -DTBB_VERSION=/my/package/content/include/tbb/tbb_stddef.h -P tbb_config_installer.cmake`` (default relative paths will be used)
+ ``cmake -DINSTALL_DIR=/my/package/content/lib/cmake/TBB -DSYSTEM_NAME=Linux -DTBB_VERSION_FILE=/my/package/content/include/tbb/tbb_stddef.h -P tbb_config_installer.cmake`` (default relative paths will be used)
 
 **Install TBB CMake configuration files for installed TBB.**
 
@@ -280,7 +280,7 @@ but it can be overridden by optional parameters ``TBB_VERSION_FILE`` or ``TBB_VE
  TBB is installed to ``/usr`` directory.
  In order to create TBBConfig.cmake and TBBConfigVersion.cmake in ``/usr/lib/cmake/TBB`` run
 
- ``cmake -DINSTALL_DIR=/usr/lib/cmake/TBB -DLIB_PATH=/usr/lib -DINC_PATH=/usr/include -P tbb_config_installer.cmake``.
+ ``cmake -DINSTALL_DIR=/usr/lib/cmake/TBB -DSYSTEM_NAME=Linux -DLIB_PATH=/usr/lib -DINC_PATH=/usr/include -P tbb_config_installer.cmake``.
 
 TBBGet
 ^^^^^^
