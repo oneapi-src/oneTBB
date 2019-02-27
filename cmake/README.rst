@@ -238,6 +238,8 @@ The use case is applicable for package maintainers who create own TBB packages a
 ===========================================  ===========================================================
               Parameter                                      Description
 ===========================================  ===========================================================
+``INSTALL_DIR <directory>``                  Directory to install CMake configuration files
+``SYSTEM_NAME Linux|Darwin``                 OS name to generate config files for
 ``TBB_VERSION_FILE <version_file>``          Path to ``tbb_stddef.h`` to parse version from and
                                              write it to TBBConfigVersion.cmake
 ``TBB_VERSION <major>.<minor>.<interface>``  Directly specified TBB version;
