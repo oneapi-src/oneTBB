@@ -210,6 +210,78 @@ Variables set during Intel TBB configuration:
 ``TBB_INTERFACE_VERSION``  Intel TBB interface version
 =========================  ================================================
 
+TBBInstallConfig
+^^^^^^^^^^^^^^^^
+
+Module for generation and installation of TBB CMake configuration files (TBBConfig.cmake and TBBConfigVersion.cmake files) on Linux and macOS.
+
+Provides the following functions:
+
+ .. code:: cmake
+
+  tbb_install_config(INSTALL_DIR <install_dir> SYSTEM_NAME Linux|Darwin
+                     [TBB_VERSION <major>.<minor>.<interface>|TBB_VERSION_FILE <version_file>]
+                     [LIB_REL_PATH <lib_rel_path> INC_REL_PATH <inc_rel_path>]
+                     [LIB_PATH <lib_path> INC_PATH <inc_path>])``
+
+**Note: the module overwrites existing TBBConfig.cmake and TBBConfigVersion.cmake files in <install_dir>.**
+
+``tbb_config_installer.cmake`` allows to run ``TBBInstallConfig.cmake`` from command line.
+It accepts the same parameters as ``tbb_install_config`` function, run ``cmake -P tbb_config_installer.cmake`` to get help.
+
+Use cases
+"""""""""
+**Prepare TBB CMake configuration files for custom TBB package.**
+
+The use case is applicable for package maintainers who create own TBB packages and want to create TBBConfig.cmake and TBBConfigVersion.cmake for these packages.
+
+===========================================  ===========================================================
+              Parameter                                      Description
+===========================================  ===========================================================
+``TBB_VERSION_FILE <version_file>``          Path to ``tbb_stddef.h`` to parse version from and
+                                             write it to TBBConfigVersion.cmake
+``TBB_VERSION <major>.<minor>.<interface>``  Directly specified TBB version;
+                                             alternative to ``TBB_VERSION_FILE`` parameter
+``LIB_REL_PATH <lib_rel_path>``              Relative path to TBB binaries, default: ``../..``
+``INC_REL_PATH <inc_rel_path>``              Relative path to TBB headers, default: ``../../../include``
+===========================================  ===========================================================
+
+*Example*
+
+ Assume your package is installed to the following structure:
+
+ * Binaries go to ``<prefix>/lib``
+ * Headers go to ``<prefix>/include``
+ * CMake configuration files go to ``<prefix>/lib/cmake/<package>``
+
+ The package is packed from ``/my/package/content`` directory.
+
+ ``cmake -DINSTALL_DIR=/my/package/content/lib/cmake/TBB -DTBB_VERSION=/my/package/content/include/tbb/tbb_stddef.h -P tbb_config_installer.cmake`` (default relative paths will be used)
+
+**Install TBB CMake configuration files for installed TBB.**
+
+The use case is applicable for users who have installed TBB, but do not have (or have incorrect) CMake configuration files for this TBB.
+
+============================  ==============================================
+      Parameter                            Description
+============================  ==============================================
+``INSTALL_DIR <directory>``   Directory to install CMake configuration files
+``SYSTEM_NAME Linux|Darwin``  OS name to generate config files for
+``LIB_PATH <lib_path>``       Path to installed TBB binaries
+``INC_PATH <inc_path>``       Path to installed TBB headers
+============================  ==============================================
+
+``LIB_PATH`` and ``INC_PATH`` will be converted to relative paths based on ``INSTALL_DIR``.
+By default TBB version will be parsed from ``<inc_path>/tbb/tbb_stddef.h``,
+but it can be overridden by optional parameters ``TBB_VERSION_FILE`` or ``TBB_VERSION``.
+
+*Example*
+
+ TBB is installed to ``/usr`` directory.
+ In order to create TBBConfig.cmake and TBBConfigVersion.cmake in ``/usr/lib/cmake/TBB`` run
+
+ ``cmake -DINSTALL_DIR=/usr/lib/cmake/TBB -DLIB_PATH=/usr/lib -DINC_PATH=/usr/include -P tbb_config_installer.cmake``.
+
 TBBGet
 ^^^^^^
 
@@ -234,7 +306,7 @@ Provides the following functions:
 TBBMakeConfig
 ^^^^^^^^^^^^^
 
-Module for making TBBConfig in ``Intel(R) Threading Building Blocks (Intel(R) TBB)`` binary package.
+Module for making TBBConfig in `official TBB binary packages published on GitHub <https://github.com/01org/tbb/releases>`_.
 
 This module is to be used for packages that do not have TBBConfig.
 

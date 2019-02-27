@@ -162,7 +162,7 @@ endif()")
     else()
         set(_tbb_config_template TBBConfig.cmake.in)
     endif()
-    configure_file(${_tbb_cmake_module_path}/templates/${_tbb_config_template}   ${tbb_config_dir}/TBBConfig.cmake @ONLY)
+    configure_file(${_tbb_cmake_module_path}/templates/${_tbb_config_template}   ${tbb_config_dir}/TBBConfigInternal.cmake @ONLY)
     configure_file(${_tbb_cmake_module_path}/templates/TBBConfigVersion.cmake.in ${tbb_config_dir}/TBBConfigVersion.cmake @ONLY)
 
     set(${tbb_MK_CONFIG_DIR} ${tbb_config_dir} PARENT_SCOPE)
