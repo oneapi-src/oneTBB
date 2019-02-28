@@ -31,6 +31,7 @@ function(tbb_install_config)
     cmake_parse_arguments(tbb_IC "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     get_filename_component(config_install_dir ${tbb_IC_INSTALL_DIR} ABSOLUTE)
+    file(MAKE_DIRECTORY ${config_install_dir})
 
     # --- TBB_LIB_REL_PATH handling ---
     set(TBB_LIB_REL_PATH "../..")
