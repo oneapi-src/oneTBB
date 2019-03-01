@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
 #ifndef __TBB_concurrent_unordered_set_H
 #define __TBB_concurrent_unordered_set_H
 
+#include "internal/_template_helpers.h"
 #include "internal/_concurrent_unordered_impl.h"
 
 namespace tbb
@@ -39,7 +40,8 @@ protected:
     typedef Key value_type;
     typedef Key key_type;
     typedef Hash_compare hash_compare;
-    typedef typename Allocator::template rebind<value_type>::other allocator_type;
+    typedef typename tbb::internal::allocator_rebind<Allocator, value_type>::type allocator_type;
+
     enum { allow_multimapping = Allow_multimapping };
 
     concurrent_unordered_set_traits() : my_hash_compare() {}
@@ -182,6 +184,45 @@ public:
 
 };
 
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+
+namespace internal {
+using namespace tbb::internal;
+
+template <template<typename...> typename Set, typename T, typename... Args>
+using cu_set_t = Set <
+    T,
+    std::conditional_t< (sizeof...(Args)>0) && !is_allocator_v< pack_element_t<0, Args...> >,
+                        pack_element_t<0, Args...>, tbb_hash<T> >,
+    std::conditional_t< (sizeof...(Args)>1) && !is_allocator_v< pack_element_t<1, Args...> >,
+                        pack_element_t<1, Args...>, std::equal_to<T> >,
+    std::conditional_t< (sizeof...(Args)>0) && is_allocator_v< pack_element_t<sizeof...(Args)-1, Args...> >,
+                        pack_element_t<sizeof...(Args)-1, Args...>, tbb_allocator<T> >
+>;
+}
+
+// Deduction guide for the constructor from two iterators
+template<typename I>
+concurrent_unordered_set(I, I)
+-> internal::cu_set_t<concurrent_unordered_set, internal::iterator_value_t<I>>;
+
+// Deduction guide for the constructor from two iterators and hasher/equality/allocator
+template<typename I, typename... Args>
+concurrent_unordered_set(I, I, size_t, Args...)
+-> internal::cu_set_t<concurrent_unordered_set, internal::iterator_value_t<I>, Args...>;
+
+// Deduction guide for the constructor from an initializer_list
+template<typename T>
+concurrent_unordered_set(std::initializer_list<T>)
+-> internal::cu_set_t<concurrent_unordered_set, T>;
+
+// Deduction guide for the constructor from an initializer_list and hasher/equality/allocator
+template<typename T, typename... Args>
+concurrent_unordered_set(std::initializer_list<T>, size_t, Args...)
+-> internal::cu_set_t<concurrent_unordered_set, T, Args...>;
+
+#endif /*__TBB_CPP17_DEDUCTION_GUIDES_PRESENT */
+
 template <typename Key, typename Hasher = tbb::tbb_hash<Key>, typename Key_equality = std::equal_to<Key>,
          typename Allocator = tbb::tbb_allocator<Key> >
 class concurrent_unordered_multiset :
@@ -319,6 +360,30 @@ public:
         : base_type(table, a)
     {}
 };
+
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+
+// Deduction guide for the constructor from two iterators
+template<typename I>
+concurrent_unordered_multiset(I, I)
+-> internal::cu_set_t<concurrent_unordered_multiset, internal::iterator_value_t<I>>;
+
+// Deduction guide for the constructor from two iterators and hasher/equality/allocator
+template<typename I, typename... Args>
+concurrent_unordered_multiset(I, I, size_t, Args...)
+-> internal::cu_set_t<concurrent_unordered_multiset, internal::iterator_value_t<I>, Args...>;
+
+// Deduction guide for the constructor from an initializer_list
+template<typename T>
+concurrent_unordered_multiset(std::initializer_list<T>)
+-> internal::cu_set_t<concurrent_unordered_multiset, T>;
+
+// Deduction guide for the constructor from an initializer_list and hasher/equality/allocator
+template<typename T, typename... Args>
+concurrent_unordered_multiset(std::initializer_list<T>, size_t, Args...)
+-> internal::cu_set_t<concurrent_unordered_multiset, T, Args...>;
+
+#endif /* __TBB_CPP17_DEDUCTION_GUIDES_PRESENT */
 } // namespace interface5
 
 using interface5::concurrent_unordered_set;

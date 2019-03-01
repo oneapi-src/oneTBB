@@ -324,7 +324,7 @@
 				A1F593C70B8F0E6E00073279 /* Release64 */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug64;
+			defaultConfigurationName = Release64;
 		};
 		1DEB923508733DC60010E9CD /* Build configuration list for PBXProject "convex_hull" */ = {
 			isa = XCConfigurationList;
@@ -333,7 +333,7 @@
 				A1F593C90B8F0E6E00073279 /* Release64 */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug64;
+			defaultConfigurationName = Release64;
 		};
 		A1F594EE0B8F4B8200073279 /* Build configuration list for PBXNativeTarget "convex_hull_bench" */ = {
 			isa = XCConfigurationList;
@@ -342,7 +342,7 @@
 				A1F594F20B8F4B8200073279 /* Release64 */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug64;
+			defaultConfigurationName = Release64;
 		};
 /* End XCConfigurationList section */
 	};

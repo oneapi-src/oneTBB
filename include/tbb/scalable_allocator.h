@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -193,6 +193,7 @@ void *pool_aligned_realloc(MemoryPool* mPool, void *ptr, size_t size, size_t ali
 bool  pool_reset(MemoryPool* memPool);
 bool  pool_free(MemoryPool *memPool, void *object);
 MemoryPool *pool_identify(void *object);
+size_t pool_msize(MemoryPool *memPool, void *object);
 
 } // namespace rml
 
@@ -208,7 +209,11 @@ MemoryPool *pool_identify(void *object);
 #endif
 
 #if __TBB_ALLOCATOR_CONSTRUCT_VARIADIC
- #include <utility> // std::forward
+#include <utility> // std::forward
+#endif
+
+#if __TBB_CPP17_MEMORY_RESOURCE_PRESENT
+#include <memory_resource>
 #endif
 
 namespace tbb {
@@ -314,6 +319,48 @@ inline bool operator==( const scalable_allocator<T>&, const scalable_allocator<U
 
 template<typename T, typename U>
 inline bool operator!=( const scalable_allocator<T>&, const scalable_allocator<U>& ) {return false;}
+
+#if __TBB_CPP17_MEMORY_RESOURCE_PRESENT
+
+namespace internal {
+
+//! C++17 memory resource implementation for scalable allocator
+//! ISO C++ Section 23.12.2
+class scalable_resource_impl : public std::pmr::memory_resource {
+private:
+    void* do_allocate(size_t bytes, size_t alignment) override {
+        void* ptr = scalable_aligned_malloc( bytes, alignment );
+        if (!ptr) {
+            throw_exception(std::bad_alloc());
+        }
+        return ptr;
+    }
+
+    void do_deallocate(void* ptr, size_t /*bytes*/, size_t /*alignment*/) override {
+        scalable_free(ptr);
+    }
+
+    //! Memory allocated by one instance of scalable_resource_impl could be deallocated by any
+    //! other instance of this class
+    bool do_is_equal(const std::pmr::memory_resource& other) const noexcept override {
+        return this == &other ||
+#if __TBB_USE_OPTIONAL_RTTI
+            dynamic_cast<const scalable_resource_impl*>(&other) != NULL;
+#else
+            false;
+#endif
+    }
+};
+
+} // namespace internal
+
+//! Global scalable allocator memory resource provider
+inline std::pmr::memory_resource* scalable_memory_resource() noexcept {
+    static tbb::internal::scalable_resource_impl scalable_res;
+    return &scalable_res;
+}
+
+#endif /* __TBB_CPP17_MEMORY_RESOURCE_PRESENT */
 
 } // namespace tbb
 

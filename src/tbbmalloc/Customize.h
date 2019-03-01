@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
 // customizing MALLOC_ASSERT macro
 #include "tbb/tbb_stddef.h"
 #define MALLOC_ASSERT(assertion, message) __TBB_ASSERT(assertion, message)
+#define MALLOC_ASSERT_EX(assertion, message) __TBB_ASSERT_EX(assertion, message)
 
 #ifndef MALLOC_DEBUG
 #define MALLOC_DEBUG TBB_USE_DEBUG

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -40,19 +40,22 @@
     #include <cstddef>
 #endif
 
-// note that when ICC or Clang is in use, __TBB_GCC_VERSION might not fully match
+// Note that when ICC or Clang is in use, __TBB_GCC_VERSION might not fully match
 // the actual GCC version on the system.
 #define __TBB_GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
 
-// Since GNU libstdc++ does not have a convenient macro for its version,
-// we rely on the version of GCC or the user-specified macro below.
-// The format of TBB_USE_GLIBCXX_VERSION should match the __TBB_GCC_VERSION above,
-// e.g. it should be set to 40902 for libstdc++ coming with GCC 4.9.2.
+// Prior to GCC 7, GNU libstdc++ did not have a convenient version macro.
+// Therefore we use different ways to detect its version.
 #ifdef TBB_USE_GLIBCXX_VERSION
+// The version is explicitly specified in our public TBB_USE_GLIBCXX_VERSION macro.
+// Its format should match the __TBB_GCC_VERSION above, e.g. 70301 for libstdc++ coming with GCC 7.3.1.
 #define __TBB_GLIBCXX_VERSION TBB_USE_GLIBCXX_VERSION
+#elif _GLIBCXX_RELEASE && _GLIBCXX_RELEASE != __GNUC__
+// Reported versions of GCC and libstdc++ do not match; trust the latter
+#define __TBB_GLIBCXX_VERSION (_GLIBCXX_RELEASE*10000)
 #elif __GLIBCPP__ || __GLIBCXX__
+// The version macro is not defined or matches the GCC version; use __TBB_GCC_VERSION
 #define __TBB_GLIBCXX_VERSION __TBB_GCC_VERSION
-//TODO: analyze __GLIBCXX__ instead of __TBB_GCC_VERSION ?
 #endif
 
 #if __clang__
@@ -211,7 +214,8 @@
     #define __TBB_ALIGNAS_PRESENT                           (__INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1500)
     #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            (__INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1210)
     #define __TBB_CPP14_INTEGER_SEQUENCE_PRESENT            (__cplusplus >= 201402L)
-    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            __INTEL_COMPILER > 1900
+    #define __TBB_CPP14_VARIABLE_TEMPLATES_PRESENT          (__cplusplus >= 201402L)
+    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            (__INTEL_COMPILER > 1900)
     #define __TBB_CPP17_INVOKE_RESULT_PRESENT               (__cplusplus >= 201703L)
 #elif __clang__
 /** TODO: these options need to be rechecked **/
@@ -242,6 +246,7 @@
     #define __TBB_ALIGNAS_PRESENT                           __has_feature(cxx_alignas)
     #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            __has_feature(cxx_alias_templates)
     #define __TBB_CPP14_INTEGER_SEQUENCE_PRESENT            (__cplusplus >= 201402L)
+    #define __TBB_CPP14_VARIABLE_TEMPLATES_PRESENT          (__has_feature(cxx_variable_templates))
     #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            (__has_feature(__cpp_deduction_guides))
     #define __TBB_CPP17_INVOKE_RESULT_PRESENT               (__has_feature(__cpp_lib_is_invocable))
 #elif __GNUC__
@@ -269,7 +274,8 @@
     #define __TBB_ALIGNAS_PRESENT                           (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40800)
     #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GCC_VERSION >= 40700)
     #define __TBB_CPP14_INTEGER_SEQUENCE_PRESENT            (__cplusplus >= 201402L     && __TBB_GCC_VERSION >= 50000)
-    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            (__cpp_deduction_guides >= 201606)
+    #define __TBB_CPP14_VARIABLE_TEMPLATES_PRESENT          (__cplusplus >= 201402L     && __TBB_GCC_VERSION >= 50000)
+    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            (__cpp_deduction_guides >= 201606L)
     #define __TBB_CPP17_INVOKE_RESULT_PRESENT               (__cplusplus >= 201703L     && __TBB_GCC_VERSION >= 70000)
 #elif _MSC_VER
     // These definitions are also used with Intel C++ Compiler in "default" mode (__INTEL_CXX11_MODE__ == 0);
@@ -295,8 +301,10 @@
     #define __TBB_ALIGNAS_PRESENT                           (_MSC_VER >= 1900)
     #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            (_MSC_VER >= 1800)
     #define __TBB_CPP14_INTEGER_SEQUENCE_PRESENT            (_MSC_VER >= 1900)
-    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            (_MSVC_LANG >= 201703L)
-    #define __TBB_CPP17_INVOKE_RESULT_PRESENT               (__TBB_MSVC_CPP_VER >= 201703L && _MSC_VER >= 1914)
+    /* Variable templates are supported in VS2015 Update 2 or later */
+    #define __TBB_CPP14_VARIABLE_TEMPLATES_PRESENT          (_MSC_FULL_VER >= 190023918 && (!__INTEL_COMPILER || __INTEL_COMPILER >= 1700))
+    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            (_MSVC_LANG >= 201703L && _MSC_VER >= 1914)
+    #define __TBB_CPP17_INVOKE_RESULT_PRESENT               (_MSVC_LANG >= 201703L && _MSC_VER >= 1911)
 #else
     #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          0
     #define __TBB_CPP11_RVALUE_REF_PRESENT                  0
@@ -317,6 +325,7 @@
     #define __TBB_ALIGNAS_PRESENT                           0
     #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            0
     #define __TBB_CPP14_INTEGER_SEQUENCE_PRESENT            (__cplusplus >= 201402L)
+    #define __TBB_CPP14_VARIABLE_TEMPLATES_PRESENT          0
     #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            0
     #define __TBB_CPP17_INVOKE_RESULT_PRESENT               0
 #endif
@@ -337,7 +346,7 @@
 
 // In GCC, std::move_if_noexcept appeared later than noexcept
 #define __TBB_MOVE_IF_NOEXCEPT_PRESENT                      (__TBB_NOEXCEPT_PRESENT && (__TBB_GLIBCXX_VERSION >= 40700 || _MSC_VER >= 1900 || _LIBCPP_VERSION))
-#define __TBB_ALLOCATOR_TRAITS_PRESENT                      (__cplusplus >= 201103L && _LIBCPP_VERSION  || _MSC_VER >= 1700 ||  \
+#define __TBB_ALLOCATOR_TRAITS_PRESENT                      (__cplusplus >= 201103L && _LIBCPP_VERSION  || _MSC_VER >= 1800 ||  \
                                                             __GXX_EXPERIMENTAL_CXX0X__ && __TBB_GLIBCXX_VERSION >= 40700 && !(__TBB_GLIBCXX_VERSION == 40700 && __TBB_DEFINE_MIC))
 #define __TBB_MAKE_EXCEPTION_PTR_PRESENT                    (__TBB_EXCEPTION_PTR_PRESENT && (_MSC_VER >= 1700 || __TBB_GLIBCXX_VERSION >= 40600 || _LIBCPP_VERSION))
 
@@ -352,7 +361,11 @@
 
 #define __TBB_CPP17_UNCAUGHT_EXCEPTIONS_PRESENT             (_MSC_VER >= 1900 || __GLIBCXX__ && __cpp_lib_uncaught_exceptions \
                                                             || _LIBCPP_VERSION >= 3700 && (!__TBB_MACOS_TARGET_VERSION || __TBB_MACOS_TARGET_VERSION >= 101200))
-
+// TODO: wait when memory_resource will be fully supported in clang and define the right macro
+// Currently it is in experimental stage since 6 version.
+#define __TBB_CPP17_MEMORY_RESOURCE_PRESENT                 (_MSC_VER >= 1913 && (_MSVC_LANG > 201402L || __cplusplus > 201402L) || \
+                                                            __GLIBCXX__ && __cpp_lib_memory_resource >= 201603)
+#define __TBB_CPP17_HW_INTERFERENCE_SIZE_PRESENT            (_MSC_VER >= 1911)
 // std::swap is in <utility> only since C++11, though MSVC had it at least since VS2005
 #if _MSC_VER>=1400 || _LIBCPP_VERSION || __GXX_EXPERIMENTAL_CXX0X__
 #define __TBB_STD_SWAP_HEADER <utility>

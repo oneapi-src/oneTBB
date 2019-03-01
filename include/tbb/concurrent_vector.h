@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -33,6 +33,8 @@
 #include __TBB_STD_SWAP_HEADER
 #include <algorithm>
 #include <iterator>
+
+#include "internal/_allocator_traits.h"
 
 #if _MSC_VER==1500 && !__INTEL_COMPILER
     // VS2008/VC9 seems to have an issue; limits pull in math.h
@@ -467,12 +469,9 @@ public:
     template<typename T, class A>
     class allocator_base {
     public:
-        typedef typename A::template
-            rebind<T>::other allocator_type;
+        typedef typename tbb::internal::allocator_rebind<A, T>::type allocator_type;
         allocator_type my_allocator;
-
         allocator_base(const allocator_type &a = allocator_type() ) : my_allocator(a) {}
-
     };
 
 } // namespace internal
@@ -742,9 +741,7 @@ public:
         if(pocma_t::value || this->my_allocator == other.my_allocator) {
             concurrent_vector trash (std::move(*this));
             internal_swap(other);
-            if (pocma_t::value) {
-                this->my_allocator = std::move(other.my_allocator);
-            }
+            tbb::internal::allocator_move_assignment(this->my_allocator, other.my_allocator, pocma_t());
         } else {
             internal_assign(other, sizeof(T), &destroy_array, &move_assign_array, &move_array);
         }
@@ -1002,10 +999,10 @@ public:
 
     //! swap two instances
     void swap(concurrent_vector &vector) {
-        using std::swap;
-        if( this != &vector ) {
+        typedef typename tbb::internal::allocator_traits<A>::propagate_on_container_swap pocs_t;
+        if( this != &vector && (this->my_allocator == vector.my_allocator || pocs_t::value) ) {
             concurrent_vector_base_v3::internal_swap(static_cast<concurrent_vector_base_v3&>(vector));
-            swap(this->my_allocator, vector.my_allocator);
+            tbb::internal::allocator_swap(this->my_allocator, vector.my_allocator, pocs_t());
         }
     }
 
@@ -1042,7 +1039,13 @@ private:
         internal_resize( n, sizeof(T), max_size(), static_cast<const void*>(p), &destroy_array, p? &initialize_array_by : &initialize_array );
     }
 
-    //! helper class
+    //! True/false function override helper
+    /* Functions declarations:
+     *     void foo(is_integer_tag<true>*);
+     *     void foo(is_integer_tag<false>*);
+     * Usage example:
+     *     foo(static_cast<is_integer_tag<std::numeric_limits<T>::is_integer>*>(0));
+     */
     template<bool B> class is_integer_tag;
 
     //! assign integer items by copying when arguments are treated as iterators. See C++ Standard 2003 23.1.1p9

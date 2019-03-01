@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -34,6 +34,8 @@
 #include "tbb_exception.h"
 #include "tbb_profiling.h"
 #include "internal/_tbb_hash_compare_impl.h"
+#include "internal/_template_helpers.h"
+#include "internal/_allocator_traits.h"
 #if __TBB_INITIALIZER_LISTS_PRESENT
 #include <initializer_list>
 #endif
@@ -48,7 +50,7 @@ namespace tbb {
 
 namespace interface5 {
 
-    template<typename Key, typename T, typename HashCompare = tbb_hash_compare<Key>, typename A = tbb_allocator<std::pair<Key, T> > >
+    template<typename Key, typename T, typename HashCompare = tbb_hash_compare<Key>, typename A = tbb_allocator<std::pair<const Key, T> > >
     class concurrent_hash_map;
 
     //! @cond INTERNAL
@@ -554,7 +556,7 @@ public:
 protected:
     friend class const_accessor;
     struct node;
-    typedef typename Allocator::template rebind<node>::other node_allocator_type;
+    typedef typename tbb::internal::allocator_rebind<Allocator, node>::type node_allocator_type;
     node_allocator_type my_allocator;
     HashCompare my_hash_compare;
 
@@ -858,7 +860,7 @@ public:
 #if __TBB_CPP11_RVALUE_REF_PRESENT
     //! Move Assignment
     concurrent_hash_map& operator=( concurrent_hash_map &&table ) {
-        if(this != &table){
+        if(this != &table) {
             typedef typename tbb::internal::allocator_traits<allocator_type>::propagate_on_container_move_assignment pocma_t;
             if(pocma_t::value || this->my_allocator == table.my_allocator) {
                 concurrent_hash_map trash (std::move(*this));
@@ -1134,6 +1136,33 @@ protected:
         return 0;
     }
 };
+
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+namespace internal {
+using namespace tbb::internal;
+
+template<template<typename...> typename Map, typename Key, typename T, typename... Args>
+using hash_map_t = Map<
+    Key, T,
+    std::conditional_t< (sizeof...(Args)>0) && !is_allocator_v< pack_element_t<0, Args...> >,
+                        pack_element_t<0, Args...>, tbb_hash_compare<Key> >,
+    std::conditional_t< (sizeof...(Args)>0) && is_allocator_v< pack_element_t<sizeof...(Args)-1, Args...> >,
+                         pack_element_t<sizeof...(Args)-1, Args...>, tbb_allocator<std::pair<const Key, T> > >
+>;
+}
+
+// Deduction guide for the constructor from two iterators and hash_compare/ allocator
+template<typename I, typename... Args>
+concurrent_hash_map(I, I, Args...)
+-> internal::hash_map_t<concurrent_hash_map, internal::iterator_key_t<I>,internal::iterator_mapped_t<I>, Args...>;
+
+// Deduction guide for the constructor from an initializer_list and hash_compare/ allocator
+// Deduction guide for an initializer_list, hash_compare and allocator is implicit
+template<typename Key, typename T, typename CompareOrAllocator>
+concurrent_hash_map(std::initializer_list<std::pair<const Key, T>>, CompareOrAllocator)
+-> internal::hash_map_t<concurrent_hash_map, Key, T, CompareOrAllocator>;
+
+#endif /* __TBB_CPP17_DEDUCTION_GUIDES_PRESENT */
 
 template<typename Key, typename T, typename HashCompare, typename A>
 bool concurrent_hash_map<Key,T,HashCompare,A>::lookup( bool op_insert, const Key &key, const T *t, const_accessor *result, bool write, node* (*allocate_node)(node_allocator_type& , const Key&, const T*), node *tmp_n ) {

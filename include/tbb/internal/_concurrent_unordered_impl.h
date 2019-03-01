@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@
     #include <initializer_list>
 #endif
 
+#include "_allocator_traits.h"
 #include "_tbb_hash_compare_impl.h"
 
 namespace tbb {
@@ -185,17 +186,20 @@ class split_ordered_list
 {
 public:
     typedef split_ordered_list<T, Allocator> self_type;
-    typedef typename Allocator::template rebind<T>::other allocator_type;
+
+    typedef typename tbb::internal::allocator_rebind<Allocator, T>::type allocator_type;
+
     struct node;
     typedef node *nodeptr_t;
 
-    typedef typename allocator_type::size_type size_type;
-    typedef typename allocator_type::difference_type difference_type;
-    typedef typename allocator_type::pointer pointer;
-    typedef typename allocator_type::const_pointer const_pointer;
-    typedef typename allocator_type::reference reference;
-    typedef typename allocator_type::const_reference const_reference;
-    typedef typename allocator_type::value_type value_type;
+    typedef typename tbb::internal::allocator_traits<allocator_type>::value_type value_type;
+    typedef typename tbb::internal::allocator_traits<allocator_type>::size_type size_type;
+    typedef typename tbb::internal::allocator_traits<allocator_type>::difference_type difference_type;
+    typedef typename tbb::internal::allocator_traits<allocator_type>::pointer pointer;
+    typedef typename tbb::internal::allocator_traits<allocator_type>::const_pointer const_pointer;
+    // No support for reference/const_reference in allocator traits
+    typedef value_type& reference;
+    typedef const value_type& const_reference;
 
     typedef solist_iterator<self_type, const value_type> const_iterator;
     typedef solist_iterator<self_type, value_type> iterator;
@@ -639,7 +643,7 @@ private:
 #endif
     }
 
-    typename allocator_type::template rebind<node>::other my_node_allocator;  // allocator object for nodes
+    typename tbb::internal::allocator_rebind<allocator_type, node>::type my_node_allocator; // allocator object for nodes
     size_type                                             my_element_count;   // Total item count, not counting dummy nodes
     nodeptr_t                                             my_head;            // pointer to head node
 };
@@ -661,12 +665,15 @@ protected:
     typedef typename Traits::allocator_type allocator_type;
     typedef typename hash_compare::hasher hasher;
     typedef typename hash_compare::key_equal key_equal;
-    typedef typename allocator_type::pointer pointer;
-    typedef typename allocator_type::const_pointer const_pointer;
-    typedef typename allocator_type::reference reference;
-    typedef typename allocator_type::const_reference const_reference;
-    typedef typename allocator_type::size_type size_type;
-    typedef typename allocator_type::difference_type difference_type;
+
+    typedef typename tbb::internal::allocator_traits<allocator_type>::size_type size_type;
+    typedef typename tbb::internal::allocator_traits<allocator_type>::difference_type difference_type;
+    typedef typename tbb::internal::allocator_traits<allocator_type>::pointer pointer;
+    typedef typename tbb::internal::allocator_traits<allocator_type>::const_pointer const_pointer;
+    // No support for reference/const_reference in allocator
+    typedef typename allocator_type::value_type& reference;
+    typedef const typename allocator_type::value_type& const_reference;
+
     typedef split_ordered_list<value_type, typename Traits::allocator_type> solist_t;
     typedef typename solist_t::nodeptr_t nodeptr_t;
     // Iterators that walk the entire split-order list, including dummy nodes
@@ -1507,7 +1514,7 @@ private:
     // Shared variables
     atomic<size_type>                                             my_number_of_buckets;       // Current table size
     solist_t                                                      my_solist;                  // List where all the elements are kept
-    typename allocator_type::template rebind<raw_iterator>::other my_allocator;               // Allocator object for segments
+    typename tbb::internal::allocator_rebind<allocator_type, raw_iterator>::type my_allocator; // Allocator object for segments
     float                                                         my_maximum_bucket_size;     // Maximum size of the bucket
     atomic<raw_iterator*>                                         my_buckets[pointers_per_table]; // The segment table
 };

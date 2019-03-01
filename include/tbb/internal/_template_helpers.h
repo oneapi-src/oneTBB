@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -23,6 +23,14 @@
 
 #include <utility>
 #include <cstddef>
+#include "../tbb_config.h"
+#if __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT && __TBB_CPP11_TEMPLATE_ALIASES_PRESENT
+#include <type_traits>
+#endif
+#if __TBB_CPP11_PRESENT
+#include <iterator>
+#include <memory> // allocator_traits
+#endif
 
 namespace tbb { namespace internal {
 
@@ -64,6 +72,19 @@ template<typename U> struct is_ref<U&> { static const bool value = true; };
 //! std::void_t internal implementation (to avoid GCC < 4.7 "template aliases" absence)
 template<typename...> struct void_t { typedef void type; };
 #endif
+
+#if __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT && __TBB_CPP11_TEMPLATE_ALIASES_PRESENT
+
+// Generic SFINAE helper for expression checks, based on the idea demonstrated in ISO C++ paper n4502
+template<typename T, typename, template<typename> class... Checks>
+struct supports_impl { typedef std::false_type type; };
+template<typename T, template<typename> class... Checks>
+struct supports_impl<T, typename void_t<Checks<T>...>::type, Checks...> { typedef std::true_type type; };
+
+template<typename T, template<typename> class... Checks>
+using supports = typename supports_impl<T, void, Checks...>::type;
+
+#endif /* __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT && __TBB_CPP11_TEMPLATE_ALIASES_PRESENT */
 
 #if __TBB_CPP11_RVALUE_REF_PRESENT && __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
 
@@ -175,6 +196,53 @@ template<std::size_t N>
 using make_index_sequence = typename tbb::internal::make_index_sequence_impl<N>::type;
 
 #endif /* __TBB_CPP14_INTEGER_SEQUENCE_PRESENT */
+
+#if __TBB_CPP11_PRESENT
+
+template< typename Iter >
+using iterator_value_t = typename std::iterator_traits<Iter>::value_type;
+
+template< typename Iter >
+using iterator_key_t = typename std::remove_const<typename iterator_value_t<Iter>::first_type>::type;
+
+template< typename Iter >
+using iterator_mapped_t = typename iterator_value_t<Iter>::second_type;
+
+template< typename A > using value_type = typename A::value_type;
+template< typename A > using alloc_ptr_t = typename std::allocator_traits<A>::pointer;
+template< typename A > using has_allocate = decltype(std::declval<alloc_ptr_t<A>&>() = std::declval<A>().allocate(0));
+template< typename A > using has_deallocate = decltype(std::declval<A>().deallocate(std::declval<alloc_ptr_t<A>>(), 0));
+
+// value_type should be checked first because it can be used in other checks (via allocator_traits)
+template< typename T >
+using is_allocator = supports<T, value_type, has_allocate, has_deallocate>;
+
+#if __TBB_CPP14_VARIABLE_TEMPLATES_PRESENT
+
+template< typename T >
+static constexpr bool is_allocator_v = is_allocator<T>::value;
+
+#endif /*__TBB_CPP14_VARIABLE_TEMPLATES */
+
+template< std::size_t N, typename... Args >
+struct pack_element {
+    using type = void;
+};
+
+template< std::size_t N, typename T, typename... Args >
+struct pack_element<N, T, Args...> {
+    using type = typename pack_element<N - 1, Args...>::type;
+};
+
+template< typename T, typename... Args >
+struct pack_element<0, T, Args...> {
+    using type = T;
+};
+
+template< std::size_t N, typename... Args >
+using pack_element_t = typename pack_element<N, Args...>::type;
+
+#endif /* __TBB_CPP11_PRESENT */
 
 } } // namespace internal, namespace tbb
 

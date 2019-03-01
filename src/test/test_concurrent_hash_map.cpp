@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -1386,6 +1386,76 @@ void TestMoveSupport(){
 }
 #endif //__TBB_CPP11_RVALUE_REF_PRESENT
 
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+
+template <template <typename...> typename TMap>
+void TestDeductionGuides() {
+    using Key = int;
+    using Value = std::string;
+
+    using ComplexType = std::pair<Key, Value>;
+    using ComplexTypeConst = std::pair<const Key, Value>;
+
+    using DefaultCompare = tbb::tbb_hash_compare<Key>;
+    using Compare = debug_hash_compare<Key>;
+    using DefaultAllocator = tbb::tbb_allocator<ComplexTypeConst>;
+    using Allocator = std::allocator<ComplexType>;
+
+    std::vector<ComplexType> v;
+    auto l = { ComplexTypeConst(1, "one"), ComplexTypeConst(2, "two") };
+    Compare compare;
+    Allocator allocator;
+
+    // check TMap(InputIterator, InputIterator)
+    TMap m1(v.begin(), v.end());
+    static_assert(std::is_same<decltype(m1), TMap<Key, Value, DefaultCompare, DefaultAllocator>>::value);
+
+    // check TMap(InputIterator, InputIterator, HashCompare)
+    TMap m2(v.begin(), v.end(), compare);
+    static_assert(std::is_same<decltype(m2), TMap<Key, Value, Compare>>::value);
+
+    // check TMap(InputIterator, InputIterator, HashCompare, Allocator)
+    TMap m3(v.begin(), v.end(), compare, allocator);
+    static_assert(std::is_same<decltype(m3), TMap<Key, Value, Compare, Allocator>>::value);
+
+    // check TMap(InputIterator, InputIterator, Allocator)
+    TMap m4(v.begin(), v.end(), allocator);
+    static_assert(std::is_same<decltype(m4), TMap<Key, Value, DefaultCompare, Allocator>>::value);
+
+    // check TMap(std::initializer_list)
+    TMap m5(l);
+    static_assert(std::is_same<decltype(m5), TMap<Key, Value, DefaultCompare, DefaultAllocator>>::value);
+
+    // check TMap(std::initializer_list, HashCompare)
+    TMap m6(l, compare);
+    static_assert(std::is_same<decltype(m6), TMap<Key, Value, Compare, DefaultAllocator>>::value);
+
+    // check TMap(std::initializer_list, HashCompare, Allocator)
+    TMap m7(l, compare, allocator);
+    static_assert(std::is_same<decltype(m7), TMap<Key, Value, Compare, Allocator>>::value);
+
+    // check TMap(std::initializer_list, Allocator)
+    TMap m8(l, allocator);
+    static_assert(std::is_same<decltype(m8), TMap<Key, Value, DefaultCompare, Allocator>>::value);
+
+    // check TMap(TMap &)
+    TMap m9(m1);
+    static_assert(std::is_same<decltype(m9), decltype(m1)>::value);
+
+    // check TMap(TMap &, Allocator)
+    TMap m10(m4, allocator);
+    static_assert(std::is_same<decltype(m10), decltype(m4)>::value);
+
+    // check TMap(TMap &&)
+    TMap m11(std::move(m1));
+    static_assert(std::is_same<decltype(m11), decltype(m1)>::value);
+
+    // check TMap(TMap &&, Allocator)
+    TMap m12(std::move(m4), allocator);
+    static_assert(std::is_same<decltype(m12), decltype(m4)>::value);
+}
+#endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+
 template<typename Key>
 struct non_default_constructible_hash_compare : tbb::tbb_hash_compare<Key> {
     non_default_constructible_hash_compare() {
@@ -1477,6 +1547,10 @@ int TestMain () {
 
     TestCPP11Types();
     TestHashCompareConstructors();
+
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+    TestDeductionGuides<tbb::concurrent_hash_map>();
+#endif
 
     return Harness::Done;
 }

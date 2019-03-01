@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -94,12 +94,23 @@ struct MoveOperationTracker {
 
 template<typename Allocator>
 void TestAllocatorWithSTL(const Allocator &a = Allocator() ) {
+
+// Allocator type convertion section
+#if __TBB_ALLOCATOR_TRAITS_PRESENT
+    typedef typename std::allocator_traits<Allocator>::template rebind_alloc<int> Ai;
+    typedef typename std::allocator_traits<Allocator>::template rebind_alloc<std::pair<const int, int> > Acii;
+#if _MSC_VER
+    typedef typename std::allocator_traits<Allocator>::template rebind_alloc<const int> Aci;
+    typedef typename std::allocator_traits<Allocator>::template rebind_alloc<std::pair<int, int> > Aii;
+#endif // _MSC_VER
+#else
     typedef typename Allocator::template rebind<int>::other Ai;
     typedef typename Allocator::template rebind<std::pair<const int, int> >::other Acii;
 #if _MSC_VER
     typedef typename Allocator::template rebind<const int>::other Aci;
     typedef typename Allocator::template rebind<std::pair<int, int> >::other Aii;
-#endif
+#endif // _MSC_VER
+#endif // __TBB_ALLOCATOR_TRAITS_PRESENT
 
     // Sequenced containers
     TestSequence<std::deque <int,Ai> >(a);
@@ -107,11 +118,15 @@ void TestAllocatorWithSTL(const Allocator &a = Allocator() ) {
     TestSequence<std::vector<int,Ai> >(a);
 
 #if __TBB_CPP11_RVALUE_REF_PRESENT
+#if __TBB_ALLOCATOR_TRAITS_PRESENT
+    typedef typename std::allocator_traits<Allocator>::template rebind_alloc<MoveOperationTracker> Amot;
+#else
     typedef typename Allocator::template rebind<MoveOperationTracker>::other Amot;
+#endif // __TBB_ALLOCATOR_TRAITS_PRESENT
     TestSequence<std::deque <MoveOperationTracker, Amot> >(a);
     TestSequence<std::list  <MoveOperationTracker, Amot> >(a);
     TestSequence<std::vector<MoveOperationTracker, Amot> >(a);
-#endif
+#endif // __TBB_CPP11_RVALUE_REF_PRESENT
 
     // Associative containers
     TestSet<std::set     <int, std::less<int>, Ai> >(a);

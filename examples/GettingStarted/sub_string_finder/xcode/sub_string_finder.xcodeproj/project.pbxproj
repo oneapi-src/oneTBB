@@ -467,7 +467,7 @@
 				A1F593C70B8F0E6E00073279 /* Release64 */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug64;
+			defaultConfigurationName = Release64;
 		};
 		1DEB923508733DC60010E9CD /* Build configuration list for PBXProject "sub_string_finder" */ = {
 			isa = XCConfigurationList;
@@ -476,7 +476,7 @@
 				A1F593C90B8F0E6E00073279 /* Release64 */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug64;
+			defaultConfigurationName = Release64;
 		};
 		A1F5940C0B8F1DB600073279 /* Build configuration list for PBXNativeTarget "sub_string_finder_pretty" */ = {
 			isa = XCConfigurationList;
@@ -485,7 +485,7 @@
 				A1F594100B8F1DB600073279 /* Release64 */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug64;
+			defaultConfigurationName = Release64;
 		};
 		A1F5941F0B8F1F4E00073279 /* Build configuration list for PBXNativeTarget "sub_string_finder_extended" */ = {
 			isa = XCConfigurationList;
@@ -494,7 +494,7 @@
 				A1F594230B8F1F4E00073279 /* Release64 */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug64;
+			defaultConfigurationName = Release64;
 		};
 /* End XCConfigurationList section */
 	};

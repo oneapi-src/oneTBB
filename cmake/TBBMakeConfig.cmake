@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2018 Intel Corporation
+# Copyright (c) 2017-2019 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ if (NOT _tbb_compiler_id STREQUAL \"GNU\")
     execute_process(COMMAND gcc --version OUTPUT_VARIABLE _tbb_gcc_ver_output ERROR_QUIET)
     string(REGEX REPLACE \".*gcc.*([0-9]+\\\\.[0-9]+)\\\\.[0-9]+.*\" \"\\\\1\" _tbb_compiler_ver \"\${_tbb_gcc_ver_output}\")
     if (NOT _tbb_compiler_ver)
-        message(FATAL_ERROR \"This Intel TBB package is intended to be used only environment with available 'gcc'\")
+        message(FATAL_ERROR \"This Intel TBB package is intended to be used only in environment with available 'gcc'\")
     endif()
     unset(_tbb_gcc_ver_output)
 endif()
@@ -123,10 +123,8 @@ endif()")
             set(TBB_IMPLIB_RELEASE "\nIMPORTED_IMPLIB_RELEASE \"${tbb_MK_TBB_RELEASE_DIR}/\${_tbb_component}.lib\"")
             set(TBB_IMPLIB_DEBUG "\nIMPORTED_IMPLIB_DEBUG \"${tbb_MK_TBB_DEBUG_DIR}/\${_tbb_component}_debug.lib\"")
         else()
-            # Note: multiline variable
-            set(TBB_IMPLIB "
-                              IMPORTED_IMPLIB_RELEASE       \"\${_tbb_root}/lib/\${_tbb_arch_subdir}/\${_tbb_compiler_subdir}/\${_tbb_component}.lib\"
-                              IMPORTED_IMPLIB_DEBUG         \"\${_tbb_root}/lib/\${_tbb_arch_subdir}/\${_tbb_compiler_subdir}/\${_tbb_component}_debug.lib\"")
+            set(TBB_IMPLIB_RELEASE "\nIMPORTED_IMPLIB_RELEASE \"\${_tbb_root}/lib/\${_tbb_arch_subdir}/\${_tbb_compiler_subdir}/\${_tbb_component}.lib\"")
+            set(TBB_IMPLIB_DEBUG "\nIMPORTED_IMPLIB_DEBUG \"\${_tbb_root}/lib/\${_tbb_arch_subdir}/\${_tbb_compiler_subdir}/\${_tbb_component}_debug.lib\"")
         endif()
 
         # Note: multiline variable
@@ -155,7 +153,7 @@ endif()")
     string(REGEX REPLACE ".*#define TBB_VERSION_MAJOR ([0-9]+).*" "\\1" _tbb_ver_major "${_tbb_stddef}")
     string(REGEX REPLACE ".*#define TBB_VERSION_MINOR ([0-9]+).*" "\\1" _tbb_ver_minor "${_tbb_stddef}")
     string(REGEX REPLACE ".*#define TBB_INTERFACE_VERSION ([0-9]+).*" "\\1" TBB_INTERFACE_VERSION "${_tbb_stddef}")
-    set(TBB_VERSION "${_tbb_ver_major}.${_tbb_ver_minor}")
+    set(TBB_VERSION "${_tbb_ver_major}.${_tbb_ver_minor}.${TBB_INTERFACE_VERSION}")
 
     if (tbb_MK_CONFIG_FOR_SOURCE)
         set(_tbb_config_template TBBConfigForSource.cmake.in)

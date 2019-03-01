@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2018 Intel Corporation
+# Copyright (c) 2017-2019 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -58,13 +58,23 @@ foreach (_tbb_component ${TBB_FIND_COMPONENTS})
     set(_tbb_release_lib "${_tbb_lib_path}/@TBB_LIB_PREFIX@${_tbb_component}.@TBB_LIB_EXT@")
     set(_tbb_debug_lib "${_tbb_lib_path}/@TBB_LIB_PREFIX@${_tbb_component}_debug.@TBB_LIB_EXT@")
 
-    if (EXISTS "${_tbb_release_lib}" AND EXISTS "${_tbb_debug_lib}")
+    if (EXISTS "${_tbb_release_lib}" OR EXISTS "${_tbb_debug_lib}")
         add_library(TBB::${_tbb_component} SHARED IMPORTED)
         set_target_properties(TBB::${_tbb_component} PROPERTIES
-                              IMPORTED_CONFIGURATIONS "RELEASE;DEBUG"
-                              IMPORTED_LOCATION_RELEASE     "${_tbb_release_lib}"
-                              IMPORTED_LOCATION_DEBUG       "${_tbb_debug_lib}"
-                              INTERFACE_INCLUDE_DIRECTORIES "${_tbb_root}/include"@TBB_IMPLIB@@TBB_COMPILE_DEFINITIONS@)
+                              INTERFACE_INCLUDE_DIRECTORIES "${_tbb_root}/include"@TBB_COMPILE_DEFINITIONS@)
+
+
+        if (EXISTS "${_tbb_release_lib}")
+            set_target_properties(TBB::${_tbb_component} PROPERTIES
+                                  IMPORTED_LOCATION_RELEASE "${_tbb_release_lib}"@TBB_IMPLIB_RELEASE@)
+            set_property(TARGET TBB::${_tbb_component} APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
+        endif()
+
+        if (EXISTS "${_tbb_debug_lib}")
+            set_target_properties(TBB::${_tbb_component} PROPERTIES
+                                  IMPORTED_LOCATION_DEBUG "${_tbb_debug_lib}"@TBB_IMPLIB_DEBUG@)
+            set_property(TARGET TBB::${_tbb_component} APPEND PROPERTY IMPORTED_CONFIGURATIONS DEBUG)
+        endif()
 
         # Add internal dependencies for imported targets: TBB::tbbmalloc_proxy -> TBB::tbbmalloc
         if (_tbb_component STREQUAL tbbmalloc_proxy)

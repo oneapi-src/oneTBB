@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@
 #define TBB_PREVIEW_CONCURRENT_LRU_CACHE 1
 #define TBB_PREVIEW_VARIADIC_PARALLEL_INVOKE 1
 #define TBB_PREVIEW_FLOW_GRAPH_NODES 1
-#define TBB_PREVIEW_GLOBAL_CONTROL 1
 #define TBB_PREVIEW_BLOCKED_RANGE_ND 1
 #define TBB_PREVIEW_WAITING_FOR_WORKERS 1
 #endif
@@ -195,7 +194,6 @@ static void TestPreviewNames() {
     TestTypeDefinitionPresence2(blocked_rangeNd<int,4> );
 #endif
     TestTypeDefinitionPresence2(concurrent_lru_cache<int, int> );
-    TestTypeDefinitionPresence( global_control );
 #if !__TBB_TEST_SECONDARY
     TestExceptionClassExports( std::runtime_error("test"), tbb::internal::eid_blocking_thread_join_impossible );
 #endif
@@ -334,6 +332,7 @@ int TestMain ()
     TestTypeDefinitionPresence( tbb_allocator<int> );
     TestTypeDefinitionPresence( zero_allocator<int> );
     TestTypeDefinitionPresence( tick_count );
+    TestTypeDefinitionPresence( global_control );
 #if __TBB_CPP11_PRESENT
     TestTypeDefinitionPresence( counting_iterator<int> );
     TestTypeDefinitionPresence2(zip_iterator<int*,int*> );

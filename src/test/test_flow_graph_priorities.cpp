@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2018 Intel Corporation
+    Copyright (c) 2018-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ struct TaskInfo {
     int my_task_index;
 };
 std::vector<TaskInfo> g_task_info;
-bool g_work_submitted = false;
+tbb::atomic<bool> g_work_submitted;
 
 const unsigned node_num = 100;
 const unsigned start_index = node_num / 3;
@@ -148,6 +148,13 @@ void test_node( NodeTypeCreator node_creator_func, NodePortRetriever get_sender 
         if( !found_min || !found_max )
             ++internal_order_failures;
         for( unsigned i = 0; i < g_priority_task_index; ++i ) {
+            // This check might fail because priorities do not guarantee ordering, i.e. assumption
+            // that all priority nodes should increment the task counter before any subsequent
+            // no-priority node is not correct. In the worst case, a thread that took a priority
+            // node might be preempted and become the last to increment the counter. That's why the
+            // test passing is based on statistics, which could be affected by machine overload
+            // unfortunately.
+            // TODO: make the test deterministic.
             if( g_task_info[i].my_task_index > int(priority_nodes_num) + MaxThread )
                 ++global_order_failures;
         }

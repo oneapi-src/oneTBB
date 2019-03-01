@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@
 #include "harness_assert.h"
 #include "tbb/memory_pool.h"
 #include "tbb/scalable_allocator.h"
+#include <iostream>
 
 // The actual body of the test is there:
 #include "test_allocator_STL.h"
@@ -38,5 +39,16 @@ int TestMain () {
     static char buf[1024*1024*4];
     tbb::fixed_pool fpool(buf, sizeof(buf));
     TestAllocatorWithSTL(tbb::memory_pool_allocator<void>(fpool) );
+
+#if __TBB_CPP17_MEMORY_RESOURCE_PRESENT
+    ASSERT(!tbb::scalable_memory_resource()->is_equal(*std::pmr::get_default_resource()),
+            "Scalable resource shouldn't be equal to standard resource." );
+    ASSERT(tbb::scalable_memory_resource()->is_equal(*tbb::scalable_memory_resource()),
+            "Memory that was allocated by one scalable resource should be deallocated by any other instance.");
+
+    typedef std::pmr::polymorphic_allocator<void> pmr_alloc_t;
+    TestAllocatorWithSTL(pmr_alloc_t(tbb::scalable_memory_resource()));
+#endif
+
     return Harness::Done;
 }

@@ -2,6 +2,42 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 2019 Update 4
+TBB_INTERFACE_VERSION == 11004
+
+Changes (w.r.t. Intel TBB 2019 Update 3):
+
+- global_control class is now a fully supported feature.
+- Added deduction guides for tbb containers: concurrent_hash_map,
+    concurrent_unordered_map, concurrent_unordered_set.     
+- Added tbb::scalable_memory_resource function returning
+    std::pmr::memory_resource interface to the TBB memory allocator.
+- Added tbb::cache_aligned_resource class that implements
+    std::pmr::memory_resource with cache alignment and no false sharing.
+- Added rml::pool_msize function returning the usable size of a memory
+    block allocated from a given memory pool.
+- Added default and copy constructors for tbb::counting_iterator
+    and tbb::zip_iterator.
+- Added TBB_malloc_replacement_log function to obtain the status of
+    dynamic memory allocation replacement (Windows* only).
+- CMake configuration file now supports release-only and debug-only
+    configurations (https://github.com/01org/tbb/issues/113).
+- TBBBuild CMake module takes the C++ version from CMAKE_CXX_STANDARD.
+
+Bugs fixed:
+
+- Fixed compilation for tbb::concurrent_vector when used with 
+    std::pmr::polymorphic_allocator.
+
+Open-source contributions integrated:
+
+- TBB_INTERFACE_VERSION is included into TBB version in CMake
+    configuration (https://github.com/01org/tbb/pull/100)
+    by Hans Johnson.
+- Fixed detection of C++17 deduction guides for Visual C++*
+    (https://github.com/01org/tbb/pull/112) by Marian Klymov.
+
+------------------------------------------------------------------------
 Intel TBB 2019 Update 3
 TBB_INTERFACE_VERSION == 11003
 
@@ -118,6 +154,17 @@ Changes affecting backward compatibility:
 Open-source contributions integrated:
 
 - Added support for OpenBSD by Anthony J. Bentley.
+
+------------------------------------------------------------------------
+Intel TBB 2018 Update 6
+TBB_INTERFACE_VERSION == 10006
+
+Changes (w.r.t. Intel TBB 2018 Update 5):
+
+Bugs fixed:
+
+- Fixed an issue with dynamic memory allocation replacement on Windows*
+    occurred for some versions of ucrtbase.dll.
 
 ------------------------------------------------------------------------
 Intel TBB 2018 Update 5

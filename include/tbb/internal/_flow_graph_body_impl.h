@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -367,6 +367,9 @@ public:
         : continue_receiver(
             __TBB_FLOW_GRAPH_PRIORITY_ARG1(number_of_predecessors, tbb::flow::internal::no_priority)
         )
+          // Since decrementer does not make use of possibly unconstructed owner inside its
+          // constructor, my_node can be directly initialized with 'this' pointer passed from the
+          // owner, hence making method 'set_owner' needless.
         , my_node(NULL)
     {}
     void set_owner( T *node ) { my_node = node; }

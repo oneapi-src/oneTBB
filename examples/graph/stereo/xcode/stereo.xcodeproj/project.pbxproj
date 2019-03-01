@@ -307,7 +307,7 @@
 				A1F593C70B8F0E6E00073279 /* Release64 */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug64;
+			defaultConfigurationName = Release64;
 		};
 		1DEB923508733DC60010E9CD /* Build configuration list for PBXProject "stereo" */ = {
 			isa = XCConfigurationList;
@@ -316,7 +316,7 @@
 				A1F593C90B8F0E6E00073279 /* Release64 */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug64;
+			defaultConfigurationName = Release64;
 		};
 /* End XCConfigurationList section */
 	};

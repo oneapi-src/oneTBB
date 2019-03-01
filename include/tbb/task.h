@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -49,7 +49,9 @@ namespace internal { //< @cond INTERNAL
         task* self;
         task& parent;
     public:
-        explicit allocate_additional_child_of_proxy( task& parent_ ) : self(NULL), parent(parent_) {}
+        explicit allocate_additional_child_of_proxy( task& parent_ ) : self(NULL), parent(parent_) {
+            suppress_unused_warning( self );
+        }
         task& __TBB_EXPORTED_METHOD allocate( size_t size ) const;
         void __TBB_EXPORTED_METHOD free( task& ) const;
     };

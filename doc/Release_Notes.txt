@@ -91,6 +91,7 @@ Software - Supported Compilers
         version provided with that operating system is supported
             GNU Compilers (gcc) 4.1 - 7.1
             GNU C Library (glibc) version 2.4 - 2.19
+    Clang* 3.8 - 7.0
     Xcode* 7.0 - 9.1
     Android* NDK r10e - r17b
 
@@ -120,7 +121,7 @@ Library Issues
         with each other directly.
 
 ------------------------------------------------------------------------
-(C) 2018 Intel Corporation
+(C) 2019 Intel Corporation
 
 Intel, the Intel logo, Intel Core, Intel Atom, Xeon, Intel Xeon Phi and
 Pentium are trademarks of Intel Corporation in the U.S. and/or other

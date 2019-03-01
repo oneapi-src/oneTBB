@@ -320,7 +320,7 @@
 				1DEB923308733DC60010E9CD /* Release64 */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug64;
+			defaultConfigurationName = Release64;
 		};
 		1DEB923508733DC60010E9CD /* Build configuration list for PBXProject "fgbzip2" */ = {
 			isa = XCConfigurationList;
@@ -329,7 +329,7 @@
 				1DEB923708733DC60010E9CD /* Release64 */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug64;
+			defaultConfigurationName = Release64;
 		};
 /* End XCConfigurationList section */
 	};

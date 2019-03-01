@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017-2018 Intel Corporation
+    Copyright (c) 2017-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ namespace tbb {
 
 template <typename IntType>
 class counting_iterator {
+    __TBB_STATIC_ASSERT(std::numeric_limits<IntType>::is_integer, "Cannot instantiate counting_iterator with a non-integer type");
 public:
     typedef typename std::make_signed<IntType>::type difference_type;
     typedef IntType value_type;
@@ -42,7 +43,8 @@ public:
     typedef const IntType& reference;
     typedef std::random_access_iterator_tag iterator_category;
 
-    explicit counting_iterator(IntType init): my_counter(init) { __TBB_STATIC_ASSERT(std::numeric_limits<IntType>::is_integer, "Integer required."); }
+    counting_iterator(): my_counter() {}
+    explicit counting_iterator(IntType init): my_counter(init) {}
 
     reference operator*() const { return my_counter; }
     value_type operator[](difference_type i) const { return *(*this + i); }
@@ -124,6 +126,7 @@ struct make_references {
 
 template <typename... Types>
 class zip_iterator {
+    __TBB_STATIC_ASSERT(sizeof...(Types), "Cannot instantiate zip_iterator with empty template parameter pack");
     static const std::size_t num_types = sizeof...(Types);
     typedef typename std::tuple<Types...> it_types;
 public:
@@ -133,7 +136,13 @@ public:
     typedef std::tuple<typename std::iterator_traits<Types>::pointer...> pointer;
     typedef std::random_access_iterator_tag iterator_category;
 
+    zip_iterator(): my_it() {}
     explicit zip_iterator(Types... args): my_it(std::make_tuple(args...)) {}
+    zip_iterator(const zip_iterator& input) : my_it(input.my_it) {}
+    zip_iterator& operator=(const zip_iterator& input) {
+        my_it = input.my_it;
+        return *this;
+    }
 
     reference operator*() const {
         return tbb::internal::make_references<reference>()(my_it, tbb::internal::make_index_sequence<num_types>());

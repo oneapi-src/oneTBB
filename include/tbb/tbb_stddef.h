@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@
 #define TBB_VERSION_MINOR 0
 
 // Engineering-focused interface version
-#define TBB_INTERFACE_VERSION 11003
+#define TBB_INTERFACE_VERSION 11004
 #define TBB_INTERFACE_VERSION_MAJOR TBB_INTERFACE_VERSION/1000
 
 // The oldest major interface version still supported
@@ -431,8 +431,8 @@ private:
 // Following is a set of classes and functions typically used in compile-time "metaprogramming".
 // TODO: move all that to a separate header
 
-#if __TBB_ALLOCATOR_TRAITS_PRESENT || __TBB_CPP11_SMART_POINTERS_PRESENT
-#include <memory> // for allocator_traits, unique_ptr
+#if __TBB_CPP11_SMART_POINTERS_PRESENT
+#include <memory> // for unique_ptr
 #endif
 
 #if __TBB_CPP11_RVALUE_REF_PRESENT || __TBB_CPP11_DECLTYPE_PRESENT || _LIBCPP_VERSION
@@ -471,15 +471,6 @@ struct bool_constant {
 };
 typedef bool_constant<true> true_type;
 typedef bool_constant<false> false_type;
-
-#if __TBB_ALLOCATOR_TRAITS_PRESENT
-using std::allocator_traits;
-#else
-template<typename allocator>
-struct allocator_traits{
-    typedef tbb::internal::false_type propagate_on_container_move_assignment;
-};
-#endif
 
 //! A template to select either 32-bit or 64-bit constant as compile time, depending on machine word size.
 template <unsigned u, unsigned long long ull >

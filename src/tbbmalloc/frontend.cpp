@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -2431,8 +2431,8 @@ bool isLargeObject(void *object)
     if (!isAligned(object, largeObjectAlignment))
         return false;
     LargeObjectHdr *header = (LargeObjectHdr*)object - 1;
-    BackRefIdx idx = memOrigin==unknownMem? safer_dereference(&header->backRefIdx) :
-        header->backRefIdx;
+    BackRefIdx idx = (memOrigin == unknownMem) ?
+        safer_dereference(&header->backRefIdx) : header->backRefIdx;
 
     return idx.isLargeObject()
         // in valid LargeObjectHdr memoryBlock is not NULL
@@ -2607,19 +2607,15 @@ static void internalFree(void *object)
 
 static size_t internalMsize(void* ptr)
 {
-    if (ptr) {
-        MALLOC_ASSERT(isRecognized(ptr), "Invalid pointer in scalable_msize detected.");
-        if (isLargeObject<ourMem>(ptr)) {
-            // TODO: return the maximum memory size, that can be written to this object 
-            LargeMemoryBlock* lmb = ((LargeObjectHdr*)ptr - 1)->memoryBlock;
-            return lmb->objectSize;
-        } else
-            return ((Block*)alignDown(ptr, slabSize))->findObjectSize(ptr);
+    MALLOC_ASSERT(ptr, "Invalid pointer passed to internalMsize");
+    if (isLargeObject<ourMem>(ptr)) {
+        // TODO: return the maximum memory size, that can be written to this object
+        LargeMemoryBlock* lmb = ((LargeObjectHdr*)ptr - 1)->memoryBlock;
+        return lmb->objectSize;
+    } else {
+        Block *block = (Block*)alignDown(ptr, slabSize);
+        return block->findObjectSize(ptr);
     }
-    errno = EINVAL;
-    // Unlike _msize, return 0 in case of parameter error.
-    // Returning size_t(-1) looks more like the way to troubles.
-    return 0;
 }
 
 } // namespace internal
@@ -2754,6 +2750,21 @@ rml::MemoryPool *pool_identify(void *object)
     return (rml::MemoryPool*)pool;
 }
 
+size_t pool_msize(rml::MemoryPool *mPool, void* object)
+{
+    if (object) {
+        // No assert for object recognition, cause objects allocated from non-default
+        // memory pool do not participate in range checking and do not have valid backreferences for
+        // small objects. Instead, check that an object belong to the certain memory pool.
+        MALLOC_ASSERT_EX(mPool == pool_identify(object), "Object does not belong to the specified pool");
+        return internalMsize(object);
+    }
+    errno = EINVAL;
+    // Unlike _msize, return 0 in case of parameter error.
+    // Returning size_t(-1) looks more like the way to troubles.
+    return 0;
+}
+
 } // namespace rml
 
 using namespace rml::internal;
@@ -2877,12 +2888,14 @@ extern "C" void * scalable_malloc(size_t size)
     return ptr;
 }
 
-extern "C" void scalable_free (void *object) {
+extern "C" void scalable_free(void *object)
+{
     internalFree(object);
 }
 
 #if MALLOC_ZONE_OVERLOAD_ENABLED
-extern "C" void __TBB_malloc_free_definite_size(void *object, size_t size) {
+extern "C" void __TBB_malloc_free_definite_size(void *object, size_t size)
+{
     internalPoolFree(defaultMemPool, object, size);
 }
 #endif
@@ -3133,7 +3146,14 @@ extern "C" void scalable_aligned_free(void *ptr)
  */
 extern "C" size_t scalable_msize(void* ptr)
 {
-    return internalMsize(ptr);
+    if (ptr) {
+        MALLOC_ASSERT(isRecognized(ptr), "Invalid pointer in scalable_msize detected.");
+        return internalMsize(ptr);
+    }
+    errno = EINVAL;
+    // Unlike _msize, return 0 in case of parameter error.
+    // Returning size_t(-1) looks more like the way to troubles.
+    return 0;
 }
 
 /*

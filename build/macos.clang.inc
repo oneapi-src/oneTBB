@@ -1,4 +1,4 @@
-# Copyright (c) 2005-2018 Intel Corporation
+# Copyright (c) 2005-2019 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -92,6 +92,16 @@ ifdef SDKROOT
     CPLUS_FLAGS += -isysroot $(SDKROOT)
     LINK_FLAGS += -L$(SDKROOT)/usr/lib/system -L$(SDKROOT)/usr/lib/
     LIB_LINK_FLAGS += -L$(SDKROOT)/usr/lib/system -L$(SDKROOT)/usr/lib/
+endif
+
+ifeq (ios,$(target))
+    CPLUS_FLAGS += -miphoneos-version-min=$(IPHONEOS_DEPLOYMENT_TARGET)
+    LINK_FLAGS += -miphoneos-version-min=$(IPHONEOS_DEPLOYMENT_TARGET)
+    LIB_LINK_FLAGS += -miphoneos-version-min=$(IPHONEOS_DEPLOYMENT_TARGET)
+else
+    CPLUS_FLAGS += -mmacosx-version-min=$(MACOSX_DEPLOYMENT_TARGET)
+    LINK_FLAGS += -mmacosx-version-min=$(MACOSX_DEPLOYMENT_TARGET)
+    LIB_LINK_FLAGS += -mmacosx-version-min=$(MACOSX_DEPLOYMENT_TARGET)
 endif
 
 #------------------------------------------------------------------------------

@@ -1251,7 +1251,7 @@
 				84011760152D6F6C00B07E4D /* Release64 */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug64;
+			defaultConfigurationName = Release64;
 		};
 		84011797152D6F8400B07E4D /* Build configuration list for PBXNativeTarget "tachyon.tbb1d" */ = {
 			isa = XCConfigurationList;
@@ -1260,7 +1260,7 @@
 				84011799152D6F8400B07E4D /* Release64 */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug64;
+			defaultConfigurationName = Release64;
 		};
 		84D0174B1527431F0008A4E0 /* Build configuration list for PBXProject "tachyon" */ = {
 			isa = XCConfigurationList;
@@ -1269,7 +1269,7 @@
 				84D01771152743200008A4E0 /* Release64 */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug64;
+			defaultConfigurationName = Release64;
 		};
 		84D01772152743200008A4E0 /* Build configuration list for PBXNativeTarget "tachyon.tbb" */ = {
 			isa = XCConfigurationList;
@@ -1278,7 +1278,7 @@
 				84D01774152743200008A4E0 /* Release64 */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug64;
+			defaultConfigurationName = Release64;
 		};
 		D3E786C31C0E3588006995F1 /* Build configuration list for PBXNativeTarget "tachyon.tbb.ios" */ = {
 			isa = XCConfigurationList;
@@ -1287,7 +1287,7 @@
 				D3E786C21C0E3588006995F1 /* Release64 */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug64;
+			defaultConfigurationName = Release64;
 		};
 /* End XCConfigurationList section */
 	};

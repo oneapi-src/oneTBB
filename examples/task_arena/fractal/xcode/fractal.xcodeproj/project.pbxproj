@@ -585,7 +585,7 @@
 				84D01771152743200008A4E0 /* Release64 */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug64;
+			defaultConfigurationName = Release64;
 		};
 		84D01772152743200008A4E0 /* Build configuration list for PBXNativeTarget "tbbExample" */ = {
 			isa = XCConfigurationList;
@@ -594,7 +594,7 @@
 				84D01774152743200008A4E0 /* Release64 */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug64;
+			defaultConfigurationName = Release64;
 		};
 		D31F32331C11796D00A77D54 /* Build configuration list for PBXNativeTarget "tbbExample_ios" */ = {
 			isa = XCConfigurationList;
@@ -603,7 +603,7 @@
 				D31F32321C11796D00A77D54 /* Release64 */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug64;
+			defaultConfigurationName = Release64;
 		};
 /* End XCConfigurationList section */
 	};

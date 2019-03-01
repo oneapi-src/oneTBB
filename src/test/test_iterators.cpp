@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2017-2018 Intel Corporation
+    Copyright (c) 2017-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,9 +20,10 @@
 
 #include "tbb/tbb_config.h"
 
-#if __TBB_CPP11_PRESENT && __TBB_CPP11_DECLTYPE_PRESENT
+#if __TBB_CPP11_PRESENT
 
 #include "tbb/iterators.h"
+#include "tbb/tbb_stddef.h"
 
 #include <vector>
 #include <iostream>
@@ -34,6 +35,16 @@
 //common checks of a random access iterator functionality
 template <typename RandomIt>
 void test_random_iterator(const RandomIt& it) {
+    // check that RandomIt has all necessary publicly accessible member types
+    {
+        typename RandomIt::difference_type{};
+        typename RandomIt::value_type{};
+        typename RandomIt::reference ref = *it;
+        tbb::internal::suppress_unused_warning(ref);
+        typename RandomIt::pointer{};
+        typename RandomIt::iterator_category{};
+    }
+
     ASSERT(  it == it,      "== returned false negative");
     ASSERT(!(it == it + 1), "== returned false positive");
     ASSERT(  it != it + 1,  "!= returned false negative");
@@ -104,7 +115,10 @@ struct test_counting_iterator {
         ASSERT((0 <= begin) && (begin <= end) && (end <= IntType(in.size())),
         "incorrect test_counting_iterator 'begin' and/or 'end' argument values");
 
-        auto b = tbb::counting_iterator<IntType>(begin);
+        //test that counting_iterator is default constructible
+        tbb::counting_iterator<IntType> b;
+
+        b = tbb::counting_iterator<IntType>(begin);
         auto e = tbb::counting_iterator<IntType>(end);
 
         //checks in using
@@ -129,7 +143,10 @@ struct test_counting_iterator {
 struct test_zip_iterator {
     template <typename T1, typename T2>
     void operator()(std::vector<T1>& in1, std::vector<T2>& in2) {
-        auto b = tbb::make_zip_iterator(in1.begin(), in2.begin());
+        //test that zip_iterator is default constructible
+        tbb::zip_iterator<decltype(in1.begin()), decltype(in2.begin())> b;
+
+        b = tbb::make_zip_iterator(in1.begin(), in2.begin());
         auto e = tbb::make_zip_iterator(in1.end(), in2.end());
 
         //checks in using

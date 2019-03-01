@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -130,6 +130,89 @@ void TestTypes( ) {
 }
 #endif // __TBB_TEST_SECONDARY
 
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+template <template <typename ...> typename TSet>
+void TestDeductionGuides() {
+    using ComplexType = const std::string *;
+    std::vector<ComplexType> v;
+    std::string s = "s";
+    auto l = { ComplexType(&s), ComplexType(&s)};
+
+    // check TSet(InputIterator,InputIterator)
+    TSet s1(v.begin(), v.end());
+    static_assert(std::is_same<decltype(s1), TSet<ComplexType>>::value);
+
+    // check TSet(InputIterator,InputIterator, size_t, Hasher)
+    TSet s2(v.begin(), v.end(), 5, std::hash<ComplexType>());
+    static_assert(std::is_same<decltype(s2), TSet<ComplexType, std::hash<ComplexType>>>::value);
+
+    // check TSet(InputIterator,InputIterator, size_t, Hasher, Equality)
+    TSet s3(v.begin(), v.end(), 5, std::hash<ComplexType>(), std::less<ComplexType>());
+    static_assert(std::is_same<decltype(s3), TSet<ComplexType, std::hash<ComplexType>,
+        std::less<ComplexType>>>::value);
+
+    // check TSet(InputIterator,InputIterator, size_t, Hasher, Equality, Allocator)
+    TSet s4(v.begin(), v.end(), 5, std::hash<ComplexType>(), std::less<ComplexType>(),
+        std::allocator<ComplexType>());
+    static_assert(std::is_same<decltype(s4), TSet<ComplexType, std::hash<ComplexType>,
+        std::less<ComplexType>, std::allocator<ComplexType>>>::value);
+
+    // check TSet(InputIterator,InputIterator, size_t, Allocator)
+    TSet s5(v.begin(), v.end(), 5, std::allocator<ComplexType>());
+    static_assert(std::is_same<decltype(s5), TSet<ComplexType, tbb::tbb_hash<ComplexType>,
+        std::equal_to<ComplexType>, std::allocator<ComplexType>>>::value);
+
+    // check TSet(InputIterator,InputIterator, size_t, Hasher, Allocator)
+    TSet s6(v.begin(), v.end(), 5, std::hash<ComplexType>(), std::allocator<ComplexType>());
+    static_assert(std::is_same<decltype(s6), TSet<ComplexType, std::hash<ComplexType>,
+        std::equal_to<ComplexType>, std::allocator<ComplexType>>>::value);
+
+    // check TSet(std::initializer_list)
+    TSet s7(l);
+    static_assert(std::is_same<decltype(s7), TSet<ComplexType>>::value);
+
+    // check TSet(std::initializer_list, size_t, Hasher)
+    TSet s8(l, 5, std::hash<ComplexType>());
+    static_assert(std::is_same<decltype(s8), TSet<ComplexType, std::hash<ComplexType>>>::value);
+
+    // check TSet(std::initializer_list, size_t, Hasher, Equality)
+    TSet s9(l, 5, std::hash<ComplexType>(), std::less<ComplexType>());
+    static_assert(std::is_same<decltype(s9), TSet<ComplexType, std::hash<ComplexType>,
+        std::less<ComplexType>>>::value);
+
+    // check TSet(std::initializer_list, size_t, Hasher, Equality, Allocator)
+    TSet s10(l, 5, std::hash<ComplexType>(), std::less<ComplexType>(), std::allocator<ComplexType>());
+    static_assert(std::is_same<decltype(s10), TSet<ComplexType, std::hash<ComplexType>,
+        std::less<ComplexType>, std::allocator<ComplexType>>>::value);
+
+    // check TSet(std::initializer_list, size_t, Allocator)
+    TSet s11(l, 5, std::allocator<ComplexType>());
+    static_assert(std::is_same<decltype(s11), TSet<ComplexType, tbb::tbb_hash<ComplexType>,
+        std::equal_to<ComplexType>, std::allocator<ComplexType>>>::value);
+
+    // check TSet(std::initializer_list, size_t, Hasher, Allocator)
+    TSet s12(l, 5, std::hash<ComplexType>(), std::allocator<ComplexType>());
+    static_assert(std::is_same<decltype(s12), TSet<ComplexType, std::hash<ComplexType>,
+        std::equal_to<ComplexType>, std::allocator<ComplexType>>>::value);
+
+    // check TSet(TSet &)
+    TSet s13(s1);
+    static_assert(std::is_same<decltype(s13), decltype(s1)>::value);
+
+    // check TSet(TSet &, Allocator)
+    TSet s14(s5, std::allocator<ComplexType>());
+    static_assert(std::is_same<decltype(s14), decltype(s5)>::value);
+
+    // check TSet(TSet &&)
+    TSet s15(std::move(s1));
+    static_assert(std::is_same<decltype(s15), decltype(s1)>::value);
+
+    // check TSet(TSet &&, Allocator)
+    TSet s16(std::move(s5), std::allocator<ComplexType>());
+    static_assert(std::is_same<decltype(s16), decltype(s5)>::value);
+}
+#endif
+
 #if !__TBB_TEST_SECONDARY
 #define INITIALIZATION_TIME_TEST_NAMESPACE            initialization_time_test
 #define TEST_INITIALIZATION_TIME_OPERATIONS_NAME      test_initialization_time_operations
@@ -196,6 +279,11 @@ int TestMain() {
 #endif /* __TBB_CPP11_RVALUE_REF_PRESENT */
 
     TestTypes();
+
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+    TestDeductionGuides<tbb::concurrent_unordered_set>();
+    TestDeductionGuides<tbb::concurrent_unordered_multiset>();
+#endif
 
     return Harness::Done;
 }

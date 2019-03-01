@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
 #ifndef __TBB_concurrent_unordered_map_H
 #define __TBB_concurrent_unordered_map_H
 
+#include "internal/_template_helpers.h"
 #include "internal/_concurrent_unordered_impl.h"
 
 namespace tbb
@@ -39,7 +40,8 @@ protected:
     typedef std::pair<const Key, T> value_type;
     typedef Key key_type;
     typedef Hash_compare hash_compare;
-    typedef typename Allocator::template rebind<value_type>::other allocator_type;
+    typedef typename tbb::internal::allocator_rebind<Allocator, value_type>::type allocator_type;
+
     enum { allow_multimapping = Allow_multimapping };
 
     concurrent_unordered_map_traits() : my_hash_compare() {}
@@ -228,6 +230,45 @@ public:
     }
 };
 
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+
+namespace internal {
+using namespace tbb::internal;
+
+template<template<typename...> typename Map, typename Key, typename Element, typename... Args>
+using cu_map_t = Map<
+    Key, Element,
+    std::conditional_t< (sizeof...(Args)>0) && !is_allocator_v< pack_element_t<0, Args...> >,
+                        pack_element_t<0, Args...>, tbb_hash<Key> >,
+    std::conditional_t< (sizeof...(Args)>1) && !is_allocator_v< pack_element_t<1, Args...> >,
+                        pack_element_t<1, Args...>, std::equal_to<Key> >,
+    std::conditional_t< (sizeof...(Args)>0) && is_allocator_v< pack_element_t<sizeof...(Args)-1, Args...> >,
+                        pack_element_t<sizeof...(Args)-1, Args...>, tbb_allocator<std::pair<const Key, Element> > >
+>;
+}
+
+// Deduction guide for the constructor from two iterators
+template<typename I>
+concurrent_unordered_map (I, I)
+-> internal::cu_map_t<concurrent_unordered_map, internal::iterator_key_t<I>, internal::iterator_mapped_t<I>>;
+
+// Deduction guide for the constructor from two iterators and hasher/equality/allocator
+template<typename I, typename... Args>
+concurrent_unordered_map(I, I, size_t, Args...)
+-> internal::cu_map_t<concurrent_unordered_map, internal::iterator_key_t<I>, internal::iterator_mapped_t<I>, Args...>;
+
+// Deduction guide for the constructor from an initializer_list
+template<typename Key, typename Element>
+concurrent_unordered_map(std::initializer_list<std::pair<const Key, Element>>)
+-> internal::cu_map_t<concurrent_unordered_map, Key, Element>;
+
+// Deduction guide for the constructor from an initializer_list and hasher/equality/allocator
+template<typename Key, typename Element, typename... Args>
+concurrent_unordered_map(std::initializer_list<std::pair<const Key, Element>>, size_t, Args...)
+-> internal::cu_map_t<concurrent_unordered_map, Key, Element, Args...>;
+
+#endif /* __TBB_CPP17_DEDUCTION_GUIDES_PRESENT */
+
 template < typename Key, typename T, typename Hasher = tbb::tbb_hash<Key>, typename Key_equality = std::equal_to<Key>,
         typename Allocator = tbb::tbb_allocator<std::pair<const Key, T> > >
 class concurrent_unordered_multimap :
@@ -363,6 +404,30 @@ public:
         : base_type(table, a)
     {}
 };
+
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+
+// Deduction guide for the constructor from two iterators
+template<typename I>
+concurrent_unordered_multimap (I, I)
+-> internal::cu_map_t<concurrent_unordered_multimap, internal::iterator_key_t<I>, internal::iterator_mapped_t<I>>;
+
+// Deduction guide for the constructor from two iterators and hasher/equality/allocator
+template<typename I, typename... Args>
+concurrent_unordered_multimap(I, I, size_t, Args...)
+-> internal::cu_map_t<concurrent_unordered_multimap, internal::iterator_key_t<I>, internal::iterator_mapped_t<I>, Args...>;
+
+// Deduction guide for the constructor from an initializer_list
+template<typename Key, typename Element>
+concurrent_unordered_multimap(std::initializer_list<std::pair<const Key, Element>>)
+-> internal::cu_map_t<concurrent_unordered_multimap, Key, Element>;
+
+// Deduction guide for the constructor from an initializer_list and hasher/equality/allocator
+template<typename Key, typename Element, typename... Args>
+concurrent_unordered_multimap(std::initializer_list<std::pair<const Key, Element>>, size_t, Args...)
+-> internal::cu_map_t<concurrent_unordered_multimap, Key, Element, Args...>;
+
+#endif /* __TBB_CPP17_DEDUCTION_GUIDES_PRESENT */
 } // namespace interface5
 
 using interface5::concurrent_unordered_map;

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -759,7 +759,7 @@ void TestPoolDetection()
         PoolIdentityCheck check(pools, objs);
         if( k&1 )
             NativeParallelFor( POOLS, check);
-        else 
+        else
             for (int i=0; i<POOLS; i++) check(i);
 
         for (int i=0; i<POOLS; i++) {
@@ -844,6 +844,25 @@ void TestDestroyFailed()
            "expect pool_destroy() failure");
 }
 
+void TestPoolMSize() {
+    rml::MemoryPool *pool = CreateUsablePool(1024);
+
+    const int SZ = 10;
+    // Original allocation requests, random numbers from small to large
+    size_t requestedSz[SZ] = {8, 16, 500, 1000, 2000, 4000, 8000, 1024*1024, 4242+4242, 8484+8484};
+    // Unlike large objects, small objects do not store its original size along with the object itself
+    size_t allocatedSz[SZ] = {8, 16, 512, 1024, 2688, 4032, 8128, 1024*1024, 4242+4242, 8484+8484};
+
+    for (int i = 0; i < SZ; i++) {
+        void* obj = pool_malloc(pool, requestedSz[i]);
+        size_t objSize = pool_msize(pool, obj);
+        ASSERT(objSize == allocatedSz[i], "pool_msize returned the wrong value");
+        pool_free(pool, obj);
+    }
+    bool destroyed = pool_destroy(pool);
+    ASSERT(destroyed, NULL);
+}
+
 int TestMain () {
     TestTooSmallBuffer();
     TestPoolReset();
@@ -858,6 +877,7 @@ int TestMain () {
     TestLazyBootstrap();
     TestNoLeakOnDestroy();
     TestDestroyFailed();
+    TestPoolMSize();
 
     return Harness::Done;
 }

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,10 +20,6 @@
 
 #ifndef __TBB_global_control_H
 #define __TBB_global_control_H
-
-#if !TBB_PREVIEW_GLOBAL_CONTROL && !__TBB_BUILD
-#error Set TBB_PREVIEW_GLOBAL_CONTROL before including global_control.h
-#endif
 
 #include "tbb_stddef.h"
 

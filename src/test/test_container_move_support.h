@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -25,8 +25,11 @@
 #include "harness_assert.h"
 #include "harness_allocator.h"
 #include "harness_state_trackable.h"
+
 #include "tbb/atomic.h"
 #include "tbb/aligned_space.h"
+#include "tbb/internal/_allocator_traits.h"
+
 #include <stdexcept>
 #include <string>
 #include <functional>
