@@ -883,9 +883,33 @@ void TestRehash() {
     }
 }
 
+template<typename base_alloc_t, typename count_t = tbb::atomic<size_t> >
+class only_node_counting_allocator : public local_counting_allocator<base_alloc_t, count_t> {
+    typedef local_counting_allocator<base_alloc_t, count_t> base_type;
+public:
+    template<typename U>
+    struct rebind {
+        typedef only_node_counting_allocator<typename base_alloc_t::template rebind<U>::other,count_t> other;
+    };
+
+    only_node_counting_allocator() : base_type() {}
+    only_node_counting_allocator(const only_node_counting_allocator& a) : base_type(a) {}
+
+    template<typename U>
+    only_node_counting_allocator(const only_node_counting_allocator<U>& a) : base_type(a) {}
+
+    typename base_type::pointer allocate(const typename base_type::size_type n) {
+        if ( n > 1) {
+            return base_alloc_t::allocate(n);
+        } else {
+            return base_type::allocate(n);
+        }
+    }
+};
+
 #if TBB_USE_EXCEPTIONS
 void TestExceptions() {
-    typedef local_counting_allocator<tbb::tbb_allocator<MyData2> > allocator_t;
+    typedef only_node_counting_allocator<tbb::tbb_allocator<MyData2> > allocator_t;
     typedef tbb::concurrent_hash_map<MyKey,MyData2,MyHashCompare,allocator_t> ThrowingTable;
     enum methods {
         zero_method = 0,
@@ -916,6 +940,14 @@ void TestExceptions() {
                         victim = src;
                     } break;
                 case op_insert: {
+#if __TBB_CPP11_RVALUE_REF_PRESENT && __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT && __TBB_CPP11_TUPLE_PRESENT
+                        // Insertion in cpp11 don't make copy constructions
+                        // during the insertion, so we need to decrement limit
+                        // to throw an exception in the right place and to prevent
+                        // successful insertion of one unexpected item
+                        if (MyDataCountLimit)
+                            --MyDataCountLimit;
+#endif
                         FillTable( victim, 1000 );
                     } break;
                 default:;
@@ -1488,6 +1520,97 @@ void TestHashCompareConstructors() {
 #endif
 }
 
+#if __TBB_CPP11_RVALUE_REF_PRESENT && __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT && !__TBB_SCOPED_ALLOCATOR_BROKEN
+#include <scoped_allocator>
+
+template<typename Allocator>
+class allocator_aware_data {
+public:
+    static bool assert_on_constructions;
+    typedef Allocator allocator_type;
+
+    allocator_aware_data(const allocator_type& allocator = allocator_type())
+        : my_allocator(allocator), my_value(0) {}
+    allocator_aware_data(int v, const allocator_type& allocator = allocator_type())
+        : my_allocator(allocator), my_value(v) {}
+    allocator_aware_data(const allocator_aware_data&) {
+        ASSERT(!assert_on_constructions, "Allocator should propogate to the data during copy construction");
+    }
+    allocator_aware_data(allocator_aware_data&&) {
+        ASSERT(!assert_on_constructions, "Allocator should propogate to the data during move construction");
+    }
+    allocator_aware_data(const allocator_aware_data& rhs, const allocator_type& allocator)
+        : my_allocator(allocator), my_value(rhs.my_value) {}
+    allocator_aware_data(allocator_aware_data&& rhs, const allocator_type& allocator)
+        : my_allocator(allocator), my_value(rhs.my_value) {}
+
+    int value() const { return my_value; }
+private:
+    allocator_type my_allocator;
+    int my_value;
+};
+
+struct custom_hash_compare {
+    template<typename Allocator>
+    static size_t hash(const allocator_aware_data<Allocator>& key) {
+        return tbb::tbb_hash_compare<int>::hash(key.value());
+    }
+
+    template<typename Allocator>
+    static bool equal(const allocator_aware_data<Allocator>& key1, const allocator_aware_data<Allocator>& key2) {
+        return tbb::tbb_hash_compare<int>::equal(key1.value(), key2.value());
+    }
+};
+
+template<typename Allocator>
+bool allocator_aware_data<Allocator>::assert_on_constructions = false;
+
+void TestScopedAllocator() {
+    typedef allocator_aware_data<std::scoped_allocator_adaptor<tbb::tbb_allocator<int>>> allocator_data_type;
+    typedef std::scoped_allocator_adaptor<tbb::tbb_allocator<allocator_data_type>> allocator_type;
+    typedef tbb::concurrent_hash_map<allocator_data_type, allocator_data_type,
+                                     custom_hash_compare, allocator_type> hash_map_type;
+
+    allocator_type allocator;
+    allocator_data_type key1(1, allocator), key2(2, allocator);
+    allocator_data_type data1(1, allocator), data2(data1, allocator);
+    hash_map_type map1(allocator), map2(allocator);
+
+    hash_map_type::value_type v1(key1, data1), v2(key2, data2);
+
+    auto init_list = { v1, v2 };
+
+    allocator_data_type::assert_on_constructions = true;
+    map1.emplace(key1, data1);
+    map2.emplace(key2, std::move(data2));
+
+    map1.clear();
+    map2.clear();
+
+    map1.insert(v1);
+    map2.insert(std::move(v2));
+
+    map1.clear();
+    map2.clear();
+
+    map1.insert(init_list);
+
+    map1.clear();
+    map2.clear();
+
+    hash_map_type::accessor a;
+    map2.insert(a, allocator_data_type(3));
+    a.release();
+
+    map1 = map2;
+    map2 = std::move(map1);
+
+    hash_map_type map3(allocator);
+    map3.rehash(1000);
+    map3 = map2;
+}
+#endif
+
 //------------------------------------------------------------------------
 // Test driver
 //------------------------------------------------------------------------
@@ -1550,6 +1673,9 @@ int TestMain () {
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
     TestDeductionGuides<tbb::concurrent_hash_map>();
+#endif
+#if __TBB_CPP11_RVALUE_REF_PRESENT && __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT && !__TBB_SCOPED_ALLOCATOR_BROKEN
+    TestScopedAllocator();
 #endif
 
     return Harness::Done;

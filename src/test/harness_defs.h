@@ -160,6 +160,16 @@
     (__TBB_GCC_VERSION>=40700 && __TBB_GCC_VERSION<40704 || __TBB_GCC_VERSION>=40800 && __TBB_GCC_VERSION<40803 )
 #endif
 
+// Swapping of scoped_allocator_adaptors is broken on GCC 4.9 and lower and on Android for Windows
+// Allocator propagation into std::pair is broken for Apple clang, lower then 9.0
+// Compilation of <scoped_allocator> header is broken for Visual Studio 2017 with ICC 17.8
+#define __TBB_SCOPED_ALLOCATOR_BROKEN (__TBB_GCC_VERSION <= 50100 || (__APPLE__ && __TBB_CLANG_VERSION < 90000) || \
+                                      (__FreeBSD__ && __TBB_CLANG_VERSION <= 60000) ||  \
+                                      (__ANDROID__ && (_WIN32 || _WIN64)) || \
+                                      (_MSC_VER && _MSC_VER == 1912 && __INTEL_COMPILER == 1700))
+
+
+
 // The tuple-based tests with more inputs take a long time to compile.  If changes
 // are made to the tuple implementation or any switch that controls it, or if testing
 // with a new platform implementation of std::tuple, the test should be compiled with

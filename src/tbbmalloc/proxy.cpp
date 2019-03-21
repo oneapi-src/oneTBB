@@ -740,6 +740,8 @@ void doMallocReplacement()
         }
         if ( strcmp(modules_to_replace[j].name, "ucrtbase.dll") == 0 ) {
             HMODULE ucrtbase_handle = GetModuleHandle("ucrtbase.dll");
+            if (!ucrtbase_handle)
+                continue;
             // If _o_free function is present and patchable, redirect it to tbbmalloc as well
             // This prevents issues with other _o_* functions which might allocate memory with malloc
             if ( IsPrologueKnown("ucrtbase.dll", "_o_free", known_bytecodes, ucrtbase_handle)) {

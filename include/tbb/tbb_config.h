@@ -215,7 +215,7 @@
     #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            (__INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1210)
     #define __TBB_CPP14_INTEGER_SEQUENCE_PRESENT            (__cplusplus >= 201402L)
     #define __TBB_CPP14_VARIABLE_TEMPLATES_PRESENT          (__cplusplus >= 201402L)
-    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            (__INTEL_COMPILER > 1900)
+    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            (__INTEL_COMPILER > 1901) // a future version
     #define __TBB_CPP17_INVOKE_RESULT_PRESENT               (__cplusplus >= 201703L)
 #elif __clang__
 /** TODO: these options need to be rechecked **/
@@ -561,12 +561,8 @@ There are four cases that are supported:
 #define __TBB_RECYCLE_TO_ENQUEUE __TBB_BUILD // keep non-official
 
 #ifndef __TBB_ARENA_OBSERVER
-    #define __TBB_ARENA_OBSERVER ((__TBB_BUILD||TBB_PREVIEW_LOCAL_OBSERVER)&& __TBB_SCHEDULER_OBSERVER)
+    #define __TBB_ARENA_OBSERVER __TBB_SCHEDULER_OBSERVER
 #endif /* __TBB_ARENA_OBSERVER */
-
-#ifndef __TBB_SLEEP_PERMISSION
-    #define __TBB_SLEEP_PERMISSION ((__TBB_CPF_BUILD||TBB_PREVIEW_LOCAL_OBSERVER)&& __TBB_SCHEDULER_OBSERVER)
-#endif /* __TBB_SLEEP_PERMISSION */
 
 #ifndef __TBB_TASK_ISOLATION
     #define __TBB_TASK_ISOLATION 1
@@ -623,6 +619,7 @@ There are four cases that are supported:
 
 /** __TBB_WIN8UI_SUPPORT enables support of Windows* Store Apps and limit a possibility to load
     shared libraries at run time only from application container **/
+// TODO: Separate this single macro into two for Windows 8 Store* (win8ui mode) and UWP/UWD modes.
 #if defined(WINAPI_FAMILY) && WINAPI_FAMILY == WINAPI_FAMILY_APP
     #define __TBB_WIN8UI_SUPPORT 1
 #else
@@ -785,6 +782,11 @@ There are four cases that are supported:
 
 // In some cases decltype of a function adds a reference to a return type.
 #define __TBB_CPP11_DECLTYPE_OF_FUNCTION_RETURN_TYPE_BROKEN (_MSC_VER == 1600 && !__INTEL_COMPILER)
+
+// Visual Studio 2013 does not delete the copy constructor when a user-defined move constructor is provided
+#if _MSC_VER && _MSC_VER <= 1800
+    #define __TBB_IMPLICIT_COPY_DELETION_BROKEN 1
+#endif
 
 /** End of __TBB_XXX_BROKEN macro section **/
 

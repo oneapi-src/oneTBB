@@ -385,6 +385,83 @@ void TestDeductionGuides() {
 }
 #endif
 
+#if __TBB_UNORDERED_NODE_HANDLE_PRESENT
+
+void TestMerge(){
+    using Map = tbb::concurrent_unordered_map<int, int>;
+    using MultiMap = tbb::concurrent_unordered_multimap<int, int>;
+
+    Map map_for_merge1;
+    map_for_merge1.insert({1, 10});
+    map_for_merge1.insert({2, 20});
+    map_for_merge1.insert({3, 30});
+    Map map_for_merge2;
+    map_for_merge2.insert({1, 40});
+    map_for_merge2.insert({2, 20});
+    map_for_merge2.insert({9, 90});
+
+    MultiMap multimap_for_merge1;
+    multimap_for_merge1.insert({1, 10});
+    multimap_for_merge1.insert({1, 10});
+    multimap_for_merge1.insert({2, 20});
+    multimap_for_merge1.insert({3, 30});
+    multimap_for_merge1.insert({4, 40});
+    MultiMap multimap_for_merge2;
+    multimap_for_merge2.insert({1, 10});
+    multimap_for_merge2.insert({2, 50});
+    multimap_for_merge2.insert({5, 60});
+    multimap_for_merge2.insert({5, 70});
+
+    node_handling::TestMergeTransposition(map_for_merge1, map_for_merge2,
+                                          multimap_for_merge1, multimap_for_merge2);
+
+    // Test merge with different hashers
+    tbb::concurrent_unordered_map<int, int, degenerate_hash<int>> degenerate_hash_map;
+    degenerate_hash_map.insert({1, 10});
+    degenerate_hash_map.insert({2, 20});
+    degenerate_hash_map.insert({9, 90});
+
+    tbb::concurrent_unordered_multimap<int, int, degenerate_hash<int>> degenerate_hash_multimap;
+    degenerate_hash_multimap.insert({1, 10});
+    degenerate_hash_multimap.insert({2, 20});
+    degenerate_hash_multimap.insert({5, 50});
+    degenerate_hash_multimap.insert({5, 60});
+    degenerate_hash_multimap.insert({6, 70});
+
+    node_handling::TestMergeOverloads(map_for_merge1, degenerate_hash_map);
+    node_handling::TestMergeOverloads(multimap_for_merge1, degenerate_hash_multimap);
+
+    int size = 100000;
+
+    Map map_for_merge3(size);
+    for (int i = 0; i<size; i++){
+        map_for_merge3.insert({i,i});
+    }
+    node_handling::TestConcurrentMerge(map_for_merge3);
+
+    MultiMap multimap_for_merge3(size/2);
+    for (int i = 0; i<size/2; i++){
+        multimap_for_merge3.insert({i,i});
+        multimap_for_merge3.insert({i,i});
+    }
+    node_handling::TestConcurrentMerge(multimap_for_merge3);
+}
+
+void TestNodeHandling() {
+    tbb::concurrent_unordered_map<int, int> unordered_map;
+    for (int i = 1; i<5; i++)
+        unordered_map.insert({i,i*10});
+    node_handling::NodeHandlingTests(unordered_map, /*new key for test_data*/{5,90});
+
+    tbb::concurrent_unordered_multimap<int, int> unordered_multimap;
+    for (int i = 1; i<5; i++)
+        unordered_multimap.insert({i,i*10});
+    unordered_multimap.insert({2, 30});
+    node_handling::NodeHandlingTests(unordered_multimap, /*new key for test_data*/{5,90});
+}
+
+#endif /*__TBB_UNORDERED_NODE_HANDLE_PRESENT*/
+
 int TestMain() {
     test_machine();
 
@@ -426,6 +503,11 @@ int TestMain() {
 #endif
 
     TestTypes();
+
+#if __TBB_UNORDERED_NODE_HANDLE_PRESENT
+    TestNodeHandling ();
+    TestMerge();
+#endif /*__TBB_UNORDERED_NODE_HANDLE_PRESENT*/
 
     return Harness::Done;
 }

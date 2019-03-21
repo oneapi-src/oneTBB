@@ -92,9 +92,6 @@ public:
 
     //! Call exit notifications on last and observers added before it.
     inline void notify_exit_observers( observer_proxy*& last, bool worker );
-
-    //! Call may_sleep callbacks to ask for permission for a worker thread to leave market
-    bool ask_permission_to_leave();
 }; // class observer_list
 
 //! Wrapper for an observer object
@@ -122,7 +119,7 @@ class observer_proxy {
     //! Version
     char my_version;
 
-#if __TBB_ARENA_OBSERVER || __TBB_SLEEP_PERMISSION
+#if __TBB_ARENA_OBSERVER
     interface6::task_scheduler_observer* get_v6_observer();
 #endif
 #if __TBB_ARENA_OBSERVER

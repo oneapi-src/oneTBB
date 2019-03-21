@@ -128,6 +128,86 @@ void TestTypes( ) {
     REPORT( "Known issue: C++11 smart pointer tests are skipped.\n" );
 #endif /* __TBB_CPP11_SMART_POINTERS_PRESENT */
 }
+
+#if __TBB_UNORDERED_NODE_HANDLE_PRESENT
+
+void TestNodeHandling() {
+    tbb::concurrent_unordered_set<int> unordered_set;
+    for (int i =1; i< 5; i++)
+        unordered_set.insert(i);
+    node_handling::NodeHandlingTests(unordered_set, /*new key for test_data*/5);
+
+    tbb::concurrent_unordered_multiset<int> unordered_multiset;
+    for (int i =1; i< 5; i++)
+        unordered_multiset.insert(i);
+    unordered_multiset.insert(1);
+    unordered_multiset.insert(2);
+    node_handling::NodeHandlingTests(unordered_multiset, /*new key for test_data*/5);
+}
+
+void TestMerge(){
+    using Set = tbb::concurrent_unordered_set<int>;
+    using MultiSet = tbb::concurrent_unordered_multiset<int>;
+
+    Set set_for_merge1;
+    set_for_merge1.insert(1);
+    set_for_merge1.insert(2);
+    set_for_merge1.insert(3);
+    Set set_for_merge2;
+    set_for_merge2.insert(1);
+    set_for_merge2.insert(2);
+    set_for_merge2.insert(9);
+
+    MultiSet multiset_for_merge1;
+    multiset_for_merge1.insert(1);
+    multiset_for_merge1.insert(1);
+    multiset_for_merge1.insert(2);
+    multiset_for_merge1.insert(3);
+    multiset_for_merge1.insert(4);
+    MultiSet multiset_for_merge2;
+    multiset_for_merge2.insert(1);
+    multiset_for_merge2.insert(2);
+    multiset_for_merge2.insert(5);
+    multiset_for_merge2.insert(5);
+    multiset_for_merge2.insert(6);
+
+    node_handling::TestMergeTransposition(set_for_merge1, set_for_merge2,
+                                          multiset_for_merge1, multiset_for_merge2);
+
+    // Test merge with different hashers
+    tbb::concurrent_unordered_set<int, degenerate_hash<int>> degenerate_hash_set;
+    degenerate_hash_set.insert(1);
+    degenerate_hash_set.insert(2);
+    degenerate_hash_set.insert(9);
+
+    tbb::concurrent_unordered_multiset<int, degenerate_hash<int>> degenerate_hash_multiset;
+    degenerate_hash_multiset.insert(1);
+    degenerate_hash_multiset.insert(2);
+    degenerate_hash_multiset.insert(5);
+    degenerate_hash_multiset.insert(5);
+    degenerate_hash_multiset.insert(6);
+
+    node_handling::TestMergeOverloads(set_for_merge1, degenerate_hash_set);
+    node_handling::TestMergeOverloads(multiset_for_merge1, degenerate_hash_multiset);
+
+    int size = 100000;
+
+    Set set_for_merge3(size);
+    for (int i = 0; i<size; i++){
+        set_for_merge3.insert(i);
+    }
+    node_handling::TestConcurrentMerge(set_for_merge3);
+
+    MultiSet multiset_for_merge3(size/2);
+    for (int i = 0; i<size/2; i++){
+        multiset_for_merge3.insert(i);
+        multiset_for_merge3.insert(i);
+    }
+    node_handling::TestConcurrentMerge(multiset_for_merge3);
+}
+
+#endif/*__TBB_UNORDERED_NODE_HANDLE_PRESENT*/
+
 #endif // __TBB_TEST_SECONDARY
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
@@ -284,6 +364,11 @@ int TestMain() {
     TestDeductionGuides<tbb::concurrent_unordered_set>();
     TestDeductionGuides<tbb::concurrent_unordered_multiset>();
 #endif
+
+#if __TBB_UNORDERED_NODE_HANDLE_PRESENT
+    TestNodeHandling();
+    TestMerge();
+#endif /*__TBB_UNORDERED_NODE_HANDLE_PRESENT*/
 
     return Harness::Done;
 }

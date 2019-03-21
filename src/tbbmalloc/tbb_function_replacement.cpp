@@ -563,10 +563,13 @@ FRR_TYPE ReplaceFunctionW(const wchar_t *dllName, const char *funcName, FUNCPTR 
 bool IsPrologueKnown(const char* dllName, const char *funcName, const char **opcodes, HMODULE module)
 {
     FARPROC inpFunc = GetProcAddress(module, funcName);
-    if (!inpFunc)
-        return false;
-
     FunctionInfo functionInfo = { funcName, dllName };
+
+    if (!inpFunc) {
+        Log::record(functionInfo, "unknown", /*status*/ false);
+        return false;
+    }
+
     return CheckOpcodes( opcodes, (void*)inpFunc, /*abortOnError=*/false, &functionInfo) != 0;
 }
 

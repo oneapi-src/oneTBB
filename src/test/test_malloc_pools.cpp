@@ -850,9 +850,15 @@ void TestPoolMSize() {
     const int SZ = 10;
     // Original allocation requests, random numbers from small to large
     size_t requestedSz[SZ] = {8, 16, 500, 1000, 2000, 4000, 8000, 1024*1024, 4242+4242, 8484+8484};
-    // Unlike large objects, small objects do not store its original size along with the object itself
-    size_t allocatedSz[SZ] = {8, 16, 512, 1024, 2688, 4032, 8128, 1024*1024, 4242+4242, 8484+8484};
 
+    // Unlike large objects, small objects do not store its original size along with the object itself
+    // On Power architecture TLS bins are divided differently.
+    size_t allocatedSz[SZ] =
+#if __powerpc64__ || __ppc64__ || __bgp__
+        {8, 16, 512, 1024, 2688, 5376, 8064, 1024*1024, 4242+4242, 8484+8484};
+#else
+        {8, 16, 512, 1024, 2688, 4032, 8128, 1024*1024, 4242+4242, 8484+8484};
+#endif
     for (int i = 0; i < SZ; i++) {
         void* obj = pool_malloc(pool, requestedSz[i]);
         size_t objSize = pool_msize(pool, obj);

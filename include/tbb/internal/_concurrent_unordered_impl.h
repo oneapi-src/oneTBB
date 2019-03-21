@@ -44,8 +44,13 @@
     #include <initializer_list>
 #endif
 
+#if __TBB_CPP11_RVALUE_REF_PRESENT && !__TBB_IMPLICIT_COPY_DELETION_BROKEN
+    #define __TBB_UNORDERED_NODE_HANDLE_PRESENT 1
+#endif
+
 #include "_allocator_traits.h"
 #include "_tbb_hash_compare_impl.h"
+#include "_template_helpers.h"
 
 namespace tbb {
 namespace interface5 {
@@ -125,6 +130,8 @@ class solist_iterator : public flist_iterator<Solist, Value>
     friend class split_ordered_list;
     template<class M, typename V>
     friend class solist_iterator;
+    template <typename Traits>
+    friend class concurrent_unordered_base;
     template<typename M, typename T, typename U>
     friend bool operator==( const solist_iterator<M,T> &i, const solist_iterator<M,U> &j );
     template<typename M, typename T, typename U>
@@ -568,26 +575,48 @@ public:
 
     }
 
-    // This erase function can handle both real and dummy nodes
-    void erase_node(raw_iterator previous, raw_const_iterator& where)
-    {
+    nodeptr_t  erase_node_impl(raw_iterator previous, raw_const_iterator& where) {
         nodeptr_t pnode = (where++).get_node_ptr();
         nodeptr_t prevnode = previous.get_node_ptr();
         __TBB_ASSERT(prevnode->my_next == pnode, "Erase must take consecutive iterators");
         prevnode->my_next = pnode->my_next;
+        return pnode;
+    }
 
+    // This erase function can handle both real and dummy nodes
+    void erase_node(raw_iterator previous, raw_const_iterator& where,
+                    /*allow_destroy*/tbb::internal::true_type)
+    {
+        nodeptr_t pnode = erase_node_impl(previous, where);
         destroy_node(pnode);
     }
 
+    void erase_node(raw_iterator previous, raw_const_iterator& where,
+                    /*allow_destroy*/tbb::internal::false_type)
+    {
+        erase_node_impl(previous, where);
+    }
+
+    void erase_node(raw_iterator previous, raw_const_iterator& where) {
+        erase_node(previous, where, /*allow_destroy*/tbb::internal::true_type());
+    }
+
     // Erase the element (previous node needs to be passed because this is a forward only list)
-    iterator erase_node(raw_iterator previous, const_iterator where)
+    template<typename AllowDestroy>
+    iterator erase_node(raw_iterator previous, const_iterator where, AllowDestroy)
     {
         raw_const_iterator it = where;
-        erase_node(previous, it);
+        erase_node(previous, it, AllowDestroy());
         my_element_count--;
 
         return get_iterator(first_real_iterator(it));
     }
+
+    iterator erase_node(raw_iterator previous, const_iterator& where) {
+        return erase_node(previous, where, /*allow_destroy*/tbb::internal::true_type());
+    }
+
+
 
     // Move all elements from the passed in split-ordered list to this one
     void move_all(self_type& source)
@@ -683,12 +712,19 @@ protected:
     typedef typename solist_t::const_iterator const_iterator;
     typedef iterator local_iterator;
     typedef const_iterator const_local_iterator;
+#if __TBB_UNORDERED_NODE_HANDLE_PRESENT
+    typedef typename Traits::node_type node_type;
+#endif // __TBB_UNORDERED_NODE_HANDLE_PRESENT
     using Traits::my_hash_compare;
     using Traits::get_key;
     using Traits::allow_multimapping;
 
     static const size_type initial_bucket_number = 8;                               // Initial number of buckets
+
 private:
+    template<typename OtherTraits>
+    friend class concurrent_unordered_base;
+
     typedef std::pair<iterator, iterator> pairii_t;
     typedef std::pair<const_iterator, const_iterator> paircc_t;
 
@@ -831,6 +867,43 @@ protected:
         internal_clear();
     }
 
+#if __TBB_UNORDERED_NODE_HANDLE_PRESENT
+    template<typename SourceType>
+    void internal_merge(SourceType& source) {
+        typedef typename SourceType::iterator source_iterator;
+        __TBB_STATIC_ASSERT((tbb::internal::is_same_type<node_type,
+                            typename SourceType::node_type>::value),
+                            "Incompatible containers cannot be merged");
+
+        for(source_iterator it = source.begin(); it != source.end();) {
+            source_iterator where = it++;
+            if (allow_multimapping || find(get_key(*where)) == end()) {
+                std::pair<node_type, raw_iterator> extract_result = source.internal_extract(where);
+                
+                // If the insertion fails, it returns ownership of the node to extract_result.first
+                // extract_result.first remains valid node handle
+                if (!insert(std::move(extract_result.first)).second) {
+                    raw_iterator next = extract_result.second;
+                    raw_iterator current = next++;
+
+                    __TBB_ASSERT(extract_result.first.my_node->get_order_key() >= current.get_node_ptr()->get_order_key(),
+                                "Wrong nodes order in source container");
+                    __TBB_ASSERT(next==source.my_solist.raw_end() ||
+                                 extract_result.first.my_node->get_order_key() <= next.get_node_ptr()->get_order_key(),
+                                 "Wrong nodes order in source container");
+
+                    size_t new_count = 0;// To use try_insert()
+                    bool insert_result =
+                        source.my_solist.try_insert(current, next, extract_result.first.my_node, &new_count).second;
+                    __TBB_ASSERT_EX(insert_result, "Return to source must be successful. "
+                                                   "Changing source container while merging is unsafe.");
+                }
+                extract_result.first.deactivate();
+            }
+        }
+    }
+#endif // __TBB_UNORDERED_NODE_HANDLE_PRESENT
+
 public:
     allocator_type get_allocator() const {
         return my_solist.get_allocator();
@@ -967,7 +1040,8 @@ public:
 
     // Modifiers
     std::pair<iterator, bool> insert(const value_type& value) {
-        return internal_insert</*AllowCreate=*/tbb::internal::true_type>(value);
+        return internal_insert</*AllowCreate=*/tbb::internal::true_type,
+                               /*AllowDestroy=*/tbb::internal::true_type>(value);
     }
 
     iterator insert(const_iterator, const value_type& value) {
@@ -977,23 +1051,43 @@ public:
 
 #if __TBB_CPP11_RVALUE_REF_PRESENT
     std::pair<iterator, bool> insert(value_type&& value) {
-        return internal_insert</*AllowCreate=*/tbb::internal::true_type>(std::move(value));
+        return internal_insert</*AllowCreate=*/tbb::internal::true_type,
+                               /*AllowDestroy=*/tbb::internal::true_type>(std::move(value));
     }
 
     iterator insert(const_iterator, value_type&& value) {
         // Ignore hint
         return insert(std::move(value)).first;
     }
+#endif /*__TBB_CPP11_RVALUE_REF_PRESENT*/
 
-#if __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
+#if __TBB_UNORDERED_NODE_HANDLE_PRESENT
+    std::pair<iterator, bool> insert(node_type&& nh) {
+        if (!nh.empty()) {
+            nodeptr_t handled_node = nh.my_node;
+            std::pair<iterator, bool> insert_result =
+                                      internal_insert</*AllowCreate=*/tbb::internal::false_type,
+                                                      /*AllowDestroy=*/tbb::internal::false_type>
+                                                      (handled_node->my_element, handled_node);
+            if (insert_result.second)
+                nh.deactivate();
+            return insert_result;
+        }
+        return std::pair<iterator, bool>(end(), false);
+    }
+
+    iterator insert(const_iterator, node_type&& nh) {
+        return insert(std::move(nh)).first;
+    }
+#endif // __TBB_UNORDERED_NODE_HANDLE_PRESENT
+
+#if __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT && __TBB_CPP11_RVALUE_REF_PRESENT
     template<typename... Args>
     std::pair<iterator, bool> emplace(Args&&... args) {
         nodeptr_t pnode = my_solist.create_node_v(tbb::internal::forward<Args>(args)...);
-        const sokey_t hashed_element_key = (sokey_t) my_hash_compare(get_key(pnode->my_element));
-        const sokey_t order_key = split_order_key_regular(hashed_element_key);
-        pnode->init(order_key);
 
-        return internal_insert</*AllowCreate=*/tbb::internal::false_type>(pnode->my_element, pnode);
+        return internal_insert</*AllowCreate=*/tbb::internal::false_type,
+                               /*AllowDestroy=*/tbb::internal::true_type>(pnode->my_element, pnode);
     }
 
     template<typename... Args>
@@ -1001,9 +1095,8 @@ public:
         // Ignore hint
         return emplace(tbb::internal::forward<Args>(args)...).first;
     }
+#endif // __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT && __TBB_CPP11_RVALUE_REF_PRESENT
 
-#endif // __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
-#endif // __TBB_CPP11_RVALUE_REF_PRESENT
 
     template<class Iterator>
     void insert(Iterator first, Iterator last) {
@@ -1034,6 +1127,18 @@ public:
         unsafe_erase(where.first, where.second);
         return item_count;
     }
+
+#if __TBB_UNORDERED_NODE_HANDLE_PRESENT
+    node_type unsafe_extract(const_iterator where) {
+        return internal_extract(where).first;
+    }
+
+    node_type unsafe_extract(const key_type& key) {
+        pairii_t where = equal_range(key);
+        if (where.first == end()) return node_type(); // element was not found
+        return internal_extract(where.first).first;
+    }
+#endif // __TBB_UNORDERED_NODE_HANDLE_PRESENT
 
     void swap(concurrent_unordered_base& right) {
         if (this != &right) {
@@ -1269,7 +1374,7 @@ private:
     }
 
     // Insert an element in the hash given its value
-    template<typename AllowCreate, typename ValueType>
+    template<typename AllowCreate, typename AllowDestroy, typename ValueType>
     std::pair<iterator, bool> internal_insert(__TBB_FORWARDING_REF(ValueType) value, nodeptr_t pnode = NULL)
     {
         const key_type *pkey = &get_key(value);
@@ -1293,6 +1398,11 @@ private:
                     pnode = my_solist.create_node(order_key, tbb::internal::forward<ValueType>(value), AllowCreate());
                     // If the value was moved, the known reference to key might be invalid
                     pkey = &get_key(pnode->my_element);
+                }
+                else
+                {
+                    // Set new order_key to node
+                    pnode->init(order_key);
                 }
 
                 // Try to insert 'pnode' between 'previous' and 'where'
@@ -1318,7 +1428,7 @@ private:
             else if (!allow_multimapping && solist_t::get_order_key(where) == order_key &&
                      !my_hash_compare(get_key(*where), *pkey)) // TODO: fix negation
             { // Element already in the list, return it
-                 if (pnode)
+                 if (pnode && AllowDestroy::value)
                      my_solist.destroy_node(pnode);
                 return std::pair<iterator, bool>(my_solist.get_iterator(where), false);
             }
@@ -1364,14 +1474,33 @@ private:
         __TBB_ASSERT(previous != last, "Invalid head node");
 
         // First node is a dummy node
-        for (raw_iterator where = previous; ; previous = where) {
+        for (raw_iterator where = previous; where != last; previous = where) {
             ++where;
-            if (where == last)
-                return end();
-            else if (my_solist.get_iterator(where) == it)
+            if (my_solist.get_iterator(where) == it)
                 return my_solist.erase_node(previous, it);
         }
+        return end();
     }
+
+#if __TBB_UNORDERED_NODE_HANDLE_PRESENT
+    std::pair<node_type, raw_iterator> internal_extract(const_iterator it) {
+        sokey_t hash_key = sokey_t(my_hash_compare(get_key(*it)));
+        raw_iterator previous = prepare_bucket(hash_key);
+        raw_iterator last = my_solist.raw_end();
+        __TBB_ASSERT(previous != last, "Invalid head node");
+
+        for(raw_iterator where = previous; where != last; previous = where) {
+            ++where;
+            if (my_solist.get_iterator(where) == it) {
+                const_iterator result = it;
+                my_solist.erase_node(previous, it, /*allow_destroy*/tbb::internal::false_type());
+                return std::pair<node_type, raw_iterator>( node_type(result.get_node_ptr()),
+                                                           previous);
+            }
+        }
+        return std::pair<node_type, iterator>(node_type(), end());
+    }
+#endif // __TBB_UNORDERED_NODE_HANDLE_PRESENT
 
     // Return the [begin, end) pair of iterators with the same key values.
     // This operation makes sense only if mapping is many-to-one.
@@ -1521,6 +1650,124 @@ private:
 #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
 #pragma warning(pop) // warning 4127 is back
 #endif
+
+#if __TBB_UNORDERED_NODE_HANDLE_PRESENT
+
+template<typename Value, typename Allocator>
+class node_handle_base {
+public:
+    typedef Allocator allocator_type;
+protected:
+    typedef typename split_ordered_list<Value, allocator_type>::node node;
+public:
+
+    node_handle_base() : my_node(NULL), my_allocator() {}
+    node_handle_base(node_handle_base&& nh) : my_node(nh.my_node),
+                                              my_allocator(std::move(nh.my_allocator)) {
+        nh.my_node = NULL;
+    }
+
+    bool empty() const { return my_node == NULL; }
+    explicit operator bool() const { return my_node != NULL; }
+
+    ~node_handle_base() { internal_destroy(); }
+
+    node_handle_base& operator=(node_handle_base&& nh) {
+        internal_destroy();
+        my_node = nh.my_node;
+        typedef typename tbb::internal::allocator_traits<allocator_type>::
+                         propagate_on_container_move_assignment pocma_type;
+        tbb::internal::allocator_move_assignment(my_allocator, nh.my_allocator, pocma_type());
+        nh.deactivate();
+        return *this;
+    }
+
+    void swap(node_handle_base& nh) {
+        std::swap(my_node, nh.my_node);
+        typedef typename tbb::internal::allocator_traits<allocator_type>::
+                         propagate_on_container_swap pocs_type;
+        tbb::internal::allocator_swap(my_allocator, nh.my_allocator, pocs_type());
+    }
+
+    allocator_type get_allocator() const {
+        return my_allocator;
+    }
+
+protected:
+    node_handle_base(node* n) : my_node(n) {}
+
+    void internal_destroy() {
+        if(my_node) {
+            my_allocator.destroy(&(my_node->my_element));
+            // TODO: Consider using node_allocator from the container
+            typename tbb::internal::allocator_rebind<allocator_type, node>::type node_allocator;
+            node_allocator.deallocate(my_node, 1);
+        }
+    }
+
+    void deactivate() { my_node = NULL; }
+
+    node* my_node;
+    allocator_type my_allocator;
+};
+
+// node handle for concurrent_unordered maps
+template<typename Key, typename Value, typename Allocator>
+class node_handle : public node_handle_base<Value, Allocator> {
+    typedef node_handle_base<Value, Allocator> base_type;
+public:
+    typedef Key key_type;
+    typedef typename Value::second_type mapped_type;
+    typedef typename base_type::allocator_type allocator_type;
+
+    node_handle() : base_type() {}
+
+    key_type& key() const {
+        __TBB_ASSERT(!this->empty(), "Cannot get key from the empty node_type object");
+        return *const_cast<key_type*>(&(this->my_node->my_element.first));
+    }
+
+    mapped_type& mapped() const {
+        __TBB_ASSERT(!this->empty(), "Cannot get mapped value from the empty node_type object");
+        return this->my_node->my_element.second;
+    }
+
+private:
+    template<typename T, typename A>
+    friend class split_ordered_list;
+
+    template<typename Traits>
+    friend class concurrent_unordered_base;
+
+    node_handle(typename base_type::node* n) : base_type(n) {}
+};
+
+// node handle for concurrent_unordered sets
+template<typename Key, typename Allocator>
+class node_handle<Key, Key, Allocator> : public node_handle_base<Key, Allocator> {
+    typedef node_handle_base<Key, Allocator> base_type;
+public:
+    typedef Key value_type;
+    typedef typename base_type::allocator_type allocator_type;
+
+    node_handle() : base_type() {}
+
+    value_type& value() const {
+        __TBB_ASSERT(!this->empty(), "Cannot get value from the empty node_type object");
+        return *const_cast<value_type*>(&(this->my_node->my_element));
+    }
+
+private:
+    template<typename T, typename A>
+    friend class split_ordered_list;
+
+    template<typename Traits>
+    friend class concurrent_unordered_base;
+
+    node_handle(typename base_type::node* n) : base_type(n) {}
+};
+
+#endif // __TBB_UNORDERED_NODE_HANDLE_PRESENT
 
 } // namespace internal
 //! @endcond

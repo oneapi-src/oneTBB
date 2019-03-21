@@ -43,8 +43,9 @@ namespace internal {
 
 const size_t MByte = 1024*1024;
 
-#if __TBB_WIN8UI_SUPPORT
-// In Win8UI mode, TBB uses a thread creation API that does not allow to specify the stack size.
+#if __TBB_WIN8UI_SUPPORT && (_WIN32_WINNT < 0x0A00)
+// In Win8UI mode (Windows 8 Store* applications), TBB uses a thread creation API
+// that does not allow to specify the stack size.
 // Still, the thread stack size value, either explicit or default, is used by the scheduler.
 // So here we set the default value to match the platform's default of 1MB.
 const size_t ThreadStackSize = 1*MByte;

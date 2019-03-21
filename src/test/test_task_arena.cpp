@@ -18,7 +18,6 @@
 
 */
 
-#define TBB_PREVIEW_LOCAL_OBSERVER 1
 #define __TBB_EXTRA_DEBUG 1
 
 #include <stdexcept>
@@ -1613,4 +1612,3 @@ int TestMain() {
     TestArenaWorkersMigration();
     return Harness::Done;
 }
-

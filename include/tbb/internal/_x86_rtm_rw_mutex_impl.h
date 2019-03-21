@@ -171,7 +171,8 @@ private:
         bool upgrade_to_writer() {
             x86_rtm_rw_mutex* mutex = x86_rtm_rw_mutex::internal_get_mutex(my_scoped_lock);
             __TBB_ASSERT( mutex, "lock is not acquired" );
-            __TBB_ASSERT( transaction_state==RTM_transacting_reader || transaction_state==RTM_real_reader, "Invalid state for upgrade" );
+            if (transaction_state == RTM_transacting_writer || transaction_state == RTM_real_writer)
+                return true; // Already a writer
             return mutex->internal_upgrade(*this);
         }
 
@@ -180,7 +181,8 @@ private:
         bool downgrade_to_reader() {
             x86_rtm_rw_mutex* mutex = x86_rtm_rw_mutex::internal_get_mutex(my_scoped_lock);
             __TBB_ASSERT( mutex, "lock is not acquired" );
-            __TBB_ASSERT( transaction_state==RTM_transacting_writer || transaction_state==RTM_real_writer, "Invalid state for downgrade" );
+            if (transaction_state == RTM_transacting_reader || transaction_state == RTM_real_reader)
+                return true; // Already a reader
             return mutex->internal_downgrade(*this);
         }
 

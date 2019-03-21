@@ -1980,6 +1980,11 @@ static bool initMemoryManager()
     // POSIX.1-2001-compliant way to get page size
     const size_t granularity = sysconf(_SC_PAGESIZE);
 #endif
+    if (!defaultMemPool) {
+        // Do not rely on static constructors and do the assignment in case
+        // of library static section not initialized at this call yet.
+        defaultMemPool = (MemoryPool*)defaultMemPool_space;
+    }
     bool initOk = defaultMemPool->
         extMemPool.init(0, NULL, NULL, granularity,
                         /*keepAllMemory=*/false, /*fixedPool=*/false);

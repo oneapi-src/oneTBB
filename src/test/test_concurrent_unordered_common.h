@@ -988,3 +988,405 @@ namespace test_select_size_t_constant{
     __TBB_STATIC_ASSERT((tbb::internal::select_size_t_constant<0x12345678U,0x091A2B3C091A2B3CULL>::value % ~0U == 0x12345678U),
             "select_size_t_constant have chosen the wrong constant");
 }
+
+#if __TBB_UNORDERED_NODE_HANDLE_PRESENT
+namespace node_handling{
+    template<typename Handle>
+    bool compare_handle_getters(
+        const Handle& node, const std::pair<typename Handle::key_type, typename Handle::mapped_type>& expected
+    ) {
+        return node.key() == expected.first && node.mapped() == expected.second;
+    }
+
+    template<typename Handle>
+    bool compare_handle_getters( const Handle& node, const typename Handle::value_type& value) {
+        return node.value() == value;
+    }
+
+    template<typename Handle>
+    void set_node_handle_value(
+        Handle& node, const std::pair<typename Handle::key_type, typename Handle::mapped_type>& value
+    ) {
+        node.key() = value.first;
+        node.mapped() = value.second;
+    }
+
+    template<typename Handle>
+    void set_node_handle_value( Handle& node, const typename Handle::value_type& value) {
+        node.value() = value;
+    }
+
+    template <typename node_type>
+    void TestTraits() {
+        ASSERT( !std::is_copy_constructible<node_type>::value,
+                "Node handle: Handle is copy constructable" );
+        ASSERT( !std::is_copy_assignable<node_type>::value,
+                "Node handle: Handle is copy assignable" );
+        ASSERT( std::is_move_constructible<node_type>::value,
+                "Node handle: Handle is not move constructable" );
+        ASSERT( std::is_move_assignable<node_type>::value,
+                "Node handle: Handle is not move constructable" );
+        ASSERT( std::is_default_constructible<node_type>::value,
+                "Node handle:  Handle is not default constructable" );
+        ASSERT( std::is_destructible<node_type>::value,
+                "Node handle: Handle is not destructible" );
+    }
+
+    template <typename Table>
+    void TestHandle( Table test_table ) {
+        ASSERT( test_table.size()>1, "Node handle: Container must contains 2 or more elements" );
+        // Initialization
+        using node_type = typename Table::node_type;
+
+        TestTraits<node_type>();
+
+        // Default Ctor and empty function
+        node_type nh;
+        ASSERT( nh.empty(), "Node handle: Node is not empty after initialization" );
+
+        // Move Assign
+        // key/mapped/value function
+        auto expected_value = *test_table.begin();
+
+        nh = test_table.unsafe_extract(test_table.begin());
+        ASSERT( !nh.empty(), "Node handle: Node handle is empty after valid move assigning" );
+        ASSERT( compare_handle_getters(nh,expected_value),
+                "Node handle: After valid move assigning "
+                "node handle does not contains expected value");
+
+        // Move Ctor
+        // key/mapped/value function
+        node_type nh2(std::move(nh));
+        ASSERT( nh.empty(), "Node handle: After valid move construction node handle is empty" );
+        ASSERT( !nh2.empty(), "Node handle: After valid move construction "
+                              "argument hode handle was not moved" );
+        ASSERT( compare_handle_getters(nh2,expected_value),
+                "Node handle: After valid move construction "
+                "node handle does not contains expected value" );
+
+        // Bool conversion
+        ASSERT( nh2, "Node hanlde: Wrong not handle bool conversion" );
+
+        // Change key/mapped/value of node handle
+        auto expected_value2 = *test_table.begin();
+        set_node_handle_value(nh2, expected_value2);
+        ASSERT( compare_handle_getters(nh2, expected_value2),
+                "Node handle: Wrong node handle key/mapped/value changing behavior" );
+
+        // Member/non member swap check
+        node_type empty_node;
+        // We extract this element for nh2 and nh3 difference
+        test_table.unsafe_extract(test_table.begin());
+        auto expected_value3 =  *test_table.begin();
+        node_type nh3(test_table.unsafe_extract(test_table.begin()));
+
+        // Both of node handles are not empty
+        nh3.swap(nh2);
+        ASSERT( compare_handle_getters(nh3, expected_value2),
+                "Node handle: Wrong node handle swap behavior" );
+        ASSERT( compare_handle_getters(nh2, expected_value3),
+                "Node handle: Wrong node handle swap behavior" );
+
+        std::swap(nh2,nh3);
+        ASSERT( compare_handle_getters(nh3, expected_value3),
+                "Node handle: Wrong node handle swap behavior" );
+        ASSERT( compare_handle_getters(nh2, expected_value2),
+                "Node handle: Wrong node handle swap behavior" );
+        ASSERT( !nh2.empty(), "Node handle: Wrong node handle swap behavior" );
+        ASSERT( !nh3.empty(), "Node handle: Wrong node handle swap behavior" );
+
+        // One of nodes is empty
+        nh3.swap(empty_node);
+        ASSERT( compare_handle_getters(std::move(empty_node), expected_value3),
+                "Node handle: Wrong node handle swap behavior" );
+        ASSERT( nh3.empty(), "Node handle: Wrong node handle swap behavior" );
+
+        std::swap(empty_node, nh3);
+        ASSERT( compare_handle_getters(std::move(nh3), expected_value3),
+                "Node handle: Wrong node handle swap behavior" );
+        ASSERT( empty_node.empty(), "Node handle: Wrong node handle swap behavior" );
+
+        empty_node.swap(nh3);
+        ASSERT( compare_handle_getters(std::move(empty_node), expected_value3),
+                "Node handle: Wrong node handle swap behavior" );
+        ASSERT( nh3.empty(), "Node handle: Wrong node handle swap behavior" );
+    }
+
+    template <typename Table>
+    typename Table::node_type GenerateNodeHandle(const typename Table::value_type& value) {
+        Table temp_table;
+        temp_table.insert(value);
+        return temp_table.unsafe_extract(temp_table.cbegin());
+    }
+
+    // overload for multitable or insertion with hint iterator
+    template <typename Table>
+    void InsertAssertion( const Table& table,
+                          const typename Table::iterator& result,
+                          bool,
+                          const typename Table::value_type* node_value = nullptr ) {
+        if (node_value==nullptr) {
+            ASSERT( result==table.end(), "Insert: Result iterator does not "
+                                         "contains end pointer after empty node insertion" );
+        } else {
+            if (!Table::allow_multimapping) {
+                ASSERT( result==table.find(Value<Table>::key( *node_value )) &&
+                        result != table.end(),
+                        "Insert: After node insertion result iterator"
+                        " doesn't contains address to equal element in table" );
+            } else {
+                ASSERT( *result==*node_value, "Insert: Result iterator contains"
+                                              "wrong content after successful insertion" );
+
+                for (auto it = table.begin(); it != table.end(); ++it) {
+                    if (it == result) return;
+                }
+                ASSERT( false, "Insert: After successful insertion result "
+                               "iterator contains address that is not in the table" );
+            }
+        }
+    }
+
+    // Not multitable overload
+    template <typename Table>
+    void InsertAssertion( const Table& table,
+                          const std::pair<typename Table::iterator, bool>& result,
+                          bool is_existing_key,
+                          const typename Table::value_type* node_value = nullptr ) {
+        // Empty node insertion
+        if (node_value == nullptr) {
+            ASSERT( result.first == table.end(),
+                    "Insert: Returned iterator does not contains "
+                    "pointer end after empty node insertion" );
+            ASSERT( !result.second,
+                    "Insert: Returned bool return true after empty node insertion" );
+        } else {
+            ASSERT( result.first == table.find(Value<Table>::key( *node_value )),
+                    "Insert: Returned iterator not contains iterator "
+                    "to equal node in table after node insertion" );
+            ASSERT( result.second == (!is_existing_key || Table::allow_multimapping),
+                    "Insert: Returned bool wrong value after node insertion" );
+        }
+    }
+
+#if __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
+    // Internal func for testing
+    // Can't delete ref from "Table" argument because hint must point to element of table
+    namespace {
+        template <typename Table, typename... Hint>
+        void TestInsertOverloads( Table& table_to_insert,
+                                  const typename Table::value_type &value, const Hint&... hint ) {
+            // Insert empty element
+            typename Table::node_type nh;
+
+            auto table_size = table_to_insert.size();
+            auto result = table_to_insert.insert(hint..., std::move(nh));
+            InsertAssertion(table_to_insert, result, /*is_existing_key*/ false);
+            ASSERT( table_to_insert.size() == table_size,
+                    "Insert: After empty node insertion table size changed" );
+
+            // Standart insertion
+            nh = GenerateNodeHandle<Table>(value);
+
+            result = table_to_insert.insert(hint..., std::move(nh));
+            ASSERT( nh.empty(), "Insert: Not empty handle after successful insertion" );
+            InsertAssertion(table_to_insert, result, /*is_existing_key*/ false, &value);
+
+            // Insert existing node
+            nh = GenerateNodeHandle<Table>(value);
+
+            result = table_to_insert.insert(hint..., std::move(nh));
+
+            InsertAssertion(table_to_insert, result, /*is_existing_key*/ true, &value);
+
+            if (Table::allow_multimapping){
+                ASSERT( nh.empty(), "Insert: Failed insertion to multitable" );
+            } else {
+                ASSERT( !nh.empty() , "Insert: Empty handle after failed insertion" );
+                ASSERT( compare_handle_getters( std::move(nh), value ),
+                        "Insert: Existing data does not equal to the one being inserted" );
+            }
+        }
+    }
+
+    template <typename Table>
+    void TestInsert( Table table, const typename Table::value_type &value) {
+        ASSERT( !table.empty(), "Insert: Map should contains 1 or more elements" );
+        Table table_backup(table);
+
+        TestInsertOverloads(table, value);
+        TestInsertOverloads(table_backup, value, table.begin());
+    }
+#endif /*__TBB_CPP11_VARIADIC_TEMPLATES_PRESENT*/
+
+    template <typename Table>
+    void TestExtract( Table table_for_extract, typename Table::key_type new_key ) {
+        ASSERT( table_for_extract.size()>1, "Extract: Container must contains 2 or more element" );
+        ASSERT( table_for_extract.find(new_key)==table_for_extract.end(),
+                "Extract: Table must not contains new element!");
+
+        // Extract new element
+        auto nh = table_for_extract.unsafe_extract(new_key);
+        ASSERT( nh.empty(), "Extract: Node handle is not empty after wrong key extraction" );
+
+        // Valid key extraction
+        auto expected_value = *table_for_extract.cbegin();
+        auto key = Value<Table>::key( expected_value );
+        auto count = table_for_extract.count(key);
+
+        nh = table_for_extract.unsafe_extract(key);
+        ASSERT( !nh.empty(),
+                "Extract: After successful extraction by key node handle is empty" );
+        ASSERT( compare_handle_getters(std::move(nh), expected_value),
+                "Extract: After successful extraction by key node handle contains wrong value" );
+        ASSERT( table_for_extract.count(key) == count - 1,
+                "Extract: After successful node extraction by key, table still contains this key" );
+
+        // Valid iterator overload
+        auto expected_value2 = *table_for_extract.cbegin();
+        auto key2 = Value<Table>::key( expected_value2 );
+        auto count2 = table_for_extract.count(key2);
+
+        nh = table_for_extract.unsafe_extract(table_for_extract.cbegin());
+        ASSERT( !nh.empty(),
+                "Extract: After successful extraction by iterator node handle is empty" );
+        ASSERT( compare_handle_getters(std::move(nh), expected_value2),
+                "Extract: After successful extraction by iterator node handle contains wrong value" );
+        ASSERT( table_for_extract.count(key2) == count2 - 1,
+                "Extract: After successful extraction table also contains this element" );
+    }
+
+    // All test exclude merge
+    template <typename Table>
+    void NodeHandlingTests ( const Table& table,
+                             const typename Table::value_type& new_value) {
+        TestHandle(table);
+#if __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
+        TestInsert(table, new_value);
+#endif /*__TBB_CPP11_VARIADIC_TEMPLATES_PRESENT*/
+        TestExtract(table,  Value<Table>::key( new_value ));
+    }
+
+    template <typename TableType1, typename TableType2>
+    void TestMerge( TableType1 table1, TableType2&& table2 ) {
+        using Table2PureType = typename std::decay<TableType2>::type;
+        // Initialization
+        TableType1 table1_backup = table1;
+        // For copying lvalue
+        Table2PureType table2_backup = table2;
+
+        table1.merge(std::forward<TableType2>(table2));
+        for (auto it: table2) {
+            ASSERT( table1.find( Value<Table2PureType>::key( it ) ) != table1.end(),
+                    "Merge: Some key(s) was not merged" );
+        }
+
+        // After the following step table1 will contains only merged elements from table2
+        for (auto it: table1_backup) {
+            table1.unsafe_extract(Value<TableType1>::key( it ));
+        }
+        // After the following step table2_backup will contains only merged elements from table2
+         for (auto it: table2) {
+            table2_backup.unsafe_extract(Value<Table2PureType>::key( it ));
+        }
+
+        ASSERT ( table1.size() == table2_backup.size(), "Merge: Size of tables is not equal" );
+        for (auto it: table2_backup) {
+            ASSERT( table1.find( Value<Table2PureType>::key( it ) ) != table1.end(),
+                    "Merge: Wrong merge behavior" );
+        }
+    }
+
+    // Testing of rvalue and lvalue overloads
+    template <typename TableType1, typename TableType2>
+    void TestMergeOverloads( const TableType1& table1, TableType2 table2 ) {
+        TableType2 table_backup(table2);
+        TestMerge(table1, table2);
+        TestMerge(table1, std::move(table_backup));
+    }
+
+    template <typename Table, typename MultiTable>
+    void TestMergeTransposition( Table table1, Table table2,
+                                 MultiTable multitable1, MultiTable multitable2 ) {
+        Table empty_map;
+        MultiTable empty_multimap;
+
+        // Map transpositions
+        node_handling::TestMergeOverloads(table1, table2);
+        node_handling::TestMergeOverloads(table1, empty_map);
+        node_handling::TestMergeOverloads(empty_map, table2);
+
+        // Multimap transpositions
+        node_handling::TestMergeOverloads(multitable1, multitable2);
+        node_handling::TestMergeOverloads(multitable1, empty_multimap);
+        node_handling::TestMergeOverloads(empty_multimap, multitable2);
+
+        // Map/Multimap transposition
+        node_handling::TestMergeOverloads(table1, multitable1);
+        node_handling::TestMergeOverloads(multitable2, table2);
+    }
+
+    template <typename Table>
+    void AssertionConcurrentMerge ( Table start_data, Table src_table, std::vector<Table> tables,
+                                    std::true_type) {
+        ASSERT( src_table.size() == start_data.size()*tables.size(),
+                "Merge: Incorrect merge for some elements" );
+
+        for(auto it: start_data) {
+            ASSERT( src_table.count( Value<Table>::key( it ) ) ==
+                    start_data.count( Value<Table>::key( it ) )*tables.size(),
+                                      "Merge: Incorrect merge for some element" );
+        }
+
+        for (size_t i = 0; i < tables.size(); i++) {
+            ASSERT( tables[i].empty(), "Merge: Some elements was not merged" );
+        }
+    }
+
+    template <typename Table>
+    void AssertionConcurrentMerge ( Table start_data, Table src_table, std::vector<Table> tables,
+                                    std::false_type) {
+        Table expected_result;
+        for (auto table: tables)
+            for (auto it: start_data) {
+                // If we cannot find some element in some table, then it has been moved
+                if (table.find( Value<Table>::key( it ) ) == table.end()){
+                    bool result = expected_result.insert( it ).second;
+                    ASSERT( result, "Merge: Some element was merged twice or was not "
+                                    "returned to his owner after unsuccessful merge");
+                }
+            }
+
+        ASSERT( expected_result.size() == src_table.size() && start_data.size() == src_table.size(),
+                "Merge: wrong size of result table");
+        for (auto it: expected_result) {
+            if ( src_table.find( Value<Table>::key( it ) ) != src_table.end() &&
+                 start_data.find( Value<Table>::key( it ) ) != start_data.end() ){
+                src_table.unsafe_extract(Value<Table>::key( it ));
+                start_data.unsafe_extract(Value<Table>::key( it ));
+            } else {
+                ASSERT( false, "Merge: Incorrect merge for some element" );
+            }
+        }
+
+        ASSERT( src_table.empty()&&start_data.empty(), "Merge: Some elements were not merged" );
+    }
+
+    template <typename Table>
+    void TestConcurrentMerge (const Table& table_data) {
+        for (auto num_threads = MinThread + 1; num_threads <= MaxThread; num_threads++){
+            std::vector<Table> tables;
+            Table src_table;
+
+            for (auto j = 0; j < num_threads; j++){
+                tables.push_back(table_data);
+            }
+
+            NativeParallelFor( num_threads, [&](size_t index){ src_table.merge(tables[index]); } );
+
+            AssertionConcurrentMerge( table_data, src_table, tables,
+                                      std::integral_constant<bool,Table::allow_multimapping>{});
+        }
+    }
+}
+#endif /*__TBB_UNORDERED_NODE_HANDLE_PRESENT*/

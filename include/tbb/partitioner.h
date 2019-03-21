@@ -258,25 +258,6 @@ struct partition_type_base {
     }
 };
 
-//! Class determines whether template parameter has static boolean constant
-//! 'is_splittable_in_proportion' initialized with value of 'true' or not.
-/** If template parameter has such field that has been initialized with non-zero
-*  value then class field will be set to 'true', otherwise - 'false'
-*/
-template <typename Range>
-class is_splittable_in_proportion {
-private:
-    typedef char yes[1];
-    typedef char no[2];
-
-    template <typename range_type> static yes& decide(typename enable_if<range_type::is_splittable_in_proportion>::type *);
-    template <typename range_type> static no& decide(...);
-public:
-    // equals to 'true' if and only if static const variable 'is_splittable_in_proportion' of template parameter
-    // initialized with the value of 'true'
-    static const bool value = (sizeof(decide<Range>(0)) == sizeof(yes));
-};
-
 //! Provides default splitting strategy for partition objects.
 template <typename Partition>
 struct adaptive_mode : partition_type_base<Partition> {
@@ -292,6 +273,28 @@ struct adaptive_mode : partition_type_base<Partition> {
     /*! Override do_split methods in order to specify splitting strategy */
     size_t do_split(adaptive_mode &src, split) {
         return src.my_divisor /= 2u;
+    }
+};
+
+//! A helper class to create a proportional_split object for a given type of Range.
+/** If the Range has static boolean constant 'is_splittable_in_proportion' set to 'true',
+    the created object splits a provided value in an implemenation-defined proportion;
+    otherwise it represents equal-size split. */
+// TODO: check if this helper can be a nested class of proportional_mode.
+template <typename Range, typename = void>
+struct proportion_helper {
+    static proportional_split get_split(size_t) { return proportional_split(1,1); }
+};
+template <typename Range>
+struct proportion_helper<Range, typename enable_if<Range::is_splittable_in_proportion, void>::type> {
+    static proportional_split get_split(size_t n) {
+#if __TBB_NONUNIFORM_TASK_CREATION
+        size_t right = (n + 2) / 3;
+#else
+        size_t right = n / 2;
+#endif
+        size_t left = n - right;
+        return proportional_split(left, right);
     }
 };
 
@@ -325,29 +328,11 @@ struct proportional_mode : adaptive_mode<Partition> {
     bool is_divisible() { // part of old should_execute_range()
         return self().my_divisor > my_partition::factor;
     }
-#if _MSC_VER && !defined(__INTEL_COMPILER)
-    // Suppress "conditional expression is constant" warning.
-    #pragma warning( push )
-    #pragma warning( disable: 4127 )
-#endif
     template <typename Range>
     proportional_split get_split() {
-        if (is_splittable_in_proportion<Range>::value) {
-            size_t size = self().my_divisor / my_partition::factor;
-#if __TBB_NONUNIFORM_TASK_CREATION
-            size_t right = (size + 2) / 3;
-#else
-            size_t right = size / 2;
-#endif
-            size_t left = size - right;
-            return proportional_split(left, right);
-        } else {
-            return proportional_split(1, 1);
-        }
+        // Create a proportion for the number of threads expected to handle "this" subrange
+        return proportion_helper<Range>::get_split( self().my_divisor / my_partition::factor );
     }
-#if _MSC_VER && !defined(__INTEL_COMPILER)
-    #pragma warning( pop )
-#endif // warning 4127 is back
 };
 
 static size_t get_initial_partition_head() {
@@ -409,7 +394,7 @@ struct dynamic_grainsize_mode : Mode {
 #endif
         , my_delay(begin)
         , my_max_depth(p.my_max_depth) {}
-    bool check_being_stolen( task &t) { // part of old should_execute_range()
+    bool check_being_stolen(task &t) { // part of old should_execute_range()
         if( !(self().my_divisor / Mode::my_partition::factor) ) { // if not from the top P tasks of binary tree
             self().my_divisor = 1; // TODO: replace by on-stack flag (partition_state's member)?
             if( t.is_stolen_task() && t.parent()->ref_count() >= 2 ) { // runs concurrently with the left task

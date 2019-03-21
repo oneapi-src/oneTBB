@@ -40,16 +40,15 @@ set(TBB_INTERFACE_VERSION @TBB_INTERFACE_VERSION@)
 
 get_filename_component(_tbb_root "${CMAKE_CURRENT_LIST_FILE}" PATH)
 get_filename_component(_tbb_root "${_tbb_root}" PATH)
-
+@TBB_CHOOSE_ARCH_AND_COMPILER@
 foreach (_tbb_component ${TBB_FIND_COMPONENTS})
-    set(_tbb_release_lib "@TBB_RELEASE_DIR@/@TBB_LIB_PREFIX@${_tbb_component}.@TBB_LIB_EXT@")
-    set(_tbb_debug_lib "@TBB_DEBUG_DIR@/@TBB_LIB_PREFIX@${_tbb_component}_debug.@TBB_LIB_EXT@")
+    set(_tbb_release_lib "@TBB_RELEASE_LIB_PATH@/@TBB_LIB_PREFIX@${_tbb_component}.@TBB_LIB_EXT@")
+    set(_tbb_debug_lib "@TBB_DEBUG_LIB_PATH@/@TBB_LIB_PREFIX@${_tbb_component}_debug.@TBB_LIB_EXT@")
 
     if (EXISTS "${_tbb_release_lib}" OR EXISTS "${_tbb_debug_lib}")
         add_library(TBB::${_tbb_component} SHARED IMPORTED)
         set_target_properties(TBB::${_tbb_component} PROPERTIES
                               INTERFACE_INCLUDE_DIRECTORIES "${_tbb_root}/include"@TBB_COMPILE_DEFINITIONS@)
-
 
         if (EXISTS "${_tbb_release_lib}")
             set_target_properties(TBB::${_tbb_component} PROPERTIES
@@ -71,10 +70,12 @@ foreach (_tbb_component ${TBB_FIND_COMPONENTS})
         list(APPEND TBB_IMPORTED_TARGETS TBB::${_tbb_component})
         set(TBB_${_tbb_component}_FOUND 1)
     elseif (TBB_FIND_REQUIRED AND TBB_FIND_REQUIRED_${_tbb_component})
-        message(FATAL_ERROR "Missed required Intel TBB component: ${_tbb_component}")
+        message(STATUS "Missed required Intel TBB component: ${_tbb_component}")
+        set(TBB_FOUND FALSE)
+        set(TBB_${_tbb_component}_FOUND 0)
     endif()
 endforeach()
-
+@TBB_UNSET_ADDITIONAL_VARIABLES@
 unset(_tbbmalloc_proxy_ix)
 unset(_tbbmalloc_ix)
 unset(_tbb_lib_path)

@@ -700,42 +700,20 @@ void market::process( job& j ) {
     // s.my_arena can be dead. Don't access it until arena_in_need is called
     arena *a = s.my_arena;
     __TBB_ASSERT( governor::is_set(&s), NULL );
-    enum {
-        query_interval = 1000,
-        first_interval = 1
-    };
-    for(int i = first_interval; ; i--) {
-        while ( (a = arena_in_need(a)) )
-        {
+
+    for (int i = 0; i < 2; ++i) {
+        while ( (a = arena_in_need(a)) ) {
             a->process(s);
-            a = NULL; // To avoid double checks in arena_in_need
-            i = first_interval;
+            a = NULL; // to avoid double checks in arena_in_need(arena*) for the same priority level
         }
         // Workers leave market because there is no arena in need. It can happen earlier than
         // adjust_job_count_estimate() decreases my_slack and RML can put this thread to sleep.
         // It might result in a busy-loop checking for my_slack<0 and calling this method instantly.
-        // first_interval>0 and the yield refines this spinning.
-        if( i > 0 )
+        // the yield refines this spinning.
+        if ( !i )
             __TBB_Yield();
-        else
-#if !__TBB_SLEEP_PERMISSION
-            break;
-#else
-        { // i == 0
-#if __TBB_TASK_PRIORITY
-            arena_list_type &al = my_priority_levels[my_global_top_priority].arenas;
-#else /* __TBB_TASK_PRIORITY */
-            arena_list_type &al = my_arenas;
-#endif /* __TBB_TASK_PRIORITY */
-            if( al.empty() ) // races if any are innocent TODO: replace by an RML query interface
-                break; // no arenas left, perhaps going to shut down
-            if( the_global_observer_list.ask_permission_to_leave() )
-                break; // go sleep
-            __TBB_Yield();
-            i = query_interval;
-        }
-#endif// !__TBB_SLEEP_PERMISSION
     }
+    
     GATHER_STATISTIC( ++s.my_counters.market_roundtrips );
 }
 

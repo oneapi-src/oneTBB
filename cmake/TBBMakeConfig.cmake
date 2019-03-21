@@ -120,11 +120,15 @@ if (WINDOWS_STORE)
 endif()")
 
         if (tbb_MK_CONFIG_FOR_SOURCE)
-            set(TBB_IMPLIB_RELEASE "\nIMPORTED_IMPLIB_RELEASE \"${tbb_MK_TBB_RELEASE_DIR}/\${_tbb_component}.lib\"")
-            set(TBB_IMPLIB_DEBUG "\nIMPORTED_IMPLIB_DEBUG \"${tbb_MK_TBB_DEBUG_DIR}/\${_tbb_component}_debug.lib\"")
+            set(TBB_IMPLIB_RELEASE "
+                                  IMPORTED_IMPLIB_RELEASE \"${tbb_MK_TBB_RELEASE_DIR}/\${_tbb_component}.lib\"")
+            set(TBB_IMPLIB_DEBUG "
+                                  IMPORTED_IMPLIB_DEBUG \"${tbb_MK_TBB_DEBUG_DIR}/\${_tbb_component}_debug.lib\"")
         else()
-            set(TBB_IMPLIB_RELEASE "\nIMPORTED_IMPLIB_RELEASE \"\${_tbb_root}/lib/\${_tbb_arch_subdir}/\${_tbb_compiler_subdir}/\${_tbb_component}.lib\"")
-            set(TBB_IMPLIB_DEBUG "\nIMPORTED_IMPLIB_DEBUG \"\${_tbb_root}/lib/\${_tbb_arch_subdir}/\${_tbb_compiler_subdir}/\${_tbb_component}_debug.lib\"")
+            set(TBB_IMPLIB_RELEASE "
+                                  IMPORTED_IMPLIB_RELEASE \"\${_tbb_root}/lib/\${_tbb_arch_subdir}/\${_tbb_compiler_subdir}/\${_tbb_component}.lib\"")
+            set(TBB_IMPLIB_DEBUG "
+                                  IMPORTED_IMPLIB_DEBUG \"\${_tbb_root}/lib/\${_tbb_arch_subdir}/\${_tbb_compiler_subdir}/\${_tbb_component}_debug.lib\"")
         endif()
 
         # Note: multiline variable
@@ -156,11 +160,34 @@ endif()")
     set(TBB_VERSION "${_tbb_ver_major}.${_tbb_ver_minor}.${TBB_INTERFACE_VERSION}")
 
     if (tbb_MK_CONFIG_FOR_SOURCE)
-        set(_tbb_config_template TBBConfigForSource.cmake.in)
+        set(TBB_CHOOSE_ARCH_AND_COMPILER "")
+        set(TBB_RELEASE_LIB_PATH "${TBB_RELEASE_DIR}")
+        set(TBB_DEBUG_LIB_PATH "${TBB_DEBUG_DIR}")
+        set(TBB_UNSET_ADDITIONAL_VARIABLES "")
     else()
-        set(_tbb_config_template TBBConfig.cmake.in)
+        # Note: multiline variable
+        set(TBB_CHOOSE_ARCH_AND_COMPILER "
+if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set(_tbb_arch_subdir ${TBB_X64_SUBDIR})
+else()
+    set(_tbb_arch_subdir ${TBB_X32_SUBDIR})
+endif()
+
+${TBB_CHOOSE_COMPILER_SUBDIR}
+
+get_filename_component(_tbb_lib_path \"\${_tbb_root}/${TBB_SHARED_LIB_DIR}/\${_tbb_arch_subdir}/\${_tbb_compiler_subdir}\" ABSOLUTE)
+")
+
+    set(TBB_RELEASE_LIB_PATH "\${_tbb_lib_path}")
+    set(TBB_DEBUG_LIB_PATH "\${_tbb_lib_path}")
+
+    # Note: multiline variable
+    set(TBB_UNSET_ADDITIONAL_VARIABLES "
+unset(_tbb_arch_subdir)
+unset(_tbb_compiler_subdir)")
     endif()
-    configure_file(${_tbb_cmake_module_path}/templates/${_tbb_config_template}   ${tbb_config_dir}/TBBConfig.cmake @ONLY)
+
+    configure_file(${_tbb_cmake_module_path}/templates/TBBConfigInternal.cmake.in ${tbb_config_dir}/TBBConfig.cmake @ONLY)
     configure_file(${_tbb_cmake_module_path}/templates/TBBConfigVersion.cmake.in ${tbb_config_dir}/TBBConfigVersion.cmake @ONLY)
 
     set(${tbb_MK_CONFIG_DIR} ${tbb_config_dir} PARENT_SCOPE)

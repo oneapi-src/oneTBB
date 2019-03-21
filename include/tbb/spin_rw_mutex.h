@@ -119,7 +119,7 @@ public:
         /** Returns whether the upgrade happened without releasing and re-acquiring the lock */
         bool upgrade_to_writer() {
             __TBB_ASSERT( mutex, "mutex is not acquired" );
-            __TBB_ASSERT( !is_writer, "not a reader" );
+            if (is_writer) return true; // Already a writer
             is_writer = true;
             return mutex->internal_upgrade();
         }
@@ -141,7 +141,7 @@ public:
         //! Downgrade writer to become a reader.
         bool downgrade_to_reader() {
             __TBB_ASSERT( mutex, "mutex is not acquired" );
-            __TBB_ASSERT( is_writer, "not a writer" );
+            if (!is_writer) return true; // Already a reader
 #if TBB_USE_THREADING_TOOLS||TBB_USE_ASSERT
             mutex->internal_downgrade();
 #else

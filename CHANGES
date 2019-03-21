@@ -2,6 +2,42 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 2019 Update 5
+TBB_INTERFACE_VERSION == 11005
+
+Changes (w.r.t. Intel TBB 2019 Update 4):
+
+- Associating a task_scheduler_observer with an implicit or explicit
+    task arena is now a fully supported feature.
+- Added a CMake module TBBInstallConfig that allows to generate and
+    install CMake configuration files for TBB packages.
+    Inspired by Hans Johnson (https://github.com/01org/tbb/pull/119).
+- Added node handles, methods merge() and unsafe_extract() to concurrent
+    unordered containers.
+- Added constructors with Compare argument to concurrent_priority_queue
+    (https://github.com/01org/tbb/issues/109).
+- Controlling the stack size of worker threads is now supported for
+    Universal Windows Platform.
+- Improved tbb::zip_iterator to work with algorithms that swap values
+    via iterators.
+- Improved support for user-specified allocators in concurrent_hash_map,
+    including construction of allocator-aware data types.
+- For ReaderWriterMutex types, upgrades and downgrades now succeed if
+    the mutex is already in the requested state.
+    Inspired by Niadb (https://github.com/01org/tbb/pull/122).
+
+Preview Features:
+
+- The task_scheduler_observer::may_sleep() method has been removed.
+
+Bugs fixed:
+
+- Fixed the issue with a pipeline parallel filter executing serially if
+    it follows a thread-bound filter.
+- Fixed a performance regression observed when multiple parallel
+    algorithms start simultaneously.
+    
+------------------------------------------------------------------------
 Intel TBB 2019 Update 4
 TBB_INTERFACE_VERSION == 11004
 

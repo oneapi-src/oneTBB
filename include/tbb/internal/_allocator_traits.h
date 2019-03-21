@@ -93,6 +93,42 @@ struct allocator_traits {
     template <typename U> struct rebind_alloc {
         typedef typename Alloc::template rebind<U>::other other;
     };
+
+    static pointer allocate(Alloc& a, size_type n) {
+        return a.allocate(n);
+    }
+
+    static void deallocate(Alloc& a, pointer p, size_type n) {
+        a.deallocate(p, n);
+    }
+
+    template<typename PT>
+    static void construct(Alloc&, PT* p) {
+        ::new (static_cast<void*>(p)) PT();
+    }
+
+    template<typename PT, typename T1>
+    static void construct(Alloc&, PT* p, __TBB_FORWARDING_REF(T1) t1) {
+        ::new (static_cast<void*>(p)) PT(tbb::internal::forward<T1>(t1));
+    }
+
+    template<typename PT, typename T1, typename T2>
+    static void construct(Alloc&, PT* p, __TBB_FORWARDING_REF(T1) t1, __TBB_FORWARDING_REF(T2) t2) {
+        ::new (static_cast<void*>(p)) PT(tbb::internal::forward<T1>(t1), tbb::internal::forward<T2>(t2));
+    }
+
+    template<typename PT, typename T1, typename T2, typename T3>
+    static void construct(Alloc&, PT* p, __TBB_FORWARDING_REF(T1) t1,
+                          __TBB_FORWARDING_REF(T2) t2, __TBB_FORWARDING_REF(T3) t3) {
+        ::new (static_cast<void*>(p)) PT(tbb::internal::forward<T1>(t1), tbb::internal::forward<T2>(t2),
+                                         tbb::internal::forward<T3>(t3));
+    }
+
+    template<typename T>
+    static void destroy(Alloc&, T* p) {
+        p->~T();
+        tbb::internal::suppress_unused_warning(p);
+    }
 };
 #endif // __TBB_ALLOCATOR_TRAITS_PRESENT
 

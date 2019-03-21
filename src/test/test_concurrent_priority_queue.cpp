@@ -213,11 +213,25 @@ void TestHelpers(){
     TestToVector();
 }
 
+//Comparator with assert in default consructor
+template<typename T>
+class less_a : public std::less<T>
+{
+public:
+    explicit less_a(bool no_assert = false) {
+        ASSERT(no_assert,"empty consructor should not be called");
+    };
+};
+
 void TestConstructorsDestructorsAccessors() {
     std::vector<int> v;
     std::allocator<int> a;
     concurrent_priority_queue<int, std::less<int> > *q, *qo;
     concurrent_priority_queue<int, std::less<int>, std::allocator<int>  > *qi;
+
+    less_a<int> l(true);
+    concurrent_priority_queue<int, less_a<int> > *ql;
+    concurrent_priority_queue<int, less_a<int>, std::allocator<int>  > *qla;
 
     // Test constructors/destructors
     REMARK("Testing default constructor.\n");
@@ -228,7 +242,6 @@ void TestConstructorsDestructorsAccessors() {
     REMARK("Testing destructor.\n");
     delete q;
     REMARK("Destruction complete.\n");
-
     REMARK("Testing capacity constructor.\n");
     q = new concurrent_priority_queue<int, std::less<int> >(42);
     REMARK("Capacity constructor complete.\n");
@@ -247,6 +260,24 @@ void TestConstructorsDestructorsAccessors() {
     delete qi;
     REMARK("Destruction complete.\n");
 
+    REMARK("Testing compare constructor.\n");
+    ql = new concurrent_priority_queue<int, less_a<int> >(l);
+    REMARK("Compare constructor complete.\n");
+    ASSERT(ql->size()==0, "FAILED size test.");
+    ASSERT(ql->empty(), "FAILED empty test.");
+    REMARK("Testing destructor.\n");
+    delete ql;
+    REMARK("Destruction complete.\n");
+
+    REMARK("Testing compare+allocator constructor.\n");
+    qla = new concurrent_priority_queue<int, less_a<int>, std::allocator<int> >(l, a);
+    REMARK("Compare+allocator constructor complete.\n");
+    ASSERT(qla->size()==0, "FAILED size test.");
+    ASSERT(qla->empty(), "FAILED empty test.");
+    REMARK("Testing destructor.\n");
+    delete qla;
+    REMARK("Destruction complete.\n");
+
     REMARK("Testing capacity+allocator constructor.\n");
     qi = new concurrent_priority_queue<int, std::less<int>, std::allocator<int> >(42, a);
     REMARK("Capacity+allocator constructor complete.\n");
@@ -256,6 +287,25 @@ void TestConstructorsDestructorsAccessors() {
     delete qi;
     REMARK("Destruction complete.\n");
 
+    REMARK("Testing capacity+compare constructor.\n");
+    ql = new concurrent_priority_queue<int, less_a<int> >(42, l);
+    REMARK("Capacity+compare constructor complete.\n");
+    ASSERT(ql->size()==0, "FAILED size test.");
+    ASSERT(ql->empty(), "FAILED empty test.");
+    REMARK("Testing destructor.\n");
+    delete ql;
+    REMARK("Destruction complete.\n");
+
+    REMARK("Testing capacity+compare+allocator constructor.\n");
+    qla = new concurrent_priority_queue<int, less_a<int>, std::allocator<int> >(42, l, a);
+    REMARK("Capacity+compare+allocator constructor complete.\n");
+    ASSERT(qla->size()==0, "FAILED size test.");
+    ASSERT(qla->empty(), "FAILED empty test.");
+    REMARK("Testing destructor.\n");
+    delete qla;
+    REMARK("Destruction complete.\n");
+
+    REMARK("Destruction complete.\n");
     REMARK("Testing iterator filler constructor.\n");
     for (int i=0; i<42; ++i)
         v.push_back(i);
@@ -264,6 +314,16 @@ void TestConstructorsDestructorsAccessors() {
     ASSERT(q->size()==42, "FAILED vector/size test.");
     ASSERT(!q->empty(), "FAILED vector/empty test.");
     ASSERT(*q == v, "FAILED vector/equality test.");
+
+    REMARK("Destruction complete.\n");
+    REMARK("Testing iterator filler +compare constructor.\n");
+    ql = new concurrent_priority_queue<int, less_a<int> >(v.begin(), v.end(), l);
+    REMARK("Iterator filler +compare constructor complete.\n");
+    ASSERT(ql->size()==42, "FAILED vector/size test.");
+    ASSERT(!ql->empty(), "FAILED vector/empty test.");
+    REMARK("Testing destructor.\n");
+    delete ql;
+    REMARK("Destruction complete.\n");
 
     REMARK("Testing copy constructor.\n");
     qo = new concurrent_priority_queue<int, std::less<int> >(*q);
@@ -1072,38 +1132,56 @@ void TestDeductionGuides() {
     auto l = {ComplexType(&s), ComplexType(&s) };
 
     // check TQueue(InputIterator, InputIterator)
-    TQueue q1(v.begin(), v.end());
-    static_assert(std::is_same<decltype(q1), TQueue<ComplexType>>::value);
+    TQueue qv(v.begin(), v.end());
+    static_assert(std::is_same<decltype(qv), TQueue<ComplexType> >::value);
 
     // check TQueue(InputIterator, InputIterator, Allocator)
-    TQueue q2(v.begin(), v.end(), std::allocator<ComplexType>());
-    static_assert(std::is_same<decltype(q2), TQueue<ComplexType, std::less<ComplexType>,
+    TQueue qva(v.begin(), v.end(), std::allocator<ComplexType>());
+    static_assert(std::is_same<decltype(qva), TQueue<ComplexType, std::less<ComplexType>,
+        std::allocator<ComplexType>>>::value);
+
+    // check TQueue(InputIterator, InputIterator, Compare)
+    TQueue qvc(v.begin(), v.end(), less_a<ComplexType>(true));
+    static_assert(std::is_same<decltype(qvc), TQueue<ComplexType, less_a<ComplexType>>>::value);
+
+    // check TQueue(InputIterator, InputIterator, Compare, Allocator)
+    TQueue qvca(v.begin(), v.end(), less_a<ComplexType>(true), std::allocator<ComplexType>());
+    static_assert(std::is_same<decltype(qvca), TQueue<ComplexType, less_a<ComplexType>,
         std::allocator<ComplexType>>>::value);
 
     // check TQueue(std::initializer_list)
-    TQueue q3(l);
-    static_assert(std::is_same<decltype(q3), TQueue<ComplexType>>::value);
+    TQueue ql(l);
+    static_assert(std::is_same<decltype(ql), TQueue<ComplexType>>::value);
 
     // check TQueue(std::initializer_list, Allocator)
-    TQueue q4(l, std::allocator<ComplexType>());
-    static_assert(std::is_same<decltype(q4), TQueue<ComplexType, std::less<ComplexType>,
+    TQueue qla(l, std::allocator<ComplexType>());
+    static_assert(std::is_same<decltype(qla), TQueue<ComplexType, std::less<ComplexType>,
+        std::allocator<ComplexType>>>::value);
+
+    // check TQueue(std::initializer_list, Compare)
+    TQueue qlc(l, less_a<ComplexType>(true));
+    static_assert(std::is_same<decltype(qlc), TQueue<ComplexType, less_a<ComplexType>>>::value);
+
+    // check TQueue(std::initializer_list, Compare, Allocator)
+    TQueue qlca(l, less_a<ComplexType>(true), std::allocator<ComplexType>());
+    static_assert(std::is_same<decltype(qlca), TQueue<ComplexType, less_a<ComplexType>,
         std::allocator<ComplexType>>>::value);
 
     // check TQueue(TQueue &)
-    TQueue q5(q1);
-    static_assert(std::is_same<decltype(q5), decltype(q5)>::value);
+    TQueue qc(qv);
+    static_assert(std::is_same<decltype(qv), decltype(qv)>::value);
 
     // check TQueue(TQueue &, Allocator)
-    TQueue q6(q4, std::allocator<ComplexType>());
-    static_assert(std::is_same<decltype(q6), decltype(q4)>::value);
+    TQueue qca(qva, std::allocator<ComplexType>());
+    static_assert(std::is_same<decltype(qca), decltype(qva)>::value);
 
     // check TQueue(TQueue &&)
-    TQueue q7(std::move(q1));
-    static_assert(std::is_same<decltype(q7), decltype(q1)>::value);
+    TQueue qm(std::move(qv));
+    static_assert(std::is_same<decltype(qm), decltype(qv)>::value);
 
     // check TQueue(TQueue &&, Allocator)
-    TQueue q8(std::move(q4), std::allocator<ComplexType>());
-    static_assert(std::is_same<decltype(q8), decltype(q4)>::value);
+    TQueue qma(std::move(qva), std::allocator<ComplexType>());
+    static_assert(std::is_same<decltype(qma), decltype(qva)>::value);
 }
 #endif
 

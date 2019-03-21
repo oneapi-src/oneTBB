@@ -24,7 +24,6 @@
 #ifndef __TBB_concurrent_unordered_map_H
 #define __TBB_concurrent_unordered_map_H
 
-#include "internal/_template_helpers.h"
 #include "internal/_concurrent_unordered_impl.h"
 
 namespace tbb
@@ -41,6 +40,9 @@ protected:
     typedef Key key_type;
     typedef Hash_compare hash_compare;
     typedef typename tbb::internal::allocator_rebind<Allocator, value_type>::type allocator_type;
+#if __TBB_UNORDERED_NODE_HANDLE_PRESENT
+    typedef internal::node_handle<Key, value_type, Allocator> node_type;
+#endif // __TBB_UNORDERED_NODE_HANDLE_PRESENT
 
     enum { allow_multimapping = Allow_multimapping };
 
@@ -54,6 +56,9 @@ protected:
 
     hash_compare my_hash_compare; // the comparator predicate for keys
 };
+
+template<typename Key, typename T, typename Hasher, typename Key_equality, typename Allocator>
+class concurrent_unordered_multimap;
 
 template <typename Key, typename T, typename Hasher = tbb::tbb_hash<Key>, typename Key_equality = std::equal_to<Key>,
          typename Allocator = tbb::tbb_allocator<std::pair<const Key, T> > >
@@ -95,6 +100,9 @@ public:
     typedef typename base_type::const_iterator const_iterator;
     typedef typename base_type::iterator local_iterator;
     typedef typename base_type::const_iterator const_local_iterator;
+#if __TBB_UNORDERED_NODE_HANDLE_PRESENT
+    typedef typename base_type::node_type node_type;
+#endif // __TBB_UNORDERED_NODE_HANDLE_PRESENT
 
     // Construction/destruction/copying
     explicit concurrent_unordered_map(size_type n_of_buckets = base_type::initial_bucket_number,
@@ -163,8 +171,8 @@ public:
 
 #endif //# __TBB_INITIALIZER_LISTS_PRESENT
 
-#if __TBB_CPP11_RVALUE_REF_PRESENT
-#if !__TBB_IMPLICIT_MOVE_PRESENT
+
+#if __TBB_CPP11_RVALUE_REF_PRESENT && !__TBB_IMPLICIT_MOVE_PRESENT
     concurrent_unordered_map(const concurrent_unordered_map& table)
         : base_type(table)
     {}
@@ -182,11 +190,31 @@ public:
     {
         return static_cast<concurrent_unordered_map&>(base_type::operator=(std::move(table)));
     }
-#endif //!__TBB_IMPLICIT_MOVE_PRESENT
+#endif //__TBB_CPP11_RVALUE_REF_PRESENT && !__TBB_IMPLICIT_MOVE_PRESENT
 
+#if __TBB_CPP11_RVALUE_REF_PRESENT
     concurrent_unordered_map(concurrent_unordered_map&& table, const Allocator& a) : base_type(std::move(table), a)
     {}
-#endif //__TBB_CPP11_RVALUE_REF_PRESENT
+#endif /*__TBB_CPP11_RVALUE_REF_PRESENT*/
+
+#if __TBB_UNORDERED_NODE_HANDLE_PRESENT
+    template<typename Hash, typename Equality>
+    void merge(concurrent_unordered_map<Key, T, Hash, Equality, Allocator>& source)
+              { this->internal_merge(source); }
+
+    template<typename Hash, typename Equality>
+    void merge(concurrent_unordered_map<Key, T, Hash, Equality, Allocator>&& source)
+              { this->internal_merge(source); }
+
+    template<typename Hash, typename Equality>
+    void merge(concurrent_unordered_multimap<Key, T, Hash, Equality, Allocator>& source)
+              { this->internal_merge(source); }
+
+    template<typename Hash, typename Equality>
+    void merge(concurrent_unordered_multimap<Key, T, Hash, Equality, Allocator>&& source)
+              { this->internal_merge(source); }
+
+#endif //__TBB_UNORDERED_NODE_HANDLE_PRESENT
 
     concurrent_unordered_map(const concurrent_unordered_map& table, const Allocator& a)
         : base_type(table, a)
@@ -307,6 +335,9 @@ public:
     typedef typename base_type::const_iterator const_iterator;
     typedef typename base_type::iterator local_iterator;
     typedef typename base_type::const_iterator const_local_iterator;
+#if __TBB_UNORDERED_NODE_HANDLE_PRESENT
+    typedef typename base_type::node_type node_type;
+#endif //__TBB_UNORDERED_NODE_HANDLE_PRESENT
 
     // Construction/destruction/copying
     explicit concurrent_unordered_multimap(size_type n_of_buckets = base_type::initial_bucket_number,
@@ -375,8 +406,7 @@ public:
 
 #endif //# __TBB_INITIALIZER_LISTS_PRESENT
 
-#if __TBB_CPP11_RVALUE_REF_PRESENT
-#if !__TBB_IMPLICIT_MOVE_PRESENT
+#if __TBB_CPP11_RVALUE_REF_PRESENT && !__TBB_IMPLICIT_MOVE_PRESENT
     concurrent_unordered_multimap(const concurrent_unordered_multimap& table)
         : base_type(table)
     {}
@@ -394,11 +424,31 @@ public:
     {
         return static_cast<concurrent_unordered_multimap&>(base_type::operator=(std::move(table)));
     }
-#endif //!__TBB_IMPLICIT_MOVE_PRESENT
+#endif //__TBB_CPP11_RVALUE_REF_PRESENT && !__TBB_IMPLICIT_MOVE_PRESENT
 
+#if __TBB_CPP11_RVALUE_REF_PRESENT
     concurrent_unordered_multimap(concurrent_unordered_multimap&& table, const Allocator& a) : base_type(std::move(table), a)
     {}
-#endif //__TBB_CPP11_RVALUE_REF_PRESENT
+#endif /*__TBB_CPP11_RVALUE_REF_PRESENT*/
+
+#if __TBB_UNORDERED_NODE_HANDLE_PRESENT
+    template<typename Hash, typename Equality>
+    void merge(concurrent_unordered_map<Key, T, Hash, Equality, Allocator>& source)
+              { this->internal_merge(source); }
+
+    template<typename Hash, typename Equality>
+    void merge(concurrent_unordered_map<Key, T, Hash, Equality, Allocator>&& source)
+              { this->internal_merge(source); }
+
+    template<typename Hash, typename Equality>
+    void merge(concurrent_unordered_multimap<Key, T, Hash, Equality, Allocator>& source)
+              { this->internal_merge(source); }
+
+    template<typename Hash, typename Equality>
+    void merge(concurrent_unordered_multimap<Key, T, Hash, Equality, Allocator>&& source)
+              { this->internal_merge(source); }
+
+#endif //__TBB_UNORDERED_NODE_HANDLE_PRESENT
 
     concurrent_unordered_multimap(const concurrent_unordered_multimap& table, const Allocator& a)
         : base_type(table, a)
