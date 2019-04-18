@@ -12,10 +12,6 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
-
-
-
 */
 
 #include "tbb/global_control.h" // thread_stack_size
@@ -803,8 +799,8 @@ void task_arena_base::internal_enqueue( task& t, intptr_t prio ) const {
     generic_scheduler* s = governor::local_scheduler_if_initialized();
     __TBB_ASSERT(s, "Scheduler is not initialized"); // we allocated a task so can expect the scheduler
 #if __TBB_TASK_GROUP_CONTEXT
-    __TBB_ASSERT(my_arena->my_default_ctx == t.prefix().context, NULL);
-    __TBB_ASSERT(!my_arena->my_default_ctx->is_group_execution_cancelled(), // TODO: any better idea?
+    // Is there a better place for checking the state of my_default_ctx?
+    __TBB_ASSERT(!(my_arena->my_default_ctx == t.prefix().context && my_arena->my_default_ctx->is_group_execution_cancelled()),
                  "The task will not be executed because default task_group_context of task_arena is cancelled. Has previously enqueued task thrown an exception?");
 #endif
     my_arena->enqueue_task( t, prio, s->my_random );

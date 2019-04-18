@@ -12,10 +12,6 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
-
-
-
 */
 
 /* to prevent loading dynamic TBBmalloc at startup, that is not needed
@@ -620,9 +616,14 @@ public:
         for (int i=0; i<ITERS; i++) {
             BlockI *slabBlock = backend->getSlabBlock(1);
             ASSERT(slabBlock, "Memory was not allocated");
-            LargeMemoryBlock *lmb = backend->getLargeBlock(8*1024);
+            uintptr_t prevBlock = (uintptr_t)slabBlock;
             backend->putSlabBlock(slabBlock);
-            backend->putLargeBlock(lmb);
+
+            LargeMemoryBlock *largeBlock = backend->getLargeBlock(16*1024);
+            ASSERT(largeBlock, "Memory was not allocated");
+            ASSERT((uintptr_t)largeBlock != prevBlock,
+                    "Large block cannot be reused from slab memory, only in fixed_pool case.");
+            backend->putLargeBlock(largeBlock);
         }
     }
 };
@@ -632,8 +633,7 @@ void TestBackend()
     rml::MemPoolPolicy pol(getMallocMem, putMallocMem);
     rml::MemoryPool *mPool;
     pool_create_v1(0, &pol, &mPool);
-    rml::internal::ExtMemoryPool *ePool =
-        &((rml::internal::MemoryPool*)mPool)->extMemPool;
+    rml::internal::ExtMemoryPool *ePool = &((rml::internal::MemoryPool*)mPool)->extMemPool;
     rml::internal::Backend *backend = &ePool->backend;
 
     for( int p=MaxThread; p>=MinThread; --p ) {
@@ -784,17 +784,25 @@ const int num_allocs = 10*1024;
 void *ptrs[num_allocs];
 tbb::atomic<int> alloc_counter;
 
+void multiThreadAlloc(size_t alloc_size) {
+    for( int i = alloc_counter++; i < num_allocs; i = alloc_counter++ ) {
+       ptrs[i] = scalable_malloc( alloc_size );
+       ASSERT( ptrs[i] != NULL, "scalable_malloc returned zero." );
+    }
+}
+void crossThreadDealloc() {
+    for( int i = --alloc_counter; i >= 0; i = --alloc_counter ) {
+       if (i < num_allocs) scalable_free( ptrs[i] );
+    }
+}
+
 template<int AllocSize>
 struct TestCleanAllBuffersBody : public SimpleBarrier {
     void operator() ( int ) const {
         barrier.wait();
-        for( int i = alloc_counter++; i < num_allocs; i = alloc_counter++ ) {
-           ptrs[i] = scalable_malloc( AllocSize );
-           ASSERT( ptrs[i] != NULL, "scalable_malloc returned zero." );
-        }
+        multiThreadAlloc(AllocSize);
         barrier.wait();
-        for( int i = --alloc_counter; i >= 0; i = --alloc_counter )
-           if (i<num_allocs) scalable_free( ptrs[i] );
+        crossThreadDealloc();
     }
 };
 
@@ -807,6 +815,7 @@ void TestCleanAllBuffers() {
     size_t memory_in_use_before = getMemSize();
     alloc_counter = 0;
     TestCleanAllBuffersBody<AllocSize>::initBarrier(num_threads);
+
     NativeParallelFor(num_threads, TestCleanAllBuffersBody<AllocSize>());
     // TODO: reproduce the bug conditions more reliably
     if ( defaultMemPool->extMemPool.backend.coalescQ.blocksToFree == NULL )
@@ -819,6 +828,39 @@ void TestCleanAllBuffers() {
     REMARK( "memory_in_use_before = %ld\nmemory_in_use_after = %ld\n", memory_in_use_before, memory_in_use_after );
     ASSERT( memory_leak == 0, "Cleanup was unable to release all allocated memory." );
 }
+
+//! Force cross thread deallocation of small objects to create a set of privatizable slab blocks.
+//! TBBMALLOC_CLEAN_THREAD_BUFFERS command have to privatize all the block.
+struct TestCleanThreadBuffersBody : public SimpleBarrier {
+    void operator() ( int ) const {
+        barrier.wait();
+        multiThreadAlloc(2*1024);
+        barrier.wait();
+        crossThreadDealloc();
+        barrier.wait();
+        int result = scalable_allocation_command(TBBMALLOC_CLEAN_THREAD_BUFFERS,0);
+        ASSERT(result == TBBMALLOC_OK, "Per-thread clean request has not cleaned anything.");
+
+        // Check that TLS was cleaned fully
+        TLSData *tlsCurr = defaultMemPool->getTLS(/*create=*/false);
+        for (int i = 0; i < numBlockBinLimit; i++) {
+            ASSERT(!(tlsCurr->bin[i].activeBlk), "Some bin was not cleaned.");
+        }
+        ASSERT(!(tlsCurr->lloc.head), "Local LOC was not cleaned.");
+        ASSERT(!(tlsCurr->freeSlabBlocks.head), "Free Block pool was not cleaned.");
+    }
+};
+
+void TestCleanThreadBuffers() {
+    const int num_threads = 8;
+    // Clean up if something was allocated before the test
+    scalable_allocation_command(TBBMALLOC_CLEAN_ALL_BUFFERS,0);
+
+    alloc_counter = 0;
+    TestCleanThreadBuffersBody::initBarrier(num_threads);
+    NativeParallelFor(num_threads, TestCleanThreadBuffersBody());
+}
+
 /*---------------------------------------------------------------------------*/
 /*------------------------- Large Object Cache tests ------------------------*/
 #if _MSC_VER==1600 || _MSC_VER==1500
@@ -1384,6 +1426,7 @@ int TestMain () {
     TestBackRef();
     TestCleanAllBuffers<4*1024>();
     TestCleanAllBuffers<16*1024>();
+    TestCleanThreadBuffers();
     TestPools();
     TestBackend();
 

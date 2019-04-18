@@ -12,10 +12,6 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
-
-
-
 */
 
 // Declarations for rock-bottom simple test harness.
@@ -424,8 +420,9 @@ int main(int argc, char* argv[]) {
         res = TestMain();
 #if __TBB_MIC_OFFLOAD && __MIC__
         // It is recommended not to use the __MIC__ macro directly in the offload block but it is Ok here
-        // since it is not lead to an unexpected difference between host and target compilation phases.
-        // We need to flush internals COI buffers to order output from the offload part before the host part.
+        // since it does not lead to an unexpected difference between host and target compilation phases.
+        // We need to flush internal Intel(R) Coprocessor Offload Infrastructure (Intel(R) COI) buffers
+        // to order output from the offload part before the host part.
         // Also it is work-around for the issue with missed output.
         COIProcessProxyFlush();
 #endif

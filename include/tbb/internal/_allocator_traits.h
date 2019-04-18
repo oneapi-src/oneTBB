@@ -12,10 +12,6 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
-
-
-
 */
 
 #ifndef __TBB_allocator_traits_H
@@ -46,6 +42,15 @@ typedef std::false_type traits_false_type;
 typedef tbb::internal::true_type traits_true_type;
 typedef tbb::internal::false_type traits_false_type;
 #endif
+
+//! Copy assignment implementation for allocator if propagate_on_container_copy_assignment == true_type
+//! Noop if pocca == false_type
+template <typename MyAlloc, typename OtherAlloc>
+inline void allocator_copy_assignment(MyAlloc& my_allocator, OtherAlloc& other_allocator, traits_true_type) {
+    my_allocator = other_allocator;
+}
+template <typename MyAlloc, typename OtherAlloc>
+inline void allocator_copy_assignment(MyAlloc&, OtherAlloc&, traits_false_type) { /* NO COPY */}
 
 #if __TBB_CPP11_RVALUE_REF_PRESENT
 //! Move assignment implementation for allocator if propagate_on_container_move_assignment == true_type.
@@ -129,6 +134,8 @@ struct allocator_traits {
         p->~T();
         tbb::internal::suppress_unused_warning(p);
     }
+
+    static Alloc select_on_container_copy_construction(const Alloc& a) { return a; }
 };
 #endif // __TBB_ALLOCATOR_TRAITS_PRESENT
 

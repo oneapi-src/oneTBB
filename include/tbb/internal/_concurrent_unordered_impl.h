@@ -12,10 +12,6 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
-
-
-
 */
 
 /* Container implementations in this header are based on PPL implementations
@@ -879,7 +875,7 @@ protected:
             source_iterator where = it++;
             if (allow_multimapping || find(get_key(*where)) == end()) {
                 std::pair<node_type, raw_iterator> extract_result = source.internal_extract(where);
-                
+
                 // If the insertion fails, it returns ownership of the node to extract_result.first
                 // extract_result.first remains valid node handle
                 if (!insert(std::move(extract_result.first)).second) {
@@ -1142,7 +1138,7 @@ public:
 
     void swap(concurrent_unordered_base& right) {
         if (this != &right) {
-            std::swap(my_hash_compare, right.my_hash_compare); // TODO: check what ADL meant here
+            std::swap(my_hash_compare, right.my_hash_compare);
             my_solist.swap(right.my_solist);
             internal_swap_buckets(right);
             std::swap(my_number_of_buckets, right.my_number_of_buckets);

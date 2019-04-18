@@ -12,10 +12,6 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
-
-
-
 */
 
 #include "tbb/tbb_config.h"
@@ -352,7 +348,7 @@ static tbb::runtime_loader::error_code _load( char const * dll_name, int min_ver
     tbb::runtime_loader::error_code code = tbb::runtime_loader::ec_ok;
 
     /*
-        If these variables declared at the first usage, Intel C++ Compiler may issue warning(s):
+        If these variables declared at the first usage, Intel(R) C++ Compiler may issue warning(s):
             transfer of control [goto error] bypasses initialization of: ...
         Declaring variables at the beginning of the function eliminates warnings.
     */

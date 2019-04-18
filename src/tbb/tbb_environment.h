@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2019 Intel Corporation
+    Copyright (c) 2018-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
-
-
-
 */
 
 #ifndef __TBB_tbb_environment_H
@@ -23,6 +19,8 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <cerrno>
+#include <cctype>
 
 namespace tbb {
 
@@ -31,6 +29,10 @@ namespace internal {
 #if __TBB_WIN8UI_SUPPORT
 static inline bool GetBoolEnvironmentVariable( const char * ) {
     return false;
+}
+
+static inline long GetIntegralEnvironmentVariable( const char * ) {
+    return -1;
 }
 #else  /* __TBB_WIN8UI_SUPPORT */
 static inline bool GetBoolEnvironmentVariable( const char * name ) {
@@ -50,6 +52,30 @@ static inline bool GetBoolEnvironmentVariable( const char * name ) {
         return !s[index];
     }
     return false;
+}
+
+static inline long GetIntegralEnvironmentVariable( const char * name ) {
+    if( const char* s = std::getenv(name) )
+    {
+        char* end = NULL;
+        errno = 0;
+        long value = std::strtol(s, &end, 10);
+
+        // We have exceeded the range, value is negative or string is incovertable
+        if ( errno == ERANGE || value < 0 || end==s )
+        {
+            return -1;
+        }
+
+        for ( ; *end != '\0'; end++ )
+        {
+            if ( !std::isspace(*end) )
+                return -1;
+        }
+
+        return value;
+    }
+    return -1;
 }
 #endif /* __TBB_WIN8UI_SUPPORT */
 

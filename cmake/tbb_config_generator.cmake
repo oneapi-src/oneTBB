@@ -11,10 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-#
-#
-#
 
 function(tbb_conf_gen_print_help)
     message("Usage: cmake -DTBB_ROOT=<tbb_root> -DTBB_OS=Linux|Windows|Darwin [-DSAVE_TO=<path>] -P tbb_config_generator.cmake")

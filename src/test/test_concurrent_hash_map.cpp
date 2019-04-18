@@ -12,10 +12,6 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
-
-
-
 */
 
 #ifndef TBB_USE_PERFORMANCE_WARNINGS
@@ -1611,6 +1607,88 @@ void TestScopedAllocator() {
 }
 #endif
 
+// C++03 allocator doesn't have to be assignable or swappable, so
+// tbb::internal::allocator_traits defines POCCA and POCS as false_type
+#if __TBB_ALLOCATOR_TRAITS_PRESENT
+
+template<typename Allocator>
+void test_traits() {
+    typedef int key_type;
+
+    typedef int mapped_type;
+    typedef tbb::tbb_hash_compare<key_type> compare_type;
+
+    typedef typename Allocator::propagate_on_container_copy_assignment pocca;
+    typedef typename Allocator::propagate_on_container_swap pocs;
+
+    typedef tbb::concurrent_hash_map<key_type, mapped_type, compare_type, Allocator> container_type;
+    bool propagated_on_copy_assign = false;
+    bool propagated_on_move = false;
+    bool propagated_on_swap = false;
+    bool selected_on_copy_construct = false;
+
+    Allocator alloc(propagated_on_copy_assign, propagated_on_move, propagated_on_swap, selected_on_copy_construct);
+
+    container_type c1(alloc), c2(c1);
+    ASSERT(selected_on_copy_construct, "select_on_container_copy_construction function was not called");
+
+    c1 = c2;
+    ASSERT(propagated_on_copy_assign == pocca::value, "Unexpected allocator propagation on copy assignment");
+
+#if __TBB_CPP11_RVALUE_REF_PRESENT
+    typedef typename Allocator::propagate_on_container_move_assignment pocma;
+    c2 = std::move(c1);
+    ASSERT(propagated_on_move == pocma::value, "Unexpected allocator propagation on move assignment");
+#endif
+
+    c1.swap(c2);
+    ASSERT(propagated_on_swap == pocs::value, "Unexpected allocator propagation on swap");
+}
+
+#if __TBB_CPP11_RVALUE_REF_PRESENT
+class non_movable_object {
+    non_movable_object() {}
+private:
+    non_movable_object(non_movable_object&&);
+    non_movable_object& operator=(non_movable_object&&);
+};
+
+void test_non_movable_value_type() {
+    // Check, that if pocma is true, concurrent_hash_map allows move assignment without per-element move
+    typedef propagating_allocator<tbb::tbb_allocator<int>, /*POCMA=*/tbb::internal::traits_true_type> allocator_type;
+    typedef tbb::concurrent_hash_map<int, non_movable_object, tbb::tbb_hash_compare<int>, allocator_type> container_type;
+    allocator_type alloc;
+    container_type container1(alloc), container2(alloc);
+    container1 = std::move(container2);
+}
+
+#endif // __TBB_CPP11_RVALUE_REF_PRESENT
+
+void TestAllocatorTraits() {
+    typedef tbb::tbb_allocator<int> base_allocator;
+    typedef tbb::internal::traits_true_type true_type;
+    typedef tbb::internal::traits_true_type false_type;
+
+    typedef propagating_allocator<base_allocator, /*POCMA=*/true_type, /*POCCA=*/true_type, /*POCS=*/true_type>
+            always_propagating_allocator;
+    typedef propagating_allocator<base_allocator, false_type, false_type, false_type> never_propagating_allocator;
+    typedef propagating_allocator<base_allocator, true_type, false_type, false_type> pocma_allocator;
+    typedef propagating_allocator<base_allocator, false_type, true_type, false_type> pocca_allocator;
+    typedef propagating_allocator<base_allocator, false_type, false_type, true_type> pocs_allocator;
+
+    test_traits<always_propagating_allocator>();
+    test_traits<never_propagating_allocator>();
+    test_traits<pocca_allocator>();
+    test_traits<pocma_allocator>();
+    test_traits<pocs_allocator>();
+
+#if __TBB_CPP11_RVALUE_REF_PRESENT
+    test_non_movable_value_type();
+#endif
+}
+
+#endif // __TBB_ALLOCATOR_TRAITS_PRESENT
+
 //------------------------------------------------------------------------
 // Test driver
 //------------------------------------------------------------------------
@@ -1676,6 +1754,10 @@ int TestMain () {
 #endif
 #if __TBB_CPP11_RVALUE_REF_PRESENT && __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT && !__TBB_SCOPED_ALLOCATOR_BROKEN
     TestScopedAllocator();
+#endif
+
+#if __TBB_ALLOCATOR_TRAITS_PRESENT
+    TestAllocatorTraits();
 #endif
 
     return Harness::Done;

@@ -13,10 +13,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-#
-#
-#
 
 
 __all__ = ["task_arena", "task_group", "task_scheduler_init", "global_control", "default_num_threads"]

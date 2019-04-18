@@ -12,10 +12,6 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
-
-
-
 */
 
 // Declarations for simple estimate of the memory being used by a program.
@@ -649,6 +645,82 @@ public:
 
     void* unique_pointer;
 };
+
+#include "tbb/internal/_allocator_traits.h" // Need traits_true/false_type
+
+template <typename Allocator, typename POCMA = tbb::internal::traits_false_type,
+          typename POCCA = tbb::internal::traits_false_type, typename POCS = tbb::internal::traits_false_type>
+struct propagating_allocator : Allocator {
+    typedef POCMA propagate_on_container_move_assignment;
+    typedef POCCA propagate_on_container_copy_assignment;
+    typedef POCS propagate_on_container_swap;
+    bool* propagated_on_copy_assignment;
+    bool* propagated_on_move_assignment;
+    bool* propagated_on_swap;
+    bool* selected_on_copy_construction;
+
+    template <typename U>
+    struct rebind {
+        typedef propagating_allocator<typename tbb::internal::allocator_rebind<Allocator, U>::type,
+                                      POCMA, POCCA, POCS> other;
+    };
+
+    propagating_allocator() : propagated_on_copy_assignment(NULL),
+                              propagated_on_move_assignment(NULL),
+                              propagated_on_swap(NULL),
+                              selected_on_copy_construction(NULL) {}
+
+    propagating_allocator(bool& poca, bool& poma, bool& pos, bool& soc)
+        : propagated_on_copy_assignment(&poca),
+          propagated_on_move_assignment(&poma),
+          propagated_on_swap(&pos),
+          selected_on_copy_construction(&soc) {}
+
+    propagating_allocator(const propagating_allocator& other)
+        : Allocator(other),
+          propagated_on_copy_assignment(other.propagated_on_copy_assignment),
+          propagated_on_move_assignment(other.propagated_on_move_assignment),
+          propagated_on_swap(other.propagated_on_swap),
+          selected_on_copy_construction(other.selected_on_copy_construction) {}
+
+    template <typename Allocator2>
+    propagating_allocator(const propagating_allocator<Allocator2, POCMA, POCCA, POCS>& other)
+        : Allocator(other),
+          propagated_on_copy_assignment(other.propagated_on_copy_assignment),
+          propagated_on_move_assignment(other.propagated_on_move_assignment),
+          propagated_on_swap(other.propagated_on_swap),
+          selected_on_copy_construction(other.selected_on_copy_construction) {}
+
+    propagating_allocator& operator=(const propagating_allocator&) {
+        ASSERT(POCCA::value, "Allocator should not copy assign if pocca is false");
+        if (propagated_on_copy_assignment)
+            *propagated_on_copy_assignment = true;
+        return *this;
+    }
+
+#if __TBB_CPP11_RVALUE_REF_PRESENT
+    propagating_allocator& operator=(propagating_allocator&&) {
+        ASSERT(POCMA::value, "Allocator should not move assign if pocma is false");
+        if (propagated_on_move_assignment)
+            *propagated_on_move_assignment = true;
+        return *this;
+    }
+#endif
+
+    propagating_allocator select_on_container_copy_construction() const {
+        if (selected_on_copy_construction)
+            *selected_on_copy_construction = true;
+        return *this;
+    }
+};
+
+template <typename Allocator, typename POCMA, typename POCCA, typename POCS>
+void swap(propagating_allocator<Allocator, POCMA, POCCA, POCS>& lhs,
+          propagating_allocator<Allocator, POCMA, POCCA, POCS>&) {
+    ASSERT(POCS::value, "Allocator should not swap if pocs is false");
+    if (lhs.propagated_on_swap)
+        *lhs.propagated_on_swap = true;
+}
 
 #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
     // Workaround for overzealous compiler warnings

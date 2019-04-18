@@ -11,10 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-#
-#
-#
 
 # The original source for this example is
 # Copyright (c) 1994-2008 John E. Stone
@@ -52,9 +48,10 @@ CXX=icc
 endif # icc
 
 # The default runtime arguments
-export ARGS = dat/balls.dat
-export PERF_RUN_ARGS = silent dat/balls3.dat
-export LIGHT_ARGS= dat/model2.dat
+DATASET = balls
+override ARGS := dat/$(DATASET).dat $(ARGS)
+PERF_RUN_ARGS = silent dat/balls3.dat
+LIGHT_ARGS = dat/model2.dat
 
 # define name suffix
 SUFFIX = .$(VERSION)

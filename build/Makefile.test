@@ -11,10 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-#
-#
-#
 
 #------------------------------------------------------------------------------
 # Define rules for making the TBB tests.
@@ -220,7 +216,6 @@ TEST_TBB_PLAIN.EXE = test_assembly.$(TEST_EXT)   \
 # These tests depend on other technologies
 TEST_TBB_SPECIAL.EXE = test_openmp.$(TEST_EXT) \
     test_cilk_interop.$(TEST_EXT)              \
-    test_gfx_factory.$(TEST_EXT)               \
     test_opencl_node.$(TEST_EXT)
 
 # skip mode_plugin for now
@@ -241,7 +236,6 @@ ifdef CILK_AVAILABLE
 # The issue reveals itself if a version of binutils is prior to 2.17
 ifeq (linux_icc,$(tbb_os)_$(compiler))
 test_cilk_interop.$(TEST_EXT): LIBS += -lcilkrts
-test_gfx_factory.$(TEST_EXT): LIBS += -lcilkrts
 endif
 test_tbb_cilk: test_cilk_interop.$(TEST_EXT)
 	$(run_cmd) ./test_cilk_interop.$(TEST_EXT) $(args)
@@ -273,7 +267,7 @@ test_tbb_plain: $(TEST_PREREQUISITE) $(TESTS_TO_RUN)
 
 # For deprecated files, we don't mind warnings etc., thus compilation rules are most relaxed
 CPLUS_FLAGS_DEPRECATED = $(DEFINE_KEY)__TBB_TEST_DEPRECATED=1 $(subst $(WARNING_KEY),,$(CPLUS_FLAGS)) $(WARNING_SUPPRESS) $(INCLUDE_KEY)$(tbb_root)/src/test
-TEST_TBB_OLD.OBJ = test_concurrent_vector_v2.$(OBJ) test_concurrent_queue_v2.$(OBJ) test_mutex_v2.$(OBJ) test_task_scheduler_observer_v3.$(OBJ) 
+TEST_TBB_OLD.OBJ = test_concurrent_vector_v2.$(OBJ) test_concurrent_queue_v2.$(OBJ) test_mutex_v2.$(OBJ) test_task_scheduler_observer_v3.$(OBJ)
 
 $(TEST_TBB_OLD.OBJ): CPLUS_FLAGS := $(CPLUS_FLAGS_DEPRECATED)
 

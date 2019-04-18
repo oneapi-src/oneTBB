@@ -12,10 +12,6 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
-
-
-
 */
 
 #ifndef _TBB_scheduler_H
@@ -119,7 +115,7 @@ struct scheduler_state {
     the thread that creates the instance.
 
     Class generic_scheduler is an abstract base class that contains most of the scheduler,
-    except for tweaks specific to processors and tools (e.g. VTune).
+    except for tweaks specific to processors and tools (e.g. VTune(TM) Performance Tools).
     The derived template class custom_scheduler<SchedulerTraits> fills in the tweaks. */
 class generic_scheduler: public scheduler
                        , public ::rml::job

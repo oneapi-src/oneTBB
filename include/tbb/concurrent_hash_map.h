@@ -12,10 +12,6 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
-
-
-
 */
 
 #ifndef __TBB_concurrent_hash_map_H
@@ -315,6 +311,25 @@ namespace interface5 {
             for(size_type i = embedded_block; i < pointers_per_table; i++)
                 swap(this->my_table[i], table.my_table[i]);
         }
+
+#if __TBB_CPP11_RVALUE_REF_PRESENT
+        void internal_move(hash_map_base&& other) {
+            my_mask = other.my_mask;
+            other.my_mask = embedded_buckets - 1;
+            my_size = other.my_size;
+            other.my_size = 0;
+
+            for(size_type i = 0; i < embedded_buckets; ++i) {
+                my_embedded_segment[i].node_list = other.my_embedded_segment[i].node_list;
+                other.my_embedded_segment[i].node_list = NULL;
+            }
+
+            for(size_type i = embedded_block; i < pointers_per_table; ++i) {
+                my_table[i] = other.my_table[i];
+                other.my_table[i] = NULL;
+            }
+        }
+#endif // __TBB_CPP11_RVALUE_REF_PRESENT
     };
 
     template<typename Iterator>
@@ -820,7 +835,16 @@ public:
     }
 
     //! Copy constructor
-    concurrent_hash_map( const concurrent_hash_map &table, const allocator_type &a = allocator_type() )
+    concurrent_hash_map( const concurrent_hash_map &table )
+        : internal::hash_map_base(),
+          my_allocator(node_allocator_traits::select_on_container_copy_construction(table.get_allocator()))
+    {
+        call_clear_on_leave scope_guard(this);
+        internal_copy(table);
+        scope_guard.dismiss();
+    }
+
+    concurrent_hash_map( const concurrent_hash_map &table, const allocator_type &a)
         : internal::hash_map_base(), my_allocator(a)
     {
         call_clear_on_leave scope_guard(this);
@@ -833,7 +857,7 @@ public:
     concurrent_hash_map( concurrent_hash_map &&table )
         : internal::hash_map_base(), my_allocator(std::move(table.get_allocator()))
     {
-        swap(table);
+        internal_move(std::move(table));
     }
 
     //! Move constructor
@@ -841,7 +865,7 @@ public:
         : internal::hash_map_base(), my_allocator(a)
     {
         if (a == table.get_allocator()){
-            this->swap(table);
+            internal_move(std::move(table));
         }else{
             call_clear_on_leave scope_guard(this);
             internal_copy(std::make_move_iterator(table.begin()), std::make_move_iterator(table.end()), table.size());
@@ -892,7 +916,9 @@ public:
     //! Assignment
     concurrent_hash_map& operator=( const concurrent_hash_map &table ) {
         if( this!=&table ) {
+            typedef typename node_allocator_traits::propagate_on_container_copy_assignment pocca_type;
             clear();
+            tbb::internal::allocator_copy_assignment(my_allocator, table.my_allocator, pocca_type());
             internal_copy(table);
         }
         return *this;
@@ -902,16 +928,8 @@ public:
     //! Move Assignment
     concurrent_hash_map& operator=( concurrent_hash_map &&table ) {
         if(this != &table) {
-            typedef typename tbb::internal::allocator_traits<allocator_type>::propagate_on_container_move_assignment pocma_t;
-            if(pocma_t::value || this->my_allocator == table.my_allocator) {
-                concurrent_hash_map trash (std::move(*this));
-                //TODO: swapping allocators here may be a problem, replace with single direction moving iff pocma is set
-                this->swap(table);
-            } else {
-                //do per element move
-                concurrent_hash_map moved_copy(std::move(table), this->my_allocator);
-                this->swap(moved_copy);
-            }
+            typedef typename node_allocator_traits::propagate_on_container_move_assignment pocma_type;
+            internal_move_assign(std::move(table), pocma_type());
         }
         return *this;
     }
@@ -1148,6 +1166,23 @@ protected:
     template<typename I>
     void internal_copy( I first, I last, size_type reserve_size );
 
+#if __TBB_CPP11_RVALUE_REF_PRESENT
+    // A compile-time dispatch to allow move assignment of containers with non-movable value_type if POCMA is true_type
+    void internal_move_assign(concurrent_hash_map&& other, tbb::internal::traits_true_type) {
+        tbb::internal::allocator_move_assignment(my_allocator, other.my_allocator, tbb::internal::traits_true_type());
+        internal_move(std::move(other));
+    }
+
+    void internal_move_assign(concurrent_hash_map&& other, tbb::internal::traits_false_type) {
+        if (this->my_allocator == other.my_allocator) {
+            internal_move(std::move(other));
+        } else {
+            //do per element move
+            internal_copy(std::make_move_iterator(other.begin()), std::make_move_iterator(other.end()), other.size());
+        }
+    }
+#endif
+
     //! Fast find when no concurrent erasure is used. For internal use inside TBB only!
     /** Return pointer to item with given key, or NULL if no such item exists.
         Must not be called concurrently with erasure operations. */
@@ -1372,11 +1407,13 @@ restart:
 
 template<typename Key, typename T, typename HashCompare, typename A>
 void concurrent_hash_map<Key,T,HashCompare,A>::swap(concurrent_hash_map<Key,T,HashCompare,A> &table) {
-    //TODO: respect C++11 allocator_traits<A>::propogate_on_constainer_swap
-    using std::swap;
-    swap(this->my_allocator, table.my_allocator);
-    swap(this->my_hash_compare, table.my_hash_compare);
-    internal_swap(table);
+    typedef typename node_allocator_traits::propagate_on_container_swap pocs_type;
+    if (this != &table && (pocs_type::value || my_allocator == table.my_allocator)) {
+        using std::swap;
+        tbb::internal::allocator_swap(this->my_allocator, table.my_allocator, pocs_type());
+        swap(this->my_hash_compare, table.my_hash_compare);
+        internal_swap(table);
+    }
 }
 
 template<typename Key, typename T, typename HashCompare, typename A>

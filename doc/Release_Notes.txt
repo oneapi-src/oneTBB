@@ -85,6 +85,8 @@ Software - Supported Compilers
         Windows* OS only)
     Microsoft* Visual C++ 14.1 (Microsoft* Visual Studio* 2017,
         Windows* OS only)
+    Microsoft* Visual C++ 14.2 (Microsoft* Visual Studio* 2019,
+        Windows* OS only)
     Microsoft* Windows* Software Development Kit for Windows* 8.1
     Microsoft* Windows* Software Development Kit for Windows* 10
     For each supported Linux* operating system, the standard gcc
@@ -114,11 +116,6 @@ Library Issues
     - If you build Intel(R) TBB from sources with GCC 6, specify
         the -flifetime-dse=1 option to prevent crashes at runtime,
         or use Intel(R) TBB makefiles that automatically set this option.
-
-    - The current implementation of gfx_factory does not allow memory
-        buffer objects to be used concurrently. As a result, several
-        streaming nodes customized with gfx_factory cannot be connected
-        with each other directly.
 
 ------------------------------------------------------------------------
 (C) 2019 Intel Corporation

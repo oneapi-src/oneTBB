@@ -14,10 +14,6 @@ REM WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 REM See the License for the specific language governing permissions and
 REM limitations under the License.
 REM
-REM
-REM
-REM
-REM
 
 :: Getting parameters
 if ("%1") == ("") goto error0
@@ -27,6 +23,17 @@ set arch=%1
 if ("%2") == ("debug") set postfix=_debug
 set output_dir=%3
 
+:: Check if necessary .dll's already exist in output directory
+set dlls=tbb%postfix%.dll tbbmalloc%postfix%.dll
+(for %%a in (%dlls%) do (
+    if not exist %output_dir%\%%a (
+        goto copy_libs
+    )
+))
+:: Necessary .dll's already exist; no need to do anything
+exit /B 0
+
+:copy_libs
 :: Optional 4th parameter to set install root
 if ("%4") NEQ ("") set TBBROOT=%4
 :: Actually we can set install root by ourselves
@@ -41,6 +48,8 @@ if ("%VS140COMNTOOLS%") NEQ ("") set vc_dir=vc14
 :: If it is not, try running Microsoft Visual Studio 2017 from Microsoft* Developer Command Prompt* for VS 2017.
 :: For details, see https://developercommunity.visualstudio.com/content/problem/730/vs154-env-var-vs150comntools-missing-from-build-sy.html
 if ("%VS150COMNTOOLS%") NEQ ("") set vc_dir=vc14
+:: The same comment also applies to Microsoft Visual Studio 2019 and variable VS160COMNTOOLS
+if ("%VS160COMNTOOLS%") NEQ ("") set vc_dir=vc14
 
 :: Are we standalone/oss or inside compiler?
 if exist "%TBBROOT%\bin\%arch%\%vc_dir%\tbb%postfix%.dll" set interim_path=bin\%arch%

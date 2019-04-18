@@ -11,10 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-#
-#
-#
 
 ifneq ($(arch),$(filter $(arch),ia32 intel64 armv7 armv7s arm64))
   $(error $(arch) is unknown architecture. Known arhitechtures are ia32 intel64 armv7 armv7s arm64)

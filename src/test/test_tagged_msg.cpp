@@ -12,10 +12,6 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
-
-
-
 */
 
 #define _VARIADIC_MAX 10   // Visual Studio 2012
@@ -177,7 +173,7 @@ void RunTests() {
     try {
         int *iip = cast_to<int *>(counted_array_tagged_msg);
         ASSERT(false, "did not throw on invalid cast");
-        *iip = 2;  // avoids "ipp set but not used" warning
+        *iip = 2;  // avoids "iip set but not used" warning
     }
     catch(std::runtime_error &re) {
         REMARK("attempt to cast to invalid type caught %s\n", re.what());

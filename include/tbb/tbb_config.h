@@ -12,10 +12,6 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
-
-
-
 */
 
 #ifndef __TBB_tbb_config_H
@@ -164,13 +160,6 @@
     #define __INTEL_CXX11_MODE__ (__GXX_EXPERIMENTAL_CXX0X__ || (_MSC_VER && __STDC_HOSTED__))
 #endif
 
-// Intel(R) C++ Compiler offloading API to the Intel(R) Graphics Technology presence macro
-// TODO: add support for ICC 15.00 _GFX_enqueue API and then decrease Intel C++ Compiler supported version
-// TODO: add linux support and restict it with (__linux__ && __TBB_x86_64 && !__ANDROID__) macro
-#if __INTEL_COMPILER >= 1600 && _WIN32
-#define __TBB_GFX_PRESENT 1
-#endif
-
 #if __INTEL_COMPILER && (!_MSC_VER || __INTEL_CXX11_MODE__)
     //  On Windows, C++11 features supported by Visual Studio 2010 and higher are enabled by default,
     //  so in absence of /Qstd= use MSVC branch for feature detection.
@@ -306,28 +295,28 @@
     #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            (_MSVC_LANG >= 201703L && _MSC_VER >= 1914)
     #define __TBB_CPP17_INVOKE_RESULT_PRESENT               (_MSVC_LANG >= 201703L && _MSC_VER >= 1911)
 #else
-    #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          0
-    #define __TBB_CPP11_RVALUE_REF_PRESENT                  0
-    #define __TBB_IMPLICIT_MOVE_PRESENT                     0
-    #define __TBB_EXCEPTION_PTR_PRESENT                     0
-    #define __TBB_STATIC_ASSERT_PRESENT                     0
-    #define __TBB_CPP11_TUPLE_PRESENT                       0
-    #define __TBB_INITIALIZER_LISTS_PRESENT                 0
-    #define __TBB_CONSTEXPR_PRESENT                         0
-    #define __TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT        0
-    #define __TBB_NOEXCEPT_PRESENT                          0
-    #define __TBB_CPP11_STD_BEGIN_END_PRESENT               0
-    #define __TBB_CPP11_AUTO_PRESENT                        0
-    #define __TBB_CPP11_DECLTYPE_PRESENT                    0
-    #define __TBB_CPP11_LAMBDAS_PRESENT                     0
-    #define __TBB_CPP11_DEFAULT_FUNC_TEMPLATE_ARGS_PRESENT  0
-    #define __TBB_OVERRIDE_PRESENT                          0
-    #define __TBB_ALIGNAS_PRESENT                           0
-    #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            0
+    #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          __TBB_CPP11_PRESENT
+    #define __TBB_CPP11_RVALUE_REF_PRESENT                  __TBB_CPP11_PRESENT
+    #define __TBB_IMPLICIT_MOVE_PRESENT                     __TBB_CPP11_PRESENT
+    #define __TBB_EXCEPTION_PTR_PRESENT                     __TBB_CPP11_PRESENT
+    #define __TBB_STATIC_ASSERT_PRESENT                     __TBB_CPP11_PRESENT
+    #define __TBB_CPP11_TUPLE_PRESENT                       __TBB_CPP11_PRESENT
+    #define __TBB_INITIALIZER_LISTS_PRESENT                 __TBB_CPP11_PRESENT
+    #define __TBB_CONSTEXPR_PRESENT                         __TBB_CPP11_PRESENT
+    #define __TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT        __TBB_CPP11_PRESENT
+    #define __TBB_NOEXCEPT_PRESENT                          __TBB_CPP11_PRESENT
+    #define __TBB_CPP11_STD_BEGIN_END_PRESENT               __TBB_CPP11_PRESENT
+    #define __TBB_CPP11_AUTO_PRESENT                        __TBB_CPP11_PRESENT
+    #define __TBB_CPP11_DECLTYPE_PRESENT                    __TBB_CPP11_PRESENT
+    #define __TBB_CPP11_LAMBDAS_PRESENT                     __TBB_CPP11_PRESENT
+    #define __TBB_CPP11_DEFAULT_FUNC_TEMPLATE_ARGS_PRESENT  __TBB_CPP11_PRESENT
+    #define __TBB_OVERRIDE_PRESENT                          __TBB_CPP11_PRESENT
+    #define __TBB_ALIGNAS_PRESENT                           __TBB_CPP11_PRESENT
+    #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            __TBB_CPP11_PRESENT
     #define __TBB_CPP14_INTEGER_SEQUENCE_PRESENT            (__cplusplus >= 201402L)
-    #define __TBB_CPP14_VARIABLE_TEMPLATES_PRESENT          0
-    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            0
-    #define __TBB_CPP17_INVOKE_RESULT_PRESENT               0
+    #define __TBB_CPP14_VARIABLE_TEMPLATES_PRESENT          (__cplusplus >= 201402L)
+    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            (__cplusplus >= 201703L)
+    #define __TBB_CPP17_INVOKE_RESULT_PRESENT               (__cplusplus >= 201703L)
 #endif
 
 // C++11 standard library features
@@ -348,7 +337,7 @@
 #define __TBB_MOVE_IF_NOEXCEPT_PRESENT                      (__TBB_NOEXCEPT_PRESENT && (__TBB_GLIBCXX_VERSION >= 40700 || _MSC_VER >= 1900 || _LIBCPP_VERSION))
 #define __TBB_ALLOCATOR_TRAITS_PRESENT                      (__cplusplus >= 201103L && _LIBCPP_VERSION  || _MSC_VER >= 1800 ||  \
                                                             __GXX_EXPERIMENTAL_CXX0X__ && __TBB_GLIBCXX_VERSION >= 40700 && !(__TBB_GLIBCXX_VERSION == 40700 && __TBB_DEFINE_MIC))
-#define __TBB_MAKE_EXCEPTION_PTR_PRESENT                    (__TBB_EXCEPTION_PTR_PRESENT && (_MSC_VER >= 1700 || __TBB_GLIBCXX_VERSION >= 40600 || _LIBCPP_VERSION))
+#define __TBB_MAKE_EXCEPTION_PTR_PRESENT                    (__TBB_EXCEPTION_PTR_PRESENT && (_MSC_VER >= 1700 || __TBB_GLIBCXX_VERSION >= 40600 || _LIBCPP_VERSION || __SUNPRO_CC))
 
 // Due to libc++ limitations in C++03 mode, do not pass rvalues to std::make_shared()
 #define __TBB_CPP11_SMART_POINTERS_PRESENT                  ( _MSC_VER >= 1600 || _LIBCPP_VERSION   \
@@ -816,10 +805,6 @@ There are four cases that are supported:
 #define __TBB_PREVIEW_OPENCL_NODE               (__TBB_PREVIEW_STREAMING_NODE && __TBB_CPP11_TEMPLATE_ALIASES_PRESENT)
 #define __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING (TBB_PREVIEW_FLOW_GRAPH_FEATURES || __TBB_PREVIEW_OPENCL_NODE)
 #define __TBB_PREVIEW_ASYNC_MSG                 (TBB_PREVIEW_FLOW_GRAPH_FEATURES && __TBB_FLOW_GRAPH_CPP11_FEATURES)
-
-#define __TBB_PREVIEW_GFX_FACTORY               (__TBB_GFX_PRESENT && TBB_PREVIEW_FLOW_GRAPH_FEATURES && !__TBB_MIC_OFFLOAD \
-                                                && __TBB_FLOW_GRAPH_CPP11_FEATURES && __TBB_CPP11_TEMPLATE_ALIASES_PRESENT \
-                                                && __TBB_CPP11_FUTURE_PRESENT)
 
 
 #ifndef __TBB_PREVIEW_FLOW_GRAPH_PRIORITIES

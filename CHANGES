@@ -2,6 +2,27 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 2019 Update 6
+TBB_INTERFACE_VERSION == 11006
+
+Changes (w.r.t. Intel TBB 2019 Update 5):
+
+- Added support for Microsoft* Visual Studio* 2019.
+- Added support for enqueuing tbb::task into tbb::task_arena
+    (https://github.com/01org/tbb/issues/116).
+- Improved support for allocator propagation on concurrent_hash_map
+    assigning and swapping.
+- Improved scalable_allocation_command cleanup operations to release
+    more memory buffered by the calling thread.
+- Separated allocation of small and large objects into distinct memory
+    regions, which helps to reduce excessive memory caching inside the
+    TBB allocator.
+
+Preview Features:
+
+- Removed template class gfx_factory from the flow graph API.
+
+------------------------------------------------------------------------
 Intel TBB 2019 Update 5
 TBB_INTERFACE_VERSION == 11005
 

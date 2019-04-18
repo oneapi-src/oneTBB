@@ -12,10 +12,6 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
-
-
-
 */
 
 #ifndef __TBB_task_H
@@ -310,6 +306,7 @@ enum priority_t {
 
 class task_scheduler_init;
 namespace interface7 { class task_arena; }
+using interface7::task_arena;
 
 //! Used to form groups of tasks
 /** @ingroup task_scheduling
@@ -336,7 +333,7 @@ class task_group_context : internal::no_copy {
 private:
     friend class internal::generic_scheduler;
     friend class task_scheduler_init;
-    friend class interface7::task_arena;
+    friend class task_arena;
 
 #if TBB_USE_CAPTURED_EXCEPTION
     typedef tbb_exception exception_container_type;
@@ -822,6 +819,14 @@ public:
         t.prefix().owner->enqueue( t, (void*)p );
     }
 #endif /* __TBB_TASK_PRIORITY */
+
+    //! Enqueue task in task_arena
+    //! The implementation is in task_arena.h
+    inline static void enqueue( task& t, task_arena& arena
+#if __TBB_TASK_PRIORITY
+        , priority_t p = priority_t(0)
+#endif
+    );
 
     //! The innermost task being executed or destroyed by the current thread at the moment.
     static task& __TBB_EXPORTED_FUNC self();

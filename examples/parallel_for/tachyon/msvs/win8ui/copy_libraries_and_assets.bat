@@ -14,10 +14,6 @@ REM WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 REM See the License for the specific language governing permissions and
 REM limitations under the License.
 REM
-REM
-REM
-REM
-REM
 :: Getting parameters
 :: Architecture
 if ("%1") == ("") goto error0

@@ -12,10 +12,6 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
-
-
-
 */
 
 #include "tbb/scalable_allocator.h"
@@ -249,14 +245,12 @@ public:
             void *ptrLarge = pool_malloc(pool[id], lrgSz);
             ASSERT(ptrLarge, NULL);
             memset(ptrLarge, 1, lrgSz);
-
             // consume all small objects
-            while (pool_malloc(pool[id], 5*1024))
-                ;
-            // releasing of large object can give a chance to allocate more
+            while (pool_malloc(pool[id], 5 * 1024));
+            // releasing of large object will not give a chance to allocate more
+            // since only fixed pool can look at other bins aligned/notAligned
             pool_free(pool[id], ptrLarge);
-
-            ASSERT(pool_malloc(pool[id], 5*1024), NULL);
+            ASSERT(!pool_malloc(pool[id], 5*1024), NULL);
         }
 
         barrier.wait();
@@ -641,8 +635,8 @@ rml::MemoryPool *CreateUsablePool(size_t size)
         return NULL;
     }
     ASSERT(o, "Created pool must be useful.");
-    ASSERT(getMemSuccessful == 1 || getMemAll > getMemSuccessful,
-           "Multiple requests are allowed only when unsuccessful request occurred.");
+    ASSERT(getMemSuccessful == 1 || getMemSuccessful == 5 || getMemAll > getMemSuccessful,
+           "Multiple requests are allowed when unsuccessful request occurred or cannot search in bootstrap memory. ");
     ASSERT(!putMemAll, NULL);
     pool_free(pool, o);
 

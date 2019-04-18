@@ -12,10 +12,6 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
-
-
-
 */
 
 #ifndef __TBB_concurrent_priority_queue_H
@@ -28,6 +24,7 @@
 #include "tbb_profiling.h"
 #include "internal/_aggregator_impl.h"
 #include "internal/_template_helpers.h"
+#include "internal/_allocator_traits.h"
 #include <vector>
 #include <iterator>
 #include <functional>

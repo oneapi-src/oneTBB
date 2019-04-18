@@ -12,10 +12,6 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
-
-
-
 */
 
 #ifndef __TBB_task_arena_H
@@ -172,6 +168,11 @@ R isolate_impl(F& f) {
  */
 class task_arena : public internal::task_arena_base {
     friend class tbb::internal::task_scheduler_observer_v3;
+    friend void task::enqueue(task&, task_arena&
+#if __TBB_TASK_PRIORITY
+        , priority_t
+#endif
+    );
     friend int tbb::this_task_arena::max_concurrency();
     bool my_initialized;
     void mark_initialized() {
@@ -414,6 +415,19 @@ namespace this_task_arena {
     }
 } // namespace this_task_arena
 
+//! Enqueue task in task_arena
+void task::enqueue( task& t, task_arena& arena
+#if __TBB_TASK_PRIORITY
+        , priority_t p
+#endif
+    ) {
+#if !__TBB_TASK_PRIORITY
+    intptr_t p = 0;
+#endif
+    arena.initialize();
+    //! Note: the context of the task may differ from the context instantiated by task_arena
+    arena.internal_enqueue(t, p);
+}
 } // namespace tbb
 
 #endif /* __TBB_task_arena_H */
