@@ -55,7 +55,9 @@ ifndef arch
 endif
 
 ifndef runtime
-        export gcc_version:=$(shell gcc -dumpversion)
+        # -dumpfullversion prints e.g. 7.3.0. -dumpversion only prints the major version (7) on newer GCCs
+        # but it is kept for backwards compatibility with old GCCs that don't have -dumpfullversion.
+        export gcc_version:=$(shell gcc -dumpfullversion -dumpversion)
         os_version:=$(shell uname -r)
         os_kernel_version:=$(shell uname -r | sed -e 's/-.*$$//')
         export os_glibc_version_full:=$(shell getconf GNU_LIBC_VERSION | grep glibc | sed -e 's/^glibc //')
