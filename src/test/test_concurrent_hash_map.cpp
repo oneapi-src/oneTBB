@@ -1519,33 +1519,6 @@ void TestHashCompareConstructors() {
 #if __TBB_CPP11_RVALUE_REF_PRESENT && __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT && !__TBB_SCOPED_ALLOCATOR_BROKEN
 #include <scoped_allocator>
 
-template<typename Allocator>
-class allocator_aware_data {
-public:
-    static bool assert_on_constructions;
-    typedef Allocator allocator_type;
-
-    allocator_aware_data(const allocator_type& allocator = allocator_type())
-        : my_allocator(allocator), my_value(0) {}
-    allocator_aware_data(int v, const allocator_type& allocator = allocator_type())
-        : my_allocator(allocator), my_value(v) {}
-    allocator_aware_data(const allocator_aware_data&) {
-        ASSERT(!assert_on_constructions, "Allocator should propogate to the data during copy construction");
-    }
-    allocator_aware_data(allocator_aware_data&&) {
-        ASSERT(!assert_on_constructions, "Allocator should propogate to the data during move construction");
-    }
-    allocator_aware_data(const allocator_aware_data& rhs, const allocator_type& allocator)
-        : my_allocator(allocator), my_value(rhs.my_value) {}
-    allocator_aware_data(allocator_aware_data&& rhs, const allocator_type& allocator)
-        : my_allocator(allocator), my_value(rhs.my_value) {}
-
-    int value() const { return my_value; }
-private:
-    allocator_type my_allocator;
-    int my_value;
-};
-
 struct custom_hash_compare {
     template<typename Allocator>
     static size_t hash(const allocator_aware_data<Allocator>& key) {
@@ -1557,9 +1530,6 @@ struct custom_hash_compare {
         return tbb::tbb_hash_compare<int>::equal(key1.value(), key2.value());
     }
 };
-
-template<typename Allocator>
-bool allocator_aware_data<Allocator>::assert_on_constructions = false;
 
 void TestScopedAllocator() {
     typedef allocator_aware_data<std::scoped_allocator_adaptor<tbb::tbb_allocator<int>>> allocator_data_type;
@@ -1607,86 +1577,29 @@ void TestScopedAllocator() {
 }
 #endif
 
-// C++03 allocator doesn't have to be assignable or swappable, so
-// tbb::internal::allocator_traits defines POCCA and POCS as false_type
 #if __TBB_ALLOCATOR_TRAITS_PRESENT
-
-template<typename Allocator>
-void test_traits() {
-    typedef int key_type;
-
-    typedef int mapped_type;
-    typedef tbb::tbb_hash_compare<key_type> compare_type;
-
-    typedef typename Allocator::propagate_on_container_copy_assignment pocca;
-    typedef typename Allocator::propagate_on_container_swap pocs;
-
-    typedef tbb::concurrent_hash_map<key_type, mapped_type, compare_type, Allocator> container_type;
-    bool propagated_on_copy_assign = false;
-    bool propagated_on_move = false;
-    bool propagated_on_swap = false;
-    bool selected_on_copy_construct = false;
-
-    Allocator alloc(propagated_on_copy_assign, propagated_on_move, propagated_on_swap, selected_on_copy_construct);
-
-    container_type c1(alloc), c2(c1);
-    ASSERT(selected_on_copy_construct, "select_on_container_copy_construction function was not called");
-
-    c1 = c2;
-    ASSERT(propagated_on_copy_assign == pocca::value, "Unexpected allocator propagation on copy assignment");
-
-#if __TBB_CPP11_RVALUE_REF_PRESENT
-    typedef typename Allocator::propagate_on_container_move_assignment pocma;
-    c2 = std::move(c1);
-    ASSERT(propagated_on_move == pocma::value, "Unexpected allocator propagation on move assignment");
-#endif
-
-    c1.swap(c2);
-    ASSERT(propagated_on_swap == pocs::value, "Unexpected allocator propagation on swap");
-}
-
-#if __TBB_CPP11_RVALUE_REF_PRESENT
-class non_movable_object {
-    non_movable_object() {}
-private:
-    non_movable_object(non_movable_object&&);
-    non_movable_object& operator=(non_movable_object&&);
-};
-
-void test_non_movable_value_type() {
-    // Check, that if pocma is true, concurrent_hash_map allows move assignment without per-element move
-    typedef propagating_allocator<tbb::tbb_allocator<int>, /*POCMA=*/tbb::internal::traits_true_type> allocator_type;
-    typedef tbb::concurrent_hash_map<int, non_movable_object, tbb::tbb_hash_compare<int>, allocator_type> container_type;
-    allocator_type alloc;
-    container_type container1(alloc), container2(alloc);
-    container1 = std::move(container2);
-}
-
-#endif // __TBB_CPP11_RVALUE_REF_PRESENT
-
 void TestAllocatorTraits() {
-    typedef tbb::tbb_allocator<int> base_allocator;
-    typedef tbb::internal::traits_true_type true_type;
-    typedef tbb::internal::traits_true_type false_type;
+    using namespace propagating_allocators;
+    typedef int key;
+    typedef int mapped;
+    typedef tbb::tbb_hash_compare<key> compare;
 
-    typedef propagating_allocator<base_allocator, /*POCMA=*/true_type, /*POCCA=*/true_type, /*POCS=*/true_type>
-            always_propagating_allocator;
-    typedef propagating_allocator<base_allocator, false_type, false_type, false_type> never_propagating_allocator;
-    typedef propagating_allocator<base_allocator, true_type, false_type, false_type> pocma_allocator;
-    typedef propagating_allocator<base_allocator, false_type, true_type, false_type> pocca_allocator;
-    typedef propagating_allocator<base_allocator, false_type, false_type, true_type> pocs_allocator;
+    typedef tbb::concurrent_hash_map<key, mapped, compare, always_propagating_allocator> always_propagating_map;
+    typedef tbb::concurrent_hash_map<key, mapped, compare, never_propagating_allocator> never_propagating_map;
+    typedef tbb::concurrent_hash_map<key, mapped, compare, pocma_allocator> pocma_map;
+    typedef tbb::concurrent_hash_map<key, mapped, compare, pocca_allocator> pocca_map;
+    typedef tbb::concurrent_hash_map<key, mapped, compare, pocs_allocator> pocs_map;
 
-    test_traits<always_propagating_allocator>();
-    test_traits<never_propagating_allocator>();
-    test_traits<pocca_allocator>();
-    test_traits<pocma_allocator>();
-    test_traits<pocs_allocator>();
+    test_allocator_traits_support<always_propagating_map>();
+    test_allocator_traits_support<never_propagating_map>();
+    test_allocator_traits_support<pocma_map>();
+    test_allocator_traits_support<pocca_map>();
+    test_allocator_traits_support<pocs_map>();
 
 #if __TBB_CPP11_RVALUE_REF_PRESENT
-    test_non_movable_value_type();
+    test_allocator_traits_with_non_movable_value_type<pocma_map>();
 #endif
 }
-
 #endif // __TBB_ALLOCATOR_TRAITS_PRESENT
 
 //------------------------------------------------------------------------

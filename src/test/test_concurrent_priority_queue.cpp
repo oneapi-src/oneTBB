@@ -181,7 +181,6 @@ namespace equality_comparison_helpers {
     };
 }
 //TODO: make CPQ more testable instead of hacking ad-hoc operator ==
-//operator == is required for __TBB_TEST_INIT_LIST_SUITE
 template <typename element_type, typename compare_t, typename allocator_t>
 bool operator==(tbb::concurrent_priority_queue<element_type, compare_t, allocator_t> const& lhs, tbb::concurrent_priority_queue<element_type, compare_t, allocator_t> const& rhs){
     using equality_comparison_helpers::to_vector;

@@ -25,7 +25,7 @@ else
             CXX0XFLAGS ?= -std=c++0x
         else
             # support of lambda started GCC 4.5
-            ifneq (, $(strip $(shell g++ -dumpversion | egrep "^(4\.[5-9]|[5-9])")))
+            ifneq (, $(strip $(shell g++ -dumpfullversion -dumpversion | egrep "^(4\.[5-9]|[5-9])")))
                CXX0XFLAGS ?= -std=c++0x
             endif
         endif

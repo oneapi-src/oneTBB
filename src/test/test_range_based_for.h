@@ -48,6 +48,21 @@ namespace range_based_for_support_tests{
         return (sequence_length +1)* sequence_length /2;
     }
 
+    struct unified_summer
+    {
+        template <typename type>
+        type operator()(type const& lhs, type const& rhs)
+        {
+            return lhs + rhs;
+        }
+
+        template<typename first_type, typename second_type>
+        second_type operator()(second_type const& lhs, std::pair<first_type, second_type> const& rhs)
+        {
+            return lhs + rhs.second;
+        }
+    };
+
     struct pair_second_summer{
         template<typename first_type, typename second_type>
         second_type operator() (second_type const& lhs, std::pair<first_type, second_type> const& rhs) const

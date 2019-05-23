@@ -300,9 +300,9 @@ void test( int num_threads ) {
     SpinBarrier barrier(cpu_threads + /*async thread=*/1);
     g_task_num = 0;
     g_async_task_ids.clear();
-    g_async_task_ids.reserve( async_subgraph_reruns );
+    g_async_task_ids.reserve(async_subgraph_reruns);
 
-    tbb::task_scheduler_init init( cpu_threads );
+    tbb::task_scheduler_init init(cpu_threads);
     AsyncActivity activity(barrier);
     graph g;
 
@@ -587,6 +587,7 @@ int TestMain() {
     }
     for( int p = MinThread; p <= MaxThread; ++p ) {
         PriorityNodesTakePrecedence::test( p );
+        ThreadsEagerReaction::test( p );
         LimitingExecutionToPriorityTask::test( p );
     }
     NestedCase::test( MaxThread );

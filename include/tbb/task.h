@@ -1005,7 +1005,7 @@ public:
     //! Destroys the list, but does not destroy the task objects.
     ~task_list() {}
 
-    //! True if list if empty; false otherwise.
+    //! True if list is empty; false otherwise.
     bool empty() const {return !first;}
 
     //! Push task onto back of list.

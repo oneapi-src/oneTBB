@@ -46,6 +46,10 @@
 #include "concurrent_queue.h"
 #include "concurrent_unordered_map.h"
 #include "concurrent_unordered_set.h"
+#if TBB_PREVIEW_CONCURRENT_ORDERED_CONTAINERS
+#include "concurrent_map.h"
+#include "concurrent_set.h"
+#endif
 #include "concurrent_vector.h"
 #include "critical_section.h"
 #include "enumerable_thread_specific.h"

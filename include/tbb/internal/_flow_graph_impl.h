@@ -44,6 +44,16 @@
 #define __TBB_FLOW_GRAPH_PRIORITY_ARG1( arg1, priority ) arg1
 #endif // __TBB_PREVIEW_FLOW_GRAPH_PRIORITIES
 
+#if TBB_DEPRECATED_LIMITER_NODE_CONSTRUCTOR
+#define __TBB_DEPRECATED_LIMITER_EXPR( expr ) expr
+#define __TBB_DEPRECATED_LIMITER_ARG2( arg1, arg2 ) arg1, arg2
+#define __TBB_DEPRECATED_LIMITER_ARG4( arg1, arg2, arg3, arg4 ) arg1, arg3, arg4
+#else
+#define __TBB_DEPRECATED_LIMITER_EXPR( expr )
+#define __TBB_DEPRECATED_LIMITER_ARG2( arg1, arg2 ) arg1
+#define __TBB_DEPRECATED_LIMITER_ARG4( arg1, arg2, arg3, arg4 ) arg1, arg2
+#endif // TBB_DEPRECATED_LIMITER_NODE_CONSTRUCTOR
+
 namespace tbb {
 namespace flow {
 
@@ -154,9 +164,10 @@ namespace internal {
 void activate_graph(graph& g);
 void deactivate_graph(graph& g);
 bool is_graph_active(graph& g);
+tbb::task& prioritize_task(graph& g, tbb::task& arena_task);
 void spawn_in_graph_arena(graph& g, tbb::task& arena_task);
+void enqueue_in_graph_arena(graph &g, tbb::task& arena_task);
 void add_task_to_graph_reset_list(graph& g, tbb::task *tp);
-template<typename F> void execute_in_graph_arena(graph& g, F& f);
 
 #if __TBB_PREVIEW_FLOW_GRAPH_PRIORITIES
 struct graph_task_comparator {
@@ -407,13 +418,10 @@ private:
     friend void internal::activate_graph(graph& g);
     friend void internal::deactivate_graph(graph& g);
     friend bool internal::is_graph_active(graph& g);
+    friend tbb::task& internal::prioritize_task(graph& g, tbb::task& arena_task);
     friend void internal::spawn_in_graph_arena(graph& g, tbb::task& arena_task);
+    friend void internal::enqueue_in_graph_arena(graph &g, tbb::task& arena_task);
     friend void internal::add_task_to_graph_reset_list(graph& g, tbb::task *tp);
-    template<typename F> friend void internal::execute_in_graph_arena(graph& g, F& f);
-#if __TBB_PREVIEW_FLOW_GRAPH_PRIORITIES
-    template<typename Input, typename Output, typename Policy, typename Allocator>
-    friend class async_node;
-#endif
 
     friend class tbb::interface7::internal::task_arena_base;
 
@@ -459,33 +467,43 @@ inline bool is_graph_active(graph& g) {
     return g.my_is_active;
 }
 
-//! Executes custom functor inside graph arena
-template<typename F>
-inline void execute_in_graph_arena(graph& g, F& f) {
-    if (is_graph_active(g)) {
-        __TBB_ASSERT(g.my_task_arena && g.my_task_arena->is_active(), NULL);
-        g.my_task_arena->execute(f);
-    }
-}
-
-//! Spawns a task inside graph arena
-inline void spawn_in_graph_arena(graph& g, tbb::task& arena_task) {
-    task* task_to_spawn = &arena_task;
 #if __TBB_PREVIEW_FLOW_GRAPH_PRIORITIES
+inline tbb::task& prioritize_task(graph& g, tbb::task& t) {
+    task* critical_task = &t;
     // TODO: change flow graph's interfaces to work with graph_task type instead of tbb::task.
-    graph_task* t = static_cast<graph_task*>(&arena_task);
-    if( t->priority != no_priority ) {
+    graph_task* gt = static_cast<graph_task*>(&t);
+    if( gt->priority != no_priority ) {
         //! Non-preemptive priority pattern. The original task is submitted as a work item to the
         //! priority queue, and a new critical task is created to take and execute a work item with
         //! the highest known priority. The reference counting responsibility is transferred (via
         //! allocate_continuation) to the new task.
-        task_to_spawn = new( t->allocate_continuation() ) priority_task_selector(g.my_priority_queue);
-        tbb::internal::make_critical( *task_to_spawn );
-        g.my_priority_queue.push(t);
+        critical_task = new( gt->allocate_continuation() ) priority_task_selector(g.my_priority_queue);
+        tbb::internal::make_critical( *critical_task );
+        g.my_priority_queue.push(gt);
     }
+    return *critical_task;
+}
+#else
+inline tbb::task& prioritize_task(graph&, tbb::task& t) {
+    return t;
+}
 #endif /* __TBB_PREVIEW_FLOW_GRAPH_PRIORITIES */
-    graph::spawn_functor s_fn(*task_to_spawn);
-    execute_in_graph_arena(g, s_fn);
+
+//! Spawns a task inside graph arena
+inline void spawn_in_graph_arena(graph& g, tbb::task& arena_task) {
+    if (is_graph_active(g)) {
+        graph::spawn_functor s_fn(prioritize_task(g, arena_task));
+        __TBB_ASSERT(g.my_task_arena && g.my_task_arena->is_active(), NULL);
+        g.my_task_arena->execute(s_fn);
+    }
+}
+
+//! Enqueues a task inside graph arena
+inline void enqueue_in_graph_arena(graph &g, tbb::task& arena_task) {
+    if (is_graph_active(g)) {
+        __TBB_ASSERT( g.my_task_arena && g.my_task_arena->is_active(), "Is graph's arena initialized and active?" );
+        task::enqueue(prioritize_task(g, arena_task), *g.my_task_arena);
+    }
 }
 
 inline void add_task_to_graph_reset_list(graph& g, tbb::task *tp) {

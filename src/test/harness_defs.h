@@ -201,6 +201,9 @@
     #ifndef TBB_PREVIEW_ALGORITHM_TRACE
         #define TBB_PREVIEW_ALGORITHM_TRACE 1
     #endif
+    #ifndef TBB_DEPRECATED_LIMITER_NODE_CONSTRUCTOR
+        #define TBB_DEPRECATED_LIMITER_NODE_CONSTRUCTOR 1
+    #endif
 #endif
 
 namespace Harness {

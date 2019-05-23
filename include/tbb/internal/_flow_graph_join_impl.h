@@ -221,7 +221,6 @@ namespace internal {
             , add_blt_pred, del_blt_pred, blt_pred_cnt, blt_pred_cpy
 #endif
         };
-        enum op_stat {WAIT=0, SUCCEEDED, FAILED};
         typedef reserving_port<T> class_type;
 
         class reserving_port_operation : public aggregated_operation<reserving_port_operation> {
@@ -441,7 +440,6 @@ namespace internal {
             , add_blt_pred, del_blt_pred, blt_pred_cnt, blt_pred_cpy
 #endif
         };
-        enum op_stat {WAIT=0, SUCCEEDED, FAILED};
 
         class queueing_port_operation : public aggregated_operation<queueing_port_operation> {
         public:
@@ -675,7 +673,6 @@ namespace internal {
            , add_blt_pred, del_blt_pred, blt_pred_cnt, blt_pred_cpy
 #endif
         };
-        enum op_stat {WAIT=0, SUCCEEDED, FAILED};
 
         class key_matching_port_operation : public aggregated_operation<key_matching_port_operation> {
         public:
@@ -1063,7 +1060,6 @@ namespace internal {
         // and the output_buffer_type base class
     private:
         enum op_type { res_count, inc_count, may_succeed, try_make };
-        enum op_stat {WAIT=0, SUCCEEDED, FAILED};
         typedef join_node_FE<key_matching<key_type,key_hash_compare>, InputTuple, OutputTuple> class_type;
 
         class key_matching_FE_operation : public aggregated_operation<key_matching_FE_operation> {
@@ -1282,7 +1278,6 @@ namespace internal {
             , add_blt_succ, del_blt_succ, blt_succ_cnt, blt_succ_cpy
 #endif
         };
-        enum op_stat {WAIT=0, SUCCEEDED, FAILED};
         typedef join_node_base<JP,InputTuple,OutputTuple> class_type;
 
         class join_node_base_operation : public aggregated_operation<join_node_base_operation> {

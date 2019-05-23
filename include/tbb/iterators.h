@@ -221,6 +221,8 @@ public:
     bool operator==(const zip_iterator& it) const {
         return *this - it == 0;
     }
+    it_types base() const { return my_it; }
+
     bool operator!=(const zip_iterator& it) const { return !(*this == it); }
     bool operator<(const zip_iterator& it) const { return *this - it < 0; }
     bool operator>(const zip_iterator& it) const { return it < *this; }

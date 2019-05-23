@@ -13,17 +13,19 @@
 # limitations under the License.
 
 function(tbb_conf_gen_print_help)
-    message("Usage: cmake -DINSTALL_DIR=<config_install_dir> -DSYSTEM_NAME=Linux|Darwin <parameters> -P tbb_config_generator.cmake
+    message("Usage: cmake -DINSTALL_DIR=<config_install_dir> -DSYSTEM_NAME=Linux|Darwin|Windows <parameters> -P tbb_config_generator.cmake
 
 Parameters:
   For custom TBB package:
     -DTBB_VERSION_FILE=<tbb_version_file>
     -DTBB_VERSION=<major>.<minor>.<interface> (alternative to TBB_VERSION_FILE)
-    -DLIB_REL_PATH=<relative_path_to_tbb_binaries>
     -DINC_REL_PATH=<relative_path_to_tbb_headers>
+    -DLIB_REL_PATH=<relative_path_to_tbb_libs>
+    -DBIN_REL_PATH=<relative_path_to_tbb_dlls> (only for Windows)
   For installed TBB:
-    -DLIB_PATH=<path_to_installed_tbb_binaries>
     -DINC_PATH=<path_to_installed_tbb_headers>
+    -DLIB_PATH=<path_to_installed_tbb_libs>
+    -DBIN_PATH=<path_to_installed_tbb_dlls> (only for Windows)
 ")
 endfunction()
 
@@ -37,7 +39,7 @@ if (NOT DEFINED SYSTEM_NAME)
     message(FATAL_ERROR "Required parameter SYSTEM_NAME is not defined")
 endif()
 
-foreach (arg TBB_VERSION LIB_REL_PATH INC_REL_PATH TBB_VERSION_FILE LIB_PATH INC_PATH)
+foreach (arg TBB_VERSION INC_REL_PATH LIB_REL_PATH BIN_REL_PATH TBB_VERSION_FILE INC_PATH LIB_PATH BIN_PATH)
     set(optional_args ${optional_args} ${arg} ${${arg}})
 endforeach()
 

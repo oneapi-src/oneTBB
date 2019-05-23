@@ -65,13 +65,13 @@ foreach (_tbb_component ${TBB_FIND_COMPONENTS})
 
             if (EXISTS "${_tbb_release_lib}")
                 set_target_properties(TBB::${_tbb_component} PROPERTIES
-                                      IMPORTED_LOCATION_RELEASE "${_tbb_release_lib}")
+                                      IMPORTED_LOCATION_RELEASE "${_tbb_release_lib}"@TBB_IMPLIB_RELEASE@)
                 set_property(TARGET TBB::${_tbb_component} APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
             endif()
 
             if (EXISTS "${_tbb_debug_lib}")
                 set_target_properties(TBB::${_tbb_component} PROPERTIES
-                                      IMPORTED_LOCATION_DEBUG "${_tbb_debug_lib}")
+                                      IMPORTED_LOCATION_DEBUG "${_tbb_debug_lib}"@TBB_IMPLIB_DEBUG@)
                 set_property(TARGET TBB::${_tbb_component} APPEND PROPERTY IMPORTED_CONFIGURATIONS DEBUG)
             endif()
 

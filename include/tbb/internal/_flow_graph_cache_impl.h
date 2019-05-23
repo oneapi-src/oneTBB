@@ -504,6 +504,40 @@ public:
         return last_task;
     }
 
+    // call try_put_task and return list of received tasks
+#if __TBB_PREVIEW_ASYNC_MSG
+    template<typename X>
+    bool gather_successful_try_puts( const X &t, task_list &tasks ) {
+#else
+    bool gather_successful_try_puts( const T &t, task_list &tasks ) {
+#endif // __TBB_PREVIEW_ASYNC_MSG
+        bool upgraded = true;
+        bool is_at_least_one_put_successful = false;
+        typename mutex_type::scoped_lock l(this->my_mutex, upgraded);
+        typename successors_type::iterator i = this->my_successors.begin();
+        while ( i != this->my_successors.end() ) {
+            task * new_task = (*i)->try_put_task(t);
+            if(new_task) {
+                ++i;
+                if(new_task != SUCCESSFULLY_ENQUEUED) {
+                    tasks.push_back(*new_task);
+                }
+                is_at_least_one_put_successful = true;
+            }
+            else {  // failed
+                if ( (*i)->register_predecessor(*this->my_owner) ) {
+                    if (!upgraded) {
+                        l.upgrade_to_writer();
+                        upgraded = true;
+                    }
+                    i = this->my_successors.erase(i);
+                } else {
+                    ++i;
+                }
+            }
+        }
+        return is_at_least_one_put_successful;
+    }
 };
 
 //! A cache of successors that are put in a round-robin fashion

@@ -25,6 +25,7 @@
 #include <iostream>
 #include <algorithm>
 #include <numeric>
+#include <type_traits>
 
 #include "harness.h"
 
@@ -195,6 +196,12 @@ struct test_zip_iterator {
             // TODO: Add simple check: comparison with sort_fun().
         }
         test_explicit_move(b, b+1);
+        auto iter_base = b.base();
+        static_assert(std::is_same<decltype(iter_base),
+            std::tuple<decltype(in1.begin()), decltype(in2.begin())>>::value, "base returned wrong type");
+        ASSERT(std::get<0>(iter_base) == in1.begin(), "wrong result from base (get<0>)");
+        ASSERT(std::get<1>(iter_base) == in2.begin(), "wrong result from base (get<1>)");
+
         test_random_iterator(b);
     }
 };

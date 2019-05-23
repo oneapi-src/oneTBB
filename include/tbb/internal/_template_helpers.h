@@ -64,6 +64,23 @@ template<class W>          struct is_same_type<W,W> { static const bool value = 
 template<typename T> struct is_ref { static const bool value = false; };
 template<typename U> struct is_ref<U&> { static const bool value = true; };
 
+//! Partial support for std::is_integral
+template<typename T> struct is_integral_impl             { static const bool value = false; };
+template<>           struct is_integral_impl<bool>       { static const bool value = true;  };
+template<>           struct is_integral_impl<char>       { static const bool value = true;  };
+#if __TBB_CPP11_PRESENT
+template<>           struct is_integral_impl<char16_t>   { static const bool value = true;  };
+template<>           struct is_integral_impl<char32_t>   { static const bool value = true;  };
+#endif
+template<>           struct is_integral_impl<wchar_t>    { static const bool value = true;  };
+template<>           struct is_integral_impl<short>      { static const bool value = true;  };
+template<>           struct is_integral_impl<int>        { static const bool value = true;  };
+template<>           struct is_integral_impl<long>       { static const bool value = true;  };
+template<>           struct is_integral_impl<long long>  { static const bool value = true;  };
+
+template<typename T>
+struct is_integral : is_integral_impl<typename strip<T>::type> {};
+
 #if __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
 //! std::void_t internal implementation (to avoid GCC < 4.7 "template aliases" absence)
 template<typename...> struct void_t { typedef void type; };
@@ -237,6 +254,11 @@ struct pack_element<0, T, Args...> {
 
 template< std::size_t N, typename... Args >
 using pack_element_t = typename pack_element<N, Args...>::type;
+
+template <typename Comp> using is_transparent = typename Comp::is_transparent;
+
+template <typename Comp>
+using has_is_transparent = supports<Comp, is_transparent>;
 
 #endif /* __TBB_CPP11_PRESENT */
 

@@ -71,6 +71,7 @@ Thumbs.db
 /rules.ninja
 *~
 .emacs.desktop
+.tags
 
 # Build system generated files #
 ################################

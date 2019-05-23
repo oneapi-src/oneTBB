@@ -63,6 +63,8 @@
     The parameters are chosen so that CPU and ASYNC work take approximately the same time.
 */
 
+#define TBB_PREVIEW_FLOW_GRAPH_FEATURES __TBB_CPF_BUILD
+
 #include "tbb/task_scheduler_init.h"
 #include "tbb/parallel_for.h"
 #include "tbb/concurrent_queue.h"

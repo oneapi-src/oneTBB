@@ -95,7 +95,11 @@ class continue_msg {};
 template< typename T > class sender;
 template< typename T > class receiver;
 class continue_receiver;
-template< typename T > class limiter_node;  // needed for resetting decrementer
+} // namespaceX
+namespace interface11 {
+template< typename T, typename U > class limiter_node;  // needed for resetting decrementer
+}
+namespace interface10 {
 template< typename R, typename B > class run_and_put_task;
 
 namespace internal {
@@ -325,7 +329,6 @@ protected:
 
 class untyped_receiver  {
     template< typename, typename > friend class run_and_put_task;
-    template< typename > friend class limiter_node;
 
     template< typename, typename > friend class internal::broadcast_cache;
     template< typename, typename > friend class internal::round_robin_cache;
@@ -551,7 +554,6 @@ public:
 
 protected:
     //! put receiver back in initial state
-    template<typename U> friend class limiter_node;
     virtual void reset_receiver(reset_flags f = rf_reset_protocol) = 0;
 
     template<typename TT, typename M> friend class internal::successor_cache;
@@ -663,7 +665,7 @@ protected:
     __TBB_FLOW_GRAPH_PRIORITY_EXPR( node_priority_t my_priority; )
     // the friend declaration in the base class did not eliminate the "protected class"
     // error in gcc 4.1.2
-    template<typename U> friend class limiter_node;
+    template<typename U, typename V> friend class tbb::flow::interface11::limiter_node;
 
     void reset_receiver( reset_flags f ) __TBB_override {
         my_current_count = 0;
@@ -2392,11 +2394,18 @@ private:
     }
 };  // priority_queue_node
 
+} // interfaceX
+
+namespace interface11 {
+
+using namespace interface10;
+namespace internal = interface10::internal;
+
 //! Forwards messages only if the threshold has not been reached
 /** This node forwards items until its threshold is reached.
     It contains no buffering.  If the downstream node rejects, the
     message is dropped. */
-template< typename T >
+template< typename T, typename DecrementType=continue_msg >
 class limiter_node : public graph_node, public receiver< T >, public sender< T > {
 public:
     typedef T input_type;
@@ -2418,12 +2427,12 @@ private:
     internal::reservable_predecessor_cache< T, spin_mutex > my_predecessors;
     spin_mutex my_mutex;
     internal::broadcast_cache< T > my_successors;
-    int init_decrement_predecessors;
+    __TBB_DEPRECATED_LIMITER_EXPR( int init_decrement_predecessors; )
 
-    friend class internal::forward_task_bypass< limiter_node<T> >;
+    friend class internal::forward_task_bypass< limiter_node<T,DecrementType> >;
 
     // Let decrementer call decrement_counter()
-    friend class internal::decrementer< limiter_node<T> >;
+    friend class internal::decrementer< limiter_node<T,DecrementType>, DecrementType >;
 
     bool check_conditions() {  // always called under lock
         return ( my_count + my_tries < my_threshold && !my_predecessors.empty() && !my_successors.empty() );
@@ -2456,7 +2465,7 @@ private:
                     if ( check_conditions() ) {
                         if ( internal::is_graph_active(this->my_graph) ) {
                             task *rtask = new ( task::allocate_additional_child_of( *(this->my_graph.root_task()) ) )
-                                internal::forward_task_bypass< limiter_node<T> >( *this );
+                                internal::forward_task_bypass< limiter_node<T, DecrementType> >( *this );
                             internal::spawn_in_graph_arena(graph_reference(), *rtask);
                         }
                     }
@@ -2474,7 +2483,7 @@ private:
             if ( check_conditions() ) {
                 if ( internal::is_graph_active(this->my_graph) ) {
                     task *rtask = new ( task::allocate_additional_child_of( *(this->my_graph.root_task()) ) )
-                        internal::forward_task_bypass< limiter_node<T> >( *this );
+                        internal::forward_task_bypass< limiter_node<T, DecrementType> >( *this );
                     __TBB_ASSERT(!rval, "Have two tasks to handle");
                     return rtask;
                 }
@@ -2488,45 +2497,59 @@ private:
         return;
     }
 
-    task * decrement_counter() {
+    task* decrement_counter( long long delta ) {
         {
             spin_mutex::scoped_lock lock(my_mutex);
-            if(my_count) --my_count;
+            if( delta > 0 && size_t(delta) > my_count )
+                my_count = 0;
+            else if( delta < 0 && size_t(delta) > my_threshold - my_count )
+                my_count = my_threshold;
+            else
+                my_count -= size_t(delta); // absolute value of delta is sufficiently small
         }
         return forward_task();
     }
 
-public:
-    //! The internal receiver< continue_msg > that decrements the count
-    internal::decrementer< limiter_node<T> > decrement;
-
-    //! Constructor
-    limiter_node(graph &g, size_t threshold, int num_decrement_predecessors=0) :
-        graph_node(g), my_threshold(threshold), my_count(0), my_tries(0),
-        init_decrement_predecessors(num_decrement_predecessors),
-        decrement(num_decrement_predecessors)
-    {
+    void initialize() {
         my_predecessors.set_owner(this);
         my_successors.set_owner(this);
         decrement.set_owner(this);
-        tbb::internal::fgt_node( tbb::internal::FLOW_LIMITER_NODE, &this->my_graph,
-                                 static_cast<receiver<input_type> *>(this), static_cast<receiver<continue_msg> *>(&decrement),
-                                 static_cast<sender<output_type> *>(this) );
+        tbb::internal::fgt_node(
+            tbb::internal::FLOW_LIMITER_NODE, &this->my_graph,
+            static_cast<receiver<input_type> *>(this), static_cast<receiver<DecrementType> *>(&decrement),
+            static_cast<sender<output_type> *>(this)
+        );
+    }
+public:
+    //! The internal receiver< DecrementType > that decrements the count
+    internal::decrementer< limiter_node<T, DecrementType>, DecrementType > decrement;
+
+#if TBB_DEPRECATED_LIMITER_NODE_CONSTRUCTOR
+    __TBB_STATIC_ASSERT( (tbb::internal::is_same_type<DecrementType, continue_msg>::value),
+                         "Deprecated interface of the limiter node can be used only in conjunction "
+                         "with continue_msg as the type of DecrementType template parameter." );
+#endif // Check for incompatible interface
+
+    //! Constructor
+    limiter_node(graph &g,
+                 __TBB_DEPRECATED_LIMITER_ARG2(size_t threshold, int num_decrement_predecessors=0))
+        : graph_node(g), my_threshold(threshold), my_count(0),
+          __TBB_DEPRECATED_LIMITER_ARG4(
+              my_tries(0), decrement(),
+              init_decrement_predecessors(num_decrement_predecessors),
+              decrement(num_decrement_predecessors)) {
+        initialize();
     }
 
     //! Copy constructor
     limiter_node( const limiter_node& src ) :
         graph_node(src.my_graph), receiver<T>(), sender<T>(),
-        my_threshold(src.my_threshold), my_count(0), my_tries(0),
-        init_decrement_predecessors(src.init_decrement_predecessors),
-        decrement(src.init_decrement_predecessors)
-    {
-        my_predecessors.set_owner(this);
-        my_successors.set_owner(this);
-        decrement.set_owner(this);
-        tbb::internal::fgt_node( tbb::internal::FLOW_LIMITER_NODE, &this->my_graph,
-                                 static_cast<receiver<input_type> *>(this), static_cast<receiver<continue_msg> *>(&decrement),
-                                 static_cast<sender<output_type> *>(this) );
+        my_threshold(src.my_threshold), my_count(0),
+        __TBB_DEPRECATED_LIMITER_ARG4(
+            my_tries(0), decrement(),
+            init_decrement_predecessors(src.init_decrement_predecessors),
+            decrement(src.init_decrement_predecessors)) {
+        initialize();
     }
 
 #if TBB_PREVIEW_FLOW_GRAPH_TRACE
@@ -2544,7 +2567,7 @@ public:
         if ( was_empty && !my_predecessors.empty() && my_count + my_tries < my_threshold ) {
             if ( internal::is_graph_active(this->my_graph) ) {
                 task* task = new ( task::allocate_additional_child_of( *(this->my_graph.root_task()) ) )
-                            internal::forward_task_bypass < limiter_node<T> >( *this );
+                    internal::forward_task_bypass < limiter_node<T, DecrementType> >( *this );
                 internal::spawn_in_graph_arena(graph_reference(), *task);
             }
         }
@@ -2605,7 +2628,7 @@ public:
         my_predecessors.add( src );
         if ( my_count + my_tries < my_threshold && !my_successors.empty() && internal::is_graph_active(this->my_graph) ) {
             task* task = new ( task::allocate_additional_child_of( *(this->my_graph.root_task()) ) )
-                        internal::forward_task_bypass < limiter_node<T> >( *this );
+                internal::forward_task_bypass < limiter_node<T, DecrementType> >( *this );
             internal::spawn_in_graph_arena(graph_reference(), *task);
         }
         return true;
@@ -2639,7 +2662,7 @@ protected:
             --my_tries;
             if (check_conditions() && internal::is_graph_active(this->my_graph)) {
                 rtask = new ( task::allocate_additional_child_of( *(this->my_graph.root_task()) ) )
-                    internal::forward_task_bypass< limiter_node<T> >( *this );
+                    internal::forward_task_bypass< limiter_node<T, DecrementType> >( *this );
             }
         }
         else {
@@ -2650,9 +2673,7 @@ protected:
         return rtask;
     }
 
-    graph& graph_reference() __TBB_override {
-        return my_graph;
-    }
+    graph& graph_reference() __TBB_override { return my_graph; }
 
     void reset_receiver(reset_flags /*f*/) __TBB_override {
         __TBB_ASSERT(false,NULL);  // should never be called
@@ -2671,6 +2692,9 @@ protected:
         decrement.reset_receiver(f);
     }
 };  // limiter_node
+} // namespace interfaceX
+
+namespace interface10 {
 
 #include "internal/_flow_graph_join_impl.h"
 
@@ -3541,11 +3565,18 @@ private:
     //! Implements gateway_type::try_put for an external activity to submit a message to FG
     bool try_put_impl(const Output &i) {
         internal::multifunction_output<Output> &port_0 = internal::output_port<0>(*this);
+        internal::broadcast_cache<output_type>& port_successors = port_0.successors();
         tbb::internal::fgt_async_try_put_begin(this, &port_0);
-        try_put_functor tpf(port_0, i);
-        internal::execute_in_graph_arena(this->my_graph, tpf);
+        task_list tasks;
+        bool is_at_least_one_put_successful = port_successors.gather_successful_try_puts(i, tasks);
+        __TBB_ASSERT( is_at_least_one_put_successful || tasks.empty(),
+                      "Return status is inconsistent with the method operation." );
+
+        while( !tasks.empty() ) {
+            internal::enqueue_in_graph_arena(this->my_graph, tasks.pop_front());
+        }
         tbb::internal::fgt_async_try_put_end(this, &port_0);
-        return tpf.result;
+        return is_at_least_one_put_successful;
     }
 
 public:
@@ -3919,7 +3950,7 @@ protected:
     using interface10::queue_node;
     using interface10::sequencer_node;
     using interface10::priority_queue_node;
-    using interface10::limiter_node;
+    using interface11::limiter_node;
     using namespace interface10::internal::graph_policy_namespace;
     using interface10::join_node;
     using interface10::input_port;

@@ -218,7 +218,7 @@ Provides the following functions:
 
  .. code:: cmake
 
-  tbb_install_config(INSTALL_DIR <install_dir> SYSTEM_NAME Linux|Darwin
+  tbb_install_config(INSTALL_DIR <install_dir> SYSTEM_NAME Linux|Darwin|Windows
                      [TBB_VERSION <major>.<minor>.<interface>|TBB_VERSION_FILE <version_file>]
                      [LIB_REL_PATH <lib_rel_path> INC_REL_PATH <inc_rel_path>]
                      [LIB_PATH <lib_path> INC_PATH <inc_path>])``
@@ -243,7 +243,8 @@ The use case is applicable for package maintainers who create own TBB packages a
                                              write it to TBBConfigVersion.cmake
 ``TBB_VERSION <major>.<minor>.<interface>``  Directly specified TBB version;
                                              alternative to ``TBB_VERSION_FILE`` parameter
-``LIB_REL_PATH <lib_rel_path>``              Relative path to TBB binaries, default: ``../..``
+``LIB_REL_PATH <lib_rel_path>``              Relative path to TBB binaries (.lib files on Windows), default: ``../../../lib``
+``BIN_REL_PATH <bin_rel_path>``              Relative path to TBB DLLs, default: ``../../../bin`` (applicable for Windows only)
 ``INC_REL_PATH <inc_rel_path>``              Relative path to TBB headers, default: ``../../../include``
 ===========================================  ===========================================================
 
@@ -268,7 +269,8 @@ The use case is applicable for users who have installed TBB, but do not have (or
 ============================  ==============================================
 ``INSTALL_DIR <directory>``   Directory to install CMake configuration files
 ``SYSTEM_NAME Linux|Darwin``  OS name to generate config files for
-``LIB_PATH <lib_path>``       Path to installed TBB binaries
+``LIB_PATH <lib_path>``       Path to installed TBB binaries (.lib files on Windows)
+``BIN_PATH <bin_path>``       Path to installed TBB DLLs (applicable for Windows only)
 ``INC_PATH <inc_path>``       Path to installed TBB headers
 ============================  ==============================================
 

@@ -37,7 +37,9 @@ protected:
     typedef Hash_compare hash_compare;
     typedef typename tbb::internal::allocator_rebind<Allocator, value_type>::type allocator_type;
 #if __TBB_UNORDERED_NODE_HANDLE_PRESENT
-    typedef internal::node_handle<Key, Key, allocator_type> node_type;
+    typedef tbb::internal::node_handle<key_type, key_type,
+                                  typename internal::split_ordered_list<key_type, allocator_type>::node,
+                                  allocator_type> node_type;
 #endif // __TBB_UNORDERED_NODE_HANDLE_PRESENT
 
     enum { allow_multimapping = Allow_multimapping };

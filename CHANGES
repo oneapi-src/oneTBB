@@ -2,6 +2,42 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 2019 Update 7
+TBB_INTERFACE_VERSION == 11007
+
+Changes (w.r.t. Intel TBB 2019 Update 6):
+
+- Added TBBMALLOC_SET_HUGE_SIZE_THRESHOLD parameter to set the lower
+    bound for allocations that are not released back to OS unless
+    a cleanup is explicitly requested.
+- Added zip_iterator::base() method to get the tuple of underlying
+    iterators.
+- Improved async_node to never block a thread that sends a message
+    through its gateway.
+- Extended decrement port of the tbb::flow::limiter_node to accept
+    messages of integral types.
+- Added support of Windows* to the CMake module TBBInstallConfig.
+- Added packaging of CMake configuration files to TBB packages built
+    using build/build.py script
+    (https://github.com/intel/tbb/issues/141).
+    
+Changes affecting backward compatibility:
+
+- Removed the number_of_decrement_predecessors parameter from the
+    constructor of flow::limiter_node. To allow its usage, set
+    TBB_DEPRECATED_LIMITER_NODE_CONSTRUCTOR macro to 1.
+
+Preview Features:
+
+- Added ordered associative containers:
+    concurrent_{map,multimap,set,multiset} (requires C++11).
+
+Open-source contributions integrated:
+
+- Fixed makefiles to properly obtain the GCC version for GCC 7 
+    and later (https://github.com/intel/tbb/pull/147) by Timmmm.
+
+------------------------------------------------------------------------
 Intel TBB 2019 Update 6
 TBB_INTERFACE_VERSION == 11006
 

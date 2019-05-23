@@ -28,6 +28,7 @@
 #define TBB_PREVIEW_FLOW_GRAPH_NODES 1
 #define TBB_PREVIEW_BLOCKED_RANGE_ND 1
 #define TBB_PREVIEW_WAITING_FOR_WORKERS 1
+#define TBB_PREVIEW_CONCURRENT_ORDERED_CONTAINERS 1
 #endif
 
 #if __TBB_TEST_SECONDARY
@@ -192,6 +193,12 @@ static void TestPreviewNames() {
     TestTypeDefinitionPresence2(concurrent_lru_cache<int, int> );
 #if !__TBB_TEST_SECONDARY
     TestExceptionClassExports( std::runtime_error("test"), tbb::internal::eid_blocking_thread_join_impossible );
+#endif
+#if __TBB_CONCURRENT_ORDERED_CONTAINERS_PRESENT
+    TestTypeDefinitionPresence2(concurrent_map<int, int> );
+    TestTypeDefinitionPresence2(concurrent_multimap<int, int> );
+    TestTypeDefinitionPresence(concurrent_set<int> );
+    TestTypeDefinitionPresence(concurrent_multiset<int> );
 #endif
 }
 #endif

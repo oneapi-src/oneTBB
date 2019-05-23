@@ -75,134 +75,27 @@ struct cu_multiset_type : unordered_move_traits_base {
     typedef FooIterator init_iterator_type;
 };
 #endif /* __TBB_CPP11_RVALUE_REF_PRESENT */
-
-template <bool defCtorPresent, typename value_type>
-void TestTypesSet( const std::list<value_type> &lst ) {
-    TypeTester< defCtorPresent, tbb::concurrent_unordered_set<value_type, tbb::tbb_hash<value_type>, Harness::IsEqual>,
-        tbb::concurrent_unordered_set< value_type, tbb::tbb_hash<value_type>, Harness::IsEqual, debug_allocator<value_type> > >( lst );
-    TypeTester< defCtorPresent, tbb::concurrent_unordered_multiset<value_type, tbb::tbb_hash<value_type>, Harness::IsEqual>,
-        tbb::concurrent_unordered_multiset< value_type, tbb::tbb_hash<value_type>, Harness::IsEqual, debug_allocator<value_type> > >( lst );
-}
+struct UnorderedSetTypesTester {
+    template <bool defCtorPresent, typename value_type>
+    void check( const std::list<value_type> &lst ) {
+        TypeTester< defCtorPresent, tbb::concurrent_unordered_set<value_type, tbb::tbb_hash<value_type>, Harness::IsEqual>,
+            tbb::concurrent_unordered_set< value_type, tbb::tbb_hash<value_type>, Harness::IsEqual, debug_allocator<value_type> > >( lst );
+        TypeTester< defCtorPresent, tbb::concurrent_unordered_multiset<value_type, tbb::tbb_hash<value_type>, Harness::IsEqual>,
+            tbb::concurrent_unordered_multiset< value_type, tbb::tbb_hash<value_type>, Harness::IsEqual, debug_allocator<value_type> > >( lst );
+    }
+};
 
 void TestTypes( ) {
-    const int NUMBER = 10;
+    TestSetCommonTypes<UnorderedSetTypesTester>();
 
-    std::list<int> arrInt;
-    for ( int i = 0; i<NUMBER; ++i ) arrInt.push_back( i );
-    TestTypesSet</*defCtorPresent = */true>( arrInt );
-
-    std::list< tbb::atomic<int> > arrTbb(NUMBER);
-    int seq = 0;
-    for ( std::list< tbb::atomic<int> >::iterator it = arrTbb.begin(); it != arrTbb.end(); ++it, ++seq ) *it = seq;
-    TestTypesSet</*defCtorPresent = */true>( arrTbb );
-
-#if __TBB_CPP11_REFERENCE_WRAPPER_PRESENT && !__TBB_REFERENCE_WRAPPER_COMPILATION_BROKEN
-    std::list< std::reference_wrapper<int> > arrRef;
-    for ( std::list<int>::iterator it = arrInt.begin( ); it != arrInt.end( ); ++it )
-        arrRef.push_back( std::reference_wrapper<int>(*it) );
-    TestTypesSet</*defCtorPresent = */false>( arrRef );
-#endif /* __TBB_CPP11_REFERENCE_WRAPPER_PRESENT && !__TBB_REFERENCE_WRAPPER_COMPILATION_BROKEN */
-
-#if __TBB_CPP11_SMART_POINTERS_PRESENT
-    std::list< std::shared_ptr<int> > arrShr;
-    for ( int i = 0; i<NUMBER; ++i ) arrShr.push_back( std::make_shared<int>( i ) );
-    TestTypesSet</*defCtorPresent = */true>( arrShr );
-
-    std::list< std::weak_ptr<int> > arrWk;
-    std::copy( arrShr.begin( ), arrShr.end( ), std::back_inserter( arrWk ) );
-    TestTypesSet</*defCtorPresent = */true>( arrWk );
-
-#if __TBB_CPP11_RVALUE_REF_PRESENT && __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
+#if __TBB_CPP11_RVALUE_REF_PRESENT && __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT && __TBB_CPP11_SMART_POINTERS_PRESENT
     // Regression test for a problem with excessive requirements of emplace()
     test_emplace_insert<tbb::concurrent_unordered_set< test::unique_ptr<int> >,
                         tbb::internal::false_type>( new int, new int );
     test_emplace_insert<tbb::concurrent_unordered_multiset< test::unique_ptr<int> >,
                         tbb::internal::false_type>( new int, new int );
-#endif
-
-#else
-    REPORT( "Known issue: C++11 smart pointer tests are skipped.\n" );
-#endif /* __TBB_CPP11_SMART_POINTERS_PRESENT */
+#endif /*__TBB_CPP11_RVALUE_REF_PRESENT && __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT && __TBB_CPP11_SMART_POINTERS_PRESENT*/
 }
-
-#if __TBB_UNORDERED_NODE_HANDLE_PRESENT
-
-void TestNodeHandling() {
-    tbb::concurrent_unordered_set<int> unordered_set;
-    for (int i =1; i< 5; i++)
-        unordered_set.insert(i);
-    node_handling::NodeHandlingTests(unordered_set, /*new key for test_data*/5);
-
-    tbb::concurrent_unordered_multiset<int> unordered_multiset;
-    for (int i =1; i< 5; i++)
-        unordered_multiset.insert(i);
-    unordered_multiset.insert(1);
-    unordered_multiset.insert(2);
-    node_handling::NodeHandlingTests(unordered_multiset, /*new key for test_data*/5);
-}
-
-void TestMerge(){
-    using Set = tbb::concurrent_unordered_set<int>;
-    using MultiSet = tbb::concurrent_unordered_multiset<int>;
-
-    Set set_for_merge1;
-    set_for_merge1.insert(1);
-    set_for_merge1.insert(2);
-    set_for_merge1.insert(3);
-    Set set_for_merge2;
-    set_for_merge2.insert(1);
-    set_for_merge2.insert(2);
-    set_for_merge2.insert(9);
-
-    MultiSet multiset_for_merge1;
-    multiset_for_merge1.insert(1);
-    multiset_for_merge1.insert(1);
-    multiset_for_merge1.insert(2);
-    multiset_for_merge1.insert(3);
-    multiset_for_merge1.insert(4);
-    MultiSet multiset_for_merge2;
-    multiset_for_merge2.insert(1);
-    multiset_for_merge2.insert(2);
-    multiset_for_merge2.insert(5);
-    multiset_for_merge2.insert(5);
-    multiset_for_merge2.insert(6);
-
-    node_handling::TestMergeTransposition(set_for_merge1, set_for_merge2,
-                                          multiset_for_merge1, multiset_for_merge2);
-
-    // Test merge with different hashers
-    tbb::concurrent_unordered_set<int, degenerate_hash<int>> degenerate_hash_set;
-    degenerate_hash_set.insert(1);
-    degenerate_hash_set.insert(2);
-    degenerate_hash_set.insert(9);
-
-    tbb::concurrent_unordered_multiset<int, degenerate_hash<int>> degenerate_hash_multiset;
-    degenerate_hash_multiset.insert(1);
-    degenerate_hash_multiset.insert(2);
-    degenerate_hash_multiset.insert(5);
-    degenerate_hash_multiset.insert(5);
-    degenerate_hash_multiset.insert(6);
-
-    node_handling::TestMergeOverloads(set_for_merge1, degenerate_hash_set);
-    node_handling::TestMergeOverloads(multiset_for_merge1, degenerate_hash_multiset);
-
-    int size = 100000;
-
-    Set set_for_merge3(size);
-    for (int i = 0; i<size; i++){
-        set_for_merge3.insert(i);
-    }
-    node_handling::TestConcurrentMerge(set_for_merge3);
-
-    MultiSet multiset_for_merge3(size/2);
-    for (int i = 0; i<size/2; i++){
-        multiset_for_merge3.insert(i);
-        multiset_for_merge3.insert(i);
-    }
-    node_handling::TestConcurrentMerge(multiset_for_merge3);
-}
-
-#endif/*__TBB_UNORDERED_NODE_HANDLE_PRESENT*/
 
 #endif // __TBB_TEST_SECONDARY
 
@@ -349,6 +242,11 @@ int TestMain() {
                   tbb::concurrent_unordered_multiset<int> >( {1,2,3,4,5} );
 #endif
 
+#if __TBB_RANGE_BASED_FOR_PRESENT
+    TestRangeBasedFor<MySet>();
+    TestRangeBasedFor<MyMultiSet>();
+#endif
+
 #if __TBB_CPP11_RVALUE_REF_PRESENT
     test_rvalue_ref_support<cu_set_type>( "concurrent unordered set" );
     test_rvalue_ref_support<cu_multiset_type>( "concurrent unordered multiset" );
@@ -362,8 +260,10 @@ int TestMain() {
 #endif
 
 #if __TBB_UNORDERED_NODE_HANDLE_PRESENT
-    TestNodeHandling();
-    TestMerge();
+    node_handling::TestNodeHandling<MySet>();
+    node_handling::TestNodeHandling<MyMultiSet>();
+    node_handling::TestMerge<MySet, MyMultiSet>(10000);
+    node_handling::TestMerge<MySet, MyDegenerateSet>(10000);
 #endif /*__TBB_UNORDERED_NODE_HANDLE_PRESENT*/
 
     return Harness::Done;

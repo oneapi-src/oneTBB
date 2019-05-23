@@ -55,7 +55,7 @@ ifndef arch
 endif
 
 ifndef runtime
-        export gcc_version:=$(shell gcc -dumpversion)
+        export gcc_version:=$(shell gcc -dumpfullversion -dumpversion)
         os_version:=$(shell uname -r)
         os_kernel_version:=$(shell uname -r | sed -e 's/-.*$$//')
         export os_glibc_version_full:=$(shell getconf GNU_LIBC_VERSION | grep glibc | sed -e 's/^glibc //')

@@ -276,14 +276,19 @@ public:
         async_activity* my_activity;
     };
 
-    async_activity(int expected_items, int sleep_time = 50) : my_expected_items(expected_items), my_sleep_time(sleep_time) {
+    async_activity(int expected_items, bool deferred = false, int sleep_time = 50)
+        : my_expected_items(expected_items), my_sleep_time(sleep_time) {
+        is_active = !deferred;
         my_quit = false;
         tbb::tbb_thread( ServiceThreadBody( this ) ).swap( my_service_thread );
     }
 
 private:
 
-    async_activity( const async_activity& ) : my_expected_items(UNKNOWN_NUMBER_OF_ITEMS), my_sleep_time(0) { }
+    async_activity( const async_activity& )
+        : my_expected_items(UNKNOWN_NUMBER_OF_ITEMS), my_sleep_time(0) {
+        is_active = true;
+    }
 
 public:
     ~async_activity() {
@@ -299,14 +304,15 @@ public:
     void process() {
         do {
             work_type work;
-            if( my_work_queue.try_pop( work ) ) {
+            if( is_active && my_work_queue.try_pop( work ) ) {
                 Harness::Sleep(my_sleep_time);
                 ++async_activity_processed_msg_count;
                 output_type output;
                 wrapper_helper<output_type, output_type>::copy_value(work.input, output);
                 wrapper_helper<output_type, output_type>::check(work.input, output);
                 work.gateway->try_put(output);
-                if ( my_expected_items == UNKNOWN_NUMBER_OF_ITEMS || int(async_activity_processed_msg_count) == my_expected_items ) {
+                if ( my_expected_items == UNKNOWN_NUMBER_OF_ITEMS ||
+                     int(async_activity_processed_msg_count) == my_expected_items ) {
                     work.gateway->release_wait();
                 }
             }
@@ -315,6 +321,10 @@ public:
 
     void stop() {
         my_quit = true;
+    }
+
+    void activate() {
+        is_active = true;
     }
 
     bool should_reserve_each_time() {
@@ -328,6 +338,7 @@ private:
 
     const int my_expected_items;
     const int my_sleep_time;
+    tbb::atomic< bool > is_active;
 
     tbb::concurrent_queue< work_type > my_work_queue;
 
@@ -538,7 +549,7 @@ struct spin_test {
     spin_test() {}
 
     static int run(int nthreads, int async_expected_items = UNKNOWN_NUMBER_OF_ITEMS) {
-        async_activity<input_type, output_type> my_async_activity(async_expected_items, 0);
+        async_activity<input_type, output_type> my_async_activity(async_expected_items, false, 0);
         Harness::SpinBarrier spin_barrier(nthreads);
         tbb::flow::graph g;
         tbb::flow::function_node< int, input_type > start_node( g, tbb::flow::unlimited, start_body_type() );
@@ -595,6 +606,88 @@ int run_tests() {
     return Harness::Done;
 }
 
+#include "tbb/parallel_for.h"
+template<typename Input, typename Output>
+class equeueing_on_inner_level {
+    typedef Input input_type;
+    typedef Output output_type;
+    typedef async_activity<input_type, output_type> async_activity_type;
+    typedef tbb::flow::async_node<Input, Output> async_node_type;
+    typedef typename async_node_type::gateway_type gateway_type;
+
+    class start_body_type {
+    public:
+        input_type operator() ( int input ) {
+            return input_type( input);
+        }
+    };
+
+    class async_body_type {
+    public:
+        async_body_type( async_activity_type& activity ) : my_async_activity(&activity) {}
+
+        void operator() ( const input_type &input, gateway_type& gateway ) {
+            gateway.reserve_wait();
+            my_async_activity->submit( input, gateway );
+        }
+    private:
+        async_activity_type* my_async_activity;
+    };
+
+    class end_body_type {
+    public:
+        void operator()( output_type ) {}
+    };
+
+    class body_graph_with_async {
+    public:
+        body_graph_with_async( Harness::SpinBarrier& barrier, async_activity_type& activity )
+            : spin_barrier(&barrier), my_async_activity(&activity) {}
+
+        void operator()(int) const {
+            tbb::flow::graph g;
+            tbb::flow::function_node< int, input_type > start_node( g, tbb::flow::unlimited, start_body_type() );
+
+            async_node_type offload_node( g, tbb::flow::unlimited, async_body_type( *my_async_activity ) );
+
+            tbb::flow::function_node< output_type > end_node( g, tbb::flow::unlimited, end_body_type() );
+
+            tbb::flow::make_edge( start_node, offload_node );
+            tbb::flow::make_edge( offload_node, end_node );
+
+            start_node.try_put(1);
+
+            spin_barrier->wait();
+
+            my_async_activity->activate();
+
+            g.wait_for_all();
+        }
+
+    private:
+        Harness::SpinBarrier* spin_barrier;
+        async_activity_type* my_async_activity;
+    };
+
+
+public:
+    static int run ()
+    {
+        const int nthreads = tbb::this_task_arena::max_concurrency();
+        Harness::SpinBarrier spin_barrier( nthreads );
+
+        async_activity_type my_async_activity( UNKNOWN_NUMBER_OF_ITEMS, true );
+    
+        tbb::parallel_for( 0, nthreads, body_graph_with_async( spin_barrier, my_async_activity ) );
+        return Harness::Done;
+    }
+};
+
+int run_test_equeueing_on_inner_level() {
+    equeueing_on_inner_level<int, int>::run();
+    return Harness::Done;
+}
+
 int TestMain() {
     tbb::task_scheduler_init init(4);
     run_tests<int, int>();
@@ -606,6 +699,7 @@ int TestMain() {
     test_reset();
     test_copy_ctor();
     test_for_spin_avoidance();
+    run_test_equeueing_on_inner_level();
     return Harness::Done;
 }
 

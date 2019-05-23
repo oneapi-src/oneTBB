@@ -362,7 +362,7 @@ public:
     inline FreeObject* allocate();
     inline FreeObject *allocateFromFreeList();
 
-    inline void adjustFullness();
+    inline bool adjustFullness();
     void adjustPositionInBin(Bin* bin = NULL);
 
     bool freeListNonNull() { return freeList; }
@@ -1314,35 +1314,34 @@ bool Bin::cleanPublicFreeLists()
     return released;
 }
 
-void Block::adjustFullness()
+bool Block::adjustFullness()
 {
-    const float threshold = (slabSize - sizeof(Block)) * (1 - emptyEnoughRatio);
-
     if (bumpPtr) {
         /* If we are still using a bump ptr for this block it is empty enough to use. */
         STAT_increment(getThreadId(), getIndex(objectSize), examineEmptyEnough);
         isFull = false;
-        return;
-    }
-
-    /* allocatedCount shows how many objects in the block are in use; however it still counts
-     * blocks freed by other threads; so prior call to privatizePublicFreeList() is recommended */
-    isFull = (allocatedCount*objectSize > threshold) ? true : false;
+    } else {
+        const float threshold = (slabSize - sizeof(Block)) * (1 - emptyEnoughRatio);
+        /* allocatedCount shows how many objects in the block are in use; however it still counts
+         * blocks freed by other threads; so prior call to privatizePublicFreeList() is recommended */
+        isFull = (allocatedCount*objectSize > threshold) ? true : false;
 #if COLLECT_STATISTICS
-    if (isFull)
-        STAT_increment(getThreadId(), getIndex(objectSize), examineNotEmpty);
-    else
-        STAT_increment(getThreadId(), getIndex(objectSize), examineEmptyEnough);
+        if (isFull)
+            STAT_increment(getThreadId(), getIndex(objectSize), examineNotEmpty);
+        else
+            STAT_increment(getThreadId(), getIndex(objectSize), examineEmptyEnough);
 #endif
+    }
+    return isFull;
 }
 
 // This method resides in class Block, and not in class Bin, in order to avoid
 // calling getAllocationBin on a reasonably hot path in Block::freeOwnObject
 void Block::adjustPositionInBin(Bin* bin/*=NULL*/)
 {
-    bool fullBefore = isFull;
-    adjustFullness();
-    if (fullBefore && !isFull) {
+    // If the block were full, but became empty enough to use,
+    // move it to the front of the list 
+    if (isFull && !adjustFullness()) {
         if (!bin)
             bin = tlsPtr->getAllocationBin(objectSize);
         bin->moveBlockToFront(this);
@@ -1931,21 +1930,6 @@ static MallocMutex initMutex;
     delivers a clean result. */
 static char VersionString[] = "\0" TBBMALLOC_VERSION_STRINGS;
 
-void AllocControlledMode::initReadEnv(const char *envName, intptr_t defaultVal)
-{
-    if (!setDone) {
-#if !__TBB_WIN8UI_SUPPORT
-    // TODO: use strtol to get the actual value of the envirable
-        const char *envVal = getenv(envName);
-        if (envVal && !strcmp(envVal, "1"))
-            val = 1;
-        else
-#endif
-            val = defaultVal;
-        setDone = true;
-    }
-}
-
 #if USE_PTHREAD && (__TBB_SOURCE_DIRECTLY_INCLUDED || __TBB_USE_DLOPEN_REENTRANCY_WORKAROUND)
 
 /* Decrease race interval between dynamic library unloading and pthread key
@@ -2002,7 +1986,7 @@ bool isMallocInitializedExt() {
     return isMallocInitialized();
 }
 
-/** Caller is responsible for ensuring this routine is called exactly once. */
+/* Caller is responsible for ensuring this routine is called exactly once. */
 extern "C" void MallocInitializeITT() {
 #if DO_ITT_NOTIFY
     if (!usedBySrcIncluded)
@@ -3279,6 +3263,9 @@ extern "C" int scalable_allocation_mode(int param, intptr_t value)
             return TBBMALLOC_INVALID_PARAM;
         }
 #endif
+    } else if (param == TBBMALLOC_SET_HUGE_SIZE_THRESHOLD) {
+        defaultMemPool->extMemPool.loc.setHugeSizeThreshold((size_t)value);
+        return TBBMALLOC_OK;
     }
     return TBBMALLOC_INVALID_PARAM;
 }
@@ -3292,7 +3279,7 @@ extern "C" int scalable_allocation_command(int cmd, void *param)
     switch(cmd) {
     case TBBMALLOC_CLEAN_THREAD_BUFFERS:
         if (TLSData *tls = defaultMemPool->getTLS(/*create=*/false))
-            released = tls->externalCleanup(/*cleanOnlyUsed*/false, /*cleanBins=*/true);
+            released = tls->externalCleanup(/*cleanOnlyUnused*/false, /*cleanBins=*/true);
         break;
     case TBBMALLOC_CLEAN_ALL_BUFFERS:
         released = defaultMemPool->extMemPool.hardCachesCleanup();

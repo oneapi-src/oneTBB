@@ -204,7 +204,7 @@
     #define __TBB_CPP11_TEMPLATE_ALIASES_PRESENT            (__INTEL_CXX11_MODE__ && __INTEL_COMPILER >= 1210)
     #define __TBB_CPP14_INTEGER_SEQUENCE_PRESENT            (__cplusplus >= 201402L)
     #define __TBB_CPP14_VARIABLE_TEMPLATES_PRESENT          (__cplusplus >= 201402L)
-    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            (__INTEL_COMPILER > 1901) // a future version
+    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            (__INTEL_COMPILER > 1910) // a future version
     #define __TBB_CPP17_INVOKE_RESULT_PRESENT               (__cplusplus >= 201703L)
 #elif __clang__
 /** TODO: these options need to be rechecked **/
@@ -508,6 +508,15 @@ There are four cases that are supported:
 #endif
 
 /** Internal TBB features & modes **/
+
+/** __TBB_CONCURRENT_ORDERED_CONTAINERS indicates that all conditions of use
+ * concurrent_map and concurrent_set are met. **/
+// TODO: Add cpp11 random generation macro
+#ifndef __TBB_CONCURRENT_ORDERED_CONTAINERS_PRESENT
+    #define __TBB_CONCURRENT_ORDERED_CONTAINERS_PRESENT ( __TBB_CPP11_RVALUE_REF_PRESENT && __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT \
+     && __TBB_IMPLICIT_MOVE_PRESENT  && __TBB_CPP11_AUTO_PRESENT && __TBB_CPP11_LAMBDAS_PRESENT && __TBB_CPP11_ARRAY_PRESENT \
+     && __TBB_INITIALIZER_LISTS_PRESENT )
+#endif
 
 /** __TBB_WEAK_SYMBOLS_PRESENT denotes that the system supports the weak symbol mechanism **/
 #ifndef __TBB_WEAK_SYMBOLS_PRESENT

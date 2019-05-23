@@ -51,7 +51,7 @@ function doWork() {
                     WScript.Echo("unknown");
                 }
             } else {
-                tmpExec = WshShell.Exec(compilerPath + " -dumpversion");
+                tmpExec = WshShell.Exec(compilerPath + " -dumpfullversion -dumpversion");
                 var gccVersion = tmpExec.StdOut.ReadLine();
                 if (WScript.Arguments(0) == "/runtime") {
                     WScript.Echo("mingw" + gccVersion);

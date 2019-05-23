@@ -340,13 +340,85 @@ struct empty_body {
     Output operator()( const Input & ) const { return Output(); }
 };
 
+template<typename T, typename DecrementType, typename DummyType = void>
+class decrementer;
+
+template<typename T, typename DecrementType>
+class decrementer<T, DecrementType,
+                  typename tbb::internal::enable_if<
+                      tbb::internal::is_integral<DecrementType>::value, void>::type
+                  > : public receiver<DecrementType>, tbb::internal::no_copy {
+    T* my_node;
+protected:
+
+    task* try_put_task( const DecrementType& value ) __TBB_override {
+        task* result = my_node->decrement_counter( value );
+        if( !result )
+            result = SUCCESSFULLY_ENQUEUED;
+        return result;
+    }
+
+    graph& graph_reference() __TBB_override {
+        return my_node->my_graph;
+    }
+
+    template<typename U, typename V> friend class tbb::flow::interface11::limiter_node;
+    void reset_receiver( reset_flags f ) __TBB_override {
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
+        if (f & rf_clear_edges)
+            my_built_predecessors.clear();
+#else
+        tbb::internal::suppress_unused_warning( f );
+#endif
+    }
+
+public:
+    // Since decrementer does not make use of possibly unconstructed owner inside its
+    // constructor, my_node can be directly initialized with 'this' pointer passed from the
+    // owner, hence making method 'set_owner' needless.
+    decrementer() : my_node(NULL) {}
+    void set_owner( T *node ) { my_node = node; }
+
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
+    spin_mutex my_mutex;
+    //! The predecessor type for this node
+    typedef typename receiver<DecrementType>::predecessor_type predecessor_type;
+
+    typedef internal::edge_container<predecessor_type> built_predecessors_type;
+    typedef typename built_predecessors_type::edge_list_type predecessor_list_type;
+    built_predecessors_type &built_predecessors() __TBB_override { return my_built_predecessors; }
+
+    void internal_add_built_predecessor( predecessor_type &s) __TBB_override {
+        spin_mutex::scoped_lock l(my_mutex);
+        my_built_predecessors.add_edge( s );
+    }
+
+    void internal_delete_built_predecessor( predecessor_type &s) __TBB_override {
+        spin_mutex::scoped_lock l(my_mutex);
+        my_built_predecessors.delete_edge(s);
+    }
+
+    void copy_predecessors( predecessor_list_type &v) __TBB_override {
+        spin_mutex::scoped_lock l(my_mutex);
+        my_built_predecessors.copy_edges(v);
+    }
+
+    size_t predecessor_count() __TBB_override {
+        spin_mutex::scoped_lock l(my_mutex);
+        return my_built_predecessors.edge_count();
+    }
+protected:
+    built_predecessors_type my_built_predecessors;
+#endif  /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
+};
+
 template<typename T>
-class decrementer : public continue_receiver, tbb::internal::no_copy {
+class decrementer<T, continue_msg, void> : public continue_receiver, tbb::internal::no_copy {
 
     T *my_node;
 
     task *execute() __TBB_override {
-        return my_node->decrement_counter();
+        return my_node->decrement_counter( 1 );
     }
 
 protected:

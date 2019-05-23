@@ -48,6 +48,10 @@
 #include "_tbb_hash_compare_impl.h"
 #include "_template_helpers.h"
 
+#if __TBB_UNORDERED_NODE_HANDLE_PRESENT
+#include "_node_handle_impl.h"
+#endif // __TBB_UNORDERED_NODE_HANDLE_PRESENT
+
 namespace tbb {
 namespace interface5 {
 //! @cond INTERNAL
@@ -225,6 +229,15 @@ public:
         // Return the order key (needed for hashing)
         sokey_t get_order_key() const { // TODO: remove
             return my_order_key;
+        }
+
+        // get() and value() is a common interface for getting access to node`s element (required by node_handle)
+        value_type* storage() {
+            return reinterpret_cast<value_type*>(&my_element);
+        }
+
+        value_type& value() {
+        return *storage();
         }
 
         // Inserts the new element in the list in an atomic fashion
@@ -1646,124 +1659,6 @@ private:
 #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
 #pragma warning(pop) // warning 4127 is back
 #endif
-
-#if __TBB_UNORDERED_NODE_HANDLE_PRESENT
-
-template<typename Value, typename Allocator>
-class node_handle_base {
-public:
-    typedef Allocator allocator_type;
-protected:
-    typedef typename split_ordered_list<Value, allocator_type>::node node;
-public:
-
-    node_handle_base() : my_node(NULL), my_allocator() {}
-    node_handle_base(node_handle_base&& nh) : my_node(nh.my_node),
-                                              my_allocator(std::move(nh.my_allocator)) {
-        nh.my_node = NULL;
-    }
-
-    bool empty() const { return my_node == NULL; }
-    explicit operator bool() const { return my_node != NULL; }
-
-    ~node_handle_base() { internal_destroy(); }
-
-    node_handle_base& operator=(node_handle_base&& nh) {
-        internal_destroy();
-        my_node = nh.my_node;
-        typedef typename tbb::internal::allocator_traits<allocator_type>::
-                         propagate_on_container_move_assignment pocma_type;
-        tbb::internal::allocator_move_assignment(my_allocator, nh.my_allocator, pocma_type());
-        nh.deactivate();
-        return *this;
-    }
-
-    void swap(node_handle_base& nh) {
-        std::swap(my_node, nh.my_node);
-        typedef typename tbb::internal::allocator_traits<allocator_type>::
-                         propagate_on_container_swap pocs_type;
-        tbb::internal::allocator_swap(my_allocator, nh.my_allocator, pocs_type());
-    }
-
-    allocator_type get_allocator() const {
-        return my_allocator;
-    }
-
-protected:
-    node_handle_base(node* n) : my_node(n) {}
-
-    void internal_destroy() {
-        if(my_node) {
-            my_allocator.destroy(&(my_node->my_element));
-            // TODO: Consider using node_allocator from the container
-            typename tbb::internal::allocator_rebind<allocator_type, node>::type node_allocator;
-            node_allocator.deallocate(my_node, 1);
-        }
-    }
-
-    void deactivate() { my_node = NULL; }
-
-    node* my_node;
-    allocator_type my_allocator;
-};
-
-// node handle for concurrent_unordered maps
-template<typename Key, typename Value, typename Allocator>
-class node_handle : public node_handle_base<Value, Allocator> {
-    typedef node_handle_base<Value, Allocator> base_type;
-public:
-    typedef Key key_type;
-    typedef typename Value::second_type mapped_type;
-    typedef typename base_type::allocator_type allocator_type;
-
-    node_handle() : base_type() {}
-
-    key_type& key() const {
-        __TBB_ASSERT(!this->empty(), "Cannot get key from the empty node_type object");
-        return *const_cast<key_type*>(&(this->my_node->my_element.first));
-    }
-
-    mapped_type& mapped() const {
-        __TBB_ASSERT(!this->empty(), "Cannot get mapped value from the empty node_type object");
-        return this->my_node->my_element.second;
-    }
-
-private:
-    template<typename T, typename A>
-    friend class split_ordered_list;
-
-    template<typename Traits>
-    friend class concurrent_unordered_base;
-
-    node_handle(typename base_type::node* n) : base_type(n) {}
-};
-
-// node handle for concurrent_unordered sets
-template<typename Key, typename Allocator>
-class node_handle<Key, Key, Allocator> : public node_handle_base<Key, Allocator> {
-    typedef node_handle_base<Key, Allocator> base_type;
-public:
-    typedef Key value_type;
-    typedef typename base_type::allocator_type allocator_type;
-
-    node_handle() : base_type() {}
-
-    value_type& value() const {
-        __TBB_ASSERT(!this->empty(), "Cannot get value from the empty node_type object");
-        return *const_cast<value_type*>(&(this->my_node->my_element));
-    }
-
-private:
-    template<typename T, typename A>
-    friend class split_ordered_list;
-
-    template<typename Traits>
-    friend class concurrent_unordered_base;
-
-    node_handle(typename base_type::node* n) : base_type(n) {}
-};
-
-#endif // __TBB_UNORDERED_NODE_HANDLE_PRESENT
 
 } // namespace internal
 //! @endcond

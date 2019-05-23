@@ -409,7 +409,9 @@ TestLimiterNode() {
     ASSERT(ln.decrement.my_predecessor_count == 0, "error in pred count");
     ASSERT(ln.decrement.my_initial_predecessor_count == 0, "error in initial pred count");
     ASSERT(ln.decrement.my_current_count == 0, "error in current count");
+#if TBB_DEPRECATED_LIMITER_NODE_CONSTRUCTOR
     ASSERT(ln.init_decrement_predecessors == 0, "error in decrement predecessors");
+#endif
     ASSERT(ln.my_threshold == 1, "error in my_threshold");
     tbb::flow::queue_node<int> inq(g);
     tbb::flow::queue_node<int> outq(g);
@@ -447,7 +449,9 @@ TestLimiterNode() {
     ASSERT(ln.decrement.my_predecessor_count == 0, "error in pred count");
     ASSERT(ln.decrement.my_initial_predecessor_count == 0, "error in initial pred count");
     ASSERT(ln.decrement.my_current_count == 0, "error in current count");
+#if TBB_DEPRECATED_LIMITER_NODE_CONSTRUCTOR
     ASSERT(ln.init_decrement_predecessors == 0, "error in decrement predecessors");
+#endif
     ASSERT(ln.my_threshold == 1, "error in my_threshold");
     ASSERT(ln.my_predecessors.empty(), "preds not reset(rf_clear_edges)");
     ASSERT(ln.my_successors.empty(), "preds not reset(rf_clear_edges)");

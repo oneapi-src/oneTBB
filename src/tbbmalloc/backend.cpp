@@ -964,9 +964,10 @@ void *Backend::remap(void *ptr, size_t oldSize, size_t newSize, size_t alignment
     if (oldRegion->type != MEMREG_ONE_BLOCK)
         return NULL;  // we are not single in the region
     const size_t userOffset = (uintptr_t)ptr - (uintptr_t)oldRegion;
+    const size_t alignedSize = LargeObjectCache::alignToBin(newSize);
     const size_t requestSize =
-        alignUp(userOffset + newSize + sizeof(LastFreeBlock), extMemPool->granularity);
-    if (requestSize < newSize) // is wrapped around?
+        alignUp(userOffset + alignedSize + sizeof(LastFreeBlock), extMemPool->granularity);
+    if (requestSize < alignedSize) // is wrapped around?
         return NULL;
     regionList.remove(oldRegion);
 
@@ -978,12 +979,10 @@ void *Backend::remap(void *ptr, size_t oldSize, size_t newSize, size_t alignment
     MemRegion *region = (MemRegion*)ret;
     MALLOC_ASSERT(region->type == MEMREG_ONE_BLOCK, ASSERT_TEXT);
     region->allocSz = requestSize;
+    region->blockSz = alignedSize;
 
     FreeBlock *fBlock = (FreeBlock *)alignUp((uintptr_t)region + sizeof(MemRegion),
                                              largeObjectAlignment);
-    // put LastFreeBlock at the very end of region
-    const uintptr_t fBlockEnd = (uintptr_t)region + requestSize - sizeof(LastFreeBlock);
-    region->blockSz = fBlockEnd - (uintptr_t)fBlock;
 
     regionList.add(region);
     startUseBlock(region, fBlock, /*addToBin=*/false);

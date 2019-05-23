@@ -122,6 +122,9 @@ namespace initializer_list_support_tests{
             std::vector<T> vec;
             public:
             ad_hoc_container(){}
+            typename std::vector<T>::const_iterator begin() const {return vec.begin();}
+            typename std::vector<T>::const_iterator end() const {return vec.end();}
+            typename std::vector<T>::size_type size() const {return vec.size();}
             template<typename InputIterator>
             ad_hoc_container(InputIterator begin, InputIterator end) : vec(begin,end) {}
             ad_hoc_container(std::initializer_list<T> il) : vec(il.begin(),il.end()) {}
