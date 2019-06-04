@@ -19,6 +19,7 @@
 #include "tbb/tbb_allocator.h"
 #include "tbb/tbb_exception.h"
 #include "tbb_misc.h"
+#include "tbb_environment.h"
 #include "dynamic_link.h"
 #include <cstdlib>
 
@@ -124,7 +125,9 @@ static const dynamic_link_descriptor MallocLinkTable[] = {
     If that allocator is not found, it links to malloc and free. */
 void initialize_handler_pointers() {
     __TBB_ASSERT( MallocHandler==&DummyMalloc, NULL );
-    bool success = dynamic_link( MALLOCLIB_NAME, MallocLinkTable, 4 );
+    bool success = false;
+    if (!tbb::internal::GetBoolEnvironmentVariable("TBB_USE_MALLOC"))
+        success = dynamic_link( MALLOCLIB_NAME, MallocLinkTable, 4 );
     if( !success ) {
         // If unsuccessful, set the handlers to the default routines.
         // This must be done now, and not before FillDynamicLinks runs, because if other
