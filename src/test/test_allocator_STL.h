@@ -70,7 +70,7 @@ struct MoveOperationTracker {
     MoveOperationTracker(MoveOperationTracker&& m) __TBB_NOEXCEPT( true ) : my_value( m.my_value ) {
     }
     MoveOperationTracker& operator=(MoveOperationTracker const&) {
-        ASSERT( false, "Copy assigment operator is called" );
+        ASSERT( false, "Copy assignment operator is called" );
         return *this;
     }
     MoveOperationTracker& operator=(MoveOperationTracker&& m) __TBB_NOEXCEPT( true ) {
@@ -91,7 +91,7 @@ struct MoveOperationTracker {
 template<typename Allocator>
 void TestAllocatorWithSTL(const Allocator &a = Allocator() ) {
 
-// Allocator type convertion section
+// Allocator type conversion section
 #if __TBB_ALLOCATOR_TRAITS_PRESENT
     typedef typename std::allocator_traits<Allocator>::template rebind_alloc<int> Ai;
     typedef typename std::allocator_traits<Allocator>::template rebind_alloc<std::pair<const int, int> > Acii;

@@ -296,7 +296,7 @@ NumberType ParallelCountPrimes( NumberType n , int number_of_threads, NumberType
             printf("---\n");
         using namespace tbb;
         // Explicit grain size and simple_partitioner() used here instead of automatic grainsize 
-        // determination becase we want SieveRange to be decomposed down to grainSize or smaller.  
+        // determination because we want SieveRange to be decomposed down to grainSize or smaller.  
         // Doing so improves odds that the working set fits in cache when evaluating Sieve::operator().
         parallel_reduce( SieveRange( s.multiples.m, n, s.multiples.m, grain_size ), s, simple_partitioner() );
         count += s.count;

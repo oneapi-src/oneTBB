@@ -153,8 +153,8 @@ int test_reservation(int) {
 //
 // Tests
 //
-// multilpe parallel senders, items in FIFO (relatively to sender) order
-// multilpe parallel senders, multiple parallel receivers, items in FIFO order (relative to sender/receiver) and all items received
+// multiple parallel senders, items in FIFO (relatively to sender) order
+// multiple parallel senders, multiple parallel receivers, items in FIFO order (relative to sender/receiver) and all items received
 //   * overlapped puts / gets
 //   * all puts finished before any getS
 //

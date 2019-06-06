@@ -20,7 +20,7 @@
     Sometimes macOS* requires leading underscore (e. g. in export list file), but sometimes not
     (e. g. when searching symbol in a dynamic library via dlsym()). Symbols in this file SHOULD
     be listed WITHOUT one leading underscore. __TBB_SYMBOL macro should add underscore when
-    necessary, depending on the indended usage.
+    necessary, depending on the intended usage.
 */
 
 // cache_aligned_allocator.cpp

@@ -139,7 +139,7 @@ void init_condvar_module()
     __TBB_ASSERT( (uintptr_t)__TBB_init_condvar==(uintptr_t)&init_condvar_using_event, NULL );
 #if __TBB_WIN8UI_SUPPORT
     // We expect condition variables to be always available for Windows* store applications,
-    // so there is no need to check presense and use alternative implementation.
+    // so there is no need to check presence and use alternative implementation.
     __TBB_init_condvar = (void (WINAPI *)(PCONDITION_VARIABLE))&InitializeConditionVariable;
     __TBB_condvar_wait = (BOOL(WINAPI *)(PCONDITION_VARIABLE, LPCRITICAL_SECTION, DWORD))&SleepConditionVariableCS;
     __TBB_condvar_notify_one = (void (WINAPI *)(PCONDITION_VARIABLE))&WakeConditionVariable;

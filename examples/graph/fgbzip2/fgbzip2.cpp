@@ -275,7 +275,7 @@ private:
         m_readQueue.pop(readWork);
 
         // Reading thread waits for buffers to be received
-        // (the graph reuses limitted number of buffers)
+        // (the graph reuses limited number of buffers)
         // and reads the file while there is something to read
         while (m_io.hasDataToRead()) {
             readWork.bufferMsg.seqId = m_io.chunksRead();
@@ -471,10 +471,10 @@ int main(int argc, char* argv[]) {
             if (verbose) std::cout << "Running flow graph based compression algorithm." << std::endl;
             fgCompression(io, blockSizeIn100KB);
         } else if (asyncType == "async_node") {
-            if (verbose) std::cout << "Running flow graph based compression algorithm with async_node based asynchronious IO operations." << std::endl;
+            if (verbose) std::cout << "Running flow graph based compression algorithm with async_node based asynchronous IO operations." << std::endl;
             fgCompressionAsyncNode(io, blockSizeIn100KB);
         } else if (asyncType == "async_msg") {
-            if (verbose) std::cout << "Running flow graph based compression algorithm with async_msg based asynchronious IO operations. Using limited memory: " << memoryLimitIn1MB << "MB." << std::endl;
+            if (verbose) std::cout << "Running flow graph based compression algorithm with async_msg based asynchronous IO operations. Using limited memory: " << memoryLimitIn1MB << "MB." << std::endl;
             fgCompressionAsyncMsg(io, blockSizeIn100KB, memoryLimitIn1MB);
         }
 

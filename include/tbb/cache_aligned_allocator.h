@@ -144,7 +144,7 @@ public:
     }
 
 private:
-    //! We don't know what memory resource set. Use padding to gurantee alignment
+    //! We don't know what memory resource set. Use padding to guarantee alignment
     void* do_allocate(size_t bytes, size_t alignment) override {
         size_t cache_line_alignment = correct_alignment(alignment);
         uintptr_t base = (uintptr_t)m_upstream->allocate(correct_size(bytes) + cache_line_alignment);
@@ -183,7 +183,7 @@ private:
     }
 
     size_t correct_alignment(size_t alignment) {
-        __TBB_ASSERT(tbb::internal::is_power_of_two(alignment), "Alignemnt is not a power of 2");
+        __TBB_ASSERT(tbb::internal::is_power_of_two(alignment), "Alignment is not a power of 2");
 #if __TBB_CPP17_HW_INTERFERENCE_SIZE_PRESENT
         size_t cache_line_size = std::hardware_destructive_interference_size;
 #else

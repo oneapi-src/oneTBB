@@ -92,10 +92,10 @@ namespace initializer_list_support_tests{
         element_type test_seq[] = INIT_SEQ;                                                                                                           \
         container_type expected(test_seq,test_seq + Harness::array_length(test_seq));                                                                 \
                                                                                                                                                       \
-        /*test for explicit contructor call*/                                                                                                         \
+        /*test for explicit constructor call*/                                                                                                         \
         container_type vd INIT_SEQ;                                                                                                                   \
         ASSERT(vd == expected,"initialization via explicit constructor call with init list failed");                                                  \
-        /*test for explicit contructor call with std::initializer_list*/                                                                              \
+        /*test for explicit constructor call with std::initializer_list*/                                                                              \
                                                                                                                                                       \
         std::initializer_list<element_type> init_list = INIT_SEQ;                                                                                     \
         container_type v1 (init_list);                                                                                                                \

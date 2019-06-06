@@ -1111,7 +1111,7 @@ namespace node_handling{
                 "node handle does not contains expected value" );
 
         // Bool conversion
-        ASSERT( nh2, "Node hanlde: Wrong not handle bool conversion" );
+        ASSERT( nh2, "Node handle: Wrong not handle bool conversion" );
 
         // Change key/mapped/value of node handle
         auto expected_value2 = *test_table.begin();
@@ -1227,7 +1227,7 @@ namespace node_handling{
             ASSERT( table_to_insert.size() == table_size,
                     "Insert: After empty node insertion table size changed" );
 
-            // Standart insertion
+            // Standard insertion
             nh = GenerateNodeHandle<Table>(value);
 
             result = table_to_insert.insert(hint..., std::move(nh));

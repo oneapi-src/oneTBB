@@ -147,7 +147,7 @@ public:
         LargeMemoryBlock *first,
                          *last;
         /* age of an oldest block in the list; equal to last->age, if last defined,
-            used for quick cheching it without acquiring the lock. */
+            used for quick checking it without acquiring the lock. */
         uintptr_t         oldest;
         /* currAge when something was excluded out of list because of the age,
          not because of cache hit */

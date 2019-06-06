@@ -15,7 +15,7 @@
   </Resources>
   <Applications>
     <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="tbbTachyon.App">
-      <VisualElements DisplayName="Tachyon Demo" Logo="Assets\Logo.png" SmallLogo="Assets\SmallLogo.png" Description="Tachyon Demo demostrates how to use Intel(R) Threading Building Blocks library for Windows Store applications." ForegroundText="light" BackgroundColor="#464646">
+      <VisualElements DisplayName="Tachyon Demo" Logo="Assets\Logo.png" SmallLogo="Assets\SmallLogo.png" Description="Tachyon Demo demonstrates how to use Intel(R) Threading Building Blocks library for Windows Store applications." ForegroundText="light" BackgroundColor="#464646">
         <DefaultTile ShowName="allLogos" />
         <SplashScreen Image="Assets\SplashScreen.png" />
         <InitialRotationPreference>

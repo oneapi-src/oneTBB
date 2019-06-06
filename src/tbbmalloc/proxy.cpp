@@ -406,10 +406,10 @@ void* __TBB_malloc_safer_realloc_##CRTLIB( void *ptr, size_t size )             
     return __TBB_malloc_safer_realloc( ptr, size, &func_ptrs );                                      \
 }                                                                                                    \
                                                                                                      \
-void* __TBB_malloc_safer__aligned_realloc_##CRTLIB( void *ptr, size_t size, size_t aligment )        \
+void* __TBB_malloc_safer__aligned_realloc_##CRTLIB( void *ptr, size_t size, size_t alignment )       \
 {                                                                                                    \
     orig_aligned_ptrs func_ptrs = {orig__aligned_free_##CRTLIB, orig__aligned_msize_##CRTLIB};       \
-    return __TBB_malloc_safer_aligned_realloc( ptr, size, aligment, &func_ptrs );                    \
+    return __TBB_malloc_safer_aligned_realloc( ptr, size, alignment, &func_ptrs );                   \
 }
 
 // Only for ucrtbase: substitution for _o_free

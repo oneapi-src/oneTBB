@@ -639,7 +639,7 @@ bool TLSData::cleanupBlockBins()
 
 bool ExtMemoryPool::releaseAllLocalCaches()
 {
-    // Iterate all registred TLS data and clean LLOC and Slab pools
+    // Iterate all registered TLS data and clean LLOC and Slab pools
     bool released = allLocalCaches.cleanup(/*cleanOnlyUnused=*/false);
 
     // Bins privatization is done only for the current thread
@@ -1235,7 +1235,7 @@ void Bin::outofTLSBin(Block* block)
     if (block == activeBlk) {
         activeBlk = block->previous? block->previous : block->next;
     }
-    /* Delink the block */
+    /* Unlink the block */
     if (block->previous) {
         MALLOC_ASSERT( block->previous->next == block, ASSERT_TEXT );
         block->previous->next = block->next;

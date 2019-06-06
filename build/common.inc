@@ -156,8 +156,8 @@ ifndef BUILDING_PHASE
 
 .DELETE_ON_ERROR:    # Make will delete target if error occurred when building it.
 
-# MAKEOVERRIDES contains the command line variable definitions. Reseting it to
-# empty allows propogating all exported overridden variables to nested makes.
+# MAKEOVERRIDES contains the command line variable definitions. Resetting it to
+# empty allows propagating all exported overridden variables to nested makes.
 # NOTEs:
 #   1. All variable set in command line are propagated to nested makes.
 #   2. All variables declared with the "export" keyword are propagated to

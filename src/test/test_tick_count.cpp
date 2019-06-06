@@ -131,7 +131,7 @@ void TestTickCountDifference( int n ) {
     do {
         NativeParallelFor( n, TickCountDifferenceBody( n ) );
         if ( barrier_time > tolerance )
-            // The machine seems to be oversubscibed so skip the test.
+            // The machine seems to be oversubscribed so skip the test.
             continue;
         for ( int i = 0; i < n; ++i ) {
             for ( int j = 0; j < i; ++j ) {
@@ -146,7 +146,7 @@ void TestTickCountDifference( int n ) {
     } while ( ++num_trials < 10 && (tbb::tick_count::now() - start_time).seconds() < 5 );
     REMARK( "Difference test time: %g sec\n", (tbb::tick_count::now() - start_time).seconds() );
     // TODO: Find the cause of the machine high load, fix it and upgrade ASSERT_WARNING to ASSERT
-    ASSERT_WARNING( num_trials == 10, "The machine seems to be heavily oversubscibed, difference test was skipped." );
+    ASSERT_WARNING( num_trials == 10, "The machine seems to be heavily oversubscribed, difference test was skipped." );
     delete[] tick_count_array;
 }
 

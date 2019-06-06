@@ -242,7 +242,7 @@ namespace internal {
         friend tbb_thread_v3::id __TBB_EXPORTED_FUNC thread_get_id_v3();
 
         friend inline size_t tbb_hasher( const tbb_thread_v3::id& id ) {
-            __TBB_STATIC_ASSERT(sizeof(id.my_id) <= sizeof(size_t), "Implementaion assumes that thread_id_type fits into machine word");
+            __TBB_STATIC_ASSERT(sizeof(id.my_id) <= sizeof(size_t), "Implementation assumes that thread_id_type fits into machine word");
             return tbb::tbb_hasher(id.my_id);
         }
 

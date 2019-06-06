@@ -156,7 +156,7 @@ namespace test_framework_unit_tests{
                 test_suite ts;
                 ts.register_test_case("tc_name",&do_nothing_tc);
                 bool silent =true;
-                ASSERT(!ts(!silent).empty(),"in verbose mode all messages should be outputed");
+                ASSERT(!ts(!silent).empty(),"in verbose mode all messages should be outputted");
             }
         };
     }

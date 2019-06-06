@@ -44,6 +44,8 @@
 #include "harness.h"
 #include "harness_barrier.h"
 
+#include "tbb/tbb_thread.h"
+
 #if _MSC_VER
 // plays around __TBB_NO_IMPLICIT_LINKAGE. __TBB_LIB_NAME should be defined (in makefiles)
 #pragma comment(lib, __TBB_STRING(__TBB_LIB_NAME))
@@ -1608,6 +1610,19 @@ private:
 
 Harness::SpinBarrier CheckArenaNumThreads::m_barrier;
 
+class EnqueueTaskIntoTaskArena
+{
+public:
+    EnqueueTaskIntoTaskArena(tbb::task& t, tbb::task_arena& a) : my_task(t), my_arena(a) {}
+    void operator() ()
+    {
+        tbb::task::enqueue(my_task, my_arena);
+    }
+private:
+    tbb::task& my_task;
+    tbb::task_arena& my_arena;
+};
+
 void TestTaskEnqueueInArena()
 {   
     int pp[8]={3, 4, 5, 7, 8, 11, 13, 17};
@@ -1617,10 +1632,21 @@ void TestTaskEnqueueInArena()
         int reserved_for_masters = p - 1;
         tbb::task_arena a(p, reserved_for_masters);
         a.initialize();
-        CheckArenaNumThreads& t = *new( tbb::task::allocate_root() ) CheckArenaNumThreads(p, reserved_for_masters);
-        tbb::task::enqueue(t, a);
-        CheckArenaNumThreads::m_barrier.wait();
-        a.debug_wait_until_empty();
+        //Enqueue on master thread
+        {
+            CheckArenaNumThreads& t = *new( tbb::task::allocate_root() ) CheckArenaNumThreads(p, reserved_for_masters);
+            tbb::task::enqueue(t, a);
+            CheckArenaNumThreads::m_barrier.wait();
+            a.debug_wait_until_empty();
+        }
+        //Enqueue on thread without scheduler
+        {
+            CheckArenaNumThreads& t = *new( tbb::task::allocate_root() ) CheckArenaNumThreads(p, reserved_for_masters);
+            tbb::tbb_thread thr(EnqueueTaskIntoTaskArena(t, a));
+            CheckArenaNumThreads::m_barrier.wait();
+            a.debug_wait_until_empty();
+            thr.join();
+        }
     }
 }
 

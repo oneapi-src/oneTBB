@@ -433,7 +433,7 @@ private:
     intptr_t my_priority;
 #endif /* __TBB_TASK_PRIORITY */
 
-    //! Decription of algorithm for scheduler based instrumentation.
+    //! Description of algorithm for scheduler based instrumentation.
     internal::string_index my_name;
 
     //! Trailing padding protecting accesses to frequently used members from false sharing

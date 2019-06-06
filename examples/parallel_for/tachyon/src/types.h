@@ -70,7 +70,7 @@
 /* Use prime numbers for best memory system performance */
 #define INTTBSIZE 1024       /* maximum intersections we can hold    */
 #define MAXLIGHTS 39         /* maximum number of lights in a scene  */
-#define MAXIMGS   39         /* maxiumum number of distinct images   */
+#define MAXIMGS   39         /* maximum number of distinct images   */
 #define RPCQSIZE  113	     /* number of RPC messages to queue      */
 
 /* Parameter values for rt_boundmode() */

@@ -18,7 +18,7 @@
 #define TBB_PREVIEW_FLOW_GRAPH_FEATURES 1
 
 // This preview feature depends on
-// TBB_PREVIEW_FLOW_GRAPH_FEATURES macro, and should not accidentaly be dependent on
+// TBB_PREVIEW_FLOW_GRAPH_FEATURES macro, and should not accidentally be dependent on
 // this deprecated feature
 #define TBB_DEPRECATED_FLOW_NODE_EXTRACTION 0
 

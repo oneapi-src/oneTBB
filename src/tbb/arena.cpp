@@ -574,20 +574,20 @@ void arena::enqueue_task( task& t, intptr_t prio, FastRandom &random )
     if( prio == internal::priority_critical || internal::is_critical( t ) ) {
         // TODO: consider using of 'scheduler::handled_as_critical'
         internal::make_critical( t );
-#if __TBB_TASK_ISOLATION
         generic_scheduler* s = governor::local_scheduler_if_initialized();
-        __TBB_ASSERT( s, "Scheduler must be initialized at this moment" );
-        // propagate isolation level to critical task
-        t.prefix().isolation = s->my_innermost_running_task->prefix().isolation;
-#endif
         ITT_NOTIFY(sync_releasing, &my_critical_task_stream);
-        if( !s || !s->my_arena_slot ) {
-            // Either scheduler is not initialized or it is not attached to the arena, use random
-            // lane for the task.
-            my_critical_task_stream.push( &t, 0, internal::random_lane_selector(random) );
-        } else {
+        if( s && s->my_arena_slot ) {
+            // Scheduler is  initialized and it is attached to the arena,
+            // propagate isolation level to critical task
+#if __TBB_TASK_ISOLATION
+            t.prefix().isolation = s->my_innermost_running_task->prefix().isolation;
+#endif
             unsigned& lane = s->my_arena_slot->hint_for_critical;
             my_critical_task_stream.push( &t, 0, tbb::internal::subsequent_lane_selector(lane) );
+        } else {
+            // Either scheduler is not initialized or it is not attached to the arena
+            // use random lane for the task
+            my_critical_task_stream.push( &t, 0, internal::random_lane_selector(random) );
         }
         advertise_new_work<work_spawned>();
         return;
@@ -796,7 +796,7 @@ void task_arena_base::internal_attach( ) {
 
 void task_arena_base::internal_enqueue( task& t, intptr_t prio ) const {
     __TBB_ASSERT(my_arena, NULL);
-    generic_scheduler* s = governor::local_scheduler_if_initialized();
+    generic_scheduler* s = governor::local_scheduler_weak();  // scheduler is only needed for FastRandom instance
     __TBB_ASSERT(s, "Scheduler is not initialized"); // we allocated a task so can expect the scheduler
 #if __TBB_TASK_GROUP_CONTEXT
     // Is there a better place for checking the state of my_default_ctx?

@@ -186,8 +186,8 @@ int test_reservation() {
 //
 // Tests
 //
-// multilpe parallel senders, items in arbitrary order
-// multilpe parallel senders, multiple parallel receivers, items in arbitrary order and all items received
+// multiple parallel senders, items in arbitrary order
+// multiple parallel senders, multiple parallel receivers, items in arbitrary order and all items received
 //   * overlapped puts / gets
 //   * all puts finished before any getS
 //

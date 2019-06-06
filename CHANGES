@@ -2,6 +2,20 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 2019 Update 8
+TBB_INTERFACE_VERSION == 11008
+
+Changes (w.r.t. Intel TBB 2019 Update 7):
+
+Bugs fixed:
+
+- Fixed a bug in TBB 2019 Update 7 that could lead to incorrect memory
+    reallocation on Linux (https://github.com/intel/tbb/issues/148).
+- Fixed enqueuing tbb::task into tbb::task_arena not to fail on threads
+    with no task scheduler initialized
+    (https://github.com/intel/tbb/issues/116).
+
+------------------------------------------------------------------------
 Intel TBB 2019 Update 7
 TBB_INTERFACE_VERSION == 11007
 
@@ -20,7 +34,7 @@ Changes (w.r.t. Intel TBB 2019 Update 6):
 - Added packaging of CMake configuration files to TBB packages built
     using build/build.py script
     (https://github.com/intel/tbb/issues/141).
-    
+
 Changes affecting backward compatibility:
 
 - Removed the number_of_decrement_predecessors parameter from the
@@ -34,7 +48,7 @@ Preview Features:
 
 Open-source contributions integrated:
 
-- Fixed makefiles to properly obtain the GCC version for GCC 7 
+- Fixed makefiles to properly obtain the GCC version for GCC 7
     and later (https://github.com/intel/tbb/pull/147) by Timmmm.
 
 ------------------------------------------------------------------------
@@ -93,7 +107,7 @@ Bugs fixed:
     it follows a thread-bound filter.
 - Fixed a performance regression observed when multiple parallel
     algorithms start simultaneously.
-    
+
 ------------------------------------------------------------------------
 Intel TBB 2019 Update 4
 TBB_INTERFACE_VERSION == 11004
@@ -102,7 +116,7 @@ Changes (w.r.t. Intel TBB 2019 Update 3):
 
 - global_control class is now a fully supported feature.
 - Added deduction guides for tbb containers: concurrent_hash_map,
-    concurrent_unordered_map, concurrent_unordered_set.     
+    concurrent_unordered_map, concurrent_unordered_set.
 - Added tbb::scalable_memory_resource function returning
     std::pmr::memory_resource interface to the TBB memory allocator.
 - Added tbb::cache_aligned_resource class that implements
@@ -119,7 +133,7 @@ Changes (w.r.t. Intel TBB 2019 Update 3):
 
 Bugs fixed:
 
-- Fixed compilation for tbb::concurrent_vector when used with 
+- Fixed compilation for tbb::concurrent_vector when used with
     std::pmr::polymorphic_allocator.
 
 Open-source contributions integrated:
@@ -582,7 +596,7 @@ Changes (w.r.t. Intel TBB 4.4 Update 5):
 - Added TBB_USE_GLIBCXX_VERSION macro to specify the version of GNU
     libstdc++ when it cannot be properly recognized, e.g. when used
     with Clang on Linux* OS. Inspired by a contribution from David A.
-- Added graph/stereo example to demostrate tbb::flow::async_msg.
+- Added graph/stereo example to demonstrate tbb::flow::async_msg.
 - Removed a few cases of excessive user data copying in the flow graph.
 - Reworked split_node to eliminate unnecessary overheads.
 - Added support for C++11 move semantics to the argument of
@@ -1293,7 +1307,7 @@ Changes (w.r.t. Intel TBB 4.1 Update 4):
     were added on OS X*.
 - For OS X* exact exception propagation is supported with Clang;
     it requires use of libc++ and corresponding Intel TBB binaries.
-- Support for C++11 initializer lists in constructor and assigment
+- Support for C++11 initializer lists in constructor and assignment
     has been added to concurrent_hash_map, concurrent_unordered_set,
     concurrent_unordered_multiset, concurrent_unordered_map,
     concurrent_unordered_multimap.
@@ -1889,7 +1903,7 @@ Changes (w.r.t. 20100310 open-source release):
 - Reworked enumerable_thread_specific to use a custom implementation of
     hash map that is more efficient for ETS usage models.
 - Added example for class task_group; see examples/task_group/sudoku.
-- Removed two examples, as they were long outdated and superceded:
+- Removed two examples, as they were long outdated and superseded:
     pipeline/text_filter (use pipeline/square);
     parallel_while/parallel_preorder (use parallel_do/parallel_preorder).
 - PDF documentation updated.
@@ -2107,7 +2121,7 @@ Changes (w.r.t. Intel TBB 2.1 U3 commercial-aligned release):
 
 - Added tests for aligned memory allocations and malloc replacement.
 - Several improvements for better bundling with Intel(R) C++ Compiler.
-- A few other small changes in code and documentaion.
+- A few other small changes in code and documentation.
 
 Bugs fixed:
 

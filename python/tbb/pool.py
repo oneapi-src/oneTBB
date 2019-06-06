@@ -323,7 +323,7 @@ class ApplyResult(object):
         the collector will be called when the result from the Job is
         ready
         \param callback when not None, function to call when the
-        result becomes available (this is the paramater passed to the
+        result becomes available (this is the parameter passed to the
         Pool::*_async() methods.
         """
         self._success = False

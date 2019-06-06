@@ -885,7 +885,7 @@ class CacheBinModel {
 
     // The emulated cache bin.
     CacheBinType cacheBinModel;
-    // The reference to real cahce bin inside the large object cache.
+    // The reference to real cache bin inside the large object cache.
     CacheBinType &cacheBin;
 
     const size_t size;
@@ -991,7 +991,7 @@ public:
 template<typename Props> uintptr_t CacheBinModel<Props>::cacheCurrTime;
 template<typename Props> intptr_t CacheBinModel<Props>::tooLargeLOC;
 
-template <typename Scenarion>
+template <typename Scenario>
 void LOCModelTester() {
     defaultMemPool->extMemPool.loc.cleanAll();
     defaultMemPool->extMemPool.loc.reset();
@@ -1005,7 +1005,7 @@ void LOCModelTester() {
     CacheBinModel<rml::internal::LargeObjectCache::LargeCacheTypeProps>::tooLargeLOC = defaultMemPool->extMemPool.loc.largeCache.tooLargeLOC;
     CacheBinModel<rml::internal::LargeObjectCache::LargeCacheTypeProps> cacheBinModel(defaultMemPool->extMemPool.loc.largeCache.bin[binIdx], allocationSize);
 
-    Scenarion scen;
+    Scenario scen;
     for (rml::internal::LargeMemoryBlock *lmb = scen.next(); (intptr_t)lmb != (intptr_t)-1; lmb = scen.next()) {
         if ( lmb ) {
             int num=1;
@@ -1227,21 +1227,21 @@ void TestTHP() {
         // Map memory
         allocPtrs[i] = backend->allocRawMem(allocSize);
 
-        MALLOC_ASSERT(allocPtrs[i], "Allocation not succeded.");
+        MALLOC_ASSERT(allocPtrs[i], "Allocation not succeeded.");
         MALLOC_ASSERT(allocSize == HUGE_PAGE_SIZE,
-            "Allocation size have to be aligned on Huge Page size internaly.");
+            "Allocation size have to be aligned on Huge Page size internally.");
 
         // First touch policy - no real pages allocated by OS without accessing the region
         memset(allocPtrs[i], 1, allocSize);
 
         MALLOC_ASSERT(isAligned(allocPtrs[i], HUGE_PAGE_SIZE),
-            "The pointer returned by scalable_malloc is not alligned on huge page size.");
+            "The pointer returned by scalable_malloc is not aligned on huge page size.");
     }
 
     // Wait for the system to update process memory info files after allocations
     Harness::Sleep(4000);
 
-    // Generaly, kernel tries to allocate transparent huge pages, but sometimes it cannot do this
+    // Generally, kernel tries to allocate transparent huge pages, but sometimes it cannot do this
     // (tested on SLES 11/12), so consider this system info checks as a remark.
     // Also, some systems can allocate more memory then needed in background (tested on Ubuntu 14.04)
     size_t newSystemTHPCount = getSystemTHPCount();
@@ -1418,8 +1418,8 @@ void TesFunctionReplacementLog() {
 #include <cmath> // pow function
 
 // Huge objects cache: Size = MinSize * (2 ^ (Index / StepFactor) formula gives value for the bin size,
-// but it is not matched with our sizeToIdx aproximation algorithm, where step sizes between major
-// (power of 2) sizes are equal. Used internaly for the test. Static cast to avoid warnings.
+// but it is not matched with our sizeToIdx approximation algorithm, where step sizes between major
+// (power of 2) sizes are equal. Used internally for the test. Static cast to avoid warnings.
 inline size_t hocIdxToSizeFormula(int idx) {
     return static_cast<size_t>(float(rml::internal::LargeObjectCache::maxLargeSize) *
         pow(2, float(idx) / float(rml::internal::LargeObjectCache::HugeBSProps::StepFactor)));

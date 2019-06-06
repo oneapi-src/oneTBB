@@ -178,7 +178,7 @@ void test_puts_with_decrements( int num_threads, tbb::flow::limiter_node< T >& l
 // Tests
 //
 // limiter only forwards below the limit, multiple parallel senders / single receiver
-// mutiple parallel senders that put to decrement at each accept, limiter accepts new messages
+// multiple parallel senders that put to decrement at each accept, limiter accepts new messages
 //
 //
 template< typename T >

@@ -1136,7 +1136,7 @@ task* generic_scheduler::steal_task_from( __TBB_ISOLATION_ARG( arena_slot& victi
                     break;
                 GATHER_STATISTIC( ++my_counters.proxies_bypassed );
             }
-            // The task cannot be executed either due to isolation or proxy contraints.
+            // The task cannot be executed either due to isolation or proxy constraints.
             result = NULL;
             tasks_omitted = true;
         } else if ( !tasks_omitted ) {

@@ -44,7 +44,7 @@
 */
 
 /*
- * apitrigeom.h - header for functions to generate triangle tesselated 
+ * apitrigeom.h - header for functions to generate triangle tessellated 
  *                geometry for use with OpenGL, XGL, etc.
  *
  */

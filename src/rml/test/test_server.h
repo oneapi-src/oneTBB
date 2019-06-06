@@ -16,7 +16,7 @@
 
 /* This header contains code shared by test_omp_server.cpp and test_tbb_server.cpp 
    There is no ifndef guard - test is supposed to include this file exactly once.
-   The test is also exected to have #include of rml_omp.h or rml_tbb.h before 
+   The test is also executed to have #include of rml_omp.h or rml_tbb.h before 
    including this header. 
 
    This header should not use any parts of TBB that require linking in the TBB run-time. 

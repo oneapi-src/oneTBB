@@ -807,10 +807,10 @@ public:
     allocator_aware_data(int v, const allocator_type& allocator = allocator_type())
         : my_allocator(allocator), my_value(v) {}
     allocator_aware_data(const allocator_aware_data&) {
-        ASSERT(!assert_on_constructions, "Allocator should propogate to the data during copy construction");
+        ASSERT(!assert_on_constructions, "Allocator should propagate to the data during copy construction");
     }
     allocator_aware_data(allocator_aware_data&&) {
-        ASSERT(!assert_on_constructions, "Allocator should propogate to the data during move construction");
+        ASSERT(!assert_on_constructions, "Allocator should propagate to the data during move construction");
     }
     allocator_aware_data(const allocator_aware_data& rhs, const allocator_type& allocator)
         : my_allocator(allocator), my_value(rhs.my_value) {}

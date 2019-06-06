@@ -32,7 +32,7 @@
 #define MAX_NODES 4
 
 //! Performs test on function nodes with limited concurrency and buffering
-/** Theses tests check:
+/** These tests check:
     1) that the number of executing copies never exceed the concurrency limit
     2) that the node never rejects
     3) that no items are lost
@@ -240,7 +240,7 @@ void run_buffered_levels( int c ) {
 
 
 //! Performs test on executable nodes with limited concurrency
-/** Theses tests check:
+/** These tests check:
     1) that the nodes will accepts puts up to the concurrency limit,
     2) the nodes do not exceed the concurrency limit even when run with more threads (this is checked in the harness_graph_executor),
     3) the nodes will receive puts from multiple successors simultaneously,

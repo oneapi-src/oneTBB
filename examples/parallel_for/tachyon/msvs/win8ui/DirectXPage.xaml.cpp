@@ -65,7 +65,7 @@ DirectXPage::DirectXPage() :
     m_eventToken = CompositionTarget::Rendering::add(ref new EventHandler<Object^>(this, &DirectXPage::OnRendering));
 
     int num_threads = 2*tbb::task_scheduler_init::default_num_threads();
-    // The thread slider has geometric sequence with several intermidiate steps for each interval between 2^N and 2^(N+1).
+    // The thread slider has geometric sequence with several intermediate steps for each interval between 2^N and 2^(N+1).
     // The nearest (from below) the power of 2.
     int i_base = log2(num_threads);
     int base = 1 << i_base;

@@ -99,7 +99,7 @@ inline void* mmapTHP(size_t bytes) {
             offset = HUGE_PAGE_SIZE - ((uintptr_t)result & (HUGE_PAGE_SIZE - 1));
             munmap(result, offset);
 
-            // New region begining
+            // New region beginning
             result = (void*)((uintptr_t)result + offset);
         }
 
@@ -108,7 +108,7 @@ inline void* mmapTHP(size_t bytes) {
     }
 
     // Assume, that mmap virtual addresses grow down by default
-    // So, set a hint as a result of a last successfull allocation
+    // So, set a hint as a result of a last successful allocation
     // and then use it minus requested size as a new mapping point.
     // TODO: Atomic store is meant here, fence not needed, but
     // currently we don't have such function.

@@ -25,7 +25,7 @@ extern unsigned int *g_pImg;
 void on_mouse_func(int x, int y, int k);
 void on_key_func(int x);
 
-bool initilized = false;
+bool initialized = false;
 
 #if TARGET_OS_IPHONE
 
@@ -38,7 +38,7 @@ bool initilized = false;
 
 - (void)drawRect:(CGRect)start
 {
-    if (initilized == false) {
+    if (initialized == false) {
         NSLog(@"INITIALIZE");
         timer = [NSTimer scheduledTimerWithTimeInterval:0.03 target:self selector:@selector(update_window) userInfo:nil repeats:YES];
         imageRect = [[UIScreen mainScreen] bounds];
@@ -46,7 +46,7 @@ bool initilized = false;
         const float ratio=(float)g_sizex/g_sizey;
         imageRect.size.height=imageRect.size.width/ratio;
         imageRect.origin.y=(full_height-imageRect.size.height)/2;
-        initilized = true;
+        initialized = true;
     }
     
     CGColorSpaceRef colourSpace = CGColorSpaceCreateDeviceRGB();
@@ -89,10 +89,10 @@ bool initilized = false;
 
 - (void) drawRect:(NSRect)start
 {
-    if (initilized == false) {
+    if (initialized == false) {
         NSLog(@"INITIALIZE");
         timer = [NSTimer scheduledTimerWithTimeInterval:0.03 target:self selector:@selector(update_window) userInfo:nil repeats:YES];
-        initilized = true;
+        initialized = true;
     }
     glWindowPos2i(0, (int)self.visibleRect.size.height);
     glPixelZoom( (float)self.visibleRect.size.width /(float)g_sizex,

@@ -212,7 +212,7 @@ Variables set during TBB configuration:
 TBBInstallConfig
 ^^^^^^^^^^^^^^^^
 
-Module for generation and installation of TBB CMake configuration files (TBBConfig.cmake and TBBConfigVersion.cmake files) on Linux and macOS.
+Module for generation and installation of TBB CMake configuration files (TBBConfig.cmake and TBBConfigVersion.cmake files) on Linux, macOS and Windows.
 
 Provides the following functions:
 
@@ -238,7 +238,7 @@ The use case is applicable for package maintainers who create own TBB packages a
               Parameter                                      Description
 ===========================================  ===========================================================
 ``INSTALL_DIR <directory>``                  Directory to install CMake configuration files
-``SYSTEM_NAME Linux|Darwin``                 OS name to generate config files for
+``SYSTEM_NAME Linux|Darwin|Windows``         OS name to generate config files for
 ``TBB_VERSION_FILE <version_file>``          Path to ``tbb_stddef.h`` to parse version from and
                                              write it to TBBConfigVersion.cmake
 ``TBB_VERSION <major>.<minor>.<interface>``  Directly specified TBB version;
@@ -264,15 +264,15 @@ The use case is applicable for package maintainers who create own TBB packages a
 
 The use case is applicable for users who have installed TBB, but do not have (or have incorrect) CMake configuration files for this TBB.
 
-============================  ==============================================
+====================================  ==============================================
       Parameter                            Description
-============================  ==============================================
-``INSTALL_DIR <directory>``   Directory to install CMake configuration files
-``SYSTEM_NAME Linux|Darwin``  OS name to generate config files for
-``LIB_PATH <lib_path>``       Path to installed TBB binaries (.lib files on Windows)
-``BIN_PATH <bin_path>``       Path to installed TBB DLLs (applicable for Windows only)
-``INC_PATH <inc_path>``       Path to installed TBB headers
-============================  ==============================================
+====================================  ==============================================
+``INSTALL_DIR <directory>``           Directory to install CMake configuration files
+``SYSTEM_NAME Linux|Darwin|Windows``  OS name to generate config files for
+``LIB_PATH <lib_path>``               Path to installed TBB binaries (.lib files on Windows)
+``BIN_PATH <bin_path>``               Path to installed TBB DLLs (applicable for Windows only)
+``INC_PATH <inc_path>``               Path to installed TBB headers
+====================================  ==============================================
 
 ``LIB_PATH`` and ``INC_PATH`` will be converted to relative paths based on ``INSTALL_DIR``.
 By default TBB version will be parsed from ``<inc_path>/tbb/tbb_stddef.h``,

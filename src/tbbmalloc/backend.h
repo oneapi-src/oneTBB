@@ -92,7 +92,7 @@ enum MemRegionType {
     MEMREG_SLAB_BLOCKS = 0,
     // The region can hold several large object blocks
     MEMREG_LARGE_BLOCKS,
-    // The region holds only one block with a reqested size
+    // The region holds only one block with a requested size
     MEMREG_ONE_BLOCK
 };
 
@@ -255,7 +255,7 @@ private:
 
     // register bins related to advance regions
     AdvRegionsBins advRegBins;
-    // Storage for splitted FreeBlocks
+    // Storage for split FreeBlocks
     IndexedBins freeLargeBlockBins,
                 freeSlabAlignedBins;
 

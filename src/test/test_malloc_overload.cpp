@@ -370,7 +370,7 @@ void FuncReplacementInfoCheck() {
     func_replacement_status = TBB_malloc_replacement_log(NULL);
     ASSERT(func_replacement_status == status_check, "replacement_opcodes_log() function return wrong status");
 
-    ASSERT_WARNING(func_replacement_status == 0, "Some standart allocation functions was not replaced to tbb_malloc functions.");
+    ASSERT_WARNING(func_replacement_status == 0, "Some standard allocation functions was not replaced to tbb_malloc functions.");
 }
 #endif // MALLOC_WINDOWS_OVERLOAD_ENABLED
 

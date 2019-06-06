@@ -142,7 +142,7 @@ static void globalbound(object ** rootlist, vector * gmin, vector * gmax) {
   vector min, max;
   object * cur;
 
-  if (*rootlist == NULL)  /* don't bound non-existant objects */
+  if (*rootlist == NULL)  /* don't bound non-existent objects */
     return;
 
   gmin->x =  FHUGE;   gmin->y =  FHUGE;   gmin->z =  FHUGE;
@@ -175,7 +175,7 @@ static int cellbound(grid *g, gridindex *index, vector * cmin, vector * cmax) {
 
   cur = g->cells[index->z*g->xsize*g->ysize + index->y*g->xsize + index->x]; 
 
-  if (cur == NULL)  /* don't bound non-existant objects */
+  if (cur == NULL)  /* don't bound non-existent objects */
     return 0;
 
   cellmin.x = voxel2x(g, index->x); 

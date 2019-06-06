@@ -459,7 +459,7 @@ struct CheckerMakeEdge {
     static const bool valueRemove = !is_same_type<decltype(checkRemove(static_cast<T1*>(0), static_cast<T2*>(0))), ImpossibleType>::value;
 
     __TBB_STATIC_ASSERT( valueMake == valueRemove, "make_edge() availability is NOT equal to remove_edge() availability" );
-    
+
     static const bool value = valueMake;
 };
 
@@ -469,10 +469,10 @@ struct TypeChecker {
          ++g_CheckerCounter;
 
         REMARK("%d: %s -> %s: %s %s \n", g_CheckerCounter, typeid(T1).name(), typeid(T2).name(),
-            (bAllowed ? "YES" : "no"), (bConvertable ? " (Convertable)" : ""));
+            (bAllowed ? "YES" : "no"), (bConvertible ? " (Convertible)" : ""));
      }
 
-// 
+//
 // Check connection: function_node<continue_msg, SENDING_TYPE> <-> function_node<RECEIVING_TYPE>
 //                                         R E C E I V I N G   T Y P E
 // S     'bAllowed'    | int | float | A | async_msg | async_msg | async_msg | UserAsync | UserAsync | UserAsync |
@@ -487,13 +487,13 @@ struct TypeChecker {
 // Y   UserAsync_int   |  Y  |       |   |           |           |           |    Y      |           |           |
 // P  UserAsync_float  |     |   Y   |   |           |           |           |           |    Y      |           |
 // E   UserAsync_A     |     |       | Y |           |           |           |           |           |    Y      |
-// 
+//
     // Test make_edge() & remove_edge() availability
     static const bool bAllowed = is_same_type<T1, T2>::value
         || is_same_type<typename async_helpers<T1>::filtered_type, T2>::value
         || is_same_type<T1, typename async_helpers<T2>::filtered_type>::value;
 
-    static const bool bConvertable = bAllowed
+    static const bool bConvertible = bAllowed
         || std::is_base_of<T1, T2>::value
         || (is_same_type<typename async_helpers<T1>::filtered_type, int>::value && is_same_type<T2, float>::value)
         || (is_same_type<typename async_helpers<T1>::filtered_type, float>::value && is_same_type<T2, int>::value);
@@ -518,7 +518,7 @@ struct TypeChecker {
     // Test untyped_receiver->try_put(T2) availability
     __TBB_STATIC_ASSERT( (true  == CheckerTryPut<untyped_receiver, T2>::value), "untyped_receiver cannot try_put(T2)" );
     // Test receiver<T1>->try_put(T2) availability
-    __TBB_STATIC_ASSERT( (bConvertable == CheckerTryPut<receiver<T1>, T2>::value), "invalid availability of receiver<T1>->try_put(T2)" );
+    __TBB_STATIC_ASSERT( (bConvertible == CheckerTryPut<receiver<T1>, T2>::value), "invalid availability of receiver<T1>->try_put(T2)" );
 };
 
 template <typename T1>

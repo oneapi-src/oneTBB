@@ -186,7 +186,7 @@ bool market::release ( bool is_public, bool blocking_terminate ) {
                 // Theoretically, new private references to the market can be added during waiting making it potentially
                 // endless.
                 // TODO: revise why the weak scheduler needs market's pointer and try to remove this wait.
-                // Note that the market should know about its schedulers for cancelation/exception/priority propagation,
+                // Note that the market should know about its schedulers for cancellation/exception/priority propagation,
                 // see e.g. task_group_context::cancel_group_execution()
                 while ( __TBB_load_with_acquire( my_public_ref_count ) == 1 && __TBB_load_with_acquire( my_ref_count ) > 1 )
                     __TBB_Yield();

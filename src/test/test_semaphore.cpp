@@ -50,7 +50,6 @@ Harness::SpinBarrier sBarrier;
 //   set semaphore to initial value
 //   see that semaphore only allows that number of threads to be active
 class Body: NoAssign {
-    const int nThreads;
     const int nIters;
     tbb::internal::semaphore &mySem;
     vector<int> &ourCounts;
@@ -61,7 +60,7 @@ public:
     Body(int nThread_, int nIter_, semaphore &mySem_,
             vector<int>& ourCounts_,
             vector<double>& tottime_
-            ) : nThreads(nThread_), nIters(nIter_), mySem(mySem_), ourCounts(ourCounts_), tottime(tottime_) { sBarrier.initialize(nThread_); pCount = 0; }
+            ) : nIters(nIter_), mySem(mySem_), ourCounts(ourCounts_), tottime(tottime_) { sBarrier.initialize(nThread_); pCount = 0; }
 void operator()(const int tid) const {
     sBarrier.wait();
     for(int i=0; i < nIters; ++i) {

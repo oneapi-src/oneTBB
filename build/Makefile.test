@@ -111,7 +111,7 @@ TEST_BIGOBJ = test_opencl_node.$(TEST_EXT)      \
 $(TEST_BIGOBJ): override CXXFLAGS += $(BIGOBJ_KEY)
 endif
 
-# TODO: remove repetition of .$(TEST_EXT) in the list bellow
+# TODO: remove repetition of .$(TEST_EXT) in the list below
 # The main list of TBB tests
 TEST_TBB_PLAIN.EXE = test_assembly.$(TEST_EXT)   \
 	test_global_control.$(TEST_EXT)              \

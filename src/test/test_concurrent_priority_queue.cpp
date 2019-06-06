@@ -208,13 +208,13 @@ void TestHelpers(){
     TestToVector();
 }
 
-//Comparator with assert in default consructor
+//Comparator with assert in default constructor
 template<typename T>
 class less_a : public std::less<T>
 {
 public:
     explicit less_a(bool no_assert = false) {
-        ASSERT(no_assert,"empty consructor should not be called");
+        ASSERT(no_assert,"empty constructor should not be called");
     };
 };
 

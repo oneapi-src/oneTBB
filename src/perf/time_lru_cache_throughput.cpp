@@ -34,7 +34,7 @@
 #include <algorithm>
 #include "tbb/mutex.h"
 
-//TODO: probably move this to separate header utlity file
+//TODO: probably move this to separate header utility file
 namespace micro_benchmarking{
 namespace utils{
     template <typename type>

@@ -25,7 +25,7 @@
 #include "harness_iterator.h"
 #include <list>
 
-// Some old compilers can't deduce template paremeter type for parallel_for_each
+// Some old compilers can't deduce template parameter type for parallel_for_each
 // if the function name is passed without explicit cast to function pointer.
 typedef void (*TestFunctionType)(size_t);
 

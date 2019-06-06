@@ -17,7 +17,7 @@
 export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH
 #setting output format .csv, 'pivot' - is pivot table mode, ++ means append
 export STAT_FORMAT=pivot-csv++
-#check existing files because of apend mode
+#check existing files because of append mode
 ls *.csv
 rm -i *.csv
 #setting a delimiter in txt or csv file

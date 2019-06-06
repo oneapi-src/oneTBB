@@ -498,7 +498,7 @@ void Check( AtomicByte array[], size_t n, size_t expected_size ) {
         }
 }
 
-//! Test travering the tabel with a parallel range
+//! Test traversing the table with a parallel range
 void ParallelTraverseTable( MyTable& table, size_t n, size_t expected_size ) {
     REMARK("testing parallel traversal\n");
     ASSERT( table.size()==expected_size, NULL );

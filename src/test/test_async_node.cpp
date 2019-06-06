@@ -88,7 +88,7 @@ tbb::atomic<int> async_body_exec_count;
 tbb::atomic<int> async_activity_processed_msg_count;
 tbb::atomic<int> end_body_exec_count;
 
-// queueing required in test_reset for testing of cancelation
+// queueing required in test_reset for testing of cancellation
 typedef tbb::flow::async_node< int, int, tbb::flow::queueing > counting_async_node_type;
 typedef counting_async_node_type::gateway_type counting_gateway_type;
 
@@ -435,7 +435,7 @@ public:
             start_node.try_put(i);
         }
         g.wait_for_all();
-        ASSERT( async_body_exec_count == NUMBER_OF_MSGS, "AsyncBody procesed wrong number of signals" );
+        ASSERT( async_body_exec_count == NUMBER_OF_MSGS, "AsyncBody processed wrong number of signals" );
         ASSERT( async_activity_processed_msg_count == NUMBER_OF_MSGS, "AsyncActivity processed wrong number of signals" );
         ASSERT( end_body_exec_count == NUMBER_OF_MSGS, "EndBody processed wrong number of signals");
         REMARK("async_body_exec_count == %d == async_activity_processed_msg_count == %d == end_body_exec_count == %d\n",
@@ -471,7 +471,7 @@ int test_copy_ctor() {
 
     REMARK("async_body_exec_count = %d\n", int(async_body_exec_count));
     REMARK("r1.my_count == %d and r2.my_count = %d\n", int(r1.my_count), int(r2.my_count));
-    ASSERT( int(async_body_exec_count) == NUMBER_OF_MSGS, "AsyncBody procesed wrong number of signals" );
+    ASSERT( int(async_body_exec_count) == NUMBER_OF_MSGS, "AsyncBody processed wrong number of signals" );
     ASSERT( int(r1.my_count) == N, "counting receiver r1 has not received N items" );
     ASSERT( int(r2.my_count) == 0, "counting receiver r2 has not received 0 items" );
 
@@ -482,7 +482,7 @@ int test_copy_ctor() {
 
     REMARK("async_body_exec_count = %d\n", int(async_body_exec_count));
     REMARK("r1.my_count == %d and r2.my_count = %d\n", int(r1.my_count), int(r2.my_count));
-    ASSERT( int(async_body_exec_count) == 2*NUMBER_OF_MSGS, "AsyncBody procesed wrong number of signals" );
+    ASSERT( int(async_body_exec_count) == 2*NUMBER_OF_MSGS, "AsyncBody processed wrong number of signals" );
     ASSERT( int(r1.my_count) == N, "counting receiver r1 has not received N items" );
     ASSERT( int(r2.my_count) == N, "counting receiver r2 has not received N items" );
     return Harness::Done;
@@ -582,7 +582,7 @@ struct spin_test {
             start_node.try_put(i);
         }
         g.wait_for_all();
-        ASSERT( async_body_exec_count == nthreads*NUMBER_OF_MSGS, "AsyncBody procesed wrong number of signals" );
+        ASSERT( async_body_exec_count == nthreads*NUMBER_OF_MSGS, "AsyncBody processed wrong number of signals" );
         ASSERT( async_activity_processed_msg_count == nthreads*NUMBER_OF_MSGS, "AsyncActivity processed wrong number of signals" );
         ASSERT( end_body_exec_count == nthreads*NUMBER_OF_MSGS, "EndBody processed wrong number of signals");
         ASSERT_WARNING( main_tid_count != 0, "Main thread did not participate in end_body tasks");
@@ -677,7 +677,7 @@ public:
         Harness::SpinBarrier spin_barrier( nthreads );
 
         async_activity_type my_async_activity( UNKNOWN_NUMBER_OF_ITEMS, true );
-    
+
         tbb::parallel_for( 0, nthreads, body_graph_with_async( spin_barrier, my_async_activity ) );
         return Harness::Done;
     }

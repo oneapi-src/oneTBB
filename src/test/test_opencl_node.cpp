@@ -95,7 +95,7 @@ public:
         cl_uint selected_platform_index = 0;
         cl_platform_id platform = platforms[selected_platform_index];
 
-        // Count the number of plaform devices and compare with selector list
+        // Count the number of platform devices and compare with selector list
         cl_uint device_count;
         clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, NULL, &device_count);
         // It should be the same
@@ -795,7 +795,7 @@ struct BufferWithKey : public opencl_buffer<int> {
     KeyType my_key;
     int my_idx;
 
-    // TODO: investigate why defaul ctor is required
+    // TODO: investigate why default ctor is required
     BufferWithKey() {}
     BufferWithKey( size_t N, int idx ) : opencl_buffer<int>( N ), my_idx( idx ) {}
     const KeyType& key() const { return my_key; }

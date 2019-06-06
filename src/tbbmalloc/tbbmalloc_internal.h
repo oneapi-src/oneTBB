@@ -419,7 +419,7 @@ private:
         unsigned long long hugePageSize = 0;
 
 #if __linux__
-        // Check huge pages existense
+        // Check huge pages existence
         unsigned long long meminfoHugePagesTotal = 0;
 
         parseFileItem meminfoItems[] = {

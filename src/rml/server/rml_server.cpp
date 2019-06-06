@@ -1677,7 +1677,7 @@ void wakeup_some_tbb_threads()
 {
     /* First, atomically grab the connection, then increase the server ref count to keep
        it from being released prematurely.  Second, check if the balance is available for TBB
-       and the tbb conneciton has slack to exploit.  If the answer is true, go ahead and
+       and the tbb connection has slack to exploit.  If the answer is true, go ahead and
        try to wake some up. */
     if( generic_connection<tbb_server,tbb_client >::get_addr(active_tbb_connections)==0 )
         // the next connection will see the change; return.

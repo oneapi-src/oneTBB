@@ -49,7 +49,7 @@ parser.add_argument('--make-tool',      default='make', help='Use different make
 parser.add_argument('--copy-tool',      default=None, help='Use this command for copying ($ tool file dest-dir)')
 parser.add_argument('--build-args',     default="", help='specify extra build args')
 parser.add_argument('--build-prefix',   default='local', help='build dir prefix')
-parser.add_argument('--cmake-dir',      help='directory to install CMake configuraion files. Default: <prefix>/lib/cmake/tbb')
+parser.add_argument('--cmake-dir',      help='directory to install CMake configuration files. Default: <prefix>/lib/cmake/tbb')
 if is_win:
     parser.add_argument('--msbuild',   default=False, action='store_true', help='Use msbuild')
     parser.add_argument('--vs',          default="2012", help='select VS version for build')
@@ -79,7 +79,7 @@ doc_dir   = jp(args.prefix, 'share', 'doc', 'tbb')
 cmake_dir = jp(args.prefix, "lib", "cmake", "tbb") if args.cmake_dir is None else args.cmake_dir
 
 if is_win:
-    os.environ["OS"] = "Windows_NT" # make sure TBB will interpret it corretly
+    os.environ["OS"] = "Windows_NT" # make sure TBB will interpret it correctly
     libext = '.dll'
     libpref = ''
     dll_dir = bin_dir

@@ -44,7 +44,7 @@
 */
 
 /*
- * apitrigeom.cpp - This file contains code for generating triangle tesselated
+ * apitrigeom.cpp - This file contains code for generating triangle tessellated
  *                geometry, for use with OpenGL, XGL, etc.
  */
 

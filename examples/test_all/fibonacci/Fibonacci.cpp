@@ -177,7 +177,7 @@ value SharedSerialFib(int n)
 //! Hash comparer
 struct IntHashCompare {
     bool equal( const int j, const int k ) const { return j == k; }
-    unsigned long hash( const int k ) const { return (unsigned long)k; }   
+    unsigned long hash( const int k ) const { return (unsigned long)k; }
 };
 //! NumbersTable type based on concurrent_hash_map
 typedef concurrent_hash_map<int, value, IntHashCompare> NumbersTable;
@@ -193,7 +193,7 @@ public:
         for( int i = 2; i <= my_n; ++i ) { // there is no difference in to recycle or to make loop
             NumbersTable::const_accessor f1, f2; // same as iterators
             if( !Fib.find(f1, i-1) || !Fib.find(f2, i-2) ) {
-                // Something is seriously wrong, because i-1 and i-2 must have been inserted 
+                // Something is seriously wrong, because i-1 and i-2 must have been inserted
                 // earlier by this thread or another thread.
                 assert(0);
             }
@@ -209,7 +209,7 @@ public:
 //! Root function
 value ConcurrentHashSerialFib(int n)
 {
-    NumbersTable Fib; 
+    NumbersTable Fib;
     bool okay;
     okay = Fib.insert( make_pair(0, 0) ); assert(okay); // assign initial values
     okay = Fib.insert( make_pair(1, 1) ); assert(okay);
@@ -245,7 +245,7 @@ struct QueueStream {
 };
 
 //! Functor for parallel_for which fills the queue
-struct parallel_forFibBody { 
+struct parallel_forFibBody {
     QueueStream &my_stream;
     //! fill functor arguments
     parallel_forFibBody(QueueStream &s) : my_stream(s) { }
@@ -286,8 +286,8 @@ struct QueueInsertTask: public task {
     //! executing task
     task* execute() /*override*/ {
         // Execute of parallel pushing of n-1 initial matrices
-        parallel_for( blocked_range<int>( 1, my_n, 10 ), parallel_forFibBody(my_stream) ); 
-        my_stream.producer_is_done = true; 
+        parallel_for( blocked_range<int>( 1, my_n, 10 ), parallel_forFibBody(my_stream) );
+        my_stream.producer_is_done = true;
         return 0;
     }
 };
@@ -317,7 +317,7 @@ value ParallelQueueFib(int n)
     // before the second task in the list starts.
     task::spawn_root_and_wait(list);
     assert(stream.Queue.unsafe_size() == 1); // it is easy to lose some work
-    Matrix2x2 M; 
+    Matrix2x2 M;
     bool result = stream.Queue.try_pop( M ); // get last matrix
     assert( result );
     return M.v[0][0]; // and result number
@@ -349,7 +349,7 @@ public:
         concurrent_queue<Matrix2x2> &Queue = *static_cast<concurrent_queue<Matrix2x2> *>(p);
         Matrix2x2 m1, m2;
         // get two elements
-        while( !Queue.try_pop( m1 ) ) this_tbb_thread::yield(); 
+        while( !Queue.try_pop( m1 ) ) this_tbb_thread::yield();
         while( !Queue.try_pop( m2 ) ) this_tbb_thread::yield();
         m1 = m1 * m2; // process them
         Queue.push( m1 ); // and push back
@@ -373,7 +373,7 @@ value ParallelPipeFib(int n)
     pipeline.clear(); // do not forget clear the pipeline
 
     assert( input.Queue.unsafe_size()==1 );
-    Matrix2x2 M; 
+    Matrix2x2 M;
     bool result = input.Queue.try_pop( M ); // get last element
     assert( result );
     return M.v[0][0]; // get value
@@ -384,20 +384,20 @@ value ParallelPipeFib(int n)
 //! Functor for parallel_reduce
 struct parallel_reduceFibBody {
     Matrix2x2 sum;
-    int splitted;  //< flag to make one less operation for splitted bodies
+    int split_flag;  //< flag to make one less operation for split bodies
     //! Constructor fills sum with initial matrix
-    parallel_reduceFibBody() : sum( Matrix1110 ), splitted(0) { }
+    parallel_reduceFibBody() : sum( Matrix1110 ), split_flag(0) { }
     //! Splitting constructor
-    parallel_reduceFibBody( parallel_reduceFibBody& other, split ) : sum( Matrix1110 ), splitted(1/*note that it is splitted*/) {}
+    parallel_reduceFibBody( parallel_reduceFibBody& other, split ) : sum( Matrix1110 ), split_flag(1/*note that it is split*/) {}
     //! Join point
     void join( parallel_reduceFibBody &s ) {
         sum = sum * s.sum;
     }
     //! Process multiplications
     void operator()( const blocked_range<int> &r ) {
-        for( int k = r.begin() + splitted; k < r.end(); ++k )
+        for( int k = r.begin() + split_flag; k < r.end(); ++k )
             sum = sum * Matrix1110;
-        splitted = 0; // reset flag, because this method can be reused for next range
+        split_flag = 0; // reset flag, because this method can be reused for next range
     }
 };
 //! Root function
@@ -469,7 +469,7 @@ struct FibTask: public task {
     value x, y;
     bool second_phase; //< flag of continuation
     // task arguments
-    FibTask( int n_, value& sum_ ) : 
+    FibTask( int n_, value& sum_ ) :
         n(n_), sum(sum_), second_phase(false)
     {}
     //! Execute task
@@ -494,7 +494,7 @@ struct FibTask: public task {
     }
 };
 //! Root function
-value ParallelTaskFib(int n) { 
+value ParallelTaskFib(int n) {
     value sum;
     FibTask& a = *new(task::allocate_root()) FibTask(n, sum);
     task::spawn_root_and_wait(a);
@@ -515,8 +515,8 @@ void IntRange::set_from_string( const char* s ) {
     char* end;
     high = low = strtol(s,&end,0);
     switch( *end ) {
-    case ':': 
-        high = strtol(end+1,0,0); 
+    case ':':
+        high = strtol(end+1,0,0);
         break;
     case '\0':
         break;

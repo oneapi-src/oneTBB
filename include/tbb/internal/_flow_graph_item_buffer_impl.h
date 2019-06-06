@@ -140,7 +140,7 @@ namespace internal {
             return get_my_item(my_tail - 1);
         }
 
-        // following methods are for reservation of the front of a bufffer.
+        // following methods are for reservation of the front of a buffer.
         void reserve_item(size_type i) { __TBB_ASSERT(my_item_valid(i) && !my_item_reserved(i), "item cannot be reserved"); item(i).second = reserved_item; }
         void release_item(size_type i) { __TBB_ASSERT(my_item_reserved(i), "item is not reserved"); item(i).second = has_item; }
 

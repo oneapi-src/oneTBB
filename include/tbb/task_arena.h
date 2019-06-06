@@ -53,7 +53,7 @@ public:
     virtual ~delegate_base() {}
 };
 
-// If decltype is availabe, the helper detects the return type of functor of specified type,
+// If decltype is available, the helper detects the return type of functor of specified type,
 // otherwise it defines the void type.
 template <typename F>
 struct return_type_or_void {

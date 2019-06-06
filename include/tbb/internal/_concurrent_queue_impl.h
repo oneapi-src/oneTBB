@@ -885,7 +885,7 @@ protected:
     //! Get size of queue
     ptrdiff_t __TBB_EXPORTED_METHOD internal_size() const;
 
-    //! Check if the queue is emtpy
+    //! Check if the queue is empty
     bool __TBB_EXPORTED_METHOD internal_empty() const;
 
     //! Set the queue capacity

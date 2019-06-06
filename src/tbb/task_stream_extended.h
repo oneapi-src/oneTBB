@@ -30,7 +30,7 @@
 #endif
 
 #if !__TBB_CPF_BUILD
-#error This code bears a preview status until it proves its usefulness/peformance suitability.
+#error This code bears a preview status until it proves its usefulness/performance suitability.
 #endif
 
 #include "tbb/tbb_stddef.h"

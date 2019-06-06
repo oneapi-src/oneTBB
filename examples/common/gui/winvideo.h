@@ -23,7 +23,7 @@
 #ifndef _CRT_SECURE_NO_DEPRECATE
 #define _CRT_SECURE_NO_DEPRECATE
 #endif
-// Check that the target Windows version has all API calls requried.
+// Check that the target Windows version has all API calls required.
 #ifndef _WIN32_WINNT
 # define _WIN32_WINNT 0x0400
 #endif
@@ -41,7 +41,7 @@
 #pragma comment(lib, "gdi32.lib")
 #pragma comment(lib, "user32.lib")
 
-// maximum mumber of lines the output console should have
+// maximum number of lines the output console should have
 static const WORD MAX_CONSOLE_LINES = 500;
 const COLORREF              RGBKEY = RGB(8, 8, 16); // at least 8 for 16-bit palette
 HWND                        g_hAppWnd;           // The program's window handle
