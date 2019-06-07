@@ -45,7 +45,7 @@ ifndef arch
 endif
 
 ifndef runtime
-  clang_version:=$(shell clang -v 2>&1 >/dev/null | grep version | sed -e "s/.*version \(.*[0-9]\) .*/\1/")
+  clang_version:=$(shell clang --version | sed -n "1s/.*version \(.*[0-9]\) .*/\1/p")
   ifndef os_version
     os_version:=$(shell /usr/bin/sw_vers -productVersion)
   endif
