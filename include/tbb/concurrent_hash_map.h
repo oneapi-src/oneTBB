@@ -122,7 +122,7 @@ namespace interface5 {
 #endif
         //! Constructor
         hash_map_base() {
-            std::memset( this, 0, pointers_per_table*sizeof(segment_ptr_t) // 32*4=128   or 64*8=512
+            std::memset( static_cast<void*>(this), 0, pointers_per_table*sizeof(segment_ptr_t) // 32*4=128   or 64*8=512
                 + sizeof(my_size) + sizeof(my_mask)  // 4+4 or 8+8
                 + embedded_buckets*sizeof(bucket) ); // n*8 or n*16
             for( size_type i = 0; i < embedded_block; i++ ) // fill the table
