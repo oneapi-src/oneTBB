@@ -27,6 +27,10 @@ int filter_node_count = 0;
 #include "tbb/tbb_allocator.h"
 #include "tbb/spin_mutex.h"
 
+#if __TBB_CPP11_RVALUE_REF_PRESENT
+#include <memory> // std::unique_ptr
+#endif
+
 const unsigned n_tokens = 8;
 // we can conceivably have two buffers used in the middle filter for every token in flight, so
 // we must allocate two buffers for every token.  Unlikely, but possible.
@@ -647,17 +651,22 @@ int TestMain() {
 
         // Run test several times with different types
         run_function_spec();
-        run_function<size_t,int>("size_t", "int");
-        run_function<int,double>("int", "double");
-        run_function<size_t,double>("size_t", "double");
-        run_function<size_t,bool>("size_t", "bool");
-        run_function<int,int>("int","int");
-        run_function<check_type<unsigned int>,size_t>("check_type<unsigned int>", "size_t");
-        run_function<check_type<unsigned short>,size_t>("check_type<unsigned short>", "size_t");
-        run_function<check_type<unsigned int>, check_type<unsigned int> >("check_type<unsigned int>", "check_type<unsigned int>");
-        run_function<check_type<unsigned int>, check_type<unsigned short> >("check_type<unsigned int>", "check_type<unsigned short>");
-        run_function<check_type<unsigned short>, check_type<unsigned short> >("check_type<unsigned short>", "check_type<unsigned short>");
-        run_function<double, check_type<unsigned short> >("double", "check_type<unsigned short>");
+        #define M(type1, type2) run_function<type1, type2>(#type1, #type2);
+        M(size_t, int)
+        M(int, double)
+        M(size_t, double)
+        M(size_t, bool)
+        M(int, int)
+        M(check_type<unsigned int>, size_t)
+        M(check_type<unsigned short>, size_t)
+        M(check_type<unsigned int>, check_type<unsigned int>)
+        M(check_type<unsigned int>, check_type<unsigned short>)
+        M(check_type<unsigned short>, check_type<unsigned short>)
+        M(double, check_type<unsigned short>)
+#if __TBB_CPP11_RVALUE_REF_PRESENT
+        M(std::unique_ptr<int>, std::unique_ptr<int>) // move-only type
+#endif
+        #undef M
     }
     return Harness::Done;
 }
