@@ -636,12 +636,12 @@ void run_function(const char *l1, const char *l2) {
 int TestMain() {
 #if TBB_USE_DEBUG
     // size and copyability.
-    REMARK("is_large_object<int>::value=%d\n", tbb::interface6::internal::is_large_object<int>::value);
-    REMARK("is_large_object<double>::value=%d\n", tbb::interface6::internal::is_large_object<double>::value);
-    REMARK("is_large_object<int *>::value=%d\n", tbb::interface6::internal::is_large_object<int *>::value);
-    REMARK("is_large_object<check_type<int> >::value=%d\n", tbb::interface6::internal::is_large_object<check_type<int> >::value);
-    REMARK("is_large_object<check_type<int>* >::value=%d\n", tbb::interface6::internal::is_large_object<check_type<int>* >::value);
-    REMARK("is_large_object<check_type<short> >::value=%d\n\n", tbb::interface6::internal::is_large_object<check_type<short> >::value);
+    REMARK("use_allocator<int>::value=%d\n", tbb::interface6::internal::use_allocator<int>::value);
+    REMARK("use_allocator<double>::value=%d\n", tbb::interface6::internal::use_allocator<double>::value);
+    REMARK("use_allocator<int *>::value=%d\n", tbb::interface6::internal::use_allocator<int *>::value);
+    REMARK("use_allocator<check_type<int> >::value=%d\n", tbb::interface6::internal::use_allocator<check_type<int> >::value);
+    REMARK("use_allocator<check_type<int>* >::value=%d\n", tbb::interface6::internal::use_allocator<check_type<int>* >::value);
+    REMARK("use_allocator<check_type<short> >::value=%d\n\n", tbb::interface6::internal::use_allocator<check_type<short> >::value);
 #endif
     // Test with varying number of threads.
     for( int nthread=MinThread; nthread<=MaxThread; ++nthread ) {
