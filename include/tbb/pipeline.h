@@ -26,10 +26,6 @@
 #include <type_traits>
 #endif
 
-#if __TBB_CPP11_RVALUE_REF_PRESENT
-#include <utility> // for std::move
-#endif
-
 namespace tbb {
 
 class pipeline;
@@ -362,16 +358,14 @@ class token_helper<T, true> {
     typedef T* pointer;
     typedef T value_type;
 #if __TBB_CPP11_RVALUE_REF_PRESENT
-    static pointer create_token(value_type && source) {
-        pointer output_t = allocator().allocate(1);
-        return new (output_t) T(std::move(source));
-    }
+    static pointer create_token(      value_type && source)
 #else
-    static pointer create_token(const value_type & source) {
-        pointer output_t = allocator().allocate(1);
-        return new (output_t) T(source);
-    }
+    static pointer create_token(const value_type &  source)
 #endif
+    {
+        pointer output_t = allocator().allocate(1);
+        return new (output_t) T(tbb::internal::move(source));
+    }
     static value_type & token(pointer & t) { return *t; }
     static void * cast_to_void_ptr(pointer ref) { return (void *) ref; }
     static pointer cast_from_void_ptr(void * ref) { return (pointer)ref; }
@@ -431,11 +425,7 @@ class concrete_filter: public tbb::filter {
 
     void* operator()(void* input) __TBB_override {
         t_pointer temp_input = t_helper::cast_from_void_ptr(input);
-#if __TBB_CPP11_RVALUE_REF_PRESENT
-        u_pointer output_u = u_helper::create_token(my_body(std::move(t_helper::token(temp_input))));
-#else
-        u_pointer output_u = u_helper::create_token(my_body(          t_helper::token(temp_input) ));
-#endif
+        u_pointer output_u = u_helper::create_token(my_body(tbb::internal::move(t_helper::token(temp_input))));
         t_helper::destroy_token(temp_input);
         return u_helper::cast_to_void_ptr(output_u);
     }
@@ -483,11 +473,7 @@ class concrete_filter<T,void,Body>: public filter {
 
     void* operator()(void* input) __TBB_override {
         t_pointer temp_input = t_helper::cast_from_void_ptr(input);
-#if __TBB_CPP11_RVALUE_REF_PRESENT
-        my_body(std::move(t_helper::token(temp_input)));
-#else
-        my_body(          t_helper::token(temp_input) );
-#endif
+        my_body(tbb::internal::move(t_helper::token(temp_input)));
         t_helper::destroy_token(temp_input);
         return NULL;
     }
