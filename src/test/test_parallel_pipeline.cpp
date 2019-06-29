@@ -651,22 +651,22 @@ int TestMain() {
 
         // Run test several times with different types
         run_function_spec();
-        #define M(type1, type2) run_function<type1, type2>(#type1, #type2);
-        M(size_t, int)
-        M(int, double)
-        M(size_t, double)
-        M(size_t, bool)
-        M(int, int)
-        M(check_type<unsigned int>, size_t)
-        M(check_type<unsigned short>, size_t)
-        M(check_type<unsigned int>, check_type<unsigned int>)
-        M(check_type<unsigned int>, check_type<unsigned short>)
-        M(check_type<unsigned short>, check_type<unsigned short>)
-        M(double, check_type<unsigned short>)
+        #define RUN_FUNCTION(type1, type2) run_function<type1, type2>(#type1, #type2);
+        RUN_FUNCTION(size_t, int)
+        RUN_FUNCTION(int, double)
+        RUN_FUNCTION(size_t, double)
+        RUN_FUNCTION(size_t, bool)
+        RUN_FUNCTION(int, int)
+        RUN_FUNCTION(check_type<unsigned int>, size_t)
+        RUN_FUNCTION(check_type<unsigned short>, size_t)
+        RUN_FUNCTION(check_type<unsigned int>, check_type<unsigned int>)
+        RUN_FUNCTION(check_type<unsigned int>, check_type<unsigned short>)
+        RUN_FUNCTION(check_type<unsigned short>, check_type<unsigned short>)
+        RUN_FUNCTION(double, check_type<unsigned short>)
 #if __TBB_CPP11_RVALUE_REF_PRESENT
-        M(std::unique_ptr<int>, std::unique_ptr<int>) // move-only type
+        RUN_FUNCTION(std::unique_ptr<int>, std::unique_ptr<int>) // move-only type
 #endif
-        #undef M
+        #undef RUN_FUNCTION
     }
     return Harness::Done;
 }
