@@ -84,6 +84,8 @@ public:
     flist_iterator( const flist_iterator<Solist, typename Solist::value_type> &other )
         : my_node_ptr(other.my_node_ptr) {}
 
+    flist_iterator& operator=( const flist_iterator<Solist, Value> &other ) = default;
+
     reference operator*() const { return my_node_ptr->my_element; }
     pointer operator->() const { return &**this; }
 

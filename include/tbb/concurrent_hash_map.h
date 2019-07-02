@@ -407,6 +407,9 @@ namespace interface5 {
             my_bucket(other.my_bucket),
             my_node(other.my_node)
         {}
+
+        hash_map_iterator& operator=( const hash_map_iterator<Container, Value> &other ) = default;
+
         Value& operator*() const {
             __TBB_ASSERT( hash_map_base::is_valid(my_node), "iterator uninitialized or at end of container?" );
             return my_node->value();

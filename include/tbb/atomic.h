@@ -416,6 +416,7 @@ struct atomic: internal::atomic_impl<T> {
     #define __TBB_DECL_ATOMIC(T)                                                                    \
         template<> struct atomic<T>: internal::atomic_impl_with_arithmetic<T,T,char> {              \
             atomic() = default;                                                                     \
+            constexpr atomic( const atomic<T>& rhs ) = default;                                     \
             constexpr atomic(T arg): internal::atomic_impl_with_arithmetic<T,T,char>(arg) {}        \
                                                                                                     \
             T operator=( T rhs ) {return store_with_release(rhs);}                                  \

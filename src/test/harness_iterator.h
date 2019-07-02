@@ -125,6 +125,7 @@ public:
 
     explicit RandomIterator ( T * ptr ) : my_ptr(ptr){}
     RandomIterator ( const RandomIterator& r ) : my_ptr(r.my_ptr){}
+    RandomIterator& operator= ( const RandomIterator& r ) = default;
     T& operator* () const { return *my_ptr; }
     RandomIterator& operator++ () { ++my_ptr; return *this; }
     bool operator== ( const RandomIterator& r ) const { return my_ptr == r.my_ptr; }

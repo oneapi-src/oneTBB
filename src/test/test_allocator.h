@@ -46,6 +46,9 @@ struct Foo {
         *this = x;
         ++NumberOfFoo;
     }
+
+    Foo& operator=( const Foo& x ) = default;
+
     ~Foo() {
         --NumberOfFoo;
     }
