@@ -757,10 +757,20 @@ public:
 public:
     concurrent_queue_iterator() {}
 
-    /** If Value==Container::value_type, then this routine is the copy constructor.
-        If Value==const Container::value_type, then this routine is a conversion constructor. */
-    concurrent_queue_iterator( const concurrent_queue_iterator<Container,typename Container::value_type>& other ) :
+    concurrent_queue_iterator( const concurrent_queue_iterator<Container, Value>& other ) :
         concurrent_queue_iterator_base_v3<typename tbb_remove_cv<Value>::type>(other)
+    {}
+
+    // converting constructor enabled only when Value != Container::value_type since there already is a copy constructor
+    template<
+        typename U=concurrent_queue_iterator<Container, Value>,
+        typename std::enable_if<
+            !std::is_same<Value, typename Container::value_type>::value,
+            U
+        >::type* =nullptr
+    >
+    concurrent_queue_iterator( const U& other) :
+        concurrent_queue_iterator_base_v3<typename tbb_remove_cv<typename Container::value_type>::type>(other)
     {}
 
     //! Iterator assignment
@@ -1018,11 +1028,22 @@ public:
 public:
     concurrent_queue_iterator() {}
 
-    /** If Value==Container::value_type, then this routine is the copy constructor.
-        If Value==const Container::value_type, then this routine is a conversion constructor. */
-    concurrent_queue_iterator( const concurrent_queue_iterator<Container,typename Container::value_type>& other ) :
+    concurrent_queue_iterator( const concurrent_queue_iterator<Container, Value>& other ) :
         concurrent_queue_iterator_base_v3(other)
     {}
+
+    // converting constructor enabled only when Value != Container::value_type since there already is a copy constructor
+    template<
+        typename U=concurrent_queue_iterator<Container, Value>,
+        typename std::enable_if<
+            !std::is_same<Value, typename Container::value_type>::value,
+            U
+        >::type* =nullptr
+    >
+    concurrent_queue_iterator( const U& other) :
+        concurrent_queue_iterator_base_v3(other)
+    {}
+
 
     //! Iterator assignment
     concurrent_queue_iterator& operator=( const concurrent_queue_iterator& other ) {
