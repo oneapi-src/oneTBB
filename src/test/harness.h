@@ -445,9 +445,9 @@ int main(int argc, char* argv[]) {
 
 //! Base class for prohibiting compiler-generated operator=
 class NoAssign {
-    //! Assignment not allowed
-    void operator=( const NoAssign& );
 public:
+    //! Assignment not allowed
+    void operator=( const NoAssign& ) = delete;
     NoAssign() {} // explicitly defined to prevent gratuitous warnings
 };
 

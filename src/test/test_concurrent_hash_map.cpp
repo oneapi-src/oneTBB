@@ -90,11 +90,11 @@ public:
     that concurrent_hash_map uses only the required interface. */
 class MyKey {
 private:
-    void operator=( const MyKey&  );    // Deny access
     int key;
     friend class MyHashCompare;
     friend class YourHashCompare;
 public:
+    void operator=( const MyKey&  ) = delete;    // Deny access
     static MyKey make( int i ) {
         MyKey result;
         result.key = i;
