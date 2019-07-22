@@ -170,10 +170,50 @@ int UnmapMemory(void *area, size_t bytes)
 #include <windows.h>
 
 #define MEMORY_MAPPING_USES_MALLOC 0
-void* MapMemory (size_t bytes, PageType)
+void* MapMemory (size_t bytes, PageType pageType)
 {
     /* Is VirtualAlloc thread safe? */
-    return VirtualAlloc(NULL, bytes, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+    void* result = 0;
+    int prevErrno = errno;
+
+    switch (pageType) {
+    case PREALLOCATED_HUGE_PAGE:
+    case TRANSPARENT_HUGE_PAGE:
+    {
+        MALLOC_ASSERT((bytes % HUGE_PAGE_SIZE) == 0, "Mapping size should be divisible by huge page size");
+
+#if _WIN32_WINNT >= _WIN32_WINNT_WIN7
+        ULONG HighestNodeNumber;
+        GetNumaHighestNodeNumber(&HighestNodeNumber);
+
+        if (HighestNodeNumber == 0)
+        {
+            result = VirtualAlloc(nullptr, bytes, MEM_COMMIT | MEM_RESERVE | MEM_LARGE_PAGES, PAGE_READWRITE);
+        }
+        else
+        {
+            PROCESSOR_NUMBER ProcNumber;
+            GetCurrentProcessorNumberEx(&ProcNumber);
+
+            USHORT NumaNodeNumber;
+            GetNumaProcessorNodeEx(&ProcNumber, &NumaNodeNumber);
+
+            result = VirtualAllocExNuma(GetCurrentProcess(), nullptr, bytes, MEM_COMMIT | MEM_RESERVE | MEM_LARGE_PAGES, PAGE_READWRITE, NumaNodeNumber);
+        }
+#else
+        result = VirtualAlloc(nullptr, bytes, MEM_COMMIT | MEM_RESERVE | MEM_LARGE_PAGES, PAGE_READWRITE);
+#endif
+        if(result != 0)
+            break;
+    }
+    default:
+    {
+        result = VirtualAlloc(NULL, bytes, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+    }
+    }
+
+    return result;
+
 }
 
 int UnmapMemory(void *area, size_t /*bytes*/)
