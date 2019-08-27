@@ -33,21 +33,21 @@ public:
     }
     typedef rml::internal::thread_monitor thread_monitor;
     thread_monitor monitor;
-    volatile int request;
-    volatile int ack;
-    volatile unsigned clock;
-    volatile unsigned stamp;
+    tbb::atomic<int> request;
+    tbb::atomic<int> ack;
+    tbb::atomic<unsigned> clock;
+    unsigned stamp;
     ThreadState() : request(-1), ack(-1), clock(0) {}
 };
 
 void ThreadState::loop() {
     for(;;) {
-        ++clock;
         if( ack==request ) {
             thread_monitor::cookie c;
             monitor.prepare_wait(c);
             if( ack==request ) {
                 REMARK("%p: request=%d ack=%d\n", this, request, ack );
+                ++clock;
                 monitor.commit_wait(c);
             } else
                 monitor.cancel_wait();
@@ -60,7 +60,7 @@ void ThreadState::loop() {
                     rml::internal::thread_monitor::yield();
             }
             int r = request;
-            ack = request;
+            ack = r;
             if( !r ) return;
         }
     }
@@ -89,7 +89,7 @@ int TestMain () {
                                 REPORT("Warning: thread %d not waiting\n",i);
                                 break;
                             }
-                        } while( t[i].stamp!=t[i].clock );
+                        } while( t[i].stamp==0 || t[i].stamp!=t[i].clock );
                     }
                 }
                 REMARK("notifying threads\n");
