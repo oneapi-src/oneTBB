@@ -1612,6 +1612,23 @@ int TestMain () {
     }
     if( MaxThread<2 ) MaxThread=2;
 
+    // Trying to make a regression test for non-initialization
+    {
+        {
+            char buf[1000];
+            memset(buf, static_cast<char>(0xff), sizeof(buf)); // apparently this is not enough to avoid having the inserted value already be zero by accident
+            ASSERT(buf[0] == static_cast<char>(0xff), NULL); // will this avoid having this optimised away?
+        }
+        tbb::concurrent_hash_map<int, double> testmap;
+        tbb::concurrent_hash_map<int, double>::accessor a;
+        for (int i = 0; i < 1000000; ++i) {
+            testmap.insert(a, i); // this currently fails but only with local sabotage
+            ///testmap.insert(a, std::pair<int, double>(i, double())); // this currently works even with local sabotage
+            ASSERT(a->second == double(), NULL);
+        }
+        
+    }
+    
     // Do serial tests
     TestTypes();
     TestCopy();

@@ -132,10 +132,9 @@ public:
 };
 
 class ExpertBody : NoAssign {
-    pq_t& pq;
     tbb::aggregator_ext<my_handler>& agg;
 public:
-    ExpertBody(pq_t& pq_, tbb::aggregator_ext<my_handler>& agg_) : pq(pq_), agg(agg_) {}
+    ExpertBody(tbb::aggregator_ext<my_handler>& agg_) : agg(agg_) {}
     void operator()(const int threadID) const {
         for (int i=0; i<N; ++i) {
             op_data to_push(threadID);
@@ -153,7 +152,7 @@ void TestExpertInterface(int nThreads) {
     tbb::aggregator_ext<my_handler> agg((my_handler(&my_pq)));
     for (int i=0; i<MaxThread; ++i) shared_data[i] = 0;
     REMARK("Testing aggregator expert interface.\n");
-    NativeParallelFor(nThreads, ExpertBody(my_pq, agg));
+    NativeParallelFor(nThreads, ExpertBody(agg));
     for (int i=0; i<nThreads; ++i)
         ASSERT(shared_data[i] == N, "wrong number of elements pushed");
     REMARK("Done testing aggregator expert interface.\n");

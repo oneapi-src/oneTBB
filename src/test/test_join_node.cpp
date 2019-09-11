@@ -126,5 +126,7 @@ int TestMain() {
     test_main<tbb::flow::queueing>();
     test_main<tbb::flow::reserving>();
     test_main<tbb::flow::tag_matching>();
+    // TODO: this now actually exercises the code above, but is just one arbitrary type sufficient (here same as in reference manual example)?
+    generate_recirc_test<tbb::flow::tuple<int,float> >::do_test();
     return Harness::Done;
 }
