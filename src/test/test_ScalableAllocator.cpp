@@ -37,7 +37,7 @@
 
 typedef static_counting_allocator<tbb::memory_pool_allocator<char> > cnt_alloc_t;
 typedef local_counting_allocator<std::allocator<char> > cnt_provider_t;
-class MinimalAllocator : cnt_provider_t {
+class MinimalAllocator : cnt_provider_t, tbb::internal::no_assign {
 public:
     typedef char value_type;
     MinimalAllocator() {
@@ -68,12 +68,9 @@ public:
     }
 };
 
-class NullAllocator {
+class NullAllocator : tbb::internal::no_assign {
 public:
     typedef char value_type;
-    NullAllocator() { }
-    NullAllocator(const NullAllocator&) { }
-    ~NullAllocator() { }
     void *allocate(size_t) { return NULL; }
     void deallocate(void *, size_t) { ASSERT(0, NULL); }
 };

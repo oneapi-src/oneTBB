@@ -56,13 +56,14 @@ typedef double value_t;
 
 class StatisticsCollector
 {
+    StatisticsCollector           (const StatisticsCollector &); // = delete
+    StatisticsCollector& operator=(const StatisticsCollector &); // = delete
+
 public:
     typedef map<string, string> Analysis_t;
     typedef vector<value_t> Results_t;
 
 protected:
-    StatisticsCollector(const StatisticsCollector &);
-
     struct StatisticResults
     {
         string              Name;

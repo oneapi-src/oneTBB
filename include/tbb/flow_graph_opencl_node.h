@@ -804,7 +804,7 @@ private:
 };
 
 template <typename DeviceFilter>
-class opencl_factory {
+class opencl_factory : tbb::internal::no_copy {
 public:
     template<typename T> using async_msg_type = opencl_async_msg<T, opencl_factory<DeviceFilter>>;
     typedef opencl_device device_type;
@@ -1069,9 +1069,6 @@ private:
         return d1 == d2;
     }
 private:
-    opencl_factory( const opencl_factory& );
-    opencl_factory& operator=(const opencl_factory&);
-
     cl_context context() {
         std::call_once( my_once_flag, &opencl_factory::init_once, this );
         return my_cl_context;

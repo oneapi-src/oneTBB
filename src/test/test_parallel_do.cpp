@@ -29,9 +29,8 @@
 
 static tbb::atomic<int> g_values_counter;
 
-class value_t {
+class value_t : tbb::internal::no_copy {
     size_t x;
-    value_t& operator= ( const value_t& );
 public:
     value_t ( size_t xx ) : x(xx) { ++g_values_counter; }
     value_t ( const value_t& v ) : x(v.x) { ++g_values_counter; }
@@ -54,7 +53,7 @@ size_t FindNumOfTasks ( size_t max_depth ) {
 }
 
 //! Simplest form of the parallel_do functor object.
-class FakeTaskGeneratorBody {
+class FakeTaskGeneratorBody : tbb::internal::no_copy {
 public:
     //! The simplest form of the function call operator
     /** It does not allow adding new tasks during its execution. **/
@@ -64,7 +63,7 @@ public:
 };
 
 /** Work item is passed by reference here. **/
-class FakeTaskGeneratorBody_RefVersion {
+class FakeTaskGeneratorBody_RefVersion : tbb::internal::no_copy {
 public:
     void operator() ( value_t& depth ) const {
         g_tasks_observed += FindNumOfTasks(depth.value());
@@ -72,7 +71,7 @@ public:
 };
 
 /** Work item is passed by reference to const here. **/
-class FakeTaskGeneratorBody_ConstRefVersion {
+class FakeTaskGeneratorBody_ConstRefVersion : tbb::internal::no_copy {
 public:
     void operator() ( const value_t& depth ) const {
         g_tasks_observed += FindNumOfTasks(depth.value());
@@ -80,7 +79,7 @@ public:
 };
 
 /** Work item is passed by reference to volatile here. **/
-class FakeTaskGeneratorBody_VolatileRefVersion {
+class FakeTaskGeneratorBody_VolatileRefVersion : tbb::internal::no_copy {
 public:
     void operator() ( volatile value_t& depth, tbb::parallel_do_feeder<value_t>& ) const {
         g_tasks_observed += FindNumOfTasks(depth.value());
@@ -89,7 +88,7 @@ public:
 
 #if __TBB_CPP11_RVALUE_REF_PRESENT
 /** Work item is passed by rvalue reference here. **/
-class FakeTaskGeneratorBody_RvalueRefVersion {
+class FakeTaskGeneratorBody_RvalueRefVersion : tbb::internal::no_copy {
 public:
     void operator() ( value_t&& depth ) const {
         g_tasks_observed += FindNumOfTasks(depth.value());
@@ -108,7 +107,7 @@ void do_work ( const value_t& depth, tbb::parallel_do_feeder<value_t>& feeder ) 
 
 //! Standard form of the parallel_do functor object.
 /** Allows adding new work items on the fly. **/
-class TaskGeneratorBody
+class TaskGeneratorBody : tbb::internal::no_copy
 {
 public:
     //! This form of the function call operator can be used when the body needs to add more work during the processing
@@ -116,16 +115,13 @@ public:
         do_work(depth, feeder);
     }
 private:
-    // Assert that parallel_do does not ever access body constructors
-    TaskGeneratorBody () {}
-    TaskGeneratorBody ( const TaskGeneratorBody& );
     // These functions need access to the default constructor
     template<class Body, class Iterator> friend void TestBody( size_t );
     template<class Body, class Iterator> friend void TestBody_MoveOnly( size_t );
 };
 
 /** Work item is passed by reference here. **/
-class TaskGeneratorBody_RefVersion
+class TaskGeneratorBody_RefVersion : tbb::internal::no_copy
 {
 public:
     void operator() ( value_t& depth, tbb::parallel_do_feeder<value_t>& feeder ) const {
@@ -134,7 +130,7 @@ public:
 };
 
 /** Work item is passed as const here. Compilers must ignore the const qualifier. **/
-class TaskGeneratorBody_ConstVersion
+class TaskGeneratorBody_ConstVersion : tbb::internal::no_copy
 {
 public:
     void operator() ( const value_t depth, tbb::parallel_do_feeder<value_t>& feeder ) const {
@@ -143,7 +139,7 @@ public:
 };
 
 /** Work item is passed by reference to const here. **/
-class TaskGeneratorBody_ConstRefVersion
+class TaskGeneratorBody_ConstRefVersion : tbb::internal::no_copy
 {
 public:
     void operator() ( const value_t& depth, tbb::parallel_do_feeder<value_t>& feeder ) const {
@@ -152,7 +148,7 @@ public:
 };
 
 /** Work item is passed by reference to volatile here. **/
-class TaskGeneratorBody_VolatileRefVersion
+class TaskGeneratorBody_VolatileRefVersion : tbb::internal::no_copy
 {
 public:
     void operator() ( volatile value_t& depth, tbb::parallel_do_feeder<value_t>& feeder ) const {
@@ -161,7 +157,7 @@ public:
 };
 
 /** Work item is passed by reference to const volatile here. **/
-class TaskGeneratorBody_ConstVolatileRefVersion
+class TaskGeneratorBody_ConstVolatileRefVersion : tbb::internal::no_copy
 {
 public:
     void operator() ( const volatile value_t& depth, tbb::parallel_do_feeder<value_t>& feeder ) const {
@@ -171,7 +167,7 @@ public:
 
 #if __TBB_CPP11_RVALUE_REF_PRESENT
 /** Work item is passed by rvalue reference here. **/
-class TaskGeneratorBody_RvalueRefVersion
+class TaskGeneratorBody_RvalueRefVersion : tbb::internal::no_copy
 {
 public:
     void operator() ( value_t&& depth, tbb::parallel_do_feeder<value_t>& feeder ) const {
@@ -184,7 +180,7 @@ static value_t g_depths[N_DEPTHS] = {0, 1, 2, 3, 4, 0, 1, 0, 1, 2, 0, 1, 2, 3, 0
 
 #if __TBB_CPP11_RVALUE_REF_PRESENT
 template<class Body, class Iterator>
-void TestBody_MoveIter ( const Body& body, Iterator begin, Iterator end  ) {
+void TestBody_MoveIter ( const Body& body, Iterator begin, Iterator end  ) : tbb::internal::no_copy {
     typedef std::move_iterator<Iterator> MoveIterator;
     MoveIterator mbegin(begin);
     MoveIterator mend(end);

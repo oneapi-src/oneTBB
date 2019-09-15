@@ -446,7 +446,11 @@ int main(int argc, char* argv[]) {
 //! Base class for prohibiting compiler-generated operator=
 class NoAssign {
     //! Assignment not allowed
+#if __TBB_CPP11_PRESENT
+    void operator=( const NoAssign& ) = delete;
+#else
     void operator=( const NoAssign& );
+#endif
 public:
     NoAssign() {} // explicitly defined to prevent gratuitous warnings
 };
@@ -454,7 +458,11 @@ public:
 //! Base class for prohibiting compiler-generated copy constructor or operator=
 class NoCopy: NoAssign {
     //! Copy construction not allowed
+#if __TBB_CPP11_PRESENT
+    NoCopy( const NoCopy& ) = delete;
+#else
     NoCopy( const NoCopy& );
+#endif
 public:
     NoCopy() {}
 };

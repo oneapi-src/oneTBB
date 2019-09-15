@@ -39,10 +39,8 @@ public:
 };
 
 //! Class with public interface that is exactly minimal requirements for Body of a parallel_reduce
-class FooBody {
+class FooBody : tbb::internal::no_copy {
 private:
-    FooBody( const FooBody& );          // Deny access
-    void operator=( const FooBody& );   // Deny access
     friend void Flog( int nthread, bool interference );
     //! Parent that created this body via split operation.  NULL if original body.
     FooBody* parent;

@@ -35,8 +35,7 @@ void DoClientSpecificVerification( MyServer& , int );
 
 static bool StrictTeam;
 
-class MyTeam {
-    MyTeam& operator=( const MyTeam& ) ;
+class MyTeam : tbb::internal::no_copy {
 public:
     struct info_type {
         rml::job* job;

@@ -112,7 +112,7 @@ private:
         typename map_storage_type::reference my_value_ref;
         handle_move_t(coarse_grained_raii_lru_cache & cache_ref, typename map_storage_type::reference value_ref):my_cache_ref(cache_ref),my_value_ref(value_ref) {};
     };
-    class handle_object {
+    class handle_object : tbb::internal::no_copy {
         coarse_grained_raii_lru_cache * my_cache_pointer;
         typename map_storage_type::reference my_value_ref;
     public:
@@ -135,9 +135,6 @@ private:
             std::swap(cache_pointer,h.my_cache_pointer);
             return handle_move_t(*cache_pointer,h.my_value_ref);
         }
-    private:
-        void operator=(handle_object&);
-        handle_object(handle_object &);
     };
 };
 #endif //coarse_grained_raii_lru_cache_H

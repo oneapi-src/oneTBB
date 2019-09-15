@@ -53,7 +53,7 @@ public:
         tbb::internal::spin_wait_while_eq(location, value);
     }
 };
-class SpinBarrier
+class SpinBarrier : tbb::internal::no_copy
 {
     unsigned numThreads;
     tbb::atomic<unsigned> numThreadsFinished; // reached the barrier in this epoch
@@ -67,9 +67,6 @@ class SpinBarrier
         template<typename T, typename U>
         void operator()( const T&, U) const {}
     };
-
-    SpinBarrier( const SpinBarrier& );    // no copy ctor
-    void operator=( const SpinBarrier& ); // no assignment
 public:
     SpinBarrier( unsigned nthreads = 0, bool throwaway_ = false ) {
         initialize(nthreads, throwaway_);

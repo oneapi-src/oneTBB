@@ -94,7 +94,7 @@ public:
 /** To maintain shared lists of observers the scheduler first wraps each observer
     object into a proxy so that a list item remained valid even after the corresponding
     proxy object is destroyed by the user code. **/
-class observer_proxy {
+class observer_proxy : tbb::internal::no_copy {
     friend class task_scheduler_observer_v3;
     friend class observer_list;
     //! Reference count used for garbage collection.
@@ -128,9 +128,6 @@ class observer_proxy {
 #if TBB_USE_ASSERT
     ~observer_proxy();
 #endif /* TBB_USE_ASSERT */
-
-    //! Shut up the warning
-    observer_proxy& operator = ( const observer_proxy& );
 }; // class observer_proxy
 
 inline void observer_list::remove_ref_fast( observer_proxy*& p ) {

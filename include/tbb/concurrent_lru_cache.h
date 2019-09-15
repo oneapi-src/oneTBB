@@ -178,9 +178,17 @@ private:
             return handle_move_t(*cache_pointer, *map_record_ptr);
         }
 #endif // __TBB_CPP11_RVALUE_REF_PRESENT
+    // TODO: Unfortunately the DIY move semantics using handle_move_t make it
+    //       very difficult to reason about the following or try variations.
     private:
+#if 1 // TODO: Why does this compile...
         void operator=(handle_object&);
+#else // ...but not this?
+        handle_object& operator=(const handle_object&);
+#endif
 #if __SUNPRO_CC
+    // TODO: Why would this be "a compiler error", if, prior to C++17, the copy constructor
+    //       has to be accessible to allow the use of copy-initialization, even if elided?
     // Presumably due to a compiler error, private copy constructor
     // breaks expressions like handle h = cache[key];
     public:

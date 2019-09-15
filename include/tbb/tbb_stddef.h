@@ -242,6 +242,12 @@ const size_t NFS_MaxLineSize = 128;
 #define __TBB_override // formal comment only
 #endif
 
+#if __TBB_CPP11_PRESENT // TODO: or introduce __TBB_DELETE_PRESENT?
+#define __TBB_delete = delete
+#else
+#define __TBB_delete // formal comment only
+#endif
+
 #if __TBB_CPP17_FALLTHROUGH_PRESENT
 #define __TBB_fallthrough [[fallthrough]]
 #elif __TBB_FALLTHROUGH_PRESENT
@@ -319,7 +325,7 @@ inline T punned_cast( U* ptr ) {
 //! Base class for types that should not be assigned.
 class no_assign {
     // Deny assignment
-    void operator=( const no_assign& );
+    void operator=( const no_assign& ) __TBB_delete;
 public:
 #if __GNUC__
     //! Explicitly define default construction, because otherwise gcc issues gratuitous warning.
@@ -330,7 +336,7 @@ public:
 //! Base class for types that should not be copied or assigned.
 class no_copy: no_assign {
     //! Deny copy construction
-    no_copy( const no_copy& );
+    no_copy( const no_copy& ) __TBB_delete;
 public:
     //! Allow default construction
     no_copy() {}

@@ -578,9 +578,8 @@ public:
 
 template <typename T>
 class pmr_stateful_allocator
+    : tbb::internal::no_assign // redundant: cannot assign const unique_pointer
 {
-private:
-    pmr_stateful_allocator& operator=(const pmr_stateful_allocator&); /* = deleted */
 public:
     typedef T value_type;
     typedef Harness::false_type propagate_on_container_move_assignment;
@@ -644,7 +643,7 @@ public:
         return !(lhs == rhs);
     }
 
-    void* unique_pointer;
+    void* const unique_pointer;
 };
 
 // C++03 allocator doesn't have to be assignable or swappable, so

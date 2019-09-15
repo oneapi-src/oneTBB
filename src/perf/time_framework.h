@@ -164,10 +164,9 @@ class NumberPerSecond : public Tester {
 };
 
 // operate with single tester
-class TestRunner {
+class TestRunner : tbb::internal::no_copy {
     friend class TestProcessor;
     friend struct RunArgsBody;
-    TestRunner(const TestRunner &); // don't copy
 
     const char *tester_name;
     StatisticsCollector *stat;

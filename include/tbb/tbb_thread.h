@@ -106,13 +106,6 @@ namespace internal {
 
     //! Versioned thread class.
     class tbb_thread_v3 {
-#if __TBB_IF_NO_COPY_CTOR_MOVE_SEMANTICS_BROKEN
-        // Workaround for a compiler bug: declaring the copy constructor as public
-        // enables use of the moving constructor.
-        // The definition is not provided in order to prohibit copying.
-    public:
-#endif
-        tbb_thread_v3(const tbb_thread_v3&); // = delete;   // Deny access
     public:
 #if _WIN32||_WIN64
         typedef HANDLE native_handle_type;
@@ -144,6 +137,16 @@ namespace internal {
             internal_start(closure_type::start_routine, new closure_type(f,x,y));
         }
 
+#if __TBB_IF_NO_COPY_CTOR_MOVE_SEMANTICS_BROKEN
+        // Workaround for a compiler bug: declaring the copy constructor as public
+        // enables use of the moving constructor.
+        // The definition is not provided in order to prohibit copying.
+    public:
+#else
+    private:
+#endif
+        tbb_thread_v3(const tbb_thread_v3&) __TBB_delete;
+    public:
 #if __TBB_CPP11_RVALUE_REF_PRESENT
         tbb_thread_v3(tbb_thread_v3&& x) __TBB_NOEXCEPT(true)
             : my_handle(x.my_handle)
@@ -158,7 +161,7 @@ namespace internal {
             return *this;
         }
     private:
-        tbb_thread_v3& operator=(const tbb_thread_v3& x); // = delete;
+        tbb_thread_v3& operator=(const tbb_thread_v3& x) = delete;
     public:
 #else  // __TBB_CPP11_RVALUE_REF_PRESENT
         tbb_thread_v3& operator=(tbb_thread_v3& x) {

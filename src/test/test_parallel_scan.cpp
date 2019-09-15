@@ -261,11 +261,10 @@ T ParallelScanFunctionalInvoker(const Range& range, T idx, const Scan& scan, con
 }
 
 template<typename T>
-class ScanBody {
+class ScanBody : tbb::internal::no_copy {
     const std::vector<T> &my_addend;
     std::vector<T> &my_sum;
     const T my_init;
-    ScanBody& operator= (const ScanBody&);
 public:
     ScanBody(T init, const std::vector<T> &addend, std::vector<T> &sum) :my_addend(addend), my_sum(sum), my_init(init) {}
     template<typename Tag>
