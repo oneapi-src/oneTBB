@@ -663,21 +663,10 @@ protected:
         // Emplace construct an empty T object inside the pair
         return create_node(allocator, std::piecewise_construct,
                            std::forward_as_tuple(key), std::forward_as_tuple());
-#error // this is not what's under investigation right now
 #else
-        // TODO: A compiler warning has been observed if obj is not initialized,
-        //       but can we also demonstrate failure without the initialization,
-        //       and then add that as a regression test? Unfortunately, it seems that
-        //       the value accidentally starts out as if it were zero-initialized anyway,
-        //       unless the memory is spoiled inside this implementation file,
-        //       so we only have a demonstration but not a regression test.
-        {
-            volatile unsigned int i = 0xDEADBEEF; // this will prevent having obj already be zero by accident
-            ++i;
-        }
         // Use of a temporary object is impossible, because create_node takes a non-const reference.
-        // We can initialize obj as follows because concurrent_hash_map already requires T to be CopyConstructible:
-        T obj;// = T(); // without this initialization and with spoiled memory underneath, the contract is broken
+        // copy-initialization is possible because T is already required to be CopyConstructible.
+        T obj = T();
         return create_node(allocator, key, tbb::internal::move(obj));
 #endif
     }
