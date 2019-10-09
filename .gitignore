@@ -85,3 +85,4 @@ CMakeFiles/
 .svn
 crash*
 *.tmp
+/.vs

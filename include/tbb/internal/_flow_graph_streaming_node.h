@@ -462,6 +462,7 @@ private:
         device_selector_base *my_device_selector;
     };
 
+    // TODO: investigate why copy-construction is disallowed
     class args_storage_base : tbb::internal::no_copy {
     public:
         typedef typename kernel_multifunction_node::output_ports_type output_ports_type;
@@ -477,7 +478,7 @@ private:
         {}
 
         args_storage_base( const args_storage_base &k )
-            : my_kernel( k.my_kernel ), my_factory( k.my_factory )
+            : tbb::internal::no_copy(), my_kernel( k.my_kernel ), my_factory( k.my_factory )
         {}
 
         const kernel_type my_kernel;

@@ -361,11 +361,11 @@ public:
  };  // successor_cache<T>
 
 //! An abstract cache of successors, specialized to continue_msg
-template<>
-class successor_cache< continue_msg > : tbb::internal::no_copy {
+template<typename M>
+class successor_cache< continue_msg, M > : tbb::internal::no_copy {
 protected:
 
-    typedef spin_rw_mutex mutex_type;
+    typedef M mutex_type;
     mutex_type my_mutex;
 
 #if __TBB_PREVIEW_ASYNC_MSG
@@ -391,22 +391,22 @@ public:
     edge_container<successor_type> &built_successors() { return my_built_successors; }
 
     void internal_add_built_successor( successor_type &r) {
-        mutex_type::scoped_lock l(my_mutex, true);
+        typename mutex_type::scoped_lock l(my_mutex, true);
         my_built_successors.add_edge( r );
     }
 
     void internal_delete_built_successor( successor_type &r) {
-        mutex_type::scoped_lock l(my_mutex, true);
+        typename mutex_type::scoped_lock l(my_mutex, true);
         my_built_successors.delete_edge(r);
     }
 
     void copy_successors( successor_list_type &v) {
-        mutex_type::scoped_lock l(my_mutex, false);
+        typename mutex_type::scoped_lock l(my_mutex, false);
         my_built_successors.copy_edges(v);
     }
 
     size_t successor_count() {
-        mutex_type::scoped_lock l(my_mutex,false);
+        typename mutex_type::scoped_lock l(my_mutex,false);
         return my_built_successors.edge_count();
     }
 
@@ -419,7 +419,7 @@ public:
     virtual ~successor_cache() {}
 
     void register_successor( successor_type &r ) {
-        mutex_type::scoped_lock l(my_mutex, true);
+        typename mutex_type::scoped_lock l(my_mutex, true);
         my_successors.push_back( &r );
         if ( my_owner && r.is_continue_receiver() ) {
             r.register_predecessor( *my_owner );
@@ -427,7 +427,7 @@ public:
     }
 
     void remove_successor( successor_type &r ) {
-        mutex_type::scoped_lock l(my_mutex, true);
+        typename mutex_type::scoped_lock l(my_mutex, true);
         for ( successors_type::iterator i = my_successors.begin();
               i != my_successors.end(); ++i ) {
             if ( *i == & r ) {
@@ -442,7 +442,7 @@ public:
     }
 
     bool empty() {
-        mutex_type::scoped_lock l(my_mutex, false);
+        typename mutex_type::scoped_lock l(my_mutex, false);
         return my_successors.empty();
     }
 

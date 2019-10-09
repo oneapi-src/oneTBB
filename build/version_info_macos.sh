@@ -19,7 +19,7 @@ echo "#define __TBB_VERSION_STRINGS(N) \\"
 echo '#N": BUILD_HOST'"\t\t"`hostname -s`" ("`arch`")"'" ENDL \'
 echo '#N": BUILD_OS'"\t\t"`sw_vers -productName`" version "`sw_vers -productVersion`'" ENDL \'
 echo '#N": BUILD_KERNEL'"\t"`uname -v`'" ENDL \'
-echo '#N": BUILD_CLANG'"\t"`clang --version </dev/null 2>&1 | grep 'version '`'" ENDL \'
+echo '#N": BUILD_CLANG'"\t"`clang --version | sed -n "1p"`'" ENDL \'
 echo '#N": BUILD_XCODE'"\t"`xcodebuild -version </dev/null 2>&1 | grep 'Xcode'`'" ENDL \'
 [ -z "$COMPILER_VERSION" ] || echo '#N": BUILD_COMPILER'"\t"$COMPILER_VERSION'" ENDL \'
 echo '#N": BUILD_TARGET'"\t$arch on $runtime"'" ENDL \'

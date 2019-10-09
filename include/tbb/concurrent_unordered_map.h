@@ -20,6 +20,9 @@
 #ifndef __TBB_concurrent_unordered_map_H
 #define __TBB_concurrent_unordered_map_H
 
+#define __TBB_concurrent_unordered_map_H_include_area
+#include "internal/_warning_suppress_enable_notice.h"
+
 #include "internal/_concurrent_unordered_impl.h"
 
 namespace tbb
@@ -482,5 +485,8 @@ using interface5::concurrent_unordered_map;
 using interface5::concurrent_unordered_multimap;
 
 } // namespace tbb
+
+#include "internal/_warning_suppress_disable_notice.h"
+#undef __TBB_concurrent_unordered_map_H_include_area
 
 #endif// __TBB_concurrent_unordered_map_H

@@ -102,10 +102,6 @@ class CombineEachHelper {
 public:
     CombineEachHelper(T& _result) : my_result(_result) {}
     void operator()(const T& new_bit) { my_result +=  new_bit; }
-    CombineEachHelper& operator=(const CombineEachHelper& other) {
-        my_result =  other;
-        return *this;
-    }
 private:
     T& my_result;
 };
@@ -115,11 +111,6 @@ class CombineEachHelperCnt {
 public:
     CombineEachHelperCnt(T& _result, int& _nbuckets) : my_result(_result), nBuckets(_nbuckets) {}
     void operator()(const T& new_bit) { my_result +=  new_bit; ++nBuckets; }
-    CombineEachHelperCnt& operator=(const CombineEachHelperCnt& other) {
-        my_result =  other.my_result;
-        nBuckets = other.nBuckets;
-        return *this;
-    }
 private:
     T& my_result;
     int& nBuckets;
@@ -134,10 +125,6 @@ public:
         for(typename ContainerType::const_iterator ci = new_bit.begin(); ci != new_bit.end(); ++ci) {
             my_result +=  *ci;
         }
-    }
-    CombineEachVectorHelper& operator=(const CombineEachVectorHelper& other) {
-        my_result=other.my_result;
-        return *this;
     }
 
 private:

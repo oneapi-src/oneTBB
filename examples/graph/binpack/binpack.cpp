@@ -22,14 +22,14 @@
 #include <iostream>
 #include <cmath>
 #include <vector>
-#include "tbb/atomic.h"
-#include "tbb/task_scheduler_init.h"
+#include <atomic>
 #include "tbb/tick_count.h"
 #include "tbb/flow_graph.h"
+#include "tbb/global_control.h"
 #include "../../common/utility/utility.h"
+#include "../../common/utility/get_default_num_threads.h"
 
 using tbb::tick_count;
-using tbb::task_scheduler_init;
 using namespace tbb::flow;
 
 typedef size_t size_type;             // to represent non-zero indices, capacities, etc.
@@ -62,9 +62,9 @@ size_type min_B;                 // lower bound on the optimal number of bins
 size_type B;                     // the answer, i.e. number of bins used by the algorithm
 size_type *input_array;          // stores randomly generated input values
 value_type item_sum;             // sum of all randomly generated input values
-tbb::atomic<value_type> packed_sum;   // sum of all values currently packed into all bins
-tbb::atomic<size_type> packed_items;  // number of values currently packed into all bins
-tbb::atomic<size_type> active_bins;   // number of active bin_packers
+std::atomic<value_type> packed_sum;   // sum of all values currently packed into all bins
+std::atomic<size_type>  packed_items; // number of values currently packed into all bins
+std::atomic<size_type>  active_bins;  // number of active bin_packers
 bin_packer **bins;               // the array of bin packers
 
 // This class is the Body type for bin_packer
@@ -218,16 +218,9 @@ public:
     }
 };
 
-int get_default_num_threads() {
-    static int threads = 0;
-    if (threads == 0)
-        threads = task_scheduler_init::default_num_threads();
-    return threads;
-}
-
 int main(int argc, char *argv[]) {
     try {
-        utility::thread_number_range threads(get_default_num_threads);
+        utility::thread_number_range threads(utility::get_default_num_threads);
         utility::parse_cli_arguments(argc, argv,
                                      utility::cli_argument_pack()
                                      //"-h" option for displaying help is present implicitly
@@ -255,7 +248,7 @@ int main(int argc, char *argv[]) {
 
         tick_count start = tick_count::now();
         for(int p = threads.first; p <= threads.last; p = threads.step(p)) {
-            task_scheduler_init init(p);
+            tbb::global_control c(tbb::global_control::max_allowed_parallelism, p);
             packed_sum = 0;
             packed_items = 0;
             B = 0;

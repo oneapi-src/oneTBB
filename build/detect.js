@@ -57,12 +57,18 @@ function doWork() {
                     WScript.Echo("mingw" + gccVersion);
                 }
                 else if (WScript.Arguments(0) == "/minversion") {
-                    // Comparing strings, not numbers; will not work for two-digit versions
-                    if (gccVersion >= WScript.Arguments(2)) {
-                        WScript.Echo("ok");
-                    } else {
-                        WScript.Echo("fail");
+                    for (var i = 0; i < 3; i++) {
+                        v1 = parseInt(gccVersion.split('.')[i]);
+                        v2 = parseInt(WScript.Arguments(2).split('.')[i]);
+
+                        if (v1 > v2) {
+                            break;
+                        } else if (v1 < v2) {
+                            WScript.Echo("fail");
+                            return;
+                        }
                     }
+                    WScript.Echo("ok");
                 }
             }
             return;
@@ -121,6 +127,8 @@ function doWork() {
         } else if (mapContext.match(vc140)) {
             if (WshShell.ExpandEnvironmentStrings("%VisualStudioVersion%") == "15.0")
                 WScript.Echo("vc14.1");
+            else if (WshShell.ExpandEnvironmentStrings("%VisualStudioVersion%") == "16.0")
+                WScript.Echo("vc14.2");
             else
                 WScript.Echo("vc14");
         } else {

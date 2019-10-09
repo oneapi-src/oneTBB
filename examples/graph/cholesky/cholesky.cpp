@@ -27,10 +27,11 @@
 #include "tbb/tbb_config.h"
 #include "tbb/flow_graph.h"
 #include "tbb/tick_count.h"
-#include "tbb/task_scheduler_init.h"
+#include "tbb/global_control.h"
 
 // Application command line arguments parsing
 #include "../../common/utility/utility.h"
+#include "../../common/utility/get_default_num_threads.h"
 
 /************************************************************
  FORWARD DECLARATIONS
@@ -49,7 +50,7 @@ void matrix_init( double * &A, int &n, const char *fname );
 
 /**********************************************
  Writes a lower triangular matrix to a file
- -- first line of file is n 
+ -- first line of file is n
  -- subsequently 1 row per line
 **********************************************/
 void matrix_write ( double *A, int n, const char *fname, bool is_triangular = false );
@@ -58,11 +59,11 @@ void matrix_write ( double *A, int n, const char *fname, bool is_triangular = fa
  GLOBAL VARIABLES
 ************************************************************/
 bool g_benchmark_run = false;
-int g_num_tbb_threads = tbb::task_scheduler_init::default_num_threads();
 int g_n = -1, g_b = -1, g_num_trials = 1;
 char *g_input_file_name = NULL;
 char *g_output_prefix = NULL;
 std::string g_alg_name;
+int g_num_tbb_threads;
 
 // Creates tiled array
 static double ***create_tile_array( double *A, int n, int b ) {
@@ -210,7 +211,7 @@ static void call_dpotf2( double ***tile, int b, int k ) {
     double *A_block = tile[k][k];
     char uplo = 'l';
     int info = 0;
-    dpotf2( &uplo, &b, A_block, &b, &info ); 
+    dpotf2( &uplo, &b, A_block, &b, &info );
     return;
 }
 
@@ -320,7 +321,7 @@ public:
         dpotf2( &uplo, &b, A_block, &b, &info );
 
         // Send to dtrsms in same column
-        // k == k  j == k 
+        // k == k  j == k
         t.a[2] = k;
         for ( int j = k+1; j < p; ++j ) {
             t.a[1] = j;
@@ -390,7 +391,7 @@ public:
         int j = in2.first.a[1];
         int i = in2.first.a[2];
 
-        tile_t A_block = in2.second; 
+        tile_t A_block = in2.second;
         if ( i == j ) {   // Diagonal block
             tile_t L_block = in0.second;
             dsyrk( &uplo, &transa, &b, &b, &alpha, L_block, &b, &beta, A_block, &b );
@@ -660,6 +661,7 @@ bool process_args( int argc, char *argv[] ) {
 }
 
 int main(int argc, char *argv[]) {
+    g_num_tbb_threads = utility::get_default_num_threads();
     typedef std::map< std::string, algorithm * > algmap_t;
     algmap_t algmap;
 
@@ -674,7 +676,7 @@ int main(int argc, char *argv[]) {
         exit( 1 );
     }
 
-    tbb::task_scheduler_init init( g_num_tbb_threads );
+    tbb::global_control c(tbb::global_control::max_allowed_parallelism, g_num_tbb_threads);
     double *A = NULL;
 
     // Read input matrix

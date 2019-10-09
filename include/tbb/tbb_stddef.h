@@ -19,10 +19,10 @@
 
 // Marketing-driven product version
 #define TBB_VERSION_MAJOR 2019
-#define TBB_VERSION_MINOR 0
+#define TBB_VERSION_MINOR 9
 
 // Engineering-focused interface version
-#define TBB_INTERFACE_VERSION 11008
+#define TBB_INTERFACE_VERSION 11009
 #define TBB_INTERFACE_VERSION_MAJOR TBB_INTERFACE_VERSION/1000
 
 // The oldest major interface version still supported
@@ -316,6 +316,25 @@ inline T punned_cast( U* ptr ) {
     return reinterpret_cast<T>(x);
 }
 
+#if __TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT
+
+//! Base class for types that should not be assigned.
+class no_assign {
+public:
+    void operator=( const no_assign& ) = delete;
+    no_assign( const no_assign& ) = default;
+    no_assign() = default;
+};
+
+//! Base class for types that should not be copied or assigned.
+class no_copy: no_assign {
+public:
+    no_copy( const no_copy& ) = delete;
+    no_copy() = default;
+};
+
+#else /*__TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT*/
+
 //! Base class for types that should not be assigned.
 class no_assign {
     // Deny assignment
@@ -335,6 +354,8 @@ public:
     //! Allow default construction
     no_copy() {}
 };
+
+#endif /*__TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT*/
 
 #if TBB_DEPRECATED_MUTEX_COPYING
 class mutex_copy_deprecated_and_disabled {};

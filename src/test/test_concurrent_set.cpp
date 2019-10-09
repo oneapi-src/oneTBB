@@ -125,11 +125,9 @@ void TestDeductionGuides() {
 }
 #endif /*__TBB_CPP17_DEDUCTION_GUIDES_PRESENT*/
 
-void test_heterogenious_lookup() {
-    tbb::concurrent_set<int, transparent_compare> set = {1, 2, 3};
-    tbb::concurrent_multiset<int, transparent_compare> mset = {1, 1, 2, 3};
-    check_heterogenious_lookup(set);
-    check_heterogenious_lookup(mset);
+void test_heterogeneous_functions() {
+    check_heterogeneous_functions<tbb::concurrent_set<int, transparent_less> >();
+    check_heterogeneous_functions<tbb::concurrent_multiset<int, transparent_less> >();
 }
 
 struct compare_keys_less {
@@ -236,7 +234,7 @@ int TestMain() {
     node_handling::TestNodeHandling<MyMultiSet>();
     node_handling::TestMerge<MySet, MyMultiSet>(1000);
 
-    test_heterogenious_lookup();
+    test_heterogeneous_functions();
 
     test_allocator_traits<tbb::concurrent_set, int, std::less<int>>();
     test_allocator_traits<tbb::concurrent_multiset, int, std::less<int>>();

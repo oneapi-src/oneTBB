@@ -17,6 +17,9 @@
 #ifndef __TBB_parallel_scan_H
 #define __TBB_parallel_scan_H
 
+#define __TBB_parallel_scan_H_include_area
+#include "internal/_warning_suppress_enable_notice.h"
+
 #include "task.h"
 #include "aligned_space.h"
 #include <new>
@@ -405,6 +408,9 @@ Value parallel_scan( const Range& range, const Value& identity, const Scan& scan
 //@}
 
 } // namespace tbb
+
+#include "internal/_warning_suppress_disable_notice.h"
+#undef __TBB_parallel_scan_H_include_area
 
 #endif /* __TBB_parallel_scan_H */
 

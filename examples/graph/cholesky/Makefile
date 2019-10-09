@@ -34,16 +34,16 @@ endif
 override MKL_LIBS += -lmkl_rt
 endif
 
-# C++0x support
-override CXXFLAGS += -std=c++0x
+# autodetect C++11 support
+include ../../common/examples-common.inc
 
 all:	release test
 
 release: *.cpp
-	$(CXX) -O2  -DNDEBUG $(CXXFLAGS) -o $(PROG) $^ -ltbb $(MKL_LIBS) $(LIBS)
+	$(CXX) -O2  -DNDEBUG $(CXXFLAGS) -o $(PROG) $^ -ltbb $(MKL_LIBS) $(LIBS) $(CXX0XFLAGS)
 
 debug: *.cpp
-	$(CXX) -O0 -g -DTBB_USE_DEBUG $(CXXFLAGS) -o $(PROG) $^ -ltbb_debug $(MKL_LIBS) $(LIBS)
+	$(CXX) -O0 -g -DTBB_USE_DEBUG $(CXXFLAGS) -o $(PROG) $^ -ltbb_debug $(MKL_LIBS) $(LIBS) $(CXX0XFLAGS)
 
 profile: override CXXFLAGS += -DTBB_USE_THREADING_TOOLS -g
 profile: release

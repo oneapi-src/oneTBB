@@ -30,7 +30,7 @@ Visit our `forum <https://software.intel.com/en-us/forums/intel-threading-buildi
 Release Notes
 -------------
 * Minimum supported CMake version: ``3.0.0``.
-* TBB versioning via `find_package <https://cmake.org/cmake/help/latest/command/find_package.html>`_ has the following format: ``find_package(TBB <major>.<minor>.<interface> ...)``. TBB interface version can also be obtained in the customer project via the ``TBB_INTERFACE_VERSION`` variable.
+* TBB versioning via `find_package <https://cmake.org/cmake/help/latest/command/find_package.html>`_ has the following format: ``find_package(TBB <major>.<minor> ...)``.
 
 Use cases of TBB integration into CMake-aware projects
 ------------------------------------------------------------
@@ -206,7 +206,7 @@ Variables set during TBB configuration:
 ``TBB_<component>_FOUND``  specific TBB component is found
 ``TBB_IMPORTED_TARGETS``   all created TBB imported targets
 ``TBB_VERSION``            TBB version (format: ``<major>.<minor>``)
-``TBB_INTERFACE_VERSION``  TBB interface version
+``TBB_INTERFACE_VERSION``  TBB interface version (can be empty, see below for details)
 =========================  ================================================
 
 TBBInstallConfig
@@ -219,7 +219,7 @@ Provides the following functions:
  .. code:: cmake
 
   tbb_install_config(INSTALL_DIR <install_dir> SYSTEM_NAME Linux|Darwin|Windows
-                     [TBB_VERSION <major>.<minor>.<interface>|TBB_VERSION_FILE <version_file>]
+                     [TBB_VERSION <major>.<minor>|TBB_VERSION_FILE <version_file>]
                      [LIB_REL_PATH <lib_rel_path> INC_REL_PATH <inc_rel_path>]
                      [LIB_PATH <lib_path> INC_PATH <inc_path>])``
 
@@ -241,8 +241,8 @@ The use case is applicable for package maintainers who create own TBB packages a
 ``SYSTEM_NAME Linux|Darwin|Windows``         OS name to generate config files for
 ``TBB_VERSION_FILE <version_file>``          Path to ``tbb_stddef.h`` to parse version from and
                                              write it to TBBConfigVersion.cmake
-``TBB_VERSION <major>.<minor>.<interface>``  Directly specified TBB version;
-                                             alternative to ``TBB_VERSION_FILE`` parameter
+``TBB_VERSION <major>.<minor>``              Directly specified TBB version; alternative to ``TBB_VERSION_FILE`` parameter;
+                                             ``TBB_INTERFACE_VERSION`` is set to empty value in this case
 ``LIB_REL_PATH <lib_rel_path>``              Relative path to TBB binaries (.lib files on Windows), default: ``../../../lib``
 ``BIN_REL_PATH <bin_rel_path>``              Relative path to TBB DLLs, default: ``../../../bin`` (applicable for Windows only)
 ``INC_REL_PATH <inc_rel_path>``              Relative path to TBB headers, default: ``../../../include``

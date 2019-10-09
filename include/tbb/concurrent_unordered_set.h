@@ -20,6 +20,9 @@
 #ifndef __TBB_concurrent_unordered_set_H
 #define __TBB_concurrent_unordered_set_H
 
+#define __TBB_concurrent_unordered_set_H_include_area
+#include "internal/_warning_suppress_enable_notice.h"
+
 #include "internal/_concurrent_unordered_impl.h"
 
 namespace tbb
@@ -438,5 +441,8 @@ using interface5::concurrent_unordered_set;
 using interface5::concurrent_unordered_multiset;
 
 } // namespace tbb
+
+#include "internal/_warning_suppress_disable_notice.h"
+#undef __TBB_concurrent_unordered_set_H_include_area
 
 #endif// __TBB_concurrent_unordered_set_H

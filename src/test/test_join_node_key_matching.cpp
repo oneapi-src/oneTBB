@@ -18,7 +18,37 @@
 #define TBB_DEPRECATED_FLOW_NODE_EXTRACTION 1
 #endif
 
+#define TBB_PREVIEW_FLOW_GRAPH_FEATURES 1
 #include "test_join_node.h"
+
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+void test_deduction_guides() {
+    using namespace tbb::flow;
+    using tuple_type = std::tuple<int, int, double>;
+
+    graph g;
+    auto body_int = [](const int&)->int { return 1; };
+    auto body_double = [](const double&)->int { return 1; };
+
+    join_node j1(g, body_int, body_int, body_double);
+    static_assert(std::is_same_v<decltype(j1), join_node<tuple_type, key_matching<int>>>);
+
+#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+    broadcast_node<int> b1(g), b2(g);
+    broadcast_node<double> b3(g);
+    broadcast_node<tuple_type> b4(g);
+
+    join_node j2(follows(b1, b2, b3), body_int, body_int, body_double);
+    static_assert(std::is_same_v<decltype(j2), join_node<tuple_type, key_matching<int>>>);
+
+    join_node j3(precedes(b4), body_int, body_int, body_double);
+    static_assert(std::is_same_v<decltype(j3), join_node<tuple_type, key_matching<int>>>);
+#endif
+
+    join_node j4(j1);
+    static_assert(std::is_same_v<decltype(j4), join_node<tuple_type, key_matching<int>>>);
+}
+#endif
 
 int TestMain() {
 #if __TBB_USE_TBB_TUPLE
@@ -45,9 +75,14 @@ int TestMain() {
     >, tbb::flow::key_matching<std::string&> >::do_test();
 #endif
 
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+    test_deduction_guides();
+#endif
+
     generate_test<parallel_test, tbb::flow::tuple<MyKeyFirst<int, double>, MyKeySecond<int, float> >, tbb::flow::key_matching<int> >::do_test();
     generate_test<parallel_test, tbb::flow::tuple<MyKeyFirst<int, double>, MyKeySecond<int, float> >, tbb::flow::key_matching<int&> >::do_test();
     generate_test<parallel_test, tbb::flow::tuple<MyKeyFirst<std::string, double>, MyKeySecond<std::string, float> >, tbb::flow::key_matching<std::string&> >::do_test();
+
 #if MAX_TUPLE_TEST_SIZE >= 10
     generate_test<parallel_test, tbb::flow::tuple<
         MyKeyFirst<std::string, double>,

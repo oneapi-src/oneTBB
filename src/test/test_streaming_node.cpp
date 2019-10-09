@@ -433,7 +433,7 @@ private:
 void TestSendData_withoutSetArgs() {
     graph g;
 
-    typedef send_data_factory< tbb::flow::interface10::internal::port_ref_impl<0, 1> > device_factory;
+    typedef send_data_factory< tbb::flow::interface11::internal::port_ref_impl<0, 1> > device_factory;
 
     device_factory factory;
     device_selector<device_factory> device_selector;
@@ -470,7 +470,7 @@ void TestSendData_setArgsOnly() {
 void TestSendData_portRefOnly() {
     graph g;
 
-    typedef send_data_factory< tbb::flow::interface10::internal::port_ref_impl<0,1> > device_factory;
+    typedef send_data_factory< tbb::flow::interface11::internal::port_ref_impl<0,1> > device_factory;
 
     device_factory factory;
     device_selector<device_factory> device_selector;
@@ -489,7 +489,7 @@ void TestSendData_portRefOnly() {
 void TestSendData_setArgsAndPortRef1() {
     graph g;
 
-    typedef send_data_factory< factory_msg<int>, tbb::flow::interface10::internal::port_ref_impl<0, 1> > device_factory;
+    typedef send_data_factory< factory_msg<int>, tbb::flow::interface11::internal::port_ref_impl<0, 1> > device_factory;
 
     device_factory factory;
     device_selector<device_factory> device_selector;
@@ -508,8 +508,8 @@ void TestSendData_setArgsAndPortRef1() {
 void TestSendData_setArgsAndPortRef2() {
     graph g;
 
-    typedef send_data_factory< factory_msg<int>, tbb::flow::interface10::internal::port_ref_impl<0,0>,
-                               factory_msg<int>, tbb::flow::interface10::internal::port_ref_impl<1,1> > device_factory;
+    typedef send_data_factory< factory_msg<int>, tbb::flow::interface11::internal::port_ref_impl<0,0>,
+                               factory_msg<int>, tbb::flow::interface11::internal::port_ref_impl<1,1> > device_factory;
 
     device_factory factory;
     device_selector<device_factory> device_selector;

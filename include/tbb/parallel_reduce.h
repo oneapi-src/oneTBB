@@ -17,6 +17,9 @@
 #ifndef __TBB_parallel_reduce_H
 #define __TBB_parallel_reduce_H
 
+#define __TBB_parallel_reduce_H_include_area
+#include "internal/_warning_suppress_enable_notice.h"
+
 #include <new>
 #include "task.h"
 #include "aligned_space.h"
@@ -647,5 +650,8 @@ Value parallel_deterministic_reduce( const Range& range, const Value& identity, 
 //@}
 
 } // namespace tbb
+
+#include "internal/_warning_suppress_disable_notice.h"
+#undef __TBB_parallel_reduce_H_include_area
 
 #endif /* __TBB_parallel_reduce_H */

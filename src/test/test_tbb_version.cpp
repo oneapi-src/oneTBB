@@ -224,8 +224,8 @@ int main(int argc, char *argv[] ) {
 // Fill dictionary with version strings for platforms
 void initialize_strings_vector(std::vector <string_pair>* vector)
 {
-    vector->push_back(string_pair("TBB: VERSION\t\t2019.0", required));       // check TBB_VERSION
-    vector->push_back(string_pair("TBB: INTERFACE VERSION\t11008", required)); // check TBB_INTERFACE_VERSION
+    vector->push_back(string_pair("TBB: VERSION\t\t2019.9", required));       // check TBB_VERSION
+    vector->push_back(string_pair("TBB: INTERFACE VERSION\t11009", required)); // check TBB_INTERFACE_VERSION
     vector->push_back(string_pair("TBB: BUILD_DATE", required));
     vector->push_back(string_pair("TBB: BUILD_HOST", required));
     vector->push_back(string_pair("TBB: BUILD_OS", required));

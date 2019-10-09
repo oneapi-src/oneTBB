@@ -182,7 +182,7 @@ void DirectXBase::SetDpi(float dpi)
 void DirectXBase::UpdateForWindowSizeChange()
 {
     // Only handle window size changed if there is no pending DPI change.
-    if (m_dpi != DisplayProperties::LogicalDpi)
+    if (m_dpi != DisplayInformation::GetForCurrentView()->LogicalDpi)
         return;
 
     if (m_window->Bounds.Width  != m_windowBounds.Width ||

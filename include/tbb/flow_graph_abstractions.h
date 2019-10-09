@@ -19,7 +19,7 @@
 
 namespace tbb {
 namespace flow {
-namespace interface10 {
+namespace interface11 {
 
 //! Pure virtual template classes that define interfaces for async communication
 class graph_proxy {
@@ -45,8 +45,8 @@ public:
 
 } //interfaceX
 
-using interface10::graph_proxy;
-using interface10::receiver_gateway;
+using interface11::graph_proxy;
+using interface11::receiver_gateway;
 
 } //flow
 } //tbb

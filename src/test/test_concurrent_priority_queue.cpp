@@ -81,7 +81,10 @@ public:
     my_throwing_type() : my_data_type() {}
     my_throwing_type(const my_throwing_type& src) : my_data_type(src) {
         if (my_throwing_type::throw_flag) throw 42;
+    }
+    my_throwing_type& operator=(const my_throwing_type& src) {
         priority = src.priority;
+        return *this;
     }
 };
 int my_throwing_type::throw_flag = 0;

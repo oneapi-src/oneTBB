@@ -152,7 +152,7 @@ void TestArgumentPassing() {
     ASSERT( std::all_of( b2.begin(), b2.end(), []( int c ) { return c == 1; } ), "Validation has failed" );
 
     // By default, the first device is used.
-    opencl_device d = *interface10::opencl_info::available_devices().begin();
+    opencl_device d = *interface11::opencl_info::available_devices().begin();
     std::array<size_t, 3> maxSizes = d.max_work_item_sizes();
 
     *err.data() = 0; ASSERT( err.data() != std::string( "Done" ), NULL );
@@ -645,7 +645,7 @@ void CustomFactoryTest() {
 
     REMARK( "  One device tests:\n" );
     graph g;
-    opencl_device_list all_devices = interface10::opencl_info::available_devices();
+    opencl_device_list all_devices = interface11::opencl_info::available_devices();
     for ( int i = 0; i < (int)all_devices.size(); ++i ) {
         opencl_device_list::const_iterator it = all_devices.begin();
         std::advance( it, i );
@@ -664,7 +664,7 @@ void CustomFactoryTest() {
 void DefaultConcurrencyTest() {
     REMARK( "DefaultConcurrencyTest: " );
     // By default, the first device is selected.
-    ConcurrencyTest( { *interface10::opencl_info::available_devices().begin() } );
+    ConcurrencyTest( { *interface11::opencl_info::available_devices().begin() } );
     REMARK( "done\n" );
 }
 
@@ -672,7 +672,7 @@ void DefaultConcurrencyTest() {
 void SpirKernelTest() {
     REMARK( "SpirKernelTest:\n" );
 
-    const opencl_device_list devices = interface10::opencl_info::available_devices();
+    const opencl_device_list devices = interface11::opencl_info::available_devices();
 
     for( auto d = devices.begin(); d != devices.end(); d++ ) {
         if( !(*d).extension_available( "cl_khr_spir" ) ) {
@@ -727,7 +727,7 @@ void PrecompiledKernelTest() {
     graph g;
     DefaultFactoryType factory;
 
-    const opencl_device_list devices = interface10::opencl_info::available_devices();
+    const opencl_device_list devices = interface11::opencl_info::available_devices();
     opencl_device_list::const_iterator it = std::find_if(
         devices.cbegin(), devices.cend(),
         []( const opencl_device &d ) {

@@ -18,11 +18,13 @@
 #define TBB_DEPRECATED_FLOW_NODE_EXTRACTION 1
 #endif
 
+#include "harness.h"
 #include "harness_graph.h"
 
 #include "tbb/flow_graph.h"
 #include "tbb/task_scheduler_init.h"
 #include "tbb/spin_rw_mutex.h"
+#include "test_follows_and_precedes_api.h"
 
 #define N 100
 #define MAX_NODES 4
@@ -577,6 +579,77 @@ void test_extract() {
 }
 #endif
 
+#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+#include <array>
+#include <vector>
+void test_follows_and_precedes_api() {
+    using msg_t = tbb::flow::continue_msg;
+
+    std::array<msg_t, 3> messages_for_follows = { msg_t(), msg_t(), msg_t() };
+    std::vector<msg_t> messages_for_precedes = { msg_t() };
+
+    pass_through<msg_t> pass_msg;
+
+    follows_and_precedes_testing::test_follows
+        <msg_t, tbb::flow::function_node<msg_t, msg_t>>
+        (messages_for_follows, tbb::flow::unlimited, pass_msg);
+    follows_and_precedes_testing::test_precedes
+        <msg_t, tbb::flow::function_node<msg_t, msg_t>>
+        (messages_for_precedes, tbb::flow::unlimited, pass_msg);
+}
+#endif
+
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+
+int function_body_f(const int&) { return 1; }
+
+template <typename Body>
+void test_deduction_guides_common(Body body) {
+    using namespace tbb::flow;
+    graph g;
+
+    function_node f1(g, unlimited, body);
+    static_assert(std::is_same_v<decltype(f1), function_node<int, int>>);
+
+    function_node f2(g, unlimited, body, rejecting());
+    static_assert(std::is_same_v<decltype(f2), function_node<int, int, rejecting>>);
+
+#if __TBB_PREVIEW_FLOW_GRAPH_PRIORITIES
+    function_node f3(g, unlimited, body, node_priority_t(5));
+    static_assert(std::is_same_v<decltype(f3), function_node<int, int>>);
+
+    function_node f4(g, unlimited, body, rejecting(), node_priority_t(5));
+    static_assert(std::is_same_v<decltype(f4), function_node<int, int, rejecting>>);
+#endif
+
+#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+    function_node f5(follows(f2), unlimited, body);
+    static_assert(std::is_same_v<decltype(f5), function_node<int, int>>);
+
+    function_node f6(follows(f5), unlimited, body, rejecting());
+    static_assert(std::is_same_v<decltype(f6), function_node<int, int, rejecting>>);
+
+#if __TBB_PREVIEW_FLOW_GRAPH_PRIORITIES
+    function_node f7(follows(f6), unlimited, body, node_priority_t(5));
+    static_assert(std::is_same_v<decltype(f7), function_node<int, int>>);
+
+    function_node f8(follows(f7), unlimited, body, rejecting(), node_priority_t(5));
+    static_assert(std::is_same_v<decltype(f8), function_node<int, int, rejecting>>);
+#endif // __TBB_PREVIEW_FLOW_GRAPH_PRIORITIES
+#endif // __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+
+    function_node f9(f1);
+    static_assert(std::is_same_v<decltype(f9), function_node<int, int>>);
+}
+
+void test_deduction_guides() {
+    test_deduction_guides_common([](const int&)->int { return 1; });
+    test_deduction_guides_common([](const int&) mutable ->int { return 1; });
+    test_deduction_guides_common(function_body_f);
+}
+
+#endif
+
 int TestMain() {
     if( MinThread<1 ) {
         REPORT("number of threads must be positive\n");
@@ -590,6 +663,11 @@ int TestMain() {
     test_extract<tbb::flow::rejecting>();
     test_extract<tbb::flow::queueing>();
 #endif
+#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+    test_follows_and_precedes_api();
+#endif
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+    test_deduction_guides();
+#endif
    return Harness::Done;
 }
-

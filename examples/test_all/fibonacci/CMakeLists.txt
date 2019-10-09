@@ -15,6 +15,12 @@
 cmake_minimum_required(VERSION 3.0.0 FATAL_ERROR)
 
 project(fibonacci CXX)
+
+if (NOT CMAKE_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD 11)
+    set(CXX_STANDARD_REQUIRED ON)
+endif()
+
 add_executable(fibonacci Fibonacci.cpp)
 
 # find_package will search for available TBBConfig using variables CMAKE_PREFIX_PATH and TBB_DIR.

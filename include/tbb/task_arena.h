@@ -17,6 +17,9 @@
 #ifndef __TBB_task_arena_H
 #define __TBB_task_arena_H
 
+#define __TBB_task_arena_H_include_area
+#include "internal/_warning_suppress_enable_notice.h"
+
 #include "task.h"
 #include "tbb_exception.h"
 #include "internal/_template_helpers.h"
@@ -149,7 +152,7 @@ public:
 };
 
 #if __TBB_TASK_ISOLATION
-void __TBB_EXPORTED_FUNC isolate_within_arena( delegate_base& d, intptr_t reserved = 0 );
+void __TBB_EXPORTED_FUNC isolate_within_arena( delegate_base& d, intptr_t isolation = 0 );
 
 template<typename R, typename F>
 R isolate_impl(F& f) {
@@ -313,7 +316,7 @@ public:
     //! Does not require the calling thread to join the arena
     template<typename F>
 #if __TBB_CPP11_RVALUE_REF_PRESENT
-    void enqueue( F&& f, priority_t p ) {
+    __TBB_DEPRECATED void enqueue( F&& f, priority_t p ) {
 #if __TBB_PREVIEW_CRITICAL_TASKS
         __TBB_ASSERT(p == priority_low || p == priority_normal || p == priority_high
                      || p == internal::priority_critical, "Invalid priority level value");
@@ -323,7 +326,7 @@ public:
         enqueue_impl(std::forward<F>(f), p);
     }
 #else
-    void enqueue( const F& f, priority_t p ) {
+    __TBB_DEPRECATED void enqueue( const F& f, priority_t p ) {
 #if __TBB_PREVIEW_CRITICAL_TASKS
         __TBB_ASSERT(p == priority_low || p == priority_normal || p == priority_high
                      || p == internal::priority_critical, "Invalid priority level value");
@@ -376,8 +379,8 @@ public:
     }
 };
 
-#if __TBB_TASK_ISOLATION
 namespace this_task_arena {
+#if __TBB_TASK_ISOLATION
     //! Executes a mutable functor in isolation within the current task arena.
     //! Since C++11, the method returns the value returned by functor (prior to C++11 it returns void).
     template<typename F>
@@ -391,18 +394,15 @@ namespace this_task_arena {
     typename internal::return_type_or_void<F>::type isolate(const F& f) {
         return internal::isolate_impl<typename internal::return_type_or_void<F>::type>(f);
     }
-}
 #endif /* __TBB_TASK_ISOLATION */
+} // namespace this_task_arena
 } // namespace interfaceX
 
 using interface7::task_arena;
-#if __TBB_TASK_ISOLATION
-namespace this_task_arena {
-    using namespace interface7::this_task_arena;
-}
-#endif /* __TBB_TASK_ISOLATION */
 
 namespace this_task_arena {
+    using namespace interface7::this_task_arena;
+
     //! Returns the index, aka slot number, of the calling thread in its current arena
     inline int current_thread_index() {
         int idx = tbb::task_arena::current_thread_index();
@@ -416,12 +416,10 @@ namespace this_task_arena {
 } // namespace this_task_arena
 
 //! Enqueue task in task_arena
-void task::enqueue( task& t, task_arena& arena
 #if __TBB_TASK_PRIORITY
-        , priority_t p
-#endif
-    ) {
-#if !__TBB_TASK_PRIORITY
+void task::enqueue( task& t, task_arena& arena, priority_t p ) {
+#else
+void task::enqueue( task& t, task_arena& arena ) {
     intptr_t p = 0;
 #endif
     arena.initialize();
@@ -429,5 +427,8 @@ void task::enqueue( task& t, task_arena& arena
     arena.internal_enqueue(t, p);
 }
 } // namespace tbb
+
+#include "internal/_warning_suppress_disable_notice.h"
+#undef __TBB_task_arena_H_include_area
 
 #endif /* __TBB_task_arena_H */

@@ -14,19 +14,19 @@
 
 # detect if a compiler can support C++11
 # If CXX0XFLAGS already set, do not change it
-ifneq (,$(findstring $(CXX), icc icpc clang++))
+ifneq (,$(findstring icc, $(CXX))$(findstring icpc, $(CXX))$(findstring clang++, $(CXX)))
     # every supported icc or clang is OK
-    CXX0XFLAGS ?= -std=c++0x
+    CXX0XFLAGS ?= -std=c++11
 else
-    ifneq (,$(findstring $(CXX), g++ gcc))
+    ifneq (,$(findstring g++, $(CXX))$(findstring gcc, $(CXX)))
         ifneq (, $(strip $(shell $(CXX) -v 2>&1 | grep "clang-")))
             # This is clang actually,
             # every supported clang is OK
-            CXX0XFLAGS ?= -std=c++0x
+            CXX0XFLAGS ?= -std=c++11
         else
             # support of lambda started GCC 4.5
-            ifneq (, $(strip $(shell g++ -dumpfullversion -dumpversion | egrep "^(4\.[5-9]|[5-9])")))
-               CXX0XFLAGS ?= -std=c++0x
+            ifneq (, $(strip $(shell g++ -dumpfullversion -dumpversion | egrep "^(4\.[5-9]|[5-9]|1[0-9])")))
+               CXX0XFLAGS ?= -std=c++11
             endif
         endif
     endif

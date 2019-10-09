@@ -29,6 +29,7 @@
 #define TBB_PREVIEW_BLOCKED_RANGE_ND 1
 #define TBB_PREVIEW_WAITING_FOR_WORKERS 1
 #define TBB_PREVIEW_CONCURRENT_ORDERED_CONTAINERS 1
+#define TBB_PREVIEW_ISOLATED_TASK_GROUP 1
 #endif
 
 #if __TBB_TEST_SECONDARY
@@ -191,6 +192,7 @@ static void TestPreviewNames() {
     TestTypeDefinitionPresence2(blocked_rangeNd<int,4> );
 #endif
     TestTypeDefinitionPresence2(concurrent_lru_cache<int, int> );
+    TestTypeDefinitionPresence( isolated_task_group );
 #if !__TBB_TEST_SECONDARY
     TestExceptionClassExports( std::runtime_error("test"), tbb::internal::eid_blocking_thread_join_impossible );
 #endif

@@ -139,11 +139,7 @@ void arena::process( generic_scheduler& s ) {
         __TBB_ASSERT( s.my_arena_slot->task_pool == EmptyTaskPool, "Empty task pool is not marked appropriately" );
         // This check prevents relinquishing more than necessary workers because
         // of the non-atomicity of the decision making procedure
-        if ( num_workers_active() > my_num_workers_allotted
-#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-             || recall_by_mandatory_request()
-#endif
-            )
+        if ( is_recall_requested() )
             break;
         // Try to steal a task.
         // Passing reference count is technically unnecessary in this context,
@@ -204,12 +200,18 @@ arena::arena ( market& m, unsigned num_slots, unsigned num_reserved_slots ) {
 #if __TBB_ARENA_OBSERVER
     my_observers.my_arena = this;
 #endif
+#if __TBB_PREVIEW_RESUMABLE_TASKS
+    my_co_cache.init(4 * num_slots);
+#endif
     __TBB_ASSERT ( my_max_num_workers <= my_num_slots, NULL );
     // Construct slots. Mark internal synchronization elements for the tools.
     for( unsigned i = 0; i < my_num_slots; ++i ) {
         __TBB_ASSERT( !my_slots[i].my_scheduler && !my_slots[i].task_pool, NULL );
         __TBB_ASSERT( !my_slots[i].task_pool_ptr, NULL );
         __TBB_ASSERT( !my_slots[i].my_task_pool_size, NULL );
+#if __TBB_PREVIEW_RESUMABLE_TASKS
+        __TBB_ASSERT( !my_slots[i].my_scheduler_is_recalled, NULL );
+#endif
         ITT_SYNC_CREATE(my_slots + i, SyncType_Scheduler, SyncObj_WorkerTaskPool);
         mailbox(i+1).construct();
         ITT_SYNC_CREATE(&mailbox(i+1), SyncType_Scheduler, SyncObj_Mailbox);
@@ -228,7 +230,8 @@ arena::arena ( market& m, unsigned num_slots, unsigned num_reserved_slots ) {
     ITT_SYNC_CREATE(&my_critical_task_stream, SyncType_Scheduler, SyncObj_CriticalTaskStream);
 #endif
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-    my_concurrency_mode = cm_normal;
+    my_local_concurrency_mode = false;
+    my_global_concurrency_mode = false;
 #endif
 #if !__TBB_FP_CONTEXT
     my_cpu_ctl_env.get_env();
@@ -252,7 +255,7 @@ void arena::free_arena () {
     __TBB_ASSERT( !my_num_workers_requested && !my_num_workers_allotted, "Dying arena requests workers" );
     __TBB_ASSERT( my_pool_state == SNAPSHOT_EMPTY || !my_max_num_workers, "Inconsistent state of a dying arena" );
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-    __TBB_ASSERT( my_concurrency_mode != cm_enforced_global, NULL );
+    __TBB_ASSERT( !my_global_concurrency_mode, NULL );
 #endif
 #if !__TBB_STATISTICS_EARLY_DUMP
     GATHER_STATISTIC( dump_arena_statistics() );
@@ -271,6 +274,10 @@ void arena::free_arena () {
         drained += mailbox(i+1).drain();
     }
     __TBB_ASSERT( my_task_stream.drain()==0, "Not all enqueued tasks were executed");
+#if __TBB_PREVIEW_RESUMABLE_TASKS
+    // Cleanup coroutines/schedulers cache
+    my_co_cache.cleanup();
+#endif
 #if __TBB_PREVIEW_CRITICAL_TASKS
     __TBB_ASSERT( my_critical_task_stream.drain()==0, "Not all critical tasks were executed");
 #endif
@@ -507,17 +514,9 @@ bool arena::is_out_of_work() {
                                 // to avoid race with advertise_new_work.
                                 int current_demand = (int)my_max_num_workers;
                                 if( my_pool_state.compare_and_swap( SNAPSHOT_EMPTY, busy )==busy ) {
-#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-                                    if( my_concurrency_mode==cm_enforced_global  ) {
-                                        // adjust_demand() called inside, if needed
-                                        my_market->mandatory_concurrency_disable( this );
-                                    } else
-#endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
-                                    {
-                                        // This thread transitioned pool to empty state, and thus is
-                                        // responsible for telling the market that there is no work to do.
-                                        my_market->adjust_demand( *this, -current_demand );
-                                    }
+                                    // This thread transitioned pool to empty state, and thus is
+                                    // responsible for telling the market that there is no work to do.
+                                    my_market->adjust_demand( *this, -current_demand );
                                     restore_priority_if_need();
                                     return true;
                                 }
@@ -630,6 +629,10 @@ public:
             mimic_outermost_level(a, type);
         } else {
             my_orig_state = *s;
+#if __TBB_PREVIEW_RESUMABLE_TASKS
+            my_scheduler.my_properties.genuine = true;
+            my_scheduler.my_current_is_recalled = NULL;
+#endif
             mimic_outermost_level(a, type);
             s->nested_arena_entry(a, slot_index);
         }
@@ -694,6 +697,9 @@ void generic_scheduler::nested_arena_entry(arena* a, size_t slot_index) {
     my_last_local_observer = 0; // TODO: try optimize number of calls
     my_arena->my_observers.notify_entry_observers( my_last_local_observer, /*worker=*/false );
 #endif
+#if __TBB_PREVIEW_RESUMABLE_TASKS
+    my_wait_task = NULL;
+#endif
 }
 
 void generic_scheduler::nested_arena_exit() {
@@ -718,6 +724,80 @@ void generic_scheduler::wait_until_empty() {
         local_wait_for_all(*my_dummy_task, NULL);
     my_dummy_task->prefix().ref_count--;
 }
+
+#if __TBB_PREVIEW_RESUMABLE_TASKS
+class resume_task : public task {
+    generic_scheduler& my_target;
+public:
+    resume_task(generic_scheduler& target) : my_target(target) {}
+    task* execute() __TBB_override {
+        generic_scheduler* s = governor::local_scheduler_if_initialized();
+        __TBB_ASSERT(s, NULL);
+        if (s->prepare_resume(my_target)) {
+            s->resume(my_target);
+        } else {
+            __TBB_ASSERT(prefix().state == task::executing, NULL);
+            // Request the dispatch loop to exit (because we in a coroutine on the outermost level).
+            prefix().state = task::to_resume;
+        }
+        return NULL;
+    }
+};
+
+static generic_scheduler& create_coroutine(generic_scheduler& curr) {
+    // We may have some coroutines cached
+    generic_scheduler* co_sched = curr.my_arena->my_co_cache.pop();
+    if (!co_sched) {
+        // TODO: avoid setting/unsetting the scheduler.
+        governor::assume_scheduler(NULL);
+        co_sched = generic_scheduler::create_worker(*curr.my_market, curr.my_arena_index, /* genuine = */ false);
+        governor::assume_scheduler(&curr);
+        // Prepare newly created scheduler
+        co_sched->my_arena = curr.my_arena;
+    }
+    // Prepare scheduler (general)
+    co_sched->my_dummy_task->prefix().context = co_sched->my_arena->my_default_ctx;
+    // Prolong the arena's lifetime until all coroutines is alive
+    // (otherwise the arena can be destroyed while some tasks are suspended).
+    co_sched->my_arena->my_references += arena::ref_external;
+    return *co_sched;
+}
+
+void internal_suspend(void* suspend_callback, void* user_callback) {
+    generic_scheduler& s = *governor::local_scheduler();
+    __TBB_ASSERT(s.my_arena_slot->my_scheduler_is_recalled != NULL, NULL);
+    bool is_recalled = *s.my_arena_slot->my_scheduler_is_recalled;
+    generic_scheduler& target = is_recalled ? *s.my_arena_slot->my_scheduler : create_coroutine(s);
+
+    generic_scheduler::callback_t callback = {
+        (generic_scheduler::suspend_callback_t)suspend_callback, user_callback, &s };
+    target.set_post_resume_action(generic_scheduler::PRA_CALLBACK, &callback);
+    s.resume(target);
+}
+
+void internal_resume(task::suspend_point tag) {
+    generic_scheduler& s = *static_cast<generic_scheduler*>(tag);
+    task* t = new(&s.allocate_task(sizeof(resume_task), __TBB_CONTEXT_ARG(NULL, s.my_dummy_task->context()))) resume_task(s);
+    make_critical(*t);
+
+    // TODO: remove this work-around
+    // Prolong the arena's lifetime until all coroutines is alive
+    // (otherwise the arena can be destroyed while some tasks are suspended).
+    arena& a = *s.my_arena;
+    a.my_references += arena::ref_external;
+
+    a.my_critical_task_stream.push(t, 0, tbb::internal::random_lane_selector(s.my_random));
+    // Do not access 's' after that point.
+    a.advertise_new_work<arena::work_spawned>();
+
+    // Release our reference to my_arena.
+    a.on_thread_leaving<arena::ref_external>();
+}
+
+task::suspend_point internal_current_suspend_point() {
+    return governor::local_scheduler();
+}
+#endif /* __TBB_PREVIEW_RESUMABLE_TASKS */
 
 } // namespace internal
 } // namespace tbb
@@ -835,6 +915,7 @@ class delegated_task : public task {
                 // Restore context for sake of registering potential exception
                 t->prefix().context = orig_ctx;
 #endif
+                // Restore scheduler state
                 s.my_properties = orig_props;
                 s.my_dummy_task = orig_dummy;
             }
@@ -844,8 +925,19 @@ class delegated_task : public task {
     }
     ~delegated_task() {
         // potential exception was already registered. It must happen before the notification
-        __TBB_ASSERT(my_root->ref_count()==2, NULL);
-        __TBB_store_with_release(my_root->prefix().ref_count, 1); // must precede the wakeup
+        __TBB_ASSERT(my_root->ref_count() == 2, NULL);
+        task_prefix& prefix = my_root->prefix();
+#if __TBB_PREVIEW_RESUMABLE_TASKS
+        reference_count old_ref_count = __TBB_FetchAndStoreW(&prefix.ref_count, 1);
+        // Check if the scheduler was abandoned.
+        if (old_ref_count == internal::abandon_flag + 2) {
+            __TBB_ASSERT(prefix.abandoned_scheduler, NULL);
+            // The wait has been completed. Spawn a resume task.
+            tbb::task::resume(prefix.abandoned_scheduler);
+        }
+#else
+        __TBB_store_with_release(prefix.ref_count, 1); // must precede the wakeup
+#endif
         my_monitor.notify(*this); // do not relax, it needs a fence!
     }
 public:
@@ -878,7 +970,7 @@ void task_arena_base::internal_execute(internal::delegate_base& d) const {
                     dynamic_cast< internal::delegated_function< graph_funct, void>* >(&d);
 
             if (deleg_funct) {
-                internal_enqueue(*new(task::allocate_root(*my_context))
+                internal_enqueue(*new(task::allocate_root(__TBB_CONTEXT_ARG1(*my_context)))
                     internal::function_task< internal::strip< graph_funct >::type >
                         (internal::forward< graph_funct >(deleg_funct->my_func)), 0);
                 return;
@@ -1024,8 +1116,7 @@ public:
     }
 };
 
-void isolate_within_arena( delegate_base& d, intptr_t reserved ) {
-    __TBB_ASSERT_EX( reserved == 0, NULL );
+void isolate_within_arena( delegate_base& d, intptr_t isolation ) {
     // TODO: Decide what to do if the scheduler is not initialized. Is there a use case for it?
     generic_scheduler* s = governor::local_scheduler_weak();
     __TBB_ASSERT( s, "this_task_arena::isolate() needs an initialized scheduler" );
@@ -1034,7 +1125,7 @@ void isolate_within_arena( delegate_base& d, intptr_t reserved ) {
     isolation_tag& current_isolation = s->my_innermost_running_task->prefix().isolation;
     // We temporarily change the isolation tag of the currently running task. It will be restored in the destructor of the guard.
     isolation_guard guard( current_isolation );
-    current_isolation = reinterpret_cast<isolation_tag>(&d);
+    current_isolation = isolation? isolation : reinterpret_cast<isolation_tag>(&d);
     d();
 }
 #endif /* __TBB_TASK_ISOLATION */

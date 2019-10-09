@@ -44,6 +44,11 @@ class ClassWithVectorType {
 public:
     ClassWithVectorType() {init(-n);}
     ClassWithVectorType( int i ) {init(i);}
+    ClassWithVectorType( const ClassWithVectorType& src ) {
+        for( int i=0; i<n; ++i ) {
+            field[i] = src.field[i];
+        }
+    }
     void operator=( const ClassWithVectorType& src ) {
         __Mvec stack[n];
         for( int i=0; i<n; ++i )

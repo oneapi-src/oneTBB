@@ -12,8 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# TBB_FOUND should not be set explicitly. It is defined automatically by CMake.
-# Handling of TBB_VERSION is in TBBConfigVersion.cmake.
+# It defines the following variables:
+#     TBB_<component>_FOUND
+#     TBB_IMPORTED_TARGETS
+#
+# TBBConfigVersion.cmake defines TBB_VERSION
+#
+# Initialize to default values
+if (NOT TBB_IMPORTED_TARGETS)
+    set(TBB_IMPORTED_TARGETS "")
+endif()
 
 if (NOT TBB_FIND_COMPONENTS)
     set(TBB_FIND_COMPONENTS "@TBB_DEFAULT_COMPONENTS@")
@@ -38,39 +46,45 @@ get_filename_component(_tbb_root "${CMAKE_CURRENT_LIST_FILE}" PATH)
 get_filename_component(_tbb_root "${_tbb_root}" PATH)
 @TBB_CHOOSE_ARCH_AND_COMPILER@
 foreach (_tbb_component ${TBB_FIND_COMPONENTS})
+    set(TBB_${_tbb_component}_FOUND 0)
+
     set(_tbb_release_lib "@TBB_RELEASE_LIB_PATH@/@TBB_LIB_PREFIX@${_tbb_component}.@TBB_LIB_EXT@")
     set(_tbb_debug_lib "@TBB_DEBUG_LIB_PATH@/@TBB_LIB_PREFIX@${_tbb_component}_debug.@TBB_LIB_EXT@")
 
     if (EXISTS "${_tbb_release_lib}" OR EXISTS "${_tbb_debug_lib}")
-        add_library(TBB::${_tbb_component} SHARED IMPORTED)
-        set_target_properties(TBB::${_tbb_component} PROPERTIES
-                              INTERFACE_INCLUDE_DIRECTORIES "${_tbb_root}/include"@TBB_COMPILE_DEFINITIONS@)
-
-        if (EXISTS "${_tbb_release_lib}")
+        if (NOT TARGET TBB::${_tbb_component})
+            add_library(TBB::${_tbb_component} SHARED IMPORTED)
             set_target_properties(TBB::${_tbb_component} PROPERTIES
-                                  IMPORTED_LOCATION_RELEASE "${_tbb_release_lib}"@TBB_IMPLIB_RELEASE@)
-            set_property(TARGET TBB::${_tbb_component} APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
-        endif()
+                                INTERFACE_INCLUDE_DIRECTORIES "${_tbb_root}/include"@TBB_COMPILE_DEFINITIONS@)
 
-        if (EXISTS "${_tbb_debug_lib}")
-            set_target_properties(TBB::${_tbb_component} PROPERTIES
-                                  IMPORTED_LOCATION_DEBUG "${_tbb_debug_lib}"@TBB_IMPLIB_DEBUG@)
-            set_property(TARGET TBB::${_tbb_component} APPEND PROPERTY IMPORTED_CONFIGURATIONS DEBUG)
-        endif()
+            if (EXISTS "${_tbb_release_lib}")
+                set_target_properties(TBB::${_tbb_component} PROPERTIES
+                                    IMPORTED_LOCATION_RELEASE "${_tbb_release_lib}"@TBB_IMPLIB_RELEASE@)
+                set_property(TARGET TBB::${_tbb_component} APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
+            endif()
 
-        # Add internal dependencies for imported targets: TBB::tbbmalloc_proxy -> TBB::tbbmalloc
-        if (_tbb_component STREQUAL tbbmalloc_proxy)
-            set_target_properties(TBB::tbbmalloc_proxy PROPERTIES INTERFACE_LINK_LIBRARIES TBB::tbbmalloc)
-        endif()
+            if (EXISTS "${_tbb_debug_lib}")
+                set_target_properties(TBB::${_tbb_component} PROPERTIES
+                                    IMPORTED_LOCATION_DEBUG "${_tbb_debug_lib}"@TBB_IMPLIB_DEBUG@)
+                set_property(TARGET TBB::${_tbb_component} APPEND PROPERTY IMPORTED_CONFIGURATIONS DEBUG)
+            endif()
 
+            # Add internal dependencies for imported targets: TBB::tbbmalloc_proxy -> TBB::tbbmalloc
+            if (_tbb_component STREQUAL tbbmalloc_proxy)
+                set_target_properties(TBB::tbbmalloc_proxy PROPERTIES INTERFACE_LINK_LIBRARIES TBB::tbbmalloc)
+            endif()
+        else()
+            message(STATUS "Using previously found TBB::${_tbb_component}")
+        endif()
         list(APPEND TBB_IMPORTED_TARGETS TBB::${_tbb_component})
         set(TBB_${_tbb_component}_FOUND 1)
     elseif (TBB_FIND_REQUIRED AND TBB_FIND_REQUIRED_${_tbb_component})
         message(STATUS "Missed required Intel TBB component: ${_tbb_component}")
+        message(STATUS "  one or both of:\n   ${_tbb_release_lib}\n    ${_tbb_debug_lib}\n   files must exist.")
         set(TBB_FOUND FALSE)
-        set(TBB_${_tbb_component}_FOUND 0)
     endif()
 endforeach()
+list(REMOVE_DUPLICATES TBB_IMPORTED_TARGETS)
 @TBB_UNSET_ADDITIONAL_VARIABLES@
 unset(_tbbmalloc_proxy_ix)
 unset(_tbbmalloc_ix)

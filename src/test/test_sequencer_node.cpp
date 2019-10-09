@@ -14,19 +14,18 @@
     limitations under the License.
 */
 
-#include "harness.h"
-
 #if __TBB_CPF_BUILD
 #define TBB_DEPRECATED_FLOW_NODE_EXTRACTION 1
 #endif
+
+#include "harness.h"
+#include "harness_graph.h"
 
 #include "tbb/flow_graph.h"
 #include "tbb/task_scheduler_init.h"
 #include "tbb/tick_count.h"
 #include "tbb/atomic.h"
-#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
-#include "harness_graph.h"
-#endif
+#include "test_follows_and_precedes_api.h"
 
 #include <cstdio>
 
@@ -389,6 +388,51 @@ int test_serial() {
     return 0;
 }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+#include <array>
+#include <vector>
+void test_follows_and_precedes_api() {
+    std::array<int, 3> messages_for_follows = {0, 1, 2};
+    std::vector<int> messages_for_precedes = {0, 1, 2};
+
+    follows_and_precedes_testing::test_follows
+        <int, tbb::flow::sequencer_node<int>>
+        (messages_for_follows, [](const int& i) { return i; });
+
+    follows_and_precedes_testing::test_precedes
+        <int, tbb::flow::sequencer_node<int>>
+        (messages_for_precedes, [](const int& i) { return i; });
+}
+#endif
+
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+template <typename Body>
+void test_deduction_guides_common(Body body) {
+    using namespace tbb::flow;
+    graph g;
+    broadcast_node<int> br(g);
+
+    sequencer_node s1(g, body);
+    static_assert(std::is_same_v<decltype(s1), sequencer_node<int>>);
+
+#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+    sequencer_node s2(follows(br), body);
+    static_assert(std::is_same_v<decltype(s2), sequencer_node<int>>);
+#endif
+
+    sequencer_node s3(s1);
+    static_assert(std::is_same_v<decltype(s3), sequencer_node<int>>);
+}
+
+int sequencer_body_f(const int&) { return 1; }
+
+void test_deduction_guides() {
+    test_deduction_guides_common([](const int&)->int { return 1; });
+    test_deduction_guides_common([](const int&) mutable ->int { return 1; });
+    test_deduction_guides_common(sequencer_body_f);
+}
+#endif
+
 int TestMain() {
     tbb::tick_count start = tbb::tick_count::now(), stop;
     for (int p = 2; p <= 4; ++p) {
@@ -398,6 +442,12 @@ int TestMain() {
     }
 #if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     test_buffer_extract<tbb::flow::sequencer_node<int> >().run_tests();
+#endif
+#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+    test_follows_and_precedes_api();
+#endif
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+    test_deduction_guides();
 #endif
     stop = tbb::tick_count::now();
     REMARK("Sequencer_Node Time=%6.6f\n", (stop-start).seconds());

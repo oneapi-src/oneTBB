@@ -44,8 +44,15 @@ struct Foo {
     }
     Foo( const Foo& x ) {
         *this = x;
-        ++NumberOfFoo;
+        //Internal call of assignment
     }
+    Foo& operator=( const Foo& x ) {
+        for (size_t i = 0; i < N; i++)
+            foo_array[i] = x.foo_array[i];
+        ++NumberOfFoo;
+        return *this;
+    }
+
     ~Foo() {
         --NumberOfFoo;
     }

@@ -296,30 +296,56 @@ void TypeTester( const std::list<typename Table::value_type> &lst ) {
 struct int_key {
         int_key(int i) : my_item(i) {}
         int my_item;
-    };
+};
 
-struct transparent_compare {
-    template <typename K, typename K2>
-    bool operator()(const K&, const K2&) const {
-        return false;
+bool operator<(const int_key& ik, int i) { return ik.my_item < i; }
+bool operator<(int i, const int_key& ik) { return i < ik.my_item; }
+bool operator<(const int_key& ik1, const int_key& ik2) { return ik1.my_item < ik2.my_item; }
+
+struct transparent_less {
+    template <typename T, typename U>
+    auto operator()( T&& lhs, U&& rhs ) const
+    -> decltype(std::forward<T>(lhs) < std::forward<U>(rhs)){
+        return lhs < rhs;
     }
 
     using is_transparent = void;
 };
 
 template <typename Container>
-void check_heterogenious_lookup(const Container& c) {
+void check_heterogeneous_functions() {
     static_assert(std::is_same<typename Container::key_type, int>::value,
-                  "incorrect key_type for heterogenious lookup test");
-    int_key k(1);
-    int key = 1;
+                  "incorrect key_type for heterogeneous lookup test");
+    // Initialization
+    Container c;
+    int size = 10;
+    for (int i = 0; i < size; i++){
+        c.insert(Value<Container>::make(i));
+    }
+    // Insert first duplicated element for multicontainers
+    if (Container::allow_multimapping){
+        c.insert(Value<Container>::make(0));
+    }
 
-    ASSERT(c.find(k) == c.find(key), "Incorrect heterogenious find return value");
-    ASSERT(c.lower_bound(k) == c.lower_bound(key), "Incorrect heterogenious lower_bound return value");
-    ASSERT(c.upper_bound(k) == c.upper_bound(key), "Incorrect heterogenious upper_bound return value");
-    ASSERT(c.equal_range(k) == c.equal_range(key), "Incorrect heterogenious equal_range return value");
-    ASSERT(c.count(k) == c.count(key), "Incorrect heterogenious count return value");
-    ASSERT(c.contains(k) == c.contains(key), "Incorrect heterogenious contains return value");
+    // Look up testing
+    for (int i = 0; i < size; i++) {
+        int_key k(i);
+        int key = i;
+        ASSERT(c.find(k) == c.find(key), "Incorrect heterogeneous find return value");
+        ASSERT(c.lower_bound(k) == c.lower_bound(key), "Incorrect heterogeneous lower_bound return value");
+        ASSERT(c.upper_bound(k) == c.upper_bound(key), "Incorrect heterogeneous upper_bound return value");
+        ASSERT(c.equal_range(k) == c.equal_range(key), "Incorrect heterogeneous equal_range return value");
+        ASSERT(c.count(k) == c.count(key), "Incorrect heterogeneous count return value");
+        ASSERT(c.contains(k) == c.contains(key), "Incorrect heterogeneous contains return value");
+    }
+
+    // Erase testing
+    for (int i = 0; i < size; i++){
+        auto count_before_erase = c.count(i);
+        auto result = c.unsafe_erase(int_key(i));
+        ASSERT(count_before_erase==result,"Incorrent erased elements count");
+        ASSERT(c.count(i)==0, "Some elements was not erased");
+    }
 }
 
 template <template<typename...> class ContainerType, typename... ContainerArgs>

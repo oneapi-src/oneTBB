@@ -99,9 +99,10 @@ namespace utility{
         template <typename type>
         class type_impl : public type_base {
         private:
+            type_impl(const type_impl& src) : type_base(src.name, src.description), target(src.target),
+                                              validating_function(src.validating_function) {}
             type_impl& operator=(const type_impl&);
             typedef bool(*validating_function_type)(const type&);
-        private:
             type & target;
             validating_function_type validating_function;
         public:
@@ -419,10 +420,10 @@ namespace utility{
         int first; // 0<=first (0 can be used as a special value)
         int last;  // first<=last
 
-        internal::thread_range_step step;
+		::utility::internal::thread_range_step step;
 
         thread_number_range( int (*auto_number_of_threads_)(),int low_=1, int high_=-1
-                , internal::thread_range_step step_ =  internal::thread_range_step(internal::step_function_power2_ladder,4)
+                , ::utility::internal::thread_range_step step_ = ::utility::internal::thread_range_step(::utility::internal::step_function_power2_ladder,4)
         )
             : auto_number_of_threads(auto_number_of_threads_), first(low_), last((high_>-1) ? high_ : auto_number_of_threads_())
               ,step(step_)
@@ -484,7 +485,7 @@ namespace utility{
                                                 "\n\twhere low and optional high are non-negative integers or 'auto' for the default choice,"
                                                 "\n\tand optional step expression specifies how thread numbers are chosen within the range."
                                                 "\n\tSee examples/common/index.html for detailed description."
-   ;
+    ;
 
     inline void report_elapsed_time(double seconds){
         std::cout<<"elapsed time : "<<seconds<<" seconds"<<std::endl;

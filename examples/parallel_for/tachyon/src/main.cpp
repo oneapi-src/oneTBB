@@ -97,8 +97,8 @@ void initoptions(argoptions * opt) {
     opt->verbosemode = -1;
     opt->antialiasing = -1;
     opt->displaymode = -1;
-    opt->boundmode = -1; 
-    opt->boundthresh = -1; 
+    opt->boundmode = -1;
+    opt->boundthresh = -1;
     opt->usecamfile = -1;
 }
 
@@ -120,7 +120,7 @@ int CreateScene() {
 
     // scene->hres and scene->vres should be equal to screen resolution
     scene->hres = global_xwinsize = global_xsize;
-    scene->vres = global_ywinsize = global_ysize;  
+    scene->vres = global_ywinsize = global_ysize;
 
     return 0;
 }
@@ -137,7 +137,7 @@ unsigned int __stdcall example_main(void *)
         tachyon.init_console();
 
         // always using window even if(!global_usegraphics)
-        global_usegraphics = 
+        global_usegraphics =
             tachyon.init_window(global_xwinsize, global_ywinsize);
         if(!tachyon.running)
             exit(-1);
@@ -149,7 +149,7 @@ unsigned int __stdcall example_main(void *)
             global_startTime=(long) time(NULL);
             global_isCancelled=false;
             if (video)video->running = true;
-            tbb::task_scheduler_init init (global_number_of_threads);
+            tbb::global_control c(tbb::global_control::max_allowed_parallelism, global_number_of_threads);
             memset(g_pImg, 0, sizeof(unsigned int) * global_xsize * global_ysize);
             tachyon.main_loop();
             global_elapsedTime = (long)(time(NULL)-global_startTime);
@@ -262,7 +262,7 @@ int useoptions(argoptions * opt, SceneHandle scene) {
 
   if (opt->antialiasing != -1) {
     /* need new api code for this */
-  } 
+  }
 
   if (opt->displaymode != -1) {
     rt_displaymode(scene, opt->displaymode);
@@ -277,7 +277,7 @@ int useoptions(argoptions * opt, SceneHandle scene) {
   }
 
   return 0;
-}    
+}
 
 argoptions ParseCommandLine(int argc, const char *argv[]) {
     argoptions opt;
@@ -362,7 +362,7 @@ int main (int argc, char *argv[]) {
 
         tachyon.title = global_window_title;
         // always using window even if(!global_usegraphics)
-        global_usegraphics = 
+        global_usegraphics =
             tachyon.init_window(global_xwinsize, global_ywinsize);
         if(!tachyon.running)
             return -1;

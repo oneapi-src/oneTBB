@@ -14,8 +14,22 @@
     limitations under the License.
 */
 
+#include "internal/_deprecated_header_message_guard.h"
+
+#if !defined(__TBB_show_deprecation_message_tbb_thread_H) && defined(__TBB_show_deprecated_header_message)
+#define  __TBB_show_deprecation_message_tbb_thread_H
+#pragma message("TBB Warning: tbb/tbb_thread.h is deprecated. For details, please see Deprecated Features appendix in the TBB reference manual.")
+#endif
+
+#if defined(__TBB_show_deprecated_header_message)
+#undef __TBB_show_deprecated_header_message
+#endif
+
 #ifndef __TBB_tbb_thread_H
 #define __TBB_tbb_thread_H
+
+#define __TBB_tbb_thread_H_include_area
+#include "internal/_warning_suppress_enable_notice.h"
 
 #include "tbb_stddef.h"
 
@@ -293,7 +307,7 @@ namespace internal {
 } // namespace internal;
 
 //! Users reference thread class by name tbb_thread
-typedef internal::tbb_thread_v3 tbb_thread;
+__TBB_DEPRECATED_VERBOSE_MSG("tbb::thread is deprecated, use std::thread") typedef internal::tbb_thread_v3 tbb_thread;
 
 using internal::operator==;
 using internal::operator!=;
@@ -314,15 +328,18 @@ inline void swap( internal::tbb_thread_v3& t1, internal::tbb_thread_v3& t2 )  __
 }
 
 namespace this_tbb_thread {
-    inline tbb_thread::id get_id() { return internal::thread_get_id_v3(); }
+    __TBB_DEPRECATED_VERBOSE inline tbb_thread::id get_id() { return internal::thread_get_id_v3(); }
     //! Offers the operating system the opportunity to schedule another thread.
-    inline void yield() { internal::thread_yield_v3(); }
+    __TBB_DEPRECATED_VERBOSE inline void yield() { internal::thread_yield_v3(); }
     //! The current thread blocks at least until the time specified.
-    inline void sleep(const tick_count::interval_t &i) {
+    __TBB_DEPRECATED_VERBOSE inline void sleep(const tick_count::interval_t &i) {
         internal::thread_sleep_v3(i);
     }
 }  // namespace this_tbb_thread
 
 } // namespace tbb
+
+#include "internal/_warning_suppress_disable_notice.h"
+#undef __TBB_tbb_thread_H_include_area
 
 #endif /* __TBB_tbb_thread_H */

@@ -329,7 +329,6 @@
 #define __TBB_CPP11_VARIADIC_TUPLE_PRESENT                  (!_MSC_VER || _MSC_VER >= 1800)
 
 #define __TBB_CPP11_TYPE_PROPERTIES_PRESENT                 (_LIBCPP_VERSION || _MSC_VER >= 1700 || (__TBB_GLIBCXX_VERSION >= 50000 && __GXX_EXPERIMENTAL_CXX0X__))
-#define __TBB_TR1_TYPE_PROPERTIES_IN_STD_PRESENT            (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GLIBCXX_VERSION >= 40300 || _MSC_VER >= 1600)
 // GCC supported some of type properties since 4.7
 #define __TBB_CPP11_IS_COPY_CONSTRUCTIBLE_PRESENT           (__GXX_EXPERIMENTAL_CXX0X__ && __TBB_GLIBCXX_VERSION >= 40700 || __TBB_CPP11_TYPE_PROPERTIES_PRESENT)
 
@@ -615,6 +614,46 @@ There are four cases that are supported:
     #endif
 #endif
 
+// Intel C++ Compiler starts analyzing usages of the deprecated content at the template
+// instantiation site, which is too late for suppression of the corresponding messages for internal
+// stuff.
+#ifndef TBB_SUPPRESS_DEPRECATED_MESSAGES
+#define TBB_SUPPRESS_DEPRECATED_MESSAGES 1
+#endif
+
+#if !defined(__INTEL_COMPILER) && (!defined(TBB_SUPPRESS_DEPRECATED_MESSAGES) || (TBB_SUPPRESS_DEPRECATED_MESSAGES == 0))
+    #if (__cplusplus >= 201402L)
+        #define __TBB_DEPRECATED [[deprecated]]
+        #define __TBB_DEPRECATED_MSG(msg) [[deprecated(msg)]]
+    #elif _MSC_VER
+        #define __TBB_DEPRECATED __declspec(deprecated)
+        #define __TBB_DEPRECATED_MSG(msg) __declspec(deprecated(msg))
+    #elif (__GNUC__ && __TBB_GCC_VERSION >= 40805) || __clang__
+        #define __TBB_DEPRECATED __attribute__((deprecated))
+        #define __TBB_DEPRECATED_MSG(msg) __attribute__((deprecated(msg)))
+    #endif
+#endif  // !defined(TBB_SUPPRESS_DEPRECATED_MESSAGES) || (TBB_SUPPRESS_DEPRECATED_MESSAGES == 0)
+
+#if !defined(__TBB_DEPRECATED)
+    #define __TBB_DEPRECATED
+    #define __TBB_DEPRECATED_MSG(msg)
+#elif !defined(__TBB_SUPPRESS_INTERNAL_DEPRECATED_MESSAGES)
+    // Suppress deprecated messages from self
+    #define __TBB_SUPPRESS_INTERNAL_DEPRECATED_MESSAGES 1
+#endif
+
+#if defined(TBB_SUPPRESS_DEPRECATED_MESSAGES) && (TBB_SUPPRESS_DEPRECATED_MESSAGES == 0)
+    #define __TBB_DEPRECATED_VERBOSE __TBB_DEPRECATED
+    #define __TBB_DEPRECATED_VERBOSE_MSG(msg) __TBB_DEPRECATED_MSG(msg)
+#else
+    #define __TBB_DEPRECATED_VERBOSE
+    #define __TBB_DEPRECATED_VERBOSE_MSG(msg)
+#endif // (TBB_SUPPRESS_DEPRECATED_MESSAGES == 0)
+
+#if (!defined(TBB_SUPPRESS_DEPRECATED_MESSAGES) || (TBB_SUPPRESS_DEPRECATED_MESSAGES == 0)) && !__TBB_CPP11_PRESENT
+    #pragma message("TBB Warning: Support for C++98/03 is deprecated. Please use the compiler that supports C++11 features at least.")
+#endif
+
 /** __TBB_WIN8UI_SUPPORT enables support of Windows* Store Apps and limit a possibility to load
     shared libraries at run time only from application container **/
 // TODO: Separate this single macro into two for Windows 8 Store* (win8ui mode) and UWP/UWD modes.
@@ -820,8 +859,17 @@ There are four cases that are supported:
 #define __TBB_PREVIEW_FLOW_GRAPH_PRIORITIES     TBB_PREVIEW_FLOW_GRAPH_FEATURES
 #endif
 
+// This feature works only in combination with critical tasks (__TBB_PREVIEW_CRITICAL_TASKS)
+#ifndef __TBB_PREVIEW_RESUMABLE_TASKS
+#define __TBB_PREVIEW_RESUMABLE_TASKS           ((__TBB_CPF_BUILD || TBB_PREVIEW_RESUMABLE_TASKS) && !__TBB_WIN8UI_SUPPORT && !__ANDROID__ && !__TBB_ipf)
+#endif
+
 #ifndef __TBB_PREVIEW_CRITICAL_TASKS
-#define __TBB_PREVIEW_CRITICAL_TASKS            (__TBB_CPF_BUILD || __TBB_PREVIEW_FLOW_GRAPH_PRIORITIES)
+#define __TBB_PREVIEW_CRITICAL_TASKS            (__TBB_CPF_BUILD || __TBB_PREVIEW_FLOW_GRAPH_PRIORITIES || __TBB_PREVIEW_RESUMABLE_TASKS)
+#endif
+
+#ifndef __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+#define __TBB_PREVIEW_FLOW_GRAPH_NODE_SET       (TBB_PREVIEW_FLOW_GRAPH_FEATURES && __TBB_CPP11_PRESENT && __TBB_FLOW_GRAPH_CPP11_FEATURES)
 #endif
 
 #endif /* __TBB_tbb_config_H */

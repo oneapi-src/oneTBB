@@ -17,7 +17,6 @@
 #if __TBB_CPF_BUILD
 #define TBB_DEPRECATED_FLOW_NODE_EXTRACTION 1
 #endif
-
 #include "test_join_node.h"
 
 static tbb::atomic<int> output_count;
@@ -115,13 +114,75 @@ public:
     }
 };
 
+#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+#include <array>
+#include <vector>
+void test_follows_and_precedes_api() {
+    using msg_t = tbb::flow::continue_msg;
+    using JoinOutputType = tbb::flow::tuple<msg_t, msg_t, msg_t>;
+
+    std::array<msg_t, 3> messages_for_follows = {msg_t(), msg_t(), msg_t()};
+    std::vector<msg_t> messages_for_precedes = {msg_t(), msg_t(), msg_t()};
+
+    follows_and_precedes_testing::test_follows
+        <msg_t, tbb::flow::join_node<JoinOutputType>, tbb::flow::buffer_node<msg_t>>(messages_for_follows);
+    follows_and_precedes_testing::test_follows
+        <msg_t, tbb::flow::join_node<JoinOutputType, tbb::flow::queueing>>(messages_for_follows);
+    follows_and_precedes_testing::test_follows
+        <msg_t, tbb::flow::join_node<JoinOutputType, tbb::flow::reserving>, tbb::flow::buffer_node<msg_t>>(messages_for_follows);
+    // TODO: add tests for key_matching and message based key matching
+
+    follows_and_precedes_testing::test_precedes
+        <msg_t, tbb::flow::join_node<JoinOutputType>>(messages_for_precedes);
+    follows_and_precedes_testing::test_precedes
+        <msg_t, tbb::flow::join_node<JoinOutputType, tbb::flow::queueing>>(messages_for_precedes);
+    follows_and_precedes_testing::test_precedes
+        <msg_t, tbb::flow::join_node<JoinOutputType, tbb::flow::reserving>>(messages_for_precedes);
+}
+#endif
+
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+void test_deduction_guides() {
+    using namespace tbb::flow;
+
+    graph g;
+    using tuple_type = std::tuple<int, int, int>;
+    broadcast_node<int> b1(g), b2(g), b3(g);
+    broadcast_node<tuple_type> b4(g);
+    join_node<tuple_type> j0(g);
+
+#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+    join_node j1(follows(b1, b2, b3));
+    static_assert(std::is_same_v<decltype(j1), join_node<tuple_type>>);
+
+    join_node j2(follows(b1, b2, b3), reserving());
+    static_assert(std::is_same_v<decltype(j2), join_node<tuple_type, reserving>>);
+
+    join_node j3(precedes(b4));
+    static_assert(std::is_same_v<decltype(j3), join_node<tuple_type>>);
+
+    join_node j4(precedes(b4), reserving());
+    static_assert(std::is_same_v<decltype(j4), join_node<tuple_type, reserving>>);
+#endif
+
+    join_node j5(j0);
+    static_assert(std::is_same_v<decltype(j5), join_node<tuple_type>>);
+}
+
+#endif
+
 int TestMain() {
 #if __TBB_USE_TBB_TUPLE
     REMARK("  Using TBB tuple\n");
 #else
     REMARK("  Using platform tuple\n");
 #endif
-
+#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+    test_follows_and_precedes_api();
+#endif
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+    test_deduction_guides();
+#endif
     TestTaggedBuffers();
     test_main<tbb::flow::queueing>();
     test_main<tbb::flow::reserving>();

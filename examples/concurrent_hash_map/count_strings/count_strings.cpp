@@ -27,13 +27,14 @@
 #include "tbb/blocked_range.h"
 #include "tbb/parallel_for.h"
 #include "tbb/tick_count.h"
-#include "tbb/task_scheduler_init.h"
 #include "tbb/tbb_allocator.h"
+#include "tbb/global_control.h"
 #include "../../common/utility/utility.h"
+#include "../../common/utility/get_default_num_threads.h"
 
 
 //! String type with scalable allocator.
-/** On platforms with non-scalable default memory allocators, the example scales 
+/** On platforms with non-scalable default memory allocators, the example scales
     better if the string allocator is changed to tbb::tbb_allocator<char>. */
 typedef std::basic_string<char,std::char_traits<char>,tbb::tbb_allocator<char> > MyString;
 
@@ -185,7 +186,7 @@ int main( int argc, char* argv[] ) {
         //! Working threads count
         // The 1st argument is the function to obtain 'auto' value; the 2nd is the default value
         // The example interprets 0 threads as "run serially, then fully subscribed"
-        utility::thread_number_range threads(tbb::task_scheduler_init::default_num_threads,0);
+        utility::thread_number_range threads(utility::get_default_num_threads,0);
 
         utility::parse_cli_arguments(argc,argv,
             utility::cli_argument_pack()
@@ -204,18 +205,18 @@ int main( int argc, char* argv[] ) {
         if ( threads.first ) {
             for(int p = threads.first;  p <= threads.last; p = threads.step(p)) {
                 if ( !silent ) printf("threads = %d  ", p );
-                task_scheduler_init init( p );
+                global_control c(tbb::global_control::max_allowed_parallelism, p);
                 CountOccurrences( p );
             }
         } else { // Number of threads wasn't set explicitly. Run serial and parallel version
             { // serial run
                 if ( !silent ) printf("serial run   ");
-                task_scheduler_init init_serial(1);
+                global_control c(tbb::global_control::max_allowed_parallelism, 1);
                 CountOccurrences(1);
             }
             { // parallel run (number of threads is selected automatically)
                 if ( !silent ) printf("parallel run ");
-                task_scheduler_init init_parallel;
+                global_control c(tbb::global_control::max_allowed_parallelism, utility::get_default_num_threads());
                 CountOccurrences(0);
             }
         }

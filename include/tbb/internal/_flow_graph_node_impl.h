@@ -191,7 +191,7 @@ namespace internal {
             __TBB_ASSERT(!(f & rf_clear_edges) || my_predecessors.empty(), "function_input_base reset failed");
         }
 
-        graph& graph_reference() __TBB_override {
+        graph& graph_reference() const __TBB_override {
             return my_graph_ref;
         }
 
@@ -559,6 +559,79 @@ namespace internal {
     };
 #endif
 
+    template <typename OutputTuple>
+    struct init_output_ports {
+#if __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
+        template <typename... Args>
+        static OutputTuple call(graph& g, const tbb::flow::tuple<Args...>&) {
+            return OutputTuple(Args(g)...);
+        }
+#else // __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
+        template <typename T1>
+        static OutputTuple call(graph& g, const tbb::flow::tuple<T1>&) {
+            return OutputTuple(T1(g));
+        }
+
+        template <typename T1, typename T2>
+        static OutputTuple call(graph& g, const tbb::flow::tuple<T1, T2>&) {
+            return OutputTuple(T1(g), T2(g));
+        }
+
+        template <typename T1, typename T2, typename T3>
+        static OutputTuple call(graph& g, const tbb::flow::tuple<T1, T2, T3>&) {
+            return OutputTuple(T1(g), T2(g), T3(g));
+        }
+
+        template <typename T1, typename T2, typename T3, typename T4>
+        static OutputTuple call(graph& g, const tbb::flow::tuple<T1, T2, T3, T4>&) {
+            return OutputTuple(T1(g), T2(g), T3(g), T4(g));
+        }
+
+        template <typename T1, typename T2, typename T3, typename T4, typename T5>
+        static OutputTuple call(graph& g, const tbb::flow::tuple<T1, T2, T3, T4, T5>&) {
+            return OutputTuple(T1(g), T2(g), T3(g), T4(g), T5(g));
+        }
+#if __TBB_VARIADIC_MAX >= 6
+        template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
+        static OutputTuple call(graph& g, const tbb::flow::tuple<T1, T2, T3, T4, T5, T6>&) {
+            return OutputTuple(T1(g), T2(g), T3(g), T4(g), T5(g), T6(g));
+        }
+#endif
+#if __TBB_VARIADIC_MAX >= 7
+        template <typename T1, typename T2, typename T3, typename T4,
+                  typename T5, typename T6, typename T7>
+        static OutputTuple call(graph& g,
+                                const tbb::flow::tuple<T1, T2, T3, T4, T5, T6, T7>&) {
+            return OutputTuple(T1(g), T2(g), T3(g), T4(g), T5(g), T6(g), T7(g));
+        }
+#endif
+#if __TBB_VARIADIC_MAX >= 8
+        template <typename T1, typename T2, typename T3, typename T4,
+                  typename T5, typename T6, typename T7, typename T8>
+        static OutputTuple call(graph& g,
+                                const tbb::flow::tuple<T1, T2, T3, T4, T5, T6, T7, T8>&) {
+            return OutputTuple(T1(g), T2(g), T3(g), T4(g), T5(g), T6(g), T7(g), T8(g));
+        }
+#endif
+#if __TBB_VARIADIC_MAX >= 9
+        template <typename T1, typename T2, typename T3, typename T4,
+                  typename T5, typename T6, typename T7, typename T8, typename T9>
+        static OutputTuple call(graph& g,
+                                const tbb::flow::tuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>&) {
+            return OutputTuple(T1(g), T2(g), T3(g), T4(g), T5(g), T6(g), T7(g), T8(g), T9(g));
+        }
+#endif
+#if __TBB_VARIADIC_MAX >= 9
+        template <typename T1, typename T2, typename T3, typename T4, typename T5,
+                  typename T6, typename T7, typename T8, typename T9, typename T10>
+        static OutputTuple call(graph& g,
+                                const tbb::flow::tuple<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>&) {
+            return OutputTuple(T1(g), T2(g), T3(g), T4(g), T5(g), T6(g), T7(g), T8(g), T9(g), T10(g));
+        }
+#endif
+#endif // __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
+    }; // struct init_output_ports
+
     //! Implements methods for a function node that takes a type Input as input
     //  and has a tuple of output ports specified.
     template< typename Input, typename OutputPortSet, typename Policy, typename A>
@@ -578,14 +651,16 @@ namespace internal {
                             __TBB_FLOW_GRAPH_PRIORITY_ARG1(Body& body, node_priority_t priority)
         ) : base_type(g, __TBB_FLOW_GRAPH_PRIORITY_ARG1(max_concurrency, priority))
           , my_body( new internal::multifunction_body_leaf<input_type, output_ports_type, Body>(body) )
-          , my_init_body( new internal::multifunction_body_leaf<input_type, output_ports_type, Body>(body) ) {
+          , my_init_body( new internal::multifunction_body_leaf<input_type, output_ports_type, Body>(body) )
+          , my_output_ports(init_output_ports<output_ports_type>::call(g, my_output_ports)){
         }
 
         //! Copy constructor
         multifunction_input( const multifunction_input& src ) :
                 base_type(src),
                 my_body( src.my_init_body->clone() ),
-                my_init_body(src.my_init_body->clone() ) {
+                my_init_body(src.my_init_body->clone() ),
+                my_output_ports( init_output_ports<output_ports_type>::call(src.my_graph_ref, my_output_ports) ) {
         }
 
         ~multifunction_input() {
@@ -769,7 +844,7 @@ namespace internal {
             }
         }
 
-        graph& graph_reference() __TBB_override {
+        graph& graph_reference() const __TBB_override {
             return my_graph_ref;
         }
     };  // continue_input
@@ -788,8 +863,8 @@ namespace internal {
         typedef typename sender<output_type>::successor_list_type successor_list_type;
 #endif
 
-        function_output() { my_successors.set_owner(this); }
-        function_output(const function_output & /*other*/) : sender<output_type>() {
+        function_output( graph& g) : my_graph_ref(g) { my_successors.set_owner(this); }
+        function_output(const function_output & other) : sender<output_type>(), my_graph_ref(other.my_graph_ref) {
             my_successors.set_owner(this);
         }
 
@@ -839,9 +914,11 @@ namespace internal {
         }
 
         broadcast_cache_type &successors() { return my_successors; }
+
+        graph& graph_reference() const { return my_graph_ref; }
     protected:
         broadcast_cache_type my_successors;
-
+        graph& my_graph_ref;
     };  // function_output
 
     template< typename Output >
@@ -851,8 +928,8 @@ namespace internal {
         typedef function_output<output_type> base_type;
         using base_type::my_successors;
 
-        multifunction_output() : base_type() {my_successors.set_owner(this);}
-        multifunction_output( const multifunction_output &/*other*/) : base_type() { my_successors.set_owner(this); }
+        multifunction_output(graph& g) : base_type(g) {my_successors.set_owner(this);}
+        multifunction_output( const multifunction_output& other) : base_type(other.my_graph_ref) { my_successors.set_owner(this); }
 
         bool try_put(const output_type &i) {
             task *res = try_put_task(i);
@@ -862,6 +939,8 @@ namespace internal {
             }
             return true;
         }
+
+        using base_type::graph_reference;
 
     protected:
 

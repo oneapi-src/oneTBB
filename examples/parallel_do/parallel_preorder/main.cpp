@@ -18,9 +18,10 @@
    traversal of a directed acyclic graph. */
 
 #include <cstdlib>
-#include "tbb/task_scheduler_init.h"
 #include "tbb/tick_count.h"
+#include "tbb/global_control.h"
 #include "../../common/utility/utility.h"
+#include "../../common/utility/get_default_num_threads.h"
 #include <iostream>
 #include <vector>
 #include "Graph.h"
@@ -32,13 +33,12 @@ void ParallelPreorderTraversal( const std::vector<Cell*>& root_set );
 //------------------------------------------------------------------------
 // Test driver
 //------------------------------------------------------------------------
-utility::thread_number_range threads(tbb::task_scheduler_init::default_num_threads);
 static unsigned nodes = 1000;
 static unsigned traversals = 500;
 static bool SilentFlag = false;
 
 //! Parse the command line.
-static void ParseCommandLine( int argc, const char* argv[] ) {
+static void ParseCommandLine( int argc, const char* argv[], utility::thread_number_range& threads ) {
     utility::parse_cli_arguments(
             argc,argv,
             utility::cli_argument_pack()
@@ -52,13 +52,14 @@ static void ParseCommandLine( int argc, const char* argv[] ) {
 
 int main( int argc, const char* argv[] ) {
     try {
+        utility::thread_number_range threads(utility::get_default_num_threads);
         tbb::tick_count main_start = tbb::tick_count::now();
-        ParseCommandLine(argc,argv);
+        ParseCommandLine(argc,argv,threads);
 
         // Start scheduler with given number of threads.
         for( int p=threads.first; p<=threads.last; p = threads.step(p) ) {
             tbb::tick_count t0 = tbb::tick_count::now();
-            tbb::task_scheduler_init init(p);
+            tbb::global_control c(tbb::global_control::max_allowed_parallelism, p);
             srand(2);
             size_t root_set_size = 0;
             {

@@ -30,6 +30,10 @@
 #include "cilk-tbb-interop.h"
 #endif /* __TBB_SURVIVE_THREAD_SWITCH */
 
+#if __TBB_PREVIEW_RESUMABLE_TASKS
+#include "co_context.h"
+#endif
+
 namespace tbb {
 namespace internal {
 
@@ -54,13 +58,20 @@ struct scheduler_properties {
 #if __TBB_PREVIEW_CRITICAL_TASKS
     //! Indicates that a scheduler is in the process of executing critical task(s).
     bool has_taken_critical_task : 1;
-
+#endif
+#if __TBB_PREVIEW_RESUMABLE_TASKS
+    //! Indicates that the scheduler is bound to an original thread stack.
+    bool genuine : 1;
+#endif
     //! Reserved bits
-    unsigned char : 5;
+    unsigned char :
+#if __TBB_PREVIEW_RESUMABLE_TASKS
+                    4;
+#elif __TBB_PREVIEW_CRITICAL_TASKS
+                    5;
 #else
-    //! Reserved bits
-    unsigned char : 6;
-#endif /* __TBB_PREVIEW_CRITICAL_TASKS */
+                    6;
+#endif
 };
 
 struct scheduler_state {
@@ -75,7 +86,6 @@ struct scheduler_state {
 
     //! Innermost task whose task::execute() is running. A dummy task on the outermost level.
     task* my_innermost_running_task;
-
 
     mail_inbox my_inbox;
 
@@ -108,6 +118,13 @@ struct scheduler_state {
     //! Pointer to market's (for workers) or current arena's (for the master) reload epoch counter.
     volatile uintptr_t *my_ref_reload_epoch;
 #endif /* __TBB_TASK_PRIORITY */
+#if __TBB_PREVIEW_RESUMABLE_TASKS
+    //! The currently waited task.
+    task* my_wait_task;
+
+    //! The currently recalled stack.
+    tbb::atomic<bool>* my_current_is_recalled;
+#endif
 };
 
 //! Work stealing task scheduler.
@@ -183,6 +200,68 @@ public: // almost every class in TBB uses generic_scheduler
     //! Net number of big task objects that have been allocated but not yet freed.
     intptr_t my_task_node_count;
 #endif /* __TBB_COUNT_TASK_NODES */
+
+#if __TBB_PREVIEW_RESUMABLE_TASKS
+    //! The list of possible post resume actions.
+    enum post_resume_action {
+        PRA_INVALID,
+        PRA_ABANDON,
+        PRA_CALLBACK,
+        PRA_CLEANUP,
+        PRA_NOTIFY,
+        PRA_NONE
+    };
+
+    //! The suspend callback function type.
+    typedef void(*suspend_callback_t)(void*, task::suspend_point);
+
+    //! The callback to call the user callback passed to tbb::suspend.
+    struct callback_t {
+        suspend_callback_t suspend_callback;
+        void* user_callback;
+        task::suspend_point tag;
+
+        void operator()() {
+            if (suspend_callback) {
+                __TBB_ASSERT(suspend_callback && user_callback && tag, NULL);
+                suspend_callback(user_callback, tag);
+            }
+        }
+    };
+
+    //! The coroutine context associated with the current scheduler.
+    co_context my_co_context;
+
+    //! The post resume action requested for the current scheduler.
+    post_resume_action my_post_resume_action;
+
+    //! The post resume action argument.
+    void* my_post_resume_arg;
+
+    //! The scheduler to resume on exit.
+    generic_scheduler* my_target_on_exit;
+
+    //! Set post resume action to perform after resume.
+    void set_post_resume_action(post_resume_action, void* arg);
+
+    //! Performs post resume action.
+    void do_post_resume_action();
+
+    //! Decides how to switch and sets post resume action.
+    /** Returns false if the caller should finish the coroutine and then resume the target scheduler.
+        Returns true if the caller should resume the target scheduler immediately. **/
+    bool prepare_resume(generic_scheduler& target);
+
+    //! Resumes the original scheduler of the calling thread.
+    /** Returns false if the current stack should be left to perform the resume.
+        Returns true if the current stack is resumed. **/
+    bool resume_original_scheduler();
+
+    //! Resumes the target scheduler. The prepare_resume must be called for the target scheduler in advance.
+    void resume(generic_scheduler& target);
+
+    friend void recall_function(task::suspend_point tag);
+#endif /* __TBB_PREVIEW_RESUMABLE_TASKS */
 
     //! Sets up the data necessary for the stealing limiting heuristics
     void init_stack_info ();
@@ -301,14 +380,14 @@ public: // almost every class in TBB uses generic_scheduler
     bool cleanup_master( bool blocking_terminate );
 
     //! Initialize a scheduler for a worker thread.
-    static generic_scheduler* create_worker( market& m, size_t index );
+    static generic_scheduler* create_worker( market& m, size_t index, bool geniune );
 
     //! Perform necessary cleanup when a worker thread finishes.
     static void cleanup_worker( void* arg, bool worker );
 
 protected:
     template<typename SchedulerTraits> friend class custom_scheduler;
-    generic_scheduler( market & );
+    generic_scheduler( market &, bool );
 
 public:
 #if TBB_USE_ASSERT > 1
@@ -334,8 +413,11 @@ public:
     void local_spawn_root_and_wait( task* first, task*& next );
     virtual void local_wait_for_all( task& parent, task* child ) = 0;
 
-    //! Destroy and deallocate this scheduler object
-    void free_scheduler();
+    //! Destroy and deallocate this scheduler object.
+    void destroy();
+
+    //! Cleans up this scheduler (the scheduler might be destroyed).
+    void cleanup_scheduler();
 
     //! Allocate task object, either from the heap or a free list.
     /** Returns uninitialized task object with initialized prefix. */
@@ -660,7 +742,11 @@ void generic_scheduler::free_task( task& t ) {
     poison_value(p.depth);
     poison_value(p.ref_count);
     poison_pointer(p.owner);
-    __TBB_ASSERT( 1L<<t.state() & (1L<<task::executing|1L<<task::allocated), NULL );
+#if __TBB_PREVIEW_RESUMABLE_TASKS
+    __TBB_ASSERT(1L << t.state() & (1L << task::executing | 1L << task::allocated | 1 << task::to_resume), NULL);
+#else
+    __TBB_ASSERT(1L << t.state() & (1L << task::executing | 1L << task::allocated), NULL);
+#endif
     p.state = task::freed;
     if( h==small_local_task || p.origin==this ) {
         GATHER_STATISTIC(++my_counters.free_list_length);
@@ -693,11 +779,7 @@ inline intptr_t generic_scheduler::effective_reference_priority () const {
     // be trapped in a futile spinning (because market's priority would prohibit
     // executing ANY tasks in this arena).
     return !worker_outermost_level() ||
-        (my_arena->my_num_workers_allotted < my_arena->num_workers_active()
-#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-         && my_arena->my_concurrency_mode!=arena_base::cm_enforced_global
-#endif
-            ) ? *my_ref_top_priority : my_arena->my_top_priority;
+        my_arena->my_num_workers_allotted < my_arena->num_workers_active() ? *my_ref_top_priority : my_arena->my_top_priority;
 }
 
 inline void generic_scheduler::offload_task ( task& t, intptr_t /*priority*/ ) {
@@ -712,43 +794,174 @@ inline void generic_scheduler::offload_task ( task& t, intptr_t /*priority*/ ) {
 }
 #endif /* __TBB_TASK_PRIORITY */
 
-#if __TBB_PREVIEW_CRITICAL_TASKS
-class critical_task_count_guard : internal::no_copy {
-public:
-    critical_task_count_guard(scheduler_properties& properties, task& t)
-        : my_properties(properties),
-          my_original_critical_task_state(properties.has_taken_critical_task) {
-        my_properties.has_taken_critical_task |= internal::is_critical(t);
-    }
-    ~critical_task_count_guard() {
-        my_properties.has_taken_critical_task = my_original_critical_task_state;
-    }
-private:
-    scheduler_properties& my_properties;
-    bool my_original_critical_task_state;
-};
-#endif /* __TBB_PREVIEW_CRITICAL_TASKS */
+#if __TBB_PREVIEW_RESUMABLE_TASKS
+inline void generic_scheduler::set_post_resume_action(post_resume_action pra, void* arg) {
+    __TBB_ASSERT(my_post_resume_action == PRA_NONE, "Post resume action has already been set.");
+    __TBB_ASSERT(!my_post_resume_arg, NULL);
 
-#if __TBB_FP_CONTEXT || __TBB_TASK_GROUP_CONTEXT
+    my_post_resume_action = pra;
+    my_post_resume_arg = arg;
+}
+
+inline bool generic_scheduler::prepare_resume(generic_scheduler& target) {
+    // The second condition is valid for worker or cleanup operation for master
+    if (my_properties.outermost && my_wait_task == my_dummy_task) {
+        if (my_properties.genuine) {
+            // We are in someone's original scheduler.
+            target.set_post_resume_action(PRA_NOTIFY, my_current_is_recalled);
+            return true;
+        }
+        // We are in a coroutine on outermost level.
+        target.set_post_resume_action(PRA_CLEANUP, this);
+        my_target_on_exit = &target;
+        // Request to finish coroutine instead of immediate resume.
+        return false;
+    }
+    __TBB_ASSERT(my_wait_task != my_dummy_task, NULL);
+    // We are in the coroutine on a nested level.
+    my_wait_task->prefix().abandoned_scheduler = this;
+    target.set_post_resume_action(PRA_ABANDON, my_wait_task);
+    return true;
+}
+
+inline bool generic_scheduler::resume_original_scheduler() {
+    generic_scheduler& target = *my_arena_slot->my_scheduler;
+    if (!prepare_resume(target)) {
+        // We should return and finish the current coroutine.
+        return false;
+    }
+    resume(target);
+    return true;
+}
+
+inline void generic_scheduler::resume(generic_scheduler& target) {
+    // Do not create non-trivial objects on the stack of this function. They might never be destroyed.
+    __TBB_ASSERT(governor::is_set(this), NULL);
+    __TBB_ASSERT(target.my_post_resume_action != PRA_NONE,
+        "The post resume action is not set. Has prepare_resume been called?");
+    __TBB_ASSERT(target.my_post_resume_arg, NULL);
+    __TBB_ASSERT(&target != this, NULL);
+    __TBB_ASSERT(target.my_arena == my_arena, "Cross-arena switch is forbidden.");
+
+    // Transfer thread related data.
+    target.my_arena_index = my_arena_index;
+    target.my_arena_slot = my_arena_slot;
+    target.attach_mailbox(affinity_id(target.my_arena_index + 1));
+
+#if __TBB_TASK_PRIORITY
+    if (my_offloaded_tasks)
+        my_arena->orphan_offloaded_tasks(*this);
+#endif /* __TBB_TASK_PRIORITY */
+
+    governor::assume_scheduler(&target);
+    my_co_context.resume(target.my_co_context);
+    __TBB_ASSERT(governor::is_set(this), NULL);
+
+    do_post_resume_action();
+    if (this == my_arena_slot->my_scheduler) {
+        my_arena_slot->my_scheduler_is_recalled->store<tbb::relaxed>(false);
+    }
+}
+
+inline void generic_scheduler::do_post_resume_action() {
+    __TBB_ASSERT(my_post_resume_action != PRA_NONE, "The post resume action is not set.");
+    __TBB_ASSERT(my_post_resume_arg, NULL);
+
+    switch (my_post_resume_action) {
+    case PRA_ABANDON:
+    {
+        task_prefix& wait_task_prefix = static_cast<task*>(my_post_resume_arg)->prefix();
+        reference_count old_ref_count = __TBB_FetchAndAddW(&wait_task_prefix.ref_count, internal::abandon_flag);
+        __TBB_ASSERT(old_ref_count > 0, NULL);
+        if (old_ref_count == 1) {
+            // Remove the abandon flag.
+            __TBB_store_with_release(wait_task_prefix.ref_count, 1);
+            // The wait has been completed. Spawn a resume task.
+            tbb::task::resume(wait_task_prefix.abandoned_scheduler);
+        }
+        break;
+    }
+    case PRA_CALLBACK:
+    {
+        callback_t callback = *static_cast<callback_t*>(my_post_resume_arg);
+        callback();
+        break;
+    }
+    case PRA_CLEANUP:
+    {
+        generic_scheduler* to_cleanup = static_cast<generic_scheduler*>(my_post_resume_arg);
+        __TBB_ASSERT(!to_cleanup->my_properties.genuine, NULL);
+        // Release coroutine's reference to my_arena.
+        to_cleanup->my_arena->on_thread_leaving<arena::ref_external>();
+        // Cache the coroutine for possible later re-usage
+        to_cleanup->my_arena->my_co_cache.push(to_cleanup);
+        break;
+    }
+    case PRA_NOTIFY:
+    {
+        tbb::atomic<bool>& scheduler_recall_flag = *static_cast<tbb::atomic<bool>*>(my_post_resume_arg);
+        scheduler_recall_flag = true;
+        // Do not access recall_flag because it can be destroyed after the notification.
+        break;
+    }
+    default:
+        __TBB_ASSERT(false, NULL);
+    }
+
+    my_post_resume_action = PRA_NONE;
+    my_post_resume_arg = NULL;
+}
+
+struct recall_functor {
+    tbb::atomic<bool>* scheduler_recall_flag;
+
+    recall_functor(tbb::atomic<bool>* recall_flag_) :
+        scheduler_recall_flag(recall_flag_) {}
+
+    void operator()(task::suspend_point /*tag*/) {
+        *scheduler_recall_flag = true;
+    }
+};
+
+#if _WIN32
+/* [[noreturn]] */ inline void __stdcall co_local_wait_for_all(void* arg) {
+#else
+/* [[noreturn]] */ inline void co_local_wait_for_all(void* arg) {
+#endif
+    // Do not create non-trivial objects on the stack of this function. They will never be destroyed.
+    generic_scheduler& s = *static_cast<generic_scheduler*>(arg);
+    __TBB_ASSERT(governor::is_set(&s), NULL);
+    // For correct task stealing threshold, calculate stack on a coroutine start
+    s.init_stack_info();
+    // Basically calls the user callback passed to the tbb::task::suspend function
+    s.do_post_resume_action();
+    // Endless loop here because coroutine could be reused
+    for( ;; ) {
+        __TBB_ASSERT(s.my_innermost_running_task == s.my_dummy_task, NULL);
+        __TBB_ASSERT(s.worker_outermost_level(), NULL);
+        s.local_wait_for_all(*s.my_dummy_task, NULL);
+        __TBB_ASSERT(s.my_target_on_exit, NULL);
+        __TBB_ASSERT(s.my_wait_task == NULL, NULL);
+        s.resume(*s.my_target_on_exit);
+    }
+    // This code is unreachable
+}
+#endif /* __TBB_PREVIEW_RESUMABLE_TASKS */
+
+#if __TBB_TASK_GROUP_CONTEXT
 //! Helper class for tracking floating point context and task group context switches
 /** Assuming presence of an itt collector, in addition to keeping track of floating
     point context, this class emits itt events to indicate begin and end of task group
     context execution **/
 template <bool report_tasks>
 class context_guard_helper {
-#if __TBB_TASK_GROUP_CONTEXT
     const task_group_context *curr_ctx;
-#endif
 #if __TBB_FP_CONTEXT
     cpu_ctl_env guard_cpu_ctl_env;
     cpu_ctl_env curr_cpu_ctl_env;
 #endif
 public:
-    context_guard_helper()
-#if __TBB_TASK_GROUP_CONTEXT
-        : curr_ctx(NULL)
-#endif
-    {
+    context_guard_helper() : curr_ctx( NULL ) {
 #if __TBB_FP_CONTEXT
         guard_cpu_ctl_env.get_env();
         curr_cpu_ctl_env = guard_cpu_ctl_env;
@@ -759,38 +972,31 @@ public:
         if ( curr_cpu_ctl_env != guard_cpu_ctl_env )
             guard_cpu_ctl_env.set_env();
 #endif
-#if __TBB_TASK_GROUP_CONTEXT
-        if (report_tasks && curr_ctx)
+        if ( report_tasks && curr_ctx )
             ITT_TASK_END;
-#endif
     }
+    // The function is called from bypass dispatch loop on the hot path.
+    // Consider performance issues when refactoring.
     void set_ctx( const task_group_context *ctx ) {
-        generic_scheduler::assert_context_valid(ctx);
+        generic_scheduler::assert_context_valid( ctx );
 #if __TBB_FP_CONTEXT
-        const cpu_ctl_env &ctl = *punned_cast<cpu_ctl_env*>(&ctx->my_cpu_ctl_env);
-#endif
-#if __TBB_TASK_GROUP_CONTEXT
-        if(ctx != curr_ctx) {
-#endif
-#if __TBB_FP_CONTEXT
-            if ( ctl != curr_cpu_ctl_env ) {
-                curr_cpu_ctl_env = ctl;
-                curr_cpu_ctl_env.set_env();
-            }
-#endif
-#if __TBB_TASK_GROUP_CONTEXT
-            // if task group context was active, report end of current execution frame.
-            if (report_tasks) {
-                if (curr_ctx)
-                    ITT_TASK_END;
-                // reporting begin of new task group context execution frame.
-                // using address of task group context object to group tasks (parent).
-                // id of task execution frame is NULL and reserved for future use.
-                ITT_TASK_BEGIN(ctx,ctx->my_name,NULL);
-                curr_ctx = ctx;
-            }
+        const cpu_ctl_env &ctl = *punned_cast<cpu_ctl_env*>( &ctx->my_cpu_ctl_env );
+        // Compare the FPU settings directly because the context can be reused between parallel algorithms.
+        if ( ctl != curr_cpu_ctl_env ) {
+            curr_cpu_ctl_env = ctl;
+            curr_cpu_ctl_env.set_env();
         }
 #endif
+        if ( report_tasks && ctx != curr_ctx ) {
+            // if task group context was active, report end of current execution frame.
+            if ( curr_ctx )
+                ITT_TASK_END;
+            // reporting begin of new task group context execution frame.
+            // using address of task group context object to group tasks (parent).
+            // id of task execution frame is NULL and reserved for future use.
+            ITT_TASK_BEGIN( ctx,ctx->my_name, NULL );
+            curr_ctx = ctx;
+        }
     }
     void restore_default() {
 #if __TBB_FP_CONTEXT
@@ -804,10 +1010,10 @@ public:
 #else
 template <bool T>
 struct context_guard_helper {
-    void set_ctx( __TBB_CONTEXT_ARG1(task_group_context *) ) {}
+    void set_ctx() {}
     void restore_default() {}
 };
-#endif /* __TBB_FP_CONTEXT */
+#endif /* __TBB_TASK_GROUP_CONTEXT */
 
 } // namespace internal
 } // namespace tbb

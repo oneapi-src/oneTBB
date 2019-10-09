@@ -618,6 +618,7 @@ void TestParallelismRestored()
         const int P = 4;
         blocking_task_scheduler_init tsi(P);
         {
+            ASSERT(tbb::this_task_arena::max_concurrency() == P, NULL);
             tbb::global_control s(tbb::global_control::max_allowed_parallelism, 1);
             Harness::ExactConcurrencyLevel::check(1);
             // create enforced concurrency in the arena
@@ -625,7 +626,9 @@ void TestParallelismRestored()
                 FFTask* t = new( tbb::task::allocate_root() ) FFTask(&counter);
                 tbb::task::enqueue(*t);
             }
+            ASSERT(tbb::this_task_arena::max_concurrency() == P, NULL);
         }
+        ASSERT(tbb::this_task_arena::max_concurrency() == P, NULL);
         // global control is off, check that concurrency P is available
         Harness::ExactConcurrencyLevel::check(P);
     }
@@ -754,6 +757,7 @@ int TestMain()
     TestConcurrentArenas();
     TestMultipleControls();
     TestNoUnwantedEnforced();
+    TestParallelismRestored();
     const unsigned h_c = tbb::tbb_thread::hardware_concurrency();
     bool excessHC;
     {

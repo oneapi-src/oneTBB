@@ -17,6 +17,9 @@
 #ifndef __TBB_parallel_for_H
 #define __TBB_parallel_for_H
 
+#define __TBB_parallel_for_H_include_area
+#include "internal/_warning_suppress_enable_notice.h"
+
 #include <new>
 #include "task.h"
 #include "partitioner.h"
@@ -107,9 +110,9 @@ namespace internal {
         }
 #endif /* __TBB_TASK_GROUP_CONTEXT */
         //! Run body for range, serves as callback for partitioner
-        void run_body( Range &r ) { 
+        void run_body( Range &r ) {
             fgt_alg_begin_body( tbb::internal::PARALLEL_FOR_TASK, (void *)const_cast<Body*>(&(this->my_body)), (void*)this );
-            my_body( r ); 
+            my_body( r );
             fgt_alg_end_body( (void *)const_cast<Body*>(&(this->my_body)) );
         }
 
@@ -415,5 +418,8 @@ using strict_ppl::parallel_for;
 #include "../serial/tbb/parallel_for.h"
 #undef __TBB_NORMAL_EXECUTION
 #endif
+
+#include "internal/_warning_suppress_disable_notice.h"
+#undef __TBB_parallel_for_H_include_area
 
 #endif /* __TBB_parallel_for_H */

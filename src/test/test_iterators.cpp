@@ -36,9 +36,10 @@ void test_random_iterator(const RandomIt& it) {
     {
         auto t1 = typename RandomIt::difference_type{};
         auto t2 = typename RandomIt::value_type{};
+        auto t3 = typename RandomIt::pointer{};
+        tbb::internal::suppress_unused_warning(t1,t2,t3);
         typename RandomIt::reference ref = *it;
         tbb::internal::suppress_unused_warning(ref);
-        auto t3 = typename RandomIt::pointer{};
         typename RandomIt::iterator_category{};
     }
 

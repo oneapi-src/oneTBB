@@ -69,6 +69,9 @@ endif # X
 
 MYCXXFLAGS = $(CXXFLAGS) $(UI_CXXFLAGS)
 
+# autodetect C++11 support
+include ../../common/examples-common.inc
+
 all: build run
 release: build
 debug: build_debug
@@ -168,9 +171,9 @@ ifeq ($(UI),mac)
 	cp ../../common/gui/xcode/tbbExample/tbbExample-Info.plist $(NAME)$(SUFFIX).app/Contents/Info.plist
 	cp ../../common/gui/xcode/tbbExample/PkgInfo $(NAME)$(SUFFIX).app/Contents
 	cp ../../common/gui/xcode/tbbExample/en.lproj/* $(APPRES)/en.lproj
-	$(CXX_UI) $(MYCXXFLAGS) $(CXXFLAGS) -c $(MACUISOURCES)
+	$(CXX_UI) $(MYCXXFLAGS) $(CXXFLAGS) -c $(MACUISOURCES) $(CXX0XFLAGS)
 endif # macOS*
-	$(CXX) $(MYCXXFLAGS) -o $@ $(SOURCE) $(MACUIOBJS) $(LIBS)
+	$(CXX) $(MYCXXFLAGS) -o $@ $(SOURCE) $(MACUIOBJS) $(LIBS) $(CXX0XFLAGS)
 	$(RM) *.o
 
 clean: VERSION = *

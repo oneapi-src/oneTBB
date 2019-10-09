@@ -41,8 +41,6 @@ private:
         switch ( key&0xff ) {
             case esc_key:
                 running = false; break;
-            case ' ': // space
-                if( fg ) fg->switch_priorities(); break;
 
             case 'q':
                 if( fg ) fg->active_fractal_zoom_in(); break;

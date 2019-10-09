@@ -14,8 +14,22 @@
     limitations under the License.
 */
 
+#include "../internal/_deprecated_header_message_guard.h"
+
+#if !defined(__TBB_show_deprecation_message_ppl_H) && defined(__TBB_show_deprecated_header_message)
+#define  __TBB_show_deprecation_message_ppl_H
+#pragma message("TBB Warning: tbb/compat/ppl.h is deprecated. For details, please see Deprecated Features appendix in the TBB reference manual.")
+#endif
+
+#if defined(__TBB_show_deprecated_header_message)
+#undef __TBB_show_deprecated_header_message
+#endif
+
 #ifndef __TBB_compat_ppl_H
 #define __TBB_compat_ppl_H
+
+#define __TBB_ppl_H_include_area
+#include "../internal/_warning_suppress_enable_notice.h"
 
 #include "../task_group.h"
 #include "../parallel_invoke.h"
@@ -54,5 +68,8 @@ namespace Concurrency {
     using tbb::improper_lock;
 
 } // namespace Concurrency
+
+#include "../internal/_warning_suppress_disable_notice.h"
+#undef __TBB_ppl_H_include_area
 
 #endif /* __TBB_compat_ppl_H */

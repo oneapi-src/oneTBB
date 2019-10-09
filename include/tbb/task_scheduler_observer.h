@@ -17,6 +17,9 @@
 #ifndef __TBB_task_scheduler_observer_H
 #define __TBB_task_scheduler_observer_H
 
+#define __TBB_task_scheduler_observer_H_include_area
+#include "internal/_warning_suppress_enable_notice.h"
+
 #include "atomic.h"
 #if __TBB_ARENA_OBSERVER
 #include "task_arena.h"
@@ -156,5 +159,8 @@ typedef tbb::internal::task_scheduler_observer_v3 task_scheduler_observer;
 } // namespace tbb
 
 #endif /* __TBB_SCHEDULER_OBSERVER */
+
+#include "internal/_warning_suppress_disable_notice.h"
+#undef __TBB_task_scheduler_observer_H_include_area
 
 #endif /* __TBB_task_scheduler_observer_H */

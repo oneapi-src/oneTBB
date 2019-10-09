@@ -15,13 +15,16 @@
 */
 
 #include "harness.h"
+
 #if __TBB_CPF_BUILD
 #define TBB_DEPRECATED_FLOW_NODE_EXTRACTION 1
 #include "harness_graph.h"
 #endif
+
 #include "tbb/flow_graph.h"
 #include "tbb/atomic.h"
 #include "tbb/task_scheduler_init.h"
+#include "test_follows_and_precedes_api.h"
 
 const int L = 10;
 const int N = 1000;
@@ -40,7 +43,7 @@ struct serial_receiver : public tbb::flow::receiver<T>, NoAssign {
        return const_cast<tbb::task *>(SUCCESSFULLY_ENQUEUED);
    }
 
-    tbb::flow::graph& graph_reference() __TBB_override {
+    tbb::flow::graph& graph_reference() const __TBB_override {
         return my_graph;
     }
 
@@ -72,7 +75,7 @@ struct parallel_receiver : public tbb::flow::receiver<T>, NoAssign {
        return const_cast<tbb::task *>(tbb::flow::internal::SUCCESSFULLY_ENQUEUED);
     }
 
-    tbb::flow::graph& graph_reference() __TBB_override {
+    tbb::flow::graph& graph_reference() const __TBB_override {
         return my_graph;
     }
 
@@ -162,7 +165,7 @@ void test_puts_with_decrements( int num_threads, tbb::flow::limiter_node< T >& l
     ASSERT(lim.decrement.predecessor_count() == 1, NULL);
     ASSERT(lim.successor_count() == 1, NULL);
     ASSERT(lim.predecessor_count() == 0, NULL);
-    typename tbb::flow::interface10::internal::decrementer
+    typename tbb::flow::interface11::internal::decrementer
         <tbb::flow::limiter_node<T>, tbb::flow::continue_msg>::predecessor_list_type dec_preds;
     lim.decrement.copy_predecessors(dec_preds);
     ASSERT(dec_preds.size() == 1, NULL);
@@ -604,6 +607,44 @@ void test_extract() {
 }
 #endif  // TBB_DEPRECATED_FLOW_NODE_EXTRACTION
 
+#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+#include <array>
+#include <vector>
+void test_follows_and_precedes_api() {
+    using msg_t = tbb::flow::continue_msg;
+
+    std::array<msg_t, 3> messages_for_follows= {msg_t(), msg_t(), msg_t()};
+    std::vector<msg_t> messages_for_precedes = {msg_t()};
+
+    follows_and_precedes_testing::test_follows
+        <msg_t, tbb::flow::limiter_node<msg_t, msg_t>>(messages_for_follows, 1000);
+    follows_and_precedes_testing::test_precedes
+        <msg_t, tbb::flow::limiter_node<msg_t, msg_t>>(messages_for_precedes, 1000);
+
+}
+#endif
+
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+void test_deduction_guides() {
+    using namespace tbb::flow;
+
+    graph g;
+    broadcast_node<int> br(g);
+    limiter_node<int> l0(g, 100);
+
+#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+    limiter_node l1(follows(br), 100);
+    static_assert(std::is_same_v<decltype(l1), limiter_node<int>>);
+
+    limiter_node l2(precedes(br), 100);
+    static_assert(std::is_same_v<decltype(l2), limiter_node<int>>);
+#endif
+
+    limiter_node l3(l0);
+    static_assert(std::is_same_v<decltype(l3), limiter_node<int>>);
+}
+#endif
+
 int TestMain() {
     for (int i = 1; i <= 8; ++i) {
         tbb::task_scheduler_init init(i);
@@ -622,6 +663,12 @@ int TestMain() {
 #endif
 #if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     test_extract();
+#endif
+#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+    test_follows_and_precedes_api();
+#endif
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+    test_deduction_guides();
 #endif
    return Harness::Done;
 }

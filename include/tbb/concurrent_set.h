@@ -17,6 +17,9 @@
 #ifndef __TBB_concurrent_set_H
 #define __TBB_concurrent_set_H
 
+#define __TBB_concurrent_set_H_include_area
+#include "internal/_warning_suppress_enable_notice.h"
+
 #if !TBB_PREVIEW_CONCURRENT_ORDERED_CONTAINERS
 #error Set TBB_PREVIEW_CONCURRENT_ORDERED_CONTAINERS to include concurrent_set.h
 #endif
@@ -294,4 +297,8 @@ using interface10::concurrent_multiset;
 } // namespace tbb
 
 #endif // __TBB_CONCURRENT_ORDERED_CONTAINERS_PRESENT
+
+#include "internal/_warning_suppress_disable_notice.h"
+#undef __TBB_concurrent_set_H_include_area
+
 #endif // __TBB_concurrent_set_H

@@ -156,7 +156,7 @@ struct tuplewrapper : public std::tuple<typename std::enable_if<std::is_referenc
 
 template <typename... Types>
 class zip_iterator {
-    __TBB_STATIC_ASSERT(sizeof...(Types), "Cannot instantiate zip_iterator with empty template parameter pack");
+    __TBB_STATIC_ASSERT(sizeof...(Types)>0, "Cannot instantiate zip_iterator with empty template parameter pack");
     static const std::size_t num_types = sizeof...(Types);
     typedef std::tuple<Types...> it_types;
 public:

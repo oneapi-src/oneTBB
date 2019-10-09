@@ -20,7 +20,6 @@
 #include <process.h>
 #include <thread>
 #include "../../src/tachyon_video.h"
-#include "tbb/tbb.h"
 
 using namespace Microsoft::WRL;
 using namespace Windows::Foundation;
@@ -133,9 +132,9 @@ void tbbTachyonRenderer::Render()
 #if SHOW_TEXT
     if (video && video->running)
         global_elapsedTime=(long)(time(NULL)-global_startTime);
-    
+
     Platform::String^ text= "Running in " +
-        (global_number_of_threads == tbb::task_scheduler_init::automatic? "all hardware threads: ":
+        (global_number_of_threads == utility::get_default_num_threads()? "all hardware threads: ":
             global_number_of_threads.ToString() + (global_number_of_threads==1?" thread: ":" threads: ")) +
         global_elapsedTime.ToString() + (global_elapsedTime>1?" seconds":" second");
 

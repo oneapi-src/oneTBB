@@ -17,6 +17,9 @@
 #ifndef __TBB_queuing_mutex_H
 #define __TBB_queuing_mutex_H
 
+#define __TBB_queuing_mutex_H_include_area
+#include "internal/_warning_suppress_enable_notice.h"
+
 #include <cstring>
 #include "atomic.h"
 #include "tbb_profiling.h"
@@ -103,5 +106,8 @@ private:
 __TBB_DEFINE_PROFILING_SET_NAME(queuing_mutex)
 
 } // namespace tbb
+
+#include "internal/_warning_suppress_disable_notice.h"
+#undef __TBB_queuing_mutex_H_include_area
 
 #endif /* __TBB_queuing_mutex_H */

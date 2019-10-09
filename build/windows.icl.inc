@@ -51,6 +51,11 @@ ifeq (ok,$(call detect_js,/minversion icl 17 4))
     VS2017_SUPPORT = yes
 endif
 
+# ICC 19.0.4 and higher provide support for VS2019
+ifeq (ok,$(call detect_js,/minversion icl 19 4))
+    VS2019_SUPPORT = yes
+endif
+
 ifeq ($(runtime), vc_mt)
     MS_CRT_KEY = /MT$(if $(findstring debug,$(cfg)),d)
 else
@@ -59,7 +64,7 @@ endif
 EH_FLAGS = $(if $(no_exceptions),/EHs-,/EHsc /GR)
 
 ifeq ($(cfg), release)
-    CPLUS_FLAGS = $(MS_CRT_KEY) /O2 /Zi $(EH_FLAGS) /Zc:forScope /Zc:wchar_t /D__TBB_LIB_NAME=$(TBB.LIB)
+    CPLUS_FLAGS = $(MS_CRT_KEY) /O2 /Zi /Qopt-report-embed- $(EH_FLAGS) /Zc:forScope /Zc:wchar_t /D__TBB_LIB_NAME=$(TBB.LIB)
     ASM_FLAGS =
 endif
 ifeq ($(cfg), debug)
@@ -110,7 +115,7 @@ ifeq ($(VCCOMPAT_FLAG),)
         VCCOMPAT_FLAG := $(if $(findstring vc8, $(VCVERSION)),/Qvc8)
 endif
 ifeq ($(VCCOMPAT_FLAG),)
-        VCCOMPAT_FLAG := $(if $(findstring vc_mt, $(VCVERSION)),/Qvc10)
+        VCCOMPAT_FLAG := $(if $(findstring vc_mt, $(VCVERSION)),/Qvc14)
 endif
 ifeq ($(VCCOMPAT_FLAG),)
         VCCOMPAT_FLAG := $(if $(findstring vc9, $(VCVERSION)),/Qvc9)
@@ -129,6 +134,11 @@ ifeq ($(VCCOMPAT_FLAG),)
     ifeq ($(VS2017_SUPPORT),yes)
         ifneq (,$(findstring vc14.1, $(VCVERSION)))
             VCCOMPAT_FLAG := /Qvc14.1
+        endif
+    endif
+    ifeq ($(VS2019_SUPPORT),yes)
+        ifneq (,$(findstring vc14.2, $(VCVERSION)))
+            VCCOMPAT_FLAG := /Qvc14.2
         endif
     endif
 endif

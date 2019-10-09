@@ -84,6 +84,11 @@ public:
     flist_iterator( const flist_iterator<Solist, typename Solist::value_type> &other )
         : my_node_ptr(other.my_node_ptr) {}
 
+    flist_iterator& operator=( const flist_iterator<Solist, typename Solist::value_type> &other ) {
+        my_node_ptr = other.my_node_ptr;
+        return *this;
+    }
+
     reference operator*() const { return my_node_ptr->my_element; }
     pointer operator->() const { return &**this; }
 
@@ -147,8 +152,14 @@ public:
     typedef typename Solist::reference reference;
 
     solist_iterator() {}
-    solist_iterator(const solist_iterator<Solist, typename Solist::value_type> &other )
+    solist_iterator( const solist_iterator<Solist, typename Solist::value_type> &other )
         : base_type(other), my_list_ptr(other.my_list_ptr) {}
+
+    solist_iterator& operator=( const solist_iterator<Solist, typename Solist::value_type> &other ) {
+        base_type::my_node_ptr = other.get_node_ptr();
+        my_list_ptr = other.my_list_ptr;
+        return *this;
+    }
 
     reference operator*() const {
         return this->base_type::operator*();
@@ -889,11 +900,17 @@ protected:
             if (allow_multimapping || find(get_key(*where)) == end()) {
                 std::pair<node_type, raw_iterator> extract_result = source.internal_extract(where);
 
+                // Remember the old order key
+                sokey_t old_order_key = extract_result.first.my_node->get_order_key();
+
                 // If the insertion fails, it returns ownership of the node to extract_result.first
                 // extract_result.first remains valid node handle
                 if (!insert(std::move(extract_result.first)).second) {
                     raw_iterator next = extract_result.second;
                     raw_iterator current = next++;
+
+                    // Revert order key to old value
+                    extract_result.first.my_node->init(old_order_key);
 
                     __TBB_ASSERT(extract_result.first.my_node->get_order_key() >= current.get_node_ptr()->get_order_key(),
                                 "Wrong nodes order in source container");
@@ -1394,6 +1411,11 @@ private:
         raw_iterator last = my_solist.raw_end();
         __TBB_ASSERT(previous != last, "Invalid head node");
 
+        if (pnode) {
+            // Set new order_key to node
+            pnode->init(order_key);
+        }
+
         // First node is a dummy node
         for (raw_iterator where = previous;;)
         {
@@ -1407,11 +1429,6 @@ private:
                     pnode = my_solist.create_node(order_key, tbb::internal::forward<ValueType>(value), AllowCreate());
                     // If the value was moved, the known reference to key might be invalid
                     pkey = &get_key(pnode->my_element);
-                }
-                else
-                {
-                    // Set new order_key to node
-                    pnode->init(order_key);
                 }
 
                 // Try to insert 'pnode' between 'previous' and 'where'

@@ -17,7 +17,6 @@
 
 #include "pch.h"
 #include "DirectXPage.xaml.h"
-#include "tbb/tbb.h"
 
 using namespace tbbTachyon;
 
@@ -59,15 +58,15 @@ DirectXPage::DirectXPage() :
     m_renderer->Initialize(
         Window::Current->CoreWindow,
         this,
-        DisplayProperties::LogicalDpi
+		DisplayInformation::GetForCurrentView()->LogicalDpi
         );
 
     m_eventToken = CompositionTarget::Rendering::add(ref new EventHandler<Object^>(this, &DirectXPage::OnRendering));
 
-    int num_threads = 2*tbb::task_scheduler_init::default_num_threads();
+    int num_threads = 2*utility::get_default_num_threads();
     // The thread slider has geometric sequence with several intermediate steps for each interval between 2^N and 2^(N+1).
     // The nearest (from below) the power of 2.
-    int i_base = log2(num_threads);
+    int i_base = int(log2(num_threads));
     int base = 1 << i_base;
     // The step size for the current interval.
     int step = base / num_interval_steps;
@@ -75,7 +74,7 @@ DirectXPage::DirectXPage() :
     int i_step = (num_threads-base)/step;
 
     ThreadsSlider->Maximum = (i_base-interval_step_power)*num_interval_steps + i_step;
-    global_number_of_threads = m_number_of_threads = tbb::task_scheduler_init::automatic;
+    global_number_of_threads = m_number_of_threads = utility::get_default_num_threads();
 }
 
 DirectXPage::~DirectXPage()
@@ -118,9 +117,9 @@ void tbbTachyon::DirectXPage::ThreadsSliderValueChanged(Platform::Object^ sender
     int step = max(1,base/num_interval_steps);
     m_number_of_threads = base + (pos%num_interval_steps)*step;
 
-    if (m_number_of_threads == 0) m_number_of_threads = tbb::task_scheduler_init::automatic;
+    if (m_number_of_threads == 0) m_number_of_threads = utility::get_default_num_threads();
 
-    NumberOfThreadsTextBlock->Text="Number Of Threads: " + (m_number_of_threads == tbb::task_scheduler_init::automatic? "Auto": m_number_of_threads.ToString());
+    NumberOfThreadsTextBlock->Text="Number Of Threads: " + (m_number_of_threads == utility::get_default_num_threads()? "Auto": m_number_of_threads.ToString());
     if (global_number_of_threads != m_number_of_threads){
         ThreadsApply->Visibility=Windows::UI::Xaml::Visibility::Visible;
     }else{

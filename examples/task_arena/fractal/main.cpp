@@ -23,7 +23,6 @@
 #include "fractal_video.h"
 
 #include "tbb/tick_count.h"
-#include "tbb/task_scheduler_init.h"
 
 #include "../../common/utility/utility.h"
 
@@ -40,7 +39,7 @@ int main(int argc, char *argv[])
         // It is used for console mode for test with different number of threads and also has
         // meaning for GUI: threads.first  - use separate event/updating loop thread (>0) or not (0).
         //                  threads.second - initialization value for scheduler
-        utility::thread_number_range threads( tbb::task_scheduler_init::default_num_threads );
+        utility::thread_number_range threads( utility::get_default_num_threads );
         int num_frames = -1;
         int max_iterations = 1000000;
 

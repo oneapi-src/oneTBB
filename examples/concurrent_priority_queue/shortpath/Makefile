@@ -23,9 +23,6 @@ ifneq (,$(shell which icc 2>/dev/null))
     CXX=icpc
 endif
 
-# autodetect C++11 support
-include ../../common/examples-common.inc
-
 ifeq ($(shell uname), Linux)
 ifeq ($(target), android)
 LIBS+= --sysroot=$(SYSROOT)
@@ -36,6 +33,8 @@ endif
 else ifeq ($(shell uname), Darwin)
 override CXXFLAGS += -Wl,-rpath,$(TBBROOT)/lib
 endif
+
+include ../../common/examples-common.inc
 
 all:    release test
 

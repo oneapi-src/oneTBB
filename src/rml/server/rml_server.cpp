@@ -49,7 +49,7 @@
 #include <concrtrm.h>
 using namespace Concurrency;
 #include <vector>
-#include <hash_map>
+#include <unordered_map>
 #define __RML_REMOVE_VIRTUAL_PROCESSORS_DISABLED 0
 #endif /* RML_USE_WCRM */
 
@@ -870,7 +870,7 @@ skip:
 
 class thread_map : no_copy {
     friend class omp_connection_v2;
-    typedef ::std::hash_map<uintptr_t,server_thread*> hash_map_type;
+    typedef ::std::unordered_map<uintptr_t,server_thread*> unordered_map_type;
     size_t my_min_stack_size;
     size_t my_unrealized_threads;
     ::rml::client& my_client;
@@ -880,7 +880,7 @@ class thread_map : no_copy {
     ref_count my_server_ref_count;
     ref_count my_client_ref_count;
     // FIXME: pad this?
-    hash_map_type my_map;
+    unordered_map_type my_map;
     bool shutdown_in_progress;
     std::vector<IExecutionResource*> original_exec_resources;
     tbb::cache_aligned_allocator<padded<tbb_server_thread> > my_tbb_allocator;
@@ -918,7 +918,7 @@ public:
             my_scavenger_allocator.deallocate(static_cast<padded<thread_scavenger_thread>*>(tst),1);
         }
         // deallocate thread contexts
-        for( hash_map_type::const_iterator hi=my_map.begin(); hi!=my_map.end(); ++hi ) {
+        for( unordered_map_type::const_iterator hi=my_map.begin(); hi!=my_map.end(); ++hi ) {
             server_thread* thr = hi->second;
             if( thr->tbb_thread ) {
                 while( ((tbb_server_thread*)thr)->activation_count>1 )
@@ -939,9 +939,9 @@ public:
             __TBB_ASSERT( !my_scheduler, NULL );
         }
     }
-    typedef hash_map_type::key_type key_type;
-    typedef hash_map_type::value_type value_type;
-    typedef hash_map_type::iterator iterator;
+    typedef unordered_map_type::key_type key_type;
+    typedef unordered_map_type::value_type value_type;
+    typedef unordered_map_type::iterator iterator;
     iterator begin() {return my_map.begin();}
     iterator end() {return my_map.end();}
     iterator find( key_type k ) {return my_map.find( k );}
@@ -2352,8 +2352,8 @@ bool tbb_server_thread::switch_out() {
             // the thread's state should be either ts_idle or ts_done.
             while( is_removed() )
                 __TBB_Yield();
-            thread_state_t s = read_state();
-            __TBB_ASSERT( s==ts_idle || s==ts_done, NULL );
+            thread_state_t state = read_state();
+            __TBB_ASSERT( state==ts_idle || state==ts_done, NULL );
         }
 #endif
         __TBB_ASSERT( my_state==ts_asleep||my_state==ts_idle, NULL );
@@ -2708,7 +2708,7 @@ void thread_map::mark_virtual_processors_as_lent( IVirtualProcessorRoot** vproot
         iterator i = my_map.find( (key_type) vproots[c] );
         if( i==end ) {
             // The vproc has not been added to the map in create_oversubscribers()
-            my_map.insert( hash_map_type::value_type( (key_type) vproots[c], (server_thread*)1 ) );
+            my_map.insert( unordered_map_type::value_type( (key_type) vproots[c], (server_thread*)1 ) );
         } else {
             server_thread* thr = (*i).second;
             if( ((uintptr_t)thr)&~(uintptr_t)1 ) {
@@ -2726,8 +2726,8 @@ void thread_map::create_oversubscribers( unsigned n, std::vector<server_thread*>
         curr_exec_rsc = original_exec_resources; // copy construct
     }
     typedef std::vector<IExecutionResource*>::iterator iterator_er;
-    typedef ::std::vector<std::pair<hash_map_type::key_type, hash_map_type::mapped_type> > hash_val_vector_t;
-    hash_val_vector_t v_vec(n);
+    typedef ::std::vector<std::pair<unordered_map_type::key_type, unordered_map_type::mapped_type> > map_val_vector_t;
+    map_val_vector_t v_vec(n);
     iterator_er begin = curr_exec_rsc.begin();
     iterator_er end   = curr_exec_rsc.end();
     iterator_er i = begin;
@@ -2735,7 +2735,7 @@ void thread_map::create_oversubscribers( unsigned n, std::vector<server_thread*>
         IVirtualProcessorRoot* vpr = my_scheduler_proxy->CreateOversubscriber( *i );
         omp_server_thread* t = new ( my_omp_allocator.allocate(1) ) omp_server_thread( true, my_scheduler, (IExecutionResource*)vpr, &conn, *this, my_client );
         thr_vec[c] = t;
-        v_vec[c] = hash_map_type::value_type( (key_type) vpr, t );
+        v_vec[c] = unordered_map_type::value_type( (key_type) vpr, t );
         if( ++i==end ) i = begin;
     }
 
@@ -2744,17 +2744,17 @@ void thread_map::create_oversubscribers( unsigned n, std::vector<server_thread*>
 
         if( is_closing() ) return;
 
-        iterator end = my_map.end();
+        iterator map_end = my_map.end();
         unsigned c = 0;
-        for( hash_val_vector_t::iterator vi=v_vec.begin(); vi!=v_vec.end(); ++vi, ++c ) {
-            iterator i = my_map.find( (key_type) (*vi).first );
-            if( i==end ) {
+        for( map_val_vector_t::iterator vi=v_vec.begin(); vi!=v_vec.end(); ++vi, ++c ) {
+            iterator j = my_map.find( (key_type) (*vi).first );
+            if( j==map_end ) {
                 my_map.insert( *vi );
             } else {
                 // the vproc has not been added to the map in mark_virtual_processors_as_returned();
-                uintptr_t lent = (uintptr_t) (*i).second;
+                uintptr_t lent = (uintptr_t) (*j).second;
                 __TBB_ASSERT( lent<=1, "vproc map entry added incorrectly?");
-                (*i).second = thr_vec[c];
+                (*j).second = thr_vec[c];
                 if( lent )
                     ((omp_server_thread*)thr_vec[c])->set_lent();
                 else
@@ -2837,7 +2837,7 @@ void thread_map::mark_virtual_processors_as_returned( IVirtualProcessorRoot** vp
             iterator i = my_map.find( (key_type) vprocs[c] );
             if( i==end ) {
                 // the vproc has not been added to the map in create_oversubscribers()
-                my_map.insert( hash_map_type::value_type( (key_type) vprocs[c], static_cast<server_thread*>(0) ) );
+                my_map.insert( unordered_map_type::value_type( (key_type) vprocs[c], static_cast<server_thread*>(0) ) );
             } else {
                 omp_server_thread* thr = (omp_server_thread*) (*i).second;
                 if( ((uintptr_t)thr)&~(uintptr_t)1 ) {

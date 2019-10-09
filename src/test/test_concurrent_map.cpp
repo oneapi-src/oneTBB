@@ -147,11 +147,9 @@ void TestDeductionGuides() {
 }
 #endif
 
-void test_heterogenious_lookup() {
-    tbb::concurrent_map<int, int, transparent_compare> map = {{1,1}, {2, 2}};
-    tbb::concurrent_multimap<int, int, transparent_compare> mmap = {{1, 1}, {1, 10}, {2, 2}};
-    check_heterogenious_lookup(map);
-    check_heterogenious_lookup(mmap);
+void test_heterogeneous_functions() {
+    check_heterogeneous_functions<tbb::concurrent_map<int, int, transparent_less> >();
+    check_heterogeneous_functions<tbb::concurrent_multimap<int, int, transparent_less> >();
 }
 
 void multicontainer_specific_test() {
@@ -248,7 +246,7 @@ int TestMain() {
     node_handling::TestNodeHandling<MyMultiMap>();
     node_handling::TestMerge<MyMap, MyMultiMap>(1000);
 
-    test_heterogenious_lookup();
+    test_heterogeneous_functions();
 
     test_allocator_traits<tbb::concurrent_map, int, int, std::less<int>>();
     test_allocator_traits<tbb::concurrent_multimap, int, int, std::less<int>>();

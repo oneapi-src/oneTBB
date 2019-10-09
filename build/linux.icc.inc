@@ -34,15 +34,19 @@ endif
 ITT_NOTIFY = -DDO_ITT_NOTIFY
 ifeq (release,$(cfg))
 SDL_FLAGS += -D_FORTIFY_SOURCE=2
-CPLUS_FLAGS = $(ITT_NOTIFY) -O2 -g -DUSE_PTHREAD
+# -g is set intentionally in the release mode. It should not affect performance.
+CPLUS_FLAGS = -O2 -g -qno-opt-report-embed
 else
-CPLUS_FLAGS = $(ITT_NOTIFY) -O0 -g -DUSE_PTHREAD -DTBB_USE_DEBUG
+CPLUS_FLAGS = -O0 -g -DTBB_USE_DEBUG
 endif
 
 LIB_LINK_FLAGS = -shared -static-intel -Wl,-soname=$(BUILDING_LIBRARY) -z relro -z now
-LIBS += -lpthread -lrt
+LIBS += -lrt
 LINK_FLAGS = -rdynamic
 C_FLAGS = $(CPLUS_FLAGS)
+
+CPLUS_FLAGS += $(ITT_NOTIFY) -DUSE_PTHREAD -pthread
+LIB_LINK_FLAGS += -pthread
 
 ifneq (,$(shell icc -dumpversion | egrep  "^1[6-9]\."))
 OPENMP_FLAG = -qopenmp

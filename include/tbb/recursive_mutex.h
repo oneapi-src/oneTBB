@@ -14,8 +14,22 @@
     limitations under the License.
 */
 
+#include "internal/_deprecated_header_message_guard.h"
+
+#if !defined(__TBB_show_deprecation_message_recursive_mutex_H) && defined(__TBB_show_deprecated_header_message)
+#define  __TBB_show_deprecation_message_recursive_mutex_H
+#pragma message("TBB Warning: tbb/recursive_mutex.h is deprecated. For details, please see Deprecated Features appendix in the TBB reference manual.")
+#endif
+
+#if defined(__TBB_show_deprecated_header_message)
+#undef __TBB_show_deprecated_header_message
+#endif
+
 #ifndef __TBB_recursive_mutex_H
 #define __TBB_recursive_mutex_H
+
+#define __TBB_recursive_mutex_H_include_area
+#include "internal/_warning_suppress_enable_notice.h"
 
 #if _WIN32||_WIN64
 #include "machine/windows_api.h"
@@ -32,7 +46,8 @@ namespace tbb {
 //! Mutex that allows recursive mutex acquisition.
 /** Mutex that allows recursive mutex acquisition.
     @ingroup synchronization */
-class recursive_mutex : internal::mutex_copy_deprecated_and_disabled {
+class __TBB_DEPRECATED_VERBOSE_MSG("tbb::recursive_mutex is deprecated, use std::recursive_mutex")
+recursive_mutex : internal::mutex_copy_deprecated_and_disabled {
 public:
     //! Construct unacquired recursive_mutex.
     recursive_mutex() {
@@ -226,5 +241,8 @@ private:
 __TBB_DEFINE_PROFILING_SET_NAME(recursive_mutex)
 
 } // namespace tbb
+
+#include "internal/_warning_suppress_disable_notice.h"
+#undef __TBB_recursive_mutex_H_include_area
 
 #endif /* __TBB_recursive_mutex_H */

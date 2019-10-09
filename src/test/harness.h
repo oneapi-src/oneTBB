@@ -443,6 +443,25 @@ int main(int argc, char* argv[]) {
 
 #endif /* !HARNESS_CUSTOM_MAIN */
 
+#if __TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT
+
+//! Base class for types that should not be assigned.
+class NoAssign {
+public:
+    void operator=( const NoAssign& ) = delete;
+    NoAssign( const NoAssign& ) = default;
+    NoAssign() = default;
+};
+
+//! Base class for types that should not be copied or assigned.
+class NoCopy: NoAssign {
+public:
+    NoCopy( const NoCopy& ) = delete;
+    NoCopy() = default;
+};
+
+#else /*__TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT*/
+
 //! Base class for prohibiting compiler-generated operator=
 class NoAssign {
     //! Assignment not allowed
@@ -458,6 +477,8 @@ class NoCopy: NoAssign {
 public:
     NoCopy() {}
 };
+
+#endif /*__TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT*/
 
 #if __TBB_CPP11_RVALUE_REF_PRESENT
 #include <utility>

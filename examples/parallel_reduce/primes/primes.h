@@ -21,7 +21,7 @@
 #pragma offload_attribute (push,target(mic))
 #endif // __TBB_MIC_OFFLOAD
 
-#include "tbb/task_scheduler_init.h"
+#include "../../common/utility/get_default_num_threads.h"
 #include <cstddef>
 typedef std::size_t NumberType;
 
@@ -31,7 +31,7 @@ NumberType SerialCountPrimes( NumberType n);
 
 //! Count number of primes between 0 and n
 /** This is the parallel version. */
-NumberType ParallelCountPrimes( NumberType n, int numberOfThreads= tbb::task_scheduler_init::automatic, NumberType grainSize = 1000);
+NumberType ParallelCountPrimes( NumberType n, int numberOfThreads= utility::get_default_num_threads(), NumberType grainSize = 1000);
 
 #if __TBB_MIC_OFFLOAD
 #pragma offload_attribute (pop)

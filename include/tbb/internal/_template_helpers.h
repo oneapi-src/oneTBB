@@ -210,6 +210,22 @@ using make_index_sequence = typename tbb::internal::make_index_sequence_impl<N>:
 
 #endif /* __TBB_CPP14_INTEGER_SEQUENCE_PRESENT */
 
+#if __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
+template<typename... Args>
+struct conjunction;
+
+template<typename First, typename... Args>
+struct conjunction<First, Args...>
+    : std::conditional<bool(First::value), conjunction<Args...>, First>::type {};
+
+template<typename T>
+struct conjunction<T> : T {};
+
+template<>
+struct conjunction<> : std::true_type {};
+
+#endif
+
 #if __TBB_CPP11_PRESENT
 
 template< typename Iter >
@@ -255,10 +271,11 @@ struct pack_element<0, T, Args...> {
 template< std::size_t N, typename... Args >
 using pack_element_t = typename pack_element<N, Args...>::type;
 
-template <typename Comp> using is_transparent = typename Comp::is_transparent;
-
-template <typename Comp>
-using has_is_transparent = supports<Comp, is_transparent>;
+// Helper alias for heterogeneous lookup functions in containers
+// template parameter K and std::conditional are needed to provide immediate context
+// and postpone getting is_trasparent from the compare functor until method instantiation.
+template <typename Comp, typename K>
+using is_transparent = typename std::conditional<true, Comp, K>::type::is_transparent;
 
 #endif /* __TBB_CPP11_PRESENT */
 

@@ -17,6 +17,13 @@
 #ifndef __TBB_tbb_H
 #define __TBB_tbb_H
 
+#if (!defined(TBB_SUPPRESS_DEPRECATED_MESSAGES) || (TBB_SUPPRESS_DEPRECATED_MESSAGES == 0)) && !defined(__TBB_INTERNAL_INCLUDES_DEPRECATION_MESSAGE)
+#pragma message("TBB Warning: tbb.h contains deprecated functionality. For details, please see Deprecated Features appendix in the TBB reference manual.")
+#endif
+
+#define __TBB_tbb_H_include_area
+#include "internal/_warning_suppress_enable_notice.h"
+
 /**
     This header bulk-includes declarations or definitions of all the functionality
     provided by TBB (save for tbbmalloc and 3rd party dependent headers).
@@ -83,5 +90,8 @@
 #include "tbb_exception.h"
 #include "tbb_thread.h"
 #include "tick_count.h"
+
+#include "internal/_warning_suppress_disable_notice.h"
+#undef __TBB_tbb_H_include_area
 
 #endif /* __TBB_tbb_H */

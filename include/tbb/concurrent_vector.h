@@ -17,6 +17,9 @@
 #ifndef __TBB_concurrent_vector_H
 #define __TBB_concurrent_vector_H
 
+#define __TBB_concurrent_vector_H_include_area
+#include "internal/_warning_suppress_enable_notice.h"
+
 #include "tbb_stddef.h"
 #include "tbb_exception.h"
 #include "atomic.h"
@@ -337,6 +340,14 @@ public:
             my_index(other.my_index),
             my_item(other.my_item)
         {}
+
+        vector_iterator& operator=( const vector_iterator<Container,typename Container::value_type>& other )
+        {
+            my_vector=other.my_vector;
+            my_index=other.my_index;
+            my_item=other.my_item;
+            return *this;
+        }
 
         vector_iterator operator+( ptrdiff_t offset ) const {
             return vector_iterator( *my_vector, my_index+offset );
@@ -1377,5 +1388,9 @@ inline void swap(concurrent_vector<T, A> &a, concurrent_vector<T, A> &b)
 #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
     #pragma warning (pop)
 #endif // warning 4267,4127 are back
+
+
+#undef __TBB_concurrent_vector_H_include_area
+#include "internal/_warning_suppress_disable_notice.h"
 
 #endif /* __TBB_concurrent_vector_H */

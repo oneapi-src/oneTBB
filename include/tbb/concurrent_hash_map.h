@@ -17,6 +17,9 @@
 #ifndef __TBB_concurrent_hash_map_H
 #define __TBB_concurrent_hash_map_H
 
+#define __TBB_concurrent_hash_map_H_include_area
+#include "internal/_warning_suppress_enable_notice.h"
+
 #include "tbb_stddef.h"
 #include <iterator>
 #include <utility>      // Need std::pair
@@ -122,9 +125,10 @@ namespace interface5 {
 #endif
         //! Constructor
         hash_map_base() {
-            std::memset( this, 0, pointers_per_table*sizeof(segment_ptr_t) // 32*4=128   or 64*8=512
-                + sizeof(my_size) + sizeof(my_mask)  // 4+4 or 8+8
-                + embedded_buckets*sizeof(bucket) ); // n*8 or n*16
+            std::memset(my_table, 0, sizeof(my_table));
+            my_mask = 0;
+            my_size = 0;
+            std::memset(my_embedded_segment, 0, sizeof(my_embedded_segment));
             for( size_type i = 0; i < embedded_block; i++ ) // fill the table
                 my_table[i] = my_embedded_segment + segment_base(i);
             my_mask = embedded_buckets - 1;
@@ -407,6 +411,14 @@ namespace interface5 {
             my_bucket(other.my_bucket),
             my_node(other.my_node)
         {}
+
+        hash_map_iterator& operator=( const hash_map_iterator<Container,typename Container::value_type> &other ) {
+            my_map = other.my_map;
+            my_index = other.my_index;
+            my_bucket = other.my_bucket;
+            my_node = other.my_node;
+            return *this;
+        }
         Value& operator*() const {
             __TBB_ASSERT( hash_map_base::is_valid(my_node), "iterator uninitialized or at end of container?" );
             return my_node->value();
@@ -1629,5 +1641,8 @@ inline void swap(concurrent_hash_map<Key, T, HashCompare, A> &a, concurrent_hash
 #endif // warning 4127 is back
 
 } // namespace tbb
+
+#include "internal/_warning_suppress_disable_notice.h"
+#undef __TBB_concurrent_hash_map_H_include_area
 
 #endif /* __TBB_concurrent_hash_map_H */

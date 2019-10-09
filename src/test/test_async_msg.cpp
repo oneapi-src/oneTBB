@@ -409,13 +409,13 @@ static bool testChaining() {
 namespace testFunctionsAvailabilityNS {
 
 using namespace tbb::flow;
-using tbb::flow::interface10::internal::untyped_sender;
-using tbb::flow::interface10::internal::untyped_receiver;
+using tbb::flow::interface11::internal::untyped_sender;
+using tbb::flow::interface11::internal::untyped_receiver;
 
 using tbb::internal::is_same_type;
 using tbb::internal::strip;
-using tbb::flow::interface10::internal::wrap_tuple_elements;
-using tbb::flow::interface10::internal::async_helpers;
+using tbb::flow::interface11::internal::wrap_tuple_elements;
+using tbb::flow::interface11::internal::async_helpers;
 
 class A {}; // Any type (usually called 'T')
 struct ImpossibleType {};

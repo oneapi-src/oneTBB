@@ -1120,13 +1120,13 @@ void TestSchedulerTaskSelectionWhenEnqueue() {
 
     ASSERT( g_execution_profile[idx].size() == task_num + num_critical_tasks,
             "Incorrect number of tasks executed" );
-    ASSERT( g_execution_profile[idx][0] == outer_critical_task,
-            "Critical task was executed in wrong order." );
+    ASSERT( *(g_execution_profile[idx].end() - 1) == outer_critical_task,
+            "Critical task was executed in wrong order. It should be the last one." );
     bool all_regular = true;
-    for( std::vector<task_marker_t>::const_iterator it = g_execution_profile[idx].begin() + 1;
-         it != g_execution_profile[idx].end(); ++it )
+    for( std::vector<task_marker_t>::const_iterator it = g_execution_profile[idx].begin();
+         it != g_execution_profile[idx].end() - 1; ++it )
         all_regular &= regular_task == *it;
-    ASSERT( all_regular, "Critical task was executed in wrong order." );
+    ASSERT( all_regular, "Critical task was executed in wrong order. It should be the last one." );
 }
 
 enum ways_to_cancel_t {

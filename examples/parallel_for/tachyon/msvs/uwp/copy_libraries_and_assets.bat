@@ -29,9 +29,14 @@ if ("%4") == ("") set dat_file="%output_dir%\..\..\dat\balls.dat"
 :: Actually we can set install root by ourselves
 if ("%TBBROOT%") == ("") set TBBROOT=%~dp0..\..\..\..\..\
 
-:: ordered from oldest to newest, so we end with newest available version
-if ("%VS110COMNTOOLS%") NEQ ("") set vc_dir=vc11_ui
-if ("%VS120COMNTOOLS%") NEQ ("") set vc_dir=vc12_ui
+:: Getting vs folders ordered from oldest to newest, so we end with newest available version
+if ("%VS140COMNTOOLS%") NEQ ("") set vc_dir=vc14_uwp
+:: To use Microsoft* Visual Studio* 2017 IDE, make sure the variable VS150COMNTOOLS is set in your IDE instance.
+:: If it is not, try running Microsoft Visual Studio 2017 from Microsoft* Developer Command Prompt* for VS 2017.
+:: For details, see https://developercommunity.visualstudio.com/content/problem/730/vs154-env-var-vs150comntools-missing-from-build-sy.html
+if ("%VS150COMNTOOLS%") NEQ ("") set vc_dir=vc14_uwp
+:: The same comment also applies to Microsoft Visual Studio 2019 and variable VS160COMNTOOLS
+if ("%VS160COMNTOOLS%") NEQ ("") set vc_dir=vc14_uwp
 echo Using %vc_dir% libraries
 
 if exist "%TBBROOT%\bin\%arch%\%vc_dir%\tbb%postfix%.dll" set interim_path=bin\%arch%

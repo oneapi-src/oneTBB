@@ -163,6 +163,11 @@ public:
 
     skip_list_iterator(const skip_list_iterator<node_type, false>& other) : my_node_ptr(other.my_node_ptr) {}
 
+    skip_list_iterator& operator=(const skip_list_iterator<node_type, false>& other) {
+         my_node_ptr = other.my_node_ptr;
+         return *this;
+    }
+
     template <typename T = void, typename = typename std::enable_if<is_const, T>::type>
     skip_list_iterator(const skip_list_iterator<node_type, true>& other) : my_node_ptr(other.my_node_ptr) {}
 
@@ -404,9 +409,23 @@ public:
         std::pair<node_ptr, node_ptr> extract_result = internal_extract(pos);
         if(extract_result.first) { // node was extracted
             delete_node(extract_result.first);
-            return extract_result.second;
+            return iterator(extract_result.second);
         }
         return end();
+    }
+
+    iterator unsafe_erase(const_iterator pos) {
+        return unsafe_erase(get_iterator(pos));
+    }
+
+    template <typename K, typename = tbb::internal::is_transparent<key_compare, K>,
+                          typename = typename std::enable_if<!std::is_convertible<K, iterator>::value &&
+                                                             !std::is_convertible<K, const_iterator>::value>::type>
+    size_type unsafe_erase(const K& key) {
+        std::pair<iterator, iterator> range = equal_range(key);
+        size_type sz = std::distance(range.first, range.second);
+        unsafe_erase(range.first, range.second);
+        return sz;
     }
 
     iterator unsafe_erase(const_iterator first, const_iterator last) {
@@ -440,12 +459,12 @@ public:
         return internal_get_bound(key, my_compare);
     }
 
-    template<typename K, typename = typename std::enable_if<tbb::internal::has_is_transparent<key_compare>::value, K>::type>
+    template <typename K, typename = typename tbb::internal::is_transparent<key_compare, K> >
     iterator lower_bound(const K& key) {
         return internal_get_bound(key, my_compare);
     }
 
-    template<typename K, typename = typename std::enable_if<tbb::internal::has_is_transparent<key_compare>::value, K>::type>
+    template <typename K, typename = typename tbb::internal::is_transparent<key_compare, K> >
     const_iterator lower_bound(const K& key) const {
         return internal_get_bound(key, my_compare);
     }
@@ -458,12 +477,12 @@ public:
         return internal_get_bound(key, not_greater_compare(my_compare));
     }
 
-    template<typename K, typename = typename std::enable_if<tbb::internal::has_is_transparent<key_compare>::value, K>::type>
+    template <typename K, typename = typename tbb::internal::is_transparent<key_compare, K> >
     iterator upper_bound(const K& key) {
         return internal_get_bound(key, not_greater_compare(my_compare));
     }
 
-    template<typename K, typename = typename std::enable_if<tbb::internal::has_is_transparent<key_compare>::value, K>::type>
+    template <typename K, typename = typename tbb::internal::is_transparent<key_compare, K> >
     const_iterator upper_bound(const K& key) const {
         return internal_get_bound(key, not_greater_compare(my_compare));
     }
@@ -476,12 +495,12 @@ public:
         return internal_find(key);
     }
 
-    template<typename K, typename = typename std::enable_if<tbb::internal::has_is_transparent<key_compare>::value, K>::type>
+    template <typename K, typename = typename tbb::internal::is_transparent<key_compare, K> >
     iterator find(const K& key) {
         return internal_find(key);
     }
 
-    template<typename K, typename = typename std::enable_if<tbb::internal::has_is_transparent<key_compare>::value, K>::type>
+    template <typename K, typename = typename tbb::internal::is_transparent<key_compare, K> >
     const_iterator find(const K& key) const {
         return internal_find(key);
     }
@@ -490,7 +509,7 @@ public:
         return internal_count(key);
     }
 
-    template<typename K, typename = typename std::enable_if<tbb::internal::has_is_transparent<key_compare>::value, K>::type>
+    template <typename K, typename = typename tbb::internal::is_transparent<key_compare, K> >
     size_type count(const K& key) const {
         return internal_count(key);
     }
@@ -499,7 +518,7 @@ public:
         return find(key) != end();
     }
 
-    template<typename K, typename = typename std::enable_if<tbb::internal::has_is_transparent<key_compare>::value, K>::type>
+    template <typename K, typename = typename tbb::internal::is_transparent<key_compare, K> >
     bool contains(const K& key) const {
         return find(key) != end();
     }
@@ -582,12 +601,12 @@ public:
         return std::pair<const_iterator, const_iterator>(lower_bound(key), upper_bound(key));
     }
 
-    template<typename K, typename = typename std::enable_if<tbb::internal::has_is_transparent<key_compare>::value, K>::type>
+    template <typename K, typename = typename tbb::internal::is_transparent<key_compare, K> >
     std::pair<iterator, iterator> equal_range(const K& key) {
         return std::pair<iterator, iterator>(lower_bound(key), upper_bound(key));
     }
 
-    template<typename K, typename = typename std::enable_if<tbb::internal::has_is_transparent<key_compare>::value, K>::type>
+    template <typename K, typename = typename tbb::internal::is_transparent<key_compare, K> >
     std::pair<const_iterator, const_iterator> equal_range(const K& key) const {
         return std::pair<const_iterator, const_iterator>(lower_bound(key), upper_bound(key));
     }
@@ -727,6 +746,29 @@ private:
         }
     }
 
+    template <typename comparator>
+    void fill_prev_next_by_ptr(array_type& prev_nodes, array_type& next_nodes, const_iterator it, const key_type& key,
+                               const comparator& cmp) {
+        node_ptr prev = dummy_head;
+        node_ptr erase_node = it.my_node_ptr;
+        size_type node_height = erase_node->height();
+
+        for (size_type h = prev->height(); h >= node_height; --h) {
+            internal_find_position(h - 1, prev, key, cmp);
+        }
+
+        for (size_type h = node_height; h > 0; --h) {
+            node_ptr curr = prev->next(h - 1);
+            while (const_iterator(curr) != it) {
+                prev = curr;
+                curr = prev->next(h - 1);
+            }
+            prev_nodes[h - 1] = prev;
+        }
+
+        std::fill(next_nodes.begin(), next_nodes.begin() + node_height, erase_node);
+    }
+
     template<typename... Args>
     std::pair<iterator, bool> internal_insert(Args&&... args) {
         node_ptr new_node = create_node(std::forward<Args>(args)...);
@@ -838,18 +880,18 @@ private:
     std::pair<node_ptr, node_ptr> internal_extract(const_iterator it) {
         if ( it != end() ) {
             key_type key = traits_type::get_key(*it);
-            node_ptr prev = dummy_head;
             __TBB_ASSERT(dummy_head->height() > 0, NULL);
 
             array_type prev_nodes;
             array_type next_nodes;
 
-            fill_prev_next_arrays(prev_nodes, next_nodes, prev, key, my_compare);
+            fill_prev_next_by_ptr(prev_nodes, next_nodes, it, key, my_compare);
 
             node_ptr erase_node = next_nodes[0];
+            __TBB_ASSERT(erase_node != nullptr, NULL);
             node_ptr next_node = erase_node->next(0);
 
-            if (erase_node && !my_compare(key, get_key(erase_node))) {
+            if (!my_compare(key, get_key(erase_node))) {
                 for(size_type level = 0; level < erase_node->height(); ++level) {
                     __TBB_ASSERT(prev_nodes[level]->height() > level, NULL);
                     __TBB_ASSERT(next_nodes[level] == erase_node, NULL);

@@ -239,6 +239,31 @@ void CheckMultiMap(MultiMap &m, int *targets, int tcount, int key) {
 }
 
 template <typename MultiMap>
+void MultiMapEraseTests(){
+    MultiMap cont1, cont2;
+
+    typename MultiMap::iterator erased_it;
+    for (int i = 0; i < 10; ++i) {
+        if ( i != 1 ) {
+            cont1.emplace(1, i);
+            cont2.emplace(1, i);
+        } else {
+            erased_it = cont1.emplace(1, i).first;
+        }
+    }
+
+    cont1.unsafe_erase(erased_it);
+
+    ASSERT(cont1.size() == cont2.size(), "Incorrect count of elements was erased");
+    typename MultiMap::iterator it1 = cont1.begin();
+    typename MultiMap::iterator it2 = cont2.begin();
+    
+    for (typename MultiMap::size_type i = 0; i < cont2.size(); ++i) {
+        ASSERT(*(it1++) == *(it2++), "Multimap repetitive key was not erased properly");
+    }
+}
+
+template <typename MultiMap>
 void SpecialMultiMapTests( const char *str ){
     int one_values[] = { 7, 2, 13, 23, 13 };
     int zero_values[] = { 4, 9, 13, 29, 42, 111};
@@ -302,6 +327,7 @@ void SpecialMultiMapTests( const char *str ){
     CheckMultiMap(cont, one_values, n_one_values, 1);
     CheckMultiMap(cont, zero_values, n_zero_values, 0);
 
+    MultiMapEraseTests<MultiMap>();
 
     REMARK( "passed -- specialized %s tests\n", str );
 }
@@ -470,9 +496,14 @@ void test_basic_common(const char * str, do_check_element_state)
     typename T::size_type size = cont.unsafe_erase(1);
     ASSERT(T::allow_multimapping ? (size == 2) : (size == 1), "Erase has not removed the right number of elements");
 
-    // iterator unsafe_erase(const_iterator position);
+    // iterator unsafe_erase(iterator position);
     typename T::iterator it4 = cont.unsafe_erase(cont.find(2));
     ASSERT(it4 == cont.end() && cont.size() == 0, "Erase has not removed the last element properly");
+
+    // iterator unsafe_erase(const_iterator position);
+    cont.insert(Value<T>::make(3));
+    typename T::iterator it5 = cont.unsafe_erase(cont.cbegin());
+    ASSERT(it5 == cont.end() && cont.size() == 0, "Erase has not removed the last element properly");
 
     // template<class InputIterator> void insert(InputIterator first, InputIterator last);
     cont.insert(newcont.begin(), newcont.end());
@@ -1367,69 +1398,68 @@ namespace node_handling{
         node_handling::TestMergeOverloads(multitable2, table2);
     }
 
-    template <typename Table>
-    void AssertionConcurrentMerge ( Table start_data, Table src_table, std::vector<Table> tables,
-                                    std::true_type) {
-        ASSERT( src_table.size() == start_data.size()*tables.size(),
+    template <typename SrcTableType, typename DestTableType>
+    void AssertionConcurrentMerge ( SrcTableType& start_data, DestTableType& dest_table,
+                                    std::vector<SrcTableType>& src_tables, std::true_type) {
+        ASSERT( dest_table.size() == start_data.size() * src_tables.size(),
                 "Merge: Incorrect merge for some elements" );
 
         for(auto it: start_data) {
-            ASSERT( src_table.count( Value<Table>::key( it ) ) ==
-                    start_data.count( Value<Table>::key( it ) )*tables.size(),
+            ASSERT( dest_table.count( Value<DestTableType>::key( it ) ) ==
+                    start_data.count( Value<SrcTableType>::key( it ) ) * src_tables.size(),
                                       "Merge: Incorrect merge for some element" );
         }
 
-        for (size_t i = 0; i < tables.size(); i++) {
-            ASSERT( tables[i].empty(), "Merge: Some elements was not merged" );
+        for (size_t i = 0; i < src_tables.size(); i++) {
+            ASSERT( src_tables[i].empty(), "Merge: Some elements were not merged" );
         }
     }
 
-    template <typename Table>
-    void AssertionConcurrentMerge ( Table start_data, Table src_table, std::vector<Table> tables,
-                                    std::false_type) {
-        Table expected_result;
-        for (auto table: tables)
+    template <typename SrcTableType, typename DestTableType>
+    void AssertionConcurrentMerge ( SrcTableType& start_data, DestTableType& dest_table,
+                                    std::vector<SrcTableType>& src_tables, std::false_type) {
+        SrcTableType expected_result;
+        for (auto table: src_tables)
             for (auto it: start_data) {
                 // If we cannot find some element in some table, then it has been moved
-                if (table.find( Value<Table>::key( it ) ) == table.end()){
+                if (table.find( Value<SrcTableType>::key( it ) ) == table.end()){
                     bool result = expected_result.insert( it ).second;
                     ASSERT( result, "Merge: Some element was merged twice or was not "
                                     "returned to his owner after unsuccessful merge");
                 }
             }
 
-        ASSERT( expected_result.size() == src_table.size() && start_data.size() == src_table.size(),
+        ASSERT( expected_result.size() == dest_table.size() && start_data.size() == dest_table.size(),
                 "Merge: wrong size of result table");
         for (auto it: expected_result) {
-            if ( src_table.find( Value<Table>::key( it ) ) != src_table.end() &&
-                 start_data.find( Value<Table>::key( it ) ) != start_data.end() ){
-                src_table.unsafe_extract(Value<Table>::key( it ));
-                start_data.unsafe_extract(Value<Table>::key( it ));
+            if ( dest_table.find( Value<SrcTableType>::key( it ) ) != dest_table.end() &&
+                 start_data.find( Value<DestTableType>::key( it ) ) != start_data.end() ){
+                dest_table.unsafe_extract(Value<SrcTableType>::key( it ));
+                start_data.unsafe_extract(Value<DestTableType>::key( it ));
             } else {
                 ASSERT( false, "Merge: Incorrect merge for some element" );
             }
         }
 
-        ASSERT( src_table.empty()&&start_data.empty(), "Merge: Some elements were not merged" );
+        ASSERT( dest_table.empty()&&start_data.empty(), "Merge: Some elements were not merged" );
     }
 
-    template <typename Table>
-    void TestConcurrentMerge (const Table& table_data) {
+    template <typename SrcTableType, typename DestTableType>
+    void TestConcurrentMerge (SrcTableType table_data) {
         for (auto num_threads = MinThread + 1; num_threads <= MaxThread; num_threads++){
-            std::vector<Table> tables;
-            Table src_table;
+            std::vector<SrcTableType> src_tables;
+            DestTableType dest_table;
 
             for (auto j = 0; j < num_threads; j++){
-                tables.push_back(table_data);
+                src_tables.push_back(table_data);
             }
 
-            NativeParallelFor( num_threads, [&](size_t index){ src_table.merge(tables[index]); } );
+            NativeParallelFor( num_threads, [&](size_t index){ dest_table.merge(src_tables[index]); } );
 
-            AssertionConcurrentMerge( table_data, src_table, tables,
-                                      std::integral_constant<bool,Table::allow_multimapping>{});
+            AssertionConcurrentMerge( table_data, dest_table, src_tables,
+                                      std::integral_constant<bool, DestTableType::allow_multimapping>{});
         }
     }
-
 
     template <typename Table>
     void TestNodeHandling(){
@@ -1476,13 +1506,13 @@ namespace node_handling{
         for (i = 0; i<size; ++i){
             table1_3.insert(Value<TableType1>::make(i));
         }
-        node_handling::TestConcurrentMerge(table1_3);
+        node_handling::TestConcurrentMerge<TableType1, TableType2>(table1_3);
 
         TableType2 table2_3;
         for (i = 0; i<size; ++i){
             table2_3.insert(Value<TableType2>::make(i));
         }
-        node_handling::TestConcurrentMerge(table2_3);
+        node_handling::TestConcurrentMerge<TableType2, TableType1>(table2_3);
 }
 }
 #endif // __TBB_UNORDERED_NODE_HANDLE_PRESENT || __TBB_CONCURRENT_ORDERED_CONTAINERS_PRESENT

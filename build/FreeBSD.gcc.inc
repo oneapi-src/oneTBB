@@ -32,7 +32,7 @@ C_FLAGS = $(CPLUS_FLAGS)
 
 # gcc 6.0 and later have -flifetime-dse option that controls
 # elimination of stores done outside the object lifetime
-ifneq (,$(shell gcc -dumpfullversion -dumpversion | egrep  "^([6-9])"))
+ifneq (,$(shell gcc -dumpfullversion -dumpversion | egrep  "^([6-9]|1[0-9])"))
     # keep pre-contruction stores for zero initialization
     DSE_KEY = -flifetime-dse=1
 endif

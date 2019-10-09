@@ -20,6 +20,7 @@
 */
 #include "Board.h"
 #include "Form1.h"
+#include "../../../common/utility/get_default_num_threads.h"
 
 #define WIN32_LEAN_AND_MEAN
 
@@ -149,7 +150,7 @@ bool ParseCommandLine(int argc, char * argv [])
     //! command line without parameters
     if(argc == 1)
     {
-        low = tbb::task_scheduler_init::automatic;
+        low = utility::get_default_num_threads();
         high = low;
         execution_time = 5;
         return true;

@@ -319,7 +319,7 @@ namespace internal {
             return NULL;
         }
 
-        graph& graph_reference() __TBB_override {
+        graph& graph_reference() const __TBB_override {
             return my_join->graph_ref;
         }
 
@@ -416,6 +416,10 @@ namespace internal {
         }
 
     private:
+#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+        friend class get_graph_helper;
+#endif
+
         forwarding_base *my_join;
         reservable_predecessor_cache< T, null_mutex > my_predecessors;
         bool reserved;
@@ -542,7 +546,7 @@ namespace internal {
             return op_data.bypass_t;
         }
 
-        graph& graph_reference() __TBB_override {
+        graph& graph_reference() const __TBB_override {
             return my_join->graph_ref;
         }
 
@@ -622,6 +626,10 @@ namespace internal {
         }
 
     private:
+#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+        friend class get_graph_helper;
+#endif
+
         forwarding_base *my_join;
 #if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
         edge_container<predecessor_type> my_built_predecessors;
@@ -760,7 +768,7 @@ namespace internal {
             return rtask;
         }
 
-        graph& graph_reference() __TBB_override {
+        graph& graph_reference() const __TBB_override {
             return my_join->graph_ref;
         }
 

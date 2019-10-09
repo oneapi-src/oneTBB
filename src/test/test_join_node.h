@@ -26,11 +26,13 @@
 #endif
 #endif
 
+#include "harness.h"
 #include "harness_graph.h"
 #include "harness_checktype.h"
 
 #include "tbb/flow_graph.h"
 #include "tbb/task_scheduler_init.h"
+#include "test_follows_and_precedes_api.h"
 
 #define __TBB_MIC_OFFLOAD_TEST_COMPILATION_BROKEN __TBB_MIC_OFFLOAD
 
@@ -250,7 +252,7 @@ struct my_struct_key<K&, V> {
 using tbb::internal::is_ref;
 
 template<class K, class V> struct VtoKFB {
-    typedef tbb::flow::interface10::internal::type_to_key_function_body<V, K> type;
+    typedef tbb::flow::interface11::internal::type_to_key_function_body<V, K> type;
 };
 
 template<typename K> struct make_hash_compare { typedef typename tbb::tbb_hash_compare<K> type; };
@@ -258,14 +260,14 @@ template<typename K> struct make_hash_compare { typedef typename tbb::tbb_hash_c
 template<typename K, class V>
 void hash_buffer_test(const char *sname) {
     typedef typename K_deref<K>::type KnoR;
-    tbb::flow::interface10::internal::hash_buffer<
+    tbb::flow::interface11::internal::hash_buffer<
         K,
         V,
         typename VtoKFB<K, V>::type,
         tbb::tbb_hash_compare<KnoR>
     > my_hash_buffer;
     const bool k_is_ref = is_ref<K>::value;
-    typedef tbb::flow::interface10::internal::type_to_key_function_body_leaf<
+    typedef tbb::flow::interface11::internal::type_to_key_function_body_leaf<
         V, K, my_struct_key<K, V> > my_func_body_type;
     typename VtoKFB<K, V>::type *kp = new my_func_body_type(my_struct_key<K, V>());
     my_hash_buffer.set_key_func(kp);
@@ -2090,7 +2092,7 @@ template<typename Policy> struct policy_name {};
 
 template<> struct policy_name<tbb::flow::queueing> {
 const char* msg_beg() { return "queueing\n";}
-const char* msg_end() { return "test queueing extract\n";} 
+const char* msg_end() { return "test queueing extract\n";}
 };
 
 template<> struct policy_name<tbb::flow::reserving> {

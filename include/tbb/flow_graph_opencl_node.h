@@ -17,6 +17,9 @@
 #ifndef __TBB_flow_graph_opencl_node_H
 #define __TBB_flow_graph_opencl_node_H
 
+#define __TBB_flow_graph_opencl_node_H_include_area
+#include "internal/_warning_suppress_enable_notice.h"
+
 #include "tbb/tbb_config.h"
 #if __TBB_PREVIEW_OPENCL_NODE
 
@@ -39,7 +42,7 @@
 namespace tbb {
 namespace flow {
 
-namespace interface10 {
+namespace interface11 {
 
 template <typename DeviceFilter>
 class opencl_factory;
@@ -1410,20 +1413,20 @@ public:
     opencl_node( graph &g, const kernel_type& kernel )
         : base_type( g, kernel, opencl_info::default_device_selector< opencl_info::default_opencl_factory >(), opencl_info::default_factory() )
     {
-        tbb::internal::fgt_multiinput_multioutput_node( tbb::internal::FLOW_OPENCL_NODE, this, &this->my_graph );
+        tbb::internal::fgt_multiinput_multioutput_node( CODEPTR(), tbb::internal::FLOW_OPENCL_NODE, this, &this->my_graph );
     }
 
     opencl_node( graph &g, const kernel_type& kernel, Factory &f )
         : base_type( g, kernel, opencl_info::default_device_selector <Factory >(), f )
     {
-        tbb::internal::fgt_multiinput_multioutput_node( tbb::internal::FLOW_OPENCL_NODE, this, &this->my_graph );
+        tbb::internal::fgt_multiinput_multioutput_node( CODEPTR(), tbb::internal::FLOW_OPENCL_NODE, this, &this->my_graph );
     }
 
     template <typename DeviceSelector>
     opencl_node( graph &g, const kernel_type& kernel, DeviceSelector d, Factory &f)
         : base_type( g, kernel, d, f)
     {
-        tbb::internal::fgt_multiinput_multioutput_node( tbb::internal::FLOW_OPENCL_NODE, this, &this->my_graph );
+        tbb::internal::fgt_multiinput_multioutput_node( CODEPTR(), tbb::internal::FLOW_OPENCL_NODE, this, &this->my_graph );
     }
 };
 
@@ -1459,24 +1462,27 @@ public:
     {}
 };
 
-} // namespace interface10
+} // namespace interfaceX
 
-using interface10::opencl_node;
-using interface10::read_only;
-using interface10::read_write;
-using interface10::write_only;
-using interface10::opencl_buffer;
-using interface10::opencl_subbuffer;
-using interface10::opencl_device;
-using interface10::opencl_device_list;
-using interface10::opencl_program;
-using interface10::opencl_program_type;
-using interface10::opencl_async_msg;
-using interface10::opencl_factory;
-using interface10::opencl_range;
+using interface11::opencl_node;
+using interface11::read_only;
+using interface11::read_write;
+using interface11::write_only;
+using interface11::opencl_buffer;
+using interface11::opencl_subbuffer;
+using interface11::opencl_device;
+using interface11::opencl_device_list;
+using interface11::opencl_program;
+using interface11::opencl_program_type;
+using interface11::opencl_async_msg;
+using interface11::opencl_factory;
+using interface11::opencl_range;
 
 } // namespace flow
 } // namespace tbb
 #endif /* __TBB_PREVIEW_OPENCL_NODE */
+
+#include "internal/_warning_suppress_disable_notice.h"
+#undef __TBB_flow_graph_opencl_node_H_include_area
 
 #endif // __TBB_flow_graph_opencl_node_H

@@ -173,6 +173,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				ENABLE_TESTABILITY = YES;
 				GCC_ENABLE_CPP_RTTI = YES;
 				GCC_MODEL_TUNING = "";
@@ -183,6 +184,7 @@
 					"$(TBBROOT)/include",
 					/opt/intel/tbb/include,
 				);
+				ICC_CXX_LANG_DIALECT = "c++11";
 				LD_RUNPATH_SEARCH_PATHS = "$(TBBROOT)/lib /opt/intel/tbb/lib";
 				LIBRARY_SEARCH_PATHS = (
 					"$(TBBROOT)/lib",
@@ -208,6 +210,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				GCC_ENABLE_CPP_RTTI = YES;
 				GCC_MODEL_TUNING = "";
 				GCC_VERSION = "";
@@ -217,6 +220,7 @@
 					"$(TBBROOT)/include",
 					/opt/intel/tbb/include,
 				);
+				ICC_CXX_LANG_DIALECT = "c++11";
 				LD_RUNPATH_SEARCH_PATHS = "$(TBBROOT)/lib /opt/intel/tbb/lib";
 				LIBRARY_SEARCH_PATHS = (
 					"$(TBBROOT)/lib",

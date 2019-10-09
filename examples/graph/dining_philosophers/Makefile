@@ -33,13 +33,16 @@ else ifeq ($(shell uname), Darwin)
 override CXXFLAGS += -Wl,-rpath,$(TBBROOT)/lib
 endif
 
+# autodetect C++11 support
+include ../../common/examples-common.inc
+
 all:	release test
 
 release: dining_philosophers.cpp
-	$(CXX) -O2 -DNDEBUG -D_CONSOLE $(CXXFLAGS) -o $(PROG) $^ -ltbb $(LIBS)
+	$(CXX) -O2 -DNDEBUG -D_CONSOLE $(CXXFLAGS) -o $(PROG) $^ -ltbb $(LIBS) $(CXX0XFLAGS)
 
 debug:  dining_philosophers.cpp
-	$(CXX) -O0 -D_CONSOLE -g -DTBB_USE_DEBUG $(CXXFLAGS) -o $(PROG) $^ -ltbb_debug $(LIBS)
+	$(CXX) -O0 -D_CONSOLE -g -DTBB_USE_DEBUG $(CXXFLAGS) -o $(PROG) $^ -ltbb_debug $(LIBS) $(CXX0XFLAGS)
 
 profile: override CXXFLAGS += -DTBB_USE_THREADING_TOOLS -g
 profile: release

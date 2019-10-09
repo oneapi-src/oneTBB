@@ -37,6 +37,8 @@ override CXXFLAGS += $(CXX_STD_FLAGS)
 # give stdver priotity over autodetection
 ifneq (,$(stdver))
     CXX0XFLAGS=-std=$(stdver)
+else
+    include common/examples-common.inc
 endif
 # empty CXX0XFLAGS exported as well, to have control over C++ autodetection
 export CXX0XFLAGS

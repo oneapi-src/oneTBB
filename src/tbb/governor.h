@@ -56,6 +56,9 @@ private:
     //! Caches the maximal level of parallelism supported by the hardware
     static unsigned DefaultNumberOfThreads;
 
+    //! Caches the size of OS regular memory page
+    static size_t DefaultPageSize;
+
     static rml::tbb_factory theRMLServerFactory;
 
     static bool UsePrivateRML;
@@ -82,6 +85,10 @@ public:
         // No memory fence required, because at worst each invoking thread calls AvailableHwConcurrency once.
         return DefaultNumberOfThreads ? DefaultNumberOfThreads :
                                         DefaultNumberOfThreads = AvailableHwConcurrency();
+    }
+    static size_t default_page_size () {
+        return DefaultPageSize ? DefaultPageSize :
+                                 DefaultPageSize = DefaultSystemPageSize();
     }
     static void one_time_init();
     //! Processes scheduler initialization request (possibly nested) in a master thread

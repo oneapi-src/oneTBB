@@ -23,9 +23,6 @@ ifneq (,$(shell which icc 2>/dev/null))
     CXX=icpc
 endif
 
-# autodetect C++11 support
-include ../../common/examples-common.inc
-
 TBBLIB = -ltbb
 TBBLIB_DEBUG = -ltbb_debug
 
@@ -48,6 +45,9 @@ endif
 else ifeq ($(shell uname), Darwin)
 override CXXFLAGS += -Wl,-rpath,$(TBBROOT)/lib
 endif
+
+# autodetect C++11 support
+include ../../common/examples-common.inc
 
 all:	release test
 

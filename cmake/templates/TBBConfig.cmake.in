@@ -13,23 +13,12 @@
 # limitations under the License.
 
 # It defines the following variables:
-#     TBB_tbb_FOUND
-#     TBB_tbbmalloc_FOUND
-#     TBB_tbbmalloc_proxy_FOUND
+#     TBB_<component>_FOUND
 #     TBB_IMPORTED_TARGETS
 #
 # TBBConfigVersion.cmake defines TBB_VERSION
 #
 # Initialize to default values
-if (NOT TBB_tbb_FOUND)
-    set(TBB_tbb_FOUND 0)
-endif()
-if (NOT TBB_tbbmalloc_FOUND)
-    set(TBB_tbbmalloc_FOUND 0)
-endif()
-if (NOT TBB_tbbmalloc_proxy_FOUND)
-    set(TBB_tbbmalloc_proxy_FOUND 0)
-endif()
 if (NOT TBB_IMPORTED_TARGETS)
     set(TBB_IMPORTED_TARGETS "")
 endif()
@@ -40,6 +29,8 @@ if (NOT TBB_FIND_COMPONENTS)
         set(TBB_FIND_REQUIRED_${_tbb_component} 1)
     endforeach()
 endif()
+
+set(TBB_INTERFACE_VERSION @TBB_INTERFACE_VERSION@)
 
 # Add components with internal dependencies: tbbmalloc_proxy -> tbbmalloc
 list(FIND TBB_FIND_COMPONENTS tbbmalloc_proxy _tbbmalloc_proxy_ix)
@@ -54,6 +45,8 @@ endif()
 unset(_tbbmalloc_proxy_ix)
 
 foreach (_tbb_component ${TBB_FIND_COMPONENTS})
+    set(TBB_${_tbb_component}_FOUND 0)
+
     set(_tbb_release_lib "${CMAKE_CURRENT_LIST_DIR}/@TBB_LIB_REL_PATH@/@TBB_LIB_PREFIX@${_tbb_component}.@TBB_LIB_EXT@")
     set(_tbb_debug_lib "${CMAKE_CURRENT_LIST_DIR}/@TBB_LIB_REL_PATH@/@TBB_LIB_PREFIX@${_tbb_component}_debug.@TBB_LIB_EXT@")
 
@@ -79,17 +72,17 @@ foreach (_tbb_component ${TBB_FIND_COMPONENTS})
             if (_tbb_component STREQUAL tbbmalloc_proxy)
                 set_target_properties(TBB::tbbmalloc_proxy PROPERTIES INTERFACE_LINK_LIBRARIES TBB::tbbmalloc)
             endif()
-            list(APPEND TBB_IMPORTED_TARGETS TBB::${_tbb_component})
         else()
             message(STATUS "Using previously found TBB::${_tbb_component}")
         endif()
+        list(APPEND TBB_IMPORTED_TARGETS TBB::${_tbb_component})
         set(TBB_${_tbb_component}_FOUND 1)
     elseif (TBB_FIND_REQUIRED AND TBB_FIND_REQUIRED_${_tbb_component})
         message(STATUS "Missed required Intel TBB component: ${_tbb_component}")
         message(STATUS "  one or both of:\n   ${_tbb_release_lib}\n    ${_tbb_debug_lib}\n   files must exist.")
         set(TBB_FOUND FALSE)
-        set(TBB_${_tbb_component}_FOUND 0)
     endif()
 endforeach()
+list(REMOVE_DUPLICATES TBB_IMPORTED_TARGETS)
 unset(_tbb_release_lib)
 unset(_tbb_debug_lib)

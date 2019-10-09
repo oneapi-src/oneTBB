@@ -2,6 +2,40 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 2019 Update 9
+TBB_INTERFACE_VERSION == 11009
+
+Changes (w.r.t. Intel TBB 2019 Update 8):
+
+- Multiple APIs are deprecated. For details, please see
+    Deprecated Features appendix in the TBB reference manual.
+- Added C++17 deduction guides for flow graph nodes.
+
+Preview Features:
+
+- Added isolated_task_group class that allows multiple threads to add 
+    and execute tasks sharing the same isolation.
+- Extended the flow graph API to simplify connecting nodes.
+- Added erase() by heterogeneous keys for concurrent ordered containers.
+- Added a possibility to suspend task execution at a specific point
+    and resume it later.
+
+Bugs fixed:
+
+- Fixed the emplace() method of concurrent unordered containers to
+    destroy a temporary element that was not inserted.
+- Fixed a bug in the merge() method of concurrent unordered
+    containers.
+- Fixed behavior of a continue_node that follows buffering nodes.
+
+Open-source contributions integrated:
+
+- Added support for move-only types to tbb::parallel_pipeline
+    (https://github.com/intel/tbb/pull/159) by Raf Schietekat.
+- Fixed detection of clang version when CUDA toolkit is installed
+    (https://github.com/intel/tbb/pull/150) by Guilherme Amadio.
+
+------------------------------------------------------------------------
 Intel TBB 2019 Update 8
 TBB_INTERFACE_VERSION == 11008
 

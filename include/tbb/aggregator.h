@@ -17,6 +17,9 @@
 #ifndef __TBB__aggregator_H
 #define __TBB__aggregator_H
 
+#define __TBB_aggregator_H_include_area
+#include "internal/_warning_suppress_enable_notice.h"
+
 #if !TBB_PREVIEW_AGGREGATOR
 #error Set TBB_PREVIEW_AGGREGATOR before including aggregator.h
 #endif
@@ -194,5 +197,8 @@ using interface6::aggregator_ext;
 using interface6::aggregator_operation;
 
 } // namespace tbb
+
+#include "internal/_warning_suppress_disable_notice.h"
+#undef __TBB_aggregator_H_include_area
 
 #endif  // __TBB__aggregator_H

@@ -103,6 +103,9 @@ test_dynamic_link.$(TEST_EXT): LIBS += $(LIBDL)
 ifneq (,$(BIGOBJ_KEY))
 TEST_BIGOBJ = test_opencl_node.$(TEST_EXT)      \
     test_atomic.$(TEST_EXT)                     \
+    test_concurrent_hash_map.$(TEST_EXT)        \
+    test_concurrent_set.$(TEST_EXT)             \
+    test_concurrent_map.$(TEST_EXT)             \
     test_concurrent_unordered_set.$(TEST_EXT)   \
     test_concurrent_unordered_map.$(TEST_EXT)   \
     test_join_node_key_matching.$(TEST_EXT)     \
@@ -130,6 +133,8 @@ TEST_TBB_PLAIN.EXE = test_assembly.$(TEST_EXT)   \
 	test_concurrent_unordered_set.$(TEST_EXT)    \
 	test_concurrent_unordered_map.$(TEST_EXT)    \
 	test_concurrent_hash_map.$(TEST_EXT)         \
+	test_concurrent_set.$(TEST_EXT)              \
+	test_concurrent_map.$(TEST_EXT)              \
 	test_enumerable_thread_specific.$(TEST_EXT)  \
 	test_handle_perror.$(TEST_EXT)               \
 	test_halt.$(TEST_EXT)                        \
@@ -211,6 +216,7 @@ TEST_TBB_PLAIN.EXE = test_assembly.$(TEST_EXT)   \
 	test_composite_node.$(TEST_EXT)              \
 	test_async_node.$(TEST_EXT)                  \
 	test_async_msg.$(TEST_EXT)                   \
+	test_resumable_tasks.$(TEST_EXT)             \
 	test_tbb_version.$(TEST_EXT)                 # insert new files right above
 
 # These tests depend on other technologies

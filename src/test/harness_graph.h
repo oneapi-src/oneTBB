@@ -292,7 +292,7 @@ struct harness_counting_receiver : public tbb::flow::receiver<T>, NoAssign {
        num_copies = c;
     }
 
-    tbb::flow::graph& graph_reference() __TBB_override {
+    tbb::flow::graph& graph_reference() const __TBB_override {
         return my_graph;
     }
 
@@ -362,7 +362,7 @@ struct harness_mapped_receiver : public tbb::flow::receiver<T>, NoCopy {
       return const_cast<tbb::task *>(SUCCESSFULLY_ENQUEUED);
     }
 
-    tbb::flow::graph& graph_reference() __TBB_override {
+    tbb::flow::graph& graph_reference() const __TBB_override {
         return my_graph;
     }
 

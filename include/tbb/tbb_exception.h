@@ -17,6 +17,9 @@
 #ifndef __TBB_exception_H
 #define __TBB_exception_H
 
+#define __TBB_tbb_exception_H_include_area
+#include "internal/_warning_suppress_enable_notice.h"
+
 #include "tbb_stddef.h"
 #include <exception>
 #include <new>    // required for bad_alloc definition, operators new
@@ -34,7 +37,7 @@ public:
 };
 
 //! Exception for PPL locks
-class improper_lock : public std::exception {
+class __TBB_DEPRECATED improper_lock : public std::exception {
 public:
     const char* what() const throw() __TBB_override;
 };
@@ -131,7 +134,7 @@ namespace tbb {
 
     TBB provides two implementations of this interface: tbb::captured_exception and
     template class tbb::movable_exception. See their declarations for more info. **/
-class tbb_exception : public std::exception
+class __TBB_DEPRECATED tbb_exception : public std::exception
 {
     /** No operator new is provided because the TBB usage model assumes dynamic
         creation of the TBB exception objects only by means of applying move()
@@ -185,7 +188,7 @@ public:
     algorithm ) if an unhandled exception was intercepted during the algorithm execution in one
     of the workers.
     \sa tbb::tbb_exception **/
-class captured_exception : public tbb_exception
+class __TBB_DEPRECATED captured_exception : public tbb_exception
 {
 public:
     captured_exception( const captured_exception& src )
@@ -241,7 +244,7 @@ private:
     and delivered to the root thread ().
     \sa tbb::tbb_exception **/
 template<typename ExceptionData>
-class movable_exception : public tbb_exception
+class __TBB_DEPRECATED movable_exception : public tbb_exception
 {
     typedef movable_exception<ExceptionData> self_type;
 
@@ -352,5 +355,8 @@ private:
 } // namespace tbb
 
 #endif /* __TBB_TASK_GROUP_CONTEXT */
+
+#include "internal/_warning_suppress_disable_notice.h"
+#undef __TBB_tbb_exception_H_include_area
 
 #endif /* __TBB_exception_H */

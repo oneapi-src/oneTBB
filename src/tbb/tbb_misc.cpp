@@ -33,6 +33,10 @@
 #include "tbb/machine/windows_api.h"
 #endif
 
+#if !_WIN32
+#include <unistd.h> // sysconf(_SC_PAGESIZE)
+#endif
+
 #define __TBB_STD_RETHROW_EXCEPTION_POSSIBLY_BROKEN                             \
     (__GLIBCXX__ && __TBB_GLIBCXX_VERSION>=40700 && __TBB_GLIBCXX_VERSION<60000 \
      && TBB_USE_EXCEPTIONS && !TBB_USE_CAPTURED_EXCEPTION)
@@ -63,6 +67,15 @@ namespace internal {
     #define DO_THROW(exc, init_args) PRINT_ERROR_AND_ABORT(#exc, #init_args)
 #endif /* !TBB_USE_EXCEPTIONS */
 
+size_t DefaultSystemPageSize() {
+#if _WIN32
+    SYSTEM_INFO si;
+    GetSystemInfo(&si);
+    return si.dwPageSize;
+#else
+    return sysconf(_SC_PAGESIZE);
+#endif
+}
 
 /* The "what" should be fairly short, not more than about 128 characters.
    Because we control all the call sites to handle_perror, it is pointless

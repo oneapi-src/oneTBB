@@ -19,8 +19,6 @@
 #include "tbb/atomic.h"
 #include "harness_assert.h"
 
-using namespace std;
-
 static tbb::atomic<long> ForkCount;
 static tbb::atomic<long> FooBodyCount;
 
@@ -95,7 +93,6 @@ public:
     }
 };
 
-#include <cstdio>
 #include "harness.h"
 #include "tbb/tick_count.h"
 

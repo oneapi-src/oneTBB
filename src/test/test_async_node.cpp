@@ -688,6 +688,129 @@ int run_test_equeueing_on_inner_level() {
     return Harness::Done;
 }
 
+#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+#include <array>
+#include <thread>
+
+template<typename NodeType>
+class AsyncActivity {
+public:
+    using gateway_t = typename NodeType::gateway_type;
+
+    struct work_type {
+        int input;
+        gateway_t* gateway;
+    };
+
+    AsyncActivity(size_t limit) : thr([this]() {
+        while(!end_of_work()) {
+            work_type w;
+            while( my_q.try_pop(w) ) {
+                int res = do_work(w.input);
+                w.gateway->try_put(res);
+                w.gateway->release_wait();
+                ++c;
+            }
+        }
+    }), stop_limit(limit), c(0) {}
+
+    void submit(int i, gateway_t* gateway) {
+        work_type w = {i, gateway};
+        gateway->reserve_wait();
+        my_q.push(w);
+    }
+
+    void wait_for_all() { thr.join(); }
+
+private:
+    bool end_of_work() { return c >= stop_limit; }
+
+    int do_work(int& i) { return i + i; }
+
+    tbb::concurrent_queue<work_type> my_q;
+    tbb::tbb_thread thr;
+    size_t stop_limit;
+    size_t c;
+};
+
+void test_follows() {
+    using namespace tbb::flow;
+
+    using input_t = int;
+    using output_t = int;
+    using node_t = async_node<input_t, output_t>;
+
+    graph g;
+
+    AsyncActivity<node_t> async_activity(3);
+
+    std::array<broadcast_node<input_t>, 3> preds = {
+        broadcast_node<input_t>(g),
+        broadcast_node<input_t>(g),
+        broadcast_node<input_t>(g)
+    };
+
+    node_t node(follows(preds[0], preds[1], preds[2]), unlimited, [&](int input, node_t::gateway_type& gtw) {
+        async_activity.submit(input, &gtw);
+    });
+
+    buffer_node<output_t> buf(g);
+    make_edge(node, buf);
+
+    for(auto& pred: preds) {
+        pred.try_put(1);
+    }
+
+    g.wait_for_all();
+    async_activity.wait_for_all();
+
+    output_t storage;
+    ASSERT((buf.try_get(storage) && buf.try_get(storage) && buf.try_get(storage) && !buf.try_get(storage)),
+            "Not exact edge quantity was made");
+}
+
+void test_precedes() {
+    using namespace tbb::flow;
+
+    using input_t = int;
+    using output_t = int;
+    using node_t = async_node<input_t, output_t>;
+
+    graph g;
+
+    AsyncActivity<node_t> async_activity(1);
+
+    std::array<buffer_node<input_t>, 2> successors = {
+        buffer_node<input_t>(g),
+        buffer_node<input_t>(g)
+    };
+
+    broadcast_node<input_t> start(g);
+
+    node_t node(precedes(successors[0], successors[1]), unlimited, [&](int input, node_t::gateway_type& gtw) {
+        async_activity.submit(input, &gtw);
+    });
+
+    make_edge(start, node);
+
+    start.try_put(1);
+
+    g.wait_for_all();
+    async_activity.wait_for_all();
+
+    for(auto& successor : successors) {
+        output_t storage;
+        ASSERT(successor.try_get(storage) && !successor.try_get(storage),
+               "Not exact edge quantity was made");
+    }
+}
+
+void test_follows_and_precedes_api() {
+    test_follows();
+    test_precedes();
+}
+#endif // __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+
 int TestMain() {
     tbb::task_scheduler_init init(4);
     run_tests<int, int>();
@@ -700,6 +823,9 @@ int TestMain() {
     test_copy_ctor();
     test_for_spin_avoidance();
     run_test_equeueing_on_inner_level();
+#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+    test_follows_and_precedes_api();
+#endif
     return Harness::Done;
 }
 

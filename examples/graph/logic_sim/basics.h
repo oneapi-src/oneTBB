@@ -19,8 +19,6 @@
 
 #include <cstdio>
 #include <string>
-#include "tbb/atomic.h"
-#include "tbb/task_scheduler_init.h"
 #include "tbb/tick_count.h"
 #include "tbb/flow_graph.h"
 #include "../../common/utility/utility.h"
@@ -167,7 +165,7 @@ class steady_signal {
     ~steady_signal() {}
     // Assignment is ignored
     steady_signal& operator=(const steady_signal& src) { return *this; }
-    sender<signal_t>& get_out() { return signal_node; }
+    write_once_node<signal_t>& get_out() { return signal_node; }
     void activate() { signal_node.try_put(init_signal); }
 };
 
@@ -208,7 +206,7 @@ public:
         ms = src.ms; init_ms = src.init_ms; reps = src.reps; init_reps = src.init_reps;
         return *this; 
     }
-    sender<signal_t>& get_out() { return clock_node; }
+    source_node<signal_t>& get_out() { return clock_node; }
     void activate() { clock_node.activate(); }
     void reset() { reps = init_reps; }
 };
@@ -227,7 +225,7 @@ class push_button {
     ~push_button() {}
     // Assignment is ignored
     push_button& operator=(const push_button& src) { return *this; }
-    sender<signal_t>& get_out() { return push_button_node; }
+    overwrite_node<signal_t>& get_out() { return push_button_node; }
     void press() { push_button_node.try_put(high); }
     void release() { push_button_node.try_put(low); }
 };
@@ -243,7 +241,7 @@ class toggle {
     ~toggle() {}
     // Assignment ignored
     toggle& operator=(const toggle& src) { return *this; }
-    sender<signal_t>& get_out() { return toggle_node; }
+    overwrite_node<signal_t>& get_out() { return toggle_node; }
     void flip() { 
         if (state==high) state = low; 
         else state = high;
@@ -494,7 +492,7 @@ class led {
         label = src.label; state = undefined; report_changes = src.report_changes; 
         return *this;
     }
-    receiver<signal_t>& get_in() { return led_node; }
+    function_node<signal_t, continue_msg>& get_in() { return led_node; }
     void display() { 
         if (state == high) printf("%s: (*)\n", label.c_str());
         else if (state == low) printf("%s: ( )\n", label.c_str());

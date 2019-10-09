@@ -484,11 +484,6 @@ class BarIterator
     Bar* bar_ptr;
     BarIterator(Bar* bp_) : bar_ptr(bp_) {}
 public:
-    ~BarIterator() {}
-    BarIterator& operator=( const BarIterator& other ) {
-        bar_ptr = other.bar_ptr;
-        return *this;
-    }
     Bar& operator*() const {
         return *bar_ptr;
     }

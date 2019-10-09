@@ -304,7 +304,6 @@ class tag_func {
     TT my_mult;
 public:
     tag_func(TT multiplier) : my_mult(multiplier) { }
-    void operator=( const tag_func& other){my_mult = other.my_mult;}
     // operator() will return [0 .. Count)
     tbb::flow::tag_value operator()( TT v) {
         tbb::flow::tag_value t = tbb::flow::tag_value(v / my_mult);

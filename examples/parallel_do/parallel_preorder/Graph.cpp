@@ -20,6 +20,17 @@
 
 using namespace std;
 
+Cell::Cell(const Cell& other)
+    : op( other.op )
+    , value( other.value )
+    , successor( other.successor )
+{
+    ref_count = other.ref_count.load();
+
+    input[0] = other.input[0];
+    input[1] = other.input[1];
+}
+
 void Graph::create_random_dag( size_t number_of_nodes ) {
     my_vertex_set.resize(number_of_nodes);
     for( size_t k=0; k<number_of_nodes; ++k ) {
@@ -37,10 +48,10 @@ void Graph::create_random_dag( size_t number_of_nodes ) {
             case 2:
                 c.op = OP_SUB;
                 break;
-            case 3: 
+            case 3:
                 c.op = OP_ADD;
                 break;
-            case 4: 
+            case 4:
                 c.op = OP_MUL;
                 break;
         }

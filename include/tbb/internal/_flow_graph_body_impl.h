@@ -84,8 +84,8 @@ namespace graph_policy_namespace {
     typedef key_matching<tag_value> tag_matching;
 
     // Aliases for Policy combinations
-    typedef interface10::internal::Policy<queueing, lightweight> queueing_lightweight;
-    typedef interface10::internal::Policy<rejecting, lightweight>  rejecting_lightweight;
+    typedef interface11::internal::Policy<queueing, lightweight> queueing_lightweight;
+    typedef interface11::internal::Policy<rejecting, lightweight>  rejecting_lightweight;
 
 } // namespace graph_policy_namespace
 
@@ -358,7 +358,7 @@ protected:
         return result;
     }
 
-    graph& graph_reference() __TBB_override {
+    graph& graph_reference() const __TBB_override {
         return my_node->my_graph;
     }
 
@@ -423,7 +423,7 @@ class decrementer<T, continue_msg, void> : public continue_receiver, tbb::intern
 
 protected:
 
-    graph& graph_reference() __TBB_override {
+    graph& graph_reference() const __TBB_override {
         return my_node->my_graph;
     }
 

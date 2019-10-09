@@ -74,3 +74,6 @@ TBB_STRING_RESOURCE(FLOW_TASKS, "tbb_flow_graph")
 TBB_STRING_RESOURCE(PARALLEL_FOR_TASK, "tbb_parallel_for_task")
 // TODO: Drop following string prefix "fgt_" here and in FGA's collector
 TBB_STRING_RESOURCE(USER_EVENT, "fgt_user_event")
+#if __TBB_CPF_BUILD || (TBB_PREVIEW_FLOW_GRAPH_TRACE && TBB_USE_THREADING_TOOLS)
+TBB_STRING_RESOURCE(CODE_ADDRESS, "code_address")
+#endif

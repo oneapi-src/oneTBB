@@ -25,12 +25,12 @@
 #include <string>
 #include <memory>
 #include <queue>
+#include <thread>
 
 #include "bzlib.h"
 
 #include "tbb/flow_graph.h"
 #include "tbb/tick_count.h"
-#include "tbb/compat/thread"
 #include "tbb/concurrent_queue.h"
 
 // TODO: change memory allocation/deallocation to be managed in constructor/destructor

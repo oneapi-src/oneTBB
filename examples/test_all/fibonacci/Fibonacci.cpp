@@ -32,8 +32,10 @@
 #include <cstdlib>
 #include <cassert>
 #include <utility>
+#include <thread>
+#include <atomic>
+#include <mutex>
 #include "tbb/task.h"
-#include "tbb/task_scheduler_init.h"
 #include "tbb/tick_count.h"
 #include "tbb/blocked_range.h"
 #include "tbb/concurrent_vector.h"
@@ -44,11 +46,9 @@
 #include "tbb/parallel_reduce.h"
 #include "tbb/parallel_scan.h"
 #include "tbb/pipeline.h"
-#include "tbb/atomic.h"
-#include "tbb/mutex.h"
 #include "tbb/spin_mutex.h"
 #include "tbb/queuing_mutex.h"
-#include "tbb/tbb_thread.h"
+#include "tbb/global_control.h"
 
 using namespace std;
 using namespace tbb;
@@ -117,9 +117,9 @@ value SerialQueueFib(int n)
         Q.push(Matrix1110);
     Matrix2x2 A, B;
     while(true) {
-        while( !Q.try_pop(A) ) this_tbb_thread::yield();
+        while( !Q.try_pop(A) ) std::this_thread::yield();
         if(Q.empty()) break;
-        while( !Q.try_pop(B) ) this_tbb_thread::yield();
+        while( !Q.try_pop(B) ) std::this_thread::yield();
         Q.push(A * B);
     }
     return A.v[0][0];
@@ -162,6 +162,19 @@ public:
         }
     }
 };
+
+#if __TBB_CPP11_PRESENT
+template<>
+void SharedSerialFibBody<std::mutex>::operator()( const blocked_range<int>& range ) const {
+    for(;;) {
+        std::lock_guard<std::mutex> lock(mutex);
+        if(SharedI >= SharedN) break;
+        value sum = SharedA + SharedB;
+        SharedA = SharedB; SharedB = sum;
+        ++SharedI;
+    }
+}
+#endif
 
 //! Root function
 template<class M>
@@ -323,60 +336,66 @@ value ParallelQueueFib(int n)
     return M.v[0][0]; // and result number
 }
 
-// *** Queue with pipeline *** //
+// *** Queue with parallel_pipeline *** //
 
-//! filter to fills queue
-class InputFilter: public filter {
-    tbb::atomic<int> N; //< index of Fibonacci number minus 1
-public:
-    concurrent_queue<Matrix2x2> Queue;
-    //! fill filter arguments
-    InputFilter( int n ) : filter(false /*is not serial*/) { N = n; }
-    //! executing filter
-    void* operator()(void*) /*override*/ {
+typedef concurrent_queue<Matrix2x2> queue_t;
+namespace parallel_pipeline_ns {
+    std::atomic<int> N; //< index of Fibonacci number minus 1
+    queue_t Queue;
+}
+
+//! functor to fills queue
+struct InputFunc {
+    InputFunc( ) { }
+    queue_t* operator()(tbb::flow_control& fc) const {
+        using namespace parallel_pipeline_ns;
+
         int n = --N;
-        if(n <= 0) return 0;
+        if(n <= 0) {
+            fc.stop();
+            return NULL;
+        }
         Queue.push( Matrix1110 );
         return &Queue;
     }
 };
-//! filter to process queue
-class MultiplyFilter: public filter {
-public:
-    MultiplyFilter( ) : filter(false /*is not serial*/) { }
-    //! executing filter
-    void* operator()(void*p) /*override*/ {
-        concurrent_queue<Matrix2x2> &Queue = *static_cast<concurrent_queue<Matrix2x2> *>(p);
+//! functor to process queue
+struct MultiplyFunc {
+    MultiplyFunc( ) { }
+    void operator()(queue_t* queue) const {
+        //concurrent_queue<Matrix2x2> &Queue = *static_cast<concurrent_queue<Matrix2x2> *>(p);
         Matrix2x2 m1, m2;
         // get two elements
-        while( !Queue.try_pop( m1 ) ) this_tbb_thread::yield();
-        while( !Queue.try_pop( m2 ) ) this_tbb_thread::yield();
+        while( !queue->try_pop( m1 ) ) std::this_thread::yield();
+        while( !queue->try_pop( m2 ) ) std::this_thread::yield();
         m1 = m1 * m2; // process them
-        Queue.push( m1 ); // and push back
-        return this; // just nothing
+        queue->push( m1 ); // and push back
     }
 };
 //! Root function
 value ParallelPipeFib(int n)
 {
-    InputFilter input( n-1 );
-    MultiplyFilter process;
-    // Create the pipeline
-    pipeline pipeline;
-    // add filters
-    pipeline.add_filter( input ); // first
-    pipeline.add_filter( process ); // second
+    using namespace parallel_pipeline_ns;
 
-    input.Queue.push( Matrix1110 );
-    // Run the pipeline
-    pipeline.run( n ); // must be larger then max threads number
-    pipeline.clear(); // do not forget clear the pipeline
+    N = n-1;
+    Queue.push( Matrix1110 );
 
-    assert( input.Queue.unsafe_size()==1 );
+    tbb::parallel_pipeline(
+        n,
+        tbb::make_filter<void,queue_t*>(
+            tbb::filter::parallel, InputFunc() )
+    &
+        tbb::make_filter<queue_t*,void>(
+            tbb::filter::parallel, MultiplyFunc() )
+    );
+
+    assert( Queue.unsafe_size()==1 );
     Matrix2x2 M;
-    bool result = input.Queue.try_pop( M ); // get last element
+    bool result = Queue.try_pop( M ); // get last element
     assert( result );
-    return M.v[0][0]; // get value
+    value res = M.v[0][0]; // get value
+    Queue.clear();
+    return res;
 }
 
 // *** parallel_reduce *** //
@@ -564,7 +583,7 @@ int main(int argc, char* argv[])
     for( unsigned long i=0; i<ntrial; ++i ) {
         for(int threads = NThread.low; threads <= NThread.high; threads *= 2)
         {
-            task_scheduler_init scheduler_init(threads);
+            tbb::global_control c(tbb::global_control::max_allowed_parallelism, threads);
             if(Verbose) printf("\nThreads number is %d\n", threads);
 
             sum = Measure("Shared serial (mutex)\t", SharedSerialFib<mutex>, NumbersCount); assert(result == sum);

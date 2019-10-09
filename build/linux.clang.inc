@@ -30,16 +30,20 @@ EXPORT_KEY = -Wl,--version-script,
 LIBDL = -ldl
 
 LIB_LINK_FLAGS = $(DYLIB_KEY) -Wl,-soname=$(BUILDING_LIBRARY)
-LIBS += -lpthread -lrt
+LIBS += -lrt
 LINK_FLAGS = -Wl,-rpath-link=. -rdynamic
 C_FLAGS = $(CPLUS_FLAGS)
 
 ifeq ($(cfg), release)
-        CPLUS_FLAGS = $(ITT_NOTIFY) -g -O2 -DUSE_PTHREAD
+        # -g is set intentionally in the release mode. It should not affect performance.
+        CPLUS_FLAGS = -O2 -g
 endif
 ifeq ($(cfg), debug)
-        CPLUS_FLAGS = -DTBB_USE_DEBUG $(ITT_NOTIFY) -g -O0 -DUSE_PTHREAD
+        CPLUS_FLAGS = -DTBB_USE_DEBUG -O0 -g
 endif
+
+CPLUS_FLAGS += $(ITT_NOTIFY) -DUSE_PTHREAD -pthread
+LIB_LINK_FLAGS += -pthread
 
 ifneq (,$(stdlib))
     CPLUS_FLAGS    += -stdlib=$(stdlib)

@@ -58,23 +58,23 @@ static const size_t hash_multiplier = tbb::internal::select_size_t_constant<2654
 
 //! Hasher functions
 template<typename T>
-inline size_t tbb_hasher( const T& t ) {
+__TBB_DEPRECATED_MSG("tbb::tbb_hasher is deprecated, use std::hash") inline size_t tbb_hasher( const T& t ) {
     return static_cast<size_t>( t ) * internal::hash_multiplier;
 }
 template<typename P>
-inline size_t tbb_hasher( P* ptr ) {
+__TBB_DEPRECATED_MSG("tbb::tbb_hasher is deprecated, use std::hash") inline size_t tbb_hasher( P* ptr ) {
     size_t const h = reinterpret_cast<size_t>( ptr );
     return (h >> 3) ^ h;
 }
 template<typename E, typename S, typename A>
-inline size_t tbb_hasher( const std::basic_string<E,S,A>& s ) {
+__TBB_DEPRECATED_MSG("tbb::tbb_hasher is deprecated, use std::hash") inline size_t tbb_hasher( const std::basic_string<E,S,A>& s ) {
     size_t h = 0;
     for( const E* c = s.c_str(); *c; ++c )
         h = static_cast<size_t>(*c) ^ (h * internal::hash_multiplier);
     return h;
 }
 template<typename F, typename S>
-inline size_t tbb_hasher( const std::pair<F,S>& p ) {
+__TBB_DEPRECATED_MSG("tbb::tbb_hasher is deprecated, use std::hash") inline size_t tbb_hasher( const std::pair<F,S>& p ) {
     return tbb_hasher(p.first) ^ tbb_hasher(p.second);
 }
 
@@ -83,7 +83,7 @@ using interface5::tbb_hasher;
 
 // Template class for hash compare
 template<typename Key>
-class tbb_hash
+class __TBB_DEPRECATED_MSG("tbb::tbb_hash is deprecated, use std::hash") tbb_hash
 {
 public:
     tbb_hash() {}

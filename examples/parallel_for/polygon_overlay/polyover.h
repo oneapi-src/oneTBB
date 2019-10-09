@@ -18,7 +18,6 @@
  * polyover.h : extern declarations for polyover.cpp
 */
 #include "rpolygon.h"
-#include "tbb/mutex.h"
 #include "tbb/spin_mutex.h"
 
 extern void OverlayOnePolygonWithMap(Polygon_map_t *resultMap, RPolygon *myPoly, Polygon_map_t  *map2, tbb::spin_mutex *rMutex);

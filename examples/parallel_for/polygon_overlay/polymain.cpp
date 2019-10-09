@@ -27,7 +27,6 @@
 #include <cstring>
 
 #include "tbb/tick_count.h"
-#include "tbb/task_scheduler_init.h"
 #include "pover_global.h"
 #include "polyover.h"
 #include "pover_video.h"
@@ -39,7 +38,7 @@ using namespace std;
 const char *faceNames[] = { "North", "East", "South", "West" };
 #endif
 
-/** 
+/**
 **/
 int main( int argc, char **argv) {
     pover_video poly;
@@ -107,7 +106,7 @@ void Usage(int argc, char **argv) {
     if(cmdTail == NULL)  {
         cmdTail = *argv;
     }
-    else { 
+    else {
         cmdTail++;
     }
     cout << cmdTail << " [threads[:threads2]] [--polys npolys] [--size nnnxnnn] [--seed nnn]" << std::endl;
@@ -363,7 +362,7 @@ bool GenerateMap(Polygon_map_t **newMap, int xSize, int ySize, int gNPolygons, c
         (**newMap)[polyIndx].get(&xlow,&ylow,&xhigh,&yhigh);
         xlnew = xlow;
         xhnew = xhigh;
-        ylnew = ylow; 
+        ylnew = ylow;
         yhnew = yhigh;
         // can this polygon be expanded along the chosen side?
         switch(checkSide) {

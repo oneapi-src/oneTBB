@@ -59,7 +59,11 @@ def_prefix = $(if $(findstring intel64,$(arch)),win64,win32)
 # Target Windows version. Do not increase beyond 0x0502 without prior discussion!
 # Used as the value for macro definition option in windows.cl.inc etc.
 # For tests, we need at least Windows XP SP2 for sake of enabling stack backtraces.
+ifeq (1,$(tbb_cpf))
+_WIN32_WINNT=0x0600
+else
 _WIN32_WINNT=0x0502
+endif
 
 TBB.LST = $(tbb_root)/src/tbb/$(def_prefix)-tbb-export.lst
 TBB.DEF = $(TBB.LST:.lst=.def)
@@ -68,7 +72,7 @@ TBB.LIB = tbb$(CPF_SUFFIX)$(DEBUG_SUFFIX).$(LIBEXT)
 TBB.RES = tbb_resource.res
 # On Windows, we use #pragma comment to set the proper TBB lib to link with.
 # But for cross-configuration testing, need to link explicitly.
-# Tests use this variable to detect dependency on TBB binary, so have to be non-empty. 
+# Tests use this variable to detect dependency on TBB binary, so have to be non-empty.
 LINK_TBB.LIB = $(if $(crosstest),$(TBB.LIB),$(DEFINE_KEY)__TBB_IMPLICITLY_LINKED)
 TBB.MANIFEST =
 ifneq ($(filter vc8 vc9,$(runtime)),)

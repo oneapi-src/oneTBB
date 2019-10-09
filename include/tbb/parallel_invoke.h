@@ -17,6 +17,9 @@
 #ifndef __TBB_parallel_invoke_H
 #define __TBB_parallel_invoke_H
 
+#define __TBB_parallel_invoke_H_include_area
+#include "internal/_warning_suppress_enable_notice.h"
+
 #include "task.h"
 #include "tbb_profiling.h"
 
@@ -450,5 +453,8 @@ void parallel_invoke(const F0& f0, const F1& f1, const F2& f2, const F3& f3, con
 //@}
 
 } // namespace
+
+#include "internal/_warning_suppress_disable_notice.h"
+#undef __TBB_parallel_invoke_H_include_area
 
 #endif /* __TBB_parallel_invoke_H */

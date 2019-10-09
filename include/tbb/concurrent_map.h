@@ -17,6 +17,9 @@
 #ifndef __TBB_concurrent_map_H
 #define __TBB_concurrent_map_H
 
+#define __TBB_concurrent_map_H_include_area
+#include "internal/_warning_suppress_enable_notice.h"
+
 #if !TBB_PREVIEW_CONCURRENT_ORDERED_CONTAINERS
 #error Set TBB_PREVIEW_CONCURRENT_ORDERED_CONTAINERS to include concurrent_map.h
 #endif
@@ -378,6 +381,9 @@ using interface10::concurrent_map;
 using interface10::concurrent_multimap;
 
 } // namespace tbb
+
+#include "internal/_warning_suppress_disable_notice.h"
+#undef __TBB_concurrent_map_H_include_area
 
 #endif // __TBB_CONCURRENT_ORDERED_CONTAINERS_PRESENT
 #endif // __TBB_concurrent_map_H

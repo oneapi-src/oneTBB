@@ -133,7 +133,7 @@ namespace internal {
             return my_try_put_task(v, my_indexer_ptr);
         }
 
-        graph& graph_reference() __TBB_override {
+        graph& graph_reference() const __TBB_override {
             return *my_graph;
         }
 
