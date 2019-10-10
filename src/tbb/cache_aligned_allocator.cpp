@@ -19,6 +19,7 @@
 #include "tbb/tbb_allocator.h"
 #include "tbb/tbb_exception.h"
 #include "tbb_misc.h"
+#include "tbb_environment.h"
 #include "dynamic_link.h"
 #include <cstdlib>
 
@@ -27,6 +28,14 @@
 #else
 #include <dlfcn.h>
 #endif /* _WIN32||_WIN64 */
+
+#if (!_WIN32 && !_WIN64) || defined(__CYGWIN__)
+#include <stdlib.h> // posix_memalign
+#define __TBB_USE_POSIX_MEMALIGN
+#elif defined(_MSC_VER) || defined(__MINGW32__)
+#include <malloc.h> // _aligned_malloc, _aligned_free
+#define __TBB_USE_MSVC_ALIGNED_MALLOC
+#endif
 
 #if __TBB_WEAK_SYMBOLS_PRESENT
 
@@ -66,11 +75,15 @@ static void* dummy_padded_allocate( size_t bytes, size_t alignment );
 //! Dummy routine used for first indirect call via padded_free_handler.
 static void dummy_padded_free( void * ptr );
 
+#if !defined(__TBB_USE_MSVC_ALIGNED_MALLOC)
 // ! Allocates memory using standard malloc. It is used when scalable_allocator is not available
 static void* padded_allocate( size_t bytes, size_t alignment );
+#endif
 
+#if !defined(__TBB_USE_POSIX_MEMALIGN) && !defined(__TBB_USE_MSVC_ALIGNED_MALLOC)
 // ! Allocates memory using standard free. It is used when scalable_allocator is not available
 static void padded_free( void* p );
+#endif
 
 //! Handler for padded memory allocation
 static void* (*padded_allocate_handler)( size_t bytes, size_t alignment ) = &dummy_padded_allocate;
@@ -112,7 +125,9 @@ static const dynamic_link_descriptor MallocLinkTable[] = {
     If that allocator is not found, it links to malloc and free. */
 void initialize_handler_pointers() {
     __TBB_ASSERT( MallocHandler==&DummyMalloc, NULL );
-    bool success = dynamic_link( MALLOCLIB_NAME, MallocLinkTable, 4 );
+    bool success = false;
+    if (!tbb::internal::GetBoolEnvironmentVariable("TBB_USE_MALLOC"))
+        success = dynamic_link( MALLOCLIB_NAME, MallocLinkTable, 4 );
     if( !success ) {
         // If unsuccessful, set the handlers to the default routines.
         // This must be done now, and not before FillDynamicLinks runs, because if other
@@ -120,8 +135,16 @@ void initialize_handler_pointers() {
         // which forces them to wait.
         FreeHandler = &std::free;
         MallocHandler = &std::malloc;
+#if defined(__TBB_USE_POSIX_MEMALIGN)
+        padded_allocate_handler = &padded_allocate;
+        padded_free_handler = &std::free;
+#elif defined(__TBB_USE_MSVC_ALIGNED_MALLOC)
+        padded_allocate_handler = &::_aligned_malloc;
+        padded_free_handler = &::_aligned_free;
+#else
         padded_allocate_handler = &padded_allocate;
         padded_free_handler = &padded_free;
+#endif
     }
 #if !__TBB_RML_STATIC
     PrintExtraVersionInfo( "ALLOCATOR", success?"scalable_malloc":"malloc" );
@@ -199,7 +222,15 @@ void NFS_Free( void* p ) {
     (*padded_free_handler)( p );
 }
 
+#if !defined(__TBB_USE_MSVC_ALIGNED_MALLOC)
 static void* padded_allocate( size_t bytes, size_t alignment ) {
+#if defined(__TBB_USE_POSIX_MEMALIGN)
+    void* p = NULL;
+    int res = posix_memalign(&p, alignment, bytes);
+    if (res != 0)
+        p = NULL;
+    return p;
+#else
     unsigned char* result = NULL;
     unsigned char* base = (unsigned char*)std::malloc(alignment+bytes);
     if( base ) {
@@ -209,8 +240,11 @@ static void* padded_allocate( size_t bytes, size_t alignment ) {
         ((uintptr_t*)result)[-1] = uintptr_t(base);
     }
     return result;
+#endif
 }
+#endif // !defined(__TBB_USE_MSVC_ALIGNED_MALLOC)
 
+#if !defined(__TBB_USE_POSIX_MEMALIGN) && !defined(__TBB_USE_MSVC_ALIGNED_MALLOC)
 static void padded_free( void* p ) {
     if( p ) {
         __TBB_ASSERT( (uintptr_t)p>=0x4096, "attempt to free block not obtained from cache_aligned_allocator" );
@@ -220,6 +254,7 @@ static void padded_free( void* p ) {
         std::free(base);
     }
 }
+#endif // !defined(__TBB_USE_POSIX_MEMALIGN) && !defined(__TBB_USE_MSVC_ALIGNED_MALLOC)
 
 void* __TBB_EXPORTED_FUNC allocate_via_handler_v3( size_t n ) {
     void* result = (*MallocHandler) (n);
