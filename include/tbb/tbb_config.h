@@ -206,7 +206,7 @@
     #define __TBB_CPP14_VARIABLE_TEMPLATES_PRESENT          (__cplusplus >= 201402L)
     #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT            (__INTEL_COMPILER > 1910) // a future version
     #define __TBB_CPP17_INVOKE_RESULT_PRESENT               (__cplusplus >= 201703L)
-#elif __clang__
+#elif __clang__ && !_MSC_VER
 /** TODO: these options need to be rechecked **/
     #define __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT          __has_feature(__cxx_variadic_templates__)
     #define __TBB_CPP11_RVALUE_REF_PRESENT                  (__has_feature(__cxx_rvalue_references__) && (_LIBCPP_VERSION || __TBB_GLIBCXX_VERSION >= 40500))
