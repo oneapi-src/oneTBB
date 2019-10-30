@@ -91,8 +91,8 @@ endif
 
 ifdef SDKROOT
     CPLUS_FLAGS += -isysroot $(SDKROOT)
-    LINK_FLAGS += -L$(SDKROOT)/usr/lib/system -L$(SDKROOT)/usr/lib/
-    LIB_LINK_FLAGS += -L$(SDKROOT)/usr/lib/system -L$(SDKROOT)/usr/lib/
+    LINK_FLAGS += -L$(SDKROOT)/usr/include -L$(SDKROOT)/usr/lib/
+    LIB_LINK_FLAGS += -L$(SDKROOT)/usr/include -L$(SDKROOT)/usr/lib/
 endif
 
 ifeq (ios,$(target))
