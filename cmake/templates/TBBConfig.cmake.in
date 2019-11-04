@@ -53,8 +53,6 @@ foreach (_tbb_component ${TBB_FIND_COMPONENTS})
     if (EXISTS "${_tbb_release_lib}" OR EXISTS "${_tbb_debug_lib}")
         if (NOT TARGET TBB::${_tbb_component})
             add_library(TBB::${_tbb_component} SHARED IMPORTED)
-            set_target_properties(TBB::${_tbb_component} PROPERTIES
-                                  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/@TBB_INC_REL_PATH@")
 
             if (EXISTS "${_tbb_release_lib}")
                 set_target_properties(TBB::${_tbb_component} PROPERTIES
