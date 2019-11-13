@@ -107,7 +107,7 @@
 #define __TBB_DEFINE_MIC 1
 #endif
 
-#define __TBB_TSX_AVAILABLE  ((__TBB_x86_32 || __TBB_x86_64) && !__TBB_DEFINE_MIC)
+#define __TBB_TSX_AVAILABLE  ((__TBB_x86_32 || __TBB_x86_64) && !__TBB_DEFINE_MIC && !(defined(__clang__) && defined(_WIN32)))
 
 /** Presence of compiler features **/
 
