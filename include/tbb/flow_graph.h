@@ -779,6 +779,8 @@ inline graph::graph(task_group_context& use_this_context) :
     my_context(&use_this_context), my_nodes(NULL), my_nodes_last(NULL), my_task_arena(NULL) {
     prepare_task_arena();
     own_context = false;
+    cancelled = false;
+    caught_exception = false;
     my_root_task = (new (task::allocate_root(*my_context)) empty_task);
     my_root_task->set_ref_count(1);
     tbb::internal::fgt_graph(this);

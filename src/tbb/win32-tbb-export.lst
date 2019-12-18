@@ -77,6 +77,11 @@ __TBB_SYMBOL( ?internal_attach@task_arena_base@internal@interface7@tbb@@IAEXXZ )
 __TBB_SYMBOL( ?internal_enqueue@task_arena_base@internal@interface7@tbb@@IBEXAAVtask@4@H@Z )
 __TBB_SYMBOL( ?internal_execute@task_arena_base@internal@interface7@tbb@@IBEXAAVdelegate_base@234@@Z )
 __TBB_SYMBOL( ?internal_wait@task_arena_base@internal@interface7@tbb@@IBEXXZ )
+#if __TBB_NUMA_SUPPORT
+__TBB_SYMBOL( ?nodes_count@numa_topology@internal@tbb@@YAIXZ )
+__TBB_SYMBOL( ?fill@numa_topology@internal@tbb@@YAXPAH@Z )
+__TBB_SYMBOL( ?default_concurrency@numa_topology@internal@tbb@@YAHH@Z )
+#endif /*__TBB_NUMA_SUPPORT*/
 #if __TBB_TASK_ISOLATION
 __TBB_SYMBOL( ?isolate_within_arena@internal@interface7@tbb@@YAXAAVdelegate_base@123@H@Z )
 #endif /* __TBB_TASK_ISOLATION */

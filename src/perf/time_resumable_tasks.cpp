@@ -310,7 +310,7 @@ int main() {
     // No any work + just resumable tasks feature (true)
     ScalabilityBenchmark<true>(0);
 
-    // Native implmentation
+    // Native implementation
     // Big work size
     BenchNativeImpl(100000);
     // Small work size

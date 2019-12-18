@@ -79,6 +79,13 @@ ifneq ($(filter vc8 vc9,$(runtime)),)
     TBB.MANIFEST = tbbmanifest.exe.manifest
 endif
 
+TBBBIND.DEF = $(tbb_root)/src/tbb/$(def_prefix)-tbbbind-export.def
+TBBBIND.DLL = tbbbind$(DEBUG_SUFFIX).$(DLL)
+TBBBIND.LIB = tbbbind$(DEBUG_SUFFIX).$(LIBEXT)
+TBBBIND.RES = tbbbind.res
+LINK_TBBBIND.LIB = $(TBBBIND.LIB)
+HWLOC.LIB = libhwloc.$(LIBEXT)
+
 MALLOC.DEF = $(MALLOC_ROOT)/$(def_prefix)-tbbmalloc-export.def
 MALLOC.DLL = tbbmalloc$(DEBUG_SUFFIX).$(DLL)
 MALLOC.LIB = tbbmalloc$(DEBUG_SUFFIX).$(LIBEXT)

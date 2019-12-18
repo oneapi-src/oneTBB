@@ -812,7 +812,11 @@ namespace internal {
 void task_arena_base::internal_initialize( ) {
     governor::one_time_init();
     if( my_max_concurrency < 1 )
+#if __TBB_NUMA_SUPPORT
+        my_max_concurrency = tbb::internal::numa_topology::default_concurrency(numa_id());
+#else /*__TBB_NUMA_SUPPORT*/
         my_max_concurrency = (int)governor::default_num_threads();
+#endif /*__TBB_NUMA_SUPPORT*/
     __TBB_ASSERT( my_master_slots <= (unsigned)my_max_concurrency, "Number of slots reserved for master should not exceed arena concurrency");
     arena* new_arena = market::create_arena( my_max_concurrency, my_master_slots, 0 );
     // add an internal market reference; a public reference was added in create_arena
@@ -833,17 +837,32 @@ void task_arena_base::internal_initialize( ) {
         new_arena->on_thread_leaving<arena::ref_external>(); // destroy unneeded arena
 #if __TBB_TASK_GROUP_CONTEXT
         spin_wait_while_eq(my_context, (task_group_context*)NULL);
+#endif /*__TBB_TASK_GROUP_CONTEXT*/
+#if __TBB_TASK_GROUP_CONTEXT || __TBB_NUMA_SUPPORT
     } else {
+#if __TBB_TASK_GROUP_CONTEXT
         new_arena->my_default_ctx->my_version_and_traits |= my_version_and_traits & exact_exception_flag;
         as_atomic(my_context) = new_arena->my_default_ctx;
-#endif
+#endif /*__TBB_TASK_GROUP_CONTEXT*/
+#if __TBB_NUMA_SUPPORT
+        my_arena->my_numa_binding_observer = tbb::internal::construct_binding_observer(
+            static_cast<task_arena*>(this), numa_id(), my_arena->my_num_slots);
+#endif /*__TBB_NUMA_SUPPORT*/
     }
+#endif /*__TBB_TASK_GROUP_CONTEXT || __TBB_NUMA_SUPPORT*/
+
     // TODO: should it trigger automatic initialization of this thread?
     governor::local_scheduler_weak();
 }
 
 void task_arena_base::internal_terminate( ) {
     if( my_arena ) {// task_arena was initialized
+#if __TBB_NUMA_SUPPORT
+        if( my_arena->my_numa_binding_observer != NULL ) {
+            tbb::internal::destroy_binding_observer(my_arena->my_numa_binding_observer);
+            my_arena->my_numa_binding_observer = NULL;
+        }
+#endif /*__TBB_NUMA_SUPPORT*/
         my_arena->my_market->release( /*is_public=*/true, /*blocking_terminate=*/false );
         my_arena->on_thread_leaving<arena::ref_external>();
         my_arena = 0;

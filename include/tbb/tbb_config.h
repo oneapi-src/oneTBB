@@ -214,9 +214,7 @@
 /** TODO: extend exception_ptr related conditions to cover libstdc++ **/
     #define __TBB_EXCEPTION_PTR_PRESENT                     (__cplusplus >= 201103L && (_LIBCPP_VERSION || __TBB_GLIBCXX_VERSION >= 40600))
     #define __TBB_STATIC_ASSERT_PRESENT                     __has_feature(__cxx_static_assert__)
-    /**Clang (preprocessor) has problems with dealing with expression having __has_include in #ifs
-     * used inside C++ code. (At least version that comes with OS X 10.8 : Apple LLVM version 4.2 (clang-425.0.28) (based on LLVM 3.2svn)) **/
-    #if (__GXX_EXPERIMENTAL_CXX0X__ && __has_include(<tuple>))
+    #if (__cplusplus >= 201103L && __has_include(<tuple>))
         #define __TBB_CPP11_TUPLE_PRESENT                   1
     #endif
     #if (__has_feature(__cxx_generalized_initializers__) && __has_include(<initializer_list>))
@@ -577,6 +575,10 @@ There are four cases that are supported:
     #error __TBB_TASK_PRIORITY requires __TBB_TASK_GROUP_CONTEXT to be enabled
 #endif
 
+#if TBB_PREVIEW_NUMA_SUPPORT || __TBB_BUILD
+    #define __TBB_NUMA_SUPPORT 1
+#endif
+
 #if TBB_PREVIEW_WAITING_FOR_WORKERS || __TBB_BUILD
     #define __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE 1
 #endif
@@ -617,10 +619,6 @@ There are four cases that are supported:
 // Intel C++ Compiler starts analyzing usages of the deprecated content at the template
 // instantiation site, which is too late for suppression of the corresponding messages for internal
 // stuff.
-#ifndef TBB_SUPPRESS_DEPRECATED_MESSAGES
-#define TBB_SUPPRESS_DEPRECATED_MESSAGES 1
-#endif
-
 #if !defined(__INTEL_COMPILER) && (!defined(TBB_SUPPRESS_DEPRECATED_MESSAGES) || (TBB_SUPPRESS_DEPRECATED_MESSAGES == 0))
     #if (__cplusplus >= 201402L)
         #define __TBB_DEPRECATED [[deprecated]]

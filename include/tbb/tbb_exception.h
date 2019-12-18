@@ -228,7 +228,7 @@ public:
 
 private:
     //! Used only by method move().
-    captured_exception() {}
+    captured_exception() : my_dynamic(), my_exception_name(), my_exception_info() {}
 
     //! Functionally equivalent to {captured_exception e(name,info); return e.move();}
     static captured_exception* allocate( const char* name, const char* info );

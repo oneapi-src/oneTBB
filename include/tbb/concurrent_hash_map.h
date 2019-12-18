@@ -676,7 +676,9 @@ protected:
         return create_node(allocator, std::piecewise_construct,
                            std::forward_as_tuple(key), std::forward_as_tuple());
 #else
-        T obj; // Use of temporary object in impossible, because create_node takes non-const reference
+        // Use of a temporary object is impossible, because create_node takes a non-const reference.
+        // copy-initialization is possible because T is already required to be CopyConstructible.
+        T obj = T();
         return create_node(allocator, key, tbb::internal::move(obj));
 #endif
     }

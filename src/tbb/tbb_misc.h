@@ -21,6 +21,10 @@
 #include "tbb/tbb_machine.h"
 #include "tbb/atomic.h"     // For atomic_xxx definitions
 
+#if __TBB_NUMA_SUPPORT
+#include "tbb/info.h"
+#endif /*__TBB_NUMA_SUPPORT*/
+
 #if __linux__ || __FreeBSD__
 #include <sys/param.h>  // __FreeBSD_version
 #if __FreeBSD_version >= 701000
@@ -35,6 +39,12 @@
 #define __TBB_USE_OS_AFFINITY_SYSCALL (__TBB_OS_AFFINITY_SYSCALL_PRESENT && !__bg__)
 
 namespace tbb {
+
+#if __TBB_NUMA_SUPPORT
+namespace interface7 { class task_arena; }
+namespace interface6 { class task_scheduler_observer; }
+#endif /*__TBB_NUMA_SUPPORT*/
+
 namespace internal {
 
 const size_t MByte = 1024*1024;
@@ -264,6 +274,26 @@ inline void run_initializer( bool (*f)(), atomic<do_once_state>& state ) {
 bool cpu_has_speculation();
 bool gcc_rethrow_exception_broken();
 void fix_broken_rethrow();
+
+#if __TBB_NUMA_SUPPORT
+// Interfaces for binding threads to certain NUMA nodes by third-party library interfaces.
+// - construct_binding_observer() returns pointer to constructed and enabled (observe(true) was called) observer
+// that binds incoming thread during on_scheduler_entry() call and returns old affinity mask
+// during on_scheduler_exit() call
+// - destroy_binding_observer() deactivates, destroys and deallocates observer that was described earlier.
+// If requested third party library does not exist on the system, then they are still may be called but do nothing.
+tbb::interface6::task_scheduler_observer* construct_binding_observer(
+    tbb::interface7::task_arena* ta, int numa_id, int num_slots );
+
+void destroy_binding_observer( tbb::interface6::task_scheduler_observer* observer );
+
+namespace numa_topology {
+    bool is_initialized();
+    void initialize();
+    void destroy();
+}
+
+#endif /*__TBB_NUMA_SUPPORT*/
 
 } // namespace internal
 } // namespace tbb

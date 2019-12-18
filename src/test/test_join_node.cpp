@@ -187,5 +187,6 @@ int TestMain() {
     test_main<tbb::flow::queueing>();
     test_main<tbb::flow::reserving>();
     test_main<tbb::flow::tag_matching>();
+    generate_recirc_test<tbb::flow::tuple<int,float> >::do_test();
     return Harness::Done;
 }

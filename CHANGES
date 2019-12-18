@@ -2,6 +2,21 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 2020
+TBB_INTERFACE_VERSION == 11100
+
+Changes (w.r.t. Intel TBB 2019 Update 9):
+
+- Extended task_arena interface to simplify development of NUMA-aware
+    applications.
+- Added warning notifications when the deprecated functionality is used.
+
+Open-source contributions integrated:
+
+- Fixed various build warnings
+    (https://github.com/intel/tbb/pull/179) by Raf Schietekat.
+
+------------------------------------------------------------------------
 Intel TBB 2019 Update 9
 TBB_INTERFACE_VERSION == 11009
 
@@ -13,7 +28,7 @@ Changes (w.r.t. Intel TBB 2019 Update 8):
 
 Preview Features:
 
-- Added isolated_task_group class that allows multiple threads to add 
+- Added isolated_task_group class that allows multiple threads to add
     and execute tasks sharing the same isolation.
 - Extended the flow graph API to simplify connecting nodes.
 - Added erase() by heterogeneous keys for concurrent ordered containers.
@@ -27,6 +42,9 @@ Bugs fixed:
 - Fixed a bug in the merge() method of concurrent unordered
     containers.
 - Fixed behavior of a continue_node that follows buffering nodes.
+- Fixed compilation error caused by missed stdlib.h when CMake
+    integration is used (https://github.com/intel/tbb/issues/195).
+    Inspired by Andrew Penkrat.
 
 Open-source contributions integrated:
 

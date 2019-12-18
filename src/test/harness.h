@@ -58,6 +58,8 @@ int TestMain ();
     #include <cstdlib>
     #include <cstring>
 #endif /* !__SUNPRO_CC */
+#include <cerrno>
+#include <cctype>
 
 #include <new>
 
@@ -839,6 +841,32 @@ public:
 #else
         return std::getenv(envname);
 #endif
+    }
+
+    long GetIntEnv( const char * envname ) {
+        ASSERT(envname, "Harness::GetIntEnv() requires a valid C string");
+#if !__TBB_WIN8UI_SUPPORT
+        if( const char* s = std::getenv(envname) ){
+            char* end = NULL;
+            errno = 0;
+            long value = std::strtol(s, &end, 10);
+
+            // We have exceeded the range, value is negative or string is incovertable
+            if ( errno == ERANGE || value < 0 || end==s )
+            {
+                return -1;
+            }
+
+            for ( ; *end != '\0'; end++ )
+            {
+                if ( !std::isspace(*end) )
+                    return -1;
+            }
+
+            return value;
+        }
+#endif
+        return -1;
     }
 
     class DummyBody {

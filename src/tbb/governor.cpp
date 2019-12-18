@@ -293,6 +293,154 @@ __cilk_tbb_retcode governor::stack_op_handler( __cilk_tbb_stack_op op, void* dat
 }
 #endif /* __TBB_SURVIVE_THREAD_SWITCH */
 
+#if __TBB_NUMA_SUPPORT
+
+#if __TBB_WEAK_SYMBOLS_PRESENT
+#pragma weak initialize_numa_topology
+#pragma weak subscribe_arena
+#pragma weak unsubscribe_arena
+
+extern "C" {
+void initialize_numa_topology(
+    size_t groups_num, int& nodes_count, int*& indexes_list, int*& concurrency_list );
+tbb::interface6::task_scheduler_observer* subscribe_arena(
+    tbb::interface7::task_arena* ta, int numa_id, int num_slots );
+void unsubscribe_arena( tbb::interface6::task_scheduler_observer* numa_binding_observer );
+}
+#endif /* __TBB_WEAK_SYMBOLS_PRESENT */
+
+// Handlers for communication with TBBbind
+#if _WIN32 || _WIN64 || __linux__
+static void (*initialize_numa_topology_handler)(
+    size_t groups_num, int& nodes_count, int*& indexes_list, int*& concurrency_list ) = NULL;
+#endif /* _WIN32 || _WIN64 || __linux__ */
+
+static tbb::interface6::task_scheduler_observer* (*subscribe_arena_handler)(
+    tbb::interface7::task_arena* ta, int numa_id, int num_slots ) = NULL;
+
+static void (*unsubscribe_arena_handler)(
+    tbb::interface6::task_scheduler_observer* numa_binding_observer ) = NULL;
+
+#if _WIN32 || _WIN64 || __linux__
+// Table describing how to link the handlers.
+static const dynamic_link_descriptor TbbBindLinkTable[] = {
+    DLD(initialize_numa_topology, initialize_numa_topology_handler),
+    DLD(subscribe_arena, subscribe_arena_handler),
+    DLD(unsubscribe_arena, unsubscribe_arena_handler)
+};
+
+#if TBB_USE_DEBUG
+#define DEBUG_SUFFIX "_debug"
+#else
+#define DEBUG_SUFFIX
+#endif /* TBB_USE_DEBUG */
+
+#if _WIN32 || _WIN64
+#define TBBBIND_NAME "tbbbind" DEBUG_SUFFIX ".dll"
+#elif __linux__
+#define TBBBIND_NAME "libtbbbind" DEBUG_SUFFIX  __TBB_STRING(.so.TBB_COMPATIBLE_INTERFACE_VERSION)
+#endif /* __linux__ */
+#endif /* _WIN32 || _WIN64 || __linux__ */
+
+// Stubs that will be used if TBBbind library is unavailable.
+static tbb::interface6::task_scheduler_observer* dummy_subscribe_arena (
+    tbb::interface7::task_arena*, int, int ) { return NULL; }
+static void dummy_unsubscribe_arena( tbb::interface6::task_scheduler_observer* ) {}
+
+// Representation of NUMA topology information on the TBB side.
+// NUMA topology may be initialized by third-party component (e.g. hwloc)
+// or just filled by default stubs (1 NUMA node with 0 index and
+// default_num_threads value as default_concurrency).
+namespace numa_topology {
+namespace {
+int  numa_nodes_count = 0;
+int* numa_indexes = NULL;
+int* default_concurrency_list = NULL;
+static tbb::atomic<do_once_state> numa_topology_init_state;
+} // internal namespace
+
+// Tries to load TBBbind library API, if success, gets NUMA topology information from it,
+// in another case, fills NUMA topology by stubs.
+// TODO: Add TBBbind loading status if TBB_VERSION is set.
+void initialization_impl() {
+    governor::one_time_init();
+
+#if _WIN32 || _WIN64 || __linux__
+    bool load_tbbbind = true;
+#if _WIN32 && !_WIN64
+    // For 32-bit Windows applications, process affinity masks can only support up to 32 logical CPUs.
+    SYSTEM_INFO si;
+    GetNativeSystemInfo(&si);
+    load_tbbbind = si.dwNumberOfProcessors <= 32;
+#endif /* _WIN32 && !_WIN64 */
+
+    if (load_tbbbind && dynamic_link(TBBBIND_NAME, TbbBindLinkTable, 3)) {
+        int number_of_groups = 1;
+#if _WIN32 || _WIN64
+        number_of_groups = NumberOfProcessorGroups();
+#endif /* _WIN32 || _WIN64 */
+        initialize_numa_topology_handler(
+            number_of_groups, numa_nodes_count, numa_indexes, default_concurrency_list);
+
+        if (numa_nodes_count==1 && numa_indexes[0] >= 0) {
+            __TBB_ASSERT(default_concurrency_list[numa_indexes[0]] == (int)governor::default_num_threads(),
+                "default_concurrency() should be equal to governor::default_num_threads() on single"
+                "NUMA node systems.");
+        }
+        return;
+    }
+#endif /* _WIN32 || _WIN64 || __linux__ */
+
+    static int dummy_index = -1;
+    static int dummy_concurrency = governor::default_num_threads();
+
+    numa_nodes_count = 1;
+    numa_indexes = &dummy_index;
+    default_concurrency_list = &dummy_concurrency;
+
+    subscribe_arena_handler   = dummy_subscribe_arena;
+    unsubscribe_arena_handler = dummy_unsubscribe_arena;
+}
+
+void initialize() {
+    atomic_do_once(initialization_impl, numa_topology_init_state);
+}
+
+unsigned nodes_count() {
+    initialize();
+    return numa_nodes_count;
+}
+
+void fill( int* indexes_array ) {
+    initialize();
+    for ( int i = 0; i < numa_nodes_count; i++ ) {
+        indexes_array[i] = numa_indexes[i];
+    }
+}
+
+int default_concurrency( int node_id ) {
+    if (node_id >= 0) {
+        initialize();
+        return default_concurrency_list[node_id];
+    }
+    return governor::default_num_threads();
+}
+
+} // namespace numa_topology
+
+tbb::interface6::task_scheduler_observer* construct_binding_observer( tbb::interface7::task_arena* ta,
+                                                                      int numa_id, int num_slots ) {
+    // numa_topology initialization will be lazily performed inside nodes_count() call
+    return (numa_id >= 0 && numa_topology::nodes_count() > 1) ?
+            subscribe_arena_handler(ta, numa_id, num_slots) : NULL;
+}
+
+void destroy_binding_observer( tbb::interface6::task_scheduler_observer* observer ) {
+        __TBB_ASSERT(observer != NULL, "Trying to access observer via NULL pointer");
+        unsubscribe_arena_handler(observer);
+}
+#endif /* __TBB_NUMA_SUPPORT */
+
 } // namespace internal
 
 //------------------------------------------------------------------------

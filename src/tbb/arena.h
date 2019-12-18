@@ -195,6 +195,11 @@ struct arena_base : padded<intrusive_list_node> {
     observer_list my_observers;
 #endif
 
+#if __TBB_NUMA_SUPPORT
+    //! Pointer to internal observer that allows to bind threads in arena to certain NUMA node.
+    task_scheduler_observer* my_numa_binding_observer;
+#endif /*__TBB_NUMA_SUPPORT*/
+
 #if __TBB_TASK_PRIORITY
     //! The lowest normalized priority of available spawned or enqueued tasks.
     intptr_t my_bottom_priority;

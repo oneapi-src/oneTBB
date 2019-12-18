@@ -1,5 +1,5 @@
-# Threading Building Blocks 2019 Update 9
-[![Stable release](https://img.shields.io/badge/version-2019_U9-green.svg)](https://github.com/intel/tbb/releases/tag/2019_U9)
+# Threading Building Blocks 2020
+[![Stable release](https://img.shields.io/badge/version-2020-green.svg)](https://github.com/intel/tbb/releases/tag/2020)
 [![Apache License Version 2.0](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE)
 
 Threading Building Blocks (TBB) lets you easily write parallel C++ programs that take

@@ -252,6 +252,8 @@ endif
 
 test_opencl_node.$(TEST_EXT): LIBS += $(OPENCL.LIB)
 
+test_arena_constraints_hwloc.$(TEST_EXT): LIBS += $(HWLOC.LIB)
+
 $(TEST_TBB_PLAIN.EXE) $(TEST_TBB_SPECIAL.EXE): WARNING_KEY += $(TEST_WARNING_KEY)
 
 # Run tests that are in SCHEDULER_DIRECTLY_INCLUDED and TEST_TBB_PLAIN.EXE but not in skip_tests (which is specified by user)

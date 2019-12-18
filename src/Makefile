@@ -20,17 +20,19 @@ include $(tbb_root)/build/common.inc
 #According to documentation, recursively invoked make commands can process their targets in parallel
 .NOTPARALLEL:
 
-.PHONY: all tbb tbbmalloc tbbproxy test test_no_depends release debug examples clean
+.PHONY: all tbb tbbmalloc tbbbind tbbproxy test test_no_depends release debug examples clean mkdir
 
-all: release debug examples
+all: release examples
 
 tbb: tbb_release tbb_debug
 
 tbbmalloc: tbbmalloc_release tbbmalloc_debug
 
-tbbproxy: tbbproxy_release tbbproxy_debug
+tbbbind: tbbbind_release
 
-rml: rml_release rml_debug
+tbbproxy: tbbproxy_release
+
+rml: rml_release
 
 test: tbbmalloc_test_release $(if $(use_proxy),tbbproxy_test_release) tbb_test_release tbbmalloc_test_debug $(if $(use_proxy),tbbproxy_test_debug) tbb_test_debug
 ifeq (,$(findstring skip,$(target:android=skip) $(offload:mic=skip)))
@@ -52,6 +54,8 @@ examples_no_depends: examples_release_no_depends examples_debug_no_depends
 
 clean: clean_release clean_debug clean_examples
 	@echo clean done
+
+mkdir: mkdir_debug mkdir_release
 
 .PHONY: full
 full:
@@ -95,6 +99,7 @@ python_%: mkdir_release
 
 .PHONY: test_release test_debug test_release_no_depends test_debug_no_depends
 .PHONY: tbb_release tbb_debug tbb_test_release tbb_test_debug tbb_test_release_no_depends tbb_test_debug_no_depends
+.PHONY: tbbbind_release tbbbind_debug
 # do not delete double-space after -C option
 tbb_release: mkdir_release
 	$(MAKE) -C "$(work_dir)_release"  -r -f $(tbb_root)/build/Makefile.tbb cfg=release
@@ -116,6 +121,12 @@ test_release: tbb_test_release
 test_debug: tbb_test_debug
 test_release_no_depends: tbb_test_release_no_depends
 test_debug_no_depends: tbb_test_debug_no_depends
+
+tbbbind_release: mkdir_release
+	$(MAKE) -C "$(work_dir)_release"  -r -f $(tbb_root)/build/Makefile.tbbbind cfg=release tbbbind
+
+tbbbind_debug: mkdir_debug
+	$(MAKE) -C "$(work_dir)_debug"  -r -f $(tbb_root)/build/Makefile.tbbbind cfg=debug tbbbind
 
 .PHONY: tbbmalloc_release tbbmalloc_debug
 .PHONY: tbbmalloc_dll_release tbbmalloc_dll_debug tbbmalloc_proxy_dll_release tbbmalloc_proxy_dll_debug

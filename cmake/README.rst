@@ -197,6 +197,7 @@ If ``tbbmalloc_proxy`` is requested, ``tbbmalloc`` component will also be added 
 TBBConfig creates `imported targets <https://cmake.org/cmake/help/latest/manual/cmake-buildsystem.7.html#imported-targets>`_ as
 shared libraries using the following format: ``TBB::<component>`` (for example, ``TBB::tbb``, ``TBB::tbbmalloc``).
 
+Set ``TBB_FIND_RELEASE_ONLY`` to ``TRUE`` before ``find_package`` call in order to search only for release TBB version. This variable helps to avoid simultaneous linkage of release and debug TBB versions when CMake configuration is `Debug` but a third-party component depends on release TBB version.
 Variables set during TBB configuration:
 
 =========================  ================================================

@@ -846,6 +846,12 @@ inline void generic_scheduler::resume(generic_scheduler& target) {
     // Transfer thread related data.
     target.my_arena_index = my_arena_index;
     target.my_arena_slot = my_arena_slot;
+#if __TBB_SCHEDULER_OBSERVER
+    target.my_last_global_observer = my_last_global_observer;
+#endif
+#if __TBB_ARENA_OBSERVER
+    target.my_last_local_observer = my_last_local_observer;
+#endif
     target.attach_mailbox(affinity_id(target.my_arena_index + 1));
 
 #if __TBB_TASK_PRIORITY

@@ -245,10 +245,10 @@ void MultiMapEraseTests(){
     typename MultiMap::iterator erased_it;
     for (int i = 0; i < 10; ++i) {
         if ( i != 1 ) {
-            cont1.emplace(1, i);
-            cont2.emplace(1, i);
+            cont1.insert(std::make_pair(1, i));
+            cont2.insert(std::make_pair(1, i));
         } else {
-            erased_it = cont1.emplace(1, i).first;
+            erased_it = cont1.insert(std::make_pair(1, i)).first;
         }
     }
 

@@ -15,6 +15,7 @@
 */
 
 #include "tbb/tbb_config.h"
+#include "tbb/task_scheduler_observer.h"
 
 #include "harness.h"
 
@@ -363,6 +364,43 @@ void TestNativeThread() {
     });
     ASSERT(ets.local() == true, NULL);
 }
+
+class ObserverTracker : public tbb::task_scheduler_observer {
+    tbb::enumerable_thread_specific<bool> is_in_arena;
+public:
+    tbb::atomic<int> counter;
+
+    ObserverTracker(tbb::task_arena& a) : tbb::task_scheduler_observer(a) {
+        counter = 0;
+        observe(true);
+    }
+    void on_scheduler_entry(bool) __TBB_override {
+        bool& l = is_in_arena.local();
+        ASSERT(l == false, "The thread must call on_scheduler_entry only one time.");
+        l = true;
+        ++counter;
+    }
+    void on_scheduler_exit(bool) __TBB_override {
+        bool& l = is_in_arena.local();
+        ASSERT(l == true, "The thread must call on_scheduler_entry before calling on_scheduler_exit.");
+        l = false;
+    }
+};
+
+void TestObservers() {
+    tbb::task_arena arena;
+    ObserverTracker tracker(arena);
+    do {
+        arena.execute([] {
+            tbb::parallel_for(0, 10, [](int) {
+                tbb::task::suspend([](tbb::task::suspend_point tag) {
+                    tbb::task::resume(tag);
+                });
+            }, tbb::simple_partitioner());
+        });
+    } while (tracker.counter < 100);
+    tracker.observe(false);
+}
 #endif
 
 int TestMain() {
@@ -379,6 +417,7 @@ int TestMain() {
     TestCleanupMaster();
     TestPriorities();
     TestNativeThread();
+    TestObservers();
 #endif
     ASSERT(ets.local() == true, NULL);
     return Harness::Done;
