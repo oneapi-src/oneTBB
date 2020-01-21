@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2019 Intel Corporation
+    Copyright (c) 2005-2020 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -507,7 +507,7 @@ public:
         my_curr_device_id = my_factory->devices().begin()->my_device_id;
     }
 
-    ~opencl_memory() {
+    virtual ~opencl_memory() {
         if ( my_sending_event_present ) enforce_cl_retcode( clReleaseEvent( my_sending_event ), "Failed to release an event for the OpenCL buffer" );
         enforce_cl_retcode( clReleaseMemObject( my_cl_mem ), "Failed to release an memory object" );
     }
@@ -789,7 +789,7 @@ public:
     opencl_range(G&& global_work = std::initializer_list<int>({ 0 }), L&& local_work = std::initializer_list<int>({ 0, 0, 0 })) {
         auto g_it = global_work.begin();
         auto l_it = local_work.begin();
-        my_global_work_size = { size_t(-1), size_t(-1), size_t(-1) };
+        my_global_work_size = { {size_t(-1), size_t(-1), size_t(-1)} };
         // my_local_work_size is still uninitialized
         for (int s = 0; s < 3 && g_it != global_work.end(); ++g_it, ++l_it, ++s) {
             __TBB_ASSERT(l_it != local_work.end(), "global_work & local_work must have same size");
@@ -1397,8 +1397,7 @@ private:
     template <typename DeviceFilter>
     friend class opencl_factory;
 
-    template <typename DeviceFilter>
-    friend class opencl_factory<DeviceFilter>::kernel;
+    friend class Factory::kernel;
 };
 
 template<typename... Args>

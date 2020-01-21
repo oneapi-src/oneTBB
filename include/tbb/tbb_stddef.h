@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2019 Intel Corporation
+    Copyright (c) 2005-2020 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@
 
 // Marketing-driven product version
 #define TBB_VERSION_MAJOR 2020
-#define TBB_VERSION_MINOR 0
+#define TBB_VERSION_MINOR 1
 
 // Engineering-focused interface version
-#define TBB_INTERFACE_VERSION 11100
+#define TBB_INTERFACE_VERSION 11101
 #define TBB_INTERFACE_VERSION_MAJOR TBB_INTERFACE_VERSION/1000
 
 // The oldest major interface version still supported

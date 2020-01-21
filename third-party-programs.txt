@@ -1,0 +1,350 @@
+This file is the "third-party-programs.txt" file specified  in  the  associated Intel end user license
+agreement for the Intel software you are licensing. The third party programs and their corresponding
+required notices and/or license terms are listed below.
+
+1. Portable Hardware Locality (hwloc):
+    Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana University Research and Technology Corporation.  All rights reserved.
+    Copyright (c) 2004-2005 The University of Tennessee and The University of Tennessee Research Foundation.  All rights reserved.
+    Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, University of Stuttgart.  All rights reserved.
+    Copyright (c) 2004-2005 The Regents of the University of California. All rights reserved.
+    Copyright (c) 2009      CNRS
+    Copyright (c) 2009-2016 Inria.  All rights reserved.
+    Copyright (c) 2009-2015 Universite Bordeaux
+    Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
+    Copyright (c) 2009-2012 Oracle and/or its affiliates.  All rights reserved.
+    Copyright (c) 2010      IBM
+    Copyright (c) 2010      Jirka Hladky
+    Copyright (c) 2012      Aleksej Saushev, The NetBSD Foundation
+    Copyright (c) 2012      Blue Brain Project, EPFL. All rights reserved.
+    Copyright (c) 2013-2014 University of Wisconsin-La Crosse. All rights reserved.
+    Copyright (c) 2015      Research Organization for Information Science and Technology (RIST). All rights reserved.
+    Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+    See COPYING in top-level directory.
+
+    New BSD License
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions
+    are met:
+    1. Redistributions of source code must retain the above copyright
+       notice, this list of conditions and the following disclaimer.
+    2. Redistributions in binary form must reproduce the above copyright
+       notice, this list of conditions and the following disclaimer in the
+       documentation and/or other materials provided with the distribution.
+    3. The name of the author may not be used to endorse or promote products
+       derived from this software without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+    IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+    OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+    IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+    INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+    NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+    DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+    THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+    THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+_______________________________________________________________________________________________________
+
+2. Instrumentation and Tracing Technology (ITT) Notify User API:
+    Copyright (c) 2005-2014 Intel Corporation. All rights reserved.
+
+    The 3-Clause BSD License
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions
+    are met:
+
+      * Redistributions of source code must retain the above copyright
+        notice, this list of conditions and the following disclaimer.
+      * Redistributions in binary form must reproduce the above copyright
+        notice, this list of conditions and the following disclaimer in
+        the documentation and/or other materials provided with the
+        distribution.
+      * Neither the name of Intel Corporation nor the names of its
+        contributors may be used to endorse or promote products derived
+        from this software without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+    A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+    OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+    SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+    LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+    DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+    THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+_______________________________________________________________________________________________________
+
+3.  ActiveState Thread pool with same API as (multi)  processing.Pool (Python recipe):
+    Copyright (c) 2008,2016 david decotigny (this file)
+    Copyright (c) 2006-2008, R Oudkerk (multiprocessing.Pool)
+
+    BSD 3-clause "New" or "Revised" License
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions
+    are met:
+
+    1. Redistributions of source code must retain the above copyright
+       notice, this list of conditions and the following disclaimer.
+    2. Redistributions in binary form must reproduce the above copyright
+       notice, this list of conditions and the following disclaimer in the
+       documentation and/or other materials provided with the distribution.
+    3. Neither the name of author nor the names of any contributors may be
+       used to endorse or promote products derived from this software
+       without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS "AS IS" AND
+    ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+    ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+    FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+    DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+    OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+    HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+    LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+    OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+    SUCH DAMAGE.
+_______________________________________________________________________________________________________
+
+4.  gperftools: Copyright (c) 2011, Google Inc.
+
+    BSD 3-Clause "New" or "Revised" License
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are
+    met:
+
+        * Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+        * Redistributions in binary form must reproduce the above
+    copyright notice, this list of conditions and the following disclaimer
+    in the documentation and/or other materials provided with the
+    distribution.
+        * Neither the name of Google Inc. nor the names of its
+    contributors may be used to endorse or promote products derived from
+    this software without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+    A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+    OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+    SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+    LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+    DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+    THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+_______________________________________________________________________________________________________
+
+5.  C Runtime Library (CRT): (c) 2015 Microsoft Corporation.
+
+    MICROSOFT* VISUAL STUDIO ENTERPRISE 2015, VISUAL STUDIO PROFESSIONAL 2015, VISUAL STUDIO TEST PROFESSIONAL 2015 AND TRIAL EDITION
+
+    These license terms are an agreement between Microsoft Corporation (or based on where you live, one of its affiliates) and you. Please read them. They apply to the software named above. The terms also apply to any Microsoft services and updates for the software, except to the extent these come with any different terms.
+
+    BY USING THE SOFTWARE, YOU ACCEPT THESE TERMS. IF YOU DO NOT ACCEPT THEM, DO NOT USE THE SOFTWARE. INSTEAD, RETURN IT TO THE RETAILER FOR A REFUND OR CREDIT. If you cannot obtain a refund there, contact Microsoft or the Microsoft affiliate serving your country for information about Microsoft's refund policies. See www.microsoft.com/worldwide. In the United States and Canada, call (800) MICROSOFT or see https://aka.ms/nareturn.
+
+    TRIAL EDITION USE RIGHTS. If the software is a trial edition, then this Section applies to your use of the trial edition.
+
+    GENERAL. You may use any number of copies of the trial edition on your devices. You may only use the trial edition for internal evaluation purposes, and only during the trial period. You may not deploy any applications you make with the trial edition to a production environment. You may run load tests of up to 250 virtual users during the trial period.
+    TRIAL PERIOD AND CONVERSION. The length of the trial period is the first thirty (30) days after you install the trial edition, plus any permitted extension period. After the expiration of the trial period, the trial edition will stop running. You may extend the trial period an additional ninety (90) days if you sign in to the software. You may not be able to access data used with the trial edition when it stops running. You may convert your trial rights at any time to the full-use rights described below by acquiring a valid full-use license.
+    DISCLAIMER OF WARRANTY. THE TRIAL EDITION IS LICENSED "AS-IS." YOU BEAR THE RISK OF USING IT. MICROSOFT GIVES NO EXPRESS WARRANTIES, GUARANTEES OR CONDITIONS. TO THE EXTENT PERMITTED UNDER YOUR LOCAL LAWS, MICROSOFT EXCLUDES THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.FOR AUSTRALIA – YOU HAVE STATUTORY GUARANTEES UNDER THE AUSTRALIAN CONSUMER LAW AND NOTHING IN THESE TERMS IS INTENDED TO AFFECT THOSE RIGHTS.
+    Because the trial edition is "as is," we may not provide support services for it.
+    LIMITATION ON AND EXCLUSION OF DAMAGES. YOU CAN RECOVER FROM MICROSOFT AND ITS SUPPLIERS ONLY DIRECT DAMAGES UP TO U.S. $5.00. YOU CANNOT RECOVER ANY OTHER DAMAGES, INCLUDING CONSEQUENTIAL, LOST PROFITS, SPECIAL, INDIRECT OR INCIDENTAL DAMAGES.
+    This limitation applies to (a) anything related to the trial edition, services, content (including code) on third party Internet sites, or third party programs; and (b) claims for breach of contract, breach of warranty, guarantee or condition, strict liability, negligence, or other tort to the extent permitted by applicable law.
+    It also applies even if Microsoft knew or should have known about the possibility of the damages. The above limitation or exclusion may not apply to you because your country may not allow the exclusion or limitation of incidental, consequential or other damages.
+    FULL-USE LICENSE TERMS FOR THE SOFTWARE: When you acquire a valid license and either enter a product key or sign in to the software, the full-use terms below apply. You may not share your product key or access credentials.
+
+    OVERVIEW.
+    Software. The software includes development tools, applications and documentation.
+    License Model. The software is licensed on a per user basis.
+    USE RIGHTS.
+    General. One user may use copies of the software to develop and test your applications. This includes using copies of the software on your own internal servers that remain fully dedicated to your own use. You may not, however, separate the components of the software and run those in a production environment, or on different devices (except as otherwise stated in this agreement), or for any purpose other than developing and testing your applications. Running the software on Microsoft Azure Platform Services requires a separate license.
+    Demo Use. The use permitted above includes use of the software in demonstrating your applications.
+    Backup copy. You may make one backup copy of the software, for reinstalling the software.
+    TERMS FOR SPECIFIC COMPONENTS.
+    Utilities. The software contains some items on the Utilities List at http://go.microsoft.com/fwlink/?LinkId=523763&clcid=0x409. You may copy and install those items, if included with the software, on to yours or other third party machines, to debug and deploy your applications and databases you developed with the software. Please note that Utilities are designed for temporary use, that Microsoft may not be able to patch or update Utilities separately from the rest of the software, and that some Utilities by their nature may make it possible for others to access allow machines on which they are installed. As a result, you should delete all Utilities you have installed after you finish debugging or deploying your applications and databases. Microsoft is not responsible for any third party use or access of Utilities you install on any machine.
+    Build Server. The software contains some items on the Build Server List at http://go.microsoft.com/fwlink/?LinkId=523763&clcid=0x409. You may copy and install those items, if included in the software, onto your build machines. You and others in your organization may use these items on your build machines solely for the purpose of compiling, building, verifying and archiving your applications or running quality or performance tests as part of the build process.
+    Font Components. While the software is running, you may use its fonts to display and print content. You may only: (i) embed fonts in content as permitted by the embedding restrictions in the fonts; and (ii) temporarily download them to a printer or other output device to help print content.
+    Licenses for Other Components.
+    Microsoft Platforms. The software may include components from Microsoft Windows; Microsoft Windows Server; Microsoft SQL Server; Microsoft Exchange; Microsoft Office; and Microsoft SharePoint. These components are governed by separate agreements and their own product support policies, as described in the license terms found in the installation directory for that component or in the "Licenses" folder accompanying the software.
+    Developer resources. The software includes compilers, languages, runtimes, environments, and other resources. These components may be governed by separate agreements and have their own product support policies. A list of these other components is located at www.support.microsoft.com/common/international.aspx.
+    Third Party Components. The software may include third party components with separate legal notices or governed by other agreements, as described in the ThirdPartyNotices file accompanying the software. Even if such components are governed by other agreements, the disclaimers on limitations on and exclusions of damages below also apply.The software may also include components licensed under open source licenses with source code availability obligations. Copies of those licenses, if applicable, are included in the ThirdPartyNotices file. You may obtain this source code from us, if and as required under the relevant open source licenses, by sending a money order or check for $5.00 to: Source Code Compliance Team, Microsoft Corporation, 1 Microsoft Way, Redmond, WA 98052. Please write "source code for Microsoft Visual Studio Enterprise 2015, Microsoft Visual Studio Professional 2015 or Microsoft Visual Studio Test Professional 2015" in the memo line of your payment. We may also make a copy of the source code     available at Thirdpartysource.microsoft.com.
+    PACKAGE MANAGERS. The software includes package managers, like NuGet, that give you the option to download other Microsoft and third party software packages to use with your application. Those packages are under their own licenses, and not this agreement. Microsoft does not distribute, license or provide any warranties for any of the third party packages.
+    DISTRIBUTABLE CODE. The software contains code that you are permitted to distribute in applications you develop as described in this Section. (For this Section the term "distribution" also means deployment of your applications for third parties to access over the Internet.)
+    Right to Use and Distribute. The code and text files listed below are "Distributable Code."
+    REDIST.TXT Files. You may copy and distribute the object code form of code listed on the REDIST list located at http://go.microsoft.com/fwlink/?LinkId=523763&clcid=0x409.
+    Sample Code, Templates and Styles. You may copy, modify and distribute the source and object code form of code marked as "sample", "template", "simple styles" and "sketch styles".
+    Image Library. You may copy and distribute images, graphics and animations in the Image Library as described in the software documentation.
+    Third Party Distribution. You may permit distributors of your applications to copy and distribute the Distributable Code as part of those applications.
+    Distribution Requirements. For any Distributable Code you distribute, you must:
+    add significant primary functionality to it in your applications;
+    require distributors and external end users to agree to terms that protect the Distributable Code at least as much as this agreement; and
+    indemnify, defend, and hold harmless Microsoft from any claims, including attorneys' fees, related to the distribution or use of your applications, except to the extent that any claim is based solely on the Distributable Code.
+    Distribution Restrictions. You may not:
+    use Microsoft's trademarks in your applications' names or branding in a way that suggests your applications come from or are endorsed by Microsoft; or
+    modify or distribute the source code of any Distributable Code so that any part of it becomes subject to an Excluded License. An Excluded License is one that requires, as a condition of use, modification or distribution, that (i) the code be disclosed or distributed in source code form; or (ii) others have the right to modify it.
+    DATA. The software may collect information about you and your use of the software, and send that to Microsoft. Microsoft may use this information to provide services and improve our products and services. You may opt-out of many of these scenarios, but not all, as described in the product documentation. There are also some features in the software that may enable you to collect data from users of your applications. If you use these features to enable data collection in your applications, you must comply with applicable law, including providing appropriate notices to users of your applications. You can learn more about data collection and use in the help documentation and the privacy statement at http://go.microsoft.com/fwlink/?LinkId=528096&clcid=0x409. Your use of the software operates as your consent to these practices.
+    SCOPE OF LICENSE. The software is licensed, not sold. This agreement only gives you some rights to use the software. Microsoft reserves all other rights. Unless applicable law gives you more rights despite this limitation, you may use the software only as expressly permitted in this agreement. In doing so, you must comply with any technical limitations in the software that only allow you to use it in certain ways. For more information, see www.microsoft.com/licensing. You may not
+    work around any technical limitations in the software;
+    reverse engineer, decompile or disassemble the software, or otherwise attempt to derive the source code for the software except, and solely to the extent: (i) permitted by applicable law, despite this limitation; or (ii) required to debug changes to any libraries licensed under the GNU Lesser General Public License which are included with and linked to by the software;
+    remove, minimize, block or modify any notices of Microsoft or its suppliers in the software;
+    use the software in any way that is against the law;
+    share, publish, rent or lease the software, or provide the software as a stand-alone hosted solution for others to use.
+    DOCUMENTATION. Any person that has valid access to your computer or internal network may copy and use the documentation for your internal, reference purposes.
+    NOT FOR RESALE SOFTWARE. You may not sell software marked as "NFR" or "Not for Resale."
+    RIGHTS TO USE OTHER VERSIONS AND LOWER EDITIONS. You may use the software and any prior version on any device. You may create, store, install, run or access in place of the version licensed, a copy or instance of a prior version, different permitted language version or lower edition.
+    PROOF OF LICENSE. If you acquired the software on a disc or other media, your proof of license is the Microsoft certificate of authenticity label, the accompanying product key and your receipt. If you purchased an online copy of the software, your proof of license is the Microsoft product key you received with your purchase and your receipt and/or being able to access the software service through your Microsoft account. To identify genuine Microsoft software, see www.howtotell.com.
+    TRANSFER TO A THIRD PARTY. If you are a valid licensee of the software you may transfer it and this license agreement directly to another party. Before the transfer, that party must agree that this agreement applies to the transfer and use of the software. The transfer must include the software, genuine Microsoft product key, and (if applicable) the Proof of License label. The transferor must uninstall all copies of the software after transferring it from the device. The transferor may not retain any copies of the genuine Microsoft product key to be transferred, and may only retain copies of the software if otherwise licensed to do so. If you have acquired a non-perpetual license to use the software or if the software is marked Not for Resale you may not transfer the software or the software license agreement to another party.
+    EXPORT RESTRICTIONS. Microsoft software, online services, professional services and related technology are subject to U.S. export jurisdiction. You must comply with all applicable international and national, laws including the U.S. Export Administration Regulations, the International Traffic in Arms Regulations, Office of Foreign Assets Control sanctions programs, and end-user, end use and destination restrictions by the U.S. and other governments related to Microsoft products, services and technologies. For additional information, see www.microsoft.com/exporting.
+    SUPPORT SERVICES. Microsoft provides support services for the software as described at www.support.microsoft.com/common/international.aspx.
+    ENTIRE AGREEMENT. This agreement (including the warranty below), and the terms for supplements, updates, Internet-based services and support services that you use, are the entire agreement for the software and support services.
+    APPLICABLE LAW. If you acquired the software in the United States, Washington law applies to interpretation of and claims for breach of this agreement, and the laws of the state where you live govern all other claims. If you acquire the software in any other country, its laws apply.
+    LEGAL EFFECT. This agreement describes certain legal rights. You may have other rights under the laws of your state or country. You may also have rights with respect to the party from whom you acquired the software. This agreement does not change your rights under the laws of your state or country if the laws of your state or country do not permit it to do so.
+    LIMITATION ON AND EXCLUSION OF DAMAGES. YOU CAN RECOVER FROM MICROSOFT AND ITS SUPPLIERS ONLY DIRECT DAMAGES UP TO THE AMOUNT YOU PAID FOR THE SOFTWARE. YOU CANNOT RECOVER ANY OTHER DAMAGES, INCLUDING CONSEQUENTIAL, LOST PROFITS, SPECIAL, INDIRECT OR INCIDENTAL DAMAGES.This limitation applies to a) anything related to the software, services, content (including code) on third party Internet sites, or b) third party applications; and claims for breach of contract, breach of warranty, guarantee or condition, strict liability, negligence, or other tort to the extent permitted by applicable law.
+    It also applies even if
+
+    repair, replacement or a refund for the software does not fully compensate you for any losses; or
+    Microsoft knew or should have known about the possibility of the damages.Some states do not allow the exclusion or limitation of incidental or consequential damages, so the above limitation or exclusion may not apply to you. They also may not apply to you because your country may not allow the exclusion or limitation of incidental, consequential or other damages.
+    LIMITED WARRANTY
+    LIMITED WARRANTY. If you follow the instructions, the software will perform substantially as described in the Microsoft materials that you receive in or with the software.References to "limited warranty" are references to the express warranty provided by Microsoft. This warranty is given in addition to other rights and remedies you may have under law, including your rights and remedies in accordance with the statutory guarantees under local Consumer Law.
+    TERM OF WARRANTY; WARRANTY RECIPIENT; LENGTH OF ANY IMPLIED WARRANTIES. THE LIMITED WARRANTY COVERS THE SOFTWARE FOR ONE YEAR AFTER ACQUIRED BY THE FIRST USER. IF YOU RECEIVE SUPPLEMENTS, UPDATES, OR REPLACEMENT SOFTWARE DURING THAT YEAR, THEY WILL BE COVERED FOR THE REMAINDER OF THE WARRANTY OR 30 DAYS, WHICHEVER IS LONGER. If the first user transfers the software, the remainder of the warranty will apply to the recipient.TO THE EXTENT PERMITTED BY LAW, ANY IMPLIED WARRANTIES, GUARANTEES OR CONDITIONS LAST ONLY DURING THE TERM OF THE LIMITED WARRANTY. Some states do not allow limitations on how long an implied warranty lasts, so these limitations may not apply to you. They also might not apply to you because some countries may not allow limitations on how long an implied warranty, guarantee or condition lasts.
+    EXCLUSIONS FROM WARRANTY. This warranty does not cover problems caused by your acts (or failures to act), the acts of others, or events beyond Microsoft's reasonable control.
+    REMEDY FOR BREACH OF WARRANTY. MICROSOFT WILL REPAIR OR REPLACE THE SOFTWARE AT NO CHARGE. IF MICROSOFT CANNOT REPAIR OR REPLACE IT, MICROSOFT WILL REFUND THE AMOUNT SHOWN ON YOUR RECEIPT FOR THE SOFTWARE. IT WILL ALSO REPAIR OR REPLACE SUPPLEMENTS, UPDATES AND REPLACEMENT SOFTWARE AT NO CHARGE. IF MICROSOFT CANNOT REPAIR OR REPLACE THEM, IT WILL REFUND THE AMOUNT YOU PAID FOR THEM, IF ANY. YOU MUST UNINSTALL THE SOFTWARE AND RETURN ANY MEDIA AND OTHER ASSOCIATED MATERIALS TO MICROSOFT WITH PROOF OF PURCHASE TO OBTAIN A REFUND. THESE ARE YOUR ONLY REMEDIES FOR BREACH OF THE LIMITED WARRANTY.
+    CONSUMER RIGHTS NOT AFFECTED. YOU MAY HAVE ADDITIONAL CONSUMER RIGHTS UNDER YOUR LOCAL LAWS, WHICH THIS AGREEMENT CANNOT CHANGE.
+    WARRANTY PROCEDURES. You need proof of purchase for warranty service.
+    United States and Canada. For warranty service or information about how to obtain a refund for software acquired in the United States and Canada, contact Microsoft at
+    (800) MICROSOFT;
+    Microsoft Customer Service and Support, One Microsoft Way, Redmond, WA 98052-6399; or
+    visit https://aka.ms/nareturn.
+    Europe, Middle East and Africa. If you acquired the software in Europe, the Middle East or Africa, Microsoft Ireland Operations Limited makes this limited warranty. To make a claim under this warranty, you should contact either
+    Microsoft Ireland Operations Limited, Customer Care Centre, Atrium Building Block B, Carmanhall Road, Sandyford Industrial Estate, Dublin 18, Ireland; or
+    the Microsoft affiliate serving your country (see www.microsoft.com/worldwide).
+    Australia. If you acquired the software in Australia, contact Microsoft to make a claim at
+    13 20 58; or
+    Microsoft Pty Ltd, 1 Epping Road, North Ryde NSW 2113, Australia.
+    Outside United States, Canada, Europe, Middle East, Africa and Australia. If you acquired the software outside the United States, Canada, Europe, the Middle East, Africa and Australia, contact the Microsoft affiliate serving your country (see www.microsoft.com/worldwide).
+    NO OTHER WARRANTIES. THE LIMITED WARRANTY IS THE ONLY DIRECT WARRANTY FROM MICROSOFT. MICROSOFT GIVES NO OTHER EXPRESS WARRANTIES, GUARANTEES OR CONDITIONS. WHERE ALLOWED BY YOUR LOCAL LAWS, MICROSOFT EXCLUDES IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. If your local laws give you any implied warranties, guarantees or conditions, despite this exclusion, your remedies are described in the Remedy for Breach of Warranty clause above, to the extent permitted by your local laws.FOR AUSTRALIA ONLY. In this paragraph, "goods" refers to the software for which Microsoft provides the express warranty. Our goods come with guarantees that cannot be excluded under the Australian Consumer Law. You are entitled to a replacement or refund for a major failure and compensation for any other reasonably foreseeable loss or damage. You are also entitled to have the goods repaired or replaced if the goods fail to be of acceptable quality and the failure does not amount to a maj     or failure. Goods presented for repair may be replaced by refurbished goods of the same type rather than being replaced. Refurbished parts may be used to repair the goods.
+    LIMITATION ON AND EXCLUSION OF DAMAGES FOR BREACH OF WARRANTY. THE LIMITATION ON AND EXCLUSION OF DAMAGES CLAUSE ABOVE APPLIES TO BREACHES OF THIS LIMITED WARRANTY.THIS WARRANTY GIVES YOU SPECIFIC LEGAL RIGHTS, AND YOU MAY ALSO HAVE OTHER RIGHTS WHICH VARY FROM STATE TO STATE. YOU MAY ALSO HAVE OTHER RIGHTS WHICH VARY FROM COUNTRY TO COUNTRY.
+_______________________________________________________________________________________________________
+
+6.  Mateusz Kwiatkowski Workaround for bug 62258 in libstdc++
+
+    Public domain
+_______________________________________________________________________________________________________
+
+7. Tachyon: Copyright (c) 1994-2008 John E. Stone. All rights reserved.
+
+    BSD 3-Clause "New" or "Revised" License
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are
+    met:
+
+        * Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+        * Redistributions in binary form must reproduce the above
+    copyright notice, this list of conditions and the following disclaimer
+    in the documentation and/or other materials provided with the
+    distribution.
+        * Neither the name of Google Inc. nor the names of its
+    contributors may be used to endorse or promote products derived from
+    this software without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+    A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+    OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+    SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+    LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+    DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+    THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+_______________________________________________________________________________________________________
+
+8. Bzip2: Copyright (c) 1996-2019 Julian Seward.
+
+    Bzip 2 License
+
+    This program, bzip2, the associated library libbzip2, and all documentation, are copyright (c) 1996-2019 Julian Seward. All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+    Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+    The origin of this software must not be misrepresented; you must not claim that you wrote the original software. If you use this software in a product, an acknowledgment in the product documentation would be appreciated but is not required.
+
+    Altered source versions must be plainly marked as such, and must not be misrepresented as being the original software.
+
+    The name of the author may not be used to endorse or promote products derived from this software without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE AUTHOR "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+_______________________________________________________________________________________________________
+
+9. Apple OpenGL Image Sample Source Code
+
+    Apple MIT License
+
+    ("Apple") in consideration of your agreement to the following terms, and your use, installation, modification or redistribution of this Apple software constitutes acceptance of these terms. If you do not agree with these terms, please do not use, install, modify or redistribute this Apple software.
+
+    In consideration of your agreement to abide by the following terms, and subject to these terms, Apple grants you a personal, non-exclusive license, under Apple's copyrights in this original Apple software (the "Apple Software"), to use, reproduce, modify and redistribute the Apple Software, with or without modifications, in source and/or binary forms; provided that if you redistribute the Apple Software in its entirety and without modifications, you must retain this notice and the following text and disclaimers in all such redistributions of the Apple Software. Neither the name, trademarks, service marks or logos of Apple Computer, Inc. may be used to endorse or promote products derived from the Apple Software without specific prior written permission from Apple.Except as expressly stated in this notice, no other rights or licenses, express or implied, are granted by Apple herein, including but not limited to any patent rights that may be infringed by your derivative works or by other works in which the Apple Software may be incorporated.
+
+    The Apple Software is provided by Apple on an "AS IS" basis. APPLE MAKES NO WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION THE IMPLIED WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, REGARDING THE APPLE SOFTWARE OR ITS USE AND OPERATION ALONE OR IN COMBINATION WITH YOUR PRODUCTS.
+
+    IN NO EVENT SHALL APPLE BE LIABLE FOR ANY SPECIAL, INDIRECT, INCIDENTAL OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) ARISING IN ANY WAY OUT OF THE USE, REPRODUCTION, MODIFICATION AND/OR DISTRIBUTION OF THE APPLE SOFTWARE, HOWEVER CAUSED AND WHETHER UNDER THEORY OF CONTRACT, TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+_______________________________________________________________________________________________________
+
+10. LodePNG: Copyright (c) 2005-2019 by Lode Vandevenne.
+    
+    zlib License
+
+    This software is provided 'as-is', without any express or implied
+    warranty. In no event will the authors be held liable for any damages
+    arising from the use of this software.
+
+    Permission is granted to anyone to use this software for any purpose,
+    including commercial applications, and to alter it and redistribute it
+    freely, subject to the following restrictions:
+
+        1. The origin of this software must not be misrepresented; you must not
+        claim that you wrote the original software. If you use this software
+        in a product, an acknowledgment in the product documentation would be
+        appreciated but is not required.
+
+        2. Altered source versions must be plainly marked as such, and must not be
+        misrepresented as being the original software.
+
+        3. This notice may not be removed or altered from any source
+        distribution.
+
+_______________________________________________________________________________________________________
+11. prism: Copyright (c) 2012-2013 Lea Verou.
+
+    MIT License
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+_______________________________________________________________________________________________________
+12. jquery: Copyright (c) 2005, 2014 jQuery Foundation, Inc.
+
+    MIT License
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+*Other names and brands may be claimed as the property of others.

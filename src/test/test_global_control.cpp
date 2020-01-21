@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2019 Intel Corporation
+    Copyright (c) 2005-2020 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -722,6 +722,7 @@ void TestMultipleControls()
     NativeParallelFor( 2, TestMultipleControlsRun(&barrier) );
 }
 
+#if __TBB_TASK_PRIORITY
 // enqueued tasks with priority below current must not be forgotten,
 // when enqueue enforced priority is enabled
 void TestForgottenEnqueuedTasks()
@@ -750,6 +751,7 @@ void TestForgottenEnqueuedTasks()
     r.wait_for_all();
     tbb::task::destroy(r);
 }
+#endif
 
 int TestMain()
 {

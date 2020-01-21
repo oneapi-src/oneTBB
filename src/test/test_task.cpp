@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2019 Intel Corporation
+    Copyright (c) 2005-2020 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -789,7 +789,7 @@ void TestWaitableTask() {
     tbb::task::destroy(wt);
 }
 
-#if __TBB_PREVIEW_CRITICAL_TASKS
+#if __TBB_PREVIEW_CRITICAL_TASKS && __TBB_TASK_PRIORITY
 #include <stdexcept>
 #include <vector>
 #include <map>
@@ -1313,7 +1313,7 @@ void test() {
     NestedArenaCase::test();
 }
 } // namespace CriticalTaskSupport
-#endif /* __TBB_PREVIEW_CRITICAL_TASKS */
+#endif /* __TBB_PREVIEW_CRITICAL_TASKS && __TBB_TASK_PRIORITY */
 
 int TestMain () {
 #if TBB_USE_EXCEPTIONS
@@ -1338,7 +1338,7 @@ int TestMain () {
         TestMastersIsolation( p );
     }
     TestWaitableTask();
-#if __TBB_PREVIEW_CRITICAL_TASKS
+#if __TBB_PREVIEW_CRITICAL_TASKS && __TBB_TASK_PRIORITY
     CriticalTaskSupport::test();
 #endif
     return Harness::Done;

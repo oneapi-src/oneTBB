@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2019 Intel Corporation
+  Copyright (c) 2019-2020 Intel Corporation
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ namespace numa_validation {
             hwloc_cpuset_t buffer_cpu_set;
             hwloc_cpuset_t buffer_node_set;
 
-            // hwloc_cpuset_t, hwloc_nodeset_t (inherited from hwloc_bitmap_t ) is pointers, 
+            // hwloc_cpuset_t, hwloc_nodeset_t (inherited from hwloc_bitmap_t ) is pointers,
             // so we must manage memory allocation and deallocation
             typedef tbb::concurrent_unordered_set<hwloc_bitmap_t> memory_handler_t;
             memory_handler_t memory_handler;
@@ -191,7 +191,7 @@ void validate_topology_information(std::vector<int> numa_indexes) {
         ASSERT(!hwloc_bitmap_isset(merged_input_node_set, numa_indexes[i]), "Indices are repeated.");
         hwloc_bitmap_set(merged_input_node_set, numa_indexes[i]);
 
-        ASSERT(tbb::info::default_concurrency(numa_indexes[i]) == 
+        ASSERT(tbb::info::default_concurrency(numa_indexes[i]) ==
             system_info.numa_node_max_concurrency(numa_indexes[i]),
             "Wrong default concurrency value.");
         whole_system_concurrency += tbb::info::default_concurrency(numa_indexes[i]);
@@ -212,13 +212,13 @@ namespace numa_validation {
     type affinity_set_verification(It begin, It end) {
         affinity_mask buffer_mask = system_info.allocate_empty_affinity_mask();
         for (auto it = begin; it != end; it++) {
-            ASSERT(!hwloc_bitmap_intersects(buffer_mask, *it), 
+            ASSERT(!hwloc_bitmap_intersects(buffer_mask, *it),
                    "Bitmaps that are binded to different nodes are intersects.");
             // Add masks to buffer_mask to concatenate process affinity mask
             hwloc_bitmap_or(buffer_mask, buffer_mask,  *it);
         }
 
-        ASSERT(affinity_masks_isequal(system_info.get_process_cpu_set(), buffer_mask), 
+        ASSERT(affinity_masks_isequal(system_info.get_process_cpu_set(), buffer_mask),
                "Some cores was not included to bitmaps.");
     }
 } /*namespace numa_validation*/
@@ -329,18 +329,38 @@ void test_memory_leak(std::vector<int> numa_indexes_vector){
 
         current_memory_usage = GetMemoryUsage();
         stability_counter = current_memory_usage==previous_memory_usage ? stability_counter + 1 : 0;
-        // If the amount of used memory has not changed during 10% of executions, 
+        // If the amount of used memory has not changed during 10% of executions,
         // then we can assume that the check was successful
         if (stability_counter > big_number / 10) return;
         previous_memory_usage = current_memory_usage;
     }
     ASSERT(false, "Seems like we get memory leak here.");
 }
+
+// Check that arena constraints are copied during copy construction
+void test_arena_constraints_copying(std::vector<int> numa_indexes) {
+    for (auto index: numa_indexes) {
+        numa_validation::affinity_mask constructed_mask, copied_mask;
+
+        tbb::task_arena constructed{tbb::task_arena::constraints(index)};
+        constructed.execute([&constructed_mask](){
+            constructed_mask = numa_validation::allocate_current_cpu_set();
+        });
+
+        tbb::task_arena copied(constructed);
+        copied.execute([&copied_mask](){
+            copied_mask = numa_validation::allocate_current_cpu_set();
+        });
+
+        ASSERT(numa_validation::affinity_masks_isequal(constructed_mask, copied_mask),
+                    "Affinity mask brokes during copy construction");
+    }
+}
 #endif /*__TBB_CPP11_PRESENT*/
 
 int TestMain() {
 #if _WIN32 && !_WIN64
-    // HWLOC cannot proceed affinity masks on Windows in 32-bit mode if there are more than 32 logical CPU. 
+    // HWLOC cannot proceed affinity masks on Windows in 32-bit mode if there are more than 32 logical CPU.
     SYSTEM_INFO si;
     GetNativeSystemInfo(&si);
     if (si.dwNumberOfProcessors > 32) return Harness::Skipped;
@@ -355,6 +375,7 @@ int TestMain() {
     test_numa_binding(numa_indexes);
     test_nested_numa_binding(numa_indexes);
     test_memory_leak(numa_indexes);
+    test_arena_constraints_copying(numa_indexes);
 #endif /*__TBB_CPP11_PRESENT*/
 
     return Harness::Done;

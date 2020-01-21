@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2019 Intel Corporation
+    Copyright (c) 2005-2020 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -58,6 +58,15 @@ struct place_wrapper {
     place_wrapper( const place_wrapper<int> &v ) : value(v.value), thread_id(v.thread_id), task_ptr(v.task_ptr) { }
 
     place_wrapper( const place_wrapper<minimal_type> &v ) : value(v.value), thread_id(v.thread_id), task_ptr(v.task_ptr) { }
+
+    place_wrapper<minimal_type>& operator=(const place_wrapper<minimal_type> &v) {
+        if( this != &v ) {
+            value = v.value;
+            thread_id = v.thread_id;
+            task_ptr = v.task_ptr;
+        }
+        return *this;
+    }
 };
 
 template<typename T1, typename T2>
@@ -745,9 +754,11 @@ void test_follows() {
     AsyncActivity<node_t> async_activity(3);
 
     std::array<broadcast_node<input_t>, 3> preds = {
+      {
         broadcast_node<input_t>(g),
         broadcast_node<input_t>(g),
         broadcast_node<input_t>(g)
+      }
     };
 
     node_t node(follows(preds[0], preds[1], preds[2]), unlimited, [&](int input, node_t::gateway_type& gtw) {
@@ -780,14 +791,11 @@ void test_precedes() {
 
     AsyncActivity<node_t> async_activity(1);
 
-    std::array<buffer_node<input_t>, 2> successors = {
-        buffer_node<input_t>(g),
-        buffer_node<input_t>(g)
-    };
+    std::array<buffer_node<input_t>, 1> successors = { {buffer_node<input_t>(g)} };
 
     broadcast_node<input_t> start(g);
 
-    node_t node(precedes(successors[0], successors[1]), unlimited, [&](int input, node_t::gateway_type& gtw) {
+    node_t node(precedes(successors[0]), unlimited, [&](int input, node_t::gateway_type& gtw) {
         async_activity.submit(input, &gtw);
     });
 

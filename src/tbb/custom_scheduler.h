@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2019 Intel Corporation
+    Copyright (c) 2005-2020 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -390,7 +390,7 @@ bool custom_scheduler<SchedulerTraits>::process_bypass_loop(
         __TBB_ASSERT(!is_proxy(*t),"unexpected proxy");
         __TBB_ASSERT( t->prefix().owner, NULL );
 #if __TBB_TASK_ISOLATION
-        __TBB_ASSERT( isolation == no_isolation || isolation == t->prefix().isolation,
+        __TBB_ASSERT_EX( isolation == no_isolation || isolation == t->prefix().isolation,
             "A task from another isolated region is going to be executed" );
 #endif /* __TBB_TASK_ISOLATION */
         assert_task_valid(t);

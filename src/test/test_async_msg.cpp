@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2019 Intel Corporation
+    Copyright (c) 2005-2020 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -112,10 +112,6 @@ class UserAsyncMsg1 : public tbb::flow::async_msg<int>
 {
 public:
     typedef tbb::flow::async_msg<int> base;
-
-    UserAsyncMsg1() : base() {}
-    UserAsyncMsg1(int value) : base(value) {}
-    UserAsyncMsg1(const UserAsyncMsg1& msg) : base(msg) {}
 };
 
 struct F2_body : tbb::internal::no_assign
@@ -127,7 +123,7 @@ struct F2_body : tbb::internal::no_assign
 
     F2_body(int& i) : myI(i), myAlive(true) {}
 
-    F2_body(const F2_body& b) : myI(b.myI), myAlive(true) {}
+    F2_body(const F2_body& b) : no_assign(), myI(b.myI), myAlive(true) {}
 
     ~F2_body() {
         myAlive = false;
@@ -208,7 +204,6 @@ public:
 
     UserAsyncMsg() : base() {}
     UserAsyncMsg(int value) : base(value) {}
-    UserAsyncMsg(const UserAsyncMsg& msg) : base(msg) {}
 
     // Notify AsyncActivity that it must return result because async calculation chain is over
     void finalize() const __TBB_override;
@@ -327,7 +322,7 @@ struct F3_body : tbb::internal::no_assign
 
     F3_body(int& _i) : myI(_i), myAlive(true) {}
 
-    F3_body(const F3_body& b) : myI(b.myI), myAlive(true) {}
+    F3_body(const F3_body& b) : no_assign(), myI(b.myI), myAlive(true) {}
 
     ~F3_body() {
         myAlive = false;

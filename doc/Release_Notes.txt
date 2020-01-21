@@ -116,13 +116,9 @@ Library Issues
         specify the -flifetime-dse=1 option to prevent crashes at
         runtime, or use Intel(R) TBB makefiles that automatically set
         this option.
-    - The copy constructor of task_arena does not propagate arena
-        constraints to the new task_arena object. For a workaround,
-        explicitly call task_arena::initialize() with the desired
-        constraints for the constructed object.
 
 ------------------------------------------------------------------------
-(C) 2019 Intel Corporation
+(C) 2020 Intel Corporation
 
 Intel, the Intel logo, Intel Core, Intel Atom, Celeron, Xeon,
 Intel Xeon Phi and Pentium are trademarks of Intel Corporation

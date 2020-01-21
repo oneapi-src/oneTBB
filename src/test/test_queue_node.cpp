@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2019 Intel Corporation
+    Copyright (c) 2005-2020 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -452,7 +452,7 @@ int test_serial() {
 #include <array>
 #include <vector>
 void test_follows_and_precedes_api() {
-    std::array<int, 3> messages_for_follows = {0, 1, 2};
+    std::array<int, 3> messages_for_follows = { {0, 1, 2} };
     std::vector<int> messages_for_precedes = {0, 1, 2};
 
     follows_and_precedes_testing::test_follows <int, tbb::flow::queue_node<int>>(messages_for_follows);

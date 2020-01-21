@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2019 Intel Corporation
+    Copyright (c) 2005-2020 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@
 
 #include "../tbb/itt_notify.h"
 
-
 template<typename M>
 class WorkEmulator: NoAssign {
     M& m_mutex;
@@ -68,7 +67,7 @@ void Test( const char * name ) {
     tbb::parallel_for( tbb::blocked_range<size_t>(0,n,n/100), WorkEmulator<M>(mtx) );
 }
 
-    #define TEST_MUTEX(type, name)  Test<tbb::type>( name )
+#define TEST_MUTEX(type, name)  Test<tbb::type>( name )
 
 #endif /* !DO_ITT_NOTIFY */
 

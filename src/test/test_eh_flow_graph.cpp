@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2019 Intel Corporation
+    Copyright (c) 2005-2020 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -1931,7 +1931,7 @@ public:
     Foo(std::vector<int>& vec) : m_vec(&vec) { }
     void operator() (tbb::flow::continue_msg) const {
         ++nExceptions;
-        m_vec->at(m_vec->size()); // Will throw out_of_range exception
+        tbb::internal::suppress_unused_warning( m_vec->at(m_vec->size()) ); // Will throw out_of_range exception
         ASSERT(false, "Exception not thrown by invalid access");
     }
 };

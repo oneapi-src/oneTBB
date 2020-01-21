@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2019 Intel Corporation
+    Copyright (c) 2005-2020 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -698,7 +698,6 @@ struct threebyte {
         b2 = (unsigned char)((i>>8)&0xFF);
         b3 = (unsigned char)((i>>16)&0xFF);
     }
-    threebyte(const threebyte &other): b1(other.b1), b2(other.b2), b3(other.b3) { }
     operator int() const { return (int)(b1+(b2<<8)+(b3<<16)); }
 };
 
@@ -855,7 +854,6 @@ class source_body {
     int addend;
 public:
     source_body(int init_val, int addto): my_count(init_val), addend(addto) { }
-    void operator=(const source_body& other) { my_count = other.my_count; addend = other.addend; }
     bool operator()(TT &v) {
         int lc = my_count;
         v = make_thingie<TT, INDEX>()(my_count);
@@ -869,7 +867,6 @@ class tag_func {
     TT my_mult;
 public:
     tag_func(TT multiplier): my_mult(multiplier) { }
-    void operator=(const tag_func& other) { my_mult = other.my_mult; }
     // operator() will return [0 .. Count)
     tbb::flow::tag_value operator()(TT v) {
         tbb::flow::tag_value t = tbb::flow::tag_value(v/my_mult);

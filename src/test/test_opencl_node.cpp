@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2019 Intel Corporation
+    Copyright (c) 2005-2020 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -452,8 +452,8 @@ class ConcurrencyTestBody : NoAssign {
         ~RoundRobinDeviceSelector() {
             ASSERT( !num_checks, "Device Selector has not been called required number of times" );
         }
-        opencl_device operator()( Factory &f ) {
-            const opencl_device_list& devices = f.devices();
+        opencl_device operator()( Factory &a_factory ) {
+            const opencl_device_list& devices = a_factory.devices();
             ASSERT( filteredDevices.size() == devices.size(), "Incorrect list of devices" );
             std::vector<opencl_device>::const_iterator it = filteredDevices.cbegin();
             for ( auto d = devices.begin(); d != devices.end(); ++d ) ASSERT( (*d) == *it++, "Incorrect list of devices" );

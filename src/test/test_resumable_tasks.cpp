@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2019 Intel Corporation
+    Copyright (c) 2005-2020 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -313,6 +313,7 @@ public:
     }
 };
 
+#if __TBB_TASK_PRIORITY
 class InnerParFor {
     AsyncActivity& asyncActivity;
 public:
@@ -337,6 +338,7 @@ void TestPriorities() {
         ASSERT(ets.local() == i, NULL);
     }
 }
+#endif
 
 void TestNativeThread() {
     AsyncActivity asyncActivity(4);
@@ -415,7 +417,9 @@ int TestMain() {
     // unnecessary complexity, one C++03 TestNestedArena is enough
     TestSuspendResume();
     TestCleanupMaster();
+#if __TBB_TASK_PRIORITY
     TestPriorities();
+#endif
     TestNativeThread();
     TestObservers();
 #endif

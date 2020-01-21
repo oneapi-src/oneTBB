@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2019 Intel Corporation
+# Copyright (c) 2017-2020 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -198,7 +198,7 @@ function(_tbb_get_url)
             return()
         endif()
 
-        string(REGEX REPLACE ".*(https.*oss_${tbb_lib_archive_suffix}).*" "\\1" tbb_bin_url "${tbb_release_info}")
+        string(REGEX REPLACE ".*(https.*${tbb_lib_archive_suffix}).*" "\\1" tbb_bin_url "${tbb_release_info}")
 
         set(${tbb_get_url_URL} ${tbb_bin_url} PARENT_SCOPE)
     endif()

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2019 Intel Corporation
+    Copyright (c) 2005-2020 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -31,6 +31,50 @@
 
 namespace tbb {
 namespace internal {
+
+#if __TBB_NUMA_SUPPORT
+class numa_binding_observer : public tbb::task_scheduler_observer {
+    int my_numa_node_id;
+    binding_handler* binding_handler_ptr;
+public:
+    numa_binding_observer( task_arena* ta, int numa_id, int num_slots )
+        : task_scheduler_observer(*ta)
+        , my_numa_node_id(numa_id)
+        , binding_handler_ptr(tbb::internal::construct_binding_handler(num_slots))
+    {}
+
+    void on_scheduler_entry( bool ) __TBB_override {
+        tbb::internal::bind_thread_to_node(
+            binding_handler_ptr, this_task_arena::current_thread_index(), my_numa_node_id);
+    }
+
+    void on_scheduler_exit( bool ) __TBB_override {
+        tbb::internal::restore_affinity_mask(binding_handler_ptr, this_task_arena::current_thread_index());
+    }
+
+    ~numa_binding_observer(){
+        tbb::internal::destroy_binding_handler(binding_handler_ptr);
+    }
+};
+
+numa_binding_observer* construct_binding_observer( tbb::interface7::task_arena* ta,
+                                                   int numa_id, int num_slots ) {
+    numa_binding_observer* binding_observer = NULL;
+    // numa_topology initialization will be lazily performed inside nodes_count() call
+    if (numa_id >= 0 && numa_topology::nodes_count() > 1) {
+        binding_observer = new numa_binding_observer(ta, numa_id, num_slots);
+        __TBB_ASSERT(binding_observer, "Failure during NUMA binding observer allocation and construction");
+        binding_observer->observe(true);
+    }
+    return binding_observer;
+}
+
+void destroy_binding_observer( numa_binding_observer* binding_observer ) {
+    __TBB_ASSERT(binding_observer, "Trying to deallocate NULL pointer");
+    binding_observer->observe(false);
+    delete binding_observer;
+}
+#endif
 
 // put it here in order to enable compiler to inline it into arena::process and nested_arena_entry
 void generic_scheduler::attach_arena( arena* a, size_t index, bool is_master ) {
@@ -570,7 +614,14 @@ void arena::enqueue_task( task& t, intptr_t prio, FastRandom &random )
     __TBB_ASSERT(t.prefix().affinity==affinity_id(0), "affinity is ignored for enqueued tasks");
 #endif /* TBB_USE_ASSERT */
 #if __TBB_PREVIEW_CRITICAL_TASKS
-    if( prio == internal::priority_critical || internal::is_critical( t ) ) {
+
+#if __TBB_TASK_PRIORITY
+    bool is_critical =  internal::is_critical( t ) || prio == internal::priority_critical;
+#else /*!__TBB_TASK_PRIORITY*/
+    bool is_critical =  internal::is_critical( t );
+#endif /*!__TBB_TASK_PRIORITY*/
+
+    if( is_critical ) {
         // TODO: consider using of 'scheduler::handled_as_critical'
         internal::make_critical( t );
         generic_scheduler* s = governor::local_scheduler_if_initialized();

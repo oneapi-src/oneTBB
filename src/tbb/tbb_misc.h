@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2019 Intel Corporation
+    Copyright (c) 2005-2020 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -39,11 +39,6 @@
 #define __TBB_USE_OS_AFFINITY_SYSCALL (__TBB_OS_AFFINITY_SYSCALL_PRESENT && !__bg__)
 
 namespace tbb {
-
-#if __TBB_NUMA_SUPPORT
-namespace interface7 { class task_arena; }
-namespace interface6 { class task_scheduler_observer; }
-#endif /*__TBB_NUMA_SUPPORT*/
 
 namespace internal {
 
@@ -276,16 +271,12 @@ bool gcc_rethrow_exception_broken();
 void fix_broken_rethrow();
 
 #if __TBB_NUMA_SUPPORT
-// Interfaces for binding threads to certain NUMA nodes by third-party library interfaces.
-// - construct_binding_observer() returns pointer to constructed and enabled (observe(true) was called) observer
-// that binds incoming thread during on_scheduler_entry() call and returns old affinity mask
-// during on_scheduler_exit() call
-// - destroy_binding_observer() deactivates, destroys and deallocates observer that was described earlier.
-// If requested third party library does not exist on the system, then they are still may be called but do nothing.
-tbb::interface6::task_scheduler_observer* construct_binding_observer(
-    tbb::interface7::task_arena* ta, int numa_id, int num_slots );
+class binding_handler;
 
-void destroy_binding_observer( tbb::interface6::task_scheduler_observer* observer );
+binding_handler* construct_binding_handler(int slot_num);
+void destroy_binding_handler(binding_handler* handler_ptr);
+void bind_thread_to_node(binding_handler* handler_ptr, int slot_num , int numa_id);
+void restore_affinity_mask(binding_handler* handler_ptr, int slot_num);
 
 namespace numa_topology {
     bool is_initialized();

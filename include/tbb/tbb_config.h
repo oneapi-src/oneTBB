@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2019 Intel Corporation
+    Copyright (c) 2005-2020 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@
 
 // Prior to GCC 7, GNU libstdc++ did not have a convenient version macro.
 // Therefore we use different ways to detect its version.
-#ifdef TBB_USE_GLIBCXX_VERSION
+#if defined(TBB_USE_GLIBCXX_VERSION) && !defined(_GLIBCXX_RELEASE)
 // The version is explicitly specified in our public TBB_USE_GLIBCXX_VERSION macro.
 // Its format should match the __TBB_GCC_VERSION above, e.g. 70301 for libstdc++ coming with GCC 7.3.1.
 #define __TBB_GLIBCXX_VERSION TBB_USE_GLIBCXX_VERSION

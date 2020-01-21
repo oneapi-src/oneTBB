@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2019 Intel Corporation
+    Copyright (c) 2019-2020 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -196,10 +196,12 @@ private:
         ASSERT((messages.size() == 3),
                "messages.size() has to be 3 to test nodes what send a message to the first available successor");
         std::array<tbb::flow::buffer_node<MessageType>, 3> preds = {
-            tbb::flow::buffer_node<MessageType>(g),
-            tbb::flow::buffer_node<MessageType>(g),
-            tbb::flow::buffer_node<MessageType>(g)
-        };
+	  {
+	    tbb::flow::buffer_node<MessageType>(g),
+	    tbb::flow::buffer_node<MessageType>(g),
+	    tbb::flow::buffer_node<MessageType>(g)
+	  }
+	};
 
         make_edge(preds[0], tbb::flow::input_port<0>(node));
         make_edge(preds[1], tbb::flow::input_port<1>(node));
@@ -227,9 +229,11 @@ void test_follows(std::array<MessageType, 3>& messages, ConstructorArgs&&... arg
 
     graph g;
     std::array<PredecessorType, 3> preds = {
-        PredecessorType(g),
-        PredecessorType(g),
-        PredecessorType(g)
+        {
+            PredecessorType(g),
+            PredecessorType(g),
+            PredecessorType(g)
+        }
     };
 
     NodeType node(follows(preds[0], preds[1], preds[2]), std::forward<ConstructorArgs>(args)...);
@@ -247,7 +251,7 @@ void test_precedes(std::vector<MessageType>& messages, ConstructorArgs&&... args
 
     graph g;
 
-    std::array<SuccessorType, 3> successors = { SuccessorType(g), SuccessorType(g), SuccessorType(g) };
+    std::array<SuccessorType, 3> successors = { {SuccessorType(g), SuccessorType(g), SuccessorType(g)} };
 
     NodeType node(precedes(successors[0], successors[1], successors[2]), std::forward<ConstructorArgs>(args)...);
 

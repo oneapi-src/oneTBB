@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2019 Intel Corporation
+    Copyright (c) 2005-2020 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -14,11 +14,8 @@
     limitations under the License.
 */
 
-#include "tbb/tbb_stddef.h" // For correct linking with TBB on Windows
-
-#include "tbb/task_arena.h"
-#include "tbb/task_scheduler_observer.h"
-#include "tbb/tbb_allocator.h"
+#include "../tbb/tbb_assert_impl.h" // Out-of-line TBB assertion handling routines are instantiated here.
+#include "tbb/tbb_stddef.h"
 
 #if _MSC_VER && !__INTEL_COMPILER
 #pragma warning( push )
@@ -82,7 +79,7 @@ public:
             }
         }
 
-        // Fill parameters by stubs if topology parsing brokes.
+        // Fill parameters with stubs if topology parsing is broken.
         if ( initialization_state != topology_loaded ) {
             if ( initialization_state == topology_allocated ) {
                 hwloc_topology_destroy(topology);
@@ -194,7 +191,7 @@ public:
     static void store_current_affinity_mask( affinity_mask current_mask ) {
         assertion_hwloc_wrapper(hwloc_get_cpubind, topology, current_mask, HWLOC_CPUBIND_THREAD);
 
-        hwloc_bitmap_and(current_mask,current_mask, process_cpu_affinity_mask);
+        hwloc_bitmap_and(current_mask, current_mask, process_cpu_affinity_mask);
         __TBB_ASSERT(!hwloc_bitmap_iszero(current_mask),
             "Current affinity mask must intersects with process affinity mask");
     }
@@ -221,21 +218,21 @@ int  platform_topology::numa_nodes_count = 0;
 
 platform_topology::init_stages platform_topology::initialization_state = uninitialized;
 
-class numa_affinity_handler {
+class binding_handler {
     // Following vector saves thread affinity mask on scheduler entry to return it to this thread 
     // on scheduler exit.
     typedef std::vector<platform_topology::affinity_mask> affinity_masks_container;
     affinity_masks_container affinity_backup;
 
 public:
-    numa_affinity_handler( size_t size ) : affinity_backup(size) {
+    binding_handler( size_t size ) : affinity_backup(size) {
         for (affinity_masks_container::iterator it = affinity_backup.begin();
              it != affinity_backup.end(); it++) {
             *it = platform_topology::allocate_process_affinity_mask();
         }
     }
 
-    ~numa_affinity_handler() {
+    ~binding_handler() {
         for (affinity_masks_container::iterator it = affinity_backup.begin();
              it != affinity_backup.end(); it++) {
             platform_topology::free_affinity_mask(*it);
@@ -261,25 +258,6 @@ public:
 
 };
 
-class numa_binding_observer : public tbb::task_scheduler_observer {
-    int my_numa_node_id;
-    numa_affinity_handler numa_handler;
-public:
-    numa_binding_observer( task_arena* ta, int numa_id, int num_slots )
-        : task_scheduler_observer(*ta)
-        , my_numa_node_id(numa_id)
-        , numa_handler(num_slots)
-    {}
-
-    void on_scheduler_entry( bool ) __TBB_override {
-        numa_handler.bind_thread_to_node(this_task_arena::current_thread_index(), my_numa_node_id);
-    }
-
-    void on_scheduler_exit( bool ) __TBB_override {
-        numa_handler.restore_previous_affinity_mask(this_task_arena::current_thread_index());
-    }
-};
-
 extern "C" { // exported to TBB interfaces
 
 void initialize_numa_topology( size_t groups_num,
@@ -288,17 +266,28 @@ void initialize_numa_topology( size_t groups_num,
     platform_topology::fill(nodes_count, indexes_list, concurrency_list);
 }
 
-task_scheduler_observer* subscribe_arena( task_arena* ta, int numa_id, int num_slots ) {
-    task_scheduler_observer* binding_observer = new numa_binding_observer(ta, numa_id, num_slots);
-    __TBB_ASSERT(binding_observer, "Failure during NUMA binding observer allocation and construction");
-    binding_observer->observe(true);
-    return binding_observer;
+binding_handler* allocate_binding_handler(int slot_num) {
+    __TBB_ASSERT(slot_num > 0, "Trying to create numa handler for 0 threads.");
+    return new binding_handler(slot_num);
 }
 
-void unsubscribe_arena( task_scheduler_observer* binding_observer ) {
-    __TBB_ASSERT(binding_observer, "Trying to deallocate NULL pointer");
-    binding_observer->observe(false);
-    delete binding_observer;
+void deallocate_binding_handler(binding_handler* handler_ptr) {
+    __TBB_ASSERT(handler_ptr != NULL, "Trying to deallocate NULL pointer.");
+    delete handler_ptr;
+}
+
+void bind_to_node(binding_handler* handler_ptr, int slot_num, int numa_id) {
+    __TBB_ASSERT(handler_ptr != NULL, "Trying to get access to uninitialized metadata.");
+    __TBB_ASSERT(platform_topology::is_topology_parsed(), "Trying to get access "
+                                                          "to uninitialized platform_topology.");
+    handler_ptr->bind_thread_to_node(slot_num, numa_id);
+}
+
+void restore_affinity(binding_handler* handler_ptr, int slot_num) {
+    __TBB_ASSERT(handler_ptr != NULL, "Trying to get access to uninitialized metadata.");
+    __TBB_ASSERT(platform_topology::is_topology_parsed(), "Trying to get access "
+                                                          "to uninitialized platform_topology.");
+    handler_ptr->restore_previous_affinity_mask(slot_num);
 }
 
 } // extern "C"

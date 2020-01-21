@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2019 Intel Corporation
+    Copyright (c) 2005-2020 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -719,7 +719,7 @@ void test_precedes() {
 void test_follows_and_precedes_api() {
     using multinode = tbb::flow::multifunction_node<int, std::tuple<int, int, int>>;
 
-    std::array<int, 3> messages_for_follows = {0, 1, 2};
+    std::array<int, 3> messages_for_follows = { {0, 1, 2} };
 
     follows_and_precedes_testing::test_follows
         <int, tbb::flow::multifunction_node<int, std::tuple<int, int, int>>>

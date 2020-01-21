@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2019 Intel Corporation
+    Copyright (c) 2005-2020 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -288,12 +288,17 @@ public:
     task_arena(const constraints& constraints_, unsigned reserved_for_masters = 1)
         : task_arena_base(constraints_, reserved_for_masters)
     {}
-#endif /*__TBB_NUMA_SUPPORT*/
 
+    //! Copies settings from another task_arena
+    task_arena(const task_arena &s) // copy settings but not the reference or instance
+        : task_arena_base(constraints(s.my_numa_id, s.my_max_concurrency), s.my_master_slots)
+    {}
+#else
     //! Copies settings from another task_arena
     task_arena(const task_arena &s) // copy settings but not the reference or instance
         : task_arena_base(s.my_max_concurrency, s.my_master_slots)
     {}
+#endif /*__TBB_NUMA_SUPPORT*/
 
     //! Tag class used to indicate the "attaching" constructor
     struct attach {};

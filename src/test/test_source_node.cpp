@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2019 Intel Corporation
+    Copyright (c) 2005-2020 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -450,11 +450,11 @@ void test_follows_and_precedes_api() {
 
     graph g;
 
-    std::array<buffer_node<bool>, 3> successors {
+    std::array<buffer_node<bool>, 3> successors {{
         buffer_node<bool>(g),
-        buffer_node<bool>(g),
-        buffer_node<bool>(g)
-    };
+	    buffer_node<bool>(g),
+	    buffer_node<bool>(g)
+    }};
 
     bool do_try_put = true;
     source_node<bool> src(precedes(successors[0], successors[1], successors[2]), [&](bool& v) -> bool {

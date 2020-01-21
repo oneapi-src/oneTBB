@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2019 Intel Corporation
+    Copyright (c) 2005-2020 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -796,7 +796,6 @@ namespace TestIsolatedExecuteNS {
         tbb::enumerable_thread_specific<Harness::FastRandom>& myRandom;
         tbb::enumerable_thread_specific<int>& myIsolatedLevel;
         int myNestedLevel;
-        bool myHighPriority;
 
         template <typename Partitioner, typename Body>
         static void RunTwoBodies( Harness::FastRandom& rnd, const Body &body, Partitioner& p, tbb::task_group_context* ctx = NULL ) {
@@ -819,7 +818,7 @@ namespace TestIsolatedExecuteNS {
             void operator()() const {
                 RunTwoBodies( myHeavyMixTestBody.myRandom.local(),
                     HeavyMixTestBody( myHeavyMixTestBody.myRandom, myHeavyMixTestBody.myIsolatedLevel,
-                        myHeavyMixTestBody.myNestedLevel + 1, myHeavyMixTestBody.myHighPriority ),
+                        myHeavyMixTestBody.myNestedLevel + 1 ),
                     myPartitioner );
             }
         };
@@ -831,16 +830,16 @@ namespace TestIsolatedExecuteNS {
                 case 0: {
                     // No features
                     tbb::task_group_context ctx;
-                    if ( myHighPriority )
-                        ctx.set_priority( tbb::priority_high );
-                    RunTwoBodies( rnd, HeavyMixTestBody(myRandom, myIsolatedLevel, myNestedLevel + 1, myHighPriority), p, &ctx );
+                    RunTwoBodies( rnd, HeavyMixTestBody(myRandom, myIsolatedLevel, myNestedLevel + 1), p, &ctx );
                     break;
                 }
                 case 1: {
                     // High priority
                     tbb::task_group_context ctx;
+#if __TBB_TASK_PRIORITY
                     ctx.set_priority( tbb::priority_high );
-                    RunTwoBodies( rnd, HeavyMixTestBody(myRandom, myIsolatedLevel, myNestedLevel + 1, true), p, &ctx );
+#endif
+                    RunTwoBodies( rnd, HeavyMixTestBody(myRandom, myIsolatedLevel, myNestedLevel + 1), p, &ctx );
                     break;
                 }
                 case 2: {
@@ -855,9 +854,9 @@ namespace TestIsolatedExecuteNS {
         }
     public:
         HeavyMixTestBody( tbb::enumerable_thread_specific<Harness::FastRandom>& random,
-            tbb::enumerable_thread_specific<int>& isolated_level, int nested_level, bool high_priority )
+            tbb::enumerable_thread_specific<int>& isolated_level, int nested_level )
             : myRandom( random ), myIsolatedLevel( isolated_level )
-            , myNestedLevel( nested_level ), myHighPriority( high_priority ) {}
+            , myNestedLevel( nested_level ) {}
         void operator()() const {
             int &isolated_level = myIsolatedLevel.local();
             ASSERT( myNestedLevel > isolated_level, "The outer-level task should not be stolen on isolated level" );
@@ -887,7 +886,7 @@ namespace TestIsolatedExecuteNS {
         tbb::enumerable_thread_specific<Harness::FastRandom> random( init_random );
         tbb::enumerable_thread_specific<int> isolated_level( 0 );
         for ( int i = 0; i < 5; ++i ) {
-            HeavyMixTestBody b( random, isolated_level, 1, false );
+            HeavyMixTestBody b( random, isolated_level, 1 );
             b( 0 );
             REMARK( "." );
         }

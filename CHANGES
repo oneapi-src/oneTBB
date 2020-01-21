@@ -2,6 +2,24 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 2020 Update 1
+TBB_INTERFACE_VERSION == 11101
+
+Changes (w.r.t. Intel TBB 2020):
+
+Preview features:
+
+- The NUMA support library (tbbbind) no more depends on the main
+    TBB library.
+
+Bugs fixed:
+
+- Fixed the issue of task_arena constraints not propagated on
+    copy construction.
+- Fixed TBBGet.cmake script broken by TBB package name changes
+    (https://github.com/intel/tbb/issues/209).
+
+------------------------------------------------------------------------
 Intel TBB 2020
 TBB_INTERFACE_VERSION == 11100
 

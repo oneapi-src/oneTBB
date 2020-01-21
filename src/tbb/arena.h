@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2019 Intel Corporation
+    Copyright (c) 2005-2020 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -46,6 +46,10 @@ class task_group_context;
 class allocate_root_with_context_proxy;
 
 namespace internal {
+
+#if __TBB_NUMA_SUPPORT
+class numa_binding_observer;
+#endif /*__TBB_NUMA_SUPPORT*/
 
 #if __TBB_PREVIEW_RESUMABLE_TASKS
 //! Bounded coroutines cache LIFO ring buffer
@@ -197,7 +201,7 @@ struct arena_base : padded<intrusive_list_node> {
 
 #if __TBB_NUMA_SUPPORT
     //! Pointer to internal observer that allows to bind threads in arena to certain NUMA node.
-    task_scheduler_observer* my_numa_binding_observer;
+    numa_binding_observer* my_numa_binding_observer;
 #endif /*__TBB_NUMA_SUPPORT*/
 
 #if __TBB_TASK_PRIORITY

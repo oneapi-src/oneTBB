@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2019 Intel Corporation
+    Copyright (c) 2005-2020 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -1602,6 +1602,41 @@ void TestAllocatorTraits() {
 }
 #endif // __TBB_ALLOCATOR_TRAITS_PRESENT
 
+// A test for undocumented member function internal_fast_find
+// which is declared protected in concurrent_hash_map for internal TBB use
+void TestInternalFastFind() {
+    typedef tbb::concurrent_hash_map<int, int> basic_chmap_type;
+    typedef basic_chmap_type::const_pointer const_pointer;
+
+    class chmap : public basic_chmap_type {
+    public:
+        chmap() : basic_chmap_type() {}
+
+        using basic_chmap_type::internal_fast_find;
+    };
+
+    chmap m;
+    int sz = 100;
+
+    for (int i = 0; i != sz; ++i) {
+        m.insert(std::make_pair(i, i * i));
+    }
+    ASSERT(m.size() == 100, "Incorrect concurrent_hash_map size");
+
+    for (int i = 0; i != sz; ++i) {
+        const_pointer res = m.internal_fast_find(i);
+        ASSERT(res != NULL, "Incorrect internal_fast_find return value for existing key");
+        basic_chmap_type::value_type val = *res;
+        ASSERT(val.first == i, "Incorrect key in internal_fast_find return value");
+        ASSERT(val.second == i * i, "Incorrect mapped in internal_fast_find return value");
+    }
+
+    for (int i = sz; i != 2 * sz; ++i) {
+        const_pointer res = m.internal_fast_find(i);
+        ASSERT(res == NULL, "Incorrect internal_fast_find return value for not existing key");
+    }
+}
+
 //------------------------------------------------------------------------
 // Test driver
 //------------------------------------------------------------------------
@@ -1673,5 +1708,6 @@ int TestMain () {
     TestAllocatorTraits();
 #endif
 
+    TestInternalFastFind();
     return Harness::Done;
 }
