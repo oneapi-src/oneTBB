@@ -27,7 +27,7 @@ class MinimalRange {
     size_t begin, end;
     friend class FooBody;
     explicit MinimalRange( size_t i ) : begin(0), end(i) {}
-    friend void Flog( int nthread, bool inteference );
+    friend void Flog( int nthread, bool interference );
 public:
     MinimalRange( MinimalRange& r, tbb::split ) : end(r.end) {
         begin = r.end = (r.begin+r.end)/2;

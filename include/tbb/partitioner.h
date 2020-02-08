@@ -277,7 +277,7 @@ struct adaptive_mode : partition_type_base<Partition> {
 
 //! A helper class to create a proportional_split object for a given type of Range.
 /** If the Range has static boolean constant 'is_splittable_in_proportion' set to 'true',
-    the created object splits a provided value in an implemenation-defined proportion;
+    the created object splits a provided value in an implementation-defined proportion;
     otherwise it represents equal-size split. */
 // TODO: check if this helper can be a nested class of proportional_mode.
 template <typename Range, typename = void>
