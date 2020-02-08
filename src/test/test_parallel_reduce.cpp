@@ -123,7 +123,7 @@ void Flog( int nthread, bool interference=false ) {
         }
         tbb::tick_count T1 = tbb::tick_count::now();
         REMARK("time=%g join_count=%ld ForkCount=%ld nthread=%d%s\n",
-                   (T1-T0).seconds(),join_count,long(ForkCount), nthread, interference ? " with interference":"");
+                   (T1-T0).seconds(), join_count, long(ForkCount), nthread, interference ? " with interference":"");
     }
 }
 
@@ -297,12 +297,12 @@ namespace unsupported {
     void parallel_deterministic_reduce(const Range&, Body&, tbb::affinity_partitioner&) { }
 
     template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation>
-    Value parallel_deterministic_reduce(const Range& , const Value& identity, const RangeOperation& , const BinaryOperation& , const tbb::auto_partitioner&) {
+    Value parallel_deterministic_reduce(const Range&, const Value& identity, const RangeOperation&, const BinaryOperation&, const tbb::auto_partitioner&) {
         return identity;
     }
 
     template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation>
-    Value parallel_deterministic_reduce(const Range& , const Value& identity, const RangeOperation& , const BinaryOperation& , tbb::affinity_partitioner&) {
+    Value parallel_deterministic_reduce(const Range&, const Value& identity, const RangeOperation&, const BinaryOperation&, tbb::affinity_partitioner&) {
         return identity;
     }
 
@@ -373,7 +373,7 @@ void TestDeterministicReductionFor() {
             },
             [](const Type& v1, const Type& v2) -> Type {
                 RotOp op;
-                return op.join(v1,v2);
+                return op.join(v1, v2);
             }
         );
         ASSERT( R1 == R3, "lambda-based parallel_deterministic_reduce behaves differently from run to run" );
