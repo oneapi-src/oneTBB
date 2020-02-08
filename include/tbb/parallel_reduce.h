@@ -292,7 +292,7 @@ namespace internal {
      **/
     /** @ingroup algorithms */
     template<typename Range, typename Value, typename RealBody, typename Reduction>
-    class lambda_reduce_body {
+    class lambda_reduce_body : no_copy {
 
 //FIXME: decide if my_real_body, my_reduction, and identity_element should be copied or referenced
 //       (might require some performance measurements)
@@ -301,19 +301,12 @@ namespace internal {
         const RealBody&  my_real_body;
         const Reduction& my_reduction;
         Value            my_value;
-        lambda_reduce_body& operator= ( const lambda_reduce_body& other );
     public:
         lambda_reduce_body( const Value& identity, const RealBody& body, const Reduction& reduction )
             : identity_element(identity)
             , my_real_body(body)
             , my_reduction(reduction)
             , my_value(identity)
-        { }
-        lambda_reduce_body( const lambda_reduce_body& other )
-            : identity_element(other.identity_element)
-            , my_real_body(other.my_real_body)
-            , my_reduction(other.my_reduction)
-            , my_value(other.my_value)
         { }
         lambda_reduce_body( lambda_reduce_body& other, tbb::split )
             : identity_element(other.identity_element)
