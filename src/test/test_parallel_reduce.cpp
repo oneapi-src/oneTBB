@@ -399,54 +399,52 @@ void test() {
     using namespace test_partitioner_utils::interaction_with_range_and_partitioner;
 
     test_partitioner_utils::DummyReduceBody body;
-    tbb::affinity_partitioner ap;
+    tbb::affinity_partitioner dummy_affinity_partitioner;
 
-    parallel_reduce(Range1(/*assert_in_split*/ true, /*assert_in_proportional_split*/ false), body, ap);
-    parallel_reduce(Range2(true, false), body, ap);
-    parallel_reduce(Range3(true, false), body, ap);
-    parallel_reduce(Range4(false, true), body, ap);
-    parallel_reduce(Range5(false, true), body, ap);
-    parallel_reduce(Range6(false, true), body, ap);
+    // Each Range*() constructor takes assert_in_nonproportional resp. assert_in_proportional boolean arguments.
+    // TODO explain: why are there two arguments if the second is always the opposite of the first?
 
-    parallel_reduce(Range1(/*assert_in_split*/ true, /*assert_in_proportional_split*/ false),
-                           body, tbb::static_partitioner());
-    parallel_reduce(Range2(true, false), body, tbb::static_partitioner());
-    parallel_reduce(Range3(true, false), body, tbb::static_partitioner());
-    parallel_reduce(Range4(false, true), body, tbb::static_partitioner());
-    parallel_reduce(Range5(false, true), body, tbb::static_partitioner());
-    parallel_reduce(Range6(false, true), body, tbb::static_partitioner());
+    parallel_reduce              (Range1(true, false), body, dummy_affinity_partitioner  );
+    parallel_reduce              (Range2(true, false), body, dummy_affinity_partitioner  );
+    parallel_reduce              (Range3(true, false), body, dummy_affinity_partitioner  );
+    parallel_reduce              (Range4(false, true), body, dummy_affinity_partitioner  );
+    parallel_reduce              (Range5(false, true), body, dummy_affinity_partitioner  );
+    parallel_reduce              (Range6(false, true), body, dummy_affinity_partitioner  );
 
-    parallel_reduce(Range1(/*assert_in_split*/ false, /*assert_in_proportional_split*/ true),
-                           body, tbb::simple_partitioner());
-    parallel_reduce(Range2(false, true), body, tbb::simple_partitioner());
-    parallel_reduce(Range3(false, true), body, tbb::simple_partitioner());
-    parallel_reduce(Range4(false, true), body, tbb::simple_partitioner());
-    parallel_reduce(Range5(false, true), body, tbb::simple_partitioner());
-    parallel_reduce(Range6(false, true), body, tbb::simple_partitioner());
+    parallel_reduce              (Range1(true, false), body, tbb::   static_partitioner());
+    parallel_reduce              (Range2(true, false), body, tbb::   static_partitioner());
+    parallel_reduce              (Range3(true, false), body, tbb::   static_partitioner());
+    parallel_reduce              (Range4(false, true), body, tbb::   static_partitioner());
+    parallel_reduce              (Range5(false, true), body, tbb::   static_partitioner());
+    parallel_reduce              (Range6(false, true), body, tbb::   static_partitioner());
 
-    parallel_reduce(Range1(/*assert_in_split*/ false, /*assert_in_proportional_split*/ true),
-                           body, tbb::auto_partitioner());
-    parallel_reduce(Range2(false, true), body, tbb::auto_partitioner());
-    parallel_reduce(Range3(false, true), body, tbb::auto_partitioner());
-    parallel_reduce(Range4(false, true), body, tbb::auto_partitioner());
-    parallel_reduce(Range5(false, true), body, tbb::auto_partitioner());
-    parallel_reduce(Range6(false, true), body, tbb::auto_partitioner());
+    parallel_reduce              (Range1(false, true), body, tbb::   simple_partitioner());
+    parallel_reduce              (Range2(false, true), body, tbb::   simple_partitioner());
+    parallel_reduce              (Range3(false, true), body, tbb::   simple_partitioner());
+    parallel_reduce              (Range4(false, true), body, tbb::   simple_partitioner());
+    parallel_reduce              (Range5(false, true), body, tbb::   simple_partitioner());
+    parallel_reduce              (Range6(false, true), body, tbb::   simple_partitioner());
 
-    parallel_deterministic_reduce(Range1(/*assert_in_split*/true, /*assert_in_proportional_split*/ false),
-                                         body, tbb::static_partitioner());
-    parallel_deterministic_reduce(Range2(true, false), body, tbb::static_partitioner());
-    parallel_deterministic_reduce(Range3(true, false), body, tbb::static_partitioner());
-    parallel_deterministic_reduce(Range4(false, true), body, tbb::static_partitioner());
-    parallel_deterministic_reduce(Range5(false, true), body, tbb::static_partitioner());
-    parallel_deterministic_reduce(Range6(false, true), body, tbb::static_partitioner());
+    parallel_reduce              (Range1(false, true), body, tbb::     auto_partitioner());
+    parallel_reduce              (Range2(false, true), body, tbb::     auto_partitioner());
+    parallel_reduce              (Range3(false, true), body, tbb::     auto_partitioner());
+    parallel_reduce              (Range4(false, true), body, tbb::     auto_partitioner());
+    parallel_reduce              (Range5(false, true), body, tbb::     auto_partitioner());
+    parallel_reduce              (Range6(false, true), body, tbb::     auto_partitioner());
 
-    parallel_deterministic_reduce(Range1(/*assert_in_split*/false, /*assert_in_proportional_split*/ true),
-                                         body, tbb::simple_partitioner());
-    parallel_deterministic_reduce(Range2(false, true), body, tbb::simple_partitioner());
-    parallel_deterministic_reduce(Range3(false, true), body, tbb::simple_partitioner());
-    parallel_deterministic_reduce(Range4(false, true), body, tbb::simple_partitioner());
-    parallel_deterministic_reduce(Range5(false, true), body, tbb::simple_partitioner());
-    parallel_deterministic_reduce(Range6(false, true), body, tbb::simple_partitioner());
+    parallel_deterministic_reduce(Range1(true, false), body, tbb::   static_partitioner());
+    parallel_deterministic_reduce(Range2(true, false), body, tbb::   static_partitioner());
+    parallel_deterministic_reduce(Range3(true, false), body, tbb::   static_partitioner());
+    parallel_deterministic_reduce(Range4(false, true), body, tbb::   static_partitioner());
+    parallel_deterministic_reduce(Range5(false, true), body, tbb::   static_partitioner());
+    parallel_deterministic_reduce(Range6(false, true), body, tbb::   static_partitioner());
+
+    parallel_deterministic_reduce(Range1(false, true), body, tbb::   simple_partitioner());
+    parallel_deterministic_reduce(Range2(false, true), body, tbb::   simple_partitioner());
+    parallel_deterministic_reduce(Range3(false, true), body, tbb::   simple_partitioner());
+    parallel_deterministic_reduce(Range4(false, true), body, tbb::   simple_partitioner());
+    parallel_deterministic_reduce(Range5(false, true), body, tbb::   simple_partitioner());
+    parallel_deterministic_reduce(Range6(false, true), body, tbb::   simple_partitioner());
 }
 
 } // interaction_with_range_and_partitioner
