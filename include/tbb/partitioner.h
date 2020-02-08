@@ -62,10 +62,23 @@
 
 namespace tbb {
 
-class auto_partitioner;
-class simple_partitioner;
-class static_partitioner;
+class     auto_partitioner;
+class   simple_partitioner;
+class   static_partitioner;
 class affinity_partitioner;
+
+//! @cond INTERNAL
+namespace internal {
+    template <typename P, typename T> struct   is_deterministic_partitioner_t                                             ;
+    template <            typename T> struct   is_deterministic_partitioner_t<  simple_partitioner, T> { typedef T type; };
+    template <            typename T> struct   is_deterministic_partitioner_t<  static_partitioner, T> { typedef T type; };
+
+    template <typename P, typename T> struct is_isolated_action_partitioner_t                                             ;
+    template <            typename T> struct is_isolated_action_partitioner_t<    auto_partitioner, T> { typedef T type; };
+    template <            typename T> struct is_isolated_action_partitioner_t<  simple_partitioner, T> { typedef T type; };
+    template <            typename T> struct is_isolated_action_partitioner_t<  static_partitioner, T> { typedef T type; };
+} // namespace internal
+//! @endcond
 
 namespace interface9 {
     namespace internal {

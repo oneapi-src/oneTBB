@@ -353,28 +353,15 @@ namespace internal {
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
 void parallel_reduce( const Range& range, Body& body ) {
-    internal::start_reduce<Range, Body, const __TBB_DEFAULT_PARTITIONER>::run( range, body, __TBB_DEFAULT_PARTITIONER() );
+    parallel_reduce( range, body, __TBB_DEFAULT_PARTITIONER() );
 }
 
-//! Parallel iteration with reduction and simple_partitioner
+//! Parallel iteration with reduction and isolated-action partitioner
 /** @ingroup algorithms **/
-template<typename Range, typename Body>
-void parallel_reduce( const Range& range, Body& body, const simple_partitioner& partitioner ) {
-    internal::start_reduce<Range, Body, const simple_partitioner>::run( range, body, partitioner );
-}
-
-//! Parallel iteration with reduction and auto_partitioner
-/** @ingroup algorithms **/
-template<typename Range, typename Body>
-void parallel_reduce( const Range& range, Body& body, const auto_partitioner& partitioner ) {
-    internal::start_reduce<Range, Body, const auto_partitioner>::run( range, body, partitioner );
-}
-
-//! Parallel iteration with reduction and static_partitioner
-/** @ingroup algorithms **/
-template<typename Range, typename Body>
-void parallel_reduce( const Range& range, Body& body, const static_partitioner& partitioner ) {
-    internal::start_reduce<Range, Body, const static_partitioner>::run( range, body, partitioner );
+template<typename Range, typename Body, typename Partitioner>
+typename internal::is_isolated_action_partitioner_t<Partitioner, void>::type
+parallel_reduce( const Range& range, Body& body, const Partitioner& partitioner ) {
+    internal::start_reduce<Range, Body, const Partitioner>::run( range, body, partitioner );
 }
 
 //! Parallel iteration with reduction and affinity_partitioner
@@ -385,32 +372,20 @@ void parallel_reduce( const Range& range, Body& body, affinity_partitioner& part
 }
 
 #if __TBB_TASK_GROUP_CONTEXT
+
 //! Parallel iteration with reduction, default partitioner and user-supplied context.
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
 void parallel_reduce( const Range& range, Body& body, task_group_context& context ) {
-    internal::start_reduce<Range, Body, const __TBB_DEFAULT_PARTITIONER>::run( range, body, __TBB_DEFAULT_PARTITIONER(), context );
+    parallel_reduce( range, body, __TBB_DEFAULT_PARTITIONER(), context );
 }
 
-//! Parallel iteration with reduction, simple partitioner and user-supplied context.
+//! Parallel iteration with reduction, isolated-action partitioner and user-supplied context
 /** @ingroup algorithms **/
-template<typename Range, typename Body>
-void parallel_reduce( const Range& range, Body& body, const simple_partitioner& partitioner, task_group_context& context ) {
-    internal::start_reduce<Range, Body, const simple_partitioner>::run( range, body, partitioner, context );
-}
-
-//! Parallel iteration with reduction, auto_partitioner and user-supplied context
-/** @ingroup algorithms **/
-template<typename Range, typename Body>
-void parallel_reduce( const Range& range, Body& body, const auto_partitioner& partitioner, task_group_context& context ) {
-    internal::start_reduce<Range, Body, const auto_partitioner>::run( range, body, partitioner, context );
-}
-
-//! Parallel iteration with reduction, static_partitioner and user-supplied context
-/** @ingroup algorithms **/
-template<typename Range, typename Body>
-void parallel_reduce( const Range& range, Body& body, const static_partitioner& partitioner, task_group_context& context ) {
-    internal::start_reduce<Range, Body, const static_partitioner>::run( range, body, partitioner, context );
+template<typename Range, typename Body, typename Partitioner>
+typename internal::is_isolated_action_partitioner_t<Partitioner, void>::type
+parallel_reduce( const Range& range, Body& body, const Partitioner& partitioner, task_group_context& context ) {
+    internal::start_reduce<Range, Body, const Partitioner>::run( range, body, partitioner, context );
 }
 
 //! Parallel iteration with reduction, affinity_partitioner and user-supplied context
@@ -419,6 +394,7 @@ template<typename Range, typename Body>
 void parallel_reduce( const Range& range, Body& body, affinity_partitioner& partitioner, task_group_context& context ) {
     internal::start_reduce<Range, Body, affinity_partitioner>::run( range, body, partitioner, context );
 }
+
 #endif /* __TBB_TASK_GROUP_CONTEXT */
 
 /** parallel_reduce overloads that work with anonymous function objects
@@ -428,43 +404,16 @@ void parallel_reduce( const Range& range, Body& body, affinity_partitioner& part
 /** @ingroup algorithms **/
 template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation>
 Value parallel_reduce( const Range& range, const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation ) {
-    internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation> body(identity, range_operation, binary_operation);
-    internal::start_reduce<Range, internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation>, const __TBB_DEFAULT_PARTITIONER>
-                          ::run(range, body, __TBB_DEFAULT_PARTITIONER() );
-    return body.result();
+    return parallel_reduce( range, identity, range_operation, binary_operation, __TBB_DEFAULT_PARTITIONER() );
 }
 
-//! Parallel iteration with reduction and simple_partitioner.
+//! Parallel iteration with reduction and isolated-action partitioner
 /** @ingroup algorithms **/
-template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation>
-Value parallel_reduce( const Range& range, const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
-                       const simple_partitioner& partitioner ) {
-    internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation> body(identity, range_operation, binary_operation);
-    internal::start_reduce<Range, internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation>, const simple_partitioner>
-                          ::run(range, body, partitioner );
-    return body.result();
-}
-
-//! Parallel iteration with reduction and auto_partitioner
-/** @ingroup algorithms **/
-template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation>
-Value parallel_reduce( const Range& range, const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
-                       const auto_partitioner& partitioner ) {
-    internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation> body(identity, range_operation, binary_operation);
-    internal::start_reduce<Range, internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation>, const auto_partitioner>
-                          ::run( range, body, partitioner );
-    return body.result();
-}
-
-//! Parallel iteration with reduction and static_partitioner
-/** @ingroup algorithms **/
-template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation>
-Value parallel_reduce( const Range& range, const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
-                       const static_partitioner& partitioner ) {
-    internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation> body(identity, range_operation, binary_operation);
-    internal::start_reduce<Range, internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation>, const static_partitioner>
-                                        ::run( range, body, partitioner );
-    return body.result();
+template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation, typename Partitioner>
+typename internal::is_isolated_action_partitioner_t<Partitioner, Value>::type
+parallel_reduce( const Range& range, const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
+                 const Partitioner& partitioner ) {
+    return __TBB_impl_parallel_reduce( range, identity, range_operation, binary_operation, partitioner );
 }
 
 //! Parallel iteration with reduction and affinity_partitioner
@@ -472,55 +421,35 @@ Value parallel_reduce( const Range& range, const Value& identity, const RangeOpe
 template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation>
 Value parallel_reduce( const Range& range, const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
                        affinity_partitioner& partitioner ) {
+    return __TBB_impl_parallel_reduce( range, identity, range_operation, binary_operation, partitioner );
+}
+
+template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation, typename Partitioner>
+Value __TBB_impl_parallel_reduce( const Range& range, const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
+                                  Partitioner& partitioner ) {
     internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation> body(identity, range_operation, binary_operation);
-    internal::start_reduce<Range, internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation>, affinity_partitioner>
-                                        ::run( range, body, partitioner );
+    internal::start_reduce<Range, internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation>, Partitioner>
+                ::run( range, body, partitioner );
     return body.result();
 }
 
 #if __TBB_TASK_GROUP_CONTEXT
+
 //! Parallel iteration with reduction, default partitioner and user-supplied context.
 /** @ingroup algorithms **/
 template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation>
 Value parallel_reduce( const Range& range, const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
                        task_group_context& context ) {
-    internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation> body(identity, range_operation, binary_operation);
-    internal::start_reduce<Range, internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation>, const __TBB_DEFAULT_PARTITIONER>
-                          ::run( range, body, __TBB_DEFAULT_PARTITIONER(), context );
-    return body.result();
+    return parallel_reduce( range, identity, range_operation, binary_operation, __TBB_DEFAULT_PARTITIONER(), context );
 }
 
-//! Parallel iteration with reduction, simple partitioner and user-supplied context.
+//! Parallel iteration with reduction, isolated-action partitioner and user-supplied context
 /** @ingroup algorithms **/
-template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation>
-Value parallel_reduce( const Range& range, const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
-                       const simple_partitioner& partitioner, task_group_context& context ) {
-    internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation> body(identity, range_operation, binary_operation);
-    internal::start_reduce<Range, internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation>, const simple_partitioner>
-                          ::run( range, body, partitioner, context );
-    return body.result();
-}
-
-//! Parallel iteration with reduction, auto_partitioner and user-supplied context
-/** @ingroup algorithms **/
-template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation>
-Value parallel_reduce( const Range& range, const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
-                       const auto_partitioner& partitioner, task_group_context& context ) {
-    internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation> body(identity, range_operation, binary_operation);
-    internal::start_reduce<Range, internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation>, const auto_partitioner>
-                          ::run( range, body, partitioner, context );
-    return body.result();
-}
-
-//! Parallel iteration with reduction, static_partitioner and user-supplied context
-/** @ingroup algorithms **/
-template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation>
-Value parallel_reduce( const Range& range, const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
-                       const static_partitioner& partitioner, task_group_context& context ) {
-    internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation> body(identity, range_operation, binary_operation);
-    internal::start_reduce<Range, internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation>, const static_partitioner>
-                                        ::run( range, body, partitioner, context );
-    return body.result();
+template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation, typename Partitioner>
+typename internal::is_isolated_action_partitioner_t<Partitioner, Value>::type
+parallel_reduce( const Range& range, const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
+                 const Partitioner& partitioner, task_group_context& context ) {
+    return __TBB_impl_parallel_reduce( range, identity, range_operation, binary_operation, partitioner, context );
 }
 
 //! Parallel iteration with reduction, affinity_partitioner and user-supplied context
@@ -528,61 +457,58 @@ Value parallel_reduce( const Range& range, const Value& identity, const RangeOpe
 template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation>
 Value parallel_reduce( const Range& range, const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
                        affinity_partitioner& partitioner, task_group_context& context ) {
+    return __TBB_impl_parallel_reduce( range, identity, range_operation, binary_operation, partitioner, context );
+}
+
+template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation, typename Partitioner>
+Value __TBB_impl_parallel_reduce( const Range& range, const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
+                                  Partitioner& partitioner, task_group_context& context ) {
     internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation> body(identity, range_operation, binary_operation);
-    internal::start_reduce<Range, internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation>, affinity_partitioner>
-                                        ::run( range, body, partitioner, context );
+    internal::start_reduce<Range, internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation>, Partitioner>
+                ::run( range, body, partitioner, context );
     return body.result();
 }
+
 #endif /* __TBB_TASK_GROUP_CONTEXT */
 
-//! Parallel iteration with deterministic reduction and default simple partitioner.
+//! Parallel iteration with deterministic reduction and default simple_partitioner.
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
 void parallel_deterministic_reduce( const Range& range, Body& body ) {
-    internal::start_deterministic_reduce<Range, Body, const simple_partitioner>::run(range, body, simple_partitioner());
+    parallel_deterministic_reduce(range, body, simple_partitioner());
 }
 
-//! Parallel iteration with deterministic reduction and simple partitioner.
+//! Parallel iteration with deterministic reduction and deterministic partitioner.
 /** @ingroup algorithms **/
-template<typename Range, typename Body>
-void parallel_deterministic_reduce( const Range& range, Body& body, const simple_partitioner& partitioner ) {
-    internal::start_deterministic_reduce<Range, Body, const simple_partitioner>::run(range, body, partitioner);
-}
-
-//! Parallel iteration with deterministic reduction and static partitioner.
-/** @ingroup algorithms **/
-template<typename Range, typename Body>
-void parallel_deterministic_reduce( const Range& range, Body& body, const static_partitioner& partitioner ) {
-    internal::start_deterministic_reduce<Range, Body, const static_partitioner>::run(range, body, partitioner);
+template<typename Range, typename Body, typename Partitioner>
+typename internal::is_deterministic_partitioner_t<Partitioner, void>::type
+parallel_deterministic_reduce( const Range& range, Body& body, const Partitioner& partitioner ) {
+    internal::start_deterministic_reduce<Range, Body, const Partitioner>::run(range, body, partitioner);
 }
 
 #if __TBB_TASK_GROUP_CONTEXT
-//! Parallel iteration with deterministic reduction, default simple partitioner and user-supplied context.
+
+//! Parallel iteration with deterministic reduction, default simple_partitioner and user-supplied context.
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
 void parallel_deterministic_reduce( const Range& range, Body& body, task_group_context& context ) {
-    internal::start_deterministic_reduce<Range, Body, const simple_partitioner>::run( range, body, simple_partitioner(), context );
+    parallel_deterministic_reduce( range, body, simple_partitioner(), context );
 }
 
-//! Parallel iteration with deterministic reduction, simple partitioner and user-supplied context.
+//! Parallel iteration with deterministic reduction, deterministic partitioner and user-supplied context.
 /** @ingroup algorithms **/
-template<typename Range, typename Body>
-void parallel_deterministic_reduce( const Range& range, Body& body, const simple_partitioner& partitioner, task_group_context& context ) {
-    internal::start_deterministic_reduce<Range, Body, const simple_partitioner>::run(range, body, partitioner, context);
+template<typename Range, typename Body, typename Partitioner>
+typename internal::is_deterministic_partitioner_t<Partitioner, void>::type
+parallel_deterministic_reduce( const Range& range, Body& body, const Partitioner& partitioner, task_group_context& context ) {
+    internal::start_deterministic_reduce<Range, Body, const Partitioner>::run(range, body, partitioner, context);
 }
 
-//! Parallel iteration with deterministic reduction, static partitioner and user-supplied context.
-/** @ingroup algorithms **/
-template<typename Range, typename Body>
-void parallel_deterministic_reduce( const Range& range, Body& body, const static_partitioner& partitioner, task_group_context& context ) {
-    internal::start_deterministic_reduce<Range, Body, const static_partitioner>::run(range, body, partitioner, context);
-}
 #endif /* __TBB_TASK_GROUP_CONTEXT */
 
 /** parallel_reduce overloads that work with anonymous function objects
     (see also \ref parallel_reduce_lambda_req "requirements on parallel_reduce anonymous function objects"). **/
 
-//! Parallel iteration with deterministic reduction and default simple partitioner.
+//! Parallel iteration with deterministic reduction and default simple_partitioner.
 // TODO: consider making static_partitioner the default
 /** @ingroup algorithms **/
 template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation>
@@ -590,56 +516,41 @@ Value parallel_deterministic_reduce( const Range& range, const Value& identity, 
     return parallel_deterministic_reduce(range, identity, range_operation, binary_operation, simple_partitioner());
 }
 
-//! Parallel iteration with deterministic reduction and simple partitioner.
+//! Parallel iteration with deterministic reduction and deterministic partitioner.
 /** @ingroup algorithms **/
-template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation>
-Value parallel_deterministic_reduce( const Range& range, const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation, const simple_partitioner& partitioner ) {
+template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation, typename Partitioner>
+typename internal::is_deterministic_partitioner_t<Partitioner, Value>::type
+parallel_deterministic_reduce( const Range& range, const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation, const Partitioner& partitioner ) {
     internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation> body(identity, range_operation, binary_operation);
-    internal::start_deterministic_reduce<Range, internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation>, const simple_partitioner>
-                          ::run(range, body, partitioner);
+    internal::start_deterministic_reduce<Range, internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation>, const Partitioner>
+                ::run(range, body, partitioner);
     return body.result();
 }
 
-//! Parallel iteration with deterministic reduction and static partitioner.
-/** @ingroup algorithms **/
-template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation>
-Value parallel_deterministic_reduce( const Range& range, const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation, const static_partitioner& partitioner ) {
-    internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation> body(identity, range_operation, binary_operation);
-    internal::start_deterministic_reduce<Range, internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation>, const static_partitioner>
-        ::run(range, body, partitioner);
-    return body.result();
-}
 #if __TBB_TASK_GROUP_CONTEXT
-//! Parallel iteration with deterministic reduction, default simple partitioner and user-supplied context.
+
+//! Parallel iteration with deterministic reduction, default simple_partitioner and user-supplied context.
 /** @ingroup algorithms **/
 template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation>
 Value parallel_deterministic_reduce( const Range& range, const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
-    task_group_context& context ) {
+                                     task_group_context& context ) {
     return parallel_deterministic_reduce(range, identity, range_operation, binary_operation, simple_partitioner(), context);
 }
 
-//! Parallel iteration with deterministic reduction, simple partitioner and user-supplied context.
+//! Parallel iteration with deterministic reduction, deterministic partitioner and user-supplied context.
 /** @ingroup algorithms **/
-template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation>
-Value parallel_deterministic_reduce( const Range& range, const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
-    const simple_partitioner& partitioner, task_group_context& context ) {
+template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation, typename Partitioner>
+typename internal::is_deterministic_partitioner_t<Partitioner, Value>::type
+parallel_deterministic_reduce( const Range& range, const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
+                               const Partitioner& partitioner, task_group_context& context ) {
     internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation> body(identity, range_operation, binary_operation);
-    internal::start_deterministic_reduce<Range, internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation>, const simple_partitioner>
-        ::run(range, body, partitioner, context);
+    internal::start_deterministic_reduce<Range, internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation>, const Partitioner>
+                ::run(range, body, partitioner, context);
     return body.result();
 }
 
-//! Parallel iteration with deterministic reduction, static partitioner and user-supplied context.
-/** @ingroup algorithms **/
-template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation>
-Value parallel_deterministic_reduce( const Range& range, const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
-    const static_partitioner& partitioner, task_group_context& context ) {
-    internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation> body(identity, range_operation, binary_operation);
-    internal::start_deterministic_reduce<Range, internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation>, const static_partitioner>
-        ::run(range, body, partitioner, context);
-    return body.result();
-}
 #endif /* __TBB_TASK_GROUP_CONTEXT */
+
 //@}
 
 } // namespace tbb
