@@ -316,13 +316,7 @@ namespace unsupported {
 
 }
 
-struct Body {
-    float value;
-    Body() : value(0) {}
-    Body(Body&, tbb::split) { value = 0; }
-    void operator()(const tbb::blocked_range<int>&) {}
-    void join(Body&) {}
-};
+#include "test_partitioner.h"
 
 //! Check that other types of partitioners are not supported (auto, affinity)
 //! In the case of "unsupported" API unexpectedly sneaking into namespace tbb,
@@ -330,7 +324,7 @@ struct Body {
 static void TestUnsupportedPartitioners() {
     using namespace tbb;
     using namespace unsupported;
-    Body body;
+    test_partitioner_utils::DummyReduceBody body;
     parallel_deterministic_reduce(blocked_range<int>(0, 10), body, tbb::auto_partitioner());
 
     tbb::affinity_partitioner ap;
@@ -404,7 +398,6 @@ void TestDeterministicReduction () {
 
 #include "tbb/task_scheduler_init.h"
 #include "harness_cpu.h"
-#include "test_partitioner.h"
 
 namespace interaction_with_range_and_partitioner {
 
@@ -413,7 +406,7 @@ namespace interaction_with_range_and_partitioner {
 void test() {
     using namespace test_partitioner_utils::interaction_with_range_and_partitioner;
 
-    test_partitioner_utils::SimpleReduceBody body;
+    test_partitioner_utils::DummyReduceBody body;
     tbb::affinity_partitioner ap;
 
     parallel_reduce(Range1(/*assert_in_split*/ true, /*assert_in_proportional_split*/ false), body, ap);

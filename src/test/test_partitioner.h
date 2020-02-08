@@ -447,20 +447,20 @@ private:
     }
 };
 
-class SimpleBody {
+class DummyBody {
 public:
-    SimpleBody() { }
+    DummyBody() { }
     template <typename Range>
     void operator()(Range&) const { }
 };
 
-class SimpleReduceBody {
+class DummyReduceBody {
 public:
-    SimpleReduceBody() { }
-    SimpleReduceBody(SimpleReduceBody&, tbb::split) { }
+    DummyReduceBody() { }
+    DummyReduceBody(DummyReduceBody&, tbb::split) { }
     template <typename Range>
     void operator()(Range&) { }
-    void join(SimpleReduceBody&) { }
+    void join(DummyReduceBody&) { }
 };
 
 namespace interaction_with_range_and_partitioner {

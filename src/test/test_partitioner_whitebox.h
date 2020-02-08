@@ -381,7 +381,7 @@ protected:
             Range range = Range(settings.range_begin, range_end, &stat, settings.provide_feedback,
                                 settings.ensure_non_empty_size);
             Partitioner my_partitioner;
-            test_case(range, SimpleBody(), my_partitioner, NULL);
+            test_case(range, DummyBody(), my_partitioner, NULL);
             size_t range_size = range_end - settings.range_begin;
             const char* rangeName = typeid(range).name();
             settings.checker(rangeName, range_size, &settings, stat);
@@ -445,7 +445,7 @@ void check_tree<tbb::static_partitioner>(const test_partitioner_utils::BinaryTre
 template<typename Partitioner>
 void test_task_affinity() {
     using namespace task_affinity_whitebox;
-    test_partitioner_utils::SimpleBody body;
+    test_partitioner_utils::DummyBody body;
     for (size_t p = 1; p <= 50; ++p) {
         g_threadNums.local() = p;
         whitebox_simulation::whitebox_thread_index = 0;

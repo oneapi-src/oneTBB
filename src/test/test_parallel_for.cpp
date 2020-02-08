@@ -445,7 +445,7 @@ namespace interaction_with_range_and_partitioner {
 void test() {
     using namespace test_partitioner_utils::interaction_with_range_and_partitioner;
 
-    test_partitioner_utils::SimpleBody b;
+    test_partitioner_utils::DummyBody b;
     tbb::affinity_partitioner ap;
 
     parallel_for(Range1(true, false), b, ap);
@@ -500,7 +500,7 @@ void test() {
     static const int thread_num = tbb::task_scheduler_init::default_num_threads();
     RangeType range( 0, thread_num, NULL, false, ensure_non_emptiness );
     tbb::affinity_partitioner ap;
-    tbb::parallel_for( range, SimpleBody(), ap );
+    tbb::parallel_for( range, DummyBody(), ap );
 }
 
 } // namespace correctness
@@ -627,7 +627,7 @@ struct ArenaBody {
 
     void operator()() const {
         Partitioner my_partitioner;
-        tbb::parallel_for(BlockedRangeWhitebox(range_begin, range_end), test_partitioner_utils::SimpleBody(), my_partitioner);
+        tbb::parallel_for(BlockedRangeWhitebox(range_begin, range_end), test_partitioner_utils::DummyBody(), my_partitioner);
     }
 };
 
