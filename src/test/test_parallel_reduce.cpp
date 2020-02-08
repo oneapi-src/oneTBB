@@ -20,12 +20,12 @@
 #include "harness_assert.h"
 
 static tbb::atomic<long> ForkCount;
-static tbb::atomic<long> FooBodyCount;
+static tbb::atomic<long> MinimalBodyCount;
 
 //! Class with public interface that is exactly minimal requirements for Range concept
 class MinimalRange {
     size_t begin, end;
-    friend class FooBody;
+    friend class MinimalBody;
     explicit MinimalRange( size_t i ) : begin(0), end(i) {}
     friend void Flog( int nthread, bool interference );
 public:
@@ -37,11 +37,11 @@ public:
 };
 
 //! Class with public interface that is exactly minimal requirements for Body of a parallel_reduce
-class FooBody : tbb::internal::no_copy {
+class MinimalBody : tbb::internal::no_copy {
 private:
     friend void Flog( int nthread, bool interference );
     //! Parent that created this body via split operation.  NULL if original body.
-    FooBody* parent;
+    MinimalBody* parent;
     //! Total number of index values processed by body and its children.
     size_t sum;
     //! Number of join operations done so far on this body and its children.
@@ -52,24 +52,23 @@ private:
     bool is_new;
     //! 1 if body was created by split; 0 if original body.
     int forked;
-    FooBody() {++FooBodyCount;}
+    MinimalBody()
+            : parent(NULL), sum(0), join_count(0), begin(~size_t(0)), end(~size_t(0)), is_new(true), forked(0) {
+        ++MinimalBodyCount;
+    }
 public:
-    ~FooBody() {
+    ~MinimalBody() {
         forked = 0xDEADBEEF;
         sum=0xDEADBEEF;
         join_count=0xDEADBEEF;
-        --FooBodyCount;
+        --MinimalBodyCount;
     }
-    FooBody( FooBody& other, tbb::split ) {
-        ++FooBodyCount;
+    MinimalBody( MinimalBody& other, tbb::split )
+            : parent(&other), sum(0), join_count(0), begin(~size_t(0)), end(~size_t(0)), is_new(true), forked(1) {
+        ++MinimalBodyCount;
         ++ForkCount;
-        sum = 0;
-        parent = &other;
-        join_count = 0;
-        is_new = true;
-        forked = 1;
     }
-    void join( FooBody& s ) {
+    void join( MinimalBody& s ) {
         ASSERT( s.forked==1, NULL );
         ASSERT( this!=&s, NULL );
         ASSERT( this==s.parent, NULL );
@@ -100,34 +99,27 @@ void Flog( int nthread, bool interference=false ) {
         long join_count = 0;
         tbb::affinity_partitioner ap;
         for( size_t i=0; i<=1000; ++i ) {
-            FooBody f;
-            f.sum = 0;
-            f.parent = NULL;
-            f.join_count = 0;
-            f.is_new = true;
-            f.forked = 0;
-            f.begin = ~size_t(0);
-            f.end = ~size_t(0);
-            ASSERT( FooBodyCount==1, NULL );
+            MinimalBody body;
+            ASSERT( MinimalBodyCount==1, NULL );
             switch (mode) {
                 case 0:
-                    tbb::parallel_reduce( MinimalRange(i), f );
+                    tbb::parallel_reduce( MinimalRange(i), body );
                     break;
                 case 1:
-                    tbb::parallel_reduce( MinimalRange(i), f, tbb::simple_partitioner() );
+                    tbb::parallel_reduce( MinimalRange(i), body, tbb::simple_partitioner() );
                     break;
                 case 2:
-                    tbb::parallel_reduce( MinimalRange(i), f, tbb::auto_partitioner() );
+                    tbb::parallel_reduce( MinimalRange(i), body, tbb::auto_partitioner() );
                     break;
                 case 3:
-                    tbb::parallel_reduce( MinimalRange(i), f, ap );
+                    tbb::parallel_reduce( MinimalRange(i), body, ap );
                     break;
             }
-            join_count += f.join_count;
-            ASSERT( FooBodyCount==1, NULL );
-            ASSERT( f.sum==i, NULL );
-            ASSERT( f.begin==(i==0 ? ~size_t(0) : 0), NULL );
-            ASSERT( f.end==(i==0 ? ~size_t(0) : i), NULL );
+            join_count += body.join_count;
+            ASSERT( MinimalBodyCount==1, NULL );
+            ASSERT( body.sum==i, NULL );
+            ASSERT( body.begin==(i==0 ? ~size_t(0) : 0), NULL );
+            ASSERT( body.end==(i==0 ? ~size_t(0) : i), NULL );
         }
         tbb::tick_count T1 = tbb::tick_count::now();
         REMARK("time=%g join_count=%ld ForkCount=%ld nthread=%d%s\n",
