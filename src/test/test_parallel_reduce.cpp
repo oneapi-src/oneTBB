@@ -281,17 +281,17 @@ struct parallel_deterministic_reduce_invoker<Body, harness_default_partitioner> 
 
 template<typename ResultType, typename Partitioner>
 struct parallel_deterministic_reduce_lambda_invoker {
-    template<typename Range, typename Func, typename Reduction>
-    static ResultType run( const Range& range, Func f, Reduction r ) {
-        return tbb::parallel_deterministic_reduce(range, ResultType(), f, r, Partitioner());
+    template<typename Range, typename RangeOperation, typename BinaryOperation>
+    static ResultType run( const Range& range, RangeOperation range_operation, BinaryOperation binary_operation ) {
+        return tbb::parallel_deterministic_reduce(range, ResultType(), range_operation, binary_operation, Partitioner());
     }
 };
 
 template<typename ResultType>
 struct parallel_deterministic_reduce_lambda_invoker<ResultType, harness_default_partitioner> {
-    template<typename Range, typename Func, typename Reduction>
-    static ResultType run(const Range& range, Func f, Reduction r) {
-        return tbb::parallel_deterministic_reduce(range, ResultType(), f, r);
+    template<typename Range, typename RangeOperation, typename BinaryOperation>
+    static ResultType run(const Range& range, RangeOperation range_operation, BinaryOperation binary_operation) {
+        return tbb::parallel_deterministic_reduce(range, ResultType(), range_operation, binary_operation);
     }
 };
 
@@ -304,13 +304,13 @@ namespace unsupported {
     template<typename Range, typename Body>
     void parallel_deterministic_reduce(const Range&, Body&, tbb::affinity_partitioner&) { }
 
-    template<typename Range, typename Value, typename RealBody, typename Reduction>
-    Value parallel_deterministic_reduce(const Range& , const Value& identity, const RealBody& , const Reduction& , const tbb::auto_partitioner&) {
+    template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation>
+    Value parallel_deterministic_reduce(const Range& , const Value& identity, const RangeOperation& , const BinaryOperation& , const tbb::auto_partitioner&) {
         return identity;
     }
 
-    template<typename Range, typename Value, typename RealBody, typename Reduction>
-    Value parallel_deterministic_reduce(const Range& , const Value& identity, const RealBody& , const Reduction& , tbb::affinity_partitioner&) {
+    template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation>
+    Value parallel_deterministic_reduce(const Range& , const Value& identity, const RangeOperation& , const BinaryOperation& , tbb::affinity_partitioner&) {
         return identity;
     }
 
