@@ -46,9 +46,9 @@ namespace internal {
     /** @ingroup algorithms */
     template<typename Body>
     class finish_reduce: public flag_task {
-        //! Pointer to body, or NULL if the left child has not yet finished.
         bool has_right_zombie;
         const reduction_context my_context;
+        //! Pointer to body, or NULL if the left child has not yet finished.
         Body* my_body;
         aligned_space<Body> zombie_space;
         finish_reduce( reduction_context context_ ) :
