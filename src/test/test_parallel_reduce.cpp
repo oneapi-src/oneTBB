@@ -20,6 +20,10 @@
 #include "tbb/atomic.h"
 #include "harness_assert.h"
 
+#if __TBB_CPP11_DECLTYPE_PRESENT && !__TBB_CPP11_LAMBDAS_PRESENT
+#error // semigroup overloads are not getting tested
+#endif
+
 static tbb::atomic<long> ForkCount;
 static tbb::atomic<long> MinimalBodyCount;
 
@@ -191,8 +195,17 @@ void resetCounters() {
     #undef M
 }
 
-const char* const with_function_object   = "function object";
-const char* const with_lambda            = "lambda         ";
+// These possible values for "used_with" in inspectCounters() are used:
+// - as a column in the diagnostic output (==> same length), and
+// - to select specific assertions based on pointer value (==> use only these constants).
+// There is no with_function_object_semigroup because:
+// - with_function_object_monoid is only relevant before C++11,
+// - semigroup support requires at least C++11.
+const char* const with_function_object_monoid = "function monoid   ";
+#if __TBB_CPP11_LAMBDAS_PRESENT // otherwise not used
+const char* const with_lambda_monoid          = "lambda   monoid   ";
+#endif
+const char* const with_lambda_semigroup       = "lambda   semigroup";
 
 // TODO: make member function?
 void inspectCounters(int nthreads, const char* what_partitioner, const char* used_with, std::size_t size) {
@@ -210,8 +223,13 @@ void inspectCounters(int nthreads, const char* what_partitioner, const char* use
 
     // TODO: This assumes copy elision for constructing result in "Accumulated result = tbb::parallel_reduce([...]);",
     //       and maybe other situations as well (?).
+    if (used_with != with_lambda_semigroup) {
     ASSERT( counter_con ==                                  0, NULL ); // ParallelSumTester::I is not involved in the counters
-    ASSERT( counter_cc1 ==                 counter_binary + 1, NULL ); // during lambda_reduce_body split (same number as joins), plus 1 for initial argument
+    ASSERT( counter_cc1 ==                 counter_binary + 1, NULL ); // during reduce_body_lambda_monoid split (same number as joins), plus 1 for initial argument
+    } else {
+    ASSERT( counter_con ==                 counter_binary + 1, NULL ); // once per smallest segment
+    ASSERT( counter_cc1 ==                                  0, NULL ); // this is for semigroups, so...
+    }
 #if TESTING_GUARANTEE_BASED_SIGNATURE
     ASSERT( counter_cc2 ==                                  1, NULL ); // final body.result()
 #if USING_LEFT_PARAMETER_FOR_SUM // advised
@@ -227,11 +245,19 @@ void inspectCounters(int nthreads, const char* what_partitioner, const char* use
     ASSERT( counter_cc2 ==                                  0, NULL );
     ASSERT( counter_ca1 ==                                  0, NULL );
     ASSERT( counter_ca2 ==                                  0, NULL );
+    if (used_with != with_lambda_semigroup) {
     ASSERT( counter_mc  == counter_range + counter_binary + 1, NULL ); // 1 for final body.result()
     ASSERT( counter_ma  == counter_range + counter_binary    , NULL ); // ca1 before C++11, here split into mc and ma
+    } else {
+    ASSERT( counter_mc  == counter_range                     , NULL );
+    ASSERT( counter_ma  ==                 counter_binary    , NULL );
+    }
 #endif // #if TESTING_GUARANTEE_BASED_SIGNATURE
 
     ASSERT( counter_range1 ==              counter_binary + 1, NULL );
+    if (used_with == with_lambda_semigroup) {
+    ASSERT( counter_range2 ==                               0, NULL );
+    }
 
     ASSERT( counter_des == counter_con + counter_cc1 + counter_cc2 + counter_mc, NULL );
 }
@@ -293,7 +319,7 @@ struct Sum {
     }
 };
 
-struct Accumulator {
+struct Accumulator_monoid {
     OPERATION_RESULT_TYPE(Accumulated)
     operator() ( const tbb::blocked_range<ValueType*>& r, OPERATION_PARAMETER_TYPE(Accumulated) value ) const {
         ASSERT(nullptr != r.begin()                     , "");
@@ -315,6 +341,17 @@ struct Accumulator {
     }
 };
 
+//! Like Accumulator_monoid but for semigroup usage (no parameter with initial value).
+struct Accumulator_semigroup {
+    Accumulated operator() ( const tbb::blocked_range<ValueType*>& r ) const {
+        ASSERT(nullptr != r.begin()                     , "");
+        ASSERT(           r.begin() < r.end()           , "");
+        ASSERT(                       r.end() != nullptr, ""); // redundant
+        ++counter_range1;
+        return Accumulated(r, std::accumulate(std::next(r.begin()), r.end(), *r.begin()));
+    }
+};
+
 //! Type-tag for automatic testing algorithm deduction
 struct harness_default_partitioner {};
 
@@ -324,6 +361,7 @@ public:
         : m_nthreads(nthreads)
         , m_array(new ValueType[unsigned(N)])
         , m_range(m_array, m_array + N)
+        , m_empty(m_array, m_array)
     {
         for ( ValueType i = 0; i < N; ++i )
             m_array[i] = i + 1;
@@ -334,57 +372,110 @@ public:
         Partitioner partitioner;
         resetCounters();
         {
-            Accumulated result = tbb::parallel_reduce( m_range, I, Accumulator(), Sum(), partitioner );
+            Accumulated result = tbb::parallel_reduce( m_range, I, Accumulator_monoid(), Sum(), partitioner );
             ASSERT( result.m_range.begin() == m_range.begin() && result.m_range.end() == m_range.end() && result.m_value == R, NULL );
         }
-        inspectCounters(m_nthreads, what_partitioner, with_function_object, m_range.size());
+        inspectCounters(m_nthreads, what_partitioner, with_function_object_monoid, m_range.size());
 #if __TBB_CPP11_LAMBDAS_PRESENT
         resetCounters();
         {
             Accumulated result = tbb::parallel_reduce(
                 m_range, I,
-                [](const tbb::blocked_range<ValueType*>& r, OPERATION_PARAMETER_TYPE(Accumulated) value) {
-                    return Accumulator()(r, tbb::internal::move(value));
+                [](const tbb::blocked_range<ValueType*>& r, OPERATION_PARAMETER_TYPE(Accumulated) value) -> Accumulated {
+                    return Accumulator_monoid()(r, tbb::internal::move(value));
                 },
-                [](OPERATION_PARAMETER_TYPE(Accumulated) v1, OPERATION_PARAMETER_TYPE(Accumulated) v2) {
+                [](OPERATION_PARAMETER_TYPE(Accumulated) v1, OPERATION_PARAMETER_TYPE(Accumulated) v2) -> Accumulated {
                     return Sum()(tbb::internal::move(v1), tbb::internal::move(v2));
                 },
                 partitioner
             );
             ASSERT( result.m_range.begin() == m_range.begin() && result.m_range.end() == m_range.end() && result.m_value == R, NULL );
         }
-        inspectCounters(m_nthreads, what_partitioner, with_lambda, m_range.size());
-#endif /* LAMBDAS */
+        inspectCounters(m_nthreads, what_partitioner, with_lambda_monoid, m_range.size());
+#if __TBB_PARALLEL_REDUCE_PROVIDE_SEMIGROUP_OVERLOADS
+        resetCounters();
+        {
+            Accumulated result = tbb::parallel_reduce1(
+                m_range,
+                [](const tbb::blocked_range<ValueType*>& r) -> Accumulated {
+                    return Accumulator_semigroup()(r);
+                },
+                [](OPERATION_PARAMETER_TYPE(Accumulated) v1, OPERATION_PARAMETER_TYPE(Accumulated) v2) -> Accumulated {
+                    return Sum()(tbb::internal::move(v1), tbb::internal::move(v2));
+                },
+                partitioner
+            );
+            ASSERT( result.m_range.begin() == m_range.begin() && result.m_range.end() == m_range.end() && result.m_value == R, NULL );
+        }
+        inspectCounters(m_nthreads, what_partitioner, with_lambda_semigroup, m_range.size());
+        try {
+            // same call as above, except that the input range is now m_empty instead of m_range
+            Accumulated result = tbb::parallel_reduce1(
+                m_empty,
+                [](const tbb::blocked_range<ValueType*>& r) -> Accumulated {
+                    return Accumulator_semigroup()(r);
+                },
+                [](OPERATION_PARAMETER_TYPE(Accumulated) v1, OPERATION_PARAMETER_TYPE(Accumulated) v2) -> Accumulated {
+                    return Sum()(tbb::internal::move(v1), tbb::internal::move(v2));
+                },
+                partitioner
+            );
+            ASSERT( false, "empty input range without identity argument must throw invalid_argument exception" );
+        } catch (const std::invalid_argument& exception) {
+            // expected
+        } catch (...) {
+            ASSERT( false, "empty input range without identity argument must throw invalid_argument exception" );
+        }
+#endif /* __TBB_PARALLEL_REDUCE_PROVIDE_SEMIGROUP_OVERLOADS */
+#endif /* __TBB_CPP11_LAMBDAS_PRESENT */
     }
     template<>
     void CheckParallelReduce<harness_default_partitioner>(const char* what_partitioner) {
         resetCounters();
         {
-            Accumulated result = tbb::parallel_reduce( m_range, I, Accumulator(), Sum() );
+            Accumulated result = tbb::parallel_reduce( m_range, I, Accumulator_monoid(), Sum() );
             ASSERT( result.m_range.begin() == m_range.begin() && result.m_range.end() == m_range.end() && result.m_value == R, NULL );
         }
-        inspectCounters(m_nthreads, what_partitioner, with_function_object, m_range.size());
+        inspectCounters(m_nthreads, what_partitioner, with_function_object_monoid, m_range.size());
 #if __TBB_CPP11_LAMBDAS_PRESENT
         resetCounters();
         {
             Accumulated result = tbb::parallel_reduce(
                 m_range, I,
-                [](const tbb::blocked_range<ValueType*>& r, OPERATION_PARAMETER_TYPE(Accumulated) value) {
-                    return Accumulator()(r, tbb::internal::move(value));
+                [](const tbb::blocked_range<ValueType*>& r, OPERATION_PARAMETER_TYPE(Accumulated) value) -> Accumulated {
+                    return Accumulator_monoid()(r, tbb::internal::move(value));
                 },
-                [](OPERATION_PARAMETER_TYPE(Accumulated) v1, OPERATION_PARAMETER_TYPE(Accumulated) v2) {
+                [](OPERATION_PARAMETER_TYPE(Accumulated) v1, OPERATION_PARAMETER_TYPE(Accumulated) v2) -> Accumulated {
                     return Sum()(tbb::internal::move(v1), tbb::internal::move(v2));
                 }
             );
             ASSERT( result.m_range.begin() == m_range.begin() && result.m_range.end() == m_range.end() && result.m_value == R, NULL );
         }
-        inspectCounters(m_nthreads, " default partitioner", with_lambda, m_range.size());
-#endif /* LAMBDAS */
+        inspectCounters(m_nthreads, " default partitioner", with_lambda_monoid, m_range.size());
+#if __TBB_PARALLEL_REDUCE_PROVIDE_SEMIGROUP_OVERLOADS
+        resetCounters();
+        {
+            Accumulated result = tbb::parallel_reduce1(
+                m_range,
+                [](const tbb::blocked_range<ValueType*>& r) -> Accumulated {
+                    return Accumulator_semigroup()(r);
+                },
+                [](OPERATION_PARAMETER_TYPE(Accumulated) v1, OPERATION_PARAMETER_TYPE(Accumulated) v2) -> Accumulated {
+                    return Sum()(tbb::internal::move(v1), tbb::internal::move(v2));
+                }
+            );
+            ASSERT( result.m_range.begin() == m_range.begin() && result.m_range.end() == m_range.end() && result.m_value == R, NULL );
+        }
+        inspectCounters(m_nthreads, " default partitioner", with_lambda_semigroup, m_range.size());
+        // TODO: also test empty input range with default partitioner?
+#endif /* __TBB_PARALLEL_REDUCE_PROVIDE_SEMIGROUP_OVERLOADS */
+#endif /* __TBB_CPP11_LAMBDAS_PRESENT */
     }
 private:
     const int m_nthreads;
     ValueType* m_array;
     tbb::blocked_range<ValueType*> m_range;
+    tbb::blocked_range<ValueType*> m_empty;
     static const ValueType N, R;
     static const Accumulated I;
 };
@@ -458,7 +549,7 @@ struct parallel_deterministic_reduce_with_body<Body, harness_default_partitioner
 };
 
 template<typename ResultType, typename Partitioner>
-struct parallel_deterministic_reduce_with_lambda {
+struct parallel_deterministic_reduce_with_lambda_monoid {
     template<typename Range, typename RangeOperation, typename BinaryOperation>
     static ResultType run( const Range& range, RangeOperation range_operation, BinaryOperation binary_operation ) {
         return tbb::parallel_deterministic_reduce(range, ResultType(), range_operation, binary_operation, Partitioner());
@@ -466,12 +557,32 @@ struct parallel_deterministic_reduce_with_lambda {
 };
 
 template<typename ResultType>
-struct parallel_deterministic_reduce_with_lambda<ResultType, harness_default_partitioner> {
+struct parallel_deterministic_reduce_with_lambda_monoid<ResultType, harness_default_partitioner> {
     template<typename Range, typename RangeOperation, typename BinaryOperation>
     static ResultType run(const Range& range, RangeOperation range_operation, BinaryOperation binary_operation) {
         return tbb::parallel_deterministic_reduce(range, ResultType(), range_operation, binary_operation);
     }
 };
+
+#if __TBB_PARALLEL_REDUCE_PROVIDE_SEMIGROUP_OVERLOADS
+
+template<typename ResultType, typename Partitioner>
+struct parallel_deterministic_reduce_with_lambda_semigroup {
+    template<typename Range, typename RangeOperation, typename BinaryOperation>
+    static ResultType run( const Range& range, RangeOperation range_operation, BinaryOperation binary_operation ) {
+        return tbb::parallel_deterministic_reduce1(range, range_operation, binary_operation, Partitioner());
+    }
+};
+
+template<typename ResultType>
+struct parallel_deterministic_reduce_with_lambda_semigroup<ResultType, harness_default_partitioner> {
+    template<typename Range, typename RangeOperation, typename BinaryOperation>
+    static ResultType run(const Range& range, RangeOperation range_operation, BinaryOperation binary_operation) {
+        return tbb::parallel_deterministic_reduce1(range, range_operation, binary_operation);
+    }
+};
+
+#endif /* __TBB_PARALLEL_REDUCE_PROVIDE_SEMIGROUP_OVERLOADS */
 
 //! Define overloads of parallel_deterministic_reduce that accept "undesired" types of partitioners
 //! (they are executed, but the result is ignored).
@@ -493,6 +604,22 @@ namespace unsupported {
         return identity;
     }
 
+#if __TBB_CPP11_DECLTYPE_PRESENT
+
+    template<typename Range, typename RangeOperation, typename BinaryOperation>
+    auto parallel_deterministic_reduce(const Range& range, const RangeOperation& range_operation, const BinaryOperation&, const tbb::auto_partitioner&)
+    -> decltype(range_operation(range)) {
+        return range_operation(range);
+    }
+
+    template<typename Range, typename RangeOperation, typename BinaryOperation>
+    auto parallel_deterministic_reduce(const Range& range, const RangeOperation& range_operation, const BinaryOperation&, tbb::affinity_partitioner&)
+    -> decltype(range_operation(range)) {
+        return range_operation(range);
+    }
+
+#endif /* __TBB_CPP11_DECLTYPE_PRESENT */
+
 }
 
 #include "test_partitioner.h"
@@ -513,26 +640,32 @@ static void TestUnsupportedPartitioners() {
     parallel_deterministic_reduce(
         blocked_range<int>(0, 10),
         0,
-        [](const blocked_range<int>&, int init)->int {
-            return init;
-        },
-        [](int x, int y)->int {
-            return x + y;
-        },
+        [](const blocked_range<int>&, int init)->int { return init; },
+        [](int x, int y)->int { return x + y; },
         tbb::auto_partitioner()
     );
     parallel_deterministic_reduce(
         blocked_range<int>(0, 10),
         0,
-        [](const blocked_range<int>&, int init)->int {
-            return init;
-        },
-        [](int x, int y)->int {
-            return x + y;
-        },
+        [](const blocked_range<int>&, int init)->int { return init; },
+        [](int x, int y)->int { return x + y; },
         ap
     );
-#endif /* LAMBDAS */
+#if __TBB_CPP11_DECLTYPE_PRESENT
+    parallel_deterministic_reduce(
+        blocked_range<int>(0, 10),
+        [](const blocked_range<int>&)->int { return 0; },
+        [](int x, int y)->int { return x + y; },
+        tbb::auto_partitioner()
+    );
+    parallel_deterministic_reduce(
+        blocked_range<int>(0, 10),
+        [](const blocked_range<int>&)->int { return 0; },
+        [](int x, int y)->int { return x + y; },
+        ap
+    );
+#endif /* __TBB_CPP11_DECLTYPE_PRESENT */
+#endif /* __TBB_CPP11_LAMBDAS_PRESENT */
 }
 
 template <class Partitioner>
@@ -548,9 +681,10 @@ void TestDeterministicReductionFor() {
         ASSERT( R1 == R2, "parallel_deterministic_reduce behaves differently from run to run" );
 #if __TBB_CPP11_LAMBDAS_PRESENT
         typedef RotOp::Type Type;
-        Type R3 = parallel_deterministic_reduce_with_lambda<Type, Partitioner>::run(
+        Type R3 = parallel_deterministic_reduce_with_lambda_monoid<Type, Partitioner>::run(
             range,
             [](const tbb::blocked_range<int>& br, Type value) -> Type {
+                ASSERT(value == Type(), NULL); // each subrange is evaluated by its own Body
                 Harness::ConcurrencyTracker ct;
                 for ( int ii = br.begin(); ii != br.end(); ++ii ) {
                     RotOp op;
@@ -564,7 +698,26 @@ void TestDeterministicReductionFor() {
             }
         );
         ASSERT( R1 == R3, "lambda-based parallel_deterministic_reduce behaves differently from run to run" );
-#endif /* LAMBDAS */
+#if __TBB_PARALLEL_REDUCE_PROVIDE_SEMIGROUP_OVERLOADS
+        Type R4 = parallel_deterministic_reduce_with_lambda_semigroup<Type, Partitioner>::run(
+            range,
+            [](const tbb::blocked_range<int>& br) -> Type {
+                Type value = Type(); // see "ASSERT(value == Type(), NULL);" above
+                Harness::ConcurrencyTracker ct;
+                for ( int ii = br.begin(); ii != br.end(); ++ii ) {
+                    RotOp op;
+                    value = op(value, ii);
+                }
+                return value;
+            },
+            [](const Type& v1, const Type& v2) -> Type {
+                RotOp op;
+                return op.join(v1, v2);
+            }
+        );
+        ASSERT( R1 == R4, "lambda-based parallel_deterministic_reduce behaves differently from run to run" );
+#endif /* __TBB_PARALLEL_REDUCE_PROVIDE_SEMIGROUP_OVERLOADS */
+#endif /* __TBB_CPP11_LAMBDAS_PRESENT */
     }
 }
 

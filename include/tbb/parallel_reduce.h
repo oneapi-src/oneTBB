@@ -26,6 +26,9 @@
 #include "partitioner.h"
 #include "tbb_profiling.h"
 
+// Overloads for semigroups are of the form "auto f(...) -> decltype(...)", with "decltype(...)" needed prior to C++14.
+#define __TBB_PARALLEL_REDUCE_PROVIDE_SEMIGROUP_OVERLOADS __TBB_CPP11_DECLTYPE_PRESENT
+
 namespace tbb {
 
 namespace interface9 {
@@ -299,13 +302,14 @@ public:
 namespace internal {
     using interface9::internal::start_reduce;
     using interface9::internal::start_deterministic_reduce;
+
     //! Auxiliary class for parallel_reduce; for internal use only.
     /** The adaptor class that implements \ref parallel_reduce_body_req "parallel_reduce Body"
-        using given \ref parallel_reduce_lambda_req "anonymous function objects".
+        using given \ref parallel_reduce_lambda_req closure objects (or plain functions or function objects).
      **/
     /** @ingroup algorithms */
     template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation>
-    class lambda_reduce_body : no_copy {
+    class reduce_body_lambda_monoid : no_copy {
 
 //FIXME: decide if my_identity, my_range_operation, and my_binary_operation should be copied or referenced
 //       (might require some performance measurements)
@@ -315,13 +319,13 @@ namespace internal {
         const BinaryOperation& my_binary_operation;
         Value                  my_value;
     public:
-        lambda_reduce_body( const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation )
+        reduce_body_lambda_monoid( const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation )
             : my_identity        (identity)
             , my_range_operation (range_operation)
             , my_binary_operation(binary_operation)
             , my_value           (identity)
         { }
-        lambda_reduce_body( lambda_reduce_body& other, tbb::split )
+        reduce_body_lambda_monoid( reduce_body_lambda_monoid& other, tbb::split )
             : my_identity        (other.my_identity)
             , my_range_operation (other.my_range_operation)
             , my_binary_operation(other.my_binary_operation)
@@ -331,7 +335,7 @@ namespace internal {
             // implements part of TBB_PARALLEL_REDUCE_PRE_CPP11_RVALUE_REF_FORM_GUARANTEE
             my_value = my_range_operation(range, tbb::internal::move(my_value));
         }
-        void join( lambda_reduce_body& rhs ) {
+        void join( reduce_body_lambda_monoid& rhs ) {
             // implements part of TBB_PARALLEL_REDUCE_PRE_CPP11_RVALUE_REF_FORM_GUARANTEE
             my_value = my_binary_operation(tbb::internal::move(my_value), tbb::internal::move(rhs.my_value));
         }
@@ -339,6 +343,67 @@ namespace internal {
             return my_value;
         }
     };
+
+#if __TBB_PARALLEL_REDUCE_PROVIDE_SEMIGROUP_OVERLOADS
+
+    // With a Value that is costly to create, it might be more beneficial to use either a plain Body
+    // or an overload with an identity parameter (perhaps even by extending the source domain if needed).
+    // TODO: investigate the circumstances in which this might be so and formulate concrete advice
+
+    //! Auxiliary class for parallel_reduce; for internal use only.
+    /** The adaptor class that implements \ref parallel_reduce_body_req "parallel_reduce Body"
+        using given \ref parallel_reduce_lambda_req closure objects (or plain functions or function objects).
+     **/
+    /** @ingroup algorithms */
+    template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation>
+    class reduce_body_lambda_semigroup : no_copy {
+
+//FIXME: decide if my_range_operation and my_binary_operation should be copied or referenced
+//       (might require some performance measurements)
+
+        const RangeOperation&  my_range_operation;
+        const BinaryOperation& my_binary_operation;
+        Value*                 my_value;
+        aligned_space<Value>   my_value_space;
+    public:
+        reduce_body_lambda_semigroup( const RangeOperation& range_operation, const BinaryOperation& binary_operation )
+            : my_range_operation (range_operation)
+            , my_binary_operation(binary_operation)
+            , my_value           (nullptr)
+        { }
+        reduce_body_lambda_semigroup( reduce_body_lambda_semigroup& other, tbb::split )
+            : my_range_operation (other.my_range_operation)
+            , my_binary_operation(other.my_binary_operation)
+            , my_value           (nullptr)
+        { }
+        ~reduce_body_lambda_semigroup() {
+            if (my_value) my_value->~Value();
+        }
+        void operator()(Range& range) {
+            if (range.empty()) {
+                // TODO: can this happen? could the user have provided a defective Range that causes this?
+                //       should we throw ("fail early"), or defer to my_range_operation to either return identity or throw?
+                throw std::runtime_error("Unexpected: empty range in reduce_body_lambda_semigroup::operator()");
+            } else if (!my_value) {
+                my_value = new( my_value_space.begin() ) Value(my_range_operation(range));
+            } else {
+                *my_value = my_binary_operation(tbb::internal::move(*my_value), my_range_operation(range));
+            }
+        }
+        void join( reduce_body_lambda_semigroup& rhs ) {
+            __TBB_ASSERT(my_value && rhs.my_value, NULL); // TODO: explain, or else test to throw logic_error anyway?
+            *my_value = my_binary_operation(tbb::internal::move(*my_value), tbb::internal::move(*rhs.my_value));
+        }
+        Value& result() {
+            if (my_value) {
+                return *my_value;
+            } else {
+                throw std::invalid_argument("range must not be empty"); // TODO: or rather catch before this adapter is ever invoked?
+            }
+        }
+    };
+
+#endif /* __TBB_PARALLEL_REDUCE_PROVIDE_SEMIGROUP_OVERLOADS */
 
 } // namespace internal
 //! @endcond
@@ -412,7 +477,7 @@ void parallel_reduce( const Range& range, Body& body, affinity_partitioner& part
 
 #endif /* __TBB_TASK_GROUP_CONTEXT */
 
-/** parallel_reduce overloads that work with anonymous function objects
+/** parallel_reduce overloads that work with anonymous function objects with identity parameter
     (see also \ref parallel_reduce_lambda_req "requirements on parallel_reduce anonymous function objects"). **/
 
 //! Parallel iteration with reduction and default partitioner.
@@ -442,8 +507,8 @@ Value parallel_reduce( const Range& range, const Value& identity, const RangeOpe
 template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation, typename Partitioner>
 Value __TBB_impl_parallel_reduce( const Range& range, const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
                                   Partitioner& partitioner ) {
-    internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation> body(identity, range_operation, binary_operation);
-    internal::start_reduce<Range, internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation>, Partitioner>
+    internal::reduce_body_lambda_monoid<Range, Value, RangeOperation, BinaryOperation> body(identity, range_operation, binary_operation);
+    internal::start_reduce<Range, internal::reduce_body_lambda_monoid<Range, Value, RangeOperation, BinaryOperation>, Partitioner>
                 ::run( range, body, partitioner );
     return tbb::internal::move(body.result());
 }
@@ -478,13 +543,109 @@ Value parallel_reduce( const Range& range, const Value& identity, const RangeOpe
 template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation, typename Partitioner>
 Value __TBB_impl_parallel_reduce( const Range& range, const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
                                   Partitioner& partitioner, task_group_context& context ) {
-    internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation> body(identity, range_operation, binary_operation);
-    internal::start_reduce<Range, internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation>, Partitioner>
+    internal::reduce_body_lambda_monoid<Range, Value, RangeOperation, BinaryOperation> body(identity, range_operation, binary_operation);
+    internal::start_reduce<Range, internal::reduce_body_lambda_monoid<Range, Value, RangeOperation, BinaryOperation>, Partitioner>
                 ::run( range, body, partitioner, context );
     return tbb::internal::move(body.result());
 }
 
 #endif /* __TBB_TASK_GROUP_CONTEXT */
+
+#if __TBB_PARALLEL_REDUCE_PROVIDE_SEMIGROUP_OVERLOADS
+
+// TODO: require that both operations return the same type?
+//       or more freely that the return type of range_operation is convertible to the return type of binary_operation,
+//       and then return the type that binary_operation returns?
+
+/** parallel_reduce overloads that work with anonymous function objects without identity parameter
+    (see also \ref parallel_reduce_lambda_req "requirements on parallel_reduce anonymous function objects"). **/
+
+//! Parallel iteration with reduction and default partitioner.
+/** @ingroup algorithms **/
+template<typename Range, typename RangeOperation, typename BinaryOperation>
+auto parallel_reduce1( const Range& range, const RangeOperation& range_operation, const BinaryOperation& binary_operation )
+-> decltype(range_operation(range))
+{
+    return parallel_reduce1( range, range_operation, binary_operation, __TBB_DEFAULT_PARTITIONER() );
+}
+
+//! Parallel iteration with reduction and isolated-action partitioner
+/** @ingroup algorithms **/
+template<typename Range, typename RangeOperation, typename BinaryOperation, typename Partitioner>
+auto parallel_reduce1( const Range& range, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
+                       const Partitioner& partitioner )
+-> typename internal::is_isolated_action_partitioner_t<Partitioner, decltype(range_operation(range))>::type
+{
+    return __TBB_impl_parallel_reduce1( range, range_operation, binary_operation, partitioner );
+}
+
+//! Parallel iteration with reduction and affinity_partitioner
+/** @ingroup algorithms **/
+template<typename Range, typename RangeOperation, typename BinaryOperation>
+auto parallel_reduce1( const Range& range, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
+                       affinity_partitioner& partitioner )
+-> decltype(range_operation(range))
+{
+    return __TBB_impl_parallel_reduce1( range, range_operation, binary_operation, partitioner );
+}
+
+template<typename Range, typename RangeOperation, typename BinaryOperation, typename Partitioner>
+auto __TBB_impl_parallel_reduce1( const Range& range, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
+                                  Partitioner& partitioner )
+-> decltype(range_operation(range))
+{
+    internal::reduce_body_lambda_semigroup<Range, decltype(range_operation(range)), RangeOperation, BinaryOperation> body(range_operation, binary_operation);
+    internal::start_reduce<Range, internal::reduce_body_lambda_semigroup<Range, decltype(range_operation(range)), RangeOperation, BinaryOperation>, Partitioner>
+                ::run( range, body, partitioner );
+    return tbb::internal::move(body.result());
+}
+
+#if __TBB_TASK_GROUP_CONTEXT
+
+//! Parallel iteration with reduction, default partitioner and user-supplied context.
+/** @ingroup algorithms **/
+template<typename Range, typename RangeOperation, typename BinaryOperation>
+auto parallel_reduce1( const Range& range, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
+                       task_group_context& context )
+-> decltype(range_operation(range))
+{
+    return parallel_reduce1( range, range_operation, binary_operation, __TBB_DEFAULT_PARTITIONER(), context );
+}
+
+//! Parallel iteration with reduction, isolated-action partitioner and user-supplied context
+/** @ingroup algorithms **/
+template<typename Range, typename RangeOperation, typename BinaryOperation, typename Partitioner>
+auto parallel_reduce1( const Range& range, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
+                       const Partitioner& partitioner, task_group_context& context )
+-> typename internal::is_isolated_action_partitioner_t<Partitioner, decltype(range_operation(range))>::type
+{
+    return __TBB_impl_parallel_reduce1( range, range_operation, binary_operation, partitioner, context );
+}
+
+//! Parallel iteration with reduction, affinity_partitioner and user-supplied context
+/** @ingroup algorithms **/
+template<typename Range, typename RangeOperation, typename BinaryOperation>
+auto parallel_reduce1( const Range& range, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
+                       affinity_partitioner& partitioner, task_group_context& context )
+-> decltype(range_operation(range))
+{
+    return __TBB_impl_parallel_reduce1( range, range_operation, binary_operation, partitioner, context );
+}
+
+template<typename Range, typename RangeOperation, typename BinaryOperation, typename Partitioner>
+auto __TBB_impl_parallel_reduce1( const Range& range, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
+                                  Partitioner& partitioner, task_group_context& context )
+-> decltype(range_operation(range))
+{
+    internal::reduce_body_lambda_semigroup<Range, decltype(range_operation(range)), RangeOperation, BinaryOperation> body(range_operation, binary_operation);
+    internal::start_reduce<Range, internal::reduce_body_lambda_semigroup<Range, decltype(range_operation(range)), RangeOperation, BinaryOperation>, Partitioner>
+                ::run( range, body, partitioner, context );
+    return tbb::internal::move(body.result());
+}
+
+#endif /* __TBB_TASK_GROUP_CONTEXT */
+
+#endif /* __TBB_PARALLEL_REDUCE_PROVIDE_SEMIGROUP_OVERLOADS */
 
 //! Parallel iteration with deterministic reduction and default simple_partitioner.
 /** @ingroup algorithms **/
@@ -520,7 +681,7 @@ parallel_deterministic_reduce( const Range& range, Body& body, const Partitioner
 
 #endif /* __TBB_TASK_GROUP_CONTEXT */
 
-/** parallel_reduce overloads that work with anonymous function objects
+/** parallel_reduce overloads that work with anonymous function objects with identity parameter
     (see also \ref parallel_reduce_lambda_req "requirements on parallel_reduce anonymous function objects"). **/
 
 //! Parallel iteration with deterministic reduction and default simple_partitioner.
@@ -536,8 +697,8 @@ Value parallel_deterministic_reduce( const Range& range, const Value& identity, 
 template<typename Range, typename Value, typename RangeOperation, typename BinaryOperation, typename Partitioner>
 typename internal::is_deterministic_partitioner_t<Partitioner, Value>::type
 parallel_deterministic_reduce( const Range& range, const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation, const Partitioner& partitioner ) {
-    internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation> body(identity, range_operation, binary_operation);
-    internal::start_deterministic_reduce<Range, internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation>, const Partitioner>
+    internal::reduce_body_lambda_monoid<Range, Value, RangeOperation, BinaryOperation> body(identity, range_operation, binary_operation);
+    internal::start_deterministic_reduce<Range, internal::reduce_body_lambda_monoid<Range, Value, RangeOperation, BinaryOperation>, const Partitioner>
                 ::run(range, body, partitioner);
     return tbb::internal::move(body.result());
 }
@@ -558,13 +719,69 @@ template<typename Range, typename Value, typename RangeOperation, typename Binar
 typename internal::is_deterministic_partitioner_t<Partitioner, Value>::type
 parallel_deterministic_reduce( const Range& range, const Value& identity, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
                                const Partitioner& partitioner, task_group_context& context ) {
-    internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation> body(identity, range_operation, binary_operation);
-    internal::start_deterministic_reduce<Range, internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation>, const Partitioner>
+    internal::reduce_body_lambda_monoid<Range, Value, RangeOperation, BinaryOperation> body(identity, range_operation, binary_operation);
+    internal::start_deterministic_reduce<Range, internal::reduce_body_lambda_monoid<Range, Value, RangeOperation, BinaryOperation>, const Partitioner>
                 ::run(range, body, partitioner, context);
     return tbb::internal::move(body.result());
 }
 
 #endif /* __TBB_TASK_GROUP_CONTEXT */
+
+#if __TBB_PARALLEL_REDUCE_PROVIDE_SEMIGROUP_OVERLOADS
+
+/** parallel_reduce overloads that work with anonymous function objects without identity parameter
+    (see also \ref parallel_reduce_lambda_req "requirements on parallel_reduce anonymous function objects"). **/
+
+//! Parallel iteration with deterministic reduction and default simple_partitioner.
+// TODO: consider making static_partitioner the default
+/** @ingroup algorithms **/
+template<typename Range, typename RangeOperation, typename BinaryOperation>
+auto parallel_deterministic_reduce1( const Range& range, const RangeOperation& range_operation, const BinaryOperation& binary_operation )
+-> decltype(range_operation(range))
+{
+    return parallel_deterministic_reduce1(range, range_operation, binary_operation, simple_partitioner());
+}
+
+//! Parallel iteration with deterministic reduction and deterministic partitioner.
+/** @ingroup algorithms **/
+template<typename Range, typename RangeOperation, typename BinaryOperation, typename Partitioner>
+auto parallel_deterministic_reduce1( const Range& range, const RangeOperation& range_operation, const BinaryOperation& binary_operation, const Partitioner& partitioner )
+-> typename internal::is_deterministic_partitioner_t<Partitioner, decltype(range_operation(range))>::type
+{
+    internal::reduce_body_lambda_semigroup<Range, decltype(range_operation(range)), RangeOperation, BinaryOperation> body(range_operation, binary_operation);
+    internal::start_deterministic_reduce<Range, internal::reduce_body_lambda_semigroup<Range, decltype(range_operation(range)), RangeOperation, BinaryOperation>, const Partitioner>
+                ::run(range, body, partitioner);
+    return tbb::internal::move(body.result());
+}
+
+#if __TBB_TASK_GROUP_CONTEXT
+
+//! Parallel iteration with deterministic reduction, default simple_partitioner and user-supplied context.
+/** @ingroup algorithms **/
+template<typename Range, typename RangeOperation, typename BinaryOperation>
+auto parallel_deterministic_reduce1( const Range& range, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
+                                     task_group_context& context )
+-> decltype(range_operation(range))
+{
+    return parallel_deterministic_reduce1(range, range_operation, binary_operation, simple_partitioner(), context);
+}
+
+//! Parallel iteration with deterministic reduction, deterministic partitioner and user-supplied context.
+/** @ingroup algorithms **/
+template<typename Range, typename RangeOperation, typename BinaryOperation, typename Partitioner>
+auto parallel_deterministic_reduce1( const Range& range, const RangeOperation& range_operation, const BinaryOperation& binary_operation,
+                                     const Partitioner& partitioner, task_group_context& context )
+-> typename internal::is_deterministic_partitioner_t<Partitioner, decltype(range_operation(range))>::type
+{
+    internal::reduce_body_lambda_semigroup<Range, decltype(range_operation(range)), RangeOperation, BinaryOperation> body(range_operation, binary_operation);
+    internal::start_deterministic_reduce<Range, internal::reduce_body_lambda_semigroup<Range, decltype(range_operation(range)), RangeOperation, BinaryOperation>, const Partitioner>
+                ::run(range, body, partitioner, context);
+    return tbb::internal::move(body.result());
+}
+
+#endif /* __TBB_TASK_GROUP_CONTEXT */
+
+#endif /* __TBB_PARALLEL_REDUCE_PROVIDE_SEMIGROUP_OVERLOADS */
 
 //@}
 
