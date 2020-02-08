@@ -282,6 +282,19 @@ public:
 //! @endcond
 } //namespace interfaceX
 
+// Until revoked, this guarantees calls to be of the form "x = binary_operation(std::move(x), std::move(y));"
+// (with x on the left) and "x = range_operation(range, std::move(x));" (or both without std::move() before C++11),
+// allowing the operations to modify the parameter referencing "x" in place and then return it by reference,
+// so that the reduction type (or any of its components) can benefit from elision of any expensive self-assignment,
+// i.e., where the copy assignment operator's implementation is explicitly predicated on "this != &that".
+// For more details about usage and benefits see the unit tests.
+// Usage of this guarantee is deprecated for code that can always rely on C++11 move semantics instead,
+// although code that does use it and that remains under your direct control can probably delay implementation
+// of the alternative until revocation is observed (#else #error).
+// Note that the interface could have allowed to manipulate the argument in-place without returning it,
+// but that's water under the bridge now.
+#define TBB_PARALLEL_REDUCE_PRE_CPP11_RVALUE_REF_FORM_GUARANTEE 1
+
 //! @cond INTERNAL
 namespace internal {
     using interface9::internal::start_reduce;
@@ -315,12 +328,14 @@ namespace internal {
             , my_value           (other.my_identity)
         { }
         void operator()(Range& range) {
-            my_value = my_range_operation(range, const_cast<const Value&>(my_value));
+            // implements part of TBB_PARALLEL_REDUCE_PRE_CPP11_RVALUE_REF_FORM_GUARANTEE
+            my_value = my_range_operation(range, tbb::internal::move(my_value));
         }
         void join( lambda_reduce_body& rhs ) {
-            my_value = my_binary_operation(const_cast<const Value&>(my_value), const_cast<const Value&>(rhs.my_value));
+            // implements part of TBB_PARALLEL_REDUCE_PRE_CPP11_RVALUE_REF_FORM_GUARANTEE
+            my_value = my_binary_operation(tbb::internal::move(my_value), tbb::internal::move(rhs.my_value));
         }
-        Value result() const {
+        Value& result() {
             return my_value;
         }
     };
@@ -430,7 +445,7 @@ Value __TBB_impl_parallel_reduce( const Range& range, const Value& identity, con
     internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation> body(identity, range_operation, binary_operation);
     internal::start_reduce<Range, internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation>, Partitioner>
                 ::run( range, body, partitioner );
-    return body.result();
+    return tbb::internal::move(body.result());
 }
 
 #if __TBB_TASK_GROUP_CONTEXT
@@ -466,7 +481,7 @@ Value __TBB_impl_parallel_reduce( const Range& range, const Value& identity, con
     internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation> body(identity, range_operation, binary_operation);
     internal::start_reduce<Range, internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation>, Partitioner>
                 ::run( range, body, partitioner, context );
-    return body.result();
+    return tbb::internal::move(body.result());
 }
 
 #endif /* __TBB_TASK_GROUP_CONTEXT */
@@ -524,7 +539,7 @@ parallel_deterministic_reduce( const Range& range, const Value& identity, const 
     internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation> body(identity, range_operation, binary_operation);
     internal::start_deterministic_reduce<Range, internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation>, const Partitioner>
                 ::run(range, body, partitioner);
-    return body.result();
+    return tbb::internal::move(body.result());
 }
 
 #if __TBB_TASK_GROUP_CONTEXT
@@ -546,7 +561,7 @@ parallel_deterministic_reduce( const Range& range, const Value& identity, const 
     internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation> body(identity, range_operation, binary_operation);
     internal::start_deterministic_reduce<Range, internal::lambda_reduce_body<Range, Value, RangeOperation, BinaryOperation>, const Partitioner>
                 ::run(range, body, partitioner, context);
-    return body.result();
+    return tbb::internal::move(body.result());
 }
 
 #endif /* __TBB_TASK_GROUP_CONTEXT */

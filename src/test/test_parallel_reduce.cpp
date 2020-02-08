@@ -15,6 +15,7 @@
 */
 
 
+#include <numeric> // std::accumulate()
 #include "tbb/parallel_reduce.h"
 #include "tbb/atomic.h"
 #include "harness_assert.h"
@@ -135,82 +136,270 @@ void Flog( int nthread, bool interference=false ) {
     typedef uint64_t ValueType;
 #endif
 
+// These macros illustrate possible signatures for reduction operations,
+// specifically for those relatively unusual reduction types where the
+// difference with simply returning and taking by value is significant.
+// Currently, not all combinations are tested at the same time: the test relies on
+// herd immunity, so to say, to cover both values of __TBB_CPP11_RVALUE_REF_PRESENT,
+// and the pre-C++11 guarantee-based usage is not tested with a C++11 compiler (TODO?).
+#if !__TBB_CPP11_RVALUE_REF_PRESENT
+#if TBB_PARALLEL_REDUCE_PRE_CPP11_RVALUE_REF_FORM_GUARANTEE
+#define TESTING_GUARANTEE_BASED_SIGNATURE 1
+#else
+#error // time to embrace move semantics
+#endif
+#else
+#define TESTING_GUARANTEE_BASED_SIGNATURE 0
+#endif
+    
+#if TESTING_GUARANTEE_BASED_SIGNATURE
+#define OPERATION_PARAMETER_TYPE(Type)       Type&
+#define    OPERATION_RESULT_TYPE(Type) const Type&
+#else
+#define OPERATION_PARAMETER_TYPE(Type)       Type&&
+#define    OPERATION_RESULT_TYPE(Type)       Type
+#endif
+
+// Only significant with TESTING_GUARANTEE_BASED_SIGNATURE,
+// and just for curiosity's sake (could also be eliminated
+// by choosing the code for value 1 and deleting the rest).
+#define USING_LEFT_PARAMETER_FOR_SUM 1
+
+// Used as: #define M(what) [...] / M_COUNTERS / #undef M
+#define M_COUNTERS                                       \
+  /* object life cycle for Accumulated:               */ \
+  M(con   ) /*      constructor from arguments        */ \
+  M(cc1   ) /* copy-constructor from identity         */ \
+  M(cc2   ) /* copy-constructor from other            */ \
+  M(ca1   ) /* copy-assignment  from itself           */ \
+  M(ca2   ) /* copy-assignment  from another instance */ \
+  M(mc    ) /* move-constructor                       */ \
+  M(ma    ) /* move-assignment                        */ \
+  M(des   ) /*      destructor                        */ \
+  /* algorithm steps for Body:                        */ \
+  M(range1) /*      range       from identity         */ \
+  M(range2) /*      range       from other            */ \
+  M(binary)
+
+#define M(what) tbb::atomic<unsigned long> counter_##what;
+M_COUNTERS
+#undef M
+
+void resetCounters() {
+    #define M(what) counter_##what.store<tbb::relaxed>(0);
+    M_COUNTERS
+    #undef M
+}
+
+const char* const with_function_object   = "function object";
+const char* const with_lambda            = "lambda         ";
+
+// TODO: make member function?
+void inspectCounters(int nthreads, const char* what_partitioner, const char* used_with, std::size_t size) {
+    const unsigned long counter_range =
+        counter_range1.load<tbb::relaxed>() +
+        counter_range2.load<tbb::relaxed>() ;
+
+    // trace counter values:
+    #define M(what) #what "=%3lu "
+    const char* format = "nthreads=%i %s %s:  " M_COUNTERS "(average %g)\n";
+    #undef M
+    #define M(what) counter_##what.load<tbb::relaxed>(),
+    REPORT( format, nthreads, what_partitioner, used_with, M_COUNTERS static_cast<double>(size) / counter_range); // TODO: change to REMARK
+    #undef M
+
+    // TODO: This assumes copy elision for constructing result in "Accumulated result = tbb::parallel_reduce([...]);",
+    //       and maybe other situations as well (?).
+    ASSERT( counter_con ==                                  0, NULL ); // ParallelSumTester::I is not involved in the counters
+    ASSERT( counter_cc1 ==                 counter_binary + 1, NULL ); // during lambda_reduce_body split (same number as joins), plus 1 for initial argument
+#if TESTING_GUARANTEE_BASED_SIGNATURE
+    ASSERT( counter_cc2 ==                                  1, NULL ); // final body.result()
+#if USING_LEFT_PARAMETER_FOR_SUM // advised
+    ASSERT( counter_ca1 == counter_range + counter_binary    , NULL );
+    ASSERT( counter_ca2 ==                                  0, NULL );
+#else // and this is why (even though counter_binary is typically a small fraction of counter_range)
+    ASSERT( counter_ca1 == counter_range                     , NULL );
+    ASSERT( counter_ca2 ==                 counter_binary    , NULL );
+#endif
+    ASSERT( counter_mc  ==                                  0, NULL );
+    ASSERT( counter_ma  ==                                  0, NULL );
+#else // #if TESTING_GUARANTEE_BASED_SIGNATURE
+    ASSERT( counter_cc2 ==                                  0, NULL );
+    ASSERT( counter_ca1 ==                                  0, NULL );
+    ASSERT( counter_ca2 ==                                  0, NULL );
+    ASSERT( counter_mc  == counter_range + counter_binary + 1, NULL ); // 1 for final body.result()
+    ASSERT( counter_ma  == counter_range + counter_binary    , NULL ); // ca1 before C++11, here split into mc and ma
+#endif // #if TESTING_GUARANTEE_BASED_SIGNATURE
+
+    ASSERT( counter_range1 ==              counter_binary + 1, NULL );
+
+    ASSERT( counter_des == counter_con + counter_cc1 + counter_cc2 + counter_mc, NULL );
+}
+
+struct Accumulated {
+    tbb::blocked_range<ValueType*> m_range;
+    ValueType m_value;
+    explicit Accumulated(const tbb::blocked_range<ValueType*>& range, ValueType value) : m_range(range), m_value(value) {
+        ++counter_con;
+    }
+    ~Accumulated() { ++counter_des; }
+    Accumulated           (const Accumulated&  that) : m_range(that.m_range), m_value(that.m_value) {
+        if (m_range.begin() == nullptr && m_range.end() == nullptr && m_value == 0) ++counter_cc1; else ++counter_cc2;
+    }
+    Accumulated& operator=(const Accumulated&  that) {
+        if (this == &that) ++counter_ca1; else ++counter_ca2;
+        this->m_range = that.m_range;
+        this->m_value = that.m_value;
+        return *this;
+    }
+#if __TBB_CPP11_RVALUE_REF_PRESENT
+    Accumulated           (      Accumulated&& that) : m_range(that.m_range), m_value(that.m_value) {
+        ++counter_mc;
+        that.invalidate();
+    }
+    Accumulated& operator=(      Accumulated&& that) {
+        ++counter_ma;
+        ASSERT( this != &that, NULL );
+        this->m_range = that.m_range;
+        this->m_value = that.m_value;
+        that.invalidate();
+        return *this;
+    }
+#endif
+    //! Invalidate after use in move construction/assignment to help detect any continued use after std::move().
+    void invalidate() {
+        m_range = tbb::blocked_range<ValueType*>(reinterpret_cast<ValueType*>(-1), reinterpret_cast<ValueType*>(-1));
+        m_value = static_cast<ValueType>(-1);
+    }
+};
+
 struct Sum {
-    template<typename T>
-    T operator() ( const T& v1, const T& v2 ) const {
-        return v1 + v2;
+    OPERATION_RESULT_TYPE(Accumulated)
+    operator() ( OPERATION_PARAMETER_TYPE(Accumulated) v1, OPERATION_PARAMETER_TYPE(Accumulated) v2 ) const {
+        ++counter_binary;
+        ASSERT(v1.m_range.begin() < v1.m_range.end()                                         , "");
+        ASSERT(                     v1.m_range.end() == v2.m_range.begin()                   , "");
+        ASSERT(                                         v2.m_range.begin() < v2.m_range.end(), "");
+
+#if USING_LEFT_PARAMETER_FOR_SUM
+        v1.m_range = tbb::blocked_range<ValueType*>(v1.m_range.begin(), v2.m_range.end());
+        v1.m_value += v2.m_value;
+        return tbb::internal::move(v1);
+#else
+        v2.m_range = tbb::blocked_range<ValueType*>(v1.m_range.begin(), v2.m_range.end());
+        v2.m_value += v1.m_value;
+        return tbb::internal::move(v2);
+#endif
     }
 };
 
 struct Accumulator {
-    ValueType operator() ( const tbb::blocked_range<ValueType*>& r, ValueType value ) const {
-        for ( ValueType* pv = r.begin(); pv != r.end(); ++pv )
-            value += *pv;
-        return value;
+    OPERATION_RESULT_TYPE(Accumulated)
+    operator() ( const tbb::blocked_range<ValueType*>& r, OPERATION_PARAMETER_TYPE(Accumulated) value ) const {
+        ASSERT(nullptr != r.begin()                     , "");
+        ASSERT(           r.begin() < r.end()           , "");
+        ASSERT(                       r.end() != nullptr, ""); // redundant
+        ASSERT((value.m_range.begin() == nullptr) == (value.m_range.end() == nullptr), "");
+        ASSERT((value.m_range.begin() == nullptr) == (value.m_value       == 0      ), "");
+        if (value.m_range.begin() == nullptr) {
+            ++counter_range1;
+            value.m_range = r;
+        } else {
+            ++counter_range2;
+            ASSERT(value.m_range.begin() < value.m_range.end()             , "");
+            ASSERT(                        value.m_range.end() == r.begin(), "");
+            value.m_range = tbb::blocked_range<ValueType*>(value.m_range.begin(), r.end());
+        }
+        value.m_value = std::accumulate(r.begin(), r.end(), value.m_value);
+        return tbb::internal::move(value);
     }
 };
+
+//! Type-tag for automatic testing algorithm deduction
+struct harness_default_partitioner {};
 
 class ParallelSumTester: public NoAssign {
 public:
-    ParallelSumTester() : m_range(NULL, NULL) {
-        m_array = new ValueType[unsigned(N)];
+    ParallelSumTester(int nthreads)
+        : m_nthreads(nthreads)
+        , m_array(new ValueType[unsigned(N)])
+        , m_range(m_array, m_array + N)
+    {
         for ( ValueType i = 0; i < N; ++i )
             m_array[i] = i + 1;
-        m_range = tbb::blocked_range<ValueType*>( m_array, m_array + N );
     }
     ~ParallelSumTester() { delete[] m_array; }
     template<typename Partitioner>
-    void CheckParallelReduce() {
+    void CheckParallelReduce(const char* what_partitioner) {
         Partitioner partitioner;
-        ValueType r1 = tbb::parallel_reduce( m_range, I, Accumulator(), Sum(), partitioner );
-        ASSERT( r1 == R, NULL );
+        resetCounters();
+        {
+            Accumulated result = tbb::parallel_reduce( m_range, I, Accumulator(), Sum(), partitioner );
+            ASSERT( result.m_range.begin() == m_range.begin() && result.m_range.end() == m_range.end() && result.m_value == R, NULL );
+        }
+        inspectCounters(m_nthreads, what_partitioner, with_function_object, m_range.size());
 #if __TBB_CPP11_LAMBDAS_PRESENT
-        ValueType r2 = tbb::parallel_reduce(
-            m_range, I,
-            [](const tbb::blocked_range<ValueType*>& r, ValueType value) -> ValueType {
-                for ( const ValueType* pv = r.begin(); pv != r.end(); ++pv )
-                    value += *pv;
-                return value;
-            },
-            Sum(),
-            partitioner
-        );
-        ASSERT( r2 == R, NULL );
+        resetCounters();
+        {
+            Accumulated result = tbb::parallel_reduce(
+                m_range, I,
+                [](const tbb::blocked_range<ValueType*>& r, OPERATION_PARAMETER_TYPE(Accumulated) value) {
+                    return Accumulator()(r, tbb::internal::move(value));
+                },
+                [](OPERATION_PARAMETER_TYPE(Accumulated) v1, OPERATION_PARAMETER_TYPE(Accumulated) v2) {
+                    return Sum()(tbb::internal::move(v1), tbb::internal::move(v2));
+                },
+                partitioner
+            );
+            ASSERT( result.m_range.begin() == m_range.begin() && result.m_range.end() == m_range.end() && result.m_value == R, NULL );
+        }
+        inspectCounters(m_nthreads, what_partitioner, with_lambda, m_range.size());
 #endif /* LAMBDAS */
     }
-    void CheckParallelReduceDefault() {
-        ValueType r1 = tbb::parallel_reduce( m_range, I, Accumulator(), Sum() );
-        ASSERT( r1 == R, NULL );
+    template<>
+    void CheckParallelReduce<harness_default_partitioner>(const char* what_partitioner) {
+        resetCounters();
+        {
+            Accumulated result = tbb::parallel_reduce( m_range, I, Accumulator(), Sum() );
+            ASSERT( result.m_range.begin() == m_range.begin() && result.m_range.end() == m_range.end() && result.m_value == R, NULL );
+        }
+        inspectCounters(m_nthreads, what_partitioner, with_function_object, m_range.size());
 #if __TBB_CPP11_LAMBDAS_PRESENT
-        ValueType r2 = tbb::parallel_reduce(
-            m_range, I,
-            [](const tbb::blocked_range<ValueType*>& r, ValueType value) -> ValueType {
-                for ( const ValueType* pv = r.begin(); pv != r.end(); ++pv )
-                    value += *pv;
-                return value;
-            },
-            Sum()
-        );
-        ASSERT( r2 == R, NULL );
+        resetCounters();
+        {
+            Accumulated result = tbb::parallel_reduce(
+                m_range, I,
+                [](const tbb::blocked_range<ValueType*>& r, OPERATION_PARAMETER_TYPE(Accumulated) value) {
+                    return Accumulator()(r, tbb::internal::move(value));
+                },
+                [](OPERATION_PARAMETER_TYPE(Accumulated) v1, OPERATION_PARAMETER_TYPE(Accumulated) v2) {
+                    return Sum()(tbb::internal::move(v1), tbb::internal::move(v2));
+                }
+            );
+            ASSERT( result.m_range.begin() == m_range.begin() && result.m_range.end() == m_range.end() && result.m_value == R, NULL );
+        }
+        inspectCounters(m_nthreads, " default partitioner", with_lambda, m_range.size());
 #endif /* LAMBDAS */
     }
 private:
+    const int m_nthreads;
     ValueType* m_array;
     tbb::blocked_range<ValueType*> m_range;
-    static const ValueType I, N, R;
+    static const ValueType N, R;
+    static const Accumulated I;
 };
 
-const ValueType ParallelSumTester::I = 0;
+const Accumulated ParallelSumTester::I(tbb::blocked_range<ValueType*>(nullptr, nullptr), 0);
 const ValueType ParallelSumTester::N = 1000000;
 const ValueType ParallelSumTester::R = N * (N + 1) / 2;
 
-void ParallelSum () {
-    ParallelSumTester pst;
-    pst.CheckParallelReduceDefault();
-    pst.CheckParallelReduce<tbb::simple_partitioner>();
-    pst.CheckParallelReduce<tbb::auto_partitioner>();
-    pst.CheckParallelReduce<tbb::affinity_partitioner>();
-    pst.CheckParallelReduce<tbb::static_partitioner>();
+void ParallelSum (int nthreads) {
+    ParallelSumTester pst(nthreads);
+    pst.CheckParallelReduce<harness_default_partitioner>(" default partitioner");
+    pst.CheckParallelReduce<tbb::    simple_partitioner>("  simple_partitioner");
+    pst.CheckParallelReduce<tbb::      auto_partitioner>("    auto_partitioner");
+    pst.CheckParallelReduce<tbb::  affinity_partitioner>("affinity_partitioner");
+    pst.CheckParallelReduce<tbb::    static_partitioner>("  static_partitioner");
 }
 
 #include "harness_concurrency_tracker.h"
@@ -248,11 +437,8 @@ struct ReduceBody {
     }
 };
 
-//! Type-tag for automatic testing algorithm deduction
-struct harness_default_partitioner {};
-
 template<typename Body, typename Partitioner>
-struct parallel_deterministic_reduce_invoker {
+struct parallel_deterministic_reduce_with_body {
     template<typename Range>
     static typename Body::result_type run( const Range& range ) {
         Body body;
@@ -262,7 +448,7 @@ struct parallel_deterministic_reduce_invoker {
 };
 
 template<typename Body>
-struct parallel_deterministic_reduce_invoker<Body, harness_default_partitioner> {
+struct parallel_deterministic_reduce_with_body<Body, harness_default_partitioner> {
     template<typename Range>
     static typename Body::result_type run( const Range& range ) {
         Body body;
@@ -272,7 +458,7 @@ struct parallel_deterministic_reduce_invoker<Body, harness_default_partitioner> 
 };
 
 template<typename ResultType, typename Partitioner>
-struct parallel_deterministic_reduce_lambda_invoker {
+struct parallel_deterministic_reduce_with_lambda {
     template<typename Range, typename RangeOperation, typename BinaryOperation>
     static ResultType run( const Range& range, RangeOperation range_operation, BinaryOperation binary_operation ) {
         return tbb::parallel_deterministic_reduce(range, ResultType(), range_operation, binary_operation, Partitioner());
@@ -280,7 +466,7 @@ struct parallel_deterministic_reduce_lambda_invoker {
 };
 
 template<typename ResultType>
-struct parallel_deterministic_reduce_lambda_invoker<ResultType, harness_default_partitioner> {
+struct parallel_deterministic_reduce_with_lambda<ResultType, harness_default_partitioner> {
     template<typename Range, typename RangeOperation, typename BinaryOperation>
     static ResultType run(const Range& range, RangeOperation range_operation, BinaryOperation binary_operation) {
         return tbb::parallel_deterministic_reduce(range, ResultType(), range_operation, binary_operation);
@@ -288,6 +474,7 @@ struct parallel_deterministic_reduce_lambda_invoker<ResultType, harness_default_
 };
 
 //! Define overloads of parallel_deterministic_reduce that accept "undesired" types of partitioners
+//! (they are executed, but the result is ignored).
 namespace unsupported {
 
     template<typename Range, typename Body>
@@ -354,14 +541,14 @@ void TestDeterministicReductionFor() {
     const tbb::blocked_range<int> range(0, N);
     typedef ReduceBody<RotOp> BodyType;
     BodyType::result_type R1 =
-        parallel_deterministic_reduce_invoker<BodyType, Partitioner>::run(range);
+        parallel_deterministic_reduce_with_body<BodyType, Partitioner>::run(range);
     for ( int i=0; i<100; ++i ) {
         BodyType::result_type R2 =
-            parallel_deterministic_reduce_invoker<BodyType, Partitioner>::run(range);
+            parallel_deterministic_reduce_with_body<BodyType, Partitioner>::run(range);
         ASSERT( R1 == R2, "parallel_deterministic_reduce behaves differently from run to run" );
 #if __TBB_CPP11_LAMBDAS_PRESENT
         typedef RotOp::Type Type;
-        Type R3 = parallel_deterministic_reduce_lambda_invoker<Type, Partitioner>::run(
+        Type R3 = parallel_deterministic_reduce_with_lambda<Type, Partitioner>::run(
             range,
             [](const tbb::blocked_range<int>& br, Type value) -> Type {
                 Harness::ConcurrencyTracker ct;
@@ -458,7 +645,7 @@ int TestMain () {
     for( int p=MinThread; p<=MaxThread; ++p ) {
         tbb::task_scheduler_init init( p );
         Flog(p);
-        ParallelSum();
+        ParallelSum(p);
         if ( p>=2 )
             TestDeterministicReduction();
         // Test that all workers sleep when no work
