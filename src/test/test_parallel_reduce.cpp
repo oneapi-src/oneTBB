@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#define COMPILATION_UNIT_TEST_PARALLEL_REDUCE_CPP 1
 
 #include <numeric> // std::accumulate()
 #include "tbb/parallel_reduce.h"
@@ -183,7 +184,8 @@ void Flog( int nthread, bool interference=false ) {
   /* algorithm steps for Body:                        */ \
   M(range1) /*      range       from identity         */ \
   M(range2) /*      range       from other            */ \
-  M(binary)
+  M(binary)                                              \
+  M(aeo   ) /* assignment to empty optional           */
 
 #define M(what) tbb::atomic<unsigned long> counter_##what;
 M_COUNTERS
@@ -249,7 +251,12 @@ void inspectCounters(int nthreads, const char* what_partitioner, const char* use
     ASSERT( counter_mc  == counter_range + counter_binary + 1, NULL ); // 1 for final body.result()
     ASSERT( counter_ma  == counter_range + counter_binary    , NULL ); // ca1 before C++11, here split into mc and ma
     } else {
-    ASSERT( counter_mc  == counter_range                     , NULL );
+#if __TBB_PARALLEL_REDUCE_EXPERIMENTALLY_USE_OPTIONAL == 0
+    ASSERT( counter_aeo == 0                                 , NULL );
+#else
+    ASSERT( counter_aeo >  0                                 , NULL );
+#endif
+    ASSERT( counter_mc  == counter_range + counter_aeo       , NULL );
     ASSERT( counter_ma  ==                 counter_binary    , NULL );
     }
 #endif // #if TESTING_GUARANTEE_BASED_SIGNATURE

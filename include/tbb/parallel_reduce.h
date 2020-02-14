@@ -20,7 +20,20 @@
 #define __TBB_parallel_reduce_H_include_area
 #include "internal/_warning_suppress_enable_notice.h"
 
+// 0: direct use of aligned_space
+// 1: std::optional backported on top of aligned_space (to C++11, already assumed by the relevant code)
+// 2: std::optional
+// Note that, while 1/2 is more elegant than 0, for each contiguous range a placement new is replaced with
+// an assignment to an empty std::optional, at the cost of an extra move-constructor/destructor pair.
+// This means that the caller must provide a suitable type or incur a penalty for non-optimal move-construction,
+// and therefore it seems better to avoid using std::optional.
+// TODO: is this an implementation issue with compiler and/or std::optional, or inevitable?
+#define __TBB_PARALLEL_REDUCE_EXPERIMENTALLY_USE_OPTIONAL 0
+
 #include <new>
+#if __TBB_PARALLEL_REDUCE_EXPERIMENTALLY_USE_OPTIONAL == 2
+#include <optional>
+#endif
 #include "task.h"
 #include "aligned_space.h"
 #include "partitioner.h"
@@ -28,6 +41,10 @@
 
 // Overloads for semigroups are of the form "auto f(...) -> decltype(...)", with "decltype(...)" needed prior to C++14.
 #define __TBB_PARALLEL_REDUCE_PROVIDE_SEMIGROUP_OVERLOADS __TBB_CPP11_DECLTYPE_PRESENT
+
+#if COMPILATION_UNIT_TEST_PARALLEL_REDUCE_CPP
+extern tbb::atomic<unsigned long> counter_aeo;
+#endif
 
 namespace tbb {
 
@@ -350,6 +367,42 @@ namespace internal {
     // or an overload with an identity parameter (perhaps even by extending the source domain if needed).
     // TODO: investigate the circumstances in which this might be so and formulate concrete advice
 
+#if __TBB_PARALLEL_REDUCE_EXPERIMENTALLY_USE_OPTIONAL == 1
+    // backported std::optional (only the features that are actually used)
+    template<typename Value>
+    class __TBB_optional : internal::no_copy {
+        Value*               my_value;
+        aligned_space<Value> my_value_space;
+    public:
+        __TBB_optional() : my_value(nullptr) {}
+        ~__TBB_optional() {
+            if (my_value) {
+                my_value->~Value();
+            } else {
+                __TBB_ASSERT(false, NULL); // in this context, all instances happen to be assigned to
+            }
+        }
+        __TBB_optional& operator=(Value&& value) {
+            if (my_value) {
+                __TBB_ASSERT(false, NULL); // in this context, all assignments happen to be to empty instances...
+                my_value->~Value(); // ...but otherwise this would be necessary and sufficient
+            }
+            my_value = new( my_value_space.begin() ) Value(std::move(value));
+            return *this;
+        }
+        Value& operator*() {
+            // TODO: test "my_value != nullptr"?
+            return *my_value;
+        }
+        operator bool() const {
+            return my_value != nullptr;
+        }
+    };
+#elif __TBB_PARALLEL_REDUCE_EXPERIMENTALLY_USE_OPTIONAL == 2
+    template<typename T>
+    using __TBB_optional = std::optional<T>;
+#endif
+
     //! Auxiliary class for parallel_reduce; for internal use only.
     /** The adaptor class that implements \ref parallel_reduce_body_req "parallel_reduce Body"
         using given \ref parallel_reduce_lambda_req closure objects (or plain functions or function objects).
@@ -363,21 +416,27 @@ namespace internal {
 
         const RangeOperation&  my_range_operation;
         const BinaryOperation& my_binary_operation;
+        #if !__TBB_PARALLEL_REDUCE_EXPERIMENTALLY_USE_OPTIONAL
         Value*                 my_value;
         aligned_space<Value>   my_value_space;
+        #else
+        __TBB_optional<Value>  my_value;
+        #endif
     public:
         reduce_body_lambda_semigroup( const RangeOperation& range_operation, const BinaryOperation& binary_operation )
             : my_range_operation (range_operation)
             , my_binary_operation(binary_operation)
-            , my_value           (nullptr)
+            , my_value           () // nullptr/nullopt
         { }
         reduce_body_lambda_semigroup( reduce_body_lambda_semigroup& other, tbb::split )
             : my_range_operation (other.my_range_operation)
             , my_binary_operation(other.my_binary_operation)
-            , my_value           (nullptr)
+            , my_value           () // nullptr/nullopt
         { }
         ~reduce_body_lambda_semigroup() {
+            #if !__TBB_PARALLEL_REDUCE_EXPERIMENTALLY_USE_OPTIONAL
             if (my_value) my_value->~Value();
+            #endif
         }
         void operator()(Range& range) {
             if (range.empty()) {
@@ -385,7 +444,14 @@ namespace internal {
                 //       should we throw ("fail early"), or defer to my_range_operation to either return identity or throw?
                 throw std::runtime_error("Unexpected: empty range in reduce_body_lambda_semigroup::operator()");
             } else if (!my_value) {
+                #if !__TBB_PARALLEL_REDUCE_EXPERIMENTALLY_USE_OPTIONAL
                 my_value = new( my_value_space.begin() ) Value(my_range_operation(range));
+                #else
+                #if COMPILATION_UNIT_TEST_PARALLEL_REDUCE_CPP
+                ++counter_aeo;
+                #endif
+                my_value =                                     my_range_operation(range) ;
+                #endif
             } else {
                 *my_value = my_binary_operation(tbb::internal::move(*my_value), my_range_operation(range));
             }
