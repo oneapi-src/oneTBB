@@ -26,29 +26,29 @@ default: tbb tbbmalloc $(if $(use_proxy),tbbproxy)
 all: tbb tbbmalloc tbbproxy test examples
 
 tbb: mkdir
-	$(MAKE) -C "$(work_dir)_release"  -r -f $(tbb_root)/build/Makefile.tbb cfg=release
+	$(MAKE) -C "$(work_dir)_$(cfg)"  -r -f $(tbb_root)/build/Makefile.tbb cfg=$(cfg)
 
 tbbmalloc: mkdir
-	$(MAKE) -C "$(work_dir)_release"  -r -f $(tbb_root)/build/Makefile.tbbmalloc cfg=release malloc
+	$(MAKE) -C "$(work_dir)_$(cfg)"  -r -f $(tbb_root)/build/Makefile.tbbmalloc cfg=$(cfg) malloc
 
 tbbproxy: mkdir
-	$(MAKE) -C "$(work_dir)_release"  -r -f $(tbb_root)/build/Makefile.tbbproxy cfg=release tbbproxy
+	$(MAKE) -C "$(work_dir)_$(cfg)"  -r -f $(tbb_root)/build/Makefile.tbbproxy cfg=$(cfg) tbbproxy
 
 tbbbind: mkdir
-	$(MAKE) -C "$(work_dir)_release"  -r -f $(tbb_root)/build/Makefile.tbbbind cfg=release tbbbind
+	$(MAKE) -C "$(work_dir)_$(cfg)"  -r -f $(tbb_root)/build/Makefile.tbbbind cfg=$(cfg) tbbbind
 
 test: tbb tbbmalloc $(if $(use_proxy),tbbproxy)
-	-$(MAKE) -C "$(work_dir)_release"  -r -f $(tbb_root)/build/Makefile.tbbmalloc cfg=release malloc_test
-	-$(MAKE) -C "$(work_dir)_release"  -r -f $(tbb_root)/build/Makefile.test cfg=release
+	-$(MAKE) -C "$(work_dir)_$(cfg)"  -r -f $(tbb_root)/build/Makefile.tbbmalloc cfg=$(cfg) malloc_test
+	-$(MAKE) -C "$(work_dir)_$(cfg)"  -r -f $(tbb_root)/build/Makefile.test cfg=$(cfg)
 
 rml: mkdir
-	$(MAKE) -C "$(work_dir)_release"  -r -f $(tbb_root)/build/Makefile.rml cfg=release
+	$(MAKE) -C "$(work_dir)_$(cfg)"  -r -f $(tbb_root)/build/Makefile.rml cfg=$(cfg)
 
 examples: tbb tbbmalloc
-	$(MAKE) -C examples -r -f Makefile tbb_root=.. release test
+	$(MAKE) -C examples -r -f Makefile tbb_root=.. $(cfg) test
 
 python: tbb
-	$(MAKE) -C "$(work_dir)_release" -rf $(tbb_root)/python/Makefile install
+	$(MAKE) -C "$(work_dir)_$(cfg)" -rf $(tbb_root)/python/Makefile install
 
 doxygen:
 	doxygen Doxyfile
@@ -56,16 +56,16 @@ doxygen:
 .PHONY: clean clean_examples mkdir info
 
 clean: clean_examples
-	$(shell $(RM) $(work_dir)_release$(SLASH)*.* >$(NUL) 2>$(NUL))
-	$(shell $(RD) $(work_dir)_release >$(NUL) 2>$(NUL))
+	$(shell $(RM) $(work_dir)_$(cfg)$(SLASH)*.* >$(NUL) 2>$(NUL))
+	$(shell $(RD) $(work_dir)_$(cfg) >$(NUL) 2>$(NUL))
 	@echo clean done
 
 clean_examples:
 	$(shell $(MAKE) -s -i -r -C examples -f Makefile tbb_root=.. clean >$(NUL) 2>$(NUL))
 
 mkdir:
-	$(shell $(MD) "$(work_dir)_release" >$(NUL) 2>$(NUL))
-	@echo Created the $(work_dir)_release directory
+	$(shell $(MD) "$(work_dir)_$(cfg)" >$(NUL) 2>$(NUL))
+	@echo Created the $(work_dir)_$(cfg) directory
 
 info:
 	@echo OS: $(tbb_os)
