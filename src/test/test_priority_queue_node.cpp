@@ -16,9 +16,8 @@
 
 // TO DO: Add overlapping put / receive tests
 
-#if __TBB_CPF_BUILD
-#define TBB_DEPRECATED_FLOW_NODE_EXTRACTION 1
-#endif
+#define TBB_DEPRECATED_FLOW_NODE_EXTRACTION __TBB_CPF_BUILD
+#define TBB_DEPRECATED_FLOW_NODE_ALLOCATOR __TBB_CPF_BUILD
 
 #include "harness.h"
 
@@ -374,6 +373,13 @@ void test_deduction_guides() {
 }
 #endif
 
+#if TBB_DEPRECATED_FLOW_NODE_ALLOCATOR
+void test_node_allocator() {
+    tbb::flow::graph g;
+    tbb::flow::priority_queue_node< int, std::less<int>, std::allocator<int> > tmp(g);
+}
+#endif
+
 int TestMain() {
     tbb::tick_count start = tbb::tick_count::now(), stop;
     for (int p = 2; p <= 4; ++p) {
@@ -388,14 +394,17 @@ int TestMain() {
     REMARK("Testing resets\n");
     test_resets<int,tbb::flow::priority_queue_node<int> >();
     test_resets<float,tbb::flow::priority_queue_node<float> >();
-#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
-    test_buffer_extract<tbb::flow::priority_queue_node<int> >().run_tests();
-#endif
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
     test_follows_and_precedes_api();
 #endif
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
     test_deduction_guides();
+#endif
+#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
+    test_buffer_extract<tbb::flow::priority_queue_node<int> >().run_tests();
+#endif
+#if TBB_DEPRECATED_FLOW_NODE_ALLOCATOR
+    test_node_allocator();
 #endif
     return Harness::Done;
 }

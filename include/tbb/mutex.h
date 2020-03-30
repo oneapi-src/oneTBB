@@ -46,7 +46,7 @@ namespace tbb {
 
 //! Wrapper around the platform's native lock.
 /** @ingroup synchronization */
-class __TBB_DEPRECATED_VERBOSE_MSG("tbb::critical_section is deprecated, use std::mutex") mutex : internal::mutex_copy_deprecated_and_disabled {
+class __TBB_DEPRECATED_IN_VERBOSE_MODE_MSG("tbb::critical_section is deprecated, use std::mutex") mutex : internal::mutex_copy_deprecated_and_disabled {
 public:
     //! Construct unacquired mutex.
     mutex() {

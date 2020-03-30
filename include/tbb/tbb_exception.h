@@ -188,7 +188,7 @@ public:
     algorithm ) if an unhandled exception was intercepted during the algorithm execution in one
     of the workers.
     \sa tbb::tbb_exception **/
-class __TBB_DEPRECATED captured_exception : public tbb_exception
+class __TBB_DEPRECATED_IN_VERBOSE_MODE captured_exception : public tbb_exception
 {
 public:
     captured_exception( const captured_exception& src )

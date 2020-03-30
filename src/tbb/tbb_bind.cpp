@@ -42,31 +42,46 @@ namespace internal {
 class platform_topology {
     friend class numa_affinity_handler;
 
-    static hwloc_topology_t topology;
-    static hwloc_cpuset_t   process_cpu_affinity_mask;
-    static hwloc_nodeset_t  process_node_affinity_mask;
-    static std::vector<hwloc_cpuset_t>  affinity_masks_list;
+    // TODO: add the `my_` prefix to the members
+    hwloc_topology_t topology;
+    hwloc_cpuset_t   process_cpu_affinity_mask;
+    hwloc_nodeset_t  process_node_affinity_mask;
+    std::vector<hwloc_cpuset_t>  affinity_masks_list;
 
-    static std::vector<int> default_concurrency_list;
-    static std::vector<int> numa_indexes_list;
-    static int  numa_nodes_count;
+    std::vector<int> default_concurrency_list;
+    std::vector<int> numa_indexes_list;
+    int  numa_nodes_count;
 
-    enum init_stages { uninitialized, started, topology_allocated, topology_loaded, topology_parsed };
-    static init_stages initialization_state;
+    enum init_stages { uninitialized,
+                       started,
+                       topology_allocated,
+                       topology_loaded,
+                       topology_parsed } initialization_state;
 
     // Binding threads to NUMA nodes that locates in another Windows Processor groups
     // is allowed only if machine topology contains several Windows Processors groups
     // and process affinity mask wasn`t limited manually (affinity mask cannot violates
     // processors group boundaries).
-    static bool intergroup_binding_allowed(size_t groups_num) { return groups_num > 1; }
+    bool intergroup_binding_allowed(size_t groups_num) { return groups_num > 1; }
+
+    platform_topology() : topology(NULL),
+                          process_cpu_affinity_mask(NULL),
+                          process_node_affinity_mask(NULL),
+                          numa_nodes_count(0),
+                          initialization_state(uninitialized) {}
 
 public:
     typedef hwloc_cpuset_t             affinity_mask;
     typedef hwloc_const_cpuset_t const_affinity_mask;
 
-    static bool is_topology_parsed() { return initialization_state == topology_parsed; }
+    static platform_topology& instance() {
+        static platform_topology topology;
+        return topology;
+    }
 
-    static void initialize( size_t groups_num ) {
+    bool is_topology_parsed() { return initialization_state == topology_parsed; }
+
+    void initialize( size_t groups_num ) {
         if ( initialization_state != uninitialized )
             return;
         initialization_state = started;
@@ -172,23 +187,23 @@ public:
         initialization_state = uninitialized;
     }
 
-    static void fill(int& nodes_count, int*& indexes_list, int*& concurrency_list ) {
+    void fill(int& nodes_count, int*& indexes_list, int*& concurrency_list ) {
         __TBB_ASSERT(is_topology_parsed(), "Trying to get access to uninitialized platform_topology");
         nodes_count = numa_nodes_count;
         indexes_list = &numa_indexes_list.front();
         concurrency_list = &default_concurrency_list.front();
     }
 
-    static affinity_mask allocate_process_affinity_mask() {
+    affinity_mask allocate_process_affinity_mask() {
         __TBB_ASSERT(is_topology_parsed(), "Trying to get access to uninitialized platform_topology");
         return hwloc_bitmap_dup(process_cpu_affinity_mask);
     }
 
-    static void free_affinity_mask( affinity_mask mask_to_free ) {
+    void free_affinity_mask( affinity_mask mask_to_free ) {
         hwloc_bitmap_free(mask_to_free); // If bitmap is NULL, no operation is performed.
     }
 
-    static void store_current_affinity_mask( affinity_mask current_mask ) {
+    void store_current_affinity_mask( affinity_mask current_mask ) {
         assertion_hwloc_wrapper(hwloc_get_cpubind, topology, current_mask, HWLOC_CPUBIND_THREAD);
 
         hwloc_bitmap_and(current_mask, current_mask, process_cpu_affinity_mask);
@@ -196,27 +211,16 @@ public:
             "Current affinity mask must intersects with process affinity mask");
     }
 
-    static void set_new_affinity_mask( const_affinity_mask new_mask ) {
+    void set_new_affinity_mask( const_affinity_mask new_mask ) {
         assertion_hwloc_wrapper(hwloc_set_cpubind, topology, new_mask, HWLOC_CPUBIND_THREAD);
     }
 
-    static const_affinity_mask get_node_affinity_mask( int node_index ) {
+    const_affinity_mask get_node_affinity_mask( int node_index ) {
         __TBB_ASSERT((int)affinity_masks_list.size() > node_index,
             "Trying to get affinity mask for uninitialized NUMA node");
         return affinity_masks_list[node_index];
     }
 };
-
-hwloc_topology_t platform_topology::topology = NULL;
-hwloc_cpuset_t   platform_topology::process_cpu_affinity_mask = NULL;
-hwloc_nodeset_t  platform_topology::process_node_affinity_mask = NULL;
-std::vector<hwloc_cpuset_t>  platform_topology::affinity_masks_list;
-
-std::vector<int> platform_topology::default_concurrency_list;
-std::vector<int> platform_topology::numa_indexes_list;
-int  platform_topology::numa_nodes_count = 0;
-
-platform_topology::init_stages platform_topology::initialization_state = uninitialized;
 
 class binding_handler {
     // Following vector saves thread affinity mask on scheduler entry to return it to this thread 
@@ -228,32 +232,32 @@ public:
     binding_handler( size_t size ) : affinity_backup(size) {
         for (affinity_masks_container::iterator it = affinity_backup.begin();
              it != affinity_backup.end(); it++) {
-            *it = platform_topology::allocate_process_affinity_mask();
+            *it = platform_topology::instance().allocate_process_affinity_mask();
         }
     }
 
     ~binding_handler() {
         for (affinity_masks_container::iterator it = affinity_backup.begin();
              it != affinity_backup.end(); it++) {
-            platform_topology::free_affinity_mask(*it);
+            platform_topology::instance().free_affinity_mask(*it);
         }
     }
 
     void bind_thread_to_node( unsigned slot_num, unsigned numa_node_id ) {
         __TBB_ASSERT(slot_num < affinity_backup.size(),
             "The slot number is greater than the number of slots in the arena");
-        __TBB_ASSERT(platform_topology::is_topology_parsed(),
+        __TBB_ASSERT(platform_topology::instance().is_topology_parsed(),
             "Trying to get access to uninitialized platform_topology");
-        platform_topology::store_current_affinity_mask(affinity_backup[slot_num]);
+        platform_topology::instance().store_current_affinity_mask(affinity_backup[slot_num]);
 
-        platform_topology::set_new_affinity_mask(
-            platform_topology::get_node_affinity_mask(numa_node_id));
+        platform_topology::instance().set_new_affinity_mask(
+            platform_topology::instance().get_node_affinity_mask(numa_node_id));
     }
 
     void restore_previous_affinity_mask( unsigned slot_num ) {
-        __TBB_ASSERT(platform_topology::is_topology_parsed(),
+        __TBB_ASSERT(platform_topology::instance().is_topology_parsed(),
             "Trying to get access to uninitialized platform_topology");
-        platform_topology::set_new_affinity_mask(affinity_backup[slot_num]);
+        platform_topology::instance().set_new_affinity_mask(affinity_backup[slot_num]);
     };
 
 };
@@ -262,8 +266,8 @@ extern "C" { // exported to TBB interfaces
 
 void initialize_numa_topology( size_t groups_num,
                                int& nodes_count, int*& indexes_list, int*& concurrency_list ) {
-    platform_topology::initialize(groups_num);
-    platform_topology::fill(nodes_count, indexes_list, concurrency_list);
+    platform_topology::instance().initialize(groups_num);
+    platform_topology::instance().fill(nodes_count, indexes_list, concurrency_list);
 }
 
 binding_handler* allocate_binding_handler(int slot_num) {
@@ -278,15 +282,15 @@ void deallocate_binding_handler(binding_handler* handler_ptr) {
 
 void bind_to_node(binding_handler* handler_ptr, int slot_num, int numa_id) {
     __TBB_ASSERT(handler_ptr != NULL, "Trying to get access to uninitialized metadata.");
-    __TBB_ASSERT(platform_topology::is_topology_parsed(), "Trying to get access "
-                                                          "to uninitialized platform_topology.");
+    __TBB_ASSERT(platform_topology::instance().is_topology_parsed(),
+        "Trying to get access to uninitialized platform_topology.");
     handler_ptr->bind_thread_to_node(slot_num, numa_id);
 }
 
 void restore_affinity(binding_handler* handler_ptr, int slot_num) {
     __TBB_ASSERT(handler_ptr != NULL, "Trying to get access to uninitialized metadata.");
-    __TBB_ASSERT(platform_topology::is_topology_parsed(), "Trying to get access "
-                                                          "to uninitialized platform_topology.");
+    __TBB_ASSERT(platform_topology::instance().is_topology_parsed(),
+        "Trying to get access to uninitialized platform_topology.");
     handler_ptr->restore_previous_affinity_mask(slot_num);
 }
 

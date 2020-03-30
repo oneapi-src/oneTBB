@@ -14,6 +14,17 @@
     limitations under the License.
 */
 
+#include "internal/_deprecated_header_message_guard.h"
+
+#if !defined(__TBB_show_deprecation_message_flow_graph_opencl_node_H) && defined(__TBB_show_deprecated_header_message)
+#define  __TBB_show_deprecation_message_flow_graph_opencl_node_H
+#pragma message("TBB Warning: tbb/flow_graph_opencl_node.h is deprecated. For details, please see Deprecated Features appendix in the TBB reference manual.")
+#endif
+
+#if defined(__TBB_show_deprecated_header_message)
+#undef __TBB_show_deprecated_header_message
+#endif
+
 #ifndef __TBB_flow_graph_opencl_node_H
 #define __TBB_flow_graph_opencl_node_H
 
@@ -105,7 +116,7 @@ inline std::string platform_info<std::string>(cl_platform_id p, cl_platform_info
 }
 
 
-class opencl_device {
+class __TBB_DEPRECATED_IN_VERBOSE_MODE opencl_device {
 public:
     typedef size_t device_id_type;
     enum : device_id_type {
@@ -253,7 +264,7 @@ private:
 #endif
 };
 
-class opencl_device_list {
+class __TBB_DEPRECATED_IN_VERBOSE_MODE opencl_device_list {
     typedef std::vector<opencl_device> container_type;
 public:
     typedef container_type::iterator iterator;
@@ -351,7 +362,7 @@ public:
 };
 
 template <typename T, typename Factory = opencl_info::default_opencl_factory>
-class opencl_async_msg : public async_msg<T> {
+class __TBB_DEPRECATED_IN_VERBOSE_MODE opencl_async_msg : public async_msg<T> {
 public:
     typedef T value_type;
 
@@ -626,10 +637,12 @@ enum access_type {
 };
 
 template <typename T, typename Factory = opencl_info::default_opencl_factory>
-class opencl_subbuffer;
+class __TBB_DEPRECATED_IN_VERBOSE_MODE
+opencl_subbuffer;
 
 template <typename T, typename Factory = opencl_info::default_opencl_factory>
-class opencl_buffer {
+class __TBB_DEPRECATED_IN_VERBOSE_MODE
+opencl_buffer {
 public:
     typedef cl_mem native_object_type;
     typedef opencl_buffer memory_object_type;
@@ -703,7 +716,8 @@ private:
 };
 
 template <typename T, typename Factory>
-class opencl_subbuffer : public opencl_buffer<T, Factory> {
+class __TBB_DEPRECATED_IN_VERBOSE_MODE
+opencl_subbuffer : public opencl_buffer<T, Factory> {
     opencl_buffer<T, Factory> my_owner;
 public:
     opencl_subbuffer() {}
@@ -779,7 +793,7 @@ typename std::enable_if<is_memory_object_type<T>::value>::type receive_if_memory
 template <typename T>
 typename std::enable_if<!is_memory_object_type<T>::value>::type  receive_if_memory_object( const T& ) {}
 
-class opencl_range {
+class __TBB_DEPRECATED_IN_VERBOSE_MODE opencl_range {
 public:
     typedef size_t range_index_type;
     typedef std::array<range_index_type, 3> nd_range_type;
@@ -807,7 +821,7 @@ private:
 };
 
 template <typename DeviceFilter>
-class opencl_factory {
+class __TBB_DEPRECATED_IN_VERBOSE_MODE opencl_factory {
 public:
     template<typename T> using async_msg_type = opencl_async_msg<T, opencl_factory<DeviceFilter>>;
     typedef opencl_device device_type;
@@ -1218,7 +1232,7 @@ enum class opencl_program_type {
 };
 
 template <typename Factory = opencl_info::default_opencl_factory>
-class opencl_program : tbb::internal::no_assign {
+class __TBB_DEPRECATED_IN_VERBOSE_MODE opencl_program : tbb::internal::no_assign {
 public:
     typedef typename Factory::kernel_type kernel_type;
 
@@ -1401,10 +1415,11 @@ private:
 };
 
 template<typename... Args>
-class opencl_node;
+class __TBB_DEPRECATED_IN_VERBOSE_MODE opencl_node;
 
 template<typename JP, typename Factory, typename... Ports>
-class opencl_node< tuple<Ports...>, JP, Factory > : public streaming_node< tuple<Ports...>, JP, Factory > {
+class __TBB_DEPRECATED_IN_VERBOSE_MODE
+opencl_node< tuple<Ports...>, JP, Factory > : public streaming_node< tuple<Ports...>, JP, Factory > {
     typedef streaming_node < tuple<Ports...>, JP, Factory > base_type;
 public:
     typedef typename base_type::kernel_type kernel_type;
@@ -1430,7 +1445,8 @@ public:
 };
 
 template<typename JP, typename... Ports>
-class opencl_node< tuple<Ports...>, JP > : public opencl_node < tuple<Ports...>, JP, opencl_info::default_opencl_factory > {
+class __TBB_DEPRECATED_IN_VERBOSE_MODE
+opencl_node< tuple<Ports...>, JP > : public opencl_node < tuple<Ports...>, JP, opencl_info::default_opencl_factory > {
     typedef opencl_node < tuple<Ports...>, JP, opencl_info::default_opencl_factory > base_type;
 public:
     typedef typename base_type::kernel_type kernel_type;
@@ -1446,7 +1462,8 @@ public:
 };
 
 template<typename... Ports>
-class opencl_node< tuple<Ports...> > : public opencl_node < tuple<Ports...>, queueing, opencl_info::default_opencl_factory > {
+class __TBB_DEPRECATED_IN_VERBOSE_MODE
+opencl_node< tuple<Ports...> > : public opencl_node < tuple<Ports...>, queueing, opencl_info::default_opencl_factory > {
     typedef opencl_node < tuple<Ports...>, queueing, opencl_info::default_opencl_factory > base_type;
 public:
     typedef typename base_type::kernel_type kernel_type;

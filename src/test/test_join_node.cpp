@@ -54,7 +54,7 @@ public:
             // this is the tag-matching join we're testing
             JType * my_join = makeJoin<N, JType, tbb::flow::tag_matching>::create(g);
             // source_node for continue messages
-            tbb::flow::source_node<tbb::flow::continue_msg> snode(g, recirc_source_node_body(), false);
+            tbb::flow::input_node<tbb::flow::continue_msg> snode(g, recirc_source_node_body());
             // reserving join that matches recirculating tags with continue messages.
             input_join_type * my_input_join = makeJoin<2, input_join_type, tbb::flow::reserving>::create(g);
             // tbb::flow::make_edge(snode, tbb::flow::input_port<1>(*my_input_join));

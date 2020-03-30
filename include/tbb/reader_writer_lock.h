@@ -41,7 +41,7 @@ namespace interface5 {
 /** Loosely adapted from Mellor-Crummey and Scott pseudocode at
     http://www.cs.rochester.edu/research/synchronization/pseudocode/rw.html#s_wp
     @ingroup synchronization */
-    class __TBB_DEPRECATED_VERBOSE_MSG("tbb::reader_writer_lock is deprecated, use std::shared_mutex")
+    class __TBB_DEPRECATED_IN_VERBOSE_MODE_MSG("tbb::reader_writer_lock is deprecated, use std::shared_mutex")
     reader_writer_lock : tbb::internal::no_copy {
  public:
     friend class scoped_lock;

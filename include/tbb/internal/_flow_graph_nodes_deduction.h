@@ -80,9 +80,19 @@ template <typename Body>
 decltype(decide_on_operator_overload(std::declval<Body>())) decide_on_callable_type(...);
 
 // Deduction guides for Flow Graph nodes
+#if TBB_USE_SOURCE_NODE_AS_ALIAS
+template <typename GraphOrSet, typename Body>
+source_node(GraphOrSet&&, Body)
+->source_node<input_t<decltype(decide_on_callable_type<Body>(0))>>;
+#else
 template <typename GraphOrSet, typename Body>
 source_node(GraphOrSet&&, Body, bool = true)
 ->source_node<input_t<decltype(decide_on_callable_type<Body>(0))>>;
+#endif
+
+template <typename GraphOrSet, typename Body>
+input_node(GraphOrSet&&, Body, bool = true)
+->input_node<input_t<decltype(decide_on_callable_type<Body>(0))>>;
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
 

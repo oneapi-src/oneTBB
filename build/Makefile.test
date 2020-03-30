@@ -199,6 +199,7 @@ TEST_TBB_PLAIN.EXE = test_assembly.$(TEST_EXT)   \
 	test_priority_queue_node.$(TEST_EXT)         \
 	test_sequencer_node.$(TEST_EXT)              \
 	test_source_node.$(TEST_EXT)                 \
+	test_input_node.$(TEST_EXT)                  \
 	test_overwrite_node.$(TEST_EXT)              \
 	test_write_once_node.$(TEST_EXT)             \
 	test_indexer_node.$(TEST_EXT)                \

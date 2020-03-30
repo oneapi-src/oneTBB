@@ -74,7 +74,7 @@ namespace internal {
         typedef typename receiver<input_type>::predecessor_type predecessor_type;
         typedef predecessor_cache<input_type, null_mutex > predecessor_cache_type;
         typedef function_input_queue<input_type, A> input_queue_type;
-        typedef typename A::template rebind< input_queue_type >::other queue_allocator_type;
+        typedef typename tbb::internal::allocator_rebind<A, input_queue_type>::type queue_allocator_type;
         __TBB_STATIC_ASSERT(!((internal::has_policy<queueing, Policy>::value) && (internal::has_policy<rejecting, Policy>::value)),
                               "queueing and rejecting policies can't be specified simultaneously");
 

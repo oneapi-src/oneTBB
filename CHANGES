@@ -2,6 +2,26 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 2020 Update 2
+TBB_INTERFACE_VERSION == 11102
+
+Changes (w.r.t. Intel TBB 2020 Update 1):
+
+- Cross-allocator copying constructor and copy assignment operator for
+    concurrent_vector are deprecated.
+- Added input_node to the flow graph API. It acts like a source_node 
+    except for being inactive by default; source_node is deprecated.
+- Allocator template parameter for flow graph nodes is deprecated. Set
+    TBB_DEPRECATED_FLOW_NODE_ALLOCATOR to 1 to avoid compilation errors.
+- Flow graph preview hetero-features are deprecated.
+
+Bugs fixed:
+
+- Fixed the task affinity mechanism to prevent unlimited memory
+    consumption in case the number of threads is explicitly decreased.
+- Fixed memory leak related NUMA support functionality in task_arena.
+
+------------------------------------------------------------------------
 Intel TBB 2020 Update 1
 TBB_INTERFACE_VERSION == 11101
 

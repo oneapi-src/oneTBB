@@ -46,7 +46,7 @@ typedef buffer_node<bin> bin_buffer;
 // Packed bins are taken from the_bin_buffer and processed by the_writer:
 typedef function_node<bin, continue_msg, rejecting> bin_writer;
 // Items are injected into the graph when this node sends them to the_value_pool:
-typedef source_node<value_type> value_source;
+typedef input_node<value_type> value_source;
 
 // User-specified globals with default values
 size_type V = 42;                // desired capacity for each bin
@@ -259,7 +259,7 @@ int main(int argc, char *argv[]) {
                      << optimality << ", " << num_bin_packers << " bins of capacity=" << V << " on " << p
                      << " threads.\n";
             graph g;
-            value_source the_source(g, item_generator(), false);
+            value_source the_source(g, item_generator());
             value_pool the_value_pool(g);
             make_edge(the_source, the_value_pool);
             bin_buffer the_bin_buffer(g);

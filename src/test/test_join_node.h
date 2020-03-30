@@ -1359,7 +1359,7 @@ public:
     typedef tbb::flow::join_node<tbb::flow::tuple<int, tbb::flow::continue_msg>, tbb::flow::reserving> input_join_type;
     typedef typename join_node_type::output_type TT;
     typedef typename tbb::flow::tuple_element<ELEM-1, TT>::type IT;
-    typedef typename tbb::flow::source_node<IT> my_source_node_type;
+    typedef typename tbb::flow::input_node<IT> my_source_node_type;
     typedef typename tbb::flow::function_node<tbb::flow::tuple<int, tbb::flow::continue_msg>, IT> my_recirc_function_type;
     static void print_remark(const char * str) {
         source_node_helper<ELEM-1, JNT>::print_remark(str);
@@ -1370,6 +1370,7 @@ public:
             my_source_node_type *new_node = new my_source_node_type(g, source_body<IT, ELEM>(i, nInputs));
             tbb::flow::make_edge(*new_node, tbb::flow::input_port<ELEM-1>(my_join));
             all_source_nodes[ELEM-1][i] = (void *)new_node;
+            new_node->activate();
         }
         // add the next source_node
         source_node_helper<ELEM-1, JNT>::add_source_nodes(my_join, g, nInputs);
@@ -1423,7 +1424,7 @@ class source_node_helper<1, JNT> {
     typedef tbb::flow::join_node<tbb::flow::tuple<int, tbb::flow::continue_msg>, tbb::flow::reserving> input_join_type;
     typedef typename join_node_type::output_type TT;
     typedef typename tbb::flow::tuple_element<0, TT>::type IT;
-    typedef typename tbb::flow::source_node<IT> my_source_node_type;
+    typedef typename tbb::flow::input_node<IT> my_source_node_type;
     typedef typename tbb::flow::function_node<tbb::flow::tuple<int, tbb::flow::continue_msg>, IT> my_recirc_function_type;
 public:
     static void print_remark(const char * str) {
@@ -1434,6 +1435,7 @@ public:
             my_source_node_type *new_node = new my_source_node_type(g, source_body<IT, 1>(i, nInputs));
             tbb::flow::make_edge(*new_node, tbb::flow::input_port<0>(my_join));
             all_source_nodes[0][i] = (void *)new_node;
+            new_node->activate();
         }
     }
 

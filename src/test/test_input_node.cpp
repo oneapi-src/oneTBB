@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2020 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,13 +16,7 @@
 
 // have to expose the reset_node method to be able to reset a function_body
 
-#define TBB_USE_SOURCE_NODE_AS_ALIAS __TBB_CPF_BUILD
-
 #include "harness.h"
-
-#if __TBB_CPF_BUILD
-#define TBB_DEPRECATED_FLOW_NODE_EXTRACTION 1
-#endif
 
 #include "harness_graph.h"
 #include "tbb/flow_graph.h"
@@ -78,7 +72,7 @@ public:
 template< typename T >
 class source_body {
 
-   tbb::atomic<int> my_count;
+   unsigned my_count;
    int *ninvocations;
 
 public:
@@ -87,7 +81,7 @@ public:
    source_body(int &_inv) : ninvocations(&_inv)  { my_count = 0; }
 
    bool operator()( T &v ) {
-      v = (T)my_count.fetch_and_increment();
+      v = (T)my_count++;
       if(ninvocations) ++(*ninvocations);
       if ( (int)v < N )
          return true;
@@ -121,12 +115,10 @@ void test_single_dest() {
 
    // push only
    tbb::flow::graph g;
-   tbb::flow::source_node<T> src(g, source_body<T>() );
+   tbb::flow::input_node<T> src(g, source_body<T>() );
    test_push_receiver<T> dest(g);
    tbb::flow::make_edge( src, dest );
-#if TBB_USE_SOURCE_NODE_AS_ALIAS
    src.activate();
-#endif
    g.wait_for_all();
    for (int i = 0; i < N; ++i ) {
        ASSERT( dest.get_count(i) == 1, NULL );
@@ -134,13 +126,12 @@ void test_single_dest() {
 
    // push only
    tbb::atomic<int> counters3[N];
-   tbb::flow::source_node<T> src3(g, source_body<T>() );
+   tbb::flow::input_node<T> src3(g, source_body<T>() );
+
    function_body<T> b3( counters3 );
    tbb::flow::function_node<T,bool> dest3(g, tbb::flow::unlimited, b3 );
    tbb::flow::make_edge( src3, dest3 );
-#if TBB_USE_SOURCE_NODE_AS_ALIAS
    src3.activate();
-#endif
    g.wait_for_all();
    for (int i = 0; i < N; ++i ) {
        int v = counters3[i];
@@ -148,22 +139,12 @@ void test_single_dest() {
    }
 
    // push & pull
-   tbb::flow::source_node<T> src2(g, source_body<T>() );
+   tbb::flow::input_node<T> src2(g, source_body<T>() );
    tbb::atomic<int> counters2[N];
    function_body<T> b2( counters2 );
    tbb::flow::function_node<T,bool,tbb::flow::rejecting> dest2(g, tbb::flow::serial, b2 );
    tbb::flow::make_edge( src2, dest2 );
-
-#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
-   ASSERT(src2.successor_count() == 1, NULL);
-   typename tbb::flow::source_node<T>::successor_list_type my_succs;
-   src2.copy_successors(my_succs);
-   ASSERT(my_succs.size() == 1, NULL);
-#endif
-
-#if TBB_USE_SOURCE_NODE_AS_ALIAS
    src2.activate();
-#endif
    g.wait_for_all();
    for (int i = 0; i < N; ++i ) {
        int v = counters2[i];
@@ -171,12 +152,10 @@ void test_single_dest() {
    }
 
    // test copy constructor
-   tbb::flow::source_node<T> src_copy(src);
+   tbb::flow::input_node<T> src_copy(src);
    test_push_receiver<T> dest_c(g);
    ASSERT( src_copy.register_successor(dest_c), NULL );
-#if TBB_USE_SOURCE_NODE_AS_ALIAS
    src_copy.activate();
-#endif
    g.wait_for_all();
    for (int i = 0; i < N; ++i ) {
        ASSERT( dest_c.get_count(i) == 1, NULL );
@@ -187,19 +166,12 @@ void test_reset() {
     //    source_node -> function_node
     tbb::flow::graph g;
     tbb::atomic<int> counters3[N];
-    tbb::flow::source_node<int> src3(g, source_body<int>() );
-#if TBB_USE_SOURCE_NODE_AS_ALIAS
-    tbb::flow::source_node<int> src_inactive(g, source_body<int>() );
-#else
-    tbb::flow::source_node<int> src_inactive(g, source_body<int>(), /*is_active=*/ false );
-#endif
+    tbb::flow::input_node<int> src3(g, source_body<int>() );
+    tbb::flow::input_node<int> src_inactive(g, source_body<int>());
     function_body<int> b3( counters3 );
     tbb::flow::function_node<int,bool> dest3(g, tbb::flow::unlimited, b3 );
     tbb::flow::make_edge( src3, dest3 );
-
- #if TBB_USE_SOURCE_NODE_AS_ALIAS
     src3.activate();
- #endif
     //    source_node is now in active state.  Let the graph run,
     g.wait_for_all();
     //    check the array for each value.
@@ -208,11 +180,11 @@ void test_reset() {
         ASSERT( v == 1, NULL );
         counters3[i] = 0;
     }
+
     g.reset(tbb::flow::rf_reset_bodies);  // <-- re-initializes the counts.
- #if TBB_USE_SOURCE_NODE_AS_ALIAS
-    src3.activate();
- #endif
     // and spawns task to run source
+    src3.activate();
+
     g.wait_for_all();
     //    check output queue again.  Should be the same contents.
     for (int i = 0; i < N; ++i ) {
@@ -283,156 +255,6 @@ void test_reset() {
     }
 }
 
-#if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
-void test_extract() {
-    int counts = 0;
-    tbb::flow::tuple<int,int> dont_care;
-    tbb::flow::graph g;
-    typedef tbb::flow::source_node<int> snode_type;
-    typedef snode_type::successor_list_type successor_list_type;
-#if TBB_USE_SOURCE_NODE_AS_ALIAS
-    snode_type s0(g, source_body<int>(counts));
-#else
-    snode_type s0(g, source_body<int>(counts), false);
-#endif
-    tbb::flow::join_node< tbb::flow::tuple<int,int>, tbb::flow::reserving > j0(g);
-    tbb::flow::join_node< tbb::flow::tuple<int,int>, tbb::flow::reserving > j1(g);
-    tbb::flow::join_node< tbb::flow::tuple<int,int>, tbb::flow::reserving > j2(g);
-    tbb::flow::queue_node<int> q0(g);
-    tbb::flow::queue_node<tbb::flow::tuple<int,int> > q1(g);
-    tbb::flow::make_edge(s0, tbb::flow::get<0>(j0.input_ports()));
-    /*  s0 ----+    */
-    /*         | j0 */
-    /*         +    */
-    ASSERT(!counts, "source_node activated too soon");
-    s0.activate();
-    g.wait_for_all();  // should produce one value, buffer it.
-    ASSERT(counts == 1, "source_node did not react to activation");
-
-    g.reset(tbb::flow::rf_reset_bodies);
-    counts = 0;
-    s0.extract();
-    /*  s0     +    */
-    /*         | j0 */
-    /*         +    */
-    s0.activate();
-    g.wait_for_all();  // no successors, so the body will not execute
-    ASSERT(counts == 0, "source_node shouldn't forward (no successors)");
-    g.reset(tbb::flow::rf_reset_bodies);
-
-    tbb::flow::make_edge(s0, tbb::flow::get<0>(j0.input_ports()));
-    tbb::flow::make_edge(s0, tbb::flow::get<0>(j1.input_ports()));
-    tbb::flow::make_edge(s0, tbb::flow::get<0>(j2.input_ports()));
-
-    /*        /+    */
-    /*       / | j0 */
-    /*      /  +    */
-    /*     /        */
-    /*    / /--+    */
-    /*  s0-/   | j1 */
-    /*    \    +    */
-    /*     \        */
-    /*      \--+    */
-    /*         | j2 */
-    /*         +    */
-
-    // do all joins appear in successor list?
-    successor_list_type jv1;
-    jv1.push_back(&(tbb::flow::get<0>(j0.input_ports())));
-    jv1.push_back(&(tbb::flow::get<0>(j1.input_ports())));
-    jv1.push_back(&(tbb::flow::get<0>(j2.input_ports())));
-    snode_type::successor_list_type sv;
-    s0.copy_successors(sv);
-    ASSERT(lists_match(sv, jv1), "mismatch in successor list");
-
-    tbb::flow::make_edge(q0, tbb::flow::get<1>(j2.input_ports()));
-    tbb::flow::make_edge(j2, q1);
-    s0.activate();
-
-    /*        /+           */
-    /*       / | j0        */
-    /*      /  +           */
-    /*     /               */
-    /*    / /--+           */
-    /*  s0-/   | j1        */
-    /*    \    +           */
-    /*     \               */
-    /*      \--+           */
-    /*         | j2----q1  */
-    /*  q0-----+           */
-
-    q0.try_put(1);
-    g.wait_for_all();
-    ASSERT(q1.try_get(dont_care), "join did not emit result");
-    j2.extract();
-    tbb::flow::make_edge(q0, tbb::flow::get<1>(j2.input_ports()));
-    tbb::flow::make_edge(j2, q1);
-
-    /*        /+           */
-    /*       / | j0        */
-    /*      /  +           */
-    /*     /               */
-    /*    / /--+           */
-    /*  s0-/   | j1        */
-    /*         +           */
-    /*                     */
-    /*         +           */
-    /*         | j2----q1  */
-    /*  q0-----+           */
-
-    jv1.clear();
-    jv1.push_back(&(tbb::flow::get<0>(j0.input_ports())));
-    jv1.push_back(&(tbb::flow::get<0>(j1.input_ports())));
-    s0.copy_successors(sv);
-    ASSERT(lists_match(sv, jv1), "mismatch in successor list");
-
-    q0.try_put(1);
-    g.wait_for_all();
-    ASSERT(!q1.try_get(dont_care), "extract of successor did not remove pred link");
-
-    s0.extract();
-
-    /*         +           */
-    /*         | j0        */
-    /*         +           */
-    /*                     */
-    /*         +           */
-    /*  s0     | j1        */
-    /*         +           */
-    /*                     */
-    /*         +           */
-    /*         | j2----q1  */
-    /*  q0-----+           */
-
-    ASSERT(s0.successor_count() == 0, "successor list not cleared");
-    s0.copy_successors(sv);
-    ASSERT(sv.size() == 0, "non-empty successor list");
-
-    tbb::flow::make_edge(s0, tbb::flow::get<0>(j2.input_ports()));
-
-    /*         +           */
-    /*         | j0        */
-    /*         +           */
-    /*                     */
-    /*         +           */
-    /*  s0     | j1        */
-    /*    \    +           */
-    /*     \               */
-    /*      \--+           */
-    /*         | j2----q1  */
-    /*  q0-----+           */
-
-    jv1.clear();
-    jv1.push_back(&(tbb::flow::get<0>(j2.input_ports())));
-    s0.copy_successors(sv);
-    ASSERT(lists_match(sv, jv1), "mismatch in successor list");
-
-    q0.try_put(1);
-    g.wait_for_all();
-    ASSERT(!q1.try_get(dont_care), "extract of successor did not remove pred link");
-}
-#endif  /* TBB_DEPRECATED_FLOW_NODE_EXTRACTION */
-
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 bool source_body_f(int& i) { return i > 5; }
 
@@ -444,30 +266,30 @@ void test_deduction_guides() {
     auto non_const_lambda = [](int& i) mutable { return i > 5; };
 
     // Tests for source_node(graph&, Body)
-    source_node s1(g, lambda);
-    static_assert(std::is_same_v<decltype(s1), source_node<int>>);
+    input_node s1(g, lambda);
+    static_assert(std::is_same_v<decltype(s1), input_node<int>>);
 
-    source_node s2(g, non_const_lambda);
-    static_assert(std::is_same_v<decltype(s2), source_node<int>>);
+    input_node s2(g, non_const_lambda);
+    static_assert(std::is_same_v<decltype(s2), input_node<int>>);
 
-    source_node s3(g, source_body_f);
-    static_assert(std::is_same_v<decltype(s3), source_node<int>>);
+    input_node s3(g, source_body_f);
+    static_assert(std::is_same_v<decltype(s3), input_node<int>>);
 
-    source_node s4(s3);
-    static_assert(std::is_same_v<decltype(s4), source_node<int>>);
+    input_node s4(s3);
+    static_assert(std::is_same_v<decltype(s4), input_node<int>>);
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
     broadcast_node<int> bc(g);
 
     // Tests for source_node(const node_set<Args...>&, Body)
-    source_node s5(precedes(bc), lambda);
-    static_assert(std::is_same_v<decltype(s5), source_node<int>>);
+    input_node s5(precedes(bc), lambda);
+    static_assert(std::is_same_v<decltype(s5), input_node<int>>);
 
-    source_node s6(precedes(bc), non_const_lambda);
-    static_assert(std::is_same_v<decltype(s6), source_node<int>>);
+    input_node s6(precedes(bc), non_const_lambda);
+    static_assert(std::is_same_v<decltype(s6), input_node<int>>);
 
-    source_node s7(precedes(bc), source_body_f);
-    static_assert(std::is_same_v<decltype(s7), source_node<int>>);
+    input_node s7(precedes(bc), source_body_f);
+    static_assert(std::is_same_v<decltype(s7), input_node<int>>);
 #endif
     g.wait_for_all();
 }
@@ -488,8 +310,7 @@ void test_follows_and_precedes_api() {
     }};
 
     bool do_try_put = true;
-
-    source_node<bool> src(precedes(successors[0], successors[1], successors[2]), [&](bool& v) -> bool {
+    input_node<bool> src(precedes(successors[0], successors[1], successors[2]), [&](bool& v) -> bool {
         if(do_try_put) {
             v = do_try_put;
             do_try_put = false;

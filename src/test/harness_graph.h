@@ -1226,7 +1226,11 @@ void test_lightweight(unsigned N) {
 template<template<typename, typename, typename, typename> class NodeType>
 void test(unsigned N) {
     typedef tbb::tbb_thread::id input_type;
+#if TBB_DEPRECATED_FLOW_NODE_ALLOCATOR
     typedef tbb::cache_aligned_allocator<input_type> allocator_type;
+#else
+    typedef tbb::flow::interface11::null_type allocator_type;
+#endif
     typedef NodeType<input_type, output_tuple_type, tbb::flow::queueing_lightweight, allocator_type> node_type;
     test_lightweight<node_type>(N);
 }

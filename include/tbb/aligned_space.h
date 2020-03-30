@@ -40,7 +40,7 @@ namespace tbb {
 /** The elements are not constructed or destroyed by this class.
     @ingroup memory_allocation */
 template<typename T,size_t N=1>
-class __TBB_DEPRECATED_VERBOSE_MSG("tbb::aligned_space is deprecated, use std::aligned_storage") aligned_space {
+class __TBB_DEPRECATED_IN_VERBOSE_MODE_MSG("tbb::aligned_space is deprecated, use std::aligned_storage") aligned_space {
 private:
     typedef __TBB_TypeWithAlignmentAtLeastAsStrict(T) element_type;
     element_type array[(sizeof(T)*N+sizeof(element_type)-1)/sizeof(element_type)];

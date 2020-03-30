@@ -92,7 +92,7 @@ There are some implications:
 
 */
 
-class __TBB_DEPRECATED_VERBOSE runtime_loader : tbb::internal::no_copy {
+class __TBB_DEPRECATED_IN_VERBOSE_MODE runtime_loader : tbb::internal::no_copy {
 
     public:
 

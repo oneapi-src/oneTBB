@@ -97,7 +97,7 @@ void add_all_nodes (){
     //node types
     tbb::flow::continue_node<tbb::flow::continue_msg> ct(g, ct_body());
     tbb::flow::split_node< tbb::flow::tuple<int, int> > s(g);
-    tbb::flow::source_node<int> src(g, src_body(20,5), false);
+    tbb::flow::input_node<int> src(g, src_body(20,5));
     tbb::flow::function_node<int, int> fxn(g, tbb::flow::unlimited, passthru_body());
     tbb::flow::multifunction_node<int, tbb::flow::tuple<int, int> > m_fxn(g, tbb::flow::unlimited, m_fxn_body());
     tbb::flow::broadcast_node<int> bc(g);
@@ -511,7 +511,7 @@ void input_only_output_only_composite(bool hidden) {
 #endif
     typedef tbb::flow::composite_node<tbb::flow::tuple<int>, tbb::flow::tuple<> > input_only_composite;
     typedef tbb::flow::composite_node<tbb::flow::tuple<>, tbb::flow::tuple<int> > output_only_composite;
-    typedef tbb::flow::source_node<int> src_type;
+    typedef tbb::flow::input_node<int> src_type;
     typedef tbb::flow::queue_node<int> q_type;
     typedef tbb::flow::function_node<int, int> f_type;
     typedef tbb::flow::sequencer_node<int> sequencer_type;
@@ -523,7 +523,7 @@ void input_only_output_only_composite(bool hidden) {
     input_only_composite a_in(g);
     output_only_composite a_out(g);
 
-    src_type src(g, src_body(finish, step), false);
+    src_type src(g, src_body(finish, step));
     q_type que(g);
     f_type f(g, 1, passthru_body());
 

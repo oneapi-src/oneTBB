@@ -306,7 +306,7 @@ void test( int num_threads ) {
     AsyncActivity activity(barrier);
     graph g;
 
-    source_node<data_type> starter_node(g, StartBody(), false);
+    input_node<data_type> starter_node(g, StartBody());
     function_node<data_type, data_type> cpu_work_node(
         g, unlimited, CpuWorkBody(barrier, nested_cpu_tasks));
     decider_node_type cpu_restarter_node(g, unlimited, DeciderBody(cpu_subgraph_reruns));

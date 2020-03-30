@@ -358,6 +358,7 @@ void test_arena_constraints_copying(std::vector<int> numa_indexes) {
 }
 #endif /*__TBB_CPP11_PRESENT*/
 
+//TODO: Write a test that checks for memory leaks during dynamic link/unlink of TBBbind.
 int TestMain() {
 #if _WIN32 && !_WIN64
     // HWLOC cannot proceed affinity masks on Windows in 32-bit mode if there are more than 32 logical CPU.

@@ -338,7 +338,12 @@ fail:
                 }
             }
 #endif /* __TBB_TASK_PRIORITY */
+#if __APPLE__
+            // threshold value tuned separately for macOS due to high cost of sched_yield there
+            const int yield_threshold = 10;
+#else
             const int yield_threshold = 100;
+#endif
             if( yield_count++ >= yield_threshold ) {
                 // When a worker thread has nothing to do, return it to RML.
                 // For purposes of affinity support, the thread is considered idle while in RML.

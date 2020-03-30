@@ -14,6 +14,8 @@
     limitations under the License.
 */
 
+#define TBB_DEPRECATED_FLOW_NODE_ALLOCATOR __TBB_CPF_BUILD
+
 #include "harness.h"
 #include "harness_graph.h"
 #include "harness_barrier.h"
@@ -819,6 +821,19 @@ void test_follows_and_precedes_api() {
 }
 #endif // __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
 
+#if TBB_DEPRECATED_FLOW_NODE_ALLOCATOR
+typedef tbb::flow::async_node< int, int, tbb::flow::queueing, std::allocator<int> > async_node_type;
+
+struct async_body {
+    void operator()( const int&, async_node_type::gateway_type& ) {}
+};
+
+void test_node_allocator() {
+    tbb::flow::graph g;
+    async_node_type tmp(g, tbb::flow::unlimited, async_body());
+}
+#endif
+
 int TestMain() {
     tbb::task_scheduler_init init(4);
     run_tests<int, int>();
@@ -833,6 +848,9 @@ int TestMain() {
     run_test_equeueing_on_inner_level();
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
     test_follows_and_precedes_api();
+#endif
+#if TBB_DEPRECATED_FLOW_NODE_ALLOCATOR
+    test_node_allocator();
 #endif
     return Harness::Done;
 }

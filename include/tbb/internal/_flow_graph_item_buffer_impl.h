@@ -44,8 +44,7 @@ namespace internal {
     protected:
         typedef size_t size_type;
         typedef typename aligned_pair<item_type, buffer_item_state>::type buffer_item_type;
-        typedef typename A::template rebind<buffer_item_type>::other allocator_type;
-
+        typedef typename tbb::internal::allocator_rebind<A, buffer_item_type>::type allocator_type;
         buffer_item_type *my_array;
         size_type my_array_size;
         static const size_type initial_buffer_size = 4;

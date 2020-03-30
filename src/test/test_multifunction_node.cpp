@@ -14,9 +14,8 @@
     limitations under the License.
 */
 
-#if __TBB_CPF_BUILD
-#define TBB_DEPRECATED_FLOW_NODE_EXTRACTION 1
-#endif
+#define TBB_DEPRECATED_FLOW_NODE_EXTRACTION __TBB_CPF_BUILD
+#define TBB_DEPRECATED_FLOW_NODE_ALLOCATOR __TBB_CPF_BUILD
 
 #include "harness.h"
 #include "harness_graph.h"
@@ -731,6 +730,22 @@ void test_follows_and_precedes_api() {
 }
 #endif // __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
 
+#if TBB_DEPRECATED_FLOW_NODE_ALLOCATOR
+typedef tbb::flow::multifunction_node< int, tbb::flow::tuple<int>,
+                                       tbb::flow::queueing,
+                                       std::allocator<int> > multifunction_type;
+struct multipass_through {
+    void operator()( int, multifunction_type::output_ports_type& ) {}
+};
+
+void test_node_allocator() {
+    tbb::flow::graph g;
+    multifunction_type tmp(
+        g, tbb::flow::unlimited, multipass_through()
+    );
+}
+#endif
+
 int TestMain() {
     if( MinThread<1 ) {
         REPORT("number of threads must be positive\n");
@@ -742,12 +757,15 @@ int TestMain() {
     test_ports_return_references<tbb::flow::queueing>();
     test_ports_return_references<tbb::flow::rejecting>();
     lightweight_testing::test<tbb::flow::multifunction_node>(10);
+#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+    test_follows_and_precedes_api();
+#endif
 #if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
     test_extract<tbb::flow::rejecting>();
     test_extract<tbb::flow::queueing>();
 #endif
-#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
-    test_follows_and_precedes_api();
+#if TBB_DEPRECATED_FLOW_NODE_ALLOCATOR
+    test_node_allocator();
 #endif
    return Harness::Done;
 }

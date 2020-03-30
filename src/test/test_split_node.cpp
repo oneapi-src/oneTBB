@@ -14,6 +14,8 @@
     limitations under the License.
 */
 
+#define TBB_DEPRECATED_FLOW_NODE_ALLOCATOR __TBB_CPF_BUILD
+
 #include "harness.h"
 #include "harness_graph.h"
 #include "tbb/flow_graph.h"
@@ -207,7 +209,7 @@ template<typename SType>
 class parallel_test {
 public:
     typedef typename SType::input_type TType;
-    typedef tbb::flow::source_node<TType> source_type;
+    typedef tbb::flow::input_node<TType> source_type;
     static const int N = tbb::flow::tuple_size<TType>::value;
     static void test() {
         source_type* all_source_nodes[MaxNSources];
@@ -231,6 +233,7 @@ public:
                 source_type *s = new source_type(g, source_body<TType>(i, nInputs) );
                 tbb::flow::make_edge(*s, *my_split);
                 all_source_nodes[i] = s;
+                s->activate();
             }
 
             g.wait_for_all();
@@ -381,6 +384,13 @@ void test_deduction_guides() {
 
 #endif
 
+#if TBB_DEPRECATED_FLOW_NODE_ALLOCATOR
+void test_node_allocator() {
+    tbb::flow::graph g;
+    tbb::flow::split_node< tbb::flow::tuple<int,int>, std::allocator<int> > tmp(g);
+}
+#endif
+
 int TestMain() {
 #if __TBB_USE_TBB_TUPLE
     REMARK("  Using TBB tuple\n");
@@ -420,6 +430,9 @@ int TestMain() {
 #endif
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
     test_deduction_guides();
+#endif
+#if TBB_DEPRECATED_FLOW_NODE_ALLOCATOR
+    test_node_allocator();
 #endif
     return Harness::Done;
 }

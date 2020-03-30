@@ -118,7 +118,7 @@ private:
 } // namespace internal
 
 template <typename T>
-class async_msg {
+class __TBB_DEPRECATED async_msg {
     template< typename > friend class receiver;
     template< typename, typename > friend struct internal::async_helpers;
 public:

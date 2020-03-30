@@ -63,7 +63,7 @@ namespace internal {
     and will persist until this thread exits. Default concurrency level is defined
     as described in task_scheduler_init::initialize().
     @ingroup task_scheduling */
-class __TBB_DEPRECATED_VERBOSE task_scheduler_init: internal::no_copy {
+class __TBB_DEPRECATED_IN_VERBOSE_MODE task_scheduler_init: internal::no_copy {
     enum ExceptionPropagationMode {
         propagation_mode_exact = 1u,
         propagation_mode_captured = 2u,

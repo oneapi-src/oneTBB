@@ -188,17 +188,17 @@ class pulse {
     graph& my_graph;
     size_t ms, init_ms;
     int reps, init_reps;
-    source_node<signal_t> clock_node;
+    input_node<signal_t> clock_node;
 
 public:
     pulse(graph& g, size_t _ms=1000, int _reps=-1) : 
         my_graph(g), ms(_ms), init_ms(_ms), reps(_reps), init_reps(_reps),
-        clock_node(g, clock_body(ms, reps), false)
+        clock_node(g, clock_body(ms, reps))
     {}
     pulse(const pulse& src) : 
         my_graph(src.my_graph), ms(src.init_ms), init_ms(src.init_ms),
         reps(src.init_reps), init_reps(src.init_reps), 
-        clock_node(src.my_graph, clock_body(ms, reps), false)
+        clock_node(src.my_graph, clock_body(ms, reps))
     {}
     ~pulse() {}
     // Assignment changes the behavior of LHS to that of the RHS, but doesn't change owning graph
@@ -206,7 +206,7 @@ public:
         ms = src.ms; init_ms = src.init_ms; reps = src.reps; init_reps = src.init_reps;
         return *this; 
     }
-    source_node<signal_t>& get_out() { return clock_node; }
+    input_node<signal_t>& get_out() { return clock_node; }
     void activate() { clock_node.activate(); }
     void reset() { reps = init_reps; }
 };

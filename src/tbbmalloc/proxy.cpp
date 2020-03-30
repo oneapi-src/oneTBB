@@ -146,7 +146,15 @@ static inline void initPageSize()
    1) detection that the proxy library is loaded
    2) check that dlsym("malloc") found something different from our replacement malloc
 */
+// Starting from GCC 9, the -Wmissing-attributes warning was extended for alias below
+#if __GNUC__ == 9
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wmissing-attributes"
+#endif
 extern "C" void *__TBB_malloc_proxy(size_t) __attribute__ ((alias ("malloc")));
+#if __GNUC__ == 9
+    #pragma GCC diagnostic pop
+#endif
 
 static void *orig_msize;
 
@@ -293,11 +301,20 @@ void *aligned_alloc(size_t alignment, size_t size) __attribute__ ((alias ("memal
 // in conjunction with standard malloc/free, so we must ovberload them.
 // Bionic doesn't have them. Not removing from the linker scripts,
 // as absent entry points are ignored by the linker.
+
+// Starting from GCC 9, the -Wmissing-attributes warning was extended for aliases below
+#if __GNUC__ == 9
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wmissing-attributes"
+#endif
 void *__libc_malloc(size_t size) __attribute__ ((alias ("malloc")));
 void *__libc_calloc(size_t num, size_t size) __attribute__ ((alias ("calloc")));
 void *__libc_memalign(size_t alignment, size_t size) __attribute__ ((alias ("memalign")));
 void *__libc_pvalloc(size_t size) __attribute__ ((alias ("pvalloc")));
 void *__libc_valloc(size_t size) __attribute__ ((alias ("valloc")));
+#if __GNUC__ == 9
+    #pragma GCC diagnostic pop
+#endif
 
 // call original __libc_* to support naive replacement of free via __libc_free etc
 void __libc_free(void *ptr)

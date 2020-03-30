@@ -283,7 +283,7 @@ struct nodes_test_functor : tbb::internal::no_assign {
         // Continue, function, source nodes
         tbb::flow::continue_node< tbb::flow::continue_msg > c_n(my_graph, function_body<tbb::flow::continue_msg>(fg_arena));
         tbb::flow::function_node< int > f_n(my_graph, tbb::flow::unlimited, function_body<int>(fg_arena));
-        tbb::flow::source_node< int > s_n(my_graph, source_body(fg_arena), false);
+        tbb::flow::input_node< int > s_n(my_graph, source_body(fg_arena));
 
         // Multifunction node
         mf_node m_n(my_graph, tbb::flow::unlimited, multifunction_body(fg_arena));

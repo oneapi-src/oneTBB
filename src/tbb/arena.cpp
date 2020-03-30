@@ -891,14 +891,14 @@ void task_arena_base::internal_initialize( ) {
 #endif /*__TBB_TASK_GROUP_CONTEXT*/
 #if __TBB_TASK_GROUP_CONTEXT || __TBB_NUMA_SUPPORT
     } else {
-#if __TBB_TASK_GROUP_CONTEXT
-        new_arena->my_default_ctx->my_version_and_traits |= my_version_and_traits & exact_exception_flag;
-        as_atomic(my_context) = new_arena->my_default_ctx;
-#endif /*__TBB_TASK_GROUP_CONTEXT*/
 #if __TBB_NUMA_SUPPORT
         my_arena->my_numa_binding_observer = tbb::internal::construct_binding_observer(
             static_cast<task_arena*>(this), numa_id(), my_arena->my_num_slots);
 #endif /*__TBB_NUMA_SUPPORT*/
+#if __TBB_TASK_GROUP_CONTEXT
+        new_arena->my_default_ctx->my_version_and_traits |= my_version_and_traits & exact_exception_flag;
+        as_atomic(my_context) = new_arena->my_default_ctx;
+#endif /*__TBB_TASK_GROUP_CONTEXT*/
     }
 #endif /*__TBB_TASK_GROUP_CONTEXT || __TBB_NUMA_SUPPORT*/
 
