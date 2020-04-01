@@ -1,30 +1,28 @@
-# Intel(R) Threading Building Blocks
+# oneAPI Threading Building Blocks (Beta)
+[![Stable release](https://img.shields.io/badge/version-2021.1--beta05-yellow.svg)](https://github.com/oneapi-src/oneTBB/releases/tag/v2021.1-beta05)
+[![Apache License Version 2.0](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE)
 
-Intel(R) Threading Building Blocks (Intel(R) TBB) lets you easily write parallel C++ programs that take
+oneAPI Threading Building Blocks (oneTBB) lets you easily write parallel C++ programs that take
 full advantage of multicore performance, that are portable, composable and have future-proof scalability.
 
-## Intel(R) TBB Distribution
-* Commercial version: [https://software.intel.com/en-us/intel-tbb](https://software.intel.com/en-us/intel-tbb)
-* Community licensing: [https://software.intel.com/sites/campaigns/nest/](https://software.intel.com/sites/campaigns/nest/)
-* Open source version: [https://www.threadingbuildingblocks.org/](https://www.threadingbuildingblocks.org/)
-* Intel(R) TBB for Python\*: [http://anaconda.org/intel/tbb](http://anaconda.org/intel/tbb)
+## Release Information
+Here are [Release Notes]( https://software.intel.com/en-us/articles/intel-oneapi-threading-building-blocks-release-notes) and
+[System Requirements](https://software.intel.com/en-us/articles/intel-oneapi-threading-building-blocks-system-requirements).
 
-## Repository Content
-This is an official Intel(R) TBB public GitHub repository. All source and binary packages starting from Intel(R) TBB 4.4
-can be found at the [Release page](https://github.com/01org/tbb/releases). Links to the packages with older versions of 
-Intel(R) TBB can be found in the [download.md](download.md) file.
+## Documentation
+* [TBB general documentation](https://software.intel.com/en-us/oneapi-tbb-documentation)
 
-## Repository Structure
-The Master branch is empty and contains only README.md and download.md files.
+## Support
+Please report issues and suggestions via
+[GitHub issues](https://github.com/oneapi-src/oneTBB/issues) or start a topic on the
+[TBB forum](http://software.intel.com/en-us/forums/intel-threading-building-blocks/).
 
-tbb_\<major_version\> - branch for the new major version. All minor versions of the major release will be committed in this branch.
+## How to Contribute
+To contribute to TBB, please open a GitHub pull request (preferred) or send us a patch by e-mail.
+oneAPI Threading Building Blocks is licensed under [Apache License, Version 2.0](LICENSE).
+By its terms, contributions submitted to the project are also done under that license.
 
-For example:
-* Intel(R) TBB 2017 initial release goes to branch tbb_2017.
-* Intel(R) TBB 2017 Update 1 will go to branch tbb_2017 too.
-* Intel(R) TBB 2018 initial release will go to branch tbb_2018.
-
-## Сontact engineering team
+## Engineering team contacts
 * [E-mail us.](mailto:inteltbbdevelopers@intel.com)
 
 ------------------------------------------------------------------------
