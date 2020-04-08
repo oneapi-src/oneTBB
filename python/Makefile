@@ -32,7 +32,7 @@ release: $(SRC) rml
 
 install: CC=$(compiler)
 install: $(SRC) rml
-	$(PY_SETUP) build -b$(work_dir)_release build_ext -f -I$(tbb_root)/include -L$(work_dir)_release install -f
+	$(PY_SETUP) build -b$(work_dir)_release build_ext -f -I$(tbb_root)/include -L$(work_dir)_release install -f $(if $(HAS_NO_PRIVILEGE),--user)
 
 test:
 	python -m tbb test
