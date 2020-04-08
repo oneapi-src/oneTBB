@@ -19,7 +19,7 @@ include $(tbb_root)/build/common.inc
 
 export TBBROOT=$(abspath $(tbb_root))
 SRC=$(tbb_root)/python/*.py $(tbb_root)/python/tbb/*
-PY_SETUP=python $(tbb_root)/python/setup.py
+PY_SETUP=python3 $(tbb_root)/python/setup.py
 
 all: install test
 
@@ -35,7 +35,7 @@ install: $(SRC) rml
 	$(PY_SETUP) build -b$(work_dir)_release build_ext -f -I$(tbb_root)/include -L$(work_dir)_release install -f $(if $(HAS_NO_PRIVILEGE),--user)
 
 test:
-	python -m tbb test
+	python3 -m tbb test
 
 rml:
 ifeq (linux,$(tbb_os))

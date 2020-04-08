@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright (c) 2016-2020 Intel Corporation
 #
@@ -45,7 +45,6 @@
 # SUCH DAMAGE.
 #
 
-from __future__ import print_function
 import time
 import threading
 
@@ -193,3 +192,5 @@ def test(arg=None):
     pool.join()
 
 
+if __name__ == "__main__":
+    test()

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright (c) 2016-2020 Intel Corporation
 #
@@ -15,14 +15,12 @@
 # limitations under the License.
 
 
-from __future__ import print_function
-
 import multiprocessing.pool
 import ctypes
 import atexit
 import sys
 import os
- 
+
 from .api import  *
 from .api import __all__ as api__all
 from .pool import *
