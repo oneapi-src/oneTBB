@@ -494,7 +494,7 @@ There are four cases that are supported:
         #define TBB_USE_CAPTURED_EXCEPTION 1
     #endif
 #else /* defined TBB_USE_CAPTURED_EXCEPTION */
-    #if !TBB_USE_CAPTURED_EXCEPTION && !__TBB_EXCEPTION_PTR_PRESENT
+    #if !TBB_USE_CAPTURED_EXCEPTION && !__TBB_EXCEPTION_PTR_PRESENT && !defined(__TBB_SYMBOL)
         #error Current runtime does not support std::exception_ptr. Set TBB_USE_CAPTURED_EXCEPTION and make sure that your code is ready to catch tbb::captured_exception.
     #endif
 #endif /* defined TBB_USE_CAPTURED_EXCEPTION */
