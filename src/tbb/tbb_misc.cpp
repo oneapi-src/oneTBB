@@ -151,10 +151,10 @@ void throw_exception_v4 ( exception_id eid ) {
     default: break;
     }
 #if !TBB_USE_EXCEPTIONS && __APPLE__
-    out_of_range e1("");
-    length_error e2("");
-    range_error e3("");
-    invalid_argument e4("");
+    std::out_of_range e1("");
+    std::length_error e2("");
+    std::range_error e3("");
+    std::invalid_argument e4("");
 #endif /* !TBB_USE_EXCEPTIONS && __APPLE__ */
 }
 
