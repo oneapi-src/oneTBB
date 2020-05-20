@@ -76,11 +76,11 @@ class intrusive_list_base {
             return my_pos = &node(val);
         }
 
-        bool operator == ( const Iterator& it ) const {
+        bool operator == ( const iterator_impl& it ) const {
             return my_pos == it.my_pos;
         }
 
-        bool operator != ( const Iterator& it ) const {
+        bool operator != ( const iterator_impl& it ) const {
             return my_pos != it.my_pos;
         }
 
