@@ -146,8 +146,8 @@ public:
     /** Result returned by this method does not depend on whether the scheduler
         has already been initialized.
 
-        Because tbb 2.0 does not support blocking tasks yet, you may use this method
-        to boost the number of threads in the tbb's internal pool, if your tasks are
+        Because TBB 2.0 does not support blocking tasks yet, you may use this method
+        to boost the number of threads in the TBB's internal pool, if your tasks are
         doing I/O operations. The optimal number of additional threads depends on how
         much time your tasks spend in the blocked state.
 

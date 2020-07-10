@@ -29,6 +29,7 @@
 #include "task.h"
 #include "cache_aligned_allocator.h"
 #include "tbb_exception.h"
+#include "pipeline.h"
 #include "internal/_template_helpers.h"
 #include "internal/_aggregator_impl.h"
 #include "tbb/internal/_allocator_traits.h"
@@ -920,12 +921,12 @@ public:
     template< typename Body >
      __TBB_NOINLINE_SYM input_node( graph &g, Body body )
         : graph_node(g), my_active(false),
-        my_body( new internal::source_body_leaf< output_type, Body>(body) ),
-        my_init_body( new internal::source_body_leaf< output_type, Body>(body) ),
+        my_body( new internal::input_body_leaf< output_type, Body>(body) ),
+        my_init_body( new internal::input_body_leaf< output_type, Body>(body) ),
         my_reserved(false), my_has_cached_item(false)
     {
         my_successors.set_owner(this);
-	tbb::internal::fgt_node_with_body( CODEPTR(), tbb::internal::FLOW_SOURCE_NODE, &this->my_graph,
+        tbb::internal::fgt_node_with_body( CODEPTR(), tbb::internal::FLOW_SOURCE_NODE, &this->my_graph,
                                            static_cast<sender<output_type> *>(this), this->my_body );
     }
 
@@ -1066,8 +1067,8 @@ public:
 
     template<typename Body>
     Body copy_function_object() {
-        internal::source_body<output_type> &body_ref = *this->my_body;
-        return dynamic_cast< internal::source_body_leaf<output_type, Body> & >(body_ref).get_body();
+        internal::input_body<output_type> &body_ref = *this->my_body;
+        return dynamic_cast< internal::input_body_leaf<output_type, Body> & >(body_ref).get_body();
     }
 
 #if TBB_DEPRECATED_FLOW_NODE_EXTRACTION
@@ -1081,7 +1082,7 @@ public:
 
 protected:
 
-    //! resets the source_node to its initial state
+    //! resets the input_node to its initial state
     void reset_node( reset_flags f) __TBB_override {
         my_active = false;
         my_reserved = false;
@@ -1089,7 +1090,7 @@ protected:
 
         if(f & rf_clear_edges) my_successors.clear();
         if(f & rf_reset_bodies) {
-            internal::source_body<output_type> *tmp = my_init_body->clone();
+            internal::input_body<output_type> *tmp = my_init_body->clone();
             delete my_body;
             my_body = tmp;
         }
@@ -1098,8 +1099,8 @@ protected:
 private:
     spin_mutex my_mutex;
     bool my_active;
-    internal::source_body<output_type> *my_body;
-    internal::source_body<output_type> *my_init_body;
+    internal::input_body<output_type> *my_body;
+    internal::input_body<output_type> *my_init_body;
     internal::broadcast_cache< output_type > my_successors;
     bool my_reserved;
     bool my_has_cached_item;
@@ -1113,11 +1114,18 @@ private:
         }
         if ( !my_has_cached_item ) {
             tbb::internal::fgt_begin_body( my_body );
+
+#if TBB_DEPRECATED_INPUT_NODE_BODY
             bool r = (*my_body)(my_cached_item);
-            tbb::internal::fgt_end_body( my_body );
             if (r) {
                 my_has_cached_item = true;
             }
+#else
+            flow_control control;
+            my_cached_item = (*my_body)(control);
+            my_has_cached_item = !control.is_pipeline_stopped;
+#endif
+            tbb::internal::fgt_end_body( my_body );
         }
         if ( my_has_cached_item ) {
             v = my_cached_item;

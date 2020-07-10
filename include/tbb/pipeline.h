@@ -300,6 +300,12 @@ private:
 // Support for lambda-friendly parallel_pipeline interface
 //------------------------------------------------------------------------
 
+namespace flow {
+namespace interface11 {
+    template<typename Output> class input_node;
+}
+}
+
 namespace interface6 {
 
 namespace internal {
@@ -311,6 +317,7 @@ class flow_control {
     bool is_pipeline_stopped;
     flow_control() { is_pipeline_stopped = false; }
     template<typename T, typename U, typename Body> friend class internal::concrete_filter;
+    template<typename Output> friend class flow::interface11::input_node;
 public:
     void stop() { is_pipeline_stopped = true; }
 };

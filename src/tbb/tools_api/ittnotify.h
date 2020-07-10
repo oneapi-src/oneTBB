@@ -22,7 +22,7 @@
 @brief Public User API functions and types
 @mainpage
 
-The ITT API is used to annotate a user's program with additional information
+The Instrumentation and Tracing Technology API (ITT API) is used to annotate a user's program with additional information
 that can be used by correctness and performance tools. The user inserts
 calls in their program. Those calls generate information that is collected
 at runtime, and used by Intel(R) Threading Tools.

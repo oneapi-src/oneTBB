@@ -324,10 +324,10 @@ int TestMain () {
 #if _MSC_VER && !__TBB_NO_IMPLICIT_LINKAGE && !defined(__TBB_LIB_NAME)
     #ifdef _DEBUG
         ASSERT(!GetModuleHandle(_T("tbb.dll")) && GetModuleHandle(_T("tbb_debug.dll")),
-            "test linked with wrong (non-debug) tbb library");
+            "test linked with wrong (non-debug) TBB library");
     #else
         ASSERT(!GetModuleHandle(_T("tbb_debug.dll")) && GetModuleHandle(_T("tbb.dll")),
-            "test linked with wrong (debug) tbb library");
+            "test linked with wrong (debug) TBB library");
     #endif
 #endif /* _MSC_VER && !__TBB_NO_IMPLICIT_LINKAGE && !__TBB_LIB_NAME */
     std::srand(2);

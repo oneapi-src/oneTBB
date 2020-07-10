@@ -54,7 +54,7 @@ function(tbb_build)
         set(multiValueArgs USER_DEFINED_ARGS)
         cmake_parse_arguments(tbb_GMA "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-        set(result ${tbb_GMA_USER_DEFINED_ARGS})
+        set(result "${tbb_GMA_USER_DEFINED_ARGS}")
 
         if (NOT tbb_GMA_USER_DEFINED_ARGS MATCHES "compiler=")
             # TODO: add other supported compilers.

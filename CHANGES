@@ -2,6 +2,31 @@
 The list of most significant changes made over time in
 Intel(R) Threading Building Blocks (Intel(R) TBB).
 
+Intel TBB 2020 Update 3
+TBB_INTERFACE_VERSION == 11103
+
+Changes (w.r.t. Intel TBB 2020 Update 2):
+
+Changes affecting backward compatibility:
+
+- Changed body type concept of the flow::input_node.
+    Set TBB_DEPRECATED_INPUT_NODE_BODY to 1 to compile with the previous
+    concept of the body type.
+
+Bugs fixed:
+
+- Fixed compilation errors in C++20 mode due to ambiguity of comparison
+    operators. Inspired by Barry Revzin
+    (https://github.com/oneapi-src/oneTBB/pull/251).
+
+Open-source contributions integrated:
+
+- Fixed an issue in TBBBuild.cmake that causes the build with no arguments
+    to fail (https://github.com/oneapi-src/oneTBB/pull/233) by tttapa.
+- Added cmake/{TBBConfig,TBBConfigVersion}.cmake to Git ignore list
+    (https://github.com/oneapi-src/oneTBB/pull/239) by Eisuke Kawashima.
+
+------------------------------------------------------------------------
 Intel TBB 2020 Update 2
 TBB_INTERFACE_VERSION == 11102
 

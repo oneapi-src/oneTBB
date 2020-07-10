@@ -1204,7 +1204,7 @@ void test_limited_lightweight_execution(unsigned N, unsigned concurrency) {
     tbb::flow::graph g;
     NodeType node(g, concurrency, limited_lightweight_checker_body());
     // Execute first body as lightweight, then wait for all other threads to fill internal buffer.
-    // Then unblock the lightweightd thread and check if other body executions are inside tbb task.
+    // Then unblock the lightweightd thread and check if other body executions are inside TBB task.
     Harness::SpinBarrier barrier(N - concurrency);
     NativeParallelFor(N, native_loop_limited_body<NodeType>(node, barrier));
     g.wait_for_all();

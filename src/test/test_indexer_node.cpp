@@ -17,6 +17,7 @@
 #if __TBB_CPF_BUILD
 #define TBB_DEPRECATED_FLOW_NODE_EXTRACTION 1
 #endif
+#define TBB_DEPRECATED_INPUT_NODE_BODY __TBB_CPF_BUILD
 
 #include "harness.h"
 #include "harness_graph.h"
@@ -414,12 +415,26 @@ class source_body {
     int addend;
 public:
     source_body(TT multiplier, int init_val, int addto) : my_mult(multiplier), my_count(init_val), addend(addto) { }
+#if TBB_DEPRECATED_INPUT_NODE_BODY
     bool operator()( TT &v) {
         int lc = my_count;
         v = my_mult * (TT)my_count;
         my_count += addend;
         return lc < Count;
     }
+#else
+    TT operator()( tbb::flow_control& fc) {
+        int lc = my_count;
+        TT ret = my_mult * (TT)my_count;
+        my_count += addend;
+        if ( lc < Count){
+            return ret;
+        }else{
+            fc.stop();
+            return TT();
+        }
+    }
+#endif
 };
 
 // allocator for indexer_node.

@@ -15,6 +15,7 @@
 */
 
 #define TBB_DEPRECATED_FLOW_NODE_ALLOCATOR __TBB_CPF_BUILD
+#define TBB_DEPRECATED_INPUT_NODE_BODY __TBB_CPF_BUILD
 
 #include "harness.h"
 #include "harness_graph.h"
@@ -100,12 +101,25 @@ class source_body {
     int addend;
 public:
     source_body(int init_val, int addto) : my_count(init_val), addend(addto) { }
+#if TBB_DEPRECATED_INPUT_NODE_BODY
     bool operator()( TT &v) {
         if(my_count >= Count) return false;
         tuple_helper<N>::set_element(v, my_count);
         my_count += addend;
         return true;
     }
+#else
+    TT operator()( tbb::flow_control &fc) {
+        if(my_count >= Count){
+            fc.stop();
+            return TT();
+        }
+        TT v;
+        tuple_helper<N>::set_element(v, my_count);
+        my_count += addend;
+        return v;
+    }
+#endif
 };
 
 // allocator for split_node.

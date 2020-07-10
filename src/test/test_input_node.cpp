@@ -17,6 +17,7 @@
 // have to expose the reset_node method to be able to reset a function_body
 
 #include "harness.h"
+#define TBB_DEPRECATED_INPUT_NODE_BODY __TBB_CPF_BUILD
 
 #include "harness_graph.h"
 #include "tbb/flow_graph.h"
@@ -80,15 +81,27 @@ public:
    source_body() : ninvocations(NULL) { my_count = 0; }
    source_body(int &_inv) : ninvocations(&_inv)  { my_count = 0; }
 
-   bool operator()( T &v ) {
-      v = (T)my_count++;
-      if(ninvocations) ++(*ninvocations);
-      if ( (int)v < N )
-         return true;
-      else
-         return false;
-   }
-
+#if TBB_DEPRECATED_INPUT_NODE_BODY
+    bool operator()( T &v ) {
+        v = (T)my_count++;
+        if(ninvocations) ++(*ninvocations);
+        if ( (int)v < N )
+            return true;
+        else
+            return false;
+    }
+#else
+    T operator()( tbb::flow_control& fc ) {
+        T v = (T)my_count++;
+        if(ninvocations) ++(*ninvocations);
+        if ( (int)v < N ){
+            return v;
+        }else{
+            fc.stop();
+            return T();
+        }
+    }
+#endif
 };
 
 template< typename T >
@@ -256,15 +269,22 @@ void test_reset() {
 }
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
-bool source_body_f(int& i) { return i > 5; }
-
+#if TBB_DEPRECATED_INPUT_NODE_BODY
+    bool source_body_f(int& i) { return i > 5; }
+#else
+    int source_body_f(tbb::flow_control&) { return 42; }
+#endif
 void test_deduction_guides() {
     using namespace tbb::flow;
     graph g;
 
+#if TBB_DEPRECATED_INPUT_NODE_BODY
     auto lambda = [](int& i) { return i > 5; };
     auto non_const_lambda = [](int& i) mutable { return i > 5; };
-
+#else
+    auto lambda = [](tbb::flow_control&) { return 42; };
+    auto non_const_lambda = [](tbb::flow_control&) mutable { return 42; };
+#endif
     // Tests for source_node(graph&, Body)
     input_node s1(g, lambda);
     static_assert(std::is_same_v<decltype(s1), input_node<int>>);
@@ -310,7 +330,9 @@ void test_follows_and_precedes_api() {
     }};
 
     bool do_try_put = true;
-    input_node<bool> src(precedes(successors[0], successors[1], successors[2]), [&](bool& v) -> bool {
+    input_node<bool> src(precedes(successors[0], successors[1], successors[2]),
+    #if TBB_DEPRECATED_INPUT_NODE_BODY
+    [&](bool& v) -> bool {
         if(do_try_put) {
             v = do_try_put;
             do_try_put = false;
@@ -319,7 +341,16 @@ void test_follows_and_precedes_api() {
         else {
             return false;
         }
-    });
+    }
+    #else
+    [&](tbb::flow_control& fc) -> bool {
+        if(!do_try_put)
+            fc.stop();
+        do_try_put = !do_try_put;
+        return true;
+    }
+    #endif
+    );
 
     src.activate();
     g.wait_for_all();

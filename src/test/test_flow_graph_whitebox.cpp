@@ -25,6 +25,8 @@
     #endif
 #endif
 
+#define TBB_DEPRECATED_INPUT_NODE_BODY __TBB_CPF_BUILD
+
 #include "harness.h"
 #include <string> // merely prevents LNK2001 error to happen (on ICL+VC9 configurations)
 
@@ -633,11 +635,21 @@ struct snode_body {
     int max_cnt;
     int my_cnt;
     snode_body( const int &in) : max_cnt(in) { my_cnt = 0; }
+#if TBB_DEPRECATED_INPUT_NODE_BODY
     bool operator()(int &out) {
         if(max_cnt <= my_cnt++) return false;
         out = my_cnt;
         return true;
     }
+#else
+    int operator()(tbb::flow_control &fc) {
+        if(max_cnt <= my_cnt++) {
+            fc.stop();
+            return int();
+        }
+        return my_cnt;
+    }
+#endif
 };
 
 void

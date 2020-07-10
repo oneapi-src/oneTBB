@@ -279,6 +279,33 @@ using is_transparent = typename std::conditional<true, Comp, K>::type::is_transp
 
 #endif /* __TBB_CPP11_PRESENT */
 
+template <typename F>
+struct body_arg_detector;
+
+template <typename Callable, typename ReturnType, typename T>
+struct body_arg_detector<ReturnType(Callable::*)(T)> {
+    typedef T arg_type;
+};
+
+template <typename Callable, typename ReturnType, typename T>
+struct body_arg_detector<ReturnType(Callable::*)(T) const> {
+    typedef T arg_type;
+};
+
+#if __TBB_CPP11_PRESENT
+using std::conditional;
+#else
+template <bool C, typename T, typename U>
+struct conditional {
+    typedef U type;
+};
+
+template <typename T, typename U>
+struct conditional<true, T, U> {
+    typedef T type;
+};
+#endif
+
 } } // namespace internal, namespace tbb
 
 #endif /* __TBB_template_helpers_H */

@@ -16,6 +16,7 @@
 
 #include "harness.h"
 #if __TBB_FLOW_GRAPH_CPP11_FEATURES
+#define TBB_DEPRECATED_INPUT_NODE_BODY __TBB_CPF_BUILD
 
 #include "tbb/flow_graph.h"
 #include "harness_graph.h"
@@ -35,6 +36,7 @@ class src_body{
     int step;
 public:
     src_body(int f, int s) : start(1), finish(f), step(s) {}
+#if TBB_DEPRECATED_INPUT_NODE_BODY
     bool operator()(int &a) {
        a = start;
        if (start <= finish) {
@@ -45,7 +47,21 @@ public:
        else {
            return false;
        };
-   }
+    }
+#else
+    int operator()(tbb::flow_control& fc) {
+       int a = start;
+       if (start <= finish) {
+           a = start;
+           start+=step;
+           return a;
+       }
+       else {
+           fc.stop();
+           return int();
+       };
+    }
+#endif
 };
 
 struct m_fxn_body{

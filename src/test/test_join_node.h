@@ -26,6 +26,8 @@
 #endif
 #endif
 
+#define TBB_DEPRECATED_INPUT_NODE_BODY __TBB_CPF_BUILD
+
 #include "harness.h"
 #include "harness_graph.h"
 #include "harness_checktype.h"
@@ -835,11 +837,20 @@ static int input_count;  // source_nodes are serial
 // emit input_count continue_msg
 class recirc_source_node_body {
 public:
+#if TBB_DEPRECATED_INPUT_NODE_BODY
     bool operator()(tbb::flow::continue_msg &v) {
         --input_count;
         v = tbb::flow::continue_msg();
         return 0<=input_count;
     }
+#else
+    tbb::flow::continue_msg operator()(tbb::flow_control &fc) {
+        if( --input_count < 0 ){
+            fc.stop();
+        }
+        return tbb::flow::continue_msg();
+    }
+#endif
 };
 
 // T must be arithmetic, and shouldn't wrap around for reasonable sizes of Count (which is now 150, and maxPorts is 10,
@@ -854,12 +865,26 @@ class source_body {
     int addend;
 public:
     source_body(int init_val, int addto): my_count(init_val), addend(addto) { }
+#if TBB_DEPRECATED_INPUT_NODE_BODY
     bool operator()(TT &v) {
         int lc = my_count;
         v = make_thingie<TT, INDEX>()(my_count);
         my_count += addend;
         return lc < Count;
     }
+#else
+    TT operator()(tbb::flow_control& fc) {
+        int lc = my_count;
+        TT ret = make_thingie<TT, INDEX>()(my_count);
+        my_count += addend;
+        if ( lc < Count){
+            return ret;
+        }else{
+            fc.stop();
+            return TT();
+        }
+    }
+#endif
 };
 
 template<typename TT>

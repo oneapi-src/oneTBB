@@ -42,7 +42,7 @@ int TestMain () {
 #include <stdexcept>
 
 #ifdef HARNESS_USE_RUNTIME_LOADER
-    #undef HARNESS_USE_RUNTIME_LOADER    // We do not want harness to preload tbb.
+    #undef HARNESS_USE_RUNTIME_LOADER    // We do not want harness to preload TBB.
 #endif
 #include "harness.h"
 

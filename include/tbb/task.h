@@ -510,7 +510,7 @@ public:
         init();
     }
 
-    // Custom constructor for instrumentation of tbb algorithm
+    // Custom constructor for instrumentation of TBB algorithm
     task_group_context ( internal::string_index name )
         : my_kind(bound)
         , my_version_and_traits(3 | default_traits)

@@ -77,6 +77,8 @@ Thumbs.db
 ################################
 CMakeCache.txt
 CMakeFiles/
+cmake/TBBConfig.cmake
+cmake/TBBConfigVersion.cmake
 
 # Other #
 #########

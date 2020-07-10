@@ -147,7 +147,7 @@ enum thread_state_t {
     ts_omp_busy,
     //! Thread is busy doing TBB work.
     ts_tbb_busy,
-    //! For tbb threads only
+    //! For TBB threads only
     ts_done,
     ts_created,
     ts_started,
@@ -1005,7 +1005,7 @@ connection_scavenger_thread connection_scavenger;
 template<typename Server, typename Client>
 struct connection_traits {};
 
-// head of the active tbb connections
+// head of the active TBB connections
 static tbb::atomic<uintptr_t> active_tbb_connections;
 static tbb::atomic<int> current_tbb_conn_readers;
 static size_t current_tbb_conn_reader_epoch;
@@ -1381,7 +1381,7 @@ template<typename Server, typename Client>
 void generic_connection<Server,Client>::request_close_connection( bool ) {
 #endif /* RML_USE_WCRM */
     if( connection_traits<Server,Client>::is_tbb ) {
-        // acquire the head of active tbb connections
+        // acquire the head of active TBB connections
         uintptr_t conn;
         do {
             for( ; (conn=active_tbb_connections)&1; )
@@ -1402,7 +1402,7 @@ void generic_connection<Server,Client>::request_close_connection( bool ) {
         } else
             active_tbb_connections = (uintptr_t) curr_conn->next_conn; // update & release it
         curr_conn->next_conn = NULL;
-        // Increment the tbb connection close event count
+        // Increment the TBB connection close event count
         my_ec = ++close_tbb_connection_event_count;
         // Wait happens in tbb_connection_v2::~tbb_connection_v2()
     }
@@ -1672,12 +1672,12 @@ void omp_connection_v2::reactivate( rml::job* j )
 
 #endif  /* RML_USE_WCRM */
 
-//! Wake up some available tbb threads
+//! Wake up some available TBB threads
 void wakeup_some_tbb_threads()
 {
     /* First, atomically grab the connection, then increase the server ref count to keep
        it from being released prematurely.  Second, check if the balance is available for TBB
-       and the tbb connection has slack to exploit.  If the answer is true, go ahead and
+       and the TBB connection has slack to exploit.  If the answer is true, go ahead and
        try to wake some up. */
     if( generic_connection<tbb_server,tbb_client >::get_addr(active_tbb_connections)==0 )
         // the next connection will see the change; return.
@@ -1687,7 +1687,7 @@ start_it_over:
     int n_curr_readers = ++current_tbb_conn_readers;
     if( n_curr_readers>1 ) // I lost
         return;
-    // if n_curr_readers==1, i am the first one, so I will take responsibility for waking tbb threads up.
+    // if n_curr_readers==1, i am the first one, so I will take responsibility for waking TBB threads up.
 
     // update the current epoch
     current_tbb_conn_reader_epoch = close_tbb_connection_event_count;
@@ -1702,7 +1702,7 @@ start_it_over:
     generic_connection<tbb_server,tbb_client>* next_conn_wake_up = generic_connection<tbb_server,tbb_client>::get_addr( active_tbb_connections );
 
     for( ; next_conn_wake_up; ) {
-        /* some threads are creating tbb server threads; they may not see my changes made to the_balance */
+        /* some threads are creating TBB server threads; they may not see my changes made to the_balance */
         /* When a thread is in adjust_job_count_estimate() to increase the slack
            RML tries to activate worker threads on behalf of the requesting thread
            by repeatedly drawing a coin from the bank optimistically and grabbing a
@@ -2076,7 +2076,7 @@ void server_thread::loop() {
         if( s==ts_omp_busy ) {
             // Enslaved by OpenMP team.
             omp_dispatch.consume();
-            /* here wake tbb threads up if feasible */
+            /* here wake TBB threads up if feasible */
             if( ++the_balance>0 )
                 wakeup_some_tbb_threads();
             state = ts_idle;
@@ -2109,7 +2109,7 @@ void server_thread::loop() {
                     }
                 } // else the new request will see my changes to state & the_balance.
             }
-            /* here wake tbb threads up if feasible */
+            /* here wake TBB threads up if feasible */
             if( the_balance>0 )
                 wakeup_some_tbb_threads();
         }
@@ -2229,7 +2229,7 @@ void tbb_server_thread::Dispatch( DispatchState* ) {
     make_job( *tbb_conn, *this );
 
     for( ;; ) {
-        // Try to wake some tbb threads if the balance is positive.
+        // Try to wake some TBB threads if the balance is positive.
         // When a thread is added by ConcRT and enter here for the first time,
         // the thread may wake itself up (i.e., atomically change its state to ts_busy.
         if( the_balance>0 )

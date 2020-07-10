@@ -14,10 +14,13 @@
     limitations under the License.
 */
 
+#define TBB_DEPRECATED_INPUT_NODE_BODY __TBB_CPF_BUILD
+
 #include "harness_graph.h"
 #include "harness_barrier.h"
 #include "tbb/flow_graph.h"
 #include "tbb/task_scheduler_init.h"
+
 
 const int T = 4;
 const int W = 4;
@@ -246,6 +249,8 @@ struct source_body {
     tbb::task_arena* my_a;
     int counter;
     source_body(tbb::task_arena* a) : my_a(a), counter(0) {}
+
+#if TBB_DEPRECATED_INPUT_NODE_BODY
     bool operator()(const int& /*i*/) {
         check_arena(my_a);
         if (counter < 1) {
@@ -254,6 +259,15 @@ struct source_body {
        }
        return false;
     }
+#else
+    int operator()(tbb::flow_control &fc) {
+        check_arena(my_a);
+        if (counter++ >= 1) {
+            fc.stop();
+        }
+        return int();
+    }
+#endif
 };
 
 struct run_test_functor : tbb::internal::no_assign {
