@@ -261,6 +261,7 @@ private:
         __TBB_ASSERT(&(*it) == &map_record_ref,"dangling reference has been returned to outside world? data race ?");
         __TBB_ASSERT( my_lru_list.end()== std::find(my_lru_list.begin(),my_lru_list.end(),it),
                 "object in use should not be in list of unused objects ");
+        if (my_number_of_lru_history_items == 0) return;
         if (! --(it->second.my_ref_counter)){
             //it was the last reference so put it to the LRU history
             if (my_lru_list.size()>=my_number_of_lru_history_items){
