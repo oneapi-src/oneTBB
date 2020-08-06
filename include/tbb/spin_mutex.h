@@ -17,199 +17,161 @@
 #ifndef __TBB_spin_mutex_H
 #define __TBB_spin_mutex_H
 
-#define __TBB_spin_mutex_H_include_area
-#include "internal/_warning_suppress_enable_notice.h"
+#include "profiling.h"
 
-#include <cstddef>
-#include <new>
-#include "aligned_space.h"
-#include "tbb_stddef.h"
-#include "tbb_machine.h"
-#include "tbb_profiling.h"
-#include "internal/_mutex_padding.h"
+#include "detail/_assert.h"
+#include "detail/_utils.h"
+
+#include <atomic>
 
 namespace tbb {
+namespace detail {
+namespace d1 {
 
-//! A lock that occupies a single byte.
-/** A spin_mutex is a spin mutex that fits in a single byte.
+#if __TBB_TSX_INTRINSICS_PRESENT
+class rtm_mutex;
+#endif
+
+/** A spin_mutex is a low-level synchronization primitive.
+    While locked, it causes the waiting threads to spin in a loop until the lock is released.
     It should be used only for locking short critical sections
     (typically less than 20 instructions) when fairness is not an issue.
     If zero-initialized, the mutex is considered unheld.
     @ingroup synchronization */
-class spin_mutex : internal::mutex_copy_deprecated_and_disabled {
-    //! 0 if lock is released, 1 if lock is acquired.
-    __TBB_atomic_flag flag;
-
+class spin_mutex {
 public:
-    //! Construct unacquired lock.
-    /** Equivalent to zero-initialization of *this. */
-    spin_mutex() : flag(0) {
-#if TBB_USE_THREADING_TOOLS
-        internal_construct();
-#endif
-    }
+    //! Constructors
+    spin_mutex() noexcept : m_flag(false) {
+        create_itt_sync(this, "tbb::spin_mutex", "");
+    };
+
+    //! Destructor
+    ~spin_mutex() = default;
+
+    //! No Copy
+    spin_mutex(const spin_mutex&) = delete;
+    spin_mutex& operator=(const spin_mutex&) = delete;
 
     //! Represents acquisition of a mutex.
-    class scoped_lock : internal::no_copy {
-    private:
+    class scoped_lock {
         //! Points to currently held mutex, or NULL if no lock is held.
-        spin_mutex* my_mutex;
-
-        //! Value to store into spin_mutex::flag to unlock the mutex.
-        /** This variable is no longer used. Instead, 0 and 1 are used to
-            represent that the lock is free and acquired, respectively.
-            We keep the member variable here to ensure backward compatibility */
-        __TBB_Flag my_unlock_value;
-
-        //! Like acquire, but with ITT instrumentation.
-        void __TBB_EXPORTED_METHOD internal_acquire( spin_mutex& m );
-
-        //! Like try_acquire, but with ITT instrumentation.
-        bool __TBB_EXPORTED_METHOD internal_try_acquire( spin_mutex& m );
-
-        //! Like release, but with ITT instrumentation.
-        void __TBB_EXPORTED_METHOD internal_release();
-
-        friend class spin_mutex;
+        spin_mutex* m_mutex;
 
     public:
         //! Construct without acquiring a mutex.
-        scoped_lock() : my_mutex(NULL), my_unlock_value(0) {}
+        constexpr scoped_lock() noexcept : m_mutex(nullptr) {}
 
         //! Construct and acquire lock on a mutex.
-        scoped_lock( spin_mutex& m ) : my_unlock_value(0) {
-            internal::suppress_unused_warning(my_unlock_value);
-#if TBB_USE_THREADING_TOOLS||TBB_USE_ASSERT
-            my_mutex=NULL;
-            internal_acquire(m);
-#else
-            my_mutex=&m;
-            __TBB_LockByte(m.flag);
-#endif /* TBB_USE_THREADING_TOOLS||TBB_USE_ASSERT*/
+        scoped_lock(spin_mutex& m) {
+            acquire(m);
         }
 
+        //! No Copy
+        scoped_lock(const scoped_lock&) = delete;
+        scoped_lock& operator=(const scoped_lock&) = delete;
+
         //! Acquire lock.
-        void acquire( spin_mutex& m ) {
-#if TBB_USE_THREADING_TOOLS||TBB_USE_ASSERT
-            internal_acquire(m);
-#else
-            my_mutex = &m;
-            __TBB_LockByte(m.flag);
-#endif /* TBB_USE_THREADING_TOOLS||TBB_USE_ASSERT*/
+        void acquire(spin_mutex& m) {
+            m_mutex = &m;
+            m.lock();
         }
 
         //! Try acquiring lock (non-blocking)
         /** Return true if lock acquired; false otherwise. */
-        bool try_acquire( spin_mutex& m ) {
-#if TBB_USE_THREADING_TOOLS||TBB_USE_ASSERT
-            return internal_try_acquire(m);
-#else
-            bool result = __TBB_TryLockByte(m.flag);
-            if( result )
-                my_mutex = &m;
+        bool try_acquire(spin_mutex& m) {
+            bool result = m.try_lock();
+            if (result) {
+                m_mutex = &m;
+            }
             return result;
-#endif /* TBB_USE_THREADING_TOOLS||TBB_USE_ASSERT*/
         }
 
         //! Release lock
         void release() {
-#if TBB_USE_THREADING_TOOLS||TBB_USE_ASSERT
-            internal_release();
-#else
-            __TBB_UnlockByte(my_mutex->flag);
-            my_mutex = NULL;
-#endif /* TBB_USE_THREADING_TOOLS||TBB_USE_ASSERT */
+            __TBB_ASSERT(m_mutex, "release on spin_mutex::scoped_lock that is not holding a lock");
+            m_mutex->unlock();
+            m_mutex = nullptr;
         }
 
-        //! Destroy lock.  If holding a lock, releases the lock first.
+        //! Destroy lock. If holding a lock, releases the lock first.
         ~scoped_lock() {
-            if( my_mutex ) {
-#if TBB_USE_THREADING_TOOLS||TBB_USE_ASSERT
-                internal_release();
-#else
-                __TBB_UnlockByte(my_mutex->flag);
-#endif /* TBB_USE_THREADING_TOOLS||TBB_USE_ASSERT */
+            if (m_mutex) {
+                release();
             }
         }
     };
 
-    //! Internal constructor with ITT instrumentation.
-    void __TBB_EXPORTED_METHOD internal_construct();
-
-    // Mutex traits
-    static const bool is_rw_mutex = false;
-    static const bool is_recursive_mutex = false;
-    static const bool is_fair_mutex = false;
-
-    // ISO C++0x compatibility methods
+    //! Mutex traits
+    static constexpr bool is_rw_mutex = false;
+    static constexpr bool is_recursive_mutex = false;
+    static constexpr bool is_fair_mutex = false;
 
     //! Acquire lock
+    /** Spin if the lock is taken */
     void lock() {
-#if TBB_USE_THREADING_TOOLS
-        internal::aligned_space<scoped_lock> tmp;
-        new(tmp.begin()) scoped_lock(*this);
-#else
-        __TBB_LockByte(flag);
-#endif /* TBB_USE_THREADING_TOOLS*/
+        atomic_backoff backoff;
+        call_itt_notify(prepare, this);
+        while (m_flag.exchange(true)) backoff.pause();
+        call_itt_notify(acquired, this);
     }
 
     //! Try acquiring lock (non-blocking)
     /** Return true if lock acquired; false otherwise. */
     bool try_lock() {
-#if TBB_USE_THREADING_TOOLS
-        internal::aligned_space<scoped_lock> tmp;
-        return (new(tmp.begin()) scoped_lock)->internal_try_acquire(*this);
-#else
-        return __TBB_TryLockByte(flag);
-#endif /* TBB_USE_THREADING_TOOLS*/
+        bool result = !m_flag.exchange(true);
+        if (result) {
+            call_itt_notify(acquired, this);
+        }
+        return result;
     }
 
     //! Release lock
     void unlock() {
-#if TBB_USE_THREADING_TOOLS
-        internal::aligned_space<scoped_lock> tmp;
-        scoped_lock& s = *tmp.begin();
-        s.my_mutex = this;
-        s.internal_release();
-#else
-        __TBB_UnlockByte(flag);
-#endif /* TBB_USE_THREADING_TOOLS */
+        call_itt_notify(releasing, this);
+        m_flag.store(false, std::memory_order_release);
     }
 
-    friend class scoped_lock;
-}; // end of spin_mutex
+protected:
+    std::atomic<bool> m_flag;
+}; // class spin_mutex
 
-__TBB_DEFINE_PROFILING_SET_NAME(spin_mutex)
+#if TBB_USE_PROFILING_TOOLS
+inline void set_name(spin_mutex& obj, const char* name) {
+    itt_set_sync_name(&obj, name);
+}
+#if (_WIN32||_WIN64) && !__MINGW32__
+inline void set_name(spin_mutex& obj, const wchar_t* name) {
+    itt_set_sync_name(&obj, name);
+}
+#endif //WIN
+#else
+inline void set_name(spin_mutex&, const char*) {}
+#if (_WIN32||_WIN64) && !__MINGW32__
+inline void set_name(spin_mutex&, const wchar_t*) {}
+#endif // WIN
+#endif
+} // namespace d1
+} // namespace detail
 
+inline namespace v1 {
+using detail::d1::spin_mutex;
+} // namespace v1
+namespace profiling {
+    using detail::d1::set_name;
+}
 } // namespace tbb
 
-#if ( __TBB_x86_32 || __TBB_x86_64 )
-#include "internal/_x86_eliding_mutex_impl.h"
-#endif
+#include "detail/_rtm_mutex.h"
 
 namespace tbb {
-//! A cross-platform spin mutex with speculative lock acquisition.
-/** On platforms with proper HW support, this lock may speculatively execute
-    its critical sections, using HW mechanisms to detect real data races and
-    ensure atomicity of the critical sections. In particular, it uses
-    Intel(R) Transactional Synchronization Extensions (Intel(R) TSX).
-    Without such HW support, it behaves like a spin_mutex.
-    It should be used for locking short critical sections where the lock is
-    contended but the data it protects are not.  If zero-initialized, the
-    mutex is considered unheld.
-    @ingroup synchronization */
-
-#if ( __TBB_x86_32 || __TBB_x86_64 )
-typedef interface7::internal::padded_mutex<interface7::internal::x86_eliding_mutex,false> speculative_spin_mutex;
+inline namespace v1 {
+#if __TBB_TSX_INTRINSICS_PRESENT
+    using speculative_spin_mutex = detail::d1::rtm_mutex;
 #else
-typedef interface7::internal::padded_mutex<spin_mutex,false> speculative_spin_mutex;
+    using speculative_spin_mutex = detail::d1::spin_mutex;
 #endif
-__TBB_DEFINE_PROFILING_SET_NAME(speculative_spin_mutex)
-
-} // namespace tbb
-
-
-#include "internal/_warning_suppress_disable_notice.h"
-#undef __TBB_spin_mutex_H_include_area
+}
+}
 
 #endif /* __TBB_spin_mutex_H */
+

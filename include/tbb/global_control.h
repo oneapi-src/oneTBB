@@ -17,10 +17,27 @@
 #ifndef __TBB_global_control_H
 #define __TBB_global_control_H
 
-#include "tbb_stddef.h"
+#include "detail/_config.h"
+
+#include "detail/_assert.h"
+
+#include <cstddef>
 
 namespace tbb {
-namespace interface9 {
+namespace detail {
+
+namespace d1 {
+    class global_control;
+}
+
+namespace r1 {
+void __TBB_EXPORTED_FUNC create(d1::global_control&);
+void __TBB_EXPORTED_FUNC destroy(d1::global_control&);
+std::size_t __TBB_EXPORTED_FUNC global_control_active_value(int);
+struct global_control_impl;
+}
+
+namespace d1 {
 
 class global_control {
 public:
@@ -30,7 +47,7 @@ public:
         parameter_max // insert new parameters above this point
     };
 
-    global_control(parameter p, size_t value) :
+    global_control(parameter p, std::size_t value) :
         my_value(value), my_next(NULL), my_param(p) {
         __TBB_ASSERT(my_param < parameter_max, "Invalid parameter");
 #if __TBB_WIN8UI_SUPPORT && (_WIN32_WINNT < 0x0A00)
@@ -43,7 +60,7 @@ public:
 #endif
         if (my_param==max_allowed_parallelism)
             __TBB_ASSERT_RELEASE(my_value>0, "max_allowed_parallelism cannot be 0.");
-        internal_create();
+        r1::create(*this);
     }
 
     ~global_control() {
@@ -53,27 +70,28 @@ public:
         if (my_param==thread_stack_size)
             return;
 #endif
-        internal_destroy();
+        r1::destroy(*this);
     }
 
-    static size_t active_value(parameter p) {
+    static std::size_t active_value(parameter p) {
         __TBB_ASSERT(p < parameter_max, "Invalid parameter");
-        return active_value((int)p);
+        return r1::global_control_active_value((int)p);
     }
 private:
-    size_t    my_value;
+    std::size_t   my_value;
     global_control *my_next;
     parameter my_param;
 
-    void __TBB_EXPORTED_METHOD internal_create();
-    void __TBB_EXPORTED_METHOD internal_destroy();
-    static size_t __TBB_EXPORTED_FUNC active_value(int param);
+    friend struct r1::global_control_impl;
 };
-} // namespace interface9
 
-using interface9::global_control;
+} // namespace d1
+} // namespace detail
 
-} // tbb
+inline namespace v1 {
+using detail::d1::global_control;
+} // namespace v1
 
+} // namespace tbb
 
 #endif // __TBB_global_control_H

@@ -233,7 +233,7 @@ public:
 
 private:
     // How many times LOC was "too large"
-    intptr_t     tooLargeLOC;
+    std::atomic<intptr_t> tooLargeLOC;
     // for fast finding of used bins and bins with non-zero usedSize;
     // indexed from the end, as we need largest 1st
     BinBitMask   bitMask;
@@ -275,7 +275,7 @@ private:
     static const size_t minLargeSize = 8 * 1024,
                         maxLargeSize = 8 * 1024 * 1024,
                         // Cache memory up to 1TB (or 2GB for 32-bit arch), but sieve objects from the special threshold
-                        maxHugeSize = tbb::internal::select_size_t_constant<2147483648U, 1099511627776ULL>::value;
+                        maxHugeSize = tbb::detail::select_size_t_constant<2147483648U, 1099511627776ULL>::value;
 
 public:
     // Upper bound threshold for caching size. After that size all objects sieve through cache
@@ -313,7 +313,7 @@ private:
        a different case multiple cached blocks would have same age,
        and accuracy of predictors suffers.
     */
-    uintptr_t cacheCurrTime;
+    std::atomic<uintptr_t> cacheCurrTime;
 
     // Memory pool that owns this LargeObjectCache.
     // strict 1:1 relation, never changed

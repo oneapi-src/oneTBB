@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright (c) 2016-2020 Intel Corporation
 #
@@ -45,7 +45,6 @@
 # SUCH DAMAGE.
 #
 
-from __future__ import print_function
 import time
 import threading
 
@@ -61,8 +60,12 @@ def test(arg=None):
         def say(*x):
             pass
     say("Start Pool testing")
+    print("oneTBB version is %s" % runtime_version())
+    print("oneTBB interface version is %s" % runtime_interface_version())
 
     get_tid = lambda: threading.current_thread().ident
+
+    assert default_num_threads() == this_task_arena_max_concurrency()
 
     def return42():
         return 42
@@ -192,4 +195,5 @@ def test(arg=None):
     pool.terminate()
     pool.join()
 
-
+if __name__ == "__main__":
+    test()

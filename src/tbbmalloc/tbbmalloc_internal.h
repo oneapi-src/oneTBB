@@ -17,7 +17,6 @@
 #ifndef __TBB_tbbmalloc_internal_H
 #define __TBB_tbbmalloc_internal_H
 
-
 #include "TypeDefinitions.h" /* Also includes customization layer Customize.h */
 
 #if USE_PTHREAD
@@ -25,17 +24,20 @@
     #include <pthread.h>
     typedef pthread_key_t tls_key_t;
 #elif USE_WINTHREAD
-    #include "tbb/machine/windows_api.h"
+    #include <windows.h>
     typedef DWORD tls_key_t;
 #else
     #error Must define USE_PTHREAD or USE_WINTHREAD
 #endif
 
+#include <atomic>
+
 // TODO: *BSD also has it
 #define BACKEND_HAS_MREMAP __linux__
 #define CHECK_ALLOCATION_RANGE MALLOC_DEBUG || MALLOC_ZONE_OVERLOAD_ENABLED || MALLOC_UNIXLIKE_OVERLOAD_ENABLED
 
-#include "tbb/tbb_config.h" // for __TBB_LIBSTDCPP_EXCEPTION_HEADERS_BROKEN
+#include "tbb/detail/_config.h" // for __TBB_LIBSTDCPP_EXCEPTION_HEADERS_BROKEN
+#include "tbb/detail/_template_helpers.h"
 #if __TBB_LIBSTDCPP_EXCEPTION_HEADERS_BROKEN
   #define _EXCEPTION_PTR_H /* prevents exception_ptr.h inclusion */
   #define _GLIBCXX_NESTED_EXCEPTION_H /* prevents nested_exception.h inclusion */
@@ -157,36 +159,39 @@ public:
 };
 
 template<typename Arg, typename Compare>
-inline void AtomicUpdate(Arg &location, Arg newVal, const Compare &cmp)
+inline void AtomicUpdate(std::atomic<Arg>& location, Arg newVal, const Compare &cmp)
 {
-    MALLOC_STATIC_ASSERT(sizeof(Arg) == sizeof(intptr_t),
-                         "Type of argument must match AtomicCompareExchange type.");
-    for (Arg old = location; cmp(old, newVal); ) {
-        Arg val = AtomicCompareExchange((intptr_t&)location, (intptr_t)newVal, old);
-        if (val == old)
+    static_assert(sizeof(Arg) == sizeof(intptr_t), "Type of argument must match AtomicCompareExchange type.");
+    Arg old = location.load(std::memory_order_acquire);
+    for (; cmp(old, newVal); ) {
+        if (location.compare_exchange_strong(old, newVal))
             break;
         // TODO: do we need backoff after unsuccessful CAS?
-        old = val;
+        //old = val;
     }
 }
 
 // TODO: make BitMaskBasic more general
+// TODO: check that BitMaskBasic is not used for synchronization
 // (currently, it fits BitMaskMin well, but not as suitable for BitMaskMax)
 template<unsigned NUM>
 class BitMaskBasic {
     static const unsigned SZ = (NUM-1)/(CHAR_BIT*sizeof(uintptr_t))+1;
     static const unsigned WORD_LEN = CHAR_BIT*sizeof(uintptr_t);
-    uintptr_t mask[SZ];
+
+    std::atomic<uintptr_t> mask[SZ];
+
 protected:
     void set(size_t idx, bool val) {
         MALLOC_ASSERT(idx<NUM, ASSERT_TEXT);
 
         size_t i = idx / WORD_LEN;
         int pos = WORD_LEN - idx % WORD_LEN - 1;
-        if (val)
-            AtomicOr(&mask[i], 1ULL << pos);
-        else
-            AtomicAnd(&mask[i], ~(1ULL << pos));
+        if (val) {
+            mask[i].fetch_or(1ULL << pos);
+        } else {
+            mask[i].fetch_and(~(1ULL << pos));
+        }
     }
     int getMinTrue(unsigned startIdx) const {
         unsigned idx = startIdx / WORD_LEN;
@@ -195,19 +200,19 @@ protected:
         if (startIdx % WORD_LEN) {
             // only interested in part of a word, clear bits before startIdx
             pos = WORD_LEN - startIdx % WORD_LEN;
-            uintptr_t actualMask = mask[idx] & (((uintptr_t)1<<pos) - 1);
+            uintptr_t actualMask = mask[idx].load(std::memory_order_relaxed) & (((uintptr_t)1<<pos) - 1);
             idx++;
             if (-1 != (pos = BitScanRev(actualMask)))
                 return idx*WORD_LEN - pos - 1;
         }
 
         while (idx<SZ)
-            if (-1 != (pos = BitScanRev(mask[idx++])))
+            if (-1 != (pos = BitScanRev(mask[idx++].load(std::memory_order_relaxed))))
                 return idx*WORD_LEN - pos - 1;
         return -1;
     }
 public:
-    void reset() { for (unsigned i=0; i<SZ; i++) mask[i] = 0; }
+    void reset() { for (unsigned i=0; i<SZ; i++) mask[i].store(0, std::memory_order_relaxed); }
 };
 
 template<unsigned NUM>
@@ -365,6 +370,8 @@ public:
     // envName - environment variable to get controlled mode
     void initReadEnv(const char *envName, intptr_t defaultVal) {
         if (!setDone) {
+            // unreferenced formal parameter warning
+            tbb::detail::suppress_unused_warning(envName);
 #if !__TBB_WIN8UI_SUPPORT
         // TODO: use strtol to get the actual value of the envirable
             const char *envVal = getenv(envName);
@@ -400,7 +407,7 @@ private:
                                        // to keep enabled and requestedMode consistent
     MallocMutex setModeLock;
     size_t      pageSize;
-    intptr_t    needActualStatusPrint;
+    std::atomic<intptr_t> needActualStatusPrint;
 
     static void doPrintStatus(bool state, const char *stateName) {
         // Under macOS* fprintf/snprintf acquires an internal lock, so when
@@ -495,7 +502,8 @@ public:
     }
 
     void reset() {
-        pageSize = needActualStatusPrint = 0;
+        needActualStatusPrint.store(0, std::memory_order_relaxed);
+        pageSize = 0;
         isEnabled = isHPAvailable = isTHPAvailable = false;
     }
 
@@ -512,7 +520,7 @@ public:
         doPrintStatus(requestedMode.get(), "requested");
         if (requestedMode.get()) { // report actual status iff requested
             if (pageSize)
-                FencedStore(needActualStatusPrint, 1);
+                needActualStatusPrint.store(1, std::memory_order_release);
             else
                 doPrintStatus(/*state=*/false, "available");
         }

@@ -17,276 +17,348 @@
 #ifndef __TBB_concurrent_lru_cache_H
 #define __TBB_concurrent_lru_cache_H
 
-#define __TBB_concurrent_lru_cache_H_include_area
-#include "internal/_warning_suppress_enable_notice.h"
-
 #if ! TBB_PREVIEW_CONCURRENT_LRU_CACHE
     #error Set TBB_PREVIEW_CONCURRENT_LRU_CACHE to include concurrent_lru_cache.h
 #endif
 
-#include "tbb_stddef.h"
-#include "tbb_config.h"
+#include "detail/_assert.h"
+#include "detail/_aggregator.h"
 
-#include <map>
-#include <list>
-#include <algorithm> // std::find
-#if __TBB_CPP11_RVALUE_REF_PRESENT
-#include <utility> // std::move
-#endif
+#include <map>       // for std::map
+#include <list>      // for std::list
+#include <utility>   // for std::make_pair
+#include <algorithm> // for std::find
+#include <atomic>    // for std::atomic<bool>
 
-#include "atomic.h"
-#include "internal/_aggregator_impl.h"
+namespace tbb {
 
-namespace tbb{
-namespace interface6 {
+namespace detail {
+namespace d1 {
 
+//-----------------------------------------------------------------------------
+// Concurrent LRU cache
+//-----------------------------------------------------------------------------
 
-template <typename key_type, typename value_type, typename value_functor_type = value_type (*)(key_type) >
-class concurrent_lru_cache : internal::no_assign{
+template<typename KeyT, typename ValT, typename KeyToValFunctorT = ValT (*) (KeyT)>
+class concurrent_lru_cache : no_assign {
+// incapsulated helper classes
 private:
-    typedef concurrent_lru_cache self_type;
-    typedef value_functor_type value_function_type;
-    typedef std::size_t ref_counter_type;
-    struct map_value_type;
-    typedef std::map<key_type, map_value_type> map_storage_type;
-    typedef std::list<typename map_storage_type::iterator> lru_list_type;
-    struct map_value_type {
-        value_type my_value;
-        ref_counter_type my_ref_counter;
-        typename lru_list_type::iterator my_lru_list_iterator;
-        bool my_is_ready;
-
-        map_value_type (value_type const& a_value,  ref_counter_type a_ref_counter,    typename lru_list_type::iterator a_lru_list_iterator, bool a_is_ready)
-            : my_value(a_value), my_ref_counter(a_ref_counter), my_lru_list_iterator (a_lru_list_iterator), my_is_ready(a_is_ready)
-        {}
-    };
-
-    class handle_object;
+    struct handle_object;
+    struct storage_map_value_type;
 
     struct aggregator_operation;
-    typedef aggregator_operation aggregated_operation_type;
-    typedef tbb::internal::aggregating_functor<self_type,aggregated_operation_type> aggregator_function_type;
-    friend class tbb::internal::aggregating_functor<self_type,aggregated_operation_type>;
-    typedef tbb::internal::aggregator<aggregator_function_type, aggregated_operation_type> aggregator_type;
+    struct retrieve_aggregator_operation;
+    struct signal_end_of_usage_aggregator_operation;
 
+// typedefs
+public:
+    using key_type = KeyT;
+    using value_type = ValT;
+    using pointer = ValT*;
+    using reference = ValT&;
+    using const_pointer = const ValT*;
+    using const_reference = const ValT&;
+
+    using value_function_type = KeyToValFunctorT;
+    using handle = handle_object;
+private:
+    using lru_cache_type = concurrent_lru_cache<KeyT, ValT, KeyToValFunctorT>;
+
+    using storage_map_type = std::map<key_type, storage_map_value_type>;
+    using storage_map_iterator_type = typename storage_map_type::iterator;
+    using storage_map_pointer_type = typename storage_map_type::pointer;
+    using storage_map_reference_type = typename storage_map_type::reference;
+
+    using history_list_type = std::list<storage_map_iterator_type>;
+    using history_list_iterator_type = typename history_list_type::iterator;
+
+    using aggregator_operation_type = aggregator_operation;
+    using aggregator_function_type = aggregating_functor<lru_cache_type, aggregator_operation_type>;
+    using aggregator_type = aggregator<aggregator_function_type, aggregator_operation_type>;
+
+    friend class aggregating_functor<lru_cache_type,aggregator_operation_type>;
+
+// fields
 private:
     value_function_type my_value_function;
-    std::size_t const my_number_of_lru_history_items;
-    map_storage_type my_map_storage;
-    lru_list_type my_lru_list;
     aggregator_type my_aggregator;
 
-public:
-    typedef handle_object handle;
+    storage_map_type my_storage_map;            // storage map for used objects
+    history_list_type my_history_list;          // history list for unused objects
+    const std::size_t my_history_list_capacity; // history list's allowed capacity
 
+// interface
 public:
-    concurrent_lru_cache(value_function_type f, std::size_t number_of_lru_history_items)
-        : my_value_function(f),my_number_of_lru_history_items(number_of_lru_history_items)
-    {
+
+    concurrent_lru_cache(value_function_type value_function, std::size_t cache_capacity)
+        : my_value_function(value_function), my_history_list_capacity(cache_capacity) {
         my_aggregator.initialize_handler(aggregator_function_type(this));
     }
 
-    handle_object operator[](key_type k){
-        retrieve_aggregator_operation op(k);
+    handle operator[](key_type key) {
+        retrieve_aggregator_operation op(key);
         my_aggregator.execute(&op);
-        if (op.is_new_value_needed()){
-             op.result().second.my_value = my_value_function(k);
-             __TBB_store_with_release(op.result().second.my_is_ready, true);
-        }else{
-            tbb::internal::spin_wait_while_eq(op.result().second.my_is_ready,false);
+
+        if (op.is_new_value_needed()) {
+            op.result().second.my_value = my_value_function(key);
+            op.result().second.my_is_ready.store(true, std::memory_order_release);
+        } else {
+            spin_wait_while_eq(op.result().second.my_is_ready, false);
         }
-        return handle_object(*this,op.result());
+
+        return handle(*this, op.result());
     }
+
 private:
-    void signal_end_of_usage(typename map_storage_type::reference value_ref){
-        signal_end_of_usage_aggregator_operation op(value_ref);
+
+    void handle_operations(aggregator_operation* op_list) {
+        while (op_list) {
+            op_list->cast_and_handle(*this);
+            aggregator_operation* prev_op = op_list;
+            op_list = op_list->next;
+
+            (prev_op->status).store(1, std::memory_order_release);
+        }
+    }
+
+    void signal_end_of_usage(storage_map_reference_type map_record_ref) {
+        signal_end_of_usage_aggregator_operation op(map_record_ref);
         my_aggregator.execute(&op);
     }
 
-private:
-#if !__TBB_CPP11_RVALUE_REF_PRESENT
-    struct handle_move_t:no_assign{
-        concurrent_lru_cache & my_cache_ref;
-        typename map_storage_type::reference my_map_record_ref;
-        handle_move_t(concurrent_lru_cache & cache_ref, typename map_storage_type::reference value_ref):my_cache_ref(cache_ref),my_map_record_ref(value_ref) {};
-    };
-#endif
-    class handle_object {
-        concurrent_lru_cache * my_cache_pointer;
-        typename map_storage_type::pointer my_map_record_ptr;
-    public:
-        handle_object() : my_cache_pointer(), my_map_record_ptr() {}
-        handle_object(concurrent_lru_cache& cache_ref, typename map_storage_type::reference value_ref) : my_cache_pointer(&cache_ref), my_map_record_ptr(&value_ref) {}
-        operator bool() const {
-            return (my_cache_pointer && my_map_record_ptr);
-        }
-#if __TBB_CPP11_RVALUE_REF_PRESENT
-        // TODO: add check for double moved objects by special dedicated field
-        handle_object(handle_object&& src) : my_cache_pointer(src.my_cache_pointer), my_map_record_ptr(src.my_map_record_ptr) {
-            __TBB_ASSERT((src.my_cache_pointer && src.my_map_record_ptr) || (!src.my_cache_pointer && !src.my_map_record_ptr), "invalid state of moving object?");
-            src.my_cache_pointer = NULL;
-            src.my_map_record_ptr = NULL;
-        }
-        handle_object& operator=(handle_object&& src) {
-            __TBB_ASSERT((src.my_cache_pointer && src.my_map_record_ptr) || (!src.my_cache_pointer && !src.my_map_record_ptr), "invalid state of moving object?");
-            if (my_cache_pointer) {
-                my_cache_pointer->signal_end_of_usage(*my_map_record_ptr);
-            }
-            my_cache_pointer = src.my_cache_pointer;
-            my_map_record_ptr = src.my_map_record_ptr;
-            src.my_cache_pointer = NULL;
-            src.my_map_record_ptr = NULL;
-            return *this;
-        }
-#else
-        handle_object(handle_move_t m) : my_cache_pointer(&m.my_cache_ref), my_map_record_ptr(&m.my_map_record_ref) {}
-        handle_object& operator=(handle_move_t m) {
-            if (my_cache_pointer) {
-                my_cache_pointer->signal_end_of_usage(*my_map_record_ptr);
-            }
-            my_cache_pointer = &m.my_cache_ref;
-            my_map_record_ptr = &m.my_map_record_ref;
-            return *this;
-        }
-        operator handle_move_t(){
-            return move(*this);
-        }
-#endif // __TBB_CPP11_RVALUE_REF_PRESENT
-        value_type& value(){
-            __TBB_ASSERT(my_cache_pointer,"get value from already moved object?");
-            __TBB_ASSERT(my_map_record_ptr,"get value from an invalid or already moved object?");
-            return my_map_record_ptr->second.my_value;
-        }
-        ~handle_object(){
-            if (my_cache_pointer){
-                my_cache_pointer->signal_end_of_usage(*my_map_record_ptr);
-            }
-        }
-    private:
-#if __TBB_CPP11_RVALUE_REF_PRESENT
-        // For source compatibility with C++03
-        friend handle_object&& move(handle_object& h){
-            return std::move(h);
-        }
-#else
-        friend handle_move_t move(handle_object& h){
-            return handle_object::move(h);
-        }
-        // TODO: add check for double moved objects by special dedicated field
-        static handle_move_t move(handle_object& h){
-            __TBB_ASSERT((h.my_cache_pointer && h.my_map_record_ptr) || (!h.my_cache_pointer && !h.my_map_record_ptr), "invalid state of moving object?");
-            concurrent_lru_cache * cache_pointer = h.my_cache_pointer;
-            typename map_storage_type::pointer map_record_ptr = h.my_map_record_ptr;
-            h.my_cache_pointer = NULL;
-            h.my_map_record_ptr = NULL;
-            return handle_move_t(*cache_pointer, *map_record_ptr);
-        }
-#endif // __TBB_CPP11_RVALUE_REF_PRESENT
-    private:
-        void operator=(handle_object&);
-#if __SUNPRO_CC
-    // Presumably due to a compiler error, private copy constructor
-    // breaks expressions like handle h = cache[key];
-    public:
-#endif
-        handle_object(handle_object &);
-    };
-private:
-    //TODO: looks like aggregator_operation is a perfect match for statically typed variant type
-    struct aggregator_operation : tbb::internal::aggregated_operation<aggregator_operation>{
-        enum e_op_type {op_retive, op_signal_end_of_usage};
-        //TODO: try to use pointer to function apply_visitor here
-        //TODO: try virtual functions and measure the difference
-        e_op_type my_operation_type;
-        aggregator_operation(e_op_type operation_type): my_operation_type(operation_type) {}
-        void cast_and_handle(self_type& container ){
-            if (my_operation_type==op_retive){
-                static_cast<retrieve_aggregator_operation*>(this)->handle(container);
-            }else{
-                static_cast<signal_end_of_usage_aggregator_operation*>(this)->handle(container);
-            }
-        }
-    };
-    struct retrieve_aggregator_operation : aggregator_operation, private internal::no_assign {
-        key_type my_key;
-        typename map_storage_type::pointer my_result_map_record_pointer;
-        bool my_is_new_value_needed;
-        retrieve_aggregator_operation(key_type key):aggregator_operation(aggregator_operation::op_retive),my_key(key),my_is_new_value_needed(false){}
-        void handle(self_type& container ){
-            my_result_map_record_pointer = & container.retrieve_serial(my_key,my_is_new_value_needed);
-        }
-        typename map_storage_type::reference result(){ return * my_result_map_record_pointer; }
-        bool is_new_value_needed(){return my_is_new_value_needed;}
-    };
-    struct signal_end_of_usage_aggregator_operation : aggregator_operation, private internal::no_assign {
-        typename map_storage_type::reference my_map_record_ref;
-        signal_end_of_usage_aggregator_operation(typename map_storage_type::reference map_record_ref):aggregator_operation(aggregator_operation::op_signal_end_of_usage),my_map_record_ref(map_record_ref){}
-        void handle(self_type& container ){
-            container.signal_end_of_usage_serial(my_map_record_ref);
-        }
-    };
+    void signal_end_of_usage_serial(storage_map_reference_type map_record_ref) {
+        storage_map_iterator_type map_it = my_storage_map.find(map_record_ref.first);
 
-private:
-   void handle_operations(aggregator_operation* op_list){
-       while(op_list){
-           op_list->cast_and_handle(*this);
-           aggregator_operation* tmp = op_list;
-           op_list=op_list->next;
-           tbb::internal::itt_store_word_with_release(tmp->status, uintptr_t(1));
-       }
-   }
+        __TBB_ASSERT(map_it != my_storage_map.end(),
+            "cache should not return past-end iterators to outer world");
+        __TBB_ASSERT(&(*map_it) == &map_record_ref,
+            "dangling reference has been returned to outside world: data race?");
+        __TBB_ASSERT(std::find(my_history_list.begin(), my_history_list.end(), map_it) == my_history_list.end(),
+            "object in use should not be in list of unused objects ");
 
-private:
-   typename map_storage_type::reference retrieve_serial(key_type k, bool& is_new_value_needed){
-        typename map_storage_type::iterator it = my_map_storage.find(k);
-        if (it == my_map_storage.end()){
-            it = my_map_storage.insert(it,std::make_pair(k,map_value_type(value_type(),0,my_lru_list.end(),false)));
-            is_new_value_needed = true;
-        }else {
-            typename lru_list_type::iterator list_it = it->second.my_lru_list_iterator;
-            if (list_it!=my_lru_list.end()) {
-                __TBB_ASSERT(!it->second.my_ref_counter,"item to be evicted should not have a live references");
-                //item is going to be used. Therefore it is not a subject for eviction
-                //so - remove it from LRU history.
-                my_lru_list.erase(list_it);
-                it->second.my_lru_list_iterator= my_lru_list.end();
-            }
-        }
-        ++(it->second.my_ref_counter);
-        return *it;
-    }
+        // if it was the last reference, put it to the LRU history
+        if (! --(map_it->second.my_ref_counter)) {
+            // if the LRU history is full, evict the oldest items to get space
+            if (my_history_list.size() >= my_history_list_capacity) {
+                std::size_t number_of_elements_to_evict = 1 + my_history_list.size() - my_history_list_capacity;
 
-    void signal_end_of_usage_serial(typename map_storage_type::reference map_record_ref){
-        typename map_storage_type::iterator it = my_map_storage.find(map_record_ref.first);
-        __TBB_ASSERT(it!=my_map_storage.end(),"cache should not return past-end iterators to outer world");
-        __TBB_ASSERT(&(*it) == &map_record_ref,"dangling reference has been returned to outside world? data race ?");
-        __TBB_ASSERT( my_lru_list.end()== std::find(my_lru_list.begin(),my_lru_list.end(),it),
-                "object in use should not be in list of unused objects ");
-        if (! --(it->second.my_ref_counter)){
-            //it was the last reference so put it to the LRU history
-            if (my_lru_list.size()>=my_number_of_lru_history_items){
-                //evict items in order to get a space
-                size_t number_of_elements_to_evict = 1 + my_lru_list.size() - my_number_of_lru_history_items;
-                for (size_t i=0; i<number_of_elements_to_evict; ++i){
-                    typename map_storage_type::iterator it_to_evict = my_lru_list.back();
-                    __TBB_ASSERT(!it_to_evict->second.my_ref_counter,"item to be evicted should not have a live references");
-                    my_lru_list.pop_back();
-                    my_map_storage.erase(it_to_evict);
+                for (std::size_t i = 0; i < number_of_elements_to_evict; ++i) {
+                    storage_map_iterator_type map_it_to_evict = my_history_list.back();
+
+                    __TBB_ASSERT(map_it_to_evict->second.my_ref_counter == 0,
+                        "item to be evicted should not have a live references");
+
+                    // TODO: can we use forward_list instead of list? pop_front / insert_after last
+                    my_history_list.pop_back();
+                    my_storage_map.erase(map_it_to_evict);
                 }
             }
-            my_lru_list.push_front(it);
-            it->second.my_lru_list_iterator = my_lru_list.begin();
+
+            // TODO: can we use forward_list instead of list? pop_front / insert_after last
+            my_history_list.push_front(map_it);
+            map_it->second.my_history_list_iterator = my_history_list.begin();
         }
     }
+
+    storage_map_reference_type retrieve_serial(key_type key, bool& is_new_value_needed) {
+        storage_map_iterator_type map_it = my_storage_map.find(key);
+
+        if (map_it == my_storage_map.end()) {
+            map_it = my_storage_map.emplace_hint(
+                map_it, std::piecewise_construct, std::make_tuple(key), std::make_tuple(value_type(), 0, my_history_list.end(), false));
+            is_new_value_needed = true;
+        } else {
+            history_list_iterator_type list_it = map_it->second.my_history_list_iterator;
+            if (list_it != my_history_list.end()) {
+                __TBB_ASSERT(map_it->second.my_ref_counter == 0,
+                    "item to be evicted should not have a live references");
+
+                // Item is going to be used. Therefore it is not a subject for eviction,
+                // so we remove it from LRU history.
+                my_history_list.erase(list_it);
+                map_it->second.my_history_list_iterator = my_history_list.end();
+            }
+        }
+
+        ++(map_it->second.my_ref_counter);
+        return *map_it;
+    }
 };
-} // namespace interface6
 
-using interface6::concurrent_lru_cache;
+//-----------------------------------------------------------------------------
+// Value type for storage map in concurrent LRU cache
+//-----------------------------------------------------------------------------
 
+template<typename KeyT, typename ValT, typename KeyToValFunctorT>
+struct concurrent_lru_cache<KeyT, ValT, KeyToValFunctorT>::storage_map_value_type {
+//typedefs
+public:
+    using ref_counter_type = std::size_t;
+
+// fields
+public:
+    value_type my_value;
+    ref_counter_type my_ref_counter;
+    history_list_iterator_type my_history_list_iterator;
+    std::atomic<bool> my_is_ready;
+
+// interface
+public:
+    storage_map_value_type(
+        value_type const& value, ref_counter_type ref_counter,
+        history_list_iterator_type history_list_iterator, bool is_ready)
+        : my_value(value), my_ref_counter(ref_counter),
+          my_history_list_iterator(history_list_iterator), my_is_ready(is_ready) {}
+};
+
+//-----------------------------------------------------------------------------
+// Handle object for operator[] in concurrent LRU cache
+//-----------------------------------------------------------------------------
+
+template<typename KeyT, typename ValT, typename KeyToValFunctorT>
+struct concurrent_lru_cache<KeyT, ValT, KeyToValFunctorT>::handle_object {
+// fields
+private:
+    lru_cache_type* my_lru_cache_ptr;
+    storage_map_pointer_type my_map_record_ptr;
+
+// interface
+public:
+    handle_object()
+        : my_lru_cache_ptr(nullptr), my_map_record_ptr(nullptr) {}
+    handle_object(lru_cache_type& lru_cache_ref, storage_map_reference_type map_record_ref)
+        : my_lru_cache_ptr(&lru_cache_ref), my_map_record_ptr(&map_record_ref) {}
+
+    handle_object(handle_object&) = delete;
+    void operator=(handle_object&) = delete;
+
+    handle_object(handle_object&& other)
+        : my_lru_cache_ptr(other.my_lru_cache_ptr), my_map_record_ptr(other.my_map_record_ptr) {
+
+        __TBB_ASSERT(
+            bool(other.my_lru_cache_ptr) == bool(other.my_map_record_ptr),
+            "invalid state of moving object?");
+
+        other.my_lru_cache_ptr = nullptr;
+        other.my_map_record_ptr = nullptr;
+    }
+
+    handle_object& operator=(handle_object&& other) {
+        __TBB_ASSERT(
+            bool(other.my_lru_cache_ptr) == bool(other.my_map_record_ptr),
+            "invalid state of moving object?");
+
+        if (my_lru_cache_ptr)
+            my_lru_cache_ptr->signal_end_of_usage(*my_map_record_ptr);
+
+        my_lru_cache_ptr = other.my_lru_cache_ptr;
+        my_map_record_ptr = other.my_map_record_ptr;
+        other.my_lru_cache_ptr = nullptr;
+        other.my_map_record_ptr = nullptr;
+
+        return *this;
+    }
+
+    ~handle_object() {
+        if (my_lru_cache_ptr)
+            my_lru_cache_ptr->signal_end_of_usage(*my_map_record_ptr);
+    }
+
+    operator bool() const {
+        return (my_lru_cache_ptr && my_map_record_ptr);
+    }
+
+    value_type& value() {
+        __TBB_ASSERT(my_lru_cache_ptr, "get value from already moved object?");
+        __TBB_ASSERT(my_map_record_ptr, "get value from an invalid or already moved object?");
+
+        return my_map_record_ptr->second.my_value;
+    }
+};
+
+//-----------------------------------------------------------------------------
+// Aggregator operation for aggregator type in concurrent LRU cache
+//-----------------------------------------------------------------------------
+
+template<typename KeyT, typename ValT, typename KeyToValFunctorT>
+struct concurrent_lru_cache<KeyT, ValT, KeyToValFunctorT>::aggregator_operation
+    : aggregated_operation<aggregator_operation> {
+// incapsulated helper classes
+public:
+    enum class op_type { retrieve, signal_end_of_usage };
+
+// fields
+private:
+    op_type my_op;
+
+// interface
+public:
+    aggregator_operation(op_type op) : my_op(op) {}
+
+    // TODO: aggregator_operation can be implemented
+    //   - as a statically typed variant type or CRTP? (static, dependent on the use case)
+    //   - or use pointer to function and apply_visitor (dynamic)
+    //   - or use virtual functions (dynamic)
+    void cast_and_handle(lru_cache_type& lru_cache_ref) {
+        if (my_op == op_type::retrieve)
+            static_cast<retrieve_aggregator_operation*>(this)->handle(lru_cache_ref);
+        else
+            static_cast<signal_end_of_usage_aggregator_operation*>(this)->handle(lru_cache_ref);
+    }
+};
+
+template<typename KeyT, typename ValT, typename KeyToValFunctorT>
+struct concurrent_lru_cache<KeyT, ValT, KeyToValFunctorT>::retrieve_aggregator_operation
+    : aggregator_operation, private no_assign {
+public:
+    key_type my_key;
+    storage_map_pointer_type my_map_record_ptr;
+    bool my_is_new_value_needed;
+
+public:
+    retrieve_aggregator_operation(key_type key)
+        : aggregator_operation(aggregator_operation::op_type::retrieve),
+          my_key(key), my_is_new_value_needed(false) {}
+
+    void handle(lru_cache_type& lru_cache_ref) {
+        my_map_record_ptr = &lru_cache_ref.retrieve_serial(my_key, my_is_new_value_needed);
+    }
+
+    storage_map_reference_type result() { return *my_map_record_ptr; }
+
+    bool is_new_value_needed() { return my_is_new_value_needed; }
+};
+
+template<typename KeyT, typename ValT, typename KeyToValFunctorT>
+struct concurrent_lru_cache<KeyT, ValT, KeyToValFunctorT>::signal_end_of_usage_aggregator_operation
+    : aggregator_operation, private no_assign {
+
+private:
+    storage_map_reference_type my_map_record_ref;
+
+public:
+    signal_end_of_usage_aggregator_operation(storage_map_reference_type map_record_ref)
+        : aggregator_operation(aggregator_operation::op_type::signal_end_of_usage),
+          my_map_record_ref(map_record_ref) {}
+
+    void handle(lru_cache_type& lru_cache_ref) {
+        lru_cache_ref.signal_end_of_usage_serial(my_map_record_ref);
+    }
+};
+
+// TODO: if we have guarantees that KeyToValFunctorT always have
+//       ValT as a return type and KeyT as an argument type
+//       we can deduce template parameters of concurrent_lru_cache
+//       by pattern matching on KeyToValFunctorT
+
+} // namespace d1
+} // namespace detail
+
+inline namespace v1 {
+
+using detail::d1::concurrent_lru_cache;
+
+} // inline namespace v1
 } // namespace tbb
 
-#include "internal/_warning_suppress_disable_notice.h"
-#undef __TBB_concurrent_lru_cache_H_include_area
-
-#endif //__TBB_concurrent_lru_cache_H
-
+#endif // __TBB_concurrent_lru_cache_H

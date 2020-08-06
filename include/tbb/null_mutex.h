@@ -17,35 +17,62 @@
 #ifndef __TBB_null_mutex_H
 #define __TBB_null_mutex_H
 
-#include "tbb_stddef.h"
+#include "detail/_config.h"
 
 namespace tbb {
+namespace detail {
+namespace d1 {
 
 //! A mutex which does nothing
 /** A null_mutex does no operation and simulates success.
     @ingroup synchronization */
-class null_mutex : internal::mutex_copy_deprecated_and_disabled {
+class null_mutex {
 public:
+    //! Constructors
+    constexpr null_mutex() noexcept = default;
+
+    //! Destructor
+    ~null_mutex() = default;
+
+    //! No Copy
+    null_mutex(const null_mutex&) = delete;
+    null_mutex& operator=(const null_mutex&) = delete;
+
     //! Represents acquisition of a mutex.
-    class scoped_lock : internal::no_copy {
+    class scoped_lock {
     public:
-        scoped_lock() {}
-        scoped_lock( null_mutex& ) {}
-        ~scoped_lock() {}
-        void acquire( null_mutex& ) {}
-        bool try_acquire( null_mutex& ) { return true; }
+        //! Constructors
+        constexpr scoped_lock() noexcept = default;
+        scoped_lock(null_mutex&) {}
+
+        //! Destructor
+        ~scoped_lock() = default;
+
+        //! No Copy
+        scoped_lock(const scoped_lock&) = delete;
+        scoped_lock& operator=(const scoped_lock&) = delete;
+
+        void acquire(null_mutex&) {}
+        bool try_acquire(null_mutex&) { return true; }
         void release() {}
     };
 
-    null_mutex() {}
+    //! Mutex traits
+    static constexpr bool is_rw_mutex = false;
+    static constexpr bool is_recursive_mutex = true;
+    static constexpr bool is_fair_mutex = true;
 
-    // Mutex traits
-    static const bool is_rw_mutex = false;
-    static const bool is_recursive_mutex = true;
-    static const bool is_fair_mutex = true;
-};
+    void lock() {}
+    bool try_lock() { return true; }
+    void unlock() {}
+}; // class null_mutex
 
-}
+} // namespace d1
+} // namespace detail
 
+inline namespace v1 {
+using detail::d1::null_mutex;
+} // namespace v1
+} // namespace tbb
 
 #endif /* __TBB_null_mutex_H */

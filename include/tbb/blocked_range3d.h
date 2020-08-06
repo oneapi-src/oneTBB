@@ -17,20 +17,25 @@
 #ifndef __TBB_blocked_range3d_H
 #define __TBB_blocked_range3d_H
 
-#include "tbb_stddef.h"
+#include <cstddef>
+
+#include "detail/_config.h"
+
 #include "blocked_range.h"
 
 namespace tbb {
+namespace detail {
+namespace d1 {
 
 //! A 3-dimensional range that models the Range concept.
 /** @ingroup algorithms */
-template<typename PageValue, typename RowValue=PageValue, typename ColValue=RowValue>
+template<typename PageValue, typename RowValue = PageValue, typename ColValue = RowValue>
 class blocked_range3d {
 public:
     //! Type for size of an iteration range
-    typedef blocked_range<PageValue> page_range_type;
-    typedef blocked_range<RowValue>  row_range_type;
-    typedef blocked_range<ColValue>  col_range_type;
+    using page_range_type = blocked_range<PageValue>;
+    using row_range_type = blocked_range<RowValue>;
+    using col_range_type = blocked_range<ColValue>;
 
 private:
     page_range_type my_pages;
@@ -66,18 +71,13 @@ public:
         return  my_pages.is_divisible() || my_rows.is_divisible() || my_cols.is_divisible();
     }
 
-    blocked_range3d( blocked_range3d& r, split ) :
+    blocked_range3d( blocked_range3d& r, split split_obj ) :
         my_pages(r.my_pages),
         my_rows(r.my_rows),
         my_cols(r.my_cols)
     {
-        split split_obj;
         do_split(r, split_obj);
     }
-
-#if __TBB_USE_PROPORTIONAL_SPLIT_IN_BLOCKED_RANGES
-    //! Static field to support proportional split
-    static const bool is_splittable_in_proportion = true;
 
     blocked_range3d( blocked_range3d& r, proportional_split& proportion ) :
         my_pages(r.my_pages),
@@ -86,22 +86,19 @@ public:
     {
         do_split(r, proportion);
     }
-#endif /* __TBB_USE_PROPORTIONAL_SPLIT_IN_BLOCKED_RANGES */
 
     //! The pages of the iteration space
-    const page_range_type& pages() const {return my_pages;}
+    const page_range_type& pages() const { return my_pages; }
 
     //! The rows of the iteration space
-    const row_range_type& rows() const {return my_rows;}
+    const row_range_type& rows() const { return my_rows; }
 
     //! The columns of the iteration space
-    const col_range_type& cols() const {return my_cols;}
+    const col_range_type& cols() const { return my_cols; }
 
 private:
-
     template <typename Split>
-    void do_split( blocked_range3d& r, Split& split_obj)
-    {
+    void do_split( blocked_range3d& r, Split& split_obj) {
         if ( my_pages.size()*double(my_rows.grainsize()) < my_rows.size()*double(my_pages.grainsize()) ) {
             if ( my_rows.size()*double(my_cols.grainsize()) < my_cols.size()*double(my_rows.grainsize()) ) {
                 my_cols.my_begin = col_range_type::do_split(r.my_cols, split_obj);
@@ -118,7 +115,12 @@ private:
     }
 };
 
-} // namespace tbb
+} // namespace d1
+} // namespace detail
 
+inline namespace v1 {
+using detail::d1::blocked_range3d;
+} // namespace v1
+} // namespace tbb
 
 #endif /* __TBB_blocked_range3d_H */

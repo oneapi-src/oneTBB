@@ -86,7 +86,7 @@ void *Backend::allocRawMem(size_t &size)
     size_t allocSize = 0;
 
     if (extMemPool->userPool()) {
-        if (extMemPool->fixedPool && bootsrapMemDone == FencedLoad(bootsrapMemStatus))
+        if (extMemPool->fixedPool && bootsrapMemDone == bootsrapMemStatus.load(std::memory_order_acquire))
             return NULL;
         MALLOC_ASSERT(bootsrapMemStatus != bootsrapMemNotDone,
                       "Backend::allocRawMem() called prematurely?");
@@ -125,7 +125,7 @@ void *Backend::allocRawMem(size_t &size)
         volatile size_t curTotalSize = totalMemSize; // to read global value once
         MALLOC_ASSERT(curTotalSize+size > curTotalSize, "Overflow allocation size.");
 #endif
-        AtomicAdd((intptr_t&)totalMemSize, size);
+        totalMemSize.fetch_add(size);
     }
 
     return res;
@@ -138,7 +138,7 @@ bool Backend::freeRawMem(void *object, size_t size)
     volatile size_t curTotalSize = totalMemSize; // to read global value once
     MALLOC_ASSERT(curTotalSize-size < curTotalSize, "Negative allocation size.");
 #endif
-    AtomicAdd((intptr_t&)totalMemSize, -size);
+    totalMemSize.fetch_sub(size);
     if (extMemPool->userPool()) {
         MALLOC_ASSERT(!extMemPool->fixedPool, "No free for fixed-size pools.");
         fail = (*extMemPool->rawFree)(extMemPool->poolId, object, size);
@@ -154,8 +154,8 @@ bool Backend::freeRawMem(void *object, size_t size)
 
 // Protected object size. After successful locking returns size of locked block,
 // and releasing requires setting block size.
-class GuardedSize : tbb::internal::no_copy {
-    uintptr_t value;
+class GuardedSize : tbb::detail::no_copy {
+    std::atomic<uintptr_t> value;
 public:
     enum State {
         LOCKED,
@@ -166,31 +166,30 @@ public:
         MAX_SPEC_VAL = LAST_REGION_BLOCK
     };
 
-    void initLocked() { value = LOCKED; }
+    void initLocked() { value.store(LOCKED, std::memory_order_release); } // TBB_REVAMP_TODO: was relaxed
     void makeCoalscing() {
-        MALLOC_ASSERT(value == LOCKED, ASSERT_TEXT);
-        value = COAL_BLOCK;
+        MALLOC_ASSERT(value.load(std::memory_order_relaxed) == LOCKED, ASSERT_TEXT);
+        value.store(COAL_BLOCK, std::memory_order_release); // TBB_REVAMP_TODO: was relaxed
     }
     size_t tryLock(State state) {
-        size_t szVal, sz;
         MALLOC_ASSERT(state <= MAX_LOCKED_VAL, ASSERT_TEXT);
+        size_t sz = value.load(std::memory_order_acquire);
         for (;;) {
-            sz = FencedLoad((intptr_t&)value);
-            if (sz <= MAX_LOCKED_VAL)
+            if (sz <= MAX_LOCKED_VAL) {
                 break;
-            szVal = AtomicCompareExchange((intptr_t&)value, state, sz);
-
-            if (szVal==sz)
+            }
+            if (value.compare_exchange_strong(sz, state)) {
                 break;
+            }
         }
         return sz;
     }
     void unlock(size_t size) {
-        MALLOC_ASSERT(value <= MAX_LOCKED_VAL, "The lock is not locked");
+        MALLOC_ASSERT(value.load(std::memory_order_relaxed) <= MAX_LOCKED_VAL, "The lock is not locked");
         MALLOC_ASSERT(size > MAX_LOCKED_VAL, ASSERT_TEXT);
-        FencedStore((intptr_t&)value, size);
+        value.store(size, std::memory_order_release);
     }
-    bool isLastRegionBlock() const { return value==LAST_REGION_BLOCK; }
+    bool isLastRegionBlock() const { return value.load(std::memory_order_relaxed) == LAST_REGION_BLOCK; }
     friend void Backend::IndexedBins::verify();
 };
 
@@ -298,11 +297,10 @@ inline bool BackendSync::waitTillBlockReleased(intptr_t startModifiedCnt)
     };
     ITT_Guard ittGuard(&inFlyBlocks);
 #endif
-    for (intptr_t myBinsInFlyBlocks = FencedLoad(inFlyBlocks),
-             myCoalescQInFlyBlocks = backend->blocksInCoalescing(); ;
-         backoff.pause()) {
+    for (intptr_t myBinsInFlyBlocks = inFlyBlocks.load(std::memory_order_acquire),
+             myCoalescQInFlyBlocks = backend->blocksInCoalescing(); ; backoff.pause()) {
         MALLOC_ASSERT(myBinsInFlyBlocks>=0 && myCoalescQInFlyBlocks>=0, NULL);
-        intptr_t currBinsInFlyBlocks = FencedLoad(inFlyBlocks),
+        intptr_t currBinsInFlyBlocks = inFlyBlocks.load(std::memory_order_acquire),
             currCoalescQInFlyBlocks = backend->blocksInCoalescing();
         WhiteboxTestingYield();
         // Stop waiting iff:
@@ -333,34 +331,30 @@ void CoalRequestQ::putBlock(FreeBlock *fBlock)
     MALLOC_ASSERT(fBlock->sizeTmp >= FreeBlock::minBlockSize, ASSERT_TEXT);
     fBlock->markUsed();
     // the block is in the queue, do not forget that it's here
-    AtomicIncrement(inFlyBlocks);
+    inFlyBlocks++;
 
+    FreeBlock *myBlToFree = blocksToFree.load(std::memory_order_acquire);
     for (;;) {
-        FreeBlock *myBlToFree = (FreeBlock*)FencedLoad((intptr_t&)blocksToFree);
-
         fBlock->nextToFree = myBlToFree;
-        if (myBlToFree ==
-            (FreeBlock*)AtomicCompareExchange((intptr_t&)blocksToFree,
-                                              (intptr_t)fBlock,
-                                              (intptr_t)myBlToFree))
+        if (blocksToFree.compare_exchange_strong(myBlToFree, fBlock)) {
             return;
+        }
     }
 }
 
 FreeBlock *CoalRequestQ::getAll()
 {
     for (;;) {
-        FreeBlock *myBlToFree = (FreeBlock*)FencedLoad((intptr_t&)blocksToFree);
+        FreeBlock *myBlToFree = blocksToFree.load(std::memory_order_acquire);
 
-        if (!myBlToFree)
+        if (!myBlToFree) {
             return NULL;
-        else {
-            if (myBlToFree ==
-                (FreeBlock*)AtomicCompareExchange((intptr_t&)blocksToFree,
-                                                  0, (intptr_t)myBlToFree))
+        } else {
+            if (blocksToFree.compare_exchange_strong(myBlToFree, 0)) {
                 return myBlToFree;
-            else
+            } else {
                 continue;
+            }
         }
     }
 }
@@ -368,7 +362,7 @@ FreeBlock *CoalRequestQ::getAll()
 inline void CoalRequestQ::blockWasProcessed()
 {
     bkndSync->binsModified();
-    int prev = AtomicAdd(inFlyBlocks, -1);
+    int prev = inFlyBlocks.fetch_sub(1);
     MALLOC_ASSERT(prev > 0, ASSERT_TEXT);
 }
 
@@ -482,7 +476,7 @@ void Backend::Bin::removeBlock(FreeBlock *fBlock)
         fBlock->next->prev = fBlock->prev;
 }
 
-void Backend::IndexedBins::addBlock(int binIdx, FreeBlock *fBlock, size_t blockSz, bool addToTail)
+void Backend::IndexedBins::addBlock(int binIdx, FreeBlock *fBlock, size_t /* blockSz */, bool addToTail)
 {
     Bin *b = &freeBins[binIdx];
     fBlock->myBin = binIdx;
@@ -546,7 +540,7 @@ bool Backend::IndexedBins::tryAddBlock(int binIdx, FreeBlock *fBlock, bool addTo
 
 void Backend::IndexedBins::reset()
 {
-    for (int i=0; i<Backend::freeBinsNum; i++)
+    for (unsigned i=0; i<Backend::freeBinsNum; i++)
         freeBins[i].reset();
     bitMask.reset();
 }
@@ -720,14 +714,16 @@ FreeBlock *Backend::askMemFromOS(size_t blockSize, intptr_t startModifiedCnt,
 
 void Backend::releaseCachesToLimit()
 {
-    if (!memSoftLimit || totalMemSize <= memSoftLimit)
+    if (!memSoftLimit.load(std::memory_order_relaxed)
+            || totalMemSize.load(std::memory_order_relaxed) <= memSoftLimit.load(std::memory_order_relaxed)) {
         return;
+    }
     size_t locTotalMemSize, locMemSoftLimit;
 
     scanCoalescQ(/*forceCoalescQDrop=*/false);
     if (extMemPool->softCachesCleanup() &&
-        (locTotalMemSize = FencedLoad((intptr_t&)totalMemSize)) <=
-        (locMemSoftLimit = FencedLoad((intptr_t&)memSoftLimit)))
+        (locTotalMemSize = totalMemSize.load(std::memory_order_acquire)) <=
+        (locMemSoftLimit = memSoftLimit.load(std::memory_order_acquire)))
         return;
     // clean global large-object cache, if this is not enough, clean local caches
     // do this in several tries, because backend fragmentation can prevent
@@ -736,8 +732,8 @@ void Backend::releaseCachesToLimit()
         while (cleanLocal ?
                  extMemPool->allLocalCaches.cleanup(/*cleanOnlyUnused=*/true) :
                  extMemPool->loc.decreasingCleanup())
-            if ((locTotalMemSize = FencedLoad((intptr_t&)totalMemSize)) <=
-                (locMemSoftLimit = FencedLoad((intptr_t&)memSoftLimit)))
+            if ((locTotalMemSize = totalMemSize.load(std::memory_order_acquire)) <=
+                (locMemSoftLimit = memSoftLimit.load(std::memory_order_acquire)))
                 return;
     // last chance to match memSoftLimit
     extMemPool->hardCachesCleanup();
@@ -761,7 +757,7 @@ FreeBlock *Backend::IndexedBins::findBlock(int nativeBin, BackendSync *sync, siz
 
 void Backend::requestBootstrapMem()
 {
-    if (bootsrapMemDone == FencedLoad(bootsrapMemStatus))
+    if (bootsrapMemDone == bootsrapMemStatus.load(std::memory_order_acquire))
         return;
     MallocMutex::scoped_lock lock( bootsrapMemStatusMutex );
     if (bootsrapMemDone == bootsrapMemStatus)
@@ -1007,7 +1003,7 @@ void *Backend::remap(void *ptr, size_t oldSize, size_t newSize, size_t alignment
 
     usedAddrRange.registerFree((uintptr_t)oldRegion, (uintptr_t)oldRegion + oldRegionSize);
     usedAddrRange.registerAlloc((uintptr_t)region, (uintptr_t)region + requestSize);
-    AtomicAdd((intptr_t&)totalMemSize, region->allocSz - oldRegionSize);
+    totalMemSize.fetch_add(region->allocSz - oldRegionSize);
 
     return object;
 }
@@ -1212,7 +1208,7 @@ FreeBlock *Backend::findBlockInRegion(MemRegion *region, size_t exactBlockSize)
     uintptr_t fBlockEnd,
         lastFreeBlock = (uintptr_t)region + region->allocSz - sizeof(LastFreeBlock);
 
-    MALLOC_STATIC_ASSERT(sizeof(LastFreeBlock) % sizeof(uintptr_t) == 0,
+    static_assert(sizeof(LastFreeBlock) % sizeof(uintptr_t) == 0,
         "Atomic applied on LastFreeBlock, and we put it at the end of region, that"
         " is uintptr_t-aligned, so no unaligned atomic operations are possible.");
      // right bound is slab-aligned, keep LastFreeBlock after it
@@ -1311,8 +1307,7 @@ int MemRegionList::reportStat(FILE *f)
 
 FreeBlock *Backend::addNewRegion(size_t size, MemRegionType memRegType, bool addToBin)
 {
-    MALLOC_STATIC_ASSERT(sizeof(BlockMutexes) <= sizeof(BlockI),
-                 "Header must be not overwritten in used blocks");
+    static_assert(sizeof(BlockMutexes) <= sizeof(BlockI), "Header must be not overwritten in used blocks");
     MALLOC_ASSERT(FreeBlock::minBlockSize > GuardedSize::MAX_SPEC_VAL,
           "Block length must not conflict with special values of GuardedSize");
     // If the region is not "for slabs" we should reserve some space for

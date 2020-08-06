@@ -17,13 +17,6 @@
 #ifndef __TBB_tbb_H
 #define __TBB_tbb_H
 
-#if defined(__TBB_LEGACY_MODE) && (!defined(TBB_SUPPRESS_DEPRECATED_MESSAGES) || (TBB_SUPPRESS_DEPRECATED_MESSAGES == 0)) && !defined(__TBB_INTERNAL_INCLUDES_DEPRECATION_MESSAGE)
-#pragma message("TBB Warning: tbb.h contains deprecated functionality. For details, please see Deprecated Features appendix in the TBB reference manual.")
-#endif
-
-#define __TBB_tbb_H_include_area
-#include "internal/_warning_suppress_enable_notice.h"
-
 /**
     This header bulk-includes declarations or definitions of all the functionality
     provided by TBB (save for tbbmalloc and 3rd party dependent headers).
@@ -32,9 +25,6 @@
     Any header listed below can be included independently of others.
 **/
 
-#if TBB_PREVIEW_AGGREGATOR
-#include "aggregator.h"
-#endif
 #include "blocked_range.h"
 #include "blocked_range2d.h"
 #include "blocked_range3d.h"
@@ -51,25 +41,23 @@
 #include "concurrent_queue.h"
 #include "concurrent_unordered_map.h"
 #include "concurrent_unordered_set.h"
-#if TBB_PREVIEW_CONCURRENT_ORDERED_CONTAINERS
 #include "concurrent_map.h"
 #include "concurrent_set.h"
-#endif
 #include "concurrent_vector.h"
 #include "enumerable_thread_specific.h"
 #include "flow_graph.h"
 #include "global_control.h"
+#include "info.h"
 #include "null_mutex.h"
 #include "null_rw_mutex.h"
-#include "parallel_do.h"
 #include "parallel_for.h"
 #include "parallel_for_each.h"
 #include "parallel_invoke.h"
+#include "parallel_pipeline.h"
 #include "parallel_reduce.h"
 #include "parallel_scan.h"
 #include "parallel_sort.h"
 #include "partitioner.h"
-#include "pipeline.h"
 #include "queuing_mutex.h"
 #include "queuing_rw_mutex.h"
 #include "spin_mutex.h"
@@ -79,22 +67,7 @@
 #include "task_group.h"
 #include "task_scheduler_observer.h"
 #include "tbb_allocator.h"
-#include "tbb_exception.h"
 #include "tick_count.h"
-
-#if __TBB_LEGACY_MODE
-#include "atomic.h"
-#include "aligned_space.h"
-#include "critical_section.h"
-#include "mutex.h"
-#include "iterators.h"
-#include "reader_writer_lock.h"
-#include "recursive_mutex.h"
-#include "task_scheduler_init.h"
-#include "tbb_thread.h"
-#endif // __TBB_LEGACY_MODE
-
-#include "internal/_warning_suppress_disable_notice.h"
-#undef __TBB_tbb_H_include_area
+#include "version.h"
 
 #endif /* __TBB_tbb_H */

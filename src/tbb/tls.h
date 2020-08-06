@@ -17,22 +17,24 @@
 #ifndef _TBB_tls_H
 #define _TBB_tls_H
 
-#if USE_PTHREAD
+#include "tbb/detail/_config.h"
+
+#if __TBB_USE_POSIX
 #include <pthread.h>
-#else /* assume USE_WINTHREAD */
-#include "tbb/machine/windows_api.h"
+#else /* assume __TBB_USE_WINAPI */
+#include <windows.h>
 #endif
 
 namespace tbb {
-
-namespace internal {
+namespace detail {
+namespace r1 {
 
 typedef void (*tls_dtor_t)(void*);
 
 //! Basic cross-platform wrapper class for TLS operations.
 template <typename T>
 class basic_tls {
-#if USE_PTHREAD
+#if __TBB_USE_POSIX
     typedef pthread_key_t tls_key_t;
 public:
     int  create( tls_dtor_t dtor = NULL ) {
@@ -41,7 +43,7 @@ public:
     int  destroy()      { return pthread_key_delete(my_key); }
     void set( T value ) { pthread_setspecific(my_key, (void*)value); }
     T    get()          { return (T)pthread_getspecific(my_key); }
-#else /* USE_WINTHREAD */
+#else /* __TBB_USE_WINAPI */
     typedef DWORD tls_key_t;
 public:
 #if !__TBB_WIN8UI_SUPPORT
@@ -67,7 +69,7 @@ public:
     void set( T value ) { FlsSetValue(my_key, (LPVOID)value); }
     T    get()          { return (T)FlsGetValue(my_key); }
 #endif /* !__TBB_WIN8UI_SUPPORT */
-#endif /* USE_WINTHREAD */
+#endif /* __TBB_USE_WINAPI */
 private:
     tls_key_t my_key;
 };
@@ -100,7 +102,7 @@ class tls<T*> : basic_tls<T*> {
     }
 public:
     tls()  {
-#if USE_PTHREAD
+#if __TBB_USE_POSIX
         base::create( internal_dtor );
 #else
         base::create();
@@ -113,8 +115,8 @@ public:
     T& operator*()  { return *internal_get(); }
 };
 
-} // namespace internal
-
+} // namespace r1
+} // namespace detail
 } // namespace tbb
 
 #endif /* _TBB_tls_H */

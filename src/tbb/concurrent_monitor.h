@@ -17,16 +17,17 @@
 #ifndef __TBB_concurrent_monitor_H
 #define __TBB_concurrent_monitor_H
 
-#include "tbb/tbb_stddef.h"
-#include "tbb/atomic.h"
 #include "tbb/spin_mutex.h"
-#include "tbb/tbb_exception.h"
-#include "tbb/aligned_space.h"
+#include "tbb/detail/_exception.h"
+#include "tbb/detail/_aligned_space.h"
 
 #include "semaphore.h"
 
+#include <atomic>
+
 namespace tbb {
-namespace internal {
+namespace detail {
+namespace r1 {
 
 //! Circular doubly-linked list with sentinel
 /** head.next points to the front and head.prev points to the back */
@@ -43,7 +44,7 @@ public:
     // dtor
     ~circular_doubly_linked_list_with_sentinel() {__TBB_ASSERT( head.next==&head && head.prev==&head, "the list is not empty" );}
 
-    inline size_t  size()  const {return count;}
+    inline std::size_t  size()  const {return count.load(std::memory_order_relaxed );}
     inline bool    empty() const {return size()==0;}
     inline node_t* front() const {return head.next;}
     inline node_t* last()  const {return head.prev;}
@@ -52,7 +53,7 @@ public:
 
     //! add to the back of the list
     inline void add( node_t* n ) {
-        __TBB_store_relaxed(count, __TBB_load_relaxed(count) + 1);
+        count.store(count.load(std::memory_order_relaxed) + 1, std::memory_order_relaxed);
         n->prev = head.prev;
         n->next = &head;
         head.prev->next = n;
@@ -61,16 +62,16 @@ public:
 
     //! remove node 'n'
     inline void remove( node_t& n ) {
-        __TBB_ASSERT( count > 0, "attempt to remove an item from an empty list" );
-        __TBB_store_relaxed(count, __TBB_load_relaxed(count) - 1);
+        __TBB_ASSERT(count.load(std::memory_order_relaxed) > 0, "attempt to remove an item from an empty list");
+        count.store(count.load( std::memory_order_relaxed ) - 1, std::memory_order_relaxed);
         n.prev->next = n.next;
         n.next->prev = n.prev;
     }
 
     //! move all elements to 'lst' and initialize the 'this' list
     inline void flush_to( circular_doubly_linked_list_with_sentinel& lst ) {
-        if( const size_t l_count = __TBB_load_relaxed(count) ) {
-            __TBB_store_relaxed(lst.count, l_count);
+        if( const std::size_t l_count = count.load(std::memory_order_relaxed) ) {
+            lst.count.store(l_count, std::memory_order_relaxed);
             lst.head.next = head.next;
             lst.head.prev = head.prev;
             head.next->prev = &lst.head;
@@ -79,9 +80,9 @@ public:
         }
     }
 
-    void clear() {head.next = head.prev = &head; __TBB_store_relaxed(count, 0);}
+    void clear() {head.next = head.prev = &head; count.store(0, std::memory_order_relaxed);}
 private:
-    __TBB_atomic size_t count;
+    std::atomic<size_t> count;
     node_t head;
 };
 
@@ -112,9 +113,9 @@ public:
         //  Inlining of the method is undesirable, due to extra instructions for
         //  exception support added at caller side.
         __TBB_NOINLINE( void init() );
-        tbb::internal::aligned_space<binary_semaphore> sema;
-        __TBB_atomic unsigned epoch;
-        tbb::internal::atomic<bool> in_waitset;
+        tbb::detail::aligned_space<binary_semaphore> sema;
+        unsigned epoch;
+        std::atomic<bool> in_waitset;
         bool  skipped_wakeup;
         bool  aborted;
         bool  ready;
@@ -122,7 +123,7 @@ public:
     };
 
     //! ctor
-    concurrent_monitor() {__TBB_store_relaxed(epoch, 0);}
+    concurrent_monitor() : epoch{} {}
 
     //! dtor
     ~concurrent_monitor() ;
@@ -133,14 +134,14 @@ public:
     //! Commit wait if event count has not changed; otherwise, cancel wait.
     /** Returns true if committed, false if canceled. */
     inline bool commit_wait( thread_context& thr ) {
-        const bool do_it = thr.epoch == __TBB_load_relaxed(epoch);
+        const bool do_it = thr.epoch == epoch.load( std::memory_order_relaxed );
         // this check is just an optimization
         if( do_it ) {
             __TBB_ASSERT( thr.ready, "use of commit_wait() without prior prepare_wait()");
             thr.semaphore().P();
-            __TBB_ASSERT( !thr.in_waitset, "still in the queue?" );
+            __TBB_ASSERT( !thr.in_waitset.load(std::memory_order_relaxed), "still in the queue?" );
             if( thr.aborted )
-                throw_exception( eid_user_abort );
+                throw_exception(exception_id::user_abort);
         } else {
             cancel_wait( thr );
         }
@@ -154,25 +155,28 @@ public:
     void wait( WaitUntil until, Context on );
 
     //! Notify one thread about the event
-    void notify_one() {atomic_fence(); notify_one_relaxed();}
+    void notify_one() {atomic_fence( std::memory_order_seq_cst ); notify_one_relaxed();}
 
     //! Notify one thread about the event. Relaxed version.
     void notify_one_relaxed();
 
     //! Notify all waiting threads of the event
-    void notify_all() {atomic_fence(); notify_all_relaxed();}
+    void notify_all() {atomic_fence( std::memory_order_seq_cst ); notify_all_relaxed();}
 
     //! Notify all waiting threads of the event; Relaxed version
     void notify_all_relaxed();
 
     //! Notify waiting threads of the event that satisfies the given predicate
-    template<typename P> void notify( const P& predicate ) {atomic_fence(); notify_relaxed( predicate );}
+    template<typename P> void notify( const P& predicate ) {
+        atomic_fence( std::memory_order_seq_cst );
+        notify_relaxed( predicate );
+    }
 
     //! Notify waiting threads of the event that satisfies the given predicate; Relaxed version
     template<typename P> void notify_relaxed( const P& predicate );
 
     //! Abort any sleeping threads at the time of the call
-    void abort_all() {atomic_fence(); abort_all_relaxed(); }
+    void abort_all() {atomic_fence( std::memory_order_seq_cst ); abort_all_relaxed(); }
 
     //! Abort any sleeping threads at the time of the call; Relaxed version
     void abort_all_relaxed();
@@ -180,7 +184,7 @@ public:
 private:
     tbb::spin_mutex mutex_ec;
     waitset_t       waitset_ec;
-    __TBB_atomic unsigned epoch;
+    std::atomic<unsigned> epoch;
     thread_context* to_thread_context( waitset_node_t* n ) { return static_cast<thread_context*>(n); }
 };
 
@@ -209,7 +213,7 @@ void concurrent_monitor::notify_relaxed( const P& predicate ) {
         const waitset_node_t* end = waitset_ec.end();
         {
             tbb::spin_mutex::scoped_lock l( mutex_ec );
-            __TBB_store_relaxed(epoch, __TBB_load_relaxed(epoch) + 1);
+            epoch.store( epoch.load( std::memory_order_relaxed ) + 1, std::memory_order_relaxed );
             for( waitset_node_t* n=waitset_ec.last(); n!=end; n=nxt ) {
                 nxt = n->prev;
                 thread_context* thr = to_thread_context( n );
@@ -231,7 +235,8 @@ void concurrent_monitor::notify_relaxed( const P& predicate ) {
 #endif
 }
 
-} // namespace internal
+} // namespace r1
+} // namespace detail
 } // namespace tbb
 
 #endif /* __TBB_concurrent_monitor_H */

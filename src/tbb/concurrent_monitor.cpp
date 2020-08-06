@@ -17,7 +17,8 @@
 #include "concurrent_monitor.h"
 
 namespace tbb {
-namespace internal {
+namespace detail {
+namespace r1 {
 
 void concurrent_monitor::thread_context::init() {
     new (sema.begin()) binary_semaphore;
@@ -41,10 +42,10 @@ void concurrent_monitor::prepare_wait( thread_context& thr, uintptr_t ctx ) {
     thr.in_waitset = true;
     {
         tbb::spin_mutex::scoped_lock l( mutex_ec );
-        __TBB_store_relaxed( thr.epoch, __TBB_load_relaxed(epoch) );
+        thr.epoch = epoch.load(std::memory_order_relaxed);
         waitset_ec.add( (waitset_t::node_t*)&thr );
     }
-    atomic_fence();
+    atomic_fence(std::memory_order_seq_cst);
 }
 
 void concurrent_monitor::cancel_wait( thread_context& thr ) {
@@ -70,7 +71,7 @@ void concurrent_monitor::notify_one_relaxed() {
     const waitset_node_t* end = waitset_ec.end();
     {
         tbb::spin_mutex::scoped_lock l( mutex_ec );
-        __TBB_store_relaxed( epoch, __TBB_load_relaxed(epoch) + 1 );
+        epoch.store( epoch.load( std::memory_order_relaxed ) + 1, std::memory_order_relaxed );
         n = waitset_ec.front();
         if( n!=end ) {
             waitset_ec.remove( *n );
@@ -88,7 +89,7 @@ void concurrent_monitor::notify_all_relaxed() {
     const waitset_node_t* end;
     {
         tbb::spin_mutex::scoped_lock l( mutex_ec );
-        __TBB_store_relaxed( epoch, __TBB_load_relaxed(epoch) + 1 );
+        epoch.store( epoch.load( std::memory_order_relaxed ) + 1, std::memory_order_relaxed );
         waitset_ec.flush_to( temp );
         end = temp.end();
         for( waitset_node_t* n=temp.front(); n!=end; n=n->next )
@@ -111,7 +112,7 @@ void concurrent_monitor::abort_all_relaxed() {
     const waitset_node_t* end;
     {
         tbb::spin_mutex::scoped_lock l( mutex_ec );
-        __TBB_store_relaxed( epoch, __TBB_load_relaxed(epoch) + 1 );
+        epoch.store( epoch.load( std::memory_order_relaxed ) + 1, std::memory_order_relaxed );
         waitset_ec.flush_to( temp );
         end = temp.end();
         for( waitset_node_t* n=temp.front(); n!=end; n=n->next )
@@ -128,5 +129,7 @@ void concurrent_monitor::abort_all_relaxed() {
 #endif
 }
 
-} // namespace internal
+} // namespace r1
+} // namespace detail
 } // namespace tbb
+

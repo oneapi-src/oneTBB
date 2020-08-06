@@ -17,25 +17,23 @@
 #ifndef __TBB_blocked_rangeNd_H
 #define __TBB_blocked_rangeNd_H
 
-#if ! TBB_PREVIEW_BLOCKED_RANGE_ND
+#if !TBB_PREVIEW_BLOCKED_RANGE_ND
     #error Set TBB_PREVIEW_BLOCKED_RANGE_ND to include blocked_rangeNd.h
 #endif
 
-#include "tbb_config.h"
-
-// tbb::blocked_rangeNd requires C++11 support and legacy mode
-#if __TBB_CPP11_PRESENT && __TBB_CPP11_ARRAY_PRESENT && __TBB_CPP11_TEMPLATE_ALIASES_PRESENT
-
-#include "internal/_template_helpers.h" // index_sequence, make_index_sequence
-
-#include <array>
 #include <algorithm>    // std::any_of
+#include <array>
+#include <cstddef>
 #include <type_traits>  // std::is_same, std::enable_if
 
-#include "tbb/blocked_range.h"
+#include "detail/_config.h"
+#include "detail/_template_helpers.h" // index_sequence, make_index_sequence
+
+#include "blocked_range.h"
 
 namespace tbb {
-namespace internal {
+namespace detail {
+namespace d1 {
 
 /*
     The blocked_rangeNd_impl uses make_index_sequence<N> to automatically generate a ctor with
@@ -50,17 +48,16 @@ namespace internal {
     facing the same problem that the impl class solves.
 */
 
-template<typename Value, unsigned int N, typename = make_index_sequence<N>>
+template<typename Value, unsigned int N, typename = detail::make_index_sequence<N>>
 class blocked_rangeNd_impl;
 
 template<typename Value, unsigned int N, std::size_t... Is>
-class blocked_rangeNd_impl<Value, N, index_sequence<Is...>> {
+class blocked_rangeNd_impl<Value, N, detail::index_sequence<Is...>> {
 public:
     //! Type of a value.
     using value_type = Value;
 
 private:
-
     //! Helper type to construct range with N tbb::blocked_range<value_type> objects.
     template<std::size_t>
     using dim_type_helper = tbb::blocked_range<value_type>;
@@ -98,30 +95,23 @@ public:
         });
     }
 
-#if __TBB_USE_PROPORTIONAL_SPLIT_IN_BLOCKED_RANGES
-    //! Static field to support proportional split.
-    static const bool is_splittable_in_proportion = true;
-
     blocked_rangeNd_impl(blocked_rangeNd_impl& r, proportional_split proportion) : my_dims(r.my_dims) {
         do_split(r, proportion);
     }
-#endif
 
     blocked_rangeNd_impl(blocked_rangeNd_impl& r, split proportion) : my_dims(r.my_dims) {
         do_split(r, proportion);
     }
 
 private:
-    __TBB_STATIC_ASSERT(N != 0, "zero dimensional blocked_rangeNd can't be constructed");
+    static_assert(N != 0, "zero dimensional blocked_rangeNd can't be constructed");
 
     //! Ranges in each dimension.
     std::array<tbb::blocked_range<value_type>, N> my_dims;
 
     template<typename split_type>
     void do_split(blocked_rangeNd_impl& r, split_type proportion) {
-        __TBB_STATIC_ASSERT((is_same_type<split_type, split>::value
-                            || is_same_type<split_type, proportional_split>::value),
-                            "type of split object is incorrect");
+        static_assert((std::is_same<split_type, split>::value || std::is_same<split_type, proportional_split>::value), "type of split object is incorrect");
         __TBB_ASSERT(r.is_divisible(), "can't split not divisible range");
 
         auto my_it = std::max_element(my_dims.begin(), my_dims.end(), [](const tbb::blocked_range<value_type>& first, const tbb::blocked_range<value_type>& second) {
@@ -139,13 +129,16 @@ private:
     }
 };
 
-} // namespace internal
-
 template<typename Value, unsigned int N>
-using blocked_rangeNd = internal::blocked_rangeNd_impl<Value, N>;
+using blocked_rangeNd = blocked_rangeNd_impl<Value, N>;
 
+} // namespace d1
+} // namespace detail
+
+inline namespace v1 {
+using detail::d1::blocked_rangeNd;
+} // namespace v1
 } // namespace tbb
 
-
-#endif /* __TBB_CPP11_PRESENT && __TBB_CPP11_ARRAY_PRESENT && __TBB_CPP11_TEMPLATE_ALIASES_PRESENT */
 #endif /* __TBB_blocked_rangeNd_H */
+

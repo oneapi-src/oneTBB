@@ -14,435 +14,219 @@
     limitations under the License.
 */
 
-/* Container implementations in this header are based on PPL implementations
-   provided by Microsoft. */
-
 #ifndef __TBB_concurrent_unordered_set_H
 #define __TBB_concurrent_unordered_set_H
 
-#define __TBB_concurrent_unordered_set_H_include_area
-#include "internal/_warning_suppress_enable_notice.h"
-
-#include "internal/_concurrent_unordered_impl.h"
+#include "detail/_concurrent_unordered_base.h"
+#include "tbb_allocator.h"
 
 namespace tbb {
+namespace detail {
+namespace d1 {
 
-namespace interface5 {
+template <typename Key, typename Hash, typename KeyEqual, typename Allocator, bool AllowMultimapping>
+struct concurrent_unordered_set_traits {
+    using key_type = Key;
+    using value_type = key_type;
+    using allocator_type = Allocator;
+    using hash_compare_type = hash_compare<key_type, Hash, KeyEqual>;
+    static constexpr bool allow_multimapping = AllowMultimapping;
 
-// Template class for hash set traits
-template<typename Key, typename Hash_compare, typename Allocator, bool Allow_multimapping>
-class concurrent_unordered_set_traits
-{
-protected:
-    typedef Key value_type;
-    typedef Key key_type;
-    typedef Hash_compare hash_compare;
-    typedef typename tbb::internal::allocator_rebind<Allocator, value_type>::type allocator_type;
-#if __TBB_UNORDERED_NODE_HANDLE_PRESENT
-    typedef tbb::internal::node_handle<key_type, key_type,
-                                  typename internal::split_ordered_list<key_type, allocator_type>::node,
-                                  allocator_type> node_type;
-#endif // __TBB_UNORDERED_NODE_HANDLE_PRESENT
-
-    enum { allow_multimapping = Allow_multimapping };
-
-    concurrent_unordered_set_traits() : my_hash_compare() {}
-    concurrent_unordered_set_traits(const hash_compare& hc) : my_hash_compare(hc) {}
-
-    static const Key& get_key(const value_type& value) {
+    static constexpr const key_type& get_key( const value_type& value ) {
         return value;
     }
+}; // class concurrent_unordered_set_traits
 
-    hash_compare my_hash_compare; // the comparator predicate for keys
-};
-
-template<typename Key, typename Hasher, typename Key_equality, typename Allocator>
+template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
 class concurrent_unordered_multiset;
 
-template <typename Key, typename Hasher = tbb::internal::tbb_hash<Key>, typename Key_equality = std::equal_to<Key>, typename Allocator = tbb::tbb_allocator<Key> >
-class concurrent_unordered_set : public internal::concurrent_unordered_base< concurrent_unordered_set_traits<Key, internal::hash_compare<Key, Hasher, Key_equality>, Allocator, false> >
+template <typename Key, typename Hash = std::hash<Key>, typename KeyEqual = std::equal_to<Key>,
+          typename Allocator = tbb::tbb_allocator<Key>>
+class concurrent_unordered_set
+    : public concurrent_unordered_base<concurrent_unordered_set_traits<Key, Hash, KeyEqual, Allocator, false>>
 {
-    // Base type definitions
-    typedef internal::hash_compare<Key, Hasher, Key_equality> hash_compare;
-    typedef concurrent_unordered_set_traits<Key, hash_compare, Allocator, false> traits_type;
-    typedef internal::concurrent_unordered_base< traits_type > base_type;
-#if __TBB_EXTRA_DEBUG
+    using traits_type = concurrent_unordered_set_traits<Key, Hash, KeyEqual, Allocator, false>;
+    using base_type = concurrent_unordered_base<traits_type>;
 public:
-#endif
-    using traits_type::allow_multimapping;
-public:
-    using base_type::insert;
+    using key_type = typename base_type::key_type;
+    using value_type = typename base_type::value_type;
+    using size_type = typename base_type::size_type;
+    using difference_type = typename base_type::difference_type;
+    using hasher = typename base_type::hasher;
+    using key_equal = typename base_type::key_equal;
+    using allocator_type = typename base_type::allocator_type;
+    using reference = typename base_type::reference;
+    using const_reference = typename base_type::const_reference;
+    using pointer = typename base_type::pointer;
+    using const_pointer = typename base_type::const_pointer;
+    using iterator = typename base_type::iterator;
+    using const_iterator = typename base_type::const_iterator;
+    using local_iterator = typename base_type::local_iterator;
+    using const_local_iterator = typename base_type::const_local_iterator;
+    using node_type = typename base_type::node_type;
 
-    // Type definitions
-    typedef Key key_type;
-    typedef typename base_type::value_type value_type;
-    typedef Key mapped_type;
-    typedef Hasher hasher;
-    typedef Key_equality key_equal;
-    typedef hash_compare key_compare;
+    // Include constructors of base_type;
+    using base_type::base_type;
 
-    typedef typename base_type::allocator_type allocator_type;
-    typedef typename base_type::pointer pointer;
-    typedef typename base_type::const_pointer const_pointer;
-    typedef typename base_type::reference reference;
-    typedef typename base_type::const_reference const_reference;
-
-    typedef typename base_type::size_type size_type;
-    typedef typename base_type::difference_type difference_type;
-
-    typedef typename base_type::iterator iterator;
-    typedef typename base_type::const_iterator const_iterator;
-    typedef typename base_type::iterator local_iterator;
-    typedef typename base_type::const_iterator const_local_iterator;
-#if __TBB_UNORDERED_NODE_HANDLE_PRESENT
-    typedef typename base_type::node_type node_type;
-#endif /*__TBB_UNORDERED_NODE_HANDLE_PRESENT*/
-
-    // Construction/destruction/copying
-    explicit concurrent_unordered_set(size_type n_of_buckets = base_type::initial_bucket_number, const hasher& a_hasher = hasher(),
-        const key_equal& a_keyeq = key_equal(), const allocator_type& a = allocator_type())
-        : base_type(n_of_buckets, key_compare(a_hasher, a_keyeq), a)
-    {}
-
-    concurrent_unordered_set(size_type n_of_buckets, const allocator_type& a)
-        : base_type(n_of_buckets, key_compare(hasher(), key_equal()), a)
-    {}
-
-    concurrent_unordered_set(size_type n_of_buckets, const hasher& a_hasher, const allocator_type& a)
-        : base_type(n_of_buckets, key_compare(a_hasher, key_equal()), a)
-    {}
-
-    explicit concurrent_unordered_set(const Allocator& a) : base_type(base_type::initial_bucket_number, key_compare(), a)
-    {}
-
-    template <typename Iterator>
-    concurrent_unordered_set(Iterator first, Iterator last, size_type n_of_buckets = base_type::initial_bucket_number,
-        const hasher& a_hasher = hasher(), const key_equal& a_keyeq = key_equal(), const allocator_type& a = allocator_type())
-        : base_type(n_of_buckets, key_compare(a_hasher, a_keyeq), a)
-    {
-        insert(first, last);
+    template <typename OtherHash, typename OtherKeyEqual>
+    void merge( concurrent_unordered_set<key_type, OtherHash, OtherKeyEqual, allocator_type>& source ) {
+        this->internal_merge(source);
     }
 
-    template <typename Iterator>
-    concurrent_unordered_set(Iterator first, Iterator last, size_type n_of_buckets, const allocator_type& a)
-        : base_type(n_of_buckets, key_compare(hasher(), key_equal()), a)
-    {
-        insert(first, last);
+    template <typename OtherHash, typename OtherKeyEqual>
+    void merge( concurrent_unordered_set<key_type, OtherHash, OtherKeyEqual, allocator_type>&& source ) {
+        this->internal_merge(std::move(source));
     }
 
-    template <typename Iterator>
-    concurrent_unordered_set(Iterator first, Iterator last, size_type n_of_buckets, const hasher& a_hasher, const allocator_type& a)
-        : base_type(n_of_buckets, key_compare(a_hasher, key_equal()), a)
-    {
-        insert(first, last);
+    template <typename OtherHash, typename OtherKeyEqual>
+    void merge( concurrent_unordered_multiset<key_type, OtherHash, OtherKeyEqual, allocator_type>& source ) {
+        this->internal_merge(source);
     }
 
-#if __TBB_INITIALIZER_LISTS_PRESENT
-    //! Constructor from initializer_list
-    concurrent_unordered_set(std::initializer_list<value_type> il, size_type n_of_buckets = base_type::initial_bucket_number, const hasher& a_hasher = hasher(),
-        const key_equal& a_keyeq = key_equal(), const allocator_type& a = allocator_type())
-        : base_type(n_of_buckets, key_compare(a_hasher, a_keyeq), a)
-    {
-        insert(il.begin(),il.end());
+    template <typename OtherHash, typename OtherKeyEqual>
+    void merge( concurrent_unordered_multiset<key_type, OtherHash, OtherKeyEqual, allocator_type>&& source ) {
+        this->internal_merge(std::move(source));
     }
-
-    concurrent_unordered_set(std::initializer_list<value_type> il, size_type n_of_buckets, const allocator_type& a)
-        : base_type(n_of_buckets, key_compare(hasher(), key_equal()), a)
-    {
-        insert(il.begin(), il.end());
-    }
-
-    concurrent_unordered_set(std::initializer_list<value_type> il, size_type n_of_buckets, const hasher& a_hasher, const allocator_type& a)
-        : base_type(n_of_buckets, key_compare(a_hasher, key_equal()), a)
-    {
-        insert(il.begin(), il.end());
-    }
-
-#endif //# __TBB_INITIALIZER_LISTS_PRESENT
-
-#if __TBB_CPP11_RVALUE_REF_PRESENT && !__TBB_IMPLICIT_MOVE_PRESENT
-    concurrent_unordered_set(const concurrent_unordered_set& table)
-        : base_type(table)
-    {}
-
-    concurrent_unordered_set& operator=(const concurrent_unordered_set& table)
-    {
-        return static_cast<concurrent_unordered_set&>(base_type::operator=(table));
-    }
-
-    concurrent_unordered_set(concurrent_unordered_set&& table)
-        : base_type(std::move(table))
-    {}
-
-    concurrent_unordered_set& operator=(concurrent_unordered_set&& table)
-    {
-        return static_cast<concurrent_unordered_set&>(base_type::operator=(std::move(table)));
-    }
-#endif //__TBB_CPP11_RVALUE_REF_PRESENT && !__TBB_IMPLICIT_MOVE_PRESENT
-
-#if __TBB_CPP11_RVALUE_REF_PRESENT
-    concurrent_unordered_set(concurrent_unordered_set&& table, const Allocator& a)
-        : base_type(std::move(table), a)
-    {}
-#endif /*__TBB_CPP11_RVALUE_REF_PRESENT*/
-
-#if __TBB_UNORDERED_NODE_HANDLE_PRESENT
-    template<typename Hash, typename Equality>
-    void merge(concurrent_unordered_set<Key, Hash, Equality, Allocator>& source)
-              { this->internal_merge(source); }
-
-    template<typename Hash, typename Equality>
-    void merge(concurrent_unordered_set<Key, Hash, Equality, Allocator>&& source)
-              { this->internal_merge(source); }
-
-    template<typename Hash, typename Equality>
-    void merge(concurrent_unordered_multiset<Key, Hash, Equality, Allocator>& source)
-              { this->internal_merge(source); }
-
-    template<typename Hash, typename Equality>
-    void merge(concurrent_unordered_multiset<Key, Hash, Equality, Allocator>&& source)
-              { this->internal_merge(source); }
-
-#endif //__TBB_UNORDERED_NODE_HANDLE_PRESENT
-
-    concurrent_unordered_set(const concurrent_unordered_set& table, const Allocator& a)
-        : base_type(table, a)
-    {}
-
-};
+}; // class concurrent_unordered_set
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 
-namespace internal {
-using namespace tbb::internal;
+template <typename Value>
+using cu_set_def_allocator = tbb::tbb_allocator<Value>;
 
-template <template<typename...> typename Set, typename T, typename... Args>
-using cu_set_t = Set <
-    T,
-    std::conditional_t< (sizeof...(Args)>0) && !is_allocator_v< pack_element_t<0, Args...> >,
-                        pack_element_t<0, Args...>, tbb_hash<T> >,
-    std::conditional_t< (sizeof...(Args)>1) && !is_allocator_v< pack_element_t<1, Args...> >,
-                        pack_element_t<1, Args...>, std::equal_to<T> >,
-    std::conditional_t< (sizeof...(Args)>0) && is_allocator_v< pack_element_t<sizeof...(Args)-1, Args...> >,
-                        pack_element_t<sizeof...(Args)-1, Args...>, tbb_allocator<T> >
->;
+template <template <typename...> class Set, typename T, typename... Args>
+using cu_set_type = Set<T,
+                        std::conditional_t<(sizeof...(Args) > 0) && !is_allocator_v<pack_element_t<0, Args...>>,
+                                           pack_element_t<0, Args...>, std::hash<T>>,
+                        std::conditional_t<(sizeof...(Args) > 1) && !is_allocator_v<pack_element_t<1, Args...>>,
+                                           pack_element_t<1, Args...>, std::equal_to<T>>,
+                        std::conditional_t<(sizeof...(Args) > 0) && is_allocator_v<pack_element_t<sizeof...(Args) - 1, Args...>>,
+                                           pack_element_t<sizeof...(Args) - 1, Args...>, cu_set_def_allocator<T>>>;
+
+template <typename Key, typename Hash, typename KeyEq, typename Allocator>
+concurrent_unordered_set( const concurrent_unordered_set<Key, Hash, KeyEq, Allocator>&, const Allocator& )
+-> concurrent_unordered_set<Key, Hash, KeyEq, Allocator>;
+
+// Deduction guide for the constructor from two iterators
+template <typename I>
+concurrent_unordered_set( I, I )
+-> cu_set_type<concurrent_unordered_set, iterator_value_t<I>>;
+
+// Deduction guide for the constructor from two iterators and hasher/equal/allocator
+template <typename I, typename... Args>
+concurrent_unordered_set( I, I, std::size_t, Args... )
+-> cu_set_type<concurrent_unordered_set, iterator_value_t<I>, Args...>;
+
+// Deduction guide for the constructor from an initializer_list
+template <typename T>
+concurrent_unordered_set( std::initializer_list<T> )
+-> cu_set_type<concurrent_unordered_set, T>;
+
+// Deduction guide for the constructor from an initializer_list and hasher/equal/allocator
+template <typename T, typename... Args>
+concurrent_unordered_set( std::initializer_list<T>, std::size_t, Args... )
+-> cu_set_type<concurrent_unordered_set, T, Args...>;
+
+#endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+
+template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
+void swap( concurrent_unordered_set<Key, Hash, KeyEqual, Allocator>& lhs,
+           concurrent_unordered_set<Key, Hash, KeyEqual, Allocator>& rhs ) {
+    lhs.swap(rhs);
 }
 
-// Deduction guide for the constructor from two iterators
-template<typename I>
-concurrent_unordered_set(I, I)
--> internal::cu_set_t<concurrent_unordered_set, internal::iterator_value_t<I>>;
-
-// Deduction guide for the constructor from two iterators and hasher/equality/allocator
-template<typename I, typename... Args>
-concurrent_unordered_set(I, I, size_t, Args...)
--> internal::cu_set_t<concurrent_unordered_set, internal::iterator_value_t<I>, Args...>;
-
-// Deduction guide for the constructor from an initializer_list
-template<typename T>
-concurrent_unordered_set(std::initializer_list<T>)
--> internal::cu_set_t<concurrent_unordered_set, T>;
-
-// Deduction guide for the constructor from an initializer_list and hasher/equality/allocator
-template<typename T, typename... Args>
-concurrent_unordered_set(std::initializer_list<T>, size_t, Args...)
--> internal::cu_set_t<concurrent_unordered_set, T, Args...>;
-
-#endif /*__TBB_CPP17_DEDUCTION_GUIDES_PRESENT */
-
-template <typename Key, typename Hasher = tbb::internal::tbb_hash<Key>, typename Key_equality = std::equal_to<Key>,
-         typename Allocator = tbb::tbb_allocator<Key> >
-class concurrent_unordered_multiset :
-    public internal::concurrent_unordered_base< concurrent_unordered_set_traits<Key,
-    internal::hash_compare<Key, Hasher, Key_equality>, Allocator, true> >
+template <typename Key, typename Hash = std::hash<Key>, typename KeyEqual = std::equal_to<Key>,
+          typename Allocator = tbb::tbb_allocator<Key>>
+class concurrent_unordered_multiset
+    : public concurrent_unordered_base<concurrent_unordered_set_traits<Key, Hash, KeyEqual, Allocator, true>>
 {
-    // Base type definitions
-    typedef internal::hash_compare<Key, Hasher, Key_equality> hash_compare;
-    typedef concurrent_unordered_set_traits<Key, hash_compare, Allocator, true> traits_type;
-    typedef internal::concurrent_unordered_base< traits_type > base_type;
-#if __TBB_EXTRA_DEBUG
+    using traits_type = concurrent_unordered_set_traits<Key, Hash, KeyEqual, Allocator, true>;
+    using base_type = concurrent_unordered_base<traits_type>;
 public:
-#endif
-    using traits_type::allow_multimapping;
-public:
-    using base_type::insert;
+    using key_type = typename base_type::key_type;
+    using value_type = typename base_type::value_type;
+    using size_type = typename base_type::size_type;
+    using difference_type = typename base_type::difference_type;
+    using hasher = typename base_type::hasher;
+    using key_equal = typename base_type::key_equal;
+    using allocator_type = typename base_type::allocator_type;
+    using reference = typename base_type::reference;
+    using const_reference = typename base_type::const_reference;
+    using pointer = typename base_type::pointer;
+    using const_pointer = typename base_type::const_pointer;
+    using iterator = typename base_type::iterator;
+    using const_iterator = typename base_type::const_iterator;
+    using local_iterator = typename base_type::local_iterator;
+    using const_local_iterator = typename base_type::const_local_iterator;
+    using node_type = typename base_type::node_type;
 
-    // Type definitions
-    typedef Key key_type;
-    typedef typename base_type::value_type value_type;
-    typedef Key mapped_type;
-    typedef Hasher hasher;
-    typedef Key_equality key_equal;
-    typedef hash_compare key_compare;
+    // Include constructors of base_type;
+    using base_type::base_type;
 
-    typedef typename base_type::allocator_type allocator_type;
-    typedef typename base_type::pointer pointer;
-    typedef typename base_type::const_pointer const_pointer;
-    typedef typename base_type::reference reference;
-    typedef typename base_type::const_reference const_reference;
-
-    typedef typename base_type::size_type size_type;
-    typedef typename base_type::difference_type difference_type;
-
-    typedef typename base_type::iterator iterator;
-    typedef typename base_type::const_iterator const_iterator;
-    typedef typename base_type::iterator local_iterator;
-    typedef typename base_type::const_iterator const_local_iterator;
-#if __TBB_UNORDERED_NODE_HANDLE_PRESENT
-    typedef typename base_type::node_type node_type;
-#endif // __TBB_UNORDERED_NODE_HANDLE_PRESENT
-
-    // Construction/destruction/copying
-    explicit concurrent_unordered_multiset(size_type n_of_buckets = base_type::initial_bucket_number,
-        const hasher& a_hasher = hasher(), const key_equal& a_keyeq = key_equal(),
-        const allocator_type& a = allocator_type())
-        : base_type(n_of_buckets, key_compare(a_hasher, a_keyeq), a)
-    {}
-
-    concurrent_unordered_multiset(size_type n_of_buckets, const allocator_type& a)
-        : base_type(n_of_buckets, key_compare(hasher(), key_equal()), a)
-    {}
-
-    concurrent_unordered_multiset(size_type n_of_buckets, const hasher& a_hasher,
-        const allocator_type& a)
-        : base_type(n_of_buckets, key_compare(a_hasher, key_equal()), a)
-    {}
-
-    explicit concurrent_unordered_multiset(const Allocator& a) : base_type(base_type::initial_bucket_number, key_compare(), a)
-    {}
-
-    template <typename Iterator>
-    concurrent_unordered_multiset(Iterator first, Iterator last, size_type n_of_buckets = base_type::initial_bucket_number,
-        const hasher& a_hasher = hasher(), const key_equal& a_keyeq = key_equal(),
-        const allocator_type& a = allocator_type())
-        : base_type(n_of_buckets, key_compare(a_hasher, a_keyeq), a)
-    {
-        insert(first, last);
+    template <typename OtherHash, typename OtherKeyEqual>
+    void merge( concurrent_unordered_set<key_type, OtherHash, OtherKeyEqual, allocator_type>& source ) {
+        this->internal_merge(source);
     }
 
-    template <typename Iterator>
-    concurrent_unordered_multiset(Iterator first, Iterator last, size_type n_of_buckets, const allocator_type& a)
-        : base_type(n_of_buckets, key_compare(hasher(), key_equal()), a)
-    {
-        insert(first, last);
+    template <typename OtherHash, typename OtherKeyEqual>
+    void merge( concurrent_unordered_set<key_type, OtherHash, OtherKeyEqual, allocator_type>&& source ) {
+        this->internal_merge(std::move(source));
     }
 
-    template <typename Iterator>
-    concurrent_unordered_multiset(Iterator first, Iterator last, size_type n_of_buckets, const hasher& a_hasher,
-        const allocator_type& a)
-        : base_type(n_of_buckets, key_compare(a_hasher, key_equal()), a)
-    {
-        insert(first, last);
+    template <typename OtherHash, typename OtherKeyEqual>
+    void merge( concurrent_unordered_multiset<key_type, OtherHash, OtherKeyEqual, allocator_type>& source ) {
+        this->internal_merge(source);
     }
 
-#if __TBB_INITIALIZER_LISTS_PRESENT
-    //! Constructor from initializer_list
-    concurrent_unordered_multiset(std::initializer_list<value_type> il, size_type n_of_buckets = base_type::initial_bucket_number,
-        const hasher& a_hasher = hasher(), const key_equal& a_keyeq = key_equal(), const allocator_type& a = allocator_type())
-        : base_type(n_of_buckets, key_compare(a_hasher, a_keyeq), a)
-    {
-        insert(il.begin(),il.end());
+    template <typename OtherHash, typename OtherKeyEqual>
+    void merge( concurrent_unordered_multiset<key_type, OtherHash, OtherKeyEqual, allocator_type>&& source ) {
+        this->internal_merge(std::move(source));
     }
-
-    concurrent_unordered_multiset(std::initializer_list<value_type> il, size_type n_of_buckets, const allocator_type& a)
-        : base_type(n_of_buckets, key_compare(hasher(), key_equal()), a)
-    {
-        insert(il.begin(), il.end());
-    }
-
-    concurrent_unordered_multiset(std::initializer_list<value_type> il, size_type n_of_buckets, const hasher& a_hasher,
-        const allocator_type& a)
-        : base_type(n_of_buckets, key_compare(a_hasher, key_equal()), a)
-    {
-        insert(il.begin(), il.end());
-    }
-
-#endif //# __TBB_INITIALIZER_LISTS_PRESENT
-
-
-#if __TBB_CPP11_RVALUE_REF_PRESENT && !__TBB_IMPLICIT_MOVE_PRESENT
-    concurrent_unordered_multiset(const concurrent_unordered_multiset& table)
-        : base_type(table)
-    {}
-
-    concurrent_unordered_multiset& operator=(const concurrent_unordered_multiset& table)
-    {
-        return static_cast<concurrent_unordered_multiset&>(base_type::operator=(table));
-    }
-
-    concurrent_unordered_multiset(concurrent_unordered_multiset&& table)
-        : base_type(std::move(table))
-    {}
-
-    concurrent_unordered_multiset& operator=(concurrent_unordered_multiset&& table)
-    {
-        return static_cast<concurrent_unordered_multiset&>(base_type::operator=(std::move(table)));
-    }
-#endif //__TBB_CPP11_RVALUE_REF_PRESENT && !__TBB_IMPLICIT_MOVE_PRESENT
-
-#if __TBB_CPP11_RVALUE_REF_PRESENT
-    concurrent_unordered_multiset(concurrent_unordered_multiset&& table, const Allocator& a)
-        : base_type(std::move(table), a)
-    {
-    }
-#endif /*__TBB_CPP11_RVALUE_REF_PRESENT*/
-
-#if __TBB_UNORDERED_NODE_HANDLE_PRESENT
-    template<typename Hash, typename Equality>
-    void merge(concurrent_unordered_set<Key, Hash, Equality, Allocator>& source)
-              { this->internal_merge(source); }
-
-    template<typename Hash, typename Equality>
-    void merge(concurrent_unordered_set<Key, Hash, Equality, Allocator>&& source)
-              { this->internal_merge(source); }
-
-    template<typename Hash, typename Equality>
-    void merge(concurrent_unordered_multiset<Key, Hash, Equality, Allocator>& source)
-              { this->internal_merge(source); }
-
-    template<typename Hash, typename Equality>
-    void merge(concurrent_unordered_multiset<Key, Hash, Equality, Allocator>&& source)
-              { this->internal_merge(source); }
-
-#endif //__TBB_UNORDERED_NODE_HANDLE_PRESENT
-
-    concurrent_unordered_multiset(const concurrent_unordered_multiset& table, const Allocator& a)
-        : base_type(table, a)
-    {}
-};
+}; // class concurrent_unordered_multiset
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+template <typename Key, typename Hash, typename KeyEq, typename Allocator>
+concurrent_unordered_multiset( const concurrent_unordered_multiset<Key, Hash, KeyEq, Allocator>&, const Allocator& )
+-> concurrent_unordered_multiset<Key, Hash, KeyEq, Allocator>;
 
 // Deduction guide for the constructor from two iterators
-template<typename I>
-concurrent_unordered_multiset(I, I)
--> internal::cu_set_t<concurrent_unordered_multiset, internal::iterator_value_t<I>>;
+template <typename I>
+concurrent_unordered_multiset( I, I )
+-> cu_set_type<concurrent_unordered_multiset, iterator_value_t<I>>;
 
-// Deduction guide for the constructor from two iterators and hasher/equality/allocator
-template<typename I, typename... Args>
-concurrent_unordered_multiset(I, I, size_t, Args...)
--> internal::cu_set_t<concurrent_unordered_multiset, internal::iterator_value_t<I>, Args...>;
+// Deduction guide for the constructor from two iterators and hasher/equal/allocator
+template <typename I, typename... Args>
+concurrent_unordered_multiset( I, I, std::size_t, Args... )
+-> cu_set_type<concurrent_unordered_multiset, iterator_value_t<I>, Args...>;
 
 // Deduction guide for the constructor from an initializer_list
-template<typename T>
-concurrent_unordered_multiset(std::initializer_list<T>)
--> internal::cu_set_t<concurrent_unordered_multiset, T>;
+template <typename T>
+concurrent_unordered_multiset( std::initializer_list<T> )
+-> cu_set_type<concurrent_unordered_multiset, T>;
 
-// Deduction guide for the constructor from an initializer_list and hasher/equality/allocator
-template<typename T, typename... Args>
-concurrent_unordered_multiset(std::initializer_list<T>, size_t, Args...)
--> internal::cu_set_t<concurrent_unordered_multiset, T, Args...>;
+// Deduction guide for the constructor from an initializer_list and hasher/equal/allocator
+template <typename T, typename... Args>
+concurrent_unordered_multiset( std::initializer_list<T>, std::size_t, Args... )
+-> cu_set_type<concurrent_unordered_multiset, T, Args...>;
 
-#endif /* __TBB_CPP17_DEDUCTION_GUIDES_PRESENT */
-} // namespace interface5
+#endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 
-using interface5::concurrent_unordered_set;
-using interface5::concurrent_unordered_multiset;
+template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
+void swap( concurrent_unordered_multiset<Key, Hash, KeyEqual, Allocator>& lhs,
+           concurrent_unordered_multiset<Key, Hash, KeyEqual, Allocator>& rhs ) {
+    lhs.swap(rhs);
+}
 
+} // namespace d1
+} // namespace detail
+
+inline namespace v1 {
+
+using detail::d1::concurrent_unordered_set;
+using detail::d1::concurrent_unordered_multiset;
+using detail::split;
+
+} // inline namespace v1
 } // namespace tbb
 
-
-#include "internal/_warning_suppress_disable_notice.h"
-#undef __TBB_concurrent_unordered_set_H_include_area
-
-#endif// __TBB_concurrent_unordered_set_H
+#endif // __TBB_concurrent_unordered_set_H

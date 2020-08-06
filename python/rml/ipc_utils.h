@@ -25,6 +25,6 @@ char* get_shared_name(const char* prefix);
 int get_num_threads(const char* env_var);
 bool get_enable_flag(const char* env_var);
 
-}}} //tbb::internal::rml
+}}} // namespace tbb::internal::rml
 
 #endif

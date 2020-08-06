@@ -17,353 +17,391 @@
 #ifndef __TBB_concurrent_priority_queue_H
 #define __TBB_concurrent_priority_queue_H
 
-#define __TBB_concurrent_priority_queue_H_include_area
-#include "internal/_warning_suppress_enable_notice.h"
-
-#include "atomic.h"
+#include "detail/_aggregator.h"
+#include "detail/_template_helpers.h"
+#include "detail/_allocator_traits.h"
+#include "detail/_range_common.h"
+#include "detail/_exception.h"
+#include "detail/_utils.h"
 #include "cache_aligned_allocator.h"
-#include "tbb_exception.h"
-#include "tbb_stddef.h"
-#include "tbb_profiling.h"
-#include "internal/_aggregator_impl.h"
-#include "internal/_template_helpers.h"
-#include "internal/_allocator_traits.h"
 #include <vector>
 #include <iterator>
 #include <functional>
-#include __TBB_STD_SWAP_HEADER
-
-#if __TBB_INITIALIZER_LISTS_PRESENT
-    #include <initializer_list>
-#endif
-
-#if __TBB_CPP11_IS_COPY_CONSTRUCTIBLE_PRESENT
-    #include <type_traits>
-#endif
+#include <utility>
+#include <initializer_list>
+#include <type_traits>
 
 namespace tbb {
-namespace interface5 {
-namespace internal {
-#if __TBB_CPP11_IS_COPY_CONSTRUCTIBLE_PRESENT
-    template<typename T, bool C = std::is_copy_constructible<T>::value>
-    struct use_element_copy_constructor {
-        typedef tbb::internal::true_type type;
-    };
-    template<typename T>
-    struct use_element_copy_constructor <T,false> {
-        typedef tbb::internal::false_type type;
-    };
-#else
-    template<typename>
-    struct use_element_copy_constructor {
-        typedef tbb::internal::true_type type;
-    };
-#endif
-} // namespace internal
+namespace detail {
+namespace d1 {
 
-using namespace tbb::internal;
-
-//! Concurrent priority queue
-template <typename T, typename Compare=std::less<T>, typename A=cache_aligned_allocator<T> >
+template <typename T, typename Compare = std::less<T>, typename Allocator = cache_aligned_allocator<T>>
 class concurrent_priority_queue {
- public:
-    //! Element type in the queue.
-    typedef T value_type;
+public:
+    using value_type = T;
+    using reference = T&;
+    using const_reference = const T&;
 
-    //! Reference type
-    typedef T& reference;
+    using size_type = std::size_t;
+    using difference_type = std::ptrdiff_t;
 
-    //! Const reference type
-    typedef const T& const_reference;
+    using allocator_type = Allocator;
 
-    //! Integral type for representing size of the queue.
-    typedef size_t size_type;
+    concurrent_priority_queue() : concurrent_priority_queue(allocator_type{}) {}
 
-    //! Difference type for iterator
-    typedef ptrdiff_t difference_type;
-
-    //! Allocator type
-    typedef A allocator_type;
-
-    //! Constructs a new concurrent_priority_queue with default capacity
-    explicit concurrent_priority_queue(const allocator_type& a = allocator_type()) : mark(0), my_size(0), compare(), data(a)
+    explicit concurrent_priority_queue( const allocator_type& alloc )
+        : mark(0), my_size(0), my_compare(), data(alloc)
     {
-        my_aggregator.initialize_handler(my_functor_t(this));
+        my_aggregator.initialize_handler(functor{this});
     }
 
-    //! Constructs a new concurrent_priority_queue with default capacity
-    explicit concurrent_priority_queue(const Compare& c, const allocator_type& a = allocator_type()) : mark(0), my_size(0), compare(c), data(a)
+    explicit concurrent_priority_queue( const Compare& compare, const allocator_type& alloc = allocator_type() )
+        : mark(0), my_size(0), my_compare(compare), data(alloc)
     {
-        my_aggregator.initialize_handler(my_functor_t(this));
+        my_aggregator.initialize_handler(functor{this});
     }
 
-    //! Constructs a new concurrent_priority_queue with init_sz capacity
-    explicit concurrent_priority_queue(size_type init_capacity, const allocator_type& a = allocator_type()) :
-        mark(0), my_size(0), compare(), data(a)
+    explicit concurrent_priority_queue( size_type init_capacity, const allocator_type& alloc = allocator_type() )
+        : mark(0), my_size(0), my_compare(), data(alloc)
     {
         data.reserve(init_capacity);
-        my_aggregator.initialize_handler(my_functor_t(this));
+        my_aggregator.initialize_handler(functor{this});
     }
 
-    //! Constructs a new concurrent_priority_queue with init_sz capacity
-    explicit concurrent_priority_queue(size_type init_capacity, const Compare& c, const allocator_type& a = allocator_type()) :
-        mark(0), my_size(0), compare(c), data(a)
+    explicit concurrent_priority_queue( size_type init_capacity, const Compare& compare, const allocator_type& alloc = allocator_type() )
+        : mark(0), my_size(0), my_compare(compare), data(alloc)
     {
         data.reserve(init_capacity);
-        my_aggregator.initialize_handler(my_functor_t(this));
+        my_aggregator.initialize_handler(functor{this});
     }
 
-    //! [begin,end) constructor
-    template<typename InputIterator>
-    concurrent_priority_queue(InputIterator begin, InputIterator end, const allocator_type& a = allocator_type()) :
-        mark(0), compare(), data(begin, end, a)
+    template <typename InputIterator>
+    concurrent_priority_queue( InputIterator begin, InputIterator end, const Compare& compare, const allocator_type& alloc = allocator_type() )
+        : mark(0), my_compare(compare), data(begin, end, alloc)
     {
-        my_aggregator.initialize_handler(my_functor_t(this));
+        my_aggregator.initialize_handler(functor{this});
         heapify();
-        my_size = data.size();
+        my_size.store(data.size(), std::memory_order_relaxed);
     }
 
-    //! [begin,end) constructor
-    template<typename InputIterator>
-    concurrent_priority_queue(InputIterator begin, InputIterator end, const Compare& c, const allocator_type& a = allocator_type()) :
-        mark(0), compare(c), data(begin, end, a)
+    template <typename InputIterator>
+    concurrent_priority_queue( InputIterator begin, InputIterator end, const allocator_type& alloc = allocator_type() )
+        : concurrent_priority_queue(begin, end, Compare(), alloc) {}
+
+    concurrent_priority_queue( std::initializer_list<value_type> init, const Compare& compare, const allocator_type& alloc = allocator_type() )
+        : concurrent_priority_queue(init.begin(), init.end(), compare, alloc) {}
+
+    concurrent_priority_queue( std::initializer_list<value_type> init, const allocator_type& alloc = allocator_type() )
+        : concurrent_priority_queue(init, Compare(), alloc) {}
+
+    concurrent_priority_queue( const concurrent_priority_queue& other )
+        : mark(other.mark), my_size(other.my_size.load(std::memory_order_relaxed)), my_compare(other.my_compare),
+          data(other.data)
     {
-        my_aggregator.initialize_handler(my_functor_t(this));
-        heapify();
-        my_size = data.size();
+        my_aggregator.initialize_handler(functor{this});
     }
 
-#if __TBB_INITIALIZER_LISTS_PRESENT
-    //! Constructor from std::initializer_list
-    concurrent_priority_queue(std::initializer_list<T> init_list, const allocator_type &a = allocator_type()) :
-        mark(0), compare(), data(init_list.begin(), init_list.end(), a)
+    concurrent_priority_queue( const concurrent_priority_queue& other, const allocator_type& alloc )
+        : mark(other.mark), my_size(other.my_size.load(std::memory_order_relaxed)), my_compare(other.my_compare),
+          data(other.data, alloc)
     {
-        my_aggregator.initialize_handler(my_functor_t(this));
-        heapify();
-        my_size = data.size();
+        my_aggregator.initialize_handler(functor{this});
     }
 
-    //! Constructor from std::initializer_list
-    concurrent_priority_queue(std::initializer_list<T> init_list, const Compare& c, const allocator_type &a = allocator_type()) :
-        mark(0), compare(c), data(init_list.begin(), init_list.end(), a)
+    concurrent_priority_queue( concurrent_priority_queue&& other )
+        : mark(other.mark), my_size(other.my_size.load(std::memory_order_relaxed)), my_compare(other.my_compare),
+          data(std::move(other.data))
     {
-        my_aggregator.initialize_handler(my_functor_t(this));
-        heapify();
-        my_size = data.size();
+        my_aggregator.initialize_handler(functor{this});
     }
-#endif //# __TBB_INITIALIZER_LISTS_PRESENT
 
-    //! Copy constructor
-    /** This operation is unsafe if there are pending concurrent operations on the src queue. */
-    concurrent_priority_queue(const concurrent_priority_queue& src) : mark(src.mark),
-        my_size(src.my_size), data(src.data.begin(), src.data.end(), src.data.get_allocator())
+    concurrent_priority_queue( concurrent_priority_queue&& other, const allocator_type& alloc )
+        : mark(other.mark), my_size(other.my_size.load(std::memory_order_relaxed)), my_compare(other.my_compare),
+          data(std::move(other.data), alloc)
     {
-        my_aggregator.initialize_handler(my_functor_t(this));
-        heapify();
+        my_aggregator.initialize_handler(functor{this});
     }
 
-    //! Copy constructor with specific allocator
-    /** This operation is unsafe if there are pending concurrent operations on the src queue. */
-    concurrent_priority_queue(const concurrent_priority_queue& src, const allocator_type& a) : mark(src.mark),
-        my_size(src.my_size), data(src.data.begin(), src.data.end(), a)
-    {
-        my_aggregator.initialize_handler(my_functor_t(this));
-        heapify();
-    }
-
-    //! Assignment operator
-    /** This operation is unsafe if there are pending concurrent operations on the src queue. */
-    concurrent_priority_queue& operator=(const concurrent_priority_queue& src) {
-        if (this != &src) {
-            vector_t(src.data.begin(), src.data.end(), src.data.get_allocator()).swap(data);
-            mark = src.mark;
-            my_size = src.my_size;
+    concurrent_priority_queue& operator=( const concurrent_priority_queue& other ) {
+        if (this != &other) {
+            data = other.data;
+            mark = other.mark;
+            my_size.store(other.my_size.load(std::memory_order_relaxed), std::memory_order_relaxed);
         }
         return *this;
     }
 
-#if __TBB_CPP11_RVALUE_REF_PRESENT
-    //! Move constructor
-    /** This operation is unsafe if there are pending concurrent operations on the src queue. */
-    concurrent_priority_queue(concurrent_priority_queue&& src) : mark(src.mark),
-        my_size(src.my_size), data(std::move(src.data))
-    {
-        my_aggregator.initialize_handler(my_functor_t(this));
-    }
-
-    //! Move constructor with specific allocator
-    /** This operation is unsafe if there are pending concurrent operations on the src queue. */
-    concurrent_priority_queue(concurrent_priority_queue&& src, const allocator_type& a) : mark(src.mark),
-        my_size(src.my_size),
-#if __TBB_ALLOCATOR_TRAITS_PRESENT
-        data(std::move(src.data), a)
-#else
-    // Some early version of C++11 STL vector does not have a constructor of vector(vector&& , allocator).
-    // It seems that the reason is absence of support of allocator_traits (stateful allocators).
-        data(a)
-#endif //__TBB_ALLOCATOR_TRAITS_PRESENT
-    {
-        my_aggregator.initialize_handler(my_functor_t(this));
-#if !__TBB_ALLOCATOR_TRAITS_PRESENT
-        if (a != src.data.get_allocator()){
-            data.reserve(src.data.size());
-            data.assign(std::make_move_iterator(src.data.begin()), std::make_move_iterator(src.data.end()));
-        }else{
-            data = std::move(src.data);
-        }
-#endif //!__TBB_ALLOCATOR_TRAITS_PRESENT
-    }
-
-    //! Move assignment operator
-    /** This operation is unsafe if there are pending concurrent operations on the src queue. */
-    concurrent_priority_queue& operator=( concurrent_priority_queue&& src) {
-        if (this != &src) {
-            mark = src.mark;
-            my_size = src.my_size;
-#if !__TBB_ALLOCATOR_TRAITS_PRESENT
-            if (data.get_allocator() != src.data.get_allocator()){
-                vector_t(std::make_move_iterator(src.data.begin()), std::make_move_iterator(src.data.end()), data.get_allocator()).swap(data);
-            }else
-#endif //!__TBB_ALLOCATOR_TRAITS_PRESENT
-            {
-                data = std::move(src.data);
-            }
+    concurrent_priority_queue& operator=( concurrent_priority_queue&& other ) {
+        if (this != &other) {
+            // TODO: check if exceptions from std::vector::operator=(vector&&) should be handled separately
+            data = std::move(other.data);
+            mark = other.mark;
+            my_size.store(other.my_size.load(std::memory_order_relaxed), std::memory_order_relaxed);
         }
         return *this;
     }
-#endif //__TBB_CPP11_RVALUE_REF_PRESENT
 
-    //! Assign the queue from [begin,end) range, not thread-safe
-    template<typename InputIterator>
-    void assign(InputIterator begin, InputIterator end) {
-        vector_t(begin, end, data.get_allocator()).swap(data);
+    concurrent_priority_queue& operator=( std::initializer_list<value_type> init ) {
+        assign(init.begin(), init.end());
+        return *this;
+    }
+
+    template <typename InputIterator>
+    void assign( InputIterator begin, InputIterator end ) {
+        data.assign(begin, end);
         mark = 0;
-        my_size = data.size();
+        my_size.store(data.size(), std::memory_order_relaxed);
         heapify();
     }
 
-#if __TBB_INITIALIZER_LISTS_PRESENT
-    //! Assign the queue from std::initializer_list, not thread-safe
-    void assign(std::initializer_list<T> il) { this->assign(il.begin(), il.end()); }
-
-    //! Assign from std::initializer_list, not thread-safe
-    concurrent_priority_queue& operator=(std::initializer_list<T> il) {
-        this->assign(il.begin(), il.end());
-        return *this;
+    void assign( std::initializer_list<value_type> init ) {
+        assign(init.begin(), init.end());
     }
-#endif //# __TBB_INITIALIZER_LISTS_PRESENT
 
-    //! Returns true if empty, false otherwise
-    /** Returned value may not reflect results of pending operations.
-        This operation reads shared data and will trigger a race condition. */
-    bool empty() const { return size()==0; }
+    /* Returned value may not reflect results of pending operations.
+       This operation reads shared data and will trigger a race condition. */
+    bool empty() const { return size() == 0; }
 
-    //! Returns the current number of elements contained in the queue
-    /** Returned value may not reflect results of pending operations.
-        This operation reads shared data and will trigger a race condition. */
-    size_type size() const { return __TBB_load_with_acquire(my_size); }
+    // Returns the current number of elements contained in the queue
+    /* Returned value may not reflect results of pending operations.
+       This operation reads shared data and will trigger a race condition. */
+    size_type size() const { return my_size.load(std::memory_order_relaxed); }
 
-    //! Pushes elem onto the queue, increasing capacity of queue if necessary
-    /** This operation can be safely used concurrently with other push, try_pop or emplace operations. */
-    void push(const_reference elem) {
-#if __TBB_CPP11_IS_COPY_CONSTRUCTIBLE_PRESENT
-        __TBB_STATIC_ASSERT( std::is_copy_constructible<value_type>::value, "The type is not copy constructible. Copying push operation is impossible." );
-#endif
-        cpq_operation op_data(elem, PUSH_OP);
+    /* This operation can be safely used concurrently with other push, try_pop or emplace operations. */
+    void push( const value_type& value ) {
+        cpq_operation op_data(value, PUSH_OP);
         my_aggregator.execute(&op_data);
-        if (op_data.status == FAILED) // exception thrown
-            throw_exception(eid_bad_alloc);
+        if (op_data.status == FAILED)
+            throw_exception(exception_id::bad_alloc);
     }
 
-#if __TBB_CPP11_RVALUE_REF_PRESENT
-    //! Pushes elem onto the queue, increasing capacity of queue if necessary
-    /** This operation can be safely used concurrently with other push, try_pop or emplace operations. */
-    void push(value_type &&elem) {
-        cpq_operation op_data(elem, PUSH_RVALUE_OP);
+    /* This operation can be safely used concurrently with other push, try_pop or emplace operations. */
+    void push( value_type&& value ) {
+        cpq_operation op_data(value, PUSH_RVALUE_OP);
         my_aggregator.execute(&op_data);
-        if (op_data.status == FAILED) // exception thrown
-            throw_exception(eid_bad_alloc);
+        if (op_data.status == FAILED)
+            throw_exception(exception_id::bad_alloc);
     }
 
-#if __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT
-    //! Constructs a new element using args as the arguments for its construction and pushes it onto the queue */
-    /** This operation can be safely used concurrently with other push, try_pop or emplace operations. */
-    template<typename... Args>
-    void emplace(Args&&... args) {
+    /* This operation can be safely used concurrently with other push, try_pop or emplace operations. */
+    template <typename... Args>
+    void emplace( Args&&... args ) {
+        // TODO: support uses allocator construction in this place
         push(value_type(std::forward<Args>(args)...));
     }
-#endif /* __TBB_CPP11_VARIADIC_TEMPLATES_PRESENT */
-#endif /* __TBB_CPP11_RVALUE_REF_PRESENT */
 
-    //! Gets a reference to and removes highest priority element
-    /** If a highest priority element was found, sets elem and returns true,
-        otherwise returns false.
-        This operation can be safely used concurrently with other push, try_pop or emplace operations. */
-    bool try_pop(reference elem) {
-        cpq_operation op_data(POP_OP);
-        op_data.elem = &elem;
+    // Gets a reference to and removes highest priority element
+    /* If a highest priority element was found, sets elem and returns true,
+       otherwise returns false.
+       This operation can be safely used concurrently with other push, try_pop or emplace operations. */
+    bool try_pop( value_type& value ) {
+        cpq_operation op_data(value, POP_OP);
         my_aggregator.execute(&op_data);
-        return op_data.status==SUCCEEDED;
+        return op_data.status == SUCCEEDED;
     }
 
-    //! Clear the queue; not thread-safe
-    /** This operation is unsafe if there are pending concurrent operations on the queue.
-        Resets size, effectively emptying queue; does not free space.
-        May not clear elements added in pending operations. */
+    // This operation affects the whole container => it is not thread-safe
     void clear() {
         data.clear();
         mark = 0;
-        my_size = 0;
+        my_size.store(0, std::memory_order_relaxed);
     }
 
-    //! Swap this queue with another; not thread-safe
-    /** This operation is unsafe if there are pending concurrent operations on the queue. */
-    void swap(concurrent_priority_queue& q) {
-        using std::swap;
-        data.swap(q.data);
-        swap(mark, q.mark);
-        swap(my_size, q.my_size);
+    // This operation affects the whole container => it is not thread-safe
+    void swap( concurrent_priority_queue& other ) {
+        if (this != &other) {
+            using std::swap;
+            swap(data, other.data);
+            swap(mark, other.mark);
+
+            size_type sz = my_size.load(std::memory_order_relaxed);
+            my_size.store(other.my_size.load(std::memory_order_relaxed), std::memory_order_relaxed);
+            other.my_size.store(sz, std::memory_order_relaxed);
+        }
     }
 
-    //! Return allocator object
     allocator_type get_allocator() const { return data.get_allocator(); }
-
- private:
+private:
     enum operation_type {INVALID_OP, PUSH_OP, POP_OP, PUSH_RVALUE_OP};
-    enum operation_status { WAIT=0, SUCCEEDED, FAILED };
+    enum operation_status {WAIT = 0, SUCCEEDED, FAILED};
 
     class cpq_operation : public aggregated_operation<cpq_operation> {
-     public:
+    public:
         operation_type type;
         union {
-            value_type *elem;
+            value_type* elem;
             size_type sz;
         };
-        cpq_operation(const_reference e, operation_type t) :
-            type(t), elem(const_cast<value_type*>(&e)) {}
-        cpq_operation(operation_type t) : type(t) {}
-    };
+        cpq_operation( const value_type& value, operation_type t )
+            : type(t), elem(const_cast<value_type*>(&value)) {}
 
-    class my_functor_t {
-        concurrent_priority_queue<T, Compare, A> *cpq;
-     public:
-        my_functor_t() {}
-        my_functor_t(concurrent_priority_queue<T, Compare, A> *cpq_) : cpq(cpq_) {}
+        cpq_operation( operation_type t ) : type(t) {}
+    }; // class cpq_operation
+
+    class functor {
+        concurrent_priority_queue* my_cpq;
+    public:
+        functor() : my_cpq(nullptr) {}
+        functor( concurrent_priority_queue* cpq ) : my_cpq(cpq) {}
+
         void operator()(cpq_operation* op_list) {
-            cpq->handle_operations(op_list);
+            __TBB_ASSERT(my_cpq != nullptr, "Invalid functor");
+            my_cpq->handle_operations(op_list);
         }
-    };
+    }; // class functor
 
-    typedef tbb::internal::aggregator< my_functor_t, cpq_operation > aggregator_t;
-    aggregator_t my_aggregator;
-    //! Padding added to avoid false sharing
-    char padding1[NFS_MaxLineSize - sizeof(aggregator_t)];
-    //! The point at which unsorted elements begin
+    void handle_operations( cpq_operation* op_list ) {
+        cpq_operation* tmp, *pop_list = nullptr;
+        __TBB_ASSERT(mark == data.size(), NULL);
+
+        // First pass processes all constant (amortized; reallocation may happen) time pushes and pops.
+        while(op_list) {
+            // ITT note: &(op_list->status) tag is used to cover accesses to op_list
+            // node. This thread is going to handle the operation, and so will acquire it
+            // and perform the associated operation w/o triggering a race condition; the
+            // thread that created the operation is waiting on the status field, so when
+            // this thread is done with the operation, it will perform a
+            // store_with_release to give control back to the waiting thread in
+            // aggregator::insert_operation.
+            // TODO: enable
+            call_itt_notify(acquired, &(op_list->status));
+            __TBB_ASSERT(op_list->type != INVALID_OP, NULL);
+
+            tmp = op_list;
+            op_list = op_list->next.load(std::memory_order_relaxed);
+            if (tmp->type == POP_OP) {
+                if (mark < data.size() &&
+                    my_compare(data[0], data.back()))
+                {
+                    // there are newly pushed elems and the last one is higher than top
+                    *(tmp->elem) = std::move(data.back());
+                    my_size.store(my_size.load(std::memory_order_relaxed) - 1, std::memory_order_relaxed);
+                    tmp->status.store(uintptr_t(SUCCEEDED), std::memory_order_release);
+
+                    data.pop_back();
+                    __TBB_ASSERT(mark <= data.size(), NULL);
+                } else { // no convenient item to pop; postpone
+                    tmp->next.store(pop_list, std::memory_order_relaxed);
+                    pop_list = tmp;
+                }
+            } else { // PUSH_OP or PUSH_RVALUE_OP
+                __TBB_ASSERT(tmp->type == PUSH_OP || tmp->type == PUSH_RVALUE_OP, "Unknown operation");
+#if TBB_USE_EXCEPTIONS
+                try
+#endif
+                {
+                    if (tmp->type == PUSH_OP) {
+                        push_back_helper(*(tmp->elem));
+                    } else {
+                        data.push_back(std::move(*(tmp->elem)));
+                    }
+                    my_size.store(my_size.load(std::memory_order_relaxed) + 1, std::memory_order_relaxed);
+                    tmp->status.store(uintptr_t(SUCCEEDED), std::memory_order_release);
+                }
+#if TBB_USE_EXCEPTIONS
+                catch(...) {
+                    tmp->status.store(uintptr_t(FAILED), std::memory_order_release);
+                }
+#endif
+            }
+        }
+
+        // Second pass processes pop operations
+        while(pop_list) {
+            tmp = pop_list;
+            pop_list = pop_list->next.load(std::memory_order_relaxed);
+            __TBB_ASSERT(tmp->type == POP_OP, NULL);
+            if (data.empty()) {
+                tmp->status.store(uintptr_t(FAILED), std::memory_order_release);
+            } else {
+                __TBB_ASSERT(mark <= data.size(), NULL);
+                if (mark < data.size() &&
+                    my_compare(data[0], data.back()))
+                {
+                    // there are newly pushed elems and the last one is higher than top
+                    *(tmp->elem) = std::move(data.back());
+                    my_size.store(my_size.load(std::memory_order_relaxed) - 1, std::memory_order_relaxed);
+                    tmp->status.store(uintptr_t(SUCCEEDED), std::memory_order_release);
+                    data.pop_back();
+                } else { // extract top and push last element down heap
+                    *(tmp->elem) = std::move(data[0]);
+                    my_size.store(my_size.load(std::memory_order_relaxed) - 1, std::memory_order_relaxed);
+                    tmp->status.store(uintptr_t(SUCCEEDED), std::memory_order_release);
+                    reheap();
+                }
+            }
+        }
+
+        // heapify any leftover pushed elements before doing the next
+        // batch of operations
+        if (mark < data.size()) heapify();
+        __TBB_ASSERT(mark == data.size(), NULL);
+    }
+
+    // Merge unsorted elements into heap
+    void heapify() {
+        if (!mark && data.size() > 0) mark = 1;
+        for (; mark < data.size(); ++mark) {
+            // for each unheapified element under size
+            size_type cur_pos = mark;
+            value_type to_place = std::move(data[mark]);
+            do { // push to_place up the heap
+                size_type parent = (cur_pos - 1) >> 1;
+                if (!my_compare(data[parent], to_place))
+                    break;
+                data[cur_pos] = std::move(data[parent]);
+                cur_pos = parent;
+            } while(cur_pos);
+            data[cur_pos] = std::move(to_place);
+        }
+    }
+
+    // Re-heapify after an extraction
+    // Re-heapify by pushing last element down the heap from the root.
+    void reheap() {
+        size_type cur_pos = 0, child = 1;
+
+        while(child < mark) {
+            size_type target = child;
+            if (child + 1 < mark && my_compare(data[child], data[child + 1]))
+                ++target;
+            // target now has the higher priority child
+            if (my_compare(data[target], data.back()))
+                break;
+            data[cur_pos] = std::move(data[target]);
+            cur_pos = target;
+            child = (cur_pos << 1) + 1;
+        }
+        if (cur_pos != data.size() - 1)
+            data[cur_pos] = std::move(data.back());
+        data.pop_back();
+        if (mark > data.size()) mark = data.size();
+    }
+
+    void push_back_helper( const T& value ) {
+        push_back_helper_impl(value, std::is_copy_constructible<T>{});
+    }
+
+    void push_back_helper_impl( const T& value, /*is_copy_constructible = */std::true_type ) {
+        data.push_back(value);
+    }
+
+    void push_back_helper_impl( const T&, /*is_copy_constructible = */std::false_type ) {
+        __TBB_ASSERT(false, "error: calling tbb::concurrent_priority_queue.push(const value_type&) for move-only type");
+    }
+
+    using aggregator_type = aggregator<functor, cpq_operation>;
+
+    aggregator_type my_aggregator;
+    // Padding added to avoid false sharing
+    char padding1[max_nfs_size - sizeof(aggregator_type)];
+    // The point at which unsorted elements begin
     size_type mark;
-    __TBB_atomic size_type my_size;
-    Compare compare;
-    //! Padding added to avoid false sharing
-    char padding2[NFS_MaxLineSize - (2*sizeof(size_type)) - sizeof(Compare)];
+    std::atomic<size_type> my_size;
+    Compare my_compare;
+
+    // Padding added to avoid false sharing
+    char padding2[max_nfs_size - (2*sizeof(size_type)) - sizeof(Compare)];
     //! Storage for the heap of elements in queue, plus unheapified elements
     /** data has the following structure:
 
@@ -382,172 +420,62 @@ class concurrent_priority_queue {
         mark-1 (it may be empty).  Then there are 0 or more elements
         that have not yet been inserted into the heap, in positions
         mark through my_size-1. */
-    typedef std::vector<value_type, allocator_type> vector_t;
-    vector_t data;
 
-    void handle_operations(cpq_operation *op_list) {
-        cpq_operation *tmp, *pop_list=NULL;
+    using vector_type = std::vector<value_type, allocator_type>;
+    vector_type data;
 
-        __TBB_ASSERT(mark == data.size(), NULL);
-
-        // First pass processes all constant (amortized; reallocation may happen) time pushes and pops.
-        while (op_list) {
-            // ITT note: &(op_list->status) tag is used to cover accesses to op_list
-            // node. This thread is going to handle the operation, and so will acquire it
-            // and perform the associated operation w/o triggering a race condition; the
-            // thread that created the operation is waiting on the status field, so when
-            // this thread is done with the operation, it will perform a
-            // store_with_release to give control back to the waiting thread in
-            // aggregator::insert_operation.
-            call_itt_notify(acquired, &(op_list->status));
-            __TBB_ASSERT(op_list->type != INVALID_OP, NULL);
-            tmp = op_list;
-            op_list = itt_hide_load_word(op_list->next);
-            if (tmp->type == POP_OP) {
-                if (mark < data.size() &&
-                    compare(data[0], data[data.size()-1])) {
-                    // there are newly pushed elems and the last one
-                    // is higher than top
-                    *(tmp->elem) = tbb::internal::move(data[data.size()-1]);
-                    __TBB_store_with_release(my_size, my_size-1);
-                    itt_store_word_with_release(tmp->status, uintptr_t(SUCCEEDED));
-                    data.pop_back();
-                    __TBB_ASSERT(mark<=data.size(), NULL);
-                }
-                else { // no convenient item to pop; postpone
-                    itt_hide_store_word(tmp->next, pop_list);
-                    pop_list = tmp;
-                }
-            } else { // PUSH_OP or PUSH_RVALUE_OP
-                __TBB_ASSERT(tmp->type == PUSH_OP || tmp->type == PUSH_RVALUE_OP, "Unknown operation" );
-                __TBB_TRY{
-                    if (tmp->type == PUSH_OP) {
-                        push_back_helper(*(tmp->elem), typename internal::use_element_copy_constructor<value_type>::type());
-                    } else {
-                        data.push_back(tbb::internal::move(*(tmp->elem)));
-                    }
-                    __TBB_store_with_release(my_size, my_size + 1);
-                    itt_store_word_with_release(tmp->status, uintptr_t(SUCCEEDED));
-                } __TBB_CATCH(...) {
-                    itt_store_word_with_release(tmp->status, uintptr_t(FAILED));
-                }
-            }
-        }
-
-        // second pass processes pop operations
-        while (pop_list) {
-            tmp = pop_list;
-            pop_list = itt_hide_load_word(pop_list->next);
-            __TBB_ASSERT(tmp->type == POP_OP, NULL);
-            if (data.empty()) {
-                itt_store_word_with_release(tmp->status, uintptr_t(FAILED));
-            }
-            else {
-                __TBB_ASSERT(mark<=data.size(), NULL);
-                if (mark < data.size() &&
-                    compare(data[0], data[data.size()-1])) {
-                    // there are newly pushed elems and the last one is
-                    // higher than top
-                    *(tmp->elem) = tbb::internal::move(data[data.size()-1]);
-                    __TBB_store_with_release(my_size, my_size-1);
-                    itt_store_word_with_release(tmp->status, uintptr_t(SUCCEEDED));
-                    data.pop_back();
-                }
-                else { // extract top and push last element down heap
-                    *(tmp->elem) = tbb::internal::move(data[0]);
-                    __TBB_store_with_release(my_size, my_size-1);
-                    itt_store_word_with_release(tmp->status, uintptr_t(SUCCEEDED));
-                    reheap();
-                }
-            }
-        }
-
-        // heapify any leftover pushed elements before doing the next
-        // batch of operations
-        if (mark<data.size()) heapify();
-        __TBB_ASSERT(mark == data.size(), NULL);
-    }
-
-    //! Merge unsorted elements into heap
-    void heapify() {
-        if (!mark && data.size()>0) mark = 1;
-        for (; mark<data.size(); ++mark) {
-            // for each unheapified element under size
-            size_type cur_pos = mark;
-            value_type to_place = tbb::internal::move(data[mark]);
-            do { // push to_place up the heap
-                size_type parent = (cur_pos-1)>>1;
-                if (!compare(data[parent], to_place)) break;
-                data[cur_pos] = tbb::internal::move(data[parent]);
-                cur_pos = parent;
-            } while( cur_pos );
-            data[cur_pos] = tbb::internal::move(to_place);
-        }
-    }
-
-    //! Re-heapify after an extraction
-    /** Re-heapify by pushing last element down the heap from the root. */
-    void reheap() {
-        size_type cur_pos=0, child=1;
-
-        while (child < mark) {
-            size_type target = child;
-            if (child+1 < mark && compare(data[child], data[child+1]))
-                ++target;
-            // target now has the higher priority child
-            if (compare(data[target], data[data.size()-1])) break;
-            data[cur_pos] = tbb::internal::move(data[target]);
-            cur_pos = target;
-            child = (cur_pos<<1)+1;
-        }
-        if (cur_pos != data.size()-1)
-            data[cur_pos] = tbb::internal::move(data[data.size()-1]);
-        data.pop_back();
-        if (mark > data.size()) mark = data.size();
-    }
-
-    void push_back_helper(const T& t, tbb::internal::true_type) {
-        data.push_back(t);
-    }
-
-    void push_back_helper(const T&, tbb::internal::false_type) {
-        __TBB_ASSERT( false, "The type is not copy constructible. Copying push operation is impossible." );
-    }
-};
+    template <typename Type, typename Comp, typename Alloc>
+    friend bool operator==( const concurrent_priority_queue<Type, Comp, Alloc>&,
+                            const concurrent_priority_queue<Type, Comp, Alloc>& );
+}; // class concurrent_priority_queue
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
-namespace internal {
+template <typename T, typename... Args>
+using priority_queue_type = concurrent_priority_queue<T,
+                                                      std::conditional_t<(sizeof...(Args) > 0) && !is_allocator_v<pack_element_t<0, Args...>>,
+                                                                         pack_element_t<0, Args...>, std::less<T>>,
+                                                      std::conditional_t<(sizeof...(Args) > 0) && is_allocator_v<pack_element_t<sizeof...(Args) - 1, Args...>>,
+                                                                         pack_element_t<sizeof...(Args) - 1, Args...>,
+                                                                         cache_aligned_allocator<T>>>;
 
-template<typename T, typename... Args>
-using priority_queue_t = concurrent_priority_queue<
-    T,
-    std::conditional_t< (sizeof...(Args)>0) && !is_allocator_v< pack_element_t<0, Args...> >,
-                        pack_element_t<0, Args...>, std::less<T> >,
-    std::conditional_t< (sizeof...(Args)>0) && is_allocator_v< pack_element_t<sizeof...(Args)-1, Args...> >,
-                         pack_element_t<sizeof...(Args)-1, Args...>, cache_aligned_allocator<T> >
->;
+template <typename InputIterator,
+          typename T = typename std::iterator_traits<InputIterator>::value_type,
+          typename... Args>
+concurrent_priority_queue( InputIterator, InputIterator, Args... )
+-> priority_queue_type<T, Args...>;
+
+template <typename T, typename CompareOrAllocator>
+concurrent_priority_queue( std::initializer_list<T> init_list, CompareOrAllocator )
+-> priority_queue_type<T, CompareOrAllocator>;
+#endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+
+template <typename T, typename Compare, typename Allocator>
+bool operator==( const concurrent_priority_queue<T, Compare, Allocator>& lhs,
+                 const concurrent_priority_queue<T, Compare, Allocator>& rhs )
+{
+    return lhs.data == rhs.data;
 }
 
-// Deduction guide for the constructor from two iterators
-template<typename InputIterator,
-         typename T = typename std::iterator_traits<InputIterator>::value_type,
-         typename... Args
-> concurrent_priority_queue(InputIterator, InputIterator, Args...)
--> internal::priority_queue_t<T, Args...>;
+template <typename T, typename Compare, typename Allocator>
+bool operator!=( const concurrent_priority_queue<T, Compare, Allocator>& lhs,
+                 const concurrent_priority_queue<T, Compare, Allocator>& rhs )
+{
+    return !(lhs == rhs);
+}
 
-template<typename T, typename CompareOrAllocalor>
-concurrent_priority_queue(std::initializer_list<T> init_list, CompareOrAllocalor)
--> internal::priority_queue_t<T, CompareOrAllocalor>;
+template <typename T, typename Compare, typename Allocator>
+void swap( concurrent_priority_queue<T, Compare, Allocator>& lhs,
+           concurrent_priority_queue<T, Compare, Allocator>& rhs )
+{
+    lhs.swap(rhs);
+}
 
-#endif /* __TBB_CPP17_DEDUCTION_GUIDES_PRESENT */
-} // namespace interface5
+} // namespace d1
+} // namespace detail
+inline namespace v1 {
+using detail::d1::concurrent_priority_queue;
 
-using interface5::concurrent_priority_queue;
-
+}; // inline namespace v1
 } // namespace tbb
 
-
-#include "internal/_warning_suppress_disable_notice.h"
-#undef __TBB_concurrent_priority_queue_H_include_area
-
-#endif /* __TBB_concurrent_priority_queue_H */
+#endif // __TBB_concurrent_priority_queue_H

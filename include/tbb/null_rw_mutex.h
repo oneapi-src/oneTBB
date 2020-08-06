@@ -17,37 +17,67 @@
 #ifndef __TBB_null_rw_mutex_H
 #define __TBB_null_rw_mutex_H
 
-#include "tbb_stddef.h"
+#include "detail/_config.h"
 
 namespace tbb {
+namespace detail {
+namespace d1 {
 
 //! A rw mutex which does nothing
 /** A null_rw_mutex is a rw mutex that does nothing and simulates successful operation.
     @ingroup synchronization */
-class null_rw_mutex : internal::mutex_copy_deprecated_and_disabled {
+class null_rw_mutex {
 public:
+    //! Constructors
+    constexpr null_rw_mutex() noexcept = default;
+
+    //! Destructor
+    ~null_rw_mutex() = default;
+
+    //! No Copy
+    null_rw_mutex(const null_rw_mutex&) = delete;
+    null_rw_mutex& operator=(const null_rw_mutex&) = delete;
+
     //! Represents acquisition of a mutex.
-    class scoped_lock : internal::no_copy {
+    class scoped_lock {
     public:
-        scoped_lock() {}
-        scoped_lock( null_rw_mutex& , bool = true ) {}
-        ~scoped_lock() {}
-        void acquire( null_rw_mutex& , bool = true ) {}
+        //! Constructors
+        constexpr scoped_lock() noexcept = default;
+        scoped_lock(null_rw_mutex&, bool = true) {}
+
+        //! Destructor
+        ~scoped_lock() = default;
+
+        //! No Copy
+        scoped_lock(const scoped_lock&) = delete;
+        scoped_lock& operator=(const scoped_lock&) = delete;
+
+        void acquire(null_rw_mutex&, bool = true) {}
+        bool try_acquire(null_rw_mutex&, bool = true) { return true; }
+        void release() {}
         bool upgrade_to_writer() { return true; }
         bool downgrade_to_reader() { return true; }
-        bool try_acquire( null_rw_mutex& , bool = true ) { return true; }
-        void release() {}
     };
 
-    null_rw_mutex() {}
+    //! Mutex traits
+    static constexpr bool is_rw_mutex = true;
+    static constexpr bool is_recursive_mutex = true;
+    static constexpr bool is_fair_mutex = true;
 
-    // Mutex traits
-    static const bool is_rw_mutex = true;
-    static const bool is_recursive_mutex = true;
-    static const bool is_fair_mutex = true;
-};
+    void lock() {}
+    bool try_lock() { return true; }
+    void unlock() {}
+    void lock_shared() {}
+    bool try_lock_shared() { return true; }
+    void unlock_shared() {}
+}; // class null_rw_mutex
 
-}
+} // namespace d1
+} // namespace detail
 
+inline namespace v1 {
+using detail::d1::null_rw_mutex;
+} // namespace v1
+} // namespace tbb
 
 #endif /* __TBB_null_rw_mutex_H */

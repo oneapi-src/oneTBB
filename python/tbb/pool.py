@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright (c) 2016-2020 Intel Corporation
 #
@@ -74,7 +74,7 @@ from .api import *
 __all__ = ["Pool", "TimeoutError"]
 __doc__ = """
 Standard Python Pool implementation based on Python API
-for Intel(R) Threading Building Blocks library (Intel(R) TBB)
+for Intel(R) oneAPI Threading Building Blocks (oneTBB)
 """
 
 
@@ -86,7 +86,7 @@ class TimeoutError(Exception):
 class Pool(object):
     """
     The Pool class provides standard multiprocessing.Pool interface
-    which is mapped onto Intel(R) TBB tasks executing in its thread pool
+    which is mapped onto oneTBB tasks executing in its thread pool
     """
 
     def __init__(self, nworkers=0, name="Pool"):

@@ -1,88 +1,60 @@
-# Ignore the debug and release directories created with Makefile builds #
-#########################################################################
-build/*_debug/
-build/*_release/
+# -------- C++ --------
+# Prerequisites
+*.d
 
-# Compiled source #
-###################
-*.com
-*.class
-*.dll
-*.lib
-*.pdb
-*.exe
-*.o
-*.so
-*.so.1
-*.so.2
-*.dylib
-*.a
-*.obj
-*.pyc
-
-*.orig
-*.raw
-*.sample
+# Compiled Object files
 *.slo
-*.swp
-*.config
-*.la
-*.lai
 *.lo
-*.nhdr
-*.nii.gz
-*.nrrd
+*.o
+*.obj
 
-# Packages #
-############
-# it's better to unpack these files and commit the raw source
-# git has its own built in compression methods
-*.7z
-*.dmg
-*.gz
-*.iso
-*.jar
-*.rar
-*.tar
-*.tgz
-*.zip
+# Precompiled Headers
+*.gch
+*.pch
 
-# Logs and databases #
-######################
-*.log
-*.sql
-*.sqlite
+# Compiled Dynamic libraries
+*.so
+*.so.*
+*.dylib
+*.dll
 
-# OS generated files #
-######################
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
+# Fortran module files
+*.mod
+*.smod
 
-# IDE generated files #
-######################
-/.ninja_deps
-/.ninja_log
-/build.ninja
-/rules.ninja
-*~
-.emacs.desktop
-.tags
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
 
-# Build system generated files #
-################################
+# Executables
+*.exe
+*.out
+*.app
+
+# -------- CMake --------
 CMakeCache.txt
-CMakeFiles/
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+build/*
 
-# Other #
-#########
-.clang_complete
-.idea
-.svn
-crash*
-*.tmp
-/.vs
+# -------- Python --------
+__pycache__/
+*.py[cod]
+*$py.class
+
+# -------- IDE --------
+.vscode/*
+.vs/*
+
+# -------- CTags --------
+.tags
+.ctags
+

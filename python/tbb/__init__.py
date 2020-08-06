@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright (c) 2016-2020 Intel Corporation
 #
@@ -14,15 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-from __future__ import print_function
-
 import multiprocessing.pool
 import ctypes
 import atexit
 import sys
 import os
- 
+
 from .api import  *
 from .api import __all__ as api__all
 from .pool import *
@@ -31,16 +28,16 @@ from .pool import __all__ as pool__all
 __all__ = ["Monkey", "is_active"] + api__all + pool__all
 
 __doc__ = """
-Python API for Intel(R) Threading Building Blocks library (Intel(R) TBB)
+Python API for Intel(R) oneAPI Threading Building Blocks (oneTBB)
 extended with standard Python's pools implementation and monkey-patching.
 
 Command-line interface example:
-$  python -m tbb $your_script.py
+$  python3 -m tbb $your_script.py
 Runs your_script.py in context of tbb.Monkey
 """
 
 is_active = False
-""" Indicates whether TBB context is activated """
+""" Indicates whether oneTBB context is activated """
 
 ipc_enabled = False
 """ Indicates whether IPC mode is enabled """
@@ -147,8 +144,8 @@ class TBBProcessPool3(multiprocessing.pool.Pool):
 class Monkey:
     """
     Context manager which replaces standard multiprocessing.pool
-    implementations with tbb.pool using monkey-patching. It also enables TBB
-    threading for Intel(R) Math Kernel Library (Intel(R) MKL). For example:
+    implementations with tbb.pool using monkey-patching. It also enables oneTBB
+    threading for Intel(R) oneAPI Math Kernel Library (oneMKL). For example:
 
         with tbb.Monkey():
             run_my_numpy_code()
@@ -241,31 +238,31 @@ def tbb_atexit():
 
 def _main():
     # Run the module specified as the next command line argument
-    # python -m TBB user_app.py
+    # python3 -m TBB user_app.py
     global ipc_enabled
 
     import platform
     import argparse
-    parser = argparse.ArgumentParser(prog="python -m tbb", description="""
+    parser = argparse.ArgumentParser(prog="python3 -m tbb", description="""
                 Run your Python script in context of tbb.Monkey, which
                 replaces standard Python pools and threading layer of
-                Intel(R) Math Kernel Library by implementation based on
-                Intel(R) Threading Building Blocks. It enables multiple parallel
+                Intel(R) oneAPI Math Kernel Library (oneMKL) by implementation based on
+                Intel(R) oneAPI Threading Building Blocks (oneTBB). It enables multiple parallel
                 tasks to be executed on the same thread pool and coordinate
                 number of threads across multiple processes thus avoiding
                 overheads from oversubscription.
              """, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     if platform.system() == "Linux":
         parser.add_argument('--ipc', action='store_true',
-                        help="Enable inter-process (IPC) coordination between Intel TBB schedulers")
+                        help="Enable inter-process (IPC) coordination between oneTBB schedulers")
         parser.add_argument('-a', '--allocator', action='store_true',
-                        help="Enable Intel TBB scalable allocator as a replacement for standard memory allocator")
+                        help="Enable oneTBB scalable allocator as a replacement for standard memory allocator")
         parser.add_argument('--allocator-huge-pages', action='store_true',
-                        help="Enable huge pages for Intel TBB allocator (implies: -a)")
+                        help="Enable huge pages for oneTBB allocator (implies: -a)")
     parser.add_argument('-p', '--max-num-threads', default=default_num_threads(), type=int,
-                        help="Initialize Intel TBB with P max number of threads per process", metavar='P')
+                        help="Initialize oneTBB with P max number of threads per process", metavar='P')
     parser.add_argument('-b', '--benchmark', action='store_true',
-                        help="Block Intel TBB initialization until all the threads are created before continue the script. "
+                        help="Block oneTBB initialization until all the threads are created before continue the script. "
                         "This is necessary for performance benchmarks that want to exclude lazy scheduler initialization effects from the measurements")
     parser.add_argument('-v', '--verbose', action='store_true',
                         help="Request verbose and version information")
@@ -297,11 +294,11 @@ def _main():
                     with open('/proc/sys/vm/nr_hugepages', 'r') as f:
                         pages = int(f.read())
                     if pages == 0:
-                        print("TBB: Pre-allocated huge pages are not currently reserved in the system. To reserve, run e.g.:\n"
+                        print("oneTBB: Pre-allocated huge pages are not currently reserved in the system. To reserve, run e.g.:\n"
                               "\tsudo sh -c 'echo 2000 > /proc/sys/vm/nr_hugepages'")
                     os.environ["TBB_MALLOC_USE_HUGE_PAGES"] = "1"
                 except:
-                    print("TBB: Failed to read number of pages from /proc/sys/vm/nr_hugepages\n"
+                    print("oneTBB: Failed to read number of pages from /proc/sys/vm/nr_hugepages\n"
                           "\tIs the Linux kernel configured with the huge pages feature?")
                     sys.exit(1)
 

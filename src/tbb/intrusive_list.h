@@ -17,10 +17,9 @@
 #ifndef _TBB_intrusive_list_H
 #define _TBB_intrusive_list_H
 
-#include "tbb/tbb_stddef.h"
-
 namespace tbb {
-namespace internal {
+namespace detail {
+namespace r1 {
 
 //! Data structure to be inherited by the types that can form intrusive lists.
 /** Intrusive list is formed by means of the member_intrusive_list<T> template class.
@@ -28,10 +27,10 @@ namespace internal {
     declare instantiation member_intrusive_list<T> as a friend.
     This class implements a limited subset of std::list interface. **/
 struct intrusive_list_node {
-    intrusive_list_node *my_prev_node,
-                        *my_next_node;
+    intrusive_list_node* my_prev_node{};
+    intrusive_list_node* my_next_node{};
 #if TBB_USE_ASSERT
-    intrusive_list_node () { my_prev_node = my_next_node = this; }
+    intrusive_list_node() { my_prev_node = my_next_node = this; }
 #endif /* TBB_USE_ASSERT */
 };
 
@@ -43,75 +42,81 @@ class intrusive_list_base {
     intrusive_list_node my_head;
 
     //! Number of list elements
-    size_t my_size;
+    std::size_t my_size;
 
     static intrusive_list_node& node ( T& item ) { return List::node(item); }
 
     static T& item ( intrusive_list_node* node ) { return List::item(node); }
 
-    template<class Iterator>
+    static const T& item( const intrusive_list_node* node ) { return List::item(node); }
+
+    template <typename DereferenceType>
     class iterator_impl {
-        Iterator& self () { return *static_cast<Iterator*>(this); }
+        static_assert(std::is_same<DereferenceType, T>::value ||
+                      std::is_same<DereferenceType, const T>::value,
+                      "Incorrect DereferenceType in iterator_impl");
 
-        //! Node the iterator points to at the moment
-        intrusive_list_node *my_pos;
+        using pointer_type = typename std::conditional<std::is_same<DereferenceType, T>::value,
+                                                       intrusive_list_node*,
+                                                       const intrusive_list_node*>::type;
 
-    protected:
-        iterator_impl (intrusive_list_node* pos )
-            :  my_pos(pos)
-        {}
+    public:
+        iterator_impl() : my_pos(nullptr) {}
 
-        T& item () const {
+        iterator_impl( pointer_type pos ) : my_pos(pos) {}
+
+        iterator_impl& operator=( const T& val ) {
+            my_pos = &node(val);
+            return *this;
+        }
+
+        iterator_impl& operator++() {
+            my_pos = my_pos->my_next_node;
+            return *this;
+        }
+
+        iterator_impl operator++( int ) {
+            iterator_impl it(*this);
+            ++*this;
+            return it;
+        }
+
+        iterator_impl& operator--() {
+            my_pos = my_pos->my_prev_node;
+            return *this;
+        }
+
+        iterator_impl operator--( int ) {
+            iterator_impl it(*this);
+            --*this;
+            return it;
+        }
+
+        bool operator==( const iterator_impl& rhs ) const {
+            return my_pos == rhs.my_pos;
+        }
+
+        bool operator!=( const iterator_impl& rhs ) const {
+            return my_pos != rhs.my_pos;
+        }
+
+        DereferenceType& operator*() const {
             return intrusive_list_base::item(my_pos);
         }
 
-    public:
-        iterator_impl () :  my_pos(NULL) {}
-
-        Iterator& operator = ( const Iterator& it ) {
-            return my_pos = it.my_pos;
+        DereferenceType* operator->() const {
+            return &intrusive_list_base::item(my_pos);
         }
-
-        Iterator& operator = ( const T& val ) {
-            return my_pos = &node(val);
-        }
-
-        bool operator == ( const Iterator& it ) const {
-            return my_pos == it.my_pos;
-        }
-
-        bool operator != ( const Iterator& it ) const {
-            return my_pos != it.my_pos;
-        }
-
-        Iterator& operator++ () {
-            my_pos = my_pos->my_next_node;
-            return self();
-        }
-
-        Iterator& operator-- () {
-            my_pos = my_pos->my_prev_node;
-            return self();
-        }
-
-        Iterator operator++ ( int ) {
-            Iterator result = self();
-            ++(*this);
-            return result;
-        }
-
-        Iterator operator-- ( int ) {
-            Iterator result = self();
-            --(*this);
-            return result;
-        }
-    }; // intrusive_list_base::iterator_impl
+    private:
+        // Node the iterator points to at the moment
+        pointer_type my_pos;
+    }; // class iterator_impl
 
     void assert_ok () const {
         __TBB_ASSERT( (my_head.my_prev_node == &my_head && !my_size) ||
                       (my_head.my_next_node != &my_head && my_size >0), "intrusive_list_base corrupted" );
 #if TBB_USE_ASSERT >= 2
-        size_t i = 0;
+        std::size_t i = 0;
         for ( intrusive_list_node *n = my_head.my_next_node; n != &my_head; n = n->my_next_node )
             ++i;
         __TBB_ASSERT( my_size == i, "Wrong size" );
@@ -119,31 +124,8 @@ class intrusive_list_base {
     }
 
 public:
-    class iterator : public iterator_impl<iterator> {
-        template <class U, class V> friend class intrusive_list_base;
-    public:
-        iterator (intrusive_list_node* pos )
-            : iterator_impl<iterator>(pos )
-        {}
-        iterator () {}
-
-        T* operator-> () const { return &this->item(); }
-
-        T& operator* () const { return this->item(); }
-    }; // class iterator
-
-    class const_iterator : public iterator_impl<const_iterator> {
-        template <class U, class V> friend class intrusive_list_base;
-    public:
-        const_iterator (const intrusive_list_node* pos )
-            : iterator_impl<const_iterator>(const_cast<intrusive_list_node*>(pos) )
-        {}
-        const_iterator () {}
-
-        const T* operator-> () const { return &this->item(); }
-
-        const T& operator* () const { return this->item(); }
-    }; // class iterator
+    using iterator = iterator_impl<T>;
+    using const_iterator = iterator_impl<const T>;
 
     intrusive_list_base () : my_size(0) {
         my_head.my_prev_node = &my_head;
@@ -152,7 +134,7 @@ public:
 
     bool empty () const { return my_head.my_next_node == &my_head; }
 
-    size_t size () const { return my_size; }
+    std::size_t size () const { return my_size; }
 
     iterator begin () { return iterator(my_head.my_next_node); }
 
@@ -195,6 +177,21 @@ public:
 
 }; // intrusive_list_base
 
+#if __TBB_TODO
+// With standard compliant compilers memptr_intrusive_list could be named simply intrusive_list,
+// and inheritance based intrusive_list version would become its partial specialization.
+// Here are the corresponding declarations:
+
+struct dummy_intrusive_list_item { intrusive_list_node my_node; };
+
+template <class T, class U = dummy_intrusive_list_item, intrusive_list_node U::*NodePtr = &dummy_intrusive_list_item::my_node>
+class intrusive_list : public intrusive_list_base<intrusive_list<T, U, NodePtr>, T>;
+
+template <class T>
+class intrusive_list<T, dummy_intrusive_list_item, &dummy_intrusive_list_item::my_node>
+    : public intrusive_list_base<intrusive_list<T>, T>;
+
+#endif /* __TBB_TODO */
 
 //! Double linked list of items of type T containing a member of type intrusive_list_node.
 /** NodePtr is a member pointer to the node data field. Class U is either T or
@@ -219,6 +216,11 @@ class memptr_intrusive_list : public intrusive_list_base<memptr_intrusive_list<T
         // __TBB_offsetof implementation breaks operations with normal member names.
         return *reinterpret_cast<T*>((char*)node - ((ptrdiff_t)&(reinterpret_cast<T*>(0x1000)->*NodePtr) - 0x1000));
     }
+
+    static const T& item( const intrusive_list_node* node ) {
+        return item(const_cast<intrusive_list_node*>(node));
+    }
+
 }; // intrusive_list<T, U, NodePtr>
 
 //! Double linked list of items of type T that is derived from intrusive_list_node class.
@@ -234,9 +236,12 @@ class intrusive_list : public intrusive_list_base<intrusive_list<T>, T>
     static intrusive_list_node& node ( T& val ) { return val; }
 
     static T& item ( intrusive_list_node* node ) { return *static_cast<T*>(node); }
+
+    static const T& item( const intrusive_list_node* node ) { return *static_cast<const T*>(node); }
 }; // intrusive_list<T>
 
-} // namespace internal
+} // namespace r1
+} // namespace detail
 } // namespace tbb
 
 #endif /* _TBB_intrusive_list_H */

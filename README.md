@@ -1,5 +1,4 @@
 # oneAPI Threading Building Blocks (Beta)
-[![Stable release](https://img.shields.io/badge/version-2021.1--beta05-yellow.svg)](https://github.com/oneapi-src/oneTBB/releases/tag/v2021.1-beta05)
 [![Apache License Version 2.0](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE)
 
 oneAPI Threading Building Blocks (oneTBB) lets you easily write parallel C++ programs that take
@@ -10,7 +9,8 @@ Here are [Release Notes]( https://software.intel.com/en-us/articles/intel-oneapi
 [System Requirements](https://software.intel.com/en-us/articles/intel-oneapi-threading-building-blocks-system-requirements).
 
 ## Documentation
-* [TBB general documentation](https://software.intel.com/en-us/oneapi-tbb-documentation)
+* [oneTBB documentation](https://software.intel.com/en-us/oneapi-tbb-documentation)
+* README for build system: [cmake/README.md](cmake/README.md)
 
 ## Support
 Please report issues and suggestions via
@@ -18,7 +18,7 @@ Please report issues and suggestions via
 [TBB forum](http://software.intel.com/en-us/forums/intel-threading-building-blocks/).
 
 ## How to Contribute
-To contribute to TBB, please open a GitHub pull request (preferred) or send us a patch by e-mail.
+To contribute to oneTBB, please open a GitHub pull request (preferred) or send us a patch by e-mail.
 oneAPI Threading Building Blocks is licensed under [Apache License, Version 2.0](LICENSE).
 By its terms, contributions submitted to the project are also done under that license.
 

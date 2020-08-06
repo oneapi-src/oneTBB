@@ -14,17 +14,21 @@
     limitations under the License.
 */
 
-#include "rml_tbb.h"
-#include "../server/thread_monitor.h"
-#include "tbb/atomic.h"
+#include <atomic>
+#include <cstring>
+#include <cstdlib>
+
+#include "../../src/tbb/rml_tbb.h"
+#include "../../src/tbb/rml_thread_monitor.h"
+#include "../../src/tbb/scheduler_common.h"
+#include "../../src/tbb/governor.h"
+#include "../../src/tbb/misc.h"
 #include "tbb/cache_aligned_allocator.h"
-#include "tbb/scheduler_common.h"
-#include "tbb/governor.h"
-#include "tbb/tbb_misc.h"
 
 #include "ipc_utils.h"
 
 #include <fcntl.h>
+#include <stdlib.h>
 
 namespace rml {
 namespace internal {
@@ -39,9 +43,11 @@ extern "C" factory::status_type __RML_open_factory(factory& f, version_type& /*s
     }
 
     // Hack to keep this library from being closed
-    static tbb::atomic<bool> one_time_flag;
-    if( one_time_flag.compare_and_swap(true,false)==false ) {
-        __TBB_ASSERT( (size_t)f.library_handle!=factory::c_dont_unload, NULL );
+    static std::atomic<bool> one_time_flag{false};
+    bool expected = false;
+
+    if( one_time_flag.compare_exchange_strong(expected, true) ) {
+        __TBB_ASSERT( (size_t)f.library_handle!=factory::c_dont_unload, nullptr );
 #if _WIN32||_WIN64
         f.library_handle = reinterpret_cast<HMODULE>(factory::c_dont_unload);
 #else
@@ -56,7 +62,7 @@ extern "C" factory::status_type __RML_open_factory(factory& f, version_type& /*s
 extern "C" void __RML_close_factory(factory& /*f*/) {
 }
 
-class ipc_thread_monitor : public thread_monitor {
+class ipc_thread_monitor : public tbb::detail::r1::rml::internal::thread_monitor {
 public:
     ipc_thread_monitor() : thread_monitor() {}
 
@@ -81,12 +87,13 @@ inline ipc_thread_monitor::handle_type ipc_thread_monitor::launch(void* (*thread
 }
 #endif
 
-}} //rml::internal
+}} // rml::internal
 
 using rml::internal::ipc_thread_monitor;
+using tbb::internal::rml::get_shared_name;
 
 namespace tbb {
-namespace internal {
+namespace detail {
 namespace rml {
 
 typedef ipc_thread_monitor::handle_type thread_handle;
@@ -100,71 +107,79 @@ static const char* IPC_ACTIVE_SEM_VAR_NAME = "IPC_ACTIVE_SEMAPHORE";
 static const char* IPC_STOP_SEM_VAR_NAME = "IPC_STOP_SEMAPHORE";
 static const mode_t IPC_SEM_MODE = 0660;
 
-static tbb::atomic<int> my_global_thread_count;
+static std::atomic<int> my_global_thread_count;
+using tbb_client = tbb::detail::r1::rml::tbb_client;
+using tbb_server = tbb::detail::r1::rml::tbb_server;
+using tbb_factory = tbb::detail::r1::rml::tbb_factory;
 
-char* get_active_sem_name() {
-    char* value = getenv( IPC_ACTIVE_SEM_VAR_NAME );
-    if( value!=NULL && strlen( value )>0 ) {
-        char* sem_name = new char[strlen( value ) + 1];
-        __TBB_ASSERT( sem_name!=NULL, NULL );
-        strcpy( sem_name, value );
+using tbb::detail::r1::runtime_warning;
+
+char* get_sem_name(const char* name, const char* prefix) {
+    __TBB_ASSERT(name != nullptr, nullptr);
+    __TBB_ASSERT(prefix != nullptr, nullptr);
+    char* value = std::getenv(name);
+    std::size_t len = value == nullptr ? 0 : std::strlen(value);
+    if (len > 0) {
+        // TODO: consider returning the original string instead of the copied string.
+        char* sem_name = new char[len + 1];
+        __TBB_ASSERT(sem_name != nullptr, nullptr);
+        std::strncpy(sem_name, value, len+1);
+        __TBB_ASSERT(sem_name[len] == 0, nullptr);
         return sem_name;
     } else {
-        return get_shared_name( IPC_ACTIVE_SEM_PREFIX );
+        return get_shared_name(prefix);
     }
+}
+
+char* get_active_sem_name() {
+    return get_sem_name(IPC_ACTIVE_SEM_VAR_NAME, IPC_ACTIVE_SEM_PREFIX);
 }
 
 char* get_stop_sem_name() {
-    char* value = getenv( IPC_STOP_SEM_VAR_NAME );
-    if( value!=NULL && strlen( value )>0 ) {
-        char* sem_name = new char[strlen( value ) + 1];
-        __TBB_ASSERT( sem_name!=NULL, NULL );
-        strcpy( sem_name, value );
-        return sem_name;
-    } else {
-        return get_shared_name( IPC_STOP_SEM_PREFIX );
-    }
+    return get_sem_name(IPC_STOP_SEM_VAR_NAME, IPC_STOP_SEM_PREFIX);
 }
 
 static void release_thread_sem(sem_t* my_sem) {
-    int old;
+    int old = my_global_thread_count.load(std::memory_order_relaxed);
     do {
-        old = my_global_thread_count;
         if( old<=0 ) return;
-    } while( my_global_thread_count.compare_and_swap(old-1, old)!=old );
+    } while( !my_global_thread_count.compare_exchange_strong(old, old-1) );
     if( old>0 ) {
         sem_post( my_sem );
     }
 }
 
-extern "C" void set_active_sem_name() {
-    char* templ = new char[strlen( IPC_ACTIVE_SEM_PREFIX ) + strlen( "_XXXXXX" ) + 1];
-    __TBB_ASSERT( templ!=NULL, NULL );
-    strcpy( templ, IPC_ACTIVE_SEM_PREFIX );
-    strcpy( templ + strlen( IPC_ACTIVE_SEM_PREFIX ), "_XXXXXX" );
-    char* sem_name = mktemp( templ );
-    if( sem_name!=NULL ) {
-        int status = setenv( IPC_ACTIVE_SEM_VAR_NAME, sem_name, 1 );
-        __TBB_ASSERT_EX( status==0, NULL );
+void set_sem_name(const char* name, const char* prefix) {
+    __TBB_ASSERT(name != nullptr, nullptr);
+    __TBB_ASSERT(prefix != nullptr, nullptr);
+    const char* postfix = "_XXXXXX";
+    std::size_t plen = std::strlen(prefix);
+    std::size_t xlen = std::strlen(postfix);
+    char* templ = new char[plen + xlen + 1];
+    __TBB_ASSERT(templ != nullptr, nullptr);
+    strncpy(templ, prefix, plen+1);
+    __TBB_ASSERT(templ[plen] == 0, nullptr);
+    strncat(templ, postfix, xlen + 1);
+    __TBB_ASSERT(std::strlen(templ) == plen + xlen + 1, nullptr);
+    // TODO: consider using mkstemp instead of mktemp.
+    char* sem_name = mktemp(templ);
+    if (sem_name != nullptr) {
+        int status = setenv(name, sem_name,  /*overwrite*/ 1);
+        __TBB_ASSERT_EX(status == 0, nullptr);
     }
     delete[] templ;
+}
+
+extern "C" void set_active_sem_name() {
+    set_sem_name(IPC_ACTIVE_SEM_VAR_NAME, IPC_ACTIVE_SEM_PREFIX);
 }
 
 extern "C" void set_stop_sem_name() {
-    char* templ = new char[strlen( IPC_STOP_SEM_PREFIX ) + strlen( "_XXXXXX" ) + 1];
-    __TBB_ASSERT( templ!=NULL, NULL );
-    strcpy( templ, IPC_STOP_SEM_PREFIX );
-    strcpy( templ + strlen( IPC_STOP_SEM_PREFIX ), "_XXXXXX" );
-    char* sem_name = mktemp( templ );
-    if( sem_name!=NULL ) {
-        int status = setenv( IPC_STOP_SEM_VAR_NAME, sem_name, 1 );
-        __TBB_ASSERT_EX( status==0, NULL );
-    }
-    delete[] templ;
+    set_sem_name(IPC_STOP_SEM_VAR_NAME, IPC_STOP_SEM_PREFIX);
 }
 
 extern "C" void release_resources() {
-    if( my_global_thread_count!=0 ) {
+    if( my_global_thread_count.load(std::memory_order_acquire)!=0 ) {
         char* active_sem_name = get_active_sem_name();
         sem_t* my_active_sem = sem_open( active_sem_name, O_CREAT );
         __TBB_ASSERT( my_active_sem, "Unable to open active threads semaphore" );
@@ -172,16 +187,16 @@ extern "C" void release_resources() {
 
         do {
             release_thread_sem( my_active_sem );
-        } while( my_global_thread_count!=0 );
+        } while( my_global_thread_count.load(std::memory_order_acquire)!=0 );
     }
 }
 
 extern "C" void release_semaphores() {
     int status = 0;
-    char* sem_name = NULL;
+    char* sem_name = nullptr;
 
     sem_name = get_active_sem_name();
-    if( sem_name==NULL ) {
+    if( sem_name==nullptr ) {
         runtime_warning("Can not get RML semaphore name");
         return;
     }
@@ -197,7 +212,7 @@ extern "C" void release_semaphores() {
     delete[] sem_name;
 
     sem_name = get_stop_sem_name();
-    if( sem_name==NULL ) {
+    if( sem_name==nullptr ) {
         runtime_warning( "Can not get RML semaphore name" );
         return;
     }
@@ -237,7 +252,7 @@ protected:
         //! Associated thread has ended normal life sequence and promises to never touch *this again.
         st_quit
     };
-    atomic<state_t> my_state;
+    std::atomic<state_t> my_state;
 
     //! Associated server
     ipc_server& my_server;
@@ -287,7 +302,8 @@ protected:
     }
 };
 
-static const size_t cache_line_size = tbb::internal::NFS_MaxLineSize;
+//TODO: cannot bind to nfs_size from allocator.cpp since nfs_size is constexpr defined in another translation unit
+constexpr static size_t cache_line_sz = 128;
 
 #if _MSC_VER && !defined(__INTEL_COMPILER)
     // Suppress overzealous compiler warnings about uninstantiable class
@@ -295,7 +311,7 @@ static const size_t cache_line_size = tbb::internal::NFS_MaxLineSize;
     #pragma warning(disable:4510 4610)
 #endif
 class padded_ipc_worker: public ipc_worker {
-    char pad[cache_line_size - sizeof(ipc_worker)%cache_line_size];
+    char pad[cache_line_sz - sizeof(ipc_worker)%cache_line_sz];
 public:
     padded_ipc_worker(ipc_server& server, tbb_client& client, const size_t i)
     : ipc_worker( server,client,i ) { suppress_unused_warning(pad); }
@@ -345,15 +361,15 @@ private:
         If positive, indicates that more threads should run.
         Can be lowered asynchronously, but must be raised only while holding my_asleep_list_mutex,
         because raising it impacts the invariant for sleeping threads. */
-    atomic<int> my_slack;
+    std::atomic<int> my_slack;
 
     //! Counter used to determine when to delete this.
-    atomic<int> my_ref_count;
+    std::atomic<int> my_ref_count;
 
     padded_ipc_worker* my_thread_array;
 
     //! List of workers that are asleep or committed to sleeping until notified by another thread.
-    tbb::atomic<ipc_worker*> my_asleep_list_root;
+    std::atomic<ipc_worker*> my_asleep_list_root;
 
     //! Protects my_asleep_list_root
     typedef scheduler_mutex_type asleep_list_mutex_type;
@@ -375,7 +391,7 @@ private:
     sem_t* my_stop_sem;
 
 #if TBB_USE_ASSERT
-    atomic<int> my_net_slack_requests;
+    std::atomic<int> my_net_slack_requests;
 #endif /* TBB_USE_ASSERT */
 
     //! Wake up to two sleeping workers, if there are any sleeping.
@@ -383,7 +399,7 @@ private:
         which in turn each wake up two threads, etc. */
     void propagate_chain_reaction() {
         // First test of a double-check idiom.  Second test is inside wake_some(0).
-        if( my_slack>0 ) {
+        if( my_slack.load(std::memory_order_acquire)>0 ) {
             int active_threads = 0;
             if( try_get_active_thread() ) {
                 ++active_threads;
@@ -440,11 +456,11 @@ public:
     ipc_server(tbb_client& client);
     virtual ~ipc_server();
 
-    version_type version() const __TBB_override {
+    version_type version() const override {
         return 0;
     }
 
-    void request_close_connection(bool /*exiting*/) __TBB_override {
+    void request_close_connection(bool /*exiting*/) override {
         my_waker->start_shutdown(false);
         my_stopper->start_shutdown(false);
         for( size_t i=0; i<my_n_thread; ++i )
@@ -452,17 +468,17 @@ public:
         remove_server_ref();
     }
 
-    void yield() __TBB_override {__TBB_Yield();}
+    void yield() override {d0::yield();}
 
-    void independent_thread_number_changed(int) __TBB_override { __TBB_ASSERT( false, NULL ); }
+    void independent_thread_number_changed(int) override { __TBB_ASSERT( false, nullptr ); }
 
-    unsigned default_concurrency() const __TBB_override { return my_n_thread - 1; }
+    unsigned default_concurrency() const override { return my_n_thread - 1; }
 
-    void adjust_job_count_estimate(int delta) __TBB_override;
+    void adjust_job_count_estimate(int delta) override;
 
 #if _WIN32||_WIN64
-    void register_master(::rml::server::execution_resource_t&) __TBB_override {}
-    void unregister_master(::rml::server::execution_resource_t) __TBB_override {}
+    void register_master(::rml::server::execution_resource_t&) override {}
+    void unregister_master(::rml::server::execution_resource_t) override {}
 #endif /* _WIN32||_WIN64 */
 };
 
@@ -496,12 +512,11 @@ void ipc_worker::release_handle(thread_handle handle, bool join) {
 }
 
 void ipc_worker::start_shutdown(bool join) {
-    state_t s;
+    state_t s = my_state.load(std::memory_order_relaxed);;
 
     do {
-        s = my_state;
-        __TBB_ASSERT( s!=st_quit, NULL );
-    } while( my_state.compare_and_swap( st_quit, s )!=s );
+        __TBB_ASSERT( s!=st_quit, nullptr );
+    } while( !my_state.compare_exchange_strong( s, st_quit ) );
     if( s==st_normal || s==st_starting ) {
         // May have invalidated invariant for sleeping, so wake up the thread.
         // Note that the notify() here occurs without maintaining invariants for my_slack.
@@ -516,11 +531,9 @@ void ipc_worker::start_shutdown(bool join) {
 }
 
 void ipc_worker::start_stopping(bool join) {
-    state_t s;
+    state_t s = my_state.load(std::memory_order_relaxed);;
 
-    do {
-        s = my_state;
-    } while( my_state.compare_and_swap( st_stop, s )!=s );
+    while( !my_state.compare_exchange_strong( s, st_quit ) ) {};
     if( s==st_normal || s==st_starting ) {
         // May have invalidated invariant for sleeping, so wake up the thread.
         // Note that the notify() here occurs without maintaining invariants for my_slack.
@@ -542,7 +555,7 @@ void ipc_worker::run() {
     // complications in handle management on Windows.
 
     ::rml::job& j = *my_client.create_one_job();
-    state_t state = my_state;
+    state_t state = my_state.load(std::memory_order_acquire);
     while( state!=st_quit && state!=st_stop ) {
         if( my_server.my_slack>=0 ) {
             my_client.process(j);
@@ -551,7 +564,7 @@ void ipc_worker::run() {
             // Prepare to wait
             my_thread_monitor.prepare_wait(c);
             // Check/set the invariant for sleeping
-            state = my_state;
+            state = my_state.load(std::memory_order_acquire);
             if( state!=st_quit && state!=st_stop && my_server.try_insert_in_asleep_list(*this) ) {
                 if( my_server.my_n_thread > 1 ) my_server.release_active_thread();
                 my_thread_monitor.commit_wait(c);
@@ -561,7 +574,7 @@ void ipc_worker::run() {
                 my_thread_monitor.cancel_wait();
             }
         }
-        state = my_state;
+        state = my_state.load(std::memory_order_acquire);
     }
     my_client.cleanup(j);
 
@@ -569,8 +582,9 @@ void ipc_worker::run() {
 }
 
 inline bool ipc_worker::wake_or_launch() {
-    if( ( my_state==st_init && my_state.compare_and_swap( st_starting, st_init )==st_init ) ||
-        ( my_state==st_stop && my_state.compare_and_swap( st_starting, st_stop )==st_stop ) ) {
+    state_t excepted_stop = st_stop, expected_init = st_init;
+    if( ( my_state.load(std::memory_order_acquire)==st_init && my_state.compare_exchange_strong( expected_init, st_starting ) ) ||
+        ( my_state.load(std::memory_order_acquire)==st_stop && my_state.compare_exchange_strong( excepted_stop, st_starting ) ) ) {
         // after this point, remove_server_ref() must be done by created thread
 #if USE_WINTHREAD
         my_handle = ipc_thread_monitor::launch( thread_routine, this, my_server.my_stack_size, &this->my_index );
@@ -582,12 +596,13 @@ inline bool ipc_worker::wake_or_launch() {
         if( my_handle == 0 ) {
             // Unable to create new thread for process
             // However, this is expected situation for the use cases of this coordination server
-            state_t s = my_state.compare_and_swap( st_init, st_starting );
+            state_t s = st_starting;
+            my_state.compare_exchange_strong( s, st_init );
             if (st_starting != s) {
                 // Do shutdown during startup. my_handle can't be released
                 // by start_shutdown, because my_handle value might be not set yet
                 // at time of transition from st_starting to st_quit.
-                __TBB_ASSERT( s==st_quit, NULL );
+                __TBB_ASSERT( s==st_quit, nullptr );
                 release_handle( my_handle, my_server.my_join_workers );
             }
             return false;
@@ -597,12 +612,13 @@ inline bool ipc_worker::wake_or_launch() {
         // Implicit destruction of fpa resets original affinity mask.
         }
 #endif /* USE_PTHREAD */
-        state_t s = my_state.compare_and_swap( st_normal, st_starting );
+        state_t s = st_starting;
+        my_state.compare_exchange_strong( s, st_normal );
         if( st_starting!=s ) {
             // Do shutdown during startup. my_handle can't be released
             // by start_shutdown, because my_handle value might be not set yet
             // at time of transition from st_starting to st_quit.
-            __TBB_ASSERT( s==st_quit, NULL );
+            __TBB_ASSERT( s==st_quit, nullptr );
             release_handle( my_handle, my_server.my_join_workers );
         }
     }
@@ -640,11 +656,11 @@ void ipc_waker::run() {
     // which would create race with the launching thread and
     // complications in handle management on Windows.
 
-    while( my_state!=st_quit ) {
+    while( my_state.load(std::memory_order_acquire)!=st_quit ) {
         bool have_to_sleep = false;
-        if( my_server.my_slack>0 ) {
+        if( my_server.my_slack.load(std::memory_order_acquire)>0 ) {
             if( my_server.wait_active_thread() ) {
-                if( my_server.my_slack>0 ) {
+                if( my_server.my_slack.load(std::memory_order_acquire)>0 ) {
                     my_server.wake_some( 0, 1 );
                 } else {
                     my_server.release_active_thread();
@@ -659,7 +675,7 @@ void ipc_waker::run() {
             // Prepare to wait
             my_thread_monitor.prepare_wait(c);
             // Check/set the invariant for sleeping
-            if( my_state!=st_quit && my_server.my_slack<0 ) {
+            if( my_state.load(std::memory_order_acquire)!=st_quit && my_server.my_slack.load(std::memory_order_acquire)<0 ) {
                 my_thread_monitor.commit_wait(c);
             } else {
                 // Invariant broken
@@ -672,7 +688,8 @@ void ipc_waker::run() {
 }
 
 inline bool ipc_waker::wake_or_launch() {
-    if( my_state==st_init && my_state.compare_and_swap( st_starting, st_init )==st_init ) {
+    state_t excepted = st_init;
+    if( ( my_state.load(std::memory_order_acquire)==st_init && my_state.compare_exchange_strong( excepted, st_starting ) ) ) {
         // after this point, remove_server_ref() must be done by created thread
 #if USE_WINTHREAD
         my_handle = ipc_thread_monitor::launch( thread_routine, this, my_server.my_stack_size, &this->my_index );
@@ -683,12 +700,13 @@ inline bool ipc_waker::wake_or_launch() {
         my_handle = ipc_thread_monitor::launch( thread_routine, this, my_server.my_stack_size );
         if( my_handle == 0 ) {
             runtime_warning( "Unable to create new thread for process %d", getpid() );
-            state_t s = my_state.compare_and_swap( st_init, st_starting );
+            state_t s = st_starting;
+            my_state.compare_exchange_strong(s, st_init);
             if (st_starting != s) {
                 // Do shutdown during startup. my_handle can't be released
                 // by start_shutdown, because my_handle value might be not set yet
                 // at time of transition from st_starting to st_quit.
-                __TBB_ASSERT( s==st_quit, NULL );
+                __TBB_ASSERT( s==st_quit, nullptr );
                 release_handle( my_handle, my_server.my_join_workers );
             }
             return false;
@@ -698,12 +716,13 @@ inline bool ipc_waker::wake_or_launch() {
         // Implicit destruction of fpa resets original affinity mask.
         }
 #endif /* USE_PTHREAD */
-        state_t s = my_state.compare_and_swap( st_normal, st_starting );
+        state_t s = st_starting;
+        my_state.compare_exchange_strong(s, st_normal);
         if( st_starting!=s ) {
             // Do shutdown during startup. my_handle can't be released
             // by start_shutdown, because my_handle value might be not set yet
             // at time of transition from st_starting to st_quit.
-            __TBB_ASSERT( s==st_quit, NULL );
+            __TBB_ASSERT( s==st_quit, nullptr );
             release_handle( my_handle, my_server.my_join_workers );
         }
     }
@@ -741,12 +760,12 @@ void ipc_stopper::run() {
     // which would create race with the launching thread and
     // complications in handle management on Windows.
 
-    while( my_state!=st_quit ) {
+    while( my_state.load(std::memory_order_acquire)!=st_quit ) {
         if( my_server.wait_stop_thread() ) {
-            if( my_state!=st_quit ) {
+            if( my_state.load(std::memory_order_acquire)!=st_quit ) {
                 if( !my_server.stop_one() ) {
                     my_server.add_stop_thread();
-                    prolonged_pause();
+                    tbb::detail::r1::prolonged_pause();
                 }
             }
         }
@@ -756,7 +775,8 @@ void ipc_stopper::run() {
 }
 
 inline bool ipc_stopper::wake_or_launch() {
-    if( my_state==st_init && my_state.compare_and_swap( st_starting, st_init )==st_init ) {
+    state_t excepted = st_init;
+    if( ( my_state.load(std::memory_order_acquire)==st_init && my_state.compare_exchange_strong( excepted, st_starting ) ) ) {
         // after this point, remove_server_ref() must be done by created thread
 #if USE_WINTHREAD
         my_handle = ipc_thread_monitor::launch( thread_routine, this, my_server.my_stack_size, &this->my_index );
@@ -767,12 +787,13 @@ inline bool ipc_stopper::wake_or_launch() {
         my_handle = ipc_thread_monitor::launch( thread_routine, this, my_server.my_stack_size );
         if( my_handle == 0 ) {
             runtime_warning( "Unable to create new thread for process %d", getpid() );
-            state_t s = my_state.compare_and_swap( st_init, st_starting );
+            state_t s = st_starting;
+            my_state.compare_exchange_strong(s, st_init);
             if (st_starting != s) {
                 // Do shutdown during startup. my_handle can't be released
                 // by start_shutdown, because my_handle value might be not set yet
                 // at time of transition from st_starting to st_quit.
-                __TBB_ASSERT( s==st_quit, NULL );
+                __TBB_ASSERT( s==st_quit, nullptr );
                 release_handle( my_handle, my_server.my_join_workers );
             }
             return false;
@@ -782,12 +803,13 @@ inline bool ipc_stopper::wake_or_launch() {
         // Implicit destruction of fpa resets original affinity mask.
         }
 #endif /* USE_PTHREAD */
-        state_t s = my_state.compare_and_swap( st_normal, st_starting );
+        state_t s = st_starting;
+        my_state.compare_exchange_strong(s, st_normal);
         if( st_starting!=s ) {
             // Do shutdown during startup. my_handle can't be released
             // by start_shutdown, because my_handle value might be not set yet
             // at time of transition from st_starting to st_quit.
-            __TBB_ASSERT( s==st_quit, NULL );
+            __TBB_ASSERT( s==st_quit, nullptr );
             release_handle( my_handle, my_server.my_join_workers );
         }
     }
@@ -804,25 +826,24 @@ inline bool ipc_stopper::wake_or_launch() {
 ipc_server::ipc_server(tbb_client& client) :
     my_client( client ),
     my_stack_size( client.min_stack_size() ),
-    my_thread_array(NULL),
+    my_thread_array(nullptr),
     my_join_workers(false),
-    my_waker(NULL),
-    my_stopper(NULL)
+    my_waker(nullptr),
+    my_stopper(nullptr)
 {
     my_ref_count = 1;
     my_slack = 0;
 #if TBB_USE_ASSERT
     my_net_slack_requests = 0;
 #endif /* TBB_USE_ASSERT */
-    my_n_thread = get_num_threads(IPC_MAX_THREADS_VAR_NAME);
+    my_n_thread = tbb::internal::rml::get_num_threads(IPC_MAX_THREADS_VAR_NAME);
     if( my_n_thread==0 ) {
-        my_n_thread = AvailableHwConcurrency();
-        __TBB_ASSERT( my_n_thread>0, NULL );
+        my_n_thread = tbb::detail::r1::AvailableHwConcurrency();
+        __TBB_ASSERT( my_n_thread>0, nullptr );
     }
 
-    my_asleep_list_root = NULL;
+    my_asleep_list_root = nullptr;
     my_thread_array = tbb::cache_aligned_allocator<padded_ipc_worker>().allocate( my_n_thread );
-    memset( my_thread_array, 0, sizeof(padded_ipc_worker)*my_n_thread );
     for( size_t i=0; i<my_n_thread; ++i ) {
         ipc_worker* t = new( &my_thread_array[i] ) padded_ipc_worker( *this, client, i );
         t->my_next = my_asleep_list_root;
@@ -830,11 +851,9 @@ ipc_server::ipc_server(tbb_client& client) :
     }
 
     my_waker = tbb::cache_aligned_allocator<ipc_waker>().allocate(1);
-    memset( my_waker, 0, sizeof(ipc_waker) );
     new( my_waker ) ipc_waker( *this, client, my_n_thread );
 
     my_stopper = tbb::cache_aligned_allocator<ipc_stopper>().allocate(1);
-    memset( my_stopper, 0, sizeof(ipc_stopper) );
     new( my_stopper ) ipc_stopper( *this, client, my_n_thread + 1 );
 
     char* active_sem_name = get_active_sem_name();
@@ -849,20 +868,20 @@ ipc_server::ipc_server(tbb_client& client) :
 }
 
 ipc_server::~ipc_server() {
-    __TBB_ASSERT( my_net_slack_requests==0, NULL );
+    __TBB_ASSERT( my_net_slack_requests.load(std::memory_order_relaxed)==0, nullptr );
 
     for( size_t i=my_n_thread; i--; )
         my_thread_array[i].~padded_ipc_worker();
     tbb::cache_aligned_allocator<padded_ipc_worker>().deallocate( my_thread_array, my_n_thread );
-    tbb::internal::poison_pointer( my_thread_array );
+    tbb::detail::d0::poison_pointer( my_thread_array );
 
     my_waker->~ipc_waker();
     tbb::cache_aligned_allocator<ipc_waker>().deallocate( my_waker, 1 );
-    tbb::internal::poison_pointer( my_waker );
+    tbb::detail::d0::poison_pointer( my_waker );
 
     my_stopper->~ipc_stopper();
     tbb::cache_aligned_allocator<ipc_stopper>().deallocate( my_stopper, 1 );
-    tbb::internal::poison_pointer( my_stopper );
+    tbb::detail::d0::poison_pointer( my_stopper );
 
     sem_close( my_active_sem );
     sem_close( my_stop_sem );
@@ -876,8 +895,8 @@ inline bool ipc_server::try_insert_in_asleep_list(ipc_worker& t) {
     // it sees us sleeping on the list and wakes us up.
     int k = ++my_slack;
     if( k<=0 ) {
-        t.my_next = my_asleep_list_root;
-        my_asleep_list_root = &t;
+        t.my_next = my_asleep_list_root.load(std::memory_order_relaxed);
+        my_asleep_list_root.store(&t, std::memory_order_relaxed);
         return true;
     } else {
         --my_slack;
@@ -892,8 +911,8 @@ inline bool ipc_server::try_insert_in_asleep_list_forced(ipc_worker& t) {
     // Contribute to slack under lock so that if another takes that unit of slack,
     // it sees us sleeping on the list and wakes us up.
     ++my_slack;
-    t.my_next = my_asleep_list_root;
-    my_asleep_list_root = &t;
+    t.my_next = my_asleep_list_root.load(std::memory_order_relaxed);
+    my_asleep_list_root.store(&t, std::memory_order_relaxed);
     return true;
 }
 
@@ -933,26 +952,29 @@ inline void ipc_server::add_stop_thread() {
 }
 
 void ipc_server::wake_some( int additional_slack, int active_threads ) {
-    __TBB_ASSERT( additional_slack>=0, NULL );
+    __TBB_ASSERT( additional_slack>=0, nullptr );
     ipc_worker* wakee[2];
     ipc_worker **w = wakee;
     {
         asleep_list_mutex_type::scoped_lock lock(my_asleep_list_mutex);
-        while( active_threads>0 && my_asleep_list_root && w<wakee+2 ) {
+        while( active_threads>0 && my_asleep_list_root.load(std::memory_order_relaxed) && w<wakee+2 ) {
             if( additional_slack>0 ) {
-                if( additional_slack+my_slack<=0 ) // additional demand does not exceed surplus supply
+                if( additional_slack+my_slack.load(std::memory_order_acquire)<=0 ) // additional demand does not exceed surplus supply
                     break;
                 --additional_slack;
             } else {
                 // Chain reaction; Try to claim unit of slack
                 int old;
                 do {
-                    old = my_slack;
+                    old = my_slack.load(std::memory_order_relaxed);
                     if( old<=0 ) goto done;
-                } while( my_slack.compare_and_swap( old-1, old )!=old );
+                } while( !my_slack.compare_exchange_strong( old, old-1 ) );
             }
             // Pop sleeping worker to combine with claimed unit of slack
-            my_asleep_list_root = (*w++ = my_asleep_list_root)->my_next;
+            my_asleep_list_root.store(
+                (*w++ = my_asleep_list_root.load(std::memory_order_relaxed))->my_next,
+                std::memory_order_relaxed
+            );
             --active_threads;
         }
         if( additional_slack ) {
@@ -976,26 +998,28 @@ done:
 }
 
 void ipc_server::wake_one_forced( int additional_slack ) {
-    __TBB_ASSERT( additional_slack>=0, NULL );
+    __TBB_ASSERT( additional_slack>=0, nullptr );
     ipc_worker* wakee[1];
     ipc_worker **w = wakee;
     {
         asleep_list_mutex_type::scoped_lock lock(my_asleep_list_mutex);
-        while( my_asleep_list_root && w<wakee+1 ) {
+        while( my_asleep_list_root.load(std::memory_order_relaxed) && w<wakee+1 ) {
             if( additional_slack>0 ) {
-                if( additional_slack+my_slack<=0 ) // additional demand does not exceed surplus supply
+                if( additional_slack+my_slack.load(std::memory_order_acquire)<=0 ) // additional demand does not exceed surplus supply
                     break;
                 --additional_slack;
             } else {
                 // Chain reaction; Try to claim unit of slack
                 int old;
                 do {
-                    old = my_slack;
+                    old = my_slack.load(std::memory_order_relaxed);
                     if( old<=0 ) goto done;
-                } while( my_slack.compare_and_swap( old-1, old )!=old );
+                } while( !my_slack.compare_exchange_strong( old, old-1 ) );
             }
             // Pop sleeping worker to combine with claimed unit of slack
-            my_asleep_list_root = (*w++ = my_asleep_list_root)->my_next;
+            my_asleep_list_root.store(
+                (*w++ = my_asleep_list_root.load(std::memory_order_relaxed))->my_next,
+                std::memory_order_relaxed);
         }
         if( additional_slack ) {
             // Contribute our unused slack to my_slack.
@@ -1013,15 +1037,15 @@ done:
 }
 
 bool ipc_server::stop_one() {
-    ipc_worker* current = NULL;
-    ipc_worker* next = NULL;
+    ipc_worker* current = nullptr;
+    ipc_worker* next = nullptr;
     {
         asleep_list_mutex_type::scoped_lock lock(my_asleep_list_mutex);
-        if( my_asleep_list_root ) {
-            current = my_asleep_list_root;
-            if( current->my_state==ipc_worker::st_normal ) {
+        if( my_asleep_list_root.load(std::memory_order_relaxed) ) {
+            current = my_asleep_list_root.load(std::memory_order_relaxed);
+            if( current->my_state.load(std::memory_order_relaxed)==ipc_worker::st_normal ) {
                 next = current->my_next;
-                while( next!= NULL && next->my_state==ipc_worker::st_normal ) {
+                while( next!= nullptr && next->my_state.load(std::memory_order_relaxed)==ipc_worker::st_normal ) {
                     current = next;
                     next = current->my_next;
                 }
@@ -1072,20 +1096,20 @@ void ipc_server::adjust_job_count_estimate( int delta ) {
 
 #if USE_PTHREAD
 
-static tbb_client* my_global_client = NULL;
-static tbb_server* my_global_server = NULL;
+static tbb_client* my_global_client = nullptr;
+static tbb_server* my_global_server = nullptr;
 
 void rml_atexit() {
     release_resources();
 }
 
 void rml_atfork_child() {
-    if( my_global_server!=NULL && my_global_client!=NULL ) {
+    if( my_global_server!=nullptr && my_global_client!=nullptr ) {
         ipc_server* server = static_cast<ipc_server*>( my_global_server );
         server->~ipc_server();
-        memset( server, 0, sizeof(ipc_server) );
+        // memset( server, 0, sizeof(ipc_server) );
         new( server ) ipc_server( *my_global_client );
-        pthread_atfork( NULL, NULL, rml_atfork_child );
+        pthread_atfork( nullptr, nullptr, rml_atfork_child );
         atexit( rml_atexit );
     }
 }
@@ -1097,7 +1121,7 @@ extern "C" tbb_factory::status_type __TBB_make_rml_server(tbb_factory& /*f*/, tb
 #if USE_PTHREAD
     my_global_client = &client;
     my_global_server = server;
-    pthread_atfork( NULL, NULL, rml_atfork_child );
+    pthread_atfork( nullptr, nullptr, rml_atfork_child );
     atexit( rml_atexit );
 #endif /* USE_PTHREAD */
     if( getenv( "RML_DEBUG" ) ) {
@@ -1110,6 +1134,6 @@ extern "C" void __TBB_call_with_my_server_info(::rml::server_info_callback_t /*c
 }
 
 } // namespace rml
-} // namespace internal
+} // namespace detail
 
 } // namespace tbb

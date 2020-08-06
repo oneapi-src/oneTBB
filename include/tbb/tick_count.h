@@ -17,121 +17,81 @@
 #ifndef __TBB_tick_count_H
 #define __TBB_tick_count_H
 
-#include "tbb_stddef.h"
-
-#if _WIN32||_WIN64
-#include "machine/windows_api.h"
-#elif __linux__
-#include <ctime>
-#else /* generic Unix */
-#include <sys/time.h>
-#endif /* (choice of OS) */
+#include <chrono>
 
 namespace tbb {
+namespace detail {
+namespace d1 {
+
 
 //! Absolute timestamp
 /** @ingroup timing */
 class tick_count {
 public:
+    using clock_type = typename std::conditional<std::chrono::high_resolution_clock::is_steady,
+        std::chrono::high_resolution_clock, std::chrono::steady_clock>::type;
+
     //! Relative time interval.
-    class interval_t {
-        long long value;
-        explicit interval_t( long long value_ ) : value(value_) {}
+    class interval_t : public clock_type::duration {
     public:
         //! Construct a time interval representing zero time duration
-        interval_t() : value(0) {};
+        interval_t() : clock_type::duration(clock_type::duration::zero()) {}
 
-        //! Construct a time interval representing sec seconds time  duration
-        explicit interval_t( double sec );
+        //! Construct a time interval representing sec seconds time duration
+        explicit interval_t( double sec )
+            : clock_type::duration(std::chrono::duration_cast<clock_type::duration>(std::chrono::duration<double>(sec))) {}
 
         //! Return the length of a time interval in seconds
-        double seconds() const;
-
-        friend class tbb::tick_count;
+        double seconds() const {
+            return std::chrono::duration_cast<std::chrono::duration<double>>(*this).count();
+        }
 
         //! Extract the intervals from the tick_counts and subtract them.
         friend interval_t operator-( const tick_count& t1, const tick_count& t0 );
 
         //! Add two intervals.
         friend interval_t operator+( const interval_t& i, const interval_t& j ) {
-            return interval_t(i.value+j.value);
+            return interval_t(std::chrono::operator+(i, j));
         }
 
         //! Subtract two intervals.
         friend interval_t operator-( const interval_t& i, const interval_t& j ) {
-            return interval_t(i.value-j.value);
+            return interval_t(std::chrono::operator-(i, j));
         }
 
-        //! Accumulation operator
-        interval_t& operator+=( const interval_t& i ) {value += i.value; return *this;}
-
-        //! Subtraction operator
-        interval_t& operator-=( const interval_t& i ) {value -= i.value; return *this;}
     private:
-        static long long ticks_per_second(){
-#if _WIN32||_WIN64
-            LARGE_INTEGER qpfreq;
-            int rval = QueryPerformanceFrequency(&qpfreq);
-            __TBB_ASSERT_EX(rval, "QueryPerformanceFrequency returned zero");
-            return static_cast<long long>(qpfreq.QuadPart);
-#elif __linux__
-            return static_cast<long long>(1E9);
-#else /* generic Unix */
-            return static_cast<long long>(1E6);
-#endif /* (choice of OS) */
-        }
+        explicit interval_t( clock_type::duration value_ ) : clock_type::duration(value_) {}
     };
 
-    //! Construct an absolute timestamp initialized to zero.
-    tick_count() : my_count(0) {};
+    tick_count() = default;
 
     //! Return current time.
-    static tick_count now();
+    static tick_count now() {
+        return clock_type::now();
+    }
 
     //! Subtract two timestamps to get the time interval between
-    friend interval_t operator-( const tick_count& t1, const tick_count& t0 );
+    friend interval_t operator-( const tick_count& t1, const tick_count& t0 ) {
+        return tick_count::interval_t(t1.my_time_point - t0.my_time_point);
+    }
 
     //! Return the resolution of the clock in seconds per tick.
-    static double resolution() { return 1.0 / interval_t::ticks_per_second(); }
+    static double resolution() {
+        return static_cast<double>(interval_t::period::num) / interval_t::period::den;
+    }
 
 private:
-    long long my_count;
+    clock_type::time_point my_time_point;
+    tick_count( clock_type::time_point tp ) : my_time_point(tp) {}
 };
 
-inline tick_count tick_count::now() {
-    tick_count result;
-#if _WIN32||_WIN64
-    LARGE_INTEGER qpcnt;
-    int rval = QueryPerformanceCounter(&qpcnt);
-    __TBB_ASSERT_EX(rval, "QueryPerformanceCounter failed");
-    result.my_count = qpcnt.QuadPart;
-#elif __linux__
-    struct timespec ts;
-    int status = clock_gettime( CLOCK_REALTIME, &ts );
-    __TBB_ASSERT_EX( status==0, "CLOCK_REALTIME not supported" );
-    result.my_count = static_cast<long long>(1000000000UL)*static_cast<long long>(ts.tv_sec) + static_cast<long long>(ts.tv_nsec);
-#else /* generic Unix */
-    struct timeval tv;
-    int status = gettimeofday(&tv, NULL);
-    __TBB_ASSERT_EX( status==0, "gettimeofday failed" );
-    result.my_count = static_cast<long long>(1000000)*static_cast<long long>(tv.tv_sec) + static_cast<long long>(tv.tv_usec);
-#endif /*(choice of OS) */
-    return result;
-}
+} // namespace d1
+} // namespace detail
 
-inline tick_count::interval_t::interval_t( double sec ) {
-    value = static_cast<long long>(sec*interval_t::ticks_per_second());
-}
-
-inline tick_count::interval_t operator-( const tick_count& t1, const tick_count& t0 ) {
-    return tick_count::interval_t( t1.my_count-t0.my_count );
-}
-
-inline double tick_count::interval_t::seconds() const {
-    return value*tick_count::resolution();
-}
+inline namespace v1 {
+    using detail::d1::tick_count;
+} // namespace v1
 
 } // namespace tbb
-
 
 #endif /* __TBB_tick_count_H */

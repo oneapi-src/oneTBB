@@ -15,7 +15,14 @@
 */
 
 #include "tbbmalloc_internal.h"
-#include "tbb/tbb_environment.h"
+#include "../tbb/environment.h"
+
+#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+    // Suppress warning: unary minus operator applied to unsigned type, result still unsigned
+    // TBB_REVAMP_TODO: review this warning
+    #pragma warning(push)
+    #pragma warning(disable:4146)
+#endif
 
 /******************************* Allocation of large objects *********************************************/
 
@@ -30,7 +37,7 @@ void LargeObjectCache::init(ExtMemoryPool *memPool)
     // scalable_allocation_mode can be called before allocator initialization, respect this manual request
     if (hugeSizeThreshold == 0) {
         // Huge size threshold initialization if environment variable was set
-        long requestedThreshold = tbb::internal::GetIntegralEnvironmentVariable("TBB_MALLOC_SET_HUGE_SIZE_THRESHOLD");
+        long requestedThreshold = tbb::detail::r1::GetIntegralEnvironmentVariable("TBB_MALLOC_SET_HUGE_SIZE_THRESHOLD");
         // Read valid env or initialize by default with max possible values
         if (requestedThreshold != -1) {
             setHugeSizeThreshold(requestedThreshold);
@@ -209,8 +216,10 @@ OpTypeData& opCast(CacheBinOperation &op) {
 /* ------------------------------------------------------------------------ */
 
 #if __TBB_MALLOC_LOCACHE_STAT
-intptr_t mallocCalls, cacheHits;
-intptr_t memAllocKB, memHitKB;
+//intptr_t mallocCalls, cacheHits;
+std::atomic<intptr_t> mallocCalls, cacheHits;
+//intptr_t memAllocKB, memHitKB;
+std::atomic<intptr_t> memAllocKB, memHitKB;
 #endif
 
 inline bool lessThanWithOverflow(intptr_t a, intptr_t b)
@@ -224,7 +233,8 @@ inline bool lessThanWithOverflow(intptr_t a, intptr_t b)
 template<typename Props> void CacheBinFunctor<Props>::
     OperationPreprocessor::commitOperation(CacheBinOperation *op) const
 {
-    FencedStore( (intptr_t&)(op->status), CBST_DONE );
+    // FencedStore( (intptr_t&)(op->status), CBST_DONE );
+    op->status.store(CBST_DONE, std::memory_order_release);
 }
 
 template<typename Props> void CacheBinFunctor<Props>::
@@ -694,7 +704,7 @@ bool LargeObjectCacheImpl<Props>::regularCleanup(ExtMemoryPool *extMemPool, uint
 
     for (int i = bitMask.getMaxTrue(startSearchIdx); i >= 0; i = bitMask.getMaxTrue(i-1)) {
         bin[i].updateBinsSummary(&binsSummary);
-        if (!doThreshDecr && tooLargeLOC > 2 && binsSummary.isLOCTooLarge()) {
+        if (!doThreshDecr && tooLargeLOC.load(std::memory_order_relaxed) > 2 && binsSummary.isLOCTooLarge()) {
             // if LOC is too large for quite long time, decrease the threshold
             // based on bin hit statistics.
             // For this, redo cleanup from the beginning.
@@ -716,10 +726,11 @@ bool LargeObjectCacheImpl<Props>::regularCleanup(ExtMemoryPool *extMemPool, uint
     // We want to find if LOC was too large for some time continuously,
     // so OK with races between incrementing and zeroing, but incrementing
     // must be atomic.
-    if (binsSummary.isLOCTooLarge())
-        AtomicIncrement(tooLargeLOC);
-    else
-        tooLargeLOC = 0;
+    if (binsSummary.isLOCTooLarge()) {
+        tooLargeLOC++;
+    } else {
+        tooLargeLOC.store(0, std::memory_order_relaxed);
+    }
     return released;
 }
 
@@ -735,7 +746,7 @@ bool LargeObjectCacheImpl<Props>::cleanAll(ExtMemoryPool *extMemPool)
 
 template<typename Props>
 void LargeObjectCacheImpl<Props>::reset() {
-    tooLargeLOC = 0;
+    tooLargeLOC.store(0, std::memory_order_relaxed);
     for (int i = numBins-1; i >= 0; i--)
         bin[i].init();
     bitMask.reset();
@@ -789,12 +800,12 @@ bool LargeObjectCache::doCleanup(uintptr_t currTime, bool doThreshDecr)
 
 bool LargeObjectCache::decreasingCleanup()
 {
-    return doCleanup(FencedLoad((intptr_t&)cacheCurrTime), /*doThreshDecr=*/true);
+    return doCleanup(cacheCurrTime.load(std::memory_order_acquire), /*doThreshDecr=*/true);
 }
 
 bool LargeObjectCache::regularCleanup()
 {
-    return doCleanup(FencedLoad((intptr_t&)cacheCurrTime), /*doThreshDecr=*/false);
+    return doCleanup(cacheCurrTime.load(std::memory_order_acquire), /*doThreshDecr=*/false);
 }
 
 bool LargeObjectCache::cleanAll()
@@ -844,7 +855,7 @@ void LargeObjectCache::reportStat(FILE *f)
 {
     largeCache.reportStat(f);
     hugeCache.reportStat(f);
-    fprintf(f, "cache time %lu\n", cacheCurrTime);
+    fprintf(f, "cache time %lu\n", cacheCurrTime.load(std::memory_order_relaxed));
 }
 #endif
 
@@ -867,12 +878,12 @@ void LargeObjectCache::updateCacheState(DecreaseOrIncrease op, size_t size)
 
 uintptr_t LargeObjectCache::getCurrTime()
 {
-    return (uintptr_t)AtomicIncrement((intptr_t&)cacheCurrTime);
+    return ++cacheCurrTime;
 }
 
 uintptr_t LargeObjectCache::getCurrTimeRange(uintptr_t range)
 {
-    return (uintptr_t)AtomicAdd((intptr_t&)cacheCurrTime, range) + 1;
+    return (cacheCurrTime.fetch_add(range) + 1);
 }
 
 void LargeObjectCache::registerRealloc(size_t oldSize, size_t newSize)
@@ -959,8 +970,8 @@ LargeMemoryBlock *LargeObjectCache::get(size_t size)
 LargeMemoryBlock *ExtMemoryPool::mallocLargeObject(MemoryPool *pool, size_t allocationSize)
 {
 #if __TBB_MALLOC_LOCACHE_STAT
-    AtomicIncrement(mallocCalls);
-    AtomicAdd(memAllocKB, allocationSize/1024);
+    mallocCalls++;
+    memAllocKB.fetch_add(allocationSize/1024);
 #endif
     LargeMemoryBlock* lmb = loc.get(allocationSize);
     if (!lmb) {
@@ -980,8 +991,8 @@ LargeMemoryBlock *ExtMemoryPool::mallocLargeObject(MemoryPool *pool, size_t allo
         STAT_increment(getThreadId(), ThreadCommonCounters, allocNewLargeObj);
     } else {
 #if __TBB_MALLOC_LOCACHE_STAT
-        AtomicIncrement(cacheHits);
-        AtomicAdd(memHitKB, allocationSize/1024);
+        cacheHits++;
+        memHitKB.fetch_add(allocationSize/1024);
 #endif
     }
     return lmb;
@@ -1030,4 +1041,8 @@ void *ExtMemoryPool::remap(void *ptr, size_t oldSize, size_t newSize, size_t ali
 
 } // namespace internal
 } // namespace rml
+
+#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+    #pragma warning(pop)
+#endif
 

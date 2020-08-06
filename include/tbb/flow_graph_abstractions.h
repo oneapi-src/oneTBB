@@ -18,8 +18,8 @@
 #define __TBB_flow_graph_abstractions_H
 
 namespace tbb {
-namespace flow {
-namespace interface11 {
+namespace detail {
+namespace d1 {
 
 //! Pure virtual template classes that define interfaces for async communication
 class graph_proxy {
@@ -43,13 +43,9 @@ public:
     virtual bool try_put(const input_type&) = 0;
 };
 
-} //interfaceX
-
-using interface11::graph_proxy;
-using interface11::receiver_gateway;
-
-} //flow
-} //tbb
+} // d1
 
 
+} // detail
+} // tbb
 #endif

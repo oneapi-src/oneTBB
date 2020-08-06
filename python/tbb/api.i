@@ -15,10 +15,17 @@
 # limitations under the License.
 
 
-__all__ = ["task_arena", "task_group", "task_scheduler_init", "global_control", "default_num_threads"]
+__all__ = ["task_arena",
+           "task_group",
+           "global_control",
+           "default_num_threads",
+           "this_task_arena_max_concurrency",
+           "this_task_arena_current_thread_index",
+           "runtime_version",
+           "runtime_interface_version"]
 %}
 %begin %{
-/* Defines Python wrappers for Intel(R) Threading Building Blocks (Intel TBB).*/
+/* Defines Python wrappers for Intel(R) oneAPI Threading Building Blocks (oneTBB) */
 %}
 %module api
 
@@ -28,16 +35,15 @@ __all__ = ["task_arena", "task_group", "task_scheduler_init", "global_control", 
 
 %{
 #define TBB_PREVIEW_WAITING_FOR_WORKERS 1
-#include <tbb/tbb.h>
-#include <tbb/compat/condition_variable>
-#if TBB_IMPLEMENT_CPP0X
-namespace std { using tbb::mutex; }
-#define unique_ptr auto_ptr
-#else
+#include "tbb/task_arena.h"
+#include "tbb/task_group.h"
+#include "tbb/global_control.h"
+#include "tbb/version.h"
+
 #include <condition_variable>
 #include <mutex>
 #include <memory>
-#endif
+
 using namespace tbb;
 
 class PyCaller : public swig::SwigPtr_PyObject {
@@ -48,7 +54,7 @@ public:
 
     void operator()() const {
         SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-        PyObject* r = PyObject_CallFunctionObjArgs((PyObject*)*this, NULL);
+        PyObject* r = PyObject_CallFunctionObjArgs((PyObject*)*this, nullptr);
         if(r) Py_DECREF(r);
         SWIG_PYTHON_THREAD_END_BLOCK;
     }
@@ -73,62 +79,41 @@ struct barrier_data {
     int worker_threads, full_threads;
 };
 
-class barrier_task : public tbb::task {
-    barrier_data &b;
-public:
-    barrier_task(barrier_data &d) : b(d) {}
-    /*override*/ tbb::task *execute() {
-        std::unique_lock<std::mutex> lock(b.m);
-        if(++b.worker_threads >= b.full_threads)
-            b.event.notify_all();
-        else while(b.worker_threads < b.full_threads)
-            b.event.wait(lock);
-        return NULL;
-    }
-};
-
-void _concurrency_barrier(int threads = tbb::task_scheduler_init::automatic) {
-    if(threads == task_scheduler_init::automatic)
-        threads = task_scheduler_init::default_num_threads();
+void _concurrency_barrier(int threads = tbb::task_arena::automatic) {
+    if(threads == tbb::task_arena::automatic)
+        threads = tbb::this_task_arena::max_concurrency();
     if(threads < 2)
         return;
     std::unique_ptr<global_control> g(
         (global_control::active_value(global_control::max_allowed_parallelism) < unsigned(threads))?
-            new global_control(global_control::max_allowed_parallelism, threads) : NULL);
+            new global_control(global_control::max_allowed_parallelism, threads) : nullptr);
+
+    tbb::task_group tg;
     barrier_data b;
     b.worker_threads = 0;
     b.full_threads = threads-1;
     for(int i = 0; i < b.full_threads; i++)
-        tbb::task::enqueue( *new( tbb::task::allocate_root() ) barrier_task(b) );
+        tg.run([&b]{
+            std::unique_lock<std::mutex> lock(b.m);
+            if(++b.worker_threads >= b.full_threads)
+                b.event.notify_all();
+            else while(b.worker_threads < b.full_threads)
+                b.event.wait(lock);
+        });
     std::unique_lock<std::mutex> lock(b.m);
     b.event.wait(lock);
+    tg.wait();
 };
 
 %}
 
-void _concurrency_barrier(int threads = tbb::task_scheduler_init::automatic);
+void _concurrency_barrier(int threads = tbb::task_arena::automatic);
 
 namespace tbb {
-    class task_scheduler_init {
-    public:
-        //! Typedef for number of threads that is automatic.
-        static const int automatic = -1;
-        //! Argument to initialize() or constructor that causes initialization to be deferred.
-        static const int deferred = -2;
-        task_scheduler_init( int max_threads=automatic,
-                             size_t thread_stack_size=0 );
-        ~task_scheduler_init();
-        void initialize( int max_threads=automatic );
-        void terminate();
-        static int default_num_threads();
-        bool is_active() const;
-        void blocking_terminate();
-    };
 
     class task_arena {
     public:
         static const int automatic = -1;
-        static int current_thread_index();
         task_arena(int max_concurrency = automatic, unsigned reserved_for_masters = 1);
         task_arena(const task_arena &s);
         ~task_arena();
@@ -169,7 +154,14 @@ namespace tbb {
 
 } // tbb
 
+%inline {
+    inline const char* runtime_version() { return TBB_runtime_version();}
+    inline int runtime_interface_version() { return TBB_runtime_interface_version();}
+    inline int this_task_arena_max_concurrency() { return this_task_arena::max_concurrency();}
+    inline int this_task_arena_current_thread_index() { return this_task_arena::current_thread_index();}
+};
+
 // Additional definitions for Python part of the module
 %pythoncode %{
-default_num_threads = task_scheduler_init_default_num_threads
+default_num_threads = this_task_arena_max_concurrency
 %}
