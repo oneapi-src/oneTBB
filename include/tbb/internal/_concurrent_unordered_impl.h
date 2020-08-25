@@ -463,14 +463,14 @@ public:
     // Returns a public iterator version of the internal iterator. Public iterator must not
     // be a dummy private iterator.
     iterator get_iterator(raw_iterator it) {
-        __TBB_ASSERT(it.get_node_ptr() == NULL || !it.get_node_ptr()->is_dummy(), "Invalid user node (dummy)");
+        __TBB_ASSERT(it.get_node_ptr() != NULL && !it.get_node_ptr()->is_dummy(), "Invalid user node (dummy)");
         return iterator(it.get_node_ptr(), this);
     }
 
     // Returns a public iterator version of the internal iterator. Public iterator must not
     // be a dummy private iterator.
     const_iterator get_iterator(raw_const_iterator it) const {
-        __TBB_ASSERT(it.get_node_ptr() == NULL || !it.get_node_ptr()->is_dummy(), "Invalid user node (dummy)");
+        __TBB_ASSERT(it.get_node_ptr() != NULL && !it.get_node_ptr()->is_dummy(), "Invalid user node (dummy)");
         return const_iterator(it.get_node_ptr(), this);
     }
 
