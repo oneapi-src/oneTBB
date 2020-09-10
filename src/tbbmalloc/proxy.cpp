@@ -57,6 +57,13 @@
 #define __TBB_NO_THROW throw()
 #endif
 
+#if __has_attribute(__copy__)
+  #define __TBB_ALIAS_ATTR_COPY(name) __attribute__((alias (#name), __copy__(name)))
+#else
+  #define __TBB_ALIAS_ATTR_COPY(name) __attribute__((alias (#name)))
+#endif
+
+
 #if MALLOC_UNIXLIKE_OVERLOAD_ENABLED || _WIN32 && !__TBB_WIN8UI_SUPPORT
 /*** internal global operator new implementation (Linux, Windows) ***/
 #include <new>
@@ -146,15 +153,7 @@ static inline void initPageSize()
    1) detection that the proxy library is loaded
    2) check that dlsym("malloc") found something different from our replacement malloc
 */
-// Starting from GCC 9, the -Wmissing-attributes warning was extended for alias below
-#if __GNUC__ == 9
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wmissing-attributes"
-#endif
-extern "C" void *__TBB_malloc_proxy(size_t) __attribute__ ((alias ("malloc")));
-#if __GNUC__ == 9
-    #pragma GCC diagnostic pop
-#endif
+extern "C" void *__TBB_malloc_proxy(size_t) __TBB_ALIAS_ATTR_COPY(malloc);
 
 static void *orig_msize;
 
@@ -293,25 +292,20 @@ struct mallinfo mallinfo() __THROW
 // Android doesn't have malloc_usable_size, provide it to be compatible
 // with Linux, in addition overload dlmalloc_usable_size() that presented
 // under Android.
-size_t dlmalloc_usable_size(const void *ptr) __attribute__ ((alias ("malloc_usable_size")));
+size_t dlmalloc_usable_size(const void *ptr) __TBB_ALIAS_ATTR_COPY(malloc_usable_size)
 #else // __ANDROID__
 // C11 function, supported starting GLIBC 2.16
-void *aligned_alloc(size_t alignment, size_t size) __attribute__ ((alias ("memalign")));
+void *aligned_alloc(size_t alignment, size_t size) __TBB_ALIAS_ATTR_COPY(memalign);
 // Those non-standard functions are exported by GLIBC, and might be used
 // in conjunction with standard malloc/free, so we must ovberload them.
 // Bionic doesn't have them. Not removing from the linker scripts,
 // as absent entry points are ignored by the linker.
 
-// Starting from GCC 9, the -Wmissing-attributes warning was extended for aliases below
-#if __GNUC__ == 9
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wmissing-attributes"
-#endif
-void *__libc_malloc(size_t size) __attribute__ ((alias ("malloc")));
-void *__libc_calloc(size_t num, size_t size) __attribute__ ((alias ("calloc")));
-void *__libc_memalign(size_t alignment, size_t size) __attribute__ ((alias ("memalign")));
-void *__libc_pvalloc(size_t size) __attribute__ ((alias ("pvalloc")));
-void *__libc_valloc(size_t size) __attribute__ ((alias ("valloc")));
+void *__libc_malloc(size_t size) __TBB_ALIAS_ATTR_COPY(malloc);
+void *__libc_calloc(size_t num, size_t size) __TBB_ALIAS_ATTR_COPY(calloc);
+void *__libc_memalign(size_t alignment, size_t size) __TBB_ALIAS_ATTR_COPY(memalign);
+void *__libc_pvalloc(size_t size) __TBB_ALIAS_ATTR_COPY(pvalloc);
+void *__libc_valloc(size_t size) __TBB_ALIAS_ATTR_COPY(valloc);
 #if __GNUC__ == 9
     #pragma GCC diagnostic pop
 #endif
