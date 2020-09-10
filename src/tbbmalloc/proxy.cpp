@@ -292,7 +292,7 @@ struct mallinfo mallinfo() __THROW
 // Android doesn't have malloc_usable_size, provide it to be compatible
 // with Linux, in addition overload dlmalloc_usable_size() that presented
 // under Android.
-size_t dlmalloc_usable_size(const void *ptr) __TBB_ALIAS_ATTR_COPY(malloc_usable_size)
+size_t dlmalloc_usable_size(const void *ptr) __TBB_ALIAS_ATTR_COPY(malloc_usable_size);
 #else // __ANDROID__
 // C11 function, supported starting GLIBC 2.16
 void *aligned_alloc(size_t alignment, size_t size) __TBB_ALIAS_ATTR_COPY(memalign);
