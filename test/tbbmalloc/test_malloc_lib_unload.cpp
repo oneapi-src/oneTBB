@@ -15,6 +15,8 @@
 */
 
 
+#define __TBB_NO_IMPLICIT_LINKAGE 1
+
 #if _USRDLL
 #include "common/utils_assert.h"
 #include <stdlib.h> // for NULL

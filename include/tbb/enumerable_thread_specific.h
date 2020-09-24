@@ -340,13 +340,9 @@ class enumerable_thread_specific_iterator
     typename Container::size_type my_index;
     mutable Value *my_value;
 
-    template<typename C, typename T>
-    friend enumerable_thread_specific_iterator<C,T>
-    operator+( std::ptrdiff_t offset, const enumerable_thread_specific_iterator<C,T>& v );
-
     template<typename C, typename T, typename U>
-    friend bool operator==( const enumerable_thread_specific_iterator<C,T>& i,
-                            const enumerable_thread_specific_iterator<C,U>& j );
+    friend bool operator==( const enumerable_thread_specific_iterator<C, T>& i,
+                     const enumerable_thread_specific_iterator<C, U>& j );
 
     template<typename C, typename T, typename U>
     friend bool operator<( const enumerable_thread_specific_iterator<C,T>& i,
@@ -381,6 +377,10 @@ public:
         return enumerable_thread_specific_iterator(*my_container, my_index + offset);
     }
 
+    friend enumerable_thread_specific_iterator operator+( std::ptrdiff_t offset, enumerable_thread_specific_iterator v ) {
+        return enumerable_thread_specific_iterator(*v.my_container, v.my_index + offset);
+    }
+
     enumerable_thread_specific_iterator &operator+=( std::ptrdiff_t offset ) {
         my_index += offset;
         my_value = nullptr;
@@ -407,7 +407,7 @@ public:
     }
 
     Value& operator[]( std::ptrdiff_t k ) const {
-       return (*my_container)[my_index + k].value;
+       return *(*my_container)[my_index + k].value();
     }
 
     Value* operator->() const {return &operator*();}
@@ -441,16 +441,10 @@ public:
     }
 };
 
-template<typename Container, typename T>
-enumerable_thread_specific_iterator<Container,T>
-operator+( std::ptrdiff_t offset, const enumerable_thread_specific_iterator<Container,T>& v ) {
-    return enumerable_thread_specific_iterator<Container,T>( v.my_container, v.my_index + offset );
-}
-
 template<typename Container, typename T, typename U>
-bool operator==( const enumerable_thread_specific_iterator<Container,T>& i,
-                 const enumerable_thread_specific_iterator<Container,U>& j ) {
-    return i.my_index==j.my_index && i.my_container == j.my_container;
+bool operator==( const enumerable_thread_specific_iterator<Container, T>& i,
+                 const enumerable_thread_specific_iterator<Container, U>& j ) {
+    return i.my_index == j.my_index && i.my_container == j.my_container;
 }
 
 template<typename Container, typename T, typename U>

@@ -22,6 +22,8 @@
 #include "_template_helpers.h"
 #include "_small_object_pool.h"
 
+#include "../profiling.h"
+
 #include <cstddef>
 #include <cstdint>
 #include <climits>
@@ -104,6 +106,7 @@ class wait_context {
     }
 
     void add_reference(std::int64_t delta) {
+        call_itt_task_notify(releasing, this);
         std::uint64_t r = m_ref_count.fetch_add(delta) + delta;
         __TBB_ASSERT_EX((r & overflow_mask) == 0, "Overflow is detected");
         if (r == abandon_wait_flag) {
@@ -178,9 +181,28 @@ inline bool is_stolen(const execution_data& ed) {
     return original_slot(ed) != execution_slot(ed);
 }
 
-using r1::spawn;
-using r1::execute_and_wait;
-using r1::wait;
+inline void spawn(task& t, task_group_context& ctx) {
+    call_itt_task_notify(releasing, &t);
+    r1::spawn(t, ctx);
+}
+
+inline void spawn(task& t, task_group_context& ctx, slot_id id) {
+    call_itt_task_notify(releasing, &t);
+    r1::spawn(t, ctx, id);
+}
+
+inline void execute_and_wait(task& t, task_group_context& t_ctx, wait_context& wait_ctx, task_group_context& w_ctx) {
+    r1::execute_and_wait(t, t_ctx, wait_ctx, w_ctx);
+    call_itt_task_notify(acquired, &wait_ctx);
+    call_itt_task_notify(destroy, &wait_ctx);
+}
+
+inline void wait(wait_context& wait_ctx, task_group_context& ctx) {
+    r1::wait(wait_ctx, ctx);
+    call_itt_task_notify(acquired, &wait_ctx);
+    call_itt_task_notify(destroy, &wait_ctx);
+}
+
 using r1::current_context;
 
 class task_traits {
@@ -205,7 +227,7 @@ public:
     static task_group_context* current_execute_data() { return current_context(); }
 
 private:
-    std::uint64_t m_reserved[5];
+    std::uint64_t m_reserved[5]{};
 
     // Reserve one pointer-sized object in derived class
     // static_assert(sizeof(task) == 64 - 8);

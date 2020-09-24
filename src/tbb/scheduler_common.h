@@ -90,10 +90,6 @@ struct task_accessor {
         task_group_context** tgc = reinterpret_cast<task_group_context**>(&t.m_reserved[0]);
         return *tgc;
     }
-    static d1::task*& next(d1::task& t) {
-        d1::task** p = reinterpret_cast<d1::task**>(&t.m_reserved[1]);
-        return *p;
-    }
     static isolation_type& isolation(d1::task& t) {
         isolation_type* tag = reinterpret_cast<isolation_type*>(&t.m_reserved[2]);
         return *tag;
@@ -168,12 +164,14 @@ public:
             curr_ctx = ctx;
         }
     }
+#if _WIN64
     void restore_default() {
         if (curr_cpu_ctl_env != guard_cpu_ctl_env) {
             guard_cpu_ctl_env.set_env();
             curr_cpu_ctl_env = guard_cpu_ctl_env;
         }
     }
+#endif // _WIN64
 };
 
 #if (_WIN32 || _WIN64 || __linux__) && (__TBB_x86_32 || __TBB_x86_64)
@@ -293,14 +291,6 @@ private:
     tbb_exception_ptr(const std::exception_ptr& src) : my_ptr(src) {}
 }; // class tbb_exception_ptr
 
-#define TbbCatchAll(context)                                                                        \
-    catch ( ... ) {                                                                                 \
-        if ( context->cancel_group_execution() ) {                                                  \
-            /* We are the first to signal cancellation, so store the exception that caused it. */   \
-            context->my_exception = tbb_exception_ptr::allocate();                                  \
-        }                                                                                           \
-    }
-
 //------------------------------------------------------------------------
 // Debugging support
 //------------------------------------------------------------------------
@@ -315,16 +305,10 @@ inline void poison_value(std::atomic<std::uintptr_t>& val) { val.store(venom, st
 /** Expected to be used in assertions only, thus no empty form is defined. **/
 inline bool is_alive(std::uintptr_t v) { return v != venom; }
 
-/** Expected to be used in assertions only, thus no empty form is defined. **/
-inline bool is_alive(const std::atomic<std::uintptr_t>& v) { return v.load(std::memory_order_relaxed) != venom; }
-
 /** Logically, this method should be a member of class task.
     But we do not want to publish it, so it is here instead. */
 inline void assert_task_valid(const d1::task* t) {
     assert_pointer_valid(t);
-}
-inline void assert_task_valid(const d1::task& t) {
-    assert_task_valid(&t);
 }
 #else /* !TBB_USE_ASSERT */
 
@@ -462,7 +446,7 @@ public:
                                 isolation_type, bool /*critical_allowed*/);
 
 #if __TBB_RESUMABLE_TASKS
-    void co_local_wait_for_all();
+    /* [[noreturn]] */ void co_local_wait_for_all() noexcept;
     void suspend(suspend_callback_type suspend_callback, void* user_callback);
     void resume(task_dispatcher& target);
     suspend_point_type* get_suspend_point();
@@ -489,7 +473,6 @@ struct task_group_context_impl {
     static void reset(d1::task_group_context&);
     static void capture_fp_settings(d1::task_group_context&);
     static void copy_fp_settings(d1::task_group_context& ctx, const d1::task_group_context& src);
-    static void register_pending_exception(d1::task_group_context& ctx);
 };
 
 

@@ -61,7 +61,6 @@ void __TBB_EXPORTED_FUNC destroy(d1::task_group_context&);
 void __TBB_EXPORTED_FUNC reset(d1::task_group_context&);
 bool __TBB_EXPORTED_FUNC cancel_group_execution(d1::task_group_context&);
 bool __TBB_EXPORTED_FUNC is_group_execution_cancelled(d1::task_group_context&);
-void __TBB_EXPORTED_FUNC register_pending_exception(d1::task_group_context&);
 void __TBB_EXPORTED_FUNC capture_fp_settings(d1::task_group_context&);
 
 struct task_group_context_impl;
@@ -247,17 +246,6 @@ public:
     //! Returns true if the context received cancellation request.
     bool is_group_execution_cancelled() {
         return r1::is_group_execution_cancelled(*this);
-    }
-
-    //! Records the pending exception, and cancels the task group.
-    /** May be called only from inside a catch-block. If the context is already
-        cancelled, does nothing.
-        The method brings the task group associated with this context exactly into
-        the state it would be in, if one of its tasks threw the currently pending
-        exception during its execution. In other words, it emulates the actions
-        of the scheduler's dispatch loop exception handler. **/
-    void register_pending_exception() {
-        r1::register_pending_exception(*this);
     }
 
 #if __TBB_FP_CONTEXT

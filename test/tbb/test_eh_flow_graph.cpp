@@ -51,8 +51,6 @@
 #include <sstream>
 #include <vector>
 
-inline intptr_t Existed() { return INT_MAX; }  // resolve Existed in harness_eh.h
-
 #include "common/exception_handling.h"
 
 #include <stdexcept>

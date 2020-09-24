@@ -119,7 +119,7 @@ static inline void initPageSize()
 */
 
 // Starting from GCC 9, the -Wmissing-attributes warning was extended for alias below
-#if __GNUC__ == 9
+#if __GNUC__ >= 9
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wmissing-attributes"
 #endif
@@ -275,7 +275,7 @@ void *aligned_alloc(size_t alignment, size_t size) __attribute__ ((alias ("memal
 // as absent entry points are ignored by the linker.
 
 // Starting from GCC 9, the -Wmissing-attributes warning was extended for aliases below
-#if __GNUC__ == 9
+#if __GNUC__ >= 9
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wmissing-attributes"
 #endif

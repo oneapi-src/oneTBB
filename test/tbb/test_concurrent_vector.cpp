@@ -25,6 +25,7 @@
 #include <tbb/concurrent_vector.h>
 #include <tbb/tick_count.h>
 #include <tbb/parallel_reduce.h>
+#include <tbb/parallel_for.h>
 #include <algorithm>
 #include <cmath>
 
@@ -677,4 +678,22 @@ TEST_CASE("swap with NotAlwaysEqualAllocator allocators"){
     swap(vec1, vec2);
 
     CHECK(vec2.empty());
+}
+
+// The problem was that after allocating first_block,
+// no write was made to the embedded table.
+// Also, two threads could be in the table extension section at once.
+// NOTE: If the implementation of the vector has an issue, this test will either hang
+// or fail with the assertion in debug mode.
+//! \brief \ref regression
+TEST_CASE("Testing vector in a highly concurrent environment") {
+    for (std::size_t i = 0; i < 10000; ++i) {
+        tbb::concurrent_vector<int> test_vec;
+
+        tbb::parallel_for(tbb::blocked_range<std::size_t>(0, 10000), [&] (const tbb::blocked_range<std::size_t>&) {
+            test_vec.grow_by(1);
+        }, tbb::static_partitioner{});
+
+        REQUIRE(test_vec.size() == utils::get_platform_max_threads());
+    }
 }

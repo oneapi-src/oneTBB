@@ -310,4 +310,3 @@ TEST_CASE("Testing parallel_for with partitioners") {
     parallel_for(Range1(false, true), b, tbb::auto_partitioner());
     parallel_for(Range6(false, true), b, tbb::auto_partitioner());
 }
-

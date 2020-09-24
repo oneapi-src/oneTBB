@@ -178,6 +178,7 @@ public:
                 self()->deallocate_segment(new_segment, seg_index);
             }
         }
+
         segment = table[seg_index].load(std::memory_order_acquire);
         __TBB_ASSERT(segment != nullptr, "If create_segment returned nullptr, the element should be stored in the table");
     }
@@ -277,7 +278,14 @@ public:
             if (start_index <= embedded_table_size) {
                 try_call([&] {
                     table = self()->allocate_long_table(my_embedded_table, start_index);
-                    my_segment_table.store(table, std::memory_order_release);
+                    // It is possible that the table was extended by the thread that allocated first_block.
+                    // In this case it is necessary to re-read the current table.
+
+                    if (table) {
+                        my_segment_table.store(table, std::memory_order_release);
+                    } else {
+                        table = my_segment_table.load(std::memory_order_acquire);
+                    }
                 }).on_exception([&] {
                     my_segment_table_allocation_failed.store(true, std::memory_order_relaxed);
                 });
@@ -516,7 +524,7 @@ protected:
         return segment[index];
     }
 
-    inline void assign_first_block_if_necessary(segment_index_type index) {
+    void assign_first_block_if_necessary(segment_index_type index) {
         size_type zero = 0;
         if (this->my_first_block.load(std::memory_order_relaxed) == zero) {
             this->my_first_block.compare_exchange_strong(zero, index);

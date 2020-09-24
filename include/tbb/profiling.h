@@ -65,7 +65,7 @@ inline namespace d0 {
 namespace tbb {
 namespace detail {
 namespace d1 {
-    enum notify_type {prepare=0, cancel, acquired, releasing};
+    enum notify_type {prepare=0, cancel, acquired, releasing, destroy};
     enum itt_domain_enum { ITT_DOMAIN_FLOW=0, ITT_DOMAIN_MAIN=1, ITT_DOMAIN_ALGO=2, ITT_NUM_DOMAINS };
 } // namespace d1
 
@@ -118,6 +118,15 @@ namespace d1 {
         delete[] name;
 #endif // WIN
     }
+
+// Distinguish notifications on task for reducing overheads
+#if TBB_USE_PROFILING_TOOLS == 2
+    inline void call_itt_task_notify(d1::notify_type t, void *ptr) {
+        r1::call_itt_notify((int)t, ptr);
+    }
+#else
+    inline void call_itt_task_notify(d1::notify_type, void *) {}
+#endif // TBB_USE_PROFILING_TOOLS 
 
     inline void call_itt_notify(d1::notify_type t, void *ptr) {
         r1::call_itt_notify((int)t, ptr);
@@ -179,7 +188,10 @@ namespace d1 {
     }
 #else
     inline void create_itt_sync(void* /*ptr*/, const char* /*objtype*/, const char* /*objname*/) {}
+
     inline void call_itt_notify(notify_type /*t*/, void* /*ptr*/) {}
+
+    inline void call_itt_task_notify(notify_type /*t*/, void* /*ptr*/) {}
 
     inline void itt_make_task_group( itt_domain_enum /*domain*/, void* /*group*/, unsigned long long /*group_extra*/,
                                         void* /*parent*/, unsigned long long /*parent_extra*/, string_resource_index /*name_index*/ ) {}
@@ -206,13 +218,13 @@ namespace d1 {
 
     template <typename T>
     inline void store_with_release_itt(std::atomic<T>& dst, T src) {
-        call_itt_notify(releasing, &dst);
+        call_itt_task_notify(releasing, &dst);
         dst.store(src, std::memory_order_release);
     }
 
     template <typename T>
     inline T load_with_acquire_itt(const std::atomic<T>& src) {
-        call_itt_notify(acquired, &src);
+        call_itt_task_notify(acquired, &src);
         return src.load(std::memory_order_acquire);
     }
 } // namespace d1

@@ -66,8 +66,6 @@ std::atomic<intptr_t> g_FedTasksCount{}; // number of tasks added by parallel_fo
 std::atomic<intptr_t> g_OuterParCalls{};  // number of actual invocations of the outer construct executed.
 context_specific_counter g_TGCCancelled{};  // Number of times a task sees its group cancelled at start
 
-inline intptr_t Existed () { return INT_MAX; }
-
 #include "common/exception_handling.h"
 
 /********************************

@@ -14,6 +14,12 @@
     limitations under the License.
 */
 
+#if _MSC_VER && !defined(__INTEL_COMPILER)
+    // Workaround for vs2015 and warning name was longer than the compiler limit (4096).
+    #pragma warning (push)
+    #pragma warning (disable: 4503)
+#endif
+
 #include <common/test.h>
 #include <common/utils.h>
 #include <common/range_based_for_support.h>
@@ -31,7 +37,6 @@
 
 //! \file test_concurrent_hash_map.cpp
 //! \brief Test for [containers.concurrent_hash_map containers.tbb_hash_compare] specification
-
 
 void TestRangeBasedFor(){
     using namespace range_based_for_support_tests;
@@ -594,3 +599,7 @@ TEST_CASE("swap with NotAlwaysEqualAllocator allocators"){
     CHECK(map2.empty());
     CHECK(map1 == map3);
 }
+
+#if _MSC_VER && !defined(__INTEL_COMPILER)
+    #pragma warning (pop)
+#endif // warning 4503 is back

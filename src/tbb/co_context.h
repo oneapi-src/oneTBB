@@ -119,9 +119,9 @@ public:
 };
 
 #if _WIN32 || _WIN64
-/* [[noreturn]] */ void __stdcall co_local_wait_for_all(void* arg);
+/* [[noreturn]] */ void __stdcall co_local_wait_for_all(void* arg) noexcept;
 #else
-/* [[noreturn]] */ void co_local_wait_for_all(void* arg);
+/* [[noreturn]] */ void co_local_wait_for_all(void* arg) noexcept;
 #endif
 
 #if _WIN32 || _WIN64

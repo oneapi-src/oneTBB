@@ -18,6 +18,7 @@
 #define __TBB_test_common_concurrent_ordered_common_H
 
 #include "common/concurrent_associative_common.h"
+#include "test_comparisons.h"
 
 template<typename MyTable>
 inline void CheckContainerAllocator(MyTable &table, size_t expected_allocs, size_t expected_frees, bool exact) {
@@ -300,6 +301,63 @@ void check_heterogeneous_bound_functions() {
         REQUIRE_MESSAGE(c.lower_bound(k) == c.lower_bound(key), "Incorrect heterogeneous lower_bound return value");
         REQUIRE_MESSAGE(c.upper_bound(k) == c.upper_bound(key), "Incorrect heterogeneous upper_bound return value");
     }
+}
+
+template <typename Container>
+void test_comparisons_basic() {
+    using comparisons_testing::testEqualityAndLessComparisons;
+    Container c1, c2;
+    testEqualityAndLessComparisons</*ExpectEqual = */true, /*ExpectLess = */false>(c1, c2);
+
+    c1.insert(Value<Container>::make(1));
+    testEqualityAndLessComparisons</*ExpectEqual = */false, /*ExpectLess = */false>(c1, c2);
+
+    c2.insert(Value<Container>::make(1));
+    testEqualityAndLessComparisons</*ExpectEqual = */true, /*ExpectLess = */false>(c1, c2);
+
+    c2.insert(Value<Container>::make(2));
+    testEqualityAndLessComparisons</*ExpectEqual = */false, /*ExpectLess = */true>(c1, c2);
+
+    c1.clear();
+    c2.clear();
+
+    testEqualityAndLessComparisons</*ExpectEqual = */true, /*ExpectLess = */false>(c1, c2);
+}
+
+template <typename TwoWayComparableContainerType>
+void test_two_way_comparable_container() {
+    TwoWayComparableContainerType c1, c2;
+    c1.insert(Value<TwoWayComparableContainerType>::make(1));
+    c2.insert(Value<TwoWayComparableContainerType>::make(1));
+    comparisons_testing::TwoWayComparable::reset();
+    REQUIRE_MESSAGE(!(c1 < c2), "Incorrect operator < result");
+    comparisons_testing::check_two_way_comparison();
+    REQUIRE_MESSAGE(!(c1 > c2), "Incorrect operator > result");
+    comparisons_testing::check_two_way_comparison();
+    REQUIRE_MESSAGE(c1 <= c2, "Incorrect operator <= result");
+    comparisons_testing::check_two_way_comparison();
+    REQUIRE_MESSAGE(c1 >= c2, "Incorrect operator >= result");
+    comparisons_testing::check_two_way_comparison();
+}
+
+template <template <typename...> class ContainerType>
+void test_map_comparisons() {
+    using integral_container = ContainerType<int, int>;
+    using two_way_comparable_container = ContainerType<comparisons_testing::TwoWayComparable,
+                                                       comparisons_testing::TwoWayComparable>;
+    test_comparisons_basic<integral_container>();
+    test_comparisons_basic<two_way_comparable_container>();
+    test_two_way_comparable_container<two_way_comparable_container>();
+}
+
+template <template <typename...> class ContainerType>
+void test_set_comparisons() {
+    using integral_container = ContainerType<int>;
+    using two_way_comparable_container = ContainerType<comparisons_testing::TwoWayComparable>;
+
+    test_comparisons_basic<integral_container>();
+    test_comparisons_basic<two_way_comparable_container>();
+    test_two_way_comparable_container<two_way_comparable_container>();
 }
 
 #endif // __TBB_test_common_concurrent_ordered_common_H

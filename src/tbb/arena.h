@@ -445,7 +445,6 @@ void arena::advertise_new_work() {
         atomic_fence(std::memory_order_seq_cst);
     }
     else if( work_type == wakeup ) {
-        __TBB_ASSERT(my_max_num_workers!=0, "Unexpected worker wakeup request");
         atomic_fence(std::memory_order_seq_cst);
     }
     // Double-check idiom that, in case of spawning, is deliberately sloppy about memory fences.

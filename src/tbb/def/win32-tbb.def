@@ -118,6 +118,8 @@ EXPORTS
 ?create@r1@detail@tbb@@YAXAAVglobal_control@d1@23@@Z
 ?destroy@r1@detail@tbb@@YAXAAVglobal_control@d1@23@@Z
 ?global_control_active_value@r1@detail@tbb@@YAIH@Z
+?get@r1@detail@tbb@@YAXAAVtask_scheduler_handle@d1@23@@Z
+?finalize@r1@detail@tbb@@YA_NAAVtask_scheduler_handle@d1@23@H@Z
 
 ; Parallel pipeline (parallel_pipeline.cpp)
 ?parallel_pipeline@r1@detail@tbb@@YAXAAVtask_group_context@d1@23@IABVfilter_node@523@@Z

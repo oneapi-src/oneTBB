@@ -542,6 +542,11 @@ private:
             spin_wait_while_eq(embedded_table[i], segment_type(nullptr));
         }
 
+        // It is possible that the table was extend by a thread allocating first_block, need to check this.
+        if (this->get_table() != embedded_table) {
+            return nullptr;
+        }
+
         // Allocate long segment table and fill with null pointers
         segment_table_type new_segment_table = segment_table_allocator_traits::allocate(base_type::get_allocator(), this->pointers_per_long_table);
         // Copy segment pointers from the embedded table
@@ -552,7 +557,6 @@ private:
         for (size_type segment_index = this->pointers_per_embedded_table; segment_index < this->pointers_per_long_table; ++segment_index) {
             segment_table_allocator_traits::construct(base_type::get_allocator(), &new_segment_table[segment_index], nullptr);
         }
-
 
         return new_segment_table;
     }
@@ -588,6 +592,11 @@ private:
                 this->extend_table_if_necessary(table, 0, first_block_size);
                 for (size_type i = 1; i < first_block; ++i) {
                     table[i].store(new_segment, std::memory_order_release);
+                }
+
+                // Other threads can wait on a snapshot of an embedded table, need to fill it.
+                for (size_type i = 1; i < first_block && i < this->pointers_per_embedded_table; ++i) {
+                    this->my_embedded_table[i].store(new_segment, std::memory_order_release);
                 }
             } else if (new_segment != this->segment_allocation_failure_tag) {
                 // Deallocate the memory
@@ -910,7 +919,7 @@ private:
         this->my_size.store(0, std::memory_order_relaxed);
     }
 
-    inline static bool incompact_predicate( size_type size ) {
+    static bool incompact_predicate( size_type size ) {
         // memory page size
         const size_type page_size = 4096;
         return size < page_size || ((size - 1) % page_size < page_size / 2 && size < page_size * 128);

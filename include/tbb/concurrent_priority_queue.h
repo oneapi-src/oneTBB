@@ -251,6 +251,7 @@ private:
     }; // class functor
 
     void handle_operations( cpq_operation* op_list ) {
+        call_itt_notify(acquired, this);
         cpq_operation* tmp, *pop_list = nullptr;
         __TBB_ASSERT(mark == data.size(), NULL);
 
@@ -336,6 +337,7 @@ private:
         // batch of operations
         if (mark < data.size()) heapify();
         __TBB_ASSERT(mark == data.size(), NULL);
+        call_itt_notify(releasing, this);
     }
 
     // Merge unsorted elements into heap

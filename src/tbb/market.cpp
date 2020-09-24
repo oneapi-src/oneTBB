@@ -85,12 +85,11 @@ static unsigned calc_workers_soft_limit(unsigned workers_soft_limit, unsigned wo
     return workers_soft_limit;
 }
 
-market& market::global_market ( bool is_public, unsigned workers_requested, std::size_t stack_size ) {
-    global_market_mutex_type::scoped_lock lock( theMarketMutex );
+bool market::add_ref_unsafe( global_market_mutex_type::scoped_lock& lock, bool is_public, unsigned workers_requested, std::size_t stack_size ) {
     market *m = theMarket;
     if( m ) {
         ++m->my_ref_count;
-        const unsigned old_public_count = is_public? m->my_public_ref_count++ : /*any non-zero value*/1;
+        const unsigned old_public_count = is_public ? m->my_public_ref_count++ : /*any non-zero value*/1;
         lock.release();
         if( old_public_count==0 )
             set_active_num_workers( calc_workers_soft_limit(workers_requested, m->my_num_workers_hard_limit) );
@@ -114,10 +113,15 @@ market& market::global_market ( bool is_public, unsigned workers_requested, std:
         }
         if( m->my_stack_size < stack_size )
             runtime_warning( "Thread stack size has been already set to %u. "
-                             "The request for larger stack (%u) cannot be satisfied.\n",
-                              m->my_stack_size, stack_size );
+                             "The request for larger stack (%u) cannot be satisfied.\n", m->my_stack_size, stack_size );
+        return true;
     }
-    else {
+    return false;
+}
+
+market& market::global_market(bool is_public, unsigned workers_requested, std::size_t stack_size) {
+    global_market_mutex_type::scoped_lock lock( theMarketMutex );
+    if( !market::add_ref_unsafe(lock, is_public, workers_requested, stack_size) ) {
         // TODO: A lot is done under theMarketMutex locked. Can anything be moved out?
         if( stack_size == 0 )
             stack_size = global_control::active_value(global_control::thread_stack_size);
@@ -140,16 +144,22 @@ market& market::global_market ( bool is_public, unsigned workers_requested, std:
         void* storage = cache_aligned_allocate(size);
         std::memset( storage, 0, size );
         // Initialize and publish global market
-        m = new (storage) market( workers_soft_limit, workers_hard_limit, stack_size );
+        market* m = new (storage) market( workers_soft_limit, workers_hard_limit, stack_size );
         if( is_public )
             m->my_public_ref_count.store(1, std::memory_order_relaxed);
+#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
+        if (market::is_lifetime_control_present()) {
+            ++m->my_public_ref_count;
+            ++m->my_ref_count;
+        }
+#endif // __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
         theMarket = m;
         // This check relies on the fact that for shared RML default_concurrency==max_concurrency
         if ( !governor::UsePrivateRML && m->my_server->default_concurrency() < workers_soft_limit )
             runtime_warning( "RML might limit the number of workers to %u while %u is requested.\n"
                     , m->my_server->default_concurrency(), workers_soft_limit );
     }
-    return *m;
+    return *theMarket;
 }
 
 void market::destroy () {
@@ -214,7 +224,7 @@ int market::update_workers_request() {
         my_num_workers_requested = 1;
     }
 #endif
-    update_allotment();
+    update_allotment(my_num_workers_requested);
     return my_num_workers_requested - old_request;
 }
 
@@ -511,7 +521,12 @@ void market::adjust_demand ( arena& a, int delta ) {
     my_total_demand += delta;
     my_priority_level_demand[a.my_priority_level] += delta;
     unsigned effective_soft_limit = my_num_workers_soft_limit.load(std::memory_order_relaxed);
-    update_allotment();
+    if (my_mandatory_num_requested > 0) {
+        __TBB_ASSERT(effective_soft_limit == 0, NULL);
+        effective_soft_limit = 1;
+    }
+
+    update_allotment(effective_soft_limit);
     if ( delta > 0 ) {
         // can't overflow soft_limit, but remember values request by arenas in
         // my_total_demand to not prematurely release workers to RML

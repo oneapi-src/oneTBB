@@ -36,6 +36,16 @@
     #define __TBB_EXPORTED_METHOD
 #endif
 
+#if defined(_MSVC_LANG)
+    #define __TBB_LANG _MSVC_LANG
+#else
+    #define __TBB_LANG __cplusplus
+#endif // _MSVC_LANG
+
+#define __TBB_CPP14_PRESENT (__TBB_LANG >= 201402L)
+#define __TBB_CPP17_PRESENT (__TBB_LANG >= 201703L)
+#define __TBB_CPP20_PRESENT (__TBB_LANG >= 202002L)
+
 #if __INTEL_COMPILER || _MSC_VER
     #define __TBB_NOINLINE(decl) __declspec(noinline) decl
 #elif __GNUC__
@@ -123,7 +133,11 @@
 #endif // TBB_USE_ASSERT
 
 #ifndef TBB_USE_PROFILING_TOOLS
-    #define TBB_USE_PROFILING_TOOLS TBB_USE_DEBUG
+#if TBB_USE_DEBUG
+    #define TBB_USE_PROFILING_TOOLS 2
+#else // TBB_USE_DEBUG
+    #define TBB_USE_PROFILING_TOOLS 0
+#endif // TBB_USE_DEBUG
 #endif // TBB_USE_PROFILING_TOOLS
 
 // Exceptions support cases
@@ -201,24 +215,24 @@
 
 /** Library features presence macros **/
 
-#define __TBB_CPP14_INTEGER_SEQUENCE_PRESENT       (__cplusplus >= 201402L)
-#define __TBB_CPP17_INVOKE_RESULT_PRESENT          (__cplusplus >= 201703L)
+#define __TBB_CPP14_INTEGER_SEQUENCE_PRESENT       (__TBB_LANG >= 201402L)
+#define __TBB_CPP17_INVOKE_RESULT_PRESENT          (__TBB_LANG >= 201703L)
 
 #if __INTEL_COMPILER && (!_MSC_VER || __INTEL_CXX11_MOVE__)
-    #define __TBB_CPP14_VARIABLE_TEMPLATES_PRESENT (__cplusplus >= 201402L)
-    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT   (__INTEL_COMPILER > 2021 && __cplusplus >= 201703L)
+    #define __TBB_CPP14_VARIABLE_TEMPLATES_PRESENT (__TBB_LANG >= 201402L)
+    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT   (__INTEL_COMPILER > 2021 && __TBB_LANG >= 201703L)
 #elif __clang__
     #define __TBB_CPP14_VARIABLE_TEMPLATES_PRESENT (__has_feature(cxx_variable_templates))
     #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT   (__has_feature(__cpp_deduction_guides))
 #elif __GNUC__
-    #define __TBB_CPP14_VARIABLE_TEMPLATES_PRESENT (__cplusplus >= 201402L && __TBB_GCC_VERSION >= 50000)
+    #define __TBB_CPP14_VARIABLE_TEMPLATES_PRESENT (__TBB_LANG >= 201402L && __TBB_GCC_VERSION >= 50000)
     #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT   (__cpp_deduction_guides >= 201606L)
 #elif _MSC_VER
     #define __TBB_CPP14_VARIABLE_TEMPLATES_PRESENT (_MSC_FULL_VER >= 190023918 && (!__INTEL_COMPILER || __INTEL_COMPILER >= 1700))
-    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT   (_MSVC_LANG >= 201703L && _MSC_VER >= 1914)
+    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT   (__TBB_LANG >= 201703L && _MSC_VER >= 1914)
 #else
-    #define __TBB_CPP14_VARIABLE_TEMPLATES_PRESENT (__cplusplus >= 201402L)
-    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT   (__cplusplus >= 201703L)
+    #define __TBB_CPP14_VARIABLE_TEMPLATES_PRESENT (__TBB_LANG >= 201402L)
+    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT   (__TBB_LANG >= 201703L)
 #endif
 
 // GCC4.8 on RHEL7 does not support std::get_new_handler
@@ -226,12 +240,12 @@
 // GCC4.8 on RHEL7 does not support std::is_trivially_copyable
 #define __TBB_CPP11_TYPE_PROPERTIES_PRESENT             (_LIBCPP_VERSION || _MSC_VER >= 1700 || (__TBB_GLIBCXX_VERSION >= 50000 && __GXX_EXPERIMENTAL_CXX0X__))
 
-#define __TBB_CPP17_MEMORY_RESOURCE_PRESENT             (_MSC_VER >= 1913 && (_MSVC_LANG > 201402L || __cplusplus > 201402L) || \
-                                                        __GLIBCXX__ && __GNUC__ >= 9 && __cplusplus >= 201703L)
+#define __TBB_CPP17_MEMORY_RESOURCE_PRESENT             (_MSC_VER >= 1913 && (__TBB_LANG > 201402L) || \
+                                                        __TBB_GLIBCXX_VERSION >= 90000 && __TBB_LANG >= 201703L)
 #define __TBB_CPP17_HW_INTERFERENCE_SIZE_PRESENT        (_MSC_VER >= 1911)
-#define __TBB_CPP17_LOGICAL_OPERATIONS_PRESENT          (__cplusplus >= 201703L)
-#define __TBB_CPP17_ALLOCATOR_IS_ALWAYS_EQUAL_PRESENT   (__cplusplus >= 201703L)
-#define __TBB_CPP17_IS_SWAPPABLE_PRESENT                (__cplusplus >= 201703L)
+#define __TBB_CPP17_LOGICAL_OPERATIONS_PRESENT          (__TBB_LANG >= 201703L)
+#define __TBB_CPP17_ALLOCATOR_IS_ALWAYS_EQUAL_PRESENT   (__TBB_LANG >= 201703L)
+#define __TBB_CPP17_IS_SWAPPABLE_PRESENT                (__TBB_LANG >= 201703L)
 
 #define __TBB_RESUMABLE_TASKS                           (!__TBB_WIN8UI_SUPPORT && !__ANDROID__)
 
@@ -265,7 +279,7 @@
     #define __TBB_GCC_WARNING_IGNORED_ATTRIBUTES_PRESENT (__TBB_GCC_VERSION >= 60100)
 #endif
 
-#define __TBB_CPP17_FALLTHROUGH_PRESENT (__cplusplus >= 201703L)
+#define __TBB_CPP17_FALLTHROUGH_PRESENT (__TBB_LANG >= 201703L)
 #define __TBB_FALLTHROUGH_PRESENT       (__TBB_GCC_VERSION >= 70000 && !__INTEL_COMPILER)
 
 #if __TBB_CPP17_FALLTHROUGH_PRESENT
@@ -292,31 +306,33 @@
     #define __TBBMALLOC_NO_IMPLICIT_LINKAGE 1
 #endif
 
-#ifndef __TBB_TASK_GROUP_CONTEXT
-    #define __TBB_TASK_GROUP_CONTEXT 1
-#endif /* __TBB_TASK_GROUP_CONTEXT */
+#if (__TBB_BUILD || __TBBMALLOC_BUILD || __TBBMALLOCPROXY_BUILD || __TBBBIND_BUILD) && !defined(__TBB_NO_IMPLICIT_LINKAGE)
+    #define __TBB_NO_IMPLICIT_LINKAGE 1
+#endif
+
+#if _MSC_VER
+    #if !__TBB_NO_IMPLICIT_LINKAGE
+        #ifdef _DEBUG
+            #pragma comment(lib, "tbb_debug.lib")
+        #else
+            #pragma comment(lib, "tbb.lib")
+        #endif
+    #endif
+#endif
 
 #ifndef __TBB_SCHEDULER_OBSERVER
     #define __TBB_SCHEDULER_OBSERVER 1
 #endif /* __TBB_SCHEDULER_OBSERVER */
 
 #ifndef __TBB_FP_CONTEXT
-    #define __TBB_FP_CONTEXT __TBB_TASK_GROUP_CONTEXT
+    #define __TBB_FP_CONTEXT 1
 #endif /* __TBB_FP_CONTEXT */
-
-#if __TBB_FP_CONTEXT && !__TBB_TASK_GROUP_CONTEXT
-    #error __TBB_FP_CONTEXT requires __TBB_TASK_GROUP_CONTEXT to be enabled
-#endif
 
 #define __TBB_RECYCLE_TO_ENQUEUE __TBB_BUILD // keep non-official
 
 #ifndef __TBB_ARENA_OBSERVER
     #define __TBB_ARENA_OBSERVER __TBB_SCHEDULER_OBSERVER
 #endif /* __TBB_ARENA_OBSERVER */
-
-#if TBB_USE_EXCEPTIONS && !__TBB_TASK_GROUP_CONTEXT
-    #error TBB_USE_EXCEPTIONS requires __TBB_TASK_GROUP_CONTEXT to be enabled
-#endif
 
 #if TBB_PREVIEW_NUMA_SUPPORT || __TBB_BUILD
     #define __TBB_NUMA_SUPPORT 1
@@ -351,7 +367,7 @@
 // instantiation site, which is too late for suppression of the corresponding messages for internal
 // stuff.
 #if !defined(__INTEL_COMPILER) && (!defined(TBB_SUPPRESS_DEPRECATED_MESSAGES) || (TBB_SUPPRESS_DEPRECATED_MESSAGES == 0))
-    #if (__cplusplus >= 201402L)
+    #if (__TBB_LANG >= 201402L)
         #define __TBB_DEPRECATED [[deprecated]]
         #define __TBB_DEPRECATED_MSG(msg) [[deprecated(msg)]]
     #elif _MSC_VER
@@ -379,7 +395,7 @@
     #define __TBB_DEPRECATED_VERBOSE_MSG(msg)
 #endif // (TBB_SUPPRESS_DEPRECATED_MESSAGES == 0)
 
-#if (!defined(TBB_SUPPRESS_DEPRECATED_MESSAGES) || (TBB_SUPPRESS_DEPRECATED_MESSAGES == 0)) && !(__cplusplus >= 201103L || _MSC_VER >= 1900)
+#if (!defined(TBB_SUPPRESS_DEPRECATED_MESSAGES) || (TBB_SUPPRESS_DEPRECATED_MESSAGES == 0)) && !(__TBB_LANG >= 201103L || _MSC_VER >= 1900)
     #pragma message("TBB Warning: Support for C++98/03 is deprecated. Please use the compiler that supports C++11 features at least.")
 #endif
 
@@ -402,7 +418,7 @@
 **/
 
 // Some STL containers not support allocator traits in old GCC versions
-#if __GXX_EXPERIMENTAL_CXX0X__ && __TBB_GLIBCXX_VERSION <= 50000
+#if __GXX_EXPERIMENTAL_CXX0X__ && __TBB_GLIBCXX_VERSION <= 50301
     #define TBB_ALLOCATOR_TRAITS_BROKEN 1
 #endif
 

@@ -210,8 +210,8 @@ class task_arena : public task_arena_base {
             finalize(ed);
             return nullptr;
         }
-        task* cancel(execution_data& ed) override {
-            finalize(ed);
+        task* cancel(execution_data&) override {
+            __TBB_ASSERT_RELEASE(false, "Unhandled exception from enqueue task is caught");
             return nullptr;
         }
     public:
@@ -397,6 +397,7 @@ public:
 
     friend void submit(task& t, task_arena& ta, task_group_context& ctx, bool as_critical) {
         __TBB_ASSERT(ta.is_active(), nullptr);
+        call_itt_task_notify(releasing, &t);
         r1::submit(t, ctx, ta.my_arena, as_critical ? 1 : 0);
     }
 };

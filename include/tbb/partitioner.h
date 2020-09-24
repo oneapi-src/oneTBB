@@ -161,6 +161,7 @@ template<typename TreeNodeType>
 void fold_tree(node* n, const execution_data& ed) {
     for (;;) {
         __TBB_ASSERT(n->m_ref_count.load(std::memory_order_relaxed) > 0, "The refcount must be positive.");
+        call_itt_task_notify(releasing, n);
         if (--n->m_ref_count > 0) {
             return;
         }
@@ -169,6 +170,7 @@ void fold_tree(node* n, const execution_data& ed) {
             break;
         };
 
+        call_itt_task_notify(acquired, n);
         TreeNodeType* self = static_cast<TreeNodeType*>(n);
         self->join(ed.context);
         self->m_allocator.delete_object(self, ed);

@@ -18,6 +18,7 @@
 
 #include "common/parallel_reduce_common.h"
 #include "common/cpu_usertime.h"
+#include "common/exception_handling.h"
 
 //! \file test_parallel_reduce.cpp
 //! \brief Test for [algorithms.parallel_reduce algorithms.parallel_deterministic_reduce] specification
@@ -77,6 +78,185 @@ private:
 const ValueType ParallelSumTester::count = 1000000;
 const ValueType ParallelSumTester::expected = count * (count + 1) / 2;
 
+namespace test_cancellation {
+
+struct ReduceToCancel {
+    std::size_t operator()( const tbb::blocked_range<std::size_t>&, std::size_t ) const {
+        ++g_CurExecuted;
+        Cancellator::WaitUntilReady();
+        return 1;
+    }
+}; // struct ReduceToCancel
+
+struct JoinToCancel {
+    std::size_t operator()( std::size_t, std::size_t ) const {
+        ++g_CurExecuted;
+        Cancellator::WaitUntilReady();
+        return 1;
+    }
+}; // struct Join
+
+struct ReduceFunctorToCancel {
+    std::size_t result;
+
+    ReduceFunctorToCancel() : result(0) {}
+    ReduceFunctorToCancel( ReduceFunctorToCancel&, tbb::split ) : result(0) {}
+
+    void operator()( const tbb::blocked_range<std::size_t>& br ) {
+        result = ReduceToCancel{}(br, result);
+    }
+
+    void join( ReduceFunctorToCancel& rhs ) {
+        result = JoinToCancel{}(result, rhs.result);
+    }
+}; // struct ReduceFunctorToCancel
+
+static constexpr std::size_t buffer_test_size = 1024;
+static constexpr std::size_t maxParallelReduceRunnerMode = 9;
+
+template <std::size_t Mode>
+class ParallelReduceRunner {
+    tbb::task_group_context& my_ctx;
+
+    static_assert(Mode >= 0 && Mode <= maxParallelReduceRunnerMode, "Incorrect mode for ParallelReduceTask");
+
+    template <typename... Args>
+    void run_parallel_reduce( Args&&... args ) const {
+        switch(Mode % 5) {
+            case 0 : {
+                tbb::parallel_reduce(std::forward<Args>(args)..., my_ctx);
+                break;
+            }
+            case 1 : {
+                tbb::parallel_reduce(std::forward<Args>(args)..., tbb::simple_partitioner{}, my_ctx);
+                break;
+            }
+            case 2 : {
+                tbb::parallel_reduce(std::forward<Args>(args)..., tbb::auto_partitioner{}, my_ctx);
+                break;
+            }
+            case 3 : {
+                tbb::parallel_reduce(std::forward<Args>(args)..., tbb::static_partitioner{}, my_ctx);
+                break;
+            }
+            case 4 : {
+                tbb::affinity_partitioner aff;
+                tbb::parallel_reduce(std::forward<Args>(args)..., aff, my_ctx);
+                break;
+            }
+        }
+    }
+
+public:
+    ParallelReduceRunner( tbb::task_group_context& ctx )
+        : my_ctx(ctx) {}
+
+    void operator()() const {
+        tbb::blocked_range<std::size_t> br(0, buffer_test_size);
+        if (Mode < 5) {
+            ReduceFunctorToCancel functor;
+            run_parallel_reduce(br, functor);
+        } else {
+            run_parallel_reduce(br, 0, ReduceToCancel{}, JoinToCancel{});
+        }
+    }
+}; // class ParallelReduceRunner
+
+static constexpr std::size_t maxParallelDeterministicReduceRunnerMode = 5;
+
+// TODO: unify with ParallelReduceRunner
+template <std::size_t Mode>
+class ParallelDeterministicReduceRunner {
+    tbb::task_group_context& my_ctx;
+
+    static_assert(Mode >= 0 && Mode <= maxParallelDeterministicReduceRunnerMode, "Incorrect Mode for deterministic_reduce task");
+
+    template <typename... Args>
+    void run_parallel_deterministic_reduce( Args&&... args ) const {
+        switch(Mode % 3) {
+            case 0 : {
+                tbb::parallel_deterministic_reduce(std::forward<Args>(args)..., my_ctx);
+                break;
+            }
+            case 1 : {
+                tbb::parallel_deterministic_reduce(std::forward<Args>(args)..., tbb::simple_partitioner{}, my_ctx);
+                break;
+            }
+            case 2 : {
+                tbb::parallel_deterministic_reduce(std::forward<Args>(args)..., tbb::static_partitioner{}, my_ctx);
+                break;
+            }
+        }
+    }
+
+public:
+    ParallelDeterministicReduceRunner( tbb::task_group_context& ctx )
+        : my_ctx(ctx) {}
+
+    void operator()() const {
+        tbb::blocked_range<std::size_t> br(0, buffer_test_size);
+        if (Mode < 3) {
+            ReduceFunctorToCancel functor;
+            run_parallel_deterministic_reduce(br, functor);
+        } else {
+            run_parallel_deterministic_reduce(br, 0, ReduceToCancel{}, JoinToCancel{});
+        }
+    }
+}; // class ParallelDeterministicReduceRunner
+
+template <std::size_t Mode>
+void run_parallel_reduce_cancellation_test() {
+    for ( auto concurrency_level : utils::concurrency_range() ) {
+        if (concurrency_level < 2) continue;
+
+        tbb::global_control gc(tbb::global_control::max_allowed_parallelism, concurrency_level);
+        ResetEhGlobals();
+        RunCancellationTest<ParallelReduceRunner<Mode>, Cancellator>();
+    }
+}
+
+template <std::size_t Mode>
+void run_parallel_deterministic_reduce_cancellation_test() {
+    for ( auto concurrency_level : utils::concurrency_range() ) {
+        if (concurrency_level < 2) continue;
+
+        tbb::global_control gc(tbb::global_control::max_allowed_parallelism, concurrency_level);
+        ResetEhGlobals();
+        RunCancellationTest<ParallelDeterministicReduceRunner<Mode>, Cancellator>();
+    }
+}
+
+template <std::size_t Mode>
+struct ParallelReduceTestRunner {
+    static void run() {
+        run_parallel_reduce_cancellation_test<Mode>();
+        ParallelReduceTestRunner<Mode + 1>::run();
+    }
+}; // struct ParallelReduceTestRunner
+
+template <>
+struct ParallelReduceTestRunner<maxParallelReduceRunnerMode> {
+    static void run() {
+        run_parallel_reduce_cancellation_test<maxParallelReduceRunnerMode>();
+    }
+}; // struct ParallelReduceTestRunner<maxParallelReduceRunnerMode>
+
+template <std::size_t Mode>
+struct ParallelDeterministicReduceTestRunner {
+    static void run() {
+        run_parallel_deterministic_reduce_cancellation_test<Mode>();
+        ParallelDeterministicReduceTestRunner<Mode + 1>::run();
+    }
+}; // struct ParallelDeterministicReduceTestRunner
+
+template <>
+struct ParallelDeterministicReduceTestRunner<maxParallelDeterministicReduceRunnerMode> {
+    static void run() {
+        run_parallel_deterministic_reduce_cancellation_test<maxParallelDeterministicReduceRunnerMode>();
+    }
+}; // struct ParallelDeterministicReduceTestRunner<maxParallelDeterministicReduceRunnerMode>
+
+} // namespace test_cancellation
 
 //! Test parallel summation correctness
 //! \brief \ref stress
@@ -272,4 +452,16 @@ TEST_CASE("Test Unsupported Partitioners") {
         },
         ap
     );
+}
+
+//! Testing tbb::parallel_reduce with tbb::task_group_context
+//! \brief \ref interface \ref error_guessing
+TEST_CASE("cancellation test for tbb::parallel_reduce") {
+    test_cancellation::ParallelReduceTestRunner</*First mode = */0>::run();
+}
+
+//! Testing tbb::parallel_deterministic_reduce with tbb::task_group_context
+//! \brief \ref interface \ref error_guessing
+TEST_CASE("cancellation test for tbb::parallel_deterministic_reduce") {
+    test_cancellation::ParallelDeterministicReduceTestRunner</*First mode = */0>::run();
 }

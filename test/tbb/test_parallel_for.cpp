@@ -22,10 +22,12 @@
 #include "common/vector_types.h"
 #include "common/cpu_usertime.h"
 #include "common/spin_barrier.h"
+#include "common/exception_handling.h"
 
 #include "tbb/tick_count.h"
 #include "tbb/blocked_range.h"
 #include "tbb/parallel_for.h"
+#include "tbb/global_control.h"
 #include "tbb/test_partitioner.h"
 
 #include <cstdio>
@@ -184,6 +186,115 @@ void test() {
 
 } // namespace various_range_implementations
 
+namespace test_cancellation {
+
+struct FunctorToCancel {
+    static std::atomic<bool> need_to_wait;
+
+    void operator()( std::size_t ) const {
+        ++g_CurExecuted;
+        if (need_to_wait) {
+            need_to_wait = Cancellator::WaitUntilReady();
+        }
+    }
+
+    void operator()( const tbb::blocked_range<std::size_t>& ) const {
+        ++g_CurExecuted;
+        Cancellator::WaitUntilReady();
+    }
+
+    static void reset() { need_to_wait = true; }
+}; // struct FunctorToCancel
+
+std::atomic<bool> FunctorToCancel::need_to_wait(true);
+
+static constexpr std::size_t buffer_test_size = 1024;
+static constexpr std::size_t maxParallelForRunnerMode = 14;
+
+template <std::size_t Mode>
+class ParallelForRunner {
+    tbb::task_group_context& my_ctx;
+    const std::size_t worker_task_step = 1;
+
+    static_assert(Mode >= 0 && Mode <= maxParallelForRunnerMode, "Incorrect mode for ParallelForRunner");
+
+    template <typename Partitioner, typename... Args>
+    void run_parallel_for( Args&&... args ) const {
+        Partitioner part;
+        tbb::parallel_for(std::forward<Args>(args)..., part, my_ctx);
+    }
+
+    template <typename... Args>
+    void run_overload( Args&&... args ) const {
+
+        switch(Mode % 5) {
+            case 0 : {
+                tbb::parallel_for(std::forward<Args>(args)..., my_ctx);
+                break;
+            }
+            case 1 : {
+                run_parallel_for<tbb::simple_partitioner>(std::forward<Args>(args)...);
+                break;
+            }
+            case 2 : {
+                run_parallel_for<tbb::auto_partitioner>(std::forward<Args>(args)...);
+                break;
+            }
+            case 3 : {
+                run_parallel_for<tbb::static_partitioner>(std::forward<Args>(args)...);
+                break;
+            }
+            case 4 : {
+                run_parallel_for<tbb::affinity_partitioner>(std::forward<Args>(args)...);
+                break;
+            }
+        }
+    }
+
+public:
+    ParallelForRunner( tbb::task_group_context& ctx )
+        : my_ctx(ctx) {}
+
+    ~ParallelForRunner() { FunctorToCancel::reset(); }
+
+    void operator()() const {
+        if (Mode < 5) {
+            // Overload with blocked range
+            tbb::blocked_range<std::size_t> br(0, buffer_test_size);
+            run_overload(br, FunctorToCancel{});
+        } else if (Mode < 10) {
+            // Overload with two indexes
+            run_overload(std::size_t(0), buffer_test_size, FunctorToCancel{});
+        } else {
+            // Overload with two indexes and step
+            run_overload(std::size_t(0), buffer_test_size, worker_task_step, FunctorToCancel{});
+        }
+    }
+}; // class ParallelForRunner
+
+template <std::size_t Mode>
+void run_parallel_for_cancellation_test() {
+    // TODO: enable concurrency_range
+    ResetEhGlobals();
+    RunCancellationTest<ParallelForRunner<Mode>, Cancellator>();
+}
+
+template <std::size_t Mode>
+struct ParallelForTestRunner {
+    static void run() {
+        run_parallel_for_cancellation_test<Mode>();
+        ParallelForTestRunner<Mode + 1>::run();
+    }
+}; // struct ParallelForTestRunner
+
+template <>
+struct ParallelForTestRunner<maxParallelForRunnerMode> {
+    static void run() {
+        run_parallel_for_cancellation_test<maxParallelForRunnerMode>();
+    }
+}; // struct ParallelForTestRunner<maxParallelForRunnerMode>
+
+} // namespace test_cancellation
 
 #if TBB_USE_EXCEPTIONS && !__TBB_THROW_ACROSS_MODULE_BOUNDARY_BROKEN && TBB_REVAMP_TODO
 //! Testing exceptions
@@ -197,19 +308,6 @@ TEST_CASE("Exceptions support") {
     }
 }
 #endif /* TBB_USE_EXCEPTIONS && !__TBB_THROW_ACROSS_MODULE_BOUNDARY_BROKEN */
-
-#if __TBB_TASK_GROUP_CONTEXT && TBB_REVAMP_TODO
-//! Testing cancellation
-//! \brief \ref requirement
-TEST_CASE("Cancellation") {
-    for ( int p = MinThread; p <= MaxThread; ++p ) {
-        if ( p > 1 ) {
-            tbb::global_control control(tbb::global_control::max_allowed_parallelism, p);
-            TestCancellation();
-        }
-    }
-}
-#endif /* __TBB_TASK_GROUP_CONTEXT */
 
 //! Testing cancellation
 //! \brief \ref error_guessing
@@ -246,6 +344,12 @@ TEST_CASE("Simple partitioner stability") {
 //! \brief \ref requirement
 TEST_CASE("Various range implementations") {
     various_range_implementations::test();
+}
+
+//! Testing parallel_for with explicit task_group_context
+//! \brief \ref interface \ref error_guessing
+TEST_CASE("Сancellation test for tbb::parallel_for") {
+    test_cancellation::ParallelForTestRunner</*FirstMode = */0>::run();
 }
 
 #if _MSC_VER

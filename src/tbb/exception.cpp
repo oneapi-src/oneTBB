@@ -41,7 +41,26 @@ const char* user_abort::what() const noexcept(true) { return "User-initiated abo
 const char* missing_wait::what() const noexcept(true) { return "wait() was not called on the structured_task_group"; }
 
 #if TBB_USE_EXCEPTIONS
-    #define DO_THROW(exc, init_args) throw exc init_args;
+    template <typename F>
+    /*[[noreturn]]*/ void do_throw_noexcept(F throw_func) noexcept {
+        throw_func();
+    }
+
+    /*[[noreturn]]*/ void do_throw_noexcept(void (*throw_func)()) noexcept {
+        throw_func();
+    }
+
+    bool terminate_on_exception(); // defined in global_control.cpp and ipc_server.cpp
+
+    template <typename F>
+    /*[[noreturn]]*/ void do_throw(F throw_func) {
+        if (terminate_on_exception()) {
+            do_throw_noexcept(throw_func);
+        }
+        throw_func();
+    }
+
+    #define DO_THROW(exc, init_args) do_throw( []{ throw exc init_args; } );
 #else /* !TBB_USE_EXCEPTIONS */
     #define PRINT_ERROR_AND_ABORT(exc_name, msg) \
         std::fprintf (stderr, "Exception %s with message %s would have been thrown, "  \
@@ -53,18 +72,22 @@ const char* missing_wait::what() const noexcept(true) { return "wait() was not c
 
 void throw_exception ( exception_id eid ) {
     switch ( eid ) {
-    case exception_id::bad_alloc: DO_THROW(std::bad_alloc, () );
-    case exception_id::bad_last_alloc: DO_THROW(bad_last_alloc, ());
-    case exception_id::user_abort: DO_THROW( user_abort, () );
-    case exception_id::nonpositive_step: DO_THROW(std::invalid_argument, ("Step must be positive") );
-    case exception_id::out_of_range: DO_THROW(std::out_of_range, ("Index out of requested size range"));
-    case exception_id::reservation_length_error: DO_THROW(std::length_error, ("Attempt to exceed implementation defined length limits"));
-    case exception_id::missing_wait: DO_THROW(missing_wait, ());
-    case exception_id::invalid_load_factor: DO_THROW(std::out_of_range, ("Invalid hash load factor"));
-    case exception_id::invalid_key: DO_THROW(std::out_of_range, ("invalid key"));
-    case exception_id::bad_tagged_msg_cast: DO_THROW(std::runtime_error, ("Illegal tagged_msg cast"));
+    case exception_id::bad_alloc: DO_THROW(std::bad_alloc, ()); break;
+    case exception_id::bad_last_alloc: DO_THROW(bad_last_alloc, ()); break;
+    case exception_id::user_abort: DO_THROW( user_abort, () ); break;
+    case exception_id::nonpositive_step: DO_THROW(std::invalid_argument, ("Step must be positive") ); break;
+    case exception_id::out_of_range: DO_THROW(std::out_of_range, ("Index out of requested size range")); break;
+    case exception_id::reservation_length_error: DO_THROW(std::length_error, ("Attempt to exceed implementation defined length limits")); break;
+    case exception_id::missing_wait: DO_THROW(missing_wait, ()); break;
+    case exception_id::invalid_load_factor: DO_THROW(std::out_of_range, ("Invalid hash load factor")); break;
+    case exception_id::invalid_key: DO_THROW(std::out_of_range, ("invalid key")); break;
+    case exception_id::bad_tagged_msg_cast: DO_THROW(std::runtime_error, ("Illegal tagged_msg cast")); break;
+#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
+    case exception_id::unsafe_wait: DO_THROW(unsafe_wait, ("Unsafe to wait further")); break;
+#endif
     default: __TBB_ASSERT ( false, "Unknown exception ID" );
     }
+    __TBB_ASSERT(false, "Unreachable code");
 }
 
 /* The "what" should be fairly short, not more than about 128 characters.
@@ -75,17 +98,19 @@ void throw_exception ( exception_id eid ) {
    Task.cpp because the throw generates a pathetic lot of code, and ADR wanted
    this large chunk of code to be placed on a cold page. */
 void handle_perror( int error_code, const char* what ) {
-    char buf[256];
-#if defined(_MSC_VER) && _MSC_VER < 1500
- #define snprintf _snprintf
-#endif
-    int written = std::snprintf(buf, sizeof(buf), "%s: %s", what, std::strerror( error_code ));
-    // On overflow, the returned value exceeds sizeof(buf) (for GLIBC) or is negative (for MSVC).
-    __TBB_ASSERT_EX( written>0 && written<(int)sizeof(buf), "Error description is too long" );
-    // Ensure that buffer ends in terminator.
-    buf[sizeof(buf)-1] = 0;
+    const int BUF_SIZE = 255;
+    char buf[BUF_SIZE + 1] = { 0 };
+    std::strncat(buf, what, BUF_SIZE);
+    std::size_t buf_len = std::strlen(buf);
+    if (error_code) {
+        std::strncat(buf, ": ", BUF_SIZE - buf_len);
+        buf_len = std::strlen(buf);
+        std::strncat(buf, std::strerror(error_code), BUF_SIZE - buf_len);
+        buf_len = std::strlen(buf);
+    }
+    __TBB_ASSERT(buf_len <= BUF_SIZE && buf[buf_len] == 0, nullptr);
 #if TBB_USE_EXCEPTIONS
-    throw std::runtime_error(buf);
+    do_throw([buf] { throw std::runtime_error(buf); });
 #else
     PRINT_ERROR_AND_ABORT( "runtime_error", buf);
 #endif /* !TBB_USE_EXCEPTIONS */

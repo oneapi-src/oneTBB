@@ -153,8 +153,7 @@ public:
     }
     //! Construct a random number generator.
     FastRandom( void* unique_ptr ) { init(uintptr_t(unique_ptr)); }
-    FastRandom( uint32_t seed) { init(seed); }
-    FastRandom( uint64_t seed) { init(seed); }
+
     template <typename T>
     void init( T seed ) {
         init(seed,int_to_type<sizeof(seed)>());

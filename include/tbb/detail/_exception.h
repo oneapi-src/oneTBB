@@ -21,6 +21,7 @@
 
 #include <new>
 #include <exception>
+#include <stdexcept>
 
 namespace tbb {
 namespace detail {
@@ -36,6 +37,7 @@ enum class exception_id {
     invalid_load_factor,
     invalid_key,
     bad_tagged_msg_cast,
+    unsafe_wait,
     last_entry
 };
 } // namespace d0
@@ -58,6 +60,14 @@ class missing_wait : public std::exception {
 public:
     const char* __TBB_EXPORTED_METHOD what() const noexcept(true) override;
 };
+
+#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
+//! Exception for impossible finalization of task_sheduler_handle
+class unsafe_wait : public std::runtime_error {
+public:
+    unsafe_wait(const char* msg) : std::runtime_error(msg) {}
+};
+#endif // __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
 
 //! Gathers all throw operators in one place.
 /** Its purpose is to minimize code bloat that can be caused by throw operators

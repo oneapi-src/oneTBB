@@ -76,11 +76,6 @@ private:
 
     static rml::tbb_server* create_rml_server ( rml::tbb_client& );
 
-    //! The internal routine to undo automatic initialization.
-    /** The signature is written with void* so that the routine
-        can be the destructor argument to pthread_key_create. */
-    static void auto_terminate(void* tls);
-
 public:
     static unsigned default_num_threads () {
         // No memory fence required, because at worst each invoking thread calls AvailableHwConcurrency once.
@@ -96,6 +91,11 @@ public:
     /** If necessary creates new instance of arena and/or local scheduler.
         The auto_init argument specifies if the call is due to automatic initialization. **/
     static void init_external_thread();
+
+    //! The routine to undo automatic initialization.
+    /** The signature is written with void* so that the routine
+        can be the destructor argument to pthread_key_create. */
+    static void auto_terminate(void* tls);
 
     //! Obtain the thread-local instance of the thread data.
     /** If the scheduler has not been initialized yet, initialization is done automatically.

@@ -147,24 +147,15 @@ public:
         }
         return do_it;
     }
+
     //! Cancel the wait. Removes the thread from the wait queue if not removed yet.
     void cancel_wait( thread_context& thr );
-
-    //! Wait for a condition to be satisfied with waiting-on context
-    template<typename WaitUntil, typename Context>
-    void wait( WaitUntil until, Context on );
 
     //! Notify one thread about the event
     void notify_one() {atomic_fence( std::memory_order_seq_cst ); notify_one_relaxed();}
 
     //! Notify one thread about the event. Relaxed version.
     void notify_one_relaxed();
-
-    //! Notify all waiting threads of the event
-    void notify_all() {atomic_fence( std::memory_order_seq_cst ); notify_all_relaxed();}
-
-    //! Notify all waiting threads of the event; Relaxed version
-    void notify_all_relaxed();
 
     //! Notify waiting threads of the event that satisfies the given predicate
     template<typename P> void notify( const P& predicate ) {
@@ -187,22 +178,6 @@ private:
     std::atomic<unsigned> epoch;
     thread_context* to_thread_context( waitset_node_t* n ) { return static_cast<thread_context*>(n); }
 };
-
-template<typename WaitUntil, typename Context>
-void concurrent_monitor::wait( WaitUntil until, Context on )
-{
-    bool slept = false;
-    thread_context thr_ctx;
-    prepare_wait( thr_ctx, on() );
-    while( !until() ) {
-        if( (slept = commit_wait( thr_ctx ) )==true )
-            if( until() ) break;
-        slept = false;
-        prepare_wait( thr_ctx, on() );
-    }
-    if( !slept )
-        cancel_wait( thr_ctx );
-}
 
 template<typename P>
 void concurrent_monitor::notify_relaxed( const P& predicate ) {
@@ -234,6 +209,53 @@ void concurrent_monitor::notify_relaxed( const P& predicate ) {
         temp.clear();
 #endif
 }
+
+// Additional possible methods that are not required right now
+// //! Notify all waiting threads of the event
+// void notify_all() {atomic_fence( std::memory_order_seq_cst ); notify_all_relaxed();}
+
+// Additional possible methods that are not required right now
+//! Notify all waiting threads of the event; Relaxed version
+// void concurrent_monitor::notify_all_relaxed() {
+//     if( waitset_ec.empty() )
+//         return;
+//     waitset_t temp;
+//     const waitset_node_t* end;
+//     {
+//         tbb::spin_mutex::scoped_lock l( mutex_ec );
+//         epoch.store( epoch.load( std::memory_order_relaxed ) + 1, std::memory_order_relaxed );
+//         waitset_ec.flush_to( temp );
+//         end = temp.end();
+//         for( waitset_node_t* n=temp.front(); n!=end; n=n->next )
+//             to_thread_context(n)->in_waitset = false;
+//     }
+//     waitset_node_t* nxt;
+//     for( waitset_node_t* n=temp.front(); n!=end; n=nxt ) {
+//         nxt = n->next;
+//         to_thread_context(n)->semaphore().V();
+//     }
+// #if TBB_USE_ASSERT
+//     temp.clear();
+// #endif
+// }
+
+// Additional possible methods that are not required right now
+//! Wait for a condition to be satisfied with waiting-on context
+// template<typename WaitUntil, typename Context>
+// void concurrent_monitor::wait( WaitUntil until, Context on )
+// {
+//     bool slept = false;
+//     thread_context thr_ctx;
+//     prepare_wait( thr_ctx, on() );
+//     while( !until() ) {
+//         if( (slept = commit_wait( thr_ctx ) )==true )
+//             if( until() ) break;
+//         slept = false;
+//         prepare_wait( thr_ctx, on() );
+//     }
+//     if( !slept )
+//         cancel_wait( thr_ctx );
+// }
 
 } // namespace r1
 } // namespace detail

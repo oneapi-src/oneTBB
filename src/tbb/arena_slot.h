@@ -258,7 +258,6 @@ private:
     void commit_spawned_tasks(std::size_t new_tail) {
         __TBB_ASSERT (new_tail <= my_task_pool_size, "task deque end was overwritten");
         // emit "task was released" signal
-        // ITT_NOTIFY(sync_releasing, (void*)((std::uintptr_t)my_arena_slot+sizeof(std::uintptr_t)));
         // Release fence is necessary to make sure that previously stored task pointers
         // are visible to thieves.
         tail.store(new_tail, std::memory_order_release);
@@ -271,7 +270,6 @@ private:
         __TBB_ASSERT ( head.load(std::memory_order_relaxed) < tail.load(std::memory_order_relaxed),
                 "entering arena without tasks to share" );
         // Release signal on behalf of previously spawned tasks (when this thread was not in arena yet)
-        // ITT_NOTIFY(sync_releasing, my_arena_slot);
         task_pool.store(task_pool_ptr, std::memory_order_release );
     }
 
@@ -296,11 +294,9 @@ private:
             if( task_pool.load(std::memory_order_relaxed) != LockedTaskPool &&
                 task_pool.compare_exchange_strong(expected, LockedTaskPool ) ) {
                 // We acquired our own slot
-                // ITT_NOTIFY(sync_acquired, my_arena_slot);
                 break;
             } else if( !sync_prepare_done ) {
                 // Start waiting
-                // ITT_NOTIFY(sync_prepare, my_arena_slot);
                 sync_prepare_done = true;
             }
             // Someone else acquired a lock, so pause and do exponential backoff.
@@ -315,7 +311,6 @@ private:
         if ( !(task_pool.load(std::memory_order_relaxed) != EmptyTaskPool) )
             return; // we are not in arena - nothing to unlock
         __TBB_ASSERT( task_pool.load(std::memory_order_relaxed) == LockedTaskPool, "arena slot is not locked" );
-        // ITT_NOTIFY(sync_releasing, my_arena_slot);
         task_pool.store( task_pool_ptr, std::memory_order_release );
     }
 
@@ -323,7 +318,6 @@ private:
     /** Garbles victim_arena_slot->task_pool for the duration of the lock. **/
     d1::task** lock_task_pool() {
         d1::task** victim_task_pool;
-        bool sync_prepare_done = false;
         for ( atomic_backoff backoff;; /*backoff pause embedded in the loop*/) {
             victim_task_pool = task_pool.load(std::memory_order_relaxed);
             // Microbenchmarks demonstrated that aborting stealing attempt when the
@@ -332,22 +326,13 @@ private:
             // the presence of work in the victim's task pool, as they may give
             // incorrect indication because of task pool relocations and resizes.
             if (victim_task_pool == EmptyTaskPool) {
-                // The victim thread emptied its task pool - nothing to lock
-                if( sync_prepare_done ) {
-                //  ITT_NOTIFY(sync_cancel, victim_arena_slot);
-                }
                 break;
             }
             d1::task** expected = victim_task_pool;
             if (victim_task_pool != LockedTaskPool && task_pool.compare_exchange_strong(expected, LockedTaskPool) ) {
                 // We've locked victim's task pool
-                // ITT_NOTIFY(sync_acquired, victim_arena_slot);
                 break;
-            } else if ( !sync_prepare_done ) {
-                // Start waiting
-                // ITT_NOTIFY(sync_prepare, victim_arena_slot);
-                sync_prepare_done = true;
-            }
+            } 
             // Someone else acquired a lock, so pause and do exponential backoff.
             backoff.pause();
         }
@@ -362,7 +347,6 @@ private:
     void unlock_task_pool(d1::task** victim_task_pool) {
         __TBB_ASSERT(task_pool.load(std::memory_order_relaxed) == LockedTaskPool, "victim arena slot is not locked");
         __TBB_ASSERT(victim_task_pool != LockedTaskPool, NULL);
-        // ITT_NOTIFY(sync_releasing, victim_arena_slot);
         task_pool.store(victim_task_pool, std::memory_order_release);
     }
 
@@ -388,7 +372,6 @@ private:
         // Do not reset my_arena_index. It will be used to (attempt to) re-acquire the slot next time
         __TBB_ASSERT(task_pool.load(std::memory_order_relaxed) == LockedTaskPool, "Task pool must be locked when leaving arena");
         __TBB_ASSERT(is_quiescent_local_task_pool_empty(), "Cannot leave arena when the task pool is not empty");
-        // ITT_NOTIFY(sync_releasing, &my_arena->my_slots[my_arena_index]);
         // No release fence is necessary here as this assignment precludes external
         // accesses to the local task pool when becomes visible. Thus it is harmless
         // if it gets hoisted above preceding local bookkeeping manipulations.

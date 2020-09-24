@@ -242,9 +242,9 @@ public:
 };
 
 #if _WIN32
-/* [[noreturn]] */ void __stdcall co_local_wait_for_all(void* arg)
+/* [[noreturn]] */ void __stdcall co_local_wait_for_all(void* arg) noexcept
 #else
-/* [[noreturn]] */ void co_local_wait_for_all(void* arg)
+/* [[noreturn]] */ void co_local_wait_for_all(void* arg)  noexcept
 #endif
 {
     // Do not create non-trivial objects on the stack of this function. They will never be destroyed.
@@ -258,7 +258,7 @@ public:
     // This code is unreachable
 }
 
-/* [[noreturn]] */ void task_dispatcher::co_local_wait_for_all() {
+/* [[noreturn]] */ void task_dispatcher::co_local_wait_for_all() noexcept {
     // Do not create non-trivial objects on the stack of this function. They will never be destroyed.
     assert_pointer_valid(m_thread_data);
 

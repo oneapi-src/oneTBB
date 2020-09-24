@@ -42,6 +42,10 @@ function(tbb_add_test)
                          -P ${PROJECT_SOURCE_DIR}/cmake/android/test_launcher.cmake)
     else()
         add_test(NAME ${_tbb_test_NAME} COMMAND ${_tbb_test_NAME} --force-colors=1 WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+        # Additional testing scenarios if Intel(R) Software Development Emulator is found
+        if (UNIX AND ";test_mutex;conformance_mutex;" MATCHES ";${_tbb_test_NAME};" AND SDE_EXE)
+            add_test(NAME ${_tbb_test_NAME}_SDE COMMAND ${SDE_EXE} -nhm -rtm_mode disabled -- ./${_tbb_test_NAME} --force-colors=1 WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+        endif()
     endif()
 
     # Prefer using target_link_options instead of target_link_libraries to specify link options because
@@ -160,6 +164,20 @@ if (TBB_FOUND)
     file(COPY ${TBB_LIB_FILE_LOCATION} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}) # TODO: check and update for multi-config generators.
 endif()
 
+# Find Intel(R) Software Development Emulator to run test_mutex and conformance_mutex for coverage 
+set(_sde_find_name sde)
+
+if (UNIX AND TBB_ARCH EQUAL 64)
+    set(_sde_find_name sde64)
+endif()
+
+find_program(SDE_EXE
+    NAMES ${_sde_find_name}
+    PATHS ENV PATH
+    PATH_SUFFIXES bin)
+
+unset(_sde_find_name)
+
 # Define the tests
 tbb_add_test(SUBDIR tbb NAME test_tick_count DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_allocators DEPENDENCIES TBB::tbb)
@@ -220,6 +238,13 @@ tbb_add_test(SUBDIR tbb NAME test_semaphore DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_environment_whitebox DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_handle_perror DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_hw_concurrency DEPENDENCIES TBB::tbb)
+tbb_add_test(SUBDIR tbb NAME test_eh_thread DEPENDENCIES TBB::tbb)
+tbb_add_test(SUBDIR tbb NAME test_global_control DEPENDENCIES TBB::tbb)
+tbb_add_test(SUBDIR tbb NAME test_task DEPENDENCIES TBB::tbb)
+if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
+    # TODO: Fix for MIPS
+    tbb_add_test(SUBDIR tbb NAME test_tbb_fork DEPENDENCIES TBB::tbb)
+endif()
 
 tbb_add_test(SUBDIR tbb NAME test_tbb_header DEPENDENCIES TBB::tbb)
 target_sources(test_tbb_header PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/tbb/test_tbb_header_secondary.cpp)
@@ -256,17 +281,50 @@ tbb_add_test(SUBDIR conformance NAME conformance_combinable DEPENDENCIES TBB::tb
 tbb_add_test(SUBDIR conformance NAME conformance_concurrent_queue DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR conformance NAME conformance_resumable_tasks DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR conformance NAME conformance_version DEPENDENCIES TBB::tbb)
+# functional nodes conformance
+tbb_add_test(SUBDIR conformance NAME conformance_function_node DEPENDENCIES TBB::tbb)
+tbb_add_test(SUBDIR conformance NAME conformance_multifunction_node DEPENDENCIES TBB::tbb)
+tbb_add_test(SUBDIR conformance NAME conformance_input_node DEPENDENCIES TBB::tbb)
+tbb_add_test(SUBDIR conformance NAME conformance_continue_node DEPENDENCIES TBB::tbb)
+tbb_add_test(SUBDIR conformance NAME conformance_async_node DEPENDENCIES TBB::tbb)
+# buffering nodes conformance
+tbb_add_test(SUBDIR conformance NAME conformance_overwrite_node DEPENDENCIES TBB::tbb)
+tbb_add_test(SUBDIR conformance NAME conformance_write_once_node DEPENDENCIES TBB::tbb)
+tbb_add_test(SUBDIR conformance NAME conformance_buffer_node DEPENDENCIES TBB::tbb)
+tbb_add_test(SUBDIR conformance NAME conformance_queue_node DEPENDENCIES TBB::tbb)
+tbb_add_test(SUBDIR conformance NAME conformance_priority_queue_node DEPENDENCIES TBB::tbb)
+tbb_add_test(SUBDIR conformance NAME conformance_sequencer_node DEPENDENCIES TBB::tbb)
+# service nodes conformance
+tbb_add_test(SUBDIR conformance NAME conformance_limiter_node DEPENDENCIES TBB::tbb)
+tbb_add_test(SUBDIR conformance NAME conformance_broadcast_node DEPENDENCIES TBB::tbb)
+tbb_add_test(SUBDIR conformance NAME conformance_composite_node DEPENDENCIES TBB::tbb)
+tbb_add_test(SUBDIR conformance NAME conformance_indexer_node DEPENDENCIES TBB::tbb)
+tbb_add_test(SUBDIR conformance NAME conformance_split_node DEPENDENCIES TBB::tbb)
+tbb_add_test(SUBDIR conformance NAME conformance_join_node DEPENDENCIES TBB::tbb)
+# flowraph auxiliary conformance
+# TODO: add conformance tests for graph_node, continue_msg, tagged_msg, copy_body, input_port, output_port, make_edge, remove_edge
+tbb_add_test(SUBDIR conformance NAME conformance_graph DEPENDENCIES TBB::tbb)
+
+if (MSVC AND CMAKE_VERSION VERSION_GREATER 3.13) # LINK_OPTIONS property first appeared in 3.13
+                                                 # version of the CMake
+    tbb_add_test(SUBDIR tbb NAME test_implicit_linkage_on_windows)
+    # TODO: consider setting environment instead of passing additional
+    #       compiler and linker options
+    target_include_directories(test_implicit_linkage_on_windows PRIVATE
+      $<TARGET_PROPERTY:TBB::tbb,INTERFACE_INCLUDE_DIRECTORIES>)
+    set_target_properties(test_implicit_linkage_on_windows PROPERTIES
+      LINK_OPTIONS /LIBPATH:$<TARGET_LINKER_FILE_DIR:TBB::tbb>)
+    add_dependencies(test_implicit_linkage_on_windows TBB::tbb)
+endif()
 
 if (TBB_NUMA_SUPPORT)
     find_package(HWLOC QUIET)
     if (HWLOC_FOUND)
-        target_link_libraries(test_arena_constraints PRIVATE ${HWLOC_LIBRARIES})
-        target_include_directories(test_arena_constraints PRIVATE ${HWLOC_INCLUDE_DIRS})
+        target_link_libraries(test_arena_constraints PRIVATE HWLOC::hwloc)
         target_compile_definitions(test_arena_constraints PRIVATE __TBB_HWLOC_PRESENT)
         add_dependencies(test_arena_constraints TBB::tbbbind)
 
-        target_link_libraries(conformance_arena_constraints PRIVATE ${HWLOC_LIBRARIES})
-        target_include_directories(conformance_arena_constraints PRIVATE ${HWLOC_INCLUDE_DIRS})
+        target_link_libraries(conformance_arena_constraints PRIVATE HWLOC::hwloc)
         target_compile_definitions(conformance_arena_constraints PRIVATE __TBB_HWLOC_PRESENT)
         add_dependencies(conformance_arena_constraints TBB::tbbbind)
     endif()

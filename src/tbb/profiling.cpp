@@ -101,20 +101,21 @@ void ITT_DoOneTimeInitialization() {
     }
 }
 
-void __TBB_EXPORTED_FUNC create_itt_sync(void* ptr, const tchar* objtype, const tchar* objname) {
+void create_itt_sync(void* ptr, const tchar* objtype, const tchar* objname) {
         ITT_SYNC_CREATE(ptr, objtype, objname);
 }
 
-void __TBB_EXPORTED_FUNC call_itt_notify(int t, void *ptr) {
+void call_itt_notify(int t, void *ptr) {
     switch (t) {
     case 0: ITT_NOTIFY(sync_prepare, ptr); break;
     case 1: ITT_NOTIFY(sync_cancel, ptr); break;
     case 2: ITT_NOTIFY(sync_acquired, ptr); break;
     case 3: ITT_NOTIFY(sync_releasing, ptr); break;
+    case 4: ITT_NOTIFY(sync_destroy, ptr); break;
     }
 }
 
-void __TBB_EXPORTED_FUNC itt_set_sync_name(void* obj, const tchar* name) {
+void itt_set_sync_name(void* obj, const tchar* name) {
     __itt_sync_rename(obj, name);
 }
 

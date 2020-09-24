@@ -99,7 +99,6 @@ std::size_t arena::occupy_free_slot(thread_data& tls) {
             return out_of_arena;
     }
 
-    ITT_NOTIFY(sync_acquired, my_slots + index);
     atomic_update( my_limit, (unsigned)(index + 1), std::less<unsigned>() );
     return index;
 }
@@ -218,19 +217,15 @@ arena::arena ( market& m, unsigned num_slots, unsigned num_reserved_slots, unsig
         // __TBB_ASSERT( !my_slots[i].my_scheduler && !my_slots[i].task_pool, NULL );
         __TBB_ASSERT( !my_slots[i].task_pool_ptr, NULL );
         __TBB_ASSERT( !my_slots[i].my_task_pool_size, NULL );
-        // ITT_SYNC_CREATE(my_slots + i, SyncType_Scheduler, SyncObj_WorkerTaskPool);
         mailbox(i).construct();
-        // ITT_SYNC_CREATE(&mailbox(i+1), SyncType_Scheduler, SyncObj_Mailbox);
         my_slots[i].init_task_streams(i);
         my_slots[i].my_default_task_dispatcher = new(base_td_pointer + i) task_dispatcher(this);
         my_slots[i].my_is_occupied.store(false, std::memory_order_relaxed);
     }
     my_fifo_task_stream.initialize(my_num_slots);
     my_resume_task_stream.initialize(my_num_slots);
-    // ITT_SYNC_CREATE(&my_task_stream, SyncType_Scheduler, SyncObj_TaskStream);
 #if __TBB_PREVIEW_CRITICAL_TASKS
     my_critical_task_stream.initialize(my_num_slots);
-    // ITT_SYNC_CREATE(&my_critical_task_stream, SyncType_Scheduler, SyncObj_CriticataskStream);
 #endif
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
     my_local_concurrency_mode = false;
@@ -272,14 +267,14 @@ void arena::free_arena () {
         drained += mailbox(i).drain();
         my_slots[i].my_default_task_dispatcher->~task_dispatcher();
     }
-    __TBB_ASSERT(my_fifo_task_stream.drain() == 0, "Not all enqueued tasks were executed");
-    __TBB_ASSERT(my_resume_task_stream.drain() == 0, "Not all enqueued tasks were executed");
+    __TBB_ASSERT(my_fifo_task_stream.empty(), "Not all enqueued tasks were executed");
+    __TBB_ASSERT(my_resume_task_stream.empty(), "Not all enqueued tasks were executed");
     // Cleanup coroutines/schedulers cache
     my_co_cache.cleanup();
     my_default_ctx->~task_group_context();
     cache_aligned_deallocate(my_default_ctx);
 #if __TBB_PREVIEW_CRITICAL_TASKS
-    __TBB_ASSERT( my_critical_task_stream.drain()==0, "Not all critical tasks were executed");
+    __TBB_ASSERT( my_critical_task_stream.empty(), "Not all critical tasks were executed");
 #endif
     // remove an internal reference
     my_market->release( /*is_public=*/false, /*blocking_terminate=*/false );
@@ -690,15 +685,14 @@ void task_arena_impl::execute(d1::task_arena_base& ta, d1::delegate_base& d) {
     context_guard.set_ctx(ta.my_arena->my_default_ctx);
     nested_arena_context scope(*td, *ta.my_arena, index1);
 #if _WIN64
-    try {
+    try_call([&] {
 #endif
         d();
         __TBB_ASSERT(same_arena || governor::is_thread_data_set(td), nullptr);
 #if _WIN64
-    } catch (...) {
+    }).on_exception([&] {
         context_guard.restore_default();
-        throw;
-    }
+    });
 #endif
 }
 

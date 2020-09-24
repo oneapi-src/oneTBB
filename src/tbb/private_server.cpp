@@ -80,7 +80,7 @@ private:
     friend class private_server;
 
     //! Actions executed by the associated thread
-    void run();
+    void run() noexcept;
 
     //! Wake up associated thread (or launch a thread if there is none)
     void wake_or_launch();
@@ -253,7 +253,7 @@ void private_worker::start_shutdown() {
     }
 }
 
-void private_worker::run() {
+void private_worker::run() noexcept {
     my_server.propagate_chain_reaction();
 
     // Transiting to st_normal here would require setting my_handle,

@@ -20,6 +20,8 @@
 
 // Test whether scalable_allocator complies with the requirements in 20.1.5 of ISO C++ Standard (1998).
 
+#define __TBB_NO_IMPLICIT_LINKAGE 1
+
 #include "common/test.h"
 #include "common/utils.h"
 #include "common/utils_assert.h"

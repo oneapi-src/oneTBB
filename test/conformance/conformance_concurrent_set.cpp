@@ -196,6 +196,12 @@ TEST_CASE("CTAD support in concurrent_set") {
 }
 #endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 
+//! Testing comparison operators in concurrent_set
+//! \brief \ref interface \ref requirement
+TEST_CASE("test concurrent_set comparisons") {
+    test_set_comparisons<tbb::concurrent_set>();
+}
+
 //! Testing concurrent_multiset member types
 //! \brief \ref interface \ref requirement
 TEST_CASE("concurrent_multiset member types") {
@@ -251,6 +257,12 @@ TEST_CASE("CTAD support in concurrent_multiset") {
     test_deduction_guides<tbb::concurrent_multiset>();
 }
 #endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+
+//! Testing comparison operators in concurrent_multiset
+//! \brief \ref interface \ref requirement
+TEST_CASE("test concurrent_set comparisons") {
+    test_set_comparisons<tbb::concurrent_multiset>();
+}
 
 //! Testing of merge operations in concurrent_set and concurrent_multiset
 //! \brief \ref interface \ref requirement

@@ -115,17 +115,12 @@ struct preceding_lane_selector : lane_selector_base {
     }
 };
 
-class task_stream_base : no_copy {
-protected:
-    using lane_t = queue_and_mutex <d1::task*, spin_mutex>;
-};
-
 //! Specializes from which side of the underlying container elements are retrieved. Method must be
 //! called under corresponding mutex locked.
 template<task_stream_accessor_type accessor>
-class task_stream_accessor : public task_stream_base {
+class task_stream_accessor : no_copy {
 protected:
-    using task_stream_base::lane_t;
+    using lane_t = queue_and_mutex <d1::task*, spin_mutex>;
     d1::task* get_item( lane_t::queue_base_t& queue ) {
         d1::task* result = queue.front();
         queue.pop_front();
@@ -134,14 +129,19 @@ protected:
 };
 
 template<>
-class task_stream_accessor< back_nonnull_accessor > : public task_stream_base {
+class task_stream_accessor< back_nonnull_accessor > : no_copy {
 protected:
+    using lane_t = queue_and_mutex <d1::task*, spin_mutex>;
     d1::task* get_item( lane_t::queue_base_t& queue ) {
-        d1::task* result = NULL;
+        d1::task* result = nullptr;
+        __TBB_ASSERT(!queue.empty(), nullptr);
+        // Isolated task can put zeros in queue see look_specific
         do {
             result = queue.back();
             queue.pop_back();
-        } while( !result && !queue.empty() );
+        } while ( !result && !queue.empty() );
+
+        __TBB_ASSERT_RELEASE(result, nullptr);
         return result;
     }
 };
@@ -150,36 +150,32 @@ protected:
 template<task_stream_accessor_type accessor>
 class task_stream : public task_stream_accessor< accessor > {
     using lane_t = typename task_stream_accessor<accessor>::lane_t;
-    std::atomic<population_t> population;
-    lane_t* lanes;
-    unsigned N;
+    std::atomic<population_t> population{};
+    lane_t* lanes{nullptr};
+    unsigned N{};
 
 public:
-    task_stream() : N() {
-        population = 0;
-        lanes = nullptr;
-    }
+    task_stream() = default;
 
     void initialize( unsigned n_lanes ) {
         const unsigned max_lanes = sizeof(population_t) * CHAR_BIT;
 
-        N = n_lanes>=max_lanes ? max_lanes : n_lanes>2 ? 1<<(tbb::detail::log2(n_lanes-1)+1) : 2;
-        __TBB_ASSERT( N==max_lanes || N>=n_lanes && ((N-1)&N)==0, "number of lanes miscalculated");
+        N = n_lanes >= max_lanes ? max_lanes : n_lanes > 2 ? 1 << (tbb::detail::log2(n_lanes - 1) + 1) : 2;
+        __TBB_ASSERT( N == max_lanes || N >= n_lanes && ((N - 1) & N) == 0, "number of lanes miscalculated" );
         __TBB_ASSERT( N <= sizeof(population_t) * CHAR_BIT, NULL );
         lanes = static_cast<lane_t*>(cache_aligned_allocate(sizeof(lane_t) * N));
         for (unsigned i = 0; i < N; ++i) {
-            new (lanes+i) lane_t;
+            new (lanes + i) lane_t;
         }
         __TBB_ASSERT( !population.load(std::memory_order_relaxed), NULL );
     }
 
     ~task_stream() {
-        if (lanes) {
-            for (unsigned i = 0; i < N; ++i) {
-                lanes[i].~lane_t();
-            }
-            cache_aligned_deallocate(lanes);
+        __TBB_ASSERT(lanes, "Initialize wasn't called");
+        for (unsigned i = 0; i < N; ++i) {
+            lanes[i].~lane_t();
         }
+        cache_aligned_deallocate(lanes);
     }
 
     //! Push a task into a lane. Lane selection is performed by passed functor.
@@ -234,28 +230,6 @@ public:
         return !population.load(std::memory_order_relaxed);
     }
 
-    //! Destroys all remaining tasks in every lane. Returns the number of destroyed tasks.
-    /** Tasks are not executed, because it would potentially create more tasks at a late stage.
-        The scheduler is really expected to execute all tasks before task_stream destruction. */
-    intptr_t drain() {
-        intptr_t result = 0;
-        for (unsigned i = 0; i < N; ++i) {
-            lane_t& lane = lanes[i];
-            spin_mutex::scoped_lock lock(lane.my_mutex);
-            for (typename lane_t::queue_base_t::iterator it=lane.my_queue.begin();
-                it!=lane.my_queue.end(); ++it, ++result)
-            {
-                __TBB_ASSERT( is_bit_set( population.load(std::memory_order_relaxed), i ), NULL );
-                // TODO: TBB_REVAMP_TODO - what to do with drained tasks
-                // task* t = *it;
-                // task::destroy(*t);
-            }
-            lane.my_queue.clear();
-            clear_one_bit( population, i );
-        }
-        return result;
-    }
-
 private:
     //! Returns true on successful push, otherwise - false.
     bool try_push(d1::task* source, unsigned lane_idx ) {
@@ -284,7 +258,7 @@ private:
     }
 
     // TODO: unify '*_specific' logic with 'pop' methods above
-    d1::task* look_specific( task_stream_base::lane_t::queue_base_t& queue, isolation_type isolation ) {
+    d1::task* look_specific( typename lane_t::queue_base_t& queue, isolation_type isolation ) {
         __TBB_ASSERT( !queue.empty(), NULL );
         // TODO: add a worst-case performance test and consider an alternative container with better
         // performance for isolation search.

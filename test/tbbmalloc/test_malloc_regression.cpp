@@ -14,6 +14,8 @@
     limitations under the License.
 */
 
+#define __TBB_NO_IMPLICIT_LINKAGE 1
+
 #include "common/test.h"
 #include "common/utils.h"
 #include "common/utils_report.h"

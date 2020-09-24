@@ -17,6 +17,8 @@
 //! \file test_malloc_compliance.cpp
 //! \brief Test for [memory_allocation.scalable_alloc_c_interface] functionality
 
+#define __TBB_NO_IMPLICIT_LINKAGE 1
+
 #define __STDC_LIMIT_MACROS 1 // to get SIZE_MAX from stdint.h
 
 #include "common/test.h"

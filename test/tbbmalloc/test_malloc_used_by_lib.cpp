@@ -14,6 +14,8 @@
     limitations under the License.
 */
 
+#define __TBB_NO_IMPLICIT_LINKAGE 1
+
 #if _USRDLL
 
 #include <stdlib.h>

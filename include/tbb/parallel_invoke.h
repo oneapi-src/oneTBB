@@ -44,6 +44,7 @@ struct function_invoker : public task {
     task* execute(execution_data& ed) override {
         my_function();
         parent_wait_ctx.release(ed);
+        call_itt_task_notify(destroy, this);
         return nullptr;
     }
 
@@ -94,7 +95,9 @@ struct invoke_subroot_task : public task {
 
     void release(const execution_data& ed) {
         __TBB_ASSERT(ref_count > 0, nullptr);
+        call_itt_task_notify(releasing, this);
         if( --ref_count == 0 ) {
+            call_itt_task_notify(acquired, this);
             finalize(ed);
         }
     }

@@ -376,75 +376,26 @@ namespace r1 {
     #endif
     }
 
-#if !_WIN32
-#if __TBB_DYNAMIC_LOAD_ENABLED
-    static dynamic_link_handle pin_symbols( dynamic_link_descriptor desc, const dynamic_link_descriptor* descriptors, std::size_t required ) {
-        // It is supposed that all symbols are from the only one library
-        // The library has been loaded by another module and contains at least one requested symbol.
-        // But after we obtained the symbol the library can be unloaded by another thread
-        // invalidating our symbol. Therefore we need to pin the library in memory.
-        dynamic_link_handle library_handle = 0;
-        Dl_info info;
-        // Get library's name from earlier found symbol
-        if ( dladdr( reinterpret_cast<void*>(*desc.handler), &info ) ) {
-            // Pin the library
-            library_handle = dlopen( info.dli_fname, RTLD_LAZY );
-            if ( library_handle ) {
-                // If original library was unloaded before we pinned it
-                // and then another module loaded in its place, the earlier
-                // found symbol would become invalid. So revalidate them.
-                if ( !resolve_symbols( library_handle, descriptors, required ) ) {
-                    // Wrong library.
-                    dynamic_unlink(library_handle);
-                    library_handle = 0;
-                }
-            } else {
-                char const * err = dlerror();
-                DYNAMIC_LINK_WARNING( dl_lib_not_found, info.dli_fname, err );
-            }
-        }
-        // else the library has been unloaded by another thread
-        return library_handle;
-    }
-#endif /* __TBB_DYNAMIC_LOAD_ENABLED */
-#endif /* !_WIN32 */
-
     static dynamic_link_handle global_symbols_link( const char* library, const dynamic_link_descriptor descriptors[], std::size_t required ) {
-        ::tbb::detail::suppress_unused_warning( library );
-        dynamic_link_handle library_handle;
+        dynamic_link_handle library_handle{};
 #if _WIN32
-        if ( GetModuleHandleEx( 0, library, &library_handle ) ) {
-            if ( resolve_symbols( library_handle, descriptors, required ) )
-                return library_handle;
-            else
-                FreeLibrary( library_handle );
-        }
+        bool res = GetModuleHandleEx(0, library, &library_handle);
+        __TBB_ASSERT_EX(res && library_handle || !res && !library_handle, nullptr);
 #else /* _WIN32 */
     #if !__TBB_DYNAMIC_LOAD_ENABLED /* only __TBB_WEAK_SYMBOLS_PRESENT is defined */
         if ( !dlopen ) return 0;
     #endif /* !__TBB_DYNAMIC_LOAD_ENABLED */
-        library_handle = dlopen( NULL, RTLD_LAZY );
-    #if !__ANDROID__
-        // On Android dlopen( NULL ) returns NULL if it is called during dynamic module initialization.
-        __TBB_ASSERT_EX( library_handle, "The handle for the main program is NULL" );
-    #endif
-    #if __TBB_DYNAMIC_LOAD_ENABLED
-        // Check existence of the first symbol only, then use it to find the library and load all necessary symbols.
-        pointer_to_handler handler;
-        dynamic_link_descriptor desc;
-        desc.name = descriptors[0].name;
-        desc.handler = &handler;
-        if ( resolve_symbols( library_handle, &desc, 1 ) ) {
-            dynamic_unlink( library_handle );
-            return pin_symbols( desc, descriptors, required );
-        }
-    #else  /* only __TBB_WEAK_SYMBOLS_PRESENT is defined */
-        if ( resolve_symbols( library_handle, descriptors, required ) )
-            return library_handle;
-    #endif
-        dynamic_unlink( library_handle );
+        // RTLD_GLOBAL - to guarantee that old TBB will find the loaded library
+        // RTLD_NOLOAD - not to load the library without the full path
+        library_handle = dlopen(library, RTLD_LAZY | RTLD_GLOBAL | RTLD_NOLOAD);
 #endif /* _WIN32 */
-        return 0;
+        if (library_handle) {
+            if (!resolve_symbols(library_handle, descriptors, required)) {
+                dynamic_unlink(library_handle);
+                library_handle = nullptr;
+            }
+        }
+        return library_handle;
     }
 
     static void save_library_handle( dynamic_link_handle src, dynamic_link_handle *dst ) {
@@ -470,7 +421,7 @@ namespace r1 {
             // (e.g. because of MS runtime problems - one of those crazy manifest related ones)
             UINT prev_mode = SetErrorMode (SEM_FAILCRITICALERRORS);
 #endif /* _WIN32 */
-            dynamic_link_handle library_handle = dlopen( path, RTLD_LAZY );
+            dynamic_link_handle library_handle = dlopen( path, RTLD_LAZY | RTLD_GLOBAL );
 #if _WIN32
             SetErrorMode (prev_mode);
 #endif /* _WIN32 */

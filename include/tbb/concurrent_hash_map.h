@@ -167,19 +167,21 @@ public:
                 my_table[k].store(nullptr, std::memory_order_relaxed);
             });
 
+            __TBB_ASSERT(ptr, nullptr);
             init_buckets(ptr, sz, is_initial);
             my_table[k].store(ptr, std::memory_order_release);
             sz <<= 1;// double it to get entire capacity of the container
         } else { // the first block
             __TBB_ASSERT( k == embedded_block, "Wrong segment index" );
             sz = segment_size(first_block);
-            segment_ptr_type ptr;
+            segment_ptr_type ptr = nullptr;
             try_call( [&] {
                 ptr = bucket_allocator_traits::allocate(my_allocator, sz - embedded_buckets);
             } ).on_exception( [&] {
                 my_table[k].store(nullptr, std::memory_order_relaxed);
             });
 
+            __TBB_ASSERT(ptr, nullptr);
             init_buckets(ptr, sz - embedded_buckets, is_initial);
             ptr -= segment_base(embedded_block);
             for(segment_index_type i = embedded_block; i < first_block; i++) // calc the offsets

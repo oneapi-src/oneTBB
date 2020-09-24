@@ -47,6 +47,9 @@ struct correctness_test_case {
     };
 
     static void run_validate_and_reset(tbb::task_group_context* context_ptr) {
+        for (auto& elem : data_array)
+            elem.store(0, std::memory_order_relaxed);
+
         parallel_invoke_call<TaskCount, functor>::perform(context_ptr);
         for (std::size_t i = 0; i < TaskCount; i++) {
             REQUIRE_MESSAGE(data_array[i] == 1, "Some task was executed more than once, or was not executed.");
@@ -56,7 +59,7 @@ struct correctness_test_case {
 };
 
 template<std::size_t TaskCount>
-std::atomic<std::size_t> correctness_test_case<TaskCount>::data_array[TaskCount]{};
+std::atomic<std::size_t> correctness_test_case<TaskCount>::data_array[TaskCount];
 
 void correctness_test(tbb::task_group_context* context_ptr = nullptr) {
     for ( auto concurrency_level : utils::concurrency_range() ) {
@@ -129,7 +132,7 @@ private:
 };
 
 template<std::size_t TaskCount>
-std::uint64_t exception_handling_test_case<TaskCount>::exception_mask{};
+std::uint64_t exception_handling_test_case<TaskCount>::exception_mask(0);
 
 //! Testing exception hangling
 //! \brief \ref requirement \ref error_guessing

@@ -94,6 +94,13 @@ using tbb::internal::rml::get_shared_name;
 
 namespace tbb {
 namespace detail {
+
+namespace r1 {
+bool terminate_on_exception() {
+    return false;
+}
+}
+
 namespace rml {
 
 typedef ipc_thread_monitor::handle_type thread_handle;

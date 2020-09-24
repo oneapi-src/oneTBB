@@ -46,6 +46,7 @@ public:
     /** The version number is incremented when a incompatible change is introduced.
         The version number is invariant for the lifetime of the object. */
     virtual version_type version() const RML_PURE(version_type)
+
 };
 
 //! Represents a client's job for an execution context.
@@ -53,11 +54,6 @@ public:
     Not derived from versioned_object because version is same as for client. */
 class job {
     friend class server;
-
-    //! Word for use by server
-    /** Typically the server uses it to speed up internal lookup.
-        Clients must not modify the word. */
-    void* scratch_ptr;
 };
 
 //! Information that client provides to server when asking for a server.
@@ -84,11 +80,6 @@ public:
     /** Called by server in response to request_close_connection
         after cleanup(job) has been called for each job. */
     virtual void acknowledge_close_connection() RML_PURE(void)
-
-    enum policy_type {turnaround,throughput};
-
-    //! Inform server of desired policy. [idempotent]
-    virtual policy_type policy() const RML_PURE(policy_type)
 
     //! Inform client that server is done with *this.
     /** Client should destroy the job.
@@ -136,9 +127,6 @@ public:
     /** Normally, the value is the hardware concurrency minus one.
         The "minus one" accounts for the thread created by main(). */
     virtual unsigned default_concurrency() const = 0;
-
-protected:
-    static void*& scratch_ptr( job& j ) {return j.scratch_ptr;}
 };
 
 class factory {
@@ -150,9 +138,6 @@ public:
         st_not_found,
         st_incompatible
     };
-
-    //! Scratch pointer for use by RML.
-    void* scratch_ptr;
 
 protected:
     //! Pointer to routine that waits for server to indicate when client can close itself.

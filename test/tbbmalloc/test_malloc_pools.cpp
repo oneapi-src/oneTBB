@@ -17,6 +17,8 @@
 //! \file test_malloc_pools.cpp
 //! \brief Test for [memory_allocation] functionality
 
+#define __TBB_NO_IMPLICIT_LINKAGE 1
+
 #include "common/test.h"
 
 #define HARNESS_TBBMALLOC_THREAD_SHUTDOWN 1

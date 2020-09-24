@@ -24,6 +24,16 @@
 #include <cerrno>
 #include <iostream>
 
+namespace tbb {
+namespace detail {
+namespace r1 {
+bool terminate_on_exception() {
+    return false;
+}
+}
+}
+}
+
 #if TBB_USE_EXCEPTIONS
 
 //! \brief \ref error_guessing

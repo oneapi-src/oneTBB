@@ -86,35 +86,6 @@ public:
     operator T() { return base::get(); }
 };
 
-template <typename T>
-class tls<T*> : basic_tls<T*> {
-    typedef basic_tls<T*> base;
-    static void internal_dtor(void* ptr) {
-        if (ptr) delete (T*)ptr;
-    }
-    T* internal_get() {
-        T* result = base::get();
-        if (!result) {
-            result = new T;
-            base::set(result);
-        }
-        return result;
-    }
-public:
-    tls()  {
-#if __TBB_USE_POSIX
-        base::create( internal_dtor );
-#else
-        base::create();
-#endif
-    }
-    ~tls() { base::destroy(); }
-    T* operator=(T* value) { base::set(value); return value; }
-    operator T*()   { return  internal_get(); }
-    T* operator->() { return  internal_get(); }
-    T& operator*()  { return *internal_get(); }
-};
-
 } // namespace r1
 } // namespace detail
 } // namespace tbb

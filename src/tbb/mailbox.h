@@ -225,11 +225,6 @@ public:
     bool is_idle_state ( bool value ) const {
         return !my_putter || my_putter->my_is_idle == value;
     }
-
-#if __TBB_USE_ITT_NOTIFY
-    //! Get pointer to corresponding outbox used for ITT_NOTIFY calls.
-    void* outbox() const {return my_putter;}
-#endif /* __TBB_USE_ITT_NOTIFY */
 }; // class mail_inbox
 
 } // namespace r1

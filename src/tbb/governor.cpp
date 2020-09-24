@@ -22,6 +22,9 @@
 #include "dynamic_link.h"
 
 #include "tbb/task_group.h"
+#include "tbb/global_control.h"
+#include "tbb/tbb_allocator.h"
+
 #include "task_dispatcher.h"
 
 #include <cstdio>
@@ -32,6 +35,12 @@
 namespace tbb {
 namespace detail {
 namespace r1 {
+
+#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
+//! global_control.cpp contains definition
+bool remove_and_check_if_empty(d1::global_control& gc);
+bool is_present(d1::global_control& gc);
+#endif // __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
 
 namespace rml {
 tbb_server* make_private_server( tbb_client& client );
@@ -56,10 +65,9 @@ void governor::acquire_resources () {
 void governor::release_resources () {
     theRMLServerFactory.close();
     destroy_process_mask();
-#if TBB_USE_ASSERT
-    if( __TBB_InitOnce::initialization_done() && theTLS.get() )
-        runtime_warning( "TBB is unloaded while tbb::task_scheduler_init object is alive?" );
-#endif
+
+    __TBB_ASSERT(!(__TBB_InitOnce::initialization_done() && theTLS.get()), "TBB is unloaded while thread data still alive?");
+
     int status = theTLS.destroy();
     if( status )
         runtime_warning("failed to destroy task scheduler TLS: %s", std::strerror(status));
@@ -208,6 +216,59 @@ void governor::initialize_rml_factory () {
     ::rml::factory::status_type res = theRMLServerFactory.open();
     UsePrivateRML = res != ::rml::factory::st_success;
 }
+
+#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
+void __TBB_EXPORTED_FUNC get(d1::task_scheduler_handle& handle) {
+    handle.m_ctl = new(allocate_memory(sizeof(global_control))) global_control(global_control::scheduler_handle, 1);
+}
+
+void release_impl(d1::task_scheduler_handle& handle) {
+    if (handle.m_ctl != nullptr) {
+        handle.m_ctl->~global_control();
+        deallocate_memory(handle.m_ctl);
+        handle.m_ctl = nullptr;
+    }
+}
+
+bool finalize_impl(d1::task_scheduler_handle& handle) {
+    market::global_market_mutex_type::scoped_lock lock( market::theMarketMutex );
+    bool ok = true; // ok if theMarket does not exist yet
+    market* m = market::theMarket; // read the state of theMarket
+    if (m != nullptr) {
+        lock.release();
+        __TBB_ASSERT(is_present(*handle.m_ctl), "finalize or release was already called on this object");
+        thread_data* td = governor::get_thread_data_if_initialized();
+        if (td) {
+            task_dispatcher* task_disp = td->my_task_dispatcher;
+            __TBB_ASSERT(task_disp, nullptr);
+            if (task_disp->m_properties.outermost && !td->my_is_worker) { // is not inside a tbb parallel region
+                governor::auto_terminate(td);
+            }
+        }
+        if (remove_and_check_if_empty(*handle.m_ctl)) {
+            ok = m->release(/*is_public*/ true, /*blocking_terminate*/ true);
+        } else {
+            ok = false;
+        }
+    }
+    return ok;
+}
+
+bool __TBB_EXPORTED_FUNC finalize(d1::task_scheduler_handle& handle, std::intptr_t mode) {
+    if (mode == d1::release_nothrowing) {
+        release_impl(handle);
+        return true;
+    } else {
+        bool ok = finalize_impl(handle);
+        // TODO: it is unsafe when finalize is called concurrently and further library unload
+        release_impl(handle);
+        if (mode == d1::finalize_throwing && !ok) {
+            throw_exception(exception_id::unsafe_wait);
+        }
+        return ok;
+    }
+}
+#endif // __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
 
 #if __TBB_NUMA_SUPPORT
 

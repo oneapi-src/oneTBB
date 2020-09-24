@@ -30,6 +30,16 @@ if (TBB_WINDOWS_DRIVER AND (NOT ("${CMAKE_MSVC_RUNTIME_LIBRARY}" STREQUAL MultiT
     message(FATAL_ERROR "Enabled TBB_WINDOWS_DRIVER requires CMAKE_MSVC_RUNTIME_LIBRARY to be set to MultiThreaded or MultiThreadedDebug.")
 endif()
 
+# Enable support of minimum supported macOS version flag
+if (APPLE)
+    if (NOT CMAKE_CXX_OSX_DEPLOYMENT_TARGET_FLAG)
+        set(CMAKE_CXX_OSX_DEPLOYMENT_TARGET_FLAG "-mmacosx-version-min=" CACHE STRING "Minimum macOS version flag")
+    endif()
+    if (NOT CMAKE_C_OSX_DEPLOYMENT_TARGET_FLAG)
+        set(CMAKE_C_OSX_DEPLOYMENT_TARGET_FLAG "-mmacosx-version-min=" CACHE STRING "Minimum macOS version flag")
+    endif()
+endif()
+
 # Until CMake 3.4.0 FindThreads.cmake requires C language enabled.
 # Enable C language before CXX to avoid possible override of CMAKE_SIZEOF_VOID_P.
 if (CMAKE_VERSION VERSION_LESS 3.4)
@@ -41,7 +51,9 @@ string(REGEX REPLACE ".*#define TBB_VERSION_MAJOR ([0-9]+).*" "\\1" _tbb_ver_maj
 string(REGEX REPLACE ".*#define TBB_VERSION_MINOR ([0-9]+).*" "\\1" _tbb_ver_minor "${_tbb_version_info}")
 string(REGEX REPLACE ".*#define TBB_INTERFACE_VERSION ([0-9]+).*" "\\1" TBB_INTERFACE_VERSION "${_tbb_version_info}")
 string(REGEX REPLACE ".*#define __TBB_BINARY_VERSION ([0-9]+).*" "\\1" TBB_BINARY_VERSION "${_tbb_version_info}")
+set(TBB_BINARY_MINOR_VERSION 0)
 set(TBBMALLOC_BINARY_VERSION 2)
+set(TBBBIND_BINARY_VERSION 3)
 
 project(TBB VERSION ${_tbb_ver_major}.${_tbb_ver_minor} LANGUAGES CXX)
 unset(_tbb_ver_major)
@@ -176,7 +188,11 @@ else()
         add_subdirectory(src/tbbmalloc)
         add_subdirectory(src/tbbmalloc_proxy)
         if (TBB_NUMA_SUPPORT)
-            add_subdirectory(src/tbbbind)
+            if (APPLE)
+                message(WARNING "TBBBind build target is disabled due to unsupported environment")
+            else()
+                add_subdirectory(src/tbbbind)
+            endif()
         endif()
     endif()
 

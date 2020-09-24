@@ -904,7 +904,6 @@ TEST_CASE("Test for stack overflow avoidance mechanism within arena") {
             second_thread_executed = tasks_executed;
             utils::Sleep(10);
         } while (second_thread_executed < 100 || second_thread_executed != tasks_executed);
-        std::cout << "tasks_executed = " << tasks_executed << std::endl;
         CHECK(tasks_executed < 10000);
     });
     tg2.wait();

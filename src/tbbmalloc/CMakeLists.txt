@@ -55,7 +55,8 @@ target_compile_options(tbbmalloc
 set_target_properties(tbbmalloc PROPERTIES
     LINK_FLAGS ${TBB_LINK_DEF_FILE_FLAG}${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbmalloc.def
     DEFINE_SYMBOL ""
-    VERSION ${TBBMALLOC_BINARY_VERSION})
+    VERSION ${TBBMALLOC_BINARY_VERSION}.${TBB_BINARY_MINOR_VERSION}
+    SOVERSION ${TBBMALLOC_BINARY_VERSION})
 
 # Prefer using target_link_options instead of target_link_libraries to specify link options because
 # target_link_libraries may incorrectly handle some options (on Windows, for example).

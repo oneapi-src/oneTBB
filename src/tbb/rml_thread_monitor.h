@@ -62,6 +62,10 @@
 namespace tbb {
 namespace detail {
 namespace r1 {
+
+// Forward declaration: throws std::runtime_error with what() returning error_code description prefixed with aux_info
+void handle_perror(int error_code, const char* aux_info);
+
 namespace rml {
 namespace internal {
 
@@ -117,10 +121,6 @@ public:
     static handle_type launch( thread_routine_type thread_routine, void* arg, std::size_t stack_size );
 #endif /* __TBB_USE_POSIX */
 
-    //! Yield control to OS
-    /** Affects the calling thread. **/
-    static void yield();
-
     //! Join thread
     static void join(handle_type handle);
 
@@ -156,8 +156,7 @@ inline thread_monitor::handle_type thread_monitor::launch( thread_routine_type t
     unsigned create_flags = ( number_of_processor_groups > 1 ) ? CREATE_SUSPENDED : 0;
     HANDLE h = (HANDLE)_beginthreadex( NULL, unsigned(stack_size), thread_routine, arg, STACK_SIZE_PARAM_IS_A_RESERVATION | create_flags, &thread_id );
     if( !h ) {
-        fprintf(stderr,"thread_monitor::launch: _beginthreadex failed\n");
-        exit(1);
+        handle_perror(0, "thread_monitor::launch: _beginthreadex failed\n");
     }
     if ( number_of_processor_groups > 1 ) {
         MoveThreadIntoProcessorGroup( h, FindProcessorGroupIndex( static_cast<int>(*worker_index) ) );
@@ -188,17 +187,12 @@ void thread_monitor::detach_thread(handle_type handle) {
     __TBB_ASSERT( val, NULL );
 }
 
-inline void thread_monitor::yield() {
-    d0::yield();
-}
 #endif /* __TBB_USE_WINAPI */
 
 #if __TBB_USE_POSIX
-// TODO: can we throw exceptions instead of termination?
 inline void thread_monitor::check( int error_code, const char* routine ) {
     if( error_code ) {
-        fprintf(stderr,"thread_monitor %s in %s\n", strerror(error_code), routine );
-        exit(1);
+        handle_perror(error_code, routine);
     }
 }
 
@@ -207,25 +201,21 @@ inline thread_monitor::handle_type thread_monitor::launch( void* (*thread_routin
     // Note that there are some tricky situations to deal with, such that the thread is already
     // grabbed as part of an OpenMP team.
     pthread_attr_t s;
-    check(pthread_attr_init( &s ), "pthread_attr_init");
+    check(pthread_attr_init( &s ), "pthread_attr_init has failed");
     if( stack_size>0 )
-        check(pthread_attr_setstacksize( &s, stack_size ), "pthread_attr_setstack_size" );
+        check(pthread_attr_setstacksize( &s, stack_size ), "pthread_attr_setstack_size has failed" );
     pthread_t handle;
-    check( pthread_create( &handle, &s, thread_routine, arg ), "pthread_create" );
-    check( pthread_attr_destroy( &s ), "pthread_attr_destroy" );
+    check( pthread_create( &handle, &s, thread_routine, arg ), "pthread_create has failed" );
+    check( pthread_attr_destroy( &s ), "pthread_attr_destroy has failed" );
     return handle;
 }
 
 void thread_monitor::join(handle_type handle) {
-    check(pthread_join(handle, NULL), "pthread_join");
+    check(pthread_join(handle, NULL), "pthread_join has failed");
 }
 
 void thread_monitor::detach_thread(handle_type handle) {
-    check(pthread_detach(handle), "pthread_detach");
-}
-
-inline void thread_monitor::yield() {
-    sched_yield();
+    check(pthread_detach(handle), "pthread_detach has failed");
 }
 #endif /* __TBB_USE_POSIX */
 

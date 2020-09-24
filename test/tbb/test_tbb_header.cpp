@@ -23,6 +23,9 @@
 
     Most of the checks happen at the compilation or link phases.
 **/
+
+#define __TBB_NO_IMPLICIT_LINKAGE 1
+
 #if __TBB_CPF_BUILD
 // Add testing of preview features
 #define TBB_PREVIEW_CONCURRENT_LRU_CACHE 1

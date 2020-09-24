@@ -14,6 +14,9 @@
     limitations under the License.
 */
 
+#ifndef __TBB_test_common_exception_handling_H
+#define __TBB_test_common_exception_handling_H
+
 #include <typeinfo>
 #include <thread>
 
@@ -112,14 +115,16 @@ using PropagatedException = test_exception;
 
 #if UTILS_EXCEPTION_HANDLING_SIMPLE_MODE
 
-static void ThrowTestException () {
+inline void ThrowTestException () {
     ++g_ExceptionsThrown;
     throw test_exception(EXCEPTION_DESCR);
 }
 
 #else /* !UTILS_EXCEPTION_HANDLING_SIMPLE_MODE */
 
-static void ThrowTestException ( intptr_t threshold ) {
+constexpr std::intptr_t Existed = INT_MAX;
+
+inline void ThrowTestException ( intptr_t threshold ) {
     bool inMaster = (std::this_thread::get_id() == g_Master);
     if ( !g_ThrowException ||   // if we're not supposed to throw
             (!g_Flog &&         // if we're not catching throw in bodies and
@@ -127,7 +132,7 @@ static void ThrowTestException ( intptr_t threshold ) {
               // or are the master and the master is not the one to throw (??)
         return;
     }
-    while ( Existed() < threshold )
+    while ( Existed < threshold )
         std::this_thread::yield();
     if ( !g_SolitaryException ) {
         ++g_ExceptionsThrown;
@@ -306,3 +311,5 @@ void RunCancellationTest ( intptr_t threshold = 1 )
         tg.wait();
     CATCH_AND_FAIL();
 }
+
+#endif // __TBB_test_common_exception_handling_H

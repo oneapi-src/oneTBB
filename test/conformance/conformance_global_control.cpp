@@ -203,11 +203,111 @@ TEST_CASE("setting stack size") {
 }
 #endif
 
-
 //! Testing setting max number of threads
 //! \brief \ref interface \ref requirement
 TEST_CASE("setting max number of threads") {
     TestWorkersConstraints();
     TestConcurrentSetUseConcurrency();
     TestAutoInit();
+}
+
+//! Test terminate_on_exception default value
+//! \brief \ref interface \ref requirement
+TEST_CASE("terminate_on_exception: default") {
+    std::size_t default_toe = tbb::global_control::active_value(tbb::global_control::terminate_on_exception);
+    CHECK(default_toe == 0);
+}
+
+//! Test terminate_on_exception in a nested case
+//! \brief \ref interface \ref requirement
+TEST_CASE("terminate_on_exception: nested") {
+    tbb::global_control* c0;
+    {
+        tbb::global_control c1(tbb::global_control::terminate_on_exception, 1);
+        CHECK(tbb::global_control::active_value(tbb::global_control::terminate_on_exception) == 1);
+        {
+            tbb::global_control c2(tbb::global_control::terminate_on_exception, 0);
+            CHECK(tbb::global_control::active_value(tbb::global_control::terminate_on_exception) == 1);
+        }
+        CHECK(tbb::global_control::active_value(tbb::global_control::terminate_on_exception) == 1);
+        c0 = new tbb::global_control(tbb::global_control::terminate_on_exception, 0);
+    }
+    CHECK(tbb::global_control::active_value(tbb::global_control::terminate_on_exception) == 0);
+    delete c0;
+}
+
+// The test cannot work correctly with statically linked runtime.
+#if !_MSC_VER || defined(_DLL)
+#include <csetjmp>
+
+// Overall, the test case is not safe because the dtors might not be called during long jump.
+// Therefore, it makes sense to run the test case after all other test cases.
+//! Test terminate_on_exception behavior
+//! \brief \ref interface \ref requirement
+TEST_CASE("terminate_on_exception: enabled") {
+    tbb::global_control c(tbb::global_control::terminate_on_exception, 1);
+    static bool terminate_handler_called;
+    terminate_handler_called = false;
+
+#if TBB_USE_EXCEPTIONS
+    try {
+#endif
+        static std::jmp_buf buffer;
+        std::terminate_handler prev = std::set_terminate([] {
+            CHECK(!terminate_handler_called);
+            terminate_handler_called = true;
+            std::longjmp(buffer, 1);
+        });
+#if _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4611) // interaction between '_setjmp' and C++ object destruction is non - portable
+#endif
+        SUBCASE("internal exception") {
+            if (setjmp(buffer) == 0) {
+                tbb::parallel_for(0, 1, -1, [](int) {});
+                FAIL("Unreachable code");
+            }
+        }
+#if TBB_USE_EXCEPTIONS
+        SUBCASE("user exception") {
+            if (setjmp(buffer) == 0) {
+                tbb::parallel_for(0, 1, [](int) {
+                    volatile bool suppress_unreachable_code_warning = true;
+                    if (suppress_unreachable_code_warning) {
+                        throw std::exception();
+                    }
+                });
+                FAIL("Unreachable code");
+            }
+        }
+#endif
+#if _MSC_VER
+#pragma warning(pop)
+#endif
+        std::set_terminate(prev);
+        terminate_handler_called = true;
+#if TBB_USE_EXCEPTIONS
+    } catch (...) {
+        FAIL("The exception is not expected");
+    }
+#endif
+    CHECK(terminate_handler_called);
+}
+#endif
+
+//! Testing setting the same value but different objects
+//! \brief \ref interface \ref error_guessing
+TEST_CASE("setting same value") {
+    const std::size_t value = 2;
+
+    tbb::global_control* ctl1 = new tbb::global_control(tbb::global_control::max_allowed_parallelism, value);
+    tbb::global_control* ctl2 = new tbb::global_control(tbb::global_control::max_allowed_parallelism, value);
+
+    std::size_t active = tbb::global_control::active_value(tbb::global_control::max_allowed_parallelism);
+    REQUIRE(active == value);
+    delete ctl2;
+
+    active = tbb::global_control::active_value(tbb::global_control::max_allowed_parallelism);
+    REQUIRE_MESSAGE(active == value, "Active value should not change, because of value duplication");
+    delete ctl1;
 }

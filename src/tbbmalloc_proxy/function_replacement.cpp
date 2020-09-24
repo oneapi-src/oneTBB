@@ -23,7 +23,6 @@
 #ifndef _CRT_SECURE_NO_DEPRECATE
 #define _CRT_SECURE_NO_DEPRECATE 1
 #endif
-#define __TBB_NO_IMPLICIT_LINKAGE 1
 
 // no standard-conforming implementation of snprintf prior to VS 2015
 #if !defined(_MSC_VER) || _MSC_VER>=1900

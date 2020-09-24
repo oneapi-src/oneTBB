@@ -15,11 +15,12 @@
 add_library(tbbbind SHARED tbb_bind.cpp)
 add_library(TBB::tbbbind ALIAS tbbbind)
 
-find_package(HWLOC REQUIRED)
+target_compile_definitions(tbbbind PRIVATE __TBBBIND_BUILD)
+
+find_package(HWLOC 1.11 EXACT REQUIRED)
 
 target_include_directories(tbbbind
     PUBLIC
-    ${HWLOC_INCLUDE_DIRS}
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../include>
     $<INSTALL_INTERFACE:include>)
 
@@ -38,7 +39,8 @@ target_compile_options(tbbbind
 set_target_properties(tbbbind PROPERTIES
     LINK_FLAGS ${TBB_LINK_DEF_FILE_FLAG}${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbbind.def
     DEFINE_SYMBOL ""
-    VERSION 3)
+    VERSION ${TBBBIND_BINARY_VERSION}.${TBB_BINARY_MINOR_VERSION}
+    SOVERSION ${TBBBIND_BINARY_VERSION})
 
 # Prefer using target_link_options instead of target_link_libraries to specify link options because
 # target_link_libraries may incorrectly handle some options (on Windows, for example).
@@ -58,7 +60,7 @@ endif()
 
 target_link_libraries(tbbbind
     PUBLIC
-    ${HWLOC_LIBRARIES}
+    HWLOC::hwloc
     PRIVATE
     ${TBB_LIB_LINK_LIBS}
     ${TBB_COMMON_LINK_LIBS}

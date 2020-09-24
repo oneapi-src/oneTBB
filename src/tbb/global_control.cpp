@@ -18,6 +18,7 @@
 #include "tbb/detail/_template_helpers.h"
 
 #include "tbb/global_control.h"
+#include "tbb/tbb_allocator.h"
 #include "tbb/spin_mutex.h"
 
 #include "governor.h"
@@ -25,26 +26,35 @@
 #include "misc.h"
 
 #include <atomic>
+#include <set>
 
 namespace tbb {
 namespace detail {
 namespace r1 {
 
+//! Comparator for a set of global_control objects
+struct control_storage_comparator {
+    bool operator()(const global_control* lhs, const global_control* rhs) const;
+};
+
 class control_storage {
     friend struct global_control_impl;
     friend std::size_t global_control_active_value(int);
 protected:
-    std::size_t my_active_value;
-    std::atomic<global_control*> my_head;
-    spin_mutex my_list_mutex;
+    std::size_t my_active_value{0};
+    std::set<global_control*, control_storage_comparator, tbb_allocator<global_control*>> my_list{};
+    spin_mutex my_list_mutex{};
 public:
     virtual std::size_t default_value() const = 0;
-    virtual void apply_active() const {}
+    virtual void apply_active(std::size_t new_active) {
+        my_active_value = new_active;
+    }
     virtual bool is_first_arg_preferred(std::size_t a, std::size_t b) const {
         return a>b; // prefer max by default
     }
-    virtual std::size_t active_value() const {
-        return my_head.load(std::memory_order_acquire)? my_active_value : default_value();
+    virtual std::size_t active_value() {
+        spin_mutex::scoped_lock lock(my_list_mutex); // protect my_list.empty() call
+        return !my_list.empty() ? my_active_value : default_value();
     }
 };
 
@@ -55,16 +65,15 @@ class alignas(max_nfs_size) allowed_parallelism_control : public control_storage
     virtual bool is_first_arg_preferred(std::size_t a, std::size_t b) const override {
         return a<b; // prefer min allowed parallelism
     }
-    virtual void apply_active() const override {
+    virtual void apply_active(std::size_t new_active) override {
+        control_storage::apply_active(new_active);
         __TBB_ASSERT( my_active_value>=1, NULL );
         // -1 to take master into account
         market::set_active_num_workers( my_active_value-1 );
     }
-    virtual std::size_t active_value() const override {
-/* Reading of my_active_value is not synchronized with possible updating
-   of my_head by other thread. It's ok, as value of my_active_value became
-   not invalid, just obsolete. */
-        if (!my_head.load(std::memory_order_acquire))
+    virtual std::size_t active_value() override {
+        spin_mutex::scoped_lock lock(my_list_mutex); // protect my_list.empty() call
+        if (my_list.empty())
             return default_value();
         // non-zero, if market is active
         const std::size_t workers = market::max_num_workers();
@@ -74,7 +83,7 @@ class alignas(max_nfs_size) allowed_parallelism_control : public control_storage
     }
 public:
     std::size_t active_value_if_present() const {
-        return my_head.load(std::memory_order_acquire)? my_active_value : 0;
+        return !my_list.empty() ? my_active_value : 0;
     }
 };
 
@@ -82,81 +91,161 @@ class alignas(max_nfs_size) stack_size_control : public control_storage {
     virtual std::size_t default_value() const override {
         return ThreadStackSize;
     }
-    virtual void apply_active() const override {
+    virtual void apply_active(std::size_t new_active) override {
+        control_storage::apply_active(new_active);
 #if __TBB_WIN8UI_SUPPORT && (_WIN32_WINNT < 0x0A00)
         __TBB_ASSERT( false, "For Windows 8 Store* apps we must not set stack size" );
 #endif
     }
 };
 
+class alignas(max_nfs_size) terminate_on_exception_control : public control_storage {
+    virtual std::size_t default_value() const override {
+        return 0;
+    }
+};
+
+#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
+class alignas(max_nfs_size) lifetime_control : public control_storage {
+    virtual bool is_first_arg_preferred(std::size_t, std::size_t) const override {
+        return false; // not interested
+    }
+    virtual std::size_t default_value() const override {
+        return 0;
+    }
+    virtual void apply_active(std::size_t new_active) override {
+        if (new_active == 1) {
+            // reserve the market reference
+            market::global_market_mutex_type::scoped_lock lock( market::theMarketMutex );
+            if (market::theMarket) {
+                market::add_ref_unsafe(lock, /*is_public*/ true);
+            }
+        } else if (new_active == 0) { // new_active == 0
+            // release the market reference
+            market::global_market_mutex_type::scoped_lock lock( market::theMarketMutex );
+            if (market::theMarket != nullptr) {
+                lock.release();
+                market::theMarket->release(/*is_public*/ true, /*blocking_terminate*/ false);
+            }
+        }
+        control_storage::apply_active(new_active);
+    }
+
+public:
+    bool is_empty() {
+        spin_mutex::scoped_lock lock(my_list_mutex);
+        return my_list.empty();
+    }
+};
+#endif // __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
+
 static allowed_parallelism_control allowed_parallelism_ctl;
 static stack_size_control stack_size_ctl;
+static terminate_on_exception_control terminate_on_exception_ctl;
+#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
+static lifetime_control lifetime_ctl;
+static control_storage *controls[] = {&allowed_parallelism_ctl, &stack_size_ctl, &terminate_on_exception_ctl, &lifetime_ctl};
+#else
+static control_storage *controls[] = {&allowed_parallelism_ctl, &stack_size_ctl, &terminate_on_exception_ctl};
+#endif // __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
 
-static control_storage *controls[] = {&allowed_parallelism_ctl, &stack_size_ctl};
+//! Comparator for a set of global_control objects
+inline bool control_storage_comparator::operator()(const global_control* lhs, const global_control* rhs) const {
+    __TBB_ASSERT_RELEASE(lhs->my_param < global_control::parameter_max , NULL);
+    return lhs->my_value < rhs->my_value || (lhs->my_value == rhs->my_value && lhs < rhs);
+}
 
 unsigned market::app_parallelism_limit() {
     return allowed_parallelism_ctl.active_value_if_present();
 }
 
+bool terminate_on_exception() {
+    return global_control::active_value(global_control::terminate_on_exception) == 1;
+}
+
+#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
+unsigned market::is_lifetime_control_present() {
+    return !lifetime_ctl.is_empty();
+}
+#endif // __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
+
 struct global_control_impl {
+private:
+    static bool erase_if_present(control_storage* const c, d1::global_control& gc) {
+        auto it = c->my_list.find(&gc);
+        if (it != c->my_list.end()) {
+            c->my_list.erase(it);
+            return true;
+        }
+        return false;
+    }
+
+public:
+
     static void create(d1::global_control& gc) {
         __TBB_ASSERT_RELEASE(gc.my_param < global_control::parameter_max, NULL);
         control_storage* const c = controls[gc.my_param];
 
         spin_mutex::scoped_lock lock(c->my_list_mutex);
-        if (!c->my_head.load(std::memory_order_acquire) || c->is_first_arg_preferred(gc.my_value, c->my_active_value)) {
-            c->my_active_value = gc.my_value;
+        if (c->my_list.empty() || c->is_first_arg_preferred(gc.my_value, c->my_active_value)) {
             // to guarantee that apply_active() is called with current active value,
             // calls it here and in internal_destroy() under my_list_mutex
-            c->apply_active();
+            c->apply_active(gc.my_value);
         }
-        gc.my_next = c->my_head.load(std::memory_order_acquire);
-        // publish my_head, at this point my_active_value must be valid
-        c->my_head.store(&gc, std::memory_order_release);
+        c->my_list.insert(&gc);
     }
 
     static void destroy(d1::global_control& gc) {
-        global_control* prev = 0;
-
         __TBB_ASSERT_RELEASE(gc.my_param < global_control::parameter_max, NULL);
         control_storage* const c = controls[gc.my_param];
-        __TBB_ASSERT(c->my_head.load(std::memory_order_relaxed), NULL);
-
+#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
+        __TBB_ASSERT(gc.my_param == global_control::scheduler_handle || !c->my_list.empty(), NULL);
+#else
+        __TBB_ASSERT(!c->my_list.empty(), NULL);
+#endif // __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
         // Concurrent reading and changing global parameter is possible.
-        // In this case, my_active_value may not match current state of parameters.
-        // This is OK because:
-        // 1) my_active_value is either current or previous
-        // 2) my_active_value is current on internal_destroy leave
         spin_mutex::scoped_lock lock(c->my_list_mutex);
-        std::size_t new_active = (std::size_t) - 1, old_active = c->my_active_value;
+        std::size_t new_active = (std::size_t)(-1), old_active = c->my_active_value;
 
-        if (c->my_head.load(std::memory_order_acquire) != &gc)
-            new_active = c->my_head.load(std::memory_order_acquire)->my_value;
-        else if (c->my_head.load(std::memory_order_acquire)->my_next)
-            new_active = c->my_head.load(std::memory_order_acquire)->my_next->my_value;
-        // if there is only one element, new_active will be set later
-        for (global_control* curr = c->my_head.load(std::memory_order_acquire); curr; prev = curr, curr = curr->my_next) {
-            if (curr == &gc) {
-                if (prev) {
-                    prev->my_next = gc.my_next;
-                } else {
-                    c->my_head.store(gc.my_next, std::memory_order_release);
-                }
-            } else {
-                if (c->is_first_arg_preferred(curr->my_value, new_active)) {
-                    new_active = curr->my_value;
-                }
-            }
+        if (!erase_if_present(c, gc)) {
+#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
+            __TBB_ASSERT(gc.my_param == global_control::scheduler_handle , NULL);
+            return;
+#else
+            __TBB_ASSERT(false, "Unreachable code");
+#endif // __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
         }
-
-        if (!c->my_head.load(std::memory_order_acquire)) {
+        if (c->my_list.empty()) {
             __TBB_ASSERT(new_active == (std::size_t) - 1, NULL);
             new_active = c->default_value();
+        } else {
+            new_active = (*c->my_list.begin())->my_value;
         }
         if (new_active != old_active) {
-            c->my_active_value = new_active;
-            c->apply_active();
+            c->apply_active(new_active);
         }
+    }
+
+    static bool remove_and_check_if_empty(d1::global_control& gc) {
+        __TBB_ASSERT_RELEASE(gc.my_param < global_control::parameter_max, NULL);
+        control_storage* const c = controls[gc.my_param];
+        __TBB_ASSERT(!c->my_list.empty(), NULL);
+
+        spin_mutex::scoped_lock lock(c->my_list_mutex);
+        erase_if_present(c, gc);
+        return c->my_list.empty();
+    }
+
+    static bool is_present(d1::global_control& gc) {
+        __TBB_ASSERT_RELEASE(gc.my_param < global_control::parameter_max, NULL);
+        control_storage* const c = controls[gc.my_param];
+
+        spin_mutex::scoped_lock lock(c->my_list_mutex);
+        auto it = c->my_list.find(&gc);
+        if (it != c->my_list.end()) {
+            return true;
+        }
+        return false;
     }
 };
 
@@ -165,6 +254,13 @@ void __TBB_EXPORTED_FUNC create(d1::global_control& gc) {
 }
 void __TBB_EXPORTED_FUNC destroy(d1::global_control& gc) {
     global_control_impl::destroy(gc);
+}
+
+bool remove_and_check_if_empty(d1::global_control& gc) {
+    return global_control_impl::remove_and_check_if_empty(gc);
+}
+bool is_present(d1::global_control& gc) {
+    return global_control_impl::is_present(gc);
 }
 
 std::size_t __TBB_EXPORTED_FUNC global_control_active_value(int param) {

@@ -224,6 +224,12 @@ TEST_CASE("CTAD support in concurrent_map") {
 }
 #endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 
+//! Testing comparison operators in concurrent_map
+//! \brief \ref interface \ref requirement
+TEST_CASE("test concurrent_map comparisons") {
+    test_map_comparisons<tbb::concurrent_map>();
+}
+
 //! Testing concurrent_multimap member types
 //! \brief \ref interface \ref requirement
 TEST_CASE("concurrent_multimap member types") {
@@ -285,6 +291,12 @@ TEST_CASE("CTAD support in concurrent_multimap") {
     test_deduction_guides<tbb::concurrent_multimap>();
 }
 #endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+
+//! Testing comparison operators in concurrent_multimap
+//! \brief \ref interface \ref requirement
+TEST_CASE("test concurrent_multimap comparisons") {
+    test_map_comparisons<tbb::concurrent_multimap>();
+}
 
 //! Testing of merge operations in concurrent_map and concurrent_multimap
 //! \brief \ref interface \ref requirement

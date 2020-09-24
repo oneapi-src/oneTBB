@@ -77,11 +77,17 @@ extern const tchar
 #define ITT_FINI_ITTLIB()               __itt_fini_ittlib()
 #define ITT_SYNC_CREATE(obj, type, name) __itt_sync_create((void*)(obj), type, name, 2)
 #define ITT_STACK_CREATE(obj)           obj = __itt_stack_caller_create()
-#define ITT_STACK(precond, name, obj)   (precond) ? __itt_stack_##name(static_cast<__itt_caller>(obj)) : ((void)0);
+#define ITT_STACK_DESTROY(obj)          (obj!=nullptr) ? __itt_stack_caller_destroy(static_cast<__itt_caller>(obj)) : ((void)0)
+#define ITT_CALLEE_ENTER(cond, t, obj)  if(cond) {\
+                                            __itt_stack_callee_enter(static_cast<__itt_caller>(obj));\
+                                            __itt_sync_acquired(t);\
+                                        }
+#define ITT_CALLEE_LEAVE(cond, obj)     (cond) ? __itt_stack_callee_leave(static_cast<__itt_caller>(obj)) : ((void)0)
 
 #define ITT_TASK_GROUP(obj,name,parent)     r1::itt_make_task_group(d1::ITT_DOMAIN_MAIN,(void*)(obj),ALGORITHM,(void*)(parent),(parent!=nullptr) ? ALGORITHM : FLOW_NULL,name)
 #define ITT_TASK_BEGIN(obj,name,id)         r1::itt_task_begin(d1::ITT_DOMAIN_MAIN,(void*)(id),ALGORITHM,(void*)(obj),ALGORITHM,name)
 #define ITT_TASK_END                        r1::itt_task_end(d1::ITT_DOMAIN_MAIN)
+
 
 #else /* !__TBB_USE_ITT_NOTIFY */
 
@@ -90,8 +96,9 @@ extern const tchar
 #define ITT_FINI_ITTLIB()               ((void)0)
 #define ITT_SYNC_CREATE(obj, type, name) ((void)0)
 #define ITT_STACK_CREATE(obj)           ((void)0)
-#define ITT_STACK(precond, name, obj)   ((void)0)
-
+#define ITT_STACK_DESTROY(obj)          ((void)0)
+#define ITT_CALLEE_ENTER(cond, t, obj)  ((void)0)
+#define ITT_CALLEE_LEAVE(cond, obj)     ((void)0)
 #define ITT_TASK_GROUP(type,name,parent)    ((void)0)
 #define ITT_TASK_BEGIN(type,name,id)        ((void)0)
 #define ITT_TASK_END                        ((void)0)

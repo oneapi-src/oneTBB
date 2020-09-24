@@ -22,6 +22,8 @@
    by non-recursive mutex in some versions of GLIBC.
  */
 
+#define __TBB_NO_IMPLICIT_LINKAGE 1
+
 #include "common/allocator_overload.h"
 #include "common/utils_assert.h"
 #include <stdlib.h>

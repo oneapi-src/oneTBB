@@ -19,6 +19,7 @@
 
 #include "tbb/detail/_utils.h"
 #include "tbb/detail/_task.h"
+#include "tbb/global_control.h"
 
 #include "scheduler_common.h"
 #include "arena_slot.h"
@@ -50,6 +51,8 @@ inline d1::task* get_self_recall_task(arena_slot& slot) {
     return t;
 }
 
+// Defined in exception.cpp
+/*[[noreturn]]*/void do_throw_noexcept(void (*throw_exception)()) noexcept;
 
 //------------------------------------------------------------------------
 // Suspend point
@@ -280,7 +283,7 @@ d1::task* task_dispatcher::local_wait_for_all(d1::task* t, Waiter& waiter ) {
                     __TBB_ASSERT(ed.context->my_lifetime_state > d1::task_group_context::lifetime_state::locked &&
                                  ed.context->my_lifetime_state < d1::task_group_context::lifetime_state::dying, nullptr);
                     __TBB_ASSERT(m_thread_data->my_inbox.is_idle_state(false), nullptr);
-                    __TBB_ASSERT(isolation == no_isolation || isolation == ed.isolation, nullptr);
+                    __TBB_ASSERT(task_accessor::is_resume_task(*t) || isolation == no_isolation || isolation == ed.isolation, nullptr);
                     // Check premature leave
                     if (Waiter::postpone_execution(*t)) {
                         __TBB_ASSERT(task_accessor::is_resume_task(*t) && dl_guard.old_properties.outermost,
@@ -290,13 +293,17 @@ d1::task* task_dispatcher::local_wait_for_all(d1::task* t, Waiter& waiter ) {
                     // Copy itt_caller to a stack because the context might be destroyed after t->execute.
                     void* itt_caller = ed.context->my_itt_caller;
                     suppress_unused_warning(itt_caller);
-                    ITT_STACK(ITTPossible, callee_enter, itt_caller);
+
+                    ITT_CALLEE_ENTER(ITTPossible, t, itt_caller);
+
                     if (ed.context->is_group_execution_cancelled()) {
                         t = t->cancel(ed);
                     } else {
                         t = t->execute(ed);
                     }
-                    ITT_STACK(ITTPossible, callee_leave, itt_caller);
+
+                    ITT_CALLEE_LEAVE(ITTPossible, itt_caller);
+
                     // The task affinity in execution data is set for affinitized tasks.
                     // So drop it after the task execution.
                     ed.affinity_slot = d1::no_slot;
@@ -327,6 +334,9 @@ d1::task* task_dispatcher::local_wait_for_all(d1::task* t, Waiter& waiter ) {
             } while (t != nullptr); // main dispatch loop
             break; // Exit exception loop;
         } catch (...) {
+            if (global_control::active_value(global_control::terminate_on_exception) == 1) {
+                do_throw_noexcept([] { throw; });
+            }
             if (ed.context->cancel_group_execution()) {
                 /* We are the first to signal cancellation, so store the exception that caused it. */
                 ed.context->my_exception = tbb_exception_ptr::allocate();
@@ -390,7 +400,7 @@ inline d1::task* task_dispatcher::get_critical_task(d1::task* t, execution_data_
         assert_task_valid(crit_t);
         if (t != nullptr) {
             assert_pointer_valid</*alignment = */alignof(void*)>(ed.context);
-            spawn(*t, *ed.context );
+            r1::spawn(*t, *ed.context);
         }
         ed.context = task_accessor::context(*crit_t);
         ed.isolation = task_accessor::isolation(*crit_t);
@@ -418,7 +428,6 @@ inline d1::task* task_dispatcher::get_critical_task(d1::task* t, execution_data_
 inline d1::task* task_dispatcher::get_mailbox_task(mail_inbox& my_inbox, execution_data_ext& ed, isolation_type isolation) {
     while (task_proxy* const tp = my_inbox.pop(isolation)) {
         if (d1::task* result = tp->extract_task<task_proxy::mailbox_bit>()) {
-            ITT_NOTIFY(sync_acquired, my_inbox.outbox());
             ed.original_slot = (unsigned short)(-2);
             ed.affinity_slot = ed.task_disp->m_thread_data->my_arena_index;
             return result;

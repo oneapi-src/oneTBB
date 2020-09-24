@@ -17,6 +17,8 @@
 //! \file test_malloc_overload.cpp
 //! \brief Test for [memory_allocation] functionality
 
+#define __TBB_NO_IMPLICIT_LINKAGE 1
+
 #if (_WIN32 || _WIN64)
 // As the test is intentionally build with /EHs-, suppress multiple VS2005's
 // warnings like C4530: C++ exception handler used, but unwind semantics are not enabled

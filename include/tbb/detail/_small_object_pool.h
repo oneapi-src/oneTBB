@@ -20,6 +20,7 @@
 #include "_config.h"
 #include "_assert.h"
 
+#include "../profiling.h"
 #include <cstddef>
 #include <cstdint>
 #include <atomic>
@@ -83,12 +84,16 @@ public:
 
     template <typename Type>
     void deallocate(Type* ptr, const execution_data& ed) {
+        call_itt_task_notify(destroy, ptr);
+
         __TBB_ASSERT(m_pool != nullptr, "Pool must be valid for deallocate call");
         r1::deallocate(*m_pool, ptr, sizeof(Type), ed);
     }
 
     template <typename Type>
     void deallocate(Type* ptr) {
+        call_itt_task_notify(destroy, ptr);
+
         __TBB_ASSERT(m_pool != nullptr, "Pool must be valid for deallocate call");
         r1::deallocate(*m_pool, ptr, sizeof(Type));
     }

@@ -15,7 +15,7 @@
 */
 
 //! \file test_hw_concurrency.cpp
-//! \brief Test for [all] specifications
+//! \brief Test for [internal] specifications
 
 #include "common/config.h"
 #include "common/test.h"

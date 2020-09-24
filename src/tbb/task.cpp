@@ -107,7 +107,7 @@ void task_dispatcher::suspend(suspend_callback_type suspend_callback, void* user
     thread_data::suspend_callback_wrapper callback = { suspend_callback, user_callback, get_suspend_point() };
     m_thread_data->set_post_resume_action(thread_data::post_resume_action::callback, &callback);
     resume(target);
-    
+
     if (m_properties.outermost) {
         recall_point();
     }

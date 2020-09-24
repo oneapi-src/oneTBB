@@ -14,17 +14,24 @@
     limitations under the License.
 */
 
+#if _MSC_VER && !defined(__INTEL_COMPILER)
+    // Workaround for vs2015 and warning name was longer than the compiler limit (4096).
+    #pragma warning (push)
+    #pragma warning (disable: 4503)
+#endif
+
 #include "common/test.h"
 #include "common/utils.h"
 #include "common/utils_report.h"
+#include "common/utils_concurrency_limit.h"
 #include "common/spin_barrier.h"
 #include "common/checktype.h"
 
 #include "tbb/detail/_utils.h"
-
 #include "tbb/enumerable_thread_specific.h"
 #include "tbb/parallel_for.h"
 #include "tbb/parallel_reduce.h"
+#include "tbb/parallel_invoke.h"
 #include "tbb/blocked_range.h"
 #include "tbb/tbb_allocator.h"
 #include "tbb/global_control.h"
@@ -657,13 +664,18 @@ void run_parallel_vector_tests(const char* /* test_name */, const char *allocato
             size_t ccount = fvs.size();
             REQUIRE( ccount == size_t(N) );
             size_t elem_cnt = 0;
+            typename tbb::flattened2d<ets_type>::iterator it;
+            auto it2(it);
+            it = fvs.begin();
+            REQUIRE(it != it2);
+
             for(typename tbb::flattened2d<ets_type>::const_iterator i = fvs.begin(); i != fvs.end(); ++i) {
                 ++elem_cnt;
             };
             REQUIRE( ccount == elem_cnt );
 
             elem_cnt = 0;
-            for(typename tbb::flattened2d<ets_type>::iterator i = fvs.begin(); i != fvs.end(); ++i) {
+            for(typename tbb::flattened2d<ets_type>::iterator i = fvs.begin(); i != fvs.end(); i++) {
                 ++elem_cnt;
             };
             REQUIRE( ccount == elem_cnt );
@@ -744,6 +756,11 @@ void run_cross_type_vector_tests(const char* /* test_name */) {
                 ++elem_cnt;
             };
             REQUIRE(ccount == elem_cnt);
+
+            tbb::flattened2d<ets_nokey_type> fvs2 = flatten2d(vs3, vs3.begin(), std::next(vs3.begin()));
+            REQUIRE(std::distance(fvs2.begin(), fvs2.end()) == vs3.begin()->size());
+            const tbb::flattened2d<ets_nokey_type>& cfvs2(fvs2);
+            REQUIRE(std::distance(cfvs2.begin(), cfvs2.end()) == vs3.begin()->size());
         }
 
         double result_value = test_helper<T>::get(sum);
@@ -1063,6 +1080,80 @@ size_t init_tbb_alloc_mask() {
 static const size_t cache_allocator_mask = tbb::detail::r1::cache_line_size();
 static const size_t tbb_allocator_mask = init_tbb_alloc_mask();
 
+void TestETSIterator() {
+    using ets_type = tbb::enumerable_thread_specific<int>;
+    if (utils::get_platform_max_threads() == 1) {
+        ets_type ets;
+        ets.local() = 1;
+        REQUIRE_MESSAGE(std::next(ets.begin()) == ets.end(), "Incorrect begin or end of the ETS");
+        REQUIRE_MESSAGE(std::prev(ets.end()) == ets.begin(), "Incorrect begin or end of the ETS");
+    } else {
+        std::atomic<std::size_t> sync_counter(0);
+
+        const std::size_t expected_ets_size = 2;
+        ets_type ets;
+        const ets_type& cets(ets);
+
+        auto fill_ets_body = [&](){
+            ets.local() = 42;
+            ++sync_counter;
+            while(sync_counter != expected_ets_size)
+                std::this_thread::yield();
+        };
+
+        tbb::parallel_invoke(fill_ets_body, fill_ets_body);
+        REQUIRE_MESSAGE(ets.size() == expected_ets_size, "Incorrect ETS size");
+
+        std::size_t counter = 0;
+        auto iter = ets.begin();
+        while(iter != ets.end()) {
+            ++counter % 2 == 0 ? ++iter : iter++;
+        }
+        REQUIRE(counter == expected_ets_size);
+        while(iter != ets.begin()) {
+            --counter % 2 == 0 ? --iter : iter--;
+        }
+        REQUIRE(counter == 0);
+        auto citer = cets.begin();
+        while(citer != cets.end()) {
+            ++counter % 2 == 0 ? ++citer : citer++;
+        }
+        REQUIRE(counter == expected_ets_size);
+        while(citer != cets.begin()) {
+            --counter % 2 == 0 ? --citer : citer--;
+        }
+        REQUIRE(counter == 0);
+        REQUIRE(ets.begin() + expected_ets_size == ets.end());
+        REQUIRE(expected_ets_size + ets.begin() == ets.end());
+        REQUIRE(ets.end() - expected_ets_size == ets.begin());
+
+        typename ets_type::iterator it;
+        it = ets.begin();
+
+        auto it_bkp = it;
+        auto it2 = it++;
+        REQUIRE(it2 == it_bkp);
+
+        it = ets.begin();
+        it += expected_ets_size;
+        REQUIRE(it == ets.end());
+        it -= expected_ets_size;
+        REQUIRE(it == ets.begin());
+
+        for (int i = 0; i < int(expected_ets_size - 1); ++i) {
+            REQUIRE(ets.begin()[i] == 42);
+            REQUIRE(std::prev(ets.end())[-i] == 42);
+        }
+
+        auto iter1 = ets.begin();
+        auto iter2 = ets.end();
+        REQUIRE(iter1 < iter2);
+        REQUIRE(iter1 <= iter2);
+        REQUIRE(!(iter1 > iter2));
+        REQUIRE(!(iter1 >= iter2));
+    }
+}
+
 //! Test container instantiation
 //! \brief \ref interface \ref requirement
 TEST_CASE("Instantiation") {
@@ -1127,3 +1218,11 @@ TEST_CASE("Member types") {
     TestMemberTypes();
 }
 
+//! \brief \ref interface \ref requirement
+TEST_CASE("enumerable_thread_specific iterator") {
+    TestETSIterator();
+}
+
+#if _MSC_VER && !defined(__INTEL_COMPILER)
+    #pragma warning (pop)
+#endif // warning 4503 is back

@@ -124,8 +124,9 @@ void task_group_context_impl::destroy(d1::task_group_context& ctx) {
 
     if (ctx.my_exception)
         ctx.my_exception->destroy();
-    ITT_STACK(ctx.my_itt_caller != nullptr, caller_destroy, static_cast<__itt_caller>(ctx.my_itt_caller));
+    ITT_STACK_DESTROY(ctx.my_itt_caller);
 
+    poison_pointer(ctx.my_parent);
     poison_pointer(ctx.my_parent);
     poison_pointer(ctx.my_owner);
     poison_pointer(ctx.my_node.next);
@@ -356,17 +357,6 @@ void task_group_context_impl::copy_fp_settings(d1::task_group_context& ctx, cons
     ctx.my_traits.fp_settings = true;
 }
 
-void task_group_context_impl::register_pending_exception(d1::task_group_context& ctx) {
-    __TBB_ASSERT(!is_poisoned(ctx.my_owner), NULL);
-    if (ctx.my_cancellation_requested.load(std::memory_order_relaxed))
-        return;
-#if TBB_USE_EXCEPTIONS
-    try {
-        throw;
-    } TbbCatchAll((&ctx));
-#endif /* TBB_USE_EXCEPTIONS */
-}
-
 template <typename T>
 void thread_data::propagate_task_group_state(std::atomic<T> d1::task_group_context::* mptr_state, d1::task_group_context& src, T new_state) {
     spin_mutex::scoped_lock lock(my_context_list_state.mutex);
@@ -481,9 +471,6 @@ bool __TBB_EXPORTED_FUNC cancel_group_execution(d1::task_group_context& ctx) {
 }
 bool __TBB_EXPORTED_FUNC is_group_execution_cancelled(d1::task_group_context& ctx) {
     return task_group_context_impl::is_group_execution_cancelled(ctx);
-}
-void __TBB_EXPORTED_FUNC register_pending_exception(d1::task_group_context& ctx) {
-    task_group_context_impl::register_pending_exception(ctx);
 }
 void __TBB_EXPORTED_FUNC capture_fp_settings(d1::task_group_context& ctx) {
     task_group_context_impl::capture_fp_settings(ctx);

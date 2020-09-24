@@ -18,6 +18,8 @@ add_library(tbbmalloc_proxy SHARED
 
 add_library(TBB::tbbmalloc_proxy ALIAS tbbmalloc_proxy)
 
+target_compile_definitions(tbbmalloc_proxy PRIVATE __TBBMALLOCPROXY_BUILD)
+
 target_include_directories(tbbmalloc_proxy
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../include>
@@ -34,7 +36,9 @@ target_compile_options(tbbmalloc_proxy
     ${TBB_COMMON_COMPILE_FLAGS}
 )
 
-set_target_properties(tbbmalloc_proxy PROPERTIES VERSION ${TBBMALLOC_BINARY_VERSION})
+set_target_properties(tbbmalloc_proxy PROPERTIES
+    VERSION ${TBBMALLOC_BINARY_VERSION}.${TBB_BINARY_MINOR_VERSION}
+    SOVERSION ${TBBMALLOC_BINARY_VERSION})
 
 if (UNIX AND NOT APPLE)
     # Avoid use of target_link_libraries here as it changes /DEF option to \DEF on Windows.

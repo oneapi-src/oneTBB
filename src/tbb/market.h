@@ -34,6 +34,13 @@
 
 namespace tbb {
 namespace detail {
+
+#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
+namespace d1 {
+class task_scheduler_handle;
+}
+#endif
+
 namespace r1 {
 
 class task_arena_base;
@@ -49,11 +56,19 @@ class market : no_copy, rml::tbb_client {
     template<typename SchedulerTraits> friend class custom_scheduler;
     friend class task_group_context;
     friend class governor;
+#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
+    friend class lifetime_control;
+#endif
+
 public:
     //! Keys for the arena map array. The lower the value the higher priority of the arena list.
     static constexpr unsigned num_priority_levels = 3;
+
 private:
     friend void ITT_DoUnsafeOneTimeInitialization ();
+#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
+    friend bool finalize_impl(d1::task_scheduler_handle& handle);
+#endif
 
     typedef intrusive_list<arena> arena_list_type;
     typedef intrusive_list<thread_data> thread_data_list_type;
@@ -141,10 +156,10 @@ private:
     //! Recalculates the number of workers assigned to each arena in the list.
     /** The actual number of workers servicing a particular arena may temporarily
         deviate from the calculated value. **/
-    void update_allotment () {
+    void update_allotment (unsigned effective_soft_limit) {
         if ( my_total_demand )
             update_allotment( my_arenas, my_total_demand,
-                              (int)my_num_workers_soft_limit.load(std::memory_order_relaxed) );
+                              (int)effective_soft_limit );
     }
 
     //! Returns next arena that needs more workers, or NULL.
@@ -178,8 +193,6 @@ private:
 
     std::size_t min_stack_size () const override { return worker_stack_size(); }
 
-    policy_type policy () const override { return throughput; }
-
     job* create_one_job () override;
 
     void cleanup( job& j ) override;
@@ -190,7 +203,10 @@ private:
 
 public:
     //! Factory method creating new market object
-    static market& global_market(bool is_public, unsigned max_num_workers = 0, std::size_t stack_size = 0);
+    static market& global_market( bool is_public, unsigned max_num_workers = 0, std::size_t stack_size = 0 );
+
+    //! Add reference to market if theMarket exists
+    static bool add_ref_unsafe( global_market_mutex_type::scoped_lock& lock, bool is_public, unsigned max_num_workers = 0, std::size_t stack_size = 0 );
 
     //! Creates an arena object
     /** If necessary, also creates global market instance, and boosts its ref count.
@@ -236,6 +252,11 @@ public:
 
     //! Reports active parallelism level according to user's settings
     static unsigned app_parallelism_limit();
+
+#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
+    //! Reports if any active global lifetime references are present
+    static unsigned is_lifetime_control_present();
+#endif
 
     //! Finds all contexts affected by the state change and propagates the new state to them.
     /** The propagation is relayed to the market because tasks created by one

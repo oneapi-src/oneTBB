@@ -85,6 +85,7 @@ public:
     }
 private:
     sum_node_type* release_parent() {
+        call_itt_task_notify(releasing, m_parent);
         if (m_parent) {
             auto parent = m_parent;
             m_parent = nullptr;
@@ -176,6 +177,7 @@ public:
     }
 private:
     sum_node* release_parent() {
+        call_itt_task_notify(releasing, m_parent);
         if (m_parent) {
             auto parent = m_parent;
             m_parent = nullptr;
@@ -291,6 +293,7 @@ public:
     }
 private:
     finish_scan* release_parent() {
+        call_itt_task_notify(releasing, m_parent);
         if (m_parent) {
             auto parent = m_parent;
             m_parent = nullptr;
@@ -331,6 +334,7 @@ private:
     wait_context& m_wait_context;
 
     finish_pass1_type* release_parent() {
+        call_itt_task_notify(releasing, m_parent);
         if (m_parent) {
             auto parent = m_parent;
             m_parent = nullptr;

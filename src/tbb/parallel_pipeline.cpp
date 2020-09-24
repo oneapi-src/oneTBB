@@ -282,7 +282,7 @@ private:
         ITT_NOTIFY( sync_releasing, &my_pipeline.input_tokens );
         if( (my_pipeline.input_tokens.fetch_sub(1, std::memory_order_relaxed)) > 1 ) {
             d1::small_object_allocator alloc{};
-            spawn( *alloc.new_object<stage_task>(ed, my_pipeline, alloc ), my_pipeline.my_context );
+            r1::spawn( *alloc.new_object<stage_task>(ed, my_pipeline, alloc ), my_pipeline.my_context );
         }
     }
 
@@ -342,7 +342,7 @@ public:
     void spawn_stage_task(const task_info& info, d1::execution_data& ed) {
         d1::small_object_allocator alloc{};
         stage_task* clone = alloc.new_object<stage_task>(ed, my_pipeline, my_filter, info, alloc);
-        spawn(*clone, my_pipeline.my_context);
+        r1::spawn(*clone, my_pipeline.my_context);
     }
 };
 
@@ -452,7 +452,7 @@ void __TBB_EXPORTED_FUNC parallel_pipeline(d1::task_group_context& cxt, std::siz
     stage_task& st = *alloc.new_object<stage_task>(pipe, alloc);
 
     // Start execution of tasks
-    execute_and_wait(st, cxt, pipe.wait_ctx, cxt);
+    r1::execute_and_wait(st, cxt, pipe.wait_ctx, cxt);
 }
 
 void __TBB_EXPORTED_FUNC set_end_of_input(d1::base_filter& bf) {
