@@ -1,0 +1,302 @@
+/*
+    Copyright (c) 2005-2020 Intel Corporation
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#ifndef _TBB_waiters_H
+#define _TBB_waiters_H
+
+#include "tbb/detail/_task.h"
+#include "scheduler_common.h"
+#include "arena.h"
+
+namespace tbb {
+namespace detail {
+namespace r1 {
+
+// Organizes wait list in wait_context
+struct wait_node {
+    virtual void notify(d1::wait_context& wo) = 0;
+
+    void notify_all(d1::wait_context& wo) {
+        wait_node* curr_node = this;
+        wait_node* next_node = nullptr;
+
+        for (; curr_node != nullptr; curr_node = next_node) {
+            next_node = curr_node->my_next;
+            curr_node->notify(wo);
+        }
+    }
+
+    void link(wait_node* next_node) {
+        my_next = next_node;
+        my_prev = nullptr;
+
+        if (next_node != nullptr) {
+            next_node->my_prev = this;
+        }
+    }
+
+    void unlink() {
+        if (my_prev) {
+            my_prev->my_next = my_next;
+        }
+
+        if (my_next) {
+            my_next->my_prev = my_prev;
+        }
+    }
+
+    wait_node* my_next{nullptr};
+    wait_node* my_prev{nullptr};
+};
+
+struct sleep_node : public wait_node {
+    sleep_node(arena& a) : my_arena(a)
+    {}
+
+    void notify(d1::wait_context& wo) override {
+        std::uintptr_t wait_tag = reinterpret_cast<std::uintptr_t>(&wo);
+        my_arena.my_sleep_monitors.notify(
+            [&wait_tag] (std::uintptr_t tag) {
+                return tag == wait_tag;
+            }
+        );
+    }
+
+    arena& my_arena;
+};
+
+struct resume_node : public wait_node {
+    resume_node(suspend_point_type* sp) : my_suspend_point(sp)
+    {}
+
+    void notify(d1::wait_context&) override {
+        r1::resume(my_suspend_point);
+    }
+
+    suspend_point_type* my_suspend_point;
+};
+
+inline d1::task* get_self_recall_task(arena_slot& slot);
+
+class waiter_base {
+public:
+    waiter_base(arena& a) : my_arena(a), my_backoff(int(a.my_num_slots)) {}
+
+    bool pause() {
+        if (my_backoff.pause()) {
+            my_arena.is_out_of_work();
+            return true;
+        }
+
+        return false;
+    }
+
+    void reset_wait() {
+        my_backoff.reset_wait();
+    }
+
+protected:
+    arena& my_arena;
+    stealing_loop_backoff my_backoff;
+};
+
+class outermost_worker_waiter : public waiter_base {
+public:
+    using waiter_base::waiter_base;
+
+    bool continue_execution(arena_slot& slot, d1::task*& t) const {
+        __TBB_ASSERT(t == nullptr, nullptr);
+
+        if (is_worker_should_leave(slot)) {
+            // Leave dispatch loop
+            return false;
+        }
+
+        t = get_self_recall_task(slot);
+        return true;
+    }
+
+    void pause(arena_slot&) {
+        waiter_base::pause();
+    }
+
+
+    d1::wait_context* wait_ctx() {
+        return nullptr;
+    }
+
+    static bool postpone_execution(d1::task&) {
+        return false;
+    }
+
+private:
+    using base_type = waiter_base;
+
+    bool is_worker_should_leave(arena_slot& slot) const {
+        bool is_top_priority_arena = my_arena.my_is_top_priority.load(std::memory_order_relaxed);
+        bool is_task_pool_empty = slot.task_pool.load(std::memory_order_relaxed) == EmptyTaskPool;
+
+        if (is_top_priority_arena) {
+            // Worker in most priority arena do not leave arena, until all work in task_pool is done
+            if (is_task_pool_empty && my_arena.is_recall_requested()) {
+                return true;
+            }
+        } else {
+            if (my_arena.is_recall_requested()) {
+                // If worker has work in task pool, we must notify other threads,
+                // because can appear missed wake up of other threads
+                if (!is_task_pool_empty) {
+                    my_arena.advertise_new_work<arena::wakeup>();
+                }
+                return true;
+            }
+        }
+
+        return false;
+    }
+};
+
+class sleep_waiter : public waiter_base {
+protected:
+    using waiter_base::waiter_base;
+
+    bool is_arena_empty() {
+        return my_arena.my_pool_state.load(std::memory_order_relaxed) == arena::SNAPSHOT_EMPTY;
+    }
+};
+
+class external_waiter : public sleep_waiter {
+public:
+    external_waiter(arena& a, d1::wait_context& wo)
+        : sleep_waiter(a), my_wait_ctx(wo)
+        {}
+
+    bool continue_execution(arena_slot& slot, d1::task*& t) const {
+        __TBB_ASSERT(t == nullptr, nullptr);
+        if (!my_wait_ctx.continue_execution())
+            return false;
+        t = get_self_recall_task(slot);
+        return true;
+    }
+
+    void pause(arena_slot&) {
+        if (!sleep_waiter::pause()) {
+            return;
+        }
+
+        // Support of backward compatibility
+        if (my_wait_ctx.m_version_and_traits == 0) {
+            return;
+        }
+
+        concurrent_monitor::thread_context thr_ctx;
+        auto sleep_condition = [&] { return is_arena_empty() && my_wait_ctx.continue_execution(); };
+
+        if (sleep_condition()) {
+            my_arena.my_sleep_monitors.prepare_wait(thr_ctx, reinterpret_cast<std::uintptr_t>(&my_wait_ctx));
+            sleep_node node{my_arena};
+
+            if (my_wait_ctx.try_register_waiter(node, sleep_condition)) {
+                my_arena.my_sleep_monitors.commit_wait(thr_ctx);
+                my_wait_ctx.unregister_waiter(node);
+            } else {
+                my_arena.my_sleep_monitors.cancel_wait(thr_ctx);
+            }
+        }
+    }
+
+    d1::wait_context* wait_ctx() {
+        return &my_wait_ctx;
+    }
+
+    static bool postpone_execution(d1::task&) {
+        return false;
+    }
+
+private:
+    d1::wait_context& my_wait_ctx;
+};
+
+#if __TBB_RESUMABLE_TASKS
+
+class coroutine_waiter : public sleep_waiter {
+public:
+    using sleep_waiter::sleep_waiter;
+
+    bool continue_execution(arena_slot& slot, d1::task*& t) const {
+        __TBB_ASSERT(t == nullptr, nullptr);
+        t = get_self_recall_task(slot);
+        return true;
+    }
+
+    void pause(arena_slot& slot) {
+        if (!sleep_waiter::pause()) {
+            return;
+        }
+
+        concurrent_monitor::thread_context thr_ctx;
+        suspend_point_type* sp = slot.default_task_dispatcher().m_suspend_point;
+
+        auto sleep_condition = [&] { return is_arena_empty() && !sp->m_is_owner_recalled.load(std::memory_order_relaxed); };
+
+        if (sleep_condition()) {
+            my_arena.my_sleep_monitors.prepare_wait(thr_ctx, (std::uintptr_t)sp);
+            if (sleep_condition()) {
+                my_arena.my_sleep_monitors.commit_wait(thr_ctx);
+            } else {
+                my_arena.my_sleep_monitors.cancel_wait(thr_ctx);
+            }
+        }
+    }
+
+    void reset_wait() {
+        my_backoff.reset_wait();
+    }
+
+    d1::wait_context* wait_ctx() {
+        return nullptr;
+    }
+
+    static bool postpone_execution(d1::task& t) {
+        return task_accessor::is_resume_task(t);
+    }
+};
+
+#endif // __TBB_RESUMABLE_TASKS
+
+} // namespace r1
+
+namespace d1 {
+template <typename F>
+bool wait_context::try_register_waiter(r1::wait_node& waiter, F&& condition) {
+    bool result = condition();
+    if (result) {
+        lock_guard lock(*this);
+
+        result = result && publish_wait_list();
+        if (result) {
+            waiter.link(m_wait_head);
+            m_wait_head = &waiter;
+        }
+    }
+    return result;
+}
+} // namespace d1
+
+} // namespace detail
+} // namespace tbb
+
+#endif // _TBB_waiters_H
