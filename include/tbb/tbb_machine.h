@@ -254,6 +254,8 @@ template<> struct atomic_selector<8> {
         #include "machine/linux_intel64.h"
     #elif __POWERPC__
         #include "machine/mac_ppc.h"
+    #elif __aarch64__
+        #include "machine/gcc_arm.h"
     #endif
     #include "machine/macos_common.h"
 
