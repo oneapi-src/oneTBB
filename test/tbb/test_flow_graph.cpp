@@ -339,3 +339,32 @@ TEST_CASE("Test parallel"){
 TEST_CASE("Test graph_arena"){
     test_graph_arena();
 }
+
+//! Graph iterator
+//! \brief \ref error_guessing
+TEST_CASE("graph iterator") {
+    using namespace tbb::flow;
+
+    graph g;
+    
+    auto past_end = g.end();
+    ++past_end;
+
+    continue_node<int> n(g, [](const continue_msg &){return 1;});
+
+    size_t item_count = 0;
+
+    for(auto it = g.cbegin(); it != g.cend(); it++)
+        ++item_count;
+    CHECK_MESSAGE((item_count == 1), "Should find 1 item");
+
+    item_count = 0;
+    auto jt(g.begin());
+    for(; jt != g.end(); jt++)
+        ++item_count;
+    CHECK_MESSAGE((item_count == 1), "Should find 1 item");
+
+    graph g2;
+    continue_node<int> n2(g, [](const continue_msg &){return 1;});
+    CHECK_MESSAGE((g.begin() != g2.begin()), "Different graphs should have different iterators");
+}

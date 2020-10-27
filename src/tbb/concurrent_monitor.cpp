@@ -82,6 +82,29 @@ void concurrent_monitor::notify_one_relaxed() {
         to_thread_context(n)->semaphore().V();
 }
 
+void concurrent_monitor::notify_all_relaxed() {
+    if( waitset_ec.empty() )
+        return;
+    waitset_t temp;
+    const waitset_node_t* end;
+    {
+        tbb::spin_mutex::scoped_lock l( mutex_ec );
+        epoch.store( epoch.load( std::memory_order_relaxed ) + 1, std::memory_order_relaxed );
+        waitset_ec.flush_to( temp );
+        end = temp.end();
+        for( waitset_node_t* n=temp.front(); n!=end; n=n->next )
+            to_thread_context(n)->in_waitset = false;
+    }
+    waitset_node_t* nxt;
+    for( waitset_node_t* n=temp.front(); n!=end; n=nxt ) {
+        nxt = n->next;
+        to_thread_context(n)->semaphore().V();
+    }
+#if TBB_USE_ASSERT
+    temp.clear();
+#endif
+}
+
 void concurrent_monitor::abort_all_relaxed() {
     if( waitset_ec.empty() )
         return;

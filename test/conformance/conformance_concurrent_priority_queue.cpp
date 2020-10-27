@@ -171,6 +171,7 @@ void test_steal_move_ctor() {
     container_type dst{std::move(fixture.cpq_src)};
     REQUIRE_MESSAGE(previous == MoveOperationTracker::special_member_calls(), "Steal move ctor should not create any new elements");
     REQUIRE_MESSAGE(dst == src_copy, "cpq content changed during steal move");
+    REQUIRE_MESSAGE(!(dst != src_copy), "cpq content changed during steal move");
 }
 
 void test_steal_move_ctor_with_allocator() {
@@ -185,6 +186,7 @@ void test_steal_move_ctor_with_allocator() {
     fixture_type::cpq_type dst(std::move(fixture.cpq_src), arena_fixture.source_allocator);
     REQUIRE_MESSAGE(previous == MoveOperationTracker::special_member_calls(), "Steal move ctor should not create any new elements");
     REQUIRE_MESSAGE(dst == src_copy, "cpq content changed during steal move");
+    REQUIRE_MESSAGE(!(dst != src_copy), "cpq content changed during steal move");
 }
 
 void test_per_element_move_ctor_with_allocator() {
@@ -202,6 +204,7 @@ void test_per_element_move_ctor_with_allocator() {
     REQUIRE_MESSAGE(move_ctor_called_cpq_size_times == MoveOperationTracker::special_member_calls(),
                     "Per element move ctor should move initialize all new elements");
     REQUIRE_MESSAGE(dst == src_copy, "cpq content changed during move");
+    REQUIRE_MESSAGE(!(dst != src_copy), "cpq content changed during move");
 }
 
 void test_steal_move_assign_operator() {
@@ -216,6 +219,7 @@ void test_steal_move_assign_operator() {
 
     REQUIRE_MESSAGE(previous == MoveOperationTracker::special_member_calls(), "Steal move assign operator should not create any new elements");
     REQUIRE_MESSAGE(dst == src_copy, "cpq content changed during steal move assignment");
+    REQUIRE_MESSAGE(!(dst != src_copy), "cpq content changed during steal move assignment");
 }
 
 void test_steal_move_assign_operator_with_stateful_allocator() {
@@ -232,6 +236,7 @@ void test_steal_move_assign_operator_with_stateful_allocator() {
     dst = std::move(fixture.cpq_src);
     REQUIRE_MESSAGE(previous == MoveOperationTracker::special_member_calls(), "Steal move assign operator should not create any new elements");
     REQUIRE_MESSAGE(dst == src_copy, "cpq content changed during steal move assignment");
+    REQUIRE_MESSAGE(!(dst != src_copy), "cpq content changed during steal move assignment");
 }
 
 void test_per_element_move_assign_operator() {
@@ -250,6 +255,7 @@ void test_per_element_move_assign_operator() {
     REQUIRE_MESSAGE(move_ctor_called_cpq_size_times == MoveOperationTracker::special_member_calls(),
                     "Per element move assignment should move initialize all new elements");
     REQUIRE_MESSAGE(dst == src_copy, "cpq content changed during per element move assignment");
+    REQUIRE_MESSAGE(!(dst != src_copy), "cpq content changed during per element move assignment");
 }
 
 void test_cpq_move_constructor() {
@@ -450,6 +456,7 @@ void test_assignment_clear_swap() {
     REQUIRE_MESSAGE(!qo.empty(), "Failed assignment empty test");
     REQUIRE_MESSAGE(v == toVector(qo), "Failed assignment equality test");
     REQUIRE_MESSAGE(qo == q, "Failed assignment equality test");
+    REQUIRE_MESSAGE(!(qo != q), "Failed assignment inequality test");
 
     cpq_type assigned_q;
     // Testing assign member function

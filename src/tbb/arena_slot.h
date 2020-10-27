@@ -87,6 +87,7 @@ struct alignas(max_nfs_size) arena_slot_private_state {
 
 class arena_slot : private arena_slot_shared_state, private arena_slot_private_state {
     friend class arena;
+    friend class outermost_worker_waiter;
     friend class task_dispatcher;
     friend class thread_data;
     friend class nested_arena_context;
@@ -350,6 +351,7 @@ private:
         task_pool.store(victim_task_pool, std::memory_order_release);
     }
 
+#if TBB_USE_ASSERT
     bool is_local_task_pool_quiescent() const {
         d1::task** tp = task_pool.load(std::memory_order_relaxed);
         return tp == EmptyTaskPool || tp == LockedTaskPool;
@@ -364,6 +366,7 @@ private:
         __TBB_ASSERT(is_local_task_pool_quiescent(), "Task pool is not quiescent");
         return head.load(std::memory_order_relaxed) == 0 && tail.load(std::memory_order_relaxed) == 0;
     }
+#endif // TBB_USE_ASSERT
 
     //! Leave the task pool
     /** Leaving task pool automatically releases the task pool if it is locked. **/

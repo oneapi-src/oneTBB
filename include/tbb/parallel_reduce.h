@@ -83,7 +83,7 @@ struct start_reduce : public task {
     //! Splitting constructor used to generate children.
     /** parent_ becomes left child. Newly constructed object is right child. */
     start_reduce( start_reduce& parent_, typename Partitioner::split_type& split_obj, small_object_allocator& alloc ) :
-        my_range(parent_.my_range, split_obj),
+        my_range(parent_.my_range, get_range_split_object<Range>(split_obj)),
         my_body(parent_.my_body),
         my_partition(parent_.my_partition, split_obj),
         my_allocator(alloc),
@@ -238,21 +238,10 @@ struct start_deterministic_reduce : public task {
     /** parent_ becomes left child.  Newly constructed object is right child. */
     start_deterministic_reduce( start_deterministic_reduce& parent_, typename Partitioner::split_type& split_obj, Body& body,
                                 small_object_allocator& alloc ) :
-        my_range(parent_.my_range, split_obj),
+        my_range(parent_.my_range, get_range_split_object<Range>(split_obj)),
         my_body(body),
         my_partition(parent_.my_partition, split_obj),
         my_allocator(alloc) {}
-    //! Construct right child from the given range as response to the demand.
-    /** parent_ remains left child.  Newly constructed object is right child. */
-    start_deterministic_reduce( start_deterministic_reduce& parent_, const Range& r, depth_t d, Body& body,
-                                small_object_allocator& alloc ) :
-        my_range(r),
-        my_body(body),
-        my_partition(parent_.my_partition, split()),
-        my_allocator(alloc)
-    {
-        my_partition.align_depth( d );
-    }
     static void run(const Range& range, Body& body, Partitioner& partitioner, task_group_context& context) {
         if ( !range.empty() ) {
             wait_node wn;
@@ -274,16 +263,10 @@ struct start_deterministic_reduce : public task {
     void run_body( Range &r ) {
         my_body( r );
     }
-
     //! Spawn right task, serves as callback for partitioner
     void offer_work(typename Partitioner::split_type& split_obj, execution_data& ed) {
         offer_work_impl(ed, *this, split_obj);
     }
-    //! Spawn right task, serves as callback for partitioner
-    void offer_work(const Range& r, depth_t d, execution_data& ed) {
-        offer_work_impl(ed, *this, r, d);
-    }
-
 private:
     template <typename... Args>
     void offer_work_impl(execution_data& ed, Args&&... args) {

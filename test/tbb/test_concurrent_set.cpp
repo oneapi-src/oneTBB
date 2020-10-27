@@ -204,6 +204,32 @@ TEST_CASE("concurrent_multiset with std::scoped_allocator_adaptor") {
 }
 
 //! \brief \ref regression
-TEST_CASE("broken internal structure for multimap") {
+TEST_CASE("broken internal structure for multiset") {
     test_cycles_absense();
 }
+
+//! \brief \ref error_guessing
+TEST_CASE("concurrent_set::swap with not always equal allocator") {
+    using not_always_equal_alloc_set_type = tbb::concurrent_set<int, std::less<int>, NotAlwaysEqualAllocator<int>>;
+    test_swap_not_always_equal_allocator<not_always_equal_alloc_set_type>();
+}
+
+//! \brief \ref error_guessing
+TEST_CASE("concurrent_multiset::swap with not always equal allocator") {
+    using not_always_equal_alloc_mset_type = tbb::concurrent_multiset<int, std::less<int>, NotAlwaysEqualAllocator<int>>;
+    test_swap_not_always_equal_allocator<not_always_equal_alloc_mset_type>();
+}
+
+#if TBB_USE_EXCEPTIONS
+//! \brief \ref error_guessing
+TEST_CASE("concurrent_set throwing copy constructor") {
+    using exception_set_type = tbb::concurrent_set<ThrowOnCopy>;
+    test_exception_on_copy_ctor<exception_set_type>();
+}
+
+//! \brief \ref error_guessing
+TEST_CASE("concurrent_multiset throwing copy constructor") {
+    using exception_mset_type = tbb::concurrent_multiset<ThrowOnCopy>;
+    test_exception_on_copy_ctor<exception_mset_type>();
+}
+#endif // TBB_USE_EXCEPTIONS

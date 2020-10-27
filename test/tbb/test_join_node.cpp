@@ -134,7 +134,15 @@ void test_follows_and_precedes_api() {
         <msg_t, tbb::flow::join_node<JoinOutputType, tbb::flow::queueing>>(messages_for_follows);
     follows_and_precedes_testing::test_follows
         <msg_t, tbb::flow::join_node<JoinOutputType, tbb::flow::reserving>, tbb::flow::buffer_node<msg_t>>(messages_for_follows);
-    // TODO: add tests for key_matching and message based key matching
+    auto b = [](msg_t) { return msg_t(); };
+    class hash_compare {
+    public:
+        std::size_t hash(msg_t) const { return 0; }
+        bool equal(msg_t, msg_t) const { return true; }
+    };
+    follows_and_precedes_testing::test_follows
+        <msg_t, tbb::flow::join_node<JoinOutputType, tbb::flow::key_matching<msg_t, hash_compare>>, tbb::flow::buffer_node<msg_t>>
+        (messages_for_follows, b, b, b);
 
     follows_and_precedes_testing::test_precedes
         <msg_t, tbb::flow::join_node<JoinOutputType>>(messages_for_precedes);
@@ -142,6 +150,9 @@ void test_follows_and_precedes_api() {
         <msg_t, tbb::flow::join_node<JoinOutputType, tbb::flow::queueing>>(messages_for_precedes);
     follows_and_precedes_testing::test_precedes
         <msg_t, tbb::flow::join_node<JoinOutputType, tbb::flow::reserving>>(messages_for_precedes);
+    follows_and_precedes_testing::test_precedes
+        <msg_t, tbb::flow::join_node<JoinOutputType, tbb::flow::key_matching<msg_t, hash_compare>>>
+        (messages_for_precedes, b, b, b);
 }
 #endif
 
@@ -174,6 +185,101 @@ void test_deduction_guides() {
 }
 
 #endif
+
+namespace multiple_predecessors {
+
+using namespace tbb::flow;
+
+using join_node_t = join_node<std::tuple<continue_msg, continue_msg, continue_msg>, reserving>;
+using queue_node_t = queue_node<std::tuple<continue_msg, continue_msg, continue_msg>>;
+
+void twist_join_connections(
+    buffer_node<continue_msg>& bn1, buffer_node<continue_msg>& bn2, buffer_node<continue_msg>& bn3,
+    join_node_t& jn)
+{
+    // order, in which edges are created/destroyed, is important
+    make_edge(bn1, input_port<0>(jn));
+    make_edge(bn2, input_port<0>(jn));
+    make_edge(bn3, input_port<0>(jn));
+
+    remove_edge(bn3, input_port<0>(jn));
+    make_edge  (bn3, input_port<2>(jn));
+
+    remove_edge(bn2, input_port<0>(jn));
+    make_edge  (bn2, input_port<1>(jn));
+}
+
+std::unique_ptr<join_node_t> connect_join_via_make_edge(
+    graph& g, buffer_node<continue_msg>& bn1, buffer_node<continue_msg>& bn2,
+    buffer_node<continue_msg>& bn3, queue_node_t& qn)
+{
+    std::unique_ptr<join_node_t> jn( new join_node_t(g) );
+    twist_join_connections( bn1, bn2, bn3, *jn );
+    make_edge(*jn, qn);
+    return jn;
+}
+
+#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+std::unique_ptr<join_node_t> connect_join_via_follows(
+    graph&, buffer_node<continue_msg>& bn1, buffer_node<continue_msg>& bn2,
+    buffer_node<continue_msg>& bn3, queue_node_t& qn)
+{
+    auto bn_set = make_node_set(bn1, bn2, bn3);
+    std::unique_ptr<join_node_t> jn( new join_node_t(follows(bn_set)) );
+    make_edge(*jn, qn);
+    return jn;
+}
+
+std::unique_ptr<join_node_t> connect_join_via_precedes(
+    graph&, buffer_node<continue_msg>& bn1, buffer_node<continue_msg>& bn2,
+    buffer_node<continue_msg>& bn3, queue_node_t& qn)
+{
+    auto qn_set = make_node_set(qn);
+    auto qn_copy_set = qn_set;
+    std::unique_ptr<join_node_t> jn( new join_node_t(precedes(qn_copy_set)) );
+    twist_join_connections( bn1, bn2, bn3, *jn );
+    return jn;
+}
+#endif // TBB_PREVIEW_FLOW_GRAPH_FEATURES
+
+void run_and_check(
+    graph& g, buffer_node<continue_msg>& bn1, buffer_node<continue_msg>& bn2,
+    buffer_node<continue_msg>& bn3, queue_node_t& qn, bool expected)
+{
+    std::tuple<continue_msg, continue_msg, continue_msg> msg;
+
+    bn1.try_put(continue_msg());
+    bn2.try_put(continue_msg());
+    bn3.try_put(continue_msg());
+    g.wait_for_all();
+
+    CHECK_MESSAGE(
+        (qn.try_get(msg) == expected),
+        "Unexpected message absence/existence at the end of the graph."
+    );
+}
+
+template<typename ConnectJoinNodeFunc>
+void test(ConnectJoinNodeFunc&& connect_join_node) {
+    graph g;
+    buffer_node<continue_msg> bn1(g);
+    buffer_node<continue_msg> bn2(g);
+    buffer_node<continue_msg> bn3(g);
+    queue_node_t qn(g);
+
+    auto jn = connect_join_node(g, bn1, bn2, bn3, qn);
+
+    run_and_check(g, bn1, bn2, bn3, qn, /*expected=*/true);
+
+    remove_edge(bn3, input_port<2>(*jn));
+    remove_edge(bn2, input_port<1>(*jn));
+    remove_edge(bn1, input_port<0>(*jn));
+    remove_edge(*jn, qn);
+
+    run_and_check(g, bn1, bn2, bn3, qn, /*expected=*/false);
+}
+} // namespace multiple_predecessors
+
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
 //! Test follows and precedes API
@@ -209,4 +315,16 @@ TEST_CASE("Main test"){
 //! \brief \ref error_guessing
 TEST_CASE("Recirculation test"){
     generate_recirc_test<std::tuple<int,float> >::do_test();
+}
+
+//! Test maintaining correct count of ports without input
+//! \brief \ref error_guessing
+TEST_CASE("Test removal of the predecessor while having none") {
+    using namespace multiple_predecessors;
+
+    test(connect_join_via_make_edge);
+#if TBB_PREVIEW_FLOW_GRAPH_FEATURES
+    test(connect_join_via_follows);
+    test(connect_join_via_precedes);
+#endif
 }

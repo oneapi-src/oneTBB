@@ -127,7 +127,7 @@ using namespace std;
 #endif
 
 #include "tbb/detail/_utils.h"  // tbb::detail::is_aligned
-#include "../src/tbbmalloc/shared_utils.h"  // alignDown, alignUp, estimatedCacheLineSize
+#include "src/tbbmalloc/shared_utils.h"  // alignDown, alignUp, estimatedCacheLineSize
 
 /* start of code replicated from src/tbbmalloc */
 

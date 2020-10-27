@@ -106,12 +106,6 @@ void FACTORY::close() {
     return (*my_make_server_routine)(*this,s,c);
 }
 
-void FACTORY::call_with_server_info( ::rml::server_info_callback_t cb, void* arg ) const {
-    // Failure of following assertion means that factory was not successfully opened.
-    __TBB_ASSERT_EX( my_call_with_server_info_routine, NULL );
-    (*my_call_with_server_info_routine)( cb, arg );
-}
-
 } // namespace rml
 } // namespace r1
 } // namespace detail

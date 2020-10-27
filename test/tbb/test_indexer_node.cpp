@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#define MAX_TUPLE_TEST_SIZE 10
 #include "common/config.h"
 
 #include "tbb/flow_graph.h"
@@ -253,16 +254,18 @@ public:
         }
         for(int nInputs = 1; nInputs <= MaxNInputs; ++nInputs) {
             tbb::flow::graph g;
-            IType* my_indexer = new IType(g); //makeIndexer<IType>::create();
+            IType* my_indexer_ptr = new IType(g); //makeIndexer<IType>::create();
+            IType my_indexer = *my_indexer_ptr;
             tbb::flow::queue_node<TType> outq1(g);
             tbb::flow::queue_node<TType> outq2(g);
 
-            tbb::flow::make_edge(*my_indexer, outq1);
-            tbb::flow::make_edge(*my_indexer, outq2);
+            tbb::flow::make_edge(my_indexer, outq1);
+            tbb::flow::make_edge(my_indexer, outq2);
 
-            input_node_helper<SIZE, IType>::add_input_nodes((*my_indexer), g, nInputs);
+            input_node_helper<SIZE, IType>::add_input_nodes(my_indexer, g, nInputs);
 
             g.wait_for_all();
+            makeIndexer<IType>::destroy(my_indexer_ptr);
 
             reset_outputCheck(SIZE, Count);
             for(int i=0; i < Count*SIZE; ++i) {
@@ -282,10 +285,9 @@ public:
             CHECK_MESSAGE(!outq1.try_get(v), "");
             CHECK_MESSAGE(!outq2.try_get(v), "");
 
-            input_node_helper<SIZE, IType>::remove_input_nodes((*my_indexer), nInputs);
-            tbb::flow::remove_edge(*my_indexer, outq1);
-            tbb::flow::remove_edge(*my_indexer, outq2);
-            makeIndexer<IType>::destroy(my_indexer);
+            input_node_helper<SIZE, IType>::remove_input_nodes(my_indexer, nInputs);
+            tbb::flow::remove_edge(my_indexer, outq1);
+            tbb::flow::remove_edge(my_indexer, outq2);
         }
     }
 };
@@ -551,7 +553,7 @@ public:
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
 template<typename tagged_msg_t, typename input_t>
-void check_edge(tbb::flow::graph& g,
+bool check_edge(tbb::flow::graph& g,
                 tbb::flow::broadcast_node<input_t>& start,
                 tbb::flow::buffer_node<tagged_msg_t>& buf,
                 input_t input_value) {
@@ -563,27 +565,36 @@ void check_edge(tbb::flow::graph& g,
 
     CHECK_MESSAGE( ((is_get_succeeded)), "There is no item in the buffer");
     CHECK_MESSAGE( ((tbb::flow::cast_to<input_t>(msg) == input_value)), "Wrong item value");
+    return true;
 }
 
-void test_follows() {
+template <typename... T>
+void sink(T...) {}
+
+template <typename indexer_output_t, typename Type, typename BN, std::size_t... Seq>
+void check_edge(tbb::flow::graph& g, BN& bn, tbb::flow::buffer_node<indexer_output_t>& buf, Type, tbb::detail::index_sequence<Seq...>) {
+    sink(check_edge<indexer_output_t>(g, std::get<Seq>(bn), buf, typename std::tuple_element<Seq, Type>::type(Seq))...);
+}
+
+template <typename... Args, std::size_t... Seq>
+void test_follows_impl(std::tuple<Args...> t, tbb::detail::index_sequence<Seq...> seq) {
     using namespace tbb::flow;
-    using indexer_output_t = indexer_node<int, float, double>::output_type;
+    using indexer_output_t = typename indexer_node<Args...>::output_type;
 
     graph g;
-    broadcast_node<continue_msg> start(g);
+    auto bn = std::make_tuple(broadcast_node<Args>(g)...);
 
-    broadcast_node<int> start1(g);
-    broadcast_node<float> start2(g);
-    broadcast_node<double> start3(g);
-
-    indexer_node<int, float, double> my_indexer(follows(start1, start2, start3));
+    indexer_node<Args...> my_indexer(follows(std::get<Seq>(bn)...));
 
     buffer_node<indexer_output_t> buf(g);
     make_edge(my_indexer, buf);
 
-    check_edge<indexer_output_t, int>(g, start1, buf, 1);
-    check_edge<indexer_output_t, float>(g, start2, buf, 2.2f);
-    check_edge<indexer_output_t, double>(g, start3, buf, 3.3);
+    check_edge<indexer_output_t>(g, bn, buf, t, seq);
+}
+
+template <typename... Args>
+void test_follows() {
+    test_follows_impl(std::tuple<Args...>(), tbb::detail::make_index_sequence<sizeof...(Args)>());
 }
 
 void test_precedes() {
@@ -613,7 +624,16 @@ void test_precedes() {
 }
 
 void test_follows_and_precedes_api() {
-    test_follows();
+    test_follows<double>();
+    test_follows<int, double>();
+    test_follows<int, float, double>();
+    test_follows<float, double, int, double>();
+    test_follows<float, double, int, double, double>();
+    test_follows<float, double, int, double, double, float>();
+    test_follows<float, double, int, double, double, float, long>();
+    test_follows<float, double, int, double, double, float, long, int>();
+    test_follows<float, double, int, double, double, float, long, int, long>();
+    test_follows<float, double, int, double, double, float, long, int, float, long>();
     test_precedes();
 }
 #endif // __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
@@ -646,7 +666,7 @@ TEST_CASE("Serial and parallel test") {
    for (int p = 0; p < 2; ++p) {
        generate_test<serial_test, float>::do_test();
 #if MAX_TUPLE_TEST_SIZE >= 4
-       generate_test<serial_test, float, double, int>::do_test();
+       generate_test<serial_test, float, double, int, short>::do_test();
 #endif
 #if MAX_TUPLE_TEST_SIZE >= 6
        generate_test<serial_test, double, double, int, long, int, short>::do_test();

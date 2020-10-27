@@ -314,9 +314,7 @@ struct harness_counting_receiver : public tbb::flow::receiver<T> {
         size_t n = my_count;
         CHECK( n == num_copies*max_value );
     }
-
-    void reset_receiver(tbb::flow::reset_flags /*f*/) override { my_count = 0; }
-};
+ };
 
 //! Counts the number of puts received
 template< typename T >
@@ -335,6 +333,11 @@ struct harness_mapped_receiver : public tbb::flow::receiver<T> {
        my_count = 0;
     }
 
+#if __INTEL_COMPILER <= 2021
+    // Suppress superfluous diagnostic about virtual keyword absence in a destructor of an inherited
+    // class while the parent class has the virtual keyword for the destrocutor.
+    virtual
+#endif
     ~harness_mapped_receiver() {
         if ( my_multiset ) delete my_multiset;
     }
@@ -374,7 +377,7 @@ struct harness_mapped_receiver : public tbb::flow::receiver<T> {
         }
     }
 
-    void reset_receiver(tbb::flow::reset_flags /*f*/) override {
+    void reset_receiver(tbb::flow::reset_flags /*f*/) {
         my_count = 0;
         if(my_multiset) delete my_multiset;
         my_multiset = new multiset_type;

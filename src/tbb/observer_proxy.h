@@ -35,10 +35,10 @@ class observer_list {
     typedef aligned_space<spin_rw_mutex>  my_mutex_type;
 
     //! Pointer to the head of this list.
-    observer_proxy* my_head;
+    observer_proxy* my_head{nullptr};
 
     //! Pointer to the tail of this list.
-    observer_proxy* my_tail;
+    observer_proxy* my_tail{nullptr};
 
     //! Mutex protecting this list.
     my_mutex_type my_mutex;
@@ -57,7 +57,7 @@ class observer_list {
     void do_notify_exit_observers( observer_proxy* last, bool worker );
 
 public:
-    observer_list () : my_head(NULL), my_tail(NULL) {}
+    observer_list () = default;
 
     //! Removes and destroys all observer proxies from the list.
     /** Cannot be used concurrently with other methods. **/
@@ -79,11 +79,11 @@ public:
     //! Accessor to the reader-writer mutex associated with the list.
     spin_rw_mutex& mutex () { return my_mutex.begin()[0]; }
 
-    bool empty () const { return my_head == NULL; }
+    bool empty () const { return my_head == nullptr; }
 
     //! Call entry notifications on observers added after last was notified.
     /** Updates last to become the last notified observer proxy (in the global list)
-        or leaves it to be NULL. The proxy has its refcount incremented. **/
+        or leaves it to be nullptr. The proxy has its refcount incremented. **/
     inline void notify_entry_observers( observer_proxy*& last, bool worker );
 
     //! Call exit notifications on last and observers added before it.
@@ -120,7 +120,7 @@ class observer_proxy {
     ~observer_proxy();
 }; // class observer_proxy
 
-inline void observer_list::remove_ref_fast( observer_proxy*& p ) {
+void observer_list::remove_ref_fast( observer_proxy*& p ) {
     if( p->my_observer ) {
         // Can decrement refcount quickly, as it cannot drop to zero while under the lock.
         std::uintptr_t r = --p->my_ref_count;
@@ -131,13 +131,13 @@ inline void observer_list::remove_ref_fast( observer_proxy*& p ) {
     }
 }
 
-inline void observer_list::notify_entry_observers(observer_proxy*& last, bool worker) {
+void observer_list::notify_entry_observers(observer_proxy*& last, bool worker) {
     if (last == my_tail)
         return;
     do_notify_entry_observers(last, worker);
 }
 
-inline void observer_list::notify_exit_observers( observer_proxy*& last, bool worker ) {
+void observer_list::notify_exit_observers( observer_proxy*& last, bool worker ) {
     if (last == nullptr) {
         return;
     }

@@ -34,10 +34,6 @@ public:
         return this->item_buffer<T, A>::front();
     }
 
-    bool pop( T& t ) {
-        return this->pop_front( t );
-    }
-
     void pop() {
         this->destroy_front();
     }
@@ -67,27 +63,19 @@ public:
     static_assert(!has_policy<queueing, Policy>::value || !has_policy<rejecting, Policy>::value, "");
 
     //! Constructor for function_input_base
-    function_input_base(
-        graph &g, size_t max_concurrency, node_priority_t a_priority)
-      : my_graph_ref(g), my_max_concurrency(max_concurrency)
-      , my_concurrency(0), my_priority(a_priority)
-      , my_queue(!has_policy<rejecting, Policy>::value ? new input_queue_type() : NULL)
-      , forwarder_busy(false)
+    function_input_base( graph &g, size_t max_concurrency, node_priority_t a_priority )
+        : my_graph_ref(g), my_max_concurrency(max_concurrency)
+        , my_concurrency(0), my_priority(a_priority)
+        , my_queue(!has_policy<rejecting, Policy>::value ? new input_queue_type() : NULL)
+        , my_predecessors(this)
+        , forwarder_busy(false)
     {
-        my_predecessors.set_owner(this);
         my_aggregator.initialize_handler(handler_type(this));
     }
 
     //! Copy constructor
-    function_input_base( const function_input_base& src)
-        : receiver<Input>(), no_assign()
-        , my_graph_ref(src.my_graph_ref), my_max_concurrency(src.my_max_concurrency)
-        , my_concurrency(0), my_priority(src.my_priority)
-        , my_queue(src.my_queue ? new input_queue_type() : NULL), forwarder_busy(false)
-    {
-        my_predecessors.set_owner(this);
-        my_aggregator.initialize_handler(handler_type(this));
-    }
+    function_input_base( const function_input_base& src )
+        : function_input_base(src.my_graph_ref, src.my_max_concurrency, src.my_priority) {}
 
     //! Destructor
     // The queue is allocated by the constructor for {multi}function_node.
@@ -135,7 +123,7 @@ protected:
     input_queue_type *my_queue;
     predecessor_cache<input_type, null_mutex > my_predecessors;
 
-    void reset_receiver( reset_flags f) override {
+    void reset_receiver( reset_flags f) {
         if( f & rf_clear_edges) my_predecessors.clear();
         else
             my_predecessors.reset();
@@ -255,7 +243,7 @@ private:
     //! Creates tasks for postponed messages if available and if concurrency allows
     void internal_forward(operation_type *op) {
         op->bypass_t = NULL;
-        if (my_concurrency < my_max_concurrency || !my_max_concurrency)
+        if (my_concurrency < my_max_concurrency)
             op->bypass_t = perform_queued_requests();
         if(op->bypass_t)
             op->status.store(SUCCEEDED, std::memory_order_release);
@@ -379,7 +367,7 @@ public:
         my_body( src.my_init_body->clone() ),
         my_init_body(src.my_init_body->clone() ) {
     }
-#if __INTEL_COMPILER == 2021
+#if __INTEL_COMPILER <= 2021
     // Suppress superfluous diagnostic about virtual keyword absence in a destructor of an inherited
     // class while the parent class has the virtual keyword for the destrocutor.
     virtual
@@ -459,20 +447,24 @@ template<int N> struct clear_element {
         (void)std::get<N-1>(p).successors().clear();
         clear_element<N-1>::clear_this(p);
     }
+#if TBB_USE_ASSERT
     template<typename P> static bool this_empty(P &p) {
         if(std::get<N-1>(p).successors().empty())
             return clear_element<N-1>::this_empty(p);
         return false;
     }
+#endif
 };
 
 template<> struct clear_element<1> {
     template<typename P> static void clear_this(P &p) {
         (void)std::get<0>(p).successors().clear();
     }
+#if TBB_USE_ASSERT
     template<typename P> static bool this_empty(P &p) {
         return std::get<0>(p).successors().empty();
     }
+#endif
 };
 
 template <typename OutputTuple>
@@ -706,10 +698,8 @@ public:
     typedef typename sender<output_type>::successor_type successor_type;
     typedef broadcast_cache<output_type> broadcast_cache_type;
 
-    function_output( graph& g) : my_graph_ref(g) { my_successors.set_owner(this); }
-    function_output(const function_output & other) : sender<output_type>(), my_graph_ref(other.my_graph_ref) {
-        my_successors.set_owner(this);
-    }
+    function_output(graph& g) : my_successors(this), my_graph_ref(g) {}
+    function_output(const function_output& other) = delete;
 
     //! Adds a new successor to this node
     bool register_successor( successor_type &r ) override {
@@ -721,18 +711,6 @@ public:
     bool remove_successor( successor_type &r ) override {
         successors().remove_successor( r );
         return true;
-    }
-
-    // for multifunction_node.  The function_body that implements
-    // the node will have an input and an output tuple of ports.  To put
-    // an item to a successor, the body should
-    //
-    //    get<I>(output_ports).try_put(output_value);
-    //
-    // if task pointer is returned will always spawn and return true, else
-    // return value will be bool returned from successors.try_put.
-    graph_task *try_put_task(const output_type &i) { // not a virtual method in this class
-        return my_successors.try_put_task(i);
     }
 
     broadcast_cache_type &successors() { return my_successors; }
@@ -750,8 +728,8 @@ public:
     typedef function_output<output_type> base_type;
     using base_type::my_successors;
 
-    multifunction_output(graph& g) : base_type(g) {my_successors.set_owner(this);}
-    multifunction_output( const multifunction_output& other) : base_type(other.my_graph_ref) { my_successors.set_owner(this); }
+    multifunction_output(graph& g) : base_type(g) {}
+    multifunction_output(const multifunction_output& other) : base_type(other.my_graph_ref) {}
 
     bool try_put(const output_type &i) {
         graph_task *res = try_put_task(i);

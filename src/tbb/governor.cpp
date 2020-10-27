@@ -58,7 +58,7 @@ void governor::acquire_resources () {
 #endif
     if( status )
         handle_perror(status, "TBB failed to initialize task scheduler TLS\n");
-    is_speculation_enabled = cpu_has_speculation();
+    detect_cpu_features(cpu_features);
     is_rethrow_broken = gcc_rethrow_exception_broken();
 }
 
@@ -241,7 +241,7 @@ bool finalize_impl(d1::task_scheduler_handle& handle) {
         if (td) {
             task_dispatcher* task_disp = td->my_task_dispatcher;
             __TBB_ASSERT(task_disp, nullptr);
-            if (task_disp->m_properties.outermost && !td->my_is_worker) { // is not inside a tbb parallel region
+            if (task_disp->m_properties.outermost && !td->my_is_worker) { // is not inside a parallel region
                 governor::auto_terminate(td);
             }
         }

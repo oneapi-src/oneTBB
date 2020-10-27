@@ -38,6 +38,7 @@ class task;
 class arena_slot;
 class task_group_context;
 class task_dispatcher;
+struct resume_node;
 
 //------------------------------------------------------------------------
 // Thread Data
@@ -150,7 +151,7 @@ public:
     //! The list of possible post resume actions.
     enum class post_resume_action {
         invalid,
-        abandon,
+        register_waiter,
         callback,
         cleanup,
         notify,
@@ -167,6 +168,11 @@ public:
             __TBB_ASSERT(suspend_callback && user_callback && tag, nullptr);
             suspend_callback(user_callback, tag);
         }
+    };
+
+    struct register_waiter_data {
+        d1::wait_context& wo;
+        resume_node& node;
     };
 
     //! Suspends the current coroutine (task_dispatcher).

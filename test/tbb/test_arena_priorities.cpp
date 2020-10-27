@@ -14,9 +14,6 @@
     limitations under the License.
 */
 
-
-#define TBB_PREVIEW_NUMA_SUPPORT __TBB_CPF_BUILD
-
 #include "common/test.h"
 
 #include "tbb/task_group.h"
@@ -88,9 +85,12 @@ tbb::task_arena* do_allocate_and_construct( const ArenaArgs&... arena_args )
         break;
 
     case explicit_initialize_with_different_constructor_parameters:
-        result_arena = new tbb::task_arena( dummy_max_concurrency, dummy_reserved_for_masters );
-        result_arena->initialize( arena_args... );
+    {
+        tbb::task_arena tmp(dummy_max_concurrency, dummy_reserved_for_masters);
+        result_arena = new tbb::task_arena(tmp);
+        result_arena->initialize(arena_args...);
         break;
+    }
 
     default:
         REQUIRE_MESSAGE( false, "Not implemented method of initialization." );
@@ -124,7 +124,6 @@ tbb::task_arena* allocate_and_construct_arena(
 {
     const int reserved_for_masters = 0;
 
-#if TBB_PREVIEW_NUMA_SUPPORT
     static bool use_constraints = false;
     use_constraints = !use_constraints;
 
@@ -132,7 +131,6 @@ tbb::task_arena* allocate_and_construct_arena(
         tbb::task_arena::constraints properties{tbb::task_arena::automatic, arena_max_concurrency};
         return decide_on_arguments( properties, reserved_for_masters, a_priority );
     }
-#endif
 
     return decide_on_arguments( arena_max_concurrency, reserved_for_masters, a_priority );
 }

@@ -19,6 +19,7 @@
       <tab type="filelist" visible="no" title="" intro=""/>
       <tab type="globals" visible="no" title="" intro=""/>
     </tab>
+    <tab type="user" url="@ref test_classification" visible="yes" title="Test Classification"/>
     <tab type="examples" visible="yes" title="" intro=""/>  
   </navindex>
 

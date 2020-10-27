@@ -32,16 +32,6 @@
 using namespace tbb::flow;
 using namespace std;
 
-//! const graph
-//! \brief \ref error_guessing
-TEST_CASE("const graph"){
-    const graph g;
-    CHECK_MESSAGE((g.cbegin() == g.cend()), "Starting graph is empty");
-
-    graph g2;
-    CHECK_MESSAGE((g2.begin() == g2.end()), "Starting graph is empty");
-}
-
 //! Graph reset
 //! \brief \ref requirement
 TEST_CASE("graph reset") {
@@ -144,4 +134,3 @@ TEST_CASE("graph reset") {
     // TODO: Add check that default invocaiton is the same as with rf_reset_protocol
     // TODO: See if specification for broadcast_node and other service nodes is sufficient for reset checks
 }
-

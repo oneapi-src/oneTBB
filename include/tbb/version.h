@@ -26,12 +26,12 @@
 // "Patch" version for custom releases
 #define TBB_VERSION_PATCH 0
 // Suffix string
-#define __TBB_VERSION_SUFFIX "-beta09"
+#define __TBB_VERSION_SUFFIX "-beta10"
 // Full official version string
 #define TBB_VERSION_STRING __TBB_STRING(TBB_VERSION_MAJOR) "." __TBB_STRING(TBB_VERSION_MINOR) __TBB_VERSION_SUFFIX
 
 // Full interface version
-#define TBB_INTERFACE_VERSION 12003
+#define TBB_INTERFACE_VERSION 12004
 // Major interface version
 #define TBB_INTERFACE_VERSION_MAJOR (TBB_INTERFACE_VERSION/1000)
 // Minor interface version

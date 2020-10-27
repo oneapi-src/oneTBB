@@ -51,11 +51,6 @@ static inline T alignUpGeneric(T arg, uintptr_t alignment) {
     return arg;
 }
 
-template<typename T, size_t N> // generic function to find length of array
-inline size_t arrayLength(const T(&)[N]) {
-    return N;
-}
-
 /*
  * Compile time Log2 calculation
  */

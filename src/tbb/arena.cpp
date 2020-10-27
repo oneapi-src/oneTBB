@@ -19,6 +19,7 @@
 #include "arena.h"
 #include "itt_notify.h"
 #include "semaphore.h"
+#include "waiters.h"
 #include "tbb/detail/_task.h"
 #include "tbb/tbb_allocator.h"
 
@@ -102,40 +103,6 @@ std::size_t arena::occupy_free_slot(thread_data& tls) {
     atomic_update( my_limit, (unsigned)(index + 1), std::less<unsigned>() );
     return index;
 }
-
-class outermost_worker_waiter {
-    arena& my_arena;
-    stealing_loop_backoff my_backoff;
-public:
-    outermost_worker_waiter(arena& a) : my_arena( a ), my_backoff( int(a.my_num_slots) ) {}
-
-    bool continue_execution(arena_slot& slot, d1::task*& t) const {
-        __TBB_ASSERT(t == nullptr, nullptr);
-        if (my_arena.is_recall_requested()) {
-            return false;
-        }
-        t = get_self_recall_task(slot);
-        return true;
-    }
-
-    void pause() {
-        if (my_backoff.pause()) {
-            my_arena.is_out_of_work();
-        }
-    }
-
-    void reset_wait() {
-        my_backoff.reset_wait();
-    }
-
-    d1::wait_context* wait_ctx() {
-        return nullptr;
-    }
-
-    static bool postpone_execution(d1::task&) {
-        return false;
-    }
-};
 
 std::uintptr_t arena::calculate_stealing_threshold() {
     stack_anchor_type anchor;
@@ -251,7 +218,7 @@ void arena::free_arena () {
     __TBB_ASSERT( is_alive(my_guard), NULL );
     __TBB_ASSERT( !my_references.load(std::memory_order_relaxed), "There are threads in the dying arena" );
     __TBB_ASSERT( !my_num_workers_requested && !my_num_workers_allotted, "Dying arena requests workers" );
-    __TBB_ASSERT( my_pool_state.load(std::memory_order_relaxed) == SNAPSHOT_EMPTY || !my_max_num_workers, 
+    __TBB_ASSERT( my_pool_state.load(std::memory_order_relaxed) == SNAPSHOT_EMPTY || !my_max_num_workers,
                   "Inconsistent state of a dying arena" );
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
     __TBB_ASSERT( !my_global_concurrency_mode, NULL );
@@ -447,7 +414,7 @@ void task_arena_impl::initialize(d1::task_arena_base& ta) {
     governor::one_time_init();
     if (ta.my_max_concurrency < 1) {
 #if __TBB_NUMA_SUPPORT
-        ta.my_max_concurrency = numa_default_concurrency(ta.numa_id());
+        ta.my_max_concurrency = numa_default_concurrency(ta.my_numa_id);
 #else /*__TBB_NUMA_SUPPORT*/
         ta.my_max_concurrency = (int)governor::default_num_threads();
 #endif /*__TBB_NUMA_SUPPORT*/
@@ -462,7 +429,7 @@ void task_arena_impl::initialize(d1::task_arena_base& ta) {
     market::global_market( /*is_public=*/false);
 #if __TBB_NUMA_SUPPORT
     ta.my_arena->my_numa_binding_observer = construct_binding_observer(
-        static_cast<d1::task_arena*>(&ta), ta.numa_id(), ta.my_arena->my_num_slots);
+        static_cast<d1::task_arena*>(&ta), ta.my_numa_id, ta.my_arena->my_num_slots);
 #endif /*__TBB_NUMA_SUPPORT*/
 }
 
@@ -685,14 +652,15 @@ void task_arena_impl::execute(d1::task_arena_base& ta, d1::delegate_base& d) {
     context_guard.set_ctx(ta.my_arena->my_default_ctx);
     nested_arena_context scope(*td, *ta.my_arena, index1);
 #if _WIN64
-    try_call([&] {
+    try {
 #endif
         d();
         __TBB_ASSERT(same_arena || governor::is_thread_data_set(td), nullptr);
 #if _WIN64
-    }).on_exception([&] {
+    } catch (...) {
         context_guard.restore_default();
-    });
+        throw;
+    }
 #endif
 }
 
@@ -701,8 +669,10 @@ void task_arena_impl::wait(d1::task_arena_base& ta) {
     thread_data* td = governor::get_thread_data();
     __TBB_ASSERT_EX(td, "Scheduler is not initialized");
     __TBB_ASSERT(td->my_arena != ta.my_arena || td->my_arena_index == 0, "internal_wait is not supported within a worker context" );
-    while (ta.my_arena->num_workers_active() || ta.my_arena->my_pool_state.load(std::memory_order_acquire) != arena::SNAPSHOT_EMPTY) {
-        yield();
+    if (ta.my_arena->my_max_num_workers != 0) {
+        while (ta.my_arena->num_workers_active() || ta.my_arena->my_pool_state.load(std::memory_order_acquire) != arena::SNAPSHOT_EMPTY) {
+            yield();
+        }
     }
 }
 
@@ -716,26 +686,32 @@ int task_arena_impl::max_concurrency(const d1::task_arena_base *ta) {
     if( a ) { // Get parameters from the arena
         __TBB_ASSERT( !ta || ta->my_max_concurrency==1, NULL );
         return a->my_num_reserved_slots + a->my_max_num_workers;
-    } else {
-        __TBB_ASSERT( !ta || ta->my_max_concurrency==d1::task_arena_base::automatic, NULL );
-        return int(governor::default_num_threads());
     }
+
+    if (ta && ta->my_max_concurrency == 1) {
+        return 1;
+    }
+
+    __TBB_ASSERT(!ta || ta->my_max_concurrency==d1::task_arena_base::automatic, NULL );
+    return int(governor::default_num_threads());
 }
 
 void isolate_within_arena(d1::delegate_base& d, std::intptr_t isolation) {
     // TODO: Decide what to do if the scheduler is not initialized. Is there a use case for it?
     thread_data* tls = governor::get_thread_data();
     assert_pointers_valid(tls, tls->my_task_dispatcher);
-    isolation_type previous_isolation = tls->my_task_dispatcher->m_execute_data_ext.isolation;
+    task_dispatcher* dispatcher = tls->my_task_dispatcher;
+    isolation_type previous_isolation = dispatcher->m_execute_data_ext.isolation;
     try_call([&] {
         // We temporarily change the isolation tag of the currently running task. It will be restored in the destructor of the guard.
         isolation_type current_isolation = isolation ? isolation : reinterpret_cast<isolation_type>(&d);
         // Save the current isolation value and set new one
-        previous_isolation = tls->my_task_dispatcher->set_isolation(current_isolation);
+        previous_isolation = dispatcher->set_isolation(current_isolation);
         // Isolation within this callable
         d();
     }).on_completion([&] {
-        tls->my_task_dispatcher->set_isolation(previous_isolation);
+        __TBB_ASSERT(governor::get_thread_data()->my_task_dispatcher == dispatcher, NULL);
+        dispatcher->set_isolation(previous_isolation);
     });
 }
 

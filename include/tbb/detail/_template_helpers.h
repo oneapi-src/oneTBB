@@ -313,13 +313,7 @@ protected:
             std::forward<Preceding>(params)... , pack.leftmost_value
         );
     }
-    template< typename Ret, typename F, typename... Preceding >
-    static Ret call(F&& f, const pack_type& pack, Preceding&&... params) {
-        return pack_remainder::template call<Ret>(
-            std::forward<F>(f), static_cast<const pack_remainder&>(pack),
-            std::forward<Preceding>(params)... , pack.leftmost_value
-        );
-    }
+
     template< typename Ret, typename F, typename... Preceding >
     static Ret call(F&& f, pack_type&& pack, Preceding&&... params) {
         return pack_remainder::template call<Ret>(

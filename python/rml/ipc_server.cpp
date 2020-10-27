@@ -772,7 +772,9 @@ void ipc_stopper::run() {
             if( my_state.load(std::memory_order_acquire)!=st_quit ) {
                 if( !my_server.stop_one() ) {
                     my_server.add_stop_thread();
-                    tbb::detail::r1::prolonged_pause();
+                    // Workaround for prolonged_pause.
+                    // Reconsider this for new updates.
+                    tbb::detail::r1::prolonged_pause_impl();
                 }
             }
         }

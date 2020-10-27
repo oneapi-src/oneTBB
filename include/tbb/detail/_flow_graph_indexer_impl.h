@@ -45,11 +45,6 @@
             std::get<N-1>(my_input).set_up(p, indexer_node_put_task, g);
             indexer_helper<TupleTypes,N-1>::template set_indexer_node_pointer<IndexerNodeBaseType,PortTuple>(my_input, p, g);
         }
-        template<typename InputTuple>
-        static inline void reset_inputs(InputTuple &my_input, reset_flags f) {
-            indexer_helper<TupleTypes,N-1>::reset_inputs(my_input, f);
-            std::get<N-1>(my_input).reset_receiver(f);
-        }
     };
 
     template<typename TupleTypes>
@@ -59,10 +54,6 @@
             typedef typename std::tuple_element<0, TupleTypes>::type T;
             graph_task* (*indexer_node_put_task)(const T&, void *) = do_try_put<IndexerNodeBaseType, T, 0>;
             std::get<0>(my_input).set_up(p, indexer_node_put_task, g);
-        }
-        template<typename InputTuple>
-        static inline void reset_inputs(InputTuple &my_input, reset_flags f) {
-            std::get<0>(my_input).reset_receiver(f);
         }
     };
 
@@ -91,9 +82,6 @@
         graph& graph_reference() const override {
             return *my_graph;
         }
-
-    public:
-        void reset_receiver(reset_flags /*f*/) override { }
     };
 
     template<typename InputTuple, typename OutputType, typename StructTypes>
@@ -142,7 +130,6 @@
                 type(char(t)), my_arg(e) {}
             indexer_node_base_operation(const successor_type &s, op_type t) : type(char(t)),
                 my_succ(const_cast<successor_type *>(&s)) {}
-            indexer_node_base_operation(op_type t) : type(char(t)) {}
         };
 
         typedef aggregating_functor<class_type, indexer_node_base_operation> handler_type;
@@ -175,15 +162,15 @@
         }
         // ---------- end aggregator -----------
     public:
-        indexer_node_base(graph& g) : graph_node(g), input_ports_type() {
+        indexer_node_base(graph& g) : graph_node(g), input_ports_type(), my_successors(this) {
             indexer_helper<StructTypes,N>::set_indexer_node_pointer(this->my_inputs, this, g);
-            my_successors.set_owner(this);
             my_aggregator.initialize_handler(handler_type(this));
         }
 
-        indexer_node_base(const indexer_node_base& other) : graph_node(other.my_graph), input_ports_type(), sender<output_type>() {
+        indexer_node_base(const indexer_node_base& other)
+            : graph_node(other.my_graph), input_ports_type(), sender<output_type>(), my_successors(this)
+        {
             indexer_helper<StructTypes,N>::set_indexer_node_pointer(this->my_inputs, this, other.my_graph);
-            my_successors.set_owner(this);
             my_aggregator.initialize_handler(handler_type(this));
         }
 
@@ -209,7 +196,6 @@
         void reset_node(reset_flags f) override {
             if(f & rf_clear_edges) {
                 my_successors.clear();
-                indexer_helper<StructTypes,N>::reset_inputs(this->my_inputs,f);
             }
         }
 

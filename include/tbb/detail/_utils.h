@@ -272,11 +272,6 @@ void run_initializer(const Functor& f, std::atomic<do_once_state>& state ) {
     state.store(do_once_state::executed, std::memory_order_release);
 }
 
-// Run the initializer which can require repeated call
-inline void run_initializer( bool (*f)(), std::atomic<do_once_state>& state ) {
-    state.store(f() ? do_once_state::executed : do_once_state::uninitialized, std::memory_order_release);
-}
-
 } // namespace d0
 
 namespace d1 {

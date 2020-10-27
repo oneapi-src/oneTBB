@@ -305,11 +305,11 @@ void test_follows_and_precedes_api() {
 
     follows_and_precedes_testing::test_follows
         <msg_t, tbb::flow::continue_node<msg_t>>
-        (messages_for_follows, pass_through);
+        (messages_for_follows, pass_through, node_priority_t(0));
 
     follows_and_precedes_testing::test_precedes
         <msg_t, tbb::flow::continue_node<msg_t>>
-        (messages_for_precedes, pass_through);
+        (messages_for_precedes, /* number_of_predecessors = */0, pass_through, node_priority_t(1));
 }
 #endif // __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
 

@@ -725,7 +725,7 @@ void test_follows() {
 
     node_t node(follows(preds[0], preds[1], preds[2]), unlimited, [&](int input, node_t::gateway_type& gtw) {
         async_activity.submit(input, &gtw);
-    });
+    }, no_priority);
 
     buffer_node<output_t> buf(g);
     make_edge(node, buf);
@@ -759,7 +759,7 @@ void test_precedes() {
 
     node_t node(precedes(successors[0]), unlimited, [&](int input, node_t::gateway_type& gtw) {
         async_activity.submit(input, &gtw);
-    });
+    }, no_priority);
 
     make_edge(start, node);
 

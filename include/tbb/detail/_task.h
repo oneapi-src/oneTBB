@@ -29,6 +29,7 @@
 #include <climits>
 #include <utility>
 #include <atomic>
+#include <mutex>
 
 namespace tbb {
 namespace detail {
@@ -60,12 +61,14 @@ using suspend_callback_type = void(*)(void*, suspend_point_type*);
 void __TBB_EXPORTED_FUNC suspend(suspend_callback_type suspend_callback, void* user_callback);
 void __TBB_EXPORTED_FUNC resume(suspend_point_type* tag);
 suspend_point_type* __TBB_EXPORTED_FUNC current_suspend_point();
+void __TBB_EXPORTED_FUNC notify_waiters(d1::wait_context& wc);
 
 class thread_data;
 class task_dispatcher;
 class external_waiter;
 struct task_accessor;
 struct task_arena_impl;
+struct wait_node;
 } // namespace r1
 
 namespace d1 {
@@ -92,36 +95,64 @@ inline void resume(suspend_point tag) {
 }
 #endif /* __TBB_RESUMABLE_TASKS */
 
+// TODO align wait_context on cache lane
 class wait_context {
-    static constexpr std::uint64_t abandon_wait_flag = 1LLU << 33;
-    static constexpr std::uint64_t overflow_mask = ~((1LLU << 32) - 1) & ~abandon_wait_flag;
+    // The flag works as a lock for the wait_context
+    // All functions use this lock to work with the wait list
+    static constexpr std::uint64_t lock_flag = 1LLU << 34;
+    // The flag signals to the last decrimenting thread to proceed wait list
+    static constexpr std::uint64_t waiter_flag = 1LLU << 33;
+    static constexpr std::uint64_t overflow_mask = ~((1LLU << 32) - 1) & ~(lock_flag | waiter_flag);
+    using lock_guard = std::lock_guard<wait_context>;
 
-    std::uint64_t m_version_and_traits{};
+    std::uint64_t m_version_and_traits{1};
     std::atomic<std::uint64_t> m_ref_count{};
-    suspend_point m_waiting_coroutine{};
+    // Pointer to the head of the wait list
+    r1::wait_node* m_wait_head{nullptr};
 
-    void abandon_wait() {
-        __TBB_ASSERT((m_ref_count.load(std::memory_order_relaxed) & abandon_wait_flag) == 0, "The wait object can be abandoned only once");
-        add_reference(abandon_wait_flag);
-    }
+    bool is_locked();
+    void lock();
+    void unlock();
+
+    bool publish_wait_list();
+
+    template <typename F>
+    bool try_register_waiter(r1::wait_node& waiter, F&& condition);
+
+    void unregister_waiter(r1::wait_node& waiter);
+
+    void notify_waiters();
 
     void add_reference(std::int64_t delta) {
         call_itt_task_notify(releasing, this);
         std::uint64_t r = m_ref_count.fetch_add(delta) + delta;
+
         __TBB_ASSERT_EX((r & overflow_mask) == 0, "Overflow is detected");
-        if (r == abandon_wait_flag) {
-            // There is no any more references but the waiting stack is
-            // suspended (abandoned) so resume it.
-            __TBB_ASSERT(m_waiting_coroutine != nullptr, nullptr);
-            m_ref_count.store(0, std::memory_order_relaxed);
-            r1::resume(m_waiting_coroutine);
+
+        if ((r & ~lock_flag) == waiter_flag) {
+            // Some external waiters or coroutine waiters sleep in wait list
+            // Should to notify them that work is done
+            r1::notify_waiters(*this);
         }
     }
 
     bool continue_execution() const {
         std::uint64_t r = m_ref_count.load(std::memory_order_acquire);
         __TBB_ASSERT_EX((r & overflow_mask) == 0, "Overflow is detected");
-        return (r & ~abandon_wait_flag) > 0;
+        return (r & ~(waiter_flag | lock_flag)) > 0;
+    }
+
+    void wait_for_notification_completion() {
+        // This function is preventing a couple of races:
+        // - wait_context might be still locked with notifying thread when notified thread destroys the wait_context
+        //   e.g. lock or unlock might access destroyed object
+        // - wait_context might again reach zero ref_count while notifying thread still in a process
+        //   i.e. currently notifying thread might remove lock and waiter flags and the next notifiyng thread might face the first issue
+
+        atomic_backoff backoff;
+        while (!continue_execution() && m_ref_count.load(std::memory_order_relaxed) & (lock_flag | waiter_flag)) {
+            backoff.pause();
+        }
     }
 
     friend class r1::thread_data;
@@ -129,15 +160,26 @@ class wait_context {
     friend class r1::external_waiter;
     friend class task_group;
     friend class task_group_base;
+    friend class std::lock_guard<wait_context>;
     friend struct r1::task_arena_impl;
     friend struct r1::suspend_point_type;
+    friend void r1::notify_waiters(d1::wait_context& wc);
 public:
     // Despite the internal reference count is uin64_t we limit the user interface with uint32_t
     // to preserve a part of the internal reference count for special needs.
     wait_context(std::uint32_t ref_count) : m_ref_count{ref_count} { suppress_unused_warning(m_version_and_traits); }
     wait_context(const wait_context&) = delete;
 
+    ~wait_context() {
+        __TBB_ASSERT(!continue_execution(), NULL);
+        // Wait until all notifiyng threads leave wait_context
+        wait_for_notification_completion();
+    }
+
     void reserve(std::uint32_t delta = 1) {
+        // Wait until the notifiyng thread completes nofications
+        // To prevent calling notify_waiters by more than one thread
+        wait_for_notification_completion();
         add_reference(delta);
     }
 
@@ -222,9 +264,6 @@ protected:
 public:
     virtual task* execute(execution_data&) = 0;
     virtual task* cancel(execution_data&) = 0;
-
-    // TODO: remove in Gold release
-    static task_group_context* current_execute_data() { return current_context(); }
 
 private:
     std::uint64_t m_reserved[5]{};

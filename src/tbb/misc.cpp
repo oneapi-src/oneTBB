@@ -74,50 +74,57 @@ void PrintExtraVersionInfo( const char* category, const char* format, ... ) {
     }
 }
 
-void PrintRMLVersionInfo( void* arg, const char* server_info ) {
-    PrintExtraVersionInfo( server_info, (const char *)arg );
-}
-
 //! check for transaction support.
 #if _MSC_VER
 #include <intrin.h> // for __cpuid
 #endif
-bool cpu_has_speculation() {
-#if (__TBB_x86_32 || __TBB_x86_64)
-#if (__INTEL_COMPILER || __GNUC__ || _MSC_VER || __SUNPRO_CC)
-    bool result = false;
-    const int rtm_ebx_mask = 1<<11;
+
+#if __TBB_x86_32 || __TBB_x86_64
+void check_cpuid(int leaf, int sub_leaf, int registers[4]) {
 #if _MSC_VER
-    int info[4] = {0,0,0,0};
-    const int reg_ebx = 1;
-    __cpuidex(info, 7, 0);
-    result = (info[reg_ebx] & rtm_ebx_mask)!=0;
-#elif __GNUC__ || __SUNPRO_CC
-    int32_t reg_ebx = 0;
-    int32_t reg_eax = 7;
-    int32_t reg_ecx = 0;
-    __asm__ __volatile__ ( "movl %%ebx, %%esi\n"
-                           "cpuid\n"
-                           "movl %%ebx, %0\n"
-                           "movl %%esi, %%ebx\n"
-                           : "=a"(reg_ebx) : "0" (reg_eax), "c" (reg_ecx) : "esi",
-#if __TBB_x86_64
-                           "ebx",
-#endif
-                           "edx"
-                           );
-    result = (reg_ebx & rtm_ebx_mask)!=0 ;
-#endif
-    return result;
+    __cpuidex(registers, leaf, sub_leaf);
 #else
-    #error Speculation detection not enabled for compiler
-#endif /* __INTEL_COMPILER || __GNUC__ || _MSC_VER */
-#else  /* (__TBB_x86_32 || __TBB_x86_64) */
-    return false;
+    int reg_eax = 0;
+    int reg_ebx = 0;
+    int reg_ecx = 0;
+    int reg_edx = 0;
+#if __TBB_x86_32 && __PIC__
+    // On 32-bit systems with position-independent code GCC fails to work around the stuff in EBX
+    // register. We help it using backup and restore.
+    __asm__("mov %%ebx, %%esi\n\t"
+            "cpuid\n\t"
+            "xchg %%ebx, %%esi"
+            : "=a"(reg_eax), "=S"(reg_ebx), "=c"(reg_ecx), "=d"(reg_edx)
+            : "0"(leaf), "2"(sub_leaf) // read value from eax and ecx
+    );
+#else
+    __asm__("cpuid"
+            : "=a"(reg_eax), "=b"(reg_ebx), "=c"(reg_ecx), "=d"(reg_edx)
+            : "0"(leaf), "2"(sub_leaf) // read value from eax and ecx
+    );
+#endif
+    registers[0] = reg_eax;
+    registers[1] = reg_ebx;
+    registers[2] = reg_ecx;
+    registers[3] = reg_edx;
+#endif
+}
+#endif
+
+void detect_cpu_features(cpu_features_type& cpu_features) {
+    suppress_unused_warning(cpu_features);
+#if __TBB_x86_32 || __TBB_x86_64
+    const int rtm_ebx_mask = 1 << 11;
+    const int waitpkg_ecx_mask = 1 << 5;
+    int registers[4] = {0};
+
+    // Check RTM and WAITPKG
+    check_cpuid(7, 0, registers);
+    cpu_features.rtm_enabled = (registers[1] & rtm_ebx_mask) != 0;
+    cpu_features.waitpkg_enabled = (registers[2] & waitpkg_ecx_mask) != 0;
 #endif /* (__TBB_x86_32 || __TBB_x86_64) */
 }
 
 } // namespace r1
 } // namespace detail
 } // namespace tbb
-

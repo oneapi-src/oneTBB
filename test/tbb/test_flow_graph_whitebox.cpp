@@ -408,19 +408,52 @@ TestJoinNode() {
     INFO(" done\n");
 }
 
-void
-TestLimiterNode() {
+template <typename DecrementerType>
+struct limiter_node_type {
+    using type = tbb::flow::limiter_node<int, DecrementerType>;
+    using dtype = DecrementerType;
+};
+
+template <>
+struct limiter_node_type<void> {
+    using type = tbb::flow::limiter_node<int>;
+    using dtype = tbb::flow::continue_msg;
+};
+
+template <typename DType>
+struct DecrementerHelper {
+    template <typename Decrementer>
+    static void check(Decrementer&&) {}
+    static DType makeDType() {
+        return DType(1);
+    }
+};
+
+template <>
+struct DecrementerHelper<tbb::flow::continue_msg> {
+    template <typename Decrementer>
+    static void check(Decrementer&& d) {
+        CHECK_MESSAGE(d.my_predecessor_count == 0, "error in pred count");
+        CHECK_MESSAGE(d.my_initial_predecessor_count == 0, "error in initial pred count");
+        CHECK_MESSAGE(d.my_current_count == 0, "error in current count");
+    }
+    static tbb::flow::continue_msg makeDType() {
+        return tbb::flow::continue_msg();
+    }
+};
+
+template <typename DecrementerType>
+void TestLimiterNode() {
     int out_int{};
     tbb::flow::graph g;
-    tbb::flow::limiter_node<int> ln(g,1);
+    using dtype = typename limiter_node_type<DecrementerType>::dtype;
+    typename limiter_node_type<DecrementerType>::type ln(g,1);
     INFO("Testing limiter_node: preds and succs");
-    CHECK_MESSAGE( (ln.decrement.my_predecessor_count == 0), "error in pred count");
-    CHECK_MESSAGE( (ln.decrement.my_initial_predecessor_count == 0), "error in initial pred count");
-    CHECK_MESSAGE( (ln.decrement.my_current_count == 0), "error in current count");
+    DecrementerHelper<dtype>::check(ln.decrement);
     CHECK_MESSAGE( (ln.my_threshold == 1), "error in my_threshold");
     tbb::flow::queue_node<int> inq(g);
     tbb::flow::queue_node<int> outq(g);
-    tbb::flow::broadcast_node<tbb::flow::continue_msg> bn(g);
+    tbb::flow::broadcast_node<dtype> bn(g);
 
     tbb::flow::make_edge(inq,ln);
     tbb::flow::make_edge(ln,outq);
@@ -437,7 +470,7 @@ TestLimiterNode() {
     g.wait_for_all();
     CHECK_MESSAGE( (!outq.try_get(out_int)), "limiter_node incorrectly passed second input");
     CHECK_MESSAGE( (!ln.my_predecessors.empty()), "input edge to limiter_node not reversed");
-    bn.try_put(tbb::flow::continue_msg());
+    bn.try_put(DecrementerHelper<dtype>::makeDType());
     g.wait_for_all();
     CHECK_MESSAGE( (outq.try_get(out_int) && out_int == 2), "limiter_node didn't pass second value");
     g.wait_for_all();
@@ -451,9 +484,7 @@ TestLimiterNode() {
     INFO(" rf_clear_edges");
     // currently the limiter_node will not pass another message
     g.reset(tbb::flow::rf_clear_edges);
-    CHECK_MESSAGE( (ln.decrement.my_predecessor_count == 0), "error in pred count");
-    CHECK_MESSAGE( (ln.decrement.my_initial_predecessor_count == 0), "error in initial pred count");
-    CHECK_MESSAGE( (ln.decrement.my_current_count == 0), "error in current count");
+    DecrementerHelper<dtype>::check(ln.decrement);
     CHECK_MESSAGE( (ln.my_threshold == 1), "error in my_threshold");
     CHECK_MESSAGE( (ln.my_predecessors.empty()), "preds not reset(rf_clear_edges)");
     CHECK_MESSAGE( (ln.my_successors.empty()), "preds not reset(rf_clear_edges)");
@@ -467,7 +498,7 @@ TestLimiterNode() {
     g.wait_for_all();
     CHECK_MESSAGE( (outq.try_get(out_int)),"missing output after reset(rf_clear_edges)");
     CHECK_MESSAGE( (out_int == 4), "input incorrect (4)");
-    bn.try_put(tbb::flow::continue_msg());
+    bn.try_put(DecrementerHelper<dtype>::makeDType());
     g.wait_for_all();
     CHECK_MESSAGE( (!outq.try_get(out_int)),"second output incorrectly passed (rf_clear_edges)");
     INFO(" done\n");
@@ -747,7 +778,9 @@ TEST_CASE("Test join node"){
 //! Test limiter_node
 //! \brief \ref error_guessing
 TEST_CASE("Test limiter node"){
-    TestLimiterNode();
+    TestLimiterNode<void>();
+    TestLimiterNode<int>();
+    TestLimiterNode<tbb::flow::continue_msg>();
 }
 
 //! Test indexer_node
@@ -769,3 +802,135 @@ TEST_CASE("Test scalar node"){
     TestScalarNode<tbb::flow::overwrite_node<int> >("overwrite_node");
     TestScalarNode<tbb::flow::write_once_node<int> >("write_once_node");
 }
+
+//! try_get in inactive graph
+//! \brief \ref error_guessing
+TEST_CASE("try_get in inactive graph"){
+    tbb::flow::graph g;
+
+    tbb::flow::input_node<int> src(g, [&](tbb::flow_control& fc) -> bool { fc.stop(); return 0;});
+    deactivate_graph(g);
+
+    int tmp = -1;
+    CHECK_MESSAGE((src.try_get(tmp) == false), "try_get can not succeed");
+
+    src.activate();
+    tmp = -1;
+    CHECK_MESSAGE((src.try_get(tmp) == false), "try_get can not succeed");
+}
+
+//! Test make_edge in inactive graph
+//! \brief \ref error_guessing
+TEST_CASE("Test make_edge in inactive graph"){
+    tbb::flow::graph g;
+
+    tbb::flow::continue_node<int> c(g, [](const tbb::flow::continue_msg&){ return 1; });
+
+    tbb::flow::function_node<int, int> f(g, tbb::flow::serial, serial_fn_body<int>(serial_fn_state0));
+
+    c.try_put(tbb::flow::continue_msg());
+    g.wait_for_all();
+
+    deactivate_graph(g);
+
+    make_edge(c, f);
+}
+
+//! Test make_edge from overwrite_node in inactive graph
+//! \brief \ref error_guessing
+TEST_CASE("Test make_edge from overwrite_node in inactive graph"){
+    tbb::flow::graph g;
+
+    tbb::flow::queue_node<int> q(g);
+
+    tbb::flow::overwrite_node<int> on(g);
+
+    on.try_put(1);
+    g.wait_for_all();
+
+    deactivate_graph(g);
+
+    make_edge(on, q);
+
+    int tmp = -1;
+    CHECK_MESSAGE((q.try_get(tmp) == false), "Message should not be passed on");
+}
+
+//! Test iterators directly
+//! \brief \ref error_guessing
+TEST_CASE("graph_iterator details"){
+    tbb::flow::graph g;
+    const tbb::flow::graph cg;
+
+    tbb::flow::graph::iterator b = g.begin();
+    tbb::flow::graph::iterator b2 = g.begin();
+    ++b2;
+    // Cast to a volatile pointer to workaround self assignment warnings from some compilers.
+    tbb::flow::graph::iterator* volatile b2_ptr = &b2;
+    b2 = *b2_ptr;
+    b = b2;
+    CHECK_MESSAGE((b == b2), "Assignment should make iterators equal");
+}
+
+//! const graph
+//! \brief \ref error_guessing
+TEST_CASE("const graph"){
+    using namespace tbb::flow;
+
+    const graph g;
+    CHECK_MESSAGE((g.cbegin() == g.cend()), "Starting graph is empty");
+    CHECK_MESSAGE((g.begin() == g.end()), "Starting graph is empty");
+
+    graph g2;
+    CHECK_MESSAGE((g2.begin() == g2.end()), "Starting graph is empty");
+}
+
+//! Send message to continue_node while graph is inactive
+//! \brief \ref error_guessing
+TEST_CASE("Send message to continue_node while graph is inactive") {
+    using namespace tbb::flow;
+
+    graph g;
+
+    continue_node<int> c(g, [](const continue_msg&){ return 1; });
+    buffer_node<int> b(g);
+
+    make_edge(c, b);
+    
+    deactivate_graph(g);
+
+    c.try_put(continue_msg());
+    g.wait_for_all();
+
+    int tmp = -1;
+    CHECK_MESSAGE((b.try_get(tmp) == false), "Message should not arrive");
+    CHECK_MESSAGE((tmp == -1), "Value should not be altered");
+}
+
+
+//! Bypass of a successor's message in a node with lightweight policy
+//! \brief \ref error_guessing
+TEST_CASE("Bypass of a successor's message in a node with lightweight policy") {
+    using namespace tbb::flow;
+
+    graph g;
+
+    auto body = [](const int&v)->int { return v * 2; };
+    function_node<int, int, lightweight> f1(g, unlimited, body);
+
+    auto body2 = [](const int&v)->int {return v / 2;};
+    function_node<int, int> f2(g, unlimited, body2);
+    
+    buffer_node<int> b(g);
+    
+    make_edge(f1, f2);
+    make_edge(f2, b);
+
+    f1.try_put(1);
+    g.wait_for_all();
+
+    int tmp = -1;
+    CHECK_MESSAGE((b.try_get(tmp) == true), "Functional nodes can work in succession");
+    CHECK_MESSAGE((tmp == 1), "Value should not be altered");
+}
+

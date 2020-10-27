@@ -313,7 +313,7 @@ void market::detach_arena ( arena& a ) {
         ++my_arenas_aba_epoch;
 }
 
-void market::try_destroy_arena ( arena* a, uintptr_t aba_epoch ) {
+void market::try_destroy_arena ( arena* a, uintptr_t aba_epoch, unsigned priority_level ) {
     bool locked = true;
     __TBB_ASSERT( a, NULL );
     // we hold reference to the market, so it cannot be destroyed at any moment here
@@ -321,14 +321,14 @@ void market::try_destroy_arena ( arena* a, uintptr_t aba_epoch ) {
     __TBB_ASSERT( my_ref_count!=0, NULL );
     my_arenas_list_mutex.lock();
     assert_market_valid();
-        arena_list_type::iterator it = my_arenas[a->my_priority_level].begin();
-        for ( ; it != my_arenas[a->my_priority_level].end(); ++it ) {
+        arena_list_type::iterator it = my_arenas[priority_level].begin();
+        for ( ; it != my_arenas[priority_level].end(); ++it ) {
             if ( a == &*it ) {
                 if ( it->my_aba_epoch == aba_epoch ) {
                     // Arena is alive
                     if ( !a->my_num_workers_requested && !a->my_references.load(std::memory_order_relaxed) ) {
                         __TBB_ASSERT(
-                            !a->my_num_workers_allotted &&
+                            !a->my_num_workers_allotted.load(std::memory_order_relaxed) &&
                             (a->my_pool_state == arena::SNAPSHOT_EMPTY || !a->my_max_num_workers),
                             "Inconsistent arena state"
                         );
@@ -364,7 +364,7 @@ arena* market::arena_in_need ( arena_list_type* arenas, arena* hint ) {
             } while ( arenas[curr_priority_level].empty() );
             it = arenas[curr_priority_level].begin();
         }
-        if( a.num_workers_active() < a.my_num_workers_allotted ) {
+        if( a.num_workers_active() < a.my_num_workers_allotted.load(std::memory_order_relaxed) ) {
             a.my_references += arena::ref_worker;
             return &a;
         }
@@ -389,14 +389,21 @@ int market::update_allotment ( arena_list_type* arenas, int workers_demand, int 
     int unassigned_workers = max_workers;
     int assigned = 0;
     int carry = 0;
+    unsigned max_priority_level = num_priority_levels;
     for (unsigned list_idx = 0; list_idx < num_priority_levels; ++list_idx ) {
         int assigned_per_priority = 0;
         for (arena_list_type::iterator it = arenas[list_idx].begin(); it != arenas[list_idx].end(); ++it) {
             arena& a = *it;
-            if (a.my_num_workers_requested <= 0) {
-                __TBB_ASSERT(!a.my_num_workers_allotted, nullptr);
+            __TBB_ASSERT(a.my_num_workers_requested >= 0 && a.my_num_workers_requested <= int(a.my_max_num_workers), nullptr);
+            if (a.my_num_workers_requested == 0) {
+                __TBB_ASSERT(!a.my_num_workers_allotted.load(std::memory_order_relaxed), nullptr);
                 continue;
             }
+
+            if (max_priority_level == num_priority_levels) {
+                max_priority_level = list_idx;
+            }
+
             int allotted = 0;
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
             if (my_num_workers_soft_limit.load(std::memory_order_relaxed) == 0) {
@@ -412,7 +419,8 @@ int market::update_allotment ( arena_list_type* arenas, int workers_demand, int 
                 // a.my_num_workers_requested may temporarily exceed a.my_max_num_workers
                 allotted = min(allotted, (int)a.my_max_num_workers);
             }
-            a.my_num_workers_allotted = allotted;
+            a.my_num_workers_allotted.store(allotted, std::memory_order_relaxed);
+            a.my_is_top_priority.store(list_idx == max_priority_level, std::memory_order_relaxed);
             assigned += allotted;
             assigned_per_priority += allotted;
         }
@@ -505,19 +513,26 @@ void market::adjust_demand ( arena& a, int delta ) {
     if ( !delta )
         return;
     my_arenas_list_mutex.lock();
-    int prev_req = a.my_num_workers_requested;
+    a.my_total_num_workers_requested += delta;
+    int target_workers = 0;
+    // Cap target_workers into interval [0, a.my_max_num_workers]
+    if (a.my_total_num_workers_requested > 0) {
+        target_workers = a.my_total_num_workers_requested < int(a.my_max_num_workers) ?
+            a.my_total_num_workers_requested : a.my_max_num_workers;
+    }
+
+    delta = target_workers - a.my_num_workers_requested;
+
+    if (delta == 0) {
+        my_arenas_list_mutex.unlock();
+        return;
+    }
+
     a.my_num_workers_requested += delta;
-    if ( a.my_num_workers_requested <= 0 ) {
-        a.my_num_workers_allotted = 0;
-        if ( prev_req <= 0 ) {
-            my_arenas_list_mutex.unlock();
-            return;
-        }
-        delta = -prev_req;
+    if (a.my_num_workers_requested == 0) {
+        a.my_num_workers_allotted.store(0, std::memory_order_relaxed);
     }
-    else if ( prev_req < 0 ) {
-        delta = a.my_num_workers_requested;
-    }
+
     my_total_demand += delta;
     my_priority_level_demand[a.my_priority_level] += delta;
     unsigned effective_soft_limit = my_num_workers_soft_limit.load(std::memory_order_relaxed);
@@ -540,9 +555,14 @@ void market::adjust_demand ( arena& a, int delta ) {
     my_num_workers_requested += delta;
     __TBB_ASSERT( my_num_workers_requested <= (int)effective_soft_limit, NULL );
 
+    int target_epoch = my_adjust_demand_target_epoch++;
+
     my_arenas_list_mutex.unlock();
+
+    spin_wait_until_eq(my_adjust_demand_current_epoch, target_epoch);
     // Must be called outside of any locks
     my_server->adjust_job_count_estimate( delta );
+    my_adjust_demand_current_epoch.store(target_epoch + 1, std::memory_order_release);
 }
 
 void market::process( job& j ) {

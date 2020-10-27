@@ -235,7 +235,7 @@ public:
         erase_if_present(c, gc);
         return c->my_list.empty();
     }
-
+#if TBB_USE_ASSERT
     static bool is_present(d1::global_control& gc) {
         __TBB_ASSERT_RELEASE(gc.my_param < global_control::parameter_max, NULL);
         control_storage* const c = controls[gc.my_param];
@@ -247,6 +247,7 @@ public:
         }
         return false;
     }
+#endif // TBB_USE_ASSERT
 };
 
 void __TBB_EXPORTED_FUNC create(d1::global_control& gc) {
@@ -259,10 +260,11 @@ void __TBB_EXPORTED_FUNC destroy(d1::global_control& gc) {
 bool remove_and_check_if_empty(d1::global_control& gc) {
     return global_control_impl::remove_and_check_if_empty(gc);
 }
+#if TBB_USE_ASSERT
 bool is_present(d1::global_control& gc) {
     return global_control_impl::is_present(gc);
 }
-
+#endif // TBB_USE_ASSERT
 std::size_t __TBB_EXPORTED_FUNC global_control_active_value(int param) {
     __TBB_ASSERT_RELEASE(param < global_control::parameter_max, NULL);
     return controls[param]->active_value();

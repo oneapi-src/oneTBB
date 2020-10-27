@@ -457,7 +457,7 @@ void run_filter_set(
         resetCounters();
         tbb::parallel_pipeline( n_tokens, copy123, context...  );
         checkCounters(my_t);
-        tbb::filter<void, void> move123( filter123 );
+        tbb::filter<void, void> move123( std::move(filter123) );
         resetCounters();
         tbb::parallel_pipeline( n_tokens, move123, context...  );
         checkCounters(my_t);

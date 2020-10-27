@@ -193,4 +193,50 @@ TEST_CASE("concurrent_unordered map/multimap with specific key/mapped types") {
     test_specific_types();
 }
 
+//! \brief \ref error_guessing
+TEST_CASE("concurrent_unordered_map::swap with not always equal allocator") {
+    using not_always_equal_alloc_map_type = tbb::concurrent_unordered_map<int, int, std::hash<int>, std::equal_to<int>,
+                                                                          NotAlwaysEqualAllocator<std::pair<const int, int>>>;
+    test_swap_not_always_equal_allocator<not_always_equal_alloc_map_type>();
+}
+
+//! \brief \ref error_guessing
+TEST_CASE("concurrent_unordered_multimap::swap with not always equal allocator") {
+    using not_always_equal_alloc_mmap_type = tbb::concurrent_unordered_multimap<int, int, std::hash<int>, std::equal_to<int>,
+                                                                                NotAlwaysEqualAllocator<std::pair<const int, int>>>;
+    test_swap_not_always_equal_allocator<not_always_equal_alloc_mmap_type>();
+}
+
+#if TBB_USE_EXCEPTIONS
+//! \brief \ref error_guessing
+TEST_CASE("concurrent_unordered_map throwing copy constructor") {
+    using exception_map_type = tbb::concurrent_unordered_map<ThrowOnCopy, ThrowOnCopy>;
+    test_exception_on_copy_ctor<exception_map_type>();
+}
+
+//! \brief \ref error_guessing
+TEST_CASE("concurrent_unordered_multimap throwing copy constructor") {
+    using exception_mmap_type = tbb::concurrent_unordered_multimap<ThrowOnCopy, ThrowOnCopy>;
+    test_exception_on_copy_ctor<exception_mmap_type>();
+}
+
+//! \brief \ref error_guessing
+TEST_CASE("concurrent_unordered_map whitebox throwing copy constructor") {
+    using allocator_type = StaticSharedCountingAllocator<std::allocator<std::pair<const int, int>>>;
+    using exception_mmap_type = tbb::concurrent_unordered_map<int, int, std::hash<int>, std::equal_to<int>, allocator_type>;
+
+    exception_mmap_type map;
+    for (std::size_t i = 0; i < 10; ++i) {
+        map.insert(std::pair<const int, int>(i, 42));
+    }
+
+    allocator_type::set_limits(1);
+    REQUIRE_THROWS_AS( [&] {
+        exception_mmap_type map1(map);
+        utils::suppress_unused_warning(map1);
+    }(), const std::bad_alloc);
+}
+
+#endif // TBB_USE_EXCEPTIONS
+
 // TODO: add test_scoped_allocator support with broken macro

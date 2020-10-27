@@ -1,5 +1,5 @@
 # oneAPI Threading Building Blocks (Beta)
-[![Apache License Version 2.0](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE)
+[![Apache License Version 2.0](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE.txt)
 
 oneAPI Threading Building Blocks (oneTBB) lets you easily write parallel C++ programs that take
 full advantage of multicore performance, that are portable, composable and have future-proof scalability.
@@ -19,7 +19,7 @@ Please report issues and suggestions via
 
 ## How to Contribute
 To contribute to oneTBB, please open a GitHub pull request (preferred) or send us a patch by e-mail.
-oneAPI Threading Building Blocks is licensed under [Apache License, Version 2.0](LICENSE).
+oneAPI Threading Building Blocks is licensed under [Apache License, Version 2.0](LICENSE.txt).
 By its terms, contributions submitted to the project are also done under that license.
 
 ## Engineering team contacts

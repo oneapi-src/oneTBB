@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-#define TBB_PREVIEW_NUMA_SUPPORT 1
 #include "tbb/detail/_config.h"
 
 #include "common/test.h"

@@ -108,7 +108,6 @@ void ParallelTest() {
     }
 }
 
-
 //! Testing blocked_range interface
 //! \brief \ref interface \ref requirement
 TEST_CASE("Basic serial") {
@@ -122,6 +121,26 @@ TEST_CASE("Basic parallel") {
         tbb::global_control control(tbb::global_control::max_allowed_parallelism, concurrency_level);
         ParallelTest();
     }
+}
+
+//! Testing blocked_range with proportional splitting
+//! \brief \ref interface \ref requirement
+TEST_CASE("blocked_range proportional splitting") {
+    tbb::blocked_range<int> original(0, 100);
+    tbb::blocked_range<int> first(original);
+    tbb::proportional_split ps(3, 1);
+    tbb::blocked_range<int> second(first, ps);
+
+    // Test proportional_split -> split conversion
+    tbb::blocked_range<int> copy(original);
+    tbb::split s = tbb::split(ps);
+    tbb::blocked_range<int> splitted_copy(copy, s);
+    CHECK(copy.size() == original.size() / 2);
+    CHECK(splitted_copy.size() == copy.size());
+
+
+    int expected_first_end = original.begin() + ps.left() * (original.end() - original.begin()) / (ps.left() + ps.right());
+    utils::check_range_bounds_after_splitting(original, first, second, expected_first_end);
 }
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT

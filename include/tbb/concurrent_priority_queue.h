@@ -234,8 +234,6 @@ private:
         };
         cpq_operation( const value_type& value, operation_type t )
             : type(t), elem(const_cast<value_type*>(&value)) {}
-
-        cpq_operation( operation_type t ) : type(t) {}
     }; // class cpq_operation
 
     class functor {
@@ -477,7 +475,7 @@ void swap( concurrent_priority_queue<T, Compare, Allocator>& lhs,
 inline namespace v1 {
 using detail::d1::concurrent_priority_queue;
 
-}; // inline namespace v1
+} // inline namespace v1
 } // namespace tbb
 
 #endif // __TBB_concurrent_priority_queue_H

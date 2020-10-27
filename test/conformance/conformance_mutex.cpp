@@ -86,6 +86,15 @@ void TestTryAcquire(const char* mutex_name) {
     }
 }
 
+template <>
+void TestTryAcquire<tbb::null_mutex>( const char* mutex_name ) {
+    tbb::null_mutex tested_mutex;
+    typename tbb::null_mutex::scoped_lock lock(tested_mutex);
+    CHECK_MESSAGE(lock.try_acquire(tested_mutex), "ERROR for " << mutex_name << ": try_acquire failed though it should not");
+    lock.release();
+    CHECK_MESSAGE(lock.try_acquire(tested_mutex), "ERROR for " << mutex_name << ": try_acquire failed though it should not");
+}
+
 //! Test try_acquire functionality of a non-reenterable mutex
 template<typename M>
 void TestTryAcquireReader(const char* mutex_name) {
@@ -110,6 +119,17 @@ void TestTryAcquireReader(const char* mutex_name) {
     } else {
         CHECK_MESSAGE(false, "ERROR for " << mutex_name << ": try_acquire failed though it should not");
     }
+}
+
+template <>
+void TestTryAcquireReader<tbb::null_rw_mutex>( const char* mutex_name ) {
+    tbb::null_rw_mutex tested_mutex;
+    typename tbb::null_rw_mutex::scoped_lock lock(tested_mutex, false);
+    CHECK_MESSAGE(lock.try_acquire(tested_mutex, false), "Error for " << mutex_name << ": try_acquire on read failed though it should not");
+    CHECK_MESSAGE(lock.try_acquire(tested_mutex, true), "Error for " << mutex_name << ": try_acquire on write failed though it should not");
+    lock.release();
+    CHECK_MESSAGE(lock.try_acquire(tested_mutex, false), "Error for " << mutex_name << ": try_acquire on read failed though it should not");
+    CHECK_MESSAGE(lock.try_acquire(tested_mutex, true), "Error for " << mutex_name << ": try_acquire on write failed though it should not");
 }
 
 template<typename M, size_t N>
@@ -417,6 +437,7 @@ TEST_CASE("Lockable requirement test") {
     TestTryAcquire<tbb::queuing_rw_mutex>("Queuing RW Mutex");
     TestTryAcquire<tbb::speculative_spin_mutex>("Speculative Spin Mutex");
     TestTryAcquire<tbb::speculative_spin_rw_mutex>("Speculative Spin RW Mutex");
+    TestTryAcquire<tbb::null_mutex>("Null Mutex");
 }
 
 //! Testing ReaderWriterMutex requirements
@@ -434,6 +455,7 @@ TEST_CASE("Shared mutexes (reader/writer) test") {
     TestRWStateMultipleChange<tbb::queuing_rw_mutex>("Queuing RW Mutex");
     TestTryAcquireReader<tbb::speculative_spin_rw_mutex>("Speculative Spin RW Mutex");
     TestRWStateMultipleChange<tbb::speculative_spin_rw_mutex>("Speculative Spin RW Mutex");
+    TestTryAcquireReader<tbb::null_rw_mutex>("Null RW Mutex");
 }
 
 //! Testing ISO C++ Mutex and Shared Mutex requirements.

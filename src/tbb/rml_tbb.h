@@ -84,9 +84,6 @@ public:
 
     //! Close factory
     void close();
-
-    //! Call the callback with the server build info
-    void call_with_server_info( ::rml::server_info_callback_t cb, void* arg ) const;
 };
 
 } // namespace rml

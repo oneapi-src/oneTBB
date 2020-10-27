@@ -22,6 +22,7 @@
 #include "tbb/global_control.h"
 
 #include "scheduler_common.h"
+#include "waiters.h"
 #include "arena_slot.h"
 #include "arena.h"
 #include "thread_data.h"
@@ -61,11 +62,13 @@ inline d1::task* get_self_recall_task(arena_slot& slot) {
 
 inline d1::task* suspend_point_type::resume_task::execute(d1::execution_data& ed) {
     execution_data_ext& ed_ext = static_cast<execution_data_ext&>(ed);
+    resume_node node{ed_ext.task_disp->get_suspend_point()};
+    thread_data::register_waiter_data wait_data{*ed_ext.wait_ctx, node};
+
     if (ed_ext.wait_ctx) {
         // The wait_ctx is present only in external_waiter. In that case we leave the current stack
         // in the abandoned state to resume when waiting completes.
-        ed_ext.wait_ctx->m_waiting_coroutine = ed_ext.task_disp->get_suspend_point();
-        ed_ext.task_disp->m_thread_data->set_post_resume_action(thread_data::post_resume_action::abandon, ed_ext.wait_ctx);
+        ed_ext.task_disp->m_thread_data->set_post_resume_action(thread_data::post_resume_action::register_waiter, &wait_data);
     } else {
         // If wait_ctx is null, it can be only a worker thread on outermost level because
         // coroutine_waiter interrupts bypass loop before the resume_task execution.
@@ -215,7 +218,7 @@ d1::task* task_dispatcher::receive_or_steal_task(
             break; // Stealing success, end of stealing attempt
         }
         // Nothing to do, pause a little.
-        waiter.pause();
+        waiter.pause(slot);
     } // end of nonlocal task retrieval loop
     if (inbox.is_idle_state(true)) {
         inbox.set_is_idle(false);
@@ -362,22 +365,17 @@ inline void task_dispatcher::recall_point() {
         __TBB_ASSERT(m_suspend_point->m_is_owner_recalled.load(std::memory_order_relaxed) == false, nullptr);
         d1::suspend([](suspend_point_type* sp) {
             sp->m_is_owner_recalled.store(true, std::memory_order_release);
+            sp->m_arena->my_sleep_monitors.notify([sp] (std::uintptr_t tag) {
+                return tag == std::uintptr_t(sp);
+            });
         });
+
         if (m_thread_data->my_inbox.is_idle_state(true)) {
             m_thread_data->my_inbox.set_is_idle(false);
         }
     }
 }
 #endif /* __TBB_RESUMABLE_TASKS */
-
-template <typename Waiter>
-d1::task* local_wait_for_all(d1::task* t, Waiter& waiter) {
-    if (governor::is_itt_present()) {
-        return local_wait_for_all<true>(t, waiter);
-    } else {
-        return local_wait_for_all<false>(t, waiter);
-    }
-}
 
 #if __TBB_PREVIEW_CRITICAL_TASKS
 inline d1::task* task_dispatcher::get_critical_task(d1::task* t, execution_data_ext& ed, isolation_type isolation, bool critical_allowed) {

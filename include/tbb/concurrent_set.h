@@ -74,6 +74,7 @@ public:
 
     // Include constructors of base_type
     using base_type::base_type;
+    using base_type::operator=;
 
     template<typename OtherCompare>
     void merge(concurrent_set<key_type, OtherCompare, Allocator>& source) {
@@ -148,6 +149,7 @@ public:
 
     // Include constructors of base_type;
     using base_type::base_type;
+    using base_type::operator=;
 
     template<typename OtherCompare>
     void merge(concurrent_set<key_type, OtherCompare, Allocator>& source) {

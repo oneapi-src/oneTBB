@@ -529,11 +529,9 @@ public:
     // assignment
     template<typename U>
     segmented_iterator& operator=( const segmented_iterator<SegmentedContainer, U>& other) {
-        if(this != &other) {
-            my_segcont = other.my_segcont;
-            outer_iter = other.outer_iter;
-            if(outer_iter != my_segcont->end()) inner_iter = other.inner_iter;
-        }
+        my_segcont = other.my_segcont;
+        outer_iter = other.outer_iter;
+        if(outer_iter != my_segcont->end()) inner_iter = other.inner_iter;
         return *this;
     }
 
@@ -638,7 +636,6 @@ template<typename T, typename Finit>
 struct construct_by_finit: no_assign {
     Finit f;
     void construct(void* where) {new(where) T(f());}
-    construct_by_finit( const Finit& f_ ) : f(f_) {}
     construct_by_finit( Finit&& f_ ) : f(std::move(f_)) {}
 };
 

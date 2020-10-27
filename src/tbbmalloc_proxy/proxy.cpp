@@ -347,7 +347,10 @@ void operator delete[](void* ptr, const std::nothrow_t&) noexcept {
 
 #include "function_replacement.h"
 
-#include "../tbbmalloc/shared_utils.h"
+template<typename T, size_t N> // generic function to find length of array
+inline size_t arrayLength(const T(&)[N]) {
+    return N;
+}
 
 void __TBB_malloc_safer_delete( void *ptr)
 {

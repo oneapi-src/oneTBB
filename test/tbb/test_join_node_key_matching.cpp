@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#define MAX_TUPLE_TEST_SIZE 10
 #include "common/config.h"
 
 #include "test_join_node.h"
@@ -52,26 +53,32 @@ void test_deduction_guides() {
 }
 #endif
 
+template <typename T1, typename T2>
+using make_tuple = decltype(std::tuple_cat(T1(), std::tuple<T2>()));
+using T1 = std::tuple<MyKeyFirst<std::string, double>>;
+using T2 = make_tuple<T1, MyKeySecond<std::string, int>>;
+using T3 = make_tuple<T2, MyKeyFirst<std::string, int>>;
+using T4 = make_tuple<T3, MyKeyWithBrokenMessageKey<std::string, size_t>>;
+using T5 = make_tuple<T4, MyKeyWithBrokenMessageKey<std::string, int>>;
+using T6 = make_tuple<T5, MyKeySecond<std::string, short>>;
+using T7 = make_tuple<T6, MyKeySecond<std::string, threebyte>>;
+using T8 = make_tuple<T7, MyKeyFirst<std::string, int>>;
+using T9 = make_tuple<T8, MyKeySecond<std::string, threebyte>>;
+using T10 = make_tuple<T9, MyKeyWithBrokenMessageKey<std::string, size_t>>;
+
 //! Test serial key matching on special input types
 //! \brief \ref error_guessing
-TEST_CASE("Serial test on tuples"){
+TEST_CASE("Serial test on tuples") {
     INFO("key_matching\n");
     generate_test<serial_test, std::tuple<MyKeyFirst<int, double>, MyKeySecond<int, float> >, tbb::flow::key_matching<int> >::do_test();
     generate_test<serial_test, std::tuple<MyKeyFirst<std::string, double>, MyKeySecond<std::string, float> >, tbb::flow::key_matching<std::string> >::do_test();
-#if MAX_TUPLE_TEST_SIZE >= 3
     generate_test<serial_test, std::tuple<MyKeyFirst<std::string, double>, MyKeySecond<std::string, float>, MyKeyWithBrokenMessageKey<std::string, int> >, tbb::flow::key_matching<std::string&> >::do_test();
-#endif
-#if MAX_TUPLE_TEST_SIZE >= 7
-    generate_test<serial_test, std::tuple<
-        MyKeyFirst<std::string, double>,
-        MyKeyWithBrokenMessageKey<std::string, int>,
-        MyKeyFirst<std::string, int>,
-        MyKeySecond<std::string, size_t>,
-        MyKeyWithBrokenMessageKey<std::string, int>,
-        MyKeySecond<std::string, short>,
-        MyKeySecond<std::string, threebyte>
-    >, tbb::flow::key_matching<std::string&> >::do_test();
-#endif
+}
+
+//! Serial test with different tuple sizes
+//! \brief \ref error_guessing
+TEST_CASE_TEMPLATE("Serial N tests on tuples", T, T2, T3, T4, T5, T6, T7, T8, T9, T10) {
+     generate_test<serial_test, T, tbb::flow::key_matching<std::string&>>::do_test();
 }
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
@@ -88,19 +95,10 @@ TEST_CASE("Parallel test on tuples"){
     generate_test<parallel_test, std::tuple<MyKeyFirst<int, double>, MyKeySecond<int, float> >, tbb::flow::key_matching<int> >::do_test();
     generate_test<parallel_test, std::tuple<MyKeyFirst<int, double>, MyKeySecond<int, float> >, tbb::flow::key_matching<int&> >::do_test();
     generate_test<parallel_test, std::tuple<MyKeyFirst<std::string, double>, MyKeySecond<std::string, float> >, tbb::flow::key_matching<std::string&> >::do_test();
+}
 
-#if MAX_TUPLE_TEST_SIZE >= 10
-    generate_test<parallel_test, std::tuple<
-        MyKeyFirst<std::string, double>,
-        MyKeySecond<std::string, int>,
-        MyKeyFirst<std::string, int>,
-        MyKeyWithBrokenMessageKey<std::string, size_t>,
-        MyKeyWithBrokenMessageKey<std::string, int>,
-        MyKeySecond<std::string, short>,
-        MyKeySecond<std::string, threebyte>,
-        MyKeyFirst<std::string, int>,
-        MyKeySecond<std::string, threebyte>,
-        MyKeyWithBrokenMessageKey<std::string, size_t>
-    >, tbb::flow::key_matching<std::string&> >::do_test();
-#endif
+//! Parallel test with different tuple sizes
+//! \brief \ref error_guessing
+TEST_CASE_TEMPLATE("Parallel N tests on tuples", T, T2, T3, T4, T5, T6, T7, T8, T9, T10) {
+    generate_test<parallel_test, T, tbb::flow::key_matching<std::string&>>::do_test();
 }

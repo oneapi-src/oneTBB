@@ -20,6 +20,7 @@
 #include "arena.h"
 #include "thread_data.h"
 #include "task_dispatcher.h"
+#include "waiters.h"
 #include "itt_notify.h"
 
 #include "tbb/detail/_task.h"
@@ -30,6 +31,72 @@
 
 namespace tbb {
 namespace detail {
+
+namespace d1 {
+
+bool wait_context::is_locked() {
+    return m_ref_count.load(std::memory_order_relaxed) & lock_flag;
+}
+
+void wait_context::lock() {
+    atomic_backoff backoff;
+
+    auto try_lock = [&] { return !(m_ref_count.fetch_or(lock_flag) & lock_flag); };
+
+    // While is_locked return true try_lock is not invoked
+    while (is_locked() || !try_lock()) {
+        backoff.pause();
+    }
+}
+
+void wait_context::unlock() {
+    __TBB_ASSERT(is_locked(), NULL);
+    m_ref_count.fetch_and(~lock_flag);
+}
+
+bool wait_context::publish_wait_list() {
+    // Try to add waiter_flag to the ref_counter
+    // Important : This function should never add waiter_flag if work is done otherwise waiter_flag will be never removed
+
+    auto expected = m_ref_count.load(std::memory_order_relaxed);
+    __TBB_ASSERT(is_locked() || m_version_and_traits == 0, NULL);
+
+    while (!(expected & waiter_flag) && continue_execution()) {
+        if (m_ref_count.compare_exchange_strong(expected, expected | waiter_flag)) {
+            __TBB_ASSERT(!(expected & waiter_flag), NULL);
+            expected |= waiter_flag;
+            break;
+        }
+    }
+
+    // There is waiter_flag in ref_count
+    return expected & waiter_flag;
+}
+
+void wait_context::unregister_waiter(r1::wait_node& node) {
+    lock_guard lock(*this);
+
+    if (m_wait_head != nullptr) {
+        if (m_wait_head == &node) {
+            m_wait_head = node.my_next;
+        }
+        node.unlink();
+    }
+}
+
+void wait_context::notify_waiters() {
+    lock_guard lock(*this);
+
+    if (m_wait_head != nullptr) {
+        m_wait_head->notify_all(*this);
+        m_wait_head = nullptr;
+    }
+
+    m_ref_count.store(m_ref_count.load(std::memory_order_relaxed) & ~waiter_flag, std::memory_order_relaxed);
+}
+
+} // namespace d1
+
 namespace r1 {
 
 //------------------------------------------------------------------------
@@ -153,10 +220,24 @@ void thread_data::do_post_resume_action() {
     __TBB_ASSERT(my_post_resume_arg, "The post resume action must have an argument");
 
     switch (my_post_resume_action) {
-    case post_resume_action::abandon:
+    case post_resume_action::register_waiter:
     {
-        d1::wait_context& wo = *static_cast<d1::wait_context*>(my_post_resume_arg);
-        wo.abandon_wait();
+        auto& data = *static_cast<thread_data::register_waiter_data*>(my_post_resume_arg);
+
+        // Support of backward compatibility
+        if (data.wo.m_version_and_traits == 0) {
+            data.wo.m_wait_head = reinterpret_cast<wait_node*>(data.node.my_suspend_point);
+            if (!data.wo.publish_wait_list()) {
+                r1::resume(data.node.my_suspend_point);
+            }
+            break;
+        }
+
+        auto wait_condition = [&data] { return data.wo.continue_execution(); };
+        if (!data.wo.try_register_waiter(data.node, wait_condition)) {
+            r1::resume(data.node.my_suspend_point);
+        }
+
         break;
     }
     case post_resume_action::callback:
@@ -205,6 +286,12 @@ suspend_point_type* current_suspend_point() {
 }
 
 #endif /* __TBB_RESUMABLE_TASKS */
+
+void notify_waiters(d1::wait_context& wc) {
+    __TBB_ASSERT(wc.m_version_and_traits > 0, NULL);
+
+    wc.notify_waiters();
+}
 
 } // namespace r1
 } // namespace detail

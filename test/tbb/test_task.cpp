@@ -18,12 +18,14 @@
 #include "common/utils.h"
 #include "common/spin_barrier.h"
 #include "common/utils_concurrency_limit.h"
+#include "common/cpu_usertime.h"
 
 #include "tbb/task.h"
 #include "tbb/task_group.h"
 #include "tbb/parallel_for.h"
 #include "tbb/cache_aligned_allocator.h"
 #include "tbb/global_control.h"
+#include "tbb/concurrent_vector.h"
 
 #include <atomic>
 #include <thread>
@@ -110,6 +112,7 @@ void test_cancellation_on_exception( bool reset_ctx ) {
         }
         wait.reserve(1);
     }
+    wait.release(1);
 
     REQUIRE_MESSAGE(task.execute_counter() == (reset_ctx ? iter_counter : 1), "Some task was not executed");
     REQUIRE_MESSAGE(task.cancel_counter() == iter_counter, "Some task was not canceled after the exception occurs");
@@ -128,6 +131,8 @@ TEST_CASE("Test that task was executed p times") {
         tbb::detail::d1::execute_and_wait(test_task, test_context, wait, test_context);
         wait.reserve(1);
     }
+
+    wait.release(1);
 
     REQUIRE_MESSAGE(CountingTask<>::execute_counter() == iter_counter, "The task was not executed necessary times");
     REQUIRE_MESSAGE(CountingTask<>::cancel_counter() == 0, "Some instance of the task was canceled");
@@ -165,6 +170,7 @@ TEST_CASE("Simple test parallelism usage") {
         tbb::detail::d1::wait(wait, test_context);
         wait.reserve(threads_num);
     }
+    wait.release(threads_num);
 
     REQUIRE_MESSAGE(task_type::execute_counter() == iter_counter * threads_num, "Some task was not executed");
     REQUIRE_MESSAGE(task_type::cancel_counter() == 0, "Some task was canceled");
@@ -221,6 +227,7 @@ TEST_CASE("Test parallelism usage with parallel_for") {
 
         wait.reserve(task_threads_num);
     }
+    wait.release(task_threads_num);
 
     REQUIRE_MESSAGE(task_type::execute_counter() == task_threads_num * iter_count, "Some task was not executed");
     REQUIRE_MESSAGE(task_type::cancel_counter() == 0, "Some task was canceled");
@@ -263,6 +270,7 @@ TEST_CASE("Test parallelism usage with spawn tasks in different threads") {
         tbb::detail::d1::execute_and_wait(vector_test_task[threads_num - 1], test_context, wait, test_context);
         wait.reserve(threads_num);
     }
+    wait.release(threads_num);
 
     REQUIRE_MESSAGE(task_type::execute_counter() == iter_count * threads_num, "Some task was not executed");
     REQUIRE_MESSAGE(task_type::cancel_counter() == 0, "Some task was canceled");
@@ -372,8 +380,8 @@ TEST_CASE("Isolation + resumable tasks") {
                 std::vector<suspended_task, tbb::cache_aligned_allocator<suspended_task>> test_task;
                 tbb::detail::d1::wait_context wait(1);
                 ++suspend_count;
-                tbb::task::suspend([&wait, &test_context, &test_task] (tbb::task::suspend_point tag) {
-                    tbb::this_task_arena::isolate([&wait, &test_context, &test_task, &tag] {
+                tbb::this_task_arena::isolate([&wait, &test_context, &test_task] {
+                    tbb::task::suspend([&wait, &test_context, &test_task] (tbb::task::suspend_point tag) {
                         test_task.emplace_back(tag, wait);
                         tbb::detail::d1::spawn(test_task[0], test_context);
                     });
@@ -576,11 +584,58 @@ TEST_CASE("Stress testing") {
             tbb::detail::d1::wait(wait, test_context);
             wait.reserve(task_number);
         }
+        wait.release(task_number);
     });
 
 
     REQUIRE_MESSAGE(task_type::execute_counter() == task_number * iter_counter, "Some task was not executed");
     REQUIRE_MESSAGE(task_type::cancel_counter() == 0, "Some task was canceled");
+}
+
+//! \brief \ref error_guessing
+TEST_CASE("All workers sleep") {
+    std::size_t thread_number = utils::get_platform_max_threads();
+    tbb::concurrent_vector<tbb::task::suspend_point> suspend_points;
+
+    tbb::task_group test_gr;
+
+    utils::SpinBarrier barrier(thread_number);
+    auto resumble_task = [&] {
+        barrier.wait();
+        tbb::task::suspend([&] (tbb::task::suspend_point sp) {
+            suspend_points.push_back(sp);
+            barrier.wait();
+        });
+    };
+
+    for (std::size_t i = 0; i < thread_number - 1; ++i) {
+        test_gr.run(resumble_task);
+    }
+
+    barrier.wait();
+    barrier.wait();
+    TestCPUUserTime(thread_number);
+
+    for (auto sp : suspend_points)
+        tbb::task::resume(sp);
+    test_gr.wait();
+}
+
+//! \brief \ref error_guessing
+TEST_CASE("External threads sleep") {
+    if (utils::get_platform_max_threads() < 2) return;
+    utils::SpinBarrier barrier(2);
+
+    tbb::task_group test_gr;
+
+    test_gr.run([&] {
+        barrier.wait();
+        TestCPUUserTime(2);
+    });
+
+    barrier.wait();
+
+    test_gr.wait();
 }
 
 #endif // __TBB_RESUMABLE_TASKS
@@ -644,6 +699,7 @@ TEST_CASE("Enqueue with exception") {
             wait.reserve(task_number);
         });
     }
+    wait.release(task_number);
 
 
     REQUIRE_MESSAGE(task_type::execute_counter() == task_number * iter_count, "Some task was not executed");

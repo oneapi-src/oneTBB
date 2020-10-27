@@ -96,3 +96,12 @@ TEST_CASE("Task arena observer") {
     REQUIRE(observer.is_callbacks_called());
 }
 
+//! Test task arena copy constructor
+//! \brief \ref interface \ref requirement
+TEST_CASE("Task arena copy constructor") {
+    tbb::task_arena arena(1);
+    tbb::task_arena copy = arena;
+
+    REQUIRE(arena.max_concurrency() == copy.max_concurrency());
+    REQUIRE(arena.is_active() == copy.is_active());
+}

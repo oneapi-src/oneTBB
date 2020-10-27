@@ -312,8 +312,6 @@ static inline void fgt_node_desc( const NodeType * /*node*/, const char * /*desc
 
 static inline void fgt_graph_desc( const void * /*g*/, const char * /*desc*/ ) { }
 
-static inline void fgt_body( void * /*node*/, void * /*body*/ ) { }
-
 template< int N, typename PortsTuple >
 static inline void fgt_multioutput_node( void* /*codeptr*/, string_resource_index /*t*/, void * /*g*/, void * /*input_port*/, PortsTuple & /*ports*/ ) { }
 
@@ -325,7 +323,6 @@ static inline void fgt_multiinput_node( void* /*codeptr*/, string_resource_index
 
 static inline void fgt_multiinput_multioutput_node( void* /*codeptr*/, string_resource_index /*t*/, void * /*node*/, void * /*graph*/ ) { }
 
-static inline void fgt_node( void* /*codeptr*/, string_resource_index /*t*/, void * /*g*/, void * /*output_port*/ ) { }
 static inline void fgt_node( void* /*codeptr*/, string_resource_index /*t*/, void * /*g*/, void * /*input_port*/, void * /*output_port*/ ) { }
 static inline void  fgt_node( void* /*codeptr*/, string_resource_index /*t*/, void * /*g*/, void * /*input_port*/, void * /*decrement_port*/, void * /*output_port*/ ) { }
 

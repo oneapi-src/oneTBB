@@ -65,7 +65,7 @@ private:
     static bool UsePrivateRML;
 
     // Flags for runtime-specific conditions
-    static bool is_speculation_enabled;
+    static cpu_features_type cpu_features;
     static bool is_rethrow_broken;
 
     //! Create key for thread-local storage and initialize RML.
@@ -136,7 +136,9 @@ public:
 
     static bool does_client_join_workers (const rml::tbb_client &client);
 
-    static bool speculation_enabled() { return is_speculation_enabled; }
+    static bool speculation_enabled() { return cpu_features.rtm_enabled; }
+
+    static bool wait_package_enabled() { return cpu_features.waitpkg_enabled; }
 
     static bool rethrow_exception_broken() { return is_rethrow_broken; }
 

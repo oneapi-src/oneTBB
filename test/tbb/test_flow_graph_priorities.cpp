@@ -782,6 +782,38 @@ void test(int num_threads) {
 
 } // namespace ManySuccessors
 
+#if TBB_USE_EXCEPTIONS
+namespace Exceptions {
+    void test() {
+        using namespace tbb::flow;
+        graph g;
+        std::srand(42);
+        continue_node<int> c(g, [](continue_msg) {
+            return std::rand() % 10;
+        }, 2);
+        function_node<int> f(g, unlimited, [](int v) {
+            if (v > 4) {
+                throw std::runtime_error("Exception::test");
+            }
+        }, 1);
+        make_edge(c, f);
+        for (int i = 0; i < 10; ++i) {
+            try {
+                for (int j = 0; j < 50; ++j) {
+                    c.try_put(continue_msg());
+                }
+                g.wait_for_all();
+                FAIL("Unreachable code. The exception is expected");
+            } catch (std::runtime_error&) {
+                CHECK(g.is_cancelled());
+            } catch (...) {
+                FAIL("Unexpected exception");
+            }
+        }
+    }
+} // namespace Exceptions
+#endif
+
 //! Test node prioritization
 //! \brief \ref requirement
 TEST_CASE("Priority nodes take precedence"){
@@ -825,3 +857,12 @@ TEST_CASE("Many successors") {
         ManySuccessors::test( p );
     }
 }
+
+#if TBB_USE_EXCEPTIONS
+//! Test for exceptions
+//! \brief \ref error_guessing
+TEST_CASE("Exceptions") {
+    Exceptions::test();
+}
+#endif
+

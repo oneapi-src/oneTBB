@@ -63,8 +63,6 @@ public:
     tbb::flow::graph& graph_reference() const override {
         return my_graph;
     }
-
-    void reset_receiver(tbb::flow::reset_flags /*f*/) override {}
 };
 
 template< typename T >
@@ -367,3 +365,12 @@ TEST_CASE("Deduction guides"){
 }
 #endif
 
+//! Test try_get before activation
+//! \brief \ref error_guessing
+TEST_CASE("try_get before activation"){
+    tbb::flow::graph g;
+    tbb::flow::input_node<int> in(g, [&](tbb::flow_control& fc) -> bool { fc.stop(); return 0;});
+
+    int tmp = -1;
+    CHECK_MESSAGE((in.try_get(tmp) == false), "try_get before activation should not succeed");
+}

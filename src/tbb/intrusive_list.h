@@ -65,11 +65,6 @@ class intrusive_list_base {
 
         iterator_impl( pointer_type pos ) : my_pos(pos) {}
 
-        iterator_impl& operator=( const T& val ) {
-            my_pos = &node(val);
-            return *this;
-        }
-
         iterator_impl& operator++() {
             my_pos = my_pos->my_next_node;
             return *this;

@@ -126,7 +126,7 @@ namespace d1 {
     }
 #else
     inline void call_itt_task_notify(d1::notify_type, void *) {}
-#endif // TBB_USE_PROFILING_TOOLS 
+#endif // TBB_USE_PROFILING_TOOLS
 
     inline void call_itt_notify(d1::notify_type t, void *ptr) {
         r1::call_itt_notify((int)t, ptr);
@@ -192,46 +192,8 @@ namespace d1 {
     inline void call_itt_notify(notify_type /*t*/, void* /*ptr*/) {}
 
     inline void call_itt_task_notify(notify_type /*t*/, void* /*ptr*/) {}
-
-    inline void itt_make_task_group( itt_domain_enum /*domain*/, void* /*group*/, unsigned long long /*group_extra*/,
-                                        void* /*parent*/, unsigned long long /*parent_extra*/, string_resource_index /*name_index*/ ) {}
-
-    inline void itt_metadata_str_add( itt_domain_enum /*domain*/, void* /*addr*/, unsigned long long /*addr_extra*/,
-                                        string_resource_index /*key*/, const char* /*value*/ ) {}
-
-    inline void register_node_addr( itt_domain_enum /*domain*/, void* /*addr*/, unsigned long long /*addr_extra*/, string_resource_index /*key*/, void* /*value*/ ) {}
-
-    inline void itt_relation_add( itt_domain_enum /*domain*/, void* /*addr0*/, unsigned long long /*addr0_extra*/,
-                                    itt_relation /*relation*/, void* /*addr1*/, unsigned long long /*addr1_extra*/ ) {}
-
-    inline void itt_task_begin( itt_domain_enum /*domain*/, void* /*task*/, unsigned long long /*task_extra*/,
-                                void* /*parent*/, unsigned long long /*parent_extra*/, string_resource_index /*name_index*/ ) {}
-
-    inline void itt_task_end( itt_domain_enum /*domain*/ ) {}
-
-    inline void itt_region_begin( itt_domain_enum /*domain*/, void* /*region*/, unsigned long long /*region_extra*/,
-                                    void* /*parent*/, unsigned long long /*parent_extra*/, string_resource_index /*name_index*/ ) {}
-
-    inline void itt_region_end( itt_domain_enum /*domain*/, void* /*region*/, unsigned long long /*region_extra*/ ) {}
-
 #endif // TBB_USE_PROFILING_TOOLS
 
-    template <typename T>
-    inline void store_with_release_itt(std::atomic<T>& dst, T src) {
-        call_itt_task_notify(releasing, &dst);
-        dst.store(src, std::memory_order_release);
-    }
-
-    template <typename T>
-    inline T load_with_acquire_itt(const std::atomic<T>& src) {
-        call_itt_task_notify(acquired, &src);
-        return src.load(std::memory_order_acquire);
-    }
-} // namespace d1
-} // namespace detail
-
-namespace detail {
-namespace d1 {
 #if TBB_USE_PROFILING_TOOLS && !(TBB_USE_PROFILING_TOOLS == 2)
 class event {
 /** This class supports user event traces through itt.

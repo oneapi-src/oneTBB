@@ -209,9 +209,6 @@ protected:
     virtual graph_task *try_put_task(const T& t) = 0;
     virtual graph& graph_reference() const = 0;
 
-    //! put receiver back in initial state
-    virtual void reset_receiver(reset_flags f = rf_reset_protocol) = 0;
-
     template<typename TT, typename M> friend class successor_cache;
     virtual bool is_continue_receiver() { return false; }
 
@@ -307,7 +304,7 @@ protected:
     // error in gcc 4.1.2
     template<typename U, typename V> friend class limiter_node;
 
-    void reset_receiver( reset_flags f ) override {
+    virtual void reset_receiver( reset_flags f ) {
         my_current_count = 0;
         if (f & rf_clear_edges) {
             my_predecessor_count = my_initial_predecessor_count;
@@ -438,7 +435,7 @@ inline void graph::reset( reset_flags f ) {
     // reset context
     deactivate_graph(*this);
 
-    if(my_context) my_context->reset();
+    my_context->reset();
     cancelled = false;
     caught_exception = false;
     // reset all the nodes comprising the graph
@@ -492,34 +489,33 @@ public:
     //! Constructor for a node with a successor
     template< typename Body >
      __TBB_NOINLINE_SYM input_node( graph &g, Body body )
-        : graph_node(g), my_active(false),
-        my_body( new input_body_leaf< output_type, Body>(body) ),
-        my_init_body( new input_body_leaf< output_type, Body>(body) ),
-        my_reserved(false), my_has_cached_item(false)
+         : graph_node(g), my_active(false)
+         , my_body( new input_body_leaf< output_type, Body>(body) )
+         , my_init_body( new input_body_leaf< output_type, Body>(body) )
+         , my_successors(this), my_reserved(false), my_has_cached_item(false)
     {
-        my_successors.set_owner(this);
-        fgt_node_with_body( CODEPTR(), FLOW_INPUT_NODE, &this->my_graph,
-                                           static_cast<sender<output_type> *>(this), this->my_body );
+        fgt_node_with_body(CODEPTR(), FLOW_INPUT_NODE, &this->my_graph,
+                           static_cast<sender<output_type> *>(this), this->my_body);
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
     template <typename Body, typename... Successors>
     input_node( const node_set<order::preceding, Successors...>& successors, Body body )
-        : input_node(successors.graph_reference(), body) {
+        : input_node(successors.graph_reference(), body)
+    {
         make_edges(*this, successors);
     }
 #endif
 
     //! Copy constructor
-    __TBB_NOINLINE_SYM input_node( const input_node& src ) :
-        graph_node(src.my_graph), sender<Output>(),
-        my_active(false),
-        my_body( src.my_init_body->clone() ), my_init_body(src.my_init_body->clone() ),
-        my_reserved(false), my_has_cached_item(false)
+    __TBB_NOINLINE_SYM input_node( const input_node& src )
+        : graph_node(src.my_graph), sender<Output>()
+        , my_active(false)
+        , my_body(src.my_init_body->clone()), my_init_body(src.my_init_body->clone())
+        , my_successors(this), my_reserved(false), my_has_cached_item(false)
     {
-        my_successors.set_owner(this);
         fgt_node_with_body(CODEPTR(), FLOW_INPUT_NODE, &this->my_graph,
-                                           static_cast<sender<output_type> *>(this), this->my_body );
+                           static_cast<sender<output_type> *>(this), this->my_body);
     }
 
     //! The destructor
@@ -897,7 +893,6 @@ protected:
 
         __TBB_ASSERT(!(f & rf_clear_edges) || clear_element<N>::this_empty(my_output_ports), "split_node reset failed");
     }
-    void reset_receiver(reset_flags /*f*/) override {}
     graph& graph_reference() const override {
         return my_graph;
     }
@@ -1013,10 +1008,9 @@ private:
     broadcast_cache<input_type> my_successors;
 public:
 
-    __TBB_NOINLINE_SYM explicit broadcast_node(graph& g) : graph_node(g) {
-        my_successors.set_owner( this );
+    __TBB_NOINLINE_SYM explicit broadcast_node(graph& g) : graph_node(g), my_successors(this) {
         fgt_node( CODEPTR(), FLOW_BROADCAST_NODE, &this->my_graph,
-                                 static_cast<receiver<input_type> *>(this), static_cast<sender<output_type> *>(this) );
+                  static_cast<receiver<input_type> *>(this), static_cast<sender<output_type> *>(this) );
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
@@ -1027,13 +1021,7 @@ public:
 #endif
 
     // Copy constructor
-    __TBB_NOINLINE_SYM broadcast_node( const broadcast_node& src ) :
-        graph_node(src.my_graph), receiver<T>(), sender<T>()
-    {
-        my_successors.set_owner( this );
-        fgt_node( CODEPTR(), FLOW_BROADCAST_NODE, &this->my_graph,
-                                 static_cast<receiver<input_type> *>(this), static_cast<sender<output_type> *>(this) );
-    }
+    __TBB_NOINLINE_SYM broadcast_node( const broadcast_node& src ) : broadcast_node(src.my_graph) {}
 
     //! Adds a successor
     bool register_successor( successor_type &r ) override {
@@ -1061,8 +1049,6 @@ protected:
     graph& graph_reference() const override {
         return my_graph;
     }
-
-    void reset_receiver(reset_flags /*f*/) override {}
 
     void reset_node(reset_flags f) override {
         if (f&rf_clear_edges) {
@@ -1291,9 +1277,8 @@ public:
     //! Constructor
     __TBB_NOINLINE_SYM explicit buffer_node( graph &g )
         : graph_node(g), reservable_item_buffer<T, internals_allocator>(), receiver<T>(),
-          sender<T>(), forwarder_busy(false)
+          sender<T>(), my_successors(this), forwarder_busy(false)
     {
-        my_successors.set_owner(this);
         my_aggregator.initialize_handler(handler_type(this));
         fgt_node( CODEPTR(), FLOW_BUFFER_NODE, &this->my_graph,
                                  static_cast<receiver<input_type> *>(this), static_cast<sender<output_type> *>(this) );
@@ -1307,15 +1292,7 @@ public:
 #endif
 
     //! Copy constructor
-    __TBB_NOINLINE_SYM buffer_node( const buffer_node& src )
-        : graph_node(src.my_graph), reservable_item_buffer<T, internals_allocator>(),
-          receiver<T>(), sender<T>(), forwarder_busy(false)
-    {
-        my_successors.set_owner(this);
-        my_aggregator.initialize_handler(handler_type(this));
-        fgt_node( CODEPTR(), FLOW_BUFFER_NODE, &this->my_graph,
-                                 static_cast<receiver<input_type> *>(this), static_cast<sender<output_type> *>(this) );
-    }
+    __TBB_NOINLINE_SYM buffer_node( const buffer_node& src ) : buffer_node(src.my_graph) {}
 
     //
     // message sender implementation
@@ -1415,8 +1392,6 @@ protected:
     graph& graph_reference() const override {
         return my_graph;
     }
-
-    void reset_receiver(reset_flags /*f*/) override { }
 
 protected:
     void reset_node( reset_flags f) override {
@@ -1889,11 +1864,6 @@ private:
         }
     }
 
-    void forward() {
-        __TBB_ASSERT(false, "Should never be called");
-        return;
-    }
-
     graph_task* decrement_counter( long long delta ) {
         {
             spin_mutex::scoped_lock lock(my_mutex);
@@ -1908,9 +1878,6 @@ private:
     }
 
     void initialize() {
-        my_predecessors.set_owner(this);
-        my_successors.set_owner(this);
-        decrement.set_owner(this);
         fgt_node(
             CODEPTR(), FLOW_LIMITER_NODE, &this->my_graph,
             static_cast<receiver<input_type> *>(this), static_cast<receiver<DecrementType> *>(&decrement),
@@ -1923,7 +1890,8 @@ public:
 
     //! Constructor
     limiter_node(graph &g, size_t threshold)
-        : graph_node(g), my_threshold(threshold), my_count(0), my_tries(0), decrement()
+        : graph_node(g), my_threshold(threshold), my_count(0), my_tries(0), my_predecessors(this)
+        , my_successors(this), decrement(this)
     {
         initialize();
     }
@@ -1937,12 +1905,7 @@ public:
 #endif
 
     //! Copy constructor
-    limiter_node( const limiter_node& src ) :
-        graph_node(src.my_graph), receiver<T>(), sender<T>(),
-        my_threshold(src.my_threshold), my_count(0), my_tries(0), decrement()
-    {
-        initialize();
-    }
+    limiter_node( const limiter_node& src ) : limiter_node(src.my_graph, src.my_threshold) {}
 
     //! Replace the current successor with this new successor
     bool register_successor( successor_type &r ) override {
@@ -2027,10 +1990,6 @@ protected:
     }
 
     graph& graph_reference() const override { return my_graph; }
-
-    void reset_receiver(reset_flags /*f*/) override {
-        __TBB_ASSERT(false,NULL);  // should never be called
-    }
 
     void reset_node( reset_flags f) override {
         my_count = 0;
@@ -2118,15 +2077,6 @@ public:
 
 #if __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING
     join_node(graph &g) : unfolded_type(g) {}
-
-#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
-    template <typename... Args>
-    join_node(const node_set<Args...>& nodes, key_matching<K, KHash> = key_matching<K, KHash>())
-        : join_node(nodes.graph_reference()) {
-        make_edges_in_order(nodes, *this);
-    }
-#endif
-
 #endif  /* __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING */
 
     template<typename __TBB_B0, typename __TBB_B1>
@@ -2768,25 +2718,13 @@ public:
     typedef Input input_type;
     typedef Output output_type;
     typedef receiver<input_type> receiver_type;
-    typedef typename receiver_type::predecessor_type predecessor_type;
-    typedef typename sender<output_type>::successor_type successor_type;
+    typedef receiver<output_type> successor_type;
+    typedef sender<input_type> predecessor_type;
     typedef receiver_gateway<output_type> gateway_type;
     typedef async_body_base<gateway_type> async_body_base_type;
     typedef typename base_type::output_ports_type output_ports_type;
 
 private:
-    struct try_put_functor {
-        typedef multifunction_output<Output> output_port_type;
-        output_port_type *port;
-        // TODO: pass value by copy since we do not want to block asynchronous thread.
-        const Output *value;
-        bool result;
-        try_put_functor(output_port_type &p, const Output &v) : port(&p), value(&v), result(false) { }
-        void operator()() {
-            result = port->try_put(*value);
-        }
-    };
-
     class receiver_gateway_impl: public receiver_gateway<Output> {
     public:
         receiver_gateway_impl(async_node* node): my_node(node) {}
@@ -2880,13 +2818,15 @@ public:
     // Define sender< Output >
 
     //! Add a new successor to this node
-    bool register_successor( successor_type &r ) override {
-        return output_port<0>(*this).register_successor(r);
+    bool register_successor(successor_type&) override {
+        __TBB_ASSERT(false, "Successors must be registered only via ports");
+        return false;
     }
 
     //! Removes a successor from this node
-    bool remove_successor( successor_type &r ) override {
-        return output_port<0>(*this).remove_successor(r);
+    bool remove_successor(successor_type&) override {
+        __TBB_ASSERT(false, "Successors must be removed only via ports");
+        return false;
     }
 
     template<typename Body>
@@ -2915,10 +2855,11 @@ public:
     typedef typename receiver<input_type>::predecessor_type predecessor_type;
     typedef typename sender<output_type>::successor_type successor_type;
 
-    __TBB_NOINLINE_SYM explicit overwrite_node(graph &g) : graph_node(g), my_buffer_is_valid(false) {
-        my_successors.set_owner( this );
+    __TBB_NOINLINE_SYM explicit overwrite_node(graph &g)
+        : graph_node(g), my_successors(this), my_buffer_is_valid(false)
+    {
         fgt_node( CODEPTR(), FLOW_OVERWRITE_NODE, &this->my_graph,
-                                 static_cast<receiver<input_type> *>(this), static_cast<sender<output_type> *>(this) );
+                  static_cast<receiver<input_type> *>(this), static_cast<sender<output_type> *>(this) );
     }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
@@ -2929,17 +2870,11 @@ public:
 #endif
 
     //! Copy constructor; doesn't take anything from src; default won't work
-    __TBB_NOINLINE_SYM overwrite_node( const overwrite_node& src ) :
-        graph_node(src.my_graph), receiver<T>(), sender<T>(), my_buffer_is_valid(false)
-    {
-        my_successors.set_owner( this );
-        fgt_node( CODEPTR(), FLOW_OVERWRITE_NODE, &this->my_graph,
-                                 static_cast<receiver<input_type> *>(this), static_cast<sender<output_type> *>(this) );
-    }
+    __TBB_NOINLINE_SYM overwrite_node( const overwrite_node& src ) : overwrite_node(src.my_graph) {}
 
     ~overwrite_node() {}
 
-   bool register_successor( successor_type &s ) override {
+    bool register_successor( successor_type &s ) override {
         spin_mutex::scoped_lock l( my_mutex );
         if (my_buffer_is_valid && is_graph_active( my_graph )) {
             // We have a valid value that must be forwarded immediately.
@@ -3048,7 +2983,6 @@ protected:
     broadcast_cache< input_type, null_rw_mutex > my_successors;
     input_type my_buffer;
     bool my_buffer_is_valid;
-    void reset_receiver(reset_flags /*f*/) override {}
 
     void reset_node( reset_flags f) override {
         my_buffer_is_valid = false;

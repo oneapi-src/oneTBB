@@ -360,13 +360,15 @@ protected:
     task_group_status internal_run_and_wait(const F& f) {
         function_stack_task<F> t{ f, m_wait_ctx };
         m_wait_ctx.reserve();
+        bool cancellation_status = false;
         try_call([&] {
             execute_and_wait(t, m_context, m_wait_ctx, m_context);
         }).on_completion([&] {
             // TODO: the reset method is not thread-safe. Ensure the correct behavior.
+            cancellation_status = m_context.is_group_execution_cancelled();
             m_context.reset();
         });
-        return m_context.is_group_execution_cancelled() ? canceled : complete;
+        return cancellation_status ? canceled : complete;
     }
 
     template<typename F>
@@ -401,13 +403,15 @@ public:
     }
 
     task_group_status wait() {
+        bool cancellation_status = false;
         try_call([&] {
             d1::wait(m_wait_ctx, m_context);
         }).on_completion([&] {
             // TODO: the reset method is not thread-safe. Ensure the correct behavior.
+            cancellation_status = m_context.is_group_execution_cancelled();
             m_context.reset();
         });
-        return m_context.is_group_execution_cancelled() ? canceled : complete;
+        return cancellation_status ? canceled : complete;
     }
 
     bool is_canceling() {

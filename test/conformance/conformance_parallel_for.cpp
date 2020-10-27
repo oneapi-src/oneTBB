@@ -232,6 +232,7 @@ void TestParallelForWithStepSupport() {
     static tbb::affinity_partitioner affinity_p;
     tbb::auto_partitioner auto_p;
     tbb::simple_partitioner simple_p;
+    tbb::static_partitioner static_p;
     empty_partitioner_tag p;
 
     // Try out all partitioner combinations
@@ -239,6 +240,7 @@ void TestParallelForWithStepSupport() {
     TestParallelForWithStepSupportHelper< Flavor,T,const tbb::auto_partitioner >(auto_p);
     TestParallelForWithStepSupportHelper< Flavor,T,const tbb::simple_partitioner >(simple_p);
     TestParallelForWithStepSupportHelper< Flavor,T,tbb::affinity_partitioner >(affinity_p);
+    TestParallelForWithStepSupportHelper< Flavor,T,tbb::static_partitioner >(static_p);
 
     // Testing some corner cases
     tbb::parallel_for(static_cast<T>(2), static_cast<T>(1), static_cast<T>(1), TestFunctor<T>());
@@ -309,4 +311,7 @@ TEST_CASE("Testing parallel_for with partitioners") {
 
     parallel_for(Range1(false, true), b, tbb::auto_partitioner());
     parallel_for(Range6(false, true), b, tbb::auto_partitioner());
+
+    parallel_for(Range1(true, false), b, tbb::static_partitioner());
+    parallel_for(Range6(false, true), b, tbb::static_partitioner());
 }

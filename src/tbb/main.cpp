@@ -39,8 +39,8 @@ unsigned governor::DefaultNumberOfThreads;
 size_t governor::DefaultPageSize;
 rml::tbb_factory governor::theRMLServerFactory;
 bool governor::UsePrivateRML;
-bool governor::is_speculation_enabled;
 bool governor::is_rethrow_broken;
+cpu_features_type governor::cpu_features;
 
 //------------------------------------------------------------------------
 // market data

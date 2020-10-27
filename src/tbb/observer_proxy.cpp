@@ -40,7 +40,7 @@ observer_proxy::observer_proxy( d1::task_scheduler_observer& tso )
 #endif /* TBB_USE_ASSERT */
 }
 
-observer_proxy::~observer_proxy () {
+observer_proxy::~observer_proxy() {
     __TBB_ASSERT( !my_ref_count, "Attempt to destroy proxy still in use" );
     poison_value(my_ref_count);
     poison_pointer(my_prev);
@@ -50,7 +50,7 @@ observer_proxy::~observer_proxy () {
 #endif /* TBB_USE_ASSERT */
 }
 
-void observer_list::clear () {
+void observer_list::clear() {
     // Though the method will work fine for the empty list, we require the caller
     // to check for the list emptiness before invoking it to avoid extra overhead.
     __TBB_ASSERT( !empty(), NULL );
@@ -72,15 +72,25 @@ void observer_list::clear () {
             __TBB_ASSERT(is_alive(p->my_ref_count), "Observer's proxy died prematurely");
             __TBB_ASSERT(p->my_ref_count.load(std::memory_order_relaxed) == 1, "Reference for observer is missing");
             poison_pointer(p->my_observer);
-            poison_value(p->my_ref_count);
             remove(p);
+            --p->my_ref_count;
             delete p;
         }
-        __TBB_ASSERT(my_head == nullptr && my_tail == nullptr, nullptr);
     }
+
+    // If observe(false) is called concurrently with the destruction of the arena,
+    // need to wait until all proxies are removed.
+    for (atomic_backoff backoff; ; backoff.pause()) {
+        scoped_lock lock(mutex(), /*is_writer=*/false);
+        if (my_head == nullptr) {
+            break;
+        }
+    }
+
+    __TBB_ASSERT(my_head == nullptr && my_tail == nullptr, nullptr);
 }
 
-void observer_list::insert ( observer_proxy* p ) {
+void observer_list::insert( observer_proxy* p ) {
     scoped_lock lock(mutex(), /*is_writer=*/true);
     if (my_head) {
         p->my_prev = my_tail;
@@ -217,6 +227,9 @@ void observer_list::do_notify_exit_observers(observer_proxy* last, bool worker) 
                         remove_ref_fast(p);
                         if (p) {
                             lock.release();
+                            if (p != prev && prev) {
+                                remove_ref(prev);
+                            }
                             remove_ref(p);
                         }
                         return;

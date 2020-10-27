@@ -81,6 +81,10 @@ void check_list_nodes( List& il, int value_step ) {
 
     int i;
     Iterator it = il.begin();
+
+    Iterator it_default;
+    REQUIRE_MESSAGE(it_default != it, "Incorrect default constructed intrusive_list::iterator");
+
     for ( i = value_step - 1; it != il.end(); ++it, i += value_step ) {
         REQUIRE_MESSAGE(it->Data() == i, "Unexpected node value while iterating forward");
         REQUIRE_MESSAGE(it->m_Canary == NoliMeTangere, "Memory corruption");

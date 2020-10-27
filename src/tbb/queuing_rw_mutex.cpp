@@ -532,18 +532,23 @@ struct queuing_rw_mutex_impl {
 void __TBB_EXPORTED_FUNC acquire(d1::queuing_rw_mutex& m, d1::queuing_rw_mutex::scoped_lock& s, bool write) {
     queuing_rw_mutex_impl::acquire(m, s, write);
 }
+
 bool __TBB_EXPORTED_FUNC try_acquire(d1::queuing_rw_mutex& m, d1::queuing_rw_mutex::scoped_lock& s, bool write) {
     return queuing_rw_mutex_impl::try_acquire(m, s, write);
 }
+
 void __TBB_EXPORTED_FUNC release(d1::queuing_rw_mutex::scoped_lock& s) {
     queuing_rw_mutex_impl::release(s);
 }
+
 bool __TBB_EXPORTED_FUNC upgrade_to_writer(d1::queuing_rw_mutex::scoped_lock& s) {
     return queuing_rw_mutex_impl::upgrade_to_writer(s);
 }
+
 bool __TBB_EXPORTED_FUNC downgrade_to_reader(d1::queuing_rw_mutex::scoped_lock& s) {
     return queuing_rw_mutex_impl::downgrade_to_reader(s);
 }
+
 void __TBB_EXPORTED_FUNC construct(d1::queuing_rw_mutex& m) {
     queuing_rw_mutex_impl::construct(m);
 }

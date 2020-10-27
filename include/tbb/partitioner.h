@@ -133,7 +133,6 @@ struct tree_node : public node {
     small_object_allocator m_allocator;
     std::atomic<bool> m_child_stolen{false};
 
-    tree_node(small_object_allocator& alloc) : m_allocator{alloc} {}
     tree_node(node* parent, int ref_count, small_object_allocator& alloc)
         : node{parent, ref_count}
         , m_allocator{alloc} {}
@@ -260,11 +259,6 @@ struct partition_type_base {
     void note_affinity( slot_id ) {}
     template <typename Task>
     bool check_being_stolen(Task&, const execution_data&) { return false; } // part of old should_execute_range()
-    template <typename Task>
-    bool check_for_demand(Task& ) { return false; }
-    bool is_divisible() { return true; } // part of old should_execute_range()
-    depth_t max_depth() { return 0; }
-    void align_depth(depth_t) { }
     template <typename Range> split_type get_split() { return split(); }
     Partition& self() { return *static_cast<Partition*>(this); } // CRTP helper
 
@@ -532,8 +526,6 @@ public:
     typedef detail::proportional_split split_type;
     static_partition_type( const static_partitioner& )
         : linear_affinity_mode<static_partition_type>() {}
-    static_partition_type( static_partition_type& p, split )
-        : linear_affinity_mode<static_partition_type>(p, split()) {}
     static_partition_type( static_partition_type& p, const proportional_split& split_obj )
         : linear_affinity_mode<static_partition_type>(p, split_obj) {}
 };
@@ -597,7 +589,6 @@ private:
     public:
         bool should_execute_range(const execution_data& ) {return false;}
         partition_type( const simple_partitioner& ) {}
-        partition_type( const partition_type& ) {}
         partition_type( const partition_type&, split ) {}
     };
 };
@@ -631,8 +622,6 @@ private:
             return num_chunks==1;
         }
         partition_type( const auto_partitioner& )
-            : num_chunks(get_initial_auto_partitioner_divisor()*__TBB_INITIAL_CHUNKS/4) {}
-        partition_type( const partition_type& )
             : num_chunks(get_initial_auto_partitioner_divisor()*__TBB_INITIAL_CHUNKS/4) {}
         partition_type( partition_type& pt, split ) {
             num_chunks = pt.num_chunks = (pt.num_chunks+1u) / 2u;

@@ -183,3 +183,31 @@ TEST_CASE("concurrent_unordered_set with std::scoped_allocator_adaptor") {
 TEST_CASE("concurrent_unordered_multiset with std::scoped_allocator_adaptor") {
     test_scoped_allocator<CumultisetTraits>();
 }
+
+//! \brief \ref error_guessing
+TEST_CASE("concurrent_unordered_set::swap with not always equal allocator") {
+    using not_always_equal_alloc_set_type = tbb::concurrent_unordered_set<int, std::hash<int>, std::equal_to<int>,
+                                                                          NotAlwaysEqualAllocator<int>>;
+    test_swap_not_always_equal_allocator<not_always_equal_alloc_set_type>();
+}
+
+//! \brief \ref error_guessing
+TEST_CASE("concurrent_unordered_multiset::swap with not always equal allocator") {
+    using not_always_equal_alloc_mset_type = tbb::concurrent_unordered_multiset<int, std::hash<int>, std::equal_to<int>,
+                                                                                NotAlwaysEqualAllocator<int>>;
+    test_swap_not_always_equal_allocator<not_always_equal_alloc_mset_type>();
+}
+
+#if __TBB_USE_EXCEPTIONS
+//! \brief \ref error_guessing
+TEST_CASE("concurrent_unordered_set throwing copy constructor") {
+    using exception_set_type = tbb::concurrent_unordered_set<ThrowOnCopy>;
+    test_exception_on_copy_ctor<exception_set_type>();
+}
+
+//! \brief \ref error_guessing
+TEST_CASE("concurrent_unordered_multimap throwing copy constructor") {
+    using exception_mset_type = tbb::concurrent_unordered_multiset<ThrowOnCopy>;
+    test_exception_on_copy_ctor<exception_mset_type>();
+}
+#endif // __TBB_USE_EXCEPTIONS

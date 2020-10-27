@@ -318,7 +318,6 @@ public:
     void operator=(filter_node *);
     void operator=(const filter_node_ptr &);
     void operator=(filter_node_ptr &&);
-    filter_node* operator->() const;
     filter_node& operator*() const;
     operator bool() const;
 };
@@ -416,10 +415,6 @@ inline void filter_node_ptr::operator=(filter_node_ptr && rhs) {
     if (old) {
         old->remove_ref();
     }
-}
-
-inline filter_node* filter_node_ptr::operator->() const {
-    return my_node;
 }
 
 inline filter_node& filter_node_ptr::operator*() const{

@@ -464,7 +464,7 @@ void test_follows_and_precedes_api() {
         (messages_for_follows, tbb::flow::unlimited, pass_msg);
     follows_and_precedes_testing::test_precedes
         <msg_t, tbb::flow::function_node<msg_t, msg_t>>
-        (messages_for_precedes, tbb::flow::unlimited, pass_msg);
+        (messages_for_precedes, tbb::flow::unlimited, pass_msg, tbb::flow::node_priority_t(1));
 }
 #endif
 
@@ -544,3 +544,14 @@ TEST_CASE("Deduction guides test"){
      test_deduction_guides();
 }
 #endif
+
+//! try_release and try_consume test
+//! \brief \ref error_guessing
+TEST_CASE("try_release try_consume"){
+    tbb::flow::graph g;
+
+    tbb::flow::function_node<int, int> fn(g, tbb::flow::unlimited, [](const int&v){return v;});
+
+    CHECK_MESSAGE((fn.try_release()==false), "try_release should initially return false on a node");
+    CHECK_MESSAGE((fn.try_consume()==false), "try_consume should initially return false on a node");
+}

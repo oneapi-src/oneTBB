@@ -83,6 +83,7 @@ void test_node_handle( Container test_table ) {
 
     nh = test_table.unsafe_extract(test_table.begin());
     REQUIRE_MESSAGE(!nh.empty(), "Node handle: node_type object is empty after valid move assignment");
+    REQUIRE_MESSAGE(nh.get_allocator() == test_table.get_allocator(), "Node handle: node_type object allocator is incorrect");
     REQUIRE_MESSAGE(compare_handle_getters(nh, expected_value),
                     "Node handle: node_type object does not contains expected value after valid move assignment");
 

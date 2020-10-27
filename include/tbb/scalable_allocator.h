@@ -191,19 +191,6 @@ std::size_t pool_msize(MemoryPool *memPool, void *object);
 
 } // namespace rml
 
-#if TBB_USE_EXCEPTIONS
-    #define __TBB_TRY try
-    #define __TBB_CATCH(e) catch(e)
-    #define __TBB_THROW(e) throw e
-    #define __TBB_RETHROW() throw
-#else /* !TBB_USE_EXCEPTIONS */
-    inline bool __TBB_false() { return false; }
-    #define __TBB_TRY
-    #define __TBB_CATCH(e) if ( __TBB_false() )
-    #define __TBB_THROW(e) tbb::detail::suppress_unused_warning(e)
-    #define __TBB_RETHROW() ((void)0)
-#endif /* !TBB_USE_EXCEPTIONS */
-
 namespace tbb {
 namespace detail {
 namespace d1 {
@@ -211,7 +198,11 @@ namespace d1 {
 // keep throw in a separate function to prevent code bloat
 template<typename E>
 void throw_exception(const E &e) {
-    __TBB_THROW(e);
+#if TBB_USE_EXCEPTIONS
+    throw e;
+#else
+    suppress_unused_warning(e);
+#endif
 }
 
 template<typename T>

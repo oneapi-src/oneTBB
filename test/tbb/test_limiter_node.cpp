@@ -51,8 +51,6 @@ struct serial_receiver : public tbb::flow::receiver<T>, utils::NoAssign {
     tbb::flow::graph& graph_reference() const override {
         return my_graph;
     }
-
-   void reset_receiver(tbb::flow::reset_flags /*f*/) override {next_value = T(0);}
 };
 
 template< typename T >
@@ -71,8 +69,6 @@ struct parallel_receiver : public tbb::flow::receiver<T>, utils::NoAssign {
     tbb::flow::graph& graph_reference() const override {
         return my_graph;
     }
-
-    void reset_receiver(tbb::flow::reset_flags /*f*/) override {my_count = 0;}
 };
 
 template< typename T >
@@ -414,6 +410,36 @@ void test_decrementer() {
     g.wait_for_all();
 }
 
+void test_try_put_without_successors() {
+    tbb::flow::graph g;
+    std::size_t try_put_num{3};
+    tbb::flow::buffer_node<int> bn(g);
+    tbb::flow::limiter_node<int> ln(g, try_put_num);
+    tbb::flow::make_edge(bn, ln);
+    std::size_t i = 1;
+    for (; i <= try_put_num; i++)
+        bn.try_put(i);
+
+    std::atomic<std::size_t> counter{0};
+    tbb::flow::function_node<int, int> fn(g, tbb::flow::unlimited,
+        [&](int input) {
+            counter += input;
+            return int{};
+        }
+    );
+    tbb::flow::make_edge(ln, fn);
+    g.wait_for_all();
+    CHECK((counter == i * try_put_num / 2));
+
+    // Check the lost message
+    tbb::flow::remove_edge(bn, ln);
+    ln.decrement.try_put(tbb::flow::continue_msg());
+    bn.try_put(try_put_num + 1);
+    g.wait_for_all();
+    CHECK((counter == i * try_put_num / 2));
+
+}
+
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
 #include <array>
 #include <vector>
@@ -490,6 +516,12 @@ TEST_CASE("Message is released if successor does not accept") {
 //! \brief \ref requirement \ref error_guessing
 TEST_CASE("Decrementer") {
     test_decrementer();
+}
+
+//! Test try_put() without successor
+//! \brief \ref error_guessing
+TEST_CASE("Test try_put() without successors") {
+    test_try_put_without_successors();
 }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET

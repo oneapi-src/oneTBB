@@ -138,7 +138,7 @@ struct stack_anchor_type {
     Intrusive list node base class is used by market to form a list of arenas. **/
 struct arena_base : padded<intrusive_list_node> {
     //! The number of workers that have been marked out by the resource manager to service the arena.
-    unsigned my_num_workers_allotted;   // heavy use in stealing loop
+    std::atomic<unsigned> my_num_workers_allotted;   // heavy use in stealing loop
 
     //! Reference counter for the arena.
     /** Worker and master references are counted separately: first several bits are for references
@@ -171,11 +171,18 @@ struct arena_base : padded<intrusive_list_node> {
     //! The number of workers requested by the master thread owning the arena.
     unsigned my_max_num_workers;
 
-    //! The number of workers that are currently requested from the resource manager.
+    //! The total number of workers that are requested from the resource manager.
+    int my_total_num_workers_requested;
+
+    //! The number of workers that are really requested from the resource manager.
+    //! Possible values are in [0, my_max_num_workers]
     int my_num_workers_requested;
 
     //! The index in the array of per priority lists of arenas this object is in.
     /*const*/ unsigned my_priority_level;
+
+    //! The max priority level of arena in market.
+    std::atomic<bool> my_is_top_priority{false};
 
     //! Current task pool state and estimate of available tasks amount.
     /** The estimate is either 0 (SNAPSHOT_EMPTY) or infinity (SNAPSHOT_FULL).
@@ -216,6 +223,9 @@ struct arena_base : padded<intrusive_list_node> {
     // arena needs an extra worker despite a global limit
     std::atomic<bool> my_global_concurrency_mode;
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
+
+    //! Waiting object for external and coroutine waiters.
+    concurrent_monitor my_sleep_monitors;
 
     //! Waiting object for master threads that cannot join the arena.
     concurrent_monitor my_exit_monitors;
@@ -277,7 +287,7 @@ public:
 
     //! Reference increment values for externals and workers
     static const unsigned ref_external = 1;
-    static const unsigned ref_worker   = 1<<ref_external_bits;
+    static const unsigned ref_worker   = 1 << ref_external_bits;
 
     //! No tasks to steal or snapshot is being taken.
     static bool is_busy_or_empty( pool_state_t s ) { return s < SNAPSHOT_FULL; }
@@ -289,7 +299,7 @@ public:
 
     //! Check if the recall is requested by the market.
     bool is_recall_requested() const {
-        return num_workers_active() > my_num_workers_allotted;
+        return num_workers_active() > my_num_workers_allotted.load(std::memory_order_relaxed);
     }
 
     //! If necessary, raise a flag that there is new job in arena.
@@ -394,6 +404,7 @@ inline void arena::on_thread_leaving ( ) {
     // state (including the fact if it is alive) under the lock.
     //
     std::uintptr_t aba_epoch = my_aba_epoch;
+    unsigned priority_level = my_priority_level;
     market* m = my_market;
     __TBB_ASSERT(my_references.load(std::memory_order_relaxed) >= ref_param, "broken arena reference counter");
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
@@ -415,15 +426,11 @@ inline void arena::on_thread_leaving ( ) {
     }
 #endif
     if ( (my_references -= ref_param ) == 0 )
-        m->try_destroy_arena( this, aba_epoch );
+        m->try_destroy_arena( this, aba_epoch, priority_level );
 }
 
 template<arena::new_work_type work_type>
 void arena::advertise_new_work() {
-    if (my_max_num_workers == 0 && my_num_reserved_slots > 1) {
-        // No workers are available. It is the worker-less arena.
-        return;
-    }
     if( work_type == work_enqueued ) {
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
         if ( my_market->my_num_workers_soft_limit.load(std::memory_order_acquire) == 0 &&
@@ -437,6 +444,9 @@ void arena::advertise_new_work() {
             my_pool_state.store(SNAPSHOT_FULL, std::memory_order_release);
             my_max_num_workers = 1;
             my_market->adjust_demand(*this, my_max_num_workers);
+
+            // Notify all sleeping threads that work has appeared in the arena.
+            my_sleep_monitors.notify_all();
             return;
         }
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
@@ -447,6 +457,7 @@ void arena::advertise_new_work() {
     else if( work_type == wakeup ) {
         atomic_fence(std::memory_order_seq_cst);
     }
+
     // Double-check idiom that, in case of spawning, is deliberately sloppy about memory fences.
     // Technically, to avoid missed wakeups, there should be a full memory fence between the point we
     // released the task pool (i.e. spawned task) and read the arena's state.  However, adding such a
@@ -491,6 +502,9 @@ void arena::advertise_new_work() {
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
             // TODO: investigate adjusting of arena's demand by a single worker.
             my_market->adjust_demand( *this, my_max_num_workers );
+
+            // Notify all sleeping threads that work has appeared in the arena.
+            my_sleep_monitors.notify_all();
         }
     }
 }

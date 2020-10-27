@@ -217,3 +217,31 @@ TEST_CASE("concurrent_map/multimap with specific key/mapped types") {
 TEST_CASE("broken internal structure for multimap") {
     test_cycles_absense();
 }
+
+//! \brief \ref error_guessing
+TEST_CASE("concurrent_map::swap with not always equal allocator") {
+    using not_always_equal_alloc_map_type = tbb::concurrent_map<int, int, std::less<int>,
+                                                                NotAlwaysEqualAllocator<std::pair<const int, int>>>;
+    test_swap_not_always_equal_allocator<not_always_equal_alloc_map_type>();
+}
+
+//! \brief \ref error_guessing
+TEST_CASE("concurrent_multimap::swap with not always equal allocator") {
+    using not_always_equal_alloc_mmap_type = tbb::concurrent_multimap<int, int, std::less<int>,
+                                                                      NotAlwaysEqualAllocator<std::pair<const int, int>>>;
+    test_swap_not_always_equal_allocator<not_always_equal_alloc_mmap_type>();
+}
+
+#if TBB_USE_EXCEPTIONS
+//! \brief \ref error_guessing
+TEST_CASE("concurrent_map throwing copy constructor") {
+    using exception_map_type = tbb::concurrent_map<ThrowOnCopy, ThrowOnCopy>;
+    test_exception_on_copy_ctor<exception_map_type>();
+}
+
+//! \brief \ref error_guessing
+TEST_CASE("concurrent_multimap throwing copy constructor") {
+    using exception_mmap_type = tbb::concurrent_multimap<ThrowOnCopy, ThrowOnCopy>;
+    test_exception_on_copy_ctor<exception_mmap_type>();
+}
+#endif // TBB_USE_EXCEPTIONS

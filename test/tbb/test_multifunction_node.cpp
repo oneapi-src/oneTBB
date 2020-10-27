@@ -552,5 +552,34 @@ TEST_CASE("Lightweight testing"){
 TEST_CASE("Test follows-precedes API"){
     test_follows_and_precedes_api();
 }
+//! Test priority constructor with follows and precedes API
+//! \brief \ref error_guessing
+TEST_CASE("Test priority with follows and precedes"){
+    using namespace tbb::flow;
+
+    using multinode = multifunction_node<int, std::tuple<int, int>>;
+
+    graph g;
+
+    buffer_node<int> b1(g);
+    buffer_node<int> b2(g);
+
+    multinode node(precedes(b1, b2), unlimited, [](const int& i, multinode::output_ports_type& op) -> void {
+            if (i % 2)
+                std::get<0>(op).try_put(i);
+            else
+                std::get<1>(op).try_put(i);
+        }
+        , node_priority_t(0));
+
+    node.try_put(0);
+    node.try_put(1);
+    g.wait_for_all();
+
+    int storage;
+    CHECK_MESSAGE((b1.try_get(storage) && !b1.try_get(storage) && b2.try_get(storage) && !b2.try_get(storage)),
+            "Not exact edge quantity was made");
+}
+
 #endif
 

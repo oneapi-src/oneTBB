@@ -48,7 +48,6 @@ public:
     inline bool    empty() const {return size()==0;}
     inline node_t* front() const {return head.next;}
     inline node_t* last()  const {return head.prev;}
-    inline node_t* begin() const {return front();}
     inline const node_t* end() const {return &head;}
 
     //! add to the back of the list
@@ -157,6 +156,12 @@ public:
     //! Notify one thread about the event. Relaxed version.
     void notify_one_relaxed();
 
+    //! Notify all waiting threads of the event
+    void notify_all() {atomic_fence( std::memory_order_seq_cst ); notify_all_relaxed();}
+
+    // ! Notify all waiting threads of the event; Relaxed version
+    void notify_all_relaxed();
+
     //! Notify waiting threads of the event that satisfies the given predicate
     template<typename P> void notify( const P& predicate ) {
         atomic_fence( std::memory_order_seq_cst );
@@ -209,35 +214,6 @@ void concurrent_monitor::notify_relaxed( const P& predicate ) {
         temp.clear();
 #endif
 }
-
-// Additional possible methods that are not required right now
-// //! Notify all waiting threads of the event
-// void notify_all() {atomic_fence( std::memory_order_seq_cst ); notify_all_relaxed();}
-
-// Additional possible methods that are not required right now
-//! Notify all waiting threads of the event; Relaxed version
-// void concurrent_monitor::notify_all_relaxed() {
-//     if( waitset_ec.empty() )
-//         return;
-//     waitset_t temp;
-//     const waitset_node_t* end;
-//     {
-//         tbb::spin_mutex::scoped_lock l( mutex_ec );
-//         epoch.store( epoch.load( std::memory_order_relaxed ) + 1, std::memory_order_relaxed );
-//         waitset_ec.flush_to( temp );
-//         end = temp.end();
-//         for( waitset_node_t* n=temp.front(); n!=end; n=n->next )
-//             to_thread_context(n)->in_waitset = false;
-//     }
-//     waitset_node_t* nxt;
-//     for( waitset_node_t* n=temp.front(); n!=end; n=nxt ) {
-//         nxt = n->next;
-//         to_thread_context(n)->semaphore().V();
-//     }
-// #if TBB_USE_ASSERT
-//     temp.clear();
-// #endif
-// }
 
 // Additional possible methods that are not required right now
 //! Wait for a condition to be satisfied with waiting-on context

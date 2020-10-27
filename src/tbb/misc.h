@@ -211,7 +211,12 @@ T1 atomic_update(std::atomic<T1>& dst, T1 newValue, Pred compare) {
     inline void destroy_process_mask(){}
 #endif /* __TBB_USE_OS_AFFINITY_SYSCALL */
 
-bool cpu_has_speculation();
+struct cpu_features_type {
+    bool rtm_enabled{false};
+    bool waitpkg_enabled{false};
+};
+
+void detect_cpu_features(cpu_features_type& cpu_features);
 
 #if __TBB_NUMA_SUPPORT
 class binding_handler;
@@ -273,6 +278,7 @@ static inline void abort_transaction() {
 #endif
 }
 
+#if TBB_USE_ASSERT
 static inline unsigned char is_in_transaction() {
 #if __TBB_TSX_INTRINSICS_PRESENT
     return _xtest();
@@ -280,6 +286,7 @@ static inline unsigned char is_in_transaction() {
     return 0;
 #endif
 }
+#endif // TBB_USE_ASSERT
 
 } // namespace r1
 } // namespace detail

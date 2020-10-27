@@ -70,6 +70,7 @@ EXPORTS
 ?current_suspend_point@r1@detail@tbb@@YAPAUsuspend_point_type@123@XZ
 ?resume@r1@detail@tbb@@YAXPAUsuspend_point_type@123@@Z
 ?suspend@r1@detail@tbb@@YAXP6AXPAXPAUsuspend_point_type@123@@Z0@Z
+?notify_waiters@r1@detail@tbb@@YAXAAVwait_context@d1@23@@Z
 
 ; Task dispatcher (task_dispatcher.cpp)
 ?spawn@r1@detail@tbb@@YAXAAVtask@d1@23@AAVtask_group_context@523@G@Z

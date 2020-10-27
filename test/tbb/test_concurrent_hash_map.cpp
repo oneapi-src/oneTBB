@@ -557,7 +557,8 @@ TEST_CASE("Test exception in constructors") {
     using allocator_type = StaticSharedCountingAllocator<std::allocator<std::pair<const int, int>>>;
     using map_type = tbb::concurrent_hash_map<int, int, tbb::tbb_hash_compare<int>, allocator_type>;
 
-    auto init_list = {std::pair<const int, int>(1, 42), std::pair<const int, int>(2, 42), std::pair<const int, int>(3, 42)};
+    auto init_list = {std::pair<const int, int>(1, 42), std::pair<const int, int>(2, 42), std::pair<const int, int>(3, 42),
+        std::pair<const int, int>(4, 42), std::pair<const int, int>(5, 42), std::pair<const int, int>(6, 42)};
     map_type map(init_list);
 
     allocator_type::set_limits(1);
@@ -581,6 +582,24 @@ TEST_CASE("Test exception in constructors") {
     REQUIRE_THROWS_AS( [&] {
         map_type map4(init_list, test_hash);
         utils::suppress_unused_warning(map4);
+    }(), const std::bad_alloc);
+
+    REQUIRE_THROWS_AS( [&] {
+        map_type map5(init_list);
+        utils::suppress_unused_warning(map5);
+    }(), const std::bad_alloc);
+
+    allocator_type::set_limits(0);
+    map_type big_map{};
+    for (std::size_t i = 0; i < 1000; ++i) {
+        big_map.insert(std::pair<const int, int>(i, 42));
+    }
+
+    allocator_type::init_counters();
+    allocator_type::set_limits(300);
+    REQUIRE_THROWS_AS( [&] {
+        map_type map6(big_map);
+        utils::suppress_unused_warning(map6);
     }(), const std::bad_alloc);
 }
 #endif // TBB_USE_EXCEPTIONS

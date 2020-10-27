@@ -114,6 +114,43 @@ void TestQueueWorksWithSSE() {
     }
 #endif /* HAVE_m256 */
 }
+#if TBB_USE_EXCEPTIONS
+    int rnd_elem = -1;
+    int global_counter = -1;
+
+struct throw_element {
+    throw_element() = default;
+    throw_element(const throw_element&) {
+        if (global_counter++ == rnd_elem) {
+            throw std::exception{};
+        }
+    }
+
+    throw_element& operator= (const throw_element&) = default;
+};
+
+template <typename Queue>
+void CopyWithThrowElement() {
+    utils::FastRandom<> rnd(42);
+
+    Queue source;
+
+    constexpr size_t queue_size = 100000;
+    for (std::size_t i = 0; i < queue_size; ++i) {
+        source.emplace();
+    }
+
+    for (std::size_t i = 0; i < 100; ++i) {
+        global_counter = 0;
+        rnd_elem = rnd.get() % queue_size;
+
+        REQUIRE_THROWS_AS( [&] {
+            Queue copy(source);
+            utils::suppress_unused_warning(copy);
+        }(), std::exception);
+    }
+}
+#endif // TBB_USE_EXCEPTIONS
 
 //! Test work with different fypes
 //! \brief \ref error_guessing
@@ -154,4 +191,11 @@ TEST_CASE("Test exception in allocation") {
         }(), const std::bad_alloc);
     }
 }
+
+//! \brief \ref regression \ref error_guessing
+TEST_CASE("Test exception in allocation") {
+    CopyWithThrowElement<tbb::concurrent_queue<throw_element>>();
+    CopyWithThrowElement<tbb::concurrent_bounded_queue<throw_element>>();
+}
+
 #endif // TBB_USE_EXCEPTIONS

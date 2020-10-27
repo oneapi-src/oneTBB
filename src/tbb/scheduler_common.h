@@ -189,7 +189,8 @@ inline std::uint64_t machine_time_stamp() {
     return (std::uint64_t(hi) << 32) | lo;
 #endif
 }
-inline void prolonged_pause() {
+
+inline void prolonged_pause_impl() {
     // Assumption based on practice: 1000-2000 ticks seems to be a suitable invariant for the
     // majority of platforms. Currently, skip platforms that define __TBB_STEALING_PAUSE
     // because these platforms require very careful tuning.
@@ -206,7 +207,7 @@ inline void prolonged_pause() {
     } while (prev < finish);
 }
 #else
-inline void prolonged_pause() {
+inline void prolonged_pause_impl() {
 #ifdef __TBB_ipf
     static const long PauseTime = 1500;
 #else
@@ -215,7 +216,22 @@ inline void prolonged_pause() {
     // TODO IDEA: Update PauseTime adaptively?
     machine_pause(PauseTime);
 }
-#endif // (_WIN32 || _WIN64 || __linux__) && (__TBB_x86_32 || __TBB_x86_64)
+#endif
+
+inline void prolonged_pause() {
+#if __TBB_WAITPKG_INTRINSICS_PRESENT && (_WIN32 || _WIN64 || __linux__) && (__TBB_x86_32 || __TBB_x86_64)
+    if (governor::wait_package_enabled()) {
+        std::uint64_t time_stamp = machine_time_stamp();
+        // _tpause function directs the processor to enter an implementation-dependent optimized state
+        // until the Time Stamp Counter reaches or exceeds the value specified in second parameter.
+        // Constant "700" is ticks to wait for.
+        // First parameter 0 selects between a lower power (cleared) or faster wakeup (set) optimized state.
+        _tpause(0, time_stamp + 700);
+    }
+    else
+#endif
+    prolonged_pause_impl();
+}
 
 class stealing_loop_backoff {
     const int my_pause_threshold;

@@ -131,44 +131,24 @@ protected:
 #if __TBB_NUMA_SUPPORT
     //! The NUMA node index to which the arena will be attached
     numa_node_id my_numa_id;
-
-    // Do not access my_numa_id without the following runtime check.
-    // Despite my_numa_id is accessible, it does not exist in task_arena_base on user side
-    // if TBB_PREVIEW_NUMA_SUPPORT macro is not defined by the user. To be sure that
-    // my_numa_id exists in task_arena_base layout we check the traits.
-    // TODO: Consider increasing interface version for task_arena_base instead of this runtime check.
-    numa_node_id numa_id() {
-        return (my_version_and_traits & numa_support_flag) == numa_support_flag ? my_numa_id : automatic;
-    }
 #endif
 
-    enum {
-        default_flags = 0
-#if __TBB_NUMA_SUPPORT
-        , numa_support_flag = 1
-#endif
-    };
+    enum { default_flags = 0 };
 
     task_arena_base(int max_concurrency, unsigned reserved_for_masters, priority a_priority)
         :
-#if __TBB_NUMA_SUPPORT
-        my_version_and_traits(default_flags | numa_support_flag)
-#else
         my_version_and_traits(default_flags)
-#endif
         , my_initialization_state(do_once_state::uninitialized)
         , my_arena(nullptr)
         , my_max_concurrency(max_concurrency)
         , my_master_slots(reserved_for_masters)
         , my_priority(a_priority)
-#if __TBB_NUMA_SUPPORT
         , my_numa_id(automatic)
-#endif
         {}
 
 #if __TBB_NUMA_SUPPORT
     task_arena_base(const constraints& constraints_, unsigned reserved_for_masters, priority a_priority)
-        : my_version_and_traits(default_flags | numa_support_flag)
+        : my_version_and_traits(default_flags)
         , my_initialization_state(do_once_state::uninitialized)
         , my_arena(nullptr)
         , my_max_concurrency(constraints_.max_concurrency)

@@ -57,9 +57,7 @@ static const tbb::detail::r1::dynamic_link_descriptor LinkTable[] = {
 #include "src/tbb/dynamic_link.cpp"
 #include "common/utils_dynamic_libs.h"
 
-//! Testing dynamic_link
-//! \brief \ref error_guessing
-TEST_CASE("Test dynamic_link") {
+void test_dynamic_link(const char* lib_name) {
 #if __TBB_DYNAMIC_LOAD_ENABLED
 #if !_WIN32
     // Check if the executable exports its symbols.
@@ -71,7 +69,7 @@ TEST_CASE("Test dynamic_link") {
     // the dynamic_link call - let it be an empty string.
     // Generally speaking the test has sense only on Linux but on Windows it
     // checks the dynamic_link graceful behavior with incorrect library name.
-    if (tbb::detail::r1::dynamic_link("", LinkTable, sizeof(LinkTable) / sizeof(LinkTable[0]))) {
+    if (tbb::detail::r1::dynamic_link(lib_name, LinkTable, sizeof(LinkTable) / sizeof(LinkTable[0]))) {
         REQUIRE_MESSAGE((foo1_handler && foo2_handler), "The symbols are corrupted by dynamic_link");
         REQUIRE_MESSAGE((foo1_handler() == FOO_IMPLEMENTATION && foo2_handler() == FOO_IMPLEMENTATION),
                 "dynamic_link returned the successful code but symbol(s) are wrong");
@@ -79,4 +77,16 @@ TEST_CASE("Test dynamic_link") {
         REQUIRE_MESSAGE((foo1_handler == dummy_foo1 && foo2_handler == dummy_foo2), "The symbols are corrupted by dynamic_link");
     }
 #endif
+}
+
+//! Testing dynamic_link with non-existing library
+//! \brief \ref error_guessing
+TEST_CASE("Test dynamic_link with non-existing library") {
+    test_dynamic_link("tbb_unrealNAME.so");
+}
+
+//! Testing dynamic_link
+//! \brief \ref error_guessing
+TEST_CASE("Test dynamic_link") {
+    test_dynamic_link("");
 }

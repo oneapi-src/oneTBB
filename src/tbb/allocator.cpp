@@ -54,20 +54,14 @@ namespace r1 {
 //! Initialization routine used for first indirect call via allocate_handler.
 static void* initialize_allocate_handler(std::size_t size);
 
-//! Initialization routine used for first indirect call via deallocate_handler.
-static void  initialize_deallocate_handler(void* ptr);
-
 //! Handler for memory allocation
 static void* (*allocate_handler)(std::size_t size) = &initialize_allocate_handler;
 
 //! Handler for memory deallocation
-static void  (*deallocate_handler)(void* pointer) = &initialize_deallocate_handler;
+static void  (*deallocate_handler)(void* pointer) = nullptr;
 
 //! Initialization routine used for first indirect call via cache_aligned_allocate_handler.
 static void* initialize_cache_aligned_allocate_handler(std::size_t n, std::size_t alignment);
-
-//! Initialization routine used for first indirect call via cache_aligned_deallocate_handler.
-static void  initialize_cache_aligned_deallocate_handler(void* ptr);
 
 //! Allocates memory using standard malloc. It is used when scalable_allocator is not available
 static void* std_cache_aligned_allocate(std::size_t n, std::size_t alignment);
@@ -79,7 +73,7 @@ static void  std_cache_aligned_deallocate(void* p);
 static void* (*cache_aligned_allocate_handler)(std::size_t n, std::size_t alignment) = &initialize_cache_aligned_allocate_handler;
 
 //! Handler for padded memory deallocation
-static void (*cache_aligned_deallocate_handler)(void* p) = &initialize_cache_aligned_deallocate_handler;
+static void (*cache_aligned_deallocate_handler)(void* p) = nullptr;
 
 //! Table describing how to link the handlers.
 static const dynamic_link_descriptor MallocLinkTable[] = {
@@ -142,25 +136,11 @@ static void* initialize_allocate_handler(std::size_t size) {
     return (*allocate_handler)(size);
 }
 
-//! Executed on very first call through deallocate_handler
-static void initialize_deallocate_handler(void* ptr) {
-    initialize_cache_aligned_allocator();
-    __TBB_ASSERT(deallocate_handler != &initialize_deallocate_handler, NULL);
-    (*deallocate_handler)(ptr);
-}
-
 //! Executed on very first call through cache_aligned_allocate_handler
 static void* initialize_cache_aligned_allocate_handler(std::size_t bytes, std::size_t alignment) {
     initialize_cache_aligned_allocator();
     __TBB_ASSERT(cache_aligned_allocate_handler != &initialize_cache_aligned_allocate_handler, NULL);
     return (*cache_aligned_allocate_handler)(bytes, alignment);
-}
-
-//! Executed on very first call through cache_aligned_deallocate_handler
-static void initialize_cache_aligned_deallocate_handler(void* ptr) {
-    initialize_cache_aligned_allocator();
-    __TBB_ASSERT(cache_aligned_deallocate_handler != &initialize_cache_aligned_deallocate_handler, NULL);
-    (*cache_aligned_deallocate_handler)(ptr);
 }
 
 // TODO: use CPUID to find actual line size, though consider backward compatibility
@@ -191,6 +171,7 @@ void* __TBB_EXPORTED_FUNC cache_aligned_allocate(std::size_t size) {
 }
 
 void __TBB_EXPORTED_FUNC cache_aligned_deallocate(void* p) {
+    __TBB_ASSERT(cache_aligned_deallocate_handler, "Initialization has not been yet.");
     (*cache_aligned_deallocate_handler)(p);
 }
 
@@ -231,6 +212,7 @@ void* __TBB_EXPORTED_FUNC allocate_memory(std::size_t size) {
 
 void __TBB_EXPORTED_FUNC deallocate_memory(void* p) {
     if (p) {
+        __TBB_ASSERT(deallocate_handler, "Initialization has not been yet.");
         (*deallocate_handler)(p);
     }
 }
@@ -240,7 +222,7 @@ bool __TBB_EXPORTED_FUNC is_tbbmalloc_used() {
         void* void_ptr = allocate_handler(1);
         deallocate_handler(void_ptr);
     }
-    __TBB_ASSERT(allocate_handler != &initialize_allocate_handler && deallocate_handler != &initialize_deallocate_handler, NULL);
+    __TBB_ASSERT(allocate_handler != &initialize_allocate_handler && deallocate_handler != nullptr, NULL);
     // Cast to void avoids type mismatch errors on some compilers (e.g. __IBMCPP__)
     __TBB_ASSERT((reinterpret_cast<void*>(allocate_handler) == reinterpret_cast<void*>(&std::malloc)) == (reinterpret_cast<void*>(deallocate_handler) == reinterpret_cast<void*>(&std::free)),
                   "Both shim pointers must refer to routines from the same package (either TBB or CRT)");

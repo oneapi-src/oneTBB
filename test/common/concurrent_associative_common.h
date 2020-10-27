@@ -606,6 +606,8 @@ void test_basic_common()
     REQUIRE(!ccont.range().empty());
     REQUIRE((256 == CheckRecursiveRange<T,typename T::iterator>(cont.range()).first));
     REQUIRE((256 == CheckRecursiveRange<T,typename T::const_iterator>(ccont.range()).first));
+    REQUIRE(cont.range().grainsize() > 0);
+    REQUIRE(ccont.range().grainsize() > 0);
 
     // void swap(T&);
     cont.swap(newcont);
@@ -1485,5 +1487,59 @@ void test_insert_by_generic_pair() {
 
     CountingKey::reset();
 }
+
+template <typename Container>
+void test_swap_not_always_equal_allocator() {
+    static_assert(std::is_same<typename Container::allocator_type, NotAlwaysEqualAllocator<typename Container::value_type>>::value,
+                  "Incorrect allocator in not always equal test");
+    Container c1{};
+    Container c2{Value<Container>::make(1), Value<Container>::make(2)};
+
+    Container c1_copy = c1;
+    Container c2_copy = c2;
+
+    c1.swap(c2);
+
+    REQUIRE_MESSAGE(c1 == c2_copy, "Incorrect swap with not always equal allocator");
+    REQUIRE_MESSAGE(c2 == c1_copy, "Incorrect swap with not always equal allocator");
+}
+
+#if TBB_USE_EXCEPTIONS
+template <typename Container>
+void test_exception_on_copy_ctor() {
+    Container c1;
+    c1.emplace(Value<Container>::make(ThrowOnCopy{}));
+
+    using container_allocator_type = std::allocator<Container>;
+    using alloc_traits = std::allocator_traits<container_allocator_type>;
+    container_allocator_type container_allocator;
+    Container* c2_ptr = alloc_traits::allocate(container_allocator, 1);
+
+    ThrowOnCopy::activate();
+    // Test copy ctor
+    try {
+        alloc_traits::construct(container_allocator, c2_ptr, c1);
+    } catch ( int error_code ) {
+        REQUIRE_MESSAGE(error_code == ThrowOnCopy::error_code(), "Incorrect code was thrown");
+    }
+
+    REQUIRE_MESSAGE(c2_ptr->empty(), "Incorrect container state after throwing copy constructor");
+
+    alloc_traits::deallocate(container_allocator, c2_ptr, 1);
+    c2_ptr = alloc_traits::allocate(container_allocator, 1);
+
+    // Test copy ctor with allocator
+    try {
+        auto value_allocator = c1.get_allocator();
+        alloc_traits::construct(container_allocator, c2_ptr, c1, value_allocator);
+    } catch( int error_code ) {
+        REQUIRE_MESSAGE(error_code == ThrowOnCopy::error_code(), "Incorrect code was thrown");
+    }
+
+    REQUIRE_MESSAGE(c2_ptr->empty(), "Incorrect container state after throwing copy ctor with allocator");
+    alloc_traits::deallocate(container_allocator, c2_ptr, 1);
+    ThrowOnCopy::deactivate();
+}
+#endif // TBB_USE_EXCEPTIONS
 
 #endif // __TBB_test_common_concurrent_associative_common_H

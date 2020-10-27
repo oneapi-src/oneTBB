@@ -213,8 +213,15 @@ void *memory_pool<Alloc>::allocate_request(intptr_t pool_id, size_t & bytes) {
     const size_t unit_size = sizeof(typename Alloc::value_type);
     __TBBMALLOC_ASSERT( 0 == bytes%unit_size, NULL);
     void *ptr;
-    __TBB_TRY { ptr = self.my_alloc.allocate( bytes/unit_size ); }
-    __TBB_CATCH(...) { return 0; }
+#if TBB_USE_EXCEPTIONS
+    try {
+#endif
+        ptr = self.my_alloc.allocate( bytes/unit_size );
+#if TBB_USE_EXCEPTIONS
+    } catch(...) {
+        return 0;
+    }
+#endif
     return ptr;
 }
 #if __TBB_MSVC_UNREACHABLE_CODE_IGNORED

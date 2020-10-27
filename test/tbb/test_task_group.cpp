@@ -477,15 +477,15 @@ void LaunchChildrenWithFunctor () {
     bool exceptionCaught = false;
     try {
         status = g.wait();
-    }
-    catch ( TestException& e ) {
+    } catch ( TestException& e ) {
         CHECK_MESSAGE( e.what(), "Empty what() string" );
         CHECK_MESSAGE( strcmp(e.what(), EXCEPTION_DESCR1) == 0, "Unknown exception" );
         exceptionCaught = true;
         ++g_ExceptionCount;
     } catch( ... ) { CHECK_MESSAGE( false, "Unknown exception" ); }
-    if (g_Throw && !exceptionCaught && status != tbb::canceled)
-        CHECK_MESSAGE( false, "No exception in the child task group" );
+    if (g_Throw && !exceptionCaught && status != tbb::canceled) {
+        CHECK_MESSAGE(false, "No exception in the child task group");
+    }
     if ( g_Rethrow && g_ExceptionCount > SKIP_GROUPS ) {
         throw test_exception(EXCEPTION_DESCR2);
     }
@@ -515,7 +515,7 @@ void TestManualCancellationWithFunctor () {
     CHECK_MESSAGE( g_TaskCount <= g_ExecutedAtCancellation + utils::ConcurrencyTracker::PeakParallelism(), "Too many tasks survived cancellation" );
 }
 
-#if TBB_USE_EXCEPTION
+#if TBB_USE_EXCEPTIONS
 template<typename task_group_type>
 void TestExceptionHandling1 () {
     ResetGlobals( true, false );
@@ -555,6 +555,23 @@ void TestExceptionHandling2 () {
     CHECK_MESSAGE( g_ExceptionCount < NUM_GROUPS - SKIP_GROUPS, "None of the child groups was cancelled" );
 }
 
+template <typename task_group_type>
+void TestExceptionHandling3() {
+    task_group_type tg;
+    try {
+        tg.run_and_wait([]() {
+            volatile bool suppress_unreachable_code_warning = true;
+            if (suppress_unreachable_code_warning) {
+                throw 1;
+            }
+        });
+    } catch (int error) {
+        CHECK(error == 1);
+    } catch ( ... ) {
+        CHECK_MESSAGE( false, "Unexpected exception" );
+    }
+}
+
 template<typename task_group_type>
 class LaunchChildrenDriver {
 public:
@@ -584,8 +601,10 @@ void TestMissingWait () {
     try {
         task_group_type tg;
         driver.Launch( tg );
-        if ( Throw )
+        volatile bool suppress_unreachable_code_warning = Throw;
+        if (suppress_unreachable_code_warning) {
             throw int(); // Initiate stack unwinding
+        }
     }
     catch ( const tbb::missing_wait& e ) {
         CHECK_MESSAGE( e.what(), "Error message is absent" );
@@ -608,9 +627,10 @@ void TestMissingWait () {
 template<typename task_group_type>
 void RunCancellationAndExceptionHandlingTests() {
     TestManualCancellationWithFunctor<task_group_type>();
-#if TBB_USE_EXCEPTION
+#if TBB_USE_EXCEPTIONS
     TestExceptionHandling1<task_group_type>();
     TestExceptionHandling2<task_group_type>();
+    TestExceptionHandling3<task_group_type>();
     TestMissingWait<task_group_type, true>();
     TestMissingWait<task_group_type, false>();
 #endif
@@ -767,7 +787,7 @@ TEST_CASE("Fibonacci test for the task group") {
 //! Cancellation and exception test for the task group
 //! \brief \ref interface \ref requirement
 TEST_CASE("Cancellation and exception test for the task group") {
-    for (unsigned p=MinThread; p <= MaxThread; ++p) {
+    for (unsigned p = MinThread; p <= MaxThread; ++p) {
         tbb::global_control limit(tbb::global_control::max_allowed_parallelism, p);
         g_MaxConcurrency = p;
         RunCancellationAndExceptionHandlingTests<tbb::task_group>();
@@ -943,4 +963,34 @@ TEST_CASE("Test for stack overflow avoidance mechanism within arena") {
         tg2.wait();
     });
     CHECK(tasks_executed == 10000 + second_thread_executed);
+}
+
+//! Test checks that we can submit work to task_group asynchronously with waiting.
+//! \brief \ref regression
+TEST_CASE("Async task group") {
+    int num_threads = tbb::this_task_arena::max_concurrency();
+    tbb::task_arena a(2*num_threads, num_threads);
+    utils::SpinBarrier barrier(num_threads + 2);
+    tbb::task_group tg[2];
+    std::atomic<bool> finished[2]{};
+    finished[0] = false; finished[1] = false;
+    for (int i = 0; i < 2; ++i) {
+        a.enqueue([i, &tg, &finished, &barrier] {
+            barrier.wait();
+            for (int j = 0; j < 10000; ++j) {
+                tg[i].run([] {});
+                std::this_thread::yield();
+            }
+            finished[i] = true;
+        });
+    }
+    utils::NativeParallelFor(num_threads, [&](int idx) {
+        barrier.wait();
+        a.execute([idx, &tg, &finished] {
+            while (!finished[idx%2]) {
+                tg[idx%2].wait();
+            }
+            tg[idx%2].wait();
+        });
+    });
 }

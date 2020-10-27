@@ -150,6 +150,24 @@ TEST_CASE("Parallel test") {
     }
 }
 
+//! Testing blocked_range2d with proportional splitting
+//! \brief \ref interface \ref requirement
+TEST_CASE("blocked_range2d proportional splitting") {
+    tbb::blocked_range2d<int> original(0, 100, 0, 100);
+    tbb::blocked_range2d<int> first(original);
+    tbb::proportional_split ps(3, 1);
+    tbb::blocked_range2d<int> second(first, ps);
+
+    int expected_first_end = original.rows().begin() + ps.left() * (original.rows().end() - original.rows().begin()) / (ps.left() + ps.right());
+    if (first.rows().size() == second.rows().size()) {
+        // Splitting was made by cols
+        utils::check_range_bounds_after_splitting(original.cols(), first.cols(), second.cols(), expected_first_end);
+    } else {
+        // Splitting was made by rows
+        utils::check_range_bounds_after_splitting(original.rows(), first.rows(), second.rows(), expected_first_end);
+    }
+}
+
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 //! Testing blocked_range2d deduction guides
 //! \brief \ref interface

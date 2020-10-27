@@ -30,7 +30,7 @@
 #include <errno.h>       /* for use in LinuxKernelVersion() */
 
 // Parse file utility for THP info
-#include "../../src/tbbmalloc/shared_utils.h"
+#include "src/tbbmalloc/shared_utils.h"
 
 #elif __APPLE__ && !__ARM_ARCH
 #include <unistd.h>

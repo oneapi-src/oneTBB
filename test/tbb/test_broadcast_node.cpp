@@ -76,9 +76,6 @@ public:
     tbb::flow::graph& graph_reference() const override {
         return my_graph;
     }
-
-    void reset_receiver(tbb::flow::reset_flags /*f*/) override { }
-
 };
 
 template< typename T >

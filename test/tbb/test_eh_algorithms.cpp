@@ -1094,6 +1094,7 @@ TEST_CASE("parallel_for_each exception handling test #5") {
                 g_ExceptionInMaster = (j & 1) != 0;
                 g_SolitaryException = (j & 2) != 0;
 
+                Test5_parallel_for_each<utils::InputIterator<size_t> >();
                 Test5_parallel_for_each<utils::ForwardIterator<size_t> >();
                 Test5_parallel_for_each<utils::RandomIterator<size_t> >();
             }

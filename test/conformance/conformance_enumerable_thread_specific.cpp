@@ -86,6 +86,8 @@ public:
     ~minimal() { ++destruction_counter; REQUIRE(is_constructed); is_constructed = false; }
     void set_value( const int i ) { REQUIRE(is_constructed); my_value = i; }
     int value( ) const { REQUIRE(is_constructed); return my_value; }
+
+    bool operator==( const minimal& other ) { return my_value == other.my_value; }
 };
 
 static size_t AlignMask = 0;  // set to cache-line-size - 1
@@ -135,6 +137,8 @@ class ThrowingConstructor {
 public:
     int m_cnt;
     ThrowingConstructor() : m_checktype(), m_throwing_field() { m_cnt = 0;}
+
+    bool operator==( const ThrowingConstructor& other ) { return m_cnt == other.m_cnt; }
 private:
 };
 
@@ -400,7 +404,8 @@ void run_parallel_scalar_tests_nocombine(const char* /* test_name */, const char
                 }
 
                 // use const_range_type
-                typename ets_type::const_range_type cr = sums.range();
+                const ets_type& csums = sums;
+                typename ets_type::const_range_type cr = csums.range();
                 for ( typename ets_type::const_range_type::iterator i = cr.begin(); i != cr.end(); ++i ) {
                      test_helper<T>::sum(const_range_sum, *i);
                 }
@@ -409,6 +414,15 @@ void run_parallel_scalar_tests_nocombine(const char* /* test_name */, const char
                 typedef typename tbb::enumerable_thread_specific<T, Allocator<T>, tbb::ets_key_per_instance> cached_ets_type;
 
                 cached_ets_type cconst(sums);
+                tbb::parallel_for( tbb::blocked_range<int>(0, N, RANGE_MIN), [&]( const tbb::blocked_range<int>& ) {
+                    bool exists = false;
+                    T& ref = cconst.local(exists);
+                    CHECK((exists || ref == T()));
+                } );
+                cached_ets_type cconst_to_assign1 = cconst;
+                cached_ets_type cconst_to_assign2;
+                cconst_to_assign2 = std::move(cconst_to_assign1);
+                REQUIRE(cconst_to_assign2.size() == cconst.size());
 
                 for ( typename cached_ets_type::const_iterator i = cconst.begin(); i != cconst.end(); ++i ) {
                      test_helper<T>::sum(cconst_sum, *i);
@@ -668,6 +682,11 @@ void run_parallel_vector_tests(const char* /* test_name */, const char *allocato
             auto it2(it);
             it = fvs.begin();
             REQUIRE(it != it2);
+            typename tbb::flattened2d<ets_type>::iterator it3;
+            typename tbb::flattened2d<ets_type>::const_iterator cit = fvs.begin();
+            it3 = cit;
+            REQUIRE(it3 == cit);
+            REQUIRE(it3.operator->() == &(*it3));
 
             for(typename tbb::flattened2d<ets_type>::const_iterator i = fvs.begin(); i != fvs.end(); ++i) {
                 ++elem_cnt;

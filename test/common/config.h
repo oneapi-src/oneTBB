@@ -45,13 +45,6 @@
         #define MAX_TUPLE_TEST_SIZE 5
     #endif
 #else
-    #if _MSC_VER
-// test sizes <= 8 don't get "decorated name length exceeded" errors. (disable : 4503)
-        #if MAX_TUPLE_TEST_SIZE > 8
-            #undef MAX_TUPLE_TEST_SIZE
-            #define MAX_TUPLE_TEST_SIZE 8
-        #endif
-    #endif
     #if MAX_TUPLE_TEST_SIZE > __TBB_VARIADIC_MAX
         #undef MAX_TUPLE_TEST_SIZE
         #define MAX_TUPLE_TEST_SIZE __TBB_VARIADIC_MAX

@@ -668,7 +668,7 @@ TEST_CASE("Reducing concurrent_vector") {
 
 
 //! \brief \ref error_guessing
-TEST_CASE("swap with NotAlwaysEqualAllocator allocators"){
+TEST_CASE("swap with not always equal allocators"){
     using allocator_type = NotAlwaysEqualAllocator<int>;
     using vector_type = tbb::concurrent_vector<int, allocator_type>;
 

@@ -44,7 +44,8 @@ class node_cache {
         typename mutex_type::scoped_lock lock( my_mutex );
         for ( size_t i = internal_size(); i != 0; --i ) {
             T &s = internal_pop();
-            if ( &s == &n )  return;  // only remove one predecessor per request
+            if ( &s == &n )
+                break;  // only remove one predecessor per request
             internal_push(s);
         }
     }
@@ -92,11 +93,12 @@ public:
     typedef sender<output_type> predecessor_type;
     typedef receiver<output_type> successor_type;
 
-    predecessor_cache( ) : my_owner( NULL ) { }
+    predecessor_cache( successor_type* owner ) : my_owner( owner ) {
+        __TBB_ASSERT( my_owner, "predecessor_cache should have an owner." );
+        // Do not work with the passed pointer here as it may not be fully initialized yet
+    }
 
-    void set_owner( successor_type *owner ) { my_owner = owner; }
-
-    bool get_item( output_type &v ) {
+    bool get_item( output_type& v ) {
 
         bool msg = false;
 
@@ -115,8 +117,7 @@ public:
 
             if (msg == false) {
                 // Relinquish ownership of the edge
-                if (my_owner)
-                    register_successor(*src, *my_owner);
+                register_successor(*src, *my_owner);
             } else {
                 // Retain ownership of the edge
                 this->add(*src);
@@ -127,20 +128,18 @@ public:
 
     // If we are removing arcs (rf_clear_edges), call clear() rather than reset().
     void reset() {
-        if (my_owner) {
-            for(;;) {
-                predecessor_type *src;
-                {
-                    if (this->internal_empty()) break;
-                    src = &this->internal_pop();
-                }
-                register_successor(*src, *my_owner);
+        for(;;) {
+            predecessor_type *src;
+            {
+                if (this->internal_empty()) break;
+                src = &this->internal_pop();
             }
+            register_successor(*src, *my_owner);
         }
     }
 
 protected:
-    successor_type *my_owner;
+    successor_type* my_owner;
 };
 
 //! An cache of predecessors that supports requests and reservations
@@ -152,7 +151,11 @@ public:
     typedef sender<T> predecessor_type;
     typedef receiver<T> successor_type;
 
-    reservable_predecessor_cache( ) : reserved_src(NULL) { }
+    reservable_predecessor_cache( successor_type* owner )
+        : predecessor_cache<T,M>(owner), reserved_src(NULL)
+    {
+        // Do not work with the passed pointer here as it may not be fully initialized yet
+    }
 
     bool
     try_reserve( output_type &v ) {
@@ -222,22 +225,22 @@ protected:
     mutex_type my_mutex;
 
     typedef receiver<T> successor_type;
-    typedef receiver<T> *pointer_type;
+    typedef receiver<T>* pointer_type;
     typedef sender<T> owner_type;
     // TODO revamp: introduce heapified collection of successors for strict priorities
     typedef std::list< pointer_type > successors_type;
     successors_type my_successors;
 
-    owner_type *my_owner;
+    owner_type* my_owner;
 
 public:
-    successor_cache( ) : my_owner(NULL) {}
-
-    void set_owner( owner_type *owner ) { my_owner = owner; }
+    successor_cache( owner_type* owner ) : my_owner(owner) {
+        // Do not work with the passed pointer here as it may not be fully initialized yet
+    }
 
     virtual ~successor_cache() {}
 
-    void register_successor( successor_type &r ) {
+    void register_successor( successor_type& r ) {
         typename mutex_type::scoped_lock l(my_mutex, true);
         if( r.priority() != no_priority )
             my_successors.push_front( &r );
@@ -245,7 +248,7 @@ public:
             my_successors.push_back( &r );
     }
 
-    void remove_successor( successor_type &r ) {
+    void remove_successor( successor_type& r ) {
         typename mutex_type::scoped_lock l(my_mutex, true);
         for ( typename successors_type::iterator i = my_successors.begin();
               i != my_successors.end(); ++i ) {
@@ -265,8 +268,8 @@ public:
         my_successors.clear();
     }
 
-    virtual graph_task* try_put_task( const T &t ) = 0;
- };  // successor_cache<T>
+    virtual graph_task* try_put_task( const T& t ) = 0;
+};  // successor_cache<T>
 
 //! An abstract cache of successors, specialized to continue_msg
 template<typename M>
@@ -277,38 +280,38 @@ protected:
     mutex_type my_mutex;
 
     typedef receiver<continue_msg> successor_type;
-    typedef receiver<continue_msg> *pointer_type;
+    typedef receiver<continue_msg>* pointer_type;
+    typedef sender<continue_msg> owner_type;
     typedef std::list< pointer_type > successors_type;
     successors_type my_successors;
-    sender<continue_msg> *my_owner;
+    owner_type* my_owner;
 
 public:
-    successor_cache( ) : my_owner(NULL) {}
-
-    void set_owner( sender<continue_msg> *owner ) { my_owner = owner; }
+    successor_cache( sender<continue_msg>* owner ) : my_owner(owner) {
+        // Do not work with the passed pointer here as it may not be fully initialized yet
+    }
 
     virtual ~successor_cache() {}
 
-    void register_successor( successor_type &r ) {
+    void register_successor( successor_type& r ) {
         typename mutex_type::scoped_lock l(my_mutex, true);
         if( r.priority() != no_priority )
             my_successors.push_front( &r );
         else
             my_successors.push_back( &r );
-        if ( my_owner && r.is_continue_receiver() ) {
+        __TBB_ASSERT( my_owner, "Cache of successors must have an owner." );
+        if ( r.is_continue_receiver() ) {
             r.register_predecessor( *my_owner );
         }
     }
 
-    void remove_successor( successor_type &r ) {
+    void remove_successor( successor_type& r ) {
         typename mutex_type::scoped_lock l(my_mutex, true);
-        for ( successors_type::iterator i = my_successors.begin();
-              i != my_successors.end(); ++i ) {
-            if ( *i == & r ) {
-                // TODO: Check if we need to test for continue_receiver before
-                // removing from r.
-                if ( my_owner )
-                    r.remove_predecessor( *my_owner );
+        for ( successors_type::iterator i = my_successors.begin(); i != my_successors.end(); ++i ) {
+            if ( *i == &r ) {
+                __TBB_ASSERT(my_owner, "Cache of successors must have an owner.");
+                // TODO: check if we need to test for continue_receiver before removing from r.
+                r.remove_predecessor( *my_owner );
                 my_successors.erase(i);
                 break;
             }
@@ -324,24 +327,26 @@ public:
         my_successors.clear();
     }
 
-    virtual graph_task* try_put_task( const continue_msg &t ) = 0;
+    virtual graph_task* try_put_task( const continue_msg& t ) = 0;
 };  // successor_cache< continue_msg >
 
 //! A cache of successors that are broadcast to
 template<typename T, typename M=spin_rw_mutex>
 class broadcast_cache : public successor_cache<T, M> {
+    typedef successor_cache<T, M> base_type;
     typedef M mutex_type;
     typedef typename successor_cache<T,M>::successors_type successors_type;
 
 public:
 
-    broadcast_cache( ) {}
+    broadcast_cache( typename base_type::owner_type* owner ): base_type(owner) {
+        // Do not work with the passed pointer here as it may not be fully initialized yet
+    }
 
     // as above, but call try_put_task instead, and return the last task we received (if any)
     graph_task* try_put_task( const T &t ) override {
         graph_task * last_task = nullptr;
-        bool upgraded = true;
-        typename mutex_type::scoped_lock l(this->my_mutex, upgraded);
+        typename mutex_type::scoped_lock l(this->my_mutex, /*write=*/true);
         typename successors_type::iterator i = this->my_successors.begin();
         while ( i != this->my_successors.end() ) {
             graph_task *new_task = (*i)->try_put_task(t);
@@ -353,10 +358,6 @@ public:
             }
             else {  // failed
                 if ( (*i)->register_predecessor(*this->my_owner) ) {
-                    if (!upgraded) {
-                        l.upgrade_to_writer();
-                        upgraded = true;
-                    }
                     i = this->my_successors.erase(i);
                 } else {
                     ++i;
@@ -368,9 +369,8 @@ public:
 
     // call try_put_task and return list of received tasks
     bool gather_successful_try_puts( const T &t, graph_task_list& tasks ) {
-        bool upgraded = true;
         bool is_at_least_one_put_successful = false;
-        typename mutex_type::scoped_lock l(this->my_mutex, upgraded);
+        typename mutex_type::scoped_lock l(this->my_mutex, /*write=*/true);
         typename successors_type::iterator i = this->my_successors.begin();
         while ( i != this->my_successors.end() ) {
             graph_task * new_task = (*i)->try_put_task(t);
@@ -383,10 +383,6 @@ public:
             }
             else {  // failed
                 if ( (*i)->register_predecessor(*this->my_owner) ) {
-                    if (!upgraded) {
-                        l.upgrade_to_writer();
-                        upgraded = true;
-                    }
                     i = this->my_successors.erase(i);
                 } else {
                     ++i;
@@ -400,13 +396,16 @@ public:
 //! A cache of successors that are put in a round-robin fashion
 template<typename T, typename M=spin_rw_mutex >
 class round_robin_cache : public successor_cache<T, M> {
+    typedef successor_cache<T, M> base_type;
     typedef size_t size_type;
     typedef M mutex_type;
     typedef typename successor_cache<T,M>::successors_type successors_type;
 
 public:
 
-    round_robin_cache( ) {}
+    round_robin_cache( typename base_type::owner_type* owner ): base_type(owner) {
+        // Do not work with the passed pointer here as it may not be fully initialized yet
+    }
 
     size_type size() {
         typename mutex_type::scoped_lock l(this->my_mutex, false);
@@ -414,8 +413,7 @@ public:
     }
 
     graph_task* try_put_task( const T &t ) override {
-        bool upgraded = true;
-        typename mutex_type::scoped_lock l(this->my_mutex, upgraded);
+        typename mutex_type::scoped_lock l(this->my_mutex, /*write=*/true);
         typename successors_type::iterator i = this->my_successors.begin();
         while ( i != this->my_successors.end() ) {
             graph_task* new_task = (*i)->try_put_task(t);
@@ -423,10 +421,6 @@ public:
                 return new_task;
             } else {
                if ( (*i)->register_predecessor(*this->my_owner) ) {
-                   if (!upgraded) {
-                       l.upgrade_to_writer();
-                       upgraded = true;
-                   }
                    i = this->my_successors.erase(i);
                }
                else {

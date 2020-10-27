@@ -203,6 +203,12 @@ void RunParallelScalarTests(const char* /* test_name */) {
             combine_sum += sums.combine(my_combine<T>);
             combine_ref_sum += sums.combine(my_combine_ref<T>);
 
+            // test combinable::clear()
+            tbb::combinable<T> sums_to_clear;
+            tbb::parallel_for( tbb::blocked_range<int>(0, N, 10000), ParallelScalarBody<T>(sums_to_clear) );
+            sums_to_clear.clear();
+            CHECK_MESSAGE(sums_to_clear.combine(my_combine<T>) == 0, "Failed combinable::clear test");
+
             // test parallel combinable preinitialized with a functor that returns 0
             FunctorAddFinit<T> my_finit_decl;
             tbb::combinable<T> finit_combinable(my_finit_decl);

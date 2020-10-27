@@ -58,7 +58,7 @@ struct start_for : public task {
     //! Splitting constructor used to generate children.
     /** parent_ becomes left child.  Newly constructed object is right child. */
     start_for( start_for& parent_, typename Partitioner::split_type& split_obj, small_object_allocator& alloc ) :
-        my_range(parent_.my_range, split_obj),
+        my_range(parent_.my_range, get_range_split_object<Range>(split_obj)),
         my_body(parent_.my_body),
         my_partition(parent_.my_partition, split_obj),
         my_allocator(alloc) {}

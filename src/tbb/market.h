@@ -100,6 +100,12 @@ private:
     //! Number of workers currently requested from RML
     int my_num_workers_requested;
 
+    //! The target serialization epoch for callers of adjust_job_count_estimate
+    int my_adjust_demand_target_epoch;
+
+    //! The current serialization epoch for callers of adjust_job_count_estimate
+    std::atomic<int> my_adjust_demand_current_epoch;
+
     //! First unused index of worker
     /** Used to assign indices to the new workers coming from RML, and busy part
         of my_workers array. **/
@@ -215,7 +221,7 @@ public:
                                  unsigned arena_index, std::size_t stack_size );
 
     //! Removes the arena from the market's list
-    void try_destroy_arena ( arena*, uintptr_t aba_epoch );
+    void try_destroy_arena ( arena*, uintptr_t aba_epoch, unsigned pririty_level );
 
     //! Removes the arena from the market's list
     void detach_arena ( arena& );

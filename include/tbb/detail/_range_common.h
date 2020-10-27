@@ -44,11 +44,30 @@ public:
     size_t right() const { return my_right; }
 
     // used when range does not support proportional split
-    operator split() const { return split(); }
+    explicit operator split() const { return split(); }
 
 private:
     size_t my_left, my_right;
 };
+
+template <typename Range, typename = void>
+struct range_split_object_provider {
+    template <typename PartitionerSplitType>
+    static split get( PartitionerSplitType& ) { return split(); }
+};
+
+template <typename Range>
+struct range_split_object_provider<Range,
+                                   typename std::enable_if<std::is_constructible<Range, Range&, proportional_split&>::value>::type> {
+    template <typename PartitionerSplitType>
+    static PartitionerSplitType& get( PartitionerSplitType& split_obj ) { return split_obj; }
+};
+
+template <typename Range, typename PartitionerSplitType>
+auto get_range_split_object( PartitionerSplitType& split_obj )
+-> decltype(range_split_object_provider<Range>::get(split_obj)) {
+    return range_split_object_provider<Range>::get(split_obj);
+}
 
 } // namespace d0
 } // namespace detail

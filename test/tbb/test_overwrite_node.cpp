@@ -225,3 +225,12 @@ TEST_CASE("Deduction guides"){
 }
 #endif
 
+//! Test try_release
+//! \brief \ref error_guessing
+TEST_CASE("try_release"){
+    tbb::flow::graph g;
+
+    tbb::flow::overwrite_node<int> on(g);
+
+    CHECK_MESSAGE ((on.try_release()== true), "try_release should return true");
+}

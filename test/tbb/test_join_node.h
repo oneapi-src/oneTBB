@@ -449,7 +449,7 @@ public:
 };
 
 // The additional policy to differ message based key matching from usual key matching.
-// It only has sense for the test because join_node is created with the key_matching policy for the both cases.
+// It only makes sense for the test because join_node is created with the key_matching policy for the both cases.
 template <typename K, typename KHash = tbb_hash_compare<typename std::decay<K>::type > >
 struct message_based_key_matching {};
 
@@ -1308,7 +1308,7 @@ public:
 };
 
 //
-// Single reservable predecessor at each port, single accepting successor
+// Single reservable predecessor at each port, single accepting and rejecting successor
 //   * put to buffer before port0, then put to buffer before port1, ...
 //   * fill buffer before port0 then fill buffer before port1, ...
 
@@ -1320,7 +1320,7 @@ void test_one_serial(JType &my_join, tbb::flow::graph &g) {
     std::vector<bool> flags;
     serial_queue_helper<TUPLE_SIZE, JType>::add_queue_nodes(g, my_join);
     typedef TType q3_input_type;
-    tbb::flow::queue_node< q3_input_type >  q3(g);
+    tbb::flow::queue_node< q3_input_type > q3(g);
 
     tbb::flow::make_edge(my_join, q3);
 
@@ -1354,18 +1354,23 @@ void test_one_serial(JType &my_join, tbb::flow::graph &g) {
         }
     }
 
+    tbb::flow::remove_edge(my_join, q3);
+    tbb::flow::limiter_node<q3_input_type> limiter(g, Count / 2);
+    tbb::flow::make_edge(my_join, limiter);
+    tbb::flow::make_edge(limiter, q3);
+
     // fill each queue completely before filling the next.
     serial_queue_helper<TUPLE_SIZE, JType>::fill_one_queue(Count);
 
     g.wait_for_all();
-    for(int i = 0; i < Count; ++i) {
+    for(int i = 0; i < Count / 2; ++i) {
         q3_input_type v;
         g.wait_for_all();
         CHECK_MESSAGE( (q3.try_get(v)), "Error in try_get()");
         if(is_key_matching) {
             int j = int(std::get<0>(v))/2;
             serial_queue_helper<TUPLE_SIZE, JType>::check_queue_value(j, v);
-            flags[i] = true;
+            flags[j] = true;
         }
         else {
             serial_queue_helper<TUPLE_SIZE, JType>::check_queue_value(i, v);
@@ -1373,13 +1378,10 @@ void test_one_serial(JType &my_join, tbb::flow::graph &g) {
     }
 
     if(is_key_matching) {
-        for(int i = 0; i < Count; ++i) {
-            CHECK_MESSAGE(flags[i], "");
-        }
+        CHECK(std::count(flags.begin(), flags.end(), true) == Count / 2);
     }
 
     serial_queue_helper<TUPLE_SIZE, JType>::remove_queue_nodes(my_join);
-
 }
 
 template<typename JType, class JP>

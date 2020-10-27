@@ -69,6 +69,7 @@ public:
 
     // Include constructors of base type
     using base_type::base_type;
+    using base_type::operator=;
 
     // Observers
     mapped_type& operator[]( const key_type& key ) {
@@ -220,7 +221,7 @@ public:
 
     // Include constructors of base type
     using base_type::base_type;
-
+    using base_type::operator=;
     using base_type::insert;
 
     template <typename P>

@@ -218,7 +218,6 @@ class type_to_key_function_body_leaf : public type_to_key_function_body<Input, O
 public:
     type_to_key_function_body_leaf( const B &_body ) : body(_body) { }
     Output operator()(const Input &i) override { return body(i); }
-    B get_body() { return body; }
     type_to_key_function_body_leaf* clone() override {
         return new type_to_key_function_body_leaf< Input, Output, B>(body);
     }
@@ -233,7 +232,6 @@ public:
     const Output& operator()(const Input &i) override {
         return body(i);
     }
-    B get_body() { return body; }
     type_to_key_function_body_leaf* clone() override {
         return new type_to_key_function_body_leaf< Input, Output&, B>(body);
     }
@@ -313,12 +311,6 @@ public:
 
 // ------------------------ end of node task bodies -----------------------------------
 
-//! An empty functor that takes an Input and returns a default constructed Output
-template< typename Input, typename Output >
-struct empty_body {
-    Output operator()( const Input & ) const { return Output(); }
-};
-
 template<typename T, typename DecrementType, typename DummyType = void>
 class decrementer;
 
@@ -342,15 +334,12 @@ protected:
     }
 
     template<typename U, typename V> friend class limiter_node;
-    void reset_receiver( reset_flags ) override {
-    }
+    void reset_receiver( reset_flags ) {}
 
 public:
-    // Since decrementer does not make use of possibly unconstructed owner inside its
-    // constructor, my_node can be directly initialized with 'this' pointer passed from the
-    // owner, hence making method 'set_owner' needless.
-    decrementer() : my_node(NULL) {}
-    void set_owner( T *node ) { my_node = node; }
+    decrementer(T* owner) : my_node(owner) {
+        // Do not work with the passed pointer here as it may not be fully initialized yet
+    }
 };
 
 template<typename T>
@@ -372,13 +361,11 @@ public:
 
     typedef continue_msg input_type;
     typedef continue_msg output_type;
-    decrementer() : continue_receiver( /*number_of_predecessors=*/0, no_priority )
-          // Since decrementer does not make use of possibly unconstructed owner inside its
-          // constructor, my_node can be directly initialized with 'this' pointer passed from the
-          // owner, hence making method 'set_owner' needless.
-        , my_node(NULL)
-    {}
-    void set_owner( T *node ) { my_node = node; }
+    decrementer(T* owner)
+        : continue_receiver( /*number_of_predecessors=*/0, no_priority ), my_node(owner)
+    {
+        // Do not work with the passed pointer here as it may not be fully initialized yet
+    }
 };
 
 #endif // __TBB__flow_graph_body_impl_H

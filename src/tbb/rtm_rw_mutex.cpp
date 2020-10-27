@@ -60,7 +60,7 @@ struct rtm_rw_mutex_impl {
         }
         s.m_transaction_state = d1::rtm_rw_mutex::rtm_type::rtm_not_in_mutex;
     }
-    
+
     //! Acquire write lock on the given mutex.
     static void acquire_writer(d1::rtm_rw_mutex& m, d1::rtm_rw_mutex::scoped_lock& s, bool only_speculate) {
         __TBB_ASSERT(s.m_transaction_state == d1::rtm_rw_mutex::rtm_type::rtm_not_in_mutex, "scoped_lock already in transaction");
@@ -89,7 +89,7 @@ struct rtm_rw_mutex_impl {
                 ++num_retries;
             } while((abort_code & speculation_retry) != 0 && (num_retries < retry_threshold_write));
         }
-    
+
         if(only_speculate) return;
         s.m_mutex = &m;                                                          // should apply a real try_lock...
         s.m_mutex->lock();                                                       // kill transactional writers
@@ -98,7 +98,7 @@ struct rtm_rw_mutex_impl {
         s.m_transaction_state = d1::rtm_rw_mutex::rtm_type::rtm_real_writer;
         return;
     }
-    
+
     //! Acquire read lock on given mutex.
     //  only_speculate : true if we are doing a try_acquire.  If true and we fail to speculate, don't
     //     really acquire the lock, return and do a try_acquire on the contained spin_rw_mutex.  If
@@ -129,8 +129,8 @@ struct rtm_rw_mutex_impl {
                 }
                 // fallback path
                 // retry only if there is any hope of getting into a transaction soon
-                // Retry in the following cases (from Section 8.3.5 of Intel(R)
-                // Architecture Instruction Set Extensions Programming Reference):
+                // Retry in the following cases (from Section 8.3.5 of
+                // Intel(R) Architecture Instruction Set Extensions Programming Reference):
                 // 1. abort caused by XABORT instruction (bit 0 of EAX register is set)
                 // 2. the transaction may succeed on a retry (bit 1 of EAX register is set)
                 // 3. if another logical processor conflicted with a memory address
@@ -139,13 +139,13 @@ struct rtm_rw_mutex_impl {
                 ++num_retries;
             } while((abort_code & speculation_retry) != 0 && (num_retries < retry_threshold_read));
         }
-    
+
         if(only_speculate) return;
         s.m_mutex = &m;
         s.m_mutex->lock_shared();
         s.m_transaction_state = d1::rtm_rw_mutex::rtm_type::rtm_real_reader;
     }
-    
+
     //! Upgrade reader to become a writer.
     /** Returns whether the upgrade happened without releasing and re-acquiring the lock */
     static bool upgrade(d1::rtm_rw_mutex::scoped_lock& s) {
@@ -175,7 +175,7 @@ struct rtm_rw_mutex_impl {
             return false;
         }
     }
-    
+
     //! Downgrade writer to a reader.
     static bool downgrade(d1::rtm_rw_mutex::scoped_lock& s) {
         switch (s.m_transaction_state) {
@@ -193,7 +193,7 @@ struct rtm_rw_mutex_impl {
             return false;
         }
     }
-    
+
     //! Try to acquire write lock on the given mutex.
     //  There may be reader(s) which acquired the spin_rw_mutex, as well as possibly
     //  transactional reader(s).  If this is the case, the acquire will fail, and assigning
@@ -216,7 +216,7 @@ struct rtm_rw_mutex_impl {
         }
         return false;
     }
-    
+
     //! Try to acquire read lock on the given mutex.
     static bool try_acquire_reader(d1::rtm_rw_mutex& m, d1::rtm_rw_mutex::scoped_lock& s) {
         // speculatively acquire the lock. If this fails, do try_lock_shared on the spin_rw_mutex.

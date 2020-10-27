@@ -125,12 +125,16 @@ void type_tester( const std::vector<ValueType>& vec, Compare comp ) {
     queue_type q4(q1);
     examine(q4, vec_sorted);
 
+    // Copy ctor with allocator
+    auto alloc = q1.get_allocator();
+    queue_type q4_alloc(q1, alloc);
+    examine(q4_alloc, vec_sorted);
+
     // Constructor from the half-open interval
     queue_type q5(vec.begin(), vec.end());
     examine(q5, vec_sorted);
 
     // Constructor from the allocator object
-    auto alloc = q1.get_allocator();
     queue_type q6(alloc);
     q6.assign(vec.begin(), vec.end());
     examine(q6, vec_sorted);

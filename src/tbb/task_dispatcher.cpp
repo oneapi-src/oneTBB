@@ -15,6 +15,7 @@
 */
 
 #include "task_dispatcher.h"
+#include "waiters.h"
 
 namespace tbb {
 namespace detail {
@@ -150,37 +151,6 @@ d1::task_group_context* __TBB_EXPORTED_FUNC current_context() {
     }
 }
 
-class external_waiter {
-    d1::wait_context& m_wait_ctx;
-    stealing_loop_backoff my_backoff;
-public:
-    external_waiter(d1::wait_context& wo, int num_workers) : m_wait_ctx( wo ), my_backoff( num_workers ) {}
-
-    bool continue_execution(arena_slot& slot, d1::task*& t) const {
-        __TBB_ASSERT(t == nullptr, nullptr);
-        if (!m_wait_ctx.continue_execution())
-            return false;
-        t = get_self_recall_task(slot);
-        return true;
-    }
-
-    void pause() {
-        my_backoff.pause();
-    }
-
-    void reset_wait() {
-        my_backoff.reset_wait();
-    }
-
-    d1::wait_context* wait_ctx() {
-        return &m_wait_ctx;
-    }
-
-    static bool postpone_execution(d1::task&) {
-        return false;
-    }
-};
-
 void task_dispatcher::execute_and_wait(d1::task* t, d1::wait_context& wait_ctx, d1::task_group_context& w_ctx) {
     // Get an associated task dispatcher
     thread_data* tls = governor::get_thread_data();
@@ -195,10 +165,9 @@ void task_dispatcher::execute_and_wait(d1::task* t, d1::wait_context& wait_ctx, 
     }
 
     // Waiting on special object tied to a waiting thread.
-    external_waiter waiter{ wait_ctx, int(tls->my_arena->my_num_slots) };
+    external_waiter waiter{ *tls->my_arena, wait_ctx };
     t = local_td.local_wait_for_all(t, waiter);
     __TBB_ASSERT_EX(t == nullptr, "External waiter must not leave dispatch loop with a task");
-    __TBB_ASSERT(wait_ctx.continue_execution() == false, "Thread can only leave dispatch loop when waiting object allowed this");
 
     // Master (external) thread couldn't exit the dispatch loop in an idle state
     if (local_td.m_thread_data->my_inbox.is_idle_state(true)) {
@@ -212,34 +181,6 @@ void task_dispatcher::execute_and_wait(d1::task* t, d1::wait_context& wait_ctx, 
 }
 
 #if __TBB_RESUMABLE_TASKS
-
-class coroutine_waiter {
-    stealing_loop_backoff my_backoff;
-public:
-    coroutine_waiter(int num_workers) : my_backoff(num_workers) {}
-
-    bool continue_execution(arena_slot& slot, d1::task*& t) const {
-        __TBB_ASSERT(t == nullptr, nullptr);
-        t = get_self_recall_task(slot);
-        return true;
-    }
-
-    void pause() {
-        my_backoff.pause();
-    }
-
-    void reset_wait() {
-        my_backoff.reset_wait();
-    }
-
-    d1::wait_context* wait_ctx() {
-        return nullptr;
-    }
-
-    static bool postpone_execution(d1::task& t) {
-        return task_accessor::is_resume_task(t);
-    }
-};
 
 #if _WIN32
 /* [[noreturn]] */ void __stdcall co_local_wait_for_all(void* arg) noexcept
@@ -267,7 +208,8 @@ public:
 
     // Endless loop here because coroutine could be reused
     for (;;) {
-        coroutine_waiter waiter(m_thread_data->my_arena->my_num_slots);
+        arena* a = m_thread_data->my_arena;
+        coroutine_waiter waiter(*a);
         d1::task* resume_task = local_wait_for_all(nullptr, waiter);
         assert_task_valid(resume_task);
         __TBB_ASSERT(this == m_thread_data->my_task_dispatcher, nullptr);

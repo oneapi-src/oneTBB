@@ -26,12 +26,22 @@
     struct forwarding_base : no_assign {
         forwarding_base(graph &g) : graph_ref(g) {}
         virtual ~forwarding_base() {}
+        graph& graph_ref;
+    };
+
+    struct queueing_forwarding_base : forwarding_base {
+        using forwarding_base::forwarding_base;
         // decrement_port_count may create a forwarding task.  If we cannot handle the task
         // ourselves, ask decrement_port_count to deal with it.
         virtual graph_task* decrement_port_count(bool handle_task) = 0;
+    };
+
+    struct reserving_forwarding_base : forwarding_base {
+        using forwarding_base::forwarding_base;
+        // decrement_port_count may create a forwarding task.  If we cannot handle the task
+        // ourselves, ask decrement_port_count to deal with it.
+        virtual graph_task* decrement_port_count() = 0;
         virtual void increment_port_count() = 0;
-        // moved here so input ports can queue tasks
-        graph& graph_ref;
     };
 
     // specialization that lets us keep a copy of the current_key for building results.
@@ -40,7 +50,7 @@
     struct matching_forwarding_base : public forwarding_base {
         typedef typename std::decay<KeyType>::type current_key_type;
         matching_forwarding_base(graph &g) : forwarding_base(g) { }
-        virtual graph_task* increment_key_count(current_key_type const & /*t*/, bool /*handle_task*/) = 0; // {return NULL;}
+        virtual graph_task* increment_key_count(current_key_type const & /*t*/) = 0;
         current_key_type current_key; // so ports can refer to FE's desired items
     };
 
@@ -104,15 +114,17 @@
         template<typename InputTuple, typename KeyFuncTuple>
         static inline void set_key_functors(InputTuple &my_input, KeyFuncTuple &my_key_funcs) {
             std::get<N-1>(my_input).set_my_key_func(std::get<N-1>(my_key_funcs));
-            std::get<N-1>(my_key_funcs) = NULL;
+            std::get<N-1>(my_key_funcs) = nullptr;
             join_helper<N-1>::set_key_functors(my_input, my_key_funcs);
         }
 
         template< typename KeyFuncTuple>
         static inline void copy_key_functors(KeyFuncTuple &my_inputs, KeyFuncTuple &other_inputs) {
-            if(std::get<N-1>(other_inputs).get_my_key_func()) {
-                std::get<N-1>(my_inputs).set_my_key_func(std::get<N-1>(other_inputs).get_my_key_func()->clone());
-            }
+            __TBB_ASSERT(
+                std::get<N-1>(other_inputs).get_my_key_func(),
+                "key matching join node should not be instantiated without functors."
+            );
+            std::get<N-1>(my_inputs).set_my_key_func(std::get<N-1>(other_inputs).get_my_key_func()->clone());
             join_helper<N-1>::copy_key_functors(my_inputs, other_inputs);
         }
 
@@ -174,14 +186,16 @@
         template<typename InputTuple, typename KeyFuncTuple>
         static inline void set_key_functors(InputTuple &my_input, KeyFuncTuple &my_key_funcs) {
             std::get<0>(my_input).set_my_key_func(std::get<0>(my_key_funcs));
-            std::get<0>(my_key_funcs) = NULL;
+            std::get<0>(my_key_funcs) = nullptr;
         }
 
         template< typename KeyFuncTuple>
         static inline void copy_key_functors(KeyFuncTuple &my_inputs, KeyFuncTuple &other_inputs) {
-            if(std::get<0>(other_inputs).get_my_key_func()) {
-                std::get<0>(my_inputs).set_my_key_func(std::get<0>(other_inputs).get_my_key_func()->clone());
-            }
+            __TBB_ASSERT(
+                std::get<0>(other_inputs).get_my_key_func(),
+                "key matching join node should not be instantiated without functors."
+            );
+            std::get<0>(my_inputs).set_my_key_func(std::get<0>(other_inputs).get_my_key_func()->clone());
         }
         template<typename InputTuple>
         static inline void reset_inputs(InputTuple &my_input, reset_flags f) {
@@ -222,23 +236,27 @@
 
         void handle_operations(reserving_port_operation* op_list) {
             reserving_port_operation *current;
-            bool no_predecessors;
+            bool was_missing_predecessors = false;
             while(op_list) {
                 current = op_list;
                 op_list = op_list->next;
                 switch(current->type) {
                 case reg_pred:
-                    no_predecessors = my_predecessors.empty();
+                    was_missing_predecessors = my_predecessors.empty();
                     my_predecessors.add(*(current->my_pred));
-                    if ( no_predecessors ) {
-                        (void) my_join->decrement_port_count(true); // may try to forward
+                    if ( was_missing_predecessors ) {
+                        (void) my_join->decrement_port_count(); // may try to forward
                     }
                     current->status.store( SUCCEEDED, std::memory_order_release);
                     break;
                 case rem_pred:
-                    my_predecessors.remove(*(current->my_pred));
-                    if(my_predecessors.empty()) my_join->increment_port_count();
-                    current->status.store( SUCCEEDED, std::memory_order_release);
+                    if ( !my_predecessors.empty() ) {
+                        my_predecessors.remove(*(current->my_pred));
+                        if ( my_predecessors.empty() ) // was the last predecessor
+                            my_join->increment_port_count();
+                    }
+                    // TODO: consider returning failure if there were no predecessors to remove
+                    current->status.store( SUCCEEDED, std::memory_order_release );
                     break;
                 case res_item:
                     if ( reserved ) {
@@ -273,7 +291,7 @@
         template<typename X, typename Y> friend class broadcast_cache;
         template<typename X, typename Y> friend class round_robin_cache;
         graph_task* try_put_task( const T & ) override {
-            return NULL;
+            return nullptr;
         }
 
         graph& graph_reference() const override {
@@ -283,21 +301,14 @@
     public:
 
         //! Constructor
-        reserving_port() : reserved(false) {
-            my_join = NULL;
-            my_predecessors.set_owner( this );
+        reserving_port() : my_join(nullptr), my_predecessors(this), reserved(false) {
             my_aggregator.initialize_handler(handler_type(this));
         }
 
         // copy constructor
-        reserving_port(const reserving_port& /* other */) : receiver<T>() {
-            reserved = false;
-            my_join = NULL;
-            my_predecessors.set_owner( this );
-            my_aggregator.initialize_handler(handler_type(this));
-        }
+        reserving_port(const reserving_port& /* other */) = delete;
 
-        void set_join_node_pointer(forwarding_base *join) {
+        void set_join_node_pointer(reserving_forwarding_base *join) {
             my_join = join;
         }
 
@@ -334,7 +345,7 @@
             my_aggregator.execute(&op_data);
         }
 
-        void reset_receiver( reset_flags f) override {
+        void reset_receiver( reset_flags f) {
             if(f & rf_clear_edges) my_predecessors.clear();
             else
             my_predecessors.reset();
@@ -347,7 +358,7 @@
         friend class get_graph_helper;
 #endif
 
-        forwarding_base *my_join;
+        reserving_forwarding_base *my_join;
         reservable_predecessor_cache< T, null_mutex > my_predecessors;
         bool reserved;
     };  // reserving_port
@@ -374,16 +385,16 @@
             // constructor for value parameter
             queueing_port_operation(const T& e, op_type t) :
                 type(char(t)), my_val(e)
-                , bypass_t(NULL)
+                , bypass_t(nullptr)
             {}
             // constructor for pointer parameter
             queueing_port_operation(const T* p, op_type t) :
                 type(char(t)), my_arg(const_cast<T*>(p))
-                , bypass_t(NULL)
+                , bypass_t(nullptr)
             {}
             // constructor with no parameter
             queueing_port_operation(op_type t) : type(char(t))
-                , bypass_t(NULL)
+                , bypass_t(nullptr)
             {}
         };
 
@@ -399,7 +410,7 @@
                 op_list = op_list->next;
                 switch(current->type) {
                 case try__put_task: {
-                        graph_task* rtask = NULL;
+                        graph_task* rtask = nullptr;
                         was_empty = this->buffer_empty();
                         this->push_back(current->my_val);
                         if (was_empty) rtask = my_join->decrement_port_count(false);
@@ -451,18 +462,15 @@
 
         //! Constructor
         queueing_port() : item_buffer<T>() {
-            my_join = NULL;
+            my_join = nullptr;
             my_aggregator.initialize_handler(handler_type(this));
         }
 
         //! copy constructor
-        queueing_port(const queueing_port& /* other */) : receiver<T>(), item_buffer<T>() {
-            my_join = NULL;
-            my_aggregator.initialize_handler(handler_type(this));
-        }
+        queueing_port(const queueing_port& /* other */) = delete;
 
         //! record parent for tallying available items
-        void set_join_node_pointer(forwarding_base *join) {
+        void set_join_node_pointer(queueing_forwarding_base *join) {
             my_join = join;
         }
 
@@ -480,7 +488,7 @@
             return;
         }
 
-        void reset_receiver(reset_flags) override {
+        void reset_receiver(reset_flags) {
             item_buffer<T>::reset();
         }
 
@@ -489,7 +497,7 @@
         friend class get_graph_helper;
 #endif
 
-        forwarding_base *my_join;
+        queueing_forwarding_base *my_join;
     };  // queueing_port
 
 #include "_flow_graph_tagged_buffer_impl.h"
@@ -585,10 +593,10 @@
         template<typename X, typename Y> friend class round_robin_cache;
         graph_task* try_put_task(const input_type& v) override {
             key_matching_port_operation op_data(v, try__put);
-            graph_task* rtask = NULL;
+            graph_task* rtask = nullptr;
             my_aggregator.execute(&op_data);
             if(op_data.status == SUCCEEDED) {
-                rtask = my_join->increment_key_count((*(this->get_key_func()))(v), false);  // may spawn
+                rtask = my_join->increment_key_count((*(this->get_key_func()))(v));  // may spawn
                 // rtask has to reflect the return status of the try_put
                 if(!rtask) rtask = SUCCESSFULLY_ENQUEUED;
             }
@@ -602,16 +610,17 @@
     public:
 
         key_matching_port() : receiver<input_type>(), buffer_type() {
-            my_join = NULL;
+            my_join = nullptr;
             my_aggregator.initialize_handler(handler_type(this));
         }
 
         // copy constructor
-        key_matching_port(const key_matching_port& /*other*/) : receiver<input_type>(), buffer_type() {
-            my_join = NULL;
-            my_aggregator.initialize_handler(handler_type(this));
-        }
-
+        key_matching_port(const key_matching_port& /*other*/) = delete;
+#if __INTEL_COMPILER <= 2021
+        // Suppress superfluous diagnostic about virtual keyword absence in a destructor of an inherited
+        // class while the parent class has the virtual keyword for the destrocutor.
+        virtual
+#endif
         ~key_matching_port() { }
 
         void set_join_node_pointer(forwarding_base *join) {
@@ -637,7 +646,7 @@
             return;
         }
 
-        void reset_receiver(reset_flags ) override {
+        void reset_receiver(reset_flags ) {
             buffer_type::reset();
         }
 
@@ -657,19 +666,19 @@
     class join_node_FE;
 
     template<typename InputTuple, typename OutputTuple>
-    class join_node_FE<reserving, InputTuple, OutputTuple> : public forwarding_base {
+    class join_node_FE<reserving, InputTuple, OutputTuple> : public reserving_forwarding_base {
     public:
         static const int N = std::tuple_size<OutputTuple>::value;
         typedef OutputTuple output_type;
         typedef InputTuple input_type;
         typedef join_node_base<reserving, InputTuple, OutputTuple> base_node_type; // for forwarding
 
-        join_node_FE(graph &g) : forwarding_base(g), my_node(NULL) {
+        join_node_FE(graph &g) : reserving_forwarding_base(g), my_node(nullptr) {
             ports_with_no_inputs = N;
             join_helper<N>::set_join_node_pointer(my_inputs, this);
         }
 
-        join_node_FE(const join_node_FE& other) : forwarding_base((other.forwarding_base::graph_ref)), my_node(NULL) {
+        join_node_FE(const join_node_FE& other) : reserving_forwarding_base((other.reserving_forwarding_base::graph_ref)), my_node(nullptr) {
             ports_with_no_inputs = N;
             join_helper<N>::set_join_node_pointer(my_inputs, this);
         }
@@ -681,19 +690,17 @@
         }
 
         // if all input_ports have predecessors, spawn forward to try and consume tuples
-        graph_task* decrement_port_count(bool handle_task) override {
+        graph_task* decrement_port_count() override {
             if(ports_with_no_inputs.fetch_sub(1) == 1) {
                 if(is_graph_active(this->graph_ref)) {
                     small_object_allocator allocator{};
                     typedef forward_task_bypass<base_node_type> task_type;
                     graph_task* t = allocator.new_object<task_type>(graph_ref, allocator, *my_node);
                     graph_ref.reserve_wait();
-                    if( !handle_task )
-                        return t;
                     spawn_in_graph_arena(this->graph_ref, *t);
                 }
             }
-            return NULL;
+            return nullptr;
         }
 
         input_type &input_ports() { return my_inputs; }
@@ -730,19 +737,19 @@
     };  // join_node_FE<reserving, ... >
 
     template<typename InputTuple, typename OutputTuple>
-    class join_node_FE<queueing, InputTuple, OutputTuple> : public forwarding_base {
+    class join_node_FE<queueing, InputTuple, OutputTuple> : public queueing_forwarding_base {
     public:
         static const int N = std::tuple_size<OutputTuple>::value;
         typedef OutputTuple output_type;
         typedef InputTuple input_type;
         typedef join_node_base<queueing, InputTuple, OutputTuple> base_node_type; // for forwarding
 
-        join_node_FE(graph &g) : forwarding_base(g), my_node(NULL) {
+        join_node_FE(graph &g) : queueing_forwarding_base(g), my_node(nullptr) {
             ports_with_no_items = N;
             join_helper<N>::set_join_node_pointer(my_inputs, this);
         }
 
-        join_node_FE(const join_node_FE& other) : forwarding_base((other.forwarding_base::graph_ref)), my_node(NULL) {
+        join_node_FE(const join_node_FE& other) : queueing_forwarding_base((other.queueing_forwarding_base::graph_ref)), my_node(nullptr) {
             ports_with_no_items = N;
             join_helper<N>::set_join_node_pointer(my_inputs, this);
         }
@@ -770,8 +777,6 @@
             }
             return nullptr;
         }
-
-        void increment_port_count() override { __TBB_ASSERT(false, NULL); }  // should never be called
 
         input_type &input_ports() { return my_inputs; }
 
@@ -853,14 +858,12 @@
             unref_key_type my_val;
             output_type* my_output;
             graph_task* bypass_t;
-            bool enqueue_task;
             // constructor for value parameter
-            key_matching_FE_operation(const unref_key_type& e , bool q_task , op_type t) : type(char(t)), my_val(e),
-                 my_output(NULL), bypass_t(NULL), enqueue_task(q_task) {}
-            key_matching_FE_operation(output_type *p, op_type t) : type(char(t)), my_output(p), bypass_t(NULL),
-                 enqueue_task(true) {}
+            key_matching_FE_operation(const unref_key_type& e , op_type t) : type(char(t)), my_val(e),
+                 my_output(nullptr), bypass_t(nullptr) {}
+            key_matching_FE_operation(output_type *p, op_type t) : type(char(t)), my_output(p), bypass_t(nullptr) {}
             // constructor with no parameter
-            key_matching_FE_operation(op_type t) : type(char(t)), my_output(NULL), bypass_t(NULL), enqueue_task(true) {}
+            key_matching_FE_operation(op_type t) : type(char(t)), my_output(nullptr), bypass_t(nullptr) {}
         };
 
         typedef aggregating_functor<class_type, key_matching_FE_operation> handler_type;
@@ -869,11 +872,11 @@
 
         // called from aggregator, so serialized
         // returns a task pointer if the a task would have been enqueued but we asked that
-        // it be returned.  Otherwise returns NULL.
-        graph_task* fill_output_buffer(unref_key_type &t, bool should_enqueue, bool handle_task) {
+        // it be returned.  Otherwise returns nullptr.
+        graph_task* fill_output_buffer(unref_key_type &t) {
             output_type l_out;
-            graph_task* rtask = NULL;
-            bool do_fwd = should_enqueue && this->buffer_empty() && is_graph_active(this->graph_ref);
+            graph_task* rtask = nullptr;
+            bool do_fwd = this->buffer_empty() && is_graph_active(this->graph_ref);
             this->current_key = t;
             this->delete_with_key(this->current_key);   // remove the key
             if(join_helper<N>::get_items(my_inputs, l_out)) {  //  <== call back
@@ -883,12 +886,6 @@
                     typedef forward_task_bypass<base_node_type> task_type;
                     rtask = allocator.new_object<task_type>(this->graph_ref, allocator, *my_node);
                     this->graph_ref.reserve_wait();
-                    if( handle_task ) {
-                        // TODO revamp: make spawn_in_graph_arena extract reference to the graph
-                        // from the passed task
-                        spawn_in_graph_arena(this->graph_ref, *rtask);
-                        rtask = NULL;
-                    }
                     do_fwd = false;
                 }
                 // retire the input values
@@ -915,20 +912,16 @@
                 case inc_count: {  // called from input ports
                         count_element_type *p = 0;
                         unref_key_type &t = current->my_val;
-                        bool do_enqueue = current->enqueue_task;
                         if(!(this->find_ref_with_key(t,p))) {
                             count_element_type ev;
                             ev.my_key = t;
                             ev.my_value = 0;
                             this->insert_with_key(ev);
-                            if(!(this->find_ref_with_key(t,p))) {
-                                __TBB_ASSERT(false, "should find key after inserting it");
-                            }
+                            bool found = this->find_ref_with_key(t, p);
+                            __TBB_ASSERT_EX(found, "should find key after inserting it");
                         }
                         if(++(p->my_value) == size_t(N)) {
-                            graph_task* rtask = fill_output_buffer(t, true, do_enqueue);
-                            __TBB_ASSERT(!rtask || !do_enqueue, "task should not be returned");
-                            current->bypass_t = rtask;
+                            current->bypass_t = fill_output_buffer(t);
                         }
                     }
                     current->status.store( SUCCEEDED, std::memory_order_release);
@@ -952,7 +945,7 @@
 
     public:
         template<typename FunctionTuple>
-        join_node_FE(graph &g, FunctionTuple &TtoK_funcs) : forwarding_base_type(g), my_node(NULL) {
+        join_node_FE(graph &g, FunctionTuple &TtoK_funcs) : forwarding_base_type(g), my_node(nullptr) {
             join_helper<N>::set_join_node_pointer(my_inputs, this);
             join_helper<N>::set_key_functors(my_inputs, TtoK_funcs);
             my_aggregator.initialize_handler(handler_type(this));
@@ -962,7 +955,7 @@
 
         join_node_FE(const join_node_FE& other) : forwarding_base_type((other.forwarding_base_type::graph_ref)), key_to_count_buffer_type(),
         output_buffer_type() {
-            my_node = NULL;
+            my_node = nullptr;
             join_helper<N>::set_join_node_pointer(my_inputs, this);
             join_helper<N>::copy_key_functors(my_inputs, const_cast<input_type &>(other.my_inputs));
             my_aggregator.initialize_handler(handler_type(this));
@@ -981,15 +974,11 @@
 
         // if all input_ports have items, spawn forward to try and consume tuples
         // return a task if we are asked and did create one.
-        graph_task *increment_key_count(unref_key_type const & t, bool handle_task) override {  // called from input_ports
-            key_matching_FE_operation op_data(t, handle_task, inc_count);
+        graph_task *increment_key_count(unref_key_type const & t) override {  // called from input_ports
+            key_matching_FE_operation op_data(t, inc_count);
             my_aggregator.execute(&op_data);
             return op_data.bypass_t;
         }
-
-        graph_task *decrement_port_count(bool /*handle_task*/) override { __TBB_ASSERT(false, NULL); return NULL; }
-
-        void increment_port_count() override { __TBB_ASSERT(false, NULL); }  // should never be called
 
         input_type &input_ports() { return my_inputs; }
 
@@ -1062,10 +1051,10 @@
             };
             graph_task* bypass_t;
             join_node_base_operation(const output_type& e, op_type t) : type(char(t)),
-                my_arg(const_cast<output_type*>(&e)), bypass_t(NULL) {}
+                my_arg(const_cast<output_type*>(&e)), bypass_t(nullptr) {}
             join_node_base_operation(const successor_type &s, op_type t) : type(char(t)),
-                my_succ(const_cast<successor_type *>(&s)), bypass_t(NULL) {}
-            join_node_base_operation(op_type t) : type(char(t)), bypass_t(NULL) {}
+                my_succ(const_cast<successor_type *>(&s)), bypass_t(nullptr) {}
+            join_node_base_operation(op_type t) : type(char(t)), bypass_t(nullptr) {}
         };
 
         typedef aggregating_functor<class_type, join_node_base_operation> handler_type;
@@ -1108,7 +1097,7 @@
                     break;
                 case do_fwrd_bypass: {
                         bool build_succeeded;
-                        graph_task *last_task = NULL;
+                        graph_task *last_task = nullptr;
                         output_type out;
                         // forwarding must be exclusive, because try_to_make_tuple and tuple_accepted
                         // are separate locked methods in the FE.  We could conceivably fetch the front
@@ -1143,23 +1132,25 @@
         }
         // ---------- end aggregator -----------
     public:
-        join_node_base(graph &g) : graph_node(g), input_ports_type(g), forwarder_busy(false) {
-            my_successors.set_owner(this);
+        join_node_base(graph &g)
+            : graph_node(g), input_ports_type(g), forwarder_busy(false), my_successors(this)
+        {
             input_ports_type::set_my_node(this);
             my_aggregator.initialize_handler(handler_type(this));
         }
 
         join_node_base(const join_node_base& other) :
             graph_node(other.graph_node::my_graph), input_ports_type(other),
-            sender<OutputTuple>(), forwarder_busy(false), my_successors() {
-            my_successors.set_owner(this);
+            sender<OutputTuple>(), forwarder_busy(false), my_successors(this)
+        {
             input_ports_type::set_my_node(this);
             my_aggregator.initialize_handler(handler_type(this));
         }
 
         template<typename FunctionTuple>
-        join_node_base(graph &g, FunctionTuple f) : graph_node(g), input_ports_type(g, f), forwarder_busy(false) {
-            my_successors.set_owner(this);
+        join_node_base(graph &g, FunctionTuple f)
+            : graph_node(g), input_ports_type(g, f), forwarder_busy(false), my_successors(this)
+        {
             input_ports_type::set_my_node(this);
             my_aggregator.initialize_handler(handler_type(this));
         }

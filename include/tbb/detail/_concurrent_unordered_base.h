@@ -708,6 +708,8 @@ public:
             return my_midpoint_node != my_end_node;
         }
 
+        size_type grainsize() const { return 1; }
+
         const_range_type( const_range_type& range, split )
             : my_instance(range.my_instance),
               my_begin_node(range.my_midpoint_node),

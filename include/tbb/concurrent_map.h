@@ -91,6 +91,7 @@ public:
 
     // Include constructors of base type
     using base_type::base_type;
+    using base_type::operator=;
 
     // Observers
     mapped_type& at(const key_type& key) {
@@ -215,6 +216,7 @@ public:
     // Include constructors of base_type
     using base_type::base_type;
     using base_type::insert;
+    using base_type::operator=;
 
     template <typename P>
     typename std::enable_if<std::is_constructible<value_type, P&&>::value,

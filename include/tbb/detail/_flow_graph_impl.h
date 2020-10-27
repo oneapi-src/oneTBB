@@ -52,9 +52,6 @@ public:
     typedef const GraphNodeType& const_reference;
     typedef std::forward_iterator_tag iterator_category;
 
-    //! Default constructor
-    graph_iterator() : my_graph(NULL), current_node(NULL) {}
-
     //! Copy constructor
     graph_iterator(const graph_iterator& other) :
         my_graph(other.my_graph), current_node(other.current_node)
@@ -137,9 +134,9 @@ public:
     // TODO revamp: rename to my_priority
     node_priority_t priority;
     void destruct_and_deallocate(const execution_data& ed);
+    task* cancel(execution_data& ed) override;
 protected:
     void finalize(const execution_data& ed);
-    task* cancel(execution_data& ed) override;
 private:
     // To organize task_list
     graph_task* my_next{ nullptr };
@@ -160,29 +157,38 @@ typedef tbb::concurrent_priority_queue<graph_task*, graph_task_comparator> graph
 class priority_task_selector : public task {
 public:
     priority_task_selector(graph_task_priority_queue_t& priority_queue, small_object_allocator& allocator)
-        : my_priority_queue(priority_queue), my_allocator(allocator) {}
+        : my_priority_queue(priority_queue), my_allocator(allocator), my_task() {}
     task* execute(execution_data& ed) override {
-        graph_task* t = nullptr;
-        // TODO revamp: hold functors in priority queue instead of real tasks
-        bool result = my_priority_queue.try_pop(t);
-        __TBB_ASSERT_EX( result, "Number of critical tasks for scheduler and tasks"
-                         " in graph's priority queue mismatched" );
-        __TBB_ASSERT( t && t != SUCCESSFULLY_ENQUEUED,
-                      "Incorrect task submitted to graph priority queue" );
-        __TBB_ASSERT( t->priority != no_priority,
-                      "Tasks from graph's priority queue must have priority" );
-        // TODO revamp: consider cancellation and exception handling for the task t.
-        task* t_next = t->execute(ed);
+        next_task();
+        __TBB_ASSERT(my_task, nullptr);
+        task* t_next = my_task->execute(ed);
         my_allocator.delete_object(this, ed);
         return t_next;
     }
     task* cancel(execution_data& ed) override {
+        if (!my_task) {
+            next_task();
+        }
+        __TBB_ASSERT(my_task, nullptr);
+        task* t_next = my_task->cancel(ed);
         my_allocator.delete_object(this, ed);
-        return nullptr;
+        return t_next;
     }
 private:
+    void next_task() {
+        // TODO revamp: hold functors in priority queue instead of real tasks
+        bool result = my_priority_queue.try_pop(my_task);
+        __TBB_ASSERT_EX(result, "Number of critical tasks for scheduler and tasks"
+            " in graph's priority queue mismatched");
+        __TBB_ASSERT(my_task && my_task != SUCCESSFULLY_ENQUEUED,
+            "Incorrect task submitted to graph priority queue");
+        __TBB_ASSERT(my_task->priority != no_priority,
+            "Tasks from graph's priority queue must have priority");
+    }
+
     graph_task_priority_queue_t& my_priority_queue;
     small_object_allocator my_allocator;
+    graph_task* my_task;
 };
 
 template <typename Receiver, typename Body> class run_and_put_task;

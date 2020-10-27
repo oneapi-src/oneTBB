@@ -62,7 +62,9 @@ protected:
     }
 
     bool my_item_valid(size_type i) const { return (i < my_tail) && (i >= my_head) && (item(i).second != no_item); }
+#if TBB_USE_ASSERT
     bool my_item_reserved(size_type i) const { return item(i).second == reserved_item; }
+#endif
 
     // object management in buffer
     const item_type &get_my_item(size_t i) const {

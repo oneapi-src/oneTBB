@@ -530,3 +530,28 @@ TEST_CASE("Deduction guides"){
 }
 #endif
 
+//! Test operations on a reserved queue_node
+//! \brief \ref error_guessing
+TEST_CASE("queue_node with reservation"){
+    tbb::flow::graph g;
+
+    tbb::flow::queue_node<int> q(g);
+
+    bool res = q.try_put(42);
+    CHECK_MESSAGE( res, "queue_node must accept input." );
+
+    int val = 1;
+    res = q.try_reserve(val);
+    CHECK_MESSAGE( res, "queue_node must reserve as it has an item." );
+    CHECK_MESSAGE( (val == 42), "queue_node must reserve once passed item." );
+
+    int out_arg = -1;
+    CHECK_MESSAGE((q.try_reserve(out_arg) == false), "Reserving a reserved node should fail.");
+    CHECK_MESSAGE((out_arg == -1), "Reserving a reserved node should not update its argument.");
+
+    out_arg = -1;
+    CHECK_MESSAGE((q.try_get(out_arg) == false), "Getting from reserved node should fail.");
+    CHECK_MESSAGE((out_arg == -1), "Getting from reserved node should not update its argument.");
+    g.wait_for_all();
+    
+}

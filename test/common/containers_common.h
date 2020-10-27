@@ -128,6 +128,27 @@ void test_allocator_traits_support() {
     test_is_always_equal<always_equal_container_type>();
 }
 
+#if TBB_USE_EXCEPTIONS
+struct ThrowOnCopy {
+    static int error_code() { return 8; };
+    static bool is_active;
+    ThrowOnCopy() = default;
+    ThrowOnCopy( const ThrowOnCopy& ) {
+        if (is_active) {
+            throw error_code();
+        }
+    }
+    static void activate() { is_active = true; }
+    static void deactivate() { is_active = false; }
+
+    bool operator<( const ThrowOnCopy& ) const { return true; }
+    bool operator==( const ThrowOnCopy& ) const { return true; }
+}; // struct ThrowOnCopy
+
+bool ThrowOnCopy::is_active = false;
+
+#endif
+
 namespace std {
 template <typename T>
 struct hash<std::reference_wrapper<T>> {
@@ -143,6 +164,15 @@ struct hash<std::weak_ptr<T>> {
         return std::hash<T>()(*wr.lock().get());
     }
 };
+
+#if TBB_USE_EXCEPTIONS
+template <>
+struct hash<ThrowOnCopy> {
+    std::size_t operator()( const ThrowOnCopy& ) const {
+        return 1;
+    }
+};
+#endif
 
 template <typename T>
 struct equal_to<std::weak_ptr<T>> {

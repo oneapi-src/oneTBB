@@ -159,6 +159,9 @@ void add_all_nodes (){
     output_only_type c_node(g);
     c_node.set_external_ports(output_tuple);
 
+    // Reset is not suppose to do anything. Check that it can be called.
+    g.reset();
+
     c_node.add_visible_nodes(src, fxn, m_fxn, bc, lim, ind, s, ct, j, q, bf, pq, wo, ovw, seq);
 
     c_node.add_nodes(src, fxn, m_fxn, bc, lim, ind, s, ct, j, q, bf, pq, wo, ovw, seq);
@@ -318,10 +321,10 @@ int test_adder(bool hidden = false) {
     int sum_total=0;
     int result=0;
     for ( int i = 1; i < 4; ++i ) {
-       s.try_put(i);
-       c.try_put(i);
-       sum_total += adder_sum(i);
-    g.wait_for_all();
+        s.try_put(i);
+        c.try_put(i);
+        sum_total += adder_sum(i);
+        g.wait_for_all();
     }
 
     int j;
@@ -342,10 +345,10 @@ int test_adder(bool hidden = false) {
     sum_total=0;
     result=0;
     for ( int i = 10; i < 20; ++i ) {
-       s.try_put(i);
-       c.try_put(i);
-       sum_total += adder_sum(i);
-    g.wait_for_all();
+        s.try_put(i);
+        c.try_put(i);
+        sum_total += adder_sum(i);
+        g.wait_for_all();
     }
 
     for ( int i = 10; i < 20; ++i ) {

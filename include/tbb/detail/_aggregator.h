@@ -143,7 +143,6 @@ class aggregator : public aggregator_generic<OperationType> {
     HandlerType handle_operations;
 public:
     aggregator() = default;
-    explicit aggregator( HandlerType h ) : handle_operations(h) {}
 
     void initialize_handler( HandlerType h ) { handle_operations = h; }
 
@@ -167,8 +166,8 @@ public:
 }; // class aggregating_functor
 
 
-}; // namespace d1
-}; // namespace detail
-}; // namespace tbb
+} // namespace d1
+} // namespace detail
+} // namespace tbb
 
 #endif // __TBB_detail__aggregator_H

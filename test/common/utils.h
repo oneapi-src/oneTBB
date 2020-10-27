@@ -397,6 +397,17 @@ tbb::blocked_range<T*> make_blocked_range( T(& array)[N] ) {
     return tbb::blocked_range<T*>(array, array + N);
 }
 
+template <typename T>
+void check_range_bounds_after_splitting( const tbb::blocked_range<T>& original, const tbb::blocked_range<T>& first,
+                                         const tbb::blocked_range<T>& second, const T& expected_first_end )
+{
+    REQUIRE(first.begin() == original.begin());
+    REQUIRE(first.end() == expected_first_end);
+    REQUIRE(second.begin() == expected_first_end);
+    REQUIRE(second.end() == original.end());
+    REQUIRE(first.size() + second.size() == original.size());
+}
+
 //! Functor with N dummy iterations in it`s body
 class DummyBody {
     int m_numIters;

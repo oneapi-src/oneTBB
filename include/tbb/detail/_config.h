@@ -296,6 +296,8 @@
 
 #define __TBB_TSX_INTRINSICS_PRESENT ((__RTM__ || _MSC_VER>=1700 || __INTEL_COMPILER) && !__ANDROID__)
 
+#define __TBB_WAITPKG_INTRINSICS_PRESENT ((__INTEL_COMPILER >= 1900 || __TBB_GCC_VERSION >= 110000 || __TBB_CLANG_VERSION >= 120000) && !__ANDROID__)
+
 /** Internal TBB features & modes **/
 
 /** __TBB_SOURCE_DIRECTLY_INCLUDED is a mode used in whitebox testing when
@@ -334,7 +336,7 @@
     #define __TBB_ARENA_OBSERVER __TBB_SCHEDULER_OBSERVER
 #endif /* __TBB_ARENA_OBSERVER */
 
-#if TBB_PREVIEW_NUMA_SUPPORT || __TBB_BUILD
+#ifndef __TBB_NUMA_SUPPORT
     #define __TBB_NUMA_SUPPORT 1
 #endif
 

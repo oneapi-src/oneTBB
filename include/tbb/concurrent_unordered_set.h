@@ -67,6 +67,7 @@ public:
 
     // Include constructors of base_type;
     using base_type::base_type;
+    using base_type::operator=;
 
     template <typename OtherHash, typename OtherKeyEqual>
     void merge( concurrent_unordered_set<key_type, OtherHash, OtherKeyEqual, allocator_type>& source ) {
@@ -162,6 +163,7 @@ public:
 
     // Include constructors of base_type;
     using base_type::base_type;
+    using base_type::operator=;
 
     template <typename OtherHash, typename OtherKeyEqual>
     void merge( concurrent_unordered_set<key_type, OtherHash, OtherKeyEqual, allocator_type>& source ) {

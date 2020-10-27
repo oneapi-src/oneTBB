@@ -65,6 +65,7 @@ void check_container_order( const Container& cont ) {
 template <typename Container>
 void test_ordered_methods() {
     Container cont;
+    const Container& ccont = cont;
 
     int r, random_threshold = 10, uncontained_key = random_threshold / 2;
     for (int i = 0; i < 100; ++i) {
@@ -97,11 +98,23 @@ void test_ordered_methods() {
             }
         }
 
+        typename Container::range_type cont_range = cont.range();
+        typename Container::const_range_type ccont_range = ccont.range();
+        REQUIRE_MESSAGE(cont_range.size() == ccont_range.size(), "Incorrect ordered container range size");
+        REQUIRE_MESSAGE(cont_range.size() == cont.size(), "Incorrect ordered container range size");
+
         typename Container::iterator l_bound = cont.lower_bound(key);
         typename Container::iterator u_bound = cont.upper_bound(key);
 
         REQUIRE_MESSAGE(l_bound == l_bound_check, "lower_bound() returned wrong iterator");
         REQUIRE_MESSAGE(u_bound == u_bound_check, "upper_bound() returned wrong iterator");
+
+        using const_iterator = typename Container::const_iterator;
+        const_iterator cl_bound = ccont.lower_bound(key);
+        const_iterator cu_bound = ccont.upper_bound(key);
+
+        REQUIRE_MESSAGE(cl_bound == const_iterator(l_bound), "lower_bound() const returned wrong iterator");
+        REQUIRE_MESSAGE(cu_bound == const_iterator(u_bound), "upper_bound() const returned wrong iterator");
 
         REQUIRE((l_bound == eq_range.first && u_bound == eq_range.second));
     }
@@ -284,6 +297,8 @@ void check_heterogeneous_bound_functions() {
                   "incorrect key_type for heterogeneous bounds test");
     // Initialization
     Container c;
+    const Container& cc = c;
+
     int size = 10;
     for (int i = 0; i < size; ++i) {
         c.insert(Value<Container>::make(i));
@@ -300,6 +315,8 @@ void check_heterogeneous_bound_functions() {
 
         REQUIRE_MESSAGE(c.lower_bound(k) == c.lower_bound(key), "Incorrect heterogeneous lower_bound return value");
         REQUIRE_MESSAGE(c.upper_bound(k) == c.upper_bound(key), "Incorrect heterogeneous upper_bound return value");
+        REQUIRE_MESSAGE(cc.lower_bound(k) == cc.lower_bound(key), "Incorrect const heterogeneous lower_bound return value");
+        REQUIRE_MESSAGE(cc.upper_bound(k) == cc.upper_bound(key), "Incorrect const heterogeneous upper_bound return value");
     }
 }
 
