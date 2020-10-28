@@ -312,10 +312,10 @@ public:
 // ------------------------ end of node task bodies -----------------------------------
 
 template<typename T, typename DecrementType, typename DummyType = void>
-class decrementer;
+class threshold_regulator;
 
 template<typename T, typename DecrementType>
-class decrementer<T, DecrementType,
+class threshold_regulator<T, DecrementType,
                   typename std::enable_if<std::is_integral<DecrementType>::value>::type>
     : public receiver<DecrementType>, no_copy
 {
@@ -337,13 +337,13 @@ protected:
     void reset_receiver( reset_flags ) {}
 
 public:
-    decrementer(T* owner) : my_node(owner) {
+    threshold_regulator(T* owner) : my_node(owner) {
         // Do not work with the passed pointer here as it may not be fully initialized yet
     }
 };
 
 template<typename T>
-class decrementer<T, continue_msg, void> : public continue_receiver, no_copy {
+class threshold_regulator<T, continue_msg, void> : public continue_receiver, no_copy {
 
     T *my_node;
 
@@ -361,7 +361,7 @@ public:
 
     typedef continue_msg input_type;
     typedef continue_msg output_type;
-    decrementer(T* owner)
+    threshold_regulator(T* owner)
         : continue_receiver( /*number_of_predecessors=*/0, no_priority ), my_node(owner)
     {
         // Do not work with the passed pointer here as it may not be fully initialized yet

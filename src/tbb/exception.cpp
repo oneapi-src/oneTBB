@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
-#include "tbb/detail/_exception.h"
-#include "tbb/detail/_assert.h"
-#include "tbb/detail/_template_helpers.h"
+#include "oneapi/tbb/detail/_exception.h"
+#include "oneapi/tbb/detail/_assert.h"
+#include "oneapi/tbb/detail/_template_helpers.h"
 
 #include <cstring>
 #include <cstdio>

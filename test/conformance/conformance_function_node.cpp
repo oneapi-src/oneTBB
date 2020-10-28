@@ -19,9 +19,9 @@
 #include "common/utils.h"
 #include "common/graph_utils.h"
 
-#include "tbb/flow_graph.h"
-#include "tbb/task_arena.h"
-#include "tbb/global_control.h"
+#include "oneapi/tbb/flow_graph.h"
+#include "oneapi/tbb/task_arena.h"
+#include "oneapi/tbb/global_control.h"
 
 #include "conformance_flowgraph.h"
 
@@ -36,8 +36,8 @@ TODO: implement missing conformance tests for function_node:
   - [ ] Rename test_broadcast to test_forwarding and check that the value passed is the actual one
     received.
   - [ ] Concurrency testing of the node: make a loop over possible concurrency levels. It is
-    important to test at least on five values: 1, tbb::flow::serial, `max_allowed_parallelism'
-    obtained from `tbb::global_control', `tbb::flow::unlimited', and, if `max allowed
+    important to test at least on five values: 1, oneapi::tbb::flow::serial, `max_allowed_parallelism'
+    obtained from `oneapi::tbb::global_control', `oneapi::tbb::flow::unlimited', and, if `max allowed
     parallelism' is > 2, use something in the middle of the [1, max_allowed_parallelism]
     interval. Use `utils::ExactConcurrencyLevel' entity (extending it if necessary).
   - [ ] make `test_rejecting' deterministic, i.e. avoid dependency on OS scheduling of the threads;
@@ -71,11 +71,11 @@ struct concurrency_functor {
 };
 
 void test_func_body(){
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
     inc_functor<int> fun;
     fun.execute_count = 0;
 
-    tbb::flow::function_node<int, int> node1(g, tbb::flow::unlimited, fun);
+    oneapi::tbb::flow::function_node<int, int> node1(g, oneapi::tbb::flow::unlimited, fun);
 
     const size_t n = 10;
     for(size_t i = 0; i < n; ++i) {
@@ -88,23 +88,23 @@ void test_func_body(){
 
 void test_priority(){
     size_t concurrency_limit = 1;
-    tbb::global_control control(tbb::global_control::max_allowed_parallelism, concurrency_limit);
+    oneapi::tbb::global_control control(oneapi::tbb::global_control::max_allowed_parallelism, concurrency_limit);
 
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
 
     first_functor<int>::first_id.store(-1);
     first_functor<int> low_functor(1);
     first_functor<int> high_functor(2);
 
-    tbb::flow::continue_node<int> source(g, [&](tbb::flow::continue_msg){return 1;} );
+    oneapi::tbb::flow::continue_node<int> source(g, [&](oneapi::tbb::flow::continue_msg){return 1;} );
 
-    tbb::flow::function_node<int, int> high(g, tbb::flow::unlimited, high_functor, tbb::flow::node_priority_t(1));
-    tbb::flow::function_node<int, int> low(g, tbb::flow::unlimited, low_functor);
+    oneapi::tbb::flow::function_node<int, int> high(g, oneapi::tbb::flow::unlimited, high_functor, oneapi::tbb::flow::node_priority_t(1));
+    oneapi::tbb::flow::function_node<int, int> low(g, oneapi::tbb::flow::unlimited, low_functor);
 
     make_edge(source, low);
     make_edge(source, high);
 
-    source.try_put(tbb::flow::continue_msg());
+    source.try_put(oneapi::tbb::flow::continue_msg());
     g.wait_for_all();
 
     CHECK_MESSAGE( (first_functor<int>::first_id == 2), "High priority node should execute first");
@@ -112,7 +112,7 @@ void test_priority(){
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 void test_deduction_guides(){
-    using namespace tbb::flow;
+    using namespace oneapi::tbb::flow;
     graph g;
 
     auto body = [](const int&)->int { return 1; };
@@ -122,15 +122,15 @@ void test_deduction_guides(){
 #endif
 
 void test_broadcast(){
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
     passthru_body fun;
 
-    tbb::flow::function_node<int, int> node1(g, tbb::flow::unlimited, fun);
+    oneapi::tbb::flow::function_node<int, int> node1(g, oneapi::tbb::flow::unlimited, fun);
     test_push_receiver<int> node2(g);
     test_push_receiver<int> node3(g);
 
-    tbb::flow::make_edge(node1, node2);
-    tbb::flow::make_edge(node1, node3);
+    oneapi::tbb::flow::make_edge(node1, node2);
+    oneapi::tbb::flow::make_edge(node1, node3);
 
     node1.try_put(1);
     g.wait_for_all();
@@ -141,13 +141,13 @@ void test_broadcast(){
 
 template<typename Policy>
 void test_buffering(){
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
     passthru_body fun;
 
-    tbb::flow::function_node<int, int, Policy> node(g, tbb::flow::unlimited, fun);
-    tbb::flow::limiter_node<int> rejecter(g, 0);
+    oneapi::tbb::flow::function_node<int, int, Policy> node(g, oneapi::tbb::flow::unlimited, fun);
+    oneapi::tbb::flow::limiter_node<int> rejecter(g, 0);
 
-    tbb::flow::make_edge(node, rejecter);
+    oneapi::tbb::flow::make_edge(node, rejecter);
     node.try_put(1);
 
     int tmp = -1;
@@ -160,9 +160,9 @@ void test_node_concurrency(){
     my_concurrency = 0;
     my_max_concurrency = 0;
 
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
     concurrency_functor<int> counter;
-    tbb::flow::function_node <int, int> fnode(g, tbb::flow::serial, counter);
+    oneapi::tbb::flow::function_node <int, int> fnode(g, oneapi::tbb::flow::serial, counter);
 
     test_push_receiver<int> sink(g);
 
@@ -179,7 +179,7 @@ void test_node_concurrency(){
 
 template<typename I, typename O>
 void test_inheritance(){
-    using namespace tbb::flow;
+    using namespace oneapi::tbb::flow;
 
     CHECK_MESSAGE( (std::is_base_of<graph_node, function_node<I, O>>::value), "function_node should be derived from graph_node");
     CHECK_MESSAGE( (std::is_base_of<receiver<I>, function_node<I, O>>::value), "function_node should be derived from receiver<Input>");
@@ -187,14 +187,14 @@ void test_inheritance(){
 }
 
 void test_policy_ctors(){
-    using namespace tbb::flow;
+    using namespace oneapi::tbb::flow;
     graph g;
 
-    function_node<int, int, lightweight> lw_node(g, tbb::flow::serial,
+    function_node<int, int, lightweight> lw_node(g, oneapi::tbb::flow::serial,
                                                           [](int v) { return v;});
-    function_node<int, int, queueing_lightweight> qlw_node(g, tbb::flow::serial,
+    function_node<int, int, queueing_lightweight> qlw_node(g, oneapi::tbb::flow::serial,
                                                           [](int v) { return v;});
-    function_node<int, int, rejecting_lightweight> rlw_node(g, tbb::flow::serial,
+    function_node<int, int, rejecting_lightweight> rlw_node(g, oneapi::tbb::flow::serial,
                                                           [](int v) { return v;});
 
 }
@@ -207,7 +207,7 @@ public:
 };
     
 void test_ctors(){
-    using namespace tbb::flow;
+    using namespace oneapi::tbb::flow;
     graph g;
 
     function_node<int, int> fn(g, unlimited, stateful_functor());
@@ -241,7 +241,7 @@ struct CopyCounterBody{
 };
 
 void test_copies(){
-    using namespace tbb::flow;
+    using namespace oneapi::tbb::flow;
 
     CopyCounterBody<int, int> b;
 
@@ -254,8 +254,8 @@ void test_copies(){
 }
 
 void test_rejecting(){
-    tbb::flow::graph g;
-    tbb::flow::function_node <int, int, tbb::flow::rejecting> fnode(g, tbb::flow::serial,
+    oneapi::tbb::flow::graph g;
+    oneapi::tbb::flow::function_node <int, int, oneapi::tbb::flow::rejecting> fnode(g, oneapi::tbb::flow::serial,
                                                                     [&](int v){
                                                                         size_t ms = 50;
                                                                         std::chrono::milliseconds sleep_time( ms );
@@ -303,8 +303,8 @@ TEST_CASE("function_node superclasses"){
 //! Test function_node buffering
 //! \brief \ref requirement
 TEST_CASE("function_node buffering"){
-    test_buffering<tbb::flow::rejecting>();
-    test_buffering<tbb::flow::queueing>();
+    test_buffering<oneapi::tbb::flow::rejecting>();
+    test_buffering<oneapi::tbb::flow::queueing>();
 }
 
 //! Test function_node broadcasting

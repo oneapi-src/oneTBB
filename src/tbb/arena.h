@@ -20,7 +20,7 @@
 #include <atomic>
 #include <cstring>
 
-#include "tbb/detail/_task.h"
+#include "oneapi/tbb/detail/_task.h"
 
 #include "scheduler_common.h"
 #include "intrusive_list.h"
@@ -32,7 +32,7 @@
 #include "governor.h"
 #include "concurrent_monitor.h"
 #include "observer_proxy.h"
-#include "tbb/spin_mutex.h"
+#include "oneapi/tbb/spin_mutex.h"
 
 namespace tbb {
 namespace detail {
@@ -223,9 +223,6 @@ struct arena_base : padded<intrusive_list_node> {
     // arena needs an extra worker despite a global limit
     std::atomic<bool> my_global_concurrency_mode;
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
-
-    //! Waiting object for external and coroutine waiters.
-    concurrent_monitor my_sleep_monitors;
 
     //! Waiting object for master threads that cannot join the arena.
     concurrent_monitor my_exit_monitors;
@@ -431,6 +428,11 @@ inline void arena::on_thread_leaving ( ) {
 
 template<arena::new_work_type work_type>
 void arena::advertise_new_work() {
+    auto is_related_arena = [&] (extended_context context) {
+        std::uintptr_t arena_tag = std::uintptr_t(this);
+        return arena_tag == context.arena_ctx;
+    };
+
     if( work_type == work_enqueued ) {
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
         if ( my_market->my_num_workers_soft_limit.load(std::memory_order_acquire) == 0 &&
@@ -446,7 +448,7 @@ void arena::advertise_new_work() {
             my_market->adjust_demand(*this, my_max_num_workers);
 
             // Notify all sleeping threads that work has appeared in the arena.
-            my_sleep_monitors.notify_all();
+            my_market->get_wait_list().notify(is_related_arena);
             return;
         }
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
@@ -504,7 +506,7 @@ void arena::advertise_new_work() {
             my_market->adjust_demand( *this, my_max_num_workers );
 
             // Notify all sleeping threads that work has appeared in the arena.
-            my_sleep_monitors.notify_all();
+            my_market->get_wait_list().notify(is_related_arena);
         }
     }
 }

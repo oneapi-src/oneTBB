@@ -423,7 +423,7 @@ struct limiter_node_type<void> {
 template <typename DType>
 struct DecrementerHelper {
     template <typename Decrementer>
-    static void check(Decrementer&&) {}
+    static void check(Decrementer&) {}
     static DType makeDType() {
         return DType(1);
     }
@@ -432,7 +432,8 @@ struct DecrementerHelper {
 template <>
 struct DecrementerHelper<tbb::flow::continue_msg> {
     template <typename Decrementer>
-    static void check(Decrementer&& d) {
+    static void check(Decrementer& decrementer) {
+        auto& d = static_cast<tbb::detail::d1::continue_receiver&>(decrementer);
         CHECK_MESSAGE(d.my_predecessor_count == 0, "error in pred count");
         CHECK_MESSAGE(d.my_initial_predecessor_count == 0, "error in initial pred count");
         CHECK_MESSAGE(d.my_current_count == 0, "error in current count");
@@ -449,7 +450,7 @@ void TestLimiterNode() {
     using dtype = typename limiter_node_type<DecrementerType>::dtype;
     typename limiter_node_type<DecrementerType>::type ln(g,1);
     INFO("Testing limiter_node: preds and succs");
-    DecrementerHelper<dtype>::check(ln.decrement);
+    DecrementerHelper<dtype>::check(ln.decrementer());
     CHECK_MESSAGE( (ln.my_threshold == 1), "error in my_threshold");
     tbb::flow::queue_node<int> inq(g);
     tbb::flow::queue_node<int> outq(g);
@@ -457,7 +458,7 @@ void TestLimiterNode() {
 
     tbb::flow::make_edge(inq,ln);
     tbb::flow::make_edge(ln,outq);
-    tbb::flow::make_edge(bn,ln.decrement);
+    tbb::flow::make_edge(bn,ln.decrementer());
 
     g.wait_for_all();
     CHECK_MESSAGE( (!(ln.my_successors.empty())),"successors empty after make_edge");
@@ -484,7 +485,7 @@ void TestLimiterNode() {
     INFO(" rf_clear_edges");
     // currently the limiter_node will not pass another message
     g.reset(tbb::flow::rf_clear_edges);
-    DecrementerHelper<dtype>::check(ln.decrement);
+    DecrementerHelper<dtype>::check(ln.decrementer());
     CHECK_MESSAGE( (ln.my_threshold == 1), "error in my_threshold");
     CHECK_MESSAGE( (ln.my_predecessors.empty()), "preds not reset(rf_clear_edges)");
     CHECK_MESSAGE( (ln.my_successors.empty()), "preds not reset(rf_clear_edges)");

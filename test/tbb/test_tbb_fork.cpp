@@ -29,7 +29,7 @@ static const int MaxThread = 4;
 
 // Doctest is not used here, but placed just to prevent compiler errors for bad headers design
 #define DOCTEST_CONFIG_IMPLEMENT
-#include "common/doctest.h"
+#include "common/test.h"
 
 #include "common/utils.h"
 #include "common/utils_assert.h"

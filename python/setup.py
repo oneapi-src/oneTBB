@@ -53,9 +53,11 @@ if platform.system() == 'Windows':
         print("Using compiler settings from environment")
     tbb_flag = ['/Qtbb'] if use_compiler_tbb else []
     compile_flags = ['/Qstd=c++11'] if intel_compiler else []
+    tbb_lib_name = 'tbb12'
 else:
     tbb_flag = ['-tbb'] if use_compiler_tbb else []
     compile_flags = ['-std=c++11', '-Wno-unused-variable']
+    tbb_lib_name = 'tbb'
 
 _tbb = Extension("tbb._api", ["tbb/api.i"],
         include_dirs=[os.path.join(tbb_root, 'include')] if not use_compiler_tbb else [],
@@ -63,7 +65,7 @@ _tbb = Extension("tbb._api", ["tbb/api.i"],
               ['-I' + os.path.join(tbb_root, 'include')] if not use_compiler_tbb else []),
         extra_compile_args=compile_flags + tbb_flag,
         extra_link_args=tbb_flag,
-        libraries   =(['tbb'] if not use_compiler_tbb else []) +
+        libraries   =([tbb_lib_name] if not use_compiler_tbb else []) +
                      (['irml'] if platform.system() == "Linux" else []),
         library_dirs=[ rundir,                                              # for custom-builds
                        os.path.join(tbb_root, 'lib', 'intel64', 'gcc4.8'),  # for Linux

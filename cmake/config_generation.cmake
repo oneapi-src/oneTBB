@@ -22,7 +22,6 @@ function(tbb_generate_config)
     set(options      HANDLE_SUBDIRS)
     set(oneValueArgs INSTALL_DIR
                      SYSTEM_NAME
-                     SIZEOF_VOID_P  # 4 for 32 bit, 8 for 64 bit.
                      LIB_REL_PATH INC_REL_PATH DLL_REL_PATH
                      VERSION
                      TBB_BINARY_VERSION
@@ -38,8 +37,6 @@ function(tbb_generate_config)
     file(TO_CMAKE_PATH "${tbb_gen_cfg_LIB_REL_PATH}" TBB_LIB_REL_PATH)
     file(TO_CMAKE_PATH "${tbb_gen_cfg_DLL_REL_PATH}" TBB_DLL_REL_PATH)
     file(TO_CMAKE_PATH "${tbb_gen_cfg_INC_REL_PATH}" TBB_INC_REL_PATH)
-
-    set(TBB_SIZEOF_VOID_P "${tbb_gen_cfg_SIZEOF_VOID_P}")
 
     set(TBB_VERSION ${tbb_gen_cfg_VERSION})
 
@@ -57,7 +54,11 @@ set(_tbbbind_bin_version ${tbb_gen_cfg_TBBBIND_BINARY_VERSION})
         set(TBB_IMPLIB_DEBUG "")
         if (tbb_gen_cfg_HANDLE_SUBDIRS)
             set(TBB_HANDLE_SUBDIRS "
-set(_tbb_subdir gcc4.8)
+if (CMAKE_SIZEOF_VOID_P STREQUAL \"8\")
+    set(_tbb_subdir intel64/gcc4.8)
+else ()
+    set(_tbb_subdir ia32/gcc4.8)
+endif()
 ")
         endif()
     elseif (tbb_gen_cfg_SYSTEM_NAME STREQUAL "Darwin")
@@ -76,9 +77,9 @@ set(_tbb_subdir gcc4.8)
         # Expand TBB_LIB_REL_PATH here in IMPORTED_IMPLIB property and
         # redefine it with TBB_DLL_REL_PATH value to properly fill IMPORTED_LOCATION property in TBBConfig.cmake.in template.
         set(TBB_IMPLIB_RELEASE "
-                                      IMPORTED_IMPLIB_RELEASE \"\${CMAKE_CURRENT_LIST_DIR}/${TBB_LIB_REL_PATH}/\${_tbb_subdir}/\${_tbb_component}.lib\"")
+                                      IMPORTED_IMPLIB_RELEASE \"\${CMAKE_CURRENT_LIST_DIR}/${TBB_LIB_REL_PATH}/\${_tbb_subdir}/\${_tbb_component}\${_bin_version}.lib\"")
         set(TBB_IMPLIB_DEBUG "
-                                      IMPORTED_IMPLIB_DEBUG \"\${CMAKE_CURRENT_LIST_DIR}/${TBB_LIB_REL_PATH}/\${_tbb_subdir}/\${_tbb_component}_debug.lib\"")
+                                      IMPORTED_IMPLIB_DEBUG \"\${CMAKE_CURRENT_LIST_DIR}/${TBB_LIB_REL_PATH}/\${_tbb_subdir}/\${_tbb_component}\${_bin_version}_debug.lib\"")
         set(TBB_LIB_REL_PATH ${TBB_DLL_REL_PATH})
 
         if (tbb_gen_cfg_HANDLE_SUBDIRS)
@@ -87,8 +88,21 @@ set(_tbb_subdir vc14)
 if (WINDOWS_STORE)
     set(_tbb_subdir \${_tbb_subdir}_uwp)
 endif()
+
+if (CMAKE_SIZEOF_VOID_P STREQUAL \"8\")
+    set(_tbb_subdir intel64/\${_tbb_subdir})
+else ()
+    set(_tbb_subdir ia32/\${_tbb_subdir})
+endif()
 ")
         endif()
+
+        set(TBB_HANDLE_BIN_VERSION "
+    unset(_bin_version)
+    if (_tbb_component STREQUAL tbb)
+        set(_bin_version \${_tbb_bin_version})
+    endif()
+")
     else()
         message(FATAL_ERROR "Unsupported OS name: ${tbb_system_name}")
     endif()

@@ -121,6 +121,23 @@ void test_cancellation_on_exception( bool reset_ctx ) {
 #endif // TBB_USE_EXCEPTIONS
 
 //! \brief \ref error_guessing
+TEST_CASE("External threads sleep") {
+    if (utils::get_platform_max_threads() < 2) return;
+    utils::SpinBarrier barrier(2);
+
+    tbb::task_group test_gr;
+
+    test_gr.run([&] {
+        barrier.wait();
+        TestCPUUserTime(2);
+    });
+
+    barrier.wait();
+
+    test_gr.wait();
+}
+
+//! \brief \ref error_guessing
 TEST_CASE("Test that task was executed p times") {
     tbb::detail::d1::wait_context wait(1);
     tbb::task_group_context test_context;
@@ -618,23 +635,6 @@ TEST_CASE("All workers sleep") {
 
     for (auto sp : suspend_points)
         tbb::task::resume(sp);
-    test_gr.wait();
-}
-
-//! \brief \ref error_guessing
-TEST_CASE("External threads sleep") {
-    if (utils::get_platform_max_threads() < 2) return;
-    utils::SpinBarrier barrier(2);
-
-    tbb::task_group test_gr;
-
-    test_gr.run([&] {
-        barrier.wait();
-        TestCPUUserTime(2);
-    });
-
-    barrier.wait();
-
     test_gr.wait();
 }
 

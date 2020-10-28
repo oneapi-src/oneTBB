@@ -131,8 +131,7 @@ namespace tbb {
     public:
         task_group();
         ~task_group();
-        void wait(); 
-        bool is_canceling();
+        void wait();
         void cancel();
         %extend {
         void run( PyObject *c ) { $self->run(PyCaller(c)); }

@@ -17,7 +17,7 @@
 #ifndef _TBB_tls_H
 #define _TBB_tls_H
 
-#include "tbb/detail/_config.h"
+#include "oneapi/tbb/detail/_config.h"
 
 #if __TBB_USE_POSIX
 #include <pthread.h>

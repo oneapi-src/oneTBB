@@ -17,8 +17,8 @@
 #ifndef __TBB_test_common_parallel_for_each_common_H
 #define __TBB_test_common_parallel_for_each_common_H
 
-#include "tbb/parallel_for_each.h"
-#include "tbb/global_control.h"
+#include "oneapi/tbb/parallel_for_each.h"
+#include "oneapi/tbb/global_control.h"
 
 #include "test.h"
 #include "config.h"

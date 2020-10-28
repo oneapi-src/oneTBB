@@ -24,7 +24,10 @@ add_library(TBB::tbbmalloc ALIAS tbbmalloc)
 
 target_compile_definitions(tbbmalloc PRIVATE __TBBMALLOC_BUILD)
 
-if (NOT ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(armv7-a|aarch64|mips)" OR WINDOWS_STORE OR TBB_WINDOWS_DRIVER))
+if (NOT ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(armv7-a|aarch64|mips|arm64)" OR
+         "${CMAKE_OSX_ARCHITECTURES}" MATCHES "arm64" OR
+         WINDOWS_STORE OR
+         TBB_WINDOWS_DRIVER))
     target_compile_definitions(tbbmalloc PRIVATE __TBB_USE_ITT_NOTIFY)
 endif()
 

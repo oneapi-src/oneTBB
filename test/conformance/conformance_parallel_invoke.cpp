@@ -46,7 +46,7 @@ struct correctness_test_case {
         }
     };
 
-    static void run_validate_and_reset(tbb::task_group_context* context_ptr) {
+    static void run_validate_and_reset(oneapi::tbb::task_group_context* context_ptr) {
         for (auto& elem : data_array)
             elem.store(0, std::memory_order_relaxed);
 
@@ -61,9 +61,9 @@ struct correctness_test_case {
 template<std::size_t TaskCount>
 std::atomic<std::size_t> correctness_test_case<TaskCount>::data_array[TaskCount];
 
-void correctness_test(tbb::task_group_context* context_ptr = nullptr) {
+void correctness_test(oneapi::tbb::task_group_context* context_ptr = nullptr) {
     for ( auto concurrency_level : utils::concurrency_range() ) {
-        tbb::global_control control(tbb::global_control::max_allowed_parallelism, concurrency_level);
+        oneapi::tbb::global_control control(oneapi::tbb::global_control::max_allowed_parallelism, concurrency_level);
 
         correctness_test_case<2>::run_validate_and_reset(context_ptr);
         correctness_test_case<3>::run_validate_and_reset(context_ptr);
@@ -90,7 +90,7 @@ TEST_CASE("Test correctness") {
 //! Testing correctness with various functors count using task_group_context
 //! \brief \ref requirement \ref interface
 TEST_CASE("Test correctness using context") {
-    tbb::task_group_context context;
+    oneapi::tbb::task_group_context context;
     correctness_test(&context);
 }
 
@@ -139,7 +139,7 @@ std::uint64_t exception_handling_test_case<TaskCount>::exception_mask(0);
 TEST_CASE("Test exception hangling") {
     for ( auto concurrency_level : utils::concurrency_range() ) {
         if (concurrency_level < 2) continue;
-        tbb::global_control control(tbb::global_control::max_allowed_parallelism, concurrency_level);
+        oneapi::tbb::global_control control(oneapi::tbb::global_control::max_allowed_parallelism, concurrency_level);
 
         exception_handling_test_case<2>::run_validate_and_reset();
         exception_handling_test_case<3>::run_validate_and_reset();
@@ -168,7 +168,7 @@ void simple_test_nothrow (){
 std::size_t g_numFunctions, g_functionToCancel;
 
 struct ParInvokeLauncher {
-    tbb::task_group_context &my_ctx;
+    oneapi::tbb::task_group_context &my_ctx;
 
     void operator()() const {
         void(*func_array[10])(void);
@@ -176,11 +176,11 @@ struct ParInvokeLauncher {
             func_array[i] = &simple_test_nothrow;
         func_array[g_functionToCancel] = &function_to_cancel;
 
-        tbb::parallel_invoke(func_array[0], func_array[1], func_array[2], func_array[3],
+        oneapi::tbb::parallel_invoke(func_array[0], func_array[1], func_array[2], func_array[3],
             func_array[4], func_array[5], func_array[6], func_array[7], func_array[8], func_array[9], my_ctx);
     }
 
-    ParInvokeLauncher ( tbb::task_group_context& ctx ) : my_ctx(ctx) {}
+    ParInvokeLauncher ( oneapi::tbb::task_group_context& ctx ) : my_ctx(ctx) {}
 };
 
 //! Testing cancellation
@@ -188,7 +188,7 @@ struct ParInvokeLauncher {
 TEST_CASE("Test cancellation") {
     for ( auto concurrency_level : utils::concurrency_range() ) {
         if (concurrency_level < 2) continue;
-        tbb::global_control control(tbb::global_control::max_allowed_parallelism, concurrency_level);
+        oneapi::tbb::global_control control(oneapi::tbb::global_control::max_allowed_parallelism, concurrency_level);
 
         for ( int n = 2; n <= 10; ++n ) {
             for ( int m = 0; m <= n - 1; ++m ) {

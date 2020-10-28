@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include "tbb/cache_aligned_allocator.h"
-#include "tbb/tbb_allocator.h"
+#include "oneapi/tbb/cache_aligned_allocator.h"
+#include "oneapi/tbb/tbb_allocator.h"
 
 // the real body of the test is there:
 #include "common/allocator_test_common.h"
@@ -28,11 +28,11 @@
 //! \brief \ref interface \ref requirement
 TEST_CASE("Allocator concept") {
     // allocate/deallocate
-    TestAllocator<tbb::cache_aligned_allocator<void>>(Concept);
-    TestAllocator<tbb::tbb_allocator<void>>(Concept);
+    TestAllocator<oneapi::tbb::cache_aligned_allocator<void>>(Concept);
+    TestAllocator<oneapi::tbb::tbb_allocator<void>>(Concept);
 
     // max_size case for cache_aligned allocator
-    using Allocator = tbb::cache_aligned_allocator<int>;
+    using Allocator = oneapi::tbb::cache_aligned_allocator<int>;
     Allocator allocator;
     AssertSameType(allocator.max_size(), typename std::allocator_traits<Allocator>::size_type(0));
     // Following assertion catches case where max_size() is so large that computation of
@@ -40,25 +40,25 @@ TEST_CASE("Allocator concept") {
     REQUIRE_MESSAGE((allocator.max_size() * typename std::allocator_traits<Allocator>::size_type(sizeof(int)) >= allocator.max_size()), "max_size larger than reasonable");
 
     // operator==
-    TestAllocator<tbb::cache_aligned_allocator<void>>(Comparison);
-    TestAllocator<tbb::tbb_allocator<void>>(Comparison);
+    TestAllocator<oneapi::tbb::cache_aligned_allocator<void>>(Comparison);
+    TestAllocator<oneapi::tbb::tbb_allocator<void>>(Comparison);
 }
 
 #if TBB_USE_EXCEPTIONS
 //! Testing exception guarantees
 //! \brief \ref requirement
 TEST_CASE("Exceptions") {
-    TestAllocator<tbb::cache_aligned_allocator<void>>(Exceptions);
-    TestAllocator<tbb::tbb_allocator<void>>(Exceptions);
+    TestAllocator<oneapi::tbb::cache_aligned_allocator<void>>(Exceptions);
+    TestAllocator<oneapi::tbb::tbb_allocator<void>>(Exceptions);
 }
 #endif /* TBB_USE_EXCEPTIONS */
 
 //! Testing allocators thread safety (should not introduce data races)
 //! \brief \ref requirement
 TEST_CASE("Thread safety") {
-    TestAllocator<tbb::cache_aligned_allocator<void>>(ThreadSafety);
-    TestAllocator<tbb::tbb_allocator<void>>(ThreadSafety);
-    tbb::tbb_allocator<int> tbb_alloc;
+    TestAllocator<oneapi::tbb::cache_aligned_allocator<void>>(ThreadSafety);
+    TestAllocator<oneapi::tbb::tbb_allocator<void>>(ThreadSafety);
+    oneapi::tbb::tbb_allocator<int> tbb_alloc;
 #if _MSC_VER && _MSC_VER <= 1900 && !__INTEL_COMPILER
     utils::suppress_unused_warning(tbb_alloc);
 #endif
@@ -68,7 +68,7 @@ TEST_CASE("Thread safety") {
 //! Testing tbb_allocator to return the type of allocation library used
 //! \brief \ref requirement
 TEST_CASE("tbb_allocator allocator type") {
-    using Allocator = tbb::tbb_allocator<int>; Allocator tbb_alloc;
+    using Allocator = oneapi::tbb::tbb_allocator<int>; Allocator tbb_alloc;
 #if _MSC_VER && _MSC_VER <= 1900 && !__INTEL_COMPILER
     utils::suppress_unused_warning(tbb_alloc);
 #endif
@@ -82,7 +82,7 @@ TEST_CASE("tbb_allocator allocator type") {
 //! std::pmr::polymorphic_allocator
 //! \brief \ref interface \ref requirement
 TEST_CASE("polymorphic_allocator test") {
-    tbb::cache_aligned_resource aligned_resource;
+    oneapi::tbb::cache_aligned_resource aligned_resource;
     TestAllocator<std::pmr::polymorphic_allocator<void>>(Concept, std::pmr::polymorphic_allocator<void>(&aligned_resource));
 }
 #endif

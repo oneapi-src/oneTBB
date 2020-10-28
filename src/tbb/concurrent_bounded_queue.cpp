@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
-#include "tbb/detail/_utils.h"
-#include "tbb/concurrent_queue.h"
-#include "tbb/cache_aligned_allocator.h"
+#include "oneapi/tbb/detail/_utils.h"
+#include "oneapi/tbb/concurrent_queue.h"
+#include "oneapi/tbb/cache_aligned_allocator.h"
 #include "concurrent_monitor.h"
 
 namespace tbb {
@@ -66,12 +66,12 @@ void __TBB_EXPORTED_FUNC wait_bounded_queue_monitor( concurrent_monitor* monitor
     concurrent_monitor& monitor = monitors[monitor_tag];
 
     concurrent_monitor::thread_context thr_ctx;
-    monitor.prepare_wait(thr_ctx, target);
+    monitor.prepare_wait(thr_ctx, std::uintptr_t(target));
     while (call_predicate(predicate, monitor, thr_ctx)) {
         if (monitor.commit_wait(thr_ctx)) {
             return;
         }
-        monitor.prepare_wait(thr_ctx, target);
+        monitor.prepare_wait(thr_ctx, std::uintptr_t(target));
     }
 
     monitor.cancel_wait(thr_ctx);

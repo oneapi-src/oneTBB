@@ -244,14 +244,6 @@ void test() {
             actual_concurrency = std::max( min_arena_concurrency, actual_concurrency ); // implementation detail
 
             tbb::task_arena* arena = allocate_and_construct_arena(concurrency, a_priority);
-#if _MSC_VER && !defined(__INTEL_COMPILER)
-#pragma warning(push)
-#pragma warning(disable:4316) // object allocated on the heap may not be aligned
-#endif
-#if __TBB_GCC_VERSION >= 70000 && !defined(__clang__) && !defined(__INTEL_COMPILER)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Waligned-new=none"
-#endif
             arenas.push_back(
                 std::make_tuple(
                     std::unique_ptr<tbb::task_arena>(arena),
@@ -260,12 +252,6 @@ void test() {
                     std::unique_ptr<tbb::task_group>(new tbb::task_group)
                 )
             );
-#if __TBB_GCC_VERSION >= 70000 && !defined(__clang__) && !defined(__INTEL_COMPILER)
-#pragma GCC diagnostic pop
-#endif
-#if _MSC_VER && !defined(__INTEL_COMPILER)
-#pragma warning(pop)
-#endif
         }
 
         std::rotate( arenas.begin(), arenas.begin() + progressing_arenas_num - 1, arenas.end() );

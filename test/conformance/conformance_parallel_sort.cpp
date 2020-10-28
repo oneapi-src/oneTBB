@@ -17,8 +17,8 @@
 #include "common/test.h"
 #include "common/utils_concurrency_limit.h"
 
-#include "tbb/parallel_sort.h"
-#include "tbb/global_control.h"
+#include "oneapi/tbb/parallel_sort.h"
+#include "oneapi/tbb/global_control.h"
 
 #include <vector>
 
@@ -38,10 +38,10 @@ std::vector<int> get_random_vector() {
 //! \brief \ref requirement \ref interface
 TEST_CASE("Iterator based range sorting test (default comparator)") {
     for ( auto concurrency_level : utils::concurrency_range() ) {
-        tbb::global_control control(tbb::global_control::max_allowed_parallelism, concurrency_level);
+        oneapi::tbb::global_control control(oneapi::tbb::global_control::max_allowed_parallelism, concurrency_level);
 
         auto test_vector = get_random_vector();
-        tbb::parallel_sort(test_vector.begin(), test_vector.end());
+        oneapi::tbb::parallel_sort(test_vector.begin(), test_vector.end());
 
         for(auto it = test_vector.begin(); it != test_vector.end() - 1; ++it)
             REQUIRE_MESSAGE(*it <= *(it+1), "Testing data not sorted");
@@ -52,10 +52,10 @@ TEST_CASE("Iterator based range sorting test (default comparator)") {
 //! \brief \ref requirement \ref interface
 TEST_CASE ("Iterator based range sorting test (greater comparator)") {
     for ( auto concurrency_level : utils::concurrency_range() ) {
-        tbb::global_control control(tbb::global_control::max_allowed_parallelism, concurrency_level);
+        oneapi::tbb::global_control control(oneapi::tbb::global_control::max_allowed_parallelism, concurrency_level);
 
         auto test_vector = get_random_vector();
-        tbb::parallel_sort(test_vector.begin(), test_vector.end(), std::greater<int>());
+        oneapi::tbb::parallel_sort(test_vector.begin(), test_vector.end(), std::greater<int>());
 
         for(auto it = test_vector.begin(); it != test_vector.end() - 1; ++it)
             REQUIRE_MESSAGE(*it >= *(it+1), "Testing data not sorted");
@@ -66,10 +66,10 @@ TEST_CASE ("Iterator based range sorting test (greater comparator)") {
 //! \brief \ref requirement \ref interface
 TEST_CASE ("Range sorting test (default comparator)") {
     for ( auto concurrency_level : utils::concurrency_range() ) {
-        tbb::global_control control(tbb::global_control::max_allowed_parallelism, concurrency_level);
+        oneapi::tbb::global_control control(oneapi::tbb::global_control::max_allowed_parallelism, concurrency_level);
 
         auto test_vector = get_random_vector();
-        tbb::parallel_sort(test_vector);
+        oneapi::tbb::parallel_sort(test_vector);
 
         for(auto it = test_vector.begin(); it != test_vector.end() - 1; ++it)
             REQUIRE_MESSAGE(*it <= *(it+1), "Testing data not sorted");
@@ -80,10 +80,10 @@ TEST_CASE ("Range sorting test (default comparator)") {
 //! \brief \ref requirement \ref interface
 TEST_CASE ("Range sorting test (greater comparator)") {
     for ( auto concurrency_level : utils::concurrency_range() ) {
-        tbb::global_control control(tbb::global_control::max_allowed_parallelism, concurrency_level);
+        oneapi::tbb::global_control control(oneapi::tbb::global_control::max_allowed_parallelism, concurrency_level);
 
         auto test_vector = get_random_vector();
-        tbb::parallel_sort(test_vector, std::greater<int>());
+        oneapi::tbb::parallel_sort(test_vector, std::greater<int>());
 
         for(auto it = test_vector.begin(); it != test_vector.end() - 1; ++it)
             REQUIRE_MESSAGE(*it >= *(it+1), "Testing data not sorted");

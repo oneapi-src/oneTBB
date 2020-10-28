@@ -20,8 +20,8 @@
 #include <common/custom_allocators.h>
 #include <common/container_move_support.h>
 
-#include <tbb/concurrent_queue.h>
-#include <tbb/cache_aligned_allocator.h>
+#include "oneapi/tbb/concurrent_queue.h"
+#include "oneapi/tbb/cache_aligned_allocator.h"
 #include <type_traits>
 #include <atomic>
 
@@ -29,7 +29,7 @@
 //! \brief Test for [containers.concurrent_queue containers.concurrent_bounded_queue] specification
 
 template <typename T>
-using test_allocator = StaticSharedCountingAllocator<tbb::cache_aligned_allocator<T>>;
+using test_allocator = StaticSharedCountingAllocator<oneapi::tbb::cache_aligned_allocator<T>>;
 
 static constexpr std::size_t MinThread = 1;
 static constexpr std::size_t MaxThread = 4;
@@ -52,8 +52,8 @@ void push(CQ& q, ValueType v, CounterType i) {
 }
 
 template<typename T>
-class ConcQWithCapacity : public tbb::concurrent_queue<T, test_allocator<T>> {
-    using base_type = tbb::concurrent_queue<T, test_allocator<T>>;
+class ConcQWithCapacity : public oneapi::tbb::concurrent_queue<T, test_allocator<T>> {
+    using base_type = oneapi::tbb::concurrent_queue<T, test_allocator<T>>;
 public:
     ConcQWithCapacity() : my_capacity( std::size_t(-1) / (sizeof(void*) + sizeof(T)) ) {}
     std::size_t size() const {
@@ -93,8 +93,8 @@ void TestEmptyQueue() {
 void TestEmptiness() {
     TestEmptyQueue<ConcQWithCapacity<char>, char>();
     TestEmptyQueue<ConcQWithCapacity<move_support_tests::Foo>, move_support_tests::Foo>();
-    TestEmptyQueue<tbb::concurrent_bounded_queue<char, test_allocator<char>>, char>();
-    TestEmptyQueue<tbb::concurrent_bounded_queue<move_support_tests::Foo,
+    TestEmptyQueue<oneapi::tbb::concurrent_bounded_queue<char, test_allocator<char>>, char>();
+    TestEmptyQueue<oneapi::tbb::concurrent_bounded_queue<move_support_tests::Foo,
            test_allocator<move_support_tests::Foo>>, move_support_tests::Foo>();
 }
 
@@ -128,7 +128,7 @@ void TestFullQueue() {
 
 void TestFullness() {
     TestFullQueue<ConcQWithCapacity<move_support_tests::Foo>, move_support_tests::Foo>();
-    TestFullQueue<tbb::concurrent_bounded_queue<move_support_tests::Foo, test_allocator<move_support_tests::Foo>>, move_support_tests::Foo>();
+    TestFullQueue<oneapi::tbb::concurrent_bounded_queue<move_support_tests::Foo, test_allocator<move_support_tests::Foo>>, move_support_tests::Foo>();
 }
 
 template<typename CQ>
@@ -172,7 +172,7 @@ void TestClear() {
 
 void TestClearWorks() {
     TestClear<ConcQWithCapacity<move_support_tests::Foo>>();
-    TestClear<tbb::concurrent_bounded_queue<move_support_tests::Foo, test_allocator<move_support_tests::Foo>>>();
+    TestClear<oneapi::tbb::concurrent_bounded_queue<move_support_tests::Foo, test_allocator<move_support_tests::Foo>>>();
 }
 
 template<typename Iterator1, typename Iterator2>
@@ -249,27 +249,27 @@ void TestIterator() {
 }
 
 void TestQueueIteratorWorks() {
-    TestIterator<tbb::concurrent_queue<move_support_tests::Foo, test_allocator<move_support_tests::Foo>>>();
-    TestIterator<tbb::concurrent_bounded_queue<move_support_tests::Foo, test_allocator<move_support_tests::Foo>>>();
+    TestIterator<oneapi::tbb::concurrent_queue<move_support_tests::Foo, test_allocator<move_support_tests::Foo>>>();
+    TestIterator<oneapi::tbb::concurrent_bounded_queue<move_support_tests::Foo, test_allocator<move_support_tests::Foo>>>();
 }
 
-// Define wrapper classes to test tbb::concurrent_queue<T>
-template<typename T, typename A = tbb::cache_aligned_allocator<T>>
-class ConcQWithSizeWrapper : public tbb::concurrent_queue<T, A> {
+// Define wrapper classes to test oneapi::tbb::concurrent_queue<T>
+template<typename T, typename A = oneapi::tbb::cache_aligned_allocator<T>>
+class ConcQWithSizeWrapper : public oneapi::tbb::concurrent_queue<T, A> {
 public:
     ConcQWithSizeWrapper() {}
-    ConcQWithSizeWrapper( const ConcQWithSizeWrapper& q ) : tbb::concurrent_queue<T, A>(q) {}
-    ConcQWithSizeWrapper( const ConcQWithSizeWrapper& q, const A& a ) : tbb::concurrent_queue<T, A>(q, a) {}
-    ConcQWithSizeWrapper( const A& a ) : tbb::concurrent_queue<T, A>( a ) {}
+    ConcQWithSizeWrapper( const ConcQWithSizeWrapper& q ) : oneapi::tbb::concurrent_queue<T, A>(q) {}
+    ConcQWithSizeWrapper( const ConcQWithSizeWrapper& q, const A& a ) : oneapi::tbb::concurrent_queue<T, A>(q, a) {}
+    ConcQWithSizeWrapper( const A& a ) : oneapi::tbb::concurrent_queue<T, A>( a ) {}
 
-    ConcQWithSizeWrapper( ConcQWithSizeWrapper&& q ) : tbb::concurrent_queue<T>(std::move(q)) {}
+    ConcQWithSizeWrapper( ConcQWithSizeWrapper&& q ) : oneapi::tbb::concurrent_queue<T>(std::move(q)) {}
     ConcQWithSizeWrapper( ConcQWithSizeWrapper&& q, const A& a )
-        : tbb::concurrent_queue<T, A>(std::move(q), a) { }
+        : oneapi::tbb::concurrent_queue<T, A>(std::move(q), a) { }
 
     template<typename InputIterator>
     ConcQWithSizeWrapper( InputIterator begin, InputIterator end, const A& a = A() )
-        : tbb::concurrent_queue<T, A>(begin, end, a) {}
-    typename tbb::concurrent_queue<T, A>::size_type size() const { return this->unsafe_size(); }
+        : oneapi::tbb::concurrent_queue<T, A>(begin, end, a) {}
+    typename oneapi::tbb::concurrent_queue<T, A>::size_type size() const { return this->unsafe_size(); }
 };
 
 enum state_type {
@@ -595,14 +595,14 @@ void TestConstructors () {
 
 void TestQueueConstructors() {
     TestConstructors<ConcQWithSizeWrapper<Bar>, Bar, BarIterator, ConcQWithSizeWrapper<BarEx>, BarEx>();
-    TestConstructors<tbb::concurrent_bounded_queue<Bar>, Bar, BarIterator, tbb::concurrent_bounded_queue<BarEx>, BarEx>();
+    TestConstructors<oneapi::tbb::concurrent_bounded_queue<Bar>, Bar, BarIterator, oneapi::tbb::concurrent_bounded_queue<BarEx>, BarEx>();
 }
 
 template<typename T>
 struct TestNegativeQueueBody {
-    tbb::concurrent_bounded_queue<T>& queue;
+    oneapi::tbb::concurrent_bounded_queue<T>& queue;
     const std::size_t nthread;
-    TestNegativeQueueBody( tbb::concurrent_bounded_queue<T>& q, std::size_t n ) : queue(q), nthread(n) {}
+    TestNegativeQueueBody( oneapi::tbb::concurrent_bounded_queue<T>& q, std::size_t n ) : queue(q), nthread(n) {}
     void operator()( std::size_t k ) const {
         if (k == 0) {
             int number_of_pops = int(nthread) - 1;
@@ -629,12 +629,12 @@ struct TestNegativeQueueBody {
 //! Test a queue with a negative size.
 template<typename T>
 void TestNegativeQueue( std::size_t nthread ) {
-    tbb::concurrent_bounded_queue<T> queue;
+    oneapi::tbb::concurrent_bounded_queue<T> queue;
     utils::NativeParallelFor( nthread, TestNegativeQueueBody<T>(queue,nthread));
 }
 
 template<typename T>
-class ConcQPushPopWrapper : public tbb::concurrent_queue<T, test_allocator<T>> {
+class ConcQPushPopWrapper : public oneapi::tbb::concurrent_queue<T, test_allocator<T>> {
 public:
     ConcQPushPopWrapper() : my_capacity(std::size_t(-1) / (sizeof(void*) + sizeof(T)))
     {}
@@ -642,7 +642,7 @@ public:
     std::size_t size() const { return this->unsafe_size(); }
     void set_capacity( const ptrdiff_t n ) { my_capacity = n; }
     bool try_push( const T& source ) { return this->push( source); }
-    bool try_pop( T& dest ) { return this->tbb::concurrent_queue<T, test_allocator<T>>::try_pop(dest); }
+    bool try_pop( T& dest ) { return this->oneapi::tbb::concurrent_queue<T, test_allocator<T>>::try_pop(dest); }
     std::size_t my_capacity;
 };
 
@@ -772,15 +772,15 @@ void TestConcurrentPushPop() {
             TestPushPop<ConcQPushPopWrapper<move_support_tests::Foo>, move_support_tests::Foo>(prefill, std::ptrdiff_t(100), nthread);
         }
         for (std::size_t prefill = 0; prefill < 64; prefill += (1 + prefill / 3) ) {
-            TestPushPop<tbb::concurrent_bounded_queue<move_support_tests::Foo, test_allocator<move_support_tests::Foo>>,
+            TestPushPop<oneapi::tbb::concurrent_bounded_queue<move_support_tests::Foo, test_allocator<move_support_tests::Foo>>,
                 move_support_tests::Foo>(prefill, std::ptrdiff_t(-1), nthread);
-            TestPushPop<tbb::concurrent_bounded_queue<move_support_tests::Foo, test_allocator<move_support_tests::Foo>>,
+            TestPushPop<oneapi::tbb::concurrent_bounded_queue<move_support_tests::Foo, test_allocator<move_support_tests::Foo>>,
                 move_support_tests::Foo>(prefill, std::ptrdiff_t(1), nthread);
-            TestPushPop<tbb::concurrent_bounded_queue<move_support_tests::Foo, test_allocator<move_support_tests::Foo>>,
+            TestPushPop<oneapi::tbb::concurrent_bounded_queue<move_support_tests::Foo, test_allocator<move_support_tests::Foo>>,
                 move_support_tests::Foo>(prefill, std::ptrdiff_t(2), nthread);
-            TestPushPop<tbb::concurrent_bounded_queue<move_support_tests::Foo, test_allocator<move_support_tests::Foo>>,
+            TestPushPop<oneapi::tbb::concurrent_bounded_queue<move_support_tests::Foo, test_allocator<move_support_tests::Foo>>,
                 move_support_tests::Foo>(prefill, std::ptrdiff_t(10), nthread);
-            TestPushPop<tbb::concurrent_bounded_queue<move_support_tests::Foo, test_allocator<move_support_tests::Foo>>,
+            TestPushPop<oneapi::tbb::concurrent_bounded_queue<move_support_tests::Foo, test_allocator<move_support_tests::Foo>>,
                 move_support_tests::Foo>(prefill, std::ptrdiff_t(100), nthread);
         }
     }
@@ -932,10 +932,10 @@ void TestExceptionBody() {
 }
 
 void TestExceptions() {
-    using allocator_t = StaticSharedCountingAllocator<tbb::cache_aligned_allocator<std::size_t>>;
-    using allocator_char_t = StaticSharedCountingAllocator<tbb::cache_aligned_allocator<char>>;
+    using allocator_t = StaticSharedCountingAllocator<oneapi::tbb::cache_aligned_allocator<std::size_t>>;
+    using allocator_char_t = StaticSharedCountingAllocator<oneapi::tbb::cache_aligned_allocator<char>>;
     TestExceptionBody<ConcQWithSizeWrapper, allocator_t, allocator_char_t, FooEx>();
-    TestExceptionBody<tbb::concurrent_bounded_queue, allocator_t, allocator_char_t, FooEx>();
+    TestExceptionBody<oneapi::tbb::concurrent_bounded_queue, allocator_t, allocator_char_t, FooEx>();
 
 }
 
@@ -945,10 +945,10 @@ std::atomic<std::size_t> failed_pushes;
 std::atomic<std::size_t> failed_pops;
 
 class SimplePushBody {
-    tbb::concurrent_bounded_queue<int>* q;
+    oneapi::tbb::concurrent_bounded_queue<int>* q;
     std::size_t max;
 public:
-    SimplePushBody(tbb::concurrent_bounded_queue<int>* _q, std::size_t hi_thr) : q(_q), max(hi_thr) {}
+    SimplePushBody(oneapi::tbb::concurrent_bounded_queue<int>* _q, std::size_t hi_thr) : q(_q), max(hi_thr) {}
 
     void operator()(std::size_t thread_id) const {
         if (thread_id == max) {
@@ -968,11 +968,11 @@ public:
 };
 
 class SimplePopBody {
-    tbb::concurrent_bounded_queue<int>* q;
+    oneapi::tbb::concurrent_bounded_queue<int>* q;
     std::ptrdiff_t max;
     std::ptrdiff_t prefill;
 public:
-    SimplePopBody(tbb::concurrent_bounded_queue<int>* _q, std::size_t hi_thr, std::size_t nitems)
+    SimplePopBody(oneapi::tbb::concurrent_bounded_queue<int>* _q, std::size_t hi_thr, std::size_t nitems)
     : q(_q), max(hi_thr), prefill(nitems) {}
 
     void operator()(std::size_t thread_id) const {
@@ -996,7 +996,7 @@ public:
 
 void TestAbort() {
     for (std::size_t nthreads = MinThread; nthreads <= MaxThread; ++nthreads) {
-        tbb::concurrent_bounded_queue<int> iq1;
+        oneapi::tbb::concurrent_bounded_queue<int> iq1;
         iq1.set_capacity(0);
         for (std::size_t i = 0; i < 10; ++i) {
             num_pushed.store(0, std::memory_order_relaxed);
@@ -1015,7 +1015,7 @@ void TestAbort() {
             }
         }
 
-        tbb::concurrent_bounded_queue<int> iq2;
+        oneapi::tbb::concurrent_bounded_queue<int> iq2;
         iq2.set_capacity(2);
         for (std::size_t i=0; i < 10; ++i) {
             num_pushed.store(0, std::memory_order_relaxed);
@@ -1031,7 +1031,7 @@ void TestAbort() {
             while (iq2.try_pop(e)) ;
         }
 
-        tbb::concurrent_bounded_queue<int> iq3;
+        oneapi::tbb::concurrent_bounded_queue<int> iq3;
         iq3.set_capacity(2);
         for (std::size_t i = 0; i < 10; ++i) {
             num_pushed.store(0, std::memory_order_relaxed);
@@ -1051,7 +1051,7 @@ void TestAbort() {
             }
         }
 
-        tbb::concurrent_bounded_queue<int> iq4;
+        oneapi::tbb::concurrent_bounded_queue<int> iq4;
         std::size_t cap = nthreads / 2;
         if (!cap) cap = 1;
         iq4.set_capacity(cap);
@@ -1082,7 +1082,7 @@ void TestAbort() {
 template <template <typename...> class ContainerType>
 void test_member_types() {
     using container_type = ContainerType<int>;
-    static_assert(std::is_same<typename container_type::allocator_type, tbb::cache_aligned_allocator<int>>::value,
+    static_assert(std::is_same<typename container_type::allocator_type, oneapi::tbb::cache_aligned_allocator<int>>::value,
                   "Incorrect default template allocator");
 
     static_assert(std::is_same<typename container_type::value_type, int>::value,
@@ -1210,13 +1210,13 @@ void TestMoveSupport() {
 }
 
 void TestMoveSupportInPushPop() {
-    TestMoveSupport<tbb::concurrent_queue<MoveOperationTracker>, push_op, try_pop_op>();
-    TestMoveSupport<tbb::concurrent_bounded_queue<MoveOperationTracker>, push_op, pop_op>();
-    TestMoveSupport<tbb::concurrent_bounded_queue<MoveOperationTracker>, try_push_op, try_pop_op>();
+    TestMoveSupport<oneapi::tbb::concurrent_queue<MoveOperationTracker>, push_op, try_pop_op>();
+    TestMoveSupport<oneapi::tbb::concurrent_bounded_queue<MoveOperationTracker>, push_op, pop_op>();
+    TestMoveSupport<oneapi::tbb::concurrent_bounded_queue<MoveOperationTracker>, try_push_op, try_pop_op>();
 }
 
 template<class T>
-class allocator: public tbb::cache_aligned_allocator<T> {
+class allocator: public oneapi::tbb::cache_aligned_allocator<T> {
 public:
     std::size_t m_unique_id;
 
@@ -1271,14 +1271,14 @@ void EmptyTest(Queue &q, const std::vector<typename Queue::value_type> &vec) {
 }
 
 template <typename T, typename A>
-void bounded_queue_specific_test(tbb::concurrent_queue<T, A> &, const std::vector<T> &) { /* do nothing */ }
+void bounded_queue_specific_test(oneapi::tbb::concurrent_queue<T, A> &, const std::vector<T> &) { /* do nothing */ }
 
 template <typename T, typename A>
-void bounded_queue_specific_test(tbb::concurrent_bounded_queue<T, A> &q, const std::vector<T> &vec) {
-    typedef typename tbb::concurrent_bounded_queue<T, A>::size_type size_type;
+void bounded_queue_specific_test(oneapi::tbb::concurrent_bounded_queue<T, A> &q, const std::vector<T> &vec) {
+    typedef typename oneapi::tbb::concurrent_bounded_queue<T, A>::size_type size_type;
 
     FillTest<try_push_op>(q, vec);
-    tbb::concurrent_bounded_queue<T, A> q2 = q;
+    oneapi::tbb::concurrent_bounded_queue<T, A> q2 = q;
     EmptyTest<pop_op>(q, vec);
 
     // capacity
@@ -1356,7 +1356,7 @@ void TestMoveConstructors() {
 
 void TestMoveConstruction() {
     TestMoveConstructors<ConcQWithSizeWrapper<Bar, allocator<Bar>>, Bar>();
-    TestMoveConstructors<tbb::concurrent_bounded_queue<Bar, allocator<Bar>>, Bar>();
+    TestMoveConstructors<oneapi::tbb::concurrent_bounded_queue<Bar, allocator<Bar>>, Bar>();
 }
 
 class NonTrivialConstructorType {
@@ -1426,8 +1426,8 @@ void TestEmplaceInQueue() {
 }
 void TestEmplace() {
     TestEmplaceInQueue<ConcQWithSizeWrapper<NonTrivialConstructorType>, emplace_op>();
-    TestEmplaceInQueue<tbb::concurrent_bounded_queue<NonTrivialConstructorType>, emplace_op>();
-    TestEmplaceInQueue<tbb::concurrent_bounded_queue<NonTrivialConstructorType>, try_emplace_op>();
+    TestEmplaceInQueue<oneapi::tbb::concurrent_bounded_queue<NonTrivialConstructorType>, emplace_op>();
+    TestEmplaceInQueue<oneapi::tbb::concurrent_bounded_queue<NonTrivialConstructorType>, try_emplace_op>();
 }
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
@@ -1508,14 +1508,14 @@ TEST_CASE("testing emplace") {
 //! Test concurrent_queues member types
 //! \brief \ref interface \ref requirement
 TEST_CASE("testing concurrent_queues member types"){
-    test_member_types<tbb::concurrent_queue>();
-    test_member_types<tbb::concurrent_bounded_queue>();
+    test_member_types<oneapi::tbb::concurrent_queue>();
+    test_member_types<oneapi::tbb::concurrent_bounded_queue>();
 
     // Test size_type
-    static_assert(std::is_unsigned<typename tbb::concurrent_queue<int>::size_type>::value,
-                  "Incorrect tbb::concurrent_queue::size_type member type");
-    static_assert(std::is_signed<typename tbb::concurrent_bounded_queue<int>::size_type>::value,
-                  "Incorrect tbb::concurrent_bounded_queue::size_type member type");
+    static_assert(std::is_unsigned<typename oneapi::tbb::concurrent_queue<int>::size_type>::value,
+                  "Incorrect oneapi::tbb::concurrent_queue::size_type member type");
+    static_assert(std::is_signed<typename oneapi::tbb::concurrent_bounded_queue<int>::size_type>::value,
+                  "Incorrect oneapi::tbb::concurrent_bounded_queue::size_type member type");
 }
 
 //! Test iterators
@@ -1548,7 +1548,7 @@ TEST_CASE("testing abort operation") {
 //! Test deduction guides
 //! \brief \ref interface
 TEST_CASE("testing deduction guides") {
-    TestDeductionGuides<tbb::concurrent_queue>();
-    TestDeductionGuides<tbb::concurrent_bounded_queue>();
+    TestDeductionGuides<oneapi::tbb::concurrent_queue>();
+    TestDeductionGuides<oneapi::tbb::concurrent_bounded_queue>();
 }
 #endif

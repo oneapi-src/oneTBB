@@ -22,12 +22,12 @@
 
 #include "common/container_move_support.h"
 
-#include "tbb/combinable.h"
-#include "tbb/parallel_for.h"
-#include "tbb/blocked_range.h"
-#include "tbb/global_control.h"
-#include "tbb/tbb_allocator.h"
-// INFO: #include "tbb/tick_count.h"
+#include "oneapi/tbb/combinable.h"
+#include "oneapi/tbb/parallel_for.h"
+#include "oneapi/tbb/blocked_range.h"
+#include "oneapi/tbb/global_control.h"
+#include "oneapi/tbb/tbb_allocator.h"
+// INFO: #include "oneapi/tbb/tick_count.h"
 
 #include <cstring>
 #include <vector>
@@ -123,7 +123,7 @@ private:
 template <typename T>
 class CombineEachVectorHelper {
 public:
-    typedef std::vector<T, tbb::tbb_allocator<T> > ContainerType;
+    typedef std::vector<T, oneapi::tbb::tbb_allocator<T> > ContainerType;
     CombineEachVectorHelper(T& _result) : my_result(_result) { }
     void operator()(const ContainerType& new_bit) {
         for(typename ContainerType::const_iterator ci = new_bit.begin(); ci != new_bit.end(); ++ci) {
@@ -141,13 +141,13 @@ private:
 template <typename T>
 class ParallelScalarBody: utils::NoAssign {
 
-    tbb::combinable<T> &sums;
+    oneapi::tbb::combinable<T> &sums;
 
 public:
 
-    ParallelScalarBody ( tbb::combinable<T> &_sums ) : sums(_sums) { }
+    ParallelScalarBody ( oneapi::tbb::combinable<T> &_sums ) : sums(_sums) { }
 
-    void operator()( const tbb::blocked_range<int> &r ) const {
+    void operator()( const oneapi::tbb::blocked_range<int> &r ) const {
         for (int i = r.begin(); i != r.end(); ++i) {
             bool was_there;
             T& my_local = sums.local(was_there);
@@ -162,13 +162,13 @@ public:
 template <typename T>
 class ParallelScalarBodyNoInit: utils::NoAssign {
 
-    tbb::combinable<T> &sums;
+    oneapi::tbb::combinable<T> &sums;
 
 public:
 
-    ParallelScalarBodyNoInit ( tbb::combinable<T> &_sums ) : sums(_sums) { }
+    ParallelScalarBodyNoInit ( oneapi::tbb::combinable<T> &_sums ) : sums(_sums) { }
 
-    void operator()( const tbb::blocked_range<int> &r ) const {
+    void operator()( const oneapi::tbb::blocked_range<int> &r ) const {
         for (int i = r.begin(); i != r.end(); ++i) {
              sums.local() +=  1 ;
         }
@@ -182,9 +182,9 @@ void RunParallelScalarTests(const char* /* test_name */) {
 
         if (p == 0) continue;
         // REMARK("  Testing parallel %s on %d thread(s)...\n", test_name, p);
-        tbb::global_control gc(tbb::global_control::max_allowed_parallelism, p);
+        oneapi::tbb::global_control gc(oneapi::tbb::global_control::max_allowed_parallelism, p);
 
-        // INFO: tbb::tick_count t0;
+        // INFO: oneapi::tbb::tick_count t0;
         T combine_sum(0);
         T combine_ref_sum(0);
         T combine_finit_sum(0);
@@ -195,24 +195,24 @@ void RunParallelScalarTests(const char* /* test_name */) {
         T move_assign_sum(0);
 
         for (int t = -1; t < REPETITIONS; ++t) {
-            // INFO: if (Verbose && t == 0) t0 = tbb::tick_count::now();
+            // INFO: if (Verbose && t == 0) t0 = oneapi::tbb::tick_count::now();
 
             // test uninitialized parallel combinable
-            tbb::combinable<T> sums;
-            tbb::parallel_for( tbb::blocked_range<int>( 0, N, 10000 ), ParallelScalarBody<T>( sums ) );
+            oneapi::tbb::combinable<T> sums;
+            oneapi::tbb::parallel_for( oneapi::tbb::blocked_range<int>( 0, N, 10000 ), ParallelScalarBody<T>( sums ) );
             combine_sum += sums.combine(my_combine<T>);
             combine_ref_sum += sums.combine(my_combine_ref<T>);
 
             // test combinable::clear()
-            tbb::combinable<T> sums_to_clear;
-            tbb::parallel_for( tbb::blocked_range<int>(0, N, 10000), ParallelScalarBody<T>(sums_to_clear) );
+            oneapi::tbb::combinable<T> sums_to_clear;
+            oneapi::tbb::parallel_for( oneapi::tbb::blocked_range<int>(0, N, 10000), ParallelScalarBody<T>(sums_to_clear) );
             sums_to_clear.clear();
             CHECK_MESSAGE(sums_to_clear.combine(my_combine<T>) == 0, "Failed combinable::clear test");
 
             // test parallel combinable preinitialized with a functor that returns 0
             FunctorAddFinit<T> my_finit_decl;
-            tbb::combinable<T> finit_combinable(my_finit_decl);
-            tbb::parallel_for( tbb::blocked_range<int>( 0, N, 10000 ), ParallelScalarBodyNoInit<T>( finit_combinable ) );
+            oneapi::tbb::combinable<T> finit_combinable(my_finit_decl);
+            oneapi::tbb::parallel_for( oneapi::tbb::blocked_range<int>( 0, N, 10000 ), ParallelScalarBodyNoInit<T>( finit_combinable ) );
             combine_finit_sum += finit_combinable.combine(my_combine<T>);
 
             // test another way of combining the elements using CombineEachHelper<T> functor
@@ -220,20 +220,20 @@ void RunParallelScalarTests(const char* /* test_name */) {
             sums.combine_each(my_helper);
 
             // test copy constructor for parallel combinable
-            tbb::combinable<T> copy_constructed(sums);
+            oneapi::tbb::combinable<T> copy_constructed(sums);
             copy_construct_sum += copy_constructed.combine(my_combine<T>);
 
             // test copy assignment for uninitialized parallel combinable
-            tbb::combinable<T> assigned;
+            oneapi::tbb::combinable<T> assigned;
             assigned = sums;
             copy_assign_sum += assigned.combine(my_combine<T>);
 
             // test move constructor for parallel combinable
-            tbb::combinable<T> moved1(std::move(sums));
+            oneapi::tbb::combinable<T> moved1(std::move(sums));
             move_construct_sum += moved1.combine(my_combine<T>);
 
             // test move assignment for uninitialized parallel combinable
-            tbb::combinable<T> moved2;
+            oneapi::tbb::combinable<T> moved2;
             moved2=std::move(finit_combinable);
             move_assign_sum += moved2.combine(my_combine<T>);
         }
@@ -247,20 +247,20 @@ void RunParallelScalarTests(const char* /* test_name */) {
         REQUIRE( EXPECTED_SUM == copy_assign_sum );
         REQUIRE( EXPECTED_SUM == move_construct_sum );
         REQUIRE( EXPECTED_SUM == move_assign_sum );
-        // REMARK("  done parallel %s, %d, %g, %g\n", test_name, p, static_cast<double>(combine_sum), ( tbb::tick_count::now() - t0).seconds());
+        // REMARK("  done parallel %s, %d, %g, %g\n", test_name, p, static_cast<double>(combine_sum), ( oneapi::tbb::tick_count::now() - t0).seconds());
     }
 }
 
 template <typename T>
 class ParallelVectorForBody: utils::NoAssign {
 
-    tbb::combinable< std::vector<T, tbb::tbb_allocator<T> > > &locals;
+    oneapi::tbb::combinable< std::vector<T, oneapi::tbb::tbb_allocator<T> > > &locals;
 
 public:
 
-    ParallelVectorForBody ( tbb::combinable< std::vector<T, tbb::tbb_allocator<T> > > &_locals ) : locals(_locals) { }
+    ParallelVectorForBody ( oneapi::tbb::combinable< std::vector<T, oneapi::tbb::tbb_allocator<T> > > &_locals ) : locals(_locals) { }
 
-    void operator()( const tbb::blocked_range<int> &r ) const {
+    void operator()( const oneapi::tbb::blocked_range<int> &r ) const {
         T one = 1;
 
         for (int i = r.begin(); i < r.end(); ++i) {
@@ -272,15 +272,15 @@ public:
 
 template< typename T >
 void RunParallelVectorTests(const char* /* test_name */) {
-    typedef std::vector<T, tbb::tbb_allocator<T> > ContainerType;
+    typedef std::vector<T, oneapi::tbb::tbb_allocator<T> > ContainerType;
 
     for (int p = MinThread; p <= MaxThread; ++p) {
 
         if (p == 0) continue;
         // REMARK("  Testing parallel %s on %d thread(s)... \n", test_name, p);
-        tbb::global_control gc(tbb::global_control::max_allowed_parallelism, p);
+        oneapi::tbb::global_control gc(oneapi::tbb::global_control::max_allowed_parallelism, p);
 
-        // INFO: tbb::tick_count t0;
+        // INFO: oneapi::tbb::tick_count t0;
         T defaultConstructed_sum(0);
         T copyConstructed_sum(0);
         T copyAssigned_sum(0);
@@ -288,13 +288,13 @@ void RunParallelVectorTests(const char* /* test_name */) {
         T moveAssigned_sum(0);
 
         for (int t = -1; t < REPETITIONS; ++t) {
-            // if (Verbose && t == 0) t0 = tbb::tick_count::now();
+            // if (Verbose && t == 0) t0 = oneapi::tbb::tick_count::now();
 
-            typedef typename tbb::combinable< ContainerType > CombinableType;
+            typedef typename oneapi::tbb::combinable< ContainerType > CombinableType;
 
             // test uninitialized parallel combinable
             CombinableType vs;
-            tbb::parallel_for( tbb::blocked_range<int> (0, N, 10000), ParallelVectorForBody<T>( vs ) );
+            oneapi::tbb::parallel_for( oneapi::tbb::blocked_range<int> (0, N, 10000), ParallelVectorForBody<T>( vs ) );
             CombineEachVectorHelper<T> MyCombineEach(defaultConstructed_sum);
             vs.combine_each(MyCombineEach); // combine_each sums all elements of each vector into the result
 
@@ -331,7 +331,7 @@ void RunParallelVectorTests(const char* /* test_name */) {
         ResultValue = moveAssigned_sum;
         REQUIRE( EXPECTED_SUM == ResultValue );
 
-        // REMARK("  done parallel %s, %d, %g, %g\n", test_name, p, ResultValue, ( tbb::tick_count::now() - t0).seconds());
+        // REMARK("  done parallel %s, %d, %g, %g\n", test_name, p, ResultValue, ( oneapi::tbb::tick_count::now() - t0).seconds());
     }
 }
 
@@ -341,8 +341,8 @@ RunParallelTests() {
     RunParallelScalarTests<int>("int");
     RunParallelScalarTests<double>("double");
     RunParallelScalarTests<minimal>("minimal");
-    RunParallelVectorTests<int>("std::vector<int, tbb::tbb_allocator<int> >");
-    RunParallelVectorTests<double>("std::vector<double, tbb::tbb_allocator<double> >");
+    RunParallelVectorTests<int>("std::vector<int, oneapi::tbb::tbb_allocator<int> >");
+    RunParallelVectorTests<double>("std::vector<double, oneapi::tbb::tbb_allocator<double> >");
 }
 
 template <typename T>
@@ -352,25 +352,25 @@ RunAssignmentAndCopyConstructorTest(const char* /* test_name */) {
 
     // test creation with finit function (combine returns finit return value if no threads have created locals)
     FunctorAddFinit7<T> my_finit7_decl;
-    tbb::combinable<T> create1(my_finit7_decl);
+    oneapi::tbb::combinable<T> create1(my_finit7_decl);
     REQUIRE_MESSAGE(7 == create1.combine(my_combine<T>), "Unexpected combine result for combinable object preinitialized with functor");
 
     // test copy construction with function initializer
-    tbb::combinable<T> copy1(create1);
+    oneapi::tbb::combinable<T> copy1(create1);
     REQUIRE_MESSAGE(7 == copy1.combine(my_combine<T>), "Unexpected combine result for copy-constructed combinable object");
 
     // test copy assignment with function initializer
     FunctorAddFinit<T> my_finit_decl;
-    tbb::combinable<T> assign1(my_finit_decl);
+    oneapi::tbb::combinable<T> assign1(my_finit_decl);
     assign1 = create1;
     REQUIRE_MESSAGE(7 == assign1.combine(my_combine<T>), "Unexpected combine result for copy-assigned combinable object");
 
     // test move construction with function initializer
-    tbb::combinable<T> move1(std::move(create1));
+    oneapi::tbb::combinable<T> move1(std::move(create1));
     REQUIRE_MESSAGE(7 == move1.combine(my_combine<T>), "Unexpected combine result for move-constructed combinable object");
 
     // test move assignment with function initializer
-    tbb::combinable<T> move2;
+    oneapi::tbb::combinable<T> move2;
     move2=std::move(copy1);
     REQUIRE_MESSAGE(7 == move2.combine(my_combine<T>), "Unexpected combine result for move-assigned combinable object");
 
@@ -388,17 +388,17 @@ void RunAssignmentAndCopyConstructorTests() {
 void RunMoveSemanticsForStateTrackableObjectTest() {
     // REMARK("Testing move assignment and move construction for combinable<Harness::StateTrackable>...\n");
 
-    tbb::combinable< StateTrackable<true> > create1;
+    oneapi::tbb::combinable< StateTrackable<true> > create1;
     REQUIRE_MESSAGE(create1.local().state == StateTrackable<true>::DefaultInitialized,
            "Unexpected value in default combinable object");
 
     // Copy constructing of the new combinable causes copying of stored values
-    tbb::combinable< StateTrackable<true> > copy1(create1);
+    oneapi::tbb::combinable< StateTrackable<true> > copy1(create1);
     REQUIRE_MESSAGE(copy1.local().state == StateTrackable<true>::CopyInitialized,
            "Unexpected value in copy-constructed combinable object");
 
     // Copy assignment also causes copying of stored values
-    tbb::combinable< StateTrackable<true> > copy2;
+    oneapi::tbb::combinable< StateTrackable<true> > copy2;
     REQUIRE_MESSAGE(copy2.local().state == StateTrackable<true>::DefaultInitialized,
            "Unexpected value in default combinable object");
     copy2=create1;
@@ -409,7 +409,7 @@ void RunMoveSemanticsForStateTrackableObjectTest() {
     create1.local().state = StateTrackableBase::Unspecified;
 
     // Move constructing of the new combinable must not cause copying of stored values
-    tbb::combinable< StateTrackable<true> > move1(std::move(create1));
+    oneapi::tbb::combinable< StateTrackable<true> > move1(std::move(create1));
     REQUIRE_MESSAGE(move1.local().state == StateTrackableBase::Unspecified, "Unexpected value in move-constructed combinable object");
 
     // Move assignment must not cause copying of stored values
@@ -425,7 +425,7 @@ void RunMoveSemanticsForStateTrackableObjectTest() {
 utils::SpinBarrier sBarrier;
 
 struct Body : utils::NoAssign {
-    tbb::combinable<int>* locals;
+    oneapi::tbb::combinable<int>* locals;
     const int nthread;
     const int nIters;
     Body( int nthread_, int niters_ ) : nthread(nthread_), nIters(niters_) { sBarrier.initialize(nthread_); }
@@ -449,7 +449,7 @@ void TestLocalAllocations( int nthread ) {
     REQUIRE_MESSAGE(nthread > 0, "nthread must be positive");
 #define NITERATIONS 1000
     Body myBody(nthread, NITERATIONS);
-    tbb::combinable<int> myCombinable;
+    oneapi::tbb::combinable<int> myCombinable;
     myBody.locals = &myCombinable;
 
     NativeParallelFor( nthread, myBody );

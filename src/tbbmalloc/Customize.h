@@ -25,8 +25,8 @@
 #define MALLOC_DEBUG TBB_USE_DEBUG
 #endif
 
-#include "tbb/detail/_utils.h"
-#include "tbb/detail/_assert.h"
+#include "oneapi/tbb/detail/_utils.h"
+#include "oneapi/tbb/detail/_assert.h"
 
 #include "Synchronize.h"
 
@@ -133,7 +133,7 @@ namespace d1 {
 } // namespace detail
 } // namespace tbb
 
-#include "tbb/detail/_aggregator.h"
+#include "oneapi/tbb/detail/_aggregator.h"
 
 template <typename OperationType>
 struct MallocAggregator {

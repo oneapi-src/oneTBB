@@ -17,10 +17,10 @@
 #ifndef __TBB_test_common_concurrency_tracker_H
 #define __TBB_test_common_concurrency_tracker_H
 
-#include "doctest.h"
+#include "common/test.h"
 #include "utils.h"
 #include "spin_barrier.h"
-#include "tbb/parallel_for.h"
+#include "oneapi/tbb/parallel_for.h"
 
 #include <mutex>
 

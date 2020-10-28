@@ -44,11 +44,18 @@ add_library(tbb SHARED
 
 add_library(TBB::tbb ALIAS tbb)
 
+if (WIN32)
+    set_target_properties(tbb PROPERTIES OUTPUT_NAME "tbb${TBB_BINARY_VERSION}")
+endif()
+
 # TODO: Add statistics.cpp
 
 target_compile_definitions(tbb PRIVATE __TBB_BUILD)
 
-if (NOT ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(armv7-a|aarch64|mips)" OR WINDOWS_STORE OR TBB_WINDOWS_DRIVER))
+if (NOT ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(armv7-a|aarch64|mips|arm64)" OR
+         "${CMAKE_OSX_ARCHITECTURES}" MATCHES "arm64" OR
+         WINDOWS_STORE OR
+         TBB_WINDOWS_DRIVER))
     target_compile_definitions(tbb PRIVATE __TBB_USE_ITT_NOTIFY)
 endif()
 
@@ -105,6 +112,24 @@ install(TARGETS tbb
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
     RUNTIME DESTINATION bin)
+
+if (WIN32)
+    # Create a copy of target linker file (tbb<ver>[_debug].lib) with legacy name (tbb[_debug].lib)
+    # to support previous user experience for linkage.
+    install(FILES
+            $<TARGET_LINKER_FILE:tbb>
+            DESTINATION lib
+            CONFIGURATIONS RelWithDebInfo Release MinSizeRel
+            RENAME tbb.lib
+    )
+
+    install(FILES
+            $<TARGET_LINKER_FILE:tbb>
+            DESTINATION lib
+            CONFIGURATIONS Debug
+            RENAME tbb_debug.lib
+    )
+endif()
 
 if (COMMAND tbb_gen_vars)
     tbb_gen_vars(tbb)

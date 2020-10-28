@@ -17,7 +17,7 @@
 #ifndef __TBB_test_common_state_trackable_H
 #define __TBB_test_common_state_trackable_H
 
-#include "doctest.h"
+#include "common/test.h"
 #include <map>
 #include <atomic>
 

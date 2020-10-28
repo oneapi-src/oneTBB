@@ -21,8 +21,8 @@
 #define __TBB_TEST_SKIP_IS_ALWAYS_EQUAL_CHECK (__cplusplus < 201703L)
 #include <common/test.h>
 #include <common/utils.h>
-#include <tbb/concurrent_priority_queue.h>
-#include <tbb/blocked_range.h>
+#include <oneapi/tbb/concurrent_priority_queue.h>
+#include <oneapi/tbb/blocked_range.h>
 #include <vector>
 
 namespace equality_comparison_helpers {

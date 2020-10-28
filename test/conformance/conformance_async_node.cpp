@@ -20,9 +20,9 @@
 #include "common/utils.h"
 #include "common/graph_utils.h"
 
-#include "tbb/flow_graph.h"
-#include "tbb/task_arena.h"
-#include "tbb/global_control.h"
+#include "oneapi/tbb/flow_graph.h"
+#include "oneapi/tbb/task_arena.h"
+#include "oneapi/tbb/global_control.h"
 
 #include "conformance_flowgraph.h"
 
@@ -38,8 +38,8 @@ TODO: implement missing conformance tests for async_node:
   - [ ] Write inheritance test.
   - [ ] Constructor with explicitly passed Policy parameter.
   - [ ] Concurrency testing of the node: make a loop over possible concurrency levels. It is
-    important to test at least on five values: 1, tbb::flow::serial, `max_allowed_parallelism'
-    obtained from `tbb::global_control', `tbb::flow::unlimited', and, if `max allowed
+    important to test at least on five values: 1, oneapi::tbb::flow::serial, `max_allowed_parallelism'
+    obtained from `oneapi::tbb::global_control', `oneapi::tbb::flow::unlimited', and, if `max allowed
     parallelism' is > 2, use something in the middle of the [1, max_allowed_parallelism]
     interval. Use `utils::ExactConcurrencyLevel' entity (extending it if necessary).
   - [ ] Write `test_rejecting', where avoid dependency on OS scheduling of the threads; add check
@@ -51,7 +51,7 @@ TODO: implement missing conformance tests for async_node:
 
 template<typename I, typename O>
 void test_inheritance(){
-    using namespace tbb::flow;
+    using namespace oneapi::tbb::flow;
 
     CHECK_MESSAGE( (std::is_base_of<graph_node, async_node<I, O>>::value), "async_node should be derived from graph_node");
     CHECK_MESSAGE( (std::is_base_of<receiver<I>, async_node<I, O>>::value), "async_node should be derived from receiver<Input>");
@@ -71,7 +71,7 @@ struct as_inc_functor {
     as_inc_functor( const as_inc_functor &f ) : local_execute_count(f.local_execute_count) { }
     void operator=(const as_inc_functor &f) { local_execute_count = size_t(f.local_execute_count); }
 
-    void operator()( int num , tbb::flow::async_node<int, int>::gateway_type& g) {
+    void operator()( int num , oneapi::tbb::flow::async_node<int, int>::gateway_type& g) {
         ++local_execute_count;
         g.try_put(num);
         //    my_thread = std::thread([&](){
@@ -82,12 +82,12 @@ struct as_inc_functor {
 };
 
 void test_async_body(){
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
 
     std::atomic<size_t> local_count(0);
     as_inc_functor<int> fun(local_count);
 
-    tbb::flow::async_node<int, int> node1(g, tbb::flow::unlimited, fun);
+    oneapi::tbb::flow::async_node<int, int> node1(g, oneapi::tbb::flow::unlimited, fun);
 
     const size_t n = 10;
     for(size_t i = 0; i < n; ++i) {
@@ -101,32 +101,32 @@ void test_async_body(){
 }
 
 void test_copy(){
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
     std::atomic<size_t> local_count(0);
     as_inc_functor<int> fun(local_count);
 
-    tbb::flow::async_node<int, int> node1(g, tbb::flow::unlimited, fun);
-    tbb::flow::async_node<int, int> node2(node1);
+    oneapi::tbb::flow::async_node<int, int> node1(g, oneapi::tbb::flow::unlimited, fun);
+    oneapi::tbb::flow::async_node<int, int> node2(node1);
 }
 
 void test_priority(){
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
     std::atomic<size_t> local_count(0);
     as_inc_functor<int> fun(local_count);
 
-    tbb::flow::async_node<int, int> node1(g, tbb::flow::unlimited, fun, tbb::flow::no_priority);
+    oneapi::tbb::flow::async_node<int, int> node1(g, oneapi::tbb::flow::unlimited, fun, oneapi::tbb::flow::no_priority);
 }
 
 void test_discarding(){
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
 
     std::atomic<size_t> local_count(0);
     as_inc_functor<int> fun(local_count);
 
-    tbb::flow::async_node<int, int> node1(g, tbb::flow::unlimited, fun);
+    oneapi::tbb::flow::async_node<int, int> node1(g, oneapi::tbb::flow::unlimited, fun);
 
-    tbb::flow::limiter_node< int > rejecter1( g,0);
-    tbb::flow::limiter_node< int > rejecter2( g,0);
+    oneapi::tbb::flow::limiter_node< int > rejecter1( g,0);
+    oneapi::tbb::flow::limiter_node< int > rejecter2( g,0);
 
     make_edge(node1, rejecter2);
     make_edge(node1, rejecter1);

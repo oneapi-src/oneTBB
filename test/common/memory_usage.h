@@ -19,7 +19,7 @@
 // This header is an optional part of the test harness.
 // It assumes that "harness_assert.h" has already been included.
 
-#include "doctest.h"
+#include "common/test.h"
 #include "utils.h"
 #include "utils_assert.h"
 

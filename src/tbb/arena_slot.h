@@ -17,12 +17,12 @@
 #ifndef _TBB_arena_slot_H
 #define _TBB_arena_slot_H
 
-#include "tbb/detail/_config.h"
-#include "tbb/detail/_utils.h"
-#include "tbb/detail/_template_helpers.h"
-#include "tbb/detail/_task.h"
+#include "oneapi/tbb/detail/_config.h"
+#include "oneapi/tbb/detail/_utils.h"
+#include "oneapi/tbb/detail/_template_helpers.h"
+#include "oneapi/tbb/detail/_task.h"
 
-#include "tbb/cache_aligned_allocator.h"
+#include "oneapi/tbb/cache_aligned_allocator.h"
 
 #include "misc.h"
 #include "mailbox.h"

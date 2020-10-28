@@ -17,13 +17,13 @@
 #include "common/test.h"
 #include "common/utils.h"
 
-#include "tbb/parallel_for.h"
-#include <tbb/spin_mutex.h>
-#include <tbb/spin_rw_mutex.h>
-#include <tbb/queuing_mutex.h>
-#include <tbb/queuing_rw_mutex.h>
-#include <tbb/null_mutex.h>
-#include <tbb/null_rw_mutex.h>
+#include "oneapi/tbb/parallel_for.h"
+#include "oneapi/tbb/spin_mutex.h"
+#include "oneapi/tbb/spin_rw_mutex.h"
+#include "oneapi/tbb/queuing_mutex.h"
+#include "oneapi/tbb/queuing_rw_mutex.h"
+#include "oneapi/tbb/null_mutex.h"
+#include "oneapi/tbb/null_rw_mutex.h"
 
 #include <type_traits>
 
@@ -87,9 +87,9 @@ void TestTryAcquire(const char* mutex_name) {
 }
 
 template <>
-void TestTryAcquire<tbb::null_mutex>( const char* mutex_name ) {
-    tbb::null_mutex tested_mutex;
-    typename tbb::null_mutex::scoped_lock lock(tested_mutex);
+void TestTryAcquire<oneapi::tbb::null_mutex>( const char* mutex_name ) {
+    oneapi::tbb::null_mutex tested_mutex;
+    typename oneapi::tbb::null_mutex::scoped_lock lock(tested_mutex);
     CHECK_MESSAGE(lock.try_acquire(tested_mutex), "ERROR for " << mutex_name << ": try_acquire failed though it should not");
     lock.release();
     CHECK_MESSAGE(lock.try_acquire(tested_mutex), "ERROR for " << mutex_name << ": try_acquire failed though it should not");
@@ -122,9 +122,9 @@ void TestTryAcquireReader(const char* mutex_name) {
 }
 
 template <>
-void TestTryAcquireReader<tbb::null_rw_mutex>( const char* mutex_name ) {
-    tbb::null_rw_mutex tested_mutex;
-    typename tbb::null_rw_mutex::scoped_lock lock(tested_mutex, false);
+void TestTryAcquireReader<oneapi::tbb::null_rw_mutex>( const char* mutex_name ) {
+    oneapi::tbb::null_rw_mutex tested_mutex;
+    typename oneapi::tbb::null_rw_mutex::scoped_lock lock(tested_mutex, false);
     CHECK_MESSAGE(lock.try_acquire(tested_mutex, false), "Error for " << mutex_name << ": try_acquire on read failed though it should not");
     CHECK_MESSAGE(lock.try_acquire(tested_mutex, true), "Error for " << mutex_name << ": try_acquire on write failed though it should not");
     lock.release();
@@ -349,7 +349,7 @@ struct NullRecursive: utils::NoAssign {
         }
     }
 
-    void operator()(tbb::blocked_range<std::size_t>& range) const {
+    void operator()(oneapi::tbb::blocked_range<std::size_t>& range) const {
         typename C::mutex_type::scoped_lock lock(counter.mutex);
         recurse_till(range.begin(), range.end());
     }
@@ -362,7 +362,7 @@ struct NullRecursive: utils::NoAssign {
 
 template<typename M>
 struct NullUpgradeDowngrade: utils::NoAssign {
-    void operator()(tbb::blocked_range<std::size_t>& range) const {
+    void operator()(oneapi::tbb::blocked_range<std::size_t>& range) const {
         typename M::scoped_lock lock2;
         for(std::size_t i = range.begin(); i != range.end(); ++i) {
             if(i & 1) {
@@ -391,7 +391,7 @@ void TestNullMutex(const char* mutex_name) {
     Counter<M> counter;
     counter.value = 0;
     const std::size_t n = 100;
-    tbb::parallel_for(tbb::blocked_range<std::size_t>(0, n, 10), NullRecursive<Counter<M>>(counter));
+    oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<std::size_t>(0, n, 10), NullRecursive<Counter<M>>(counter));
     M m;
     m.lock();
     REQUIRE(m.try_lock());
@@ -402,7 +402,7 @@ template<typename M>
 void TestNullRWMutex(const char* mutex_name) {
     const std::size_t n = 100;
     M m;
-    tbb::parallel_for(tbb::blocked_range<std::size_t>(0, n, 10), NullUpgradeDowngrade<M>(m, mutex_name));
+    oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<std::size_t>(0, n, 10), NullUpgradeDowngrade<M>(m, mutex_name));
     m.lock();
     REQUIRE(m.try_lock());
     m.lock_shared();
@@ -415,58 +415,58 @@ void TestNullRWMutex(const char* mutex_name) {
 //! \brief \ref interface \ref requirement
 TEST_CASE("Basic Locable requirement test") {
     // BasicLockable
-    GeneralTest<tbb::spin_mutex>("Spin Mutex");
-    GeneralTest<tbb::spin_rw_mutex>("Spin RW Mutex");
-    GeneralTest<tbb::queuing_mutex>("Queuing Mutex");
-    GeneralTest<tbb::queuing_rw_mutex>("Queuing RW Mutex");
-    GeneralTest<tbb::speculative_spin_mutex>("Speculative Spin Mutex");
-    GeneralTest<tbb::speculative_spin_rw_mutex>("Speculative Spin RW Mutex");
+    GeneralTest<oneapi::tbb::spin_mutex>("Spin Mutex");
+    GeneralTest<oneapi::tbb::spin_rw_mutex>("Spin RW Mutex");
+    GeneralTest<oneapi::tbb::queuing_mutex>("Queuing Mutex");
+    GeneralTest<oneapi::tbb::queuing_rw_mutex>("Queuing RW Mutex");
+    GeneralTest<oneapi::tbb::speculative_spin_mutex>("Speculative Spin Mutex");
+    GeneralTest<oneapi::tbb::speculative_spin_rw_mutex>("Speculative Spin RW Mutex");
     // NullMutexes
-    GeneralTest<tbb::null_mutex>("Null Mutex", false);
-    GeneralTest<tbb::null_rw_mutex>("Null RW Mutex", false);
-    TestNullMutex<tbb::null_mutex>("Null Mutex");
-    TestNullMutex<tbb::null_rw_mutex>("Null RW Mutex");
+    GeneralTest<oneapi::tbb::null_mutex>("Null Mutex", false);
+    GeneralTest<oneapi::tbb::null_rw_mutex>("Null RW Mutex", false);
+    TestNullMutex<oneapi::tbb::null_mutex>("Null Mutex");
+    TestNullMutex<oneapi::tbb::null_rw_mutex>("Null RW Mutex");
 }
 
 //! \brief \ref interface \ref requirement
 TEST_CASE("Lockable requirement test") {
     // Lockable - single threaded try_acquire operations
-    TestTryAcquire<tbb::spin_mutex>("Spin Mutex");
-    TestTryAcquire<tbb::spin_rw_mutex>("Spin RW Mutex");
-    TestTryAcquire<tbb::queuing_mutex>("Queuing Mutex");
-    TestTryAcquire<tbb::queuing_rw_mutex>("Queuing RW Mutex");
-    TestTryAcquire<tbb::speculative_spin_mutex>("Speculative Spin Mutex");
-    TestTryAcquire<tbb::speculative_spin_rw_mutex>("Speculative Spin RW Mutex");
-    TestTryAcquire<tbb::null_mutex>("Null Mutex");
+    TestTryAcquire<oneapi::tbb::spin_mutex>("Spin Mutex");
+    TestTryAcquire<oneapi::tbb::spin_rw_mutex>("Spin RW Mutex");
+    TestTryAcquire<oneapi::tbb::queuing_mutex>("Queuing Mutex");
+    TestTryAcquire<oneapi::tbb::queuing_rw_mutex>("Queuing RW Mutex");
+    TestTryAcquire<oneapi::tbb::speculative_spin_mutex>("Speculative Spin Mutex");
+    TestTryAcquire<oneapi::tbb::speculative_spin_rw_mutex>("Speculative Spin RW Mutex");
+    TestTryAcquire<oneapi::tbb::null_mutex>("Null Mutex");
 }
 
 //! Testing ReaderWriterMutex requirements
 //! \brief \ref interface \ref requirement
 TEST_CASE("Shared mutexes (reader/writer) test") {
     // General reader writer capabilities + upgrade/downgrade
-    TestReaderWriterLock<tbb::spin_rw_mutex>("Spin RW Mutex");
-    TestReaderWriterLock<tbb::queuing_rw_mutex>("Queuing RW Mutex");
-    TestReaderWriterLock<tbb::speculative_spin_rw_mutex>("Speculative Spin RW Mutex");
-    TestNullRWMutex<tbb::null_rw_mutex>("Null RW Mutex");
+    TestReaderWriterLock<oneapi::tbb::spin_rw_mutex>("Spin RW Mutex");
+    TestReaderWriterLock<oneapi::tbb::queuing_rw_mutex>("Queuing RW Mutex");
+    TestReaderWriterLock<oneapi::tbb::speculative_spin_rw_mutex>("Speculative Spin RW Mutex");
+    TestNullRWMutex<oneapi::tbb::null_rw_mutex>("Null RW Mutex");
     // Single threaded read/write try_acquire operations
-    TestTryAcquireReader<tbb::spin_rw_mutex>("Spin RW Mutex");
-    TestTryAcquireReader<tbb::queuing_rw_mutex>("Queuing RW Mutex");
-    TestRWStateMultipleChange<tbb::spin_rw_mutex>("Spin RW Mutex");
-    TestRWStateMultipleChange<tbb::queuing_rw_mutex>("Queuing RW Mutex");
-    TestTryAcquireReader<tbb::speculative_spin_rw_mutex>("Speculative Spin RW Mutex");
-    TestRWStateMultipleChange<tbb::speculative_spin_rw_mutex>("Speculative Spin RW Mutex");
-    TestTryAcquireReader<tbb::null_rw_mutex>("Null RW Mutex");
+    TestTryAcquireReader<oneapi::tbb::spin_rw_mutex>("Spin RW Mutex");
+    TestTryAcquireReader<oneapi::tbb::queuing_rw_mutex>("Queuing RW Mutex");
+    TestRWStateMultipleChange<oneapi::tbb::spin_rw_mutex>("Spin RW Mutex");
+    TestRWStateMultipleChange<oneapi::tbb::queuing_rw_mutex>("Queuing RW Mutex");
+    TestTryAcquireReader<oneapi::tbb::speculative_spin_rw_mutex>("Speculative Spin RW Mutex");
+    TestRWStateMultipleChange<oneapi::tbb::speculative_spin_rw_mutex>("Speculative Spin RW Mutex");
+    TestTryAcquireReader<oneapi::tbb::null_rw_mutex>("Null RW Mutex");
 }
 
 //! Testing ISO C++ Mutex and Shared Mutex requirements.
 //! Compatibility with the standard
 //! \brief \ref interface \ref requirement
 TEST_CASE("ISO interface test") {
-    GeneralTest<TBB_MutexFromISO_Mutex<tbb::spin_mutex> >("ISO Spin Mutex");
-    GeneralTest<TBB_MutexFromISO_Mutex<tbb::spin_rw_mutex> >("ISO Spin RW Mutex");
-    TestTryAcquire<TBB_MutexFromISO_Mutex<tbb::spin_mutex> >("ISO Spin Mutex");
-    TestTryAcquire<TBB_MutexFromISO_Mutex<tbb::spin_rw_mutex> >("ISO Spin RW Mutex");
-    TestTryAcquireReader<TBB_MutexFromISO_Mutex<tbb::spin_rw_mutex> >("ISO Spin RW Mutex");
-    TestReaderWriterLock<TBB_MutexFromISO_Mutex<tbb::spin_rw_mutex> >("ISO Spin RW Mutex");
+    GeneralTest<TBB_MutexFromISO_Mutex<oneapi::tbb::spin_mutex> >("ISO Spin Mutex");
+    GeneralTest<TBB_MutexFromISO_Mutex<oneapi::tbb::spin_rw_mutex> >("ISO Spin RW Mutex");
+    TestTryAcquire<TBB_MutexFromISO_Mutex<oneapi::tbb::spin_mutex> >("ISO Spin Mutex");
+    TestTryAcquire<TBB_MutexFromISO_Mutex<oneapi::tbb::spin_rw_mutex> >("ISO Spin RW Mutex");
+    TestTryAcquireReader<TBB_MutexFromISO_Mutex<oneapi::tbb::spin_rw_mutex> >("ISO Spin RW Mutex");
+    TestReaderWriterLock<TBB_MutexFromISO_Mutex<oneapi::tbb::spin_rw_mutex> >("ISO Spin RW Mutex");
 }
 

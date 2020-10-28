@@ -19,8 +19,8 @@
 #include "common/utils.h"
 #include "common/utils_report.h"
 
-#include "tbb/parallel_for.h"
-#include "tbb/tick_count.h"
+#include "oneapi/tbb/parallel_for.h"
+#include "oneapi/tbb/tick_count.h"
 
 #include "../tbb/test_partitioner.h"
 
@@ -71,7 +71,7 @@ class FooRange {
 public:
     bool empty() const {return size==0;}
     bool is_divisible() const {return size>1;}
-    FooRange( FooRange& original, tbb::split ) : size(original.size/2) {
+    FooRange( FooRange& original, oneapi::tbb::split ) : size(original.size/2) {
         original.size -= size;
         start = original.start+original.size;
         CHECK( original.pad[Pad-1]=='x');
@@ -114,14 +114,14 @@ struct Invoker;
 template <typename Range, typename Body>
 struct Invoker<parallel_tag, empty_partitioner_tag, Range, Body> {
     void operator()( const Range& r, const Body& body, empty_partitioner_tag& ) {
-        tbb::parallel_for( r, body );
+        oneapi::tbb::parallel_for( r, body );
     }
 };
 
 template <typename Partitioner, typename Range, typename Body>
 struct Invoker<parallel_tag, Partitioner, Range, Body> {
     void operator()( const Range& r, const Body& body, Partitioner& p ) {
-        tbb::parallel_for( r, body, p );
+        oneapi::tbb::parallel_for( r, body, p );
     }
 };
 
@@ -131,20 +131,20 @@ struct InvokerStep;
 template <typename T, typename Body>
 struct InvokerStep<parallel_tag, empty_partitioner_tag, T, Body> {
     void operator()( const T& first, const T& last, const Body& f, empty_partitioner_tag& ) {
-        tbb::parallel_for( first, last, f );
+        oneapi::tbb::parallel_for( first, last, f );
     }
     void operator()( const T& first, const T& last, const T& step, const Body& f, empty_partitioner_tag& ) {
-        tbb::parallel_for( first, last, step, f );
+        oneapi::tbb::parallel_for( first, last, step, f );
     }
 };
 
 template <typename Partitioner, typename T, typename Body>
 struct InvokerStep<parallel_tag, Partitioner, T, Body> {
     void operator()( const T& first, const T& last, const Body& f, Partitioner& p ) {
-        tbb::parallel_for( first, last, f, p );
+        oneapi::tbb::parallel_for( first, last, f, p );
     }
     void operator()( const T& first, const T& last, const T& step, const Body& f, Partitioner& p ) {
-        tbb::parallel_for( first, last, step, f, p );
+        oneapi::tbb::parallel_for( first, last, step, f, p );
     }
 };
 
@@ -168,18 +168,18 @@ void Flog() {
             }
                 break;
             case 1: {
-                Invoker< Flavor, const tbb::simple_partitioner, FooRange<Pad>, FooBody<Pad> > invoke_for;
-                invoke_for( rc, fc, tbb::simple_partitioner() );
+                Invoker< Flavor, const oneapi::tbb::simple_partitioner, FooRange<Pad>, FooBody<Pad> > invoke_for;
+                invoke_for( rc, fc, oneapi::tbb::simple_partitioner() );
             }
                 break;
             case 2: {
-                Invoker< Flavor, const tbb::auto_partitioner, FooRange<Pad>, FooBody<Pad> > invoke_for;
-                invoke_for( rc, fc, tbb::auto_partitioner() );
+                Invoker< Flavor, const oneapi::tbb::auto_partitioner, FooRange<Pad>, FooBody<Pad> > invoke_for;
+                invoke_for( rc, fc, oneapi::tbb::auto_partitioner() );
             }
                 break;
             case 3: {
-                static tbb::affinity_partitioner affinity;
-                Invoker< Flavor, tbb::affinity_partitioner, FooRange<Pad>, FooBody<Pad> > invoke_for;
+                static oneapi::tbb::affinity_partitioner affinity;
+                Invoker< Flavor, oneapi::tbb::affinity_partitioner, FooRange<Pad>, FooBody<Pad> > invoke_for;
                 invoke_for( rc, fc, affinity );
             }
                 break;
@@ -229,21 +229,21 @@ void TestParallelForWithStepSupportHelper(Partitioner& p) {
 
 template <typename Flavor, typename T>
 void TestParallelForWithStepSupport() {
-    static tbb::affinity_partitioner affinity_p;
-    tbb::auto_partitioner auto_p;
-    tbb::simple_partitioner simple_p;
-    tbb::static_partitioner static_p;
+    static oneapi::tbb::affinity_partitioner affinity_p;
+    oneapi::tbb::auto_partitioner auto_p;
+    oneapi::tbb::simple_partitioner simple_p;
+    oneapi::tbb::static_partitioner static_p;
     empty_partitioner_tag p;
 
     // Try out all partitioner combinations
     TestParallelForWithStepSupportHelper< Flavor,T,empty_partitioner_tag >(p);
-    TestParallelForWithStepSupportHelper< Flavor,T,const tbb::auto_partitioner >(auto_p);
-    TestParallelForWithStepSupportHelper< Flavor,T,const tbb::simple_partitioner >(simple_p);
-    TestParallelForWithStepSupportHelper< Flavor,T,tbb::affinity_partitioner >(affinity_p);
-    TestParallelForWithStepSupportHelper< Flavor,T,tbb::static_partitioner >(static_p);
+    TestParallelForWithStepSupportHelper< Flavor,T,const oneapi::tbb::auto_partitioner >(auto_p);
+    TestParallelForWithStepSupportHelper< Flavor,T,const oneapi::tbb::simple_partitioner >(simple_p);
+    TestParallelForWithStepSupportHelper< Flavor,T,oneapi::tbb::affinity_partitioner >(affinity_p);
+    TestParallelForWithStepSupportHelper< Flavor,T,oneapi::tbb::static_partitioner >(static_p);
 
     // Testing some corner cases
-    tbb::parallel_for(static_cast<T>(2), static_cast<T>(1), static_cast<T>(1), TestFunctor<T>());
+    oneapi::tbb::parallel_for(static_cast<T>(2), static_cast<T>(1), static_cast<T>(1), TestFunctor<T>());
 }
 
 //! Test simple parallel_for with different partitioners
@@ -253,24 +253,24 @@ TEST_CASE("Basic parallel_for") {
     const std::size_t number_of_partitioners = 5;
     const std::size_t iterations = 100000;
 
-    tbb::parallel_for(std::size_t(0), iterations, [&](std::size_t) {
+    oneapi::tbb::parallel_for(std::size_t(0), iterations, [&](std::size_t) {
         counter++;
     });
 
-    tbb::parallel_for(std::size_t(0), iterations, [&](std::size_t) {
+    oneapi::tbb::parallel_for(std::size_t(0), iterations, [&](std::size_t) {
         counter++;
-    }, tbb::simple_partitioner());
+    }, oneapi::tbb::simple_partitioner());
 
-    tbb::parallel_for(std::size_t(0), iterations, [&](std::size_t) {
+    oneapi::tbb::parallel_for(std::size_t(0), iterations, [&](std::size_t) {
         counter++;
-    }, tbb::auto_partitioner());
+    }, oneapi::tbb::auto_partitioner());
 
-    tbb::parallel_for(std::size_t(0), iterations, [&](std::size_t) {
+    oneapi::tbb::parallel_for(std::size_t(0), iterations, [&](std::size_t) {
         counter++;
-    }, tbb::static_partitioner());
+    }, oneapi::tbb::static_partitioner());
 
-    tbb::affinity_partitioner aff;
-    tbb::parallel_for(std::size_t(0), iterations, [&](std::size_t) {
+    oneapi::tbb::affinity_partitioner aff;
+    oneapi::tbb::parallel_for(std::size_t(0), iterations, [&](std::size_t) {
         counter++;
     }, aff);
 
@@ -301,17 +301,17 @@ TEST_CASE("Testing parallel_for with partitioners") {
     using namespace test_partitioner_utils::interaction_with_range_and_partitioner;
 
     test_partitioner_utils::SimpleBody b;
-    tbb::affinity_partitioner ap;
+    oneapi::tbb::affinity_partitioner ap;
 
     parallel_for(Range1(true, false), b, ap);
     parallel_for(Range6(false, true), b, ap);
 
-    parallel_for(Range1(false, true), b, tbb::simple_partitioner());
-    parallel_for(Range6(false, true), b, tbb::simple_partitioner());
+    parallel_for(Range1(false, true), b, oneapi::tbb::simple_partitioner());
+    parallel_for(Range6(false, true), b, oneapi::tbb::simple_partitioner());
 
-    parallel_for(Range1(false, true), b, tbb::auto_partitioner());
-    parallel_for(Range6(false, true), b, tbb::auto_partitioner());
+    parallel_for(Range1(false, true), b, oneapi::tbb::auto_partitioner());
+    parallel_for(Range6(false, true), b, oneapi::tbb::auto_partitioner());
 
-    parallel_for(Range1(true, false), b, tbb::static_partitioner());
-    parallel_for(Range6(false, true), b, tbb::static_partitioner());
+    parallel_for(Range1(true, false), b, oneapi::tbb::static_partitioner());
+    parallel_for(Range6(false, true), b, oneapi::tbb::static_partitioner());
 }

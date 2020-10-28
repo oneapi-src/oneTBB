@@ -18,7 +18,7 @@
 //! \brief Test for [internal] functionality
 
 #include "common/test.h"
-#include "tbb/detail/_exception.h"
+#include "oneapi/tbb/detail/_exception.h"
 #include "../../src/tbb/exception.cpp"
 #include <stdexcept>
 #include <cerrno>

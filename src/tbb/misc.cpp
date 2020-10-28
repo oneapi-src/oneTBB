@@ -17,12 +17,13 @@
 // Source file for miscellaneous entities that are infrequently referenced by
 // an executing program.
 
-#include "tbb/detail/_exception.h"
-#include "tbb/detail/_machine.h"
+#include "oneapi/tbb/detail/_exception.h"
+#include "oneapi/tbb/detail/_machine.h"
 
-#include "tbb/version.h"
+#include "oneapi/tbb/version.h"
 
 #include "misc.h"
+#include "governor.h"
 #include "assert_impl.h" // Out-of-line TBB assertion handling routines are instantiated here.
 
 #include <cstdio>
@@ -42,6 +43,12 @@
 namespace tbb {
 namespace detail {
 namespace r1 {
+
+//------------------------------------------------------------------------
+// governor data
+//------------------------------------------------------------------------
+cpu_features_type governor::cpu_features;
+
 
 size_t DefaultSystemPageSize() {
 #if _WIN32
@@ -70,7 +77,7 @@ void PrintExtraVersionInfo( const char* category, const char* format, ... ) {
         // Note: correct vsnprintf definition obtained from tbb_assert_impl.h
         std::vsnprintf( str, 1024-1, format, args);
         va_end(args);
-        std::fprintf(stderr, "TBB: %s\t%s\n", category, str );
+        std::fprintf(stderr, "oneTBB: %s\t%s\n", category, str );
     }
 }
 

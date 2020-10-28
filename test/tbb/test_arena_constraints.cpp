@@ -37,7 +37,7 @@ void recursive_arena_binding(int* numa_indexes, size_t count,
         );
     } else {
         // Validation of assigned affinity masks at the deepest recursion step
-        numa_validation::affinity_set_verification(affinity_masks.begin(), affinity_masks.end());
+        numa_validation::verify_affinity_set(affinity_masks.begin(), affinity_masks.end());
     }
 
     if (!affinity_masks.empty()) {
@@ -48,12 +48,22 @@ void recursive_arena_binding(int* numa_indexes, size_t count,
     }
 }
 
+//! Testing that tbb::info correctly parses the system topology
+//! \brief \ref error_guessing
+TEST_CASE("Test tbb::info interfaces") {
+    if (is_system_environment_supported()) {
+        numa_validation::initialize_system_info();
+        std::vector<tbb::numa_node_id> numa_indexes = tbb::info::numa_nodes();
+        numa_validation::verify_numa_indexes(numa_indexes);
+    }
+}
+
 //! Testing binding correctness during passing through netsed arenas
 //! \brief \ref interface \ref error_guessing
 TEST_CASE("Test binding to NUMA nodes with nested arenas") {
     if (is_system_environment_supported()) {
         numa_validation::initialize_system_info();
-        std::vector<int> numa_indexes = tbb::info::numa_nodes();
+        std::vector<tbb::numa_node_id> numa_indexes = tbb::info::numa_nodes();
         std::vector<numa_validation::affinity_mask> affinity_masks;
         recursive_arena_binding(numa_indexes.data(), numa_indexes.size(), affinity_masks);
     }
@@ -64,7 +74,7 @@ TEST_CASE("Test binding to NUMA nodes with nested arenas") {
 TEST_CASE("Test constraints propagation during arenas copy construction") {
     if (is_system_environment_supported()) {
         numa_validation::initialize_system_info();
-        std::vector<int> numa_indexes = tbb::info::numa_nodes();
+        std::vector<tbb::numa_node_id> numa_indexes = tbb::info::numa_nodes();
         for (auto index: numa_indexes) {
             numa_validation::affinity_mask constructed_mask, copied_mask;
 
@@ -97,7 +107,7 @@ void collect_all_threads_on_barrier() {
 //! Testing memory leaks absence
 //! \brief \ref resource_usage
 TEST_CASE("Test memory leaks") {
-    std::vector<int> numa_indexes = tbb::info::numa_nodes();
+    std::vector<tbb::numa_node_id> numa_indexes = tbb::info::numa_nodes();
     size_t num_traits = 1000;
     size_t current_memory_usage = 0, previous_memory_usage = 0, stability_counter = 0;
     bool no_memory_leak = false;

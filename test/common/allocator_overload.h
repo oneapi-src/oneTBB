@@ -18,7 +18,7 @@
 #define tbb_test_harness_allocator_overload_H
 
 #include "../src/tbbmalloc_proxy/proxy.h" // for MALLOC_UNIXLIKE_OVERLOAD_ENABLED, MALLOC_ZONE_OVERLOAD_ENABLED
-#include "tbb/detail/_config.h" // for __TBB_WIN8UI_SUPPORT
+#include "oneapi/tbb/detail/_config.h" // for __TBB_WIN8UI_SUPPORT
 
 // Skip configurations with unsupported system malloc overload:
 // skip unsupported MSVCs, WIN8UI and MINGW (it doesn't define _MSC_VER),

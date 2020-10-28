@@ -18,8 +18,8 @@
 
 #if (!__TBB_WIN8UI_SUPPORT && !defined(WINAPI_FAMILY) && !__ANDROID__)
 
-#include "tbb/task.h"
-#include "tbb/task_group.h"
+#include "oneapi/tbb/task.h"
+#include "oneapi/tbb/task_group.h"
 #include <thread>
 
 //! \file conformance_resumable_tasks.cpp
@@ -34,11 +34,11 @@ TEST_CASE("Async test") {
     mLocal = true;
     bool suspend = false, resume = false;
     std::thread t;
-    tbb::task::suspend([&t, &suspend, &resume](tbb::task::suspend_point sp) {
+    oneapi::tbb::task::suspend([&t, &suspend, &resume](oneapi::tbb::task::suspend_point sp) {
         suspend = true;
         t = std::thread([sp, &resume] {
             resume = true;
-            tbb::task::resume(sp);
+            oneapi::tbb::task::resume(sp);
         });
     });
     CHECK(suspend);
@@ -55,14 +55,14 @@ TEST_CASE("Parallel test") {
     mLocal = true;
     constexpr int N = 100;
     std::atomic<int> suspend{}, resume{};
-    tbb::task_group tg;
+    oneapi::tbb::task_group tg;
     for (int i = 0; i < N; ++i) {
         tg.run([&tg, &suspend, &resume] {
-            tbb::task::suspend([&tg, &suspend, &resume](tbb::task::suspend_point sp) {
+            oneapi::tbb::task::suspend([&tg, &suspend, &resume](oneapi::tbb::task::suspend_point sp) {
                 ++suspend;
                 tg.run([sp, &resume] {
                     ++resume;
-                    tbb::task::resume(sp);
+                    oneapi::tbb::task::resume(sp);
                 });
             });
         });

@@ -39,9 +39,9 @@ struct ReduceBody {
     result_type my_value;
 
     ReduceBody() : my_value() {}
-    ReduceBody( ReduceBody &, tbb::split ) : my_value() {}
+    ReduceBody( ReduceBody &, oneapi::tbb::split ) : my_value() {}
 
-    void operator() ( const tbb::blocked_range<int>& r ) {
+    void operator() ( const oneapi::tbb::blocked_range<int>& r ) {
         utils::ConcurrencyTracker ct;
         for ( int i = r.begin(); i != r.end(); ++i ) {
             Op op;
@@ -58,7 +58,7 @@ struct ReduceBody {
 template <class Partitioner>
 void TestDeterministicReductionFor() {
     const int N = 1000;
-    const tbb::blocked_range<int> range(0, N);
+    const oneapi::tbb::blocked_range<int> range(0, N);
     using BodyType = ReduceBody<RotOp>;
     using Type = RotOp::Type;
 
@@ -71,7 +71,7 @@ void TestDeterministicReductionFor() {
         "parallel_deterministic_reduce behaves differently from run to run" );
         
         Type lambda_measurement_result = deterministic_reduce_invoker<Type>( range,
-            [](const tbb::blocked_range<int>& br, Type value) -> Type {
+            [](const oneapi::tbb::blocked_range<int>& br, Type value) -> Type {
                 utils::ConcurrencyTracker ct;
                 for ( int ii = br.begin(); ii != br.end(); ++ii ) {
                     RotOp op;
@@ -94,9 +94,9 @@ void TestDeterministicReductionFor() {
 //! \brief \ref requirement \ref interface
 TEST_CASE("Test deterministic reduce correctness") {
     for ( auto concurrency_level : utils::concurrency_range() ) {
-        tbb::global_control control(tbb::global_control::max_allowed_parallelism, concurrency_level);
-        TestDeterministicReductionFor<tbb::simple_partitioner>();
-        TestDeterministicReductionFor<tbb::static_partitioner>();
+        oneapi::tbb::global_control control(oneapi::tbb::global_control::max_allowed_parallelism, concurrency_level);
+        TestDeterministicReductionFor<oneapi::tbb::simple_partitioner>();
+        TestDeterministicReductionFor<oneapi::tbb::static_partitioner>();
         TestDeterministicReductionFor<utils_default_partitioner>();
     }
 }
@@ -106,27 +106,27 @@ TEST_CASE("Test deterministic reduce correctness") {
 TEST_CASE("Test partitioners interaction with various ranges") {
     using namespace test_partitioner_utils::interaction_with_range_and_partitioner;
     for ( auto concurrency_level : utils::concurrency_range() ) {
-        tbb::global_control control(tbb::global_control::max_allowed_parallelism, concurrency_level);
+        oneapi::tbb::global_control control(oneapi::tbb::global_control::max_allowed_parallelism, concurrency_level);
 
         test_partitioner_utils::SimpleReduceBody body;
-        tbb::affinity_partitioner ap;
+        oneapi::tbb::affinity_partitioner ap;
 
         parallel_reduce(Range1(/*assert_in_split*/ true, /*assert_in_proportional_split*/ false), body, ap);
         parallel_reduce(Range6(false, true), body, ap);
 
-        parallel_reduce(Range1(/*assert_in_split*/ true, /*assert_in_proportional_split*/ false), body, tbb::static_partitioner());
-        parallel_reduce(Range6(false, true), body, tbb::static_partitioner());
+        parallel_reduce(Range1(/*assert_in_split*/ true, /*assert_in_proportional_split*/ false), body, oneapi::tbb::static_partitioner());
+        parallel_reduce(Range6(false, true), body, oneapi::tbb::static_partitioner());
 
-        parallel_reduce(Range1(/*assert_in_split*/ false, /*assert_in_proportional_split*/ true), body, tbb::simple_partitioner());
-        parallel_reduce(Range6(false, true), body, tbb::simple_partitioner());
+        parallel_reduce(Range1(/*assert_in_split*/ false, /*assert_in_proportional_split*/ true), body, oneapi::tbb::simple_partitioner());
+        parallel_reduce(Range6(false, true), body, oneapi::tbb::simple_partitioner());
 
-        parallel_reduce(Range1(/*assert_in_split*/ false, /*assert_in_proportional_split*/ true), body, tbb::auto_partitioner());
-        parallel_reduce(Range6(false, true), body, tbb::auto_partitioner());
+        parallel_reduce(Range1(/*assert_in_split*/ false, /*assert_in_proportional_split*/ true), body, oneapi::tbb::auto_partitioner());
+        parallel_reduce(Range6(false, true), body, oneapi::tbb::auto_partitioner());
 
-        parallel_deterministic_reduce(Range1(/*assert_in_split*/true, /*assert_in_proportional_split*/ false), body, tbb::static_partitioner());
-        parallel_deterministic_reduce(Range6(false, true), body, tbb::static_partitioner());
+        parallel_deterministic_reduce(Range1(/*assert_in_split*/true, /*assert_in_proportional_split*/ false), body, oneapi::tbb::static_partitioner());
+        parallel_deterministic_reduce(Range6(false, true), body, oneapi::tbb::static_partitioner());
 
-        parallel_deterministic_reduce(Range1(/*assert_in_split*/false, /*assert_in_proportional_split*/ true), body, tbb::simple_partitioner());
-        parallel_deterministic_reduce(Range6(false, true), body, tbb::simple_partitioner());
+        parallel_deterministic_reduce(Range1(/*assert_in_split*/false, /*assert_in_proportional_split*/ true), body, oneapi::tbb::simple_partitioner());
+        parallel_deterministic_reduce(Range6(false, true), body, oneapi::tbb::simple_partitioner());
     }
 }

@@ -23,9 +23,9 @@
 //! \brief Test for [preview] functionality
 
 #define TBB_PREVIEW_BLOCKED_RANGE_ND 1
-#include "tbb/blocked_rangeNd.h"
-#include "tbb/parallel_for.h"
-#include "tbb/global_control.h"
+#include "oneapi/tbb/blocked_rangeNd.h"
+#include "oneapi/tbb/parallel_for.h"
+#include "oneapi/tbb/global_control.h"
 
 #include <algorithm> // std::for_each
 #include <array>
@@ -99,7 +99,7 @@ struct range_utils {
 #pragma GCC diagnostic ignored "-Wsequence-point"
 #endif
     template<typename input_t, std::size_t... Is>
-    static range_t make_range(std::size_t shift, bool negative, val_t(*gen)(input_t), tbb::detail::index_sequence<Is...>) {
+    static range_t make_range(std::size_t shift, bool negative, val_t(*gen)(input_t), oneapi::tbb::detail::index_sequence<Is...>) {
         return range_t( { { gen(negative ? -input_t(Is + shift) : 0), gen(input_t(Is + shift)), Is + 1} ... } );
     }
 #if __GNUC__ && !defined(__clang__) && !defined(__INTEL_COMPILER)
@@ -160,14 +160,14 @@ int MakeInt(int i) { return i; }
 
 template<unsigned int DimAmount>
 void SerialTest() {
-    static_assert((tbb::blocked_rangeNd<int, DimAmount>::ndims() == tbb::blocked_rangeNd<AbstractValueType, DimAmount>::ndims()),
+    static_assert((oneapi::tbb::blocked_rangeNd<int, DimAmount>::ndims() == oneapi::tbb::blocked_rangeNd<AbstractValueType, DimAmount>::ndims()),
                          "different amount of dimensions");
 
-    using range_t = tbb::blocked_rangeNd<AbstractValueType, DimAmount>;
+    using range_t = oneapi::tbb::blocked_rangeNd<AbstractValueType, DimAmount>;
     using utils_t = range_utils<range_t, DimAmount>;
 
     // Generate empty range
-    range_t r = utils_t::make_range(0, true, &MakeAbstractValue, tbb::detail::make_index_sequence<DimAmount>());
+    range_t r = utils_t::make_range(0, true, &MakeAbstractValue, oneapi::tbb::detail::make_index_sequence<DimAmount>());
 
     utils::AssertSameType(r.is_divisible(), bool());
     utils::AssertSameType(r.empty(), bool());
@@ -177,11 +177,11 @@ void SerialTest() {
     REQUIRE(r.is_divisible() == utils_t::is_divisible(r));
 
     // Generate not-empty range divisible range
-    r = utils_t::make_range(1, true, &MakeAbstractValue, tbb::detail::make_index_sequence<DimAmount>());
+    r = utils_t::make_range(1, true, &MakeAbstractValue, oneapi::tbb::detail::make_index_sequence<DimAmount>());
     REQUIRE((r.empty() == utils_t::is_empty(r) && !r.empty()));
     REQUIRE((r.is_divisible() == utils_t::is_divisible(r) && r.is_divisible()));
 
-    range_t r_new(r, tbb::split());
+    range_t r_new(r, oneapi::tbb::split());
     utils_t::check_splitting(r, r_new, &GetValueOf);
 
     SerialTest<DimAmount - 1>();
@@ -190,7 +190,7 @@ template<> void SerialTest<0>() {}
 
 template<unsigned int DimAmount>
 void ParallelTest() {
-    using range_t = tbb::blocked_rangeNd<int, DimAmount>;
+    using range_t = oneapi::tbb::blocked_rangeNd<int, DimAmount>;
     using utils_t = range_utils<range_t, DimAmount>;
 
     // Max size is                                 1 << 20 - 1 bytes
@@ -198,9 +198,9 @@ void ParallelTest() {
     typename utils_t::template data_type<unsigned char, 1 << (20 / DimAmount - 1)> data;
     utils_t::init_data(data);
 
-    range_t r = utils_t::make_range((1 << (20 / DimAmount - 1)) - DimAmount, false, &MakeInt, tbb::detail::make_index_sequence<DimAmount>());
+    range_t r = utils_t::make_range((1 << (20 / DimAmount - 1)) - DimAmount, false, &MakeInt, oneapi::tbb::detail::make_index_sequence<DimAmount>());
 
-    tbb::parallel_for(r, [&data](const range_t& range) {
+    oneapi::tbb::parallel_for(r, [&data](const range_t& range) {
         utils_t::increment_data(range, data);
     });
 
@@ -213,25 +213,25 @@ template<> void ParallelTest<0>() {}
 //! Testing blocked_rangeNd construction
 //! \brief \ref interface
 TEST_CASE("Construction") {
-    tbb::blocked_rangeNd<int, 1>{ { 0,13,3 } };
+    oneapi::tbb::blocked_rangeNd<int, 1>{ { 0,13,3 } };
 
-    tbb::blocked_rangeNd<int, 1>{ tbb::blocked_range<int>{ 0,13,3 } };
+    oneapi::tbb::blocked_rangeNd<int, 1>{ oneapi::tbb::blocked_range<int>{ 0,13,3 } };
 
-    tbb::blocked_rangeNd<int, 2>(tbb::blocked_range<int>(-8923, 8884, 13), tbb::blocked_range<int>(-8923, 5, 13));
+    oneapi::tbb::blocked_rangeNd<int, 2>(oneapi::tbb::blocked_range<int>(-8923, 8884, 13), oneapi::tbb::blocked_range<int>(-8923, 5, 13));
 
-    tbb::blocked_rangeNd<int, 2>({ -8923, 8884, 13 }, { -8923, 8884, 13 });
+    oneapi::tbb::blocked_rangeNd<int, 2>({ -8923, 8884, 13 }, { -8923, 8884, 13 });
 
-    tbb::blocked_range<int> r1(0, 13);
+    oneapi::tbb::blocked_range<int> r1(0, 13);
 
-    tbb::blocked_range<int> r2(-12, 23);
+    oneapi::tbb::blocked_range<int> r2(-12, 23);
 
-    tbb::blocked_rangeNd<int, 2>({ { -8923, 8884, 13 }, r1});
+    oneapi::tbb::blocked_rangeNd<int, 2>({ { -8923, 8884, 13 }, r1});
 
-    tbb::blocked_rangeNd<int, 2>({ r2, r1 });
+    oneapi::tbb::blocked_rangeNd<int, 2>({ r2, r1 });
 
-    tbb::blocked_rangeNd<int, 2>(r1, r2);
+    oneapi::tbb::blocked_rangeNd<int, 2>(r1, r2);
 
-    tbb::blocked_rangeNd<AbstractValueType, 4>({ MakeAbstractValue(-3), MakeAbstractValue(13), 8 },
+    oneapi::tbb::blocked_rangeNd<AbstractValueType, 4>({ MakeAbstractValue(-3), MakeAbstractValue(13), 8 },
                                                { MakeAbstractValue(-53), MakeAbstractValue(23), 2 },
                                                { MakeAbstractValue(-23), MakeAbstractValue(33), 1 },
                                                { MakeAbstractValue(-13), MakeAbstractValue(43), 7 });
@@ -249,7 +249,7 @@ TEST_CASE("Serial test") {
 //! \brief \ref requirement
 TEST_CASE("Parallel test") {
     for ( auto concurrency_level : utils::concurrency_range() ) {
-        tbb::global_control control(tbb::global_control::max_allowed_parallelism, concurrency_level);
+        oneapi::tbb::global_control control(oneapi::tbb::global_control::max_allowed_parallelism, concurrency_level);
         ParallelTest<N>();
     }
 }
@@ -257,10 +257,10 @@ TEST_CASE("Parallel test") {
 //! Testing blocked_rangeNd with proportional splitting
 //! \brief \ref interface \ref requirement
 TEST_CASE("blocked_rangeNd proportional splitting") {
-    tbb::blocked_rangeNd<int, 2> original{{0, 100}, {0, 100}};
-    tbb::blocked_rangeNd<int, 2> first(original);
-    tbb::proportional_split ps(3, 1);
-    tbb::blocked_rangeNd<int, 2> second(first, ps);
+    oneapi::tbb::blocked_rangeNd<int, 2> original{{0, 100}, {0, 100}};
+    oneapi::tbb::blocked_rangeNd<int, 2> first(original);
+    oneapi::tbb::proportional_split ps(3, 1);
+    oneapi::tbb::blocked_rangeNd<int, 2> second(first, ps);
 
     int expected_first_end = original.dim(0).begin() + ps.left() * (original.dim(0).end() - original.dim(0).begin()) / (ps.left() + ps.right());
     if (first.dim(0).size() == second.dim(0).size()) {

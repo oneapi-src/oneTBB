@@ -14,14 +14,14 @@
     limitations under the License.
 */
 
-#include "tbb/parallel_pipeline.h"
-#include "tbb/spin_mutex.h"
-#include "tbb/tbb_allocator.h"
-#include "tbb/cache_aligned_allocator.h"
+#include "oneapi/tbb/parallel_pipeline.h"
+#include "oneapi/tbb/spin_mutex.h"
+#include "oneapi/tbb/tbb_allocator.h"
+#include "oneapi/tbb/cache_aligned_allocator.h"
 #include "itt_notify.h"
 #include "tls.h"
-#include "tbb/detail/_exception.h"
-#include "tbb/detail/_small_object_pool.h"
+#include "oneapi/tbb/detail/_exception.h"
+#include "oneapi/tbb/detail/_small_object_pool.h"
 
 namespace tbb {
 namespace detail {

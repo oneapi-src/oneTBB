@@ -18,11 +18,13 @@ set(TBB_WARNING_LEVEL -Wall -Wextra $<$<BOOL:${TBB_STRICT}>:-Werror>)
 set(TBB_TEST_WARNING_FLAGS -Wshadow -Wcast-qual -Woverloaded-virtual -Wnon-virtual-dtor)
 set(TBB_WARNING_SUPPRESS -Wno-parentheses -Wno-non-virtual-dtor -Wno-dangling-else)
 # For correct ucontext.h structures layout
-set(TBB_LIB_COMPILE_FLAGS -D_XOPEN_SOURCE)
-set(TBB_BENCH_COMPILE_FLAGS -D_XOPEN_SOURCE)
+set(TBB_COMMON_COMPILE_FLAGS -D_XOPEN_SOURCE)
 
 set(TBB_MMD_FLAG -MMD)
-set(TBB_COMMON_COMPILE_FLAGS -mrtm)
+
+if (NOT "${CMAKE_OSX_ARCHITECTURES}" MATCHES "^arm64$")
+    set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -mrtm)
+endif()
 
 # TBB malloc settings
 set(TBBMALLOC_LIB_COMPILE_FLAGS -fno-rtti -fno-exceptions)

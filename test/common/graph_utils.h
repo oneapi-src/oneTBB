@@ -29,9 +29,9 @@
 #define __TBB_EXTRA_DEBUG 1
 
 #include "common/spin_barrier.h"
-#include "tbb/flow_graph.h"
-#include "tbb/null_rw_mutex.h"
-#include "tbb/concurrent_unordered_set.h"
+#include "oneapi/tbb/flow_graph.h"
+#include "oneapi/tbb/null_rw_mutex.h"
+#include "oneapi/tbb/concurrent_unordered_set.h"
 
 #include <atomic>
 #include <thread>

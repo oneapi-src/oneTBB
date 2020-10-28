@@ -26,16 +26,18 @@ get_filename_component(TBB_VARS_TEMPLATE_NAME ${PROJECT_SOURCE_DIR}/integration/
 string(REPLACE ".in" "" TBB_VARS_NAME ${TBB_VARS_TEMPLATE_NAME})
 
 macro(tbb_gen_vars target)
-    add_custom_command(TARGET ${target} POST_BUILD COMMAND
-        ${CMAKE_COMMAND}
-        -DBINARY_DIR=${CMAKE_BINARY_DIR}
-        -DSOURCE_DIR=${PROJECT_SOURCE_DIR}
-        -DBIN_PATH=$<TARGET_FILE_DIR:${target}>
-        -DVARS_TEMPLATE=${TBB_VARS_TEMPLATE}
-        -DVARS_NAME=${TBB_VARS_NAME}
-        -DTBB_INSTALL_VARS=${TBB_INSTALL_VARS}
-        -P ${PROJECT_SOURCE_DIR}/integration/cmake/generate_vars.cmake
-    )
+    if (${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
+        add_custom_command(TARGET ${target} POST_BUILD COMMAND
+            ${CMAKE_COMMAND}
+            -DBINARY_DIR=${CMAKE_BINARY_DIR}
+            -DSOURCE_DIR=${PROJECT_SOURCE_DIR}
+            -DBIN_PATH=$<TARGET_FILE_DIR:${target}>
+            -DVARS_TEMPLATE=${TBB_VARS_TEMPLATE}
+            -DVARS_NAME=${TBB_VARS_NAME}
+            -DTBB_INSTALL_VARS=${TBB_INSTALL_VARS}
+            -P ${PROJECT_SOURCE_DIR}/integration/cmake/generate_vars.cmake
+        )
+    endif()
 endmacro(tbb_gen_vars)
 
 if (TBB_INSTALL_VARS)

@@ -328,12 +328,15 @@ public:
     //! end const iterator
     const_iterator cend() const;
 
+    // thread-unsafe state reset.
+    void reset(reset_flags f = rf_reset_protocol);
+
+    //! cancels execution of the associated task_group_context
+    void cancel();
+
     //! return status of graph execution
     bool is_cancelled() { return cancelled; }
     bool exception_thrown() { return caught_exception; }
-
-    // thread-unsafe state reset.
-    void reset(reset_flags f = rf_reset_protocol);
 
 private:
     wait_context my_wait_context;

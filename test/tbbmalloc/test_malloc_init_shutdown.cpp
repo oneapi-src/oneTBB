@@ -19,7 +19,7 @@
 #include "common/test.h"
 #include "common/utils.h"
 #include "common/spin_barrier.h"
-#include "tbb/detail/_utils.h"
+#include "oneapi/tbb/detail/_utils.h"
 #include "tbb/scalable_allocator.h"
 #include <thread>
 

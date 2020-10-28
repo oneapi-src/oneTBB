@@ -114,7 +114,7 @@ struct put_dec_body : utils::NoAssign {
             if ( msg == true ) {
                 ++local_accept_count;
                 ++my_accept_count;
-                my_lim.decrement.try_put( tbb::flow::continue_msg() );
+                my_lim.decrementer().try_put( tbb::flow::continue_msg() );
             }
         }
     }
@@ -128,7 +128,7 @@ void test_puts_with_decrements( int num_threads, tbb::flow::limiter_node< T >& l
     std::atomic<int> accept_count;
     accept_count = 0;
     tbb::flow::make_edge( lim, r );
-    tbb::flow::make_edge(s, lim.decrement);
+    tbb::flow::make_edge(s, lim.decrementer());
 
     // test puts with decrements
     utils::NativeParallelFor( num_threads, put_dec_body<T>(lim, accept_count) );
@@ -203,12 +203,12 @@ int test_serial() {
        serial_receiver<T> r(g);
        empty_sender< tbb::flow::continue_msg > s;
        tbb::flow::make_edge( lim, r );
-       tbb::flow::make_edge(s, lim.decrement);
+       tbb::flow::make_edge(s, lim.decrementer());
        for ( int j = 0; j < N; ++j ) {
            bool msg = lim.try_put( T(j) );
            CHECK_MESSAGE( (( j < i && msg == true ) || ( j >= i && msg == false )), "" );
            if ( msg == false ) {
-               lim.decrement.try_put( tbb::flow::continue_msg() );
+               lim.decrementer().try_put( tbb::flow::continue_msg() );
                msg = lim.try_put( T(j) );
                CHECK_MESSAGE( msg == true, "" );
            }
@@ -281,7 +281,7 @@ test_multifunction_to_limiter(int _max, int _nparallel) {
     tbb::flow::function_node<int, int> fn_node(g, tbb::flow::unlimited, fn_body());
     tbb::flow::limiter_node<int> lim_node(g, _nparallel);
     tbb::flow::make_edge(tbb::flow::output_port<LIMITER_OUTPUT>(mf_node), lim_node);
-    tbb::flow::make_edge(tbb::flow::output_port<DECREMENT_OUTPUT>(mf_node), lim_node.decrement);
+    tbb::flow::make_edge(tbb::flow::output_port<DECREMENT_OUTPUT>(mf_node), lim_node.decrementer());
     tbb::flow::make_edge(lim_node, fn_node);
     tbb::flow::make_edge(fn_node, mf_node);
 
@@ -310,7 +310,7 @@ test_continue_msg_reception() {
     tbb::flow::limiter_node<int> ln(g,2);
     tbb::flow::queue_node<int>   qn(g);
     tbb::flow::make_edge(ln, qn);
-    ln.decrement.try_put(tbb::flow::continue_msg());
+    ln.decrementer().try_put(tbb::flow::continue_msg());
     ln.try_put(42);
     g.wait_for_all();
     int outint;
@@ -336,7 +336,7 @@ void test_reserve_release_messages() {
     //edges
     make_edge(input_queue, limit);
     make_edge(limit, output_queue);
-    make_edge(broad,limit.decrement);
+    make_edge(broad,limit.decrementer());
 
     int list[4] = {19, 33, 72, 98}; //list to be put to the input queue
 
@@ -375,10 +375,10 @@ void test_decrementer() {
     make_edge(limit, queue);
     int m = 0;
     CHECK_MESSAGE( ( limit.try_put( m++ )), "Newly constructed limiter node does not accept message." );
-    CHECK_MESSAGE( limit.decrement.try_put( -threshold ), // close limiter's gate
+    CHECK_MESSAGE( limit.decrementer().try_put( -threshold ), // close limiter's gate
                    "Limiter node decrementer's port does not accept message." );
     CHECK_MESSAGE( ( !limit.try_put( m++ )), "Closed limiter node's accepts message." );
-    CHECK_MESSAGE( limit.decrement.try_put( threshold + 5 ),  // open limiter's gate
+    CHECK_MESSAGE( limit.decrementer().try_put( threshold + 5 ),  // open limiter's gate
                    "Limiter node decrementer's port does not accept message." );
     for( int i = 0; i < threshold; ++i )
         CHECK_MESSAGE( ( limit.try_put( m++ )), "Limiter node does not accept message while open." );
@@ -396,10 +396,10 @@ void test_decrementer() {
     make_edge(limit2, queue);
     CHECK_MESSAGE( ( limit2.try_put( 1 )), "Newly constructed limiter node does not accept message." );
     long long decrement_value = (long long)( size_t(-1)/2 );
-    CHECK_MESSAGE( limit2.decrement.try_put( -decrement_value ),
+    CHECK_MESSAGE( limit2.decrementer().try_put( -decrement_value ),
                    "Limiter node decrementer's port does not accept message" );
     CHECK_MESSAGE( ( limit2.try_put( 2 )), "Limiter's gate should not be closed yet." );
-    CHECK_MESSAGE( limit2.decrement.try_put( -decrement_value ),
+    CHECK_MESSAGE( limit2.decrementer().try_put( -decrement_value ),
                    "Limiter node decrementer's port does not accept message" );
     CHECK_MESSAGE( ( !limit2.try_put( 3 )), "Overflow happened for internal counter." );
     int expected2[] = {1, 2};
@@ -433,7 +433,7 @@ void test_try_put_without_successors() {
 
     // Check the lost message
     tbb::flow::remove_edge(bn, ln);
-    ln.decrement.try_put(tbb::flow::continue_msg());
+    ln.decrementer().try_put(tbb::flow::continue_msg());
     bn.try_put(try_put_num + 1);
     g.wait_for_all();
     CHECK((counter == i * try_put_num / 2));

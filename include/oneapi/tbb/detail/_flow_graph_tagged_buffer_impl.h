@@ -182,6 +182,8 @@ public:
         internal_free_buffer(pointer_array, elements_array, my_size, nelements);
         if(my_key) delete my_key;
     }
+    hash_buffer(const hash_buffer&) = delete;
+    hash_buffer& operator=(const hash_buffer&) = delete;
 
     void reset() {
         internal_free_buffer(pointer_array, elements_array, my_size, nelements);

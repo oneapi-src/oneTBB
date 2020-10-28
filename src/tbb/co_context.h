@@ -17,7 +17,7 @@
 #ifndef _TBB_co_context_H
 #define _TBB_co_context_H
 
-#include "tbb/detail/_config.h"
+#include "oneapi/tbb/detail/_config.h"
 
 #if __TBB_RESUMABLE_TASKS
 

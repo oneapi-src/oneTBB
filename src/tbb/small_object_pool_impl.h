@@ -17,8 +17,8 @@
 #ifndef __TBB_small_object_pool_impl_H
 #define __TBB_small_object_pool_impl_H
 
-#include "tbb/detail/_small_object_pool.h"
-#include "tbb/detail/_utils.h"
+#include "oneapi/tbb/detail/_small_object_pool.h"
+#include "oneapi/tbb/detail/_utils.h"
 
 #include <cstddef>
 #include <cstdint>

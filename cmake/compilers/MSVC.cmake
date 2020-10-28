@@ -23,8 +23,14 @@ string(REGEX REPLACE "/W[0-4]" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 set(TBB_WARNING_LEVEL $<$<NOT:$<CXX_COMPILER_ID:Intel>>:/W4> $<$<BOOL:${TBB_STRICT}>:/WX>)
 set(TBB_WARNING_SUPPRESS /wd4324 /wd4530 /wd4577)
 set(TBB_TEST_COMPILE_FLAGS /bigobj)
+if (MSVC_VERSION LESS_EQUAL 1900)
+    # Warning suppression C4503 for VS2015 and earlier:
+    # decorated name length exceeded, name was truncated.
+    # More info can be found at
+    # https://docs.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4503
+    set(TBB_TEST_COMPILE_FLAGS ${TBB_TEST_COMPILE_FLAGS} /wd4503)
+endif()
 set(TBB_LIB_COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS /GS)
-
 set(TBB_COMMON_COMPILE_FLAGS /volatile:iso /FS)
 
 if (WINDOWS_STORE OR TBB_WINDOWS_DRIVER)

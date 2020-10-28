@@ -14,17 +14,17 @@
     limitations under the License.
 */
 
-#include "tbb/detail/_config.h"
+#include "oneapi/tbb/detail/_config.h"
 
 #include "common/test.h"
 #include "common/utils_concurrency_limit.h"
 
-#include "tbb/task_arena.h"
+#include "oneapi/tbb/task_arena.h"
 
 #include <vector>
 
 #if __TBB_HWLOC_PRESENT
-#include "tbb/concurrent_unordered_set.h"
+#include "oneapi/tbb/concurrent_unordered_set.h"
 
 #include <atomic>
 
@@ -188,6 +188,12 @@ affinity_mask allocate_current_cpu_set() {
     return system_info.allocate_current_cpu_set();
 }
 
+int get_numa_nodes_count() {
+    auto process_node_set = system_info.get_process_node_set();
+    REQUIRE_MESSAGE(hwloc_bitmap_weight(process_node_set) > 0, "Negative NUMA nodes count.");
+    return hwloc_bitmap_weight(process_node_set);
+}
+
 bool affinity_masks_isequal(const_affinity_mask first, const_affinity_mask second) {
     return hwloc_bitmap_isequal(first, second) ? true : false;
 }
@@ -196,7 +202,7 @@ bool affinity_masks_intersects(const_affinity_mask first, const_affinity_mask se
     return hwloc_bitmap_intersects(first, second) ? true : false;
 }
 
-void validate_topology_information(std::vector<tbb::numa_node_id> numa_indexes) {
+void verify_numa_indexes(const std::vector<tbb::numa_node_id>& numa_indexes) {
     // Generate available numa nodes bitmap
     const_affinity_mask process_node_set = system_info.get_process_node_set();
 
@@ -216,23 +222,24 @@ void validate_topology_information(std::vector<tbb::numa_node_id> numa_indexes) 
     REQUIRE_MESSAGE(whole_system_concurrency == utils::get_platform_max_threads(),
            "Wrong whole system default concurrency level.");
     REQUIRE_MESSAGE(affinity_masks_isequal(process_node_set, merged_input_node_set),
-           "Input array of indices is not equal with process numa node set.");
+           "Array of indices is not equal with process numa node set.");
 }
 
-    template <typename It>
-    typename std::enable_if<std::is_same<typename std::iterator_traits<It>::value_type, affinity_mask>::value, void>::
-    type affinity_set_verification(It begin, It end) {
-        affinity_mask buffer_mask = system_info.allocate_empty_affinity_mask();
-        for (auto it = begin; it != end; it++) {
-            REQUIRE_MESSAGE(!hwloc_bitmap_intersects(buffer_mask, *it),
-                   "Bitmaps that are binded to different nodes are intersects.");
-            // Add masks to buffer_mask to concatenate process affinity mask
-            hwloc_bitmap_or(buffer_mask, buffer_mask,  *it);
-        }
-
-        REQUIRE_MESSAGE(affinity_masks_isequal(system_info.get_process_cpu_set(), buffer_mask),
-               "Some cores was not included to bitmaps.");
+template <typename It>
+typename std::enable_if<std::is_same<typename std::iterator_traits<It>::value_type, affinity_mask>::value, void>::
+type verify_affinity_set(It begin, It end) {
+    affinity_mask buffer_mask = system_info.allocate_empty_affinity_mask();
+    for (auto it = begin; it != end; it++) {
+        REQUIRE_MESSAGE(!hwloc_bitmap_intersects(buffer_mask, *it),
+               "Bitmaps that are binded to different nodes are intersects.");
+        // Add masks to buffer_mask to concatenate process affinity mask
+        hwloc_bitmap_or(buffer_mask, buffer_mask,  *it);
     }
+
+    REQUIRE_MESSAGE(affinity_masks_isequal(system_info.get_process_cpu_set(), buffer_mask),
+           "Some cores were not included to the bitmaps.");
+}
+
 } /*namespace numa_validation*/
 
 #endif /*__TBB_HWLOC_PRESENT*/

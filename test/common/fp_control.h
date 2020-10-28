@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include "doctest.h"
-#include "tbb/detail/_machine.h"
+#include "common/test.h"
+#include "oneapi/tbb/detail/_machine.h"
 
 #if ( __TBB_x86_32 || __TBB_x86_64 )
 

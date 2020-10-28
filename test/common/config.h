@@ -17,7 +17,7 @@
 #ifndef __TBB_test_common_config_H
 #define __TBB_test_common_config_H
 
-#include "tbb/detail/_config.h"
+#include "oneapi/tbb/detail/_config.h"
 #if __FreeBSD__
 #include <sys/param.h>  // for __FreeBSD_version
 #endif

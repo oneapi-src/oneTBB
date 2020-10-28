@@ -18,9 +18,9 @@
     with SPIN tool using <TBB directory>/tools/spin_models/ReaderWriterMutex.pml.
     There could be some code looking as "can be restructured" but its structure does matter! */
 
-#include "tbb/queuing_rw_mutex.h"
-#include "tbb/detail/_assert.h"
-#include "tbb/detail/_utils.h"
+#include "oneapi/tbb/queuing_rw_mutex.h"
+#include "oneapi/tbb/detail/_assert.h"
+#include "oneapi/tbb/detail/_utils.h"
 #include "itt_notify.h"
 
 namespace tbb {

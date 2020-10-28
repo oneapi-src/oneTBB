@@ -23,9 +23,9 @@
 #include "utils_report.h"
 #include "utils_concurrency_limit.h"
 
-#include "tbb/parallel_reduce.h"
-#include "tbb/blocked_range.h"
-#include "tbb/global_control.h"
+#include "oneapi/tbb/parallel_reduce.h"
+#include "oneapi/tbb/blocked_range.h"
+#include "oneapi/tbb/global_control.h"
 
 //! Type-tag for testing algorithm with default partitioner
 struct utils_default_partitioner {};

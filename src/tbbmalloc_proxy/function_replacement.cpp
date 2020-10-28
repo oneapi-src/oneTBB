@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include "tbb/detail/_config.h"
-#include "tbb/detail/_assert.h"
+#include "oneapi/tbb/detail/_config.h"
+#include "oneapi/tbb/detail/_assert.h"
 #include "../tbb/assert_impl.h"
 
 #if !__TBB_WIN8UI_SUPPORT && defined(_WIN32)

@@ -37,7 +37,7 @@
 #include "common/utils_env.h"
 #include "common/spin_barrier.h"
 
-#include "tbb/detail/_machine.h"
+#include "oneapi/tbb/detail/_machine.h"
 
 #define __TBB_MALLOC_WHITEBOX_TEST 1 // to get access to allocator internals
 // help trigger rare race condition

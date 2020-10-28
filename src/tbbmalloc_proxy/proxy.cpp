@@ -37,7 +37,7 @@
 
 #include "proxy.h"
 
-#include "tbb/detail/_config.h"
+#include "oneapi/tbb/detail/_config.h"
 #include "../tbb/environment.h"
 
 #if !defined(__EXCEPTIONS) && !defined(_CPPUNWIND) && !defined(__SUNPRO_CC)

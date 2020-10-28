@@ -295,7 +295,7 @@ void TestMultipleMasters(int p) {
 // TODO: explain what TestArenaEntryConsistency does
 #include <sstream>
 #include <stdexcept>
-#include "tbb/detail/_exception.h"
+#include "oneapi/tbb/detail/_exception.h"
 #include "common/fp_control.h"
 
 struct TestArenaEntryBody : FPModeContext {
@@ -822,7 +822,7 @@ namespace TestIsolatedExecuteNS {
         tbb::enumerable_thread_specific<int> ets;
         std::atomic<bool> is_stolen;
         is_stolen = false;
-        for ( int i = 0; i<10; ++i ) {
+        for ( ;; ) {
             tbb::parallel_for( 0, 1000, ExceptionTestBody( ets, is_stolen ) );
             if ( is_stolen ) break;
         }
@@ -1533,7 +1533,7 @@ void StressTestMixFunctionality() {
     std::vector<std::thread> thread_pool;
 
     utils::SpinBarrier thread_barrier(thread_number);
-    std::size_t max_operations = 100000;
+    std::size_t max_operations = 10000;
     std::atomic<std::size_t> curr_operation{};
     auto thread_func = [&] () {
         arenas_pool.emplace(new tbb::task_arena());
@@ -1773,6 +1773,26 @@ TEST_CASE("Small stack size") {
 TEST_CASE("Test for exceptions during execute.") {
     ExceptionInExecute();
 }
+
+//! \brief \ref error_guessing
+TEST_CASE("Exception thrown during tbb::task_arena::execute call") {
+    struct throwing_obj {
+        throwing_obj() {
+            volatile bool flag = true;
+            if (flag) throw std::exception{};
+        }
+        throwing_obj(const throwing_obj&) = default;
+        ~throwing_obj() { FAIL("An destructor was called."); }
+    };
+
+    tbb::task_arena arena;
+
+    REQUIRE_THROWS_AS( [&] {
+        arena.execute([] {
+            return throwing_obj{};
+        });
+    }(), std::exception );
+}
 #endif // TBB_USE_EXCEPTIONS
 
 //! \brief \ref stress
@@ -1808,7 +1828,7 @@ TEST_CASE("Workers oversubscription") {
     while (task_counter < 100000) std::this_thread::yield();
 
     arena.execute([&] {
-        tbb::parallel_for(std::size_t(0), num_threads * 2, 
+        tbb::parallel_for(std::size_t(0), num_threads * 2,
             [&] (const std::size_t&) {
                 CHECK(ets.local());
                 barrier.wait();

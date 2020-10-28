@@ -15,7 +15,7 @@
 */
 
 #define DOCTEST_CONFIG_IMPLEMENT
-#include "common/doctest.h"
+#include "common/test.h"
 
 #include "common/utils.h"
 #include "common/utils_report.h"

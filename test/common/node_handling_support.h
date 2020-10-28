@@ -17,7 +17,7 @@
 #ifndef __TBB_test_common_node_handling_support_H
 #define __TBB_test_common_node_handling_support_H
 
-#include "doctest.h"
+#include "common/test.h"
 #include <utility>
 
 template <typename T>

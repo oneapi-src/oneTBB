@@ -26,10 +26,10 @@
 void test_to_vector() {
     using equality_comparison_helpers::toVector;
     int array[] = {1, 5, 6, 8, 4, 7};
-    tbb::blocked_range<int*> range = utils::make_blocked_range(array);
+    oneapi::tbb::blocked_range<int*> range = utils::make_blocked_range(array);
     std::vector<int> source(range.begin(), range.end());
 
-    tbb::concurrent_priority_queue<int> q(source.begin(), source.end());
+    oneapi::tbb::concurrent_priority_queue<int> q(source.begin(), source.end());
     std::vector<int> from_cpq = toVector(q);
 
     std::sort(source.begin(), source.end());
@@ -49,8 +49,8 @@ void test_basic() {
 
 void test_initializer_list() {
     using namespace initializer_list_support_tests;
-    test_initializer_list_support<tbb::concurrent_priority_queue<char>>({1, 2, 3, 4, 5});
-    test_initializer_list_support<tbb::concurrent_priority_queue<int>>({});
+    test_initializer_list_support<oneapi::tbb::concurrent_priority_queue<char>>({1, 2, 3, 4, 5});
+    test_initializer_list_support<oneapi::tbb::concurrent_priority_queue<int>>({});
 }
 
 struct SpecialMemberCalls {
@@ -133,7 +133,7 @@ struct CPQSrcFixture {
     enum {default_container_size = 100};
     using cpq_compare_type = std::less<MoveOperationTracker>;
     using cpq_allocator_type = typename std::allocator_traits<Allocator>::template rebind_alloc<MoveOperationTracker>;
-    using cpq_type = tbb::concurrent_priority_queue<MoveOperationTracker, cpq_compare_type, cpq_allocator_type>;
+    using cpq_type = oneapi::tbb::concurrent_priority_queue<MoveOperationTracker, cpq_compare_type, cpq_allocator_type>;
 
     cpq_type cpq_src;
     const std::size_t container_size;
@@ -317,7 +317,7 @@ void test_move_support_in_push_pop() {
     std::size_t& mact = MoveOperationTracker::move_assign_called_times;
     mcct = ccct = cact = mact = 0;
 
-    tbb::concurrent_priority_queue<MoveOperationTracker> q1;
+    oneapi::tbb::concurrent_priority_queue<MoveOperationTracker> q1;
 
     REQUIRE_MESSAGE(mcct == 0, "Value must be zero-initialized");
     REQUIRE_MESSAGE(ccct == 0, "Value must be zero-initialized");
@@ -338,7 +338,7 @@ void test_move_support_in_push_pop() {
     REQUIRE_MESSAGE(cact == 0, "Copy assignment called during try_pop(T&)");
     REQUIRE_MESSAGE(mact > prev_mact, "Move assignment was not called during try_pop(T&)");
 
-    tbb::concurrent_priority_queue<NoDefaultCtorType> q2;
+    oneapi::tbb::concurrent_priority_queue<NoDefaultCtorType> q2;
     q2.emplace(15, 3);
     q2.emplace(2, 35);
     q2.emplace(8, 8);
@@ -352,7 +352,7 @@ void test_move_support_in_push_pop() {
     REQUIRE_MESSAGE((o.value1 == 8 && o.value2 == 8), "Unexpected data popped; possible emplace() failure");
     REQUIRE_MESSAGE(!q2.try_pop(o), "The queue should be empty");
 
-    tbb::concurrent_priority_queue<ForwardInEmplaceTester> q3;
+    oneapi::tbb::concurrent_priority_queue<ForwardInEmplaceTester> q3;
     REQUIRE(ForwardInEmplaceTester::move_ctor_called == false);
     q3.emplace(ForwardInEmplaceTester{5}, 2);
     REQUIRE_MESSAGE(ForwardInEmplaceTester::move_ctor_called == true, "Not used std::forward in emplace()");
@@ -379,9 +379,9 @@ void test_ctors_dtor_accessors() {
     std::vector<int> v;
     std::allocator<int> a;
 
-    using cpq_type = tbb::concurrent_priority_queue<int, std::less<int>>;
-    using cpq_with_compare_type = tbb::concurrent_priority_queue<int, LessA<int>>;
-    using cpq_with_compare_and_allocator_type = tbb::concurrent_priority_queue<int, LessA<int>, std::allocator<int>>;
+    using cpq_type = oneapi::tbb::concurrent_priority_queue<int, std::less<int>>;
+    using cpq_with_compare_type = oneapi::tbb::concurrent_priority_queue<int, LessA<int>>;
+    using cpq_with_compare_and_allocator_type = oneapi::tbb::concurrent_priority_queue<int, LessA<int>, std::allocator<int>>;
 
     LessA<int> l(true);
 
@@ -440,7 +440,7 @@ void test_ctors_dtor_accessors() {
 
 void test_assignment_clear_swap() {
     using equality_comparison_helpers::toVector;
-    using cpq_type = tbb::concurrent_priority_queue<int, std::less<int>>;
+    using cpq_type = oneapi::tbb::concurrent_priority_queue<int, std::less<int>>;
     std::vector<int> v;
     int e;
 
@@ -490,7 +490,7 @@ void test_assignment_clear_swap() {
 }
 
 void test_serial_push_pop() {
-    tbb::concurrent_priority_queue<int, std::less<int>> q(MAX_ITER);
+    oneapi::tbb::concurrent_priority_queue<int, std::less<int>> q(MAX_ITER);
     int e = 42;
     int prev = INT_MAX;
     std::size_t count = 0;
@@ -540,7 +540,7 @@ struct CPQTraits {
     using container_value_type = T;
 
     template <typename T, typename Allocator>
-    using container_type = tbb::concurrent_priority_queue<T, std::less<T>, Allocator>;
+    using container_type = oneapi::tbb::concurrent_priority_queue<T, std::less<T>, Allocator>;
 }; // struct CPQTraits
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
@@ -667,6 +667,6 @@ TEST_CASE("std::allocator_traits support in concurrent_priority_queue") {
 //! Testing Class Template Argument Deduction in concurrent_priority_queue
 //! \brief \ref interface \ref requirement
 TEST_CASE("CTAD support in concurrent_priority_queue") {
-    TestDeductionGuides<tbb::concurrent_priority_queue>();
+    TestDeductionGuides<oneapi::tbb::concurrent_priority_queue>();
 }
 #endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT

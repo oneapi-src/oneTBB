@@ -6,7 +6,6 @@ The following controls are available during the configure stage:
 ```
 TBB_TEST:BOOL - Enable testing (ON by default)
 TBB_STRICT:BOOL - Treat compiler warnings as errors (ON by default)
-TBB_NUMA_SUPPORT:BOOL - Enable TBBBind build target and task_arena extensions for NUMA support (depends on Portable Hardware Locality (hwloc) library) (OFF by default)
 TBB_SANITIZE:STRING - Sanitizer parameter, passed to compiler/linker
 TBB_SIGNTOOL:FILEPATH - Tool for digital signing, used in post install step for libraries if provided.
 TBB_SIGNTOOL_ARGS:STRING - Additional arguments for TBB_SIGNTOOL, used if TBB_SIGNTOOL is set.
@@ -184,8 +183,8 @@ Variable | Description
 `TBB_VERSION`           | oneTBB version (format: `<major>.<minor>.<patch>.<tweak>`)
 `TBB_IMPORTED_TARGETS`  | All created oneTBB imported targets (not supported for builds from source code)
 
-Starting from [oneTBB 2021.1-beta08](https://github.com/oneapi-src/oneTBB/releases/tag/v2021.1-beta08) GitHub release TBBConfig files in the binary packages are located under `<tbb-root>/lib[/<intel64|ia32>]/cmake/TBB`.
-For example, for Linux 64-bit `TBB_DIR` should be set to `<tbb-root>/lib/intel64/cmake/TBB`.
+Starting from [oneTBB 2021.1](https://github.com/oneapi-src/oneTBB/releases/tag/v2021.1) GitHub release TBBConfig files in the binary packages are located under `<tbb-root>/lib/cmake/TBB`.
+For example, `TBB_DIR` should be set to `<tbb-root>/lib/cmake/TBB`.
 
 TBBConfig files are automatically created during the build from source code and can be installed together with the library.
 Also oneTBB provides a helper function that creates TBBConfig files from predefined templates: see `tbb_generate_config` in `cmake/config_generation.cmake`.

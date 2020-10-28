@@ -19,7 +19,7 @@
 #ifndef __TBB_rml_tbb_H
 #define __TBB_rml_tbb_H
 
-#include "tbb/version.h"
+#include "oneapi/tbb/version.h"
 #include "rml_base.h"
 
 namespace tbb {

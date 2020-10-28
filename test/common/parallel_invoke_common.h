@@ -20,8 +20,8 @@
 #include <cstddef>
 #include <tuple>
 
-#include "tbb/parallel_invoke.h"
-#include "tbb/global_control.h"
+#include "oneapi/tbb/parallel_invoke.h"
+#include "oneapi/tbb/global_control.h"
 
 // Helps generate a tuple of functional objects
 template<std::size_t Counter, template <std::size_t> class Functor, class Generator, typename... Fs>

@@ -20,16 +20,16 @@
 #include "common/utils.h"
 #include "common/graph_utils.h"
 
-#include "tbb/flow_graph.h"
-#include "tbb/task_arena.h"
-#include "tbb/global_control.h"
+#include "oneapi/tbb/flow_graph.h"
+#include "oneapi/tbb/task_arena.h"
+#include "oneapi/tbb/global_control.h"
 
 #include "conformance_flowgraph.h"
 
 //! \file conformance_graph.cpp
 //! \brief Test for [flow_graph.graph] specification
 
-using namespace tbb::flow;
+using namespace oneapi::tbb::flow;
 using namespace std;
 
 //! Graph reset
@@ -37,7 +37,7 @@ using namespace std;
 TEST_CASE("graph reset") {
     graph g;
     size_t concurrency_limit = 1;
-    tbb::global_control control(tbb::global_control::max_allowed_parallelism, concurrency_limit);
+    oneapi::tbb::global_control control(oneapi::tbb::global_control::max_allowed_parallelism, concurrency_limit);
 
     // Functional nodes
     // TODO: Check input_node, multifunction_node, async_node similarly
@@ -127,10 +127,50 @@ TEST_CASE("graph reset") {
     tmp = -1;
     src.try_put(continue_msg());
     g.wait_for_all();
-    
+
     CHECK_MESSAGE( (dest.try_get(tmp)== false), "Message should not pass when edge doesn't exist");
     CHECK_MESSAGE( (tmp == -1), "Value should not be altered");
 
     // TODO: Add check that default invocaiton is the same as with rf_reset_protocol
     // TODO: See if specification for broadcast_node and other service nodes is sufficient for reset checks
+}
+
+//! Graph cancel
+//! \brief \ref requirement
+TEST_CASE("graph cancel") {
+    graph g;
+    CHECK_MESSAGE( !g.is_cancelled(), "Freshly created graph should not be cancelled." );
+
+    g.cancel();
+    CHECK_MESSAGE( !g.is_cancelled(), "Cancelled status should appear only after the wait_for_all() call." );
+
+    g.wait_for_all();
+    CHECK_MESSAGE( g.is_cancelled(), "Waiting should allow checking the cancellation status." );
+
+    g.reset();
+    CHECK_MESSAGE( !g.is_cancelled(), "Resetting must reset the cancellation status." );
+
+    std::atomic<bool> cancelled(false);
+    std::atomic<unsigned> executed(0);
+    function_node<int> f(g, serial, [&](int) {
+        ++executed;
+        while( !cancelled.load(std::memory_order_relaxed) )
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    });
+
+    const unsigned N = 10;
+    for( unsigned i = 0; i < N; ++i )
+        f.try_put(0);
+
+    std::thread thr([&] {
+        while( !executed )
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        g.cancel();
+        cancelled.store(true, std::memory_order_relaxed);
+    });
+    g.wait_for_all();
+    thr.join();
+    CHECK_MESSAGE( g.is_cancelled(), "Wait for all should not change the cancellation status." );
+    CHECK_MESSAGE( 1 == executed, "Buffered messages should be dropped by the cancelled graph." );
+
 }

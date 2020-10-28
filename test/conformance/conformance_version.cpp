@@ -16,11 +16,19 @@
 
 #include "common/test.h"
 
-#include <tbb/version.h>
+#include "oneapi/tbb/version.h"
 #include <cstring>
 
 //! \file conformance_version.cpp
 //! \brief Test for [version_information] specification
+
+//! Testing the match of compile-time oneTBB specification version
+//! \brief \ref requirement \ref interface
+TEST_CASE("Test specification version") {
+    const char* expected = "1.0";
+    REQUIRE_MESSAGE(std::strcmp(expected, ONETBB_SPEC_VERSION) == 0,
+        "Expected and actual specification versions do not match.");
+}
 
 //! Testing the match of compile-time and runtime interface versions
 //! \brief \ref requirement \ref interface

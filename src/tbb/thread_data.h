@@ -17,13 +17,14 @@
 #ifndef __TBB_thread_data_H
 #define __TBB_thread_data_H
 
-#include "tbb/detail/_task.h"
-#include "tbb/task.h"
+#include "oneapi/tbb/detail/_task.h"
+#include "oneapi/tbb/task.h"
 
 #include "rml_base.h" // rml::job
 
 #include "scheduler_common.h"
 #include "arena.h"
+#include "concurrent_monitor.h"
 #include "mailbox.h"
 #include "misc.h" // FastRandom
 #include "small_object_pool_impl.h"
@@ -38,7 +39,6 @@ class task;
 class arena_slot;
 class task_group_context;
 class task_dispatcher;
-struct resume_node;
 
 //------------------------------------------------------------------------
 // Thread Data
@@ -171,8 +171,8 @@ public:
     };
 
     struct register_waiter_data {
-        d1::wait_context& wo;
-        resume_node& node;
+        d1::wait_context* wo;
+        concurrent_monitor::resume_context& node;
     };
 
     //! Suspends the current coroutine (task_dispatcher).

@@ -20,7 +20,7 @@
 #include "config.h"
 #include "utils_assert.h"
 #include "utils_report.h"
-#include "tbb/task_arena.h"
+#include "oneapi/tbb/task_arena.h"
 
 #include <cstddef>
 #include <vector>

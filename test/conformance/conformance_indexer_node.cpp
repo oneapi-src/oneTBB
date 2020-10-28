@@ -20,9 +20,9 @@
 #include "common/utils.h"
 #include "common/graph_utils.h"
 
-#include "tbb/flow_graph.h"
-#include "tbb/task_arena.h"
-#include "tbb/global_control.h"
+#include "oneapi/tbb/flow_graph.h"
+#include "oneapi/tbb/task_arena.h"
+#include "oneapi/tbb/global_control.h"
 
 //! \file conformance_indexer_node.cpp
 //! \brief Test for [flow_graph.indexer_node] specification
@@ -36,18 +36,18 @@ TODO: implement missing conformance tests for buffer_node:
   - [ ] Based on the decision about the details for `try_put()' and `try_get()' write corresponding tests.
   - [ ] Fix description in `TEST_CASEs'.
 */
-using namespace tbb::flow;
+using namespace oneapi::tbb::flow;
 using namespace std;
 
 template<typename I1, typename I2>
 void test_inheritance(){
-    using namespace tbb::flow;
+    using namespace oneapi::tbb::flow;
 
     CHECK_MESSAGE( (std::is_base_of<graph_node, indexer_node<I1, I2>>::value), "indexer_node should be derived from graph_node");
 }
 
 void test_copies(){
-    using namespace tbb::flow;
+    using namespace oneapi::tbb::flow;
 
     graph g;
     indexer_node<int, int> fn(g);
@@ -62,7 +62,7 @@ TEST_CASE("indexer_node and body copying"){
 }
 
 void test_broadcasting(){
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
 
     typedef indexer_node<int,float> my_indexer_type;
     typedef my_indexer_type::output_type my_output_type;
@@ -73,8 +73,8 @@ void test_broadcasting(){
     queue_node<my_output_type> node2(g);
     queue_node<my_output_type> node3(g);
 
-    tbb::flow::make_edge(node1, node2);
-    tbb::flow::make_edge(node1, node3);
+    oneapi::tbb::flow::make_edge(node1, node2);
+    oneapi::tbb::flow::make_edge(node1, node3);
 
     input_port<0>(node1).try_put(6);
     input_port<1>(node1).try_put(1.5);

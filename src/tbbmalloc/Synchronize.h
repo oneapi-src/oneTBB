@@ -17,7 +17,7 @@
 #ifndef __TBB_malloc_Synchronize_H_
 #define __TBB_malloc_Synchronize_H_
 
-#include "tbb/detail/_utils.h"
+#include "oneapi/tbb/detail/_utils.h"
 
 #include <atomic>
 

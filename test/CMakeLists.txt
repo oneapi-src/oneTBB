@@ -158,10 +158,17 @@ function(tbb_add_lib_test)
 endfunction()
 
 # Copy libraries to test folder to make it visible during tests execution if external TBB is tested.
+# TODO: check and update for multi-config generators.
 if (TBB_FOUND)
-    get_property(TBB_LIB_FILE_LOCATION TARGET TBB::tbb PROPERTY LOCATION)
-    get_filename_component(TBB_LIB_FILE_NAME ${TBB_LIB_FILE_LOCATION} NAME)
-    file(COPY ${TBB_LIB_FILE_LOCATION} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}) # TODO: check and update for multi-config generators.
+    list(APPEND _tbb_test_components tbb tbbmalloc tbbmalloc_proxy tbbbind tbbbind_2_0)
+    foreach(_component ${_tbb_test_components})
+        if (TARGET TBB::${_component})
+            get_property(${_component}_lib_file_location TARGET TBB::${_component} PROPERTY LOCATION)
+            file(COPY ${${_component}_lib_file_location} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+            unset(${_component}_lib_file_location CACHE)
+        endif()
+    endforeach()
+    unset(_tbb_test_components)
 endif()
 
 # Find Intel(R) Software Development Emulator to run test_mutex and conformance_mutex for coverage 
@@ -241,6 +248,7 @@ tbb_add_test(SUBDIR tbb NAME test_hw_concurrency DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_eh_thread DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_global_control DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_task DEPENDENCIES TBB::tbb)
+tbb_add_test(SUBDIR tbb NAME test_concurrent_monitor DEPENDENCIES TBB::tbb)
 if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
     # TODO: Fix for MIPS
     tbb_add_test(SUBDIR tbb NAME test_tbb_fork DEPENDENCIES TBB::tbb)
@@ -324,17 +332,15 @@ if (MSVC AND CMAKE_VERSION VERSION_GREATER 3.13) # LINK_OPTIONS property first a
     add_dependencies(test_implicit_linkage_on_windows TBB::tbb)
 endif()
 
-if (TBB_NUMA_SUPPORT)
-    find_package(HWLOC QUIET)
-    if (HWLOC_FOUND)
-        target_link_libraries(test_arena_constraints PRIVATE HWLOC::hwloc)
-        target_compile_definitions(test_arena_constraints PRIVATE __TBB_HWLOC_PRESENT)
-        add_dependencies(test_arena_constraints TBB::tbbbind)
+find_package(HWLOC 1.11 EXACT QUIET)
+if (HWLOC_FOUND)
+    target_link_libraries(test_arena_constraints PRIVATE HWLOC::hwloc_1_11)
+    target_compile_definitions(test_arena_constraints PRIVATE __TBB_HWLOC_PRESENT)
+    add_dependencies(test_arena_constraints TBB::tbbbind)
 
-        target_link_libraries(conformance_arena_constraints PRIVATE HWLOC::hwloc)
-        target_compile_definitions(conformance_arena_constraints PRIVATE __TBB_HWLOC_PRESENT)
-        add_dependencies(conformance_arena_constraints TBB::tbbbind)
-    endif()
+    target_link_libraries(conformance_arena_constraints PRIVATE HWLOC::hwloc_1_11)
+    target_compile_definitions(conformance_arena_constraints PRIVATE __TBB_HWLOC_PRESENT)
+    add_dependencies(conformance_arena_constraints TBB::tbbbind)
 endif()
 
 # TBB allocator tests
