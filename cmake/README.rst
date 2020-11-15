@@ -333,7 +333,7 @@ TBBBuild
 Module for building TBB library from the source code.
 
 Provides the following functions:
- ``tbb_build(TBB_ROOT <tbb_root> CONFIG_DIR <variable> [MAKE_ARGS <custom_make_arguments>])``
+ ``tbb_build(TBB_ROOT <tbb_root> CONFIG_DIR <variable> [MAKE_ARGS <custom_make_arguments>] [MAKE_TOOL_NAME <tool_name>])``
   builds TBB from source code using the ``Makefile``, creates and provides the location of the CMake configuration files (TBBConfig.cmake and TBBConfigVersion.cmake) .
 
   =====================================  ====================================
@@ -351,6 +351,9 @@ Provides the following functions:
                                            - ``tbb_build_dir=<tbb_build_dir>``
                                            - ``tbb_build_prefix=<tbb_build_prefix>``
                                            - ``-j<n>``
+  ``MAKE_TOOL_NAME <tool_name>``         the name of the ``make`` tool used to compile TBB
+
+                                         If not set the name is guessed based on `CMAKE_SYSTEM_NAME <https://cmake.org/cmake/help/latest/variable/CMAKE_SYSTEM_NAME.html>`_.
   =====================================  ====================================
 
 
