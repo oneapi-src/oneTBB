@@ -137,7 +137,7 @@ function(tbb_build)
     # -------------------- #
     # Function entry point #
     # -------------------- #
-    set(oneValueArgs TBB_ROOT CONFIG_DIR)
+    set(oneValueArgs TBB_ROOT CONFIG_DIR MAKE_TOOL_NAME)
     set(multiValueArgs MAKE_ARGS)
     cmake_parse_arguments(tbb_build "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -147,11 +147,15 @@ function(tbb_build)
         return()
     endif()
 
-    set(make_tool_name make)
-    if (CMAKE_SYSTEM_NAME MATCHES "Windows")
-        set(make_tool_name gmake)
-    elseif (CMAKE_SYSTEM_NAME MATCHES "Android")
-        set(make_tool_name ndk-build)
+    if (tbb_build_MAKE_TOOL_NAME STREQUAL "")
+        set(make_tool_name make)
+        if (CMAKE_SYSTEM_NAME MATCHES "Windows")
+            set(make_tool_name gmake)
+        elseif (CMAKE_SYSTEM_NAME MATCHES "Android")
+            set(make_tool_name ndk-build)
+        endif()
+    else()
+        set(make_tool_name "${tbb_build_MAKE_TOOL_NAME}")
     endif()
 
     find_program(TBB_MAKE_TOOL ${make_tool_name} DOC "Make-tool to build Intel TBB.")
