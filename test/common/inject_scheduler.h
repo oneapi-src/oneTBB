@@ -45,7 +45,7 @@
 
 // Other dependencies
 // #include "../../src/tbb/private_server.cpp"
-#include "../../src/tbb/concurrent_monitor.cpp"
+#include "../../src/tbb/concurrent_monitor.h"
 #if _WIN32 || _WIN64
 #include "../../src/tbb/semaphore.cpp"
 #endif

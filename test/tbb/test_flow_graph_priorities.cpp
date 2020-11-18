@@ -21,6 +21,7 @@
 
 #include "common/test.h"
 #include "common/utils.h"
+#include "common/utils_concurrency_limit.h"
 #include "common/spin_barrier.h"
 
 #include <vector>
@@ -720,7 +721,6 @@ void test_use_case() {
 //! The test checks that the task from the node with higher priority, which task gets bypassed, is
 //! executed first than the one spawned with lower priority.
 void test() {
-    tbb::global_control gc( tbb::global_control::max_allowed_parallelism, 1 );
     test_use_case<continue_node<continue_msg>>();
     test_use_case<input_node<continue_msg>>();
 }
@@ -825,7 +825,7 @@ namespace Exceptions {
 //! Test node prioritization
 //! \brief \ref requirement
 TEST_CASE("Priority nodes take precedence"){
-    for( unsigned int p = utils::MinThread; p <= utils::MaxThread; ++p ) {
+    for( auto p : utils::concurrency_range() ) {
         PriorityNodesTakePrecedence::test( p );
     }
 }
@@ -833,7 +833,7 @@ TEST_CASE("Priority nodes take precedence"){
 //! Test thread eager reaction
 //! \brief \ref error_guessing
 TEST_CASE("Thread eager reaction"){
-    for( unsigned int p = utils::MinThread; p <= utils::MaxThread; ++p ) {
+    for( auto p : utils::concurrency_range() ) {
         ThreadsEagerReaction::test( p );
     }
 }
@@ -841,7 +841,7 @@ TEST_CASE("Thread eager reaction"){
 //! Test prioritization under concurrency limits
 //! \brief \ref error_guessing
 TEST_CASE("Limiting execution to prioritized work") {
-    for( unsigned int p = utils::MinThread; p <= utils::MaxThread; ++p ) {
+    for( auto p : utils::concurrency_range() ) {
         LimitingExecutionToPriorityTask::test( p );
     }
 }
@@ -849,19 +849,22 @@ TEST_CASE("Limiting execution to prioritized work") {
 //! Test nested graphs
 //! \brief \ref error_guessing
 TEST_CASE("Nested test case") {
-    NestedCase::test( utils::MaxThread );
+    for( auto p : utils::concurrency_range() ) {
+        NestedCase::test( p );
+    }
 }
 
 //! Test bypassed task with higher priority
 //! \brief \ref error_guessing
 TEST_CASE("Bypass prioritized task"){
+    tbb::global_control gc( tbb::global_control::max_allowed_parallelism, 1 );
     BypassPrioritizedTask::test();
 }
 
 //! Test mixing prioritized and ordinary successors
 //! \brief \ref error_guessing
 TEST_CASE("Many successors") {
-    for( unsigned int p = utils::MinThread; p <= utils::MaxThread; ++p ) {
+    for( auto p : utils::concurrency_range() ) {
         ManySuccessors::test( p );
     }
 }

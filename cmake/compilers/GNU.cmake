@@ -24,6 +24,11 @@ endif()
 
 set(TBB_COMMON_LINK_LIBS dl)
 
+# Ignore -Werror set through add_compile_options() or added to CMAKE_CXX_FLAGS if TBB_STRICT is disabled.
+if (NOT TBB_STRICT AND COMMAND tbb_remove_compile_flag)
+    tbb_remove_compile_flag(-Werror)
+endif()
+
 if (NOT ${CMAKE_CXX_COMPILER_ID} STREQUAL Intel)
     # gcc 6.0 and later have -flifetime-dse option that controls elimination of stores done outside the object lifetime
     set(TBB_DSE_FLAG $<$<NOT:$<VERSION_LESS:${CMAKE_CXX_COMPILER_VERSION},6.0>>:-flifetime-dse=1>)

@@ -22,6 +22,11 @@ set(TBB_COMMON_COMPILE_FLAGS -D_XOPEN_SOURCE)
 
 set(TBB_MMD_FLAG -MMD)
 
+# Ignore -Werror set through add_compile_options() or added to CMAKE_CXX_FLAGS if TBB_STRICT is disabled.
+if (NOT TBB_STRICT AND COMMAND tbb_remove_compile_flag)
+    tbb_remove_compile_flag(-Werror)
+endif()
+
 if (NOT "${CMAKE_OSX_ARCHITECTURES}" MATCHES "^arm64$")
     set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -mrtm)
 endif()

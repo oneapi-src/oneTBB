@@ -969,8 +969,10 @@ TEST_CASE("Async task group") {
     utils::NativeParallelFor(num_threads, [&](int idx) {
         barrier.wait();
         a.execute([idx, &tg, &finished] {
+            std::size_t counter{};
             while (!finished[idx%2]) {
                 tg[idx%2].wait();
+                if (counter++ % 16 == 0) std::this_thread::yield();
             }
             tg[idx%2].wait();
         });

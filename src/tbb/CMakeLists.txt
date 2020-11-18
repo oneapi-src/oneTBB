@@ -16,7 +16,6 @@ add_library(tbb SHARED
     allocator.cpp
     arena.cpp
     arena_slot.cpp
-    concurrent_monitor.cpp
     concurrent_bounded_queue.cpp
     dynamic_link.cpp
     exception.cpp

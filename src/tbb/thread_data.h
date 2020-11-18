@@ -152,6 +152,7 @@ public:
     enum class post_resume_action {
         invalid,
         register_waiter,
+        resume,
         callback,
         cleanup,
         notify,
@@ -170,11 +171,6 @@ public:
         }
     };
 
-    struct register_waiter_data {
-        d1::wait_context* wo;
-        concurrent_monitor::resume_context& node;
-    };
-
     //! Suspends the current coroutine (task_dispatcher).
     void suspend(void* suspend_callback, void* user_callback);
 
@@ -187,6 +183,11 @@ public:
         __TBB_ASSERT(!my_post_resume_arg, "The post resume action must not have an argument");
         my_post_resume_action = pra;
         my_post_resume_arg = arg;
+    }
+
+    void clear_post_resume_action() {
+        my_post_resume_action = thread_data::post_resume_action::none;
+        my_post_resume_arg = nullptr;
     }
 
     //! Performs post resume action.

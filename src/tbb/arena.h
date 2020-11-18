@@ -429,8 +429,7 @@ inline void arena::on_thread_leaving ( ) {
 template<arena::new_work_type work_type>
 void arena::advertise_new_work() {
     auto is_related_arena = [&] (extended_context context) {
-        std::uintptr_t arena_tag = std::uintptr_t(this);
-        return arena_tag == context.arena_ctx;
+        return this == context.my_arena_addr;
     };
 
     if( work_type == work_enqueued ) {

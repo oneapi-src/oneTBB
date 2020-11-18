@@ -609,7 +609,7 @@ void task_arena_impl::execute(d1::task_arena_base& ta, d1::delegate_base& d) {
     if (!same_arena) {
         index1 = ta.my_arena->occupy_free_slot</*as_worker */false>(*td);
         if (index1 == arena::out_of_arena) {
-            concurrent_monitor::thread_context waiter;
+            concurrent_monitor::thread_context waiter((std::uintptr_t)&d);
             d1::wait_context wo(1);
             d1::task_group_context exec_context(d1::task_group_context::isolated);
             task_group_context_impl::copy_fp_settings(exec_context, *ta.my_arena->my_default_ctx);
@@ -618,7 +618,7 @@ void task_arena_impl::execute(d1::task_arena_base& ta, d1::delegate_base& d) {
             ta.my_arena->enqueue_task( dt, exec_context, *td);
             size_t index2 = arena::out_of_arena;
             do {
-                ta.my_arena->my_exit_monitors.prepare_wait(waiter, (std::uintptr_t)&d);
+                ta.my_arena->my_exit_monitors.prepare_wait(waiter);
                 if (!wo.continue_execution()) {
                     ta.my_arena->my_exit_monitors.cancel_wait(waiter);
                     break;

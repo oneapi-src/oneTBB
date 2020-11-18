@@ -24,7 +24,6 @@
 #include "tbb/global_control.h"
 #include "tbb/task_arena.h"
 #include "../../src/tbb/concurrent_monitor.h"
-#include "../../src/tbb/concurrent_monitor.cpp"
 
 //! \file test_concurrent_monitor.cpp
 //! \brief Test for [internal] functionality
@@ -54,8 +53,8 @@ TEST_CASE("Stress test") {
 
         auto thread_func = [&] {
             for (std::size_t i = 0; i < operation_number; ++i) {
-                tbb::detail::r1::concurrent_monitor::thread_context context;
-                test_monitor.prepare_wait(context, std::uintptr_t(1));
+                tbb::detail::r1::concurrent_monitor::thread_context context{std::uintptr_t(1)};
+                test_monitor.prepare_wait(context);
                 barrier.wait();
                 test_monitor.cancel_wait(context);
             }
