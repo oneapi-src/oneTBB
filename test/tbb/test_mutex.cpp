@@ -25,8 +25,8 @@
 #include <tbb/queuing_mutex.h>
 #include <tbb/queuing_rw_mutex.h>
 #include <tbb/parallel_for.h>
-#include <tbb/detail/_utils.h>
-#include <tbb/detail/_machine.h>
+#include <oneapi/tbb/detail/_utils.h>
+#include <oneapi/tbb/detail/_machine.h>
 
 #include <atomic>
 

@@ -344,6 +344,36 @@ stored_pack<Types...> save_pack(Types&&... types) {
 template <typename Trait, typename T>
 struct dependent_bool : std::integral_constant<bool, bool(Trait::value)> {};
 
+template <typename Callable>
+struct body_arg_detector;
+
+template <typename Callable, typename ReturnType, typename Arg>
+struct body_arg_detector<ReturnType(Callable::*)(Arg)> {
+    using arg_type = Arg;
+};
+
+template <typename Callable, typename ReturnType, typename Arg>
+struct body_arg_detector<ReturnType(Callable::*)(Arg) const> {
+    using arg_type = Arg;
+};
+
+template <typename Callable>
+struct argument_detector;
+
+template <typename Callable>
+struct argument_detector {
+    using type = typename body_arg_detector<decltype(&Callable::operator())>::arg_type;
+};
+
+template <typename ReturnType, typename Arg>
+struct argument_detector<ReturnType(*)(Arg)> {
+    using type = Arg;
+};
+
+// Detects the argument type of callable, works for callable with one argument.
+template <typename Callable>
+using argument_type_of = typename argument_detector<typename std::decay<Callable>::type>::type;
+
 } // inline namespace d0
 } // namespace detail
 } // namespace tbb

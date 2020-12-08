@@ -20,9 +20,9 @@
 #include "common/utils.h"
 #include "common/graph_utils.h"
 
-#include "tbb/flow_graph.h"
-#include "tbb/task_arena.h"
-#include "tbb/global_control.h"
+#include "oneapi/tbb/flow_graph.h"
+#include "oneapi/tbb/task_arena.h"
+#include "oneapi/tbb/global_control.h"
 
 #include "conformance_flowgraph.h"
 
@@ -42,7 +42,7 @@ TODO: implement missing conformance tests for sequencer_node:
 
 template<typename T>
 void test_inheritance(){
-    using namespace tbb::flow;
+    using namespace oneapi::tbb::flow;
 
     CHECK_MESSAGE( (std::is_base_of<graph_node, sequencer_node<T>>::value), "sequencer_node should be derived from graph_node");
     CHECK_MESSAGE( (std::is_base_of<receiver<T>, sequencer_node<T>>::value), "sequencer_node should be derived from receiver<T>");
@@ -59,7 +59,7 @@ struct id_sequencer{
 };
 
 void test_copies(){
-    using namespace tbb::flow;
+    using namespace oneapi::tbb::flow;
 
     graph g;
     id_sequencer<int> sequencer;
@@ -70,14 +70,14 @@ void test_copies(){
 }
 
 void test_buffering(){
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
 
     id_sequencer<int> sequencer;
 
-    tbb::flow::sequencer_node<int> node(g, sequencer);
-    tbb::flow::limiter_node<int> rejecter(g, 0);
+    oneapi::tbb::flow::sequencer_node<int> node(g, sequencer);
+    oneapi::tbb::flow::limiter_node<int> rejecter(g, 0);
 
-    tbb::flow::make_edge(node, rejecter);
+    oneapi::tbb::flow::make_edge(node, rejecter);
     node.try_put(1);
     g.wait_for_all();
 
@@ -88,22 +88,22 @@ void test_buffering(){
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 void test_deduction_guides(){
-    // tbb::flow::graph g;
+    // oneapi::tbb::flow::graph g;
     // id_sequencer<int> sequ;
-    // tbb::flow::sequencer_node node1(g, sequ);
+    // oneapi::tbb::flow::sequencer_node node1(g, sequ);
 }
 #endif
 
 void test_forwarding(){
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
     id_sequencer<int> sequencer;
 
-    tbb::flow::sequencer_node<int> node1(g, sequencer);
+    oneapi::tbb::flow::sequencer_node<int> node1(g, sequencer);
     test_push_receiver<int> node2(g);
     test_push_receiver<int> node3(g);
 
-    tbb::flow::make_edge(node1, node2);
-    tbb::flow::make_edge(node1, node3);
+    oneapi::tbb::flow::make_edge(node1, node2);
+    oneapi::tbb::flow::make_edge(node1, node3);
 
     node1.try_put(0);
 
@@ -115,10 +115,10 @@ void test_forwarding(){
 }
 
 void test_sequencer(){
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
     id_sequencer<int> sequencer;
 
-    tbb::flow::sequencer_node<int> node(g, sequencer);
+    oneapi::tbb::flow::sequencer_node<int> node(g, sequencer);
 
     node.try_put(1);
     node.try_put(0);

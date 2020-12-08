@@ -36,8 +36,8 @@
 #define BACKEND_HAS_MREMAP __linux__
 #define CHECK_ALLOCATION_RANGE MALLOC_DEBUG || MALLOC_ZONE_OVERLOAD_ENABLED || MALLOC_UNIXLIKE_OVERLOAD_ENABLED
 
-#include "tbb/detail/_config.h" // for __TBB_LIBSTDCPP_EXCEPTION_HEADERS_BROKEN
-#include "tbb/detail/_template_helpers.h"
+#include "oneapi/tbb/detail/_config.h" // for __TBB_LIBSTDCPP_EXCEPTION_HEADERS_BROKEN
+#include "oneapi/tbb/detail/_template_helpers.h"
 #if __TBB_LIBSTDCPP_EXCEPTION_HEADERS_BROKEN
   #define _EXCEPTION_PTR_H /* prevents exception_ptr.h inclusion */
   #define _GLIBCXX_NESTED_EXCEPTION_H /* prevents nested_exception.h inclusion */
@@ -50,7 +50,7 @@
 #if MALLOC_CHECK_RECURSION
 #include <new>        /* for placement new */
 #endif
-#include "tbb/scalable_allocator.h"
+#include "oneapi/tbb/scalable_allocator.h"
 #include "tbbmalloc_internal_api.h"
 
 /********* Various compile-time options        **************/

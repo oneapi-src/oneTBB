@@ -14,38 +14,4 @@
     limitations under the License.
 */
 
-#ifndef __TBB_flow_graph_abstractions_H
-#define __TBB_flow_graph_abstractions_H
-
-namespace tbb {
-namespace detail {
-namespace d1 {
-
-//! Pure virtual template classes that define interfaces for async communication
-class graph_proxy {
-public:
-    //! Inform a graph that messages may come from outside, to prevent premature graph completion
-    virtual void reserve_wait() = 0;
-
-    //! Inform a graph that a previous call to reserve_wait is no longer in effect
-    virtual void release_wait() = 0;
-
-    virtual ~graph_proxy() {}
-};
-
-template <typename Input>
-class receiver_gateway : public graph_proxy {
-public:
-    //! Type of inputing data into FG.
-    typedef Input input_type;
-
-    //! Submit signal from an asynchronous activity to FG.
-    virtual bool try_put(const input_type&) = 0;
-};
-
-} // d1
-
-
-} // detail
-} // tbb
-#endif
+#include "../oneapi/tbb/flow_graph_abstractions.h"

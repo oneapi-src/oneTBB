@@ -14,14 +14,13 @@
 
 include(${CMAKE_CURRENT_LIST_DIR}/../config_generation.cmake)
 
-# TBBConfig in TBB provided packages are expected to be placed into: <tbb-root>/lib[/<intel64|ia32>]/cmake/TBB
-set(WIN_LIN_INC_REL_PATH "../../../../include")
-set(DARWIN_INC_REL_PATH "../../../include")
+# TBBConfig in TBB provided packages are expected to be placed into: <tbb-root>/lib/cmake/TBB
+set(INC_REL_PATH "../../../include")
 set(LIB_REL_PATH "../..")
-set(DLL_REL_PATH "../../../../redist")  # ia32/intel64 subdir is appended depending on configuration.
+set(DLL_REL_PATH "../../../redist")
 
 # Parse version info
-file(READ ${CMAKE_CURRENT_LIST_DIR}/../../include/tbb/version.h _tbb_version_info)
+file(READ ${CMAKE_CURRENT_LIST_DIR}/../../include/oneapi/tbb/version.h _tbb_version_info)
 string(REGEX REPLACE ".*#define TBB_VERSION_MAJOR ([0-9]+).*" "\\1" _tbb_ver_major "${_tbb_version_info}")
 string(REGEX REPLACE ".*#define TBB_VERSION_MINOR ([0-9]+).*" "\\1" _tbb_ver_minor "${_tbb_version_info}")
 string(REGEX REPLACE ".*#define TBB_INTERFACE_VERSION ([0-9]+).*" "\\1" _tbb_interface_ver "${_tbb_version_info}")
@@ -35,11 +34,6 @@ string(REGEX REPLACE ".*TBBBIND_BINARY_VERSION ([0-9]+).*" "\\1" TBBBIND_BINARY_
 math(EXPR _tbb_ver_patch "${_tbb_interface_ver} % 1000 / 10")
 math(EXPR _tbb_ver_tweak "${_tbb_interface_ver} % 10")
 
-# Applicable for beta releases.
-if (_tbb_ver_patch EQUAL 0)
-    math(EXPR _tbb_ver_tweak "${_tbb_ver_tweak} + 6")
-endif()
-
 set(COMMON_ARGS
     LIB_REL_PATH ${LIB_REL_PATH}
     VERSION ${_tbb_ver_major}.${_tbb_ver_minor}.${_tbb_ver_patch}.${_tbb_ver_tweak}
@@ -49,9 +43,7 @@ set(COMMON_ARGS
     TBBBIND_BINARY_VERSION ${TBBBIND_BINARY_VERSION}
 )
 
-tbb_generate_config(INSTALL_DIR ${INSTALL_DIR}/linux-32   SYSTEM_NAME Linux   INC_REL_PATH ${WIN_LIN_INC_REL_PATH} SIZEOF_VOID_P 4 HANDLE_SUBDIRS ${COMMON_ARGS})
-tbb_generate_config(INSTALL_DIR ${INSTALL_DIR}/linux-64   SYSTEM_NAME Linux   INC_REL_PATH ${WIN_LIN_INC_REL_PATH} SIZEOF_VOID_P 8 HANDLE_SUBDIRS ${COMMON_ARGS})
-tbb_generate_config(INSTALL_DIR ${INSTALL_DIR}/windows-32 SYSTEM_NAME Windows INC_REL_PATH ${WIN_LIN_INC_REL_PATH} SIZEOF_VOID_P 4 HANDLE_SUBDIRS DLL_REL_PATH ${DLL_REL_PATH}/ia32 ${COMMON_ARGS})
-tbb_generate_config(INSTALL_DIR ${INSTALL_DIR}/windows-64 SYSTEM_NAME Windows INC_REL_PATH ${WIN_LIN_INC_REL_PATH} SIZEOF_VOID_P 8 HANDLE_SUBDIRS DLL_REL_PATH ${DLL_REL_PATH}/intel64 ${COMMON_ARGS})
-tbb_generate_config(INSTALL_DIR ${INSTALL_DIR}/darwin     SYSTEM_NAME Darwin  INC_REL_PATH ${DARWIN_INC_REL_PATH}  SIZEOF_VOID_P 8 ${COMMON_ARGS})
+tbb_generate_config(INSTALL_DIR ${INSTALL_DIR}/linux   SYSTEM_NAME Linux   INC_REL_PATH ${INC_REL_PATH} HANDLE_SUBDIRS ${COMMON_ARGS})
+tbb_generate_config(INSTALL_DIR ${INSTALL_DIR}/windows SYSTEM_NAME Windows INC_REL_PATH ${INC_REL_PATH} HANDLE_SUBDIRS DLL_REL_PATH ${DLL_REL_PATH} ${COMMON_ARGS})
+tbb_generate_config(INSTALL_DIR ${INSTALL_DIR}/darwin  SYSTEM_NAME Darwin  INC_REL_PATH ${INC_REL_PATH} ${COMMON_ARGS})
 message(STATUS "TBBConfig files were created in ${INSTALL_DIR}")

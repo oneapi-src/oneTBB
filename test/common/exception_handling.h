@@ -20,7 +20,7 @@
 #include <typeinfo>
 #include <thread>
 
-#include "tbb/task_scheduler_observer.h"
+#include "oneapi/tbb/task_scheduler_observer.h"
 
 #include "concurrency_tracker.h"
 
@@ -223,7 +223,7 @@ inline void ThrowTestException ( intptr_t ) {}
 
 const int c_Timeout = 1000000;
 
-#include "tbb/task_arena.h"
+#include "oneapi/tbb/task_arena.h"
 
 void WaitUntilConcurrencyPeaks ( int expected_peak ) {
     tbb::task_group tg;

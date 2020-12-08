@@ -17,9 +17,9 @@
 #ifndef __TBB_test_common_utils_H
 #define __TBB_test_common_utils_H
 
-#include <tbb/detail/_template_helpers.h>
-#include <tbb/detail/_config.h>
-#include <tbb/blocked_range.h>
+#include <oneapi/tbb/detail/_template_helpers.h>
+#include <oneapi/tbb/detail/_config.h>
+#include <oneapi/tbb/blocked_range.h>
 #include <thread>
 #include <type_traits>
 #include <memory>

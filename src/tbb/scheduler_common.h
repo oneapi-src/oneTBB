@@ -17,21 +17,22 @@
 #ifndef _TBB_scheduler_common_H
 #define _TBB_scheduler_common_H
 
-#include "tbb/detail/_utils.h"
-#include "tbb/detail/_template_helpers.h"
-#include "tbb/detail/_task.h"
-#include "tbb/detail/_machine.h"
-#include "tbb/task_group.h"
-#include "tbb/cache_aligned_allocator.h"
+#include "oneapi/tbb/detail/_utils.h"
+#include "oneapi/tbb/detail/_template_helpers.h"
+#include "oneapi/tbb/detail/_task.h"
+#include "oneapi/tbb/detail/_machine.h"
+#include "oneapi/tbb/task_group.h"
+#include "oneapi/tbb/cache_aligned_allocator.h"
 #include "itt_notify.h"
 #include "co_context.h"
 #include "misc.h"
+#include "governor.h"
 
 #ifndef __TBB_SCHEDULER_MUTEX_TYPE
 #define __TBB_SCHEDULER_MUTEX_TYPE tbb::spin_mutex
 #endif
 // TODO: add conditional inclusion based on specified type
-#include "tbb/spin_mutex.h"
+#include "oneapi/tbb/spin_mutex.h"
 
 #if TBB_USE_ASSERT
 #include <atomic>
@@ -55,7 +56,6 @@ namespace detail {
 namespace r1 {
 
 class arena;
-class governor;
 class mail_inbox;
 class mail_outbox;
 class market;

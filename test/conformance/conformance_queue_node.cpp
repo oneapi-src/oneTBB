@@ -20,9 +20,9 @@
 #include "common/utils.h"
 #include "common/graph_utils.h"
 
-#include "tbb/flow_graph.h"
-#include "tbb/task_arena.h"
-#include "tbb/global_control.h"
+#include "oneapi/tbb/flow_graph.h"
+#include "oneapi/tbb/task_arena.h"
+#include "oneapi/tbb/global_control.h"
 
 #include "conformance_flowgraph.h"
 
@@ -42,7 +42,7 @@ TODO: implement missing conformance tests for queue_node:
 
 template<typename T>
 void test_inheritance(){
-    using namespace tbb::flow;
+    using namespace oneapi::tbb::flow;
 
     CHECK_MESSAGE( (std::is_base_of<graph_node, queue_node<T>>::value), "queue_node should be derived from graph_node");
     CHECK_MESSAGE( (std::is_base_of<receiver<T>, queue_node<T>>::value), "queue_node should be derived from receiver<T>");
@@ -50,7 +50,7 @@ void test_inheritance(){
 }
 
 void test_copies(){
-    using namespace tbb::flow;
+    using namespace oneapi::tbb::flow;
 
     graph g;
     queue_node<int> n(g);
@@ -59,12 +59,12 @@ void test_copies(){
 }
 
 void test_buffering(){
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
 
-    tbb::flow::queue_node<int> node(g);
-    tbb::flow::limiter_node<int> rejecter(g, 0);
+    oneapi::tbb::flow::queue_node<int> node(g);
+    oneapi::tbb::flow::limiter_node<int> rejecter(g, 0);
 
-    tbb::flow::make_edge(node, rejecter);
+    oneapi::tbb::flow::make_edge(node, rejecter);
     node.try_put(1);
     g.wait_for_all();
 
@@ -74,14 +74,14 @@ void test_buffering(){
 }
 
 void test_forwarding(){
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
 
-    tbb::flow::queue_node<int> node1(g);
+    oneapi::tbb::flow::queue_node<int> node1(g);
     test_push_receiver<int> node2(g);
     test_push_receiver<int> node3(g);
 
-    tbb::flow::make_edge(node1, node2);
-    tbb::flow::make_edge(node1, node3);
+    oneapi::tbb::flow::make_edge(node1, node2);
+    oneapi::tbb::flow::make_edge(node1, node3);
 
     node1.try_put(1);
     g.wait_for_all();
@@ -92,9 +92,9 @@ void test_forwarding(){
 }
 
 void test_queue_node(){
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
 
-    tbb::flow::queue_node<int> node(g);
+    oneapi::tbb::flow::queue_node<int> node(g);
     node.try_put(1);
     node.try_put(2);
     g.wait_for_all();
@@ -109,9 +109,9 @@ void test_queue_node(){
 }
 
 void test_double_reserve(){
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
 
-    tbb::flow::queue_node<int> node(g);
+    oneapi::tbb::flow::queue_node<int> node(g);
 
     int tmp = -1;
     node.try_reserve(tmp);

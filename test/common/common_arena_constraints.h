@@ -14,17 +14,17 @@
     limitations under the License.
 */
 
-#include "tbb/detail/_config.h"
+#include "oneapi/tbb/detail/_config.h"
 
 #include "common/test.h"
 #include "common/utils_concurrency_limit.h"
 
-#include "tbb/task_arena.h"
+#include "oneapi/tbb/task_arena.h"
 
 #include <vector>
 
 #if __TBB_HWLOC_PRESENT
-#include "tbb/concurrent_unordered_set.h"
+#include "oneapi/tbb/concurrent_unordered_set.h"
 
 #include <atomic>
 

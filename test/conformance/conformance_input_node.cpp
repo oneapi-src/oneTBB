@@ -20,8 +20,8 @@
 #include "common/utils.h"
 #include "common/graph_utils.h"
 
-#include "tbb/flow_graph.h"
-#include "tbb/task_arena.h"
+#include "oneapi/tbb/flow_graph.h"
+#include "oneapi/tbb/task_arena.h"
 
 #include "conformance_flowgraph.h"
 
@@ -50,7 +50,7 @@ struct input_functor {
     input_functor( const input_functor &f ) : n(f.n) {  }
     void operator=(const input_functor &f) { n = f.n; }
 
-    OutputType operator()( tbb::flow_control & fc ) {
+    OutputType operator()( oneapi::tbb::flow_control & fc ) {
        ++global_execute_count;
        if(global_execute_count > n){
            fc.stop();
@@ -75,7 +75,7 @@ struct CopyCounterBody{
         copy_count = other.copy_count + 1; return *this;
     }
 
-    O operator()(tbb::flow_control & fc){
+    O operator()(oneapi::tbb::flow_control & fc){
         fc.stop();
         return O();
     }
@@ -83,14 +83,14 @@ struct CopyCounterBody{
 
 
 void test_input_body(){
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
     input_functor<int> fun;
 
     global_execute_count = 0;
-    tbb::flow::input_node<int> node1(g, fun);
+    oneapi::tbb::flow::input_node<int> node1(g, fun);
     test_push_receiver<int> node2(g);
 
-    tbb::flow::make_edge(node1, node2);
+    oneapi::tbb::flow::make_edge(node1, node2);
 
     node1.activate();
     g.wait_for_all();
@@ -101,21 +101,21 @@ void test_input_body(){
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 void test_deduction_guides(){
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
     input_functor<int> fun;
-    tbb::flow::input_node node1(g, fun);
+    oneapi::tbb::flow::input_node node1(g, fun);
 }
 #endif
 
 void test_buffering(){
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
     input_functor<int> fun;
     global_execute_count = 0;
 
-    tbb::flow::input_node<int> source(g, fun);
-    tbb::flow::limiter_node<int> rejecter(g, 0);
+    oneapi::tbb::flow::input_node<int> source(g, fun);
+    oneapi::tbb::flow::limiter_node<int> rejecter(g, 0);
 
-    tbb::flow::make_edge(source, rejecter);
+    oneapi::tbb::flow::make_edge(source, rejecter);
     source.activate();
     g.wait_for_all();
 
@@ -125,16 +125,16 @@ void test_buffering(){
 }
 
 void test_forwarding(){
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
     input_functor<int> fun;
 
     global_execute_count = 0;
-    tbb::flow::input_node<int> node1(g, fun);
+    oneapi::tbb::flow::input_node<int> node1(g, fun);
     test_push_receiver<int> node2(g);
     test_push_receiver<int> node3(g);
 
-    tbb::flow::make_edge(node1, node2);
-    tbb::flow::make_edge(node1, node3);
+    oneapi::tbb::flow::make_edge(node1, node2);
+    oneapi::tbb::flow::make_edge(node1, node3);
 
     node1.activate();
     g.wait_for_all();
@@ -145,14 +145,14 @@ void test_forwarding(){
 
 template<typename O>
 void test_inheritance(){
-    using namespace tbb::flow;
+    using namespace oneapi::tbb::flow;
 
     CHECK_MESSAGE( (std::is_base_of<graph_node, input_node<O>>::value), "input_node should be derived from graph_node");
     CHECK_MESSAGE( (std::is_base_of<sender<O>, input_node<O>>::value), "input_node should be derived from sender<Output>");
 }
 
 void test_copies(){
-    using namespace tbb::flow;
+    using namespace oneapi::tbb::flow;
 
     CopyCounterBody<int> b;
 

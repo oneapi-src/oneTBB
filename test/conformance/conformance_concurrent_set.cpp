@@ -17,7 +17,7 @@
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
-#include <tbb/concurrent_set.h>
+#include "oneapi/tbb/concurrent_set.h"
 #include <common/test.h>
 #include <common/utils.h>
 #include <common/concurrent_ordered_common.h>
@@ -28,20 +28,20 @@
 //! \brief Test for [containers.concurrent_set containers.concurrent_multiset] specifications
 
 template <typename... Args>
-struct AllowMultimapping<tbb::concurrent_multiset<Args...>> : std::true_type {};
+struct AllowMultimapping<oneapi::tbb::concurrent_multiset<Args...>> : std::true_type {};
 
 template <typename Key>
 using Allocator = LocalCountingAllocator<std::allocator<Key>>;
 
-using set_type = tbb::concurrent_set<int, std::less<int>, Allocator<int>>;
-using multiset_type = tbb::concurrent_multiset<int, std::less<int>, Allocator<int>>;
+using set_type = oneapi::tbb::concurrent_set<int, std::less<int>, Allocator<int>>;
+using multiset_type = oneapi::tbb::concurrent_multiset<int, std::less<int>, Allocator<int>>;
 
 template <template <typename...> class ContainerType>
 void test_member_types() {
     using default_container_type = ContainerType<int>;
     static_assert(std::is_same<typename default_container_type::key_compare, std::less<int>>::value,
                   "Incorrect default template comparator");
-    static_assert(std::is_same<typename default_container_type::allocator_type, tbb::tbb_allocator<int>>::value,
+    static_assert(std::is_same<typename default_container_type::allocator_type, oneapi::tbb::tbb_allocator<int>>::value,
                   "Incorrect default template allocator");
 
     auto test_comparator = [](const int&, const int&)->bool { return true; };
@@ -128,7 +128,7 @@ void test_heterogeneous_functions() {
 
 struct COSetTraits : OrderedMoveTraitsBase {
     template <typename T, typename Allocator>
-    using container_type = tbb::concurrent_set<T, std::less<T>, Allocator>;
+    using container_type = oneapi::tbb::concurrent_set<T, std::less<T>, Allocator>;
 
     template <typename T>
     using container_value_type = T;
@@ -138,7 +138,7 @@ struct COSetTraits : OrderedMoveTraitsBase {
 
 struct COMultisetTraits : OrderedMoveTraitsBase {
     template <typename T, typename Allocator>
-    using container_type = tbb::concurrent_multiset<T, std::less<T>, Allocator>;
+    using container_type = oneapi::tbb::concurrent_multiset<T, std::less<T>, Allocator>;
 
     template <typename T>
     using container_value_type = T;
@@ -149,7 +149,7 @@ struct COMultisetTraits : OrderedMoveTraitsBase {
 //! Testing concurrent_set member types
 //! \brief \ref interface \ref requirement
 TEST_CASE("concurrent_set member types") {
-    test_member_types<tbb::concurrent_set>();
+    test_member_types<oneapi::tbb::concurrent_set>();
 }
 
 //! Testing multithreading support in concurrent_set
@@ -185,27 +185,27 @@ TEST_CASE("std::allocator_traits support in concurrent_set") {
 //! Testing heterogeneous overloads in concurrent_set
 //! \brief \ref interface \ref requirement
 TEST_CASE("heterogeneous overloads in concurrent_set") {
-    test_heterogeneous_functions<tbb::concurrent_set>();
+    test_heterogeneous_functions<oneapi::tbb::concurrent_set>();
 }
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 //! Testing Class Template Argument Deduction in concurrent_set
 //! \brief \ref interface \ref requirement
 TEST_CASE("CTAD support in concurrent_set") {
-    test_deduction_guides<tbb::concurrent_set>();
+    test_deduction_guides<oneapi::tbb::concurrent_set>();
 }
 #endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 
 //! Testing comparison operators in concurrent_set
 //! \brief \ref interface \ref requirement
 TEST_CASE("test concurrent_set comparisons") {
-    test_set_comparisons<tbb::concurrent_set>();
+    test_set_comparisons<oneapi::tbb::concurrent_set>();
 }
 
 //! Testing concurrent_multiset member types
 //! \brief \ref interface \ref requirement
 TEST_CASE("concurrent_multiset member types") {
-    test_member_types<tbb::concurrent_multiset>();
+    test_member_types<oneapi::tbb::concurrent_multiset>();
 }
 
 //! Testing requirements of concurrent_multiset
@@ -247,21 +247,21 @@ TEST_CASE("std::allocator_traits support in concurrent_multiset") {
 //! Testing heterogeneous overloads in concurrent_multiset
 //! \brief \ref interface \ref requirement
 TEST_CASE("heterogeneous overloads in concurrent_multiset") {
-    test_heterogeneous_functions<tbb::concurrent_multiset>();
+    test_heterogeneous_functions<oneapi::tbb::concurrent_multiset>();
 }
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 //! Testing Class Template Argument Deduction in concurrent_multiset
 //! \brief \ref interface \ref requirement
 TEST_CASE("CTAD support in concurrent_multiset") {
-    test_deduction_guides<tbb::concurrent_multiset>();
+    test_deduction_guides<oneapi::tbb::concurrent_multiset>();
 }
 #endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 
 //! Testing comparison operators in concurrent_multiset
 //! \brief \ref interface \ref requirement
 TEST_CASE("test concurrent_set comparisons") {
-    test_set_comparisons<tbb::concurrent_multiset>();
+    test_set_comparisons<oneapi::tbb::concurrent_multiset>();
 }
 
 //! Testing of merge operations in concurrent_set and concurrent_multiset

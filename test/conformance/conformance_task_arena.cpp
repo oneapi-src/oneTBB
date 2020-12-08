@@ -17,10 +17,10 @@
 #include "common/test.h"
 #include "common/utils.h"
 
-#include "tbb/task_arena.h"
-#include "tbb/task_scheduler_observer.h"
-#include "tbb/enumerable_thread_specific.h"
-#include "tbb/parallel_for.h"
+#include "oneapi/tbb/task_arena.h"
+#include "oneapi/tbb/task_scheduler_observer.h"
+#include "oneapi/tbb/enumerable_thread_specific.h"
+#include "oneapi/tbb/parallel_for.h"
 
 //! \file conformance_task_arena.cpp
 //! \brief Test for [scheduler.task_arena scheduler.task_scheduler_observer] specification
@@ -29,45 +29,45 @@
 //! \brief \ref requirement \ref interface
 TEST_CASE("Arena interfaces") {
     //! Initialization interfaces
-    tbb::task_arena a(1,1); a.initialize();
+    oneapi::tbb::task_arena a(1,1); a.initialize();
     //! Enqueue interface
     a.enqueue(utils::DummyBody(10));
     //! Execute interface
     a.execute([&] {
-        //! tbb::this_task_arena interfaces
-        CHECK(tbb::this_task_arena::max_concurrency() == 2);
-        CHECK(tbb::this_task_arena::current_thread_index() >= 0);
+        //! oneapi::tbb::this_task_arena interfaces
+        CHECK(oneapi::tbb::this_task_arena::max_concurrency() == 2);
+        CHECK(oneapi::tbb::this_task_arena::current_thread_index() >= 0);
         //! Attach interface
-        tbb::task_arena attached_arena = tbb::task_arena(tbb::task_arena::attach());
+        oneapi::tbb::task_arena attached_arena = oneapi::tbb::task_arena(oneapi::tbb::task_arena::attach());
         CHECK(attached_arena.is_active());
     });
     //! Terminate interface
     a.terminate();
 }
 
-//! Test tasks isolation for inner tbb::parallel_for loop
+//! Test tasks isolation for inner oneapi::tbb::parallel_for loop
 //! \brief \ref requirement \ref interface
 TEST_CASE("Task isolation") {
     const int N1 = 1000, N2 = 1000;
-    tbb::enumerable_thread_specific<int> ets;
-    tbb::parallel_for(0, N1, [&](int i) {
+    oneapi::tbb::enumerable_thread_specific<int> ets;
+    oneapi::tbb::parallel_for(0, N1, [&](int i) {
         // Set a thread specific value
         ets.local() = i;
         // Run the second parallel loop in an isolated region to prevent the current thread
         // from taking tasks related to the outer parallel loop.
-        tbb::this_task_arena::isolate([&]{
-            tbb::parallel_for(0, N2, utils::DummyBody(10));
+        oneapi::tbb::this_task_arena::isolate([&]{
+            oneapi::tbb::parallel_for(0, N2, utils::DummyBody(10));
         });
         REQUIRE(ets.local() == i);
     });
 }
 
-class conformance_observer: public tbb::task_scheduler_observer {
+class conformance_observer: public oneapi::tbb::task_scheduler_observer {
 public:
     std::atomic<bool> is_entry_called{false};
     std::atomic<bool> is_exit_called{false};
 
-    conformance_observer( tbb::task_arena &a ) : tbb::task_scheduler_observer(a) {
+    conformance_observer( oneapi::tbb::task_arena &a ) : oneapi::tbb::task_scheduler_observer(a) {
         observe(true); // activate the observer
     }
 
@@ -88,10 +88,10 @@ public:
 //! Test task arena observer interfaces
 //! \brief \ref requirement \ref interface
 TEST_CASE("Task arena observer") {
-    tbb::task_arena a; a.initialize();
+    oneapi::tbb::task_arena a; a.initialize();
     conformance_observer observer(a);
     a.execute([&] {
-        tbb::parallel_for(0, 100, utils::DummyBody(10), tbb::simple_partitioner());
+        oneapi::tbb::parallel_for(0, 100, utils::DummyBody(10), oneapi::tbb::simple_partitioner());
     });
     REQUIRE(observer.is_callbacks_called());
 }
@@ -99,8 +99,8 @@ TEST_CASE("Task arena observer") {
 //! Test task arena copy constructor
 //! \brief \ref interface \ref requirement
 TEST_CASE("Task arena copy constructor") {
-    tbb::task_arena arena(1);
-    tbb::task_arena copy = arena;
+    oneapi::tbb::task_arena arena(1);
+    oneapi::tbb::task_arena copy = arena;
 
     REQUIRE(arena.max_concurrency() == copy.max_concurrency());
     REQUIRE(arena.is_active() == copy.is_active());

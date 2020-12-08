@@ -17,7 +17,7 @@
 #ifndef __TBB_semaphore_H
 #define __TBB_semaphore_H
 
-#include "tbb/detail/_utils.h"
+#include "oneapi/tbb/detail/_utils.h"
 
 #if _WIN32||_WIN64
 #include <windows.h>

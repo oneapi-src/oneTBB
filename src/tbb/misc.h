@@ -17,12 +17,12 @@
 #ifndef _TBB_tbb_misc_H
 #define _TBB_tbb_misc_H
 
-#include "tbb/detail/_config.h"
-#include "tbb/detail/_assert.h"
-#include "tbb/detail/_utils.h"
+#include "oneapi/tbb/detail/_config.h"
+#include "oneapi/tbb/detail/_assert.h"
+#include "oneapi/tbb/detail/_utils.h"
 
 #if __TBB_NUMA_SUPPORT
-#include "tbb/info.h"
+#include "oneapi/tbb/info.h"
 #endif /*__TBB_NUMA_SUPPORT*/
 
 #if __linux__ || __FreeBSD__

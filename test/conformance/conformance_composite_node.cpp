@@ -20,9 +20,9 @@
 #include "common/utils.h"
 #include "common/graph_utils.h"
 
-#include "tbb/flow_graph.h"
-#include "tbb/task_arena.h"
-#include "tbb/global_control.h"
+#include "oneapi/tbb/flow_graph.h"
+#include "oneapi/tbb/task_arena.h"
+#include "oneapi/tbb/global_control.h"
 
 #include "conformance_flowgraph.h"
 
@@ -41,7 +41,7 @@ TODO: implement missing conformance tests for composite_node:
     `output_ports_type'.
 */
 
-using namespace tbb::flow;
+using namespace oneapi::tbb::flow;
 using namespace std;
 
 class adder : public composite_node<  tuple<int, int>,  tuple<int> > {
@@ -69,7 +69,7 @@ public:
 };
 
 void test_inheritance(){
-    using namespace tbb::flow;
+    using namespace oneapi::tbb::flow;
 
     CHECK_MESSAGE( (std::is_base_of<graph_node, adder>::value), "multifunction_node should be derived from graph_node");
 

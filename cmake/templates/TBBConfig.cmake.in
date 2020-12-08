@@ -43,11 +43,11 @@ unset(_tbbmalloc_proxy_ix)
 @TBB_HANDLE_SUBDIRS@
 foreach (_tbb_component ${TBB_FIND_COMPONENTS})
     set(TBB_${_tbb_component}_FOUND 0)
-
-    get_filename_component(_tbb_release_lib "${CMAKE_CURRENT_LIST_DIR}/@TBB_LIB_REL_PATH@/${_tbb_subdir}/@TBB_LIB_PREFIX@${_tbb_component}.@TBB_LIB_EXT@" ABSOLUTE)
+    @TBB_HANDLE_BIN_VERSION@
+    get_filename_component(_tbb_release_lib "${CMAKE_CURRENT_LIST_DIR}/@TBB_LIB_REL_PATH@/${_tbb_subdir}/@TBB_LIB_PREFIX@${_tbb_component}${_bin_version}.@TBB_LIB_EXT@" ABSOLUTE)
 
     if (NOT TBB_FIND_RELEASE_ONLY)
-        get_filename_component(_tbb_debug_lib "${CMAKE_CURRENT_LIST_DIR}/@TBB_LIB_REL_PATH@/${_tbb_subdir}/@TBB_LIB_PREFIX@${_tbb_component}_debug.@TBB_LIB_EXT@" ABSOLUTE)
+        get_filename_component(_tbb_debug_lib "${CMAKE_CURRENT_LIST_DIR}/@TBB_LIB_REL_PATH@/${_tbb_subdir}/@TBB_LIB_PREFIX@${_tbb_component}${_bin_version}_debug.@TBB_LIB_EXT@" ABSOLUTE)
     endif()
 
     if (EXISTS "${_tbb_release_lib}" OR EXISTS "${_tbb_debug_lib}")

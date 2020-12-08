@@ -18,7 +18,7 @@
 #define __TBB_test_common_custom_allocators_H
 
 #include "test.h"
-#include <tbb/detail/_allocator_traits.h>
+#include <oneapi/tbb/detail/_allocator_traits.h>
 #include <memory>
 #include <atomic>
 #include <scoped_allocator>

@@ -72,8 +72,4 @@ target_link_libraries(tbbmalloc_proxy
     ${TBB_COMMON_LINK_LIBS}
 )
 
-install(TARGETS tbbmalloc_proxy
-    EXPORT TBBTargets
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    RUNTIME DESTINATION bin)
+tbb_install_target(tbbmalloc_proxy)

@@ -17,11 +17,11 @@
 #ifndef __TBB_observer_proxy_H
 #define __TBB_observer_proxy_H
 
-#include "tbb/detail/_config.h"
-#include "tbb/detail/_aligned_space.h"
+#include "oneapi/tbb/detail/_config.h"
+#include "oneapi/tbb/detail/_aligned_space.h"
 
-#include "tbb/task_scheduler_observer.h"
-#include "tbb/spin_rw_mutex.h"
+#include "oneapi/tbb/task_scheduler_observer.h"
+#include "oneapi/tbb/spin_rw_mutex.h"
 
 namespace tbb {
 namespace detail {

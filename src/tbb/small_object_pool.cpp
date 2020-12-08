@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
-#include "tbb/cache_aligned_allocator.h"
-#include "tbb/detail/_small_object_pool.h"
-#include "tbb/detail/_task.h"
+#include "oneapi/tbb/cache_aligned_allocator.h"
+#include "oneapi/tbb/detail/_small_object_pool.h"
+#include "oneapi/tbb/detail/_task.h"
 #include "governor.h"
 #include "thread_data.h"
 #include "task_dispatcher.h"

@@ -20,7 +20,7 @@
 
 #include "common/test.h"
 #include "common/utils.h"
-#include "tbb/detail/_config.h"
+#include "oneapi/tbb/detail/_config.h"
 #include "tbb/global_control.h"
 
 #include "tbb/task_group.h"
@@ -136,21 +136,7 @@ public:
             if (m_taskGroup || m_tasksSpawned) {
                 CHECK_MESSAGE(false, "SharedGroupBody must be reset before reuse");
             }
-#if _MSC_VER && !defined(__INTEL_COMPILER)
-#pragma warning(push)
-#pragma warning(disable:4316) // object allocated on the heap may not be aligned
-#endif
-#if __TBB_GCC_VERSION >= 70000 && !defined(__clang__) && !defined(__INTEL_COMPILER)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Waligned-new=none"
-#endif
             m_taskGroup = new task_group_type;
-#if __TBB_GCC_VERSION >= 70000 && !defined(__clang__) && !defined(__INTEL_COMPILER)
-#pragma GCC diagnostic pop
-#endif
-#if _MSC_VER && !defined(__INTEL_COMPILER)
-#pragma warning(pop)
-#endif
             Spawn( c_numTasks0 );
             Wait();
             if ( m_sharingMode & VagabondGroup )
@@ -503,13 +489,12 @@ void TestManualCancellationWithFunctor () {
         // TBB version does not require taking function address
         tg.run( &LaunchChildrenWithFunctor<task_group_type> );
     CHECK_MESSAGE ( !tbb::is_current_task_group_canceling(), "Unexpected cancellation" );
-    CHECK_MESSAGE ( !tg.is_canceling(), "Unexpected cancellation" );
     while ( g_MaxConcurrency > 1 && g_TaskCount == 0 )
         std::this_thread::yield();
     tg.cancel();
     g_ExecutedAtCancellation = int(g_TaskCount);
-    CHECK_MESSAGE ( tg.is_canceling(), "No cancellation reported" );
-    tg.wait();
+    tbb::task_group_status status = tg.wait();
+    CHECK_MESSAGE( status == tbb::canceled, "Task group reported invalid status." );
     CHECK_MESSAGE( g_TaskCount <= NUM_GROUPS * NUM_CHORES, "Too many tasks reported. The test is broken" );
     CHECK_MESSAGE( g_TaskCount < NUM_GROUPS * NUM_CHORES, "No tasks were cancelled. Cancellation model changed?" );
     CHECK_MESSAGE( g_TaskCount <= g_ExecutedAtCancellation + utils::ConcurrencyTracker::PeakParallelism(), "Too many tasks survived cancellation" );
@@ -546,7 +531,6 @@ void TestExceptionHandling2 () {
     } catch ( TestException& e ) {
         CHECK_MESSAGE( e.what(), "Empty what() string" );
         CHECK_MESSAGE( strcmp(e.what(), EXCEPTION_DESCR2) == 0, "Unknown exception" );
-        CHECK_MESSAGE ( !tg.is_canceling(), "wait() has not reset cancellation state" );
         exceptionCaught = true;
     } catch( ... ) { CHECK_MESSAGE( false, "Unknown exception" ); }
     CHECK_MESSAGE( exceptionCaught, "No exception thrown from the root task group" );
@@ -581,7 +565,6 @@ public:
             tg.run(LaunchChildrenWithFunctor<task_group_type>);
         }
         CHECK_MESSAGE(!tbb::is_current_task_group_canceling(), "Unexpected cancellation");
-        CHECK_MESSAGE(!tg.is_canceling(), "Unexpected cancellation");
         while (g_MaxConcurrency > 1 && g_TaskCount == 0)
             std::this_thread::yield();
     }

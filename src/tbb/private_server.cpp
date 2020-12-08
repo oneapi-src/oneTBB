@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/cache_aligned_allocator.h"
+#include "oneapi/tbb/cache_aligned_allocator.h"
 
 #include "rml_tbb.h"
 #include "rml_thread_monitor.h"

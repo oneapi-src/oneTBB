@@ -17,7 +17,7 @@
 #define TBB_PREVIEW_CONCURRENT_LRU_CACHE 1
 
 #include "common/test.h"
-#include <tbb/concurrent_lru_cache.h>
+#include "oneapi/tbb/concurrent_lru_cache.h"
 #include <common/concurrent_lru_cache_common.h>
 
 //! \file conformance_concurrent_lru_cache.cpp

@@ -19,9 +19,9 @@
 #include "common/utils_assert.h"
 #include "common/utils_concurrency_limit.h"
 
-#include "tbb/blocked_range3d.h"
-#include "tbb/parallel_for.h"
-#include "tbb/global_control.h"
+#include "oneapi/tbb/blocked_range3d.h"
+#include "oneapi/tbb/parallel_for.h"
+#include "oneapi/tbb/global_control.h"
 
 #include <vector>
 
@@ -73,7 +73,7 @@ static void SerialTest() {
     typedef AbstractValueType<PageTag> page_type;
     typedef AbstractValueType<RowTag> row_type;
     typedef AbstractValueType<ColTag> col_type;
-    typedef tbb::blocked_range3d<page_type,row_type,col_type> range_type;
+    typedef oneapi::tbb::blocked_range3d<page_type,row_type,col_type> range_type;
     for( int page_x=-4; page_x<4; ++page_x ) {
         for( int page_y=page_x; page_y<4; ++page_y ) {
             page_type page_i = MakeAbstractValueType<PageTag>(page_x);
@@ -98,16 +98,16 @@ static void SerialTest() {
                                         utils::AssertSameType( static_cast<range_type::row_range_type::const_iterator*>(0), static_cast<row_type*>(0) );
                                         utils::AssertSameType( static_cast<range_type::col_range_type::const_iterator*>(0), static_cast<col_type*>(0) );
 
-                                        utils::AssertSameType( r.pages(), tbb::blocked_range<page_type>( page_i, page_j, 1 ));
-                                        utils::AssertSameType( r.rows(), tbb::blocked_range<row_type>( row_i, row_j, 1 ));
-                                        utils::AssertSameType( r.cols(), tbb::blocked_range<col_type>( col_i, col_j, 1 ));
+                                        utils::AssertSameType( r.pages(), oneapi::tbb::blocked_range<page_type>( page_i, page_j, 1 ));
+                                        utils::AssertSameType( r.rows(), oneapi::tbb::blocked_range<row_type>( row_i, row_j, 1 ));
+                                        utils::AssertSameType( r.cols(), oneapi::tbb::blocked_range<col_type>( col_i, col_j, 1 ));
 
                                         REQUIRE( r.empty()==(page_x==page_y||row_x==row_y||col_x==col_y) );
 
                                         REQUIRE( r.is_divisible()==(page_y-page_x>page_grain||row_y-row_x>row_grain||col_y-col_x>col_grain) );
 
                                         if( r.is_divisible() ) {
-                                            range_type r2(r,tbb::split());
+                                            range_type r2(r,oneapi::tbb::split());
                                             if( (GetValueOf(r2.pages().begin())==GetValueOf(r.pages().begin())) && (GetValueOf(r2.rows().begin())==GetValueOf(r.rows().begin())) ) {
                                                 REQUIRE( GetValueOf(r2.pages().end())==GetValueOf(r.pages().end()) );
                                                 REQUIRE( GetValueOf(r2.rows().end())==GetValueOf(r.rows().end()) );
@@ -141,10 +141,10 @@ unsigned char Array[N][N][N];
 
 struct Striker {
    // Note: we use <int> here instead of <long> in order to test for problems similar to Quad 407676
-    void operator()( const tbb::blocked_range3d<int>& r ) const {
-        for( tbb::blocked_range<int>::const_iterator i=r.pages().begin(); i!=r.pages().end(); ++i )
-            for( tbb::blocked_range<int>::const_iterator j=r.rows().begin(); j!=r.rows().end(); ++j )
-                for( tbb::blocked_range<int>::const_iterator k=r.cols().begin(); k!=r.cols().end(); ++k )
+    void operator()( const oneapi::tbb::blocked_range3d<int>& r ) const {
+        for( oneapi::tbb::blocked_range<int>::const_iterator i=r.pages().begin(); i!=r.pages().end(); ++i )
+            for( oneapi::tbb::blocked_range<int>::const_iterator j=r.rows().begin(); j!=r.rows().end(); ++j )
+                for( oneapi::tbb::blocked_range<int>::const_iterator k=r.cols().begin(); k!=r.cols().end(); ++k )
                     ++Array[i][j][k];
     }
 };
@@ -153,8 +153,8 @@ void ParallelTest() {
     for( int i=0; i<N; i=i<3 ? i+1 : i*3 ) {
         for( int j=0; j<N; j=j<3 ? j+1 : j*3 ) {
             for( int k=0; k<N; k=k<3 ? k+1 : k*3 ) {
-                const tbb::blocked_range3d<int> r( 0, i, 5, 0, j, 3, 0, k, 1 );
-                tbb::parallel_for( r, Striker() );
+                const oneapi::tbb::blocked_range3d<int> r( 0, i, 5, 0, j, 3, 0, k, 1 );
+                oneapi::tbb::parallel_for( r, Striker() );
                 for( int l=0; l<N; ++l ) {
                     for( int m=0; m<N; ++m ) {
                         for( int n=0; n<N; ++n ) {
@@ -178,7 +178,7 @@ TEST_CASE("Serial test") {
 //! \brief \ref requirement
 TEST_CASE("Parallel test") {
     for ( auto concurrency_level : utils::concurrency_range() ) {
-        tbb::global_control control(tbb::global_control::max_allowed_parallelism, concurrency_level);
+        oneapi::tbb::global_control control(oneapi::tbb::global_control::max_allowed_parallelism, concurrency_level);
         ParallelTest();
     }
 }
@@ -186,10 +186,10 @@ TEST_CASE("Parallel test") {
 //! Testing blocked_range3d with proportional splitting
 //! \brief \ref interface \ref requirement
 TEST_CASE("blocked_range3d proportional splitting") {
-    tbb::blocked_range3d<int> original(0, 100, 0, 100, 0, 100);
-    tbb::blocked_range3d<int> first(original);
-    tbb::proportional_split ps(3, 1);
-    tbb::blocked_range3d<int> second(first, ps);
+    oneapi::tbb::blocked_range3d<int> original(0, 100, 0, 100, 0, 100);
+    oneapi::tbb::blocked_range3d<int> first(original);
+    oneapi::tbb::proportional_split ps(3, 1);
+    oneapi::tbb::blocked_range3d<int> second(first, ps);
 
     int expected_first_end = original.rows().begin() + ps.left() * (original.rows().end() - original.rows().begin()) / (ps.left() + ps.right());
     if (first.rows().size() == second.rows().size()) {
@@ -215,16 +215,16 @@ TEST_CASE("Deduction guides") {
     std::vector<std::vector<int>> v3;
 
     // check blocked_range2d(PageValue, PageValue, size_t, RowValue, RowValue, size_t, ColValue, ColValue, size_t)
-    tbb::blocked_range3d r1(v.begin(), v.end(), 2, v2.begin(), v2.end(), 2, v3.begin(), v3.end(), 6);
+    oneapi::tbb::blocked_range3d r1(v.begin(), v.end(), 2, v2.begin(), v2.end(), 2, v3.begin(), v3.end(), 6);
     static_assert(std::is_same<decltype(r1),
-        tbb::blocked_range3d<decltype(v)::iterator, decltype(v2)::iterator, decltype(v3)::iterator>>::value);
+        oneapi::tbb::blocked_range3d<decltype(v)::iterator, decltype(v2)::iterator, decltype(v3)::iterator>>::value);
 
     // check blocked_range2d(blocked_range3d &)
-    tbb::blocked_range3d r2(r1);
+    oneapi::tbb::blocked_range3d r2(r1);
     static_assert(std::is_same<decltype(r2), decltype(r1)>::value);
 
     // check blocked_range2d(blocked_range3d &&)
-    tbb::blocked_range3d r3(std::move(r1));
+    oneapi::tbb::blocked_range3d r3(std::move(r1));
     static_assert(std::is_same<decltype(r2), decltype(r1)>::value);
 }
 #endif

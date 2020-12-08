@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <tbb/concurrent_unordered_map.h>
+#include "oneapi/tbb/concurrent_unordered_map.h"
 #include <common/test.h>
 #include <common/utils.h>
 #include <common/concurrent_unordered_common.h>
@@ -25,13 +25,13 @@
 //! \brief Test for [containers.concurrent_unordered_map containers.concurrent_unordered_multimap] specifications
 
 template <typename... Args>
-struct AllowMultimapping<tbb::concurrent_unordered_multimap<Args...>> : std::true_type {};
+struct AllowMultimapping<oneapi::tbb::concurrent_unordered_multimap<Args...>> : std::true_type {};
 
 template <typename Key, typename Mapped>
 using Allocator = LocalCountingAllocator<std::allocator<std::pair<const Key, Mapped>>>;
 
-using map_type = tbb::concurrent_unordered_map<int, int, std::hash<int>, std::equal_to<int>, Allocator<int, int>>;
-using multimap_type = tbb::concurrent_unordered_multimap<int, int, std::hash<int>, std::equal_to<int>, Allocator<int, int>>;
+using map_type = oneapi::tbb::concurrent_unordered_map<int, int, std::hash<int>, std::equal_to<int>, Allocator<int, int>>;
+using multimap_type = oneapi::tbb::concurrent_unordered_multimap<int, int, std::hash<int>, std::equal_to<int>, Allocator<int, int>>;
 
 template <>
 struct SpecialTests<map_type> {
@@ -55,7 +55,7 @@ void test_member_types() {
     static_assert(std::is_same<typename default_container_type::key_equal, std::equal_to<int>>::value,
                   "Incorrect default template key equality");
     static_assert(std::is_same<typename default_container_type::allocator_type,
-                               tbb::tbb_allocator<std::pair<const int, int>>>::value,
+                               oneapi::tbb::tbb_allocator<std::pair<const int, int>>>::value,
                   "Incorrect default template allocator");
 
     auto test_hasher = [](const int&)->std::size_t { return 0; };
@@ -211,15 +211,15 @@ void test_deduction_guides() {
 #endif
 
 void test_heterogeneous_functions() {
-    check_heterogeneous_functions_key_int<tbb::concurrent_unordered_map, int, int>();
-    check_heterogeneous_functions_key_int<tbb::concurrent_unordered_multimap, int, int>();
-    check_heterogeneous_functions_key_string<tbb::concurrent_unordered_map, std::string, std::string>();
-    check_heterogeneous_functions_key_string<tbb::concurrent_unordered_multimap, std::string, std::string>();
+    check_heterogeneous_functions_key_int<oneapi::tbb::concurrent_unordered_map, int, int>();
+    check_heterogeneous_functions_key_int<oneapi::tbb::concurrent_unordered_multimap, int, int>();
+    check_heterogeneous_functions_key_string<oneapi::tbb::concurrent_unordered_map, std::string, std::string>();
+    check_heterogeneous_functions_key_string<oneapi::tbb::concurrent_unordered_multimap, std::string, std::string>();
 }
 
 struct CumapTraits : UnorderedMoveTraitsBase {
     template <typename T, typename Allocator>
-    using container_type = tbb::concurrent_unordered_map<T, T, std::hash<T>, std::equal_to<T>, Allocator>;
+    using container_type = oneapi::tbb::concurrent_unordered_map<T, T, std::hash<T>, std::equal_to<T>, Allocator>;
 
     template <typename T>
     using container_value_type = std::pair<const T, T>;
@@ -229,7 +229,7 @@ struct CumapTraits : UnorderedMoveTraitsBase {
 
 struct CumultimapTraits : UnorderedMoveTraitsBase {
     template <typename T, typename Allocator>
-    using container_type = tbb::concurrent_unordered_multimap<T, T, std::hash<T>, std::equal_to<T>, Allocator>;
+    using container_type = oneapi::tbb::concurrent_unordered_multimap<T, T, std::hash<T>, std::equal_to<T>, Allocator>;
 
     template <typename T>
     using container_value_type = std::pair<const T, T>;
@@ -240,7 +240,7 @@ struct CumultimapTraits : UnorderedMoveTraitsBase {
 //! Testing concurrent_unordered_map member types
 //! \brief \ref interface \ref requirement
 TEST_CASE("concurrent_unordered_map member types") {
-    test_member_types<tbb::concurrent_unordered_map>();
+    test_member_types<oneapi::tbb::concurrent_unordered_map>();
 }
 
 //! Testing requirements of concurrent_unordered_map
@@ -282,28 +282,28 @@ TEST_CASE("std::allocator_traits support in concurrent_unordered_map") {
 //! Testing heterogeneous overloads in concurrent_unordered_map
 //! \brief \ref interface \ref requirement
 TEST_CASE("heterogeneous overloads in concurrent_unordered_map") {
-    check_heterogeneous_functions_key_int<tbb::concurrent_unordered_map, int, int>();
-    check_heterogeneous_functions_key_string<tbb::concurrent_unordered_map, std::string, std::string>();
+    check_heterogeneous_functions_key_int<oneapi::tbb::concurrent_unordered_map, int, int>();
+    check_heterogeneous_functions_key_string<oneapi::tbb::concurrent_unordered_map, std::string, std::string>();
 }
 
 //! Testing insert overloads with generic pair in concurrent_unordered_map
 //! \brief \ref interface \ref requirement
 TEST_CASE("insertion by generic pair in concurrent_unordered_map") {
-    test_insert_by_generic_pair<tbb::concurrent_unordered_map>();
+    test_insert_by_generic_pair<oneapi::tbb::concurrent_unordered_map>();
 }
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 //! Testing Class Template Argument Deduction in concurrent_unordered_map
 //! \brief \ref interface \ref requirement
 TEST_CASE("CTAD support in concurrent_unordered_map") {
-    test_deduction_guides<tbb::concurrent_unordered_map>();
+    test_deduction_guides<oneapi::tbb::concurrent_unordered_map>();
 }
 #endif
 
 //! Testing concurrent_unordered_multimap member types
 //! \brief \ref interface \ref requirement
 TEST_CASE("concurrent_unordered_multimap member types") {
-    test_member_types<tbb::concurrent_unordered_multimap>();
+    test_member_types<oneapi::tbb::concurrent_unordered_multimap>();
 }
 
 //! Testing requirements of concurrent_unordered_multimap
@@ -345,21 +345,21 @@ TEST_CASE("std::allocator_traits support in concurrent_unordered_multimap") {
 //! Testing heterogeneous overloads in concurrent_unordered_multimap
 //! \brief \ref interface \ref requirement
 TEST_CASE("heterogeneous overloads in concurrent_unordered_multimap") {
-    check_heterogeneous_functions_key_int<tbb::concurrent_unordered_multimap, int, int>();
-    check_heterogeneous_functions_key_string<tbb::concurrent_unordered_multimap, std::string, std::string>();
+    check_heterogeneous_functions_key_int<oneapi::tbb::concurrent_unordered_multimap, int, int>();
+    check_heterogeneous_functions_key_string<oneapi::tbb::concurrent_unordered_multimap, std::string, std::string>();
 }
 
 //! Testing insert overloads with generic pair in concurrent_unordered_multimap
 //! \brief \ref interface \ref requirement
 TEST_CASE("insertion by generic pair in concurrent_unordered_multimap") {
-    test_insert_by_generic_pair<tbb::concurrent_unordered_multimap>();
+    test_insert_by_generic_pair<oneapi::tbb::concurrent_unordered_multimap>();
 }
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 //! Testing Class Template Argument Deduction in concurrent_unordered_multimap
 //! \brief \ref interface \ref requirement
 TEST_CASE("CTAD support in concurrent_unordered_multimap") {
-    test_deduction_guides<tbb::concurrent_unordered_multimap>();
+    test_deduction_guides<oneapi::tbb::concurrent_unordered_multimap>();
 }
 #endif
 

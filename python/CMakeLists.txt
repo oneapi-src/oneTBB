@@ -49,6 +49,10 @@ add_test(NAME python_test
                  -DPYTHON_MODULE_BUILD_PATH=${PYTHON_BUILD_WORK_DIR}/build
                  -P ${PROJECT_SOURCE_DIR}/cmake/python/test_launcher.cmake)
 
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${PYTHON_BUILD_WORK_DIR}/build/lib/
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        COMPONENT tbb4py)
+
 if (UNIX AND NOT APPLE)
     add_subdirectory(rml)
     add_dependencies(python_build irml)

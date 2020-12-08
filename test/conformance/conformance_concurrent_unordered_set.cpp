@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <tbb/concurrent_unordered_set.h>
+#include "oneapi/tbb/concurrent_unordered_set.h"
 #include <common/test.h>
 #include <common/utils.h>
 #include <common/concurrent_unordered_common.h>
@@ -25,13 +25,13 @@
 //! \brief Test for [containers.concurrent_unordered_set containers.concurrent_unordered_multiset] specifications
 
 template <typename... Args>
-struct AllowMultimapping<tbb::concurrent_unordered_multiset<Args...>> : std::true_type {};
+struct AllowMultimapping<oneapi::tbb::concurrent_unordered_multiset<Args...>> : std::true_type {};
 
 template <typename Key>
 using Allocator = LocalCountingAllocator<std::allocator<Key>>;
 
-using set_type = tbb::concurrent_unordered_set<int, std::hash<int>, std::equal_to<int>, Allocator<int>>;
-using multiset_type = tbb::concurrent_unordered_multiset<int, std::hash<int>, std::equal_to<int>, Allocator<int>>;
+using set_type = oneapi::tbb::concurrent_unordered_set<int, std::hash<int>, std::equal_to<int>, Allocator<int>>;
+using multiset_type = oneapi::tbb::concurrent_unordered_multiset<int, std::hash<int>, std::equal_to<int>, Allocator<int>>;
 
 template <template <typename...> class ContainerType>
 void test_member_types() {
@@ -40,7 +40,7 @@ void test_member_types() {
                   "Incorrect default template hasher");
     static_assert(std::is_same<typename default_container_type::key_equal, std::equal_to<int>>::value,
                   "Incorrect default template key equality");
-    static_assert(std::is_same<typename default_container_type::allocator_type, tbb::tbb_allocator<int>>::value,
+    static_assert(std::is_same<typename default_container_type::allocator_type, oneapi::tbb::tbb_allocator<int>>::value,
                   "Incorrect default template allocator");
 
     auto test_hasher = [](const int&)->std::size_t { return 0; };
@@ -103,7 +103,7 @@ void test_member_types() {
 
 struct CusetTraits : UnorderedMoveTraitsBase {
     template <typename T, typename Allocator>
-    using container_type = tbb::concurrent_unordered_set<T, std::hash<T>, std::equal_to<T>, Allocator>;
+    using container_type = oneapi::tbb::concurrent_unordered_set<T, std::hash<T>, std::equal_to<T>, Allocator>;
 
     template <typename T>
     using container_value_type = T;
@@ -113,7 +113,7 @@ struct CusetTraits : UnorderedMoveTraitsBase {
 
 struct CumultisetTraits : UnorderedMoveTraitsBase {
     template <typename T, typename Allocator>
-    using container_type = tbb::concurrent_unordered_multiset<T, std::hash<T>, std::equal_to<T>, Allocator>;
+    using container_type = oneapi::tbb::concurrent_unordered_multiset<T, std::hash<T>, std::equal_to<T>, Allocator>;
 
     template <typename T>
     using container_value_type = T;
@@ -210,7 +210,7 @@ void test_deduction_guides() {
 //! Testing concurrent_unordered_set member types
 //! \brief \ref interface \ref requirement
 TEST_CASE("concurrent_unordered_set member types") {
-    test_member_types<tbb::concurrent_unordered_set>();
+    test_member_types<oneapi::tbb::concurrent_unordered_set>();
 }
 
 //! Testing requirements of concurrent_unordered_set
@@ -252,22 +252,22 @@ TEST_CASE("std::allocator_traits support in concurrent_unordered_set") {
 //! Testing heterogeneous overloads in concurrent_unordered_set
 //! \brief \ref interface \ref requirement
 TEST_CASE("heterogeneous overloads in concurrent_unordered_set") {
-    check_heterogeneous_functions_key_int<tbb::concurrent_unordered_set, int>();
-    check_heterogeneous_functions_key_string<tbb::concurrent_unordered_set, std::string>();
+    check_heterogeneous_functions_key_int<oneapi::tbb::concurrent_unordered_set, int>();
+    check_heterogeneous_functions_key_string<oneapi::tbb::concurrent_unordered_set, std::string>();
 }
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 //! Testing Class Template Argument Deduction in concurrent_unordered_set
 //! \brief \ref interface \ref requirement
 TEST_CASE("CTAD support in concurrent_unordered_set") {
-    test_deduction_guides<tbb::concurrent_unordered_set>();
+    test_deduction_guides<oneapi::tbb::concurrent_unordered_set>();
 }
 #endif
 
 //! Testing concurrent_unordered_multiset member types
 //! \brief \ref interface \ref requirement
 TEST_CASE("concurrent_unordered_set member types") {
-    test_member_types<tbb::concurrent_unordered_multiset>();
+    test_member_types<oneapi::tbb::concurrent_unordered_multiset>();
 }
 
 //! Testing requirements of concurrent_unordered_multiset
@@ -309,15 +309,15 @@ TEST_CASE("std::allocator_traits support in concurrent_unordered_multiset") {
 //! Testing heterogeneous overloads in concurrent_unordered_multiset
 //! \brief \ref interface \ref requirement
 TEST_CASE("heterogeneous overloads in concurrent_unordered_multiset") {
-    check_heterogeneous_functions_key_int<tbb::concurrent_unordered_multiset, int>();
-    check_heterogeneous_functions_key_string<tbb::concurrent_unordered_multiset, std::string>();
+    check_heterogeneous_functions_key_int<oneapi::tbb::concurrent_unordered_multiset, int>();
+    check_heterogeneous_functions_key_string<oneapi::tbb::concurrent_unordered_multiset, std::string>();
 }
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 //! Testing Class Template Argument Deduction in concurrent_unordered_multiset
 //! \brief \ref interface \ref requirement
 TEST_CASE("CTAD support in concurrent_unordered_multiset") {
-    test_deduction_guides<tbb::concurrent_unordered_multiset>();
+    test_deduction_guides<oneapi::tbb::concurrent_unordered_multiset>();
 }
 #endif
 

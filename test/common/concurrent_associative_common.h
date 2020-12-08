@@ -29,7 +29,7 @@
 #include <list>
 #include <cstring>
 
-#include "tbb/parallel_for.h"
+#include "oneapi/tbb/parallel_for.h"
 
 // This structure should be specialized for multimap and multiset classes
 template <typename T>

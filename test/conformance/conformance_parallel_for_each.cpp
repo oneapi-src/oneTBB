@@ -23,7 +23,7 @@
 //! \brief \ref requirement \ref interface
 TEST_CASE("Input iterator support") {
     for ( auto concurrency_level : utils::concurrency_range() ) {
-        tbb::global_control control(tbb::global_control::max_allowed_parallelism, concurrency_level);
+        oneapi::tbb::global_control control(oneapi::tbb::global_control::max_allowed_parallelism, concurrency_level);
 
         for( size_t depth = 0; depth <= depths_nubmer; ++depth ) {
             g_tasks_expected = 0;
@@ -59,27 +59,27 @@ struct set_to {
 template<typename... Context>
 void WorkProducingTest(Context&... context) {
     for ( auto concurrency_level : utils::concurrency_range() ) {
-        tbb::global_control control(tbb::global_control::max_allowed_parallelism, concurrency_level);
+        oneapi::tbb::global_control control(oneapi::tbb::global_control::max_allowed_parallelism, concurrency_level);
 
         using namespace range_based_for_support_tests;
         std::deque<size_t> v(elements, 0);
 
         element_counter = 0;
-        tbb::parallel_for_each(v.begin(), v.end(), set_to<0>(), context...);
+        oneapi::tbb::parallel_for_each(v.begin(), v.end(), set_to<0>(), context...);
         REQUIRE_MESSAGE((element_counter == v.size() && element_counter == elements),
             "not all elements were set");
         REQUIRE_MESSAGE(range_based_for_accumulate(v, std::plus<size_t>(), init_sum) == init_sum,
             "elements of v not all ones");
 
         element_counter = 0;
-        tbb::parallel_for_each(v, set_to<1>(), context...);
+        oneapi::tbb::parallel_for_each(v, set_to<1>(), context...);
         REQUIRE_MESSAGE((element_counter == v.size() && element_counter == elements),
             "not all elements were set");
         REQUIRE_MESSAGE(range_based_for_accumulate(v, std::plus<size_t>(), init_sum) == v.size(),
             "elements of v not all ones");
 
         element_counter = 0;
-        tbb::parallel_for_each(tbb::blocked_range<std::deque<size_t>::iterator>(v.begin(), v.end()), set_to<0>(), context...);
+        oneapi::tbb::parallel_for_each(oneapi::tbb::blocked_range<std::deque<size_t>::iterator>(v.begin(), v.end()), set_to<0>(), context...);
         REQUIRE_MESSAGE((element_counter == v.size() && element_counter == elements),
             "not all elements were set");
         REQUIRE_MESSAGE(range_based_for_accumulate(v, std::plus<size_t>(), init_sum) == init_sum,
@@ -96,7 +96,7 @@ TEST_CASE("Test that all elements in range were produced through body (without t
 //! Test that all elements were produced (with task_group_context)
 //! \brief \ref requirement \ref interface \ref stress
 TEST_CASE("Test that all elements in range were produced through body (with task_group_context)") {
-    tbb::task_group_context context;
+    oneapi::tbb::task_group_context context;
     WorkProducingTest(context);
 }
 

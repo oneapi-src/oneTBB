@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include "tbb/detail/_assert.h"
-#include "tbb/detail/_rtm_rw_mutex.h"
+#include "oneapi/tbb/detail/_assert.h"
+#include "oneapi/tbb/detail/_rtm_rw_mutex.h"
 #include "itt_notify.h"
 #include "governor.h"
 #include "misc.h"

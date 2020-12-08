@@ -15,6 +15,7 @@
 cmake_minimum_required(VERSION 3.1)
 
 include(CheckCXXCompilerFlag)
+include(GNUInstallDirs)
 
 # Enable CMake policies
 
@@ -46,7 +47,7 @@ if (CMAKE_VERSION VERSION_LESS 3.4)
     enable_language(C)
 endif()
 
-file(READ include/tbb/version.h _tbb_version_info)
+file(READ include/oneapi/tbb/version.h _tbb_version_info)
 string(REGEX REPLACE ".*#define TBB_VERSION_MAJOR ([0-9]+).*" "\\1" _tbb_ver_major "${_tbb_version_info}")
 string(REGEX REPLACE ".*#define TBB_VERSION_MINOR ([0-9]+).*" "\\1" _tbb_ver_minor "${_tbb_version_info}")
 string(REGEX REPLACE ".*#define TBB_INTERFACE_VERSION ([0-9]+).*" "\\1" TBB_INTERFACE_VERSION "${_tbb_version_info}")
@@ -55,7 +56,7 @@ set(TBB_BINARY_MINOR_VERSION 1)
 set(TBBMALLOC_BINARY_VERSION 2)
 set(TBBBIND_BINARY_VERSION 3)
 
-project(TBB VERSION ${_tbb_ver_major}.${_tbb_ver_minor} LANGUAGES CXX)
+project(TBB VERSION ${_tbb_ver_major}.${_tbb_ver_minor}.1 LANGUAGES CXX)
 unset(_tbb_ver_major)
 unset(_tbb_ver_minor)
 
@@ -93,7 +94,6 @@ endif()
 option(TBB_TEST "Enable testing" ON)
 option(TBB_EXAMPLES "Enable examples" OFF)
 option(TBB_STRICT "Treat compiler warnings as errors" ON)
-option(TBB_NUMA_SUPPORT "Enable NUMA support that depends on Portable Hardware Locality (hwloc) library" OFF)
 option(TBB_WINDOWS_DRIVER "Build as Universal Windows Driver (UWD)" OFF)
 option(TBB_NO_APPCONTAINER "Apply /APPCONTAINER:NO (for testing binaries for Windows Store)" OFF)
 option(TBB4PY_BUILD "Enable tbb4py build" OFF)
@@ -187,12 +187,10 @@ else()
     if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
         add_subdirectory(src/tbbmalloc)
         add_subdirectory(src/tbbmalloc_proxy)
-        if (TBB_NUMA_SUPPORT)
-            if (APPLE)
-                message(WARNING "TBBBind build target is disabled due to unsupported environment")
-            else()
-                add_subdirectory(src/tbbbind)
-            endif()
+        if (APPLE)
+            message(STATUS "TBBBind build target is disabled due to unsupported environment")
+        else()
+            add_subdirectory(src/tbbbind)
         endif()
     endif()
 
@@ -200,12 +198,14 @@ else()
     # Installation instructions
     include(CMakePackageConfigHelpers)
 
-    install(DIRECTORY include
-            DESTINATION .)
+    install(DIRECTORY include/
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+            COMPONENT devel)
 
     install(EXPORT ${PROJECT_NAME}Targets
             NAMESPACE TBB::
-            DESTINATION lib/cmake/${PROJECT_NAME})
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+            COMPONENT devel)
     file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
                "include(\${CMAKE_CURRENT_LIST_DIR}/${PROJECT_NAME}Targets.cmake)\n")
 
@@ -214,7 +214,8 @@ else()
 
     install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
                   "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-            DESTINATION lib/cmake/${PROJECT_NAME})
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+            COMPONENT devel)
     # -------------------------------------------------------------------
 endif()
 

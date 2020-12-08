@@ -788,24 +788,32 @@ namespace Exceptions {
         using namespace tbb::flow;
         graph g;
         std::srand(42);
-        continue_node<int> c(g, [](continue_msg) {
-            return std::rand() % 10;
+        const unsigned num_messages = 50;
+        std::vector<unsigned> throwing_msgs;
+        std::atomic<unsigned> msg_count(0);
+        continue_node<unsigned> c(g, [&msg_count](continue_msg) {
+            return ++msg_count;
         }, 2);
-        function_node<int> f(g, unlimited, [](int v) {
-            if (v > 4) {
-                throw std::runtime_error("Exception::test");
+        function_node<unsigned> f(g, unlimited, [&throwing_msgs](unsigned v) {
+            for( auto i : throwing_msgs ) {
+                if( i == v )
+                    throw std::runtime_error("Exception::test");
             }
         }, 1);
         make_edge(c, f);
         for (int i = 0; i < 10; ++i) {
+            msg_count = 0;
+            g.reset();
+            throwing_msgs.push_back(std::rand() % num_messages);
             try {
-                for (int j = 0; j < 50; ++j) {
+                for (unsigned j = 0; j < num_messages; ++j) {
                     c.try_put(continue_msg());
                 }
                 g.wait_for_all();
                 FAIL("Unreachable code. The exception is expected");
             } catch (std::runtime_error&) {
                 CHECK(g.is_cancelled());
+                CHECK(g.exception_thrown());
             } catch (...) {
                 FAIL("Unexpected exception");
             }

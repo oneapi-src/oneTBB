@@ -19,7 +19,7 @@
 
 // Support for dynamic loading entry points from other shared libraries.
 
-#include "tbb/detail/_config.h"
+#include "oneapi/tbb/detail/_config.h"
 
 #include <atomic>
 #include <mutex>

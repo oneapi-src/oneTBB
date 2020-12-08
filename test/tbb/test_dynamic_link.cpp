@@ -41,7 +41,7 @@ FOO_TYPE dummy_foo2() { return FOO_DUMMY; }
 static FOO_TYPE (*foo1_handler)() = &dummy_foo1;
 static FOO_TYPE (*foo2_handler)() = &dummy_foo2;
 
-#include "tbb/detail/_config.h"
+#include "oneapi/tbb/detail/_config.h"
 // Suppress the weak symbol mechanism to avoid surplus compiler warnings.
 #ifdef __TBB_WEAK_SYMBOLS_PRESENT
 #undef __TBB_WEAK_SYMBOLS_PRESENT

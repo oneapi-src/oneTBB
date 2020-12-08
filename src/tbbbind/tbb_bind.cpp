@@ -15,7 +15,7 @@
 */
 
 #include "../tbb/assert_impl.h" // Out-of-line TBB assertion handling routines are instantiated here.
-#include "tbb/detail/_assert.h"
+#include "oneapi/tbb/detail/_assert.h"
 
 #if _MSC_VER && !__INTEL_COMPILER
 #pragma warning( push )

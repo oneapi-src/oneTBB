@@ -20,9 +20,9 @@
 #include "common/utils.h"
 #include "common/graph_utils.h"
 
-#include "tbb/flow_graph.h"
-#include "tbb/task_arena.h"
-#include "tbb/global_control.h"
+#include "oneapi/tbb/flow_graph.h"
+#include "oneapi/tbb/task_arena.h"
+#include "oneapi/tbb/global_control.h"
 
 #include "conformance_flowgraph.h"
 
@@ -45,7 +45,7 @@ TODO: implement missing conformance tests for split_node:
     returns a reference to the `output_ports_type' type.
 */
 
-using namespace tbb::flow;
+using namespace oneapi::tbb::flow;
 using namespace std;
 
 template<typename T>
@@ -78,7 +78,7 @@ void test_split(){
 }
 
 void test_copies(){
-    using namespace tbb::flow;
+    using namespace oneapi::tbb::flow;
 
     graph g;
     split_node<std::tuple<int, int>> n(g);
@@ -86,14 +86,14 @@ void test_copies(){
 }
 
 void test_forwarding(){
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
 
-    tbb::flow::split_node<std::tuple<int, int>> node1(g);
+    oneapi::tbb::flow::split_node<std::tuple<int, int>> node1(g);
     test_push_receiver<int> node2(g);
     test_push_receiver<int> node3(g);
 
-    tbb::flow::make_edge(output_port<0>(node1), node2);
-    tbb::flow::make_edge(output_port<1>(node1), node3);
+    oneapi::tbb::flow::make_edge(output_port<0>(node1), node2);
+    oneapi::tbb::flow::make_edge(output_port<1>(node1), node3);
 
     tuple<int, int> my_tuple(0, 1);
     node1.try_put(my_tuple);

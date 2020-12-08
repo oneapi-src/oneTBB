@@ -21,9 +21,9 @@
 #include "arena.h"
 #include "dynamic_link.h"
 
-#include "tbb/task_group.h"
-#include "tbb/global_control.h"
-#include "tbb/tbb_allocator.h"
+#include "oneapi/tbb/task_group.h"
+#include "oneapi/tbb/global_control.h"
+#include "oneapi/tbb/tbb_allocator.h"
 
 #include "task_dispatcher.h"
 

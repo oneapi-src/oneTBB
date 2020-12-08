@@ -17,7 +17,7 @@
 #ifndef _TBB_ITT_NOTIFY
 #define _TBB_ITT_NOTIFY
 
-#include "tbb/detail/_config.h"
+#include "oneapi/tbb/detail/_config.h"
 
 #if __TBB_USE_ITT_NOTIFY
 

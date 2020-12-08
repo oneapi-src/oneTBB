@@ -28,7 +28,7 @@
 #include "common/spin_barrier.h"
 #include "common/memory_usage.h"
 
-#include "tbb/detail/_config.h"
+#include "oneapi/tbb/detail/_config.h"
 
 #define __TBB_NO_IMPLICIT_LINKAGE 1
 #include "tbb/scalable_allocator.h"

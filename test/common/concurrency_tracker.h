@@ -20,7 +20,7 @@
 #include "doctest.h"
 #include "utils.h"
 #include "spin_barrier.h"
-#include "tbb/parallel_for.h"
+#include "oneapi/tbb/parallel_for.h"
 
 #include <mutex>
 

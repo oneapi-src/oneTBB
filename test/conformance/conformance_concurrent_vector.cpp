@@ -22,10 +22,10 @@
 #include "common/custom_allocators.h"
 #include "common/initializer_list_support.h"
 #include "common/containers_common.h"
-#include <tbb/concurrent_vector.h>
-#include <tbb/parallel_for.h>
-#include <tbb/tick_count.h>
-#include <tbb/global_control.h>
+#include "oneapi/tbb/concurrent_vector.h"
+#include "oneapi/tbb/parallel_for.h"
+#include "oneapi/tbb/tick_count.h"
+#include "oneapi/tbb/global_control.h"
 #include <initializer_list>
 #include <numeric>
 
@@ -87,7 +87,7 @@ void TestRangeAssignment( Range2 r2 ) {
 
 template<typename T>
 void TestSequentialFor() {
-    using V = tbb::concurrent_vector<move_support_tests::FooWithAssign>;
+    using V = oneapi::tbb::concurrent_vector<move_support_tests::FooWithAssign>;
     V v(N);
     REQUIRE(v.grow_by(0) == v.grow_by(0, move_support_tests::FooWithAssign()));
 
@@ -208,7 +208,7 @@ void TestSequentialFor() {
     TestIteratorAssignment<typename V::reverse_iterator>( v.rbegin() );
 
     {
-        tbb::concurrent_vector<int> v1, v2(1ul, 100);
+        oneapi::tbb::concurrent_vector<int> v1, v2(1ul, 100);
         v1.assign(1, 100);
         REQUIRE(v1 == v2);
         REQUIRE_MESSAGE((v1.size() == 1 && v1[0] == 100), "used integral iterators");
@@ -238,7 +238,7 @@ static void CheckVector( const vector_t& cv, std::size_t expected_size, std::siz
 
 void TestResizeAndCopy() {
     using allocator_t = StaticSharedCountingAllocator<std::allocator<move_support_tests::Foo>>;
-    using vector_t = tbb::concurrent_vector<move_support_tests::Foo, allocator_t>;
+    using vector_t = oneapi::tbb::concurrent_vector<move_support_tests::Foo, allocator_t>;
     allocator_t::init_counters();
     for( int old_size=0; old_size<=0; NextSize( old_size ) ) {
         for( int new_size=0; new_size<=8; NextSize( new_size ) ) {
@@ -286,7 +286,7 @@ void TestResizeAndCopy() {
 
 void TestCopyAssignment() {
     using allocator_t = StaticCountingAllocator<std::allocator<move_support_tests::FooWithAssign>>;
-    using vector_t = tbb::concurrent_vector<move_support_tests::FooWithAssign, allocator_t>;
+    using vector_t = oneapi::tbb::concurrent_vector<move_support_tests::FooWithAssign, allocator_t>;
     StaticCountingAllocator<std::allocator<move_support_tests::FooWithAssign>> init_alloc;
     for( int dst_size=1; dst_size<=128; NextSize( dst_size ) ) {
         for( int src_size=2; src_size<=128; NextSize( src_size ) ) {
@@ -328,8 +328,8 @@ void TestGrowToAtLeastWithSourceParameter(T const& src){
 }
 
 void TestCapacity() {
-    using allocator_t = StaticCountingAllocator<std::allocator<move_support_tests::Foo> /*TODO: tbb::cache_aligned_allocator*/>;
-    using vector_t = tbb::concurrent_vector<move_support_tests::Foo, allocator_t>;
+    using allocator_t = StaticCountingAllocator<std::allocator<move_support_tests::Foo> /*TODO: oneapi::tbb::cache_aligned_allocator*/>;
+    using vector_t = oneapi::tbb::concurrent_vector<move_support_tests::Foo, allocator_t>;
     allocator_t::init_counters();
     for( std::size_t old_size=0; old_size<=11000; old_size=(old_size<5 ? old_size+1 : 3*old_size) ) {
         for( std::size_t new_size=0; new_size<=11000; new_size=(new_size<5 ? new_size+1 : 3*new_size) ) {
@@ -349,7 +349,7 @@ void TestCapacity() {
                     v[j].bar() = int(~j);
                 }
                 vector_t copy_of_v(v); // should allocate first segment with same size as for shrink_to_fit()
-                if(tbb::detail::log2(/*reserved size*/old_size|1) > tbb::detail::log2(fill_size|1) ){
+                if(oneapi::tbb::detail::log2(/*reserved size*/old_size|1) > oneapi::tbb::detail::log2(fill_size|1) ){
                    REQUIRE( v.capacity() != copy_of_v.capacity() );
                 }
                 v.shrink_to_fit();
@@ -382,7 +382,7 @@ void verify_c_vector_size(c_vector_t & c_v){
 #if TBB_USE_EXCEPTIONS
 void TestExceptions() {
     using allocator_t = StaticSharedCountingAllocator<std::allocator<move_support_tests::FooWithAssign>>;
-    using vector_t = tbb::concurrent_vector<move_support_tests::FooWithAssign, allocator_t>;
+    using vector_t = oneapi::tbb::concurrent_vector<move_support_tests::FooWithAssign, allocator_t>;
 
     enum methods {
         zero_method = 0,
@@ -499,11 +499,11 @@ void verify_c_vector_capacity_is_below(size_t capacity, size_t high){
 
 template<typename allocator_t>
 void verify_vector_partially_copied(
-        tbb::concurrent_vector<move_support_tests::FooWithAssign, allocator_t> const& victim, size_t planned_victim_size,
-        tbb::concurrent_vector<move_support_tests::FooWithAssign, allocator_t> const& src,  bool is_memory_allocation_failure)
+        oneapi::tbb::concurrent_vector<move_support_tests::FooWithAssign, allocator_t> const& victim, size_t planned_victim_size,
+        oneapi::tbb::concurrent_vector<move_support_tests::FooWithAssign, allocator_t> const& src,  bool is_memory_allocation_failure)
 {
     if (is_memory_allocation_failure) { // allocator generated exception
-        using vector_t = tbb::concurrent_vector<move_support_tests::FooWithAssign, allocator_t>;
+        using vector_t = oneapi::tbb::concurrent_vector<move_support_tests::FooWithAssign, allocator_t>;
         REQUIRE_MESSAGE( victim == vector_t(src.begin(), src.begin() + victim.size(), src.get_allocator()), "failed to properly copy of source ?" );
     }else{
         REQUIRE_MESSAGE( std::equal(victim.begin(), victim.begin() + planned_victim_size, src.begin()), "failed to properly copy items before the exception?" );
@@ -530,7 +530,7 @@ void verify_copy_and_assign_from_produce_the_same(vector_t const& victim){
 template<typename vector_t>
 void verify_assignment_operator_throws_bad_last_alloc(vector_t & victim){
     vector_t copy_of_victim(victim, victim.get_allocator());
-    //CHECK_THROWS_AS(victim = copy_of_victim, tbb::bad_last_alloc); //TODO exceptions support
+    //CHECK_THROWS_AS(victim = copy_of_victim, oneapi::tbb::bad_last_alloc); //TODO exceptions support
 }
 
 //TODO: split into two separate tests
@@ -538,7 +538,7 @@ void verify_assignment_operator_throws_bad_last_alloc(vector_t & victim){
 void test_ex_assign_operator(){
     //TODO: use __FUNCTION__ for test name
     using allocator_t = StaticCountingAllocator<std::allocator<move_support_tests::FooWithAssign>>;
-    using vector_t = tbb::concurrent_vector<move_support_tests::FooWithAssign, allocator_t>;
+    using vector_t = oneapi::tbb::concurrent_vector<move_support_tests::FooWithAssign, allocator_t>;
 
     move_support_tests::track_foo_count<__LINE__> check_all_foo_destroyed_on_exit{};
     move_support_tests::track_allocator_memory<allocator_t> verify_no_leak_at_exit{};
@@ -596,8 +596,8 @@ void TestIteratorTraits() {
 
 void TestInitList() {
     using namespace initializer_list_support_tests;
-    test_initializer_list_support<tbb::concurrent_vector<char>, test_grow_by>( { 1, 2, 3, 4, 5 } );
-    test_initializer_list_support<tbb::concurrent_vector<int>, test_grow_by>( {} );
+    test_initializer_list_support<oneapi::tbb::concurrent_vector<char>, test_grow_by>( { 1, 2, 3, 4, 5 } );
+    test_initializer_list_support<oneapi::tbb::concurrent_vector<int>, test_grow_by>( {} );
 }
 
 namespace TestMoveInShrinkToFitHelpers {
@@ -618,7 +618,7 @@ void TestSerialMoveInShrinkToFit(){
         REQUIRE_MESSAGE(is_state<StateTrackableBase::MoveInitialized>(dummy(std::move_if_noexcept(src))),"broken configuration ?");
     }
     static const std::size_t sequence_size = 15;
-    using c_vector_t = tbb::concurrent_vector<dummy>;
+    using c_vector_t = oneapi::tbb::concurrent_vector<dummy>;
     std::vector<dummy> source(sequence_size, 0);
     std::generate_n(source.begin(), source.size(), std::rand);
 
@@ -652,7 +652,7 @@ struct default_container_traits {
 
 struct c_vector_type : default_container_traits {
     template <typename T, typename Allocator>
-    using container_type = tbb::concurrent_vector<T, Allocator>;
+    using container_type = oneapi::tbb::concurrent_vector<T, Allocator>;
 
     template <typename T>
     using container_value_type = T;
@@ -660,13 +660,13 @@ struct c_vector_type : default_container_traits {
     using init_iterator_type = move_support_tests::FooIterator;
     template<typename element_type, typename allocator_type>
     struct apply{
-        using type = tbb::concurrent_vector<element_type,  allocator_type >;
+        using type = oneapi::tbb::concurrent_vector<element_type,  allocator_type >;
     };
 
     enum{ expected_number_of_items_to_allocate_for_steal_move = 0 };
 
     template<typename element_type, typename allocator_type, typename iterator>
-    static bool equal(tbb::concurrent_vector<element_type, allocator_type > const& c, iterator begin, iterator end){
+    static bool equal(oneapi::tbb::concurrent_vector<element_type, allocator_type > const& c, iterator begin, iterator end){
         bool equal_sizes = (std::size_t)std::distance(begin, end) == c.size();
         return  equal_sizes && std::equal(c.begin(), c.end(), begin);
     }
@@ -693,7 +693,7 @@ namespace test_grow_to_at_least_helpers {
         MyVector& my_vector;
         const_reference my_init_from;
     public:
-        void operator()( const tbb::blocked_range<std::size_t>& range ) const {
+        void operator()( const oneapi::tbb::blocked_range<std::size_t>& range ) const {
             for( std::size_t i=range.begin(); i!=range.end(); ++i ) {
                 std::size_t n = my_vector.size();
                 std::size_t req = (i % (2*n+1))+1;
@@ -721,12 +721,12 @@ template<bool use_two_arg_form>
 void TestConcurrentGrowToAtLeastImpl() {
     using namespace test_grow_to_at_least_helpers;
     using MyAllocator = StaticCountingAllocator<std::allocator<move_support_tests::Foo>>;
-    using MyVector = tbb::concurrent_vector<move_support_tests::Foo, MyAllocator>;
+    using MyVector = oneapi::tbb::concurrent_vector<move_support_tests::Foo, MyAllocator>;
     move_support_tests::Foo copy_from;
     MyAllocator::init_counters();
     MyVector v(2, move_support_tests::Foo(), MyAllocator());
     for (std::size_t s=1; s<1000; s*=10) {
-        tbb::parallel_for(tbb::blocked_range<std::size_t>(0, 10000*s, s), GrowToAtLeast<MyVector>(use_two_arg_form, v, copy_from), tbb::simple_partitioner());
+        oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<std::size_t>(0, 10000*s, s), GrowToAtLeast<MyVector>(use_two_arg_form, v, copy_from), oneapi::tbb::simple_partitioner());
     }
 
     v.clear();
@@ -740,9 +740,9 @@ void TestConcurrentGrowToAtLeastImpl() {
 }
 
 struct AssignElement {
-    using iterator = tbb::concurrent_vector<int>::range_type::iterator;
+    using iterator = oneapi::tbb::concurrent_vector<int>::range_type::iterator;
     iterator base;
-    void operator()( const tbb::concurrent_vector<int>::range_type& range ) const {
+    void operator()( const oneapi::tbb::concurrent_vector<int>::range_type& range ) const {
         for (iterator i = range.begin(); i != range.end(); ++i) {
             if (*i != 0) {
                 REPORT("ERROR for v[%ld]\n", long(i - base));
@@ -754,9 +754,9 @@ struct AssignElement {
 };
 
 struct CheckElement {
-    using iterator = tbb::concurrent_vector<int>::const_range_type::iterator;
+    using iterator = oneapi::tbb::concurrent_vector<int>::const_range_type::iterator;
     iterator base;
-    void operator()( const tbb::concurrent_vector<int>::const_range_type& range ) const {
+    void operator()( const oneapi::tbb::concurrent_vector<int>::const_range_type& range ) const {
         for (iterator i = range.begin(); i != range.end(); ++i) {
             if (*i != int(i-base)) {
                 REPORT("ERROR for v[%ld]\n", long(i-base));
@@ -768,16 +768,16 @@ struct CheckElement {
 
 // Test parallel access by iterators
 void TestParallelFor( std::size_t nthread ) {
-    using vector_type = tbb::concurrent_vector<int>;
+    using vector_type = oneapi::tbb::concurrent_vector<int>;
     vector_type v;
     v.resize(N);
-    tbb::tick_count t0 = tbb::tick_count::now();
+    oneapi::tbb::tick_count t0 = oneapi::tbb::tick_count::now();
     INFO("Calling parallel_for with " << nthread << " threads");
-    tbb::parallel_for(v.range(10000), AssignElement(v.begin()));
-    tbb::tick_count t1 = tbb::tick_count::now();
+    oneapi::tbb::parallel_for(v.range(10000), AssignElement(v.begin()));
+    oneapi::tbb::tick_count t1 = oneapi::tbb::tick_count::now();
     const vector_type& u = v;
-    tbb::parallel_for(u.range(10000), CheckElement(u.begin()));
-    tbb::tick_count t2 = tbb::tick_count::now();
+    oneapi::tbb::parallel_for(u.range(10000), CheckElement(u.begin()));
+    oneapi::tbb::tick_count t2 = oneapi::tbb::tick_count::now();
     INFO("Time for parallel_for: assign time = " << (t1 - t0).seconds() <<
         " , check time = " << (t2 - t1).seconds());
     for (int i = 0; std::size_t(i) < v.size(); ++i) {
@@ -846,7 +846,7 @@ class GrowBy {
     const grain_map& my_grain_map;
     std::size_t my_part_weight;
 public:
-    void operator()( const tbb::blocked_range<std::size_t>& range ) const {
+    void operator()( const oneapi::tbb::blocked_range<std::size_t>& range ) const {
         CHECK(range.begin() < range.end());
 
         std::size_t current_adding_index_in_cvector = range.begin();
@@ -958,7 +958,7 @@ void TestConcurrentGrowBy() {
     };
 
     using MyAllocator = StaticCountingAllocator<std::allocator<move_support_tests::Foo> >;
-    using MyVector = tbb::concurrent_vector<move_support_tests::Foo, MyAllocator>;
+    using MyVector = oneapi::tbb::concurrent_vector<move_support_tests::Foo, MyAllocator>;
 
     MyAllocator::init_counters();
     {
@@ -973,7 +973,7 @@ void TestConcurrentGrowBy() {
 
         MyAllocator a;
         MyVector v(a);
-        tbb::parallel_for(tbb::blocked_range<std::size_t>(0, range_size, grain_size), GrowBy<MyVector>(v, m, part_weight), tbb::simple_partitioner());
+        oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<std::size_t>(0, range_size, grain_size), GrowBy<MyVector>(v, m, part_weight), oneapi::tbb::simple_partitioner());
 
         REQUIRE( v.size() == std::size_t(range_size) );
 
@@ -1031,7 +1031,7 @@ void TestComparison() {
     str[0] = "abc";
     str[1].assign("cba");
     str[2].assign("abc"); // same as 0th
-    tbb::concurrent_vector<char> var[3];
+    oneapi::tbb::concurrent_vector<char> var[3];
     var[0].assign(str[0].begin(), str[0].end());
     var[1].assign(str[0].rbegin(), str[0].rend());
     var[2].assign(var[1].rbegin(), var[1].rend()); // same as 0th
@@ -1116,11 +1116,11 @@ void test_ex_move_assignment() {
 
 template <typename Type, typename Allocator>
 class test_grow_by_and_resize {
-    tbb::concurrent_vector<Type, Allocator> &my_c;
+    oneapi::tbb::concurrent_vector<Type, Allocator> &my_c;
 public:
-    test_grow_by_and_resize( tbb::concurrent_vector<Type, Allocator> &c ) : my_c(c) {}
+    test_grow_by_and_resize( oneapi::tbb::concurrent_vector<Type, Allocator> &c ) : my_c(c) {}
     void operator()() const {
-        const typename tbb::concurrent_vector<Type, Allocator>::size_type sz = my_c.size();
+        const typename oneapi::tbb::concurrent_vector<Type, Allocator>::size_type sz = my_c.size();
         my_c.grow_by( 5 );
         REQUIRE( my_c.size() == sz + 5 );
         my_c.resize( sz );
@@ -1138,7 +1138,7 @@ namespace push_back_exception_safety_helpers {
 
     template< typename foo_t = throwing_foo>
     struct fixture {
-        using vector_t = tbb::concurrent_vector<foo_t, std::allocator<foo_t> >;
+        using vector_t = oneapi::tbb::concurrent_vector<foo_t, std::allocator<foo_t> >;
         vector_t v;
 
         void test( void(*p_test)(vector_t&)){
@@ -1193,7 +1193,7 @@ namespace move_semantics_helpers {
 
 void TestPushBackMoveOnlyContainer(){
     using namespace move_semantics_helpers;
-    using vector_t = tbb::concurrent_vector<move_only_type >;
+    using vector_t = oneapi::tbb::concurrent_vector<move_only_type >;
     vector_t v;
     static const int magic_number = 7;
     move_only_type src(&magic_number);
@@ -1233,16 +1233,16 @@ void TestDeductionGuides() {
     static_assert(std::is_same<decltype(v5), TVector<ComplexType>>::value);
 
     // check TVector(TVector&, Allocator)
-    TVector v6(v5, tbb::cache_aligned_allocator<ComplexType>());
-    static_assert(std::is_same<decltype(v6), TVector<ComplexType, tbb::cache_aligned_allocator<ComplexType>>>::value);
+    TVector v6(v5, oneapi::tbb::cache_aligned_allocator<ComplexType>());
+    static_assert(std::is_same<decltype(v6), TVector<ComplexType, oneapi::tbb::cache_aligned_allocator<ComplexType>>>::value);
 
     // check TVector(TVector&&)
     TVector v7(std::move(v1));
     static_assert(std::is_same<decltype(v7), decltype(v1)>::value);
 
     // check TVector(TVector&&, Allocator)
-    TVector v8(std::move(v5), tbb::cache_aligned_allocator<ComplexType>());
-    static_assert(std::is_same<decltype(v8), TVector<ComplexType, tbb::cache_aligned_allocator<ComplexType>>>::value);
+    TVector v8(std::move(v5), oneapi::tbb::cache_aligned_allocator<ComplexType>());
+    static_assert(std::is_same<decltype(v8), TVector<ComplexType, oneapi::tbb::cache_aligned_allocator<ComplexType>>>::value);
 
 }
 #endif
@@ -1252,11 +1252,11 @@ void test_member_types() {
     using default_container_type = ContainerType<int>;
 
     static_assert(std::is_same<typename default_container_type::allocator_type,
-                               tbb::cache_aligned_allocator<int>>::value,
+                               oneapi::tbb::cache_aligned_allocator<int>>::value,
                   "Incorrect default template allocator");
 
 
-    using test_allocator_type = tbb::cache_aligned_allocator<int>;
+    using test_allocator_type = oneapi::tbb::cache_aligned_allocator<int>;
     using container_type = ContainerType<int, test_allocator_type>;
 
     static_assert(std::is_same<typename container_type::value_type, int>::value,
@@ -1297,7 +1297,7 @@ void TestConcurrentGrowToAtLeast() {
 //! Test type matching
 //! \brief \ref interface \ref requirement
 TEST_CASE("test type matching") {
-    test_member_types<tbb::concurrent_vector>();
+    test_member_types<oneapi::tbb::concurrent_vector>();
 }
 
 //! Test sequential access to elements
@@ -1321,7 +1321,7 @@ TEST_CASE("testing copy assignment"){
 //! Testing grow_to_at_least operations
 //! \brief \ref interface
 TEST_CASE("testing grow_to_at_least with source parameter"){
-    TestGrowToAtLeastWithSourceParameter<tbb::concurrent_vector<int>>(12345);
+    TestGrowToAtLeastWithSourceParameter<oneapi::tbb::concurrent_vector<int>>(12345);
 }
 
 //! Test of capacity, reserve, and shrink_to_fit
@@ -1376,13 +1376,13 @@ TEST_CASE("testing push_back move only container"){
 //! Test types for std::iterator_traits in concurrent_vector::iterator
 //! \brief \ref requirement
 TEST_CASE("testing std::iterator_traits for concurrent_vector::iterator"){
-    TestIteratorTraits<tbb::concurrent_vector<move_support_tests::Foo>::iterator,move_support_tests::Foo>();
+    TestIteratorTraits<oneapi::tbb::concurrent_vector<move_support_tests::Foo>::iterator,move_support_tests::Foo>();
 }
 
 //! Test types for std::iterator_traits in concurrent_vector::const_iterator
 //! \brief \ref requirement
 TEST_CASE("testing std::iterator_traits for concurrent_vector::const_iterator"){
-    TestIteratorTraits<tbb::concurrent_vector<move_support_tests::Foo>::const_iterator,const move_support_tests::Foo>();
+    TestIteratorTraits<oneapi::tbb::concurrent_vector<move_support_tests::Foo>::const_iterator,const move_support_tests::Foo>();
 }
 
 //! Test initializer_list support
@@ -1432,7 +1432,7 @@ TEST_CASE("testing serial move in shrink_to_fit"){
 TEST_CASE("testing concurrency"){
     REQUIRE(!move_support_tests::foo_count);
     for (std::size_t p = 1; p <= 4; ++p) {
-        tbb::global_control limit(tbb::global_control::max_allowed_parallelism, p);
+        oneapi::tbb::global_control limit(oneapi::tbb::global_control::max_allowed_parallelism, p);
         TestParallelFor(p);
         TestConcurrentGrowToAtLeast();
         TestConcurrentGrowBy();
@@ -1457,6 +1457,6 @@ TEST_CASE("test allocator_traits support in concurrent_vector") {
 //! Test deduction guides
 //! \brief \ref requirement
 TEST_CASE("testing deduction guides"){
-    TestDeductionGuides<tbb::concurrent_vector>();
+    TestDeductionGuides<oneapi::tbb::concurrent_vector>();
 }
 #endif

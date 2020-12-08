@@ -19,7 +19,7 @@
 #include "common/utils_report.h"
 #include "common/checktype.h"
 
-#include "tbb/detail/_utils.h"
+#include "oneapi/tbb/detail/_utils.h"
 
 #include "tbb/enumerable_thread_specific.h"
 #include "tbb/parallel_for.h"

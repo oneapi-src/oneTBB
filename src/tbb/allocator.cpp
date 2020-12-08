@@ -14,11 +14,11 @@
     limitations under the License.
 */
 
-#include "tbb/version.h"
+#include "oneapi/tbb/version.h"
 
-#include "tbb/detail/_exception.h"
-#include "tbb/detail/_assert.h"
-#include "tbb/detail/_utils.h"
+#include "oneapi/tbb/detail/_exception.h"
+#include "oneapi/tbb/detail/_assert.h"
+#include "oneapi/tbb/detail/_utils.h"
 
 #include "dynamic_link.h"
 #include "misc.h"

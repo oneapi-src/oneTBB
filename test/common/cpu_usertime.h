@@ -16,7 +16,7 @@
 
 #include "utils_report.h"
 
-#include "tbb/tick_count.h"
+#include "oneapi/tbb/tick_count.h"
 
 #include <cstdio>
 

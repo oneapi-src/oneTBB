@@ -17,7 +17,7 @@
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
-#include <tbb/concurrent_map.h>
+#include "oneapi/tbb/concurrent_map.h"
 #include <common/test.h>
 #include <common/utils.h>
 #include <common/concurrent_ordered_common.h>
@@ -28,13 +28,13 @@
 //! \brief Test for [containers.concurrent_map containers.concurrent_multimap] specifications
 
 template <typename... Args>
-struct AllowMultimapping<tbb::concurrent_multimap<Args...>> : std::true_type {};
+struct AllowMultimapping<oneapi::tbb::concurrent_multimap<Args...>> : std::true_type {};
 
 template <typename Key, typename Mapped>
 using Allocator = LocalCountingAllocator<std::allocator<std::pair<const Key, Mapped>>>;
 
-using map_type = tbb::concurrent_map<int, int, std::less<int>, Allocator<int, int>>;
-using multimap_type = tbb::concurrent_multimap<int, int, std::less<int>, Allocator<int, int>>;
+using map_type = oneapi::tbb::concurrent_map<int, int, std::less<int>, Allocator<int, int>>;
+using multimap_type = oneapi::tbb::concurrent_multimap<int, int, std::less<int>, Allocator<int, int>>;
 
 template <>
 struct SpecialTests<map_type> {
@@ -55,7 +55,7 @@ void test_member_types() {
     using default_container_type = ContainerType<int, int>;
     static_assert(std::is_same<typename default_container_type::key_compare, std::less<int>>::value,
                   "Incorrect default template comparator");
-    static_assert(std::is_same<typename default_container_type::allocator_type, tbb::tbb_allocator<std::pair<const int, int>>>::value,
+    static_assert(std::is_same<typename default_container_type::allocator_type, oneapi::tbb::tbb_allocator<std::pair<const int, int>>>::value,
                   "Incorrect default template allocator");
 
     auto test_comparator = [](const int&, const int&)->bool { return true; };
@@ -144,7 +144,7 @@ void test_heterogeneous_functions() {
 
 struct COMapTraits : OrderedMoveTraitsBase {
     template <typename T, typename Allocator>
-    using container_type = tbb::concurrent_map<T, T, std::less<T>, Allocator>;
+    using container_type = oneapi::tbb::concurrent_map<T, T, std::less<T>, Allocator>;
 
     template <typename T>
     using container_value_type = std::pair<const T, T>;
@@ -154,7 +154,7 @@ struct COMapTraits : OrderedMoveTraitsBase {
 
 struct COMultimapTraits : OrderedMoveTraitsBase {
     template <typename T, typename Allocator>
-    using container_type = tbb::concurrent_multimap<T, T, std::less<T>, Allocator>;
+    using container_type = oneapi::tbb::concurrent_multimap<T, T, std::less<T>, Allocator>;
 
     template <typename T>
     using container_value_type = std::pair<const T, T>;
@@ -165,7 +165,7 @@ struct COMultimapTraits : OrderedMoveTraitsBase {
 //! Testing concurrent_map member types
 //! \brief \ref interface \ref requirement
 TEST_CASE("concurrent_map member types") {
-    test_member_types<tbb::concurrent_map>();
+    test_member_types<oneapi::tbb::concurrent_map>();
 }
 
 //! Testing requirements of concurrent_map
@@ -207,33 +207,33 @@ TEST_CASE("std::allocator_traits support in concurrent_map") {
 //! Testing heterogeneous overloads in concurrent_map
 //! \brief \ref interface \ref requirement
 TEST_CASE("heterogeneous overloads in concurrent_map") {
-    test_heterogeneous_functions<tbb::concurrent_map>();
+    test_heterogeneous_functions<oneapi::tbb::concurrent_map>();
 }
 
 //! Testing insert overloads with generic pair in concurrent_map
 //! \brief \ref interface \ref requirement
 TEST_CASE("insertion by generic pair in concurrent_map") {
-    test_insert_by_generic_pair<tbb::concurrent_map>();
+    test_insert_by_generic_pair<oneapi::tbb::concurrent_map>();
 }
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 //! Testing Class Template Argument Deduction in concurrent_map
 //! \brief \ref interface \ref requirement
 TEST_CASE("CTAD support in concurrent_map") {
-    test_deduction_guides<tbb::concurrent_map>();
+    test_deduction_guides<oneapi::tbb::concurrent_map>();
 }
 #endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 
 //! Testing comparison operators in concurrent_map
 //! \brief \ref interface \ref requirement
 TEST_CASE("test concurrent_map comparisons") {
-    test_map_comparisons<tbb::concurrent_map>();
+    test_map_comparisons<oneapi::tbb::concurrent_map>();
 }
 
 //! Testing concurrent_multimap member types
 //! \brief \ref interface \ref requirement
 TEST_CASE("concurrent_multimap member types") {
-    test_member_types<tbb::concurrent_multimap>();
+    test_member_types<oneapi::tbb::concurrent_multimap>();
 }
 
 //! Testing requirements of concurrent_multimap
@@ -275,27 +275,27 @@ TEST_CASE("std::allocator_traits support in concurrent_multimap") {
 //! Testing heterogeneous overloads in concurrent_multimap
 //! \brief \ref interface \ref requirement
 TEST_CASE("heterogeneous overloads in concurrent_multimap") {
-    test_heterogeneous_functions<tbb::concurrent_multimap>();
+    test_heterogeneous_functions<oneapi::tbb::concurrent_multimap>();
 }
 
 //! Testing insert overloads with generic pair in concurrent_multimap
 //! \brief \ref interface \ref requirement
 TEST_CASE("insertion by generic pair in concurrent_multimap") {
-    test_insert_by_generic_pair<tbb::concurrent_multimap>();
+    test_insert_by_generic_pair<oneapi::tbb::concurrent_multimap>();
 }
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 //! Testing Class Template Argument Deduction in concurrent_multimap
 //! \brief \ref interface \ref requirement
 TEST_CASE("CTAD support in concurrent_multimap") {
-    test_deduction_guides<tbb::concurrent_multimap>();
+    test_deduction_guides<oneapi::tbb::concurrent_multimap>();
 }
 #endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 
 //! Testing comparison operators in concurrent_multimap
 //! \brief \ref interface \ref requirement
 TEST_CASE("test concurrent_multimap comparisons") {
-    test_map_comparisons<tbb::concurrent_multimap>();
+    test_map_comparisons<oneapi::tbb::concurrent_multimap>();
 }
 
 //! Testing of merge operations in concurrent_map and concurrent_multimap

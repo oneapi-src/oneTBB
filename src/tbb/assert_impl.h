@@ -17,7 +17,7 @@
 #ifndef __TBB_assert_impl_H
 #define __TBB_assert_impl_H
 
-#include "tbb/detail/_config.h"
+#include "oneapi/tbb/detail/_config.h"
 
 #include <cstdio>
 #include <cstdlib>

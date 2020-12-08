@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/detail/_assert.h"
+#include "oneapi/tbb/detail/_assert.h"
 
 #include "rml_tbb.h"
 #include "dynamic_link.h"

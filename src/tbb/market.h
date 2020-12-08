@@ -18,11 +18,12 @@
 #define _TBB_market_H
 
 #include "scheduler_common.h"
+#include "concurrent_monitor.h"
 #include "intrusive_list.h"
 #include "rml_tbb.h"
 
-#include "tbb/spin_rw_mutex.h"
-#include "tbb/task_group.h"
+#include "oneapi/tbb/spin_rw_mutex.h"
+#include "oneapi/tbb/task_group.h"
 
 #include <atomic>
 
@@ -88,6 +89,9 @@ private:
 
     //! Pointer to the RML server object that services this TBB instance.
     rml::tbb_server* my_server;
+
+    //! Waiting object for external and coroutine waiters.
+    concurrent_monitor my_sleep_monitor;
 
     //! Maximal number of workers allowed for use by the underlying resource manager
     /** It can't be changed after market creation. **/
@@ -189,7 +193,6 @@ private:
 
     bool is_arena_alive( arena* a );
 
-
     ////////////////////////////////////////////////////////////////////////////////
     // Implementation of rml::tbb_client interface methods
 
@@ -228,6 +231,9 @@ public:
 
     //! Decrements market's refcount and destroys it in the end
     bool release ( bool is_public, bool blocking_terminate );
+
+    //! Return wait list
+    concurrent_monitor& get_wait_list() { return my_sleep_monitor; }
 
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
     //! Imlpementation of mandatory concurrency enabling

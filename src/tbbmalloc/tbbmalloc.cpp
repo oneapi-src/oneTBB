@@ -18,7 +18,7 @@
 #include "tbbmalloc_internal_api.h"
 
 #include "../tbb/assert_impl.h" // Out-of-line TBB assertion handling routines are instantiated here.
-#include "tbb/version.h"
+#include "oneapi/tbb/version.h"
 
 #undef UNICODE
 

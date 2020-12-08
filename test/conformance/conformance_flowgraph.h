@@ -21,20 +21,20 @@ struct passthru_body {
     int operator()( int i ) {
         return i;
     }
-    void operator()( const int& argument, tbb::flow::multifunction_node<int, std::tuple<int>>::output_ports_type &op ) {
+    void operator()( const int& argument, oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>::output_ports_type &op ) {
        std::get<0>(op).try_put(argument);
     }
 
 };
 
 template<typename V>
-using test_push_receiver = tbb::flow::queue_node<V>;
+using test_push_receiver = oneapi::tbb::flow::queue_node<V>;
 
 template<typename V>
 int get_count( test_push_receiver<V>& rr ){
     int val = 0;
     for(V tmp; rr.try_get(tmp); ++val);
-   
+
     return val;
 }
 
@@ -55,11 +55,11 @@ struct first_functor {
         return argument;
     }
 
-    OutputType operator()( const tbb::flow::continue_msg&  ) {
+    OutputType operator()( const oneapi::tbb::flow::continue_msg&  ) {
         return operator()(OutputType());
     }
-    
-    void operator()( const OutputType& argument, tbb::flow::multifunction_node<int, std::tuple<int>>::output_ports_type &op ) {
+
+    void operator()( const OutputType& argument, oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>::output_ports_type &op ) {
         operator()(OutputType());
         std::get<0>(op).try_put(argument);
     }
@@ -72,8 +72,8 @@ std::atomic<int> first_functor<OutputType>::first_id;
 template< typename OutputType >
 struct inc_functor {
     static std::atomic<size_t> execute_count;
-    
-    OutputType operator()( tbb::flow::continue_msg ) {
+
+    OutputType operator()( oneapi::tbb::flow::continue_msg ) {
        ++execute_count;
        return OutputType();
     }

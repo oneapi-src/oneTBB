@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/detail/_config.h"
+#include "oneapi/tbb/detail/_config.h"
 
 #include "main.h"
 #include "governor.h"
@@ -40,7 +40,6 @@ size_t governor::DefaultPageSize;
 rml::tbb_factory governor::theRMLServerFactory;
 bool governor::UsePrivateRML;
 bool governor::is_rethrow_broken;
-cpu_features_type governor::cpu_features;
 
 //------------------------------------------------------------------------
 // market data

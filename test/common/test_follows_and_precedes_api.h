@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/flow_graph.h"
+#include "oneapi/tbb/flow_graph.h"
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
 #include <array>

@@ -20,9 +20,9 @@
 #include "common/utils.h"
 #include "common/graph_utils.h"
 
-#include "tbb/flow_graph.h"
-#include "tbb/task_arena.h"
-#include "tbb/global_control.h"
+#include "oneapi/tbb/flow_graph.h"
+#include "oneapi/tbb/task_arena.h"
+#include "oneapi/tbb/global_control.h"
 
 #include "conformance_flowgraph.h"
 
@@ -52,7 +52,7 @@ TODO: implement missing conformance tests for join_node:
   - [ ] Add test for CTAD.
 */
 
-using namespace tbb::flow;
+using namespace oneapi::tbb::flow;
 using namespace std;
 
 template<typename T>
@@ -62,18 +62,18 @@ void test_inheritance(){
 }
 
 void test_copies(){
-    using namespace tbb::flow;
+    using namespace oneapi::tbb::flow;
 
     graph g;
     join_node<std::tuple<int, int>> n(g);
     join_node<std::tuple<int, int>> n2(n);
 
-    join_node <std::tuple<int, int, tbb::flow::reserving>> nr(g);
-    join_node <std::tuple<int, int, tbb::flow::reserving>> nr2(nr);
+    join_node <std::tuple<int, int, oneapi::tbb::flow::reserving>> nr(g);
+    join_node <std::tuple<int, int, oneapi::tbb::flow::reserving>> nr2(nr);
 }
 
 void test_forwarding(){
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
 
     join_node<std::tuple<int, int>> node1(g);
 
@@ -82,8 +82,8 @@ void test_forwarding(){
     test_push_receiver<output_t> node2(g);
     test_push_receiver<output_t> node3(g);
 
-    tbb::flow::make_edge(node1, node2);
-    tbb::flow::make_edge(node1, node3);
+    oneapi::tbb::flow::make_edge(node1, node2);
+    oneapi::tbb::flow::make_edge(node1, node3);
 
     input_port<0>(node1).try_put(1);
     input_port<1>(node1).try_put(1);

@@ -19,10 +19,10 @@
 #include "common/utils.h"
 #include "common/graph_utils.h"
 
-#include "tbb/flow_graph.h"
-#include "tbb/task_arena.h"
+#include "oneapi/tbb/flow_graph.h"
+#include "oneapi/tbb/task_arena.h"
 
-#include "tbb/global_control.h"
+#include "oneapi/tbb/global_control.h"
 #include "conformance_flowgraph.h"
 
 //! \file conformance_continue_node.cpp
@@ -45,15 +45,15 @@ TODO: implement missing conformance tests for continue_node:
 */
 
 void test_cont_body(){
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
     inc_functor<int> cf;
     cf.execute_count = 0;
 
-    tbb::flow::continue_node<int> node1(g, cf);
+    oneapi::tbb::flow::continue_node<int> node1(g, cf);
 
     const size_t n = 10;
     for(size_t i = 0; i < n; ++i) {
-        CHECK_MESSAGE((node1.try_put(tbb::flow::continue_msg()) == true),
+        CHECK_MESSAGE((node1.try_put(oneapi::tbb::flow::continue_msg()) == true),
                       "continue_node::try_put() should never reject a message.");
     }
     g.wait_for_all();
@@ -63,7 +63,7 @@ void test_cont_body(){
 
 template<typename O>
 void test_inheritance(){
-    using namespace tbb::flow;
+    using namespace oneapi::tbb::flow;
 
     CHECK_MESSAGE( (std::is_base_of<graph_node, continue_node<O>>::value), "continue_node should be derived from graph_node");
     CHECK_MESSAGE( (std::is_base_of<receiver<continue_msg>, continue_node<O>>::value), "continue_node should be derived from receiver<Input>");
@@ -72,25 +72,25 @@ void test_inheritance(){
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 void test_deduction_guides(){
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
     inc_functor<int> fun;
-    tbb::flow::continue_node node1(g, fun);
+    oneapi::tbb::flow::continue_node node1(g, fun);
 }
 #endif
 
 void test_forwarding(){
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
     inc_functor<int> fun;
     fun.execute_count = 0;
     
-    tbb::flow::continue_node<int> node1(g, fun);
+    oneapi::tbb::flow::continue_node<int> node1(g, fun);
     test_push_receiver<int> node2(g);
     test_push_receiver<int> node3(g);
 
-    tbb::flow::make_edge(node1, node2);
-    tbb::flow::make_edge(node1, node3);
+    oneapi::tbb::flow::make_edge(node1, node2);
+    oneapi::tbb::flow::make_edge(node1, node3);
 
-    node1.try_put(tbb::flow::continue_msg());
+    node1.try_put(oneapi::tbb::flow::continue_msg());
     g.wait_for_all();
 
     CHECK_MESSAGE( (get_count(node2) == 1), "Descendant of the node must receive one message.");
@@ -98,14 +98,14 @@ void test_forwarding(){
 }
 
 void test_buffering(){
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
     inc_functor<int> fun;
 
-    tbb::flow::continue_node<int> node(g, fun);
-    tbb::flow::limiter_node<int> rejecter(g, 0);
+    oneapi::tbb::flow::continue_node<int> node(g, fun);
+    oneapi::tbb::flow::limiter_node<int> rejecter(g, 0);
 
-    tbb::flow::make_edge(node, rejecter);
-    node.try_put(tbb::flow::continue_msg());
+    oneapi::tbb::flow::make_edge(node, rejecter);
+    node.try_put(oneapi::tbb::flow::continue_msg());
 
     int tmp = -1;
     CHECK_MESSAGE( (node.try_get(tmp) == false), "try_get after rejection should not succeed");
@@ -114,7 +114,7 @@ void test_buffering(){
 }
 
 void test_policy_ctors(){
-    using namespace tbb::flow;
+    using namespace oneapi::tbb::flow;
     graph g;
 
     inc_functor<int> fun;
@@ -123,12 +123,12 @@ void test_policy_ctors(){
 }
 
 void test_ctors(){
-    using namespace tbb::flow;
+    using namespace oneapi::tbb::flow;
     graph g;
 
     inc_functor<int> fun;
 
-    continue_node<int> proto1(g, 2, fun, tbb::flow::node_priority_t(1));
+    continue_node<int> proto1(g, 2, fun, oneapi::tbb::flow::node_priority_t(1));
 }
 
 template<typename O>
@@ -146,13 +146,13 @@ struct CopyCounterBody{
         return *this;
     }
 
-    O operator()(tbb::flow::continue_msg){
+    O operator()(oneapi::tbb::flow::continue_msg){
         return 1;
     }
 };
 
 void test_copies(){
-    using namespace tbb::flow;
+    using namespace oneapi::tbb::flow;
 
     CopyCounterBody<int> b;
 
@@ -168,20 +168,20 @@ void test_copies(){
 
 void test_priority(){
     size_t concurrency_limit = 1;
-    tbb::global_control control(tbb::global_control::max_allowed_parallelism, concurrency_limit);
+    oneapi::tbb::global_control control(oneapi::tbb::global_control::max_allowed_parallelism, concurrency_limit);
 
-    tbb::flow::graph g;
+    oneapi::tbb::flow::graph g;
 
-    tbb::flow::continue_node<tbb::flow::continue_msg> source(g,
-                                                             [](tbb::flow::continue_msg){ return tbb::flow::continue_msg();});
-    source.try_put(tbb::flow::continue_msg());
+    oneapi::tbb::flow::continue_node<oneapi::tbb::flow::continue_msg> source(g,
+                                                             [](oneapi::tbb::flow::continue_msg){ return oneapi::tbb::flow::continue_msg();});
+    source.try_put(oneapi::tbb::flow::continue_msg());
 
     first_functor<int>::first_id = -1;
     first_functor<int> low_functor(1);
     first_functor<int> high_functor(2);
 
-    tbb::flow::continue_node<int, int> high(g, high_functor, tbb::flow::node_priority_t(1));
-    tbb::flow::continue_node<int, int> low(g, low_functor);
+    oneapi::tbb::flow::continue_node<int, int> high(g, high_functor, oneapi::tbb::flow::node_priority_t(1));
+    oneapi::tbb::flow::continue_node<int, int> low(g, low_functor);
 
     make_edge(source, low);
     make_edge(source, high);

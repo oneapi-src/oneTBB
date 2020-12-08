@@ -19,9 +19,9 @@
 #include "common/utils_assert.h"
 #include "common/utils_concurrency_limit.h"
 
-#include "tbb/blocked_range.h"
-#include "tbb/parallel_for.h"
-#include "tbb/global_control.h"
+#include "oneapi/tbb/blocked_range.h"
+#include "oneapi/tbb/parallel_for.h"
+#include "oneapi/tbb/global_control.h"
 
 #include <vector>
 
@@ -60,7 +60,7 @@ static void SerialTest() {
             AbstractValueType i = MakeAbstractValueType(x);
             AbstractValueType j = MakeAbstractValueType(y);
             for( std::size_t k=1; k<10; ++k ) {
-                typedef tbb::blocked_range<AbstractValueType> range_type;
+                typedef oneapi::tbb::blocked_range<AbstractValueType> range_type;
                 range_type r( i, j, k );
                 utils::AssertSameType( r.empty(), true );
                 utils::AssertSameType( range_type::size_type(), std::size_t() );
@@ -74,7 +74,7 @@ static void SerialTest() {
                     CHECK( r.is_divisible()==(std::size_t(y-x)>k) );
                     CHECK( r.size()==std::size_t(y-x) );
                     if( r.is_divisible() ) {
-                        tbb::blocked_range<AbstractValueType> r2(r,tbb::split());
+                        oneapi::tbb::blocked_range<AbstractValueType> r2(r,oneapi::tbb::split());
                         CHECK( GetValueOf(r.begin())==x );
                         CHECK( GetValueOf(r.end())==GetValueOf(r2.begin()) );
                         CHECK( GetValueOf(r2.end())==y );
@@ -91,16 +91,16 @@ const int N = 1<<22;
 unsigned char Array[N];
 
 struct Striker {
-    void operator()( const tbb::blocked_range<int>& r ) const {
-        for( tbb::blocked_range<int>::const_iterator i=r.begin(); i!=r.end(); ++i )
+    void operator()( const oneapi::tbb::blocked_range<int>& r ) const {
+        for( oneapi::tbb::blocked_range<int>::const_iterator i=r.begin(); i!=r.end(); ++i )
             ++Array[i];
     }
 };
 
 void ParallelTest() {
     for (int i=0; i<N; i=i<3 ? i+1 : i*3) {
-        const tbb::blocked_range<int> r( 0, i, 10 );
-        tbb::parallel_for( r, Striker() );
+        const oneapi::tbb::blocked_range<int> r( 0, i, 10 );
+        oneapi::tbb::parallel_for( r, Striker() );
         for (int k=0; k<N; ++k) {
             if (Array[k] != (k<i)) CHECK(false);
             Array[k] = 0;
@@ -118,7 +118,7 @@ TEST_CASE("Basic serial") {
 //! \brief \ref requirement
 TEST_CASE("Basic parallel") {
     for ( auto concurrency_level : utils::concurrency_range() ) {
-        tbb::global_control control(tbb::global_control::max_allowed_parallelism, concurrency_level);
+        oneapi::tbb::global_control control(oneapi::tbb::global_control::max_allowed_parallelism, concurrency_level);
         ParallelTest();
     }
 }
@@ -126,15 +126,15 @@ TEST_CASE("Basic parallel") {
 //! Testing blocked_range with proportional splitting
 //! \brief \ref interface \ref requirement
 TEST_CASE("blocked_range proportional splitting") {
-    tbb::blocked_range<int> original(0, 100);
-    tbb::blocked_range<int> first(original);
-    tbb::proportional_split ps(3, 1);
-    tbb::blocked_range<int> second(first, ps);
+    oneapi::tbb::blocked_range<int> original(0, 100);
+    oneapi::tbb::blocked_range<int> first(original);
+    oneapi::tbb::proportional_split ps(3, 1);
+    oneapi::tbb::blocked_range<int> second(first, ps);
 
     // Test proportional_split -> split conversion
-    tbb::blocked_range<int> copy(original);
-    tbb::split s = tbb::split(ps);
-    tbb::blocked_range<int> splitted_copy(copy, s);
+    oneapi::tbb::blocked_range<int> copy(original);
+    oneapi::tbb::split s = oneapi::tbb::split(ps);
+    oneapi::tbb::blocked_range<int> splitted_copy(copy, s);
     CHECK(copy.size() == original.size() / 2);
     CHECK(splitted_copy.size() == copy.size());
 
@@ -150,15 +150,15 @@ TEST_CASE("Deduction guides") {
     std::vector<const int *> v;
 
     // check blocked_range(Value, Value, size_t)
-    tbb::blocked_range r1(v.begin(), v.end());
-    static_assert(std::is_same<decltype(r1), tbb::blocked_range<decltype(v)::iterator>>::value);
+    oneapi::tbb::blocked_range r1(v.begin(), v.end());
+    static_assert(std::is_same<decltype(r1), oneapi::tbb::blocked_range<decltype(v)::iterator>>::value);
 
     // check blocked_range(blocked_range &)
-    tbb::blocked_range r2(r1);
+    oneapi::tbb::blocked_range r2(r1);
     static_assert(std::is_same<decltype(r2), decltype(r1)>::value);
 
     // check blocked_range(blocked_range &&)
-    tbb::blocked_range r3(std::move(r1));
+    oneapi::tbb::blocked_range r3(std::move(r1));
     static_assert(std::is_same<decltype(r3), decltype(r1)>::value);
 }
 #endif

@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/version.h"
+#include "oneapi/tbb/version.h"
 #include "doctest.h"
 
 #if __TBB_DYNAMIC_LOAD_ENABLED

@@ -17,7 +17,7 @@
 #define DOCTEST_CONFIG_SUPER_FAST_ASSERTS
 #include "common/test.h"
 
-#include "tbb/parallel_scan.h"
+#include "oneapi/tbb/parallel_scan.h"
 
 #include <vector>
 
@@ -37,7 +37,7 @@ public:
     T get_sum() const { return sum; }
 
     template<typename Tag>
-    void operator()( const tbb::blocked_range<std::size_t>& r, Tag ) {
+    void operator()( const oneapi::tbb::blocked_range<std::size_t>& r, Tag ) {
         T temp = sum;
         for(std::size_t i=r.begin(); i<r.end(); ++i ) {
             temp = Op()(temp, z[i]);
@@ -46,7 +46,7 @@ public:
         }
         sum = temp;
     }
-    Body( Body& b, tbb::split ): identity(b.identity), sum(b.identity), y(b.y), z(b.z) {}
+    Body( Body& b, oneapi::tbb::split ): identity(b.identity), sum(b.identity), y(b.y), z(b.z) {}
     void reverse_join( Body& a ) { sum = Op()(a.sum, sum); }
     void assign( Body& b ) { sum = b.sum; }
 };
@@ -57,7 +57,7 @@ template<typename Partitioner>
 struct parallel_scan_wrapper{
     template<typename... Args>
     void operator()(Args&&... args) {
-    tbb::parallel_scan(std::forward<Args>(args)..., Partitioner());
+    oneapi::tbb::parallel_scan(std::forward<Args>(args)..., Partitioner());
     }
 };
 
@@ -65,22 +65,22 @@ template<>
 struct parallel_scan_wrapper<default_partitioner_tag>{
     template<typename... Args>
     void operator()(Args&&... args) {
-    tbb::parallel_scan(std::forward<Args>(args)...);
+    oneapi::tbb::parallel_scan(std::forward<Args>(args)...);
     }
 };
 
 // Test scan tag
 //! \brief \ref interface
 TEST_CASE("scan tags testing") {
-    CHECK(tbb::pre_scan_tag::is_final_scan()==false);
-    CHECK(tbb::final_scan_tag::is_final_scan()==true);
-    CHECK((bool)tbb::pre_scan_tag()==false);
-    CHECK((bool)tbb::final_scan_tag()==true);
+    CHECK(oneapi::tbb::pre_scan_tag::is_final_scan()==false);
+    CHECK(oneapi::tbb::final_scan_tag::is_final_scan()==true);
+    CHECK((bool)oneapi::tbb::pre_scan_tag()==false);
+    CHECK((bool)oneapi::tbb::final_scan_tag()==true);
 }
 
 //! Test parallel prefix sum calculation for body-based interface
 //! \brief \ref requirement \ref interface
-TEST_CASE_TEMPLATE("Test parallel scan with body", Partitioner, default_partitioner_tag, tbb::simple_partitioner, tbb::auto_partitioner) {
+TEST_CASE_TEMPLATE("Test parallel scan with body", Partitioner, default_partitioner_tag, oneapi::tbb::simple_partitioner, oneapi::tbb::auto_partitioner) {
     std::vector<int> input(size);
     std::vector<int> output(size);
     std::vector<int> control(size);
@@ -93,14 +93,14 @@ TEST_CASE_TEMPLATE("Test parallel scan with body", Partitioner, default_partitio
             control[i] = input[i];
     }
     Body<int, std::plus<int>> body(input, output, 0);
-    parallel_scan_wrapper<Partitioner>()(tbb::blocked_range<std::size_t>(0U, size, 1U), body);
+    parallel_scan_wrapper<Partitioner>()(oneapi::tbb::blocked_range<std::size_t>(0U, size, 1U), body);
     CHECK((control == output));
 }
 
 
 //! Test parallel prefix sum calculation for scan-based interface
 //! \brief \ref requirement \ref interface
-TEST_CASE_TEMPLATE("Test parallel scan with body", Partitioner, default_partitioner_tag, tbb::simple_partitioner, tbb::auto_partitioner) {
+TEST_CASE_TEMPLATE("Test parallel scan with body", Partitioner, default_partitioner_tag, oneapi::tbb::simple_partitioner, oneapi::tbb::auto_partitioner) {
     std::vector<int> input(size);
     std::vector<int> output(size);
     std::vector<int> control(size);
@@ -112,8 +112,8 @@ TEST_CASE_TEMPLATE("Test parallel scan with body", Partitioner, default_partitio
         else
             control[i] = input[i];
     }
-    parallel_scan_wrapper<Partitioner>()(tbb::blocked_range<std::size_t>(0U, size, 1U), 0U,
-        [&](const tbb::blocked_range<std::size_t>& r, int sum, bool is_final) -> int
+    parallel_scan_wrapper<Partitioner>()(oneapi::tbb::blocked_range<std::size_t>(0U, size, 1U), 0U,
+        [&](const oneapi::tbb::blocked_range<std::size_t>& r, int sum, bool is_final) -> int
         {
             int temp = sum;
             for (std::size_t i = r.begin(); i<r.end(); ++i) {

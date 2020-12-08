@@ -20,9 +20,9 @@
 #include "common/spin_barrier.h"
 #include "common/utils_concurrency_limit.h"
 
-#include "tbb/parallel_pipeline.h"
-#include "tbb/global_control.h"
-#include "tbb/task_group.h"
+#include "oneapi/tbb/parallel_pipeline.h"
+#include "oneapi/tbb/global_control.h"
+#include "oneapi/tbb/task_group.h"
 
 #include <atomic>
 #include <thread>
@@ -42,7 +42,7 @@ static std::atomic<int> input_counter{ max_counter };
 template<typename U>
 class input_filter {
 public:
-    U operator()( tbb::flow_control& control ) const {
+    U operator()( oneapi::tbb::flow_control& control ) const {
         if( --input_counter < 0 ) {
             control.stop();
             input_counter = max_counter;
@@ -66,23 +66,23 @@ public:
     void operator()(T ) const {}
 };
 
-static const tbb::filter_mode filter_table[] = { tbb::filter_mode::parallel,
-                                                 tbb::filter_mode::serial_in_order,
-                                                 tbb::filter_mode::serial_out_of_order};
+static const oneapi::tbb::filter_mode filter_table[] = { oneapi::tbb::filter_mode::parallel,
+                                                 oneapi::tbb::filter_mode::serial_in_order,
+                                                 oneapi::tbb::filter_mode::serial_out_of_order};
 
 template<typename Body, typename... Cotnext>
 void TestSingleFilter(Body body, Cotnext&... context) {
 
     for(int i =0; i <3; i++)
     {
-        tbb::filter_mode mode = filter_table[i];
+        oneapi::tbb::filter_mode mode = filter_table[i];
 
-        tbb::filter<void, void> one_filter( mode, body );
-        tbb::parallel_pipeline( n_tokens, one_filter, context...   );
+        oneapi::tbb::filter<void, void> one_filter( mode, body );
+        oneapi::tbb::parallel_pipeline( n_tokens, one_filter, context...   );
 
-        tbb::parallel_pipeline( n_tokens, tbb::filter<void, void>(mode, body), context... );
+        oneapi::tbb::parallel_pipeline( n_tokens, oneapi::tbb::filter<void, void>(mode, body), context... );
 
-        tbb::parallel_pipeline( n_tokens, tbb::make_filter<void, void>(mode, body), context...);
+        oneapi::tbb::parallel_pipeline( n_tokens, oneapi::tbb::make_filter<void, void>(mode, body), context...);
     }
 }
 
@@ -92,7 +92,7 @@ void TestSingleFilterFunctor() {
 
     TestSingleFilter(i_filter);
 
-    tbb::task_group_context context;
+    oneapi::tbb::task_group_context context;
     TestSingleFilter(i_filter,  context);
 }
 
@@ -100,15 +100,15 @@ void TestSingleFilterFunctor() {
 void TestSingleFilterLambda() {
 
 
-    TestSingleFilter([]( tbb::flow_control& control ) {
+    TestSingleFilter([]( oneapi::tbb::flow_control& control ) {
                     if(input_counter-- == 0 ) {
                         control.stop();
                         input_counter = max_counter;
                         }
                     } );
 
-    tbb::task_group_context context;
-    TestSingleFilter([]( tbb::flow_control& control ) {
+    oneapi::tbb::task_group_context context;
+    TestSingleFilter([]( oneapi::tbb::flow_control& control ) {
                      if(input_counter-- == 0 ) {
                         control.stop();
                         input_counter = max_counter;
@@ -117,12 +117,12 @@ void TestSingleFilterLambda() {
 }
 
 template<typename I, typename O>
-void RunPipeline(const tbb::filter<I, O> &filter)
+void RunPipeline(const oneapi::tbb::filter<I, O> &filter)
 {
     bool flag{false};
 
-    auto f_beg = tbb::make_filter<void, I>(tbb::filter_mode::serial_out_of_order,
-                                        [&flag](tbb::flow_control& fc) -> I{
+    auto f_beg = oneapi::tbb::make_filter<void, I>(oneapi::tbb::filter_mode::serial_out_of_order,
+                                        [&flag](oneapi::tbb::flow_control& fc) -> I{
                                             if(flag) {
                                                 fc.stop();
                                             }
@@ -130,24 +130,24 @@ void RunPipeline(const tbb::filter<I, O> &filter)
                                             return I();
                                         });
 
-    auto f_end = tbb::make_filter<O, void>(tbb::filter_mode::serial_in_order,
+    auto f_end = oneapi::tbb::make_filter<O, void>(oneapi::tbb::filter_mode::serial_in_order,
                                             [](O) {});
 
-    tbb::parallel_pipeline(n_tokens, f_beg & filter & f_end);
+    oneapi::tbb::parallel_pipeline(n_tokens, f_beg & filter & f_end);
 }
 
-void RunPipeline(const tbb::filter<void, void> &filter)
+void RunPipeline(const oneapi::tbb::filter<void, void> &filter)
 {
-    tbb::parallel_pipeline(n_tokens, filter);
+    oneapi::tbb::parallel_pipeline(n_tokens, filter);
 }
 
 template<typename Iterator1, typename Iterator2>
 void RootSequence( Iterator1 first, Iterator1 last, Iterator2 res) {
     using ValueType = typename Iterator1::value_type;
-    tbb::parallel_pipeline( n_tokens,
-        tbb::make_filter<void,ValueType>(
-            tbb::filter_mode::serial_in_order,
-            [&first, &last](tbb::flow_control& fc)-> ValueType{
+    oneapi::tbb::parallel_pipeline( n_tokens,
+        oneapi::tbb::make_filter<void,ValueType>(
+            oneapi::tbb::filter_mode::serial_in_order,
+            [&first, &last](oneapi::tbb::flow_control& fc)-> ValueType{
                 if( first<last ) {
                     ValueType val  = *first;
                     ++first;
@@ -158,12 +158,12 @@ void RootSequence( Iterator1 first, Iterator1 last, Iterator2 res) {
                 }
             }
         ) &
-        tbb::make_filter<ValueType,ValueType>(
-            tbb::filter_mode::parallel,
+        oneapi::tbb::make_filter<ValueType,ValueType>(
+            oneapi::tbb::filter_mode::parallel,
             [](ValueType p){return p*p;}
         ) &
-        tbb::make_filter<ValueType,void>(
-            tbb::filter_mode::serial_in_order,
+        oneapi::tbb::make_filter<ValueType,void>(
+            oneapi::tbb::filter_mode::serial_in_order,
             [&res](ValueType x) {
                 *res = x;
                 ++res; }
@@ -207,21 +207,21 @@ TEST_CASE_TEMPLATE("Filter creation testing", T, std::tuple<size_t, int>,
     using O = typename std::tuple_element<1, T>::type;
     for(int i = 0; i < 3; i++)
     {
-        tbb::filter_mode mode = filter_table[i];
-        tbb::filter<I, O> default_filter;
+        oneapi::tbb::filter_mode mode = filter_table[i];
+        oneapi::tbb::filter<I, O> default_filter;
 
-        auto made_filter1 = tbb::make_filter<I,O>(mode, [](I)->O{return O();});
-        static_assert(std::is_same<tbb::filter<I, O>, decltype(made_filter1)>::value, "make_filter wrong result type");
+        auto made_filter1 = oneapi::tbb::make_filter<I,O>(mode, [](I)->O{return O();});
+        static_assert(std::is_same<oneapi::tbb::filter<I, O>, decltype(made_filter1)>::value, "make_filter wrong result type");
         RunPipeline(made_filter1);
 
-        auto made_filter2 = tbb::make_filter(mode, [](I)->O{return O();});
-        static_assert(std::is_same<tbb::filter<I, O>, decltype(made_filter2)>::value, "make_filter wrong result type");
+        auto made_filter2 = oneapi::tbb::make_filter(mode, [](I)->O{return O();});
+        static_assert(std::is_same<oneapi::tbb::filter<I, O>, decltype(made_filter2)>::value, "make_filter wrong result type");
         RunPipeline(made_filter2);
 
-        tbb::filter<I, O> one_filter(mode, [](I)->O{return O();});
+        oneapi::tbb::filter<I, O> one_filter(mode, [](I)->O{return O();});
         RunPipeline(one_filter);
 
-        tbb::filter<I, O> copy_filter(one_filter);
+        oneapi::tbb::filter<I, O> copy_filter(one_filter);
         RunPipeline(one_filter);
 
         default_filter = copy_filter;
@@ -247,14 +247,14 @@ TEST_CASE_TEMPLATE("Testing filters concatenation", T, std::tuple<size_t, int>,
         int i = fi%3;
         int j = (fi/3)%3;
         int k = (fi/9);
-        auto filter_chain = tbb::filter<void, I>(filter_table[i], input_filter<I>()) &
-                            tbb::filter<I, O>(filter_table[j], middle_filter<I,O>()) &
-                            tbb::filter<O, void>(filter_table[k], output_filter<O>());
+        auto filter_chain = oneapi::tbb::filter<void, I>(filter_table[i], input_filter<I>()) &
+                            oneapi::tbb::filter<I, O>(filter_table[j], middle_filter<I,O>()) &
+                            oneapi::tbb::filter<O, void>(filter_table[k], output_filter<O>());
         RunPipeline(filter_chain);
 
-        tbb::filter<void, I> filter1 = tbb::filter<void, I>(filter_table[i], input_filter<I>());
-        tbb::filter<I, O> filter2 = tbb::filter<I, O>(filter_table[j], middle_filter<I,O>());
-        tbb::filter<O, void> filter3 = tbb::filter<O, void>(filter_table[k], output_filter<O>());
+        oneapi::tbb::filter<void, I> filter1 = oneapi::tbb::filter<void, I>(filter_table[i], input_filter<I>());
+        oneapi::tbb::filter<I, O> filter2 = oneapi::tbb::filter<I, O>(filter_table[j], middle_filter<I,O>());
+        oneapi::tbb::filter<O, void> filter3 = oneapi::tbb::filter<O, void>(filter_table[k], output_filter<O>());
 
         auto fitler12 = filter1 & filter2;
         auto fitler23 = filter2 & filter3;
@@ -277,11 +277,11 @@ TEST_CASE("Testing filter modes")
 {
     for ( auto concurrency_level : utils::concurrency_range() )
     {
-        tbb::global_control control(tbb::global_control::max_allowed_parallelism, concurrency_level);
+        oneapi::tbb::global_control control(oneapi::tbb::global_control::max_allowed_parallelism, concurrency_level);
 
         std::atomic<short> serial_checker{0};
-        tbb::filter<void,short> filter1(tbb::filter_mode::serial_out_of_order,
-                                [&serial_checker](tbb::flow_control&fc)
+        oneapi::tbb::filter<void,short> filter1(oneapi::tbb::filter_mode::serial_out_of_order,
+                                [&serial_checker](oneapi::tbb::flow_control&fc)
                                 {
                                     auto check_value = ++serial_checker;
                                     doWork();
@@ -294,7 +294,7 @@ TEST_CASE("Testing filter modes")
                                 });
 
         std::atomic<short> serial_checker2{ 0 };
-        tbb::filter<short, short> filter2(tbb::filter_mode::serial_in_order,
+        oneapi::tbb::filter<short, short> filter2(oneapi::tbb::filter_mode::serial_in_order,
             [&serial_checker2](int)
             {
                 auto check_value = ++serial_checker2;
@@ -304,7 +304,7 @@ TEST_CASE("Testing filter modes")
             });
 
         utils::SpinBarrier spin_barrier(utils::min(concurrency_level, n_tokens), true);
-        tbb::filter<short,int> filter3(tbb::filter_mode::parallel,
+        oneapi::tbb::filter<short,int> filter3(oneapi::tbb::filter_mode::parallel,
                                 [&spin_barrier](int value)
                                 {
                                     spin_barrier.wait();
@@ -314,13 +314,13 @@ TEST_CASE("Testing filter modes")
 
 
         std::atomic<short> order_checker{0};
-        tbb::filter<int,void> filter4(tbb::filter_mode::serial_in_order,
+        oneapi::tbb::filter<int,void> filter4(oneapi::tbb::filter_mode::serial_in_order,
                                 [&order_checker](int value)
                                 {
                                     CHECK_MESSAGE(++order_checker == value, "the order of message was broken");
                                 });
 
-        tbb::parallel_pipeline(n_tokens, filter1 & filter2 & filter3 & filter4);
+        oneapi::tbb::parallel_pipeline(n_tokens, filter1 & filter2 & filter3 & filter4);
     }
 }
 
@@ -333,8 +333,8 @@ TEST_CASE("Testing max token number")
         std::atomic<short> active_tokens{0};
         int counter{0};
 
-        tbb::filter<void,int> filter1(tbb::filter_mode::parallel,
-                                [&active_tokens,&counter](tbb::flow_control&fc)
+        oneapi::tbb::filter<void,int> filter1(oneapi::tbb::filter_mode::parallel,
+                                [&active_tokens,&counter](oneapi::tbb::flow_control&fc)
                                 {
                                     ++active_tokens;
                                     doWork();
@@ -347,7 +347,7 @@ TEST_CASE("Testing max token number")
                                     return 0;
                                 });
 
-        tbb::filter<int,int> filter2(tbb::filter_mode::parallel,
+        oneapi::tbb::filter<int,int> filter2(oneapi::tbb::filter_mode::parallel,
                                 [&active_tokens](int value)
                                 {
                                     ++active_tokens;
@@ -357,7 +357,7 @@ TEST_CASE("Testing max token number")
                                     return value;
                                 });
 
-        tbb::filter<int,void> filter3(tbb::filter_mode::serial_out_of_order,
+        oneapi::tbb::filter<int,void> filter3(oneapi::tbb::filter_mode::serial_out_of_order,
                                 [&active_tokens](int)
                                 {
                                     ++active_tokens;
@@ -366,7 +366,7 @@ TEST_CASE("Testing max token number")
                                     --active_tokens;
                                 });
 
-        tbb::parallel_pipeline(i, filter1 & filter2 & filter3);
+        oneapi::tbb::parallel_pipeline(i, filter1 & filter2 & filter3);
     }
 }
 
@@ -377,22 +377,22 @@ TEST_CASE("Testing max token number")
 TEST_CASE_TEMPLATE("Deduction guides testing", T, int, unsigned int, double)
 {
     input_filter<T> i_filter;
-    tbb::filter  fc1(tbb::filter_mode::serial_in_order, i_filter);
-    static_assert(std::is_same_v<decltype(fc1), tbb::filter<void, T>>);
+    oneapi::tbb::filter  fc1(oneapi::tbb::filter_mode::serial_in_order, i_filter);
+    static_assert(std::is_same_v<decltype(fc1), oneapi::tbb::filter<void, T>>);
 
-    tbb::filter fc2 (fc1);
-    static_assert(std::is_same_v<decltype(fc2), tbb::filter<void, T>>);
+    oneapi::tbb::filter fc2 (fc1);
+    static_assert(std::is_same_v<decltype(fc2), oneapi::tbb::filter<void, T>>);
 
     middle_filter<T, std::size_t> m_filter;
-    tbb::filter  fc3(tbb::filter_mode::serial_in_order, m_filter);
-    static_assert(std::is_same_v<decltype(fc3), tbb::filter<T, std::size_t>>);
+    oneapi::tbb::filter  fc3(oneapi::tbb::filter_mode::serial_in_order, m_filter);
+    static_assert(std::is_same_v<decltype(fc3), oneapi::tbb::filter<T, std::size_t>>);
 
-    tbb::filter frv(tbb::filter_mode::serial_in_order, [](int&&) -> double { return 0.0; });
-    tbb::filter fclv(tbb::filter_mode::serial_in_order, [](const int&) -> double { return 0.0; });
-    tbb::filter fc(tbb::filter_mode::serial_in_order, [](const int) -> double { return 0.0; });
+    oneapi::tbb::filter frv(oneapi::tbb::filter_mode::serial_in_order, [](int&&) -> double { return 0.0; });
+    oneapi::tbb::filter fclv(oneapi::tbb::filter_mode::serial_in_order, [](const int&) -> double { return 0.0; });
+    oneapi::tbb::filter fc(oneapi::tbb::filter_mode::serial_in_order, [](const int) -> double { return 0.0; });
 
-    static_assert(std::is_same_v<decltype(frv), tbb::filter<int, double>>);
-    static_assert(std::is_same_v<decltype(fclv), tbb::filter<int, double>>);
-    static_assert(std::is_same_v<decltype(fc), tbb::filter<int, double>>);
+    static_assert(std::is_same_v<decltype(frv), oneapi::tbb::filter<int, double>>);
+    static_assert(std::is_same_v<decltype(fclv), oneapi::tbb::filter<int, double>>);
+    static_assert(std::is_same_v<decltype(fc), oneapi::tbb::filter<int, double>>);
 }
 #endif  //__TBB_CPP17_DEDUCTION_GUIDES_PRESENT

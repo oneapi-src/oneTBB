@@ -241,6 +241,7 @@ tbb_add_test(SUBDIR tbb NAME test_hw_concurrency DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_eh_thread DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_global_control DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_task DEPENDENCIES TBB::tbb)
+tbb_add_test(SUBDIR tbb NAME test_concurrent_monitor DEPENDENCIES TBB::tbb)
 if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
     # TODO: Fix for MIPS
     tbb_add_test(SUBDIR tbb NAME test_tbb_fork DEPENDENCIES TBB::tbb)
@@ -324,17 +325,15 @@ if (MSVC AND CMAKE_VERSION VERSION_GREATER 3.13) # LINK_OPTIONS property first a
     add_dependencies(test_implicit_linkage_on_windows TBB::tbb)
 endif()
 
-if (TBB_NUMA_SUPPORT)
-    find_package(HWLOC QUIET)
-    if (HWLOC_FOUND)
-        target_link_libraries(test_arena_constraints PRIVATE HWLOC::hwloc)
-        target_compile_definitions(test_arena_constraints PRIVATE __TBB_HWLOC_PRESENT)
-        add_dependencies(test_arena_constraints TBB::tbbbind)
+find_package(HWLOC 1.11 EXACT QUIET)
+if (HWLOC_FOUND)
+    target_link_libraries(test_arena_constraints PRIVATE HWLOC::hwloc_1_11)
+    target_compile_definitions(test_arena_constraints PRIVATE __TBB_HWLOC_PRESENT)
+    add_dependencies(test_arena_constraints TBB::tbbbind)
 
-        target_link_libraries(conformance_arena_constraints PRIVATE HWLOC::hwloc)
-        target_compile_definitions(conformance_arena_constraints PRIVATE __TBB_HWLOC_PRESENT)
-        add_dependencies(conformance_arena_constraints TBB::tbbbind)
-    endif()
+    target_link_libraries(conformance_arena_constraints PRIVATE HWLOC::hwloc_1_11)
+    target_compile_definitions(conformance_arena_constraints PRIVATE __TBB_HWLOC_PRESENT)
+    add_dependencies(conformance_arena_constraints TBB::tbbbind)
 endif()
 
 # TBB allocator tests

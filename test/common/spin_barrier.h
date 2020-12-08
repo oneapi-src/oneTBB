@@ -22,9 +22,9 @@
 // Using of both DocTest and Celero frameworks caused unexpected compilation errors.
 #include "utils_assert.h"
 
-#include "tbb/detail/_machine.h"
-#include "tbb/detail/_utils.h"
-#include "tbb/tick_count.h"
+#include "oneapi/tbb/detail/_machine.h"
+#include "oneapi/tbb/detail/_utils.h"
+#include "oneapi/tbb/tick_count.h"
 
 #include <atomic>
 #include <thread>

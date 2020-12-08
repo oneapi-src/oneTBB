@@ -23,9 +23,9 @@
 #include <common/containers_common.h>
 #include <common/initializer_list_support.h>
 #include <common/vector_types.h>
-#include <tbb/concurrent_hash_map.h>
-#include <tbb/global_control.h>
-#include <tbb/parallel_for.h>
+#include "oneapi/tbb/concurrent_hash_map.h"
+#include "oneapi/tbb/global_control.h"
+#include "oneapi/tbb/parallel_for.h"
 
 //! \file conformance_concurrent_hash_map.cpp
 //! \brief Test for [containers.concurrent_hash_map containers.tbb_hash_compare] specification
@@ -176,13 +176,13 @@ public:
 };
 
 using test_allocator_type = StaticSharedCountingAllocator<std::allocator<std::pair<const MyKey, MyData>>>;
-using test_table_type = tbb::concurrent_hash_map<MyKey, MyData, MyHashCompare, test_allocator_type>;
-using other_test_table_type = tbb::concurrent_hash_map<MyKey, MyData2, MyHashCompare>;
+using test_table_type = oneapi::tbb::concurrent_hash_map<MyKey, MyData, MyHashCompare, test_allocator_type>;
+using other_test_table_type = oneapi::tbb::concurrent_hash_map<MyKey, MyData2, MyHashCompare>;
 
 template <template <typename...> class ContainerType>
 void test_member_types() {
     using container_type = ContainerType<int, int>;
-    static_assert(std::is_same<typename container_type::allocator_type, tbb::tbb_allocator<std::pair<const int, int>>>::value,
+    static_assert(std::is_same<typename container_type::allocator_type, oneapi::tbb::tbb_allocator<std::pair<const int, int>>>::value,
                   "Incorrect default template allocator");
 
     static_assert(std::is_same<typename container_type::key_type, int>::value,
@@ -305,7 +305,7 @@ void TestRehash() {
 
 void TestAssignment() {
     INFO("testing assignment\n");
-    tbb::concurrent_hash_map<int, int> test_map({{1, 2}, {2, 4}});
+    oneapi::tbb::concurrent_hash_map<int, int> test_map({{1, 2}, {2, 4}});
     test_map.operator=(test_map); // suppress self assign warning
     CHECK(!test_map.empty());
 
@@ -396,8 +396,8 @@ void TestIteratorsAndRanges() {
 
     INFO("testing comparison\n");
     using test_allocator_type2 = StaticSharedCountingAllocator<std::allocator<std::pair<const MyKey, MyData2>>>;
-    using YourTable1 = tbb::concurrent_hash_map<MyKey,MyData2,YourHashCompare, test_allocator_type2>;
-    using YourTable2 = tbb::concurrent_hash_map<MyKey,MyData2,YourHashCompare>;
+    using YourTable1 = oneapi::tbb::concurrent_hash_map<MyKey,MyData2,YourHashCompare, test_allocator_type2>;
+    using YourTable2 = oneapi::tbb::concurrent_hash_map<MyKey,MyData2,YourHashCompare>;
     YourTable1 t1;
     FillTable( t1, 10 );
     CheckTable(t1, 10 );
@@ -425,7 +425,7 @@ void TestInitList(){
     using namespace initializer_list_support_tests;
     INFO("testing initializer_list methods \n");
 
-    using ch_map_type = tbb::concurrent_hash_map<int,int>;
+    using ch_map_type = oneapi::tbb::concurrent_hash_map<int,int>;
     std::initializer_list<ch_map_type::value_type> pairs_il = {{1,1},{2,2},{3,3},{4,4},{5,5}};
 
     test_initializer_list_support_without_assign<ch_map_type, test_insert>( pairs_il );
@@ -435,7 +435,7 @@ void TestInitList(){
 template <typename base_alloc_type>
 class only_node_counting_allocator : public StaticSharedCountingAllocator<base_alloc_type> {
     using base_type = StaticSharedCountingAllocator<base_alloc_type>;
-    using base_traits = tbb::detail::allocator_traits<base_alloc_type>;
+    using base_traits = oneapi::tbb::detail::allocator_traits<base_alloc_type>;
 public:
     template<typename U>
     struct rebind {
@@ -459,8 +459,8 @@ public:
 
 #if TBB_USE_EXCEPTIONS
 void TestExceptions() {
-    using allocator_type = only_node_counting_allocator<tbb::tbb_allocator<std::pair<const MyKey, MyData2>>>;
-    using throwing_table = tbb::concurrent_hash_map<MyKey, MyData2, MyHashCompare, allocator_type>;
+    using allocator_type = only_node_counting_allocator<oneapi::tbb::tbb_allocator<std::pair<const MyKey, MyData2>>>;
+    using throwing_table = oneapi::tbb::concurrent_hash_map<MyKey, MyData2, MyHashCompare, allocator_type>;
     enum methods {
         zero_method = 0,
         ctor_copy, op_assign, op_insert,
@@ -567,14 +567,14 @@ struct hash_map_traits : default_container_traits {
     };
 
     template <typename T, typename Allocator>
-    using container_type = tbb::concurrent_hash_map<T, T, hash_compare<T>, Allocator>;
+    using container_type = oneapi::tbb::concurrent_hash_map<T, T, hash_compare<T>, Allocator>;
 
     template <typename T>
     using container_value_type = std::pair<const T, T>;
 
     template<typename element_type, typename allocator_type>
     struct apply {
-        using type = tbb::concurrent_hash_map<element_type, element_type, hash_compare<element_type>, allocator_type>;
+        using type = oneapi::tbb::concurrent_hash_map<element_type, element_type, hash_compare<element_type>, allocator_type>;
     };
 
     using init_iterator_type = move_support_tests::FooPairIterator;
@@ -593,7 +593,7 @@ struct hash_map_traits : default_container_traits {
     }
 };
 
-using DataStateTrackedTable = tbb::concurrent_hash_map<MyKey, move_support_tests::Foo, MyHashCompare>;
+using DataStateTrackedTable = oneapi::tbb::concurrent_hash_map<MyKey, move_support_tests::Foo, MyHashCompare>;
 
 struct RvalueInsert {
     static void apply( DataStateTrackedTable& table, int i ) {
@@ -630,7 +630,7 @@ template<typename Op, typename test_table_type>
 class TableOperation {
     test_table_type& my_table;
 public:
-    void operator()( const tbb::blocked_range<int>& range ) const {
+    void operator()( const oneapi::tbb::blocked_range<int>& range ) const {
         for( int i=range.begin(); i!=range.end(); ++i )
             Op::apply(my_table,i);
     }
@@ -720,7 +720,7 @@ struct InsertInitList {
 template<typename Op, typename TableType>
 void DoConcurrentOperations( TableType& table, int n, const char* what, std::size_t nthread ) {
     INFO("testing " << what << " with " << nthread << " threads");
-    tbb::parallel_for(tbb::blocked_range<int>(0, n ,100), TableOperation<Op, TableType>(table));
+    oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<int>(0, n ,100), TableOperation<Op, TableType>(table));
 }
 
 //! Test traversing the table with an iterator.
@@ -782,7 +782,7 @@ struct Erase {
     }
 };
 
-using YourTable = tbb::concurrent_hash_map<MyKey, MyData, YourHashCompare>;
+using YourTable = oneapi::tbb::concurrent_hash_map<MyKey, MyData, YourHashCompare>;
 static const int IE_SIZE = 2;
 std::atomic<YourTable::size_type> InsertEraseCount[IE_SIZE];
 
@@ -880,13 +880,13 @@ void ParallelTraverseTable( test_table_type& table, size_t n, size_t expected_si
 
     memset( static_cast<void*>(array), 0, n*sizeof(AtomicByte) );
     test_table_type::range_type r = table.range(10);
-    tbb::parallel_for( r, ParallelTraverseBody<test_table_type::range_type>( array, n ));
+    oneapi::tbb::parallel_for( r, ParallelTraverseBody<test_table_type::range_type>( array, n ));
     Check( array, n, expected_size );
 
     const test_table_type& const_table = table;
     memset( static_cast<void*>(array), 0, n*sizeof(AtomicByte) );
     test_table_type::const_range_type cr = const_table.range(10);
-    tbb::parallel_for( cr, ParallelTraverseBody<test_table_type::const_range_type>( array, n ));
+    oneapi::tbb::parallel_for( cr, ParallelTraverseBody<test_table_type::const_range_type>( array, n ));
     Check( array, n, expected_size );
 
     delete[] array;
@@ -1022,12 +1022,12 @@ void TestConcurrency( std::size_t nthread ) {
         test_table_type table;
         const int m = 1000;
         Counter = 0;
-        tbb::tick_count t0 = tbb::tick_count::now();
+        oneapi::tbb::tick_count t0 = oneapi::tbb::tick_count::now();
         utils::NativeParallelFor( nthread, AddToTable(table,nthread,m) );
         REQUIRE_MESSAGE( MyDataCount==m, "memory leak detected" );
 
         EraseCount = 0;
-        t0 = tbb::tick_count::now();
+        t0 = oneapi::tbb::tick_count::now();
         utils::NativeParallelFor( nthread, RemoveFromTable(table,m) );
         REQUIRE_MESSAGE(MyDataCount==0, "memory leak detected");
         REQUIRE_MESSAGE(EraseCount==m, "return value of erase() is broken");
@@ -1040,7 +1040,7 @@ void TestConcurrency( std::size_t nthread ) {
 }
 
 template<typename Key>
-struct non_default_constructible_hash_compare : tbb::detail::d1::tbb_hash_compare<Key> {
+struct non_default_constructible_hash_compare : oneapi::tbb::detail::d1::tbb_hash_compare<Key> {
     non_default_constructible_hash_compare() {
         REQUIRE_MESSAGE(false, "Hash compare object must not default construct during the construction of hash_map with compare argument");
     }
@@ -1050,7 +1050,7 @@ struct non_default_constructible_hash_compare : tbb::detail::d1::tbb_hash_compar
 
 void TestHashCompareConstructors() {
     using key_type = int;
-    using map_type = tbb::concurrent_hash_map<key_type, key_type, non_default_constructible_hash_compare<key_type>>;
+    using map_type = oneapi::tbb::concurrent_hash_map<key_type, key_type, non_default_constructible_hash_compare<key_type>>;
 
     non_default_constructible_hash_compare<key_type> compare(0);
     map_type::allocator_type allocator;
@@ -1071,7 +1071,7 @@ void TestHashCompareConstructors() {
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 template <typename T>
-struct debug_hash_compare : public tbb::detail::d1::tbb_hash_compare<T> {};
+struct debug_hash_compare : public oneapi::tbb::detail::d1::tbb_hash_compare<T> {};
 
 template <template <typename...> typename TMap>
 void TestDeductionGuides() {
@@ -1081,9 +1081,9 @@ void TestDeductionGuides() {
     using ComplexType = std::pair<Key, Value>;
     using ComplexTypeConst = std::pair<const Key, Value>;
 
-    using DefaultCompare = tbb::detail::d1::tbb_hash_compare<Key>;
+    using DefaultCompare = oneapi::tbb::detail::d1::tbb_hash_compare<Key>;
     using Compare = debug_hash_compare<Key>;
-    using DefaultAllocator = tbb::tbb_allocator<ComplexTypeConst>;
+    using DefaultAllocator = oneapi::tbb::tbb_allocator<ComplexTypeConst>;
     using Allocator = std::allocator<ComplexTypeConst>;
 
     std::vector<ComplexType> v;
@@ -1150,7 +1150,7 @@ TEST_CASE("testing consruction with hash_compare") {
 //! Test concurrent_hash_map member types
 //! \brief \ref interface \ref requirement
 TEST_CASE("test types"){
-    test_member_types<tbb::concurrent_hash_map>();
+    test_member_types<oneapi::tbb::concurrent_hash_map>();
 }
 
 //! Test swap and clear operations
@@ -1213,7 +1213,7 @@ TEST_CASE("testing move assign operator"){
 //! Test insert and empace
 //! \brief \ref interface \ref requirement
 TEST_CASE("testing concurrency"){
-    tbb::global_control limit(tbb::global_control::max_allowed_parallelism, 1);
+    oneapi::tbb::global_control limit(oneapi::tbb::global_control::max_allowed_parallelism, 1);
     int n=250000;
     {
         DataStateTrackedTable table;
@@ -1235,7 +1235,7 @@ TEST_CASE("testing allocator traits") {
 //! \brief \ref requirement
 TEST_CASE("testing concurrency"){
     for (std::size_t p = 1; p <= 4; ++p) {
-        tbb::global_control limit(tbb::global_control::max_allowed_parallelism, p);
+        oneapi::tbb::global_control limit(oneapi::tbb::global_control::max_allowed_parallelism, p);
         TestInsertFindErase(p);
         TestConcurrency(p);
     }
@@ -1245,6 +1245,6 @@ TEST_CASE("testing concurrency"){
 //! Test deduction guides
 //! \brief \ref interface
 TEST_CASE("testing deduction guides") {
-    TestDeductionGuides<tbb::concurrent_hash_map>();
+    TestDeductionGuides<oneapi::tbb::concurrent_hash_map>();
 }
 #endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT

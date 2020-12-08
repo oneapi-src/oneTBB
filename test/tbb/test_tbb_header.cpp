@@ -66,7 +66,7 @@
 #undef TBB_USE_DEBUG
 #endif /* DO_TEST_DEBUG_MACRO */
 #define __TBB_CONFIG_PREPROC_ONLY _MSC_VER // For MSVC, prevent including standard headers in tbb_config.h
-#include "tbb/detail/_config.h"
+#include "oneapi/tbb/detail/_config.h"
 
 #if !TBB_USE_DEBUG && defined(_DEBUG)
 // TBB_USE_DEBUG is 0 but _DEBUG is defined, it means that _DEBUG is 0
@@ -168,8 +168,6 @@ static void TestPreviewNames() {
     TestTypeDefinitionPresence2( blocked_rangeNd<int,4> );
     TestTypeDefinitionPresence2( concurrent_lru_cache<int, int> );
     TestTypeDefinitionPresence( isolated_task_group );
-    TestFuncDefinitionPresence( info::numa_nodes, (), std::vector<tbb::numa_node_id> );
-    TestFuncDefinitionPresence( info::default_concurrency, (tbb::numa_node_id), int );
 }
 #endif
 
@@ -258,6 +256,8 @@ static void DefinitionPresence() {
     TestTypeDefinitionPresence( task_arena );
     TestFuncDefinitionPresence( this_task_arena::current_thread_index, (), int );
     TestFuncDefinitionPresence( this_task_arena::max_concurrency, (), int );
+    TestFuncDefinitionPresence( info::numa_nodes, (), std::vector<tbb::numa_node_id> );
+    TestFuncDefinitionPresence( info::default_concurrency, (tbb::numa_node_id), int );
     TestTypeDefinitionPresence( task_scheduler_observer );
     TestTypeDefinitionPresence( tbb_allocator<int> );
     TestTypeDefinitionPresence( tick_count );
