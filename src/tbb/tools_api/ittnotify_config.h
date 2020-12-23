@@ -207,7 +207,7 @@
 typedef HMODULE           lib_t;
 typedef DWORD             TIDT;
 typedef CRITICAL_SECTION  mutex_t;
-#define MUTEX_INITIALIZER { 0 }
+#define MUTEX_INITIALIZER { }
 #define strong_alias(name, aliasname) /* empty for Windows */
 #else  /* ITT_PLATFORM==ITT_PLATFORM_WIN */
 #include <dlfcn.h>
