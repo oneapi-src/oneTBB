@@ -12,8 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(TBB_LINK_DEF_FILE_FLAG -Wl,--version-script=)
-set(TBB_DEF_FILE_PREFIX lin${TBB_ARCH})
+if(MINGW)
+    set(TBB_LINK_DEF_FILE_FLAG "")
+    set(TBB_DEF_FILE_PREFIX win${TBB_ARCH}-mingw)
+else()
+    set(TBB_LINK_DEF_FILE_FLAG -Wl,--version-script=)
+    set(TBB_DEF_FILE_PREFIX lin${TBB_ARCH})
+endif()
+
 set(TBB_MMD_FLAG -MMD)
 set(TBB_WARNING_LEVEL -Wall -Wextra $<$<BOOL:${TBB_STRICT}>:-Werror>)
 set(TBB_TEST_WARNING_FLAGS -Wshadow -Wcast-qual -Woverloaded-virtual -Wnon-virtual-dtor)
@@ -28,7 +34,9 @@ if (CMAKE_SYSTEM_PROCESSOR STREQUAL x86_64)
     set(TBB_COMMON_COMPILE_FLAGS -mrtm)
 endif()
 
-set(TBB_COMMON_LINK_LIBS dl)
+if(UNIX)
+    set(TBB_COMMON_LINK_LIBS dl)
+endif()
 
 set(TBB_WARNING_SUPPRESS -Wno-non-virtual-dtor -Wno-dangling-else)
 if (ANDROID_PLATFORM)
@@ -39,6 +47,9 @@ if (NOT APPLE)
     set(TBB_WARNING_SUPPRESS -Wno-parentheses)
 endif()
 
+if (NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 12)
+    set(TBB_LIB_COMPILE_FLAGS -mwaitpkg)
+endif()
+
 # TBB malloc settings
 set(TBBMALLOC_LIB_COMPILE_FLAGS -fno-rtti -fno-exceptions)
-
