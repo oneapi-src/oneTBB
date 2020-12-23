@@ -17,6 +17,7 @@
 #include "ittnotify_config.h"
 
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
+#undef PATH_MAX
 #define PATH_MAX 512
 #else /* ITT_PLATFORM!=ITT_PLATFORM_WIN */
 #include <limits.h>
