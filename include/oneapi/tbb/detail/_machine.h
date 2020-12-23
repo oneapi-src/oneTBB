@@ -25,14 +25,19 @@
 #include <cstdint>
 #include <cstddef>
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #include <intrin.h>
+#ifdef _MSC_VER
 #pragma intrinsic(__rdtsc)
+#endif
 #endif
 #if __TBB_x86_64 || __TBB_x86_32
 #include <immintrin.h> // _mm_pause
 #endif
-#if (_WIN32 || _WIN64)
+#if (_WIN32)
+#if (__MINGW32__)
+#undef __STRICT_ANSI__ // Required for float.h defines in MinGW C99 mode
+#endif
 #include <float.h> // _control87
 #endif
 
@@ -63,12 +68,12 @@ using std::this_thread::yield;
 // atomic_fence implementation
 //--------------------------------------------------------------------------------------------------
 
-#if (_WIN32 || _WIN64)
+#if (_MSC_VER)
 #pragma intrinsic(_mm_mfence)
 #endif
 
 static inline void atomic_fence(std::memory_order order) {
-#if (_WIN32 || _WIN64)
+#if (_WIN32)
     if (order == std::memory_order_seq_cst ||
         order == std::memory_order_acq_rel ||
         order == std::memory_order_acquire ||
@@ -77,7 +82,7 @@ static inline void atomic_fence(std::memory_order order) {
         _mm_mfence();
         return;
     }
-#endif /*(_WIN32 || _WIN64)*/
+#endif /*(_WIN32)*/
     std::atomic_thread_fence(order);
 }
 
@@ -229,7 +234,7 @@ T machine_reverse_bits(T src) {
 
 namespace d1 {
 
-#if (_WIN32 || _WIN64)
+#if (_WIN32)
 // API to retrieve/update FPU control setting
 #define __TBB_CPU_CTL_ENV_PRESENT 1
 struct cpu_ctl_env {
