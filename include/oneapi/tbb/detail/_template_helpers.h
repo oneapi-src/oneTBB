@@ -142,6 +142,10 @@ using iterator_key_t = typename std::remove_const<typename iterator_value_t<Iter
 template <typename Iterator>
 using iterator_mapped_t = typename iterator_value_t<Iterator>::second_type;
 
+template <typename Iterator>
+using iterator_alloc_pair_t = std::pair<typename std::add_const<iterator_key_t<Iterator>>::type,
+                                        iterator_mapped_t<Iterator>>;
+
 template <typename A> using alloc_value_type = typename A::value_type;
 template <typename A> using alloc_ptr_t = typename std::allocator_traits<A>::pointer;
 template <typename A> using has_allocate = decltype(std::declval<alloc_ptr_t<A>&>() = std::declval<A>().allocate(0));
@@ -373,6 +377,14 @@ struct argument_detector<ReturnType(*)(Arg)> {
 // Detects the argument type of callable, works for callable with one argument.
 template <typename Callable>
 using argument_type_of = typename argument_detector<typename std::decay<Callable>::type>::type;
+
+template <typename T>
+struct type_identity {
+    using type = T;
+};
+
+template <typename T>
+using type_identity_t = typename type_identity<T>::type;
 
 } // inline namespace d0
 } // namespace detail

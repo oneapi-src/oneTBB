@@ -43,9 +43,9 @@ TEST_CASE("Stress test") {
     // Need to prolong lifetime of the exposed concurrent_monitor
     tbb::task_scheduler_handle handler = tbb::task_scheduler_handle::get();
 
+    tbb::detail::r1::concurrent_monitor test_monitor;
     {
         tbb::task_arena arena(threads_number - 1, 0);
-        tbb::detail::r1::concurrent_monitor test_monitor;
         utils::SpinBarrier barrier(threads_number);
 
         std::size_t iter_on_operation = 1000;

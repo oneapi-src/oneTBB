@@ -12,18 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include(ProcessorCount)
+
 # General function for test target generation
 function(tbb_add_test)
-    set(oneValueArgs SUBDIR NAME)
+    set(oneValueArgs SUBDIR NAME SUFFIX)
     set(multiValueArgs DEPENDENCIES)
     cmake_parse_arguments(_tbb_test "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
+    set(_tbb_test_TARGET_NAME ${_tbb_test_NAME}${_tbb_test_SUFFIX})
+
     # Define the target for test
+    add_executable(${_tbb_test_TARGET_NAME} ${_tbb_test_SUBDIR}/${_tbb_test_NAME}.cpp)
+    target_include_directories(${_tbb_test_TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_SOURCE_DIR})
 
-    add_executable(${_tbb_test_NAME} ${_tbb_test_SUBDIR}/${_tbb_test_NAME}.cpp)
-    target_include_directories(${_tbb_test_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_SOURCE_DIR})
-
-    target_compile_options(${_tbb_test_NAME}
+    target_compile_options(${_tbb_test_TARGET_NAME}
         PRIVATE
         ${TBB_CXX_STD_FLAG}
         ${TBB_WARNING_LEVEL}
@@ -34,33 +37,37 @@ function(tbb_add_test)
     )
 
     if (ANDROID_PLATFORM)
-        target_link_libraries(${_tbb_test_NAME} PRIVATE -rdynamic) # for the test_dynamic_link
-        add_test(NAME ${_tbb_test_NAME}
+        target_link_libraries(${_tbb_test_TARGET_NAME} PRIVATE -rdynamic) # for the test_dynamic_link
+        add_test(NAME ${_tbb_test_TARGET_NAME}
                  COMMAND ${CMAKE_COMMAND}
                          -DBINARIES_PATH=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-                         -DTEST_NAME=${_tbb_test_NAME}
+                         -DTEST_NAME=${_tbb_test_TARGET_NAME}
                          -P ${PROJECT_SOURCE_DIR}/cmake/android/test_launcher.cmake)
     else()
-        add_test(NAME ${_tbb_test_NAME} COMMAND ${_tbb_test_NAME} --force-colors=1 WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+        add_test(NAME ${_tbb_test_TARGET_NAME} COMMAND ${_tbb_test_TARGET_NAME} --force-colors=1 WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
         # Additional testing scenarios if Intel(R) Software Development Emulator is found
-        if (UNIX AND ";test_mutex;conformance_mutex;" MATCHES ";${_tbb_test_NAME};" AND SDE_EXE)
-            add_test(NAME ${_tbb_test_NAME}_SDE COMMAND ${SDE_EXE} -nhm -rtm_mode disabled -- ./${_tbb_test_NAME} --force-colors=1 WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+        if (UNIX AND ";test_mutex;conformance_mutex;" MATCHES ";${_tbb_test_TARGET_NAME};" AND SDE_EXE)
+            add_test(NAME ${_tbb_test_TARGET_NAME}_SDE COMMAND ${SDE_EXE} -nhm -rtm_mode disabled -- ./${_tbb_test_TARGET_NAME} --force-colors=1 WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
         endif()
     endif()
 
     # Prefer using target_link_options instead of target_link_libraries to specify link options because
     # target_link_libraries may incorrectly handle some options (on Windows, for example).
     if (COMMAND target_link_options)
-        target_link_options(${_tbb_test_NAME} PRIVATE ${TBB_COMMON_LINK_FLAGS})
+        target_link_options(${_tbb_test_TARGET_NAME} PRIVATE ${TBB_COMMON_LINK_FLAGS})
     else()
-        target_link_libraries(${_tbb_test_NAME} PRIVATE ${TBB_COMMON_LINK_FLAGS})
+        target_link_libraries(${_tbb_test_TARGET_NAME} PRIVATE ${TBB_COMMON_LINK_FLAGS})
     endif()
 
-    target_compile_definitions(${_tbb_test_NAME} PRIVATE
+    target_compile_definitions(${_tbb_test_TARGET_NAME} PRIVATE
         $<$<CONFIG:DEBUG>:TBB_USE_DEBUG>
         $<$<BOOL:${TBB_CPF}>:__TBB_CPF_BUILD=1>)
 
-    target_link_libraries(${_tbb_test_NAME} PRIVATE ${_tbb_test_DEPENDENCIES} Threads::Threads ${TBB_COMMON_LINK_LIBS})
+    target_link_libraries(${_tbb_test_TARGET_NAME} PRIVATE ${_tbb_test_DEPENDENCIES} Threads::Threads ${TBB_COMMON_LINK_LIBS})
+
+    if (COMMAND _tbb_run_memcheck)
+        _tbb_run_memcheck(${_tbb_test_NAME})
+    endif()
 endfunction()
 
 # Function for C test target generation
@@ -157,6 +164,123 @@ function(tbb_add_lib_test)
     )
 endfunction()
 
+function(_tbb_get_hwloc_runtime_vars HWLOC_TARGET_LIST ENV_EXTENSION_VARIABLE)
+    foreach(HWLOC_TARGET_NAME ${HWLOC_TARGET_LIST})
+        get_target_property(HWLOC_LOCATION ${HWLOC_TARGET_NAME} IMPORTED_LOCATION)
+        get_filename_component(HWLOC_LOCATION_PATH ${HWLOC_LOCATION} DIRECTORY)
+        list(APPEND LIBRARIES_PATH ${HWLOC_LOCATION_PATH})
+    endforeach()
+
+    if (WIN32)
+        string(REPLACE ";" "\;" LIBRARIES_PATH "${LIBRARIES_PATH}\;$ENV{PATH}")
+        string(REPLACE "/" "\\" LIBRARIES_PATH "${LIBRARIES_PATH}")
+        set(${ENV_EXTENSION_VARIABLE} "PATH=${LIBRARIES_PATH}" PARENT_SCOPE)
+    else()
+        string(REPLACE ";" ":" LIBRARIES_PATH "${LIBRARIES_PATH}:$ENV{LD_LIBRARY_PATH}")
+        set(${ENV_EXTENSION_VARIABLE} "LD_LIBRARY_PATH=${LIBRARIES_PATH}" PARENT_SCOPE)
+    endif()
+endfunction()
+
+function(tbb_add_tbbbind_test)
+    set(oneValueArgs SUBDIR NAME)
+    cmake_parse_arguments(_tbbbind_test "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    tbb_add_test(SUBDIR ${_tbbbind_test_SUBDIR} NAME ${_tbbbind_test_NAME} DEPENDENCIES TBB::tbb)
+
+    # Disable all HWLOC dependent tests in case unsupported environment.
+    if (TBB_WINDOWS_DRIVER OR ANDROID_PLATFORM)
+        return()
+    endif()
+    ProcessorCount(SYSTEM_CONCURRENCY)
+
+    set_tests_properties(${_tbbbind_test_NAME} PROPERTIES
+        ENVIRONMENT TBB_VERSION=1
+        PASS_REGULAR_EXPRESSION "oneTBB: TBBBIND.*UNAVAILABLE"
+    )
+
+    if (TARGET HWLOC::hwloc_2 AND NOT HWLOC_2_TESTS_STATUS_SHOWN)
+        message(STATUS "HWLOC 2 dependent tests were enabled.")
+        set(HWLOC_2_TESTS_STATUS_SHOWN TRUE PARENT_SCOPE)
+    endif()
+
+    if (TARGET HWLOC::hwloc_1_11 AND NOT HWLOC_1_11_TESTS_STATUS_SHOWN)
+        message(STATUS "HWLOC 1.11 dependent tests were enabled.")
+        set(HWLOC_1_11_TESTS_STATUS_SHOWN TRUE PARENT_SCOPE)
+    endif()
+
+    if (TARGET HWLOC::hwloc_2)
+        tbb_add_test(
+            SUBDIR ${_tbbbind_test_SUBDIR}
+            NAME ${_tbbbind_test_NAME}
+            SUFFIX _hwloc_2
+            DEPENDENCIES TBB::tbb HWLOC::hwloc_2
+        )
+
+        _tbb_get_hwloc_runtime_vars(HWLOC::hwloc_2 HWLOC_RUNTIME_VARS)
+        set_tests_properties(${_tbbbind_test_NAME}_hwloc_2 PROPERTIES
+            ENVIRONMENT "${HWLOC_RUNTIME_VARS};TBB_VERSION=1"
+            PASS_REGULAR_EXPRESSION "oneTBB: TBBBIND.*tbbbind_2_0"
+        )
+
+        # The tbbbind isn't loading on 32-bit Windows systems with more then 32 available hardware threads
+        if (WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 4 AND SYSTEM_CONCURRENCY GREATER 32)
+            set_tests_properties(${_tbbbind_test_NAME}_hwloc_2 PROPERTIES
+                PASS_REGULAR_EXPRESSION "oneTBB: TBBBIND.*UNAVAILABLE"
+            )
+        else()
+            target_compile_definitions(${_tbbbind_test_NAME}_hwloc_2 PRIVATE __TBB_HWLOC_VALID_ENVIRONMENT)
+        endif()
+    endif()
+
+    if (TARGET HWLOC::hwloc_1_11)
+        tbb_add_test(
+            SUBDIR ${_tbbbind_test_SUBDIR}
+            NAME ${_tbbbind_test_NAME}
+            SUFFIX _hwloc_1_11
+            DEPENDENCIES TBB::tbb HWLOC::hwloc_1_11
+        )
+
+        _tbb_get_hwloc_runtime_vars(HWLOC::hwloc_1_11 HWLOC_RUNTIME_VARS)
+        set_tests_properties(${_tbbbind_test_NAME}_hwloc_1_11 PROPERTIES
+            ENVIRONMENT "${HWLOC_RUNTIME_VARS};TBB_VERSION=1"
+            PASS_REGULAR_EXPRESSION "oneTBB: TBBBIND.*tbbbind"
+        )
+
+        # The tbbbind isn't loading on 32-bit Windows systems with more then 32 available hardware threads
+        if (WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 4 AND SYSTEM_CONCURRENCY GREATER 32)
+            set_tests_properties(${_tbbbind_test_NAME}_hwloc_1_11 PROPERTIES
+                PASS_REGULAR_EXPRESSION "oneTBB: TBBBIND.*UNAVAILABLE"
+            )
+        else()
+            target_compile_definitions(${_tbbbind_test_NAME}_hwloc_1_11 PRIVATE __TBB_HWLOC_VALID_ENVIRONMENT)
+        endif()
+    endif()
+
+    if (TARGET HWLOC::hwloc_1_11 AND TARGET HWLOC::hwloc_2)
+        tbb_add_test(
+            SUBDIR ${_tbbbind_test_SUBDIR}
+            NAME ${_tbbbind_test_NAME}
+            SUFFIX _hwloc_2_hwloc_1_11
+            DEPENDENCIES TBB::tbb HWLOC::hwloc_2
+        )
+
+        _tbb_get_hwloc_runtime_vars("HWLOC::hwloc_1_11;HWLOC::hwloc_2" HWLOC_RUNTIME_VARS)
+        set_tests_properties(${_tbbbind_test_NAME}_hwloc_2_hwloc_1_11 PROPERTIES
+                ENVIRONMENT "${HWLOC_RUNTIME_VARS};TBB_VERSION=1"
+                PASS_REGULAR_EXPRESSION "oneTBB: TBBBIND.*tbbbind_2_0"
+        )
+
+        # The tbbbind isn't loading on 32-bit Windows systems with more then 32 available hardware threads
+        if (WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 4 AND SYSTEM_CONCURRENCY GREATER 32)
+            set_tests_properties(${_tbbbind_test_NAME}_hwloc_2_hwloc_1_11 PROPERTIES
+                PASS_REGULAR_EXPRESSION "oneTBB: TBBBIND.*UNAVAILABLE"
+            )
+        else()
+            target_compile_definitions(${_tbbbind_test_NAME}_hwloc_2_hwloc_1_11 PRIVATE __TBB_HWLOC_VALID_ENVIRONMENT)
+        endif()
+    endif()
+endfunction()
+
 # Copy libraries to test folder to make it visible during tests execution if external TBB is tested.
 # TODO: check and update for multi-config generators.
 if (TBB_FOUND)
@@ -184,11 +308,9 @@ find_program(SDE_EXE
     PATH_SUFFIXES bin)
 
 unset(_sde_find_name)
-
 # Define the tests
 tbb_add_test(SUBDIR tbb NAME test_tick_count DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_allocators DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_arena_constraints DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_arena_priorities DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_dynamic_link DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_concurrent_lru_cache DEPENDENCIES TBB::tbb)
@@ -249,6 +371,10 @@ tbb_add_test(SUBDIR tbb NAME test_eh_thread DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_global_control DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_task DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_concurrent_monitor DEPENDENCIES TBB::tbb)
+
+# HWLOC related test
+tbb_add_tbbbind_test(SUBDIR tbb NAME test_arena_constraints)
+
 if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
     # TODO: Fix for MIPS
     tbb_add_test(SUBDIR tbb NAME test_tbb_fork DEPENDENCIES TBB::tbb)
@@ -267,7 +393,6 @@ endif()
 # Define the conformance tests
 tbb_add_test(SUBDIR conformance NAME conformance_tick_count DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR conformance NAME conformance_allocators DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_arena_constraints DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR conformance NAME conformance_mutex DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR conformance NAME conformance_task_group_context DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR conformance NAME conformance_task_arena DEPENDENCIES TBB::tbb)
@@ -320,6 +445,9 @@ tbb_add_test(SUBDIR conformance NAME conformance_join_node DEPENDENCIES TBB::tbb
 # TODO: add conformance tests for graph_node, continue_msg, tagged_msg, copy_body, input_port, output_port, make_edge, remove_edge
 tbb_add_test(SUBDIR conformance NAME conformance_graph DEPENDENCIES TBB::tbb)
 
+# HWLOC related conformance
+tbb_add_tbbbind_test(SUBDIR conformance NAME conformance_arena_constraints)
+
 if (MSVC AND CMAKE_VERSION VERSION_GREATER 3.13) # LINK_OPTIONS property first appeared in 3.13
                                                  # version of the CMake
     tbb_add_test(SUBDIR tbb NAME test_implicit_linkage_on_windows)
@@ -332,19 +460,8 @@ if (MSVC AND CMAKE_VERSION VERSION_GREATER 3.13) # LINK_OPTIONS property first a
     add_dependencies(test_implicit_linkage_on_windows TBB::tbb)
 endif()
 
-find_package(HWLOC 1.11 EXACT QUIET)
-if (HWLOC_FOUND)
-    target_link_libraries(test_arena_constraints PRIVATE HWLOC::hwloc_1_11)
-    target_compile_definitions(test_arena_constraints PRIVATE __TBB_HWLOC_PRESENT)
-    add_dependencies(test_arena_constraints TBB::tbbbind)
-
-    target_link_libraries(conformance_arena_constraints PRIVATE HWLOC::hwloc_1_11)
-    target_compile_definitions(conformance_arena_constraints PRIVATE __TBB_HWLOC_PRESENT)
-    add_dependencies(conformance_arena_constraints TBB::tbbbind)
-endif()
-
 # TBB allocator tests
-if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
+if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(armv7-a|aarch64|mips|arm64)")
     # Define TBB malloc tests
     tbb_add_test(SUBDIR tbbmalloc NAME test_scalable_allocator DEPENDENCIES TBB::tbbmalloc)
     tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_pools DEPENDENCIES TBB::tbbmalloc)
@@ -421,3 +538,6 @@ if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
     tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_overload_disable DEPENDENCIES TBB::tbbmalloc_proxy TBB::tbbmalloc) # safer_msize call need to be available
     tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_new_handler DEPENDENCIES TBB::tbbmalloc_proxy)
 endif()
+
+unset(HWLOC_2_TESTS_STATUS_SHOWN)
+unset(HWLOC_1_11_TESTS_STATUS_SHOWN)

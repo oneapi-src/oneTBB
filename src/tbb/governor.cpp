@@ -292,11 +292,9 @@ void __TBB_internal_restore_affinity( binding_handler* handler_ptr, int slot_num
 }
 #endif /* __TBB_WEAK_SYMBOLS_PRESENT */
 
-// Handlers for communication with TBBbind
-#if _WIN32 || _WIN64 || __linux__
+// Handlers for communication with TBBBind
 static void (*initialize_numa_topology_ptr)(
     size_t groups_num, int& nodes_count, int*& indexes_list, int*& concurrency_list ) = NULL;
-#endif /* _WIN32 || _WIN64 || __linux__ */
 
 static binding_handler* (*allocate_binding_handler_ptr)( int slot_num ) = NULL;
 static void (*deallocate_binding_handler_ptr)( binding_handler* handler_ptr ) = NULL;
@@ -323,10 +321,15 @@ static const unsigned LinkTableSize = 5;
 #endif /* TBB_USE_DEBUG */
 
 #if _WIN32 || _WIN64
-#define TBBBIND_NAME "tbbbind" DEBUG_SUFFIX ".dll"
+#define LIBRARY_EXTENSION ".dll"
+#define LIBRARY_PREFIX
 #elif __linux__
-#define TBBBIND_NAME "libtbbbind" DEBUG_SUFFIX __TBB_STRING(.so.3)
+#define LIBRARY_EXTENSION __TBB_STRING(.so.3)
+#define LIBRARY_PREFIX "lib"
 #endif /* __linux__ */
+
+#define TBBBIND_NAME LIBRARY_PREFIX "tbbbind" DEBUG_SUFFIX LIBRARY_EXTENSION
+#define TBBBIND_2_0_NAME LIBRARY_PREFIX "tbbbind_2_0" DEBUG_SUFFIX LIBRARY_EXTENSION
 #endif /* _WIN32 || _WIN64 || __linux__ */
 
 // Stubs that will be used if TBBbind library is unavailable.
@@ -345,39 +348,53 @@ int  numa_nodes_count = 0;
 int* numa_indexes = NULL;
 int* default_concurrency_list = NULL;
 static std::atomic<do_once_state> numa_topology_init_state;
-} // internal namespace
 
-// Tries to load TBBbind library API, if success, gets NUMA topology information from it,
-// in another case, fills NUMA topology by stubs.
-// TODO: Add TBBbind loading status if TBB_VERSION is set.
-void initialization_impl() {
-    governor::one_time_init();
-
+const char* load_tbbbind_shared_object() {
 #if _WIN32 || _WIN64 || __linux__
-    bool load_tbbbind = true;
 #if _WIN32 && !_WIN64
     // For 32-bit Windows applications, process affinity masks can only support up to 32 logical CPUs.
     SYSTEM_INFO si;
     GetNativeSystemInfo(&si);
-    load_tbbbind = si.dwNumberOfProcessors <= 32;
+    if (si.dwNumberOfProcessors > 32) return nullptr;
 #endif /* _WIN32 && !_WIN64 */
-
-    if (load_tbbbind && dynamic_link(TBBBIND_NAME, TbbBindLinkTable, LinkTableSize)) {
-        int number_of_groups = 1;
-#if _WIN32 || _WIN64
-        number_of_groups = NumberOfProcessorGroups();
-#endif /* _WIN32 || _WIN64 */
-        initialize_numa_topology_ptr(
-            number_of_groups, numa_nodes_count, numa_indexes, default_concurrency_list);
-
-        if (numa_nodes_count==1 && numa_indexes[0] >= 0) {
-            __TBB_ASSERT(default_concurrency_list[numa_indexes[0]] == (int)governor::default_num_threads(),
-                "default_concurrency() should be equal to governor::default_num_threads() on single"
-                "NUMA node systems.");
+    for (const auto& tbbbind_version : {TBBBIND_2_0_NAME, TBBBIND_NAME}) {
+        if (dynamic_link(tbbbind_version, TbbBindLinkTable, LinkTableSize)) {
+            return tbbbind_version;
         }
-        return;
     }
 #endif /* _WIN32 || _WIN64 || __linux__ */
+    return nullptr;
+}
+
+int processor_groups_num() {
+#if _WIN32
+    return NumberOfProcessorGroups();
+#else
+    // Stub to improve code readability by reducing number of the compile-time conditions
+    return 1;
+#endif
+}
+} // internal namespace
+
+// Tries to load TBBbind library API, if success, gets NUMA topology information from it,
+// in another case, fills NUMA topology by stubs.
+void initialization_impl() {
+    governor::one_time_init();
+
+    if (const char* tbbbind_name = load_tbbbind_shared_object()) {
+        initialize_numa_topology_ptr(
+            processor_groups_num(), numa_nodes_count, numa_indexes, default_concurrency_list
+        );
+
+        if (numa_nodes_count==1 && numa_indexes[0] >= 0) {
+            __TBB_ASSERT(
+                (int)governor::default_num_threads() == default_concurrency_list[numa_indexes[0]],
+                "default_concurrency() should be equal to governor::default_num_threads() on single NUMA node systems."
+            );
+        }
+        PrintExtraVersionInfo( "TBBBIND", tbbbind_name );
+        return;
+    }
 
     static int dummy_index = -1;
     static int dummy_concurrency = governor::default_num_threads();
@@ -391,6 +408,7 @@ void initialization_impl() {
 
     bind_to_node_ptr = dummy_bind_to_node;
     restore_affinity_ptr = dummy_restore_affinity;
+    PrintExtraVersionInfo( "TBBBIND", "UNAVAILABLE" );
 }
 
 void initialize() {

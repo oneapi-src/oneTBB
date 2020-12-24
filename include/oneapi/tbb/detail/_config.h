@@ -225,7 +225,11 @@
     #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT   (__INTEL_COMPILER > 2021 && __TBB_LANG >= 201703L)
 #elif __clang__
     #define __TBB_CPP14_VARIABLE_TEMPLATES_PRESENT (__has_feature(cxx_variable_templates))
-    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT   (__has_feature(__cpp_deduction_guides))
+    #ifdef __cpp_deduction_guides
+        #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT (__cpp_deduction_guides >= 201611L)
+    #else
+        #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT 0
+    #endif
 #elif __GNUC__
     #define __TBB_CPP14_VARIABLE_TEMPLATES_PRESENT (__TBB_LANG >= 201402L && __TBB_GCC_VERSION >= 50000)
     #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT   (__cpp_deduction_guides >= 201606L)

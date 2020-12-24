@@ -105,6 +105,7 @@ void test_deduction_guides() {
     static_assert(std::is_same_v<decltype(set4), TSet<int, decltype(compare), decltype(allocator)>>, "Wrong");
 
     auto init_list = { int(1), int(2), int(3) };
+
     TSet set5(init_list);
     static_assert(std::is_same_v<decltype(set5), TSet<int>>, "Wrong");
 

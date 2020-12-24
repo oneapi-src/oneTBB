@@ -244,7 +244,7 @@ inline void thread_data::context_list_cleanup() {
                 spin_wait_until_eq(state, state_t::dying);
             } else {
                 __TBB_ASSERT(expected == state_t::bound, nullptr);
-                ctx.my_owner = NULL;
+                ctx.my_owner.store(nullptr, std::memory_order_release);
             }
         }
     }

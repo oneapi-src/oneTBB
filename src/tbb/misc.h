@@ -79,11 +79,11 @@ inline int AvailableHwConcurrency() {
 //! Returns OS regular memory page size
 size_t DefaultSystemPageSize();
 
-#if _WIN32||_WIN64
-
 //! Returns number of processor groups in the current OS configuration.
 /** AvailableHwConcurrency must be called at least once before calling this method. **/
 int NumberOfProcessorGroups();
+
+#if _WIN32||_WIN64
 
 //! Retrieves index of processor group containing processor with the given index
 int FindProcessorGroupIndex ( int processorIndex );

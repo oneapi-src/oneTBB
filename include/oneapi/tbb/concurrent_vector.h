@@ -363,7 +363,7 @@ public:
     }
 
     template <typename InputIterator>
-    typename std::enable_if<detail::is_iterator<std::input_iterator_tag, InputIterator>::value, void>::type
+    typename std::enable_if<is_input_iterator<InputIterator>::value, void>::type
     assign( InputIterator first, InputIterator last ) {
         destroy_elements();
         grow_by(first, last);
@@ -384,7 +384,7 @@ public:
     }
 
     template <typename ForwardIterator>
-    typename std::enable_if<detail::is_iterator<std::input_iterator_tag, ForwardIterator>::value, iterator>::type
+    typename std::enable_if<is_input_iterator<ForwardIterator>::value, iterator>::type
     grow_by( ForwardIterator first, ForwardIterator last ) {
         auto delta = std::distance(first, last);
         return internal_grow_by_delta(delta, first, last);
@@ -986,7 +986,7 @@ private:
             });
 
             // Need to correct deallocate old segments
-            // Method destroy_segment respect active first_block, therefore, 
+            // Method destroy_segment respect active first_block, therefore,
             // in order for the segment deletion to work correctly, set the first_block size that was earlier,
             // destroy the unnecessary segments.
             this->my_first_block.store(first_block, std::memory_order_relaxed);
@@ -1027,10 +1027,11 @@ private:
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 // Deduction guide for the constructor from two iterators
-template <typename I, typename T = typename std::iterator_traits<I>::value_type,
-          typename A = tbb::cache_aligned_allocator<T>>
-concurrent_vector(I, I, const A & = A())
-    ->concurrent_vector<T, A>;
+template <typename It, typename Alloc = tbb::cache_aligned_allocator<iterator_value_t<It>>,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_vector( It, It, Alloc = Alloc() )
+-> concurrent_vector<iterator_value_t<It>, Alloc>;
 #endif
 
 template <typename T, typename Allocator>

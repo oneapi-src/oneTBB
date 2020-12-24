@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(tbb SHARED
+add_library(tbb 
     allocator.cpp
     arena.cpp
     arena_slot.cpp
@@ -106,11 +106,7 @@ target_link_libraries(tbb
     ${TBB_COMMON_LINK_LIBS}
 )
 
-install(TARGETS tbb
-    EXPORT TBBTargets
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    RUNTIME DESTINATION bin)
+tbb_install_target(tbb)
 
 if (WIN32)
     # Create a copy of target linker file (tbb<ver>[_debug].lib) with legacy name (tbb[_debug].lib)
@@ -120,6 +116,7 @@ if (WIN32)
             DESTINATION lib
             CONFIGURATIONS RelWithDebInfo Release MinSizeRel
             RENAME tbb.lib
+            COMPONENT devel
     )
 
     install(FILES
@@ -127,6 +124,7 @@ if (WIN32)
             DESTINATION lib
             CONFIGURATIONS Debug
             RENAME tbb_debug.lib
+            COMPONENT devel
     )
 endif()
 

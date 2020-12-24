@@ -19,7 +19,7 @@
 
 #include "common/common_arena_constraints.h"
 
-#if __TBB_HWLOC_PRESENT
+#if __TBB_HWLOC_VALID_ENVIRONMENT
 
 struct execute_wrapper {
     template <typename Callable>
@@ -59,46 +59,42 @@ type test_numa_binding_impl(It begin, It end, FuncWrapper wrapper) {
 //! Testing that arenas bind to NUMA nodes correctly
 //! \brief \ref interface \ref requirement
 TEST_CASE("Test binding to NUMA nodes correctness") {
-    if (is_system_environment_supported()) {
-        numa_validation::initialize_system_info();
-        std::vector<oneapi::tbb::numa_node_id> numa_indexes = oneapi::tbb::info::numa_nodes();
-        std::vector<oneapi::tbb::task_arena> arenas(numa_indexes.size());
+    numa_validation::initialize_system_info();
+    std::vector<oneapi::tbb::numa_node_id> numa_indexes = oneapi::tbb::info::numa_nodes();
+    std::vector<oneapi::tbb::task_arena> arenas(numa_indexes.size());
 
-        for(unsigned i = 0; i < numa_indexes.size(); i++) {
-            // Bind arenas to numa nodes
-            arenas[i].initialize(oneapi::tbb::task_arena::constraints(numa_indexes[i]));
-        }
-
-        test_numa_binding_impl(arenas.begin(), arenas.end(), execute_wrapper());
-        test_numa_binding_impl(arenas.begin(), arenas.end(), enqueue_wrapper());
+    for(unsigned i = 0; i < numa_indexes.size(); i++) {
+        // Bind arenas to numa nodes
+        arenas[i].initialize(oneapi::tbb::task_arena::constraints(numa_indexes[i]));
     }
+
+    test_numa_binding_impl(arenas.begin(), arenas.end(), execute_wrapper());
+    test_numa_binding_impl(arenas.begin(), arenas.end(), enqueue_wrapper());
 }
 
 //! Testing that tbb::info interfaces returns correct information
 //! \brief \ref interface \ref requirement
 TEST_CASE("Test tbb::info interfaces") {
-    if (is_system_environment_supported()) {
-        numa_validation::initialize_system_info();
-        std::vector<oneapi::tbb::numa_node_id> numa_indexes = oneapi::tbb::info::numa_nodes();
+    numa_validation::initialize_system_info();
+    std::vector<oneapi::tbb::numa_node_id> numa_indexes = oneapi::tbb::info::numa_nodes();
 
-        REQUIRE_MESSAGE(numa_indexes.size() == numa_validation::get_numa_nodes_count(),
-            "Incorrect NUMA indexes count.");
+    REQUIRE_MESSAGE(numa_indexes.size() == numa_validation::get_numa_nodes_count(),
+        "Incorrect NUMA indexes count.");
 
-        int whole_system_concurrency{};
-        for (unsigned i = 0; i < numa_indexes.size(); i++) {
-            REQUIRE_MESSAGE(numa_indexes[i] >= 0, "Topology must be parsed but one of indexes is negative.");
-            whole_system_concurrency += oneapi::tbb::info::default_concurrency(numa_indexes[i]);
-        }
-        REQUIRE_MESSAGE(whole_system_concurrency == tbb::this_task_arena::max_concurrency(),
-            "The sum of all numa nodes concurrency should be equal to whole system concurrency.");
+    int whole_system_concurrency{};
+    for (unsigned i = 0; i < numa_indexes.size(); i++) {
+        REQUIRE_MESSAGE(numa_indexes[i] >= 0, "Topology must be parsed but one of indexes is negative.");
+        whole_system_concurrency += oneapi::tbb::info::default_concurrency(numa_indexes[i]);
     }
+    REQUIRE_MESSAGE(whole_system_concurrency == tbb::this_task_arena::max_concurrency(),
+        "The sum of all numa nodes concurrency should be equal to whole system concurrency.");
 }
 
-#else /*__TBB_HWLOC_PRESENT*/
+#else /*!__TBB_HWLOC_VALID_ENVIRONMENT*/
 
 //! Testing NUMA support interfaces validity when HWLOC is not presented on system
 //! \brief \ref interface \ref requirement
-TEST_CASE("Test NUMA support interfaces validity when HWLOC is not presented on system") {
+TEST_CASE("Test validity of NUMA interfaces when HWLOC is not present on the system") {
     std::vector<oneapi::tbb::numa_node_id> numa_indexes = oneapi::tbb::info::numa_nodes();
 
     REQUIRE_MESSAGE(numa_indexes.size() == 1,
@@ -109,4 +105,4 @@ TEST_CASE("Test NUMA support interfaces validity when HWLOC is not presented on 
         "Concurrency for NUMA node must be equal to default_num_threads(), if we have no HWLOC on the system.");
 }
 
-#endif /*__TBB_HWLOC_PRESENT*/
+#endif /*__TBB_HWLOC_VALID_ENVIRONMENT*/

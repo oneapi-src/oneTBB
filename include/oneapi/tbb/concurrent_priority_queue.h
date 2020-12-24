@@ -24,6 +24,7 @@
 #include "detail/_range_common.h"
 #include "detail/_exception.h"
 #include "detail/_utils.h"
+#include "detail/_containers_helpers.h"
 #include "cache_aligned_allocator.h"
 #include <vector>
 #include <iterator>
@@ -431,23 +432,34 @@ private:
 }; // class concurrent_priority_queue
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
-template <typename T, typename... Args>
-using priority_queue_type = concurrent_priority_queue<T,
-                                                      std::conditional_t<(sizeof...(Args) > 0) && !is_allocator_v<pack_element_t<0, Args...>>,
-                                                                         pack_element_t<0, Args...>, std::less<T>>,
-                                                      std::conditional_t<(sizeof...(Args) > 0) && is_allocator_v<pack_element_t<sizeof...(Args) - 1, Args...>>,
-                                                                         pack_element_t<sizeof...(Args) - 1, Args...>,
-                                                                         cache_aligned_allocator<T>>>;
+template <typename It,
+          typename Comp = std::less<iterator_value_t<It>>,
+          typename Alloc = tbb::cache_aligned_allocator<iterator_value_t<It>>,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<Comp>>>
+concurrent_priority_queue( It, It, Comp = Comp(), Alloc = Alloc() )
+-> concurrent_priority_queue<iterator_value_t<It>, Comp, Alloc>;
 
-template <typename InputIterator,
-          typename T = typename std::iterator_traits<InputIterator>::value_type,
-          typename... Args>
-concurrent_priority_queue( InputIterator, InputIterator, Args... )
--> priority_queue_type<T, Args...>;
+template <typename It, typename Alloc,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_priority_queue( It, It, Alloc )
+-> concurrent_priority_queue<iterator_value_t<It>, std::less<iterator_value_t<It>>, Alloc>;
 
-template <typename T, typename CompareOrAllocator>
-concurrent_priority_queue( std::initializer_list<T> init_list, CompareOrAllocator )
--> priority_queue_type<T, CompareOrAllocator>;
+template <typename T,
+          typename Comp = std::less<T>,
+          typename Alloc = tbb::cache_aligned_allocator<T>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<Comp>>>
+concurrent_priority_queue( std::initializer_list<T>, Comp = Comp(), Alloc = Alloc() )
+-> concurrent_priority_queue<T, Comp, Alloc>;
+
+template <typename T, typename Alloc,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_priority_queue( std::initializer_list<T>, Alloc )
+-> concurrent_priority_queue<T, std::less<T>, Alloc>;
+
 #endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 
 template <typename T, typename Compare, typename Allocator>

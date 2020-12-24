@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(tbbmalloc SHARED
+add_library(tbbmalloc 
     backend.cpp
     backref.cpp
     frontend.cpp
@@ -86,9 +86,5 @@ target_link_libraries(tbbmalloc
     ${TBB_COMMON_LINK_LIBS}
 )
 
-install(TARGETS tbbmalloc
-    EXPORT TBBTargets
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    RUNTIME DESTINATION bin)
+tbb_install_target(tbbmalloc)
 

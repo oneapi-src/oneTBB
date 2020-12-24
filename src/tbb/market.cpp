@@ -169,7 +169,7 @@ void market::destroy () {
 }
 
 bool market::release ( bool is_public, bool blocking_terminate ) {
-    __TBB_ASSERT( theMarket == this, "Global market instance was destroyed prematurely?" );
+    market::enforce([this] { return theMarket == this; }, "Global market instance was destroyed prematurely?");
     bool do_release = false;
     {
         global_market_mutex_type::scoped_lock lock( theMarketMutex );
@@ -216,7 +216,7 @@ bool market::release ( bool is_public, bool blocking_terminate ) {
 
 int market::update_workers_request() {
     int old_request = my_num_workers_requested;
-    my_num_workers_requested = min(my_total_demand,
+    my_num_workers_requested = min(my_total_demand.load(std::memory_order_relaxed),
                                    (int)my_num_workers_soft_limit.load(std::memory_order_relaxed));
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
     if (my_mandatory_num_requested > 0) {
@@ -303,24 +303,24 @@ arena* market::create_arena ( int num_slots, int num_reserved_slots, unsigned ar
 
 /** This method must be invoked under my_arenas_list_mutex. **/
 void market::detach_arena ( arena& a ) {
-    __TBB_ASSERT( theMarket == this, "Global market instance was destroyed prematurely?" );
+    market::enforce([this] { return theMarket == this; }, "Global market instance was destroyed prematurely?");
     __TBB_ASSERT( !a.my_slots[0].is_occupied(), NULL );
     if (a.my_global_concurrency_mode.load(std::memory_order_relaxed))
         disable_mandatory_concurrency_impl(&a);
 
     remove_arena_from_list(a);
-    if ( a.my_aba_epoch == my_arenas_aba_epoch )
-        ++my_arenas_aba_epoch;
+    if (a.my_aba_epoch == my_arenas_aba_epoch.load(std::memory_order_relaxed)) {
+        my_arenas_aba_epoch.store(my_arenas_aba_epoch.load(std::memory_order_relaxed) + 1, std::memory_order_relaxed);
+    }
 }
 
 void market::try_destroy_arena ( arena* a, uintptr_t aba_epoch, unsigned priority_level ) {
     bool locked = true;
     __TBB_ASSERT( a, NULL );
     // we hold reference to the market, so it cannot be destroyed at any moment here
-    __TBB_ASSERT( this == theMarket, NULL );
+    market::enforce([this] { return theMarket == this; }, NULL);
     __TBB_ASSERT( my_ref_count!=0, NULL );
     my_arenas_list_mutex.lock();
-    assert_market_valid();
         arena_list_type::iterator it = my_arenas[priority_level].begin();
         for ( ; it != my_arenas[priority_level].end(); ++it ) {
             if ( a == &*it ) {
@@ -373,8 +373,7 @@ arena* market::arena_in_need ( arena_list_type* arenas, arena* hint ) {
 }
 
 arena* market::arena_in_need(arena* prev) {
-    atomic_fence(std::memory_order_acquire);
-    if (my_total_demand <= 0)
+    if (my_total_demand.load(std::memory_order_acquire) <= 0)
         return nullptr;
     arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex, /*is_writer=*/false);
     // TODO: introduce three state response: alive, not_alive, no_market_arenas
@@ -509,7 +508,7 @@ void market::mandatory_concurrency_disable ( arena *a ) {
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
 
 void market::adjust_demand ( arena& a, int delta ) {
-    __TBB_ASSERT( theMarket, "market instance was destroyed prematurely?" );
+    market::enforce([] { return theMarket != nullptr; }, "market instance was destroyed prematurely?");
     if ( !delta )
         return;
     my_arenas_list_mutex.lock();
@@ -533,7 +532,8 @@ void market::adjust_demand ( arena& a, int delta ) {
         a.my_num_workers_allotted.store(0, std::memory_order_relaxed);
     }
 
-    my_total_demand += delta;
+    int total_demand = my_total_demand.load(std::memory_order_relaxed) + delta;
+    my_total_demand.store(total_demand, std::memory_order_relaxed);
     my_priority_level_demand[a.my_priority_level] += delta;
     unsigned effective_soft_limit = my_num_workers_soft_limit.load(std::memory_order_relaxed);
     if (my_mandatory_num_requested > 0) {
@@ -549,8 +549,8 @@ void market::adjust_demand ( arena& a, int delta ) {
             delta = effective_soft_limit - my_num_workers_requested;
     } else {
         // the number of workers should not be decreased below my_total_demand
-        if ( my_num_workers_requested+delta < my_total_demand )
-            delta = min(my_total_demand, (int)effective_soft_limit) - my_num_workers_requested;
+        if ( my_num_workers_requested+delta < total_demand )
+            delta = min(total_demand, (int)effective_soft_limit) - my_num_workers_requested;
     }
     my_num_workers_requested += delta;
     __TBB_ASSERT( my_num_workers_requested <= (int)effective_soft_limit, NULL );
@@ -585,7 +585,7 @@ void market::process( job& j ) {
 }
 
 void market::cleanup( job& j) {
-    __TBB_ASSERT( theMarket != this, NULL );
+    market::enforce([this] { return theMarket != this; }, NULL );
     governor::auto_terminate(&j);
 }
 

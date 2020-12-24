@@ -260,7 +260,7 @@ inline bool IsThrowingThread() {
 }
 
 struct Cancellator {
-    static volatile bool s_Ready;
+    static std::atomic<bool> s_Ready;
     tbb::task_group_context &m_groupToCancel;
     intptr_t m_cancellationThreshold;
 
@@ -293,7 +293,7 @@ struct Cancellator {
     }
 };
 
-volatile bool Cancellator::s_Ready = false;
+std::atomic<bool> Cancellator::s_Ready{ false };
 
 template<class LauncherT, class CancellatorT>
 void RunCancellationTest ( intptr_t threshold = 1 )
@@ -304,8 +304,8 @@ void RunCancellationTest ( intptr_t threshold = 1 )
     CancellatorT cancellator(ctx, threshold);
     LauncherT launcher(ctx);
 
-    tg.run(cancellator);
     tg.run(launcher);
+    tg.run(cancellator);
 
     TRY();
         tg.wait();

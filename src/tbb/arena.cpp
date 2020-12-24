@@ -171,7 +171,7 @@ arena::arena ( market& m, unsigned num_slots, unsigned num_reserved_slots, unsig
     my_max_num_workers = num_slots-num_reserved_slots;
     my_priority_level = priority_level;
     my_references = ref_external; // accounts for the master
-    my_aba_epoch = m.my_arenas_aba_epoch;
+    my_aba_epoch = m.my_arenas_aba_epoch.load(std::memory_order_relaxed);
     my_observers.my_arena = this;
     my_co_cache.init(4 * num_slots);
     __TBB_ASSERT ( my_max_num_workers <= my_num_slots, NULL );

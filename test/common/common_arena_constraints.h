@@ -23,7 +23,8 @@
 
 #include <vector>
 
-#if __TBB_HWLOC_PRESENT
+//TODO: Write a test that checks for memory leaks during dynamic link/unlink of TBBbind.
+#if __TBB_HWLOC_VALID_ENVIRONMENT
 #include "oneapi/tbb/concurrent_unordered_set.h"
 
 #include <atomic>
@@ -43,22 +44,6 @@
 #if _MSC_VER
 #pragma warning( pop )
 #endif
-
-#if _MSC_VER
-#include <winbase.h>
-#endif
-
-//TODO: Write a test that checks for memory leaks during dynamic link/unlink of TBBbind.
-
-bool is_system_environment_supported() {
-#if _WIN32 && !_WIN64
-    // HWLOC cannot proceed affinity masks on Windows in 32-bit mode if there are more than 32 logical CPU.
-    SYSTEM_INFO si;
-    GetNativeSystemInfo(&si);
-    if (si.dwNumberOfProcessors > 32) return false;
-#endif // _WIN32 && !_WIN64
-    return true;
-}
 
 // Macro to check hwloc interfaces return codes
 #define hwloc_require_ex(command, ...)                                          \
@@ -242,4 +227,4 @@ type verify_affinity_set(It begin, It end) {
 
 } /*namespace numa_validation*/
 
-#endif /*__TBB_HWLOC_PRESENT*/
+#endif /*__TBB_HWLOC_VALID_ENVIRONMENT*/

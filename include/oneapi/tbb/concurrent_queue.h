@@ -21,6 +21,7 @@
 #include "detail/_concurrent_queue_base.h"
 #include "detail/_allocator_traits.h"
 #include "detail/_exception.h"
+#include "detail/_containers_helpers.h"
 #include "cache_aligned_allocator.h"
 
 namespace tbb {
@@ -216,11 +217,12 @@ private:
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 // Deduction guide for the constructor from two iterators
-template <typename InputIterator,
-          typename T = typename std::iterator_traits<InputIterator>::value_type,
-          typename A = tbb::cache_aligned_allocator<T>>
-concurrent_queue(InputIterator, InputIterator, const A& = A())
-->concurrent_queue<T, A>;
+template <typename It, typename Alloc = tbb::cache_aligned_allocator<iterator_value_t<It>>,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_queue( It, It, Alloc = Alloc() )
+-> concurrent_queue<iterator_value_t<It>, Alloc>;
+
 #endif /* __TBB_CPP17_DEDUCTION_GUIDES_PRESENT */
 
 class concurrent_monitor;
@@ -568,11 +570,10 @@ private:
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 // Deduction guide for the constructor from two iterators
-template <typename InputIterator,
-          typename T = typename std::iterator_traits<InputIterator>::value_type,
-          typename A = tbb::cache_aligned_allocator<T>>
-concurrent_bounded_queue(InputIterator, InputIterator, const A& = A())
-->concurrent_bounded_queue<T, A>;
+template <typename It, typename Alloc = tbb::cache_aligned_allocator<iterator_value_t<It>>>
+concurrent_bounded_queue( It, It, Alloc = Alloc() )
+-> concurrent_bounded_queue<iterator_value_t<It>, Alloc>;
+
 #endif /* __TBB_CPP17_DEDUCTION_GUIDES_PRESENT */
 
 } //namespace d1

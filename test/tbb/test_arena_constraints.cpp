@@ -23,7 +23,7 @@
 
 #include "tbb/parallel_for.h"
 
-#if __TBB_HWLOC_PRESENT
+#if __TBB_HWLOC_VALID_ENVIRONMENT
 void recursive_arena_binding(int* numa_indexes, size_t count,
     std::vector<numa_validation::affinity_mask>& affinity_masks) {
     if (count > 0) {
@@ -51,49 +51,43 @@ void recursive_arena_binding(int* numa_indexes, size_t count,
 //! Testing that tbb::info correctly parses the system topology
 //! \brief \ref error_guessing
 TEST_CASE("Test tbb::info interfaces") {
-    if (is_system_environment_supported()) {
-        numa_validation::initialize_system_info();
-        std::vector<tbb::numa_node_id> numa_indexes = tbb::info::numa_nodes();
-        numa_validation::verify_numa_indexes(numa_indexes);
-    }
+    numa_validation::initialize_system_info();
+    std::vector<tbb::numa_node_id> numa_indexes = tbb::info::numa_nodes();
+    numa_validation::verify_numa_indexes(numa_indexes);
 }
 
 //! Testing binding correctness during passing through netsed arenas
 //! \brief \ref interface \ref error_guessing
 TEST_CASE("Test binding to NUMA nodes with nested arenas") {
-    if (is_system_environment_supported()) {
-        numa_validation::initialize_system_info();
-        std::vector<tbb::numa_node_id> numa_indexes = tbb::info::numa_nodes();
-        std::vector<numa_validation::affinity_mask> affinity_masks;
-        recursive_arena_binding(numa_indexes.data(), numa_indexes.size(), affinity_masks);
-    }
+    numa_validation::initialize_system_info();
+    std::vector<tbb::numa_node_id> numa_indexes = tbb::info::numa_nodes();
+    std::vector<numa_validation::affinity_mask> affinity_masks;
+    recursive_arena_binding(numa_indexes.data(), numa_indexes.size(), affinity_masks);
 }
 
 //! Testing constraints propagation during arenas copy construction
 //! \brief \ref regression
 TEST_CASE("Test constraints propagation during arenas copy construction") {
-    if (is_system_environment_supported()) {
-        numa_validation::initialize_system_info();
-        std::vector<tbb::numa_node_id> numa_indexes = tbb::info::numa_nodes();
-        for (auto index: numa_indexes) {
-            numa_validation::affinity_mask constructed_mask, copied_mask;
+    numa_validation::initialize_system_info();
+    std::vector<tbb::numa_node_id> numa_indexes = tbb::info::numa_nodes();
+    for (auto index: numa_indexes) {
+        numa_validation::affinity_mask constructed_mask, copied_mask;
 
-            tbb::task_arena constructed{tbb::task_arena::constraints(index)};
-            constructed.execute([&constructed_mask]() {
-                constructed_mask = numa_validation::allocate_current_cpu_set();
-            });
+        tbb::task_arena constructed{tbb::task_arena::constraints(index)};
+        constructed.execute([&constructed_mask]() {
+            constructed_mask = numa_validation::allocate_current_cpu_set();
+        });
 
-            tbb::task_arena copied(constructed);
-            copied.execute([&copied_mask]() {
-                copied_mask = numa_validation::allocate_current_cpu_set();
-            });
+        tbb::task_arena copied(constructed);
+        copied.execute([&copied_mask]() {
+            copied_mask = numa_validation::allocate_current_cpu_set();
+        });
 
-            REQUIRE_MESSAGE(numa_validation::affinity_masks_isequal(constructed_mask, copied_mask),
-                        "Affinity mask brokes during copy construction");
-        }
+        REQUIRE_MESSAGE(numa_validation::affinity_masks_isequal(constructed_mask, copied_mask),
+                    "Affinity mask brokes during copy construction");
     }
 }
-#endif /*__TBB_HWLOC_PRESENT*/
+#endif /*__TBB_HWLOC_VALID_ENVIRONMENT*/
 
 void collect_all_threads_on_barrier() {
     utils::SpinBarrier barrier;

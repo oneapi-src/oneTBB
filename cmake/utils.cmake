@@ -21,3 +21,24 @@ macro(tbb_remove_compile_flag flag)
         string(REGEX REPLACE ${flag} "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     endif()
 endmacro()
+
+macro(tbb_install_target target)
+    install(TARGETS ${target}
+        EXPORT TBBTargets
+        LIBRARY
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            NAMELINK_SKIP
+            COMPONENT runtime
+        RUNTIME
+            DESTINATION ${CMAKE_INSTALL_BINDIR}
+            COMPONENT runtime
+        ARCHIVE
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            COMPONENT devel)
+
+    install(TARGETS ${target}
+        LIBRARY
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            NAMELINK_ONLY
+            COMPONENT devel)
+endmacro()

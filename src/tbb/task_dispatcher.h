@@ -443,7 +443,7 @@ inline d1::task* task_dispatcher::get_mailbox_task(mail_inbox& my_inbox, executi
             return result;
         }
         // We have exclusive access to the proxy, and can destroy it.
-        deallocate(*tp->allocator, tp, sizeof(*tp));
+        tp->allocator.delete_object(tp, ed);
     }
     return NULL;
 }

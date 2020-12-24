@@ -19,9 +19,11 @@
 
 #include "_config.h"
 
-#include <new>
-#include <exception>
-#include <stdexcept>
+#include <new>          // std::bad_alloc
+#include <exception>    // std::exception
+#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
+#include <stdexcept>    // std::runtime_error
+#endif
 
 namespace tbb {
 namespace detail {

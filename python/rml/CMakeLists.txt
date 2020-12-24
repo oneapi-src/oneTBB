@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(irml SHARED
+add_library(irml 
     ../../src/tbb/allocator.cpp
     ../../src/tbb/dynamic_link.cpp
     ../../src/tbb/misc.cpp
@@ -71,6 +71,12 @@ endif()
 
 install(TARGETS irml
     EXPORT TBBTargets
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    RUNTIME DESTINATION bin)
+    LIBRARY
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        COMPONENT tbb4py
+    RUNTIME
+        DESTINATION ${CMAKE_INSTALL_BINDIR}
+        COMPONENT tbb4py
+    ARCHIVE
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        COMPONENT tbb4py)

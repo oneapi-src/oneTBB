@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(tbbmalloc_proxy SHARED
+add_library(tbbmalloc_proxy 
     function_replacement.cpp
     proxy.cpp)
 
@@ -72,8 +72,4 @@ target_link_libraries(tbbmalloc_proxy
     ${TBB_COMMON_LINK_LIBS}
 )
 
-install(TARGETS tbbmalloc_proxy
-    EXPORT TBBTargets
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    RUNTIME DESTINATION bin)
+tbb_install_target(tbbmalloc_proxy)
