@@ -53,5 +53,9 @@ if (NOT APPLE)
     set(TBB_WARNING_SUPPRESS -Wno-parentheses)
 endif()
 
+if (MINGW)
+    add_compile_options(-U __STRICT_ANSI__)
+endif()
+
 # TBB malloc settings
 set(TBBMALLOC_LIB_COMPILE_FLAGS -fno-rtti -fno-exceptions)

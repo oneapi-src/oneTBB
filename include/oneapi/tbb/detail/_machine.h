@@ -35,9 +35,6 @@
 #include <immintrin.h> // _mm_pause
 #endif
 #if (_WIN32)
-#if (__MINGW32__)
-#undef __STRICT_ANSI__ // Required for float.h defines in MinGW C99 mode
-#endif
 #include <float.h> // _control87
 #endif
 

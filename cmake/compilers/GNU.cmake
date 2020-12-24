@@ -62,6 +62,10 @@ if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
     set(TBB_TEST_COMPILE_FLAGS ${TBB_TEST_COMPILE_FLAGS} -DTBB_TEST_LOW_WORKLOAD)
 endif()
 
+if (MINGW)
+    add_compile_options(-U __STRICT_ANSI__)
+endif()
+
 # TBB malloc settings
 set(TBBMALLOC_LIB_COMPILE_FLAGS -fno-rtti -fno-exceptions)
 set(TBB_OPENMP_FLAG -fopenmp)
