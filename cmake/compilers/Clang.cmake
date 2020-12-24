@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include(CheckCXXCompilerFlag)
+
 if(MINGW)
     set(TBB_LINK_DEF_FILE_FLAG "")
     set(TBB_DEF_FILE_PREFIX win${TBB_ARCH}-mingw)
@@ -32,6 +34,10 @@ endif()
 
 if (CMAKE_SYSTEM_PROCESSOR STREQUAL x86_64)
     set(TBB_COMMON_COMPILE_FLAGS -mrtm)
+    check_cxx_compiler_flag(-mwaitpkg WAITPKG_SUPPORTED)
+    if (WAITPKG_SUPPORTED)
+        set(TBB_LIB_COMPILE_FLAGS -mwaitpkg)
+    endif()
 endif()
 
 if(UNIX)
@@ -45,10 +51,6 @@ endif()
 
 if (NOT APPLE)
     set(TBB_WARNING_SUPPRESS -Wno-parentheses)
-endif()
-
-if (NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 12)
-    set(TBB_LIB_COMPILE_FLAGS -mwaitpkg)
 endif()
 
 # TBB malloc settings

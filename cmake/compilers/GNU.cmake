@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include(CheckCXXCompilerFlag)
+
 if(MINGW)
     set(TBB_LINK_DEF_FILE_FLAG "")
     set(TBB_DEF_FILE_PREFIX win${TBB_ARCH}-mingw)
@@ -26,6 +28,10 @@ set(TBB_TEST_WARNING_FLAGS -Wshadow -Wcast-qual -Woverloaded-virtual -Wnon-virtu
 set(TBB_MMD_FLAG -MMD)
 if (CMAKE_SYSTEM_PROCESSOR STREQUAL x86_64)
     set(TBB_COMMON_COMPILE_FLAGS -mrtm)
+    check_cxx_compiler_flag(-mwaitpkg WAITPKG_SUPPORTED)
+    if (WAITPKG_SUPPORTED)
+        set(TBB_LIB_COMPILE_FLAGS -mwaitpkg)
+    endif()
 endif()
 
 if(UNIX)
