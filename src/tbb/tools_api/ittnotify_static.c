@@ -17,7 +17,9 @@
 #include "ittnotify_config.h"
 
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
+#ifdef PATH_MAX
 #undef PATH_MAX
+#endif
 #define PATH_MAX 512
 #else /* ITT_PLATFORM!=ITT_PLATFORM_WIN */
 #include <limits.h>
@@ -1242,4 +1244,3 @@ ITT_EXTERN_C void _N_(mark_pt_region_end)(__itt_pt_region region)
      (void)region;
 #endif
 }
-
