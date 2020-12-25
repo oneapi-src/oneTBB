@@ -26,6 +26,7 @@
 */
 
 #include <cstdarg>          // va_list etc.
+#include <cstring>          // strrchr
 #if _WIN32
     #include <malloc.h>
 
@@ -41,7 +42,6 @@
     #include <dlfcn.h>
     #include <unistd.h>
 
-    #include <cstring>
     #include <climits>
     #include <cstdlib>
 #endif /* _WIN32 */
