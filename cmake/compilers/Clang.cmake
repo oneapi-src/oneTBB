@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include(CheckCXXCompilerFlag)
-
 if(MINGW)
     set(TBB_LINK_DEF_FILE_FLAG "")
     set(TBB_DEF_FILE_PREFIX win${TBB_ARCH}-mingw)
