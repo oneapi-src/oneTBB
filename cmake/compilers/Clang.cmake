@@ -52,7 +52,7 @@ if (NOT APPLE)
 endif()
 
 if (MINGW)
-    add_compile_options(-U __STRICT_ANSI__)
+    set(TBB_COMMON_COMPILE_FLAGS -U __STRICT_ANSI__)
 endif()
 
 # TBB malloc settings
