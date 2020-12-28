@@ -22,6 +22,7 @@
 #include "oneapi/tbb/tbb_allocator.h" // Is this OK?
 #include "oneapi/tbb/cache_aligned_allocator.h"
 
+#include "environment.h"
 #include "dynamic_link.h"
 #include "misc.h"
 
@@ -115,7 +116,9 @@ static const dynamic_link_descriptor MallocLinkTable[] = {
     If that allocator is not found, it links to malloc and free. */
 void initialize_handler_pointers() {
     __TBB_ASSERT(allocate_handler == &initialize_allocate_handler, NULL);
-    bool success = dynamic_link(MALLOCLIB_NAME, MallocLinkTable, 4);
+    bool success = false;
+    if (!GetBoolEnvironmentVariable("TBB_USE_MALLOC"))
+        success = dynamic_link(MALLOCLIB_NAME, MallocLinkTable, 4);
     if(!success) {
         // If unsuccessful, set the handlers to the default routines.
         // This must be done now, and not before FillDynamicLinks runs, because if other
