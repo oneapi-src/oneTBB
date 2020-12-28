@@ -20,6 +20,7 @@
 #include "_config.h"
 #include "_assert.h"
 
+#include <time.h>
 #include <atomic>
 #include <climits>
 #include <cstdint>
@@ -58,6 +59,15 @@ static inline void yield() {
 #else
 using std::this_thread::yield;
 #endif
+
+static inline void long_yield() {
+#if defined(__linux__)
+    struct ::timespec ts = {};
+    ::nanosleep(&ts, 0);
+#else
+    yield();
+#endif
+}
 
 //--------------------------------------------------------------------------------------------------
 // atomic_fence implementation
