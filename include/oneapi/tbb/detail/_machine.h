@@ -84,6 +84,17 @@ using std::this_thread::yield;
 #endif
 
 static inline void atomic_fence(std::memory_order order) {
+#if (__TBB_x86_64 || __TBB_x86_32) && defined(__GNUC__) && __GNUC__ < 11
+    if (order == std::memory_order_seq_cst)
+    {
+        unsigned char dummy = 0u;
+        __asm__ __volatile__ ("lock; notb %0" : "+m" (dummy) :: "memory");
+    }
+    else if (order != std::memory_order_relaxed)
+    {
+        __asm__ __volatile__ ("" ::: "memory");
+    }
+#else
 #if _MSC_VER && (__TBB_x86_64 || __TBB_x86_32)
     if (order == std::memory_order_seq_cst ||
         order == std::memory_order_acq_rel ||
@@ -95,6 +106,7 @@ static inline void atomic_fence(std::memory_order order) {
     }
 #endif /*_MSC_VER && (__TBB_x86_64 || __TBB_x86_32)*/
     std::atomic_thread_fence(order);
+#endif
 }
 
 //--------------------------------------------------------------------------------------------------
