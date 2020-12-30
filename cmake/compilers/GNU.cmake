@@ -24,7 +24,7 @@ set(TBB_WARNING_LEVEL -Wall -Wextra $<$<BOOL:${TBB_STRICT}>:-Werror> -Wfatal-err
 set(TBB_TEST_WARNING_FLAGS -Wshadow -Wcast-qual -Woverloaded-virtual -Wnon-virtual-dtor)
 
 set(TBB_MMD_FLAG -MMD)
-if (CMAKE_SYSTEM_PROCESSOR MATCHES "(amd64)|(AMD64)|(x86_64)")
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "(amd64|AMD64|x86_64)")
     set(TBB_COMMON_COMPILE_FLAGS -mrtm)
     check_cxx_compiler_flag(-mwaitpkg WAITPKG_SUPPORTED)
     if (WAITPKG_SUPPORTED)

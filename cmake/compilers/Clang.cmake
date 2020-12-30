@@ -30,7 +30,7 @@ if (NOT TBB_STRICT AND COMMAND tbb_remove_compile_flag)
     tbb_remove_compile_flag(-Werror)
 endif()
 
-if (CMAKE_SYSTEM_PROCESSOR MATCHES "(amd64)|(AMD64)|(x86_64)")
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "(amd64|AMD64|x86_64)")
     set(TBB_COMMON_COMPILE_FLAGS -mrtm)
     check_cxx_compiler_flag(-mwaitpkg WAITPKG_SUPPORTED)
     if (WAITPKG_SUPPORTED)
