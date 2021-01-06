@@ -120,7 +120,7 @@ namespace utils {
         return info.virtual_size - shared_size;
 #else
         utils::suppress_unused_warning(stat);
-		return 0;
+        return 0;
 #endif
     }
 
