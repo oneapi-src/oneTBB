@@ -389,9 +389,9 @@ namespace r1 {
         // RTLD_NOLOAD - not to load the library without the full path
         #ifndef __HAIKU__
 		    library_handle = dlopen(library, RTLD_LAZY | RTLD_GLOBAL | RTLD_NOLOAD);
-		#else
+        #else
 		    library_handle = dlopen(library, RTLD_LAZY | RTLD_GLOBAL);
-		#endif
+        #endif
 #endif /* _WIN32 */
         if (library_handle) {
             if (!resolve_symbols(library_handle, descriptors, required)) {
