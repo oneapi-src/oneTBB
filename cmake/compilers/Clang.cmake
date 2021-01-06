@@ -28,7 +28,9 @@ if (CMAKE_SYSTEM_PROCESSOR STREQUAL x86_64)
     set(TBB_COMMON_COMPILE_FLAGS -mrtm)
 endif()
 
+if (NOT HAIKU)
 set(TBB_COMMON_LINK_LIBS dl)
+endif()
 
 set(TBB_WARNING_SUPPRESS -Wno-non-virtual-dtor -Wno-dangling-else)
 if (ANDROID_PLATFORM)

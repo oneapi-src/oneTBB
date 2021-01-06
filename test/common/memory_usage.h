@@ -119,7 +119,8 @@ namespace utils {
         ASSERT(status == KERN_SUCCESS, NULL);
         return info.virtual_size - shared_size;
 #else
-        return 0;
+        utils::suppress_unused_warning(stat);
+		return 0;
 #endif
     }
 

@@ -22,7 +22,9 @@ if (CMAKE_SYSTEM_PROCESSOR STREQUAL x86_64)
     set(TBB_COMMON_COMPILE_FLAGS -mrtm)
 endif()
 
+if (NOT HAIKU)
 set(TBB_COMMON_LINK_LIBS dl)
+endif()
 
 # Ignore -Werror set through add_compile_options() or added to CMAKE_CXX_FLAGS if TBB_STRICT is disabled.
 if (NOT TBB_STRICT AND COMMAND tbb_remove_compile_flag)
