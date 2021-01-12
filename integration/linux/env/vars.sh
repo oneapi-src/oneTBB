@@ -19,10 +19,7 @@
 #   intel64|ia32 - architecture, intel64 is default.
 
 if [ -n "$ZSH_EVAL_CONTEXT" ]; then
-    case "$0" in
-    (/*) TBBROOT="$(dirname $0)"/.. ;;
-    (*) TBBROOT="$(dirname "$(command pwd)/$0")"/.. ;;
-    esac
+    TBBROOT="$(cd "$(dirname "${(%):-%x}")" && pwd -P)"/..
 elif [ -n "$KSH_VERSION" ]; then
     TBBROOT="${.sh.file%/*}/.."
 else
