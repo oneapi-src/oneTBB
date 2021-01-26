@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@
 #include "detail/_aligned_space.h"
 #include "detail/_small_object_pool.h"
 
-#if __TBB_NUMA_SUPPORT
+#if __TBB_ARENA_BINDING
 #include "info.h"
-#endif /*__TBB_NUMA_SUPPORT*/
+#endif /*__TBB_ARENA_BINDING*/
 
 namespace tbb {
 namespace detail {
@@ -104,17 +104,9 @@ public:
         normal = 2 * priority_stride,
         high   = 3 * priority_stride
     };
-#if __TBB_NUMA_SUPPORT
-    // TODO: consider version approach to resolve backward compatibility potential issues.
-    struct constraints {
-        constraints(numa_node_id id = automatic, int maximal_concurrency = automatic)
-            : numa_id(id)
-            , max_concurrency(maximal_concurrency)
-        {}
-        numa_node_id numa_id;
-        int max_concurrency;
-    };
-#endif /*__TBB_NUMA_SUPPORT*/
+#if __TBB_ARENA_BINDING
+    using constraints = tbb::detail::d1::constraints;
+#endif /*__TBB_ARENA_BINDING*/
 protected:
     //! Special settings
     intptr_t my_version_and_traits;
@@ -122,46 +114,71 @@ protected:
     std::atomic<do_once_state> my_initialization_state;
 
     //! NULL if not currently initialized.
-    r1::arena* my_arena;
+    std::atomic<r1::arena*> my_arena;
+    static_assert(sizeof(std::atomic<r1::arena*>) == sizeof(r1::arena*), 
+        "To preserve backward compatibility we need the equal size of an atomic pointer and a pointer");
 
     //! Concurrency level for deferred initialization
     int my_max_concurrency;
 
-    //! Reserved master slots
-    unsigned my_master_slots;
+    //! Reserved slots for external threads
+    unsigned my_num_reserved_slots;
 
     //! Arena priority
     priority my_priority;
 
-#if __TBB_NUMA_SUPPORT
     //! The NUMA node index to which the arena will be attached
     numa_node_id my_numa_id;
-#endif
 
-    enum { default_flags = 0 };
+    //! The core type index to which arena will be attached
+    core_type_id my_core_type;
+
+    //! Number of threads per core
+    int my_max_threads_per_core;
+
+    // Backward compatibility checks.
+    core_type_id core_type() const {
+        return (my_version_and_traits & core_type_support_flag) == core_type_support_flag ? my_core_type : automatic;
+    }
+    int max_threads_per_core() const {
+        return (my_version_and_traits & core_type_support_flag) == core_type_support_flag ? my_max_threads_per_core : automatic;
+    }
+
+    enum {
+        default_flags = 0
+        , core_type_support_flag = 1
+    };
 
     task_arena_base(int max_concurrency, unsigned reserved_for_masters, priority a_priority)
-        :
-        my_version_and_traits(default_flags)
+        : my_version_and_traits(default_flags | core_type_support_flag)
         , my_initialization_state(do_once_state::uninitialized)
         , my_arena(nullptr)
         , my_max_concurrency(max_concurrency)
-        , my_master_slots(reserved_for_masters)
+        , my_num_reserved_slots(reserved_for_masters)
         , my_priority(a_priority)
         , my_numa_id(automatic)
+        , my_core_type(automatic)
+        , my_max_threads_per_core(automatic)
         {}
 
-#if __TBB_NUMA_SUPPORT
+#if __TBB_ARENA_BINDING
     task_arena_base(const constraints& constraints_, unsigned reserved_for_masters, priority a_priority)
-        : my_version_and_traits(default_flags)
+        : my_version_and_traits(default_flags | core_type_support_flag)
         , my_initialization_state(do_once_state::uninitialized)
         , my_arena(nullptr)
         , my_max_concurrency(constraints_.max_concurrency)
-        , my_master_slots(reserved_for_masters)
+        , my_num_reserved_slots(reserved_for_masters)
         , my_priority(a_priority)
-        , my_numa_id(constraints_.numa_id )
+        , my_numa_id(constraints_.numa_id)
+#if __TBB_PREVIEW_TASK_ARENA_CONSTRAINTS_EXTENSION_PRESENT
+        , my_core_type(constraints_.core_type)
+        , my_max_threads_per_core(constraints_.max_threads_per_core)
+#else
+        , my_core_type(automatic)
+        , my_max_threads_per_core(automatic)
+#endif
         {}
-#endif /*__TBB_NUMA_SUPPORT*/
+#endif /*__TBB_ARENA_BINDING*/
 public:
     //! Typedef for number of threads that is automatic.
     static const int automatic = -1;
@@ -205,7 +222,7 @@ class task_arena : public task_arena_base {
     };
 
     void mark_initialized() {
-        __TBB_ASSERT( my_arena, "task_arena initialization is incomplete" );
+        __TBB_ASSERT( my_arena.load(std::memory_order_relaxed), "task_arena initialization is incomplete" );
         my_initialization_state.store(do_once_state::initialized, std::memory_order_release);
     }
 
@@ -227,7 +244,7 @@ public:
     //! Creates task_arena with certain concurrency limits
     /** Sets up settings only, real construction is deferred till the first method invocation
      *  @arg max_concurrency specifies total number of slots in arena where threads work
-     *  @arg reserved_for_masters specifies number of slots to be used by master threads only.
+     *  @arg reserved_for_masters specifies number of slots to be used by external threads only.
      *       Value of 1 is default and reflects behavior of implicit arenas.
      **/
     task_arena(int max_concurrency_ = automatic, unsigned reserved_for_masters = 1,
@@ -235,7 +252,7 @@ public:
         : task_arena_base(max_concurrency_, reserved_for_masters, a_priority)
     {}
 
-#if __TBB_NUMA_SUPPORT
+#if __TBB_ARENA_BINDING
     //! Creates task arena pinned to certain NUMA node
     task_arena(const constraints& constraints_, unsigned reserved_for_masters = 1,
                priority a_priority = priority::normal)
@@ -245,15 +262,21 @@ public:
     //! Copies settings from another task_arena
     task_arena(const task_arena &s) // copy settings but not the reference or instance
         : task_arena_base(
-            constraints(s.my_numa_id, s.my_max_concurrency), s.my_master_slots, s.my_priority
-        )
+            constraints{}
+                .set_numa_id(s.my_numa_id)
+                .set_max_concurrency(s.my_max_concurrency)
+#if __TBB_PREVIEW_TASK_ARENA_CONSTRAINTS_EXTENSION_PRESENT
+                .set_core_type(s.my_core_type)
+                .set_max_threads_per_core(s.my_max_threads_per_core)
+#endif
+            , s.my_num_reserved_slots, s.my_priority)
     {}
 #else
     //! Copies settings from another task_arena
     task_arena(const task_arena& a) // copy settings but not the reference or instance
-        : task_arena_base(a.my_max_concurrency, a.my_master_slots, a.my_priority)
+        : task_arena_base(a.my_max_concurrency, a.my_num_reserved_slots, a.my_priority)
     {}
-#endif /*__TBB_NUMA_SUPPORT*/
+#endif /*__TBB_ARENA_BINDING*/
 
     //! Tag class used to indicate the "attaching" constructor
     struct attach {};
@@ -276,36 +299,40 @@ public:
     void initialize(int max_concurrency_, unsigned reserved_for_masters = 1,
                     priority a_priority = priority::normal)
     {
-        __TBB_ASSERT(!my_arena, "Impossible to modify settings of an already initialized task_arena");
+        __TBB_ASSERT(!my_arena.load(std::memory_order_relaxed), "Impossible to modify settings of an already initialized task_arena");
         if( !is_active() ) {
             my_max_concurrency = max_concurrency_;
-            my_master_slots = reserved_for_masters;
+            my_num_reserved_slots = reserved_for_masters;
             my_priority = a_priority;
             r1::initialize(*this);
             mark_initialized();
         }
     }
 
-#if __TBB_NUMA_SUPPORT
+#if __TBB_ARENA_BINDING
     void initialize(constraints constraints_, unsigned reserved_for_masters = 1,
                     priority a_priority = priority::normal)
     {
-        __TBB_ASSERT(!my_arena, "Impossible to modify settings of an already initialized task_arena");
+        __TBB_ASSERT(!my_arena.load(std::memory_order_relaxed), "Impossible to modify settings of an already initialized task_arena");
         if( !is_active() ) {
             my_numa_id = constraints_.numa_id;
             my_max_concurrency = constraints_.max_concurrency;
-            my_master_slots = reserved_for_masters;
+#if __TBB_PREVIEW_TASK_ARENA_CONSTRAINTS_EXTENSION_PRESENT
+            my_core_type = constraints_.core_type;
+            my_max_threads_per_core = constraints_.max_threads_per_core;
+#endif
+            my_num_reserved_slots = reserved_for_masters;
             my_priority = a_priority;
             r1::initialize(*this);
             mark_initialized();
         }
     }
-#endif /*__TBB_NUMA_SUPPORT*/
+#endif /*__TBB_ARENA_BINDING*/
 
     //! Attaches this instance to the current arena of the thread
     void initialize(attach) {
         // TODO: decide if this call must be thread-safe
-        __TBB_ASSERT(!my_arena, "Impossible to modify settings of an already initialized task_arena");
+        __TBB_ASSERT(!my_arena.load(std::memory_order_relaxed), "Impossible to modify settings of an already initialized task_arena");
         if( !is_active() ) {
             if ( !r1::attach(*this) ) {
                 r1::initialize(*this);
@@ -353,10 +380,10 @@ public:
     }
 
 #if __TBB_EXTRA_DEBUG
-    //! Returns my_master_slots
+    //! Returns my_num_reserved_slots
     int debug_reserved_slots() const {
         // Handle special cases inside the library
-        return my_master_slots;
+        return my_num_reserved_slots;
     }
 
     //! Returns my_max_concurrency
@@ -383,7 +410,7 @@ public:
     friend void submit(task& t, task_arena& ta, task_group_context& ctx, bool as_critical) {
         __TBB_ASSERT(ta.is_active(), nullptr);
         call_itt_task_notify(releasing, &t);
-        r1::submit(t, ctx, ta.my_arena, as_critical ? 1 : 0);
+        r1::submit(t, ctx, ta.my_arena.load(std::memory_order_relaxed), as_critical ? 1 : 0);
     }
 };
 

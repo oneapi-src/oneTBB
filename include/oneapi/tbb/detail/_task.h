@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020 Intel Corporation
+    Copyright (c) 2020-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -225,12 +225,10 @@ public:
     virtual task* cancel(execution_data&) = 0;
 
 private:
-    std::uint64_t m_reserved[5]{};
-
-    // Reserve one pointer-sized object in derived class
-    // static_assert(sizeof(task) == 64 - 8);
+    std::uint64_t m_reserved[6]{};
     friend struct r1::task_accessor;
 };
+static_assert(sizeof(task) == task_alignment, "task size is broken");
 
 } // namespace d1
 } // namespace detail

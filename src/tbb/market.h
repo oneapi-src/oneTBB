@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -139,7 +139,7 @@ private:
     //! Reference count controlling market object lifetime
     std::atomic<unsigned> my_ref_count;
 
-    //! Count of master threads attached
+    //! Count of external threads attached
     std::atomic<unsigned> my_public_ref_count;
 
     //! Stack size of worker threads
@@ -248,19 +248,19 @@ public:
     //! Imlpementation of mandatory concurrency enabling
     void enable_mandatory_concurrency_impl ( arena *a );
 
-    //! Inform the master that there is an arena with mandatory concurrency
+    //! Inform the external thread that there is an arena with mandatory concurrency
     void enable_mandatory_concurrency ( arena *a );
 
-    //! Inform the master that the arena is no more interested in mandatory concurrency
+    //! Inform the external thread that the arena is no more interested in mandatory concurrency
     void disable_mandatory_concurrency_impl(arena* a);
 
-    //! Inform the master that the arena is no more interested in mandatory concurrency
+    //! Inform the external thread that the arena is no more interested in mandatory concurrency
     void mandatory_concurrency_disable ( arena *a );
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
 
     //! Request that arena's need in workers should be adjusted.
     /** Concurrent invocations are possible only on behalf of different arenas. **/
-    void adjust_demand ( arena&, int delta );
+    void adjust_demand ( arena&, int delta, bool mandatory );
 
     //! Used when RML asks for join mode during workers termination.
     bool must_join_workers () const { return my_join_workers; }
@@ -281,13 +281,13 @@ public:
 
     //! Finds all contexts affected by the state change and propagates the new state to them.
     /** The propagation is relayed to the market because tasks created by one
-        master thread can be passed to and executed by other masters. This means
+        external thread can be passed to and executed by other external threads. This means
         that context trees can span several arenas at once and thus state change
         propagation cannot be generally localized to one arena only. **/
     template <typename T>
     bool propagate_task_group_state (std::atomic<T> d1::task_group_context::*mptr_state, d1::task_group_context& src, T new_state );
 
-    //! List of registered master threads
+    //! List of registered external threads
     thread_data_list_type my_masters;
 
     //! Array of pointers to the registered workers

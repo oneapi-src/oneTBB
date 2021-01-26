@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -110,7 +110,7 @@ void handle_perror( int error_code, const char* what ) {
     }
     __TBB_ASSERT(buf_len <= BUF_SIZE && buf[buf_len] == 0, nullptr);
 #if TBB_USE_EXCEPTIONS
-    do_throw([buf] { throw std::runtime_error(buf); });
+    do_throw([&buf] { throw std::runtime_error(buf); });
 #else
     PRINT_ERROR_AND_ABORT( "runtime_error", buf);
 #endif /* !TBB_USE_EXCEPTIONS */

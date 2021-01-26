@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Intel Corporation
+# Copyright (c) 2020-2021 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,8 +27,11 @@ macro(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
         add_library(${TBBBIND_NAME} tbb_bind.cpp)
         add_library(TBB::${TBBBIND_NAME} ALIAS ${TBBBIND_NAME})
 
-        target_compile_definitions(${TBBBIND_NAME} PRIVATE __TBBBIND_BUILD)
-
+        target_compile_definitions(${TBBBIND_NAME}
+                                   PUBLIC
+                                   $<$<CONFIG:DEBUG>:TBB_USE_DEBUG>
+                                   PRIVATE
+                                   __TBBBIND_BUILD)
         target_include_directories(${TBBBIND_NAME}
             PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../include>
@@ -40,7 +43,6 @@ macro(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
             ${TBB_MMD_FLAG}
             ${TBB_DSE_FLAG}
             ${TBB_WARNING_LEVEL}
-            ${TBB_WARNING_SUPPRESS}
             ${TBB_LIB_COMPILE_FLAGS}
             ${TBB_COMMON_COMPILE_FLAGS}
         )
@@ -86,8 +88,9 @@ macro(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
     endif()
 endmacro()
 
-tbbbind_build(tbbbind HWLOC::hwloc_1_11)
-tbbbind_build(tbbbind_2_0 HWLOC::hwloc_2)
+tbbbind_build(tbbbind     HWLOC::hwloc_1_11)
+tbbbind_build(tbbbind_2_0 HWLOC::hwloc_2   )
+tbbbind_build(tbbbind_2_4 HWLOC::hwloc_2_4 )
 
 if (DEFINED CMAKE_SKIP_BUILD_RPATH_OLD_VALUE)
     set(CMAKE_SKIP_BUILD_RPATH ${CMAKE_SKIP_BUILD_RPATH_OLD_VALUE})

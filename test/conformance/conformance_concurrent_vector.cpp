@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@
 #include "common/custom_allocators.h"
 #include "common/initializer_list_support.h"
 #include "common/containers_common.h"
+#define __TBB_TEST_CPP20_COMPARISONS __TBB_CPP20_COMPARISONS_PRESENT && __TBB_CPP20_CONCEPTS_PRESENT
+#include "common/test_comparisons.h"
 #include "oneapi/tbb/concurrent_vector.h"
 #include "oneapi/tbb/parallel_for.h"
 #include "oneapi/tbb/tick_count.h"
@@ -1293,6 +1295,113 @@ void TestConcurrentGrowToAtLeast() {
     TestConcurrentGrowToAtLeastImpl<true>();
 }
 
+template <typename Vector>
+void test_comparisons_basic() {
+    using comparisons_testing::testEqualityAndLessComparisons;
+    Vector v1, v2;
+    testEqualityAndLessComparisons</*ExpectEqual = */true, /*ExpectLess = */false>(v1, v2);
+
+    v1.emplace_back(1);
+    testEqualityAndLessComparisons</*ExpectEqual = */false, /*ExpectLess = */false>(v1, v2);
+
+    v2.emplace_back(1);
+    testEqualityAndLessComparisons</*ExpectEqual = */true, /*ExpectLess = */false>(v1, v2);
+
+    v2.emplace_back(2);
+    testEqualityAndLessComparisons</*ExpectEqual = */false, /*ExpectLess = */true>(v1, v2);
+
+    v1.clear();
+    v2.clear();
+    testEqualityAndLessComparisons</*ExpectEqual = */true, /*ExpectLess = */false>(v1, v2);
+}
+
+template <typename TwoWayComparableVectorType>
+void test_two_way_comparable_vector() {
+    TwoWayComparableVectorType v1, v2;
+    v1.emplace_back(1);
+    v2.emplace_back(1);
+    comparisons_testing::TwoWayComparable::reset();
+    REQUIRE_MESSAGE(!(v1 < v2), "Incorrect operator < result");
+    comparisons_testing::check_two_way_comparison();
+    REQUIRE_MESSAGE(!(v1 > v2), "Incorrect operator > result");
+    comparisons_testing::check_two_way_comparison();
+    REQUIRE_MESSAGE(v1 <= v2, "Incorrect operator <= result");
+    comparisons_testing::check_two_way_comparison();
+    REQUIRE_MESSAGE(v1 >= v2, "Incorrect operator >= result");
+    comparisons_testing::check_two_way_comparison();
+}
+
+#if __TBB_TEST_CPP20_COMPARISONS
+template <typename ThreeWayComparableVectorType>
+void test_three_way_comparable_vector() {
+    ThreeWayComparableVectorType v1, v2;
+    v1.emplace_back(1);
+    v2.emplace_back(1);
+    comparisons_testing::ThreeWayComparable::reset();
+    REQUIRE_MESSAGE(!(v1 <=> v2 < 0), "Incorrect operator<=> result");
+    comparisons_testing::check_three_way_comparison();
+
+    REQUIRE_MESSAGE(!(v1 < v2), "Incorrect operator< result");
+    comparisons_testing::check_three_way_comparison();
+
+    REQUIRE_MESSAGE(!(v1 > v2), "Incorrect operator> result");
+    comparisons_testing::check_three_way_comparison();
+
+    REQUIRE_MESSAGE(v1 <= v2, "Incorrect operator>= result");
+    comparisons_testing::check_three_way_comparison();
+
+    REQUIRE_MESSAGE(v1 >= v2, "Incorrect operator>= result");
+    comparisons_testing::check_three_way_comparison();
+}
+#endif // __TBB_TEST_CPP20_COMPARISONS
+
+void TestVectorComparisons() {
+    using integral_vector = oneapi::tbb::concurrent_vector<int>;
+    using two_way_comparable_vector = oneapi::tbb::concurrent_vector<comparisons_testing::TwoWayComparable>;
+
+    test_comparisons_basic<integral_vector>();
+    test_comparisons_basic<two_way_comparable_vector>();
+    test_two_way_comparable_vector<two_way_comparable_vector>();
+
+#if __TBB_TEST_CPP20_COMPARISONS
+    using two_way_less_only_vector = oneapi::tbb::concurrent_vector<comparisons_testing::LessComparableOnly>;
+    using three_way_only_vector = oneapi::tbb::concurrent_vector<comparisons_testing::ThreeWayComparableOnly>;
+    using three_way_comparable_vector = oneapi::tbb::concurrent_vector<comparisons_testing::ThreeWayComparable>;
+
+    test_comparisons_basic<two_way_less_only_vector>();
+    test_comparisons_basic<three_way_only_vector>();
+    test_comparisons_basic<three_way_comparable_vector>();
+    test_three_way_comparable_vector<three_way_comparable_vector>();
+#endif // __TBB_CPP20_COMPARISONS_PRESENT && __TBB_CPP20_CONVEPTS_PRESENT
+}
+
+template <bool ExpectEqual, bool ExpectLess, typename Iterator>
+void DoVectorIteratorComparisons( const Iterator& lhs, const Iterator& rhs ) {
+    // TODO: replace with testEqualityAndLessComparisons after adding <=> operator for concurrent_vector iterator
+    using namespace comparisons_testing;
+    testEqualityComparisons<ExpectEqual>(lhs, rhs);
+    testTwoWayComparisons<ExpectEqual, ExpectLess>(lhs, rhs);
+}
+
+template <typename Iterator, typename VectorType>
+void TestVectorIteratorComparisonsBasic( VectorType& vec ) {
+    REQUIRE_MESSAGE(!vec.empty(), "Incorrect test setup");
+    Iterator it1, it2;
+    DoVectorIteratorComparisons</*ExpectEqual = */true, /*ExpectLess = */false>(it1, it2);
+    it1 = vec.begin();
+    it2 = vec.begin();
+    DoVectorIteratorComparisons</*ExpectEqual = */true, /*ExpectLess = */false>(it1, it2);
+    it2 = std::prev(vec.end());
+    DoVectorIteratorComparisons</*ExpectEqual = */false, /*ExpectLess = */true>(it1, it2);
+}
+
+void TestVectorIteratorComparisons() {
+    using vector_type = oneapi::tbb::concurrent_vector<int>;
+    vector_type vec = {1, 2, 3, 4, 5};
+    TestVectorIteratorComparisonsBasic<typename vector_type::iterator>(vec);
+    const vector_type& cvec = vec;
+    TestVectorIteratorComparisonsBasic<typename vector_type::const_iterator>(cvec);
+}
 
 //! Test type matching
 //! \brief \ref interface \ref requirement
@@ -1443,7 +1552,7 @@ TEST_CASE("testing concurrency"){
 
 //! Test assign operations
 //! \brief \ref interface \ref requirement
-TEST_CASE("testing comparison"){
+TEST_CASE("testing comparison on assign operations"){
     TestComparison();
 }
 
@@ -1460,3 +1569,15 @@ TEST_CASE("testing deduction guides"){
     TestDeductionGuides<oneapi::tbb::concurrent_vector>();
 }
 #endif
+
+//! Test concurrent_vector comparisons
+//! \brief \ref interface \ref requirement
+TEST_CASE("concurrent_vector comparisons") {
+    TestVectorComparisons();
+}
+
+//! Test concurrent_vector iterators comparisons
+//! \brief \ref interface \ref requirement
+TEST_CASE("concurrent_vector iterators comparisons") {
+    TestVectorIteratorComparisons();
+}

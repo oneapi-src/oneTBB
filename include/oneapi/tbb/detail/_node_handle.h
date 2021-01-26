@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2019-2020 Intel Corporation
+    Copyright (c) 2019-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public:
         nh.my_node = nullptr;
     }
 
-    bool empty() const { return my_node == nullptr; }
+    __TBB_nodiscard bool empty() const { return my_node == nullptr; }
     explicit operator bool() const { return my_node != nullptr; }
 
     ~node_handle_base() { internal_destroy(); }

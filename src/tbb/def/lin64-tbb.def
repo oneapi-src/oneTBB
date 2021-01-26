@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -105,10 +105,14 @@ _ZN3tbb6detail2r120isolate_within_arenaERNS0_2d113delegate_baseEl;
 _ZN3tbb6detail2r17enqueueERNS0_2d14taskEPNS2_15task_arena_baseE;
 _ZN3tbb6detail2r14waitERNS0_2d115task_arena_baseE;
 
-/* NUMA support (governor.cpp) */
+/* System topology parsing and threads pinning (governor.cpp) */
 _ZN3tbb6detail2r115numa_node_countEv;
-_ZN3tbb6detail2r124numa_default_concurrencyEi;
 _ZN3tbb6detail2r117fill_numa_indicesEPi;
+_ZN3tbb6detail2r115core_type_countEl;
+_ZN3tbb6detail2r122fill_core_type_indicesEPil;
+_ZN3tbb6detail2r131constraints_default_concurrencyERKNS0_2d111constraintsEl;
+_ZN3tbb6detail2r128constraints_threads_per_coreERKNS0_2d111constraintsEl;
+_ZN3tbb6detail2r124numa_default_concurrencyEi;
 
 /* Observer (observer_proxy.cpp) */
 _ZN3tbb6detail2r17observeERNS0_2d123task_scheduler_observerEb;

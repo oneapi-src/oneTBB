@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 */
 
 #include "utils_report.h"
+#include "utils.h"
 
 #include "oneapi/tbb/tick_count.h"
 
@@ -75,10 +76,9 @@ inline void TestCPUUserTime( std::size_t nthreads, std::size_t nactive = 1 ) {
     double usrtime_delta;
     double waittime_delta;
     tbb::tick_count stamp = tbb::tick_count::now();
-    volatile intptr_t k = (intptr_t)&usrtime_delta;
     // wait for GetCPUUserTime update
     while ( (usrtime_delta=GetCPUUserTime()-lastusrtime) < THRESHOLD ) {
-        for ( int i = 0; i < 1000; ++i ) ++k; // do fake work without which user time can stall
+        utils::doDummyWork(1000); // do fake work without which user time can stall
         if ( (waittime_delta = (tbb::tick_count::now()-stamp).seconds()) > maximal_waittime ) {
             REPORT( "Warning: %.2f sec elapsed but user mode time is still below its threshold (%g < %g)\n",
                     waittime_delta, usrtime_delta, THRESHOLD );
@@ -92,7 +92,7 @@ inline void TestCPUUserTime( std::size_t nthreads, std::size_t nactive = 1 ) {
     while ( ((waittime_delta=(tbb::tick_count::now()-stamp).seconds()) < minimal_waittime)
             || ((usrtime_delta=GetCPUUserTime()-lastusrtime) < THRESHOLD) )
     {
-        for ( int i = 0; i < 1000; ++i ) ++k; // do fake work without which user time can stall
+        utils::doDummyWork(1000); // do fake work without which user time can stall
         if ( waittime_delta > maximal_waittime ) {
             REPORT("Warning: %.2f sec elapsed but GetCPUUserTime reported only %g sec\n", waittime_delta, usrtime_delta );
             break;

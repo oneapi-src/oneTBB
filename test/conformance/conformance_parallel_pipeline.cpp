@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020 Intel Corporation
+    Copyright (c) 2020-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -268,7 +268,7 @@ TEST_CASE_TEMPLATE("Testing filters concatenation", T, std::tuple<size_t, int>,
 
 void doWork() {
     for (int i = 0; i < 10; ++i)
-        std::this_thread::yield();
+        utils::yield();
 }
 
 //! Testing filter modes

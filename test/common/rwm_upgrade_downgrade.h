@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,8 +19,9 @@
 
 #include "test.h"
 #include "utils.h"
+#include <atomic>
 
-static volatile int Count;
+static std::atomic<int> Count;
 
 // A body object for NativeParallelFor
 template <typename RWMutex>
@@ -36,9 +37,7 @@ struct Hammer : utils::NoAssign {
             typename RWMutex::scoped_lock lock(mutex_protecting_count, false);
 
             int c = Count;
-            for (int k = 0; k < 10; ++k) {
-                ++dummy;
-            }
+            utils::doDummyWork(10);
             if (lock.upgrade_to_writer()) {
                 REQUIRE_MESSAGE(c == Count, "Another thread modified Count while holding read lock");
             } else {
@@ -49,9 +48,7 @@ struct Hammer : utils::NoAssign {
                 ++Count;
             }
             lock.downgrade_to_reader();
-            for (int k = 0; k < 10; ++k) {
-                ++dummy;
-            }
+            utils::doDummyWork(10);
         }
     }
 }; // struct Hammer

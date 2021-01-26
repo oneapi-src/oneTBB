@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ namespace utils {
 
     //! Return estimate of number of bytes of memory that this program is currently using.
     /* Returns 0 if not implemented on platform. */
-    size_t GetMemoryUsage(MemoryStatType stat = currentUsage) {
+    std::size_t GetMemoryUsage(MemoryStatType stat = currentUsage) {
 #if __TBB_WIN8UI_SUPPORT || defined(WINAPI_FAMILY)
         utils::suppress_unused_warning(stat);
         return 0;

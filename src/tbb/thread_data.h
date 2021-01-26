@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020 Intel Corporation
+    Copyright (c) 2020-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ public:
     //! The current task dipsatcher
     task_dispatcher* my_task_dispatcher;
 
-    //! The arena that I own (if master) or am servicing at the moment (if worker)
+    //! The arena that I own (if external thread) or am servicing at the moment (if worker)
     arena* my_arena;
 
     //! Pointer to the slot in the arena we own at the moment

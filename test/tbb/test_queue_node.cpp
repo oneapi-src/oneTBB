@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -43,7 +43,18 @@
 
 template< typename T >
 void spin_try_get( tbb::flow::queue_node<T> &q, T &value ) {
-    while ( q.try_get(value) != true ) ;
+    int count = 0;
+    while ( q.try_get(value) != true ) {
+        if (count < 1000000) {
+            ++count;
+        }
+        if (count == 1000000) {
+            // Perhaps, we observe the missed wakeup. Enqueue a task to wake up threads.
+            tbb::task_arena a(tbb::task_arena::attach{});
+            a.enqueue([]{});
+            ++count;
+        }
+    }
 }
 
 template< typename T >
@@ -69,8 +80,6 @@ struct parallel_puts : utils::NoAssign {
     }
 
 };
-
-
 
 template< typename T >
 struct touches {
@@ -495,12 +504,10 @@ TEST_CASE("Parallel, serial test"){
         tbb::task_arena arena(p);
         arena.execute(
             [&]() {
-
                 test_serial<int>();
                 test_serial<CheckType<int> >();
                 test_parallel<int>(p);
                 test_parallel<CheckType<int> >(p);
-
             }
         );
 	}
@@ -553,5 +560,4 @@ TEST_CASE("queue_node with reservation"){
     CHECK_MESSAGE((q.try_get(out_arg) == false), "Getting from reserved node should fail.");
     CHECK_MESSAGE((out_arg == -1), "Getting from reserved node should not update its argument.");
     g.wait_for_all();
-    
 }

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -13,6 +13,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+#if __INTEL_COMPILER && _MSC_VER
+#pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
+#endif
 
 #include "common/config.h"
 
@@ -279,9 +283,9 @@ struct nodes_test_functor : utils::NoAssign {
 };
 
 void test_graph_arena() {
-    // There is only one thread for execution (master thread).
+    // There is only one thread for execution (external thread).
     // So, if graph's tasks get spawned in different arena
-    // master thread won't be able to find them in its own arena.
+    // external thread won't be able to find them in its own arena.
     // In this case test should hang.
     tbb::task_arena arena(1);
 	arena.execute(

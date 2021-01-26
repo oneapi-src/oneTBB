@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -14,6 +14,9 @@
     limitations under the License.
 */
 
+#if __INTEL_COMPILER && _MSC_VER
+#pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
+#endif
 
 #include "common/config.h"
 
@@ -521,7 +524,7 @@ struct spin_test {
             if (std::this_thread::get_id() == my_main_tid) {
                ++main_tid_count;
             }
-            my_barrier->timedWaitNoError(10);
+            my_barrier->wait();
         }
     };
 
@@ -673,7 +676,7 @@ public:
         gateway_t* gateway;
     };
 
-    AsyncActivity(size_t limit) : thr([this]() {
+    AsyncActivity(size_t limit) : stop_limit(limit), c(0), thr([this]() {
         while(!end_of_work()) {
             work_type w;
             while( my_q.try_pop(w) ) {
@@ -683,7 +686,7 @@ public:
                 ++c;
             }
         }
-    }), stop_limit(limit), c(0) {}
+    }) {}
 
     void submit(int i, gateway_t* gateway) {
         work_type w = {i, gateway};
@@ -699,9 +702,9 @@ private:
     int do_work(int& i) { return i + i; }
 
     async_activity_queue<work_type> my_q;
-    std::thread thr;
     size_t stop_limit;
     size_t c;
+    std::thread thr;
 };
 
 void test_follows() {

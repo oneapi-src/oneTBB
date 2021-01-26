@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -29,6 +29,9 @@
 #include <algorithm>
 #include <utility> // std::move_if_noexcept
 #include <algorithm>
+#if __TBB_CPP20_COMPARISONS_PRESENT
+#include <compare>
+#endif
 
 namespace tbb {
 namespace detail {
@@ -1048,12 +1051,27 @@ bool operator==(const concurrent_vector<T, Allocator> &lhs,
     return lhs.size() == rhs.size() && std::equal(lhs.begin(), lhs.end(), rhs.begin());
 }
 
+#if !__TBB_CPP20_COMPARISONS_PRESENT
 template <typename T, typename Allocator>
 bool operator!=(const concurrent_vector<T, Allocator> &lhs,
                 const concurrent_vector<T, Allocator> &rhs)
 {
     return !(lhs == rhs);
 }
+#endif // !__TBB_CPP20_COMPARISONS_PRESENT
+
+#if __TBB_CPP20_COMPARISONS_PRESENT && __TBB_CPP20_CONCEPTS_PRESENT
+template <typename T, typename Allocator>
+tbb::detail::synthesized_three_way_result<typename concurrent_vector<T, Allocator>::value_type>
+operator<=>(const concurrent_vector<T, Allocator> &lhs,
+            const concurrent_vector<T, Allocator> &rhs)
+{
+    return std::lexicographical_compare_three_way(lhs.begin(), lhs.end(),
+                                                  rhs.begin(), rhs.end(),
+                                                  tbb::detail::synthesized_three_way_comparator{});
+}
+
+#else
 
 template <typename T, typename Allocator>
 bool operator<(const concurrent_vector<T, Allocator> &lhs,
@@ -1082,6 +1100,7 @@ bool operator>=(const concurrent_vector<T, Allocator> &lhs,
 {
     return !(lhs < rhs);
 }
+#endif // __TBB_CPP20_COMPARISONS_PRESENT && __TBB_CPP20_CONCEPTS_PRESENT
 
 } // namespace d1
 } // namespace detail

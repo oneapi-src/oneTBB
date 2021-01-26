@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -35,10 +35,10 @@ class observer_list {
     typedef aligned_space<spin_rw_mutex>  my_mutex_type;
 
     //! Pointer to the head of this list.
-    observer_proxy* my_head{nullptr};
+    std::atomic<observer_proxy*> my_head{nullptr};
 
     //! Pointer to the tail of this list.
-    observer_proxy* my_tail{nullptr};
+    std::atomic<observer_proxy*> my_tail{nullptr};
 
     //! Mutex protecting this list.
     my_mutex_type my_mutex;
@@ -79,7 +79,7 @@ public:
     //! Accessor to the reader-writer mutex associated with the list.
     spin_rw_mutex& mutex () { return my_mutex.begin()[0]; }
 
-    bool empty () const { return my_head == nullptr; }
+    bool empty () const { return my_head.load(std::memory_order_relaxed) == nullptr; }
 
     //! Call entry notifications on observers added after last was notified.
     /** Updates last to become the last notified observer proxy (in the global list)
@@ -132,7 +132,7 @@ void observer_list::remove_ref_fast( observer_proxy*& p ) {
 }
 
 void observer_list::notify_entry_observers(observer_proxy*& last, bool worker) {
-    if (last == my_tail)
+    if (last == my_tail.load(std::memory_order_relaxed))
         return;
     do_notify_entry_observers(last, worker);
 }

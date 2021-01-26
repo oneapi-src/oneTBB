@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@
 //! \brief Test for [sched.global_control] specification
 
 const std::size_t MB = 1024*1024;
-const double BARRIER_TIMEOUT = 10.;
 
 void TestStackSizeSimpleControl() {
     oneapi::tbb::global_control s0(oneapi::tbb::global_control::thread_stack_size, 1*MB);
@@ -52,10 +51,10 @@ struct StackSizeRun : utils::NoAssign {
     void operator()( int id ) const {
         oneapi::tbb::global_control s1(oneapi::tbb::global_control::thread_stack_size, (1+id)*MB);
 
-        barr1->timedWaitNoError(BARRIER_TIMEOUT);
+        barr1->wait();
 
         REQUIRE(num_threads*MB == oneapi::tbb::global_control::active_value(oneapi::tbb::global_control::thread_stack_size));
-        barr2->timedWaitNoError(BARRIER_TIMEOUT);
+        barr2->wait();
     }
 };
 
@@ -70,7 +69,7 @@ void RunWorkersLimited(size_t parallelism, bool wait)
     oneapi::tbb::global_control s(oneapi::tbb::global_control::max_allowed_parallelism, parallelism);
     // try both configuration with already sleeping workers and with not yet sleeping
     if (wait)
-        utils::Sleep(100);
+        utils::Sleep(10);
     const std::size_t expected_threads = (utils::get_platform_max_threads()==1)? 1 : parallelism;
     utils::ExactConcurrencyLevel::check(expected_threads);
 }
@@ -99,11 +98,6 @@ void TestWorkersConstraints()
     }
 }
 
-void RunParallelWork() {
-    const int LOOP_ITERS = 10*1000;
-    oneapi::tbb::parallel_for(0, LOOP_ITERS, [](int){ utils::Sleep(1); }, oneapi::tbb::simple_partitioner());
-}
-
 struct SetUseRun: utils::NoAssign {
     utils::SpinBarrier &barr;
 
@@ -111,13 +105,13 @@ struct SetUseRun: utils::NoAssign {
     void operator()( int id ) const {
         if (id == 0) {
             for (int i=0; i<10; i++) {
-                RunParallelWork();
-                barr.timedWaitNoError(BARRIER_TIMEOUT);
+                oneapi::tbb::parallel_for(0, 1000, utils::DummyBody(10), oneapi::tbb::simple_partitioner());
+                barr.wait();
             }
         } else {
             for (int i=0; i<10; i++) {
                 oneapi::tbb::global_control c(oneapi::tbb::global_control::max_allowed_parallelism, 8);
-                barr.timedWaitNoError(BARRIER_TIMEOUT);
+                barr.wait();
             }
         }
     }

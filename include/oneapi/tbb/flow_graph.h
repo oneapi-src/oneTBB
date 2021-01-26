@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -2156,7 +2156,13 @@ public:
 #endif
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
-    template <typename... Args, typename... Bodies>
+    template <
+#if (__clang_major__ == 3 && __clang_minor__ == 4)
+        // clang 3.4 misdeduces 'Args...' for 'node_set' while it can cope with template template parameter.
+        template<typename...> class node_set,
+#endif
+        typename... Args, typename... Bodies
+    >
     __TBB_NOINLINE_SYM join_node(const node_set<Args...>& nodes, Bodies... bodies)
         : join_node(nodes.graph_reference(), bodies...) {
         make_edges_in_order(nodes, *this);
@@ -2743,8 +2749,10 @@ private:
         }
 
         void release_wait() override {
-            my_node->my_graph.release_wait();
-            fgt_async_commit(static_cast<typename async_node::receiver_type *>(my_node), &my_node->my_graph);
+            async_node* n = my_node;
+            graph* g = &n->my_graph;
+            g->release_wait();
+            fgt_async_commit(static_cast<typename async_node::receiver_type *>(n), g);
         }
 
         //! Implements gateway_type::try_put for an external activity to submit a message to FG
@@ -2794,8 +2802,8 @@ public:
     }
 
     template <typename Body, typename... Args>
-    __TBB_NOINLINE_SYM async_node(graph& g, size_t concurrency, Body body, node_priority_t priority)
-        : async_node(g, concurrency, body, Policy(), priority) {}
+    __TBB_NOINLINE_SYM async_node(graph& g, size_t concurrency, Body body, node_priority_t a_priority)
+        : async_node(g, concurrency, body, Policy(), a_priority) {}
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
     template <typename Body, typename... Args>
@@ -2807,8 +2815,8 @@ public:
     }
 
     template <typename Body, typename... Args>
-    __TBB_NOINLINE_SYM async_node(const node_set<Args...>& nodes, size_t concurrency, Body body, node_priority_t priority)
-        : async_node(nodes, concurrency, body, Policy(), priority) {}
+    __TBB_NOINLINE_SYM async_node(const node_set<Args...>& nodes, size_t concurrency, Body body, node_priority_t a_priority)
+        : async_node(nodes, concurrency, body, Policy(), a_priority) {}
 #endif // __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
 
     __TBB_NOINLINE_SYM async_node( const async_node &other ) : base_type(other), sender<Output>(), my_gateway(self()) {

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -761,8 +761,8 @@ void test_unlimited_lightweight_execution(unsigned N) {
 
 std::mutex m;
 std::condition_variable lightweight_condition;
-bool work_submitted;
-bool lightweight_work_processed;
+std::atomic<bool> work_submitted;
+std::atomic<bool> lightweight_work_processed;
 
 template<typename NodeType>
 class native_loop_limited_body {

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ void Universe::InitializeUniverse(video const& colorizer) {
     for (int i = 1; i < UniverseHeight - 1; ++i) {
         for (int j = 1; j < UniverseWidth - 1; ++j) {
             float x = float(j - UniverseWidth / 2) / (UniverseWidth / 2);
-            ValueType t = (ValueType)i / UniverseHeight;
+            ValueType t = (ValueType)i / (ValueType)UniverseHeight;
             MaterialType m;
             D[i][j] = 1.0;
             // Coefficient values are fictitious, and chosen to visually exaggerate
@@ -75,7 +75,7 @@ void Universe::InitializeUniverse(video const& colorizer) {
             material[i][j] = m;
         }
     }
-    ValueType scale = 2.0f / ColorMapSize;
+    ValueType scale = 2.0f / (ValueType)ColorMapSize;
     for (int k = 0; k < 4; ++k) {
         for (int i = 0; i < ColorMapSize; ++i) {
             colorcomp_t c[3];

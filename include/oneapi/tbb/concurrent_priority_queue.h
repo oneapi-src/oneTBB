@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -162,7 +162,7 @@ public:
 
     /* Returned value may not reflect results of pending operations.
        This operation reads shared data and will trigger a race condition. */
-    bool empty() const { return size() == 0; }
+    __TBB_nodiscard bool empty() const { return size() == 0; }
 
     // Returns the current number of elements contained in the queue
     /* Returned value may not reflect results of pending operations.
@@ -426,9 +426,19 @@ private:
     using vector_type = std::vector<value_type, allocator_type>;
     vector_type data;
 
-    template <typename Type, typename Comp, typename Alloc>
-    friend bool operator==( const concurrent_priority_queue<Type, Comp, Alloc>&,
-                            const concurrent_priority_queue<Type, Comp, Alloc>& );
+    friend bool operator==( const concurrent_priority_queue& lhs,
+                            const concurrent_priority_queue& rhs )
+    {
+        return lhs.data == rhs.data;
+    }
+
+#if !__TBB_CPP20_COMPARISONS_PRESENT
+    friend bool operator!=( const concurrent_priority_queue& lhs,
+                            const concurrent_priority_queue& rhs )
+    {
+        return !(lhs == rhs);
+    }
+#endif
 }; // class concurrent_priority_queue
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
@@ -461,20 +471,6 @@ concurrent_priority_queue( std::initializer_list<T>, Alloc )
 -> concurrent_priority_queue<T, std::less<T>, Alloc>;
 
 #endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
-
-template <typename T, typename Compare, typename Allocator>
-bool operator==( const concurrent_priority_queue<T, Compare, Allocator>& lhs,
-                 const concurrent_priority_queue<T, Compare, Allocator>& rhs )
-{
-    return lhs.data == rhs.data;
-}
-
-template <typename T, typename Compare, typename Allocator>
-bool operator!=( const concurrent_priority_queue<T, Compare, Allocator>& lhs,
-                 const concurrent_priority_queue<T, Compare, Allocator>& rhs )
-{
-    return !(lhs == rhs);
-}
 
 template <typename T, typename Compare, typename Allocator>
 void swap( concurrent_priority_queue<T, Compare, Allocator>& lhs,

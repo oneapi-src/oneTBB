@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -13,6 +13,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+#if __INTEL_COMPILER && _MSC_VER
+#pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
+#endif
+
 
 #include "oneapi/tbb/concurrent_unordered_set.h"
 #include <common/test.h>
@@ -264,9 +269,15 @@ TEST_CASE("CTAD support in concurrent_unordered_set") {
 }
 #endif
 
+//! Testing comparisons in concurrent_unordered_set
+//! \brief \ref interface \ref requirement
+TEST_CASE("concurrent_unordered_set comparisons") {
+    test_set_comparisons<oneapi::tbb::concurrent_unordered_set>();
+}
+
 //! Testing concurrent_unordered_multiset member types
 //! \brief \ref interface \ref requirement
-TEST_CASE("concurrent_unordered_set member types") {
+TEST_CASE("concurrent_unordered_multiset member types") {
     test_member_types<oneapi::tbb::concurrent_unordered_multiset>();
 }
 
@@ -320,6 +331,12 @@ TEST_CASE("CTAD support in concurrent_unordered_multiset") {
     test_deduction_guides<oneapi::tbb::concurrent_unordered_multiset>();
 }
 #endif
+
+//! Testing comparisons in concurrent_unordered_multiset
+//! \brief \ref interface \ref requirement
+TEST_CASE("concurrent_unordered_multiset comparisons") {
+    test_set_comparisons<oneapi::tbb::concurrent_unordered_multiset>();
+}
 
 //! Testing of merge operation in concurrent_unordered_set and concurrent_unordered_multiset
 //! \brief \ref interface \ref requirement

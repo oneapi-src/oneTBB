@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -120,7 +120,7 @@ public:
     template <typename Range>
     void operator()(Range& r) const {
         INFO("Executing range [" << r.begin() << ", " << r.end() << "]");
-        m_sb.timedWait(10); // waiting for all threads
+        m_sb.wait(); // waiting for all threads
     }
 };
 
@@ -327,7 +327,7 @@ TEST_CASE("That all workers sleep when no work") {
     std::atomic<int> counter{};
 
     tbb::parallel_for(std::size_t(0), N, [&](std::size_t) {
-        for (volatile int i = 0; i < 1000; ++i) {
+        for (int i = 0; i < 1000; ++i) {
             ++counter;
         }
     }, tbb::simple_partitioner());

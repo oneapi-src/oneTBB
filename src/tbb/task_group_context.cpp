@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -268,7 +268,7 @@ void task_group_context_impl::bind_to(d1::task_group_context& ctx, thread_data* 
             ctx.my_lifetime_state.compare_exchange_strong(state, d1::task_group_context::lifetime_state::locked)
 #endif
             ) {
-            // If we are in the outermost task dispatch loop of a master thread, then
+            // If we are in the outermost task dispatch loop of an external thread, then
             // there is nothing to bind this context to, and we skip the binding part
             // treating the context as isolated.
             __TBB_ASSERT(td->my_task_dispatcher->m_execute_data_ext.context != nullptr, nullptr);
@@ -399,7 +399,7 @@ bool market::propagate_task_group_state(std::atomic<T> d1::task_group_context::*
         return false;
     // Advance global state propagation epoch
     ++the_context_state_propagation_epoch;
-    // Propagate to all workers and masters and sync up their local epochs with the global one
+    // Propagate to all workers and external threads and sync up their local epochs with the global one
     unsigned num_workers = my_first_unused_worker_idx;
     for (unsigned i = 0; i < num_workers; ++i) {
         thread_data* td = my_workers[i];
@@ -407,7 +407,7 @@ bool market::propagate_task_group_state(std::atomic<T> d1::task_group_context::*
         if (td)
             td->propagate_task_group_state(mptr_state, src, new_state);
     }
-    // Propagate to all master threads
+    // Propagate to all external threads
     // The whole propagation sequence is locked, thus no contention is expected
     for (thread_data_list_type::iterator it = my_masters.begin(); it != my_masters.end(); it++)
         it->propagate_task_group_state(mptr_state, src, new_state);

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -103,6 +103,7 @@ bool operator!=( const ArenaAllocator<T, POCMA, C>& lhs, const ArenaAllocator<U,
 template <typename BaseAllocatorType>
 class LocalCountingAllocator : public BaseAllocatorType {
     using base_type = BaseAllocatorType;
+    using base_traits = tbb::detail::allocator_traits<base_type>;
     using counter_type = std::atomic<std::size_t>;
 public:
     using value_type = typename base_type::value_type;
@@ -137,9 +138,7 @@ public:
     }
 
     template <typename U>
-    class rebind {
-        using base_traits = tbb::detail::allocator_traits<base_type>;
-    public:
+    struct rebind {
         using other = LocalCountingAllocator<typename base_traits::template rebind_alloc<U>>;
     };
 
@@ -177,15 +176,12 @@ public:
 
     template <typename U, typename... Args>
     void construct( U* ptr, Args&&... args ) {
-        static_cast<base_type*>(this)->construct(ptr, std::forward<Args>(args)...);
+        base_traits::construct(*this, ptr, std::forward<Args>(args)...);
         ++items_constructed;
     }
 
     template <typename U>
     void destroy( U* ptr ) {
-        // Tricky implementation is required, because some old compilers
-        // declares std::allocator::destroy(pointer ptr) instead of destroy(U* ptr)
-        using base_traits = std::allocator_traits<base_type>;
         base_traits::destroy(*this, ptr);
         ++items_destroyed;
     }
@@ -244,6 +240,7 @@ struct AllocatorCounters {
 template <typename BaseAllocatorType>
 class StaticCountingAllocator : public BaseAllocatorType {
     using base_type = BaseAllocatorType;
+    using base_traits = tbb::detail::allocator_traits<BaseAllocatorType>;
     using counter_type = std::atomic<std::size_t>;
 public:
     using value_type = typename base_type::value_type;
@@ -260,9 +257,7 @@ public:
     static bool throwing;
 
     template <typename U>
-    class rebind {
-        using base_traits = tbb::detail::allocator_traits<BaseAllocatorType>;
-    public:
+    struct rebind {
         using other = StaticCountingAllocator<typename base_traits::template rebind_alloc<U>>;
     };
 
@@ -293,13 +288,13 @@ public:
     template <typename U, typename... Args>
     void construct( U* ptr, Args&&... args ) {
         ++items_constructed;
-        static_cast<base_type*>(this)->construct(ptr, std::forward<Args>(args)...);
+        base_traits::construct(*this, ptr, std::forward<Args>(args)...);
     }
 
     template <typename U>
     void destroy( U* ptr ) {
         ++items_destroyed;
-        static_cast<base_type*>(this)->destroy(ptr);
+        base_traits::destroy(*this, ptr);
     }
 
     static AllocatorCounters counters() {
@@ -434,8 +429,6 @@ public:
 
     template <typename U>
     void destroy( U* ptr ) {
-        // Tricky implementation is required, because some old compilers
-        // declares std::allocator::destroy(pointer ptr) instead of destroy(U* ptr)
         base_traits::destroy(*this, ptr);
         ++base_type::items_destroyed;
     }

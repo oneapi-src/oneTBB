@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -13,6 +13,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+#if __INTEL_COMPILER && _MSC_VER
+#pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
+#endif
 
 #define TBB_DEFINE_STD_HASH_SPECIALIZATIONS 1
 #include <tbb/concurrent_unordered_map.h>
@@ -226,7 +230,7 @@ TEST_CASE("concurrent_unordered_map whitebox throwing copy constructor") {
     using exception_mmap_type = tbb::concurrent_unordered_map<int, int, std::hash<int>, std::equal_to<int>, allocator_type>;
 
     exception_mmap_type map;
-    for (std::size_t i = 0; i < 10; ++i) {
+    for (int i = 0; i < 10; ++i) {
         map.insert(std::pair<const int, int>(i, 42));
     }
 

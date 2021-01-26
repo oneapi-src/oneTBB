@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Intel Corporation
+# Copyright (c) 2020-2021 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ string(REGEX REPLACE "/W[0-4]" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 # Warning suppression C4324: structure was padded due to alignment specifier
 set(TBB_WARNING_LEVEL $<$<NOT:$<CXX_COMPILER_ID:Intel>>:/W4> $<$<BOOL:${TBB_STRICT}>:/WX>)
-set(TBB_WARNING_SUPPRESS /wd4324 /wd4530 /wd4577)
+set(TBB_WARNING_SUPPRESS /wd4324)
 set(TBB_TEST_COMPILE_FLAGS /bigobj)
 if (MSVC_VERSION LESS_EQUAL 1900)
     # Warning suppression C4503 for VS2015 and earlier:

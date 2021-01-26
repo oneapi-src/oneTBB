@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -38,11 +38,11 @@ public:
     virtual void adjust_job_count_estimate( int delta ) = 0;
 
 #if _WIN32||_WIN64
-    //! Inform server of a oneTBB master thread.
-    virtual void register_master( execution_resource_t& v ) = 0;
+    //! Inform server of a oneTBB external thread.
+    virtual void register_external_thread( execution_resource_t& v ) = 0;
 
-    //! Inform server that the oneTBB master thread is done with its work.
-    virtual void unregister_master( execution_resource_t v ) = 0;
+    //! Inform server that the oneTBB external thread is done with its work.
+    virtual void unregister_external_thread( execution_resource_t v ) = 0;
 #endif /* _WIN32||_WIN64 */
 };
 

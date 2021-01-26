@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -102,7 +102,7 @@ private:
 #if !(_LIBCPP_VERSION) && !(_CPPLIB_VER)
 
 template <typename CharT, typename Traits, typename Allocator>
-class hash<std::basic_string<CharT, Traits, Allocator>> {
+struct hash<std::basic_string<CharT, Traits, Allocator>> {
 public:
     std::size_t operator()( const std::basic_string<CharT, Traits, Allocator>& s ) const {
         std::size_t h = 0;

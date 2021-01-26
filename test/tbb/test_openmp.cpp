@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -71,9 +71,10 @@ public:
     #pragma warning( pop )
 #endif
 
-//! Test OpenMMP loop around TBB loop
-void OpenMP_TBB_Convolve( data_type c[], const data_type a[], int m, const data_type b[], int n ) {
-#pragma omp parallel
+//! Test OpenMP loop around TBB loop
+void OpenMP_TBB_Convolve( data_type c[], const data_type a[], int m, const data_type b[], int n, std::size_t p ) {
+    utils::suppress_unused_warning(p);
+#pragma omp parallel num_threads(p)
     {
 #pragma omp for
         for (int i = 0; i < m + n - 1; ++i) {
@@ -92,16 +93,17 @@ class OuterBody: utils::NoAssign {
     data_type* my_c;
     const int m;
     const int n;
+    const std::size_t p;
 public:
-    OuterBody( data_type c[], const data_type a[], int m_, const data_type b[], int n_ ) :
-        my_a(a), my_b(b), my_c(c), m(m_), n(n_)
+    OuterBody( data_type c[], const data_type a[], int m_, const data_type b[], int n_, std::size_t p_ ) :
+        my_a(a), my_b(b), my_c(c), m(m_), n(n_), p(p_)
     {}
     void operator()( const tbb::blocked_range<int>& range ) const {
         for (int i = range.begin(); i != range.end(); ++i) {
             int start = i < n ? 0 : i - n + 1;
             int finish = i < m ? i + 1 : m;
             data_type sum = 0;
-#pragma omp parallel for reduction(+:sum)
+#pragma omp parallel for reduction(+:sum) num_threads(p)
             for (int j = start; j < finish; ++j)
                 sum += my_a[j] * my_b[i - j];
             my_c[i] = sum;
@@ -110,8 +112,8 @@ public:
 };
 
 //! Test TBB loop around OpenMP loop
-void TBB_OpenMP_Convolve( data_type c[], const data_type a[], int m, const data_type b[], int n ) {
-    tbb::parallel_for(tbb::blocked_range<int>(0, m + n - 1, 10), OuterBody(c, a, m, b, n));
+void TBB_OpenMP_Convolve( data_type c[], const data_type a[], int m, const data_type b[], int n, std::size_t p ) {
+    tbb::parallel_for(tbb::blocked_range<int>(0, m + n - 1, 10), OuterBody(c, a, m, b, n, p));
 }
 
 #if __INTEL_COMPILER
@@ -137,7 +139,7 @@ template <class Func>
 void RunTest( Func F, int m, int n, std::size_t p) {
     tbb::global_control limit(tbb::global_control::max_allowed_parallelism, p);
     memset(actual, -1, (m + n) * sizeof(data_type));
-    F(actual, A, m, B, n);
+    F(actual, A, m, B, n, p);
     CHECK(memcmp(actual, expected, (m + n - 1) * sizeof(data_type)) == 0);
 }
 
@@ -146,7 +148,6 @@ TEST_CASE("Testing oneTBB with OpenMP") {
 #if __INTEL_COMPILER
     TestNumThreads(); // Testing initialization-related behavior; must be the first
 #endif // __INTEL_COMPILER
-
     for (std::size_t p = utils::MinThread; p <= utils::MaxThread; ++p) {
         for (std::size_t m = 1; m <= M; m *= 17) {
             for (std::size_t n = 1; n <= N; n *= 13) {

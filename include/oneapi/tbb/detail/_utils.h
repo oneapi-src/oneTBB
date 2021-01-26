@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -271,6 +271,45 @@ void run_initializer(const Functor& f, std::atomic<do_once_state>& state ) {
     f();
     state.store(do_once_state::executed, std::memory_order_release);
 }
+
+#if __TBB_CPP20_CONCEPTS_PRESENT
+template <typename T>
+concept boolean_testable_impl = std::convertible_to<T, bool>;
+
+template <typename T>
+concept boolean_testable = boolean_testable_impl<T> && requires( T&& t ) {
+                               { !std::forward<T>(t) } -> boolean_testable_impl;
+                           };
+
+#if __TBB_CPP20_COMPARISONS_PRESENT
+struct synthesized_three_way_comparator {
+    template <typename T1, typename T2>
+    auto operator()( const T1& lhs, const T2& rhs ) const
+        requires requires {
+            { lhs < rhs } -> boolean_testable;
+            { rhs < lhs } -> boolean_testable;
+        }
+    {
+        if constexpr (std::three_way_comparable_with<T1, T2>) {
+            return lhs <=> rhs;
+        } else {
+            if (lhs < rhs) {
+                return std::weak_ordering::less;
+            }
+            if (rhs < lhs) {
+                return std::weak_ordering::greater;
+            }
+            return std::weak_ordering::equivalent;
+        }
+    }
+}; // struct synthesized_three_way_comparator
+
+template <typename T1, typename T2 = T1>
+using synthesized_three_way_result = decltype(synthesized_three_way_comparator{}(std::declval<T1&>(),
+                                                                                 std::declval<T2&>()));
+
+#endif // __TBB_CPP20_COMPARISONS_PRESENT
+#endif // __TBB_CPP20_CONCEPTS_PRESENT
 
 } // namespace d0
 

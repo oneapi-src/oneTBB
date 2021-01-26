@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -248,13 +248,13 @@ struct ProcessorGroupInfo {
     //! Total number of processor groups in the system
     static int NumGroups;
 
-    //! Index of the group with a slot reserved for the first master thread
+    //! Index of the group with a slot reserved for the first external thread
     /** In the context of multiple processor groups support current implementation
-        defines "the first master thread" as the first thread to invoke
+        defines "the first external thread" as the first thread to invoke
         AvailableHwConcurrency().
 
         TODO:   Implement a dynamic scheme remapping workers depending on the pending
-                master threads affinity. **/
+                external threads affinity. **/
     static int HoleIndex;
 };
 
@@ -339,7 +339,7 @@ int NumberOfProcessorGroups() {
     return ProcessorGroupInfo::NumGroups;
 }
 
-// Offset for the slot reserved for the first master thread
+// Offset for the slot reserved for the first external thread
 #define HoleAdjusted(procIdx, grpIdx) (procIdx + (holeIdx <= grpIdx))
 
 int FindProcessorGroupIndex ( int procIdx ) {

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2019-2020 Intel Corporation
+    Copyright (c) 2019-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -38,6 +38,9 @@
 #include <random> // Need std::geometric_distribution
 #include <algorithm> // Need std::equal and std::lexicographical_compare
 #include <cstdint>
+#if __TBB_CPP20_COMPARISONS_PRESENT
+#include <compare>
+#endif
 
 #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
 #pragma warning(push)
@@ -591,7 +594,7 @@ public:
         return node_allocator_traits::max_size(my_node_allocator);
     }
 
-    bool empty() const {
+    __TBB_nodiscard bool empty() const {
         return 0 == size();
     }
 
@@ -1179,11 +1182,22 @@ bool operator==( const concurrent_skip_list<Traits>& lhs, const concurrent_skip_
 #endif
 }
 
+#if !__TBB_CPP20_COMPARISONS_PRESENT
 template <typename Traits>
 bool operator!=( const concurrent_skip_list<Traits>& lhs, const concurrent_skip_list<Traits>& rhs ) {
     return !(lhs == rhs);
 }
+#endif
 
+#if __TBB_CPP20_COMPARISONS_PRESENT && __TBB_CPP20_CONCEPTS_PRESENT
+template <typename Traits>
+tbb::detail::synthesized_three_way_result<typename Traits::value_type>
+operator<=>( const concurrent_skip_list<Traits>& lhs, const concurrent_skip_list<Traits>& rhs ) {
+    return std::lexicographical_compare_three_way(lhs.begin(), lhs.end(),
+                                                  rhs.begin(), rhs.end(),
+                                                  tbb::detail::synthesized_three_way_comparator{});
+}
+#else
 template <typename Traits>
 bool operator<( const concurrent_skip_list<Traits>& lhs, const concurrent_skip_list<Traits>& rhs ) {
     return std::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
@@ -1203,6 +1217,7 @@ template <typename Traits>
 bool operator>=( const concurrent_skip_list<Traits>& lhs, const concurrent_skip_list<Traits>& rhs ) {
     return !(lhs < rhs);
 }
+#endif // __TBB_CPP20_COMPARISONS_PRESENT && __TBB_CPP20_CONCEPTS_PRESENT
 
 // Generates a number from the interval [0, MaxLevel).
 template <std::size_t MaxLevel>

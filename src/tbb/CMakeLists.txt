@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Intel Corporation
+# Copyright (c) 2020-2021 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -49,7 +49,11 @@ endif()
 
 # TODO: Add statistics.cpp
 
-target_compile_definitions(tbb PRIVATE __TBB_BUILD)
+target_compile_definitions(tbb
+                           PUBLIC
+                           $<$<CONFIG:DEBUG>:TBB_USE_DEBUG>
+                           PRIVATE
+                           __TBB_BUILD)
 
 if (NOT ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(armv7-a|aarch64|mips|arm64)" OR
          "${CMAKE_OSX_ARCHITECTURES}" MATCHES "arm64" OR

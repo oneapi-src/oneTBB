@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020 Intel Corporation
+    Copyright (c) 2020-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -194,7 +194,7 @@ d1::task* task_dispatcher::receive_or_steal_task(
     for (;;) {
         __TBB_ASSERT(t == nullptr, nullptr);
         // Check if the resource manager requires our arena to relinquish some threads
-        // For the master thread restore idle state to true after dispatch loop
+        // For the external thread restore idle state to true after dispatch loop
         if (!waiter.continue_execution(slot, t)) {
             __TBB_ASSERT(t == nullptr, nullptr);
             break;
@@ -203,10 +203,10 @@ d1::task* task_dispatcher::receive_or_steal_task(
         if (t != nullptr) {
             // continue_execution returned a task
         }
-        else if (t = get_inbox_or_critical_task(ed, inbox, isolation, critical_allowed)) {
+        else if ((t = get_inbox_or_critical_task(ed, inbox, isolation, critical_allowed))) {
             // Successfully got the task from mailbox or critical task
         }
-        else if (t = get_stream_or_critical_task(ed, a, resume_stream, resume_hint, isolation, critical_allowed)) {
+        else if ((t = get_stream_or_critical_task(ed, a, resume_stream, resume_hint, isolation, critical_allowed))) {
             // Successfully got the resume or critical task
         }
         else if (fifo_allowed && isolation == no_isolation
@@ -333,7 +333,7 @@ d1::task* task_dispatcher::local_wait_for_all(d1::task* t, Waiter& waiter ) {
                     break;
                 }
                 // Retrieve the task from local task pool
-                if (t || slot.is_task_pool_published() && (t = slot.get_task(ed, isolation))) {
+                if (t || (slot.is_task_pool_published() && (t = slot.get_task(ed, isolation)))) {
                     __TBB_ASSERT(ed.original_slot == m_thread_data->my_arena_index, NULL);
                     ed.context = task_accessor::context(*t);
                     ed.isolation = task_accessor::isolation(*t);

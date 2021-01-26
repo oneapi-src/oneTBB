@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -30,8 +30,8 @@ public:
     typedef std::input_iterator_tag iterator_category;
     typedef T value_type;
     typedef typename std::allocator<T>::difference_type difference_type;
-    typedef typename std::allocator<T>::pointer pointer;
-    typedef typename std::allocator<T>::reference reference;
+    typedef typename std::allocator_traits<std::allocator<T>>::pointer pointer;
+    typedef typename std::allocator<T>::value_type& reference;
 
     explicit InputIterator ( T * ptr ) : my_ptr(ptr), my_shared_epoch(new Epoch), my_current_epoch(0) {}
 
@@ -102,8 +102,8 @@ public:
     typedef std::forward_iterator_tag iterator_category;
     typedef T value_type;
     typedef typename std::allocator<T>::difference_type difference_type;
-    typedef typename std::allocator<T>::pointer pointer;
-    typedef typename std::allocator<T>::reference reference;
+    typedef typename std::allocator_traits<std::allocator<T>>::pointer pointer;
+    typedef typename std::allocator<T>::value_type& reference;
 
     explicit ForwardIterator ( T * ptr ) : my_ptr(ptr){}
 
@@ -119,8 +119,8 @@ class RandomIterator {
 public:
     typedef std::random_access_iterator_tag iterator_category;
     typedef T value_type;
-    typedef typename std::allocator<T>::pointer pointer;
-    typedef typename std::allocator<T>::reference reference;
+    typedef typename std::allocator_traits<std::allocator<T>>::pointer pointer;
+    typedef typename std::allocator<T>::value_type& reference;
     typedef typename std::allocator<T>::difference_type difference_type;
 
     explicit RandomIterator ( T * ptr ) : my_ptr(ptr){}
@@ -140,8 +140,8 @@ class ConstRandomIterator {
 public:
     typedef std::random_access_iterator_tag iterator_category;
     typedef const T value_type;
-    typedef typename std::allocator<T>::const_pointer pointer;
-    typedef typename std::allocator<T>::const_reference reference;
+    typedef typename std::allocator_traits<std::allocator<T>>::const_pointer pointer;
+    typedef const typename std::allocator<T>::value_type& reference;
     typedef typename std::allocator<T>::difference_type difference_type;
 
     explicit ConstRandomIterator ( const T * ptr ) : my_ptr(ptr){}

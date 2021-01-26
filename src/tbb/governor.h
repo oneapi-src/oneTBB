@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ public:
                                  DefaultPageSize = DefaultSystemPageSize();
     }
     static void one_time_init();
-    //! Processes scheduler initialization request (possibly nested) in a master thread
+    //! Processes scheduler initialization request (possibly nested) in an external thread
     /** If necessary creates new instance of arena and/or local scheduler.
         The auto_init argument specifies if the call is due to automatic initialization. **/
     static void init_external_thread();

@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Intel Corporation
+# Copyright (c) 2020-2021 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ macro(tbb_gen_vars target)
             -DVARS_TEMPLATE=${TBB_VARS_TEMPLATE}
             -DVARS_NAME=${TBB_VARS_NAME}
             -DTBB_INSTALL_VARS=${TBB_INSTALL_VARS}
+            -DTBB_CMAKE_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}
             -P ${PROJECT_SOURCE_DIR}/integration/cmake/generate_vars.cmake
         )
     endif()

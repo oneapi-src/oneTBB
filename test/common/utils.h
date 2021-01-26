@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -34,6 +34,9 @@
 #if HARNESS_TBBMALLOC_THREAD_SHUTDOWN && __TBB_SOURCE_DIRECTLY_INCLUDED && (_WIN32 || _WIN64)
 #include "../../src/tbbmalloc/tbbmalloc_internal_api.h"
 #endif
+
+#include "dummy_body.h"
+#include "utils_yield.h"
 
 namespace utils {
 
@@ -408,18 +411,7 @@ void check_range_bounds_after_splitting( const tbb::blocked_range<T>& original, 
     REQUIRE(first.size() + second.size() == original.size());
 }
 
-//! Functor with N dummy iterations in it`s body
-class DummyBody {
-    int m_numIters;
-public:
-    explicit DummyBody( int iters ) : m_numIters( iters ) {}
-    void operator()( int ) const {
-        for ( volatile int i = 0; i < m_numIters; ++i ) {}
-    }
-    void operator()() const {
-        for ( volatile int i = 0; i < m_numIters; ++i ) {}
-    }
-};
+
 
 } // namespace utils
 

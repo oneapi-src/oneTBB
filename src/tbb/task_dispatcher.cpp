@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020 Intel Corporation
+    Copyright (c) 2020-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -168,7 +168,7 @@ void task_dispatcher::execute_and_wait(d1::task* t, d1::wait_context& wait_ctx, 
     t = local_td.local_wait_for_all(t, waiter);
     __TBB_ASSERT_EX(t == nullptr, "External waiter must not leave dispatch loop with a task");
 
-    // Master (external) thread couldn't exit the dispatch loop in an idle state
+    // The external thread couldn't exit the dispatch loop in an idle state
     if (local_td.m_thread_data->my_inbox.is_idle_state(true)) {
         local_td.m_thread_data->my_inbox.set_is_idle(false);
     }

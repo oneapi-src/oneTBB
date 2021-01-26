@@ -1,4 +1,4 @@
-; Copyright (c) 2019-2020 Intel Corporation
+; Copyright (c) 2019-2021 Intel Corporation
 ;
 ; Licensed under the Apache License, Version 2.0 (the "License");
 ; you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
 EXPORTS
 
 global
-__TBB_internal_initialize_numa_topology
-__TBB_internal_bind_to_node
+__TBB_internal_initialize_system_topology
+__TBB_internal_apply_affinity
 __TBB_internal_restore_affinity
 __TBB_internal_allocate_binding_handler
 __TBB_internal_deallocate_binding_handler
+__TBB_internal_get_default_concurrency

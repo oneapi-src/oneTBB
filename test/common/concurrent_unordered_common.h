@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include <memory>
 #include "test.h"
 #include "concurrent_associative_common.h"
+#include "test_comparisons.h"
 
 template<typename MyTable>
 inline void CheckContainerAllocator(MyTable &table, size_t expected_allocs, size_t expected_frees, bool exact) {
@@ -317,6 +318,58 @@ void check_heterogeneous_functions_key_int() {
 template <template <typename...> class Container, typename... Args>
 void check_heterogeneous_functions_key_string() {
     check_heterogeneous_functions_key_string_impl<Container<Args..., hash_with_transparent_key_equal>>();
+}
+
+template <typename Container>
+void test_comparisons_basic() {
+    using comparisons_testing::testEqualityComparisons;
+    Container c1, c2;
+    testEqualityComparisons</*ExpectEqual = */true>(c1, c2);
+
+    c1.insert(Value<Container>::make(1));
+    testEqualityComparisons</*ExpectEqual = */false>(c1, c2);
+
+    c2.insert(Value<Container>::make(1));
+    testEqualityComparisons</*ExpectEqual = */true>(c1, c2);
+
+    c2.insert(Value<Container>::make(2));
+    testEqualityComparisons</*ExpectEqual = */false>(c1, c2);
+
+    c1.clear();
+    c2.clear();
+    testEqualityComparisons</*ExpectEqual = */true>(c1, c2);
+}
+
+template <typename TwoWayComparableContainerType>
+void test_two_way_comparable_container() {
+    TwoWayComparableContainerType c1, c2;
+    c1.insert(Value<TwoWayComparableContainerType>::make(1));
+    c2.insert(Value<TwoWayComparableContainerType>::make(1));
+    comparisons_testing::TwoWayComparable::reset();
+    REQUIRE_MESSAGE(c1 == c2, "Incorrect operator == result");
+    comparisons_testing::check_equality_comparison();
+    REQUIRE_MESSAGE(!(c1 != c2), "Incorrect operator != result");
+    comparisons_testing::check_equality_comparison();
+}
+
+template <template <typename...> class ContainerType>
+void test_map_comparisons() {
+    using integral_container = ContainerType<int, int>;
+    using two_way_comparable_container = ContainerType<comparisons_testing::TwoWayComparable,
+                                                       comparisons_testing::TwoWayComparable>;
+    test_comparisons_basic<integral_container>();
+    test_comparisons_basic<two_way_comparable_container>();
+    test_two_way_comparable_container<two_way_comparable_container>();
+}
+
+template <template <typename...> class ContainerType>
+void test_set_comparisons() {
+    using integral_container = ContainerType<int>;
+    using two_way_comparable_container = ContainerType<comparisons_testing::TwoWayComparable>;
+
+    test_comparisons_basic<integral_container>();
+    test_comparisons_basic<two_way_comparable_container>();
+    test_two_way_comparable_container<two_way_comparable_container>();
 }
 
 #endif // __TBB_test_common_concurrent_unordered_common

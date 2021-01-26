@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -13,6 +13,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+#if __INTEL_COMPILER && _MSC_VER
+#pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
+#endif
 
 #include "oneapi/tbb/concurrent_unordered_map.h"
 #include <common/test.h>
@@ -300,6 +304,12 @@ TEST_CASE("CTAD support in concurrent_unordered_map") {
 }
 #endif
 
+//! Testing comparisons in concurrent_unordered_map
+//! \brief \ref interface \ref requirement
+TEST_CASE("concurrent_unordered_map comparisons") {
+    test_map_comparisons<oneapi::tbb::concurrent_unordered_map>();
+}
+
 //! Testing concurrent_unordered_multimap member types
 //! \brief \ref interface \ref requirement
 TEST_CASE("concurrent_unordered_multimap member types") {
@@ -362,6 +372,12 @@ TEST_CASE("CTAD support in concurrent_unordered_multimap") {
     test_deduction_guides<oneapi::tbb::concurrent_unordered_multimap>();
 }
 #endif
+
+//! Testing comparisons in concurrent_unordered_multimap
+//! \brief \ref interface \ref requirement
+TEST_CASE("concurrent_unordered_multimap comparisons") {
+    test_map_comparisons<oneapi::tbb::concurrent_unordered_multimap>();
+}
 
 //! Testing of merge operations in concurrent_unordered_map and concurrent_unordered_multimap
 //! \brief \ref interface \ref requirement

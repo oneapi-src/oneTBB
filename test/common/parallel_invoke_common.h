@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020 Intel Corporation
+    Copyright (c) 2020-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@
 
 #include "oneapi/tbb/parallel_invoke.h"
 #include "oneapi/tbb/global_control.h"
+
+#include "dummy_body.h"
 
 // Helps generate a tuple of functional objects
 template<std::size_t Counter, template <std::size_t> class Functor, class Generator, typename... Fs>
@@ -50,10 +52,9 @@ struct fixed_generator {
 
 template<std::size_t LevelTaskCount, std::size_t MaxDepth, std::size_t WorkSize>
 struct invoke_tree {
-
     struct invoke_tree_leaf {
         static constexpr std::size_t size = WorkSize;
-        void operator()() const { volatile std::size_t i = 0; for (; i < size; i++) {} }
+        void operator()() const { utils::doDummyWork(size); }
     };
 
     // Make invoke_tree_leaf composable with generate_tuple interface

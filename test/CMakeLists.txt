@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Intel Corporation
+# Copyright (c) 2020-2021 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,10 @@ function(tbb_add_test)
     set(multiValueArgs DEPENDENCIES)
     cmake_parse_arguments(_tbb_test "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    set(_tbb_test_TARGET_NAME ${_tbb_test_NAME}${_tbb_test_SUFFIX})
+    set(_tbb_test_TARGET_NAME ${_tbb_test_NAME})
+    if (_tbb_test_SUFFIX)
+        set(_tbb_test_TARGET_NAME ${_tbb_test_NAME}_${_tbb_test_SUFFIX})
+    endif()
 
     # Define the target for test
     add_executable(${_tbb_test_TARGET_NAME} ${_tbb_test_SUBDIR}/${_tbb_test_NAME}.cpp)
@@ -31,7 +34,6 @@ function(tbb_add_test)
         ${TBB_CXX_STD_FLAG}
         ${TBB_WARNING_LEVEL}
         ${TBB_TEST_WARNING_FLAGS}
-        ${TBB_WARNING_SUPPRESS}
         ${TBB_TEST_COMPILE_FLAGS}
         ${TBB_COMMON_COMPILE_FLAGS}
     )
@@ -128,7 +130,6 @@ function(tbb_add_lib_test)
         ${TBB_CXX_STD_FLAG} # TODO: consider making it PUBLIC.
         ${TBB_MMD_FLAG}
         ${TBB_DSE_FLAG}
-        ${TBB_WARNING_SUPPRESS}
         ${TBB_LIB_COMPILE_FLAGS}
         ${TBBMALLOC_LIB_COMPILE_FLAGS}
         ${TBB_COMMON_COMPILE_FLAGS}
@@ -164,9 +165,13 @@ function(tbb_add_lib_test)
     )
 endfunction()
 
-function(_tbb_get_hwloc_runtime_vars HWLOC_TARGET_LIST ENV_EXTENSION_VARIABLE)
-    foreach(HWLOC_TARGET_NAME ${HWLOC_TARGET_LIST})
-        get_target_property(HWLOC_LOCATION ${HWLOC_TARGET_NAME} IMPORTED_LOCATION)
+function(_tbb_get_hwloc_runtime_vars)
+    set(oneValueArgs ENV_EXTENSION_VARIABLE)
+    set(multiValueArgs HWLOC_VERSION_LIST)
+    cmake_parse_arguments(_runtime_vars "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    foreach(HWLOC_VERSION ${_runtime_vars_HWLOC_VERSION_LIST})
+        get_target_property(HWLOC_LOCATION HWLOC::${HWLOC_VERSION} IMPORTED_LOCATION)
         get_filename_component(HWLOC_LOCATION_PATH ${HWLOC_LOCATION} DIRECTORY)
         list(APPEND LIBRARIES_PATH ${HWLOC_LOCATION_PATH})
     endforeach()
@@ -174,11 +179,57 @@ function(_tbb_get_hwloc_runtime_vars HWLOC_TARGET_LIST ENV_EXTENSION_VARIABLE)
     if (WIN32)
         string(REPLACE ";" "\;" LIBRARIES_PATH "${LIBRARIES_PATH}\;$ENV{PATH}")
         string(REPLACE "/" "\\" LIBRARIES_PATH "${LIBRARIES_PATH}")
-        set(${ENV_EXTENSION_VARIABLE} "PATH=${LIBRARIES_PATH}" PARENT_SCOPE)
+        set(${_runtime_vars_ENV_EXTENSION_VARIABLE} "PATH=${LIBRARIES_PATH}" PARENT_SCOPE)
     else()
         string(REPLACE ";" ":" LIBRARIES_PATH "${LIBRARIES_PATH}:$ENV{LD_LIBRARY_PATH}")
-        set(${ENV_EXTENSION_VARIABLE} "LD_LIBRARY_PATH=${LIBRARIES_PATH}" PARENT_SCOPE)
+        set(${_runtime_vars_ENV_EXTENSION_VARIABLE} "LD_LIBRARY_PATH=${LIBRARIES_PATH}" PARENT_SCOPE)
     endif()
+endfunction()
+
+function(tbb_configure_hwloc_dependent_test)
+    set(oneValueArgs SUBDIR NAME SUFFIX TBBBIND_VERSION)
+    set(multiValueArgs HWLOC_REQUIRED_VERSION_LIST)
+    cmake_parse_arguments(_hwloc_test "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    set(HWLOC_REQUIREMENTS_SATISFIED TRUE)
+    foreach(HWLOC_TARGET ${_hwloc_test_HWLOC_REQUIRED_VERSION_LIST})
+        if (NOT TARGET HWLOC::${HWLOC_TARGET})
+            set(HWLOC_REQUIREMENTS_SATISFIED FALSE)
+        endif()
+    endforeach()
+    if (NOT HWLOC_REQUIREMENTS_SATISFIED)
+        return()
+    endif()
+
+    list(GET _hwloc_test_HWLOC_REQUIRED_VERSION_LIST 0 HWLOC_MAXIMAL_VERSION)
+    tbb_add_test(
+        SUBDIR ${_hwloc_test_SUBDIR}
+        NAME ${_hwloc_test_NAME}
+        SUFFIX ${_hwloc_test_SUFFIX}
+        DEPENDENCIES TBB::tbb HWLOC::${HWLOC_MAXIMAL_VERSION}
+    )
+
+    _tbb_get_hwloc_runtime_vars(
+        ENV_EXTENSION_VARIABLE HWLOC_RUNTIME_VARS
+        HWLOC_VERSION_LIST ${_hwloc_test_HWLOC_REQUIRED_VERSION_LIST}
+    )
+    set_tests_properties(${_hwloc_test_NAME}_${_hwloc_test_SUFFIX} PROPERTIES
+        ENVIRONMENT "${HWLOC_RUNTIME_VARS};TBB_VERSION=1"
+        PASS_REGULAR_EXPRESSION "oneTBB: TBBBIND.*${_hwloc_test_TBBBIND_VERSION}"
+        FAIL_REGULAR_EXPRESSION "Status: FAILURE!"
+    )
+
+    # The tbbbind isn't loading on 32-bit Windows systems with more then 32 available hardware threads
+    if (WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 4 AND SYSTEM_CONCURRENCY GREATER 32)
+        set_tests_properties(${_hwloc_test_NAME}_${_hwloc_test_SUFFIX} PROPERTIES
+            PASS_REGULAR_EXPRESSION "oneTBB: TBBBIND.*UNAVAILABLE"
+            FAIL_REGULAR_EXPRESSION "Status: FAILURE!"
+        )
+    else()
+        target_compile_definitions(${_hwloc_test_NAME}_${_hwloc_test_SUFFIX} PRIVATE __TBB_HWLOC_VALID_ENVIRONMENT)
+    endif()
+
+    add_dependencies(test_suite_arena_constraints ${_hwloc_test_NAME}_${_hwloc_test_SUFFIX})
 endfunction()
 
 function(tbb_add_tbbbind_test)
@@ -186,6 +237,7 @@ function(tbb_add_tbbbind_test)
     cmake_parse_arguments(_tbbbind_test "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     tbb_add_test(SUBDIR ${_tbbbind_test_SUBDIR} NAME ${_tbbbind_test_NAME} DEPENDENCIES TBB::tbb)
+    add_dependencies(test_suite_arena_constraints ${_tbbbind_test_NAME})
 
     # Disable all HWLOC dependent tests in case unsupported environment.
     if (TBB_WINDOWS_DRIVER OR ANDROID_PLATFORM)
@@ -196,7 +248,13 @@ function(tbb_add_tbbbind_test)
     set_tests_properties(${_tbbbind_test_NAME} PROPERTIES
         ENVIRONMENT TBB_VERSION=1
         PASS_REGULAR_EXPRESSION "oneTBB: TBBBIND.*UNAVAILABLE"
+        FAIL_REGULAR_EXPRESSION "Status: FAILURE!"
     )
+
+    if (TARGET HWLOC::hwloc_2_4 AND NOT HWLOC_2_4_TESTS_STATUS_SHOWN)
+        message(STATUS "HWLOC 2.4 dependent tests were enabled.")
+        set(HWLOC_2_4_TESTS_STATUS_SHOWN TRUE PARENT_SCOPE)
+    endif()
 
     if (TARGET HWLOC::hwloc_2 AND NOT HWLOC_2_TESTS_STATUS_SHOWN)
         message(STATUS "HWLOC 2 dependent tests were enabled.")
@@ -208,83 +266,44 @@ function(tbb_add_tbbbind_test)
         set(HWLOC_1_11_TESTS_STATUS_SHOWN TRUE PARENT_SCOPE)
     endif()
 
-    if (TARGET HWLOC::hwloc_2)
-        tbb_add_test(
+    list(APPEND HWLOC_TEST_CASES
+        hwloc_2_4
+        hwloc_2
+        hwloc_1_11
+        hwloc_2_4_hwloc_2
+        hwloc_2_4_hwloc_1_11
+        hwloc_2_hwloc_1_11
+        hwloc_2_4_hwloc_2_hwloc_1_11
+    )
+
+    list(APPEND HWLOC_TEST_CASE_0_VARS tbbbind_2_4 "hwloc_2_4")
+    list(APPEND HWLOC_TEST_CASE_1_VARS tbbbind_2   "hwloc_2")
+    list(APPEND HWLOC_TEST_CASE_2_VARS tbbbind     "hwloc_1_11")
+    list(APPEND HWLOC_TEST_CASE_3_VARS tbbbind_2_4 "hwloc_2_4,hwloc_2")
+    list(APPEND HWLOC_TEST_CASE_4_VARS tbbbind_2_4 "hwloc_2_4,hwloc_1_11")
+    list(APPEND HWLOC_TEST_CASE_5_VARS tbbbind_2   "hwloc_2,hwloc_1_11")
+    list(APPEND HWLOC_TEST_CASE_6_VARS tbbbind_2_4 "hwloc_2_4,hwloc_2,hwloc_1_11")
+
+    foreach(TEST_CASE ${HWLOC_TEST_CASES})
+        list(FIND HWLOC_TEST_CASES ${TEST_CASE} TEST_CASE_INDEX)
+        list(GET HWLOC_TEST_CASE_${TEST_CASE_INDEX}_VARS 0 TEST_CASE_TBBBIND_EXPECTED_VERSION)
+        list(GET HWLOC_TEST_CASE_${TEST_CASE_INDEX}_VARS 1 TEST_CASE_TBBBIND_HWLOC_REQUIRED_VERSIONS)
+        string(REPLACE "," ";" TEST_CASE_TBBBIND_HWLOC_REQUIRED_VERSIONS "${TEST_CASE_TBBBIND_HWLOC_REQUIRED_VERSIONS}")
+
+        tbb_configure_hwloc_dependent_test(
             SUBDIR ${_tbbbind_test_SUBDIR}
             NAME ${_tbbbind_test_NAME}
-            SUFFIX _hwloc_2
-            DEPENDENCIES TBB::tbb HWLOC::hwloc_2
+            SUFFIX ${TEST_CASE}
+            TBBBIND_VERSION ${TEST_CASE_TBBBIND_EXPECTED_VERSION}
+            HWLOC_REQUIRED_VERSION_LIST ${TEST_CASE_TBBBIND_HWLOC_REQUIRED_VERSIONS}
         )
-
-        _tbb_get_hwloc_runtime_vars(HWLOC::hwloc_2 HWLOC_RUNTIME_VARS)
-        set_tests_properties(${_tbbbind_test_NAME}_hwloc_2 PROPERTIES
-            ENVIRONMENT "${HWLOC_RUNTIME_VARS};TBB_VERSION=1"
-            PASS_REGULAR_EXPRESSION "oneTBB: TBBBIND.*tbbbind_2_0"
-        )
-
-        # The tbbbind isn't loading on 32-bit Windows systems with more then 32 available hardware threads
-        if (WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 4 AND SYSTEM_CONCURRENCY GREATER 32)
-            set_tests_properties(${_tbbbind_test_NAME}_hwloc_2 PROPERTIES
-                PASS_REGULAR_EXPRESSION "oneTBB: TBBBIND.*UNAVAILABLE"
-            )
-        else()
-            target_compile_definitions(${_tbbbind_test_NAME}_hwloc_2 PRIVATE __TBB_HWLOC_VALID_ENVIRONMENT)
-        endif()
-    endif()
-
-    if (TARGET HWLOC::hwloc_1_11)
-        tbb_add_test(
-            SUBDIR ${_tbbbind_test_SUBDIR}
-            NAME ${_tbbbind_test_NAME}
-            SUFFIX _hwloc_1_11
-            DEPENDENCIES TBB::tbb HWLOC::hwloc_1_11
-        )
-
-        _tbb_get_hwloc_runtime_vars(HWLOC::hwloc_1_11 HWLOC_RUNTIME_VARS)
-        set_tests_properties(${_tbbbind_test_NAME}_hwloc_1_11 PROPERTIES
-            ENVIRONMENT "${HWLOC_RUNTIME_VARS};TBB_VERSION=1"
-            PASS_REGULAR_EXPRESSION "oneTBB: TBBBIND.*tbbbind"
-        )
-
-        # The tbbbind isn't loading on 32-bit Windows systems with more then 32 available hardware threads
-        if (WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 4 AND SYSTEM_CONCURRENCY GREATER 32)
-            set_tests_properties(${_tbbbind_test_NAME}_hwloc_1_11 PROPERTIES
-                PASS_REGULAR_EXPRESSION "oneTBB: TBBBIND.*UNAVAILABLE"
-            )
-        else()
-            target_compile_definitions(${_tbbbind_test_NAME}_hwloc_1_11 PRIVATE __TBB_HWLOC_VALID_ENVIRONMENT)
-        endif()
-    endif()
-
-    if (TARGET HWLOC::hwloc_1_11 AND TARGET HWLOC::hwloc_2)
-        tbb_add_test(
-            SUBDIR ${_tbbbind_test_SUBDIR}
-            NAME ${_tbbbind_test_NAME}
-            SUFFIX _hwloc_2_hwloc_1_11
-            DEPENDENCIES TBB::tbb HWLOC::hwloc_2
-        )
-
-        _tbb_get_hwloc_runtime_vars("HWLOC::hwloc_1_11;HWLOC::hwloc_2" HWLOC_RUNTIME_VARS)
-        set_tests_properties(${_tbbbind_test_NAME}_hwloc_2_hwloc_1_11 PROPERTIES
-                ENVIRONMENT "${HWLOC_RUNTIME_VARS};TBB_VERSION=1"
-                PASS_REGULAR_EXPRESSION "oneTBB: TBBBIND.*tbbbind_2_0"
-        )
-
-        # The tbbbind isn't loading on 32-bit Windows systems with more then 32 available hardware threads
-        if (WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 4 AND SYSTEM_CONCURRENCY GREATER 32)
-            set_tests_properties(${_tbbbind_test_NAME}_hwloc_2_hwloc_1_11 PROPERTIES
-                PASS_REGULAR_EXPRESSION "oneTBB: TBBBIND.*UNAVAILABLE"
-            )
-        else()
-            target_compile_definitions(${_tbbbind_test_NAME}_hwloc_2_hwloc_1_11 PRIVATE __TBB_HWLOC_VALID_ENVIRONMENT)
-        endif()
-    endif()
+    endforeach()
 endfunction()
 
 # Copy libraries to test folder to make it visible during tests execution if external TBB is tested.
 # TODO: check and update for multi-config generators.
 if (TBB_FOUND)
-    list(APPEND _tbb_test_components tbb tbbmalloc tbbmalloc_proxy tbbbind tbbbind_2_0)
+    list(APPEND _tbb_test_components tbb tbbmalloc tbbmalloc_proxy tbbbind tbbbind_2_0 tbbbind_2_4)
     foreach(_component ${_tbb_test_components})
         if (TARGET TBB::${_component})
             get_property(${_component}_lib_file_location TARGET TBB::${_component} PROPERTY LOCATION)
@@ -308,6 +327,10 @@ find_program(SDE_EXE
     PATH_SUFFIXES bin)
 
 unset(_sde_find_name)
+
+# Common target for the tbbbind related tests
+add_custom_target(test_suite_arena_constraints)
+
 # Define the tests
 tbb_add_test(SUBDIR tbb NAME test_tick_count DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_allocators DEPENDENCIES TBB::tbb)
@@ -539,5 +562,6 @@ if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(armv7-a|aarch64|mips|arm64)")
     tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_new_handler DEPENDENCIES TBB::tbbmalloc_proxy)
 endif()
 
+unset(HWLOC_2_4_TESTS_STATUS_SHOWN)
 unset(HWLOC_2_TESTS_STATUS_SHOWN)
 unset(HWLOC_1_11_TESTS_STATUS_SHOWN)

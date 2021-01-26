@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020 Intel Corporation
+    Copyright (c) 2020-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 #include "tbb/global_control.h"
 
 #include "common/spin_barrier.h"
+#include "common/utils.h"
 
 #include <cstddef>
 #include <algorithm>
@@ -148,7 +149,7 @@ void submit_work( std::vector<arena_info>& arenas, unsigned repeats, utils::Spin
                     tg->run(
                         [&barrier, priority_value](){
                             while( !g_work_submitted.load(std::memory_order_acquire) )
-                                std::this_thread::yield();
+                                utils::yield();
                             g_task_info[g_task_num++] = priority_value;
                             barrier.wait();
                         }
@@ -164,7 +165,7 @@ void wait_work_completion(
 {
     if( max_num_threads > 1 )
         while( g_task_num < overall_tasks_num )
-            std::this_thread::yield();
+            utils::yield();
 
     for( auto& item : arenas ) {
         tbb::task_arena& arena = *std::get<arena_pointer>(item).get();

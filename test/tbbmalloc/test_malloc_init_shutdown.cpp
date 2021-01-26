@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -55,8 +55,7 @@ void Test1 () {
 
     utils::NativeParallelFor(NTasks, [&] (std::size_t thread_idx) {
         tf(thread_idx % 2 == 0);
-        utils::Sleep(1000); // wait a second :)
-        REQUIRE_MESSAGE(FinishedTasks == NTasks, "Some threads appear to deadlock" );
+        while (FinishedTasks != NTasks) utils::yield();
     });
 }
 
@@ -98,8 +97,8 @@ void Test2() {
     FinishedTasks = 0;
     t2a = std::thread(func2a, std::size_t(0));
     std::thread t2b(func2b, std::size_t(1));
-    utils::Sleep(1000); // wait a second :)
-    REQUIRE_MESSAGE( FinishedTasks==2, "Threads appear to deadlock" );
+
+    while (FinishedTasks != 2) utils::yield();
 
     t2b.join(); // t2a is monitored by t2b
 

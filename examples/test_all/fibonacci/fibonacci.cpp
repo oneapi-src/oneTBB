@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -109,6 +109,16 @@ value SerialRecursiveFib(int n) {
         result = SerialRecursiveFib(n - 1) + SerialRecursiveFib(n - 2);
     return result;
 }
+
+// GCC 4.8 C++ standard library implements std::this_thread::yield as no-op.
+#if __TBB_GLIBCXX_THIS_THREAD_YIELD_BROKEN
+static inline void yield() {
+    sched_yield();
+}
+#else
+using std::this_thread::yield;
+#endif
+
 //! Introducing of queue method in serial
 value SerialQueueFib(int n) {
     oneapi::tbb::concurrent_queue<Matrix2x2> Q;
@@ -117,11 +127,11 @@ value SerialQueueFib(int n) {
     Matrix2x2 A, B;
     while (true) {
         while (!Q.try_pop(A))
-            std::this_thread::yield();
+            yield();
         if (Q.empty())
             break;
         while (!Q.try_pop(B))
-            std::this_thread::yield();
+            yield();
         Q.push(A * B);
     }
     return A.v[0][0];
@@ -284,9 +294,9 @@ struct MultiplyFunc {
         Matrix2x2 m1, m2;
         // get two elements
         while (!queue->try_pop(m1))
-            std::this_thread::yield();
+            yield();
         while (!queue->try_pop(m2))
-            std::this_thread::yield();
+            yield();
         m1 = m1 * m2; // process them
         queue->push(m1); // and push back
     }
