@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -42,9 +42,9 @@ class task_dispatcher;
 class task_group_context;
 class allocate_root_with_context_proxy;
 
-#if __TBB_NUMA_SUPPORT
+#if __TBB_ARENA_BINDING
 class numa_binding_observer;
-#endif /*__TBB_NUMA_SUPPORT*/
+#endif /*__TBB_ARENA_BINDING*/
 
 //! Bounded coroutines cache LIFO ring buffer
 class arena_co_cache {
@@ -133,6 +133,54 @@ struct stack_anchor_type {
     stack_anchor_type(const stack_anchor_type&) = delete;
 };
 
+#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
+class atomic_flag {
+    static const std::uintptr_t SET = 1;
+    static const std::uintptr_t EMPTY = 0;
+    std::atomic<std::uintptr_t> my_state;
+public:
+    bool test_and_set() {
+        std::uintptr_t state = my_state.load(std::memory_order_acquire);
+        switch (state) {
+        case SET:
+            return false;
+        default: /* busy */
+            if (my_state.compare_exchange_strong(state, SET)) {
+                // We interrupted clear transaction
+                return false;
+            }
+            if (state != EMPTY) {
+                // We lost our epoch
+                return false;
+            }
+            // We are too late but still in the same epoch
+            __TBB_fallthrough;
+        case EMPTY:
+            return my_state.compare_exchange_strong(state, SET);
+        }
+    }
+    template <typename Pred>
+    bool try_clear_if(Pred&& pred) {
+        std::uintptr_t busy = std::uintptr_t(&busy);
+        std::uintptr_t state = my_state.load(std::memory_order_acquire);
+        if (state == SET && my_state.compare_exchange_strong(state, busy)) {
+            if (pred()) {
+                return my_state.compare_exchange_strong(busy, EMPTY);
+            }
+            // The result of the next operation is discarded, always false should be returned.
+            my_state.compare_exchange_strong(busy, SET);
+        }
+        return false;
+    }
+    void clear() {
+        my_state.store(EMPTY, std::memory_order_release);
+    }
+    bool test() {
+        return my_state.load(std::memory_order_acquire) != EMPTY;
+    }
+};
+#endif
+
 //! The structure of an arena, except the array of slots.
 /** Separated in order to simplify padding.
     Intrusive list node base class is used by market to form a list of arenas. **/
@@ -141,8 +189,8 @@ struct arena_base : padded<intrusive_list_node> {
     std::atomic<unsigned> my_num_workers_allotted;   // heavy use in stealing loop
 
     //! Reference counter for the arena.
-    /** Worker and master references are counted separately: first several bits are for references
-        from master threads or explicit task_arenas (see arena::ref_external_bits below);
+    /** Worker and external thread references are counted separately: first several bits are for references
+        from external thread threads or explicit task_arenas (see arena::ref_external_bits below);
         the rest counts the number of workers servicing the arena. */
     std::atomic<unsigned> my_references;     // heavy use in stealing loop
 
@@ -168,7 +216,7 @@ struct arena_base : padded<intrusive_list_node> {
     task_stream<back_nonnull_accessor> my_critical_task_stream;
 #endif
 
-    //! The number of workers requested by the master thread owning the arena.
+    //! The number of workers requested by the external thread owning the arena.
     unsigned my_max_num_workers;
 
     //! The total number of workers that are requested from the resource manager.
@@ -195,10 +243,10 @@ struct arena_base : padded<intrusive_list_node> {
     //! The list of local observers attached to this arena.
     observer_list my_observers;
 
-#if __TBB_NUMA_SUPPORT
+#if __TBB_ARENA_BINDING
     //! Pointer to internal observer that allows to bind threads in arena to certain NUMA node.
     numa_binding_observer* my_numa_binding_observer;
-#endif /*__TBB_NUMA_SUPPORT*/
+#endif /*__TBB_ARENA_BINDING*/
 
     // Below are rarely modified members
 
@@ -214,17 +262,19 @@ struct arena_base : padded<intrusive_list_node> {
     //! The number of slots in the arena.
     unsigned my_num_slots;
 
-    //! The number of reserved slots (can be occupied only by masters).
+    //! The number of reserved slots (can be occupied only by external threads).
     unsigned my_num_reserved_slots;
 
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
     // arena needs an extra worker despite the arena limit
-    bool my_local_concurrency_mode;
+    atomic_flag my_local_concurrency_flag;
+    // the number of local mandatory concurrency requests
+    int my_local_concurrency_requests;
     // arena needs an extra worker despite a global limit
     std::atomic<bool> my_global_concurrency_mode;
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
 
-    //! Waiting object for master threads that cannot join the arena.
+    //! Waiting object for external threads that cannot join the arena.
     concurrent_monitor my_exit_monitors;
 
     //! Coroutines (task_dispathers) cache buffer
@@ -324,7 +374,7 @@ public:
     //! Registers the worker with the arena and enters TBB scheduler dispatch loop
     void process(thread_data&);
 
-    //! Notification that worker or master leaves its arena
+    //! Notification that the thread leaves its arena
     template<unsigned ref_param>
     inline void on_thread_leaving ( );
 
@@ -353,14 +403,14 @@ inline void arena::on_thread_leaving ( ) {
     // current design.
     //
     // In case of using fire-and-forget tasks (scheduled via task::enqueue())
-    // master thread is allowed to leave its arena before all its work is executed,
+    // external thread is allowed to leave its arena before all its work is executed,
     // and market may temporarily revoke all workers from this arena. Since revoked
     // workers never attempt to reset arena state to EMPTY and cancel its request
     // to RML for threads, the arena object is destroyed only when both the last
-    // thread is leaving it and arena's state is EMPTY (that is its master thread
+    // thread is leaving it and arena's state is EMPTY (that is its external thread
     // left and it does not contain any work).
     // Thus resetting arena to EMPTY state (as earlier TBB versions did) should not
-    // be done here (or anywhere else in the master thread to that matter); doing so
+    // be done here (or anywhere else in the external thread to that matter); doing so
     // can result either in arena's premature destruction (at least without
     // additional costly checks in workers) or in unnecessary arena state changes
     // (and ensuing workers migration).
@@ -391,7 +441,7 @@ inline void arena::on_thread_leaving ( ) {
     // In both cases we cannot dereference arena pointer after the refcount is
     // decremented, as our arena may already be destroyed.
     //
-    // If this is the master thread, the market is protected by refcount to it.
+    // If this is the external thread, the market is protected by refcount to it.
     // In case of workers market's liveness is ensured by the RML connection
     // rundown protocol, according to which the client (i.e. the market) lives
     // until RML server notifies it about connection termination, and this
@@ -429,32 +479,22 @@ inline void arena::on_thread_leaving ( ) {
 template<arena::new_work_type work_type>
 void arena::advertise_new_work() {
     auto is_related_arena = [&] (extended_context context) {
-        std::uintptr_t arena_tag = std::uintptr_t(this);
-        return arena_tag == context.arena_ctx;
+        return this == context.my_arena_addr;
     };
 
     if( work_type == work_enqueued ) {
+        atomic_fence(std::memory_order_seq_cst);
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
         if ( my_market->my_num_workers_soft_limit.load(std::memory_order_acquire) == 0 &&
             my_global_concurrency_mode.load(std::memory_order_acquire) == false )
             my_market->enable_mandatory_concurrency(this);
 
-        if ( my_max_num_workers == 0 && my_num_reserved_slots == 1 ) {
-            // TODO revamp: investigate concurrent equeue from external threads
-            // __TBB_ASSERT(!my_local_concurrency_mode, NULL);
-            my_local_concurrency_mode = true;
-            my_pool_state.store(SNAPSHOT_FULL, std::memory_order_release);
-            my_max_num_workers = 1;
-            my_market->adjust_demand(*this, my_max_num_workers);
-
-            // Notify all sleeping threads that work has appeared in the arena.
-            my_market->get_wait_list().notify(is_related_arena);
-            return;
+        if (my_max_num_workers == 0 && my_num_reserved_slots == 1 && my_local_concurrency_flag.test_and_set()) {
+            my_market->adjust_demand(*this, /* delta = */ 1, /* mandatory = */ true);
         }
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
         // Local memory fence here and below is required to avoid missed wakeups; see the comment below.
         // Starvation resistant tasks require concurrency, so missed wakeups are unacceptable.
-        atomic_fence(std::memory_order_seq_cst);
     }
     else if( work_type == wakeup ) {
         atomic_fence(std::memory_order_seq_cst);
@@ -488,22 +528,12 @@ void arena::advertise_new_work() {
             // telling the market that there is work to do.
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
             if( work_type == work_spawned ) {
-                if( my_local_concurrency_mode ) {
-                    __TBB_ASSERT(my_max_num_workers==1, "");
-                    // There was deliberate oversubscription on 1 core for sake of starvation-resistant tasks.
-                    // Now a single active thread (must be the master) supposedly starts a new parallel region
-                    // with relaxed sequential semantics, and oversubscription should be avoided.
-                    // Demand for workers has been decreased to 0 during SNAPSHOT_EMPTY, so just keep it.
-                    my_max_num_workers = 0;
-                    my_local_concurrency_mode = false;
-                    return;
-                }
                 if ( my_global_concurrency_mode.load(std::memory_order_acquire) == true )
                     my_market->mandatory_concurrency_disable( this );
             }
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
             // TODO: investigate adjusting of arena's demand by a single worker.
-            my_market->adjust_demand( *this, my_max_num_workers );
+            my_market->adjust_demand(*this, my_max_num_workers, /* mandatory = */ false);
 
             // Notify all sleeping threads that work has appeared in the arena.
             my_market->get_wait_list().notify(is_related_arena);
@@ -519,7 +549,7 @@ inline d1::task* arena::steal_task(unsigned arena_index, FastRandom& frnd, execu
     }
     // Try to steal a task from a random victim.
     std::size_t k = frnd.get() % (slot_num_limit - 1);
-    // The following condition excludes the master that might have
+    // The following condition excludes the external thread that might have
     // already taken our previous place in the arena from the list .
     // of potential victims. But since such a situation can take
     // place only in case of significant oversubscription, keeping
@@ -539,7 +569,7 @@ inline d1::task* arena::steal_task(unsigned arena_index, FastRandom& frnd, execu
         t = tp.extract_task<task_proxy::pool_bit>();
         if (!t) {
             // Proxy was empty, so it's our responsibility to free it
-            deallocate(*tp.allocator, &tp, sizeof(task_proxy), ed);
+            tp.allocator.delete_object(&tp, ed);
             return nullptr;
         }
         // Note affinity is called for any stealed task (proxy or general)

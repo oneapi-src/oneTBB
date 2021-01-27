@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2019-2020 Intel Corporation
+    Copyright (c) 2019-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 #ifndef __TBB_test_common_concurrent_ordered_common_H
 #define __TBB_test_common_concurrent_ordered_common_H
 
+#define __TBB_TEST_CPP20_COMPARISONS __TBB_CPP20_COMPARISONS_PRESENT && __TBB_CPP20_CONCEPTS_PRESENT
 #include "common/concurrent_associative_common.h"
 #include "test_comparisons.h"
 
@@ -357,6 +358,30 @@ void test_two_way_comparable_container() {
     comparisons_testing::check_two_way_comparison();
 }
 
+#if __TBB_TEST_CPP20_COMPARISONS
+template <typename ThreeWayComparableContainerType>
+void test_three_way_comparable_container() {
+    ThreeWayComparableContainerType c1, c2;
+    c1.insert(Value<ThreeWayComparableContainerType>::make(1));
+    c2.insert(Value<ThreeWayComparableContainerType>::make(1));
+    comparisons_testing::ThreeWayComparable::reset();
+    REQUIRE_MESSAGE(!(c1 <=> c2 < 0), "Incorrect operator<=> result");
+    comparisons_testing::check_three_way_comparison();
+
+    REQUIRE_MESSAGE(!(c1 < c2), "Incorrect operator< result");
+    comparisons_testing::check_three_way_comparison();
+
+    REQUIRE_MESSAGE(!(c1 > c2), "Incorrect operator> result");
+    comparisons_testing::check_three_way_comparison();
+
+    REQUIRE_MESSAGE(c1 <= c2, "Incorrect operator>= result");
+    comparisons_testing::check_three_way_comparison();
+
+    REQUIRE_MESSAGE(c1 >= c2, "Incorrect operator>= result");
+    comparisons_testing::check_three_way_comparison();
+}
+#endif
+
 template <template <typename...> class ContainerType>
 void test_map_comparisons() {
     using integral_container = ContainerType<int, int>;
@@ -365,6 +390,22 @@ void test_map_comparisons() {
     test_comparisons_basic<integral_container>();
     test_comparisons_basic<two_way_comparable_container>();
     test_two_way_comparable_container<two_way_comparable_container>();
+
+#if __TBB_TEST_CPP20_COMPARISONS
+    using two_way_less_only_container = ContainerType<comparisons_testing::LessComparableOnly,
+                                                      comparisons_testing::LessComparableOnly>;
+
+    using three_way_only_container = ContainerType<comparisons_testing::ThreeWayComparableOnly,
+                                                   comparisons_testing::ThreeWayComparableOnly>;
+
+    using three_way_comparable_container = ContainerType<comparisons_testing::ThreeWayComparable,
+                                                         comparisons_testing::ThreeWayComparable>;
+
+    test_comparisons_basic<two_way_less_only_container>();
+    test_comparisons_basic<three_way_only_container>();
+    test_comparisons_basic<three_way_comparable_container>();
+    test_three_way_comparable_container<three_way_comparable_container>();
+#endif // __TBB_TEST_CPP20_COMPARISONS
 }
 
 template <template <typename...> class ContainerType>
@@ -375,6 +416,17 @@ void test_set_comparisons() {
     test_comparisons_basic<integral_container>();
     test_comparisons_basic<two_way_comparable_container>();
     test_two_way_comparable_container<two_way_comparable_container>();
+
+#if __TBB_TEST_CPP20_COMPARISONS
+    using two_way_less_only_container = ContainerType<comparisons_testing::LessComparableOnly>;
+    using three_way_only_container = ContainerType<comparisons_testing::ThreeWayComparableOnly>;
+    using three_way_comparable_container = ContainerType<comparisons_testing::ThreeWayComparable>;
+
+    test_comparisons_basic<two_way_less_only_container>();
+    test_comparisons_basic<three_way_only_container>();
+    test_comparisons_basic<three_way_comparable_container>();
+    test_three_way_comparable_container<three_way_comparable_container>();
+#endif // __TBB_TEST_CPP20_COMPARISONS
 }
 
 #endif // __TBB_test_common_concurrent_ordered_common_H

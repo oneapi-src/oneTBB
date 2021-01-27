@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ std::atomic<intptr_t> g_CurExecuted,
                       g_ExecutedAtLastCatch,
                       g_ExecutedAtFirstCatch,
                       g_ExceptionsThrown,
-                      g_MasterExecutedThrow,     // number of times master entered exception code
-                      g_NonMasterExecutedThrow,  // number of times nonmaster entered exception code
+                      g_MasterExecutedThrow,     // number of times external thread entered exception code
+                      g_NonMasterExecutedThrow,  // number of times non-external thread entered exception code
                       g_PipelinesStarted;
 volatile bool g_ExceptionCaught = false,
               g_UnknownException = false;
@@ -61,7 +61,7 @@ std::atomic<intptr_t> g_NumExceptionsCaught;
 class eh_test_observer : public tbb::task_scheduler_observer {
 public:
     void on_scheduler_entry(bool is_worker) override {
-        if(is_worker) {  // we've already counted the master
+        if(is_worker) {  // we've already counted the external thread
             intptr_t p = ++g_ActualCurrentThreads;
             intptr_t q = g_ActualMaxThreads;
             while(q < p) {
@@ -89,8 +89,8 @@ inline void ResetEhGlobals ( bool throwException = true, bool flog = false ) {
     g_Flog = flog;
     g_MasterExecuted = false;
     g_NonMasterExecuted = false;
-    g_ActualMaxThreads = 1;  // count master
-    g_ActualCurrentThreads = 1;  // count master
+    g_ActualMaxThreads = 1;  // count external thread
+    g_ActualCurrentThreads = 1;  // count external thread
     g_ExceptionsThrown = g_NumExceptionsCaught = g_PipelinesStarted = 0;
 }
 
@@ -128,12 +128,12 @@ inline void ThrowTestException ( intptr_t threshold ) {
     bool inMaster = (std::this_thread::get_id() == g_Master);
     if ( !g_ThrowException ||   // if we're not supposed to throw
             (!g_Flog &&         // if we're not catching throw in bodies and
-             (g_ExceptionInMaster ^ inMaster)) ) { // we're the master and not expected to throw
-              // or are the master and the master is not the one to throw (??)
+             (g_ExceptionInMaster ^ inMaster)) ) { // we're the external thread and not expected to throw
+              // or are the external thread not the one to throw (??)
         return;
     }
     while ( Existed < threshold )
-        std::this_thread::yield();
+        utils::yield();
     if ( !g_SolitaryException ) {
         ++g_ExceptionsThrown;
         if(inMaster) ++g_MasterExecutedThrow; else ++g_NonMasterExecutedThrow;
@@ -232,7 +232,7 @@ void WaitUntilConcurrencyPeaks ( int expected_peak ) {
     int n = 0;
 retry:
     while ( ++n < c_Timeout && (int)utils::ConcurrencyTracker::PeakParallelism() < expected_peak )
-        std::this_thread::yield();
+        utils::yield();
 #if USE_TASK_SCHEDULER_OBSERVER
     DOCTEST_WARN_MESSAGE( g_NumThreads == g_ActualMaxThreads, "Library did not provide sufficient threads");
 #endif
@@ -260,7 +260,7 @@ inline bool IsThrowingThread() {
 }
 
 struct Cancellator {
-    static volatile bool s_Ready;
+    static std::atomic<bool> s_Ready;
     tbb::task_group_context &m_groupToCancel;
     intptr_t m_cancellationThreshold;
 
@@ -268,7 +268,7 @@ struct Cancellator {
         utils::ConcurrencyTracker ct;
         s_Ready = true;
         while ( g_CurExecuted < m_cancellationThreshold )
-            std::this_thread::yield();
+            utils::yield();
         m_groupToCancel.cancel_group_execution();
         g_ExecutedAtLastCatch = g_CurExecuted.load();
     }
@@ -285,7 +285,7 @@ struct Cancellator {
         const intptr_t limit = 10000000;
         intptr_t n = 0;
         do {
-            std::this_thread::yield();
+            utils::yield();
         } while( !s_Ready && ++n < limit );
         // should yield once, then continue if Cancellator is ready.
         REQUIRE( (s_Ready || n == limit) );
@@ -293,7 +293,7 @@ struct Cancellator {
     }
 };
 
-volatile bool Cancellator::s_Ready = false;
+std::atomic<bool> Cancellator::s_Ready{ false };
 
 template<class LauncherT, class CancellatorT>
 void RunCancellationTest ( intptr_t threshold = 1 )
@@ -304,8 +304,8 @@ void RunCancellationTest ( intptr_t threshold = 1 )
     CancellatorT cancellator(ctx, threshold);
     LauncherT launcher(ctx);
 
-    tg.run(cancellator);
     tg.run(launcher);
+    tg.run(cancellator);
 
     TRY();
         tg.wait();

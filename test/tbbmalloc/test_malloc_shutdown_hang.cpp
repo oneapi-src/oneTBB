@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 */
 
 #define DOCTEST_CONFIG_IMPLEMENT
-#include "common/doctest.h"
+#include "common/test.h"
 
 #include "common/utils.h"
 #include "common/utils_report.h"

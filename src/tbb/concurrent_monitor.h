@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -97,62 +97,62 @@ private:
 using base_list = circular_doubly_linked_list_with_sentinel;
 using base_node = circular_doubly_linked_list_with_sentinel::base_node;
 
-class concurrent_monitor;
+template <typename Context>
+class concurrent_monitor_base;
 
+template <typename Context>
 class wait_node : public base_node {
 public:
-    wait_node() = default;
+
+#if __TBB_GLIBCXX_VERSION >= 40800 && __TBB_GLIBCXX_VERSION < 40900
+    wait_node(Context ctx) : my_context(ctx), my_is_in_list(false) {}
+#else
+    wait_node(Context ctx) : my_context(ctx) {}
+#endif
 
     virtual ~wait_node() = default;
 
-    bool is_ready() {
-        return my_ready_flag.load(std::memory_order_acquire) == node_state::ready;
+    virtual void init() {
+        __TBB_ASSERT(!my_initialized, nullptr);
+        my_initialized = true;
     }
 
-    virtual void init() = 0;
-    virtual void wait_impl() = 0;
-    virtual void notify_impl() = 0;
+    virtual void wait() = 0;
+
+    virtual void reset() {
+        __TBB_ASSERT(my_skipped_wakeup, nullptr);
+        my_skipped_wakeup = false;
+    }
+
+    virtual void notify() = 0;
 
 protected:
-    void wait_notifiers() {
-        // We must wait unconditionally, because access to the node might be made until flag set to false.
-        spin_wait_until_eq(my_notifiers, 0);
-    }
-
-    enum class node_state : unsigned {
-        not_ready, // node is not ready for notification
-        ready,     // node is ready for notification
-        notified   // missed notify, possible only for resumble_node
-    };
-
-    friend class concurrent_monitor;
+    friend class concurrent_monitor_base<Context>;
     friend class thread_data;
-    std::atomic<node_state> my_ready_flag{node_state::not_ready};
-    std::atomic<int> my_notifiers{0};
+
+    Context my_context{};
+#if __TBB_GLIBCXX_VERSION >= 40800 && __TBB_GLIBCXX_VERSION < 40900
+    std::atomic<bool> my_is_in_list;
+#else
     std::atomic<bool> my_is_in_list{false};
-    bool my_skipped_wakeup_flag{false};
-    bool my_is_aborted{false};
+#endif
+
+    bool my_initialized{false};
+    bool my_skipped_wakeup{false};
+    bool my_aborted{false};
     unsigned my_epoch{0};
 };
 
-struct extended_context {
-    std::uintptr_t uniq_ctx;
-    std::uintptr_t arena_ctx;
-};
-
-template <typename T>
-class node_with_context : public wait_node {
-    friend class concurrent_monitor;
-    T my_context;
-};
-
-template <typename T>
-class sleep_node : public node_with_context<T> {
+template <typename Context>
+class sleep_node : public wait_node<Context> {
+    using base_type = wait_node<Context>;
 public:
+    using base_type::base_type;
+
     // Make it virtual due to Intel Compiler warning
     virtual ~sleep_node() {
-        if (this->is_ready()) {
-            this->wait_notifiers();
+        if (this->my_initialized) {
+            if (this->my_skipped_wakeup) semaphore().P();
             semaphore().~binary_semaphore();
         }
     }
@@ -160,113 +160,80 @@ public:
     binary_semaphore& semaphore() { return *sema.begin(); }
 
     void init() override {
-        new (sema.begin()) binary_semaphore;
-        this->my_ready_flag.store(node_state::ready, std::memory_order_relaxed);
+        if (!this->my_initialized) {
+            new (sema.begin()) binary_semaphore;
+            base_type::init();
+        }
     }
 
-    virtual void wait_impl() override {
-        __TBB_ASSERT(this->my_ready_flag.load(std::memory_order_relaxed) == node_state::ready,
+    void wait() override {
+        __TBB_ASSERT(this->my_initialized,
             "Use of commit_wait() without prior prepare_wait()");
         semaphore().P();
         __TBB_ASSERT(!this->my_is_in_list.load(std::memory_order_relaxed), "Still in the queue?");
-        if (this->my_is_aborted)
+        if (this->my_aborted)
             throw_exception(exception_id::user_abort);
     }
 
-    void notify_impl() override {
+    void reset() override {
+        base_type::reset();
+        semaphore().P();
+    }
+
+    void notify() override {
         semaphore().V();
     }
 
 private:
-    using node_state = wait_node::node_state;
     tbb::detail::aligned_space<binary_semaphore> sema;
 };
 
-#if __TBB_RESUMABLE_TASKS
-class resume_node : public node_with_context<extended_context> {
-public:
-    resume_node(execution_data_ext& ed_ext, task_dispatcher& target)
-        : my_curr_dispatcher(*ed_ext.task_disp), my_target_dispatcher(target)
-        , my_suspend_point(my_curr_dispatcher.get_suspend_point())
-    {}
-
-    // Make it virtual due to Intel Compiler warning
-    virtual ~resume_node() {
-        this->wait_notifiers();
-    }
-
-    void init() override {}
-
-    virtual void wait_impl() override {
-        __TBB_ASSERT(this->my_ready_flag.load(std::memory_order_relaxed) != node_state::ready,
-            "Ready flag should be set only on a new stack.");
-        my_curr_dispatcher.resume(my_target_dispatcher);
-        __TBB_ASSERT(!this->my_is_in_list.load(std::memory_order_relaxed), "Still in the queue?");
-        if (this->my_is_aborted)
-            throw_exception(exception_id::user_abort);
-    }
-
-    void notify_impl() override {
-        resume(my_suspend_point);
-    }
-
-private:
-    using node_state = wait_node::node_state;
-    friend class thread_data;
-    task_dispatcher& my_curr_dispatcher;
-    task_dispatcher& my_target_dispatcher;
-    suspend_point_type* my_suspend_point;
-};
-#endif // __TBB_RESUMABLE_TASKS
-
 //! concurrent_monitor
 /** fine-grained concurrent_monitor implementation */
-class concurrent_monitor : no_copy {
+template <typename Context>
+class concurrent_monitor_base : no_copy {
 public:
-    /** per-thread descriptor for concurrent_monitor */
-    using thread_context = sleep_node<std::uintptr_t>;
-    using extended_thread_context = sleep_node<extended_context>;
-#if __TBB_RESUMABLE_TASKS
-    using resume_context = resume_node;
-#endif
-
     //! ctor
-    concurrent_monitor() : epoch{} {}
+    concurrent_monitor_base() : my_epoch{}
+    {}
 
     //! dtor
-    ~concurrent_monitor() ;
+    ~concurrent_monitor_base() {
+        abort_all();
+        __TBB_ASSERT(my_waitset.empty(), "waitset not empty?");
+    }
 
     //! prepare wait by inserting 'thr' into the wait queue
-    template <typename T>
-    void prepare_wait( node_with_context<T>& node, T ctx = T{} ) {
-        if (!node.is_ready()) {
+    void prepare_wait( wait_node<Context>& node) {
+        // TODO: consider making even more lazy instantiation of the semaphore, that is only when it is actually needed, e.g. move it in node::wait()
+        if (!node.my_initialized) {
             node.init();
         }
         // this is good place to pump previous skipped wakeup
-        else if (node.my_skipped_wakeup_flag) {
-            node.my_skipped_wakeup_flag = false;
-            node.wait_impl();
+        else if (node.my_skipped_wakeup) {
+            node.reset();
         }
 
-        node.my_context = ctx;
         node.my_is_in_list.store(true, std::memory_order_relaxed);
 
         {
-            tbb::spin_mutex::scoped_lock l(mutex_ec);
-            node.my_epoch = epoch.load(std::memory_order_relaxed);
-            waitset_ec.add((base_list::base_node*)&node);
+            tbb::spin_mutex::scoped_lock l(my_mutex);
+            node.my_epoch = my_epoch.load(std::memory_order_relaxed);
+            my_waitset.add(&node);
         }
+
+        // Prepare wait guarantees Write Read memory barrier.
+        // In C++ only full fence covers this type of barrier.
         atomic_fence(std::memory_order_seq_cst);
     }
 
     //! Commit wait if event count has not changed; otherwise, cancel wait.
     /** Returns true if committed, false if canceled. */
-    template <typename T>
-    inline bool commit_wait( node_with_context<T>& node ) {
-        const bool do_it = node.my_epoch == epoch.load(std::memory_order_relaxed);
+    inline bool commit_wait( wait_node<Context>& node ) {
+        const bool do_it = node.my_epoch == my_epoch.load(std::memory_order_relaxed);
         // this check is just an optimization
         if (do_it) {
-           node.wait_impl();
+           node.wait();
         } else {
             cancel_wait( node );
         }
@@ -274,7 +241,38 @@ public:
     }
 
     //! Cancel the wait. Removes the thread from the wait queue if not removed yet.
-    void cancel_wait( wait_node& node ) ;
+    void cancel_wait( wait_node<Context>& node ) {
+        // possible skipped wakeup will be pumped in the following prepare_wait()
+        node.my_skipped_wakeup = true;
+        // try to remove node from waitset
+        // Cancel wait guarantees acquire memory barrier.
+        bool in_list = node.my_is_in_list.load(std::memory_order_acquire);
+        if (in_list) {
+            tbb::spin_mutex::scoped_lock l(my_mutex);
+            if (node.my_is_in_list.load(std::memory_order_relaxed)) {
+                my_waitset.remove(node);
+                // node is removed from waitset, so there will be no wakeup
+                node.my_is_in_list.store(false, std::memory_order_relaxed);
+                node.my_skipped_wakeup = false;
+            }
+        }
+    }
+
+    //! Wait for a condition to be satisfied with waiting-on my_context
+    template <typename NodeType, typename Pred>
+    bool wait(Pred&& pred, NodeType&& node) {
+        prepare_wait(node);
+        while (!guarded_call(std::forward<Pred>(pred), node)) {
+            if (commit_wait(node)) {
+                return true;
+            }
+
+            prepare_wait(node);
+        }
+
+        cancel_wait(node);
+        return false;
+    }
 
     //! Notify one thread about the event
     void notify_one() {
@@ -283,7 +281,27 @@ public:
     }
 
     //! Notify one thread about the event. Relaxed version.
-    void notify_one_relaxed();
+    void notify_one_relaxed() {
+        if (my_waitset.empty()) {
+            return;
+        }
+
+        base_node* n;
+        const base_node* end = my_waitset.end();
+        {
+            tbb::spin_mutex::scoped_lock l(my_mutex);
+            my_epoch.store(my_epoch.load(std::memory_order_relaxed) + 1, std::memory_order_relaxed);
+            n = my_waitset.front();
+            if (n != end) {
+                my_waitset.remove(*n);
+                to_wait_node(n)->my_is_in_list.store(false, std::memory_order_relaxed);
+            }
+        }
+
+        if (n != end) {
+            to_wait_node(n)->notify();
+        }
+    }
 
     //! Notify all waiting threads of the event
     void notify_all() {
@@ -292,18 +310,75 @@ public:
     }
 
     // ! Notify all waiting threads of the event; Relaxed version
-    void notify_all_relaxed();
+    void notify_all_relaxed() {
+        if (my_waitset.empty()) {
+            return;
+        }
+
+        base_list temp;
+        const base_node* end;
+        {
+            tbb::spin_mutex::scoped_lock l(my_mutex);
+            my_epoch.store(my_epoch.load(std::memory_order_relaxed) + 1, std::memory_order_relaxed);
+            // TODO: Possible optimization, don't change node state under lock, just do flush
+            my_waitset.flush_to(temp);
+            end = temp.end();
+            for (base_node* n = temp.front(); n != end; n = n->next) {
+                to_wait_node(n)->my_is_in_list.store(false, std::memory_order_relaxed);
+            }
+        }
+
+        base_node* nxt;
+        for (base_node* n = temp.front(); n != end; n=nxt) {
+            nxt = n->next;
+            to_wait_node(n)->notify();
+        }
+#if TBB_USE_ASSERT
+        temp.clear();
+#endif
+    }
 
     //! Notify waiting threads of the event that satisfies the given predicate
-    template<typename P> 
+    template <typename P>
     void notify( const P& predicate ) {
         atomic_fence(std::memory_order_seq_cst);
         notify_relaxed( predicate );
     }
 
-    //! Notify waiting threads of the event that satisfies the given predicate; Relaxed version
+    //! Notify waiting threads of the event that satisfies the given predicate;
+    //! the predicate is called under the lock. Relaxed version.
     template<typename P>
-    void notify_relaxed( const P& predicate );
+    void notify_relaxed( const P& predicate ) {
+        if (my_waitset.empty()) {
+            return;
+        }
+
+        base_list temp;
+        base_node* nxt;
+        const base_node* end = my_waitset.end();
+        {
+            tbb::spin_mutex::scoped_lock l(my_mutex);
+            my_epoch.store(my_epoch.load( std::memory_order_relaxed ) + 1, std::memory_order_relaxed);
+            for (base_node* n = my_waitset.last(); n != end; n = nxt) {
+                nxt = n->prev;
+                auto* node = static_cast<wait_node<Context>*>(n);
+                if (predicate(node->my_context)) {
+                    my_waitset.remove(*n);
+                    node->my_is_in_list.store(false, std::memory_order_relaxed);
+                    temp.add(n);
+                }
+            }
+        }
+
+        end = temp.end();
+        for (base_node* n=temp.front(); n != end; n = nxt) {
+            nxt = n->next;
+            to_wait_node(n)->notify();
+        }
+#if TBB_USE_ASSERT
+        temp.clear();
+#endif
+    }
 
     //! Abort any sleeping threads at the time of the call
     void abort_all() {
@@ -312,77 +387,140 @@ public:
     }
 
     //! Abort any sleeping threads at the time of the call; Relaxed version
-    void abort_all_relaxed();
+    void abort_all_relaxed() {
+        if (my_waitset.empty()) {
+            return;
+        }
 
-private:
-    tbb::spin_mutex mutex_ec;
-    base_list waitset_ec;
-    std::atomic<unsigned> epoch;
+        base_list temp;
+        const base_node* end;
+        {
+            tbb::spin_mutex::scoped_lock l(my_mutex);
+            my_epoch.store(my_epoch.load(std::memory_order_relaxed) + 1, std::memory_order_relaxed);
+            my_waitset.flush_to(temp);
+            end = temp.end();
+            for (base_node* n = temp.front(); n != end; n = n->next) {
+                to_wait_node(n)->my_is_in_list.store(false, std::memory_order_relaxed);
+            }
+        }
 
-    wait_node* to_wait_node( base_node* node ) { return static_cast<wait_node*>(node); }
-};
-
-template<typename P>
-void concurrent_monitor::notify_relaxed( const P& predicate ) {
-    if (waitset_ec.empty()) {
-        return;
+        base_node* nxt;
+        for (base_node* n = temp.front(); n != end; n = nxt) {
+            nxt = n->next;
+            to_wait_node(n)->my_aborted = true;
+            to_wait_node(n)->notify();
+        }
+#if TBB_USE_ASSERT
+        temp.clear();
+#endif
     }
 
-    base_list temp;
-    base_node* nxt;
-    const base_node* end = waitset_ec.end();
-    {
-        tbb::spin_mutex::scoped_lock l(mutex_ec);
-        epoch.store(epoch.load( std::memory_order_relaxed ) + 1, std::memory_order_relaxed);
-        for (base_node* n = waitset_ec.last(); n != end; n = nxt) {
-            nxt = n->prev;
-            using context_type = argument_type_of<P>;
-            using state = wait_node::node_state;
-            auto* node = static_cast<node_with_context<context_type>*>(n);
-            state expected = state::not_ready;
-            if (predicate(node->my_context) && (node->is_ready() ||
-#if defined(__INTEL_COMPILER) && __INTEL_COMPILER <= 1910
-            !((std::atomic<unsigned>&)node->my_ready_flag).compare_exchange_strong((unsigned&)expected, (unsigned)state::notified)))
-#else
-            !node->my_ready_flag.compare_exchange_strong(expected, state::notified)))
-#endif
-            {
-                waitset_ec.remove(*n);
-                ++node->my_notifiers;
-                node->my_is_in_list.store(false, std::memory_order_relaxed);
-                temp.add(n);
-            }
+private:
+    template <typename NodeType, typename Pred>
+    bool guarded_call(Pred&& predicate, NodeType& node) {
+        bool res = false;
+        tbb::detail::d0::try_call( [&] {
+            res = std::forward<Pred>(predicate)();
+        }).on_exception( [&] {
+            cancel_wait(node);
+        });
+
+        return res;
+    }
+
+    tbb::spin_mutex my_mutex;
+    base_list my_waitset;
+    std::atomic<unsigned> my_epoch;
+
+    wait_node<Context>* to_wait_node( base_node* node ) { return static_cast<wait_node<Context>*>(node); }
+};
+
+class concurrent_monitor : public concurrent_monitor_base<std::uintptr_t> {
+    using base_type = concurrent_monitor_base<std::uintptr_t>;
+public:
+    using base_type::base_type;
+    /** per-thread descriptor for concurrent_monitor */
+    using thread_context = sleep_node<std::uintptr_t>;
+};
+
+struct extended_context {
+    extended_context() = default;
+
+    extended_context(std::uintptr_t first_addr, arena* a) :
+        my_uniq_addr(first_addr), my_arena_addr(a)
+    {}
+
+    std::uintptr_t my_uniq_addr{0};
+    arena* my_arena_addr{nullptr};
+};
+
+
+#if __TBB_RESUMABLE_TASKS
+class resume_node : public wait_node<extended_context> {
+    using base_type = wait_node<extended_context>;
+public:
+    resume_node(extended_context ctx, execution_data_ext& ed_ext, task_dispatcher& target)
+        : base_type(ctx), my_curr_dispatcher(ed_ext.task_disp), my_target_dispatcher(&target)
+        , my_suspend_point(my_curr_dispatcher->get_suspend_point())
+    {}
+
+    virtual ~resume_node() {
+        if (this->my_skipped_wakeup) {
+            spin_wait_until_eq(this->my_notify_calls, 1);
+        }
+
+        poison_pointer(my_curr_dispatcher);
+        poison_pointer(my_target_dispatcher);
+        poison_pointer(my_suspend_point);
+    }
+
+    void init() override {
+        base_type::init();
+    }
+
+    void wait() override {
+        my_curr_dispatcher->resume(*my_target_dispatcher);
+        __TBB_ASSERT(!this->my_is_in_list.load(std::memory_order_relaxed), "Still in the queue?");
+    }
+
+    void reset() override {
+        base_type::reset();
+        spin_wait_until_eq(this->my_notify_calls, 1);
+        my_notify_calls.store(0, std::memory_order_relaxed);
+    }
+
+    // notify is called (perhaps, concurrently) twice from:
+    //   - concurrent_monitor::notify
+    //   - post_resume_action::register_waiter
+    // The second notify is called after thread switches the stack
+    // (Because we can not call resume while the stack is occupied)
+    // We need calling resume only when both notifications are performed.
+    void notify() override {
+        if (++my_notify_calls == 2) {
+            r1::resume(my_suspend_point);
         }
     }
 
-    end = temp.end();
-    for (base_node* n=temp.front(); n != end; n = nxt) {
-        nxt = n->next;
-        to_wait_node(n)->notify_impl();
-        --to_wait_node(n)->my_notifiers;
-    }
-#if TBB_USE_ASSERT
-    temp.clear();
-#endif
-}
+private:
+    friend class thread_data;
+    friend struct suspend_point_type::resume_task;
+    task_dispatcher* my_curr_dispatcher;
+    task_dispatcher* my_target_dispatcher;
+    suspend_point_type* my_suspend_point;
+    std::atomic<int> my_notify_calls{0};
+};
+#endif // __TBB_RESUMABLE_TASKS
 
-// Additional possible methods that are not required right now
-//! Wait for a condition to be satisfied with waiting-on my_context
-// template<typename WaitUntil, typename my_context>
-// void concurrent_monitor::wait( WaitUntil until, my_context on )
-// {
-//     bool slept = false;
-//     thread_context thr_ctx;
-//     prepare_wait( thr_ctx, on() );
-//     while( !until() ) {
-//         if( (slept = commit_wait( thr_ctx ) )==true )
-//             if( until() ) break;
-//         slept = false;
-//         prepare_wait( thr_ctx, on() );
-//     }
-//     if( !slept )
-//         cancel_wait( thr_ctx );
-// }
+class extended_concurrent_monitor : public concurrent_monitor_base<extended_context> {
+    using base_type = concurrent_monitor_base<extended_context>;
+public:
+    using base_type::base_type;
+    /** per-thread descriptor for concurrent_monitor */
+    using thread_context = sleep_node<extended_context>;
+#if __TBB_RESUMABLE_TASKS
+    using resume_context = resume_node;
+#endif
+};
 
 } // namespace r1
 } // namespace detail

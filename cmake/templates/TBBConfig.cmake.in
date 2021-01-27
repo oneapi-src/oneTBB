@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2020 Intel Corporation
+# Copyright (c) 2017-2021 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,6 +30,9 @@ if (NOT TBB_FIND_COMPONENTS)
     endforeach()
 endif()
 
+get_filename_component(_tbb_root "${CMAKE_CURRENT_LIST_DIR}" REALPATH)
+get_filename_component(_tbb_root "${_tbb_root}/@TBB_ROOT_REL_PATH@" ABSOLUTE)
+
 set(TBB_INTERFACE_VERSION @TBB_INTERFACE_VERSION@)
 @TBB_COMPONENTS_BIN_VERSION@
 # Add components with internal dependencies: tbbmalloc_proxy -> tbbmalloc
@@ -44,18 +47,17 @@ unset(_tbbmalloc_proxy_ix)
 foreach (_tbb_component ${TBB_FIND_COMPONENTS})
     set(TBB_${_tbb_component}_FOUND 0)
     @TBB_HANDLE_BIN_VERSION@
-    get_filename_component(_tbb_release_lib "${CMAKE_CURRENT_LIST_DIR}/@TBB_LIB_REL_PATH@/${_tbb_subdir}/@TBB_LIB_PREFIX@${_tbb_component}${_bin_version}.@TBB_LIB_EXT@" ABSOLUTE)
+    get_filename_component(_tbb_release_lib "${_tbb_root}/@TBB_LIB_REL_PATH@/${_tbb_subdir}/@TBB_LIB_PREFIX@${_tbb_component}${_bin_version}.@TBB_LIB_EXT@" ABSOLUTE)
 
     if (NOT TBB_FIND_RELEASE_ONLY)
-        get_filename_component(_tbb_debug_lib "${CMAKE_CURRENT_LIST_DIR}/@TBB_LIB_REL_PATH@/${_tbb_subdir}/@TBB_LIB_PREFIX@${_tbb_component}${_bin_version}_debug.@TBB_LIB_EXT@" ABSOLUTE)
+        get_filename_component(_tbb_debug_lib "${_tbb_root}/@TBB_LIB_REL_PATH@/${_tbb_subdir}/@TBB_LIB_PREFIX@${_tbb_component}${_bin_version}_debug.@TBB_LIB_EXT@" ABSOLUTE)
     endif()
 
     if (EXISTS "${_tbb_release_lib}" OR EXISTS "${_tbb_debug_lib}")
         if (NOT TARGET TBB::${_tbb_component})
             add_library(TBB::${_tbb_component} SHARED IMPORTED)
 
-            get_filename_component(_tbb_current_realpath "${CMAKE_CURRENT_LIST_DIR}" REALPATH)
-            get_filename_component(_tbb_include_dir "${_tbb_current_realpath}/@TBB_INC_REL_PATH@" ABSOLUTE)
+            get_filename_component(_tbb_include_dir "${_tbb_root}/@TBB_INC_REL_PATH@" ABSOLUTE)
             set_target_properties(TBB::${_tbb_component} PROPERTIES
                                   INTERFACE_INCLUDE_DIRECTORIES "${_tbb_include_dir}"@TBB_COMPILE_DEFINITIONS@)
             unset(_tbb_current_realpath)
@@ -93,3 +95,4 @@ endforeach()
 list(REMOVE_DUPLICATES TBB_IMPORTED_TARGETS)
 unset(_tbb_release_lib)
 unset(_tbb_debug_lib)
+unset(_tbb_root)

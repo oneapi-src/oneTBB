@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2019-2020 Intel Corporation
+    Copyright (c) 2019-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,78 +15,59 @@
 */
 
 //! \file conformance_arena_constraints.cpp
-//! \brief Test for [preview] functionality
+//! \brief Test for [info_namespace scheduler.task_arena] functionality
 
 #include "common/common_arena_constraints.h"
 
-#if __TBB_HWLOC_PRESENT
+#if __TBB_HWLOC_VALID_ENVIRONMENT
 
-struct execute_wrapper {
-    template <typename Callable>
-    void emplace_function(oneapi::tbb::task_arena& ta, Callable functor) {
-        ta.execute(functor);
-    }
-};
-
-struct enqueue_wrapper {
-    template <typename Callable>
-    void emplace_function(oneapi::tbb::task_arena& ta, Callable functor) {
-        ta.enqueue(functor);
-    }
-};
-
-template <typename It, typename FuncWrapper>
-typename std::enable_if<std::is_same<typename std::iterator_traits<It>::value_type, oneapi::tbb::task_arena>::value, void>::
-type test_numa_binding_impl(It begin, It end, FuncWrapper wrapper) {
-    oneapi::tbb::concurrent_unordered_set<numa_validation::affinity_mask> affinity_masks;
-    std::atomic<unsigned> counter(0), expected_count(0);
-
-    auto affinity_mask_checker = [&counter, &affinity_masks]() {
-        affinity_masks.insert(numa_validation::allocate_current_cpu_set());
-        counter++;
-    };
-
-    for (auto it = begin; it != end; it++) {
-        expected_count++;
-        wrapper.emplace_function(*it, affinity_mask_checker);
-    }
-
-    // Wait for all spawned tasks
-    while (counter != expected_count) {}
-    numa_validation::affinity_set_verification(affinity_masks.begin(),affinity_masks.end());
-}
-
-//! Testing that arenas bind to NUMA nodes correctly
+//! Testing all NUMA aware arenas can successfully execute tasks
 //! \brief \ref interface \ref requirement
-TEST_CASE("Test binding to NUMA nodes correctness") {
-    if (is_system_environment_supported()) {
-        numa_validation::initialize_system_info();
-        std::vector<int> numa_indexes = oneapi::tbb::info::numa_nodes();
-        std::vector<oneapi::tbb::task_arena> arenas(numa_indexes.size());
+TEST_CASE("NUMA aware arenas task execution test") {
+    for(auto& numa_index: oneapi::tbb::info::numa_nodes()) {
+        oneapi::tbb::task_arena arena(oneapi::tbb::task_arena::constraints{numa_index});
 
-        for(unsigned i = 0; i < numa_indexes.size(); i++) {
-            // Bind arenas to numa nodes
-            arenas[i].initialize(oneapi::tbb::task_arena::constraints(numa_indexes[i]));
-        }
+        std::atomic<bool> task_done{false};
+        arena.execute([&]{ task_done = true; });
+        REQUIRE_MESSAGE(task_done, "Execute was performed but task was not executed.");
 
-        test_numa_binding_impl(arenas.begin(), arenas.end(), execute_wrapper());
-        test_numa_binding_impl(arenas.begin(), arenas.end(), enqueue_wrapper());
+        task_done = false;
+        arena.enqueue([&]{ task_done = true; });
+        while(!task_done) { utils::yield(); }
     }
 }
 
-#else /*__TBB_HWLOC_PRESENT*/
+//! Testing NUMA topology traversal correctness
+//! \brief \ref interface \ref requirement
+TEST_CASE("Test NUMA topology traversal correctness") {
+    std::vector<index_info> numa_nodes_info = system_info::get_numa_nodes_info();
+
+    std::vector<oneapi::tbb::numa_node_id> numa_indexes = oneapi::tbb::info::numa_nodes();
+    for (const auto& numa_id: numa_indexes) {
+        auto pos = std::find_if(numa_nodes_info.begin(), numa_nodes_info.end(),
+            [&](const index_info& numa_info){ return numa_info.index == numa_id; }
+        );
+
+        REQUIRE_MESSAGE(pos != numa_nodes_info.end(), "Wrong, extra or repeated NUMA node index detected.");
+        numa_nodes_info.erase(pos);
+    }
+
+    REQUIRE_MESSAGE(numa_nodes_info.empty(), "Some available NUMA nodes indexes were not detected.");
+}
+
+#else /*!__TBB_HWLOC_VALID_ENVIRONMENT*/
 
 //! Testing NUMA support interfaces validity when HWLOC is not presented on system
 //! \brief \ref interface \ref requirement
-TEST_CASE("Test NUMA support interfaces validity when HWLOC is not presented on system") {
-    std::vector<int> numa_indexes = oneapi::tbb::info::numa_nodes();
+TEST_CASE("Test validity of NUMA interfaces when HWLOC is not present on the system") {
+    std::vector<oneapi::tbb::numa_node_id> numa_indexes = oneapi::tbb::info::numa_nodes();
 
     REQUIRE_MESSAGE(numa_indexes.size() == 1,
         "Number of NUMA nodes must be pinned to 1, if we have no HWLOC on the system.");
     REQUIRE_MESSAGE(numa_indexes[0] == -1,
         "Index of NUMA node must be pinned to -1, if we have no HWLOC on the system.");
-    REQUIRE_MESSAGE(  oneapi::tbb::info::default_concurrency(numa_indexes[0]) == utils::get_platform_max_threads(),
+    REQUIRE_MESSAGE(oneapi::tbb::info::default_concurrency(numa_indexes[0]) == utils::get_platform_max_threads(),
         "Concurrency for NUMA node must be equal to default_num_threads(), if we have no HWLOC on the system.");
 }
 
-#endif /*__TBB_HWLOC_PRESENT*/
+#endif /*__TBB_HWLOC_VALID_ENVIRONMENT*/

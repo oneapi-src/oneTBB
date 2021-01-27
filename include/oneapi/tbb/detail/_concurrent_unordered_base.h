@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public:
     using reference = value_type&;
     using iterator_category = std::forward_iterator_tag;
 
-    solist_iterator() = default;
+    solist_iterator() : my_node_ptr(nullptr) {}
     solist_iterator( const solist_iterator<Container, typename Container::value_type>& other )
         : my_node_ptr(other.my_node_ptr) {}
 
@@ -116,6 +116,7 @@ template<typename Solist, typename T, typename U>
 bool operator==( const solist_iterator<Solist, T>& i, const solist_iterator<Solist, U>& j ) {
     return i.my_node_ptr == j.my_node_ptr;
 }
+
 template<typename Solist, typename T, typename U>
 bool operator!=( const solist_iterator<Solist, T>& i, const solist_iterator<Solist, U>& j ) {
     return i.my_node_ptr != j.my_node_ptr;
@@ -143,11 +144,11 @@ public:
     }
 
     node_ptr next() const {
-        return my_next.load(std::memory_order_relaxed);
+        return my_next.load(std::memory_order_acquire);
     }
 
     void set_next( node_ptr next_node ) {
-        my_next.store(next_node, std::memory_order_relaxed);
+        my_next.store(next_node, std::memory_order_release);
     }
 
     bool try_set_next( node_ptr expected_next, node_ptr new_next ) {
@@ -401,7 +402,7 @@ public:
     const_iterator end() const noexcept { return const_iterator(nullptr); }
     const_iterator cend() const noexcept { return const_iterator(nullptr); }
 
-    bool empty() const noexcept { return size() == 0; }
+    __TBB_nodiscard bool empty() const noexcept { return size() == 0; }
     size_type size() const noexcept { return my_size.load(std::memory_order_relaxed); }
     size_type max_size() const noexcept { return allocator_traits_type::max_size(get_allocator()); }
 
@@ -1480,11 +1481,13 @@ bool operator==( const concurrent_unordered_base<Traits>& lhs,
 #endif
 }
 
+#if !__TBB_CPP20_COMPARISONS_PRESENT
 template <typename Traits>
 bool operator!=( const concurrent_unordered_base<Traits>& lhs,
                  const concurrent_unordered_base<Traits>& rhs ) {
     return !(lhs == rhs);
 }
+#endif
 
 #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
 #pragma warning(pop) // warning 4127 is back

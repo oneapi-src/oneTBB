@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -77,8 +77,10 @@ public:
         return ((my_graph == other.my_graph) && (current_node == other.current_node));
     }
 
+#if !__TBB_CPP20_COMPARISONS_PRESENT
     //! Inequality
     bool operator!=(const graph_iterator& other) const { return !(operator==(other)); }
+#endif
 
     //! Pre-increment
     graph_iterator& operator++() {

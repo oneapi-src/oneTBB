@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -212,8 +212,8 @@ public:
         as well. Such a behavior requires nested algorithms to use bound contexts.
 
         There is one good place where using isolated algorithms is beneficial. It is
-        a master thread. That is if a particular algorithm is invoked directly from
-        the master thread (not from a TBB task), supplying it with explicitly
+        an external thread. That is if a particular algorithm is invoked directly from
+        the external thread (not from a TBB task), supplying it with explicitly
         created isolated context will result in a faster algorithm startup.
 
         VERSIONING NOTE:
@@ -343,7 +343,7 @@ public:
         , m_allocator(alloc) {}
 
     function_task(F&& f, wait_context& wo, small_object_allocator& alloc)
-        : m_func{ std::move(f) }
+        : m_func(std::move(f))
         , m_wait_ctx(wo)
         , m_allocator(alloc) {}
 };

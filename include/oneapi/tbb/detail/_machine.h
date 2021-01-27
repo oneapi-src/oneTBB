@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -233,7 +233,7 @@ namespace d1 {
 // API to retrieve/update FPU control setting
 #define __TBB_CPU_CTL_ENV_PRESENT 1
 struct cpu_ctl_env {
-    unsigned int x87cw;
+    unsigned int x87cw{};
 #if (__TBB_x86_64)
     // Changing the infinity mode or the floating-point precision is not supported on x64.
     // The attempt causes an assertion. See
@@ -243,7 +243,7 @@ struct cpu_ctl_env {
     static constexpr unsigned int X87CW_CONTROL_MASK = ~0U;
 #endif
 #if (__TBB_x86_32 || __TBB_x86_64)
-    unsigned int mxcsr;
+    unsigned int mxcsr{};
     static constexpr unsigned int MXCSR_CONTROL_MASK = ~0x3fu; /* all except last six status bits */
 #endif
 
@@ -271,8 +271,8 @@ struct cpu_ctl_env {
 // API to retrieve/update FPU control setting
 #define __TBB_CPU_CTL_ENV_PRESENT 1
 struct cpu_ctl_env {
-    int     mxcsr;
-    short   x87cw;
+    int     mxcsr{};
+    short   x87cw{};
     static const int MXCSR_CONTROL_MASK = ~0x3f; /* all except last six status bits */
 
     bool operator!=(const cpu_ctl_env& ctl) const {

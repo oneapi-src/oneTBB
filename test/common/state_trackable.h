@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 #ifndef __TBB_test_common_state_trackable_H
 #define __TBB_test_common_state_trackable_H
 
-#include "doctest.h"
+#include "common/test.h"
 #include <map>
 #include <atomic>
 
@@ -88,11 +88,11 @@ StateTrackableCounters::counters_type StateTrackableCounters::counters;
 static const bool state_initialized = StateTrackableCounters::initialize();
 
 void StateTrackableBase::State::assign_new_state( StateValue s ) noexcept {
-    REQUIRE_MESSAGE(state_initialized, "State trackable counters are not initialized");
-    REQUIRE_MESSAGE((s == StateTrackableBase::Unspecified ||
+    CHECK_FAST_MESSAGE(state_initialized, "State trackable counters are not initialized");
+    CHECK_FAST_MESSAGE((s == StateTrackableBase::Unspecified ||
                      StateTrackableCounters::counters.find(s) != StateTrackableCounters::counters.end()),
                      "Current state value is unknown");
-    REQUIRE_MESSAGE((state == StateTrackableBase::Unspecified ||
+    CHECK_FAST_MESSAGE((state == StateTrackableBase::Unspecified ||
                      StateTrackableCounters::counters.find(state) != StateTrackableCounters::counters.end()),
                      "New state value is unknown");
     state = s;
@@ -113,31 +113,31 @@ struct StateTrackable : StateTrackableBase {
     StateTrackable() noexcept : state(DefaultInitialized) {}
 
     StateTrackable( const StateTrackable& src ) noexcept : state(CopyInitialized) {
-        REQUIRE_MESSAGE(src.is_valid(), "Bad source for copy ctor");
+        CHECK_FAST_MESSAGE(src.is_valid(), "Bad source for copy ctor");
     }
 
     StateTrackable( StateTrackable&& src ) noexcept : state(MoveInitialized) {
-        REQUIRE_MESSAGE(src.is_valid(), "Bad source for move ctor");
+        CHECK_FAST_MESSAGE(src.is_valid(), "Bad source for move ctor");
         src.state = MovedFrom;
     }
 
     StateTrackable& operator=( const StateTrackable& src ) noexcept {
-        REQUIRE_MESSAGE(is_valid(), "Copy assignment to invalid instance");
-        REQUIRE_MESSAGE(src.is_valid(), "Bad source for copy assignment");
+        CHECK_FAST_MESSAGE(is_valid(), "Copy assignment to invalid instance");
+        CHECK_FAST_MESSAGE(src.is_valid(), "Bad source for copy assignment");
         state = CopyAssigned;
         return *this;
     }
 
     StateTrackable& operator=( StateTrackable&& src ) noexcept {
-        REQUIRE_MESSAGE(is_valid(), "Move assignment to invalid instance");
-        REQUIRE_MESSAGE(src.is_valid(), "Bad source for move assignment");
+        CHECK_FAST_MESSAGE(is_valid(), "Move assignment to invalid instance");
+        CHECK_FAST_MESSAGE(src.is_valid(), "Bad source for move assignment");
         state = MoveAssigned;
         src.state = MovedFrom;
         return *this;
     }
 
     ~StateTrackable() noexcept {
-        REQUIRE_MESSAGE(is_valid(), "Calling destructor on invalid instance. (May be twice)");
+        CHECK_FAST_MESSAGE(is_valid(), "Calling destructor on invalid instance. (May be twice)");
         state = Destroyed;
     }
 

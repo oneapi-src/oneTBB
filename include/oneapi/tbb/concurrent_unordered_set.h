@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -69,6 +69,15 @@ public:
     // Include constructors of base_type;
     using base_type::base_type;
     using base_type::operator=;
+    // Required for implicit deduction guides
+    concurrent_unordered_set() = default;
+    concurrent_unordered_set( const concurrent_unordered_set& ) = default;
+    concurrent_unordered_set( const concurrent_unordered_set& other, const allocator_type& alloc ) : base_type(other, alloc) {}
+    concurrent_unordered_set( concurrent_unordered_set&& ) = default;
+    concurrent_unordered_set( concurrent_unordered_set&& other, const allocator_type& alloc ) : base_type(std::move(other), alloc) {}
+    // Required to respect the rule of 5
+    concurrent_unordered_set& operator=( const concurrent_unordered_set& ) = default;
+    concurrent_unordered_set& operator=( concurrent_unordered_set&& ) = default;
 
     template <typename OtherHash, typename OtherKeyEqual>
     void merge( concurrent_unordered_set<key_type, OtherHash, OtherKeyEqual, allocator_type>& source ) {
@@ -93,41 +102,61 @@ public:
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 
-template <typename Value>
-using cu_set_def_allocator = tbb::tbb_allocator<Value>;
+template <typename It,
+          typename Hash = std::hash<iterator_value_t<It>>,
+          typename KeyEq = std::equal_to<iterator_value_t<It>>,
+          typename Alloc = tbb::tbb_allocator<iterator_value_t<It>>,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<Hash>>,
+          typename = std::enable_if_t<!is_allocator_v<KeyEq>>,
+          typename = std::enable_if_t<!std::is_integral_v<Hash>>>
+concurrent_unordered_set( It, It, std::size_t = {}, Hash = Hash(), KeyEq = KeyEq(), Alloc = Alloc() )
+-> concurrent_unordered_set<iterator_value_t<It>, Hash, KeyEq, Alloc>;
 
-template <template <typename...> class Set, typename T, typename... Args>
-using cu_set_type = Set<T,
-                        std::conditional_t<(sizeof...(Args) > 0) && !is_allocator_v<pack_element_t<0, Args...>>,
-                                           pack_element_t<0, Args...>, std::hash<T>>,
-                        std::conditional_t<(sizeof...(Args) > 1) && !is_allocator_v<pack_element_t<1, Args...>>,
-                                           pack_element_t<1, Args...>, std::equal_to<T>>,
-                        std::conditional_t<(sizeof...(Args) > 0) && is_allocator_v<pack_element_t<sizeof...(Args) - 1, Args...>>,
-                                           pack_element_t<sizeof...(Args) - 1, Args...>, cu_set_def_allocator<T>>>;
+template <typename T,
+          typename Hash = std::hash<T>,
+          typename KeyEq = std::equal_to<T>,
+          typename Alloc = tbb::tbb_allocator<T>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<Hash>>,
+          typename = std::enable_if_t<!is_allocator_v<KeyEq>>,
+          typename = std::enable_if_t<!std::is_integral_v<Hash>>>
+concurrent_unordered_set( std::initializer_list<T>, std::size_t = {},
+                          Hash = Hash(), KeyEq = KeyEq(), Alloc = Alloc() )
+-> concurrent_unordered_set<T, Hash, KeyEq, Alloc>;
 
-template <typename Key, typename Hash, typename KeyEq, typename Allocator>
-concurrent_unordered_set( const concurrent_unordered_set<Key, Hash, KeyEq, Allocator>&, const Allocator& )
--> concurrent_unordered_set<Key, Hash, KeyEq, Allocator>;
+template <typename It, typename Alloc,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_unordered_set( It, It, std::size_t, Alloc )
+-> concurrent_unordered_set<iterator_value_t<It>, std::hash<iterator_value_t<It>>,
+                            std::equal_to<iterator_value_t<It>>, Alloc>;
 
-// Deduction guide for the constructor from two iterators
-template <typename I>
-concurrent_unordered_set( I, I )
--> cu_set_type<concurrent_unordered_set, iterator_value_t<I>>;
+template <typename It, typename Hash, typename Alloc,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<Hash>>,
+          typename = std::enable_if_t<!std::is_integral_v<Hash>>>
+concurrent_unordered_set( It, It, std::size_t, Hash, Alloc )
+-> concurrent_unordered_set<iterator_value_t<It>, Hash, std::equal_to<iterator_value_t<It>>, Alloc>;
 
-// Deduction guide for the constructor from two iterators and hasher/equal/allocator
-template <typename I, typename... Args>
-concurrent_unordered_set( I, I, std::size_t, Args... )
--> cu_set_type<concurrent_unordered_set, iterator_value_t<I>, Args...>;
+template <typename T, typename Alloc,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_unordered_set( std::initializer_list<T>, std::size_t, Alloc )
+-> concurrent_unordered_set<T, std::hash<T>, std::equal_to<T>, Alloc>;
 
-// Deduction guide for the constructor from an initializer_list
-template <typename T>
-concurrent_unordered_set( std::initializer_list<T> )
--> cu_set_type<concurrent_unordered_set, T>;
+template <typename T, typename Alloc,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_unordered_set( std::initializer_list<T>, Alloc )
+-> concurrent_unordered_set<T, std::hash<T>, std::equal_to<T>, Alloc>;
 
-// Deduction guide for the constructor from an initializer_list and hasher/equal/allocator
-template <typename T, typename... Args>
-concurrent_unordered_set( std::initializer_list<T>, std::size_t, Args... )
--> cu_set_type<concurrent_unordered_set, T, Args...>;
+template <typename T, typename Hash, typename Alloc,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<Hash>>,
+          typename = std::enable_if_t<!std::is_integral_v<Hash>>>
+concurrent_unordered_set( std::initializer_list<T>, std::size_t, Hash, Alloc )
+-> concurrent_unordered_set<T, Hash, std::equal_to<T>, Alloc>;
 
 #endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 
@@ -166,6 +195,16 @@ public:
     using base_type::base_type;
     using base_type::operator=;
 
+    // Required for implicit deduction guides
+    concurrent_unordered_multiset() = default;
+    concurrent_unordered_multiset( const concurrent_unordered_multiset& ) = default;
+    concurrent_unordered_multiset( const concurrent_unordered_multiset& other, const allocator_type& alloc ) : base_type(other, alloc) {}
+    concurrent_unordered_multiset( concurrent_unordered_multiset&& ) = default;
+    concurrent_unordered_multiset( concurrent_unordered_multiset&& other, const allocator_type& alloc ) : base_type(std::move(other), alloc) {}
+    // Required to respect the rule of 5
+    concurrent_unordered_multiset& operator=( const concurrent_unordered_multiset& ) = default;
+    concurrent_unordered_multiset& operator=( concurrent_unordered_multiset&& ) = default;
+
     template <typename OtherHash, typename OtherKeyEqual>
     void merge( concurrent_unordered_set<key_type, OtherHash, OtherKeyEqual, allocator_type>& source ) {
         this->internal_merge(source);
@@ -188,29 +227,61 @@ public:
 }; // class concurrent_unordered_multiset
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
-template <typename Key, typename Hash, typename KeyEq, typename Allocator>
-concurrent_unordered_multiset( const concurrent_unordered_multiset<Key, Hash, KeyEq, Allocator>&, const Allocator& )
--> concurrent_unordered_multiset<Key, Hash, KeyEq, Allocator>;
+template <typename It,
+          typename Hash = std::hash<iterator_value_t<It>>,
+          typename KeyEq = std::equal_to<iterator_value_t<It>>,
+          typename Alloc = tbb::tbb_allocator<iterator_value_t<It>>,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<Hash>>,
+          typename = std::enable_if_t<!is_allocator_v<KeyEq>>,
+          typename = std::enable_if_t<!std::is_integral_v<Hash>>>
+concurrent_unordered_multiset( It, It, std::size_t = {}, Hash = Hash(), KeyEq = KeyEq(), Alloc = Alloc() )
+-> concurrent_unordered_multiset<iterator_value_t<It>, Hash, KeyEq, Alloc>;
 
-// Deduction guide for the constructor from two iterators
-template <typename I>
-concurrent_unordered_multiset( I, I )
--> cu_set_type<concurrent_unordered_multiset, iterator_value_t<I>>;
+template <typename T,
+          typename Hash = std::hash<T>,
+          typename KeyEq = std::equal_to<T>,
+          typename Alloc = tbb::tbb_allocator<T>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<Hash>>,
+          typename = std::enable_if_t<!is_allocator_v<KeyEq>>,
+          typename = std::enable_if_t<!std::is_integral_v<Hash>>>
+concurrent_unordered_multiset( std::initializer_list<T>, std::size_t = {},
+                          Hash = Hash(), KeyEq = KeyEq(), Alloc = Alloc() )
+-> concurrent_unordered_multiset<T, Hash, KeyEq, Alloc>;
 
-// Deduction guide for the constructor from two iterators and hasher/equal/allocator
-template <typename I, typename... Args>
-concurrent_unordered_multiset( I, I, std::size_t, Args... )
--> cu_set_type<concurrent_unordered_multiset, iterator_value_t<I>, Args...>;
+template <typename It, typename Alloc,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_unordered_multiset( It, It, std::size_t, Alloc )
+-> concurrent_unordered_multiset<iterator_value_t<It>, std::hash<iterator_value_t<It>>,
+                            std::equal_to<iterator_value_t<It>>, Alloc>;
 
-// Deduction guide for the constructor from an initializer_list
-template <typename T>
-concurrent_unordered_multiset( std::initializer_list<T> )
--> cu_set_type<concurrent_unordered_multiset, T>;
+template <typename It, typename Hash, typename Alloc,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<Hash>>,
+          typename = std::enable_if_t<!std::is_integral_v<Hash>>>
+concurrent_unordered_multiset( It, It, std::size_t, Hash, Alloc )
+-> concurrent_unordered_multiset<iterator_value_t<It>, Hash, std::equal_to<iterator_value_t<It>>, Alloc>;
 
-// Deduction guide for the constructor from an initializer_list and hasher/equal/allocator
-template <typename T, typename... Args>
-concurrent_unordered_multiset( std::initializer_list<T>, std::size_t, Args... )
--> cu_set_type<concurrent_unordered_multiset, T, Args...>;
+template <typename T, typename Alloc,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_unordered_multiset( std::initializer_list<T>, std::size_t, Alloc )
+-> concurrent_unordered_multiset<T, std::hash<T>, std::equal_to<T>, Alloc>;
+
+template <typename T, typename Alloc,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_unordered_multiset( std::initializer_list<T>, Alloc )
+-> concurrent_unordered_multiset<T, std::hash<T>, std::equal_to<T>, Alloc>;
+
+template <typename T, typename Hash, typename Alloc,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<Hash>>,
+          typename = std::enable_if_t<!std::is_integral_v<Hash>>>
+concurrent_unordered_multiset( std::initializer_list<T>, std::size_t, Hash, Alloc )
+-> concurrent_unordered_multiset<T, Hash, std::equal_to<T>, Alloc>;
 
 #endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 

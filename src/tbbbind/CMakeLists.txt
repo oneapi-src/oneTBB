@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Intel Corporation
+# Copyright (c) 2020-2021 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,16 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-macro(tbbbind_build TBBBIND_NAME HWLOC_VERSION)
-    find_package(HWLOC ${HWLOC_VERSION} EXACT)
-    if (NOT HWLOC_FOUND)
-        message(STATUS "HWLOC ${HWLOC_VERSION} was not found, the corresponding TBBBind library target was disabled.")
+if (DEFINED CMAKE_SKIP_BUILD_RPATH)
+    set(CMAKE_SKIP_BUILD_RPATH_OLD_VALUE ${CMAKE_SKIP_BUILD_RPATH})
+endif()
+set(CMAKE_SKIP_BUILD_RPATH TRUE)
+
+macro(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
+    if (NOT TARGET ${REQUIRED_HWLOC_TARGET})
+        message(STATUS
+            "HWLOC target ${REQUIRED_HWLOC_TARGET} doesn't exist."
+            " The ${TBBBIND_NAME} target cannot be created"
+        )
     else()
-        add_library(${TBBBIND_NAME} SHARED tbb_bind.cpp)
+        add_library(${TBBBIND_NAME} tbb_bind.cpp)
         add_library(TBB::${TBBBIND_NAME} ALIAS ${TBBBIND_NAME})
 
-        target_compile_definitions(${TBBBIND_NAME} PRIVATE __TBBBIND_BUILD)
-
+        target_compile_definitions(${TBBBIND_NAME}
+                                   PUBLIC
+                                   $<$<CONFIG:DEBUG>:TBB_USE_DEBUG>
+                                   PRIVATE
+                                   __TBBBIND_BUILD)
         target_include_directories(${TBBBIND_NAME}
             PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../include>
@@ -33,7 +43,6 @@ macro(tbbbind_build TBBBIND_NAME HWLOC_VERSION)
             ${TBB_MMD_FLAG}
             ${TBB_DSE_FLAG}
             ${TBB_WARNING_LEVEL}
-            ${TBB_WARNING_SUPPRESS}
             ${TBB_LIB_COMPILE_FLAGS}
             ${TBB_COMMON_COMPILE_FLAGS}
         )
@@ -63,15 +72,13 @@ macro(tbbbind_build TBBBIND_NAME HWLOC_VERSION)
             )
         endif()
 
-        string(REPLACE "." "_" HWLOC_TARGET_SUFFIX "${HWLOC_VERSION}")
         target_link_libraries(${TBBBIND_NAME}
             PUBLIC
-            HWLOC::hwloc_${HWLOC_TARGET_SUFFIX}
+            ${REQUIRED_HWLOC_TARGET}
             PRIVATE
             ${TBB_LIB_LINK_LIBS}
             ${TBB_COMMON_LINK_LIBS}
         )
-        unset(HWLOC_TARGET_SUFFIX)
 
         tbb_install_target(${TBBBIND_NAME})
 
@@ -81,6 +88,13 @@ macro(tbbbind_build TBBBIND_NAME HWLOC_VERSION)
     endif()
 endmacro()
 
-message(STATUS "Trying to find HWLOC (versions 2 and 1.11) to build TBBBind library")
-tbbbind_build(tbbbind 1.11)
-tbbbind_build(tbbbind_2_0 2)
+tbbbind_build(tbbbind     HWLOC::hwloc_1_11)
+tbbbind_build(tbbbind_2_0 HWLOC::hwloc_2   )
+tbbbind_build(tbbbind_2_4 HWLOC::hwloc_2_4 )
+
+if (DEFINED CMAKE_SKIP_BUILD_RPATH_OLD_VALUE)
+    set(CMAKE_SKIP_BUILD_RPATH ${CMAKE_SKIP_BUILD_RPATH_OLD_VALUE})
+    unset(CMAKE_SKIP_BUILD_RPATH_OLD_VALUE)
+else()
+    unset(CMAKE_SKIP_BUILD_RPATH)
+endif()

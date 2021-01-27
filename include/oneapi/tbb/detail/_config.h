@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@
 
 #define __TBB_CPP14_PRESENT (__TBB_LANG >= 201402L)
 #define __TBB_CPP17_PRESENT (__TBB_LANG >= 201703L)
-#define __TBB_CPP20_PRESENT (__TBB_LANG >= 202002L)
+#define __TBB_CPP20_PRESENT (__TBB_LANG >= 201709L)
 
 #if __INTEL_COMPILER || _MSC_VER
     #define __TBB_NOINLINE(decl) __declspec(noinline) decl
@@ -108,7 +108,6 @@
     3. "_DEBUG defined to something that is evaluated to a non-zero value" means "debug";
     4. "_DEBUG defined to nothing (empty)" means "debug".
     */
-    // Windows case
     #ifdef _DEBUG
         // Check if _DEBUG is empty.
         #define __TBB_IS__DEBUG_EMPTY (__TBB_IS_MACRO_EMPTY(_DEBUG,IGNORED)==__TBB_MACRO_EMPTY)
@@ -118,13 +117,7 @@
             #define TBB_USE_DEBUG _DEBUG
         #endif // __TBB_IS__DEBUG_EMPTY
     #else
-        // Linux case
-        #ifdef NDEBUG
-            // No default debug macro set
-            #define TBB_USE_DEBUG 0
-        #else
-            #define TBB_USE_DEBUG 1
-        #endif // NDEBUG
+        #define TBB_USE_DEBUG 0
     #endif // _DEBUG
 #endif // TBB_USE_DEBUG
 
@@ -218,21 +211,32 @@
 #define __TBB_CPP14_INTEGER_SEQUENCE_PRESENT       (__TBB_LANG >= 201402L)
 #define __TBB_CPP17_INVOKE_RESULT_PRESENT          (__TBB_LANG >= 201703L)
 
+// TODO: Remove the condition(__INTEL_COMPILER > 2021) from the __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+// macro when this feature start working correctly on this compiler.
 #if __INTEL_COMPILER && (!_MSC_VER || __INTEL_CXX11_MOVE__)
     #define __TBB_CPP14_VARIABLE_TEMPLATES_PRESENT (__TBB_LANG >= 201402L)
     #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT   (__INTEL_COMPILER > 2021 && __TBB_LANG >= 201703L)
+    #define __TBB_CPP20_CONCEPTS_PRESENT           0 // TODO: add a mechanism for future addition
 #elif __clang__
     #define __TBB_CPP14_VARIABLE_TEMPLATES_PRESENT (__has_feature(cxx_variable_templates))
-    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT   (__has_feature(__cpp_deduction_guides))
+    #define __TBB_CPP20_CONCEPTS_PRESENT           0 // TODO: add a mechanism for future addition
+    #ifdef __cpp_deduction_guides
+        #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT (__cpp_deduction_guides >= 201611L)
+    #else
+        #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT 0
+    #endif
 #elif __GNUC__
     #define __TBB_CPP14_VARIABLE_TEMPLATES_PRESENT (__TBB_LANG >= 201402L && __TBB_GCC_VERSION >= 50000)
     #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT   (__cpp_deduction_guides >= 201606L)
+    #define __TBB_CPP20_CONCEPTS_PRESENT           (__TBB_LANG >= 201709L && __TBB_GCC_VERSION >= 100201)
 #elif _MSC_VER
     #define __TBB_CPP14_VARIABLE_TEMPLATES_PRESENT (_MSC_FULL_VER >= 190023918 && (!__INTEL_COMPILER || __INTEL_COMPILER >= 1700))
-    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT   (__TBB_LANG >= 201703L && _MSC_VER >= 1914)
+    #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT   (_MSC_VER >= 1914 && __TBB_LANG >= 201703L && (!__INTEL_COMPILER || __INTEL_COMPILER > 2021))
+    #define __TBB_CPP20_CONCEPTS_PRESENT           (_MSC_VER >= 1923 && __TBB_LANG >= 202002L) // TODO: INTEL_COMPILER?
 #else
     #define __TBB_CPP14_VARIABLE_TEMPLATES_PRESENT (__TBB_LANG >= 201402L)
     #define __TBB_CPP17_DEDUCTION_GUIDES_PRESENT   (__TBB_LANG >= 201703L)
+    #define __TBB_CPP20_CONCEPTS_PRESENT           (__TBB_LANG >= 202002L)
 #endif
 
 // GCC4.8 on RHEL7 does not support std::get_new_handler
@@ -246,6 +250,7 @@
 #define __TBB_CPP17_LOGICAL_OPERATIONS_PRESENT          (__TBB_LANG >= 201703L)
 #define __TBB_CPP17_ALLOCATOR_IS_ALWAYS_EQUAL_PRESENT   (__TBB_LANG >= 201703L)
 #define __TBB_CPP17_IS_SWAPPABLE_PRESENT                (__TBB_LANG >= 201703L)
+#define __TBB_CPP20_COMPARISONS_PRESENT                 __TBB_CPP20_PRESENT
 
 #define __TBB_RESUMABLE_TASKS                           (!__TBB_WIN8UI_SUPPORT && !__ANDROID__)
 
@@ -280,6 +285,7 @@
 #endif
 
 #define __TBB_CPP17_FALLTHROUGH_PRESENT (__TBB_LANG >= 201703L)
+#define __TBB_CPP17_NODISCARD_PRESENT   (__TBB_LANG >= 201703L)
 #define __TBB_FALLTHROUGH_PRESENT       (__TBB_GCC_VERSION >= 70000 && !__INTEL_COMPILER)
 
 #if __TBB_CPP17_FALLTHROUGH_PRESENT
@@ -288,6 +294,14 @@
     #define __TBB_fallthrough __attribute__ ((fallthrough))
 #else
     #define __TBB_fallthrough
+#endif
+
+#if __TBB_CPP17_NODISCARD_PRESENT
+    #define __TBB_nodiscard [[nodiscard]]
+#elif __clang__ || __GNUC__
+    #define __TBB_nodiscard __attribute__((warn_unused_result))
+#else
+    #define __TBB_nodiscard
 #endif
 
 #define __TBB_CPP17_UNCAUGHT_EXCEPTIONS_PRESENT             (_MSC_VER >= 1900 || __GLIBCXX__ && __cpp_lib_uncaught_exceptions \
@@ -336,12 +350,16 @@
     #define __TBB_ARENA_OBSERVER __TBB_SCHEDULER_OBSERVER
 #endif /* __TBB_ARENA_OBSERVER */
 
-#ifndef __TBB_NUMA_SUPPORT
-    #define __TBB_NUMA_SUPPORT 1
+#ifndef __TBB_ARENA_BINDING
+    #define __TBB_ARENA_BINDING 1
 #endif
 
 #if TBB_PREVIEW_WAITING_FOR_WORKERS || __TBB_BUILD
     #define __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE 1
+#endif
+
+#if (TBB_PREVIEW_TASK_ARENA_CONSTRAINTS_EXTENSION || __TBB_BUILD) && __TBB_ARENA_BINDING
+    #define __TBB_PREVIEW_TASK_ARENA_CONSTRAINTS_EXTENSION_PRESENT 1
 #endif
 
 #ifndef __TBB_ENQUEUE_ENFORCED_CONCURRENCY

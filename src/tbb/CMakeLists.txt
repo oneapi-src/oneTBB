@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Intel Corporation
+# Copyright (c) 2020-2021 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,11 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(tbb SHARED
+add_library(tbb 
     allocator.cpp
     arena.cpp
     arena_slot.cpp
-    concurrent_monitor.cpp
     concurrent_bounded_queue.cpp
     dynamic_link.cpp
     exception.cpp
@@ -50,7 +49,11 @@ endif()
 
 # TODO: Add statistics.cpp
 
-target_compile_definitions(tbb PRIVATE __TBB_BUILD)
+target_compile_definitions(tbb
+                           PUBLIC
+                           $<$<CONFIG:DEBUG>:TBB_USE_DEBUG>
+                           PRIVATE
+                           __TBB_BUILD)
 
 if (NOT ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(armv7-a|aarch64|mips|arm64)" OR
          "${CMAKE_OSX_ARCHITECTURES}" MATCHES "arm64" OR

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -115,7 +115,7 @@ int main() {}
 #if __TBB_WIN8UI_SUPPORT || __TBB_MIC_OFFLOAD
 // The test does not work if dynamic load is unavailable.
 // For MIC offload, it fails because liboffload brings libiomp which observes and uses the fake scalable_* calls.
-#else
+#else /* !(__TBB_WIN8UI_SUPPORT || __TBB_MIC_OFFLOAD) */
 #include "common/test.h"
 #include "common/memory_usage.h"
 #include "common/utils_dynamic_libs.h"
@@ -174,7 +174,6 @@ struct Run {
 
 //! \brief \ref error_guessing
 TEST_CASE("test unload lib") {
-    int i;
     std::ptrdiff_t memory_leak = 0;
 
     // warm-up run
@@ -192,23 +191,17 @@ TEST_CASE("test unload lib") {
     }
     {
         // expect that memory consumption stabilized after several runs
-        for (i=0; i<3; i++) {
+        for (;;) {
             std::size_t memory_in_use = utils::GetMemoryUsage();
             for (int j=0; j<10; j++)
                 utils::NativeParallelFor( 1, Run() );
             memory_leak = utils::GetMemoryUsage() - memory_in_use;
-            if (memory_leak == 0)  // possibly too strong?
-                break;
+            if (memory_leak == 0)
+                return;
         }
     }
-    if(3==i) {
-        // not stabilized, could be leak
-        REPORT( "Error: memory leak of up to %ld bytes\n", static_cast<long>(memory_leak));
-        exit(1);
-    }
-
 }
 
-#endif /* __TBB_WIN8UI_SUPPORT */
+#endif /* !(__TBB_WIN8UI_SUPPORT || __TBB_MIC_OFFLOAD) */
 
 #endif // _USRDLL

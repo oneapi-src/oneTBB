@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -40,7 +40,8 @@ struct Counter {
     volatile long value;
 };
 
-#if __TBB_TSX_INTRINSICS_PRESENT
+// TODO: Investigate why RTM doesn't work on some macOS.
+#if __TBB_TSX_INTRINSICS_PRESENT && !__APPLE__
 
 inline static bool IsInsideTx() {
     return _xtest() != 0;
@@ -132,7 +133,7 @@ struct Counter {
     using mutex_type = M;
 
     M mutex;
-    volatile long value;
+    long value;
 
     void flog_once( std::size_t mode ) {
         // Increments counter once for each iteration in the iteration space
@@ -155,7 +156,7 @@ struct Invariant {
     using mutex_type = M;
 
     M mutex;
-    volatile long value[N];
+    long value[N];
 
     Invariant() {
         for (long k = 0; k < N; ++k) {
@@ -256,7 +257,7 @@ struct Work : utils::NoAssign {
 
     Work( State& st ) : state(st){ Order = 0; }
 
-    void operator()( int ) const {
+    void operator()(std::size_t) const {
         std::size_t step;
         while( (step = Order.fetch_add(chunk, std::memory_order_acquire)) < TestSize ) {
             for (std::size_t i = 0; i < chunk && step < TestSize; ++i, ++step) {

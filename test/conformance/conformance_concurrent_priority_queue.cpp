@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -14,10 +14,15 @@
     limitations under the License.
 */
 
+#if __INTEL_COMPILER && _MSC_VER
+#pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
+#endif
+
 #include <common/concurrent_priority_queue_common.h>
 #include <common/initializer_list_support.h>
 #include <common/container_move_support.h>
 #include <common/containers_common.h>
+#include <common/test_comparisons.h>
 #include <scoped_allocator>
 
 //! \file conformance_concurrent_priority_queue.cpp
@@ -67,41 +72,42 @@ bool operator==( const SpecialMemberCalls& lhs, const SpecialMemberCalls& rhs ) 
            lhs.move_assign_called_times == rhs.move_assign_called_times;
 }
 
-struct MoveOperationTracker {
-    static std::size_t copy_ctor_called_times;
-    static std::size_t move_ctor_called_times;
-    static std::size_t copy_assign_called_times;
-    static std::size_t move_assign_called_times;
+template <typename CounterType>
+struct MoveOperationTrackerBase {
+    static CounterType copy_ctor_called_times;
+    static CounterType move_ctor_called_times;
+    static CounterType copy_assign_called_times;
+    static CounterType move_assign_called_times;
 
     static SpecialMemberCalls special_member_calls() {
         return SpecialMemberCalls{copy_ctor_called_times, move_ctor_called_times, copy_assign_called_times, move_assign_called_times};
     }
-    static std::size_t value_counter;
+    static CounterType value_counter;
     std::size_t value;
 
-    MoveOperationTracker() : value(++value_counter) {}
-    explicit MoveOperationTracker( const std::size_t val ) : value(val) {}
-    ~MoveOperationTracker() { value = 0; }
+    MoveOperationTrackerBase() : value(++value_counter) {}
+    explicit MoveOperationTrackerBase( const std::size_t val ) : value(val) {}
+    ~MoveOperationTrackerBase() { value = 0; }
 
-    MoveOperationTracker( const MoveOperationTracker& other ) : value(other.value) {
+    MoveOperationTrackerBase( const MoveOperationTrackerBase& other ) : value(other.value) {
         REQUIRE_MESSAGE(other.value, "The object has been moved or destroyed");
         ++copy_ctor_called_times;
     }
 
-    MoveOperationTracker( MoveOperationTracker&& other ) noexcept : value(other.value) {
+    MoveOperationTrackerBase( MoveOperationTrackerBase&& other ) noexcept : value(other.value) {
         REQUIRE_MESSAGE(other.value, "The object has been moved or destroyed");
         other.value = 0;
         ++move_ctor_called_times;
     }
 
-    MoveOperationTracker& operator=( const MoveOperationTracker& other ) {
+    MoveOperationTrackerBase& operator=( const MoveOperationTrackerBase& other ) {
         REQUIRE_MESSAGE(other.value, "The object has been moved or destroyed");
         value = other.value;
         ++copy_assign_called_times;
         return *this;
     }
 
-    MoveOperationTracker& operator=( MoveOperationTracker&& other ) noexcept {
+    MoveOperationTrackerBase& operator=( MoveOperationTrackerBase&& other ) noexcept {
         REQUIRE_MESSAGE(other.value, "The object has been moved or destroyed");
         value = other.value;
         other.value = 0;
@@ -109,22 +115,26 @@ struct MoveOperationTracker {
         return *this;
     }
 
-    bool operator<( const MoveOperationTracker& other ) const {
+    bool operator<( const MoveOperationTrackerBase& other ) const {
         REQUIRE_MESSAGE(value, "The object has been moved or destroyed");
         REQUIRE_MESSAGE(other.value, "The object has been moved or destroyed");
         return value < other.value;
     }
-}; // struct MoveOperationTracker
+}; // struct MoveOperationTrackerBase
 
-bool operator==( const MoveOperationTracker& lhs, const MoveOperationTracker& rhs ) {
+template<typename CounterType>
+bool operator==( const MoveOperationTrackerBase<CounterType>& lhs, const MoveOperationTrackerBase<CounterType>& rhs ) {
     return !(lhs < rhs) && !(rhs < lhs);
 }
 
-std::size_t MoveOperationTracker::copy_ctor_called_times = 0;
-std::size_t MoveOperationTracker::move_ctor_called_times = 0;
-std::size_t MoveOperationTracker::copy_assign_called_times = 0;
-std::size_t MoveOperationTracker::move_assign_called_times = 0;
-std::size_t MoveOperationTracker::value_counter = 0;
+using MoveOperationTracker = MoveOperationTrackerBase<std::size_t>;
+using MoveOperationTrackerConc = MoveOperationTrackerBase<std::atomic<std::size_t>>;
+
+template <typename CounterType> CounterType MoveOperationTrackerBase<CounterType>::copy_ctor_called_times(0);
+template <typename CounterType> CounterType MoveOperationTrackerBase<CounterType>::move_ctor_called_times(0);
+template <typename CounterType> CounterType MoveOperationTrackerBase<CounterType>::copy_assign_called_times(0);
+template <typename CounterType> CounterType MoveOperationTrackerBase<CounterType>::move_assign_called_times(0);
+template <typename CounterType> CounterType MoveOperationTrackerBase<CounterType>::value_counter(0);
 
 template <typename Allocator = std::allocator<MoveOperationTracker>>
 struct CPQSrcFixture {
@@ -524,9 +534,9 @@ void test_concurrent(std::size_t n) {
     test_flogger<std::less<int>, int>(n);
     test_flogger<std::less<int>, unsigned char>(n);
 
-    MoveOperationTracker::copy_assign_called_times = 0;
-    test_flogger<std::less<MoveOperationTracker>, MoveOperationTracker>(n);
-    REQUIRE_MESSAGE(MoveOperationTracker::copy_assign_called_times == 0, "Copy assignment called during try_pop");
+    MoveOperationTrackerConc::copy_assign_called_times = 0;
+    test_flogger<std::less<MoveOperationTrackerConc>, MoveOperationTrackerConc>(n);
+    REQUIRE_MESSAGE(MoveOperationTrackerConc::copy_assign_called_times == 0, "Copy assignment called during try_pop");
 }
 
 void test_multithreading() {
@@ -605,6 +615,40 @@ void TestDeductionGuides() {
 }
 #endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 
+template <typename CPQType>
+void TestComparisonsBasic() {
+    using comparisons_testing::testEqualityComparisons;
+    CPQType c1, c2;
+    testEqualityComparisons</*ExpectEqual = */true>(c1, c2);
+
+    c1.emplace(1);
+    testEqualityComparisons</*ExpectEqual = */false>(c1, c2);
+
+    c2.emplace(1);
+    testEqualityComparisons</*ExpectEqual = */true>(c1, c2);
+}
+
+template <typename TwoWayComparableCPQType>
+void TestTwoWayComparableCPQ() {
+    TwoWayComparableCPQType c1, c2;
+    c1.emplace(1);
+    c2.emplace(1);
+    comparisons_testing::TwoWayComparable::reset();
+    REQUIRE_MESSAGE(c1 == c2, "Incorrect operator == result");
+    comparisons_testing::check_equality_comparison();
+    REQUIRE_MESSAGE(!(c1 != c2), "Incorrect operator != result");
+    comparisons_testing::check_equality_comparison();
+}
+
+void TestCPQComparisons() {
+    using integral_container = oneapi::tbb::concurrent_priority_queue<int>;
+    using two_way_comparable_container = oneapi::tbb::concurrent_priority_queue<comparisons_testing::TwoWayComparable>;
+
+    TestComparisonsBasic<integral_container>();
+    TestComparisonsBasic<two_way_comparable_container>();
+    TestTwoWayComparableCPQ<two_way_comparable_container>();
+}
+
 // Testing basic operations with concurrent_priority_queue with integral value type
 //! \brief \ref interface \ref requirement
 TEST_CASE("basic test for concurrent_priority_queue") {
@@ -670,3 +714,8 @@ TEST_CASE("CTAD support in concurrent_priority_queue") {
     TestDeductionGuides<oneapi::tbb::concurrent_priority_queue>();
 }
 #endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+
+//! \brief \ref interface \ref requirement
+TEST_CASE("concurrent_priority_queue iterator comparisons") {
+    TestCPQComparisons();
+}

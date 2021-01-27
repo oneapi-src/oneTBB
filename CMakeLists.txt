@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Intel Corporation
+# Copyright (c) 2020-2021 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,9 +13,6 @@
 # limitations under the License.
 
 cmake_minimum_required(VERSION 3.1)
-
-include(CheckCXXCompilerFlag)
-include(GNUInstallDirs)
 
 # Enable CMake policies
 
@@ -50,15 +47,19 @@ endif()
 file(READ include/oneapi/tbb/version.h _tbb_version_info)
 string(REGEX REPLACE ".*#define TBB_VERSION_MAJOR ([0-9]+).*" "\\1" _tbb_ver_major "${_tbb_version_info}")
 string(REGEX REPLACE ".*#define TBB_VERSION_MINOR ([0-9]+).*" "\\1" _tbb_ver_minor "${_tbb_version_info}")
+string(REGEX REPLACE ".*#define TBB_VERSION_PATCH ([0-9]+).*" "\\1" _tbb_ver_patch "${_tbb_version_info}")
 string(REGEX REPLACE ".*#define TBB_INTERFACE_VERSION ([0-9]+).*" "\\1" TBB_INTERFACE_VERSION "${_tbb_version_info}")
 string(REGEX REPLACE ".*#define __TBB_BINARY_VERSION ([0-9]+).*" "\\1" TBB_BINARY_VERSION "${_tbb_version_info}")
-set(TBB_BINARY_MINOR_VERSION 1)
+set(TBB_BINARY_MINOR_VERSION ${_tbb_ver_minor})
 set(TBBMALLOC_BINARY_VERSION 2)
 set(TBBBIND_BINARY_VERSION 3)
 
-project(TBB VERSION ${_tbb_ver_major}.${_tbb_ver_minor}.1 LANGUAGES CXX)
+project(TBB VERSION ${_tbb_ver_major}.${_tbb_ver_minor}.${_tbb_ver_patch} LANGUAGES CXX)
 unset(_tbb_ver_major)
 unset(_tbb_ver_minor)
+
+include(CheckCXXCompilerFlag)
+include(GNUInstallDirs)
 
 # ---------------------------------------------------------------------------------------------------------
 # Handle C++ standard version.
@@ -99,6 +100,14 @@ option(TBB_NO_APPCONTAINER "Apply /APPCONTAINER:NO (for testing binaries for Win
 option(TBB4PY_BUILD "Enable tbb4py build" OFF)
 option(TBB_CPF "Enable preview features of the library" OFF)
 option(TBB_FIND_PACKAGE "Enable search for external oneTBB using find_package instead of build from sources" OFF)
+
+if (NOT DEFINED BUILD_SHARED_LIBS)
+    set(BUILD_SHARED_LIBS ON)
+endif()
+
+if (NOT BUILD_SHARED_LIBS)
+    message(WARNING "You are building oneTBB as a static library. This is highly discouraged and such configuration is not supported. Consider building a dynamic library to avoid unforeseen issues.")
+endif()
 
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Build type" FORCE)
@@ -163,8 +172,6 @@ set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
 # -------------------------------------------------------------------
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
-
 file(GLOB FILES_WITH_EXTRA_TARGETS ${CMAKE_CURRENT_SOURCE_DIR}/cmake/*.cmake)
 foreach(FILE_WITH_EXTRA_TARGETS ${FILES_WITH_EXTRA_TARGETS})
     include(${FILE_WITH_EXTRA_TARGETS})
@@ -215,6 +222,10 @@ else()
     install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
                   "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
             DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+            COMPONENT devel)
+
+    install(FILES "README.md"
+            DESTINATION ${CMAKE_INSTALL_DOCDIR}
             COMPONENT devel)
     # -------------------------------------------------------------------
 endif()

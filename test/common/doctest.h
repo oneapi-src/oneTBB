@@ -1,5 +1,5 @@
 /*
-    Modifications Copyright (c) 2020 Intel Corporation
+    Modifications Copyright (c) 2020-2021 Intel Corporation
     Modifications Licensed under the Apache License, Version 2.0;
     You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
 */
@@ -2878,9 +2878,10 @@ namespace detail {
         return oss.str().c_str();
     }
 
-    DOCTEST_THREAD_LOCAL std::ostringstream g_oss; // NOLINT(cert-err58-cpp)
+    DOCTEST_THREAD_LOCAL doctest_thread_local_wrapper<std::ostringstream> wrapped_g_oss; // NOLINT(cert-err58-cpp)
 
     std::ostream* getTlsOss() {
+        auto& g_oss = wrapped_g_oss.get();
         g_oss.clear(); // there shouldn't be anything worth clearing in the flags
         g_oss.str(""); // the slow way of resetting a string stream
         //g_oss.seekp(0); // optimal reset - as seen here: https://stackoverflow.com/a/624291/3162383
@@ -2889,7 +2890,7 @@ namespace detail {
 
     String getTlsOssResult() {
         //g_oss << std::ends; // needed - as shown here: https://stackoverflow.com/a/624291/3162383
-        return g_oss.str().c_str();
+        return wrapped_g_oss.get().str().c_str();
     }
 
 #ifndef DOCTEST_CONFIG_DISABLE
@@ -3727,7 +3728,8 @@ namespace {
         return 0;
     }
 
-    int dumy_init_console_colors = colors_init();
+    // volatile to suppress unused warning
+    volatile int dummy_init_console_colors = colors_init();
 #endif // DOCTEST_CONFIG_COLORS_WINDOWS
 
     DOCTEST_CLANG_SUPPRESS_WARNING_WITH_PUSH("-Wdeprecated-declarations")
@@ -3900,10 +3902,10 @@ namespace detail {
     void toStream(std::ostream* s, int long long in) { *s << in; }
     void toStream(std::ostream* s, int long long unsigned in) { *s << in; }
 
-    DOCTEST_THREAD_LOCAL std::vector<IContextScope*> g_infoContexts; // for logging with INFO()
+    DOCTEST_THREAD_LOCAL doctest_thread_local_wrapper<std::vector<IContextScope*>> wrapped_g_infoContexts; // for logging with INFO()
 
     ContextScopeBase::ContextScopeBase() {
-        g_infoContexts.push_back(this);
+        wrapped_g_infoContexts.get().push_back(this);
     }
 
     DOCTEST_MSVC_SUPPRESS_WARNING_WITH_PUSH(4996) // std::uncaught_exception is deprecated in C++17
@@ -3918,7 +3920,7 @@ namespace detail {
             this->stringify(&s);
             g_cs->stringifiedContexts.push_back(s.str().c_str());
         }
-        g_infoContexts.pop_back();
+        wrapped_g_infoContexts.get().pop_back();
     }
     DOCTEST_CLANG_SUPPRESS_WARNING_POP
     DOCTEST_GCC_SUPPRESS_WARNING_POP
@@ -4104,7 +4106,7 @@ namespace {
             g_cs->numAssertsFailedCurrentTest_atomic++;
     }
 
-#if defined(DOCTEST_CONFIG_POSIX_SIGNALS) || defined(DOCTEST_CONFIG_WINDOWS_SEH)
+#if defined(DOCTEST_CONFIG_POSIX_SIGNALS) || (defined(DOCTEST_CONFIG_WINDOWS_SEH) && !defined(WINAPI_FAMILY))
     void reportFatal(const std::string& message) {
         g_cs->failure_flags |= TestCaseFailureReason::Crash;
 
@@ -5106,6 +5108,7 @@ namespace {
             printReporters(getReporters(), "reporters");
         }
 
+#if 0 /* dead code */
         void list_query_results() {
             separator_to_stream();
             if(opt.count || opt.list_test_cases) {
@@ -5121,6 +5124,7 @@ namespace {
                   << g_cs->numTestSuitesPassingFilters << "\n";
             }
         }
+#endif
 
         // =========================================================================================
         // WHAT FOLLOWS ARE OVERRIDES OF THE VIRTUAL METHODS OF THE REPORTER INTERFACE
@@ -5353,18 +5357,18 @@ namespace {
 #ifdef DOCTEST_PLATFORM_WINDOWS
     struct DebugOutputWindowReporter : public ConsoleReporter
     {
-        DOCTEST_THREAD_LOCAL static std::ostringstream oss;
+        DOCTEST_THREAD_LOCAL static doctest_thread_local_wrapper<std::ostringstream> wrapped_oss;
 
         DebugOutputWindowReporter(const ContextOptions& co)
-                : ConsoleReporter(co, oss) {}
+                : ConsoleReporter(co, wrapped_oss.get()) {}
 
 #define DOCTEST_DEBUG_OUTPUT_REPORTER_OVERRIDE(func, type, arg)                                    \
     void func(type arg) override {                                                                 \
         bool with_col = g_no_colors;                                                               \
         g_no_colors   = false;                                                                     \
         ConsoleReporter::func(arg);                                                                \
-        DOCTEST_OUTPUT_DEBUG_STRING(oss.str().c_str());                                            \
-        oss.str("");                                                                               \
+        DOCTEST_OUTPUT_DEBUG_STRING(wrapped_oss.get().str().c_str());                              \
+        wrapped_oss.get().str("");                                                                 \
         g_no_colors = with_col;                                                                    \
     }
 
@@ -5381,7 +5385,7 @@ namespace {
         DOCTEST_DEBUG_OUTPUT_REPORTER_OVERRIDE(test_case_skipped, const TestCaseData&, in)
     };
 
-    DOCTEST_THREAD_LOCAL std::ostringstream DebugOutputWindowReporter::oss;
+    DOCTEST_THREAD_LOCAL doctest_thread_local_wrapper<std::ostringstream> DebugOutputWindowReporter::wrapped_oss;
 #endif // DOCTEST_PLATFORM_WINDOWS
 
     // the implementation of parseOption()
@@ -5669,6 +5673,11 @@ void Context::setAsDefaultForAssertsOutOfTestCases() { g_cs = p; }
 
 void Context::setAssertHandler(detail::assert_handler ah) { p->ah = ah; }
 
+// see these issues on the reasoning for this:
+// - https://github.com/onqtam/doctest/issues/143#issuecomment-414418903
+// - https://github.com/onqtam/doctest/issues/126
+static DOCTEST_NOINLINE void DOCTEST_FIX_FOR_MACOS_LIBCPP_IOSFWD_STRING_LINK_ERRORS()  { std::cout << std::string(); }
+
 // the main function that does all the filtering and test running
 int Context::run() {
     using namespace detail;
@@ -5913,11 +5922,6 @@ int Context::run() {
         DOCTEST_ITERATE_THROUGH_REPORTERS(report_query, qdata);
     }
 
-    // see these issues on the reasoning for this:
-    // - https://github.com/onqtam/doctest/issues/143#issuecomment-414418903
-    // - https://github.com/onqtam/doctest/issues/126
-    auto DOCTEST_FIX_FOR_MACOS_LIBCPP_IOSFWD_STRING_LINK_ERRORS = []() DOCTEST_NOINLINE
-        { std::cout << std::string(); };
     DOCTEST_FIX_FOR_MACOS_LIBCPP_IOSFWD_STRING_LINK_ERRORS();
 
     return cleanup_and_return();
@@ -5925,9 +5929,9 @@ int Context::run() {
 
 IReporter::~IReporter() = default;
 
-int IReporter::get_num_active_contexts() { return detail::g_infoContexts.size(); }
+int IReporter::get_num_active_contexts() { return detail::wrapped_g_infoContexts.get().size(); }
 const IContextScope* const* IReporter::get_active_contexts() {
-    return get_num_active_contexts() ? &detail::g_infoContexts[0] : nullptr;
+    return get_num_active_contexts() ? &detail::wrapped_g_infoContexts.get()[0] : nullptr;
 }
 
 int IReporter::get_num_stringified_contexts() { return detail::g_cs->stringifiedContexts.size(); }

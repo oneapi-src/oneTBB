@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 #include "common/test.h"
 
 #define __TBB_EXTRA_DEBUG 1
+#include "common/concurrency_tracker.h"
 #include "common/spin_barrier.h"
 #include "common/utils.h"
 #include "common/utils_report.h"
@@ -143,8 +144,7 @@ public:
 struct IndexTrackingBody { // Must be used together with ArenaObserver
     void operator() ( const Range& ) const {
         CHECK(slot_id.local() == tbb::this_task_arena::current_thread_index());
-        for ( volatile int i = 0; i < 50000; ++i )
-            ;
+        utils::doDummyWork(50000);
     }
 };
 
@@ -156,7 +156,7 @@ struct AsynchronousWork {
     void operator()() const {
         CHECK_MESSAGE(local_id.local() != 0, "not in explicit arena");
         tbb::parallel_for(Range(0,500), IndexTrackingBody(), tbb::simple_partitioner());
-        if(my_is_blocking) my_barrier.wait(); // must be asynchronous to master thread
+        if(my_is_blocking) my_barrier.wait(); // must be asynchronous to an external thread
         else my_barrier.signalNoWait();
     }
 };
@@ -230,8 +230,7 @@ class MultipleMastersPart3 : utils::NoAssign {
         wait_context& myWait;
         Runner(wait_context& w) : myWait(w) {}
         void operator()() const {
-            for ( volatile int i = 0; i < 10000; ++i )
-                ;
+            utils::doDummyWork(10000);
             myWait.release();
         }
     };
@@ -276,7 +275,7 @@ void TestMultipleMasters(int p) {
         ArenaObserver o(a, 2, 1, 2);
         utils::SpinBarrier barrier(p+2);
         a.enqueue(AsynchronousWork(barrier, /*blocking=*/true)); // occupy the worker, a regression test for bug 1981
-        // TODO: buggy test. A worker threads need time to occupy the slot to prevent a master from taking an enqueue task.
+        // TODO: buggy test. A worker threads need time to occupy the slot to prevent an external thread from taking an enqueue task.
         utils::Sleep(10);
         NativeParallelFor( p, MultipleMastersPart2(a, barrier) );
         barrier.wait();
@@ -284,8 +283,8 @@ void TestMultipleMasters(int p) {
     } {
         // Regression test for the bug 1981 part 2 (task_arena::execute() with wait_for_all for an enqueued task)
         tbb::task_arena a(p,1);
-        utils::SpinBarrier barrier(p+1); // for masters to avoid endless waiting at least in some runs
-        // "Oversubscribe" the arena by 1 master thread
+        utils::SpinBarrier barrier(p+1); // for external threads to avoid endless waiting at least in some runs
+        // "Oversubscribe" the arena by 1 external thread
         NativeParallelFor( p+1, MultipleMastersPart3(a, barrier) );
         a.debug_wait_until_empty();
     }
@@ -323,7 +322,7 @@ struct TestArenaEntryBody : FPModeContext {
         CHECK(slot >= 0);
         CHECK(slot <= 1);
         // wait until the third stage is delegated and then starts on slot 0
-        while(my_stage < 2+slot) std::this_thread::yield();
+        while(my_stage < 2+slot) utils::yield();
         // deduct its entry type and put it into id, it helps to find source of a problem
         my_id << (stage < 3 ? (tbb::this_task_arena::current_thread_index()?
                               "delegated_to_worker" : stage < 2? "direct" : "delegated_to_master")
@@ -430,8 +429,8 @@ public:
         CHECK( max_arena_concurrency == my_max_concurrency );
         if ( my_worker_barrier ) {
             if ( local_id.local() == 1 ) {
-                // Master thread in a reserved slot
-                CHECK_MESSAGE( idx < my_reserved_slots, "Masters are supposed to use only reserved slots in this test" );
+                // External thread in a reserved slot
+                CHECK_MESSAGE( idx < my_reserved_slots, "External threads are supposed to use only reserved slots in this test" );
             } else {
                 // Worker thread
                 CHECK( idx >= my_reserved_slots );
@@ -440,14 +439,14 @@ public:
         } else if ( my_barrier )
             CHECK_MESSAGE( local_id.local() == 1, "Workers are not supposed to enter the arena in this test" );
         if ( my_barrier ) my_barrier->wait();
-        else utils::Sleep( 10 );
+        else utils::Sleep( 1 );
     }
 };
 
 void TestArenaConcurrency( int p, int reserved = 0, int step = 1) {
     for (; reserved <= p; reserved += step) {
         tbb::task_arena a( p, reserved );
-        { // Check concurrency with worker & reserved master threads.
+        { // Check concurrency with worker & reserved external threads.
             ResetTLS();
             utils::SpinBarrier b( p );
             utils::SpinBarrier wb( p-reserved );
@@ -459,12 +458,12 @@ void TestArenaConcurrency( int p, int reserved = 0, int step = 1) {
             else
                 utils::NativeParallelFor( reserved, test );
             a.debug_wait_until_empty();
-        } { // Check if multiple masters alone can achieve maximum concurrency.
+        } { // Check if multiple external threads alone can achieve maximum concurrency.
             ResetTLS();
             utils::SpinBarrier b( p );
             utils::NativeParallelFor( p, TestArenaConcurrencyBody( a, p, reserved, &b ) );
             a.debug_wait_until_empty();
-        } { // Check oversubscription by masters.
+        } { // Check oversubscription by external threads.
 #if !_WIN32 || !_WIN64
             // Some C++ implementations allocate 8MB stacks for std::thread on 32 bit platforms
             // that makes impossible to create more than ~500 threads.
@@ -482,7 +481,56 @@ void TestArenaConcurrency( int p, int reserved = 0, int step = 1) {
     }
 }
 
+struct TestMandatoryConcurrencyObserver : public tbb::task_scheduler_observer {
+    utils::SpinBarrier& m_barrier;
+
+    TestMandatoryConcurrencyObserver(tbb::task_arena& a, utils::SpinBarrier& barrier)
+        : tbb::task_scheduler_observer(a), m_barrier(barrier) {
+        observe(true);
+    }
+    void on_scheduler_exit(bool worker) override {
+        if (worker) {
+            m_barrier.wait();
+        }
+    }
+};
+
+void TestMandatoryConcurrency() {
+    tbb::task_arena a(1);
+    a.execute([&a] {
+        int n_threads = 4;
+        utils::SpinBarrier exit_barrier(2);
+        TestMandatoryConcurrencyObserver observer(a, exit_barrier);
+        for (int j = 0; j < 5; ++j) {
+            utils::ExactConcurrencyLevel::check(1);
+            std::atomic<int> num_tasks{ 0 }, curr_tasks{ 0 };
+            utils::SpinBarrier barrier(n_threads);
+            utils::NativeParallelFor(n_threads, [&](int) {
+                for (int i = 0; i < 5; ++i) {
+                    barrier.wait();
+                    a.enqueue([&] {
+                        CHECK(tbb::this_task_arena::max_concurrency() == 2);
+                        CHECK(a.max_concurrency() == 2);
+                        ++curr_tasks;
+                        CHECK(curr_tasks == 1);
+                        utils::doDummyWork(1000);
+                        CHECK(curr_tasks == 1);
+                        --curr_tasks;
+                        ++num_tasks;
+                    });
+                    barrier.wait();
+                }
+            });
+            do {
+                exit_barrier.wait();
+            } while (num_tasks < n_threads * 5);
+        }
+        observer.observe(false);
+    });
+}
+
 void TestConcurrentFunctionality(int min_thread_num = 1, int max_thread_num = 3) {
+    TestMandatoryConcurrency();
     InitializeAndTerminate(max_thread_num);
     for (int p = min_thread_num; p <= max_thread_num; ++p) {
         TestConcurrentArenas(p);
@@ -744,7 +792,7 @@ namespace TestIsolatedExecuteNS {
             , myNestedLevel( nested_level ) {}
         void operator()() const {
             int &isolated_level = myIsolatedLevel.local();
-            REQUIRE_MESSAGE( myNestedLevel > isolated_level, "The outer-level task should not be stolen on isolated level" );
+            CHECK_FAST_MESSAGE( myNestedLevel > isolated_level, "The outer-level task should not be stolen on isolated level" );
             if ( myNestedLevel == 20 )
                 return;
             utils::FastRandom<>& rnd = myRandom.local();
@@ -822,7 +870,7 @@ namespace TestIsolatedExecuteNS {
         tbb::enumerable_thread_specific<int> ets;
         std::atomic<bool> is_stolen;
         is_stolen = false;
-        for ( int i = 0; i<10; ++i ) {
+        for ( ;; ) {
             tbb::parallel_for( 0, 1000, ExceptionTestBody( ets, is_stolen ) );
             if ( is_stolen ) break;
         }
@@ -864,7 +912,7 @@ namespace TestIsolatedExecuteNS {
                 arena.enqueue([&]() {
                     executed.local() = true;
                     ++completed;
-                    for (volatile int j = 0; j < 100; j++) std::this_thread::yield();
+                    for (int j = 0; j < 100; j++) utils::yield();
                     waiter.release(1);
                 });
             }
@@ -916,7 +964,7 @@ namespace TestIsolatedExecuteNS {
             arena.enqueue([&]() {
                 executed.local() = true;
                 ++completed;
-                std::this_thread::yield();
+                utils::yield();
                 waiter.release(1);
             });
         }
@@ -925,7 +973,7 @@ namespace TestIsolatedExecuteNS {
         REQUIRE_MESSAGE(executed.local() == false, "An enqueued task was executed within isolate.");
 
         tbb::detail::d1::wait(waiter, ctx);
-        // while (completed < TestEnqueueTask::N + N) std::this_thread::yield();
+        // while (completed < TestEnqueueTask::N + N) utils::yield();
     }
 }
 
@@ -1041,7 +1089,7 @@ void TestMultipleWaits( int num_threads, int num_bunches, int bunch_size ) {
         int idx = 0;
         for ( int bunch = 0; bunch < num_bunches-1; ++bunch ) {
             // Sync with the previous bunch of waiters to prevent "false" nested dependicies (when a nested task waits for an outer task).
-            while ( processed < bunch*bunch_size ) std::this_thread::yield();
+            while ( processed < bunch*bunch_size ) utils::yield();
             // Run the bunch of threads/waiters that depend on the next bunch of threads/waiters.
             for ( int i = 0; i<bunch_size; ++i ) {
                 waiters[idx]->reserve();
@@ -1052,7 +1100,7 @@ void TestMultipleWaits( int num_threads, int num_bunches, int bunch_size ) {
         // Run the last bunch of threads.
         for ( int i = 0; i<bunch_size; ++i )
             std::thread( TestMultipleWaitsThreadBody( bunch_size, num_tasks, a, waiters, processed, tgc ), idx++ ).detach();
-        while ( processed ) std::this_thread::yield();
+        while ( processed ) utils::yield();
     }
     for (auto w : waiters) delete w;
 }
@@ -1251,13 +1299,15 @@ struct MyObserver: public tbb::task_scheduler_observer {
     tbb::task_arena& my_arena;
     std::atomic<int>& my_failure_counter;
     std::atomic<int>& my_counter;
+    utils::SpinBarrier& m_barrier;
 
     MyObserver(tbb::task_arena& a,
         tbb::enumerable_thread_specific<tbb::task_arena*>& tls,
         std::atomic<int>& failure_counter,
-        std::atomic<int>& counter)
+        std::atomic<int>& counter,
+        utils::SpinBarrier& barrier)
         : tbb::task_scheduler_observer(a), my_tls(tls), my_arena(a),
-        my_failure_counter(failure_counter), my_counter(counter) {
+        my_failure_counter(failure_counter), my_counter(counter), m_barrier(barrier) {
         observe(true);
     }
     void on_scheduler_entry(bool worker) override {
@@ -1268,85 +1318,74 @@ struct MyObserver: public tbb::task_scheduler_observer {
                 ++my_failure_counter;
             }
             cur_arena = &my_arena;
+            m_barrier.wait();
+        }
+    }
+    void on_scheduler_exit(bool worker) override {
+        if (worker) {
+            m_barrier.wait(); // before wakeup
+            m_barrier.wait(); // after wakeup
         }
     }
 };
 
-struct MyLoopBody {
-    utils::SpinBarrier& m_barrier;
-    MyLoopBody(utils::SpinBarrier& b):m_barrier(b) { }
-    void operator()(int) const {
-        m_barrier.wait();
-    }
-};
-
-struct TaskForArenaExecute {
-    utils::SpinBarrier& m_barrier;
-    TaskForArenaExecute(utils::SpinBarrier& b):m_barrier(b) { }
-    void operator()() const {
-         tbb::parallel_for(0, tbb::this_task_arena::max_concurrency(),
-             MyLoopBody(m_barrier), tbb::simple_partitioner()
-         );
-    }
-};
-
-struct ExecuteParallelFor {
-    int n_per_thread;
-    int n_repetitions;
-    std::vector<tbb::task_arena>& arenas;
-    utils::SpinBarrier& arena_barrier;
-    utils::SpinBarrier& master_barrier;
-    ExecuteParallelFor(const int n_per_thread_, const int n_repetitions_,
-        std::vector<tbb::task_arena>& arenas_,
-        utils::SpinBarrier& arena_barrier_, utils::SpinBarrier& master_barrier_)
-            : n_per_thread(n_per_thread_), n_repetitions(n_repetitions_), arenas(arenas_),
-              arena_barrier(arena_barrier_), master_barrier(master_barrier_){ }
-    void operator()(int i) const {
-        for (int j = 0; j < n_repetitions; ++j) {
-            arenas[i].execute(TaskForArenaExecute(arena_barrier));
-            for(volatile int k = 0; k < n_per_thread; ++k){/* waiting until workers fall asleep */}
-            master_barrier.wait();
-        }
-    }
-};
-
-// if n_threads == -1 then global_control initialized with default value
 void TestArenaWorkersMigrationWithNumThreads(int n_threads = 0) {
     if (n_threads == 0) {
         n_threads = tbb::this_task_arena::max_concurrency();
     }
+
     const int max_n_arenas = 8;
     int n_arenas = 2;
-    if(n_threads >= 16)
+    if(n_threads > 16) {
         n_arenas = max_n_arenas;
-    else if (n_threads >= 8)
+    } else if (n_threads > 8) {
         n_arenas = 4;
-    n_threads = n_arenas * (n_threads / n_arenas);
-    const int n_per_thread = 10000000;
-    const int n_repetitions = 100;
-    const int n_outer_repetitions = 20;
+    }
+
+    int n_workers = n_threads - 1;
+    n_workers = n_arenas * (n_workers / n_arenas);
+    if (n_workers == 0) {
+        return;
+    }
+
+    n_threads = n_workers + 1;
+    tbb::global_control control(tbb::global_control::max_allowed_parallelism, n_threads);
+
+    const int n_repetitions = 20;
+    const int n_outer_repetitions = 100;
     std::multiset<float> failure_ratio; // for median calculating
-    tbb::global_control control(tbb::global_control::max_allowed_parallelism, n_threads - (n_arenas - 1));
-    utils::SpinBarrier master_barrier(n_arenas);
-    utils::SpinBarrier arena_barrier(n_threads);
+    utils::SpinBarrier barrier(n_threads);
+    utils::SpinBarrier worker_barrier(n_workers);
     MyObserver* observer[max_n_arenas];
     std::vector<tbb::task_arena> arenas(n_arenas);
     std::atomic<int> failure_counter;
     std::atomic<int> counter;
     tbb::enumerable_thread_specific<tbb::task_arena*> tls;
+
     for (int i = 0; i < n_arenas; ++i) {
-        arenas[i].initialize(n_threads / n_arenas);
-        observer[i] = new MyObserver(arenas[i], tls, failure_counter, counter);
+        arenas[i].initialize(n_workers / n_arenas + 1); // +1 for master
+        observer[i] = new MyObserver(arenas[i], tls, failure_counter, counter, barrier);
     }
+
     int ii = 0;
     for (; ii < n_outer_repetitions; ++ii) {
         failure_counter = 0;
         counter = 0;
+
         // Main code
-        utils::NativeParallelFor(n_arenas, ExecuteParallelFor(n_per_thread, n_repetitions,
-            arenas, arena_barrier, master_barrier));
-        // TODO: get rid of check below by setting ratio between n_threads and n_arenas
-        failure_ratio.insert((counter != 0 ? float(failure_counter) / counter : 1.0f));
+        auto wakeup = [&arenas] { for (auto& a : arenas) a.enqueue([]{}); };
+        wakeup();
+        for (int j = 0; j < n_repetitions; ++j) {
+            barrier.wait(); // entry
+            barrier.wait(); // exit1
+            wakeup();
+            barrier.wait(); // exit2
+        }
+        barrier.wait(); // entry
+        barrier.wait(); // exit1
+        barrier.wait(); // exit2
+
+        failure_ratio.insert(float(failure_counter) / counter);
         tls.clear();
         // collect 3 elements in failure_ratio before calculating median
         if (ii > 1) {
@@ -1399,7 +1438,7 @@ void TestDefaultCreatedWorkersAmount() {
 
 void TestAbilityToCreateWorkers(int thread_num) {
     tbb::global_control thread_limit(tbb::global_control::max_allowed_parallelism, thread_num);
-    // Checks only some part of reserved-master threads amount:
+    // Checks only some part of reserved-external threads amount:
     // 0 and 1 reserved threads are important cases but it is also needed
     // to collect some statistic data with other amount and to not consume
     // whole test sesion time checking each amount
@@ -1533,7 +1572,7 @@ void StressTestMixFunctionality() {
     std::vector<std::thread> thread_pool;
 
     utils::SpinBarrier thread_barrier(thread_number);
-    std::size_t max_operations = 100000;
+    std::size_t max_operations = 20000;
     std::atomic<std::size_t> curr_operation{};
     auto thread_func = [&] () {
         arenas_pool.emplace(new tbb::task_arena());
@@ -1621,7 +1660,7 @@ void StressTestMixFunctionality() {
                         tbb::parallel_for(tbb::blocked_range<std::size_t>(0, 10000), [] (tbb::blocked_range<std::size_t>&) {
                             std::atomic<int> sum{};
                             // Make some work
-                            for (; sum < 100; ++sum) ;
+                            for (; sum < 10; ++sum) ;
                         });
                     });
 
@@ -1646,7 +1685,7 @@ void StressTestMixFunctionality() {
                     curr_arena->arena->enqueue([] {
                         std::atomic<int> sum{};
                         // Make some work
-                        for (; sum < 100000; ++sum) ;
+                        for (; sum < 1000; ++sum) ;
                     });
 
                     break;
@@ -1683,7 +1722,7 @@ struct enqueue_test_helper {
     void operator() () const {
         CHECK(my_ets.local());
         if (my_task_counter++ < 100000) my_arena.enqueue(enqueue_test_helper(my_arena, my_ets, my_task_counter));
-        std::this_thread::yield();
+        utils::yield();
     }
 
     tbb::task_arena& my_arena;
@@ -1818,14 +1857,14 @@ TEST_CASE("Workers oversubscription") {
         );
     });
 
-    std::this_thread::yield();
+    utils::yield();
 
     std::atomic<std::size_t> task_counter{0};
     for (std::size_t i = 0; i < num_threads / 4 + 1; ++i) {
         arena.enqueue(enqueue_test_helper(arena, ets, task_counter));
     }
 
-    while (task_counter < 100000) std::this_thread::yield();
+    while (task_counter < 100000) utils::yield();
 
     arena.execute([&] {
         tbb::parallel_for(std::size_t(0), num_threads * 2,

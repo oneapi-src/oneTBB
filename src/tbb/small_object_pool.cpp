@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020 Intel Corporation
+    Copyright (c) 2020-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -139,10 +139,11 @@ void small_object_pool_impl::destroy()
     // clean up public list and subtract from private (intentionally) counter
     m_private_counter -= cleanup_list(public_list);
     __TBB_ASSERT(m_private_counter >= 0, "Private counter may not be less than 0");
-    // subtract private counter from atomic public counter once
-    auto previous_value = m_public_counter.fetch_sub(m_private_counter);
+    // Equivalent to fetch_sub(m_private_counter) - m_private_counter. But we need to do it
+    // atomically with operator-= not to access m_private_counter after the subtraction.
+    auto new_value = m_public_counter -= m_private_counter;
     // check if this method is responsible to clean up the resources
-    if (previous_value == m_private_counter) {
+    if (new_value == 0) {
         this->~small_object_pool_impl();
         cache_aligned_deallocate(this);
     }

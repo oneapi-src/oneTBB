@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -161,7 +161,7 @@ public:
         const unsigned max_lanes = sizeof(population_t) * CHAR_BIT;
 
         N = n_lanes >= max_lanes ? max_lanes : n_lanes > 2 ? 1 << (tbb::detail::log2(n_lanes - 1) + 1) : 2;
-        __TBB_ASSERT( N == max_lanes || N >= n_lanes && ((N - 1) & N) == 0, "number of lanes miscalculated" );
+        __TBB_ASSERT( N == max_lanes || (N >= n_lanes && ((N - 1) & N) == 0), "number of lanes miscalculated" );
         __TBB_ASSERT( N <= sizeof(population_t) * CHAR_BIT, NULL );
         lanes = static_cast<lane_t*>(cache_aligned_allocate(sizeof(lane_t) * N));
         for (unsigned i = 0; i < N; ++i) {
@@ -171,11 +171,12 @@ public:
     }
 
     ~task_stream() {
-        __TBB_ASSERT(lanes, "Initialize wasn't called");
-        for (unsigned i = 0; i < N; ++i) {
-            lanes[i].~lane_t();
+        if (lanes) {
+            for (unsigned i = 0; i < N; ++i) {
+                lanes[i].~lane_t();
+            }
+            cache_aligned_deallocate(lanes);
         }
-        cache_aligned_deallocate(lanes);
     }
 
     //! Push a task into a lane. Lane selection is performed by passed functor.

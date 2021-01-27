@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ public:
     void deallocate(void *p, size_t sz) {
         REQUIRE(allocations>frees);
         // REMARK("%p::deallocate(%p, %u)\n", this, p, unsigned(sz));
-        cnt_provider_t::deallocate(cnt_provider_t::pointer(p), sz);
+        cnt_provider_t::deallocate(std::allocator_traits<cnt_provider_t>::pointer(p), sz);
     }
 };
 

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ class SharedGroupBodyImpl : utils::NoCopy, utils::NoAfterlife {
         void operator () () const {
             if ( m_pOwner->m_sharingMode & ParallelWait ) {
                 while ( utils::ConcurrencyTracker::PeakParallelism() < m_pOwner->m_numThreads )
-                    std::this_thread::yield();
+                    utils::yield();
             }
             ++s_tasksExecuted;
         }
@@ -92,7 +92,7 @@ class SharedGroupBodyImpl : utils::NoCopy, utils::NoAfterlife {
 
     void Wait () {
         while ( m_threadsReady != m_numThreads )
-            std::this_thread::yield();
+            utils::yield();
         const std::uintptr_t numSpawned = c_numTasks0 + c_numTasks1 * (m_numThreads - 1);
         CHECK_MESSAGE( m_tasksSpawned == numSpawned, "Wrong number of spawned tasks. The test is broken" );
         INFO("Max spawning parallelism is " << utils::ConcurrencyTracker::PeakParallelism() << "out of " << g_MaxConcurrency);
@@ -146,7 +146,7 @@ public:
         }
         else {
             while ( m_tasksSpawned == 0 )
-                std::this_thread::yield();
+                utils::yield();
             CHECK_MESSAGE ( m_taskGroup, "Task group is not initialized");
             Spawn (c_numTasks1);
             if ( m_sharingMode & ParallelWait )
@@ -203,7 +203,7 @@ public:
 
     void operator()() const {
         m_barrier.wait();
-        for (volatile int i = 0; i < 100000; ++i) {}
+        utils::doDummyWork(100000);
         m_completed = true;
     }
 
@@ -258,7 +258,7 @@ void TestThreadSafety() {
 
     // Ensure that cosumption is stabilized.
     std::size_t initial = utils::GetMemoryUsage();
-    for (int trail = 0; trail < 20; ++trail) {
+    for (;;) {
         tests();
         std::size_t current = utils::GetMemoryUsage();
         if (current <= initial) {
@@ -266,7 +266,6 @@ void TestThreadSafety() {
         }
         initial = current;
     }
-    CHECK_MESSAGE(false, "Memory leak is detected");
 }
 //------------------------------------------------------------------------
 // Common requisites of the Fibonacci tests
@@ -433,12 +432,12 @@ public:
         if ( g_Throw ) {
             if ( ++m_TaskCount == SKIP_CHORES )
                 TBB_TEST_THROW(test_exception(EXCEPTION_DESCR1));
-            std::this_thread::yield();
+            utils::yield();
         }
         else {
             ++g_TaskCount;
             while( !tbb::is_current_task_group_canceling() )
-                std::this_thread::yield();
+                utils::yield();
         }
     }
 };
@@ -490,7 +489,7 @@ void TestManualCancellationWithFunctor () {
         tg.run( &LaunchChildrenWithFunctor<task_group_type> );
     CHECK_MESSAGE ( !tbb::is_current_task_group_canceling(), "Unexpected cancellation" );
     while ( g_MaxConcurrency > 1 && g_TaskCount == 0 )
-        std::this_thread::yield();
+        utils::yield();
     tg.cancel();
     g_ExecutedAtCancellation = int(g_TaskCount);
     tbb::task_group_status status = tg.wait();
@@ -566,7 +565,7 @@ public:
         }
         CHECK_MESSAGE(!tbb::is_current_task_group_canceling(), "Unexpected cancellation");
         while (g_MaxConcurrency > 1 && g_TaskCount == 0)
-            std::this_thread::yield();
+            utils::yield();
     }
 
     void Finish() {
@@ -879,7 +878,7 @@ TEST_CASE("Test for stack overflow avoidance mechanism") {
         run_deep_stealing(tg1, tg2, 10000, tasks_executed);
         while (tasks_executed < 100) {
             // Some stealing is expected to happen.
-            std::this_thread::yield();
+            utils::yield();
         }
         CHECK(tasks_executed < 10000);
     });
@@ -918,7 +917,7 @@ TEST_CASE("Test for stack overflow avoidance mechanism within arena") {
         run_deep_stealing(tg1, tg2, second_thread_executed-1, tasks_executed);
         while (tasks_executed < second_thread_executed-1) {
             // Wait until the second thread near the limit.
-            std::this_thread::yield();
+            utils::yield();
         }
         tg2.run([&a, &tg1, &tasks_executed] {
             a.execute([&tg1, &tasks_executed] {
@@ -930,7 +929,7 @@ TEST_CASE("Test for stack overflow avoidance mechanism within arena") {
         });
         while (tasks_executed < second_thread_executed) {
             // Wait until the second joins the arena.
-            std::this_thread::yield();
+            utils::yield();
         }
         a.execute([&tg1, &tg2, &tasks_executed] {
             run_deep_stealing(tg1, tg2, 10000, tasks_executed);
@@ -962,7 +961,7 @@ TEST_CASE("Async task group") {
             barrier.wait();
             for (int j = 0; j < 10000; ++j) {
                 tg[i].run([] {});
-                std::this_thread::yield();
+                utils::yield();
             }
             finished[i] = true;
         });
@@ -970,8 +969,10 @@ TEST_CASE("Async task group") {
     utils::NativeParallelFor(num_threads, [&](int idx) {
         barrier.wait();
         a.execute([idx, &tg, &finished] {
+            std::size_t counter{};
             while (!finished[idx%2]) {
                 tg[idx%2].wait();
+                if (counter++ % 16 == 0) utils::yield();
             }
             tg[idx%2].wait();
         });

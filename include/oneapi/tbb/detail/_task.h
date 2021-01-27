@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020 Intel Corporation
+    Copyright (c) 2020-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ using suspend_callback_type = void(*)(void*, suspend_point_type*);
 void __TBB_EXPORTED_FUNC suspend(suspend_callback_type suspend_callback, void* user_callback);
 void __TBB_EXPORTED_FUNC resume(suspend_point_type* tag);
 suspend_point_type* __TBB_EXPORTED_FUNC current_suspend_point();
-void __TBB_EXPORTED_FUNC notify_waiters(std::uintptr_t wait_ctx_tag);
+void __TBB_EXPORTED_FUNC notify_waiters(std::uintptr_t wait_ctx_addr);
 
 class thread_data;
 class task_dispatcher;
@@ -110,8 +110,8 @@ class wait_context {
         if (!r) {
             // Some external waiters or coroutine waiters sleep in wait list
             // Should to notify them that work is done
-            std::uintptr_t wait_ctx_tag = std::uintptr_t(this);
-            r1::notify_waiters(wait_ctx_tag);
+            std::uintptr_t wait_ctx_addr = std::uintptr_t(this);
+            r1::notify_waiters(wait_ctx_addr);
         }
     }
 
@@ -225,12 +225,10 @@ public:
     virtual task* cancel(execution_data&) = 0;
 
 private:
-    std::uint64_t m_reserved[5]{};
-
-    // Reserve one pointer-sized object in derived class
-    // static_assert(sizeof(task) == 64 - 8);
+    std::uint64_t m_reserved[6]{};
     friend struct r1::task_accessor;
 };
+static_assert(sizeof(task) == task_alignment, "task size is broken");
 
 } // namespace d1
 } // namespace detail

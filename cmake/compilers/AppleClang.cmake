@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Intel Corporation
+# Copyright (c) 2020-2021 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,11 @@ set(TBB_WARNING_SUPPRESS -Wno-parentheses -Wno-non-virtual-dtor -Wno-dangling-el
 set(TBB_COMMON_COMPILE_FLAGS -D_XOPEN_SOURCE)
 
 set(TBB_MMD_FLAG -MMD)
+
+# Ignore -Werror set through add_compile_options() or added to CMAKE_CXX_FLAGS if TBB_STRICT is disabled.
+if (NOT TBB_STRICT AND COMMAND tbb_remove_compile_flag)
+    tbb_remove_compile_flag(-Werror)
+endif()
 
 if (NOT "${CMAKE_OSX_ARCHITECTURES}" MATCHES "^arm64$")
     set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -mrtm)

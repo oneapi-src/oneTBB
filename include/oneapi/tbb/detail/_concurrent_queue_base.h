@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -395,6 +395,12 @@ private:
     Allocator& allocator;
 }; // class micro_queue_pop_finalizer
 
+#if _MSC_VER && !defined(__INTEL_COMPILER)
+// structure was padded due to alignment specifier
+#pragma warning( push )
+#pragma warning( disable: 4324 )
+#endif
+
 template <typename T, typename Allocator>
 struct concurrent_queue_rep {
     using self_type = concurrent_queue_rep<T, Allocator>;
@@ -503,6 +509,10 @@ public:
     alignas(max_nfs_size) std::atomic<size_type> n_invalid_entries{};
     queue_allocator_type& my_queue_allocator;
 }; // class concurrent_queue_rep
+
+#if _MSC_VER && !defined(__INTEL_COMPILER)
+#pragma warning( pop )
+#endif
 
 template <typename Value, typename Allocator>
 class concurrent_queue_iterator_base {

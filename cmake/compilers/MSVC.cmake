@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Intel Corporation
+# Copyright (c) 2020-2021 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,11 +21,22 @@ string(REGEX REPLACE "/W[0-4]" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 # Warning suppression C4324: structure was padded due to alignment specifier
 set(TBB_WARNING_LEVEL $<$<NOT:$<CXX_COMPILER_ID:Intel>>:/W4> $<$<BOOL:${TBB_STRICT}>:/WX>)
-set(TBB_WARNING_SUPPRESS /wd4324 /wd4530 /wd4577)
+set(TBB_WARNING_SUPPRESS /wd4324)
 set(TBB_TEST_COMPILE_FLAGS /bigobj)
+if (MSVC_VERSION LESS_EQUAL 1900)
+    # Warning suppression C4503 for VS2015 and earlier:
+    # decorated name length exceeded, name was truncated.
+    # More info can be found at
+    # https://docs.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4503
+    set(TBB_TEST_COMPILE_FLAGS ${TBB_TEST_COMPILE_FLAGS} /wd4503)
+endif()
 set(TBB_LIB_COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS /GS)
-
 set(TBB_COMMON_COMPILE_FLAGS /volatile:iso /FS)
+
+# Ignore /WX set through add_compile_options() or added to CMAKE_CXX_FLAGS if TBB_STRICT is disabled.
+if (NOT TBB_STRICT AND COMMAND tbb_remove_compile_flag)
+    tbb_remove_compile_flag(/WX)
+endif()
 
 if (WINDOWS_STORE OR TBB_WINDOWS_DRIVER)
     set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} /D_WIN32_WINNT=0x0A00)

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@
 
 // Other dependencies
 // #include "../../src/tbb/private_server.cpp"
-#include "../../src/tbb/concurrent_monitor.cpp"
+#include "../../src/tbb/concurrent_monitor.h"
 #if _WIN32 || _WIN64
 #include "../../src/tbb/semaphore.cpp"
 #endif

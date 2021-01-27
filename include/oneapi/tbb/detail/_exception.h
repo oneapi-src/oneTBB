@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,9 +19,11 @@
 
 #include "_config.h"
 
-#include <new>
-#include <exception>
-#include <stdexcept>
+#include <new>          // std::bad_alloc
+#include <exception>    // std::exception
+#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
+#include <stdexcept>    // std::runtime_error
+#endif
 
 namespace tbb {
 namespace detail {

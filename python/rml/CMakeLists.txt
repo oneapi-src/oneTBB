@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Intel Corporation
+# Copyright (c) 2020-2021 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(irml SHARED
+add_library(irml 
     ../../src/tbb/allocator.cpp
     ../../src/tbb/dynamic_link.cpp
     ../../src/tbb/misc.cpp
@@ -36,10 +36,13 @@ target_compile_options(irml
     ${TBB_MMD_FLAG}
     ${TBB_DSE_FLAG}
     ${TBB_WARNING_LEVEL}
-    ${TBB_WARNING_SUPPRESS}
     ${TBB_LIB_COMPILE_FLAGS}
     ${TBB_COMMON_COMPILE_FLAGS}
 )
+
+target_compile_definitions(irml
+                           PUBLIC
+                           $<$<CONFIG:DEBUG>:TBB_USE_DEBUG>)
 
 # Prefer using target_link_options instead of target_link_libraries to specify link options because
 # target_link_libraries may incorrectly handle some options (on Windows, for example).

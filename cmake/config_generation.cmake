@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Intel Corporation
+# Copyright (c) 2020-2021 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -77,9 +77,9 @@ endif()
         # Expand TBB_LIB_REL_PATH here in IMPORTED_IMPLIB property and
         # redefine it with TBB_DLL_REL_PATH value to properly fill IMPORTED_LOCATION property in TBBConfig.cmake.in template.
         set(TBB_IMPLIB_RELEASE "
-                                      IMPORTED_IMPLIB_RELEASE \"\${CMAKE_CURRENT_LIST_DIR}/${TBB_LIB_REL_PATH}/\${_tbb_subdir}/\${_tbb_component}\${_bin_version}.lib\"")
+                                      IMPORTED_IMPLIB_RELEASE \"\${_tbb_root}/${TBB_LIB_REL_PATH}/\${_tbb_subdir}/\${_tbb_component}\${_bin_version}.lib\"")
         set(TBB_IMPLIB_DEBUG "
-                                      IMPORTED_IMPLIB_DEBUG \"\${CMAKE_CURRENT_LIST_DIR}/${TBB_LIB_REL_PATH}/\${_tbb_subdir}/\${_tbb_component}\${_bin_version}_debug.lib\"")
+                                      IMPORTED_IMPLIB_DEBUG \"\${_tbb_root}/${TBB_LIB_REL_PATH}/\${_tbb_subdir}/\${_tbb_component}\${_bin_version}_debug.lib\"")
         set(TBB_LIB_REL_PATH ${TBB_DLL_REL_PATH})
 
         if (tbb_gen_cfg_HANDLE_SUBDIRS)

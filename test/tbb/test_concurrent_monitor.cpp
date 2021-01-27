@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020 Intel Corporation
+    Copyright (c) 2020-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -14,6 +14,11 @@
     limitations under the License.
 */
 
+#if _MSC_VER && !defined(__INTEL_COMPILER)
+// structure was padded due to alignment specifier
+#pragma warning( disable: 4324 )
+#endif
+
 #define TBB_PREVIEW_WAITING_FOR_WORKERS 1
 
 #include "common/test.h"
@@ -24,7 +29,6 @@
 #include "tbb/global_control.h"
 #include "tbb/task_arena.h"
 #include "../../src/tbb/concurrent_monitor.h"
-#include "../../src/tbb/concurrent_monitor.cpp"
 
 //! \file test_concurrent_monitor.cpp
 //! \brief Test for [internal] functionality
@@ -44,9 +48,9 @@ TEST_CASE("Stress test") {
     // Need to prolong lifetime of the exposed concurrent_monitor
     tbb::task_scheduler_handle handler = tbb::task_scheduler_handle::get();
 
+    tbb::detail::r1::concurrent_monitor test_monitor;
     {
         tbb::task_arena arena(threads_number - 1, 0);
-        tbb::detail::r1::concurrent_monitor test_monitor;
         utils::SpinBarrier barrier(threads_number);
 
         std::size_t iter_on_operation = 1000;
@@ -54,8 +58,8 @@ TEST_CASE("Stress test") {
 
         auto thread_func = [&] {
             for (std::size_t i = 0; i < operation_number; ++i) {
-                tbb::detail::r1::concurrent_monitor::thread_context context;
-                test_monitor.prepare_wait(context, std::uintptr_t(1));
+                tbb::detail::r1::concurrent_monitor::thread_context context{std::uintptr_t(1)};
+                test_monitor.prepare_wait(context);
                 barrier.wait();
                 test_monitor.cancel_wait(context);
             }

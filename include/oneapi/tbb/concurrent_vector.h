@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -29,6 +29,9 @@
 #include <algorithm>
 #include <utility> // std::move_if_noexcept
 #include <algorithm>
+#if __TBB_CPP20_COMPARISONS_PRESENT
+#include <compare>
+#endif
 
 namespace tbb {
 namespace detail {
@@ -363,7 +366,7 @@ public:
     }
 
     template <typename InputIterator>
-    typename std::enable_if<detail::is_iterator<std::input_iterator_tag, InputIterator>::value, void>::type
+    typename std::enable_if<is_input_iterator<InputIterator>::value, void>::type
     assign( InputIterator first, InputIterator last ) {
         destroy_elements();
         grow_by(first, last);
@@ -384,7 +387,7 @@ public:
     }
 
     template <typename ForwardIterator>
-    typename std::enable_if<detail::is_iterator<std::input_iterator_tag, ForwardIterator>::value, iterator>::type
+    typename std::enable_if<is_input_iterator<ForwardIterator>::value, iterator>::type
     grow_by( ForwardIterator first, ForwardIterator last ) {
         auto delta = std::distance(first, last);
         return internal_grow_by_delta(delta, first, last);
@@ -986,7 +989,7 @@ private:
             });
 
             // Need to correct deallocate old segments
-            // Method destroy_segment respect active first_block, therefore, 
+            // Method destroy_segment respect active first_block, therefore,
             // in order for the segment deletion to work correctly, set the first_block size that was earlier,
             // destroy the unnecessary segments.
             this->my_first_block.store(first_block, std::memory_order_relaxed);
@@ -1027,10 +1030,11 @@ private:
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 // Deduction guide for the constructor from two iterators
-template <typename I, typename T = typename std::iterator_traits<I>::value_type,
-          typename A = tbb::cache_aligned_allocator<T>>
-concurrent_vector(I, I, const A & = A())
-    ->concurrent_vector<T, A>;
+template <typename It, typename Alloc = tbb::cache_aligned_allocator<iterator_value_t<It>>,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_vector( It, It, Alloc = Alloc() )
+-> concurrent_vector<iterator_value_t<It>, Alloc>;
 #endif
 
 template <typename T, typename Allocator>
@@ -1047,12 +1051,27 @@ bool operator==(const concurrent_vector<T, Allocator> &lhs,
     return lhs.size() == rhs.size() && std::equal(lhs.begin(), lhs.end(), rhs.begin());
 }
 
+#if !__TBB_CPP20_COMPARISONS_PRESENT
 template <typename T, typename Allocator>
 bool operator!=(const concurrent_vector<T, Allocator> &lhs,
                 const concurrent_vector<T, Allocator> &rhs)
 {
     return !(lhs == rhs);
 }
+#endif // !__TBB_CPP20_COMPARISONS_PRESENT
+
+#if __TBB_CPP20_COMPARISONS_PRESENT && __TBB_CPP20_CONCEPTS_PRESENT
+template <typename T, typename Allocator>
+tbb::detail::synthesized_three_way_result<typename concurrent_vector<T, Allocator>::value_type>
+operator<=>(const concurrent_vector<T, Allocator> &lhs,
+            const concurrent_vector<T, Allocator> &rhs)
+{
+    return std::lexicographical_compare_three_way(lhs.begin(), lhs.end(),
+                                                  rhs.begin(), rhs.end(),
+                                                  tbb::detail::synthesized_three_way_comparator{});
+}
+
+#else
 
 template <typename T, typename Allocator>
 bool operator<(const concurrent_vector<T, Allocator> &lhs,
@@ -1081,6 +1100,7 @@ bool operator>=(const concurrent_vector<T, Allocator> &lhs,
 {
     return !(lhs < rhs);
 }
+#endif // __TBB_CPP20_COMPARISONS_PRESENT && __TBB_CPP20_CONCEPTS_PRESENT
 
 } // namespace d1
 } // namespace detail

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2018-2020 Intel Corporation
+    Copyright (c) 2018-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -14,19 +14,27 @@
     limitations under the License.
 */
 
+#if __INTEL_COMPILER && _MSC_VER
+#pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
+#endif
+
 #include "common/config.h"
 
 #include "tbb/flow_graph.h"
 #include "tbb/parallel_for.h"
+#include "tbb/global_control.h"
+#include "tbb/task_arena.h"
 
 #include "common/test.h"
 #include "common/utils.h"
+#include "common/utils_concurrency_limit.h"
 #include "common/spin_barrier.h"
 
 #include <vector>
 #include <cstdlib>
 #include <random>
 #include <algorithm>
+#include <memory>
 
 
 //! \file test_flow_graph_priorities.cpp
@@ -62,7 +70,8 @@ const unsigned end_index = node_num * 2 / 3;
 std::atomic<unsigned> g_priority_task_index;
 
 void body_func( int priority, utils::SpinBarrier& my_barrier ) {
-    while( !g_work_submitted.load(std::memory_order_acquire) ) std::this_thread::yield();
+    while( !g_work_submitted.load(std::memory_order_acquire) )
+        tbb::detail::d0::yield();
     int current_task_index = g_task_num++;
     if( priority != no_priority )
         g_task_info[g_priority_task_index++] = TaskInfo( priority, current_task_index );
@@ -126,9 +135,9 @@ void test_node( NodeTypeCreator node_creator ) {
     function_node<typename NodeType::input_type> tn(g, unlimited, passthru_body());
     // Using pointers to nodes to avoid errors on compilers, which try to generate assignment
     // operator for the nodes
-    std::vector<NodeType*> nodes;
+    std::vector< std::unique_ptr<NodeType> > nodes;
     for( unsigned i = 0; i < node_num; ++i ) {
-        nodes.push_back( node_creator(g, i, barrier) );
+        nodes.push_back(std::unique_ptr<NodeType>( node_creator(g, i, barrier) ));
         make_edge( bn, *nodes.back() );
         make_edge( *nodes.back(), tn );
     }
@@ -172,7 +181,7 @@ void test_node( NodeTypeCreator node_creator ) {
             // test passing is based on statistics, which could be affected by machine overload
             // unfortunately.
             // TODO revamp: reconsider the following check for this test
-            if( g_task_info[i].my_task_index > int(priority_nodes_num + utils::MaxThread ) )
+            if( g_task_info[i].my_task_index > int(priority_nodes_num + num_threads) )
                 ++global_order_failures;
         }
     }
@@ -181,8 +190,6 @@ void test_node( NodeTypeCreator node_creator ) {
         failure_ratio <= 0.1f,
         "Nodes with priorities executed in wrong order too frequently over non-prioritized nodes."
     );
-    for( size_t i = 0; i < nodes.size(); ++i )
-        delete nodes[i];
 }
 
 template<typename NodeType, typename NodeBody>
@@ -482,12 +489,14 @@ void do_nested_work<PRIORITIZED_WORK>( const std::thread::id& tid,
 
 // Using pointers to nodes to avoid errors on compilers, which try to generate assignment operator
 // for the nodes
-typedef std::vector< continue_node<continue_msg>* > nodes_container_t;
+typedef std::vector< std::unique_ptr<continue_node<continue_msg>> > nodes_container_t;
 
 void create_nodes( nodes_container_t& nodes, graph& g, int num, int body_size ) {
     for( int i = 0; i < num; ++i )
         nodes.push_back(
-            new continue_node<continue_msg>( g, CommonBody<NONPRIORITIZED_WORK>( body_size ) )
+            std::unique_ptr<continue_node<continue_msg>>(
+                new continue_node<continue_msg>( g, CommonBody<NONPRIORITIZED_WORK>( body_size ) )
+            )
         );
 }
 
@@ -508,8 +517,10 @@ void test( int num_threads ) {
             nodes_container_t nodes;
             create_nodes( nodes, g, pivot, large_problem_size );
             nodes.push_back(
-                new continue_node<continue_msg>(
-                    g, CommonBody<PRIORITIZED_WORK>(small_problem_size), node_priority_t(1)
+                std::unique_ptr<continue_node<continue_msg>>(
+                    new continue_node<continue_msg>(
+                        g, CommonBody<PRIORITIZED_WORK>(small_problem_size), node_priority_t(1)
+                    )
                 )
             );
             create_nodes( nodes, g, nodes_num - pivot - 1, large_problem_size );
@@ -523,29 +534,17 @@ void test( int num_threads ) {
             exec_tracker.reset();
             bn.try_put( continue_msg() );
             g.wait_for_all();
-
-            for( size_t i = 0; i < nodes.size(); ++i )
-                delete nodes[i];
-            INFO( "done\n" );
         }
 	);
+
+    INFO( "done\n" );
 }
 
 } /* namespace LimitingExecutionToPriorityTask */
 
-#include "tbb/global_control.h"
-#include "tbb/task_arena.h"
 namespace NestedCase {
 
 using tbb::task_arena;
-
-struct ResetGraphFunctor {
-    graph& my_graph;
-    ResetGraphFunctor(graph& g) : my_graph(g) {}
-    // copy constructor to please some old compilers
-    ResetGraphFunctor(const ResetGraphFunctor& rgf) : my_graph(rgf.my_graph) {}
-    void operator()() const { my_graph.reset(); }
-};
 
 struct InnerBody {
     continue_msg operator()( const continue_msg& ) const {
@@ -555,8 +554,8 @@ struct InnerBody {
 
 struct OuterBody {
     int my_max_threads;
-    task_arena& my_inner_arena;
-    OuterBody( int max_threads, task_arena& inner_arena )
+    task_arena** my_inner_arena;
+    OuterBody( int max_threads, task_arena** inner_arena )
         : my_max_threads(max_threads), my_inner_arena(inner_arena) {}
     // copy constructor to please some old compilers
     OuterBody( const OuterBody& rhs )
@@ -571,7 +570,7 @@ struct OuterBody {
         make_edge( mid_node1, end_node );
         make_edge( start_node, mid_node2 );
         make_edge( mid_node2, end_node );
-        my_inner_arena.execute( ResetGraphFunctor(inner_graph) );
+        (*my_inner_arena)->execute( [&inner_graph]{ inner_graph.reset(); } );
         start_node.try_put( continue_msg() );
         inner_graph.wait_for_all();
         return 13;
@@ -585,10 +584,9 @@ void execute_outer_graph( bool same_arena, task_arena& inner_arena, int max_thre
         outer_graph.wait_for_all();
         return;
     }
-    // TODO revamp: start nested case from two threads in order to avoid mandatory concurrency
-    // problem; see commented out assert in advertise_new_work<work_enqueue>() in arena.h around
-    // line 431.
-    for( int num_threads = /*should start from 1*/ 2; num_threads <= max_threads; ++num_threads ) {
+
+    auto threads_range = utils::concurrency_range(max_threads);
+    for( auto num_threads : threads_range ) {
         inner_arena.initialize( num_threads );
         start_node.try_put( 42 );
         outer_graph.wait_for_all();
@@ -596,19 +594,39 @@ void execute_outer_graph( bool same_arena, task_arena& inner_arena, int max_thre
     }
 }
 
-void test_in_arena( int max_threads, task_arena& outer_arena, task_arena& inner_arena ) {
+void test_in_arena( int max_threads, task_arena& outer_arena, task_arena& inner_arena,
+                    graph& outer_graph, function_node<int, int>& start_node ) {
+    bool same_arena = &outer_arena == &inner_arena;
+    auto threads_range = utils::concurrency_range(max_threads);
+    for( auto num_threads : threads_range ) {
+        INFO( "Testing nested nodes with specified priority in " << (same_arena? "same" : "different")
+              << " arenas, num_threads=" << num_threads << ") - " );
+        outer_arena.initialize( num_threads );
+        outer_arena.execute( [&outer_graph]{ outer_graph.reset(); } );
+        execute_outer_graph( same_arena, inner_arena, max_threads, outer_graph, start_node );
+        outer_arena.terminate();
+        INFO( "done\n" );
+    }
+}
+
+void test( int max_threads ) {
+    task_arena outer_arena; task_arena inner_arena;
+    task_arena* inner_arena_pointer = &outer_arena; // make it same as outer arena in the beginning
+
     graph outer_graph;
     const unsigned num_outer_nodes = 10;
     const size_t concurrency = unlimited;
-    std::vector< function_node<int,int>* > outer_nodes;
+    std::vector< std::unique_ptr<function_node<int,int>> > outer_nodes;
     for( unsigned node_index = 0; node_index < num_outer_nodes; ++node_index ) {
         node_priority_t priority = no_priority;
         if( node_index == num_outer_nodes / 2 )
             priority = 10;
 
         outer_nodes.push_back(
-             new function_node<int,int>(
-                outer_graph, concurrency, OuterBody(max_threads, inner_arena), priority
+            std::unique_ptr< function_node<int, int> >(
+                new function_node<int,int>(
+                    outer_graph, concurrency, OuterBody(max_threads, &inner_arena_pointer), priority
+                )
             )
         );
     }
@@ -617,25 +635,11 @@ void test_in_arena( int max_threads, task_arena& outer_arena, task_arena& inner_
         for( unsigned node_index2 = node_index1+1; node_index2 < num_outer_nodes; ++node_index2 )
             make_edge( *outer_nodes[node_index1], *outer_nodes[node_index2] );
 
-    bool same_arena = &outer_arena == &inner_arena;
-    for( int num_threads = 1; num_threads <= max_threads; ++num_threads ) {
-        INFO( "Testing nested nodes with specified priority in " << (same_arena? "same" : "different") << " arenas, num_threads=" << num_threads << ") - " );
-        outer_arena.initialize( num_threads );
-        outer_arena.execute( ResetGraphFunctor(outer_graph) );
-        execute_outer_graph( same_arena, inner_arena, max_threads, outer_graph, *outer_nodes[0] );
-        outer_arena.terminate();
-        INFO( "done\n" );
-    }
+    test_in_arena( max_threads, outer_arena, outer_arena, outer_graph, *outer_nodes[0] );
 
-    for( size_t i = 0; i < outer_nodes.size(); ++i )
-        delete outer_nodes[i];
-}
+    inner_arena_pointer = &inner_arena;
 
-void test( int max_threads ) {
-    tbb::global_control gc( tbb::global_control::max_allowed_parallelism, max_threads );
-    task_arena outer_arena; task_arena inner_arena;
-    test_in_arena( max_threads, outer_arena, outer_arena );
-    test_in_arena( max_threads, outer_arena, inner_arena );
+    test_in_arena( max_threads, outer_arena, inner_arena, outer_graph, *outer_nodes[0] );
 }
 } // namespace NestedCase
 
@@ -720,7 +724,6 @@ void test_use_case() {
 //! The test checks that the task from the node with higher priority, which task gets bypassed, is
 //! executed first than the one spawned with lower priority.
 void test() {
-    tbb::global_control gc( tbb::global_control::max_allowed_parallelism, 1 );
     test_use_case<continue_node<continue_msg>>();
     test_use_case<input_node<continue_msg>>();
 }
@@ -742,7 +745,7 @@ struct priority_node_body {
     void operator()(continue_msg) {
         --barrier;
         while (barrier)
-            std::this_thread::yield();
+            tbb::detail::d0::yield();
     }
     std::atomic<int>& barrier;
 };
@@ -753,12 +756,20 @@ void test(int num_threads) {
         [&]() {
             graph g;
             broadcast_node<continue_msg> bn(g);
-            std::vector<continue_node<continue_msg>*> nodes;
+            std::vector< std::unique_ptr<continue_node<continue_msg>> > nodes;
             std::atomic<int> barrier;
             for (int i = 0; i < 2 * num_threads; ++i)
-                nodes.push_back(new continue_node<continue_msg>(g, no_priority_node_body{ barrier }));
+                nodes.push_back(
+                    std::unique_ptr<continue_node<continue_msg>>(
+                        new continue_node<continue_msg>(g, no_priority_node_body{ barrier })
+                    )
+                );
             for (int i = 0; i < num_threads; ++i)
-                nodes.push_back(new continue_node<continue_msg>(g, priority_node_body{ barrier }, 1));
+                nodes.push_back(
+                    std::unique_ptr<continue_node<continue_msg>>(
+                        new continue_node<continue_msg>(g, priority_node_body{ barrier }, /*priority*/1)
+                    )
+                );
 
             std::random_device rd;
             std::mt19937 gen(rd());
@@ -766,16 +777,13 @@ void test(int num_threads) {
             for (int trial = 0; trial < 10; ++trial) {
                 barrier = num_threads;
                 std::shuffle(nodes.begin(), nodes.end(), gen);
-                for (auto n : nodes)
+                for (auto& n : nodes)
                     make_edge(bn, *n);
                 bn.try_put(continue_msg());
                 g.wait_for_all();
-                for (auto n : nodes)
+                for (auto& n : nodes)
                     remove_edge(bn, *n);
             }
-
-            for (auto n : nodes)
-                delete n;
         }
     );
 }
@@ -825,7 +833,7 @@ namespace Exceptions {
 //! Test node prioritization
 //! \brief \ref requirement
 TEST_CASE("Priority nodes take precedence"){
-    for( unsigned int p = utils::MinThread; p <= utils::MaxThread; ++p ) {
+    for( auto p : utils::concurrency_range() ) {
         PriorityNodesTakePrecedence::test( p );
     }
 }
@@ -833,7 +841,7 @@ TEST_CASE("Priority nodes take precedence"){
 //! Test thread eager reaction
 //! \brief \ref error_guessing
 TEST_CASE("Thread eager reaction"){
-    for( unsigned int p = utils::MinThread; p <= utils::MaxThread; ++p ) {
+    for( auto p : utils::concurrency_range() ) {
         ThreadsEagerReaction::test( p );
     }
 }
@@ -841,7 +849,7 @@ TEST_CASE("Thread eager reaction"){
 //! Test prioritization under concurrency limits
 //! \brief \ref error_guessing
 TEST_CASE("Limiting execution to prioritized work") {
-    for( unsigned int p = utils::MinThread; p <= utils::MaxThread; ++p ) {
+    for( auto p : utils::concurrency_range() ) {
         LimitingExecutionToPriorityTask::test( p );
     }
 }
@@ -849,19 +857,22 @@ TEST_CASE("Limiting execution to prioritized work") {
 //! Test nested graphs
 //! \brief \ref error_guessing
 TEST_CASE("Nested test case") {
-    NestedCase::test( utils::MaxThread );
+    std::size_t max_threads = utils::get_platform_max_threads();
+    // The stepping for the threads is done inside.
+    NestedCase::test( max_threads );
 }
 
 //! Test bypassed task with higher priority
 //! \brief \ref error_guessing
 TEST_CASE("Bypass prioritized task"){
+    tbb::global_control gc( tbb::global_control::max_allowed_parallelism, 1 );
     BypassPrioritizedTask::test();
 }
 
 //! Test mixing prioritized and ordinary successors
 //! \brief \ref error_guessing
 TEST_CASE("Many successors") {
-    for( unsigned int p = utils::MinThread; p <= utils::MaxThread; ++p ) {
+    for( auto p : utils::concurrency_range() ) {
         ManySuccessors::test( p );
     }
 }
@@ -873,4 +884,3 @@ TEST_CASE("Exceptions") {
     Exceptions::test();
 }
 #endif
-

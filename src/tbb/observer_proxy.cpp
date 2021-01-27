@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ void observer_list::clear() {
     __TBB_ASSERT( !empty(), NULL );
     {
         scoped_lock lock(mutex(), /*is_writer=*/true);
-        observer_proxy *next = my_head;
+        observer_proxy *next = my_head.load(std::memory_order_relaxed);
         while ( observer_proxy *p = next ) {
             next = p->my_next;
             // Both proxy p and observer p->my_observer (if non-null) are guaranteed
@@ -82,43 +82,44 @@ void observer_list::clear() {
     // need to wait until all proxies are removed.
     for (atomic_backoff backoff; ; backoff.pause()) {
         scoped_lock lock(mutex(), /*is_writer=*/false);
-        if (my_head == nullptr) {
+        if (my_head.load(std::memory_order_relaxed) == nullptr) {
             break;
         }
     }
 
-    __TBB_ASSERT(my_head == nullptr && my_tail == nullptr, nullptr);
+    __TBB_ASSERT(my_head.load(std::memory_order_relaxed) == nullptr && my_tail.load(std::memory_order_relaxed) == nullptr, nullptr);
 }
 
 void observer_list::insert( observer_proxy* p ) {
     scoped_lock lock(mutex(), /*is_writer=*/true);
-    if (my_head) {
-        p->my_prev = my_tail;
-        my_tail->my_next = p;
+    if (my_head.load(std::memory_order_relaxed)) {
+        p->my_prev = my_tail.load(std::memory_order_relaxed);
+        my_tail.load(std::memory_order_relaxed)->my_next = p;
     } else {
-        my_head = p;
+        my_head.store(p, std::memory_order_relaxed);
     }
-    my_tail = p;
+    my_tail.store(p, std::memory_order_relaxed);
 }
 
 void observer_list::remove(observer_proxy* p) {
-    __TBB_ASSERT(my_head, "Attempt to remove an item from an empty list");
-    __TBB_ASSERT(!my_tail->my_next, "Last item's my_next must be NULL");
-    if (p == my_tail) {
+    __TBB_ASSERT(my_head.load(std::memory_order_relaxed), "Attempt to remove an item from an empty list");
+    __TBB_ASSERT(!my_tail.load(std::memory_order_relaxed)->my_next, "Last item's my_next must be NULL");
+    if (p == my_tail.load(std::memory_order_relaxed)) {
         __TBB_ASSERT(!p->my_next, nullptr);
-        my_tail = p->my_prev;
+        my_tail.store(p->my_prev, std::memory_order_relaxed);
     } else {
         __TBB_ASSERT(p->my_next, nullptr);
         p->my_next->my_prev = p->my_prev;
     }
-    if (p == my_head) {
+    if (p == my_head.load(std::memory_order_relaxed)) {
         __TBB_ASSERT(!p->my_prev, nullptr);
-        my_head = p->my_next;
+        my_head.store(p->my_next, std::memory_order_relaxed);
     } else {
         __TBB_ASSERT(p->my_prev, nullptr);
         p->my_prev->my_next = p->my_next;
     }
-    __TBB_ASSERT((my_head && my_tail) || (!my_head && !my_tail), nullptr);
+    __TBB_ASSERT((my_head.load(std::memory_order_relaxed) && my_tail.load(std::memory_order_relaxed)) ||
+        (!my_head.load(std::memory_order_relaxed) && !my_tail.load(std::memory_order_relaxed)), nullptr);
 }
 
 void observer_list::remove_ref(observer_proxy* p) {
@@ -180,7 +181,7 @@ void observer_list::do_notify_entry_observers(observer_proxy*& last, bool worker
                     }
                 } else {
                     // Starting pass through the list
-                    p = my_head;
+                    p = my_head.load(std::memory_order_relaxed);
                     if (!p) {
                         return;
                     }
@@ -236,7 +237,7 @@ void observer_list::do_notify_exit_observers(observer_proxy* last, bool worker) 
                     }
                 } else {
                     // Starting pass through the list
-                    p = my_head;
+                    p = my_head.load(std::memory_order_relaxed);
                     __TBB_ASSERT(p, "Nonzero 'last' must guarantee that the global list is non-empty");
                 }
                 tso = p->my_observer;
@@ -277,13 +278,13 @@ void __TBB_EXPORTED_FUNC observe(d1::task_scheduler_observer &tso, bool enable) 
                 p->my_list = &td->my_arena->my_observers;
             } else {
                 d1::task_arena* ta = p->my_observer->my_task_arena;
-                arena* a = ta->my_arena;
+                arena* a = ta->my_arena.load(std::memory_order_acquire);
                 if (a == nullptr) { // Avoid recursion during arena initialization
                     ta->initialize();
-                    a = ta->my_arena;
+                    a = ta->my_arena.load(std::memory_order_relaxed);
                 }
                 __TBB_ASSERT(a != nullptr, nullptr);
-                p->my_list = &ta->my_arena->my_observers;
+                p->my_list = &a->my_observers;
             }
             p->my_list->insert(p);
             // Notify newly activated observer and other pending ones if it belongs to current arena

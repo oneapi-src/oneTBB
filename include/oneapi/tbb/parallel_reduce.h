@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -173,7 +173,9 @@ task* start_reduce<Range,Body,Partitioner>::execute(execution_data& ed) {
     }
     my_partition.check_being_stolen(*this, ed);
 
-    if( is_right_child && my_parent->m_ref_count.load(std::memory_order_relaxed) == 2 ) {
+    // The acquire barrier synchronizes the data pointed with my_body if the left
+    // task has already finished.
+    if( is_right_child && my_parent->m_ref_count.load(std::memory_order_acquire) == 2 ) {
         tree_node_type* parent_ptr = static_cast<tree_node_type*>(my_parent);
         my_body = (Body*) new( parent_ptr->zombie_space.begin() ) Body(*my_body, split());
         parent_ptr->has_right_zombie = true;

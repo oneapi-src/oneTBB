@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@
 #include "oneapi/tbb/detail/_assert.h"
 #include "oneapi/tbb/detail/_utils.h"
 
-#if __TBB_NUMA_SUPPORT
+#if __TBB_ARENA_BINDING
 #include "oneapi/tbb/info.h"
-#endif /*__TBB_NUMA_SUPPORT*/
+#endif /*__TBB_ARENA_BINDING*/
 
 #if __linux__ || __FreeBSD__
 #include <sys/param.h>  // __FreeBSD_version
@@ -46,10 +46,10 @@ namespace r1 {
 
 void runtime_warning(const char* format, ... );
 
-#if __TBB_NUMA_SUPPORT
+#if __TBB_ARENA_BINDING
 class task_arena;
 class task_scheduler_observer;
-#endif /*__TBB_NUMA_SUPPORT*/
+#endif /*__TBB_ARENA_BINDING*/
 
 const std::size_t MByte = 1024*1024;
 
@@ -79,11 +79,11 @@ inline int AvailableHwConcurrency() {
 //! Returns OS regular memory page size
 size_t DefaultSystemPageSize();
 
-#if _WIN32||_WIN64
-
 //! Returns number of processor groups in the current OS configuration.
 /** AvailableHwConcurrency must be called at least once before calling this method. **/
 int NumberOfProcessorGroups();
+
+#if _WIN32||_WIN64
 
 //! Retrieves index of processor group containing processor with the given index
 int FindProcessorGroupIndex ( int processorIndex );
@@ -218,21 +218,15 @@ struct cpu_features_type {
 
 void detect_cpu_features(cpu_features_type& cpu_features);
 
-#if __TBB_NUMA_SUPPORT
+#if __TBB_ARENA_BINDING
 class binding_handler;
 
-binding_handler* construct_binding_handler(int slot_num);
+binding_handler* construct_binding_handler(int slot_num, int numa_id, int core_type_id, int max_threads_per_core);
 void destroy_binding_handler(binding_handler* handler_ptr);
-void bind_thread_to_node(binding_handler* handler_ptr, int slot_num , int numa_id);
+void apply_affinity_mask(binding_handler* handler_ptr, int slot_num);
 void restore_affinity_mask(binding_handler* handler_ptr, int slot_num);
 
-namespace numa_topology {
-    bool is_initialized();
-    void initialize();
-    void destroy();
-}
-
-#endif /*__TBB_NUMA_SUPPORT*/
+#endif /*__TBB_ARENA_BINDING*/
 
 // RTM specific section
 // abort code for mutexes that detect a conflict with another thread.

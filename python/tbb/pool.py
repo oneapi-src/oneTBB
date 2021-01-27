@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (c) 2016-2020 Intel Corporation
+# Copyright (c) 2016-2021 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -347,10 +347,7 @@ class ApplyResult(object):
             raise TimeoutError("Result not available within %fs" % timeout)
         if self._success:
             return self._data
-        if sys.version_info[0] == 3:
-            raise self._data[0](self._data[1]).with_traceback(self._data[2])
-        else:
-            exec("raise self._data[0], self._data[1], self._data[2]")
+        raise self._data[0](self._data[1]).with_traceback(self._data[2])
 
     def wait(self, timeout=None):
         """Waits until the result is available or until timeout

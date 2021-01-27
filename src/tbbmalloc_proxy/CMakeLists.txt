@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Intel Corporation
+# Copyright (c) 2020-2021 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,18 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(tbbmalloc_proxy SHARED
+add_library(tbbmalloc_proxy 
     function_replacement.cpp
     proxy.cpp)
 
 add_library(TBB::tbbmalloc_proxy ALIAS tbbmalloc_proxy)
 
-target_compile_definitions(tbbmalloc_proxy PRIVATE __TBBMALLOCPROXY_BUILD)
+target_compile_definitions(tbbmalloc_proxy
+                           PUBLIC
+                           $<$<CONFIG:DEBUG>:TBB_USE_DEBUG>
+                           PRIVATE
+                           __TBBMALLOCPROXY_BUILD)
 
 target_include_directories(tbbmalloc_proxy
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../include>
     $<INSTALL_INTERFACE:include>)
+
+if (NOT APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # gcc 5.0 and later have -Wno-sized-deallocation options
+    set(TBB_WARNING_SUPPRESS ${TBB_WARNING_SUPPRESS}
+                             $<$<NOT:$<VERSION_LESS:${CMAKE_CXX_COMPILER_VERSION},5.0>>:-Wno-sized-deallocation>)
+endif()
 
 target_compile_options(tbbmalloc_proxy
     PRIVATE

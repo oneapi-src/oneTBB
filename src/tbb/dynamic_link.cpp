@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -421,7 +421,7 @@ namespace r1 {
             // (e.g. because of MS runtime problems - one of those crazy manifest related ones)
             UINT prev_mode = SetErrorMode (SEM_FAILCRITICALERRORS);
 #endif /* _WIN32 */
-            dynamic_link_handle library_handle = dlopen( path, RTLD_LAZY | RTLD_GLOBAL );
+            dynamic_link_handle library_handle = dlopen( path, RTLD_NOW | RTLD_GLOBAL );
 #if _WIN32
             SetErrorMode (prev_mode);
 #endif /* _WIN32 */

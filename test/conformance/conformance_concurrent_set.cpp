@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2019-2020 Intel Corporation
+    Copyright (c) 2019-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -105,6 +105,7 @@ void test_deduction_guides() {
     static_assert(std::is_same_v<decltype(set4), TSet<int, decltype(compare), decltype(allocator)>>, "Wrong");
 
     auto init_list = { int(1), int(2), int(3) };
+
     TSet set5(init_list);
     static_assert(std::is_same_v<decltype(set5), TSet<int>>, "Wrong");
 

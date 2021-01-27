@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -66,6 +66,10 @@ public:
     struct bucket : no_copy {
         using mutex_type = spin_rw_mutex;
         using scoped_type = mutex_type::scoped_lock;
+
+        bucket() : node_list(nullptr) {}
+        bucket( node_base* ptr ) : node_list(ptr) {}
+
         mutex_type mutex;
         std::atomic<node_base*> node_list;
     };
@@ -95,16 +99,10 @@ public:
 
         for (size_type segment_index = 0; segment_index < pointers_per_table; ++segment_index) {
             auto argument = segment_index < embedded_block ? my_embedded_segment + segment_base(segment_index) : nullptr;
-            bucket_allocator_traits::construct(my_allocator, &my_table[segment_index], argument);
+            my_table[segment_index].store(argument, std::memory_order_relaxed);
         }
 
         __TBB_ASSERT( embedded_block <= first_block, "The first block number must include embedded blocks");
-    }
-
-    ~hash_map_base() {
-        for (size_type segment_index = 0; segment_index < pointers_per_table; ++segment_index) {
-            bucket_allocator_traits::destroy(my_allocator, &my_table[segment_index]);
-        }
     }
 
     // segment index of given index in the array
@@ -127,15 +125,19 @@ public:
         return reinterpret_cast<uintptr_t>(ptr) > uintptr_t(63);
     }
 
+    template <typename... Args>
+    void init_buckets_impl( segment_ptr_type ptr, size_type sz, Args&&... args ) {
+        for (size_type i = 0; i < sz; ++i) {
+            bucket_allocator_traits::construct(my_allocator, ptr + i, std::forward<Args>(args)...);
+        }
+    }
+
     // Initialize buckets
-    static void init_buckets( segment_ptr_type ptr, size_type sz, bool is_initial ) {
+    void init_buckets( segment_ptr_type ptr, size_type sz, bool is_initial ) {
         if (is_initial) {
-            std::memset(static_cast<void*>(ptr), 0, sz * sizeof(bucket));
+            init_buckets_impl(ptr, sz);
         } else {
-            for(size_type i = 0; i < sz; i++, ptr++) {
-                *reinterpret_cast<intptr_t*>(&ptr->mutex) = 0;
-                ptr->node_list.store(rehash_req, std::memory_order_relaxed);
-            }
+            init_buckets_impl(ptr, sz, reinterpret_cast<node_base*>(rehash_req));
         }
     }
 
@@ -195,11 +197,21 @@ public:
         segment_ptr_type buckets_ptr = my_table[s].load(std::memory_order_relaxed);
         size_type sz = segment_size( s ? s : 1 );
 
-        if (s >= first_block) // the first segment or the next
-            bucket_allocator_traits::deallocate(my_allocator, buckets_ptr, sz);
-        else if (s == embedded_block && embedded_block != first_block)
-            bucket_allocator_traits::deallocate(my_allocator, buckets_ptr,
-                                                segment_size(first_block) - embedded_buckets);
+        size_type deallocate_size = 0;
+
+        if (s >= first_block) { // the first segment or the next
+            deallocate_size = sz;
+        } else if (s == embedded_block && embedded_block != first_block) {
+            deallocate_size = segment_size(first_block) - embedded_buckets;
+        }
+
+        for (size_type i = 0; i < deallocate_size; ++i) {
+            bucket_allocator_traits::destroy(my_allocator, buckets_ptr + i);
+        }
+        if (deallocate_size != 0) {
+            bucket_allocator_traits::deallocate(my_allocator, buckets_ptr, deallocate_size);
+        }
+
         if (s >= embedded_block) my_table[s].store(nullptr, std::memory_order_relaxed);
     }
 
@@ -540,11 +552,13 @@ public:
     using base_type = hash_map_base<Allocator>;
     using key_type = Key;
     using mapped_type = T;
-    using allocator_type = Allocator;
+    // type_identity is needed to disable implicit deduction guides for std::initializer_list constructors
+    // and copy/move constructor with explicit allocator argument
+    using allocator_type = tbb::detail::type_identity_t<Allocator>;
+    using hash_compare_type = tbb::detail::type_identity_t<HashCompare>;
     using value_type = std::pair<const Key, T>;
     using size_type = typename base_type::size_type;
     using difference_type = std::ptrdiff_t;
-
 
     using pointer = typename allocator_traits_type::pointer;
     using const_pointer = typename allocator_traits_type::const_pointer;
@@ -555,7 +569,6 @@ public:
     using const_iterator = hash_map_iterator<concurrent_hash_map, const value_type>;
     using range_type = hash_map_range<iterator>;
     using const_range_type = hash_map_range<const_iterator>;
-
 
 protected:
     static_assert(std::is_same<value_type, typename Allocator::value_type>::value,
@@ -571,7 +584,7 @@ protected:
     using bucket_allocator_type = typename base_type::bucket_allocator_type;
     using node_allocator_type = typename base_type::allocator_traits_type::template rebind_alloc<node>;
     using node_allocator_traits = tbb::detail::allocator_traits<node_allocator_type>;
-    HashCompare my_hash_compare;
+    hash_compare_type my_hash_compare;
 
     class node : public node_base {
     public:
@@ -759,15 +772,15 @@ public:
         }
     };
 
-    explicit concurrent_hash_map( const HashCompare& compare, const allocator_type& a = allocator_type() )
+    explicit concurrent_hash_map( const hash_compare_type& compare, const allocator_type& a = allocator_type() )
         : base_type(a)
         , my_hash_compare(compare)
     {}
 
-    concurrent_hash_map() : concurrent_hash_map(HashCompare()) {}
+    concurrent_hash_map() : concurrent_hash_map(hash_compare_type()) {}
 
     explicit concurrent_hash_map( const allocator_type& a )
-        : concurrent_hash_map(HashCompare(), a)
+        : concurrent_hash_map(hash_compare_type(), a)
     {}
 
     // Construct empty table with n preallocated buckets. This number serves also as initial concurrency level.
@@ -777,7 +790,7 @@ public:
         this->reserve(n);
     }
 
-    concurrent_hash_map( size_type n, const HashCompare& compare, const allocator_type& a = allocator_type() )
+    concurrent_hash_map( size_type n, const hash_compare_type& compare, const allocator_type& a = allocator_type() )
         : concurrent_hash_map(compare, a)
     {
         this->reserve(n);
@@ -832,7 +845,7 @@ public:
     }
 
     template <typename I>
-    concurrent_hash_map( I first, I last, const HashCompare& compare, const allocator_type& a = allocator_type() )
+    concurrent_hash_map( I first, I last, const hash_compare_type& compare, const allocator_type& a = allocator_type() )
         : concurrent_hash_map(compare, a)
     {
         try_call( [&] {
@@ -842,18 +855,7 @@ public:
         });
     }
 
-    // Construct empty table with n preallocated buckets. This number serves also as initial concurrency level.
-    concurrent_hash_map( std::initializer_list<value_type> il, const allocator_type &a = allocator_type() )
-        : concurrent_hash_map(a)
-    {
-        try_call( [&] {
-            internal_copy(il.begin(), il.end(), il.size());
-        }).on_exception( [&] {
-            this->clear();
-        });
-    }
-
-    concurrent_hash_map( std::initializer_list<value_type> il, const HashCompare& compare, const allocator_type& a = allocator_type() )
+    concurrent_hash_map( std::initializer_list<value_type> il, const hash_compare_type& compare = hash_compare_type(), const allocator_type& a = allocator_type() )
         : concurrent_hash_map(compare, a)
     {
         try_call( [&] {
@@ -862,6 +864,9 @@ public:
             this->clear();
         });
     }
+
+    concurrent_hash_map( std::initializer_list<value_type> il, const allocator_type& a )
+        : concurrent_hash_map(il, hash_compare_type(), a) {}
 
     // Assignment
     concurrent_hash_map& operator=( const concurrent_hash_map &table ) {
@@ -991,7 +996,7 @@ public:
     size_type size() const { return this->my_size.load(std::memory_order_acquire); }
 
     // True if size()==0.
-    bool empty() const { return size() == 0; }
+    __TBB_nodiscard bool empty() const { return size() == 0; }
 
     // Upper bound on size.
     size_type max_size() const {
@@ -1453,25 +1458,33 @@ protected:
 };
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
-template<template <typename...> typename Map, typename Key, typename T, typename... Args>
-using hash_map_type = Map<
-    Key, T,
-    std::conditional_t< (sizeof...(Args)>0) && !is_allocator_v< pack_element_t<0, Args...> >,
-                        pack_element_t<0, Args...>, tbb_hash_compare<Key> >,
-    std::conditional_t< (sizeof...(Args)>0) && is_allocator_v< pack_element_t<sizeof...(Args)-1, Args...> >,
-                         pack_element_t<sizeof...(Args)-1, Args...>, tbb_allocator<std::pair<const Key, T> > >
->;
+template <typename It,
+          typename HashCompare = tbb_hash_compare<iterator_key_t<It>>,
+          typename Alloc = tbb_allocator<iterator_alloc_pair_t<It>>,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<HashCompare>>>
+concurrent_hash_map( It, It, HashCompare = HashCompare(), Alloc = Alloc() )
+-> concurrent_hash_map<iterator_key_t<It>, iterator_mapped_t<It>, HashCompare, Alloc>;
 
-// Deduction guide for the constructor from two iterators and hash_compare/ allocator
-template <typename I, typename... Args>
-concurrent_hash_map(I, I, Args...)
--> hash_map_type<concurrent_hash_map, iterator_key_t<I>, iterator_mapped_t<I>, Args...>;
+template <typename It, typename Alloc,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_hash_map( It, It, Alloc )
+-> concurrent_hash_map<iterator_key_t<It>, iterator_mapped_t<It>, tbb_hash_compare<iterator_key_t<It>>, Alloc>;
 
-// Deduction guide for the constructor from an initializer_list and hash_compare/ allocator
-// Deduction guide for an initializer_list, hash_compare and allocator is implicit
-template <typename Key, typename T, typename CompareOrAllocator>
-concurrent_hash_map(std::initializer_list<std::pair<const Key, T>>, CompareOrAllocator)
--> hash_map_type<concurrent_hash_map, Key, T, CompareOrAllocator>;
+template <typename Key, typename T,
+          typename HashCompare = tbb_hash_compare<std::remove_const_t<Key>>,
+          typename Alloc = tbb_allocator<std::pair<const Key, T>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<HashCompare>>>
+concurrent_hash_map( std::initializer_list<std::pair<Key, T>>, HashCompare = HashCompare(), Alloc = Alloc() )
+-> concurrent_hash_map<std::remove_const_t<Key>, T, HashCompare, Alloc>;
+
+template <typename Key, typename T, typename Alloc,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_hash_map( std::initializer_list<std::pair<Key, T>>, Alloc )
+-> concurrent_hash_map<std::remove_const_t<Key>, T, tbb_hash_compare<std::remove_const_t<Key>>, Alloc>;
 
 #endif /* __TBB_CPP17_DEDUCTION_GUIDES_PRESENT */
 
@@ -1487,9 +1500,11 @@ inline bool operator==(const concurrent_hash_map<Key, T, HashCompare, A1> &a, co
     return true;
 }
 
+#if !__TBB_CPP20_COMPARISONS_PRESENT
 template <typename Key, typename T, typename HashCompare, typename A1, typename A2>
 inline bool operator!=(const concurrent_hash_map<Key, T, HashCompare, A1> &a, const concurrent_hash_map<Key, T, HashCompare, A2> &b)
 {    return !(a == b); }
+#endif // !__TBB_CPP20_COMPARISONS_PRESENT
 
 template <typename Key, typename T, typename HashCompare, typename A>
 inline void swap(concurrent_hash_map<Key, T, HashCompare, A> &a, concurrent_hash_map<Key, T, HashCompare, A> &b)

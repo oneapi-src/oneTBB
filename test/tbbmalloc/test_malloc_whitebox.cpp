@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -792,6 +792,7 @@ void checkNoHugePages()
 const int num_allocs = 10*1024;
 void *ptrs[num_allocs];
 std::atomic<int> alloc_counter;
+static thread_local bool free_was_called = false;
 
 inline void multiThreadAlloc(size_t alloc_size) {
     for( int i = alloc_counter++; i < num_allocs; i = alloc_counter++ ) {
@@ -800,8 +801,12 @@ inline void multiThreadAlloc(size_t alloc_size) {
     }
 }
 inline void crossThreadDealloc() {
+    free_was_called = false;
     for( int i = --alloc_counter; i >= 0; i = --alloc_counter ) {
-       if (i < num_allocs) scalable_free( ptrs[i] );
+        if (i < num_allocs) {
+            scalable_free(ptrs[i]);
+            free_was_called = true;
+        }
     }
 }
 
@@ -850,17 +855,19 @@ struct TestCleanThreadBuffersBody : public SimpleBarrier {
         crossThreadDealloc();
         barrier.wait();
         int result = scalable_allocation_command(TBBMALLOC_CLEAN_THREAD_BUFFERS,0);
-        if (result != TBBMALLOC_OK) {
+        if (result != TBBMALLOC_OK && free_was_called) {
             REPORT("Warning: clean-up request for this particular thread has not cleaned anything.");
         }
 
         // Check that TLS was cleaned fully
         TLSData *tlsCurr = defaultMemPool->getTLS(/*create=*/false);
-        for (int i = 0; i < numBlockBinLimit; i++) {
-            REQUIRE_MESSAGE(!(tlsCurr->bin[i].activeBlk), "Some bin was not cleaned.");
+        if (tlsCurr) {
+            for (int i = 0; i < numBlockBinLimit; i++) {
+                REQUIRE_MESSAGE(!(tlsCurr->bin[i].activeBlk), "Some bin was not cleaned.");
+            }
+            REQUIRE_MESSAGE(!(tlsCurr->lloc.head.load(std::memory_order_relaxed)), "Local LOC was not cleaned.");
+            REQUIRE_MESSAGE(!(tlsCurr->freeSlabBlocks.head.load(std::memory_order_relaxed)), "Free Block pool was not cleaned.");
         }
-        REQUIRE_MESSAGE(!(tlsCurr->lloc.head.load(std::memory_order_relaxed)), "Local LOC was not cleaned.");
-        REQUIRE_MESSAGE(!(tlsCurr->freeSlabBlocks.head.load(std::memory_order_relaxed)), "Free Block pool was not cleaned.");
     }
 };
 
@@ -1580,6 +1587,8 @@ void TestHugeSizeThreshold() {
     // Large object cache reads threshold environment during initialization.
     // Reset the value before the test.
     loc->hugeSizeThreshold = 0;
+    // Reset logical time to prevent regular cleanup
+    loc->cacheCurrTime = 0;
     loc->init(&defaultMemPool->extMemPool);
     TestHugeSizeThresholdImpl(loc, 64 * MByte, true);
 #endif

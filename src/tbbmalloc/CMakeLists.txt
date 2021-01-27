@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Intel Corporation
+# Copyright (c) 2020-2021 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(tbbmalloc SHARED
+add_library(tbbmalloc 
     backend.cpp
     backref.cpp
     frontend.cpp
@@ -22,7 +22,11 @@ add_library(tbbmalloc SHARED
 
 add_library(TBB::tbbmalloc ALIAS tbbmalloc)
 
-target_compile_definitions(tbbmalloc PRIVATE __TBBMALLOC_BUILD)
+target_compile_definitions(tbbmalloc
+                           PUBLIC
+                           $<$<CONFIG:DEBUG>:TBB_USE_DEBUG>
+                           PRIVATE
+                           __TBBMALLOC_BUILD)
 
 if (NOT ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(armv7-a|aarch64|mips|arm64)" OR
          "${CMAKE_OSX_ARCHITECTURES}" MATCHES "arm64" OR
@@ -87,3 +91,4 @@ target_link_libraries(tbbmalloc
 )
 
 tbb_install_target(tbbmalloc)
+

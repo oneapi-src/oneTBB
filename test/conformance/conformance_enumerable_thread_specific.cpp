@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -14,10 +14,13 @@
     limitations under the License.
 */
 
-#if _MSC_VER && !defined(__INTEL_COMPILER)
+#if _MSC_VER
+#if __INTEL_COMPILER
+    #pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
+#else
     // Workaround for vs2015 and warning name was longer than the compiler limit (4096).
-    #pragma warning (push)
     #pragma warning (disable: 4503)
+#endif
 #endif
 
 #include "common/test.h"
@@ -26,6 +29,7 @@
 #include "common/utils_concurrency_limit.h"
 #include "common/spin_barrier.h"
 #include "common/checktype.h"
+#include "common/test_comparisons.h"
 
 #include "oneapi/tbb/detail/_utils.h"
 #include "oneapi/tbb/enumerable_thread_specific.h"
@@ -87,7 +91,7 @@ public:
     void set_value( const int i ) { REQUIRE(is_constructed); my_value = i; }
     int value( ) const { REQUIRE(is_constructed); return my_value; }
 
-    bool operator==( const minimal& other ) { return my_value == other.my_value; }
+    bool operator==( const minimal& other ) const { return my_value == other.my_value; }
 };
 
 static size_t AlignMask = 0;  // set to cache-line-size - 1
@@ -138,7 +142,7 @@ public:
     int m_cnt;
     ThrowingConstructor() : m_checktype(), m_throwing_field() { m_cnt = 0;}
 
-    bool operator==( const ThrowingConstructor& other ) { return m_cnt == other.m_cnt; }
+    bool operator==( const ThrowingConstructor& other ) const { return m_cnt == other.m_cnt; }
 private:
 };
 
@@ -1117,7 +1121,7 @@ void TestETSIterator() {
             ets.local() = 42;
             ++sync_counter;
             while(sync_counter != expected_ets_size)
-                std::this_thread::yield();
+                utils::yield();
         };
 
         oneapi::tbb::parallel_invoke(fill_ets_body, fill_ets_body);
@@ -1171,6 +1175,47 @@ void TestETSIterator() {
         REQUIRE(!(iter1 > iter2));
         REQUIRE(!(iter1 >= iter2));
     }
+}
+
+template <bool ExpectEqual, bool ExpectLess, typename Iterator>
+void DoETSIteratorComparisons( const Iterator& lhs, const Iterator& rhs ) {
+    // TODO: replace with testEqualityAndLessComparisons after adding <=> operator for ETS iterator
+    using namespace comparisons_testing;
+    testEqualityComparisons<ExpectEqual>(lhs, rhs);
+    testTwoWayComparisons<ExpectEqual, ExpectLess>(lhs, rhs);
+}
+
+template <typename Iterator, typename ETS>
+void TestETSIteratorComparisonsBasic( ETS& ets ) {
+    REQUIRE_MESSAGE(!ets.empty(), "Incorrect test setup");
+    Iterator it1, it2;
+    DoETSIteratorComparisons</*ExpectEqual = */true, /*ExpectLess = */false>(it1, it2);
+    it1 = ets.begin();
+    it2 = ets.begin();
+    DoETSIteratorComparisons</*ExpectEqual = */true, /*ExpectLess = */false>(it1, it2);
+    it2 = std::prev(ets.end());
+    DoETSIteratorComparisons</*ExpectEqual = */false, /*ExpectLess = */true>(it1, it2);
+}
+
+void TestETSIteratorComparisons() {
+    using ets_type = oneapi::tbb::enumerable_thread_specific<int>;
+    ets_type ets;
+
+    // Fill the ets
+    const std::size_t expected_ets_size = 2;
+    std::atomic<std::size_t> sync_counter(0);
+    auto fill_ets_body = [&](){
+            ets.local() = 42;
+            ++sync_counter;
+            while(sync_counter != expected_ets_size)
+                std::this_thread::yield();
+        };
+
+    oneapi::tbb::parallel_invoke(fill_ets_body, fill_ets_body);
+
+    TestETSIteratorComparisonsBasic<typename ets_type::iterator>(ets);
+    const ets_type& cets = ets;
+    TestETSIteratorComparisonsBasic<typename ets_type::const_iterator>(cets);
 }
 
 //! Test container instantiation
@@ -1242,6 +1287,7 @@ TEST_CASE("enumerable_thread_specific iterator") {
     TestETSIterator();
 }
 
-#if _MSC_VER && !defined(__INTEL_COMPILER)
-    #pragma warning (pop)
-#endif // warning 4503 is back
+//! \brief \ref interface \ref requirement
+TEST_CASE("enumerable_thread_specific iterator comparisons") {
+    TestETSIteratorComparisons();
+}

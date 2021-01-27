@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ class alignas(max_nfs_size) allowed_parallelism_control : public control_storage
     virtual void apply_active(std::size_t new_active) override {
         control_storage::apply_active(new_active);
         __TBB_ASSERT( my_active_value>=1, NULL );
-        // -1 to take master into account
+        // -1 to take external thread into account
         market::set_active_num_workers( my_active_value-1 );
     }
     virtual std::size_t active_value() override {
@@ -78,7 +78,7 @@ class alignas(max_nfs_size) allowed_parallelism_control : public control_storage
         // non-zero, if market is active
         const std::size_t workers = market::max_num_workers();
         // We can't exceed market's maximal number of workers.
-        // +1 to take master into account
+        // +1 to take external thread into account
         return workers? min(workers+1, my_active_value): my_active_value;
     }
 public:

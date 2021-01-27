@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -71,6 +71,16 @@ public:
     // Include constructors of base type
     using base_type::base_type;
     using base_type::operator=;
+
+    // Required for implicit deduction guides
+    concurrent_unordered_map() = default;
+    concurrent_unordered_map( const concurrent_unordered_map& ) = default;
+    concurrent_unordered_map( const concurrent_unordered_map& other, const allocator_type& alloc ) : base_type(other, alloc) {}
+    concurrent_unordered_map( concurrent_unordered_map&& ) = default;
+    concurrent_unordered_map( concurrent_unordered_map&& other, const allocator_type& alloc ) : base_type(std::move(other), alloc) {}
+    // Required to respect the rule of 5
+    concurrent_unordered_map& operator=( const concurrent_unordered_map& ) = default;
+    concurrent_unordered_map& operator=( concurrent_unordered_map&& ) = default;
 
     // Observers
     mapped_type& operator[]( const key_type& key ) {
@@ -145,46 +155,69 @@ public:
 }; // class concurrent_unordered_map
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+template <typename It,
+          typename Hash = std::hash<iterator_key_t<It>>,
+          typename KeyEq = std::equal_to<iterator_key_t<It>>,
+          typename Alloc = tbb::tbb_allocator<iterator_alloc_pair_t<It>>,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<Hash>>,
+          typename = std::enable_if_t<!is_allocator_v<KeyEq>>,
+          typename = std::enable_if_t<!std::is_integral_v<Hash>>>
+concurrent_unordered_map( It, It, std::size_t =  {},
+                          Hash = Hash(), KeyEq = KeyEq(), Alloc = Alloc() )
+-> concurrent_unordered_map<iterator_key_t<It>, iterator_mapped_t<It>, Hash, KeyEq, Alloc>;
 
-template <typename Key, typename Mapped>
-using cu_map_def_allocator = tbb::tbb_allocator<std::pair<const Key, Mapped>>;
+template <typename Key, typename T,
+          typename Hash = std::hash<std::remove_const_t<Key>>,
+          typename KeyEq = std::equal_to<std::remove_const_t<Key>>,
+          typename Alloc = tbb::tbb_allocator<std::pair<const Key, T>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<Hash>>,
+          typename = std::enable_if_t<!is_allocator_v<KeyEq>>,
+          typename = std::enable_if_t<!std::is_integral_v<Hash>>>
+concurrent_unordered_map( std::initializer_list<std::pair<Key, T>>, std::size_t = {},
+                          Hash = Hash(), KeyEq = KeyEq(), Alloc = Alloc() )
+-> concurrent_unordered_map<std::remove_const_t<Key>, T, Hash, KeyEq, Alloc>;
 
-template <template <typename...> class Map, typename Key, typename Mapped, typename... Args>
-using cu_map_type = Map<Key, Mapped,
-                        std::conditional_t<(sizeof...(Args) > 0) && !is_allocator_v<pack_element_t<0, Args...>>,
-                                           pack_element_t<0, Args...>, std::hash<Key>>,
-                        std::conditional_t<(sizeof...(Args) > 1) && !is_allocator_v<pack_element_t<1, Args...>>,
-                                           pack_element_t<1, Args...>, std::equal_to<Key>>,
-                        std::conditional_t<(sizeof...(Args) > 0) && is_allocator_v<pack_element_t<sizeof...(Args) - 1, Args...>>,
-                                           pack_element_t<sizeof...(Args) - 1, Args...>,
-                                           cu_map_def_allocator<Key, Mapped>>>;
+template <typename It, typename Alloc,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_unordered_map( It, It, std::size_t, Alloc )
+-> concurrent_unordered_map<iterator_key_t<It>, iterator_mapped_t<It>,
+                            std::hash<iterator_key_t<It>>,
+                            std::equal_to<iterator_key_t<It>>, Alloc>;
 
-// Deduction guide for copy constructor with additional allocator parameter
-// TODO: Investigate why implicit deduction guides are not generated
-//       for concurrent_unordered_map( const concurrent_unordered_map&, Allocator).
-template <typename Key, typename Val, typename Hash, typename KeyEq, typename Allocator>
-concurrent_unordered_map( const concurrent_unordered_map<Key, Val, Hash, KeyEq, Allocator>&, const Allocator& )
--> concurrent_unordered_map<Key, Val, Hash, KeyEq, Allocator>;
+// TODO: investigate if a deduction guide for concurrent_unordered_map(It, It, Alloc) is needed
 
-// Deduction guide for the constructor from two iterators
-template <typename I>
-concurrent_unordered_map( I, I )
--> cu_map_type<concurrent_unordered_map, iterator_key_t<I>, iterator_mapped_t<I>>;
+template <typename It, typename Hash, typename Alloc,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<Hash>>,
+          typename = std::enable_if_t<!std::is_integral_v<Hash>>>
+concurrent_unordered_map( It, It, std::size_t, Hash, Alloc )
+-> concurrent_unordered_map<iterator_key_t<It>, iterator_mapped_t<It>,
+                            Hash, std::equal_to<iterator_key_t<It>>, Alloc>;
 
-// Deduction guide for the constructor from two iterators and hasher/equal/allocator
-template <typename I, typename... Args>
-concurrent_unordered_map( I, I, std::size_t, Args... )
--> cu_map_type<concurrent_unordered_map, iterator_key_t<I>, iterator_mapped_t<I>, Args...>;
+template <typename Key, typename T, typename Alloc,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_unordered_map( std::initializer_list<std::pair<Key, T>>, std::size_t, Alloc )
+-> concurrent_unordered_map<std::remove_const_t<Key>, T, std::hash<std::remove_const_t<Key>>,
+                            std::equal_to<std::remove_const_t<Key>>, Alloc>;
 
-// Deduction guide for the constructor from an initializer_list
-template <typename Key, typename Mapped>
-concurrent_unordered_map( std::initializer_list<std::pair<const Key, Mapped>> )
--> cu_map_type<concurrent_unordered_map, Key, Mapped>;
+template <typename Key, typename T, typename Alloc,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_unordered_map( std::initializer_list<std::pair<Key, T>>, Alloc )
+-> concurrent_unordered_map<std::remove_const_t<Key>, T, std::hash<std::remove_const_t<Key>>,
+                            std::equal_to<std::remove_const_t<Key>>, Alloc>;
 
-// Deduction guide for the constructor from an initializer_list and hasher/equal/allocator
-template <typename Key, typename Mapped, typename... Args>
-concurrent_unordered_map( std::initializer_list<std::pair<const Key, Mapped>>, std::size_t, Args... )
--> cu_map_type<concurrent_unordered_map, Key, Mapped, Args...>;
+template <typename Key, typename T, typename Hash, typename Alloc,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<Hash>>,
+          typename = std::enable_if_t<!std::is_integral_v<Hash>>>
+concurrent_unordered_map( std::initializer_list<std::pair<Key, T>>, std::size_t, Hash, Alloc )
+-> concurrent_unordered_map<std::remove_const_t<Key>, T, Hash,
+                            std::equal_to<std::remove_const_t<Key>>, Alloc>;
 
 #endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 
@@ -225,6 +258,16 @@ public:
     using base_type::operator=;
     using base_type::insert;
 
+    // Required for implicit deduction guides
+    concurrent_unordered_multimap() = default;
+    concurrent_unordered_multimap( const concurrent_unordered_multimap& ) = default;
+    concurrent_unordered_multimap( const concurrent_unordered_multimap& other, const allocator_type& alloc ) : base_type(other, alloc) {}
+    concurrent_unordered_multimap( concurrent_unordered_multimap&& ) = default;
+    concurrent_unordered_multimap( concurrent_unordered_multimap&& other, const allocator_type& alloc ) : base_type(std::move(other), alloc) {}
+    // Required to respect the rule of 5
+    concurrent_unordered_multimap& operator=( const concurrent_unordered_multimap& ) = default;
+    concurrent_unordered_multimap& operator=( concurrent_unordered_multimap&& ) = default;
+
     template <typename P>
     typename std::enable_if<std::is_constructible<value_type, P&&>::value,
                             std::pair<iterator, bool>>::type insert( P&& value ) {
@@ -260,32 +303,66 @@ public:
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 
-// Deduction guide for copy constructor with additional allocator parameter
-// TODO: Investigate why implicit deduction guides are not generated
-//       for concurrent_unordered_multimap( const concurrent_unordered_multimap&, Allocator).
-template <typename Key, typename Val, typename Hash, typename KeyEq, typename Allocator>
-concurrent_unordered_multimap( const concurrent_unordered_multimap<Key, Val, Hash, KeyEq, Allocator>&, const Allocator& )
--> concurrent_unordered_multimap<Key, Val, Hash, KeyEq, Allocator>;
+template <typename It,
+          typename Hash = std::hash<iterator_key_t<It>>,
+          typename KeyEq = std::equal_to<iterator_key_t<It>>,
+          typename Alloc = tbb::tbb_allocator<iterator_alloc_pair_t<It>>,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<Hash>>,
+          typename = std::enable_if_t<!is_allocator_v<KeyEq>>,
+          typename = std::enable_if_t<!std::is_integral_v<Hash>>>
+concurrent_unordered_multimap( It, It, std::size_t = {}, Hash = Hash(), KeyEq = KeyEq(), Alloc = Alloc() )
+-> concurrent_unordered_multimap<iterator_key_t<It>, iterator_mapped_t<It>, Hash, KeyEq, Alloc>;
 
-// Deduction guide for the constructor from two iterators
-template <typename I>
-concurrent_unordered_multimap( I, I )
--> cu_map_type<concurrent_unordered_multimap, iterator_key_t<I>, iterator_mapped_t<I>>;
+template <typename Key, typename T,
+          typename Hash = std::hash<std::remove_const_t<Key>>,
+          typename KeyEq = std::equal_to<std::remove_const_t<Key>>,
+          typename Alloc = tbb::tbb_allocator<std::pair<const Key, T>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<Hash>>,
+          typename = std::enable_if_t<!is_allocator_v<KeyEq>>,
+          typename = std::enable_if_t<!std::is_integral_v<Hash>>>
+concurrent_unordered_multimap( std::initializer_list<std::pair<Key, T>>, std::size_t = {},
+                               Hash = Hash(), KeyEq = KeyEq(), Alloc = Alloc() )
+-> concurrent_unordered_multimap<std::remove_const_t<Key>, T, Hash, KeyEq, Alloc>;
 
-// Deduction guide for the constructor from two iterators and hasher/equal/allocator
-template <typename I, typename... Args>
-concurrent_unordered_multimap( I, I, std::size_t, Args... )
--> cu_map_type<concurrent_unordered_multimap, iterator_key_t<I>, iterator_mapped_t<I>, Args...>;
+template <typename It, typename Alloc,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_unordered_multimap( It, It, std::size_t, Alloc )
+-> concurrent_unordered_multimap<iterator_key_t<It>, iterator_mapped_t<It>,
+                                 std::hash<iterator_key_t<It>>,
+                                 std::equal_to<iterator_key_t<It>>, Alloc>;
 
-// Deduction guide for the constructor from an initializer_list
-template <typename Key, typename Mapped>
-concurrent_unordered_multimap( std::initializer_list<std::pair<const Key, Mapped>> )
--> cu_map_type<concurrent_unordered_multimap, Key, Mapped>;
+template <typename It, typename Hash, typename Alloc,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<Hash>>,
+          typename = std::enable_if_t<!std::is_integral_v<Hash>>>
+concurrent_unordered_multimap( It, It, std::size_t, Hash, Alloc )
+-> concurrent_unordered_multimap<iterator_key_t<It>, iterator_mapped_t<It>, Hash,
+                                 std::equal_to<iterator_key_t<It>>, Alloc>;
 
-// Deduction guide for the constructor from an initializer_list and hasher/equal/allocator
-template <typename Key, typename Mapped, typename... Args>
-concurrent_unordered_multimap( std::initializer_list<std::pair<const Key, Mapped>>, std::size_t, Args... )
--> cu_map_type<concurrent_unordered_multimap, Key, Mapped, Args...>;
+template <typename Key, typename T, typename Alloc,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_unordered_multimap( std::initializer_list<std::pair<Key, T>>, std::size_t, Alloc )
+-> concurrent_unordered_multimap<std::remove_const_t<Key>, T, std::hash<std::remove_const_t<Key>>,
+                                 std::equal_to<std::remove_const_t<Key>>, Alloc>;
+
+template <typename Key, typename T, typename Alloc,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_unordered_multimap( std::initializer_list<std::pair<Key, T>>, Alloc )
+-> concurrent_unordered_multimap<std::remove_const_t<Key>, T, std::hash<std::remove_const_t<Key>>,
+                                 std::equal_to<std::remove_const_t<Key>>, Alloc>;
+
+template <typename Key, typename T, typename Hash, typename Alloc,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<Hash>>,
+          typename = std::enable_if_t<!std::is_integral_v<Hash>>>
+concurrent_unordered_multimap( std::initializer_list<std::pair<Key, T>>, std::size_t, Hash, Alloc )
+-> concurrent_unordered_multimap<std::remove_const_t<Key>, T, Hash,
+                                 std::equal_to<std::remove_const_t<Key>>, Alloc>;
 
 #endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 

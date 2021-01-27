@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020 Intel Corporation
+    Copyright (c) 2020-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ public:
     //! The current task dipsatcher
     task_dispatcher* my_task_dispatcher;
 
-    //! The arena that I own (if master) or am servicing at the moment (if worker)
+    //! The arena that I own (if external thread) or am servicing at the moment (if worker)
     arena* my_arena;
 
     //! Pointer to the slot in the arena we own at the moment
@@ -152,6 +152,7 @@ public:
     enum class post_resume_action {
         invalid,
         register_waiter,
+        resume,
         callback,
         cleanup,
         notify,
@@ -170,11 +171,6 @@ public:
         }
     };
 
-    struct register_waiter_data {
-        d1::wait_context* wo;
-        concurrent_monitor::resume_context& node;
-    };
-
     //! Suspends the current coroutine (task_dispatcher).
     void suspend(void* suspend_callback, void* user_callback);
 
@@ -187,6 +183,11 @@ public:
         __TBB_ASSERT(!my_post_resume_arg, "The post resume action must not have an argument");
         my_post_resume_action = pra;
         my_post_resume_arg = arg;
+    }
+
+    void clear_post_resume_action() {
+        my_post_resume_action = thread_data::post_resume_action::none;
+        my_post_resume_arg = nullptr;
     }
 
     //! Performs post resume action.
@@ -243,7 +244,7 @@ inline void thread_data::context_list_cleanup() {
                 spin_wait_until_eq(state, state_t::dying);
             } else {
                 __TBB_ASSERT(expected == state_t::bound, nullptr);
-                ctx.my_owner = NULL;
+                ctx.my_owner.store(nullptr, std::memory_order_release);
             }
         }
     }

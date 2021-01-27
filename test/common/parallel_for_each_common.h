@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -113,7 +113,8 @@ private:
     TaskGeneratorBody (const TaskGeneratorBody&);
     // These functions need access to the default constructor
     template<class Body, class Iterator> friend void TestBody(size_t);
-    template<class Body, class Iterator> friend void TestBody_MoveOnly(size_t);
+    template<class Body, class Iterator> friend void TestBodyMove(size_t);
+    template<class Body, class Iterator> friend void TestBodyWithMove(size_t);
 };
 
 /** Work item is passed by reference here. **/
@@ -161,20 +162,16 @@ struct TaskGeneratorBody_RvalueRefVersion {
 static value_t g_depths[depths_nubmer] = {0, 1, 2, 3, 4, 0, 1, 0, 1, 2, 0, 1, 2, 3, 0, 1, 2, 0, 1, 2};
 
 template<class Body, class Iterator>
-void TestBody_MoveIter(const Body& body, Iterator begin, Iterator end) {
+void TestBodyMove(size_t depth) {
+    typedef typename std::iterator_traits<Iterator>::value_type value_type;
+    value_type a_depths[depths_nubmer] = {0, 1, 2, 3, 4, 0, 1, 0, 1, 2, 0, 1, 2, 3, 0, 1, 2, 0, 1, 2};
+    Body body;
     typedef std::move_iterator<Iterator> MoveIterator;
-    MoveIterator mbegin(begin);
-    MoveIterator mend(end);
+    MoveIterator mbegin(Iterator{a_depths});
+    MoveIterator mend(Iterator{a_depths + depth});
     g_tasks_observed = 0;
     tbb::parallel_for_each(mbegin, mend, body);
     REQUIRE (g_tasks_observed == g_tasks_expected);
-}
-
-template<class Body, class Iterator>
-void TestBody_MoveOnly(size_t depth) {
-    typedef typename std::iterator_traits<Iterator>::value_type value_type;
-    value_type a_depths[depths_nubmer] = {0, 1, 2, 3, 4, 0, 1, 0, 1, 2, 0, 1, 2, 3, 0, 1, 2, 0, 1, 2};
-    TestBody_MoveIter(Body(), Iterator(a_depths), Iterator(a_depths + depth));
 }
 
 template<class Body, class Iterator>
@@ -187,16 +184,21 @@ void TestBody(size_t depth) {
     g_tasks_observed = 0;
     tbb::parallel_for_each(begin, end, body);
     REQUIRE (g_tasks_observed == g_tasks_expected);
-    TestBody_MoveIter(body, Iterator(a_depths), Iterator(a_depths + depth));
+}
+
+template<class Body, class Iterator>
+void TestBodyWithMove(size_t depth) {
+    TestBody<Body, Iterator>(depth);
+    TestBodyMove<Body, Iterator>(depth);
 }
 
 template<class Iterator>
 void TestIterator_Common(size_t depth) {
-    TestBody<FakeTaskGeneratorBody, Iterator>(depth);
-    TestBody<FakeTaskGeneratorBody_ConstRefVersion, Iterator>(depth);
-    TestBody<TaskGeneratorBody, Iterator>(depth);
-    TestBody<TaskGeneratorBody_ConstVersion, Iterator>(depth);
-    TestBody<TaskGeneratorBody_ConstRefVersion, Iterator>(depth);
+    TestBodyWithMove<FakeTaskGeneratorBody, Iterator>(depth);
+    TestBodyWithMove<FakeTaskGeneratorBody_ConstRefVersion, Iterator>(depth);
+    TestBodyWithMove<TaskGeneratorBody, Iterator>(depth);
+    TestBodyWithMove<TaskGeneratorBody_ConstVersion, Iterator>(depth);
+    TestBodyWithMove<TaskGeneratorBody_ConstRefVersion, Iterator>(depth);
 }
 
 template<class Iterator>
@@ -210,43 +212,69 @@ template<class Iterator, class GenericBody>
 void TestGenericLambda(size_t depth, GenericBody body) {
     typedef typename std::iterator_traits<Iterator>::value_type value_type;
     value_type a_depths[depths_nubmer] = {0, 1, 2, 3, 4, 0, 1, 0, 1, 2, 0, 1, 2, 3, 0, 1, 2, 0, 1, 2};
+
     Iterator begin(a_depths);
     Iterator end(a_depths + depth);
     g_tasks_observed = 0;
     tbb::parallel_for_each(begin, end, body);
     REQUIRE (g_tasks_observed == g_tasks_expected);
-    TestBody_MoveIter(body, Iterator(a_depths), Iterator(a_depths + depth));
+}
+
+template <class Iterator, class GenericBody>
+void TestGenericLambdaMove(size_t depth, GenericBody body) {
+    typedef typename std::iterator_traits<Iterator>::value_type value_type;
+    value_type a_depths[depths_nubmer] = {0, 1, 2, 3, 4, 0, 1, 0, 1, 2, 0, 1, 2, 3, 0, 1, 2, 0, 1, 2};
+
+    typedef std::move_iterator<Iterator> MoveIterator;
+    Iterator begin(a_depths);
+    Iterator end(a_depths + depth);
+    MoveIterator mbegin = std::make_move_iterator(begin);
+    MoveIterator mend = std::make_move_iterator(end);
+    g_tasks_observed = 0;
+    tbb::parallel_for_each(mbegin, mend, body);
+    REQUIRE (g_tasks_observed == g_tasks_expected);
+}
+
+template <class Iterator, class GenericBody>
+void TestGenericLambdaWithMove(size_t depth, GenericBody body) {
+    TestGenericLambda<Iterator>(depth, body);
+    TestGenericLambdaMove<Iterator>(depth, body);
 }
 
 template<class Iterator>
 void TestGenericLambdasCommon(size_t depth) {
-    TestGenericLambda<Iterator>(depth, [](auto item){g_tasks_observed += FindNumOfTasks(item.value());});
-    TestGenericLambda<Iterator>(depth, [](const auto item){g_tasks_observed += FindNumOfTasks(item.value());});
+    TestGenericLambdaWithMove<Iterator>(depth, [](auto item){g_tasks_observed += FindNumOfTasks(item.value());});
+    TestGenericLambdaWithMove<Iterator>(depth, [](const auto item){g_tasks_observed += FindNumOfTasks(item.value());});
     TestGenericLambda<Iterator>(depth, [](volatile auto& item){g_tasks_observed += FindNumOfTasks(item.value());});
     TestGenericLambda<Iterator>(depth, [](const volatile auto& item){g_tasks_observed += FindNumOfTasks(item.value());});
     TestGenericLambda<Iterator>(depth, [](auto& item){g_tasks_observed += FindNumOfTasks(item.value());});
-    TestGenericLambda<Iterator>(depth, [](const auto& item){g_tasks_observed += FindNumOfTasks(item.value());});
-    TestGenericLambda<Iterator>(depth, [](auto&& item){g_tasks_observed += FindNumOfTasks(item.value());});
+    TestGenericLambdaWithMove<Iterator>(depth, [](const auto& item){g_tasks_observed += FindNumOfTasks(item.value());});
+    TestGenericLambdaWithMove<Iterator>(depth, [](auto&& item){g_tasks_observed += FindNumOfTasks(item.value());});
 
-    TestGenericLambda<Iterator>(depth, [](auto item, auto& feeder){do_work(item, feeder);});
-    TestGenericLambda<Iterator>(depth, [](const auto item, auto& feeder){do_work(item, feeder);});
+    TestGenericLambdaWithMove<Iterator>(depth, [](auto item, auto& feeder){do_work(item, feeder);});
+    TestGenericLambdaWithMove<Iterator>(depth, [](const auto item, auto& feeder){do_work(item, feeder);});
     TestGenericLambda<Iterator>(depth, [](volatile auto& item, auto& feeder){do_work(const_cast<value_t&>(item), feeder);});
     TestGenericLambda<Iterator>(depth, [](const volatile auto& item, auto& feeder){do_work(const_cast<value_t&>(item), feeder);});
     TestGenericLambda<Iterator>(depth, [](auto& item, auto& feeder){do_work(item, feeder);});
-    TestGenericLambda<Iterator>(depth, [](const auto& item, auto& feeder){do_work(item, feeder);});
-    TestGenericLambda<Iterator>(depth, [](auto&& item, auto& feeder){do_work(item, feeder);});
+    TestGenericLambdaWithMove<Iterator>(depth, [](const auto& item, auto& feeder){do_work(item, feeder);});
+    TestGenericLambdaWithMove<Iterator>(depth, [](auto&& item, auto& feeder){do_work(item, feeder);});
 }
 #endif /*__TBB_CPP14_GENERIC_LAMBDAS_PRESENT*/
 
 template<class Iterator>
+void TestIterator_Move(size_t depth) {
+    TestBodyMove<FakeTaskGeneratorBody_RvalueRefVersion, Iterator>(depth);
+    TestBodyMove<TaskGeneratorBody_RvalueRefVersion, Iterator>(depth);
+}
+
+template<class Iterator>
 void TestIterator_Modifiable(size_t depth) {
     TestIterator_Const<Iterator>(depth);
+    TestIterator_Move<Iterator>(depth);
     TestBody<FakeTaskGeneratorBody_RefVersion, Iterator>(depth);
     TestBody<FakeTaskGeneratorBody_VolatileRefVersion, Iterator>(depth);
     TestBody<TaskGeneratorBody_RefVersion, Iterator>(depth);
     TestBody<TaskGeneratorBody_VolatileRefVersion, Iterator>(depth);
-    TestBody_MoveOnly<FakeTaskGeneratorBody_RvalueRefVersion, Iterator>(depth);
-    TestBody_MoveOnly<TaskGeneratorBody_RvalueRefVersion, Iterator>(depth);
 #if __TBB_CPP14_GENERIC_LAMBDAS_PRESENT
     TestGenericLambdasCommon<Iterator>(depth);
 #endif
@@ -266,7 +294,7 @@ struct generic_iterator_container {
 
     generic_iterator_container():
         my_vec   (default_size),
-        my_begin {my_vec.data()}, 
+        my_begin {my_vec.data()},
         my_end   {my_vec.data() + my_vec.size()}
     {}
 
@@ -286,10 +314,14 @@ struct incremental_functor {
     void operator()(std::size_t& in) const { ++in; ++task_counter;}
 };
 
-template< template<typename> class IteratorModifier>
+struct incremental_functor_const {
+    void operator()(const std::size_t&) const { ++task_counter; }
+};
+
+template< template<typename> class IteratorModifier, typename Functor = incremental_functor>
 void container_based_overload_test_case(std::size_t expected_value) {
     generic_iterator_container<IteratorModifier> container;
-    tbb::parallel_for_each(container, incremental_functor{});
+    tbb::parallel_for_each(container, Functor{});
     container.validation(expected_value);
 }
 

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2019-2020 Intel Corporation
+    Copyright (c) 2019-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,122 +15,171 @@
 */
 
 //! \file test_arena_constraints.cpp
-//! \brief Test for [preview] functionality
+//! \brief Test for [info_namespace scheduler.task_arena] functionality
 
 #include "common/common_arena_constraints.h"
-#include "common/spin_barrier.h"
-#include "common/memory_usage.h"
 
 #include "tbb/parallel_for.h"
 
-#if __TBB_HWLOC_PRESENT
-void recursive_arena_binding(int* numa_indexes, size_t count,
-    std::vector<numa_validation::affinity_mask>& affinity_masks) {
-    if (count > 0) {
-        tbb::task_arena current_level_arena;
-        current_level_arena.initialize(tbb::task_arena::constraints(numa_indexes[count - 1]));
+#if __TBB_HWLOC_VALID_ENVIRONMENT
+#if __HYBRID_CPUS_TESTING
+//! Testing NUMA topology traversal correctness
+//! \brief \ref interface \ref requirement
+TEST_CASE("Test core types topology traversal correctness") {
+    std::vector<index_info> core_types_info = system_info::get_cpu_kinds_info();
+    std::vector<tbb::core_type_id> core_types = tbb::info::core_types();
+
+    REQUIRE_MESSAGE(core_types_info.size() == core_types.size(), "Wrong core types number detected.");
+    for (unsigned i = 0; i < core_types.size(); ++i) {
+        REQUIRE_MESSAGE(core_types[i] == core_types_info[i].index, "Wrong core type index detected.");
+    }
+}
+#endif /*__HYBRID_CPUS_TESTING*/
+
+//! Test affinity and default_concurrency correctness for all available constraints.
+//! \brief \ref error_guessing
+TEST_CASE("Test affinity and default_concurrency correctness for all available constraints.") {
+    for (const auto& constraints: generate_constraints_variety()) {
+        tbb::task_arena ta{constraints};
+        test_constraints_affinity_and_concurrency(constraints, get_arena_affinity(ta));
+    }
+}
+
+bool is_observer_created(const tbb::task_arena::constraints& c) {
+    std::vector<tbb::core_type_id> core_types = tbb::info::core_types();
+    std::vector<tbb::numa_node_id> numa_nodes = tbb::info::numa_nodes();
+    return
+        (c.numa_id != tbb::task_arena::automatic && numa_nodes.size() > 1) ||
+        (c.core_type != tbb::task_arena::automatic && core_types.size() > 1) ||
+        c.max_threads_per_core != tbb::task_arena::automatic;
+}
+
+void recursive_arena_binding(constraints_container::iterator current_pos, constraints_container::iterator end_pos) {
+    system_info::affinity_mask affinity_before = system_info::allocate_current_affinity_mask();
+
+    if (current_pos != end_pos) {
+        auto constraints = *current_pos;
+        tbb::task_arena current_level_arena{constraints};
+
+        if (is_observer_created(constraints)) {
+            system_info::affinity_mask affinity = get_arena_affinity(current_level_arena);
+            test_constraints_affinity_and_concurrency(constraints, affinity);
+        }
+
         current_level_arena.execute(
-            [&numa_indexes, &count, &affinity_masks]() {
-                affinity_masks.push_back(numa_validation::allocate_current_cpu_set());
-                recursive_arena_binding(numa_indexes, --count, affinity_masks);
+            [&current_pos, &end_pos]() {
+                recursive_arena_binding(++current_pos, end_pos);
             }
         );
-    } else {
-        // Validation of assigned affinity masks at the deepest recursion step
-        numa_validation::affinity_set_verification(affinity_masks.begin(), affinity_masks.end());
     }
 
-    if (!affinity_masks.empty()) {
-        REQUIRE_MESSAGE(numa_validation::affinity_masks_isequal(affinity_masks.back(),
-            numa_validation::allocate_current_cpu_set()),
-            "After binding to different NUMA node thread affinity was not returned to previous state.");
-        affinity_masks.pop_back();
-    }
+    system_info::affinity_mask affinity_after = system_info::allocate_current_affinity_mask();
+    REQUIRE_MESSAGE(hwloc_bitmap_isequal(affinity_before, affinity_after),
+        "After nested arena execution previous affinity mask was not restored.");
 }
 
-//! Testing binding correctness during passing through netsed arenas
+//! Testing binding correctness during passing through nested arenas
 //! \brief \ref interface \ref error_guessing
-TEST_CASE("Test binding to NUMA nodes with nested arenas") {
-    if (is_system_environment_supported()) {
-        numa_validation::initialize_system_info();
-        std::vector<int> numa_indexes = tbb::info::numa_nodes();
-        std::vector<numa_validation::affinity_mask> affinity_masks;
-        recursive_arena_binding(numa_indexes.data(), numa_indexes.size(), affinity_masks);
-    }
+TEST_CASE("Test binding with nested arenas") {
+    auto constraints_variety = generate_constraints_variety();
+    recursive_arena_binding(constraints_variety.begin(), constraints_variety.end());
 }
+
 
 //! Testing constraints propagation during arenas copy construction
 //! \brief \ref regression
 TEST_CASE("Test constraints propagation during arenas copy construction") {
-    if (is_system_environment_supported()) {
-        numa_validation::initialize_system_info();
-        std::vector<int> numa_indexes = tbb::info::numa_nodes();
-        for (auto index: numa_indexes) {
-            numa_validation::affinity_mask constructed_mask, copied_mask;
+    for (const auto& constraints: generate_constraints_variety()) {
+        tbb::task_arena constructed{constraints};
 
-            tbb::task_arena constructed{tbb::task_arena::constraints(index)};
-            constructed.execute([&constructed_mask]() {
-                constructed_mask = numa_validation::allocate_current_cpu_set();
-            });
+        tbb::task_arena copied(constructed);
+        system_info::affinity_mask copied_affinity = get_arena_affinity(copied);
 
-            tbb::task_arena copied(constructed);
-            copied.execute([&copied_mask]() {
-                copied_mask = numa_validation::allocate_current_cpu_set();
-            });
-
-            REQUIRE_MESSAGE(numa_validation::affinity_masks_isequal(constructed_mask, copied_mask),
-                        "Affinity mask brokes during copy construction");
-        }
+        test_constraints_affinity_and_concurrency(constraints, copied_affinity);
     }
 }
-#endif /*__TBB_HWLOC_PRESENT*/
-
-void collect_all_threads_on_barrier() {
-    utils::SpinBarrier barrier;
-    barrier.initialize(tbb::this_task_arena::max_concurrency());
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, tbb::this_task_arena::max_concurrency()),
-        [&barrier](const tbb::blocked_range<size_t>&) {
-            barrier.wait();
-        });
-};
+#endif /*__TBB_HWLOC_VALID_ENVIRONMENT*/
 
 //! Testing memory leaks absence
 //! \brief \ref resource_usage
 TEST_CASE("Test memory leaks") {
-    std::vector<int> numa_indexes = tbb::info::numa_nodes();
-    size_t num_traits = 1000;
+    constexpr size_t num_trials = 1000;
+
+    // To reduce the test session time only one constraints object is used inside this test.
+    // This constraints should use all available settings to cover the most part of tbbbind functionality.
+    auto constraints = tbb::task_arena::constraints{}
+        .set_numa_id(tbb::info::numa_nodes().front())
+        .set_core_type(tbb::info::core_types().front())
+        .set_max_threads_per_core(1);
+
     size_t current_memory_usage = 0, previous_memory_usage = 0, stability_counter = 0;
     bool no_memory_leak = false;
-
-    for (size_t i = 0; i < num_traits; i++) {
+    for (size_t i = 0; i < num_trials; i++) {
         { /* All DTORs must be called before GetMemoryUsage() call*/
-            std::vector<tbb::task_arena> arenas(numa_indexes.size());
-            std::vector<tbb::task_group> task_groups(numa_indexes.size());
-
-            for(unsigned j = 0; j < numa_indexes.size(); j++) {
-                arenas[j].initialize(tbb::task_arena::constraints(numa_indexes[j]));
-                arenas[j].execute(
-                    [&task_groups, &j](){
-                        task_groups[j].run([](){
-                            collect_all_threads_on_barrier();
-                        });
-                    });
-            }
-
-            for(unsigned j = 0; j < numa_indexes.size(); j++) {
-                arenas[j].execute([&task_groups, &j](){ task_groups[j].wait(); });
-            }
+            tbb::task_arena arena{constraints};
+            arena.execute([]{
+                utils::SpinBarrier barrier;
+                barrier.initialize(tbb::this_task_arena::max_concurrency());
+                tbb::parallel_for(
+                    tbb::blocked_range<size_t>(0, tbb::this_task_arena::max_concurrency()),
+                    [&barrier](const tbb::blocked_range<size_t>&) {
+                        barrier.wait();
+                    }
+                );
+            });
         }
 
         current_memory_usage = utils::GetMemoryUsage();
         stability_counter = current_memory_usage==previous_memory_usage ? stability_counter + 1 : 0;
         // If the amount of used memory has not changed during 10% of executions,
         // then we can assume that the check was successful
-        if (stability_counter > num_traits / 10) {
+        if (stability_counter > num_trials / 10) {
             no_memory_leak = true;
             break;
         }
         previous_memory_usage = current_memory_usage;
     }
     REQUIRE_MESSAGE(no_memory_leak, "Seems we get memory leak here.");
+}
+
+//! Testing arena constraints setters
+//! \brief \ref interface \ref requirement
+TEST_CASE("Test arena constraints setters") {
+    using constraints = tbb::task_arena::constraints;
+    auto constraints_comparison = [](const constraints& c1, const constraints& c2) {
+        REQUIRE_MESSAGE(constraints_equal{}(c1, c2),
+            "Equal constraints settings specified by different interfaces shows different result.");
+    };
+
+    // NUMA node ID setter testing
+    for(const auto& numa_index: tbb::info::numa_nodes()) {
+        constraints setter_c = constraints{}.set_numa_id(numa_index);
+        constraints assignment_c{}; assignment_c.numa_id = numa_index;
+
+        constraints_comparison(setter_c, assignment_c);
+    }
+
+    // Core type setter testing
+    for(const auto& core_type_index: tbb::info::core_types()) {
+        constraints setter_c = constraints{}.set_core_type(core_type_index);
+        constraints assignment_c{}; assignment_c.core_type = core_type_index;
+
+        constraints_comparison(setter_c, assignment_c);
+    }
+
+    // Max concurrency setter testing
+    {
+        constraints setter_c = constraints{}.set_max_concurrency(1);
+        constraints assignment_c{}; assignment_c.max_concurrency = 1;
+
+        constraints_comparison(setter_c, assignment_c);
+    }
+
+    // Threads per core setter testing
+    {
+        constraints setter_c = constraints{}.set_max_threads_per_core(1);
+        constraints assignment_c{}; assignment_c.max_threads_per_core = 1;
+
+        constraints_comparison(setter_c, assignment_c);
+    }
 }

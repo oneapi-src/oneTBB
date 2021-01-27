@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public:
     template<typename U> tbb_allocator(const tbb_allocator<U>&) noexcept {}
 
     //! Allocate space for n objects.
-    T* allocate(std::size_t n) {
+    __TBB_nodiscard T* allocate(std::size_t n) {
         return static_cast<T*>(r1::allocate_memory(n * sizeof(value_type)));
     }
 
@@ -110,8 +110,10 @@ public:
 template<typename T, typename U>
 inline bool operator==(const tbb_allocator<T>&, const tbb_allocator<U>&) noexcept { return true; }
 
+#if !__TBB_CPP20_COMPARISONS_PRESENT
 template<typename T, typename U>
 inline bool operator!=(const tbb_allocator<T>&, const tbb_allocator<U>&) noexcept { return false; }
+#endif
 
 } // namespace d1
 } // namespace detail

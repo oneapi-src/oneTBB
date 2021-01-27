@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020 Intel Corporation
+    Copyright (c) 2020-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -44,22 +44,21 @@ void __TBB_EXPORTED_FUNC spawn(d1::task& t, d1::task_group_context& ctx, d1::slo
     task_group_context_impl::bind_to(ctx, tls);
     arena* a = tls->my_arena;
     arena_slot* slot = tls->my_arena_slot;
+    execution_data_ext& ed = tls->my_task_dispatcher->m_execute_data_ext;
 
     // Capture context
     task_accessor::context(t) = &ctx;
     // Mark isolation
-    isolation_type isolation = tls->my_task_dispatcher->m_execute_data_ext.isolation;
-    task_accessor::isolation(t) = isolation;
+    task_accessor::isolation(t) = ed.isolation;
 
     if ( id != d1::no_slot && id != tls->my_arena_index ) {
         // Allocate proxy task
-        d1::small_object_pool* alloc{};
-        auto object_pool = tls->my_small_object_pool;
-        auto proxy = static_cast<task_proxy*>(object_pool->allocate_impl(alloc, sizeof(task_proxy)));
+        d1::small_object_allocator alloc{};
+        auto proxy = alloc.new_object<task_proxy>(static_cast<d1::execution_data&>(ed));
         // Mark as a proxy
         task_accessor::set_proxy_trait(*proxy);
         // Mark isolation for the proxy task
-        task_accessor::isolation(*proxy) = isolation;
+        task_accessor::isolation(*proxy) = ed.isolation;
         // Deallocation hint (tls) from the task allocator
         proxy->allocator = alloc;
         proxy->slot = id;
@@ -169,7 +168,7 @@ void task_dispatcher::execute_and_wait(d1::task* t, d1::wait_context& wait_ctx, 
     t = local_td.local_wait_for_all(t, waiter);
     __TBB_ASSERT_EX(t == nullptr, "External waiter must not leave dispatch loop with a task");
 
-    // Master (external) thread couldn't exit the dispatch loop in an idle state
+    // The external thread couldn't exit the dispatch loop in an idle state
     if (local_td.m_thread_data->my_inbox.is_idle_state(true)) {
         local_td.m_thread_data->my_inbox.set_is_idle(false);
     }

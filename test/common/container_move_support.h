@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -128,22 +128,22 @@ public:
     }
 
     intptr_t& zero_bar() {
-        REQUIRE(is_valid_or_zero());
+        CHECK_FAST(is_valid_or_zero());
         return my_bar;
     }
 
     intptr_t zero_bar() const {
-        REQUIRE(is_valid_or_zero());
+        CHECK_FAST(is_valid_or_zero());
         return my_bar;
     }
 
     intptr_t& bar() {
-        REQUIRE(is_valid());
+        CHECK_FAST(is_valid());
         return my_bar;
     }
 
     intptr_t bar() const {
-        REQUIRE(is_valid());
+        CHECK_FAST(is_valid());
         return my_bar;
     }
 
@@ -218,24 +218,24 @@ public:
     }
 
     friend bool operator==( const int& lhs, const Foo& rhs ) {
-        REQUIRE_MESSAGE(rhs.is_valid_or_zero(), "Comparing invalid objects");
+        CHECK_FAST_MESSAGE(rhs.is_valid_or_zero(), "Comparing invalid objects");
         return lhs == rhs.my_bar;
     }
 
     friend bool operator==( const Foo& lhs, const int& rhs ) {
-        REQUIRE_MESSAGE(lhs.is_valid_or_zero(), "Comparing invalid objects");
+        CHECK_FAST_MESSAGE(lhs.is_valid_or_zero(), "Comparing invalid objects");
         return lhs.my_bar == rhs;
     }
 
     friend bool operator==( const Foo& lhs, const Foo& rhs ) {
-        REQUIRE_MESSAGE(lhs.is_valid_or_zero(), "Comparing invalid objects");
-        REQUIRE_MESSAGE(rhs.is_valid_or_zero(), "Comparing invalid objects");
+        CHECK_FAST_MESSAGE(lhs.is_valid_or_zero(), "Comparing invalid objects");
+        CHECK_FAST_MESSAGE(rhs.is_valid_or_zero(), "Comparing invalid objects");
         return lhs.my_bar == rhs.my_bar;
     }
 
     friend bool operator<( const Foo& lhs, const Foo& rhs ) {
-        REQUIRE_MESSAGE(lhs.is_valid_or_zero(), "Comparing invalid objects");
-        REQUIRE_MESSAGE(rhs.is_valid_or_zero(), "Comparing invalid objects");
+        CHECK_FAST_MESSAGE(lhs.is_valid_or_zero(), "Comparing invalid objects");
+        CHECK_FAST_MESSAGE(rhs.is_valid_or_zero(), "Comparing invalid objects");
         return lhs.my_bar < rhs.my_bar;
     }
 

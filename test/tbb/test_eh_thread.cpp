@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020 Intel Corporation
+    Copyright (c) 2020-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@
 
 // On Windows there is no real thread number limit beside available memory.
 // Therefore, the test for thread limit is unreasonable.
-#if TBB_USE_EXCEPTIONS && !_WIN32
+#if TBB_USE_EXCEPTIONS && !_WIN32 && !__ANDROID__
 
 static bool g_exception_caught = false;
 static std::mutex m;

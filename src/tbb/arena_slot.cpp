@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ d1::task* arena_slot::get_task_impl(size_t T, execution_data_ext& ed, bool& task
         return t;
     }
     // Proxy was empty, so it's our responsibility to free it
-    deallocate(*tp.allocator, &tp, sizeof(task_proxy), ed);
+    tp.allocator.delete_object(&tp, ed);
 
     if ( tasks_omitted ) {
         task_pool_ptr[T] = nullptr;
@@ -69,10 +69,11 @@ d1::task* arena_slot::get_task(execution_data_ext& ed, isolation_type isolation)
     bool tasks_omitted = false;
     do {
         __TBB_ASSERT( !result, nullptr );
-        tail.store( --T, std::memory_order_relaxed );
-        // TODO: consider other approaches instead of atomic_fence
-        atomic_fence(std::memory_order_seq_cst);
-        if ( (std::intptr_t)( head.load(std::memory_order_relaxed) ) > (std::intptr_t)T ) {
+        // The full fence is required to sync the store of `tail` with the load of `head` (write-read barrier)
+        T = --tail;
+        // The acquire load of head is required to guarantee consistency of our task pool
+        // when a thief rolls back the head.
+        if ( (std::intptr_t)( head.load(std::memory_order_acquire) ) > (std::intptr_t)T ) {
             acquire_task_pool();
             H0 = head.load(std::memory_order_relaxed);
             if ( (std::intptr_t)H0 > (std::intptr_t)T ) {
@@ -154,16 +155,16 @@ d1::task* arena_slot::steal_task(arena& a, isolation_type isolation) {
     std::size_t H0 = H;
     bool tasks_omitted = false;
     do {
-        head.store( ++H, std::memory_order_relaxed );
-        atomic_fence( std::memory_order_seq_cst );
-        if ((std::intptr_t)H > (std::intptr_t)(tail.load(std::memory_order_relaxed))) {
+        // The full fence is required to sync the store of `head` with the load of `tail` (write-read barrier)
+        H = ++head;
+        // The acquire load of tail is required to guarantee consistency of victim_pool
+        // because the owner synchronizes task spawning via tail.
+        if ((std::intptr_t)H > (std::intptr_t)(tail.load(std::memory_order_acquire))) {
             // Stealing attempt failed, deque contents has not been changed by us
             head.store( /*dead: H = */ H0, std::memory_order_relaxed );
             __TBB_ASSERT( !result, nullptr );
             goto unlock;
         }
-        // TODO: consider to implement as __TBB_control_consistency_helper()
-        atomic_fence( std::memory_order_acquire ); // on tail
         result = victim_pool[H-1];
         __TBB_ASSERT( !is_poisoned( result ), nullptr );
 
@@ -195,7 +196,8 @@ d1::task* arena_slot::steal_task(arena& a, isolation_type isolation) {
     if (tasks_omitted) {
         // Some proxies in the task pool have been omitted. Set the stolen task to nullptr.
         victim_pool[H-1] = nullptr;
-        head.store( /*dead: H = */ H0, std::memory_order_relaxed );
+        // The release store synchronizes the victim_pool update(the store of nullptr).
+        head.store( /*dead: H = */ H0, std::memory_order_release );
     }
 unlock:
     unlock_task_pool(victim_pool);

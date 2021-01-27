@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Intel Corporation
+# Copyright (c) 2020-2021 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,18 +24,14 @@ endif()
 
 set(TBB_COMMON_LINK_LIBS dl)
 
+# Ignore -Werror set through add_compile_options() or added to CMAKE_CXX_FLAGS if TBB_STRICT is disabled.
+if (NOT TBB_STRICT AND COMMAND tbb_remove_compile_flag)
+    tbb_remove_compile_flag(-Werror)
+endif()
+
 if (NOT ${CMAKE_CXX_COMPILER_ID} STREQUAL Intel)
     # gcc 6.0 and later have -flifetime-dse option that controls elimination of stores done outside the object lifetime
     set(TBB_DSE_FLAG $<$<NOT:$<VERSION_LESS:${CMAKE_CXX_COMPILER_VERSION},6.0>>:-flifetime-dse=1>)
-endif()
-
-if (NOT APPLE)
-    set(TBB_WARNING_SUPPRESS -Wno-parentheses)
-    # gcc 5.0 and later have -Wno-sized-deallocation options
-    set(TBB_WARNING_SUPPRESS ${TBB_WARNING_SUPPRESS}
-                             $<$<NOT:$<VERSION_LESS:${CMAKE_CXX_COMPILER_VERSION},5.0>>:-Wno-sized-deallocation>)
-else()
-    set(TBB_WARNING_SUPPRESS -Wno-non-virtual-dtor)
 endif()
 
 # Workaround for heavy tests

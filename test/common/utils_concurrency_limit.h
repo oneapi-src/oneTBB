@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020 Intel Corporation
+    Copyright (c) 2020-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -50,20 +50,20 @@ inline thread_num_type get_platform_max_threads() {
     return platform_max_threads;
 }
 
-inline std::vector<thread_num_type> concurrency_range() {
-    static std::vector<thread_num_type> threads_range;
-    static bool initialized = false;
-
-    if (!initialized) {
-        initialized = true;
-        thread_num_type step = 1;
-        for(thread_num_type thread_num = 1; thread_num <= get_platform_max_threads(); thread_num += step++)
-            threads_range.push_back(thread_num);
-        if(threads_range.back() != get_platform_max_threads())
-            threads_range.push_back(get_platform_max_threads());
-    }
+inline std::vector<thread_num_type> concurrency_range(thread_num_type max_threads) {
+    std::vector<thread_num_type> threads_range;
+    thread_num_type step = 1;
+    for(thread_num_type thread_num = 1; thread_num <= max_threads; thread_num += step++)
+        threads_range.push_back(thread_num);
+    if(threads_range.back() != max_threads)
+        threads_range.push_back(max_threads);
     // rotate in order to make threads_range non-monotonic
     std::rotate(threads_range.begin(), threads_range.begin() + threads_range.size()/2, threads_range.end());
+    return threads_range;
+}
+
+inline std::vector<thread_num_type> concurrency_range() {
+    static std::vector<thread_num_type> threads_range = concurrency_range(get_platform_max_threads());
     return threads_range;
 }
 

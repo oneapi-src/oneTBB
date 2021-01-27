@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2019-2020 Intel Corporation
+    Copyright (c) 2019-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -13,6 +13,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+#if __INTEL_COMPILER && _MSC_VER
+#pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
+#endif
 
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -224,7 +228,7 @@ TEST_CASE("CTAD support in concurrent_map") {
 }
 #endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 
-//! Testing comparison operators in concurrent_map
+//! Testing comparisons of concurrent_map
 //! \brief \ref interface \ref requirement
 TEST_CASE("test concurrent_map comparisons") {
     test_map_comparisons<oneapi::tbb::concurrent_map>();

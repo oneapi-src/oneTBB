@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -156,25 +156,12 @@ void thread_data::do_post_resume_action() {
     switch (my_post_resume_action) {
     case post_resume_action::register_waiter:
     {
-        auto& data = *static_cast<thread_data::register_waiter_data*>(my_post_resume_arg);
-        using state = wait_node::node_state;
-        state expected = state::not_ready;
-
-        // There are three possible situations:
-        // - wait_context has finished => call resume by ourselves
-        // - wait_context::continue_execution() returns true, but CAS fails => call resume by ourselves
-        // - wait_context::continue_execution() returns true, and CAS succeeds => successfully committed to wait list
-        if (!data.wo->continue_execution() ||
-#if defined(__INTEL_COMPILER) && __INTEL_COMPILER <= 1910
-            !((std::atomic<unsigned>&)data.node.my_ready_flag).compare_exchange_strong((unsigned&)expected, (unsigned)state::ready))
-#else
-            !data.node.my_ready_flag.compare_exchange_strong(expected, state::ready))
-#endif
-        {
-            data.node.my_suspend_point->m_arena->my_market->get_wait_list().cancel_wait(data.node);
-            r1::resume(data.node.my_suspend_point);
-        }
-
+        static_cast<extended_concurrent_monitor::resume_context*>(my_post_resume_arg)->notify();
+        break;
+    }
+    case post_resume_action::resume:
+    {
+        r1::resume(static_cast<suspend_point_type*>(my_post_resume_arg));
         break;
     }
     case post_resume_action::callback:
@@ -224,9 +211,9 @@ suspend_point_type* current_suspend_point() {
 
 #endif /* __TBB_RESUMABLE_TASKS */
 
-void notify_waiters(std::uintptr_t wait_ctx_tag) {
+void notify_waiters(std::uintptr_t wait_ctx_addr) {
     auto is_related_wait_ctx = [&] (extended_context context) {
-        return wait_ctx_tag == context.uniq_ctx;
+        return wait_ctx_addr == context.my_uniq_addr;
     };
 
     r1::governor::get_thread_data()->my_arena->my_market->get_wait_list().notify(is_related_wait_ctx);

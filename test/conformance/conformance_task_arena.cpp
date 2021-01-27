@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -30,17 +30,23 @@
 TEST_CASE("Arena interfaces") {
     //! Initialization interfaces
     oneapi::tbb::task_arena a(1,1); a.initialize();
+    std::atomic<bool> done{ false };
     //! Enqueue interface
-    a.enqueue(utils::DummyBody(10));
+    a.enqueue([&done] {
+        CHECK(oneapi::tbb::this_task_arena::max_concurrency() == 2);
+        done = true;
+    });
     //! Execute interface
     a.execute([&] {
         //! oneapi::tbb::this_task_arena interfaces
-        CHECK(oneapi::tbb::this_task_arena::max_concurrency() == 2);
         CHECK(oneapi::tbb::this_task_arena::current_thread_index() >= 0);
         //! Attach interface
         oneapi::tbb::task_arena attached_arena = oneapi::tbb::task_arena(oneapi::tbb::task_arena::attach());
         CHECK(attached_arena.is_active());
     });
+    while (!done) {
+        utils::yield();
+    }
     //! Terminate interface
     a.terminate();
 }

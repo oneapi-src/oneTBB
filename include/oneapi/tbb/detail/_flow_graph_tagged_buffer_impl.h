@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -182,6 +182,8 @@ public:
         internal_free_buffer(pointer_array, elements_array, my_size, nelements);
         if(my_key) delete my_key;
     }
+    hash_buffer(const hash_buffer&) = delete;
+    hash_buffer& operator=(const hash_buffer&) = delete;
 
     void reset() {
         internal_free_buffer(pointer_array, elements_array, my_size, nelements);

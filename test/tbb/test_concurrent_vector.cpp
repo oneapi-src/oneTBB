@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -13,6 +13,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+#if __INTEL_COMPILER && _MSC_VER
+#pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
+#endif
 
 #include <common/test.h>
 #include <common/spin_barrier.h>
@@ -411,38 +415,38 @@ void TestConcurrentOperationsWithUnSafeOperations(std::size_t threads_number) {
         operations.push_back(random_operation + 1);
     }
 
-    // Array of active threads,
-    std::vector<int> active_threads(threads_number, 0);
+    // Array of active threads
+    std::unique_ptr<std::atomic<int>[]> active_threads{ new std::atomic<int>[threads_number]() };
     // If thread still have i < max_operations than in array will be false
     // When some thread finish it operation, set true in active_thread on thread_id position and start executing only safe operations
     // Than wait all threads
     // When all threads is finish their operations, all thread exit from lambda
-    auto all_done = [&active_threads] {
-        for (std::size_t i = 0; i < active_threads.size(); ++i) {
-            if (active_threads[i] == 0) return false;
+    auto all_done = [&active_threads, threads_number] {
+        for (std::size_t i = 0; i < threads_number; ++i) {
+            if (active_threads[i].load(std::memory_order_relaxed) == 0) return false;
         }
         return true;
     };
 
     // Need double synchronization to correct work
-    std::vector<int> ready_threads(threads_number, 0);
-    auto all_ready_leave = [&ready_threads] {
-        for (std::size_t i = 0; i < ready_threads.size(); ++i) {
-            if (ready_threads[i] == 0) return false;
+    std::unique_ptr<std::atomic<int>[]> ready_threads{ new std::atomic<int>[threads_number]() };
+    auto all_ready_leave = [&ready_threads, threads_number] {
+        for (std::size_t i = 0; i < threads_number; ++i) {
+            if (ready_threads[i].load(std::memory_order_relaxed) == 0) return false;
         }
         return true;
     };
 
     utils::SpinBarrier barrier(threads_number);
-    auto concurrent_func = [operations, &vector, &curr_unsafe_thread, &barrier, &all_done, &active_threads,
+    auto concurrent_func = [&operations, &vector, &curr_unsafe_thread, &barrier, &all_done, &active_threads,
                             &all_ready_leave, &ready_threads] (std::size_t thread_id)
     {
+        std::vector<std::size_t> local_operations(operations);
         utils::FastRandom<> rand(thread_id);
-
         // std::shuffle doesn't work with msvc2017 and FastRandom
-        for (std::size_t i = 0; i < operations.size(); ++i) {
-            std::size_t j = rand.get() % operations.size();
-            std::swap(*const_cast<std::size_t*>(&operations[i]), *const_cast<std::size_t*>(&operations[j]));
+        for (std::size_t i = local_operations.size(); i > 1; --i) {
+            std::size_t j = rand.get() % i;
+            std::swap(local_operations[i - 1], local_operations[j]);
         }
 
         std::size_t i = 0;
@@ -456,7 +460,7 @@ void TestConcurrentOperationsWithUnSafeOperations(std::size_t threads_number) {
                     barrier.wait();
             }
             // Is safe operation
-            if (active_threads[thread_id] == 1 || operations[i] == 0) {
+            if (active_threads[thread_id] == 1 || local_operations[i] == 0) {
                 // If lock is free, perform various operations
                 std::size_t random_operation = rand.get() % 3;
                 switch (random_operation) {
@@ -483,7 +487,7 @@ void TestConcurrentOperationsWithUnSafeOperations(std::size_t threads_number) {
                 if (curr_unsafe_thread.compare_exchange_strong(default_unsafe_thread, int(thread_id))) {
                     barrier.wait();
                     // All threads are blocked we can execute our unsafe operation
-                    switch (operations[i]) {
+                    switch (local_operations[i]) {
                         case 1:
                             vector.shrink_to_fit();
                             break;
@@ -504,7 +508,7 @@ void TestConcurrentOperationsWithUnSafeOperations(std::size_t threads_number) {
                 }
             }
             ++i;
-            if (i >= operations.size()) active_threads[thread_id] = 1;
+            if (i >= local_operations.size()) active_threads[thread_id] = 1;
         } while (!all_ready_leave() || !all_done());
     };
 

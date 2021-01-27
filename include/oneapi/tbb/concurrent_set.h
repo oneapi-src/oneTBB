@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2019-2020 Intel Corporation
+    Copyright (c) 2019-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -77,6 +77,16 @@ public:
     using base_type::base_type;
     using base_type::operator=;
 
+    // Required for implicit deduction guides
+    concurrent_set() = default;
+    concurrent_set( const concurrent_set& ) = default;
+    concurrent_set( const concurrent_set& other, const allocator_type& alloc ) : base_type(other, alloc) {}
+    concurrent_set( concurrent_set&& ) = default;
+    concurrent_set( concurrent_set&& other, const allocator_type& alloc ) : base_type(std::move(other), alloc) {}
+    // Required to respect the rule of 5
+    concurrent_set& operator=( const concurrent_set& ) = default;
+    concurrent_set& operator=( concurrent_set&& ) = default;
+
     template<typename OtherCompare>
     void merge(concurrent_set<key_type, OtherCompare, Allocator>& source) {
         this->internal_merge(source);
@@ -100,22 +110,34 @@ public:
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 
-template<template<typename...> class Set, typename Key, typename... Args>
-using concurrent_set_type = Set<Key,
-                                std::conditional_t< (sizeof...(Args) > 0) && !is_allocator_v<pack_element_t<0, Args...>>,
-                                                     pack_element_t<0, Args...>,
-                                                     std::less<Key>>,
-                                std::conditional_t< (sizeof...(Args) > 0) && is_allocator_v<pack_element_t<sizeof...(Args) - 1, Args...>>,
-                                                     pack_element_t<sizeof...(Args) - 1, Args...>,
-                                                     tbb::tbb_allocator<Key>>>;
+template <typename It,
+          typename Comp = std::less<iterator_value_t<It>>,
+          typename Alloc = tbb::tbb_allocator<iterator_value_t<It>>,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<Comp>>>
+concurrent_set( It, It, Comp = Comp(), Alloc = Alloc() )
+-> concurrent_set<iterator_value_t<It>, Comp, Alloc>;
 
-template<typename It, typename... Args>
-concurrent_set(It, It, Args...)
--> concurrent_set_type<concurrent_set, iterator_value_t<It>, Args...>;
+template <typename Key,
+          typename Comp = std::less<Key>,
+          typename Alloc = tbb::tbb_allocator<Key>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<Comp>>>
+concurrent_set( std::initializer_list<Key>, Comp = Comp(), Alloc = Alloc() )
+-> concurrent_set<Key, Comp, Alloc>;
 
-template<typename Key, typename... Args>
-concurrent_set(std::initializer_list<Key>, Args...)
--> concurrent_set_type<concurrent_set, Key, Args...>;
+template <typename It, typename Alloc,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_set( It, It, Alloc )
+-> concurrent_set<iterator_value_t<It>,
+                  std::less<iterator_value_t<It>>, Alloc>;
+
+template <typename Key, typename Alloc,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_set( std::initializer_list<Key>, Alloc )
+-> concurrent_set<Key, std::less<Key>, Alloc>;
 
 #endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 
@@ -152,6 +174,16 @@ public:
     using base_type::base_type;
     using base_type::operator=;
 
+    // Required for implicit deduction guides
+    concurrent_multiset() = default;
+    concurrent_multiset( const concurrent_multiset& ) = default;
+    concurrent_multiset( const concurrent_multiset& other, const allocator_type& alloc ) : base_type(other, alloc) {}
+    concurrent_multiset( concurrent_multiset&& ) = default;
+    concurrent_multiset( concurrent_multiset&& other, const allocator_type& alloc ) : base_type(std::move(other), alloc) {}
+    // Required to respect the rule of 5
+    concurrent_multiset& operator=( const concurrent_multiset& ) = default;
+    concurrent_multiset& operator=( concurrent_multiset&& ) = default;
+
     template<typename OtherCompare>
     void merge(concurrent_set<key_type, OtherCompare, Allocator>& source) {
         this->internal_merge(source);
@@ -175,13 +207,33 @@ public:
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 
-template<typename It, typename... Args>
-concurrent_multiset(It, It, Args...)
--> concurrent_set_type<concurrent_multiset, iterator_value_t<It>, Args...>;
+template <typename It,
+          typename Comp = std::less<iterator_value_t<It>>,
+          typename Alloc = tbb::tbb_allocator<iterator_value_t<It>>,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<Comp>>>
+concurrent_multiset( It, It, Comp = Comp(), Alloc = Alloc() )
+-> concurrent_multiset<iterator_value_t<It>, Comp, Alloc>;
 
-template<typename Key, typename... Args>
-concurrent_multiset(std::initializer_list<Key>, Args...)
--> concurrent_set_type<concurrent_multiset, Key, Args...>;
+template <typename Key,
+          typename Comp = std::less<Key>,
+          typename Alloc = tbb::tbb_allocator<Key>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<Comp>>>
+concurrent_multiset( std::initializer_list<Key>, Comp = Comp(), Alloc = Alloc() )
+-> concurrent_multiset<Key, Comp, Alloc>;
+
+template <typename It, typename Alloc,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_multiset( It, It, Alloc )
+-> concurrent_multiset<iterator_value_t<It>, std::less<iterator_value_t<It>>, Alloc>;
+
+template <typename Key, typename Alloc,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_multiset( std::initializer_list<Key>, Alloc )
+-> concurrent_multiset<Key, std::less<Key>, Alloc>;
 
 #endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 

@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Intel Corporation
+# Copyright (c) 2020-2021 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,10 +14,13 @@
 
 include(${CMAKE_CURRENT_LIST_DIR}/../config_generation.cmake)
 
-# TBBConfig in TBB provided packages are expected to be placed into: <tbb-root>/lib/cmake/TBB
-set(INC_REL_PATH "../../../include")
-set(LIB_REL_PATH "../..")
-set(DLL_REL_PATH "../../../redist")
+# TBBConfig in TBB provided packages are expected to be placed into: <tbb-root>/lib/cmake/tbb*
+set(TBB_ROOT_REL_PATH "../../..")
+
+# Paths relative to TBB root directory
+set(INC_REL_PATH "include")
+set(LIB_REL_PATH "lib")
+set(DLL_REL_PATH "redist")
 
 # Parse version info
 file(READ ${CMAKE_CURRENT_LIST_DIR}/../../include/oneapi/tbb/version.h _tbb_version_info)
@@ -35,6 +38,8 @@ math(EXPR _tbb_ver_patch "${_tbb_interface_ver} % 1000 / 10")
 math(EXPR _tbb_ver_tweak "${_tbb_interface_ver} % 10")
 
 set(COMMON_ARGS
+    TBB_ROOT_REL_PATH ${TBB_ROOT_REL_PATH}
+    INC_REL_PATH ${INC_REL_PATH}
     LIB_REL_PATH ${LIB_REL_PATH}
     VERSION ${_tbb_ver_major}.${_tbb_ver_minor}.${_tbb_ver_patch}.${_tbb_ver_tweak}
     TBB_BINARY_VERSION ${TBB_BINARY_VERSION}
@@ -43,7 +48,7 @@ set(COMMON_ARGS
     TBBBIND_BINARY_VERSION ${TBBBIND_BINARY_VERSION}
 )
 
-tbb_generate_config(INSTALL_DIR ${INSTALL_DIR}/linux   SYSTEM_NAME Linux   INC_REL_PATH ${INC_REL_PATH} HANDLE_SUBDIRS ${COMMON_ARGS})
-tbb_generate_config(INSTALL_DIR ${INSTALL_DIR}/windows SYSTEM_NAME Windows INC_REL_PATH ${INC_REL_PATH} HANDLE_SUBDIRS DLL_REL_PATH ${DLL_REL_PATH} ${COMMON_ARGS})
-tbb_generate_config(INSTALL_DIR ${INSTALL_DIR}/darwin  SYSTEM_NAME Darwin  INC_REL_PATH ${INC_REL_PATH} ${COMMON_ARGS})
+tbb_generate_config(INSTALL_DIR ${INSTALL_DIR}/linux   SYSTEM_NAME Linux   HANDLE_SUBDIRS ${COMMON_ARGS})
+tbb_generate_config(INSTALL_DIR ${INSTALL_DIR}/windows SYSTEM_NAME Windows HANDLE_SUBDIRS DLL_REL_PATH ${DLL_REL_PATH} ${COMMON_ARGS})
+tbb_generate_config(INSTALL_DIR ${INSTALL_DIR}/darwin  SYSTEM_NAME Darwin  ${COMMON_ARGS})
 message(STATUS "TBBConfig files were created in ${INSTALL_DIR}")

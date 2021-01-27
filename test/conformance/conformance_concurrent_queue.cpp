@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 #include <common/utils_report.h>
 #include <common/custom_allocators.h>
 #include <common/container_move_support.h>
+#include <common/test_comparisons.h>
 
 #include "oneapi/tbb/concurrent_queue.h"
 #include "oneapi/tbb/cache_aligned_allocator.h"
@@ -179,28 +180,28 @@ template<typename Iterator1, typename Iterator2>
 void TestIteratorAux( Iterator1 i, Iterator2 j, int size ) {
     Iterator1 old_i; // assigned at first iteration below
     for (std::size_t k = 0; k < (std::size_t)size; ++k) {
-        CHECK(i != j);
-        CHECK(!(i == j));
+        CHECK_FAST(i != j);
+        CHECK_FAST(!(i == j));
         // Test "->"
-        CHECK((k+1 == i->get_serial()));
+        CHECK_FAST((k+1 == i->get_serial()));
         if (k & 1) {
             // Test post-increment
             move_support_tests::Foo f = *old_i++;
-            CHECK((k + 1 == f.get_serial()));
+            CHECK_FAST((k + 1 == f.get_serial()));
             // Test assignment
             i = old_i;
         } else {
             // Test pre-increment
             if (k < std::size_t(size - 1)) {
                 move_support_tests::Foo f = *++i;
-                CHECK((k + 2 == f.get_serial()));
+                CHECK_FAST((k + 2 == f.get_serial()));
             } else ++i;
             // Test assignment
             old_i = i;
         }
     }
-    CHECK(!(i != j));
-    CHECK(i == j);
+    CHECK_FAST(!(i != j));
+    CHECK_FAST(i == j);
 }
 
 template<typename Iterator1, typename Iterator2>
@@ -288,21 +289,21 @@ public:
     Bar( std::size_t _i ) : state(LIVE), my_id(_i) { construction_num++; }
 
     Bar( const Bar& a_bar ) : state(LIVE) {
-        CHECK(a_bar.state == LIVE);
+        CHECK_FAST(a_bar.state == LIVE);
         my_id = a_bar.my_id;
         construction_num++;
     }
 
     ~Bar() {
-        CHECK(state == LIVE);
+        CHECK_FAST(state == LIVE);
         state = DEAD;
         my_id = DEAD;
         destruction_num++;
     }
 
     void operator=( const Bar& a_bar ) {
-        CHECK(a_bar.state == LIVE);
-        CHECK(state == LIVE);
+        CHECK_FAST(a_bar.state == LIVE);
+        CHECK_FAST(state == LIVE);
         my_id = a_bar.my_id;
     }
     friend bool operator==( const Bar& bar1, const Bar& bar2 ) ;
@@ -312,8 +313,8 @@ std::size_t Bar::construction_num = 0;
 std::size_t Bar::destruction_num = 0;
 
 bool operator==( const Bar& bar1, const Bar& bar2 ) {
-    CHECK(bar1.state == LIVE);
-    CHECK(bar2.state == LIVE);
+    CHECK_FAST(bar1.state == LIVE);
+    CHECK_FAST(bar2.state == LIVE);
     return bar1.my_id == bar2.my_id;
 }
 
@@ -375,7 +376,7 @@ public:
     {}
 
     BarEx( const BarEx& a_bar ) : state(LIVE) {
-        CHECK(a_bar.state==LIVE);
+        CHECK_FAST(a_bar.state == LIVE);
         my_id = a_bar.my_id;
         if (mode == PREPARATION)
             if (!(++count % 100)) {
@@ -385,15 +386,15 @@ public:
     }
 
     ~BarEx() {
-        CHECK(state == LIVE);
+        CHECK_FAST(state == LIVE);
         state = DEAD;
         my_id = DEAD;
     }
     static void set_mode( mode_type m ) { mode = m; }
 
     void operator=( const BarEx& a_bar ) {
-        CHECK(a_bar.state == LIVE);
-        CHECK(state == LIVE);
+        CHECK_FAST(a_bar.state == LIVE);
+        CHECK_FAST(state == LIVE);
         my_id = a_bar.my_id;
         my_tilda_id = a_bar.my_tilda_id;
     }
@@ -405,10 +406,10 @@ int BarEx::count = 0;
 BarEx::mode_type BarEx::mode = BarEx::PREPARATION;
 
 bool operator==(const BarEx& bar1, const BarEx& bar2) {
-    CHECK(bar1.state == LIVE);
-    CHECK(bar2.state == LIVE);
-    CHECK(((bar1.my_id ^ bar1.my_tilda_id) == -1));
-    CHECK(((bar2.my_id ^ bar2.my_tilda_id) == -1));
+    CHECK_FAST(bar1.state == LIVE);
+    CHECK_FAST(bar2.state == LIVE);
+    CHECK_FAST((bar1.my_id ^ bar1.my_tilda_id) == -1);
+    CHECK_FAST((bar2.my_id ^ bar2.my_tilda_id) == -1);
     return bar1.my_id == bar2.my_id && bar1.my_tilda_id == bar2.my_tilda_id;
 }
 
@@ -418,9 +419,10 @@ void TestConstructors () {
     typename CQ::const_iterator dqb;
     typename CQ::const_iterator dqe;
     typename CQ::const_iterator iter;
+    using size_type = typename CQ::size_type;
 
-    for (std::size_t size = 0; size < 1001; ++size) {
-        for (std::size_t i = 0; i < size; ++i)
+    for (size_type size = 0; size < 1001; ++size) {
+        for (size_type i = 0; i < size; ++i)
             src_queue.push(T(i + (i ^ size)));
         typename CQ::const_iterator sqb( src_queue.unsafe_begin());
         typename CQ::const_iterator sqe( src_queue.unsafe_end()  );
@@ -428,15 +430,15 @@ void TestConstructors () {
         CQ dst_queue(sqb, sqe);
         CQ copy_with_alloc(src_queue, typename CQ::allocator_type());
 
-        REQUIRE_MESSAGE(src_queue.size() == dst_queue.size(), "different size");
-        REQUIRE_MESSAGE(src_queue.size() == copy_with_alloc.size(), "different size");
+        CHECK_FAST_MESSAGE(src_queue.size() == dst_queue.size(), "different size");
+        CHECK_FAST_MESSAGE(src_queue.size() == copy_with_alloc.size(), "different size");
 
         src_queue.clear();
     }
 
     T bar_array[1001];
-    for (std::size_t size=0; size < 1001; ++size) {
-        for (std::size_t i=0; i < size; ++i) {
+    for (size_type size=0; size < 1001; ++size) {
+        for (size_type i=0; i < size; ++i) {
             bar_array[i] = T(i+(i^size));
         }
 
@@ -445,18 +447,15 @@ void TestConstructors () {
 
         CQ dst_queue2(sab, sae);
 
-        CHECK(size == dst_queue2.size());
-        CHECK(sab == TIter(bar_array+0));
-        CHECK(sae == TIter(bar_array+size));
+        CHECK_FAST(size == dst_queue2.size());
+        CHECK_FAST(sab == TIter(bar_array+0));
+        CHECK_FAST(sae == TIter(bar_array+size));
 
         dqb = dst_queue2.unsafe_begin();
         dqe = dst_queue2.unsafe_end();
-        TIter v_iter(sab);
-        for (; dqb != dqe; ++dqb, ++v_iter) {
-            REQUIRE_MESSAGE((*dqb == *v_iter), "unexpected element");
-        }
-
-        REQUIRE_MESSAGE(v_iter==sae, "different size?");
+        auto res = std::mismatch(dqb, dqe, bar_array);
+        CHECK_FAST_MESSAGE(res.first == dqe,  "unexpected element");
+        CHECK_FAST_MESSAGE(res.second == bar_array + size, "different size?");
     }
 
     src_queue.clear();
@@ -466,7 +465,7 @@ void TestConstructors () {
     CHECK(0 == dst_queue3.size());
 
     int k = 0;
-    for (std::size_t i = 0; i < 1001; ++i) {
+    for (size_type i = 0; i < 1001; ++i) {
         T tmp_bar;
         src_queue.push(T(++k));
         src_queue.push(T(++k));
@@ -474,17 +473,14 @@ void TestConstructors () {
 
         CQ dst_queue4( src_queue);
 
-        CHECK(src_queue.size() == dst_queue4.size());
+        CHECK_FAST(src_queue.size() == dst_queue4.size());
 
         dqb = dst_queue4.unsafe_begin();
         dqe = dst_queue4.unsafe_end();
         iter = src_queue.unsafe_begin();
-
-        for (; dqb != dqe; ++dqb, ++iter) {
-            REQUIRE_MESSAGE((*dqb == *iter), "unexpected element");
-        }
-
-        REQUIRE_MESSAGE(iter == src_queue.unsafe_end(), "different size?");
+        auto res = std::mismatch(dqb, dqe, iter);
+        CHECK_FAST_MESSAGE(res.first == dqe, "unexpected element");
+        CHECK_FAST_MESSAGE(res.second == src_queue.unsafe_end(), "different size?");
     }
 
     CQ dst_queue5(src_queue);
@@ -493,11 +489,9 @@ void TestConstructors () {
     dqb = dst_queue5.unsafe_begin();
     dqe = dst_queue5.unsafe_end();
     iter = src_queue.unsafe_begin();
-    for (; dqb != dqe; ++dqb, ++iter) {
-        REQUIRE_MESSAGE(*dqb == *iter, "unexpected element");
-    }
+    REQUIRE_MESSAGE(std::equal(dqb, dqe, iter), "unexpected element");
 
-    for (std::size_t i=0; i<100; ++i) {
+    for (size_type i=0; i<100; ++i) {
         T tmp_bar;
         src_queue.push(T(i + 1000));
         src_queue.push(T(i + 1000));
@@ -512,17 +506,15 @@ void TestConstructors () {
     dqb = dst_queue5.unsafe_begin();
     dqe = dst_queue5.unsafe_end();
     iter = src_queue.unsafe_begin();
-    for (; dqb != dqe; ++dqb, ++iter) {
-        REQUIRE_MESSAGE((*dqb == *iter), "unexpected element");
-    }
-
-    REQUIRE_MESSAGE(iter == src_queue.unsafe_end(), "different size?");
+    auto res = std::mismatch(dqb, dqe, iter);
+    REQUIRE_MESSAGE(res.first == dqe, "unexpected element");
+    REQUIRE_MESSAGE(res.second == src_queue.unsafe_end(), "different size?");
 
 #if TBB_USE_EXCEPTIONS
     k = 0;
     typename CQ_EX::size_type n_elements = 0;
     CQ_EX src_queue_ex;
-    for (std::size_t size = 0; size < 1001; ++size) {
+    for (size_type size = 0; size < 1001; ++size) {
         T_EX tmp_bar_ex;
         typename CQ_EX::size_type n_successful_pushes = 0;
         T_EX::set_mode(T_EX::PREPARATION);
@@ -540,55 +532,52 @@ void TestConstructors () {
         ++k;
         src_queue_ex.try_pop(tmp_bar_ex);
         n_elements += (n_successful_pushes - 1);
-        CHECK(src_queue_ex.size() == n_elements);
+        CHECK_FAST(src_queue_ex.size() == n_elements);
 
         T_EX::set_mode(T_EX::COPY_CONSTRUCT);
         CQ_EX dst_queue_ex(src_queue_ex);
 
-        CHECK(src_queue_ex.size() == dst_queue_ex.size());
+        CHECK_FAST(src_queue_ex.size() == dst_queue_ex.size());
 
         typename CQ_EX::const_iterator dqb_ex = dst_queue_ex.unsafe_begin();
         typename CQ_EX::const_iterator dqe_ex = dst_queue_ex.unsafe_end();
         typename CQ_EX::const_iterator iter_ex = src_queue_ex.unsafe_begin();
 
-        for (; dqb_ex != dqe_ex; ++dqb_ex, ++iter_ex) {
-            REQUIRE_MESSAGE(*dqb_ex == *iter_ex, "unexpected element");
-        }
-
-        REQUIRE_MESSAGE(iter_ex==src_queue_ex.unsafe_end(), "different size?");
+        auto res2 = std::mismatch(dqb_ex, dqe_ex, iter_ex);
+        CHECK_FAST_MESSAGE(res2.first == dqe_ex, "unexpected element");
+        CHECK_FAST_MESSAGE(res2.second == src_queue_ex.unsafe_end(), "different size?");
     }
 #endif
     src_queue.clear();
 
-    using qsize_t = typename CQ::size_type;
-    for (qsize_t size = 0; size < 1001; ++size) {
-        for (qsize_t i = 0; i < size; ++i) {
+    for (size_type size = 0; size < 1001; ++size) {
+        for (size_type i = 0; i < size; ++i) {
             src_queue.push(T(i + (i ^ size)));
         }
         std::vector<const T*> locations(size);
         typename CQ::const_iterator qit = src_queue.unsafe_begin();
-        for (qsize_t i = 0; i < size; ++i, ++qit) {
+        for (size_type i = 0; i < size; ++i, ++qit) {
             locations[i] = &(*qit);
         }
 
-        qsize_t size_of_queue = src_queue.size();
+        size_type size_of_queue = src_queue.size();
         CQ dst_queue(std::move(src_queue));
 
-        REQUIRE_MESSAGE((src_queue.empty() && src_queue.size() == 0), "not working move constructor?");
-        REQUIRE_MESSAGE((size == size_of_queue && size_of_queue == qsize_t(dst_queue.size())), "not working move constructor?");
+        CHECK_FAST_MESSAGE((src_queue.empty() && src_queue.size() == 0), "not working move constructor?");
+        CHECK_FAST_MESSAGE((size == size_of_queue && size_of_queue == dst_queue.size()), "not working move constructor?");
 
-        qit = dst_queue.unsafe_begin();
-        for (qsize_t i = 0; i < size; ++i, ++qit) {
-            REQUIRE_MESSAGE(locations[i] == &(*qit), "there was data movement during move constructor");
-        }
+        CHECK_FAST_MESSAGE(
+            std::equal(locations.begin(), locations.end(), dst_queue.unsafe_begin(), [](const T* t1, const T& r2) { return t1 == &r2; }),
+            "there was data movement during move constructor"
+        );
 
-        for (qsize_t i = 0; i < size; ++i) {
+        for (size_type i = 0; i < size; ++i) {
             T test(i + (i ^ size));
             T popped;
             bool pop_result = dst_queue.try_pop( popped);
 
-            CHECK(pop_result);
-            CHECK(test == popped);
+            CHECK_FAST(pop_result);
+            CHECK_FAST(test == popped);
         }
     }
 }
@@ -608,7 +597,7 @@ struct TestNegativeQueueBody {
             int number_of_pops = int(nthread) - 1;
             // Wait for all pops to pend.
             while (int(queue.size())> -number_of_pops) {
-                std::this_thread::yield();
+                utils::yield();
             }
 
             for (int i = 0; ; ++i) {
@@ -672,11 +661,11 @@ struct Body {
             g.set_serial(j + 1);
             push(*queue, g, j);
             if (!prepopped) {
-                while(!(queue)->try_pop(f)) std::this_thread::yield();
+                while(!(queue)->try_pop(f)) utils::yield();
                 ++pop_kind[2];
             }
-            CHECK(f.get_thread_id() <= nthread);
-            REQUIRE_MESSAGE((f.get_thread_id() == nthread || serial[f.get_thread_id()] < f.get_serial()), "partial order violation");
+            CHECK_FAST(f.get_thread_id() <= nthread);
+            CHECK_FAST_MESSAGE((f.get_thread_id() == nthread || serial[f.get_thread_id()] < f.get_serial()), "partial order violation");
             serial[f.get_thread_id()] = f.get_serial();
             sum += int(f.get_serial() - 1);
         }
@@ -687,7 +676,7 @@ struct Body {
 };
 
 template<typename CQ, typename T>
-void TestPushPop( std::size_t prefill, std::ptrdiff_t capacity, std::size_t nthread ) {
+void TestPushPop(typename CQ::size_type prefill, std::ptrdiff_t capacity, std::size_t nthread ) {
     using allocator_type = decltype(std::declval<CQ>().get_allocator());
     CHECK(nthread> 0);
     std::ptrdiff_t signed_prefill = std::ptrdiff_t(prefill);
@@ -707,13 +696,13 @@ void TestPushPop( std::size_t prefill, std::ptrdiff_t capacity, std::size_t nthr
         CQ queue;
         queue.set_capacity(capacity);
         body.queue = &queue;
-        for (std::size_t i = 0; i < prefill; ++i) {
+        for (typename CQ::size_type i = 0; i < prefill; ++i) {
             T f;
             f.set_thread_id(nthread);
             f.set_serial(1 + i);
             push(queue, f, i);
-            CHECK(queue.size() == i + 1);
-            CHECK(!queue.empty());
+            CHECK_FAST(queue.size() == i + 1);
+            CHECK_FAST(!queue.empty());
         }
 
         utils::NativeParallelFor( nthread, body);
@@ -725,11 +714,11 @@ void TestPushPop( std::size_t prefill, std::ptrdiff_t capacity, std::size_t nthr
 
         int expected = int( nthread * ((M - 1) * M / 2) + ((prefill - 1) * prefill) / 2);
         for (int i = int(prefill); --i>=0;) {
-            CHECK(!queue.empty());
+            CHECK_FAST(!queue.empty());
             T f;
             bool result = queue.try_pop(f);
-            CHECK(result);
-            CHECK(int(queue.size()) == i);
+            CHECK_FAST(result);
+            CHECK_FAST(int(queue.size()) == i);
             sum += int(f.get_serial()) - 1;
         }
         REQUIRE_MESSAGE(queue.empty(), "The queue should be empty");
@@ -953,7 +942,7 @@ public:
     void operator()(std::size_t thread_id) const {
         if (thread_id == max) {
             while ( q->size() < std::ptrdiff_t(max) ) {
-                std::this_thread::yield();
+                utils::yield();
             }
             q->abort();
             return;
@@ -979,7 +968,7 @@ public:
         int e;
         if (thread_id == std::size_t(max)) {
             while (q->size()> prefill - max) {
-                std::this_thread::yield();
+                utils::yield();
             }
 
             q->abort();
@@ -1462,6 +1451,30 @@ void TestDeductionGuides() {
 }
 #endif
 
+template <typename Iterator, typename QueueType>
+void TestQueueIteratorComparisonsBasic( QueueType& q ) {
+    REQUIRE_MESSAGE(!q.empty(), "Incorrect test setup");
+    using namespace comparisons_testing;
+    Iterator it1, it2;
+    testEqualityComparisons</*ExpectEqual = */true>(it1, it2);
+    it1 = q.unsafe_begin();
+    testEqualityComparisons</*ExpectEqual = */false>(it1, it2);
+    it2 = q.unsafe_begin();
+    testEqualityComparisons</*ExpectEqual = */true>(it1, it2);
+    it2 = q.unsafe_end();
+    testEqualityComparisons</*ExpectEqual = */false>(it1, it2);
+}
+
+template <typename QueueType>
+void TestQueueIteratorComparisons() {
+    QueueType q;
+    q.emplace(1);
+    q.emplace(2);
+    q.emplace(3);
+    TestQueueIteratorComparisonsBasic<typename QueueType::iterator>(q);
+    const QueueType& cq = q;
+    TestQueueIteratorComparisonsBasic<typename QueueType::const_iterator>(cq);
+}
 
 //! Test constructors
 //! \brief \ref interface \ref requirement
@@ -1552,3 +1565,13 @@ TEST_CASE("testing deduction guides") {
     TestDeductionGuides<oneapi::tbb::concurrent_bounded_queue>();
 }
 #endif
+
+//! \brief \ref interface \ref requirement
+TEST_CASE("concurrent_queue iterator comparisons") {
+    TestQueueIteratorComparisons<oneapi::tbb::concurrent_queue<int>>();
+}
+
+//! \brief \ref interface \ref requirement
+TEST_CASE("concurrent_bounded_queue iterator comparisons") {
+    TestQueueIteratorComparisons<oneapi::tbb::concurrent_bounded_queue<int>>();
+}

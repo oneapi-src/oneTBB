@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -80,10 +80,11 @@ struct start_for : public task {
 
     static void run(const Range& range, const Body& body, Partitioner& partitioner, task_group_context& context) {
         if ( !range.empty() ) {
-            wait_node wn;
-
             small_object_allocator alloc{};
             start_for& for_task = *alloc.new_object<start_for>(range, body, partitioner, alloc);
+
+            // defer creation of the wait node until task allocation succeeds
+            wait_node wn;
             for_task.my_parent = &wn;
             execute_and_wait(for_task, context, wn.m_wait, context);
         }

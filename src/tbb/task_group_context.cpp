@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -53,7 +53,11 @@ void tbb_exception_ptr::throw_self() {
 
 void task_group_context_impl::destroy(d1::task_group_context& ctx) {
     __TBB_ASSERT(!is_poisoned(ctx.my_owner), NULL);
-    if (ctx.my_lifetime_state.load(std::memory_order_relaxed) == d1::task_group_context::lifetime_state::bound) {
+
+    auto ctx_lifetime_state = ctx.my_lifetime_state.load(std::memory_order_relaxed);
+    __TBB_ASSERT(ctx_lifetime_state != d1::task_group_context::lifetime_state::locked, nullptr);
+
+    if (ctx_lifetime_state == d1::task_group_context::lifetime_state::bound) {
         // The owner can be destroyed at any moment. Access the associate data with caution.
         thread_data* owner = ctx.my_owner.load(std::memory_order_relaxed);
         if (governor::is_thread_data_set(owner)) {
@@ -87,7 +91,7 @@ void task_group_context_impl::destroy(d1::task_group_context& ctx) {
             if (
 #if defined(__INTEL_COMPILER) && __INTEL_COMPILER <= 1910
                 !((std::atomic<typename std::underlying_type<d1::task_group_context::lifetime_state>::type>&)ctx.my_lifetime_state).compare_exchange_strong(
-                (typename std::underlying_type<d1::task_group_context::lifetime_state>::type&)expected,
+                    (typename std::underlying_type<d1::task_group_context::lifetime_state>::type&)expected,
                     (typename std::underlying_type<d1::task_group_context::lifetime_state>::type)d1::task_group_context::lifetime_state::locked)
 #else
                 !ctx.my_lifetime_state.compare_exchange_strong(expected, d1::task_group_context::lifetime_state::locked)
@@ -96,10 +100,12 @@ void task_group_context_impl::destroy(d1::task_group_context& ctx) {
                 __TBB_ASSERT(expected == d1::task_group_context::lifetime_state::detached, nullptr);
                 // The "owner" local variable can be a dangling pointer here. Do not access it.
                 owner = nullptr;
+                spin_wait_until_eq(ctx.my_owner, nullptr);
                 // It is unsafe to remove the node because its neighbors might be already destroyed.
                 // TODO: reconsider the logic.
                 // ctx.my_node.remove_relaxed();
-            } else {
+            }
+            else {
                 __TBB_ASSERT(expected == d1::task_group_context::lifetime_state::bound, nullptr);
                 __TBB_ASSERT(ctx.my_owner.load(std::memory_order_relaxed) != nullptr, nullptr);
                 thread_data::context_list_state& cls = owner->my_context_list_state;
@@ -116,6 +122,11 @@ void task_group_context_impl::destroy(d1::task_group_context& ctx) {
             }
         }
     }
+
+    if (ctx_lifetime_state == d1::task_group_context::lifetime_state::detached) {
+        spin_wait_until_eq(ctx.my_owner, nullptr);
+    }
+
     d1::cpu_ctl_env* ctl = reinterpret_cast<d1::cpu_ctl_env*>(&ctx.my_cpu_ctl_env);
 #if _MSC_VER && _MSC_VER <= 1900 && !__INTEL_COMPILER
     suppress_unused_warning(ctl);
@@ -257,7 +268,7 @@ void task_group_context_impl::bind_to(d1::task_group_context& ctx, thread_data* 
             ctx.my_lifetime_state.compare_exchange_strong(state, d1::task_group_context::lifetime_state::locked)
 #endif
             ) {
-            // If we are in the outermost task dispatch loop of a master thread, then
+            // If we are in the outermost task dispatch loop of an external thread, then
             // there is nothing to bind this context to, and we skip the binding part
             // treating the context as isolated.
             __TBB_ASSERT(td->my_task_dispatcher->m_execute_data_ext.context != nullptr, nullptr);
@@ -388,7 +399,7 @@ bool market::propagate_task_group_state(std::atomic<T> d1::task_group_context::*
         return false;
     // Advance global state propagation epoch
     ++the_context_state_propagation_epoch;
-    // Propagate to all workers and masters and sync up their local epochs with the global one
+    // Propagate to all workers and external threads and sync up their local epochs with the global one
     unsigned num_workers = my_first_unused_worker_idx;
     for (unsigned i = 0; i < num_workers; ++i) {
         thread_data* td = my_workers[i];
@@ -396,7 +407,7 @@ bool market::propagate_task_group_state(std::atomic<T> d1::task_group_context::*
         if (td)
             td->propagate_task_group_state(mptr_state, src, new_state);
     }
-    // Propagate to all master threads
+    // Propagate to all external threads
     // The whole propagation sequence is locked, thus no contention is expected
     for (thread_data_list_type::iterator it = my_masters.begin(); it != my_masters.end(); it++)
         it->propagate_task_group_state(mptr_state, src, new_state);

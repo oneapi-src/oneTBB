@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ private:
     rml::tbb_server* my_server;
 
     //! Waiting object for external and coroutine waiters.
-    concurrent_monitor my_sleep_monitor;
+    extended_concurrent_monitor my_sleep_monitor;
 
     //! Maximal number of workers allowed for use by the underlying resource manager
     /** It can't be changed after market creation. **/
@@ -116,7 +116,7 @@ private:
     std::atomic<unsigned> my_first_unused_worker_idx;
 
     //! Number of workers that were requested by all arenas on all priority levels
-    int my_total_demand;
+    std::atomic<int> my_total_demand;
 
     //! Number of workers that were requested by arenas per single priority list item
     int my_priority_level_demand[num_priority_levels];
@@ -134,12 +134,12 @@ private:
     arena *my_next_arena;
 
     //! ABA prevention marker to assign to newly created arenas
-    uintptr_t my_arenas_aba_epoch;
+    std::atomic<uintptr_t> my_arenas_aba_epoch;
 
     //! Reference count controlling market object lifetime
     std::atomic<unsigned> my_ref_count;
 
-    //! Count of master threads attached
+    //! Count of external threads attached
     std::atomic<unsigned> my_public_ref_count;
 
     //! Stack size of worker threads
@@ -167,14 +167,23 @@ private:
     /** The actual number of workers servicing a particular arena may temporarily
         deviate from the calculated value. **/
     void update_allotment (unsigned effective_soft_limit) {
-        if ( my_total_demand )
-            update_allotment( my_arenas, my_total_demand,
-                              (int)effective_soft_limit );
+        int total_demand = my_total_demand.load(std::memory_order_relaxed);
+        if (total_demand) {
+            update_allotment(my_arenas, total_demand, (int)effective_soft_limit);
+        }
     }
 
     //! Returns next arena that needs more workers, or NULL.
     arena* arena_in_need(arena* prev);
-    void assert_market_valid () const {}
+
+    template <typename Pred>
+    static void enforce (Pred pred, const char* msg) {
+        suppress_unused_warning(pred, msg);
+#if TBB_USE_ASSERT
+        global_market_mutex_type::scoped_lock lock(theMarketMutex);
+        __TBB_ASSERT(pred(), msg);
+#endif
+    }
 
     ////////////////////////////////////////////////////////////////////////////////
     // Helpers to unify code branches dependent on priority feature presence
@@ -233,25 +242,25 @@ public:
     bool release ( bool is_public, bool blocking_terminate );
 
     //! Return wait list
-    concurrent_monitor& get_wait_list() { return my_sleep_monitor; }
+    extended_concurrent_monitor& get_wait_list() { return my_sleep_monitor; }
 
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
     //! Imlpementation of mandatory concurrency enabling
     void enable_mandatory_concurrency_impl ( arena *a );
 
-    //! Inform the master that there is an arena with mandatory concurrency
+    //! Inform the external thread that there is an arena with mandatory concurrency
     void enable_mandatory_concurrency ( arena *a );
 
-    //! Inform the master that the arena is no more interested in mandatory concurrency
+    //! Inform the external thread that the arena is no more interested in mandatory concurrency
     void disable_mandatory_concurrency_impl(arena* a);
 
-    //! Inform the master that the arena is no more interested in mandatory concurrency
+    //! Inform the external thread that the arena is no more interested in mandatory concurrency
     void mandatory_concurrency_disable ( arena *a );
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
 
     //! Request that arena's need in workers should be adjusted.
     /** Concurrent invocations are possible only on behalf of different arenas. **/
-    void adjust_demand ( arena&, int delta );
+    void adjust_demand ( arena&, int delta, bool mandatory );
 
     //! Used when RML asks for join mode during workers termination.
     bool must_join_workers () const { return my_join_workers; }
@@ -272,13 +281,13 @@ public:
 
     //! Finds all contexts affected by the state change and propagates the new state to them.
     /** The propagation is relayed to the market because tasks created by one
-        master thread can be passed to and executed by other masters. This means
+        external thread can be passed to and executed by other external threads. This means
         that context trees can span several arenas at once and thus state change
         propagation cannot be generally localized to one arena only. **/
     template <typename T>
     bool propagate_task_group_state (std::atomic<T> d1::task_group_context::*mptr_state, d1::task_group_context& src, T new_state );
 
-    //! List of registered master threads
+    //! List of registered external threads
     thread_data_list_type my_masters;
 
     //! Array of pointers to the registered workers

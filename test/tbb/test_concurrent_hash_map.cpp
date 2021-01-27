@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -14,10 +14,13 @@
     limitations under the License.
 */
 
-#if _MSC_VER && !defined(__INTEL_COMPILER)
+#if _MSC_VER
+#if __INTEL_COMPILER
+    #pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
+#else
     // Workaround for vs2015 and warning name was longer than the compiler limit (4096).
-    #pragma warning (push)
     #pragma warning (disable: 4503)
+#endif
 #endif
 
 #include <common/test.h>
@@ -618,7 +621,3 @@ TEST_CASE("swap with NotAlwaysEqualAllocator allocators"){
     CHECK(map2.empty());
     CHECK(map1 == map3);
 }
-
-#if _MSC_VER && !defined(__INTEL_COMPILER)
-    #pragma warning (pop)
-#endif // warning 4503 is back

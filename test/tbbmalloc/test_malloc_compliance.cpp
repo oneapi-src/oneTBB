@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -355,7 +355,7 @@ void InvariantDataRealloc(bool aligned, size_t maxAllocSize, bool checkData)
     utils::FastRandom<> fastRandom(1);
     size_t size = 0, start = 0;
     char *ptr = NULL,
-        // master to create copies and compare ralloc result against it
+        // external thread to create copies and compare ralloc result against it
         *master = (char*)Tmalloc(2*maxAllocSize);
 
     REQUIRE(master);
@@ -375,7 +375,7 @@ void InvariantDataRealloc(bool aligned, size_t maxAllocSize, bool checkData)
         if (checkData)
             REQUIRE_MESSAGE(!memcmp(ptrNew, master+start, utils::min(size, sizeNew)), "broken data");
 
-        // prepare fresh data, copying them from random position in master
+        // prepare fresh data, copying them from random position in external
         size = sizeNew;
         ptr = ptrNew;
         if (checkData) {

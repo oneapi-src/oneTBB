@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -29,7 +29,11 @@ TEST_CASE("Input iterator support") {
             g_tasks_expected = 0;
             for ( size_t i=0; i < depth; ++i )
                 g_tasks_expected += FindNumOfTasks(g_depths[i].value());
-            TestIterator_Modifiable<utils::InputIterator<value_t>>(depth);
+            TestIterator_Const<utils::InputIterator<value_t>>(depth);
+            TestIterator_Move<utils::InputIterator<value_t>>(depth);
+#if __TBB_CPP14_GENERIC_LAMBDAS_PRESENT
+            TestGenericLambdasCommon<utils::InputIterator<value_t>>(depth);
+#endif
         }
     }
 }
@@ -37,7 +41,7 @@ TEST_CASE("Input iterator support") {
 //! Test container based overload
 //! \brief \ref requirement \ref interface
 TEST_CASE("Container based overload - input iterator based container") {
-    container_based_overload_test_case<utils::InputIterator>(/*expected_value*/0);
+    container_based_overload_test_case<utils::InputIterator, incremental_functor_const>(/*expected_value*/0);
 }
 
 const size_t elements = 10000;

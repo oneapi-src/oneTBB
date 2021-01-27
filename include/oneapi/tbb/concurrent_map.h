@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2019-2020 Intel Corporation
+    Copyright (c) 2019-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -94,6 +94,16 @@ public:
     using base_type::base_type;
     using base_type::operator=;
 
+    // Required for implicit deduction guides
+    concurrent_map() = default;
+    concurrent_map( const concurrent_map& ) = default;
+    concurrent_map( const concurrent_map& other, const allocator_type& alloc ) : base_type(other, alloc) {}
+    concurrent_map( concurrent_map&& ) = default;
+    concurrent_map( concurrent_map&& other, const allocator_type& alloc ) : base_type(std::move(other), alloc) {}
+    // Required to respect the rule of 5
+    concurrent_map& operator=( const concurrent_map& ) = default;
+    concurrent_map& operator=( concurrent_map&& ) = default;
+
     // Observers
     mapped_type& at(const key_type& key) {
         iterator it = this->find(key);
@@ -165,22 +175,34 @@ public:
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 
-template<template<typename...> typename Map, typename Key, typename T, typename... Args>
-using ordered_map_type = Map<Key, T,
-                             std::conditional_t< (sizeof...(Args) > 0) && !is_allocator_v<pack_element_t<0, Args...>>,
-                                                 pack_element_t<0, Args...>,
-                                                 std::less<Key>>,
-                             std::conditional_t< (sizeof...(Args) > 0) && is_allocator_v<pack_element_t<sizeof...(Args) - 1, Args...>>,
-                                                 pack_element_t<sizeof...(Args) - 1, Args...>,
-                                                 tbb::tbb_allocator<std::pair<const Key, T> > > >;
+template <typename It,
+          typename Comp = std::less<iterator_key_t<It>>,
+          typename Alloc = tbb::tbb_allocator<iterator_alloc_pair_t<It>>,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<Comp>>>
+concurrent_map( It, It, Comp = Comp(), Alloc = Alloc() )
+-> concurrent_map<iterator_key_t<It>, iterator_mapped_t<It>, Comp, Alloc>;
 
-template<typename It, typename... Args>
-concurrent_map(It, It, Args...)
--> ordered_map_type<concurrent_map, iterator_key_t<It>, iterator_mapped_t<It>, Args...>;
+template <typename Key, typename T,
+          typename Comp = std::less<std::remove_const_t<Key>>,
+          typename Alloc = tbb::tbb_allocator<std::pair<const Key, T>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<Comp>>>
+concurrent_map( std::initializer_list<std::pair<Key, T>>, Comp = Comp(), Alloc = Alloc() )
+-> concurrent_map<std::remove_const_t<Key>, T, Comp, Alloc>;
 
-template<typename Key, typename T, typename... Args>
-concurrent_map(std::initializer_list<std::pair<const Key, T>>, Args...)
--> ordered_map_type<concurrent_map, Key, T, Args...>;
+template <typename It, typename Alloc,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_map( It, It, Alloc )
+-> concurrent_map<iterator_key_t<It>, iterator_mapped_t<It>,
+                  std::less<iterator_key_t<It>>, Alloc>;
+
+template <typename Key, typename T, typename Alloc,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_map( std::initializer_list<std::pair<Key, T>>, Alloc )
+-> concurrent_map<std::remove_const_t<Key>, T, std::less<std::remove_const_t<Key>>, Alloc>;
 
 #endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 
@@ -219,6 +241,16 @@ public:
     using base_type::insert;
     using base_type::operator=;
 
+    // Required for implicit deduction guides
+    concurrent_multimap() = default;
+    concurrent_multimap( const concurrent_multimap& ) = default;
+    concurrent_multimap( const concurrent_multimap& other, const allocator_type& alloc ) : base_type(other, alloc) {}
+    concurrent_multimap( concurrent_multimap&& ) = default;
+    concurrent_multimap( concurrent_multimap&& other, const allocator_type& alloc ) : base_type(std::move(other), alloc) {}
+    // Required to respect the rule of 5
+    concurrent_multimap& operator=( const concurrent_multimap& ) = default;
+    concurrent_multimap& operator=( concurrent_multimap&& ) = default;
+
     template <typename P>
     typename std::enable_if<std::is_constructible<value_type, P&&>::value,
                             std::pair<iterator, bool>>::type insert( P&& value )
@@ -256,13 +288,35 @@ public:
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 
-template<typename It, typename... Args>
-concurrent_multimap(It, It, Args...)
--> ordered_map_type<concurrent_multimap, iterator_key_t<It>, iterator_mapped_t<It>, Args...>;
+template <typename It,
+          typename Comp = std::less<iterator_key_t<It>>,
+          typename Alloc = tbb::tbb_allocator<iterator_alloc_pair_t<It>>,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<Comp>>>
+concurrent_multimap( It, It, Comp = Comp(), Alloc = Alloc() )
+-> concurrent_multimap<iterator_key_t<It>, iterator_mapped_t<It>, Comp, Alloc>;
 
-template<typename Key, typename T, typename... Args>
-concurrent_multimap(std::initializer_list<std::pair<const Key, T>>, Args...)
--> ordered_map_type<concurrent_multimap, Key, T, Args...>;
+template <typename Key, typename T,
+          typename Comp = std::less<std::remove_const_t<Key>>,
+          typename Alloc = tbb::tbb_allocator<std::pair<const Key, T>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>,
+          typename = std::enable_if_t<!is_allocator_v<Comp>>>
+concurrent_multimap( std::initializer_list<std::pair<Key, T>>, Comp = Comp(), Alloc = Alloc() )
+-> concurrent_multimap<std::remove_const_t<Key>, T, Comp, Alloc>;
+
+template <typename It, typename Alloc,
+          typename = std::enable_if_t<is_input_iterator_v<It>>,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_multimap( It, It, Alloc )
+-> concurrent_multimap<iterator_key_t<It>, iterator_mapped_t<It>,
+                       std::less<iterator_key_t<It>>, Alloc>;
+
+template <typename Key, typename T, typename Alloc,
+          typename = std::enable_if_t<is_allocator_v<Alloc>>>
+concurrent_multimap( std::initializer_list<std::pair<Key, T>>, Alloc )
+-> concurrent_multimap<std::remove_const_t<Key>, T, std::less<std::remove_const_t<Key>>, Alloc>;
+
 
 #endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 

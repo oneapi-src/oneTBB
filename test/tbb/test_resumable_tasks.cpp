@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -289,7 +289,7 @@ void TestSuspendResume() {
     CHECK(inner_par_iters == N*N*100);
 }
 
-// During cleanup master's local task pool may
+// During cleanup external thread's local task pool may
 // e.g. contain proxies of affinitized tasks, but can be recalled
 void TestCleanupMaster() {
     if (tbb::this_task_arena::max_concurrency() == 1) {
@@ -308,7 +308,7 @@ void TestCleanupMaster() {
         utils::NativeParallelFor(N, [&asyncActivity, &tg, &iter_spawned, &iter_executed](int j) {
             for (int k = 0; k < j*10 + 1; ++k) {
                 tg.run([&asyncActivity, j, &iter_executed] {
-                    for (volatile int l = 0; l < j*10; ++l) {}
+                    utils::doDummyWork(j * 10);
                     tbb::task::suspend(SuspendBody(asyncActivity));
                     iter_executed++;
                 });
@@ -326,7 +326,7 @@ class ParForSuspendBody {
 public:
     ParForSuspendBody(AsyncActivity& a_, int iters) : asyncActivity(a_), m_numIters(iters) {}
     void operator()(int) const {
-        for (volatile int i = 0; i < m_numIters; ++i) {}
+        utils::doDummyWork(m_numIters);
         tbb::task::suspend(SuspendBody(asyncActivity));
     }
 };

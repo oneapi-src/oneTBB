@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@
 #include <common/containers_common.h>
 #include <common/initializer_list_support.h>
 #include <common/vector_types.h>
+#include <common/test_comparisons.h>
 #include "oneapi/tbb/concurrent_hash_map.h"
 #include "oneapi/tbb/global_control.h"
 #include "oneapi/tbb/parallel_for.h"
@@ -810,9 +811,9 @@ struct InsertErase  {
 struct InnerInsert {
     static void apply( YourTable& table, int i ) {
         YourTable::accessor a1, a2;
-        if(i&1) std::this_thread::yield();
+        if(i&1) utils::yield();
         table.insert( a1, MyKey::make(1) );
-        std::this_thread::yield();
+        utils::yield();
         table.insert( a2, MyKey::make(1 + (1<<30)) ); // the same chain
         table.erase( a2 ); // if erase by key it would lead to deadlock for single thread
     }
@@ -971,7 +972,7 @@ public:
                     // more logical threads than physical threads, and should yield in
                     // order to let suspended logical threads make progress.
                     j = 0;
-                    std::this_thread::yield();
+                    utils::yield();
                 }
             }
             // Now all threads attempt to simultaneously insert a key.
@@ -1141,6 +1142,64 @@ void TestDeductionGuides() {
 }
 #endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 
+template <typename CHMapType>
+void test_comparisons_basic() {
+    using comparisons_testing::testEqualityComparisons;
+    CHMapType c1, c2;
+    testEqualityComparisons</*ExpectEqual = */true>(c1, c2);
+
+    c1.emplace(1, 1);
+    testEqualityComparisons</*ExpectEqual = */false>(c1, c2);
+
+    c2.emplace(1, 1);
+    testEqualityComparisons</*ExpectEqual = */true>(c1, c2);
+}
+
+template <typename TwoWayComparableContainerType>
+void test_two_way_comparable_chmap() {
+    TwoWayComparableContainerType c1, c2;
+    c1.emplace(1, 1);
+    c2.emplace(1, 1);
+    comparisons_testing::TwoWayComparable::reset();
+    REQUIRE_MESSAGE(c1 == c2, "Incorrect operator == result");
+    comparisons_testing::check_equality_comparison();
+    REQUIRE_MESSAGE(!(c1 != c2), "Incorrect operator != result");
+    comparisons_testing::check_equality_comparison();
+}
+
+void TestCHMapComparisons() {
+    using integral_container = oneapi::tbb::concurrent_hash_map<int, int>;
+    using two_way_comparable_container = oneapi::tbb::concurrent_hash_map<comparisons_testing::TwoWayComparable,
+                                                                          comparisons_testing::TwoWayComparable>;
+
+    test_comparisons_basic<integral_container>();
+    test_comparisons_basic<two_way_comparable_container>();
+    test_two_way_comparable_chmap<two_way_comparable_container>();
+}
+
+template <typename Iterator, typename CHMapType>
+void TestCHMapIteratorComparisonsBasic( CHMapType& chmap ) {
+    REQUIRE_MESSAGE(!chmap.empty(), "Incorrect test setup");
+    using namespace comparisons_testing;
+    Iterator it1, it2;
+    testEqualityComparisons</*ExpectEqual = */true>(it1, it2);
+    it1 = chmap.begin();
+    testEqualityComparisons</*ExpectEqual = */false>(it1, it2);
+    it2 = chmap.begin();
+    testEqualityComparisons</*ExpectEqual = */true>(it1, it2);
+    it2 = chmap.end();
+    testEqualityComparisons</*ExpectEqual = */false>(it1, it2);
+}
+
+void TestCHMapIteratorComparisons() {
+    using chmap_type = oneapi::tbb::concurrent_hash_map<int, int>;
+    using value_type = typename chmap_type::value_type;
+    chmap_type chmap = {value_type{1, 1}, value_type{2, 2}, value_type{3, 3}};
+    TestCHMapIteratorComparisonsBasic<typename chmap_type::iterator>(chmap);
+    const chmap_type& cchmap = chmap;
+    TestCHMapIteratorComparisonsBasic<typename chmap_type::const_iterator>(cchmap);
+}
+
 //! Test consruction with hash_compare
 //! \brief \ref interface \ref requirement
 TEST_CASE("testing consruction with hash_compare") {
@@ -1248,3 +1307,13 @@ TEST_CASE("testing deduction guides") {
     TestDeductionGuides<oneapi::tbb::concurrent_hash_map>();
 }
 #endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+
+//! \brief \ref interface \ref requirement
+TEST_CASE("concurrent_hash_map comparisons") {
+    TestCHMapComparisons();
+}
+
+//! \brief \ref interface \ref requirement
+TEST_CASE("concurrent_hash_map iterator comparisons") {
+    TestCHMapIteratorComparisons();
+}

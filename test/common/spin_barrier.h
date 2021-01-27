@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 // This headers includes inside benchmark.h and used for benchmarking based on Celero
 // Using of both DocTest and Celero frameworks caused unexpected compilation errors.
 #include "utils_assert.h"
+#include "utils_yield.h"
 
 #include "oneapi/tbb/detail/_machine.h"
 #include "oneapi/tbb/detail/_utils.h"
@@ -31,37 +32,21 @@
 
 namespace utils {
 
-// Spin WHILE the value of the variable is equal to a given value
-/* T and U should be comparable types. */
-class TimedWaitWhileEq {
-    //! Assignment not allowed
-    void operator=( const TimedWaitWhileEq& );
-    double &my_limit;
-public:
-    TimedWaitWhileEq(double &n_seconds) : my_limit(n_seconds) {}
-    TimedWaitWhileEq(const TimedWaitWhileEq &src) : my_limit(src.my_limit) {}
-    template<typename T, typename U>
-    void operator()( const std::atomic<T>& location, U value ) const {
-        tbb::tick_count start = tbb::tick_count::now();
-        double time_passed;
-        do {
-            time_passed = (tbb::tick_count::now() - start).seconds();
-            if( time_passed < 0.0001 ) {
-                tbb::detail::machine_pause(10);
-            } else {
-                std::this_thread::yield();
-            }
-        } while (time_passed < my_limit && location == value);
-        my_limit -= time_passed;
-    }
-};
-
 //! Spin WHILE the condition is true.
 /** T and U should be comparable types. */
 template <typename T, typename C>
 void SpinWaitWhileCondition(const std::atomic<T>& location, C comp) {
+    int count = 0;
     while (comp(location.load(std::memory_order_acquire))) {
-        std::this_thread::yield();
+        if (count < 8) {
+            tbb::detail::machine_pause(10);
+            ++count;
+        } else if (count < 16) {
+            utils::yield();
+            ++count;
+        } else {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
     }
 }
 
@@ -150,17 +135,6 @@ public:
         epoch -= myEpoch++;
         ASSERT(epoch == 0,"Broken barrier");
         return true;
-    }
-
-    bool timedWaitNoError(double n_seconds) {
-        customWait(TimedWaitWhileEq(n_seconds), DummyCallback());
-        return n_seconds >= 0.0001;
-    }
-
-    bool timedWait(double n_seconds, const char *msg="Time is out while waiting on a barrier") {
-        bool is_last = customWait(TimedWaitWhileEq(n_seconds), DummyCallback());
-        ASSERT( n_seconds >= 0, msg); // TODO: refactor to avoid passing msg here and rising assertion
-        return is_last;
     }
 
     // onOpenBarrierCallback is called by the last thread before unblocking other threads.

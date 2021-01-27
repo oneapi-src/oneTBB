@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 #ifndef __TBB_test_common_concurrency_tracker_H
 #define __TBB_test_common_concurrency_tracker_H
 
-#include "doctest.h"
+#include "common/test.h"
 #include "utils.h"
 #include "spin_barrier.h"
 #include "oneapi/tbb/parallel_for.h"
@@ -92,14 +92,13 @@ private:
     // zero timeout means no barrier is used during concurrency level detection
     const double                myTimeout;
     const size_t                myConcLevel;
-    const bool                  myCrashOnFail;
 
     static std::mutex global_mutex;
 
-    ExactConcurrencyLevel(double timeout, size_t concLevel, bool crashOnFail) :
+    ExactConcurrencyLevel(double timeout, size_t concLevel) :
         myBarrier(NULL),
         myUniqueThreadsCnt(0), myReachedMax(false),
-        myTimeout(timeout), myConcLevel(concLevel), myCrashOnFail(crashOnFail) {
+        myTimeout(timeout), myConcLevel(concLevel) {
         myActiveBodyCnt = 0;
     }
     bool run() {
@@ -117,8 +116,9 @@ public:
         if (v == myConcLevel) // record that the max expected concurrency was observed
             myReachedMax = true;
         // try to get barrier when 1st time in the thread
-        if (myBarrier && !myBarrier->timedWaitNoError(myTimeout))
-            CHECK_MESSAGE(!myCrashOnFail, "Timeout was detected.");
+        if (myBarrier) {
+            myBarrier->wait();
+        }
 
         if (myUniqueThreads != myEpoch) {
             ++myUniqueThreadsCnt;
@@ -139,7 +139,7 @@ public:
     // check that we have never got more than concLevel threads,
     // and that in some moment we saw exactly concLevel threads
     static void check(size_t concLevel, Mode m = None) {
-        ExactConcurrencyLevel o(30., concLevel, /*crashOnFail=*/true);
+        ExactConcurrencyLevel o(30., concLevel);
 
         bool ok = false;
         if (m == Serialize) {
@@ -152,13 +152,13 @@ public:
     }
 
     static bool isEqual(size_t concLevel) {
-        ExactConcurrencyLevel o(3., concLevel, /*crashOnFail=*/false);
+        ExactConcurrencyLevel o(3., concLevel);
         return o.run();
     }
 
     static void checkLessOrEqual(size_t concLevel) {
         ++ExactConcurrencyLevel::myEpoch;
-        ExactConcurrencyLevel o(0., concLevel, /*crashOnFail=*/true);
+        ExactConcurrencyLevel o(0., concLevel);
 
         o.run(); // ignore result, as without a barrier it is not reliable
         CHECK_MESSAGE(o.myUniqueThreadsCnt<=concLevel, "Too many workers observed.");

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -129,7 +129,7 @@ private:
         handle_operations(op_list);
 
         // release the handler
-        handler_busy.store(0, std::memory_order_relaxed);
+        handler_busy.store(0, std::memory_order_release);
     }
 
     // An atomically updated list (aka mailbox) of pending operations

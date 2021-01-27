@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -114,23 +114,9 @@ protected:
     }
 
     template <typename Pred>
-    void sleep(std::uintptr_t uniq_tag, Pred sleep_condition) {
-        concurrent_monitor::extended_thread_context thr_ctx;
-        if (sleep_condition()) {
-            concurrent_monitor& wait_list = my_arena.my_market->get_wait_list();
-            std::uintptr_t arena_tag = std::uintptr_t(&my_arena);
-
-            wait_list.prepare_wait(thr_ctx, extended_context{uniq_tag, arena_tag});
-
-            while (sleep_condition()) {
-                if (wait_list.commit_wait(thr_ctx)) {
-                    return;
-                }
-                wait_list.prepare_wait(thr_ctx, extended_context{uniq_tag, arena_tag});
-            }
-
-            wait_list.cancel_wait(thr_ctx);
-        }
+    void sleep(std::uintptr_t uniq_tag, Pred wakeup_condition) {
+        my_arena.my_market->get_wait_list().wait<extended_concurrent_monitor::thread_context>(wakeup_condition,
+            extended_context{uniq_tag, &my_arena});
     }
 };
 
@@ -153,9 +139,9 @@ public:
             return;
         }
 
-        auto sleep_condition = [&] { return is_arena_empty() && my_wait_ctx.continue_execution(); };
+        auto wakeup_condition = [&] { return !is_arena_empty() || !my_wait_ctx.continue_execution(); };
 
-        sleep(std::uintptr_t(&my_wait_ctx), sleep_condition);
+        sleep(std::uintptr_t(&my_wait_ctx), wakeup_condition);
         my_backoff.reset_wait();
     }
 
@@ -190,9 +176,9 @@ public:
 
         suspend_point_type* sp = slot.default_task_dispatcher().m_suspend_point;
 
-        auto sleep_condition = [&] { return is_arena_empty() && !sp->m_is_owner_recalled.load(std::memory_order_relaxed); };
+        auto wakeup_condition = [&] { return !is_arena_empty() || sp->m_is_owner_recalled.load(std::memory_order_relaxed); };
 
-        sleep(std::uintptr_t(sp), sleep_condition);
+        sleep(std::uintptr_t(sp), wakeup_condition);
         my_backoff.reset_wait();
     }
 

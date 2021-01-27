@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ context_specific_counter g_TGCCancelled{};  // Number of times a task sees its g
       Variables in test
 
 __ Test control variables
-      g_ExceptionInMaster -- only the master thread is allowed to throw.  If false, the master cannot throw
+      g_ExceptionInMaster -- only the external thread is allowed to throw.  If false, the external cannot throw
       g_SolitaryException -- only one throw may be executed.
 
 -- controls for ThrowTestException for pipeline tests
@@ -81,16 +81,16 @@ __ Test control variables
 
 -- Information variables
 
-   g_Master -- Thread ID of the "master" thread
-      In pipelines sometimes the master thread does not participate, so the tests have to be resilient to this.
+   g_Master -- Thread ID of the "external" thread
+      In pipelines sometimes the external thread does not participate, so the tests have to be resilient to this.
 
 -- Measurement variables
 
    g_OuterParCalls -- how many outer parallel ranges or filters started
    g_TGCCancelled --  how many inner parallel ranges or filters saw task::self().is_cancelled()
    g_ExceptionsThrown -- number of throws executed (counted in ThrowTestException)
-   g_MasterExecutedThrow -- number of times master thread actually executed a throw
-   g_NonMasterExecutedThrow -- number of times non-master thread actually executed a throw
+   g_MasterExecutedThrow -- number of times external thread actually executed a throw
+   g_NonMasterExecutedThrow -- number of times non-external thread actually executed a throw
    g_ExceptionCaught -- one of PropagatedException or unknown exception was caught.  (Other exceptions cause assertions.)
 
    --  Tallies for the task bodies which have executed (counted in each inner body, sampled in ThrowTestException)
@@ -139,13 +139,10 @@ intptr_t TestNumSubrangesCalculation ( intptr_t length, intptr_t grain, intptr_t
 class NoThrowParForBody {
 public:
     void operator()( const range_type& r ) const {
-        volatile count_type x = 0;
         if(g_Master == std::this_thread::get_id()) g_MasterExecuted = true;
         else g_NonMasterExecuted = true;
         if( tbb::is_current_task_group_canceling() ) g_TGCCancelled.increment();
-        count_type end = r.end();
-        for( count_type i=r.begin(); i<end; ++i )
-            x += i;
+        utils::doDummyWork(r.size());
     }
 };
 
@@ -197,7 +194,7 @@ void TestParallelLoopAux() {
         //      more threads which are "in-flight", up to g_NumThreads, but no more will be started.  The threads,
         //      when they start, if they see they are cancelled, TGCCancelled is incremented.
         //   2) !g_SolitaryException: more than one thread can throw.  The number of threads that actually
-        //      threw is g_MasterExecutedThrow if only the master is allowed, else g_NonMasterExecutedThrow.
+        //      threw is g_MasterExecutedThrow if only the external thread is allowed, else g_NonMasterExecutedThrow.
         //      Only one context, so TGCCancelled should be <= g_NumThreads.
         //
         // the reasoning is similar for nested algorithms in a single context (Test2).
@@ -242,13 +239,11 @@ public:
 
     void operator()( const range_type& r ) const {
         utils::ConcurrencyTracker ct;
-        volatile long x = 0;
         ++g_CurExecuted;
         if(g_Master == std::this_thread::get_id()) g_MasterExecuted = true;
         else g_NonMasterExecuted = true;
         if( tbb::is_current_task_group_canceling() ) g_TGCCancelled.increment();
-        for( count_type i = r.begin(); i != r.end(); ++i )
-            x += 0;
+        utils::doDummyWork(r.size());
         WaitUntilConcurrencyPeaks();
         ThrowTestException(1);
     }
@@ -527,7 +522,7 @@ public:
         utils::ConcurrencyTracker ct;
         // The test will hang (and be timed out by the test system) if is_cancelled() is broken
         while( !tbb::is_current_task_group_canceling() )
-            std::this_thread::yield();
+            utils::yield();
     }
 };
 
@@ -975,7 +970,7 @@ void Test4_parallel_for_each () {
 class ParForEachBodyWithThrowingFeederTasks {
 public:
     //! This form of the function call operator can be used when the body needs to add more work during the processing
-    void operator() ( size_t &value, tbb::feeder<size_t> &feeder ) const {
+    void operator() (const size_t &value, tbb::feeder<size_t> &feeder ) const {
         ++g_CurExecuted;
         if(g_Master == std::this_thread::get_id()) g_MasterExecuted = true;
         else g_NonMasterExecuted = true;
@@ -997,10 +992,10 @@ void Test5_parallel_for_each () {
     CATCH();
     if (g_SolitaryException) {
         // Failure occurs when g_ExceptionInMaster is false, but all the 1 values in the range
-        // are handled by the master thread.  In this case no throw occurs.
+        // are handled by the external thread.  In this case no throw occurs.
         REQUIRE_MESSAGE ((l_ExceptionCaughtAtCurrentLevel               // we saw an exception
-                || (!g_ExceptionInMaster && !g_NonMasterExecutedThrow)  // non-master throws but none tried
-                || (g_ExceptionInMaster && !g_MasterExecutedThrow))     // master throws but master didn't try
+                || (!g_ExceptionInMaster && !g_NonMasterExecutedThrow)  // non-external trhead throws but none tried
+                || (g_ExceptionInMaster && !g_MasterExecutedThrow))     // external thread throws but external thread didn't try
                 , "At least one exception should occur");
     }
 } // void Test5_parallel_for_each ()
@@ -1142,7 +1137,7 @@ void TestCancelation1_parallel_for_each () {
     Cancellator cancellator(ctx, threshold);
     ParForEachWorker<body_to_cancel, Iterator> worker(ctx);
     tg.run( cancellator );
-    std::this_thread::yield();
+    utils::yield();
     tg.run( worker );
     TRY();
         tg.wait();
@@ -1157,7 +1152,7 @@ public:
         utils::ConcurrencyTracker ct;
         // The test will hang (and be timed out by the test system) if is_cancelled() is broken
         while( !tbb::is_current_task_group_canceling() )
-            std::this_thread::yield();
+            utils::yield();
     }
 };
 
@@ -1340,8 +1335,8 @@ void Test1_pipeline ( const FilterSet& filters ) {
         if ( g_CurExecuted == 2 * NUM_ITEMS ) {
             // all the items were processed, though an exception was supposed to occur.
             if(!g_ExceptionInMaster && g_NonMasterExecutedThrow > 0) {
-                // if !g_ExceptionInMaster, the master thread is not allowed to throw.
-                // if g_nonMasterExcutedThrow > 0 then a thread besides the master tried to throw.
+                // if !g_ExceptionInMaster, the external thread is not allowed to throw.
+                // if g_nonMasterExcutedThrow > 0 then a thread besides the external thread tried to throw.
                 REQUIRE_MESSAGE((filters.mode1 != tbb::filter_mode::parallel && filters.mode2 != tbb::filter_mode::parallel),
                     "Unusual count");
             }
@@ -1455,7 +1450,7 @@ void Test3_pipeline ( const FilterSet& filters ) {
                 // tasks not executing at throw were scheduled.
                 g_TGCCancelled.validate(g_NumThreads, "Tasks not in-flight were executed");
                 REQUIRE_MESSAGE(g_NumExceptionsCaught == 1, "Should have only one exception");
-                // if we're only throwing from the master thread, and that thread didn't
+                // if we're only throwing from the external thread, and that thread didn't
                 // participate in the pipelines, then no throw occurred.
             }
             REQUIRE_MESSAGE ((g_NumExceptionsCaught == 1 || okayNoExceptionCaught), "No try_blocks in any body expected in this test");
@@ -1630,7 +1625,7 @@ public:
         utils::ConcurrencyTracker ct;
         // The test will hang (and be timed out by the test system) if is_cancelled() is broken
         while( !tbb::is_current_task_group_canceling() )
-            std::this_thread::yield();
+            utils::yield();
         return item;
     }
 };

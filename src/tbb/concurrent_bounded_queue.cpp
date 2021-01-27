@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020 Intel Corporation
+    Copyright (c) 2020-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -48,33 +48,13 @@ void __TBB_EXPORTED_FUNC deallocate_bounded_queue_rep( std::uint8_t* mem, std::s
     cache_aligned_deallocate(mem);
 }
 
-static bool call_predicate( d1::delegate_base& predicate, concurrent_monitor& monitor, concurrent_monitor::thread_context& thr_ctx ) {
-    bool res = false;
-    tbb::detail::d0::try_call( [&] {
-        res = predicate();
-    }).on_exception( [&] {
-        monitor.cancel_wait(thr_ctx);
-    });
-
-    return res;
-}
-
 void __TBB_EXPORTED_FUNC wait_bounded_queue_monitor( concurrent_monitor* monitors, std::size_t monitor_tag,
                                                         std::ptrdiff_t target, d1::delegate_base& predicate )
 {
     __TBB_ASSERT(monitor_tag < monitors_number, nullptr);
     concurrent_monitor& monitor = monitors[monitor_tag];
 
-    concurrent_monitor::thread_context thr_ctx;
-    monitor.prepare_wait(thr_ctx, std::uintptr_t(target));
-    while (call_predicate(predicate, monitor, thr_ctx)) {
-        if (monitor.commit_wait(thr_ctx)) {
-            return;
-        }
-        monitor.prepare_wait(thr_ctx, std::uintptr_t(target));
-    }
-
-    monitor.cancel_wait(thr_ctx);
+    monitor.wait<concurrent_monitor::thread_context>([&] { return !predicate(); }, std::uintptr_t(target));
 }
 
 void __TBB_EXPORTED_FUNC abort_bounded_queue_monitors( concurrent_monitor* monitors ) {
