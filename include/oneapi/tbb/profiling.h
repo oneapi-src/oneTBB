@@ -46,7 +46,7 @@ inline namespace d0 {
     };
 
 //! Unicode support
-#if (_WIN32||_WIN64) && !__MINGW32__
+#if (_WIN32||_WIN64)
     //! Unicode character type. Always wchar_t on Windows.
     using tchar = wchar_t;
 #else /* !WIN */
@@ -90,7 +90,7 @@ namespace r1 {
 } // namespace r1
 
 namespace d1 {
-#if TBB_USE_PROFILING_TOOLS && (_WIN32||_WIN64) && !__MINGW32__
+#if TBB_USE_PROFILING_TOOLS && (_WIN32||_WIN64)
     inline std::size_t multibyte_to_widechar(wchar_t* wcs, const char* mbs, std::size_t bufsize) {
         std::size_t len;
         mbstowcs_s(&len, wcs, bufsize, mbs, _TRUNCATE);
@@ -100,7 +100,7 @@ namespace d1 {
 
 #if TBB_USE_PROFILING_TOOLS
     inline void create_itt_sync(void *ptr, const char *objtype, const char *objname) {
-#if (_WIN32||_WIN64) && !__MINGW32__
+#if (_WIN32||_WIN64)
         std::size_t len_type = multibyte_to_widechar(nullptr, objtype, 0);
         wchar_t *type = new wchar_t[len_type];
         multibyte_to_widechar(type, objtype, len_type);
@@ -113,7 +113,7 @@ namespace d1 {
 #endif
         r1::create_itt_sync(ptr, type, name);
 
-#if (_WIN32||_WIN64) && !__MINGW32__
+#if (_WIN32||_WIN64)
         delete[] type;
         delete[] name;
 #endif // WIN

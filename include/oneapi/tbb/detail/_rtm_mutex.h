@@ -143,14 +143,14 @@ inline void rtm_mutex::scoped_lock::release() {
 inline void set_name(rtm_mutex& obj, const char* name) {
     itt_set_sync_name(&obj, name);
 }
-#if (_WIN32||_WIN64) && !__MINGW32__
+#if (_WIN32||_WIN64)
 inline void set_name(rtm_mutex& obj, const wchar_t* name) {
     itt_set_sync_name(&obj, name);
 }
 #endif // WIN
 #else
 inline void set_name(rtm_mutex&, const char*) {}
-#if (_WIN32||_WIN64) && !__MINGW32__
+#if (_WIN32||_WIN64)
 inline void set_name(rtm_mutex&, const wchar_t*) {}
 #endif // WIN
 #endif
