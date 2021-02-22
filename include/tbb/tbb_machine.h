@@ -428,7 +428,12 @@ void spin_wait_while(predicate_type condition){
 //  - the architecture must consistently use either little-endian or big-endian (same for all locations)
 //
 // TODO: static_assert for the type requirements stated above
+// Disable address sanitizer for this function as it always reads 4 bytes even when the
+// type is smaller. This is safe as the implementation masks unwanted parts of the value
+// and because we require 4 byte alignment of all values (guaranteeing that we never are
+// less than four bytes from the end of a memory page)
 template<typename T>
+__TBB_NO_SANITIZE_ADDRESS
 inline T __TBB_MaskedCompareAndSwap (volatile T * const ptr, const T value, const T comparand ) {
     struct endianness{ static bool is_big_endian(){
         #if __TBB_ENDIANNESS==__TBB_ENDIAN_DETECT

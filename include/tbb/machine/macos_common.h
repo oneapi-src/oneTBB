@@ -93,7 +93,10 @@ static inline int64_t __TBB_machine_cmpswp8_OsX(volatile void *ptr, int64_t valu
 #define __TBB_release_consistency_helper() OSMemoryBarrier()
 #define __TBB_full_memory_fence()          OSMemoryBarrier()
 
-static inline int32_t __TBB_machine_cmpswp4(volatile void *ptr, int32_t value, int32_t comparand)
+// Disable address sanitizer - see comments for __TBB_MaskedCompareAndSwap
+static
+__TBB_NO_SANITIZE_ADDRESS
+inline int32_t __TBB_machine_cmpswp4(volatile void *ptr, int32_t value, int32_t comparand)
 {
     __TBB_ASSERT( tbb::internal::is_aligned(ptr,4), "address not properly aligned for macOS atomics");
     int32_t* address = (int32_t*)ptr;

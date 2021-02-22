@@ -870,4 +870,14 @@ There are four cases that are supported:
 #define __TBB_PREVIEW_FLOW_GRAPH_NODE_SET       (TBB_PREVIEW_FLOW_GRAPH_FEATURES && __TBB_CPP11_PRESENT && __TBB_FLOW_GRAPH_CPP11_FEATURES)
 #endif
 
+// When compiling with ASAN __TBB_NO_SANITIZE_ADDRESS must be set to no_sanitize("address")
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer) && !defined(__TBB_NO_SANITIZE_ADDRESS)
+#define __TBB_NO_SANITIZE_ADDRESS __attribute__((no_sanitize("address")))
+#endif
+#endif
+#ifndef __TBB_NO_SANITIZE_ADDRESS
+#define __TBB_NO_SANITIZE_ADDRESS
+#endif
+
 #endif /* __TBB_tbb_config_H */
