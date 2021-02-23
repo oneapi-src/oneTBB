@@ -39,16 +39,16 @@ class task_scheduler_handle;
 }
 
 namespace r1 {
-void __TBB_EXPORTED_FUNC create(d1::global_control&);
-void __TBB_EXPORTED_FUNC destroy(d1::global_control&);
-std::size_t __TBB_EXPORTED_FUNC global_control_active_value(int);
+TBB_EXPORT void __TBB_EXPORTED_FUNC create(d1::global_control&);
+TBB_EXPORT void __TBB_EXPORTED_FUNC destroy(d1::global_control&);
+TBB_EXPORT std::size_t __TBB_EXPORTED_FUNC global_control_active_value(int);
 struct global_control_impl;
 struct control_storage_comparator;
 #if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
 void release_impl(d1::task_scheduler_handle& handle);
 bool finalize_impl(d1::task_scheduler_handle& handle);
-void __TBB_EXPORTED_FUNC get(d1::task_scheduler_handle&);
-bool __TBB_EXPORTED_FUNC finalize(d1::task_scheduler_handle&, std::intptr_t mode);
+TBB_EXPORT void __TBB_EXPORTED_FUNC get(d1::task_scheduler_handle&);
+TBB_EXPORT bool __TBB_EXPORTED_FUNC finalize(d1::task_scheduler_handle&, std::intptr_t mode);
 #endif
 }
 

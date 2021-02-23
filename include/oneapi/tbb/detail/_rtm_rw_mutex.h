@@ -123,20 +123,20 @@ private:
 namespace r1 {
     //! Internal acquire write lock.
     // only_speculate == true if we're doing a try_lock, else false.
-    void __TBB_EXPORTED_FUNC acquire_writer(d1::rtm_rw_mutex&, d1::rtm_rw_mutex::scoped_lock&, bool only_speculate = false);
+    TBB_EXPORT void __TBB_EXPORTED_FUNC acquire_writer(d1::rtm_rw_mutex&, d1::rtm_rw_mutex::scoped_lock&, bool only_speculate = false);
     //! Internal acquire read lock.
     // only_speculate == true if we're doing a try_lock, else false.
-    void __TBB_EXPORTED_FUNC acquire_reader(d1::rtm_rw_mutex&, d1::rtm_rw_mutex::scoped_lock&, bool only_speculate = false);
+    TBB_EXPORT void __TBB_EXPORTED_FUNC acquire_reader(d1::rtm_rw_mutex&, d1::rtm_rw_mutex::scoped_lock&, bool only_speculate = false);
     //! Internal upgrade reader to become a writer.
-    bool __TBB_EXPORTED_FUNC upgrade(d1::rtm_rw_mutex::scoped_lock&);
+    TBB_EXPORT bool __TBB_EXPORTED_FUNC upgrade(d1::rtm_rw_mutex::scoped_lock&);
     //! Internal downgrade writer to become a reader.
-    bool __TBB_EXPORTED_FUNC downgrade(d1::rtm_rw_mutex::scoped_lock&);
+    TBB_EXPORT bool __TBB_EXPORTED_FUNC downgrade(d1::rtm_rw_mutex::scoped_lock&);
     //! Internal try_acquire write lock.
-    bool __TBB_EXPORTED_FUNC try_acquire_writer(d1::rtm_rw_mutex&, d1::rtm_rw_mutex::scoped_lock&);
+    TBB_EXPORT bool __TBB_EXPORTED_FUNC try_acquire_writer(d1::rtm_rw_mutex&, d1::rtm_rw_mutex::scoped_lock&);
     //! Internal try_acquire read lock.
-    bool __TBB_EXPORTED_FUNC try_acquire_reader(d1::rtm_rw_mutex&, d1::rtm_rw_mutex::scoped_lock&);
+    TBB_EXPORT bool __TBB_EXPORTED_FUNC try_acquire_reader(d1::rtm_rw_mutex&, d1::rtm_rw_mutex::scoped_lock&);
     //! Internal release lock.
-    void __TBB_EXPORTED_FUNC release(d1::rtm_rw_mutex::scoped_lock&);
+    TBB_EXPORT void __TBB_EXPORTED_FUNC release(d1::rtm_rw_mutex::scoped_lock&);
 }
 
 namespace d1 {

@@ -28,6 +28,18 @@
 /* Check which standard library we use. */
 #include <cstddef>
 
+#ifdef TBB_BUILDING
+    #if _WIN32
+        #define TBB_EXPORT __declspec(dllexport)
+    #elif __linux__ || __APPLE__
+        #define TBB_EXPORT __attribute__((visibility("default")))
+    #else
+        #error "Unknown platform/compiler"
+    #endif
+#else
+    #define TBB_EXPORT
+#endif
+
 #if _MSC_VER
     #define __TBB_EXPORTED_FUNC   __cdecl
     #define __TBB_EXPORTED_METHOD __thiscall

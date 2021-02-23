@@ -108,11 +108,11 @@ private:
 namespace r1 {
     //! Internal acquire lock.
     // only_speculate == true if we're doing a try_lock, else false.
-    void __TBB_EXPORTED_FUNC acquire(d1::rtm_mutex&, d1::rtm_mutex::scoped_lock&, bool only_speculate = false);
+    TBB_EXPORT void __TBB_EXPORTED_FUNC acquire(d1::rtm_mutex&, d1::rtm_mutex::scoped_lock&, bool only_speculate = false);
     //! Internal try_acquire lock.
-    bool __TBB_EXPORTED_FUNC try_acquire(d1::rtm_mutex&, d1::rtm_mutex::scoped_lock&);
+    TBB_EXPORT bool __TBB_EXPORTED_FUNC try_acquire(d1::rtm_mutex&, d1::rtm_mutex::scoped_lock&);
     //! Internal release lock.
-    void __TBB_EXPORTED_FUNC release(d1::rtm_mutex::scoped_lock&);
+    TBB_EXPORT void __TBB_EXPORTED_FUNC release(d1::rtm_mutex::scoped_lock&);
 } // namespace r1
 
 namespace d1 {

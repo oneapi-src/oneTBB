@@ -70,23 +70,23 @@ namespace d1 {
 } // namespace d1
 
 namespace r1 {
-    void __TBB_EXPORTED_FUNC call_itt_notify(int t, void* ptr);
-    void __TBB_EXPORTED_FUNC create_itt_sync(void* ptr, const tchar* objtype, const tchar* objname);
-    void __TBB_EXPORTED_FUNC itt_make_task_group(d1::itt_domain_enum domain, void* group, unsigned long long group_extra,
+    TBB_EXPORT void __TBB_EXPORTED_FUNC call_itt_notify(int t, void* ptr);
+    TBB_EXPORT void __TBB_EXPORTED_FUNC create_itt_sync(void* ptr, const tchar* objtype, const tchar* objname);
+    TBB_EXPORT void __TBB_EXPORTED_FUNC itt_make_task_group(d1::itt_domain_enum domain, void* group, unsigned long long group_extra,
         void* parent, unsigned long long parent_extra, string_resource_index name_index);
-    void __TBB_EXPORTED_FUNC itt_task_begin(d1::itt_domain_enum domain, void* task, unsigned long long task_extra,
+    TBB_EXPORT void __TBB_EXPORTED_FUNC itt_task_begin(d1::itt_domain_enum domain, void* task, unsigned long long task_extra,
         void* parent, unsigned long long parent_extra, string_resource_index name_index);
-    void __TBB_EXPORTED_FUNC itt_task_end(d1::itt_domain_enum domain);
-    void __TBB_EXPORTED_FUNC itt_set_sync_name(void* obj, const tchar* name);
-    void __TBB_EXPORTED_FUNC itt_metadata_str_add(d1::itt_domain_enum domain, void* addr, unsigned long long addr_extra,
+    TBB_EXPORT void __TBB_EXPORTED_FUNC itt_task_end(d1::itt_domain_enum domain);
+    TBB_EXPORT void __TBB_EXPORTED_FUNC itt_set_sync_name(void* obj, const tchar* name);
+    TBB_EXPORT void __TBB_EXPORTED_FUNC itt_metadata_str_add(d1::itt_domain_enum domain, void* addr, unsigned long long addr_extra,
         string_resource_index key, const char* value);
-    void __TBB_EXPORTED_FUNC itt_metadata_ptr_add(d1::itt_domain_enum domain, void* addr, unsigned long long addr_extra,
+    TBB_EXPORT void __TBB_EXPORTED_FUNC itt_metadata_ptr_add(d1::itt_domain_enum domain, void* addr, unsigned long long addr_extra,
         string_resource_index key, void* value);
-    void __TBB_EXPORTED_FUNC itt_relation_add(d1::itt_domain_enum domain, void* addr0, unsigned long long addr0_extra,
+    TBB_EXPORT void __TBB_EXPORTED_FUNC itt_relation_add(d1::itt_domain_enum domain, void* addr0, unsigned long long addr0_extra,
         itt_relation relation, void* addr1, unsigned long long addr1_extra);
-    void __TBB_EXPORTED_FUNC itt_region_begin(d1::itt_domain_enum domain, void* region, unsigned long long region_extra,
+    TBB_EXPORT void __TBB_EXPORTED_FUNC itt_region_begin(d1::itt_domain_enum domain, void* region, unsigned long long region_extra,
         void* parent, unsigned long long parent_extra, string_resource_index /* name_index */);
-    void __TBB_EXPORTED_FUNC itt_region_end(d1::itt_domain_enum domain, void* region, unsigned long long region_extra);
+    TBB_EXPORT void __TBB_EXPORTED_FUNC itt_region_end(d1::itt_domain_enum domain, void* region, unsigned long long region_extra);
 } // namespace r1
 
 namespace d1 {
