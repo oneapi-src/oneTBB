@@ -254,7 +254,7 @@ template<> struct atomic_selector<8> {
         #include "machine/linux_intel64.h"
     #elif __POWERPC__
         #include "machine/mac_ppc.h"
-    #elif __TBB_GCC_BUILTIN_ATOMICS_PRESENT
+    #elif defined(__aarch64__) && __TBB_GCC_BUILTIN_ATOMICS_PRESENT
         // Apple Silicon should use gcc_generics to get
         // architecture specific cas instructions
         #include "machine/gcc_generic.h"
