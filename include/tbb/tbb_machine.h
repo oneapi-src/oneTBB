@@ -245,7 +245,7 @@ template<> struct atomic_selector<8> {
     #include "machine/linux_common.h"
 
 #elif __APPLE__
-    //TODO:  TBB_USE_GCC_BUILTINS is not used for Mac, Sun, Aix
+    //TODO:  TBB_USE_GCC_BUILTINS is not used for Mac(Intel), Sun, Aix
     #if (TBB_USE_ICC_BUILTINS && __TBB_ICC_BUILTIN_ATOMICS_PRESENT)
         #include "machine/icc_generic.h"
     #elif __TBB_x86_32
@@ -254,6 +254,10 @@ template<> struct atomic_selector<8> {
         #include "machine/linux_intel64.h"
     #elif __POWERPC__
         #include "machine/mac_ppc.h"
+    #elif __TBB_GCC_BUILTIN_ATOMICS_PRESENT
+        // Apple Silicon should use gcc_generics to get
+        // architecture specific cas instructions
+        #include "machine/gcc_generic.h"
     #endif
     #include "machine/macos_common.h"
 
