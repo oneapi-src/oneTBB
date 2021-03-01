@@ -13,6 +13,7 @@
 # limitations under the License.
 
 add_library(tbb 
+    address_waiter.cpp
     allocator.cpp
     arena.cpp
     arena_slot.cpp

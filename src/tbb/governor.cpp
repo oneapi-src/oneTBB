@@ -20,6 +20,7 @@
 #include "market.h"
 #include "arena.h"
 #include "dynamic_link.h"
+#include "concurrent_monitor.h"
 
 #include "oneapi/tbb/task_group.h"
 #include "oneapi/tbb/global_control.h"
@@ -37,6 +38,8 @@
 namespace tbb {
 namespace detail {
 namespace r1 {
+
+void clear_address_waiter_table();
 
 #if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
 //! global_control.cpp contains definition
@@ -61,6 +64,7 @@ void governor::acquire_resources () {
     if( status )
         handle_perror(status, "TBB failed to initialize task scheduler TLS\n");
     detect_cpu_features(cpu_features);
+
     is_rethrow_broken = gcc_rethrow_exception_broken();
 }
 
@@ -73,6 +77,8 @@ void governor::release_resources () {
     int status = theTLS.destroy();
     if( status )
         runtime_warning("failed to destroy task scheduler TLS: %s", std::strerror(status));
+    clear_address_waiter_table();
+
     dynamic_unlink_all();
 }
 

@@ -275,19 +275,19 @@ protected:
 public:
     NoAfterlife() : m_state(LIVE) {}
     NoAfterlife(const NoAfterlife& src) : m_state(LIVE) {
-        CHECK_MESSAGE(src.IsLive(), "Constructing from the dead source");
+        CHECK_FAST_MESSAGE(src.IsLive(), "Constructing from the dead source");
     }
     ~NoAfterlife() {
-        CHECK_MESSAGE(IsLive(), "Repeated destructor call");
+        CHECK_FAST_MESSAGE(IsLive(), "Repeated destructor call");
         m_state = DEAD;
     }
     const NoAfterlife& operator=(const NoAfterlife& src) {
-        CHECK(IsLive());
-        CHECK(src.IsLive());
+        CHECK_FAST(IsLive());
+        CHECK_FAST(src.IsLive());
         return *this;
     }
     void AssertLive() const {
-        CHECK_MESSAGE(IsLive(), "Already dead");
+        CHECK_FAST_MESSAGE(IsLive(), "Already dead");
     }
     bool IsLive() const {
         return m_state == LIVE;
@@ -411,7 +411,12 @@ void check_range_bounds_after_splitting( const tbb::blocked_range<T>& original, 
     REQUIRE(first.size() + second.size() == original.size());
 }
 
-
+template<typename M>
+struct Counter {
+    using mutex_type = M;
+    M mutex;
+    volatile long value;
+};
 
 } // namespace utils
 

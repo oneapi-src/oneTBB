@@ -143,6 +143,12 @@ _ZN3tbb6detail2r128abort_bounded_queue_monitorsEPNS1_18concurrent_monitorE;
 _ZN3tbb6detail2r128deallocate_bounded_queue_repEPhm;
 _ZN3tbb6detail2r128notify_bounded_queue_monitorEPNS1_18concurrent_monitorEmm;
 
+/* Concurrent monitor (address_waiter.cpp) */
+_ZN3tbb6detail2r115wait_on_addressEPvRNS0_2d113delegate_baseEm;
+_ZN3tbb6detail2r117notify_by_addressEPvm;
+_ZN3tbb6detail2r121notify_by_address_oneEPv;
+_ZN3tbb6detail2r121notify_by_address_allEPv;
+
 /* Versioning (version.cpp) */
 TBB_runtime_interface_version;
 TBB_runtime_version;

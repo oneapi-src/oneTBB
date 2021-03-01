@@ -137,6 +137,12 @@ EXPORTS
 ?abort_bounded_queue_monitors@r1@detail@tbb@@YAXPEAVconcurrent_monitor@123@@Z
 ?notify_bounded_queue_monitor@r1@detail@tbb@@YAXPEAVconcurrent_monitor@123@_K1@Z
 
+; Concurrent monitor (address_waiter.cpp)
+?wait_on_address@r1@detail@tbb@@YAXPEAXAEAVdelegate_base@d1@23@_K@Z
+?notify_by_address@r1@detail@tbb@@YAXPEAX_K@Z
+?notify_by_address_one@r1@detail@tbb@@YAXPEAX@Z
+?notify_by_address_all@r1@detail@tbb@@YAXPEAX@Z
+
 ;; Versioning (version.cpp)
 TBB_runtime_interface_version
 TBB_runtime_version

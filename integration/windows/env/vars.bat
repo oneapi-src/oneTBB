@@ -28,9 +28,9 @@ REM        vs2019      : Set to use with Microsoft Visual Studio 2019 runtime DL
 REM        all         : Set to use TBB statically linked with Microsoft Visual C++ runtime
 REM    if ^<vs^> is not set TBB statically linked with Microsoft Visual C++ runtime will be used.
 
-set SCRIPT_NAME=%~nx0
-set TBB_BIN_DIR=%~d0%~p0
-set TBBROOT=%TBB_BIN_DIR%..
+set "SCRIPT_NAME=%~nx0"
+set "TBB_BIN_DIR=%~d0%~p0"
+set "TBBROOT=%TBB_BIN_DIR%.."
 
 :: Set the default arguments
 set TBB_TARGET_ARCH=intel64

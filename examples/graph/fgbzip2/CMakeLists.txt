@@ -34,6 +34,14 @@ add_executable(fgbzip2
 target_link_libraries(fgbzip2 TBB::tbb Threads::Threads)
 target_compile_options(fgbzip2 PRIVATE ${TBB_CXX_STD_FLAG})
 
+if (MSVC AND CMAKE_CXX_COMPILER_ID STREQUAL Intel)
+    if (COMMAND target_link_options)
+        target_link_options(fgbzip2 PRIVATE /FORCE:MULTIPLE /INCREMENTAL:NO)
+    else()
+        set_target_properties(fgbzip2 PROPERTIES LINK_FLAGS /FORCE:MULTIPLE /INCREMENTAL:NO)
+    endif()
+endif()
+
 set(EXECUTABLE "$<TARGET_FILE:fgbzip2>")
 set(ARGS -b=9 -async "$<TARGET_FILE:fgbzip2>")
 

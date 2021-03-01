@@ -365,6 +365,12 @@ struct suspend_point_type {
 #endif /*__TBB_RESUMABLE_TASKS */
 };
 
+#if _MSC_VER && !defined(__INTEL_COMPILER)
+// structure was padded due to alignment specifier
+#pragma warning( push )
+#pragma warning( disable: 4324 )
+#endif
+
 class alignas (max_nfs_size) task_dispatcher {
 public:
     // TODO: reconsider low level design to better organize dependencies and files.
@@ -471,6 +477,10 @@ public:
     void recall_point();
 #endif /* __TBB_RESUMABLE_TASKS */
 };
+
+#if _MSC_VER && !defined(__INTEL_COMPILER)
+#pragma warning( pop )
+#endif
 
 inline std::uintptr_t calculate_stealing_threshold(std::uintptr_t base, std::size_t stack_size) {
     return base - stack_size / 2;

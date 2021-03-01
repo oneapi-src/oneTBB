@@ -100,17 +100,17 @@ namespace r1 {
 #if __TBB_USE_FUTEX
 
 static inline int futex_wait( void *futex, int comparand ) {
-    int r = ::syscall( SYS_futex,futex,__TBB_FUTEX_WAIT,comparand,NULL,NULL,0 );
+    int r = ::syscall(SYS_futex, futex, __TBB_FUTEX_WAIT, comparand, NULL, NULL, 0);
 #if TBB_USE_ASSERT
     int e = errno;
-    __TBB_ASSERT( r==0||r==EWOULDBLOCK||(r==-1&&(e==EAGAIN||e==EINTR)), "futex_wait failed." );
+    __TBB_ASSERT(r == 0 || r == EWOULDBLOCK || (r == -1 && (e == EAGAIN || e == EINTR)), "futex_wait failed.");
 #endif /* TBB_USE_ASSERT */
     return r;
 }
 
 static inline int futex_wakeup_one( void *futex ) {
-    int r = ::syscall( SYS_futex,futex,__TBB_FUTEX_WAKE,1,NULL,NULL,0 );
-    __TBB_ASSERT( r==0||r==1, "futex_wakeup_one: more than one thread woken up?" );
+    int r = ::syscall(SYS_futex, futex, __TBB_FUTEX_WAKE, 1, NULL, NULL, 0);
+    __TBB_ASSERT(r == 0 || r == 1, "futex_wakeup_one: more than one thread woken up?");
     return r;
 }
 

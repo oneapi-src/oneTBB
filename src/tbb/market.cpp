@@ -580,10 +580,11 @@ void market::adjust_demand ( arena& a, int delta, bool mandatory ) {
         target_epoch = my_adjust_demand_target_epoch++;
     }
 
-    spin_wait_until_eq(my_adjust_demand_current_epoch, target_epoch);
+    my_adjust_demand_current_epoch.wait_until(target_epoch, /* context = */ target_epoch, std::memory_order_acquire);
     // Must be called outside of any locks
     my_server->adjust_job_count_estimate( delta );
-    my_adjust_demand_current_epoch.store(target_epoch + 1, std::memory_order_release);
+    my_adjust_demand_current_epoch.exchange(target_epoch + 1);
+    my_adjust_demand_current_epoch.notify_relaxed(target_epoch + 1);
 }
 
 void market::process( job& j ) {

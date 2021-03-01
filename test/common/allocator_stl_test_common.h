@@ -16,6 +16,9 @@
 
 // Tests for compatibility with the host's STL.
 
+#ifndef __TBB_test_common_allocator_stl_test_H_
+#define __TBB_test_common_allocator_stl_test_H_
+
 #include "common/test.h"
 
 template<typename Container>
@@ -130,3 +133,4 @@ void TestAllocatorWithSTL(const Allocator &a = Allocator()) {
     TestMap<std::multimap<const int, int, std::less<int>, Acii> >(a);
 #endif /* _MSC_VER */
 }
+#endif // __TBB_test_common_allocator_stl_test_H_

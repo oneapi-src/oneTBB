@@ -277,10 +277,11 @@ const std::uintptr_t F = 6765;
 atomic_t g_Sum;
 
 #define FIB_TEST_PROLOGUE() \
-    const unsigned numRepeats = g_MaxConcurrency * (TBB_USE_DEBUG ? 4 : 16);    \
+    const unsigned numRepeats = g_MaxConcurrency * 4;    \
     utils::ConcurrencyTracker::Reset()
 
 #define FIB_TEST_EPILOGUE(sum) \
+    CHECK(utils::ConcurrencyTracker::PeakParallelism() <= g_MaxConcurrency); \
     CHECK( sum == numRepeats * F );
 
 

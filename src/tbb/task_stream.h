@@ -25,9 +25,8 @@
 //! would be suitable for critical tasks due to linear time complexity on its operations.
 
 #include "oneapi/tbb/detail/_utils.h"
-
-#include "oneapi/tbb/spin_mutex.h"
 #include "oneapi/tbb/cache_aligned_allocator.h"
+#include "oneapi/tbb/mutex.h"
 
 #include "scheduler_common.h"
 #include "misc.h" // for FastRandom
@@ -120,7 +119,7 @@ struct preceding_lane_selector : lane_selector_base {
 template<task_stream_accessor_type accessor>
 class task_stream_accessor : no_copy {
 protected:
-    using lane_t = queue_and_mutex <d1::task*, spin_mutex>;
+    using lane_t = queue_and_mutex <d1::task*, mutex>;
     d1::task* get_item( lane_t::queue_base_t& queue ) {
         d1::task* result = queue.front();
         queue.pop_front();
@@ -131,7 +130,7 @@ protected:
 template<>
 class task_stream_accessor< back_nonnull_accessor > : no_copy {
 protected:
-    using lane_t = queue_and_mutex <d1::task*, spin_mutex>;
+    using lane_t = queue_and_mutex <d1::task*, mutex>;
     d1::task* get_item( lane_t::queue_base_t& queue ) {
         d1::task* result = nullptr;
         __TBB_ASSERT(!queue.empty(), nullptr);
@@ -140,8 +139,6 @@ protected:
             result = queue.back();
             queue.pop_back();
         } while ( !result && !queue.empty() );
-
-        __TBB_ASSERT_RELEASE(result, nullptr);
         return result;
     }
 };
@@ -211,7 +208,7 @@ public:
         do {
             if( is_bit_set( population.load(std::memory_order_relaxed), idx ) ) {
                 lane_t& lane = lanes[idx];
-                spin_mutex::scoped_lock lock;
+                mutex::scoped_lock lock;
                 if( lock.try_acquire(lane.my_mutex) && !lane.my_queue.empty() ) {
                     result = look_specific( lane.my_queue, isolation );
                     if( lane.my_queue.empty() )
@@ -234,7 +231,7 @@ public:
 private:
     //! Returns true on successful push, otherwise - false.
     bool try_push(d1::task* source, unsigned lane_idx ) {
-        spin_mutex::scoped_lock lock;
+        mutex::scoped_lock lock;
         if( lock.try_acquire( lanes[lane_idx].my_mutex ) ) {
             lanes[lane_idx].my_queue.push_back( source );
             set_one_bit( population, lane_idx ); // TODO: avoid atomic op if the bit is already set
@@ -249,7 +246,7 @@ private:
             return NULL;
         d1::task* result = NULL;
         lane_t& lane = lanes[lane_idx];
-        spin_mutex::scoped_lock lock;
+        mutex::scoped_lock lock;
         if( lock.try_acquire( lane.my_mutex ) && !lane.my_queue.empty() ) {
             result = this->get_item( lane.my_queue );
             if( lane.my_queue.empty() )

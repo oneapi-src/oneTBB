@@ -227,19 +227,6 @@ concurrent_queue( It, It, Alloc = Alloc() )
 
 class concurrent_monitor;
 
-template <typename FuncType>
-class delegated_function : public delegate_base {
-public:
-    delegated_function(FuncType& f) : my_func(f) {}
-
-    bool operator()() const override {
-        return my_func();
-    }
-
-private:
-    FuncType &my_func;
-}; // class delegated_function
-
 // The concurrent monitor tags for concurrent_bounded_queue.
 static constexpr std::size_t cbq_slots_avail_tag = 0;
 static constexpr std::size_t cbq_items_avail_tag = 1;

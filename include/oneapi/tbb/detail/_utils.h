@@ -90,7 +90,7 @@ public:
 //! Spin WHILE the condition is true.
 /** T and U should be comparable types. */
 template <typename T, typename C>
-void spin_wait_while_condition(const std::atomic<T>& location, C comp) {
+void spin_wait_while(const std::atomic<T>& location, C comp) {
     atomic_backoff backoff;
     while (comp(location.load(std::memory_order_acquire))) {
         backoff.pause();
@@ -101,14 +101,29 @@ void spin_wait_while_condition(const std::atomic<T>& location, C comp) {
 /** T and U should be comparable types. */
 template <typename T, typename U>
 void spin_wait_while_eq(const std::atomic<T>& location, const U value) {
-    spin_wait_while_condition(location, [&value](T t) { return t == value; });
+    spin_wait_while(location, [&value](T t) { return t == value; });
 }
 
 //! Spin UNTIL the value of the variable is equal to a given value
 /** T and U should be comparable types. */
 template<typename T, typename U>
 void spin_wait_until_eq(const std::atomic<T>& location, const U value) {
-    spin_wait_while_condition(location, [&value](T t) { return t != value; });
+    spin_wait_while(location, [&value](T t) { return t != value; });
+}
+
+//! Spin UNTIL the condition returns true or spinning time is up.
+/** Returns what the passed functor returned last time it was invoked. */
+template <typename Condition>
+bool timed_spin_wait_until(Condition condition) {
+    // 32 pauses + 32 yields are meausered as balanced spin time before sleep.
+    bool finish = condition();
+    for (int i = 1; !finish && i < 32; finish = condition(), i *= 2) {
+        machine_pause(i);
+    }
+    for (int i = 32; !finish && i < 64; finish = condition(), ++i) {
+        yield();
+    }
+    return finish;
 }
 
 template <typename T>
@@ -319,9 +334,21 @@ class delegate_base {
 public:
     virtual bool operator()() const = 0;
     virtual ~delegate_base() {}
-}; // class delegate_base
+};
 
-}  // namespace d1
+template <typename FuncType>
+class delegated_function : public delegate_base {
+public:
+    delegated_function(FuncType& f) : my_func(f) {}
+
+    bool operator()() const override {
+        return my_func();
+    }
+
+private:
+    FuncType &my_func;
+};
+} // namespace d1
 
 } // namespace detail
 } // namespace tbb

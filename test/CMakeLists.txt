@@ -216,14 +216,14 @@ function(tbb_configure_hwloc_dependent_test)
     set_tests_properties(${_hwloc_test_NAME}_${_hwloc_test_SUFFIX} PROPERTIES
         ENVIRONMENT "${HWLOC_RUNTIME_VARS};TBB_VERSION=1"
         PASS_REGULAR_EXPRESSION "oneTBB: TBBBIND.*${_hwloc_test_TBBBIND_VERSION}"
-        FAIL_REGULAR_EXPRESSION "Status: FAILURE!"
+        FAIL_REGULAR_EXPRESSION "Status:.*FAILURE"
     )
 
     # The tbbbind isn't loading on 32-bit Windows systems with more then 32 available hardware threads
     if (WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 4 AND SYSTEM_CONCURRENCY GREATER 32)
         set_tests_properties(${_hwloc_test_NAME}_${_hwloc_test_SUFFIX} PROPERTIES
             PASS_REGULAR_EXPRESSION "oneTBB: TBBBIND.*UNAVAILABLE"
-            FAIL_REGULAR_EXPRESSION "Status: FAILURE!"
+            FAIL_REGULAR_EXPRESSION "Status:.*FAILURE"
         )
     else()
         target_compile_definitions(${_hwloc_test_NAME}_${_hwloc_test_SUFFIX} PRIVATE __TBB_HWLOC_VALID_ENVIRONMENT)
@@ -239,7 +239,28 @@ function(tbb_add_tbbbind_test)
     tbb_add_test(SUBDIR ${_tbbbind_test_SUBDIR} NAME ${_tbbbind_test_NAME} DEPENDENCIES TBB::tbb)
     add_dependencies(test_suite_arena_constraints ${_tbbbind_test_NAME})
 
-    # Disable all HWLOC dependent tests in case unsupported environment.
+    # Handle the case when HWLOC was found using pkg-config
+    if (NOT DEFINED HWLOC_TARGET_EXPLICITLY_DEFINED AND DEFINED HWLOC_LIBRARIES)
+        set_target_properties(${_tbbbind_test_NAME} PROPERTIES
+            ENVIRONMENT TBB_VERSION=1
+            PASS_REGULAR_EXPRESSION "oneTBB: TBBBIND.*${TBBBIND_LIBRARY_NAME}"
+            FAIL_REGULAR_EXPRESSION "Status: FAILURE!"
+        )
+        set_property(
+            TARGET ${_tbbbind_test_NAME}
+            PROPERTY LINK_LIBRARIES ${HWLOC_LIBRARY_DIRS} ${HWLOC_LIBRARIES}
+            APPEND
+        )
+        set_property(
+            TARGET ${_tbbbind_test_NAME}
+            PROPERTY INCLUDE_DIRECTORIES ${HWLOC_INCLUDE_DIRS}
+            APPEND
+        )
+        target_compile_definitions(${_tbbbind_test_NAME} PRIVATE __TBB_HWLOC_VALID_ENVIRONMENT)
+        return()
+    endif()
+
+    # Disable all HWLOC dependent tests in case of unsupported environment.
     if (TBB_WINDOWS_DRIVER OR ANDROID_PLATFORM)
         return()
     endif()
@@ -248,7 +269,7 @@ function(tbb_add_tbbbind_test)
     set_tests_properties(${_tbbbind_test_NAME} PROPERTIES
         ENVIRONMENT TBB_VERSION=1
         PASS_REGULAR_EXPRESSION "oneTBB: TBBBIND.*UNAVAILABLE"
-        FAIL_REGULAR_EXPRESSION "Status: FAILURE!"
+        FAIL_REGULAR_EXPRESSION "Status:.*FAILURE"
     )
 
     if (TARGET HWLOC::hwloc_2_4 AND NOT HWLOC_2_4_TESTS_STATUS_SHOWN)
@@ -359,6 +380,7 @@ tbb_add_test(SUBDIR tbb NAME test_enumerable_thread_specific DEPENDENCIES TBB::t
 tbb_add_test(SUBDIR tbb NAME test_concurrent_queue DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_resumable_tasks DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_mutex DEPENDENCIES TBB::tbb)
+tbb_add_test(SUBDIR tbb NAME test_adaptive_mutex DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_function_node DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_multifunction_node DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_broadcast_node DEPENDENCIES TBB::tbb)

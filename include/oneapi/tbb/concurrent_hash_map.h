@@ -628,7 +628,8 @@ protected:
         return create_node(allocator, key, std::move(*const_cast<T*>(t)));
     }
 
-    static node* allocate_node_default_construct(bucket_allocator_type& allocator, const Key &key, const T * ){
+    template <typename K = Key>
+    static node* allocate_node_default_construct(bucket_allocator_type& allocator, const K &key, const T * ){
         // Emplace construct an empty T object inside the pair
         return create_node(allocator, std::piecewise_construct,
                            std::forward_as_tuple(key), std::forward_as_tuple());
@@ -639,7 +640,8 @@ protected:
         return nullptr;
     }
 
-    node *search_bucket( const key_type &key, bucket *b ) const {
+    template <typename K>
+    node *search_bucket( const K &key, bucket *b ) const {
         node *n = static_cast<node*>( b->node_list.load(std::memory_order_relaxed) );
         while (this->is_valid(n) && !my_hash_compare.equal(key, n->value().first))
             n = static_cast<node*>( n->next );
@@ -707,6 +709,9 @@ protected:
             }
         }
     }
+
+    template <typename U>
+    using hash_compare_is_transparent = dependent_bool<comp_is_transparent<hash_compare_type>, U>;
 
 public:
 
@@ -992,6 +997,20 @@ public:
     std::pair<iterator, iterator> equal_range( const Key& key ) { return internal_equal_range( key, end() ); }
     std::pair<const_iterator, const_iterator> equal_range( const Key& key ) const { return internal_equal_range( key, end() ); }
 
+#if __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS
+    template <typename K>
+    typename std::enable_if<hash_compare_is_transparent<K>::value,
+                            std::pair<iterator, iterator>>::type equal_range( const K& key ) {
+        return internal_equal_range(key, end());
+    }
+
+    template <typename K>
+    typename std::enable_if<hash_compare_is_transparent<K>::value,
+                            std::pair<const_iterator, const_iterator>>::type equal_range( const K& key ) const {
+        return internal_equal_range(key, end());
+    }
+#endif // __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS
+
     // Number of items in table.
     size_type size() const { return this->my_size.load(std::memory_order_acquire); }
 
@@ -1023,55 +1042,97 @@ public:
 
     // Return count of items (0 or 1)
     size_type count( const Key &key ) const {
-        return const_cast<concurrent_hash_map*>(this)->lookup(/*insert*/false, key, nullptr, nullptr, /*write=*/false, &do_not_allocate_node );
+        return const_cast<concurrent_hash_map*>(this)->lookup</*insert*/false>(key, nullptr, nullptr, /*write=*/false, &do_not_allocate_node);
     }
+
+#if __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS
+    template <typename K>
+    typename std::enable_if<hash_compare_is_transparent<K>::value,
+                            size_type>::type count( const K& key ) const {
+        return const_cast<concurrent_hash_map*>(this)->lookup</*insert*/false>(key, nullptr, nullptr, /*write=*/false, &do_not_allocate_node);
+    }
+#endif // __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS
 
     // Find item and acquire a read lock on the item.
     /** Return true if item is found, false otherwise. */
     bool find( const_accessor &result, const Key &key ) const {
         result.release();
-        return const_cast<concurrent_hash_map*>(this)->lookup(/*insert*/false, key, nullptr, &result, /*write=*/false, &do_not_allocate_node );
+        return const_cast<concurrent_hash_map*>(this)->lookup</*insert*/false>(key, nullptr, &result, /*write=*/false, &do_not_allocate_node );
     }
 
     // Find item and acquire a write lock on the item.
     /** Return true if item is found, false otherwise. */
     bool find( accessor &result, const Key &key ) {
         result.release();
-        return lookup(/*insert*/false, key, nullptr, &result, /*write=*/true, &do_not_allocate_node );
+        return lookup</*insert*/false>(key, nullptr, &result, /*write=*/true, &do_not_allocate_node);
     }
+
+#if __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS
+    template <typename K>
+    typename std::enable_if<hash_compare_is_transparent<K>::value,
+                            bool>::type find( const_accessor& result, const K& key ) {
+        result.release();
+        return lookup</*insert*/false>(key, nullptr, &result, /*write=*/false, &do_not_allocate_node);
+    }
+
+    template <typename K>
+    typename std::enable_if<hash_compare_is_transparent<K>::value,
+                            bool>::type find( accessor& result, const K& key ) {
+        result.release();
+        return lookup</*insert*/false>(key, nullptr, &result, /*write=*/true, &do_not_allocate_node);
+    }
+#endif // __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS
 
     // Insert item (if not already present) and acquire a read lock on the item.
     /** Returns true if item is new. */
     bool insert( const_accessor &result, const Key &key ) {
         result.release();
-        return lookup(/*insert*/true, key, nullptr, &result, /*write=*/false, &allocate_node_default_construct );
+        return lookup</*insert*/true>(key, nullptr, &result, /*write=*/false, &allocate_node_default_construct<>);
     }
 
     // Insert item (if not already present) and acquire a write lock on the item.
     /** Returns true if item is new. */
     bool insert( accessor &result, const Key &key ) {
         result.release();
-        return lookup(/*insert*/true, key, nullptr, &result, /*write=*/true, &allocate_node_default_construct );
+        return lookup</*insert*/true>(key, nullptr, &result, /*write=*/true, &allocate_node_default_construct<>);
     }
+
+#if __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS
+    template <typename K>
+    typename std::enable_if<hash_compare_is_transparent<K>::value &&
+                            std::is_constructible<key_type, const K&>::value,
+                            bool>::type insert( const_accessor& result, const K& key ) {
+        result.release();
+        return lookup</*insert*/true>(key, nullptr, &result, /*write=*/true, &allocate_node_default_construct<K>);
+    }
+
+    template <typename K>
+    typename std::enable_if<hash_compare_is_transparent<K>::value &&
+                            std::is_constructible<key_type, const K&>::value,
+                            bool>::type insert( accessor& result, const K& key ) {
+        result.release();
+        return lookup</*insert*/true>(key, nullptr, &result, /*write=*/true, &allocate_node_default_construct<K>);
+    }
+#endif // __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS
 
     // Insert item by copying if there is no such key present already and acquire a read lock on the item.
     /** Returns true if item is new. */
     bool insert( const_accessor &result, const value_type &value ) {
         result.release();
-        return lookup(/*insert*/true, value.first, &value.second, &result, /*write=*/false, &allocate_node_copy_construct );
+        return lookup</*insert*/true>(value.first, &value.second, &result, /*write=*/false, &allocate_node_copy_construct);
     }
 
     // Insert item by copying if there is no such key present already and acquire a write lock on the item.
     /** Returns true if item is new. */
     bool insert( accessor &result, const value_type &value ) {
         result.release();
-        return lookup(/*insert*/true, value.first, &value.second, &result, /*write=*/true, &allocate_node_copy_construct );
+        return lookup</*insert*/true>(value.first, &value.second, &result, /*write=*/true, &allocate_node_copy_construct);
     }
 
     // Insert item by copying if there is no such key present already
     /** Returns true if item is inserted. */
     bool insert( const value_type &value ) {
-        return lookup(/*insert*/true, value.first, &value.second, nullptr, /*write=*/false, &allocate_node_copy_construct );
+        return lookup</*insert*/true>(value.first, &value.second, nullptr, /*write=*/false, &allocate_node_copy_construct);
     }
 
     // Insert item by copying if there is no such key present already and acquire a read lock on the item.
@@ -1128,46 +1189,16 @@ public:
     // Erase item.
     /** Return true if item was erased by particularly this call. */
     bool erase( const Key &key ) {
-        node_base *erase_node;
-        hashcode_type const hash = my_hash_compare.hash(key);
-        hashcode_type mask = this->my_mask.load(std::memory_order_acquire);
-    restart:
-        {//lock scope
-            // get bucket
-            bucket_accessor b( this, hash & mask );
-        search:
-            node_base* prev = nullptr;
-            erase_node = b()->node_list.load(std::memory_order_relaxed);
-            while (this->is_valid(erase_node) && !my_hash_compare.equal(key, static_cast<node*>(erase_node)->value().first ) ) {
-                prev = erase_node;
-                erase_node = erase_node->next;
-            }
-
-            if (erase_node == nullptr) { // not found, but mask could be changed
-                if (this->check_mask_race(hash, mask))
-                    goto restart;
-                return false;
-            } else if (!b.is_writer() && !b.upgrade_to_writer()) {
-                if (this->check_mask_race(hash, mask)) // contended upgrade, check mask
-                    goto restart;
-                goto search;
-            }
-
-            // remove from container
-            if (prev == nullptr) {
-                b()->node_list.store(erase_node->next, std::memory_order_relaxed);
-            } else {
-                prev->next = erase_node->next;
-            }
-            this->my_size--;
-        }
-        {
-            typename node::scoped_type item_locker( erase_node->mutex, /*write=*/true );
-        }
-        // note: there should be no threads pretending to acquire this mutex again, do not try to upgrade const_accessor!
-        delete_node(erase_node); // Only one thread can delete it due to write lock on the bucket
-        return true;
+        return internal_erase(key);
     }
+
+#if __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS
+    template <typename K>
+    typename std::enable_if<hash_compare_is_transparent<K>::value,
+                            bool>::type erase( const K& key ) {
+        return internal_erase(key);
+    }
+#endif // __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS
 
     // Erase item by const_accessor.
     /** Return true if item was erased by particularly this call. */
@@ -1182,9 +1213,20 @@ public:
     }
 
 protected:
+    template <typename K, typename AllocateNodeType>
+    node* allocate_node_helper( const K& key, const T* t, AllocateNodeType allocate_node, std::true_type ) {
+        return allocate_node(base_type::get_allocator(), key, t);
+    }
+
+    template <typename K, typename AllocateNodeType>
+    node* allocate_node_helper( const K&, const T*, AllocateNodeType, std::false_type ) {
+        __TBB_ASSERT(false, "allocate_node_helper with std::false_type should never been called");
+        return nullptr;
+    }
+
     // Insert or find item and optionally acquire a lock on the item.
-    bool lookup( bool op_insert, const Key &key, const T *t, const_accessor *result, bool write, node* (*allocate_node)(bucket_allocator_type&,
-        const Key&, const T*), node *tmp_n  = 0)
+    template <bool OpInsert, typename K, typename AllocateNodeType>
+    bool lookup( const K &key, const T *t, const_accessor *result, bool write, AllocateNodeType allocate_node, node *tmp_n  = 0)
     {
         __TBB_ASSERT( !result || !result->my_node, nullptr );
         bool return_value;
@@ -1200,11 +1242,11 @@ protected:
             bucket_accessor b( this, h & m );
             // find a node
             n = search_bucket( key, b() );
-            if( op_insert ) {
+            if( OpInsert ) {
                 // [opt] insert a key
                 if( !n ) {
                     if( !tmp_n ) {
-                        tmp_n = allocate_node(base_type::get_allocator(), key, t);
+                        tmp_n = allocate_node_helper(key, t, allocate_node, std::integral_constant<bool, OpInsert>{});
                     }
                     if( !b.is_writer() && !b.upgrade_to_writer() ) { // TODO: improved insertion
                         // Rerun search_list, in case another thread inserted the item during the upgrade.
@@ -1239,7 +1281,7 @@ protected:
                     if( !backoff.bounded_pause() ) {
                         // the wait takes really long, restart the operation
                         b.release();
-                        __TBB_ASSERT( !op_insert || !return_value, "Can't acquire new item in locked bucket?" );
+                        __TBB_ASSERT( !OpInsert || !return_value, "Can't acquire new item in locked bucket?" );
                         yield();
                         m = this->my_mask.load(std::memory_order_acquire);
                         goto restart;
@@ -1254,7 +1296,7 @@ protected:
         if( grow_segment ) {
             this->enable_segment( grow_segment );
         }
-        if( tmp_n ) // if op_insert only
+        if( tmp_n ) // if OpInsert only
             delete_node( tmp_n );
         return return_value;
     }
@@ -1270,14 +1312,14 @@ protected:
     template <typename Accessor>
     bool generic_move_insert( Accessor && result, value_type && value ) {
         result.release();
-        return lookup(/*insert*/true, value.first, &value.second, accessor_location(result), is_write_access_needed(result), &allocate_node_move_construct );
+        return lookup</*insert*/true>(value.first, &value.second, accessor_location(result), is_write_access_needed(result), &allocate_node_move_construct);
     }
 
     template <typename Accessor, typename... Args>
     bool generic_emplace( Accessor && result, Args &&... args ) {
         result.release();
         node * node_ptr = create_node(base_type::get_allocator(), std::forward<Args>(args)...);
-        return lookup(/*insert*/true, node_ptr->value().first, nullptr, accessor_location(result), is_write_access_needed(result), &do_not_allocate_node, node_ptr );
+        return lookup</*insert*/true>(node_ptr->value().first, nullptr, accessor_location(result), is_write_access_needed(result), &do_not_allocate_node, node_ptr);
     }
 
     // delete item by accessor
@@ -1323,9 +1365,52 @@ protected:
         return true;
     }
 
+    template <typename K>
+    bool internal_erase( const K& key ) {
+        node_base *erase_node;
+        hashcode_type const hash = my_hash_compare.hash(key);
+        hashcode_type mask = this->my_mask.load(std::memory_order_acquire);
+    restart:
+        {//lock scope
+            // get bucket
+            bucket_accessor b( this, hash & mask );
+        search:
+            node_base* prev = nullptr;
+            erase_node = b()->node_list.load(std::memory_order_relaxed);
+            while (this->is_valid(erase_node) && !my_hash_compare.equal(key, static_cast<node*>(erase_node)->value().first ) ) {
+                prev = erase_node;
+                erase_node = erase_node->next;
+            }
+
+            if (erase_node == nullptr) { // not found, but mask could be changed
+                if (this->check_mask_race(hash, mask))
+                    goto restart;
+                return false;
+            } else if (!b.is_writer() && !b.upgrade_to_writer()) {
+                if (this->check_mask_race(hash, mask)) // contended upgrade, check mask
+                    goto restart;
+                goto search;
+            }
+
+            // remove from container
+            if (prev == nullptr) {
+                b()->node_list.store(erase_node->next, std::memory_order_relaxed);
+            } else {
+                prev->next = erase_node->next;
+            }
+            this->my_size--;
+        }
+        {
+            typename node::scoped_type item_locker( erase_node->mutex, /*write=*/true );
+        }
+        // note: there should be no threads pretending to acquire this mutex again, do not try to upgrade const_accessor!
+        delete_node(erase_node); // Only one thread can delete it due to write lock on the bucket
+        return true;
+    }
+
     // Returns an iterator for an item defined by the key, or for the next item after it (if upper==true)
-    template <typename I>
-    std::pair<I, I> internal_equal_range( const Key& key, I end_ ) const {
+    template <typename K, typename I>
+    std::pair<I, I> internal_equal_range( const K& key, I end_ ) const {
         hashcode_type h = my_hash_compare.hash( key );
         hashcode_type m = this->my_mask.load(std::memory_order_relaxed);
         __TBB_ASSERT((m&(m+1))==0, "data structure is invalid");
