@@ -45,41 +45,41 @@ extern "C" {
 
 /** The "malloc" analogue to allocate block of memory of size bytes.
   * @ingroup memory_allocation */
-void* __TBB_EXPORTED_FUNC scalable_malloc(size_t size);
+TBB_EXPORT void* __TBB_EXPORTED_FUNC scalable_malloc(size_t size);
 
 /** The "free" analogue to discard a previously allocated piece of memory.
     @ingroup memory_allocation */
-void   __TBB_EXPORTED_FUNC scalable_free(void* ptr);
+TBB_EXPORT void   __TBB_EXPORTED_FUNC scalable_free(void* ptr);
 
 /** The "realloc" analogue complementing scalable_malloc.
     @ingroup memory_allocation */
-void* __TBB_EXPORTED_FUNC scalable_realloc(void* ptr, size_t size);
+TBB_EXPORT void* __TBB_EXPORTED_FUNC scalable_realloc(void* ptr, size_t size);
 
 /** The "calloc" analogue complementing scalable_malloc.
     @ingroup memory_allocation */
-void* __TBB_EXPORTED_FUNC scalable_calloc(size_t nobj, size_t size);
+TBB_EXPORT void* __TBB_EXPORTED_FUNC scalable_calloc(size_t nobj, size_t size);
 
 /** The "posix_memalign" analogue.
     @ingroup memory_allocation */
-int __TBB_EXPORTED_FUNC scalable_posix_memalign(void** memptr, size_t alignment, size_t size);
+TBB_EXPORT int __TBB_EXPORTED_FUNC scalable_posix_memalign(void** memptr, size_t alignment, size_t size);
 
 /** The "_aligned_malloc" analogue.
     @ingroup memory_allocation */
-void* __TBB_EXPORTED_FUNC scalable_aligned_malloc(size_t size, size_t alignment);
+TBB_EXPORT void* __TBB_EXPORTED_FUNC scalable_aligned_malloc(size_t size, size_t alignment);
 
 /** The "_aligned_realloc" analogue.
     @ingroup memory_allocation */
-void* __TBB_EXPORTED_FUNC scalable_aligned_realloc(void* ptr, size_t size, size_t alignment);
+TBB_EXPORT void* __TBB_EXPORTED_FUNC scalable_aligned_realloc(void* ptr, size_t size, size_t alignment);
 
 /** The "_aligned_free" analogue.
     @ingroup memory_allocation */
-void __TBB_EXPORTED_FUNC scalable_aligned_free(void* ptr);
+TBB_EXPORT void __TBB_EXPORTED_FUNC scalable_aligned_free(void* ptr);
 
 /** The analogue of _msize/malloc_size/malloc_usable_size.
     Returns the usable size of a memory block previously allocated by scalable_*,
     or 0 (zero) if ptr does not point to such a block.
     @ingroup memory_allocation */
-size_t __TBB_EXPORTED_FUNC scalable_msize(void* ptr);
+TBB_EXPORT size_t __TBB_EXPORTED_FUNC scalable_msize(void* ptr);
 
 /* Results for scalable_allocation_* functions */
 typedef enum {
@@ -106,7 +106,7 @@ typedef enum {
 
 /** Set TBB allocator-specific allocation modes.
     @ingroup memory_allocation */
-int __TBB_EXPORTED_FUNC scalable_allocation_mode(int param, intptr_t value);
+TBB_EXPORT int __TBB_EXPORTED_FUNC scalable_allocation_mode(int param, intptr_t value);
 
 typedef enum {
     /* Clean internal allocator buffers for all threads.
@@ -120,7 +120,7 @@ typedef enum {
 
 /** Call TBB allocator-specific commands.
     @ingroup memory_allocation */
-int __TBB_EXPORTED_FUNC scalable_allocation_command(int cmd, void *param);
+TBB_EXPORT int __TBB_EXPORTED_FUNC scalable_allocation_command(int cmd, void *param);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -176,18 +176,18 @@ enum MemPoolError {
     NO_EFFECT = TBBMALLOC_NO_EFFECT
 };
 
-MemPoolError pool_create_v1(std::intptr_t pool_id, const MemPoolPolicy *policy,
+TBB_EXPORT MemPoolError pool_create_v1(std::intptr_t pool_id, const MemPoolPolicy *policy,
                             rml::MemoryPool **pool);
 
-bool  pool_destroy(MemoryPool* memPool);
-void *pool_malloc(MemoryPool* memPool, std::size_t size);
-void *pool_realloc(MemoryPool* memPool, void *object, std::size_t size);
-void *pool_aligned_malloc(MemoryPool* mPool, std::size_t size, std::size_t alignment);
-void *pool_aligned_realloc(MemoryPool* mPool, void *ptr, std::size_t size, std::size_t alignment);
-bool  pool_reset(MemoryPool* memPool);
-bool  pool_free(MemoryPool *memPool, void *object);
-MemoryPool *pool_identify(void *object);
-std::size_t pool_msize(MemoryPool *memPool, void *object);
+TBB_EXPORT bool  pool_destroy(MemoryPool* memPool);
+TBB_EXPORT void *pool_malloc(MemoryPool* memPool, std::size_t size);
+TBB_EXPORT void *pool_realloc(MemoryPool* memPool, void *object, std::size_t size);
+TBB_EXPORT void *pool_aligned_malloc(MemoryPool* mPool, std::size_t size, std::size_t alignment);
+TBB_EXPORT void *pool_aligned_realloc(MemoryPool* mPool, void *ptr, std::size_t size, std::size_t alignment);
+TBB_EXPORT bool  pool_reset(MemoryPool* memPool);
+TBB_EXPORT bool  pool_free(MemoryPool *memPool, void *object);
+TBB_EXPORT MemoryPool *pool_identify(void *object);
+TBB_EXPORT std::size_t pool_msize(MemoryPool *memPool, void *object);
 
 } // namespace rml
 
