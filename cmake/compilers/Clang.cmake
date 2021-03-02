@@ -12,8 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(TBB_LINK_DEF_FILE_FLAG -Wl,--version-script=)
-set(TBB_DEF_FILE_PREFIX lin${TBB_ARCH})
+if (MINGW)
+    set(TBB_LINK_DEF_FILE_FLAG "")
+    set(TBB_DEF_FILE_PREFIX "")
+elseif (UNIX AND NOT APPLE)
+    set(TBB_LINK_DEF_FILE_FLAG -Wl,--version-script=)
+    set(TBB_DEF_FILE_PREFIX lin${TBB_ARCH})
+endif()
 set(TBB_MMD_FLAG -MMD)
 set(TBB_WARNING_LEVEL -Wall -Wextra $<$<BOOL:${TBB_STRICT}>:-Werror>)
 set(TBB_TEST_WARNING_FLAGS -Wshadow -Wcast-qual -Woverloaded-virtual -Wnon-virtual-dtor)
@@ -31,6 +36,10 @@ set(TBB_COMMON_LINK_LIBS dl)
 
 if (ANDROID_PLATFORM)
     set(TBB_COMMON_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:-D_FORTIFY_SOURCE=2>)
+endif()
+
+if (MINGW)
+    set(TBB_COMMON_COMPILE_FLAGS "${TBB_COMMON_COMPILE_FLAGS} -U __STRICT_ANSI__")
 endif()
 
 # TBB malloc settings
