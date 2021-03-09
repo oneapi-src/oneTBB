@@ -61,7 +61,7 @@ public:
                 cancellation_status = my_context.is_group_execution_cancelled();
             });
         };
-        my_arena.execute([&f]() { return tbb::this_task_arena::isolate(f); });
+        my_arena.execute(f);
         return cancellation_status ? canceled : complete;
     }
 
