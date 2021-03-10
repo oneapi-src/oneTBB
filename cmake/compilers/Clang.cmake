@@ -12,8 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(TBB_LINK_DEF_FILE_FLAG -Wl,--version-script=)
-set(TBB_DEF_FILE_PREFIX lin${TBB_ARCH})
+# --version-script= is not supported on MacOS
+if (APPLE)
+    set(TBB_LINK_DEF_FILE_FLAG -Wl,-exported_symbols_list,)
+    set(TBB_DEF_FILE_PREFIX mac${TBB_ARCH})
+else()
+    set(TBB_LINK_DEF_FILE_FLAG -Wl,--version-script=)
+    set(TBB_DEF_FILE_PREFIX lin${TBB_ARCH})
+endif()
 set(TBB_MMD_FLAG -MMD)
 set(TBB_WARNING_LEVEL -Wall -Wextra $<$<BOOL:${TBB_STRICT}>:-Werror>)
 set(TBB_TEST_WARNING_FLAGS -Wshadow -Wcast-qual -Woverloaded-virtual -Wnon-virtual-dtor)
@@ -25,6 +31,11 @@ endif()
 
 if (CMAKE_SYSTEM_PROCESSOR STREQUAL x86_64)
     set(TBB_COMMON_COMPILE_FLAGS -mrtm)
+endif()
+
+if (APPLE)
+    # For correct ucontext.h structures layout
+    set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -D_XOPEN_SOURCE)
 endif()
 
 set(TBB_COMMON_LINK_LIBS dl)
