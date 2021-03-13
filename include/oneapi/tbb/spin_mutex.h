@@ -148,7 +148,7 @@ inline void set_name(spin_mutex& obj, const wchar_t* name) {
 #endif //WIN
 #else
 inline void set_name(spin_mutex&, const char*) {}
-#if (_WIN32||_WIN64)_
+#if (_WIN32||_WIN64)
 inline void set_name(spin_mutex&, const wchar_t*) {}
 #endif // WIN
 #endif
