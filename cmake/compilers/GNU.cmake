@@ -32,7 +32,9 @@ if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86_64|amd64|AMD64)")
     endif()
 endif()
 
-set(TBB_COMMON_LINK_LIBS dl)
+if (NOT MINGW)
+    set(TBB_COMMON_LINK_LIBS dl)
+endif()
 
 # Ignore -Werror set through add_compile_options() or added to CMAKE_CXX_FLAGS if TBB_STRICT is disabled.
 if (NOT TBB_STRICT AND COMMAND tbb_remove_compile_flag)

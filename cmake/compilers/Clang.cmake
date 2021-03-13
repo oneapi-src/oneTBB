@@ -36,7 +36,9 @@ if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86_64|amd64|AMD64)")
     endif()
 endif()
 
-set(TBB_COMMON_LINK_LIBS dl)
+if (NOT MINGW)
+    set(TBB_COMMON_LINK_LIBS dl)
+endif()
 
 if (ANDROID_PLATFORM)
     set(TBB_COMMON_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:-D_FORTIFY_SOURCE=2>)
