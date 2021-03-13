@@ -23,6 +23,7 @@
 #include <cstdlib>
 #include <utility>
 #else
+#include "oneapi/tbb/detail/_export.h"
 #include <stddef.h> /* Need ptrdiff_t and size_t from here. */
 #if !_MSC_VER
 #include <stdint.h> /* Need intptr_t from here. */
