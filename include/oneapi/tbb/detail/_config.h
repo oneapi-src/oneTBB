@@ -387,7 +387,7 @@
 // instantiation site, which is too late for suppression of the corresponding messages for internal
 // stuff.
 #if !defined(__INTEL_COMPILER) && (!defined(TBB_SUPPRESS_DEPRECATED_MESSAGES) || (TBB_SUPPRESS_DEPRECATED_MESSAGES == 0))
-    #if (__TBB_LANG >= 201402L)
+    #if (__TBB_LANG >= 201402L && (!defined(_MSC_VER) || _MSC_VER >= 1920))
         #define __TBB_DEPRECATED [[deprecated]]
         #define __TBB_DEPRECATED_MSG(msg) [[deprecated(msg)]]
     #elif _MSC_VER
