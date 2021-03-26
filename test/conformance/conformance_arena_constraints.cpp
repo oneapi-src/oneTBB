@@ -15,7 +15,7 @@
 */
 
 //! \file conformance_arena_constraints.cpp
-//! \brief Test for [info_namespace scheduler.task_arena] functionality
+//! \brief Test for [info_namespace scheduler.task_arena] specifications
 
 #include "common/common_arena_constraints.h"
 

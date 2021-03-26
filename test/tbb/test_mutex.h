@@ -19,6 +19,7 @@
 #include "common/utils_concurrency_limit.h"
 #include "common/config.h"
 #include "common/rwm_upgrade_downgrade.h"
+#include <tbb/null_rw_mutex.h>
 
 #include <atomic>
 
@@ -201,3 +202,49 @@ void test_rw() {
 }
 
 } // namespace test_with_native_threads
+
+template <typename RWMutexType>
+void TestIsWriter(const char* mutex_name) {
+    using scoped_lock = typename RWMutexType::scoped_lock;
+
+    RWMutexType rw_mutex;
+    std::string error_message_writer = std::string(mutex_name) + "::scoped_lock is not acquired for write, is_writer should return false";
+    std::string error_message_not_writer = std::string(mutex_name) + "::scoped_lock is acquired for write, is_writer should return true";
+    // Test is_writer after construction
+    {
+        scoped_lock lock(rw_mutex, /*writer = */false);
+        CHECK_MESSAGE(!lock.is_writer(), error_message_writer);
+    }
+    {
+        scoped_lock lock(rw_mutex, /*writer = */true);
+        CHECK_MESSAGE(lock.is_writer(), error_message_not_writer);
+    }
+    // Test is_writer after acquire
+    {
+        scoped_lock lock;
+        lock.acquire(rw_mutex, /*writer = */false);
+        CHECK_MESSAGE(!lock.is_writer(), error_message_writer);
+    }
+    {
+        scoped_lock lock;
+        lock.acquire(rw_mutex, /*writer = */true);
+        CHECK_MESSAGE(lock.is_writer(), error_message_not_writer);
+    }
+    // Test is_writer on upgrade/downgrade
+    {
+        scoped_lock lock(rw_mutex, /*writer = */false);
+        lock.upgrade_to_writer();
+        CHECK_MESSAGE(lock.is_writer(), error_message_not_writer);
+        lock.downgrade_to_reader();
+        CHECK_MESSAGE(!lock.is_writer(), error_message_writer);
+    }
+}
+
+template <>
+void TestIsWriter<oneapi::tbb::null_rw_mutex>( const char* ) {
+    using scoped_lock = typename oneapi::tbb::null_rw_mutex::scoped_lock;
+
+    oneapi::tbb::null_rw_mutex nrw_mutex;
+    scoped_lock l(nrw_mutex);
+    CHECK(l.is_writer());
+}

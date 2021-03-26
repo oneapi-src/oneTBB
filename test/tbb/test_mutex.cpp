@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#define TBB_PREVIEW_MUTEXES 1
 #include "test_mutex.h"
 
 #include <tbb/spin_mutex.h>
@@ -150,4 +151,14 @@ TEST_CASE("test spin_rw_mutex with native threads") {
 TEST_CASE("test queuing_rw_mutex with native threads") {
     test_with_native_threads::test<tbb::queuing_rw_mutex>();
     test_with_native_threads::test_rw<tbb::queuing_rw_mutex>();
+}
+
+//! Test scoped_lock::is_writer getter
+//! \brief \ref error_guessing
+TEST_CASE("scoped_lock::is_writer") {
+    TestIsWriter<oneapi::tbb::spin_rw_mutex>("spin_rw_mutex");
+    TestIsWriter<oneapi::tbb::queuing_rw_mutex>("queuing_rw_mutex");
+    TestIsWriter<oneapi::tbb::speculative_spin_rw_mutex>("speculative_spin_rw_mutex");
+    TestIsWriter<oneapi::tbb::null_rw_mutex>("null_rw_mutex");
+    TestIsWriter<oneapi::tbb::rw_mutex>("rw_mutex");
 }

@@ -153,6 +153,11 @@ public:
         return true;
     }
 
+    bool is_writer() const {
+        __TBB_ASSERT(m_mutex != nullptr, "The mutex is not acquired");
+        return m_is_writer;
+    }
+
 protected:
     //! The pointer to the current mutex that is held, or nullptr if no mutex is held.
     Mutex* m_mutex{};

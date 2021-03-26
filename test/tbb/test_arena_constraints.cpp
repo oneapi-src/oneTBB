@@ -15,7 +15,7 @@
 */
 
 //! \file test_arena_constraints.cpp
-//! \brief Test for [info_namespace scheduler.task_arena] functionality
+//! \brief Test for [info_namespace scheduler.task_arena] specifications
 
 #include "common/common_arena_constraints.h"
 
@@ -186,4 +186,29 @@ TEST_CASE("Test arena constraints setters") {
 
         constraints_comparison(setter_c, assignment_c);
     }
+}
+
+const int custom_concurrency_value = 42;
+void check_concurrency_level(const tbb::task_arena::constraints& c) {
+    REQUIRE_MESSAGE(tbb::info::default_concurrency(c) == custom_concurrency_value,
+        "Custom arena concurrency was passed to constraints, but was not respected by default_concurrency() call.");
+    REQUIRE_MESSAGE(tbb::task_arena{c}.max_concurrency() == custom_concurrency_value,
+        "Custom arena concurrency was passed to constraints, but was not respected by default_concurrency() call.");
+}
+
+//! Testing concurrency getters output for constraints with custom concurrency value
+//! \brief \ref interface \ref error_guessing
+TEST_CASE("Test concurrency getters output for constraints with custom concurrency value") {
+    tbb::task_arena::constraints c{};
+    c.set_max_concurrency(custom_concurrency_value);
+    check_concurrency_level(c);
+
+    c.set_numa_id(tbb::info::numa_nodes().front());
+    check_concurrency_level(c);
+
+    c.set_core_type(tbb::info::core_types().front());
+    check_concurrency_level(c);
+
+    c.set_max_threads_per_core(1);
+    check_concurrency_level(c);
 }

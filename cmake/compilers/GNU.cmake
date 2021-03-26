@@ -12,14 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(TBB_LINK_DEF_FILE_FLAG -Wl,--version-script=)
-set(TBB_DEF_FILE_PREFIX lin${TBB_ARCH})
+if (APPLE)
+    set(TBB_LINK_DEF_FILE_FLAG -Wl,-exported_symbols_list,)
+    set(TBB_DEF_FILE_PREFIX mac${TBB_ARCH})
+
+    # For correct ucontext.h structures layout
+    set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -D_XOPEN_SOURCE)
+else()
+    set(TBB_LINK_DEF_FILE_FLAG -Wl,--version-script=)
+    set(TBB_DEF_FILE_PREFIX lin${TBB_ARCH})
+endif()
+
 set(TBB_WARNING_LEVEL -Wall -Wextra $<$<BOOL:${TBB_STRICT}>:-Werror> -Wfatal-errors)
 set(TBB_TEST_WARNING_FLAGS -Wshadow -Wcast-qual -Woverloaded-virtual -Wnon-virtual-dtor)
 
-set(TBB_MMD_FLAG -MMD)
+# Depfile options (e.g. -MD) are inserted automatically in some cases.
+# Don't add -MMD to avoid conflicts in such cases.
+if (NOT CMAKE_GENERATOR MATCHES "Ninja" AND NOT CMAKE_CXX_DEPENDS_USE_COMPILER)
+    set(TBB_MMD_FLAG -MMD)
+endif()
+
 if (CMAKE_SYSTEM_PROCESSOR STREQUAL x86_64)
-    set(TBB_COMMON_COMPILE_FLAGS -mrtm)
+    set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -mrtm)
 endif()
 
 set(TBB_COMMON_LINK_LIBS dl)

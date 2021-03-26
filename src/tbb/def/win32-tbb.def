@@ -118,6 +118,7 @@ EXPORTS
 ?release@r1@detail@tbb@@YAXAAVscoped_lock@queuing_rw_mutex@d1@23@@Z
 ?try_acquire@r1@detail@tbb@@YA_NAAVqueuing_rw_mutex@d1@23@AAVscoped_lock@4523@_N@Z
 ?upgrade_to_writer@r1@detail@tbb@@YA_NAAVscoped_lock@queuing_rw_mutex@d1@23@@Z
+?is_writer@r1@detail@tbb@@YA_NABVscoped_lock@queuing_rw_mutex@d1@23@@Z
 
 ; Global control (global_control.cpp)
 ?create@r1@detail@tbb@@YAXAAVglobal_control@d1@23@@Z

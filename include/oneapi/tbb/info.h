@@ -107,6 +107,7 @@ inline std::vector<core_type_id> core_types() {
 }
 
 inline int default_concurrency(constraints c) {
+    if (c.max_concurrency > 0) { return c.max_concurrency; }
     return r1::constraints_default_concurrency(c);
 }
 #endif /*__TBB_PREVIEW_TASK_ARENA_CONSTRAINTS_EXTENSION_PRESENT*/

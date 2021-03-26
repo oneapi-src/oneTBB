@@ -38,6 +38,7 @@
 #include <algorithm>
 #include <functional>
 #include <scoped_allocator>
+#include <mutex>
 
 //! \file test_concurrent_hash_map.cpp
 //! \brief Test for [containers.concurrent_hash_map containers.tbb_hash_compare] specification
@@ -805,6 +806,157 @@ void test_heterogeneous_lookup() {
     test_heterogeneous_equal_range();
 }
 
+template <bool SimulateReacquiring>
+class MinimalisticMutex {
+public:
+    class scoped_lock {
+    public:
+        constexpr scoped_lock() noexcept : my_mutex_ptr(nullptr) {}
+
+        scoped_lock( MinimalisticMutex& m, bool = true ) : my_mutex_ptr(&m) {
+            my_mutex_ptr->my_mutex.lock();
+        }
+
+        scoped_lock( const scoped_lock& ) = delete;
+        scoped_lock& operator=( const scoped_lock& ) = delete;
+
+        ~scoped_lock() {
+            if (my_mutex_ptr) release();
+        }
+
+        void acquire( MinimalisticMutex& m, bool = true ) {
+            CHECK(my_mutex_ptr == nullptr);
+            my_mutex_ptr = &m;
+            my_mutex_ptr->my_mutex.lock();
+        }
+
+        bool try_acquire( MinimalisticMutex& m, bool = true ) {
+            if (m.my_mutex.try_lock()) {
+                my_mutex_ptr = &m;
+                return true;
+            }
+            return false;
+        }
+
+        void release() {
+            CHECK(my_mutex_ptr != nullptr);
+            my_mutex_ptr->my_mutex.unlock();
+            my_mutex_ptr = nullptr;
+        }
+
+        bool upgrade_to_writer() const {
+            // upgrade_to_writer should return false if the mutex simulates
+            // reaquiring the lock on upgrade operation
+            return !SimulateReacquiring;
+        }
+
+        bool downgrade_to_reader() const {
+            // downgrade_to_reader should return false if the mutex simulates
+            // reaquiring the lock on upgrade operation
+            return !SimulateReacquiring;
+        }
+
+        bool is_writer() const {
+            CHECK(my_mutex_ptr != nullptr);
+            return true; // Always a writer
+        }
+
+    private:
+        MinimalisticMutex* my_mutex_ptr;
+    }; // class scoped_lock
+private:
+    std::mutex my_mutex;
+}; // class MinimalisticMutex
+
+template <bool SimulateReacquiring>
+void test_with_minimalistic_mutex() {
+    using mutex_type = MinimalisticMutex<SimulateReacquiring>;
+    using chmap_type = tbb::concurrent_hash_map<int, int, tbb::tbb_hash_compare<int>,
+                                                tbb::tbb_allocator<std::pair<const int, int>>,
+                                                mutex_type>;
+
+    chmap_type chmap;
+
+    // Insert pre-existing elements
+    for (int i = 0; i < 100; ++i) {
+        bool result = chmap.emplace(i, i);
+        CHECK(result);
+    }
+
+    // Insert elements to erase
+    for (int i = 10000; i < 10005; ++i) {
+        bool result = chmap.emplace(i, i);
+        CHECK(result);
+    }
+
+    auto thread_body = [&]( const tbb::blocked_range<std::size_t>& range ) {
+        for (std::size_t item = range.begin(); item != range.end(); ++item) {
+            switch(item % 4) {
+                case 0 :
+                    // Insert new elements
+                    for (int i = 100; i < 200; ++i) {
+                        typename chmap_type::const_accessor acc;
+                        chmap.emplace(acc, i, i);
+                        CHECK(acc->first == i);
+                        CHECK(acc->second == i);
+                    }
+                    break;
+                case 1 :
+                    // Insert pre-existing elements
+                    for (int i = 0; i < 100; ++i) {
+                        typename chmap_type::const_accessor acc;
+                        bool result = chmap.emplace(acc, i, i * 10000);
+                        CHECK(!result);
+                        CHECK(acc->first == i);
+                        CHECK(acc->second == i);
+                    }
+                    break;
+                case 2 :
+                    // Find pre-existing elements
+                    for (int i = 0; i < 100; ++i) {
+                        typename chmap_type::const_accessor acc;
+                        bool result = chmap.find(acc, i);
+                        CHECK(result);
+                        CHECK(acc->first == i);
+                        CHECK(acc->second == i);
+                    }
+                    break;
+                case 3 :
+                    // Erase pre-existing elements
+                    for (int i = 10000; i < 10005; ++i) {
+                        chmap.erase(i);
+                    }
+                break;
+            }
+        }
+    }; // thread_body
+
+    tbb::blocked_range<std::size_t> br(0, 1000, 8);
+
+    tbb::parallel_for(br, thread_body);
+
+    // Check pre-existing and new elements
+    for (int i = 0; i < 200; ++i) {
+        typename chmap_type::const_accessor acc;
+        bool result = chmap.find(acc, i);
+        REQUIRE_MESSAGE(result, "Some element was unexpectedly removed or not inserted");
+        REQUIRE_MESSAGE(acc->first == i, "Incorrect key");
+        REQUIRE_MESSAGE(acc->second == i, "Incorrect value");
+    }
+
+    // Check elements for erasure
+    for (int i = 10000; i < 10005; ++i) {
+        typename chmap_type::const_accessor acc;
+        bool result = chmap.find(acc, i);
+        REQUIRE_MESSAGE(!result, "Some element was not removed");
+    }
+}
+
+void test_mutex_customization() {
+    test_with_minimalistic_mutex</*SimulateReacquiring = */false>();
+    test_with_minimalistic_mutex</*SimulateReacquiring = */true>();
+}
+
 //! Test of insert operation
 //! \brief \ref error_guessing
 TEST_CASE("testing range based for support"){
@@ -917,4 +1069,9 @@ TEST_CASE("test concurrent_hash_map heterogeneous insert") {
 //! \brief \ref error_guessing
 TEST_CASE("test concurrent_hash_map heterogeneous erase") {
     test_heterogeneous_erase();
+}
+
+//! \brief \ref error_guessing
+TEST_CASE("test concurrent_hash_map mutex customization") {
+    test_mutex_customization();
 }
