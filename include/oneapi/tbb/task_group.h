@@ -27,7 +27,8 @@
 
 #include "profiling.h"
 
-#include <functional>
+#include <memory>
+#include <type_traits>
 
 #if _MSC_VER && !defined(__INTEL_COMPILER)
     // Suppress warning: structure was padded due to alignment specifier
@@ -310,12 +311,34 @@ class structured_task_group;
 class isolated_task_group;
 #endif
 
+namespace {
+    template <typename F>
+    struct is_void_return : std::is_void< typename std::result_of<F()>::type > {};
+
+    template<typename F>
+    task* return_value_or_nullptr_impl(std::false_type, F&& f){
+        task_handle th = std::forward<F>(f)();
+        return th.release();
+    }
+
+    template<typename F>
+    task* return_value_or_nullptr_impl(std::true_type, F&& f){
+        std::forward<F>(f)();
+        return nullptr;
+    }
+
+    template<typename F>
+    task* return_value_or_nullptr(F&& f){
+        return  return_value_or_nullptr_impl(is_void_return<F>{}, std::forward<F>(f));
+    }
+}
+
 template<typename F>
 class function_task : public task {
     const F m_func;
     wait_context& m_wait_ctx;
     small_object_allocator m_allocator;
-
+public:
     void finalize(const execution_data& ed) {
         // Make a local reference not to access this after destruction.
         wait_context& wo = m_wait_ctx;
@@ -327,10 +350,12 @@ class function_task : public task {
 
         allocator.deallocate(this, ed);
     }
+private:
     task* execute(execution_data& ed) override {
-        m_func();
+        task* res = return_value_or_nullptr(m_func);
+
         finalize(ed);
-        return nullptr;
+        return res;
     }
     task* cancel(execution_data& ed) override {
         finalize(ed);
@@ -357,9 +382,9 @@ class function_stack_task : public task {
         m_wait_ctx.release();
     }
     task* execute(execution_data&) override {
-        m_func();
+        task* res = return_value_or_nullptr(m_func);
         finalize();
-        return nullptr;
+        return res;
     }
     task* cancel(execution_data&) override {
         finalize();
@@ -372,34 +397,58 @@ public:
 class task_group_base : no_copy {
 protected:
     wait_context m_wait_ctx;
-    task_group_context m_context;
+    task_group_context m_own_context;
+    task_group_context* m_context{nullptr};
 
     template<typename F>
     task_group_status internal_run_and_wait(const F& f) {
         function_stack_task<F> t{ f, m_wait_ctx };
         m_wait_ctx.reserve();
         bool cancellation_status = false;
+        __TBB_ASSERT(m_context, nullptr);
         try_call([&] {
-            execute_and_wait(t, m_context, m_wait_ctx, m_context);
+            execute_and_wait(t, *m_context, m_wait_ctx, *m_context);
         }).on_completion([&] {
             // TODO: the reset method is not thread-safe. Ensure the correct behavior.
-            cancellation_status = m_context.is_group_execution_cancelled();
-            m_context.reset();
+            cancellation_status = m_context->is_group_execution_cancelled();
+            m_context->reset();
         });
         return cancellation_status ? canceled : complete;
     }
 
     template<typename F>
-    task* prepare_task(F&& f) {
+    auto prepare_task(F&& f) -> function_task<typename std::decay<F>::type>*{
         m_wait_ctx.reserve();
         small_object_allocator alloc{};
         return alloc.new_object<function_task<typename std::decay<F>::type>>(std::forward<F>(f), m_wait_ctx, alloc);
     }
 
+    template<typename F>
+    task_handle prepare_task_handle(F&& f) {
+        m_wait_ctx.reserve();
+        small_object_allocator alloc{};
+        using function_task_t =  function_task<typename std::decay<F>::type>;
+        auto* function_task_p =  alloc.new_object<function_task_t>(std::forward<F>(f), m_wait_ctx, alloc);
+
+        return task_handle {function_task_p, [alloc, this](task* t) mutable {
+            alloc.delete_object(static_cast<function_task_t*>(t));
+            m_wait_ctx.release();
+        }};
+    }
+
+
 public:
     task_group_base(uintptr_t traits = 0)
         : m_wait_ctx(0)
-        , m_context(task_group_context::bound, task_group_context::default_traits | traits)
+        , m_own_context(task_group_context::bound, task_group_context::default_traits | traits)
+        , m_context(&m_own_context)
+    {
+    }
+
+    task_group_base(task_group_context& ctx)
+        : m_wait_ctx(0)
+        , m_own_context()
+        , m_context(&ctx)
     {
     }
 
@@ -410,40 +459,58 @@ public:
 #else
             bool stack_unwinding_in_progress = std::uncaught_exception();
 #endif
+            __TBB_ASSERT(m_context, nullptr);
             // Always attempt to do proper cleanup to avoid inevitable memory corruption
             // in case of missing wait (for the sake of better testability & debuggability)
-            if (!m_context.is_group_execution_cancelled())
+            if (!m_context->is_group_execution_cancelled())
                 cancel();
-            d1::wait(m_wait_ctx, m_context);
+            d1::wait(m_wait_ctx, *m_context);
             if (!stack_unwinding_in_progress)
                 throw_exception(exception_id::missing_wait);
         }
     }
 
     task_group_status wait() {
+        __TBB_ASSERT(m_context, nullptr);
         bool cancellation_status = false;
         try_call([&] {
-            d1::wait(m_wait_ctx, m_context);
+            d1::wait(m_wait_ctx, *m_context);
         }).on_completion([&] {
             // TODO: the reset method is not thread-safe. Ensure the correct behavior.
-            cancellation_status = m_context.is_group_execution_cancelled();
-            m_context.reset();
+            cancellation_status = m_context->is_group_execution_cancelled();
+            m_context->reset();
         });
         return cancellation_status ? canceled : complete;
     }
 
     void cancel() {
-        m_context.cancel_group_execution();
+        __TBB_ASSERT(m_context, nullptr);
+        m_context->cancel_group_execution();
     }
 }; // class task_group_base
 
 class task_group : public task_group_base {
 public:
     task_group() : task_group_base(task_group_context::concurrent_wait) {}
+    task_group(task_group_context& ctx) : task_group_base(ctx) {}
 
     template<typename F>
     void run(F&& f) {
-        spawn(*prepare_task(std::forward<F>(f)), m_context);
+        __TBB_ASSERT(m_context, nullptr);
+        spawn(*prepare_task(std::forward<F>(f)), *m_context);
+    }
+
+    void run(task_handle& h) {
+        task* t = h.release();
+        __TBB_ASSERT(t, "Attempt running empty task_handle.");
+        __TBB_ASSERT(m_context, nullptr);
+        spawn(*t, *m_context);
+    }
+
+    template<typename F>
+    task_handle defer(F&& f) {
+        return prepare_task_handle(std::forward<F>(f));
+
     }
 
     template<typename F>
@@ -500,7 +567,8 @@ public:
 
     template<typename F>
     void run(F&& f) {
-        spawn_delegate sd(prepare_task(std::forward<F>(f)), m_context);
+        __TBB_ASSERT(m_context, nullptr);
+        spawn_delegate sd(prepare_task(std::forward<F>(f)), *m_context);
         r1::isolate_within_arena(sd, this_isolation());
     }
 
@@ -545,6 +613,8 @@ using detail::d1::canceled;
 
 using detail::d1::is_current_task_group_canceling;
 using detail::r1::missing_wait;
+
+using detail::d1::task_handle;
 }
 
 } // namespace tbb

@@ -233,6 +233,11 @@ class task_arena : public task_arena_base {
         r1::enqueue(*alloc.new_object<enqueue_task<typename std::decay<F>::type>>(std::forward<F>(f), alloc), this);
     }
 
+    void enqueue_impl(task_handle&& th) {
+        initialize();
+        r1::enqueue(*th.release(), this);
+    }
+
     template<typename R, typename F>
     R execute_impl(F& f) {
         initialize();
@@ -370,6 +375,13 @@ public:
         enqueue_impl(std::forward<F>(f));
     }
 
+    //! Enqueues a task into the arena to process a functor, and immediately returns.
+    //! Does not require the calling thread to join the arena
+
+    void enqueue(task_handle&& th) {
+        enqueue_impl(std::move(th));
+    }
+
     //! Joins the arena and executes a mutable functor, then returns
     //! If not possible to join, wraps the functor into a task, enqueues it and waits for task completion
     //! Can decrement the arena demand for workers, causing a worker to leave and free a slot to the calling thread
@@ -427,9 +439,19 @@ inline int current_thread_index() {
     return idx == -1 ? task_arena_base::not_initialized : idx;
 }
 
+//! Returns the index, aka slot number, of the calling thread in its current arena
+inline bool is_inside_task() {
+    return nullptr != current_context();
+}
+
 //! Returns the maximal number of threads that can work inside the arena
 inline int max_concurrency() {
     return r1::max_concurrency(nullptr);
+}
+
+inline void enqueue(task_handle&& th) {
+    task_arena arena( task_arena::attach {});
+    return arena.enqueue(std::move(th));
 }
 
 using r1::submit;
@@ -440,10 +462,13 @@ using r1::submit;
 inline namespace v1 {
 using detail::d1::task_arena;
 
+using detail::d1::is_inside_task;
+
 namespace this_task_arena {
 using detail::d1::current_thread_index;
 using detail::d1::max_concurrency;
 using detail::d1::isolate;
+using detail::d1::enqueue;
 } // namespace this_task_arena
 
 } // inline namespace v1

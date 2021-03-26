@@ -42,6 +42,8 @@ namespace utils {
 
 #define utils_fallthrough __TBB_fallthrough
 
+using tbb::detail::try_call;
+
 template<typename It>
 typename std::iterator_traits<It>::value_type median(It first, It last) {
     std::sort(first, last);

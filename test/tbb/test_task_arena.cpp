@@ -31,6 +31,7 @@
 #include "tbb/concurrent_set.h"
 #include "tbb/spin_mutex.h"
 #include "tbb/spin_rw_mutex.h"
+#include "tbb/task_group.h"
 
 #include <stdexcept>
 #include <cstdlib>
@@ -1874,4 +1875,59 @@ TEST_CASE("Workers oversubscription") {
             }
         );
     });
+}
+
+TEST_CASE("enqueue task_handle") {
+    tbb::task_arena arena;
+    tbb::task_group tg;
+
+    std::atomic<bool> run{false};
+
+    auto task_handle = tg.defer([&]{ run = true;});
+
+    arena.enqueue(std::move(task_handle));
+    tg.wait();
+
+    ASSERT(run == true, "");
+
+}
+
+TEST_CASE("this_task_arena::enqueue task_handle") {
+    tbb::task_arena arena;
+    tbb::task_group tg;
+
+    std::atomic<bool> run{false};
+
+    arena.execute([&]{
+
+        auto task_handle = tg.defer([&]{ run = true;});
+
+        tbb::this_task_arena::enqueue(std::move(task_handle));
+    });
+
+    tg.wait();
+
+    ASSERT(run == true, "");
+
+}
+
+TEST_CASE("is_inside_task in task_group"){
+    ASSERT( false == tbb::is_inside_task(), "");
+
+    tbb::task_group tg;
+    tg.run_and_wait([&]{
+        ASSERT( true == tbb::is_inside_task(), "");
+    });
+}
+
+TEST_CASE("is_inside_task in arena::execute"){
+    ASSERT( false == tbb::is_inside_task(), "");
+
+//    FIXME: seems that test
+    tbb::task_arena arena;
+
+    arena.execute([&]{
+        ASSERT( false == tbb::is_inside_task(), "");
+    });
+
 }

@@ -30,6 +30,7 @@
 #include <utility>
 #include <atomic>
 #include <mutex>
+#include <functional>
 
 namespace tbb {
 namespace detail {
@@ -229,6 +230,9 @@ private:
     friend struct r1::task_accessor;
 };
 static_assert(sizeof(task) == task_alignment, "task size is broken");
+
+
+using task_handle = std::unique_ptr<task, std::function<void(task*)>>;
 
 } // namespace d1
 } // namespace detail

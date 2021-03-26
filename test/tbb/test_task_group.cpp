@@ -979,3 +979,189 @@ TEST_CASE("Async task group") {
         });
     });
 }
+
+TEST_CASE("Task handle created but not run"){
+    {
+        tbb::task_group tg;
+
+        std::atomic<bool> run {false};
+
+        auto h = tg.defer([&]{
+            run = true;
+        });
+        ASSERT(run == false, "delayed task should not be run until run(task_handle) is called");
+    }
+}
+
+TEST_CASE("Task handle run"){
+    tbb::task_handle h;
+
+    tbb::task_group tg;
+    std::atomic<bool> run {false};
+
+    h = tg.defer([&]{
+        run = true;
+    });
+    ASSERT(run == false, "delayed task should not be run until run(task_handle) is called");
+    tg.run(h);
+    tg.wait();
+    ASSERT(run == true, "Delayed task should be completed when task_group::wait exits");
+}
+
+TEST_CASE("Task handle empty check"){
+    tbb::task_group tg;
+
+    tbb::task_handle h;
+
+    bool empty = (h == nullptr);
+    ASSERT(empty, "default constructed task_handle should be empty");
+
+    h = tg.defer([]{});
+
+    ASSERT(h != nullptr, "delayed task returned by task_group::delayed should not be empty");
+}
+
+TEST_CASE("Task handle blocks wait"){
+    tbb::task_group tg;
+
+    std::atomic<bool> completed  {false};
+    std::atomic<bool> start_wait {false};
+    std::atomic<bool> thread_started{false};
+
+    tbb::task_handle h = tg.defer([&]{
+        completed = true;
+    });
+
+    std::thread wait_thread {[&]{
+        ASSERT(completed == false, "Deferred task should not be run until run(task_handle) is called");
+
+        thread_started = true;
+        utils::SpinWaitUntilEq(start_wait, true);
+        tg.wait();
+        ASSERT(completed == true, "Deferred task should be completed when task_group::wait exits");
+    }};
+
+    utils::SpinWaitUntilEq(thread_started, true);
+    ASSERT(completed == false, "Deferred task should not be run until run(task_handle) is called");
+
+    tg.run(h);
+    //TODO: more accurate test (with fixed number of threads (1 ?) to guarantee correctness of following assert)
+    //ASSERT(completed == false, "Deferred task should not be run until run(task_handle) and wait is called");
+    start_wait = true;
+    wait_thread.join();
+}
+
+TEST_CASE("Task handle for scheduler bypass"){
+    tbb::task_group tg;
+    std::atomic<bool> run {false};
+
+    tg.run([&]{
+        return tg.defer([&]{
+            run = true;
+        });
+    });
+
+    tg.wait();
+    ASSERT(run == true, "task handle returned by user lambda (bypassed) should be run");
+}
+
+TEST_CASE("Task handle for scheduler bypass via run_and_wait"){
+    tbb::task_group tg;
+    std::atomic<bool> run {false};
+
+    tg.run_and_wait([&]{
+        return tg.defer([&]{
+            run = true;
+        });
+    });
+
+    ASSERT(run == true, "task handle returned by user lambda (bypassed) should be run");
+}
+
+struct SelfRunner {
+    tbb::task_group& m_tg;
+    std::atomic<unsigned>& count;
+    void operator()() const {
+        unsigned previous_count = count.fetch_sub(1);
+        if (previous_count > 1)
+            m_tg.run( *this );
+    }
+};
+
+//! Submit work to single task_group instance from inside the work
+//! \brief \ref error_guessing
+TEST_CASE("Run self using same task_group instance") {
+    const unsigned num = 10;
+    std::atomic<unsigned> count{num};
+    tbb::task_group tg;
+    SelfRunner uf{tg, count};
+    tg.run( uf );
+    tg.wait();
+    CHECK_MESSAGE(
+        count == 0,
+        "Not all tasks were spawned from inside the functor running within task_group."
+    );
+}
+
+//! Respect task_group_context passed from outside
+//! \brief \ref interface \ref requirement
+TEST_CASE("Respect task_group_context passed from outside") {
+    std::atomic<bool> outer_cancelled{false};
+    bool implicit_cancel = true;
+    std::atomic<unsigned> count{13};
+
+    tbb::task_group_context inner_ctx(tbb::task_group_context::isolated);
+    tbb::task_group inner_tg(inner_ctx);
+
+    tbb::task_group outer_tg;
+    auto outer_tg_task = [&] {
+        inner_tg.run([&] {
+            utils::SpinWaitUntilEq(outer_cancelled, true);
+            inner_tg.run( SelfRunner{inner_tg, count} );
+        });
+
+        utils::try_call([&] {
+            if (implicit_cancel) {
+                throw int();
+            } else {
+                outer_tg.cancel();
+            }
+        }).on_completion([&] {
+            outer_cancelled = true;
+        });
+    };
+
+    auto check = [&] {
+        tbb::task_group_status outer_status = tbb::task_group_status::not_complete;
+        if (implicit_cancel) {
+            try {
+                outer_status = outer_tg.wait();
+            } catch(const int&) {
+                outer_status = tbb::task_group_status::canceled;
+            }
+        } else
+            outer_status = outer_tg.wait();
+        CHECK_MESSAGE(
+            outer_status == tbb::task_group_status::canceled,
+            "Outer task group should have been cancelled."
+        );
+
+        tbb::task_group_status inner_status = inner_tg.wait();
+        CHECK_MESSAGE(
+            inner_status == tbb::task_group_status::complete,
+            "Inner task group should have completed despite the cancellation of the outer one."
+        );
+
+        CHECK_MESSAGE(0 == count, "Some of the inner group tasks were not executed.");
+    };
+
+    outer_tg.run(outer_tg_task);
+    check();
+
+    count = 10;
+    implicit_cancel = false;
+    outer_cancelled = false;
+
+    outer_tg.run(outer_tg_task);
+    check();
+}
