@@ -44,6 +44,10 @@ enum class exception_id {
 };
 } // namespace d0
 
+#if _MSC_VER
+    #pragma warning(disable: 4275)
+#endif
+
 namespace r1 {
 //! Exception for concurrent containers
 class TBB_EXPORT bad_last_alloc : public std::bad_alloc {
