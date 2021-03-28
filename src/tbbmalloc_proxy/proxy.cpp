@@ -38,6 +38,7 @@
 #include "proxy.h"
 
 #include "oneapi/tbb/detail/_config.h"
+#include "oneapi/tbb/scalable_allocator.h"
 #include "../tbb/environment.h"
 
 #if !defined(__EXCEPTIONS) && !defined(_CPPUNWIND) && !defined(__SUNPRO_CC)
