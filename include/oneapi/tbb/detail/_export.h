@@ -17,16 +17,24 @@
 #ifndef __TBB_detail__export_H
 #define __TBB_detail__export_H
 
-#if (__TBB_BUILD || __TBBMALLOC_BUILD || __TBBMALLOCPROXY_BUILD || __TBBBIND_BUILD)
-    #if _WIN32
-        #define TBB_EXPORT __declspec(dllexport)
-    #elif __unix__
-        #define TBB_EXPORT __attribute__((visibility("default")))
-    #else
-        #error "Unknown platform/compiler"
-    #endif
+#if _WIN32
+    #define _EXPORT __declspec(dllexport)
+#elif __unix__
+    #define _EXPORT __attribute__((visibility("default")))
+#else
+    #error "Unknown platform/compiler"
+#endif
+
+#if __TBB_BUILD
+    #define TBB_EXPORT _EXPORT
 #else
     #define TBB_EXPORT
+#endif
+
+#if __TBBMALLOC_BUILD
+    #define TBBMALLOC_EXPORT _EXPORT
+#else
+    #define TBBMALLOC_EXPORT
 #endif
 
 #endif
