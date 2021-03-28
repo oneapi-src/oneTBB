@@ -30,9 +30,9 @@ namespace tbb {
 namespace detail {
 
 namespace r1 {
-TBBMALLOC_EXPORT void* __TBB_EXPORTED_FUNC allocate_memory(std::size_t size);
-TBBMALLOC_EXPORT void  __TBB_EXPORTED_FUNC deallocate_memory(void* p);
-TBBMALLOC_EXPORT bool  __TBB_EXPORTED_FUNC is_tbbmalloc_used();
+TBB_EXPORT void* __TBB_EXPORTED_FUNC allocate_memory(std::size_t size);
+TBB_EXPORT void  __TBB_EXPORTED_FUNC deallocate_memory(void* p);
+TBB_EXPORT bool  __TBB_EXPORTED_FUNC is_tbbmalloc_used();
 }
 
 namespace d1 {
