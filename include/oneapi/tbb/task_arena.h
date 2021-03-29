@@ -439,7 +439,6 @@ inline int current_thread_index() {
     return idx == -1 ? task_arena_base::not_initialized : idx;
 }
 
-//! Returns the index, aka slot number, of the calling thread in its current arena
 inline bool is_inside_task() {
     return nullptr != current_context();
 }

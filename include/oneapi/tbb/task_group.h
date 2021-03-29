@@ -338,7 +338,7 @@ class function_task : public task {
     const F m_func;
     wait_context& m_wait_ctx;
     small_object_allocator m_allocator;
-public:
+
     void finalize(const execution_data& ed) {
         // Make a local reference not to access this after destruction.
         wait_context& wo = m_wait_ctx;
@@ -500,7 +500,7 @@ public:
         spawn(*prepare_task(std::forward<F>(f)), *m_context);
     }
 
-    void run(task_handle& h) {
+    void run(task_handle&& h) {
         task* t = h.release();
         __TBB_ASSERT(t, "Attempt running empty task_handle.");
         __TBB_ASSERT(m_context, nullptr);

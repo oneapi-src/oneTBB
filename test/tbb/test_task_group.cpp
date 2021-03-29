@@ -1003,7 +1003,7 @@ TEST_CASE("Task handle run"){
         run = true;
     });
     ASSERT(run == false, "delayed task should not be run until run(task_handle) is called");
-    tg.run(h);
+    tg.run(std::move(h));
     tg.wait();
     ASSERT(run == true, "Delayed task should be completed when task_group::wait exits");
 }
@@ -1044,7 +1044,7 @@ TEST_CASE("Task handle blocks wait"){
     utils::SpinWaitUntilEq(thread_started, true);
     ASSERT(completed == false, "Deferred task should not be run until run(task_handle) is called");
 
-    tg.run(h);
+    tg.run(std::move(h));
     //TODO: more accurate test (with fixed number of threads (1 ?) to guarantee correctness of following assert)
     //ASSERT(completed == false, "Deferred task should not be run until run(task_handle) and wait is called");
     start_wait = true;
