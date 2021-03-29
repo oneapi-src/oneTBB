@@ -37,4 +37,10 @@
     #define TBBMALLOC_EXPORT
 #endif
 
+#if __TBBBIND_BUILD
+    #define TBBBIND_EXPORT _EXPORT
+#else
+    #define TBBBIND_EXPORT
+#endif
+
 #endif

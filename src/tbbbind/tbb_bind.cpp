@@ -438,7 +438,7 @@ public:
 
 extern "C" { // exported to TBB interfaces
 
-TBB_EXPORT void __TBB_internal_initialize_system_topology(
+TBBBIND_EXPORT void __TBB_internal_initialize_system_topology(
     std::size_t groups_num,
     int& numa_nodes_count, int*& numa_indexes_list,
     int& core_types_count, int*& core_types_indexes_list
@@ -450,27 +450,27 @@ TBB_EXPORT void __TBB_internal_initialize_system_topology(
     );
 }
 
-TBB_EXPORT binding_handler* __TBB_internal_allocate_binding_handler(int number_of_slots, int numa_id, int core_type_id, int max_threads_per_core) {
+TBBBIND_EXPORT binding_handler* __TBB_internal_allocate_binding_handler(int number_of_slots, int numa_id, int core_type_id, int max_threads_per_core) {
     __TBB_ASSERT(number_of_slots > 0, "Trying to create numa handler for 0 threads.");
     return new binding_handler(number_of_slots, numa_id, core_type_id, max_threads_per_core);
 }
 
-TBB_EXPORT void __TBB_internal_deallocate_binding_handler(binding_handler* handler_ptr) {
+TBBBIND_EXPORT void __TBB_internal_deallocate_binding_handler(binding_handler* handler_ptr) {
     __TBB_ASSERT(handler_ptr != nullptr, "Trying to deallocate nullptr pointer.");
     delete handler_ptr;
 }
 
-TBB_EXPORT void __TBB_internal_apply_affinity(binding_handler* handler_ptr, int slot_num) {
+TBBBIND_EXPORT void __TBB_internal_apply_affinity(binding_handler* handler_ptr, int slot_num) {
     __TBB_ASSERT(handler_ptr != nullptr, "Trying to get access to uninitialized metadata.");
     handler_ptr->apply_affinity(slot_num);
 }
 
-TBB_EXPORT void __TBB_internal_restore_affinity(binding_handler* handler_ptr, int slot_num) {
+TBBBIND_EXPORT void __TBB_internal_restore_affinity(binding_handler* handler_ptr, int slot_num) {
     __TBB_ASSERT(handler_ptr != nullptr, "Trying to get access to uninitialized metadata.");
     handler_ptr->restore_previous_affinity_mask(slot_num);
 }
 
-TBB_EXPORT int __TBB_internal_get_default_concurrency(int numa_id, int core_type_id, int max_threads_per_core) {
+TBBBIND_EXPORT int __TBB_internal_get_default_concurrency(int numa_id, int core_type_id, int max_threads_per_core) {
     return platform_topology::instance().get_default_concurrency(numa_id, core_type_id, max_threads_per_core);
 }
 
