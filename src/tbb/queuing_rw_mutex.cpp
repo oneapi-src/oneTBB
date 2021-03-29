@@ -523,6 +523,10 @@ struct queuing_rw_mutex_impl {
         return result;
     }
 
+    static bool is_writer(const d1::queuing_rw_mutex::scoped_lock& m) {
+        return m.my_state.load(std::memory_order_relaxed) == STATE_WRITER;
+    }
+
     static void construct(d1::queuing_rw_mutex& m) {
         suppress_unused_warning(m);
         ITT_SYNC_CREATE(&m, _T("tbb::queuing_rw_mutex"), _T(""));
@@ -543,6 +547,10 @@ void __TBB_EXPORTED_FUNC release(d1::queuing_rw_mutex::scoped_lock& s) {
 
 bool __TBB_EXPORTED_FUNC upgrade_to_writer(d1::queuing_rw_mutex::scoped_lock& s) {
     return queuing_rw_mutex_impl::upgrade_to_writer(s);
+}
+
+bool __TBB_EXPORTED_FUNC is_writer(const d1::queuing_rw_mutex::scoped_lock& s) {
+    return queuing_rw_mutex_impl::is_writer(s);
 }
 
 bool __TBB_EXPORTED_FUNC downgrade_to_reader(d1::queuing_rw_mutex::scoped_lock& s) {

@@ -115,8 +115,8 @@ protected:
 
     template <typename Pred>
     void sleep(std::uintptr_t uniq_tag, Pred wakeup_condition) {
-        my_arena.my_market->get_wait_list().wait<extended_concurrent_monitor::thread_context>(wakeup_condition,
-            extended_context{uniq_tag, &my_arena});
+        my_arena.my_market->get_wait_list().wait<market_concurrent_monitor::thread_context>(wakeup_condition,
+            market_context{uniq_tag, &my_arena});
     }
 };
 

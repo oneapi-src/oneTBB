@@ -15,11 +15,23 @@
 if (MINGW)
     set(TBB_LINK_DEF_FILE_FLAG "")
     set(TBB_DEF_FILE_PREFIX "")
-elseif (UNIX AND NOT APPLE)
+elseif (APPLE)
+    set(TBB_LINK_DEF_FILE_FLAG -Wl,-exported_symbols_list,)
+    set(TBB_DEF_FILE_PREFIX mac${TBB_ARCH})
+
+    # For correct ucontext.h structures layout
+    set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -D_XOPEN_SOURCE)
+else()
     set(TBB_LINK_DEF_FILE_FLAG -Wl,--version-script=)
     set(TBB_DEF_FILE_PREFIX lin${TBB_ARCH})
 endif()
-set(TBB_MMD_FLAG -MMD)
+
+# Depfile options (e.g. -MD) are inserted automatically in some cases.
+# Don't add -MMD to avoid conflicts in such cases.
+if (NOT CMAKE_GENERATOR MATCHES "Ninja" AND NOT CMAKE_CXX_DEPENDS_USE_COMPILER)
+    set(TBB_MMD_FLAG -MMD)
+endif()
+
 set(TBB_WARNING_LEVEL -Wall -Wextra $<$<BOOL:${TBB_STRICT}>:-Werror>)
 set(TBB_TEST_WARNING_FLAGS -Wshadow -Wcast-qual -Woverloaded-virtual -Wnon-virtual-dtor)
 
@@ -41,7 +53,7 @@ if (NOT MINGW)
 endif()
 
 if (ANDROID_PLATFORM)
-    set(TBB_COMMON_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:-D_FORTIFY_SOURCE=2>)
+    set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} $<$<NOT:$<CONFIG:Debug>>:-D_FORTIFY_SOURCE=2>)
 endif()
 
 if (MINGW)

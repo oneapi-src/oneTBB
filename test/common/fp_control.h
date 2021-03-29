@@ -14,6 +14,9 @@
     limitations under the License.
 */
 
+#ifndef __TBB_test_common_fp_control_H_
+#define __TBB_test_common_fp_control_H_
+
 #include "common/test.h"
 #include "oneapi/tbb/detail/_machine.h"
 
@@ -164,3 +167,4 @@ public:
         AssertFPMode(currentMode);
     }
 };
+#endif // __TBB_test_common_memory_usagae_H_

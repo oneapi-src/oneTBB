@@ -1271,8 +1271,7 @@ TEST_CASE("testing move assign operator"){
 
 //! Test insert and empace
 //! \brief \ref interface \ref requirement
-TEST_CASE("testing concurrency"){
-    oneapi::tbb::global_control limit(oneapi::tbb::global_control::max_allowed_parallelism, 1);
+TEST_CASE("testing concurrent insert and emplace"){
     int n=250000;
     {
         DataStateTrackedTable table;

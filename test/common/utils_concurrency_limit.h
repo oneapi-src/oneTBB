@@ -21,6 +21,8 @@
 #include "utils_assert.h"
 #include "utils_report.h"
 #include "oneapi/tbb/task_arena.h"
+#include "oneapi/tbb/task_scheduler_observer.h"
+#include "oneapi/tbb/enumerable_thread_specific.h"
 
 #include <cstddef>
 #include <vector>
@@ -164,7 +166,145 @@ int limit_number_of_threads( int max_threads ) {
 
 #endif // __TBB_TEST_SKIP_AFFINITY
 
+#define OS_AFFINITY_SYSCALL_PRESENT ((__linux__ && !__ANDROID__) || (__FreeBSD_version >= 701000))
+
+#if OS_AFFINITY_SYSCALL_PRESENT
+void get_thread_affinity_mask(std::size_t& ncpus, std::vector<int>& free_indexes) {
+    cpu_set_t* mask = nullptr;
+    ncpus = sizeof(cpu_set_t) * CHAR_BIT;
+    do {
+        mask = CPU_ALLOC(ncpus);
+        if (!mask) break;
+        const size_t size = CPU_ALLOC_SIZE(ncpus);
+        CPU_ZERO_S(size, mask);
+        const int err = sched_getaffinity(0, size, mask);
+        if (!err) break;
+
+        CPU_FREE(mask);
+        mask = NULL;
+        if (errno != EINVAL) break;
+        ncpus <<= 1;
+    } while (ncpus < 16 * 1024 /* some reasonable limit */ );
+    ASSERT(mask, "Failed to obtain process affinity mask.");
+
+    const size_t size = CPU_ALLOC_SIZE(ncpus);
+    const int num_cpus = CPU_COUNT_S(size, mask);
+    for (int i = 0; i < num_cpus; ++i) {
+        if (CPU_ISSET_S(i, size, mask)) {
+            free_indexes.push_back(i);
+        }
+    }
+
+    CPU_FREE(mask);
+}
+
+void pin_thread_imp(std::size_t ncpus, std::vector<int>& free_indexes, std::atomic<int>& curr_idx) {
+    const size_t size = CPU_ALLOC_SIZE(ncpus);
+
+    ASSERT(free_indexes.size() > 0, nullptr);
+    int mapped_idx = free_indexes[curr_idx++ % free_indexes.size()];
+
+    cpu_set_t *target_mask = CPU_ALLOC(ncpus);
+    ASSERT(target_mask, nullptr);
+    CPU_ZERO_S(size, target_mask);
+    CPU_SET_S(mapped_idx, size, target_mask);
+    const int err = sched_setaffinity(0, size, target_mask);
+    ASSERT(err == 0, "Failed to set thread affinity");
+
+    CPU_FREE(target_mask);
+}
+#endif
+
+class thread_pinner {
+public:
+    thread_pinner() {
+        tbb::detail::suppress_unused_warning(thread_index);
+#if OS_AFFINITY_SYSCALL_PRESENT
+        get_thread_affinity_mask(ncpus, free_indexes);
+#endif
+    }
+
+    void pin_thread() {
+#if OS_AFFINITY_SYSCALL_PRESENT
+        pin_thread_imp(ncpus, free_indexes, thread_index);
+#endif
+    }
+
+private:
+#if OS_AFFINITY_SYSCALL_PRESENT
+    std::size_t ncpus;
+    std::vector<int> free_indexes{};
+#endif
+    std::atomic<int> thread_index{};
+};
+
+class pinning_observer : public tbb::task_scheduler_observer {
+    thread_pinner pinner;
+    tbb::enumerable_thread_specific<bool> register_threads;
+public:
+    pinning_observer(tbb::task_arena& arena) : tbb::task_scheduler_observer(arena), pinner() {
+        observe(true);
+    }
+
+    void on_scheduler_entry( bool ) override {
+        bool& is_pinned = register_threads.local();
+        if (is_pinned) return;
+
+        pinner.pin_thread();
+
+        is_pinned = true;
+    }
+
+    ~pinning_observer() { }
+};
+
+#if __linux__
+#include <sched.h>
+#endif
+
+bool can_change_thread_priority() {
+#if __linux__
+    pthread_t this_thread = pthread_self();
+    sched_param old_params;
+    int old_policy;
+    int err = pthread_getschedparam(this_thread, &old_policy, &old_params);
+    ASSERT(err == 0, nullptr);
+
+    sched_param params;
+    params.sched_priority = sched_get_priority_max(SCHED_FIFO);
+    ASSERT(params.sched_priority != -1, nullptr);
+    err = pthread_setschedparam(this_thread, SCHED_FIFO, &params);
+    if (err == 0) {
+        err = pthread_setschedparam(this_thread, old_policy, &old_params);
+        ASSERT(err == 0, nullptr);
+    }
+    return err == 0;
+#endif
+    return false;
+}
+
+void increase_thread_priority() {
+#if __linux__
+    pthread_t this_thread = pthread_self();
+    sched_param params;
+    params.sched_priority = sched_get_priority_max(SCHED_FIFO);
+    ASSERT(params.sched_priority != -1, nullptr);
+    int err = pthread_setschedparam(this_thread, SCHED_FIFO, &params);
+    ASSERT(err == 0, "Can not change thread priority.");
+#endif
+}
+
+void decrease_thread_priority() {
+#if __linux__
+    pthread_t this_thread = pthread_self();
+    sched_param params;
+    params.sched_priority = sched_get_priority_min(SCHED_FIFO);
+    ASSERT(params.sched_priority != -1, nullptr);
+    int err = pthread_setschedparam(this_thread, SCHED_FIFO, &params);
+    ASSERT(err == 0, "Can not change thread priority.");
+#endif
+}
+
 } // namespace utils
 
 #endif // __TBB_test_common_utils_concurrency_limit_H
-

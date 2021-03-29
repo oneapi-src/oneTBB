@@ -23,12 +23,13 @@
 #endif
 #endif
 
+#define TBB_DEFINE_STD_HASH_SPECIALIZATIONS 1
+#define TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS 1
 #include <common/test.h>
 #include <common/utils.h>
 #include <common/range_based_for_support.h>
 #include <common/custom_allocators.h>
 #include <common/containers_common.h>
-#define TBB_DEFINE_STD_HASH_SPECIALIZATIONS 1
 #include <tbb/concurrent_hash_map.h>
 #include <tbb/parallel_for.h>
 #include <common/concurrent_associative_common.h>
@@ -37,6 +38,7 @@
 #include <algorithm>
 #include <functional>
 #include <scoped_allocator>
+#include <mutex>
 
 //! \file test_concurrent_hash_map.cpp
 //! \brief Test for [containers.concurrent_hash_map containers.tbb_hash_compare] specification
@@ -523,6 +525,438 @@ struct hash_map_traits : default_container_traits {
     }
 };
 
+template <bool IsConstructible>
+class HeterogeneousKey {
+public:
+    static std::size_t heterogeneous_keys_count;
+
+    int integer_key() const { return my_key; }
+
+    template <bool I = IsConstructible, typename = typename std::enable_if<I>::type>
+    HeterogeneousKey(int key) : my_key(key) { ++heterogeneous_keys_count; }
+
+    HeterogeneousKey(const HeterogeneousKey&) = delete;
+    HeterogeneousKey& operator=(const HeterogeneousKey&) = delete;
+
+    static void reset() { heterogeneous_keys_count = 0; }
+
+    struct construct_flag {};
+
+    HeterogeneousKey( construct_flag, int key ) : my_key(key) {}
+
+private:
+    int my_key;
+}; // class HeterogeneousKey
+
+template <bool IsConstructible>
+std::size_t HeterogeneousKey<IsConstructible>::heterogeneous_keys_count = 0;
+
+struct HeterogeneousHashCompare {
+    using is_transparent = void;
+
+    template <bool IsConstructible>
+    std::size_t hash( const HeterogeneousKey<IsConstructible>& key ) const {
+        return my_hash_object(key.integer_key());
+    }
+
+    std::size_t hash( const int& key ) const {
+        return my_hash_object(key);
+    }
+
+    bool equal( const int& key1, const int& key2 ) const {
+        return key1 == key2;
+    }
+
+    template <bool IsConstructible>
+    bool equal( const int& key1, const HeterogeneousKey<IsConstructible>& key2 ) const {
+        return key1 == key2.integer_key();
+    }
+
+    template <bool IsConstructible>
+    bool equal( const HeterogeneousKey<IsConstructible>& key1, const int& key2 ) const {
+        return key1.integer_key() == key2;
+    }
+
+    template <bool IsConstructible>
+    bool equal( const HeterogeneousKey<IsConstructible>& key1, const HeterogeneousKey<IsConstructible>& key2 ) const {
+        return key1.integer_key() == key2.integer_key();
+    }
+
+    std::hash<int> my_hash_object;
+}; // struct HeterogeneousHashCompare
+
+class DefaultConstructibleValue {
+public:
+    DefaultConstructibleValue() : my_i(default_value) {};
+
+    int value() const { return my_i; }
+    static constexpr int default_value = -4242;
+private:
+    int my_i;
+}; // class DefaultConstructibleValue
+
+constexpr int DefaultConstructibleValue::default_value;
+
+void test_heterogeneous_find() {
+    using key_type = HeterogeneousKey</*IsConstructible = */false>;
+    using chmap_type = tbb::concurrent_hash_map<key_type, int, HeterogeneousHashCompare>;
+
+    chmap_type chmap;
+    using const_accessor = typename chmap_type::const_accessor;
+    using accessor = typename chmap_type::accessor;
+    const_accessor cacc;
+    accessor acc;
+
+    REQUIRE_MESSAGE(key_type::heterogeneous_keys_count == 0, "Incorrect test setup");
+
+    key_type key(key_type::construct_flag{}, 1);
+    bool regular_result = chmap.find(cacc, key);
+    bool heterogeneous_result = chmap.find(cacc, int(1));
+
+    REQUIRE(!regular_result);
+    REQUIRE_MESSAGE(regular_result == heterogeneous_result,
+                    "Incorrect heterogeneous find result with const_accessor (no element)");
+    REQUIRE_MESSAGE(key_type::heterogeneous_keys_count == 0, "Temporary key object was created during find call with const_accessor (no element)");
+
+    regular_result = chmap.find(acc, key);
+    heterogeneous_result = chmap.find(acc, int(1));
+
+    REQUIRE(!regular_result);
+    REQUIRE_MESSAGE(regular_result == heterogeneous_result,
+                    "Incorrect heterogeneous find result with accessor (no element)");
+    REQUIRE_MESSAGE(key_type::heterogeneous_keys_count == 0, "Temporary key object was created during find call with accessor (no element)");
+
+    bool tmp_result = chmap.emplace(cacc, std::piecewise_construct,
+                                    std::forward_as_tuple(key_type::construct_flag{}, 1), std::forward_as_tuple(100));
+    REQUIRE(tmp_result);
+
+    regular_result = chmap.find(cacc, key);
+    heterogeneous_result = chmap.find(cacc, int(1));
+
+    REQUIRE(regular_result);
+    REQUIRE_MESSAGE(regular_result == heterogeneous_result, "Incorrect heterogeneous find result with const_accessor (element exists)");
+    REQUIRE_MESSAGE(cacc->first.integer_key() == 1, "Incorrect accessor returned");
+    REQUIRE_MESSAGE(key_type::heterogeneous_keys_count == 0, "Temporary key object was created during find call with const_accessor (element exists)");
+    cacc.release();
+
+    regular_result = chmap.find(acc, key);
+    heterogeneous_result = chmap.find(acc, int(1));
+
+    REQUIRE(regular_result);
+    REQUIRE_MESSAGE(regular_result == heterogeneous_result, "Incorrect heterogeneous find result with accessor (element exists)");
+    REQUIRE_MESSAGE(acc->first.integer_key() == 1, "Incorrect accessor returned");
+    REQUIRE_MESSAGE(key_type::heterogeneous_keys_count == 0, "Temporary key object was created during find call with accessor (element exists)");
+    key_type::reset();
+}
+
+void test_heterogeneous_count() {
+    using key_type = HeterogeneousKey</*IsConstructible = */false>;
+    using chmap_type = tbb::concurrent_hash_map<key_type, int, HeterogeneousHashCompare>;
+
+    chmap_type chmap;
+
+    REQUIRE_MESSAGE(key_type::heterogeneous_keys_count == 0, "Incorrect test setup");
+    key_type key(key_type::construct_flag{}, 1);
+
+    typename chmap_type::size_type regular_count = chmap.count(key);
+    typename chmap_type::size_type heterogeneous_count = chmap.count(int(1));
+
+    REQUIRE(regular_count == 0);
+    REQUIRE_MESSAGE(regular_count == heterogeneous_count, "Incorrect heterogeneous count result (no element)");
+    REQUIRE_MESSAGE(key_type::heterogeneous_keys_count == 0, "Temporary key object was created during count call (no element)");
+
+    chmap.emplace(std::piecewise_construct, std::forward_as_tuple(key_type::construct_flag{}, 1), std::forward_as_tuple(100));
+
+    regular_count = chmap.count(key);
+    heterogeneous_count = chmap.count(int(1));
+
+    REQUIRE(regular_count == 1);
+    REQUIRE_MESSAGE(regular_count == heterogeneous_count, "Incorrect heterogeneous count result (element exists)");
+    REQUIRE_MESSAGE(key_type::heterogeneous_keys_count == 0, "Temporary key object was created during count call (element exists)");
+    key_type::reset();
+}
+
+void test_heterogeneous_equal_range() {
+    using key_type = HeterogeneousKey</*IsConstructible = */false>;
+    using chmap_type = tbb::concurrent_hash_map<key_type, int, HeterogeneousHashCompare>;
+
+    chmap_type chmap;
+    REQUIRE_MESSAGE(key_type::heterogeneous_keys_count == 0, "Incorrect test setup");
+
+    using iterator = typename chmap_type::iterator;
+    using const_iterator = typename chmap_type::const_iterator;
+    using result = std::pair<iterator, iterator>;
+    using const_result = std::pair<const_iterator, const_iterator>;
+    key_type key(key_type::construct_flag{}, 1);
+
+    result regular_result = chmap.equal_range(key);
+    result heterogeneous_result = chmap.equal_range(int(1));
+
+    REQUIRE(regular_result.first == chmap.end());
+    REQUIRE(regular_result.second == chmap.end());
+    REQUIRE_MESSAGE(regular_result == heterogeneous_result, "Incorrect heterogeneous equal_range result (non const, no element)");
+    REQUIRE_MESSAGE(key_type::heterogeneous_keys_count == 0, "Temporary key object was created during equal_range call (non const, no element)");
+
+    const chmap_type& cchmap = chmap;
+
+    const_result regular_const_result = cchmap.equal_range(key);
+    const_result heterogeneous_const_result = cchmap.equal_range(int(1));
+
+    REQUIRE(regular_const_result.first == cchmap.end());
+    REQUIRE(regular_const_result.second == cchmap.end());
+    REQUIRE_MESSAGE(regular_const_result == heterogeneous_const_result,
+                    "Incorrect heterogeneous equal_range result (const, no element)");
+    REQUIRE_MESSAGE(key_type::heterogeneous_keys_count == 0, "Temporary key object was created during equal_range call (const, no element)");
+
+    chmap.emplace(std::piecewise_construct, std::forward_as_tuple(key_type::construct_flag{}, 1), std::forward_as_tuple(100));
+
+    regular_result = chmap.equal_range(key);
+    heterogeneous_result = chmap.equal_range(int(1));
+
+    REQUIRE(regular_result.first != chmap.end());
+    REQUIRE(regular_result.first->first.integer_key() == 1);
+    REQUIRE(regular_result.second == chmap.end());
+    REQUIRE_MESSAGE(regular_result == heterogeneous_result, "Incorrect heterogeneous equal_range result (non const, element exists)");
+    REQUIRE_MESSAGE(key_type::heterogeneous_keys_count == 0, "Temporary key object was created during equal_range call (non const, element exists)");
+
+    regular_const_result = cchmap.equal_range(key);
+    heterogeneous_const_result = cchmap.equal_range(int(1));
+    REQUIRE_MESSAGE(regular_const_result == heterogeneous_const_result,
+                    "Incorrect heterogeneous equal_range result (const, element exists)");
+    REQUIRE_MESSAGE(key_type::heterogeneous_keys_count == 0, "Temporary key object was created during equal_range call (const, element exists)");
+    key_type::reset();
+}
+
+void test_heterogeneous_insert() {
+    using key_type = HeterogeneousKey</*IsConstructible = */true>;
+    using chmap_type = tbb::concurrent_hash_map<key_type, DefaultConstructibleValue, HeterogeneousHashCompare>;
+
+    chmap_type chmap;
+    using const_accessor = typename chmap_type::const_accessor;
+    using accessor = typename chmap_type::accessor;
+    const_accessor cacc;
+    accessor acc;
+
+    REQUIRE_MESSAGE(key_type::heterogeneous_keys_count == 0, "Incorrect test setup");
+
+    bool result = chmap.insert(cacc, int(1));
+
+    REQUIRE_MESSAGE(key_type::heterogeneous_keys_count == 1, "Only one heterogeneous key should be created");
+    REQUIRE_MESSAGE(result, "Incorrect heterogeneous insert result (const_accessor)");
+    REQUIRE_MESSAGE(cacc->first.integer_key() == 1, "Incorrect accessor");
+    REQUIRE_MESSAGE(cacc->second.value() == DefaultConstructibleValue::default_value, "Value should be default constructed");
+
+    result = chmap.insert(cacc, int(1));
+
+    REQUIRE_MESSAGE(key_type::heterogeneous_keys_count == 1, "No extra keys should be created");
+    REQUIRE_MESSAGE(!result, "Incorrect heterogeneous insert result (const_accessor)");
+    REQUIRE_MESSAGE(cacc->first.integer_key() == 1, "Incorrect accessor");
+    REQUIRE_MESSAGE(cacc->second.value() == DefaultConstructibleValue::default_value, "Value should be default constructed");
+
+    result = chmap.insert(acc, int(2));
+
+    REQUIRE_MESSAGE(key_type::heterogeneous_keys_count == 2, "Only one extra heterogeneous key should be created");
+    REQUIRE_MESSAGE(result, "Incorrect heterogeneous insert result (accessor)");
+    REQUIRE_MESSAGE(acc->first.integer_key() == 2, "Incorrect accessor");
+    REQUIRE_MESSAGE(acc->second.value() == DefaultConstructibleValue::default_value, "Value should be default constructed");
+
+    result = chmap.insert(acc, int(2));
+
+    REQUIRE_MESSAGE(key_type::heterogeneous_keys_count == 2, "No extra keys should be created");
+    REQUIRE_MESSAGE(!result, "Incorrect heterogeneous insert result (accessor)");
+    REQUIRE_MESSAGE(acc->first.integer_key() == 2, "Incorrect accessor");
+    REQUIRE_MESSAGE(acc->second.value() == DefaultConstructibleValue::default_value, "Value should be default constructed");
+
+    key_type::reset();
+}
+
+void test_heterogeneous_erase() {
+    using key_type = HeterogeneousKey</*IsConstructible = */false>;
+    using chmap_type = tbb::concurrent_hash_map<key_type, int, HeterogeneousHashCompare>;
+
+    chmap_type chmap;
+
+    REQUIRE_MESSAGE(key_type::heterogeneous_keys_count == 0, "Incorrect test setup");
+
+    chmap.emplace(std::piecewise_construct, std::forward_as_tuple(key_type::construct_flag{}, 1), std::forward_as_tuple(100));
+    chmap.emplace(std::piecewise_construct, std::forward_as_tuple(key_type::construct_flag{}, 2), std::forward_as_tuple(200));
+
+    typename chmap_type::const_accessor cacc;
+
+    REQUIRE(chmap.find(cacc, int(1)));
+    REQUIRE(chmap.find(cacc, int(2)));
+
+    cacc.release();
+
+    bool result = chmap.erase(int(1));
+    REQUIRE_MESSAGE(result, "Erasure should be successful");
+    REQUIRE_MESSAGE(key_type::heterogeneous_keys_count == 0, "No extra keys should be created");
+    REQUIRE_MESSAGE(!chmap.find(cacc, int(1)), "Element was not erased");
+
+
+    result = chmap.erase(int(1));
+    REQUIRE_MESSAGE(!result, "Erasure should fail");
+    REQUIRE_MESSAGE(key_type::heterogeneous_keys_count == 0, "No extra keys should be created");
+    key_type::reset();
+}
+
+void test_heterogeneous_lookup() {
+    test_heterogeneous_find();
+    test_heterogeneous_count();
+    test_heterogeneous_equal_range();
+}
+
+template <bool SimulateReacquiring>
+class MinimalisticMutex {
+public:
+    class scoped_lock {
+    public:
+        constexpr scoped_lock() noexcept : my_mutex_ptr(nullptr) {}
+
+        scoped_lock( MinimalisticMutex& m, bool = true ) : my_mutex_ptr(&m) {
+            my_mutex_ptr->my_mutex.lock();
+        }
+
+        scoped_lock( const scoped_lock& ) = delete;
+        scoped_lock& operator=( const scoped_lock& ) = delete;
+
+        ~scoped_lock() {
+            if (my_mutex_ptr) release();
+        }
+
+        void acquire( MinimalisticMutex& m, bool = true ) {
+            CHECK(my_mutex_ptr == nullptr);
+            my_mutex_ptr = &m;
+            my_mutex_ptr->my_mutex.lock();
+        }
+
+        bool try_acquire( MinimalisticMutex& m, bool = true ) {
+            if (m.my_mutex.try_lock()) {
+                my_mutex_ptr = &m;
+                return true;
+            }
+            return false;
+        }
+
+        void release() {
+            CHECK(my_mutex_ptr != nullptr);
+            my_mutex_ptr->my_mutex.unlock();
+            my_mutex_ptr = nullptr;
+        }
+
+        bool upgrade_to_writer() const {
+            // upgrade_to_writer should return false if the mutex simulates
+            // reaquiring the lock on upgrade operation
+            return !SimulateReacquiring;
+        }
+
+        bool downgrade_to_reader() const {
+            // downgrade_to_reader should return false if the mutex simulates
+            // reaquiring the lock on upgrade operation
+            return !SimulateReacquiring;
+        }
+
+        bool is_writer() const {
+            CHECK(my_mutex_ptr != nullptr);
+            return true; // Always a writer
+        }
+
+    private:
+        MinimalisticMutex* my_mutex_ptr;
+    }; // class scoped_lock
+private:
+    std::mutex my_mutex;
+}; // class MinimalisticMutex
+
+template <bool SimulateReacquiring>
+void test_with_minimalistic_mutex() {
+    using mutex_type = MinimalisticMutex<SimulateReacquiring>;
+    using chmap_type = tbb::concurrent_hash_map<int, int, tbb::tbb_hash_compare<int>,
+                                                tbb::tbb_allocator<std::pair<const int, int>>,
+                                                mutex_type>;
+
+    chmap_type chmap;
+
+    // Insert pre-existing elements
+    for (int i = 0; i < 100; ++i) {
+        bool result = chmap.emplace(i, i);
+        CHECK(result);
+    }
+
+    // Insert elements to erase
+    for (int i = 10000; i < 10005; ++i) {
+        bool result = chmap.emplace(i, i);
+        CHECK(result);
+    }
+
+    auto thread_body = [&]( const tbb::blocked_range<std::size_t>& range ) {
+        for (std::size_t item = range.begin(); item != range.end(); ++item) {
+            switch(item % 4) {
+                case 0 :
+                    // Insert new elements
+                    for (int i = 100; i < 200; ++i) {
+                        typename chmap_type::const_accessor acc;
+                        chmap.emplace(acc, i, i);
+                        CHECK(acc->first == i);
+                        CHECK(acc->second == i);
+                    }
+                    break;
+                case 1 :
+                    // Insert pre-existing elements
+                    for (int i = 0; i < 100; ++i) {
+                        typename chmap_type::const_accessor acc;
+                        bool result = chmap.emplace(acc, i, i * 10000);
+                        CHECK(!result);
+                        CHECK(acc->first == i);
+                        CHECK(acc->second == i);
+                    }
+                    break;
+                case 2 :
+                    // Find pre-existing elements
+                    for (int i = 0; i < 100; ++i) {
+                        typename chmap_type::const_accessor acc;
+                        bool result = chmap.find(acc, i);
+                        CHECK(result);
+                        CHECK(acc->first == i);
+                        CHECK(acc->second == i);
+                    }
+                    break;
+                case 3 :
+                    // Erase pre-existing elements
+                    for (int i = 10000; i < 10005; ++i) {
+                        chmap.erase(i);
+                    }
+                break;
+            }
+        }
+    }; // thread_body
+
+    tbb::blocked_range<std::size_t> br(0, 1000, 8);
+
+    tbb::parallel_for(br, thread_body);
+
+    // Check pre-existing and new elements
+    for (int i = 0; i < 200; ++i) {
+        typename chmap_type::const_accessor acc;
+        bool result = chmap.find(acc, i);
+        REQUIRE_MESSAGE(result, "Some element was unexpectedly removed or not inserted");
+        REQUIRE_MESSAGE(acc->first == i, "Incorrect key");
+        REQUIRE_MESSAGE(acc->second == i, "Incorrect value");
+    }
+
+    // Check elements for erasure
+    for (int i = 10000; i < 10005; ++i) {
+        typename chmap_type::const_accessor acc;
+        bool result = chmap.find(acc, i);
+        REQUIRE_MESSAGE(!result, "Some element was not removed");
+    }
+}
+
+void test_mutex_customization() {
+    test_with_minimalistic_mutex</*SimulateReacquiring = */false>();
+    test_with_minimalistic_mutex</*SimulateReacquiring = */true>();
+}
+
 //! Test of insert operation
 //! \brief \ref error_guessing
 TEST_CASE("testing range based for support"){
@@ -620,4 +1054,24 @@ TEST_CASE("swap with NotAlwaysEqualAllocator allocators"){
 
     CHECK(map2.empty());
     CHECK(map1 == map3);
+}
+
+//! \brief \ref error_guessing
+TEST_CASE("test concurrent_hash_map heterogeneous lookup") {
+    test_heterogeneous_lookup();
+}
+
+//! \brief \ref error_guessing
+TEST_CASE("test concurrent_hash_map heterogeneous insert") {
+    test_heterogeneous_insert();
+}
+
+//! \brief \ref error_guessing
+TEST_CASE("test concurrent_hash_map heterogeneous erase") {
+    test_heterogeneous_erase();
+}
+
+//! \brief \ref error_guessing
+TEST_CASE("test concurrent_hash_map mutex customization") {
+    test_mutex_customization();
 }

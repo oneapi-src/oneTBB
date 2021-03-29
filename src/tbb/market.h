@@ -18,9 +18,10 @@
 #define _TBB_market_H
 
 #include "scheduler_common.h"
-#include "concurrent_monitor.h"
+#include "market_concurrent_monitor.h"
 #include "intrusive_list.h"
 #include "rml_tbb.h"
+#include "oneapi/tbb/rw_mutex.h"
 
 #include "oneapi/tbb/spin_rw_mutex.h"
 #include "oneapi/tbb/task_group.h"
@@ -83,7 +84,7 @@ private:
     static global_market_mutex_type  theMarketMutex;
 
     //! Lightweight mutex guarding accounting operations with arenas list
-    typedef spin_rw_mutex arenas_list_mutex_type;
+    typedef rw_mutex arenas_list_mutex_type;
     // TODO: introduce fine-grained (per priority list) locking of arenas.
     arenas_list_mutex_type my_arenas_list_mutex;
 
@@ -91,7 +92,7 @@ private:
     rml::tbb_server* my_server;
 
     //! Waiting object for external and coroutine waiters.
-    extended_concurrent_monitor my_sleep_monitor;
+    market_concurrent_monitor my_sleep_monitor;
 
     //! Maximal number of workers allowed for use by the underlying resource manager
     /** It can't be changed after market creation. **/
@@ -108,7 +109,7 @@ private:
     int my_adjust_demand_target_epoch;
 
     //! The current serialization epoch for callers of adjust_job_count_estimate
-    std::atomic<int> my_adjust_demand_current_epoch;
+    d1::waitable_atomic<int> my_adjust_demand_current_epoch;
 
     //! First unused index of worker
     /** Used to assign indices to the new workers coming from RML, and busy part
@@ -242,7 +243,7 @@ public:
     bool release ( bool is_public, bool blocking_terminate );
 
     //! Return wait list
-    extended_concurrent_monitor& get_wait_list() { return my_sleep_monitor; }
+    market_concurrent_monitor& get_wait_list() { return my_sleep_monitor; }
 
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
     //! Imlpementation of mandatory concurrency enabling

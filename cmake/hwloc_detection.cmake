@@ -25,7 +25,6 @@ foreach(hwloc_version ${HWLOC_REQUIRED_VERSIONS})
         CMAKE_HWLOC_${hwloc_version}_DLL_PATH AND
         CMAKE_HWLOC_${hwloc_version}_INCLUDE_PATH
     )
-
         add_library(${HWLOC_TARGET_NAME} SHARED IMPORTED)
         set_target_properties(${HWLOC_TARGET_NAME} PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
             "${CMAKE_HWLOC_${hwloc_version}_INCLUDE_PATH}")
@@ -37,6 +36,28 @@ foreach(hwloc_version ${HWLOC_REQUIRED_VERSIONS})
             set_target_properties(${HWLOC_TARGET_NAME} PROPERTIES
                                   IMPORTED_LOCATION "${CMAKE_HWLOC_${hwloc_version}_LIBRARY_PATH}")
         endif()
+    endif()
 
+    if (TARGET ${HWLOC_TARGET_NAME})
+        set(HWLOC_TARGET_EXPLICITLY_DEFINED TRUE)
     endif()
 endforeach()
+
+unset(HWLOC_TARGET_NAME)
+
+if (NOT HWLOC_TARGET_EXPLICITLY_DEFINED)
+    find_package(PkgConfig QUIET)
+    if (PKG_CONFIG_FOUND)
+        pkg_search_module(HWLOC hwloc)
+        if (HWLOC_FOUND)
+            if (HWLOC_VERSION VERSION_LESS 2)
+                set(TBBBIND_LIBRARY_NAME tbbbind)
+            elseif(HWLOC_VERSION VERSION_LESS 2.4)
+                set(TBBBIND_LIBRARY_NAME tbbbind_2_0)
+            else()
+                set(TBBBIND_LIBRARY_NAME tbbbind_2_4)
+            endif()
+        endif()
+    endif()
+endif()
+

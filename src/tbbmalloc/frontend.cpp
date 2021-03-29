@@ -687,7 +687,7 @@ void AllLocalCaches::markUnused()
     bool locked;
     MallocMutex::scoped_lock lock(listLock, /*block=*/false, &locked);
     if (!locked) // not wait for marking if someone doing something with it
-        return; 
+        return;
 
     for (TLSRemote *curr=head; curr; curr=curr->next)
         static_cast<TLSData*>(curr)->markUnused();
@@ -743,7 +743,7 @@ ALWAYSINLINE( bool isMallocInitialized() );
 
 /*
  * Given a number return the highest non-zero bit in it. It is intended to work with 32-bit values only.
- * Moreover, on IPF, for sake of simplicity and performance, it is narrowed to only serve for 64 to 1023.
+ * Moreover, on some platforms, for sake of simplicity and performance, it is narrowed to only serve for 64 to 1023.
  * This is enough for current algorithm of distribution of sizes among bins.
  * __TBB_Log2 is not used here to minimize dependencies on TBB specific sources.
  */
@@ -1337,7 +1337,7 @@ bool Block::adjustFullness()
 void Block::adjustPositionInBin(Bin* bin/*=NULL*/)
 {
     // If the block were full, but became empty enough to use,
-    // move it to the front of the list 
+    // move it to the front of the list
     if (isFull && !adjustFullness()) {
         if (!bin)
             bin = tlsPtr->getAllocationBin(objectSize);

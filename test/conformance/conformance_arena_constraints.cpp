@@ -15,7 +15,7 @@
 */
 
 //! \file conformance_arena_constraints.cpp
-//! \brief Test for [info_namespace scheduler.task_arena] functionality
+//! \brief Test for [info_namespace scheduler.task_arena] specifications
 
 #include "common/common_arena_constraints.h"
 
@@ -24,6 +24,7 @@
 //! Testing all NUMA aware arenas can successfully execute tasks
 //! \brief \ref interface \ref requirement
 TEST_CASE("NUMA aware arenas task execution test") {
+    system_info::initialize();
     for(auto& numa_index: oneapi::tbb::info::numa_nodes()) {
         oneapi::tbb::task_arena arena(oneapi::tbb::task_arena::constraints{numa_index});
 
@@ -40,6 +41,7 @@ TEST_CASE("NUMA aware arenas task execution test") {
 //! Testing NUMA topology traversal correctness
 //! \brief \ref interface \ref requirement
 TEST_CASE("Test NUMA topology traversal correctness") {
+    system_info::initialize();
     std::vector<index_info> numa_nodes_info = system_info::get_numa_nodes_info();
 
     std::vector<oneapi::tbb::numa_node_id> numa_indexes = oneapi::tbb::info::numa_nodes();

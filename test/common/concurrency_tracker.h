@@ -48,7 +48,7 @@ class ConcurrencyTracker {
 public:
     ConcurrencyTracker() : m_Outer(false) {
         std::uintptr_t nested = ctNested;
-        CHECK(nested <= 1);
+        CHECK_FAST(nested <= 1);
         if ( !ctNested ) {
             Started();
             m_Outer = true;

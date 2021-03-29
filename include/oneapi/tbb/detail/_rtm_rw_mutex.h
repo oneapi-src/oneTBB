@@ -100,6 +100,7 @@ public:
         //! Downgrade writer to become a reader.
         inline bool downgrade_to_reader();
 
+        inline bool is_writer() const;
     private:
         rtm_rw_mutex* m_mutex;
         rtm_type m_transaction_state;
@@ -184,6 +185,11 @@ bool rtm_rw_mutex::scoped_lock::downgrade_to_reader() {
         return true; // Already a reader
     }
     return r1::downgrade(*this);
+}
+
+bool rtm_rw_mutex::scoped_lock::is_writer() const {
+    __TBB_ASSERT(m_mutex, "lock is not acquired");
+    return m_transaction_state == rtm_type::rtm_transacting_writer || m_transaction_state == rtm_type::rtm_real_writer;
 }
 
 #if TBB_USE_PROFILING_TOOLS

@@ -51,9 +51,6 @@ observer_proxy::~observer_proxy() {
 }
 
 void observer_list::clear() {
-    // Though the method will work fine for the empty list, we require the caller
-    // to check for the list emptiness before invoking it to avoid extra overhead.
-    __TBB_ASSERT( !empty(), NULL );
     {
         scoped_lock lock(mutex(), /*is_writer=*/true);
         observer_proxy *next = my_head.load(std::memory_order_relaxed);

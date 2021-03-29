@@ -19,6 +19,9 @@
 // This header is an optional part of the test harness.
 // It assumes that "harness_assert.h" has already been included.
 
+#ifndef __TBB_test_common_memory_usage_H_
+#define __TBB_test_common_memory_usage_H_
+
 #include "common/test.h"
 #include "utils.h"
 #include "utils_assert.h"
@@ -82,8 +85,8 @@ namespace utils {
     //! Return estimate of number of bytes of memory that this program is currently using.
     /* Returns 0 if not implemented on platform. */
     std::size_t GetMemoryUsage(MemoryStatType stat = currentUsage) {
-#if __TBB_WIN8UI_SUPPORT || defined(WINAPI_FAMILY)
         utils::suppress_unused_warning(stat);
+#if __TBB_WIN8UI_SUPPORT || defined(WINAPI_FAMILY)
         return 0;
 #elif _WIN32
         PROCESS_MEMORY_COUNTERS mem;
@@ -166,3 +169,4 @@ namespace utils {
 #endif // __linux__
 
 } // namespace utils
+#endif // __TBB_test_common_memory_usage_H_

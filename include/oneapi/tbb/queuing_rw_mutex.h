@@ -107,6 +107,8 @@ public:
         //! Downgrade writer to become a reader.
         bool downgrade_to_reader();
 
+        bool is_writer() const;
+
     private:
         //! The pointer to the mutex owned, or NULL if not holding a mutex.
         queuing_rw_mutex* my_mutex;
@@ -183,6 +185,10 @@ inline bool queuing_rw_mutex::scoped_lock::upgrade_to_writer() {
 
 inline bool queuing_rw_mutex::scoped_lock::downgrade_to_reader() {
     return r1::downgrade_to_reader(*this);
+}
+
+inline bool queuing_rw_mutex::scoped_lock::is_writer() const {
+    return r1::is_writer(*this);
 }
 } // namespace d1
 

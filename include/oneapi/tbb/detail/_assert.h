@@ -32,7 +32,11 @@ TBB_EXPORT void __TBB_EXPORTED_FUNC assertion_failure(const char* filename, int 
 } // namespace tbb
 
 //! Release version of assertions
-#define __TBB_ASSERT_RELEASE(predicate,message) ((predicate)?((void)0) : tbb::detail::r1::assertion_failure(__FILE__,__LINE__,#predicate,message))
+#if __TBB_BUILD
+    #define __TBB_ASSERT_RELEASE(predicate,message) ((predicate)?((void)0) : tbb::detail::r1::assertion_failure(__FILE__,__LINE__,#predicate,message))
+#else
+    #define __TBB_ASSERT_RELEASE(predicate,message) ((predicate)?((void)0) : tbb::detail::r1::assertion_failure(__func__,0,#predicate,message))
+#endif
 
 #if TBB_USE_ASSERT
     //! Assert that predicate is true.

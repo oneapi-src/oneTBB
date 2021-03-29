@@ -23,6 +23,9 @@
 //  Do not create file-scope objects of the class, because MinGW (as of May 2010)
 //  did not always provide proper stack alignment in destructors of such objects.
 
+#ifndef __TBB_test_common_vector_types_H_
+#define __TBB_test_common_vector_types_H_
+
 #if (_MSC_VER>=1600)
 //TODO: handle /arch:AVX in the right way.
 #pragma warning (push)
@@ -131,3 +134,4 @@ using ClassWithSSE = ClassWithVectorType<__m128>;
 #if (_MSC_VER>=1600)
 #pragma warning (pop)
 #endif
+#endif // __TBB_test_common_vector_types_H_
