@@ -162,6 +162,7 @@ TBB_EXPORT bool try_acquire(d1::queuing_rw_mutex&, d1::queuing_rw_mutex::scoped_
 TBB_EXPORT void release(d1::queuing_rw_mutex::scoped_lock&);
 TBB_EXPORT bool upgrade_to_writer(d1::queuing_rw_mutex::scoped_lock&);
 TBB_EXPORT bool downgrade_to_reader(d1::queuing_rw_mutex::scoped_lock&);
+TBB_EXPORT bool is_writer(const d1::queuing_rw_mutex::scoped_lock&);
 } // namespace r1
 
 namespace d1 {
