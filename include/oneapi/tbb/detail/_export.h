@@ -19,7 +19,7 @@
 
 #if _WIN32
     #define _EXPORT __declspec(dllexport)
-#elif __unix__
+#elif __unix__ || __APPLE__
     #define _EXPORT __attribute__((visibility("default")))
 #else
     #error "Unknown platform/compiler"
