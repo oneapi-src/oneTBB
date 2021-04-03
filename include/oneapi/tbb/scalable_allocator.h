@@ -22,6 +22,7 @@
 #include "oneapi/tbb/detail/_utils.h"
 #include <cstdlib>
 #include <utility>
+#include <new> /* std::bad_alloc() */
 #else
 #include "oneapi/tbb/detail/_export.h"
 #include <stddef.h> /* Need ptrdiff_t and size_t from here. */
