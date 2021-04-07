@@ -49,15 +49,11 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
     )
 
     # Avoid use of target_link_libraries here as it changes /DEF option to \DEF on Windows.
-    if (FALSE)
     set_target_properties(${TBBBIND_NAME} PROPERTIES
         DEFINE_SYMBOL ""
         VERSION ${TBBBIND_BINARY_VERSION}.${TBB_BINARY_MINOR_VERSION}
         SOVERSION ${TBBBIND_BINARY_VERSION}
-        LINK_FLAGS ${TBB_LINK_DEF_FILE_FLAG}${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbbind.def
-        LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbbind.def
     )
-    endif()
 
     # Prefer using target_link_options instead of target_link_libraries to specify link options because
     # target_link_libraries may incorrectly handle some options (on Windows, for example).
