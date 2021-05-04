@@ -46,7 +46,7 @@ inline namespace d0 {
     };
 
 //! Unicode support
-#if (_WIN32||_WIN64) && !__MINGW32__
+#if (_WIN32||_WIN64) && (defined(UNICODE) || defined(_UNICODE))
     //! Unicode character type. Always wchar_t on Windows.
     using tchar = wchar_t;
 #else /* !WIN */
