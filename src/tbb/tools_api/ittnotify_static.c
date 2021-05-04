@@ -17,7 +17,9 @@
 #include "ittnotify_config.h"
 
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
+#ifndef PATH_MAX
 #define PATH_MAX 512
+#endif
 #else /* ITT_PLATFORM!=ITT_PLATFORM_WIN */
 #include <limits.h>
 #include <dlfcn.h>
@@ -201,10 +203,10 @@ static __itt_group_alias group_alias[] = {
 
 #pragma pack(pop)
 
-#if ITT_PLATFORM==ITT_PLATFORM_WIN
+#if (ITT_PLATFORM==ITT_PLATFORM_WIN) && defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable: 4054) /* warning C4054: 'type cast' : from function pointer 'XXX' to data pointer 'void *' */
-#endif /* ITT_PLATFORM==ITT_PLATFORM_WIN */
+#endif /* (ITT_PLATFORM==ITT_PLATFORM_WIN) && defined(_MSC_VER) */
 
 static __itt_api_info api_list[] = {
 /* Define functions with static implementation */
@@ -224,9 +226,14 @@ static __itt_api_info api_list[] = {
     {NULL, NULL, NULL, NULL, __itt_group_none}
 };
 
-#if ITT_PLATFORM==ITT_PLATFORM_WIN
+#if (ITT_PLATFORM==ITT_PLATFORM_WIN) && defined(_MSC_VER)
 #pragma warning(pop)
-#endif /* ITT_PLATFORM==ITT_PLATFORM_WIN */
+#endif /* (ITT_PLATFORM==ITT_PLATFORM_WIN) && defined(_MSC_VER) */
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#endif
 
 static const char dll_path[PATH_MAX] = { 0 };
 
@@ -251,6 +258,10 @@ __itt_global _N_(_ittapi_global) = {
     0                                              /* ipt_collect_events */
 };
 
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
 typedef void (__itt_api_init_t)(__itt_global*, __itt_group_id);
 typedef void (__itt_api_fini_t)(__itt_global*);
 
@@ -260,10 +271,10 @@ typedef void (__itt_api_fini_t)(__itt_global*);
 ITT_EXTERN_C void _N_(error_handler)(__itt_error_code, va_list args);
 #endif /* ITT_NOTIFY_EXT_REPORT */
 
-#if ITT_PLATFORM==ITT_PLATFORM_WIN
+#if (ITT_PLATFORM==ITT_PLATFORM_WIN) && defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable: 4055) /* warning C4055: 'type cast' : from data pointer 'void *' to function pointer 'XXX' */
-#endif /* ITT_PLATFORM==ITT_PLATFORM_WIN */
+#endif /* (ITT_PLATFORM==ITT_PLATFORM_WIN) && defined(_MSC_VER) */
 
 static void __itt_report_error_impl(int code, ...) {
     va_list args;
@@ -284,11 +295,11 @@ static void __itt_report_error_impl(int code, ...) {
                 __itt_report_error_impl((int)code,__VA_ARGS__)
 
 
-#if ITT_PLATFORM==ITT_PLATFORM_WIN
+#if (ITT_PLATFORM==ITT_PLATFORM_WIN) && defined(_MSC_VER)
 #pragma warning(pop)
-#endif /* ITT_PLATFORM==ITT_PLATFORM_WIN */
+#endif /* (ITT_PLATFORM==ITT_PLATFORM_WIN) && defined(_MSC_VER) */
 
-#if ITT_PLATFORM==ITT_PLATFORM_WIN
+#if (ITT_PLATFORM==ITT_PLATFORM_WIN)
 static __itt_domain* ITTAPI ITT_VERSIONIZE(ITT_JOIN(_N_(domain_createW),_init))(const wchar_t* name)
 {
     __itt_domain *h_tail = NULL, *h = NULL;
@@ -498,7 +509,7 @@ static __itt_counter ITTAPI ITT_VERSIONIZE(ITT_JOIN(_N_(counter_create),_init))(
     }
     for (h_tail = NULL, h = _N_(_ittapi_global).counter_list; h != NULL; h_tail = h, h = h->next)
     {
-        if (h->nameA != NULL  && h->type == type && !__itt_fstrcmp(h->nameA, name) && ((h->domainA == NULL && domain == NULL) || 
+        if (h->nameA != NULL  && h->type == type && !__itt_fstrcmp(h->nameA, name) && ((h->domainA == NULL && domain == NULL) ||
             (h->domainA != NULL && domain != NULL && !__itt_fstrcmp(h->domainA, domain)))) break;
     }
     if (h == NULL)
@@ -573,7 +584,7 @@ static __itt_counter ITTAPI ITT_VERSIONIZE(ITT_JOIN(_N_(counter_create_typed),_i
     }
     for (h_tail = NULL, h = _N_(_ittapi_global).counter_list; h != NULL; h_tail = h, h = h->next)
     {
-        if (h->nameA != NULL  && h->type == type && !__itt_fstrcmp(h->nameA, name) && ((h->domainA == NULL && domain == NULL) || 
+        if (h->nameA != NULL  && h->type == type && !__itt_fstrcmp(h->nameA, name) && ((h->domainA == NULL && domain == NULL) ||
             (h->domainA != NULL && domain != NULL && !__itt_fstrcmp(h->domainA, domain)))) break;
     }
     if (h == NULL)
@@ -775,7 +786,7 @@ static const char* __itt_get_env_var(const char* name)
 
     if (name != NULL)
     {
-#if ITT_PLATFORM==ITT_PLATFORM_WIN
+#if ITT_PLATFORM==ITT_PLATFORM_WIN && !__MINGW32__
         size_t max_len = MAX_ENV_VALUE_SIZE - (size_t)(env_value - env_buff);
         DWORD rc = GetEnvironmentVariableA(name, env_value, (DWORD)max_len);
         if (rc >= max_len)
@@ -1019,11 +1030,11 @@ static void __itt_nullify_all_pointers(void)
         *_N_(_ittapi_global).api_list_ptr[i].func_ptr = _N_(_ittapi_global).api_list_ptr[i].null_func;
 }
 
-#if ITT_PLATFORM==ITT_PLATFORM_WIN
+#if (ITT_PLATFORM==ITT_PLATFORM_WIN) && defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable: 4054) /* warning C4054: 'type cast' : from function pointer 'XXX' to data pointer 'void *' */
 #pragma warning(disable: 4055) /* warning C4055: 'type cast' : from data pointer 'void *' to function pointer 'XXX' */
-#endif /* ITT_PLATFORM==ITT_PLATFORM_WIN */
+#endif /* (ITT_PLATFORM==ITT_PLATFORM_WIN) && defined(_MSC_VER) */
 
 ITT_EXTERN_C void _N_(fini_ittlib)(void)
 {
@@ -1197,9 +1208,9 @@ ITT_EXTERN_C __itt_error_handler_t* _N_(set_error_handler)(__itt_error_handler_t
     return prev;
 }
 
-#if ITT_PLATFORM==ITT_PLATFORM_WIN
+#if (ITT_PLATFORM==ITT_PLATFORM_WIN) && defined(_MSC_VER)
 #pragma warning(pop)
-#endif /* ITT_PLATFORM==ITT_PLATFORM_WIN */
+#endif /* (ITT_PLATFORM==ITT_PLATFORM_WIN) && defined(_MSC_VER) */
 
 /** __itt_mark_pt_region functions marks region of interest
  * region parameter defines different regions.

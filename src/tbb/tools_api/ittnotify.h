@@ -22,7 +22,7 @@
 @brief Public User API functions and types
 @mainpage
 
-The Instrumentation and Tracing Technology API (ITT API) is used to 
+The Instrumentation and Tracing Technology API (ITT API) is used to
 annotate a user's program with additional information
 that can be used by correctness and performance tools. The user inserts
 calls in their program. Those calls generate information that is collected
@@ -150,7 +150,7 @@ The same ID may not be reused for different instances, unless a previous
 #include <tchar.h>
 #else  /* ITT_PLATFORM==ITT_PLATFORM_WIN */
 #include <stdint.h>
-#if defined(UNICODE) || defined(_UNICODE)
+#if (defined(UNICODE) || defined(_UNICODE)) && !__MINGW32__
 #include <wchar.h>
 #endif /* UNICODE || _UNICODE */
 #endif /* ITT_PLATFORM==ITT_PLATFORM_WIN */
@@ -364,7 +364,7 @@ typedef unsigned char __itt_pt_region;
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
 __itt_pt_region ITTAPI __itt_pt_region_createA(const char    *name);
 __itt_pt_region ITTAPI __itt_pt_region_createW(const wchar_t *name);
-#if defined(UNICODE) || defined(_UNICODE)
+#if (defined(UNICODE) || defined(_UNICODE)) && !__MINGW32__
 #  define __itt_pt_region_create __itt_pt_region_createW
 #else /* UNICODE */
 #  define __itt_pt_region_create __itt_pt_region_createA
@@ -439,7 +439,7 @@ void __itt_mark_pt_region_end(__itt_pt_region region);
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
 void ITTAPI __itt_thread_set_nameA(const char    *name);
 void ITTAPI __itt_thread_set_nameW(const wchar_t *name);
-#if defined(UNICODE) || defined(_UNICODE)
+#if (defined(UNICODE) || defined(_UNICODE)) && !__MINGW32__
 #  define __itt_thread_set_name     __itt_thread_set_nameW
 #  define __itt_thread_set_name_ptr __itt_thread_set_nameW_ptr
 #else /* UNICODE */
@@ -666,7 +666,7 @@ no name will be assigned to the object.
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
 void ITTAPI __itt_sync_createA(void *addr, const char    *objtype, const char    *objname, int attribute);
 void ITTAPI __itt_sync_createW(void *addr, const wchar_t *objtype, const wchar_t *objname, int attribute);
-#if defined(UNICODE) || defined(_UNICODE)
+#if (defined(UNICODE) || defined(_UNICODE)) && !__MINGW32__
 #  define __itt_sync_create     __itt_sync_createW
 #  define __itt_sync_create_ptr __itt_sync_createW_ptr
 #else /* UNICODE */
@@ -696,7 +696,7 @@ ITT_STUBV(ITTAPI, void, sync_create,  (void *addr, const char*    objtype, const
 #define __itt_sync_create_ptr ITTNOTIFY_NAME(sync_create)
 #endif /* ITT_PLATFORM==ITT_PLATFORM_WIN */
 #else  /* INTEL_NO_ITTNOTIFY_API */
-#if ITT_PLATFORM==ITT_PLATFORM_WIN
+#if (ITT_PLATFORM==ITT_PLATFORM_WIN) && !__MINGW32__
 #define __itt_sync_createA(addr, objtype, objname, attribute)
 #define __itt_sync_createA_ptr 0
 #define __itt_sync_createW(addr, objtype, objname, attribute)
@@ -727,7 +727,7 @@ synchronization object.
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
 void ITTAPI __itt_sync_renameA(void *addr, const char    *name);
 void ITTAPI __itt_sync_renameW(void *addr, const wchar_t *name);
-#if defined(UNICODE) || defined(_UNICODE)
+#if (defined(UNICODE) || defined(_UNICODE)) && !__MINGW32__
 #  define __itt_sync_rename     __itt_sync_renameW
 #  define __itt_sync_rename_ptr __itt_sync_renameW_ptr
 #else /* UNICODE */
@@ -1447,7 +1447,7 @@ typedef void* __itt_heap_function;
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
 __itt_heap_function ITTAPI __itt_heap_function_createA(const char*    name, const char*    domain);
 __itt_heap_function ITTAPI __itt_heap_function_createW(const wchar_t* name, const wchar_t* domain);
-#if defined(UNICODE) || defined(_UNICODE)
+#if (defined(UNICODE) || defined(_UNICODE)) && !__MINGW32__
 #  define __itt_heap_function_create     __itt_heap_function_createW
 #  define __itt_heap_function_create_ptr __itt_heap_function_createW_ptr
 #else
@@ -1759,7 +1759,7 @@ typedef struct ___itt_domain
 {
     volatile int flags; /*!< Zero if disabled, non-zero if enabled. The meaning of different non-zero values is reserved to the runtime */
     const char* nameA;  /*!< Copy of original name in ASCII. */
-#if defined(UNICODE) || defined(_UNICODE)
+#if (defined(UNICODE) || defined(_UNICODE))
     const wchar_t* nameW; /*!< Copy of original name in UNICODE. */
 #else  /* UNICODE || _UNICODE */
     void* nameW;
@@ -1785,7 +1785,7 @@ typedef struct ___itt_domain
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
 __itt_domain* ITTAPI __itt_domain_createA(const char    *name);
 __itt_domain* ITTAPI __itt_domain_createW(const wchar_t *name);
-#if defined(UNICODE) || defined(_UNICODE)
+#if (defined(UNICODE) || defined(_UNICODE)) && !__MINGW32__
 #  define __itt_domain_create     __itt_domain_createW
 #  define __itt_domain_create_ptr __itt_domain_createW_ptr
 #else /* UNICODE */
@@ -1947,7 +1947,7 @@ ITT_STUBV(ITTAPI, void, id_destroy, (const __itt_domain *domain, __itt_id id))
 typedef struct ___itt_string_handle
 {
     const char* strA; /*!< Copy of original string in ASCII. */
-#if defined(UNICODE) || defined(_UNICODE)
+#if (defined(UNICODE) || defined(_UNICODE))
     const wchar_t* strW; /*!< Copy of original string in UNICODE. */
 #else  /* UNICODE || _UNICODE */
     void* strW;
@@ -1974,7 +1974,7 @@ typedef struct ___itt_string_handle
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
 __itt_string_handle* ITTAPI __itt_string_handle_createA(const char    *name);
 __itt_string_handle* ITTAPI __itt_string_handle_createW(const wchar_t *name);
-#if defined(UNICODE) || defined(_UNICODE)
+#if (defined(UNICODE) || defined(_UNICODE)) && !__MINGW32__
 #  define __itt_string_handle_create     __itt_string_handle_createW
 #  define __itt_string_handle_create_ptr __itt_string_handle_createW_ptr
 #else /* UNICODE */
@@ -2452,7 +2452,7 @@ ITT_STUBV(ITTAPI, void, metadata_add, (const __itt_domain *domain, __itt_id id, 
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
 void ITTAPI __itt_metadata_str_addA(const __itt_domain *domain, __itt_id id, __itt_string_handle *key, const char *data, size_t length);
 void ITTAPI __itt_metadata_str_addW(const __itt_domain *domain, __itt_id id, __itt_string_handle *key, const wchar_t *data, size_t length);
-#if defined(UNICODE) || defined(_UNICODE)
+#if (defined(UNICODE) || defined(_UNICODE)) && !__MINGW32__
 #  define __itt_metadata_str_add     __itt_metadata_str_addW
 #  define __itt_metadata_str_add_ptr __itt_metadata_str_addW_ptr
 #else /* UNICODE */
@@ -2547,7 +2547,7 @@ ITT_STUBV(ITTAPI, void, metadata_add_with_scope, (const __itt_domain *domain, __
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
 void ITTAPI __itt_metadata_str_add_with_scopeA(const __itt_domain *domain, __itt_scope scope, __itt_string_handle *key, const char *data, size_t length);
 void ITTAPI __itt_metadata_str_add_with_scopeW(const __itt_domain *domain, __itt_scope scope, __itt_string_handle *key, const wchar_t *data, size_t length);
-#if defined(UNICODE) || defined(_UNICODE)
+#if (defined(UNICODE) || defined(_UNICODE)) && !__MINGW32__
 #  define __itt_metadata_str_add_with_scope     __itt_metadata_str_add_with_scopeW
 #  define __itt_metadata_str_add_with_scope_ptr __itt_metadata_str_add_with_scopeW_ptr
 #else /* UNICODE */
@@ -2889,7 +2889,7 @@ typedef struct ___itt_counter* __itt_counter;
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
 __itt_counter ITTAPI __itt_counter_createA(const char    *name, const char    *domain);
 __itt_counter ITTAPI __itt_counter_createW(const wchar_t *name, const wchar_t *domain);
-#if defined(UNICODE) || defined(_UNICODE)
+#if (defined(UNICODE) || defined(_UNICODE)) && !__MINGW32__
 #  define __itt_counter_create     __itt_counter_createW
 #  define __itt_counter_create_ptr __itt_counter_createW_ptr
 #else /* UNICODE */
@@ -3155,7 +3155,7 @@ ITT_STUBV(ITTAPI, void, counter_set_value_ex, (__itt_counter id, __itt_clock_dom
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
 __itt_counter ITTAPI __itt_counter_create_typedA(const char    *name, const char    *domain, __itt_metadata_type type);
 __itt_counter ITTAPI __itt_counter_create_typedW(const wchar_t *name, const wchar_t *domain, __itt_metadata_type type);
-#if defined(UNICODE) || defined(_UNICODE)
+#if (defined(UNICODE) || defined(_UNICODE)) && !__MINGW32__
 #  define __itt_counter_create_typed     __itt_counter_create_typedW
 #  define __itt_counter_create_typed_ptr __itt_counter_create_typedW_ptr
 #else /* UNICODE */
@@ -3427,7 +3427,7 @@ typedef int __itt_event;
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
 __itt_event LIBITTAPI __itt_event_createA(const char    *name, int namelen);
 __itt_event LIBITTAPI __itt_event_createW(const wchar_t *name, int namelen);
-#if defined(UNICODE) || defined(_UNICODE)
+#if (defined(UNICODE) || defined(_UNICODE)) && !__MINGW32__
 #  define __itt_event_create     __itt_event_createW
 #  define __itt_event_create_ptr __itt_event_createW_ptr
 #else
@@ -3565,7 +3565,7 @@ typedef enum
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
 int ITTAPI __itt_av_saveA(void *data, int rank, const int *dimensions, int type, const char *filePath, int columnOrder);
 int ITTAPI __itt_av_saveW(void *data, int rank, const int *dimensions, int type, const wchar_t *filePath, int columnOrder);
-#if defined(UNICODE) || defined(_UNICODE)
+#if (defined(UNICODE) || defined(_UNICODE)) && !__MINGW32__
 #  define __itt_av_save     __itt_av_saveW
 #  define __itt_av_save_ptr __itt_av_saveW_ptr
 #else /* UNICODE */
@@ -3648,7 +3648,7 @@ ITT_STUBV(ITTAPI, void, enable_attach, (void))
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
 void ITTAPI __itt_module_loadA(void *start_addr, void *end_addr, const char *path);
 void ITTAPI __itt_module_loadW(void *start_addr, void *end_addr, const wchar_t *path);
-#if defined(UNICODE) || defined(_UNICODE)
+#if (defined(UNICODE) || defined(_UNICODE)) && !__MINGW32__
 #  define __itt_module_load     __itt_module_loadW
 #  define __itt_module_load_ptr __itt_module_loadW_ptr
 #else /* UNICODE */
@@ -3779,7 +3779,7 @@ typedef int __itt_mark_type;
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
 __itt_mark_type ITTAPI __itt_mark_createA(const char    *name);
 __itt_mark_type ITTAPI __itt_mark_createW(const wchar_t *name);
-#if defined(UNICODE) || defined(_UNICODE)
+#if (defined(UNICODE) || defined(_UNICODE)) && !__MINGW32__
 #  define __itt_mark_create     __itt_mark_createW
 #  define __itt_mark_create_ptr __itt_mark_createW_ptr
 #else /* UNICODE */
@@ -3844,7 +3844,7 @@ ITT_STUB(ITTAPI, __itt_mark_type, mark_create,  (const char *name))
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
 int ITTAPI __itt_markA(__itt_mark_type mt, const char    *parameter);
 int ITTAPI __itt_markW(__itt_mark_type mt, const wchar_t *parameter);
-#if defined(UNICODE) || defined(_UNICODE)
+#if (defined(UNICODE) || defined(_UNICODE)) && !__MINGW32__
 #  define __itt_mark     __itt_markW
 #  define __itt_mark_ptr __itt_markW_ptr
 #else /* UNICODE  */
@@ -3902,7 +3902,7 @@ ITT_STUB(ITTAPI, int, mark,  (__itt_mark_type mt, const char *parameter))
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
 int ITTAPI __itt_mark_globalA(__itt_mark_type mt, const char    *parameter);
 int ITTAPI __itt_mark_globalW(__itt_mark_type mt, const wchar_t *parameter);
-#if defined(UNICODE) || defined(_UNICODE)
+#if (defined(UNICODE) || defined(_UNICODE)) && !__MINGW32__
 #  define __itt_mark_global     __itt_mark_globalW
 #  define __itt_mark_global_ptr __itt_mark_globalW_ptr
 #else /* UNICODE  */

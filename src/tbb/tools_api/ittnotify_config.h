@@ -202,7 +202,7 @@
                                 " (" ITT_TO_STR(API_VERSION_BUILD) ")"
 
 /* OS communication functions */
-#if ITT_PLATFORM==ITT_PLATFORM_WIN
+#if ITT_PLATFORM==ITT_PLATFORM_WIN && !__MINGW32__
 #include <windows.h>
 typedef HMODULE           lib_t;
 typedef DWORD             TIDT;
@@ -230,7 +230,7 @@ typedef pthread_mutex_t   mutex_t;
 #define strong_alias(name, aliasname) _strong_alias(name, aliasname)
 #endif /* ITT_PLATFORM==ITT_PLATFORM_WIN */
 
-#if ITT_PLATFORM==ITT_PLATFORM_WIN
+#if ITT_PLATFORM==ITT_PLATFORM_WIN && !__MINGW32__
 #define __itt_get_proc(lib, name) GetProcAddress(lib, name)
 #define __itt_mutex_init(mutex)   InitializeCriticalSection(mutex)
 #define __itt_mutex_lock(mutex)   EnterCriticalSection(mutex)

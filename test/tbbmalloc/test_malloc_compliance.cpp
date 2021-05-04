@@ -118,11 +118,6 @@ static bool Verbose = false;
 #endif
 #if _WIN32 || _WIN64
 #include <malloc.h> // _aligned_(malloc|free|realloc)
-#if __MINGW64__
-// Workaround a bug in MinGW64 headers with _aligned_(malloc|free) not declared by default
-extern "C" void __cdecl _aligned_free(void *);
-extern "C" void *__cdecl _aligned_malloc(size_t,size_t);
-#endif
 #endif
 
 #include <vector>
@@ -1078,7 +1073,7 @@ TEST_CASE("MAIN TEST") {
 #else  // _MSC_VER
     __tbb_test_errno = true;
 #endif // _MSC_VER
- 
+
     CheckArgumentsOverflow();
     CheckReallocLeak();
     for( int p=MaxThread; p>=MinThread; --p ) {

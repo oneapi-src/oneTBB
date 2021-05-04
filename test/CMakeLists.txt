@@ -335,7 +335,7 @@ if (TBB_FOUND)
     unset(_tbb_test_components)
 endif()
 
-# Find Intel(R) Software Development Emulator to run test_mutex and conformance_mutex for coverage 
+# Find Intel(R) Software Development Emulator to run test_mutex and conformance_mutex for coverage
 set(_sde_find_name sde)
 
 if (UNIX AND TBB_ARCH EQUAL 64)
