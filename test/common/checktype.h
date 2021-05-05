@@ -17,6 +17,8 @@
 #ifndef __TBB_test_common_checktype_H
 #define __TBB_test_common_checktype_H
 
+#include "config.h"
+
 #include <atomic>
 
 // Type that checks that there are no operations with the destroyed object

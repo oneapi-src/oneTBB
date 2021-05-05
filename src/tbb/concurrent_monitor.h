@@ -31,7 +31,7 @@ namespace r1 {
 
 //! Circular doubly-linked list with sentinel
 /** head.next points to the front and head.prev points to the back */
-class circular_doubly_linked_list_with_sentinel : no_copy {
+class circular_doubly_linked_list_with_sentinel {
 public:
     struct base_node {
         base_node* next;
@@ -43,6 +43,9 @@ public:
 
     // ctor
     constexpr circular_doubly_linked_list_with_sentinel() : count(0), head(&head, &head) {}
+
+    circular_doubly_linked_list_with_sentinel(const circular_doubly_linked_list_with_sentinel&) = delete;
+    circular_doubly_linked_list_with_sentinel& operator=(const circular_doubly_linked_list_with_sentinel&) = delete;
 
     inline std::size_t size() const { return count.load(std::memory_order_relaxed); }
     inline bool empty() const { return size() == 0; }
@@ -187,12 +190,15 @@ private:
 //! concurrent_monitor
 /** fine-grained concurrent_monitor implementation */
 template <typename Context>
-class concurrent_monitor_base : no_copy {
+class concurrent_monitor_base {
 public:
     //! ctor
     constexpr concurrent_monitor_base() {}
     //! dtor
     ~concurrent_monitor_base() = default;
+
+    concurrent_monitor_base(const concurrent_monitor_base&) = delete;
+    concurrent_monitor_base& operator=(const concurrent_monitor_base&) = delete;
 
     //! prepare wait by inserting 'thr' into the wait queue
     void prepare_wait( wait_node<Context>& node) {

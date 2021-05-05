@@ -43,7 +43,7 @@ void test_inheritance(){
     using namespace oneapi::tbb::flow;
 
     CHECK_MESSAGE( (std::is_base_of<graph_node, broadcast_node<T>>::value), "broadcast_node should be derived from graph_node");
-    CHECK_MESSAGE( (std::is_base_of<receiver<T>, broadcast_node<T>>::value), "broadcast_node should be derived from reciever<T>");
+    CHECK_MESSAGE( (std::is_base_of<receiver<T>, broadcast_node<T>>::value), "broadcast_node should be derived from receiver<T>");
     CHECK_MESSAGE( (std::is_base_of<sender<T>, broadcast_node<T>>::value), "broadcast_node should be derived from sender<T>");
 }
 

@@ -489,7 +489,7 @@ public:
     using iterator = Iterator;
 
     // True if range is empty.
-    bool empty() const {return my_begin == my_end;}
+    bool empty() const { return my_begin == my_end; }
 
     // True if range can be partitioned into two subranges.
     bool is_divisible() const {
@@ -518,8 +518,8 @@ public:
         set_midpoint();
     }
 
-    const Iterator begin() const { return my_begin; }
-    const Iterator end() const { return my_end; }
+    Iterator begin() const { return my_begin; }
+    Iterator end() const { return my_end; }
     // The grain size for this range.
     size_type grainsize() const { return my_grainsize; }
 
@@ -552,13 +552,26 @@ void hash_map_range<Iterator>::set_midpoint() const {
         "[my_begin, my_midpoint) range should not be empty" );
 }
 
+#if __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS && __TBB_CPP20_CONCEPTS_PRESENT
+template <typename Mutex>
+concept ch_map_rw_scoped_lockable = rw_scoped_lockable<Mutex> &&
+                                    requires (const typename Mutex::scoped_lock& sl) {
+                                        { sl.is_writer() } -> std::convertible_to<bool>;
+                                    };
+#endif
+
 template <typename Key, typename T,
           typename HashCompare = d1::tbb_hash_compare<Key>,
           typename Allocator = tbb_allocator<std::pair<const Key, T>>
 #if __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS
         , typename MutexType = spin_rw_mutex
-#endif
          >
+    __TBB_requires(tbb::detail::hash_compare<HashCompare, Key> &&
+                   ch_map_rw_scoped_lockable<MutexType>)
+#else
+         >
+    __TBB_requires(tbb::detail::hash_compare<HashCompare, Key>)
+#endif
 class concurrent_hash_map
 #if __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS
     : protected hash_map_base<Allocator, MutexType>

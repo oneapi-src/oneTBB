@@ -20,7 +20,9 @@
 #define TBB_PREVIEW_TASK_ARENA_CONSTRAINTS_EXTENSION 1
 #define __TBB_EXTRA_DEBUG 1
 
-#include "oneapi/tbb/detail/_config.h"
+#if _WIN32 || _WIN64
+#define _CRT_SECURE_NO_WARNINGS
+#endif
 
 #include "common/test.h"
 #include "common/spin_barrier.h"
@@ -49,13 +51,21 @@ int get_processors_groups_count() { return 1; }
 #include <algorithm>
 
 #if _MSC_VER
+#if __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#else
 #pragma warning( push )
 #pragma warning( disable : 4100 )
-#pragma warning( disable : 4996 )
+#endif
 #endif
 #include <hwloc.h>
 #if _MSC_VER
+#if __clang__
+#pragma GCC diagnostic pop
+#else
 #pragma warning( pop )
+#endif
 #endif
 
 #define __HWLOC_HYBRID_CPUS_INTERFACES_PRESENT (HWLOC_API_VERSION >= 0x20400)

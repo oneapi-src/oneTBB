@@ -18,7 +18,6 @@
 #define __TBB_test_common_parallel_reduce_common_H
 
 #include "test.h"
-#include "config.h"
 #include "utils.h"
 #include "utils_report.h"
 #include "utils_concurrency_limit.h"

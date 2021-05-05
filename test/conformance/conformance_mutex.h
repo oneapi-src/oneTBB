@@ -25,11 +25,11 @@
 
 //! Generic test of a TBB mutex
 /** Does not test features specific to reader-writer locks. */
-template<typename M>
+template<typename M, typename Counter = utils::Counter<M>>
 void GeneralTest(const char* mutex_name, bool check = true) { // check flag is needed to disable correctness check for null mutexes (for test reusage)
     const int N = 100000;
     const int GRAIN = 10000;
-    utils::Counter<M> counter;
+    Counter counter;
     counter.value = 0;
 
     // Stress test to force possible race condition of the counter
@@ -374,10 +374,10 @@ struct NullUpgradeDowngrade: utils::NoAssign {
 template<typename M>
 void TestNullMutex(const char* mutex_name) {
     INFO(mutex_name);
-    utils::Counter<M> counter;
+    utils::AtomicCounter<M> counter;
     counter.value = 0;
     const std::size_t n = 100;
-    oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<std::size_t>(0, n, 10), NullRecursive<utils::Counter<M>>(counter));
+    oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<std::size_t>(0, n, 10), NullRecursive<utils::AtomicCounter<M>>(counter));
     M m;
     m.lock();
     REQUIRE(m.try_lock());

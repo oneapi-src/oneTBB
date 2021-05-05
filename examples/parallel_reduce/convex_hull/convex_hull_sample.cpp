@@ -15,7 +15,7 @@
 */
 
 /*
-    This file contains the TBB-based implementation of convex hull algortihm.
+    This file contains the TBB-based implementation of convex hull algorithm.
     It corresponds to the following settings in convex_hull_bench.cpp:
     - USETBB defined to 1
     - USECONCVEC defined to 1

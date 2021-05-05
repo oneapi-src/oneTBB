@@ -17,6 +17,8 @@
 #ifndef tbb_test_harness_allocator_overload_H
 #define tbb_test_harness_allocator_overload_H
 
+#include "config.h"
+
 #include "../src/tbbmalloc_proxy/proxy.h" // for MALLOC_UNIXLIKE_OVERLOAD_ENABLED, MALLOC_ZONE_OVERLOAD_ENABLED
 #include "oneapi/tbb/detail/_config.h" // for __TBB_WIN8UI_SUPPORT
 

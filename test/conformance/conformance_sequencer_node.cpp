@@ -56,7 +56,7 @@ template<typename T>
 struct id_sequencer{
     using input_type = T;
 
-    T operator()(T v){
+    std::size_t operator()(T v) {
         return v;
     }
 };
@@ -69,7 +69,6 @@ void test_copies(){
 
     sequencer_node<int> n(g, sequencer);
     sequencer_node<int> n2(n);
-
 }
 
 void test_buffering(){

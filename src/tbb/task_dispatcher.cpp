@@ -182,15 +182,17 @@ void task_dispatcher::execute_and_wait(d1::task* t, d1::wait_context& wait_ctx, 
 #if __TBB_RESUMABLE_TASKS
 
 #if _WIN32
-/* [[noreturn]] */ void __stdcall co_local_wait_for_all(void* arg) noexcept
+/* [[noreturn]] */ void __stdcall co_local_wait_for_all(void* addr) noexcept
 #else
-/* [[noreturn]] */ void co_local_wait_for_all(void* arg)  noexcept
+/* [[noreturn]] */ void co_local_wait_for_all(unsigned hi, unsigned lo) noexcept
 #endif
 {
-    // Do not create non-trivial objects on the stack of this function. They will never be destroyed.
-    __TBB_ASSERT(arg != nullptr, nullptr);
-    task_dispatcher& task_disp = *static_cast<task_dispatcher*>(arg);
-
+#if !_WIN32
+    std::uintptr_t addr = lo;
+    __TBB_ASSERT(sizeof(addr) == 8 || hi == 0, nullptr);
+    addr += std::uintptr_t(std::uint64_t(hi) << 32);
+#endif
+    task_dispatcher& task_disp = *reinterpret_cast<task_dispatcher*>(addr);
     assert_pointers_valid(task_disp.m_thread_data, task_disp.m_thread_data->my_arena);
     task_disp.set_stealing_threshold(task_disp.m_thread_data->my_arena->calculate_stealing_threshold());
     __TBB_ASSERT(task_disp.can_steal(), nullptr);

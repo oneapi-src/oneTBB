@@ -17,6 +17,7 @@
 #ifndef __TBB_test_common_test_follows_and_precedes_api_H_
 #define __TBB_test_common_test_follows_and_precedes_api_H_
 
+#include "config.h"
 #include "oneapi/tbb/flow_graph.h"
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET

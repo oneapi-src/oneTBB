@@ -24,11 +24,6 @@
     #endif
 #endif
 
-// TODO revamp: move parts dependent on __TBB_EXTRA_DEBUG into separate test(s) since having these
-// parts in all of tests might make testing of the product, which is different from what is actually
-// released.
-#define __TBB_EXTRA_DEBUG 1
-
 // need these to get proper external names for private methods in library.
 #include "tbb/spin_mutex.h"
 #include "tbb/spin_rw_mutex.h"
@@ -43,10 +38,10 @@
 
 #include "common/test.h"
 #include "common/utils.h"
+#include "common/spin_barrier.h"
 #include "common/graph_utils.h"
 
 #include <string> // merely prevents LNK2001 error to happen (on ICL+VC9 configurations)
-
 
 //! \file test_flow_graph_whitebox.cpp
 //! \brief Test for [flow_graph.broadcast_node flow_graph.priority_queue_node flow_graph.indexer_node flow_graph.sequencer_node flow_graph.remove_edge flow_graph.join_node flow_graph.split_node flow_graph.limiter_node flow_graph.write_once_node flow_graph.overwrite_node flow_graph.make_edge flow_graph.graph flow_graph.buffer_node flow_graph.function_node flow_graph.multifunction_node flow_graph.continue_node flow_graph.input_node] specification
@@ -85,7 +80,7 @@ void TestSplitNode() {
 template< typename B >
 void TestBufferingNode(const char * name) {
     tbb::flow::graph g;
-    B                bnode(g);
+    B bnode(g);
     tbb::flow::function_node<int,int,tbb::flow::rejecting> fnode(g, tbb::flow::serial, serial_fn_body<int>(serial_fn_state0));
     INFO("Testing " << name << ":");
     for(int icnt = 0; icnt < 2; icnt++) {
@@ -94,16 +89,17 @@ void TestBufferingNode(const char * name) {
         INFO(" make_edge");
         tbb::flow::make_edge(bnode, fnode);
         CHECK_MESSAGE( (!bnode.my_successors.empty()), "buffering node has no successor after make_edge");
-        INFO(" try_put");
-        bnode.try_put(1);  // will forward to the fnode
-        BACKOFF_WAIT(serial_fn_state0 == 0, "Timed out waiting for first put");
+        std::thread t([&] {
+            INFO(" try_put");
+            bnode.try_put(1);  // will forward to the fnode
+            g.wait_for_all();
+        });
+        utils::SpinWaitWhileEq(serial_fn_state0, 0);
         if(reverse_edge) {
             INFO(" try_put2");
-            bnode.try_put(2);  // will reverse the edge
-            // cannot do a wait_for_all here; the function_node is still executing
-            BACKOFF_WAIT(!bnode.my_successors.empty(), "Timed out waiting after 2nd put");
-            // at this point the only task running is the one for the function_node.
-            CHECK_MESSAGE( (bnode.my_successors.empty()), "successor not removed");
+            bnode.try_put(2);  // should reverse the edge
+            // waiting for the edge to reverse
+            utils::SpinWaitWhile([&] { return !bnode.my_successors.empty(); });
         }
         else {
             CHECK_MESSAGE( (!bnode.my_successors.empty()), "buffering node has no successor after forwarding message");
@@ -111,10 +107,10 @@ void TestBufferingNode(const char * name) {
         serial_fn_state0 = 0;  // release the function_node.
         if(reverse_edge) {
             // have to do a second release because the function_node will get the 2nd item
-            BACKOFF_WAIT( serial_fn_state0 == 0, "Timed out waiting after 2nd put");
+            utils::SpinWaitWhileEq(serial_fn_state0, 0);
             serial_fn_state0 = 0;  // release the function_node.
         }
-        g.wait_for_all();
+        t.join();
         INFO(" remove_edge");
         tbb::flow::remove_edge(bnode, fnode);
         CHECK_MESSAGE( (bnode.my_successors.empty()), "buffering node has a successor after remove_edge");
@@ -153,7 +149,8 @@ void TestBufferingNode(const char * name) {
 void TestContinueNode() {
     tbb::flow::graph g;
     tbb::flow::function_node<int> fnode0(g, tbb::flow::serial, serial_fn_body<int>(serial_fn_state0));
-    tbb::flow::continue_node<int> cnode(g, 1, serial_continue_body<int>(serial_continue_state0));
+    tbb::flow::continue_node<int> cnode(g, /*number_of_predecessors*/ 1,
+                                        serial_continue_body<int>(serial_continue_state0));
     tbb::flow::function_node<int> fnode1(g, tbb::flow::serial, serial_fn_body<int>(serial_fn_state1));
     tbb::flow::make_edge(fnode0, cnode);
     tbb::flow::make_edge(cnode, fnode1);
@@ -167,51 +164,62 @@ void TestContinueNode() {
         serial_fn_state0 = 0;
         serial_fn_state1 = 0;
 
-        fnode0.try_put(1);  // start the first function node.
-        BACKOFF_WAIT(!serial_fn_state0, "Timed out waiting for function_node to start");
+        std::thread t([&] {
+            fnode0.try_put(1);  // start the first function node.
+            if(icnt == 0) {  // first time through, let the continue_node fire
+                INFO(" firing");
+                fnode0.try_put(1);  // second message
+                g.wait_for_all();
+
+                // try a try_get()
+                {
+                    int i;
+                    CHECK_MESSAGE( (!cnode.try_get(i)), "try_get not rejected");
+                }
+
+                INFO(" reset");
+                CHECK_MESSAGE( (!cnode.my_successors.empty()), "Empty successors in built graph (before reset)");
+                CHECK_MESSAGE( (cnode.my_predecessor_count == 2), "predecessor_count reset (before reset)");
+                g.reset();  // should still be the same
+                CHECK_MESSAGE( (!cnode.my_successors.empty()), "Empty successors in built graph (after reset)" );
+                CHECK_MESSAGE( (cnode.my_predecessor_count == 2), "predecessor_count reset (after reset)");
+            }
+            else {  // we're going to see if the rf_clear_edges resets things.
+                g.wait_for_all();
+                INFO(" reset(rf_clear_edges)");
+                CHECK_MESSAGE( (!cnode.my_successors.empty()), "Empty successors in built graph (before reset)" );
+                CHECK_MESSAGE( (cnode.my_predecessor_count == 2), "predecessor_count reset (before reset)" );
+                g.reset(tbb::flow::rf_clear_edges);  // should be in forward direction again
+                CHECK_MESSAGE( (cnode.my_current_count == 0), "state of continue_receiver incorrect after reset(rf_clear_edges)" );
+                CHECK_MESSAGE( (cnode.my_successors.empty()), "buffering node has a successor after reset(rf_clear_edges)" );
+                CHECK_MESSAGE( (cnode.my_predecessor_count == cnode.my_initial_predecessor_count), "predecessor count not reset" );
+            }
+        });
+
+        utils::SpinWaitWhileEq(serial_fn_state0, 0); // waiting for the first message to arrive in function_node
         // Now the body of function_node 0 is executing.
         serial_fn_state0 = 0;  // release the node
-        // wait for node to count the message (or for the node body to execute, which would be wrong)
-        BACKOFF_WAIT(serial_continue_state0 == 0 && cnode.my_current_count == 0, "Timed out waiting for continue_state0 to change");
-        CHECK_MESSAGE( (serial_continue_state0 == 0), "Improperly released continue_node");
-        CHECK_MESSAGE( (cnode.my_current_count == 1), "state of continue_receiver incorrect");
-        if(icnt == 0) {  // first time through, let the continue_node fire
-            INFO(" firing");
-            fnode0.try_put(1);  // second message
-            BACKOFF_WAIT(serial_fn_state0 == 0, "timeout waiting for continue_body to execute");
+        if (icnt == 0) {
+            // wait for node to count the message (or for the node body to execute, which would be wrong)
+            utils::SpinWaitWhile([&] {
+                return serial_continue_state0 == 0 && cnode.my_current_count == 0;
+            });
+            CHECK_MESSAGE( (serial_continue_state0 == 0), "Improperly released continue_node");
+            CHECK_MESSAGE( (cnode.my_current_count == 1), "state of continue_receiver incorrect");
+
+            utils::SpinWaitWhileEq(serial_fn_state0, 0); // waiting for the second message to arrive in function_node
             // Now the body of function_node 0 is executing.
             serial_fn_state0 = 0;  // release the node
 
-            BACKOFF_WAIT(!serial_continue_state0,"continue_node didn't start");  // now we wait for the continue_node.
+            utils::SpinWaitWhileEq(serial_continue_state0, 0); // waiting for continue_node to start
             CHECK_MESSAGE( (cnode.my_current_count == 0), " my_current_count not reset before body of continue_node started");
             serial_continue_state0 = 0;  // release the continue_node
-            BACKOFF_WAIT(!serial_fn_state1,"successor function_node didn't start");    // wait for the successor function_node to enter body
+
+            utils::SpinWaitWhileEq(serial_fn_state1, 0); // wait for the successor function_node to enter body
             serial_fn_state1 = 0;  // release successor function_node.
-            g.wait_for_all();
-
-            // try a try_get()
-            {
-                int i;
-                CHECK_MESSAGE( (!cnode.try_get(i)), "try_get not rejected");
-            }
-
-            INFO(" reset");
-            CHECK_MESSAGE( (!cnode.my_successors.empty()), "Empty successors in built graph (before reset)");
-            CHECK_MESSAGE( (cnode.my_predecessor_count == 2), "predecessor_count reset (before reset)");
-            g.reset();  // should still be the same
-            CHECK_MESSAGE( (!cnode.my_successors.empty()), "Empty successors in built graph (after reset)" );
-            CHECK_MESSAGE( (cnode.my_predecessor_count == 2), "predecessor_count reset (after reset)");
         }
-        else {  // we're going to see if the rf_clear_edges resets things.
-            g.wait_for_all();
-            INFO(" reset(rf_clear_edges)");
-            CHECK_MESSAGE( (!cnode.my_successors.empty()), "Empty successors in built graph (before reset)");
-            CHECK_MESSAGE( (cnode.my_predecessor_count == 2), "predecessor_count reset (before reset)");
-            g.reset(tbb::flow::rf_clear_edges);  // should be in forward direction again
-            CHECK_MESSAGE( (cnode.my_current_count == 0), "state of continue_receiver incorrect after reset(rf_clear_edges)");
-            CHECK_MESSAGE( (cnode.my_successors.empty()), "buffering node has a successor after reset(rf_clear_edges)");
-            CHECK_MESSAGE( (cnode.my_predecessor_count == cnode.my_initial_predecessor_count), "predecessor count not reset");
-        }
+
+        t.join();
     }
 
     INFO(" done\n");
@@ -225,9 +233,8 @@ void TestContinueNode() {
 void TestFunctionNode() {
     tbb::flow::graph g;
     tbb::flow::queue_node<int> qnode0(g);
-    tbb::flow::function_node<int,int, tbb::flow::rejecting > fnode0(g, tbb::flow::serial, serial_fn_body<int>(serial_fn_state0));
-    // queueing function node
-    tbb::flow::function_node<int,int> fnode1(g, tbb::flow::serial, serial_fn_body<int>(serial_fn_state0));
+    tbb::flow::function_node<int,int,   tbb::flow::rejecting > fnode0(g, tbb::flow::serial, serial_fn_body<int>(serial_fn_state0));
+    tbb::flow::function_node<int,int/*, tbb::flow::queueing*/> fnode1(g, tbb::flow::serial, serial_fn_body<int>(serial_fn_state0));
 
     tbb::flow::queue_node<int> qnode1(g);
 
@@ -235,11 +242,10 @@ void TestFunctionNode() {
     tbb::flow::make_edge(qnode0, fnode0);
 
     serial_fn_state0 = 2;  // just let it go
-    // see if the darned thing will work....
     qnode0.try_put(1);
     g.wait_for_all();
     int ii;
-    CHECK_MESSAGE( (qnode1.try_get(ii) && ii == 1), "output not passed");
+    CHECK_MESSAGE( (qnode1.try_get(ii) && ii == 1), "output not passed" );
     tbb::flow::remove_edge(qnode0, fnode0);
     tbb::flow::remove_edge(fnode0, qnode1);
 
@@ -247,10 +253,9 @@ void TestFunctionNode() {
     tbb::flow::make_edge(qnode0, fnode1);
 
     serial_fn_state0 = 2;  // just let it go
-    // see if the darned thing will work....
     qnode0.try_put(1);
     g.wait_for_all();
-    CHECK_MESSAGE( (qnode1.try_get(ii) && ii == 1), "output not passed");
+    CHECK_MESSAGE( (qnode1.try_get(ii) && ii == 1), "output not passed" );
     tbb::flow::remove_edge(qnode0, fnode1);
     tbb::flow::remove_edge(fnode1, qnode1);
 
@@ -261,12 +266,15 @@ void TestFunctionNode() {
     INFO("Testing rejecting function_node:");
     CHECK_MESSAGE( (!fnode0.my_queue), "node should have no queue");
     CHECK_MESSAGE( (!fnode0.my_successors.empty()), "successor edge not added");
-    qnode0.try_put(1);
-    BACKOFF_WAIT(!serial_fn_state0,"rejecting function_node didn't start");
-    qnode0.try_put(2);   // rejecting node should reject, reverse.
-    BACKOFF_WAIT(fnode0.my_predecessors.empty(), "Missing predecessor ---");
+    std::thread t([&] {
+        qnode0.try_put(1);
+        qnode0.try_put(2);   // rejecting node should reject, reverse.
+        g.wait_for_all();
+    });
+    utils::SpinWaitWhileEq(serial_fn_state0, 0); // waiting rejecting node to start
+    utils::SpinWaitWhile([&] { return fnode0.my_predecessors.empty(); });
     serial_fn_state0 = 2;   // release function_node body.
-    g.wait_for_all();
+    t.join();
     INFO(" reset");
     g.reset();  // should reverse the edge from the input to the function node.
     CHECK_MESSAGE( (!qnode0.my_successors.empty()), "empty successors after reset()");
@@ -294,19 +302,22 @@ void TestFunctionNode() {
 
     serial_fn_state0 = 0;  // make the function_node wait
     tbb::flow::make_edge(qnode0, fnode0);
-    INFO(" start_func");
-    qnode0.try_put(1);
-    BACKOFF_WAIT(serial_fn_state0 == 0, "Timed out waiting after 1st put");
-    // now if we put an item to the queues the edges to the function_node will reverse.
-    INFO(" put_node(2)");
-    qnode0.try_put(2);   // start queue node.
+
+    std::thread t2([&] {
+        INFO(" start_func");
+        qnode0.try_put(1);
+        // now if we put an item to the queues the edges to the function_node will reverse.
+        INFO(" put_node(2)");
+        qnode0.try_put(2);   // start queue node.
+        g.wait_for_all();
+    });
+    utils::SpinWaitWhileEq(serial_fn_state0, 0); // waiting rejecting node to start
     // wait for the edges to reverse
-    BACKOFF_WAIT(fnode0.my_predecessors.empty(), "Timed out waiting");
-    CHECK_MESSAGE( (!fnode0.my_predecessors.empty()), "function_node edge not reversed");
+    utils::SpinWaitWhile([&] { return fnode0.my_predecessors.empty(); });
     g.my_context->cancel_group_execution();
     // release the function_node
     serial_fn_state0 = 2;
-    g.wait_for_all();
+    t2.join();
     CHECK_MESSAGE( (!fnode0.my_predecessors.empty() && qnode0.my_successors.empty()), "function_node edge not reversed");
     g.reset(tbb::flow::rf_clear_edges);
     CHECK_MESSAGE( (fnode0.my_predecessors.empty() && qnode0.my_successors.empty()), "function_node edge not removed");
@@ -507,16 +518,19 @@ void TestLimiterNode() {
 
 template<typename MF_TYPE>
 struct mf_body {
-    std::atomic<int> *_flag;
-    mf_body( std::atomic<int> &myatomic) : _flag(&myatomic) { }
-    void operator()( const int& in, typename MF_TYPE::output_ports_type &outports) {
-        if(_flag->load(std::memory_order_acquire) == 0) {
-            _flag->store(1, std::memory_order_release);
-            BACKOFF_WAIT(_flag->load(std::memory_order_acquire) == 1, "multifunction_node not released");
+    std::atomic<int>& my_flag;
+    mf_body(std::atomic<int>& flag) : my_flag(flag) { }
+    void operator()(const int& in, typename MF_TYPE::output_ports_type& outports) {
+        if(my_flag == 0) {
+            my_flag = 1;
+
+            utils::SpinWaitWhileEq(my_flag, 1);
         }
 
-        if(in & 0x1) std::get<1>(outports).try_put(in);
-        else         std::get<0>(outports).try_put(in);
+        if (in & 0x1)
+            std::get<1>(outports).try_put(in);
+        else
+            std::get<0>(outports).try_put(in);
     }
 };
 
@@ -526,18 +540,17 @@ template<typename T>
 struct test_reversal<tbb::flow::queueing, T> {
     test_reversal() { INFO("<queueing>"); }
     // queueing node will not reverse.
-    bool operator()( T &node) { return node.my_predecessors.empty(); }
+    bool operator()(T& node) const { return node.my_predecessors.empty(); }
 };
 
 template<typename T>
 struct test_reversal<tbb::flow::rejecting, T> {
     test_reversal() { INFO("<rejecting>"); }
-    bool operator()( T &node) { return !node.my_predecessors.empty(); }
+    bool operator()(T& node) const { return !node.my_predecessors.empty(); }
 };
 
 template<typename P>
-void
-TestMultifunctionNode() {
+void TestMultifunctionNode() {
     typedef tbb::flow::multifunction_node<int, std::tuple<int, int>, P> multinode_type;
     INFO("Testing multifunction_node");
     test_reversal<P,multinode_type> my_test;
@@ -551,19 +564,21 @@ TestMultifunctionNode() {
     tbb::flow::make_edge(tbb::flow::output_port<0>(mf), qeven_out);
     tbb::flow::make_edge(tbb::flow::output_port<1>(mf), qodd_out);
     g.wait_for_all();
-    for( int ii = 0; ii < 2 ; ++ii) {
+    for (int ii = 0; ii < 2 ; ++ii) {
         serial_fn_state0 = 0;
         /* if(ii == 0) REMARK(" reset preds"); else REMARK(" 2nd");*/
-        qin.try_put(0);
+        std::thread t([&] {
+            qin.try_put(0);
+            qin.try_put(1);
+            g.wait_for_all();
+        });
         // wait for node to be active
-        BACKOFF_WAIT(serial_fn_state0 == 0, "timed out waiting for first put");
-        qin.try_put(1);
-        BACKOFF_WAIT((!my_test(mf)), "Timed out waiting");
-        CHECK_MESSAGE( (my_test(mf)), "fail second put test");
+        utils::SpinWaitWhileEq(serial_fn_state0, 0);
+        utils::SpinWaitWhile( [&] { return !my_test(mf); });
         g.my_context->cancel_group_execution();
         // release node
         serial_fn_state0 = 2;
-        g.wait_for_all();
+        t.join();
         CHECK_MESSAGE( (my_test(mf)), "fail cancel group test");
         if( ii == 1) {
             INFO(" rf_clear_edges");
@@ -624,8 +639,7 @@ struct seq_body {
 };
 
 // sequencer_node behaves like a queueing node, but requires a different constructor.
-void
-TestSequencerNode() {
+void TestSequencerNode() {
     tbb::flow::graph g;
     tbb::flow::sequencer_node<int> bnode(g, seq_body());
     INFO("Testing sequencer_node:");
@@ -634,13 +648,18 @@ TestSequencerNode() {
     serial_fn_state0 = 0;  // reset to waiting state.
     INFO(" make_edge");
     tbb::flow::make_edge(bnode, fnode);
-    CHECK_MESSAGE( (!bnode.my_successors.empty()), "buffering node has no successor after make_edge");
+    CHECK_MESSAGE( (!bnode.my_successors.empty()), "buffering node has no successor after make_edge" );
     INFO(" try_put");
-    bnode.try_put(0);  // will forward to the fnode
-    BACKOFF_WAIT( serial_fn_state0 == 0, "timeout waiting for function_node");  // wait for the function_node to fire up
-    CHECK_MESSAGE( (!bnode.my_successors.empty()), "buffering node has no successor after forwarding message");
-    serial_fn_state0 = 0;
-    g.wait_for_all();
+    std::thread t([&]{
+        bnode.try_put(0);  // will forward to the fnode
+        g.wait_for_all();
+    });
+    // wait for the function_node to fire up
+    utils::SpinWaitWhileEq(serial_fn_state0, 0);
+    CHECK_MESSAGE( (!bnode.my_successors.empty()), "buffering node has no successor after forwarding message" );
+    serial_fn_state0 = 0;       // release the function node
+    t.join();
+
     INFO(" remove_edge");
     tbb::flow::remove_edge(bnode, fnode);
     CHECK_MESSAGE( (bnode.my_successors.empty()), "buffering node has a successor after remove_edge");
@@ -667,9 +686,9 @@ TestSequencerNode() {
 struct snode_body {
     int max_cnt;
     int my_cnt;
-    snode_body( const int &in) : max_cnt(in) { my_cnt = 0; }
-    int operator()(tbb::flow_control &fc) {
-        if(max_cnt <= my_cnt++) {
+    snode_body(const int& in) : max_cnt(in) { my_cnt = 0; }
+    int operator()(tbb::flow_control& fc) {
+        if (max_cnt <= my_cnt++) {
             fc.stop();
             return int();
         }
@@ -677,8 +696,7 @@ struct snode_body {
     }
 };
 
-void
-TestInputNode() {
+void TestInputNode() {
     tbb::flow::graph g;
     tbb::flow::input_node<int> in(g, snode_body(4));
     INFO("Testing input_node:");
@@ -704,10 +722,8 @@ TestInputNode() {
     INFO(" activate");
     in.activate();  // will forward to the fnode
     INFO(" wait1");
-    BACKOFF_WAIT( !in.my_successors.empty(), "Timed out waiting for edge to reverse");
-    CHECK_MESSAGE( (in.my_successors.empty()), "input node has no successor after forwarding message");
-
     g.wait_for_all();
+    CHECK_MESSAGE( (in.my_successors.empty()), "input node has no successor after forwarding message");
     g.reset();
     CHECK_MESSAGE( (!in.my_successors.empty()), "input_node has no successors after reset");
     CHECK_MESSAGE( (tbb::flow::input_port<0>(jn).my_predecessors.empty()), "successor of input_node has pred after reset.");
@@ -723,11 +739,9 @@ TEST_CASE("Test buffering nodes"){
 	arena.execute(
         [&]() {
             // tests presume at least three threads
-
             TestBufferingNode< tbb::flow::buffer_node<int> >("buffer_node");
             TestBufferingNode< tbb::flow::priority_queue_node<int> >("priority_queue_node");
             TestBufferingNode< tbb::flow::queue_node<int> >("queue_node");
-
         }
 	);
 }
@@ -809,7 +823,7 @@ TEST_CASE("Test scalar node"){
 TEST_CASE("try_get in inactive graph"){
     tbb::flow::graph g;
 
-    tbb::flow::input_node<int> src(g, [&](tbb::flow_control& fc) -> bool { fc.stop(); return 0;});
+    tbb::flow::input_node<int> src(g, [&](tbb::flow_control& fc) { fc.stop(); return 0;});
     deactivate_graph(g);
 
     int tmp = -1;
@@ -897,7 +911,7 @@ TEST_CASE("Send message to continue_node while graph is inactive") {
     buffer_node<int> b(g);
 
     make_edge(c, b);
-    
+
     deactivate_graph(g);
 
     c.try_put(continue_msg());
@@ -921,9 +935,9 @@ TEST_CASE("Bypass of a successor's message in a node with lightweight policy") {
 
     auto body2 = [](const int&v)->int {return v / 2;};
     function_node<int, int> f2(g, unlimited, body2);
-    
+
     buffer_node<int> b(g);
-    
+
     make_edge(f1, f2);
     make_edge(f2, b);
 

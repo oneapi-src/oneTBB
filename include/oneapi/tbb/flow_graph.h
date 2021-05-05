@@ -35,6 +35,7 @@
 #include "detail/_template_helpers.h"
 #include "detail/_aggregator.h"
 #include "detail/_allocator_traits.h"
+#include "detail/_utils.h"
 #include "profiling.h"
 #include "task_arena.h"
 
@@ -52,6 +53,9 @@
 #include <tuple>
 #include <list>
 #include <queue>
+#if __TBB_CPP20_CONCEPTS_PRESENT
+#include <concepts>
+#endif
 
 /** @file
   \brief The graph related classes and functions
@@ -76,6 +80,62 @@ struct null_type {};
 
 //! An empty class used for messages that mean "I'm done"
 class continue_msg {};
+
+} // namespace d1
+
+#if __TBB_CPP20_CONCEPTS_PRESENT
+namespace d0 {
+
+template <typename ReturnType, typename OutputType>
+concept node_body_return_type = std::same_as<OutputType, tbb::detail::d1::continue_msg> ||
+                                std::same_as<OutputType, ReturnType>;
+
+template <typename Body, typename Output>
+concept continue_node_body = std::copy_constructible<Body> &&
+                             requires( Body& body, const tbb::detail::d1::continue_msg& v ) {
+                                 { body(v) } -> node_body_return_type<Output>;
+                             };
+
+template <typename Body, typename Input, typename Output>
+concept function_node_body = std::copy_constructible<Body> &&
+                             requires( Body& body, const Input& v ) {
+                                 { body(v) } -> node_body_return_type<Output>;
+                             };
+
+template <typename FunctionObject, typename Input, typename Key>
+concept join_node_function_object = std::copy_constructible<FunctionObject> &&
+                                    requires( FunctionObject& func, const Input& v ) {
+                                        { func(v) } -> adaptive_same_as<Key>;
+                                    };
+
+template <typename Body, typename Output>
+concept input_node_body = std::copy_constructible<Body> &&
+                          requires( Body& body, tbb::detail::d1::flow_control& fc ) {
+                              { body(fc) } -> adaptive_same_as<Output>;
+                          };
+
+template <typename Body, typename Input, typename OutputPortsType>
+concept multifunction_node_body = std::copy_constructible<Body> &&
+                                  requires( Body& body, const Input& v, OutputPortsType& p ) {
+                                      body(v, p);
+                                  };
+
+template <typename Sequencer, typename Value>
+concept sequencer = std::copy_constructible<Sequencer> &&
+                    requires( Sequencer& seq, const Value& value ) {
+                        { seq(value) } -> adaptive_same_as<std::size_t>;
+                    };
+
+template <typename Body, typename Input, typename GatewayType>
+concept async_node_body = std::copy_constructible<Body> &&
+                          requires( Body& body, const Input& v, GatewayType& gateway ) {
+                              body(v, gateway);
+                          };
+
+} // namespace d0
+#endif // __TBB_CPP20_CONCEPTS_PRESENT
+
+namespace d1 {
 
 //! Forward declaration section
 template< typename T > class sender;
@@ -480,6 +540,7 @@ inline graph_node::~graph_node() {
 //! An executable node that acts as a source, i.e. it has no predecessors
 
 template < typename Output >
+    __TBB_requires(std::copyable<Output>)
 class input_node : public graph_node, public sender< Output > {
 public:
     //! The type of the output message, which is complete
@@ -493,6 +554,7 @@ public:
 
     //! Constructor for a node with a successor
     template< typename Body >
+        __TBB_requires(input_node_body<Body, Output>)
      __TBB_NOINLINE_SYM input_node( graph &g, Body body )
          : graph_node(g), my_active(false)
          , my_body( new input_body_leaf< output_type, Body>(body) )
@@ -505,6 +567,7 @@ public:
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
     template <typename Body, typename... Successors>
+        __TBB_requires(input_node_body<Body, Output>)
     input_node( const node_set<order::preceding, Successors...>& successors, Body body )
         : input_node(successors.graph_reference(), body)
     {
@@ -697,6 +760,9 @@ private:
 
 //! Implements a function node that supports Input -> Output
 template<typename Input, typename Output = continue_msg, typename Policy = queueing>
+    __TBB_requires(std::default_initializable<Input> &&
+                   std::copy_constructible<Input> &&
+                   std::copy_constructible<Output>)
 class function_node
     : public graph_node
     , public function_input< Input, Output, Policy, cache_aligned_allocator<Input> >
@@ -720,6 +786,7 @@ public:
     // TODO: pass the graph_buffer_policy to the function_input_base so it can all
     // be done in one place.  This would be an interface-breaking change.
     template< typename Body >
+        __TBB_requires(function_node_body<Body, Input, Output>)
      __TBB_NOINLINE_SYM function_node( graph &g, size_t concurrency,
                    Body body, Policy = Policy(), node_priority_t a_priority = no_priority )
         : graph_node(g), input_impl_type(g, concurrency, body, a_priority),
@@ -729,11 +796,13 @@ public:
     }
 
     template <typename Body>
+        __TBB_requires(function_node_body<Body, Input, Output>)
     function_node( graph& g, size_t concurrency, Body body, node_priority_t a_priority )
         : function_node(g, concurrency, body, Policy(), a_priority) {}
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
     template <typename Body, typename... Args>
+        __TBB_requires(function_node_body<Body, Input, Output>)
     function_node( const node_set<Args...>& nodes, size_t concurrency, Body body,
                    Policy p = Policy(), node_priority_t a_priority = no_priority )
         : function_node(nodes.graph_reference(), concurrency, body, p, a_priority) {
@@ -741,6 +810,7 @@ public:
     }
 
     template <typename Body, typename... Args>
+        __TBB_requires(function_node_body<Body, Input, Output>)
     function_node( const node_set<Args...>& nodes, size_t concurrency, Body body, node_priority_t a_priority )
         : function_node(nodes, concurrency, body, Policy(), a_priority) {}
 #endif // __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
@@ -778,6 +848,8 @@ protected:
 //! implements a function node that supports Input -> (set of outputs)
 // Output is a tuple of output types.
 template<typename Input, typename Output, typename Policy = queueing>
+    __TBB_requires(std::default_initializable<Input> &&
+                   std::copy_constructible<Input>)
 class multifunction_node :
     public graph_node,
     public multifunction_input
@@ -807,6 +879,7 @@ private:
     using input_impl_type::my_predecessors;
 public:
     template<typename Body>
+        __TBB_requires(multifunction_node_body<Body, Input, output_ports_type>)
     __TBB_NOINLINE_SYM multifunction_node(
         graph &g, size_t concurrency,
         Body body, Policy = Policy(), node_priority_t a_priority = no_priority
@@ -819,11 +892,13 @@ public:
     }
 
     template <typename Body>
+        __TBB_requires(multifunction_node_body<Body, Input, output_ports_type>)
     __TBB_NOINLINE_SYM multifunction_node(graph& g, size_t concurrency, Body body, node_priority_t a_priority)
         : multifunction_node(g, concurrency, body, Policy(), a_priority) {}
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
     template <typename Body, typename... Args>
+        __TBB_requires(multifunction_node_body<Body, Input, output_ports_type>)
     __TBB_NOINLINE_SYM multifunction_node(const node_set<Args...>& nodes, size_t concurrency, Body body,
                        Policy p = Policy(), node_priority_t a_priority = no_priority)
         : multifunction_node(nodes.graph_reference(), concurrency, body, p, a_priority) {
@@ -831,6 +906,7 @@ public:
     }
 
     template <typename Body, typename... Args>
+        __TBB_requires(multifunction_node_body<Body, Input, output_ports_type>)
     __TBB_NOINLINE_SYM multifunction_node(const node_set<Args...>& nodes, size_t concurrency, Body body, node_priority_t a_priority)
         : multifunction_node(nodes, concurrency, body, Policy(), a_priority) {}
 #endif // __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
@@ -908,6 +984,7 @@ private:
 
 //! Implements an executable node that supports continue_msg -> Output
 template <typename Output, typename Policy = Policy<void> >
+    __TBB_requires(std::copy_constructible<Output>)
 class continue_node : public graph_node, public continue_input<Output, Policy>,
                       public function_output<Output> {
 public:
@@ -920,6 +997,7 @@ public:
 
     //! Constructor for executable node with continue_msg -> Output
     template <typename Body >
+        __TBB_requires(continue_node_body<Body, Output>)
     __TBB_NOINLINE_SYM continue_node(
         graph &g,
         Body body, Policy = Policy(), node_priority_t a_priority = no_priority
@@ -932,23 +1010,27 @@ public:
     }
 
     template <typename Body>
+        __TBB_requires(continue_node_body<Body, Output>)
     continue_node( graph& g, Body body, node_priority_t a_priority )
         : continue_node(g, body, Policy(), a_priority) {}
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
     template <typename Body, typename... Args>
+        __TBB_requires(continue_node_body<Body, Output>)
     continue_node( const node_set<Args...>& nodes, Body body,
                    Policy p = Policy(), node_priority_t a_priority = no_priority )
         : continue_node(nodes.graph_reference(), body, p, a_priority ) {
         make_edges_in_order(nodes, *this);
     }
     template <typename Body, typename... Args>
+        __TBB_requires(continue_node_body<Body, Output>)
     continue_node( const node_set<Args...>& nodes, Body body, node_priority_t a_priority)
         : continue_node(nodes, body, Policy(), a_priority) {}
 #endif // __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
 
     //! Constructor for executable node with continue_msg -> Output
     template <typename Body >
+        __TBB_requires(continue_node_body<Body, Output>)
     __TBB_NOINLINE_SYM continue_node(
         graph &g, int number_of_predecessors,
         Body body, Policy = Policy(), node_priority_t a_priority = no_priority
@@ -961,11 +1043,13 @@ public:
     }
 
     template <typename Body>
+        __TBB_requires(continue_node_body<Body, Output>)
     continue_node( graph& g, int number_of_predecessors, Body body, node_priority_t a_priority)
         : continue_node(g, number_of_predecessors, body, Policy(), a_priority) {}
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
     template <typename Body, typename... Args>
+        __TBB_requires(continue_node_body<Body, Output>)
     continue_node( const node_set<Args...>& nodes, int number_of_predecessors,
                    Body body, Policy p = Policy(), node_priority_t a_priority = no_priority )
         : continue_node(nodes.graph_reference(), number_of_predecessors, body, p, a_priority) {
@@ -973,6 +1057,7 @@ public:
     }
 
     template <typename Body, typename... Args>
+        __TBB_requires(continue_node_body<Body, Output>)
     continue_node( const node_set<Args...>& nodes, int number_of_predecessors,
                    Body body, node_priority_t a_priority )
         : continue_node(nodes, number_of_predecessors, body, Policy(), a_priority) {}
@@ -1499,6 +1584,7 @@ protected:
 
 //! Forwards messages in sequence order
 template <typename T>
+    __TBB_requires(std::copyable<T>)
 class sequencer_node : public queue_node<T> {
     function_body< T, size_t > *my_sequencer;
     // my_sequencer should be a benign function and must be callable
@@ -1511,6 +1597,7 @@ public:
 
     //! Constructor
     template< typename Sequencer >
+        __TBB_requires(sequencer<Sequencer, T>)
     __TBB_NOINLINE_SYM sequencer_node( graph &g, const Sequencer& s ) : queue_node<T>(g),
         my_sequencer(new function_body_leaf< T, size_t, Sequencer>(s) ) {
         fgt_node( CODEPTR(), FLOW_SEQUENCER_NODE, &(this->my_graph),
@@ -1520,6 +1607,7 @@ public:
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
     template <typename Sequencer, typename... Args>
+        __TBB_requires(sequencer<Sequencer, T>)
     sequencer_node( const node_set<Args...>& nodes, const Sequencer& s)
         : sequencer_node(nodes.graph_reference(), s) {
         make_edges_in_order(nodes, *this);
@@ -2072,6 +2160,22 @@ public:
 
 };
 
+#if __TBB_CPP20_CONCEPTS_PRESENT
+// Helper function which is well-formed only if all of the elements in OutputTuple
+// satisfies join_node_function_object<body[i], tuple[i], K>
+template <typename OutputTuple, typename K,
+          typename... Functions, std::size_t... Idx>
+void join_node_function_objects_helper( std::index_sequence<Idx...> )
+    requires (std::tuple_size_v<OutputTuple> == sizeof...(Functions)) &&
+             (... && join_node_function_object<Functions, std::tuple_element_t<Idx, OutputTuple>, K>);
+
+template <typename OutputTuple, typename K, typename... Functions>
+concept join_node_functions = requires {
+    join_node_function_objects_helper<OutputTuple, K, Functions...>(std::make_index_sequence<sizeof...(Functions)>{});
+};
+
+#endif
+
 // template for key_matching join_node
 // tag_matching join_node is a specialization of key_matching, and is source-compatible.
 template<typename OutputTuple, typename K, typename KHash>
@@ -2089,21 +2193,25 @@ public:
 #endif  /* __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING */
 
     template<typename __TBB_B0, typename __TBB_B1>
+        __TBB_requires(join_node_functions<OutputTuple, K, __TBB_B0, __TBB_B1>)
      __TBB_NOINLINE_SYM join_node(graph &g, __TBB_B0 b0, __TBB_B1 b1) : unfolded_type(g, b0, b1) {
         fgt_multiinput_node<N>( CODEPTR(), FLOW_JOIN_NODE_TAG_MATCHING, &this->my_graph,
                                                            this->input_ports(), static_cast< sender< output_type > *>(this) );
     }
     template<typename __TBB_B0, typename __TBB_B1, typename __TBB_B2>
+        __TBB_requires(join_node_functions<OutputTuple, K, __TBB_B0, __TBB_B1, __TBB_B2>)
      __TBB_NOINLINE_SYM join_node(graph &g, __TBB_B0 b0, __TBB_B1 b1, __TBB_B2 b2) : unfolded_type(g, b0, b1, b2) {
         fgt_multiinput_node<N>( CODEPTR(), FLOW_JOIN_NODE_TAG_MATCHING, &this->my_graph,
                                                            this->input_ports(), static_cast< sender< output_type > *>(this) );
     }
     template<typename __TBB_B0, typename __TBB_B1, typename __TBB_B2, typename __TBB_B3>
+        __TBB_requires(join_node_functions<OutputTuple, K, __TBB_B0, __TBB_B1, __TBB_B2, __TBB_B3>)
      __TBB_NOINLINE_SYM join_node(graph &g, __TBB_B0 b0, __TBB_B1 b1, __TBB_B2 b2, __TBB_B3 b3) : unfolded_type(g, b0, b1, b2, b3) {
         fgt_multiinput_node<N>( CODEPTR(), FLOW_JOIN_NODE_TAG_MATCHING, &this->my_graph,
                                                            this->input_ports(), static_cast< sender< output_type > *>(this) );
     }
     template<typename __TBB_B0, typename __TBB_B1, typename __TBB_B2, typename __TBB_B3, typename __TBB_B4>
+        __TBB_requires(join_node_functions<OutputTuple, K, __TBB_B0, __TBB_B1, __TBB_B2, __TBB_B3, __TBB_B4>)
      __TBB_NOINLINE_SYM join_node(graph &g, __TBB_B0 b0, __TBB_B1 b1, __TBB_B2 b2, __TBB_B3 b3, __TBB_B4 b4) :
             unfolded_type(g, b0, b1, b2, b3, b4) {
         fgt_multiinput_node<N>( CODEPTR(), FLOW_JOIN_NODE_TAG_MATCHING, &this->my_graph,
@@ -2112,6 +2220,7 @@ public:
 #if __TBB_VARIADIC_MAX >= 6
     template<typename __TBB_B0, typename __TBB_B1, typename __TBB_B2, typename __TBB_B3, typename __TBB_B4,
         typename __TBB_B5>
+        __TBB_requires(join_node_functions<OutputTuple, K, __TBB_B0, __TBB_B1, __TBB_B2, __TBB_B3, __TBB_B4, __TBB_B5>)
      __TBB_NOINLINE_SYM join_node(graph &g, __TBB_B0 b0, __TBB_B1 b1, __TBB_B2 b2, __TBB_B3 b3, __TBB_B4 b4, __TBB_B5 b5) :
             unfolded_type(g, b0, b1, b2, b3, b4, b5) {
         fgt_multiinput_node<N>( CODEPTR(), FLOW_JOIN_NODE_TAG_MATCHING, &this->my_graph,
@@ -2121,6 +2230,7 @@ public:
 #if __TBB_VARIADIC_MAX >= 7
     template<typename __TBB_B0, typename __TBB_B1, typename __TBB_B2, typename __TBB_B3, typename __TBB_B4,
         typename __TBB_B5, typename __TBB_B6>
+        __TBB_requires(join_node_functions<OutputTuple, K, __TBB_B0, __TBB_B1, __TBB_B2, __TBB_B3, __TBB_B4, __TBB_B5, __TBB_B6>)
      __TBB_NOINLINE_SYM join_node(graph &g, __TBB_B0 b0, __TBB_B1 b1, __TBB_B2 b2, __TBB_B3 b3, __TBB_B4 b4, __TBB_B5 b5, __TBB_B6 b6) :
             unfolded_type(g, b0, b1, b2, b3, b4, b5, b6) {
         fgt_multiinput_node<N>( CODEPTR(), FLOW_JOIN_NODE_TAG_MATCHING, &this->my_graph,
@@ -2130,6 +2240,7 @@ public:
 #if __TBB_VARIADIC_MAX >= 8
     template<typename __TBB_B0, typename __TBB_B1, typename __TBB_B2, typename __TBB_B3, typename __TBB_B4,
         typename __TBB_B5, typename __TBB_B6, typename __TBB_B7>
+        __TBB_requires(join_node_functions<OutputTuple, K, __TBB_B0, __TBB_B1, __TBB_B2, __TBB_B3, __TBB_B4, __TBB_B5, __TBB_B6, __TBB_B7>)
      __TBB_NOINLINE_SYM join_node(graph &g, __TBB_B0 b0, __TBB_B1 b1, __TBB_B2 b2, __TBB_B3 b3, __TBB_B4 b4, __TBB_B5 b5, __TBB_B6 b6,
             __TBB_B7 b7) : unfolded_type(g, b0, b1, b2, b3, b4, b5, b6, b7) {
         fgt_multiinput_node<N>( CODEPTR(), FLOW_JOIN_NODE_TAG_MATCHING, &this->my_graph,
@@ -2139,6 +2250,7 @@ public:
 #if __TBB_VARIADIC_MAX >= 9
     template<typename __TBB_B0, typename __TBB_B1, typename __TBB_B2, typename __TBB_B3, typename __TBB_B4,
         typename __TBB_B5, typename __TBB_B6, typename __TBB_B7, typename __TBB_B8>
+        __TBB_requires(join_node_functions<OutputTuple, K, __TBB_B0, __TBB_B1, __TBB_B2, __TBB_B3, __TBB_B4, __TBB_B5, __TBB_B6, __TBB_B7, __TBB_B8>)
      __TBB_NOINLINE_SYM join_node(graph &g, __TBB_B0 b0, __TBB_B1 b1, __TBB_B2 b2, __TBB_B3 b3, __TBB_B4 b4, __TBB_B5 b5, __TBB_B6 b6,
             __TBB_B7 b7, __TBB_B8 b8) : unfolded_type(g, b0, b1, b2, b3, b4, b5, b6, b7, b8) {
         fgt_multiinput_node<N>( CODEPTR(), FLOW_JOIN_NODE_TAG_MATCHING, &this->my_graph,
@@ -2148,6 +2260,7 @@ public:
 #if __TBB_VARIADIC_MAX >= 10
     template<typename __TBB_B0, typename __TBB_B1, typename __TBB_B2, typename __TBB_B3, typename __TBB_B4,
         typename __TBB_B5, typename __TBB_B6, typename __TBB_B7, typename __TBB_B8, typename __TBB_B9>
+        __TBB_requires(join_node_functions<OutputTuple, K, __TBB_B0, __TBB_B1, __TBB_B2, __TBB_B3, __TBB_B4, __TBB_B5, __TBB_B6, __TBB_B7, __TBB_B8, __TBB_B9>)
      __TBB_NOINLINE_SYM join_node(graph &g, __TBB_B0 b0, __TBB_B1 b1, __TBB_B2 b2, __TBB_B3 b3, __TBB_B4 b4, __TBB_B5 b5, __TBB_B6 b6,
             __TBB_B7 b7, __TBB_B8 b8, __TBB_B9 b9) : unfolded_type(g, b0, b1, b2, b3, b4, b5, b6, b7, b8, b9) {
         fgt_multiinput_node<N>( CODEPTR(), FLOW_JOIN_NODE_TAG_MATCHING, &this->my_graph,
@@ -2163,11 +2276,12 @@ public:
 #endif
         typename... Args, typename... Bodies
     >
+    __TBB_requires((sizeof...(Bodies) == 0) || join_node_functions<OutputTuple, K, Bodies...>)
     __TBB_NOINLINE_SYM join_node(const node_set<Args...>& nodes, Bodies... bodies)
         : join_node(nodes.graph_reference(), bodies...) {
         make_edges_in_order(nodes, *this);
     }
-#endif
+#endif // __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
 
     __TBB_NOINLINE_SYM join_node(const join_node &other) : unfolded_type(other) {
         fgt_multiinput_node<N>( CODEPTR(), FLOW_JOIN_NODE_TAG_MATCHING, &this->my_graph,
@@ -2722,6 +2836,7 @@ private:
 //! Implements async node
 template < typename Input, typename Output,
            typename Policy = queueing_lightweight >
+    __TBB_requires(std::default_initializable<Input> && std::copy_constructible<Input>)
 class async_node
     : public multifunction_node< Input, std::tuple< Output >, Policy >, public sender< Output >
 {
@@ -2787,6 +2902,7 @@ private:
 
 public:
     template<typename Body>
+        __TBB_requires(async_node_body<Body, input_type, gateway_type>)
     __TBB_NOINLINE_SYM async_node(
         graph &g, size_t concurrency,
         Body body, Policy = Policy(), node_priority_t a_priority = no_priority
@@ -2801,12 +2917,14 @@ public:
         );
     }
 
-    template <typename Body, typename... Args>
+    template <typename Body>
+        __TBB_requires(async_node_body<Body, input_type, gateway_type>)
     __TBB_NOINLINE_SYM async_node(graph& g, size_t concurrency, Body body, node_priority_t a_priority)
         : async_node(g, concurrency, body, Policy(), a_priority) {}
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
     template <typename Body, typename... Args>
+        __TBB_requires(async_node_body<Body, input_type, gateway_type>)
     __TBB_NOINLINE_SYM async_node(
         const node_set<Args...>& nodes, size_t concurrency, Body body,
         Policy = Policy(), node_priority_t a_priority = no_priority )
@@ -2815,6 +2933,7 @@ public:
     }
 
     template <typename Body, typename... Args>
+        __TBB_requires(async_node_body<Body, input_type, gateway_type>)
     __TBB_NOINLINE_SYM async_node(const node_set<Args...>& nodes, size_t concurrency, Body body, node_priority_t a_priority)
         : async_node(nodes, concurrency, body, Policy(), a_priority) {}
 #endif // __TBB_PREVIEW_FLOW_GRAPH_NODE_SET

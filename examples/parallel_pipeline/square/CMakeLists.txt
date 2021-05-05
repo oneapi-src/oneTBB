@@ -25,6 +25,10 @@ add_executable(square gen_input.cpp square.cpp)
 target_link_libraries(square TBB::tbb Threads::Threads)
 target_compile_options(square PRIVATE ${TBB_CXX_STD_FLAG})
 
+if (MSVC AND CMAKE_CXX_COMPILER_ID STREQUAL IntelLLVM)
+    target_compile_options(square PRIVATE -D_CRT_SECURE_NO_WARNINGS)
+endif()
+
 set(EXECUTABLE "$<TARGET_FILE:square>")
 set(ARGS 0 input.txt output.txt)
 set(PERF_ARGS auto input.txt output.txt silent)

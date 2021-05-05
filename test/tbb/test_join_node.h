@@ -26,10 +26,6 @@
 #endif
 #endif
 
-// TODO revamp: move parts dependent on __TBB_EXTRA_DEBUG into separate test(s) since having these
-// parts in all of tests might make testing of the product, which is different from what is actually
-// released.
-#define __TBB_EXTRA_DEBUG 1
 #include "tbb/flow_graph.h"
 
 #include "common/test.h"
@@ -245,8 +241,8 @@ struct my_struct_key {
 // specialization returning reference to my_key.
 template<class K, typename V>
 struct my_struct_key<K&, V> {
-    const K& operator()(const V& mv) {
-        return const_cast<const K&>(mv.my_key);
+    K& operator()(const V& mv) {
+        return const_cast<K&>(mv.my_key);
     }
 };
 

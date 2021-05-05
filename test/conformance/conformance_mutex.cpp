@@ -14,6 +14,10 @@
     limitations under the License.
 */
 
+#if __INTEL_COMPILER && _MSC_VER
+#pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
+#endif
+
 #include "conformance_mutex.h"
 
 #include "oneapi/tbb/spin_mutex.h"
@@ -39,8 +43,8 @@ TEST_CASE("Basic Locable requirement test") {
     GeneralTest<oneapi::tbb::speculative_spin_mutex>("Speculative Spin Mutex");
     GeneralTest<oneapi::tbb::speculative_spin_rw_mutex>("Speculative Spin RW Mutex");
     // NullMutexes
-    GeneralTest<oneapi::tbb::null_mutex>("Null Mutex", false);
-    GeneralTest<oneapi::tbb::null_rw_mutex>("Null RW Mutex", false);
+    GeneralTest<oneapi::tbb::null_mutex, utils::AtomicCounter<oneapi::tbb::null_mutex>>("Null Mutex", false);
+    GeneralTest<oneapi::tbb::null_rw_mutex, utils::AtomicCounter<oneapi::tbb::null_rw_mutex>>("Null RW Mutex", false);
     TestNullMutex<oneapi::tbb::null_mutex>("Null Mutex");
     TestNullMutex<oneapi::tbb::null_rw_mutex>("Null RW Mutex");
 }

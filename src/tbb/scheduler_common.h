@@ -233,6 +233,10 @@ inline void prolonged_pause() {
     prolonged_pause_impl();
 }
 
+// TODO: investigate possibility to work with number of CPU cycles
+// because for different configurations this number of pauses + yields
+// will be calculated in different amount of CPU cycles
+// for example use rdtsc for it
 class stealing_loop_backoff {
     const int my_pause_threshold;
     const int my_yield_threshold;
@@ -243,13 +247,13 @@ public:
     // the time spent spinning before calling is_out_of_work() should be approximately
     // the time it takes for a thread to be woken up. Doing so would guarantee that we do
     // no worse than 2x the optimal spin time. Or perhaps a time-slice quantum is the right amount.
-    stealing_loop_backoff(int num_workers)
+    stealing_loop_backoff(int num_workers, int yields_multiplier)
         : my_pause_threshold{ 2 * (num_workers + 1) }
 #if __APPLE__
         // threshold value tuned separately for macOS due to high cost of sched_yield there
-        , my_yield_threshold{10}
+        , my_yield_threshold{10 * yields_multiplier}
 #else
-        , my_yield_threshold{100}
+        , my_yield_threshold{100 * yields_multiplier}
 #endif
         , my_pause_count{}
         , my_yield_count{}

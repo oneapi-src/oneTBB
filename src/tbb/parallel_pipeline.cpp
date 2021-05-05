@@ -87,7 +87,7 @@ private:
     d1::wait_context wait_ctx;
 };
 
-//! This structure is used to store task information in a input buffer
+//! This structure is used to store task information in an input buffer
 struct task_info {
     void* my_object = nullptr;
     //! Invalid unless a task went through an ordered stage.
@@ -280,7 +280,7 @@ private:
     //! Spawn task if token is available.
     void try_spawn_stage_task(d1::execution_data& ed) {
         ITT_NOTIFY( sync_releasing, &my_pipeline.input_tokens );
-        if( (my_pipeline.input_tokens.fetch_sub(1, std::memory_order_relaxed)) > 1 ) {
+        if( (my_pipeline.input_tokens.fetch_sub(1, std::memory_order_release)) > 1 ) {
             d1::small_object_allocator alloc{};
             r1::spawn( *alloc.new_object<stage_task>(ed, my_pipeline, alloc ), my_pipeline.my_context );
         }
@@ -397,7 +397,7 @@ bool stage_task::execute_filter(d1::execution_data& ed) {
         }
     } else {
         // Reached end of the pipe.
-        std::size_t ntokens_avail = my_pipeline.input_tokens.fetch_add(1, std::memory_order_relaxed);
+        std::size_t ntokens_avail = my_pipeline.input_tokens.fetch_add(1, std::memory_order_acquire);
 
         if( ntokens_avail>0  // Only recycle if there is one available token
                 || my_pipeline.end_of_input.load(std::memory_order_relaxed) ) {
@@ -410,7 +410,7 @@ bool stage_task::execute_filter(d1::execution_data& ed) {
     return true;
 }
 
-pipeline:: ~pipeline() {
+pipeline::~pipeline() {
     while( first_filter ) {
         d1::base_filter* f = first_filter;
         if( input_buffer* b = f->my_input_buffer ) {

@@ -576,10 +576,10 @@ inline d1::task* arena::steal_task(unsigned arena_index, FastRandom& frnd, execu
             tp.allocator.delete_object(&tp, ed);
             return nullptr;
         }
-        // Note affinity is called for any stealed task (proxy or general)
+        // Note affinity is called for any stolen task (proxy or general)
         ed.affinity_slot = slot;
     } else {
-        // Note affinity is called for any stealed task (proxy or general)
+        // Note affinity is called for any stolen task (proxy or general)
         ed.affinity_slot = d1::any_slot;
     }
     // Update task owner thread id to identify stealing

@@ -215,3 +215,17 @@ TEST_CASE("concurrent_unordered_multimap throwing copy constructor") {
     test_exception_on_copy_ctor<exception_mset_type>();
 }
 #endif // __TBB_USE_EXCEPTIONS
+
+#if __TBB_CPP20_CONCEPTS_PRESENT
+//! \brief \ref error_guessing
+TEST_CASE("container_range concept for concurrent_unordered_set ranges") {
+    static_assert(test_concepts::container_range<typename tbb::concurrent_unordered_set<int>::range_type>);
+    static_assert(test_concepts::container_range<typename tbb::concurrent_unordered_set<int>::const_range_type>);
+}
+
+//! \brief \ref error_guessing
+TEST_CASE("container_range concept for concurrent_unordered_multiset ranges") {
+    static_assert(test_concepts::container_range<typename tbb::concurrent_unordered_multiset<int>::range_type>);
+    static_assert(test_concepts::container_range<typename tbb::concurrent_unordered_multiset<int>::const_range_type>);
+}
+#endif // __TBB_CPP20_CONCEPTS_PRESENT

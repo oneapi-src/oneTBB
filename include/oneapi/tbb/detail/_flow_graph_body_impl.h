@@ -54,6 +54,7 @@ namespace graph_policy_namespace {
     // functor that, given an object accepted by the port, will return the
     /// field of type K being used for matching.
     template<typename K, typename KHash=tbb_hash_compare<typename std::decay<K>::type > >
+        __TBB_requires(tbb::detail::hash_compare<KHash, K>)
     struct key_matching {
         typedef K key_type;
         typedef typename std::decay<K>::type base_key_type;

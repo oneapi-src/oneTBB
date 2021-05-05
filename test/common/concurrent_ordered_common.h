@@ -18,6 +18,9 @@
 #define __TBB_test_common_concurrent_ordered_common_H
 
 #define __TBB_TEST_CPP20_COMPARISONS __TBB_CPP20_COMPARISONS_PRESENT && __TBB_CPP20_CONCEPTS_PRESENT
+
+#include "config.h"
+
 #include "common/concurrent_associative_common.h"
 #include "test_comparisons.h"
 

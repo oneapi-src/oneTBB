@@ -119,6 +119,11 @@ void arena::process(thread_data& tls) {
     }
     __TBB_ASSERT( index >= my_num_reserved_slots, "Workers cannot occupy reserved slots" );
     tls.attach_arena(*this, index);
+    // worker thread enters the dispatch loop to look for a work
+    tls.my_inbox.set_is_idle(true);
+    if (tls.my_arena_slot->is_task_pool_published()) {
+            tls.my_inbox.set_is_idle(false);
+    }
 
     task_dispatcher& task_disp = tls.my_arena_slot->default_task_dispatcher();
     task_disp.set_stealing_threshold(calculate_stealing_threshold());
@@ -131,6 +136,10 @@ void arena::process(thread_data& tls) {
     // Waiting on special object tied to this arena
     outermost_worker_waiter waiter(*this);
     d1::task* t = tls.my_task_dispatcher->local_wait_for_all(nullptr, waiter);
+    // For purposes of affinity support, the slot's mailbox is considered idle while no thread is
+    // attached to it.
+    tls.my_inbox.set_is_idle(true);
+
     __TBB_ASSERT_EX(t == nullptr, "Outermost worker must not leave dispatch loop with a task");
     __TBB_ASSERT(governor::is_thread_data_set(&tls), nullptr);
     __TBB_ASSERT(tls.my_task_dispatcher == &task_disp, nullptr);
@@ -387,7 +396,7 @@ struct task_arena_impl {
     static void execute(d1::task_arena_base&, d1::delegate_base&);
     static void wait(d1::task_arena_base&);
     static int max_concurrency(const d1::task_arena_base*);
-    static void enqueue(d1::task&, d1::task_arena_base*);
+    static void enqueue(d1::task&, d1::task_group_context*, d1::task_arena_base*);
 };
 
 void __TBB_EXPORTED_FUNC initialize(d1::task_arena_base& ta) {
@@ -411,7 +420,11 @@ int __TBB_EXPORTED_FUNC max_concurrency(const d1::task_arena_base* ta) {
 }
 
 void __TBB_EXPORTED_FUNC enqueue(d1::task& t, d1::task_arena_base* ta) {
-    task_arena_impl::enqueue(t, ta);
+    task_arena_impl::enqueue(t, nullptr, ta);
+}
+
+void __TBB_EXPORTED_FUNC enqueue(d1::task& t, d1::task_group_context& ctx, d1::task_arena_base* ta) {
+    task_arena_impl::enqueue(t, &ctx, ta);
 }
 
 void task_arena_impl::initialize(d1::task_arena_base& ta) {
@@ -481,14 +494,20 @@ bool task_arena_impl::attach(d1::task_arena_base& ta) {
     return false;
 }
 
-void task_arena_impl::enqueue(d1::task& t, d1::task_arena_base* ta) {
+void task_arena_impl::enqueue(d1::task& t, d1::task_group_context* c, d1::task_arena_base* ta) {
     thread_data* td = governor::get_thread_data();  // thread data is only needed for FastRandom instance
-    arena* a = ta->my_arena.load(std::memory_order_relaxed);
-    assert_pointers_valid(ta, a, a->my_default_ctx, td);
-    // Is there a better place for checking the state of my_default_ctx?
+    assert_pointer_valid(td, "thread_data pointer should not be null");
+    arena* a = ta ?
+              ta->my_arena.load(std::memory_order_relaxed)
+            : td->my_arena
+    ;
+    assert_pointer_valid(a, "arena pointer should not be null");
+    auto* ctx = c ? c : a->my_default_ctx;
+    assert_pointer_valid(ctx, "context pointer should not be null");
+    // Is there a better place for checking the state of ctx?
      __TBB_ASSERT(!a->my_default_ctx->is_group_execution_cancelled(),
-                  "The task will not be executed because default task_group_context of task_arena is cancelled. Has previously enqueued task thrown an exception?");
-     a->enqueue_task(t, *a->my_default_ctx, *td);
+                  "The task will not be executed because its task_group_context is cancelled.");
+     a->enqueue_task(t, *ctx, *td);
 }
 
 class nested_arena_context : no_copy {
@@ -503,6 +522,8 @@ public:
 
             td.detach_task_dispatcher();
             td.attach_arena(nested_arena, slot_index);
+            if (td.my_inbox.is_idle_state(true))
+                td.my_inbox.set_is_idle(false);
             task_dispatcher& task_disp = td.my_arena_slot->default_task_dispatcher();
             task_disp.set_stealing_threshold(m_orig_execute_data_ext.task_disp->m_stealing_threshold);
             td.attach_task_dispatcher(task_disp);
@@ -556,6 +577,7 @@ public:
 
             td.attach_arena(*m_orig_arena, m_orig_slot_index);
             td.attach_task_dispatcher(*m_orig_execute_data_ext.task_disp);
+            __TBB_ASSERT(td.my_inbox.is_idle_state(false), nullptr);
         }
         td.my_task_dispatcher->m_execute_data_ext = m_orig_execute_data_ext;
     }

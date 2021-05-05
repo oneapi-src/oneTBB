@@ -17,6 +17,8 @@
 #ifndef __TBB_test_common_spin_barrier_H
 #define __TBB_test_common_spin_barrier_H
 
+#include "config.h"
+
 // Do not replace this include by doctest.h
 // This headers includes inside benchmark.h and used for benchmarking based on Celero
 // Using of both DocTest and Celero frameworks caused unexpected compilation errors.
@@ -32,12 +34,11 @@
 
 namespace utils {
 
-//! Spin WHILE the condition is true.
-/** T and U should be comparable types. */
-template <typename T, typename C>
-void SpinWaitWhileCondition(const std::atomic<T>& location, C comp) {
+//! Spin WHILE predicate returns true
+template <typename Predicate>
+void SpinWaitWhile(Predicate pred) {
     int count = 0;
-    while (comp(location.load(std::memory_order_acquire))) {
+    while (pred()) {
         if (count < 100) {
             tbb::detail::machine_pause(10);
             ++count;
@@ -51,6 +52,13 @@ void SpinWaitWhileCondition(const std::atomic<T>& location, C comp) {
             }
         }
     }
+    std::atomic_thread_fence(std::memory_order_acquire);
+}
+
+//! Spin WHILE the condition is true.
+template <typename T, typename C>
+void SpinWaitWhileCondition(const std::atomic<T>& location, C comp) {
+    SpinWaitWhile([&] { return comp(location.load(std::memory_order_relaxed)); });
 }
 
 //! Spin WHILE the value of the variable is equal to a given value

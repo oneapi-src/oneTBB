@@ -19,34 +19,19 @@
 # Supported arguments:
 #   intel64|ia32 - architecture, intel64 is default.
 
-# Get absolute path to script, when sourced from bash, zsh and ksh shells.
-# Uses `readlink` to remove links and `pwd -P` to turn into an absolute path.
-# Converted into a POSIX-compliant function.
-
-# Usage:
-#   script_dir=$(get_script_path "$script_rel_path")
-#
-# Inputs:
-#   script/relative/pathname/scriptname
-#
-# Outputs:
-#   /script/absolute/pathname
-
-# executing function in a *subshell* to localize vars and effects on `cd`
+# Get absolute path to script. Gets a relative path as argument and outputs an absolute path.
 get_script_path() (
-  script="$1"
-  while [ -L "$script" ] ; do
-    # combining next two lines fails in zsh shell
-    script_dir=$(command dirname -- "$script")
+  script_path="$1"
+  while [ -L "$script_path" ] ; do
+    script_dir=$(command dirname -- "$script_path")
     script_dir=$(cd "$script_dir" && command pwd -P)
-    script="$(readlink "$script")"
-    case $script in
+    script_path="$(readlink "$script_path")"
+    case $script_path in
       (/*) ;;
-       (*) script="$script_dir/$script" ;;
+       (*) script_path="$script_dir/$script_path" ;;
     esac
   done
-  # combining next two lines fails in zsh shell
-  script_dir=$(command dirname -- "$script")
+  script_dir=$(command dirname -- "$script_path")
   script_dir=$(cd "$script_dir" && command pwd -P)
   printf "%s" "$script_dir"
 )

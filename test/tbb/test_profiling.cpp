@@ -113,7 +113,7 @@ TEST_CASE("composite_node set_name") {
 TEST_CASE("continue_node set_name") {
     tbb::flow::graph g;
     tbb::flow::continue_node<tbb::flow::continue_msg> node(g,
-        [](const tbb::flow::continue_msg& val) -> const tbb::flow::continue_msg& 
+        [](const tbb::flow::continue_msg& val) -> const tbb::flow::continue_msg&
         {
             return val;
         });
@@ -217,7 +217,7 @@ TEST_CASE("queue_node set_name") {
 }
 
 struct seq_inspector {
-    int operator()(const int& v) const { return v; }
+    std::size_t operator()(const int& v) const { return v; }
 };
 
 //! Test for sequencer_node set_name

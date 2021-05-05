@@ -22,6 +22,7 @@
 #include "common/utils.h"
 #include "common/utils_assert.h"
 #include "common/test_follows_and_precedes_api.h"
+#include "common/concepts_common.h"
 
 #include <cstdio>
 #include <atomic>
@@ -399,11 +400,11 @@ void test_follows_and_precedes_api() {
 
     follows_and_precedes_testing::test_follows
         <int, tbb::flow::sequencer_node<int>>
-        (messages_for_follows, [](const int& i) { return i; });
+        (messages_for_follows, [](const int& i) -> std::size_t { return i; });
 
     follows_and_precedes_testing::test_precedes
         <int, tbb::flow::sequencer_node<int>>
-        (messages_for_precedes, [](const int& i) { return i; });
+        (messages_for_precedes, [](const int& i) -> std::size_t { return i; });
 }
 #endif
 
@@ -426,11 +427,11 @@ void test_deduction_guides_common(Body body) {
     static_assert(std::is_same_v<decltype(s3), sequencer_node<int>>);
 }
 
-int sequencer_body_f(const int&) { return 1; }
+std::size_t sequencer_body_f(const int&) { return 1; }
 
 void test_deduction_guides() {
-    test_deduction_guides_common([](const int&)->int { return 1; });
-    test_deduction_guides_common([](const int&) mutable ->int { return 1; });
+    test_deduction_guides_common([](const int&)->std::size_t { return 1; });
+    test_deduction_guides_common([](const int&) mutable ->std::size_t { return 1; });
     test_deduction_guides_common(sequencer_body_f);
 }
 #endif
@@ -442,10 +443,8 @@ TEST_CASE("Serial and parallel test"){
         tbb::task_arena arena(p);
         arena.execute(
             [&]() {
-
                 test_serial<int>();
                 test_parallel<int>(p);
-
             }
         );
 	}
@@ -466,3 +465,37 @@ TEST_CASE("Test deduction guides"){
     test_deduction_guides();
 }
 #endif
+
+#if __TBB_CPP20_CONCEPTS_PRESENT
+//! \brief \ref error_guessing
+TEST_CASE("constraints for sequencer_node object") {
+    struct Object : test_concepts::Copyable, test_concepts::CopyAssignable {};
+
+    static_assert(utils::well_formed_instantiation<tbb::flow::sequencer_node, Object>);
+    static_assert(utils::well_formed_instantiation<tbb::flow::sequencer_node, int>);
+    static_assert(!utils::well_formed_instantiation<tbb::flow::sequencer_node, test_concepts::NonCopyable>);
+    static_assert(!utils::well_formed_instantiation<tbb::flow::sequencer_node, test_concepts::NonCopyAssignable>);
+}
+
+template <typename T, typename Sequencer>
+concept can_call_sequencer_node_ctor = requires( tbb::flow::graph& graph, Sequencer seq,
+                                                 tbb::flow::buffer_node<int>& f ) {
+    tbb::flow::sequencer_node<T>(graph, seq);
+#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+    tbb::flow::sequencer_node<T>(tbb::flow::follows(f), seq);
+#endif
+};
+
+//! \brief \ref error_guessing
+TEST_CASE("constraints for sequencer_node sequencer") {
+    using type = int;
+    using namespace test_concepts::sequencer;
+
+    static_assert(can_call_sequencer_node_ctor<type, Correct<type>>);
+    static_assert(!can_call_sequencer_node_ctor<type, NonCopyable<type>>);
+    static_assert(!can_call_sequencer_node_ctor<type, NonDestructible<type>>);
+    static_assert(!can_call_sequencer_node_ctor<type, NoOperatorRoundBrackets<type>>);
+    static_assert(!can_call_sequencer_node_ctor<type, WrongInputOperatorRoundBrackets<type>>);
+    static_assert(!can_call_sequencer_node_ctor<type, WrongReturnOperatorRoundBrackets<type>>);
+}
+#endif // __TBB_CPP20_CONCEPTS_PRESENT

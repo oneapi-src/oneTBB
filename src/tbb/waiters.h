@@ -29,7 +29,7 @@ inline d1::task* get_self_recall_task(arena_slot& slot);
 
 class waiter_base {
 public:
-    waiter_base(arena& a) : my_arena(a), my_backoff(int(a.my_num_slots)) {}
+    waiter_base(arena& a, int yields_multiplier = 1) : my_arena(a), my_backoff(int(a.my_num_slots), yields_multiplier) {}
 
     bool pause() {
         if (my_backoff.pause()) {
@@ -123,7 +123,7 @@ protected:
 class external_waiter : public sleep_waiter {
 public:
     external_waiter(arena& a, d1::wait_context& wo)
-        : sleep_waiter(a), my_wait_ctx(wo)
+        : sleep_waiter(a, /*yields_multiplier*/10), my_wait_ctx(wo)
         {}
 
     bool continue_execution(arena_slot& slot, d1::task*& t) const {

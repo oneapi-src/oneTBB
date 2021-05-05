@@ -95,7 +95,7 @@ public:
     object into a proxy so that a list item remained valid even after the corresponding
     proxy object is destroyed by the user code. **/
 class observer_proxy {
-    friend class task_scheduler_observer;
+    friend class d1::task_scheduler_observer;
     friend class observer_list;
     friend void observe(d1::task_scheduler_observer&, bool);
     //! Reference count used for garbage collection.

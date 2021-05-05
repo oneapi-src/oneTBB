@@ -20,6 +20,7 @@
 #define __TBB_NO_IMPLICIT_LINKAGE 1
 
 #if (_WIN32 || _WIN64)
+#define _CRT_SECURE_NO_WARNINGS
 // As the test is intentionally build with /EHs-, suppress multiple VS2005's
 // warnings like C4530: C++ exception handler used, but unwind semantics are not enabled
 #if defined(_MSC_VER) && !__INTEL_COMPILER
@@ -326,7 +327,7 @@ struct BigStruct {
 };
 
 void CheckNewDeleteOverload() {
-    BigStruct *s1, *s2, *s3, *s4;
+    BigStruct *s1, *s2, *s3, *s4, *s5, *s6;
 
     s1 = new BigStruct;
     scalableMallocCheckSize(s1, sizeof(BigStruct));
@@ -343,6 +344,15 @@ void CheckNewDeleteOverload() {
     s4 = new(std::nothrow) BigStruct[2];
     scalableMallocCheckSize(s4, 2*sizeof(BigStruct));
     delete []s4;
+
+    s5 = new BigStruct;
+    scalableMallocCheckSize(s5, sizeof(BigStruct));
+    operator delete(s5, std::nothrow);
+
+    s6 = new BigStruct[5];
+    scalableMallocCheckSize(s6, 5*sizeof(BigStruct));
+    operator delete[](s6, std::nothrow);
+
 }
 
 #if MALLOC_WINDOWS_OVERLOAD_ENABLED
@@ -385,6 +395,10 @@ void FuncReplacementInfoCheck() {
 //! Testing tbbmalloc_proxy overload capabilities
 //! \brief \ref error_guessing
 TEST_CASE("Main set of tests") {
+#if __linux__
+    REQUIRE(mallopt(0, 0)); // add dummy mallopt call for coverage
+#endif // __linux__
+
     void *ptr = NULL;
     utils::suppress_unused_warning(ptr); // for android
 

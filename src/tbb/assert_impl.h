@@ -35,11 +35,10 @@ namespace r1 {
 
 // TODO: consider extension for formatted error description string
 static void assertion_failure_impl(const char* location, int line, const char* expression, const char* comment) {
-    if (line != 0) {
-        std::fprintf(stderr, "Assertion %s failed on line %d of file %s\n", expression, line, location);
-    } else {
-        std::fprintf(stderr, "Assertion %s failed during the %s function execution\n", expression, location);
-    }
+
+    std::fprintf(stderr, "Assertion %s failed (located in the %s function, line in file: %d)\n",
+        expression, location, line);
+
     if (comment) {
         std::fprintf(stderr, "Detailed description: %s\n", comment);
     }

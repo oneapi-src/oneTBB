@@ -18,6 +18,7 @@
 #define __TBB_spin_mutex_H
 
 #include "detail/_namespace_injection.h"
+#include "detail/_mutex_common.h"
 
 #include "profiling.h"
 

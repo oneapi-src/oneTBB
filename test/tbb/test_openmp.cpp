@@ -14,6 +14,13 @@
     limitations under the License.
 */
 
+//! \file test_openmp.cpp
+//! \brief Test for [internal] functionality
+
+#if _WIN32 || _WIN64
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include "common/test.h"
 #include "common/utils.h"
 #include "common/utils_env.h"
@@ -24,9 +31,6 @@
 
 // Test mixing OpenMP and TBB
 #include <omp.h>
-
-//! \file test_openmp.cpp
-//! \brief Test for [internal] functionality
 
 using data_type = short;
 

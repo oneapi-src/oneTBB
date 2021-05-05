@@ -30,6 +30,7 @@
 #include <common/range_based_for_support.h>
 #include <common/custom_allocators.h>
 #include <common/containers_common.h>
+#include <common/concepts_common.h>
 #include <tbb/concurrent_hash_map.h>
 #include <tbb/parallel_for.h>
 #include <common/concurrent_associative_common.h>
@@ -809,6 +810,10 @@ void test_heterogeneous_lookup() {
 template <bool SimulateReacquiring>
 class MinimalisticMutex {
 public:
+    static constexpr bool is_rw_mutex = true;
+    static constexpr bool is_recursive_mutex = false;
+    static constexpr bool is_fair_mutex = false;
+
     class scoped_lock {
     public:
         constexpr scoped_lock() noexcept : my_mutex_ptr(nullptr) {}
@@ -1042,7 +1047,7 @@ TEST_CASE("Test exception in constructors") {
 #endif // TBB_USE_EXCEPTIONS
 
 //! \brief \ref error_guessing
-TEST_CASE("swap with NotAlwaysEqualAllocator allocators"){
+TEST_CASE("swap with NotAlwaysEqualAllocator allocators") {
     using allocator_type = NotAlwaysEqualAllocator<std::pair<const int, int>>;
     using map_type = tbb::concurrent_hash_map<int, int, tbb::tbb_hash_compare<int>, allocator_type>;
 
@@ -1075,3 +1080,54 @@ TEST_CASE("test concurrent_hash_map heterogeneous erase") {
 TEST_CASE("test concurrent_hash_map mutex customization") {
     test_mutex_customization();
 }
+
+#if __TBB_CPP20_CONCEPTS_PRESENT
+template <bool ExpectSatisfies, typename Key, typename Mapped, typename... HCTypes>
+    requires (... && (utils::well_formed_instantiation<tbb::concurrent_hash_map, Key, Mapped, HCTypes> == ExpectSatisfies))
+void test_chmap_hash_compare_constraints() {}
+
+//! \brief \ref error_guessing
+TEST_CASE("tbb::concurrent_hash_map hash_compare constraints") {
+    using key_type = int;
+    using mapped_type = int;
+    using namespace test_concepts::hash_compare;
+
+    test_chmap_hash_compare_constraints</*Expected = */true, /*key = */key_type, /*mapped = */mapped_type,
+                                        Correct<key_type>, tbb::tbb_hash_compare<key_type>>();
+
+    test_chmap_hash_compare_constraints</*Expected = */false, /*key = */key_type, /*mapped = */mapped_type,
+                                        NonCopyable<key_type>, NonDestructible<key_type>,
+                                        NoHash<key_type>, HashNonConst<key_type>, WrongInputHash<key_type>, WrongReturnHash<key_type>,
+                                        NoEqual<key_type>, EqualNonConst<key_type>,
+                                        WrongFirstInputEqual<key_type>, WrongSecondInputEqual<key_type>, WrongReturnEqual<key_type>>();
+}
+
+template <bool ExpectSatisfies, typename Key, typename Mapped, typename... RWMutexes>
+    requires (... && (utils::well_formed_instantiation<tbb::concurrent_hash_map, Key, Mapped,
+                                                tbb::tbb_hash_compare<Key>, tbb::tbb_allocator<std::pair<const Key, Mapped>>, RWMutexes> == ExpectSatisfies))
+void test_chmap_mutex_constraints() {}
+
+//! \brief \ref error_guessing
+TEST_CASE("tbb::concurrent_hash_map rw_mutex constraints") {
+    using key_type = int;
+    using mapped_type = int;
+    using namespace test_concepts::rw_mutex;
+
+    test_chmap_mutex_constraints</*Expected = */true, key_type, mapped_type,
+                                 Correct>();
+
+    test_chmap_mutex_constraints</*Expected = */false, key_type, mapped_type,
+                                 NoScopedLock, ScopedLockNoDefaultCtor, ScopedLockNoMutexCtor,
+                                 ScopedLockNoDtor, ScopedLockNoAcquire, ScopedLockWrongFirstInputAcquire, ScopedLockWrongSecondInputAcquire, ScopedLockNoTryAcquire,
+                                 ScopedLockWrongFirstInputTryAcquire, ScopedLockWrongSecondInputTryAcquire, ScopedLockWrongReturnTryAcquire, ScopedLockNoRelease,
+                                 ScopedLockNoUpgrade, ScopedLockWrongReturnUpgrade, ScopedLockNoDowngrade, ScopedLockWrongReturnDowngrade,
+                                 ScopedLockNoIsWriter, ScopedLockIsWriterNonConst, ScopedLockWrongReturnIsWriter>();
+}
+
+//! \brief \ref error_guessing
+TEST_CASE("container_range concept for tbb::concurrent_hash_map ranges") {
+    static_assert(test_concepts::container_range<tbb::concurrent_hash_map<int, int>::range_type>);
+    static_assert(test_concepts::container_range<tbb::concurrent_hash_map<int, int>::const_range_type>);
+}
+
+#endif // __TBB_CPP20_CONCEPTS_PRESENT

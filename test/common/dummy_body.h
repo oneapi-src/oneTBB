@@ -17,6 +17,9 @@
 #ifndef __TBB_test_common_dummy_body_H
 #define __TBB_test_common_dummy_body_H
 
+#include "config.h"
+#include <cstddef>
+
 namespace utils {
 static void doDummyWork(std::size_t N) {
     for (volatile std::size_t i = 0; i < N; ) { i = i + 1; }

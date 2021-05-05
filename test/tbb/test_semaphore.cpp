@@ -17,6 +17,10 @@
 //! \file test_semaphore.cpp
 //! \brief Test for [internal] functionality
 
+#if _WIN32 || _WIN64
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 // Test for counting semaphore
 #include "common/test.h"
 #include "common/utils.h"

@@ -88,9 +88,40 @@ int __TBB_EXPORTED_FUNC max_concurrency(const d1::task_arena_base*);
 void __TBB_EXPORTED_FUNC isolate_within_arena(d1::delegate_base& d, std::intptr_t);
 
 void __TBB_EXPORTED_FUNC enqueue(d1::task&, d1::task_arena_base*);
+void __TBB_EXPORTED_FUNC enqueue(d1::task&, d1::task_group_context&, d1::task_arena_base*);
 void __TBB_EXPORTED_FUNC submit(d1::task&, d1::task_group_context&, arena*, std::uintptr_t);
 } // namespace r1
 
+namespace d2 {
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+class task_handle;
+
+//move the helper functions into separate namespace in order hide the from argument-dependent lookup
+//(to not make them visible in the user code)
+namespace h {
+d1::task*                release(task_handle& th);
+d1::task_group_context*  ctx_of(task_handle& th);
+}
+using namespace h;
+
+bool operator==(task_handle const& th, std::nullptr_t) noexcept;
+bool operator==(std::nullptr_t, task_handle const& th) noexcept;
+
+bool operator!=(task_handle const& th, std::nullptr_t) noexcept;
+bool operator!=(std::nullptr_t, task_handle const& th) noexcept;
+
+inline void enqueue_impl(task_handle&& th, d1::task_arena_base* ta) {
+    if (th == nullptr)
+        throw_exception(exception_id::bad_task_handle);
+
+    __TBB_ASSERT(ctx_of(th), "task_group_context of the task_handle being enqueued should not be null");
+    auto* ctx = ctx_of(th);
+    // Do not access th after release
+    r1::enqueue(*release(th), *ctx, ta);
+}
+#endif// __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+
+}
 namespace d1 {
 
 static constexpr int priority_stride = INT_MAX / 4;
@@ -192,6 +223,33 @@ R isolate_impl(F& f) {
     return func.consume_result();
 }
 
+template <typename F>
+class enqueue_task : public task {
+    small_object_allocator m_allocator;
+    const F m_func;
+
+    void finalize(const execution_data& ed) {
+        m_allocator.delete_object(this, ed);
+    }
+    task* execute(execution_data& ed) override {
+        m_func();
+        finalize(ed);
+        return nullptr;
+    }
+    task* cancel(execution_data&) override {
+        __TBB_ASSERT_RELEASE(false, "Unhandled exception from enqueue task is caught");
+        return nullptr;
+    }
+public:
+    enqueue_task(const F& f, small_object_allocator& alloc) : m_allocator(alloc), m_func(f) {}
+    enqueue_task(F&& f, small_object_allocator& alloc) : m_allocator(alloc), m_func(std::move(f)) {}
+};
+
+template<typename F>
+void enqueue_impl(F&& f, task_arena_base* ta) {
+    small_object_allocator alloc{};
+    r1::enqueue(*alloc.new_object<enqueue_task<typename std::decay<F>::type>>(std::forward<F>(f), alloc), ta);
+}
 /** 1-to-1 proxy representation class of scheduler's arena
  * Constructors set up settings only, real construction is deferred till the first method invocation
  * Destructor only removes one of the references to the inner arena representation.
@@ -199,38 +257,9 @@ R isolate_impl(F& f) {
  */
 class task_arena : public task_arena_base {
 
-    template <typename F>
-    class enqueue_task : public task {
-        small_object_allocator m_allocator;
-        const F m_func;
-
-        void finalize(const execution_data& ed) {
-            m_allocator.delete_object(this, ed);
-        }
-        task* execute(execution_data& ed) override {
-            m_func();
-            finalize(ed);
-            return nullptr;
-        }
-        task* cancel(execution_data&) override {
-            __TBB_ASSERT_RELEASE(false, "Unhandled exception from enqueue task is caught");
-            return nullptr;
-        }
-    public:
-        enqueue_task(const F& f, small_object_allocator& alloc) : m_allocator(alloc), m_func(f) {}
-        enqueue_task(F&& f, small_object_allocator& alloc) : m_allocator(alloc), m_func(std::move(f)) {}
-    };
-
     void mark_initialized() {
         __TBB_ASSERT( my_arena.load(std::memory_order_relaxed), "task_arena initialization is incomplete" );
         my_initialization_state.store(do_once_state::initialized, std::memory_order_release);
-    }
-
-    template<typename F>
-    void enqueue_impl(F&& f) {
-        initialize();
-        small_object_allocator alloc{};
-        r1::enqueue(*alloc.new_object<enqueue_task<typename std::decay<F>::type>>(std::forward<F>(f), alloc), this);
     }
 
     template<typename R, typename F>
@@ -367,8 +396,18 @@ public:
 
     template<typename F>
     void enqueue(F&& f) {
-        enqueue_impl(std::forward<F>(f));
+        initialize();
+        enqueue_impl(std::forward<F>(f), this);
     }
+
+    //! Enqueues a task into the arena to process a functor wrapped in task_handle, and immediately returns.
+    //! Does not require the calling thread to join the arena
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+    void enqueue(d2::task_handle&& th) {
+        initialize();
+        d2::enqueue_impl(std::move(th), this);
+    }
+#endif //__TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 
     //! Joins the arena and executes a mutable functor, then returns
     //! If not possible to join, wraps the functor into a task, enqueues it and waits for task completion
@@ -427,10 +466,27 @@ inline int current_thread_index() {
     return idx == -1 ? task_arena_base::not_initialized : idx;
 }
 
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+inline bool is_inside_task() {
+    return nullptr != current_context();
+}
+#endif //__TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+
 //! Returns the maximal number of threads that can work inside the arena
 inline int max_concurrency() {
     return r1::max_concurrency(nullptr);
 }
+
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+inline void enqueue(d2::task_handle&& th) {
+    d2::enqueue_impl(std::move(th), nullptr);
+}
+
+template<typename F>
+inline void enqueue(F&& f) {
+    enqueue_impl(std::forward<F>(f), nullptr);
+}
+#endif //__TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 
 using r1::submit;
 
@@ -440,10 +496,18 @@ using r1::submit;
 inline namespace v1 {
 using detail::d1::task_arena;
 
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+using detail::d1::is_inside_task;
+#endif
+
 namespace this_task_arena {
 using detail::d1::current_thread_index;
 using detail::d1::max_concurrency;
 using detail::d1::isolate;
+
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+using detail::d1::enqueue;
+#endif
 } // namespace this_task_arena
 
 } // inline namespace v1

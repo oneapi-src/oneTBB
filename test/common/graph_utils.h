@@ -23,12 +23,6 @@
 
 #include "config.h"
 
-// TODO revamp: move parts dependent on __TBB_EXTRA_DEBUG into separate test(s) since having these
-// parts in all of tests might make testing of the product, which is different from what is actually
-// released.
-#define __TBB_EXTRA_DEBUG 1
-
-#include "common/spin_barrier.h"
 #include "oneapi/tbb/flow_graph.h"
 #include "oneapi/tbb/null_rw_mutex.h"
 #include "oneapi/tbb/concurrent_unordered_set.h"
@@ -38,32 +32,9 @@
 #include <mutex>
 #include <condition_variable>
 
+#include "common/spin_barrier.h"
 
 using tbb::detail::d1::SUCCESSFULLY_ENQUEUED;
-
-#define WAIT_MAX 2000000
-#define BACKOFF_WAIT(ex,msg) \
-{ \
-    int wait_cnt = 0; \
-    tbb::detail::atomic_backoff backoff; \
-    do { \
-        backoff.pause(); \
-        ++wait_cnt; \
-    } \
-    while( (ex) && (wait_cnt < WAIT_MAX)); \
-    CHECK_MESSAGE(wait_cnt < WAIT_MAX, msg); \
-}
-#define BACKOFF_WAIT_NOASSERT(ex,msg) \
-{ \
-    int wait_cnt = 0; \
-    tbb::detail::atomic_backoff backoff; \
-    do { \
-        backoff.pause(); \
-        ++wait_cnt; \
-    } \
-    while( (ex) && (wait_cnt < WAIT_MAX)); \
-    if(wait_cnt >= WAIT_MAX) MESSAGE(msg); \
-}
 
 // Needed conversion to and from continue_msg, but didn't want to add
 // conversion operators to the class, since we don't want it in general,
@@ -484,35 +455,28 @@ std::atomic<int> serial_continue_state0;
 
 template<typename T>
 struct serial_fn_body {
-    std::atomic<int> *_flag;
-    serial_fn_body(std::atomic<int> &myatomic) : _flag(&myatomic) { }
+    std::atomic<int>& my_flag;
+    serial_fn_body(std::atomic<int>& flag) : my_flag(flag) { }
     T operator()(const T& in) {
-        if(*_flag == 0) {
-            *_flag = 1;
+        if (my_flag == 0) {
+            my_flag = 1;
+
             // wait until we are released
-            tbb::detail::atomic_backoff backoff;
-            do {
-                backoff.pause();
-            } while(*_flag == 1);
+            utils::SpinWaitWhileEq(my_flag, 1);
         }
-        // return value
         return in;
     }
 };
 
 template<typename T>
 struct serial_continue_body {
-    std::atomic<int> *_flag;
-    serial_continue_body(std::atomic<int> &myatomic) : _flag(&myatomic) {}
+    std::atomic<int>& my_flag;
+    serial_continue_body(std::atomic<int> &flag) : my_flag(flag) {}
     T operator()(const tbb::flow::continue_msg& /*in*/) {
         // signal we have received a value
-        *_flag = 1;
+        my_flag = 1;
         // wait until we are released
-        tbb::detail::atomic_backoff backoff;
-        do {
-            backoff.pause();
-        } while(*_flag == 1);
-        // return value
+        utils::SpinWaitWhileEq(my_flag, 1);
         return (T)1;
     }
 };
@@ -569,28 +533,27 @@ void test_resets() {
             g.wait_for_all();  // wait for all the tasks started by building the graph are done.
             serial_fn_state0 = 0;
 
-#if __TBB_EXTRA_DEBUG
             // b0 ------> sfn ------> outq
-
             for(int icnt = 0; icnt < 2; ++icnt) {
                 g.wait_for_all();
                 serial_fn_state0 = 0;
-                b0.try_put((T)0);  // will start sfn
+                std::thread t([&] {
+                    b0.try_put((T)0);  // will start sfn
+                    g.wait_for_all();  // wait for all the tasks to complete.
+                });
                 // wait until function_node starts
-                BACKOFF_WAIT(serial_fn_state0 == 0,"Timed out waiting for function_node to start");
+                utils::SpinWaitWhileEq(serial_fn_state0, 0);
                 // now the function_node is executing.
                 // this will start a task to forward the second item
                 // to the serial function node
                 b0.try_put((T)1);  // first item will be consumed by task completing the execution
-                BACKOFF_WAIT_NOASSERT(g.ref_count() >= 3,"Timed out waiting try_put task to wind down");
                 b0.try_put((T)2);  // second item will remain after cancellation
                 // now wait for the task that attempts to forward the buffer item to
                 // complete.
-                BACKOFF_WAIT_NOASSERT(g.ref_count() >= 3,"Timed out waiting for tasks to wind down");
                 // now cancel the graph.
                 CHECK_MESSAGE(tgc.cancel_group_execution(), "task group already cancelled");
                 serial_fn_state0 = 0;  // release the function_node.
-                g.wait_for_all();  // wait for all the tasks to complete.
+                t.join();
                 // check that at most one output reached the queue_node
                 T outt;
                 T outt2;
@@ -598,7 +561,7 @@ void test_resets() {
                 bool got_item2 = outq.try_get(outt2);
                 // either the output queue was empty (if the function_node tested for cancellation before putting the
                 // result to the queue) or there was one element in the queue (the 0).
-                bool is_successful_operation = !got_item1 || ((int)outt == 0 && !got_item2);
+                bool is_successful_operation = got_item1 && (int)outt == 0 && !got_item2;
                 CHECK_MESSAGE( is_successful_operation, "incorrect output from function_node");
                 // the edge between the buffer and the function_node should be reversed, and the last
                 // message we put in the buffer should still be there.  We can't directly test for the
@@ -610,7 +573,7 @@ void test_resets() {
                 CHECK_MESSAGE(g.is_cancelled(), "Graph was not cancelled");
                 g.reset();
             }  // icnt
-#endif // __TBB_EXTRA_DEBUG
+
             // reset with remove_edge removes edge.  (icnt ==0 => forward edge, 1 => reversed edge
             for(int icnt = 0; icnt < 2; ++icnt) {
                 if(icnt == 1) {
@@ -618,12 +581,15 @@ void test_resets() {
                     tbb::flow::make_edge(b0, sfn);
                     tbb::flow::make_edge(sfn,outq);
                     serial_fn_state0 = 0;
-                    b0.try_put((T)0);  // starts up the function node
-                    b0.try_put((T)1);  // shoyuld reverse the edge
-                    BACKOFF_WAIT(serial_fn_state0 == 0,"Timed out waiting for edge reversal");
+                    std::thread t([&] {
+                        b0.try_put((T)0);  // starts up the function node
+                        b0.try_put((T)1);  // should reverse the edge
+                        g.wait_for_all();  // wait for all the tasks to complete.
+                    });
+                    utils::SpinWaitWhileEq(serial_fn_state0, 0); // waiting for edge reversal
                     CHECK_MESSAGE(tgc.cancel_group_execution(), "task group already cancelled");
                     serial_fn_state0 = 0;  // release the function_node.
-                    g.wait_for_all();  // wait for all the tasks to complete.
+                    t.join();
                 }
                 g.reset(tbb::flow::rf_clear_edges);
                 // test that no one is a successor to the buffer now.
@@ -632,7 +598,7 @@ void test_resets() {
                 g.wait_for_all();
                 CHECK_MESSAGE((int)serial_fn_state0 == 1, "function_node executed when it shouldn't");
                 T outt;
-                bool is_successful_operation = b0.try_get(outt) && (T)23 == outt;
+                bool is_successful_operation = b0.try_get(outt) && (T)23 == outt && !outq.try_get(outt);
                 CHECK_MESSAGE(is_successful_operation, "node lost its input");
             }
         }

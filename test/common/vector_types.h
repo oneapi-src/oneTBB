@@ -26,6 +26,8 @@
 #ifndef __TBB_test_common_vector_types_H_
 #define __TBB_test_common_vector_types_H_
 
+#include "config.h"
+
 #if (_MSC_VER>=1600)
 //TODO: handle /arch:AVX in the right way.
 #pragma warning (push)
@@ -96,6 +98,9 @@ void ClassWithVectorType<Mvec>::init( int start ) {
 
 #if (defined(__AVX__) || (_MSC_VER >= 1600 && defined(_M_X64))) && !defined(__sun)
 #include <immintrin.h>
+#if __clang__
+#include <avxintrin.h>
+#endif
 #define HAVE_m256 1
 using ClassWithAVX = ClassWithVectorType<__m256>;
 #if _MSC_VER

@@ -265,7 +265,7 @@ struct partition_type_base {
 
     template<typename StartType, typename Range>
     void work_balance(StartType &start, Range &range, const execution_data&) {
-        start.run_body( range ); // simple partitioner goes always here
+        start.run_body( range ); // static partitioner goes here
     }
 
     template<typename StartType, typename Range>
@@ -301,6 +301,10 @@ struct adaptive_mode : partition_type_base<Partition> {
     static const unsigned factor = 1;
     adaptive_mode() : my_divisor(get_initial_auto_partitioner_divisor() / 4 * my_partition::factor) {}
     adaptive_mode(adaptive_mode &src, split) : my_divisor(do_split(src, split())) {}
+    adaptive_mode(adaptive_mode&, const proportional_split&) : my_divisor(0)
+    {
+        // left blank as my_divisor gets overridden in the successors' constructors
+    }
     /*! Override do_split methods in order to specify splitting strategy */
     std::size_t do_split(adaptive_mode &src, split) {
         return src.my_divisor /= 2u;
@@ -337,7 +341,11 @@ struct proportional_mode : adaptive_mode<Partition> {
 
     proportional_mode() : adaptive_mode<Partition>() {}
     proportional_mode(proportional_mode &src, split) : adaptive_mode<Partition>(src, split()) {}
-    proportional_mode(proportional_mode &src, const proportional_split& split_obj) { self().my_divisor = do_split(src, split_obj); }
+    proportional_mode(proportional_mode &src, const proportional_split& split_obj)
+        : adaptive_mode<Partition>(src, split_obj)
+    {
+        self().my_divisor = do_split(src, split_obj);
+    }
     std::size_t do_split(proportional_mode &src, const proportional_split& split_obj) {
         std::size_t portion = split_obj.right() * my_partition::factor;
         portion = (portion + my_partition::factor/2) & (0ul - my_partition::factor);
@@ -436,7 +444,7 @@ struct dynamic_grainsize_mode : Mode {
     template<typename StartType, typename Range>
     void work_balance(StartType &start, Range &range, execution_data& ed) {
         if( !range.is_divisible() || !self().max_depth() ) {
-            start.run_body( range ); // simple partitioner goes always here
+            start.run_body( range );
         }
         else { // do range pool
             range_vector<Range, range_pool_size> range_pool(range);

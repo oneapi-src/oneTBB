@@ -176,6 +176,7 @@ void governor::init_external_thread() {
     // External thread always occupies the first slot
     thread_data& td = *new(cache_aligned_allocate(sizeof(thread_data))) thread_data(0, false);
     td.attach_arena(a, /*slot index*/ 0);
+    __TBB_ASSERT(td.my_inbox.is_idle_state(false), nullptr);
 
     stack_size = a.my_market->worker_stack_size();
     std::uintptr_t stack_base = get_stack_base(stack_size);
@@ -239,6 +240,7 @@ void release_impl(d1::task_scheduler_handle& handle) {
 }
 
 bool finalize_impl(d1::task_scheduler_handle& handle) {
+    __TBB_ASSERT_RELEASE(handle, "trying to finalize with null handle");
     market::global_market_mutex_type::scoped_lock lock( market::theMarketMutex );
     bool ok = true; // ok if theMarket does not exist yet
     market* m = market::theMarket; // read the state of theMarket

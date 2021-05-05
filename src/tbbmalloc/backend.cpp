@@ -52,28 +52,28 @@ int freeRawMemory (void *object, size_t size) {
 void Backend::UsedAddressRange::registerAlloc(uintptr_t left, uintptr_t right)
 {
     MallocMutex::scoped_lock lock(mutex);
-    if (left < leftBound)
-        leftBound = left;
-    if (right > rightBound)
-        rightBound = right;
-    MALLOC_ASSERT(leftBound, ASSERT_TEXT);
-    MALLOC_ASSERT(leftBound < rightBound, ASSERT_TEXT);
-    MALLOC_ASSERT(leftBound <= left && right <= rightBound, ASSERT_TEXT);
+    if (left < leftBound.load(std::memory_order_relaxed))
+        leftBound.store(left, std::memory_order_relaxed);
+    if (right > rightBound.load(std::memory_order_relaxed))
+        rightBound.store(right, std::memory_order_relaxed);
+    MALLOC_ASSERT(leftBound.load(std::memory_order_relaxed), ASSERT_TEXT);
+    MALLOC_ASSERT(leftBound.load(std::memory_order_relaxed) < rightBound.load(std::memory_order_relaxed), ASSERT_TEXT);
+    MALLOC_ASSERT(leftBound.load(std::memory_order_relaxed) <= left && right <= rightBound.load(std::memory_order_relaxed), ASSERT_TEXT);
 }
 
 void Backend::UsedAddressRange::registerFree(uintptr_t left, uintptr_t right)
 {
     MallocMutex::scoped_lock lock(mutex);
-    if (leftBound == left) {
-        if (rightBound == right) {
-            leftBound = ADDRESS_UPPER_BOUND;
-            rightBound = 0;
+    if (leftBound.load(std::memory_order_relaxed) == left) {
+        if (rightBound.load(std::memory_order_relaxed) == right) {
+            leftBound.store(ADDRESS_UPPER_BOUND, std::memory_order_relaxed);
+            rightBound.store(0, std::memory_order_relaxed);
         } else
-            leftBound = right;
-    } else if (rightBound == right)
-        rightBound = left;
-    MALLOC_ASSERT((!rightBound && leftBound == ADDRESS_UPPER_BOUND)
-                  || leftBound < rightBound, ASSERT_TEXT);
+            leftBound.store(right, std::memory_order_relaxed);
+    } else if (rightBound.load(std::memory_order_relaxed) == right)
+        rightBound.store(left, std::memory_order_relaxed);
+    MALLOC_ASSERT((!rightBound.load(std::memory_order_relaxed) && leftBound.load(std::memory_order_relaxed) == ADDRESS_UPPER_BOUND)
+                  || leftBound.load(std::memory_order_relaxed) < rightBound.load(std::memory_order_relaxed), ASSERT_TEXT);
 }
 #endif // CHECK_ALLOCATION_RANGE
 
@@ -377,7 +377,7 @@ FreeBlock *Backend::IndexedBins::getFromBin(int binIdx, BackendSync *sync, size_
     Bin *b = &freeBins[binIdx];
 try_next:
     FreeBlock *fBlock = NULL;
-    if (b->head) {
+    if (!b->empty()) {
         bool locked;
         MallocMutex::scoped_lock scopedLock(b->tLock, wait, &locked);
 
@@ -386,7 +386,7 @@ try_next:
             return NULL;
         }
 
-        for (FreeBlock *curr = b->head; curr; curr = curr->next) {
+        for (FreeBlock *curr = b->head.load(std::memory_order_relaxed); curr; curr = curr->next) {
             size_t szBlock = curr->tryLockBlock();
             if (!szBlock) {
                 // block is locked, re-do bin lock, as there is no place to spin
@@ -442,9 +442,9 @@ bool Backend::IndexedBins::tryReleaseRegions(int binIdx, Backend *backend)
     // got all blocks from the bin and re-do coalesce on them
     // to release single-block regions
 try_next:
-    if (b->head) {
+    if (!b->empty()) {
         MallocMutex::scoped_lock binLock(b->tLock);
-        for (FreeBlock *curr = b->head; curr; ) {
+        for (FreeBlock *curr = b->head.load(std::memory_order_relaxed); curr; ) {
             size_t szBlock = curr->tryLockBlock();
             if (!szBlock)
                 goto try_next;
@@ -464,10 +464,10 @@ try_next:
 
 void Backend::Bin::removeBlock(FreeBlock *fBlock)
 {
-    MALLOC_ASSERT(fBlock->next||fBlock->prev||fBlock==head,
+    MALLOC_ASSERT(fBlock->next||fBlock->prev||fBlock== head.load(std::memory_order_relaxed),
                   "Detected that a block is not in the bin.");
-    if (head == fBlock)
-        head = fBlock->next;
+    if (head.load(std::memory_order_relaxed) == fBlock)
+        head.store(fBlock->next, std::memory_order_relaxed);
     if (tail == fBlock)
         tail = fBlock->prev;
     if (fBlock->prev)
@@ -488,11 +488,11 @@ void Backend::IndexedBins::addBlock(int binIdx, FreeBlock *fBlock, size_t /* blo
             b->tail = fBlock;
             if (fBlock->prev)
                 fBlock->prev->next = fBlock;
-            if (!b->head)
-                b->head = fBlock;
+            if (!b->head.load(std::memory_order_relaxed))
+                b->head.store(fBlock, std::memory_order_relaxed);
         } else {
-            fBlock->next = b->head;
-            b->head = fBlock;
+            fBlock->next = b->head.load(std::memory_order_relaxed);
+            b->head.store(fBlock, std::memory_order_relaxed);
             if (fBlock->next)
                 fBlock->next->prev = fBlock;
             if (!b->tail)
@@ -517,8 +517,8 @@ bool Backend::IndexedBins::tryAddBlock(int binIdx, FreeBlock *fBlock, bool addTo
             b->tail = fBlock;
             if (fBlock->prev)
                 fBlock->prev->next = fBlock;
-            if (!b->head)
-                b->head = fBlock;
+            if (!b->head.load(std::memory_order_relaxed))
+                b->head.store(fBlock, std::memory_order_relaxed);
         }
     } else {
         fBlock->prev = NULL;
@@ -526,8 +526,8 @@ bool Backend::IndexedBins::tryAddBlock(int binIdx, FreeBlock *fBlock, bool addTo
             MallocMutex::scoped_lock scopedLock(b->tLock, /*wait=*/false, &locked);
             if (!locked)
                 return false;
-            fBlock->next = b->head;
-            b->head = fBlock;
+            fBlock->next = b->head.load(std::memory_order_relaxed);
+            b->head.store(fBlock, std::memory_order_relaxed);
             if (fBlock->next)
                 fBlock->next->prev = fBlock;
             if (!b->tail)
@@ -1404,8 +1404,9 @@ bool Backend::clean()
 
 void Backend::IndexedBins::verify()
 {
+#if MALLOC_DEBUG
     for (int i=0; i<freeBinsNum; i++) {
-        for (FreeBlock *fb = freeBins[i].head; fb; fb=fb->next) {
+        for (FreeBlock *fb = freeBins[i].head.load(std::memory_order_relaxed); fb; fb=fb->next) {
             uintptr_t mySz = fb->myL.value;
             MALLOC_ASSERT(mySz>GuardedSize::MAX_SPEC_VAL, ASSERT_TEXT);
             FreeBlock *right = (FreeBlock*)((uintptr_t)fb + mySz);
@@ -1415,6 +1416,7 @@ void Backend::IndexedBins::verify()
             MALLOC_ASSERT(fb->leftL.value<=GuardedSize::MAX_SPEC_VAL, ASSERT_TEXT);
         }
     }
+#endif
 }
 
 // For correct operation, it must be called when no other threads
@@ -1423,10 +1425,10 @@ void Backend::verify()
 {
 #if MALLOC_DEBUG
     scanCoalescQ(/*forceCoalescQDrop=*/false);
+#endif // MALLOC_DEBUG
 
     freeLargeBlockBins.verify();
     freeSlabAlignedBins.verify();
-#endif // MALLOC_DEBUG
 }
 
 #if __TBB_MALLOC_BACKEND_STAT
