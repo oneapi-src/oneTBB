@@ -114,7 +114,7 @@ static void CountOccurrences(int nthreads) {
     if (!silent && count_collisions) {
         for (auto i = hashes.begin(); i != hashes.end(); ++i)
             c += i->second - 1;
-        printf("hashes = %d  collisions = %d  ", hashes.size(), c);
+        printf("hashes = %d  collisions = %d  ", static_cast<int>(hashes.size()), c);
         c = 0;
         hashes.clear();
     }

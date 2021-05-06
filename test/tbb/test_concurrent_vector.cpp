@@ -26,6 +26,7 @@
 #include <common/utils.h>
 #include <common/utils_concurrency_limit.h>
 #include <common/vector_types.h>
+#include <common/concepts_common.h>
 #include <tbb/concurrent_vector.h>
 #include <tbb/tick_count.h>
 #include <tbb/parallel_reduce.h>
@@ -701,3 +702,11 @@ TEST_CASE("Testing vector in a highly concurrent environment") {
         REQUIRE(test_vec.size() == utils::get_platform_max_threads());
     }
 }
+
+#if __TBB_CPP20_CONCEPTS_PRESENT
+//! \brief \ref error_guessing
+TEST_CASE("container_range concept for concurrent_vector ranges") {
+    static_assert(test_concepts::container_range<typename tbb::concurrent_vector<int>::range_type>);
+    static_assert(test_concepts::container_range<typename tbb::concurrent_vector<int>::const_range_type>);
+}
+#endif // __TBB_CPP20_CONCEPTS_PRESENT

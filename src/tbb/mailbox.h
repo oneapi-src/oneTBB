@@ -20,7 +20,6 @@
 #include "oneapi/tbb/cache_aligned_allocator.h"
 #include "oneapi/tbb/detail/_small_object_pool.h"
 
-#include "arena_slot.h"
 #include "scheduler_common.h"
 
 #include <atomic>

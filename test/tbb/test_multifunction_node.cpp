@@ -20,10 +20,6 @@
 
 #include "common/config.h"
 
-// TODO revamp: move parts dependent on __TBB_EXTRA_DEBUG into separate test(s) since having these
-// parts in all of tests might make testing of the product, which is different from what is actually
-// released.
-#define __TBB_EXTRA_DEBUG 1
 #include "tbb/flow_graph.h"
 #include "tbb/spin_rw_mutex.h"
 
@@ -31,6 +27,7 @@
 #include "common/utils.h"
 #include "common/graph_utils.h"
 #include "common/test_follows_and_precedes_api.h"
+#include "common/concepts_common.h"
 
 
 //! \file test_multifunction_node.cpp
@@ -587,3 +584,42 @@ TEST_CASE("Test priority with follows and precedes"){
 
 #endif
 
+#if __TBB_CPP20_CONCEPTS_PRESENT
+//! \brief \ref error_guessing
+TEST_CASE("constraints for multifunction_node input") {
+    struct InputObject {
+        InputObject() = default;
+        InputObject( const InputObject& ) = default;
+    };
+
+    static_assert(utils::well_formed_instantiation<tbb::flow::multifunction_node, InputObject, int>);
+    static_assert(utils::well_formed_instantiation<tbb::flow::multifunction_node, int, int>);
+    static_assert(!utils::well_formed_instantiation<tbb::flow::multifunction_node, test_concepts::NonCopyable, int>);
+    static_assert(!utils::well_formed_instantiation<tbb::flow::multifunction_node, test_concepts::NonDefaultInitializable, int>);
+}
+
+template <typename Input, typename Output, typename Body>
+concept can_call_multifunction_node_ctor = requires( tbb::flow::graph& graph, std::size_t concurrency, Body body,
+                                                     tbb::flow::node_priority_t priority, tbb::flow::buffer_node<int>& f ) {
+    tbb::flow::multifunction_node<Input, Output>(graph, concurrency, body);
+    tbb::flow::multifunction_node<Input, Output>(graph, concurrency, body, priority);
+#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+    tbb::flow::multifunction_node<Input, Output>(tbb::flow::follows(f), concurrency, body);
+    tbb::flow::multifunction_node<Input, Output>(tbb::flow::follows(f), concurrency, body, priority);
+#endif // __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+};
+
+//! \brief \ref error_guessing
+TEST_CASE("constraints for multifunction_node body") {
+    using input_type = int;
+    using output_type = std::tuple<int>;
+    using namespace test_concepts::multifunction_node_body;
+
+    static_assert(can_call_multifunction_node_ctor<input_type, output_type, Correct<input_type, output_type>>);
+    static_assert(!can_call_multifunction_node_ctor<input_type, output_type, NonCopyable<input_type, output_type>>);
+    static_assert(!can_call_multifunction_node_ctor<input_type, output_type, NonDestructible<input_type, output_type>>);
+    static_assert(!can_call_multifunction_node_ctor<input_type, output_type, NoOperatorRoundBrackets<input_type, output_type>>);
+    static_assert(!can_call_multifunction_node_ctor<input_type, output_type, WrongFirstInputOperatorRoundBrackets<input_type, output_type>>);
+    static_assert(!can_call_multifunction_node_ctor<input_type, output_type, WrongSecondInputOperatorRoundBrackets<input_type, output_type>>);
+}
+#endif // __TBB_CPP20_CONCEPTS_PRESENT

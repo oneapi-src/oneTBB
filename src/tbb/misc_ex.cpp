@@ -283,6 +283,7 @@ static const dynamic_link_descriptor ProcessorGroupsApiLinkTable[] = {
 };
 
 static void initialize_hardware_concurrency_info () {
+    suppress_unused_warning(TBB_ALL_PROCESSOR_GROUPS);
 #if __TBB_WIN8UI_SUPPORT
     // For these applications processor groups info is unavailable
     // Setting up a number of processors for one processor group

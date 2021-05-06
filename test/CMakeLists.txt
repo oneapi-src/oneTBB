@@ -363,6 +363,7 @@ tbb_add_test(SUBDIR tbb NAME test_concurrent_unordered_set DEPENDENCIES TBB::tbb
 tbb_add_test(SUBDIR tbb NAME test_concurrent_map DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_concurrent_set DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_concurrent_priority_queue DEPENDENCIES TBB::tbb)
+tbb_add_test(SUBDIR tbb NAME test_partitioner DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_parallel_for DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_parallel_for_each DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_parallel_reduce DEPENDENCIES TBB::tbb)
@@ -506,7 +507,7 @@ if (MSVC AND CMAKE_VERSION VERSION_GREATER 3.13) # LINK_OPTIONS property first a
 endif()
 
 # TBB allocator tests
-if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(armv7-a|aarch64|mips|arm64)")
+if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
     # Define TBB malloc tests
     tbb_add_test(SUBDIR tbbmalloc NAME test_scalable_allocator DEPENDENCIES TBB::tbbmalloc)
     tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_pools DEPENDENCIES TBB::tbbmalloc)

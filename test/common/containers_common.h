@@ -17,6 +17,7 @@
 #ifndef __TBB_test_common_containers_common_H
 #define __TBB_test_common_containers_common_H
 
+#include "config.h"
 #include "custom_allocators.h"
 
 template <typename ContainerType>
@@ -71,7 +72,7 @@ struct hash<NonMovableObject> {
 
 template <typename ContainerType>
 void test_allocator_traits_with_non_movable_value_type() {
-    // Check that if pocma is true, container allows move assignment withoud per-element move
+    // Check that if pocma is true, container allows move assignment without per-element move
     using allocator_type = typename ContainerType::allocator_type;
     using allocator_traits_type = std::allocator_traits<allocator_type>;
     using pocma_type = typename allocator_traits_type::propagate_on_container_move_assignment;

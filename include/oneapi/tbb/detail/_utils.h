@@ -90,9 +90,9 @@ public:
 //! Spin WHILE the condition is true.
 /** T and U should be comparable types. */
 template <typename T, typename C>
-void spin_wait_while(const std::atomic<T>& location, C comp) {
+void spin_wait_while(const std::atomic<T>& location, C comp, std::memory_order order) {
     atomic_backoff backoff;
-    while (comp(location.load(std::memory_order_acquire))) {
+    while (comp(location.load(order))) {
         backoff.pause();
     }
 }
@@ -100,15 +100,15 @@ void spin_wait_while(const std::atomic<T>& location, C comp) {
 //! Spin WHILE the value of the variable is equal to a given value
 /** T and U should be comparable types. */
 template <typename T, typename U>
-void spin_wait_while_eq(const std::atomic<T>& location, const U value) {
-    spin_wait_while(location, [&value](T t) { return t == value; });
+void spin_wait_while_eq(const std::atomic<T>& location, const U value, std::memory_order order = std::memory_order_acquire) {
+    spin_wait_while(location, [&value](T t) { return t == value; }, order);
 }
 
 //! Spin UNTIL the value of the variable is equal to a given value
 /** T and U should be comparable types. */
 template<typename T, typename U>
-void spin_wait_until_eq(const std::atomic<T>& location, const U value) {
-    spin_wait_while(location, [&value](T t) { return t != value; });
+void spin_wait_until_eq(const std::atomic<T>& location, const U value, std::memory_order order = std::memory_order_acquire) {
+    spin_wait_while(location, [&value](T t) { return t != value; }, order);
 }
 
 //! Spin UNTIL the condition returns true or spinning time is up.
@@ -324,6 +324,18 @@ using synthesized_three_way_result = decltype(synthesized_three_way_comparator{}
                                                                                  std::declval<T2&>()));
 
 #endif // __TBB_CPP20_COMPARISONS_PRESENT
+
+// Check if the type T is implicitly OR explicitly convertible to U
+template <typename T, typename U>
+concept relaxed_convertible_to = std::constructible_from<U, T>;
+
+template <typename T, typename U>
+concept adaptive_same_as =
+#if __TBB_STRICT_CONSTRAINTS
+    std::same_as<T, U>;
+#else
+    std::convertible_to<T, U>;
+#endif
 #endif // __TBB_CPP20_CONCEPTS_PRESENT
 
 } // namespace d0

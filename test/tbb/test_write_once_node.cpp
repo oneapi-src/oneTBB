@@ -17,10 +17,6 @@
 
 #include "common/config.h"
 
-// TODO revamp: move parts dependent on __TBB_EXTRA_DEBUG into separate test(s) since having these
-// parts in all of tests might make testing of the product, which is different from what is actually
-// released.
-#define __TBB_EXTRA_DEBUG 1
 #include "tbb/flow_graph.h"
 
 #include "common/test.h"

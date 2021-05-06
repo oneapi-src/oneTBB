@@ -20,7 +20,6 @@
 
 #include "common/config.h"
 
-#define __TBB_EXTRA_DEBUG 1
 #include "tbb/flow_graph.h"
 
 #include "tbb/task.h"
@@ -32,6 +31,7 @@
 #include "common/graph_utils.h"
 #include "common/spin_barrier.h"
 #include "common/test_follows_and_precedes_api.h"
+#include "common/concepts_common.h"
 
 #include <string>
 #include <thread>
@@ -588,7 +588,10 @@ struct spin_test {
 void test_for_spin_avoidance() {
     const int nthreads = 4;
     tbb::global_control gc(tbb::global_control::max_allowed_parallelism, nthreads);
-    spin_test<int, int>::run(nthreads);
+    tbb::task_arena a(nthreads);
+    a.execute([&] {
+        spin_test<int, int>::run(nthreads);
+    });
 }
 
 template< typename Input, typename Output >
@@ -834,3 +837,44 @@ TEST_CASE("Test follows and preceedes API"){
     test_follows_and_precedes_api();
 }
 #endif
+
+#if __TBB_CPP20_CONCEPTS_PRESENT
+//! \brief \ref error_guessing
+TEST_CASE("constraints for async_node input") {
+    struct InputObject {
+        InputObject() = default;
+        InputObject( const InputObject& ) = default;
+    };
+
+    static_assert(utils::well_formed_instantiation<tbb::flow::async_node, InputObject, int>);
+    static_assert(utils::well_formed_instantiation<tbb::flow::async_node, int, int>);
+    static_assert(!utils::well_formed_instantiation<tbb::flow::async_node, test_concepts::NonCopyable, int>);
+    static_assert(!utils::well_formed_instantiation<tbb::flow::async_node, test_concepts::NonDefaultInitializable, int>);
+}
+
+template <typename Input, typename Output, typename Body>
+concept can_call_async_node_ctor = requires( tbb::flow::graph& graph, std::size_t concurrency,
+                                             Body body, tbb::flow::node_priority_t priority, tbb::flow::buffer_node<int>& f ) {
+    tbb::flow::async_node<Input, Output>(graph, concurrency, body);
+    tbb::flow::async_node<Input, Output>(graph, concurrency, body, priority);
+#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+    tbb::flow::async_node<Input, Output>(tbb::flow::follows(f), concurrency, body);
+    tbb::flow::async_node<Input, Output>(tbb::flow::follows(f), concurrency, body, priority);
+#endif // __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+};
+
+//! \brief \ref error_guessing
+TEST_CASE("constraints for async_node body") {
+    using input_type = int;
+    using output_type = input_type;
+    using namespace test_concepts::async_node_body;
+
+    static_assert(can_call_async_node_ctor<input_type, output_type, Correct<input_type, output_type>>);
+    static_assert(!can_call_async_node_ctor<input_type, output_type, NonCopyable<input_type, output_type>>);
+    static_assert(!can_call_async_node_ctor<input_type, output_type, NonDestructible<input_type, output_type>>);
+    static_assert(!can_call_async_node_ctor<input_type, output_type, NoOperatorRoundBrackets<input_type, output_type>>);
+    static_assert(!can_call_async_node_ctor<input_type, output_type, WrongFirstInputOperatorRoundBrackets<input_type, output_type>>);
+    static_assert(!can_call_async_node_ctor<input_type, output_type, WrongSecondInputOperatorRoundBrackets<input_type, output_type>>);
+}
+
+#endif // __TBB_CPP20_CONCEPTS_PRESENT

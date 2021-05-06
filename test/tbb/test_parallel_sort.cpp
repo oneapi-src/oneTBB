@@ -17,6 +17,8 @@
 #include "common/test.h"
 #include "common/utils_concurrency_limit.h"
 #include "common/cpu_usertime.h"
+#include "common/concepts_common.h"
+#include "common/iterator.h"
 
 #include "tbb/parallel_sort.h"
 #include "tbb/concurrent_vector.h"
@@ -250,6 +252,75 @@ void parallel_sort_test_suite() {
     }
 }
 
+#if __TBB_CPP20_CONCEPTS_PRESENT
+template <typename RandomAccessIterator>
+concept can_call_parallel_sort_with_iterator = requires( RandomAccessIterator it ) {
+    tbb::parallel_sort(it, it);
+};
+
+template <typename RandomAccessIterator, typename Compare>
+concept can_call_parallel_sort_with_iterator_and_compare = requires( RandomAccessIterator it, const Compare& compare ) {
+    tbb::parallel_sort(it, it, compare);
+};
+
+template <typename CBS>
+concept can_call_parallel_sort_with_cbs = requires( CBS& cbs ) {
+    tbb::parallel_sort(cbs);
+};
+
+template <typename CBS, typename Compare>
+concept can_call_parallel_sort_with_cbs_and_compare = requires( CBS& cbs, const Compare& compare ) {
+    tbb::parallel_sort(cbs, compare);
+};
+
+template <typename T>
+using CorrectCompare = test_concepts::compare::Correct<T>;
+
+void test_psort_iterator_constraints() {
+    static_assert(can_call_parallel_sort_with_iterator<utils::RandomIterator<int>>);
+    static_assert(can_call_parallel_sort_with_iterator<typename std::vector<int>::iterator>);
+    static_assert(!can_call_parallel_sort_with_iterator<utils::ForwardIterator<int>>);
+    static_assert(!can_call_parallel_sort_with_iterator<utils::InputIterator<int>>);
+
+    static_assert(can_call_parallel_sort_with_iterator_and_compare<utils::RandomIterator<int>, CorrectCompare<int>>);
+    static_assert(can_call_parallel_sort_with_iterator_and_compare<typename std::vector<int>::iterator, CorrectCompare<int>>);
+    static_assert(!can_call_parallel_sort_with_iterator_and_compare<utils::ForwardIterator<int>, CorrectCompare<int>>);
+    static_assert(!can_call_parallel_sort_with_iterator_and_compare<utils::InputIterator<int>, CorrectCompare<int>>);
+}
+
+void test_psort_compare_constraints() {
+    using namespace test_concepts::compare;
+    using CorrectIterator = test_concepts::container_based_sequence::iterator;
+    using CorrectCBS = test_concepts::container_based_sequence::Correct;
+    static_assert(can_call_parallel_sort_with_iterator_and_compare<CorrectIterator, Correct<int>>);
+    static_assert(!can_call_parallel_sort_with_iterator_and_compare<CorrectIterator, NoOperatorRoundBrackets<int>>);
+    static_assert(!can_call_parallel_sort_with_iterator_and_compare<CorrectIterator, WrongFirstInputOperatorRoundBrackets<int>>);
+    static_assert(!can_call_parallel_sort_with_iterator_and_compare<CorrectIterator, WrongSecondInputOperatorRoundBrackets<int>>);
+    static_assert(!can_call_parallel_sort_with_iterator_and_compare<CorrectIterator, WrongReturnOperatorRoundBrackets<int>>);
+
+    static_assert(can_call_parallel_sort_with_cbs_and_compare<CorrectCBS, Correct<int>>);
+    static_assert(!can_call_parallel_sort_with_cbs_and_compare<CorrectCBS, NoOperatorRoundBrackets<int>>);
+    static_assert(!can_call_parallel_sort_with_cbs_and_compare<CorrectCBS, WrongFirstInputOperatorRoundBrackets<int>>);
+    static_assert(!can_call_parallel_sort_with_cbs_and_compare<CorrectCBS, WrongSecondInputOperatorRoundBrackets<int>>);
+    static_assert(!can_call_parallel_sort_with_cbs_and_compare<CorrectCBS, WrongReturnOperatorRoundBrackets<int>>);
+}
+
+void test_psort_cbs_constraints() {
+    using namespace test_concepts::container_based_sequence;
+    using CorrectCompare = test_concepts::compare::Correct<int>;
+    static_assert(can_call_parallel_sort_with_cbs<Correct>);
+    static_assert(!can_call_parallel_sort_with_cbs<NoBegin>);
+    static_assert(!can_call_parallel_sort_with_cbs<NoEnd>);
+    static_assert(!can_call_parallel_sort_with_cbs<ForwardIteratorCBS>);
+
+    static_assert(can_call_parallel_sort_with_cbs_and_compare<Correct, CorrectCompare>);
+    static_assert(!can_call_parallel_sort_with_cbs_and_compare<NoBegin, CorrectCompare>);
+    static_assert(!can_call_parallel_sort_with_cbs_and_compare<NoEnd, CorrectCompare>);
+    static_assert(!can_call_parallel_sort_with_cbs_and_compare<ForwardIteratorCBS, CorrectCompare>);
+}
+
+#endif // __TBB_CPP20_CONCEPTS_PRESENT
+
 //! Minimal array sorting test (less comparator)
 //! \brief \ref error_guessing
 TEST_CASE("Minimal array sorting test (less comparator)") {
@@ -321,3 +392,12 @@ TEST_CASE("That all workers sleep when no work") {
     tbb::parallel_sort(test_array);
     TestCPUUserTime(utils::get_platform_max_threads());
 }
+
+#if __TBB_CPP20_CONCEPTS_PRESENT
+//! \brief \ref error_guessing
+TEST_CASE("parallel_sort constraints") {
+    test_psort_iterator_constraints();
+    test_psort_compare_constraints();
+    test_psort_cbs_constraints();
+}
+#endif // __TBB_CPP20_CONCEPTS_PRESENT

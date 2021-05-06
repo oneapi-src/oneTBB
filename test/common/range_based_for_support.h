@@ -17,6 +17,8 @@
 #ifndef __TBB_test_common_range_based_for_support_H
 #define __TBB_test_common_range_based_for_support_H
 
+#include "config.h"
+
 #include <utility>
 
 namespace range_based_for_support_tests {

@@ -20,10 +20,6 @@
 
 #include "common/config.h"
 
-// TODO revamp: move parts dependent on __TBB_EXTRA_DEBUG into separate test(s) since having these
-// parts in all of tests might make testing of the product, which is different from what is actually
-// released.
-#define __TBB_EXTRA_DEBUG 1
 #include "tbb/flow_graph.h"
 #include "tbb/spin_rw_mutex.h"
 #include "tbb/global_control.h"
@@ -32,6 +28,7 @@
 #include "common/utils.h"
 #include "common/graph_utils.h"
 #include "common/test_follows_and_precedes_api.h"
+#include "common/concepts_common.h"
 
 
 //! \file test_function_node.cpp
@@ -559,3 +556,45 @@ TEST_CASE("try_release try_consume"){
     CHECK_MESSAGE((fn.try_release()==false), "try_release should initially return false on a node");
     CHECK_MESSAGE((fn.try_consume()==false), "try_consume should initially return false on a node");
 }
+
+#if __TBB_CPP20_CONCEPTS_PRESENT
+//! \brief \ref error_guessing
+TEST_CASE("constraints for function_node input and output") {
+    struct InputObject {
+        InputObject() = default;
+        InputObject( const InputObject& ) = default;
+    };
+    struct OutputObject : test_concepts::Copyable {};
+
+    static_assert(utils::well_formed_instantiation<tbb::flow::function_node, InputObject, OutputObject>);
+    static_assert(utils::well_formed_instantiation<tbb::flow::function_node, int, int>);
+    static_assert(!utils::well_formed_instantiation<tbb::flow::function_node, test_concepts::NonCopyable, OutputObject>);
+    static_assert(!utils::well_formed_instantiation<tbb::flow::function_node, test_concepts::NonDefaultInitializable, OutputObject>);
+    static_assert(!utils::well_formed_instantiation<tbb::flow::function_node, InputObject, test_concepts::NonCopyable>);
+}
+
+template <typename Input, typename Output, typename Body>
+concept can_call_function_node_ctor = requires( tbb::flow::graph& graph, std::size_t concurrency, Body body,
+                                                tbb::flow::node_priority_t priority, tbb::flow::buffer_node<int>& f ) {
+    tbb::flow::function_node<Input, Output>(graph, concurrency, body);
+    tbb::flow::function_node<Input, Output>(graph, concurrency, body, priority);
+#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+    tbb::flow::function_node<Input, Output>(tbb::flow::follows(f), concurrency, body);
+    tbb::flow::function_node<Input, Output>(tbb::flow::follows(f), concurrency, body, priority);
+#endif
+};
+
+//! \brief \ref error_guessing
+TEST_CASE("constraints for function_node body") {
+    using input_type = int;
+    using output_type = int;
+    using namespace test_concepts::function_node_body;
+
+    static_assert(can_call_function_node_ctor<input_type, output_type, Correct<input_type, output_type>>);
+    static_assert(!can_call_function_node_ctor<input_type, output_type, NonCopyable<input_type, output_type>>);
+    static_assert(!can_call_function_node_ctor<input_type, output_type, NonDestructible<input_type, output_type>>);
+    static_assert(!can_call_function_node_ctor<input_type, output_type, NoOperatorRoundBrackets<input_type, output_type>>);
+    static_assert(!can_call_function_node_ctor<input_type, output_type, WrongInputRoundBrackets<input_type, output_type>>);
+    static_assert(!can_call_function_node_ctor<input_type, output_type, WrongReturnRoundBrackets<input_type, output_type>>);
+}
+#endif // __TBB_CPP20_CONCEPTS_PRESENT

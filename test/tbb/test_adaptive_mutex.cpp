@@ -16,6 +16,10 @@
 
 #define TBB_PREVIEW_MUTEXES 1
 
+#if __INTEL_COMPILER && _MSC_VER
+#pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
+#endif
+
 #include "../conformance/conformance_mutex.h"
 #include "test_mutex.h"
 
@@ -75,3 +79,12 @@ TEST_CASE("ISO interface test") {
     TestTryAcquireReader<TBB_MutexFromISO_Mutex<oneapi::tbb::rw_mutex>>("ISO Adaptive RW Mutex");
     TestReaderWriterLock<TBB_MutexFromISO_Mutex<oneapi::tbb::rw_mutex>>("ISO Adaptive RW Mutex");
 }
+
+#if __TBB_CPP20_CONCEPTS_PRESENT
+//! \brief \ref error_guessing
+TEST_CASE("Test internal mutex concepts for oneapi::tbb::mutex and oneapi::tbb::rw_mutex") {
+    static_assert(oneapi::tbb::detail::scoped_lockable<oneapi::tbb::mutex>);
+    static_assert(oneapi::tbb::detail::scoped_lockable<oneapi::tbb::rw_mutex>);
+    static_assert(oneapi::tbb::detail::rw_scoped_lockable<oneapi::tbb::rw_mutex>);
+}
+#endif

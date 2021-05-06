@@ -30,7 +30,7 @@
 #endif
 
 #if _MSC_VER
-// Due to race between exiting the process and starting of a new detached thread in Windows, thread 
+// Due to race between exiting the process and starting of a new detached thread in Windows, thread
 // local variables, which constructors or destructors have calls to runtime functions (e.g. free()
 // function) can cause access violation since TBB along with runtime library may have been unloaded
 // by the time these variables are constructed or destroyed. The workaround is do not call constructors

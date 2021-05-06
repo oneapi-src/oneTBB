@@ -17,6 +17,8 @@
 #ifndef __TBB_test_common_concurrent_associative_common_H
 #define __TBB_test_common_concurrent_associative_common_H
 
+#include "config.h"
+
 #include "custom_allocators.h"
 #include "utils.h"
 #include "utils_concurrency_limit.h"
@@ -27,6 +29,7 @@
 #include "node_handling_support.h"
 #include "containers_common.h"
 #include "test_comparisons.h"
+#include "concepts_common.h"
 #include <list>
 #include <cstring>
 
@@ -520,7 +523,12 @@ void test_basic_common()
     REQUIRE_MESSAGE((AllowMultimapping<T>{} ? (newcont.size() == 3) : (newcont.size() == 2)), "Copy construction has not copied the elements properly");
 
     // size_type unsafe_erase(const key_type& k);
-    typename T::size_type size = cont.unsafe_erase(1);
+    typename T::size_type size;
+#if _MSC_VER && __INTEL_COMPILER == 1900
+    // The compiler optimizes the next line too aggressively.
+#pragma noinline
+#endif
+    size = cont.unsafe_erase(1);
 
     REQUIRE_MESSAGE((AllowMultimapping<T>{} ? (size == 2) : (size == 1)), "Erase has not removed the right number of elements");
 

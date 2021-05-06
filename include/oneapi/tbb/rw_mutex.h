@@ -23,6 +23,7 @@
 #include "detail/_utils.h"
 #include "detail/_waitable_atomic.h"
 #include "detail/_scoped_lock.h"
+#include "detail/_mutex_common.h"
 #include "profiling.h"
 
 namespace tbb {

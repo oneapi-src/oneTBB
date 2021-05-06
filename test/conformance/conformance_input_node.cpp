@@ -38,7 +38,7 @@ TODO: implement missing conformance tests for input_node:
   - [ ] Improve CTAD test to assert result node type.
   - [ ] Explicit test for copy constructor of the node.
   - [ ] Check `Output' type indeed copy-constructed and copy-assigned while working with the node.
-  - [ ] Check node cannot have predecessors (Will ADL be of any help here?)
+  - [ ] Check node cannot have predecessors (Will argument-dependent lookup be of any help here?)
   - [ ] Check the node is serial and its body never invoked concurrently.
   - [ ] `try_get()' call testing: a call to body is made only when the internal buffer is empty.
 */

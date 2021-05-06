@@ -17,6 +17,8 @@
 #ifndef __TBB_test_common_utils_H
 #define __TBB_test_common_utils_H
 
+#include "config.h"
+
 #include <oneapi/tbb/detail/_template_helpers.h>
 #include <oneapi/tbb/detail/_config.h>
 #include <oneapi/tbb/blocked_range.h>
@@ -37,10 +39,13 @@
 
 #include "dummy_body.h"
 #include "utils_yield.h"
+#include "utils_assert.h"
 
 namespace utils {
 
 #define utils_fallthrough __TBB_fallthrough
+
+using tbb::detail::try_call;
 
 template<typename It>
 typename std::iterator_traits<It>::value_type median(It first, It last) {
@@ -417,6 +422,20 @@ struct Counter {
     M mutex;
     volatile long value;
 };
+
+template<typename M>
+struct AtomicCounter {
+    using mutex_type = M;
+    M mutex;
+    std::atomic<long> value;
+};
+
+#if __TBB_CPP20_CONCEPTS_PRESENT
+template <template <typename...> class Template, typename... Types>
+concept well_formed_instantiation = requires {
+    typename Template<Types...>;
+};
+#endif // __TBB_CPP20_CONCEPTS_PRESENT
 
 } // namespace utils
 

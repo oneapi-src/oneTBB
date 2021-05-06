@@ -19,15 +19,6 @@
 
 #include <stdlib.h>
 
-void *ErrnoPreservingMalloc(size_t bytes)
-{
-    int prevErrno = errno;
-    void *ret = malloc( bytes );
-    if (!ret)
-        errno = prevErrno;
-    return ret;
-}
-
 #if __linux__ || __APPLE__ || __sun || __FreeBSD__
 
 #if __sun && !defined(_XPG4_2)
@@ -183,6 +174,15 @@ int UnmapMemory(void *area, size_t /*bytes*/)
 }
 
 #else
+
+void *ErrnoPreservingMalloc(size_t bytes)
+{
+    int prevErrno = errno;
+    void *ret = malloc( bytes );
+    if (!ret)
+        errno = prevErrno;
+    return ret;
+}
 
 #define MEMORY_MAPPING_USES_MALLOC 1
 void* MapMemory (size_t bytes, PageType)

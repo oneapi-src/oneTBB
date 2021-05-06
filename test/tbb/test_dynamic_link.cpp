@@ -14,10 +14,14 @@
     limitations under the License.
 */
 
-#include "common/test.h"
-
 //! \file test_dynamic_link.cpp
 //! \brief Test for [internal] functionality
+
+#if _WIN32 || _WIN64
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
+#include "common/test.h"
 
 enum FOO_TYPE {
     FOO_DUMMY,

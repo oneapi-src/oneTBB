@@ -14,6 +14,10 @@
     limitations under the License.
 */
 
+#if _WIN32 || _WIN64
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #if _MSC_VER && !defined(__INTEL_COMPILER)
 // structure was padded due to alignment specifier
 #pragma warning( disable: 4324 )

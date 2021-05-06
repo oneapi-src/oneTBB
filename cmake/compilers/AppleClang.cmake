@@ -31,7 +31,8 @@ if (NOT TBB_STRICT AND COMMAND tbb_remove_compile_flag)
     tbb_remove_compile_flag(-Werror)
 endif()
 
-if (NOT "${CMAKE_OSX_ARCHITECTURES}" MATCHES "^arm64$" AND CMAKE_SYSTEM_PROCESSOR STREQUAL x86_64)
+# Enable Intel(R) Transactional Synchronization Extensions (-mrtm) on relevant processors
+if (NOT "${CMAKE_OSX_ARCHITECTURES}" MATCHES "^arm64$" AND CMAKE_SYSTEM_PROCESSOR MATCHES "(x86_64|AMD64)") # OSX systems are 64-bit only
     set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -mrtm)
 endif()
 

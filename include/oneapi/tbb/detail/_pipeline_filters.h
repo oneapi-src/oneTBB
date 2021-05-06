@@ -129,7 +129,9 @@ class flow_control {
     bool is_pipeline_stopped = false;
     flow_control() = default;
     template<typename Body, typename InputType, typename OutputType > friend class concrete_filter;
-    template<typename Output> friend class input_node;
+    template<typename Output>
+    __TBB_requires(std::copyable<Output>)
+    friend class input_node;
 public:
     void stop() { is_pipeline_stopped = true; }
 };

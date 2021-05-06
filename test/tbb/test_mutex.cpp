@@ -23,6 +23,8 @@
 #include "oneapi/tbb/rw_mutex.h"
 #include <tbb/queuing_mutex.h>
 #include <tbb/queuing_rw_mutex.h>
+#include <tbb/null_mutex.h>
+#include <tbb/null_rw_mutex.h>
 #include <tbb/parallel_for.h>
 #include <oneapi/tbb/detail/_utils.h>
 #include <oneapi/tbb/detail/_machine.h>
@@ -162,3 +164,19 @@ TEST_CASE("scoped_lock::is_writer") {
     TestIsWriter<oneapi::tbb::null_rw_mutex>("null_rw_mutex");
     TestIsWriter<oneapi::tbb::rw_mutex>("rw_mutex");
 }
+
+#if __TBB_CPP20_CONCEPTS_PRESENT
+template <typename... Args>
+concept mutexes = (... && tbb::detail::scoped_lockable<Args>);
+
+template <typename... Args>
+concept rw_mutexes = (... && tbb::detail::rw_scoped_lockable<Args>);
+
+//! \brief \ref error_guessing
+TEST_CASE("internal mutex concepts") {
+    static_assert(mutexes<tbb::spin_mutex, tbb::speculative_spin_mutex, tbb::null_mutex, tbb::queuing_mutex,
+                          tbb::spin_rw_mutex, tbb::speculative_spin_rw_mutex, tbb::null_rw_mutex, tbb::queuing_rw_mutex>);
+    static_assert(rw_mutexes<tbb::spin_rw_mutex, tbb::speculative_spin_rw_mutex,
+                             tbb::null_rw_mutex, tbb::queuing_rw_mutex>);
+}
+#endif // __TBB_CPP20_CONCEPTS_PRESENT

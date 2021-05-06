@@ -66,7 +66,7 @@ public:
 
     template <typename Type>
     void delete_object(Type* object, const execution_data& ed) {
-        // Copy this since the it can be the member of the passed object and
+        // Copy this since it can be a member of the passed object and
         // unintentionally destroyed when Type destructor is called below
         small_object_allocator alloc = *this;
         object->~Type();
@@ -75,7 +75,7 @@ public:
 
     template <typename Type>
     void delete_object(Type* object) {
-        // Copy this since the it can be the member of the passed object and
+        // Copy this since it can be a member of the passed object and
         // unintentionally destroyed when Type destructor is called below
         small_object_allocator alloc = *this;
         object->~Type();

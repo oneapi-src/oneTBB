@@ -230,6 +230,7 @@ d1::task* task_dispatcher::receive_or_steal_task(
         // Nothing to do, pause a little.
         waiter.pause(slot);
     } // end of nonlocal task retrieval loop
+
     if (inbox.is_idle_state(true)) {
         inbox.set_is_idle(false);
     }
@@ -280,6 +281,11 @@ d1::task* task_dispatcher::local_wait_for_all(d1::task* t, Waiter& waiter ) {
     m_properties.fifo_tasks_allowed = false;
 
     t = get_critical_task(t, ed, isolation, critical_allowed);
+    if (t && m_thread_data->my_inbox.is_idle_state(true)) {
+        // The thread has a work to do. Therefore, marking its inbox as not idle so that
+        // affinitized tasks can be stolen from it.
+        m_thread_data->my_inbox.set_is_idle(false);
+    }
 
     // Infinite exception loop
     for (;;) {

@@ -17,6 +17,8 @@
 #ifndef __TBB_test_common_parallel_invoke_common_H
 #define __TBB_test_common_parallel_invoke_common_H
 
+#include "config.h"
+
 #include <cstddef>
 #include <tuple>
 

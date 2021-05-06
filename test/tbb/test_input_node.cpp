@@ -23,6 +23,7 @@
 #include "common/test.h"
 #include "common/utils.h"
 #include "common/utils_assert.h"
+#include "common/concepts_common.h"
 
 
 //! \file test_input_node.cpp
@@ -369,8 +370,41 @@ TEST_CASE("Deduction guides"){
 //! \brief \ref error_guessing
 TEST_CASE("try_get before activation"){
     tbb::flow::graph g;
-    tbb::flow::input_node<int> in(g, [&](tbb::flow_control& fc) -> bool { fc.stop(); return 0;});
+    tbb::flow::input_node<int> in(g, [&](tbb::flow_control& fc) { fc.stop(); return 0;});
 
     int tmp = -1;
     CHECK_MESSAGE((in.try_get(tmp) == false), "try_get before activation should not succeed");
 }
+
+#if __TBB_CPP20_CONCEPTS_PRESENT
+//! \brief \ref error_guessing
+TEST_CASE("constraints for input_node output") {
+    struct Object : test_concepts::Copyable, test_concepts::CopyAssignable {};
+
+    static_assert(utils::well_formed_instantiation<tbb::flow::input_node, Object>);
+    static_assert(utils::well_formed_instantiation<tbb::flow::input_node, int>);
+    static_assert(!utils::well_formed_instantiation<tbb::flow::input_node, test_concepts::NonCopyable>);
+    static_assert(!utils::well_formed_instantiation<tbb::flow::input_node, test_concepts::NonCopyAssignable>);
+}
+
+template <typename Output, typename Body>
+concept can_call_input_node_ctor = requires( tbb::flow::graph& graph, Body body, tbb::flow::buffer_node<int> f ) {
+    tbb::flow::input_node<Output>(graph, body);
+#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+    tbb::flow::input_node<Output>(tbb::flow::precedes(f), body);
+#endif
+};
+
+//! \brief \ref error_guessing
+TEST_CASE("constraints for input_node body") {
+    using output_type = int;
+    using namespace test_concepts::input_node_body;
+
+    static_assert(can_call_input_node_ctor<output_type, Correct<output_type>>);
+    static_assert(!can_call_input_node_ctor<output_type, NonCopyable<output_type>>);
+    static_assert(!can_call_input_node_ctor<output_type, NonDestructible<output_type>>);
+    static_assert(!can_call_input_node_ctor<output_type, NoOperatorRoundBrackets<output_type>>);
+    static_assert(!can_call_input_node_ctor<output_type, WrongInputOperatorRoundBrackets<output_type>>);
+    static_assert(!can_call_input_node_ctor<output_type, WrongReturnOperatorRoundBrackets<output_type>>);
+}
+#endif // __TBB_CPP20_CONCEPTS_PRESENT

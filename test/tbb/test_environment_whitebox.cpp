@@ -17,10 +17,14 @@
 //! \file test_environment_whitebox.cpp
 //! \brief Test for [internal] functionality
 
+#if _WIN32 || _WIN64
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include "common/test.h"
 #include "common/utils.h"
 #include "common/utils_env.h"
-#include "../../src/tbb/environment.h"
+#include "src/tbb/environment.h"
 
 #include <string>
 #include <algorithm>

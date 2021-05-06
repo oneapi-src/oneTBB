@@ -20,6 +20,7 @@
 #include "detail/_config.h"
 #include "detail/_namespace_injection.h"
 #include "detail/_assert.h"
+#include "detail/_mutex_common.h"
 
 #include "profiling.h"
 

@@ -19,6 +19,7 @@
 #include "common/parallel_reduce_common.h"
 #include "common/cpu_usertime.h"
 #include "common/exception_handling.h"
+#include "common/concepts_common.h"
 
 //! \file test_parallel_reduce.cpp
 //! \brief Test for [algorithms.parallel_reduce algorithms.parallel_deterministic_reduce] specification
@@ -157,7 +158,7 @@ public:
             ReduceFunctorToCancel functor;
             run_parallel_reduce(br, functor);
         } else {
-            run_parallel_reduce(br, 0, ReduceToCancel{}, JoinToCancel{});
+            run_parallel_reduce(br, std::size_t(0), ReduceToCancel{}, JoinToCancel{});
         }
     }
 }; // class ParallelReduceRunner
@@ -199,7 +200,7 @@ public:
             ReduceFunctorToCancel functor;
             run_parallel_deterministic_reduce(br, functor);
         } else {
-            run_parallel_deterministic_reduce(br, 0, ReduceToCancel{}, JoinToCancel{});
+            run_parallel_deterministic_reduce(br, std::size_t(0), ReduceToCancel{}, JoinToCancel{});
         }
     }
 }; // class ParallelDeterministicReduceRunner
@@ -257,6 +258,173 @@ struct ParallelDeterministicReduceTestRunner<maxParallelDeterministicReduceRunne
 }; // struct ParallelDeterministicReduceTestRunner<maxParallelDeterministicReduceRunnerMode>
 
 } // namespace test_cancellation
+
+#if __TBB_CPP20_CONCEPTS_PRESENT
+template <typename... Args>
+concept can_call_parallel_reduce_basic = requires( Args&&... args ) {
+    tbb::parallel_reduce(std::forward<Args>(args)...);
+};
+
+template <typename... Args>
+concept can_call_parallel_deterministic_reduce_basic = requires ( Args&&... args ) {
+    tbb::parallel_deterministic_reduce(std::forward<Args>(args)...);
+};
+
+template <typename... Args>
+concept can_call_preduce_helper = can_call_parallel_reduce_basic<Args...> &&
+                                  can_call_parallel_reduce_basic<Args..., tbb::task_group_context&>;
+
+template <typename... Args>
+concept can_call_pdet_reduce_helper = can_call_parallel_deterministic_reduce_basic<Args...> &&
+                                      can_call_parallel_deterministic_reduce_basic<Args..., tbb::task_group_context&>;
+
+template <typename... Args>
+concept can_call_preduce_with_partitioner = can_call_preduce_helper<Args...> &&
+                                            can_call_preduce_helper<Args..., const tbb::simple_partitioner&> &&
+                                            can_call_preduce_helper<Args..., const tbb::auto_partitioner&> &&
+                                            can_call_preduce_helper<Args..., const tbb::static_partitioner&> &&
+                                            can_call_preduce_helper<Args..., tbb::affinity_partitioner&>;
+
+template <typename... Args>
+concept can_call_pdet_reduce_with_partitioner = can_call_pdet_reduce_helper<Args...> &&
+                                                can_call_pdet_reduce_helper<Args..., const tbb::simple_partitioner&> &&
+                                                can_call_pdet_reduce_helper<Args..., const tbb::static_partitioner&>;
+
+template <typename Range, typename Body>
+concept can_call_imperative_preduce = can_call_preduce_with_partitioner<const Range&, Body&>;
+
+template <typename Range, typename Body>
+concept can_call_imperative_pdet_reduce = can_call_pdet_reduce_with_partitioner<const Range&, Body&>;
+
+template <typename Range, typename Value, typename RealBody, typename Reduction>
+concept can_call_functional_preduce = can_call_preduce_with_partitioner<const Range&, const Value&,
+                                                                        const RealBody&, const Reduction&>;
+
+template <typename Range, typename Value, typename RealBody, typename Reduction>
+concept can_call_functional_pdet_reduce = can_call_pdet_reduce_with_partitioner<const Range&, const Value&,
+                                                                                const RealBody&, const Reduction&>;
+
+template <typename Range>
+using CorrectBody = test_concepts::parallel_reduce_body::Correct<Range>;
+
+template <typename Range>
+using CorrectFunc = test_concepts::parallel_reduce_function::Correct<Range>;
+
+using CorrectReduction = test_concepts::parallel_reduce_combine::Correct<int>;
+using CorrectRange = test_concepts::range::Correct;
+
+void test_preduce_range_constraints() {
+    using namespace test_concepts::range;
+    static_assert(can_call_imperative_preduce<Correct, CorrectBody<Correct>>);
+    static_assert(!can_call_imperative_preduce<NonCopyable, CorrectBody<NonCopyable>>);
+    static_assert(!can_call_imperative_preduce<NonDestructible, CorrectBody<NonDestructible>>);
+    static_assert(!can_call_imperative_preduce<NonSplittable, CorrectBody<NonSplittable>>);
+    static_assert(!can_call_imperative_preduce<NoEmpty, CorrectBody<NoEmpty>>);
+    static_assert(!can_call_imperative_preduce<EmptyNonConst, CorrectBody<EmptyNonConst>>);
+    static_assert(!can_call_imperative_preduce<WrongReturnEmpty, CorrectBody<WrongReturnEmpty>>);
+    static_assert(!can_call_imperative_preduce<NoIsDivisible, CorrectBody<NoIsDivisible>>);
+    static_assert(!can_call_imperative_preduce<IsDivisibleNonConst, CorrectBody<NoIsDivisible>>);
+    static_assert(!can_call_imperative_preduce<WrongReturnIsDivisible, CorrectBody<WrongReturnIsDivisible>>);
+
+    static_assert(can_call_functional_preduce<Correct, int, CorrectFunc<Correct>, CorrectReduction>);
+    static_assert(!can_call_functional_preduce<NonCopyable, int, CorrectFunc<NonCopyable>, CorrectReduction>);
+    static_assert(!can_call_functional_preduce<NonDestructible, int, CorrectFunc<NonDestructible>, CorrectReduction>);
+    static_assert(!can_call_functional_preduce<NonSplittable, int, CorrectFunc<NonSplittable>, CorrectReduction>);
+    static_assert(!can_call_functional_preduce<NoEmpty, int, CorrectFunc<NoEmpty>, CorrectReduction>);
+    static_assert(!can_call_functional_preduce<EmptyNonConst, int, CorrectFunc<EmptyNonConst>, CorrectReduction>);
+    static_assert(!can_call_functional_preduce<WrongReturnEmpty, int, CorrectFunc<WrongReturnEmpty>, CorrectReduction>);
+    static_assert(!can_call_functional_preduce<NoIsDivisible, int, CorrectFunc<NoIsDivisible>, CorrectReduction>);
+    static_assert(!can_call_functional_preduce<IsDivisibleNonConst, int, CorrectFunc<IsDivisibleNonConst>, CorrectReduction>);
+    static_assert(!can_call_functional_preduce<WrongReturnIsDivisible, int, CorrectFunc<WrongReturnIsDivisible>, CorrectReduction>);
+}
+
+void test_preduce_body_constraints() {
+    using namespace test_concepts::parallel_reduce_body;
+    static_assert(can_call_imperative_preduce<CorrectRange, Correct<CorrectRange>>);
+    static_assert(!can_call_imperative_preduce<CorrectRange, NonSplittable<CorrectRange>>);
+    static_assert(!can_call_imperative_preduce<CorrectRange, NonDestructible<CorrectRange>>);
+    static_assert(!can_call_imperative_preduce<CorrectRange, NoOperatorRoundBrackets<CorrectRange>>);
+    static_assert(!can_call_imperative_preduce<CorrectRange, WrongInputOperatorRoundBrackets<CorrectRange>>);
+    static_assert(!can_call_imperative_preduce<CorrectRange, NoJoin<CorrectRange>>);
+    static_assert(!can_call_imperative_preduce<CorrectRange, WrongInputJoin<CorrectRange>>);
+}
+
+void test_preduce_func_constraints() {
+    using namespace test_concepts::parallel_reduce_function;
+    static_assert(can_call_functional_preduce<CorrectRange, int, Correct<CorrectRange>, CorrectReduction>);
+    static_assert(!can_call_functional_preduce<CorrectRange, int, NoOperatorRoundBrackets<CorrectRange>, CorrectReduction>);
+    static_assert(!can_call_functional_preduce<CorrectRange, int, OperatorRoundBracketsNonConst<CorrectRange>, CorrectReduction>);
+    static_assert(!can_call_functional_preduce<CorrectRange, int, WrongFirstInputOperatorRoundBrackets<CorrectRange>, CorrectReduction>);
+    static_assert(!can_call_functional_preduce<CorrectRange, int, WrongSecondInputOperatorRoundBrackets<CorrectRange>, CorrectReduction>);
+    static_assert(!can_call_functional_preduce<CorrectRange, int, WrongReturnOperatorRoundBrackets<CorrectRange>, CorrectReduction>);
+}
+
+void test_preduce_combine_constraints() {
+    using namespace test_concepts::parallel_reduce_combine;
+    static_assert(can_call_functional_preduce<CorrectRange, int, CorrectFunc<CorrectRange>, Correct<int>>);
+    static_assert(!can_call_functional_preduce<CorrectRange, int, CorrectFunc<CorrectRange>, NoOperatorRoundBrackets<int>>);
+    static_assert(!can_call_functional_preduce<CorrectRange, int, CorrectFunc<CorrectRange>, OperatorRoundBracketsNonConst<int>>);
+    static_assert(!can_call_functional_preduce<CorrectRange, int, CorrectFunc<CorrectRange>, WrongFirstInputOperatorRoundBrackets<int>>);
+    static_assert(!can_call_functional_preduce<CorrectRange, int, CorrectFunc<CorrectRange>, WrongSecondInputOperatorRoundBrackets<int>>);
+    static_assert(!can_call_functional_preduce<CorrectRange, int, CorrectFunc<CorrectRange>, WrongReturnOperatorRoundBrackets<int>>);
+}
+
+void test_pdet_reduce_range_constraints() {
+    using namespace test_concepts::range;
+    static_assert(can_call_imperative_pdet_reduce<Correct, CorrectBody<Correct>>);
+    static_assert(!can_call_imperative_pdet_reduce<NonCopyable, CorrectBody<NonCopyable>>);
+    static_assert(!can_call_imperative_pdet_reduce<NonDestructible, CorrectBody<NonDestructible>>);
+    static_assert(!can_call_imperative_pdet_reduce<NonSplittable, CorrectBody<NonSplittable>>);
+    static_assert(!can_call_imperative_pdet_reduce<NoEmpty, CorrectBody<NoEmpty>>);
+    static_assert(!can_call_imperative_pdet_reduce<EmptyNonConst, CorrectBody<EmptyNonConst>>);
+    static_assert(!can_call_imperative_pdet_reduce<WrongReturnEmpty, CorrectBody<WrongReturnEmpty>>);
+    static_assert(!can_call_imperative_pdet_reduce<NoIsDivisible, CorrectBody<NoIsDivisible>>);
+    static_assert(!can_call_imperative_pdet_reduce<IsDivisibleNonConst, CorrectBody<NoIsDivisible>>);
+    static_assert(!can_call_imperative_pdet_reduce<WrongReturnIsDivisible, CorrectBody<WrongReturnIsDivisible>>);
+
+    static_assert(can_call_functional_pdet_reduce<Correct, int, CorrectFunc<Correct>, CorrectReduction>);
+    static_assert(!can_call_functional_pdet_reduce<NonCopyable, int, CorrectFunc<NonCopyable>, CorrectReduction>);
+    static_assert(!can_call_functional_pdet_reduce<NonDestructible, int, CorrectFunc<NonDestructible>, CorrectReduction>);
+    static_assert(!can_call_functional_pdet_reduce<NonSplittable, int, CorrectFunc<NonSplittable>, CorrectReduction>);
+    static_assert(!can_call_functional_pdet_reduce<NoEmpty, int, CorrectFunc<NoEmpty>, CorrectReduction>);
+    static_assert(!can_call_functional_pdet_reduce<EmptyNonConst, int, CorrectFunc<EmptyNonConst>, CorrectReduction>);
+    static_assert(!can_call_functional_pdet_reduce<WrongReturnEmpty, int, CorrectFunc<WrongReturnEmpty>, CorrectReduction>);
+    static_assert(!can_call_functional_pdet_reduce<NoIsDivisible, int, CorrectFunc<NoIsDivisible>, CorrectReduction>);
+    static_assert(!can_call_functional_pdet_reduce<IsDivisibleNonConst, int, CorrectFunc<IsDivisibleNonConst>, CorrectReduction>);
+    static_assert(!can_call_functional_pdet_reduce<WrongReturnIsDivisible, int, CorrectFunc<WrongReturnIsDivisible>, CorrectReduction>);
+}
+
+void test_pdet_reduce_body_constraints() {
+    using namespace test_concepts::parallel_reduce_body;
+    static_assert(can_call_imperative_pdet_reduce<CorrectRange, Correct<CorrectRange>>);
+    static_assert(!can_call_imperative_pdet_reduce<CorrectRange, NonSplittable<CorrectRange>>);
+    static_assert(!can_call_imperative_pdet_reduce<CorrectRange, NonDestructible<CorrectRange>>);
+    static_assert(!can_call_imperative_pdet_reduce<CorrectRange, NoOperatorRoundBrackets<CorrectRange>>);
+    static_assert(!can_call_imperative_pdet_reduce<CorrectRange, WrongInputOperatorRoundBrackets<CorrectRange>>);
+    static_assert(!can_call_imperative_pdet_reduce<CorrectRange, NoJoin<CorrectRange>>);
+    static_assert(!can_call_imperative_pdet_reduce<CorrectRange, WrongInputJoin<CorrectRange>>);
+}
+
+void test_pdet_reduce_func_constraints() {
+    using namespace test_concepts::parallel_reduce_function;
+    static_assert(can_call_functional_pdet_reduce<CorrectRange, int, Correct<CorrectRange>, CorrectReduction>);
+    static_assert(!can_call_functional_pdet_reduce<CorrectRange, int, NoOperatorRoundBrackets<CorrectRange>, CorrectReduction>);
+    static_assert(!can_call_functional_pdet_reduce<CorrectRange, int, OperatorRoundBracketsNonConst<CorrectRange>, CorrectReduction>);
+    static_assert(!can_call_functional_pdet_reduce<CorrectRange, int, WrongFirstInputOperatorRoundBrackets<CorrectRange>, CorrectReduction>);
+    static_assert(!can_call_functional_pdet_reduce<CorrectRange, int, WrongSecondInputOperatorRoundBrackets<CorrectRange>, CorrectReduction>);
+    static_assert(!can_call_functional_pdet_reduce<CorrectRange, int, WrongReturnOperatorRoundBrackets<CorrectRange>, CorrectReduction>);
+}
+
+void test_pdet_reduce_combine_constraints() {
+    using namespace test_concepts::parallel_reduce_combine;
+    static_assert(can_call_functional_pdet_reduce<CorrectRange, int, CorrectFunc<CorrectRange>, Correct<int>>);
+    static_assert(!can_call_functional_pdet_reduce<CorrectRange, int, CorrectFunc<CorrectRange>, NoOperatorRoundBrackets<int>>);
+    static_assert(!can_call_functional_pdet_reduce<CorrectRange, int, CorrectFunc<CorrectRange>, OperatorRoundBracketsNonConst<int>>);
+    static_assert(!can_call_functional_pdet_reduce<CorrectRange, int, CorrectFunc<CorrectRange>, WrongFirstInputOperatorRoundBrackets<int>>);
+    static_assert(!can_call_functional_pdet_reduce<CorrectRange, int, CorrectFunc<CorrectRange>, WrongSecondInputOperatorRoundBrackets<int>>);
+    static_assert(!can_call_functional_pdet_reduce<CorrectRange, int, CorrectFunc<CorrectRange>, WrongReturnOperatorRoundBrackets<int>>);
+}
+#endif // __TBB_CPP20_CONCEPTS_PRESENT
 
 //! Test parallel summation correctness
 //! \brief \ref stress
@@ -465,3 +633,21 @@ TEST_CASE("cancellation test for tbb::parallel_reduce") {
 TEST_CASE("cancellation test for tbb::parallel_deterministic_reduce") {
     test_cancellation::ParallelDeterministicReduceTestRunner</*First mode = */0>::run();
 }
+
+#if __TBB_CPP20_CONCEPTS_PRESENT
+//! \brief \ref error_guessing
+TEST_CASE("parallel_reduce constraints") {
+    test_preduce_range_constraints();
+    test_preduce_body_constraints();
+    test_preduce_func_constraints();
+    test_preduce_combine_constraints();
+}
+
+//! \brief \ref error_guessing
+TEST_CASE("parallel_deterministic_reduce constraints") {
+    test_pdet_reduce_range_constraints();
+    test_pdet_reduce_body_constraints();
+    test_pdet_reduce_func_constraints();
+    test_pdet_reduce_combine_constraints();
+}
+#endif

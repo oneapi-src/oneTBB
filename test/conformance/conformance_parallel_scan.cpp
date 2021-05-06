@@ -14,6 +14,10 @@
     limitations under the License.
 */
 
+#if __INTEL_COMPILER && _MSC_VER
+#pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
+#endif
+
 #define DOCTEST_CONFIG_SUPER_FAST_ASSERTS
 #include "common/test.h"
 
@@ -101,21 +105,21 @@ TEST_CASE_TEMPLATE("Test parallel scan with body", Partitioner, default_partitio
 //! Test parallel prefix sum calculation for scan-based interface
 //! \brief \ref requirement \ref interface
 TEST_CASE_TEMPLATE("Test parallel scan with body", Partitioner, default_partitioner_tag, oneapi::tbb::simple_partitioner, oneapi::tbb::auto_partitioner) {
-    std::vector<int> input(size);
-    std::vector<int> output(size);
-    std::vector<int> control(size);
+    std::vector<std::size_t> input(size);
+    std::vector<std::size_t> output(size);
+    std::vector<std::size_t> control(size);
 
-    for (size_t i = 0; i<size; ++i) {
-        input[i] = int(i);
+    for (std::size_t i = 0; i<size; ++i) {
+        input[i] = i;
         if (i)
             control[i] = control[i-1]+input[i];
         else
             control[i] = input[i];
     }
-    parallel_scan_wrapper<Partitioner>()(oneapi::tbb::blocked_range<std::size_t>(0U, size, 1U), 0U,
-        [&](const oneapi::tbb::blocked_range<std::size_t>& r, int sum, bool is_final) -> int
+    parallel_scan_wrapper<Partitioner>()(oneapi::tbb::blocked_range<std::size_t>(0U, size, 1U), std::size_t(0),
+        [&](const oneapi::tbb::blocked_range<std::size_t>& r, std::size_t sum, bool is_final) -> std::size_t
         {
-            int temp = sum;
+            std::size_t temp = sum;
             for (std::size_t i = r.begin(); i<r.end(); ++i) {
                 temp = temp + input[i];
                 if (is_final)
@@ -123,7 +127,7 @@ TEST_CASE_TEMPLATE("Test parallel scan with body", Partitioner, default_partitio
             }
             return temp;
         },
-        [](int a, int b) -> int
+        [](std::size_t a, std::size_t b) -> std::size_t
         {
             return a + b;
         });

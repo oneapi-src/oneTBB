@@ -18,6 +18,7 @@
 // Example program that reads a file of decimal integers in text format
 // and changes each to its square.
 //
+
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>

@@ -15,6 +15,9 @@
 */
 
 #include "common/test.h"
+
+#include "tbb/parallel_for.h"
+
 #include "common/config.h"
 #include "common/utils.h"
 #include "common/utils_concurrency_limit.h"
@@ -23,16 +26,11 @@
 #include "common/cpu_usertime.h"
 #include "common/spin_barrier.h"
 #include "common/exception_handling.h"
+#include "common/concepts_common.h"
+#include "test_partitioner.h"
 
-#include "tbb/tick_count.h"
-#include "tbb/blocked_range.h"
-#include "tbb/parallel_for.h"
-#include "tbb/global_control.h"
-#include "tbb/test_partitioner.h"
-
-#include <cstdio>
+#include <cstddef>
 #include <vector>
-#include <sstream>
 
 //! \file test_parallel_for.cpp
 //! \brief Test for [algorithms.parallel_for] specification
@@ -100,8 +98,11 @@ void TestSimplePartitionerStability(){
 
         tbb::parallel_for(tbb::blocked_range<size_t>(0,rangeToSplitSize,grainsize),FunctorType(firstSeries),tbb::simple_partitioner());
         tbb::parallel_for(tbb::blocked_range<size_t>(0,rangeToSplitSize,grainsize),FunctorType(secondSeries),tbb::simple_partitioner());
-        std::stringstream str; str<<i;
-        CHECK_MESSAGE(firstSeries==secondSeries, ("splitting range with tbb::simple_partitioner must be reproducible; i=" +str.str()).c_str() );
+
+        CHECK_MESSAGE(
+            firstSeries == secondSeries,
+            "Splitting range with tbb::simple_partitioner must be reproducible; i = " << i
+        );
     }
 }
 
@@ -275,6 +276,10 @@ public:
 template <std::size_t Mode>
 void run_parallel_for_cancellation_test() {
     // TODO: enable concurrency_range
+    if (utils::get_platform_max_threads() < 2) {
+        // The test requires at least one worker thread to request cancellation
+        return;
+    }
     ResetEhGlobals();
     RunCancellationTest<ParallelForRunner<Mode>, Cancellator>();
 }
@@ -296,7 +301,97 @@ struct ParallelForTestRunner<maxParallelForRunnerMode> {
 
 } // namespace test_cancellation
 
+#if __TBB_CPP20_CONCEPTS_PRESENT
+template <typename... Args>
+concept can_call_parallel_for_basic = requires( Args&&... args ) {
+    tbb::parallel_for(std::forward<Args>(args)...);
+};
+
+template <typename... Args>
+concept can_call_parallel_for_helper = can_call_parallel_for_basic<Args...> &&
+                                       can_call_parallel_for_basic<Args..., tbb::task_group_context&>;
+
+template <typename... Args>
+concept can_call_parallel_for_with_partitioner = can_call_parallel_for_helper<Args...> &&
+                                                 can_call_parallel_for_helper<Args..., const tbb::simple_partitioner&> &&
+                                                 can_call_parallel_for_helper<Args..., const tbb::auto_partitioner&> &&
+                                                 can_call_parallel_for_helper<Args..., const tbb::static_partitioner> &&
+                                                 can_call_parallel_for_helper<Args..., tbb::affinity_partitioner&>;
+
+template <typename Range, typename Body>
+concept can_call_range_pfor = can_call_parallel_for_with_partitioner<const Range&, const Body&>;
+
+template <typename Index, typename Function>
+concept can_call_index_pfor = can_call_parallel_for_with_partitioner<Index, Index, const Function&> &&
+                              can_call_parallel_for_with_partitioner<Index, Index, Index, const Function&>;
+
+
+template <typename Range>
+using CorrectBody = test_concepts::parallel_for_body::Correct<Range>;
+template <typename Index>
+using CorrectFunc = test_concepts::parallel_for_function::Correct<Index>;
+
+void test_pfor_range_constraints() {
+    using namespace test_concepts::range;
+
+    static_assert(can_call_range_pfor<Correct, CorrectBody<Correct>>);
+    static_assert(!can_call_range_pfor<NonCopyable, CorrectBody<NonCopyable>>);
+    static_assert(!can_call_range_pfor<NonSplittable, CorrectBody<NonSplittable>>);
+    static_assert(!can_call_range_pfor<NonDestructible, CorrectBody<NonDestructible>>);
+    static_assert(!can_call_range_pfor<NoEmpty, CorrectBody<NoEmpty>>);
+    static_assert(!can_call_range_pfor<EmptyNonConst, CorrectBody<EmptyNonConst>>);
+    static_assert(!can_call_range_pfor<WrongReturnEmpty, CorrectBody<WrongReturnEmpty>>);
+    static_assert(!can_call_range_pfor<NoIsDivisible, CorrectBody<NoIsDivisible>>);
+    static_assert(!can_call_range_pfor<IsDivisibleNonConst, CorrectBody<IsDivisibleNonConst>>);
+    static_assert(!can_call_range_pfor<WrongReturnIsDivisible, CorrectBody<WrongReturnIsDivisible>>);
+}
+
+void test_pfor_body_constraints() {
+    using namespace test_concepts::parallel_for_body;
+    using CorrectRange = test_concepts::range::Correct;
+
+    static_assert(can_call_range_pfor<CorrectRange, Correct<CorrectRange>>);
+    static_assert(!can_call_range_pfor<CorrectRange, NonCopyable<CorrectRange>>);
+    static_assert(!can_call_range_pfor<CorrectRange, NonDestructible<CorrectRange>>);
+    static_assert(!can_call_range_pfor<CorrectRange, NoOperatorRoundBrackets<CorrectRange>>);
+    static_assert(!can_call_range_pfor<CorrectRange, OperatorRoundBracketsNonConst<CorrectRange>>);
+    static_assert(!can_call_range_pfor<CorrectRange, WrongInputOperatorRoundBrackets<CorrectRange>>);
+}
+
+void test_pfor_func_constraints() {
+    using namespace test_concepts::parallel_for_function;
+    using CorrectIndex = test_concepts::parallel_for_index::Correct;
+
+    static_assert(can_call_index_pfor<CorrectIndex, Correct<CorrectIndex>>);
+    static_assert(!can_call_index_pfor<CorrectIndex, NoOperatorRoundBrackets<CorrectIndex>>);
+    static_assert(!can_call_index_pfor<CorrectIndex, OperatorRoundBracketsNonConst<CorrectIndex>>);
+    static_assert(!can_call_index_pfor<CorrectIndex, WrongInputOperatorRoundBrackets<CorrectIndex>>);
+}
+
+void test_pfor_index_constraints() {
+    using namespace test_concepts::parallel_for_index;
+    static_assert(can_call_index_pfor<Correct, CorrectFunc<Correct>>);
+    static_assert(!can_call_index_pfor<NoIntCtor, CorrectFunc<NoIntCtor>>);
+    static_assert(!can_call_index_pfor<NonCopyable, CorrectFunc<NonCopyable>>);
+    static_assert(!can_call_index_pfor<NonCopyAssignable, CorrectFunc<NonCopyAssignable>>);
+    static_assert(!can_call_index_pfor<NonDestructible, CorrectFunc<NonDestructible>>);
+    static_assert(!can_call_index_pfor<NoOperatorLess, CorrectFunc<NoOperatorLess>>);
+    static_assert(!can_call_index_pfor<OperatorLessNonConst, CorrectFunc<OperatorLessNonConst>>);
+    static_assert(!can_call_index_pfor<WrongInputOperatorLess, CorrectFunc<WrongInputOperatorLess>>);
+    static_assert(!can_call_index_pfor<WrongReturnOperatorLess, CorrectFunc<WrongReturnOperatorLess>>);
+    static_assert(!can_call_index_pfor<NoOperatorMinus, CorrectFunc<NoOperatorMinus>>);
+    static_assert(!can_call_index_pfor<OperatorMinusNonConst, CorrectFunc<OperatorMinusNonConst>>);
+    static_assert(!can_call_index_pfor<WrongInputOperatorMinus, CorrectFunc<WrongInputOperatorMinus>>);
+    static_assert(!can_call_index_pfor<WrongReturnOperatorMinus, CorrectFunc<WrongReturnOperatorMinus>>);
+    static_assert(!can_call_index_pfor<NoOperatorPlus, CorrectFunc<NoOperatorPlus>>);
+    static_assert(!can_call_index_pfor<OperatorPlusNonConst, CorrectFunc<OperatorPlusNonConst>>);
+    static_assert(!can_call_index_pfor<WrongInputOperatorPlus, CorrectFunc<WrongInputOperatorPlus>>);
+    static_assert(!can_call_index_pfor<WrongReturnOperatorPlus, CorrectFunc<WrongReturnOperatorPlus>>);
+}
+#endif // __TBB_CPP20_CONCEPTS_PRESENT
+
 #if TBB_USE_EXCEPTIONS && !__TBB_THROW_ACROSS_MODULE_BOUNDARY_BROKEN && TBB_REVAMP_TODO
+#include "tbb/global_control.h"
 //! Testing exceptions
 //! \brief \ref requirement
 TEST_CASE("Exceptions support") {
@@ -351,6 +446,16 @@ TEST_CASE("Various range implementations") {
 TEST_CASE("Сancellation test for tbb::parallel_for") {
     test_cancellation::ParallelForTestRunner</*FirstMode = */0>::run();
 }
+
+#if __TBB_CPP20_CONCEPTS_PRESENT
+//! \brief \ref error_guessing
+TEST_CASE("parallel_for constraints") {
+    test_pfor_range_constraints();
+    test_pfor_body_constraints();
+    test_pfor_func_constraints();
+    test_pfor_index_constraints();
+}
+#endif // __TBB_CPP20_CONCEPTS_PRESENT
 
 #if _MSC_VER
 #pragma warning (pop)

@@ -64,11 +64,11 @@ void task_group_context_impl::destroy(d1::task_group_context& ctx) {
             thread_data::context_list_state& cls = owner->my_context_list_state;
             // We are the owner, so cls is valid.
             // Local update of the context list
-            std::uintptr_t local_count_snapshot = cls.epoch.load(std::memory_order_relaxed);
+            std::uintptr_t local_count_snapshot = cls.epoch.load(std::memory_order_acquire);
             // The sequentially-consistent store to prevent load of nonlocal update flag
             // from being hoisted before the store to local update flag.
             cls.local_update = 1;
-            if (cls.nonlocal_update.load(std::memory_order_relaxed)) {
+            if (cls.nonlocal_update.load(std::memory_order_acquire)) {
                 spin_mutex::scoped_lock lock(cls.mutex);
                 ctx.my_node.remove_relaxed();
                 cls.local_update.store(0, std::memory_order_relaxed);
@@ -84,6 +84,9 @@ void task_group_context_impl::destroy(d1::task_group_context& ctx) {
                     // when this destructor finishes. We'll be able to acquire the lock
                     // below only after the other thread finishes with us.
                     spin_mutex::scoped_lock lock(cls.mutex);
+                } else {
+                    // TODO: simplify exception propagation mechanism
+                    std::atomic_thread_fence(std::memory_order_release);
                 }
             }
         } else {
@@ -138,7 +141,6 @@ void task_group_context_impl::destroy(d1::task_group_context& ctx) {
     ITT_STACK_DESTROY(ctx.my_itt_caller);
 
     poison_pointer(ctx.my_parent);
-    poison_pointer(ctx.my_parent);
     poison_pointer(ctx.my_owner);
     poison_pointer(ctx.my_node.next);
     poison_pointer(ctx.my_node.prev);
@@ -181,7 +183,7 @@ void task_group_context_impl::register_with(d1::task_group_context& ctx, thread_
     // being hoisted before the store to local update flag.
     cls.local_update = 1;
     // Finalize local context list update
-    if (cls.nonlocal_update.load(std::memory_order_relaxed)) {
+    if (cls.nonlocal_update.load(std::memory_order_acquire)) {
         spin_mutex::scoped_lock lock(cls.mutex);
         d1::context_list_node* head_next = cls.head.next.load(std::memory_order_relaxed);
         head_next->prev.store(&ctx.my_node, std::memory_order_relaxed);
@@ -314,6 +316,52 @@ void task_group_context_impl::propagate_task_group_state(d1::task_group_context&
     }
 }
 
+template <typename T>
+void thread_data::propagate_task_group_state(std::atomic<T> d1::task_group_context::* mptr_state, d1::task_group_context& src, T new_state) {
+    spin_mutex::scoped_lock lock(my_context_list_state.mutex);
+    // Acquire fence is necessary to ensure that the subsequent node->my_next load
+    // returned the correct value in case it was just inserted in another thread.
+    // The fence also ensures visibility of the correct ctx.my_parent value.
+    d1::context_list_node* node = my_context_list_state.head.next.load(std::memory_order_acquire);
+    while (node != &my_context_list_state.head) {
+        d1::task_group_context& ctx = __TBB_get_object_ref(d1::task_group_context, my_node, node);
+        if ((ctx.*mptr_state).load(std::memory_order_relaxed) != new_state)
+            task_group_context_impl::propagate_task_group_state(ctx, mptr_state, src, new_state);
+        node = node->next.load(std::memory_order_relaxed);
+    }
+    // Sync up local propagation epoch with the global one. Release fence prevents
+    // reordering of possible store to *mptr_state after the sync point.
+    my_context_list_state.epoch.store(the_context_state_propagation_epoch.load(std::memory_order_relaxed), std::memory_order_release);
+}
+
+template <typename T>
+bool market::propagate_task_group_state(std::atomic<T> d1::task_group_context::* mptr_state, d1::task_group_context& src, T new_state) {
+    if (src.my_state.load(std::memory_order_relaxed) != d1::task_group_context::may_have_children)
+        return true;
+    // The whole propagation algorithm is under the lock in order to ensure correctness
+    // in case of concurrent state changes at the different levels of the context tree.
+    // See comment at the bottom of scheduler.cpp
+    context_state_propagation_mutex_type::scoped_lock lock(the_context_state_propagation_mutex);
+    if ((src.*mptr_state).load(std::memory_order_relaxed) != new_state)
+        // Another thread has concurrently changed the state. Back down.
+        return false;
+    // Advance global state propagation epoch
+    ++the_context_state_propagation_epoch;
+    // Propagate to all workers and external threads and sync up their local epochs with the global one
+    unsigned num_workers = my_first_unused_worker_idx;
+    for (unsigned i = 0; i < num_workers; ++i) {
+        thread_data* td = my_workers[i];
+        // If the worker is only about to be registered, skip it.
+        if (td)
+            td->propagate_task_group_state(mptr_state, src, new_state);
+    }
+    // Propagate to all external threads
+    // The whole propagation sequence is locked, thus no contention is expected
+    for (thread_data_list_type::iterator it = my_masters.begin(); it != my_masters.end(); it++)
+        it->propagate_task_group_state(mptr_state, src, new_state);
+    return true;
+}
+
 bool task_group_context_impl::cancel_group_execution(d1::task_group_context& ctx) {
     __TBB_ASSERT(!is_poisoned(ctx.my_owner), NULL);
     __TBB_ASSERT(ctx.my_cancellation_requested.load(std::memory_order_relaxed) <= 1, "The cancellation state can be either 0 or 1");
@@ -366,52 +414,6 @@ void task_group_context_impl::copy_fp_settings(d1::task_group_context& ctx, cons
     const d1::cpu_ctl_env* src_ctl = reinterpret_cast<const d1::cpu_ctl_env*>(&src.my_cpu_ctl_env);
     new (&ctx.my_cpu_ctl_env) d1::cpu_ctl_env(*src_ctl);
     ctx.my_traits.fp_settings = true;
-}
-
-template <typename T>
-void thread_data::propagate_task_group_state(std::atomic<T> d1::task_group_context::* mptr_state, d1::task_group_context& src, T new_state) {
-    spin_mutex::scoped_lock lock(my_context_list_state.mutex);
-    // Acquire fence is necessary to ensure that the subsequent node->my_next load
-    // returned the correct value in case it was just inserted in another thread.
-    // The fence also ensures visibility of the correct ctx.my_parent value.
-    d1::context_list_node* node = my_context_list_state.head.next.load(std::memory_order_acquire);
-    while (node != &my_context_list_state.head) {
-        d1::task_group_context& ctx = __TBB_get_object_ref(d1::task_group_context, my_node, node);
-        if ((ctx.*mptr_state).load(std::memory_order_relaxed) != new_state)
-            task_group_context_impl::propagate_task_group_state(ctx, mptr_state, src, new_state);
-        node = node->next.load(std::memory_order_relaxed);
-    }
-    // Sync up local propagation epoch with the global one. Release fence prevents
-    // reordering of possible store to *mptr_state after the sync point.
-    my_context_list_state.epoch.store(the_context_state_propagation_epoch.load(std::memory_order_relaxed), std::memory_order_release);
-}
-
-template <typename T>
-bool market::propagate_task_group_state(std::atomic<T> d1::task_group_context::* mptr_state, d1::task_group_context& src, T new_state) {
-    if (src.my_state.load(std::memory_order_relaxed) != d1::task_group_context::may_have_children)
-        return true;
-    // The whole propagation algorithm is under the lock in order to ensure correctness
-    // in case of concurrent state changes at the different levels of the context tree.
-    // See comment at the bottom of scheduler.cpp
-    context_state_propagation_mutex_type::scoped_lock lock(the_context_state_propagation_mutex);
-    if ((src.*mptr_state).load(std::memory_order_relaxed) != new_state)
-        // Another thread has concurrently changed the state. Back down.
-        return false;
-    // Advance global state propagation epoch
-    ++the_context_state_propagation_epoch;
-    // Propagate to all workers and external threads and sync up their local epochs with the global one
-    unsigned num_workers = my_first_unused_worker_idx;
-    for (unsigned i = 0; i < num_workers; ++i) {
-        thread_data* td = my_workers[i];
-        // If the worker is only about to be registered, skip it.
-        if (td)
-            td->propagate_task_group_state(mptr_state, src, new_state);
-    }
-    // Propagate to all external threads
-    // The whole propagation sequence is locked, thus no contention is expected
-    for (thread_data_list_type::iterator it = my_masters.begin(); it != my_masters.end(); it++)
-        it->propagate_task_group_state(mptr_state, src, new_state);
-    return true;
 }
 
 /*

@@ -16,10 +16,6 @@
 
 // Support for GUI display for Polygon overlay demo
 
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif // NOMINMAX
-
 #define VIDEO_WINMAIN_ARGS
 #include <iostream>
 

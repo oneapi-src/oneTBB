@@ -244,3 +244,17 @@ TEST_CASE("concurrent_unordered_map whitebox throwing copy constructor") {
 #endif // TBB_USE_EXCEPTIONS
 
 // TODO: add test_scoped_allocator support with broken macro
+
+#if __TBB_CPP20_CONCEPTS_PRESENT
+//! \brief \ref error_guessing
+TEST_CASE("container_range concept for concurrent_unordered_map ranges") {
+    static_assert(test_concepts::container_range<typename tbb::concurrent_unordered_map<int, int>::range_type>);
+    static_assert(test_concepts::container_range<typename tbb::concurrent_unordered_map<int, int>::const_range_type>);
+}
+
+//! \brief \ref error_guessing
+TEST_CASE("container_range concept for concurrent_unordered_multimap ranges") {
+    static_assert(test_concepts::container_range<typename tbb::concurrent_unordered_multimap<int, int>::range_type>);
+    static_assert(test_concepts::container_range<typename tbb::concurrent_unordered_multimap<int, int>::const_range_type>);
+}
+#endif // __TBB_CPP20_CONCEPTS_PRESENT

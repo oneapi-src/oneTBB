@@ -121,7 +121,7 @@ public:
 #if _WIN32 || _WIN64
 /* [[noreturn]] */ void __stdcall co_local_wait_for_all(void* arg) noexcept;
 #else
-/* [[noreturn]] */ void co_local_wait_for_all(void* arg) noexcept;
+/* [[noreturn]] */ void co_local_wait_for_all(unsigned hi, unsigned lo) noexcept;
 #endif
 
 #if _WIN32 || _WIN64
@@ -180,7 +180,13 @@ inline void create_coroutine(coroutine_type& c, std::size_t stack_size, void* ar
     c.my_context.uc_stack.ss_flags = 0;
 
     typedef void(*coroutine_func_t)();
-    makecontext(&c.my_context, (coroutine_func_t)co_local_wait_for_all, sizeof(arg) / sizeof(int), arg);
+
+    std::uintptr_t addr = std::uintptr_t(arg);
+    unsigned lo = unsigned(addr);
+    unsigned hi = unsigned(std::uint64_t(addr) >> 32);
+    __TBB_ASSERT(sizeof(addr) == 8 || hi == 0, nullptr);
+
+    makecontext(&c.my_context, (coroutine_func_t)co_local_wait_for_all, 2, hi, lo);
 }
 
 inline void current_coroutine(coroutine_type& c) {

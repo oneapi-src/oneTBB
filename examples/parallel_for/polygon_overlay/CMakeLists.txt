@@ -26,6 +26,9 @@ add_subdirectory(../../common/gui gui)
 
 target_link_libraries(polygon_overlay TBB::tbb TBB::tbbmalloc Threads::Threads UI_LIB_polygon_overlay)
 target_compile_options(polygon_overlay PRIVATE ${TBB_CXX_STD_FLAG})
+if (MSVC)
+    target_compile_options(polygon_overlay PRIVATE -DNOMINMAX)
+endif()
 
 set(EXECUTABLE "$<TARGET_FILE:polygon_overlay>")
 set(ARGS "")
@@ -33,3 +36,4 @@ set(LIGHT_ARGS --polys 10 --size 5x5)
 
 add_execution_target(run_polygon_overlay polygon_overlay ${EXECUTABLE} "${ARGS}")
 add_execution_target(light_test_polygon_overlay polygon_overlay ${EXECUTABLE} "${LIGHT_ARGS}")
+

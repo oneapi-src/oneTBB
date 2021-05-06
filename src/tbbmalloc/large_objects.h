@@ -144,24 +144,24 @@ public:
     // and move bins to different cache lines.
     class CacheBin {
     private:
-        LargeMemoryBlock *first,
-                         *last;
+        LargeMemoryBlock* first;
+        std::atomic<LargeMemoryBlock*> last;
         /* age of an oldest block in the list; equal to last->age, if last defined,
             used for quick checking it without acquiring the lock. */
-        uintptr_t         oldest;
+        std::atomic<uintptr_t> oldest;
         /* currAge when something was excluded out of list because of the age,
          not because of cache hit */
         uintptr_t         lastCleanedAge;
         /* Current threshold value for the blocks of a particular size.
          Set on cache miss. */
-        intptr_t          ageThreshold;
+        std::atomic<intptr_t> ageThreshold;
 
         /* total size of all objects corresponding to the bin and allocated by user */
-        size_t            usedSize,
+        std::atomic<size_t> usedSize;
         /* total size of all objects cached in the bin */
-                          cachedSize;
+        std::atomic<size_t> cachedSize;
         /* mean time of presence of block in the bin before successful reuse */
-        intptr_t          meanHitRange;
+        std::atomic<intptr_t> meanHitRange;
         /* time of last get called for the bin */
         uintptr_t         lastGet;
 
@@ -188,14 +188,15 @@ public:
 
         void updateUsedSize(ExtMemoryPool *extMemPool, size_t size, BinBitMask *bitMask, int idx);
         void decreaseThreshold() {
-            if (ageThreshold)
-                ageThreshold = (ageThreshold + meanHitRange) / 2;
+            intptr_t threshold = ageThreshold.load(std::memory_order_relaxed);
+            if (threshold)
+                ageThreshold.store((threshold + meanHitRange.load(std::memory_order_relaxed)) / 2, std::memory_order_relaxed);
         }
         void updateBinsSummary(BinsSummary *binsSummary) const {
-            binsSummary->update(usedSize, cachedSize);
+            binsSummary->update(usedSize.load(std::memory_order_relaxed), cachedSize.load(std::memory_order_relaxed));
         }
-        size_t getSize() const { return cachedSize; }
-        size_t getUsedSize() const { return usedSize; }
+        size_t getSize() const { return cachedSize.load(std::memory_order_relaxed); }
+        size_t getUsedSize() const { return usedSize.load(std::memory_order_relaxed); }
         size_t reportStat(int num, FILE *f);
 
         /* --------- Unsafe methods used with the aggregator ------- */
@@ -206,20 +207,22 @@ public:
         LargeMemoryBlock *cleanToThreshold(uintptr_t currTime, BinBitMask *bitMask, int idx);
         LargeMemoryBlock *cleanAll(BinBitMask *bitMask, int idx);
         void updateUsedSize(size_t size, BinBitMask *bitMask, int idx) {
-            if (!usedSize) bitMask->set(idx, true);
-            usedSize += size;
-            if (!usedSize && !first) bitMask->set(idx, false);
+            if (!usedSize.load(std::memory_order_relaxed)) bitMask->set(idx, true);
+            usedSize.store(usedSize.load(std::memory_order_relaxed) + size, std::memory_order_relaxed);
+            if (!usedSize.load(std::memory_order_relaxed) && !first) bitMask->set(idx, false);
         }
         void updateMeanHitRange( intptr_t hitRange ) {
             hitRange = hitRange >= 0 ? hitRange : 0;
-            meanHitRange = meanHitRange ? (meanHitRange + hitRange) / 2 : hitRange;
+            intptr_t mean = meanHitRange.load(std::memory_order_relaxed);
+            mean = mean ? (mean + hitRange) / 2 : hitRange;
+            meanHitRange.store(mean, std::memory_order_relaxed);
         }
         void updateAgeThreshold( uintptr_t currTime ) {
             if (lastCleanedAge)
-                ageThreshold = Props::OnMissFactor*(currTime - lastCleanedAge);
+                ageThreshold.store(Props::OnMissFactor * (currTime - lastCleanedAge), std::memory_order_relaxed);
         }
         void updateCachedSize(size_t size) {
-            cachedSize += size;
+            cachedSize.store(cachedSize.load(std::memory_order_relaxed) + size, std::memory_order_relaxed);
         }
         void setLastGet( uintptr_t newLastGet ) {
             lastGet = newLastGet;
@@ -359,7 +362,6 @@ public:
     // Check if we should cache or sieve this size
     bool sizeInCacheRange(size_t size);
 
-    uintptr_t getCurrTime();
     uintptr_t getCurrTimeRange(uintptr_t range);
     void registerRealloc(size_t oldSize, size_t newSize);
 };

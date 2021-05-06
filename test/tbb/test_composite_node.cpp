@@ -20,10 +20,6 @@
 
 #include "common/config.h"
 
-// TODO revamp: move parts dependent on __TBB_EXTRA_DEBUG into separate test(s) since having these
-// parts in all of tests might make testing of the product, which is different from what is actually
-// released.
-#define __TBB_EXTRA_DEBUG 1
 #include "tbb/flow_graph.h"
 
 #include "common/test.h"
@@ -75,7 +71,7 @@ ct_body(){}
 };
 
 struct seq_body {
-int operator()(int i){return i;}
+std::size_t operator()(int i) { return i; }
 };
 
 template<int N, typename T1, typename T2>
@@ -509,7 +505,10 @@ int test_prefix(bool hidden = false) {
 }
 
 struct input_only_output_only_seq {
-    int operator()(int i){ return (i + 3) / 4 - 1;}
+    std::size_t operator()(int i) {
+        CHECK(i > 0);
+        return std::size_t((i + 3) / 4 - 1);
+    }
 };
 
 void input_only_output_only_composite(bool hidden) {

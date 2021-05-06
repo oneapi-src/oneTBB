@@ -17,6 +17,8 @@
 #ifndef __TBB_test_common_cpu_usertime_H_
 #define __TBB_test_common_cpu_usertime_H_
 
+#include "config.h"
+
 #include "utils_report.h"
 #include "utils.h"
 
