@@ -267,6 +267,7 @@ void TestFunctionNode() {
     CHECK_MESSAGE( (!fnode0.my_queue), "node should have no queue");
     CHECK_MESSAGE( (!fnode0.my_successors.empty()), "successor edge not added");
     std::thread t([&] {
+        g.reset(); // attach to the current arena
         qnode0.try_put(1);
         qnode0.try_put(2);   // rejecting node should reject, reverse.
         g.wait_for_all();
@@ -304,6 +305,7 @@ void TestFunctionNode() {
     tbb::flow::make_edge(qnode0, fnode0);
 
     std::thread t2([&] {
+        g.reset(); // attach to the current arena
         INFO(" start_func");
         qnode0.try_put(1);
         // now if we put an item to the queues the edges to the function_node will reverse.
@@ -568,6 +570,7 @@ void TestMultifunctionNode() {
         serial_fn_state0 = 0;
         /* if(ii == 0) REMARK(" reset preds"); else REMARK(" 2nd");*/
         std::thread t([&] {
+            g.reset(); // attach to the current arena
             qin.try_put(0);
             qin.try_put(1);
             g.wait_for_all();
