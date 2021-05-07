@@ -164,7 +164,7 @@ jobs:
           cmake --build . --config ${{ matrix.build_type }} -j -v
           ctest -C ${{ matrix.build_type }} --timeout ${env:TEST_TIMEOUT} --output-on-failure
 
-  linux-examples-extesting:
+  linux-examples-testing:
     name: examples_${{ matrix.os }}_${{ matrix.cxx_compiler }}_cxx${{ matrix.std }}_${{ matrix.build_type }}_preview=${{ matrix.preview }}
     runs-on: ['${{ matrix.os }}']
     timeout-minutes: 20
