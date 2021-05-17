@@ -1175,14 +1175,14 @@ void TestETSIteratorComparisons() {
     // Fill the ets
     const std::size_t expected_ets_size = 2;
     std::atomic<std::size_t> sync_counter(0);
-    auto fill_ets_body = [&](){
+    auto fill_ets_body = [&](int){
             ets.local() = 42;
             ++sync_counter;
             while(sync_counter != expected_ets_size)
                 std::this_thread::yield();
         };
 
-    oneapi::tbb::parallel_invoke(fill_ets_body, fill_ets_body);
+    utils::NativeParallelFor(2, fill_ets_body);
 
     TestETSIteratorComparisonsBasic<typename ets_type::iterator>(ets);
     const ets_type& cets = ets;

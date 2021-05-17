@@ -706,7 +706,7 @@ void AllLocalCaches::markUnused()
 
 #if MALLOC_CHECK_RECURSION
 MallocMutex RecursiveMallocCallProtector::rmc_mutex;
-pthread_t   RecursiveMallocCallProtector::owner_thread;
+std::atomic<pthread_t> RecursiveMallocCallProtector::owner_thread;
 std::atomic<void*> RecursiveMallocCallProtector::autoObjPtr;
 bool        RecursiveMallocCallProtector::mallocRecursionDetected;
 #if __FreeBSD__

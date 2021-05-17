@@ -39,6 +39,9 @@ function(tbb_add_test)
     )
 
     if (ANDROID_PLATFORM)
+        # Expand the linker rpath by the CMAKE_LIBRARY_OUTPUT_DIRECTORY path since clang compiler from Android SDK
+        # doesn't respect the -L flag.
+        target_link_libraries(${_tbb_test_TARGET_NAME} PRIVATE "-Wl,--rpath-link,${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
         target_link_libraries(${_tbb_test_TARGET_NAME} PRIVATE -rdynamic) # for the test_dynamic_link
         add_test(NAME ${_tbb_test_TARGET_NAME}
                  COMMAND ${CMAKE_COMMAND}

@@ -189,11 +189,16 @@ namespace TestBlockingTerminateNS {
     };
 
     void TestExceptions() {
-        ExceptionTest1 Test1(0), Test2(1);
+        ExceptionTest1 Test1(0);
         TestException( Test1 );
+        ExceptionTest1 Test2(1);
         TestException( Test2 );
-        ExceptionTest2 Test3;
-        TestException( Test3 );
+        if (utils::get_platform_max_threads() > 1) {
+            // TODO: Fix the arena leak issue on single threaded machine
+            // (see https://github.com/oneapi-src/oneTBB/issues/396)
+            ExceptionTest2 Test3;
+            TestException(Test3);
+        }
     }
 
 #endif /* TBB_USE_EXCEPTIONS */
