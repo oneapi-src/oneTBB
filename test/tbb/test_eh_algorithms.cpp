@@ -1148,6 +1148,7 @@ void TestCancelation1_parallel_for_each () {
     ResetGlobals( false );
     // Threshold should leave more then max_threads tasks to test the cancellation. Set the threshold to iter_range_size()/4 since iter_range_size >= max_threads*2
     intptr_t threshold = get_iter_range_size() / 4;
+    REQUIRE_MESSAGE(get_iter_range_size() - threshold > g_NumThreads, "Threshold should leave more then max_threads tasks to test the cancellation.");
     tbb::task_group tg;
     tbb::task_group_context  ctx;
     Cancellator cancellator(ctx, threshold);
@@ -1236,13 +1237,12 @@ class InputFilter {
     mutable std::atomic<size_t> m_Item{};
     mutable std::vector<size_t> m_Buffer;
 public:
-    InputFilter() {
+    InputFilter() : m_Buffer(get_iter_range_size()) {
         m_Item = 0;
-        m_Buffer.resize(get_iter_range_size());
         for (size_t i = 0; i < get_iter_range_size(); ++i )
             m_Buffer[i] = 1;
     }
-    InputFilter(const InputFilter& other) : m_Item(other.m_Item.load()) {
+    InputFilter(const InputFilter& other) : m_Item(other.m_Item.load()), m_Buffer(get_iter_range_size()) {
         m_Buffer.resize(get_iter_range_size());
         for (size_t i = 0; i < get_iter_range_size(); ++i )
             m_Buffer[i] = other.m_Buffer[i];
@@ -1625,6 +1625,7 @@ void TestCancelation1_pipeline () {
     g_ThrowException = false;
     // Threshold should leave more then max_threads tasks to test the cancellation. Set the threshold to iter_range_size()/4 since iter_range_size >= max_threads*2
     intptr_t threshold = get_iter_range_size() / 4;
+    REQUIRE_MESSAGE(get_iter_range_size() - threshold > g_NumThreads, "Threshold should leave more then max_threads tasks to test the cancellation.");
     RunCancellationTest<PipelineLauncher<FilterToCancel>, Cancellator>(threshold);
     g_TGCCancelled.validate(g_NumThreads, "Too many tasks survived cancellation");
     REQUIRE_MESSAGE (g_CurExecuted < g_ExecutedAtLastCatch + g_NumThreads, "Too many tasks were executed after cancellation");
