@@ -11,6 +11,7 @@
     limitations under the License.
 */
 
+#define TBB_PREVIEW_COLLABORATIVE_CALL_ONCE 1
 #include "common/test.h"
 #include "common/exception_handling.h"
 #include "common/utils_concurrency_limit.h"

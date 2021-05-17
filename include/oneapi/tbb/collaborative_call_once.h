@@ -17,6 +17,8 @@
 #ifndef __TBB_collaborative_call_once_H
 #define __TBB_collaborative_call_once_H
 
+#if __TBB_PREVIEW_COLLABORATIVE_CALL_ONCE
+
 #include "tbb/task_arena.h"
 #include "tbb/task_group.h"
 #include "tbb/task.h"
@@ -128,12 +130,12 @@ class collaborative_once_flag : no_copy {
                 try_call([&] {
                     local_runner.run_and_wait(std::forward<Fn>(f));
                 }).on_exception([&] {
-                    while (!my_state.compare_exchange_strong(local_expected, state::uninitialized, std::memory_order_release, std::memory_order_relaxed)) {
+                    while (!my_state.compare_exchange_strong(local_expected, state::uninitialized)) {
                         local_expected = reinterpret_cast<std::uintptr_t>(&local_runner);
                     }
                 });
 
-                while (!my_state.compare_exchange_strong(local_expected, state::done, std::memory_order_release, std::memory_order_relaxed)) {
+                while (!my_state.compare_exchange_strong(local_expected, state::done)) {
                     local_expected = reinterpret_cast<std::uintptr_t>(&local_runner);
                 }
                 return;
@@ -179,4 +181,5 @@ using detail::d1::collaborative_call_once;
 using detail::d1::collaborative_once_flag;
 } // namespace tbb
 
+#endif // __TBB_PREVIEW_COLLABORATIVE_CALL_ONCE
 #endif // __TBB_collaborative_call_once_H

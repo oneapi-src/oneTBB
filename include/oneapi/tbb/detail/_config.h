@@ -508,4 +508,8 @@
 #define __TBB_PREVIEW_TASK_GROUP_EXTENSIONS 1
 #endif
 
+#if TBB_PREVIEW_COLLABORATIVE_CALL_ONCE || __TBB_BUILD
+#define __TBB_PREVIEW_COLLABORATIVE_CALL_ONCE 1
+#endif
+
 #endif // __TBB_detail__config_H
