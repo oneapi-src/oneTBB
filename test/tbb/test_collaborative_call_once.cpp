@@ -226,7 +226,7 @@ TEST_CASE("handles exceptions - stress test") {
 #endif
 
 TEST_CASE("multiple help") {
-    // Test mutliple threads do the work:
+    // Test multiple threads do the work:
     std::mutex mutex;
     std::map<int, int> id_ct_map;
     std::atomic<int> call_ct{0};
