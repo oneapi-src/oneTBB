@@ -1,5 +1,5 @@
 # oneAPI Threading Building Blocks
-[![Apache License Version 2.0](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE.txt)
+[![Apache License Version 2.0](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE.txt) [![oneTBB CI](https://github.com/oneapi-src/oneTBB/actions/workflows/ci.yml/badge.svg)](https://github.com/oneapi-src/oneTBB/actions/workflows/ci.yml?query=branch%3Amaster)
 
 oneAPI Threading Building Blocks (oneTBB) lets you easily write parallel C++ programs that take
 full advantage of multicore performance, that are portable, composable and have future-proof scalability.
