@@ -12,9 +12,16 @@
 */
 
 #define TBB_PREVIEW_COLLABORATIVE_CALL_ONCE 1
+#if _MSC_VER && !defined(__INTEL_COMPILER)
+// unreachable code
+#pragma warning( push )
+#pragma warning( disable: 4702 )
+#endif
+
 #include "common/test.h"
 #include "common/exception_handling.h"
 #include "common/utils_concurrency_limit.h"
+
 
 #include "tbb/collaborative_call_once.h"
 #include "tbb/parallel_invoke.h"
@@ -23,6 +30,7 @@
 
 #include <atomic>
 #include <mutex>
+
 
 struct increment_functor {
     std::atomic<int> ct{0};
@@ -317,3 +325,7 @@ TEST_CASE("fibonacci example") {
 
     REQUIRE(naive == collaborative);
 }
+
+#if _MSC_VER && !defined(__INTEL_COMPILER)
+#pragma warning( pop )
+#endif
