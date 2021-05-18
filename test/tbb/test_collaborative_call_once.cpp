@@ -68,17 +68,17 @@ void call_once_in_for_loop(Fn& body, Args&&... args) {
 template<typename Fn, typename... Args>
 void call_once_in_parallel_for(Fn& body, Args&&... args) {
     tbb::collaborative_once_flag flag;
-#if !__TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_PRESENT
-    auto stored_pack = save_pack(std::forward<Args>(args)...);
-    auto func = [&] { call(body, stored_pack); };
+#if __GNUC__ && !__TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_PRESENT
+    auto stored_pack = tbb::detail::d0::save_pack(std::forward<Args>(args)...);
+    auto func = [&] { tbb::detail::d0::call(body, stored_pack); };
 #endif // !__TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_PRESENT
 
     tbb::parallel_for(tbb::blocked_range<size_t>(0, 100), [&](const tbb::blocked_range<size_t>& range) {
         for (size_t i = range.begin(); i != range.end(); ++i) {
-#if __TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_PRESENT
-            tbb::collaborative_call_once(flag, body, std::forward<Args>(args)...);
-#else
+#if __GNUC__ && !__TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_PRESENT
             tbb::collaborative_call_once(flag, func);
+#else
+            tbb::collaborative_call_once(flag, body, std::forward<Args>(args)...);
 #endif // __TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_PRESENT
         }
     });
