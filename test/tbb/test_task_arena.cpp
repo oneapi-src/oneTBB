@@ -1221,7 +1221,7 @@ namespace TestReturnValueNS {
             // The number of copies/moves should not exceed 3 if copy elision takes a place:
             // function return, store to an internal storage, acquire internal storage.
             // For compilation, without copy elision, this number may be grown up to 7.
-            REQUIRE((copied == 0 && moved <=7));
+            REQUIRE((copied == 0 && moved <= 7));
             WARN_MESSAGE(moved <= 3,
                 "Waring: The number of copies/moves should not exceed 3 if copy elision takes a place."
                 "Take an attention to this warning only if copy elision is enabled."
