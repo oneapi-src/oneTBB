@@ -1539,18 +1539,21 @@ void TestWithDifferentFiltersAndConcurrency() {
         g_NumThreads = static_cast<int>(concurrency_level);
         g_Master = std::this_thread::get_id();
         if (g_NumThreads > 1) {
+
+            const tbb::filter_mode modes[] = {
+                tbb::filter_mode::parallel,
+                tbb::filter_mode::serial_in_order,
+                tbb::filter_mode::serial_out_of_order
+            };
+
+            const int NumFilterTypes = sizeof(modes)/sizeof(modes[0]);
+
             // Execute in all the possible modes
-            for ( size_t j = 0; j < 4; ++j ) {
+            for ( size_t j = 0; j < NumFilterTypes; ++j ) {
                 tbb::global_control control(tbb::global_control::max_allowed_parallelism, g_NumThreads);
                 g_ExceptionInMaster = (j & 1) != 0;
                 g_SolitaryException = (j & 2) != 0;
                 g_NumTokens = 2 * g_NumThreads;
-                const int NumFilterTypes = 3;
-                const tbb::filter_mode modes[NumFilterTypes] = {
-                    tbb::filter_mode::parallel,
-                    tbb::filter_mode::serial_in_order,
-                    tbb::filter_mode::serial_out_of_order
-                };
 
                 for ( int i = 0; i < NumFilterTypes; ++i ) {
                     for ( int n = 0; n < NumFilterTypes; ++n ) {
