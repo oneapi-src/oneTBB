@@ -166,7 +166,10 @@ class collaborative_once_flag : no_copy {
 
 template <typename Fn, typename... Args>
 void collaborative_call_once(collaborative_once_flag& flag, Fn&& fn, Args&&... args) {
-    auto func = [&] { fn(std::forward<Args>(args)...); };
+    // Using stored_pack to suppress bug in GCC 4.8
+    // with parameter pack expansion in lambda
+    auto stored_pack = save_pack(std::forward<Args>(args)...);
+    auto func = [&] { call(std::forward<Fn>(fn), stored_pack); };
     flag.do_collaborative_call_once(func);
 }
 
