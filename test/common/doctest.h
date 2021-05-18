@@ -1972,7 +1972,7 @@ int registerReporter(const char* name, int priority, bool isReporter) {
         mb_name << expression;                                                                     \
     };                                                                                             \
     DOCTEST_MSVC_SUPPRESS_WARNING_POP                                                              \
-    auto DOCTEST_ANONYMOUS(_DOCTEST_CAPTURE_) = doctest::detail::MakeContextScope(lambda_name)
+    doctest::detail::ContextScope<decltype(lambda_name)> DOCTEST_ANONYMOUS(_DOCTEST_CAPTURE_){lambda_name}
 
 #define DOCTEST_CAPTURE(x) DOCTEST_INFO(#x " := " << x)
 
