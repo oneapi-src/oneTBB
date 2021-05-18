@@ -88,10 +88,20 @@ template<typename Fn, typename... Args>
 void call_once_threads(Fn& body, Args&&... args) {
     tbb::collaborative_once_flag flag;
     std::vector<std::thread> threads;
+
+#if __GNUC__ && !__TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_PRESENT
+    auto stored_pack = tbb::detail::d0::save_pack(std::forward<Args>(args)...);
+    auto func = [&] { tbb::detail::d0::call(body, stored_pack); };
+#endif // !__TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_PRESENT
+
     for (int i = 0; i < 100; ++i)
     {
         threads.push_back(std::thread([&]() {
+#if __GNUC__ && !__TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_PRESENT
+            tbb::collaborative_call_once(flag, func);
+#else
             tbb::collaborative_call_once(flag, body, std::forward<Args>(args)...);
+#endif // __TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_PRESENT
         }));
     }
     for (auto& thread : threads) {
