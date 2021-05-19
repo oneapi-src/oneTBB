@@ -88,7 +88,7 @@ public:
     once_runner() {}
     ~once_runner() {
         spin_wait_while(ref_count, [&](std::int64_t value) { return value > 0; }, std::memory_order_acquire);
-        if (m_initialized.load(std::memory_order::memory_order_relaxed)) {
+        if (m_initialized.load(std::memory_order_relaxed)) {
             m_storage.~storage_t();
         }
     }
@@ -160,7 +160,7 @@ class collaborative_once_flag : no_copy {
                 while (!my_state.compare_exchange_strong(local_expected, state::done)) {
                     local_expected = reinterpret_cast<std::uintptr_t>(&local_runner);
                 }
-                
+
                 return;
             } else {
                 // moonlighting thread
