@@ -1511,8 +1511,10 @@ namespace detail {
     class DOCTEST_INTERFACE ContextScopeBase : public IContextScope {
     protected:
         ContextScopeBase();
+        ContextScopeBase(ContextScopeBase&& other);
 
         void destroy();
+        bool need_to_destroy{true};
     };
 
     template <typename L> class DOCTEST_INTERFACE ContextScope : public ContextScopeBase
@@ -1522,11 +1524,18 @@ namespace detail {
     public:
         explicit ContextScope(const L &lambda) : ContextScopeBase(), lambda_(lambda) {}
 
-        ContextScope(ContextScope &&other) : ContextScopeBase(), lambda_(other.lambda_) {}
+        ContextScope(ContextScope &&other) : ContextScopeBase(static_cast<ContextScopeBase&&>(other)), lambda_(other.lambda_) {}
 
         void stringify(std::ostream* s) const override { lambda_(s); }
 
-        ~ContextScope() override { destroy(); }
+        ~ContextScope() override {
+            if (need_to_destroy) {
+                destroy();
+            }
+        }
+
+        template <typename F>
+        friend ContextScope<F> MakeContextScope(const F &lambda);
     };
 
     struct DOCTEST_INTERFACE MessageBuilder : public MessageData
@@ -3917,6 +3926,14 @@ namespace detail {
         wrapped_g_infoContexts.get().push_back(this);
     }
 
+    ContextScopeBase::ContextScopeBase(ContextScopeBase&& other) {
+        if (other.need_to_destroy) {
+            other.destroy();
+        }
+        other.need_to_destroy = false;
+        wrapped_g_infoContexts.get().push_back(this);
+    }
+
     DOCTEST_MSVC_SUPPRESS_WARNING_WITH_PUSH(4996) // std::uncaught_exception is deprecated in C++17
     DOCTEST_GCC_SUPPRESS_WARNING_WITH_PUSH("-Wdeprecated-declarations")
     DOCTEST_CLANG_SUPPRESS_WARNING_WITH_PUSH("-Wdeprecated-declarations")
@@ -3933,14 +3950,7 @@ namespace detail {
             this->stringify(&s);
             g_cs->stringifiedContexts.push_back(s.str().c_str());
         }
-        // fix from TBB: With disabled copy elision optimization there may be situations
-        // (e.g. inside MakeContextScope() function) where the destroyed ContextScope is not the last
-        // element in wrapped_g_infoContexts, so we should search for the required element
-        auto& contexts = wrapped_g_infoContexts.get();
-        auto pos = std::find(std::begin(contexts), std::end(contexts), this);
-        if (pos != contexts.end()) {
-            contexts.erase(pos);
-        }
+        wrapped_g_infoContexts.get().pop_back();
     }
     DOCTEST_CLANG_SUPPRESS_WARNING_POP
     DOCTEST_GCC_SUPPRESS_WARNING_POP
