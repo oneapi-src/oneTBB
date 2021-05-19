@@ -75,8 +75,6 @@ class alignas(max_nfs_size) once_runner {
         storage_t m_storage;
     };
 
-
-
     template<typename Fn>
     void isolated_execute(Fn f) {
         call_once_delegate<Fn> delegate(f);

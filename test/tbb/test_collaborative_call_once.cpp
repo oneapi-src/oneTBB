@@ -163,7 +163,7 @@ TEST_CASE("only calls once - stress test") {
 
         tbb::collaborative_once_flag flag;
         std::vector<std::thread> threads;
-        for (std::size_t i = 0; i < utils::get_platform_max_threads()*7; ++i)
+        for (std::size_t i = 0; i < utils::get_platform_max_threads()*5; ++i)
         {
             threads.push_back(std::thread([&]() {
                 tbb::collaborative_call_once(flag, f);
@@ -177,9 +177,9 @@ TEST_CASE("only calls once - stress test") {
     {
         increment_functor f;
 
-        utils::SpinBarrier barrier(utils::get_platform_max_threads()*7);
+        utils::SpinBarrier barrier(utils::get_platform_max_threads()*5);
         tbb::collaborative_once_flag flag;
-        utils::NativeParallelFor(utils::get_platform_max_threads()*7, [&](std::size_t) {
+        utils::NativeParallelFor(utils::get_platform_max_threads()*5, [&](std::size_t) {
             for (int i = 0; i < 100; ++i) {
                 REQUIRE(f.ct == i);
                 barrier.wait([&] {
@@ -240,7 +240,7 @@ TEST_CASE("handles exceptions - stress test") {
 
     tbb::collaborative_once_flag flag;
 
-    utils::NativeParallelFor(utils::get_platform_max_threads()*7, [&](std::size_t) {
+    utils::NativeParallelFor(utils::get_platform_max_threads()*5, [&](std::size_t) {
         while(run_again) {
             try {
                 tbb::collaborative_call_once(flag, throwing_func);
