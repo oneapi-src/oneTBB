@@ -43,12 +43,14 @@ inline constexpr std::uintptr_t maskoff_pointer(std::uintptr_t ptr) {
     return ptr & (std::size_t(-1) << bit_count);
 }
 
-class alignas(max_nfs_size) run_once {
-    task_arena my_arena;
-    wait_context my_wait_context;
-    task_group_context my_context;
+class alignas(max_nfs_size) once_runner {
 
-    std::atomic<std::int64_t> ref_count{0};
+    struct storage_t {
+        task_arena my_arena{task_arena::attach{}};
+        wait_context my_wait_context{0};
+        task_group_context my_context{task_group_context::bound,
+            task_group_context::default_traits | task_group_context::concurrent_wait};
+    };
 
     template <typename Func>
     class call_once_delegate : public delegate_base {
@@ -64,6 +66,17 @@ class alignas(max_nfs_size) run_once {
         Func& my_func;
     };
 
+    std::atomic<std::int64_t> ref_count{0};
+    std::atomic<bool> m_initialized{false};
+
+    // Storage with task_arena and contexts must be initialized only by winner thread
+    // by calling make_runner() method
+    union {
+        storage_t m_storage;
+    };
+
+
+
     template<typename Fn>
     void isolated_execute(Fn f) {
         call_once_delegate<Fn> delegate(f);
@@ -72,15 +85,21 @@ class alignas(max_nfs_size) run_once {
     }
 
 public:
-    run_once()
-        : my_arena(task_arena::attach{})
-        , my_wait_context(0)
-        , my_context(task_group_context::bound,
-            task_group_context::default_traits | task_group_context::concurrent_wait)
-        {}
-
-    ~run_once() {
+    once_runner() {}
+    ~once_runner() {
         spin_wait_while(ref_count, [&](std::int64_t value) { return value > 0; }, std::memory_order_acquire);
+        if (m_initialized.load(std::memory_order::memory_order_relaxed)) {
+            m_storage.~storage_t();
+        }
+    }
+
+    void make_runner() {
+        new(&m_storage) storage_t();
+        m_initialized.store(true, std::memory_order_release);
+    }
+
+    void wait_for_init() {
+        spin_wait_while_eq(m_initialized, false);
     }
 
     void increase_ref() { ref_count++; }
@@ -88,24 +107,24 @@ public:
     void decrease_ref() { ref_count--; }
 
     template <typename F>
-    void run_and_wait(F&& f) {
-        my_arena.execute([&] {
+    void run_once(F&& f) {
+        m_storage.my_arena.execute([&] {
             isolated_execute([&] {
-                function_stack_task<F> t{ std::forward<F>(f), my_wait_context };
-                my_wait_context.reserve();
+                function_stack_task<F> t{ std::forward<F>(f), m_storage.my_wait_context };
+                m_storage.my_wait_context.reserve();
                 
-                execute_and_wait(t, my_context, my_wait_context, my_context);
+                execute_and_wait(t, m_storage.my_context, m_storage.my_wait_context, m_storage.my_context);
             });
         });
     }
 
-    void wait() {
-        my_arena.execute([&] {
+    void assist() {
+        m_storage.my_arena.execute([&] {
             isolated_execute([&] {
                 // We do not want to get an exception from user functor on moonlighting threads.
                 // The exception is handled with the winner thread
                 task_group_context stub_context;
-                detail::d1::wait(my_wait_context, stub_context);
+                detail::d1::wait(m_storage.my_wait_context, stub_context);
             });
         });
     }
@@ -122,13 +141,16 @@ class collaborative_once_flag : no_copy {
     template <typename Fn>
     void do_collaborative_call_once(Fn&& f) {
         std::uintptr_t expected = my_state.load(std::memory_order_acquire);
-        run_once local_runner;
+        once_runner local_runner;
         while (expected != state::done) {
             if (expected == state::uninitialized && my_state.compare_exchange_strong(expected, reinterpret_cast<std::uintptr_t>(&local_runner))) {
                 // winner
+                local_runner.make_runner();
+
                 auto local_expected = reinterpret_cast<std::uintptr_t>(&local_runner);
+
                 try_call([&] {
-                    local_runner.run_and_wait(std::forward<Fn>(f));
+                    local_runner.run_once(std::forward<Fn>(f));
                 }).on_exception([&] {
                     while (!my_state.compare_exchange_strong(local_expected, state::uninitialized)) {
                         local_expected = reinterpret_cast<std::uintptr_t>(&local_runner);
@@ -138,6 +160,7 @@ class collaborative_once_flag : no_copy {
                 while (!my_state.compare_exchange_strong(local_expected, state::done)) {
                     local_expected = reinterpret_cast<std::uintptr_t>(&local_runner);
                 }
+                
                 return;
             } else {
                 // moonlighting thread
@@ -147,14 +170,15 @@ class collaborative_once_flag : no_copy {
                 // "expected > state::done" prevents storing values, when state is uninitialized
                 } while (expected > state::done && !my_state.compare_exchange_strong(expected, expected + 1));
 
-                if (auto runner = reinterpret_cast<run_once*>(maskoff_pointer(expected))) {
+                if (auto runner = reinterpret_cast<once_runner*>(maskoff_pointer(expected))) {
+                    runner->wait_for_init();
 
                     runner->increase_ref();
                     my_state.fetch_sub(1);
 
                     // The moonlighting threads are not expected to handle exceptions from user functor.
-                    // Therefore, no exception is expected from wait().
-                    [runner] () noexcept { runner->wait(); }();
+                    // Therefore, no exception is expected from assist().
+                    [runner] () noexcept { runner->assist(); }();
 
                     runner->decrease_ref();
                 }
