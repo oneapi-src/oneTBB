@@ -1520,9 +1520,9 @@ namespace detail {
         const L &lambda_;
 
     public:
-        explicit ContextScope(const L &lambda) : lambda_(lambda) {}
+        explicit ContextScope(const L &lambda) : ContextScopeBase(), lambda_(lambda) {}
 
-        ContextScope(ContextScope &&other) : lambda_(other.lambda_) {}
+        ContextScope(ContextScope &&other) : ContextScopeBase(), lambda_(std::move(other.lambda_)) {}
 
         void stringify(std::ostream* s) const override { lambda_(s); }
 
@@ -1972,7 +1972,7 @@ int registerReporter(const char* name, int priority, bool isReporter) {
         mb_name << expression;                                                                     \
     };                                                                                             \
     DOCTEST_MSVC_SUPPRESS_WARNING_POP                                                              \
-    doctest::detail::ContextScope<decltype(lambda_name)> DOCTEST_ANONYMOUS(_DOCTEST_CAPTURE_){lambda_name}
+    auto DOCTEST_ANONYMOUS(_DOCTEST_CAPTURE_) = doctest::detail::MakeContextScope(lambda_name)
 
 #define DOCTEST_CAPTURE(x) DOCTEST_INFO(#x " := " << x)
 
@@ -3933,7 +3933,14 @@ namespace detail {
             this->stringify(&s);
             g_cs->stringifiedContexts.push_back(s.str().c_str());
         }
-        wrapped_g_infoContexts.get().pop_back();
+        // fix from TBB: With disabled copy elision optimization there may be situations
+        // (e.g. inside MakeContextScope() function) where the destroyed ContextScope is not the last
+        // element in wrapped_g_infoContexts, so we should search for the required element
+        auto& contexts = wrapped_g_infoContexts.get();
+        auto pos = std::find(std::begin(contexts), std::end(contexts), this);
+        if (pos != contexts.end()) {
+            contexts.erase(pos);
+        }
     }
     DOCTEST_CLANG_SUPPRESS_WARNING_POP
     DOCTEST_GCC_SUPPRESS_WARNING_POP
