@@ -184,12 +184,7 @@ class raii_guard {
 public:
     raii_guard( Func f ) : my_func(f), is_active(true) {}
 
-    raii_guard (raii_guard&& g) : my_func(g.my_func), is_active(g.is_active) {
-        g.is_active = false;
-    }
-    raii_guard& operator=(raii_guard&& g) {
-        my_func = std::move(g.my_func);
-        is_active = g.is_active;
+    raii_guard (raii_guard&& g) : my_func(std::move(g.my_func)), is_active(g.is_active) {
         g.is_active = false;
     }
 

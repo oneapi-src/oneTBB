@@ -1522,7 +1522,7 @@ namespace detail {
     public:
         explicit ContextScope(const L &lambda) : ContextScopeBase(), lambda_(lambda) {}
 
-        ContextScope(ContextScope &&other) : ContextScopeBase(), lambda_(std::move(other.lambda_)) {}
+        ContextScope(ContextScope &&other) : ContextScopeBase(), lambda_(other.lambda_) {}
 
         void stringify(std::ostream* s) const override { lambda_(s); }
 
