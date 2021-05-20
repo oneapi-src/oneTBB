@@ -346,10 +346,7 @@ public:
 
     ~concurrent_skip_list() {
         clear();
-        node_ptr head = my_head_ptr.load(std::memory_order_relaxed);
-        if (head != nullptr) {
-            delete_node(head);
-        }
+        delete_head();
     }
 
     concurrent_skip_list& operator=( const concurrent_skip_list& other ) {
@@ -366,6 +363,8 @@ public:
     concurrent_skip_list& operator=( concurrent_skip_list&& other ) {
         if (this != &other) {
             clear();
+            delete_head();
+
             my_compare = std::move(other.my_compare);
             my_rng = std::move(other.my_rng);
 
@@ -1080,10 +1079,7 @@ private:
             }
         }).on_exception([&] {
             clear();
-            node_ptr head = my_head_ptr.load(std::memory_order_relaxed);
-            if (head != nullptr) {
-                delete_node(head);
-            }
+            delete_head();
         });
     }
 
@@ -1109,6 +1105,14 @@ private:
 
     node_ptr create_head_node() {
         return create_node(max_level);
+    }
+
+    void delete_head() {
+        node_ptr head = my_head_ptr.load(std::memory_order_relaxed);
+        if (head != nullptr) {
+            delete_node(head);
+            my_head_ptr.store(nullptr, std::memory_order_relaxed);
+        }
     }
 
     void delete_node( node_ptr node ) {
