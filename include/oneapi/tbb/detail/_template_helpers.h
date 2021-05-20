@@ -22,7 +22,7 @@
 
 #include <cstddef>
 #include <cstdint>
-
+#include <utility>
 #include <type_traits>
 #include <memory>
 #include <iterator>
@@ -182,9 +182,15 @@ using pack_element_t = typename pack_element<N, Args...>::type;
 template <typename Func>
 class raii_guard {
 public:
-    raii_guard( Func f ) : my_func(f), is_active(true) {}
+    static_assert(
+        std::is_nothrow_copy_constructible<Func>::value &&
+        std::is_nothrow_move_constructible<Func>::value,
+        "Throwing an exception during the Func copy or move construction cause an unexpected behavior."
+    );
 
-    raii_guard (raii_guard&& g) : my_func(std::move(g.my_func)), is_active(g.is_active) {
+    raii_guard( Func f ) noexcept : my_func(f), is_active(true) {}
+
+    raii_guard( raii_guard&& g ) noexcept : my_func(std::move(g.my_func)), is_active(g.is_active) {
         g.is_active = false;
     }
 
