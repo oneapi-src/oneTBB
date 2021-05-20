@@ -14,11 +14,14 @@
     limitations under the License.
 */
 
+#include "common/config.h"
+
 #include "tbb/parallel_for.h"
 #include "tbb/global_control.h"
 
 #include "common/test.h"
 #include "common/utils.h"
+#include "common/utils_concurrency_limit.h"
 
 #include <atomic>
 #include <condition_variable>
@@ -65,6 +68,10 @@ public:
 //! Test for exception when too many threads
 //! \brief \ref resource_usage
 TEST_CASE("Too many threads") {
+    if (utils::get_platform_max_threads() < 2) {
+        // The test expects that the scheduler will try to create at least one thread.
+        return;
+    }
     std::thread /* isolate test */ ([] {
         std::vector<Thread> threads;
         stop = false;

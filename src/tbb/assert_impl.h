@@ -18,6 +18,7 @@
 #define __TBB_assert_impl_H
 
 #include "oneapi/tbb/detail/_config.h"
+#include "oneapi/tbb/detail/_utils.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -53,9 +54,23 @@ static void assertion_failure_impl(const char* location, int line, const char* e
     }
 }
 
+// Do not move the definition into the assertion_failure function because it will require "magic statics".
+// It will bring a dependency on C++ runtime on some platforms while assert_impl.h is reused in tbbmalloc 
+// that should not depend on C++ runtime
+static std::atomic<do_once_state> assertion_state;
+
 void __TBB_EXPORTED_FUNC assertion_failure(const char* location, int line, const char* expression, const char* comment) {
-    static std::once_flag flag;
-    std::call_once(flag, [&](){ assertion_failure_impl(location, line, expression, comment); });
+#if __TBB_MSVC_UNREACHABLE_CODE_IGNORED
+    // Workaround for erroneous "unreachable code" during assertion throwing using call_once
+    #pragma warning (push)
+    #pragma warning (disable: 4702)
+#endif
+    // We cannot use std::call_once because it brings a dependency on C++ runtime on some platforms 
+    // while assert_impl.h is reused in tbbmalloc that should not depend on C++ runtime
+    atomic_do_once([&](){ assertion_failure_impl(location, line, expression, comment); }, assertion_state);
+#if __TBB_MSVC_UNREACHABLE_CODE_IGNORED
+    #pragma warning (pop)
+#endif
 }
 
 //! Report a runtime warning.

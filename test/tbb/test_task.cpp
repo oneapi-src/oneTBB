@@ -508,7 +508,10 @@ TEST_CASE("Critical tasks + resume") {
     tbb::task_group_context test_context;
     tbb::detail::d1::wait_context wait(task_number);
 
-    tbb::task_arena test_arena;
+    // The test expects at least one thread in test_arena
+    int num_threads_in_test_arena = std::max(2, int(utils::get_platform_max_threads()));
+    tbb::global_control thread_limit(tbb::global_control::max_allowed_parallelism, num_threads_in_test_arena);
+    tbb::task_arena test_arena(num_threads_in_test_arena);
 
     test_arena.initialize();
 

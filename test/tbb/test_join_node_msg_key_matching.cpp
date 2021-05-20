@@ -16,6 +16,7 @@
 
 // Message based key matching is a preview feature
 #define TBB_PREVIEW_FLOW_GRAPH_FEATURES 1
+
 #define MAX_TUPLE_TEST_SIZE 10
 
 #include "common/config.h"
@@ -89,15 +90,22 @@ using T8 = make_tuple < T7, MyMessageKeyWithBrokenKey<std::string, int>>;
 using T9 = make_tuple < T8, MyMessageKeyWithoutKeyMethod<std::string, threebyte>>;
 using T10 = make_tuple < T9, MyMessageKeyWithBrokenKey<std::string, size_t>>;
 
+#if TBB_TEST_LOW_WORKLOAD && TBB_USE_DEBUG
+// the compiler might generate huge object file in debug (>64M)
+#define TEST_CASE_TEMPLATE_N_ARGS(dec) TEST_CASE_TEMPLATE(dec, T, T2, T3, T4, T5, T6, T7, T8, T9, T10)
+#else
+#define TEST_CASE_TEMPLATE_N_ARGS(dec) TEST_CASE_TEMPLATE(dec, T, T2, T5, T8, T10)
+#endif
+
 //! Serial test with different tuple sizes
 //! \brief \ref error_guessing
-TEST_CASE_TEMPLATE("Serial N tests", T, T2, T3, T4, T5, T6, T7, T8, T9, T10) {
+TEST_CASE_TEMPLATE_N_ARGS("Serial N tests") {
     generate_test<serial_test, T, message_based_key_matching<std::string&> >::do_test();
 }
 
 //! Parallel test with different tuple sizes
 //! \brief \ref error_guessing
-TEST_CASE_TEMPLATE("Parallel N tests", T, T2, T3, T4, T5, T6, T7, T8, T9, T10) {
+TEST_CASE_TEMPLATE_N_ARGS("Parallel N tests") {
     generate_test<parallel_test, T, message_based_key_matching<std::string&> >::do_test();
 }
 

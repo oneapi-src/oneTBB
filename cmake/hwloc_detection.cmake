@@ -45,7 +45,10 @@ endforeach()
 
 unset(HWLOC_TARGET_NAME)
 
-if (NOT HWLOC_TARGET_EXPLICITLY_DEFINED)
+if (NOT HWLOC_TARGET_EXPLICITLY_DEFINED AND
+    # No hwloc auto detection for cross compilation
+    NOT CMAKE_CROSSCOMPILING
+)
     find_package(PkgConfig QUIET)
     if (PKG_CONFIG_FOUND)
         pkg_search_module(HWLOC hwloc)

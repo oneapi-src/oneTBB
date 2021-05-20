@@ -59,12 +59,17 @@ target_compile_options(tbbmalloc
     ${TBB_COMMON_COMPILE_FLAGS}
 )
 
+enable_language(C)
+
 # Avoid use of target_link_libraries here as it changes /DEF option to \DEF on Windows.
 set_target_properties(tbbmalloc PROPERTIES
     DEFINE_SYMBOL ""
     VERSION ${TBBMALLOC_BINARY_VERSION}.${TBB_BINARY_MINOR_VERSION}
     SOVERSION ${TBBMALLOC_BINARY_VERSION}
+    LINKER_LANGUAGE C
 )
+
+set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "")
 
 # Prefer using target_link_options instead of target_link_libraries to specify link options because
 # target_link_libraries may incorrectly handle some options (on Windows, for example).
