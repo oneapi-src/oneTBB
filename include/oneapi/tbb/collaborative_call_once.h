@@ -46,10 +46,10 @@ inline constexpr std::uintptr_t maskoff_pointer(std::uintptr_t ptr) {
 class alignas(max_nfs_size) once_runner {
 
     struct storage_t {
-        task_arena my_arena{task_arena::attach{}};
+        task_arena my_arena{ task_arena::attach{} };
         wait_context my_wait_context{0};
-        task_group_context my_context{task_group_context::bound,
-            task_group_context::default_traits | task_group_context::concurrent_wait};
+        task_group_context my_context{ task_group_context::bound,
+            task_group_context::default_traits | task_group_context::concurrent_wait };
     };
 
     template <typename Func>
@@ -140,9 +140,10 @@ class collaborative_once_flag : no_copy {
     void do_collaborative_call_once(Fn&& f) {
         std::uintptr_t expected = my_state.load(std::memory_order_acquire);
         once_runner local_runner;
+
         while (expected != state::done) {
             if (expected == state::uninitialized && my_state.compare_exchange_strong(expected, reinterpret_cast<std::uintptr_t>(&local_runner))) {
-                // winner
+                // winner thread
                 local_runner.make_runner();
 
                 auto local_expected = reinterpret_cast<std::uintptr_t>(&local_runner);

@@ -34,6 +34,8 @@
 #include <atomic>
 #include <mutex>
 
+//! \file test_collaborative_call_once.cpp
+//! \brief Tests for [algorithms.collaborative_call_once] functionality
 
 struct increment_functor {
     std::atomic<int> ct{0};
@@ -112,6 +114,8 @@ void call_once_threads(Fn& body, Args&&... args) {
     }
 }
 
+//! Test for functor to be called only once
+//! \brief \ref interface \ref requirement
 TEST_CASE("only calls once 1") {
     {
         increment_functor f;
@@ -136,6 +140,8 @@ TEST_CASE("only calls once 1") {
     }
 }
 
+//! Test for functor to be called only once
+//! \brief \ref interface \ref requirement
 TEST_CASE("only calls once 2") {
     {
         sum_functor f;
@@ -160,6 +166,8 @@ TEST_CASE("only calls once 2") {
     }
 }
 
+//! Stress test for functor to be called only once
+//! \brief \ref interface \ref requirement \ref stress
 TEST_CASE("only calls once - stress test") {
     {
         increment_functor f;
@@ -196,6 +204,9 @@ TEST_CASE("only calls once - stress test") {
 }
 
 #if TBB_USE_EXCEPTIONS
+
+//! Test for collaborative_call_once exception handling
+//! \brief \ref error_guessing
 TEST_CASE("handles exceptions - state reset") {
 
     std::atomic<bool> b{ false };
@@ -226,6 +237,8 @@ TEST_CASE("handles exceptions - state reset") {
     REQUIRE(!b);
 }
 
+//! Stress test for collaborative_call_once exception handling
+//! \brief \ref error_guessing \ref stress
 TEST_CASE("handles exceptions - stress test") {
     std::atomic<int> data{0};
 
@@ -247,7 +260,7 @@ TEST_CASE("handles exceptions - stress test") {
         while(run_again) {
             try {
                 tbb::collaborative_call_once(flag, throwing_func);
-            } catch(...) {
+            } catch(const call_once_exception&) {
             }
         }
     });
@@ -256,29 +269,33 @@ TEST_CASE("handles exceptions - stress test") {
 
 #endif
 
+//! Test for multiple help from moonlighting threads
+//! \brief \ref interface \ref requirement
 TEST_CASE("multiple help") {
     // Test multiple threads do the work:
     std::mutex mutex;
     std::map<int, int> id_ct_map;
     std::atomic<int> call_ct{0};
 
-    const size_t num_work_pieces = tbb::this_task_arena::max_concurrency() * 512;
-    const auto time_per_work_piece = std::chrono::microseconds(5);
-    // this allows us to make sure all the calls in the outer loop get stuck (if they will) before the inner loop begins
-    const auto time_initial_delay = std::chrono::milliseconds(100);
+    const size_t num_work_pieces = tbb::this_task_arena::max_concurrency() * 5;
+    // const auto time_per_work_piece = std::chrono::microseconds(5);
+    // // this allows us to make sure all the calls in the outer loop get stuck (if they will) before the inner loop begins
+    // const auto time_initial_delay = std::chrono::milliseconds(100);
 
-    auto busy_wait = [](std::chrono::microseconds time) {
-        auto start_t = std::chrono::steady_clock::now();
-        while (std::chrono::steady_clock::now() < start_t + time) {
-            // busy wait
-        }
-    };
+    // auto busy_wait = [](std::chrono::microseconds time) {
+    //     auto start_t = std::chrono::steady_clock::now();
+    //     while (std::chrono::steady_clock::now() < start_t + time) {
+    //         // busy wait
+    //     }
+    // };
     auto work = [&]() {
         call_ct++;
-        busy_wait(time_initial_delay);
+        // busy_wait(time_initial_delay);
+        utils::doDummyWork(100000);
         tbb::parallel_for(tbb::blocked_range<size_t>(0, num_work_pieces, 1), [&](const tbb::blocked_range<size_t>& range) {
             for (size_t i = range.begin(); i != range.end(); ++i) {
-                busy_wait(time_per_work_piece);
+                // busy_wait(time_per_work_piece);
+                utils::doDummyWork(100000);
             }
             std::lock_guard<std::mutex> lock(mutex);
             int id = tbb::detail::d1::current_thread_index();
@@ -338,6 +355,8 @@ std::uint64_t collaborative_recursive_fib(int n) {
     return collaborative_recursive_fib(n, buffer);
 }
 
+//! Correctness test for Fibonacci example
+//! \brief \ref interface \ref requirement
 TEST_CASE("fibonacci example") {
     constexpr int N = 25;
 
