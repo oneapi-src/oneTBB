@@ -279,7 +279,7 @@ TEST_CASE("Testing filter modes")
     {
         oneapi::tbb::global_control control(oneapi::tbb::global_control::max_allowed_parallelism, concurrency_level);
 
-        std::atomic<short> serial_checker{0};
+        short serial_checker{0};
         oneapi::tbb::filter<void,short> filter1(oneapi::tbb::filter_mode::serial_out_of_order,
                                 [&serial_checker](oneapi::tbb::flow_control&fc)
                                 {
@@ -293,7 +293,7 @@ TEST_CASE("Testing filter modes")
                                     return check_value;
                                 });
 
-        std::atomic<short> serial_checker2{ 0 };
+        short serial_checker2{ 0 };
         oneapi::tbb::filter<short, short> filter2(oneapi::tbb::filter_mode::serial_in_order,
             [&serial_checker2](int)
             {
@@ -313,7 +313,7 @@ TEST_CASE("Testing filter modes")
                                 });
 
 
-        std::atomic<short> order_checker{0};
+        short order_checker{0};
         oneapi::tbb::filter<int,void> filter4(oneapi::tbb::filter_mode::serial_in_order,
                                 [&order_checker](int value)
                                 {
@@ -331,18 +331,17 @@ TEST_CASE("Testing max token number")
     for(unsigned int i = 1; i < n_tokens; i++)
     {
         std::atomic<short> active_tokens{0};
-        int counter{0};
 
         oneapi::tbb::filter<void,int> filter1(oneapi::tbb::filter_mode::parallel,
-                                [&active_tokens,&counter](oneapi::tbb::flow_control&fc)
+                                [&active_tokens](oneapi::tbb::flow_control&fc)
                                 {
                                     ++active_tokens;
                                     doWork();
                                     CHECK_MESSAGE(active_tokens <= n_tokens, "max number of tokens is exceed");
                                     --active_tokens;
-                                    if(++counter>=max_counter)
-                                    {
+                                    if (--input_counter < 0) {
                                         fc.stop();
+                                        input_counter = max_counter;
                                     }
                                     return 0;
                                 });
