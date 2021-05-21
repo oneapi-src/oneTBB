@@ -53,7 +53,7 @@ set_target_properties(tbbmalloc_proxy PROPERTIES
 if (UNIX AND NOT APPLE)
     # Avoid use of target_link_libraries here as it changes /DEF option to \DEF on Windows.
     set_target_properties(tbbmalloc_proxy PROPERTIES
-        LINK_FLAGS ${TBB_LINK_DEF_FILE_FLAG} "\"${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-proxy.def\""
+        LINK_FLAGS "${TBB_LINK_DEF_FILE_FLAG}\"${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-proxy.def\""
         LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-proxy.def"
         DEFINE_SYMBOL "")
 endif()
