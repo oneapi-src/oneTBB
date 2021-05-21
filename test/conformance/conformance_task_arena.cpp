@@ -41,7 +41,7 @@ TEST_CASE("Arena interfaces") {
         //! oneapi::tbb::this_task_arena interfaces
         CHECK(oneapi::tbb::this_task_arena::current_thread_index() >= 0);
         //! Attach interface
-        oneapi::tbb::task_arena attached_arena = oneapi::tbb::task_arena(oneapi::tbb::task_arena::attach());
+        oneapi::tbb::task_arena attached_arena{oneapi::tbb::task_arena::attach()};
         CHECK(attached_arena.is_active());
     });
     while (!done) {
