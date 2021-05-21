@@ -1524,6 +1524,7 @@ namespace detail {
     public:
         explicit ContextScope(const L &lambda) : ContextScopeBase(), lambda_(lambda) {}
 
+        // std::move cannot be applied here since there is no utility header included in this place (by some reason all headers are included later)
         ContextScope(ContextScope &&other) : ContextScopeBase(static_cast<ContextScopeBase&&>(other)), lambda_(other.lambda_) {}
 
         void stringify(std::ostream* s) const override { lambda_(s); }
