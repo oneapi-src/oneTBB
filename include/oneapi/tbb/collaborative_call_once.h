@@ -84,6 +84,7 @@ class alignas(max_nfs_size) once_runner {
 
 public:
     once_runner() {}
+
     ~once_runner() {
         spin_wait_while(ref_count, [&](std::int64_t value) { return value > 0; }, std::memory_order_acquire);
         if (m_initialized.load(std::memory_order_relaxed)) {
@@ -110,23 +111,34 @@ public:
             isolated_execute([&] {
                 function_stack_task<F> t{ std::forward<F>(f), m_storage.my_wait_context };
                 m_storage.my_wait_context.reserve();
-                
+
                 execute_and_wait(t, m_storage.my_context, m_storage.my_wait_context, m_storage.my_context);
             });
         });
     }
 
-    void assist() {
+    void assist() noexcept {
         m_storage.my_arena.execute([&] {
             isolated_execute([&] {
                 // We do not want to get an exception from user functor on moonlighting threads.
                 // The exception is handled with the winner thread
                 task_group_context stub_context;
-                detail::d1::wait(m_storage.my_wait_context, stub_context);
+                wait(m_storage.my_wait_context, stub_context);
             });
         });
     }
 
+};
+
+class runner_lifetime_checker : no_copy {
+    once_runner& m_runner;
+public:
+    runner_lifetime_checker(once_runner& r) : m_runner(r) {
+        m_runner.increase_ref();
+    }
+    ~runner_lifetime_checker() {
+        m_runner.decrease_ref();
+    }
 };
 
 class collaborative_once_flag : no_copy {
@@ -159,8 +171,8 @@ class collaborative_once_flag : no_copy {
                 while (!my_state.compare_exchange_strong(local_expected, state::done)) {
                     local_expected = reinterpret_cast<std::uintptr_t>(&local_runner);
                 }
-
-                return;
+                
+                break;
             } else {
                 // moonlighting thread
                 do {
@@ -170,16 +182,15 @@ class collaborative_once_flag : no_copy {
                 } while (expected > state::done && !my_state.compare_exchange_strong(expected, expected + 1));
 
                 if (auto runner = reinterpret_cast<once_runner*>(maskoff_pointer(expected))) {
-                    runner->wait_for_init();
 
-                    runner->increase_ref();
+                    runner_lifetime_checker hold_ref_count{*runner};
                     my_state.fetch_sub(1);
+
+                    runner->wait_for_init();
 
                     // The moonlighting threads are not expected to handle exceptions from user functor.
                     // Therefore, no exception is expected from assist().
-                    [runner] () noexcept { runner->assist(); }();
-
-                    runner->decrease_ref();
+                    runner->assist();
                 }
             }
         }
