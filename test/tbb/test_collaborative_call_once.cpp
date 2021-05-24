@@ -66,50 +66,50 @@ struct sum_functor {
 class call_once_exception : public std::exception {};
 
 template<typename Fn, typename... Args>
-void call_once_in_for_loop(Fn& body, Args&&... args) {
+void call_once_in_for_loop(std::size_t N, Fn& body, Args&&... args) {
     tbb::collaborative_once_flag flag;
-    for (int i = 0; i < 1024; ++i) {
+    for (std::size_t i = 0; i < N; ++i) {
         tbb::collaborative_call_once(flag, body, std::forward<Args>(args)...);
     }
 }
 
 template<typename Fn, typename... Args>
-void call_once_in_parallel_for(Fn& body, Args&&... args) {
+void call_once_in_parallel_for(std::size_t N, Fn& body, Args&&... args) {
     tbb::collaborative_once_flag flag;
-#if __GNUC__ && !__TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_PRESENT
+#if __TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_BROKEN
     auto stored_pack = tbb::detail::d0::save_pack(std::forward<Args>(args)...);
     auto func = [&] { tbb::detail::d0::call(body, stored_pack); };
-#endif // !__TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_PRESENT
+#endif // __TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_BROKEN
 
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, 100), [&](const tbb::blocked_range<size_t>& range) {
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, N), [&](const tbb::blocked_range<size_t>& range) {
         for (size_t i = range.begin(); i != range.end(); ++i) {
-#if __GNUC__ && !__TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_PRESENT
+#if __TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_BROKEN
             tbb::collaborative_call_once(flag, func);
 #else
             tbb::collaborative_call_once(flag, body, std::forward<Args>(args)...);
-#endif // __TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_PRESENT
+#endif //__TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_BROKEN
         }
     });
 }
 
 template<typename Fn, typename... Args>
-void call_once_threads(Fn& body, Args&&... args) {
+void call_once_threads(std::size_t N, Fn& body, Args&&... args) {
     tbb::collaborative_once_flag flag;
     std::vector<std::thread> threads;
 
-#if __GNUC__ && !__TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_PRESENT
+#if __TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_BROKEN
     auto stored_pack = tbb::detail::d0::save_pack(std::forward<Args>(args)...);
     auto func = [&] { tbb::detail::d0::call(body, stored_pack); };
-#endif // !__TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_PRESENT
+#endif // __TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_BROKEN
 
-    for (std::size_t i = 0; i < std::thread::hardware_concurrency(); ++i)
+    for (std::size_t i = 0; i < N; ++i)
     {
         threads.push_back(std::thread([&]() {
-#if __GNUC__ && !__TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_PRESENT
+#if __TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_BROKEN
             tbb::collaborative_call_once(flag, func);
 #else
             tbb::collaborative_call_once(flag, body, std::forward<Args>(args)...);
-#endif // __TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_PRESENT
+#endif // __TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_BROKEN
         }));
     }
     for (auto& thread : threads) {
@@ -123,21 +123,21 @@ TEST_CASE("only calls once 1") {
     {
         increment_functor f;
 
-        call_once_in_for_loop(f);
+        call_once_in_for_loop(1024, f);
 
         REQUIRE( f.ct == 1);
     }
     {
         increment_functor f;
 
-        call_once_in_parallel_for(f);
+        call_once_in_parallel_for(100, f);
 
         REQUIRE(f.ct == 1);
     }
     {
         increment_functor f;
 
-        call_once_threads(f);
+        call_once_threads(std::thread::hardware_concurrency(), f);
 
         REQUIRE(f.ct == 1);
     }
@@ -149,21 +149,21 @@ TEST_CASE("only calls once 2") {
     {
         sum_functor f;
 
-        call_once_in_for_loop(f, 1, 2, 3 ,4);
+        call_once_in_for_loop(1024, f, 1, 2, 3 ,4);
 
         REQUIRE(f.sum == 10);
     }
     {
         sum_functor f;
 
-        call_once_in_parallel_for(f, 1000, -1000);
+        call_once_in_parallel_for(512, f, 1000, -1000);
 
         REQUIRE(f.sum == 0);
     }
     {
         sum_functor f;
 
-        call_once_threads(f, 0, -1, -5);
+        call_once_threads(std::thread::hardware_concurrency(), f, 0, -1, -5);
 
         REQUIRE(f.sum == -6);
     }
@@ -173,30 +173,25 @@ TEST_CASE("only calls once 2") {
 //! \brief \ref interface \ref requirement \ref stress
 TEST_CASE("only calls once - stress test") {
 #if TBB_TEST_LOW_WORK_LOAD
-    constexpr std::size_t N = std::thread::hardware_concurrency();
-#else
+    constexpr std::size_t N = 32;
+#elif __TBB_x86_32 || __aarch32__
+    // Some C++ implementations allocate 8MB stacks for std::thread on 32 bit platforms
+    // that makes impossible to create more than ~500 threads.
+    constexpr std::size_t N = tbb::detail::d0::max_nfs_size * 2;
+#else 
     constexpr std::size_t N = tbb::detail::d0::max_nfs_size * 4;
 #endif
     {
         increment_functor f;
 
-        tbb::collaborative_once_flag flag;
-        std::vector<std::thread> threads;
-        for (std::size_t i = 0; i < N; ++i)
-        {
-            threads.push_back(std::thread([&]() {
-                tbb::collaborative_call_once(flag, f);
-            }));
-        }
-        for (auto& thread : threads) {
-            thread.join();
-        }
+        call_once_threads(N, f);
+
         REQUIRE(f.ct == 1);
     }
     {
         increment_functor f;
 
-        utils::SpinBarrier barrier(N);
+        utils::SpinBarrier barrier{N};
         tbb::collaborative_once_flag flag;
         utils::NativeParallelFor(N, [&](std::size_t) {
             for (int i = 0; i < 100; ++i) {
@@ -248,13 +243,16 @@ TEST_CASE("handles exceptions - state reset") {
 //! \brief \ref error_guessing \ref stress
 TEST_CASE("handles exceptions - stress test") {
 #if TBB_TEST_LOW_WORK_LOAD
-    constexpr std::size_t N = std::thread::hardware_concurrency();
-#else
+    constexpr std::size_t N = 32;
+#elif __TBB_x86_32 || __aarch32__
+    // Some C++ implementations allocate 8MB stacks for std::thread on 32 bit platforms
+    // that makes impossible to create more than ~500 threads.
+    constexpr std::size_t N = tbb::detail::d0::max_nfs_size * 2;
+#else 
     constexpr std::size_t N = tbb::detail::d0::max_nfs_size * 4;
 #endif
 
     int data{0};
-
     bool run_again{true};
 
     auto throwing_func = [&] {
@@ -284,55 +282,44 @@ TEST_CASE("handles exceptions - stress test") {
 
 //! Test for multiple help from moonlighting threads
 //! \brief \ref interface \ref requirement
-TEST_CASE("multiple help") {
-    // Test multiple threads do the work:
-    std::mutex mutex;
-    std::map<int, int> id_ct_map;
-    int call_ct{0};
+TEST_CASE("multiple help - parallel_for") {
+    std::size_t num_threads = tbb::this_task_arena::max_concurrency();
+    utils::SpinBarrier barrier{num_threads};
 
-#if TBB_TEST_LOW_WORK_LOAD
-    const size_t num_work_pieces = tbb::this_task_arena::max_concurrency();
-#else
-    const size_t num_work_pieces = tbb::this_task_arena::max_concurrency() * 5;
-#endif
+    tbb::collaborative_once_flag flag;
 
-    auto work = [&]() {
-        call_ct++;
-        // busy_wait(time_initial_delay);
-        utils::doDummyWork(100000);
-        utils::SpinBarrier barrier{std::thread::hardware_concurrency()};
-        tbb::parallel_for(tbb::blocked_range<size_t>(0, num_work_pieces, 1), [&](const tbb::blocked_range<size_t>& range) {
-            barrier.wait();
-            for (size_t i = range.begin(); i != range.end(); ++i) {
-                // busy_wait(time_per_work_piece);
-                utils::doDummyWork(100000);
-            }
-            std::lock_guard<std::mutex> lock(mutex);
-            int id = tbb::detail::d1::current_thread_index();
-            id_ct_map[id] += range.size();
+    tbb::parallel_for<std::size_t>(0, num_threads, [&](std::size_t) {
+        barrier.wait();
+        tbb::collaborative_call_once(flag, [&] {
+            tbb::parallel_for<std::size_t>(0, num_threads, [&](std::size_t) {
+                barrier.wait();
+            });
         });
-    };
-    // check that a bunch of the threads did some of the work
-    auto isParallel = [](const std::map<int, int> cts) {
-        return std::count_if(cts.begin(), cts.end(), [](const std::pair<int, int>& it) { return it.second >= 2; }) >= tbb::this_task_arena::max_concurrency() / 3;
-    };
-    {
-        id_ct_map.clear();
-        call_ct = 0;
+    });
+}
 
-        call_once_threads(work);
+//! Test for multiple help from moonlighting threads
+//! \brief \ref interface \ref requirement
+TEST_CASE("multiple help - threads") {
+    std::size_t num_threads = tbb::this_task_arena::max_concurrency();
+    utils::SpinBarrier barrier{num_threads};
 
-        REQUIRE(call_ct == 1);
-        REQUIRE(isParallel(id_ct_map));
+    tbb::collaborative_once_flag flag;
+    std::vector<std::thread> thread_pool;
+
+    for (std::size_t i = 0; i < num_threads; ++i) {
+        thread_pool.push_back(std::thread([&] {
+            barrier.wait();
+            tbb::collaborative_call_once(flag, [&] {
+                tbb::parallel_for<std::size_t>(0, num_threads, [&](std::size_t) {
+                    barrier.wait();
+                });
+            });
+        }));
     }
-    {
-        id_ct_map.clear();
-        call_ct = 0;
 
-        call_once_in_parallel_for(work);
-
-        REQUIRE(call_ct == 1);
-        REQUIRE(isParallel(id_ct_map));
+    for (auto& thread : thread_pool) {
+        thread.join();
     }
 }
 

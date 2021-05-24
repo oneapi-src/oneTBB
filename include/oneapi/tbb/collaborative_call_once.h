@@ -39,35 +39,40 @@ constexpr std::size_t bit_count = 7;
 
 static_assert(1 << bit_count == max_nfs_size, "bit_count must be a log2(max_nfs_size)");
 
-inline constexpr std::uintptr_t maskoff_pointer(std::uintptr_t ptr) {
-    return ptr & (std::size_t(-1) << bit_count);
-}
-
 class alignas(max_nfs_size) once_runner {
 
     struct storage_t {
-        task_arena my_arena{ task_arena::attach{} };
-        wait_context my_wait_context{0};
-        task_group_context my_context{ task_group_context::bound,
-            task_group_context::default_traits | task_group_context::concurrent_wait };
+        task_arena m_arena{ task_arena::attach{} };
+        wait_context m_wait_context{1};
     };
 
     template <typename Func>
     class call_once_delegate : public delegate_base {
     public:
-        call_once_delegate(Func& f) : my_func(f) {}
+        call_once_delegate(Func& f) : m_func(f) {}
 
         bool operator()() const override {
-            my_func();
+            m_func();
             return true;
         }
 
     private:
-        Func& my_func;
+        Func& m_func;
     };
 
+    class lifetime_tracker : no_copy {
+        once_runner& m_runner;
+    public:
+    lifetime_tracker(once_runner& r) : m_runner(r) {
+        m_runner.increase_ref();
+    }
+    ~lifetime_tracker() {
+        m_runner.decrease_ref();
+    }
+};
+
     std::atomic<std::int64_t> ref_count{0};
-    std::atomic<bool> m_initialized{false};
+    std::atomic<bool> is_ready{false};
 
     // Storage with task_arena and contexts must be initialized only by winner thread
     // by calling make_runner() method
@@ -82,94 +87,94 @@ class alignas(max_nfs_size) once_runner {
         r1::isolate_within_arena(delegate, reinterpret_cast<std::intptr_t>(this));
     }
 
+    void increase_ref() { ref_count++; }
+
+    void decrease_ref() { ref_count--; }
+
 public:
     once_runner() {}
 
     ~once_runner() {
         spin_wait_while(ref_count, [&](std::int64_t value) { return value > 0; }, std::memory_order_acquire);
-        if (m_initialized.load(std::memory_order_relaxed)) {
+        if (is_ready.load(std::memory_order_relaxed)) {
             m_storage.~storage_t();
         }
     }
 
-    void make_runner() {
+    void init() {
         new(&m_storage) storage_t();
-        m_initialized.store(true, std::memory_order_release);
     }
 
-    void wait_for_init() {
-        spin_wait_while_eq(m_initialized, false);
+    void wait_for_readiness() {
+        spin_wait_while_eq(is_ready, false);
     }
 
-    void increase_ref() { ref_count++; }
+    std::uintptr_t to_bits() {
+        return reinterpret_cast<std::uintptr_t>(this);
+    }
 
-    void decrease_ref() { ref_count--; }
+    static once_runner* from_bits(std::uintptr_t bits) {
+        __TBB_ASSERT( (bits & (max_nfs_size-1)) == 0, "invalid pointer, last log2(max_nfs_size) bits must be zero" );
+        return reinterpret_cast<once_runner*>(bits);
+    }
 
     template <typename F>
     void run_once(F&& f) {
-        m_storage.my_arena.execute([&] {
+        m_storage.m_arena.execute([&] {
             isolated_execute([&] {
-                function_stack_task<F> t{ std::forward<F>(f), m_storage.my_wait_context };
-                m_storage.my_wait_context.reserve();
+                task_group_context context{ task_group_context::bound,
+                    task_group_context::default_traits | task_group_context::concurrent_wait };
 
-                execute_and_wait(t, m_storage.my_context, m_storage.my_wait_context, m_storage.my_context);
+                function_stack_task<F> t{ std::forward<F>(f), m_storage.m_wait_context };
+
+                is_ready.store(true, std::memory_order_release);
+                execute_and_wait(t, context, m_storage.m_wait_context, context);
             });
         });
     }
 
     void assist() noexcept {
-        m_storage.my_arena.execute([&] {
+        m_storage.m_arena.execute([&] {
             isolated_execute([&] {
                 // We do not want to get an exception from user functor on moonlighting threads.
                 // The exception is handled with the winner thread
                 task_group_context stub_context;
-                wait(m_storage.my_wait_context, stub_context);
+                wait(m_storage.m_wait_context, stub_context);
             });
         });
     }
 
 };
 
-class runner_lifetime_checker : no_copy {
-    once_runner& m_runner;
-public:
-    runner_lifetime_checker(once_runner& r) : m_runner(r) {
-        m_runner.increase_ref();
-    }
-    ~runner_lifetime_checker() {
-        m_runner.decrease_ref();
-    }
-};
-
 class collaborative_once_flag : no_copy {
     enum state {uninitialized, done};
-    std::atomic<std::uintptr_t> my_state{ state::uninitialized };
+    std::atomic<std::uintptr_t> m_state{ state::uninitialized };
 
     template <typename Fn, typename... Args>
     friend void collaborative_call_once(collaborative_once_flag& flag, Fn&& f, Args&&... args);
 
     template <typename Fn>
     void do_collaborative_call_once(Fn&& f) {
-        std::uintptr_t expected = my_state.load(std::memory_order_acquire);
-        once_runner local_runner;
+        std::uintptr_t expected = m_state.load(std::memory_order_acquire);
+        once_runner shared_runner;
 
         while (expected != state::done) {
-            if (expected == state::uninitialized && my_state.compare_exchange_strong(expected, reinterpret_cast<std::uintptr_t>(&local_runner))) {
+            if (expected == state::uninitialized && m_state.compare_exchange_strong(expected, shared_runner.to_bits())) {
                 // winner thread
-                local_runner.make_runner();
+                shared_runner.init();
 
-                auto local_expected = reinterpret_cast<std::uintptr_t>(&local_runner);
+                expected = shared_runner.to_bits();
 
                 try_call([&] {
-                    local_runner.run_once(std::forward<Fn>(f));
+                    shared_runner.run_once(std::forward<Fn>(f));
                 }).on_exception([&] {
-                    while (!my_state.compare_exchange_strong(local_expected, state::uninitialized)) {
-                        local_expected = reinterpret_cast<std::uintptr_t>(&local_runner);
+                    while (!m_state.compare_exchange_strong(expected, state::uninitialized)) {
+                        expected = shared_runner.to_bits();
                     }
                 });
 
-                while (!my_state.compare_exchange_strong(local_expected, state::done)) {
-                    local_expected = reinterpret_cast<std::uintptr_t>(&local_runner);
+                while (!m_state.compare_exchange_strong(expected, state::done)) {
+                    expected = shared_runner.to_bits();
                 }
                 
                 break;
@@ -177,16 +182,16 @@ class collaborative_once_flag : no_copy {
                 // moonlighting thread
                 do {
                     auto max_value = expected | (max_nfs_size-1);
-                    expected = spin_wait_while_eq(my_state, max_value);
+                    expected = spin_wait_while_eq(m_state, max_value);
                 // "expected > state::done" prevents storing values, when state is uninitialized
-                } while (expected > state::done && !my_state.compare_exchange_strong(expected, expected + 1));
+                } while (expected > state::done && !m_state.compare_exchange_strong(expected, expected + 1));
 
-                if (auto runner = reinterpret_cast<once_runner*>(maskoff_pointer(expected))) {
+                if (auto runner = once_runner::from_bits(expected & (std::size_t(-1) << bit_count))) {
 
-                    runner_lifetime_checker hold_ref_count{*runner};
-                    my_state.fetch_sub(1);
+                    once_runner::lifetime_tracker hold_ref_count{*runner};
+                    m_state.fetch_sub(1);
 
-                    runner->wait_for_init();
+                    runner->wait_for_readiness();
 
                     // The moonlighting threads are not expected to handle exceptions from user functor.
                     // Therefore, no exception is expected from assist().
@@ -200,10 +205,14 @@ class collaborative_once_flag : no_copy {
 
 template <typename Fn, typename... Args>
 void collaborative_call_once(collaborative_once_flag& flag, Fn&& fn, Args&&... args) {
+#if __TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_BROKEN
     // Using stored_pack to suppress bug in GCC 4.8
     // with parameter pack expansion in lambda
     auto stored_pack = save_pack(std::forward<Args>(args)...);
     auto func = [&] { call(std::forward<Fn>(fn), stored_pack); };
+#else
+    auto func = [&] { fn(std::forward<Args>(args)...); };
+#endif
     flag.do_collaborative_call_once(func);
 }
 
