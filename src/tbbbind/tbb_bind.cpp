@@ -41,6 +41,24 @@
 #define assertion_hwloc_wrapper(command, ...) \
         __TBB_ASSERT_EX( (command(__VA_ARGS__)) >= 0, "Error occurred during call to hwloc API.");
 
+void print_affinity(const hwloc_bitmap_t& bitmap) {
+    char buffer[256];
+    hwloc_bitmap_snprintf(buffer, 256, bitmap);
+    printf("Affinity is: %s\n", buffer);
+}
+
+void report_binding() {
+    GROUP_AFFINITY aff;
+    memset(&aff, 0, sizeof(aff));
+    DWORD_PTR process_mask = 0, sys_mask = 0;
+
+    if (!GetProcessAffinityMask(GetCurrentProcess(), &process_mask, &sys_mask))
+        printf("GetProcessAffinityMask() failed %u\n", (unsigned) GetLastError());
+    if (!GetThreadGroupAffinity(GetCurrentThread(), &aff))
+        printf("GetThreadGroupAffinity() failed %u\n", (unsigned) GetLastError());
+    printf("binding is now: thread 0x%llx group %u process 0x%llx\n", aff.Mask, aff.Group, process_mask);
+}
+
 namespace tbb {
 namespace detail {
 namespace r1 {
@@ -85,9 +103,17 @@ private:
         // Parse topology
         if ( hwloc_topology_init( &topology ) == 0 ) {
             initialization_state = topology_allocated;
+
+            if ( groups_num == 1 && hwloc_topology_set_flags(topology,
+                    HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM |
+                    HWLOC_TOPOLOGY_FLAG_RESTRICT_TO_BINDING) != 0) {
+                return;
+            }
+            report_binding();
             if ( hwloc_topology_load( topology ) == 0 ) {
                 initialization_state = topology_loaded;
             }
+            report_binding();
         }
         if ( initialization_state != topology_loaded )
             return;
@@ -103,6 +129,12 @@ private:
             assertion_hwloc_wrapper(hwloc_get_cpubind, topology, process_cpu_affinity_mask, 0);
             hwloc_cpuset_to_nodeset(topology, process_cpu_affinity_mask, process_node_affinity_mask);
         }
+
+        printf("groups numbed is %d\n", (int)groups_num);
+        printf("process cpu affinity: ");
+        print_affinity(process_cpu_affinity_mask);
+        printf("process nodes affinity: ");
+        print_affinity(process_node_affinity_mask);
 
         number_of_processors_groups = groups_num;
     }
@@ -135,7 +167,7 @@ private:
             numa_indexes_list.resize(numa_nodes_count);
             hwloc_obj_t node_buffer;
             hwloc_bitmap_foreach_begin(i, process_node_affinity_mask) {
-                node_buffer = hwloc_get_obj_by_type(topology, HWLOC_OBJ_NUMANODE, i);
+                node_buffer = hwloc_get_numanode_obj_by_os_index(topology, i);
                 numa_indexes_list[counter] = static_cast<int>(node_buffer->logical_index);
 
                 if ( numa_indexes_list[counter] > max_numa_index ) {
@@ -150,7 +182,7 @@ private:
             numa_affinity_masks_list.resize(max_numa_index + 1);
             int index = 0;
             hwloc_bitmap_foreach_begin(i, process_node_affinity_mask) {
-                node_buffer = hwloc_get_obj_by_type(topology, HWLOC_OBJ_NUMANODE, i);
+                node_buffer = hwloc_get_numanode_obj_by_os_index(topology, i);
                 index = static_cast<int>(node_buffer->logical_index);
 
                 hwloc_cpuset_t& current_mask = numa_affinity_masks_list[index];

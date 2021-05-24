@@ -38,7 +38,27 @@
 
 #if (_WIN32 || _WIN64) && __TBB_HWLOC_VALID_ENVIRONMENT
 #include <windows.h>
-int get_processors_groups_count() { return GetActiveProcessorGroupCount(); }
+
+int get_processors_groups_count() {
+    SYSTEM_INFO si;
+    GetNativeSystemInfo(&si);
+    DWORD_PTR pam, sam, m = 1;
+    GetProcessAffinityMask( GetCurrentProcess(), &pam, &sam );
+    int nproc = 0;
+    for ( std::size_t i = 0; i < sizeof(DWORD_PTR) * CHAR_BIT; ++i, m <<= 1 ) {
+        if ( pam & m )
+            ++nproc;
+    }
+    // Setting up processor groups in case the process does not restrict affinity mask and more than one processor group is present
+    if ( nproc == (int)si.dwNumberOfProcessors  ) {
+        // The process does not have restricting affinity mask and multiple processor groups are possible
+        return (int)GetActiveProcessorGroupCount();
+    } else {
+        return 1;
+    }
+}
+
+// int get_processors_groups_count() { return GetActiveProcessorGroupCount(); }
 #else
 int get_processors_groups_count() { return 1; }
 #endif
@@ -153,6 +173,13 @@ private:
 
     system_info() {
         hwloc_require_ex(hwloc_topology_init, &topology);
+        if ( get_processors_groups_count() == 1 ) {
+            REQUIRE(
+                hwloc_topology_set_flags(topology,
+                    HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM |
+                    HWLOC_TOPOLOGY_FLAG_RESTRICT_TO_BINDING) == 0
+            );
+        }
         hwloc_require_ex(hwloc_topology_load, topology);
 
         if ( get_processors_groups_count() > 1 ) {
