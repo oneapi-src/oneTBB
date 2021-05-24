@@ -140,8 +140,10 @@ TBBROOT=$(get_script_path "${vars_script_name:-}")/..
 
 TBB_TARGET_ARCH="intel64"
 
-if [ ! -z "$SETVARS_ARGS" ] && [ "$SETVARS_CALL" "==" "1" ]; then
-    for arg in "$SETVARS_ARGS"; do
+# shellcheck disable=2236
+# shellcheck disable=2154
+if [ ! -z "$SETVARS_ARGS" ] && [ "$SETVARS_CALL" "=" "1" ]; then
+    for arg in $SETVARS_ARGS; do
         case "$arg" in
         (intel64|ia32)
             TBB_TARGET_ARCH="${arg}"
@@ -150,7 +152,7 @@ if [ ! -z "$SETVARS_ARGS" ] && [ "$SETVARS_CALL" "==" "1" ]; then
         esac
     done
 elif [ ! -z "$SETVARS_ARGS" ]; then
-        for arg in "$SETVARS_ARGS"; do
+        for arg in $SETVARS_ARGS; do
         case "$arg" in
             (intel64|ia32)
             TBB_TARGET_ARCH="${arg}"
@@ -178,7 +180,7 @@ TBB_LIB_DIR="$TBB_TARGET_ARCH/gcc4.8"
 if [ -e "$TBBROOT/lib/$TBB_LIB_DIR/$TBB_LIB_NAME" ]; then
     export TBBROOT
 
-    LIBRARY_PATH=$(prepend_path "${TBBROOT}/lib"/$TBB_LIB_DIR "${LIBRARY_PATH:-}") ; export LIBRARY_PATH
+    LIBRARY_PATH=$(prepend_path "${TBBROOT}/lib/$TBB_LIB_DIR" "${LIBRARY_PATH:-}") ; export LIBRARY_PATH
     LD_LIBRARY_PATH=$(prepend_path "${TBBROOT}/lib/$TBB_LIB_DIR" "${LD_LIBRARY_PATH:-}") ; export LD_LIBRARY_PATH
     CPATH=$(prepend_path "${TBBROOT}/include" "${CPATH:-}") ; export CPATH
     CMAKE_PREFIX_PATH=$(prepend_path "${TBBROOT}" "${CMAKE_PREFIX_PATH:-}") ; export CMAKE_PREFIX_PATH
