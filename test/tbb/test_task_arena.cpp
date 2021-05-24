@@ -1433,16 +1433,23 @@ void TestDefaultCreatedWorkersAmount() {
         REQUIRE_MESSAGE(idx == 0, "more than 1 thread is going to reset TLS");
         utils::SpinBarrier barrier(threads);
         ResetTLS();
-        for (int trail = 0; trail < 10; ++trail) {
-            tbb::parallel_for(0, threads, [threads, &barrier](int) {
-                REQUIRE_MESSAGE(threads == tbb::this_task_arena::max_concurrency(), "concurrency level is not equal specified threadnum");
-                REQUIRE_MESSAGE(tbb::this_task_arena::current_thread_index() < tbb::this_task_arena::max_concurrency(), "amount of created threads is more than specified by default");
-                local_id.local() = 1;
-                // If there is more threads than expected, 'sleep' gives a chance to join unexpected threads.
-                utils::Sleep(1);
-                barrier.wait();
+        for (auto blocked : { false, true }) {
+            for (int trail = 0; trail < (blocked ? 10 : 10000); ++trail) {
+                tbb::parallel_for(0, threads, [threads, blocked, &barrier](int) {
+                    CHECK_FAST_MESSAGE(threads == tbb::this_task_arena::max_concurrency(), "concurrency level is not equal specified threadnum");
+                    CHECK_FAST_MESSAGE(tbb::this_task_arena::current_thread_index() < tbb::this_task_arena::max_concurrency(), "amount of created threads is more than specified by default");
+                    local_id.local() = 1;
+                    if (blocked) {
+                        // If there is more threads than expected, 'sleep' gives a chance to join unexpected threads.
+                        utils::Sleep(1);
+                        barrier.wait();
+                    }
                 }, tbb::simple_partitioner());
-            REQUIRE_MESSAGE(local_id.size() == size_t(threads), "amount of created threads is not equal to default num");
+                REQUIRE_MESSAGE(local_id.size() <= size_t(threads), "amount of created threads is not equal to default num");
+                if (blocked) {
+                    REQUIRE_MESSAGE(local_id.size() == size_t(threads), "amount of created threads is not equal to default num");
+                }
+            }
         }
     });
 }
@@ -1742,7 +1749,6 @@ struct enqueue_test_helper {
 };
 
 //--------------------------------------------------//
-
 //! Test for task arena in concurrent cases
 //! \brief \ref requirement
 TEST_CASE("Test for concurrent functionality") {
