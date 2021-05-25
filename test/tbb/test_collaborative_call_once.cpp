@@ -177,7 +177,7 @@ TEST_CASE("only calls once 2") {
 //! Test for correct handling move-only arguments
 //! \brief \ref interface \ref requirement
 TEST_CASE("only calls once - move only argument") {
-    constexpr int value = 42;
+    const int value = 42;
     int ready{0};
 
     auto func = [&ready, &value] (move_only_type other) {
