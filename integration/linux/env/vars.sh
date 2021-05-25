@@ -140,9 +140,12 @@ TBBROOT=$(get_script_path "${vars_script_name:-}")/..
 
 TBB_TARGET_ARCH="intel64"
 
-# shellcheck disable=2236
+if [ -n "${ZSH_VERSION:-}" ]; then
+    setopt sh_word_split
+fi
+
 # shellcheck disable=2154
-if [ ! -z "$SETVARS_ARGS" ] && [ "$SETVARS_CALL" "=" "1" ]; then
+if [ -n "$SETVARS_ARGS" ] && [ "$SETVARS_CALL" = "1" ]; then
     for arg in $SETVARS_ARGS; do
         case "$arg" in
         (intel64|ia32)
@@ -151,7 +154,7 @@ if [ ! -z "$SETVARS_ARGS" ] && [ "$SETVARS_CALL" "=" "1" ]; then
         (*) ;;
         esac
     done
-elif [ ! -z "$SETVARS_ARGS" ]; then
+elif [ -n "$SETVARS_ARGS" ]; then
         for arg in $SETVARS_ARGS; do
         case "$arg" in
             (intel64|ia32)
@@ -172,6 +175,10 @@ else
         (*) ;;
         esac
     done
+fi
+
+if [ -n "${ZSH_VERSION:-}" ]; then
+    unsetopt sh_word_split
 fi
 
 TBB_LIB_NAME="libtbb.so.12"
