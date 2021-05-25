@@ -87,7 +87,7 @@ using T10 = make_tuple < T9, MyMessageKeyWithBrokenKey<std::string, size_t>>;
 // the compiler might generate huge object file in debug (>64M)
 #define TEST_CASE_TEMPLATE_N_ARGS(dec) TEST_CASE_TEMPLATE(dec, T, T2, T3, T4, T5, T6, T7, T8, T9, T10)
 #else
-#define TEST_CASE_TEMPLATE_N_ARGS(dec) TEST_CASE_TEMPLATE(dec, T, T2, T5)
+#define TEST_CASE_TEMPLATE_N_ARGS(dec) TEST_CASE_TEMPLATE(dec, T, T2, T10)
 #endif
 
 //! Serial test with different tuple sizes
