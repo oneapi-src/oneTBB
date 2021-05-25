@@ -26,7 +26,10 @@
 #include <cstddef>
 
 #ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include <intrin.h>
+#include <windows.h> // SwitchToThread()
 #ifdef _MSC_VER
 #pragma intrinsic(__rdtsc)
 #endif
@@ -56,6 +59,10 @@ inline namespace d0 {
 static inline void yield() {
     int err = sched_yield();
     __TBB_ASSERT_EX(err == 0, "sched_yiled has failed");
+}
+#elif __TBBMALLOC_BUILD && _WIN32
+static inline void yield() {
+    SwitchToThread();
 }
 #else
 using std::this_thread::yield;
