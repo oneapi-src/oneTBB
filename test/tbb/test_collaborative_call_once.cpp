@@ -35,8 +35,6 @@
 #include "tbb/parallel_reduce.h"
 #include "tbb/task_arena.h"
 
-#include <mutex>
-
 //! \file test_collaborative_call_once.cpp
 //! \brief Tests for [algorithms.collaborative_call_once] functionality
 
@@ -62,6 +60,13 @@ struct sum_functor {
         (*this)(std::forward<Args>(args)...);
     }
 };
+
+struct move_only_type {
+    const int* my_pointer;
+    move_only_type(move_only_type && other): my_pointer(other.my_pointer){ other.my_pointer=nullptr; }
+    explicit move_only_type(const int* value): my_pointer(value) {}
+};
+
 
 class call_once_exception : public std::exception {};
 
@@ -137,7 +142,7 @@ TEST_CASE("only calls once 1") {
     {
         increment_functor f;
 
-        call_once_threads(std::thread::hardware_concurrency(), f);
+        call_once_threads(utils::get_platform_max_threads(), f);
 
         REQUIRE(f.ct == 1);
     }
@@ -163,9 +168,39 @@ TEST_CASE("only calls once 2") {
     {
         sum_functor f;
 
-        call_once_threads(std::thread::hardware_concurrency(), f, 0, -1, -5);
+        call_once_threads(utils::get_platform_max_threads(), f, 0, -1, -5);
 
         REQUIRE(f.sum == -6);
+    }
+}
+
+//! Test for correct handling move-only arguments
+//! \brief \ref interface \ref requirement
+TEST_CASE("only calls once - move only argument") {
+    constexpr int value = 42;
+    int ready{0};
+
+    auto func = [&ready, &value] (move_only_type other) {
+        REQUIRE(other.my_pointer == &value);
+        ready++;
+    };
+
+    {
+        move_only_type mv(&value);
+
+        call_once_in_parallel_for(512, func, std::move(mv));
+
+        REQUIRE(ready == 1);
+        REQUIRE(mv.my_pointer == nullptr);
+    }
+
+    {
+        move_only_type mv(&value);
+
+        call_once_threads(utils::get_platform_max_threads(), func, std::move(mv));
+
+        REQUIRE(ready == 2);
+        REQUIRE(mv.my_pointer == nullptr);
     }
 }
 
@@ -283,7 +318,7 @@ TEST_CASE("handles exceptions - stress test") {
 //! Test for multiple help from moonlighting threads
 //! \brief \ref interface \ref requirement
 TEST_CASE("multiple help - parallel_for") {
-    std::size_t num_threads = tbb::this_task_arena::max_concurrency();
+    std::size_t num_threads = utils::get_platform_max_threads();
     utils::SpinBarrier barrier{num_threads};
 
     tbb::collaborative_once_flag flag;
@@ -301,7 +336,7 @@ TEST_CASE("multiple help - parallel_for") {
 //! Test for multiple help from moonlighting threads
 //! \brief \ref interface \ref requirement
 TEST_CASE("multiple help - threads") {
-    std::size_t num_threads = tbb::this_task_arena::max_concurrency();
+    std::size_t num_threads = utils::get_platform_max_threads();
     utils::SpinBarrier barrier{num_threads};
 
     tbb::collaborative_once_flag flag;
@@ -321,6 +356,42 @@ TEST_CASE("multiple help - threads") {
     for (auto& thread : thread_pool) {
         thread.join();
     }
+}
+
+//! Test for collaborative work from different arenas
+//! \brief \ref interface \ref requirement
+TEST_CASE("multiple arenas") {
+    std::size_t num_threads = utils::get_platform_max_threads();
+    utils::SpinBarrier barrier(num_threads);
+    tbb::task_arena a1(num_threads), a2(num_threads);
+
+    tbb::collaborative_once_flag flag;
+    for (std::size_t i = 0; i < num_threads - 1; ++i) {
+        a1.enqueue([&] {
+            barrier.wait();
+            barrier.wait();
+
+            tbb::collaborative_call_once(flag, [] {
+                FAIL("Unreachable code. collaborative_once_flag must be already initialized at this moment");
+            });
+        });
+    }
+
+    barrier.wait();
+
+    a2.execute([&] {
+        utils::ConcurrencyTracker ct;
+        tbb::parallel_for<std::size_t>(0, num_threads, [&](std::size_t) {
+            CHECK(utils::ConcurrencyTracker::PeakParallelism() == 1);
+        });
+        tbb::collaborative_call_once(flag, [&] {
+            barrier.wait();
+            tbb::parallel_for<std::size_t>(0, num_threads, [&](std::size_t) {
+                barrier.wait();
+            });
+        });
+    });
+
 }
 
 using FibBuffer = std::vector<std::pair<tbb::collaborative_once_flag, std::uint64_t>>;

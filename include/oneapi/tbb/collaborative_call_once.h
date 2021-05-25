@@ -63,19 +63,19 @@ class alignas(max_nfs_size) once_runner {
     class lifetime_tracker : no_copy {
         once_runner& m_runner;
     public:
-    lifetime_tracker(once_runner& r) : m_runner(r) {
-        m_runner.increase_ref();
-    }
-    ~lifetime_tracker() {
-        m_runner.decrease_ref();
-    }
-};
+        lifetime_tracker(once_runner& r) : m_runner(r) {
+            m_runner.increase_ref();
+        }
+        ~lifetime_tracker() {
+            m_runner.decrease_ref();
+        }
+    };
 
-    std::atomic<std::int64_t> ref_count{0};
+    std::atomic<std::int64_t> m_ref_count{0};
     std::atomic<bool> is_ready{false};
 
-    // Storage with task_arena and contexts must be initialized only by winner thread
-    // by calling make_runner() method
+    // Storage with task_arena and wait_context must be initialized only by winner thread
+    // by calling init() method
     union {
         storage_t m_storage;
     };
@@ -87,15 +87,15 @@ class alignas(max_nfs_size) once_runner {
         r1::isolate_within_arena(delegate, reinterpret_cast<std::intptr_t>(this));
     }
 
-    void increase_ref() { ref_count++; }
+    void increase_ref() { m_ref_count++; }
 
-    void decrease_ref() { ref_count--; }
+    void decrease_ref() { m_ref_count--; }
 
 public:
     once_runner() {}
 
     ~once_runner() {
-        spin_wait_while(ref_count, [&](std::int64_t value) { return value > 0; }, std::memory_order_acquire);
+        spin_wait_while(m_ref_count, [&](std::int64_t value) { return value > 0; }, std::memory_order_acquire);
         if (is_ready.load(std::memory_order_relaxed)) {
             m_storage.~storage_t();
         }
@@ -156,25 +156,24 @@ class collaborative_once_flag : no_copy {
     template <typename Fn>
     void do_collaborative_call_once(Fn&& f) {
         std::uintptr_t expected = m_state.load(std::memory_order_acquire);
-        once_runner shared_runner;
+        once_runner runner;
 
         while (expected != state::done) {
-            if (expected == state::uninitialized && m_state.compare_exchange_strong(expected, shared_runner.to_bits())) {
+            if (expected == state::uninitialized && m_state.compare_exchange_strong(expected, runner.to_bits())) {
                 // winner thread
-                shared_runner.init();
+                runner.init();
 
-                expected = shared_runner.to_bits();
-
+                expected = runner.to_bits();
                 try_call([&] {
-                    shared_runner.run_once(std::forward<Fn>(f));
+                    runner.run_once(std::forward<Fn>(f));
                 }).on_exception([&] {
                     while (!m_state.compare_exchange_strong(expected, state::uninitialized)) {
-                        expected = shared_runner.to_bits();
+                        expected = runner.to_bits();
                     }
                 });
 
                 while (!m_state.compare_exchange_strong(expected, state::done)) {
-                    expected = shared_runner.to_bits();
+                    expected = runner.to_bits();
                 }
                 
                 break;
@@ -186,16 +185,15 @@ class collaborative_once_flag : no_copy {
                 // "expected > state::done" prevents storing values, when state is uninitialized
                 } while (expected > state::done && !m_state.compare_exchange_strong(expected, expected + 1));
 
-                if (auto runner = once_runner::from_bits(expected & (std::size_t(-1) << bit_count))) {
-
-                    once_runner::lifetime_tracker hold_ref_count{*runner};
+                if (auto shared_runner = once_runner::from_bits(expected & (std::size_t(-1) << bit_count))) {
+                    once_runner::lifetime_tracker hold_ref_count{*shared_runner};
                     m_state.fetch_sub(1);
 
-                    runner->wait_for_readiness();
+                    shared_runner->wait_for_readiness();
 
                     // The moonlighting threads are not expected to handle exceptions from user functor.
                     // Therefore, no exception is expected from assist().
-                    runner->assist();
+                    shared_runner->assist();
                 }
             }
         }
