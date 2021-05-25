@@ -60,17 +60,6 @@ class alignas(max_nfs_size) once_runner {
         Func& m_func;
     };
 
-    class lifetime_tracker : no_copy {
-        once_runner& m_runner;
-    public:
-        lifetime_tracker(once_runner& r) : m_runner(r) {
-            m_runner.increase_ref();
-        }
-        ~lifetime_tracker() {
-            m_runner.decrease_ref();
-        }
-    };
-
     std::atomic<std::int64_t> m_ref_count{0};
     std::atomic<bool> is_ready{false};
 
@@ -92,6 +81,17 @@ class alignas(max_nfs_size) once_runner {
     void decrease_ref() { m_ref_count--; }
 
 public:
+    class lifetime_tracker : no_copy {
+        once_runner& m_runner;
+    public:
+        lifetime_tracker(once_runner& r) : m_runner(r) {
+            m_runner.increase_ref();
+        }
+        ~lifetime_tracker() {
+            m_runner.decrease_ref();
+        }
+    };
+    
     once_runner() {}
 
     ~once_runner() {
@@ -207,7 +207,7 @@ void collaborative_call_once(collaborative_once_flag& flag, Fn&& fn, Args&&... a
     // Using stored_pack to suppress bug in GCC 4.8
     // with parameter pack expansion in lambda
     auto stored_pack = save_pack(std::forward<Args>(args)...);
-    auto func = [&] { call(std::forward<Fn>(fn), stored_pack); };
+    auto func = [&] { call(std::forward<Fn>(fn), std::move(stored_pack)); };
 #else
     auto func = [&] { fn(std::forward<Args>(args)...); };
 #endif

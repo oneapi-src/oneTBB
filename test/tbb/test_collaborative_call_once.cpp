@@ -71,19 +71,19 @@ struct move_only_type {
 class call_once_exception : public std::exception {};
 
 template<typename Fn, typename... Args>
-void call_once_in_for_loop(std::size_t N, Fn& body, Args&&... args) {
+void call_once_in_for_loop(std::size_t N, Fn&& body, Args&&... args) {
     tbb::collaborative_once_flag flag;
     for (std::size_t i = 0; i < N; ++i) {
-        tbb::collaborative_call_once(flag, body, std::forward<Args>(args)...);
+        tbb::collaborative_call_once(flag, std::forward<Fn>(body), std::forward<Args>(args)...);
     }
 }
 
 template<typename Fn, typename... Args>
-void call_once_in_parallel_for(std::size_t N, Fn& body, Args&&... args) {
+void call_once_in_parallel_for(std::size_t N, Fn&& body, Args&&... args) {
     tbb::collaborative_once_flag flag;
 #if __TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_BROKEN
     auto stored_pack = tbb::detail::d0::save_pack(std::forward<Args>(args)...);
-    auto func = [&] { tbb::detail::d0::call(body, stored_pack); };
+    auto func = [&] { tbb::detail::d0::call(std::forward<Fn>(body), std::move(stored_pack)); };
 #endif // __TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_BROKEN
 
     tbb::parallel_for(tbb::blocked_range<size_t>(0, N), [&](const tbb::blocked_range<size_t>& range) {
@@ -91,20 +91,20 @@ void call_once_in_parallel_for(std::size_t N, Fn& body, Args&&... args) {
 #if __TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_BROKEN
             tbb::collaborative_call_once(flag, func);
 #else
-            tbb::collaborative_call_once(flag, body, std::forward<Args>(args)...);
+            tbb::collaborative_call_once(flag, std::forward<Fn>(body), std::forward<Args>(args)...);
 #endif //__TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_BROKEN
         }
     });
 }
 
 template<typename Fn, typename... Args>
-void call_once_threads(std::size_t N, Fn& body, Args&&... args) {
+void call_once_threads(std::size_t N, Fn&& body, Args&&... args) {
     tbb::collaborative_once_flag flag;
     std::vector<std::thread> threads;
 
 #if __TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_BROKEN
     auto stored_pack = tbb::detail::d0::save_pack(std::forward<Args>(args)...);
-    auto func = [&] { tbb::detail::d0::call(body, stored_pack); };
+    auto func = [&] { tbb::detail::d0::call(std::forward<Fn>(body), std::move(stored_pack)); };
 #endif // __TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_BROKEN
 
     for (std::size_t i = 0; i < N; ++i)
@@ -113,7 +113,7 @@ void call_once_threads(std::size_t N, Fn& body, Args&&... args) {
 #if __TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_BROKEN
             tbb::collaborative_call_once(flag, func);
 #else
-            tbb::collaborative_call_once(flag, body, std::forward<Args>(args)...);
+            tbb::collaborative_call_once(flag, std::forward<Fn>(body), std::forward<Args>(args)...);
 #endif // __TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_BROKEN
         }));
     }
