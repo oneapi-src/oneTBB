@@ -450,7 +450,7 @@ void test_try_put_without_successors() {
     for (; i <= try_put_num; i++)
         bn.try_put(i);
 
-    std::atomic<std::size_t> counter{0};
+    std::atomic<int> counter{0};
     tbb::flow::function_node<int, int> fn(g, tbb::flow::unlimited,
         [&](int input) {
             counter += input;

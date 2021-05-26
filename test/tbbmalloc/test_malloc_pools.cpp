@@ -283,7 +283,7 @@ void TestCrossThreadPools()
         CrossThreadRun::initBarrier(p);
         CrossThreadRun::init(p);
         utils::NativeParallelFor( p, CrossThreadRun() );
-        for (size_t i=0; i<p; i++)
+        for (int i=0; i<p; i++)
             REQUIRE_MESSAGE(!poolSpace[i].regions, "Region leak detected");
         CrossThreadRun::destroy();
     }
