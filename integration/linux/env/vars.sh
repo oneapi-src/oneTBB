@@ -140,32 +140,11 @@ TBBROOT=$(get_script_path "${vars_script_name:-}")/..
 
 TBB_TARGET_ARCH="intel64"
 
-if [ -n "${ZSH_VERSION:-}" ]; then
-    setopt sh_word_split
-fi
-
-# shellcheck disable=2154
-if [ -n "$SETVARS_ARGS" ] && [ "$SETVARS_CALL" = "1" ]; then
-    for arg in $SETVARS_ARGS; do
-        case "$arg" in
-        (intel64|ia32)
-            TBB_TARGET_ARCH="${arg}"
-            ;;
-        (*) ;;
-        esac
-    done
-elif [ -n "$SETVARS_ARGS" ]; then
-        for arg in $SETVARS_ARGS; do
-        case "$arg" in
-            (intel64|ia32)
-            TBB_TARGET_ARCH="${arg}"
-            ;;
-            (*)
-            >&2 echo "ERROR: Unknown argument $arg"
-            return 255 2>/dev/null || exit 255
-            ;;
-        esac
-    done
+if [ -n "${SETVARS_ARGS:-}" ]; then
+  arg_ia32="$(expr "${SETVARS_ARGS:-}" : '^.*[:space:]*\(ia32\)[:space:]*')"
+  if [ -n "${arg_ia32:-}" ]; then
+    TBB_TARGET_ARCH="ia32"
+  fi
 else
     for arg do
         case "$arg" in
@@ -175,10 +154,6 @@ else
         (*) ;;
         esac
     done
-fi
-
-if [ -n "${ZSH_VERSION:-}" ]; then
-    unsetopt sh_word_split
 fi
 
 TBB_LIB_NAME="libtbb.so.12"
