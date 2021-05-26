@@ -138,7 +138,7 @@ public:
     }
 
     void assist() noexcept {
-        // Do not join the arena until the winner thread takse the slot
+        // Do not join the arena until the winner thread takes the slot
         wait_for_readiness();
         m_storage.m_arena.execute([&] {
             isolated_execute([&] {
