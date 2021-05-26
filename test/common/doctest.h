@@ -3120,7 +3120,7 @@ typedef timer_large_integer::type ticks_t;
         }
 
     private:
-        // Change inspired by oneTBB : Fix the typo (degrate -> degrade)
+        // Change inspired by oneTBB : Fix the typo (word "degrade")
         // Each thread has a different atomic that it operates on. If more than NumLanes threads
         // use this, some will use the same atomic. So performance will degrade a bit, but still
         // everything will work.
