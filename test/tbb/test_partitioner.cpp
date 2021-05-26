@@ -37,7 +37,7 @@ namespace task_affinity_retention {
 template <typename PerBodyFunc> float test(PerBodyFunc&& body) {
     const std::size_t num_threads = 2 * utils::get_platform_max_threads();
     tbb::global_control concurrency(tbb::global_control::max_allowed_parallelism, num_threads);
-    tbb::task_arena big_arena(num_threads);
+    tbb::task_arena big_arena(static_cast<int>(num_threads));
 
     const std::size_t repeats = 100;
     const std::size_t per_thread_iters = 1000;

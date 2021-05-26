@@ -76,7 +76,7 @@ public:
 #endif
 
 //! Test OpenMP loop around TBB loop
-void OpenMP_TBB_Convolve( data_type c[], const data_type a[], int m, const data_type b[], int n, std::size_t p ) {
+void OpenMP_TBB_Convolve( data_type c[], const data_type a[], int m, const data_type b[], int n, int p ) {
     utils::suppress_unused_warning(p);
 #pragma omp parallel num_threads(p)
     {
@@ -97,9 +97,9 @@ class OuterBody: utils::NoAssign {
     data_type* my_c;
     const int m;
     const int n;
-    const std::size_t p;
+    const int p;
 public:
-    OuterBody( data_type c[], const data_type a[], int m_, const data_type b[], int n_, std::size_t p_ ) :
+    OuterBody( data_type c[], const data_type a[], int m_, const data_type b[], int n_, int p_ ) :
         my_a(a), my_b(b), my_c(c), m(m_), n(n_), p(p_)
     {}
     void operator()( const tbb::blocked_range<int>& range ) const {
@@ -116,7 +116,7 @@ public:
 };
 
 //! Test TBB loop around OpenMP loop
-void TBB_OpenMP_Convolve( data_type c[], const data_type a[], int m, const data_type b[], int n, std::size_t p ) {
+void TBB_OpenMP_Convolve( data_type c[], const data_type a[], int m, const data_type b[], int n, int p ) {
     tbb::parallel_for(tbb::blocked_range<int>(0, m + n - 1, 10), OuterBody(c, a, m, b, n, p));
 }
 
@@ -140,7 +140,7 @@ data_type A[M], B[N];
 data_type expected[M+N], actual[M+N];
 
 template <class Func>
-void RunTest( Func F, int m, int n, std::size_t p) {
+void RunTest( Func F, int m, int n, int p) {
     tbb::global_control limit(tbb::global_control::max_allowed_parallelism, p);
     memset(actual, -1, (m + n) * sizeof(data_type));
     F(actual, A, m, B, n, p);
@@ -152,11 +152,11 @@ TEST_CASE("Testing oneTBB with OpenMP") {
 #if __INTEL_COMPILER
     TestNumThreads(); // Testing initialization-related behavior; must be the first
 #endif // __INTEL_COMPILER
-    for (std::size_t p = utils::MinThread; p <= utils::MaxThread; ++p) {
-        for (std::size_t m = 1; m <= M; m *= 17) {
-            for (std::size_t n = 1; n <= N; n *= 13) {
-                for (std::size_t i = 0; i < m; ++i) A[i] = data_type(1 + i / 5);
-                for (std::size_t i = 0; i < n; ++i) B[i] = data_type(1 + i / 7);
+    for (int p = static_cast<int>(utils::MinThread); p <= static_cast<int>(utils::MaxThread); ++p) {
+        for (int m = 1; m <= M; m *= 17) {
+            for (int n = 1; n <= N; n *= 13) {
+                for (int i = 0; i < m; ++i) A[i] = data_type(1 + i / 5);
+                for (int i = 0; i < n; ++i) B[i] = data_type(1 + i / 7);
                 SerialConvolve( expected, A, m, B, n );
                 RunTest( OpenMP_TBB_Convolve, m, n, p );
                 RunTest( TBB_OpenMP_Convolve, m, n, p );

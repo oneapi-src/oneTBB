@@ -1477,7 +1477,8 @@ void TestDefaultWorkersLimit() {
 
 void ExceptionInExecute() {
     std::size_t thread_number = utils::get_platform_max_threads();
-    tbb::task_arena test_arena(thread_number / 2, thread_number / 2);
+    int arena_concurrency = static_cast<int>(thread_number) / 2;
+    tbb::task_arena test_arena(arena_concurrency, arena_concurrency);
 
     std::atomic<int> canceled_task{};
 
@@ -1861,7 +1862,7 @@ TEST_CASE("Workers oversubscription") {
     std::size_t num_threads = utils::get_platform_max_threads();
     tbb::enumerable_thread_specific<bool> ets;
     tbb::global_control gl(tbb::global_control::max_allowed_parallelism, num_threads * 2);
-    tbb::task_arena arena(num_threads * 2);
+    tbb::task_arena arena(static_cast<int>(num_threads) * 2);
 
     utils::SpinBarrier barrier(num_threads * 2);
 

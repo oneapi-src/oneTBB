@@ -21,7 +21,7 @@
 #include "utils.h"
 #include <atomic>
 
-static std::atomic<int> Count;
+static std::atomic<std::size_t> Count;
 
 // A body object for NativeParallelFor
 template <typename RWMutex>
@@ -31,12 +31,12 @@ struct Hammer : utils::NoAssign {
 
     Hammer( RWMutex& m ) : mutex_protecting_count(m) {}
 
-    void operator()( int ) const {
+    void operator()( std::size_t ) const {
         for (int j = 0; j < 10000; ++j) {
             // Acquire for reading
             typename RWMutex::scoped_lock lock(mutex_protecting_count, false);
 
-            int c = Count;
+            std::size_t c = Count;
             utils::doDummyWork(10);
             if (lock.upgrade_to_writer()) {
                 REQUIRE_MESSAGE(c == Count, "Another thread modified Count while holding read lock");

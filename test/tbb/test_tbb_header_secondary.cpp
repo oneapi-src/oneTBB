@@ -21,6 +21,10 @@
 #pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
 #endif
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif // NOMINMAX
+
 #include <exception>
 
 #define CHECK(x) do { if (!(x)) { std::terminate(); } } while (false)
