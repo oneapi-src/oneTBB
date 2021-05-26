@@ -26,10 +26,12 @@
 #include <cstddef>
 
 #ifdef _WIN32
+#include <intrin.h>
+#ifdef __TBBMALLOC_BUILD
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
-#include <intrin.h>
 #include <windows.h> // SwitchToThread()
+#endif
 #ifdef _MSC_VER
 #pragma intrinsic(__rdtsc)
 #endif
@@ -58,9 +60,10 @@ inline namespace d0 {
 #if __TBB_GLIBCXX_THIS_THREAD_YIELD_BROKEN
 static inline void yield() {
     int err = sched_yield();
-    __TBB_ASSERT_EX(err == 0, "sched_yiled has failed");
+    __TBB_ASSERT_EX(err == 0, "sched_yield has failed");
 }
 #elif __TBBMALLOC_BUILD && _WIN32
+// Use Windows API for yield in tbbmalloc to avoid dependency on C++ runtime with some implementations.
 static inline void yield() {
     SwitchToThread();
 }
