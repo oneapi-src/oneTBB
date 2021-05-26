@@ -207,7 +207,7 @@ TEST_CASE("only calls once - move only argument") {
 //! Stress test for functor to be called only once
 //! \brief \ref interface \ref requirement \ref stress
 TEST_CASE("only calls once - stress test") {
-#if TBB_TEST_LOW_WORK_LOAD
+#if TBB_TEST_LOW_WORKLOAD
     constexpr std::size_t N = 32;
 #elif __TBB_x86_32 || __aarch32__
     // Some C++ implementations allocate 8MB stacks for std::thread on 32 bit platforms
@@ -277,7 +277,7 @@ TEST_CASE("handles exceptions - state reset") {
 //! Stress test for collaborative_call_once exception handling
 //! \brief \ref error_guessing \ref stress
 TEST_CASE("handles exceptions - stress test") {
-#if TBB_TEST_LOW_WORK_LOAD
+#if TBB_TEST_LOW_WORKLOAD
     constexpr std::size_t N = 32;
 #elif __TBB_x86_32 || __aarch32__
     // Some C++ implementations allocate 8MB stacks for std::thread on 32 bit platforms
