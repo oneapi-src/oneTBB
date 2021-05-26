@@ -61,7 +61,7 @@ class alignas(max_nfs_size) once_runner {
     };
 
     std::atomic<std::int64_t> m_ref_count{0};
-    std::atomic<bool> is_ready{false};
+    std::atomic<bool> m_is_ready{false};
 
     // Storage with task_arena and wait_context must be initialized only by winner thread
     // by calling init() method
@@ -80,6 +80,14 @@ class alignas(max_nfs_size) once_runner {
 
     void decrease_ref() { m_ref_count--; }
 
+    void init() {
+        new(&m_storage) storage_t();
+    }
+
+    void wait_for_readiness() {
+        spin_wait_while_eq(m_is_ready, false);
+    }
+
 public:
     class lifetime_tracker : no_copy {
         once_runner& m_runner;
@@ -95,19 +103,12 @@ public:
     once_runner() {}
 
     ~once_runner() {
-        spin_wait_while(m_ref_count, [&](std::int64_t value) { return value > 0; }, std::memory_order_acquire);
-        if (is_ready.load(std::memory_order_relaxed)) {
+        spin_wait_until_eq(m_ref_count, 0, std::memory_order_acquire);
+        if (m_is_ready.load(std::memory_order_relaxed)) {
             m_storage.~storage_t();
         }
     }
 
-    void init() {
-        new(&m_storage) storage_t();
-    }
-
-    void wait_for_readiness() {
-        spin_wait_while_eq(is_ready, false);
-    }
 
     std::uintptr_t to_bits() {
         return reinterpret_cast<std::uintptr_t>(this);
@@ -120,6 +121,7 @@ public:
 
     template <typename F>
     void run_once(F&& f) {
+        init();
         m_storage.m_arena.execute([&] {
             isolated_execute([&] {
                 task_group_context context{ task_group_context::bound,
@@ -127,13 +129,17 @@ public:
 
                 function_stack_task<F> t{ std::forward<F>(f), m_storage.m_wait_context };
 
-                is_ready.store(true, std::memory_order_release);
+                // Set the ready flag after entering the execute body to prevent
+                // moonlighting threads from occupying all slots inside the arena.
+                m_is_ready.store(true, std::memory_order_release);
                 execute_and_wait(t, context, m_storage.m_wait_context, context);
             });
         });
     }
 
     void assist() noexcept {
+        // Do not join the arena until the winner thread takse the slot
+        wait_for_readiness();
         m_storage.m_arena.execute([&] {
             isolated_execute([&] {
                 // We do not want to get an exception from user functor on moonlighting threads.
@@ -147,12 +153,20 @@ public:
 };
 
 class collaborative_once_flag : no_copy {
-    enum state {uninitialized, done};
+    enum state : std::uintptr_t { uninitialized, done };
     std::atomic<std::uintptr_t> m_state{ state::uninitialized };
 
     template <typename Fn, typename... Args>
     friend void collaborative_call_once(collaborative_once_flag& flag, Fn&& f, Args&&... args);
 
+    void set_state(std::uintptr_t runner_bits, std::uintptr_t desired) {
+        std::uintptr_t expected = runner_bits;
+        do {
+            expected = runner_bits;
+            spin_wait_until_eq(m_state, expected);
+        } while (!m_state.compare_exchange_strong(expected, desired));
+    }
+    
     template <typename Fn>
     void do_collaborative_call_once(Fn&& f) {
         std::uintptr_t expected = m_state.load(std::memory_order_acquire);
@@ -161,20 +175,14 @@ class collaborative_once_flag : no_copy {
         while (expected != state::done) {
             if (expected == state::uninitialized && m_state.compare_exchange_strong(expected, runner.to_bits())) {
                 // winner thread
-                runner.init();
 
-                expected = runner.to_bits();
                 try_call([&] {
                     runner.run_once(std::forward<Fn>(f));
                 }).on_exception([&] {
-                    while (!m_state.compare_exchange_strong(expected, state::uninitialized)) {
-                        expected = runner.to_bits();
-                    }
+                    set_state(runner.to_bits(), state::uninitialized);
                 });
 
-                while (!m_state.compare_exchange_strong(expected, state::done)) {
-                    expected = runner.to_bits();
-                }
+                set_state(runner.to_bits(), state::done);
                 
                 break;
             } else {
@@ -188,8 +196,6 @@ class collaborative_once_flag : no_copy {
                 if (auto shared_runner = once_runner::from_bits(expected & (std::size_t(-1) << bit_count))) {
                     once_runner::lifetime_tracker hold_ref_count{*shared_runner};
                     m_state.fetch_sub(1);
-
-                    shared_runner->wait_for_readiness();
 
                     // The moonlighting threads are not expected to handle exceptions from user functor.
                     // Therefore, no exception is expected from assist().
