@@ -323,6 +323,11 @@ DOCTEST_MSVC_SUPPRESS_WARNING(26812) // Prefer 'enum class' over 'enum'
 #define DOCTEST_UNUSED __attribute__((unused))
 #define DOCTEST_ALIGNMENT(x) __attribute__((aligned(x)))
 #endif
+// Change inspired by oneTBB : Work-around for the warning: 'routine is both "inline" and "noinline"'
+#if DOCTEST_ICC
+#undef DOCTEST_NOINLINE
+#define DOCTEST_NOINLINE
+#endif // ICC
 
 #ifndef DOCTEST_NORETURN
 #define DOCTEST_NORETURN [[noreturn]]
