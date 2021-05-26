@@ -146,27 +146,27 @@ if [ -n "${SETVARS_ARGS:-}" ]; then
     TBB_TARGET_ARCH="ia32"
   fi
 else
-    for arg do
-        case "$arg" in
-        (intel64|ia32)
-            TBB_TARGET_ARCH="${arg}"
-            ;;
-        (*) ;;
-        esac
-    done
+  for arg do
+    case "$arg" in
+    (intel64|ia32)
+      TBB_TARGET_ARCH="${arg}"
+      ;;
+    (*) ;;
+    esac
+  done
 fi
 
 TBB_LIB_NAME="libtbb.so.12"
 TBB_LIB_DIR="$TBB_TARGET_ARCH/gcc4.8"
 
 if [ -e "$TBBROOT/lib/$TBB_LIB_DIR/$TBB_LIB_NAME" ]; then
-    export TBBROOT
+  export TBBROOT
 
-    LIBRARY_PATH=$(prepend_path "${TBBROOT}/lib/$TBB_LIB_DIR" "${LIBRARY_PATH:-}") ; export LIBRARY_PATH
-    LD_LIBRARY_PATH=$(prepend_path "${TBBROOT}/lib/$TBB_LIB_DIR" "${LD_LIBRARY_PATH:-}") ; export LD_LIBRARY_PATH
-    CPATH=$(prepend_path "${TBBROOT}/include" "${CPATH:-}") ; export CPATH
-    CMAKE_PREFIX_PATH=$(prepend_path "${TBBROOT}" "${CMAKE_PREFIX_PATH:-}") ; export CMAKE_PREFIX_PATH
+  LIBRARY_PATH=$(prepend_path "${TBBROOT}/lib/$TBB_LIB_DIR" "${LIBRARY_PATH:-}") ; export LIBRARY_PATH
+  LD_LIBRARY_PATH=$(prepend_path "${TBBROOT}/lib/$TBB_LIB_DIR" "${LD_LIBRARY_PATH:-}") ; export LD_LIBRARY_PATH
+  CPATH=$(prepend_path "${TBBROOT}/include" "${CPATH:-}") ; export CPATH
+  CMAKE_PREFIX_PATH=$(prepend_path "${TBBROOT}" "${CMAKE_PREFIX_PATH:-}") ; export CMAKE_PREFIX_PATH
 else
-    >&2 echo "ERROR: $TBB_LIB_NAME library does not exist in $TBBROOT/lib/$TBB_LIB_DIR."
-    return 255 2>/dev/null || exit 255
+  >&2 echo "ERROR: $TBB_LIB_NAME library does not exist in $TBBROOT/lib/$TBB_LIB_DIR."
+  return 255 2>/dev/null || exit 255
 fi
