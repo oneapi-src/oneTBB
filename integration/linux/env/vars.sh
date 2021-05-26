@@ -141,7 +141,7 @@ TBBROOT=$(get_script_path "${vars_script_name:-}")/..
 TBB_TARGET_ARCH="intel64"
 
 if [ -n "${SETVARS_ARGS:-}" ]; then
-  tbb_arg_ia32="$(expr "${SETVARS_ARGS:-}" : '^.*[:space:]*\(ia32\)[:space:]*')"
+  tbb_arg_ia32="$(expr "${SETVARS_ARGS:-}" : '^.*\(ia32\)')"
   if [ -n "${tbb_arg_ia32:-}" ]; then
     TBB_TARGET_ARCH="ia32"
   fi
