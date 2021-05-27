@@ -308,7 +308,10 @@ TEST_CASE("handles exceptions - stress test") {
         while(run_again) {
             try {
                 tbb::collaborative_call_once(flag, throwing_func);
-            } catch(const call_once_exception&) {
+            } catch (const call_once_exception&) {
+                // We expecting only const call_once_exception&
+            } catch (...) {
+                FAIL("Unexpected exception");
             }
         }
     });
