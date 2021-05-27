@@ -461,6 +461,8 @@ DOCTEST_MSVC_SUPPRESS_WARNING_POP
 #ifdef DOCTEST_CONFIG_INCLUDE_TYPE_TRAITS
 #include <type_traits>
 #endif // DOCTEST_CONFIG_INCLUDE_TYPE_TRAITS
+// Change inspired by oneTBB : Include <utility> to use std::declval
+#include <utility>
 
 namespace doctest {
 
@@ -1097,7 +1099,9 @@ DOCTEST_CLANG_SUPPRESS_WARNING_WITH_PUSH("-Wunused-comparison")
 // If not it doesn't find the operator or if the operator at global scope is defined after
 // this template, the template won't be instantiated due to SFINAE. Once the template is not
 // instantiated it can look for global operator using normal conversions.
-#define SFINAE_OP(ret,op) decltype(doctest::detail::declval<L>() op doctest::detail::declval<R>(),static_cast<ret>(0))
+// Change inspired by oneTBB : Change doctest::detail::declval to std::declval to prevent error on
+// Intel Compiler 19.1 : too many recursive substitutions of function template signatures
+#define SFINAE_OP(ret,op) decltype(std::declval<L>() op std::declval<R>(),static_cast<ret>(0))
 
 #define DOCTEST_DO_BINARY_EXPRESSION_COMPARISON(op, op_str, op_macro)                              \
     template <typename R>                                                                          \
@@ -1253,12 +1257,16 @@ DOCTEST_MSVC_SUPPRESS_WARNING_POP
 	operator L() const { return lhs; }
 
         // clang-format off
+// Change inspired by oneTBB : Disable checks du to error on Intel Compiler 19.1 compiler:
+// internal error: assertion failed at: "shared/cfe/edgcpfe/exprutil.c", line 5155
+#if !DOCTEST_ICC
         DOCTEST_DO_BINARY_EXPRESSION_COMPARISON(==, " == ", DOCTEST_CMP_EQ) //!OCLINT bitwise operator in conditional
         DOCTEST_DO_BINARY_EXPRESSION_COMPARISON(!=, " != ", DOCTEST_CMP_NE) //!OCLINT bitwise operator in conditional
         DOCTEST_DO_BINARY_EXPRESSION_COMPARISON(>,  " >  ", DOCTEST_CMP_GT) //!OCLINT bitwise operator in conditional
         DOCTEST_DO_BINARY_EXPRESSION_COMPARISON(<,  " <  ", DOCTEST_CMP_LT) //!OCLINT bitwise operator in conditional
         DOCTEST_DO_BINARY_EXPRESSION_COMPARISON(>=, " >= ", DOCTEST_CMP_GE) //!OCLINT bitwise operator in conditional
         DOCTEST_DO_BINARY_EXPRESSION_COMPARISON(<=, " <= ", DOCTEST_CMP_LE) //!OCLINT bitwise operator in conditional
+#endif
         // clang-format on
 
         // forbidding some expressions based on this table: https://en.cppreference.com/w/cpp/language/operator_precedence
