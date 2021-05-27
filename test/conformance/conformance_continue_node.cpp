@@ -126,7 +126,7 @@ void test_deduction_guides() {
     Test node forvard messages to successors
 */
 void test_forwarding(){
-    conformance::test_forvarding_impl<oneapi::tbb::flow::continue_node<int>>();
+    conformance::test_forwarding_impl<oneapi::tbb::flow::continue_node<int>>();
 }
 
 /*
@@ -205,7 +205,7 @@ void test_copy_ctor(){
     Test the body object passed to a node is copied
 */
 void test_copy_body(){
-    conformance::test_copy_body_impl<oneapi::tbb::flow::continue_node<int>>();
+    conformance::test_copy_body_impl<oneapi::tbb::flow::continue_node<int>, conformance::CountingObject<int>>();
 }
 
 /*

@@ -29,22 +29,6 @@
 
 namespace conformance{
 
-template <typename OutputType = int>
-struct passthru_body {
-    OutputType operator()( const OutputType& i ) {
-        return i;
-    }
-
-    OutputType operator()( oneapi::tbb::flow::continue_msg ) {
-       return OutputType();
-    }
-
-    void operator()( const int& argument, oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>::output_ports_type &op ) {
-       std::get<0>(op).try_put(argument);
-    }
-
-};
-
 template<typename V>
 using test_push_receiver = oneapi::tbb::flow::queue_node<V>;
 
@@ -78,9 +62,9 @@ struct first_functor {
         return operator()(OutputType());
     }
 
-    void operator()( const OutputType& argument, oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>::output_ports_type &op ) {
-        operator()(OutputType());
-        std::get<0>(op).try_put(argument);
+    void operator()( oneapi::tbb::flow::continue_msg, oneapi::tbb::flow::multifunction_node<oneapi::tbb::flow::continue_msg, std::tuple<oneapi::tbb::flow::continue_msg>>::output_ports_type &op ) {
+       operator()(OutputType());
+       std::get<0>(op).try_put(oneapi::tbb::flow::continue_msg());
     }
 };
 
@@ -106,10 +90,36 @@ struct counting_functor {
        ++execute_count;
        return my_value;
     }
+
+    void operator()( const int&, oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>::output_ports_type &op ) {
+       ++execute_count;
+       std::get<0>(op).try_put(my_value);
+    }
+
+    void operator()( oneapi::tbb::flow::continue_msg, oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>::output_ports_type &op ) {
+       ++execute_count;
+       std::get<0>(op).try_put(my_value);
+    }
 };
 
 template<typename OutputType>
 std::atomic<size_t> counting_functor<OutputType>::execute_count;
+
+template< typename OutputType>
+struct worker_body {
+    OutputType operator()( oneapi::tbb::flow::continue_msg ) {
+       utils::doDummyWork(1000000);
+       return OutputType();
+    }
+    OutputType operator()( OutputType ) {
+        utils::doDummyWork(1000000);
+       return OutputType();
+    }
+    void operator()( const int& argument, oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>::output_ports_type &op ) {
+        utils::doDummyWork(1000000);
+        std::get<0>(op).try_put(argument);
+    }
+};
 
 template< typename OutputType>
 struct dummy_functor {
@@ -118,6 +128,9 @@ struct dummy_functor {
     }
     OutputType operator()( OutputType ) {
        return OutputType();
+    }
+    void operator()( const int& argument, oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>::output_ports_type &op ) {
+       std::get<0>(op).try_put(argument);
     }
 };
 
@@ -143,11 +156,18 @@ struct barrier_body{
         CHECK_MESSAGE((int)utils::ConcurrencyTracker::PeakParallelism() <= required_max_concurrency, "Measured parallelism is not expected");
         return 1;
     }
+
+    void operator()( const int& argument, oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>::output_ports_type &op ) {
+        utils::ConcurrencyTracker ct;
+        utils::doDummyWork(1000);
+        CHECK_MESSAGE((int)utils::ConcurrencyTracker::PeakParallelism() <= required_max_concurrency, "Measured parallelism is not expected");
+        std::get<0>(op).try_put(argument);
+    }
 };
 
 std::atomic<bool> barrier_body::flag{false};
 
-template<typename O>
+template<typename O, typename I = int>
 struct CountingObject{
     size_t copy_count;
     mutable size_t copies_count;
@@ -193,12 +213,35 @@ struct CountingObject{
     O operator()(O){
         return 1;
     }
+
+    void operator()( const I& argument, oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>::output_ports_type &op ) {
+       std::get<0>(op).try_put(argument);
+    }
 };
 
-template<typename Node, typename ...Args>
+template <typename OutputType = int>
+struct passthru_body {
+    OutputType operator()( const OutputType& i ) {
+        return i;
+    }
+
+    OutputType operator()( oneapi::tbb::flow::continue_msg ) {
+       return OutputType();
+    }
+
+    void operator()( const int& argument, oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>::output_ports_type &op ) {
+       std::get<0>(op).try_put(argument);
+    }
+    
+    void operator()( const CountingObject<int>& argument, oneapi::tbb::flow::multifunction_node<CountingObject<int>, std::tuple<CountingObject<int>>>::output_ports_type &op ) {
+       std::get<0>(op).try_put(argument);
+    }
+};
+
+template<typename Node, typename Body = conformance::counting_functor<int>, typename ...Args>
 void test_body_exec_impl(Args... args){
     oneapi::tbb::flow::graph g;
-    conformance::counting_functor<int> cf;
+    Body cf;
     cf.execute_count = 0;
 
     Node node1(g, args..., cf);
@@ -213,26 +256,26 @@ void test_body_exec_impl(Args... args){
     CHECK_MESSAGE( (cf.execute_count == n), "Body of the first node needs to be executed N times");
 }
 
-template<typename Node>
-void test_body_copying(Node& tested_node, CountingObject<int>& base_body){
+template<typename Node, typename Body>
+void test_body_copying(Node& tested_node, Body& base_body){
     using namespace oneapi::tbb::flow;
 
-    CountingObject<int> b2 = copy_body<CountingObject<int>, Node>(tested_node);
+    Body b2 = copy_body<Body, Node>(tested_node);
 
     CHECK_MESSAGE( (base_body.copy_count + 1 < b2.copy_count), "copy_body and constructor should copy bodies");
 }
 
-template<typename Node, typename ...Args>
+template<typename Node, typename Body, typename ...Args>
 void test_copy_body_impl(Args... args){
     using namespace oneapi::tbb::flow;
 
-    conformance::CountingObject<int> base_body;
+    Body base_body;
 
     graph g;
 
     Node tested_node(g, args..., base_body);
 
-    CountingObject<int> b2 = copy_body<CountingObject<int>, Node>(tested_node);
+    Body b2 = copy_body<Body, Node>(tested_node);
 
     CHECK_MESSAGE( (base_body.copy_count + 1 < b2.copy_count), "copy_body and constructor should copy bodies");
 }
@@ -254,7 +297,7 @@ void test_buffering_impl(Args... args){
 }
 
 template<typename Node, typename ...Args>
-void test_forvarding_impl(Args... args){
+void test_forwarding_impl(Args... args){
     oneapi::tbb::flow::graph g;
     const int expected = 5;
     conformance::counting_functor<int> fun(expected);
@@ -262,7 +305,7 @@ void test_forvarding_impl(Args... args){
     Node node1(g, args..., fun);
     conformance::test_push_receiver<int> node2(g);
     conformance::test_push_receiver<int> node3(g);
-
+    
     oneapi::tbb::flow::make_edge(node1, node2);
     oneapi::tbb::flow::make_edge(node1, node3);
 
@@ -287,6 +330,39 @@ void test_inheritance_impl(){
     CHECK_MESSAGE( (std::is_base_of<sender<O>, Node>::value), "Node should be derived from sender<Output>");
 }
 
+template<typename Node, typename CountingBody, typename ...Args>
+void test_copy_ctor_impl(Args...){
+    using namespace oneapi::tbb::flow;
+    graph g;
+
+    conformance::dummy_functor<int> fun1;
+    CountingBody fun2;
+
+    Node node0(g, unlimited, fun1);
+    Node node1(g, unlimited, fun2);
+    conformance::test_push_receiver<int> node2(g);
+    conformance::test_push_receiver<int> node3(g);
+
+    oneapi::tbb::flow::make_edge(node0, node1);
+    oneapi::tbb::flow::make_edge(node1, node2);
+
+    Node node_copy(node1);
+
+    conformance::test_body_copying(node_copy, fun2);
+
+    oneapi::tbb::flow::make_edge(node_copy, node3);
+
+    node_copy.try_put(1);
+    g.wait_for_all();
+
+    CHECK_MESSAGE( (conformance::get_values(node2).size() == 0 && conformance::get_values(node3).size() == 1), "Copied node doesn`t copy successor, but copy number of predecessors");
+
+    node0.try_put(1);
+    g.wait_for_all();
+
+    CHECK_MESSAGE( (conformance::get_values(node2).size() == 1 && conformance::get_values(node3).size() == 0), "Copied node doesn`t copy predecessor, but copy number of predecessors");
+}
+
 template<typename Node, typename ...Args>
 void test_priority_impl(Args... args){
     size_t concurrency_limit = 1;
@@ -294,7 +370,8 @@ void test_priority_impl(Args... args){
 
     oneapi::tbb::flow::graph g;
 
-    Node source(g, args..., [](oneapi::tbb::flow::continue_msg){ return oneapi::tbb::flow::continue_msg();});
+    oneapi::tbb::flow::continue_node<oneapi::tbb::flow::continue_msg> source(g,
+                                          [](oneapi::tbb::flow::continue_msg){ return oneapi::tbb::flow::continue_msg();});
 
     conformance::first_functor<int>::first_id = -1;
     conformance::first_functor<int> low_functor(1);
@@ -311,6 +388,102 @@ void test_priority_impl(Args... args){
     g.wait_for_all();
     
     CHECK_MESSAGE( (conformance::first_functor<int>::first_id == 2), "High priority node should execute first");
+}
+
+template<typename Node, typename ...Args>
+void test_concurrency_impl(Args...){
+    oneapi::tbb::global_control c(oneapi::tbb::global_control::max_allowed_parallelism,
+                                          oneapi::tbb::this_task_arena::max_concurrency());
+
+    int max_num_threads = tbb::global_control::active_value(
+        tbb::global_control::max_allowed_parallelism
+    );
+
+    std::vector<int> threads_count = {1, oneapi::tbb::flow::serial, max_num_threads, oneapi::tbb::flow::unlimited};
+
+    if(max_num_threads > 2){
+        threads_count.push_back(max_num_threads / 2);
+    }
+
+    for(auto num_threads : threads_count){
+        utils::ConcurrencyTracker::Reset();
+        int expected_threads = num_threads;
+        if(num_threads == oneapi::tbb::flow::unlimited){
+            expected_threads = max_num_threads;
+        }
+        oneapi::tbb::flow::graph g;
+        conformance::barrier_body counter(expected_threads);
+        Node fnode(g, num_threads, counter);
+
+        conformance::test_push_receiver<int> sink(g);
+
+        make_edge(fnode, sink);
+
+        for(int i = 0; i < 500; ++i){
+            fnode.try_put(i);
+        }
+        g.wait_for_all();
+    }
+}
+
+template<typename Node, typename ...Args>
+void test_rejecting_impl(Args...){
+    oneapi::tbb::flow::graph g;
+
+    worker_body<int> body;
+    Node fnode(g, oneapi::tbb::flow::serial, body);
+
+    conformance::test_push_receiver<int> sink(g);
+
+    make_edge(fnode, sink);
+
+    bool try_put_state;
+
+    for(int i = 0; i < 10; ++i){
+        try_put_state = fnode.try_put(i);
+    }
+
+    g.wait_for_all();
+    CHECK_MESSAGE( (conformance::get_values(sink).size() == 1), "Messages should be rejected while the first is being processed");
+    CHECK_MESSAGE( (!try_put_state), "`try_put()' should returns `false' after rejecting");
+}
+
+template<typename Node, typename ...Args>
+void test_output_input_class_impl(Args...){
+    using namespace oneapi::tbb::flow;
+
+    conformance::passthru_body<conformance::CountingObject<int>> fun;
+
+    graph g;
+    function_node<conformance::CountingObject<int>, conformance::CountingObject<int>> node1(g, unlimited, fun);
+    conformance::test_push_receiver<conformance::CountingObject<int>> node2(g);
+    make_edge(node1, node2);
+    conformance::CountingObject<int> b1;
+    conformance::CountingObject<int> b2;
+    node1.try_put(b1);
+    g.wait_for_all();
+    node2.try_get(b2);
+    DOCTEST_WARN_MESSAGE( (b1.copies_count > 0), "The type Input must meet the DefaultConstructible and CopyConstructible requirements");
+    DOCTEST_WARN_MESSAGE( (b2.is_copy), "The type Output must meet the CopyConstructible requirements");
+}
+
+template<typename Node, typename CountingBody, typename ...Args>
+void test_output_input_class_impl(Args...){
+    using namespace oneapi::tbb::flow;
+
+    conformance::passthru_body<CountingBody> fun;
+
+    graph g;
+    Node node1(g, unlimited, fun);
+    conformance::test_push_receiver<CountingBody> node2(g);
+    make_edge(node1, node2);
+    CountingBody b1;
+    CountingBody b2;
+    node1.try_put(b1);
+    g.wait_for_all();
+    node2.try_get(b2);
+    DOCTEST_WARN_MESSAGE( (b1.copies_count > 0), "The type Input must meet the DefaultConstructible and CopyConstructible requirements");
+    DOCTEST_WARN_MESSAGE( (b2.is_copy), "The type Output must meet the CopyConstructible requirements");
 }
 
 }
