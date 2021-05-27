@@ -209,9 +209,10 @@ TEST_CASE("only calls once - move only argument") {
 TEST_CASE("only calls once - stress test") {
 #if TBB_TEST_LOW_WORKLOAD
     constexpr std::size_t N = 32;
-#elif __TBB_x86_32 || __aarch32__
+#elif __TBB_x86_32 || __aarch32__  || __ANDROID__
     // Some C++ implementations allocate 8MB stacks for std::thread on 32 bit platforms
     // that makes impossible to create more than ~500 threads.
+    // Android has been added to decrease testing time.
     constexpr std::size_t N = tbb::detail::d0::max_nfs_size * 2;
 #else 
     constexpr std::size_t N = tbb::detail::d0::max_nfs_size * 4;
@@ -279,9 +280,10 @@ TEST_CASE("handles exceptions - state reset") {
 TEST_CASE("handles exceptions - stress test") {
 #if TBB_TEST_LOW_WORKLOAD
     constexpr std::size_t N = 32;
-#elif __TBB_x86_32 || __aarch32__
+#elif __TBB_x86_32 || __aarch32__ || __ANDROID__
     // Some C++ implementations allocate 8MB stacks for std::thread on 32 bit platforms
     // that makes impossible to create more than ~500 threads.
+    // Android has been added to decrease testing time.
     constexpr std::size_t N = tbb::detail::d0::max_nfs_size * 2;
 #else 
     constexpr std::size_t N = tbb::detail::d0::max_nfs_size * 4;
@@ -317,7 +319,7 @@ TEST_CASE("handles exceptions - stress test") {
 
 //! Test for multiple help from moonlighting threads
 //! \brief \ref interface \ref requirement
-TEST_CASE("multiple help - parallel_for") {
+TEST_CASE("multiple help") {
     std::size_t num_threads = utils::get_platform_max_threads();
     utils::SpinBarrier barrier{num_threads};
 
@@ -331,31 +333,6 @@ TEST_CASE("multiple help - parallel_for") {
             });
         });
     });
-}
-
-//! Test for multiple help from moonlighting threads
-//! \brief \ref interface \ref requirement
-TEST_CASE("multiple help - threads") {
-    std::size_t num_threads = utils::get_platform_max_threads();
-    utils::SpinBarrier barrier{num_threads};
-
-    tbb::collaborative_once_flag flag;
-    std::vector<std::thread> thread_pool;
-
-    for (std::size_t i = 0; i < num_threads; ++i) {
-        thread_pool.push_back(std::thread([&] {
-            barrier.wait();
-            tbb::collaborative_call_once(flag, [&] {
-                tbb::parallel_for<std::size_t>(0, num_threads, [&](std::size_t) {
-                    barrier.wait();
-                });
-            });
-        }));
-    }
-
-    for (auto& thread : thread_pool) {
-        thread.join();
-    }
 }
 
 //! Test for collaborative work from different arenas
