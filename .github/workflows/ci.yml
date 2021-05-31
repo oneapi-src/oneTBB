@@ -53,8 +53,7 @@ jobs:
           diff -r examples examples_formatted
 
   documetation:
-    needs:
-      - codespell
+    needs: [codespell]
     env:
       DEST_FOLDER: html
       BUILD_TYPE: oss
