@@ -1898,7 +1898,7 @@ private:
             spin_mutex::scoped_lock lock(my_mutex);
             if( delta > 0 && size_t(delta) > my_count )
                 my_count = 0;
-            else if( delta < 0 && size_t(delta) > my_threshold - my_count )
+            else if( delta < 0 && delta > int(my_threshold - my_count) )
                 my_count = my_threshold;
             else
                 my_count -= size_t(delta); // absolute value of delta is sufficiently small
