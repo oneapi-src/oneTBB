@@ -52,6 +52,30 @@ jobs:
           find examples_formatted -regex '.*\.\(cpp\|hpp\)' -exec clang-format-9 -style=file -i {} \;
           diff -r examples examples_formatted
 
+  documetation:
+    needs:
+      - codespell
+    env:
+      DEST_FOLDER: html
+      BUILD_TYPE: oss
+    runs-on: [ubuntu-20.04]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install prerequisites
+        run: |
+          pip3 install git+https://github.com/executablebooks/sphinx-book-theme.git
+          echo GITHUB_SHA_SHORT=${GITHUB_SHA::8} >> $GITHUB_ENV
+          mkdir ${DEST_FOLDER}
+      - name: Build documentation
+        run: |
+          export BUILD_TYPE=${BUILD_TYPE} && sphinx-build doc/dev_guide_reference ${DEST_FOLDER}
+      - name: Save docs
+        uses: actions/upload-artifact@v2.2.1
+        with:
+          name: oneTBB-html-docs-${{ env.GITHUB_SHA_SHORT }}
+          path: html
+
   python_module_test_ubuntu18-04:
     runs-on: [ubuntu-18.04]
     timeout-minutes: 15
