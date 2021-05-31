@@ -1324,15 +1324,20 @@ DOCTEST_CLANG_SUPPRESS_WARNING_POP
     struct DOCTEST_INTERFACE TestSuite
     {
         // Change inspired by oneTBB : missing initializer for member
-        const char* m_test_suite{};
-        const char* m_description{};
-        bool        m_skip{};
-        bool        m_no_breaks{};
-        bool        m_no_output{};
-        bool        m_may_fail{};
-        bool        m_should_fail{};
-        int         m_expected_failures{};
-        double      m_timeout{};
+        const char* m_test_suite = nullptr;
+        const char* m_description = nullptr;
+        bool        m_skip = false;
+        bool        m_no_breaks = false;
+        bool        m_no_output = false;
+        bool        m_may_fail = false;
+        bool        m_should_fail = false;
+        int         m_expected_failures = 0;
+        double      m_timeout = 0;
+
+        // Change inspired by oneTBB : Fix segfault on Intel Compiler 2021 during the DOCTEST_TEST_SUITE_END execution
+        TestSuite(const char* in = nullptr) {
+            m_test_suite = in;
+        }
 
         TestSuite& operator*(const char* in);
 
@@ -2047,7 +2052,7 @@ int registerReporter(const char* name, int priority, bool isReporter) {
 // for ending a testsuite block
 #define DOCTEST_TEST_SUITE_END                                                                     \
     DOCTEST_GLOBAL_NO_WARNINGS(DOCTEST_ANONYMOUS(_DOCTEST_ANON_VAR_)) =                            \
-            doctest::detail::setTestSuite(doctest::detail::TestSuite() * "");                      \
+            doctest::detail::setTestSuite(doctest::detail::TestSuite(""));                      \
     DOCTEST_GLOBAL_NO_WARNINGS_END()                                                               \
     typedef int DOCTEST_ANONYMOUS(_DOCTEST_ANON_FOR_SEMICOLON_)
 
