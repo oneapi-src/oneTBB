@@ -166,7 +166,7 @@ private:
         index_info current_node_info{};
         while ((current_numa_node = hwloc_get_next_obj_by_type(topology,
                                                                HWLOC_OBJ_NUMANODE,
-                                                               current_numa_node))) {
+                                                               current_numa_node)) != nullptr) {
             current_node_info.index = static_cast<int>(current_numa_node->logical_index);
             current_node_info.cpuset = hwloc_bitmap_dup(current_numa_node->cpuset);
             hwloc_bitmap_and(current_node_info.cpuset, current_node_info.cpuset, process_cpuset);
@@ -235,7 +235,7 @@ private:
 
         hwloc_bitmap_t core_affinity = hwloc_bitmap_alloc();
         hwloc_obj_t current_core = nullptr;
-        while ((current_core = hwloc_get_next_obj_by_type(topology, HWLOC_OBJ_CORE, current_core))) {
+        while ((current_core = hwloc_get_next_obj_by_type(topology, HWLOC_OBJ_CORE, current_core)) != nullptr) {
             hwloc_bitmap_and(core_affinity, process_cpuset, current_core->cpuset);
             if (hwloc_bitmap_weight(core_affinity) > 0) {
                 core_infos.emplace_back(core_affinity);
