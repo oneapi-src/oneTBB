@@ -385,7 +385,7 @@ void test_constraints_affinity_and_concurrency(tbb::task_arena::constraints cons
                                                system_info::affinity_mask arena_affinity) {
     int default_concurrency = tbb::info::default_concurrency(constraints);
     system_info::affinity_mask reference_affinity = prepare_reference_affinity_mask(constraints);
-    int max_threads_per_core = system_info::get_maximal_threads_per_core();
+    int max_threads_per_core = static_cast<int>(system_info::get_maximal_threads_per_core());
 
     if (constraints.max_threads_per_core == tbb::task_arena::automatic || constraints.max_threads_per_core == max_threads_per_core) {
         REQUIRE_MESSAGE(hwloc_bitmap_isequal(reference_affinity, arena_affinity),

@@ -179,7 +179,7 @@ void TestSharedPool()
     void **crossThread = new void*[utils::MaxThread * SharedPoolRun::OBJ_CNT];
     void **afterTerm = new void*[utils::MaxThread * SharedPoolRun::OBJ_CNT];
 
-    for (auto p=utils::MinThread; p<=utils::MaxThread; p++) {
+    for (int p=utils::MinThread; p<=utils::MaxThread; p++) {
         SharedPoolRun::init(p, pool, crossThread, afterTerm);
         SharedPoolRun thr;
 
@@ -189,7 +189,7 @@ void TestSharedPool()
         utils::NativeParallelFor( p, thr );
 
         pool_free(pool, hugeObj);
-        for (size_t i=0; i<p*SharedPoolRun::OBJ_CNT; i++)
+        for (int i=0; i<p*SharedPoolRun::OBJ_CNT; i++)
             pool_free(pool, afterTerm[i]);
     }
     delete []afterTerm;
