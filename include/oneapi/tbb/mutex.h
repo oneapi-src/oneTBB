@@ -65,7 +65,7 @@ public:
     //! Try acquiring lock (non-blocking)
     /** Return true if lock acquired; false otherwise. */
     bool try_lock() {
-        bool result = !my_flag.exchange(true);
+        bool result = !my_flag.load(std::memory_order_relaxed) && !my_flag.exchange(true);
         if (result) {
             call_itt_notify(acquired, this);
         }
