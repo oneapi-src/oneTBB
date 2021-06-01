@@ -57,6 +57,9 @@ out/*
 CMakeSettings.json
 
 # -------- CTags --------
+tags
 .tags
 .ctags
 
+# ------- bazel --------
+/bazel-*
