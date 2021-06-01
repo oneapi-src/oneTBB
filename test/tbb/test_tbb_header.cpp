@@ -64,7 +64,7 @@
 #undef TBB_USE_DEBUG
 #endif /* DO_TEST_DEBUG_MACRO */
 #define __TBB_CONFIG_PREPROC_ONLY _MSC_VER // For MSVC, prevent including standard headers in tbb_config.h
-#include "test/common/config.h"
+#include "common/config.h"
 
 #include "oneapi/tbb/detail/_config.h"
 
