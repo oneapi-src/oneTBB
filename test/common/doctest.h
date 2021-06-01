@@ -2120,10 +2120,10 @@ int registerReporter(const char* name, int priority, bool isReporter) {
 
 // for logging
 // Change inspired by oneTBB : DOCTEST_ANONYMOUS doesn't work on the same line here on MSVS 15.9.13
-#define DOCTEST_INFO(expression)                                                                   \
+#define DOCTEST_INFO(...)                                                                          \
     DOCTEST_INFO_IMPL(DOCTEST_ANONYMOUS(_DOCTEST_CAPTURE_),                                        \
                       _DOCTEST_CAPTURE_##__COUNTER__,                                              \
-                      DOCTEST_ANONYMOUS(_DOCTEST_CAPTURE_), expression)
+                      __VA_ARGS__)
 
 #define DOCTEST_INFO_IMPL(mb_name, s_name, ...)                                       \
     auto DOCTEST_ANONYMOUS(_DOCTEST_CAPTURE_) = doctest::detail::MakeContextScope(                 \
