@@ -30,13 +30,6 @@
 
 #define __TBB_NO_IMPLICIT_LINKAGE 1
 
-#if __TBB_CPF_BUILD
-// Add testing of preview features
-#define TBB_PREVIEW_CONCURRENT_LRU_CACHE 1
-#define TBB_PREVIEW_VARIADIC_PARALLEL_INVOKE 1
-#define TBB_PREVIEW_BLOCKED_RANGE_ND 1
-#define TBB_PREVIEW_ISOLATED_TASK_GROUP 1
-#endif
 
 #if __TBB_TEST_SECONDARY
     // Test _DEBUG macro custom definitions.
@@ -65,12 +58,16 @@
     #endif /* _DEBUG */
 #endif /* __TBB_TEST_SECONDARY */
 
+
 #if DO_TEST_DEBUG_MACRO
 // Reset TBB_USE_DEBUG defined in makefiles.
 #undef TBB_USE_DEBUG
 #endif /* DO_TEST_DEBUG_MACRO */
 #define __TBB_CONFIG_PREPROC_ONLY _MSC_VER // For MSVC, prevent including standard headers in tbb_config.h
+#include "test/common/config.h"
+
 #include "oneapi/tbb/detail/_config.h"
+
 
 #if !TBB_USE_DEBUG && defined(_DEBUG)
 // TBB_USE_DEBUG is 0 but _DEBUG is defined, it means that _DEBUG is 0
@@ -175,6 +172,8 @@ static void TestPreviewNames() {
     TestTypeDefinitionPresence2( blocked_rangeNd<int,4> );
     TestTypeDefinitionPresence2( concurrent_lru_cache<int, int> );
     TestTypeDefinitionPresence( isolated_task_group );
+    TestTypeDefinitionPresence( collaborative_once_flag );
+    TestFuncDefinitionPresence( collaborative_call_once, (tbb::collaborative_once_flag&, const Body&), void );
 }
 #endif
 
