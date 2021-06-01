@@ -168,18 +168,13 @@ int limit_number_of_threads( int max_threads ) {
 
 #endif // __TBB_TEST_SKIP_AFFINITY
 
-#define OS_AFFINITY_SYSCALL_PRESENT ((__linux__ && !__ANDROID__) || (__FreeBSD_version >= 701000))
+#define OS_AFFINITY_SYSCALL_PRESENT (__linux__ && !__ANDROID__)
 
 #if OS_AFFINITY_SYSCALL_PRESENT
 
-#if __FreeBSD__
-using mask_t = cpuset_t;
-#else
-using mask_t = cpu_set_t;
-#endif
 void get_thread_affinity_mask(std::size_t& ncpus, std::vector<int>& free_indexes) {
-    mask_t* mask = nullptr;
-    ncpus = sizeof(mask_t) * CHAR_BIT;
+    cpu_set_t* mask = nullptr;
+    ncpus = sizeof(cpu_set_t) * CHAR_BIT;
     do {
         mask = CPU_ALLOC(ncpus);
         if (!mask) break;
@@ -212,7 +207,7 @@ void pin_thread_imp(std::size_t ncpus, std::vector<int>& free_indexes, std::atom
     ASSERT(free_indexes.size() > 0, nullptr);
     int mapped_idx = free_indexes[curr_idx++ % free_indexes.size()];
 
-    mask_t *target_mask = CPU_ALLOC(ncpus);
+    cpu_set_t *target_mask = CPU_ALLOC(ncpus);
     ASSERT(target_mask, nullptr);
     CPU_ZERO_S(size, target_mask);
     CPU_SET_S(mapped_idx, size, target_mask);
