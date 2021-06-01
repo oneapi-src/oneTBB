@@ -469,7 +469,7 @@ namespace doctest {
 DOCTEST_INTERFACE extern bool is_running_in_test;
 
 #if _MSC_VER
-// Change inspired by oneTBB:
+// Change inspired by oneTBB :
 // Due to race between exiting the process and starting of a new detached thread in Windows, thread
 // local variables, which constructors or destructors have calls to runtime functions (e.g. free()
 // function) can cause access violation since TBB along with runtime library may have been unloaded
@@ -844,8 +844,9 @@ namespace detail {
 
     template<typename T> auto declval() DOCTEST_NOEXCEPT -> decltype(declval<T>(0)) ;
 
-    template<class T> struct is_lvalue_reference { const static bool value=false; };
-    template<class T> struct is_lvalue_reference<T&> { const static bool value=true; };
+    // Change inspired by oneTBB : fix "storage class is not first warning"
+    template<class T> struct is_lvalue_reference { static const bool value=false; };
+    template<class T> struct is_lvalue_reference<T&> { static const bool value=true; };
 
     template <class T>
     inline T&& forward(typename remove_reference<T>::type& t) DOCTEST_NOEXCEPT
@@ -2118,9 +2119,11 @@ int registerReporter(const char* name, int priority, bool isReporter) {
     DOCTEST_GLOBAL_NO_WARNINGS_END() typedef int DOCTEST_ANONYMOUS(_DOCTEST_ANON_FOR_SEMICOLON_)
 
 // for logging
-#define DOCTEST_INFO(...)                                                                          \
-    DOCTEST_INFO_IMPL(DOCTEST_ANONYMOUS(_DOCTEST_CAPTURE_), DOCTEST_ANONYMOUS(_DOCTEST_CAPTURE_),  \
-                      __VA_ARGS__)
+// Change inspired by oneTBB : DOCTEST_ANONYMOUS doesn't work on the same line here on MSVS 15.9.13
+#define DOCTEST_INFO(expression)                                                                   \
+    DOCTEST_INFO_IMPL(DOCTEST_ANONYMOUS(_DOCTEST_CAPTURE_),                                        \
+                      _DOCTEST_CAPTURE_##__COUNTER__,                                              \
+                      DOCTEST_ANONYMOUS(_DOCTEST_CAPTURE_), expression)
 
 #define DOCTEST_INFO_IMPL(mb_name, s_name, ...)                                       \
     auto DOCTEST_ANONYMOUS(_DOCTEST_CAPTURE_) = doctest::detail::MakeContextScope(                 \
@@ -5832,6 +5835,8 @@ namespace {
             printReporters(getReporters(), "reporters");
         }
 
+// Change inspired by oneTBB : list_query_results() was declared but never referenced
+#if 0 /* dead code */
         void list_query_results() {
             separator_to_stream();
             if(opt.count || opt.list_test_cases) {
@@ -5847,6 +5852,7 @@ namespace {
                   << g_cs->numTestSuitesPassingFilters << "\n";
             }
         }
+#endif
 
         // =========================================================================================
         // WHAT FOLLOWS ARE OVERRIDES OF THE VIRTUAL METHODS OF THE REPORTER INTERFACE
