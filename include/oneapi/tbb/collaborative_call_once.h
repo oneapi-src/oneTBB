@@ -93,7 +93,7 @@ public:
     }
 
     static collaborative_once_runner* from_bits(std::uintptr_t bits) {
-        __TBB_ASSERT( (bits & collaborative_once_max_references-1) == 0, "invalid pointer, last 6 bits must be zero" );
+        __TBB_ASSERT( (bits & collaborative_once_references_mask) == 0, "invalid pointer, last log2(max_nfs_size) bits must be zero" );
         return reinterpret_cast<collaborative_once_runner*>(bits);
     }
 
