@@ -1896,12 +1896,15 @@ private:
     graph_task* decrement_counter( long long delta ) {
         {
             spin_mutex::scoped_lock lock(my_mutex);
-            if( delta > 0 && size_t(delta) > my_count )
+            if( delta > 0 && size_t(delta) > my_count ) {
                 my_count = 0;
-            else if( delta < 0 && delta > int(my_count - my_threshold) )
+            }
+            else if( delta < 0 && size_t(-delta) > my_threshold - my_count ) {
                 my_count = my_threshold;
-            else
+            }
+            else {
                 my_count -= size_t(delta); // absolute value of delta is sufficiently small
+            }
             __TBB_ASSERT(my_count <= my_threshold, "counter values are truncated to be inside the [0, threshold] interval");
         }
         return forward_task();

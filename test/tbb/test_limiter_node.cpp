@@ -419,6 +419,21 @@ void test_decrementer() {
         CHECK_MESSAGE( actual == expected2[m++], "" );
     CHECK_MESSAGE( ( sizeof(expected2) / sizeof(expected2[0]) == m), "Not all messages have been processed." );
     g.wait_for_all();
+
+    const size_t threshold3 = 10;
+    tbb::flow::limiter_node<int, long long> limit3(g, threshold3);
+    make_edge(limit3, queue);
+    long long decrement_value3 = 1;
+    CHECK_MESSAGE( limit3.decrementer().try_put( -decrement_value3 ),
+                   "Limiter node decrementer's port does not accept message" );
+    for(size_t i = 0; i < threshold3 - decrement_value3; ++i){
+        CHECK_MESSAGE( ( limit3.try_put( i )), "Limiter's gate should not be closed yet." );
+    }
+    actual = -1; m = 0;
+    while( queue.try_get(actual) ){
+        CHECK_MESSAGE( actual == m++, "Not all messages have been processed." );
+    }
+    g.wait_for_all();
 }
 
 void test_try_put_without_successors() {
