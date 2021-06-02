@@ -30,10 +30,6 @@ if (MSVC_VERSION LESS_EQUAL 1900)
     # https://docs.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4503
     set(TBB_TEST_COMPILE_FLAGS ${TBB_TEST_COMPILE_FLAGS} /wd4503)
 endif()
-# Warning suppression C4127: conditional expression is constant
-set(TBB_TEST_COMPILE_FLAGS ${TBB_TEST_COMPILE_FLAGS} /wd4127)
-# Warning suppression C4800: forcing value to bool 'true' or 'false' (performance warning)
-set(TBB_TEST_COMPILE_FLAGS ${TBB_TEST_COMPILE_FLAGS} /wd4800)
 set(TBB_LIB_COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS /GS)
 set(TBB_COMMON_COMPILE_FLAGS /volatile:iso /FS)
 
