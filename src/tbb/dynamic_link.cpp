@@ -408,6 +408,22 @@ namespace r1 {
     #endif /* __TBB_DYNAMIC_LOAD_ENABLED */
     }
 
+    int define_flags(bool is_local) {
+        int flags = 0;
+#if !_WIN32
+        flags = flags | RTLD_NOW;
+        if (is_local) {
+            flags = flags | RTLD_LOCAL;
+#if !__APPLE__
+            flags = flags | RTLD_DEEPBIND;
+#endif /*!__APPLE__*/
+        } else {
+            flags = flags | RTLD_GLOBAL;
+        }
+#endif /*!_WIN32*/
+        return flags;
+    }
+
     dynamic_link_handle dynamic_load( const char* library, const dynamic_link_descriptor descriptors[], std::size_t required, bool is_local ) {
         ::tbb::detail::suppress_unused_warning( library, descriptors, required );
 #if __TBB_DYNAMIC_LOAD_ENABLED
@@ -420,16 +436,7 @@ namespace r1 {
             // (e.g. because of MS runtime problems - one of those crazy manifest related ones)
             UINT prev_mode = SetErrorMode (SEM_FAILCRITICALERRORS);
 #endif /* _WIN32 */
-            auto flags = RTLD_NOW;
-            if (is_local) {
-                flags = flags | RTLD_LOCAL;
-#if !__APPLE__
-                flags = flags | RTLD_DEEPBIND;
-#endif
-            } else {
-                flags = flags | RTLD_GLOBAL;
-            }
-            dynamic_link_handle library_handle = dlopen( path, flags );
+            dynamic_link_handle library_handle = dlopen( path, define_flags(is_local) );
 #if _WIN32
             SetErrorMode (prev_mode);
 #endif /* _WIN32 */
