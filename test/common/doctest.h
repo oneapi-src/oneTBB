@@ -462,8 +462,6 @@ DOCTEST_MSVC_SUPPRESS_WARNING_POP
 #ifdef DOCTEST_CONFIG_INCLUDE_TYPE_TRAITS
 #include <type_traits>
 #endif // DOCTEST_CONFIG_INCLUDE_TYPE_TRAITS
-// Change inspired by oneTBB : Include <utility> to use std::declval
-#include <utility>
 
 namespace doctest {
 
@@ -845,7 +843,7 @@ namespace detail {
 
     template<typename T> auto declval() DOCTEST_NOEXCEPT -> decltype(declval<T>(0)) ;
 
-    // Change inspired by oneTBB : fix "storage class is not first warning"
+    // Change inspired by oneTBB : fix "storage class is not first" warning
     template<class T> struct is_lvalue_reference { static const bool value=false; };
     template<class T> struct is_lvalue_reference<T&> { static const bool value=true; };
 
