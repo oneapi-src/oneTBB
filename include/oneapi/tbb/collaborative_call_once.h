@@ -49,7 +49,6 @@ class alignas(max_nfs_size) collaborative_once_runner : no_copy {
     std::atomic<bool> m_is_ready{false};
 
     // Storage with task_arena and wait_context must be initialized only by winner thread
-    // by calling init() method
     union {
         storage_t m_storage;
     };
