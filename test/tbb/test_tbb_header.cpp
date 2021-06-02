@@ -68,7 +68,6 @@
 
 #include "oneapi/tbb/detail/_config.h"
 
-
 #if !TBB_USE_DEBUG && defined(_DEBUG)
 // TBB_USE_DEBUG is 0 but _DEBUG is defined, it means that _DEBUG is 0
 // MSVC C++ headers consider any definition of _DEBUG, including 0, as debug mode

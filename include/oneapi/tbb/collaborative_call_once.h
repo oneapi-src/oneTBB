@@ -71,10 +71,10 @@ public:
         collaborative_once_runner& m_runner;
     public:
         lifetime_guard(collaborative_once_runner& r) : m_runner(r) {
-            m_runner.m_ref_count++;;
+            m_runner.m_ref_count++;
         }
         ~lifetime_guard() {
-            m_runner.m_ref_count--;;
+            m_runner.m_ref_count--;
         }
     };
     
@@ -168,11 +168,13 @@ class collaborative_once_flag : no_copy {
                 });
                 break;
             } else {
-                // Moonlighting thread
+                // Moonlighting thread: we need to add a reference to the state to prolong runner lifetime.
+                // However, the maximum number of references are limited with runner alignment.
+                // So, we use CAS loop and spin_wait to guarantee that references are never exceed "max_value".
                 do {
                     auto max_value = expected | collaborative_once_references_mask;
                     expected = spin_wait_while_eq(m_state, max_value);
-                // "expected > state::done" prevents storing values, when state is uninitialized
+                // "expected > state::done" prevents storing values, when state is uninitialized or done
                 } while (expected > state::done && !m_state.compare_exchange_strong(expected, expected + 1));
 
                 if (auto shared_runner = collaborative_once_runner::from_bits(expected & ~collaborative_once_references_mask)) {
