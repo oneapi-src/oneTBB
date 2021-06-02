@@ -58,7 +58,6 @@
     #endif /* _DEBUG */
 #endif /* __TBB_TEST_SECONDARY */
 
-
 #if DO_TEST_DEBUG_MACRO
 // Reset TBB_USE_DEBUG defined in makefiles.
 #undef TBB_USE_DEBUG
