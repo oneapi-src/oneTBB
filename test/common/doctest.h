@@ -83,7 +83,7 @@
         !defined(__INTEL_COMPILER)
 #define DOCTEST_GCC DOCTEST_COMPILER(__GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__)
 #endif // GCC
-// Change inspired by oneTBB : Intel Compiler support
+// TODO: upstream the change to doctest : Intel Compiler support
 #if defined(__INTEL_COMPILER)
 #define DOCTEST_ICC DOCTEST_COMPILER(__INTEL_COMPILER / 100, __INTEL_COMPILER % 100, __INTEL_COMPILER % 10000)
 #endif // ICC
@@ -323,7 +323,7 @@ DOCTEST_MSVC_SUPPRESS_WARNING(26812) // Prefer 'enum class' over 'enum'
 #define DOCTEST_UNUSED __attribute__((unused))
 #define DOCTEST_ALIGNMENT(x) __attribute__((aligned(x)))
 #endif
-// Change inspired by oneTBB : Work-around for the warning: 'routine is both "inline" and "noinline"'
+// TODO: upstream the change to doctest : Work-around for the warning: 'routine is both "inline" and "noinline"'
 #if DOCTEST_ICC
 #undef DOCTEST_NOINLINE
 #define DOCTEST_NOINLINE
@@ -369,7 +369,7 @@ DOCTEST_MSVC_SUPPRESS_WARNING(26812) // Prefer 'enum class' over 'enum'
 #define DOCTEST_PLATFORM_LINUX
 #endif // DOCTEST_PLATFORM
 
-// Change inspired by oneTBB : make variable volatile to suppress unused warning
+// TODO: upstream the change to doctest : make variable volatile to suppress unused warning
 #define DOCTEST_GLOBAL_NO_WARNINGS(var)                                                            \
     DOCTEST_CLANG_SUPPRESS_WARNING_WITH_PUSH("-Wglobal-constructors")                              \
     DOCTEST_CLANG_SUPPRESS_WARNING("-Wunused-variable")                                            \
@@ -468,7 +468,7 @@ namespace doctest {
 DOCTEST_INTERFACE extern bool is_running_in_test;
 
 #if _MSC_VER
-// Change inspired by oneTBB :
+// TODO: upstream the change to doctest :
 // Due to race between exiting the process and starting of a new detached thread in Windows, thread
 // local variables, which constructors or destructors have calls to runtime functions (e.g. free()
 // function) can cause access violation since TBB along with runtime library may have been unloaded
@@ -843,7 +843,7 @@ namespace detail {
 
     template<typename T> auto declval() DOCTEST_NOEXCEPT -> decltype(declval<T>(0)) ;
 
-    // Change inspired by oneTBB : fix "storage class is not first" warning
+    // TODO: upstream the change to doctest : fix "storage class is not first" warning
     template<class T> struct is_lvalue_reference { static const bool value=false; };
     template<class T> struct is_lvalue_reference<T&> { static const bool value=true; };
 
@@ -1136,7 +1136,7 @@ DOCTEST_CLANG_SUPPRESS_WARNING_WITH_PUSH("-Wunused-comparison")
 // If not it doesn't find the operator or if the operator at global scope is defined after
 // this template, the template won't be instantiated due to SFINAE. Once the template is not
 // instantiated it can look for global operator using normal conversions.
-// Change inspired by oneTBB : Implement old version of check due to Intel Compiler
+// TODO: upstream the change to doctest : Implement old version of check due to Intel Compiler
 // internal error: assertion failed at: "shared/cfe/edgcpfe/exprutil.c", line 5155
 #if !DOCTEST_ICC
 #define SFINAE_OP(ret,op) decltype(doctest::detail::declval<L>() op doctest::detail::declval<R>(),static_cast<ret>(0))
@@ -1360,7 +1360,7 @@ DOCTEST_CLANG_SUPPRESS_WARNING_POP
 
     struct DOCTEST_INTERFACE TestSuite
     {
-        // Change inspired by oneTBB : missing initializer for member
+        // TODO: upstream the change to doctest : missing initializer for member
         const char* m_test_suite = nullptr;
         const char* m_description = nullptr;
         bool        m_skip = false;
@@ -1371,7 +1371,7 @@ DOCTEST_CLANG_SUPPRESS_WARNING_POP
         int         m_expected_failures = 0;
         double      m_timeout = 0;
 
-        // Change inspired by oneTBB : Fix segfault on Intel Compiler 2021 during the DOCTEST_TEST_SUITE_END execution
+        // TODO: upstream the change to doctest : Fix segfault on Intel Compiler 2021 during the DOCTEST_TEST_SUITE_END execution
         TestSuite(const char* in = nullptr) {
             m_test_suite = in;
         }
@@ -1657,7 +1657,7 @@ DOCTEST_CLANG_SUPPRESS_WARNING_POP
     
         explicit ContextScope(const L &lambda) : ContextScopeBase(), lambda_(lambda) {}
 
-        // Change inspired by oneTBB : fix copy elision absence case
+        // TODO: upstream the change to doctest : fix copy elision absence case
         // std::move cannot be applied here since there is no utility header included in this place (by some reason all headers are included later)
         ContextScope(ContextScope &&other) : ContextScopeBase(static_cast<ContextScopeBase&&>(other)), lambda_(other.lambda_) {}
 
@@ -2118,7 +2118,7 @@ int registerReporter(const char* name, int priority, bool isReporter) {
     DOCTEST_GLOBAL_NO_WARNINGS_END() typedef int DOCTEST_ANONYMOUS(_DOCTEST_ANON_FOR_SEMICOLON_)
 
 // for logging
-// Change inspired by oneTBB : DOCTEST_ANONYMOUS doesn't work on the same line here on MSVS 15.9.13
+// TODO: upstream the change to doctest : DOCTEST_ANONYMOUS doesn't work on the same line here on MSVS 15.9.13
 #define DOCTEST_INFO(...)                                                                          \
     DOCTEST_INFO_IMPL(DOCTEST_ANONYMOUS(_DOCTEST_CAPTURE_),                                        \
                       _DOCTEST_CAPTURE_##__COUNTER__,                                              \
@@ -3187,7 +3187,7 @@ typedef timer_large_integer::type ticks_t;
         }
 
     private:
-        // Change inspired by oneTBB : Fix the typo (word "degrade")
+        // TODO: upstream the change to doctest : Fix the typo (word "degrade")
         // Each thread has a different atomic that it operates on. If more than NumLanes threads
         // use this, some will use the same atomic. So performance will degrade a bit, but still
         // everything will work.
@@ -4031,7 +4031,7 @@ namespace {
         return 0;
     }
 
-    // Change inspired by oneTBB : add volatile to get rid of "unused variable warning" + fix typo
+    // TODO: upstream the change to doctest : add volatile to get rid of "unused variable warning" + fix typo
     volatile int dummy_init_console_colors = colors_init();
 #endif // DOCTEST_CONFIG_COLORS_WINDOWS
 
@@ -4232,7 +4232,7 @@ namespace detail {
         wrapped_g_infoContexts.get().push_back(this);
     }
 
-    // Change inspired by oneTBB : fix copy elision absence case
+    // TODO: upstream the change to doctest : fix copy elision absence case
     ContextScopeBase::ContextScopeBase(ContextScopeBase&& other) {
         if (other.need_to_destroy) {
             other.destroy();
@@ -4268,7 +4268,7 @@ namespace detail {
 namespace {
     using namespace detail;
 
-// Change inspired by oneTBB : Universal Windows Platform support
+// TODO: upstream the change to doctest : Universal Windows Platform support
 #if !defined(DOCTEST_CONFIG_POSIX_SIGNALS) && (!defined(DOCTEST_CONFIG_WINDOWS_SEH) || defined(WINAPI_FAMILY))
     struct FatalConditionHandler
     {
@@ -4532,7 +4532,7 @@ namespace {
             g_cs->numAssertsFailedCurrentTest_atomic++;
     }
 
-// Change inspired by oneTBB : Universal Windows Platform support
+// TODO: upstream the change to doctest : Universal Windows Platform support
 #if defined(DOCTEST_CONFIG_POSIX_SIGNALS) || (defined(DOCTEST_CONFIG_WINDOWS_SEH) && !defined(WINAPI_FAMILY))
     void reportFatal(const std::string& message) {
         g_cs->failure_flags |= TestCaseFailureReason::Crash;
@@ -5834,7 +5834,7 @@ namespace {
             printReporters(getReporters(), "reporters");
         }
 
-// Change inspired by oneTBB : list_query_results() was declared but never referenced
+// TODO: upstream the change to doctest : list_query_results() was declared but never referenced
 #if 0 /* dead code */
         void list_query_results() {
             separator_to_stream();
