@@ -474,7 +474,6 @@ DOCTEST_INTERFACE extern bool is_running_in_test;
 // function) can cause access violation since TBB along with runtime library may have been unloaded
 // by the time these variables are constructed or destroyed. The workaround is do not call constructors
 // and/or destructors for such variables if they are not used.
-#include <type_traits>
 template <typename T>
 struct doctest_thread_local_wrapper {
     doctest_thread_local_wrapper() {
