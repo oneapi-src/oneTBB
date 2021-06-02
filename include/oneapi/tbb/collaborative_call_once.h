@@ -171,7 +171,7 @@ class collaborative_once_flag : no_copy {
             } else {
                 // Moonlighting thread: we need to add a reference to the state to prolong runner lifetime.
                 // However, the maximum number of references are limited with runner alignment.
-                // So, we use CAS loop and spin_wait to guarantee that references are never exceed "max_value".
+                // So, we use CAS loop and spin_wait to guarantee that references never exceed "max_value".
                 do {
                     auto max_value = expected | collaborative_once_references_mask;
                     expected = spin_wait_while_eq(m_state, max_value);
