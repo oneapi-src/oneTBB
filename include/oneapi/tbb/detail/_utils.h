@@ -37,6 +37,8 @@ template<typename... T> void suppress_unused_warning(T&&...) {}
   bound is more useful than a run-time exact answer.
   @ingroup memory_allocation */
 constexpr size_t max_nfs_size = 128;
+constexpr std::size_t max_nfs_size_exp = 7;
+static_assert(1 << max_nfs_size_exp == max_nfs_size, "max_nfs_size_exp must be a log2(max_nfs_size)");
 
 //! Class that implements exponential backoff.
 class atomic_backoff {
@@ -90,25 +92,28 @@ public:
 //! Spin WHILE the condition is true.
 /** T and U should be comparable types. */
 template <typename T, typename C>
-void spin_wait_while(const std::atomic<T>& location, C comp, std::memory_order order) {
+T spin_wait_while(const std::atomic<T>& location, C comp, std::memory_order order) {
     atomic_backoff backoff;
-    while (comp(location.load(order))) {
+    T snapshot = location.load(order);
+    while (comp(snapshot)) {
         backoff.pause();
+        snapshot = location.load(order);
     }
+    return snapshot;
 }
 
 //! Spin WHILE the value of the variable is equal to a given value
 /** T and U should be comparable types. */
 template <typename T, typename U>
-void spin_wait_while_eq(const std::atomic<T>& location, const U value, std::memory_order order = std::memory_order_acquire) {
-    spin_wait_while(location, [&value](T t) { return t == value; }, order);
+T spin_wait_while_eq(const std::atomic<T>& location, const U value, std::memory_order order = std::memory_order_acquire) {
+    return spin_wait_while(location, [&value](T t) { return t == value; }, order);
 }
 
 //! Spin UNTIL the value of the variable is equal to a given value
 /** T and U should be comparable types. */
 template<typename T, typename U>
-void spin_wait_until_eq(const std::atomic<T>& location, const U value, std::memory_order order = std::memory_order_acquire) {
-    spin_wait_while(location, [&value](T t) { return t != value; }, order);
+T spin_wait_until_eq(const std::atomic<T>& location, const U value, std::memory_order order = std::memory_order_acquire) {
+    return spin_wait_while(location, [&value](T t) { return t != value; }, order);
 }
 
 //! Spin UNTIL the condition returns true or spinning time is up.
