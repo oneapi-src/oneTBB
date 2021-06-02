@@ -98,6 +98,7 @@ public:
 
     template <typename F>
     void run_once(F&& f) {
+        __TBB_ASSERT(!m_is_ready.load(std::memory_order_relaxed), "storage with task_arena and wait_context is already initialized");
         // Initialize internal state
         new(&m_storage) storage_t();
         m_storage.m_arena.execute([&] {
