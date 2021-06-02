@@ -22,6 +22,10 @@
 #pragma warning( disable: 4702 )
 #endif
 
+#if __INTEL_COMPILER && _MSC_VER
+#pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
+#endif
+
 #include "common/config.h"
 
 // Include first to check missed header dependencies
