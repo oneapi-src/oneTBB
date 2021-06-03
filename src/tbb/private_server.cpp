@@ -351,14 +351,16 @@ inline bool private_server::try_insert_in_asleep_list( private_worker& t ) {
         return false;
     // Contribute to slack under lock so that if another takes that unit of slack,
     // it sees us sleeping on the list and wakes us up.
-    if (my_slack.load(std::memory_order_relaxed) < 0) {
-        ++my_slack;
-        t.my_next = my_asleep_list_root.load(std::memory_order_relaxed);
-        my_asleep_list_root.store(&t, std::memory_order_relaxed);
-        return true;
-    } else {
-        return false;
+    auto expected = my_slack.load(std::memory_order_relaxed);
+    while (expected < 0) {
+        if (my_slack.compare_exchange_strong(expected, expected + 1)) {
+            t.my_next = my_asleep_list_root.load(std::memory_order_relaxed);
+            my_asleep_list_root.store(&t, std::memory_order_relaxed);
+            return true;
+        }
     }
+
+    return false;
 }
 
 void private_server::wake_some( int additional_slack ) {
