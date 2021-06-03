@@ -28,7 +28,7 @@
 
 #if _MSC_VER
 #pragma warning (push)
-// Forcing value to bool 'true' or 'false' (occured inside tls.h)
+// Forcing value to bool 'true' or 'false' (occurred inside tls.h)
 #pragma warning (disable: 4800)
 #endif //#if _MSC_VER
 
