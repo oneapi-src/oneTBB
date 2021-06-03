@@ -448,7 +448,10 @@ TEST_CASE("Main set of tests") {
     CheckMemalignFuncOverload(aligned_alloc, free);
 #endif
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     struct mallinfo info = mallinfo();
+#pragma GCC diagnostic pop
     // right now mallinfo initialized by zero
     REQUIRE((!info.arena && !info.ordblks && !info.smblks && !info.hblks
            && !info.hblkhd && !info.usmblks && !info.fsmblks
