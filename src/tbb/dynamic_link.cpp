@@ -426,7 +426,7 @@ namespace r1 {
 #endif /*_WIN32*/
 
     dynamic_link_handle dynamic_load( const char* library, const dynamic_link_descriptor descriptors[], std::size_t required, bool is_local ) {
-        ::tbb::detail::suppress_unused_warning( library, descriptors, required );
+        ::tbb::detail::suppress_unused_warning( library, descriptors, required, is_local );
 #if __TBB_DYNAMIC_LOAD_ENABLED
         std::size_t const len = PATH_MAX + 1;
         char path[ len ];
