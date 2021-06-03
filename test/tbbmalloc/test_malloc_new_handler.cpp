@@ -28,7 +28,7 @@
 
 #if _MSC_VER
 #pragma warning (push)
-// Forcing value to bool 'true' or 'false'
+// Forcing value to bool 'true' or 'false' (occured inside tls.h)
 #pragma warning (disable: 4800)
 #endif //#if _MSC_VER
 
@@ -81,8 +81,9 @@ TEST_CASE("New handler callback") {
     // Undo custom handler
     std::set_new_handler(0);
 }
-#endif // !HARNESS_SKIP_TEST && TBB_USE_EXCEPTIONS
 
 #if _MSC_VER
 #pragma warning (pop)
 #endif
+
+#endif // !HARNESS_SKIP_TEST && TBB_USE_EXCEPTIONS

@@ -235,18 +235,34 @@ public:
     handle_object(handle_object&& other)
         : my_lru_cache_ptr(other.my_lru_cache_ptr), my_map_record_ptr(other.my_map_record_ptr) {
 
+#if _MSC_VER
+#pragma warning (push)
+// Warning: forcing value to bool 'true' or 'false'
+#pragma warning (disable: 4800)
+#endif //#if _MSC_VER
         __TBB_ASSERT(
             bool(other.my_lru_cache_ptr) == bool(other.my_map_record_ptr),
             "invalid state of moving object?");
+#if _MSC_VER
+#pragma warning (pop)
+#endif
 
         other.my_lru_cache_ptr = nullptr;
         other.my_map_record_ptr = nullptr;
     }
 
     handle_object& operator=(handle_object&& other) {
+#if _MSC_VER
+#pragma warning (push)
+// Warning: forcing value to bool 'true' or 'false'
+#pragma warning (disable: 4800)
+#endif //#if _MSC_VER
         __TBB_ASSERT(
             bool(other.my_lru_cache_ptr) == bool(other.my_map_record_ptr),
             "invalid state of moving object?");
+#if _MSC_VER
+#pragma warning (pop)
+#endif
 
         if (my_lru_cache_ptr)
             my_lru_cache_ptr->signal_end_of_usage(*my_map_record_ptr);
