@@ -408,10 +408,9 @@ namespace r1 {
     #endif /* __TBB_DYNAMIC_LOAD_ENABLED */
     }
 
-    int define_flags(bool is_local) {
-        int flags = 0;
 #if !_WIN32
-        flags = flags | RTLD_NOW;
+    int define_flags(bool is_local) {
+        int flags = RTLD_NOW;
         if (is_local) {
             flags = flags | RTLD_LOCAL;
 #if !__APPLE__
@@ -420,9 +419,11 @@ namespace r1 {
         } else {
             flags = flags | RTLD_GLOBAL;
         }
-#endif /*!_WIN32*/
         return flags;
     }
+#else /*_WIN32*/
+    int define_flags(bool) { return 0; }
+#endif /*_WIN32*/
 
     dynamic_link_handle dynamic_load( const char* library, const dynamic_link_descriptor descriptors[], std::size_t required, bool is_local ) {
         ::tbb::detail::suppress_unused_warning( library, descriptors, required );
