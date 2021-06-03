@@ -38,7 +38,7 @@ cmake <options> <repo_root>
 
 Some useful options:
 - `-G <generator>` - specify particular project generator, see `cmake --help` for details.
-- `-DCMAKE_BUILD_TYPE=Debug` - specify for Debug build, it doesn't applicable for multi-config generators, e.g. for Visual Studio generator).
+- `-DCMAKE_BUILD_TYPE=Debug` - specify for Debug build, it isn't applicable for multi-config generators, e.g. for Visual Studio generator).
 
 #### TBBBind library configuration
 
