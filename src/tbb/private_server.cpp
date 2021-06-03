@@ -333,7 +333,8 @@ private_server::private_server( tbb_client& client ) :
     my_thread_array = tbb::cache_aligned_allocator<padded_private_worker>().allocate( my_n_thread );
     for( std::size_t i=0; i<my_n_thread; ++i ) {
         private_worker* t = new( &my_thread_array[i] ) padded_private_worker( *this, client, i );
-        t->my_next = my_asleep_list_root.exchange(t, std::memory_order_relaxed);
+        t->my_next = my_asleep_list_root.load(std::memory_order_relaxed);
+        my_asleep_list_root.store(t, std::memory_order_relaxed);
     }
 }
 
