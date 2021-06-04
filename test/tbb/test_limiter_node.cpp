@@ -429,6 +429,7 @@ void test_decrementer() {
 
     m = 0;
     while( limit3.try_put( m++ ) ){};
+    CHECK_MESSAGE( m == threshold3 - decrement_value3, "Not all messages have been accepted." );
 
     actual = -1; m = 0;
     while( queue.try_get(actual) ){
