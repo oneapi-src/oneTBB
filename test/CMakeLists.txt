@@ -204,12 +204,12 @@ function(tbb_configure_hwloc_dependent_test)
         return()
     endif()
 
-    list(GET _hwloc_test_HWLOC_REQUIRED_VERSION_LIST 0 HWLOC_MAXIMAL_VERSION)
+    list(GET _hwloc_test_HWLOC_REQUIRED_VERSION_LIST 0 TEST_HWLOC_VERSION)
     tbb_add_test(
         SUBDIR ${_hwloc_test_SUBDIR}
         NAME ${_hwloc_test_NAME}
         SUFFIX ${_hwloc_test_SUFFIX}
-        DEPENDENCIES TBB::tbb HWLOC::${HWLOC_MAXIMAL_VERSION}
+        DEPENDENCIES TBB::tbb HWLOC::${TEST_HWLOC_VERSION}
     )
 
     _tbb_get_hwloc_runtime_vars(
