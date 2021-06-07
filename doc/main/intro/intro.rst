@@ -1,4 +1,4 @@
-.. _introducing_main:
+.. _intro:
 
 Introduction
 ============
