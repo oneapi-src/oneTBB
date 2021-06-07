@@ -28,6 +28,9 @@
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 #include <hwloc.h>
+#if _WIN32
+#include <hwloc/windows.h>
+#endif
 #if _MSC_VER && !__INTEL_COMPILER && !__clang__
 #pragma warning( pop )
 #elif _MSC_VER && __clang__
@@ -40,6 +43,12 @@
 // This macro tracks error codes that are returned from the hwloc interfaces.
 #define assertion_hwloc_wrapper(command, ...) \
         __TBB_ASSERT_EX( (command(__VA_ARGS__)) >= 0, "Error occurred during call to hwloc API.");
+
+void print_affinity(const hwloc_bitmap_t& bitmap) {
+    char buffer[256];
+    hwloc_bitmap_snprintf(buffer, 256, bitmap);
+    printf("Affinity is: %s\n", buffer);
+}
 
 namespace tbb {
 namespace detail {
@@ -65,7 +74,10 @@ class platform_topology {
     // Hybrid CPUs API related topology members
     std::vector<hwloc_cpuset_t> core_types_affinity_masks_list{};
     std::vector<int> core_types_indexes_list{};
-
+public:
+    // Windows processor groups related topology members
+    std::vector<hwloc_cpuset_t> processor_groups_masks_list{};
+private:
     enum init_stages { uninitialized,
                        started,
                        topology_allocated,
@@ -76,11 +88,11 @@ class platform_topology {
     // is allowed only if machine topology contains several Windows Processors groups
     // and process affinity mask wasn`t limited manually (affinity mask cannot violates
     // processors group boundaries).
-    bool intergroup_binding_allowed(std::size_t groups_num) { return groups_num > 1; }
+    bool intergroup_binding_allowed() { return number_of_processors_groups > 1; }
 
-private:
     void topology_initialization(std::size_t groups_num) {
         initialization_state = started;
+        number_of_processors_groups = groups_num;
 
         // Parse topology
         if ( hwloc_topology_init( &topology ) == 0 ) {
@@ -93,7 +105,7 @@ private:
             return;
 
         // Getting process affinity mask
-        if ( intergroup_binding_allowed(groups_num) ) {
+        if ( intergroup_binding_allowed() ) {
             process_cpu_affinity_mask  = hwloc_bitmap_dup(hwloc_topology_get_complete_cpuset (topology));
             process_node_affinity_mask = hwloc_bitmap_dup(hwloc_topology_get_complete_nodeset(topology));
         } else {
@@ -103,8 +115,6 @@ private:
             assertion_hwloc_wrapper(hwloc_get_cpubind, topology, process_cpu_affinity_mask, 0);
             hwloc_cpuset_to_nodeset(topology, process_cpu_affinity_mask, process_node_affinity_mask);
         }
-
-        number_of_processors_groups = groups_num;
     }
 
     void numa_topology_parsing() {
@@ -212,6 +222,35 @@ private:
         }
     }
 
+    void processor_groups_topology_parsing() {
+        bool proc_groups_parsing_broken = false;
+#if _WIN32
+        if ( initialization_state == topology_loaded && intergroup_binding_allowed() ) {
+            int groups_count = hwloc_windows_get_nr_processor_groups(topology, 0);
+            processor_groups_masks_list.resize(groups_count);
+            for (int group_index = 0; group_index < groups_count; ++group_index) {
+                hwloc_cpuset_t& current_group_mask = processor_groups_masks_list[group_index];
+                current_group_mask = hwloc_bitmap_alloc();
+                if (hwloc_windows_get_processor_group_cpuset(topology, group_index, current_group_mask, 0) != 0) {
+                    proc_groups_parsing_broken = true;
+                    break;
+                }
+                printf("proc group: %d ", group_index);
+                print_affinity(current_group_mask);
+            }
+        }
+#else
+        proc_groups_parsing_broken = true;
+#endif
+        if (proc_groups_parsing_broken) {
+            for (auto& proc_group_mask : processor_groups_masks_list) {
+                hwloc_bitmap_free(proc_group_mask);
+            }
+            processor_groups_masks_list.resize(1);
+            processor_groups_masks_list[0] = hwloc_bitmap_dup(process_cpu_affinity_mask);
+        }
+    }
+
 public:
     typedef hwloc_cpuset_t             affinity_mask;
     typedef hwloc_const_cpuset_t const_affinity_mask;
@@ -230,6 +269,7 @@ public:
         topology_initialization(groups_num);
         numa_topology_parsing();
         core_types_topology_parsing();
+        processor_groups_topology_parsing();
 
         if (initialization_state == topology_loaded)
             initialization_state = topology_parsed;
@@ -243,6 +283,10 @@ public:
 
             for (auto& core_type_mask : core_types_affinity_masks_list) {
                 hwloc_bitmap_free(core_type_mask);
+            }
+
+            for (auto& proc_group_mask : processor_groups_masks_list) {
+                hwloc_bitmap_free(proc_group_mask);
             }
 
             hwloc_bitmap_free(process_node_affinity_mask);
@@ -411,21 +455,15 @@ public:
         topology.store_current_affinity_mask(affinity_backup[slot_num]);
 
 #if WIN32
-        // TBBBind supports only systems where NUMA nodes and core types do not cross the border
-        // between several processor groups. So if a certain NUMA node or core type constraint
-        // specified, then the constraints affinity mask will not cross the processor groups' border.
-
-        // But if we have constraint based only on the max_threads_per_core setting, then the
-        // constraints affinity mask does may cross the border between several processor groups
-        // on machines with more then 64 hardware threads. That is why we need to use the special
-        // function, which regulates the number of threads in the current threads mask.
-        if (topology.number_of_processors_groups > 1 && my_max_threads_per_core != -1 &&
-            (my_numa_node_id == -1 || topology.numa_indexes_list.size() == 1) &&
-            (my_core_type_id == -1 || topology.core_types_indexes_list.size() == 1)
-        ) {
-            topology.fit_num_threads_per_core(affinity_buffer[slot_num], affinity_backup[slot_num], handler_affinity_mask);
-            topology.set_affinity_mask(affinity_buffer[slot_num]);
-            return;
+        printf("numa: %d, core_type: %d, tpc: %d ", my_numa_node_id, my_core_type_id, my_max_threads_per_core);
+        for (auto& proc_group_mask: topology.processor_groups_masks_list) {
+            hwloc_bitmap_and(affinity_buffer[slot_num], affinity_backup[slot_num], proc_group_mask);
+            if (hwloc_bitmap_weight(affinity_buffer[slot_num]) >= 0) {
+                hwloc_bitmap_and(affinity_buffer[slot_num], handler_affinity_mask, proc_group_mask);
+                topology.set_affinity_mask(affinity_buffer[slot_num]);
+                print_affinity(affinity_buffer[slot_num]);
+                return;
+            }
         }
 #endif
         topology.set_affinity_mask(handler_affinity_mask);
