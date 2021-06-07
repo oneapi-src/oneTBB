@@ -106,7 +106,7 @@ private:
 
             if ( groups_num == 1 && hwloc_topology_set_flags(topology,
                     HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM |
-                    HWLOC_TOPOLOGY_FLAG_RESTRICT_TO_BINDING) != 0) {
+                    HWLOC_TOPOLOGY_FLAG_RESTRICT_TO_CPUBINDING) != 0) {
                 return;
             }
             report_binding();

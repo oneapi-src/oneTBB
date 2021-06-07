@@ -177,7 +177,7 @@ private:
             REQUIRE(
                 hwloc_topology_set_flags(topology,
                     HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM |
-                    HWLOC_TOPOLOGY_FLAG_RESTRICT_TO_BINDING) == 0
+                    HWLOC_TOPOLOGY_FLAG_RESTRICT_TO_CPUBINDING) == 0
             );
         }
         hwloc_require_ex(hwloc_topology_load, topology);
