@@ -191,7 +191,7 @@ public:
         // No fences here because other threads have already quit.
         for( ; task_proxy* t = my_first; ++k ) {
             my_first.store(t->next_in_mailbox, std::memory_order_relaxed);
-            // cache_aligned_deallocate((char*)t - task_prefix_reservation_size);
+            t->allocator.delete_object(t);
         }
         return k;
     }

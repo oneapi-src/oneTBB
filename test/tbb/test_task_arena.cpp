@@ -1644,7 +1644,7 @@ void StressTestMixFunctionality() {
 
                     break;
                 }
-                case detach_observer :
+                case detach_observer:
                 {
                     auto arena_number = get_random_arena() % arenas_pool.size();
                     auto curr_arena = arenas_pool.begin();
@@ -1676,11 +1676,41 @@ void StressTestMixFunctionality() {
                     if (curr_arena == arenas_pool.end()) break;
 
                     curr_arena->arena->execute([] () {
-                        tbb::parallel_for(tbb::blocked_range<std::size_t>(0, 10000), [] (tbb::blocked_range<std::size_t>&) {
+                        static tbb::affinity_partitioner aff;
+                        auto body = [](tbb::blocked_range<std::size_t>&) {
                             std::atomic<int> sum{};
                             // Make some work
-                            for (; sum < 10; ++sum) ;
-                        });
+                            for (; sum < 10; ++sum);
+                        };
+                        tbb::parallel_for(tbb::blocked_range<std::size_t>(0, 10000), body, tbb::auto_partitioner{});
+                        tbb::parallel_for(tbb::blocked_range<std::size_t>(0, 10000), body, aff);
+                    });
+
+                    break;
+                }
+                {
+                    tbb::spin_rw_mutex::scoped_lock lock{};
+                    auto curr_arena = arenas_pool.begin();
+                    for (; curr_arena != arenas_pool.end(); ++curr_arena) {
+                        if (lock.try_acquire(curr_arena->arena_in_use, /*writer*/ false)) {
+                            if (curr_arena->status == arena_handler::alive) {
+                                break;
+                            }
+                            else {
+                                lock.release();
+                            }
+                        }
+                    }
+
+                    if (curr_arena == arenas_pool.end()) break;
+
+                    curr_arena->arena->execute([]() {
+                        static tbb::affinity_partitioner aff;
+                        tbb::parallel_for(tbb::blocked_range<std::size_t>(0, 10000), [](tbb::blocked_range<std::size_t>&) {
+                            std::atomic<int> sum{};
+                            // Make some work
+                            for (; sum < 10; ++sum);
+                        }, aff);
                     });
 
                     break;
