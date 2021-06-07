@@ -1687,34 +1687,7 @@ void StressTestMixFunctionality() {
                     });
 
                     break;
-                }
-                {
-                    tbb::spin_rw_mutex::scoped_lock lock{};
-                    auto curr_arena = arenas_pool.begin();
-                    for (; curr_arena != arenas_pool.end(); ++curr_arena) {
-                        if (lock.try_acquire(curr_arena->arena_in_use, /*writer*/ false)) {
-                            if (curr_arena->status == arena_handler::alive) {
-                                break;
-                            }
-                            else {
-                                lock.release();
-                            }
-                        }
-                    }
-
-                    if (curr_arena == arenas_pool.end()) break;
-
-                    curr_arena->arena->execute([]() {
-                        static tbb::affinity_partitioner aff;
-                        tbb::parallel_for(tbb::blocked_range<std::size_t>(0, 10000), [](tbb::blocked_range<std::size_t>&) {
-                            std::atomic<int> sum{};
-                            // Make some work
-                            for (; sum < 10; ++sum);
-                        }, aff);
-                    });
-
-                    break;
-                }
+                }               
                 case enqueue_task :
                 {
                     tbb::spin_rw_mutex::scoped_lock lock{};
