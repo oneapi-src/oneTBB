@@ -68,7 +68,7 @@ jobs:
           mkdir ${DEST_FOLDER}
       - name: Build documentation
         run: |
-          export BUILD_TYPE=${BUILD_TYPE} && sphinx-build doc/dev_guide_reference ${DEST_FOLDER}
+          export BUILD_TYPE=${BUILD_TYPE} && sphinx-build doc/main ${DEST_FOLDER}
       - name: Save docs
         uses: actions/upload-artifact@v2.2.1
         with:
