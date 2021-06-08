@@ -1264,11 +1264,11 @@
 
 #if __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING
         template <typename T>
-        using fixed_type_to_key_function_body_leaf = type_to_key_function_body_leaf<T, K, key_from_message_body<K,T> >(key_from_message_body<K,T>());
+        using fixed_type_to_key_function_body_leaf = type_to_key_function_body_leaf<T, K, key_from_message_body<K,T>>;
 
         unfolded_join_node(graph &g) : base_type(g,
                 func_initializer_type(
-                    new fixed_type_to_key_function_body_leaf<Args>...) ) {
+                    new fixed_type_to_key_function_body_leaf<Args>(key_from_message_body<K,Args>())...) ) {
         }
 #endif /* __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING */
         template <typename T, typename Body>
