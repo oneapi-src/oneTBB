@@ -169,7 +169,7 @@ private:
     // default-initialized and then copied to in some fashion, resulting in two
     // constructions and one destruction per element.  If the type is char[ ], we
     // placement new into each element, resulting in one construction per element.
-    static const size_t space_size = sizeof(ArrayType) / sizeof(char);
+    static const size_t space_size = sizeof(ArrayType);
     char value_space[space_size];
 
 
