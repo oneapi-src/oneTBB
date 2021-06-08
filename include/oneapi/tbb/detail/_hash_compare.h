@@ -72,13 +72,13 @@ template <typename Key>
 class tbb_hash_compare {
 public:
     std::size_t hash( const Key& a ) const { return my_hash_func(a); }
-#if _MSC_VER <= 1900
+#if defined(_MSC_VER) && _MSC_VER <= 1900
 #pragma warning (push)
 // MSVC 2015 throws a strange warning: 'std::size_t': forcing value to bool 'true' or 'false'
 #pragma warning (disable: 4800)
 #endif
     bool equal( const Key& a, const Key& b ) const { return my_key_equal(a, b); }
-#if _MSC_VER <= 1900
+#if defined(_MSC_VER) && _MSC_VER <= 1900
 #pragma warning (pop)
 #endif
 private:
