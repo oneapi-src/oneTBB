@@ -69,6 +69,13 @@ set_target_properties(tbbmalloc PROPERTIES
     LINKER_LANGUAGE C
 )
 
+if (NOT MINGW)
+    set_target_properties(tbbmalloc PROPERTIES
+        LINK_FLAGS ${TBB_LINK_DEF_FILE_FLAG}${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbmalloc.def
+        LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbmalloc.def
+    )
+endif()
+
 set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "")
 
 # Prefer using target_link_options instead of target_link_libraries to specify link options because
