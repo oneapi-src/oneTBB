@@ -1208,6 +1208,22 @@
                 OutputTuple > type;
     };
 
+    #if __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING
+        template <typename K, typename T>
+        struct key_from_message_body {
+            K operator()(const T& t) const {
+                return key_from_message<K>(t);
+            }
+        };
+        // Adds const to reference type
+        template <typename K, typename T>
+        struct key_from_message_body<K&,T> {
+            const K& operator()(const T& t) const {
+                return key_from_message<const K&>(t);
+            }
+        };
+    #endif /* __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING */
+
     //! unfolded_join_node : passes input_ports_type to join_node_base.  We build the input port type
     //  using tuple_element.  The class PT is the port type (reserving_port, queueing_port, key_matching_port)
     //  and should match the typename.
@@ -1264,22 +1280,6 @@
         }
         unfolded_join_node(const unfolded_join_node &other) : base_type(other) {}
     };
-
-#if __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING
-    template <typename K, typename T>
-    struct key_from_message_body {
-        K operator()(const T& t) const {
-            return key_from_message<K>(t);
-        }
-    };
-    // Adds const to reference type
-    template <typename K, typename T>
-    struct key_from_message_body<K&,T> {
-        const K& operator()(const T& t) const {
-            return key_from_message<const K&>(t);
-        }
-    };
-#endif /* __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING */
 
     //! templated function to refer to input ports of the join node
     template<size_t N, typename JNT>
