@@ -35,6 +35,10 @@ if (NOT APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
                              $<$<NOT:$<VERSION_LESS:${CMAKE_CXX_COMPILER_VERSION},5.0>>:-Wno-sized-deallocation>)
 endif()
 
+if (HAVE_MALLINFO2)
+    set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -DHAVE_MALLINFO2)
+endif()
+
 target_compile_options(tbbmalloc_proxy
     PRIVATE
     ${TBB_CXX_STD_FLAG} # TODO: consider making it PUBLIC.

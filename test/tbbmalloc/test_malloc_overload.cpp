@@ -448,7 +448,11 @@ TEST_CASE("Main set of tests") {
     CheckMemalignFuncOverload(aligned_alloc, free);
 #endif
 
+#ifdef HAVE_MALLINFO2
+    struct mallinfo2 info = mallinfo2();
+#else
     struct mallinfo info = mallinfo();
+#endif
     // right now mallinfo initialized by zero
     REQUIRE((!info.arena && !info.ordblks && !info.smblks && !info.hblks
            && !info.hblkhd && !info.usmblks && !info.fsmblks
