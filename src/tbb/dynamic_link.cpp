@@ -413,9 +413,9 @@ namespace r1 {
         int flags = RTLD_NOW;
         if (is_local) {
             flags = flags | RTLD_LOCAL;
-#if !__APPLE__
+#if __linux__ && !__ANDROID__
             flags = flags | RTLD_DEEPBIND;
-#endif /*!__APPLE__*/
+#endif /*__linux__ && !__ANDROID__*/
         } else {
             flags = flags | RTLD_GLOBAL;
         }
