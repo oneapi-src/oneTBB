@@ -49,7 +49,7 @@ void print_affinity(const hwloc_bitmap_t& bitmap) {
 }
 
 void report_binding() {
-#if _WIN32
+#if _WIN64
     GROUP_AFFINITY aff;
     memset(&aff, 0, sizeof(aff));
     DWORD_PTR process_mask = 0, sys_mask = 0;
