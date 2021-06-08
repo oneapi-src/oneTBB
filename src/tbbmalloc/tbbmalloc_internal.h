@@ -442,7 +442,7 @@ private:
         bool thpAvailable = false;
         unsigned long long hugePageSize = 0;
 
-#if __linux__
+#if __unix__
         // Check huge pages existence
         unsigned long long meminfoHugePagesTotal = 0;
 

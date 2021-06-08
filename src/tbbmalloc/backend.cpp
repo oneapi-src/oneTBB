@@ -967,7 +967,7 @@ void *Backend::remap(void *ptr, size_t oldSize, size_t newSize, size_t alignment
         return NULL;
     regionList.remove(oldRegion);
 
-    void *ret = mremap(oldRegion, oldRegion->allocSz, requestSize, MREMAP_MAYMOVE);
+    void *ret = mremap(oldRegion, oldRegion->allocSz, requestSize, M_MMAP_MAX);
     if (MAP_FAILED == ret) { // can't remap, revert and leave
         regionList.add(oldRegion);
         return NULL;

@@ -32,8 +32,10 @@
 #endif
 #else
 #include <unistd.h>
+#if __unix__
 #if __linux__
 #include <sys/sysinfo.h>
+#endif
 #include <cstring>
 #include <sched.h>
 #include <cerrno>
@@ -53,7 +55,7 @@ namespace r1 {
 
 #if __TBB_USE_OS_AFFINITY_SYSCALL
 
-#if __linux__
+#if __unix__
 // Handlers for interoperation with libiomp
 static int (*libiomp_try_restoring_original_mask)();
 // Table for mapping to libiomp entry points
@@ -63,7 +65,7 @@ static const dynamic_link_descriptor iompLinkTable[] = {
 #endif
 
 static void set_thread_affinity_mask( std::size_t maskSize, const basic_mask_t* threadMask ) {
-#if __linux__
+#if __unix__
     if( sched_setaffinity( 0, maskSize, threadMask ) )
 #else /* FreeBSD */
     if( cpuset_setaffinity( CPU_LEVEL_WHICH, CPU_WHICH_TID, -1, maskSize, threadMask ) )
@@ -76,7 +78,7 @@ static void set_thread_affinity_mask( std::size_t maskSize, const basic_mask_t* 
 }
 
 static void get_thread_affinity_mask( std::size_t maskSize, basic_mask_t* threadMask ) {
-#if __linux__
+#if __unix__
     if( sched_getaffinity( 0, maskSize, threadMask ) )
 #else /* FreeBSD */
     if( cpuset_getaffinity( CPU_LEVEL_WHICH, CPU_WHICH_TID, -1, maskSize, threadMask ) )
@@ -135,7 +137,7 @@ static void initialize_hardware_concurrency_info () {
     int err;
     int availableProcs = 0;
     int numMasks = 1;
-#if __linux__
+#if __unix__
     int maxProcs = sysconf(_SC_NPROCESSORS_ONLN);
     int pid = getpid();
 #else /* FreeBSD >= 7.1 */
@@ -147,7 +149,7 @@ static void initialize_hardware_concurrency_info () {
         const int curMaskSize = BasicMaskSize * numMasks;
         processMask = new basic_mask_t[numMasks];
         std::memset( processMask, 0, curMaskSize );
-#if __linux__
+#if __unix__
         err = sched_getaffinity( pid, curMaskSize, processMask );
         if ( !err || errno != EINVAL || curMaskSize * CHAR_BIT >= 256 * 1024 )
             break;
@@ -163,7 +165,7 @@ static void initialize_hardware_concurrency_info () {
     if ( !err ) {
         // We have found the mask size and captured the process affinity mask into processMask.
         num_masks = numMasks; // do here because it's needed for affinity_helper to work
-#if __linux__
+#if __unix__
         // For better coexistence with libiomp which might have changed the mask already,
         // check for its presence and ask it to restore the mask.
         dynamic_link_handle libhandle;

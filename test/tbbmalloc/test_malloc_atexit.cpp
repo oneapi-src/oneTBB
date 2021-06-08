@@ -60,7 +60,7 @@ bool exe_isMallocOverloaded()
 #endif
 #include <signal.h>
 
-#if __linux__ && !__ANDROID__
+#if __unix__ && !__ANDROID__
 extern "C" {
 void __libc_free(void *ptr);
 void *__libc_realloc(void *ptr, size_t size);
@@ -76,7 +76,7 @@ void *realloc(void *ptr, size_t size)
     return __libc_realloc(ptr, size);
 }
 } // extern "C"
-#endif // __linux__ && !__ANDROID__
+#endif // __unix__ && !__ANDROID__
 
 #endif // MALLOC_UNIXLIKE_OVERLOAD_ENABLED || MALLOC_ZONE_OVERLOAD_ENABLED
 
