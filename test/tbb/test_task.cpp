@@ -167,7 +167,7 @@ TEST_CASE("Test cancellation on exception") {
 
 //! \brief \ref error_guessing
 TEST_CASE("Simple test parallelism usage") {
-    std::size_t threads_num = utils::get_platform_max_threads();
+    std::uint32_t threads_num = static_cast<std::uint32_t>(utils::get_platform_max_threads());
     utils::SpinBarrier barrier(threads_num);
 
     auto barrier_wait = [&barrier] {
@@ -197,7 +197,7 @@ TEST_CASE("Simple test parallelism usage") {
 
 //! \brief \ref error_guessing
 TEST_CASE("Test parallelism usage with parallel_for") {
-    std::size_t task_threads_num = utils::get_platform_max_threads();
+    std::uint32_t task_threads_num = static_cast<std::uint32_t>(utils::get_platform_max_threads());
     utils::SpinBarrier barrier(task_threads_num);
 
     auto barrier_wait = [&barrier] {
@@ -255,7 +255,7 @@ TEST_CASE("Test parallelism usage with parallel_for") {
 
 //! \brief \ref error_guessing
 TEST_CASE("Test parallelism usage with spawn tasks in different threads") {
-    std::size_t threads_num = utils::get_platform_max_threads();
+    std::uint32_t threads_num = static_cast<std::uint32_t>(utils::get_platform_max_threads());
     utils::SpinBarrier barrier(threads_num);
 
     auto barrier_wait = [&barrier] {
@@ -326,7 +326,7 @@ std::atomic<std::size_t> SpawningTaskBody::my_current_task(0);
 
 //! \brief \ref error_guessing
 TEST_CASE("Actively adding tasks") {
-    std::size_t task_number = 500 * utils::get_platform_max_threads();
+    std::uint32_t task_number = 500 * static_cast<std::uint32_t>(utils::get_platform_max_threads());
 
     tbb::detail::d1::wait_context wait(task_number + 1);
     tbb::task_group_context test_context;
@@ -465,7 +465,7 @@ thread_local int test_tls = 0;
 
 //! \brief \ref error_guessing
 TEST_CASE("Bypass suspended by resume") {
-    std::size_t task_number = 500 * utils::get_platform_max_threads();
+    std::uint32_t task_number = 500 * static_cast<std::uint32_t>(utils::get_platform_max_threads());
     tbb::task_group_context test_context;
     tbb::detail::d1::wait_context wait(task_number + 1);
 
@@ -503,7 +503,7 @@ TEST_CASE("Bypass suspended by resume") {
 
 //! \brief \ref error_guessing
 TEST_CASE("Critical tasks + resume") {
-    std::size_t task_number = 500 * utils::get_platform_max_threads();
+    std::uint32_t task_number = 500 * static_cast<std::uint32_t>(utils::get_platform_max_threads());
 
     tbb::task_group_context test_context;
     tbb::detail::d1::wait_context wait(task_number);
@@ -565,7 +565,7 @@ TEST_CASE("Critical tasks + resume") {
 
 //! \brief \ref error_guessing
 TEST_CASE("Stress testing") {
-    std::size_t task_number = utils::get_platform_max_threads();
+    std::uint32_t task_number = static_cast<std::uint32_t>(utils::get_platform_max_threads());
 
     tbb::task_group_context test_context;
     tbb::detail::d1::wait_context wait(task_number);
@@ -617,7 +617,7 @@ TEST_CASE("Stress testing") {
 
 //! \brief \ref error_guessing
 TEST_CASE("All workers sleep") {
-    std::size_t thread_number = utils::get_platform_max_threads();
+    std::uint32_t thread_number = static_cast<std::uint32_t>(utils::get_platform_max_threads());
     tbb::concurrent_vector<tbb::task::suspend_point> suspend_points;
 
     tbb::task_group test_gr;
@@ -648,7 +648,7 @@ TEST_CASE("All workers sleep") {
 
 //! \brief \ref error_guessing
 TEST_CASE("Enqueue with exception") {
-    std::size_t task_number = 500 * utils::get_platform_max_threads();
+    std::uint32_t task_number = 500 * static_cast<std::uint32_t>(utils::get_platform_max_threads());
 
     tbb::task_group_context test_context;
     tbb::detail::d1::wait_context wait(task_number);
@@ -733,7 +733,7 @@ struct resubmitting_task : public tbb::detail::d1::task {
 TEST_CASE("Test with priority inversion") {
     if (!utils::can_change_thread_priority()) return;
 
-    std::size_t thread_number = utils::get_platform_max_threads();
+    std::uint32_t thread_number = static_cast<std::uint32_t>(utils::get_platform_max_threads());
     tbb::global_control gc(tbb::global_control::max_allowed_parallelism, thread_number + 1);
 
     tbb::task_arena test_arena(2 * thread_number, thread_number);
@@ -741,7 +741,7 @@ TEST_CASE("Test with priority inversion") {
     utils::pinning_observer obsr(test_arena);
     CHECK_MESSAGE(obsr.is_observing(), "Arena observer has not been activated");
 
-    std::size_t critical_task_counter = 1000 * thread_number;
+    std::uint32_t  critical_task_counter = 1000 * thread_number;
     std::atomic<std::size_t> task_counter{0};
 
     tbb::task_group_context test_context;
@@ -770,7 +770,7 @@ TEST_CASE("Test with priority inversion") {
     // take first core on execute
     utils::SpinBarrier barrier(thread_number + 1);
     test_arena.execute([&] {
-        tbb::parallel_for(std::size_t(0), thread_number + 1, [&] (std::size_t&) {
+        tbb::parallel_for(std::uint32_t(0), thread_number + 1, [&] (std::uint32_t&) {
             barrier.wait();
             submit(worker_task, test_arena, test_context, true);
         });

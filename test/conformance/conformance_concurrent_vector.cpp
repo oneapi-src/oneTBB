@@ -535,6 +535,12 @@ void verify_assignment_operator_throws_bad_last_alloc(vector_t & victim){
     //CHECK_THROWS_AS(victim = copy_of_victim, oneapi::tbb::bad_last_alloc); //TODO exceptions support
 }
 
+#if _MSC_VER
+#pragma warning (push)
+// Forcing value to bool 'true' or 'false'
+#pragma warning (disable: 4800)
+#endif //#if _MSC_VER
+
 //TODO: split into two separate tests
 //TODO: remove code duplication in exception safety tests
 void test_ex_assign_operator(){
@@ -571,6 +577,10 @@ void test_ex_assign_operator(){
         verify_assignment_operator_throws_bad_last_alloc(victim); //TODO exceptions support
     }
 }
+
+#if _MSC_VER
+#pragma warning (pop)
+#endif
 
 template<typename T>
 void AssertSameType( const T& /*x*/, const T& /*y*/ ) {}
@@ -896,7 +906,7 @@ public:
 
             if (!items_left_to_add[method_index]) {
                 struct not_zero{
-                    static bool is(std::size_t items_to_add){ return items_to_add;}
+                    static bool is(std::size_t items_to_add){ return items_to_add != 0;}
                 };
                 method_index = std::distance(items_left_to_add.begin(), std::find_if(items_left_to_add.begin(), items_left_to_add.end(), &not_zero::is));
                 REQUIRE_MESSAGE(method_index < my_grain_map.distributed.size(), "incorrect test setup - wrong expected distribution: left free space but no elements to add?");

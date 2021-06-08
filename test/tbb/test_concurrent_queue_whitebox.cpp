@@ -81,7 +81,7 @@ void test_flogger_help( Q& q, std::size_t items_per_page ) {
     }
 
     // To induce the overflow occurrence
-    utils::NativeParallelFor(utils::MaxThread, FloggerBody<Q>(q, reserved_elem_num + 20));
+    utils::NativeParallelFor(static_cast<typename Q::value_type>(utils::MaxThread), FloggerBody<Q>(q, reserved_elem_num + 20));
 
     REQUIRE_MESSAGE(q.empty(), "Failed flogger/empty test");
     REQUIRE_MESSAGE(q.my_queue_representation->head_counter < hack_val, "Failed wraparound test");

@@ -26,6 +26,12 @@
 
 #if !HARNESS_SKIP_TEST && TBB_USE_EXCEPTIONS
 
+#if _MSC_VER
+#pragma warning (push)
+// Forcing value to bool 'true' or 'false' (occurred inside tls.h)
+#pragma warning (disable: 4800)
+#endif //#if _MSC_VER
+
 #include "../../src/tbb/tls.h"
 
 tbb::detail::r1::tls<bool> new_handler_called;
@@ -75,4 +81,9 @@ TEST_CASE("New handler callback") {
     // Undo custom handler
     std::set_new_handler(0);
 }
+
+#if _MSC_VER
+#pragma warning (pop)
+#endif
+
 #endif // !HARNESS_SKIP_TEST && TBB_USE_EXCEPTIONS

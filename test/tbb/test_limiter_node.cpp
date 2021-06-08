@@ -442,15 +442,15 @@ void test_decrementer() {
 
 void test_try_put_without_successors() {
     tbb::flow::graph g;
-    std::size_t try_put_num{3};
+    int try_put_num{3};
     tbb::flow::buffer_node<int> bn(g);
     tbb::flow::limiter_node<int> ln(g, try_put_num);
     tbb::flow::make_edge(bn, ln);
-    std::size_t i = 1;
+    int i = 1;
     for (; i <= try_put_num; i++)
         bn.try_put(i);
 
-    std::atomic<std::size_t> counter{0};
+    std::atomic<int> counter{0};
     tbb::flow::function_node<int, int> fn(g, tbb::flow::unlimited,
         [&](int input) {
             counter += input;

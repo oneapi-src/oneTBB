@@ -58,7 +58,7 @@ TEST_CASE("Stress test") {
 
     tbb::detail::r1::concurrent_monitor test_monitor;
     {
-        tbb::task_arena arena(threads_number - 1, 0);
+        tbb::task_arena arena(static_cast<int>(threads_number - 1), 0);
 
 
         std::size_t iter_on_operation = 1000;

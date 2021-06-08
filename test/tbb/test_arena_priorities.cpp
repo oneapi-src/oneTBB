@@ -180,6 +180,7 @@ void test() {
     const std::size_t max_num_threads = tbb::global_control::active_value(
         tbb::global_control::max_allowed_parallelism
     );
+    concurrency_type signed_max_num_threads = static_cast<int>(max_num_threads);
     if( 1 == max_num_threads )
         // Skipping workerless case
         return;
@@ -217,11 +218,11 @@ void test() {
         g_task_num = 0;
 
         concurrency_type projected_concurrency =
-            (max_num_threads + progressing_arenas_num - 1) / progressing_arenas_num;
+            (signed_max_num_threads + progressing_arenas_num - 1) / progressing_arenas_num;
         projected_concurrency = std::max(min_arena_concurrency, projected_concurrency); // implementation detail
-        adjusted_progressing_arenas = max_num_threads / projected_concurrency;
+        adjusted_progressing_arenas = signed_max_num_threads / projected_concurrency;
 
-        int threads_left = max_num_threads;
+        int threads_left = signed_max_num_threads;
 
         // Instantiate arenas with necessary concurrency so that progressing arenas consume all
         // available threads.
@@ -240,7 +241,7 @@ void test() {
 
             if( !actual_concurrency ) {
                 concurrency = tbb::task_arena::automatic;
-                actual_concurrency = max_num_threads;
+                actual_concurrency = signed_max_num_threads;
             }
             actual_concurrency = std::max( min_arena_concurrency, actual_concurrency ); // implementation detail
 
@@ -324,8 +325,8 @@ void test() {
             // Other epochs - check remaining arenas
             std::map<tbb::task_arena::priority, unsigned> per_priority_tasks_num;
 
-            unsigned lower_priority_start = (repeats + 1) * max_num_threads;
-            for( unsigned i = lower_priority_start; i < overall_tasks_num; ++i )
+            std::size_t lower_priority_start = (repeats + 1) * max_num_threads;
+            for( std::size_t i = lower_priority_start; i < overall_tasks_num; ++i )
                 ++per_priority_tasks_num[ g_task_info[i] ];
 
             for( auto& e : per_priority_tasks_num ) {
