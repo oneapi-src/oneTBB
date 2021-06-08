@@ -256,10 +256,16 @@ int mallopt(int /*param*/, int /*value*/) __THROW
     return 1;
 }
 
-struct mallinfo mallinfo() __THROW
+#ifdef HAVE_MALLINFO2
+#define MALLINFO mallinfo2
+#else
+#define MALLINFO mallinfo
+#endif
+
+struct MALLINFO MALLINFO() __THROW
 {
-    struct mallinfo m;
-    memset(&m, 0, sizeof(struct mallinfo));
+    struct MALLINFO m;
+    memset(&m, 0, sizeof(struct MALLINFO));
 
     return m;
 }

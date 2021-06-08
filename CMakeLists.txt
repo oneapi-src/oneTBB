@@ -61,6 +61,8 @@ unset(_tbb_ver_minor)
 include(CheckCXXCompilerFlag)
 include(GNUInstallDirs)
 
+include(CheckSymbolExists)
+
 # ---------------------------------------------------------------------------------------------------------
 # Handle C++ standard version.
 if (NOT MSVC)  # no need to cover MSVC as it uses C++14 by default.
@@ -228,6 +230,13 @@ else()
             DESTINATION ${CMAKE_INSTALL_DOCDIR}
             COMPONENT devel)
     # -------------------------------------------------------------------
+endif()
+
+check_symbol_exists(mallinfo2 "malloc.h" HAVE_MALLINFO2)
+
+# Add compile definitions if we have mallinfo ( glibc >= 2.33 )
+if (HAVE_MALLINFO2)
+    set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -DHAVE_MALLINFO2)
 endif()
 
 if (TBB_TEST)

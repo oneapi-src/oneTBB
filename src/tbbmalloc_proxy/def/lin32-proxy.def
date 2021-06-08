@@ -26,6 +26,7 @@ aligned_alloc;
 valloc;
 pvalloc;
 mallinfo;
+mallinfo2;
 mallopt;
 malloc_usable_size;
 __libc_malloc;
