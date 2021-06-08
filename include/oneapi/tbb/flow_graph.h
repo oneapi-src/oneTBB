@@ -39,7 +39,7 @@
 #include "profiling.h"
 #include "task_arena.h"
 
-#if TBB_USE_PROFILING_TOOLS && ( __linux__ || __APPLE__ )
+#if TBB_USE_PROFILING_TOOLS && ( __unix__ || __APPLE__ )
    #if __INTEL_COMPILER
        // Disabled warning "routine is both inline and noinline"
        #pragma warning (push)
@@ -3336,7 +3336,7 @@ namespace profiling {
 } // tbb
 
 
-#if TBB_USE_PROFILING_TOOLS  && ( __linux__ || __APPLE__ )
+#if TBB_USE_PROFILING_TOOLS  && ( __unix__ || __APPLE__ )
    // We don't do pragma pop here, since it still gives warning on the USER side
    #undef __TBB_NOINLINE_SYM
 #endif

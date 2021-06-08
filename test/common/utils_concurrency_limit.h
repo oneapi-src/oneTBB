@@ -30,9 +30,11 @@
 
 #if _WIN32 || _WIN64
 #include <windows.h>
-#elif __linux__
+#elif __unix__
 #include <unistd.h>
+#if __linux__
 #include <sys/sysinfo.h>
+#endif
 #include <string.h>
 #include <sched.h>
 #elif __FreeBSD__
@@ -258,12 +260,12 @@ public:
     ~pinning_observer() { }
 };
 
-#if __linux__
+#if __unix__
 #include <sched.h>
 #endif
 
 bool can_change_thread_priority() {
-#if __linux__
+#if __unix__
     pthread_t this_thread = pthread_self();
     sched_param old_params;
     int old_policy;
@@ -284,7 +286,7 @@ bool can_change_thread_priority() {
 }
 
 void increase_thread_priority() {
-#if __linux__
+#if __unix__
     pthread_t this_thread = pthread_self();
     sched_param params;
     params.sched_priority = sched_get_priority_max(SCHED_FIFO);
@@ -295,7 +297,7 @@ void increase_thread_priority() {
 }
 
 void decrease_thread_priority() {
-#if __linux__
+#if __unix__
     pthread_t this_thread = pthread_self();
     sched_param params;
     params.sched_priority = sched_get_priority_min(SCHED_FIFO);

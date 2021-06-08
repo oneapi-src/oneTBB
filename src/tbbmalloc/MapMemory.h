@@ -19,7 +19,7 @@
 
 #include <stdlib.h>
 
-#if __linux__ || __APPLE__ || __sun || __FreeBSD__
+#if __unix__ || __APPLE__ || __sun || __FreeBSD__
 
 #if __sun && !defined(_XPG4_2)
  // To have void* as mmap's 1st argument
@@ -28,7 +28,7 @@
 #endif
 
 #include <sys/mman.h>
-#if __linux__
+#if __unix__
 /* __TBB_MAP_HUGETLB is MAP_HUGETLB from system header linux/mman.h.
    The header is not included here, as on some Linux flavors inclusion of
    linux/mman.h leads to compilation error,

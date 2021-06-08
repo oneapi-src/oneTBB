@@ -775,7 +775,7 @@ static inline unsigned int highestBitPos(unsigned int n)
     unsigned int pos;
 #if __ARCH_x86_32||__ARCH_x86_64
 
-# if __linux__||__APPLE__||__FreeBSD__||__NetBSD__||__OpenBSD__||__sun||__MINGW32__
+# if __unix__||__APPLE__||__FreeBSD__||__NetBSD__||__OpenBSD__||__sun||__MINGW32__
     __asm__ ("bsr %1,%0" : "=r"(pos) : "r"(n));
 # elif (_WIN32 && (!_WIN64 || __INTEL_COMPILER))
     __asm
@@ -3269,7 +3269,7 @@ extern "C" int scalable_allocation_mode(int param, intptr_t value)
         defaultMemPool->extMemPool.backend.setRecommendedMaxSize((size_t)value);
         return TBBMALLOC_OK;
     } else if (param == USE_HUGE_PAGES) {
-#if __linux__
+#if __unix__
         switch (value) {
         case 0:
         case 1:

@@ -50,14 +50,14 @@
   #include <android/api-level.h> // for __ANDROID_API__
 #endif
 
-#define __TBB_POSIX_MEMALIGN_PRESENT (__linux__ && !__ANDROID__) || __APPLE__
-#define __TBB_PVALLOC_PRESENT __linux__ && !__ANDROID__
+#define __TBB_POSIX_MEMALIGN_PRESENT (__unix__ && !__ANDROID__) || __APPLE__
+#define __TBB_PVALLOC_PRESENT __unix__ && !__ANDROID__
 #if __GLIBC__
   // aligned_alloc available since GLIBC 2.16
   #define __TBB_ALIGNED_ALLOC_PRESENT __GLIBC_PREREQ(2, 16)
 #endif // __GLIBC__
  // later Android doesn't have valloc or dlmalloc_usable_size
-#define __TBB_VALLOC_PRESENT (__linux__ && __ANDROID_API__<21) || __APPLE__
+#define __TBB_VALLOC_PRESENT (__unix__ && __ANDROID_API__<21) || __APPLE__
 #define __TBB_DLMALLOC_USABLE_SIZE_PRESENT  __ANDROID__ && __ANDROID_API__<21
 
 #include "common/utils.h"
@@ -77,7 +77,7 @@
 #include <dlfcn.h>
 #endif
 
-#if __linux__
+#if __unix__
 #include <stdint.h> // for uintptr_t
 
 extern "C" {
@@ -395,9 +395,9 @@ void FuncReplacementInfoCheck() {
 //! Testing tbbmalloc_proxy overload capabilities
 //! \brief \ref error_guessing
 TEST_CASE("Main set of tests") {
-#if __linux__
+#if __unix__
     REQUIRE(mallopt(0, 0)); // add dummy mallopt call for coverage
-#endif // __linux__
+#endif // __unix__
 
     void *ptr = NULL;
     utils::suppress_unused_warning(ptr); // for android
@@ -442,7 +442,7 @@ TEST_CASE("Main set of tests") {
 #if __TBB_PVALLOC_PRESENT
     CheckPvalloc(pvalloc, free);
 #endif
-#if __linux__
+#if __unix__
     CheckMemalignFuncOverload(memalign, free);
 #if __TBB_ALIGNED_ALLOC_PRESENT
     CheckMemalignFuncOverload(aligned_alloc, free);
@@ -463,7 +463,7 @@ TEST_CASE("Main set of tests") {
     CheckVallocFuncOverload(__libc_valloc, __libc_free);
     CheckPvalloc(__libc_pvalloc, __libc_free);
  #endif
-#endif // __linux__
+#endif // __unix__
 
 #else // MALLOC_WINDOWS_OVERLOAD_ENABLED
 
