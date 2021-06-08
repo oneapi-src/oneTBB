@@ -1229,7 +1229,7 @@
     //  and should match the typename.
 
     template<template<class> class PT, typename OutputTuple, typename JP>
-    class unfolded_join_node : public join_base<std::tuple_size<OutputTuple>::value,PT,OutputTuple,JP>::type {};
+    class unfolded_join_node;
 
     template<template<class> class PT, typename ...Args, typename JP>
     class unfolded_join_node<PT, std::tuple<Args...>, JP> : public join_base<sizeof...(Args),PT,std::tuple<Args...>,JP>::type {
