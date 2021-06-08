@@ -89,6 +89,7 @@ int get_processors_groups_count() { return 1; }
 #endif
 
 #define __HWLOC_HYBRID_CPUS_INTERFACES_PRESENT (HWLOC_API_VERSION >= 0x20400)
+#define __HWLOC_WINDOWS_AFFINITY_RESPECTING_INTERFACES_PRESENT (HWLOC_API_VERSION >= 0x20500)
 // At this moment the hybrid CPUs HWLOC interfaces returns unexpected results on some Windows machines
 // in the 32-bit arch mode.
 #define __HWLOC_HYBRID_CPUS_INTERFACES_VALID (!_WIN32 || _WIN64)
@@ -173,6 +174,7 @@ private:
 
     system_info() {
         hwloc_require_ex(hwloc_topology_init, &topology);
+#if __HWLOC_WINDOWS_AFFINITY_RESPECTING_INTERFACES_PRESENT
         if ( get_processors_groups_count() == 1 ) {
             REQUIRE(
                 hwloc_topology_set_flags(topology,
@@ -180,6 +182,7 @@ private:
                     HWLOC_TOPOLOGY_FLAG_RESTRICT_TO_CPUBINDING) == 0
             );
         }
+#endif
         hwloc_require_ex(hwloc_topology_load, topology);
 
         if ( get_processors_groups_count() > 1 ) {

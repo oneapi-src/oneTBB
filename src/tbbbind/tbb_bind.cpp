@@ -35,6 +35,7 @@
 #endif
 
 #define __HWLOC_HYBRID_CPUS_INTERFACES_PRESENT (HWLOC_API_VERSION >= 0x20400)
+#define __HWLOC_WINDOWS_AFFINITY_RESPECTING_INTERFACES_PRESENT (HWLOC_API_VERSION >= 0x20500)
 
 // Most of hwloc calls returns negative exit code on error.
 // This macro tracks error codes that are returned from the hwloc interfaces.
@@ -103,12 +104,13 @@ private:
         // Parse topology
         if ( hwloc_topology_init( &topology ) == 0 ) {
             initialization_state = topology_allocated;
-
+#if __HWLOC_WINDOWS_AFFINITY_RESPECTING_INTERFACES_PRESENT
             if ( groups_num == 1 && hwloc_topology_set_flags(topology,
                     HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM |
                     HWLOC_TOPOLOGY_FLAG_RESTRICT_TO_CPUBINDING) != 0) {
                 return;
             }
+#endif
             report_binding();
             if ( hwloc_topology_load( topology ) == 0 ) {
                 initialization_state = topology_loaded;
