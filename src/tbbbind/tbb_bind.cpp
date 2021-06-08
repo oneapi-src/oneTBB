@@ -49,6 +49,7 @@ void print_affinity(const hwloc_bitmap_t& bitmap) {
 }
 
 void report_binding() {
+#if _WIN32
     GROUP_AFFINITY aff;
     memset(&aff, 0, sizeof(aff));
     DWORD_PTR process_mask = 0, sys_mask = 0;
@@ -58,6 +59,7 @@ void report_binding() {
     if (!GetThreadGroupAffinity(GetCurrentThread(), &aff))
         printf("GetThreadGroupAffinity() failed %u\n", (unsigned) GetLastError());
     printf("binding is now: thread 0x%llx group %u process 0x%llx\n", aff.Mask, aff.Group, process_mask);
+#endif /*_WIN32*/
 }
 
 namespace tbb {
