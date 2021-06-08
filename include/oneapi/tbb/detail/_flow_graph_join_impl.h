@@ -1233,8 +1233,9 @@
 
     template<template<class> class PT, typename ...Args, typename JP>
     class unfolded_join_node<PT, std::tuple<Args...>, JP> : public join_base<sizeof...(Args),PT,std::tuple<Args...>,JP>::type {
-    public:
+    private:
         const static std::size_t tuple_size = sizeof...(Args); 
+    public:
         using output_type = std::tuple<Args...>;
         using input_ports_type = typename wrap_tuple_elements<tuple_size, PT, output_type>::type;
     private:
@@ -1247,11 +1248,11 @@
     template<typename ...Args, typename K, typename KHash>
     class unfolded_join_node<key_matching_port,std::tuple<Args...>, key_matching<K,KHash>> : public
             join_base<sizeof...(Args),key_matching_port,std::tuple<Args...>,key_matching<K,KHash> >::type {
-    public:
-        const static std::size_t tuple_size = sizeof...(Args); 
+    private:
+        const static std::size_t tuple_size = sizeof...(Args);
+    public: 
         using output_type = std::tuple<Args...>;
         using input_ports_type = typename wrap_key_tuple_elements<tuple_size, key_matching_port, key_matching<K,KHash>, output_type>::type;
-    private:
     private:
         using base_type = join_node_base<key_matching<K,KHash>, input_ports_type, output_type>;
 
@@ -1259,21 +1260,21 @@
         using fixed_type_to_key_function_body_ptr = type_to_key_function_body<T, K> *;
 
         using func_initializer_type = std::tuple< fixed_type_to_key_function_body_ptr<Args>... > ;
-    public:
-
 
 #if __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING
         template <typename T>
         using fixed_type_to_key_function_body_leaf = type_to_key_function_body_leaf<T, K, key_from_message_body<K,T>>;
-
+    public:
         unfolded_join_node(graph &g) : base_type(g,
                 func_initializer_type(
                     new fixed_type_to_key_function_body_leaf<Args>(key_from_message_body<K,Args>())...) ) {
         }
 #endif /* __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING */
+    private:
         template <typename T, typename Body>
         using fixed_type_to_key_function_body_leaf_with_body = type_to_key_function_body_leaf<T, K, Body>;
 
+    public:
         template<typename ...BodyArgs>
         unfolded_join_node(graph &g, BodyArgs... bodies) : base_type(g,
                 func_initializer_type( new fixed_type_to_key_function_body_leaf_with_body<Args, BodyArgs>(bodies)...) ) {
