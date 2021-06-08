@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#define MAX_TUPLE_TEST_SIZE 10
 #include "common/config.h"
 
 #include "test_join_node.h"
