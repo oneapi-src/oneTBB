@@ -57,6 +57,7 @@ target_compile_options(tbbmalloc
     ${TBB_LIB_COMPILE_FLAGS}
     ${TBBMALLOC_LIB_COMPILE_FLAGS}
     ${TBB_COMMON_COMPILE_FLAGS}
+    ${TBB_IPO_COMPILE_FLAG}
 )
 
 enable_language(C)
@@ -72,6 +73,11 @@ set_target_properties(tbbmalloc PROPERTIES
 )
 
 set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "")
+
+set_property(TARGET tbbmalloc APPEND PROPERTY LINK_FLAGS_RELWITHDEBINFO ${TBB_IPO_LINK_FLAG})
+if (WIN32)
+    set_property(TARGET tbbmalloc APPEND PROPERTY LINK_FLAGS_RELWITHDEBINFO /INCREMENTAL:NO)
+endif()
 
 # Prefer using target_link_options instead of target_link_libraries to specify link options because
 # target_link_libraries may incorrectly handle some options (on Windows, for example).
