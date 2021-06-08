@@ -1272,11 +1272,11 @@
         }
 #endif /* __TBB_PREVIEW_MESSAGE_BASED_KEY_MATCHING */
         template <typename T, typename Body>
-        using fixed_type_to_key_function_body_leaf = type_to_key_function_body_leaf<T, K, Body>;
-        
+        using fixed_type_to_key_function_body_leaf_with_body = type_to_key_function_body_leaf<T, K, Body>;
+
         template<typename ...BodyArgs>
         unfolded_join_node(graph &g, BodyArgs... bodies) : base_type(g,
-                func_initializer_type( new fixed_type_to_key_function_body_leaf<Args, BodyArgs>(bodies)...) ) {
+                func_initializer_type( new fixed_type_to_key_function_body_leaf_with_body<Args, BodyArgs>(bodies)...) ) {
         }
         unfolded_join_node(const unfolded_join_node &other) : base_type(other) {}
     };
