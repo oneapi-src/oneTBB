@@ -72,17 +72,7 @@ template <typename Key>
 class tbb_hash_compare {
 public:
     std::size_t hash( const Key& a ) const { return my_hash_func(a); }
-#if _MSC_VER
-#pragma warning (push)
-// Warning: 'std::size_t': forcing value to bool 'true' or 'false'
-// It seems like in MSVC lib the std::equal_to::operator() returns std::size_t instead of bool
-// so it causes the warning which should be suppressed.
-#pragma warning (disable: 4800)
-#endif //#if _MSC_VER
     bool equal( const Key& a, const Key& b ) const { return my_key_equal(a, b); }
-#if _MSC_VER
-#pragma warning (pop)
-#endif
 private:
     std::hash<Key> my_hash_func;
     std::equal_to<Key> my_key_equal;
