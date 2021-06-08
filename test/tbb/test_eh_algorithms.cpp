@@ -1549,7 +1549,7 @@ void TestWithDifferentFiltersAndConcurrency() {
             const int NumFilterTypes = sizeof(modes)/sizeof(modes[0]);
 
             // Execute in all the possible modes
-            for ( size_t j = 0; j < NumFilterTypes; ++j ) {
+            for ( size_t j = 0; j < 4; ++j ) {
                 tbb::global_control control(tbb::global_control::max_allowed_parallelism, g_NumThreads);
                 g_ExceptionInMaster = (j & 1) != 0;
                 g_SolitaryException = (j & 2) != 0;
@@ -1558,7 +1558,7 @@ void TestWithDifferentFiltersAndConcurrency() {
                 for ( int i = 0; i < NumFilterTypes; ++i ) {
                     for ( int n = 0; n < NumFilterTypes; ++n ) {
                         for ( int k = 0; k < 2; ++k )
-                            testFunc( FilterSet(modes[i], modes[j], k == 0, k != 0) );
+                            testFunc( FilterSet(modes[i], modes[n], k == 0, k != 0) );
                     }
                 }
             }

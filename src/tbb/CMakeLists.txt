@@ -66,7 +66,7 @@ endif()
 target_include_directories(tbb
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../include>
-    $<INSTALL_INTERFACE:include>)
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 target_compile_options(tbb
     PRIVATE
@@ -141,6 +141,17 @@ else()
     string(TOLOWER ${CMAKE_BUILD_TYPE} BUILD_TYPE)
     if (BUILD_TYPE STREQUAL "debug")
         set(TBB_LIB_NAME ${TBB_LIB_NAME}${CMAKE_DEBUG_POSTFIX})
+    endif()
+    if (IS_ABSOLUTE "${CMAKE_INSTALL_LIBDIR}")
+        set(_libdir_for_pc_file "${CMAKE_INSTALL_LIBDIR}")
+    else()
+        set(_libdir_for_pc_file "\${prefix}/${CMAKE_INSTALL_LIBDIR}")
+    endif()
+
+    if (IS_ABSOLUTE "${CMAKE_INSTALL_INCLUDEDIR}")
+        set(_includedir_for_pc_file "${CMAKE_INSTALL_INCLUDEDIR}")
+    else()
+        set(_includedir_for_pc_file "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}")
     endif()
     configure_file(${CMAKE_SOURCE_DIR}/integration/pkg-config/tbb.pc.in ${CMAKE_CURRENT_BINARY_DIR}/${TBB_LIB_NAME}.pc @ONLY)
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${TBB_LIB_NAME}.pc

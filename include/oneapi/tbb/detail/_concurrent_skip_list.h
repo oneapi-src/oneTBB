@@ -49,7 +49,7 @@
 
 namespace tbb {
 namespace detail {
-namespace d1 {
+namespace d2 {
 
 template <typename Value, typename Allocator>
 class skip_list_node {
@@ -72,24 +72,51 @@ public:
     using pointer = typename value_allocator_traits::pointer;
     using const_pointer = typename value_allocator_traits::const_pointer;
 
-    skip_list_node( size_type levels, container_allocator_type& alloc )
-        : my_container_allocator(alloc), my_height(levels), my_index_number(0)
-    {
-        for (size_type l = 0; l < my_height; ++l) {
-            allocator_traits::construct(my_container_allocator, &get_atomic_next(l), nullptr);
-        }
-    }
+    //In perfect world these constructor and destructor would have been private, 
+    //however this seems technically impractical due to use of allocator_traits.
 
-    ~skip_list_node() {
-        for (size_type l = 0; l < my_height; ++l) {
-            allocator_traits::destroy(my_container_allocator, &get_atomic_next(l));
-        }
-    }
+    //Should not be called directly, instead use create method
+    skip_list_node( size_type levels )
+        : my_height(levels), my_index_number(0)
+    {}
+
+    //Should not be called directly, instead use destroy method
+    ~skip_list_node() {}
 
     skip_list_node( const skip_list_node& ) = delete;
     skip_list_node( skip_list_node&& ) = delete;
     skip_list_node& operator=( const skip_list_node& ) = delete;
     skip_list_node& operator=( skip_list_node&& ) = delete;
+
+    static skip_list_node* create( container_allocator_type& alloc, size_type height ) {
+        size_type sz = calc_node_size(height);
+        static_assert(std::is_same<typename allocator_traits::value_type, std::uint8_t>::value, "skip_list_node assumes that passed in allocator operates on bytes");
+        auto* node = reinterpret_cast<skip_list_node*>(allocator_traits::allocate(alloc, sz));
+
+        //Construct the node itself
+        allocator_traits::construct(alloc, node, height);
+
+        //Construct the level pointers
+        for (size_type l = 0; l < height; ++l) {
+            allocator_traits::construct(alloc, &node->get_atomic_next(l), nullptr);
+        }
+
+        return node;
+    }
+
+    static void destroy( container_allocator_type& alloc, skip_list_node* node ) {
+        //Destroy the level pointers
+        for (size_type l = 0; l < node->height(); ++l) {
+            allocator_traits::destroy(alloc, &node->atomic_next(l));
+        }
+        size_type sz = calc_node_size(node->height());
+        // Destroy the node itself
+        allocator_traits::destroy(alloc, node);
+
+        // Deallocate the node
+        allocator_traits::deallocate(alloc, reinterpret_cast<std::uint8_t*>(node), sz);
+    }
+
 
     pointer storage() {
         return &my_value;
@@ -132,6 +159,11 @@ public:
     }
 
 private:
+    static size_type calc_node_size( size_type height ) {
+        static_assert(alignof(skip_list_node) >= alignof(atomic_node_ptr), "Incorrect alignment");
+        return sizeof(skip_list_node) + height * sizeof(atomic_node_ptr);
+    }
+
     atomic_node_ptr& get_atomic_next( size_type level ) {
         atomic_node_ptr* arr = reinterpret_cast<atomic_node_ptr*>(this + 1);
         return arr[level];
@@ -142,7 +174,6 @@ private:
         return arr[level];
     }
 
-    container_allocator_type& my_container_allocator;
     union {
         value_type my_value;
     };
@@ -233,7 +264,7 @@ protected:
     using node_allocator_traits = tbb::detail::allocator_traits<node_allocator_type>;
 
     using list_node_type = skip_list_node<value_type, node_allocator_type>;
-    using node_type = node_handle<key_type, value_type, list_node_type, allocator_type>;
+    using node_type = d1::node_handle<key_type, value_type, list_node_type, allocator_type>;
 
     using iterator = skip_list_iterator<list_node_type, value_type>;
     using const_iterator = skip_list_iterator<list_node_type, const value_type>;
@@ -315,10 +346,7 @@ public:
 
     ~concurrent_skip_list() {
         clear();
-        node_ptr head = my_head_ptr.load(std::memory_order_relaxed);
-        if (head != nullptr) {
-            delete_node(head);
-        }
+        delete_head();
     }
 
     concurrent_skip_list& operator=( const concurrent_skip_list& other ) {
@@ -335,6 +363,8 @@ public:
     concurrent_skip_list& operator=( concurrent_skip_list&& other ) {
         if (this != &other) {
             clear();
+            delete_head();
+
             my_compare = std::move(other.my_compare);
             my_rng = std::move(other.my_rng);
 
@@ -385,10 +415,10 @@ public:
 
     std::pair<iterator, bool> insert( node_type&& nh ) {
         if (!nh.empty()) {
-            auto insert_node = node_handle_accessor::get_node_ptr(nh);
+            auto insert_node = d1::node_handle_accessor::get_node_ptr(nh);
             std::pair<iterator, bool> insert_result = internal_insert_node(insert_node);
             if (insert_result.second) {
-                node_handle_accessor::deactivate(nh);
+                d1::node_handle_accessor::deactivate(nh);
             }
             return insert_result;
         }
@@ -447,7 +477,7 @@ public:
 
     node_type unsafe_extract( const_iterator pos ) {
         std::pair<node_ptr, node_ptr> extract_result = internal_extract(pos);
-        return extract_result.first ? node_handle_accessor::construct<node_type>(extract_result.first) : node_type();
+        return extract_result.first ? d1::node_handle_accessor::construct<node_type>(extract_result.first) : node_type();
     }
 
     node_type unsafe_extract( iterator pos ) {
@@ -1049,23 +1079,12 @@ private:
             }
         }).on_exception([&] {
             clear();
-            node_ptr head = my_head_ptr.load(std::memory_order_relaxed);
-            if (head != nullptr) {
-                delete_node(head);
-            }
+            delete_head();
         });
     }
 
-    static size_type calc_node_size( size_type height ) {
-        static_assert(alignof(list_node_type) >= alignof(typename list_node_type::atomic_node_ptr), "Incorrect alignment");
-        return sizeof(list_node_type) + height * sizeof(typename list_node_type::atomic_node_ptr);
-    }
-
     node_ptr create_node( size_type height ) {
-        size_type sz = calc_node_size(height);
-        node_ptr node = reinterpret_cast<node_ptr>(node_allocator_traits::allocate(my_node_allocator, sz));
-        node_allocator_traits::construct(my_node_allocator, node, height, my_node_allocator);
-        return node;
+        return list_node_type::create(my_node_allocator, height);
     }
 
     template <typename... Args>
@@ -1088,13 +1107,16 @@ private:
         return create_node(max_level);
     }
 
-    void delete_node( node_ptr node ) {
-        size_type sz = calc_node_size(node->height());
+    void delete_head() {
+        node_ptr head = my_head_ptr.load(std::memory_order_relaxed);
+        if (head != nullptr) {
+            delete_node(head);
+            my_head_ptr.store(nullptr, std::memory_order_relaxed);
+        }
+    }
 
-        // Destroy the node
-        node_allocator_traits::destroy(my_node_allocator, node);
-        // Deallocate the node
-        node_allocator_traits::deallocate(my_node_allocator, reinterpret_cast<std::uint8_t*>(node), sz);
+    void delete_node( node_ptr node ) {
+        list_node_type::destroy(my_node_allocator, node);
     }
 
     void delete_value_node( node_ptr node ) {
@@ -1245,7 +1267,8 @@ private:
     tbb::enumerable_thread_specific<std::minstd_rand> engines;
 };
 
-} // namespace d1
+} // namespace d2
+
 } // namespace detail
 } // namespace tbb
 

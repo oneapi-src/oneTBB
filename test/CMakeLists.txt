@@ -115,7 +115,7 @@ function(tbb_add_lib_test)
     target_include_directories(_${_tbb_test_NAME}
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
-        $<INSTALL_INTERFACE:include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
         PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/..
         ${CMAKE_CURRENT_SOURCE_DIR})
@@ -360,6 +360,7 @@ tbb_add_test(SUBDIR tbb NAME test_tick_count DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_allocators DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_arena_priorities DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_dynamic_link DEPENDENCIES TBB::tbb)
+tbb_add_test(SUBDIR tbb NAME test_collaborative_call_once DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_concurrent_lru_cache DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_concurrent_unordered_map DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_concurrent_unordered_set DEPENDENCIES TBB::tbb)

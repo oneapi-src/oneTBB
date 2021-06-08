@@ -30,6 +30,21 @@
 #ifndef TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 #define TBB_PREVIEW_TASK_GROUP_EXTENSIONS 1
 #endif
+#ifndef TBB_PREVIEW_COLLABORATIVE_CALL_ONCE
+#define TBB_PREVIEW_COLLABORATIVE_CALL_ONCE 1
+#endif
+#ifndef TBB_PREVIEW_CONCURRENT_LRU_CACHE
+#define TBB_PREVIEW_CONCURRENT_LRU_CACHE 1
+#endif
+#ifndef TBB_PREVIEW_VARIADIC_PARALLEL_INVOKE
+#define TBB_PREVIEW_VARIADIC_PARALLEL_INVOKE 1
+#endif
+#ifndef TBB_PREVIEW_BLOCKED_RANGE_ND
+#define TBB_PREVIEW_BLOCKED_RANGE_ND 1
+#endif
+#ifndef TBB_PREVIEW_ISOLATED_TASK_GROUP
+#define TBB_PREVIEW_ISOLATED_TASK_GROUP 1
+#endif
 #endif
 
 #include "oneapi/tbb/detail/_config.h"
@@ -42,8 +57,8 @@
 #elif __clang__
   #define __TBB_CPP14_GENERIC_LAMBDAS_PRESENT (__has_feature(cxx_generic_lambdas))
 #elif __GNUC__
-  #define __TBB_CPP14_GENERIC_LAMBDAS_PRESENT (__cplusplus >= 201402L)
-  #define __TBB_GCC_WARNING_IGNORED_ATTRIBUTES_PRESENT (__TBB_GCC_VERSION >= 60100)
+  #define __TBB_CPP14_GENERIC_LAMBDAS_PRESENT           (__cplusplus >= 201402L)
+  #define __TBB_GCC_WARNING_IGNORED_ATTRIBUTES_PRESENT  (__TBB_GCC_VERSION >= 60100)
 #elif _MSC_VER
   #define __TBB_CPP14_GENERIC_LAMBDAS_PRESENT (_MSC_VER >= 1922)
 #endif
@@ -72,6 +87,14 @@ const unsigned MByte = 1024*1024;
 #define __TBB_TEST_SKIP_AFFINITY 0
 #else
 #define __TBB_TEST_SKIP_AFFINITY 1
+#endif
+
+#ifdef __SANITIZE_ADDRESS__
+	#define __TBB_TEST_USE_ADDRESS_SANITIZER 1
+#elif defined(__has_feature)
+#if __has_feature(address_sanitizer)
+      #define __TBB_TEST_USE_ADDRESS_SANITIZER 1
+#endif
 #endif
 
 #endif /* __TBB_test_common_config_H */

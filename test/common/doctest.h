@@ -1511,8 +1511,10 @@ namespace detail {
     class DOCTEST_INTERFACE ContextScopeBase : public IContextScope {
     protected:
         ContextScopeBase();
+        ContextScopeBase(ContextScopeBase&& other);
 
         void destroy();
+        bool need_to_destroy{true};
     };
 
     template <typename L> class DOCTEST_INTERFACE ContextScope : public ContextScopeBase
@@ -1520,13 +1522,21 @@ namespace detail {
         const L &lambda_;
 
     public:
-        explicit ContextScope(const L &lambda) : lambda_(lambda) {}
+        explicit ContextScope(const L &lambda) : ContextScopeBase(), lambda_(lambda) {}
 
-        ContextScope(ContextScope &&other) : lambda_(other.lambda_) {}
+        // std::move cannot be applied here since there is no utility header included in this place (by some reason all headers are included later)
+        ContextScope(ContextScope &&other) : ContextScopeBase(static_cast<ContextScopeBase&&>(other)), lambda_(other.lambda_) {}
 
         void stringify(std::ostream* s) const override { lambda_(s); }
 
-        ~ContextScope() override { destroy(); }
+        ~ContextScope() override {
+            if (need_to_destroy) {
+                destroy();
+            }
+        }
+
+        template <typename F>
+        friend ContextScope<F> MakeContextScope(const F &lambda);
     };
 
     struct DOCTEST_INTERFACE MessageBuilder : public MessageData
@@ -3914,6 +3924,14 @@ namespace detail {
     DOCTEST_THREAD_LOCAL doctest_thread_local_wrapper<std::vector<IContextScope*>> wrapped_g_infoContexts; // for logging with INFO()
 
     ContextScopeBase::ContextScopeBase() {
+        wrapped_g_infoContexts.get().push_back(this);
+    }
+
+    ContextScopeBase::ContextScopeBase(ContextScopeBase&& other) {
+        if (other.need_to_destroy) {
+            other.destroy();
+        }
+        other.need_to_destroy = false;
         wrapped_g_infoContexts.get().push_back(this);
     }
 

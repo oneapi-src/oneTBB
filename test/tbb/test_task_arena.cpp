@@ -596,7 +596,7 @@ struct TestAttachBody : utils::NoAssign {
 
         int default_threads = tbb::this_task_arena::max_concurrency();
 
-        tbb::task_arena arena = tbb::task_arena( tbb::task_arena::attach() );
+        tbb::task_arena arena{tbb::task_arena::attach()};
         ValidateAttachedArena( arena, false, -1, -1 ); // Nothing yet to attach to
 
         arena.terminate();
@@ -605,7 +605,7 @@ struct TestAttachBody : utils::NoAssign {
         // attach to an auto-initialized arena
         tbb::parallel_for(0, 1, [](int) {});
 
-        tbb::task_arena arena2 = tbb::task_arena( tbb::task_arena::attach() );
+        tbb::task_arena arena2{tbb::task_arena::attach()};
         ValidateAttachedArena( arena2, true, default_threads, 1 );
 
         // attach to another task_arena
@@ -615,14 +615,14 @@ struct TestAttachBody : utils::NoAssign {
 
     // The functor body for task_arena::execute above
     void operator()() const {
-        tbb::task_arena arena2 = tbb::task_arena( tbb::task_arena::attach() );
+        tbb::task_arena arena2{tbb::task_arena::attach()};
         ValidateAttachedArena( arena2, true, maxthread, std::min(maxthread,my_idx) );
     }
 
     // The functor body for tbb::parallel_for
     void operator()( const Range& r ) const {
         for( int i = r.begin(); i<r.end(); ++i ) {
-            tbb::task_arena arena2 = tbb::task_arena( tbb::task_arena::attach() );
+            tbb::task_arena arena2{tbb::task_arena::attach()};
             ValidateAttachedArena( arena2, true, tbb::this_task_arena::max_concurrency(), 1 );
         }
     }
@@ -944,7 +944,7 @@ namespace TestIsolatedExecuteNS {
     void TestEnqueue() {
         tbb::enumerable_thread_specific<bool> executed(false);
         std::atomic<int> completed;
-        tbb::task_arena arena = tbb::task_arena(tbb::task_arena::attach());
+        tbb::task_arena arena{tbb::task_arena::attach()};
 
         // Check that the main thread can process enqueued tasks.
         completed = 0;
@@ -1218,9 +1218,14 @@ namespace TestReturnValueNS {
             std::size_t copied = cnts[StateTrackableBase::CopyInitialized];
             std::size_t moved = cnts[StateTrackableBase::MoveInitialized];
             REQUIRE(cnts[StateTrackableBase::Destroyed] == copied + moved);
-            // The number of copies/moves should not exceed 3: function return, store to an internal storage,
-            // acquire internal storage.
-            REQUIRE((copied == 0 && moved <=3));
+            // The number of copies/moves should not exceed 3 if copy elision takes a place:
+            // function return, store to an internal storage, acquire internal storage.
+            // For compilation, without copy elision, this number may be grown up to 7.
+            REQUIRE((copied == 0 && moved <= 7));
+            WARN_MESSAGE(moved <= 3,
+                "Warning: The number of copies/moves should not exceed 3 if copy elision takes a place."
+                "Take an attention to this warning only if copy elision is enabled."
+            );
         }
     };
 
@@ -1250,27 +1255,27 @@ namespace TestReturnValueNS {
     template <typename F>
     void TestExecute(F &f) {
         StateTrackableCounters::reset();
-        ReturnType r = arena().execute(f);
+        ReturnType r{arena().execute(f)};
         r.check();
     }
 
     template <typename F>
     void TestExecute(const F &f) {
         StateTrackableCounters::reset();
-        ReturnType r = arena().execute(f);
+        ReturnType r{arena().execute(f)};
         r.check();
     }
     template <typename F>
     void TestIsolate(F &f) {
         StateTrackableCounters::reset();
-        ReturnType r = tbb::this_task_arena::isolate(f);
+        ReturnType r{tbb::this_task_arena::isolate(f)};
         r.check();
     }
 
     template <typename F>
     void TestIsolate(const F &f) {
         StateTrackableCounters::reset();
-        ReturnType r = tbb::this_task_arena::isolate(f);
+        ReturnType r{tbb::this_task_arena::isolate(f)};
         r.check();
     }
 
@@ -1428,16 +1433,23 @@ void TestDefaultCreatedWorkersAmount() {
         REQUIRE_MESSAGE(idx == 0, "more than 1 thread is going to reset TLS");
         utils::SpinBarrier barrier(threads);
         ResetTLS();
-        for (int trail = 0; trail < 10; ++trail) {
-            tbb::parallel_for(0, threads, [threads, &barrier](int) {
-                REQUIRE_MESSAGE(threads == tbb::this_task_arena::max_concurrency(), "concurrency level is not equal specified threadnum");
-                REQUIRE_MESSAGE(tbb::this_task_arena::current_thread_index() < tbb::this_task_arena::max_concurrency(), "amount of created threads is more than specified by default");
-                local_id.local() = 1;
-                // If there is more threads than expected, 'sleep' gives a chance to join unexpected threads.
-                utils::Sleep(1);
-                barrier.wait();
+        for (auto blocked : { false, true }) {
+            for (int trail = 0; trail < (blocked ? 10 : 10000); ++trail) {
+                tbb::parallel_for(0, threads, [threads, blocked, &barrier](int) {
+                    CHECK_FAST_MESSAGE(threads == tbb::this_task_arena::max_concurrency(), "concurrency level is not equal specified threadnum");
+                    CHECK_FAST_MESSAGE(tbb::this_task_arena::current_thread_index() < tbb::this_task_arena::max_concurrency(), "amount of created threads is more than specified by default");
+                    local_id.local() = 1;
+                    if (blocked) {
+                        // If there is more threads than expected, 'sleep' gives a chance to join unexpected threads.
+                        utils::Sleep(1);
+                        barrier.wait();
+                    }
                 }, tbb::simple_partitioner());
-            REQUIRE_MESSAGE(local_id.size() == size_t(threads), "amount of created threads is not equal to default num");
+                REQUIRE_MESSAGE(local_id.size() <= size_t(threads), "amount of created threads is not equal to default num");
+                if (blocked) {
+                    REQUIRE_MESSAGE(local_id.size() == size_t(threads), "amount of created threads is not equal to default num");
+                }
+            }
         }
     });
 }
@@ -1737,7 +1749,6 @@ struct enqueue_test_helper {
 };
 
 //--------------------------------------------------//
-
 //! Test for task arena in concurrent cases
 //! \brief \ref requirement
 TEST_CASE("Test for concurrent functionality") {

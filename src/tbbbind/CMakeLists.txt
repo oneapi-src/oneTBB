@@ -34,7 +34,7 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
     target_include_directories(${TBBBIND_NAME}
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../include>
-        $<INSTALL_INTERFACE:include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
         ${HWLOC_INCLUDE_DIRS} # pkg-config defined
     )
 
