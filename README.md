@@ -11,7 +11,7 @@ Here are [Release Notes]( https://software.intel.com/en-us/articles/intel-oneapi
 ## Documentation
 * [oneTBB Specification](https://spec.oneapi.com/versions/latest/elements/oneTBB/source/nested-index.html)
 * [oneTBB Developer Guide and Reference](https://software.intel.com/en-us/oneapi-tbb-documentation)
-* [oneTBB Migration Guide](https://software.intel.com/content/www/us/en/develop/documentation/onetbb-documentation/top/onetbb-developer-guide/migrating-from-threading-building-blocks-tbb.html)
+* [Migrating from TBB to oneTBB](https://software.intel.com/content/www/us/en/develop/documentation/onetbb-documentation/top/onetbb-developer-guide/migrating-from-threading-building-blocks-tbb.html)
 * README for build system: [cmake/README.md](cmake/README.md)
 
 ## Support
