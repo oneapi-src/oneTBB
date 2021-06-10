@@ -86,7 +86,7 @@ set_target_properties(tbb PROPERTIES
     SOVERSION ${TBB_BINARY_VERSION}
 )
 
-if (NOT MINGW)
+if (TBB_DEF_FILE_PREFIX) # If there's no prefix, assume we're using export directives
     set_target_properties(tbb PROPERTIES
         LINK_FLAGS ${TBB_LINK_DEF_FILE_FLAG}${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbb.def
         LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbb.def
