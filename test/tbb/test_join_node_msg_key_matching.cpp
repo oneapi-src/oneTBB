@@ -17,8 +17,6 @@
 // Message based key matching is a preview feature
 #define TBB_PREVIEW_FLOW_GRAPH_FEATURES 1
 
-#define MAX_TUPLE_TEST_SIZE 10
-
 #include "common/config.h"
 
 #include "test_join_node.h"
