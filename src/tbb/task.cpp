@@ -114,7 +114,7 @@ void task_dispatcher::suspend(suspend_callback_type suspend_callback, void* user
     }
 }
 
-void task_dispatcher::resume(task_dispatcher& target) {
+bool task_dispatcher::resume(task_dispatcher& target) {
     // Do not create non-trivial objects on the stack of this function. They might never be destroyed
     {
         thread_data* td = m_thread_data;
@@ -133,7 +133,7 @@ void task_dispatcher::resume(task_dispatcher& target) {
     // Swap to the target coroutine.
     m_suspend_point->m_co_context.resume(target.m_suspend_point->m_co_context);
     // Pay attention that m_thread_data can be changed after resume
-    {
+    if (m_thread_data) {
         thread_data* td = m_thread_data;
         __TBB_ASSERT(td != nullptr, "This task dispatcher must be attach to a thread data");
         __TBB_ASSERT(td->my_task_dispatcher == this, "Thread data must be attached to this task dispatcher");
@@ -146,7 +146,9 @@ void task_dispatcher::resume(task_dispatcher& target) {
             __TBB_ASSERT(m_suspend_point != nullptr, nullptr);
             m_suspend_point->m_is_owner_recalled.store(false, std::memory_order_relaxed);
         }
+        return true;
     }
+    return false;
 }
 
 void thread_data::do_post_resume_action() {

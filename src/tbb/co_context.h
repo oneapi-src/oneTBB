@@ -18,13 +18,18 @@
 #define _TBB_co_context_H
 
 #include "oneapi/tbb/detail/_config.h"
+#define __TBB_RESUMABLE_TASKS_USE_THREADS 1 && __TBB_USE_POSIX
 
 #if __TBB_RESUMABLE_TASKS
 
 #include <cstddef>
 #include <cstdint>
 
-#if _WIN32 || _WIN64
+#if __TBB_RESUMABLE_TASKS_USE_THREADS
+#include <pthread.h>
+#include <condition_variable>
+#include "governor.h" 
+#elif _WIN32 || _WIN64
 #include <windows.h>
 #else
 // ucontext.h API is deprecated since macOS 10.6
@@ -57,7 +62,15 @@ namespace tbb {
 namespace detail {
 namespace r1 {
 
-#if _WIN32 || _WIN64
+#if __TBB_RESUMABLE_TASKS_USE_THREADS
+    struct coroutine_type {
+        pthread_t my_thread;
+        std::condition_variable my_condvar;
+        std::mutex my_mutex;
+        thread_data* my_thread_data{ nullptr };
+        bool my_is_active{ true };
+    };
+#elif _WIN32 || _WIN64
     typedef LPVOID coroutine_type;
 #else
     struct coroutine_type {
@@ -124,7 +137,103 @@ public:
 /* [[noreturn]] */ void co_local_wait_for_all(unsigned hi, unsigned lo) noexcept;
 #endif
 
-#if _WIN32 || _WIN64
+#if __TBB_RESUMABLE_TASKS_USE_THREADS
+void handle_perror(int error_code, const char* what);
+
+inline void check(int error_code, const char* routine) {
+    if (error_code) {
+        handle_perror(error_code, routine);
+    }
+}
+
+inline void create_coroutine(coroutine_type& c, std::size_t stack_size, void* arg) {
+    pthread_attr_t s;
+    check(pthread_attr_init(&s), "pthread_attr_init has failed");
+    if (stack_size > 0)
+        check(pthread_attr_setstacksize(&s, stack_size), "pthread_attr_setstack_size has failed");
+    using thread_data_t = std::pair<coroutine_type&, void*&>;
+    thread_data_t data{ c, arg };
+    check(
+        pthread_create(
+            &c.my_thread,
+            &s,
+            [](void* d) -> void* {
+                thread_data_t& data = *static_cast<thread_data_t*>(d);
+                coroutine_type& c = data.first;
+                void* arg = data.second;
+                {
+                    std::unique_lock<std::mutex> lock(c.my_mutex);
+                    __TBB_ASSERT(c.my_thread_data == nullptr, nullptr);
+                   c.my_is_active = false;
+
+                    // We read the data notify the waiting thread
+                    data.second = nullptr;
+                    c.my_condvar.notify_one();
+
+                    c.my_condvar.wait(lock, [&c] { return c.my_thread_data != nullptr; });
+                }
+                if (c.my_thread_data) {
+                    governor::set_thread_data(*c.my_thread_data);
+
+                    std::uintptr_t addr = std::uintptr_t(arg);
+                    unsigned lo = unsigned(addr);
+                    unsigned hi = unsigned(std::uint64_t(addr) >> 32);
+                    __TBB_ASSERT(sizeof(addr) == 8 || hi == 0, nullptr);
+
+                    co_local_wait_for_all(hi, lo);
+                }
+                return nullptr;
+            },
+            &data
+        ),
+        "pthread_create has failed"
+    );
+    check(pthread_attr_destroy(&s), "pthread_attr_destroy has failed");
+
+    // Wait for the just created thread to read the data
+    std::unique_lock<std::mutex> lock(c.my_mutex);
+    c.my_condvar.wait(lock, [&arg] { return arg == nullptr; });
+}
+
+inline void current_coroutine(coroutine_type& c) {
+    c.my_thread = pthread_self();
+}
+
+inline void swap_coroutine(coroutine_type& prev_coroutine, coroutine_type& new_coroutine) {
+    thread_data* td = governor::get_thread_data();
+    __TBB_ASSERT(prev_coroutine.my_is_active == true, "The current thread should be active");
+
+    prev_coroutine.my_thread_data = nullptr;
+    prev_coroutine.my_is_active = false;
+    governor::clear_thread_data();
+
+    std::unique_lock<std::mutex> lock(prev_coroutine.my_mutex);
+    {
+        std::unique_lock<std::mutex> lock(new_coroutine.my_mutex);
+        __TBB_ASSERT(new_coroutine.my_is_active == false, "The sleeping thread should not be active");
+        __TBB_ASSERT(new_coroutine.my_thread_data == nullptr, "The sleeping thread should not be active");
+
+        new_coroutine.my_thread_data = td;
+        new_coroutine.my_is_active = true;
+        new_coroutine.my_condvar.notify_one();
+    }
+
+    prev_coroutine.my_condvar.wait(lock, [&prev_coroutine] { return prev_coroutine.my_is_active == true; });
+    __TBB_ASSERT(governor::get_thread_data() != nullptr, nullptr);
+    governor::set_thread_data(*prev_coroutine.my_thread_data);
+}
+
+inline void destroy_coroutine(coroutine_type& c) {
+    {
+        std::unique_lock<std::mutex> lock(c.my_mutex);
+        __TBB_ASSERT(c.my_thread_data == nullptr, "The sleeping thread should not be active");
+        __TBB_ASSERT(c.my_is_active == false, "The sleeping thread should not be active");
+        c.my_is_active = true;
+        c.my_condvar.notify_one();
+    }
+    check(pthread_join(c.my_thread, nullptr), "pthread_join has failed");
+}
+#elif _WIN32 || _WIN64
 inline void create_coroutine(coroutine_type& c, std::size_t stack_size, void* arg) {
     __TBB_ASSERT(arg, NULL);
     c = CreateFiber(stack_size, co_local_wait_for_all, arg);

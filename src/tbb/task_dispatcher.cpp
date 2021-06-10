@@ -208,16 +208,17 @@ void task_dispatcher::execute_and_wait(d1::task* t, d1::wait_context& wait_ctx, 
     m_thread_data->do_post_resume_action();
 
     // Endless loop here because coroutine could be reused
-    for (;;) {
+    d1::task* resume_task{};
+    do {
         arena* a = m_thread_data->my_arena;
         coroutine_waiter waiter(*a);
-        d1::task* resume_task = local_wait_for_all(nullptr, waiter);
+        resume_task = local_wait_for_all(nullptr, waiter);
         assert_task_valid(resume_task);
         __TBB_ASSERT(this == m_thread_data->my_task_dispatcher, nullptr);
 
         m_thread_data->set_post_resume_action(thread_data::post_resume_action::cleanup, this);
-        resume(static_cast<suspend_point_type::resume_task*>(resume_task)->m_target);
-    }
+       
+    } while (resume(static_cast<suspend_point_type::resume_task*>(resume_task)->m_target));
     // This code is unreachable
 }
 
