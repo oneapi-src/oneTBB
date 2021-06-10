@@ -54,7 +54,7 @@ private:
     static basic_tls<thread_data*> theTLS;
 
     //! Caches the maximal level of parallelism supported by the hardware
-    static unsigned DefaultNumberOfThreads;
+    static std::atomic<unsigned> DefaultNumberOfThreads;
 
     //! Caches the size of OS regular memory page
     static std::size_t DefaultPageSize;
@@ -79,8 +79,13 @@ private:
 public:
     static unsigned default_num_threads () {
         // No memory fence required, because at worst each invoking thread calls AvailableHwConcurrency once.
-        return DefaultNumberOfThreads ? DefaultNumberOfThreads :
-                                        DefaultNumberOfThreads = AvailableHwConcurrency();
+        auto threads = DefaultNumberOfThreads.load(std::memory_order_relaxed);
+        if (!threads) {
+            unsigned expected = 0;
+            DefaultNumberOfThreads.compare_exchange_strong(expected, AvailableHwConcurrency());
+            threads = DefaultNumberOfThreads.load(std::memory_order_relaxed);
+        }
+        return threads;
     }
     static std::size_t default_page_size () {
         return DefaultPageSize ? DefaultPageSize :
