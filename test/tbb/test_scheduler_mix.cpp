@@ -40,6 +40,9 @@
 //! \file test_scheduler_mix.cpp
 //! \brief Test for [scheduler.task_arena scheduler.task_scheduler_observer] specification
 
+const std::uint64_t maxNumActions = 1 * 100 * 1000;
+static std::atomic<std::uint64_t> globalNumActions{};
+
 //using Random = utils::FastRandom<>;
 class Random {
     struct State {
@@ -239,9 +242,6 @@ public:
     }
 };
 
-const std::uint64_t maxNumActions = 1 * 1000 * 1000;
-static std::atomic<std::uint64_t> globalNumActions{};
-
 class Statistics {
 public:
     enum ACTION {
@@ -252,6 +252,8 @@ public:
         skippedArenaDestroy,
         skippedArenaAcquire,
         ParallelAlgorithm,
+        ArenaEnqueue,
+        ArenaExecute,
         numActions
     };
 
@@ -296,7 +298,7 @@ public:
 const char* const Statistics::mStatNames[Statistics::numActions] = { 
     "Arena create", "Arena destroy", "Arena acquire",
     "Skipped arena create", "Skipped arena destroy", "Skipped arena acquire",
-    "Parallel algorithm"
+    "Parallel algorithm", "Arena enqueue", "Arena execute"
 };
 thread_local Statistics::StatType* Statistics::mStats;
 
@@ -485,7 +487,6 @@ struct actor<arena_action> {
             enum arena_actions {
                 arena_execute,
                 arena_enqueue,
-                arena_execute_process,
                 num_arena_actions
             };
             auto process = r.get() % 2;
@@ -499,9 +500,10 @@ struct actor<arena_action> {
                     global_actor();
                 }
             };
-            switch (r.get() % num_arena_actions) {
-            case arena_execute_process:
+            switch (r.get() % (16*num_arena_actions)) {
+            case arena_execute:
                 if (entry.second > arenaLevel) {
+                    gStats.notify(Statistics::ArenaExecute);
                     auto oldArenaLevel = arenaLevel;
                     arenaLevel = entry.second;
                     entry.first->execute(body);
@@ -510,6 +512,9 @@ struct actor<arena_action> {
                 }
                 utils_fallthrough
             case arena_enqueue:
+                utils_fallthrough
+            default:
+                gStats.notify(Statistics::ArenaEnqueue);
                 entry.first->enqueue([] { global_actor(); });
                 break;
             }
@@ -564,13 +569,13 @@ void global_actor() {
         case parallel_algorithm: gStats.notify(Statistics::ParallelAlgorithm); actor<parallel_algorithm>::do_it(rnd);  break;
         }
 
-        if (++localNumActions == 10000) {
+        if (++localNumActions == 100) {
             localNumActions = 0;
-            globalNumActions += 10000;
+            globalNumActions += 100;
 
             static std::mutex mutex;
             std::lock_guard<std::mutex> lock{ mutex };
-            std::cout << "." << std::flush;
+            std::cout << globalNumActions << "\r" << std::flush;
         }
     }
 }
