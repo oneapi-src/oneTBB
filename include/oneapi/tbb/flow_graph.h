@@ -2111,10 +2111,10 @@ protected:
 template<typename OutputTuple, typename JP=queueing> class join_node;
 
 template<typename OutputTuple>
-class join_node<OutputTuple,reserving>: public unfolded_join_node<std::tuple_size<OutputTuple>::value, reserving_port, OutputTuple, reserving> {
+class join_node<OutputTuple,reserving>: public unfolded_join_node<reserving_port, OutputTuple, reserving> {
 private:
     static const int N = std::tuple_size<OutputTuple>::value;
-    typedef unfolded_join_node<N, reserving_port, OutputTuple, reserving> unfolded_type;
+    typedef unfolded_join_node<reserving_port, OutputTuple, reserving> unfolded_type;
 public:
     typedef OutputTuple output_type;
     typedef typename unfolded_type::input_ports_type input_ports_type;
@@ -2138,10 +2138,10 @@ public:
 };
 
 template<typename OutputTuple>
-class join_node<OutputTuple,queueing>: public unfolded_join_node<std::tuple_size<OutputTuple>::value, queueing_port, OutputTuple, queueing> {
+class join_node<OutputTuple,queueing>: public unfolded_join_node<queueing_port, OutputTuple, queueing> {
 private:
     static const int N = std::tuple_size<OutputTuple>::value;
-    typedef unfolded_join_node<N, queueing_port, OutputTuple, queueing> unfolded_type;
+    typedef unfolded_join_node<queueing_port, OutputTuple, queueing> unfolded_type;
 public:
     typedef OutputTuple output_type;
     typedef typename unfolded_type::input_ports_type input_ports_type;
@@ -2183,11 +2183,10 @@ concept join_node_functions = requires {
 // template for key_matching join_node
 // tag_matching join_node is a specialization of key_matching, and is source-compatible.
 template<typename OutputTuple, typename K, typename KHash>
-class join_node<OutputTuple, key_matching<K, KHash> > : public unfolded_join_node<std::tuple_size<OutputTuple>::value,
-      key_matching_port, OutputTuple, key_matching<K,KHash> > {
+class join_node<OutputTuple, key_matching<K, KHash> > : public unfolded_join_node<key_matching_port, OutputTuple, key_matching<K,KHash> > {
 private:
     static const int N = std::tuple_size<OutputTuple>::value;
-    typedef unfolded_join_node<N, key_matching_port, OutputTuple, key_matching<K,KHash> > unfolded_type;
+    typedef unfolded_join_node<key_matching_port, OutputTuple, key_matching<K,KHash> > unfolded_type;
 public:
     typedef OutputTuple output_type;
     typedef typename unfolded_type::input_ports_type input_ports_type;
