@@ -25,7 +25,7 @@
 #include "oneapi/tbb/info.h"
 #endif /*__TBB_ARENA_BINDING*/
 
-#if __unix__ || __FreeBSD__
+#if __unix__
 #include <sys/param.h>  // __FreeBSD_version
 #if __FreeBSD_version >= 701000
 #include <sys/cpuset.h>
