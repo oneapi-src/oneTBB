@@ -304,6 +304,55 @@ thread_local Statistics::StatType* Statistics::mStats;
 
 static Statistics gStats;
 
+class ThreadsGates {
+public:
+    ThreadsGates() = default;
+
+    class InGuard {
+    public:
+        InGuard(ThreadsGates* obj) {
+            if (obj->my_continue_flag.load(std::memory_order_relaxed)) {
+                my_obj = obj;
+                ++my_obj->my_threads_in;
+            }
+        }
+
+        InGuard(InGuard&& ing) : my_obj(ing.my_obj) {
+            ing.my_obj = nullptr;
+        }
+
+        ~InGuard() {
+            if (my_obj) {
+                --my_obj->my_threads_in;
+            }
+        }
+
+        bool continue_execution() {
+            return my_obj;
+        }
+
+    private:
+        ThreadsGates* my_obj;
+    };
+
+    InGuard get_ticket() {
+        return InGuard(this);
+    }
+
+    void shotdown_signal() {
+        my_continue_flag.store(false, std::memory_order_seq_cst);
+    }
+
+    void wait_leavers() {
+        utils::SpinWaitUntilEq(my_continue_flag, 0);
+    }
+
+private:
+    friend class InGuard;
+    std::atomic<bool> my_continue_flag{true};
+    std::atomic<int> my_threads_in{};
+};
+
 class ArenaTable {
     static const std::size_t maxArenas = 64;
     static const std::size_t maxThreads = 1 << 9;
@@ -318,8 +367,7 @@ class ArenaTable {
         int level{};
     };
 
-    std::atomic<int> mCreatingThreads{};
-    std::atomic<bool> mStop{};
+    ThreadsGates my_threads_gates{};
     static thread_local ThreadState mThreadState;
 
     template <typename F>
@@ -337,11 +385,8 @@ public:
     using ScopedLock = ArenaPtrRWMutex::ScopedLock;
 
     void create(Random& rnd) {
-        if (mStop.load(std::memory_order_relaxed)) {
-            return;
-        }
-        ++mCreatingThreads;
-        if (!mStop.load(std::memory_order_seq_cst)) {
+        auto guard = my_threads_gates.get_ticket();
+        if (guard.continue_execution()) {
             int num_threads = rnd.get() % utils::get_platform_max_threads() + 1;
             unsigned int num_reserved = rnd.get() % num_threads;
             tbb::task_arena::priority priorities[] = { tbb::task_arena::priority::low , tbb::task_arena::priority::normal, tbb::task_arena::priority::high };
@@ -361,37 +406,34 @@ public:
                 aligned_free(a);
             }
         }
-        --mCreatingThreads;
     }
 
     void destroy(Random& rnd) {
-        if (mStop.load(std::memory_order_relaxed)) {
-            return;
-        }
-        auto& ts = mThreadState;
-        if (!find_arena(rnd.get() % maxArenas, [&ts](ArenaPtrRWMutex& arena, std::size_t idx) {
-                if (!ts.lockedArenas[idx]) {
-                    ScopedLock lock;
-                    if (lock.tryAcquire(arena, true)) {
-                        auto a = arena.get();
-                        lock.clear();
-                        a->~task_arena();
-                        aligned_free(a);
-                        return true;
+        auto guard = my_threads_gates.get_ticket();
+        if (guard.continue_execution()) {
+            auto& ts = mThreadState;
+            if (!find_arena(rnd.get() % maxArenas, [&ts](ArenaPtrRWMutex& arena, std::size_t idx) {
+                    if (!ts.lockedArenas[idx]) {
+                        ScopedLock lock;
+                        if (lock.tryAcquire(arena, true)) {
+                            auto a = arena.get();
+                            lock.clear();
+                            a->~task_arena();
+                            aligned_free(a);
+                            return true;
+                        }
                     }
-                }
-                return false;
-            }))
-        {
-            gStats.notify(Statistics::skippedArenaDestroy);
+                    return false;
+                }))
+            {
+                gStats.notify(Statistics::skippedArenaDestroy);
+            }
         }
     }
 
     void shutdown() {
-        mStop.store(true, std::memory_order_seq_cst);
-        if (mCreatingThreads.load(std::memory_order_seq_cst)) {
-            utils::SpinWaitUntilEq(mCreatingThreads, 0);
-        }
+        my_threads_gates.shotdown_signal();
+        my_threads_gates.wait_leavers();
         find_arena(0, [](ArenaPtrRWMutex& arena, std::size_t) {
             if (arena.get()) {
                 ScopedLock lock{ arena, true };
@@ -405,25 +447,27 @@ public:
     }
 
     std::pair<tbb::task_arena*, std::size_t> acquire(Random& rnd, ScopedLock& lock) {
-        if (mStop.load(std::memory_order_relaxed)) {
-            return {};
-        }
-        auto& ts = mThreadState;
+        auto guard = my_threads_gates.get_ticket();
+
+        tbb::task_arena* a{nullptr};
         std::size_t resIdx{};
-        auto a = find_arena(rnd.get() % maxArenas,
-            [&ts, &lock, &resIdx](ArenaPtrRWMutex& arena, std::size_t idx) -> tbb::task_arena* {
-                if (!ts.lockedArenas[idx]) {
-                    if (lock.tryAcquire(arena, false)) {
-                        ts.lockedArenas[idx] = true;
-                        ts.arenaIdxStack[ts.level++] = idx;
-                        resIdx = idx;
-                        return arena.get();
+        if (guard.continue_execution()) {
+            auto& ts = mThreadState;
+            a = find_arena(rnd.get() % maxArenas,
+                [&ts, &lock, &resIdx](ArenaPtrRWMutex& arena, std::size_t idx) -> tbb::task_arena* {
+                    if (!ts.lockedArenas[idx]) {
+                        if (lock.tryAcquire(arena, false)) {
+                            ts.lockedArenas[idx] = true;
+                            ts.arenaIdxStack[ts.level++] = idx;
+                            resIdx = idx;
+                            return arena.get();
+                        }
                     }
-                }
-                return nullptr;
-            });
-        if (!a) {
-            gStats.notify(Statistics::skippedArenaAcquire);
+                    return nullptr;
+                });
+            if (!a) {
+                gStats.notify(Statistics::skippedArenaAcquire);
+            }
         }
         return { a, resIdx };
     }
@@ -510,9 +554,9 @@ struct actor<arena_action> {
                     arenaLevel = oldArenaLevel;
                     break;
                 }
-                utils_fallthrough
+                utils_fallthrough;
             case arena_enqueue:
-                utils_fallthrough
+                utils_fallthrough;
             default:
                 gStats.notify(Statistics::ArenaEnqueue);
                 entry.first->enqueue([] { global_actor(); });
