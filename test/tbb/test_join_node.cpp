@@ -14,16 +14,9 @@
     limitations under the License.
 */
 
-#ifdef __MIPS
-    #define MAX_TUPLE_TEST_SIZE_JOIN_NODE 3
-#else
-    #define MAX_TUPLE_TEST_SIZE_JOIN_NODE MAX_TUPLE_TEST_SIZE
-#endif
-
 #include "common/config.h"
 
 #include "test_join_node.h"
-
 
 //! \file test_join_node.cpp
 //! \brief Test for [flow_graph.join_node] specification
