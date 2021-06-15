@@ -27,9 +27,9 @@
 #endif
 
 #ifdef __MIPS
-    #define MAX_TUPLE_TEST_SIZE_JOIN_NODE 3
+    #define MAX_TUPLE_TEST_SIZE_LOCAL 3
 #else
-    #define MAX_TUPLE_TEST_SIZE_JOIN_NODE MAX_TUPLE_TEST_SIZE
+    #define MAX_TUPLE_TEST_SIZE_LOCAL MAX_TUPLE_TEST_SIZE
 #endif
 
 #include "tbb/flow_graph.h"
@@ -606,7 +606,7 @@ public:
     static void destroy(JType *p) { delete p; }
 };
 
-#if MAX_TUPLE_TEST_SIZE_JOIN_NODE >= 3
+#if MAX_TUPLE_TEST_SIZE_LOCAL >= 3
 template<typename JType, typename K, typename KHash>
 class makeJoin<3, JType, tbb::flow::key_matching<K, KHash> > {
     typedef typename JType::output_type TType;
@@ -644,7 +644,7 @@ public:
 };
 
 #endif
-#if MAX_TUPLE_TEST_SIZE_JOIN_NODE >= 4
+#if MAX_TUPLE_TEST_SIZE_LOCAL >= 4
 
 template<typename JType, typename K, typename KHash>
 class makeJoin<4, JType, tbb::flow::key_matching<K, KHash> > {
@@ -687,7 +687,7 @@ public:
 };
 
 #endif
-#if MAX_TUPLE_TEST_SIZE_JOIN_NODE >= 5
+#if MAX_TUPLE_TEST_SIZE_LOCAL >= 5
 template<typename JType, typename K, typename KHash>
 class makeJoin<5, JType, tbb::flow::key_matching<K, KHash> > {
     typedef typename JType::output_type TType;
@@ -732,7 +732,7 @@ public:
     static void destroy(JType *p) { delete p; }
 };
 #endif
-#if MAX_TUPLE_TEST_SIZE_JOIN_NODE >= 6
+#if MAX_TUPLE_TEST_SIZE_LOCAL >= 6
 template<typename JType, typename K, typename KHash>
 class makeJoin<6, JType, tbb::flow::key_matching<K, KHash> > {
     typedef typename JType::output_type TType;
@@ -782,7 +782,7 @@ public:
 };
 #endif
 
-#if MAX_TUPLE_TEST_SIZE_JOIN_NODE >= 7
+#if MAX_TUPLE_TEST_SIZE_LOCAL >= 7
 template<typename JType, typename K, typename KHash>
 class makeJoin<7, JType, tbb::flow::key_matching<K, KHash> > {
     typedef typename JType::output_type TType;
@@ -836,7 +836,7 @@ public:
 };
 #endif
 
-#if MAX_TUPLE_TEST_SIZE_JOIN_NODE >= 8
+#if MAX_TUPLE_TEST_SIZE_LOCAL >= 8
 template<typename JType, typename K, typename KHash>
 class makeJoin<8, JType, tbb::flow::key_matching<K, KHash> > {
     typedef typename JType::output_type TType;
@@ -894,7 +894,7 @@ public:
 };
 #endif
 
-#if MAX_TUPLE_TEST_SIZE_JOIN_NODE >= 9
+#if MAX_TUPLE_TEST_SIZE_LOCAL >= 9
 template<typename JType, typename K, typename KHash>
 class makeJoin<9, JType, tbb::flow::key_matching<K, KHash> > {
     typedef typename JType::output_type TType;
@@ -956,7 +956,7 @@ public:
 };
 #endif
 
-#if MAX_TUPLE_TEST_SIZE_JOIN_NODE >= 10
+#if MAX_TUPLE_TEST_SIZE_LOCAL >= 10
 template<typename JType, typename K, typename KHash>
 class makeJoin<10, JType, tbb::flow::key_matching<K, KHash> > {
     typedef typename JType::output_type TType;
@@ -1759,35 +1759,35 @@ void test_main() {
     for(int p = 0; p < 2; ++p) {
         INFO(policy_name<Policy>().msg_beg());
         generate_test<serial_test, std::tuple<threebyte, double>, Policy>::do_test();
-#if MAX_TUPLE_TEST_SIZE_JOIN_NODE >= 4
+#if MAX_TUPLE_TEST_SIZE_LOCAL >= 4
         {
             Checker<CheckType<int> > my_check;
             generate_test<serial_test, std::tuple<float, double, CheckType<int>, long>, Policy>::do_test();
         }
 #endif
-#if MAX_TUPLE_TEST_SIZE_JOIN_NODE >= 6
+#if MAX_TUPLE_TEST_SIZE_LOCAL >= 6
         generate_test<serial_test, std::tuple<double, double, int, long, int, short>, Policy>::do_test();
 #endif
-#if MAX_TUPLE_TEST_SIZE_JOIN_NODE >= 8
+#if MAX_TUPLE_TEST_SIZE_LOCAL >= 8
         generate_test<serial_test, std::tuple<float, double, double, double, float, int, float, long>, Policy>::do_test();
 #endif
-#if MAX_TUPLE_TEST_SIZE_JOIN_NODE >= 10
+#if MAX_TUPLE_TEST_SIZE_LOCAL >= 10
         generate_test<serial_test, std::tuple<float, double, int, double, double, float, long, int, float, long>, Policy>::do_test();
 #endif
         {
             Checker<CheckType<int> > my_check1;
             generate_test<parallel_test, std::tuple<float, CheckType<int> >, Policy>::do_test();
         }
-#if MAX_TUPLE_TEST_SIZE_JOIN_NODE >= 3
+#if MAX_TUPLE_TEST_SIZE_LOCAL >= 3
         generate_test<parallel_test, std::tuple<float, int, long>, Policy>::do_test();
 #endif
-#if MAX_TUPLE_TEST_SIZE_JOIN_NODE >= 5
+#if MAX_TUPLE_TEST_SIZE_LOCAL >= 5
         generate_test<parallel_test, std::tuple<double, double, int, int, short>, Policy>::do_test();
 #endif
-#if MAX_TUPLE_TEST_SIZE_JOIN_NODE >= 7
+#if MAX_TUPLE_TEST_SIZE_LOCAL >= 7
         generate_test<parallel_test, std::tuple<float, int, double, float, long, float, long>, Policy>::do_test();
 #endif
-#if MAX_TUPLE_TEST_SIZE_JOIN_NODE >= 9
+#if MAX_TUPLE_TEST_SIZE_LOCAL >= 9
         generate_test<parallel_test, std::tuple<float, double, int, double, double, long, int, float, long>, Policy>::do_test();
 #endif
     }

@@ -430,7 +430,7 @@ if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
     tbb_add_test(SUBDIR tbb NAME test_tbb_fork DEPENDENCIES TBB::tbb)
 endif()
 
-if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
+if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
     target_compile_definitions(test_join_node PUBLIC __MIPS)
 endif()
 
