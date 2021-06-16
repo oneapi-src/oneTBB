@@ -256,7 +256,7 @@ struct AsyncActivity {
     typedef async_node_type::gateway_type gateway_type;
 
     struct work_type { data_type input; gateway_type* gateway; };
-    bool done;
+    std::atomic<bool> done;
     concurrent_queue<work_type> my_queue;
     std::thread my_service_thread;
 
@@ -410,7 +410,7 @@ struct execution_tracker_t {
         prioritized_work_finished = false;
         prioritized_work_interrupted = false;
     }
-    std::thread::id prioritized_work_submitter;
+    std::atomic<std::thread::id> prioritized_work_submitter;
     bool prioritized_work_started;
     bool prioritized_work_finished;
     bool prioritized_work_interrupted;
