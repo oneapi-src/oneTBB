@@ -235,8 +235,8 @@ TEST_CASE("only calls once - stress test") {
         tbb::collaborative_once_flag flag;
         utils::NativeParallelFor(N, [&](std::size_t) {
             for (int i = 0; i < 100; ++i) {
-                REQUIRE(f.ct == i);
                 barrier.wait([&] {
+                    REQUIRE(f.ct == i);
                     flag.~collaborative_once_flag();
                     new (&flag) tbb::collaborative_once_flag{};
                 });
@@ -294,13 +294,12 @@ TEST_CASE("handles exceptions - stress test") {
 #endif
 
     int data{0};
-    bool run_again{true};
+    std::atomic<bool> run_again{true};
 
     auto throwing_func = [&] {
         utils::doDummyWork(10000);
         if (data < 100) {
             data++;
-            run_again = true;
             throw call_once_exception{};
         }
         run_again = false;
