@@ -52,7 +52,7 @@ void tbb_exception_ptr::throw_self() {
 //------------------------------------------------------------------------
 
 void task_group_context_impl::destroy(d1::task_group_context& ctx) {
-    __TBB_ASSERT(!is_poisoned(ctx.my_owner), NULL);
+    __TBB_ASSERT(!is_poisoned(ctx.my_owner), nullptr);
 
     auto ctx_lifetime_state = ctx.my_lifetime_state.load(std::memory_order_relaxed);
     __TBB_ASSERT(ctx_lifetime_state != d1::task_group_context::lifetime_state::locked, nullptr);
@@ -170,8 +170,8 @@ void task_group_context_impl::initialize(d1::task_group_context& ctx) {
 }
 
 void task_group_context_impl::register_with(d1::task_group_context& ctx, thread_data* td) {
-    __TBB_ASSERT(!is_poisoned(ctx.my_owner), NULL);
-    __TBB_ASSERT(td, NULL);
+    __TBB_ASSERT(!is_poisoned(ctx.my_owner), nullptr);
+    __TBB_ASSERT(td, nullptr);
     ctx.my_owner.store(td, std::memory_order_relaxed);
     thread_data::context_list_state& cls = td->my_context_list_state;
     // state propagation logic assumes new contexts are bound to head of the list
@@ -204,12 +204,12 @@ void task_group_context_impl::register_with(d1::task_group_context& ctx, thread_
 }
 
 void task_group_context_impl::bind_to_impl(d1::task_group_context& ctx, thread_data* td) {
-    __TBB_ASSERT(!is_poisoned(ctx.my_owner), NULL);
+    __TBB_ASSERT(!is_poisoned(ctx.my_owner), nullptr);
     __TBB_ASSERT(ctx.my_lifetime_state.load(std::memory_order_relaxed) == d1::task_group_context::lifetime_state::locked, "The context can be bound only under the lock.");
     __TBB_ASSERT(!ctx.my_parent, "Parent is set before initial binding");
 
     ctx.my_parent = td->my_task_dispatcher->m_execute_data_ext.context;
-    __TBB_ASSERT(ctx.my_parent, NULL);
+    __TBB_ASSERT(ctx.my_parent, nullptr);
 
     // Inherit FPU settings only if the context has not captured FPU settings yet.
     if (!ctx.my_traits.fp_settings)
@@ -258,7 +258,7 @@ void task_group_context_impl::bind_to_impl(d1::task_group_context& ctx, thread_d
 }
 
 void task_group_context_impl::bind_to(d1::task_group_context& ctx, thread_data* td) {
-    __TBB_ASSERT(!is_poisoned(ctx.my_owner), NULL);
+    __TBB_ASSERT(!is_poisoned(ctx.my_owner), nullptr);
     d1::task_group_context::lifetime_state state = ctx.my_lifetime_state.load(std::memory_order_acquire);
     if (state <= d1::task_group_context::lifetime_state::locked) {
         if (state == d1::task_group_context::lifetime_state::created &&
@@ -286,27 +286,15 @@ void task_group_context_impl::bind_to(d1::task_group_context& ctx, thread_data* 
         }
         spin_wait_while_eq(ctx.my_lifetime_state, d1::task_group_context::lifetime_state::locked);
     }
-    __TBB_ASSERT(ctx.my_lifetime_state.load(std::memory_order_relaxed) != d1::task_group_context::lifetime_state::created, NULL);
-    __TBB_ASSERT(ctx.my_lifetime_state.load(std::memory_order_relaxed) != d1::task_group_context::lifetime_state::locked, NULL);
+    __TBB_ASSERT(ctx.my_lifetime_state.load(std::memory_order_relaxed) != d1::task_group_context::lifetime_state::created, nullptr);
+    __TBB_ASSERT(ctx.my_lifetime_state.load(std::memory_order_relaxed) != d1::task_group_context::lifetime_state::locked, nullptr);
 }
 
 template <typename T>
 void task_group_context_impl::propagate_task_group_state(d1::task_group_context& ctx, std::atomic<T> d1::task_group_context::* mptr_state, d1::task_group_context& src, T new_state) {
-    __TBB_ASSERT(!is_poisoned(ctx.my_owner), NULL);
-    if ((ctx.*mptr_state).load(std::memory_order_relaxed) == new_state) {
-        // Nothing to do, whether descending from "src" or not, so no need to scan.
-        // Hopefully this happens often thanks to earlier invocations.
-        // This optimization is enabled by LIFO order in the context lists:
-        // - new contexts are bound to the beginning of lists;
-        // - descendants are newer than ancestors;
-        // - earlier invocations are therefore likely to "paint" long chains.
-    } else if (&ctx == &src) {
-        // This clause is disjunct from the traversal below, which skips src entirely.
-        // Note that src.*mptr_state is not necessarily still equal to new_state (another thread may have changed it again).
-        // Such interference is probably not frequent enough to aim for optimisation by writing new_state again (to make the other thread back down).
-        // Letting the other thread prevail may also be fairer.
-    } else {
-        for (d1::task_group_context* ancestor = ctx.my_parent; ancestor != NULL; ancestor = ancestor->my_parent) {
+    __TBB_ASSERT(!is_poisoned(ctx.my_owner), nullptr);
+    if ((ctx.*mptr_state).load(std::memory_order_relaxed) != new_state && &ctx != &src) {
+        for (d1::task_group_context* ancestor = ctx.my_parent; ancestor != nullptr; ancestor = ancestor->my_parent) {
             if (ancestor == &src) {
                 for (d1::task_group_context* c = &ctx; c != ancestor; c = c->my_parent)
                     (c->*mptr_state).store(new_state, std::memory_order_relaxed);
@@ -363,7 +351,7 @@ bool market::propagate_task_group_state(std::atomic<T> d1::task_group_context::*
 }
 
 bool task_group_context_impl::cancel_group_execution(d1::task_group_context& ctx) {
-    __TBB_ASSERT(!is_poisoned(ctx.my_owner), NULL);
+    __TBB_ASSERT(!is_poisoned(ctx.my_owner), nullptr);
     __TBB_ASSERT(ctx.my_cancellation_requested.load(std::memory_order_relaxed) <= 1, "The cancellation state can be either 0 or 1");
     if (ctx.my_cancellation_requested.load(std::memory_order_relaxed) || ctx.my_cancellation_requested.exchange(1)) {
         // This task group and any descendants have already been canceled.
@@ -381,20 +369,20 @@ bool task_group_context_impl::is_group_execution_cancelled(const d1::task_group_
 
 // IMPORTANT: It is assumed that this method is not used concurrently!
 void task_group_context_impl::reset(d1::task_group_context& ctx) {
-    __TBB_ASSERT(!is_poisoned(ctx.my_owner), NULL);
+    __TBB_ASSERT(!is_poisoned(ctx.my_owner), nullptr);
     //! TODO: Add assertion that this context does not have children
     // No fences are necessary since this context can be accessed from another thread
     // only after stealing happened (which means necessary fences were used).
     if (ctx.my_exception) {
         ctx.my_exception->destroy();
-        ctx.my_exception = NULL;
+        ctx.my_exception = nullptr;
     }
     ctx.my_cancellation_requested = 0;
 }
 
 // IMPORTANT: It is assumed that this method is not used concurrently!
 void task_group_context_impl::capture_fp_settings(d1::task_group_context& ctx) {
-    __TBB_ASSERT(!is_poisoned(ctx.my_owner), NULL);
+    __TBB_ASSERT(!is_poisoned(ctx.my_owner), nullptr);
     //! TODO: Add assertion that this context does not have children
     // No fences are necessary since this context can be accessed from another thread
     // only after stealing happened (which means necessary fences were used).
@@ -407,7 +395,7 @@ void task_group_context_impl::capture_fp_settings(d1::task_group_context& ctx) {
 }
 
 void task_group_context_impl::copy_fp_settings(d1::task_group_context& ctx, const d1::task_group_context& src) {
-    __TBB_ASSERT(!is_poisoned(ctx.my_owner), NULL);
+    __TBB_ASSERT(!is_poisoned(ctx.my_owner), nullptr);
     __TBB_ASSERT(!ctx.my_traits.fp_settings, "The context already has FPU settings.");
     __TBB_ASSERT(src.my_traits.fp_settings, "The source context does not have FPU settings.");
 
