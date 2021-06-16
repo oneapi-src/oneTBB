@@ -26,7 +26,7 @@
 #endif
 #endif
 
-#ifdef __MIPS
+#ifdef TBB_TEST_LOW_WORKLOAD
     #define MAX_TUPLE_TEST_SIZE_LOCAL 3
 #else
     #define MAX_TUPLE_TEST_SIZE_LOCAL MAX_TUPLE_TEST_SIZE

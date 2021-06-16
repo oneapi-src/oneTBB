@@ -430,10 +430,6 @@ if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
     tbb_add_test(SUBDIR tbb NAME test_tbb_fork DEPENDENCIES TBB::tbb)
 endif()
 
-if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
-    target_compile_definitions(test_join_node PUBLIC __MIPS)
-endif()
-
 tbb_add_test(SUBDIR tbb NAME test_tbb_header DEPENDENCIES TBB::tbb)
 target_sources(test_tbb_header PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/tbb/test_tbb_header_secondary.cpp)
 if (NOT "${TBB_OPENMP_FLAG}" STREQUAL "" AND NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
