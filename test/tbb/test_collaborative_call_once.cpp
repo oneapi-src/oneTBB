@@ -235,8 +235,8 @@ TEST_CASE("only calls once - stress test") {
         tbb::collaborative_once_flag flag;
         utils::NativeParallelFor(N, [&](std::size_t) {
             for (int i = 0; i < 100; ++i) {
+                REQUIRE(f.ct == i);
                 barrier.wait([&] {
-                    REQUIRE(f.ct == i);
                     flag.~collaborative_once_flag();
                     new (&flag) tbb::collaborative_once_flag{};
                 });
