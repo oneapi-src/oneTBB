@@ -14,6 +14,11 @@
     limitations under the License.
 */
 
+#ifdef TBB_TEST_LOW_WORKLOAD
+    #undef MAX_TUPLE_TEST_SIZE
+    #define MAX_TUPLE_TEST_SIZE 3
+#endif
+
 #include "common/config.h"
 
 #include "test_join_node.h"

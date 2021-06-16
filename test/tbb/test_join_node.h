@@ -26,11 +26,6 @@
 #endif
 #endif
 
-#ifdef TBB_TEST_LOW_WORKLOAD
-    #undef MAX_TUPLE_TEST_SIZE
-    #define MAX_TUPLE_TEST_SIZE 3
-#endif
-
 #include "tbb/flow_graph.h"
 
 #include "common/test.h"
