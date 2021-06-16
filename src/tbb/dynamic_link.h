@@ -71,7 +71,7 @@ using dynamic_link_handle = void*;
 const int DYNAMIC_LINK_GLOBAL        = 0x01;
 const int DYNAMIC_LINK_LOAD          = 0x02;
 const int DYNAMIC_LINK_WEAK          = 0x04;
-const int DYNAMIC_LINK_LOCAL_SCOPE   = 0x08;
+const int DYNAMIC_LINK_LOCAL_BINDING = 0x08;
 const int DYNAMIC_LINK_DEFAULT       = DYNAMIC_LINK_GLOBAL | DYNAMIC_LINK_LOAD | DYNAMIC_LINK_WEAK;
 
 //! Fill in dynamically linked handlers.

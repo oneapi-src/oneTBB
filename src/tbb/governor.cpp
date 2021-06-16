@@ -390,7 +390,7 @@ const char* load_tbbbind_shared_object() {
     if (si.dwNumberOfProcessors > 32) return nullptr;
 #endif /* _WIN32 && !_WIN64 */
     for (const auto& tbbbind_version : {TBBBIND_2_4_NAME, TBBBIND_2_0_NAME, TBBBIND_NAME}) {
-        if (dynamic_link(tbbbind_version, TbbBindLinkTable, LinkTableSize, nullptr, DYNAMIC_LINK_LOCAL_SCOPE)) {
+        if (dynamic_link(tbbbind_version, TbbBindLinkTable, LinkTableSize, nullptr, DYNAMIC_LINK_LOCAL_BINDING)) {
             return tbbbind_version;
         }
     }
