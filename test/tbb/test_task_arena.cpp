@@ -1593,6 +1593,21 @@ void StressTestMixFunctionality() {
     utils::SpinBarrier thread_barrier(thread_number);
     std::size_t max_operations = 20000;
     std::atomic<std::size_t> curr_operation{};
+
+    auto find_arena = [&arenas_pool](tbb::spin_rw_mutex::scoped_lock& lock) -> decltype(arenas_pool.begin()) {
+        for (auto curr_arena = arenas_pool.begin(); curr_arena != arenas_pool.end(); ++curr_arena) {
+            if (lock.try_acquire(curr_arena->arena_in_use, /*writer*/ false)) {
+                if (curr_arena->status == arena_handler::alive) {
+                    return curr_arena;
+                }
+                else {
+                    lock.release();
+                }
+            }
+        }
+        return arenas_pool.end();
+    };
+
     auto thread_func = [&] () {
         arenas_pool.emplace(new tbb::task_arena());
         thread_barrier.wait();
@@ -1625,23 +1640,11 @@ void StressTestMixFunctionality() {
                 case attach_observer :
                 {
                     tbb::spin_rw_mutex::scoped_lock lock{};
-                    auto curr_arena = arenas_pool.begin();
-                    for (; curr_arena != arenas_pool.end(); ++curr_arena) {
-                        if (lock.try_acquire(curr_arena->arena_in_use, /*writer*/ false)) {
-                            if (curr_arena->status == arena_handler::alive) {
-                                break;
-                            } else {
-                                lock.release();
-                            }
-                        }
-                    }
 
-                    if (curr_arena == arenas_pool.end()) break;
-
-                    {
+                    auto curr_arena = find_arena(lock);
+                    if (curr_arena != arenas_pool.end()) {
                         curr_arena->observers.emplace(*curr_arena->arena, thread_number, 1);
                     }
-
                     break;
                 }
                 case detach_observer:
@@ -1659,56 +1662,29 @@ void StressTestMixFunctionality() {
 
                     break;
                 }
-                case arena_execute :
+                case arena_execute:
                 {
                     tbb::spin_rw_mutex::scoped_lock lock{};
-                    auto curr_arena = arenas_pool.begin();
-                    for (; curr_arena != arenas_pool.end(); ++curr_arena) {
-                        if (lock.try_acquire(curr_arena->arena_in_use, /*writer*/ false)) {
-                            if (curr_arena->status == arena_handler::alive) {
-                                break;
-                            } else {
-                                lock.release();
-                            }
-                        }
+                    auto curr_arena = find_arena(lock);
+
+                    if (curr_arena != arenas_pool.end()) {
+                        curr_arena->arena->execute([]() {
+                            static tbb::affinity_partitioner aff;
+                            tbb::parallel_for(0, 10000, utils::DummyBody(10), tbb::auto_partitioner{});
+                            tbb::parallel_for(0, 10000, utils::DummyBody(10), aff);
+                        });
                     }
-
-                    if (curr_arena == arenas_pool.end()) break;
-
-                    curr_arena->arena->execute([] () {
-                        static tbb::affinity_partitioner aff;
-                        auto body = [](tbb::blocked_range<std::size_t>&) {
-                            std::atomic<int> sum{};
-                            // Make some work
-                            for (; sum < 10; ++sum);
-                        };
-                        tbb::parallel_for(tbb::blocked_range<std::size_t>(0, 10000), body, tbb::auto_partitioner{});
-                        tbb::parallel_for(tbb::blocked_range<std::size_t>(0, 10000), body, aff);
-                    });
 
                     break;
                 }
-                case enqueue_task :
+                case enqueue_task:
                 {
                     tbb::spin_rw_mutex::scoped_lock lock{};
-                    auto curr_arena = arenas_pool.begin();
-                    for (; curr_arena != arenas_pool.end(); ++curr_arena) {
-                        if (lock.try_acquire(curr_arena->arena_in_use, /*writer*/ false)) {
-                            if (curr_arena->status == arena_handler::alive) {
-                                break;
-                            } else {
-                                lock.release();
-                            }
-                        }
+                    auto curr_arena = find_arena(lock);
+
+                    if (curr_arena != arenas_pool.end()) {
+                        curr_arena->arena->enqueue([] { utils::doDummyWork(1000); });
                     }
-
-                    if (curr_arena == arenas_pool.end()) break;
-
-                    curr_arena->arena->enqueue([] {
-                        std::atomic<int> sum{};
-                        // Make some work
-                        for (; sum < 1000; ++sum) ;
-                    });
 
                     break;
                 }
