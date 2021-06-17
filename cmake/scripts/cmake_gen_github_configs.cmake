@@ -26,22 +26,18 @@ set(DLL_REL_PATH "redist")
 file(READ ${CMAKE_CURRENT_LIST_DIR}/../../include/oneapi/tbb/version.h _tbb_version_info)
 string(REGEX REPLACE ".*#define TBB_VERSION_MAJOR ([0-9]+).*" "\\1" _tbb_ver_major "${_tbb_version_info}")
 string(REGEX REPLACE ".*#define TBB_VERSION_MINOR ([0-9]+).*" "\\1" _tbb_ver_minor "${_tbb_version_info}")
-string(REGEX REPLACE ".*#define TBB_INTERFACE_VERSION ([0-9]+).*" "\\1" _tbb_interface_ver "${_tbb_version_info}")
+string(REGEX REPLACE ".*#define TBB_VERSION_PATCH ([0-9]+).*" "\\1" _tbb_ver_patch "${_tbb_version_info}")
 string(REGEX REPLACE ".*#define __TBB_BINARY_VERSION ([0-9]+).*" "\\1" TBB_BINARY_VERSION "${_tbb_version_info}")
 file(READ ${CMAKE_CURRENT_LIST_DIR}/../../CMakeLists.txt _tbb_cmakelist)
 string(REGEX REPLACE ".*TBBMALLOC_BINARY_VERSION ([0-9]+).*" "\\1" TBBMALLOC_BINARY_VERSION "${_tbb_cmakelist}")
 set(TBBMALLOC_PROXY_BINARY_VERSION ${TBBMALLOC_BINARY_VERSION})
 string(REGEX REPLACE ".*TBBBIND_BINARY_VERSION ([0-9]+).*" "\\1" TBBBIND_BINARY_VERSION "${_tbb_cmakelist}")
 
-# Parse patch and tweak versions from interface version: e.g. 12014 --> 01 - patch version, 4 - tweak version.
-math(EXPR _tbb_ver_patch "${_tbb_interface_ver} % 1000 / 10")
-math(EXPR _tbb_ver_tweak "${_tbb_interface_ver} % 10")
-
 set(COMMON_ARGS
     TBB_ROOT_REL_PATH ${TBB_ROOT_REL_PATH}
     INC_REL_PATH ${INC_REL_PATH}
     LIB_REL_PATH ${LIB_REL_PATH}
-    VERSION ${_tbb_ver_major}.${_tbb_ver_minor}.${_tbb_ver_patch}.${_tbb_ver_tweak}
+    VERSION ${_tbb_ver_major}.${_tbb_ver_minor}.${_tbb_ver_patch}
     TBB_BINARY_VERSION ${TBB_BINARY_VERSION}
     TBBMALLOC_BINARY_VERSION ${TBBMALLOC_BINARY_VERSION}
     TBBMALLOC_PROXY_BINARY_VERSION ${TBBMALLOC_PROXY_BINARY_VERSION}
