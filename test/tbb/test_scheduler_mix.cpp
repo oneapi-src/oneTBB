@@ -304,53 +304,53 @@ thread_local Statistics::StatType* Statistics::mStats;
 
 static Statistics gStats;
 
-class ThreadsGates {
+class LifetimeTracker {
 public:
-    ThreadsGates() = default;
+    LifetimeTracker() = default;
 
-    class InGuard {
+    class Guard {
     public:
-        InGuard(ThreadsGates* obj) {
-            if (obj->my_continue_flag.load(std::memory_order_relaxed)) {
-                my_obj = obj;
-                ++my_obj->my_threads_in;
+        Guard(LifetimeTracker* obj) {
+            if (obj->mContinueFlag.load(std::memory_order_relaxed)) {
+                mObj = obj;
+                ++mObj->mReferences;
             }
         }
 
-        InGuard(InGuard&& ing) : my_obj(ing.my_obj) {
-            ing.my_obj = nullptr;
+        Guard(Guard&& ing) : mObj(ing.mObj) {
+            ing.mObj = nullptr;
         }
 
-        ~InGuard() {
-            if (my_obj) {
-                --my_obj->my_threads_in;
+        ~Guard() {
+            if (mObj) {
+                --mObj->mReferences;
             }
         }
 
         bool continue_execution() {
-            return my_obj;
+            return mObj;
         }
 
     private:
-        ThreadsGates* my_obj;
+        LifetimeTracker* mObj;
     };
 
-    InGuard get_ticket() {
-        return InGuard(this);
+    Guard makeGuard() {
+        return Guard(this);
     }
 
-    void shotdown_signal() {
-        my_continue_flag.store(false, std::memory_order_seq_cst);
+    void shutdown_signal() {
+        mContinueFlag.store(false, std::memory_order_seq_cst);
     }
 
     void wait_leavers() {
-        utils::SpinWaitUntilEq(my_continue_flag, 0);
+        utils::SpinWaitUntilEq(mContinueFlag, false);
     }
 
 private:
-    friend class InGuard;
-    std::atomic<bool> my_continue_flag{true};
-    std::atomic<int> my_threads_in{};
+    friend class Guard;
+    std::atomic<bool> mContinueFlag{true};
+    std::atomic<int> mReferences{};
 };
 
 class ArenaTable {
@@ -367,7 +367,7 @@ class ArenaTable {
         int level{};
     };
 
-    ThreadsGates my_threads_gates{};
+    LifetimeTracker mLifetimeTracker{};
     static thread_local ThreadState mThreadState;
 
     template <typename F>
@@ -385,7 +385,7 @@ public:
     using ScopedLock = ArenaPtrRWMutex::ScopedLock;
 
     void create(Random& rnd) {
-        auto guard = my_threads_gates.get_ticket();
+        auto guard = mLifetimeTracker.makeGuard();
         if (guard.continue_execution()) {
             int num_threads = rnd.get() % utils::get_platform_max_threads() + 1;
             unsigned int num_reserved = rnd.get() % num_threads;
@@ -409,7 +409,7 @@ public:
     }
 
     void destroy(Random& rnd) {
-        auto guard = my_threads_gates.get_ticket();
+        auto guard = mLifetimeTracker.makeGuard();
         if (guard.continue_execution()) {
             auto& ts = mThreadState;
             if (!find_arena(rnd.get() % maxArenas, [&ts](ArenaPtrRWMutex& arena, std::size_t idx) {
@@ -432,8 +432,8 @@ public:
     }
 
     void shutdown() {
-        my_threads_gates.shotdown_signal();
-        my_threads_gates.wait_leavers();
+        mLifetimeTracker.shutdown_signal();
+        mLifetimeTracker.wait_leavers();
         find_arena(0, [](ArenaPtrRWMutex& arena, std::size_t) {
             if (arena.get()) {
                 ScopedLock lock{ arena, true };
@@ -447,7 +447,7 @@ public:
     }
 
     std::pair<tbb::task_arena*, std::size_t> acquire(Random& rnd, ScopedLock& lock) {
-        auto guard = my_threads_gates.get_ticket();
+        auto guard = mLifetimeTracker.makeGuard();
 
         tbb::task_arena* a{nullptr};
         std::size_t resIdx{};
