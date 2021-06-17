@@ -294,13 +294,12 @@ TEST_CASE("handles exceptions - stress test") {
 #endif
 
     int data{0};
-    bool run_again{true};
+    std::atomic<bool> run_again{true};
 
     auto throwing_func = [&] {
         utils::doDummyWork(10000);
         if (data < 100) {
             data++;
-            run_again = true;
             throw call_once_exception{};
         }
         run_again = false;
