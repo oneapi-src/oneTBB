@@ -232,14 +232,13 @@ void arena::free_arena () {
     __TBB_ASSERT( !my_global_concurrency_mode, NULL );
 #endif
     poison_value( my_guard );
-    std::intptr_t drained = 0;
     for ( unsigned i = 0; i < my_num_slots; ++i ) {
         // __TBB_ASSERT( !my_slots[i].my_scheduler, "arena slot is not empty" );
         // TODO: understand the assertion and modify
         // __TBB_ASSERT( my_slots[i].task_pool == EmptyTaskPool, NULL );
         __TBB_ASSERT( my_slots[i].head == my_slots[i].tail, NULL ); // TODO: replace by is_quiescent_local_task_pool_empty
         my_slots[i].free_task_pool();
-        drained += mailbox(i).drain();
+        mailbox(i).drain();
         my_slots[i].my_default_task_dispatcher->~task_dispatcher();
     }
     __TBB_ASSERT(my_fifo_task_stream.empty(), "Not all enqueued tasks were executed");
@@ -776,4 +775,3 @@ void isolate_within_arena(d1::delegate_base& d, std::intptr_t isolation) {
 } // namespace r1
 } // namespace detail
 } // namespace tbb
-
