@@ -57,7 +57,7 @@ target_compile_options(tbbmalloc
     ${TBB_LIB_COMPILE_FLAGS}
     ${TBBMALLOC_LIB_COMPILE_FLAGS}
     ${TBB_COMMON_COMPILE_FLAGS}
-    ${TBB_IPO_COMPILE_FLAG}
+    ${TBB_IPO_COMPILE_FLAGS}
 )
 
 enable_language(C)
@@ -74,7 +74,7 @@ set_target_properties(tbbmalloc PROPERTIES
 
 set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "")
 
-set_property(TARGET tbbmalloc APPEND PROPERTY LINK_FLAGS_RELWITHDEBINFO ${TBB_IPO_LINK_FLAG})
+set_property(TARGET tbbmalloc APPEND PROPERTY LINK_FLAGS_RELWITHDEBINFO )
 if (WIN32)
     set_property(TARGET tbbmalloc APPEND PROPERTY LINK_FLAGS_RELWITHDEBINFO /INCREMENTAL:NO)
 endif()
@@ -86,12 +86,14 @@ if (COMMAND target_link_options)
         PRIVATE
         ${TBB_LIB_LINK_FLAGS}
         ${TBB_COMMON_LINK_FLAGS}
+        ${TBB_IPO_LINK_FLAGS}
     )
 else()
     target_link_libraries(tbbmalloc
         PRIVATE
         ${TBB_LIB_LINK_FLAGS}
         ${TBB_COMMON_LINK_FLAGS}
+        ${TBB_IPO_LINK_FLAGS}
     )
 endif()
 

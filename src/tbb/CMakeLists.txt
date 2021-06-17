@@ -77,7 +77,7 @@ target_compile_options(tbb
     ${TBB_WARNING_SUPPRESS}
     ${TBB_LIB_COMPILE_FLAGS}
     ${TBB_COMMON_COMPILE_FLAGS}
-    ${TBB_IPO_COMPILE_FLAG}
+    ${TBB_IPO_COMPILE_FLAGS}
 )
 
 # Avoid use of target_link_libraries here as it changes /DEF option to \DEF on Windows.
@@ -89,7 +89,6 @@ set_target_properties(tbb PROPERTIES
     LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbb.def
 )
 
-set_property(TARGET tbb APPEND PROPERTY LINK_FLAGS_RELWITHDEBINFO ${TBB_IPO_LINK_FLAG})
 if (WIN32)
     set_property(TARGET tbb APPEND PROPERTY LINK_FLAGS_RELWITHDEBINFO /INCREMENTAL:NO)
 endif()
@@ -101,12 +100,14 @@ if (COMMAND target_link_options)
         PRIVATE
         ${TBB_LIB_LINK_FLAGS}
         ${TBB_COMMON_LINK_FLAGS}
+        ${TBB_IPO_LINK_FLAGS}
     )
 else()
     target_link_libraries(tbb
         PRIVATE
         ${TBB_LIB_LINK_FLAGS}
         ${TBB_COMMON_LINK_FLAGS}
+        ${TBB_IPO_LINK_FLAGS}
     )
 endif()
 
