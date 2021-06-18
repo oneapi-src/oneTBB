@@ -24,22 +24,6 @@
 //! \brief Test for [flow_graph.function_node] specification
 
 /*
-    Test execution of node body
-    Test node can do try_put call
-*/
-void test_func_body(){
-    conformance::test_body_exec_impl<oneapi::tbb::flow::function_node<oneapi::tbb::flow::continue_msg, int>>(oneapi::tbb::flow::unlimited);
-}
-
-/*
-    Test function_node is a graph_node, receiver<Input>, and sender<Output>
-*/
-template<typename I, typename O>
-void test_inheritance(){
-    conformance::test_inheritance_impl<oneapi::tbb::flow::function_node<I, O>, I, O>();
-}
-
-/*
     Test node deduction guides
 */
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
@@ -89,25 +73,15 @@ void test_deduction_guides() {
 
 #endif
 
-/*
-    Test node forvard messages to successors
-*/
-void test_forvarding(){
-    conformance::test_forwarding_impl<oneapi::tbb::flow::function_node<oneapi::tbb::flow::continue_msg, int>>(oneapi::tbb::flow::unlimited);
+//! Test calling function body
+//! \brief \ref interface \ref requirement
+TEST_CASE("Test function_node body") {
+    conformance::test_body_exec<oneapi::tbb::flow::function_node<oneapi::tbb::flow::continue_msg, int>>(oneapi::tbb::flow::unlimited);
 }
 
-/*
-    Test node not buffered unsuccesful message, and try_get after rejection should not succeed.
-*/
-template<typename Policy>
-void test_buffering(){
-   conformance::test_buffering_impl<oneapi::tbb::flow::function_node<oneapi::tbb::flow::continue_msg, int, Policy>>(oneapi::tbb::flow::unlimited);
-}
-
-/*
-    Test all node constructors
-*/
-void test_ctors(){
+//! Test function_node costructors
+//! \brief \ref requirement
+TEST_CASE("function_node constructors"){
     using namespace oneapi::tbb::flow;
     graph g;
 
@@ -120,94 +94,44 @@ void test_ctors(){
     function_node<int, int, lightweight> lw_node2(g, serial, fun, lightweight(), oneapi::tbb::flow::node_priority_t(1));
 }
 
-/*
-    The node that is constructed has a reference to the same graph object as src, has a copy of the initial body used by src, and has the same concurrency threshold as src.
-    The predecessors and successors of src are not copied.
-*/
-void test_copy_ctor(){
-    conformance::test_copy_ctor_impl<oneapi::tbb::flow::function_node<int, int>, conformance::CountingObject<int>>();
-}
-
-/*
-    Test the body object passed to a node is copied
-*/
-void test_copy_body(){
-    conformance::test_copy_body_impl<oneapi::tbb::flow::function_node<oneapi::tbb::flow::continue_msg, int>, conformance::CountingObject<int>>(oneapi::tbb::flow::unlimited);
-}
-
-/*
-    Test node Input class meet the DefaultConstructible and CopyConstructible requirements and Output class meet the CopyConstructible requirements.
-*/
-void test_output_input_class(){
-    using Body = conformance::CountingObject<int>;
-    conformance::test_output_input_class_impl<oneapi::tbb::flow::function_node<Body, Body>, Body>();
-}
-
-/*
-    Test nodes for execution with priority in single-threaded configuration
-*/
-void test_priority(){
-    conformance::test_priority_impl<oneapi::tbb::flow::function_node<oneapi::tbb::flow::continue_msg, oneapi::tbb::flow::continue_msg>>(oneapi::tbb::flow::unlimited);
-}
-
-/*
-    Test function_node has a user-settable concurrency limit. It can be set to one of predefined values. 
-    The user can also provide a value of type std::size_t to limit concurrency.
-    Test that not more than limited threads works in parallel.
-*/
-void test_node_concurrency(){
-    conformance::test_concurrency_impl<oneapi::tbb::flow::function_node<int, int>>(oneapi::tbb::flow::unlimited);
-}
-
-/*
-    Test node reject the incoming message if the concurrency limit achieved.
-*/
-void test_rejecting(){
-    conformance::test_rejecting_impl<oneapi::tbb::flow::function_node <int, int, oneapi::tbb::flow::rejecting>>();
-}
-
-//! Test function_node costructors
-//! \brief \ref requirement
-TEST_CASE("function_node constructors"){
-    test_ctors();
-}
-
-//! Test function_node copy costructor
+//! The node that is constructed has a reference to the same graph object as src, has a copy of the initial body used by src, and has the same concurrency threshold as src.
+//! The predecessors and successors of src are not copied.
 //! \brief \ref requirement
 TEST_CASE("function_node copy constructor"){
-    test_copy_ctor();
+    conformance::test_copy_ctor<oneapi::tbb::flow::function_node<int, int>, conformance::CountingObject<int>>();
 }
 
-//! Test function_node with rejecting policy
+//! Test node reject the incoming message if the concurrency limit achieved.
 //! \brief \ref interface
 TEST_CASE("function_node with rejecting policy"){
-    test_rejecting();
+    conformance::test_rejecting<oneapi::tbb::flow::function_node <int, int, oneapi::tbb::flow::rejecting>>();
 }
 
 //! Test body copying and copy_body logic
+//! Test the body object passed to a node is copied
 //! \brief \ref interface
 TEST_CASE("function_node and body copying"){
-    test_copy_body();
+    conformance::test_copy_body<oneapi::tbb::flow::function_node<oneapi::tbb::flow::continue_msg, int>, conformance::CountingObject<int>>(oneapi::tbb::flow::unlimited);
 }
 
-//! Test inheritance relations
+//! Test function_node is a graph_node, receiver<Input>, and sender<Output>
 //! \brief \ref interface
 TEST_CASE("function_node superclasses"){
-    test_inheritance<int, int>();
-    test_inheritance<void*, float>();
+    conformance::test_inheritance<oneapi::tbb::flow::function_node<int, int>, int, int>();
+    conformance::test_inheritance<oneapi::tbb::flow::function_node<void*, float>, void*, float>();
 }
 
-//! Test function_node buffering
+//! Test node not buffered unsuccesful message, and try_get after rejection should not succeed.
 //! \brief \ref requirement
 TEST_CASE("function_node buffering"){
-    test_buffering<oneapi::tbb::flow::rejecting>();
-    test_buffering<oneapi::tbb::flow::queueing>();
+    conformance::test_buffering<oneapi::tbb::flow::function_node<oneapi::tbb::flow::continue_msg, int, oneapi::tbb::flow::rejecting>>(oneapi::tbb::flow::unlimited);
+    conformance::test_buffering<oneapi::tbb::flow::function_node<oneapi::tbb::flow::continue_msg, int, oneapi::tbb::flow::queueing>>(oneapi::tbb::flow::unlimited);
 }
 
-//! Test function_node broadcasting
+//! Test node broadcast messages to successors
 //! \brief \ref requirement
 TEST_CASE("function_node broadcast"){
-    test_forvarding();
+    conformance::test_forwarding<oneapi::tbb::flow::function_node<oneapi::tbb::flow::continue_msg, int>>(1, oneapi::tbb::flow::unlimited);
 }
 
 //! Test deduction guides
@@ -221,23 +145,20 @@ TEST_CASE("Deduction guides"){
 //! Test priorities work in single-threaded configuration
 //! \brief \ref requirement
 TEST_CASE("function_node priority support"){
-    test_priority();
+    conformance::test_priority<oneapi::tbb::flow::function_node<oneapi::tbb::flow::continue_msg, oneapi::tbb::flow::continue_msg>>(oneapi::tbb::flow::unlimited);
 }
 
-//! Test that measured concurrency respects set limits
+//! Test function_node has a user-settable concurrency limit. It can be set to one of predefined values. 
+//! The user can also provide a value of type std::size_t to limit concurrency.
+//! Test that not more than limited threads works in parallel.
 //! \brief \ref requirement
 TEST_CASE("concurrency follows set limits"){
-    test_node_concurrency();
+    conformance::test_concurrency<oneapi::tbb::flow::function_node<int, int>>(oneapi::tbb::flow::unlimited);
 }
 
-//! Test calling function body
-//! \brief \ref interface \ref requirement
-TEST_CASE("Test function_node body") {
-    test_func_body();
-}
-
-//! Test constructible Output and Input class
+//! Test node Input class meet the DefaultConstructible and CopyConstructible requirements and Output class meet the CopyConstructible requirements.
 //! \brief \ref interface \ref requirement
 TEST_CASE("Test function_node Output and Input class") {
-    test_output_input_class();
+    using Body = conformance::CountingObject<int>;
+    conformance::test_output_input_class<oneapi::tbb::flow::function_node<Body, Body>, Body>();
 }

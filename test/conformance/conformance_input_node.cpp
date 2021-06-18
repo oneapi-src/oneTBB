@@ -31,146 +31,93 @@
 //! \file conformance_input_node.cpp
 //! \brief Test for [flow_graph.input_node] specification
 
-/*
-TODO: implement missing conformance tests for input_node:
-  - [ ] The `copy_body' function copies altered body (e.g. after its successful invocation).
-  - [ ] Check that in `test_forwarding' the value passed is the actual one received.
-  - [ ] Improve CTAD test to assert result node type.
-  - [ ] Explicit test for copy constructor of the node.
-  - [ ] Check `Output' type indeed copy-constructed and copy-assigned while working with the node.
-  - [ ] Check node cannot have predecessors (Will argument-dependent lookup be of any help here?)
-  - [ ] Check the node is serial and its body never invoked concurrently.
-  - [ ] `try_get()' call testing: a call to body is made only when the internal buffer is empty.
-*/
-
-std::atomic<size_t> global_execute_count;
-
-template<typename OutputType>
-struct input_functor {
-    const size_t n;
-
-    input_functor( ) : n(10) { }
-    input_functor( const input_functor &f ) : n(f.n) {  }
-    void operator=(const input_functor &f) { n = f.n; }
-
-    OutputType operator()( oneapi::tbb::flow_control & fc ) {
-       ++global_execute_count;
-       if(global_execute_count > n){
-           fc.stop();
-           return OutputType();
-       }
-       return OutputType(global_execute_count.load());
-    }
-
-};
-
-template<typename O>
-struct CopyCounterBody{
-    size_t copy_count;
-
-    CopyCounterBody():
-        copy_count(0) {}
-
-    CopyCounterBody(const CopyCounterBody<O>& other):
-        copy_count(other.copy_count + 1) {}
-
-    CopyCounterBody& operator=(const CopyCounterBody<O>& other) {
-        copy_count = other.copy_count + 1; return *this;
-    }
-
-    O operator()(oneapi::tbb::flow_control & fc){
-        fc.stop();
-        return O();
-    }
-};
-
-
-void test_input_body(){
-    oneapi::tbb::flow::graph g;
-    input_functor<int> fun;
-
-    global_execute_count = 0;
-    oneapi::tbb::flow::input_node<int> node1(g, fun);
-    test_push_receiver<int> node2(g);
-
-    oneapi::tbb::flow::make_edge(node1, node2);
-
-    node1.activate();
-    g.wait_for_all();
-
-    CHECK_MESSAGE( (get_count(node2) == 10), "Descendant of the node needs to be receive N messages");
-    CHECK_MESSAGE( (global_execute_count == 10 + 1), "Body of the node needs to be executed N + 1 times");
-}
-
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
-void test_deduction_guides(){
-    oneapi::tbb::flow::graph g;
-    input_functor<int> fun;
-    oneapi::tbb::flow::input_node node1(g, fun);
-}
+int input_body_f(tbb::flow_control&) { return 42; }
+
+void test_deduction_guides() {
+    using namespace tbb::flow;
+    graph g;
+
+    auto lambda = [](tbb::flow_control&) { return 42; };
+    auto non_const_lambda = [](tbb::flow_control&) mutable { return 42; };
+
+    // Tests for input_node(graph&, Body)
+    input_node s1(g, lambda);
+    static_assert(std::is_same_v<decltype(s1), input_node<int>>);
+
+    input_node s2(g, non_const_lambda);
+    static_assert(std::is_same_v<decltype(s2), input_node<int>>);
+
+    input_node s3(g, input_body_f);
+    static_assert(std::is_same_v<decltype(s3), input_node<int>>);
+
+    input_node s4(s3);
+    static_assert(std::is_same_v<decltype(s4), input_node<int>>);
+
+#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+    broadcast_node<int> bc(g);
+
+    // Tests for input_node(const node_set<Args...>&, Body)
+    input_node s5(precedes(bc), lambda);
+    static_assert(std::is_same_v<decltype(s5), input_node<int>>);
+
+    input_node s6(precedes(bc), non_const_lambda);
+    static_assert(std::is_same_v<decltype(s6), input_node<int>>);
+
+    input_node s7(precedes(bc), input_body_f);
+    static_assert(std::is_same_v<decltype(s7), input_node<int>>);
 #endif
-
-void test_buffering(){
-    oneapi::tbb::flow::graph g;
-    input_functor<int> fun;
-    global_execute_count = 0;
-
-    oneapi::tbb::flow::input_node<int> source(g, fun);
-    oneapi::tbb::flow::limiter_node<int> rejecter(g, 0);
-
-    oneapi::tbb::flow::make_edge(source, rejecter);
-    source.activate();
     g.wait_for_all();
-
-    int tmp = -1;
-    CHECK_MESSAGE( (source.try_get(tmp) == true), "try_get after rejection should succeed");
-    CHECK_MESSAGE( (tmp == 1), "try_get should return correct value");
 }
 
-void test_forwarding(){
-    oneapi::tbb::flow::graph g;
-    input_functor<int> fun;
-
-    global_execute_count = 0;
-    oneapi::tbb::flow::input_node<int> node1(g, fun);
-    test_push_receiver<int> node2(g);
-    test_push_receiver<int> node3(g);
-
-    oneapi::tbb::flow::make_edge(node1, node2);
-    oneapi::tbb::flow::make_edge(node1, node3);
-
-    node1.activate();
-    g.wait_for_all();
-
-    CHECK_MESSAGE( (get_count(node2) == 10), "Descendant of the node needs to be receive N messages");
-    CHECK_MESSAGE( (get_count(node3) == 10), "Descendant of the node needs to be receive N messages");
-}
+#endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 
 template<typename O>
 void test_inheritance(){
     using namespace oneapi::tbb::flow;
 
-    CHECK_MESSAGE( (std::is_base_of<graph_node, input_node<O>>::value), "input_node should be derived from graph_node");
-    CHECK_MESSAGE( (std::is_base_of<sender<O>, input_node<O>>::value), "input_node should be derived from sender<Output>");
+    CHECK_MESSAGE((std::is_base_of<graph_node, input_node<O>>::value), "input_node should be derived from graph_node");
+    CHECK_MESSAGE((std::is_base_of<sender<O>, input_node<O>>::value), "input_node should be derived from sender<Output>");
+    CHECK_MESSAGE((!std::is_base_of<receiver<O>, input_node<O>>::value), "input_node cannot have predecessors");
 }
 
-void test_copies(){
-    using namespace oneapi::tbb::flow;
-
-    CopyCounterBody<int> b;
-
-    graph g;
-    input_node<int> fn(g, b);
-
-    CopyCounterBody<int> b2 = copy_body<CopyCounterBody<int>, input_node<int>>(fn);
-
-    CHECK_MESSAGE( (b.copy_count + 2 <= b2.copy_count), "copy_body and constructor should copy bodies");
-}
-
-//! Test body copying and copy_body logic
+//! Test the body object passed to a node is copied
 //! \brief \ref interface
 TEST_CASE("input_node and body copying"){
-    test_copies();
+    conformance::test_copy_body<oneapi::tbb::flow::input_node<int>, conformance::CountingObject<int>>();
+}
+
+//! The node that is constructed has a reference to the same graph object as src,
+//! has a copy of the initial body used by src.
+//! The successors of src are not copied.
+//! \brief \ref requirement
+TEST_CASE("continue_node copy constructor"){
+    using namespace oneapi::tbb::flow;
+    graph g;
+
+    conformance::CountingObject<int> fun2;
+
+    input_node<int> node1(g, fun2);
+    conformance::test_push_receiver<int> node2(g);
+    conformance::test_push_receiver<int> node3(g);
+
+    oneapi::tbb::flow::make_edge(node1, node2);
+
+    input_node<int> node_copy(node1);
+
+    conformance::test_body_copying(node_copy, fun2);
+
+    oneapi::tbb::flow::make_edge(node_copy, node3);
+
+    node_copy.activate();
+    g.wait_for_all();
+
+    CHECK_MESSAGE((conformance::get_values(node2).size() == 0 && conformance::get_values(node3).size() > 0), "Copied node doesn`t copy successor, but copy number of predecessors");
+
+    node1.activate();
+    g.wait_for_all();
+
+    CHECK_MESSAGE((conformance::get_values(node2).size() > 0 && conformance::get_values(node3).size() == 0), "Copied node doesn`t copy successor, but copy number of predecessors");
 }
 
 //! Test inheritance relations
@@ -183,19 +130,31 @@ TEST_CASE("input_node superclasses"){
 //! Test input_node forwarding
 //! \brief \ref requirement
 TEST_CASE("input_node forwarding"){
-    test_forwarding();
+    conformance::test_forwarding<oneapi::tbb::flow::input_node<int>>(5);
 }
 
 //! Test input_node buffering
 //! \brief \ref requirement
 TEST_CASE("input_node buffering"){
-    test_buffering();
+    conformance::test_buffering<oneapi::tbb::flow::input_node<int>>();
 }
 
 //! Test calling input_node body
 //! \brief \ref interface \ref requirement
 TEST_CASE("input_node body") {
-    test_input_body();
+    oneapi::tbb::flow::graph g;
+    conformance::counting_functor<int> fun(10);
+
+    oneapi::tbb::flow::input_node<int> node1(g, fun);
+    conformance::test_push_receiver<int> node2(g);
+
+    oneapi::tbb::flow::make_edge(node1, node2);
+
+    node1.activate();
+    g.wait_for_all();
+
+    CHECK_MESSAGE((conformance::get_values(node2).size() == 10), "Descendant of the node needs to be receive N messages");
+    CHECK_MESSAGE((fun.execute_count == 10 + 1), "Body of the node needs to be executed N + 1 times");
 }
 
 //! Test deduction guides
@@ -204,4 +163,75 @@ TEST_CASE("Deduction guides"){
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
     test_deduction_guides();
 #endif
+}
+
+//! Test that measured concurrency respects set limits
+//! \brief \ref requirement
+TEST_CASE("concurrency follows set limits"){
+    oneapi::tbb::global_control c(oneapi::tbb::global_control::max_allowed_parallelism,
+                                  oneapi::tbb::this_task_arena::max_concurrency());
+
+
+    utils::ConcurrencyTracker::Reset();
+    oneapi::tbb::flow::graph g;
+    conformance::barrier_body counter(1);
+    oneapi::tbb::flow::input_node<int> tested_node(g, counter);
+
+    conformance::test_push_receiver<int> sink(g);
+
+    make_edge(tested_node, sink);
+    tested_node.activate();
+
+    g.wait_for_all();
+}
+
+//! Test node Output class meet the CopyConstructible requirements.
+//! \brief \ref interface \ref requirement
+TEST_CASE("Test input_node Output class") {
+    conformance::test_output_class<oneapi::tbb::flow::input_node<conformance::CountingObject<int>>>();
+}
+
+struct input_node_counter{
+    static int count;
+    int N;
+    input_node_counter(int n) : N(n){};
+    
+    int operator()( oneapi::tbb::flow_control & fc ) {
+       ++count;
+       if(count > N){
+           fc.stop();
+           return N;
+       }
+       return N;
+    }
+};
+
+struct function_node_counter{
+    static int count;
+
+    int operator()( int ) {
+        ++count;
+        utils::doDummyWork(1000000);
+        CHECK_MESSAGE((input_node_counter::count <= function_node_counter::count + 1), "input_node `try_get()' call testing: a call to body is made only when the internal buffer is empty");
+        return 1;
+    }
+};
+
+int input_node_counter::count = 0;
+int function_node_counter::count = 0;
+
+//! Test input_node `try_get()' call testing: a call to body is made only when the internal buffer is empty.
+//! \brief \ref requirement
+TEST_CASE("input_node `try_get()' call testing: a call to body is made only when the internal buffer is empty.") {
+    oneapi::tbb::flow::graph g;
+    input_node_counter fun1(500);
+    function_node_counter fun2;
+
+    oneapi::tbb::flow::function_node <int, int, oneapi::tbb::flow::rejecting> fnode(g, oneapi::tbb::flow::serial, fun2);
+    oneapi::tbb::flow::input_node<int> tested_node(g, fun1);
+
+    make_edge(tested_node, fnode);
+    tested_node.activate();
+
+    g.wait_for_all();
 }
