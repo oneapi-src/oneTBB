@@ -464,9 +464,17 @@ namespace r1 {
         // TODO: May global_symbols_link find weak symbols?
         dynamic_link_handle library_handle = ( flags & DYNAMIC_LINK_GLOBAL ) ? global_symbols_link( library, descriptors, required ) : 0;
 
+#if defined(_MSC_VER) && _MSC_VER <= 1900
+#pragma warning (push)
+// MSVC 2015 warning: 'int': forcing value to bool 'true' or 'false'
+#pragma warning (disable: 4800)
+#endif
         if ( !library_handle && ( flags & DYNAMIC_LINK_LOAD ) )
-            library_handle = dynamic_load( library, descriptors, required, ( flags & DYNAMIC_LINK_LOCAL_BINDING ) );
+            library_handle = dynamic_load( library, descriptors, required, flags & DYNAMIC_LINK_LOCAL_BINDING );
 
+#if defined(_MSC_VER) && _MSC_VER <= 1900
+#pragma warning (pop)
+#endif
         if ( !library_handle && ( flags & DYNAMIC_LINK_WEAK ) )
             return weak_symbol_link( descriptors, required );
 
