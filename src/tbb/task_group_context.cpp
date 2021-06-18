@@ -53,9 +53,7 @@ void tbb_exception_ptr::throw_self() {
 
 void task_group_context_impl::destroy(d1::task_group_context& ctx) {
     __TBB_ASSERT(!is_poisoned(ctx.my_owner), nullptr);
-
-    __TBB_ASSERT(ctx_lifetime_state != d1::task_group_context::lifetime_state::locked, nullptr);
-
+    
     if (ctx.my_lifetime_state.load(std::memory_order_relaxed) == d1::task_group_context::lifetime_state::bound) {
         // The owner can be destroyed at any moment. Access the associate data with caution.
         thread_data* owner = ctx.my_owner.load(std::memory_order_relaxed);
