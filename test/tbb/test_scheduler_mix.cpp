@@ -339,11 +339,11 @@ public:
         return Guard(this);
     }
 
-    void shutdown_signal() {
+    void signalShutdown() {
         mContinueFlag.store(false, std::memory_order_seq_cst);
     }
 
-    void wait_leavers() {
+    void waitCompletion() {
         utils::SpinWaitUntilEq(mContinueFlag, false);
     }
 
@@ -432,8 +432,8 @@ public:
     }
 
     void shutdown() {
-        mLifetimeTracker.shutdown_signal();
-        mLifetimeTracker.wait_leavers();
+        mLifetimeTracker.signalShutdown();
+        mLifetimeTracker.waitCompletion();
         find_arena(0, [](ArenaPtrRWMutex& arena, std::size_t) {
             if (arena.get()) {
                 ScopedLock lock{ arena, true };
@@ -627,6 +627,7 @@ void global_actor() {
 
 //! //! \brief \ref stress
 TEST_CASE("Stress test with mixing functionality") {
+    // TODO add thread recreation
     tbb::task_scheduler_handle handle = tbb::task_scheduler_handle::get();
 
     const int numExtraThreads = 16;
