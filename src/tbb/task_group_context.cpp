@@ -54,17 +54,17 @@ void tbb_exception_ptr::throw_self() {
 void task_group_context_impl::destroy(d1::task_group_context& ctx) {
     __TBB_ASSERT(!is_poisoned(ctx.my_owner), nullptr);
 
-    auto ctx_lifetime_state = ctx.my_lifetime_state.load(std::memory_order_relaxed);
     __TBB_ASSERT(ctx_lifetime_state != d1::task_group_context::lifetime_state::locked, nullptr);
 
-    if (ctx_lifetime_state == d1::task_group_context::lifetime_state::bound) {
+    if (ctx.my_lifetime_state.load(std::memory_order_relaxed) == d1::task_group_context::lifetime_state::bound) {
+        // The owner can be destroyed at any moment. Access the associate data with caution.
         thread_data* owner = ctx.my_owner.load(std::memory_order_relaxed);
         thread_data::context_list_state& cls = owner->my_context_list_state;
-
         d1::mutex::scoped_lock lock(cls.m_mutex);
-        ctx.my_node.remove_relaxed();
-    }
+        if (ctx.my_lifetime_state.load(std::memory_order_relaxed) != d1::task_group_context::lifetime_state::detached)
+            ctx.my_node.remove_relaxed();
 
+    }
     d1::cpu_ctl_env* ctl = reinterpret_cast<d1::cpu_ctl_env*>(&ctx.my_cpu_ctl_env);
 #if _MSC_VER && _MSC_VER <= 1900 && !__INTEL_COMPILER
     suppress_unused_warning(ctl);
