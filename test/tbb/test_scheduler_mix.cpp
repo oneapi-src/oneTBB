@@ -57,11 +57,19 @@ class Random {
         }
     };
     static thread_local State* mState;
+    tbb::concurrent_vector<State*> mStateList;
 public:
+    ~Random() {
+        for (auto s : mStateList) {
+            delete s;
+        }
+    }
+
     int get() {
         auto& s = mState;
         if (!s) {
             s = new State;
+            mStateList.push_back(s);
         }
         return s->get();
     }
@@ -275,6 +283,12 @@ private:
         return *s;
     }
 public:
+    ~Statistics() {
+        for (auto s : mStatsList) {
+            delete s;
+        }
+    }
+
     void notify(ACTION a) {
         ++get().mCounters[a];
     }
