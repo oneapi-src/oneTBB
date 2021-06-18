@@ -80,8 +80,8 @@ public:
         poison_pointer(my_post_resume_arg);
 #endif /* __TBB_RESUMABLE_TASKS */
         poison_value(my_context_list_state.epoch);
-        poison_value(my_context_list_state.local_update);
-        poison_value(my_context_list_state.nonlocal_update);
+        // poison_value(my_context_list_state.local_update);
+        // poison_value(my_context_list_state.nonlocal_update);
     }
 
     void attach_arena(arena& a, std::size_t index);
