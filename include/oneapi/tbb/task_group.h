@@ -209,9 +209,8 @@ private:
 
     static_assert(sizeof(context_traits) == 1, "Traits shall fit into one byte.");
 
-    static constexpr std::uint8_t may_have_children = 1;
     //! The context internal state (currently only may_have_children).
-    std::atomic<std::uint8_t> my_state;
+    std::atomic<std::uint8_t> may_have_children;
 
     enum class lifetime_state : std::uint8_t {
         created,

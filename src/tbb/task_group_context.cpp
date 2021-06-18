@@ -58,76 +58,11 @@ void task_group_context_impl::destroy(d1::task_group_context& ctx) {
     __TBB_ASSERT(ctx_lifetime_state != d1::task_group_context::lifetime_state::locked, nullptr);
 
     if (ctx_lifetime_state == d1::task_group_context::lifetime_state::bound) {
-        // The owner can be destroyed at any moment. Access the associate data with caution.
         thread_data* owner = ctx.my_owner.load(std::memory_order_relaxed);
-        if (governor::is_thread_data_set(owner)) {
-            thread_data::context_list_state& cls = owner->my_context_list_state;
-            // We are the owner, so cls is valid.
-            // Local update of the context list
-            std::uintptr_t local_count_snapshot = cls.epoch.load(std::memory_order_acquire);
-            // The sequentially-consistent store to prevent load of nonlocal update flag
-            // from being hoisted before the store to local update flag.
-            cls.local_update = 1;
-            if (cls.nonlocal_update.load(std::memory_order_acquire)) {
-                spin_mutex::scoped_lock lock(cls.mutex);
-                ctx.my_node.remove_relaxed();
-                cls.local_update.store(0, std::memory_order_relaxed);
-            } else {
-                ctx.my_node.remove_relaxed();
-                // Release fence is necessary so that update of our neighbors in
-                // the context list was committed when possible concurrent destroyer
-                // proceeds after local update flag is reset by the following store.
-                cls.local_update.store(0, std::memory_order_release);
-                if (local_count_snapshot != the_context_state_propagation_epoch.load(std::memory_order_relaxed)) {
-                    // Another thread was propagating cancellation request when we removed
-                    // ourselves from the list. We must ensure that it is not accessing us
-                    // when this destructor finishes. We'll be able to acquire the lock
-                    // below only after the other thread finishes with us.
-                    spin_mutex::scoped_lock lock(cls.mutex);
-                } else {
-                    // TODO: simplify exception propagation mechanism
-                    std::atomic_thread_fence(std::memory_order_release);
-                }
-            }
-        } else {
-            d1::task_group_context::lifetime_state expected = d1::task_group_context::lifetime_state::bound;
-            if (
-#if defined(__INTEL_COMPILER) && __INTEL_COMPILER <= 1910
-                !((std::atomic<typename std::underlying_type<d1::task_group_context::lifetime_state>::type>&)ctx.my_lifetime_state).compare_exchange_strong(
-                    (typename std::underlying_type<d1::task_group_context::lifetime_state>::type&)expected,
-                    (typename std::underlying_type<d1::task_group_context::lifetime_state>::type)d1::task_group_context::lifetime_state::locked)
-#else
-                !ctx.my_lifetime_state.compare_exchange_strong(expected, d1::task_group_context::lifetime_state::locked)
-#endif
-                ) {
-                __TBB_ASSERT(expected == d1::task_group_context::lifetime_state::detached, nullptr);
-                // The "owner" local variable can be a dangling pointer here. Do not access it.
-                owner = nullptr;
-                spin_wait_until_eq(ctx.my_owner, nullptr);
-                // It is unsafe to remove the node because its neighbors might be already destroyed.
-                // TODO: reconsider the logic.
-                // ctx.my_node.remove_relaxed();
-            }
-            else {
-                __TBB_ASSERT(expected == d1::task_group_context::lifetime_state::bound, nullptr);
-                __TBB_ASSERT(ctx.my_owner.load(std::memory_order_relaxed) != nullptr, nullptr);
-                thread_data::context_list_state& cls = owner->my_context_list_state;
-                __TBB_ASSERT(is_alive(cls.nonlocal_update.load(std::memory_order_relaxed)), "The owner should be alive.");
+        thread_data::context_list_state& cls = owner->my_context_list_state;
 
-                ++cls.nonlocal_update;
-                ctx.my_lifetime_state.store(d1::task_group_context::lifetime_state::dying, std::memory_order_release);
-                spin_wait_until_eq(cls.local_update, 0u);
-                {
-                    spin_mutex::scoped_lock lock(cls.mutex);
-                    ctx.my_node.remove_relaxed();
-                }
-                --cls.nonlocal_update;
-            }
-        }
-    }
-
-    if (ctx_lifetime_state == d1::task_group_context::lifetime_state::detached) {
-        spin_wait_until_eq(ctx.my_owner, nullptr);
+        d1::mutex::scoped_lock lock(cls.m_mutex);
+        ctx.my_node.remove_relaxed();
     }
 
     d1::cpu_ctl_env* ctl = reinterpret_cast<d1::cpu_ctl_env*>(&ctx.my_cpu_ctl_env);
@@ -153,7 +88,7 @@ void task_group_context_impl::initialize(d1::task_group_context& ctx) {
 
     ctx.my_cpu_ctl_env = 0;
     ctx.my_cancellation_requested = 0;
-    ctx.my_state.store(0, std::memory_order_relaxed);
+    ctx.may_have_children.store(0, std::memory_order_relaxed);
     // Set the created state to bound at the first usage.
     ctx.my_lifetime_state.store(d1::task_group_context::lifetime_state::created, std::memory_order_relaxed);
     ctx.my_parent = nullptr;
@@ -176,31 +111,13 @@ void task_group_context_impl::register_with(d1::task_group_context& ctx, thread_
     thread_data::context_list_state& cls = td->my_context_list_state;
     // state propagation logic assumes new contexts are bound to head of the list
     ctx.my_node.prev.store(&cls.head, std::memory_order_relaxed);
-    // Notify threads that may be concurrently destroying contexts registered
-    // in this scheduler's list that local list update is underway.
-    // Prevent load of global propagation epoch counter from being hoisted before
-    // speculative stores above, as well as load of nonlocal update flag from
-    // being hoisted before the store to local update flag.
-    cls.local_update = 1;
-    // Finalize local context list update
-    if (cls.nonlocal_update.load(std::memory_order_acquire)) {
-        spin_mutex::scoped_lock lock(cls.mutex);
-        d1::context_list_node* head_next = cls.head.next.load(std::memory_order_relaxed);
-        head_next->prev.store(&ctx.my_node, std::memory_order_relaxed);
-        ctx.my_node.next.store(head_next, std::memory_order_relaxed);
-        cls.local_update.store(0, std::memory_order_relaxed);
-        cls.head.next.store(&ctx.my_node, std::memory_order_relaxed);
-    } else {
-        d1::context_list_node* head_next = cls.head.next.load(std::memory_order_relaxed);
-        head_next->prev.store(&ctx.my_node, std::memory_order_relaxed);
-        ctx.my_node.next.store(head_next, std::memory_order_relaxed);
-        cls.local_update.store(0, std::memory_order_release);
-        // Thread-local list of contexts allows concurrent traversal by another thread
-        // while propagating state change. To ensure visibility of ctx.my_node's members
-        // to the concurrently traversing thread, the list's head is updated by means
-        // of store-with-release.
-        cls.head.next.store(&ctx.my_node, std::memory_order_release);
-    }
+
+    d1::mutex::scoped_lock lock(cls.m_mutex);
+
+    d1::context_list_node* head_next = cls.head.next.load(std::memory_order_relaxed);
+    head_next->prev.store(&ctx.my_node, std::memory_order_relaxed);
+    ctx.my_node.next.store(head_next, std::memory_order_relaxed);
+    cls.head.next.store(&ctx.my_node, std::memory_order_relaxed);
 }
 
 void task_group_context_impl::bind_to_impl(d1::task_group_context& ctx, thread_data* td) {
@@ -216,8 +133,8 @@ void task_group_context_impl::bind_to_impl(d1::task_group_context& ctx, thread_d
         copy_fp_settings(ctx, *ctx.my_parent);
 
     // Condition below prevents unnecessary thrashing parent context's cache line
-    if (ctx.my_parent->my_state.load(std::memory_order_relaxed) != d1::task_group_context::may_have_children) {
-        ctx.my_parent->my_state.store(d1::task_group_context::may_have_children, std::memory_order_relaxed); // full fence is below
+    if (ctx.my_parent->may_have_children.load(std::memory_order_relaxed) != 1) {
+        ctx.my_parent->may_have_children.store(1, std::memory_order_relaxed); // full fence is below
     }
     if (ctx.my_parent->my_parent) {
         // Even if this context were made accessible for state change propagation
@@ -306,7 +223,7 @@ void task_group_context_impl::propagate_task_group_state(d1::task_group_context&
 
 template <typename T>
 void thread_data::propagate_task_group_state(std::atomic<T> d1::task_group_context::* mptr_state, d1::task_group_context& src, T new_state) {
-    spin_mutex::scoped_lock lock(my_context_list_state.mutex);
+    d1::mutex::scoped_lock lock(my_context_list_state.m_mutex);
     // Acquire fence is necessary to ensure that the subsequent node->my_next load
     // returned the correct value in case it was just inserted in another thread.
     // The fence also ensures visibility of the correct ctx.my_parent value.
@@ -324,7 +241,7 @@ void thread_data::propagate_task_group_state(std::atomic<T> d1::task_group_conte
 
 template <typename T>
 bool market::propagate_task_group_state(std::atomic<T> d1::task_group_context::* mptr_state, d1::task_group_context& src, T new_state) {
-    if (src.my_state.load(std::memory_order_relaxed) != d1::task_group_context::may_have_children)
+    if (src.may_have_children.load(std::memory_order_relaxed) != 1)
         return true;
     // The whole propagation algorithm is under the lock in order to ensure correctness
     // in case of concurrent state changes at the different levels of the context tree.
