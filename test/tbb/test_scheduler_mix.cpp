@@ -606,7 +606,7 @@ struct actor<parallel_algorithm> {
             tbb::parallel_for(0, sz, body, tbb::auto_partitioner{}); break;
         case aff_part:
         {
-            static thread_local tbb::affinity_partitioner aff;
+            tbb::affinity_partitioner aff;
             tbb::parallel_for(0, sz, body, aff); break;
         }
         case static_part:
