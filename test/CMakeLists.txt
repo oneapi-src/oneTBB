@@ -331,7 +331,7 @@ endfunction()
 # Copy libraries to test folder to make it visible during tests execution if external TBB is tested.
 # TODO: check and update for multi-config generators.
 if (TBB_FOUND)
-    list(APPEND _tbb_test_components tbb tbbmalloc tbbmalloc_proxy tbbbind tbbbind_2_0 tbbbind_2_4)
+    list(APPEND _tbb_test_components tbb tbbmalloc tbbmalloc_proxy tbbbind tbbbind_2_0 tbbbind_2_5)
     foreach(_component ${_tbb_test_components})
         if (TARGET TBB::${_component})
             get_property(${_component}_lib_file_location TARGET TBB::${_component} PROPERTY LOCATION)
