@@ -35,6 +35,7 @@
 #endif
 
 #define __HWLOC_HYBRID_CPUS_INTERFACES_PRESENT (HWLOC_API_VERSION >= 0x20400)
+#define __HWLOC_RESTRICT_TO_CPUBINDING_TOPOLOGY_FLAG_PRESENT (HWLOC_API_VERSION >= 0x20500)
 
 // Most of hwloc calls returns negative exit code on error.
 // This macro tracks error codes that are returned from the hwloc interfaces.
@@ -85,6 +86,16 @@ private:
         // Parse topology
         if ( hwloc_topology_init( &topology ) == 0 ) {
             initialization_state = topology_allocated;
+            #if __HWLOC_RESTRICT_TO_CPUBINDING_TOPOLOGY_FLAG_PRESENT
+            if ( groups_num == 1 &&
+                 hwloc_topology_set_flags(topology,
+                     HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM |
+                     HWLOC_TOPOLOGY_FLAG_RESTRICT_TO_CPUBINDING
+                 ) != 0
+            ) {
+                return;
+            }
+            #endif
             if ( hwloc_topology_load( topology ) == 0 ) {
                 initialization_state = topology_loaded;
             }
@@ -135,7 +146,7 @@ private:
             numa_indexes_list.resize(numa_nodes_count);
             hwloc_obj_t node_buffer;
             hwloc_bitmap_foreach_begin(i, process_node_affinity_mask) {
-                node_buffer = hwloc_get_obj_by_type(topology, HWLOC_OBJ_NUMANODE, i);
+                node_buffer = hwloc_get_numanode_obj_by_os_index(topology, i);
                 numa_indexes_list[counter] = static_cast<int>(node_buffer->logical_index);
 
                 if ( numa_indexes_list[counter] > max_numa_index ) {
@@ -150,7 +161,7 @@ private:
             numa_affinity_masks_list.resize(max_numa_index + 1);
             int index = 0;
             hwloc_bitmap_foreach_begin(i, process_node_affinity_mask) {
-                node_buffer = hwloc_get_obj_by_type(topology, HWLOC_OBJ_NUMANODE, i);
+                node_buffer = hwloc_get_numanode_obj_by_os_index(topology, i);
                 index = static_cast<int>(node_buffer->logical_index);
 
                 hwloc_cpuset_t& current_mask = numa_affinity_masks_list[index];

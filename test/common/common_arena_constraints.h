@@ -38,7 +38,24 @@
 
 #if (_WIN32 || _WIN64) && __TBB_HWLOC_VALID_ENVIRONMENT
 #include <windows.h>
-int get_processors_groups_count() { return GetActiveProcessorGroupCount(); }
+int get_processors_groups_count() {
+    SYSTEM_INFO si;
+    GetNativeSystemInfo(&si);
+    DWORD_PTR pam, sam, m = 1;
+    GetProcessAffinityMask( GetCurrentProcess(), &pam, &sam );
+    int nproc = 0;
+    for ( std::size_t i = 0; i < sizeof(DWORD_PTR) * CHAR_BIT; ++i, m <<= 1 ) {
+        if ( pam & m )
+            ++nproc;
+    }
+    // Setting up processor groups in case the process does not restrict affinity mask and more than one processor group is present
+    if ( nproc == (int)si.dwNumberOfProcessors  ) {
+        // The process does not have restricting affinity mask and multiple processor groups are possible
+        return (int)GetActiveProcessorGroupCount();
+    } else {
+        return 1;
+    }
+}
 #else
 int get_processors_groups_count() { return 1; }
 #endif
@@ -69,6 +86,7 @@ int get_processors_groups_count() { return 1; }
 #endif
 
 #define __HWLOC_HYBRID_CPUS_INTERFACES_PRESENT (HWLOC_API_VERSION >= 0x20400)
+#define __HWLOC_RESTRICT_TO_CPUBINDING_TOPOLOGY_FLAG_PRESENT (HWLOC_API_VERSION >= 0x20500)
 // At this moment the hybrid CPUs HWLOC interfaces returns unexpected results on some Windows machines
 // in the 32-bit arch mode.
 #define __HWLOC_HYBRID_CPUS_INTERFACES_VALID (!_WIN32 || _WIN64)
@@ -153,6 +171,15 @@ private:
 
     system_info() {
         hwloc_require_ex(hwloc_topology_init, &topology);
+#if __HWLOC_WINDOWS_AFFINITY_RESPECTING_INTERFACES_PRESENT
+        if ( get_processors_groups_count() == 1 ) {
+            REQUIRE(
+                hwloc_topology_set_flags(topology,
+                    HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM |
+                    HWLOC_TOPOLOGY_FLAG_RESTRICT_TO_CPUBINDING) == 0
+            );
+        }
+#endif
         hwloc_require_ex(hwloc_topology_load, topology);
 
         if ( get_processors_groups_count() > 1 ) {

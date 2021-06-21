@@ -362,7 +362,7 @@ static const unsigned LinkTableSize = sizeof(TbbBindLinkTable) / sizeof(dynamic_
 
 #define TBBBIND_NAME LIBRARY_PREFIX "tbbbind" DEBUG_SUFFIX LIBRARY_EXTENSION
 #define TBBBIND_2_0_NAME LIBRARY_PREFIX "tbbbind_2_0" DEBUG_SUFFIX LIBRARY_EXTENSION
-#define TBBBIND_2_4_NAME LIBRARY_PREFIX "tbbbind_2_4" DEBUG_SUFFIX LIBRARY_EXTENSION
+#define TBBBIND_2_5_NAME LIBRARY_PREFIX "tbbbind_2_5" DEBUG_SUFFIX LIBRARY_EXTENSION
 #endif /* _WIN32 || _WIN64 || __linux__ */
 
 // Representation of system hardware topology information on the TBB side.
@@ -389,7 +389,7 @@ const char* load_tbbbind_shared_object() {
     GetNativeSystemInfo(&si);
     if (si.dwNumberOfProcessors > 32) return nullptr;
 #endif /* _WIN32 && !_WIN64 */
-    for (const auto& tbbbind_version : {TBBBIND_2_4_NAME, TBBBIND_2_0_NAME, TBBBIND_NAME}) {
+    for (const auto& tbbbind_version : {TBBBIND_2_5_NAME, TBBBIND_2_0_NAME, TBBBIND_NAME}) {
         if (dynamic_link(tbbbind_version, TbbBindLinkTable, LinkTableSize, nullptr, DYNAMIC_LINK_LOCAL_BINDING)) {
             return tbbbind_version;
         }

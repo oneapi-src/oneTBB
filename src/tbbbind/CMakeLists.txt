@@ -99,7 +99,7 @@ if (NOT DEFINED HWLOC_TARGET_EXPLICITLY_DEFINED AND DEFINED HWLOC_LIBRARIES)
 else()
     tbbbind_build(tbbbind     HWLOC::hwloc_1_11)
     tbbbind_build(tbbbind_2_0 HWLOC::hwloc_2   )
-    tbbbind_build(tbbbind_2_4 HWLOC::hwloc_2_4 )
+    tbbbind_build(tbbbind_2_5 HWLOC::hwloc_2_5 )
 endif()
 
 

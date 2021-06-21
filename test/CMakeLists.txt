@@ -275,9 +275,9 @@ function(tbb_add_tbbbind_test)
         FAIL_REGULAR_EXPRESSION "Status:.*FAILURE"
     )
 
-    if (TARGET HWLOC::hwloc_2_4 AND NOT HWLOC_2_4_TESTS_STATUS_SHOWN)
-        message(STATUS "HWLOC 2.4 dependent tests were enabled.")
-        set(HWLOC_2_4_TESTS_STATUS_SHOWN TRUE PARENT_SCOPE)
+    if (TARGET HWLOC::hwloc_2_5 AND NOT HWLOC_2_5_TESTS_STATUS_SHOWN)
+        message(STATUS "HWLOC 2.5 dependent tests were enabled.")
+        set(HWLOC_2_5_TESTS_STATUS_SHOWN TRUE PARENT_SCOPE)
     endif()
 
     if (TARGET HWLOC::hwloc_2 AND NOT HWLOC_2_TESTS_STATUS_SHOWN)
@@ -291,25 +291,25 @@ function(tbb_add_tbbbind_test)
     endif()
 
     list(APPEND HWLOC_TEST_CASES
-        hwloc_2_4
+        hwloc_2_5
         hwloc_2
         hwloc_1_11
-        hwloc_2_4_hwloc_2
-        hwloc_2_4_hwloc_1_11
+        hwloc_2_5_hwloc_2
+        hwloc_2_5_hwloc_1_11
         hwloc_2_hwloc_1_11
-        hwloc_2_4_hwloc_2_hwloc_1_11
-        incompatible_hwlocs_1_11_vs_2_4
+        hwloc_2_5_hwloc_2_hwloc_1_11
+        incompatible_hwlocs_1_11_vs_2_5
         incompatible_hwlocs_1_11_vs_2
     )
 
-    list(APPEND HWLOC_TEST_CASE_0_VARS tbbbind_2_4 "hwloc_2_4")
+    list(APPEND HWLOC_TEST_CASE_0_VARS tbbbind_2_5 "hwloc_2_5")
     list(APPEND HWLOC_TEST_CASE_1_VARS tbbbind_2   "hwloc_2")
     list(APPEND HWLOC_TEST_CASE_2_VARS tbbbind     "hwloc_1_11")
-    list(APPEND HWLOC_TEST_CASE_3_VARS tbbbind_2_4 "hwloc_2_4,hwloc_2")
-    list(APPEND HWLOC_TEST_CASE_4_VARS tbbbind_2_4 "hwloc_2_4,hwloc_1_11")
+    list(APPEND HWLOC_TEST_CASE_3_VARS tbbbind_2_5 "hwloc_2_5,hwloc_2")
+    list(APPEND HWLOC_TEST_CASE_4_VARS tbbbind_2_5 "hwloc_2_5,hwloc_1_11")
     list(APPEND HWLOC_TEST_CASE_5_VARS tbbbind_2   "hwloc_2,hwloc_1_11")
-    list(APPEND HWLOC_TEST_CASE_6_VARS tbbbind_2_4 "hwloc_2_4,hwloc_2,hwloc_1_11")
-    list(APPEND HWLOC_TEST_CASE_7_VARS tbbbind_2_4 "hwloc_1_11,hwloc_2_4")
+    list(APPEND HWLOC_TEST_CASE_6_VARS tbbbind_2_5 "hwloc_2_5,hwloc_2,hwloc_1_11")
+    list(APPEND HWLOC_TEST_CASE_7_VARS tbbbind_2_4 "hwloc_1_11,hwloc_2_5")
     list(APPEND HWLOC_TEST_CASE_8_VARS tbbbind_2   "hwloc_1_11,hwloc_2")
 
     foreach(TEST_CASE ${HWLOC_TEST_CASES})
@@ -593,6 +593,6 @@ if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
     tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_new_handler DEPENDENCIES TBB::tbbmalloc_proxy)
 endif()
 
-unset(HWLOC_2_4_TESTS_STATUS_SHOWN)
+unset(HWLOC_2_5_TESTS_STATUS_SHOWN)
 unset(HWLOC_2_TESTS_STATUS_SHOWN)
 unset(HWLOC_1_11_TESTS_STATUS_SHOWN)
