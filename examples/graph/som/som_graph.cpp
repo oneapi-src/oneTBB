@@ -38,6 +38,12 @@
 //               for each part of map within radius of BMU W
 //                   update vector:  W(t+1) = W(t) + w(dist)*L*(V - W(t))
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif // NOMINMAX
+
+#include <algorithm>
+
 #define _MAIN_C_ 1
 #include "som.hpp"
 
