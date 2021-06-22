@@ -106,10 +106,6 @@ endif()
 ")
             set(TBB_LIB_NAME ${TBB_LIB_NAME}${TBB_BINARY_VERSION})
             set(_tbb_subdir vc14)
-            if (WINDOWS_STORE)
-                set(_tbb_subdir ${_tbb_subdir}_uwp)
-            endif()
-
 
             set(_tbb_subdir intel64/${_tbb_subdir})
             configure_file(${_tbb_gen_cfg_path}/../integration/pkg-config/tbb.pc.in ${config_install_dir}/tbb.pc @ONLY)
