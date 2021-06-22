@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-prefix=@CMAKE_INSTALL_PREFIX@
+prefix=${pcfiledir}/../../
 exec_prefix=${prefix}
-libdir=@_libdir_for_pc_file@
-includedir=@_includedir_for_pc_file@
+libdir=${prefix}/lib/@_tbb_subdir@
+includedir=${exec_prefix}/include
 
 Name: oneAPI Threading Building Blocks (oneTBB)
 Description: C++ library for parallel programming on multi-core processors.

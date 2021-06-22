@@ -131,27 +131,20 @@ if (WIN32)
             RENAME tbb_debug.lib
             COMPONENT devel
     )
-else()
-    set(TBB_LIB_NAME tbb)
-    string(TOLOWER ${CMAKE_BUILD_TYPE} BUILD_TYPE)
-    if (BUILD_TYPE STREQUAL "debug")
-        set(TBB_LIB_NAME ${TBB_LIB_NAME}${CMAKE_DEBUG_POSTFIX})
-    endif()
-    if (IS_ABSOLUTE "${CMAKE_INSTALL_LIBDIR}")
-        set(_libdir_for_pc_file "${CMAKE_INSTALL_LIBDIR}")
-    else()
-        set(_libdir_for_pc_file "\${prefix}/${CMAKE_INSTALL_LIBDIR}")
-    endif()
-
-    if (IS_ABSOLUTE "${CMAKE_INSTALL_INCLUDEDIR}")
-        set(_includedir_for_pc_file "${CMAKE_INSTALL_INCLUDEDIR}")
-    else()
-        set(_includedir_for_pc_file "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}")
-    endif()
-    configure_file(${CMAKE_SOURCE_DIR}/integration/pkg-config/tbb.pc.in ${CMAKE_CURRENT_BINARY_DIR}/${TBB_LIB_NAME}.pc @ONLY)
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${TBB_LIB_NAME}.pc
-            DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 endif()
+
+if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set(TBB_PC_NAME tbb)
+else()
+    set(TBB_PC_NAME tbb32)
+endif()
+
+get_target_property(TBB_LIB_NAME tbb OUTPUT_NAME)
+
+configure_file(${CMAKE_SOURCE_DIR}/integration/pkg-config/tbb.pc.in ${CMAKE_CURRENT_BINARY_DIR}/${TBB_PC_NAME}.pc @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${TBB_LIB_NAME}.pc
+        DESTINATION "tools/pkgconfig/"
+        COMPONENT devel)
 
 if (COMMAND tbb_gen_vars)
     tbb_gen_vars(tbb)

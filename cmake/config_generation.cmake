@@ -40,6 +40,8 @@ function(tbb_generate_config)
 
     set(TBB_VERSION ${tbb_gen_cfg_VERSION})
 
+    set(TBB_LIB_NAME tbb)
+
     set(TBB_COMPONENTS_BIN_VERSION "
 set(_tbb_bin_version ${tbb_gen_cfg_TBB_BINARY_VERSION})
 set(_tbbmalloc_bin_version ${tbb_gen_cfg_TBBMALLOC_BINARY_VERSION})
@@ -60,6 +62,11 @@ else ()
     set(_tbb_subdir ia32/gcc4.8)
 endif()
 ")
+            if (CMAKE_SIZEOF_VOID_P STREQUAL \"8\")
+                set(_tbb_subdir intel64/gcc4.8)
+            else ()
+                set(_tbb_subdir ia32/gcc4.8)
+            endif()
         endif()
     elseif (tbb_gen_cfg_SYSTEM_NAME STREQUAL "Darwin")
         set(TBB_LIB_PREFIX "lib")
@@ -95,6 +102,18 @@ else ()
     set(_tbb_subdir ia32/\${_tbb_subdir})
 endif()
 ")
+            set(_tbb_subdir vc14)
+            if (WINDOWS_STORE)
+                set(_tbb_subdir ${_tbb_subdir}_uwp)
+            endif()
+
+            if (CMAKE_SIZEOF_VOID_P STREQUAL \"8\")
+                set(_tbb_subdir intel64/${_tbb_subdir})
+            else ()
+                set(_tbb_subdir ia32/${_tbb_subdir})
+            endif()
+
+            set(TBB_LIB_NAME ${TBB_LIB_NAME}${TBB_BINARY_VERSION})
         endif()
 
         set(TBB_HANDLE_BIN_VERSION "
@@ -107,6 +126,13 @@ endif()
         message(FATAL_ERROR "Unsupported OS name: ${tbb_system_name}")
     endif()
 
+    if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+        set(TBB_PC_NAME tbb)
+    else()
+        set(TBB_PC_NAME tbb32)
+    endif()
+
     configure_file(${_tbb_gen_cfg_path}/templates/TBBConfig.cmake.in ${config_install_dir}/TBBConfig.cmake @ONLY)
     configure_file(${_tbb_gen_cfg_path}/templates/TBBConfigVersion.cmake.in ${config_install_dir}/TBBConfigVersion.cmake @ONLY)
+    configure_file(${_tbb_gen_cfg_path}/../integration/pkg-config/tbb.pc.in ${config_install_dir}/${TBB_PC_NAME}.pc @ONLY)
 endfunction()
