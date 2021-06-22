@@ -144,7 +144,7 @@ else()
 endif()
 
 configure_file(${CMAKE_SOURCE_DIR}/integration/pkg-config/tbb.pc.in ${CMAKE_CURRENT_BINARY_DIR}/${TBB_PC_NAME}.pc @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${TBB_LIB_NAME}.pc
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${TBB_PC_NAME}.pc
         DESTINATION "tools/pkgconfig/"
         COMPONENT devel)
 
