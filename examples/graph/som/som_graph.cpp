@@ -539,7 +539,7 @@ int main(int argc, char *argv[]) {
     std::vector<int> single_yval;
     single_yval.reserve(my_teaching.size());
 #endif
-    //TODO: Investigate not to require mandatory concurrency
+    //TODO: Investigate how to not require mandatory concurrency
     for (int p = std::max(threads.first, 2); p <= std::max(threads.last, 2); ++p) {
         // Restrict max concurrency level via task_arena interface
         oneapi::tbb::global_control limit(oneapi::tbb::global_control::max_allowed_parallelism, p);
