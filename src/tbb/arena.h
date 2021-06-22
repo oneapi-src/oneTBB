@@ -476,8 +476,12 @@ inline void arena::on_thread_leaving ( ) {
         // concurrently, can't guarantee last is_out_of_work() return true.
     }
 #endif
-    if ( (my_references -= ref_param ) == 0 )
+
+    // Release our reference to sync with arena destroy
+    unsigned remaining_ref = my_references.fetch_sub(ref_param, std::memory_order_release) - ref_param;
+    if (remaining_ref == 0) {
         m->try_destroy_arena( this, aba_epoch, priority_level );
+    }
 }
 
 template<arena::new_work_type work_type>
