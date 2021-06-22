@@ -113,6 +113,8 @@ target_link_libraries(tbb
 
 tbb_install_target(tbb)
 
+set(TBB_LIB_NAME tbb)
+
 if (WIN32)
     # Create a copy of target linker file (tbb<ver>[_debug].lib) with legacy name (tbb[_debug].lib)
     # to support previous user experience for linkage.
@@ -131,6 +133,8 @@ if (WIN32)
             RENAME tbb_debug.lib
             COMPONENT devel
     )
+
+    set(TBB_LIB_NAME ${TBB_LIB_NAME}${TBB_BINARY_VERSION})
 endif()
 
 if (CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -138,8 +142,6 @@ if (CMAKE_SIZEOF_VOID_P EQUAL 8)
 else()
     set(TBB_PC_NAME tbb32)
 endif()
-
-get_target_property(TBB_LIB_NAME tbb OUTPUT_NAME)
 
 configure_file(${CMAKE_SOURCE_DIR}/integration/pkg-config/tbb.pc.in ${CMAKE_CURRENT_BINARY_DIR}/${TBB_PC_NAME}.pc @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${TBB_LIB_NAME}.pc
