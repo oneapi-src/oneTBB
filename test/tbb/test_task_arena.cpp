@@ -1930,6 +1930,46 @@ TEST_CASE("this_task_arena::enqueue task_handle") {
     CHECK(run == true);
 }
 
+//! The test for task_handle returned by the enqueued functor
+//! \brief \ref requirement
+TEST_CASE("Task handle for scheduler bypass via task_arena::enqueue"){
+    tbb::task_group tg;
+    std::atomic<bool> run {false};
+
+    tbb::task_handle h = tg.defer([&]{
+        run = true;
+    });
+
+    tbb::task_arena arena;
+
+    arena.enqueue([&](){
+        return std::move(h);
+    });
+
+    tg.wait();
+
+    CHECK_MESSAGE(run == true, "task handle returned by user lambda (bypassed) should be run");
+}
+
+//! The test for task_handle returned by the enqueued functor
+//! \brief \ref requirement
+TEST_CASE("Task handle for scheduler bypass via this_task_arena::enqueue"){
+    tbb::task_group tg;
+    std::atomic<bool> run {false};
+
+    tbb::task_handle h = tg.defer([&]{
+        run = true;
+    });
+
+    tbb::this_task_arena::enqueue([&](){
+        return std::move(h);
+    });
+
+    tg.wait();
+
+    CHECK_MESSAGE(run == true, "task handle returned by user lambda (bypassed) should be run");
+}
+
 //! Basic test for this_task_arena::enqueue with functor
 //! \brief \ref interface \ref requirement
 TEST_CASE("this_task_arena::enqueue function") {
