@@ -1189,8 +1189,8 @@ TEST_CASE("Task handle comparison/empty checks"){
 
     h = tg.defer([]{});
 
-    CHECK_MESSAGE(h != nullptr, "delayed task returned by task_group::delayed should not be empty");
-    CHECK_MESSAGE(nullptr != h, "delayed task returned by task_group::delayed should not be empty");
+    CHECK_MESSAGE(h != nullptr, "deferred task returned by task_group::defer() should not be empty");
+    CHECK_MESSAGE(nullptr != h, "deferred task returned by task_group::defer() should not be empty");
 
 }
 
