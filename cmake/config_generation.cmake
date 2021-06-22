@@ -105,12 +105,11 @@ else ()
 endif()
 ")
             set(TBB_LIB_NAME ${TBB_LIB_NAME}${TBB_BINARY_VERSION})
-            set(_tbb_subdir vc14)
 
-            set(_tbb_subdir intel64/${_tbb_subdir})
+            set(_tbb_subdir intel64/vc14)
             configure_file(${_tbb_gen_cfg_path}/../integration/pkg-config/tbb.pc.in ${config_install_dir}/tbb.pc @ONLY)
 
-            set(_tbb_subdir ia32/${_tbb_subdir})
+            set(_tbb_subdir ia32/vc14)
             configure_file(${_tbb_gen_cfg_path}/../integration/pkg-config/tbb.pc.in ${config_install_dir}/tbb32.pc @ONLY)
         endif()
 
