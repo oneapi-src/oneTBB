@@ -43,7 +43,7 @@ namespace d2 {
 template <typename Mutex>
 concept ch_map_rw_scoped_lockable = rw_scoped_lockable<Mutex> &&
 	requires(const typename Mutex::scoped_lock& sl) {
-		{ sl.is_writer() }->std::convertible_to<bool>;
+		{ sl.is_writer() } -> std::convertible_to<bool>;
 };
 #endif
 
