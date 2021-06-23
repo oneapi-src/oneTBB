@@ -273,7 +273,8 @@ public:
     static const char* const mStatNames[numActions];
 private:
     struct StatType {
-        std::array<std::uint64_t, numActions> mCounters{};
+        StatType() : mCounters() {}
+        std::array<std::uint64_t, numActions> mCounters;
     };
 
     tbb::concurrent_vector<StatType*> mStatsList;
@@ -643,7 +644,7 @@ void global_actor() {
     }
 }
 
-
+#if TBB_USE_EXCEPTIONS
 //! //! \brief \ref stress
 TEST_CASE("Stress test with mixing functionality") {
     // TODO add thread recreation
@@ -661,3 +662,4 @@ TEST_CASE("Stress test with mixing functionality") {
 
     gStats.report();
 }
+#endif
