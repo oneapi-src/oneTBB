@@ -204,12 +204,12 @@ function(tbb_configure_hwloc_dependent_test)
         return()
     endif()
 
-    list(GET _hwloc_test_HWLOC_REQUIRED_VERSION_LIST 0 HWLOC_MAXIMAL_VERSION)
+    list(GET _hwloc_test_HWLOC_REQUIRED_VERSION_LIST 0 TEST_HWLOC_VERSION)
     tbb_add_test(
         SUBDIR ${_hwloc_test_SUBDIR}
         NAME ${_hwloc_test_NAME}
         SUFFIX ${_hwloc_test_SUFFIX}
-        DEPENDENCIES TBB::tbb HWLOC::${HWLOC_MAXIMAL_VERSION}
+        DEPENDENCIES TBB::tbb HWLOC::${TEST_HWLOC_VERSION}
     )
 
     _tbb_get_hwloc_runtime_vars(
@@ -298,6 +298,8 @@ function(tbb_add_tbbbind_test)
         hwloc_2_4_hwloc_1_11
         hwloc_2_hwloc_1_11
         hwloc_2_4_hwloc_2_hwloc_1_11
+        incompatible_hwlocs_1_11_vs_2_4
+        incompatible_hwlocs_1_11_vs_2
     )
 
     list(APPEND HWLOC_TEST_CASE_0_VARS tbbbind_2_4 "hwloc_2_4")
@@ -307,6 +309,8 @@ function(tbb_add_tbbbind_test)
     list(APPEND HWLOC_TEST_CASE_4_VARS tbbbind_2_4 "hwloc_2_4,hwloc_1_11")
     list(APPEND HWLOC_TEST_CASE_5_VARS tbbbind_2   "hwloc_2,hwloc_1_11")
     list(APPEND HWLOC_TEST_CASE_6_VARS tbbbind_2_4 "hwloc_2_4,hwloc_2,hwloc_1_11")
+    list(APPEND HWLOC_TEST_CASE_7_VARS tbbbind_2_4 "hwloc_1_11,hwloc_2_4")
+    list(APPEND HWLOC_TEST_CASE_8_VARS tbbbind_2   "hwloc_1_11,hwloc_2")
 
     foreach(TEST_CASE ${HWLOC_TEST_CASES})
         list(FIND HWLOC_TEST_CASES ${TEST_CASE} TEST_CASE_INDEX)
