@@ -57,19 +57,18 @@ public:
         , my_random{ this }
         , my_last_observer{ nullptr }
         , my_small_object_pool{new (cache_aligned_allocate(sizeof(small_object_pool_impl))) small_object_pool_impl{}}
-        , my_context_list_state{}
+        , my_context_list_control(new d1::context_list_control{})
 #if __TBB_RESUMABLE_TASKS
         , my_post_resume_action{ post_resume_action::none }
         , my_post_resume_arg{nullptr}
 #endif /* __TBB_RESUMABLE_TASKS */
     {
-        ITT_SYNC_CREATE(&my_context_list_state.m_mutex, SyncType_Scheduler, SyncObj_ContextsList);
-        my_context_list_state.head.next.store(&my_context_list_state.head, std::memory_order_relaxed);
-        my_context_list_state.head.prev.store(&my_context_list_state.head, std::memory_order_relaxed);
+        ITT_SYNC_CREATE(&my_context_list_control->m_mutex, SyncType_Scheduler, SyncObj_ContextsList);
+        my_context_list_control->m_references++;
     }
 
     ~thread_data() {
-        context_list_cleanup();
+        context_list_cleanup();        
         my_small_object_pool->destroy();
         poison_pointer(my_task_dispatcher);
         poison_pointer(my_arena);
@@ -79,7 +78,6 @@ public:
 #if __TBB_RESUMABLE_TASKS
         poison_pointer(my_post_resume_arg);
 #endif /* __TBB_RESUMABLE_TASKS */
-        poison_value(my_context_list_state.epoch);
         // poison_value(my_context_list_state.local_update);
         // poison_value(my_context_list_state.nonlocal_update);
     }
@@ -119,34 +117,7 @@ public:
     //! Pool of small object for fast task allocation
     small_object_pool_impl* my_small_object_pool;
 
-    struct context_list_state {
-        //! Head of the thread specific list of task group contexts.
-        d1::context_list_node head{};
-
-        //! m_ protecting access to the list of task group contexts.
-        // TODO: check whether it can be deadly preempted and replace by spinning/sleeping mutex
-        d1::mutex  m_mutex{};
-
-        //! Last state propagation epoch known to this thread
-        /** Together with the_context_state_propagation_epoch constitute synchronization protocol
-        that keeps hot path of task group context construction destruction mostly
-        lock-free.
-        When local epoch equals the global one, the state of task group contexts
-        registered with this thread is consistent with that of the task group trees
-        they belong to. **/
-        std::atomic<std::uintptr_t> epoch{};
-
-        //! Flag indicating that a context is being destructed by its owner thread
-        /** Together with my_nonlocal_ctx_list_update constitute synchronization protocol
-        that keeps hot path of context destruction (by the owner thread) mostly
-        lock-free. **/
-        // std::atomic<std::uintptr_t> local_update{};
-
-        // //! Flag indicating that a context is being destructed by non-owner thread.
-        // /** See also my_local_update. **/
-        // std::atomic<std::uintptr_t> nonlocal_update{};
-    } my_context_list_state;
-
+    d1::context_list_control* my_context_list_control;
 #if __TBB_RESUMABLE_TASKS
     //! The list of possible post resume actions.
     enum class post_resume_action {
@@ -219,20 +190,26 @@ inline bool thread_data::is_attached_to(arena* a) { return my_arena == a; }
 inline void thread_data::context_list_cleanup() {
     // Detach contexts remaining in the local list.
     // {
-    d1::mutex::scoped_lock lock(my_context_list_state.m_mutex);
-    d1::context_list_node* node = my_context_list_state.head.next.load(std::memory_order_relaxed);
-    while (node != &my_context_list_state.head) {
-        using state_t = d1::task_group_context::lifetime_state;
-
-        d1::task_group_context& ctx = __TBB_get_object_ref(d1::task_group_context, my_node, node);
-        std::atomic<state_t>& state = ctx.my_lifetime_state;
-
-        node = node->next.load(std::memory_order_relaxed);
-
-        __TBB_ASSERT(ctx.my_owner == this, "The context should belong to the current thread.");
-        state.store(state_t::detached);
-        ctx.my_owner.store(nullptr, std::memory_order_release);
+    spin_mutex::scoped_lock lock(my_context_list_control->m_mutex);
+    my_context_list_control->m_references--;
+    if (my_context_list_control->m_references == 0) {
+        lock.release();
+        delete my_context_list_control;
+        poison_pointer(my_context_list_control);
     }
+    // d1::context_list_node* node = my_context_list_state.head.next.load(std::memory_order_relaxed);
+    // while (node != &my_context_list_state.head) {
+    //     using state_t = d1::task_group_context::lifetime_state;
+
+    //     d1::task_group_context& ctx = __TBB_get_object_ref(d1::task_group_context, my_node, node);
+    //     std::atomic<state_t>& state = ctx.my_lifetime_state;
+
+    //     node = node->next.load(std::memory_order_relaxed);
+
+    //     __TBB_ASSERT(ctx.my_owner == this, "The context should belong to the current thread.");
+    //     state.store(state_t::detached);
+    //     ctx.my_owner.store(nullptr, std::memory_order_release);
+    // }
 }
 
 inline void thread_data::attach_task_dispatcher(task_dispatcher& task_disp) {

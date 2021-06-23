@@ -30,6 +30,7 @@
 #include "detail/_task_handle.h"
 #endif
 
+#include "spin_mutex.h"
 #include "profiling.h"
 
 #include <type_traits>
@@ -151,6 +152,33 @@ struct context_list_node {
     }
 };
 
+struct context_list_control {
+    std::size_t m_references{0};
+
+    struct context_list {
+        //! Head of the thread specific list of task group contexts.
+        context_list_node head{};
+
+        //! Last state propagation epoch known to this thread
+        /** Together with the_context_state_propagation_epoch constitute synchronization protocol
+        that keeps hot path of task group context construction destruction mostly
+        lock-free.
+        When local epoch equals the global one, the state of task group contexts
+        registered with this thread is consistent with that of the task group trees
+        they belong to. **/
+        std::atomic<std::uintptr_t> epoch{};
+
+        context_list() {
+            head.next.store(&head, std::memory_order_relaxed);
+            head.prev.store(&head, std::memory_order_relaxed);
+        }
+    } m_context_list;
+
+    //! Mutex protecting access to the list of task group contexts.
+    // TODO: check whether it can be deadly preempted and replace by spinning/sleeping mutex
+    spin_mutex m_mutex{};
+};
+
 //! Used to form groups of tasks
 /** @ingroup task_scheduling
     The context services explicit cancellation requests from user code, and unhandled
@@ -233,7 +261,7 @@ private:
     };
 
     //! Thread data instance that registered this context in its list.
-    std::atomic<r1::thread_data*> my_owner;
+    std::atomic<context_list_control*> my_context_list_control;
 
     //! Used to form the thread specific list of contexts without additional memory allocation.
     /** A context is included into the list of the current thread when its binding to
@@ -250,18 +278,18 @@ private:
     string_resource_index my_name;
 
     char padding[max_nfs_size
-        - sizeof(std::uint64_t)                     // my_cpu_ctl_env
-        - sizeof(std::atomic<std::uint32_t>)        // my_cancellation_requested
-        - sizeof(std::uint8_t)                      // my_version
-        - sizeof(context_traits)                    // my_traits
-        - sizeof(std::atomic<std::uint8_t>)         // my_state
-        - sizeof(std::atomic<lifetime_state>)       // my_lifetime_state
-        - sizeof(task_group_context*)               // my_parent
-        - sizeof(std::atomic<r1::thread_data*>)     // my_owner
-        - sizeof(context_list_node)                 // my_node
-        - sizeof(r1::tbb_exception_ptr*)            // my_exception
-        - sizeof(void*)                             // my_itt_caller
-        - sizeof(string_resource_index)             // my_name
+        - sizeof(std::uint64_t)                         // my_cpu_ctl_env
+        - sizeof(std::atomic<std::uint32_t>)            // my_cancellation_requested
+        - sizeof(std::uint8_t)                          // my_version
+        - sizeof(context_traits)                        // my_traits
+        - sizeof(std::atomic<std::uint8_t>)             // my_state
+        - sizeof(std::atomic<lifetime_state>)           // my_lifetime_state
+        - sizeof(task_group_context*)                   // my_parent
+        - sizeof(std::atomic<context_list_control*>)    // my_context_list_control
+        - sizeof(context_list_node)                     // my_node
+        - sizeof(r1::tbb_exception_ptr*)                // my_exception
+        - sizeof(void*)                                 // my_itt_caller
+        - sizeof(string_resource_index)                 // my_name
     ];
 
     task_group_context(context_traits t, string_resource_index name)
