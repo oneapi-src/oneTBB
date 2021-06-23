@@ -40,7 +40,7 @@ function(tbb_generate_config)
 
     set(TBB_VERSION ${tbb_gen_cfg_VERSION})
 
-    set(TBB_LIB_NAME tbb)
+    set(_tbb_pc_lib_name tbb)
 
     set(TBB_COMPONENTS_BIN_VERSION "
 set(_tbb_bin_version ${tbb_gen_cfg_TBB_BINARY_VERSION})
@@ -63,10 +63,10 @@ else ()
 endif()
 ")
 
-            set(_tbb_subdir intel64/gcc4.8)
+            set(_tbb_pc_subdir lib/intel64/gcc4.8)
             configure_file(${_tbb_gen_cfg_path}/../integration/pkg-config/tbb.pc.in ${config_install_dir}/tbb.pc @ONLY)
 
-            set(_tbb_subdir ia32/gcc4.8)
+            set(_tbb_pc_subdir lib/ia32/gcc4.8)
             configure_file(${_tbb_gen_cfg_path}/../integration/pkg-config/tbb.pc.in ${config_install_dir}/tbb32.pc @ONLY)
         endif()
     elseif (tbb_gen_cfg_SYSTEM_NAME STREQUAL "Darwin")
@@ -74,6 +74,7 @@ endif()
         set(TBB_LIB_EXT "\${_\${_tbb_component}_bin_version}.dylib")
         set(TBB_IMPLIB_RELEASE "")
         set(TBB_IMPLIB_DEBUG "")
+        set(_tbb_pc_subdir lib)
         configure_file(${_tbb_gen_cfg_path}/../integration/pkg-config/tbb.pc.in ${config_install_dir}/tbb.pc @ONLY)
     elseif (tbb_gen_cfg_SYSTEM_NAME STREQUAL "Windows")
         set(TBB_LIB_PREFIX "")
@@ -104,12 +105,12 @@ else ()
     set(_tbb_subdir ia32/\${_tbb_subdir})
 endif()
 ")
-            set(TBB_LIB_NAME ${TBB_LIB_NAME}${TBB_BINARY_VERSION})
+            set(_tbb_pc_lib_name ${_tbb_pc_lib_name}${TBB_BINARY_VERSION})
 
-            set(_tbb_subdir intel64/vc14)
+            set(_tbb_pc_subdir lib/intel64/vc14)
             configure_file(${_tbb_gen_cfg_path}/../integration/pkg-config/tbb.pc.in ${config_install_dir}/tbb.pc @ONLY)
 
-            set(_tbb_subdir ia32/vc14)
+            set(_tbb_pc_subdir lib/ia32/vc14)
             configure_file(${_tbb_gen_cfg_path}/../integration/pkg-config/tbb.pc.in ${config_install_dir}/tbb32.pc @ONLY)
         endif()
 

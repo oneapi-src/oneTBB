@@ -13,12 +13,12 @@
 # limitations under the License.
 
 prefix=${pcfiledir}/../../
-libdir=${prefix}/lib/@_tbb_subdir@
+libdir=${prefix}/@_tbb_pc_subdir@
 includedir=${prefix}/include
 
 Name: oneAPI Threading Building Blocks (oneTBB)
 Description: C++ library for parallel programming on multi-core processors.
 URL: https://github.com/oneapi-src/oneTBB
 Version: @TBB_VERSION@
-Libs: -L${libdir} -l@TBB_LIB_NAME@
+Libs: -L${libdir} -l@_tbb_pc_lib_name@
 Cflags: -I${includedir}
