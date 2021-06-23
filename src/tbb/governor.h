@@ -81,7 +81,7 @@ public:
     }
     static std::size_t default_page_size () {
         // Caches the size of OS regular memory page
-        static unsigned page_size = DefaultSystemPageSize();
+        static std::size_t page_size = DefaultSystemPageSize();
         return page_size;
     }
     static void one_time_init();

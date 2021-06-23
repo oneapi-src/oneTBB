@@ -472,7 +472,7 @@ public:
                     if (!ts.lockedArenas[idx]) {
                         if (lock.tryAcquire(arena, false)) {
                             ts.lockedArenas[idx] = true;
-                            ts.arenaIdxStack[ts.level++] = idx;
+                            ts.arenaIdxStack[ts.level++] = int(idx);
                             resIdx = idx;
                             return arena.get();
                         }
