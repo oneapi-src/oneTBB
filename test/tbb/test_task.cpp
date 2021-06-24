@@ -500,13 +500,13 @@ TEST_CASE("Bypass suspended by resume") {
     CHECK(bypass_task::my_current_task >= test_task_pool.size());
     REQUIRE_MESSAGE(test_tls == 1, "The wrong thread came out");
 }
-
+#if 0
 //! \brief \ref error_guessing
 TEST_CASE("Critical tasks + resume") {
     std::uint32_t task_number = 500 * static_cast<std::uint32_t>(utils::get_platform_max_threads());
 
     tbb::task_group_context test_context;
-    tbb::detail::d1::wait_context wait(task_number);
+    tbb::detail::d1::wait_context wait{ 0 };
 
     // The test expects at least one thread in test_arena
     int num_threads_in_test_arena = std::max(2, int(utils::get_platform_max_threads()));
@@ -515,15 +515,16 @@ TEST_CASE("Critical tasks + resume") {
 
     test_arena.initialize();
 
-    std::atomic<bool> resume_flag{};
+    std::atomic<bool> resume_flag{}, resumed{};
     tbb::task::suspend_point test_suspend_tag;
 
-    auto task_body = [&resume_flag, &test_suspend_tag] {
+    auto task_body = [&resume_flag, &resumed, &test_suspend_tag] {
         // Make some work
         utils::doDummyWork(1000);
 
         if (resume_flag.exchange(false)) {
             tbb::task::resume(test_suspend_tag);
+            resumed = true;
         }
     };
 
@@ -534,6 +535,7 @@ TEST_CASE("Critical tasks + resume") {
         test_tasks.emplace_back(task_body, wait);
     }
 
+    wait.reserve(task_number / 2);
     for (std::size_t i = 0; i < task_number / 2; ++i) {
         submit(test_tasks[i], test_arena, test_context, true);
     }
@@ -547,20 +549,27 @@ TEST_CASE("Critical tasks + resume") {
     using suspend_task_type = CountingTask<decltype(suspend_func)>;
     suspend_task_type suspend_task(suspend_func, wait);
 
+    wait.reserve(1);
     submit(suspend_task, test_arena, test_context, true);
 
-    test_arena.execute([&test_tasks, &test_arena, &test_context, task_number] {
-    tbb::this_task_arena::isolate([&test_tasks, &test_arena, &test_context, task_number] {
-        tbb::parallel_for(tbb::blocked_range<std::size_t>(task_number / 2, task_number - 1),
-            [&test_tasks, &test_arena, &test_context] (tbb::blocked_range<std::size_t>& range) {
-                for (std::size_t i = range.begin(); i != range.end(); ++i) {
-                    submit(test_tasks[i], test_arena, test_context, true);
-                }
-            });
+    test_arena.execute([&wait, &test_tasks, &test_arena, &test_context, &resumed, task_number] {
+        tbb::this_task_arena::isolate([&wait, &test_tasks, &test_arena, &test_context, &resumed, task_number] {
+            do {
+                wait.reserve(task_number / 2);
+                tbb::parallel_for(tbb::blocked_range<std::size_t>(task_number / 2, task_number),
+                    [&test_tasks, &test_arena, &test_context] (tbb::blocked_range<std::size_t>& range) {
+                        for (std::size_t i = range.begin(); i != range.end(); ++i) {
+                            submit(test_tasks[i], test_arena, test_context, true);
+                        }
+                    }
+                );
+            } while (!resumed);
         });
     });
 
-    tbb::detail::d1::wait(wait, test_context);
+    test_arena.execute([&wait, &test_context] {
+        tbb::detail::d1::wait(wait, test_context);
+    });
 }
 
 //! \brief \ref error_guessing
@@ -614,7 +623,7 @@ TEST_CASE("Stress testing") {
     REQUIRE_MESSAGE(task_type::execute_counter() == task_number * iter_counter, "Some task was not executed");
     REQUIRE_MESSAGE(task_type::cancel_counter() == 0, "Some task was canceled");
 }
-
+#endif
 //! \brief \ref error_guessing
 TEST_CASE("All workers sleep") {
     std::uint32_t thread_number = static_cast<std::uint32_t>(utils::get_platform_max_threads());

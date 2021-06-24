@@ -18,7 +18,7 @@
 #define _TBB_co_context_H
 
 #include "oneapi/tbb/detail/_config.h"
-#define __TBB_RESUMABLE_TASKS_USE_THREADS 1 && __TBB_USE_POSIX
+#define __TBB_RESUMABLE_TASKS_USE_THREADS 1 //&& __TBB_USE_POSIX
 
 #if __TBB_RESUMABLE_TASKS
 
@@ -111,8 +111,12 @@ public:
 
     ~co_context() {
         __TBB_ASSERT(1 << my_state & (1 << co_suspended | 1 << co_executing), NULL);
-        if (my_state == co_suspended)
+        if (my_state == co_suspended) {
+#if __TBB_RESUMABLE_TASKS_USE_THREADS
+            my_state = co_executing;
+#endif
             destroy_coroutine(my_coroutine);
+        }
         my_state = co_destroyed;
     }
 
@@ -170,18 +174,18 @@ inline void create_coroutine(coroutine_type& c, std::size_t stack_size, void* ar
                     data.second = nullptr;
                     c.my_condvar.notify_one();
 
-                    c.my_condvar.wait(lock, [&c] { return c.my_thread_data != nullptr; });
+                    c.my_condvar.wait(lock, [&c] { return c.my_is_active == true; });
                 }
-                if (c.my_thread_data) {
-                    governor::set_thread_data(*c.my_thread_data);
+                __TBB_ASSERT(c.my_thread_data != nullptr, nullptr);
+                governor::set_thread_data(*c.my_thread_data);
 
-                    std::uintptr_t addr = std::uintptr_t(arg);
-                    unsigned lo = unsigned(addr);
-                    unsigned hi = unsigned(std::uint64_t(addr) >> 32);
-                    __TBB_ASSERT(sizeof(addr) == 8 || hi == 0, nullptr);
+                std::uintptr_t addr = std::uintptr_t(arg);
+                unsigned lo = unsigned(addr);
+                unsigned hi = unsigned(std::uint64_t(addr) >> 32);
+                __TBB_ASSERT(sizeof(addr) == 8 || hi == 0, nullptr);
 
-                    co_local_wait_for_all(hi, lo);
-                }
+                co_local_wait_for_all(hi, lo);
+
                 return nullptr;
             },
             &data
