@@ -72,7 +72,6 @@ public:
     using reference = value_type&;
     using iterator_category = std::forward_iterator_tag;
 
-    solist_iterator() : my_node_ptr(nullptr) {}
     solist_iterator( const solist_iterator<Container, typename Container::value_type>& other )
         : my_node_ptr(other.my_node_ptr) {}
 

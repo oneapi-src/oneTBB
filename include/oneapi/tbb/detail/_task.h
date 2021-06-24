@@ -145,11 +145,6 @@ public:
     void release(std::uint32_t delta = 1) {
         add_reference(-std::int64_t(delta));
     }
-#if __TBB_EXTRA_DEBUG
-    unsigned reference_count() const {
-        return unsigned(m_ref_count.load(std::memory_order_acquire));
-    }
-#endif
 };
 
 struct execution_data {

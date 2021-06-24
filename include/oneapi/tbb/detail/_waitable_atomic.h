@@ -53,10 +53,6 @@ public:
         return my_atomic.load(order);
     }
 
-    void store(T desired, std::memory_order order) noexcept {
-        return my_atomic.store(desired, order);
-    }
-
     T exchange(T desired) noexcept {
         return my_atomic.exchange(desired);
     }
@@ -93,9 +89,9 @@ public:
         r1::notify_by_address_one(this);
     }
 
-    void notify_all_relaxed() {
-        r1::notify_by_address_all(this);
-    }
+    // TODO: consider adding following interfaces:
+    // store(desired, memory_order)
+    // notify_all_relaxed()
 
 private:
     std::atomic<T> my_atomic{};
