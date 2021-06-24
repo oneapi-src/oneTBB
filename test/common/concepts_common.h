@@ -643,7 +643,7 @@ template <typename I, typename K> using WrongReturnOperatorRoundBrackets = JoinN
 } // namespace join_node_function_object
 
 template <typename T>
-concept container_range = tbb::detail::range<T> &&
+concept container_range = tbb::detail::ranger<T> &&
                           std::input_iterator<typename T::iterator> &&
                           requires(T& range) {
                               typename T::value_type;

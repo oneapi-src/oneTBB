@@ -455,7 +455,7 @@ private:
             , typename M
 			 >
 		__TBB_requires(tbb::detail::hash_compare<HashCompare, Key> &&
-					   ch_map_rw_scoped_lockable<MutexType>)
+					   ch_map_rw_scoped_lockable<M>)
 #else
 			 >
 		__TBB_requires(tbb::detail::hash_compare<HashCompare, Key>)
