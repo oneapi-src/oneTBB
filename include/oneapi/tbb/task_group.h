@@ -153,7 +153,7 @@ struct context_list_node {
 };
 
 struct context_list_control {
-    std::size_t m_references{0};
+    std::size_t m_references{1};
 
     struct context_list {
         //! Head of the thread specific list of task group contexts.

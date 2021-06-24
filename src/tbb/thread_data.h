@@ -64,7 +64,6 @@ public:
 #endif /* __TBB_RESUMABLE_TASKS */
     {
         ITT_SYNC_CREATE(&my_context_list_control->m_mutex, SyncType_Scheduler, SyncObj_ContextsList);
-        my_context_list_control->m_references++;
     }
 
     ~thread_data() {
@@ -191,8 +190,7 @@ inline void thread_data::context_list_cleanup() {
     // Detach contexts remaining in the local list.
     // {
     spin_mutex::scoped_lock lock(my_context_list_control->m_mutex);
-    my_context_list_control->m_references--;
-    if (my_context_list_control->m_references == 0) {
+    if (--my_context_list_control->m_references == 0) {
         lock.release();
         delete my_context_list_control;
         poison_pointer(my_context_list_control);

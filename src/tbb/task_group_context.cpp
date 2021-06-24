@@ -61,8 +61,7 @@ void task_group_context_impl::destroy(d1::task_group_context& ctx) {
 
         ctx.my_node.remove_relaxed();
 
-        ctrl->m_references--;
-        if (ctrl->m_references == 0) {
+        if (--ctrl->m_references == 0) {
             lock.release();
             delete ctrl;
             poison_pointer(ctx.my_context_list_control);
