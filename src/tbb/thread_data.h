@@ -187,27 +187,12 @@ inline void thread_data::attach_arena(arena& a, std::size_t index) {
 inline bool thread_data::is_attached_to(arena* a) { return my_arena == a; }
 
 inline void thread_data::context_list_cleanup() {
-    // Detach contexts remaining in the local list.
-    // {
     spin_mutex::scoped_lock lock(my_context_list_control->m_mutex);
     if (--my_context_list_control->m_references == 0) {
         lock.release();
         delete my_context_list_control;
         poison_pointer(my_context_list_control);
     }
-    // d1::context_list_node* node = my_context_list_state.head.next.load(std::memory_order_relaxed);
-    // while (node != &my_context_list_state.head) {
-    //     using state_t = d1::task_group_context::lifetime_state;
-
-    //     d1::task_group_context& ctx = __TBB_get_object_ref(d1::task_group_context, my_node, node);
-    //     std::atomic<state_t>& state = ctx.my_lifetime_state;
-
-    //     node = node->next.load(std::memory_order_relaxed);
-
-    //     __TBB_ASSERT(ctx.my_owner == this, "The context should belong to the current thread.");
-    //     state.store(state_t::detached);
-    //     ctx.my_owner.store(nullptr, std::memory_order_release);
-    // }
 }
 
 inline void thread_data::attach_task_dispatcher(task_dispatcher& task_disp) {
