@@ -392,6 +392,70 @@ void test_pfor_index_constraints() {
 }
 #endif // __TBB_CPP20_CONCEPTS_PRESENT
 
+#if __TBB_CPP17_INVOKE_PRESENT
+namespace test_invoke {
+
+std::vector<std::size_t> global_vector;
+
+struct SmartBlockedRange : public tbb::blocked_range<std::size_t> {
+    using tbb::blocked_range<std::size_t>::blocked_range;
+    void compute() const {
+        for (std::size_t item = begin(); item != end(); ++item) {
+            ++global_vector[item];
+        }
+    }
+}; // struct SmartBlockedRange
+
+class SmartIndex {
+    int my_real_index;
+public:
+    SmartIndex(int value) : my_real_index(value) {}
+    SmartIndex(const SmartIndex&) = default;
+
+    SmartIndex& operator=(const SmartIndex&) = default;
+
+    bool operator<(const SmartIndex& other) const { return my_real_index < other.my_real_index; }
+    bool operator<=(int value) const { return my_real_index < value; }
+    std::size_t operator-(const SmartIndex& other) const { return my_real_index - other.my_real_index; }
+
+    SmartIndex operator+(std::size_t diff) const { return SmartIndex(my_real_index + diff); }
+
+    void compute() const {
+        ++global_vector[my_real_index];
+    }
+};
+
+void check_vector_and_reset() {
+    for (auto& item : global_vector) {
+        CHECK_MESSAGE(item == 1, "Incorrect parallel for behavior in invoke semantics test");
+        item = 0;
+    }
+}
+
+} // namespace test_invoke
+
+void test_invoke_semantics() {
+    using namespace test_invoke;
+    global_vector.resize(100);
+
+    SmartBlockedRange range(0UL, global_vector.size());
+
+    // Test range-style parallel_for
+    // test raw pointer to member function
+    tbb::parallel_for(range, &SmartBlockedRange::compute);
+    check_vector_and_reset();
+
+    // std::reference_wrapper, pointer(or iterator) and pointer to data member use cases
+    // are unapplicable for range-style parallel_for
+
+    // Test PPL_style parallel_for
+    // test raw pointer to member function
+    tbb::parallel_for(SmartIndex{0}, SmartIndex(global_vector.size()), &SmartIndex::compute);
+    check_vector_and_reset();
+}
+
+#endif // __TBB_CPP17_INVOKE_PRESENT
+
 #if TBB_USE_EXCEPTIONS && !__TBB_THROW_ACROSS_MODULE_BOUNDARY_BROKEN && TBB_REVAMP_TODO
 #include "tbb/global_control.h"
 //! Testing exceptions
@@ -458,6 +522,13 @@ TEST_CASE("parallel_for constraints") {
     test_pfor_index_constraints();
 }
 #endif // __TBB_CPP20_CONCEPTS_PRESENT
+
+#if __TBB_CPP17_INVOKE_PRESENT
+//! \brief \ref error_guessing
+TEST_CASE("parallel_for invoke semantics") {
+    test_invoke_semantics();
+}
+#endif // __TBB_CPP17_INVOKE_PRESENT
 
 #if _MSC_VER
 #pragma warning (pop)

@@ -20,6 +20,7 @@
 #include <type_traits>
 #include <cstdint>
 #include <atomic>
+#include <functional>
 
 #include "_config.h"
 #include "_assert.h"
@@ -342,6 +343,21 @@ concept adaptive_same_as =
     std::convertible_to<T, U>;
 #endif
 #endif // __TBB_CPP20_CONCEPTS_PRESENT
+
+template <typename F, typename... Args>
+auto invoke(F&& f, Args&&... args)
+#if __TBB_CPP17_INVOKE_PRESENT
+    -> std::invoke_result_t<F, Args...>
+#else
+    -> decltype(std::forward<F>(f)(std::forward<Args>(args)...))
+#endif
+{
+#if __TBB_CPP17_INVOKE_PRESENT
+    return std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
+#else
+    return std::forward<F>(f)(std::forward<Args>(args)...);
+#endif
+}
 
 } // namespace d0
 
