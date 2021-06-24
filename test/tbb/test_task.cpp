@@ -34,7 +34,6 @@
 
 //! \file test_task.cpp
 //! \brief Test for [internal] functionality
-
 struct EmptyBody {
     void operator()() const {}
 };
@@ -346,7 +345,6 @@ TEST_CASE("Actively adding tasks") {
 }
 
 #if __TBB_RESUMABLE_TASKS
-
 struct suspended_task : public tbb::detail::d1::task {
 
     suspended_task(tbb::task::suspend_point tag, tbb::detail::d1::wait_context& wait)
@@ -500,7 +498,7 @@ TEST_CASE("Bypass suspended by resume") {
     CHECK(bypass_task::my_current_task >= test_task_pool.size());
     REQUIRE_MESSAGE(test_tls == 1, "The wrong thread came out");
 }
-#if 0
+
 //! \brief \ref error_guessing
 TEST_CASE("Critical tasks + resume") {
     std::uint32_t task_number = 500 * static_cast<std::uint32_t>(utils::get_platform_max_threads());
@@ -623,7 +621,7 @@ TEST_CASE("Stress testing") {
     REQUIRE_MESSAGE(task_type::execute_counter() == task_number * iter_counter, "Some task was not executed");
     REQUIRE_MESSAGE(task_type::cancel_counter() == 0, "Some task was canceled");
 }
-#endif
+
 //! \brief \ref error_guessing
 TEST_CASE("All workers sleep") {
     std::uint32_t thread_number = static_cast<std::uint32_t>(utils::get_platform_max_threads());

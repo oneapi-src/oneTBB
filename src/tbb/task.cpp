@@ -175,7 +175,7 @@ void thread_data::do_post_resume_action() {
     case post_resume_action::cleanup:
     {
         task_dispatcher* to_cleanup = static_cast<task_dispatcher*>(my_post_resume_arg);
-        // Release coroutine's reference to my_arena.
+        // Release coroutine's reference to my_arena
         my_arena->on_thread_leaving<arena::ref_external>();
         // Cache the coroutine for possible later re-usage
         my_arena->my_co_cache.push(to_cleanup);
@@ -183,9 +183,14 @@ void thread_data::do_post_resume_action() {
     }
     case post_resume_action::notify:
     {
-        std::atomic<bool>& owner_recall_flag = *static_cast<std::atomic<bool>*>(my_post_resume_arg);
-        owner_recall_flag.store(true, std::memory_order_release);
-        // Do not access recall_flag because it can be destroyed after the notification.
+        suspend_point_type* sp = static_cast<suspend_point_type*>(my_post_resume_arg);
+        sp->m_is_owner_recalled.store(true, std::memory_order_release);
+        // Do not access sp because it can be destroyed after the store
+
+        auto is_our_suspend_point = [sp](market_context ctx) {
+            return  std::uintptr_t(sp) == ctx.my_uniq_addr;
+        };
+        my_arena->my_market->get_wait_list().notify(is_our_suspend_point);
         break;
     }
     default:
