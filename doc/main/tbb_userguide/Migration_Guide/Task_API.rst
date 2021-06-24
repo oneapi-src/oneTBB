@@ -29,10 +29,10 @@ implemented as:
         ChildTask1& child1 = *new(root.allocate_child()) ChildTask1{/*params*/};
         ChildTask2& child2 = *new(root.allocate_child()) ChildTask2{/*params*/};
 
+        root.set_ref_count(3);
+        
         tbb::task::spawn(child1);
         tbb::task::spawn(child2);
-
-        root.set_ref_count(3);
 
         root.wait_for_all();
     }
@@ -125,11 +125,14 @@ parallel pattern. The ``tbb::parallel_do`` algorithm logic may be implemented us
     int main() {
         std::vector<int> items = { 0, 1, 2, 3, 4, 5, 6, 7 };
         RootTask& root = *new(tbb::task::allocate_root()) RootTask{/*params*/};
+        
+        root.set_ref_count(items.size() + 1);
+        
         for (std::size_t i = 0; i < items.size(); ++i) {
             Task& task = *new(root.allocate_child()) Task(root, items[i]);
             tbb::task::spawn(task);
         }
-        root.set_ref_count(items.size() + 1);
+
         root.wait_for_all();
         return 0;
     }

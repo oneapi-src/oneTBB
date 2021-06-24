@@ -1,7 +1,7 @@
 .. _reference:
 
 |short_name| API Reference
-====================================================================
+==========================
 
 For oneTBB API Reference, refer to `oneAPI Specification <https://spec.oneapi.com/>`_. The current supported
 version of oneAPI Specification is 1.0.
@@ -49,3 +49,10 @@ The key properties of a preview feature are:
     concurrent_lru_cache_cls
     constraints_extensions
     info_namespace_extensions
+    task_group_extensions
+    task_arena_extensions 
+    this_task_arena_extensions
+    mutex_cls
+    rw_mutex_cls
+    heterogeneous_extensions_chmap
+    custom_mutex_chmap

@@ -46,7 +46,7 @@ Wavefront
    The solution is a parallel variant of topological sorting, using
    ``oneapi::tbb::parallel_for_each`` to process items. Associate an atomic
    counter with each item. Initialize each counter to the number of
-   predecessors. Invoke oneapi::tbb::parallel_for_each to process the items that
+   predecessors. Invoke ``oneapi::tbb::parallel_for_each`` to process the items that
    have no predessors (have counts of zero). After an item is processed,
    decrement the counters of its successors. If a successor's counter
    reaches zero, add that successor to the ``oneapi::tbb::parallel_for_each``

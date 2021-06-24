@@ -21,6 +21,7 @@
    ../tbb_userguide/The_Task_Scheduler
    ../tbb_userguide/design_patterns/Design_Patterns
    ../tbb_userguide/Migration_Guide
+   ../tbb_userguide/Constraints
    ../tbb_userguide/appendix_A
    ../tbb_userguide/appendix_B
    ../tbb_userguide/References

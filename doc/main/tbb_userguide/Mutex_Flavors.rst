@@ -34,7 +34,7 @@ summarized in the table below.
    performance. On long waits, an |full_name|
    mutex either *yields* or *blocks*. Here *yields* means to
    repeatedly poll whether progress can be made, and if not, temporarily
-   yield\ `[5] <#ftn5>`__ the processor. To *block* means to yield the
+   yield [#]_ the processor. To *block* means to yield the
    processor until the mutex permits progress. Use the yielding mutexes
    if waits are typically short and blocking mutexes if waits are
    typically long.
@@ -53,12 +53,21 @@ The following is a summary of mutex behaviors:
    instead of looking for a more efficient lock.
 
 
+-  ``mutex`` has behavior similar to the ``spin_mutex``. However,
+   the ``mutex`` *blocks* on long waits that makes it
+   resistant to high contention.
+
+
 -  ``queuing_mutex`` is scalable, fair, non-recursive, and spins in user
    space. Use it when scalability and fairness are important.
 
 
 -  ``spin_rw_mutex`` and ``queuing_rw_mutex`` are similar to
    ``spin_mutex`` and ``queuing_mutex``, but additionally support
+   *reader* locks.
+
+
+-  ``rw_mutex`` is similar to ``mutex``, but additionally support
    *reader* locks.
 
 
@@ -100,6 +109,12 @@ The following is a summary of mutex behaviors:
         -     no     
         -     yields     
         -     1 byte     
+      * -     \ ``mutex``     
+        -     ✓     
+        -     no     
+        -     no     
+        -     blocks     
+        -     1 byte     
       * -     \ ``speculative_spin_mutex``     
         -     HW dependent     
         -     no     
@@ -118,6 +133,12 @@ The following is a summary of mutex behaviors:
         -     no     
         -     yields     
         -     1 word     
+      * -     \ ``spin_rw_mutex``     
+        -     ✓     
+        -     no     
+        -     no     
+        -     blocks     
+        -     1 word     
       * -     \ ``speculative_spin_rw_mutex``     
         -     HW dependent     
         -     no     
@@ -130,7 +151,7 @@ The following is a summary of mutex behaviors:
         -     no     
         -     yields     
         -     1 word     
-      * -     \ ``null_mutex``\ `[6] <#ftn6>`__     
+      * -     \ ``null_mutex`` [#]_   
         -     moot     
         -     ✓     
         -     ✓     
@@ -146,10 +167,10 @@ The following is a summary of mutex behaviors:
 
 
 
-[5] The yielding is implemented via ``SwitchToThread()`` on Microsoft
-Windows\* operating systems and by ``sched_yield()`` on other systems.
+.. [#] The yielding is implemented via ``SwitchToThread()`` on Microsoft
+       Windows\* operating systems and by ``sched_yield()`` on other systems.
 
 
-[6] Null mutexes are considered fair by oneTBB because they cannot cause
-starvation. They lack any non-static data members.
+.. [#] Null mutexes are considered fair by oneTBB because they cannot cause
+       starvation. They lack any non-static data members.
 

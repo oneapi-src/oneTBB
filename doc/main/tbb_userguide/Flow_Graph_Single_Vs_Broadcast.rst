@@ -105,8 +105,8 @@ the ``function_nodes``.
 
 Only nodes designed to buffer (hold and forward received messages) have
 a "single-push" policy; all other nodes have a "broadcast-push" policy.
+
 Please see the :ref:`broadcast_or_send` section of
-:ref:`Flow_Graph_Tips`, and **Forwarding, Buffering and Reception
-Policy** in the Flow Graph section of the Reference for more
+:ref:`Flow_Graph_Tips`, and :ref:`Flow_Graph_Buffering_in_Nodes` for more
 information.
 

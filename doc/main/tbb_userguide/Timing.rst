@@ -43,13 +43,10 @@ some platforms, this means that the resolution of tick_count can not be
 guaranteed to be consistent across platforms.
 
 
-.. container:: Note
-
-
-   .. rubric:: Note
-      :class: NoteTipHead
+.. note::
 
    On Linux\* OS, you may need to add -lrt to the linker command when
    you use oneapi::tbb::tick_count class. For more information, see
-   http://fedoraproject.org/wiki/Features/ChangeInImplicitDSOLinking.
+   `http://fedoraproject.org/wiki/Features/ChangeInImplicitDSOLinking 
+   <http://fedoraproject.org/wiki/Features/ChangeInImplicitDSOLinking>`_.
 
