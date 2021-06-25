@@ -794,3 +794,16 @@ TEST_CASE("Test with priority inversion") {
     }
     obsr.observe(false);
 }
+
+// Explicit test for raii_guard move ctor because of copy elision optimization
+//! \brief \ref interface
+TEST_CASE("raii_guard move ctor") {
+    int count{0};
+    auto func = [&count] {
+        count++;
+        CHECK(count == 1);
+    };
+
+    tbb::detail::d0::raii_guard<decltype(func)> guard1(func);
+    tbb::detail::d0::raii_guard<decltype(func)> guard2(std::move(guard1));
+}
