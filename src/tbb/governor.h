@@ -138,7 +138,9 @@ public:
 
     static bool speculation_enabled() { return cpu_features.rtm_enabled; }
 
+#if __TBB_WAITPKG_INTRINSICS_PRESENT
     static bool wait_package_enabled() { return cpu_features.waitpkg_enabled; }
+#endif
 
     static bool rethrow_exception_broken() { return is_rethrow_broken; }
 

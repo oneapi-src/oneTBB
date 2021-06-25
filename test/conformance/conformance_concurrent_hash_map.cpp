@@ -422,6 +422,14 @@ struct test_insert {
     }
 };
 
+struct alloc_test {
+ template<typename container_type, typename element_type>
+    static void test( std::initializer_list<element_type> il, container_type const& expected ) {
+        container_type vd(il, tbb::tbb_allocator<std::pair<element_type, element_type>>{});
+        REQUIRE_MESSAGE( vd == expected, "inserting with an initializer list failed" );
+    }
+};
+
 void TestInitList(){
     using namespace initializer_list_support_tests;
     INFO("testing initializer_list methods \n");
@@ -431,6 +439,7 @@ void TestInitList(){
 
     test_initializer_list_support_without_assign<ch_map_type, test_insert>( pairs_il );
     test_initializer_list_support_without_assign<ch_map_type, test_insert>( {} );
+    test_initializer_list_support_without_assign<ch_map_type, alloc_test>(pairs_il);
 }
 
 template <typename base_alloc_type>

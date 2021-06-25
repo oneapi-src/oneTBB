@@ -26,13 +26,15 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
+#define __TBB_EXTRA_DEBUG 1 // enables additional checks
+#define TBB_PREVIEW_MEMORY_POOL 1
+#define HARNESS_TBBMALLOC_THREAD_SHUTDOWN 1
+
 #include "common/test.h"
 #include "common/utils.h"
 #include "common/utils_assert.h"
 #include "common/custom_allocators.h"
 
-#define __TBB_EXTRA_DEBUG 1 // enables additional checks
-#define TBB_PREVIEW_MEMORY_POOL 1
 
 #include "tbb/memory_pool.h"
 #include "tbb/scalable_allocator.h"
@@ -41,7 +43,6 @@
 #include "common/allocator_test_common.h"
 #include "common/allocator_stl_test_common.h"
 
-#define HARNESS_TBBMALLOC_THREAD_SHUTDOWN 1
 // #include "harness_allocator.h"
 
 #if _MSC_VER
