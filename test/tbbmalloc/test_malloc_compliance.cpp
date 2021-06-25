@@ -1043,8 +1043,9 @@ TEST_CASE("MAIN TEST") {
         perProcessLimits = false;
 #endif
     //-------------------------------------
-#if __APPLE__
+#if __APPLE__ || __TBB_TEST_USE_ADDRESS_SANITIZER
     /* Skip due to lack of memory limit enforcing under macOS. */
+    //Skip this test under ASAN , as OOM condition breaks the ASAN as well
 #else
     limitMem(200);
     ReallocParam();
