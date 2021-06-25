@@ -262,6 +262,18 @@ TEST_CASE("Zero space pool") {
     TestZeroSpaceMemoryPool();
 }
 
+#if TBB_ALLOCATOR_TRAITS_BROKEN
+//! Testing allocator traits is broken
+//! \brief \ref error_guessing
+TEST_CASE("Broken allocator concept") {
+    TestAllocator<tbb::scalable_allocator<void>>(Broken);
+    
+    tbb::memory_pool<tbb::scalable_allocator<int> > mpool; 
+    TestAllocator<tbb::memory_pool_allocator<void>>(Broken, tbb::memory_pool_allocator<void>(mpool));
+}
+#endif
+
+
 //! Testing allocators compatibility with STL containers
 //! \brief \ref interface
 TEST_CASE("Integration with STL containers") {
