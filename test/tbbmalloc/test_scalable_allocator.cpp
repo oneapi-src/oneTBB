@@ -231,12 +231,18 @@ TEST_CASE("Allocator concept") {
 
         TestAllocator(Concept, nestedAllocator);
     }
+    tbb::memory_pool<tbb::scalable_allocator<int>> mpool;
+
+    tbb::memory_pool_allocator<int> mpalloc(mpool);
+
+    TestAllocator<tbb::memory_pool_allocator<int>>(Concept, mpalloc);
+    TestAllocator<tbb::memory_pool_allocator<void>>(Concept, mpalloc);
 
     // operator==
     TestAllocator<tbb::scalable_allocator<void>>(Comparison);
-
-    tbb::memory_pool<tbb::scalable_allocator<int>> mpool;
     TestAllocator<tbb::memory_pool_allocator<void>>(Comparison, tbb::memory_pool_allocator<void>(mpool));
+    TestAllocator<tbb::memory_pool_allocator<int>>(Comparison, mpalloc);
+    TestAllocator<tbb::memory_pool_allocator<void>>(Comparison, mpalloc);
 }
 
 #if TBB_USE_EXCEPTIONS
