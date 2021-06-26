@@ -234,6 +234,9 @@ TEST_CASE("Allocator concept") {
 
     // operator==
     TestAllocator<tbb::scalable_allocator<void>>(Comparison);
+
+    tbb::memory_pool<tbb::scalable_allocator<int>> mpool;
+    TestAllocator<tbb::memory_pool_allocator<void>>(Comparison, tbb::memory_pool_allocator<void>(mpool));
 }
 
 #if TBB_USE_EXCEPTIONS
@@ -268,7 +271,7 @@ TEST_CASE("Zero space pool") {
 TEST_CASE("Broken allocator concept") {
     TestAllocator<tbb::scalable_allocator<void>>(Broken);
     
-    tbb::memory_pool<tbb::scalable_allocator<int> > mpool; 
+    tbb::memory_pool<tbb::scalable_allocator<int>> mpool; 
     TestAllocator<tbb::memory_pool_allocator<void>>(Broken, tbb::memory_pool_allocator<void>(mpool));
 }
 #endif
