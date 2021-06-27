@@ -1986,7 +1986,7 @@ public:
     }
     void processExit() {
         if (flag.fetch_add(skipDtor) != 0) {
-            SpinWaitUntilEq(flag, skipDtor);
+            tbb::detail::spin_wait_until_eq(flag, skipDtor);
         }
     }
 };
