@@ -50,14 +50,41 @@ protected:
 };
 
 class outermost_worker_waiter : public waiter_base {
+    friend class arena;
 public:
     using waiter_base::waiter_base;
 
-    bool continue_execution(arena_slot& slot, d1::task*& t) const {
+    bool continue_execution(arena_slot& slot, d1::task*& t) {
         __TBB_ASSERT(t == nullptr, nullptr);
 
         if (is_worker_should_leave(slot)) {
-            // Leave dispatch loop
+            market* m = my_arena.my_market;
+
+            int next_epoch{};
+            int current_epoch = m->my_adjust_demand_current_epoch.load(std::memory_order_relaxed);
+            bool is_same_epoch = false;
+
+            auto t1 = std::chrono::steady_clock::now();
+            for (auto t2 = std::chrono::steady_clock::now();
+                std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1) < std::chrono::microseconds(40);
+                t2 = std::chrono::steady_clock::now())
+            {
+                if (!is_same_epoch) {
+                    arena* a = m->arena_in_need(&my_arena, &my_arena);
+                    if (a == &my_arena) {
+                        return true;
+                    }
+                    if (a) {
+                        my_next_arena = a;
+                        break;
+                    }
+                }
+                next_epoch = m->my_adjust_demand_current_epoch.load(std::memory_order_relaxed);
+                is_same_epoch = next_epoch == current_epoch;
+                current_epoch = next_epoch;
+                d0::yield();
+            }
+
             return false;
         }
 
@@ -103,6 +130,8 @@ private:
 
         return false;
     }
+
+    arena* my_next_arena = nullptr;
 };
 
 class sleep_waiter : public waiter_base {
