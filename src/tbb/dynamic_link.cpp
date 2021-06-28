@@ -421,9 +421,6 @@ namespace r1 {
         }
         return flags;
     }
-#else /*_WIN32*/
-    int loading_flags(bool) { return 0; }
-#endif /*_WIN32*/
 
     dynamic_link_handle dynamic_load( const char* library, const dynamic_link_descriptor descriptors[], std::size_t required, bool local_binding ) {
         ::tbb::detail::suppress_unused_warning( library, descriptors, required, local_binding );
@@ -437,6 +434,7 @@ namespace r1 {
             // (e.g. because of MS runtime problems - one of those crazy manifest related ones)
             UINT prev_mode = SetErrorMode (SEM_FAILCRITICALERRORS);
 #endif /* _WIN32 */
+            // The second argument (loading_flags) is ignored on Windows
             dynamic_link_handle library_handle = dlopen( path, loading_flags(local_binding) );
 #if _WIN32
             SetErrorMode (prev_mode);
