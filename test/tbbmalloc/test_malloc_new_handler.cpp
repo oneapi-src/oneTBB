@@ -25,7 +25,7 @@
 #include "common/allocator_overload.h"
 
 // Under ASAN current approach is not viable as it breaks the ASAN itself as well
-#if !HARNESS_SKIP_TEST && TBB_USE_EXCEPTIONS && !__TBB_TEST_USE_ADDRESS_SANITIZER
+#if !HARNESS_SKIP_TEST && TBB_USE_EXCEPTIONS && !__TBB_USE_ADDRESS_SANITIZER
 
 #if _MSC_VER
 #pragma warning (push)
