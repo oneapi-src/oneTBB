@@ -28,10 +28,6 @@
 /* Check which standard library we use. */
 #include <cstddef>
 
-#if !defined(__has_feature)
-#define __has_feature(feature) 0
-#endif
-
 #if _MSC_VER
     #define __TBB_EXPORTED_FUNC   __cdecl
     #define __TBB_EXPORTED_METHOD __thiscall
@@ -211,8 +207,12 @@
 #endif
 
 /** Address sanitizer detection **/
-#if __SANITIZE_ADDRESS__ || (__clang__ && __has_feature(address_sanitizer))
-#define __TBB_SANITIZE_ADDRESS 1
+#ifdef __SANITIZE_ADDRESS__
+    #define __TBB_USE_ADDRESS_SANITIZER 1
+#elif defined(__has_feature)
+#if __has_feature(address_sanitizer)
+    #define __TBB_USE_ADDRESS_SANITIZER 1
+#endif
 #endif
 
 /** Library features presence macros **/
