@@ -45,7 +45,7 @@
 #include "common/test.h"
 
 //ASAN overloads memory allocation functions, so no point to run this test under it.
-#if !HARNESS_SKIP_TEST && !__TBB_TEST_USE_ADDRESS_SANITIZER
+#if !HARNESS_SKIP_TEST && !__TBB_USE_ADDRESS_SANITIZER
 
 #if __ANDROID__
   #include <android/api-level.h> // for __ANDROID_API__

@@ -413,9 +413,9 @@ namespace r1 {
         int flags = RTLD_NOW;
         if (local_binding) {
             flags = flags | RTLD_LOCAL;
-#if __linux__ && !__ANDROID__
+#if __linux__ && !__ANDROID__ && !__TBB_USE_ADDRESS_SANITIZER
             flags = flags | RTLD_DEEPBIND;
-#endif /*__linux__ && !__ANDROID__*/
+#endif /*__linux__ && !__ANDROID__ && !__TBB_USE_ADDRESS_SANITIZER*/
         } else {
             flags = flags | RTLD_GLOBAL;
         }
@@ -470,7 +470,7 @@ namespace r1 {
 #pragma warning (disable: 4800)
 #endif
         if ( !library_handle && ( flags & DYNAMIC_LINK_LOAD ) )
-            library_handle = dynamic_load( library, descriptors, required, flags & DYNAMIC_LINK_LOCAL_BINDING );
+            library_handle = dynamic_load( library, descriptors, required, flags & DYNAMIC_LINK_LOCAL );
 
 #if defined(_MSC_VER) && _MSC_VER <= 1900
 #pragma warning (pop)

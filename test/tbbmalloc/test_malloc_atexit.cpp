@@ -82,7 +82,7 @@ void *realloc(void *ptr, size_t size)
 
 // Even when the test is skipped, dll source must not be empty to generate .lib to link with.
 
-#if !defined(_PGO_INSTRUMENT) && !__TBB_TEST_USE_ADDRESS_SANITIZER
+#if !defined(_PGO_INSTRUMENT) && !__TBB_USE_ADDRESS_SANITIZER
 void dummyFunction() {}
 
 // TODO: enable the check under Android
@@ -132,7 +132,7 @@ public:
 };
 
 static Foo f;
-#endif // !defined(_PGO_INSTRUMENT) && !__TBB_TEST_USE_ADDRESS_SANITIZER
+#endif // !defined(_PGO_INSTRUMENT) && !__TBB_USE_ADDRESS_SANITIZER
 
 int main() {}
 
@@ -149,7 +149,7 @@ bool dll_isMallocOverloaded();
 #ifdef _PGO_INSTRUMENT
 //! \brief \ref error_guessing
 TEST_CASE("Known issue: test_malloc_atexit hangs if compiled with -prof-genx\n" * doctest::skip(true)) {}
-#elif __TBB_TEST_USE_ADDRESS_SANITIZER
+#elif __TBB_USE_ADDRESS_SANITIZER
 //! \brief \ref error_guessing
 TEST_CASE("Known issue: test_malloc_atexit is not applicable under ASAN\n" * doctest::skip(true)) {}
 #else
