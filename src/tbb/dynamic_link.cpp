@@ -421,6 +421,7 @@ namespace r1 {
         }
         return flags;
     }
+#endif
 
     dynamic_link_handle dynamic_load( const char* library, const dynamic_link_descriptor descriptors[], std::size_t required, bool local_binding ) {
         ::tbb::detail::suppress_unused_warning( library, descriptors, required, local_binding );
