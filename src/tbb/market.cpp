@@ -365,11 +365,12 @@ arena* market::arena_in_need ( arena_list_type* arenas, arena* hint, arena* curr
             it = arenas[curr_priority_level].begin();
         }
 
-        if ( &a == current &&
-             a.my_pool_state.load(std::memory_order_relaxed) != arena::SNAPSHOT_EMPTY &&
-             a.num_workers_active() - 1 < a.my_num_workers_allotted.load(std::memory_order_relaxed) )
-        {
-            return &a;
+        if ( &a == current ) {
+            if ( a.my_pool_state.load(std::memory_order_relaxed) != arena::SNAPSHOT_EMPTY &&
+                 a.num_workers_active() - 1 < a.my_num_workers_allotted.load(std::memory_order_relaxed) )
+            {
+                return &a;
+            }
         } else if ( a.num_workers_active() < a.my_num_workers_allotted.load(std::memory_order_relaxed) ) {
             a.my_references += arena::ref_worker;
             return &a;
