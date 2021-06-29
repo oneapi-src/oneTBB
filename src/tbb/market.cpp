@@ -365,11 +365,12 @@ arena* market::arena_in_need ( arena_list_type* arenas, arena* hint, arena* curr
             it = arenas[curr_priority_level].begin();
         }
 
-        if (&a == current) {
-            if (a.my_pool_state.load(std::memory_order_relaxed) != arena::SNAPSHOT_EMPTY) {
-                return &a;
-            }
-        } else if (a.num_workers_active() < a.my_num_workers_allotted.load(std::memory_order_relaxed)) {
+        if ( &a == current &&
+             a.my_pool_state.load(std::memory_order_relaxed) != arena::SNAPSHOT_EMPTY &&
+             a.num_workers_active() - 1 < a.my_num_workers_allotted.load(std::memory_order_relaxed) )
+        {
+            return &a;
+        } else if ( a.num_workers_active() < a.my_num_workers_allotted.load(std::memory_order_relaxed) ) {
             a.my_references += arena::ref_worker;
             return &a;
         }
@@ -426,7 +427,7 @@ int market::update_allotment ( arena_list_type* arenas, int workers_demand, int 
                 __TBB_ASSERT(allotted <= a.my_num_workers_requested, nullptr);
                 __TBB_ASSERT(allotted <= int(a.my_num_slots - a.my_num_reserved_slots), nullptr);
             }
-            a.my_num_workers_allotted.store(allotted, std::memory_order_relaxed);
+            a.my_num_workers_allotted.store(allotted, std::memory_order_release);
             a.my_is_top_priority.store(list_idx == max_priority_level, std::memory_order_relaxed);
             assigned += allotted;
         }
