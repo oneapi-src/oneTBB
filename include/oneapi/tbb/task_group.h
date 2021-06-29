@@ -60,6 +60,8 @@ class task_dispatcher;
 template <bool>
 class context_guard_helper;
 struct task_arena_impl;
+struct context_list_node;
+struct context_list_control;
 
 void __TBB_EXPORTED_FUNC execute(d1::task_arena_base&, d1::delegate_base&);
 void __TBB_EXPORTED_FUNC isolate_within_arena(d1::delegate_base&, std::intptr_t);
@@ -140,44 +142,17 @@ namespace {
 
 namespace d1 {
 
-struct context_list_node {
-    std::atomic<context_list_node*> prev{};
-    std::atomic<context_list_node*> next{};
+    struct context_list_node {
+        std::atomic<context_list_node*> prev{};
+        std::atomic<context_list_node*> next{};
 
-    void remove_relaxed() {
-        context_list_node* p = prev.load(std::memory_order_relaxed);
-        context_list_node* n = next.load(std::memory_order_relaxed);
-        p->next.store(n, std::memory_order_relaxed);
-        n->prev.store(p, std::memory_order_relaxed);
-    }
-};
-
-struct context_list_control {
-    std::size_t m_references{1};
-
-    struct context_list {
-        //! Head of the thread specific list of task group contexts.
-        context_list_node head{};
-
-        //! Last state propagation epoch known to this thread
-        /** Together with the_context_state_propagation_epoch constitute synchronization protocol
-        that keeps hot path of task group context construction destruction mostly
-        lock-free.
-        When local epoch equals the global one, the state of task group contexts
-        registered with this thread is consistent with that of the task group trees
-        they belong to. **/
-        std::atomic<std::uintptr_t> epoch{};
-
-        context_list() {
-            head.next.store(&head, std::memory_order_relaxed);
-            head.prev.store(&head, std::memory_order_relaxed);
+        void remove_relaxed() {
+            context_list_node* p = prev.load(std::memory_order_relaxed);
+            context_list_node* n = next.load(std::memory_order_relaxed);
+            p->next.store(n, std::memory_order_relaxed);
+            n->prev.store(p, std::memory_order_relaxed);
         }
-    } m_context_list;
-
-    //! Mutex protecting access to the list of task group contexts.
-    // TODO: check whether it can be deadly preempted and replace by spinning/sleeping mutex
-    spin_mutex m_mutex{};
-};
+    };
 
 //! Used to form groups of tasks
 /** @ingroup task_scheduling
@@ -244,9 +219,7 @@ private:
         created,
         locked,
         isolated,
-        bound,
-        detached,
-        dying
+        bound
     };
 
     //! The synchronization machine state to manage lifetime.
@@ -261,7 +234,7 @@ private:
     };
 
     //! Thread data instance that registered this context in its list.
-    std::atomic<context_list_control*> my_context_list_control;
+    std::atomic<r1::context_list_control*> my_context_list_control;
 
     //! Used to form the thread specific list of contexts without additional memory allocation.
     /** A context is included into the list of the current thread when its binding to
@@ -278,18 +251,18 @@ private:
     string_resource_index my_name;
 
     char padding[max_nfs_size
-        - sizeof(std::uint64_t)                         // my_cpu_ctl_env
-        - sizeof(std::atomic<std::uint32_t>)            // my_cancellation_requested
-        - sizeof(std::uint8_t)                          // my_version
-        - sizeof(context_traits)                        // my_traits
-        - sizeof(std::atomic<std::uint8_t>)             // my_state
-        - sizeof(std::atomic<lifetime_state>)           // my_lifetime_state
-        - sizeof(task_group_context*)                   // my_parent
-        - sizeof(std::atomic<context_list_control*>)    // my_context_list_control
+        - sizeof(std::uint64_t)                             // my_cpu_ctl_env
+        - sizeof(std::atomic<std::uint32_t>)                // my_cancellation_requested
+        - sizeof(std::uint8_t)                              // my_version
+        - sizeof(context_traits)                            // my_traits
+        - sizeof(std::atomic<std::uint8_t>)                 // my_state
+        - sizeof(std::atomic<lifetime_state>)               // my_lifetime_state
+        - sizeof(task_group_context*)                       // my_parent
+        - sizeof(std::atomic<r1::context_list_control*>)    // my_context_list_control
         - sizeof(context_list_node)                     // my_node
-        - sizeof(r1::tbb_exception_ptr*)                // my_exception
-        - sizeof(void*)                                 // my_itt_caller
-        - sizeof(string_resource_index)                 // my_name
+        - sizeof(r1::tbb_exception_ptr*)                    // my_exception
+        - sizeof(void*)                                     // my_itt_caller
+        - sizeof(string_resource_index)                     // my_name
     ];
 
     task_group_context(context_traits t, string_resource_index name)

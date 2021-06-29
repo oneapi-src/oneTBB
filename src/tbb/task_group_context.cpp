@@ -17,8 +17,8 @@
 #include "oneapi/tbb/detail/_config.h"
 #include "oneapi/tbb/tbb_allocator.h"
 #include "oneapi/tbb/task_group.h"
-#include "governor.h"
 #include "thread_data.h"
+#include "governor.h"
 #include "scheduler_common.h"
 #include "itt_notify.h"
 #include "task_dispatcher.h"
@@ -56,8 +56,8 @@ void task_group_context_impl::destroy(d1::task_group_context& ctx) {
     
     if (ctx.my_lifetime_state.load(std::memory_order_relaxed) == d1::task_group_context::lifetime_state::bound) {
         // The owner can be destroyed at any moment. Access the associate data with caution.
-        d1::context_list_control* ctrl = ctx.my_context_list_control.load(std::memory_order_relaxed);
-        spin_mutex::scoped_lock lock(ctrl->m_mutex);
+        context_list_control* ctrl = ctx.my_context_list_control.load(std::memory_order_relaxed);
+        mutex::scoped_lock lock(ctrl->m_mutex);
 
         ctx.my_node.remove_relaxed();
 
@@ -111,10 +111,10 @@ void task_group_context_impl::register_with(d1::task_group_context& ctx, thread_
     __TBB_ASSERT(td, nullptr);
     ctx.my_context_list_control.store(td->my_context_list_control, std::memory_order_relaxed);
     
-    d1::context_list_control* ctrl = ctx.my_context_list_control.load(std::memory_order_relaxed);
+    context_list_control* ctrl = ctx.my_context_list_control.load(std::memory_order_relaxed);
 
-    spin_mutex::scoped_lock lock(ctrl->m_mutex);
-    d1::context_list_control::context_list& cls = ctrl->m_context_list;
+    mutex::scoped_lock lock(ctrl->m_mutex);
+    context_list_control::context_list& cls = ctrl->m_context_list;
 
     // state propagation logic assumes new contexts are bound to head of the list
     ctx.my_node.prev.store(&cls.head, std::memory_order_relaxed);
@@ -229,7 +229,7 @@ void task_group_context_impl::propagate_task_group_state(d1::task_group_context&
 
 template <typename T>
 void thread_data::propagate_task_group_state(std::atomic<T> d1::task_group_context::* mptr_state, d1::task_group_context& src, T new_state) {
-    spin_mutex::scoped_lock lock(my_context_list_control->m_mutex);
+    mutex::scoped_lock lock(my_context_list_control->m_mutex);
     // Acquire fence is necessary to ensure that the subsequent node->my_next load
     // returned the correct value in case it was just inserted in another thread.
     // The fence also ensures visibility of the correct ctx.my_parent value.
