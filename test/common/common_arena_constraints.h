@@ -38,7 +38,7 @@
 
 #if (_WIN32 || _WIN64) && __TBB_HWLOC_VALID_ENVIRONMENT
 #include <windows.h>
-int get_processors_groups_count() {
+int get_processors_group_count() {
     SYSTEM_INFO si;
     GetNativeSystemInfo(&si);
     DWORD_PTR pam, sam, m = 1;
@@ -57,7 +57,7 @@ int get_processors_groups_count() {
     }
 }
 #else
-int get_processors_groups_count() { return 1; }
+int get_processors_group_count() { return 1; }
 #endif
 
 //TODO: Write a test that checks for memory leaks during dynamic link/unlink of TBBbind.
@@ -86,7 +86,7 @@ int get_processors_groups_count() { return 1; }
 #endif
 
 #define __HWLOC_HYBRID_CPUS_INTERFACES_PRESENT (HWLOC_API_VERSION >= 0x20400)
-#define __HWLOC_RESTRICT_TO_CPUBINDING_TOPOLOGY_FLAG_PRESENT (HWLOC_API_VERSION >= 0x20500)
+#define __HWLOC_TOPOLOGY_FLAG_RESTRICT_TO_CPUBINDING_PRESENT (HWLOC_API_VERSION >= 0x20500)
 // At this moment the hybrid CPUs HWLOC interfaces returns unexpected results on some Windows machines
 // in the 32-bit arch mode.
 #define __HWLOC_HYBRID_CPUS_INTERFACES_VALID (!_WIN32 || _WIN64)
@@ -171,8 +171,8 @@ private:
 
     system_info() {
         hwloc_require_ex(hwloc_topology_init, &topology);
-#if __HWLOC_WINDOWS_AFFINITY_RESPECTING_INTERFACES_PRESENT
-        if ( get_processors_groups_count() == 1 ) {
+#if __HWLOC_TOPOLOGY_FLAG_RESTRICT_TO_CPUBINDING_PRESENT
+        if ( get_processors_group_count() == 1 ) {
             REQUIRE(
                 hwloc_topology_set_flags(topology,
                     HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM |
@@ -182,7 +182,7 @@ private:
 #endif
         hwloc_require_ex(hwloc_topology_load, topology);
 
-        if ( get_processors_groups_count() > 1 ) {
+        if ( get_processors_group_count() > 1 ) {
             process_cpuset = hwloc_bitmap_dup(hwloc_topology_get_complete_cpuset(topology));
         } else {
             process_cpuset = hwloc_bitmap_alloc();
@@ -461,7 +461,7 @@ system_info::affinity_mask get_arena_affinity(tbb::task_arena& ta) {
                 barrier.wait();
                 tbb::spin_mutex::scoped_lock lock(affinity_mutex);
                 system_info::affinity_mask thread_affinity = system_info::allocate_current_affinity_mask();
-                if (get_processors_groups_count() == 1) {
+                if (get_processors_group_count() == 1) {
                     REQUIRE_MESSAGE(hwloc_bitmap_isequal(thread_affinity, arena_affinity),
                         "Threads have different masks on machine without several processors groups.");
                 }
@@ -559,7 +559,7 @@ constraints_container generate_constraints_variety() {
         }
 
         // Some constraints may cause unexpected behavior, which would be fixed later.
-        if (get_processors_groups_count() > 1) {
+        if (get_processors_group_count() > 1) {
             for(auto it = results.begin(); it != results.end(); ++it) {
                 if (it->max_threads_per_core != tbb::task_arena::automatic
                    && (it->numa_id == tbb::task_arena::automatic || tbb::info::numa_nodes().size() == 1)

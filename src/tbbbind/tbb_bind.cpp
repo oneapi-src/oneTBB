@@ -34,8 +34,8 @@
 #pragma GCC diagnostic pop
 #endif
 
-#define __HWLOC_HYBRID_CPUS_INTERFACES_PRESENT (HWLOC_API_VERSION >= 0x20400)
-#define __HWLOC_RESTRICT_TO_CPUBINDING_TOPOLOGY_FLAG_PRESENT (HWLOC_API_VERSION >= 0x20500)
+#define __TBBBIND_HWLOC_HYBRID_CPUS_INTERFACES_PRESENT (HWLOC_API_VERSION >= 0x20400)
+#define __TBBBIND_HWLOC_TOPOLOGY_FLAG_RESTRICT_TO_CPUBINDING_PRESENT (HWLOC_API_VERSION >= 0x20500)
 
 // Most of hwloc calls returns negative exit code on error.
 // This macro tracks error codes that are returned from the hwloc interfaces.
@@ -86,7 +86,7 @@ private:
         // Parse topology
         if ( hwloc_topology_init( &topology ) == 0 ) {
             initialization_state = topology_allocated;
-            #if __HWLOC_RESTRICT_TO_CPUBINDING_TOPOLOGY_FLAG_PRESENT
+#if __TBBBIND_HWLOC_TOPOLOGY_FLAG_RESTRICT_TO_CPUBINDING_PRESENT
             if ( groups_num == 1 &&
                  hwloc_topology_set_flags(topology,
                      HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM |
@@ -95,7 +95,7 @@ private:
             ) {
                 return;
             }
-            #endif
+#endif
             if ( hwloc_topology_load( topology ) == 0 ) {
                 initialization_state = topology_loaded;
             }
@@ -179,7 +179,7 @@ private:
             core_types_indexes_list.push_back(-1);
             return;
         }
-#if __HWLOC_HYBRID_CPUS_INTERFACES_PRESENT
+#if __TBBBIND_HWLOC_HYBRID_CPUS_INTERFACES_PRESENT
         __TBB_ASSERT(hwloc_get_api_version() >= 0x20400, "Hybrid CPUs support interfaces required HWLOC >= 2.4");
         // Parsing the hybrid CPU topology
         int core_types_number = hwloc_cpukinds_get_nr(topology, 0);
@@ -207,9 +207,9 @@ private:
                 }
             }
         }
-#else /*!__HWLOC_HYBRID_CPUS_INTERFACES_PRESENT*/
+#else /*!__TBBBIND_HWLOC_HYBRID_CPUS_INTERFACES_PRESENT*/
         bool core_types_parsing_broken{true};
-#endif /*__HWLOC_HYBRID_CPUS_INTERFACES_PRESENT*/
+#endif /*__TBBBIND_HWLOC_HYBRID_CPUS_INTERFACES_PRESENT*/
 
         if (core_types_parsing_broken) {
             for (auto& core_type_mask : core_types_affinity_masks_list) {
