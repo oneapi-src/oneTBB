@@ -25,11 +25,6 @@
 
 #if __TBB_CPP20_CONCEPTS_PRESENT
 
-#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
-#pragma warning (push)
-#pragma warning( disable: 4624 ) // warning 4624: implicitly declared destructor is deleted
-#endif
-
 namespace test_concepts {
 
 struct Dummy {};
@@ -54,24 +49,6 @@ struct NonCopyAssignable { NonCopyAssignable& operator=( const NonCopyAssignable
 struct DefaultInitializable { DefaultInitializable() = default; };
 struct NonDefaultInitializable { NonDefaultInitializable() = delete; };
 
-// Helper structure to work-around an issue with constrained destructor on Windows
-// The compiler on Windows generates an error in the following case:
-//     ~Struct() requires(false) = default;
-// This struct helps to make unconstrained destructor which is implicitly deleted if
-// the flag is false:
-//     ~Struct() = default; // implicitly deleted
-//     EnableDestructorIf<EnableDtorFlag> dtor_enabler;
-// Warning 4624 should be disabled
-template <bool Value>
-struct EnableDestructorIf {
-    ~EnableDestructorIf() = default;
-};
-
-template <>
-struct EnableDestructorIf<false> {
-    ~EnableDestructorIf() = delete;
-};
-
 namespace blocked_range_value {
 
 template <bool EnableCopyCtor, bool EnableCopyAssignment, bool EnableDtor,
@@ -81,9 +58,9 @@ struct BlockedRangeValue {
 
     BlockedRangeValue& operator=( const BlockedRangeValue& ) requires EnableCopyAssignment = default;
 
-    // Destructor is implicitly deleted if EnableDtor == false
-    ~BlockedRangeValue() = default;
-    EnableDestructorIf<EnableDtor> enable_dtor;
+    // Prospective destructors
+    ~BlockedRangeValue() requires EnableDtor = default;
+    ~BlockedRangeValue() = delete;
 
     bool operator<( const BlockedRangeValue& ) const requires (EnableOperatorLess == State::correct) { return true; }
     bool operator<( Dummy ) const requires (EnableOperatorLess == State::incorrect_first_input) { return true; }
@@ -125,9 +102,9 @@ template <bool EnableCopyCtor, bool EnableSplitCtor, bool EnableDtor, State Enab
 struct Range {
     Range( Range&, tbb::split ) requires EnableSplitCtor {}
     Range( const Range& ) requires EnableCopyCtor = default;
-    // Destructor is implicitly deleted if EnableDtor == false
-    ~Range() = default;
-    EnableDestructorIf<EnableDtor> enable_dtor;
+    // Prospective destructors
+    ~Range() requires EnableDtor = default;
+    ~Range() = delete;
 
     bool empty() const requires (EnableEmpty == State::correct) { return true; }
     bool empty() requires (EnableEmpty == State::incorrect_constness) { return true; }
@@ -155,9 +132,9 @@ namespace parallel_for_body {
 template <typename Range, bool EnableCopyCtor, bool EnableDtor, State EnableFunctionCallOperator>
 struct ParallelForBody {
     ParallelForBody( const ParallelForBody& ) requires EnableCopyCtor = default;
-    // Destructor is implicitly deleted if EnableDtor == false
-    ~ParallelForBody() = default;
-    EnableDestructorIf<EnableDtor> enable_dtor;
+    // Prospective destructors
+    ~ParallelForBody() requires EnableDtor = default;
+    ~ParallelForBody() = delete;
 
     void operator()( Range& ) const requires (EnableFunctionCallOperator == State::correct) {}
     void operator()( Range& ) requires (EnableFunctionCallOperator == State::incorrect_constness) {}
@@ -192,9 +169,9 @@ struct ParallelForIndex {
     ParallelForIndex(int) requires EnableIntCtor {}
     ParallelForIndex( const ParallelForIndex& ) requires EnableCopyCtor = default;
     ParallelForIndex& operator=( const ParallelForIndex& ) requires EnableCopyAssign = default;
-    // Destructor is implicitly deleted if EnableDtor == false
-    ~ParallelForIndex() = default;
-    EnableDestructorIf<EnableDtor> enable_dtor;
+    // Prospective destructors
+    ~ParallelForIndex() requires EnableDtor = default;
+    ~ParallelForIndex() = delete;
 
     bool operator<( const ParallelForIndex& ) const requires (EnableLess == State::correct) { return true; }
     bool operator<( const ParallelForIndex& ) requires (EnableLess == State::incorrect_constness) { return true; }
@@ -283,9 +260,9 @@ namespace parallel_reduce_body {
 template <typename Range, bool EnableSplitCtor, bool EnableDtor, State EnableFunctionCallOperator, State EnableJoin>
 struct ParallelReduceBody {
     ParallelReduceBody( ParallelReduceBody&, tbb::split ) requires EnableSplitCtor {}
-    // Destructor is implicitly deleted if EnableDtor == false
-    ~ParallelReduceBody() = default;
-    EnableDestructorIf<EnableDtor> enable_dtor;
+    // Prospective destructors
+    ~ParallelReduceBody() requires EnableDtor = default;
+    ~ParallelReduceBody() = delete;
 
     void operator()( const Range& ) requires (EnableFunctionCallOperator == State::correct) {}
     void operator()( Dummy ) requires (EnableFunctionCallOperator == State::incorrect_first_input) {}
@@ -417,9 +394,9 @@ namespace hash_compare {
 template <typename Key, bool EnableCopyCtor, bool EnableDtor, State EnableHash, State EnableEqual>
 struct HashCompare {
     HashCompare( const HashCompare& ) requires EnableCopyCtor = default;
-    // Destructor is implicitly deleted if EnableDtor == false
-    ~HashCompare() = default;
-    EnableDestructorIf<EnableDtor> enable_dtor;
+    // Prospective destructors
+    ~HashCompare() requires EnableDtor = default;
+    ~HashCompare() = delete;
 
     std::size_t hash( const Key& ) const requires (EnableHash == State::correct) { return 0; }
     std::size_t hash( const Key& ) requires (EnableHash == State::incorrect_constness) { return 0; }
@@ -454,9 +431,9 @@ struct DefineRWScopedLock {
     struct scoped_lock {
         scoped_lock() requires EnableSLDefaultCtor = default;
         scoped_lock( RwMutex&, bool = true ) requires EnableSLMutexCtor {}
-        // Destructor is implicitly deleted if EnableDtor == false
-        ~scoped_lock() = default;
-        EnableDestructorIf<EnableSLDtor> enable_dtor;
+        // Prospective destructors
+        ~scoped_lock() requires EnableSLDtor = default;
+        ~scoped_lock() = delete;
 
         void acquire( RwMutex&, bool = true ) requires (EnableSLAcquire == State::correct) {}
         void acquire( Dummy, bool = true ) requires (EnableSLAcquire == State::incorrect_first_input) {}
@@ -546,9 +523,9 @@ namespace input_node_body {
 template <typename Output, bool EnableCopyCtor, bool EnableDtor, State EnableFunctionCallOperator>
 struct InputNodeBody {
     InputNodeBody( const InputNodeBody& ) requires EnableCopyCtor = default;
-    // Destructor is implicitly deleted if EnableDtor == false
-    ~InputNodeBody() = default;
-    EnableDestructorIf<EnableDtor> enable_dtor;
+    // Prospective destructors
+    ~InputNodeBody() requires EnableDtor = default;
+    ~InputNodeBody() = delete;
 
     Output operator()( tbb::flow_control& ) requires (EnableFunctionCallOperator == State::correct) { return Output{}; }
     Output operator()( Dummy ) requires (EnableFunctionCallOperator == State::incorrect_first_input) { return Output{}; }
@@ -567,9 +544,9 @@ namespace function_node_body {
 template <typename Input, typename Output, bool EnableCopyCtor, bool EnableDtor, State EnableFunctionCallOperator>
 struct FunctionNodeBody {
     FunctionNodeBody( const FunctionNodeBody& ) requires EnableCopyCtor = default;
-    // Destructor is implicitly deleted if EnableDtor == false
-    ~FunctionNodeBody() = default;
-    EnableDestructorIf<EnableDtor> enable_dtor;
+    // Prospective destructors
+    ~FunctionNodeBody() requires EnableDtor = default;
+    ~FunctionNodeBody() = delete;
 
     Output operator()( const Input& ) requires (EnableFunctionCallOperator == State::correct) { return Output{}; }
     Output operator()( Dummy ) requires (EnableFunctionCallOperator == State::incorrect_first_input) { return Dummy{}; }
@@ -588,9 +565,9 @@ namespace mf_async_node_body {
 template <typename Input, typename Output, typename PortsType, bool EnableCopyCtor, bool EnableDtor, State EnableFunctionCallOperator>
 struct PortsNodeBody {
     PortsNodeBody( const PortsNodeBody& ) requires EnableCopyCtor = default;
-    // Destructor is implicitly deleted if EnableDtor == false
-    ~PortsNodeBody() = default;
-    EnableDestructorIf<EnableDtor> enable_dtor;
+    // Prospective destructors
+    ~PortsNodeBody() requires EnableDtor = default;
+    ~PortsNodeBody() = delete;
 
     void operator()( const Input&, PortsType& ) requires (EnableFunctionCallOperator == State::correct) {}
     void operator()( Dummy, PortsType& ) requires (EnableFunctionCallOperator == State::incorrect_first_input) {}
@@ -631,9 +608,9 @@ namespace continue_node_body {
 template <typename Output, bool EnableCopyCtor, bool EnableDtor, State EnableFunctionCallOperator>
 struct ContinueNodeBody {
     ContinueNodeBody( const ContinueNodeBody& ) requires EnableCopyCtor = default;
-    // Destructor is implicitly deleted if EnableDtor == false
-    ~ContinueNodeBody() = default;
-    EnableDestructorIf<EnableDtor> enable_dtor;
+    // Prospective destructors
+    ~ContinueNodeBody() requires EnableDtor = default;
+    ~ContinueNodeBody() = delete;
 
     Output operator()( tbb::flow::continue_msg ) requires (EnableFunctionCallOperator == State::correct) { return Output{}; }
     Output operator()( Dummy ) requires (EnableFunctionCallOperator == State::incorrect_first_input) { return Output{}; }
@@ -652,9 +629,9 @@ namespace sequencer {
 template <typename T, bool EnableCopyCtor, bool EnableDtor, State EnableFunctionCallOperator>
 struct Sequencer {
     Sequencer( const Sequencer& ) requires EnableCopyCtor = default;
-    // Destructor is implicitly deleted if EnableDtor == false
-    ~Sequencer() = default;
-    EnableDestructorIf<EnableDtor> enable_dtor;
+    // Prospective destructors
+    ~Sequencer() requires EnableDtor = default;
+    ~Sequencer() = delete;
 
     std::size_t operator()( const T& ) requires (EnableFunctionCallOperator == State::correct) { return 0; }
     std::size_t operator()( Dummy ) requires (EnableFunctionCallOperator == State::incorrect_first_input) { return 0; }
@@ -673,9 +650,9 @@ namespace join_node_function_object {
 template <typename Input, typename Key, bool EnableCopyCtor, bool EnableDtor, State EnableFunctionCallOperator>
 struct JoinNodeFunctionObject {
     JoinNodeFunctionObject( const JoinNodeFunctionObject& ) requires EnableCopyCtor = default;
-    // Destructor is implicitly deleted if EnableDtor == false
-    ~JoinNodeFunctionObject() = default;
-    EnableDestructorIf<EnableDtor> enable_dtor;
+    // Prospective destructors
+    ~JoinNodeFunctionObject() requires EnableDtor = default;
+    ~JoinNodeFunctionObject() = delete;
 
     Key operator()( const Input& ) requires (EnableFunctionCallOperator == State::correct) { return Key{}; }
     Key operator()( Dummy ) requires (EnableFunctionCallOperator == State::incorrect_first_input) { return Key{}; }
@@ -704,10 +681,6 @@ concept container_range = tbb::detail::tbb_range<T> &&
                               { std::as_const(range).grainsize() } -> std::same_as<typename T::size_type>;
                           };
 } // namespace test_concepts
-
-#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
-#pragma warning (pop) // warning 4624 is back
-#endif
 
 #endif // __TBB_CPP20_CONCEPTS_PRESENT
 #endif // __TBB_test_common_concepts_common_H
