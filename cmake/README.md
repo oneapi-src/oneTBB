@@ -53,7 +53,7 @@ The suitable HWLOC library version search is enabled by default, but if you want
 Windows requires one additional variable for correct TBBBind library building:
  - `CMAKE_HWLOC_<HWLOC_VER>_DLL_PATH` - path to the corresponding HWLOC version `.dll` file.
 
-`HWLOC_VER` variable used above can be replaced with one of the three values: `1_11` for the `tbbbind` library configuration, `2` for the `tbbbind_2_0`, and `2_5` for the `tbbbind_2_5` library configuration.
+`HWLOC_VER` substring used above can be replaced with one of the three values: `1_11` for the `tbbbind` library configuration, `2` for the `tbbbind_2_0`, and `2_5` for the `tbbbind_2_5` library configuration.
 
 The HWLOC searching and building TBBBIND libraries may be disabled by setting the `TBB_TBBBIND_BUILD` to `OFF`.
 
