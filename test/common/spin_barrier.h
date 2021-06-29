@@ -57,7 +57,7 @@ void SpinWaitWhile(Predicate pred) {
 //! Spin WHILE the condition is true.
 template <typename T, typename C>
 void SpinWaitWhileCondition(const std::atomic<T>& location, C comp) {
-    SpinWaitWhile([&] { return comp(location.load(std::memory_order_acquire)); });
+    SpinWaitWhile([&] { return comp(location.load(std::memory_order_relaxed)); });
 }
 
 //! Spin WHILE the value of the variable is equal to a given value

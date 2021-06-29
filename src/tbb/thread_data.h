@@ -94,7 +94,7 @@ public:
     }
 
     ~thread_data() {
-        context_list_cleanup();        
+        context_list_cleanup();
         my_small_object_pool->destroy();
         poison_pointer(my_task_dispatcher);
         poison_pointer(my_arena);

@@ -30,7 +30,6 @@
 #include "detail/_task_handle.h"
 #endif
 
-#include "spin_mutex.h"
 #include "profiling.h"
 
 #include <type_traits>
@@ -60,7 +59,6 @@ class task_dispatcher;
 template <bool>
 class context_guard_helper;
 struct task_arena_impl;
-struct context_list_node;
 struct context_list_control;
 
 void __TBB_EXPORTED_FUNC execute(d1::task_arena_base&, d1::delegate_base&);
@@ -142,17 +140,17 @@ namespace {
 
 namespace d1 {
 
-    struct context_list_node {
-        std::atomic<context_list_node*> prev{};
-        std::atomic<context_list_node*> next{};
+struct context_list_node {
+    std::atomic<context_list_node*> prev{};
+    std::atomic<context_list_node*> next{};
 
-        void remove_relaxed() {
-            context_list_node* p = prev.load(std::memory_order_relaxed);
-            context_list_node* n = next.load(std::memory_order_relaxed);
-            p->next.store(n, std::memory_order_relaxed);
-            n->prev.store(p, std::memory_order_relaxed);
-        }
-    };
+    void remove_relaxed() {
+        context_list_node* p = prev.load(std::memory_order_relaxed);
+        context_list_node* n = next.load(std::memory_order_relaxed);
+        p->next.store(n, std::memory_order_relaxed);
+        n->prev.store(p, std::memory_order_relaxed);
+    }
+};
 
 //! Used to form groups of tasks
 /** @ingroup task_scheduling
