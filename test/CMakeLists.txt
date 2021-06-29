@@ -309,7 +309,7 @@ function(tbb_add_tbbbind_test)
     list(APPEND HWLOC_TEST_CASE_4_VARS tbbbind_2_5 "hwloc_2_5,hwloc_1_11")
     list(APPEND HWLOC_TEST_CASE_5_VARS tbbbind_2   "hwloc_2,hwloc_1_11")
     list(APPEND HWLOC_TEST_CASE_6_VARS tbbbind_2_5 "hwloc_2_5,hwloc_2,hwloc_1_11")
-    list(APPEND HWLOC_TEST_CASE_7_VARS tbbbind_2_4 "hwloc_1_11,hwloc_2_5")
+    list(APPEND HWLOC_TEST_CASE_7_VARS tbbbind_2_5 "hwloc_1_11,hwloc_2_5")
     list(APPEND HWLOC_TEST_CASE_8_VARS tbbbind_2   "hwloc_1_11,hwloc_2")
 
     foreach(TEST_CASE ${HWLOC_TEST_CASES})
