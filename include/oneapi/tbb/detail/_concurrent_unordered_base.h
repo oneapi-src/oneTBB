@@ -910,6 +910,10 @@ private:
             // Deallocate the memory
             node_allocator_traits::deallocate(dummy_node_allocator, node, 1);
         } else {
+            // GCC 11.1 issues a warning here that incorrect destructor might be called for dummy_nodes
+            #if (__TBB_GCC_VERSION >= 110100 && __TBB_GCC_VERSION < 120000 ) && !__clang__ && !__INTEL_COMPILER
+            volatile
+            #endif
             value_node_ptr val_node = static_cast<value_node_ptr>(node);
             value_node_allocator_type value_node_allocator(my_segments.get_allocator());
             // Destroy the value

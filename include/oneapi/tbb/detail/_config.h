@@ -206,6 +206,15 @@
     #define __TBB_USE_OPTIONAL_RTTI (__GXX_RTTI || __RTTI || __INTEL_RTTI__)
 #endif
 
+/** Address sanitizer detection **/
+#ifdef __SANITIZE_ADDRESS__
+    #define __TBB_USE_ADDRESS_SANITIZER 1
+#elif defined(__has_feature)
+#if __has_feature(address_sanitizer)
+    #define __TBB_USE_ADDRESS_SANITIZER 1
+#endif
+#endif
+
 /** Library features presence macros **/
 
 #define __TBB_CPP14_INTEGER_SEQUENCE_PRESENT       (__TBB_LANG >= 201402L)

@@ -38,6 +38,12 @@
 //               for each part of map within radius of BMU W
 //                   update vector:  W(t+1) = W(t) + w(dist)*L*(V - W(t))
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif // NOMINMAX
+
+#include <algorithm>
+
 #define _MAIN_C_ 1
 #include "som.hpp"
 
@@ -45,6 +51,7 @@
 #include "oneapi/tbb/blocked_range2d.h"
 #include "oneapi/tbb/tick_count.h"
 #include "oneapi/tbb/task_arena.h"
+#include "oneapi/tbb/global_control.h"
 
 #include "common/utility/utility.hpp"
 #include "common/utility/get_default_num_threads.hpp"
@@ -183,10 +190,6 @@ void wait_for_all_graphs(int cIndex) { // cIndex ranges over [0 .. SPECULATION_C
     for (int x = 0; x < xranges; ++x) {
         for (int y = 0; y < yranges; ++y) {
             (*g_array[cIndex])[x][y]->wait_for_all();
-#if EXTRA_DEBUG
-            __TBB_ASSERT(!(*g_array[cIndex])[x][y]->is_cancelled(),
-                         "wait_for_all() did not reset graph cancel");
-#endif
         }
     }
 }
@@ -372,7 +375,7 @@ void graph_teach(SOMap &map1, teaching_vector_type &in, oneapi::tbb::task_arena 
     extra_count.reserve(xRangeMax * yRangeMax + 1);
     missing_count.reserve(xRangeMax * yRangeMax + 1);
     canceled_before.reserve(xRangeMax * yRangeMax + 1);
-    for (int = 0; i < xRangeMax * yRangeMax + 1; ++i) {
+    for (int i = 0; i < xRangeMax * yRangeMax + 1; ++i) {
         cancel_count.push_back(0);
         extra_count.push_back(0);
         missing_count.push_back(0);
@@ -536,8 +539,10 @@ int main(int argc, char *argv[]) {
     std::vector<int> single_yval;
     single_yval.reserve(my_teaching.size());
 #endif
-    for (int p = threads.first; p <= threads.last; ++p) {
+    //TODO: Investigate how to not require mandatory concurrency
+    for (int p = std::max(threads.first, 2); p <= std::max(threads.last, 2); ++p) {
         // Restrict max concurrency level via task_arena interface
+        oneapi::tbb::global_control limit(oneapi::tbb::global_control::max_allowed_parallelism, p);
         oneapi::tbb::task_arena ta(p);
         if (extra_debug)
             printf(" -------------- Running with %d threads. ------------\n", p);

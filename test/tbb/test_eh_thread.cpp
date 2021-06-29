@@ -33,7 +33,9 @@
 
 // On Windows there is no real thread number limit beside available memory.
 // Therefore, the test for thread limit is unreasonable.
-#if TBB_USE_EXCEPTIONS && !_WIN32 && !__ANDROID__
+//
+// Under ASAN current approach is not viable as it breaks the ASAN itself as well
+#if TBB_USE_EXCEPTIONS && !_WIN32 && !__ANDROID__ && !__TBB_USE_ADDRESS_SANITIZER
 
 static bool g_exception_caught = false;
 static std::mutex m;

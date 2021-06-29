@@ -44,7 +44,8 @@
 
 #include "common/test.h"
 
-#if !HARNESS_SKIP_TEST
+//ASAN overloads memory allocation functions, so no point to run this test under it.
+#if !HARNESS_SKIP_TEST && !__TBB_USE_ADDRESS_SANITIZER
 
 #if __ANDROID__
   #include <android/api-level.h> // for __ANDROID_API__
@@ -448,7 +449,10 @@ TEST_CASE("Main set of tests") {
     CheckMemalignFuncOverload(aligned_alloc, free);
 #endif
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     struct mallinfo info = mallinfo();
+#pragma GCC diagnostic pop
     // right now mallinfo initialized by zero
     REQUIRE((!info.arena && !info.ordblks && !info.smblks && !info.hblks
            && !info.hblkhd && !info.usmblks && !info.fsmblks

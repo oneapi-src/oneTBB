@@ -1207,19 +1207,29 @@ void TestMoveSupportInPushPop() {
 template<class T>
 class allocator: public oneapi::tbb::cache_aligned_allocator<T> {
 public:
+    state_type state = LIVE;
     std::size_t m_unique_id;
 
     allocator() : m_unique_id( 0 ) {}
-
     allocator(size_t unique_id) { m_unique_id = unique_id; }
 
+    ~allocator() {
+        REQUIRE_MESSAGE(state == LIVE, "Destroyed allocator has been used.");
+        state = DEAD;
+    }
+
     template<typename U>
-    allocator(const allocator<U>& a) noexcept { m_unique_id = a.m_unique_id; }
+    allocator(const allocator<U>& a) noexcept {
+        REQUIRE_MESSAGE(a.state == LIVE, "Destroyed allocator has been used.");
+        m_unique_id = a.m_unique_id;
+    }
 
     template<typename U>
     struct rebind { typedef allocator<U> other; };
 
     friend bool operator==(const allocator& lhs, const allocator& rhs) {
+        REQUIRE_MESSAGE(lhs.state == LIVE, "Destroyed allocator has been used.");
+        REQUIRE_MESSAGE(rhs.state == LIVE, "Destroyed allocator has been used.");
         return lhs.m_unique_id == rhs.m_unique_id;
     }
 };
