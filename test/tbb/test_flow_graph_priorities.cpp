@@ -410,8 +410,8 @@ struct execution_tracker_t {
         prioritized_work_finished = false;
         prioritized_work_interrupted = false;
     }
-    std::atomic<std::thread::id> prioritized_work_submitter;
-    bool prioritized_work_started;
+    std::thread::id prioritized_work_submitter;
+    std::atomic<bool> prioritized_work_started;
     bool prioritized_work_finished;
     bool prioritized_work_interrupted;
 } exec_tracker;
@@ -445,7 +445,7 @@ void do_node_work(int work_size) {
 template<work_type_t>
 void do_nested_work( const std::thread::id& tid, const tbb::blocked_range<int>& /*subrange*/ ) {
     // This is non-prioritized work...
-    if( exec_tracker.prioritized_work_submitter != tid )
+    if( !exec_tracker.prioritized_work_started || exec_tracker.prioritized_work_submitter != tid )
         return;
     // ...being executed by the thread that initially started prioritized one...
     CHECK_MESSAGE( exec_tracker.prioritized_work_started,
@@ -477,7 +477,7 @@ void do_node_work<PRIORITIZED_WORK>(int work_size) {
 template<>
 void do_nested_work<PRIORITIZED_WORK>( const std::thread::id& tid,
                                        const tbb::blocked_range<int>& /*subrange*/ ) {
-    if( exec_tracker.prioritized_work_submitter == tid ) {
+    if( exec_tracker.prioritized_work_started && exec_tracker.prioritized_work_submitter == tid ) {
         CHECK_MESSAGE( !exec_tracker.prioritized_work_interrupted,
                        "Thread was not fully devoted to processing of prioritized task." );
     } else {
