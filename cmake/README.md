@@ -274,6 +274,7 @@ Variable | Description
 `TBB_LIB_LINK_LIBS `       | Applied to libraries as link libraries
 `TBB_TEST_COMPILE_FLAGS`   | Applied to tests as compile options
 
+Please specify the `LINK` options prefixed with dash(-) for Visual Sudio compiler with CMake < 13 to avoid issues caused by `target_link_libraries` CMake command usage.
 
 #### Specific options
 
