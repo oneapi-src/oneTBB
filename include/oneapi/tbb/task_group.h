@@ -257,7 +257,7 @@ private:
         - sizeof(std::atomic<lifetime_state>)               // my_lifetime_state
         - sizeof(task_group_context*)                       // my_parent
         - sizeof(std::atomic<r1::context_list_control*>)    // my_context_list_control
-        - sizeof(context_list_node)                     // my_node
+        - sizeof(context_list_node)                         // my_node
         - sizeof(r1::tbb_exception_ptr*)                    // my_exception
         - sizeof(void*)                                     // my_itt_caller
         - sizeof(string_resource_index)                     // my_name
