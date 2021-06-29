@@ -299,8 +299,7 @@ d1::task* task_dispatcher::local_wait_for_all(d1::task* t, Waiter& waiter ) {
                 while (t != nullptr) {
                     assert_task_valid(t);
                     assert_pointer_valid</*alignment = */alignof(void*)>(ed.context);
-                    __TBB_ASSERT(ed.context->my_lifetime_state > d1::task_group_context::lifetime_state::locked &&
-                                 ed.context->my_lifetime_state < d1::task_group_context::lifetime_state::dying, nullptr);
+                    __TBB_ASSERT(ed.context->my_lifetime_state > d1::task_group_context::lifetime_state::locked, nullptr);
                     __TBB_ASSERT(m_thread_data->my_inbox.is_idle_state(false), nullptr);
                     __TBB_ASSERT(task_accessor::is_resume_task(*t) || isolation == no_isolation || isolation == ed.isolation, nullptr);
                     // Check premature leave
