@@ -98,9 +98,10 @@ concept continue_node_body = std::copy_constructible<Body> &&
 
 template <typename Body, typename Input, typename Output>
 concept function_node_body = std::copy_constructible<Body> &&
-                             requires( Body& body, const Input& v ) {
-                                 { body(v) } -> node_body_return_type<Output>;
-                             };
+                             std::invocable<Body&, const Input&>;
+                            //  requires( Body& body, const Input& v ) {
+                            //      { body(v) } -> node_body_return_type<Output>;
+                            //  };
 
 template <typename FunctionObject, typename Input, typename Key>
 concept join_node_function_object = std::copy_constructible<FunctionObject> &&

@@ -109,7 +109,10 @@ template <typename Input, typename Output, typename B>
 class function_body_leaf : public function_body< Input, Output > {
 public:
     function_body_leaf( const B &_body ) : body(_body) { }
-    Output operator()(const Input &i) override { return body(i); }
+    Output operator()(const Input &i) override {
+        return tbb::detail::invoke(body, i);
+        // return body(i);
+    }
     B get_body() { return body; }
     function_body_leaf* clone() override {
         return new function_body_leaf< Input, Output, B >(body);
@@ -124,7 +127,8 @@ class function_body_leaf< continue_msg, continue_msg, B> : public function_body<
 public:
     function_body_leaf( const B &_body ) : body(_body) { }
     continue_msg operator()( const continue_msg &i ) override {
-        body(i);
+        tbb::detail::invoke(body, i);
+        // body(i);
         return i;
     }
     B get_body() { return body; }

@@ -46,8 +46,8 @@ concept parallel_for_index = std::constructible_from<Index, int> &&
                              std::copyable<Index> &&
                              requires( const std::remove_reference_t<Index>& lhs, const std::remove_reference_t<Index>& rhs ) {
                                  { lhs < rhs } -> adaptive_same_as<bool>;
-                                 { lhs - rhs } -> std::convertible_to<std::size_t>;
-                                 { lhs + (rhs - lhs) } -> std::convertible_to<Index>;
+                                 { lhs - rhs } -> std::convertible_to<Index>;
+                                 { lhs + rhs } -> std::convertible_to<Index>;
                              };
 
 template <typename Function, typename Index>
@@ -307,7 +307,9 @@ void parallel_for_impl(Index first, Index last, Index step, const Function& f, P
         throw_exception(exception_id::nonpositive_step); // throws std::invalid_argument
     else if (first < last) {
         // Above "else" avoids "potential divide by zero" warning on some platforms
-        Index end = (last - first - Index(1)) / step + Index(1);
+        // Index end = (last - first - Index(1)) / step + Index(1);
+        // Index end = (Index(-1) + (last - first)) / step + Index(1);
+        Index end = Index(1) + (last - first - 1) / step;
         blocked_range<Index> range(static_cast<Index>(0), end);
         parallel_for_body_wrapper<Function, Index> body(f, first, step);
         parallel_for(range, body, partitioner);

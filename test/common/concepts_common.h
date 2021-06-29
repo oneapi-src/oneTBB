@@ -175,9 +175,9 @@ struct ParallelForIndex {
     std::size_t operator-( Dummy ) const requires (EnableMinus == State::incorrect_first_input) { return 0; }
     Dummy operator-( const ParallelForIndex& ) const requires (EnableMinus == State::incorrect_return_type) { return Dummy{}; }
 
-    ParallelForIndex operator+( std::size_t ) const requires (EnablePlus == State::correct) { return *this; }
-    ParallelForIndex operator+( std::size_t ) requires (EnablePlus == State::incorrect_constness) { return *this; }
-    ParallelForIndex operator+( Dummy ) const requires (EnablePlus == State::incorrect_first_input) { return *this; }
+    std::size_t operator+( std::size_t ) const requires (EnablePlus == State::correct) { return 0; }
+    std::size_t operator+( std::size_t ) requires (EnablePlus == State::incorrect_constness) { return 0; }
+    std::size_t operator+( Dummy ) const requires (EnablePlus == State::incorrect_first_input) { return 0; }
     Dummy operator+( std::size_t ) const requires (EnablePlus == State::incorrect_return_type) { return Dummy{}; }
 };
 

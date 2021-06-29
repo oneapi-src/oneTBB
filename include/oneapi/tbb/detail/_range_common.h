@@ -83,13 +83,16 @@ using iterator_reference_type = typename std::iterator_traits<Iterator>::referen
 template <typename Range>
 using range_reference_type = iterator_reference_type<range_iterator_type<Range>>;
 
+// template <typename Value>
+// concept blocked_range_value = std::copyable<Value> &&
+//                               requires( const std::remove_reference_t<Value>& lhs, const std::remove_reference_t<Value>& rhs ) {
+//                                 //   { lhs < rhs } -> relaxed_convertible_to<bool>;
+//                                 //   { lhs - rhs } -> std::convertible_to<std::size_t>;
+//                                 //   { lhs + (rhs - lhs) } -> std::convertible_to<Value>;
+//                               };
+
 template <typename Value>
-concept blocked_range_value = std::copyable<Value> &&
-                              requires( const std::remove_reference_t<Value>& lhs, const std::remove_reference_t<Value>& rhs ) {
-                                  { lhs < rhs } -> relaxed_convertible_to<bool>;
-                                  { lhs - rhs } -> std::convertible_to<std::size_t>;
-                                  { lhs + (rhs - lhs) } -> std::convertible_to<Value>;
-                              };
+concept blocked_range_value = true;
 
 template <typename T>
 concept splittable = std::constructible_from<T, T&, tbb::detail::split>;
