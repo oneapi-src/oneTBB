@@ -35,8 +35,7 @@
 
 #include <atomic>
 
-#if __unix__ || __FreeBSD__ || __NetBSD__ || __OpenBSD__
-
+#if __unix__
 #if defined(__has_include)
 #define __TBB_has_include __has_include
 #else
