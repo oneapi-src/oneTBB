@@ -60,28 +60,29 @@ public:
         if (is_worker_should_leave(slot)) {
             market* m = my_arena.my_market;
 
-            int next_epoch{};
-            int current_epoch = m->my_adjust_demand_current_epoch.load(std::memory_order_relaxed);
-            bool is_same_epoch = false;
+            int current_epoch{};
+            int prev_epoch{};
 
-            auto t1 = std::chrono::steady_clock::now();
-            for (auto t2 = std::chrono::steady_clock::now();
+            for (auto t1 = std::chrono::steady_clock::now(), t2 = t1;
                 std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1) < std::chrono::microseconds(40);
                 t2 = std::chrono::steady_clock::now())
             {
-                if (!is_same_epoch) {
-                    arena* a = m->arena_in_need(&my_arena, &my_arena);
-                    if (a == &my_arena) {
+                current_epoch = m->my_adjust_demand_current_epoch.load(std::memory_order_relaxed);
+                if (prev_epoch != current_epoch) {
+                    if (my_arena.my_pool_state.load(std::memory_order_relaxed) != arena::SNAPSHOT_EMPTY &&
+                        !my_arena.is_recall_requested())
+                    {
                         return true;
                     }
+
+                    arena* a = m->arena_in_need(&my_arena, &my_arena);
                     if (a) {
                         my_next_arena = a;
                         break;
                     }
                 }
-                next_epoch = m->my_adjust_demand_current_epoch.load(std::memory_order_relaxed);
-                is_same_epoch = next_epoch == current_epoch;
-                current_epoch = next_epoch;
+
+                prev_epoch = current_epoch;
                 d0::yield();
             }
 
