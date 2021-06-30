@@ -47,7 +47,8 @@ unset(HWLOC_TARGET_NAME)
 
 if (NOT HWLOC_TARGET_EXPLICITLY_DEFINED AND
     # No hwloc auto detection for cross compilation
-    NOT CMAKE_CROSSCOMPILING
+    NOT CMAKE_CROSSCOMPILING AND
+    NOT TBB_DISABLE_HWLOC_AUTOMATIC_SEARCH
 )
     find_package(PkgConfig QUIET)
     if (PKG_CONFIG_FOUND)
