@@ -30,7 +30,7 @@
 #include <sanitizer/allocator_interface.h>
 #endif
 
-#if __unix__ || __sun
+#if __unix__
 #include <sys/resource.h>
 #include <unistd.h>
 #include <sys/utsname.h> /* for uname */
