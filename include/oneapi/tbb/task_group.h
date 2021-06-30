@@ -59,7 +59,7 @@ class task_dispatcher;
 template <bool>
 class context_guard_helper;
 struct task_arena_impl;
-struct context_list_control;
+struct context_list;
 
 void __TBB_EXPORTED_FUNC execute(d1::task_arena_base&, d1::delegate_base&);
 void __TBB_EXPORTED_FUNC isolate_within_arena(d1::delegate_base&, std::intptr_t);
@@ -233,7 +233,7 @@ private:
     };
 
     //! Thread data instance that registered this context in its list.
-    r1::context_list_control* my_context_list_control;
+    r1::context_list* my_context_list;
 
     //! Used to form the thread specific list of contexts without additional memory allocation.
     /** A context is included into the list of the current thread when its binding to
@@ -257,7 +257,7 @@ private:
         - sizeof(std::atomic<std::uint8_t>)     // my_state
         - sizeof(std::atomic<lifetime_state>)   // my_lifetime_state
         - sizeof(task_group_context*)           // my_parent
-        - sizeof(r1::context_list_control*)     // my_context_list_control
+        - sizeof(r1::context_list*)     // my_context_list
         - sizeof(context_list_node)             // my_node
         - sizeof(r1::tbb_exception_ptr*)        // my_exception
         - sizeof(void*)                         // my_itt_caller

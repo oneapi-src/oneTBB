@@ -40,43 +40,40 @@ class arena_slot;
 class task_group_context;
 class task_dispatcher;
 
-struct context_list_control {
+struct context_list {
     std::size_t m_references{1};
 
-    struct context_list {
-        //! Head of the thread specific list of task group contexts.
-        d1::context_list_node head{};
+    //! Head of the thread specific list of task group contexts.
+    d1::context_list_node head{};
 
-        //! Last state propagation epoch known to this thread
-        /** Together with the_context_state_propagation_epoch constitute synchronization protocol
-        that keeps hot path of task group context construction destruction mostly
-        lock-free.
-        When local epoch equals the global one, the state of task group contexts
-        registered with this thread is consistent with that of the task group trees
-        they belong to. **/
-        std::atomic<std::uintptr_t> epoch{};
+    //! Last state propagation epoch known to this thread
+    /** Together with the_context_state_propagation_epoch constitute synchronization protocol
+    that keeps hot path of task group context construction destruction mostly
+    lock-free.
+    When local epoch equals the global one, the state of task group contexts
+    registered with this thread is consistent with that of the task group trees
+    they belong to. **/
+    std::atomic<std::uintptr_t> epoch{};
 
-        context_list() {
-            head.next.store(&head, std::memory_order_relaxed);
-            head.prev.store(&head, std::memory_order_relaxed);
-        }
+    context_list() {
+        head.next.store(&head, std::memory_order_relaxed);
+        head.prev.store(&head, std::memory_order_relaxed);
+    }
 
-        void remove_node(d1::context_list_node& node) {
-            node.remove_relaxed();
-        }
+    void remove_node(d1::context_list_node& node) {
+        node.remove_relaxed();
+    }
 
-        void push_node(d1::context_list_node& node) {
-            // state propagation logic assumes new contexts are bound to head of the list
-            node.prev.store(&head, std::memory_order_relaxed);
+    void push_node(d1::context_list_node& node) {
+        // state propagation logic assumes new contexts are bound to head of the list
+        node.prev.store(&head, std::memory_order_relaxed);
 
-            d1::context_list_node* head_next = head.next.load(std::memory_order_relaxed);
-            head_next->prev.store(&node, std::memory_order_relaxed);
-            node.next.store(head_next, std::memory_order_relaxed);
+        d1::context_list_node* head_next = head.next.load(std::memory_order_relaxed);
+        head_next->prev.store(&node, std::memory_order_relaxed);
+        node.next.store(head_next, std::memory_order_relaxed);
 
-            head.next.store(&node, std::memory_order_relaxed);
-        }
-
-    } m_context_list;
+        head.next.store(&node, std::memory_order_relaxed);
+    }
 
     //! Mutex protecting access to the list of task group contexts.
     d1::mutex m_mutex{};
@@ -99,13 +96,13 @@ public:
         , my_random{ this }
         , my_last_observer{ nullptr }
         , my_small_object_pool{new (cache_aligned_allocate(sizeof(small_object_pool_impl))) small_object_pool_impl{}}
-        , my_context_list_control(new context_list_control{})
+        , my_context_list(new context_list{})
 #if __TBB_RESUMABLE_TASKS
         , my_post_resume_action{ post_resume_action::none }
         , my_post_resume_arg{nullptr}
 #endif /* __TBB_RESUMABLE_TASKS */
     {
-        ITT_SYNC_CREATE(&my_context_list_control->m_mutex, SyncType_Scheduler, SyncObj_ContextsList);
+        ITT_SYNC_CREATE(&my_context_list->m_mutex, SyncType_Scheduler, SyncObj_ContextsList);
     }
 
     ~thread_data() {
@@ -158,7 +155,7 @@ public:
     //! Pool of small object for fast task allocation
     small_object_pool_impl* my_small_object_pool;
 
-    context_list_control* my_context_list_control;
+    context_list* my_context_list;
 #if __TBB_RESUMABLE_TASKS
     //! The list of possible post resume actions.
     enum class post_resume_action {
@@ -229,11 +226,11 @@ inline void thread_data::attach_arena(arena& a, std::size_t index) {
 inline bool thread_data::is_attached_to(arena* a) { return my_arena == a; }
 
 inline void thread_data::context_list_cleanup() {
-    mutex::scoped_lock lock(my_context_list_control->m_mutex);
-    if (--my_context_list_control->m_references == 0) {
+    mutex::scoped_lock lock(my_context_list->m_mutex);
+    if (--my_context_list->m_references == 0) {
         lock.release();
-        delete my_context_list_control;
-        poison_pointer(my_context_list_control);
+        delete my_context_list;
+        poison_pointer(my_context_list);
     }
 }
 
