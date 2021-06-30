@@ -3,7 +3,7 @@
 The main build system of oneTBB is CMake.
 Bazel support is community-based.
 The maintainers do not use Bazel internally.
-The Bazel build can have security risks or optimization gaps.
+The Bazel configuration may not include recommended compiler and linker flags used in official CMake configuration.
 
 The Bazel build of oneTBB currently only aims for a subset of oneTBB that suffices restricted use cases of the usage of oneTBB.
 Pull requests to improve the Bazel build experience are welcomed.
