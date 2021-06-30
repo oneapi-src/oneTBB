@@ -78,10 +78,10 @@ static void set_thread_affinity_mask( std::size_t maskSize, const basic_mask_t* 
 }
 
 static void get_thread_affinity_mask( std::size_t maskSize, basic_mask_t* threadMask ) {
-#if __unix__
-    if( sched_getaffinity( 0, maskSize, threadMask ) )
-#else /* FreeBSD */
+#if __FreeBSD__ || __NetBSD__ || __OpenBSD__
     if( cpuset_getaffinity( CPU_LEVEL_WHICH, CPU_WHICH_TID, -1, maskSize, threadMask ) )
+#else /* __unix__ */
+    if( sched_getaffinity( 0, maskSize, threadMask ) )
 #endif
     runtime_warning( "getaffinity syscall failed" );
 }
