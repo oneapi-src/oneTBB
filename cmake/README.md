@@ -45,7 +45,7 @@ Some useful options:
 
 The TBBbind library has three versions: `tbbbind`, `tbbbind_2_0` and `tbbbind_2_5`. Each of these versions is linked with corresponding HWLOC library version: `tbbbind` links with HWLOC 1.11.x , `tbbbind_2_0` links with HWLOC 2.1-2.4, `tbbbind_2_5` links with HWLOC 2.5 and later.
 
-The suitable HWLOC library version search is enabled by default, but if you want to specify the path to the library manually, or build several TBBBind versions at one time you may specify the following variables CMake variables:
+The search for a suitable version of the HWLOC library is enabled by default, but if you want to use a specific version of the library, you can specify the path to it manually using the following CMake variables:
 
  - `CMAKE_HWLOC_<HWLOC_VER>_LIBRARY_PATH` - path to the corresponding HWLOC version shared library on Linux or path to `.lib` file on Windows.
  - `CMAKE_HWLOC_<HWLOC_VER>_INCLUDE_PATH` - path to the corresponding HWLOC version includes directory.
@@ -55,7 +55,9 @@ Windows requires one additional variable for correct TBBBind library building:
 
 `HWLOC_VER` substring used above can be replaced with one of the three values: `1_11` for the `tbbbind` library configuration, `2` for the `tbbbind_2_0`, and `2_5` for the `tbbbind_2_5` library configuration.
 
-The HWLOC searching and building TBBBIND libraries may be disabled by setting the `TBB_TBBBIND_BUILD` to `OFF`.
+If you specify variables for several TBBBind versions, then all these versions may be built during one build session.
+
+Specify the `TBB_DISABLE_HWLOC_AUTOMATIC_SEARCH` to disable HWLOC libraries automatic search.
 
 ### Build
 
