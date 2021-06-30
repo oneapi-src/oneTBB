@@ -88,7 +88,7 @@ the actual parameter values to match Linux: 0 for wait, 1 for wake.
 #endif
 
 #endif // SYS_futex
-#endif // __unix__ || __FreeBSD__ || __NetBSD__ || __OpenBSD__
+#endif // __unix__
 
 namespace tbb {
 namespace detail {
