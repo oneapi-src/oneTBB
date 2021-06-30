@@ -71,6 +71,18 @@ public:
     friend class scoped_lock;
 };
 
+inline void SpinWaitWhileEq(const std::atomic<intptr_t>& location, const intptr_t value) {
+    tbb::detail::spin_wait_while_eq(location, value);
+}
+
+#if USE_PTHREAD && __TBB_SOURCE_DIRECTLY_INCLUDED
+
+inline void SpinWaitUntilEq(const std::atomic<intptr_t>& location, const intptr_t value) {
+    tbb::detail::spin_wait_until_eq(location, value);
+}
+
+#endif
+
 class AtomicBackoff {
     tbb::detail::atomic_backoff backoff;
 public:

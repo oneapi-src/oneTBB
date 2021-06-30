@@ -1958,7 +1958,7 @@ static MallocMutex initMutex;
     delivers a clean result. */
 static char VersionString[] = "\0" TBBMALLOC_VERSION_STRINGS;
 
-#if USE_PTHREAD && (__TBB_SOURCE_DIRECTLY_INCLUDED || __TBB_USE_DLOPEN_REENTRANCY_WORKAROUND)
+#if USE_PTHREAD && __TBB_SOURCE_DIRECTLY_INCLUDED
 
 /* Decrease race interval between dynamic library unloading and pthread key
    destructor. Protect only Pthreads with supported unloading. */
@@ -1986,7 +1986,7 @@ public:
     }
     void processExit() {
         if (flag.fetch_add(skipDtor) != 0) {
-            tbb::detail::spin_wait_until_eq(flag, skipDtor);
+            SpinWaitUntilEq(flag, skipDtor);
         }
     }
 };
@@ -2001,7 +2001,7 @@ public:
     void processExit() { }
 };
 
-#endif // USE_PTHREAD && (__TBB_SOURCE_DIRECTLY_INCLUDED || __TBB_USE_DLOPEN_REENTRANCY_WORKAROUND)
+#endif // USE_PTHREAD && __TBB_SOURCE_DIRECTLY_INCLUDED
 
 static ShutdownSync shutdownSync;
 
@@ -2928,16 +2928,6 @@ extern "C" void __TBB_mallocProcessShutdownNotification(bool windows_process_dyi
     hugePages.reset();
     // new total malloc initialization is possible after this point
     mallocInitialized.store(0, std::memory_order_release);
-#elif __TBB_USE_DLOPEN_REENTRANCY_WORKAROUND
-/* In most cases we prevent unloading tbbmalloc, and don't clean up memory
-   on process shutdown. When impossible to prevent, library unload results
-   in shutdown notification, and it makes sense to release unused memory
-   at that point (we can't release all memory because it's possible that
-   it will be accessed after this point).
-   TODO: better support systems where we can't prevent unloading by removing
-   pthread destructors and releasing caches.
- */
-    defaultMemPool->extMemPool.hardCachesCleanup();
 #endif // __TBB_SOURCE_DIRECTLY_INCLUDED
 
 #if COLLECT_STATISTICS

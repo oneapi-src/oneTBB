@@ -77,7 +77,7 @@ public:
                     break;
                 }
             } else {
-                tbb::detail::spin_wait_while_eq(active, prevCnt);
+                SpinWaitWhileEq(active, prevCnt);
                 rescanBins = true;
                 break;
             }

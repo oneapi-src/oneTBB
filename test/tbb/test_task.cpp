@@ -796,6 +796,7 @@ TEST_CASE("Test with priority inversion") {
 }
 
 // Explicit test for raii_guard move ctor because of copy elision optimization
+// TODO: consider better test file for the test case
 //! \brief \ref interface
 TEST_CASE("raii_guard move ctor") {
     int count{0};

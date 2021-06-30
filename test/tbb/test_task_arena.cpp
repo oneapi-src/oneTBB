@@ -207,7 +207,6 @@ void TestConcurrentArenasFunc(int idx) {
 
     a1.debug_wait_until_empty();
     a2.debug_wait_until_empty();
-    // a3.debug_wait_until_empty();
 }
 
 void TestConcurrentArenas(int p) {
