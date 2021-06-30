@@ -13,7 +13,7 @@ Even this is not recommended by the oneTBB maintainers this is chosen since this
 
 ## Example usage
 
-1. [Install Bazel](https://docs.bazel.build/versions/4.1.0/install.html).
+1. [Install Bazel](https://docs.bazel.build/versions/main/install.html).
 
 2. Create the following files in one folder (this folder will be considered as the workspace folder):
 
