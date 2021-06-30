@@ -60,6 +60,22 @@ struct context_list_control {
             head.next.store(&head, std::memory_order_relaxed);
             head.prev.store(&head, std::memory_order_relaxed);
         }
+
+        void remove_node(d1::context_list_node& node) {
+            node.remove_relaxed();
+        }
+
+        void push_node(d1::context_list_node& node) {
+            // state propagation logic assumes new contexts are bound to head of the list
+            node.prev.store(&head, std::memory_order_relaxed);
+
+            d1::context_list_node* head_next = head.next.load(std::memory_order_relaxed);
+            head_next->prev.store(&node, std::memory_order_relaxed);
+            node.next.store(head_next, std::memory_order_relaxed);
+
+            head.next.store(&node, std::memory_order_relaxed);
+        }
+
     } m_context_list;
 
     //! Mutex protecting access to the list of task group contexts.

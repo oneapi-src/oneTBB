@@ -56,10 +56,10 @@ void task_group_context_impl::destroy(d1::task_group_context& ctx) {
     
     if (ctx.my_lifetime_state.load(std::memory_order_relaxed) == d1::task_group_context::lifetime_state::bound) {
         // The owner can be destroyed at any moment. Access the associate data with caution.
-        context_list_control* ctrl = ctx.my_context_list_control.load(std::memory_order_relaxed);
+        context_list_control* ctrl = ctx.my_context_list_control;
         mutex::scoped_lock lock(ctrl->m_mutex);
 
-        ctx.my_node.remove_relaxed();
+        ctrl->m_context_list.remove_node(ctx.my_node);
 
         if (--ctrl->m_references == 0) {
             lock.release();
@@ -90,7 +90,7 @@ void task_group_context_impl::initialize(d1::task_group_context& ctx) {
 
     ctx.my_cpu_ctl_env = 0;
     ctx.my_cancellation_requested = 0;
-    ctx.may_have_children.store(0, std::memory_order_relaxed);
+    ctx.my_state.store(0, std::memory_order_relaxed);
     // Set the created state to bound at the first usage.
     ctx.my_lifetime_state.store(d1::task_group_context::lifetime_state::created, std::memory_order_relaxed);
     ctx.my_parent = nullptr;
@@ -109,20 +109,14 @@ void task_group_context_impl::initialize(d1::task_group_context& ctx) {
 void task_group_context_impl::register_with(d1::task_group_context& ctx, thread_data* td) {
     __TBB_ASSERT(!is_poisoned(ctx.my_context_list_control), nullptr);
     __TBB_ASSERT(td, nullptr);
-    ctx.my_context_list_control.store(td->my_context_list_control, std::memory_order_relaxed);
+    ctx.my_context_list_control = td->my_context_list_control;
     
-    context_list_control* ctrl = ctx.my_context_list_control.load(std::memory_order_relaxed);
+    context_list_control* ctrl = ctx.my_context_list_control;
 
     mutex::scoped_lock lock(ctrl->m_mutex);
     context_list_control::context_list& cls = ctrl->m_context_list;
+    cls.push_node(ctx.my_node);
 
-    // state propagation logic assumes new contexts are bound to head of the list
-    ctx.my_node.prev.store(&cls.head, std::memory_order_relaxed);
-
-    d1::context_list_node* head_next = cls.head.next.load(std::memory_order_relaxed);
-    head_next->prev.store(&ctx.my_node, std::memory_order_relaxed);
-    ctx.my_node.next.store(head_next, std::memory_order_relaxed);
-    cls.head.next.store(&ctx.my_node, std::memory_order_relaxed);
     ctrl->m_references++;
 }
 
@@ -139,8 +133,8 @@ void task_group_context_impl::bind_to_impl(d1::task_group_context& ctx, thread_d
         copy_fp_settings(ctx, *ctx.my_parent);
 
     // Condition below prevents unnecessary thrashing parent context's cache line
-    if (ctx.my_parent->may_have_children.load(std::memory_order_relaxed) != 1) {
-        ctx.my_parent->may_have_children.store(1, std::memory_order_relaxed); // full fence is below
+    if (ctx.my_parent->my_state.load(std::memory_order_relaxed) != d1::task_group_context::may_have_children) {
+        ctx.my_parent->my_state.store(d1::task_group_context::may_have_children, std::memory_order_relaxed); // full fence is below
     }
     if (ctx.my_parent->my_parent) {
         // Even if this context were made accessible for state change propagation
@@ -154,7 +148,7 @@ void task_group_context_impl::bind_to_impl(d1::task_group_context& ctx, thread_d
         // Acquire fence is necessary to prevent reordering subsequent speculative
         // loads of parent state data out of the scope where epoch counters comparison
         // can reliably validate it.
-        uintptr_t local_count_snapshot = ctx.my_parent->my_context_list_control.load(std::memory_order_relaxed)->m_context_list.epoch.load(std::memory_order_acquire);
+        uintptr_t local_count_snapshot = ctx.my_parent->my_context_list_control->m_context_list.epoch.load(std::memory_order_acquire);
         // Speculative propagation of parent's state. The speculation will be
         // validated by the epoch counters check further on.
         ctx.my_cancellation_requested.store(ctx.my_parent->my_cancellation_requested.load(std::memory_order_relaxed), std::memory_order_relaxed);
@@ -247,7 +241,7 @@ void thread_data::propagate_task_group_state(std::atomic<T> d1::task_group_conte
 
 template <typename T>
 bool market::propagate_task_group_state(std::atomic<T> d1::task_group_context::* mptr_state, d1::task_group_context& src, T new_state) {
-    if (src.may_have_children.load(std::memory_order_relaxed) != 1)
+    if (src.my_state.load(std::memory_order_relaxed) != d1::task_group_context::may_have_children)
         return true;
     // The whole propagation algorithm is under the lock in order to ensure correctness
     // in case of concurrent state changes at the different levels of the context tree.

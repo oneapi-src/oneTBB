@@ -210,8 +210,9 @@ private:
 
     static_assert(sizeof(context_traits) == 1, "Traits shall fit into one byte.");
 
+    static constexpr std::uint8_t may_have_children = 1;
     //! The context internal state (currently only may_have_children).
-    std::atomic<std::uint8_t> may_have_children;
+    std::atomic<std::uint8_t> my_state;
 
     enum class lifetime_state : std::uint8_t {
         created,
@@ -232,7 +233,7 @@ private:
     };
 
     //! Thread data instance that registered this context in its list.
-    std::atomic<r1::context_list_control*> my_context_list_control;
+    r1::context_list_control* my_context_list_control;
 
     //! Used to form the thread specific list of contexts without additional memory allocation.
     /** A context is included into the list of the current thread when its binding to
@@ -249,18 +250,18 @@ private:
     string_resource_index my_name;
 
     char padding[max_nfs_size
-        - sizeof(std::uint64_t)                             // my_cpu_ctl_env
-        - sizeof(std::atomic<std::uint32_t>)                // my_cancellation_requested
-        - sizeof(std::uint8_t)                              // my_version
-        - sizeof(context_traits)                            // my_traits
-        - sizeof(std::atomic<std::uint8_t>)                 // my_state
-        - sizeof(std::atomic<lifetime_state>)               // my_lifetime_state
-        - sizeof(task_group_context*)                       // my_parent
-        - sizeof(std::atomic<r1::context_list_control*>)    // my_context_list_control
-        - sizeof(context_list_node)                         // my_node
-        - sizeof(r1::tbb_exception_ptr*)                    // my_exception
-        - sizeof(void*)                                     // my_itt_caller
-        - sizeof(string_resource_index)                     // my_name
+        - sizeof(std::uint64_t)                 // my_cpu_ctl_env
+        - sizeof(std::atomic<std::uint32_t>)    // my_cancellation_requested
+        - sizeof(std::uint8_t)                  // my_version
+        - sizeof(context_traits)                // my_traits
+        - sizeof(std::atomic<std::uint8_t>)     // my_state
+        - sizeof(std::atomic<lifetime_state>)   // my_lifetime_state
+        - sizeof(task_group_context*)           // my_parent
+        - sizeof(r1::context_list_control*)     // my_context_list_control
+        - sizeof(context_list_node)             // my_node
+        - sizeof(r1::tbb_exception_ptr*)        // my_exception
+        - sizeof(void*)                         // my_itt_caller
+        - sizeof(string_resource_index)         // my_name
     ];
 
     task_group_context(context_traits t, string_resource_index name)
