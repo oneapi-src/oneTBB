@@ -89,7 +89,6 @@ class thread_data : public ::rml::job
                   , public intrusive_list_node
                   , no_copy {
 public:
-
     thread_data(unsigned short index, bool is_worker)
         : my_arena_index{ index }
         , my_is_worker{ is_worker }
