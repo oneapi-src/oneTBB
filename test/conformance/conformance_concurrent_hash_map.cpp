@@ -160,7 +160,7 @@ public:
         return j.key==k.key;
     }
 
-    unsigned long hash( const MyKey& k ) const {
+    std::size_t hash( const MyKey& k ) const {
         return k.key;
     }
 };
@@ -171,7 +171,7 @@ public:
         return j.key==k.key;
     }
 
-    unsigned long hash( const MyKey& ) const {
+    std::size_t hash( const MyKey& ) const {
         return 1;
     }
 };
