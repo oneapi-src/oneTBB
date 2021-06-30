@@ -379,7 +379,7 @@ namespace r1 {
     static dynamic_link_handle global_symbols_link( const char* library, const dynamic_link_descriptor descriptors[], std::size_t required ) {
         dynamic_link_handle library_handle{};
 #if _WIN32
-        bool res = GetModuleHandleEx(0, library, &library_handle);
+        auto res = GetModuleHandleEx(0, library, &library_handle);
         __TBB_ASSERT_EX(res && library_handle || !res && !library_handle, nullptr);
 #else /* _WIN32 */
     #if !__TBB_DYNAMIC_LOAD_ENABLED /* only __TBB_WEAK_SYMBOLS_PRESENT is defined */

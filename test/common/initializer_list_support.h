@@ -17,6 +17,8 @@
 #ifndef __TBB_test_common_initializer_list_support_H
 #define __TBB_test_common_initializer_list_support_H
 
+#include "config.h"
+
 #include <initializer_list>
 #include <vector>
 

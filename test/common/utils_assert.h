@@ -17,6 +17,7 @@
 #ifndef __TBB_test_common_utils_assert_H
 #define __TBB_test_common_utils_assert_H
 
+#include "config.h"
 #include "utils_report.h"
 
 #define REPORT_FATAL_ERROR REPORT

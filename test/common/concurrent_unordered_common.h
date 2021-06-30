@@ -19,8 +19,8 @@
 
 #define __TBB_UNORDERED_TEST 1
 
-#include <memory>
 #include "test.h"
+#include <memory>
 #include "concurrent_associative_common.h"
 #include "test_comparisons.h"
 

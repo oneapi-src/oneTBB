@@ -40,7 +40,6 @@
 #include "oneapi/tbb/tbb_allocator.h"
 #include "oneapi/tbb/global_control.h"
 #include "oneapi/tbb/cache_aligned_allocator.h"
-// INFO: #include "oneapi/tbb/tick_count.h"
 
 #include <cstring>
 #include <cstdio>
@@ -65,15 +64,9 @@ static int MaxThread = 4;
 static std::atomic<int> construction_counter;
 static std::atomic<int> destruction_counter;
 
-#if TBB_USE_DEBUG
-const int REPETITIONS = 4;
-const int N = 10000;
-const int RANGE_MIN=1000;
-#else
-const int REPETITIONS = 10;
-const int N = 100000;
-const int RANGE_MIN=10000;
-#endif
+const int REPETITIONS = 5;
+const int N = 25000;
+const int RANGE_MIN = 5000;
 const double EXPECTED_SUM = (REPETITIONS + 1) * N;
 
 //! A minimal class that occupies N bytes.
@@ -87,9 +80,9 @@ private:
 public:
     minimal() : utils::NoAssign(), my_value(0) { ++construction_counter; is_constructed = true; }
     minimal( const minimal &m ) : utils::NoAssign(), my_value(m.my_value) { ++construction_counter; is_constructed = true; }
-    ~minimal() { ++destruction_counter; REQUIRE(is_constructed); is_constructed = false; }
-    void set_value( const int i ) { REQUIRE(is_constructed); my_value = i; }
-    int value( ) const { REQUIRE(is_constructed); return my_value; }
+    ~minimal() { ++destruction_counter; CHECK_FAST(is_constructed); is_constructed = false; }
+    void set_value( const int i ) { CHECK_FAST(is_constructed); my_value = i; }
+    int value( ) const { CHECK_FAST(is_constructed); return my_value; }
 
     bool operator==( const minimal& other ) const { return my_value == other.my_value; }
 };
@@ -324,6 +317,19 @@ void run_parallel_scalar_tests_nocombine(const char* /* test_name */, const char
     typedef oneapi::tbb::enumerable_thread_specific<T, Allocator<T> > ets_type;
 
     Checker<T> my_check;
+
+    gThrowValue = 0;
+    struct fail_on_exception_guard {
+        bool dismiss = false;
+        ~fail_on_exception_guard() {
+            if (!dismiss) {
+                FAIL("The exception is not expected");
+            }
+        }
+    } guard;
+    T default_value{};
+    guard.dismiss = true;
+
     gThrowValue = 0;
     {
         // We assume that static_sums zero-initialized or has a default constructor that zeros it.
@@ -332,11 +338,8 @@ void run_parallel_scalar_tests_nocombine(const char* /* test_name */, const char
         T exemplar;
         test_helper<T>::init(exemplar);
 
-        for (int p = MinThread; p <= MaxThread; ++p) {
-            // INFO("Testing parallel %s with allocator %s on %d thread(s)... ", test_name, allocator_name, p);
+        for (int p = std::max(MinThread, 2); p <= MaxThread; ++p) {
             oneapi::tbb::global_control gc(oneapi::tbb::global_control::max_allowed_parallelism, p);
-
-            // INFO: oneapi::tbb::tick_count t0;
 
             T iterator_sum;
             test_helper<T>::init(iterator_sum);
@@ -368,8 +371,6 @@ void run_parallel_scalar_tests_nocombine(const char* /* test_name */, const char
             test_helper<T>::init(static_sum);
 
             for (int t = -1; t < REPETITIONS; ++t) {
-                // INFO: if (Verbose && t == 0) t0 = oneapi::tbb::tick_count::now();
-
                 static_sums.clear();
 
                 ets_type sums(exemplar);
@@ -377,15 +378,15 @@ void run_parallel_scalar_tests_nocombine(const char* /* test_name */, const char
                 ets_type finit_ets(my_finit);
 
                 REQUIRE( sums.empty());
-                oneapi::tbb::parallel_for( oneapi::tbb::blocked_range<int>( 0, N, RANGE_MIN ), parallel_scalar_body<T,Allocator>( sums, allocator_name ) );
+                oneapi::tbb::parallel_for( oneapi::tbb::blocked_range<int>( 0, N*p, RANGE_MIN ), parallel_scalar_body<T,Allocator>( sums, allocator_name ) );
                 REQUIRE( !sums.empty());
 
                 REQUIRE( finit_ets.empty());
-                oneapi::tbb::parallel_for( oneapi::tbb::blocked_range<int>( 0, N, RANGE_MIN ), parallel_scalar_body<T,Allocator>( finit_ets, allocator_name ) );
+                oneapi::tbb::parallel_for( oneapi::tbb::blocked_range<int>( 0, N*p, RANGE_MIN ), parallel_scalar_body<T,Allocator>( finit_ets, allocator_name ) );
                 REQUIRE( !finit_ets.empty());
 
                 REQUIRE(static_sums.empty());
-                oneapi::tbb::parallel_for( oneapi::tbb::blocked_range<int>( 0, N, RANGE_MIN ), parallel_scalar_body<T,Allocator>( static_sums, allocator_name ) );
+                oneapi::tbb::parallel_for( oneapi::tbb::blocked_range<int>( 0, N*p, RANGE_MIN ), parallel_scalar_body<T,Allocator>( static_sums, allocator_name ) );
                 REQUIRE( !static_sums.empty());
 
                 // use iterator
@@ -418,10 +419,10 @@ void run_parallel_scalar_tests_nocombine(const char* /* test_name */, const char
                 typedef typename oneapi::tbb::enumerable_thread_specific<T, Allocator<T>, oneapi::tbb::ets_key_per_instance> cached_ets_type;
 
                 cached_ets_type cconst(sums);
-                oneapi::tbb::parallel_for( oneapi::tbb::blocked_range<int>(0, N, RANGE_MIN), [&]( const oneapi::tbb::blocked_range<int>& ) {
+                oneapi::tbb::parallel_for( oneapi::tbb::blocked_range<int>(0, N*p, RANGE_MIN), [&]( const oneapi::tbb::blocked_range<int>& ) {
                     bool exists = false;
                     T& ref = cconst.local(exists);
-                    CHECK((exists || ref == T()));
+                    CHECK( (exists || ref == default_value) );
                 } );
                 cached_ets_type cconst_to_assign1 = cconst;
                 cached_ets_type cconst_to_assign2;
@@ -465,19 +466,17 @@ void run_parallel_scalar_tests_nocombine(const char* /* test_name */, const char
 
             }
 
-            REQUIRE(EXPECTED_SUM == test_helper<T>::get(iterator_sum));
-            REQUIRE(EXPECTED_SUM == test_helper<T>::get(const_iterator_sum));
-            REQUIRE(EXPECTED_SUM == test_helper<T>::get(range_sum));
-            REQUIRE(EXPECTED_SUM == test_helper<T>::get(const_range_sum));
+            REQUIRE(EXPECTED_SUM*p == test_helper<T>::get(iterator_sum));
+            REQUIRE(EXPECTED_SUM*p == test_helper<T>::get(const_iterator_sum));
+            REQUIRE(EXPECTED_SUM*p == test_helper<T>::get(range_sum));
+            REQUIRE(EXPECTED_SUM*p == test_helper<T>::get(const_range_sum));
 
-            REQUIRE(EXPECTED_SUM == test_helper<T>::get(cconst_sum));
-            REQUIRE(EXPECTED_SUM == test_helper<T>::get(assign_sum));
-            REQUIRE(EXPECTED_SUM == test_helper<T>::get(cassgn_sum));
-            REQUIRE(EXPECTED_SUM == test_helper<T>::get(non_cassgn_sum));
-            REQUIRE(EXPECTED_SUM == test_helper<T>::get(finit_ets_sum));
-            REQUIRE(EXPECTED_SUM == test_helper<T>::get(static_sum));
-
-            // INFO("done\nparallel %s, %d, %g, %g\n", test_name, p, test_helper<T>::get(iterator_sum), ( oneapi::tbb::tick_count::now() - t0).seconds());
+            REQUIRE(EXPECTED_SUM*p == test_helper<T>::get(cconst_sum));
+            REQUIRE(EXPECTED_SUM*p == test_helper<T>::get(assign_sum));
+            REQUIRE(EXPECTED_SUM*p == test_helper<T>::get(cassgn_sum));
+            REQUIRE(EXPECTED_SUM*p == test_helper<T>::get(non_cassgn_sum));
+            REQUIRE(EXPECTED_SUM*p == test_helper<T>::get(finit_ets_sum));
+            REQUIRE(EXPECTED_SUM*p == test_helper<T>::get(static_sum));
         }
     }  // Checker block
 }
@@ -507,15 +506,10 @@ void run_parallel_scalar_tests(const char* test_name, const char* allocator_name
             run_parallel_scalar_tests_nocombine<T,Allocator>(test_name, allocator_name);
 #if TBB_USE_EXCEPTIONS
         }
-        catch(...) {
-            // INFO("Exception caught %d\n", targetThrowValue);
-        }
+        catch(...) {}
 #endif
-        for (int p = MinThread; p <= MaxThread; ++p) {
-            // INFO("Testing parallel %s with allocator %s on %d thread(s)... ", test_name, allocator_name, p);
+        for (int p = std::max(MinThread, 2); p <= MaxThread; ++p) {
             oneapi::tbb::global_control gc(oneapi::tbb::global_control::max_allowed_parallelism, p);
-
-            // INFO: oneapi::tbb::tick_count t0;
 
             gThrowValue = 0;
 
@@ -541,21 +535,19 @@ void run_parallel_scalar_tests(const char* test_name, const char* allocator_name
 #endif
                 {
                     for (int t = -1; t < REPETITIONS; ++t) {
-                        // INFO: if (Verbose && t == 0) t0 = oneapi::tbb::tick_count::now();
-
                         static_sums.clear();
 
                         ets_type sums(exemplar);
 
-                        REQUIRE( sums.empty());
-                        oneapi::tbb::parallel_for( oneapi::tbb::blocked_range<int>( 0, N, RANGE_MIN ),
-                                parallel_scalar_body<T,Allocator>( sums, allocator_name ) );
-                        REQUIRE( !sums.empty());
+                        REQUIRE(sums.empty());
+                        oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<int>(0, N * p, RANGE_MIN),
+                            parallel_scalar_body<T, Allocator>(sums, allocator_name));
+                        REQUIRE(!sums.empty());
 
                         REQUIRE(static_sums.empty());
-                        oneapi::tbb::parallel_for( oneapi::tbb::blocked_range<int>( 0, N, RANGE_MIN ),
-                                parallel_scalar_body<T,Allocator>( static_sums, allocator_name ) );
-                        REQUIRE( !static_sums.empty());
+                        oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<int>(0, N * p, RANGE_MIN),
+                            parallel_scalar_body<T, Allocator>(static_sums, allocator_name));
+                        REQUIRE(!static_sums.empty());
 
                         // Use combine
                         test_helper<T>::sum(combine_sum, sums.combine(FunctionAdd<T>));
@@ -571,20 +563,20 @@ void run_parallel_scalar_tests(const char* test_name, const char* allocator_name
                     }
                 }
 #if TBB_USE_EXCEPTIONS
-                catch(...) {
-                    // INFO("Exception caught %d\n", targetThrowValue);
+                catch (...) {
                     exception_caught = true;
                 }
 #endif
             }
 
-            REQUIRE((EXPECTED_SUM == test_helper<T>::get(combine_sum) || exception_caught));
-            REQUIRE((EXPECTED_SUM == test_helper<T>::get(combine_ref_sum) || exception_caught));
-            REQUIRE((EXPECTED_SUM == test_helper<T>::get(static_sum) || exception_caught));
-            REQUIRE((EXPECTED_SUM == test_helper<T>::get(accumulator_sum) || exception_caught));
-            REQUIRE((EXPECTED_SUM == test_helper<T>::get(clearing_accumulator_sum) || exception_caught));
+            if (!exception_caught) {
+                REQUIRE(EXPECTED_SUM * p == test_helper<T>::get(combine_sum));
+                REQUIRE(EXPECTED_SUM * p == test_helper<T>::get(combine_ref_sum));
+                REQUIRE(EXPECTED_SUM * p == test_helper<T>::get(static_sum));
+                REQUIRE(EXPECTED_SUM * p == test_helper<T>::get(accumulator_sum));
+                REQUIRE(EXPECTED_SUM * p == test_helper<T>::get(clearing_accumulator_sum));
+            }
 
-            // INFO("done\nparallel combine %s, %d, %g, %g\n", test_name, p, test_helper<T>::get(combine_sum), ( oneapi::tbb::tick_count::now() - t0).seconds());
         }  // MinThread .. MaxThread
         test_throw_count += 10;  // keep testing until we don't get an exception
     } while (exception_caught && test_throw_count < 200);
@@ -642,23 +634,20 @@ struct parallel_vector_reduce_body {
 
 template< typename T, template<class> class Allocator>
 void run_parallel_vector_tests(const char* /* test_name */, const char *allocator_name) {
-    // INFO: oneapi::tbb::tick_count t0;
     typedef std::vector<T, oneapi::tbb::tbb_allocator<T> > container_type;
     typedef oneapi::tbb::enumerable_thread_specific< container_type, Allocator<container_type> > ets_type;
 
-    for (int p = MinThread; p <= MaxThread; ++p) {
-        // INFO("Testing parallel %s with allocator %s on %d thread(s)... ", test_name, allocator_name, p);
+    for (int p = std::max(MinThread, 2); p <= MaxThread; ++p) {
         oneapi::tbb::global_control gc(oneapi::tbb::global_control::max_allowed_parallelism, p);
 
         T sum;
         test_helper<T>::init(sum);
 
         for (int t = -1; t < REPETITIONS; ++t) {
-            // INFO: if (Verbose && t == 0) t0 = oneapi::tbb::tick_count::now();
             ets_type vs;
 
             REQUIRE( vs.empty() );
-            oneapi::tbb::parallel_for( oneapi::tbb::blocked_range<int> (0, N, RANGE_MIN),
+            oneapi::tbb::parallel_for( oneapi::tbb::blocked_range<int> (0, N*p, RANGE_MIN),
                                parallel_vector_for_body<T,Allocator>( vs, allocator_name ) );
             REQUIRE( !vs.empty() );
 
@@ -680,7 +669,7 @@ void run_parallel_vector_tests(const char* /* test_name */, const char *allocato
 
             oneapi::tbb::flattened2d<ets_type> fvs = flatten2d(vs);
             size_t ccount = fvs.size();
-            REQUIRE( ccount == size_t(N) );
+            REQUIRE( ccount == size_t(N*p) );
             size_t elem_cnt = 0;
             typename oneapi::tbb::flattened2d<ets_type>::iterator it;
             auto it2(it);
@@ -710,46 +699,42 @@ void run_parallel_vector_tests(const char* /* test_name */, const char *allocato
             // Cast 25 to size_type to prevent Intel Compiler SFINAE compilation issues with gcc 5.
             ets_type vvs( typename container_type::size_type(25), minus_one, oneapi::tbb::tbb_allocator<T>() );
             REQUIRE( vvs.empty() );
-            oneapi::tbb::parallel_for ( oneapi::tbb::blocked_range<int> (0, N, RANGE_MIN), parallel_vector_for_body<T,Allocator>( vvs, allocator_name ) );
+            oneapi::tbb::parallel_for ( oneapi::tbb::blocked_range<int> (0, N*p, RANGE_MIN), parallel_vector_for_body<T,Allocator>( vvs, allocator_name ) );
             REQUIRE( !vvs.empty() );
 
             parallel_vector_reduce_body< typename ets_type::const_range_type, T > pvrb2;
             oneapi::tbb::parallel_reduce ( vvs.range(1), pvrb2 );
             REQUIRE( pvrb2.count == vvs.size() );
-            REQUIRE( test_helper<T>::get(pvrb2.sum) == N-pvrb2.count*25 );
+            REQUIRE( test_helper<T>::get(pvrb2.sum) == N*p-pvrb2.count*25 );
 
             oneapi::tbb::flattened2d<ets_type> fvvs = flatten2d(vvs);
             ccount = fvvs.size();
-            REQUIRE( ccount == N+pvrb2.count*25 );
+            REQUIRE( ccount == N*p+pvrb2.count*25 );
         }
 
         double result_value = test_helper<T>::get(sum);
-        REQUIRE( EXPECTED_SUM == result_value);
-        // INFO("done\nparallel %s, %d, %g, %g\n", test_name, p, result_value, ( oneapi::tbb::tick_count::now() - t0).seconds());
+        REQUIRE( EXPECTED_SUM*p == result_value);
     }
 }
 
 template<typename T, template<class> class Allocator>
 void run_cross_type_vector_tests(const char* /* test_name */) {
-    // INFO: oneapi::tbb::tick_count t0;
     const char* allocator_name = "default";
     typedef std::vector<T, oneapi::tbb::tbb_allocator<T> > container_type;
 
-    for (int p = MinThread; p <= MaxThread; ++p) {
-        // INFO("Testing parallel %s on %d thread(s)... ", test_name, p);
+    for (int p = std::max(MinThread, 2); p <= MaxThread; ++p) {
         oneapi::tbb::global_control gc(oneapi::tbb::global_control::max_allowed_parallelism, p);
 
         T sum;
         test_helper<T>::init(sum);
 
         for (int t = -1; t < REPETITIONS; ++t) {
-            // INFO: if (Verbose && t == 0) t0 = oneapi::tbb::tick_count::now();
             typedef typename oneapi::tbb::enumerable_thread_specific< container_type, Allocator<container_type>, oneapi::tbb::ets_no_key > ets_nokey_type;
             typedef typename oneapi::tbb::enumerable_thread_specific< container_type, Allocator<container_type>, oneapi::tbb::ets_key_per_instance > ets_tlskey_type;
             ets_nokey_type vs;
 
             REQUIRE( vs.empty());
-            oneapi::tbb::parallel_for ( oneapi::tbb::blocked_range<int> (0, N, RANGE_MIN), parallel_vector_for_body<T, Allocator>( vs, allocator_name ) );
+            oneapi::tbb::parallel_for ( oneapi::tbb::blocked_range<int> (0, N*p, RANGE_MIN), parallel_vector_for_body<T, Allocator>( vs, allocator_name ) );
             REQUIRE( !vs.empty());
 
             // copy construct
@@ -787,20 +772,16 @@ void run_cross_type_vector_tests(const char* /* test_name */) {
         }
 
         double result_value = test_helper<T>::get(sum);
-        REQUIRE( EXPECTED_SUM == result_value);
-        // INFO("done\nparallel %s, %d, %g, %g\n", test_name, p, result_value, ( oneapi::tbb::tick_count::now() - t0).seconds());
+        REQUIRE( EXPECTED_SUM*p == result_value);
     }
 }
 
 template< typename T >
 void run_serial_scalar_tests(const char* /* test_name */) {
-    // INFO: oneapi::tbb::tick_count t0;
     T sum;
     test_helper<T>::init(sum);
 
-    // INFO("Testing serial %s... ", test_name);
     for (int t = -1; t < REPETITIONS; ++t) {
-        // INFO: if (Verbose && t == 0) t0 = oneapi::tbb::tick_count::now();
         for (int i = 0; i < N; ++i) {
             test_helper<T>::sum(sum,1);
         }
@@ -808,20 +789,16 @@ void run_serial_scalar_tests(const char* /* test_name */) {
 
     double result_value = test_helper<T>::get(sum);
     REQUIRE( EXPECTED_SUM == result_value);
-    // INFO("done\nserial %s, 0, %g, %g\n", test_name, result_value, ( oneapi::tbb::tick_count::now() - t0).seconds());
 }
 
 template< typename T >
 void run_serial_vector_tests(const char* /* test_name */) {
-    // INFO: oneapi::tbb::tick_count t0;
     T sum;
     test_helper<T>::init(sum);
     T one;
     test_helper<T>::set(one, 1);
 
-    // INFO("Testing serial %s... ", test_name);
     for (int t = -1; t < REPETITIONS; ++t) {
-        // INFO: if (Verbose && t == 0) t0 = oneapi::tbb::tick_count::now();
         std::vector<T, oneapi::tbb::tbb_allocator<T> > v;
         for (int i = 0; i < N; ++i) {
             v.push_back( one );
@@ -832,7 +809,6 @@ void run_serial_vector_tests(const char* /* test_name */) {
 
     double result_value = test_helper<T>::get(sum);
     REQUIRE( EXPECTED_SUM == result_value);
-    // INFO("done\nserial %s, 0, %g, %g\n", test_name, result_value, ( oneapi::tbb::tick_count::now() - t0).seconds());
 }
 
 const size_t line_size = oneapi::tbb::detail::max_nfs_size;
@@ -941,7 +917,6 @@ struct Validator {
 
 template <typename T, template<class> class Allocator>
 void run_assign_and_copy_constructor_test(const char* /* test_name */, const char *allocator_name) {
-    // INFO("Testing assignment and copy construction for %s with allocator %s\n", test_name, allocator_name);
     #define EXPECTED 3142
 
     // test with exemplar initializer
@@ -965,7 +940,6 @@ void run_assign_and_copy_constructor_test(const char* /* test_name */, const cha
 
 template< template<class> class Allocator>
 void run_assignment_and_copy_constructor_tests(const char* allocator_name) {
-    // INFO("Running assignment and copy constructor tests\n");
     run_assign_and_copy_constructor_test<int, Allocator>("int", allocator_name);
     run_assign_and_copy_constructor_test<double, Allocator>("double", allocator_name);
     // Try class sizes that are close to a cache line in size, in order to check padding calculations.
@@ -1011,7 +985,6 @@ struct EmptyCombineEach {
 //! Test situations where only default constructor or copy constructor is required.
 template<template<class> class Allocator>
 void TestInstantiation(const char* /* allocator_name */) {
-    // INFO("TestInstantiation<%s>\n", allocator_name);
     // Test instantiation is possible when copy constructor is not required.
     oneapi::tbb::enumerable_thread_specific<utils::NoCopy, Allocator<utils::NoCopy> > ets1;
     ets1.local();
@@ -1086,11 +1059,9 @@ void TestMemberTypes() {
 }
 
 size_t init_tbb_alloc_mask() {
-    // INFO("estimatedCacheLineSize == %d, NFS_GetLineSize() returns %d\n", (int)estimatedCacheLineSize, (int)oneapi::tbb::detail::d1::cache_line_size());
     // TODO: use __TBB_alignof(T) to check for local() results instead of using internal knowledges of ets element padding
     if(oneapi::tbb::tbb_allocator<int>::allocator_type() == oneapi::tbb::tbb_allocator<int>::standard) {
         // scalable allocator is not available.
-        // INFO("oneapi::tbb::tbb_allocator is not available\n");
         return 1;
     }
     else {

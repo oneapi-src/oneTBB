@@ -26,13 +26,13 @@ namespace r1 {
 /** Normally called from __TBB_ASSERT macro.
   If assertion handler is null, print message for assertion failure and abort.
   Otherwise call the assertion handler. */
-void __TBB_EXPORTED_FUNC assertion_failure(const char* filename, int line, const char* expression, const char* comment);
+void __TBB_EXPORTED_FUNC assertion_failure(const char* location, int line, const char* expression, const char* comment);
 } // namespace r1
 } // namespace detail
 } // namespace tbb
 
 //! Release version of assertions
-#define __TBB_ASSERT_RELEASE(predicate,message) ((predicate)?((void)0) : tbb::detail::r1::assertion_failure(__FILE__,__LINE__,#predicate,message))
+#define __TBB_ASSERT_RELEASE(predicate,message) ((predicate)?((void)0) : tbb::detail::r1::assertion_failure(__func__,__LINE__,#predicate,message))
 
 #if TBB_USE_ASSERT
     //! Assert that predicate is true.

@@ -14,6 +14,11 @@
     limitations under the License.
 */
 
+#ifndef __TBB_test_common_tls_limit_H_
+#define __TBB_test_common_tls_limit_H_
+
+#include "config.h"
+
 class LimitTLSKeysTo {
 #if _WIN32 || _WIN64
     #if __TBB_WIN8UI_SUPPORT && !defined(TLS_OUT_OF_INDEXES)
@@ -73,3 +78,4 @@ public:
         lastUsedIdx = 0;
     }
 };
+#endif // __TBB_test_common_tls_limit_H_

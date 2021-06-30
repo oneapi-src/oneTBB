@@ -184,6 +184,7 @@ public:
 //! The structure of an arena, except the array of slots.
 /** Separated in order to simplify padding.
     Intrusive list node base class is used by market to form a list of arenas. **/
+// TODO: Analyze arena_base cache lines placement
 struct arena_base : padded<intrusive_list_node> {
     //! The number of workers that have been marked out by the resource manager to service the arena.
     std::atomic<unsigned> my_num_workers_allotted;   // heavy use in stealing loop
@@ -266,10 +267,6 @@ struct arena_base : padded<intrusive_list_node> {
     unsigned my_num_reserved_slots;
 
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-    // arena needs an extra worker despite the arena limit
-    atomic_flag my_local_concurrency_flag;
-    // the number of local mandatory concurrency requests
-    int my_local_concurrency_requests;
     // arena needs an extra worker despite a global limit
     std::atomic<bool> my_global_concurrency_mode;
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
@@ -279,6 +276,13 @@ struct arena_base : padded<intrusive_list_node> {
 
     //! Coroutines (task_dispathers) cache buffer
     arena_co_cache my_co_cache;
+
+#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
+    // arena needs an extra worker despite the arena limit
+    atomic_flag my_local_concurrency_flag;
+    // the number of local mandatory concurrency requests
+    int my_local_concurrency_requests;
+#endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY*/
 
 #if TBB_USE_ASSERT
     //! Used to trap accesses to the object after its destruction.
@@ -478,7 +482,7 @@ inline void arena::on_thread_leaving ( ) {
 
 template<arena::new_work_type work_type>
 void arena::advertise_new_work() {
-    auto is_related_arena = [&] (extended_context context) {
+    auto is_related_arena = [&] (market_context context) {
         return this == context.my_arena_addr;
     };
 
@@ -572,10 +576,10 @@ inline d1::task* arena::steal_task(unsigned arena_index, FastRandom& frnd, execu
             tp.allocator.delete_object(&tp, ed);
             return nullptr;
         }
-        // Note affinity is called for any stealed task (proxy or general)
+        // Note affinity is called for any stolen task (proxy or general)
         ed.affinity_slot = slot;
     } else {
-        // Note affinity is called for any stealed task (proxy or general)
+        // Note affinity is called for any stolen task (proxy or general)
         ed.affinity_slot = d1::any_slot;
     }
     // Update task owner thread id to identify stealing

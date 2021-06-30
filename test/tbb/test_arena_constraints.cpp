@@ -15,7 +15,7 @@
 */
 
 //! \file test_arena_constraints.cpp
-//! \brief Test for [info_namespace scheduler.task_arena] functionality
+//! \brief Test for [info_namespace scheduler.task_arena] specifications
 
 #include "common/common_arena_constraints.h"
 
@@ -26,6 +26,7 @@
 //! Testing NUMA topology traversal correctness
 //! \brief \ref interface \ref requirement
 TEST_CASE("Test core types topology traversal correctness") {
+    system_info::initialize();
     std::vector<index_info> core_types_info = system_info::get_cpu_kinds_info();
     std::vector<tbb::core_type_id> core_types = tbb::info::core_types();
 
@@ -39,6 +40,7 @@ TEST_CASE("Test core types topology traversal correctness") {
 //! Test affinity and default_concurrency correctness for all available constraints.
 //! \brief \ref error_guessing
 TEST_CASE("Test affinity and default_concurrency correctness for all available constraints.") {
+    system_info::initialize();
     for (const auto& constraints: generate_constraints_variety()) {
         tbb::task_arena ta{constraints};
         test_constraints_affinity_and_concurrency(constraints, get_arena_affinity(ta));
@@ -81,6 +83,7 @@ void recursive_arena_binding(constraints_container::iterator current_pos, constr
 //! Testing binding correctness during passing through nested arenas
 //! \brief \ref interface \ref error_guessing
 TEST_CASE("Test binding with nested arenas") {
+    system_info::initialize();
     auto constraints_variety = generate_constraints_variety();
     recursive_arena_binding(constraints_variety.begin(), constraints_variety.end());
 }
@@ -89,6 +92,7 @@ TEST_CASE("Test binding with nested arenas") {
 //! Testing constraints propagation during arenas copy construction
 //! \brief \ref regression
 TEST_CASE("Test constraints propagation during arenas copy construction") {
+    system_info::initialize();
     for (const auto& constraints: generate_constraints_variety()) {
         tbb::task_arena constructed{constraints};
 
@@ -131,9 +135,9 @@ TEST_CASE("Test memory leaks") {
 
         current_memory_usage = utils::GetMemoryUsage();
         stability_counter = current_memory_usage==previous_memory_usage ? stability_counter + 1 : 0;
-        // If the amount of used memory has not changed during 10% of executions,
+        // If the amount of used memory has not changed during 5% of executions,
         // then we can assume that the check was successful
-        if (stability_counter > num_trials / 10) {
+        if (stability_counter > num_trials / 20) {
             no_memory_leak = true;
             break;
         }
@@ -182,4 +186,29 @@ TEST_CASE("Test arena constraints setters") {
 
         constraints_comparison(setter_c, assignment_c);
     }
+}
+
+const int custom_concurrency_value = 42;
+void check_concurrency_level(const tbb::task_arena::constraints& c) {
+    REQUIRE_MESSAGE(tbb::info::default_concurrency(c) == custom_concurrency_value,
+        "Custom arena concurrency was passed to constraints, but was not respected by default_concurrency() call.");
+    REQUIRE_MESSAGE(tbb::task_arena{c}.max_concurrency() == custom_concurrency_value,
+        "Custom arena concurrency was passed to constraints, but was not respected by default_concurrency() call.");
+}
+
+//! Testing concurrency getters output for constraints with custom concurrency value
+//! \brief \ref interface \ref error_guessing
+TEST_CASE("Test concurrency getters output for constraints with custom concurrency value") {
+    tbb::task_arena::constraints c{};
+    c.set_max_concurrency(custom_concurrency_value);
+    check_concurrency_level(c);
+
+    c.set_numa_id(tbb::info::numa_nodes().front());
+    check_concurrency_level(c);
+
+    c.set_core_type(tbb::info::core_types().front());
+    check_concurrency_level(c);
+
+    c.set_max_threads_per_core(1);
+    check_concurrency_level(c);
 }

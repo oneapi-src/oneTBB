@@ -14,8 +14,11 @@
     limitations under the License.
 */
 
-#include "oneapi/tbb/version.h"
+#ifndef __TBB_test_common_utils_dynamic_libs_H_
+#define __TBB_test_common_utils_dynamic_libs_H_
+
 #include "common/test.h"
+#include "oneapi/tbb/version.h"
 
 #if __TBB_DYNAMIC_LOAD_ENABLED
 
@@ -119,3 +122,4 @@ FunctionAddress GetAddress(utils::LIBRARY_HANDLE lib, const char *name)
 }  // namespace utils
 
 #endif // __TBB_DYNAMIC_LOAD_ENABLED
+#endif // __TBB_test_common_utils_dynamic_libs_H_

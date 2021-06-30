@@ -40,6 +40,10 @@ enum class exception_id {
     invalid_key,
     bad_tagged_msg_cast,
     unsafe_wait,
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+    bad_task_handle,
+    bad_task_handle_wrong_task_group,
+#endif // __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
     last_entry
 };
 } // namespace d0

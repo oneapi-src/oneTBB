@@ -14,10 +14,15 @@
     limitations under the License.
 */
 
+#ifndef __TBB_test_common_arena_constraints_H_
+#define __TBB_test_common_arena_constraints_H_
+
 #define TBB_PREVIEW_TASK_ARENA_CONSTRAINTS_EXTENSION 1
 #define __TBB_EXTRA_DEBUG 1
 
-#include "oneapi/tbb/detail/_config.h"
+#if _WIN32 || _WIN64
+#define _CRT_SECURE_NO_WARNINGS
+#endif
 
 #include "common/test.h"
 #include "common/spin_barrier.h"
@@ -26,9 +31,17 @@
 #include "common/utils_concurrency_limit.h"
 
 #include "oneapi/tbb/task_arena.h"
+#include "oneapi/tbb/spin_mutex.h"
 
 #include <vector>
 #include <unordered_set>
+
+#if (_WIN32 || _WIN64) && __TBB_HWLOC_VALID_ENVIRONMENT
+#include <windows.h>
+int get_processors_groups_count() { return GetActiveProcessorGroupCount(); }
+#else
+int get_processors_groups_count() { return 1; }
+#endif
 
 //TODO: Write a test that checks for memory leaks during dynamic link/unlink of TBBbind.
 #if __TBB_HWLOC_VALID_ENVIRONMENT
@@ -38,13 +51,21 @@
 #include <algorithm>
 
 #if _MSC_VER
+#if __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#else
 #pragma warning( push )
 #pragma warning( disable : 4100 )
-#pragma warning( disable : 4996 )
+#endif
 #endif
 #include <hwloc.h>
 #if _MSC_VER
+#if __clang__
+#pragma GCC diagnostic pop
+#else
 #pragma warning( pop )
+#endif
 #endif
 
 #define __HWLOC_HYBRID_CPUS_INTERFACES_PRESENT (HWLOC_API_VERSION >= 0x20400)
@@ -53,12 +74,6 @@
 #define __HWLOC_HYBRID_CPUS_INTERFACES_VALID (!_WIN32 || _WIN64)
 
 #define __HYBRID_CPUS_TESTING __HWLOC_HYBRID_CPUS_INTERFACES_PRESENT && __HWLOC_HYBRID_CPUS_INTERFACES_VALID
-
-#if _WIN32
-int get_processors_groups_count() { return GetActiveProcessorGroupCount(); }
-#else /*!_WIN32*/
-int get_processors_groups_count() { return 1; }
-#endif /*!_WIN32*/
 
 // Macro to check hwloc interfaces return codes
 #define hwloc_require_ex(command, ...)                                          \
@@ -89,7 +104,6 @@ struct index_info {
 };
 
 struct core_info {
-    int concurrency{-1};
     hwloc_bitmap_t cpuset{nullptr};
 
     core_info() = default;
@@ -123,9 +137,18 @@ class system_info {
     using memory_handler_t = tbb::concurrent_unordered_set<hwloc_bitmap_t>;
     memory_handler_t memory_handler{};
 
-    static system_info& instance() {
+    static system_info* system_info_ptr;
+
+public:
+    static void initialize() {
         static system_info topology_instance;
-        return topology_instance;
+        system_info_ptr = &topology_instance;
+    }
+
+private:
+    static system_info& instance() {
+        REQUIRE_MESSAGE(system_info_ptr, "Get access to the uninitialize system info.(reference)");
+        return *system_info_ptr;
     }
 
     system_info() {
@@ -147,10 +170,10 @@ class system_info {
             current_node_info.index = static_cast<int>(current_numa_node->logical_index);
             current_node_info.cpuset = hwloc_bitmap_dup(current_numa_node->cpuset);
             hwloc_bitmap_and(current_node_info.cpuset, current_node_info.cpuset, process_cpuset);
-            current_node_info.concurrency = hwloc_bitmap_weight(current_numa_node->cpuset);
-            REQUIRE_MESSAGE(current_node_info.concurrency > 0,
-                "NUMA node without available PUs detected.(reference)");
-            numa_node_infos.push_back(current_node_info);
+            current_node_info.concurrency = hwloc_bitmap_weight(current_node_info.cpuset);
+            if(current_node_info.concurrency) {
+                numa_node_infos.push_back(current_node_info);
+            }
         }
 
         if (numa_node_infos.empty()) {
@@ -330,6 +353,8 @@ public:
     }
 }; // class system_info
 
+system_info* system_info::system_info_ptr{nullptr};
+
 system_info::affinity_mask prepare_reference_affinity_mask(const tbb::task_arena::constraints& c) {
     auto reference_affinity = system_info::allocate_empty_affinity_mask();
     hwloc_bitmap_copy(reference_affinity, system_info::get_process_affinity_mask());
@@ -359,10 +384,9 @@ system_info::affinity_mask prepare_reference_affinity_mask(const tbb::task_arena
 void test_constraints_affinity_and_concurrency(tbb::task_arena::constraints constraints,
                                                system_info::affinity_mask arena_affinity) {
     int default_concurrency = tbb::info::default_concurrency(constraints);
-
     system_info::affinity_mask reference_affinity = prepare_reference_affinity_mask(constraints);
-
     int max_threads_per_core = system_info::get_maximal_threads_per_core();
+
     if (constraints.max_threads_per_core == tbb::task_arena::automatic || constraints.max_threads_per_core == max_threads_per_core) {
         REQUIRE_MESSAGE(hwloc_bitmap_isequal(reference_affinity, arena_affinity),
             "Wrong affinity mask was applied for the constraints instance.");
@@ -403,17 +427,17 @@ system_info::affinity_mask get_arena_affinity(tbb::task_arena& ta) {
 
     utils::SpinBarrier barrier;
     barrier.initialize(ta.max_concurrency() - 1);
-    std::mutex affinity_mutex{};
+    tbb::spin_mutex affinity_mutex{};
     for (int i = 0; i < ta.max_concurrency() - 1; ++i) {
         ta.enqueue([&]
             {
                 barrier.wait();
+                tbb::spin_mutex::scoped_lock lock(affinity_mutex);
                 system_info::affinity_mask thread_affinity = system_info::allocate_current_affinity_mask();
                 if (get_processors_groups_count() == 1) {
                     REQUIRE_MESSAGE(hwloc_bitmap_isequal(thread_affinity, arena_affinity),
                         "Threads have different masks on machine without several processors groups.");
                 }
-                const std::lock_guard<std::mutex> lock(affinity_mutex);
                 hwloc_bitmap_or(arena_affinity, arena_affinity, thread_affinity);
             }
         );
@@ -478,7 +502,7 @@ constraints_container generate_constraints_variety() {
                         .set_core_type(core_type)
                 );
 
-                for (const auto& max_threads_per_core: system_info::get_available_max_threads_values() ) {
+                for (const auto& max_threads_per_core: system_info::get_available_max_threads_values()) {
                     results.insert(
                         constraints{}
                             .set_max_threads_per_core(max_threads_per_core)
@@ -506,8 +530,23 @@ constraints_container generate_constraints_variety() {
             }
 #endif /*__HYBRID_CPUS_TESTING*/
         }
+
+        // Some constraints may cause unexpected behavior, which would be fixed later.
+        if (get_processors_groups_count() > 1) {
+            for(auto it = results.begin(); it != results.end(); ++it) {
+                if (it->max_threads_per_core != tbb::task_arena::automatic
+                   && (it->numa_id == tbb::task_arena::automatic || tbb::info::numa_nodes().size() == 1)
+#if __HYBRID_CPUS_TESTING
+                   && (it->core_type == tbb::task_arena::automatic || tbb::info::core_types().size() == 1)
+#endif /*__HYBRID_CPUS_TESTING*/
+                ) {
+                    it = results.erase(it);
+                }
+            }
+        }
         return results;
     }();
 
     return constraints_variety;
 }
+#endif // __TBB_test_common_arena_constraints_H_

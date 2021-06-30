@@ -144,13 +144,16 @@ public:
     // Bin keeps 2-linked list of free blocks. It must be 2-linked
     // because during coalescing a block it's removed from a middle of the list.
     struct Bin {
-        FreeBlock   *head,
-                    *tail;
-        MallocMutex  tLock;
+        std::atomic<FreeBlock*> head;
+        FreeBlock*              tail;
+        MallocMutex             tLock;
 
         void removeBlock(FreeBlock *fBlock);
-        void reset() { head = tail = 0; }
-        bool empty() const { return !head; }
+        void reset() {
+            head.store(nullptr, std::memory_order_relaxed);
+            tail = nullptr;
+        }
+        bool empty() const { return !head.load(std::memory_order_relaxed); }
 
         size_t countFreeBlocks();
         size_t reportFreeBlocks(FILE *f);
@@ -201,12 +204,12 @@ private:
     class UsedAddressRange {
         static const uintptr_t ADDRESS_UPPER_BOUND = UINTPTR_MAX;
 
-        uintptr_t   leftBound,
-                    rightBound;
+        std::atomic<uintptr_t> leftBound,
+                               rightBound;
         MallocMutex mutex;
     public:
         // rightBound is zero-initialized
-        void init() { leftBound = ADDRESS_UPPER_BOUND; }
+        void init() { leftBound.store(ADDRESS_UPPER_BOUND, std::memory_order_relaxed); }
         void registerAlloc(uintptr_t left, uintptr_t right);
         void registerFree(uintptr_t left, uintptr_t right);
         // as only left and right bounds are kept, we can return true
@@ -214,7 +217,8 @@ private:
         // was requested from OS
         bool inRange(void *ptr) const {
             const uintptr_t p = (uintptr_t)ptr;
-            return leftBound<=p && p<=rightBound;
+            return leftBound.load(std::memory_order_relaxed)<=p &&
+                   p<=rightBound.load(std::memory_order_relaxed);
         }
     };
 #else

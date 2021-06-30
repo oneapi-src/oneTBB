@@ -14,6 +14,11 @@
     limitations under the License.
 */
 
+#ifndef __TBB_test_common_cpu_usertime_H_
+#define __TBB_test_common_cpu_usertime_H_
+
+#include "config.h"
+
 #include "utils_report.h"
 #include "utils.h"
 
@@ -112,3 +117,4 @@ inline void TestCPUUserTime( std::size_t nthreads, std::size_t nactive = 1 ) {
         INFO("worker threads " << nworkers << " ; waittime: " << waittime_delta << "; usrtime: " << usrtime_delta << " ; avg worker usrtime: " << avg_worker_usrtime);
     }
 }
+#endif // __TBB_test_common_cpu_usertime_H_

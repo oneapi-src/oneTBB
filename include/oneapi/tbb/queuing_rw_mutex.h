@@ -20,6 +20,7 @@
 #include "detail/_config.h"
 #include "detail/_namespace_injection.h"
 #include "detail/_assert.h"
+#include "detail/_mutex_common.h"
 
 #include "profiling.h"
 
@@ -107,6 +108,8 @@ public:
         //! Downgrade writer to become a reader.
         bool downgrade_to_reader();
 
+        bool is_writer() const;
+
     private:
         //! The pointer to the mutex owned, or NULL if not holding a mutex.
         queuing_rw_mutex* my_mutex;
@@ -160,6 +163,7 @@ bool try_acquire(d1::queuing_rw_mutex&, d1::queuing_rw_mutex::scoped_lock&, bool
 void release(d1::queuing_rw_mutex::scoped_lock&);
 bool upgrade_to_writer(d1::queuing_rw_mutex::scoped_lock&);
 bool downgrade_to_reader(d1::queuing_rw_mutex::scoped_lock&);
+bool is_writer(const d1::queuing_rw_mutex::scoped_lock&);
 } // namespace r1
 
 namespace d1 {
@@ -183,6 +187,10 @@ inline bool queuing_rw_mutex::scoped_lock::upgrade_to_writer() {
 
 inline bool queuing_rw_mutex::scoped_lock::downgrade_to_reader() {
     return r1::downgrade_to_reader(*this);
+}
+
+inline bool queuing_rw_mutex::scoped_lock::is_writer() const {
+    return r1::is_writer(*this);
 }
 } // namespace d1
 

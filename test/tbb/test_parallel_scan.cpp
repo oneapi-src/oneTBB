@@ -14,10 +14,15 @@
     limitations under the License.
 */
 
+#if __INTEL_COMPILER && _MSC_VER
+#pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
+#endif
+
 #include "common/test.h"
 #include "common/config.h"
 #include "common/utils_concurrency_limit.h"
 #include "common/cpu_usertime.h"
+#include "common/concepts_common.h"
 
 #include "tbb/global_control.h"
 #include "tbb/parallel_scan.h"
@@ -82,12 +87,14 @@ struct Storage {
 };
 
 template<typename T>
-void JoinStorages(const Storage<T>& left, Storage<T>& right) {
+Storage<T> JoinStorages(const Storage<T>& left, const Storage<T>& right) {
+    Storage<T> result = right;
     CHECK(ScanIsRunning);
     CHECK(left.my_range.end() == right.my_range.begin());
-    right.my_total += left.my_total;
-    right.my_range = Range(left.my_range.begin(), right.my_range.end(), 1);
+    result.my_total += left.my_total;
+    result.my_range = Range(left.my_range.begin(), right.my_range.end(), 1);
     CHECK(ScanIsRunning);
+    return result;
 }
 
 template<typename T>
@@ -187,7 +194,7 @@ public:
         CHECK(my_state == partial);
         CHECK( ((left_body.my_state == full) || (left_body.my_state==partial)) );
 
-        JoinStorages(left, right);
+        right = JoinStorages(left, right);
 
         CHECK(left_body.self == &left_body);
         my_state = left_body.my_state;
@@ -239,9 +246,8 @@ public:
 class JoinBody {
 public:
     template<typename T>
-    Storage<T> operator()(const Storage<T>& left, Storage<T>& right) const {
-        JoinStorages(left, right);
-        return right;
+    Storage<T> operator()(const Storage<T>& left, const Storage<T>& right) const {
+        return JoinStorages(left, right);
     }
 };
 
@@ -273,9 +279,8 @@ struct ParallelScanLambda {
             [&addend, &sum, init](const Range& r, Storage<T> storage, bool is_final_scan /*tag*/) -> Storage<T> {
                 return ScanWithInit(r, init, is_final_scan, storage, sum, addend);
             },
-            [](const Storage<T>& left, Storage<T>& right) -> Storage<T> {
-                JoinStorages(left, right);
-                return right;
+            [](const Storage<T>& left, const Storage<T>& right) -> Storage<T> {
+                return JoinStorages(left, right);
             },
             mode);
         ScanIsRunning = false;
@@ -376,12 +381,11 @@ struct ParallelScanGenericLambda {
         }
         ScanIsRunning = true;
         Storage<T> res = ParallelScanFunctionalInvoker(range, Storage<T>(0),
-            [&addend, &sum, init](const auto& rng, auto storage, auto scan_tag) {
-                return ScanWithInit(rng, init, scan_tag.is_final_scan(), storage, sum, addend);
+            [&addend, &sum, init](const auto& rng, auto storage, bool is_final_scan) {
+                return ScanWithInit(rng, init, is_final_scan, storage, sum, addend);
             },
-            [](const auto& left, auto& right) {
-                JoinStorages(left, right);
-                return right;
+            [](const auto& left, const auto& right) {
+                return JoinStorages(left, right);
             },
             mode);
         ScanIsRunning = false;
@@ -392,7 +396,95 @@ struct ParallelScanGenericLambda {
 };
 #endif /* __TBB_CPP14_GENERIC_LAMBDAS_PRESENT */
 
+#if __TBB_CPP20_CONCEPTS_PRESENT
+template <typename... Args>
+concept can_call_parallel_scan_basic = requires( Args&&... args ) {
+    tbb::parallel_scan(std::forward<Args>(args)...);
+};
 
+template <typename Range, typename Body>
+concept can_call_imperative_pscan = can_call_parallel_scan_basic<const Range&, Body&> &&
+                                    can_call_parallel_scan_basic<const Range&, Body&, const tbb::simple_partitioner&> &&
+                                    can_call_parallel_scan_basic<const Range&, Body&, const tbb::auto_partitioner&>;
+
+template <typename Range, typename Value, typename Func, typename Combine>
+concept can_call_functional_pscan = can_call_parallel_scan_basic<const Range&, const Value&, const Func&, const Combine&> &&
+                                    can_call_parallel_scan_basic<const Range&, const Value&, const Func&, const Combine&, const tbb::simple_partitioner&> &&
+                                    can_call_parallel_scan_basic<const Range&, const Value&, const Func&, const Combine&, const tbb::auto_partitioner&>;
+
+using CorrectRange = test_concepts::range::Correct;
+
+template <typename Range>
+using CorrectBody = test_concepts::parallel_scan_body::Correct<Range>;
+
+template <typename Range, typename T>
+using CorrectFunc = test_concepts::parallel_scan_function::Correct<Range, T>;
+
+template <typename T>
+using CorrectCombine = test_concepts::parallel_scan_combine::Correct<T>;
+
+void test_pscan_range_constraints() {
+    using namespace test_concepts::range;
+    static_assert(can_call_imperative_pscan<Correct, CorrectBody<Correct>>);
+    static_assert(!can_call_imperative_pscan<NonCopyable, CorrectBody<NonCopyable>>);
+    static_assert(!can_call_imperative_pscan<NonDestructible, CorrectBody<NonDestructible>>);
+    static_assert(!can_call_imperative_pscan<NonSplittable, CorrectBody<NonSplittable>>);
+    static_assert(!can_call_imperative_pscan<NoEmpty, CorrectBody<NoEmpty>>);
+    static_assert(!can_call_imperative_pscan<EmptyNonConst, CorrectBody<EmptyNonConst>>);
+    static_assert(!can_call_imperative_pscan<WrongReturnEmpty, CorrectBody<WrongReturnEmpty>>);
+    static_assert(!can_call_imperative_pscan<NoIsDivisible, CorrectBody<NoIsDivisible>>);
+    static_assert(!can_call_imperative_pscan<IsDivisibleNonConst, CorrectBody<IsDivisibleNonConst>>);
+    static_assert(!can_call_imperative_pscan<WrongReturnIsDivisible, CorrectBody<WrongReturnIsDivisible>>);
+
+    static_assert(can_call_functional_pscan<Correct, int, CorrectFunc<Correct, int>, CorrectCombine<int>>);
+    static_assert(!can_call_functional_pscan<NonCopyable, int, CorrectFunc<NonCopyable, int>, CorrectCombine<int>>);
+    static_assert(!can_call_functional_pscan<NonDestructible, int, CorrectFunc<NonDestructible, int>, CorrectCombine<int>>);
+    static_assert(!can_call_functional_pscan<NonSplittable, int, CorrectFunc<NonSplittable, int>, CorrectCombine<int>>);
+    static_assert(!can_call_functional_pscan<NoEmpty, int, CorrectFunc<NoEmpty, int>, CorrectCombine<int>>);
+    static_assert(!can_call_functional_pscan<EmptyNonConst, int, CorrectFunc<EmptyNonConst, int>, CorrectCombine<int>>);
+    static_assert(!can_call_functional_pscan<WrongReturnEmpty, int, CorrectFunc<WrongReturnEmpty, int>, CorrectCombine<int>>);
+    static_assert(!can_call_functional_pscan<NoIsDivisible, int, CorrectFunc<NoIsDivisible, int>, CorrectCombine<int>>);
+    static_assert(!can_call_functional_pscan<IsDivisibleNonConst, int, CorrectFunc<IsDivisibleNonConst, int>, CorrectCombine<int>>);
+    static_assert(!can_call_functional_pscan<WrongReturnIsDivisible, int, CorrectFunc<WrongReturnIsDivisible, int>, CorrectCombine<int>>);
+}
+
+void test_pscan_body_constraints() {
+    using namespace test_concepts::parallel_scan_body;
+    static_assert(can_call_imperative_pscan<CorrectRange, Correct<CorrectRange>>);
+    static_assert(!can_call_imperative_pscan<CorrectRange, NonSplittable<CorrectRange>>);
+    static_assert(!can_call_imperative_pscan<CorrectRange, NoPreScanOperatorRoundBrackets<CorrectRange>>);
+    static_assert(!can_call_imperative_pscan<CorrectRange, WrongFirstInputPreScanOperatorRoundBrackets<CorrectRange>>);
+    static_assert(!can_call_imperative_pscan<CorrectRange, WrongSecondInputPreScanOperatorRoundBrackets<CorrectRange>>);
+    static_assert(!can_call_imperative_pscan<CorrectRange, NoFinalScanOperatorRoundBrackets<CorrectRange>>);
+    static_assert(!can_call_imperative_pscan<CorrectRange, WrongFirstInputFinalScanOperatorRoundBrackets<CorrectRange>>);
+    static_assert(!can_call_imperative_pscan<CorrectRange, WrongSecondInputFinalScanOperatorRoundBrackets<CorrectRange>>);
+    static_assert(!can_call_imperative_pscan<CorrectRange, NoReverseJoin<CorrectRange>>);
+    static_assert(!can_call_imperative_pscan<CorrectRange, WrongInputReverseJoin<CorrectRange>>);
+    static_assert(!can_call_imperative_pscan<CorrectRange, NoAssign<CorrectRange>>);
+    static_assert(!can_call_imperative_pscan<CorrectRange, WrongInputAssign<CorrectRange>>);
+}
+
+void test_pscan_func_constraints() {
+    using namespace test_concepts::parallel_scan_function;
+    static_assert(can_call_functional_pscan<CorrectRange, int, Correct<CorrectRange, int>, CorrectCombine<int>>);
+    static_assert(!can_call_functional_pscan<CorrectRange, int, NoOperatorRoundBrackets<CorrectRange, int>, CorrectCombine<int>>);
+    static_assert(!can_call_functional_pscan<CorrectRange, int, OperatorRoundBracketsNonConst<CorrectRange, int>, CorrectCombine<int>>);
+    static_assert(!can_call_functional_pscan<CorrectRange, int, WrongFirstInputOperatorRoundBrackets<CorrectRange, int>, CorrectCombine<int>>);
+    static_assert(!can_call_functional_pscan<CorrectRange, int, WrongSecondInputOperatorRoundBrackets<CorrectRange, int>, CorrectCombine<int>>);
+    static_assert(!can_call_functional_pscan<CorrectRange, int, WrongReturnOperatorRoundBrackets<CorrectRange, int>, CorrectCombine<int>>);
+}
+
+void test_pscan_combine_constraints() {
+    using namespace test_concepts::parallel_scan_combine;
+    static_assert(can_call_functional_pscan<CorrectRange, int, CorrectFunc<CorrectRange, int>, Correct<int>>);
+    static_assert(!can_call_functional_pscan<CorrectRange, int, CorrectFunc<CorrectRange, int>, NoOperatorRoundBrackets<int>>);
+    static_assert(!can_call_functional_pscan<CorrectRange, int, CorrectFunc<CorrectRange, int>, OperatorRoundBracketsNonConst<int>>);
+    static_assert(!can_call_functional_pscan<CorrectRange, int, CorrectFunc<CorrectRange, int>, WrongFirstInputOperatorRoundBrackets<int>>);
+    static_assert(!can_call_functional_pscan<CorrectRange, int, CorrectFunc<CorrectRange, int>, WrongSecondInputOperatorRoundBrackets<int>>);
+    static_assert(!can_call_functional_pscan<CorrectRange, int, CorrectFunc<CorrectRange, int>, WrongReturnOperatorRoundBrackets<int>>);
+}
+
+#endif // __TBB_CPP20_CONCEPTS_PRESENT
 
 // Test for parallel_scan with with different partitioners
 //! \brief \ref error_guessing \ref resource_usage
@@ -472,3 +564,13 @@ TEST_CASE("parallel_scan testing with generic lambdas") {
     }
 }
 #endif /* __TBB_CPP14_GENERIC_LAMBDAS_PRESENT */
+
+#if __TBB_CPP20_CONCEPTS_PRESENT
+//! \brief \ref error_guessing
+TEST_CASE("parallel_scan constraints") {
+    test_pscan_range_constraints();
+    test_pscan_body_constraints();
+    test_pscan_func_constraints();
+    test_pscan_combine_constraints();
+}
+#endif // __TBB_CPP20_CONCEPTS_PRESENT

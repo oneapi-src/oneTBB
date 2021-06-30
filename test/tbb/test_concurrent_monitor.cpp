@@ -14,11 +14,16 @@
     limitations under the License.
 */
 
+#if _WIN32 || _WIN64
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #if _MSC_VER && !defined(__INTEL_COMPILER)
 // structure was padded due to alignment specifier
 #pragma warning( disable: 4324 )
 #endif
 
+#define TBB_PREVIEW_MUTEXES 1
 #define TBB_PREVIEW_WAITING_FOR_WORKERS 1
 
 #include "common/test.h"
@@ -29,6 +34,7 @@
 #include "tbb/global_control.h"
 #include "tbb/task_arena.h"
 #include "../../src/tbb/concurrent_monitor.h"
+#include "../../src/tbb/misc.cpp"
 
 //! \file test_concurrent_monitor.cpp
 //! \brief Test for [internal] functionality

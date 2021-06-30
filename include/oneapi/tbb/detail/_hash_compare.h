@@ -79,6 +79,18 @@ private:
 };
 
 } // namespace d1
+#if __TBB_CPP20_CONCEPTS_PRESENT
+inline namespace d0 {
+
+template <typename HashCompare, typename Key>
+concept hash_compare = std::copy_constructible<HashCompare> &&
+                       requires( const std::remove_reference_t<HashCompare>& hc, const Key& key1, const Key& key2 ) {
+                           { hc.hash(key1) } -> std::same_as<std::size_t>;
+                           { hc.equal(key1, key2) } -> std::convertible_to<bool>;
+                       };
+
+} // namespace d0
+#endif // __TBB_CPP20_CONCEPTS_PRESENT
 } // namespace detail
 } // namespace tbb
 

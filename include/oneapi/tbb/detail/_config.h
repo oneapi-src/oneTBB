@@ -44,7 +44,7 @@
 
 #define __TBB_CPP14_PRESENT (__TBB_LANG >= 201402L)
 #define __TBB_CPP17_PRESENT (__TBB_LANG >= 201703L)
-#define __TBB_CPP20_PRESENT (__TBB_LANG >= 201709L)
+#define __TBB_CPP20_PRESENT (__TBB_LANG >= 202002L)
 
 #if __INTEL_COMPILER || _MSC_VER
     #define __TBB_NOINLINE(decl) __declspec(noinline) decl
@@ -250,7 +250,12 @@
 #define __TBB_CPP17_LOGICAL_OPERATIONS_PRESENT          (__TBB_LANG >= 201703L)
 #define __TBB_CPP17_ALLOCATOR_IS_ALWAYS_EQUAL_PRESENT   (__TBB_LANG >= 201703L)
 #define __TBB_CPP17_IS_SWAPPABLE_PRESENT                (__TBB_LANG >= 201703L)
-#define __TBB_CPP20_COMPARISONS_PRESENT                 __TBB_CPP20_PRESENT
+
+#if defined(__cpp_impl_three_way_comparison) && defined(__cpp_lib_three_way_comparison)
+    #define __TBB_CPP20_COMPARISONS_PRESENT ((__cpp_impl_three_way_comparison >= 201907L) && (__cpp_lib_three_way_comparison >= 201907L))
+#else
+    #define __TBB_CPP20_COMPARISONS_PRESENT __TBB_CPP20_PRESENT
+#endif
 
 #define __TBB_RESUMABLE_TASKS                           (!__TBB_WIN8UI_SUPPORT && !__ANDROID__)
 
@@ -306,7 +311,6 @@
 
 #define __TBB_CPP17_UNCAUGHT_EXCEPTIONS_PRESENT             (_MSC_VER >= 1900 || __GLIBCXX__ && __cpp_lib_uncaught_exceptions \
                                                             || _LIBCPP_VERSION >= 3700 && (!__TBB_MACOS_TARGET_VERSION || __TBB_MACOS_TARGET_VERSION >= 101200))
-
 
 #define __TBB_TSX_INTRINSICS_PRESENT ((__RTM__ || _MSC_VER>=1700 || __INTEL_COMPILER) && !__ANDROID__)
 
@@ -431,6 +435,28 @@
     #endif
 #endif
 
+#if __SANITIZE_THREAD__
+    #define __TBB_USE_THREAD_SANITIZER 1
+#elif defined(__has_feature)
+#if __has_feature(thread_sanitizer)
+    #define __TBB_USE_THREAD_SANITIZER 1
+#endif
+#endif
+
+#ifndef __TBB_USE_CONSTRAINTS
+#define __TBB_USE_CONSTRAINTS 1
+#endif
+
+#ifndef __TBB_STRICT_CONSTRAINTS
+#define __TBB_STRICT_CONSTRAINTS 1
+#endif
+
+#if __TBB_CPP20_CONCEPTS_PRESENT && __TBB_USE_CONSTRAINTS
+    #define __TBB_requires(...) requires __VA_ARGS__
+#else // __TBB_CPP20_CONCEPTS_PRESENT
+    #define __TBB_requires(...)
+#endif // __TBB_CPP20_CONCEPTS_PRESENT
+
 /** Macros of the form __TBB_XXX_BROKEN denote known issues that are caused by
     the bugs in compilers, standard or OS specific libraries. They should be
     removed as soon as the corresponding bugs are fixed or the buggy OS/compiler
@@ -468,6 +494,18 @@
 
 #ifndef __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
 #define __TBB_PREVIEW_FLOW_GRAPH_NODE_SET       (TBB_PREVIEW_FLOW_GRAPH_FEATURES)
+#endif
+
+#if TBB_PREVIEW_MUTEXES || __TBB_BUILD
+#define __TBB_PREVIEW_MUTEXES 1
+#endif
+
+#if TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS
+#define __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS 1
+#endif
+
+#if TBB_PREVIEW_TASK_GROUP_EXTENSIONS || __TBB_BUILD
+#define __TBB_PREVIEW_TASK_GROUP_EXTENSIONS 1
 #endif
 
 #endif // __TBB_detail__config_H

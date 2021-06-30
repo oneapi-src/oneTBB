@@ -16,6 +16,7 @@
 
 #if __TBB_CPF_BUILD
 #define TBB_PREVIEW_ISOLATED_TASK_GROUP 1
+#define TBB_PREVIEW_TASK_GROUP_EXTENSIONS 1
 #endif
 
 #include "common/test.h"
@@ -28,6 +29,7 @@
 #include "common/concurrency_tracker.h"
 
 #include <atomic>
+#include <stdexcept>
 
 //! \file test_task_group.cpp
 //! \brief Test for [scheduler.task_group scheduler.task_group_status] specification
@@ -277,10 +279,11 @@ const std::uintptr_t F = 6765;
 atomic_t g_Sum;
 
 #define FIB_TEST_PROLOGUE() \
-    const unsigned numRepeats = g_MaxConcurrency * (TBB_USE_DEBUG ? 4 : 16);    \
+    const unsigned numRepeats = g_MaxConcurrency * 4;    \
     utils::ConcurrencyTracker::Reset()
 
 #define FIB_TEST_EPILOGUE(sum) \
+    CHECK(utils::ConcurrencyTracker::PeakParallelism() <= g_MaxConcurrency); \
     CHECK( sum == numRepeats * F );
 
 
@@ -455,8 +458,16 @@ void LaunchChildrenWithFunctor () {
     atomic_t count;
     count = 0;
     task_group_type g;
-    for( unsigned i = 0; i < NUM_CHORES; ++i )
-        g.run( ThrowingTask(count) );
+    for (unsigned i = 0; i < NUM_CHORES; ++i) {
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+        if (i % 2 == 1) {
+            g.run(g.defer(ThrowingTask(count)));
+        } else
+#endif
+        {
+            g.run(ThrowingTask(count));
+        }
+    }
 #if TBB_USE_EXCEPTIONS
     tbb::task_group_status status = tbb::not_complete;
     bool exceptionCaught = false;
@@ -484,9 +495,18 @@ template<typename task_group_type>
 void TestManualCancellationWithFunctor () {
     ResetGlobals( false, false );
     task_group_type tg;
-    for( unsigned i = 0; i < NUM_GROUPS; ++i )
+    for (unsigned i = 0; i < NUM_GROUPS; ++i) {
         // TBB version does not require taking function address
-        tg.run( &LaunchChildrenWithFunctor<task_group_type> );
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+        if (i % 2 == 0) {
+            auto h = tg.defer(&LaunchChildrenWithFunctor<task_group_type>);
+            tg.run(std::move(h));
+        } else
+#endif
+        {
+            tg.run(&LaunchChildrenWithFunctor<task_group_type>);
+        }
+    }
     CHECK_MESSAGE ( !tbb::is_current_task_group_canceling(), "Unexpected cancellation" );
     while ( g_MaxConcurrency > 1 && g_TaskCount == 0 )
         utils::yield();
@@ -746,6 +766,10 @@ namespace TestIsolationNS {
 //! Test for thread safety for the task_group
 //! \brief \ref error_guessing \ref resource_usage
 TEST_CASE("Thread safety test for the task group") {
+    if (tbb::this_task_arena::max_concurrency() < 2) {
+        // The test requires more than one thread to check thread safety
+        return;
+    }
     for (unsigned p=MinThread; p <= MaxThread; ++p) {
         if (p < 2) {
             continue;
@@ -771,8 +795,11 @@ TEST_CASE("Fibonacci test for the task group") {
 TEST_CASE("Cancellation and exception test for the task group") {
     for (unsigned p = MinThread; p <= MaxThread; ++p) {
         tbb::global_control limit(tbb::global_control::max_allowed_parallelism, p);
+        tbb::task_arena a(p);
         g_MaxConcurrency = p;
-        RunCancellationAndExceptionHandlingTests<tbb::task_group>();
+        a.execute([] {
+            RunCancellationAndExceptionHandlingTests<tbb::task_group>();
+        });
     }
 }
 
@@ -800,6 +827,10 @@ TEST_CASE("Move semantics test for the task group") {
 //! Test for thread safety for the isolated_task_group
 //! \brief \ref error_guessing
 TEST_CASE("Thread safety test for the isolated task group") {
+    if (tbb::this_task_arena::max_concurrency() < 2) {
+        // The test requires more than one thread to check thread safety
+        return;
+    }
     for (unsigned p=MinThread; p <= MaxThread; ++p) {
         if (p < 2) {
             continue;
@@ -951,6 +982,10 @@ TEST_CASE("Test for stack overflow avoidance mechanism within arena") {
 //! \brief \ref regression
 TEST_CASE("Async task group") {
     int num_threads = tbb::this_task_arena::max_concurrency();
+    if (num_threads < 3) {
+        // The test requires at least 2 worker threads
+        return;
+    }
     tbb::task_arena a(2*num_threads, num_threads);
     utils::SpinBarrier barrier(num_threads + 2);
     tbb::task_group tg[2];
@@ -978,3 +1013,281 @@ TEST_CASE("Async task group") {
         });
     });
 }
+
+struct SelfRunner {
+    tbb::task_group& m_tg;
+    std::atomic<unsigned>& count;
+    void operator()() const {
+        unsigned previous_count = count.fetch_sub(1);
+        if (previous_count > 1)
+            m_tg.run( *this );
+    }
+};
+
+//! Submit work to single task_group instance from inside the work
+//! \brief \ref error_guessing
+TEST_CASE("Run self using same task_group instance") {
+    const unsigned num = 10;
+    std::atomic<unsigned> count{num};
+    tbb::task_group tg;
+    SelfRunner uf{tg, count};
+    tg.run( uf );
+    tg.wait();
+    CHECK_MESSAGE(
+        count == 0,
+        "Not all tasks were spawned from inside the functor running within task_group."
+    );
+}
+
+#if TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+
+namespace accept_task_group_context {
+
+template <typename TaskGroup, typename CancelF, typename WaitF>
+void run_cancellation_use_case(CancelF&& cancel, WaitF&& wait) {
+    std::atomic<bool> outer_cancelled{false};
+    std::atomic<unsigned> count{13};
+
+    tbb::task_group_context inner_ctx(tbb::task_group_context::isolated);
+    TaskGroup inner_tg(inner_ctx);
+
+    tbb::task_group outer_tg;
+    auto outer_tg_task = [&] {
+        inner_tg.run([&] {
+            utils::SpinWaitUntilEq(outer_cancelled, true);
+            inner_tg.run( SelfRunner{inner_tg, count} );
+        });
+
+        utils::try_call([&] {
+            std::forward<CancelF>(cancel)(outer_tg);
+        }).on_completion([&] {
+            outer_cancelled = true;
+        });
+    };
+
+    auto check = [&] {
+        tbb::task_group_status outer_status = tbb::task_group_status::not_complete;
+        outer_status = std::forward<WaitF>(wait)(outer_tg);
+        CHECK_MESSAGE(
+            outer_status == tbb::task_group_status::canceled,
+            "Outer task group should have been cancelled."
+        );
+
+        tbb::task_group_status inner_status = inner_tg.wait();
+        CHECK_MESSAGE(
+            inner_status == tbb::task_group_status::complete,
+            "Inner task group should have completed despite the cancellation of the outer one."
+        );
+
+        CHECK_MESSAGE(0 == count, "Some of the inner group tasks were not executed.");
+    };
+
+    outer_tg.run(outer_tg_task);
+    check();
+}
+
+template <typename TaskGroup>
+void test() {
+    run_cancellation_use_case<TaskGroup>(
+        [](tbb::task_group& outer) { outer.cancel(); },
+        [](tbb::task_group& outer) { return outer.wait(); }
+    );
+
+#if TBB_USE_EXCEPTIONS
+    run_cancellation_use_case<TaskGroup>(
+        [](tbb::task_group& /*outer*/) {
+            volatile bool suppress_unreachable_code_warning = true;
+            if (suppress_unreachable_code_warning) {
+                throw int();
+            }
+        },
+        [](tbb::task_group& outer) {
+            try {
+                outer.wait();
+                return tbb::task_group_status::complete;
+            } catch(const int&) {
+                return tbb::task_group_status::canceled;
+            }
+        }
+    );
+#endif
+}
+
+} // namespace accept_task_group_context
+
+//! Respect task_group_context passed from outside
+//! \brief \ref interface \ref requirement
+TEST_CASE("Respect task_group_context passed from outside") {
+    accept_task_group_context::test<tbb::task_group>();
+#if TBB_PREVIEW_ISOLATED_TASK_GROUP
+    accept_task_group_context::test<tbb::isolated_task_group>();
+#endif
+}
+#endif // TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+//! Test checks that for lost task handle
+//! \brief \ref requirement
+TEST_CASE("Task handle created but not run"){
+    {
+        tbb::task_group tg;
+
+        std::atomic<bool> run {false};
+
+        auto h = tg.defer([&]{
+            run = true;
+        });
+        CHECK_MESSAGE(run == false, "delayed task should not be run until run(task_handle) is called");
+    }
+}
+
+//! Basic test for task handle
+//! \brief \ref interface \ref requirement
+TEST_CASE("Task handle run"){
+    tbb::task_handle h;
+
+    tbb::task_group tg;
+    std::atomic<bool> run {false};
+
+    h = tg.defer([&]{
+        run = true;
+    });
+    CHECK_MESSAGE(run == false, "delayed task should not be run until run(task_handle) is called");
+    tg.run(std::move(h));
+    tg.wait();
+    CHECK_MESSAGE(run == true, "Delayed task should be completed when task_group::wait exits");
+
+    CHECK_MESSAGE(h == nullptr, "Delayed task can be executed only once");
+}
+
+//! Test for empty check
+//! \brief \ref interface
+TEST_CASE("Task handle empty check"){
+    tbb::task_group tg;
+
+    tbb::task_handle h;
+
+    bool empty = (h == nullptr);
+    CHECK_MESSAGE(empty, "default constructed task_handle should be empty");
+
+    h = tg.defer([]{});
+
+    CHECK_MESSAGE(h != nullptr, "delayed task returned by task_group::delayed should not be empty");
+}
+
+//! Test that task_handle prolongs task_group::wait
+//! \brief \ref requirement
+TEST_CASE("Task handle blocks wait"){
+    tbb::task_group tg;
+
+    std::atomic<bool> completed  {false};
+    std::atomic<bool> start_wait {false};
+    std::atomic<bool> thread_started{false};
+
+    tbb::task_handle h = tg.defer([&]{
+        completed = true;
+    });
+
+    std::thread wait_thread {[&]{
+        CHECK_MESSAGE(completed == false, "Deferred task should not be run until run(task_handle) is called");
+
+        thread_started = true;
+        utils::SpinWaitUntilEq(start_wait, true);
+        tg.wait();
+        CHECK_MESSAGE(completed == true, "Deferred task should be completed when task_group::wait exits");
+    }};
+
+    utils::SpinWaitUntilEq(thread_started, true);
+    CHECK_MESSAGE(completed == false, "Deferred task should not be run until run(task_handle) is called");
+
+    tg.run(std::move(h));
+    //TODO: more accurate test (with fixed number of threads (1 ?) to guarantee correctness of following assert)
+    //CHECK_MESSAGE(completed == false, "Deferred task should not be run until run(task_handle) and wait is called");
+    start_wait = true;
+    wait_thread.join();
+}
+
+//! The test for task_handle inside other task waiting with run
+//! \brief \ref requirement
+TEST_CASE("Task handle for scheduler bypass"){
+    tbb::task_group tg;
+    std::atomic<bool> run {false};
+
+    tg.run([&]{
+        return tg.defer([&]{
+            run = true;
+        });
+    });
+
+    tg.wait();
+    CHECK_MESSAGE(run == true, "task handle returned by user lambda (bypassed) should be run");
+}
+
+//! The test for task_handle inside other task waiting with run_and_wait
+//! \brief \ref requirement
+TEST_CASE("Task handle for scheduler bypass via run_and_wait"){
+    tbb::task_group tg;
+    std::atomic<bool> run {false};
+
+    tg.run_and_wait([&]{
+        return tg.defer([&]{
+            run = true;
+        });
+    });
+
+    CHECK_MESSAGE(run == true, "task handle returned by user lambda (bypassed) should be run");
+}
+
+#if TBB_USE_EXCEPTIONS
+//! The test for exception handling in task_handle
+//! \brief \ref requirement
+TEST_CASE("Task handle exception propagation"){
+    tbb::task_group tg;
+
+    tbb::task_handle h = tg.defer([&]{
+        volatile bool suppress_unreachable_code_warning = true;
+        if (suppress_unreachable_code_warning) {
+            throw std::runtime_error{ "" };
+        }
+    });
+
+    tg.run(std::move(h));
+
+    CHECK_THROWS_AS(tg.wait(), std::runtime_error);
+}
+
+//! The test for error in scheduling empty task_handle
+//! \brief \ref requirement
+TEST_CASE("Empty task_handle cannot be scheduled"){
+    tbb::task_group tg;
+
+    CHECK_THROWS_WITH_AS(tg.run(tbb::task_handle{}), "Attempt to schedule empty task_handle", std::runtime_error);
+}
+
+//! The test for error in task_handle being scheduled into task_group different from one it was created from
+//! \brief \ref requirement
+TEST_CASE("task_handle cannot be scheduled into different task_group"){
+    tbb::task_group tg;
+    tbb::task_group tg1;
+
+    CHECK_THROWS_WITH_AS(tg1.run(tg.defer([]{})), "Attempt to schedule task_handle into different task_group", std::runtime_error);
+}
+
+//! The test for error in task_handle being scheduled into task_group different from one it was created from
+//! \brief \ref requirement
+TEST_CASE("task_handle cannot be scheduled into other task_group of the same context"
+        * doctest::should_fail()    //Implementation is no there yet, as it is not clear that is the expected behaviour
+        * doctest::skip()           //skip the test for now, to not pollute the test log
+)
+{
+    tbb::task_group_context ctx;
+
+    tbb::task_group tg(ctx);
+    tbb::task_group tg1(ctx);
+
+    CHECK_NOTHROW(tg.run(tg.defer([]{})));
+    CHECK_THROWS_WITH_AS(tg1.run(tg.defer([]{})), "Attempt to schedule task_handle into different task_group", std::runtime_error);
+}
+
+#endif // TBB_USE_EXCEPTIONS
+#endif //__TBB_PREVIEW_TASK_GROUP_EXTENSIONS

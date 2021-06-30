@@ -59,6 +59,17 @@
 // Use MallocMutex implementation
 typedef MallocMutex ProxyMutex;
 
+// Adds aliasing and copy attributes to function if available
+#if defined(__has_attribute)
+    #if __has_attribute(__copy__)
+        #define __TBB_ALIAS_ATTR_COPY(name) __attribute__((alias (#name), __copy__(name)))
+    #endif
+#endif
+
+#ifndef __TBB_ALIAS_ATTR_COPY
+    #define __TBB_ALIAS_ATTR_COPY(name) __attribute__((alias (#name)))
+#endif
+
 // In case there is no std::get_new_handler function
 // which provides synchronized access to std::new_handler
 #if !__TBB_CPP11_GET_NEW_HANDLER_PRESENT
@@ -118,15 +129,7 @@ static inline void initPageSize()
    2) check that dlsym("malloc") found something different from our replacement malloc
 */
 
-// Starting from GCC 9, the -Wmissing-attributes warning was extended for alias below
-#if __GNUC__ >= 9
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wmissing-attributes"
-#endif
-extern "C" void *__TBB_malloc_proxy(size_t) __attribute__ ((alias ("malloc")));
-#if __GNUC__ == 9
-    #pragma GCC diagnostic pop
-#endif
+extern "C" void *__TBB_malloc_proxy(size_t) __TBB_ALIAS_ATTR_COPY(malloc);
 
 static void *orig_msize;
 
@@ -265,28 +268,21 @@ struct mallinfo mallinfo() __THROW
 // Android doesn't have malloc_usable_size, provide it to be compatible
 // with Linux, in addition overload dlmalloc_usable_size() that presented
 // under Android.
-size_t dlmalloc_usable_size(const void *ptr) __attribute__ ((alias ("malloc_usable_size")));
+size_t dlmalloc_usable_size(const void *ptr) __TBB_ALIAS_ATTR_COPY(malloc_usable_size);
 #else // __ANDROID__
+// TODO: consider using __typeof__ to guarantee the correct declaration types
 // C11 function, supported starting GLIBC 2.16
-void *aligned_alloc(size_t alignment, size_t size) __attribute__ ((alias ("memalign")));
+void *aligned_alloc(size_t alignment, size_t size) __TBB_ALIAS_ATTR_COPY(memalign);
 // Those non-standard functions are exported by GLIBC, and might be used
-// in conjunction with standard malloc/free, so we must ovberload them.
+// in conjunction with standard malloc/free, so we must overload them.
 // Bionic doesn't have them. Not removing from the linker scripts,
 // as absent entry points are ignored by the linker.
 
-// Starting from GCC 9, the -Wmissing-attributes warning was extended for aliases below
-#if __GNUC__ >= 9
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wmissing-attributes"
-#endif
-void *__libc_malloc(size_t size) __attribute__ ((alias ("malloc")));
-void *__libc_calloc(size_t num, size_t size) __attribute__ ((alias ("calloc")));
-void *__libc_memalign(size_t alignment, size_t size) __attribute__ ((alias ("memalign")));
-void *__libc_pvalloc(size_t size) __attribute__ ((alias ("pvalloc")));
-void *__libc_valloc(size_t size) __attribute__ ((alias ("valloc")));
-#if __GNUC__ == 9
-    #pragma GCC diagnostic pop
-#endif
+void *__libc_malloc(size_t size) __TBB_ALIAS_ATTR_COPY(malloc);
+void *__libc_calloc(size_t num, size_t size) __TBB_ALIAS_ATTR_COPY(calloc);
+void *__libc_memalign(size_t alignment, size_t size) __TBB_ALIAS_ATTR_COPY(memalign);
+void *__libc_pvalloc(size_t size) __TBB_ALIAS_ATTR_COPY(pvalloc);
+void *__libc_valloc(size_t size) __TBB_ALIAS_ATTR_COPY(valloc);
 
 // call original __libc_* to support naive replacement of free via __libc_free etc
 void __libc_free(void *ptr)

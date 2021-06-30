@@ -133,7 +133,7 @@ public:
             } else {
                 head_page.store(p, std::memory_order_relaxed);
             }
-            tail_page.store(p, std::memory_order_relaxed);;
+            tail_page.store(p, std::memory_order_release);
         } else {
             p = tail_page.load(std::memory_order_acquire); // TODO may be relaxed ?
         }
@@ -174,9 +174,9 @@ public:
 
     bool pop( void* dst, ticket_type k, queue_rep_type& base ) {
         k &= -queue_rep_type::n_queue;
-        if (head_counter.load(std::memory_order_relaxed) != k) spin_wait_until_eq(head_counter, k);
+        spin_wait_until_eq(head_counter, k);
         call_itt_notify(acquired, &head_counter);
-        if (tail_counter.load(std::memory_order_relaxed) == k) spin_wait_while_eq(tail_counter, k);
+        spin_wait_while_eq(tail_counter, k);
         call_itt_notify(acquired, &tail_counter);
         padded_page *p = head_page.load(std::memory_order_acquire);
         __TBB_ASSERT( p, nullptr );
@@ -377,12 +377,12 @@ public:
         if( is_valid_page(p) ) {
             spin_mutex::scoped_lock lock( my_queue.page_mutex );
             padded_page* q = p->next;
-            my_queue.head_page.store(q, std::memory_order_relaxed);
+            my_queue.head_page.store(q, std::memory_order_release);
             if( !is_valid_page(q) ) {
-                my_queue.tail_page.store(nullptr, std::memory_order_relaxed);
+                my_queue.tail_page.store(nullptr, std::memory_order_release);
             }
         }
-        my_queue.head_counter.store(my_ticket_type, std::memory_order_relaxed);
+        my_queue.head_counter.store(my_ticket_type, std::memory_order_release);
         if ( is_valid_page(p) ) {
             allocator_traits_type::destroy(allocator, static_cast<padded_page*>(p));
             allocator_traits_type::deallocate(allocator, static_cast<padded_page*>(p), 1);
@@ -588,7 +588,7 @@ protected:
     Value* my_item{ nullptr };
     queue_rep_type* my_queue_rep{ nullptr };
     ticket_type my_head_counter{};
-    padded_page* my_array[queue_rep_type::n_queue];
+    padded_page* my_array[queue_rep_type::n_queue]{};
 }; // class concurrent_queue_iterator_base
 
 struct concurrent_queue_iterator_provider {

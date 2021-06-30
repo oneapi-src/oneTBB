@@ -15,6 +15,7 @@
 */
 
 #include "oneapi/tbb/cache_aligned_allocator.h"
+#include "oneapi/tbb/mutex.h"
 
 #include "rml_tbb.h"
 #include "rml_thread_monitor.h"
@@ -142,7 +143,7 @@ private:
     std::atomic<private_worker*> my_asleep_list_root;
 
     //! Protects my_asleep_list_root
-    typedef scheduler_mutex_type asleep_list_mutex_type;
+    typedef mutex asleep_list_mutex_type;
     asleep_list_mutex_type my_asleep_list_mutex;
 
 #if TBB_USE_ASSERT

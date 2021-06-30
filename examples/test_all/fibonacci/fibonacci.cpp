@@ -506,6 +506,8 @@ int main(int argc, char *argv[]) {
     }
     if (!Verbose)
         printf("TEST PASSED\n");
+    // flush to prevent bufferization on exit
+    fflush(stdout);
     return 0;
 }
 

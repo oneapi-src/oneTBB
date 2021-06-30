@@ -16,6 +16,10 @@
 
 #define __TBB_NO_IMPLICIT_LINKAGE 1
 
+#if _WIN32 || _WIN64
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include "common/test.h"
 
 #include "common/allocator_overload.h"
@@ -29,7 +33,7 @@
 
 #include "tbb/tbbmalloc_proxy.h"
 
-#include "../src/tbb/environment.h"
+#include "src/tbb/environment.h"
 
 const size_t SmallObjectSize = 16;
 const size_t LargeObjectSize = 2*8*1024;

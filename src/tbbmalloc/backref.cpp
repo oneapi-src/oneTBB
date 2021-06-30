@@ -31,12 +31,12 @@ struct BackRefBlock : public BlockI {
     FreeObject   *freeList;
     // list of all blocks that were allocated from raw mem (i.e., not from backend)
     BackRefBlock *nextRawMemBlock;
-    int           allocatedCount; // the number of objects allocated
+    std::atomic<int> allocatedCount; // the number of objects allocated
     BackRefIdx::master_t myNum;   // the index in the master
     MallocMutex   blockMutex;
     // true if this block has been added to the listForUse chain,
     // modifications protected by masterMutex
-    bool          addedToForUse;
+    std::atomic<bool> addedToForUse;
 
     BackRefBlock(const BackRefBlock *blockToUse, intptr_t num) :
         nextForUse(NULL), bumpPtr((FreeObject*)((uintptr_t)blockToUse + slabSize - sizeof(void*))),
@@ -73,8 +73,8 @@ struct BackRefMaster {
     static const size_t blockSpaceSize = 64*1024;
 
     Backend       *backend;
-    BackRefBlock  *active;         // if defined, use it for allocations
-    BackRefBlock  *listForUse;     // the chain of data blocks with free items
+    std::atomic<BackRefBlock*> active;         // if defined, use it for allocations
+    std::atomic<BackRefBlock*> listForUse;     // the chain of data blocks with free items
     BackRefBlock  *allRawMemBlocks;
     std::atomic <intptr_t> lastUsed; // index of the last used block
     bool           rawMemUsed;
@@ -102,7 +102,8 @@ bool initBackRefMaster(Backend *backend)
     if (! master)
         return false;
     master->backend = backend;
-    master->listForUse = master->allRawMemBlocks = NULL;
+    master->listForUse.store(nullptr, std::memory_order_relaxed);
+    master->allRawMemBlocks = nullptr;
     master->rawMemUsed = rawMemUsed;
     master->lastUsed = -1;
     memset(&master->requestNewSpaceMutex, 0, sizeof(MallocMutex));
@@ -113,13 +114,14 @@ bool initBackRefMaster(Backend *backend)
         if (i)
             master->addToForUseList(bl);
         else // active leaf is not needed in listForUse
-            master->active = bl;
+            master->active.store(bl, std::memory_order_relaxed);
     }
     // backRefMaster is read in getBackRef, so publish it in consistent state
     backRefMaster.store(master, std::memory_order_release);
     return true;
 }
 
+#if __TBB_SOURCE_DIRECTLY_INCLUDED
 void destroyBackRefMaster(Backend *backend)
 {
     if (backRefMaster.load(std::memory_order_acquire)) { // Is initBackRefMaster() called?
@@ -134,12 +136,13 @@ void destroyBackRefMaster(Backend *backend)
                                  backRefMaster.load(std::memory_order_relaxed)->rawMemUsed);
     }
 }
+#endif
 
 void BackRefMaster::addToForUseList(BackRefBlock *bl)
 {
-    bl->nextForUse = listForUse;
-    listForUse = bl;
-    bl->addedToForUse = true;
+    bl->nextForUse = listForUse.load(std::memory_order_relaxed);
+    listForUse.store(bl, std::memory_order_relaxed);
+    bl->addedToForUse.store(true, std::memory_order_relaxed);
 }
 
 void BackRefMaster::initEmptyBackRefBlock(BackRefBlock *newBl)
@@ -165,7 +168,7 @@ bool BackRefMaster::requestNewSpace()
     // only one thread at a time may add blocks
     MallocMutex::scoped_lock newSpaceLock(requestNewSpaceMutex);
 
-    if (listForUse) // double check that only one block is available
+    if (listForUse.load(std::memory_order_relaxed)) // double check that only one block is available
         return true;
     BackRefBlock *newBl = (BackRefBlock*)backend->getBackRefSpace(blockSpaceSize, &isRawMemUsed);
     if (!newBl) return false;
@@ -195,8 +198,8 @@ bool BackRefMaster::requestNewSpace()
     }
     for (BackRefBlock *bl = newBl; blocksToUse>0; bl = (BackRefBlock*)((uintptr_t)bl + BackRefBlock::bytes), blocksToUse--) {
         initEmptyBackRefBlock(bl);
-        if (active->allocatedCount == BR_MAX_CNT) {
-            active = bl; // active leaf is not needed in listForUse
+        if (active.load(std::memory_order_relaxed)->allocatedCount.load(std::memory_order_relaxed) == BR_MAX_CNT) {
+            active.store(bl, std::memory_order_release); // active leaf is not needed in listForUse
         } else {
             addToForUseList(bl);
         }
@@ -206,22 +209,28 @@ bool BackRefMaster::requestNewSpace()
 
 BackRefBlock *BackRefMaster::findFreeBlock()
 {
-    if (active->allocatedCount < BR_MAX_CNT)
-        return active;
+    BackRefBlock* active_block = active.load(std::memory_order_acquire);
+    MALLOC_ASSERT(active_block, ASSERT_TEXT);
 
-    if (listForUse) {                                   // use released list
+    if (active_block->allocatedCount.load(std::memory_order_relaxed) < BR_MAX_CNT)
+        return active_block;
+
+    if (listForUse.load(std::memory_order_relaxed)) { // use released list
         MallocMutex::scoped_lock lock(masterMutex);
 
-        if (active->allocatedCount == BR_MAX_CNT && listForUse) {
-            active = listForUse;
-            listForUse = listForUse->nextForUse;
-            MALLOC_ASSERT(active->addedToForUse, ASSERT_TEXT);
-            active->addedToForUse = false;
+        if (active_block->allocatedCount.load(std::memory_order_relaxed) == BR_MAX_CNT) {
+            active_block = listForUse.load(std::memory_order_relaxed);
+            if (active_block) {
+                active.store(active_block, std::memory_order_release);
+                listForUse.store(active_block->nextForUse, std::memory_order_relaxed);
+                MALLOC_ASSERT(active_block->addedToForUse.load(std::memory_order_relaxed), ASSERT_TEXT);
+                active_block->addedToForUse.store(false, std::memory_order_relaxed);
+            }
         }
     } else // allocate new data node
         if (!requestNewSpace())
             return NULL;
-    return active;
+    return active.load(std::memory_order_acquire); // reread because of requestNewSpace
 }
 
 void *getBackRef(BackRefIdx backRefIdx)
@@ -267,11 +276,11 @@ BackRefIdx BackRefIdx::newBackRef(bool largeObj)
                               ((uintptr_t)blockToUse->freeList>=(uintptr_t)blockToUse
                                && (uintptr_t)blockToUse->freeList <
                                (uintptr_t)blockToUse + slabSize), ASSERT_TEXT);
-            } else if (blockToUse->allocatedCount < BR_MAX_CNT) {
+            } else if (blockToUse->allocatedCount.load(std::memory_order_relaxed) < BR_MAX_CNT) {
                 toUse = (void**)blockToUse->bumpPtr;
                 blockToUse->bumpPtr =
                     (FreeObject*)((uintptr_t)blockToUse->bumpPtr - sizeof(void*));
-                if (blockToUse->allocatedCount == BR_MAX_CNT-1) {
+                if (blockToUse->allocatedCount.load(std::memory_order_relaxed) == BR_MAX_CNT-1) {
                     MALLOC_ASSERT((uintptr_t)blockToUse->bumpPtr
                                   < (uintptr_t)blockToUse+sizeof(BackRefBlock),
                                   ASSERT_TEXT);
@@ -279,9 +288,11 @@ BackRefIdx BackRefIdx::newBackRef(bool largeObj)
                 }
             }
             if (toUse) {
-                if (!blockToUse->allocatedCount && !backRefMaster.load(std::memory_order_relaxed)->listForUse)
+                if (!blockToUse->allocatedCount.load(std::memory_order_relaxed) &&
+                    !backRefMaster.load(std::memory_order_relaxed)->listForUse.load(std::memory_order_relaxed)) {
                     lastBlockFirstUsed = true;
-                blockToUse->allocatedCount++;
+                }
+                blockToUse->allocatedCount.store(blockToUse->allocatedCount.load(std::memory_order_relaxed) + 1, std::memory_order_relaxed);
             }
         } // end of lock scope
     } while (!toUse);
@@ -320,13 +331,15 @@ void removeBackRef(BackRefIdx backRefIdx)
                        && (uintptr_t)freeObj->next <
                        (uintptr_t)currBlock + slabSize), ASSERT_TEXT);
         currBlock->freeList = freeObj;
-        currBlock->allocatedCount--;
+        currBlock->allocatedCount.store(currBlock->allocatedCount.load(std::memory_order_relaxed)-1, std::memory_order_relaxed);
     }
     // TODO: do we need double-check here?
-    if (!currBlock->addedToForUse && currBlock!=backRefMaster.load(std::memory_order_relaxed)->active) {
+    if (!currBlock->addedToForUse.load(std::memory_order_relaxed) &&
+        currBlock!=backRefMaster.load(std::memory_order_relaxed)->active.load(std::memory_order_relaxed)) {
         MallocMutex::scoped_lock lock(masterMutex);
 
-        if (!currBlock->addedToForUse && currBlock!=backRefMaster.load(std::memory_order_relaxed)->active)
+        if (!currBlock->addedToForUse.load(std::memory_order_relaxed) &&
+            currBlock!=backRefMaster.load(std::memory_order_relaxed)->active.load(std::memory_order_relaxed))
             backRefMaster.load(std::memory_order_relaxed)->addToForUseList(currBlock);
     }
 }

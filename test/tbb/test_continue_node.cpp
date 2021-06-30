@@ -16,16 +16,13 @@
 
 #include "common/config.h"
 
-// TODO revamp: move parts dependent on __TBB_EXTRA_DEBUG into separate test(s) since having these
-// parts in all of tests might make testing of the product, which is different from what is actually
-// released.
-#define __TBB_EXTRA_DEBUG 1
 #include "tbb/flow_graph.h"
 
 #include "common/test.h"
 #include "common/utils.h"
 #include "common/graph_utils.h"
 #include "common/test_follows_and_precedes_api.h"
+#include "common/concepts_common.h"
 
 
 //! \file test_continue_node.cpp
@@ -467,3 +464,40 @@ TEST_CASE( "Deduction guides" ) { test_deduction_guides(); }
 TEST_CASE( "Regression for successor cache specialization" ) {
     test_successor_cache_specialization();
 }
+
+#if __TBB_CPP20_CONCEPTS_PRESENT
+//! \brief \ref error_guessing
+TEST_CASE("constraints for continue_node input") {
+    static_assert(utils::well_formed_instantiation<tbb::flow::continue_node, test_concepts::Copyable>);
+    static_assert(!utils::well_formed_instantiation<tbb::flow::continue_node, test_concepts::NonCopyable>);
+}
+
+template <typename Input, typename Body>
+concept can_call_continue_node_ctor = requires( tbb::flow::graph& graph, Body body,
+                                                tbb::flow::buffer_node<int>& f, std::size_t num,
+                                                tbb::flow::node_priority_t priority  ) {
+    tbb::flow::continue_node<Input>(graph, body);
+    tbb::flow::continue_node<Input>(graph, body, priority);
+    tbb::flow::continue_node<Input>(graph, num, body);
+    tbb::flow::continue_node<Input>(graph, num, body, priority);
+#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+    tbb::flow::continue_node<Input>(tbb::flow::follows(f), body);
+    tbb::flow::continue_node<Input>(tbb::flow::follows(f), body, priority);
+    tbb::flow::continue_node<Input>(tbb::flow::follows(f), num, body);
+    tbb::flow::continue_node<Input>(tbb::flow::follows(f), num, body, priority);
+#endif // __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+};
+
+//! \brief \ref error_guessing
+TEST_CASE("constraints for continue_node body") {
+    using output_type = int;
+    using namespace test_concepts::continue_node_body;
+
+    static_assert(can_call_continue_node_ctor<output_type, Correct<output_type>>);
+    static_assert(!can_call_continue_node_ctor<output_type, NonCopyable<output_type>>);
+    static_assert(!can_call_continue_node_ctor<output_type, NonDestructible<output_type>>);
+    static_assert(!can_call_continue_node_ctor<output_type, NoOperatorRoundBrackets<output_type>>);
+    static_assert(!can_call_continue_node_ctor<output_type, WrongInputOperatorRoundBrackets<output_type>>);
+    static_assert(!can_call_continue_node_ctor<output_type, WrongReturnOperatorRoundBrackets<output_type>>);
+}
+#endif // __TBB_CPP20_CONCEPTS_PRESENT

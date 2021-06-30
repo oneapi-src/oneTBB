@@ -702,10 +702,14 @@ TEST_CASE("multithreading support in concurrent_priority_queue") {
     test_multithreading();
 }
 
+#if !_MSC_VER || _MSC_VER > 1900
+// MSVC 2015 does not provide required level of allocator support for standard containers
+
 //! \brief \ref requirement
 TEST_CASE("std::allocator_traits support in concurrent_priority_queue") {
     test_allocator_traits_support<CPQTraits>();
 }
+#endif
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 //! Testing Class Template Argument Deduction in concurrent_priority_queue

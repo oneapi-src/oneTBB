@@ -13,6 +13,7 @@
 # limitations under the License.
 
 add_library(tbb 
+    address_waiter.cpp
     allocator.cpp
     arena.cpp
     arena_slot.cpp
@@ -130,6 +131,15 @@ if (WIN32)
             RENAME tbb_debug.lib
             COMPONENT devel
     )
+else()
+    set(TBB_LIB_NAME tbb)
+    string(TOLOWER ${CMAKE_BUILD_TYPE} BUILD_TYPE)
+    if (BUILD_TYPE STREQUAL "debug")
+        set(TBB_LIB_NAME ${TBB_LIB_NAME}${CMAKE_DEBUG_POSTFIX})
+    endif()
+    configure_file(${CMAKE_SOURCE_DIR}/integration/pkg-config/tbb.pc.in ${CMAKE_CURRENT_BINARY_DIR}/${TBB_LIB_NAME}.pc @ONLY)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${TBB_LIB_NAME}.pc
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 endif()
 
 if (COMMAND tbb_gen_vars)

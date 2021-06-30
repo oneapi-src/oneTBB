@@ -14,19 +14,14 @@
     limitations under the License.
 */
 
-#if _MSC_VER==1500 && !__INTEL_COMPILER
-    // VS2008/VC9 has an issue in math.h
-    #pragma warning( push )
-    #pragma warning( disable: 4985 )
-#endif
+#include "common/test.h"
+
+#include "tbb/blocked_range.h"
+
 #include <cmath>
-#if _MSC_VER==1500 && !__INTEL_COMPILER
-    #pragma warning( pop )
-#endif
-
-#include "tbb/version.h"
-
 #include <vector>
+
+#include "common/utils_report.h"
 
 namespace test_partitioner_utils {
 
@@ -96,7 +91,7 @@ private:
     bool m_called;
 };
 
-// Base class for fake ranges used in vaious tests for parallel
+// Base class for fake ranges used in various tests for parallel
 // algorithms as well as for partitioner
 template <typename DerivedRange, typename T>
 class RangeBase: public RangeStatisticCollector {

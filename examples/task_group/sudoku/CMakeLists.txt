@@ -25,6 +25,10 @@ add_executable(sudoku sudoku.cpp)
 target_link_libraries(sudoku TBB::tbb Threads::Threads)
 target_compile_options(sudoku PRIVATE ${TBB_CXX_STD_FLAG})
 
+if (MSVC AND CMAKE_CXX_COMPILER_ID STREQUAL IntelLLVM)
+    target_compile_options(sudoku PRIVATE -D_CRT_SECURE_NO_WARNINGS)
+endif()
+
 set(EXECUTABLE "$<TARGET_FILE:sudoku>")
 set(ARGS 4 ${CMAKE_CURRENT_SOURCE_DIR}/input1 verbose)
 set(PERF_ARGS auto ${CMAKE_CURRENT_SOURCE_DIR}/input1 silent)

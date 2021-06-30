@@ -18,10 +18,6 @@
 
 #include "common/config.h"
 
-// TODO revamp: move parts dependent on __TBB_EXTRA_DEBUG into separate test(s) since having these
-// parts in all of tests might make testing of the product, which is different from what is actually
-// released.
-#define __TBB_EXTRA_DEBUG 1
 #include "tbb/flow_graph.h"
 
 #include "common/test.h"
@@ -43,7 +39,18 @@
 
 template< typename T >
 void spin_try_get( tbb::flow::queue_node<T> &q, T &value ) {
-    while ( q.try_get(value) != true ) ;
+    int count = 0;
+    while ( q.try_get(value) != true ) {
+        if (count < 1000000) {
+            ++count;
+        }
+        if (count == 1000000) {
+            // Perhaps, we observe the missed wakeup. Enqueue a task to wake up threads.
+            tbb::task_arena a(tbb::task_arena::attach{});
+            a.enqueue([]{});
+            ++count;
+        }
+    }
 }
 
 template< typename T >
@@ -69,8 +76,6 @@ struct parallel_puts : utils::NoAssign {
     }
 
 };
-
-
 
 template< typename T >
 struct touches {
@@ -495,12 +500,10 @@ TEST_CASE("Parallel, serial test"){
         tbb::task_arena arena(p);
         arena.execute(
             [&]() {
-
                 test_serial<int>();
                 test_serial<CheckType<int> >();
                 test_parallel<int>(p);
                 test_parallel<CheckType<int> >(p);
-
             }
         );
 	}
@@ -553,5 +556,4 @@ TEST_CASE("queue_node with reservation"){
     CHECK_MESSAGE((q.try_get(out_arg) == false), "Getting from reserved node should fail.");
     CHECK_MESSAGE((out_arg == -1), "Getting from reserved node should not update its argument.");
     g.wait_for_all();
-    
 }

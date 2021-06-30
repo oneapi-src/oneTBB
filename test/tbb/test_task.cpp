@@ -16,6 +16,7 @@
 
 #include "common/test.h"
 #include "common/utils.h"
+#include "common/dummy_body.h"
 #include "common/spin_barrier.h"
 #include "common/utils_concurrency_limit.h"
 #include "common/cpu_usertime.h"
@@ -417,26 +418,33 @@ struct bypass_task : public tbb::detail::d1::task {
     using task_pool_type = std::vector<bypass_task, tbb::cache_aligned_allocator<bypass_task>>;
 
     bypass_task(tbb::detail::d1::wait_context& wait, task_pool_type& task_pool,
-                std::atomic<bool>& resume_flag, tbb::task::suspend_point& suspend_tag)
+                std::atomic<int>& resume_flag, tbb::task::suspend_point& suspend_tag)
         : my_wait(wait), my_task_pool(task_pool), my_resume_flag(resume_flag), my_suspend_tag(suspend_tag)
     {}
 
     task* execute(tbb::detail::d1::execution_data&) override {
-        std::atomic<int> sum{};
+        utils::doDummyWork(10000);
 
-        // Make some heavy work
-        for (std::size_t i = 0; i < 100000; ++i) {
-            ++sum;
-        }
-
-        my_wait.release();
-
-        if (my_resume_flag.exchange(false)) {
+        int expected = 1;
+        if (my_resume_flag.compare_exchange_strong(expected, 2)) {
             tbb::task::resume(my_suspend_tag);
         }
 
         std::size_t ticket = my_current_task++;
-        return ticket < my_task_pool.size() ? &my_task_pool[ticket] : nullptr;
+        task* next = ticket < my_task_pool.size() ? &my_task_pool[ticket] : nullptr;
+
+        if (!next && my_resume_flag != 2) {
+            // Rarely all tasks can be executed before the suspend.
+            // So, wait for the suspend before leaving.
+            utils::SpinWaitWhileEq(my_resume_flag, 0);
+            expected = 1;
+            if (my_resume_flag.compare_exchange_strong(expected, 2)) {
+                tbb::task::resume(my_suspend_tag);
+            }
+        }
+
+        my_wait.release();
+        return next;
     }
 
     task* cancel(tbb::detail::d1::execution_data&) override {
@@ -446,7 +454,7 @@ struct bypass_task : public tbb::detail::d1::task {
 
     tbb::detail::d1::wait_context& my_wait;
     task_pool_type& my_task_pool;
-    std::atomic<bool>& my_resume_flag;
+    std::atomic<int>& my_resume_flag;
     tbb::task::suspend_point& my_suspend_tag;
     static std::atomic<int> my_current_task;
 };
@@ -463,7 +471,7 @@ TEST_CASE("Bypass suspended by resume") {
 
     test_tls = 1;
 
-    std::atomic<bool> resume_flag{false};
+    std::atomic<int> resume_flag{0};
     tbb::task::suspend_point test_suspend_tag;
 
     std::vector<bypass_task, tbb::cache_aligned_allocator<bypass_task>> test_task_pool;
@@ -473,13 +481,16 @@ TEST_CASE("Bypass suspended by resume") {
     }
 
     for (std::size_t i = 0; i < utils::get_platform_max_threads(); ++i) {
-        tbb::detail::d1::spawn(test_task_pool[bypass_task::my_current_task++], test_context);
+        std::size_t ticket = bypass_task::my_current_task++;
+        if (ticket < test_task_pool.size()) {
+            tbb::detail::d1::spawn(test_task_pool[ticket], test_context);
+        }
     }
 
     auto suspend_func = [&resume_flag, &test_suspend_tag] {
         tbb::task::suspend([&resume_flag, &test_suspend_tag] (tbb::task::suspend_point tag) {
             test_suspend_tag = tag;
-            resume_flag.store(true, std::memory_order_release);
+            resume_flag = 1;
         });
     };
     using task_type = CountingTask<decltype(suspend_func)>;
@@ -505,12 +516,8 @@ TEST_CASE("Critical tasks + resume") {
     tbb::task::suspend_point test_suspend_tag;
 
     auto task_body = [&resume_flag, &test_suspend_tag] {
-        std::atomic<int> sum{};
-
         // Make some work
-        for (std::size_t i = 0; i < 1000; ++i) {
-            ++sum;
-        }
+        utils::doDummyWork(1000);
 
         if (resume_flag.exchange(false)) {
             tbb::task::resume(test_suspend_tag);
@@ -566,11 +573,7 @@ TEST_CASE("Stress testing") {
 
     auto task_body = [] {
         tbb::parallel_for(tbb::blocked_range<std::size_t>(0, 1000), [] (tbb::blocked_range<std::size_t>&) {
-            std::atomic<int> sum{};
-            // Make some work
-            for (std::size_t i = 0; i < 100; ++i) {
-                ++sum;
-            }
+            utils::doDummyWork(100);
         });
     };
     using task_type = CountingTask<decltype(task_body)>;
@@ -652,11 +655,7 @@ TEST_CASE("Enqueue with exception") {
     test_arena.initialize();
 
     auto task_body = [] {
-        std::atomic<int> sum{};
-        // Make some work
-        for (std::size_t i = 0; i < 100; ++i) {
-            ++sum;
-        }
+        utils::doDummyWork(100);
     };
 
     std::atomic<bool> end_flag{false};
@@ -704,4 +703,91 @@ TEST_CASE("Enqueue with exception") {
 
     REQUIRE_MESSAGE(task_type::execute_counter() == task_number * iter_count, "Some task was not executed");
     REQUIRE_MESSAGE(task_type::cancel_counter() == 0, "Some task was canceled");
+}
+
+struct resubmitting_task : public tbb::detail::d1::task {
+    tbb::task_arena& my_arena;
+    tbb::task_group_context& my_ctx;
+    std::atomic<int> counter{100000};
+
+    resubmitting_task(tbb::task_arena& arena, tbb::task_group_context& ctx) : my_arena(arena), my_ctx(ctx)
+    {}
+
+    tbb::detail::d1::task* execute(tbb::detail::d1::execution_data& ) override {
+        if (counter-- > 0) {
+            submit(*this, my_arena, my_ctx, true);
+        }
+        return nullptr;
+    }
+
+    tbb::detail::d1::task* cancel( tbb::detail::d1::execution_data& ) override {
+        FAIL("The function should never be called.");
+        return nullptr;
+    }
+};
+
+//! \brief \ref error_guessing
+TEST_CASE("Test with priority inversion") {
+    if (!utils::can_change_thread_priority()) return;
+
+    std::size_t thread_number = utils::get_platform_max_threads();
+    tbb::global_control gc(tbb::global_control::max_allowed_parallelism, thread_number + 1);
+
+    tbb::task_arena test_arena(2 * thread_number, thread_number);
+    test_arena.initialize();
+    utils::pinning_observer obsr(test_arena);
+    CHECK_MESSAGE(obsr.is_observing(), "Arena observer has not been activated");
+
+    std::size_t critical_task_counter = 1000 * thread_number;
+    std::atomic<std::size_t> task_counter{0};
+
+    tbb::task_group_context test_context;
+    tbb::detail::d1::wait_context wait(critical_task_counter);
+
+    auto critical_work = [&] {
+        utils::doDummyWork(10);
+    };
+
+    using suspend_task_type = CountingTask<decltype(critical_work)>;
+    suspend_task_type critical_task(critical_work, wait);
+
+    auto high_priority_thread_func = [&] {
+        // Increase external threads priority
+        utils::increase_thread_priority();
+        // pin external threads
+        test_arena.execute([]{});
+        while (task_counter++ < critical_task_counter) {
+            submit(critical_task, test_arena, test_context, true);
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+    };
+
+    resubmitting_task worker_task(test_arena, test_context);
+    // warm up
+    // take first core on execute
+    utils::SpinBarrier barrier(thread_number + 1);
+    test_arena.execute([&] {
+        tbb::parallel_for(std::size_t(0), thread_number + 1, [&] (std::size_t&) {
+            barrier.wait();
+            submit(worker_task, test_arena, test_context, true);
+        });
+    });
+
+    std::vector<std::thread> high_priority_threads;
+    for (std::size_t i = 0; i < thread_number - 1; ++i) {
+        high_priority_threads.emplace_back(high_priority_thread_func);
+    }
+
+    utils::increase_thread_priority();
+    while (task_counter++ < critical_task_counter) {
+        submit(critical_task, test_arena, test_context, true);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    tbb::detail::d1::wait(wait, test_context);
+
+    for (std::size_t i = 0; i < thread_number - 1; ++i) {
+        high_priority_threads[i].join();
+    }
+    obsr.observe(false);
 }

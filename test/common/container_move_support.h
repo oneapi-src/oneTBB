@@ -17,6 +17,8 @@
 #ifndef __TBB_test_common_container_move_support_H
 #define __TBB_test_common_container_move_support_H
 
+#include "config.h"
+
 #include <vector>
 #include <memory>
 #include <type_traits>

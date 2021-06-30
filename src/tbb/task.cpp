@@ -156,7 +156,7 @@ void thread_data::do_post_resume_action() {
     switch (my_post_resume_action) {
     case post_resume_action::register_waiter:
     {
-        static_cast<extended_concurrent_monitor::resume_context*>(my_post_resume_arg)->notify();
+        static_cast<market_concurrent_monitor::resume_context*>(my_post_resume_arg)->notify();
         break;
     }
     case post_resume_action::resume:
@@ -212,7 +212,7 @@ suspend_point_type* current_suspend_point() {
 #endif /* __TBB_RESUMABLE_TASKS */
 
 void notify_waiters(std::uintptr_t wait_ctx_addr) {
-    auto is_related_wait_ctx = [&] (extended_context context) {
+    auto is_related_wait_ctx = [&] (market_context context) {
         return wait_ctx_addr == context.my_uniq_addr;
     };
 

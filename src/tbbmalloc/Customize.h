@@ -113,22 +113,6 @@ namespace d1 {
     inline void call_itt_notify(notify_type /*t*/, void * /*ptr*/) {}
 #endif // TBB_USE_PROFILING_TOOLS
 
-    template <typename T>
-    inline void store_with_release_itt(std::atomic<T>& dst, T src) {
-#if TBB_USE_PROFILING_TOOLS
-        call_itt_notify(releasing, &dst);
-#endif // TBB_USE_PROFILING_TOOLS
-        dst.store(src, std::memory_order_release);
-    }
-
-    template <typename T>
-    inline T load_with_acquire_itt(const std::atomic<T>& src) {
-#if TBB_USE_PROFILING_TOOLS
-        call_itt_notify(acquired, &src);
-#endif // TBB_USE_PROFILING_TOOLS
-        return src.load(std::memory_order_acquire);
-    }
-
 } // namespace d1
 } // namespace detail
 } // namespace tbb

@@ -17,6 +17,10 @@
 //! \file test_malloc_whitebox.cpp
 //! \brief Test for [memory_allocation] functionality
 
+#if _WIN32 || _WIN64
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 // To prevent loading dynamic TBBmalloc at startup, that is not needed for the whitebox test
 #define __TBB_SOURCE_DIRECTLY_INCLUDED 1
 // Call thread shutdown API for native threads join
@@ -62,8 +66,8 @@
 #include "../../src/tbbmalloc/backref.cpp"
 
 namespace tbbmalloc_whitebox {
-    size_t locGetProcessed = 0;
-    size_t locPutProcessed = 0;
+    std::atomic<size_t> locGetProcessed{};
+    std::atomic<size_t> locPutProcessed{};
 }
 #include "../../src/tbbmalloc/large_objects.cpp"
 #include "../../src/tbbmalloc/tbbmalloc.cpp"
@@ -92,6 +96,19 @@ public:
         scalable_free(p);
     }
 };
+
+// Test struct to call ProcessShutdown after all tests
+struct ShutdownTest {
+    ~ShutdownTest() {
+    #if _WIN32 || _WIN64
+        __TBB_mallocProcessShutdownNotification(true);
+    #else
+        __TBB_mallocProcessShutdownNotification(false);
+    #endif
+    }
+};
+
+static ShutdownTest shutdownTest;
 
 class SimpleBarrier: utils::NoAssign {
 protected:
@@ -301,9 +318,14 @@ public:
 
             barrier.wait();
 
+            int yield_count = 0;
             while (!backrefGrowthDone) {
                 scalable_free(p2);
                 p2 = scalable_malloc(minLargeObjectSize-1);
+                if (yield_count++ == 100) {
+                    yield_count = 0;
+                    std::this_thread::yield();
+                }
             }
             scalable_free(p1);
             scalable_free(p2);
@@ -648,7 +670,12 @@ void TestBackend()
     for( int p=MaxThread; p>=MinThread; --p ) {
         // regression test against an race condition in backend synchronization,
         // triggered only when WhiteboxTestingYield() call yields
-        for (int i=0; i<100; i++) {
+#if TBB_USE_DEBUG
+        int num_iters = 10;
+#else
+        int num_iters = 100;
+#endif
+        for (int i = 0; i < num_iters; i++) {
             TestBackendWork::initBarrier(p);
             utils::NativeParallelFor( p, TestBackendWork(backend) );
         }
@@ -911,30 +938,34 @@ class CacheBinModel {
     std::list<uintptr_t> objects;
 
     void doCleanup() {
-        if ( cacheBinModel.cachedSize > Props::TooLargeFactor*cacheBinModel.usedSize ) tooLargeLOC++;
+        if ( cacheBinModel.cachedSize.load(std::memory_order_relaxed) >
+            Props::TooLargeFactor*cacheBinModel.usedSize.load(std::memory_order_relaxed)) tooLargeLOC++;
         else tooLargeLOC = 0;
 
-        if (tooLargeLOC>3 && cacheBinModel.ageThreshold)
-            cacheBinModel.ageThreshold = (cacheBinModel.ageThreshold + cacheBinModel.meanHitRange)/2;
+        intptr_t threshold = cacheBinModel.ageThreshold.load(std::memory_order_relaxed);
+        if (tooLargeLOC > 3 && threshold) {
+            threshold = (threshold + cacheBinModel.meanHitRange.load(std::memory_order_relaxed)) / 2;
+            cacheBinModel.ageThreshold.store(threshold, std::memory_order_relaxed);
+        }
 
         uintptr_t currTime = cacheCurrTime;
-        while (!objects.empty() && (intptr_t)(currTime - objects.front()) > cacheBinModel.ageThreshold) {
-            cacheBinModel.cachedSize -= size;
+        while (!objects.empty() && (intptr_t)(currTime - objects.front()) > threshold) {
+            cacheBinModel.cachedSize.store(cacheBinModel.cachedSize.load(std::memory_order_relaxed) - size, std::memory_order_relaxed);
             cacheBinModel.lastCleanedAge = objects.front();
             objects.pop_front();
         }
 
-        cacheBinModel.oldest = objects.empty() ? 0 : objects.front();
+        cacheBinModel.oldest.store(objects.empty() ? 0 : objects.front(), std::memory_order_relaxed);
     }
 
 public:
     CacheBinModel(CacheBinType &_cacheBin, size_t allocSize) : cacheBin(_cacheBin), size(allocSize) {
-        cacheBinModel.oldest = cacheBin.oldest;
+        cacheBinModel.oldest.store(cacheBin.oldest.load(std::memory_order_relaxed), std::memory_order_relaxed);
         cacheBinModel.lastCleanedAge = cacheBin.lastCleanedAge;
-        cacheBinModel.ageThreshold = cacheBin.ageThreshold;
-        cacheBinModel.usedSize = cacheBin.usedSize;
-        cacheBinModel.cachedSize = cacheBin.cachedSize;
-        cacheBinModel.meanHitRange = cacheBin.meanHitRange;
+        cacheBinModel.ageThreshold.store(cacheBin.ageThreshold.load(std::memory_order_relaxed), std::memory_order_relaxed);
+        cacheBinModel.usedSize.store(cacheBin.usedSize.load(std::memory_order_relaxed), std::memory_order_relaxed);
+        cacheBinModel.cachedSize.store(cacheBin.cachedSize.load(std::memory_order_relaxed), std::memory_order_relaxed);
+        cacheBinModel.meanHitRange.store(cacheBin.meanHitRange.load(std::memory_order_relaxed), std::memory_order_relaxed);
         cacheBinModel.lastGet = cacheBin.lastGet;
     }
     void get() {
@@ -942,24 +973,29 @@ public:
 
         if ( objects.empty() ) {
             const uintptr_t sinceLastGet = currTime - cacheBinModel.lastGet;
-            if ( ( cacheBinModel.ageThreshold && sinceLastGet > Props::LongWaitFactor*cacheBinModel.ageThreshold ) ||
-                 ( cacheBinModel.lastCleanedAge && sinceLastGet > Props::LongWaitFactor*(cacheBinModel.lastCleanedAge - cacheBinModel.lastGet) ) )
-                cacheBinModel.lastCleanedAge = cacheBinModel.ageThreshold = 0;
+            intptr_t threshold = cacheBinModel.ageThreshold.load(std::memory_order_relaxed);
+            if ((threshold && sinceLastGet > Props::LongWaitFactor * threshold) ||
+                (cacheBinModel.lastCleanedAge && sinceLastGet > Props::LongWaitFactor * (cacheBinModel.lastCleanedAge - cacheBinModel.lastGet))) {
+                cacheBinModel.lastCleanedAge = 0;
+                cacheBinModel.ageThreshold.store(0, std::memory_order_relaxed);
+            }
 
             if (cacheBinModel.lastCleanedAge)
-                cacheBinModel.ageThreshold = Props::OnMissFactor*(currTime - cacheBinModel.lastCleanedAge);
+                cacheBinModel.ageThreshold.store(Props::OnMissFactor * (currTime - cacheBinModel.lastCleanedAge), std::memory_order_relaxed);
         } else {
             uintptr_t obj_age = objects.back();
             objects.pop_back();
-            if ( objects.empty() ) cacheBinModel.oldest = 0;
+            if (objects.empty()) cacheBinModel.oldest.store(0, std::memory_order_relaxed);
 
             intptr_t hitRange = currTime - obj_age;
-            cacheBinModel.meanHitRange = cacheBinModel.meanHitRange? (cacheBinModel.meanHitRange + hitRange)/2 : hitRange;
+            intptr_t mean = cacheBinModel.meanHitRange.load(std::memory_order_relaxed);
+            mean = mean ? (mean + hitRange) / 2 : hitRange;
+            cacheBinModel.meanHitRange.store(mean, std::memory_order_relaxed);
 
-            cacheBinModel.cachedSize -= size;
+            cacheBinModel.cachedSize.store(cacheBinModel.cachedSize.load(std::memory_order_relaxed) - size, std::memory_order_relaxed);
         }
 
-        cacheBinModel.usedSize += size;
+        cacheBinModel.usedSize.store(cacheBinModel.usedSize.load(std::memory_order_relaxed) + size, std::memory_order_relaxed);
         cacheBinModel.lastGet = currTime;
 
         if ( currTime % rml::internal::cacheCleanupFreq == 0 ) doCleanup();
@@ -969,7 +1005,7 @@ public:
         uintptr_t currTime = cacheCurrTime;
         cacheCurrTime += num;
 
-        cacheBinModel.usedSize -= num*size;
+        cacheBinModel.usedSize.store(cacheBinModel.usedSize.load(std::memory_order_relaxed) - num * size, std::memory_order_relaxed);
 
         bool cleanUpNeeded = false;
         if ( !cacheBinModel.lastCleanedAge ) {
@@ -981,24 +1017,24 @@ public:
         for ( int i=1; i<=num; ++i ) {
             currTime+=1;
             cleanUpNeeded |= currTime % rml::internal::cacheCleanupFreq == 0;
-            if ( objects.empty() )
-                cacheBinModel.oldest = currTime;
+            if (objects.empty())
+                cacheBinModel.oldest.store(currTime, std::memory_order_relaxed);
             objects.push_back(currTime);
         }
 
-        cacheBinModel.cachedSize += num*size;
+        cacheBinModel.cachedSize.store(cacheBinModel.cachedSize.load(std::memory_order_relaxed) + num * size, std::memory_order_relaxed);
 
         if ( cleanUpNeeded ) doCleanup();
     }
 
     void check() {
-        REQUIRE(cacheBinModel.oldest == cacheBin.oldest);
-        REQUIRE(cacheBinModel.lastCleanedAge == cacheBin.lastCleanedAge);
-        REQUIRE(cacheBinModel.ageThreshold == cacheBin.ageThreshold);
-        REQUIRE(cacheBinModel.usedSize == cacheBin.usedSize);
-        REQUIRE(cacheBinModel.cachedSize == cacheBin.cachedSize);
-        REQUIRE(cacheBinModel.meanHitRange == cacheBin.meanHitRange);
-        REQUIRE(cacheBinModel.lastGet == cacheBin.lastGet);
+        CHECK_FAST(cacheBinModel.oldest.load(std::memory_order_relaxed) == cacheBin.oldest.load(std::memory_order_relaxed));
+        CHECK_FAST(cacheBinModel.lastCleanedAge == cacheBin.lastCleanedAge);
+        CHECK_FAST(cacheBinModel.ageThreshold.load(std::memory_order_relaxed) == cacheBin.ageThreshold.load(std::memory_order_relaxed));
+        CHECK_FAST(cacheBinModel.usedSize.load(std::memory_order_relaxed) == cacheBin.usedSize.load(std::memory_order_relaxed));
+        CHECK_FAST(cacheBinModel.cachedSize.load(std::memory_order_relaxed) == cacheBin.cachedSize.load(std::memory_order_relaxed));
+        CHECK_FAST(cacheBinModel.meanHitRange.load(std::memory_order_relaxed) == cacheBin.meanHitRange.load(std::memory_order_relaxed));
+        CHECK_FAST(cacheBinModel.lastGet == cacheBin.lastGet);
     }
 
     static uintptr_t cacheCurrTime;
@@ -1532,10 +1568,11 @@ struct HOThresholdTester {
 
 private:
     bool cacheBinEmpty(int idx) {
-        return (loc->hugeCache.bin[idx].cachedSize == 0 && loc->hugeCache.bin[idx].get() == NULL);
+        return (loc->hugeCache.bin[idx].cachedSize.load(std::memory_order_relaxed) == 0 && loc->hugeCache.bin[idx].get() == NULL);
     }
     bool objectInCacheBin(int idx, size_t size) {
-        return (loc->hugeCache.bin[idx].cachedSize != 0 && loc->hugeCache.bin[idx].cachedSize % size == 0);
+        return (loc->hugeCache.bin[idx].cachedSize.load(std::memory_order_relaxed) != 0 &&
+            loc->hugeCache.bin[idx].cachedSize.load(std::memory_order_relaxed) % size == 0);
     }
     bool sizeInCacheRange(size_t size) {
         return size <= sieveSize || size >= hugeSize;

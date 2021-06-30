@@ -17,6 +17,8 @@
 #ifndef __TBB_test_common_utils_report_H
 #define __TBB_test_common_utils_report_H
 
+#include "config.h"
+
 #include <mutex>
 #include <cstdarg>
 

@@ -37,3 +37,68 @@ function(_tbb_run_memcheck test_target)
         COMMAND ${VALGRIND_EXE} --leak-check=full --show-leak-kinds=all --log-file=${CMAKE_BINARY_DIR}/memcheck/${target_name}.log -v $<TARGET_FILE:${test_target}>)
     add_dependencies(memcheck-all ${target_name})
 endfunction()
+
+add_custom_target(memcheck-short
+    COMMENT "Run memcheck scan on specified list")
+
+# List of reasonable and quick enough tests to use in automated memcheck
+add_dependencies(memcheck-short 
+    memcheck-test_allocators
+    memcheck-test_arena_constraints
+    memcheck-test_dynamic_link
+    memcheck-test_concurrent_lru_cache
+    memcheck-conformance_concurrent_unordered_map
+    memcheck-conformance_concurrent_unordered_set
+    memcheck-conformance_concurrent_map
+    memcheck-conformance_concurrent_set
+    memcheck-conformance_concurrent_priority_queue
+    memcheck-conformance_concurrent_vector
+    memcheck-conformance_concurrent_queue
+    memcheck-conformance_concurrent_hash_map
+    memcheck-test_parallel_for
+    memcheck-test_parallel_for_each
+    memcheck-test_parallel_reduce
+    memcheck-test_parallel_sort
+    memcheck-test_parallel_invoke
+    memcheck-test_parallel_scan
+    memcheck-test_parallel_pipeline
+    memcheck-test_eh_algorithms
+    memcheck-test_task_group
+    memcheck-test_task_arena
+    memcheck-test_enumerable_thread_specific
+    memcheck-test_resumable_tasks
+    memcheck-conformance_mutex
+    memcheck-test_function_node
+    memcheck-test_multifunction_node
+    memcheck-test_broadcast_node
+    memcheck-test_buffer_node
+    memcheck-test_composite_node
+    memcheck-test_continue_node
+    memcheck-test_eh_flow_graph
+    memcheck-test_flow_graph
+    memcheck-test_flow_graph_priorities
+    memcheck-test_flow_graph_whitebox
+    memcheck-test_indexer_node
+    memcheck-test_join_node
+    memcheck-test_join_node_key_matching
+    memcheck-test_join_node_msg_key_matching
+    memcheck-test_priority_queue_node
+    memcheck-test_sequencer_node
+    memcheck-test_split_node
+    memcheck-test_tagged_msg
+    memcheck-test_overwrite_node
+    memcheck-test_write_once_node
+    memcheck-test_async_node
+    memcheck-test_input_node
+    memcheck-test_profiling
+    memcheck-test_concurrent_queue_whitebox
+    memcheck-test_intrusive_list
+    memcheck-test_semaphore
+    memcheck-test_environment_whitebox
+    memcheck-test_handle_perror
+    memcheck-test_hw_concurrency
+    memcheck-test_eh_thread
+    memcheck-test_global_control
+    memcheck-test_task
+    memcheck-test_concurrent_monitor
+)

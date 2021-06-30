@@ -14,10 +14,6 @@
     limitations under the License.
 */
 
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif // NOMINMAX
-
 // Polygon overlay
 //
 #include <cstdlib>

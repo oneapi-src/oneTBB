@@ -34,24 +34,28 @@ namespace detail {
 namespace r1 {
 
 // TODO: consider extension for formatted error description string
-static void assertion_failure_impl(const char* filename, int line, const char* expression, const char* comment) {
-    std::fprintf(stderr, "Assertion %s failed on line %d of file %s\n", expression, line, filename);
+static void assertion_failure_impl(const char* location, int line, const char* expression, const char* comment) {
+
+    std::fprintf(stderr, "Assertion %s failed (located in the %s function, line in file: %d)\n",
+        expression, location, line);
+
     if (comment) {
         std::fprintf(stderr, "Detailed description: %s\n", comment);
     }
 #if _MSC_VER && _DEBUG
-    if (1 == _CrtDbgReport(_CRT_ASSERT, filename, line, "tbb_debug.dll", "%s\r\n%s", expression, comment?comment:"")) {
+    if (1 == _CrtDbgReport(_CRT_ASSERT, location, line, "tbb_debug.dll", "%s\r\n%s", expression, comment?comment:"")) {
         _CrtDbgBreak();
-    }
-#else
-    std::fflush(stderr);
-    std::abort();
+    } else
 #endif
+    {
+        std::fflush(stderr);
+        std::abort();
+    }
 }
 
-void __TBB_EXPORTED_FUNC assertion_failure(const char* filename, int line, const char* expression, const char* comment) {
+void __TBB_EXPORTED_FUNC assertion_failure(const char* location, int line, const char* expression, const char* comment) {
     static std::once_flag flag;
-    std::call_once(flag, [&](){ assertion_failure_impl(filename, line, expression, comment); });
+    std::call_once(flag, [&](){ assertion_failure_impl(location, line, expression, comment); });
 }
 
 //! Report a runtime warning.

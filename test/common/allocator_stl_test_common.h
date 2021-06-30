@@ -16,6 +16,9 @@
 
 // Tests for compatibility with the host's STL.
 
+#ifndef __TBB_test_common_allocator_stl_test_H_
+#define __TBB_test_common_allocator_stl_test_H_
+
 #include "common/test.h"
 
 template<typename Container>
@@ -94,7 +97,7 @@ void TestAllocatorWithSTL(const Allocator &a = Allocator()) {
 // Allocator type conversion section
     using Ai = typename std::allocator_traits<Allocator>::template rebind_alloc<int>;
     using Acii = typename std::allocator_traits<Allocator>::template rebind_alloc<std::pair<const int, int> >;
-#if _MSC_VER
+#if _MSC_VER && _CPPLIB_VER < 650
     using Aci = typename std::allocator_traits<Allocator>::template rebind_alloc<const int>;
     using Aii = typename std::allocator_traits<Allocator>::template rebind_alloc<std::pair<int, int> >;
 #endif // _MSC_VER
@@ -130,3 +133,4 @@ void TestAllocatorWithSTL(const Allocator &a = Allocator()) {
     TestMap<std::multimap<const int, int, std::less<int>, Acii> >(a);
 #endif /* _MSC_VER */
 }
+#endif // __TBB_test_common_allocator_stl_test_H_

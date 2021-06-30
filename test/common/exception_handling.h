@@ -17,6 +17,8 @@
 #ifndef __TBB_test_common_exception_handling_H
 #define __TBB_test_common_exception_handling_H
 
+#include "config.h"
+
 #include <typeinfo>
 #include <thread>
 
@@ -36,18 +38,18 @@ std::atomic<intptr_t> g_CurExecuted,
                       g_MasterExecutedThrow,     // number of times external thread entered exception code
                       g_NonMasterExecutedThrow,  // number of times non-external thread entered exception code
                       g_PipelinesStarted;
-volatile bool g_ExceptionCaught = false,
-              g_UnknownException = false;
+std::atomic<bool>   g_ExceptionCaught{ false },
+                    g_UnknownException{ false };
 
 std::atomic<intptr_t> g_ActualMaxThreads;
 std::atomic<intptr_t> g_ActualCurrentThreads;
 
-volatile bool g_ThrowException = true,
-              // g_Flog is true for nested construct tests with catches (exceptions are not allowed to
-              // propagate to the construct itself.)
-              g_Flog = false,
-              g_MasterExecuted = false,
-              g_NonMasterExecuted = false;
+std::atomic<bool>   g_ThrowException{ true },
+                    // g_Flog is true for nested construct tests with catches (exceptions are not allowed to
+                    // propagate to the construct itself.)
+                    g_Flog{ false },
+                    g_MasterExecuted{ false },
+                    g_NonMasterExecuted{ false };
 
 bool    g_ExceptionInMaster = false;
 bool    g_SolitaryException = false;

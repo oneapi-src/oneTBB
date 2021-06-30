@@ -19,7 +19,7 @@
 
 // #include "../config.h"
 #include "_task.h"
-#include "tbb/task_group.h"
+#include "../task_group.h"
 #include "../task_arena.h"
 #include "../flow_graph_abstractions.h"
 
@@ -295,16 +295,6 @@ public:
             my_context->reset();  // consistent with behavior in catch()
         }
     }
-
-#if TODO_REVAMP
-#error Decide on ref_count() presence.
-    Its only use is in the template<typename T, typename BufferType> void test_resets()
-#endif
-
-#if __TBB_EXTRA_DEBUG
-    unsigned ref_count() const { return my_wait_context.reference_count(); }
-#endif
-
 
     // TODO revamp: consider adding getter for task_group_context.
 

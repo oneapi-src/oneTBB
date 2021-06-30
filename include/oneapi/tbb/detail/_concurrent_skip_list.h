@@ -635,8 +635,10 @@ public:
     class const_range_type {
     public:
         using size_type = typename concurrent_skip_list::size_type;
-        using value_type = typename concurrent_skip_list::value_type;
+        using difference_type = typename concurrent_skip_list::difference_type;
         using iterator = typename concurrent_skip_list::const_iterator;
+        using value_type = typename iterator::value_type;
+        using reference = typename iterator::reference;
 
         bool empty() const {
             return my_begin.my_node_ptr->next(0) == my_end.my_node_ptr;
@@ -671,6 +673,8 @@ public:
     class range_type : public const_range_type {
     public:
         using iterator = typename concurrent_skip_list::iterator;
+        using value_type = typename iterator::value_type;
+        using reference = typename iterator::reference;
 
         range_type(range_type& r, split) : const_range_type(r, split()) {}
         range_type(const concurrent_skip_list& l) : const_range_type(l) {}

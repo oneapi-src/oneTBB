@@ -137,6 +137,10 @@ public:
         return *this;
     };
 
+    explicit operator bool() const noexcept {
+        return m_ctl != nullptr;
+    }
+
     //! Get and active instance of task_scheduler_handle
     static task_scheduler_handle get() {
          task_scheduler_handle handle;

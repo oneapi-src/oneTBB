@@ -19,14 +19,20 @@
 #include "common/utils_report.h"
 #include "common/range_based_for_support.h"
 #include "common/config.h"
+#include "common/concepts_common.h"
 
 #include "tbb/blocked_range.h"
+#include "tbb/blocked_range2d.h"
+#include "tbb/blocked_range3d.h"
+#define TBB_PREVIEW_BLOCKED_RANGE_ND 1
+#include "tbb/blocked_rangeNd.h"
 
 //! \file test_blocked_range.cpp
 //! \brief Test for [algorithms.blocked_range] specification
 
 #include <utility> //for std::pair
 #include <functional>
+#include <vector>
 
 //! Testing blocked_range with range based for
 //! \brief \ref interface
@@ -79,3 +85,111 @@ TEST_CASE("Proportional split overflow") {
     }
 }
 
+#if __TBB_CPP20_CONCEPTS_PRESENT
+
+template <bool ExpectSatisfies, typename... Types>
+    requires (... && (utils::well_formed_instantiation<tbb::blocked_range, Types> == ExpectSatisfies))
+void test_blocked_range_constraint() {}
+
+template <bool ExpectSatisfies, typename... Types>
+    requires (... && (utils::well_formed_instantiation<tbb::blocked_range2d, Types, Types> == ExpectSatisfies))
+void test_blocked_range2d_constraint() {}
+
+template <typename... Types>
+    requires (... && (utils::well_formed_instantiation<tbb::blocked_range2d, Types, test_concepts::Dummy> == false))
+void test_blocked_range2d_col_invalid_constraint() {}
+
+template <typename... Types>
+    requires (... && (utils::well_formed_instantiation<tbb::blocked_range2d, test_concepts::Dummy, Types> == false))
+void test_blocked_range2d_row_invalid_constraint() {}
+
+template <bool ExpectSatisfies, typename... Types>
+    requires (... && (utils::well_formed_instantiation<tbb::blocked_range3d, Types, Types, Types> == ExpectSatisfies))
+void test_blocked_range3d_constraint() {}
+
+template <typename... Types>
+    requires (... && (utils::well_formed_instantiation<tbb::blocked_range3d, test_concepts::Dummy, Types, Types> == false))
+void test_blocked_range3d_page_invalid_constraint() {}
+
+template <typename... Types>
+    requires (... && (utils::well_formed_instantiation<tbb::blocked_range3d, Types, test_concepts::Dummy, Types> == false))
+void test_blocked_range3d_row_invalid_constraint() {}
+
+template <typename... Types>
+    requires (... && (utils::well_formed_instantiation<tbb::blocked_range3d, Types, Types, test_concepts::Dummy> == false))
+void test_blocked_range3d_col_invalid_constraint() {}
+
+template <typename T>
+concept well_formed_blocked_range_Nd_instantiation_basic = requires {
+    typename tbb::blocked_rangeNd<T, 1>;
+};
+
+template <typename... Types>
+concept well_formed_blocked_range_Nd_instantiation = ( ... && well_formed_blocked_range_Nd_instantiation_basic<Types> );
+
+//! \brief \ref error_guessing
+TEST_CASE("constraints for blocked_range value") {
+    using namespace test_concepts::blocked_range_value;
+    using const_iterator = typename std::vector<int>::const_iterator;
+
+    test_blocked_range_constraint</*Expected = */true,
+                                  Correct, char, int, std::size_t, const_iterator>();
+
+    test_blocked_range_constraint</*Expected = */false,
+                                  NonCopyable, NonCopyAssignable, NonDestructible,
+                                  NoOperatorLess, OperatorLessNonConst, WrongReturnOperatorLess,
+                                  NoOperatorMinus, OperatorMinusNonConst, WrongReturnOperatorMinus,
+                                  NoOperatorPlus, OperatorPlusNonConst, WrongReturnOperatorPlus>();
+}
+
+//! \brief \ref error_guessing
+TEST_CASE("constraints for blocked_range2d value") {
+    using namespace test_concepts::blocked_range_value;
+    using const_iterator = typename std::vector<int>::const_iterator;
+
+    test_blocked_range2d_constraint</*Expected = */true,
+                                    Correct, char, int, std::size_t, const_iterator>();
+
+    test_blocked_range2d_constraint</*Expected = */false,
+                                    NonCopyable, NonCopyAssignable, NonDestructible,
+                                    NoOperatorLess, OperatorLessNonConst, WrongReturnOperatorLess,
+                                    NoOperatorMinus, OperatorMinusNonConst, WrongReturnOperatorMinus,
+                                    NoOperatorPlus, OperatorPlusNonConst, WrongReturnOperatorPlus>();
+
+    test_blocked_range2d_row_invalid_constraint<Correct, char, int, std::size_t, const_iterator>();
+    test_blocked_range2d_col_invalid_constraint<Correct, char, int, std::size_t, const_iterator>();
+}
+
+//! \brief \ref error_guessing
+TEST_CASE("constraints for blocked_range3d value") {
+    using namespace test_concepts::blocked_range_value;
+    using const_iterator = typename std::vector<int>::const_iterator;
+
+    test_blocked_range3d_constraint</*Expected = */true,
+                                    Correct, char, int, std::size_t, const_iterator>();
+
+    test_blocked_range3d_constraint</*Expected = */false,
+                                    NonCopyable, NonCopyAssignable, NonDestructible,
+                                    NoOperatorLess, OperatorLessNonConst, WrongReturnOperatorLess,
+                                    NoOperatorMinus, OperatorMinusNonConst, WrongReturnOperatorMinus,
+                                    NoOperatorPlus, OperatorPlusNonConst, WrongReturnOperatorPlus>();
+
+    test_blocked_range3d_page_invalid_constraint<Correct, char, int, std::size_t, const_iterator>();
+    test_blocked_range3d_row_invalid_constraint<Correct, char, int, std::size_t, const_iterator>();
+    test_blocked_range3d_col_invalid_constraint<Correct, char, int, std::size_t, const_iterator>();
+}
+
+//! \brief \ref error_guessing
+TEST_CASE("constraints for blocked_rangeNd value") {
+    using namespace test_concepts::blocked_range_value;
+    using const_iterator = typename std::vector<int>::const_iterator;
+
+    static_assert(well_formed_blocked_range_Nd_instantiation<Correct, char, int, std::size_t, const_iterator>);
+
+    static_assert(!well_formed_blocked_range_Nd_instantiation<NonCopyable, NonCopyAssignable, NonDestructible,
+                                                              NoOperatorLess, OperatorLessNonConst, WrongReturnOperatorLess,
+                                                              NoOperatorMinus, OperatorMinusNonConst, WrongReturnOperatorMinus,
+                                                              NoOperatorPlus, OperatorPlusNonConst, WrongReturnOperatorPlus>);
+}
+
+#endif // __TBB_CPP20_CONCEPTS_PRESENT

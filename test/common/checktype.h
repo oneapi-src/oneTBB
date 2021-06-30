@@ -17,6 +17,8 @@
 #ifndef __TBB_test_common_checktype_H
 #define __TBB_test_common_checktype_H
 
+#include "config.h"
+
 #include <atomic>
 
 // Type that checks that there are no operations with the destroyed object
@@ -30,17 +32,17 @@ protected:
 public:
     DestroyedTracker() : my_state(LIVE) {}
     DestroyedTracker( const DestroyedTracker& src ) : my_state(LIVE) {
-        CHECK_MESSAGE(src.is_alive(), "Constructing from the dead source");
+        CHECK_FAST_MESSAGE(src.is_alive(), "Constructing from the dead source");
     }
 
     ~DestroyedTracker() {
-        CHECK_MESSAGE(is_alive(), "Destructing the dead object");
+        CHECK_FAST_MESSAGE(is_alive(), "Destructing the dead object");
         my_state = DEAD;
     }
 
     DestroyedTracker& operator=( const DestroyedTracker& src ) {
-        CHECK_MESSAGE(is_alive(), "Assignment to the dead object");
-        CHECK_MESSAGE(src.is_alive(), "Assignment from the dead source");
+        CHECK_FAST_MESSAGE(is_alive(), "Assignment to the dead object");
+        CHECK_FAST_MESSAGE(src.is_alive(), "Assignment from the dead source");
         return *this;
     }
 
@@ -60,8 +62,8 @@ public:
     }
 
     CheckType( const CheckType& other ) : DestroyedTracker(other) {
-        REQUIRE(is_alive());
-        REQUIRE(other.is_alive());
+        CHECK_FAST(is_alive());
+        CHECK_FAST(other.is_alive());
         my_id = other.my_id;
         am_ready = other.am_ready;
         ++check_type_counter;
@@ -74,31 +76,31 @@ public:
     }
 
     CheckType& operator=( const CheckType& other ) {
-        REQUIRE(is_alive());
-        REQUIRE(other.is_alive());
+        CHECK_FAST(is_alive());
+        CHECK_FAST(other.is_alive());
         my_id = other.my_id;
         am_ready = other.am_ready;
         return *this;
     }
 
     ~CheckType() {
-        REQUIRE(is_alive());
+        CHECK_FAST(is_alive());
         --check_type_counter;
-        CHECK_MESSAGE(check_type_counter >= 0, "Too many destructions");
+        CHECK_FAST_MESSAGE(check_type_counter >= 0, "Too many destructions");
     }
 
     Counter id() const {
-        REQUIRE(is_alive());
+        CHECK_FAST(is_alive());
         return my_id;
     }
 
     bool is_ready() {
-        REQUIRE(is_alive());
+        CHECK_FAST(is_alive());
         return am_ready;
     }
 
     void get_ready() {
-        REQUIRE(is_alive());
+        CHECK_FAST(is_alive());
         if (my_id == Counter(0)) {
             my_id = Counter(1);
             am_ready = true;

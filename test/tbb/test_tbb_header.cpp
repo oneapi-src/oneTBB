@@ -100,8 +100,11 @@ struct Body1 {
 struct Body1a { // feeder body for parallel_do
     void operator() ( int, tbb::feeder<int>& ) const {}
 };
-struct Body1b { // binary operator for reduction and comparison
+struct Body1b { // binary operator for reduction
     int operator() ( const int, const int ) const { return 0; }
+};
+struct Body1bc { // binary operator for comparison
+    bool operator() (const int, const int) const { return false; }
 };
 struct Body2 {
     Body2 () {}
@@ -244,8 +247,9 @@ static void DefinitionPresence() {
     TestFuncDefinitionPresence( parallel_scan, (const tbb::blocked_range2d<int>&, Body3&, const tbb::auto_partitioner&), void );
     TestFuncDefinitionPresence( parallel_scan, (const tbb::blocked_range<int>&, const int&, const Body3a&, const Body1b&), int );
     typedef int intarray[10];
+
     TestFuncDefinitionPresence( parallel_sort, (int*, int*), void );
-    TestFuncDefinitionPresence( parallel_sort, (intarray&, const Body1b&), void );
+    TestFuncDefinitionPresence( parallel_sort, (intarray&, const Body1bc&), void );
     TestFuncDefinitionPresence( parallel_pipeline, (size_t, const tbb::filter<void,void>&), void );
     TestFuncDefinitionPresence( parallel_invoke, (const Body&, const Body&, tbb::task_group_context&), void );
     TestFuncDefinitionPresence( parallel_for_each, (const intarray&, const Body1a&, tbb::task_group_context&), void );

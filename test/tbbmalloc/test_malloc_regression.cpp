@@ -71,7 +71,7 @@ bool TestBootstrapLeak() {
     ptrdiff_t memory_leak = 0;
     // Note that 16K bootstrap memory block is enough to serve 42 threads.
     const int num_thread_runs = 200;
-    for (int run=0; run<3; run++) {
+    for (;;) {
         memory_in_use = utils::GetMemoryUsage();
         for( int i=0; i<num_thread_runs; ++i )
             RunThread( minimalAllocFree(), alloc_size );
@@ -129,17 +129,17 @@ void TestAlignedMsize()
         for (int s=0; allocSz[s]; s++) {
             for (int i=0; i<NUM; i++) {
                 p[i] = (char*)scalable_aligned_malloc(allocSz[s], align[a]);
-                CHECK(tbb::detail::is_aligned(p[i], align[a]));
+                CHECK_FAST(tbb::detail::is_aligned(p[i], align[a]));
             }
 
             for (int i=0; i<NUM; i++) {
                 objSizes[i] = scalable_msize(p[i]);
-                REQUIRE_MESSAGE(objSizes[i] >= allocSz[s], "allocated size must be not less than requested");
+                CHECK_FAST_MESSAGE(objSizes[i] >= allocSz[s], "allocated size must be not less than requested");
                 memset(p[i], i, objSizes[i]);
             }
             for (int i=0; i<NUM; i++) {
                 for (unsigned j=0; j<objSizes[i]; j++)
-                    REQUIRE_MESSAGE((((char*)p[i])[j] == i), "Error: data broken");
+                    CHECK_FAST_MESSAGE((((char*)p[i])[j] == i), "Error: data broken");
             }
 
             for (int i=0; i<NUM; i++) {
@@ -149,9 +149,9 @@ void TestAlignedMsize()
             }
             for (int i=0; i<NUM; i++) {
                 for (unsigned j=0; j<allocSz[s]; j++)
-                    REQUIRE_MESSAGE((((char*)p[i])[j] == i), "Error: data broken");
+                    CHECK_FAST_MESSAGE((((char*)p[i])[j] == i), "Error: data broken");
                 for (size_t j=allocSz[s]; j<2*allocSz[s]; j++)
-                    REQUIRE_MESSAGE((((char*)p[i])[j] == i+1), "Error: data broken");
+                    CHECK_FAST_MESSAGE((((char*)p[i])[j] == i+1), "Error: data broken");
             }
             for (int i=0; i<NUM; i++)
                 scalable_free(p[i]);

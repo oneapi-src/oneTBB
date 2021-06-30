@@ -31,6 +31,7 @@
 #include "tbb/concurrent_set.h"
 #include "tbb/spin_mutex.h"
 #include "tbb/spin_rw_mutex.h"
+#include "tbb/task_group.h"
 
 #include <stdexcept>
 #include <cstdlib>
@@ -446,12 +447,13 @@ public:
 void TestArenaConcurrency( int p, int reserved = 0, int step = 1) {
     for (; reserved <= p; reserved += step) {
         tbb::task_arena a( p, reserved );
-        { // Check concurrency with worker & reserved external threads.
+        if (p - reserved < tbb::this_task_arena::max_concurrency()) {
+            // Check concurrency with worker & reserved external threads.
             ResetTLS();
             utils::SpinBarrier b( p );
             utils::SpinBarrier wb( p-reserved );
             TestArenaConcurrencyBody test( a, p, reserved, &b, &wb );
-            for ( int i = reserved; i < p; ++i )
+            for ( int i = reserved; i < p; ++i ) // requests p-reserved worker threads
                 a.enqueue( test );
             if ( reserved==1 )
                 test( 0 ); // calls execute()
@@ -1023,6 +1025,10 @@ public:
 };
 
 void TestDelegatedSpawnWait() {
+    if (tbb::this_task_arena::max_concurrency() < 3) {
+        // The test requires at least 2 worker threads
+        return;
+    }
     // Regression test for a bug with missed wakeup notification from a delegated task
     tbb::task_arena a(2,0);
     a.initialize();
@@ -1875,3 +1881,148 @@ TEST_CASE("Workers oversubscription") {
         );
     });
 }
+
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+//! Basic test for arena::enqueue with task handle
+//! \brief \ref interface \ref requirement
+TEST_CASE("enqueue task_handle") {
+    tbb::task_arena arena;
+    tbb::task_group tg;
+
+    std::atomic<bool> run{false};
+
+    auto task_handle = tg.defer([&]{ run = true; });
+
+    arena.enqueue(std::move(task_handle));
+    tg.wait();
+
+    CHECK(run == true);
+}
+
+//! Basic test for this_task_arena::enqueue with task handle
+//! \brief \ref interface \ref requirement
+TEST_CASE("this_task_arena::enqueue task_handle") {
+    tbb::task_arena arena;
+    tbb::task_group tg;
+
+    std::atomic<bool> run{false};
+
+    arena.execute([&]{
+        auto task_handle = tg.defer([&]{ run = true; });
+
+        tbb::this_task_arena::enqueue(std::move(task_handle));
+    });
+
+    tg.wait();
+
+    CHECK(run == true);
+}
+
+//! Basic test for this_task_arena::enqueue with functor
+//! \brief \ref interface \ref requirement
+TEST_CASE("this_task_arena::enqueue function") {
+    tbb::task_arena arena;
+    tbb::task_group tg;
+
+    std::atomic<bool> run{false};
+    //block the task_group to wait on it
+    auto task_handle = tg.defer([]{});
+
+    arena.execute([&]{
+        tbb::this_task_arena::enqueue([&]{
+            run = true;
+            //release the task_group
+            task_handle = tbb::task_handle{};
+        });
+    });
+
+    tg.wait();
+
+    CHECK(run == true);
+}
+
+#if TBB_USE_EXCEPTIONS
+//! Basic test for exceptions in task_arena::enqueue with task_handle
+//! \brief \ref interface \ref requirement
+TEST_CASE("task_arena::enqueue(task_handle) exception propagation"){
+    tbb::task_group tg;
+    tbb::task_arena arena;
+
+    tbb::task_handle h = tg.defer([&]{
+        volatile bool suppress_unreachable_code_warning = true;
+        if (suppress_unreachable_code_warning) {
+            throw std::runtime_error{ "" };
+        }
+    });
+
+    arena.enqueue(std::move(h));
+
+    CHECK_THROWS_AS(tg.wait(), std::runtime_error);
+}
+
+//! Basic test for exceptions in this_task_arena::enqueue with task_handle
+//! \brief \ref interface \ref requirement
+TEST_CASE("this_task_arena::enqueue(task_handle) exception propagation"){
+    tbb::task_group tg;
+
+    tbb::task_handle h = tg.defer([&]{
+        volatile bool suppress_unreachable_code_warning = true;
+        if (suppress_unreachable_code_warning) {
+            throw std::runtime_error{ "" };
+        }
+    });
+
+    tbb::this_task_arena::enqueue(std::move(h));
+
+    CHECK_THROWS_AS(tg.wait(), std::runtime_error);
+}
+
+//! The test for error in scheduling empty task_handle
+//! \brief \ref requirement
+TEST_CASE("Empty task_handle cannot be scheduled"){
+    tbb::task_arena ta;
+
+    CHECK_THROWS_WITH_AS(ta.enqueue(tbb::task_handle{}),                    "Attempt to schedule empty task_handle", std::runtime_error);
+    CHECK_THROWS_WITH_AS(tbb::this_task_arena::enqueue(tbb::task_handle{}), "Attempt to schedule empty task_handle", std::runtime_error);
+}
+#endif // TBB_USE_EXCEPTIONS
+
+//! Basic test for is_inside_task in task_group
+//! \brief \ref interface \ref requirement
+TEST_CASE("is_inside_task in task_group"){
+    CHECK( false == tbb::is_inside_task());
+
+    tbb::task_group tg;
+    tg.run_and_wait([&]{
+        CHECK( true == tbb::is_inside_task());
+    });
+}
+
+//! Basic test for is_inside_task in arena::execute
+//! \brief \ref interface \ref requirement
+TEST_CASE("is_inside_task in arena::execute"){
+    CHECK( false == tbb::is_inside_task());
+
+    tbb::task_arena arena;
+
+    arena.execute([&]{
+        // The execute method is processed outside of any task
+        CHECK( false == tbb::is_inside_task());
+    });
+}
+
+//! The test for is_inside_task in arena::execute when inside other task
+//! \brief \ref error_guessing
+TEST_CASE("is_inside_task in arena::execute") {
+    CHECK(false == tbb::is_inside_task());
+
+    tbb::task_arena arena;
+    tbb::task_group tg;
+    tg.run_and_wait([&] {
+        arena.execute([&] {
+            // The execute method is processed outside of any task
+            CHECK(false == tbb::is_inside_task());
+        });
+    });
+}
+#endif //__TBB_PREVIEW_TASK_GROUP_EXTENSIONS

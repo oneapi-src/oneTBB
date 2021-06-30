@@ -17,6 +17,21 @@
 #ifndef __TBB_test_common_config_H
 #define __TBB_test_common_config_H
 
+#if __TBB_CPF_BUILD
+#ifndef  TBB_PREVIEW_FLOW_GRAPH_FEATURES
+#define TBB_PREVIEW_FLOW_GRAPH_FEATURES 1
+#endif
+#ifndef TBB_PREVIEW_ALGORITHM_TRACE
+#define TBB_PREVIEW_ALGORITHM_TRACE 1
+#endif
+#ifndef TBB_DEPRECATED_LIMITER_NODE_CONSTRUCTOR
+#define TBB_DEPRECATED_LIMITER_NODE_CONSTRUCTOR 1
+#endif
+#ifndef TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+#define TBB_PREVIEW_TASK_GROUP_EXTENSIONS 1
+#endif
+#endif
+
 #include "oneapi/tbb/detail/_config.h"
 #if __FreeBSD__
 #include <sys/param.h>  // for __FreeBSD_version
@@ -48,18 +63,6 @@
     #if MAX_TUPLE_TEST_SIZE > __TBB_VARIADIC_MAX
         #undef MAX_TUPLE_TEST_SIZE
         #define MAX_TUPLE_TEST_SIZE __TBB_VARIADIC_MAX
-    #endif
-#endif
-
-#if __TBB_CPF_BUILD
-    #ifndef  TBB_PREVIEW_FLOW_GRAPH_FEATURES
-        #define TBB_PREVIEW_FLOW_GRAPH_FEATURES 1
-    #endif
-    #ifndef TBB_PREVIEW_ALGORITHM_TRACE
-        #define TBB_PREVIEW_ALGORITHM_TRACE 1
-    #endif
-    #ifndef TBB_DEPRECATED_LIMITER_NODE_CONSTRUCTOR
-        #define TBB_DEPRECATED_LIMITER_NODE_CONSTRUCTOR 1
     #endif
 #endif
 

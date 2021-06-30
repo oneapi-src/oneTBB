@@ -65,6 +65,10 @@ add_subdirectory(../../common/gui gui)
 target_link_libraries(tachyon TBB::tbb Threads::Threads UI_LIB_tachyon)
 target_compile_options(tachyon PRIVATE ${TBB_CXX_STD_FLAG})
 
+if (MSVC AND CMAKE_CXX_COMPILER_ID STREQUAL IntelLLVM)
+    target_compile_options(tachyon PRIVATE -D_CRT_SECURE_NO_WARNINGS)
+endif()
+
 set(EXECUTABLE "$<TARGET_FILE:tachyon>")
 set(ARGS ${CMAKE_CURRENT_SOURCE_DIR}/dat/balls.dat)
 set(PERF_ARGS silent ${CMAKE_CURRENT_SOURCE_DIR}/dat/balls3.dat)

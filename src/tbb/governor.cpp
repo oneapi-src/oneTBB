@@ -20,6 +20,7 @@
 #include "market.h"
 #include "arena.h"
 #include "dynamic_link.h"
+#include "concurrent_monitor.h"
 
 #include "oneapi/tbb/task_group.h"
 #include "oneapi/tbb/global_control.h"
@@ -37,6 +38,8 @@
 namespace tbb {
 namespace detail {
 namespace r1 {
+
+void clear_address_waiter_table();
 
 #if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
 //! global_control.cpp contains definition
@@ -61,6 +64,7 @@ void governor::acquire_resources () {
     if( status )
         handle_perror(status, "TBB failed to initialize task scheduler TLS\n");
     detect_cpu_features(cpu_features);
+
     is_rethrow_broken = gcc_rethrow_exception_broken();
 }
 
@@ -73,6 +77,8 @@ void governor::release_resources () {
     int status = theTLS.destroy();
     if( status )
         runtime_warning("failed to destroy task scheduler TLS: %s", std::strerror(status));
+    clear_address_waiter_table();
+
     dynamic_unlink_all();
 }
 
@@ -170,6 +176,7 @@ void governor::init_external_thread() {
     // External thread always occupies the first slot
     thread_data& td = *new(cache_aligned_allocate(sizeof(thread_data))) thread_data(0, false);
     td.attach_arena(a, /*slot index*/ 0);
+    __TBB_ASSERT(td.my_inbox.is_idle_state(false), nullptr);
 
     stack_size = a.my_market->worker_stack_size();
     std::uintptr_t stack_base = get_stack_base(stack_size);
@@ -233,6 +240,7 @@ void release_impl(d1::task_scheduler_handle& handle) {
 }
 
 bool finalize_impl(d1::task_scheduler_handle& handle) {
+    __TBB_ASSERT_RELEASE(handle, "trying to finalize with null handle");
     market::global_market_mutex_type::scoped_lock lock( market::theMarketMutex );
     bool ok = true; // ok if theMarket does not exist yet
     market* m = market::theMarket; // read the state of theMarket

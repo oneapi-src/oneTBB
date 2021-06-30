@@ -355,7 +355,14 @@ void test_reserve_release_messages() {
     broad.try_put(1); //failed message retrieved.
     g.wait_for_all();
 
+#if __GNUC__ && __GNUC__ < 10 && !TBB_USE_DEBUG
+    // Seemingly, GNU compiler generates incorrect code for the call of limiter.register_successor in release (-03)
+    // The function pointer to make_edge workarounds the issue for unknown reason
+    auto make_edge_ptr = make_edge<int>;
+    make_edge_ptr(limit, output_queue); //putting the successor back
+#else
     make_edge(limit, output_queue); //putting the successor back
+#endif
 
     broad.try_put(1);  //drop the count
 

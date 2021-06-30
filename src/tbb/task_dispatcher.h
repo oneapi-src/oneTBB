@@ -65,13 +65,13 @@ inline d1::task* suspend_point_type::resume_task::execute(d1::execution_data& ed
     execution_data_ext& ed_ext = static_cast<execution_data_ext&>(ed);
 
     if (ed_ext.wait_ctx) {
-        extended_concurrent_monitor::resume_context monitor_node{{std::uintptr_t(ed_ext.wait_ctx), nullptr}, ed_ext, m_target};
+        market_concurrent_monitor::resume_context monitor_node{{std::uintptr_t(ed_ext.wait_ctx), nullptr}, ed_ext, m_target};
         // The wait_ctx is present only in external_waiter. In that case we leave the current stack
         // in the abandoned state to resume when waiting completes.
         thread_data* td = ed_ext.task_disp->m_thread_data;
         td->set_post_resume_action(thread_data::post_resume_action::register_waiter, &monitor_node);
 
-        extended_concurrent_monitor& wait_list = td->my_arena->my_market->get_wait_list();
+        market_concurrent_monitor& wait_list = td->my_arena->my_market->get_wait_list();
 
         if (wait_list.wait([&] { return !ed_ext.wait_ctx->continue_execution(); }, monitor_node)) {
             return nullptr;
@@ -230,6 +230,7 @@ d1::task* task_dispatcher::receive_or_steal_task(
         // Nothing to do, pause a little.
         waiter.pause(slot);
     } // end of nonlocal task retrieval loop
+
     if (inbox.is_idle_state(true)) {
         inbox.set_is_idle(false);
     }
@@ -280,6 +281,11 @@ d1::task* task_dispatcher::local_wait_for_all(d1::task* t, Waiter& waiter ) {
     m_properties.fifo_tasks_allowed = false;
 
     t = get_critical_task(t, ed, isolation, critical_allowed);
+    if (t && m_thread_data->my_inbox.is_idle_state(true)) {
+        // The thread has a work to do. Therefore, marking its inbox as not idle so that
+        // affinitized tasks can be stolen from it.
+        m_thread_data->my_inbox.set_is_idle(false);
+    }
 
     // Infinite exception loop
     for (;;) {
@@ -375,7 +381,7 @@ inline void task_dispatcher::recall_point() {
         __TBB_ASSERT(m_suspend_point->m_is_owner_recalled.load(std::memory_order_relaxed) == false, nullptr);
         d1::suspend([](suspend_point_type* sp) {
             sp->m_is_owner_recalled.store(true, std::memory_order_release);
-            auto is_related_suspend_point = [sp] (extended_context context) {
+            auto is_related_suspend_point = [sp] (market_context context) {
                 std::uintptr_t sp_addr = std::uintptr_t(sp);
                 return sp_addr == context.my_uniq_addr;
             };

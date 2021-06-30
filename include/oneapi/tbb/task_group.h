@@ -19,15 +19,17 @@
 
 #include "detail/_config.h"
 #include "detail/_namespace_injection.h"
-#include "detail/_template_helpers.h"
+#include "detail/_assert.h"
 #include "detail/_utils.h"
+#include "detail/_template_helpers.h"
 #include "detail/_exception.h"
 #include "detail/_task.h"
 #include "detail/_small_object_pool.h"
 
 #include "profiling.h"
 
-#include <functional>
+#include <memory>
+#include <type_traits>
 
 #if _MSC_VER && !defined(__INTEL_COMPILER)
     // Suppress warning: structure was padded due to alignment specifier
@@ -42,6 +44,7 @@ namespace d1 {
 class delegate_base;
 class task_arena_base;
 class task_group_context;
+class task_group_base;
 }
 
 namespace r1 {
@@ -66,6 +69,162 @@ void __TBB_EXPORTED_FUNC capture_fp_settings(d1::task_group_context&);
 
 struct task_group_context_impl;
 }
+
+namespace d2 {
+
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+class task_handle;
+class task_handle_task;
+
+//move the helper functions into separate namespace in order hide the from argument-dependent lookup
+//(to not make them visible in the user code)
+namespace h {
+d1::task*               release(task_handle& th);
+d1::task_group_context* ctx_of(task_handle& th);
+}
+using namespace h;
+
+class task_handle_task : public d1::task {
+protected:
+    std::uint64_t m_version_and_traits{};
+    d1::wait_context& m_wait_ctx;
+    d1::task_group_context& m_ctx;
+    d1::small_object_allocator m_allocator;
+public:
+    void finalize(const d1::execution_data* ed = nullptr) {
+        if (ed) {
+            m_allocator.delete_object(this, *ed);
+        } else {
+            m_allocator.delete_object(this);
+        }
+    }
+
+    task_handle_task(d1::wait_context& wo, d1::task_group_context& ctx, d1::small_object_allocator& alloc)
+        : m_wait_ctx(wo)
+        , m_ctx(ctx)
+        , m_allocator(alloc) {
+        suppress_unused_warning(m_version_and_traits);
+    }
+
+    ~task_handle_task(){
+        m_wait_ctx.release();
+    }
+
+    d1::task_group_context& ctx() const { return m_ctx; }
+};
+
+class task_handle {
+    struct task_handle_task_finalizer_t{
+        void operator()(task_handle_task* p){ p->finalize();}
+    };
+    using handle_impl_t = std::unique_ptr<task_handle_task, task_handle_task_finalizer_t>;
+
+    handle_impl_t m_handle = {nullptr};
+public:
+    task_handle() = default;
+    task_handle(task_handle&& )  = default;
+    task_handle& operator=(task_handle&& )  = default;
+
+    explicit operator bool() const noexcept { return static_cast<bool>(m_handle);}
+
+    friend bool operator==(task_handle const& th, std::nullptr_t) noexcept;
+    friend bool operator==(std::nullptr_t, task_handle const& th) noexcept;
+
+    friend bool operator!=(task_handle const& th, std::nullptr_t) noexcept;
+    friend bool operator!=(std::nullptr_t, task_handle const& th) noexcept;
+
+private:
+    friend class d1::task_group_base;
+    friend d1::task*               h::release(task_handle& th);
+    friend d1::task_group_context* h::ctx_of(task_handle& th);
+
+    task_handle(task_handle_task* t) : m_handle {t}{};
+
+    d1::task* release() {
+       return m_handle.release();
+    }
+};
+
+namespace h{
+inline d1::task*                release(task_handle& th){ return th.release();}
+inline d1::task_group_context*  ctx_of(task_handle& th) { return th ? & th.m_handle->ctx() : nullptr;}
+}
+
+inline bool operator==(task_handle const& th, std::nullptr_t) noexcept {
+    return th.m_handle == nullptr;
+}
+inline bool operator==(std::nullptr_t, task_handle const& th) noexcept {
+    return th.m_handle == nullptr;
+}
+
+inline bool operator!=(task_handle const& th, std::nullptr_t) noexcept {
+    return th.m_handle != nullptr;
+}
+
+inline bool operator!=(std::nullptr_t, task_handle const& th) noexcept {
+    return th.m_handle != nullptr;
+}
+
+namespace {
+template<typename F>
+d1::task* task_ptr_or_nullptr(F&& f);
+}
+
+template<typename F>
+class function_task : public task_handle_task  {
+    //TODO: apply empty base optimization here
+    const F m_func;
+
+private:
+    d1::task* execute(d1::execution_data& ed) override {
+        __TBB_ASSERT(ed.context == &this->m_ctx, "The task group context should be used for all tasks");
+        task* res = task_ptr_or_nullptr(m_func);
+        finalize(&ed);
+        return res;
+    }
+    d1::task* cancel(d1::execution_data& ed) override {
+        finalize(&ed);
+        return nullptr;
+    }
+public:
+    template<typename FF>
+    function_task(FF&& f, d1::wait_context& wo, d1::task_group_context& ctx, d1::small_object_allocator& alloc)
+        : task_handle_task{wo, ctx, alloc},
+          m_func(std::forward<FF>(f)) {}
+};
+
+namespace {
+    template<typename F>
+    d1::task* task_ptr_or_nullptr_impl(std::false_type, F&& f){
+        task_handle th = std::forward<F>(f)();
+        return release(th);
+    }
+
+    template<typename F>
+    d1::task* task_ptr_or_nullptr_impl(std::true_type, F&& f){
+        std::forward<F>(f)();
+        return nullptr;
+    }
+
+    template<typename F>
+    d1::task* task_ptr_or_nullptr(F&& f){
+        using is_void_t = std::is_void<
+            decltype(std::forward<F>(f)())
+            >;
+
+        return  task_ptr_or_nullptr_impl(is_void_t{}, std::forward<F>(f));
+    }
+}
+#else
+namespace {
+    template<typename F>
+    d1::task* task_ptr_or_nullptr(F&& f){
+        std::forward<F>(f)();
+        return nullptr;
+    }
+}  // namespace
+#endif // __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+} // namespace d2
 
 namespace d1 {
 
@@ -118,14 +277,23 @@ private:
     //! Specifies whether cancellation was requested for this task group.
     std::atomic<std::uint32_t> my_cancellation_requested;
 
-    //! Version for run-time checks and behavioral traits of the context.
-    std::uint8_t my_version;
+    //! Versioning for run-time checks and behavioral traits of the context.
+    enum class task_group_context_version : std::uint8_t {
+        gold_2021U1   = 0,      // version of task_group_context released in oneTBB 2021.1 GOLD
+        proxy_support = 1       // backward compatible support for 'this' context to act as a proxy
+    };
+    task_group_context_version my_version;
 
     //! The context traits.
     struct context_traits {
         bool fp_settings        : 1;
         bool concurrent_wait    : 1;
         bool bound              : 1;
+        bool proxy              : 1; // true if 'this' acts as a proxy for user-specified context
+        bool reserved1          : 1;
+        bool reserved2          : 1;
+        bool reserved3          : 1;
+        bool reserved4          : 1;
     } my_traits;
 
     static_assert(sizeof(context_traits) == 1, "Traits shall fit into one byte.");
@@ -146,8 +314,13 @@ private:
     //! The synchronization machine state to manage lifetime.
     std::atomic<lifetime_state> my_lifetime_state;
 
-    //! Pointer to the context of the parent cancellation group. NULL for isolated contexts.
-    task_group_context* my_parent;
+    union {
+        //! Pointer to the context of the parent cancellation group. NULL for isolated contexts.
+        task_group_context* my_parent;
+
+        //! Pointer to the actual context 'this' context represents a proxy of.
+        task_group_context* my_actual_context;
+    };
 
     //! Thread data instance that registered this context in its list.
     std::atomic<r1::thread_data*> my_owner;
@@ -167,32 +340,75 @@ private:
     string_resource_index my_name;
 
     char padding[max_nfs_size
-        - sizeof(std::uint64_t) // my_cpu_ctl_env
-        - sizeof(std::atomic<std::uint32_t>) // my_cancellation_requested
-        - sizeof(std::uint8_t) // my_version
-        - sizeof(context_traits) // my_traits
-        - sizeof(std::atomic<std::uint8_t>) // my_state
-        - sizeof(std::atomic<lifetime_state>) // my_lifetime_state
-        - sizeof(task_group_context*) // my_parent
-        - sizeof(std::atomic<r1::thread_data*>) // my_owner
-        - sizeof(context_list_node) // my_node
-        - sizeof(r1::tbb_exception_ptr*) // my_exception
-        - sizeof(void*) // my_itt_caller
-        - sizeof(string_resource_index) // my_name
+        - sizeof(std::uint64_t)                     // my_cpu_ctl_env
+        - sizeof(std::atomic<std::uint32_t>)        // my_cancellation_requested
+        - sizeof(std::uint8_t)                      // my_version
+        - sizeof(context_traits)                    // my_traits
+        - sizeof(std::atomic<std::uint8_t>)         // my_state
+        - sizeof(std::atomic<lifetime_state>)       // my_lifetime_state
+        - sizeof(task_group_context*)               // my_parent
+        - sizeof(std::atomic<r1::thread_data*>)     // my_owner
+        - sizeof(context_list_node)                 // my_node
+        - sizeof(r1::tbb_exception_ptr*)            // my_exception
+        - sizeof(void*)                             // my_itt_caller
+        - sizeof(string_resource_index)             // my_name
     ];
 
     task_group_context(context_traits t, string_resource_index name)
-        : my_version{}, my_name{ name } {
+        : my_version{task_group_context_version::proxy_support}, my_name{name}
+    {
         my_traits = t; // GCC4.8 issues warning list initialization for bitset (missing-field-initializers)
         r1::initialize(*this);
     }
 
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+    task_group_context(task_group_context* actual_context)
+        : my_version{task_group_context_version::proxy_support}
+        , my_actual_context{actual_context}
+    {
+        __TBB_ASSERT(my_actual_context, "Passed pointer value points to nothing.");
+        my_traits.proxy = true;
+        my_name = actual_context->my_name;
+
+        // no need to initialize 'this' context as it acts as a proxy for my_actual_context, which
+        // initialization is a user-side responsibility.
+    }
+#endif
+
     static context_traits make_traits(kind_type relation_with_parent, std::uintptr_t user_traits) {
         context_traits ct;
-        ct.bound = relation_with_parent == bound;
         ct.fp_settings = (user_traits & fp_settings) == fp_settings;
         ct.concurrent_wait = (user_traits & concurrent_wait) == concurrent_wait;
+        ct.bound = relation_with_parent == bound;
+        ct.proxy = false;
+        ct.reserved1 = ct.reserved2 = ct.reserved3 = ct.reserved4 = false;
         return ct;
+    }
+
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+    bool is_proxy() const {
+        return my_version >= task_group_context_version::proxy_support && my_traits.proxy;
+    }
+#endif
+
+    task_group_context& actual_context() noexcept {
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+        if (is_proxy()) {
+            __TBB_ASSERT(my_actual_context, "Actual task_group_context is not set.");
+            return *my_actual_context;
+        }
+#endif
+        return *this;
+    }
+
+    const task_group_context& actual_context() const noexcept {
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+        if (is_proxy()) {
+            __TBB_ASSERT(my_actual_context, "Actual task_group_context is not set.");
+            return *my_actual_context;
+        }
+#endif
+        return *this;
     }
 
 public:
@@ -227,12 +443,19 @@ public:
         : task_group_context(make_traits(relation_with_parent, t), CUSTOM_CTX) {}
 
     // Custom constructor for instrumentation of oneTBB algorithm
-    task_group_context (string_resource_index name )
+    task_group_context(string_resource_index name )
         : task_group_context(make_traits(bound, default_traits), name) {}
 
     // Do not introduce any logic on user side since it might break state propagation assumptions
     ~task_group_context() {
-        r1::destroy(*this);
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+        // When 'this' serves as a proxy, the initialization does not happen - nor should the
+        // destruction.
+        if (!is_proxy())
+#endif
+        {
+            r1::destroy(*this);
+        }
     }
 
     //! Forcefully reinitializes the context after the task tree it was associated with is completed.
@@ -244,7 +467,7 @@ public:
 
         The method does not change the context's parent if it is set. **/
     void reset() {
-        r1::reset(*this);
+        r1::reset(actual_context());
     }
 
     //! Initiates cancellation of all tasks in this cancellation group and its subordinate groups.
@@ -256,12 +479,12 @@ public:
         that when this method is concurrently called on the same not yet cancelled
         context, true will be returned by one and only one invocation. **/
     bool cancel_group_execution() {
-        return r1::cancel_group_execution(*this);
+        return r1::cancel_group_execution(actual_context());
     }
 
     //! Returns true if the context received cancellation request.
     bool is_group_execution_cancelled() {
-        return r1::is_group_execution_cancelled(*this);
+        return r1::is_group_execution_cancelled(actual_context());
     }
 
 #if __TBB_FP_CONTEXT
@@ -274,15 +497,16 @@ public:
 
         The method does not change the FPU control settings of the context's parent. **/
     void capture_fp_settings() {
-        r1::capture_fp_settings(*this);
+        r1::capture_fp_settings(actual_context());
     }
 #endif
 
     //! Returns the user visible context trait
     std::uintptr_t traits() const {
         std::uintptr_t t{};
-        t |= my_traits.fp_settings ? fp_settings : 0;
-        t |= my_traits.concurrent_wait ? concurrent_wait : 0;
+        const task_group_context& ctx = actual_context();
+        t |= ctx.my_traits.fp_settings ? fp_settings : 0;
+        t |= ctx.my_traits.concurrent_wait ? concurrent_wait : 0;
         return t;
     }
 private:
@@ -294,6 +518,7 @@ private:
     friend class r1::context_guard_helper;
     friend struct r1::task_arena_impl;
     friend struct r1::task_group_context_impl;
+    friend class task_group_base;
 }; // class task_group_context
 
 static_assert(sizeof(task_group_context) == 128, "Wrong size of task_group_context");
@@ -328,9 +553,9 @@ class function_task : public task {
         allocator.deallocate(this, ed);
     }
     task* execute(execution_data& ed) override {
-        m_func();
+        task* res = d2::task_ptr_or_nullptr(m_func);
         finalize(ed);
-        return nullptr;
+        return res;
     }
     task* cancel(execution_data& ed) override {
         finalize(ed);
@@ -357,9 +582,9 @@ class function_stack_task : public task {
         m_wait_ctx.release();
     }
     task* execute(execution_data&) override {
-        m_func();
+        task* res = d2::task_ptr_or_nullptr(m_func);
         finalize();
-        return nullptr;
+        return res;
     }
     task* cancel(execution_data&) override {
         finalize();
@@ -380,11 +605,11 @@ protected:
         m_wait_ctx.reserve();
         bool cancellation_status = false;
         try_call([&] {
-            execute_and_wait(t, m_context, m_wait_ctx, m_context);
+            execute_and_wait(t, context(), m_wait_ctx, context());
         }).on_completion([&] {
             // TODO: the reset method is not thread-safe. Ensure the correct behavior.
-            cancellation_status = m_context.is_group_execution_cancelled();
-            m_context.reset();
+            cancellation_status = context().is_group_execution_cancelled();
+            context().reset();
         });
         return cancellation_status ? canceled : complete;
     }
@@ -396,12 +621,34 @@ protected:
         return alloc.new_object<function_task<typename std::decay<F>::type>>(std::forward<F>(f), m_wait_ctx, alloc);
     }
 
+    task_group_context& context() noexcept {
+        return m_context.actual_context();
+    }
+
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+    template<typename F>
+    d2::task_handle prepare_task_handle(F&& f) {
+        m_wait_ctx.reserve();
+        small_object_allocator alloc{};
+        using function_task_t =  d2::function_task<typename std::decay<F>::type>;
+        d2::task_handle_task* function_task_p =  alloc.new_object<function_task_t>(std::forward<F>(f), m_wait_ctx, context(), alloc);
+
+        return {function_task_p};
+    }
+#endif
+
 public:
     task_group_base(uintptr_t traits = 0)
         : m_wait_ctx(0)
         , m_context(task_group_context::bound, task_group_context::default_traits | traits)
-    {
-    }
+    {}
+
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+    task_group_base(task_group_context& ctx)
+        : m_wait_ctx(0)
+        , m_context(&ctx)
+    {}
+#endif
 
     ~task_group_base() noexcept(false) {
         if (m_wait_ctx.continue_execution()) {
@@ -412,9 +659,9 @@ public:
 #endif
             // Always attempt to do proper cleanup to avoid inevitable memory corruption
             // in case of missing wait (for the sake of better testability & debuggability)
-            if (!m_context.is_group_execution_cancelled())
+            if (!context().is_group_execution_cancelled())
                 cancel();
-            d1::wait(m_wait_ctx, m_context);
+            d1::wait(m_wait_ctx, context());
             if (!stack_unwinding_in_progress)
                 throw_exception(exception_id::missing_wait);
         }
@@ -423,17 +670,17 @@ public:
     task_group_status wait() {
         bool cancellation_status = false;
         try_call([&] {
-            d1::wait(m_wait_ctx, m_context);
+            d1::wait(m_wait_ctx, context());
         }).on_completion([&] {
             // TODO: the reset method is not thread-safe. Ensure the correct behavior.
             cancellation_status = m_context.is_group_execution_cancelled();
-            m_context.reset();
+            context().reset();
         });
         return cancellation_status ? canceled : complete;
     }
 
     void cancel() {
-        m_context.cancel_group_execution();
+        context().cancel_group_execution();
     }
 }; // class task_group_base
 
@@ -441,11 +688,33 @@ class task_group : public task_group_base {
 public:
     task_group() : task_group_base(task_group_context::concurrent_wait) {}
 
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+    task_group(task_group_context& ctx) : task_group_base(ctx) {}
+#endif
+
     template<typename F>
     void run(F&& f) {
-        spawn(*prepare_task(std::forward<F>(f)), m_context);
+        spawn(*prepare_task(std::forward<F>(f)), context());
     }
 
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS    
+    void run(d2::task_handle&& h) {
+        if (h == nullptr)
+            throw_exception(exception_id::bad_task_handle);
+
+        if (d2::ctx_of(h) != &context())
+            throw_exception(exception_id::bad_task_handle_wrong_task_group);
+
+        spawn(*d2::release(h), context());
+    }
+
+    template<typename F>
+    d2::task_handle defer(F&& f) {
+        return prepare_task_handle(std::forward<F>(f));
+
+    }
+#endif //__TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+    
     template<typename F>
     task_group_status run_and_wait(const F& f) {
         return internal_run_and_wait(f);
@@ -496,13 +765,30 @@ class isolated_task_group : public task_group {
         return reinterpret_cast<intptr_t>(this);
     }
 public:
-    isolated_task_group () : task_group() {}
+    isolated_task_group() : task_group() {}
+
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+    isolated_task_group(task_group_context& ctx) : task_group(ctx) {}
+#endif
 
     template<typename F>
     void run(F&& f) {
-        spawn_delegate sd(prepare_task(std::forward<F>(f)), m_context);
+        spawn_delegate sd(prepare_task(std::forward<F>(f)), context());
         r1::isolate_within_arena(sd, this_isolation());
     }
+
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+    void run(d2::task_handle&& m_handle) {
+        if (m_handle == nullptr)
+            throw_exception(exception_id::bad_task_handle);
+
+        if (d2::ctx_of(m_handle) != &context())
+            throw_exception(exception_id::bad_task_handle_wrong_task_group);
+
+        spawn_delegate sd(d2::release(m_handle), context());
+        r1::isolate_within_arena(sd, this_isolation());
+    }
+#endif //__TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 
     template<typename F>
     task_group_status run_and_wait( const F& f ) {
@@ -545,6 +831,10 @@ using detail::d1::canceled;
 
 using detail::d1::is_current_task_group_canceling;
 using detail::r1::missing_wait;
+
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+using detail::d2::task_handle;
+#endif
 }
 
 } // namespace tbb
