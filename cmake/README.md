@@ -55,7 +55,7 @@ Windows requires one additional variable for correct TBBBind library building:
 
 `HWLOC_VER` substring used above can be replaced with one of the three values: `1_11` for the `tbbbind` library configuration, `2` for the `tbbbind_2_0`, and `2_5` for the `tbbbind_2_5` library configuration.
 
-If you specify variables for several TBBBind versions, then all these versions may be built during one build session.
+If you specify variables for several TBBBind versions, then building process for all of these versions will be performed during single build session.
 
 Specify the `TBB_DISABLE_HWLOC_AUTOMATIC_SEARCH` to disable HWLOC libraries automatic search.
 
