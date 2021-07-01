@@ -107,6 +107,7 @@ if (NOT DEFINED BUILD_SHARED_LIBS)
 endif()
 
 if (NOT BUILD_SHARED_LIBS)
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
     message(WARNING "You are building oneTBB as a static library. This is highly discouraged and such configuration is not supported. Consider building a dynamic library to avoid unforeseen issues.")
 endif()
 
