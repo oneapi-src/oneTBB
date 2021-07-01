@@ -558,7 +558,7 @@ public:
 //! Parallel prefix with default partitioner
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
-    __TBB_requires(range<Range> && parallel_scan_body<Body, Range>)
+    __TBB_requires(tbb_range<Range> && parallel_scan_body<Body, Range>)
 void parallel_scan( const Range& range, Body& body ) {
     start_scan<Range, Body, auto_partitioner>::run(range,body,__TBB_DEFAULT_PARTITIONER());
 }
@@ -566,7 +566,7 @@ void parallel_scan( const Range& range, Body& body ) {
 //! Parallel prefix with simple_partitioner
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
-    __TBB_requires(range<Range> && parallel_scan_body<Body, Range>)
+    __TBB_requires(tbb_range<Range> && parallel_scan_body<Body, Range>)
 void parallel_scan( const Range& range, Body& body, const simple_partitioner& partitioner ) {
     start_scan<Range, Body, simple_partitioner>::run(range, body, partitioner);
 }
@@ -574,7 +574,7 @@ void parallel_scan( const Range& range, Body& body, const simple_partitioner& pa
 //! Parallel prefix with auto_partitioner
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
-    __TBB_requires(range<Range> && parallel_scan_body<Body, Range>)
+    __TBB_requires(tbb_range<Range> && parallel_scan_body<Body, Range>)
 void parallel_scan( const Range& range, Body& body, const auto_partitioner& partitioner ) {
     start_scan<Range,Body,auto_partitioner>::run(range, body, partitioner);
 }
@@ -582,7 +582,7 @@ void parallel_scan( const Range& range, Body& body, const auto_partitioner& part
 //! Parallel prefix with default partitioner
 /** @ingroup algorithms **/
 template<typename Range, typename Value, typename Scan, typename ReverseJoin>
-    __TBB_requires(range<Range> && parallel_scan_function<Scan, Range, Value> &&
+    __TBB_requires(tbb_range<Range> && parallel_scan_function<Scan, Range, Value> &&
                    parallel_scan_combine<ReverseJoin, Value>)
 Value parallel_scan( const Range& range, const Value& identity, const Scan& scan, const ReverseJoin& reverse_join ) {
     lambda_scan_body<Range, Value, Scan, ReverseJoin> body(identity, scan, reverse_join);
@@ -593,7 +593,7 @@ Value parallel_scan( const Range& range, const Value& identity, const Scan& scan
 //! Parallel prefix with simple_partitioner
 /** @ingroup algorithms **/
 template<typename Range, typename Value, typename Scan, typename ReverseJoin>
-    __TBB_requires(range<Range> && parallel_scan_function<Scan, Range, Value> &&
+    __TBB_requires(tbb_range<Range> && parallel_scan_function<Scan, Range, Value> &&
                    parallel_scan_combine<ReverseJoin, Value>)
 Value parallel_scan( const Range& range, const Value& identity, const Scan& scan, const ReverseJoin& reverse_join,
                      const simple_partitioner& partitioner ) {
@@ -605,7 +605,7 @@ Value parallel_scan( const Range& range, const Value& identity, const Scan& scan
 //! Parallel prefix with auto_partitioner
 /** @ingroup algorithms **/
 template<typename Range, typename Value, typename Scan, typename ReverseJoin>
-    __TBB_requires(range<Range> && parallel_scan_function<Scan, Range, Value> &&
+    __TBB_requires(tbb_range<Range> && parallel_scan_function<Scan, Range, Value> &&
                    parallel_scan_combine<ReverseJoin, Value>)
 Value parallel_scan( const Range& range, const Value& identity, const Scan& scan, const ReverseJoin& reverse_join,
                      const auto_partitioner& partitioner ) {

@@ -67,10 +67,12 @@ bool rehash_required( hash_map_node_base<MutexType>* node_ptr ) {
     return reinterpret_cast<void*>(node_ptr) == rehash_req_flag;
 }
 
+#if TBB_USE_ASSERT
 template <typename MutexType>
 bool empty_rehashed( hash_map_node_base<MutexType>* node_ptr ) {
     return reinterpret_cast<void*>(node_ptr) == empty_rehashed_flag;
 }
+#endif
 
 // base class of concurrent_hash_map
 
@@ -455,7 +457,7 @@ private:
             , typename M
 			 >
 		__TBB_requires(tbb::detail::hash_compare<HashCompare, Key> &&
-					   ch_map_rw_scoped_lockable<MutexType>)
+					   ch_map_rw_scoped_lockable<M>)
 #else
 			 >
 		__TBB_requires(tbb::detail::hash_compare<HashCompare, Key>)

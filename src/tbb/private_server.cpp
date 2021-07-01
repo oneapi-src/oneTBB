@@ -197,7 +197,7 @@ public:
 
     void adjust_job_count_estimate( int delta ) override;
 
-#if _WIN32||_WIN64
+#if _WIN32 || _WIN64
     void register_external_thread ( ::rml::server::execution_resource_t& ) override {}
     void unregister_external_thread ( ::rml::server::execution_resource_t ) override {}
 #endif /* _WIN32||_WIN64 */
