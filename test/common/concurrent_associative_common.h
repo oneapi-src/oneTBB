@@ -473,7 +473,8 @@ void test_basic_common()
         REQUIRE_MESSAGE(ccont.count(1) == 2, "Concurrent container count(1) is incorrect");
         // std::pair<iterator, iterator> equal_range(const key_type& k);
         std::pair<typename T::iterator, typename T::iterator> range = cont.equal_range(1);
-        typename T::iterator it = range.first;
+        typename T::iterator it;
+        it = range.first;
         REQUIRE_MESSAGE((it != cont.end() && Value<T>::get(*it) == 1), "Element 1 has not been found properly");
         unsigned int count = 0;
         for (; it != range.second; it++)

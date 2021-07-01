@@ -26,13 +26,15 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
+#define __TBB_EXTRA_DEBUG 1 // enables additional checks
+#define TBB_PREVIEW_MEMORY_POOL 1
+#define HARNESS_TBBMALLOC_THREAD_SHUTDOWN 1
+
 #include "common/test.h"
 #include "common/utils.h"
 #include "common/utils_assert.h"
 #include "common/custom_allocators.h"
 
-#define __TBB_EXTRA_DEBUG 1 // enables additional checks
-#define TBB_PREVIEW_MEMORY_POOL 1
 
 #include "tbb/memory_pool.h"
 #include "tbb/scalable_allocator.h"
@@ -41,7 +43,6 @@
 #include "common/allocator_test_common.h"
 #include "common/allocator_stl_test_common.h"
 
-#define HARNESS_TBBMALLOC_THREAD_SHUTDOWN 1
 // #include "harness_allocator.h"
 
 #if _MSC_VER
@@ -230,9 +231,18 @@ TEST_CASE("Allocator concept") {
 
         TestAllocator(Concept, nestedAllocator);
     }
+    tbb::memory_pool<tbb::scalable_allocator<int>> mpool;
+
+    tbb::memory_pool_allocator<int> mpalloc(mpool);
+
+    TestAllocator<tbb::memory_pool_allocator<int>>(Concept, mpalloc);
+    TestAllocator<tbb::memory_pool_allocator<void>>(Concept, mpalloc);
 
     // operator==
     TestAllocator<tbb::scalable_allocator<void>>(Comparison);
+    TestAllocator<tbb::memory_pool_allocator<void>>(Comparison, tbb::memory_pool_allocator<void>(mpool));
+    TestAllocator<tbb::memory_pool_allocator<int>>(Comparison, mpalloc);
+    TestAllocator<tbb::memory_pool_allocator<void>>(Comparison, mpalloc);
 }
 
 #if TBB_USE_EXCEPTIONS
@@ -260,6 +270,18 @@ TEST_CASE("Small fixed pool") {
 TEST_CASE("Zero space pool") {
     TestZeroSpaceMemoryPool();
 }
+
+#if TBB_ALLOCATOR_TRAITS_BROKEN
+//! Testing allocator traits is broken
+//! \brief \ref error_guessing
+TEST_CASE("Broken allocator concept") {
+    TestAllocator<tbb::scalable_allocator<void>>(Broken);
+    
+    tbb::memory_pool<tbb::scalable_allocator<int>> mpool; 
+    TestAllocator<tbb::memory_pool_allocator<void>>(Broken, tbb::memory_pool_allocator<void>(mpool));
+}
+#endif
+
 
 //! Testing allocators compatibility with STL containers
 //! \brief \ref interface

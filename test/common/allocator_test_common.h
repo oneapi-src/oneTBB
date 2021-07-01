@@ -293,6 +293,7 @@ void TestAllocator(TestName name, const Allocator &a = Allocator()) {
     #endif
 
     NumberOfFoo = 0;
+    Allocator a_cpy(a);
     AllocatorFooChar a1(a);
     AllocatorFooDouble a2(a);
     AllocatorFooInt b1(a1);
@@ -300,6 +301,7 @@ void TestAllocator(TestName name, const Allocator &a = Allocator()) {
 
     switch(name) {
     case Comparison:
+        REQUIRE(a_cpy == a);
         REQUIRE(a1 == b1);
         REQUIRE(!(a2 != b2));
         break;

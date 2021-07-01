@@ -171,22 +171,40 @@ void TestConcurrentArenasFunc(int idx) {
     // check that arena observer can be activated before local observer
     struct LocalObserver : public tbb::task_scheduler_observer {
         LocalObserver() : tbb::task_scheduler_observer() { observe(true); }
+        LocalObserver(tbb::task_arena& a) : tbb::task_scheduler_observer(a) {
+            observe(true);
+        }
     };
+
     tbb::task_arena a1;
     a1.initialize(1,0);
     ArenaObserver o1(a1, 1, 0, idx*2+1); // the last argument is a "unique" observer/arena id for the test
     CHECK_MESSAGE(o1.is_observing(), "Arena observer has not been activated");
-    LocalObserver lo;
-    CHECK_MESSAGE(lo.is_observing(), "Local observer has not been activated");
+
     tbb::task_arena a2(2,1);
     ArenaObserver o2(a2, 2, 1, idx*2+2);
     CHECK_MESSAGE(o2.is_observing(), "Arena observer has not been activated");
+
+    LocalObserver lo1;
+    CHECK_MESSAGE(lo1.is_observing(), "Local observer has not been activated");
+
+    tbb::task_arena a3(1, 0);
+    LocalObserver lo2(a3);
+    CHECK_MESSAGE(lo2.is_observing(), "Local observer has not been activated");
+
     utils::SpinBarrier barrier(2);
     AsynchronousWork work(barrier);
+
     a1.enqueue(work); // put async work
     barrier.wait();
+
     a2.enqueue(work); // another work
     a2.execute(work);
+
+    a3.execute([] {
+        utils::doDummyWork(100);
+    });
+
     a1.debug_wait_until_empty();
     a2.debug_wait_until_empty();
 }
