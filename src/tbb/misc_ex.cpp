@@ -137,28 +137,24 @@ static void initialize_hardware_concurrency_info () {
     int err;
     int availableProcs = 0;
     int numMasks = 1;
-#if __unix__
     int maxProcs = sysconf(_SC_NPROCESSORS_ONLN);
-    int pid = getpid();
-#else /* FreeBSD >= 7.1 */
-    int maxProcs = sysconf(_SC_NPROCESSORS_ONLN);
-#endif
     basic_mask_t* processMask;
     const std::size_t BasicMaskSize =  sizeof(basic_mask_t);
     for (;;) {
         const int curMaskSize = BasicMaskSize * numMasks;
         processMask = new basic_mask_t[numMasks];
         std::memset( processMask, 0, curMaskSize );
-#if __unix__
-        err = sched_getaffinity( pid, curMaskSize, processMask );
-        if ( !err || errno != EINVAL || curMaskSize * CHAR_BIT >= 256 * 1024 )
-            break;
-#else /* FreeBSD >= 7.1 */
+#if __FreeBSD__ || __NetBSD__ || __OpenBSD__
         // CPU_LEVEL_WHICH - anonymous (current) mask, CPU_LEVEL_CPUSET - assigned mask
         err = cpuset_getaffinity( CPU_LEVEL_WHICH, CPU_WHICH_PID, -1, curMaskSize, processMask );
         if ( !err || errno != ERANGE || curMaskSize * CHAR_BIT >= 16 * 1024 )
             break;
-#endif /* FreeBSD >= 7.1 */
+#else /* __unix__ */
+        int pid = getpid();
+        err = sched_getaffinity( pid, curMaskSize, processMask );
+        if ( !err || errno != EINVAL || curMaskSize * CHAR_BIT >= 256 * 1024 )
+            break;
+#endif
         delete[] processMask;
         numMasks <<= 1;
     }
