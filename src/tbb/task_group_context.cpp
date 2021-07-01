@@ -56,16 +56,7 @@ void task_group_context_impl::destroy(d1::task_group_context& ctx) {
     
     if (ctx.my_lifetime_state.load(std::memory_order_relaxed) == d1::task_group_context::lifetime_state::bound) {
         // The owner can be destroyed at any moment. Access the associate data with caution.
-        context_list* cl = ctx.my_context_list;
-        mutex::scoped_lock lock(cl->m_mutex);
-
-        cl->remove_node(ctx.my_node);
-
-        if (--cl->m_references == 0) {
-            lock.release();
-            delete cl;
-            poison_pointer(ctx.my_context_list);
-        }
+        ctx.my_context_list->remove_node(ctx.my_node);
     }
     d1::cpu_ctl_env* ctl = reinterpret_cast<d1::cpu_ctl_env*>(&ctx.my_cpu_ctl_env);
 #if _MSC_VER && _MSC_VER <= 1900 && !__INTEL_COMPILER
@@ -78,7 +69,7 @@ void task_group_context_impl::destroy(d1::task_group_context& ctx) {
     ITT_STACK_DESTROY(ctx.my_itt_caller);
 
     poison_pointer(ctx.my_parent);
-    
+    poison_pointer(ctx.my_context_list);
     poison_pointer(ctx.my_node.next);
     poison_pointer(ctx.my_node.prev);
     poison_pointer(ctx.my_exception);
@@ -110,14 +101,8 @@ void task_group_context_impl::register_with(d1::task_group_context& ctx, thread_
     __TBB_ASSERT(!is_poisoned(ctx.my_context_list), nullptr);
     __TBB_ASSERT(td, nullptr);
     ctx.my_context_list = td->my_context_list;
-    
-    context_list* cl = ctx.my_context_list;
 
-    mutex::scoped_lock lock(cl->m_mutex);
-
-    cl->push_node(ctx.my_node);
-
-    cl->m_references++;
+    ctx.my_context_list->push_node(ctx.my_node);
 }
 
 void task_group_context_impl::bind_to_impl(d1::task_group_context& ctx, thread_data* td) {

@@ -60,11 +60,25 @@ struct context_list {
         head.prev.store(&head, std::memory_order_relaxed);
     }
 
+    void destroy() {
+        this->~context_list();
+        cache_aligned_deallocate(this);
+    }
+
     void remove_node(d1::context_list_node& node) {
+        mutex::scoped_lock lock(m_mutex);
+
         node.remove_relaxed();
+
+        if (--m_references == 0) {
+            lock.release();
+            destroy();
+        }
     }
 
     void push_node(d1::context_list_node& node) {
+        mutex::scoped_lock lock(m_mutex);
+
         // state propagation logic assumes new contexts are bound to head of the list
         node.prev.store(&head, std::memory_order_relaxed);
 
@@ -73,6 +87,16 @@ struct context_list {
         node.next.store(head_next, std::memory_order_relaxed);
 
         head.next.store(&node, std::memory_order_relaxed);
+
+        m_references++;
+    }
+
+    void release() {
+        mutex::scoped_lock lock(m_mutex);
+        if (--m_references == 0) {
+            lock.release();
+            destroy();
+        }
     }
 
     //! Mutex protecting access to the list of task group contexts.
@@ -96,7 +120,7 @@ public:
         , my_random{ this }
         , my_last_observer{ nullptr }
         , my_small_object_pool{new (cache_aligned_allocate(sizeof(small_object_pool_impl))) small_object_pool_impl{}}
-        , my_context_list(new context_list{})
+        , my_context_list(new (cache_aligned_allocate(sizeof(context_list))) context_list{})
 #if __TBB_RESUMABLE_TASKS
         , my_post_resume_action{ post_resume_action::none }
         , my_post_resume_arg{nullptr}
@@ -106,18 +130,17 @@ public:
     }
 
     ~thread_data() {
-        context_list_cleanup();
+        my_context_list->release();
         my_small_object_pool->destroy();
         poison_pointer(my_task_dispatcher);
         poison_pointer(my_arena);
         poison_pointer(my_arena_slot);
         poison_pointer(my_last_observer);
         poison_pointer(my_small_object_pool);
+        poison_pointer(my_context_list);
 #if __TBB_RESUMABLE_TASKS
         poison_pointer(my_post_resume_arg);
 #endif /* __TBB_RESUMABLE_TASKS */
-        // poison_value(my_context_list_state.local_update);
-        // poison_value(my_context_list_state.nonlocal_update);
     }
 
     void attach_arena(arena& a, std::size_t index);
@@ -224,15 +247,6 @@ inline void thread_data::attach_arena(arena& a, std::size_t index) {
 }
 
 inline bool thread_data::is_attached_to(arena* a) { return my_arena == a; }
-
-inline void thread_data::context_list_cleanup() {
-    mutex::scoped_lock lock(my_context_list->m_mutex);
-    if (--my_context_list->m_references == 0) {
-        lock.release();
-        delete my_context_list;
-        poison_pointer(my_context_list);
-    }
-}
 
 inline void thread_data::attach_task_dispatcher(task_dispatcher& task_disp) {
     __TBB_ASSERT(my_task_dispatcher == nullptr, nullptr);
