@@ -158,13 +158,18 @@ void TestAlignedMsize()
         }
 }
 
+#if __TBB_USE_ADDRESS_SANITIZER
+//! \brief \ref error_guessing
+TEST_CASE("Memory leaks test is not applicable under ASAN\n" * doctest::skip(true)) {}
+#else
 //! \brief \ref error_guessing
 TEST_CASE("testing leaks") {
     // Check whether memory usage data can be obtained; if not, skip test_bootstrap_leak.
     if (utils::GetMemoryUsage()) {
-        REQUIRE_MESSAGE(TestBootstrapLeak(), "Test failed" );
+        REQUIRE_MESSAGE(TestBootstrapLeak(), "Test failed");
     }
 }
+#endif // __TBB_USE_ADDRESS_SANITIZER
 
 //! \brief \ref error_guessing
 TEST_CASE("testing realloc mem size") {
