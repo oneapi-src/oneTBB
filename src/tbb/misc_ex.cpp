@@ -66,9 +66,9 @@ static const dynamic_link_descriptor iompLinkTable[] = {
 
 static void set_thread_affinity_mask( std::size_t maskSize, const basic_mask_t* threadMask ) {
 #if __FreeBSD__ || __NetBSD__ || __OpenBSD__
-    if( sched_setaffinity( 0, maskSize, threadMask ) )
-#else /* __unix__ */
     if( cpuset_setaffinity( CPU_LEVEL_WHICH, CPU_WHICH_TID, -1, maskSize, threadMask ) )
+#else /* __unix__ */
+    if( sched_setaffinity( 0, maskSize, threadMask ) )
 #endif
         // Here and below the error severity is lowered from critical level
         // because it may happen during TBB library unload because of not
