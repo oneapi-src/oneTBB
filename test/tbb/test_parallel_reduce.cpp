@@ -24,6 +24,12 @@
 //! \file test_parallel_reduce.cpp
 //! \brief Test for [algorithms.parallel_reduce algorithms.parallel_deterministic_reduce] specification
 
+#if _MSC_VER
+#pragma warning (push)
+// Suppress conditional expression is constant
+#pragma warning (disable: 4127)
+#endif //#if _MSC_VER
+
 using ValueType = uint64_t;
 
 struct Sum {
@@ -650,4 +656,8 @@ TEST_CASE("parallel_deterministic_reduce constraints") {
     test_pdet_reduce_func_constraints();
     test_pdet_reduce_combine_constraints();
 }
+#endif
+
+#if _MSC_VER
+#pragma warning (pop)
 #endif

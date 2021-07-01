@@ -63,6 +63,9 @@ if (MINGW)
     list(APPEND TBB_COMMON_COMPILE_FLAGS -U__STRICT_ANSI__)
 endif()
 
+set(TBB_IPO_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:-flto>)
+set(TBB_IPO_LINK_FLAGS $<$<NOT:$<CONFIG:Debug>>:-flto>)
+
 # TBB malloc settings
 set(TBBMALLOC_LIB_COMPILE_FLAGS -fno-rtti -fno-exceptions)
 set(TBB_OPENMP_FLAG -fopenmp)

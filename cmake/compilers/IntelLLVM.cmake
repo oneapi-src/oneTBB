@@ -14,9 +14,13 @@
 
 if (WIN32)
     include(${CMAKE_CURRENT_LIST_DIR}/MSVC.cmake)
+    set(TBB_IPO_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:/Qipo>)
+    set(TBB_IPO_LINK_FLAGS $<$<NOT:$<CONFIG:Debug>>:/INCREMENTAL:NO>)
 else()
     include(${CMAKE_CURRENT_LIST_DIR}/Clang.cmake)
+    set(TBB_IPO_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:-ipo>)
 endif()
+set(TBB_IPO_LINK_FLAGS ${TBB_IPO_LINK_FLAGS} ${TBB_IPO_COMPILE_FLAGS})
 
 if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86|AMD64)")
     set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -mrtm -mwaitpkg)

@@ -62,8 +62,8 @@ typename std::iterator_traits<It>::value_type median(It first, It last) {
     }
 }
 
-static constexpr std::size_t MinThread = 1;
-static constexpr std::size_t MaxThread = 4;
+static constexpr std::uint8_t MinThread = 1;
+static constexpr std::uint8_t MaxThread = 4;
 
 //! Simple native parallel loop where each iteration is executed in a different thread
 template <typename Index, typename Body>

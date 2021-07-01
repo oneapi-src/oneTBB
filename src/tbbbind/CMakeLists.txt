@@ -46,6 +46,7 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
         ${TBB_WARNING_LEVEL}
         ${TBB_LIB_COMPILE_FLAGS}
         ${TBB_COMMON_COMPILE_FLAGS}
+        ${TBB_IPO_COMPILE_FLAGS}
     )
 
     # Avoid use of target_link_libraries here as it changes /DEF option to \DEF on Windows.
@@ -68,6 +69,7 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
             PRIVATE
             ${TBB_LIB_LINK_FLAGS}
             ${TBB_COMMON_LINK_FLAGS}
+            ${TBB_IPO_LINK_FLAGS}
             ${HWLOC_LIBRARY_DIRS} # pkg-config defined
         )
     else()
@@ -75,6 +77,7 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
             PRIVATE
             ${TBB_LIB_LINK_FLAGS}
             ${TBB_COMMON_LINK_FLAGS}
+            ${TBB_IPO_LINK_FLAGS}
             ${HWLOC_LIBRARY_DIRS} # pkg-config defined
         )
     endif()

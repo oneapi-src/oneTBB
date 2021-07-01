@@ -28,6 +28,10 @@
 #pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
 #endif
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif // NOMINMAX
+
 #define __TBB_NO_IMPLICIT_LINKAGE 1
 
 

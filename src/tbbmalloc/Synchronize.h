@@ -75,7 +75,7 @@ inline void SpinWaitWhileEq(const std::atomic<intptr_t>& location, const intptr_
     tbb::detail::spin_wait_while_eq(location, value);
 }
 
-#if USE_PTHREAD && (__TBB_SOURCE_DIRECTLY_INCLUDED || __TBB_USE_DLOPEN_REENTRANCY_WORKAROUND)
+#if USE_PTHREAD && __TBB_SOURCE_DIRECTLY_INCLUDED
 
 inline void SpinWaitUntilEq(const std::atomic<intptr_t>& location, const intptr_t value) {
     tbb::detail::spin_wait_until_eq(location, value);

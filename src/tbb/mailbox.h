@@ -186,14 +186,12 @@ public:
     }
 
     //! Drain the mailbox
-    intptr_t drain() {
-        intptr_t k = 0;
+    void drain() {
         // No fences here because other threads have already quit.
-        for( ; task_proxy* t = my_first; ++k ) {
+        for( ; task_proxy* t = my_first; ) {
             my_first.store(t->next_in_mailbox, std::memory_order_relaxed);
-            // cache_aligned_deallocate((char*)t - task_prefix_reservation_size);
+            t->allocator.delete_object(t);
         }
-        return k;
     }
 
     //! True if thread that owns this mailbox is looking for work.

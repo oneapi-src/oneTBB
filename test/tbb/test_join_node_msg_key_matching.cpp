@@ -17,8 +17,6 @@
 // Message based key matching is a preview feature
 #define TBB_PREVIEW_FLOW_GRAPH_FEATURES 1
 
-#define MAX_TUPLE_TEST_SIZE 10
-
 #include "common/config.h"
 
 #include "test_join_node.h"
@@ -85,9 +83,9 @@ using T10 = make_tuple < T9, MyMessageKeyWithBrokenKey<std::string, size_t>>;
 
 #if TBB_TEST_LOW_WORKLOAD && TBB_USE_DEBUG
 // the compiler might generate huge object file in debug (>64M)
-#define TEST_CASE_TEMPLATE_N_ARGS(dec) TEST_CASE_TEMPLATE(dec, T, T2, T3, T4, T5, T6, T7, T8, T9, T10)
-#else
 #define TEST_CASE_TEMPLATE_N_ARGS(dec) TEST_CASE_TEMPLATE(dec, T, T2, T10)
+#else
+#define TEST_CASE_TEMPLATE_N_ARGS(dec) TEST_CASE_TEMPLATE(dec, T, T2, T3, T4, T5, T6, T7, T8, T9, T10)
 #endif
 
 //! Serial test with different tuple sizes

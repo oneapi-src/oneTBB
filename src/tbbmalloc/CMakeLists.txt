@@ -57,6 +57,7 @@ target_compile_options(tbbmalloc
     ${TBB_LIB_COMPILE_FLAGS}
     ${TBBMALLOC_LIB_COMPILE_FLAGS}
     ${TBB_COMMON_COMPILE_FLAGS}
+    ${TBB_IPO_COMPILE_FLAGS}
 )
 
 enable_language(C)
@@ -85,12 +86,14 @@ if (COMMAND target_link_options)
         PRIVATE
         ${TBB_LIB_LINK_FLAGS}
         ${TBB_COMMON_LINK_FLAGS}
+        ${TBB_IPO_LINK_FLAGS}
     )
 else()
     target_link_libraries(tbbmalloc
         PRIVATE
         ${TBB_LIB_LINK_FLAGS}
         ${TBB_COMMON_LINK_FLAGS}
+        ${TBB_IPO_LINK_FLAGS}
     )
 endif()
 

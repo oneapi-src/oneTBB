@@ -587,7 +587,7 @@ void execute_outer_graph( bool same_arena, task_arena& inner_arena, int max_thre
 
     auto threads_range = utils::concurrency_range(max_threads);
     for( auto num_threads : threads_range ) {
-        inner_arena.initialize( num_threads );
+        inner_arena.initialize( static_cast<int>(num_threads) );
         start_node.try_put( 42 );
         outer_graph.wait_for_all();
         inner_arena.terminate();
@@ -601,7 +601,7 @@ void test_in_arena( int max_threads, task_arena& outer_arena, task_arena& inner_
     for( auto num_threads : threads_range ) {
         INFO( "Testing nested nodes with specified priority in " << (same_arena? "same" : "different")
               << " arenas, num_threads=" << num_threads << ") - " );
-        outer_arena.initialize( num_threads );
+        outer_arena.initialize( static_cast<int>(num_threads) );
         outer_arena.execute( [&outer_graph]{ outer_graph.reset(); } );
         execute_outer_graph( same_arena, inner_arena, max_threads, outer_graph, start_node );
         outer_arena.terminate();
@@ -834,7 +834,7 @@ namespace Exceptions {
 //! \brief \ref requirement
 TEST_CASE("Priority nodes take precedence"){
     for( auto p : utils::concurrency_range() ) {
-        PriorityNodesTakePrecedence::test( p );
+        PriorityNodesTakePrecedence::test( static_cast<int>(p) );
     }
 }
 
@@ -842,7 +842,7 @@ TEST_CASE("Priority nodes take precedence"){
 //! \brief \ref error_guessing
 TEST_CASE("Thread eager reaction"){
     for( auto p : utils::concurrency_range() ) {
-        ThreadsEagerReaction::test( p );
+        ThreadsEagerReaction::test( static_cast<int>(p) );
     }
 }
 
@@ -850,7 +850,7 @@ TEST_CASE("Thread eager reaction"){
 //! \brief \ref error_guessing
 TEST_CASE("Limiting execution to prioritized work") {
     for( auto p : utils::concurrency_range() ) {
-        LimitingExecutionToPriorityTask::test( p );
+        LimitingExecutionToPriorityTask::test( static_cast<int>(p) );
     }
 }
 
@@ -859,7 +859,7 @@ TEST_CASE("Limiting execution to prioritized work") {
 TEST_CASE("Nested test case") {
     std::size_t max_threads = utils::get_platform_max_threads();
     // The stepping for the threads is done inside.
-    NestedCase::test( max_threads );
+    NestedCase::test( static_cast<int>(max_threads) );
 }
 
 //! Test bypassed task with higher priority
@@ -873,7 +873,7 @@ TEST_CASE("Bypass prioritized task"){
 //! \brief \ref error_guessing
 TEST_CASE("Many successors") {
     for( auto p : utils::concurrency_range() ) {
-        ManySuccessors::test( p );
+        ManySuccessors::test( static_cast<int>(p) );
     }
 }
 

@@ -26,7 +26,7 @@
 #include "utils.h"
 #include "utils_assert.h"
 
-#if __TBB_TEST_USE_ADDRESS_SANITIZER
+#if __TBB_USE_ADDRESS_SANITIZER
 #include <sanitizer/allocator_interface.h>
 #endif
 
@@ -90,7 +90,7 @@ namespace utils {
     /* Returns 0 if not implemented on platform. */
     std::size_t GetMemoryUsage(MemoryStatType stat = currentUsage) {
         utils::suppress_unused_warning(stat);
-#if __TBB_TEST_USE_ADDRESS_SANITIZER
+#if __TBB_USE_ADDRESS_SANITIZER
         // Under ASAN generic memory usage functions provide information with ASAN overhead.
         return __sanitizer_get_current_allocated_bytes();
 #elif __TBB_WIN8UI_SUPPORT || defined(WINAPI_FAMILY)

@@ -171,22 +171,40 @@ void TestConcurrentArenasFunc(int idx) {
     // check that arena observer can be activated before local observer
     struct LocalObserver : public tbb::task_scheduler_observer {
         LocalObserver() : tbb::task_scheduler_observer() { observe(true); }
+        LocalObserver(tbb::task_arena& a) : tbb::task_scheduler_observer(a) {
+            observe(true);
+        }
     };
+
     tbb::task_arena a1;
     a1.initialize(1,0);
     ArenaObserver o1(a1, 1, 0, idx*2+1); // the last argument is a "unique" observer/arena id for the test
     CHECK_MESSAGE(o1.is_observing(), "Arena observer has not been activated");
-    LocalObserver lo;
-    CHECK_MESSAGE(lo.is_observing(), "Local observer has not been activated");
+
     tbb::task_arena a2(2,1);
     ArenaObserver o2(a2, 2, 1, idx*2+2);
     CHECK_MESSAGE(o2.is_observing(), "Arena observer has not been activated");
+
+    LocalObserver lo1;
+    CHECK_MESSAGE(lo1.is_observing(), "Local observer has not been activated");
+
+    tbb::task_arena a3(1, 0);
+    LocalObserver lo2(a3);
+    CHECK_MESSAGE(lo2.is_observing(), "Local observer has not been activated");
+
     utils::SpinBarrier barrier(2);
     AsynchronousWork work(barrier);
+
     a1.enqueue(work); // put async work
     barrier.wait();
+
     a2.enqueue(work); // another work
     a2.execute(work);
+
+    a3.execute([] {
+        utils::doDummyWork(100);
+    });
+
     a1.debug_wait_until_empty();
     a2.debug_wait_until_empty();
 }
@@ -1477,7 +1495,8 @@ void TestDefaultWorkersLimit() {
 
 void ExceptionInExecute() {
     std::size_t thread_number = utils::get_platform_max_threads();
-    tbb::task_arena test_arena(thread_number / 2, thread_number / 2);
+    int arena_concurrency = static_cast<int>(thread_number) / 2;
+    tbb::task_arena test_arena(arena_concurrency, arena_concurrency);
 
     std::atomic<int> canceled_task{};
 
@@ -1592,6 +1611,21 @@ void StressTestMixFunctionality() {
     utils::SpinBarrier thread_barrier(thread_number);
     std::size_t max_operations = 20000;
     std::atomic<std::size_t> curr_operation{};
+
+    auto find_arena = [&arenas_pool](tbb::spin_rw_mutex::scoped_lock& lock) -> decltype(arenas_pool.begin()) {
+        for (auto curr_arena = arenas_pool.begin(); curr_arena != arenas_pool.end(); ++curr_arena) {
+            if (lock.try_acquire(curr_arena->arena_in_use, /*writer*/ false)) {
+                if (curr_arena->status == arena_handler::alive) {
+                    return curr_arena;
+                }
+                else {
+                    lock.release();
+                }
+            }
+        }
+        return arenas_pool.end();
+    };
+
     auto thread_func = [&] () {
         arenas_pool.emplace(new tbb::task_arena());
         thread_barrier.wait();
@@ -1624,26 +1658,14 @@ void StressTestMixFunctionality() {
                 case attach_observer :
                 {
                     tbb::spin_rw_mutex::scoped_lock lock{};
-                    auto curr_arena = arenas_pool.begin();
-                    for (; curr_arena != arenas_pool.end(); ++curr_arena) {
-                        if (lock.try_acquire(curr_arena->arena_in_use, /*writer*/ false)) {
-                            if (curr_arena->status == arena_handler::alive) {
-                                break;
-                            } else {
-                                lock.release();
-                            }
-                        }
-                    }
 
-                    if (curr_arena == arenas_pool.end()) break;
-
-                    {
+                    auto curr_arena = find_arena(lock);
+                    if (curr_arena != arenas_pool.end()) {
                         curr_arena->observers.emplace(*curr_arena->arena, thread_number, 1);
                     }
-
                     break;
                 }
-                case detach_observer :
+                case detach_observer:
                 {
                     auto arena_number = get_random_arena() % arenas_pool.size();
                     auto curr_arena = arenas_pool.begin();
@@ -1658,53 +1680,29 @@ void StressTestMixFunctionality() {
 
                     break;
                 }
-                case arena_execute :
+                case arena_execute:
                 {
                     tbb::spin_rw_mutex::scoped_lock lock{};
-                    auto curr_arena = arenas_pool.begin();
-                    for (; curr_arena != arenas_pool.end(); ++curr_arena) {
-                        if (lock.try_acquire(curr_arena->arena_in_use, /*writer*/ false)) {
-                            if (curr_arena->status == arena_handler::alive) {
-                                break;
-                            } else {
-                                lock.release();
-                            }
-                        }
-                    }
+                    auto curr_arena = find_arena(lock);
 
-                    if (curr_arena == arenas_pool.end()) break;
-
-                    curr_arena->arena->execute([] () {
-                        tbb::parallel_for(tbb::blocked_range<std::size_t>(0, 10000), [] (tbb::blocked_range<std::size_t>&) {
-                            std::atomic<int> sum{};
-                            // Make some work
-                            for (; sum < 10; ++sum) ;
+                    if (curr_arena != arenas_pool.end()) {
+                        curr_arena->arena->execute([]() {
+                            static tbb::affinity_partitioner aff;
+                            tbb::parallel_for(0, 10000, utils::DummyBody(10), tbb::auto_partitioner{});
+                            tbb::parallel_for(0, 10000, utils::DummyBody(10), aff);
                         });
-                    });
+                    }
 
                     break;
                 }
-                case enqueue_task :
+                case enqueue_task:
                 {
                     tbb::spin_rw_mutex::scoped_lock lock{};
-                    auto curr_arena = arenas_pool.begin();
-                    for (; curr_arena != arenas_pool.end(); ++curr_arena) {
-                        if (lock.try_acquire(curr_arena->arena_in_use, /*writer*/ false)) {
-                            if (curr_arena->status == arena_handler::alive) {
-                                break;
-                            } else {
-                                lock.release();
-                            }
-                        }
+                    auto curr_arena = find_arena(lock);
+
+                    if (curr_arena != arenas_pool.end()) {
+                        curr_arena->arena->enqueue([] { utils::doDummyWork(1000); });
                     }
-
-                    if (curr_arena == arenas_pool.end()) break;
-
-                    curr_arena->arena->enqueue([] {
-                        std::atomic<int> sum{};
-                        // Make some work
-                        for (; sum < 1000; ++sum) ;
-                    });
 
                     break;
                 }
@@ -1861,7 +1859,7 @@ TEST_CASE("Workers oversubscription") {
     std::size_t num_threads = utils::get_platform_max_threads();
     tbb::enumerable_thread_specific<bool> ets;
     tbb::global_control gl(tbb::global_control::max_allowed_parallelism, num_threads * 2);
-    tbb::task_arena arena(num_threads * 2);
+    tbb::task_arena arena(static_cast<int>(num_threads) * 2);
 
     utils::SpinBarrier barrier(num_threads * 2);
 

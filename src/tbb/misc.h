@@ -206,7 +206,6 @@ T1 atomic_update(std::atomic<T1>& dst, T1 newValue, Pred compare) {
     class affinity_helper : no_copy {
     public:
         void protect_affinity_mask( bool ) {}
-        void dismiss() {}
     };
     inline void destroy_process_mask(){}
 #endif /* __TBB_USE_OS_AFFINITY_SYSCALL */

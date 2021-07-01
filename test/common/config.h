@@ -69,16 +69,12 @@
 // MAX_TUPLE_TEST_SIZE >= 10 (or the largest number of elements supported) to ensure
 // all tuple sizes are tested.  Expect a very long compile time.
 #ifndef MAX_TUPLE_TEST_SIZE
-    #if TBB_USE_DEBUG
-        #define MAX_TUPLE_TEST_SIZE 3
-    #else
-        #define MAX_TUPLE_TEST_SIZE 5
-    #endif
-#else
-    #if MAX_TUPLE_TEST_SIZE > __TBB_VARIADIC_MAX
-        #undef MAX_TUPLE_TEST_SIZE
-        #define MAX_TUPLE_TEST_SIZE __TBB_VARIADIC_MAX
-    #endif
+    #define MAX_TUPLE_TEST_SIZE 10
+#endif
+
+#if MAX_TUPLE_TEST_SIZE > __TBB_VARIADIC_MAX
+    #undef MAX_TUPLE_TEST_SIZE
+    #define MAX_TUPLE_TEST_SIZE __TBB_VARIADIC_MAX
 #endif
 
 const unsigned MByte = 1024*1024;
@@ -87,14 +83,6 @@ const unsigned MByte = 1024*1024;
 #define __TBB_TEST_SKIP_AFFINITY 0
 #else
 #define __TBB_TEST_SKIP_AFFINITY 1
-#endif
-
-#ifdef __SANITIZE_ADDRESS__
-	#define __TBB_TEST_USE_ADDRESS_SANITIZER 1
-#elif defined(__has_feature)
-#if __has_feature(address_sanitizer)
-      #define __TBB_TEST_USE_ADDRESS_SANITIZER 1
-#endif
 #endif
 
 #endif /* __TBB_test_common_config_H */

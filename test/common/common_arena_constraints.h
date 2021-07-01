@@ -166,7 +166,7 @@ private:
         index_info current_node_info{};
         while ((current_numa_node = hwloc_get_next_obj_by_type(topology,
                                                                HWLOC_OBJ_NUMANODE,
-                                                               current_numa_node))) {
+                                                               current_numa_node)) != nullptr) {
             current_node_info.index = static_cast<int>(current_numa_node->logical_index);
             current_node_info.cpuset = hwloc_bitmap_dup(current_numa_node->cpuset);
             hwloc_bitmap_and(current_node_info.cpuset, current_node_info.cpuset, process_cpuset);
@@ -235,7 +235,7 @@ private:
 
         hwloc_bitmap_t core_affinity = hwloc_bitmap_alloc();
         hwloc_obj_t current_core = nullptr;
-        while ((current_core = hwloc_get_next_obj_by_type(topology, HWLOC_OBJ_CORE, current_core))) {
+        while ((current_core = hwloc_get_next_obj_by_type(topology, HWLOC_OBJ_CORE, current_core)) != nullptr) {
             hwloc_bitmap_and(core_affinity, process_cpuset, current_core->cpuset);
             if (hwloc_bitmap_weight(core_affinity) > 0) {
                 core_infos.emplace_back(core_affinity);
@@ -385,7 +385,7 @@ void test_constraints_affinity_and_concurrency(tbb::task_arena::constraints cons
                                                system_info::affinity_mask arena_affinity) {
     int default_concurrency = tbb::info::default_concurrency(constraints);
     system_info::affinity_mask reference_affinity = prepare_reference_affinity_mask(constraints);
-    int max_threads_per_core = system_info::get_maximal_threads_per_core();
+    int max_threads_per_core = static_cast<int>(system_info::get_maximal_threads_per_core());
 
     if (constraints.max_threads_per_core == tbb::task_arena::automatic || constraints.max_threads_per_core == max_threads_per_core) {
         REQUIRE_MESSAGE(hwloc_bitmap_isequal(reference_affinity, arena_affinity),

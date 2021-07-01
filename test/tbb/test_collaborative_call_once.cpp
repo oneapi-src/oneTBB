@@ -294,13 +294,12 @@ TEST_CASE("handles exceptions - stress test") {
 #endif
 
     int data{0};
-    bool run_again{true};
+    std::atomic<bool> run_again{true};
 
     auto throwing_func = [&] {
         utils::doDummyWork(10000);
         if (data < 100) {
             data++;
-            run_again = true;
             throw call_once_exception{};
         }
         run_again = false;
@@ -345,12 +344,12 @@ TEST_CASE("multiple help") {
 //! Test for collaborative work from different arenas
 //! \brief \ref interface \ref requirement
 TEST_CASE("multiple arenas") {
-    std::size_t num_threads = utils::get_platform_max_threads();
+    int num_threads = static_cast<int>(utils::get_platform_max_threads());
     utils::SpinBarrier barrier(num_threads);
     tbb::task_arena a1(num_threads), a2(num_threads);
 
     tbb::collaborative_once_flag flag;
-    for (std::size_t i = 0; i < num_threads - 1; ++i) {
+    for (auto i = 0; i < num_threads - 1; ++i) {
         a1.enqueue([&] {
             barrier.wait();
             barrier.wait();
@@ -365,12 +364,12 @@ TEST_CASE("multiple arenas") {
 
     a2.execute([&] {
         utils::ConcurrencyTracker ct;
-        tbb::parallel_for<std::size_t>(0, num_threads, [&](std::size_t) {
+        tbb::parallel_for(0, num_threads, [&](int) {
             CHECK(utils::ConcurrencyTracker::PeakParallelism() == 1);
         });
         tbb::collaborative_call_once(flag, [&] {
             barrier.wait();
-            tbb::parallel_for<std::size_t>(0, num_threads, [&](std::size_t) {
+            tbb::parallel_for(0, num_threads, [&](int) {
                 barrier.wait();
             });
         });

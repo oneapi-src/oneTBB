@@ -37,6 +37,8 @@
 
 #if _MSC_VER
 #pragma warning (push)
+// Suppress conditional expression is constant
+#pragma warning (disable: 4127)
 #if __TBB_MSVC_UNREACHABLE_CODE_IGNORED
     // Suppress pointless "unreachable code" warning.
     #pragma warning (disable: 4702)

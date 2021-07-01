@@ -179,7 +179,7 @@ void TestSharedPool()
     void **crossThread = new void*[utils::MaxThread * SharedPoolRun::OBJ_CNT];
     void **afterTerm = new void*[utils::MaxThread * SharedPoolRun::OBJ_CNT];
 
-    for (size_t p=utils::MinThread; p<=utils::MaxThread; p++) {
+    for (int p=utils::MinThread; p<=utils::MaxThread; p++) {
         SharedPoolRun::init(p, pool, crossThread, afterTerm);
         SharedPoolRun thr;
 
@@ -189,7 +189,7 @@ void TestSharedPool()
         utils::NativeParallelFor( p, thr );
 
         pool_free(pool, hugeObj);
-        for (size_t i=0; i<p*SharedPoolRun::OBJ_CNT; i++)
+        for (int i=0; i<p*SharedPoolRun::OBJ_CNT; i++)
             pool_free(pool, afterTerm[i]);
     }
     delete []afterTerm;
@@ -279,11 +279,11 @@ char **CrossThreadRun::obj;
 // pools created, used and destroyed by different threads
 void TestCrossThreadPools()
 {
-    for (size_t p=utils::MinThread; p<=utils::MaxThread; p++) {
+    for (int p=utils::MinThread; p<=utils::MaxThread; p++) {
         CrossThreadRun::initBarrier(p);
         CrossThreadRun::init(p);
         utils::NativeParallelFor( p, CrossThreadRun() );
-        for (size_t i=0; i<p; i++)
+        for (int i=0; i<p; i++)
             REQUIRE_MESSAGE(!poolSpace[i].regions, "Region leak detected");
         CrossThreadRun::destroy();
     }
@@ -419,7 +419,7 @@ void TestFixedBufferPool()
         }
         // each thread asks for an MAX_OBJECT/p/2 object,
         // /2 is to cover fragmentation
-        for (size_t p=utils::MinThread; p<=utils::MaxThread; p++) {
+        for (int p=utils::MinThread; p<=utils::MaxThread; p++) {
             utils::NativeParallelFor( p, FixedPoolUse(p, pool, MAX_OBJECT/p/2, 10000) );
         }
         {
@@ -813,7 +813,7 @@ public:
 void TestNoLeakOnDestroy()
 {
     liveRegions.store(0, std::memory_order_release);
-    for (size_t p=utils::MinThread; p<=utils::MaxThread; p++) {
+    for (int p=utils::MinThread; p<=utils::MaxThread; p++) {
         rml::MemPoolPolicy pol(getMallocMem, putMallocMem);
         utils::SpinBarrier barrier(p);
         rml::MemoryPool *pool;

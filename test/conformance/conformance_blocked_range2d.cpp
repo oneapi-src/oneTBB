@@ -158,7 +158,9 @@ TEST_CASE("blocked_range2d proportional splitting") {
     oneapi::tbb::proportional_split ps(3, 1);
     oneapi::tbb::blocked_range2d<int> second(first, ps);
 
-    int expected_first_end = original.rows().begin() + ps.left() * (original.rows().end() - original.rows().begin()) / (ps.left() + ps.right());
+    int expected_first_end = static_cast<int>(
+        original.rows().begin() + ps.left() * (original.rows().end() - original.rows().begin()) / (ps.left() + ps.right())
+    );
     if (first.rows().size() == second.rows().size()) {
         // Splitting was made by cols
         utils::check_range_bounds_after_splitting(original.cols(), first.cols(), second.cols(), expected_first_end);

@@ -1175,6 +1175,25 @@ TEST_CASE("Task handle empty check"){
     CHECK_MESSAGE(h != nullptr, "delayed task returned by task_group::delayed should not be empty");
 }
 
+//! Test for comparison operations
+//! \brief \ref interface
+TEST_CASE("Task handle comparison/empty checks"){
+    tbb::task_group tg;
+
+    tbb::task_handle h;
+
+    bool empty =  ! static_cast<bool>(h);
+    CHECK_MESSAGE(empty, "default constructed task_handle should be empty");
+    CHECK_MESSAGE(h == nullptr, "default constructed task_handle should be empty");
+    CHECK_MESSAGE(nullptr == h, "default constructed task_handle should be empty");
+
+    h = tg.defer([]{});
+
+    CHECK_MESSAGE(h != nullptr, "deferred task returned by task_group::defer() should not be empty");
+    CHECK_MESSAGE(nullptr != h, "deferred task returned by task_group::defer() should not be empty");
+
+}
+
 //! Test that task_handle prolongs task_group::wait
 //! \brief \ref requirement
 TEST_CASE("Task handle blocks wait"){

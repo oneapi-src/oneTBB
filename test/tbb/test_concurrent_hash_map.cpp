@@ -1033,7 +1033,7 @@ TEST_CASE("Test exception in constructors") {
 
     allocator_type::set_limits(0);
     map_type big_map{};
-    for (std::size_t i = 0; i < 1000; ++i) {
+    for (int i = 0; i < 1000; ++i) {
         big_map.insert(std::pair<const int, int>(i, 42));
     }
 
