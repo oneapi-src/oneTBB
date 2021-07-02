@@ -48,7 +48,7 @@ namespace utils {
 // Android SDK build system does not support .so file name versioning
 #elif __FreeBSD__ || __NetBSD__ || __sun || _AIX || __ANDROID__
 #define EXT ".so"
-#elif __linux__  // Order of these elif's matters!
+#elif __unix__  // Order of these elif's matters!
 #define EXT __TBB_STRING(.so.2)
 #else
 #error Unknown OS
