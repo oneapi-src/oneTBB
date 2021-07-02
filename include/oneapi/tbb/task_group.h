@@ -234,7 +234,7 @@ private:
 
     //! Thread data instance that registered this context in its list.
     r1::context_list* my_context_list;
-    static_assert(sizeof(std::atomic<r1::thread_data*>) == sizeof(r1::context_list*), "To preserve backward compatibility this type should have the same size");
+    static_assert(sizeof(std::atomic<r1::thread_data*>) == sizeof(r1::context_list*), "To preserve backward compatibility these types should have the same size");
 
     //! Used to form the thread specific list of contexts without additional memory allocation.
     /** A context is included into the list of the current thread when its binding to

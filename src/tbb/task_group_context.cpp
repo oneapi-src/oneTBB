@@ -55,6 +55,8 @@ void task_group_context_impl::destroy(d1::task_group_context& ctx) {
     __TBB_ASSERT(!is_poisoned(ctx.my_context_list), nullptr);
     
     if (ctx.my_lifetime_state.load(std::memory_order_relaxed) == d1::task_group_context::lifetime_state::bound) {
+        __TBB_ASSERT(ctx.my_lifetime_state.load(std::memory_order_relaxed) == d1::task_group_context::lifetime_state::bound, nullptr);
+        __TBB_ASSERT(ctx.my_context_list != nullptr, nullptr);
         // The owner can be destroyed at any moment. Access the associate data with caution.
         ctx.my_context_list->remove_node(ctx.my_node);
     }
