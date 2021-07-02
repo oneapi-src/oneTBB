@@ -30,10 +30,13 @@
 
 #include <mutex>
 
+#if __TBBMALLOC_BUILD
+namespace rml { namespace internal {
+#else
 namespace tbb {
 namespace detail {
 namespace r1 {
-
+#endif
 // TODO: consider extension for formatted error description string
 static void assertion_failure_impl(const char* location, int line, const char* expression, const char* comment) {
 
@@ -57,7 +60,7 @@ static void assertion_failure_impl(const char* location, int line, const char* e
 // Do not move the definition into the assertion_failure function because it will require "magic statics".
 // It will bring a dependency on C++ runtime on some platforms while assert_impl.h is reused in tbbmalloc 
 // that should not depend on C++ runtime
-static std::atomic<do_once_state> assertion_state;
+static std::atomic<tbb::detail::do_once_state> assertion_state;
 
 void __TBB_EXPORTED_FUNC assertion_failure(const char* location, int line, const char* expression, const char* comment) {
 #if __TBB_MSVC_UNREACHABLE_CODE_IGNORED
@@ -82,9 +85,13 @@ void runtime_warning( const char* format, ... ) {
     fprintf(stderr, "TBB Warning: %s\n", str);
 }
 
+#if __TBBMALLOC_BUILD
+}} // namespaces rml::internal
+#else
 } // namespace r1
 } // namespace detail
 } // namespace tbb
+#endif
 
 #endif // __TBB_assert_impl_H
 
