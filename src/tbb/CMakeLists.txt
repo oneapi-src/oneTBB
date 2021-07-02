@@ -151,7 +151,7 @@ else()
     else()
         set(_includedir_for_pc_file "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}")
     endif()
-    configure_file(${CMAKE_SOURCE_DIR}/integration/pkg-config/tbb.pc.in ${CMAKE_CURRENT_BINARY_DIR}/${TBB_LIB_NAME}.pc @ONLY)
+    configure_file(${PROJECT_SOURCE_DIR}/integration/pkg-config/tbb.pc.in ${CMAKE_CURRENT_BINARY_DIR}/${TBB_LIB_NAME}.pc @ONLY)
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${TBB_LIB_NAME}.pc
             DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 endif()
