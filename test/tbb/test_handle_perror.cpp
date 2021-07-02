@@ -21,6 +21,9 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
+#define __TBB_NO_IMPLICIT_LINKAGE 1
+
+#include "../../src/tbb/assert_impl.h" // Out-of-line TBB assertion handling routines are instantiated here.
 #include "common/test.h"
 #include "oneapi/tbb/detail/_exception.h"
 #include "../../src/tbb/exception.cpp"

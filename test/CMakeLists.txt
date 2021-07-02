@@ -419,12 +419,17 @@ tbb_add_test(SUBDIR tbb NAME test_concurrent_queue_whitebox DEPENDENCIES TBB::tb
 tbb_add_test(SUBDIR tbb NAME test_intrusive_list DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_semaphore DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_environment_whitebox DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_handle_perror DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_hw_concurrency DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_eh_thread DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_global_control DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_task DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_concurrent_monitor DEPENDENCIES TBB::tbb)
+
+# test_handle_perror
+tbb_add_test(SUBDIR tbb NAME test_handle_perror)
+target_include_directories(test_handle_perror PRIVATE
+    $<TARGET_PROPERTY:TBB::tbb,INTERFACE_INCLUDE_DIRECTORIES>
+)
 
 # HWLOC related test
 tbb_add_tbbbind_test(SUBDIR tbb NAME test_arena_constraints)
