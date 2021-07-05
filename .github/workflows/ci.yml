@@ -52,7 +52,7 @@ jobs:
           find examples_formatted -regex '.*\.\(cpp\|hpp\)' -exec clang-format-9 -style=file -i {} \;
           diff -r examples examples_formatted
 
-  documetation:
+  documentation:
     needs: [codespell]
     env:
       BUILD_TYPE: oss
@@ -76,7 +76,7 @@ jobs:
           path: html
 
   pages:
-    if: ${{ github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/master' }}
     runs-on: ubuntu-latest
     needs: [documentation]
     steps:
