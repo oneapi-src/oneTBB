@@ -239,7 +239,9 @@ private:
     static_assert(sizeof(intrusive_list_node) == sizeof(context_list_node), "To preserve backward compatibility these types should have the same size");
 
     //! Pointer to the container storing exception being propagated across this task group.
-    r1::tbb_exception_ptr* my_exception;
+    std::atomic<r1::tbb_exception_ptr*> my_exception;
+    static_assert(sizeof(std::atomic<r1::tbb_exception_ptr*>) == sizeof(r1::tbb_exception_ptr*),
+        "backward compatibility check");
 
     //! Used to set and maintain stack stitching point for Intel Performance Tools.
     void* my_itt_caller;
@@ -248,18 +250,18 @@ private:
     string_resource_index my_name;
 
     char padding[max_nfs_size
-        - sizeof(std::uint64_t)                 // my_cpu_ctl_env
-        - sizeof(std::atomic<std::uint32_t>)    // my_cancellation_requested
-        - sizeof(std::uint8_t)                  // my_version
-        - sizeof(context_traits)                // my_traits
-        - sizeof(std::atomic<std::uint8_t>)     // my_state
-        - sizeof(std::atomic<lifetime_state>)   // my_lifetime_state
-        - sizeof(task_group_context*)           // my_parent
-        - sizeof(r1::context_list*)             // my_context_list
-        - sizeof(intrusive_list_node)           // my_node
-        - sizeof(r1::tbb_exception_ptr*)        // my_exception
-        - sizeof(void*)                         // my_itt_caller
-        - sizeof(string_resource_index)         // my_name
+        - sizeof(std::uint64_t)                          // my_cpu_ctl_env
+        - sizeof(std::atomic<std::uint32_t>)             // my_cancellation_requested
+        - sizeof(std::uint8_t)                           // my_version
+        - sizeof(context_traits)                         // my_traits
+        - sizeof(std::atomic<std::uint8_t>)              // my_state
+        - sizeof(std::atomic<lifetime_state>)            // my_lifetime_state
+        - sizeof(task_group_context*)                    // my_parent
+        - sizeof(r1::context_list*)                      // my_context_list
+        - sizeof(context_list_node)                      // my_node
+        - sizeof(std::atomic<r1::tbb_exception_ptr*>)    // my_exception
+        - sizeof(void*)                                  // my_itt_caller
+        - sizeof(string_resource_index)                  // my_name
     ];
 
     task_group_context(context_traits t, string_resource_index name)
