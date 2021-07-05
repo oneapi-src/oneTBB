@@ -277,13 +277,13 @@ TEST_CASE("Basic parallel_for") {
 //! Testing parallel for with different partitioners and ranges ranges
 //! \brief \ref interface \ref requirement \ref stress
 TEST_CASE("Flog test") {
-    //Flog<parallel_tag, 1>();
-    //Flog<parallel_tag, 10>();
-    //Flog<parallel_tag, 100>();
+    Flog<parallel_tag, 1>();
+    Flog<parallel_tag, 10>();
+    Flog<parallel_tag, 100>();
     Flog<parallel_tag, 1000>();
-    //Flog<parallel_tag, 10000>();
+    Flog<parallel_tag, 10000>();
 }
-#if 0
+
 //! Testing parallel for with different types and step
 //! \brief \ref interface \ref requirement
 TEST_CASE_TEMPLATE("parallel_for with step support", T, short, unsigned short, int, unsigned int,
@@ -312,4 +312,3 @@ TEST_CASE("Testing parallel_for with partitioners") {
     parallel_for(Range1(true, false), b, oneapi::tbb::static_partitioner());
     parallel_for(Range6(false, true), b, oneapi::tbb::static_partitioner());
 }
-#endif
