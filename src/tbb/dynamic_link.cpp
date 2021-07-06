@@ -408,10 +408,24 @@ namespace r1 {
     #endif /* __TBB_DYNAMIC_LOAD_ENABLED */
     }
 
-    dynamic_link_handle dynamic_load( const char* library, const dynamic_link_descriptor descriptors[], std::size_t required ) {
-        ::tbb::detail::suppress_unused_warning( library, descriptors, required );
-#if __TBB_DYNAMIC_LOAD_ENABLED
+#if !_WIN32
+    int loading_flags(bool local_binding) {
+        int flags = RTLD_NOW;
+        if (local_binding) {
+            flags = flags | RTLD_LOCAL;
+#if __linux__ && !__ANDROID__ && !__TBB_USE_ADDRESS_SANITIZER
+            flags = flags | RTLD_DEEPBIND;
+#endif /*__linux__ && !__ANDROID__ && !__TBB_USE_ADDRESS_SANITIZER*/
+        } else {
+            flags = flags | RTLD_GLOBAL;
+        }
+        return flags;
+    }
+#endif
 
+    dynamic_link_handle dynamic_load( const char* library, const dynamic_link_descriptor descriptors[], std::size_t required, bool local_binding ) {
+        ::tbb::detail::suppress_unused_warning( library, descriptors, required, local_binding );
+#if __TBB_DYNAMIC_LOAD_ENABLED
         std::size_t const len = PATH_MAX + 1;
         char path[ len ];
         std::size_t rc = abs_path( library, path, len );
@@ -421,7 +435,8 @@ namespace r1 {
             // (e.g. because of MS runtime problems - one of those crazy manifest related ones)
             UINT prev_mode = SetErrorMode (SEM_FAILCRITICALERRORS);
 #endif /* _WIN32 */
-            dynamic_link_handle library_handle = dlopen( path, RTLD_NOW | RTLD_GLOBAL );
+            // The second argument (loading_flags) is ignored on Windows
+            dynamic_link_handle library_handle = dlopen( path, loading_flags(local_binding) );
 #if _WIN32
             SetErrorMode (prev_mode);
 #endif /* _WIN32 */
@@ -448,9 +463,17 @@ namespace r1 {
         // TODO: May global_symbols_link find weak symbols?
         dynamic_link_handle library_handle = ( flags & DYNAMIC_LINK_GLOBAL ) ? global_symbols_link( library, descriptors, required ) : 0;
 
+#if defined(_MSC_VER) && _MSC_VER <= 1900
+#pragma warning (push)
+// MSVC 2015 warning: 'int': forcing value to bool 'true' or 'false'
+#pragma warning (disable: 4800)
+#endif
         if ( !library_handle && ( flags & DYNAMIC_LINK_LOAD ) )
-            library_handle = dynamic_load( library, descriptors, required );
+            library_handle = dynamic_load( library, descriptors, required, flags & DYNAMIC_LINK_LOCAL );
 
+#if defined(_MSC_VER) && _MSC_VER <= 1900
+#pragma warning (pop)
+#endif
         if ( !library_handle && ( flags & DYNAMIC_LINK_WEAK ) )
             return weak_symbol_link( descriptors, required );
 

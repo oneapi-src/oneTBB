@@ -226,7 +226,7 @@ public:
 //! Parallel iteration over range with default partitioner.
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
-    __TBB_requires(range<Range> && parallel_for_body<Body, Range>)
+    __TBB_requires(tbb_range<Range> && parallel_for_body<Body, Range>)
 void parallel_for( const Range& range, const Body& body ) {
     start_for<Range,Body,const __TBB_DEFAULT_PARTITIONER>::run(range,body,__TBB_DEFAULT_PARTITIONER());
 }
@@ -234,7 +234,7 @@ void parallel_for( const Range& range, const Body& body ) {
 //! Parallel iteration over range with simple partitioner.
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
-    __TBB_requires(range<Range> && parallel_for_body<Body, Range>)
+    __TBB_requires(tbb_range<Range> && parallel_for_body<Body, Range>)
 void parallel_for( const Range& range, const Body& body, const simple_partitioner& partitioner ) {
     start_for<Range,Body,const simple_partitioner>::run(range,body,partitioner);
 }
@@ -242,7 +242,7 @@ void parallel_for( const Range& range, const Body& body, const simple_partitione
 //! Parallel iteration over range with auto_partitioner.
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
-    __TBB_requires(range<Range> && parallel_for_body<Body, Range>)
+    __TBB_requires(tbb_range<Range> && parallel_for_body<Body, Range>)
 void parallel_for( const Range& range, const Body& body, const auto_partitioner& partitioner ) {
     start_for<Range,Body,const auto_partitioner>::run(range,body,partitioner);
 }
@@ -250,7 +250,7 @@ void parallel_for( const Range& range, const Body& body, const auto_partitioner&
 //! Parallel iteration over range with static_partitioner.
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
-    __TBB_requires(range<Range> && parallel_for_body<Body, Range>)
+    __TBB_requires(tbb_range<Range> && parallel_for_body<Body, Range>)
 void parallel_for( const Range& range, const Body& body, const static_partitioner& partitioner ) {
     start_for<Range,Body,const static_partitioner>::run(range,body,partitioner);
 }
@@ -258,7 +258,7 @@ void parallel_for( const Range& range, const Body& body, const static_partitione
 //! Parallel iteration over range with affinity_partitioner.
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
-    __TBB_requires(range<Range> && parallel_for_body<Body, Range>)
+    __TBB_requires(tbb_range<Range> && parallel_for_body<Body, Range>)
 void parallel_for( const Range& range, const Body& body, affinity_partitioner& partitioner ) {
     start_for<Range,Body,affinity_partitioner>::run(range,body,partitioner);
 }
@@ -266,7 +266,7 @@ void parallel_for( const Range& range, const Body& body, affinity_partitioner& p
 //! Parallel iteration over range with default partitioner and user-supplied context.
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
-    __TBB_requires(range<Range> && parallel_for_body<Body, Range>)
+    __TBB_requires(tbb_range<Range> && parallel_for_body<Body, Range>)
 void parallel_for( const Range& range, const Body& body, task_group_context& context ) {
     start_for<Range,Body,const __TBB_DEFAULT_PARTITIONER>::run(range, body, __TBB_DEFAULT_PARTITIONER(), context);
 }
@@ -274,7 +274,7 @@ void parallel_for( const Range& range, const Body& body, task_group_context& con
 //! Parallel iteration over range with simple partitioner and user-supplied context.
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
-    __TBB_requires(range<Range> && parallel_for_body<Body, Range>)
+    __TBB_requires(tbb_range<Range> && parallel_for_body<Body, Range>)
 void parallel_for( const Range& range, const Body& body, const simple_partitioner& partitioner, task_group_context& context ) {
     start_for<Range,Body,const simple_partitioner>::run(range, body, partitioner, context);
 }
@@ -282,7 +282,7 @@ void parallel_for( const Range& range, const Body& body, const simple_partitione
 //! Parallel iteration over range with auto_partitioner and user-supplied context.
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
-    __TBB_requires(range<Range> && parallel_for_body<Body, Range>)
+    __TBB_requires(tbb_range<Range> && parallel_for_body<Body, Range>)
 void parallel_for( const Range& range, const Body& body, const auto_partitioner& partitioner, task_group_context& context ) {
     start_for<Range,Body,const auto_partitioner>::run(range, body, partitioner, context);
 }
@@ -290,7 +290,7 @@ void parallel_for( const Range& range, const Body& body, const auto_partitioner&
 //! Parallel iteration over range with static_partitioner and user-supplied context.
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
-    __TBB_requires(range<Range> && parallel_for_body<Body, Range>)
+    __TBB_requires(tbb_range<Range> && parallel_for_body<Body, Range>)
 void parallel_for( const Range& range, const Body& body, const static_partitioner& partitioner, task_group_context& context ) {
     start_for<Range,Body,const static_partitioner>::run(range, body, partitioner, context);
 }
@@ -298,7 +298,7 @@ void parallel_for( const Range& range, const Body& body, const static_partitione
 //! Parallel iteration over range with affinity_partitioner and user-supplied context.
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
-    __TBB_requires(range<Range> && parallel_for_body<Body, Range>)
+    __TBB_requires(tbb_range<Range> && parallel_for_body<Body, Range>)
 void parallel_for( const Range& range, const Body& body, affinity_partitioner& partitioner, task_group_context& context ) {
     start_for<Range,Body,affinity_partitioner>::run(range,body,partitioner, context);
 }
@@ -308,7 +308,7 @@ template <typename Index, typename Function, typename Partitioner>
 void parallel_for_impl(Index first, Index last, Index step, const Function& f, Partitioner& partitioner) {
     if (step <= 0 )
         throw_exception(exception_id::nonpositive_step); // throws std::invalid_argument
-    else if (last > first) {
+    else if (first < last) {
         // Above "else" avoids "potential divide by zero" warning on some platforms
         Index end = (last - first - Index(1)) / step + Index(1);
         blocked_range<Index> range(static_cast<Index>(0), end);

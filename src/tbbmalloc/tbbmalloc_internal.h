@@ -442,7 +442,7 @@ private:
         bool thpAvailable = false;
         unsigned long long hugePageSize = 0;
 
-#if __linux__
+#if __unix__
         // Check huge pages existence
         unsigned long long meminfoHugePagesTotal = 0;
 
@@ -660,11 +660,7 @@ class RecursiveMallocCallProtector {
 
     MallocMutex::scoped_lock* lock_acquired;
     char scoped_lock_space[sizeof(MallocMutex::scoped_lock)+1];
-
-    static uintptr_t absDiffPtr(void *x, void *y) {
-        uintptr_t xi = (uintptr_t)x, yi = (uintptr_t)y;
-        return xi > yi ? xi - yi : yi - xi;
-    }
+    
 public:
 
     RecursiveMallocCallProtector() : lock_acquired(NULL) {
@@ -694,7 +690,11 @@ public:
         // inexact stack size based test
         const uintptr_t threadStackSz = 2*1024*1024;
         int dummy;
-        return absDiffPtr(autoObjPtr.load(std::memory_order_relaxed), &dummy)<threadStackSz;
+
+        uintptr_t xi = (uintptr_t)autoObjPtr.load(std::memory_order_relaxed), yi = (uintptr_t)&dummy;
+        uintptr_t diffPtr = xi > yi ? xi - yi : yi - xi;
+
+        return diffPtr < threadStackSz;
     }
 
 /* The function is called on 1st scalable_malloc call to check if malloc calls

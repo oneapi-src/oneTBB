@@ -204,12 +204,12 @@ function(tbb_configure_hwloc_dependent_test)
         return()
     endif()
 
-    list(GET _hwloc_test_HWLOC_REQUIRED_VERSION_LIST 0 HWLOC_MAXIMAL_VERSION)
+    list(GET _hwloc_test_HWLOC_REQUIRED_VERSION_LIST 0 TEST_HWLOC_VERSION)
     tbb_add_test(
         SUBDIR ${_hwloc_test_SUBDIR}
         NAME ${_hwloc_test_NAME}
         SUFFIX ${_hwloc_test_SUFFIX}
-        DEPENDENCIES TBB::tbb HWLOC::${HWLOC_MAXIMAL_VERSION}
+        DEPENDENCIES TBB::tbb HWLOC::${TEST_HWLOC_VERSION}
     )
 
     _tbb_get_hwloc_runtime_vars(
@@ -275,9 +275,9 @@ function(tbb_add_tbbbind_test)
         FAIL_REGULAR_EXPRESSION "Status:.*FAILURE"
     )
 
-    if (TARGET HWLOC::hwloc_2_4 AND NOT HWLOC_2_4_TESTS_STATUS_SHOWN)
-        message(STATUS "HWLOC 2.4 dependent tests were enabled.")
-        set(HWLOC_2_4_TESTS_STATUS_SHOWN TRUE PARENT_SCOPE)
+    if (TARGET HWLOC::hwloc_2_5 AND NOT HWLOC_2_5_TESTS_STATUS_SHOWN)
+        message(STATUS "HWLOC 2.5 dependent tests were enabled.")
+        set(HWLOC_2_5_TESTS_STATUS_SHOWN TRUE PARENT_SCOPE)
     endif()
 
     if (TARGET HWLOC::hwloc_2 AND NOT HWLOC_2_TESTS_STATUS_SHOWN)
@@ -291,22 +291,26 @@ function(tbb_add_tbbbind_test)
     endif()
 
     list(APPEND HWLOC_TEST_CASES
-        hwloc_2_4
+        hwloc_2_5
         hwloc_2
         hwloc_1_11
-        hwloc_2_4_hwloc_2
-        hwloc_2_4_hwloc_1_11
+        hwloc_2_5_hwloc_2
+        hwloc_2_5_hwloc_1_11
         hwloc_2_hwloc_1_11
-        hwloc_2_4_hwloc_2_hwloc_1_11
+        hwloc_2_5_hwloc_2_hwloc_1_11
+        incompatible_hwlocs_1_11_vs_2_5
+        incompatible_hwlocs_1_11_vs_2
     )
 
-    list(APPEND HWLOC_TEST_CASE_0_VARS tbbbind_2_4 "hwloc_2_4")
+    list(APPEND HWLOC_TEST_CASE_0_VARS tbbbind_2_5 "hwloc_2_5")
     list(APPEND HWLOC_TEST_CASE_1_VARS tbbbind_2   "hwloc_2")
     list(APPEND HWLOC_TEST_CASE_2_VARS tbbbind     "hwloc_1_11")
-    list(APPEND HWLOC_TEST_CASE_3_VARS tbbbind_2_4 "hwloc_2_4,hwloc_2")
-    list(APPEND HWLOC_TEST_CASE_4_VARS tbbbind_2_4 "hwloc_2_4,hwloc_1_11")
+    list(APPEND HWLOC_TEST_CASE_3_VARS tbbbind_2_5 "hwloc_2_5,hwloc_2")
+    list(APPEND HWLOC_TEST_CASE_4_VARS tbbbind_2_5 "hwloc_2_5,hwloc_1_11")
     list(APPEND HWLOC_TEST_CASE_5_VARS tbbbind_2   "hwloc_2,hwloc_1_11")
-    list(APPEND HWLOC_TEST_CASE_6_VARS tbbbind_2_4 "hwloc_2_4,hwloc_2,hwloc_1_11")
+    list(APPEND HWLOC_TEST_CASE_6_VARS tbbbind_2_5 "hwloc_2_5,hwloc_2,hwloc_1_11")
+    list(APPEND HWLOC_TEST_CASE_7_VARS tbbbind_2_5 "hwloc_1_11,hwloc_2_5")
+    list(APPEND HWLOC_TEST_CASE_8_VARS tbbbind_2   "hwloc_1_11,hwloc_2")
 
     foreach(TEST_CASE ${HWLOC_TEST_CASES})
         list(FIND HWLOC_TEST_CASES ${TEST_CASE} TEST_CASE_INDEX)
@@ -327,7 +331,7 @@ endfunction()
 # Copy libraries to test folder to make it visible during tests execution if external TBB is tested.
 # TODO: check and update for multi-config generators.
 if (TBB_FOUND)
-    list(APPEND _tbb_test_components tbb tbbmalloc tbbmalloc_proxy tbbbind tbbbind_2_0 tbbbind_2_4)
+    list(APPEND _tbb_test_components tbb tbbmalloc tbbmalloc_proxy tbbbind tbbbind_2_0 tbbbind_2_5)
     foreach(_component ${_tbb_test_components})
         if (TARGET TBB::${_component})
             get_property(${_component}_lib_file_location TARGET TBB::${_component} PROPERTY LOCATION)
@@ -415,12 +419,17 @@ tbb_add_test(SUBDIR tbb NAME test_concurrent_queue_whitebox DEPENDENCIES TBB::tb
 tbb_add_test(SUBDIR tbb NAME test_intrusive_list DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_semaphore DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_environment_whitebox DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_handle_perror DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_hw_concurrency DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_eh_thread DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_global_control DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_task DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_concurrent_monitor DEPENDENCIES TBB::tbb)
+
+# test_handle_perror
+tbb_add_test(SUBDIR tbb NAME test_handle_perror)
+target_include_directories(test_handle_perror PRIVATE
+    $<TARGET_PROPERTY:TBB::tbb,INTERFACE_INCLUDE_DIRECTORIES>
+)
 
 # HWLOC related test
 tbb_add_tbbbind_test(SUBDIR tbb NAME test_arena_constraints)
@@ -589,6 +598,6 @@ if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
     tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_new_handler DEPENDENCIES TBB::tbbmalloc_proxy)
 endif()
 
-unset(HWLOC_2_4_TESTS_STATUS_SHOWN)
+unset(HWLOC_2_5_TESTS_STATUS_SHOWN)
 unset(HWLOC_2_TESTS_STATUS_SHOWN)
 unset(HWLOC_1_11_TESTS_STATUS_SHOWN)

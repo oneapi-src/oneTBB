@@ -333,7 +333,7 @@ static void (*restore_affinity_ptr)( binding_handler* handler_ptr, int slot_num 
 int (*get_default_concurrency_ptr)( int numa_id, int core_type_id, int max_threads_per_core )
     = dummy_get_default_concurrency;
 
-#if _WIN32 || _WIN64 || __linux__
+#if _WIN32 || _WIN64 || __unix__
 // Table describing how to link the handlers.
 static const dynamic_link_descriptor TbbBindLinkTable[] = {
     DLD(__TBB_internal_initialize_system_topology, initialize_system_topology_ptr),
@@ -355,15 +355,16 @@ static const unsigned LinkTableSize = sizeof(TbbBindLinkTable) / sizeof(dynamic_
 #if _WIN32 || _WIN64
 #define LIBRARY_EXTENSION ".dll"
 #define LIBRARY_PREFIX
-#elif __linux__
+#elif __unix__
 #define LIBRARY_EXTENSION __TBB_STRING(.so.3)
 #define LIBRARY_PREFIX "lib"
-#endif /* __linux__ */
+#endif /* __unix__ */
 
 #define TBBBIND_NAME LIBRARY_PREFIX "tbbbind" DEBUG_SUFFIX LIBRARY_EXTENSION
 #define TBBBIND_2_0_NAME LIBRARY_PREFIX "tbbbind_2_0" DEBUG_SUFFIX LIBRARY_EXTENSION
-#define TBBBIND_2_4_NAME LIBRARY_PREFIX "tbbbind_2_4" DEBUG_SUFFIX LIBRARY_EXTENSION
-#endif /* _WIN32 || _WIN64 || __linux__ */
+
+#define TBBBIND_2_5_NAME LIBRARY_PREFIX "tbbbind_2_5" DEBUG_SUFFIX LIBRARY_EXTENSION
+#endif /* _WIN32 || _WIN64 || __unix__ */
 
 // Representation of system hardware topology information on the TBB side.
 // System topology may be initialized by third-party component (e.g. hwloc)
@@ -382,19 +383,19 @@ int  core_types_count = 0;
 int* core_types_indexes = nullptr;
 
 const char* load_tbbbind_shared_object() {
-#if _WIN32 || _WIN64 || __linux__
+#if _WIN32 || _WIN64 || __unix__
 #if _WIN32 && !_WIN64
     // For 32-bit Windows applications, process affinity masks can only support up to 32 logical CPUs.
     SYSTEM_INFO si;
     GetNativeSystemInfo(&si);
     if (si.dwNumberOfProcessors > 32) return nullptr;
 #endif /* _WIN32 && !_WIN64 */
-    for (const auto& tbbbind_version : {TBBBIND_2_4_NAME, TBBBIND_2_0_NAME, TBBBIND_NAME}) {
-        if (dynamic_link(tbbbind_version, TbbBindLinkTable, LinkTableSize)) {
+    for (const auto& tbbbind_version : {TBBBIND_2_5_NAME, TBBBIND_2_0_NAME, TBBBIND_NAME}) {
+        if (dynamic_link(tbbbind_version, TbbBindLinkTable, LinkTableSize, nullptr, DYNAMIC_LINK_LOCAL_BINDING)) {
             return tbbbind_version;
         }
     }
-#endif /* _WIN32 || _WIN64 || __linux__ */
+#endif /* _WIN32 || _WIN64 || __unix__ */
     return nullptr;
 }
 

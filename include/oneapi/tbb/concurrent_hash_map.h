@@ -39,6 +39,14 @@ namespace tbb {
 namespace detail {
 namespace d2 {
 
+#if __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS && __TBB_CPP20_CONCEPTS_PRESENT
+template <typename Mutex>
+concept ch_map_rw_scoped_lockable = rw_scoped_lockable<Mutex> &&
+	requires(const typename Mutex::scoped_lock& sl) {
+		{ sl.is_writer() } -> std::convertible_to<bool>;
+};
+#endif
+
 template <typename MutexType>
 struct hash_map_node_base : no_copy {
     using mutex_type = MutexType;
@@ -59,10 +67,12 @@ bool rehash_required( hash_map_node_base<MutexType>* node_ptr ) {
     return reinterpret_cast<void*>(node_ptr) == rehash_req_flag;
 }
 
+#if TBB_USE_ASSERT
 template <typename MutexType>
 bool empty_rehashed( hash_map_node_base<MutexType>* node_ptr ) {
     return reinterpret_cast<void*>(node_ptr) == empty_rehashed_flag;
 }
+#endif
 
 // base class of concurrent_hash_map
 
@@ -445,8 +455,13 @@ private:
     template <typename Key, typename T, typename HashCompare, typename A
 #if __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS
             , typename M
+			 >
+		__TBB_requires(tbb::detail::hash_compare<HashCompare, Key> &&
+					   ch_map_rw_scoped_lockable<M>)
+#else
+			 >
+		__TBB_requires(tbb::detail::hash_compare<HashCompare, Key>)
 #endif
-             >
     friend class concurrent_hash_map;
 
     hash_map_iterator( const Container &map, std::size_t index, const bucket *b, node_base *n ) :
@@ -551,14 +566,6 @@ void hash_map_range<Iterator>::set_midpoint() const {
     __TBB_ASSERT( my_begin != my_midpoint || my_begin == my_end,
         "[my_begin, my_midpoint) range should not be empty" );
 }
-
-#if __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS && __TBB_CPP20_CONCEPTS_PRESENT
-template <typename Mutex>
-concept ch_map_rw_scoped_lockable = rw_scoped_lockable<Mutex> &&
-                                    requires (const typename Mutex::scoped_lock& sl) {
-                                        { sl.is_writer() } -> std::convertible_to<bool>;
-                                    };
-#endif
 
 template <typename Key, typename T,
           typename HashCompare = d1::tbb_hash_compare<Key>,

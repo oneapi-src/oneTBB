@@ -113,7 +113,7 @@ static bool Verbose = false;
 #include <errno.h>
 #include <limits.h> // for CHAR_BIT
 
-#if __linux__
+#if __unix__
 #include <stdint.h> // uintptr_t
 #endif
 #if _WIN32 || _WIN64
@@ -610,7 +610,7 @@ void CMemTest::Zerofilling()
 
 void myMemset(void *ptr, int c, size_t n)
 {
-#if  __linux__ &&  __i386__
+#if  __unix__ &&  __i386__
 // memset in Fedora 13 not always correctly sets memory to required values.
     char *p = (char*)ptr;
     for (size_t i=0; i<n; i++)
@@ -708,9 +708,9 @@ void CMemTest::NULLReturn(UINT MinSize, UINT MaxSize, int total_threads)
                 // Technically, if malloc returns a non-NULL pointer, it is allowed to set errno anyway.
                 // However, on most systems it does not set errno.
                 bool known_issue = false;
-#if __linux__ || __ANDROID__
+#if __unix__ || __ANDROID__
                 if( CHECK_ERRNO(errno==ENOMEM) ) known_issue = true;
-#endif /* __linux__ */
+#endif /* __unix__ */
                 if ( CHECK_ERRNO(errno != ENOMEM+j+1) && !known_issue) {
                     CountErrors++;
                     if (ShouldReportError()) REPORT("error: errno changed to %d though valid pointer was returned\n", errno);
@@ -747,9 +747,9 @@ void CMemTest::NULLReturn(UINT MinSize, UINT MaxSize, int total_threads)
                 // Technically, if calloc returns a non-NULL pointer, it is allowed to set errno anyway.
                 // However, on most systems it does not set errno.
                 bool known_issue = false;
-#if __linux__
+#if __unix__
                 if( CHECK_ERRNO(errno==ENOMEM) ) known_issue = true;
-#endif /* __linux__ */
+#endif /* __unix__ */
                 if ( CHECK_ERRNO(errno != ENOMEM+j+1) && !known_issue ) {
                     CountErrors++;
                     if (ShouldReportError()) REPORT("error: errno changed to %d though valid pointer was returned\n", errno);
@@ -773,9 +773,9 @@ void CMemTest::NULLReturn(UINT MinSize, UINT MaxSize, int total_threads)
                 if (tmp != NULL) // same or another place
                 {
                     bool known_issue = false;
-#if __linux__
+#if __unix__
                     if( errno==ENOMEM ) known_issue = true;
-#endif /* __linux__ */
+#endif /* __unix__ */
                     if (errno != 0 && !known_issue) {
                         CountErrors++;
                         if (ShouldReportError()) REPORT("valid pointer returned, error: errno not kept\n");
@@ -1034,7 +1034,7 @@ TEST_CASE("MAIN TEST") {
     // TODO: enable this mode
     // setSystemAllocs();
 
-#if __linux__
+#if __unix__
     /* According to man pthreads
        "NPTL threads do not share resource limits (fixed in kernel 2.6.10)".
        Use per-threads limits for affected systems.
@@ -1043,8 +1043,9 @@ TEST_CASE("MAIN TEST") {
         perProcessLimits = false;
 #endif
     //-------------------------------------
-#if __APPLE__
+#if __APPLE__ || __TBB_USE_ADDRESS_SANITIZER
     /* Skip due to lack of memory limit enforcing under macOS. */
+    //Skip this test under ASAN , as OOM condition breaks the ASAN as well
 #else
     limitMem(200);
     ReallocParam();

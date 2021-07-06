@@ -35,23 +35,24 @@
 
 #include <atomic>
 
-#if __linux__ || __FreeBSD__ || __NetBSD__ || __OpenBSD__
+#if __unix__
+#if defined(__has_include)
+#define __TBB_has_include __has_include
+#else
+#define __TBB_has_include(x) 0
+#endif
 
 /* Futex definitions */
 #include <unistd.h>
+#if defined(__linux__) || __TBB_has_include(<sys/syscall.h>)
 #include <sys/syscall.h>
+#endif
 
 #if defined(SYS_futex)
 
 /* This section is included for Linux and some other systems that may support futexes.*/
 
 #define __TBB_USE_FUTEX 1
-
-#if defined(__has_include)
-#define __TBB_has_include __has_include
-#else
-#define __TBB_has_include(x) 0
-#endif
 
 /*
 If available, use typical headers where futex API is defined. While Linux and OpenBSD
@@ -87,7 +88,7 @@ the actual parameter values to match Linux: 0 for wait, 1 for wake.
 #endif
 
 #endif // SYS_futex
-#endif // __linux__ || __FreeBSD__ || __NetBSD__ || __OpenBSD__
+#endif // __unix__
 
 namespace tbb {
 namespace detail {
