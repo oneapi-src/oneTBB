@@ -1043,7 +1043,7 @@ TEST_CASE("MAIN TEST") {
         perProcessLimits = false;
 #endif
     //-------------------------------------
-#if __APPLE__ || __TBB_USE_ADDRESS_SANITIZER
+#if __APPLE__ || __TBB_USE_ADDRESS_SANITIZER || __TBB_USE_THREAD_SANITIZER
     /* Skip due to lack of memory limit enforcing under macOS. */
     //Skip this test under ASAN , as OOM condition breaks the ASAN as well
 #else
