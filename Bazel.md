@@ -39,7 +39,7 @@ cc_binary(
 
 _main.cpp_:
 ```
-#include "tbb/version.h"
+#include "oneapi/tbb/version.h"
 
 #include <iostream>
 
