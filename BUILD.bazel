@@ -77,7 +77,11 @@ cc_library(
 cc_library(
     name = "tbbmalloc",
     srcs =
-        glob(["src/tbbmalloc/*.h"]) + [
+        glob([
+            "src/tbbmalloc/*.h",
+            "src/tbb/*.h",
+            "src/tbbmalloc_proxy/*.h",
+        ]) + [
             "src/tbbmalloc/backend.cpp",
             "src/tbbmalloc/backref.cpp",
             "src/tbbmalloc/frontend.cpp",
@@ -86,11 +90,9 @@ cc_library(
         ],
     hdrs = glob([
         "include/tbb/*.h",
-        "src/tbb/*.h",
         "include/oneapi/tbb/detail/*.h",
         "include/oneapi/tbb/detail/*.h",
         "include/oneapi/tbb/*.h",
-        "src/tbbmalloc_proxy/*.h",
     ]),
     includes = [
         "include",
