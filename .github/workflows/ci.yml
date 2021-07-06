@@ -73,7 +73,7 @@ jobs:
         uses: actions/upload-artifact@v2.2.1
         with:
           name: oneTBB-html-docs-${{ env.GITHUB_SHA_SHORT }}
-          path: html
+          path: html.tar.gz
 
   pages:
     if: ${{ github.ref == 'refs/heads/master' }}
