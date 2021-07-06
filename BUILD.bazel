@@ -91,7 +91,6 @@ cc_library(
     hdrs = glob([
         "include/tbb/*.h",
         "include/oneapi/tbb/detail/*.h",
-        "include/oneapi/tbb/detail/*.h",
         "include/oneapi/tbb/*.h",
     ]),
     includes = [
