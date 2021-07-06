@@ -36,12 +36,7 @@ cc_library(
     }),
     hdrs = glob([
         "include/tbb/*.h",
-    ]) + select({
-        "@platforms//cpu:x86_64": [
-            "src/tbb/tools_api/ittnotify_static.c",
-        ],
-        "//conditions:default": [],
-    }),
+    ]),
     copts = [
         "-w",
     ],
@@ -72,6 +67,12 @@ cc_library(
     }) + [
         "__TBB_BUILD",
     ],
+    textual_hdrs = select({
+        "@platforms//cpu:x86_64": [
+            "src/tbb/tools_api/ittnotify_static.c",
+        ],
+        "//conditions:default": [],
+    }),
 )
 
 cc_library(
