@@ -91,7 +91,7 @@ void limitMem( size_t limit )
     }
     if (rlim.rlim_max==(rlim_t)RLIM_INFINITY)
         rlim.rlim_cur = (limit > 0) ? limit*MByte : rlim.rlim_max;
-    else rlim.rlim_cur = (limit > 0 && limit<rlim.rlim_max) ? limit*MByte : rlim.rlim_max;
+    else rlim.rlim_cur = (limit > 0 && static_cast<rlim_t>(limit)<rlim.rlim_max) ? limit*MByte : rlim.rlim_max;
     ret = setrlimit(RLIMIT_AS,&rlim);
     if (0 != ret) {
         REPORT("Can't set limits: errno %d\n", errno);
