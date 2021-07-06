@@ -134,7 +134,6 @@ if (WIN32)
 endif()
 
 set(_tbb_pc_lib_name tbb)
-set(_tbb_pc_subdir ${CMAKE_INSTALL_LIBDIR})
 
 if (WIN32)
     set(_tbb_pc_lib_name ${_tbb_pc_lib_name}${TBB_BINARY_VERSION})
@@ -146,7 +145,21 @@ else()
     set(TBB_PC_NAME tbb32)
 endif()
 
-configure_file(${CMAKE_SOURCE_DIR}/integration/pkg-config/tbb.pc.in ${CMAKE_CURRENT_BINARY_DIR}/${TBB_PC_NAME}.pc @ONLY)
+set(_prefix_for_pc_file "${CMAKE_INSTALL_PREFIX}")
+
+if (IS_ABSOLUTE "${CMAKE_INSTALL_LIBDIR}")
+    set(_libdir_for_pc_file "${CMAKE_INSTALL_LIBDIR}")
+else()
+    set(_libdir_for_pc_file "\${prefix}/${CMAKE_INSTALL_LIBDIR}")
+endif()
+
+if (IS_ABSOLUTE "${CMAKE_INSTALL_INCLUDEDIR}")
+    set(_includedir_for_pc_file "${CMAKE_INSTALL_INCLUDEDIR}")
+else()
+    set(_includedir_for_pc_file "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}")
+endif()
+
+configure_file(${PROJECT_SOURCE_DIR}/integration/pkg-config/tbb.pc.in ${CMAKE_CURRENT_BINARY_DIR}/${TBB_PC_NAME}.pc @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${TBB_PC_NAME}.pc
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig/
         COMPONENT devel)
