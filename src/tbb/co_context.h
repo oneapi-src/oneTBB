@@ -71,10 +71,12 @@ namespace r1 {
 #if __TBB_RESUMABLE_TASKS_USE_THREADS
     struct coroutine_type {
 #if _WIN32 || _WIN64
-        HANDLE my_thread;
+        using hande_type = HANDLE;
 #else
-        pthread_t my_thread;
+        using hande_type = pthread_t;
 #endif
+
+        hande_type my_thread;
         std::condition_variable my_condvar;
         std::mutex my_mutex;
         thread_data* my_thread_data{ nullptr };
@@ -98,7 +100,6 @@ namespace r1 {
     void destroy_coroutine(coroutine_type& c);
 
 class co_context {
-public:
     enum co_state {
         co_invalid,
         co_suspended,
