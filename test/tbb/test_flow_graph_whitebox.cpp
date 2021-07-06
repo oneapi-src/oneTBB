@@ -277,7 +277,10 @@ void TestFunctionNode() {
     });
     utils::SpinWaitWhileEq(serial_fn_state0, 0); // waiting rejecting node to start
     utils::SpinWaitWhileEq(rejected, false);
-    CHECK(fnode0.my_predecessors.empty() == false);
+    // TODO: the assest below is not stable due to the logical race between try_put(1)
+    // try_put(2) and wait_for_all.
+    // Additionaly, empty() cannot be called concurrently due to null_mutex used in implementaton/
+    // CHECK(fnode0.my_predecessors.empty() == false);
     serial_fn_state0 = 2;   // release function_node body.
     t.join();
     INFO(" reset");
@@ -323,12 +326,14 @@ void TestFunctionNode() {
     utils::SpinWaitWhileEq(serial_fn_state0, 0); // waiting rejecting node to start
     // wait for the edges to reverse
     utils::SpinWaitWhileEq(rejected, false);
-    CHECK(fnode0.my_predecessors.empty() == false);
+    // TODO: the assest below is not stable due to the logical race between try_put(1)
+    // try_put(2) and wait_for_all.
+    // Additionaly, empty() cannot be called concurrently due to null_mutex used in implementaton/
+    // CHECK(fnode0.my_predecessors.empty() == false);
     g.my_context->cancel_group_execution();
     // release the function_node
     serial_fn_state0 = 2;
     t2.join();
-    CHECK_MESSAGE( (!fnode0.my_predecessors.empty() && qnode0.my_successors.empty()), "function_node edge not reversed");
     g.reset(tbb::flow::rf_clear_edges);
     CHECK_MESSAGE( (fnode0.my_predecessors.empty() && qnode0.my_successors.empty()), "function_node edge not removed");
     CHECK_MESSAGE( (fnode0.my_successors.empty()), "successor to fnode not removed");
@@ -575,22 +580,27 @@ void TestMultifunctionNode() {
     tbb::flow::make_edge(tbb::flow::output_port<1>(mf), qodd_out);
     g.wait_for_all();
     for (int ii = 0; ii < 2 ; ++ii) {
+        std::atomic<bool> submitted{ false };
         serial_fn_state0 = 0;
         /* if(ii == 0) REMARK(" reset preds"); else REMARK(" 2nd");*/
         std::thread t([&] {
             g.reset(); // attach to the current arena
             qin.try_put(0);
             qin.try_put(1);
+            submitted = true;
             g.wait_for_all();
         });
         // wait for node to be active
         utils::SpinWaitWhileEq(serial_fn_state0, 0);
-        utils::SpinWaitWhile( [&] { return !my_test(mf); });
+        utils::SpinWaitWhileEq(submitted, false);
         g.my_context->cancel_group_execution();
         // release node
         serial_fn_state0 = 2;
         t.join();
-        CHECK_MESSAGE( (my_test(mf)), "fail cancel group test");
+        // The rejection test cannot guarantee the state of predecessors cache.
+        if (!std::is_same<P, tbb::flow::rejecting>::value) {
+            CHECK_MESSAGE((my_test(mf)), "fail cancel group test");
+        }
         if( ii == 1) {
             INFO(" rf_clear_edges");
             g.reset(tbb::flow::rf_clear_edges);
