@@ -724,7 +724,6 @@ protected:
 
     // TODO refactor to hash_base
     void rehash_bucket( bucket *b_new, const hashcode_type hash ) {
-        __TBB_ASSERT( !b_new->mutex.try_lock(), "b_new must be locked (for write)");
         __TBB_ASSERT( hash > 1, "The lowermost buckets can't be rehashed" );
         b_new->node_list.store(reinterpret_cast<node_base*>(empty_rehashed_flag), std::memory_order_release); // mark rehashed
         hashcode_type mask = (1u << tbb::detail::log2(hash)) - 1; // get parent mask from the topmost bit
