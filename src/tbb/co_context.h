@@ -71,12 +71,12 @@ namespace r1 {
 #if __TBB_RESUMABLE_TASKS_USE_THREADS
     struct coroutine_type {
 #if _WIN32 || _WIN64
-        using hande_type = HANDLE;
+        using handle_type = HANDLE;
 #else
-        using hande_type = pthread_t;
+        using handle_type = pthread_t;
 #endif
 
-        hande_type my_thread;
+        handle_type my_thread;
         std::condition_variable my_condvar;
         std::mutex my_mutex;
         thread_data* my_thread_data{ nullptr };
@@ -217,7 +217,7 @@ inline void create_coroutine(coroutine_type& c, std::size_t stack_size, void* ar
     if (stack_size > 0) {
         check(pthread_attr_setstacksize(&s, stack_size), "pthread_attr_setstack_size has failed");
     }
-    check( pthread_create( &c.my_thread, &s, coroutine_thread_func, &data), "pthread_create has failed" );
+    check(pthread_create( &c.my_thread, &s, coroutine_thread_func, &data), "pthread_create has failed");
     check(pthread_attr_destroy(&s), "pthread_attr_destroy has failed");
 #endif
 
@@ -376,4 +376,3 @@ inline void destroy_coroutine(coroutine_type& c) {
 #endif /* __TBB_RESUMABLE_TASKS */
 
 #endif /* _TBB_co_context_H */
-
