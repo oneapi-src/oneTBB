@@ -219,7 +219,7 @@ void task_dispatcher::execute_and_wait(d1::task* t, d1::wait_context& wait_ctx, 
         m_thread_data->set_post_resume_action(thread_data::post_resume_action::cleanup, this);
        
     } while (resume(static_cast<suspend_point_type::resume_task*>(resume_task)->m_target));
-    // This code is unreachable
+    // This code might be unreachable
 }
 
 d1::suspend_point task_dispatcher::get_suspend_point() {
@@ -240,4 +240,3 @@ void task_dispatcher::init_suspend_point(arena* a, std::size_t stack_size) {
 } // namespace r1
 } // namespace detail
 } // namespace tbb
-
