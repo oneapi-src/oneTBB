@@ -279,7 +279,7 @@ void TestFunctionNode() {
     utils::SpinWaitWhileEq(rejected, false);
     // TODO: the assest below is not stable due to the logical race between try_put(1)
     // try_put(2) and wait_for_all.
-    // Additionaly, empty() cannot be called concurrently due to null_mutex used in implementaton/
+    // Additionally, empty() cannot be called concurrently due to null_mutex used in implementation
     // CHECK(fnode0.my_predecessors.empty() == false);
     serial_fn_state0 = 2;   // release function_node body.
     t.join();
@@ -328,7 +328,7 @@ void TestFunctionNode() {
     utils::SpinWaitWhileEq(rejected, false);
     // TODO: the assest below is not stable due to the logical race between try_put(1)
     // try_put(2) and wait_for_all.
-    // Additionaly, empty() cannot be called concurrently due to null_mutex used in implementaton/
+    // Additionally, empty() cannot be called concurrently due to null_mutex used in implementation
     // CHECK(fnode0.my_predecessors.empty() == false);
     g.my_context->cancel_group_execution();
     // release the function_node
