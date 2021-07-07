@@ -217,7 +217,7 @@ inline void create_coroutine(coroutine_type& c, std::size_t stack_size, void* ar
     if (stack_size > 0) {
         check(pthread_attr_setstacksize(&s, stack_size), "pthread_attr_setstack_size has failed");
     }
-    check(pthread_create( &c.my_thread, &s, coroutine_thread_func, &data), "pthread_create has failed");
+    check(pthread_create(&c.my_thread, &s, coroutine_thread_func, &data), "pthread_create has failed");
     check(pthread_attr_destroy(&s), "pthread_attr_destroy has failed");
 #endif
 
