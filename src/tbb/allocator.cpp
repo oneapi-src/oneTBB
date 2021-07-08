@@ -225,16 +225,16 @@ void __TBB_EXPORTED_FUNC deallocate_memory(void* p) {
 }
 
 bool __TBB_EXPORTED_FUNC is_tbbmalloc_used() {
-    auto alloc_handler = allocate_handler.load(std::memory_order_acquire);
-    if (alloc_handler == &initialize_allocate_handler) {
+    auto handler_snapshot = allocate_handler.load(std::memory_order_acquire);
+    if (handler_snapshot == &initialize_allocate_handler) {
         initialize_cache_aligned_allocator();
     }
-    alloc_handler = allocate_handler.load(std::memory_order_relaxed);
-    __TBB_ASSERT(alloc_handler != &initialize_allocate_handler && deallocate_handler != nullptr, NULL);
+    handler_snapshot = allocate_handler.load(std::memory_order_relaxed);
+    __TBB_ASSERT(handler_snapshot != &initialize_allocate_handler && deallocate_handler != nullptr, NULL);
     // Cast to void avoids type mismatch errors on some compilers (e.g. __IBMCPP__)
-    __TBB_ASSERT((reinterpret_cast<void*>(alloc_handler) == reinterpret_cast<void*>(&std::malloc)) == (reinterpret_cast<void*>(deallocate_handler) == reinterpret_cast<void*>(&std::free)),
+    __TBB_ASSERT((reinterpret_cast<void*>(handler_snapshot) == reinterpret_cast<void*>(&std::malloc)) == (reinterpret_cast<void*>(deallocate_handler) == reinterpret_cast<void*>(&std::free)),
                   "Both shim pointers must refer to routines from the same package (either TBB or CRT)");
-    return reinterpret_cast<void*>(alloc_handler) == reinterpret_cast<void*>(&std::malloc);
+    return reinterpret_cast<void*>(handler_snapshot) == reinterpret_cast<void*>(&std::malloc);
 }
 
 } // namespace r1
