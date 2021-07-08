@@ -136,7 +136,8 @@ TEST_CASE("Deduction guides"){
 //! Test node broadcast messages to successors
 //! \brief \ref requirement
 TEST_CASE("continue_node broadcast"){
-    conformance::test_forwarding<oneapi::tbb::flow::continue_node<int>>(1);
+    conformance::counting_functor<int> fun(conformance::expected);
+    conformance::test_forwarding<oneapi::tbb::flow::continue_node<int>>(1, fun);
 }
 
 //! Test node not buffered unsuccesful message, and try_get after rejection should not succeed.
@@ -248,11 +249,11 @@ TEST_CASE("continue_node Output class") {
 //! Test body `try_put' statement not wait for the execution of the body to complete
 //! \brief \ref requirement
 TEST_CASE("continue_node `try_put' statement not wait for the execution of the body to complete") {
-    conformance::barrier_body body;
+    conformance::wait_flag_body body;
     oneapi::tbb::flow::graph g;
 
     oneapi::tbb::flow::continue_node<oneapi::tbb::flow::continue_msg> node1(g, body);
     node1.try_put(oneapi::tbb::flow::continue_msg());
-    conformance::barrier_body::flag.store(true);
+    conformance::wait_flag_body::flag.store(true);
     g.wait_for_all();
 }

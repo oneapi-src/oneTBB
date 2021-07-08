@@ -18,6 +18,8 @@
 #pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
 #endif
 
+#define MULTIFUNCTION_NODE
+
 #include "conformance_flowgraph.h"
 
 //! \file conformance_multifunction_node.cpp
@@ -51,7 +53,7 @@ TEST_CASE("multifunction_node priority"){
 //! Test that not more than limited threads works in parallel.
 //! \brief \ref interface
 TEST_CASE("multifunction_node concurrency"){
-    conformance::test_concurrency<oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>>(oneapi::tbb::flow::unlimited);
+    conformance::test_concurrency<oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>>();
 }
 
 //! Test all node constructors
@@ -85,7 +87,8 @@ TEST_CASE("multifunction_node buffering"){
 //! Test multifunction_node broadcasting
 //! \brief \ref requirement
 TEST_CASE("multifunction_node broadcast"){
-    conformance::test_forwarding<oneapi::tbb::flow::multifunction_node<oneapi::tbb::flow::continue_msg, std::tuple<int>>>(1, oneapi::tbb::flow::unlimited);
+    conformance::counting_functor<int> fun(conformance::expected);
+    conformance::test_forwarding<oneapi::tbb::flow::multifunction_node<oneapi::tbb::flow::continue_msg, std::tuple<int>>>(1, oneapi::tbb::flow::unlimited, fun);
 }
 
 //! Test the body object passed to a node is copied

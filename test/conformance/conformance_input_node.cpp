@@ -18,13 +18,7 @@
 #pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
 #endif
 
-#include "common/test.h"
-
-#include "common/utils.h"
-#include "common/graph_utils.h"
-
-#include "oneapi/tbb/flow_graph.h"
-#include "oneapi/tbb/task_arena.h"
+#define INPUT_NODE
 
 #include "conformance_flowgraph.h"
 
@@ -130,7 +124,8 @@ TEST_CASE("input_node superclasses"){
 //! Test input_node forwarding
 //! \brief \ref requirement
 TEST_CASE("input_node forwarding"){
-    conformance::test_forwarding<oneapi::tbb::flow::input_node<int>>(5);
+    conformance::counting_functor<int> fun(conformance::expected);
+    conformance::test_forwarding<oneapi::tbb::flow::input_node<int>>(5, fun);
 }
 
 //! Test input_node buffering
@@ -174,7 +169,7 @@ TEST_CASE("concurrency follows set limits"){
 
     utils::ConcurrencyTracker::Reset();
     oneapi::tbb::flow::graph g;
-    conformance::barrier_body counter(1);
+    conformance::concurrency_peak_checker_body counter(1);
     oneapi::tbb::flow::input_node<int> tested_node(g, counter);
 
     conformance::test_push_receiver<int> sink(g);

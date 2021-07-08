@@ -18,14 +18,8 @@
 #pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
 #endif
 
-#include "common/test.h"
-
-#include "common/utils.h"
-#include "common/graph_utils.h"
-
-#include "oneapi/tbb/flow_graph.h"
-#include "oneapi/tbb/task_arena.h"
-#include "oneapi/tbb/global_control.h"
+#define BUFFERING_NODES
+#define SEQUENCER_NODE
 
 #include "conformance_flowgraph.h"
 
@@ -34,26 +28,47 @@
 
 /*
 TODO: implement missing conformance tests for sequencer_node:
-  - [ ] The copy constructor and copy assignment are called for the node's type template parameter.
-  - [ ] Explicit test that `Sequencer' requirements are necessary.
-  - [ ] Write tests for the constructors.
-  - [ ] Add CTAD test.
-  - [ ] Improve `test_buffering' by checking that additional `try_get()' does not receive the same
-    value.
-  - [ ] Add explicit test on the example from the specification.
+    The sequencer_node rejects duplicate sequencer numbers.
 */
 
-template<typename T>
-void test_inheritance(){
-    using namespace oneapi::tbb::flow;
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+template <typename Body>
+void test_deduction_guides_common(Body body) {
+    using namespace tbb::flow;
+    graph g;
+    broadcast_node<int> br(g);
 
-    CHECK_MESSAGE( (std::is_base_of<graph_node, sequencer_node<T>>::value), "sequencer_node should be derived from graph_node");
-    CHECK_MESSAGE( (std::is_base_of<receiver<T>, sequencer_node<T>>::value), "sequencer_node should be derived from receiver<T>");
-    CHECK_MESSAGE( (std::is_base_of<sender<T>, sequencer_node<T>>::value), "sequencer_node should be derived from sender<T>");
+    sequencer_node s1(g, body);
+    static_assert(std::is_same_v<decltype(s1), sequencer_node<int>>);
+
+#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
+    sequencer_node s2(follows(br), body);
+    static_assert(std::is_same_v<decltype(s2), sequencer_node<int>>);
+#endif
+
+    sequencer_node s3(s1);
+    static_assert(std::is_same_v<decltype(s3), sequencer_node<int>>);
+}
+
+std::size_t sequencer_body_f(const int&) { return 1; }
+
+void test_deduction_guides() {
+    test_deduction_guides_common([](const int&)->std::size_t { return 1; });
+    test_deduction_guides_common([](const int&) mutable ->std::size_t { return 1; });
+    test_deduction_guides_common(sequencer_body_f);
+}
+#endif
+
+//! Test deduction guides
+//! \brief \ref interface \ref requirement
+TEST_CASE("Deduction guides"){
+#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+    test_deduction_guides();
+#endif
 }
 
 template<typename T>
-struct id_sequencer{
+struct Sequencer{
     using input_type = T;
 
     std::size_t operator()(T v) {
@@ -61,64 +76,40 @@ struct id_sequencer{
     }
 };
 
-void test_copies(){
-    using namespace oneapi::tbb::flow;
-
-    graph g;
-    id_sequencer<int> sequencer;
-
-    sequencer_node<int> n(g, sequencer);
-    sequencer_node<int> n2(n);
+//! Test sequencer_node single_push
+//! \brief \ref requirement
+TEST_CASE("sequencer_node single_push"){
+    Sequencer<int> sequencer;
+    conformance::test_forwarding_single_push<oneapi::tbb::flow::sequencer_node<int>>(sequencer);
 }
 
-void test_buffering(){
+//! Test function_node buffering
+//! \brief \ref requirement
+TEST_CASE("sequencer_node buffering"){
+    Sequencer<int> sequencer;
+    conformance::test_buffering_for_buffering_nodes<oneapi::tbb::flow::sequencer_node<int>>(sequencer);
+}
+
+//! Constructs an empty sequencer_node that belongs to the same graph g as src.
+//! Any intermediate state of src, including its links to predecessors and successors, is not copied.
+//! \brief \ref requirement
+TEST_CASE("sequencer_node copy constructor"){
+    Sequencer<int> sequencer;
+    conformance::test_copy_ctor_for_buffering_nodes<oneapi::tbb::flow::sequencer_node<int>>(sequencer);
+}
+
+//! Test inheritance relations
+//! \brief \ref interface
+TEST_CASE("sequencer_node superclasses"){
+    conformance::test_inheritance<oneapi::tbb::flow::sequencer_node<int>, int, int>();
+    conformance::test_inheritance<oneapi::tbb::flow::sequencer_node<void*>, void*, void*>();
+}
+
+//! Test queue_node node `try_put()` and `try_get()`
+//! \brief \ref requirement
+TEST_CASE("queue_node methods"){
     oneapi::tbb::flow::graph g;
-
-    id_sequencer<int> sequencer;
-
-    oneapi::tbb::flow::sequencer_node<int> node(g, sequencer);
-    oneapi::tbb::flow::limiter_node<int> rejecter(g, 0);
-
-    oneapi::tbb::flow::make_edge(node, rejecter);
-    node.try_put(1);
-    g.wait_for_all();
-
-    int tmp = -1;
-    CHECK_MESSAGE( (node.try_get(tmp) == false), "try_get after rejection should not succeed");
-    CHECK_MESSAGE( (tmp == -1), "try_get after rejection should not set value");
-}
-
-#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
-void test_deduction_guides(){
-    // oneapi::tbb::flow::graph g;
-    // id_sequencer<int> sequ;
-    // oneapi::tbb::flow::sequencer_node node1(g, sequ);
-}
-#endif
-
-void test_forwarding(){
-    oneapi::tbb::flow::graph g;
-    id_sequencer<int> sequencer;
-
-    oneapi::tbb::flow::sequencer_node<int> node1(g, sequencer);
-    test_push_receiver<int> node2(g);
-    test_push_receiver<int> node3(g);
-
-    oneapi::tbb::flow::make_edge(node1, node2);
-    oneapi::tbb::flow::make_edge(node1, node3);
-
-    node1.try_put(0);
-
-    g.wait_for_all();
-
-    int c2 = get_count(node2), c3 = get_count(node3);
-    CHECK_MESSAGE( (c2 != c3 ), "Only one descendant the node needs to receive");
-    CHECK_MESSAGE( (c2 + c3 == 1 ), "Messages need to be received");
-}
-
-void test_sequencer(){
-    oneapi::tbb::flow::graph g;
-    id_sequencer<int> sequencer;
+    Sequencer<int> sequencer;
 
     oneapi::tbb::flow::sequencer_node<int> node(g, sequencer);
 
@@ -137,45 +128,42 @@ void test_sequencer(){
 
     tmp = -1;
     CHECK_MESSAGE((node.try_get(tmp) == false), "Getting from sequencer should not succeed");
-
 }
 
-//! Test function_node buffering
+struct Message {
+    int id;
+    int data;
+};
+
+//! The example demonstrates ordering capabilities of the sequencer_node. 
+//! While being processed in parallel, the data is passed to the successor node in the exact same order it was read.
 //! \brief \ref requirement
-TEST_CASE("sequencer_node buffering"){
-    test_sequencer();
-}
+TEST_CASE("sequencer_node ordering"){
+    using namespace oneapi::tbb::flow;
+    graph g;
 
-//! Test function_node buffering
-//! \brief \ref requirement
-TEST_CASE("sequencer_node buffering"){
-    test_forwarding();
-}
+    // Due to parallelism the node can push messages to its successors in any order
+    function_node<Message, Message> process(g, unlimited, [] (Message msg) -> Message {
+        msg.data++;
+        return msg;
+    });
 
-//! Test deduction guides
-//! \brief \ref interface \ref requirement
-TEST_CASE("Deduction guides"){
-#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
-    test_deduction_guides();
-#endif
-}
+    sequencer_node<Message> ordering(g, [](const Message& msg) -> int {
+        return msg.id;
+    });
 
-//! Test priority_queue_node buffering
-//! \brief \ref requirement
-TEST_CASE("sequencer_node buffering"){
-    test_buffering();
-}
+    std::atomic<int> counter{0};
+    function_node<Message> writer(g, tbb::flow::serial, [&] (const Message& msg) {
+        CHECK_MESSAGE((msg.id == counter++), "The data is passed to the successor node in the exact same order it was read");
+    });
 
-//! Test copy constructor
-//! \brief \ref interface
-TEST_CASE("sequencer_node copy constructor"){
-    test_copies();
-}
+    tbb::flow::make_edge(process, ordering);
+    tbb::flow::make_edge(ordering, writer);
 
-//! Test inheritance relations
-//! \brief \ref interface
-TEST_CASE("sequencer_node superclasses"){
-    test_inheritance<int>();
-    test_inheritance<void*>();
-}
+    for (int i = 0; i < 100; ++i) {
+        Message msg = {i, 0};
+        process.try_put(msg);
+    }
 
+    g.wait_for_all();
+}

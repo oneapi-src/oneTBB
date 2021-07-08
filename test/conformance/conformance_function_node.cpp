@@ -131,7 +131,8 @@ TEST_CASE("function_node buffering"){
 //! Test node broadcast messages to successors
 //! \brief \ref requirement
 TEST_CASE("function_node broadcast"){
-    conformance::test_forwarding<oneapi::tbb::flow::function_node<oneapi::tbb::flow::continue_msg, int>>(1, oneapi::tbb::flow::unlimited);
+    conformance::counting_functor<int> fun(conformance::expected);
+    conformance::test_forwarding<oneapi::tbb::flow::function_node<oneapi::tbb::flow::continue_msg, int>>(1, oneapi::tbb::flow::unlimited, fun);
 }
 
 //! Test deduction guides
@@ -153,7 +154,7 @@ TEST_CASE("function_node priority support"){
 //! Test that not more than limited threads works in parallel.
 //! \brief \ref requirement
 TEST_CASE("concurrency follows set limits"){
-    conformance::test_concurrency<oneapi::tbb::flow::function_node<int, int>>(oneapi::tbb::flow::unlimited);
+    conformance::test_concurrency<oneapi::tbb::flow::function_node<int, int>>();
 }
 
 //! Test node Input class meet the DefaultConstructible and CopyConstructible requirements and Output class meet the CopyConstructible requirements.
