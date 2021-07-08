@@ -184,6 +184,7 @@ void Flog() {
             }
                 break;
             }
+            CHECK(std::find_if_not(Array, Array + i, [](const std::atomic<int>& v) { return v.load(std::memory_order_relaxed) == 1; }) == Array + i);
             CHECK(std::find_if_not(Array + i, Array + N, [](const std::atomic<int>& v) { return v.load(std::memory_order_relaxed) == 0; }) == Array + N);
             CHECK(FooBodyCount == 1);
         }
