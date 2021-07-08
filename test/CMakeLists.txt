@@ -242,10 +242,11 @@ function(tbb_add_tbbbind_test)
     tbb_add_test(SUBDIR ${_tbbbind_test_SUBDIR} NAME ${_tbbbind_test_NAME} DEPENDENCIES TBB::tbb)
     add_dependencies(test_suite_arena_constraints ${_tbbbind_test_NAME})
 
+    set_tests_properties(${_tbbbind_test_NAME} PROPERTIES ENVIRONMENT "TBB_VERSION=1;${TBB_TESTS_ENVIRONMENT}")
+
     # Handle the case when HWLOC was found using pkg-config
     if (NOT DEFINED HWLOC_TARGET_EXPLICITLY_DEFINED AND DEFINED HWLOC_LIBRARIES)
-        set_target_properties(${_tbbbind_test_NAME} PROPERTIES
-            ENVIRONMENT TBB_VERSION=1
+        set_tests_properties(${_tbbbind_test_NAME} PROPERTIES
             PASS_REGULAR_EXPRESSION "oneTBB: TBBBIND.*${TBBBIND_LIBRARY_NAME}"
             FAIL_REGULAR_EXPRESSION "Status: FAILURE!"
         )
@@ -270,7 +271,6 @@ function(tbb_add_tbbbind_test)
     ProcessorCount(SYSTEM_CONCURRENCY)
 
     set_tests_properties(${_tbbbind_test_NAME} PROPERTIES
-        ENVIRONMENT TBB_VERSION=1
         PASS_REGULAR_EXPRESSION "oneTBB: TBBBIND.*UNAVAILABLE"
         FAIL_REGULAR_EXPRESSION "Status:.*FAILURE"
     )
