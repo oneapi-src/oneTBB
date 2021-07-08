@@ -168,7 +168,8 @@ int limit_number_of_threads( int max_threads ) {
 
 #endif // __TBB_TEST_SKIP_AFFINITY
 
-#define OS_AFFINITY_SYSCALL_PRESENT ((__linux__ && !__ANDROID__) || (__FreeBSD_version >= 701000))
+// TODO: consider using cpuset_setaffinity/sched_getaffinity on FreeBSD to enable the functionality
+#define OS_AFFINITY_SYSCALL_PRESENT (__linux__ && !__ANDROID__)
 
 #if OS_AFFINITY_SYSCALL_PRESENT
 void get_thread_affinity_mask(std::size_t& ncpus, std::vector<int>& free_indexes) {
