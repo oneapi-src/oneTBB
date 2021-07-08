@@ -53,8 +53,11 @@ function(tbb_add_test)
         # Additional testing scenarios if Intel(R) Software Development Emulator is found
         if (UNIX AND ";test_mutex;conformance_mutex;" MATCHES ";${_tbb_test_TARGET_NAME};" AND SDE_EXE)
             add_test(NAME ${_tbb_test_TARGET_NAME}_SDE COMMAND ${SDE_EXE} -nhm -rtm_mode disabled -- ./${_tbb_test_TARGET_NAME} --force-colors=1 WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+            set_property(TEST ${_tbb_test_TARGET_NAME}_SDE PROPERTY ENVIRONMENT ${TBB_TESTS_ENVIRONMENT} APPEND)
         endif()
     endif()
+
+    set_property(TEST ${_tbb_test_TARGET_NAME} PROPERTY ENVIRONMENT ${TBB_TESTS_ENVIRONMENT} APPEND)
 
     # Prefer using target_link_options instead of target_link_libraries to specify link options because
     # target_link_libraries may incorrectly handle some options (on Windows, for example).
@@ -96,6 +99,8 @@ function(tbb_add_c_test)
     else()
         add_test(NAME ${_tbb_test_NAME} COMMAND ${_tbb_test_NAME} --force-colors=1 WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
     endif()
+
+    set_property(TEST ${_tbb_test_NAME} PROPERTY ENVIRONMENT ${TBB_TESTS_ENVIRONMENT} APPEND)
 
     target_compile_definitions(${_tbb_test_NAME} PRIVATE
         $<$<CONFIG:DEBUG>:TBB_USE_DEBUG>
@@ -216,8 +221,9 @@ function(tbb_configure_hwloc_dependent_test)
         ENV_EXTENSION_VARIABLE HWLOC_RUNTIME_VARS
         HWLOC_VERSION_LIST ${_hwloc_test_HWLOC_REQUIRED_VERSION_LIST}
     )
+
+    set_property(TEST ${_hwloc_test_NAME}_${_hwloc_test_SUFFIX} PROPERTY ENVIRONMENT "${HWLOC_RUNTIME_VARS}" TBB_VERSION=1 APPEND)
     set_tests_properties(${_hwloc_test_NAME}_${_hwloc_test_SUFFIX} PROPERTIES
-        ENVIRONMENT "${HWLOC_RUNTIME_VARS};TBB_VERSION=1"
         PASS_REGULAR_EXPRESSION "oneTBB: TBBBIND.*${_hwloc_test_TBBBIND_VERSION}"
         FAIL_REGULAR_EXPRESSION "Status:.*FAILURE"
     )
@@ -242,7 +248,7 @@ function(tbb_add_tbbbind_test)
     tbb_add_test(SUBDIR ${_tbbbind_test_SUBDIR} NAME ${_tbbbind_test_NAME} DEPENDENCIES TBB::tbb)
     add_dependencies(test_suite_arena_constraints ${_tbbbind_test_NAME})
 
-    set_tests_properties(${_tbbbind_test_NAME} PROPERTIES ENVIRONMENT "TBB_VERSION=1;${TBB_TESTS_ENVIRONMENT}")
+    set_property(TEST ${_tbbbind_test_NAME} PROPERTY ENVIRONMENT TBB_VERSION=1 APPEND)
 
     # Handle the case when HWLOC was found using pkg-config
     if (NOT DEFINED HWLOC_TARGET_EXPLICITLY_DEFINED AND DEFINED HWLOC_LIBRARIES)
