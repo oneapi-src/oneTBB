@@ -174,11 +174,13 @@ struct Run {
 
 //! \brief \ref error_guessing
 TEST_CASE("test unload lib") {
-    std::ptrdiff_t memory_leak = 0;
-
     // warm-up run
     utils::NativeParallelFor( 1, Run() );
 
+    // It seems Thread Sanitizer remembers some history information about destroyed threads,
+    // so memory consumption cannot be stabilized
+#if !__TBB_USE_THREAD_SANITIZER
+    std::ptrdiff_t memory_leak = 0;
     {
         /* 1st call to GetMemoryUsage() allocate some memory,
            but it seems memory consumption stabilized after this.
@@ -189,6 +191,7 @@ TEST_CASE("test unload lib") {
         REQUIRE_MESSAGE(memory_in_use == memory_check,
             "Memory consumption should not increase after 1st GetMemoryUsage() call");
     }
+
     {
         // expect that memory consumption stabilized after several runs
         for (;;) {
@@ -200,6 +203,7 @@ TEST_CASE("test unload lib") {
                 return;
         }
     }
+#endif
 }
 
 #endif /* !(__TBB_WIN8UI_SUPPORT || __TBB_MIC_OFFLOAD) */
