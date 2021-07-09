@@ -77,7 +77,7 @@ public:
             m_runner.m_ref_count--;
         }
     };
-    
+
     collaborative_once_runner() {}
 
     ~collaborative_once_runner() {
@@ -185,6 +185,8 @@ class collaborative_once_flag : no_copy {
                     // The moonlighting threads are not expected to handle exceptions from user functor.
                     // Therefore, no exception is expected from assist().
                     shared_runner->assist();
+                    // Read m_state while holding the guard because m_state can be destroyed after releasing the guard
+                    expected = m_state.load(std::memory_order_relaxed);
                 }
             }
         } while (expected != state::done);

@@ -89,10 +89,11 @@ class SpinBarrier {
 public:
     using size_type = std::size_t;
 private:
-    std::atomic<size_type> myNumThreads;
+    size_type myNumThreads;
     std::atomic<size_type> myNumThreadsFinished; // reached the barrier in this epoch
     // the number of times the barrier was opened
     std::atomic<size_type> myEpoch;
+    std::atomic<size_type> myLifeTimeGuard;
     // a throwaway barrier can be used only once, then wait() becomes a no-op
     bool myThrowaway;
 
@@ -106,6 +107,10 @@ public:
     SpinBarrier( const SpinBarrier& ) = delete;    // no copy ctor
     SpinBarrier& operator=( const SpinBarrier& ) = delete; // no assignment
 
+    ~SpinBarrier() {
+        while (myLifeTimeGuard.load(std::memory_order_acquire)) {}
+    }
+
     SpinBarrier( size_type nthreads = 0, bool throwaway = false ) {
         initialize(nthreads, throwaway);
     }
@@ -115,6 +120,7 @@ public:
         myNumThreadsFinished = 0;
         myEpoch = 0;
         myThrowaway = throwaway;
+        myLifeTimeGuard = 0;
     }
 
     // Returns whether this thread was the last to reach the barrier.
@@ -128,21 +134,22 @@ public:
 
         size_type epoch = myEpoch;
         size_type numThreads = myNumThreads; // read it before the increment
-        int threadsLeft = static_cast<int>(numThreads - myNumThreadsFinished++ - 1);
+        int threadsLeft = static_cast<int>(numThreads - myNumThreadsFinished.fetch_add(1, std::memory_order_release) - 1);
         ASSERT(threadsLeft >= 0,"Broken barrier");
         if (threadsLeft > 0) {
             /* this thread is not the last; wait until the epoch changes & return false */
-            onWaitCallback(myEpoch, epoch);
+            onWaitCallback(myEpoch, epoch); // acquire myEpoch
+            myLifeTimeGuard.fetch_sub(1, std::memory_order_release);
             return false;
         }
+        /* reset the barrier, increment the epoch, and return true */
+        threadsLeft = static_cast<int>(myNumThreadsFinished.fetch_sub(numThreads, std::memory_order_acquire) - numThreads);
+        ASSERT(threadsLeft == 0,"Broken barrier");
         /* This thread is the last one at the barrier in this epoch */
         onOpenBarrierCallback();
-        /* reset the barrier, increment the epoch, and return true */
-        myNumThreadsFinished -= numThreads;
-        threadsLeft = static_cast<int>(myNumThreadsFinished);
-        ASSERT(threadsLeft == 0,"Broken barrier");
         /* wakes up threads waiting to exit in this epoch */
-        epoch -= myEpoch++;
+        myLifeTimeGuard.fetch_add(numThreads - 1, std::memory_order_relaxed);
+        epoch -= myEpoch.fetch_add(1, std::memory_order_release);
         ASSERT(epoch == 0,"Broken barrier");
         return true;
     }

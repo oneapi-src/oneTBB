@@ -374,7 +374,6 @@ TEST_CASE("multiple arenas") {
             });
         });
     });
-
 }
 
 using FibBuffer = std::vector<std::pair<tbb::collaborative_once_flag, std::uint64_t>>;
