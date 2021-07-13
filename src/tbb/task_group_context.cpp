@@ -197,6 +197,19 @@ void task_group_context_impl::bind_to(d1::task_group_context& ctx, thread_data* 
 template <typename T>
 void task_group_context_impl::propagate_task_group_state(d1::task_group_context& ctx, std::atomic<T> d1::task_group_context::* mptr_state, d1::task_group_context& src, T new_state) {
     __TBB_ASSERT(!is_poisoned(ctx.my_context_list), nullptr);
+    /*  1. if ((ctx.*mptr_state).load(std::memory_order_relaxed) == new_state):
+            Nothing to do, whether descending from "src" or not, so no need to scan.
+            Hopefully this happens often thanks to earlier invocations.
+            This optimization is enabled by LIFO order in the context lists:
+                - new contexts are bound to the beginning of lists;
+                - descendants are newer than ancestors;
+                - earlier invocations are therefore likely to "paint" long chains.
+        2. if (&ctx != &src):
+            This clause is disjunct from the traversal below, which skips src entirely.
+            Note that src.*mptr_state is not necessarily still equal to new_state (another thread may have changed it again).
+            Such interference is probably not frequent enough to aim for optimisation by writing new_state again (to make the other thread back down).
+            Letting the other thread prevail may also be fairer.
+    */
     if ((ctx.*mptr_state).load(std::memory_order_relaxed) != new_state && &ctx != &src) {
         for (d1::task_group_context* ancestor = ctx.my_parent; ancestor != nullptr; ancestor = ancestor->my_parent) {
             if (ancestor == &src) {
