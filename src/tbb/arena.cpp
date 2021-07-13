@@ -252,9 +252,10 @@ void arena::free_arena () {
 #endif
     // remove an internal reference
     my_market->release( /*is_public=*/false, /*blocking_terminate=*/false );
-    if ( !my_observers.empty() ) {
-        my_observers.clear();
-    }
+
+    // Clear enfources syncronization with observe(false)
+    my_observers.clear();
+
     void* storage  = &mailbox(my_num_slots-1);
     __TBB_ASSERT( my_references.load(std::memory_order_relaxed) == 0, NULL );
     __TBB_ASSERT( my_pool_state.load(std::memory_order_relaxed) == SNAPSHOT_EMPTY || !my_max_num_workers, NULL );

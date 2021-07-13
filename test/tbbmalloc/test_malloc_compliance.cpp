@@ -446,7 +446,7 @@ void* Tmalloc(size_t size)
     size_t alignment = (sizeof(intptr_t)>4 && size>8) ? 16 : 8;
     void *ret = Rmalloc(size);
     if (0 != ret)
-        REQUIRE_MESSAGE(0==((uintptr_t)ret & (alignment-1)),
+        CHECK_FAST_MESSAGE(0==((uintptr_t)ret & (alignment-1)),
                "allocation result should be properly aligned");
     return ret;
 }
@@ -456,7 +456,7 @@ void* Tcalloc(size_t num, size_t size)
     size_t alignment = (sizeof(intptr_t)>4 && num && size>8) ? 16 : 8;
     void *ret = Rcalloc(num, size);
     if (0 != ret)
-        REQUIRE_MESSAGE(0==((uintptr_t)ret & (alignment-1)),
+        CHECK_FAST_MESSAGE(0==((uintptr_t)ret & (alignment-1)),
                "allocation result should be properly aligned");
     return ret;
 }
@@ -466,7 +466,7 @@ void* Trealloc(void* memblock, size_t size)
     size_t alignment = (sizeof(intptr_t)>4 && size>8) ? 16 : 8;
     void *ret = Rrealloc(memblock, size);
     if (0 != ret)
-        REQUIRE_MESSAGE(0==((uintptr_t)ret & (alignment-1)),
+        CHECK_FAST_MESSAGE(0==((uintptr_t)ret & (alignment-1)),
                "allocation result should be properly aligned");
     return ret;
 }
@@ -474,7 +474,7 @@ int Tposix_memalign(void **memptr, size_t alignment, size_t size)
 {
     int ret = Rposix_memalign(memptr, alignment, size);
     if (0 == ret)
-        REQUIRE_MESSAGE(0==((uintptr_t)*memptr & (alignment-1)),
+        CHECK_FAST_MESSAGE(0==((uintptr_t)*memptr & (alignment-1)),
                "allocation result should be aligned");
     return ret;
 }
@@ -482,7 +482,7 @@ void* Taligned_malloc(size_t size, size_t alignment)
 {
     void *ret = Raligned_malloc(size, alignment);
     if (0 != ret)
-        REQUIRE_MESSAGE(0==((uintptr_t)ret & (alignment-1)),
+        CHECK_FAST_MESSAGE(0==((uintptr_t)ret & (alignment-1)),
                "allocation result should be aligned");
     return ret;
 }
@@ -490,7 +490,7 @@ void* Taligned_realloc(void* memblock, size_t size, size_t alignment)
 {
     void *ret = Raligned_realloc(memblock, size, alignment);
     if (0 != ret)
-        REQUIRE_MESSAGE(0==((uintptr_t)ret & (alignment-1)),
+        CHECK_FAST_MESSAGE(0==((uintptr_t)ret & (alignment-1)),
                "allocation result should be aligned");
     return ret;
 }
@@ -993,15 +993,18 @@ void CMemTest::TestAlignedParameters()
     }
 }
 
-void CMemTest::RunAllTests(int total_threads)
+void CMemTest::RunAllTests(int )
 {
+#if 0
     Zerofilling();
     Free_NULL();
     InvariantDataRealloc(/*aligned=*/false, 8*MByte, /*checkData=*/true);
     if (Raligned_realloc)
         InvariantDataRealloc(/*aligned=*/true, 8*MByte, /*checkData=*/true);
     TestAlignedParameters();
+#endif
     UniquePointer();
+#if 0
     AddrArifm();
 #if __APPLE__ || __TBB_USE_THREAD_SANITIZER
     REPORT("Known issue: some tests are skipped on macOS\n");
@@ -1010,6 +1013,7 @@ void CMemTest::RunAllTests(int total_threads)
     NULLReturn(1*MByte,100*MByte,total_threads);
 #endif
     if (FullLog) REPORT("Tests for %d threads ended\n", total_threads);
+#endif
 }
 
 // TODO: fix the tests to support UWP mode
@@ -1028,7 +1032,7 @@ TEST_CASE("MAIN TEST") {
     // Check if we were called to test standard behavior
     // TODO: enable this mode
     // setSystemAllocs();
-
+#if 0
 #if __unix__
     /* According to man pthreads
        "NPTL threads do not share resource limits (fixed in kernel 2.6.10)".
@@ -1077,6 +1081,7 @@ TEST_CASE("MAIN TEST") {
 
     CheckArgumentsOverflow();
     CheckReallocLeak();
+#endif
     for( int p=MaxThread; p>=MinThread; --p ) {
         for (int limit=0; limit<2; limit++) {
             int ret = scalable_allocation_mode(TBBMALLOC_SET_SOFT_HEAP_LIMIT, 16*1024*limit);
