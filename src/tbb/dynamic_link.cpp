@@ -413,9 +413,9 @@ namespace r1 {
         int flags = RTLD_NOW;
         if (local_binding) {
             flags = flags | RTLD_LOCAL;
-#if __linux__ && !__ANDROID__ && !__TBB_USE_ADDRESS_SANITIZER
+#if __linux__ && !__ANDROID__ && !__TBB_USE_ADDRESS_SANITIZER && !__TBB_USE_THREAD_SANITIZER
             flags = flags | RTLD_DEEPBIND;
-#endif /*__linux__ && !__ANDROID__ && !__TBB_USE_ADDRESS_SANITIZER*/
+#endif
         } else {
             flags = flags | RTLD_GLOBAL;
         }
