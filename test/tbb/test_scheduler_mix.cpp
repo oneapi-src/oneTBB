@@ -645,7 +645,7 @@ void global_actor() {
 }
 
 #if TBB_USE_EXCEPTIONS
-//! //! \brief \ref stress
+//! \brief \ref stress
 TEST_CASE("Stress test with mixing functionality") {
     // TODO add thread recreation
     tbb::task_scheduler_handle handle = tbb::task_scheduler_handle::get();
