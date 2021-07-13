@@ -88,7 +88,7 @@ public:
        It is recommended to disable observation before destructor of a derived class starts,
        otherwise it can lead to concurrent notification callback on partly destroyed object **/
     virtual ~task_scheduler_observer() {
-        if (my_proxy.load(std::memory_order_relaxed)) {
+        if (my_proxy.load(std::memory_order_acquire)) {
             observe(false);
         }
     }
