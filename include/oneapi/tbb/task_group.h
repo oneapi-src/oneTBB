@@ -218,7 +218,8 @@ private:
         created,
         locked,
         isolated,
-        bound
+        bound,
+        dead
     };
 
     //! The synchronization machine state to manage lifetime.
