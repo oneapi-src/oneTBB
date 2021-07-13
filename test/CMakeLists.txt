@@ -595,7 +595,7 @@ if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
         endif()
     endif()
 
-    # Thread Sanitizer overloads memory managment routines that conflicts with tbbmalloc_proxy.
+    # Thread Sanitizer overloads memory management routines that conflicts with tbbmalloc_proxy.
     if (NOT TBB_SANITIZE MATCHES "thread")
         tbb_add_lib_test(SUBDIR tbbmalloc NAME test_malloc_atexit DEPENDENCIES TBB::tbbmalloc_proxy TBB::tbbmalloc)
         tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_atexit DEPENDENCIES TBB::tbbmalloc_proxy TBB::tbbmalloc _test_malloc_atexit)

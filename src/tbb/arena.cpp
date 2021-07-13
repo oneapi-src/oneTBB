@@ -253,7 +253,7 @@ void arena::free_arena () {
     // remove an internal reference
     my_market->release( /*is_public=*/false, /*blocking_terminate=*/false );
 
-    // Clear enfources syncronization with observe(false)
+    // Clear enfources synchronization with observe(false)
     my_observers.clear();
 
     void* storage  = &mailbox(my_num_slots-1);
