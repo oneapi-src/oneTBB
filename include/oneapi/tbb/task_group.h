@@ -145,10 +145,8 @@ struct context_list_node {
     context_list_node* next{};
 
     void remove_relaxed() {
-        context_list_node* p = prev;
-        context_list_node* n = next;
-        p->next = n;
-        n->prev = p;
+        prev->next = next;
+        next->prev = prev;
     }
 };
 
