@@ -59,8 +59,8 @@ struct context_list {
     d1::mutex m_mutex{};
 
     context_list() {
-        head.next.store(&head, std::memory_order_relaxed);
-        head.prev.store(&head, std::memory_order_relaxed);
+        head.next = &head;
+        head.prev = &head;
     }
 
     void destroy() {
@@ -83,13 +83,13 @@ struct context_list {
         mutex::scoped_lock lock(m_mutex);
 
         // state propagation logic assumes new contexts are bound to head of the list
-        node.prev.store(&head, std::memory_order_relaxed);
+        node.prev = &head;
 
-        d1::context_list_node* head_next = head.next.load(std::memory_order_relaxed);
-        head_next->prev.store(&node, std::memory_order_relaxed);
-        node.next.store(head_next, std::memory_order_relaxed);
+        d1::context_list_node* head_next = head.next;
+        head_next->prev = &node;
+        node.next = head_next;
 
-        head.next.store(&node, std::memory_order_relaxed);
+        head.next = &node;
 
         m_references++;
     }
