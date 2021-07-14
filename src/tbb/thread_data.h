@@ -55,6 +55,9 @@ struct context_list {
     they belong to. **/
     std::atomic<std::uintptr_t> epoch{};
 
+    //! Mutex protecting access to the list of task group contexts.
+    d1::mutex m_mutex{};
+
     context_list() {
         head.next.store(&head, std::memory_order_relaxed);
         head.prev.store(&head, std::memory_order_relaxed);
@@ -98,9 +101,6 @@ struct context_list {
             destroy();
         }
     }
-
-    //! Mutex protecting access to the list of task group contexts.
-    d1::mutex m_mutex{};
 };
 
 //------------------------------------------------------------------------
