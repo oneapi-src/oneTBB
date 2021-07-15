@@ -89,8 +89,6 @@ void task_group_context_impl::initialize(d1::task_group_context& ctx) {
     ctx.my_lifetime_state.store(d1::task_group_context::lifetime_state::created, std::memory_order_relaxed);
     ctx.my_parent = nullptr;
     ctx.my_context_list = nullptr;
-    ctx.my_node.my_next_node = nullptr;
-    ctx.my_node.my_prev_node = nullptr;
     ctx.my_exception = nullptr;
     ctx.my_itt_caller = nullptr;
 
