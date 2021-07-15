@@ -41,24 +41,28 @@ TEST_EXPORT FOO_TYPE foo2() { return FOO_IMPLEMENTATION; }
 FOO_TYPE dummy_foo1() { return FOO_DUMMY; }
 FOO_TYPE dummy_foo2() { return FOO_DUMMY; }
 
-// Handlers.
-static FOO_TYPE (*foo1_handler)() = &dummy_foo1;
-static FOO_TYPE (*foo2_handler)() = &dummy_foo2;
-
 #include "oneapi/tbb/detail/_config.h"
 // Suppress the weak symbol mechanism to avoid surplus compiler warnings.
 #ifdef __TBB_WEAK_SYMBOLS_PRESENT
 #undef __TBB_WEAK_SYMBOLS_PRESENT
 #endif
 #include "src/tbb/dynamic_link.h"
+
+#if __TBB_DYNAMIC_LOAD_ENABLED
+// Handlers.
+static FOO_TYPE (*foo1_handler)() = &dummy_foo1;
+static FOO_TYPE (*foo2_handler)() = &dummy_foo2;
+
 // Table describing how to link the handlers.
 static const tbb::detail::r1::dynamic_link_descriptor LinkTable[] = {
     { "foo1", (tbb::detail::r1::pointer_to_handler*)(void*)(&foo1_handler) },
     { "foo2", (tbb::detail::r1::pointer_to_handler*)(void*)(&foo2_handler) }
 };
+#endif
 
 // The direct include since we want to test internal functionality.
 #include "src/tbb/dynamic_link.cpp"
+#include "common/utils.h"
 #include "common/utils_dynamic_libs.h"
 
 void test_dynamic_link(const char* lib_name) {
@@ -80,6 +84,8 @@ void test_dynamic_link(const char* lib_name) {
     } else {
         REQUIRE_MESSAGE((foo1_handler == dummy_foo1 && foo2_handler == dummy_foo2), "The symbols are corrupted by dynamic_link");
     }
+#else
+    utils::suppress_unused_warning(lib_name);
 #endif
 }
 

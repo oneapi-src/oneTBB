@@ -51,6 +51,8 @@ int main() {}
 // For sanitizers, it fails because RUNPATH is lost: https://github.com/google/sanitizers/issues/1219
 #if !__TBB_WIN8UI_SUPPORT && !(__GNUC__ && __GNUC__ < 10 && __TBB_USE_SANITIZERS)
 
+#if __TBB_DYNAMIC_LOAD_ENABLED
+
 #define __TBB_NO_IMPLICIT_LINKAGE 1
 #include "common/test.h"
 #include "common/utils.h"
@@ -145,6 +147,6 @@ TEST_CASE("use test as lib") {
         }
     }
 }
-
+#endif // __TBB_DYNAMIC_LOAD_ENABLED
 #endif /* Unsupported configurations */
 #endif // _USRDLL
