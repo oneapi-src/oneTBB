@@ -357,6 +357,8 @@ TEST_CASE("multiple arenas") {
             tbb::collaborative_call_once(flag, [] {
                 FAIL("Unreachable code. collaborative_once_flag must be already initialized at this moment");
             });
+            // To sync collaborative_once_flag lifetime
+            barrier.wait();
         });
     }
 
@@ -373,6 +375,8 @@ TEST_CASE("multiple arenas") {
                 barrier.wait();
             });
         });
+        // To sync collaborative_once_flag lifetime
+        barrier.wait();
     });
 }
 

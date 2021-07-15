@@ -132,7 +132,13 @@ public:
 };
 
 class collaborative_once_flag : no_copy {
-    enum state : std::uintptr_t { uninitialized, done };
+    enum state : std::uintptr_t {
+        uninitialized,
+        done,
+#if TBB_USE_ASSERT
+        dead
+#endif
+    };
     std::atomic<std::uintptr_t> m_state{ state::uninitialized };
 
     template <typename Fn, typename... Args>
@@ -185,17 +191,26 @@ class collaborative_once_flag : no_copy {
                     // The moonlighting threads are not expected to handle exceptions from user functor.
                     // Therefore, no exception is expected from assist().
                     shared_runner->assist();
-                    // Read m_state while holding the guard because m_state can be destroyed after releasing the guard
-                    expected = m_state.load(std::memory_order_relaxed);
                 }
             }
+            __TBB_ASSERT(m_state.load(std::memory_order_relaxed) != state::dead,
+                         "collaborative_once_flag has been prematurely destroyed");
         } while (expected != state::done);
     }
+
+#if TBB_USE_ASSERT
+public:
+    ~collaborative_once_flag() {
+        m_state.store(state::dead, std::memory_order_relaxed);
+    }
+#endif
 };
 
 
 template <typename Fn, typename... Args>
 void collaborative_call_once(collaborative_once_flag& flag, Fn&& fn, Args&&... args) {
+    __TBB_ASSERT(flag.m_state.load(std::memory_order_relaxed) != collaborative_once_flag::dead,
+                 "collaborative_once_flag has been prematurely destroyed");
     if (flag.m_state.load(std::memory_order_acquire) != collaborative_once_flag::done) {
     #if __TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_BROKEN
         // Using stored_pack to suppress bug in GCC 4.8
