@@ -115,7 +115,7 @@ function(tbb_add_lib_test)
     set(multiValueArgs DEPENDENCIES)
     cmake_parse_arguments(_tbb_test "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    add_library(_${_tbb_test_NAME} SHARED ${_tbb_test_SUBDIR}/${_tbb_test_NAME}.cpp)
+    add_library(_${_tbb_test_NAME} ${_tbb_test_SUBDIR}/${_tbb_test_NAME}.cpp)
 
     target_include_directories(_${_tbb_test_NAME}
         PUBLIC
@@ -596,7 +596,7 @@ if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
     endif()
 
     # Thread Sanitizer overloads memory management routines that conflicts with tbbmalloc_proxy.
-    if (NOT TBB_SANITIZE MATCHES "thread")
+    if (BUILD_SHARED_LIBS AND NOT TBB_SANITIZE MATCHES "thread")
         # Define TBB malloc proxy tests
         tbb_add_lib_test(SUBDIR tbbmalloc NAME test_malloc_atexit DEPENDENCIES TBB::tbbmalloc_proxy TBB::tbbmalloc)
         tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_atexit DEPENDENCIES TBB::tbbmalloc_proxy TBB::tbbmalloc _test_malloc_atexit)
