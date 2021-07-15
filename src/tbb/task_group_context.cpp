@@ -71,8 +71,8 @@ void task_group_context_impl::destroy(d1::task_group_context& ctx) {
 
     poison_pointer(ctx.my_parent);
     poison_pointer(ctx.my_context_list);
-    poison_pointer(ctx.my_node.next);
-    poison_pointer(ctx.my_node.prev);
+    poison_pointer(ctx.my_node.my_next_node);
+    poison_pointer(ctx.my_node.my_prev_node);
     poison_pointer(ctx.my_exception);
     poison_pointer(ctx.my_itt_caller);
 
@@ -89,8 +89,8 @@ void task_group_context_impl::initialize(d1::task_group_context& ctx) {
     ctx.my_lifetime_state.store(d1::task_group_context::lifetime_state::created, std::memory_order_relaxed);
     ctx.my_parent = nullptr;
     ctx.my_context_list = nullptr;
-    ctx.my_node.next = nullptr;
-    ctx.my_node.next = nullptr;
+    ctx.my_node.my_next_node = nullptr;
+    ctx.my_node.my_prev_node = nullptr;
     ctx.my_exception = nullptr;
     ctx.my_itt_caller = nullptr;
 
@@ -228,12 +228,10 @@ void thread_data::propagate_task_group_state(std::atomic<T> d1::task_group_conte
     // Acquire fence is necessary to ensure that the subsequent node->my_next load
     // returned the correct value in case it was just inserted in another thread.
     // The fence also ensures visibility of the correct ctx.my_parent value.
-    d1::context_list_node* node = my_context_list->head.next;
-    while (node != &my_context_list->head) {
-        d1::task_group_context& ctx = __TBB_get_object_ref(d1::task_group_context, my_node, node);
+    for (context_list::iterator it = my_context_list->begin(); it != my_context_list->end(); ++it) {
+        d1::task_group_context& ctx = __TBB_get_object_ref(d1::task_group_context, my_node, &(*it));
         if ((ctx.*mptr_state).load(std::memory_order_relaxed) != new_state)
             task_group_context_impl::propagate_task_group_state(ctx, mptr_state, src, new_state);
-        node = node->next;
     }
     // Sync up local propagation epoch with the global one. Release fence prevents
     // reordering of possible store to *mptr_state after the sync point.

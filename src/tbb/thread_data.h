@@ -40,11 +40,9 @@ class arena_slot;
 class task_group_context;
 class task_dispatcher;
 
-struct context_list {
+class context_list : public intrusive_list<intrusive_list_node> {
+public:
     std::size_t m_references{1};
-
-    //! Head of the thread specific list of task group contexts.
-    d1::context_list_node head{};
 
     //! Last state propagation epoch known to this thread
     /** Together with the_context_state_propagation_epoch constitute synchronization protocol
@@ -58,20 +56,15 @@ struct context_list {
     //! Mutex protecting access to the list of task group contexts.
     d1::mutex m_mutex{};
 
-    context_list() {
-        head.next = &head;
-        head.prev = &head;
-    }
-
     void destroy() {
         this->~context_list();
         cache_aligned_deallocate(this);
     }
 
-    void remove_node(d1::context_list_node& node) {
+    void remove_node(intrusive_list_node& val) {
         mutex::scoped_lock lock(m_mutex);
 
-        node.remove_relaxed();
+        remove(val);
 
         if (--m_references == 0) {
             lock.release();
@@ -79,17 +72,10 @@ struct context_list {
         }
     }
 
-    void push_node(d1::context_list_node& node) {
+    void push_node(intrusive_list_node& val) {
         mutex::scoped_lock lock(m_mutex);
 
-        // state propagation logic assumes new contexts are bound to head of the list
-        node.prev = &head;
-
-        d1::context_list_node* head_next = head.next;
-        head_next->prev = &node;
-        node.next = head_next;
-
-        head.next = &node;
+        push_front(val);
 
         m_references++;
     }

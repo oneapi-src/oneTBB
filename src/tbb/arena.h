@@ -21,9 +21,9 @@
 #include <cstring>
 
 #include "oneapi/tbb/detail/_task.h"
+#include "oneapi/tbb/detail/intrusive_list.h"
 
 #include "scheduler_common.h"
-#include "intrusive_list.h"
 #include "task_stream.h"
 #include "arena_slot.h"
 #include "rml_tbb.h"

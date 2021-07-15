@@ -25,6 +25,7 @@
 #include "detail/_exception.h"
 #include "detail/_task.h"
 #include "detail/_small_object_pool.h"
+#include "detail/intrusive_list.h"
 
 #if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 #include "detail/_task_handle.h"
@@ -59,7 +60,7 @@ class task_dispatcher;
 template <bool>
 class context_guard_helper;
 struct task_arena_impl;
-struct context_list;
+class context_list;
 
 void __TBB_EXPORTED_FUNC execute(d1::task_arena_base&, d1::delegate_base&);
 void __TBB_EXPORTED_FUNC isolate_within_arena(d1::delegate_base&, std::intptr_t);
@@ -139,16 +140,6 @@ namespace {
 } // namespace d2
 
 namespace d1 {
-
-struct context_list_node {
-    context_list_node* prev{};
-    context_list_node* next{};
-
-    void remove_relaxed() {
-        prev->next = next;
-        next->prev = prev;
-    }
-};
 
 //! Used to form groups of tasks
 /** @ingroup task_scheduling
@@ -238,7 +229,7 @@ private:
     //! Used to form the thread specific list of contexts without additional memory allocation.
     /** A context is included into the list of the current thread when its binding to
         its parent happens. Any context can be present in the list of one thread only. **/
-    context_list_node my_node;
+    r1::intrusive_list_node my_node;
 
     //! Pointer to the container storing exception being propagated across this task group.
     r1::tbb_exception_ptr* my_exception;
@@ -258,7 +249,7 @@ private:
         - sizeof(std::atomic<lifetime_state>)   // my_lifetime_state
         - sizeof(task_group_context*)           // my_parent
         - sizeof(r1::context_list*)             // my_context_list
-        - sizeof(context_list_node)             // my_node
+        - sizeof(r1::intrusive_list_node)       // my_node
         - sizeof(r1::tbb_exception_ptr*)        // my_exception
         - sizeof(void*)                         // my_itt_caller
         - sizeof(string_resource_index)         // my_name

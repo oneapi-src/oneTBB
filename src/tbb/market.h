@@ -19,7 +19,7 @@
 
 #include "scheduler_common.h"
 #include "market_concurrent_monitor.h"
-#include "intrusive_list.h"
+#include "oneapi/tbb/detail/intrusive_list.h"
 #include "rml_tbb.h"
 #include "oneapi/tbb/rw_mutex.h"
 
