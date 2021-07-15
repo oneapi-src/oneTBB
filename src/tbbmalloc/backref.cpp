@@ -240,17 +240,22 @@ void *getBackRef(BackRefIdx backRefIdx)
     if (!(backRefMaster.load(std::memory_order_acquire))
         || backRefIdx.getMaster() > (backRefMaster.load(std::memory_order_relaxed)->lastUsed.load(std::memory_order_acquire))
         || backRefIdx.getOffset() >= BR_MAX_CNT)
+    {
         return NULL;
-    return *(void**)((uintptr_t)backRefMaster.load(std::memory_order_relaxed)->backRefBl[backRefIdx.getMaster()]
-                     + sizeof(BackRefBlock)+backRefIdx.getOffset()*sizeof(void*));
+    }
+    std::atomic<void*>& backRefEntry = *(std::atomic<void*>*)(
+            (uintptr_t)backRefMaster.load(std::memory_order_relaxed)->backRefBl[backRefIdx.getMaster()]
+            + sizeof(BackRefBlock) + backRefIdx.getOffset() * sizeof(std::atomic<void*>)
+        );
+    return backRefEntry.load(std::memory_order_relaxed);
 }
 
 void setBackRef(BackRefIdx backRefIdx, void *newPtr)
 {
     MALLOC_ASSERT(backRefIdx.getMaster()<=backRefMaster.load(std::memory_order_relaxed)->lastUsed.load(std::memory_order_relaxed)
                                  && backRefIdx.getOffset()<BR_MAX_CNT, ASSERT_TEXT);
-    *(void**)((uintptr_t)backRefMaster.load(std::memory_order_relaxed)->backRefBl[backRefIdx.getMaster()]
-              + sizeof(BackRefBlock) + backRefIdx.getOffset()*sizeof(void*)) = newPtr;
+    ((std::atomic<void*>*)((uintptr_t)backRefMaster.load(std::memory_order_relaxed)->backRefBl[backRefIdx.getMaster()]
+        + sizeof(BackRefBlock) + backRefIdx.getOffset() * sizeof(void*)))->store(newPtr, std::memory_order_relaxed);
 }
 
 BackRefIdx BackRefIdx::newBackRef(bool largeObj)
@@ -318,19 +323,21 @@ void removeBackRef(BackRefIdx backRefIdx)
     MALLOC_ASSERT(backRefIdx.getMaster()<=backRefMaster.load(std::memory_order_relaxed)->lastUsed.load(std::memory_order_relaxed)
                   && backRefIdx.getOffset()<BR_MAX_CNT, ASSERT_TEXT);
     BackRefBlock *currBlock = backRefMaster.load(std::memory_order_relaxed)->backRefBl[backRefIdx.getMaster()];
-    FreeObject *freeObj = (FreeObject*)((uintptr_t)currBlock + sizeof(BackRefBlock)
-                                        + backRefIdx.getOffset()*sizeof(void*));
-    MALLOC_ASSERT(((uintptr_t)freeObj>(uintptr_t)currBlock &&
-                   (uintptr_t)freeObj<(uintptr_t)currBlock + slabSize), ASSERT_TEXT);
+    std::atomic<void*>& backRefEntry = *(std::atomic<void*>*)((uintptr_t)currBlock + sizeof(BackRefBlock)
+                                        + backRefIdx.getOffset()*sizeof(std::atomic<void*>));
+    MALLOC_ASSERT(((uintptr_t)&backRefEntry >(uintptr_t)currBlock &&
+                   (uintptr_t)&backRefEntry <(uintptr_t)currBlock + slabSize), ASSERT_TEXT);
     {
         MallocMutex::scoped_lock lock(currBlock->blockMutex);
 
-        freeObj->next = currBlock->freeList;
-        MALLOC_ASSERT(!freeObj->next ||
-                      ((uintptr_t)freeObj->next > (uintptr_t)currBlock
-                       && (uintptr_t)freeObj->next <
-                       (uintptr_t)currBlock + slabSize), ASSERT_TEXT);
-        currBlock->freeList = freeObj;
+        backRefEntry.store(currBlock->freeList, std::memory_order_relaxed);
+#if MALLOC_DEBUG
+        uintptr_t backRefEntryValue = (uintptr_t)backRefEntry.load(std::memory_order_relaxed);
+        MALLOC_ASSERT(!backRefEntryValue ||
+                      (backRefEntryValue > (uintptr_t)currBlock
+                       && backRefEntryValue < (uintptr_t)currBlock + slabSize), ASSERT_TEXT);
+#endif
+        currBlock->freeList = (FreeObject*)&backRefEntry;
         currBlock->allocatedCount.store(currBlock->allocatedCount.load(std::memory_order_relaxed)-1, std::memory_order_relaxed);
     }
     // TODO: do we need double-check here?
