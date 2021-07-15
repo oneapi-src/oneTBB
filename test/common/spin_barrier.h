@@ -132,9 +132,9 @@ public:
             return false;
         }
 
-        size_type epoch = myEpoch;
+        size_type epoch = myEpoch.load(std::memory_order_relaxed);
         size_type numThreads = myNumThreads; // read it before the increment
-        int threadsLeft = static_cast<int>(numThreads - myNumThreadsFinished.fetch_add(1, std::memory_order_release) - 1);
+        int threadsLeft = static_cast<int>(myNumThreads - myNumThreadsFinished.fetch_add(1, std::memory_order_release) - 1);
         ASSERT(threadsLeft >= 0,"Broken barrier");
         if (threadsLeft > 0) {
             /* this thread is not the last; wait until the epoch changes & return false */
