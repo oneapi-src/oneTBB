@@ -69,7 +69,9 @@ function(tbb_add_test)
 
     target_compile_definitions(${_tbb_test_TARGET_NAME} PRIVATE
         $<$<CONFIG:DEBUG>:TBB_USE_DEBUG>
-        $<$<BOOL:${TBB_CPF}>:__TBB_CPF_BUILD=1>)
+        $<$<BOOL:${TBB_CPF}>:__TBB_CPF_BUILD=1>
+        $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:__TBB_DYNAMIC_LOAD_ENABLED=0>
+        $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:__TBB_SOURCE_DIRECTLY_INCLUDED=1>)
 
     target_link_libraries(${_tbb_test_TARGET_NAME} PRIVATE ${_tbb_test_DEPENDENCIES} Threads::Threads ${TBB_COMMON_LINK_LIBS})
 
@@ -146,7 +148,10 @@ function(tbb_add_lib_test)
 
     target_compile_definitions(_${_tbb_test_NAME} PRIVATE
         $<$<CONFIG:DEBUG>:TBB_USE_DEBUG>
-        $<$<BOOL:${TBB_CPF}>:__TBB_CPF_BUILD=1>)
+        $<$<BOOL:${TBB_CPF}>:__TBB_CPF_BUILD=1>
+        $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:__TBB_DYNAMIC_LOAD_ENABLED=0>
+        $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:__TBB_SOURCE_DIRECTLY_INCLUDED=1>)
+
 
     # Prefer using target_link_options instead of target_link_libraries to specify link options because
     # target_link_libraries may incorrectly handle some options (on Windows, for example).
