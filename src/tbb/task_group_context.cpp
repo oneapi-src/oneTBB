@@ -57,7 +57,7 @@ void task_group_context_impl::destroy(d1::task_group_context& ctx) {
     if (ctx.my_context_list != nullptr) {
         __TBB_ASSERT(ctx.my_lifetime_state.load(std::memory_order_relaxed) == d1::task_group_context::lifetime_state::bound, nullptr);
         // The owner can be destroyed at any moment. Access the associate data with caution.
-        ctx.my_context_list->remove_node(ctx.my_node);
+        ctx.my_context_list->remove(ctx.my_node);
     }
     d1::cpu_ctl_env* ctl = reinterpret_cast<d1::cpu_ctl_env*>(&ctx.my_cpu_ctl_env);
 #if _MSC_VER && _MSC_VER <= 1900 && !__INTEL_COMPILER
@@ -105,7 +105,7 @@ void task_group_context_impl::register_with(d1::task_group_context& ctx, thread_
     __TBB_ASSERT(td, nullptr);
     ctx.my_context_list = td->my_context_list;
 
-    ctx.my_context_list->push_node(ctx.my_node);
+    ctx.my_context_list->push_front(ctx.my_node);
 }
 
 void task_group_context_impl::bind_to_impl(d1::task_group_context& ctx, thread_data* td) {

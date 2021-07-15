@@ -61,10 +61,10 @@ public:
         cache_aligned_deallocate(this);
     }
 
-    void remove_node(intrusive_list_node& val) {
+    void remove(intrusive_list_node& val) {
         mutex::scoped_lock lock(m_mutex);
 
-        remove(val);
+        intrusive_list<intrusive_list_node>::remove(val);
 
         if (--m_references == 0) {
             lock.release();
@@ -72,10 +72,10 @@ public:
         }
     }
 
-    void push_node(intrusive_list_node& val) {
+    void push_front(intrusive_list_node& val) {
         mutex::scoped_lock lock(m_mutex);
 
-        push_front(val);
+        intrusive_list<intrusive_list_node>::push_front(val);
 
         m_references++;
     }
