@@ -82,6 +82,8 @@ void task_group_context_impl::destroy(d1::task_group_context& ctx) {
 void task_group_context_impl::initialize(d1::task_group_context& ctx) {
     ITT_TASK_GROUP(&ctx, ctx.my_name, nullptr);
 
+    ctx.my_node.my_next_node = &ctx.my_node;
+    ctx.my_node.my_prev_node = &ctx.my_node;
     ctx.my_cpu_ctl_env = 0;
     ctx.my_cancellation_requested = 0;
     ctx.my_state.store(0, std::memory_order_relaxed);
