@@ -133,7 +133,6 @@ public:
         }
 
         size_type epoch = myEpoch.load(std::memory_order_relaxed);
-        size_type numThreads = myNumThreads; // read it before the increment
         int threadsLeft = static_cast<int>(myNumThreads - myNumThreadsFinished.fetch_add(1, std::memory_order_release) - 1);
         ASSERT(threadsLeft >= 0,"Broken barrier");
         if (threadsLeft > 0) {
@@ -143,12 +142,12 @@ public:
             return false;
         }
         /* reset the barrier, increment the epoch, and return true */
-        threadsLeft = static_cast<int>(myNumThreadsFinished.fetch_sub(numThreads, std::memory_order_acquire) - numThreads);
+        threadsLeft = static_cast<int>(myNumThreadsFinished.fetch_sub(myNumThreads, std::memory_order_acquire) - myNumThreads);
         ASSERT(threadsLeft == 0,"Broken barrier");
         /* This thread is the last one at the barrier in this epoch */
         onOpenBarrierCallback();
         /* wakes up threads waiting to exit in this epoch */
-        myLifeTimeGuard.fetch_add(numThreads - 1, std::memory_order_relaxed);
+        myLifeTimeGuard.fetch_add(myNumThreads - 1, std::memory_order_relaxed);
         epoch -= myEpoch.fetch_add(1, std::memory_order_release);
         ASSERT(epoch == 0,"Broken barrier");
         return true;
