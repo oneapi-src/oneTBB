@@ -25,7 +25,7 @@
 #include "detail/_exception.h"
 #include "detail/_task.h"
 #include "detail/_small_object_pool.h"
-#include "detail/intrusive_list.h"
+#include "detail/_intrusive_list.h"
 
 #if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 #include "detail/_task_handle.h"

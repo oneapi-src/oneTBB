@@ -21,7 +21,7 @@
 #include <cstring>
 
 #include "oneapi/tbb/detail/_task.h"
-#include "oneapi/tbb/detail/intrusive_list.h"
+#include "oneapi/tbb/detail/_intrusive_list.h"
 
 #include "scheduler_common.h"
 #include "task_stream.h"

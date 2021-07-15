@@ -17,7 +17,7 @@
 #ifndef _TBB_market_H
 #define _TBB_market_H
 
-#include "oneapi/tbb/detail/intrusive_list.h"
+#include "oneapi/tbb/detail/_intrusive_list.h"
 
 #include "scheduler_common.h"
 #include "market_concurrent_monitor.h"
