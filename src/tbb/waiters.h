@@ -45,6 +45,10 @@ public:
     }
 
 protected:
+    bool is_arena_empty() {
+        return my_arena.my_pool_state.load(std::memory_order_relaxed) == arena::SNAPSHOT_EMPTY;
+    }
+
     arena& my_arena;
     stealing_loop_backoff my_backoff;
 };
@@ -58,31 +62,31 @@ public:
         __TBB_ASSERT(t == nullptr, nullptr);
 
         if (is_worker_should_leave(slot)) {
+            int prev_epoch{};
             market* m = my_arena.my_market;
 
-            int current_epoch{};
-            int prev_epoch{};
+            static constexpr std::chrono::microseconds worker_wait_leave_duration(80);
+            static_assert(worker_wait_leave_duration > std::chrono::steady_clock::duration(1), "Clock resolution is not enough for measured interval.");
+            __TBB_ASSERT(m->my_adjust_demand_current_epoch.load(std::memory_order_relaxed) > 0, "The zero epoch is expected to be outdated");
 
             for (auto t1 = std::chrono::steady_clock::now(), t2 = t1;
-                std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1) < std::chrono::microseconds(40);
+                std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1) < worker_wait_leave_duration;
                 t2 = std::chrono::steady_clock::now())
             {
-                current_epoch = m->my_adjust_demand_current_epoch.load(std::memory_order_relaxed);
+                int current_epoch = m->my_adjust_demand_current_epoch.load(std::memory_order_relaxed);
                 if (prev_epoch != current_epoch) {
-                    if (my_arena.my_pool_state.load(std::memory_order_relaxed) != arena::SNAPSHOT_EMPTY &&
-                        !my_arena.is_recall_requested())
-                    {
+                    prev_epoch = current_epoch;
+
+                    if (!is_arena_empty() && !my_arena.is_recall_requested()) {
                         return true;
                     }
-
+                    // Try to find new arena for current worker
                     arena* a = m->arena_in_need(&my_arena, &my_arena);
                     if (a) {
                         my_next_arena = a;
                         break;
                     }
                 }
-
-                prev_epoch = current_epoch;
                 d0::yield();
             }
 
@@ -138,10 +142,6 @@ private:
 class sleep_waiter : public waiter_base {
 protected:
     using waiter_base::waiter_base;
-
-    bool is_arena_empty() {
-        return my_arena.my_pool_state.load(std::memory_order_relaxed) == arena::SNAPSHOT_EMPTY;
-    }
 
     template <typename Pred>
     void sleep(std::uintptr_t uniq_tag, Pred wakeup_condition) {
