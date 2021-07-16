@@ -21,7 +21,7 @@
 #include "common/utils.h"
 #include "../../src/tbb/intrusive_list.h"
 
-using tbb::detail::d1::intrusive_list_node;
+using tbb::detail::r1::intrusive_list_node;
 
 // Machine word filled with repeated pattern of FC bits
 const uintptr_t NoliMeTangere = ~uintptr_t(0)/0xFF*0xFC;
