@@ -34,7 +34,7 @@ struct intrusive_list_node {
 #endif /* TBB_USE_ASSERT */
 };
 
-} // namespace r1
+} // namespace d1
 } // namespace detail
 } // namespace tbb
 
