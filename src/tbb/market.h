@@ -17,7 +17,6 @@
 #ifndef _TBB_market_H
 #define _TBB_market_H
 
-
 #include "scheduler_common.h"
 #include "market_concurrent_monitor.h"
 #include "intrusive_list.h"
