@@ -42,7 +42,7 @@ class task_dispatcher;
 
 class context_list : public intrusive_list<intrusive_list_node> {
 public:
-    std::size_t m_references{1};
+    bool orphaned{false};
 
     //! Last state propagation epoch known to this thread
     /** Together with the_context_state_propagation_epoch constitute synchronization protocol
@@ -66,7 +66,7 @@ public:
 
         intrusive_list<intrusive_list_node>::remove(val);
 
-        if (--m_references == 0) {
+        if (orphaned && empty()) {
             lock.release();
             destroy();
         }
@@ -76,13 +76,13 @@ public:
         mutex::scoped_lock lock(m_mutex);
 
         intrusive_list<intrusive_list_node>::push_front(val);
-
-        m_references++;
     }
 
-    void release() {
+    void orphan() {
         mutex::scoped_lock lock(m_mutex);
-        if (--m_references == 0) {
+
+        orphaned = true;
+        if (empty()) {
             lock.release();
             destroy();
         }
@@ -116,7 +116,7 @@ public:
     }
 
     ~thread_data() {
-        my_context_list->release();
+        my_context_list->orphan();
         my_small_object_pool->destroy();
         poison_pointer(my_task_dispatcher);
         poison_pointer(my_arena);
