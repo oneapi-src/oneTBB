@@ -30,7 +30,9 @@ if (WIN32)
     file(TO_NATIVE_PATH "${BIN_PATH}" BINARY_PATH_REPLACEMENT)
 endif()
 
-configure_file( ${INPUT_FILE} ${OUTPUT_FILE} @ONLY )
+if (NOT EXISTS ${OUTPUT_FILE})
+    configure_file(${INPUT_FILE} ${OUTPUT_FILE} @ONLY)
+endif()
 
 if (TBB_INSTALL_VARS)
     set(OUTPUT_FILE "${BINARY_DIR}/internal_install_vars")

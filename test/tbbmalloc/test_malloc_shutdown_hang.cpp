@@ -65,7 +65,7 @@ void hangOnExitReproducer() {
 void processSpawn(const char* self) {
     _spawnl(_P_WAIT, self, self, "1", NULL);
 }
-#elif __linux__ || __APPLE__
+#elif __unix__ || __APPLE__
 #include <unistd.h> // fork/exec
 #include <sys/wait.h> // waitpid
 void processSpawn(const char* self) {

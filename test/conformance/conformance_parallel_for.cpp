@@ -74,7 +74,7 @@ public:
     FooRange( FooRange& original, oneapi::tbb::split ) : size(original.size/2) {
         original.size -= size;
         start = original.start+original.size;
-        CHECK( original.pad[Pad-1]=='x');
+        CHECK_FAST( original.pad[Pad-1]=='x');
         pad[Pad-1] = 'x';
     }
 };
@@ -91,12 +91,12 @@ public:
     // Copy constructor
     FooBody( const FooBody& other ) : array(other.array), state(other.state) {
         ++FooBodyCount;
-        CHECK(state == LIVE);
+        CHECK_FAST(state == LIVE);
     }
     void operator()( FooRange<Pad>& r ) const {
-        for( int k=0; k<r.size; ++k ) {
-            const int i = array[r.start+k]++;
-            CHECK( i==0 );
+        for (int k = r.start; k < r.start + r.size; ++k) {
+            CHECK_FAST(array[k].load(std::memory_order_relaxed) == 0);
+            array[k].store(1, std::memory_order_relaxed);
         }
     }
 private:
@@ -184,11 +184,9 @@ void Flog() {
             }
                 break;
             }
-            for( int j=0; j<i; ++j )
-                CHECK( Array[j]==1);
-            for( int j=i; j<N; ++j )
-                CHECK( Array[j]==0);
-            CHECK( FooBodyCount==1);
+            CHECK(std::find_if_not(Array, Array + i, [](const std::atomic<int>& v) { return v.load(std::memory_order_relaxed) == 1; }) == Array + i);
+            CHECK(std::find_if_not(Array + i, Array + N, [](const std::atomic<int>& v) { return v.load(std::memory_order_relaxed) == 0; }) == Array + N);
+            CHECK(FooBodyCount == 1);
         }
     }
 }

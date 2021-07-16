@@ -506,6 +506,7 @@ void test_resets() {
             // reset doesn't delete edge
 
             tbb::flow::make_edge(b0,q0);
+            g.wait_for_all(); // TODO: invesigate why make_edge to buffer_node always creates a forwarding task
             g.reset();
             for(T i = 0; i < NN; ++i) {
                 b0.try_put(i);

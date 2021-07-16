@@ -124,6 +124,15 @@ if BUILD_TYPE == 'oneapi':
     html_theme = 'sphinx_rtd_theme'
 else:
     html_theme = 'sphinx_book_theme'
+    html_theme_options = {
+    'repository_url': 'https://github.com/oneapi-src/oneTBB',
+    'path_to_docs': 'doc/main',
+    'use_issues_button': True,
+    'use_edit_page_button': True,
+    'repository_branch': 'master'
+    }
+
+
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

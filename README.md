@@ -13,6 +13,7 @@ Here are [Release Notes]( https://software.intel.com/en-us/articles/intel-oneapi
 * [oneTBB Developer Guide and Reference](https://software.intel.com/en-us/oneapi-tbb-documentation)
 * [Migrating from TBB to oneTBB](https://software.intel.com/content/www/us/en/develop/documentation/onetbb-documentation/top/onetbb-developer-guide/migrating-from-threading-building-blocks-tbb.html)
 * README for build system: [cmake/README.md](cmake/README.md)
+* [Basic support for the Bazel build system](Bazel.md)
 
 ## Support
 Please report issues and suggestions via

@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#if __linux__ && !__ANDROID__
+#if __unix__ && !__ANDROID__
 // include <bits/c++config.h> indirectly so that <cstdlib> is not included
 #include <cstddef>
 // include <features.h> indirectly so that <stdlib.h> is not included
@@ -24,7 +24,8 @@
 // of aligned_alloc as required by new C++ standard, this makes it hard to
 // redefine aligned_alloc here. However, running on systems with new libc
 // version, it still needs it to be redefined, thus tricking system headers
-#if defined(__GLIBC_PREREQ) && !__GLIBC_PREREQ(2, 16) && _GLIBCXX_HAVE_ALIGNED_ALLOC
+#if defined(__GLIBC_PREREQ)
+#if !__GLIBC_PREREQ(2, 16) && _GLIBCXX_HAVE_ALIGNED_ALLOC
 // tell <cstdlib> that there is no aligned_alloc
 #undef _GLIBCXX_HAVE_ALIGNED_ALLOC
 // trick <stdlib.h> to define another symbol instead
@@ -32,8 +33,10 @@
 // Fix the state and undefine the trick
 #include <cstdlib>
 #undef aligned_alloc
-#endif // defined(__GLIBC_PREREQ)&&!__GLIBC_PREREQ(2, 16)&&_GLIBCXX_HAVE_ALIGNED_ALLOC
-#endif // __linux__ && !__ANDROID__
+#endif // !__GLIBC_PREREQ(2, 16) && _GLIBCXX_HAVE_ALIGNED_ALLOC
+#endif // defined(__GLIBC_PREREQ)
+#include <cstdlib>
+#endif // __unix__ && !__ANDROID__
 
 #include "proxy.h"
 

@@ -26,11 +26,7 @@
 #include "utils.h"
 #include "utils_assert.h"
 
-#if __TBB_USE_ADDRESS_SANITIZER
-#include <sanitizer/allocator_interface.h>
-#endif
-
-#if __linux__ || __sun
+#if __unix__ || __sun
 #include <sys/resource.h>
 #include <unistd.h>
 #include <sys/utsname.h> /* for uname */
@@ -70,7 +66,7 @@ namespace utils {
         peakUsage
     };
 
-#if __linux__
+#if __unix__
     inline unsigned LinuxKernelVersion()
     {
         unsigned digit1, digit2, digit3;
@@ -90,17 +86,14 @@ namespace utils {
     /* Returns 0 if not implemented on platform. */
     std::size_t GetMemoryUsage(MemoryStatType stat = currentUsage) {
         utils::suppress_unused_warning(stat);
-#if __TBB_USE_ADDRESS_SANITIZER
-        // Under ASAN generic memory usage functions provide information with ASAN overhead.
-        return __sanitizer_get_current_allocated_bytes();
-#elif __TBB_WIN8UI_SUPPORT || defined(WINAPI_FAMILY)
+#if __TBB_WIN8UI_SUPPORT || defined(WINAPI_FAMILY)
         return 0;
 #elif _WIN32
         PROCESS_MEMORY_COUNTERS mem;
         bool status = GetProcessMemoryInfo(GetCurrentProcess(), &mem, sizeof(mem)) != 0;
         ASSERT(status, NULL);
         return stat == currentUsage ? mem.PagefileUsage : mem.PeakPagefileUsage;
-#elif __linux__
+#elif __unix__
         long unsigned size = 0;
         FILE* fst = fopen("/proc/self/status", "r");
         ASSERT(fst != nullptr, NULL);
@@ -145,7 +138,7 @@ namespace utils {
             UseStackSpace(amount, top);
     }
 
-#if __linux__
+#if __unix__
 
     inline bool isTHPEnabledOnMachine() {
         unsigned long long thpPresent = 'n';
@@ -173,7 +166,7 @@ namespace utils {
         return anonHugePages;
     }
 
-#endif // __linux__
+#endif // __unix__
 
 } // namespace utils
 #endif // __TBB_test_common_memory_usage_H_

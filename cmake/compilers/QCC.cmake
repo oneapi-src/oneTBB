@@ -1,6 +1,4 @@
-#!/bin/sh
-#
-# Copyright (c) 2005-2021 Intel Corporation
+# Copyright (c) 2021 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-export TBBROOT=@TBBROOT_REPLACEMENT@
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/compilers/GNU.cmake)
 
-LD_LIBRARY_PATH="@LIBRARY_PATH_REPLACEMENT@:${LD_LIBRARY_PATH}"; export LD_LIBRARY_PATH
-LIBRARY_PATH="@LIBRARY_PATH_REPLACEMENT@:${LIBRARY_PATH}"; export LIBRARY_PATH
-CPATH="${TBBROOT}/include:${CPATH}"; export CPATH
-PKG_CONFIG_PATH="@LIBRARY_PATH_REPLACEMENT@/pkgconfig:${PKG_CONFIG_PATH}"; export PKG_CONFIG_PATH
-
-@CMAKE_ENVIRONMENT_SOURCING_STRING@
+# Remove dl library not present in QNX systems
+unset(TBB_COMMON_LINK_LIBS)

@@ -268,7 +268,7 @@
     #define __TBB_CPP20_COMPARISONS_PRESENT __TBB_CPP20_PRESENT
 #endif
 
-#define __TBB_RESUMABLE_TASKS                           (!__TBB_WIN8UI_SUPPORT && !__ANDROID__)
+#define __TBB_RESUMABLE_TASKS                           (!__TBB_WIN8UI_SUPPORT && !__ANDROID__ && !__QNXNTO__)
 
 /* This macro marks incomplete code or comments describing ideas which are considered for the future.
  * See also for plain comment with TODO and FIXME marks for small improvement opportunities.
@@ -386,7 +386,7 @@
 #endif
 
 #if !defined(__TBB_SURVIVE_THREAD_SWITCH) && \
-          (_WIN32 || _WIN64 || __APPLE__ || (__linux__ && !__ANDROID__))
+          (_WIN32 || _WIN64 || __APPLE__ || (__unix__ && !__ANDROID__))
     #define __TBB_SURVIVE_THREAD_SWITCH 1
 #endif /* __TBB_SURVIVE_THREAD_SWITCH */
 
@@ -456,6 +456,10 @@
 #if __has_feature(thread_sanitizer)
     #define __TBB_USE_THREAD_SANITIZER 1
 #endif
+#endif
+
+#ifndef __TBB_RESUMABLE_TASKS_USE_THREADS
+#define __TBB_RESUMABLE_TASKS_USE_THREADS (__TBB_USE_THREAD_SANITIZER || __TBB_USE_ADDRESS_SANITIZER)
 #endif
 
 #ifndef __TBB_USE_CONSTRAINTS
