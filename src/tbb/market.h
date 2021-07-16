@@ -102,8 +102,11 @@ private:
     /** It can't be more than my_num_workers_hard_limit. **/
     std::atomic<unsigned> my_num_workers_soft_limit;
 
-    //! Number of workers currently requested from RML
-    int my_num_workers_requested;
+    //! Number of workers actually requested from RML
+    int my_num_workers_actual_request;
+
+    //! Number of workers currently working in the market
+    std::atomic<int> my_num_active_workers;
 
     //! The target serialization epoch for callers of adjust_job_count_estimate
     int my_adjust_demand_target_epoch;
@@ -162,7 +165,7 @@ private:
     void destroy ();
 
     //! Recalculates the number of workers requested from RML and updates the allotment.
-    int update_workers_request();
+    int update_workers_request(int old_request);
 
     //! Recalculates the number of workers assigned to each arena in the list.
     /** The actual number of workers servicing a particular arena may temporarily
@@ -220,6 +223,16 @@ private:
 
     void process( job& j ) override;
 
+    void update_demand(int delta, int priority_level);
+
+    int effective_soft_limit();
+
+    int adjust_demand(arena&, int delta, bool mandatory);
+
+    void notify_server(int target_epoch, int delta);
+
+    int get_num_target_workers();
+
 public:
     //! Factory method creating new market object
     static market& global_market( bool is_public, unsigned max_num_workers = 0, std::size_t stack_size = 0 );
@@ -261,7 +274,10 @@ public:
 
     //! Request that arena's need in workers should be adjusted.
     /** Concurrent invocations are possible only on behalf of different arenas. **/
-    void adjust_demand ( arena&, int delta, bool mandatory );
+    void increase_demand(arena&, int delta, bool mandatory);
+    void decrease_demand(arena&, int delta, bool mandatory);
+
+    arena* try_leave_market(int ticket, arena* prev_arena);
 
     //! Used when RML asks for join mode during workers termination.
     bool must_join_workers () const { return my_join_workers; }

@@ -815,3 +815,69 @@ TEST_CASE("raii_guard move ctor") {
     tbb::detail::d0::raii_guard<decltype(func)> guard1(func);
     tbb::detail::d0::raii_guard<decltype(func)> guard2(std::move(guard1));
 }
+
+struct TestMigrationObserver : public tbb::task_scheduler_observer {
+    utils::SpinBarrier my_enter_barrier;
+    utils::SpinBarrier my_exit_barrier;
+    std::size_t my_thread_number;
+    tbb::enumerable_thread_specific<int> thread_ets;
+
+    TestMigrationObserver(tbb::task_arena& a, std::size_t thread_number)
+        : tbb::task_scheduler_observer(a), my_enter_barrier(thread_number), my_exit_barrier(thread_number), my_thread_number(thread_number) {
+        observe(true);
+    }
+
+    void on_scheduler_entry(bool worker) override {
+        if (worker) {
+            REQUIRE(++thread_ets.local() == 1);
+
+            my_enter_barrier.wait();
+            REQUIRE(thread_ets.size() == my_thread_number);
+        }
+    }
+
+    void on_scheduler_exit(bool worker) override {
+        if (worker) {
+            REQUIRE(thread_ets.local() == 1);
+            my_exit_barrier.wait();
+            REQUIRE(thread_ets.size() == my_thread_number);
+        }
+    }
+
+    void wait_idle_workers_leave() {
+        my_exit_barrier.wait();
+        observe(false);
+    }
+};
+
+//! \brief \ref error_guessing
+TEST_CASE("Workers migration") {
+    std::size_t thread_number = utils::get_platform_max_threads();
+    if (thread_number < 3) return;
+
+    tbb::task_arena first_arena(thread_number - 2, 0);
+    tbb::task_arena second_arena(thread_number - 2, 0);
+
+    for (std::size_t k = 0; k < 10; ++k) {
+        TestMigrationObserver test_observer(first_arena, thread_number - 2);
+        std::atomic<bool> check_flag{false};
+        first_arena.enqueue([&] {
+            check_flag.store(true);
+            while (check_flag) utils::yield();
+        });
+
+        test_observer.wait_idle_workers_leave();
+
+        utils::SpinBarrier enqueue_barrier(thread_number - 1);
+        for (std::size_t i = 0; i < thread_number - 2; ++i) {
+            second_arena.enqueue([&] {
+                enqueue_barrier.wait();
+                check_flag.store(false);
+            });
+        }
+        enqueue_barrier.wait();
+
+        utils::SpinBarrier exit_barrier(thread_number);
+        tbb::parallel_for(0, int(thread_number), [&] (int) { exit_barrier.wait(); }, tbb::static_partitioner{});
+    }
+}
