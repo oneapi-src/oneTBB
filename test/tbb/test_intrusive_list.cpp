@@ -19,7 +19,7 @@
 
 #include "common/test.h"
 #include "common/utils.h"
-#include "../src/tbb/intrusive_list.h"
+#include "../../src/tbb/intrusive_list.h"
 
 using tbb::detail::d1::intrusive_list_node;
 
