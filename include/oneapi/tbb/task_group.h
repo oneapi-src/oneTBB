@@ -25,7 +25,7 @@
 #include "detail/_exception.h"
 #include "detail/_task.h"
 #include "detail/_small_object_pool.h"
-#include "detail/_intrusive_list.h"
+#include "detail/_intrusive_list_node.h"
 
 #if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 #include "detail/_task_handle.h"
@@ -141,6 +141,19 @@ namespace {
 
 namespace d1 {
 
+// This structure is left here for backward compatibility check
+struct context_list_node {
+    std::atomic<context_list_node*> prev{};
+    std::atomic<context_list_node*> next{};
+
+    void remove_relaxed() {
+        context_list_node* p = prev.load(std::memory_order_relaxed);
+        context_list_node* n = next.load(std::memory_order_relaxed);
+        p->next.store(n, std::memory_order_relaxed);
+        n->prev.store(p, std::memory_order_relaxed);
+    }
+};
+
 //! Used to form groups of tasks
 /** @ingroup task_scheduling
     The context services explicit cancellation requests from user code, and unhandled
@@ -229,7 +242,8 @@ private:
     //! Used to form the thread specific list of contexts without additional memory allocation.
     /** A context is included into the list of the current thread when its binding to
         its parent happens. Any context can be present in the list of one thread only. **/
-    r1::intrusive_list_node my_node;
+    intrusive_list_node my_node;
+    static_assert(sizeof(intrusive_list_node) == sizeof(context_list_node), "To preserve backward compatibility these types should have the same size");
 
     //! Pointer to the container storing exception being propagated across this task group.
     r1::tbb_exception_ptr* my_exception;
@@ -249,7 +263,7 @@ private:
         - sizeof(std::atomic<lifetime_state>)   // my_lifetime_state
         - sizeof(task_group_context*)           // my_parent
         - sizeof(r1::context_list*)             // my_context_list
-        - sizeof(r1::intrusive_list_node)       // my_node
+        - sizeof(intrusive_list_node)           // my_node
         - sizeof(r1::tbb_exception_ptr*)        // my_exception
         - sizeof(void*)                         // my_itt_caller
         - sizeof(string_resource_index)         // my_name

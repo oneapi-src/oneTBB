@@ -40,7 +40,7 @@ class arena_slot;
 class task_group_context;
 class task_dispatcher;
 
-class context_list : public intrusive_list<intrusive_list_node> {
+class context_list : public intrusive_list<d1::intrusive_list_node> {
 public:
     std::size_t m_references{1};
 
@@ -61,10 +61,10 @@ public:
         cache_aligned_deallocate(this);
     }
 
-    void remove(intrusive_list_node& val) {
+    void remove(d1::intrusive_list_node& val) {
         mutex::scoped_lock lock(m_mutex);
 
-        intrusive_list<intrusive_list_node>::remove(val);
+        intrusive_list<d1::intrusive_list_node>::remove(val);
 
         if (--m_references == 0) {
             lock.release();
@@ -72,10 +72,10 @@ public:
         }
     }
 
-    void push_front(intrusive_list_node& val) {
+    void push_front(d1::intrusive_list_node& val) {
         mutex::scoped_lock lock(m_mutex);
 
-        intrusive_list<intrusive_list_node>::push_front(val);
+        intrusive_list<d1::intrusive_list_node>::push_front(val);
 
         m_references++;
     }
@@ -93,7 +93,7 @@ public:
 // Thread Data
 //------------------------------------------------------------------------
 class thread_data : public ::rml::job
-                  , public intrusive_list_node
+                  , public d1::intrusive_list_node
                   , no_copy {
 public:
     thread_data(unsigned short index, bool is_worker)

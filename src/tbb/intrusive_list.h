@@ -17,38 +17,27 @@
 #ifndef _TBB_intrusive_list_H
 #define _TBB_intrusive_list_H
 
+#include "oneapi/tbb/detail/_intrusive_list_node.h"
+
 namespace tbb {
 namespace detail {
 namespace r1 {
-
-//! Data structure to be inherited by the types that can form intrusive lists.
-/** Intrusive list is formed by means of the member_intrusive_list<T> template class.
-    Note that type T must derive from intrusive_list_node either publicly or
-    declare instantiation member_intrusive_list<T> as a friend.
-    This class implements a limited subset of std::list interface. **/
-struct intrusive_list_node {
-    intrusive_list_node* my_prev_node{};
-    intrusive_list_node* my_next_node{};
-#if TBB_USE_ASSERT
-    intrusive_list_node() { my_prev_node = my_next_node = this; }
-#endif /* TBB_USE_ASSERT */
-};
 
 //! List of element of type T, where T is derived from intrusive_list_node
 /** The class is not thread safe. **/
 template <class List, class T>
 class intrusive_list_base {
     //! Pointer to the head node
-    intrusive_list_node my_head;
+    d1::intrusive_list_node my_head;
 
     //! Number of list elements
     std::size_t my_size;
 
-    static intrusive_list_node& node ( T& item ) { return List::node(item); }
+    static d1::intrusive_list_node& node ( T& item ) { return List::node(item); }
 
-    static T& item ( intrusive_list_node* node ) { return List::item(node); }
+    static T& item ( d1::intrusive_list_node* node ) { return List::item(node); }
 
-    static const T& item( const intrusive_list_node* node ) { return List::item(node); }
+    static const T& item( const d1::intrusive_list_node* node ) { return List::item(node); }
 
     template <typename DereferenceType>
     class iterator_impl {
@@ -57,8 +46,8 @@ class intrusive_list_base {
                       "Incorrect DereferenceType in iterator_impl");
 
         using pointer_type = typename std::conditional<std::is_same<DereferenceType, T>::value,
-                                                       intrusive_list_node*,
-                                                       const intrusive_list_node*>::type;
+                                                       d1::intrusive_list_node*,
+                                                       const d1::intrusive_list_node*>::type;
 
     public:
         iterator_impl() : my_pos(nullptr) {}
@@ -112,7 +101,7 @@ class intrusive_list_base {
                       (my_head.my_next_node != &my_head && my_size >0), "intrusive_list_base corrupted" );
 #if TBB_USE_ASSERT >= 2
         std::size_t i = 0;
-        for ( intrusive_list_node *n = my_head.my_next_node; n != &my_head; n = n->my_next_node )
+        for ( d1::intrusive_list_node *n = my_head.my_next_node; n != &my_head; n = n->my_next_node )
             ++i;
         __TBB_ASSERT( my_size == i, "Wrong size" );
 #endif /* TBB_USE_ASSERT >= 2 */
@@ -177,9 +166,9 @@ public:
 // and inheritance based intrusive_list version would become its partial specialization.
 // Here are the corresponding declarations:
 
-struct dummy_intrusive_list_item { intrusive_list_node my_node; };
+struct dummy_intrusive_list_item { d1::intrusive_list_node my_node; };
 
-template <class T, class U = dummy_intrusive_list_item, intrusive_list_node U::*NodePtr = &dummy_intrusive_list_item::my_node>
+template <class T, class U = dummy_intrusive_list_item, d1::intrusive_list_node U::*NodePtr = &dummy_intrusive_list_item::my_node>
 class intrusive_list : public intrusive_list_base<intrusive_list<T, U, NodePtr>, T>;
 
 template <class T>
@@ -197,14 +186,14 @@ class intrusive_list<T, dummy_intrusive_list_item, &dummy_intrusive_list_item::m
     memory allocation when forming lists of existing objects.
 
     The class is not thread safe. **/
-template <class T, class U, intrusive_list_node U::*NodePtr>
+template <class T, class U, d1::intrusive_list_node U::*NodePtr>
 class memptr_intrusive_list : public intrusive_list_base<memptr_intrusive_list<T, U, NodePtr>, T>
 {
     friend class intrusive_list_base<memptr_intrusive_list<T, U, NodePtr>, T>;
 
-    static intrusive_list_node& node ( T& val ) { return val.*NodePtr; }
+    static d1::intrusive_list_node& node ( T& val ) { return val.*NodePtr; }
 
-    static T& item ( intrusive_list_node* node ) {
+    static T& item ( d1::intrusive_list_node* node ) {
         // Cannot use __TBB_offsetof (and consequently __TBB_get_object_ref) macro
         // with *NodePtr argument because gcc refuses to interpret pasted "->" and "*"
         // as member pointer dereferencing operator, and explicit usage of ## in
@@ -212,8 +201,8 @@ class memptr_intrusive_list : public intrusive_list_base<memptr_intrusive_list<T
         return *reinterpret_cast<T*>((char*)node - ((ptrdiff_t)&(reinterpret_cast<T*>(0x1000)->*NodePtr) - 0x1000));
     }
 
-    static const T& item( const intrusive_list_node* node ) {
-        return item(const_cast<intrusive_list_node*>(node));
+    static const T& item( const d1::intrusive_list_node* node ) {
+        return item(const_cast<d1::intrusive_list_node*>(node));
     }
 
 }; // intrusive_list<T, U, NodePtr>
@@ -228,11 +217,11 @@ class intrusive_list : public intrusive_list_base<intrusive_list<T>, T>
 {
     friend class intrusive_list_base<intrusive_list<T>, T>;
 
-    static intrusive_list_node& node ( T& val ) { return val; }
+    static d1::intrusive_list_node& node ( T& val ) { return val; }
 
-    static T& item ( intrusive_list_node* node ) { return *static_cast<T*>(node); }
+    static T& item ( d1::intrusive_list_node* node ) { return *static_cast<T*>(node); }
 
-    static const T& item( const intrusive_list_node* node ) { return *static_cast<const T*>(node); }
+    static const T& item( const d1::intrusive_list_node* node ) { return *static_cast<const T*>(node); }
 }; // intrusive_list<T>
 
 } // namespace r1
