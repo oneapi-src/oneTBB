@@ -33,6 +33,7 @@
 #endif
 // TODO: add conditional inclusion based on specified type
 #include "oneapi/tbb/spin_mutex.h"
+#include "oneapi/tbb/mutex.h"
 
 #if TBB_USE_ASSERT
 #include <atomic>
