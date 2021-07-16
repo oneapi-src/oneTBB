@@ -185,7 +185,7 @@ public:
 /** Separated in order to simplify padding.
     Intrusive list node base class is used by market to form a list of arenas. **/
 // TODO: Analyze arena_base cache lines placement
-struct arena_base : padded<d1::intrusive_list_node> {
+struct arena_base : padded<intrusive_list_node> {
     //! The number of workers that have been marked out by the resource manager to service the arena.
     std::atomic<unsigned> my_num_workers_allotted;   // heavy use in stealing loop
 
