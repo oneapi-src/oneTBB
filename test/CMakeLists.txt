@@ -258,7 +258,12 @@ function(tbb_add_tbbbind_test)
         )
         set_property(
             TARGET ${_tbbbind_test_NAME}
-            PROPERTY LINK_LIBRARIES ${HWLOC_LIBRARY_DIRS} ${HWLOC_LIBRARIES}
+            PROPERTY LINK_LIBRARIES ${HWLOC_LIBRARIES}
+            APPEND
+        )
+        set_property(
+            TARGET ${_tbbbind_test_NAME}
+			PROPERTY LINK_DIRECTORIES ${HWLOC_LIBRARY_DIRS}
             APPEND
         )
         set_property(
