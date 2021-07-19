@@ -74,17 +74,17 @@ struct constraints {
 } // namespace d1
 
 namespace r1 {
-unsigned __TBB_EXPORTED_FUNC numa_node_count();
-void __TBB_EXPORTED_FUNC fill_numa_indices(int* index_array);
-int __TBB_EXPORTED_FUNC numa_default_concurrency(int numa_id);
+TBB_EXPORT unsigned __TBB_EXPORTED_FUNC numa_node_count();
+TBB_EXPORT void __TBB_EXPORTED_FUNC fill_numa_indices(int* index_array);
+TBB_EXPORT int __TBB_EXPORTED_FUNC numa_default_concurrency(int numa_id);
 
 // Reserved fields are required to save binary backward compatibility in case of future changes.
 // They must be defined to 0 at this moment.
-unsigned __TBB_EXPORTED_FUNC core_type_count(intptr_t reserved = 0);
-void __TBB_EXPORTED_FUNC fill_core_type_indices(int* index_array, intptr_t reserved = 0);
+TBB_EXPORT unsigned __TBB_EXPORTED_FUNC core_type_count(intptr_t reserved = 0);
+TBB_EXPORT void __TBB_EXPORTED_FUNC fill_core_type_indices(int* index_array, intptr_t reserved = 0);
 
-int __TBB_EXPORTED_FUNC constraints_default_concurrency(const d1::constraints& c, intptr_t reserved = 0);
-int __TBB_EXPORTED_FUNC constraints_threads_per_core(const d1::constraints& c, intptr_t reserved = 0);
+TBB_EXPORT int __TBB_EXPORTED_FUNC constraints_default_concurrency(const d1::constraints& c, intptr_t reserved = 0);
+TBB_EXPORT int __TBB_EXPORTED_FUNC constraints_threads_per_core(const d1::constraints& c, intptr_t reserved = 0);
 } // namespace r1
 
 namespace d1 {

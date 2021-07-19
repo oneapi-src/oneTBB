@@ -36,7 +36,7 @@ class observer_list;
 /** For local observers the method can be used only when the current thread
 has the task scheduler initialized or is attached to an arena.
 Repeated calls with the same state are no-ops. **/
-void __TBB_EXPORTED_FUNC observe(d1::task_scheduler_observer&, bool state = true);
+TBB_EXPORT void __TBB_EXPORTED_FUNC observe(d1::task_scheduler_observer&, bool state = true);
 }
 
 namespace d1 {

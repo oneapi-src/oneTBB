@@ -62,15 +62,15 @@ class context_guard_helper;
 struct task_arena_impl;
 class context_list;
 
-void __TBB_EXPORTED_FUNC execute(d1::task_arena_base&, d1::delegate_base&);
-void __TBB_EXPORTED_FUNC isolate_within_arena(d1::delegate_base&, std::intptr_t);
+TBB_EXPORT void __TBB_EXPORTED_FUNC execute(d1::task_arena_base&, d1::delegate_base&);
+TBB_EXPORT void __TBB_EXPORTED_FUNC isolate_within_arena(d1::delegate_base&, std::intptr_t);
 
-void __TBB_EXPORTED_FUNC initialize(d1::task_group_context&);
-void __TBB_EXPORTED_FUNC destroy(d1::task_group_context&);
-void __TBB_EXPORTED_FUNC reset(d1::task_group_context&);
-bool __TBB_EXPORTED_FUNC cancel_group_execution(d1::task_group_context&);
-bool __TBB_EXPORTED_FUNC is_group_execution_cancelled(d1::task_group_context&);
-void __TBB_EXPORTED_FUNC capture_fp_settings(d1::task_group_context&);
+TBB_EXPORT void __TBB_EXPORTED_FUNC initialize(d1::task_group_context&);
+TBB_EXPORT void __TBB_EXPORTED_FUNC destroy(d1::task_group_context&);
+TBB_EXPORT void __TBB_EXPORTED_FUNC reset(d1::task_group_context&);
+TBB_EXPORT bool __TBB_EXPORTED_FUNC cancel_group_execution(d1::task_group_context&);
+TBB_EXPORT bool __TBB_EXPORTED_FUNC is_group_execution_cancelled(d1::task_group_context&);
+TBB_EXPORT void __TBB_EXPORTED_FUNC capture_fp_settings(d1::task_group_context&);
 
 struct task_group_context_impl;
 }

@@ -37,12 +37,12 @@ struct execution_data;
 }
 
 namespace r1 {
-void* __TBB_EXPORTED_FUNC allocate(d1::small_object_pool*& pool, std::size_t number_of_bytes,
+TBB_EXPORT void* __TBB_EXPORTED_FUNC allocate(d1::small_object_pool*& pool, std::size_t number_of_bytes,
                                     const d1::execution_data& ed);
-void* __TBB_EXPORTED_FUNC allocate(d1::small_object_pool*& pool, std::size_t number_of_bytes);
-void  __TBB_EXPORTED_FUNC deallocate(d1::small_object_pool& pool, void* ptr, std::size_t number_of_bytes,
+TBB_EXPORT void* __TBB_EXPORTED_FUNC allocate(d1::small_object_pool*& pool, std::size_t number_of_bytes);
+TBB_EXPORT void  __TBB_EXPORTED_FUNC deallocate(d1::small_object_pool& pool, void* ptr, std::size_t number_of_bytes,
                                         const d1::execution_data& ed);
-void  __TBB_EXPORTED_FUNC deallocate(d1::small_object_pool& pool, void* ptr, std::size_t number_of_bytes);
+TBB_EXPORT void  __TBB_EXPORTED_FUNC deallocate(d1::small_object_pool& pool, void* ptr, std::size_t number_of_bytes);
 }
 
 namespace d1 {

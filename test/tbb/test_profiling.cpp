@@ -42,7 +42,7 @@ TEST_CASE_TEMPLATE("Mutexes set_name", Mutex, tbb::spin_mutex,
 }
 
 
-#if (_WIN32||_WIN64) && !__MINGW32__
+#if (_WIN32||_WIN64)
 //! Test for mutexes set_name with wchar
 //! \brief \ref interface
 TEST_CASE_TEMPLATE("Mutexes set_name wchar", Mutex, tbb::spin_mutex,

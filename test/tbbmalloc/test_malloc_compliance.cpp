@@ -120,8 +120,8 @@ static bool Verbose = false;
 #include <malloc.h> // _aligned_(malloc|free|realloc)
 #if __MINGW64__
 // Workaround a bug in MinGW64 headers with _aligned_(malloc|free) not declared by default
-extern "C" void __cdecl _aligned_free(void *);
-extern "C" void *__cdecl _aligned_malloc(size_t,size_t);
+extern "C" void __cdecl __declspec(dllimport) _aligned_free(void *);
+extern "C" void *__cdecl __declspec(dllimport) _aligned_malloc(size_t,size_t);
 #endif
 #endif
 
