@@ -37,6 +37,10 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
         ${HWLOC_INCLUDE_DIRS} # pkg-config defined
     )
+	target_link_directories(${TBBBIND_NAME}
+		PRIVATE
+		${HWLOC_LIBRARY_DIRS} # pkg-config defined
+	)
 
     target_compile_options(${TBBBIND_NAME}
         PRIVATE
@@ -66,7 +70,6 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
             ${TBB_LIB_LINK_FLAGS}
             ${TBB_COMMON_LINK_FLAGS}
             ${TBB_IPO_LINK_FLAGS}
-            ${HWLOC_LIBRARY_DIRS} # pkg-config defined
         )
     else()
         target_link_libraries(${TBBBIND_NAME}
@@ -74,7 +77,6 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
             ${TBB_LIB_LINK_FLAGS}
             ${TBB_COMMON_LINK_FLAGS}
             ${TBB_IPO_LINK_FLAGS}
-            ${HWLOC_LIBRARY_DIRS} # pkg-config defined
         )
     endif()
 
