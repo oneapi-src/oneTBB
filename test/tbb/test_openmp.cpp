@@ -147,6 +147,8 @@ void RunTest( Func F, int m, int n, int p) {
     CHECK(memcmp(actual, expected, (m + n - 1) * sizeof(data_type)) == 0);
 }
 
+// Disable it because OpenMP isn't instrumented that leads to false positive
+#if !__TBB_USE_THREAD_SANITIZER
 //! \brief \ref error_guessing
 TEST_CASE("Testing oneTBB with OpenMP") {
 #if __INTEL_COMPILER
@@ -164,3 +166,4 @@ TEST_CASE("Testing oneTBB with OpenMP") {
         }
     }
 }
+#endif

@@ -358,7 +358,7 @@ d1::task* task_dispatcher::local_wait_for_all(d1::task* t, Waiter& waiter ) {
             }
             if (ed.context->cancel_group_execution()) {
                 /* We are the first to signal cancellation, so store the exception that caused it. */
-                ed.context->my_exception = tbb_exception_ptr::allocate();
+                ed.context->my_exception.store(tbb_exception_ptr::allocate(), std::memory_order_release);
             }
         }
     } // Infinite exception loop

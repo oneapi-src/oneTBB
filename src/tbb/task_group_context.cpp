@@ -65,8 +65,10 @@ void task_group_context_impl::destroy(d1::task_group_context& ctx) {
 #endif
     ctl->~cpu_ctl_env();
 
-    if (ctx.my_exception)
-        ctx.my_exception->destroy();
+    auto exception = ctx.my_exception.load(std::memory_order_relaxed);
+    if (exception) {
+        exception->destroy();
+    }
     ITT_STACK_DESTROY(ctx.my_itt_caller);
 
     poison_pointer(ctx.my_parent);
@@ -91,7 +93,7 @@ void task_group_context_impl::initialize(d1::task_group_context& ctx) {
     ctx.my_lifetime_state.store(d1::task_group_context::lifetime_state::created, std::memory_order_relaxed);
     ctx.my_parent = nullptr;
     ctx.my_context_list = nullptr;
-    ctx.my_exception = nullptr;
+    ctx.my_exception.store(nullptr, std::memory_order_relaxed);
     ctx.my_itt_caller = nullptr;
 
     static_assert(sizeof(d1::cpu_ctl_env) <= sizeof(ctx.my_cpu_ctl_env), "FPU settings storage does not fit to uint64_t");
@@ -158,8 +160,6 @@ void task_group_context_impl::bind_to_impl(d1::task_group_context& ctx, thread_d
         // copy the state from it.
         ctx.my_cancellation_requested.store(ctx.my_parent->my_cancellation_requested.load(std::memory_order_relaxed), std::memory_order_relaxed);
     }
-
-    ctx.my_lifetime_state.store(d1::task_group_context::lifetime_state::bound, std::memory_order_release);
 }
 
 void task_group_context_impl::bind_to(d1::task_group_context& ctx, thread_data* td) {
@@ -169,7 +169,7 @@ void task_group_context_impl::bind_to(d1::task_group_context& ctx, thread_data* 
         if (state == d1::task_group_context::lifetime_state::created &&
 #if defined(__INTEL_COMPILER) && __INTEL_COMPILER <= 1910
             ((std::atomic<typename std::underlying_type<d1::task_group_context::lifetime_state>::type>&)ctx.my_lifetime_state).compare_exchange_strong(
-            (typename std::underlying_type<d1::task_group_context::lifetime_state>::type&)state,
+                (typename std::underlying_type<d1::task_group_context::lifetime_state>::type&)state,
                 (typename std::underlying_type<d1::task_group_context::lifetime_state>::type)d1::task_group_context::lifetime_state::locked)
 #else
             ctx.my_lifetime_state.compare_exchange_strong(state, d1::task_group_context::lifetime_state::locked)
@@ -179,15 +179,18 @@ void task_group_context_impl::bind_to(d1::task_group_context& ctx, thread_data* 
             // there is nothing to bind this context to, and we skip the binding part
             // treating the context as isolated.
             __TBB_ASSERT(td->my_task_dispatcher->m_execute_data_ext.context != nullptr, nullptr);
+            d1::task_group_context::lifetime_state release_state{};
             if (td->my_task_dispatcher->m_execute_data_ext.context == td->my_arena->my_default_ctx || !ctx.my_traits.bound) {
                 if (!ctx.my_traits.fp_settings) {
                     copy_fp_settings(ctx, *td->my_arena->my_default_ctx);
                 }
-                ctx.my_lifetime_state.store(d1::task_group_context::lifetime_state::isolated, std::memory_order_release);
+                release_state = d1::task_group_context::lifetime_state::isolated;
             } else {
                 bind_to_impl(ctx, td);
+                release_state = d1::task_group_context::lifetime_state::bound;
             }
             ITT_STACK_CREATE(ctx.my_itt_caller);
+            ctx.my_lifetime_state.store(release_state, std::memory_order_release);
         }
         spin_wait_while_eq(ctx.my_lifetime_state, d1::task_group_context::lifetime_state::locked);
     }
@@ -289,9 +292,11 @@ void task_group_context_impl::reset(d1::task_group_context& ctx) {
     //! TODO: Add assertion that this context does not have children
     // No fences are necessary since this context can be accessed from another thread
     // only after stealing happened (which means necessary fences were used).
-    if (ctx.my_exception) {
-        ctx.my_exception->destroy();
-        ctx.my_exception = nullptr;
+
+    auto exception = ctx.my_exception.load(std::memory_order_relaxed);
+    if (exception) {
+        exception->destroy();
+        ctx.my_exception.store(nullptr, std::memory_order_relaxed);
     }
     ctx.my_cancellation_requested = 0;
 }

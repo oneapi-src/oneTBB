@@ -198,13 +198,13 @@ public:
     static void destroy(d1::global_control& gc) {
         __TBB_ASSERT_RELEASE(gc.my_param < global_control::parameter_max, NULL);
         control_storage* const c = controls[gc.my_param];
+        // Concurrent reading and changing global parameter is possible.
+        spin_mutex::scoped_lock lock(c->my_list_mutex);
 #if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
         __TBB_ASSERT(gc.my_param == global_control::scheduler_handle || !c->my_list.empty(), NULL);
 #else
         __TBB_ASSERT(!c->my_list.empty(), NULL);
 #endif // __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
-        // Concurrent reading and changing global parameter is possible.
-        spin_mutex::scoped_lock lock(c->my_list_mutex);
         std::size_t new_active = (std::size_t)(-1), old_active = c->my_active_value;
 
         if (!erase_if_present(c, gc)) {
@@ -229,9 +229,9 @@ public:
     static bool remove_and_check_if_empty(d1::global_control& gc) {
         __TBB_ASSERT_RELEASE(gc.my_param < global_control::parameter_max, NULL);
         control_storage* const c = controls[gc.my_param];
-        __TBB_ASSERT(!c->my_list.empty(), NULL);
 
         spin_mutex::scoped_lock lock(c->my_list_mutex);
+        __TBB_ASSERT(!c->my_list.empty(), NULL);
         erase_if_present(c, gc);
         return c->my_list.empty();
     }

@@ -1687,7 +1687,7 @@ void StressTestMixFunctionality() {
 
                     if (curr_arena != arenas_pool.end()) {
                         curr_arena->arena->execute([]() {
-                            static tbb::affinity_partitioner aff;
+                            tbb::affinity_partitioner aff;
                             tbb::parallel_for(0, 10000, utils::DummyBody(10), tbb::auto_partitioner{});
                             tbb::parallel_for(0, 10000, utils::DummyBody(10), aff);
                         });
@@ -1745,7 +1745,6 @@ struct enqueue_test_helper {
     tbb::enumerable_thread_specific<bool>& my_ets;
     std::atomic<std::size_t>& my_task_counter;
 };
-
 //--------------------------------------------------//
 //! Test for task arena in concurrent cases
 //! \brief \ref requirement
@@ -1848,12 +1847,10 @@ TEST_CASE("Exception thrown during tbb::task_arena::execute call") {
     }(), std::exception );
 }
 #endif // TBB_USE_EXCEPTIONS
-
 //! \brief \ref stress
 TEST_CASE("Stress test with mixing functionality") {
     StressTestMixFunctionality();
 }
-
 //! \brief \ref stress
 TEST_CASE("Workers oversubscription") {
     std::size_t num_threads = utils::get_platform_max_threads();

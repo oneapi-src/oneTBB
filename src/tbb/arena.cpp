@@ -252,9 +252,10 @@ void arena::free_arena () {
 #endif
     // remove an internal reference
     my_market->release( /*is_public=*/false, /*blocking_terminate=*/false );
-    if ( !my_observers.empty() ) {
-        my_observers.clear();
-    }
+
+    // Clear enfources synchronization with observe(false)
+    my_observers.clear();
+
     void* storage  = &mailbox(my_num_slots-1);
     __TBB_ASSERT( my_references.load(std::memory_order_relaxed) == 0, NULL );
     __TBB_ASSERT( my_pool_state.load(std::memory_order_relaxed) == SNAPSHOT_EMPTY || !my_max_num_workers, NULL );
@@ -666,7 +667,7 @@ void task_arena_impl::execute(d1::task_arena_base& ta, d1::delegate_base& d) {
                     a->my_exit_monitors.cancel_wait(waiter);
                     nested_arena_context scope(*td, *a, index2 );
                     r1::wait(wo, exec_context);
-                    __TBB_ASSERT(!exec_context.my_exception, NULL); // exception can be thrown above, not deferred
+                    __TBB_ASSERT(!exec_context.my_exception.load(std::memory_order_relaxed), nullptr); // exception can be thrown above, not deferred
                     break;
                 }
                 a->my_exit_monitors.commit_wait(waiter);
@@ -677,9 +678,10 @@ void task_arena_impl::execute(d1::task_arena_base& ta, d1::delegate_base& d) {
                 a->my_exit_monitors.notify_one(); // do not relax!
             }
             // process possible exception
-            if (exec_context.my_exception) {
+            auto exception = exec_context.my_exception.load(std::memory_order_acquire);
+            if (exception) {
                 __TBB_ASSERT(exec_context.is_group_execution_cancelled(), "The task group context with an exception should be canceled.");
-                exec_context.my_exception->throw_self();
+                exception->throw_self();
             }
             __TBB_ASSERT(governor::is_thread_data_set(td), nullptr);
             return;
