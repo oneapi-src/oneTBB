@@ -993,18 +993,15 @@ void CMemTest::TestAlignedParameters()
     }
 }
 
-void CMemTest::RunAllTests(int )
+void CMemTest::RunAllTests(int total_threads)
 {
-#if 0
     Zerofilling();
     Free_NULL();
     InvariantDataRealloc(/*aligned=*/false, 8*MByte, /*checkData=*/true);
     if (Raligned_realloc)
         InvariantDataRealloc(/*aligned=*/true, 8*MByte, /*checkData=*/true);
     TestAlignedParameters();
-#endif
     UniquePointer();
-#if 0
     AddrArifm();
 #if __APPLE__ || __TBB_USE_THREAD_SANITIZER
     REPORT("Known issue: some tests are skipped on macOS\n");
@@ -1013,7 +1010,6 @@ void CMemTest::RunAllTests(int )
     NULLReturn(1*MByte,100*MByte,total_threads);
 #endif
     if (FullLog) REPORT("Tests for %d threads ended\n", total_threads);
-#endif
 }
 
 // TODO: fix the tests to support UWP mode
@@ -1032,7 +1028,6 @@ TEST_CASE("MAIN TEST") {
     // Check if we were called to test standard behavior
     // TODO: enable this mode
     // setSystemAllocs();
-#if 0
 #if __unix__
     /* According to man pthreads
        "NPTL threads do not share resource limits (fixed in kernel 2.6.10)".
@@ -1081,7 +1076,6 @@ TEST_CASE("MAIN TEST") {
 
     CheckArgumentsOverflow();
     CheckReallocLeak();
-#endif
     for( int p=MaxThread; p>=MinThread; --p ) {
         for (int limit=0; limit<2; limit++) {
             int ret = scalable_allocation_mode(TBBMALLOC_SET_SOFT_HEAP_LIMIT, 16*1024*limit);
