@@ -50,7 +50,7 @@ endif()
 
 # Enabling LTO on Android causes the NDK bug.
 # NDK throws the warning: "argument unused during compilation: '-Wa,--noexecstack'"
-if (NOT ANDROID_PLATFORM)
+if (NOT ANDROID_PLATFORM AND BUILD_SHARED_LIBS)
     set(TBB_IPO_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:-flto>)
     set(TBB_IPO_LINK_FLAGS $<$<NOT:$<CONFIG:Debug>>:-flto>)
 endif()

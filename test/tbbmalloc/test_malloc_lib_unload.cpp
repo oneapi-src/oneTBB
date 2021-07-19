@@ -118,7 +118,7 @@ int main() {}
 #include "common/config.h"
 // harness_defs.h must be included before tbb_stddef.h to overcome exception-dependent
 // system headers that come from tbb_stddef.h
-#if __TBB_WIN8UI_SUPPORT || __TBB_MIC_OFFLOAD || (__GNUC__ && __GNUC__ < 10 && __TBB_USE_SANITIZERS)
+#if __TBB_WIN8UI_SUPPORT || __TBB_MIC_OFFLOAD || (__GNUC__ && __GNUC__ < 10 && __TBB_USE_SANITIZERS) || __TBB_SOURCE_DIRECTLY_INCLUDED
 // The test does not work if dynamic load is unavailable.
 // For MIC offload, it fails because liboffload brings libiomp which observes and uses the fake scalable_* calls.
 // For sanitizers, it fails because RUNPATH is lost: https://github.com/google/sanitizers/issues/1219

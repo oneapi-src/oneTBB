@@ -32,8 +32,10 @@
 #define private public
 #define protected public
 #include "tbb/concurrent_queue.h"
+#if __TBB_DYNAMIC_LOAD_ENABLED
 #include "../../src/tbb/concurrent_bounded_queue.cpp"
 #include "../../src/tbb/misc.cpp"
+#endif
 #undef protected
 #undef private
 
