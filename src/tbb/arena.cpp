@@ -301,9 +301,7 @@ bool arena::is_out_of_work() {
             // this thread into the dispatch loop.
             std::size_t k;
             for (k = 0; k < n; ++k) {
-                if (my_slots[k].task_pool.load(std::memory_order_relaxed) != EmptyTaskPool &&
-                    my_slots[k].head.load(std::memory_order_relaxed) < my_slots[k].tail.load(std::memory_order_relaxed))
-                {
+                if (!my_slots[k].is_task_pool_empty()) {
                     // k-th primary task pool is nonempty and does contain tasks.
                     break;
                 }
