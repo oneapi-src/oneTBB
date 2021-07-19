@@ -110,6 +110,8 @@ inline void enqueue_impl(task_handle&& th, d1::task_arena_base* ta) {
 }
 #endif// __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 
+
+
 }
 namespace d1 {
 
@@ -211,34 +213,39 @@ R isolate_impl(F& f) {
     r1::isolate_within_arena(func, /*isolation*/ 0);
     return func.consume_result();
 }
+} //namespace d1
 
+namespace d2 {
 template <typename F>
-class enqueue_task : public task {
-    small_object_allocator m_allocator;
+class enqueue_task : public d1::task {
+    d1::small_object_allocator m_allocator;
     const F m_func;
 
-    void finalize(const execution_data& ed) {
+    void finalize(const d1::execution_data& ed) {
         m_allocator.delete_object(this, ed);
     }
-    task* execute(execution_data& ed) override {
-        m_func();
+    task* execute(d1::execution_data& ed) override {
+        task* res = task_ptr_or_nullptr(m_func);
         finalize(ed);
-        return nullptr;
+        return res;
     }
-    task* cancel(execution_data&) override {
+    task* cancel(d1::execution_data&) override {
         __TBB_ASSERT_RELEASE(false, "Unhandled exception from enqueue task is caught");
         return nullptr;
     }
 public:
-    enqueue_task(const F& f, small_object_allocator& alloc) : m_allocator(alloc), m_func(f) {}
-    enqueue_task(F&& f, small_object_allocator& alloc) : m_allocator(alloc), m_func(std::move(f)) {}
+    enqueue_task(const F& f, d1::small_object_allocator& alloc) : m_allocator(alloc), m_func(f) {}
+    enqueue_task(F&& f, d1::small_object_allocator& alloc) : m_allocator(alloc), m_func(std::move(f)) {}
 };
 
 template<typename F>
-void enqueue_impl(F&& f, task_arena_base* ta) {
-    small_object_allocator alloc{};
+void enqueue_impl(F&& f, d1::task_arena_base* ta) {
+    d1::small_object_allocator alloc{};
     r1::enqueue(*alloc.new_object<enqueue_task<typename std::decay<F>::type>>(std::forward<F>(f), alloc), ta);
 }
+} //namespace d2
+
+namespace d1 {
 /** 1-to-1 proxy representation class of scheduler's arena
  * Constructors set up settings only, real construction is deferred till the first method invocation
  * Destructor only removes one of the references to the inner arena representation.
@@ -386,7 +393,7 @@ public:
     template<typename F>
     void enqueue(F&& f) {
         initialize();
-        enqueue_impl(std::forward<F>(f), this);
+        d2::enqueue_impl(std::forward<F>(f), this);
     }
 
     //! Enqueues a task into the arena to process a functor wrapped in task_handle, and immediately returns.
@@ -473,7 +480,7 @@ inline void enqueue(d2::task_handle&& th) {
 
 template<typename F>
 inline void enqueue(F&& f) {
-    enqueue_impl(std::forward<F>(f), nullptr);
+    d2::enqueue_impl(std::forward<F>(f), nullptr);
 }
 #endif //__TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 

@@ -27,9 +27,7 @@
 #include "detail/_small_object_pool.h"
 #include "detail/_intrusive_list_node.h"
 
-#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 #include "detail/_task_handle.h"
-#endif
 
 #include "profiling.h"
 
@@ -78,10 +76,6 @@ struct task_group_context_impl;
 namespace d2 {
 
 #if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
-namespace {
-template<typename F>
-d1::task* task_ptr_or_nullptr(F&& f);
-}
 
 template<typename F>
 class function_task : public task_handle_task  {
@@ -106,36 +100,6 @@ public:
           m_func(std::forward<FF>(f)) {}
 };
 
-namespace {
-    template<typename F>
-    d1::task* task_ptr_or_nullptr_impl(std::false_type, F&& f){
-        task_handle th = std::forward<F>(f)();
-        return task_handle_accessor::release(th);
-    }
-
-    template<typename F>
-    d1::task* task_ptr_or_nullptr_impl(std::true_type, F&& f){
-        std::forward<F>(f)();
-        return nullptr;
-    }
-
-    template<typename F>
-    d1::task* task_ptr_or_nullptr(F&& f){
-        using is_void_t = std::is_void<
-            decltype(std::forward<F>(f)())
-            >;
-
-        return  task_ptr_or_nullptr_impl(is_void_t{}, std::forward<F>(f));
-    }
-}
-#else
-namespace {
-    template<typename F>
-    d1::task* task_ptr_or_nullptr(F&& f){
-        std::forward<F>(f)();
-        return nullptr;
-    }
-}  // namespace
 #endif // __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 } // namespace d2
 
