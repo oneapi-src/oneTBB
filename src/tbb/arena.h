@@ -376,7 +376,8 @@ public:
     void enqueue_task(d1::task&, d1::task_group_context&, thread_data&);
 
     //! Registers the worker with the arena and enters TBB scheduler dispatch loop
-    void process(thread_data&);
+    /** Return next arena to process, or NULL. */
+    arena* process(thread_data&);
 
     //! Notification that the thread leaves its arena
     template<unsigned ref_param>
