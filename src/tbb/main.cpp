@@ -35,8 +35,6 @@ namespace r1 {
 //------------------------------------------------------------------------
 // governor data
 basic_tls<thread_data*> governor::theTLS;
-unsigned governor::DefaultNumberOfThreads;
-size_t governor::DefaultPageSize;
 rml::tbb_factory governor::theRMLServerFactory;
 bool governor::UsePrivateRML;
 bool governor::is_rethrow_broken;

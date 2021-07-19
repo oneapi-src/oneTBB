@@ -51,7 +51,7 @@ void __TBB_EXPORTED_FUNC spawn(d1::task& t, d1::task_group_context& ctx, d1::slo
     // Mark isolation
     task_accessor::isolation(t) = ed.isolation;
 
-    if ( id != d1::no_slot && id != tls->my_arena_index ) {
+    if ( id != d1::no_slot && id != tls->my_arena_index && id < a->my_num_slots) {
         // Allocate proxy task
         d1::small_object_allocator alloc{};
         auto proxy = alloc.new_object<task_proxy>(static_cast<d1::execution_data&>(ed));

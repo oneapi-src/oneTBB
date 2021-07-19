@@ -326,7 +326,8 @@ void market::try_destroy_arena ( arena* a, uintptr_t aba_epoch, unsigned priorit
             if ( a == &*it ) {
                 if ( it->my_aba_epoch == aba_epoch ) {
                     // Arena is alive
-                    if ( !a->my_num_workers_requested && !a->my_references.load(std::memory_order_relaxed) ) {
+                    // Acquire my_references to sync with threads that just left the arena
+                    if (!a->my_num_workers_requested && !a->my_references.load(std::memory_order_acquire)) {
                         __TBB_ASSERT(
                             !a->my_num_workers_allotted.load(std::memory_order_relaxed) &&
                             (a->my_pool_state == arena::SNAPSHOT_EMPTY || !a->my_max_num_workers),

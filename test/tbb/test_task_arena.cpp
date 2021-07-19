@@ -1746,6 +1746,7 @@ struct enqueue_test_helper {
     std::atomic<std::size_t>& my_task_counter;
 };
 
+#if 0
 //--------------------------------------------------//
 //! Test for task arena in concurrent cases
 //! \brief \ref requirement
@@ -2035,3 +2036,22 @@ TEST_CASE("is_inside_task in arena::execute") {
     });
 }
 #endif //__TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+#endif
+
+//! The test for a regression when producer of affinity tasks and consumer left
+//! the arena and no one can proceed the tasks
+//! \brief \ref regression
+TEST_CASE("abandon afifinity tasks deadlock") {
+    const int num_arenas = 16;
+    std::vector<tbb::task_arena> arenas(num_arenas);
+    for (int trail = 0; trail < 1000000; trail) {
+        tbb::parallel_for(0, num_arenas, [&arenas](int i) {
+            arenas[i].execute([] {
+                tbb::parallel_for(0, tbb::this_task_arena::max_concurrency(), [](int) {}, tbb::static_partitioner{});
+                });
+            });
+        if (trail % 100 == 0) {
+            std::cout << "." << std::flush;
+        }
+    }
+}

@@ -158,8 +158,6 @@ void task_group_context_impl::bind_to_impl(d1::task_group_context& ctx, thread_d
         // copy the state from it.
         ctx.my_cancellation_requested.store(ctx.my_parent->my_cancellation_requested.load(std::memory_order_relaxed), std::memory_order_relaxed);
     }
-
-    ctx.my_lifetime_state.store(d1::task_group_context::lifetime_state::bound, std::memory_order_release);
 }
 
 void task_group_context_impl::bind_to(d1::task_group_context& ctx, thread_data* td) {
@@ -179,15 +177,18 @@ void task_group_context_impl::bind_to(d1::task_group_context& ctx, thread_data* 
             // there is nothing to bind this context to, and we skip the binding part
             // treating the context as isolated.
             __TBB_ASSERT(td->my_task_dispatcher->m_execute_data_ext.context != nullptr, nullptr);
+            d1::task_group_context::lifetime_state release_state{};
             if (td->my_task_dispatcher->m_execute_data_ext.context == td->my_arena->my_default_ctx || !ctx.my_traits.bound) {
                 if (!ctx.my_traits.fp_settings) {
                     copy_fp_settings(ctx, *td->my_arena->my_default_ctx);
                 }
-                ctx.my_lifetime_state.store(d1::task_group_context::lifetime_state::isolated, std::memory_order_release);
+                release_state = d1::task_group_context::lifetime_state::isolated;
             } else {
                 bind_to_impl(ctx, td);
+                release_state = d1::task_group_context::lifetime_state::bound;
             }
             ITT_STACK_CREATE(ctx.my_itt_caller);
+            ctx.my_lifetime_state.store(release_state, std::memory_order_release);
         }
         spin_wait_while_eq(ctx.my_lifetime_state, d1::task_group_context::lifetime_state::locked);
     }
