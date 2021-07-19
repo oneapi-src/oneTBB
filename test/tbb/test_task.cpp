@@ -855,8 +855,8 @@ TEST_CASE("Workers migration") {
     std::size_t thread_number = utils::get_platform_max_threads();
     if (thread_number < 3) return;
 
-    tbb::task_arena first_arena(thread_number - 2, 0);
-    tbb::task_arena second_arena(thread_number - 2, 0);
+    tbb::task_arena first_arena(int(thread_number - 2), 0);
+    tbb::task_arena second_arena(int(thread_number - 2), 0);
 
     for (std::size_t k = 0; k < 10; ++k) {
         TestMigrationObserver test_observer(first_arena, thread_number - 2);
