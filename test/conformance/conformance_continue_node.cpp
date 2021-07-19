@@ -18,11 +18,14 @@
 #pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
 #endif
 
+#define CONTINUE_NODE
+
 #include "conformance_flowgraph.h"
 
 //! \file conformance_continue_node.cpp
 //! \brief Test for [flow_graph.continue_node] specification
 
+using output_msg = conformance::conformance_output_msg<false, true, false>;
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 
@@ -108,7 +111,7 @@ void test_deduction_guides() {
 //! Test node can do try_put call
 //! \brief \ref interface \ref requirement
 TEST_CASE("continue body") {
-    conformance::test_body_exec<oneapi::tbb::flow::continue_node<int>>();
+    conformance::test_body_exec<oneapi::tbb::flow::continue_node<output_msg>, oneapi::tbb::flow::continue_msg, output_msg>();
 }
 
 //! Test continue_node is a graph_node, receiver<continue_msg>, and sender<Output>
@@ -116,13 +119,14 @@ TEST_CASE("continue body") {
 TEST_CASE("continue_node superclasses"){
     conformance::test_inheritance<oneapi::tbb::flow::continue_node<int>, oneapi::tbb::flow::continue_msg, int>();
     conformance::test_inheritance<oneapi::tbb::flow::continue_node<void*>, oneapi::tbb::flow::continue_msg, void*>();
+    conformance::test_inheritance<oneapi::tbb::flow::continue_node<output_msg>, oneapi::tbb::flow::continue_msg, output_msg>();
 }
 
 //! Test body copying and copy_body logic
 //! Test the body object passed to a node is copied
 //! \brief \ref interface
 TEST_CASE("continue_node and body copying"){
-    conformance::test_copy_body<oneapi::tbb::flow::continue_node<int>, conformance::CountingObject<int>>();
+    conformance::test_copy_body<oneapi::tbb::flow::continue_node<int>, conformance::CountingObject<int, oneapi::tbb::flow::continue_msg>>();
 }
 
 //! Test deduction guides
@@ -136,14 +140,15 @@ TEST_CASE("Deduction guides"){
 //! Test node broadcast messages to successors
 //! \brief \ref requirement
 TEST_CASE("continue_node broadcast"){
-    conformance::counting_functor<int> fun(conformance::expected);
-    conformance::test_forwarding<oneapi::tbb::flow::continue_node<int>>(1, fun);
+    conformance::counting_functor<output_msg> fun(conformance::expected);
+    conformance::test_forwarding<oneapi::tbb::flow::continue_node<output_msg>,  oneapi::tbb::flow::continue_msg, output_msg>(1, fun);
 }
 
-//! Test node not buffered unsuccesful message, and try_get after rejection should not succeed.
+//! Test node not buffered unsuccessful message, and try_get after rejection should not succeed.
 //! \brief \ref requirement
 TEST_CASE("continue_node buffering"){
-    conformance::test_buffering<oneapi::tbb::flow::continue_node<int>>();
+    conformance::dummy_functor<int> fun;
+    conformance::test_buffering<oneapi::tbb::flow::continue_node<int>, oneapi::tbb::flow::continue_msg>(fun);
 }
 
 //! Test all node costructors
@@ -174,17 +179,17 @@ TEST_CASE("continue_node copy constructor"){
     graph g;
 
     conformance::dummy_functor<int> fun1;
-    conformance::CountingObject<int> fun2;
+    conformance::CountingObject<int, oneapi::tbb::flow::continue_msg> fun2;
 
     continue_node<oneapi::tbb::flow::continue_msg> node0(g, fun1);
-    continue_node<oneapi::tbb::flow::continue_msg> node1(g, 2, fun2);
-    conformance::test_push_receiver<oneapi::tbb::flow::continue_msg> node2(g);
-    conformance::test_push_receiver<oneapi::tbb::flow::continue_msg> node3(g);
+    continue_node<output_msg> node1(g, 2, fun2);
+    conformance::test_push_receiver<output_msg> node2(g);
+    conformance::test_push_receiver<output_msg> node3(g);
 
     oneapi::tbb::flow::make_edge(node0, node1);
     oneapi::tbb::flow::make_edge(node1, node2);
 
-    continue_node<oneapi::tbb::flow::continue_msg> node_copy(node1);
+    continue_node<output_msg> node_copy(node1);
 
     conformance::test_body_copying(node_copy, fun2);
 
@@ -237,13 +242,13 @@ TEST_CASE("continue_node number_of_predecessors") {
 //! Test nodes for execution with priority in single-threaded configuration
 //! \brief \ref requirement
 TEST_CASE("continue_node priority support"){
-    conformance::test_priority<oneapi::tbb::flow::continue_node<oneapi::tbb::flow::continue_msg, oneapi::tbb::flow::continue_msg>>();
+    conformance::test_priority<oneapi::tbb::flow::continue_node<oneapi::tbb::flow::continue_msg, int>, oneapi::tbb::flow::continue_msg>();
 }
 
 //! Test node Output class meet the CopyConstructible requirements.
 //! \brief \ref requirement
 TEST_CASE("continue_node Output class") {
-    conformance::test_output_class<oneapi::tbb::flow::continue_node<conformance::CountingObject<int>>>();
+    conformance::test_output_class<oneapi::tbb::flow::continue_node<conformance::CountingObject<int, oneapi::tbb::flow::continue_msg>>, conformance::CountingObject<int, oneapi::tbb::flow::continue_msg>>();
 }
 
 //! Test body `try_put' statement not wait for the execution of the body to complete

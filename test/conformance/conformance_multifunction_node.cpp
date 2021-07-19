@@ -25,6 +25,9 @@
 //! \file conformance_multifunction_node.cpp
 //! \brief Test for [flow_graph.function_node] specification
 
+using input_msg = conformance::conformance_input_msg<true, true, false>;
+using output_msg = conformance::conformance_output_msg<false, false, false>;
+
 /*
     Test function_node is a graph_node, receiver<Input>, and sender<Output>
 */
@@ -45,7 +48,7 @@ TEST_CASE("multifunction_node with rejecting policy"){
 //! Test nodes for execution with priority in single-threaded configuration
 //! \brief \ref interface
 TEST_CASE("multifunction_node priority"){
-    conformance::test_priority<oneapi::tbb::flow::multifunction_node<oneapi::tbb::flow::continue_msg, std::tuple<oneapi::tbb::flow::continue_msg>>>(oneapi::tbb::flow::unlimited);
+    conformance::test_priority<oneapi::tbb::flow::multifunction_node<input_msg, std::tuple<int>>, input_msg>(oneapi::tbb::flow::unlimited);
 }
 
 //! Test function_node has a user-settable concurrency limit. It can be set to one of predefined values. 
@@ -75,33 +78,35 @@ TEST_CASE("multifunction_node constructors"){
 //! The predecessors and successors of src are not copied.
 //! \brief \ref interface
 TEST_CASE("multifunction_node copy constructor"){
-    conformance::test_copy_ctor<oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>, conformance::CountingObject<std::tuple<int>, int>>();
+    conformance::test_copy_ctor<oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>, conformance::CountingObject<int>>();
 }
 
-//! Test node not buffered unsuccesful message, and try_get after rejection should not succeed.
+//! Test node not buffered unsuccessful message, and try_get after rejection should not succeed.
 //! \brief \ref requirement
 TEST_CASE("multifunction_node buffering"){
-    conformance::test_buffering<oneapi::tbb::flow::multifunction_node<oneapi::tbb::flow::continue_msg, std::tuple<int>, oneapi::tbb::flow::rejecting>>(oneapi::tbb::flow::unlimited);
+    conformance::dummy_functor<int> fun;
+    conformance::test_buffering<oneapi::tbb::flow::multifunction_node<input_msg, std::tuple<int>,
+    oneapi::tbb::flow::rejecting>, input_msg>(oneapi::tbb::flow::unlimited, fun);
 }
 
 //! Test multifunction_node broadcasting
 //! \brief \ref requirement
 TEST_CASE("multifunction_node broadcast"){
-    conformance::counting_functor<int> fun(conformance::expected);
-    conformance::test_forwarding<oneapi::tbb::flow::multifunction_node<oneapi::tbb::flow::continue_msg, std::tuple<int>>>(1, oneapi::tbb::flow::unlimited, fun);
+    conformance::counting_functor<output_msg> fun(conformance::expected);
+    conformance::test_forwarding<oneapi::tbb::flow::multifunction_node<input_msg, std::tuple<output_msg>>, input_msg, output_msg>(1, oneapi::tbb::flow::unlimited, fun);
 }
 
 //! Test the body object passed to a node is copied
 //! \brief \ref interface
 TEST_CASE("multifunction_node copy body"){
-    conformance::test_copy_body<oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>, conformance::CountingObject<std::tuple<int>, int>>(oneapi::tbb::flow::unlimited);
+    conformance::test_copy_body<oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>, conformance::CountingObject<int>>(oneapi::tbb::flow::unlimited);
 }
 
 //! Test execution of node body
 //! Test node can do try_put call
 //! \brief \ref interface \ref requirement
 TEST_CASE("multifunction_node body") {
-    conformance::test_body_exec<oneapi::tbb::flow::multifunction_node<oneapi::tbb::flow::continue_msg, std::tuple<int>, oneapi::tbb::flow::rejecting>>(oneapi::tbb::flow::unlimited);
+    conformance::test_body_exec<oneapi::tbb::flow::multifunction_node<input_msg, std::tuple<output_msg>, oneapi::tbb::flow::rejecting>, input_msg, output_msg>(oneapi::tbb::flow::unlimited);
 }
 
 //! Test multifunction_node output_ports() returns a tuple of output ports.
@@ -121,6 +126,7 @@ TEST_CASE("multifunction_node output_ports") {
 TEST_CASE("multifunction_node superclasses"){
     test_inheritance<int, std::tuple<int>>();
     test_inheritance<void*, std::tuple<float>>();
+    test_inheritance<input_msg, std::tuple<output_msg>>();
 }
 
 //! Test node Input class meet the DefaultConstructible and CopyConstructible requirements and Output class meet the CopyConstructible requirements.

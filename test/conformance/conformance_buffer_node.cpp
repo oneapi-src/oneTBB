@@ -34,7 +34,7 @@ TEST_CASE("buffer_node single_push"){
 //! Test function_node buffering
 //! \brief \ref requirement
 TEST_CASE("buffer_node buffering"){
-    conformance::test_buffering_for_buffering_nodes<oneapi::tbb::flow::buffer_node<int>>();
+    conformance::test_buffering<oneapi::tbb::flow::buffer_node<int>, int>();
 }
 
 //! Constructs an empty buffer_node that belongs to the same graph g as src.

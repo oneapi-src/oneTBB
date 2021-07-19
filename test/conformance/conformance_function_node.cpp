@@ -18,7 +18,12 @@
 #pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
 #endif
 
+#define COPY_CONSTRUCTIBLE_OUTPUT
+
 #include "conformance_flowgraph.h"
+
+using input_msg = conformance::conformance_input_msg<true, true, false>;
+using output_msg = conformance::conformance_output_msg<false, true, false>;
 
 //! \file conformance_function_node.cpp
 //! \brief Test for [flow_graph.function_node] specification
@@ -76,10 +81,10 @@ void test_deduction_guides() {
 //! Test calling function body
 //! \brief \ref interface \ref requirement
 TEST_CASE("Test function_node body") {
-    conformance::test_body_exec<oneapi::tbb::flow::function_node<oneapi::tbb::flow::continue_msg, int>>(oneapi::tbb::flow::unlimited);
+    conformance::test_body_exec<oneapi::tbb::flow::function_node<input_msg, output_msg>, input_msg, output_msg>(oneapi::tbb::flow::unlimited);
 }
 
-//! Test function_node costructors
+//! Test function_node constructors
 //! \brief \ref requirement
 TEST_CASE("function_node constructors"){
     using namespace oneapi::tbb::flow;
@@ -104,14 +109,14 @@ TEST_CASE("function_node copy constructor"){
 //! Test node reject the incoming message if the concurrency limit achieved.
 //! \brief \ref interface
 TEST_CASE("function_node with rejecting policy"){
-    conformance::test_rejecting<oneapi::tbb::flow::function_node <int, int, oneapi::tbb::flow::rejecting>>();
+    conformance::test_rejecting<oneapi::tbb::flow::function_node<int, int, oneapi::tbb::flow::rejecting>>();
 }
 
 //! Test body copying and copy_body logic
 //! Test the body object passed to a node is copied
 //! \brief \ref interface
 TEST_CASE("function_node and body copying"){
-    conformance::test_copy_body<oneapi::tbb::flow::function_node<oneapi::tbb::flow::continue_msg, int>, conformance::CountingObject<int>>(oneapi::tbb::flow::unlimited);
+    conformance::test_copy_body<oneapi::tbb::flow::function_node<int, int>, conformance::CountingObject<int>>(oneapi::tbb::flow::unlimited);
 }
 
 //! Test function_node is a graph_node, receiver<Input>, and sender<Output>
@@ -119,20 +124,22 @@ TEST_CASE("function_node and body copying"){
 TEST_CASE("function_node superclasses"){
     conformance::test_inheritance<oneapi::tbb::flow::function_node<int, int>, int, int>();
     conformance::test_inheritance<oneapi::tbb::flow::function_node<void*, float>, void*, float>();
+    conformance::test_inheritance<oneapi::tbb::flow::function_node<input_msg, output_msg>, input_msg, output_msg>();
 }
 
-//! Test node not buffered unsuccesful message, and try_get after rejection should not succeed.
+//! Test node not buffered unsuccessful message, and try_get after rejection should not succeed.
 //! \brief \ref requirement
 TEST_CASE("function_node buffering"){
-    conformance::test_buffering<oneapi::tbb::flow::function_node<oneapi::tbb::flow::continue_msg, int, oneapi::tbb::flow::rejecting>>(oneapi::tbb::flow::unlimited);
-    conformance::test_buffering<oneapi::tbb::flow::function_node<oneapi::tbb::flow::continue_msg, int, oneapi::tbb::flow::queueing>>(oneapi::tbb::flow::unlimited);
+    conformance::dummy_functor<int> fun;
+    conformance::test_buffering<oneapi::tbb::flow::function_node<input_msg, int, oneapi::tbb::flow::rejecting>, input_msg>(oneapi::tbb::flow::unlimited, fun);
+    conformance::test_buffering<oneapi::tbb::flow::function_node<input_msg, int, oneapi::tbb::flow::queueing>, input_msg>(oneapi::tbb::flow::unlimited, fun);
 }
 
 //! Test node broadcast messages to successors
 //! \brief \ref requirement
 TEST_CASE("function_node broadcast"){
-    conformance::counting_functor<int> fun(conformance::expected);
-    conformance::test_forwarding<oneapi::tbb::flow::function_node<oneapi::tbb::flow::continue_msg, int>>(1, oneapi::tbb::flow::unlimited, fun);
+    conformance::counting_functor<output_msg> fun(conformance::expected);
+    conformance::test_forwarding<oneapi::tbb::flow::function_node<input_msg, output_msg>, input_msg, output_msg>(1, oneapi::tbb::flow::unlimited, fun);
 }
 
 //! Test deduction guides
@@ -146,7 +153,7 @@ TEST_CASE("Deduction guides"){
 //! Test priorities work in single-threaded configuration
 //! \brief \ref requirement
 TEST_CASE("function_node priority support"){
-    conformance::test_priority<oneapi::tbb::flow::function_node<oneapi::tbb::flow::continue_msg, oneapi::tbb::flow::continue_msg>>(oneapi::tbb::flow::unlimited);
+    conformance::test_priority<oneapi::tbb::flow::function_node<input_msg, int>, input_msg>(oneapi::tbb::flow::unlimited);
 }
 
 //! Test function_node has a user-settable concurrency limit. It can be set to one of predefined values. 

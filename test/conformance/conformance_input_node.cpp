@@ -25,6 +25,8 @@
 //! \file conformance_input_node.cpp
 //! \brief Test for [flow_graph.input_node] specification
 
+using output_msg = conformance::conformance_output_msg<true, true, true>;
+
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 int input_body_f(tbb::flow_control&) { return 42; }
 
@@ -85,7 +87,7 @@ TEST_CASE("input_node and body copying"){
 //! has a copy of the initial body used by src.
 //! The successors of src are not copied.
 //! \brief \ref requirement
-TEST_CASE("continue_node copy constructor"){
+TEST_CASE("input_node copy constructor"){
     using namespace oneapi::tbb::flow;
     graph g;
 
@@ -119,37 +121,40 @@ TEST_CASE("continue_node copy constructor"){
 TEST_CASE("input_node superclasses"){
     test_inheritance<int>();
     test_inheritance<void*>();
+    test_inheritance<output_msg>();
 }
 
 //! Test input_node forwarding
 //! \brief \ref requirement
 TEST_CASE("input_node forwarding"){
-    conformance::counting_functor<int> fun(conformance::expected);
-    conformance::test_forwarding<oneapi::tbb::flow::input_node<int>>(5, fun);
+    conformance::counting_functor<output_msg> fun(conformance::expected);
+    conformance::test_forwarding<oneapi::tbb::flow::input_node<output_msg>, void, output_msg>(5, fun);
 }
 
 //! Test input_node buffering
 //! \brief \ref requirement
 TEST_CASE("input_node buffering"){
-    conformance::test_buffering<oneapi::tbb::flow::input_node<int>>();
+    conformance::dummy_functor<int> fun;
+    conformance::test_buffering<oneapi::tbb::flow::input_node<int>, int>(fun);
 }
 
 //! Test calling input_node body
 //! \brief \ref interface \ref requirement
 TEST_CASE("input_node body") {
     oneapi::tbb::flow::graph g;
-    conformance::counting_functor<int> fun(10);
+    constexpr std::size_t counting_threshold = 10;
+    conformance::counting_functor<output_msg> fun(counting_threshold);
 
-    oneapi::tbb::flow::input_node<int> node1(g, fun);
-    conformance::test_push_receiver<int> node2(g);
+    oneapi::tbb::flow::input_node<output_msg> node1(g, fun);
+    conformance::test_push_receiver<output_msg> node2(g);
 
     oneapi::tbb::flow::make_edge(node1, node2);
 
     node1.activate();
     g.wait_for_all();
 
-    CHECK_MESSAGE((conformance::get_values(node2).size() == 10), "Descendant of the node needs to be receive N messages");
-    CHECK_MESSAGE((fun.execute_count == 10 + 1), "Body of the node needs to be executed N + 1 times");
+    CHECK_MESSAGE((conformance::get_values(node2).size() == counting_threshold), "Descendant of the node needs to be receive N messages");
+    CHECK_MESSAGE((fun.execute_count == counting_threshold + 1), "Body of the node needs to be executed N + 1 times");
 }
 
 //! Test deduction guides

@@ -29,13 +29,13 @@
 //! Test function_node broadcast
 //! \brief \ref requirement
 TEST_CASE("write_once_node broadcast"){
-    conformance::test_forwarding<oneapi::tbb::flow::write_once_node<int>>(1);
+    conformance::test_forwarding<oneapi::tbb::flow::write_once_node<int>, int>(1);
 }
 
 //! Test write_once_node buffering
 //! \brief \ref requirement
 TEST_CASE("write_once_node buffering"){
-    conformance::test_buffering_for_buffering_nodes<oneapi::tbb::flow::write_once_node<int>>();
+    conformance::test_buffering<oneapi::tbb::flow::write_once_node<int>, int>();
 }
 
 //! The node that is constructed has a reference to the same graph object as src,with an invalid internal buffer item. 
@@ -52,7 +52,7 @@ TEST_CASE("write_once_node superclasses"){
     conformance::test_inheritance<oneapi::tbb::flow::write_once_node<void*>, void*, void*>();
 }
 
-//! Test overwrite_node node costructor
+//! Test overwrite_node node constructor
 //! \brief \ref requirement
 TEST_CASE("write_once_node constructor"){
     oneapi::tbb::flow::graph g;

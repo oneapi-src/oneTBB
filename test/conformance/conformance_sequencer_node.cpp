@@ -26,10 +26,6 @@
 //! \file conformance_sequencer_node.cpp
 //! \brief Test for [flow_graph.sequencer_node] specification
 
-/*
-TODO: implement missing conformance tests for sequencer_node:
-    The sequencer_node rejects duplicate sequencer numbers.
-*/
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 template <typename Body>
@@ -87,7 +83,7 @@ TEST_CASE("sequencer_node single_push"){
 //! \brief \ref requirement
 TEST_CASE("sequencer_node buffering"){
     Sequencer<int> sequencer;
-    conformance::test_buffering_for_buffering_nodes<oneapi::tbb::flow::sequencer_node<int>>(sequencer);
+    conformance::test_buffering<oneapi::tbb::flow::sequencer_node<int>, int>(sequencer);
 }
 
 //! Constructs an empty sequencer_node that belongs to the same graph g as src.
@@ -103,6 +99,20 @@ TEST_CASE("sequencer_node copy constructor"){
 TEST_CASE("sequencer_node superclasses"){
     conformance::test_inheritance<oneapi::tbb::flow::sequencer_node<int>, int, int>();
     conformance::test_inheritance<oneapi::tbb::flow::sequencer_node<void*>, void*, void*>();
+}
+
+//! Test the sequencer_node rejects duplicate sequencer numbers
+//! \brief \ref interface
+TEST_CASE("sequencer_node rejects duplicate"){
+    oneapi::tbb::flow::graph g;
+    Sequencer<int> sequencer;
+
+    oneapi::tbb::flow::sequencer_node<int> node(g, sequencer);
+
+    node.try_put(1);
+
+    CHECK_MESSAGE((node.try_put(1) == false), "sequencer_node must rejects duplicate sequencer numbers");
+    g.wait_for_all();
 }
 
 //! Test queue_node node `try_put()` and `try_get()`
