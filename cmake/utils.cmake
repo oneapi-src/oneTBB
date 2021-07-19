@@ -36,9 +36,11 @@ macro(tbb_install_target target)
             DESTINATION ${CMAKE_INSTALL_LIBDIR}
             COMPONENT devel)
 
-    install(TARGETS ${target}
-        LIBRARY
-            DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            NAMELINK_ONLY
-            COMPONENT devel)
+    if (BUILD_SHARED_LIBS)
+        install(TARGETS ${target}
+            LIBRARY
+                DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                NAMELINK_ONLY
+                COMPONENT devel)
+    endif()
 endmacro()
