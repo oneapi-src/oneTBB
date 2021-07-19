@@ -469,52 +469,6 @@ void test_follows_and_precedes_api() {
 }
 #endif
 
-#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
-
-int function_body_f(const int&) { return 1; }
-
-template <typename Body>
-void test_deduction_guides_common(Body body) {
-    using namespace tbb::flow;
-    graph g;
-
-    function_node f1(g, unlimited, body);
-    static_assert(std::is_same_v<decltype(f1), function_node<int, int>>);
-
-    function_node f2(g, unlimited, body, rejecting());
-    static_assert(std::is_same_v<decltype(f2), function_node<int, int, rejecting>>);
-
-    function_node f3(g, unlimited, body, node_priority_t(5));
-    static_assert(std::is_same_v<decltype(f3), function_node<int, int>>);
-
-    function_node f4(g, unlimited, body, rejecting(), node_priority_t(5));
-    static_assert(std::is_same_v<decltype(f4), function_node<int, int, rejecting>>);
-
-#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
-    function_node f5(follows(f2), unlimited, body);
-    static_assert(std::is_same_v<decltype(f5), function_node<int, int>>);
-
-    function_node f6(follows(f5), unlimited, body, rejecting());
-    static_assert(std::is_same_v<decltype(f6), function_node<int, int, rejecting>>);
-
-    function_node f7(follows(f6), unlimited, body, node_priority_t(5));
-    static_assert(std::is_same_v<decltype(f7), function_node<int, int>>);
-
-    function_node f8(follows(f7), unlimited, body, rejecting(), node_priority_t(5));
-    static_assert(std::is_same_v<decltype(f8), function_node<int, int, rejecting>>);
-#endif // __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
-
-    function_node f9(f1);
-    static_assert(std::is_same_v<decltype(f9), function_node<int, int>>);
-}
-
-void test_deduction_guides() {
-    test_deduction_guides_common([](const int&)->int { return 1; });
-    test_deduction_guides_common([](const int&) mutable ->int { return 1; });
-    test_deduction_guides_common(function_body_f);
-}
-
-#endif
 
 //! Test various node bodies with concurrency
 //! \brief \ref error_guessing
@@ -535,14 +489,6 @@ TEST_CASE("Lightweight testing"){
 //! \brief \ref error_guessing
 TEST_CASE("Flowgraph node set test"){
      test_follows_and_precedes_api();
-}
-#endif
-
-#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
-//! Test decution guides
-//! \brief \ref requirement
-TEST_CASE("Deduction guides test"){
-     test_deduction_guides();
 }
 #endif
 

@@ -310,86 +310,6 @@ void test_follows_and_precedes_api() {
 }
 #endif // __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
 
-#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
-
-template <typename ExpectedType, typename Body>
-void test_deduction_guides_common(Body body) {
-    using namespace tbb::flow;
-    graph g;
-
-    continue_node c1(g, body);
-    static_assert(std::is_same_v<decltype(c1), continue_node<ExpectedType>>);
-
-    continue_node c2(g, body, lightweight());
-    static_assert(std::is_same_v<decltype(c2), continue_node<ExpectedType, lightweight>>);
-
-    continue_node c3(g, 5, body);
-    static_assert(std::is_same_v<decltype(c3), continue_node<ExpectedType>>);
-
-    continue_node c4(g, 5, body, lightweight());
-    static_assert(std::is_same_v<decltype(c4), continue_node<ExpectedType, lightweight>>);
-
-    continue_node c5(g, body, node_priority_t(5));
-    static_assert(std::is_same_v<decltype(c5), continue_node<ExpectedType>>);
-
-    continue_node c6(g, body, lightweight(), node_priority_t(5));
-    static_assert(std::is_same_v<decltype(c6), continue_node<ExpectedType, lightweight>>);
-
-    continue_node c7(g, 5, body, node_priority_t(5));
-    static_assert(std::is_same_v<decltype(c7), continue_node<ExpectedType>>);
-
-    continue_node c8(g, 5, body, lightweight(), node_priority_t(5));
-    static_assert(std::is_same_v<decltype(c8), continue_node<ExpectedType, lightweight>>);
-
-#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
-    broadcast_node<continue_msg> b(g);
-
-    continue_node c9(follows(b), body);
-    static_assert(std::is_same_v<decltype(c9), continue_node<ExpectedType>>);
-
-    continue_node c10(follows(b), body, lightweight());
-    static_assert(std::is_same_v<decltype(c10), continue_node<ExpectedType, lightweight>>);
-
-    continue_node c11(follows(b), 5, body);
-    static_assert(std::is_same_v<decltype(c11), continue_node<ExpectedType>>);
-
-    continue_node c12(follows(b), 5, body, lightweight());
-    static_assert(std::is_same_v<decltype(c12), continue_node<ExpectedType, lightweight>>);
-
-    continue_node c13(follows(b), body, node_priority_t(5));
-    static_assert(std::is_same_v<decltype(c13), continue_node<ExpectedType>>);
-
-    continue_node c14(follows(b), body, lightweight(), node_priority_t(5));
-    static_assert(std::is_same_v<decltype(c14), continue_node<ExpectedType, lightweight>>);
-
-    continue_node c15(follows(b), 5, body, node_priority_t(5));
-    static_assert(std::is_same_v<decltype(c15), continue_node<ExpectedType>>);
-
-    continue_node c16(follows(b), 5, body, lightweight(), node_priority_t(5));
-    static_assert(std::is_same_v<decltype(c16), continue_node<ExpectedType, lightweight>>);
-#endif // __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
-
-    continue_node c17(c1);
-    static_assert(std::is_same_v<decltype(c17), continue_node<ExpectedType>>);
-}
-
-int continue_body_f(const tbb::flow::continue_msg&) { return 1; }
-void continue_void_body_f(const tbb::flow::continue_msg&) {}
-
-void test_deduction_guides() {
-    using tbb::flow::continue_msg;
-    test_deduction_guides_common<int>([](const continue_msg&)->int { return 1; } );
-    test_deduction_guides_common<continue_msg>([](const continue_msg&) {});
-
-    test_deduction_guides_common<int>([](const continue_msg&) mutable ->int { return 1; });
-    test_deduction_guides_common<continue_msg>([](const continue_msg&) mutable {});
-
-    test_deduction_guides_common<int>(continue_body_f);
-    test_deduction_guides_common<continue_msg>(continue_void_body_f);
-}
-
-#endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
-
 // TODO: use pass_through from test_function_node instead
 template<typename T>
 struct passing_body {
@@ -451,12 +371,6 @@ TEST_CASE( "Lightweight policy" ) { test_lightweight_policy(); }
 //! Test deprecated follows and preceedes API
 //! \brief \ref error_guessing
 TEST_CASE( "Support for follows and precedes API" ) { test_follows_and_precedes_api(); }
-#endif
-
-#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
-//! Test deduction guides
-//! \brief requirement
-TEST_CASE( "Deduction guides" ) { test_deduction_guides(); }
 #endif
 
 //! Test for successor cache specialization

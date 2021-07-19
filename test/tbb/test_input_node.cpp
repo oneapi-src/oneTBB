@@ -254,47 +254,6 @@ void test_reset() {
     }
 }
 
-#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
-int input_body_f(tbb::flow_control&) { return 42; }
-
-void test_deduction_guides() {
-    using namespace tbb::flow;
-    graph g;
-
-    auto lambda = [](tbb::flow_control&) { return 42; };
-    auto non_const_lambda = [](tbb::flow_control&) mutable { return 42; };
-
-    // Tests for input_node(graph&, Body)
-    input_node s1(g, lambda);
-    static_assert(std::is_same_v<decltype(s1), input_node<int>>);
-
-    input_node s2(g, non_const_lambda);
-    static_assert(std::is_same_v<decltype(s2), input_node<int>>);
-
-    input_node s3(g, input_body_f);
-    static_assert(std::is_same_v<decltype(s3), input_node<int>>);
-
-    input_node s4(s3);
-    static_assert(std::is_same_v<decltype(s4), input_node<int>>);
-
-#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
-    broadcast_node<int> bc(g);
-
-    // Tests for input_node(const node_set<Args...>&, Body)
-    input_node s5(precedes(bc), lambda);
-    static_assert(std::is_same_v<decltype(s5), input_node<int>>);
-
-    input_node s6(precedes(bc), non_const_lambda);
-    static_assert(std::is_same_v<decltype(s6), input_node<int>>);
-
-    input_node s7(precedes(bc), input_body_f);
-    static_assert(std::is_same_v<decltype(s7), input_node<int>>);
-#endif
-    g.wait_for_all();
-}
-
-#endif // __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
-
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
 #include <array>
 void test_follows_and_precedes_api() {
@@ -355,14 +314,6 @@ TEST_CASE("Reset test"){
 //! \brief \ref error_guessing
 TEST_CASE("Follows and precedes API"){
     test_follows_and_precedes_api();
-}
-#endif
-
-#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
-//! Test deduction guides
-//! \brief \ref requirement
-TEST_CASE("Deduction guides"){
-    test_deduction_guides();
 }
 #endif
 
