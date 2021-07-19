@@ -34,7 +34,7 @@
 // On Windows there is no real thread number limit beside available memory.
 // Therefore, the test for thread limit is unreasonable.
 // TODO: enable limitThreads with sanitizer under docker
-#if TBB_USE_EXCEPTIONS && !_WIN32 && !__ANDROID__ && !__TBB_USE_SANITIZERS
+#if TBB_USE_EXCEPTIONS && !_WIN32 && !__ANDROID__
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -97,12 +97,25 @@ TEST_CASE("Too many threads") {
     std::thread /* isolate test */ ([] {
         std::vector<Thread> threads;
         stop = false;
-        for (;;) {
+        auto finilize = [&] {
+            stop = true;
+            cv.notify_all();
+            for (auto& t : threads) {
+                t.join();
+            }
+        };
+
+        for (int i = 0;; ++i) {
             Thread thread;
             if (!thread.isValid()) {
                 break;
             }
             threads.push_back(thread);
+            if (i == 1024) {
+                WARN_MESSAGE(false, "setrlimit seems having no effect");
+                finilize();
+                return;
+            }
         }
         g_exception_caught = false;
         try {
@@ -119,11 +132,7 @@ TEST_CASE("Too many threads") {
         if (!g_exception_caught) {
             FAIL("No exception was caught");
         }
-        stop = true;
-        cv.notify_all();
-        for (auto& t : threads) {
-            t.join();
-        }
+        finilize();
     }).join();
 }
 #endif
