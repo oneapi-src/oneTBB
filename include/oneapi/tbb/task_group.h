@@ -145,13 +145,6 @@ namespace d1 {
 struct context_list_node {
     std::atomic<context_list_node*> prev{};
     std::atomic<context_list_node*> next{};
-
-    void remove_relaxed() {
-        context_list_node* p = prev.load(std::memory_order_relaxed);
-        context_list_node* n = next.load(std::memory_order_relaxed);
-        p->next.store(n, std::memory_order_relaxed);
-        n->prev.store(p, std::memory_order_relaxed);
-    }
 };
 
 //! Used to form groups of tasks
