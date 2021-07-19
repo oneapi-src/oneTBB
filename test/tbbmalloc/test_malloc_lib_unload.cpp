@@ -42,6 +42,10 @@ extern "C" {
 }
 #endif
 
+extern "C" int anchor() {
+    return 42;
+}
+
 // Those functions must not be called instead of presented in dynamic library.
 extern "C" void *scalable_malloc(size_t)
 {
@@ -128,6 +132,11 @@ extern "C" {
     extern __declspec(dllimport)
 #endif
     void *scalable_malloc(size_t);
+
+#if _WIN32||_WIN64
+    extern __declspec(dllimport)
+#endif
+    int anchor();
 }
 
 struct Run {
@@ -139,9 +148,12 @@ struct Run {
         void* (*aligned_malloc_ptr)(size_t size, size_t alignment);
         void  (*aligned_free_ptr)(void*);
 
-        const char* actual_name;
-        utils::LIBRARY_HANDLE lib = utils::OpenLibrary(actual_name = MALLOCLIB_NAME1);
-        if (!lib)      lib = utils::OpenLibrary(actual_name = MALLOCLIB_NAME2);
+        const char* actual_name = MALLOCLIB_NAME1;
+        utils::LIBRARY_HANDLE lib = utils::OpenLibrary(actual_name);
+        if (!lib) {
+            actual_name = MALLOCLIB_NAME2;
+            lib = utils::OpenLibrary(actual_name);
+        }
         if (!lib) {
             REPORT("Can't load " MALLOCLIB_NAME1 " or " MALLOCLIB_NAME2 "\n");
             exit(1);
@@ -174,6 +186,8 @@ struct Run {
 
 //! \brief \ref error_guessing
 TEST_CASE("test unload lib") {
+    CHECK(anchor() == 42);
+
     // warm-up run
     utils::NativeParallelFor( 1, Run() );
 

@@ -33,7 +33,8 @@
 
 // On Windows there is no real thread number limit beside available memory.
 // Therefore, the test for thread limit is unreasonable.
-#if TBB_USE_EXCEPTIONS && !_WIN32 && !__ANDROID__
+// TODO: enable limitThreads with sanitizer under docker
+#if TBB_USE_EXCEPTIONS && !_WIN32 && !__ANDROID__ && !__TBB_USE_THREAD_SANITIZER && !__TBB_USE_ADDRESS_SANITIZER
 
 #include <sys/types.h>
 #include <sys/time.h>
