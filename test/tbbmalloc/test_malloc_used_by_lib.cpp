@@ -46,8 +46,10 @@ int main() {}
 
 
 #else // _USRDLL
+#include "common/config.h"
 // FIXME: fix the test to support Windows* 8 Store Apps mode.
-#if !__TBB_WIN8UI_SUPPORT
+// For sanitizers, it fails because RUNPATH is lost: https://github.com/google/sanitizers/issues/1219
+#if !__TBB_WIN8UI_SUPPORT && !(__GNUC__ && __GNUC__ < 10 && __TBB_USE_SANITIZERS)
 
 #define __TBB_NO_IMPLICIT_LINKAGE 1
 #include "common/test.h"
@@ -144,5 +146,5 @@ TEST_CASE("use test as lib") {
     }
 }
 
-#endif /* __TBB_WIN8UI_SUPPORT */
+#endif /* Unsupported configurations */
 #endif // _USRDLL
