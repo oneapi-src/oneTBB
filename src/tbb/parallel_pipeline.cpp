@@ -243,7 +243,8 @@ public:
         return end_of_input_tls.get() != 0;
     }
     void set_my_tls_end_of_input() {
-        end_of_input_tls.set(1);
+	// Use an arbitrary but valid pointer as value.
+        end_of_input_tls.set(array_size);
     }
 };
 
