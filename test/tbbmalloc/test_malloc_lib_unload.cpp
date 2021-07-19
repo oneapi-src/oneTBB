@@ -39,6 +39,7 @@ extern "C" {
     extern __declspec(dllexport) void scalable_aligned_free(void *);
     extern __declspec(dllexport) size_t scalable_msize(void *);
     extern __declspec(dllexport) size_t safer_scalable_msize (void *, size_t (*)(void*));
+    extern __declspec(dllexport) int anchor();
 }
 #endif
 
@@ -114,12 +115,14 @@ int main() {}
 
 #else  // _USRDLL
 
+#include "common/config.h"
 // harness_defs.h must be included before tbb_stddef.h to overcome exception-dependent
 // system headers that come from tbb_stddef.h
-#if __TBB_WIN8UI_SUPPORT || __TBB_MIC_OFFLOAD
+#if __TBB_WIN8UI_SUPPORT || __TBB_MIC_OFFLOAD || (__GNUC__ && __GNUC__ < 10 && __TBB_USE_SANITIZERS)
 // The test does not work if dynamic load is unavailable.
 // For MIC offload, it fails because liboffload brings libiomp which observes and uses the fake scalable_* calls.
-#else /* !(__TBB_WIN8UI_SUPPORT || __TBB_MIC_OFFLOAD) */
+// For sanitizers, it fails because RUNPATH is lost: https://github.com/google/sanitizers/issues/1219
+#else
 #include "common/test.h"
 #include "common/memory_usage.h"
 #include "common/utils_dynamic_libs.h"
@@ -148,12 +151,9 @@ struct Run {
         void* (*aligned_malloc_ptr)(size_t size, size_t alignment);
         void  (*aligned_free_ptr)(void*);
 
-        const char* actual_name = MALLOCLIB_NAME1;
-        utils::LIBRARY_HANDLE lib = utils::OpenLibrary(actual_name);
-        if (!lib) {
-            actual_name = MALLOCLIB_NAME2;
-            lib = utils::OpenLibrary(actual_name);
-        }
+        const char* actual_name;
+        utils::LIBRARY_HANDLE lib = utils::OpenLibrary(actual_name = MALLOCLIB_NAME1);
+        if (!lib) lib = utils::OpenLibrary(actual_name = MALLOCLIB_NAME2);
         if (!lib) {
             REPORT("Can't load " MALLOCLIB_NAME1 " or " MALLOCLIB_NAME2 "\n");
             exit(1);
@@ -193,7 +193,6 @@ TEST_CASE("test unload lib") {
 
     // It seems Thread Sanitizer remembers some history information about destroyed threads,
     // so memory consumption cannot be stabilized
-#if !__TBB_USE_THREAD_SANITIZER
     std::ptrdiff_t memory_leak = 0;
     {
         /* 1st call to GetMemoryUsage() allocate some memory,
@@ -217,9 +216,8 @@ TEST_CASE("test unload lib") {
                 return;
         }
     }
-#endif
 }
 
-#endif /* !(__TBB_WIN8UI_SUPPORT || __TBB_MIC_OFFLOAD) */
+#endif /* Unsupported configurations */
 
 #endif // _USRDLL
