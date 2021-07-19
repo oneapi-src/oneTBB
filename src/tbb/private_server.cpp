@@ -270,9 +270,9 @@ void private_worker::run() noexcept {
             // Prepare to wait
             my_thread_monitor.prepare_wait(c);
             // Check/set the invariant for sleeping
-            if( my_state.load(std::memory_order_acquire)!=st_quit && my_server.try_insert_in_asleep_list(*this) ) {
+            if (my_state.load(std::memory_order_acquire) != st_quit && my_server.try_insert_in_asleep_list(*this)) {
                 my_thread_monitor.commit_wait(c);
-                __TBB_ASSERT( my_state==st_quit || !my_next, "Thread monitor missed a spurious wakeup?" );
+                __TBB_ASSERT(my_state.load(std::memory_order_relaxed) == st_quit || !my_next, "Thread monitor missed a spurious wakeup?" );
                 my_server.propagate_chain_reaction();
             } else {
                 // Invariant broken

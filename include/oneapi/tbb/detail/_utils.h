@@ -132,6 +132,11 @@ bool timed_spin_wait_until(Condition condition) {
 }
 
 template <typename T>
+T clamp(T value, T low_bound, T high_bound) {
+    return value > low_bound ? (value > high_bound ? high_bound : value) : low_bound;
+}
+
+template <typename T>
 std::uintptr_t log2(T in) {
     __TBB_ASSERT(in > 0, "The logarithm of a non-positive value is undefined.");
     return machine_log2(in);
