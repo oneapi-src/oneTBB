@@ -135,7 +135,7 @@ namespace {
             decltype(std::forward<F>(f)())
             >;
 
-        return  task_ptr_or_nullptr_impl(is_void_t{}, std::forward<F>(f));
+        return task_ptr_or_nullptr_impl(is_void_t{}, std::forward<F>(f));
     }
 }
 #else
