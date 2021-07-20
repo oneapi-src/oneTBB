@@ -18,6 +18,10 @@ if (APPLE)
 
     # For correct ucontext.h structures layout
     set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -D_XOPEN_SOURCE)
+elseif(MSVC)
+    set(TBB_LINK_DEF_FILE_FLAG ${CMAKE_LINK_DEF_FILE_FLAG})
+    set(TBB_DEF_FILE_PREFIX win${TBB_ARCH})
+    set(TBB_LIB_COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS /GS)
 else()
     set(TBB_LINK_DEF_FILE_FLAG -Wl,--version-script=)
     set(TBB_DEF_FILE_PREFIX lin${TBB_ARCH})
@@ -25,7 +29,7 @@ endif()
 
 # Depfile options (e.g. -MD) are inserted automatically in some cases.
 # Don't add -MMD to avoid conflicts in such cases.
-if (NOT CMAKE_GENERATOR MATCHES "Ninja" AND NOT CMAKE_CXX_DEPENDS_USE_COMPILER)
+if (NOT CMAKE_GENERATOR MATCHES "Ninja" AND NOT CMAKE_CXX_DEPENDS_USE_COMPILER AND NOT MSVC)
     set(TBB_MMD_FLAG -MMD)
 endif()
 
@@ -42,7 +46,7 @@ if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86|AMD64)")
     set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -mrtm $<$<NOT:$<VERSION_LESS:${CMAKE_CXX_COMPILER_VERSION},12.0>>:-mwaitpkg>)
 endif()
 
-set(TBB_COMMON_LINK_LIBS dl)
+set(TBB_COMMON_LINK_LIBS ${CMAKE_DL_LIBS})
 
 if (ANDROID_PLATFORM)
     set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} $<$<NOT:$<CONFIG:Debug>>:-D_FORTIFY_SOURCE=2>)
@@ -56,4 +60,6 @@ if (NOT ANDROID_PLATFORM)
 endif()
 
 # TBB malloc settings
-set(TBBMALLOC_LIB_COMPILE_FLAGS -fno-rtti -fno-exceptions)
+if(NOT MSVC)
+    set(TBBMALLOC_LIB_COMPILE_FLAGS -fno-rtti -fno-exceptions)
+endif()
