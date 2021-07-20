@@ -224,7 +224,7 @@ private:
     }
 
     // Explicitly call the interface that was introduced in the HWLOC 2.5 release to prevent linking
-    // HWLOC 2.4 during the tbbbind_2_5 library loding.
+    // HWLOC 2.4 during the tbbbind_2_5 library loading.
     void backward_compatibility_guarantee() {
 #if HWLOC_API_VERSION >= 0x20500
         auto some_core = hwloc_get_next_obj_by_type(topology, HWLOC_OBJ_CORE, nullptr);
