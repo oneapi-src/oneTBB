@@ -224,17 +224,6 @@ private:
         }
     }
 
-public:
-    typedef hwloc_cpuset_t             affinity_mask;
-    typedef hwloc_const_cpuset_t const_affinity_mask;
-
-    static platform_topology& instance() {
-        static platform_topology topology;
-        return topology;
-    }
-
-    bool is_topology_parsed() { return initialization_state == topology_parsed; }
-
     void initialize( std::size_t groups_num ) {
         if ( initialization_state != uninitialized )
             return;
@@ -245,6 +234,30 @@ public:
 
         if (initialization_state == topology_loaded)
             initialization_state = topology_parsed;
+    }
+
+    static platform_topology* instance_ptr;
+public:
+    typedef hwloc_cpuset_t             affinity_mask;
+    typedef hwloc_const_cpuset_t const_affinity_mask;
+
+    bool is_topology_parsed() { return initialization_state == topology_parsed; }
+
+    static void construct( std::size_t groups_num ) {
+        if (instance_ptr == nullptr) {
+            instance_ptr = new platform_topology();
+            instance_ptr->initialize(groups_num);
+        }
+    }
+
+    static platform_topology& instance() {
+        __TBB_ASSERT(instance_ptr != nullptr, "Getting instance of non-constructed topology");
+        return *instance_ptr;
+    }
+
+    static void destroy() {
+        __TBB_ASSERT(instance_ptr != nullptr, "Destroying non-constructed topology");
+        delete instance_ptr;
     }
 
     ~platform_topology() {
@@ -368,6 +381,8 @@ public:
     }
 };
 
+platform_topology* platform_topology::instance_ptr{nullptr};
+
 class binding_handler {
     // Following vector saves thread affinity mask on scheduler entry to return it to this thread 
     // on scheduler exit.
@@ -459,7 +474,7 @@ TBBBIND_EXPORT void __TBB_internal_initialize_system_topology(
     int& numa_nodes_count, int*& numa_indexes_list,
     int& core_types_count, int*& core_types_indexes_list
 ) {
-    platform_topology::instance().initialize(groups_num);
+    platform_topology::construct(groups_num);
     platform_topology::instance().fill_topology_information(
         numa_nodes_count, numa_indexes_list,
         core_types_count, core_types_indexes_list
@@ -488,6 +503,10 @@ TBBBIND_EXPORT void __TBB_internal_restore_affinity(binding_handler* handler_ptr
 
 TBBBIND_EXPORT int __TBB_internal_get_default_concurrency(int numa_id, int core_type_id, int max_threads_per_core) {
     return platform_topology::instance().get_default_concurrency(numa_id, core_type_id, max_threads_per_core);
+}
+
+void __TBB_internal_destroy_system_topology() {
+    return platform_topology::destroy();
 }
 
 } // extern "C"
