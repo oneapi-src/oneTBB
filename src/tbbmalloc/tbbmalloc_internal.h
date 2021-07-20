@@ -339,9 +339,14 @@ public:
 // Block header is used during block coalescing
 // and must be preserved in used blocks.
 class BlockI {
-    #pragma clang diagnostic ignored "-Wunused-private-field"
-    intptr_t     blockState[2];
-    #pragma clang diagnostic warning "-Wunused-private-field"
+    #if __clang__
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wunused-private-field"
+        intptr_t     blockState[2];
+        #pragma clang diagnostic pop // "-Wunused-private-field"
+    #else
+        intptr_t     blockState[2];
+    #endif
 };
 
 struct LargeMemoryBlock : public BlockI {
