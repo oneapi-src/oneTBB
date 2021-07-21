@@ -231,6 +231,12 @@ void arena::free_arena () {
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
     __TBB_ASSERT( !my_global_concurrency_mode, NULL );
 #endif
+#if __TBB_ARENA_BINDING
+    if (my_numa_binding_observer != nullptr) {
+        destroy_binding_observer(my_numa_binding_observer);
+        my_numa_binding_observer = nullptr;
+    }
+#endif /*__TBB_ARENA_BINDING*/
     poison_value( my_guard );
     for ( unsigned i = 0; i < my_num_slots; ++i ) {
         // __TBB_ASSERT( !my_slots[i].my_scheduler, "arena slot is not empty" );
@@ -462,12 +468,6 @@ void task_arena_impl::initialize(d1::task_arena_base& ta) {
 void task_arena_impl::terminate(d1::task_arena_base& ta) {
     arena* a = ta.my_arena.load(std::memory_order_relaxed);
     assert_pointer_valid(a);
-#if __TBB_ARENA_BINDING
-    if(a->my_numa_binding_observer != nullptr ) {
-        destroy_binding_observer(a->my_numa_binding_observer);
-        a->my_numa_binding_observer = nullptr;
-    }
-#endif /*__TBB_ARENA_BINDING*/
     a->my_market->release( /*is_public=*/true, /*blocking_terminate=*/false );
     a->on_thread_leaving<arena::ref_external>();
     ta.my_arena.store(nullptr, std::memory_order_relaxed);
