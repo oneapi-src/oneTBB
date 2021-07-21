@@ -97,12 +97,12 @@ class OuterBody: utils::NoAssign {
     data_type* my_c;
     const int m;
     const int n;
-#if __clang__
+#if __clang__ && !__INTEL_COMPILER
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wunused-private-field"
 #endif
     const int p;
-#if __clang__
+#if __clang__ && !__INTEL_COMPILER
     #pragma clang diagnostic pop // "-Wunused-private-field"
 #endif
 public:
