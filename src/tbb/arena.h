@@ -556,8 +556,11 @@ inline d1::task* arena::steal_task(unsigned arena_index, FastRandom& frnd, execu
     }
     // Try to steal a task from a random victim.
     std::size_t k = frnd.get() % (slot_num_limit - 1);
-    for (std::size_t i = 0; i < 2 * my_num_slots && (k == arena_index
-        || !pool_mask[k].load(std::memory_order_acq_rel)); ++i, k = frnd.get() % (slot_num_limit - 1)) {
+    auto same_or_empty_slot = [this, arena_index] (unsigned k) {
+        return k == arena_index || !pool_mask[k].load(std::memory_order_relaxed);
+    };
+    for (std::size_t i = 0; i < 2 * my_num_slots && same_or_empty_slot(k); ++i) {
+        k = frnd.get() % (slot_num_limit - 1);
     }
     // The following condition excludes the external thread that might have
     // already taken our previous place in the arena from the list .

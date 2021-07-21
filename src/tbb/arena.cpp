@@ -207,7 +207,7 @@ arena::arena ( market& m, unsigned num_slots, unsigned num_reserved_slots, unsig
     my_global_concurrency_mode.store(false, std::memory_order_relaxed);
 #endif
     pool_mask = new (cache_aligned_allocate(num_slots * sizeof(pool_mask_type))) pool_mask_type{};
-    for (std::size_t i = 1; i < my_num_slots; ++i) {
+    for (std::size_t i = 0; i < my_num_slots; ++i) {
         new (pool_mask + i) pool_mask_type{};
     }
 }
@@ -270,7 +270,7 @@ void arena::free_arena () {
     for (std::size_t i = 0; i < my_num_slots; ++i) {
         pool_mask[i].~pool_mask_type();
     }
-    cache_aligned_deallocate( pool_mask );
+    cache_aligned_deallocate(pool_mask);
 }
 
 bool arena::has_enqueued_tasks() {
