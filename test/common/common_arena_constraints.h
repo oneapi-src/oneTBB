@@ -18,7 +18,6 @@
 #define __TBB_test_common_arena_constraints_H_
 
 #define TBB_PREVIEW_TASK_ARENA_CONSTRAINTS_EXTENSION 1
-#define __TBB_EXTRA_DEBUG 1
 
 #if _WIN32 || _WIN64
 #define _CRT_SECURE_NO_WARNINGS
@@ -452,13 +451,11 @@ system_info::affinity_mask get_arena_affinity(tbb::task_arena& ta) {
         arena_affinity = system_info::allocate_current_affinity_mask();
     });
 
-    utils::SpinBarrier barrier;
-    barrier.initialize(ta.max_concurrency() - 1);
+    utils::SpinBarrier exit_barrier(ta.max_concurrency());
     tbb::spin_mutex affinity_mutex{};
     for (int i = 0; i < ta.max_concurrency() - 1; ++i) {
-        ta.enqueue([&]
+        ta.enqueue([&] {
             {
-                barrier.wait();
                 tbb::spin_mutex::scoped_lock lock(affinity_mutex);
                 system_info::affinity_mask thread_affinity = system_info::allocate_current_affinity_mask();
                 if (get_processors_group_count() == 1) {
@@ -467,12 +464,10 @@ system_info::affinity_mask get_arena_affinity(tbb::task_arena& ta) {
                 }
                 hwloc_bitmap_or(arena_affinity, arena_affinity, thread_affinity);
             }
-        );
+            exit_barrier.wait();
+        });
     }
-
-    //TODO: Synchronization using atomics without debug_wait_until_empty() cause
-    // a race which cause the absence of on_scheduler_exit() call.
-    ta.debug_wait_until_empty();
+    exit_barrier.wait();
     return arena_affinity;
 }
 
