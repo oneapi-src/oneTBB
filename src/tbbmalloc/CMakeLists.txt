@@ -67,10 +67,15 @@ set_target_properties(tbbmalloc PROPERTIES
     DEFINE_SYMBOL ""
     VERSION ${TBBMALLOC_BINARY_VERSION}.${TBB_BINARY_MINOR_VERSION}
     SOVERSION ${TBBMALLOC_BINARY_VERSION}
-    LINK_FLAGS ${TBB_LINK_DEF_FILE_FLAG}${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbmalloc.def
-    LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbmalloc.def
     LINKER_LANGUAGE C
 )
+
+if (TBB_DEF_FILE_PREFIX) # If there's no prefix, assume we're using export directives
+    set_target_properties(tbbmalloc PROPERTIES
+        LINK_FLAGS ${TBB_LINK_DEF_FILE_FLAG}${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbmalloc.def
+        LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbmalloc.def
+    )
+endif()
 
 set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "")
 

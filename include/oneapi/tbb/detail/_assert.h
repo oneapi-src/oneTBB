@@ -26,7 +26,7 @@ namespace r1 {
 /** Normally called from __TBB_ASSERT macro.
   If assertion handler is null, print message for assertion failure and abort.
   Otherwise call the assertion handler. */
-void __TBB_EXPORTED_FUNC assertion_failure(const char* location, int line, const char* expression, const char* comment);
+TBB_EXPORT void __TBB_EXPORTED_FUNC assertion_failure(const char* location, int line, const char* expression, const char* comment);
 } // namespace r1
 } // namespace detail
 } // namespace tbb

@@ -38,8 +38,12 @@ namespace utils {
 #define SUFFIX2 "_debug"
 #endif /* TBB_USE_DEBUG */
 
-#if _WIN32||_WIN64
-#define PREFIX
+#if (_WIN32||_WIN64)
+#if __MINGW32__
+    #define PREFIX "lib"
+#else
+    #define PREFIX
+#endif
 #define EXT ".dll"
 #else
 #define PREFIX "lib"

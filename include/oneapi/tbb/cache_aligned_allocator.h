@@ -30,9 +30,9 @@ namespace tbb {
 namespace detail {
 
 namespace r1 {
-void*       __TBB_EXPORTED_FUNC cache_aligned_allocate(std::size_t size);
-void        __TBB_EXPORTED_FUNC cache_aligned_deallocate(void* p);
-std::size_t __TBB_EXPORTED_FUNC cache_line_size();
+TBB_EXPORT void*       __TBB_EXPORTED_FUNC cache_aligned_allocate(std::size_t size);
+TBB_EXPORT void        __TBB_EXPORTED_FUNC cache_aligned_deallocate(void* p);
+TBB_EXPORT std::size_t __TBB_EXPORTED_FUNC cache_line_size();
 }
 
 namespace d1 {

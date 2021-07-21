@@ -26,6 +26,7 @@
 */
 
 #include <cstdarg>          // va_list etc.
+#include <cstring>          // strrchr
 #if _WIN32
     #include <malloc.h>
 
@@ -41,7 +42,6 @@
     #include <dlfcn.h>
     #include <unistd.h>
 
-    #include <cstring>
     #include <climits>
     #include <cstdlib>
 #endif /* _WIN32 */
@@ -380,7 +380,7 @@ namespace r1 {
         dynamic_link_handle library_handle{};
 #if _WIN32
         auto res = GetModuleHandleEx(0, library, &library_handle);
-        __TBB_ASSERT_EX(res && library_handle || !res && !library_handle, nullptr);
+        __TBB_ASSERT_EX((res && library_handle) || (!res && !library_handle), nullptr);
 #else /* _WIN32 */
     #if !__TBB_DYNAMIC_LOAD_ENABLED /* only __TBB_WEAK_SYMBOLS_PRESENT is defined */
         if ( !dlopen ) return 0;
