@@ -62,4 +62,4 @@ endif()
 
 # TBB malloc settings
 set(TBBMALLOC_LIB_COMPILE_FLAGS -fno-rtti -fno-exceptions)
-set(TBB_OPENMP_FLAG -fopenmp)
+set(TBB_OPENMP_COMPILE_FLAG -fopenmp)

@@ -19,9 +19,8 @@ if (APPLE)
     # For correct ucontext.h structures layout
     set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -D_XOPEN_SOURCE)
 elseif(MSVC)
-    set(TBB_LINK_DEF_FILE_FLAG ${CMAKE_LINK_DEF_FILE_FLAG})
-    set(TBB_DEF_FILE_PREFIX win${TBB_ARCH})
-    set(TBB_LIB_COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS /GS)
+    include(${CMAKE_CURRENT_LIST_DIR}/MSVC.cmake)
+    return()
 else()
     set(TBB_LINK_DEF_FILE_FLAG -Wl,--version-script=)
     set(TBB_DEF_FILE_PREFIX lin${TBB_ARCH})
@@ -29,7 +28,7 @@ endif()
 
 # Depfile options (e.g. -MD) are inserted automatically in some cases.
 # Don't add -MMD to avoid conflicts in such cases.
-if (NOT CMAKE_GENERATOR MATCHES "Ninja" AND NOT CMAKE_CXX_DEPENDS_USE_COMPILER AND NOT MSVC)
+if (NOT CMAKE_GENERATOR MATCHES "Ninja" AND NOT CMAKE_CXX_DEPENDS_USE_COMPILER)
     set(TBB_MMD_FLAG -MMD)
 endif()
 
@@ -60,6 +59,4 @@ if (NOT ANDROID_PLATFORM)
 endif()
 
 # TBB malloc settings
-if(NOT MSVC)
-    set(TBBMALLOC_LIB_COMPILE_FLAGS -fno-rtti -fno-exceptions)
-endif()
+set(TBBMALLOC_LIB_COMPILE_FLAGS -fno-rtti -fno-exceptions)

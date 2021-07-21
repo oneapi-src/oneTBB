@@ -342,10 +342,10 @@ class BlockI {
     #if __clang__
         #pragma clang diagnostic push
         #pragma clang diagnostic ignored "-Wunused-private-field"
+    #endif
         intptr_t     blockState[2];
+    #if __clang__
         #pragma clang diagnostic pop // "-Wunused-private-field"
-    #else
-        intptr_t     blockState[2];
     #endif
 };
 
