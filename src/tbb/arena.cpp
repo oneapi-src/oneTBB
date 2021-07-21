@@ -232,7 +232,7 @@ void arena::free_arena () {
     __TBB_ASSERT( !my_global_concurrency_mode, NULL );
 #endif
 #if __TBB_ARENA_BINDING
-    if(my_numa_binding_observer != nullptr ) {
+    if (my_numa_binding_observer != nullptr) {
         destroy_binding_observer(my_numa_binding_observer);
         my_numa_binding_observer = nullptr;
     }
