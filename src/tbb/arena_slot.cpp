@@ -125,6 +125,8 @@ d1::task* arena_slot::get_task(execution_data_ext& ed, isolation_type isolation)
                 tail.store(T0, std::memory_order_relaxed);
                 // The release fence is used in publish_task_pool.
                 publish_task_pool();
+                ed.task_disp->m_thread_data->my_arena->pool_mask[this_task_arena::current_thread_index()].store(
+                        false, std::memory_order_relaxed);
                 // Synchronize with snapshot as we published some tasks.
                 ed.task_disp->m_thread_data->my_arena->advertise_new_work<arena::wakeup>();
             }
