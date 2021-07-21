@@ -82,18 +82,18 @@ namespace r1 {
 class arena;
 struct task_arena_impl;
 
-void __TBB_EXPORTED_FUNC observe(d1::task_scheduler_observer&, bool);
-void __TBB_EXPORTED_FUNC initialize(d1::task_arena_base&);
-void __TBB_EXPORTED_FUNC terminate(d1::task_arena_base&);
-bool __TBB_EXPORTED_FUNC attach(d1::task_arena_base&);
-void __TBB_EXPORTED_FUNC execute(d1::task_arena_base&, d1::delegate_base&);
-void __TBB_EXPORTED_FUNC wait(d1::task_arena_base&);
-int __TBB_EXPORTED_FUNC max_concurrency(const d1::task_arena_base*);
-void __TBB_EXPORTED_FUNC isolate_within_arena(d1::delegate_base& d, std::intptr_t);
+TBB_EXPORT void __TBB_EXPORTED_FUNC observe(d1::task_scheduler_observer&, bool);
+TBB_EXPORT void __TBB_EXPORTED_FUNC initialize(d1::task_arena_base&);
+TBB_EXPORT void __TBB_EXPORTED_FUNC terminate(d1::task_arena_base&);
+TBB_EXPORT bool __TBB_EXPORTED_FUNC attach(d1::task_arena_base&);
+TBB_EXPORT void __TBB_EXPORTED_FUNC execute(d1::task_arena_base&, d1::delegate_base&);
+TBB_EXPORT void __TBB_EXPORTED_FUNC wait(d1::task_arena_base&);
+TBB_EXPORT int  __TBB_EXPORTED_FUNC max_concurrency(const d1::task_arena_base*);
+TBB_EXPORT void __TBB_EXPORTED_FUNC isolate_within_arena(d1::delegate_base& d, std::intptr_t);
 
-void __TBB_EXPORTED_FUNC enqueue(d1::task&, d1::task_arena_base*);
-void __TBB_EXPORTED_FUNC enqueue(d1::task&, d1::task_group_context&, d1::task_arena_base*);
-void __TBB_EXPORTED_FUNC submit(d1::task&, d1::task_group_context&, arena*, std::uintptr_t);
+TBB_EXPORT void __TBB_EXPORTED_FUNC enqueue(d1::task&, d1::task_arena_base*);
+TBB_EXPORT void __TBB_EXPORTED_FUNC enqueue(d1::task&, d1::task_group_context&, d1::task_arena_base*);
+TBB_EXPORT void __TBB_EXPORTED_FUNC submit(d1::task&, d1::task_group_context&, arena*, std::uintptr_t);
 } // namespace r1
 
 namespace d2 {
