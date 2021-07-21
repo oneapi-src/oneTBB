@@ -77,7 +77,6 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "In
         set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -mrtm -mwaitpkg)
     endif()
     set(TBB_OPENMP_LINK_FLAG " ")
-    set(TBB_OPENMP_COMPILE_FLAG /openmp)
-else()
-    set(TBB_OPENMP_COMPILE_FLAG /openmp)
 endif()
+
+set(TBB_OPENMP_COMPILE_FLAG /openmp)
