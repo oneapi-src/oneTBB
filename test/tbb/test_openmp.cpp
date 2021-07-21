@@ -101,7 +101,7 @@ class OuterBody: utils::NoAssign {
         #pragma clang diagnostic push
         #pragma clang diagnostic ignored "-Wunused-private-field"
     #endif
-        const int p;
+    const int p;
     #if __clang__
         #pragma clang diagnostic pop // "-Wunused-private-field"
     #endif
