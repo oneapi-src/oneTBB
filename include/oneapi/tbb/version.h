@@ -96,13 +96,13 @@
  * The returned pointer is an address of a string in the shared library.
  * It can be different than the TBB_VERSION_STRING obtained at compile time.
  */
-extern "C" const char* __TBB_EXPORTED_FUNC TBB_runtime_version();
+extern "C" TBB_EXPORT const char* __TBB_EXPORTED_FUNC TBB_runtime_version();
 
 //! The function returns the interface version of the oneTBB shared library being used.
 /**
  * The returned version is determined at runtime, not at compile/link time.
  * It can be different than the value of TBB_INTERFACE_VERSION obtained at compile time.
  */
-extern "C" int __TBB_EXPORTED_FUNC TBB_runtime_interface_version();
+extern "C" TBB_EXPORT int __TBB_EXPORTED_FUNC TBB_runtime_interface_version();
 
 #endif // __TBB_version_H

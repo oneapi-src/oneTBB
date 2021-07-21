@@ -19,6 +19,7 @@
 
 #include "../tbb/assert_impl.h" // Out-of-line TBB assertion handling routines are instantiated here.
 #include "oneapi/tbb/version.h"
+#include "oneapi/tbb/scalable_allocator.h"
 
 #undef UNICODE
 
