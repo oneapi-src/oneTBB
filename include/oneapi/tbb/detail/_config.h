@@ -489,7 +489,7 @@
 #endif // __TBB_CPP20_CONCEPTS_PRESENT
 
 #if __TBB_STATISTICS
-    #define __TBB_add_statistics(TD, STAT) TD->add_statistics(governor::statistics::STAT)
+    #define __TBB_add_statistics(TLS, STAT) TLS->add_statistics(governor::statistics::STAT)
 #else
     #define __TBB_add_statistics(TD, STAT)
 #endif // __TBB_STATISTICS
