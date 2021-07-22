@@ -26,7 +26,7 @@
 #else
 #include "oneapi/tbb/detail/_export.h"
 #include <stddef.h> /* Need ptrdiff_t and size_t from here. */
-#if !_MSC_VER
+#if !defined(_MSC_VER) || defined(__clang__)
 #include <stdint.h> /* Need intptr_t from here. */
 #endif
 #endif

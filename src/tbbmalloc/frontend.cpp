@@ -574,7 +574,7 @@ public:
     LargeMemoryBlock *get(size_t size);
     bool externalCleanup(ExtMemoryPool *extMemPool);
 #if __TBB_MALLOC_WHITEBOX_TEST
-    LocalLOCImpl() : head(NULL), tail(NULL), totalSize(0), numOfBlocks(0) {}
+    LocalLOCImpl() : tail(NULL), head(NULL), totalSize(0), numOfBlocks(0) {}
     static size_t getMaxSize() { return MAX_TOTAL_SIZE; }
     static const int LOC_HIGH_MARK = HIGH_MARK;
 #else
@@ -1532,7 +1532,6 @@ void Block::shareOrphaned(intptr_t binTag, unsigned index)
     tbb::detail::suppress_unused_warning(index);
     STAT_increment(getThreadId(), index, freeBlockPublic);
     markOrphaned();
-    bool syncOnMailbox = false;
     if ((intptr_t)nextPrivatizable.load(std::memory_order_relaxed) == binTag) {
         // First check passed: the block is not in mailbox yet.
         // Need to set publicFreeList to non-zero, so other threads
