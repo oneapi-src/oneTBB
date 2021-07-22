@@ -53,9 +53,6 @@ private:
     //! TLS for scheduler instances associated with individual threads
     static basic_tls<thread_data*> theTLS;
 
-    //! Caches the size of OS regular memory page
-    static std::size_t DefaultPageSize;
-
     // TODO (TBB_REVAMP_TODO): reconsider constant names
     static rml::tbb_factory theRMLServerFactory;
 
