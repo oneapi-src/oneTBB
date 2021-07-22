@@ -58,7 +58,7 @@ private:
 
     // TODO: consider using thread_local (measure performance and side effects)
     //! TLS for scheduler instances associated with individual threads
-    static basic_tls<thread_data*> theTLS; 
+    static basic_tls<thread_data*> theTLS;
 
     //! Caches the maximal level of parallelism supported by the hardware
     static unsigned DefaultNumberOfThreads;
