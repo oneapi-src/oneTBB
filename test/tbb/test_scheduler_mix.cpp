@@ -512,13 +512,13 @@ enum ACTIONS {
     arena_destroy,
     arena_action,
     parallel_algorithm,
-#if 0
-    observer_attach,
-    observer_detach,
-    flow_graph,
-    task_group,
-    //resumable_tasks,
-#endif
+    // TODO:
+    // observer_attach,
+    // observer_detach,
+    // flow_graph,
+    // task_group,
+    // resumable_tasks,
+
     num_actions
 };
 
