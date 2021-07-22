@@ -119,7 +119,6 @@ public:
 #if __TBB_STATISTICS
         governor::accumulator.emplace(statistics);
 #endif /* __TBB_STATISTICS */
-        context_list_cleanup();
         my_context_list->orphan();
         my_small_object_pool->destroy();
         poison_pointer(my_task_dispatcher);
