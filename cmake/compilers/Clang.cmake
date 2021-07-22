@@ -21,6 +21,9 @@ elseif (APPLE)
 
     # For correct ucontext.h structures layout
     set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -D_XOPEN_SOURCE)
+elseif (MSVC)
+    include(${CMAKE_CURRENT_LIST_DIR}/MSVC.cmake)
+    return()
 else()
     set(TBB_LINK_DEF_FILE_FLAG -Wl,--version-script=)
     set(TBB_DEF_FILE_PREFIX lin${TBB_ARCH})
@@ -45,9 +48,7 @@ if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86|AMD64)")
     set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -mrtm $<$<NOT:$<VERSION_LESS:${CMAKE_CXX_COMPILER_VERSION},12.0>>:-mwaitpkg>)
 endif()
 
-if (NOT MINGW)
-    set(TBB_COMMON_LINK_LIBS dl)
-endif()
+set(TBB_COMMON_LINK_LIBS ${CMAKE_DL_LIBS})
 
 if (ANDROID_PLATFORM)
     set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} $<$<NOT:$<CONFIG:Debug>>:-D_FORTIFY_SOURCE=2>)

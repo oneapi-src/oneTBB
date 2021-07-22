@@ -97,7 +97,14 @@ class OuterBody: utils::NoAssign {
     data_type* my_c;
     const int m;
     const int n;
+#if __clang__ && !__INTEL_COMPILER
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-private-field"
+#endif
     const int p;
+#if __clang__ && !__INTEL_COMPILER
+    #pragma clang diagnostic pop // "-Wunused-private-field"
+#endif
 public:
     OuterBody( data_type c[], const data_type a[], int m_, const data_type b[], int n_, int p_ ) :
         my_a(a), my_b(b), my_c(c), m(m_), n(n_), p(p_)

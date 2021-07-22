@@ -446,12 +446,14 @@ endif()
 
 tbb_add_test(SUBDIR tbb NAME test_tbb_header DEPENDENCIES TBB::tbb)
 target_sources(test_tbb_header PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/tbb/test_tbb_header_secondary.cpp)
-if (NOT "${TBB_OPENMP_FLAG}" STREQUAL "" AND NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
+if (TBB_OPENMP_FLAG AND NOT CMAKE_SYSTEM_PROCESSOR MATCHES "(mips)")
     tbb_add_test(SUBDIR tbb NAME test_openmp DEPENDENCIES TBB::tbb)
-    set_target_properties(test_openmp PROPERTIES
-        COMPILE_FLAGS ${TBB_OPENMP_FLAG}
-        LINK_FLAGS ${TBB_OPENMP_FLAG}
-    )
+
+    set_target_properties(test_openmp PROPERTIES COMPILE_FLAGS ${TBB_OPENMP_FLAG})
+
+    if (NOT TBB_OPENMP_NO_LINK_FLAG)
+        set_target_properties(test_openmp PROPERTIES LINK_FLAGS ${TBB_OPENMP_FLAG})
+    endif()
 endif()
 
 # Define the conformance tests
