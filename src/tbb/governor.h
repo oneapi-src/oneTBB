@@ -169,7 +169,7 @@ public:
         victim_pool_empty,
         size,
     };
-    using array_stat = std::array<std::uint32_t, static_cast<std::size_t>(statistics::size)>;
+    using statistic_array = std::array<std::uint32_t, static_cast<std::size_t>(statistics::size)>;
 
     class collect_statistics : no_copy {
     public:
