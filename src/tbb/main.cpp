@@ -40,6 +40,9 @@ size_t governor::DefaultPageSize;
 rml::tbb_factory governor::theRMLServerFactory;
 bool governor::UsePrivateRML;
 bool governor::is_rethrow_broken;
+#if __TBB_STATISTICS
+governor::collect_statistics governor::accumulator;
+#endif // __TBB_STATISTICS
 
 //------------------------------------------------------------------------
 // market data

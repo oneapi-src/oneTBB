@@ -433,6 +433,7 @@ tbb_add_test(SUBDIR tbb NAME test_environment_whitebox DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_hw_concurrency DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_eh_thread DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_global_control DEPENDENCIES TBB::tbb)
+tbb_add_test(SUBDIR tbb NAME test_statistics DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_task DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_concurrent_monitor DEPENDENCIES TBB::tbb)
 

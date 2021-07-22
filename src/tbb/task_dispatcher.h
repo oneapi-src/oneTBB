@@ -318,6 +318,7 @@ d1::task* task_dispatcher::local_wait_for_all(d1::task* t, Waiter& waiter ) {
                     if (ed.context->is_group_execution_cancelled()) {
                         t = t->cancel(ed);
                     } else {
+                        __TBB_add_statistics(governor::get_thread_data(), exec_task);
                         t = t->execute(ed);
                     }
 

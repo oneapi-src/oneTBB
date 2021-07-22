@@ -127,6 +127,14 @@
     #define TBB_USE_ASSERT TBB_USE_DEBUG
 #endif // TBB_USE_ASSERT
 
+#ifndef __TBB_STATISTICS
+#if __TBB_STATISTICS_SUM
+    #define __TBB_STATISTICS 1
+#else
+    #define __TBB_STATISTICS 0
+#endif // __TBB_STATISTICS_SUM
+#endif // __TBB_STATISTICS
+
 #ifndef TBB_USE_PROFILING_TOOLS
 #if TBB_USE_DEBUG
     #define TBB_USE_PROFILING_TOOLS 2
@@ -479,6 +487,12 @@
 #else // __TBB_CPP20_CONCEPTS_PRESENT
     #define __TBB_requires(...)
 #endif // __TBB_CPP20_CONCEPTS_PRESENT
+
+#if __TBB_STATISTICS
+    #define __TBB_add_statistics(TD, STAT) TD->add_statistics(governor::statistics::STAT)
+#else
+    #define __TBB_add_statistics(TD, STAT)
+#endif // __TBB_STATISTICS
 
 /** Macros of the form __TBB_XXX_BROKEN denote known issues that are caused by
     the bugs in compilers, standard or OS specific libraries. They should be
