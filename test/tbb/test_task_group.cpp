@@ -763,6 +763,11 @@ namespace TestIsolationNS {
 }
 #endif
 
+#if __TBB_USE_ADDRESS_SANITIZER
+//! Test for thread safety for the task_group
+//! \brief \ref error_guessing \ref resource_usage
+TEST_CASE("Memory leaks test is not applicable under ASAN\n" * doctest::skip(true)) {}
+#else
 //! Test for thread safety for the task_group
 //! \brief \ref error_guessing \ref resource_usage
 TEST_CASE("Thread safety test for the task group") {
@@ -779,6 +784,7 @@ TEST_CASE("Thread safety test for the task group") {
         TestThreadSafety<tbb::task_group>();
     }
 }
+#endif
 
 //! Fibonacci test for task group
 //! \brief \ref interface \ref requirement
@@ -824,6 +830,12 @@ TEST_CASE("Move semantics test for the task group") {
 }
 
 #if TBB_PREVIEW_ISOLATED_TASK_GROUP
+
+#if __TBB_USE_ADDRESS_SANITIZER
+//! Test for thread safety for the isolated_task_group
+//! \brief \ref error_guessing
+TEST_CASE("Memory leaks test is not applicable under ASAN\n" * doctest::skip(true)) {}
+#else
 //! Test for thread safety for the isolated_task_group
 //! \brief \ref error_guessing
 TEST_CASE("Thread safety test for the isolated task group") {
@@ -840,6 +852,7 @@ TEST_CASE("Thread safety test for the isolated task group") {
         TestThreadSafety<tbb::isolated_task_group>();
     }
 }
+#endif
 
 //! Cancellation and exception test for the isolated task group
 //! \brief \ref interface \ref requirement
