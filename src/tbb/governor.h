@@ -22,6 +22,13 @@
 #include "misc.h" // for AvailableHwConcurrency
 #include "tls.h"
 
+#if __TBB_STATISTICS
+#include <mutex>
+#include <iostream>
+#include <iomanip>
+#include <array>
+#endif // __TBB_STATISTICS
+
 namespace tbb {
 namespace detail {
 namespace r1 {
@@ -51,7 +58,7 @@ private:
 
     // TODO: consider using thread_local (measure performance and side effects)
     //! TLS for scheduler instances associated with individual threads
-    static basic_tls<thread_data*> theTLS;
+    static basic_tls<thread_data*> theTLS; 
 
     //! Caches the maximal level of parallelism supported by the hardware
     static unsigned DefaultNumberOfThreads;
@@ -151,6 +158,68 @@ public:
         return false;
 #endif
     }
+
+#if __TBB_STATISTICS
+    enum class statistics : std::size_t {
+        exec_task = 0,
+        get_task,
+        task_res_not_null,
+        steal_task,
+        try_steal_task,
+        victim_pool_empty,
+        size,
+    };
+    using array_stat = std::array<std::uint32_t, static_cast<std::size_t>(statistics::size)>;
+
+    class collect_statistics : no_copy {
+    public:
+        collect_statistics() = default;
+
+        ~collect_statistics() = default;
+
+        void emplace(array_stat thread_stat) {
+            std::lock_guard<std::mutex> lk {m_};
+            accumulate_statistics.emplace_back(thread_stat);
+        }
+
+        // thread-unsafe method
+        void print_statistics() {
+                int offset = 2;
+                /* std::string not so bad because of Small String Optimization */
+                std::string column_names[] = {
+                    "executed", "getted",
+                    "result != null", "steal", "try steal",
+                    "vic pool empty",
+                };
+                for (auto& el : column_names) {
+                    std::cout << std::left << std::setw(el.size() + offset) << el;
+                }
+                std::cout << std::endl;
+#if __TBB_STATISTICS_SUM
+                array_stat summary{};
+#endif // __TBB_STATISTICS_SUM
+                for (const auto &thread_stat : accumulate_statistics) {
+                    for (std::size_t k = 0; k < thread_stat.size(); ++k) {
+                        std::cout << std::left << std::setw(column_names[k].size() + offset) << thread_stat[k];
+#if __TBB_STATISTICS_SUM
+                        summary[k] += thread_stat[k];
+#endif // __TBB_STATISTICS_SUM
+                    }
+                    std::cout << std::endl;
+                }
+#if __TBB_STATISTICS_SUM
+                std::cout << "SUMMARY:" << std::endl;
+                for (std::size_t k = 0; k < summary.size(); ++k) {
+                    std::cout << std::left << std::setw(column_names[k].size() + offset) << summary[k];
+                }
+                std::cout << std::endl;
+#endif // __TBB_STATISTICS_SUM
+        }
+        std::mutex m_;
+        std::vector<array_stat> accumulate_statistics {};
+    };
+    static collect_statistics accumulator;
+#endif // __TBB_STATISTICS
 }; // class governor
 
 } // namespace r1

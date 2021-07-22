@@ -59,6 +59,10 @@ d1::task* arena_slot::get_task_impl(size_t T, execution_data_ext& ed, bool& task
 }
 
 d1::task* arena_slot::get_task(execution_data_ext& ed, isolation_type isolation) {
+#if __TBB_STATISTICS
+    thread_data *tls = governor::get_thread_data();
+#endif /* __TBB_STATISTICS */
+    __TBB_add_statistics(tls, get_task);
     __TBB_ASSERT(is_task_pool_published(), nullptr);
     // The current task position in the task pool.
     std::size_t T0 = tail.load(std::memory_order_relaxed);
@@ -142,12 +146,20 @@ d1::task* arena_slot::get_task(execution_data_ext& ed, isolation_type isolation)
 
     __TBB_ASSERT( (std::intptr_t)tail.load(std::memory_order_relaxed) >= 0, nullptr );
     __TBB_ASSERT( result || tasks_omitted || is_quiescent_local_task_pool_reset(), nullptr );
+    if (result) {
+        __TBB_add_statistics(tls, task_res_not_null);
+    }
     return result;
 }
 
 d1::task* arena_slot::steal_task(arena& a, isolation_type isolation) {
+#if __TBB_STATISTICS
+    thread_data *tls = governor::get_thread_data();
+#endif /* __TBB_STATISTICS */
+    __TBB_add_statistics(tls, try_steal_task);
     d1::task** victim_pool = lock_task_pool();
     if (!victim_pool) {
+        __TBB_add_statistics(tls, victim_pool_empty);
         return nullptr;
     }
     d1::task* result = nullptr;
@@ -209,6 +221,9 @@ unlock:
     if (tasks_omitted) {
         // Synchronize with snapshot as the head and tail can be bumped which can falsely trigger EMPTY state
         a.advertise_new_work<arena::wakeup>();
+    }
+    if (result) {
+        __TBB_add_statistics(tls, steal_task);
     }
     return result;
 }
