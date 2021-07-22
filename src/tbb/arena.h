@@ -555,21 +555,32 @@ inline d1::task* arena::steal_task(unsigned arena_index, FastRandom& frnd, execu
         return nullptr;
     }
     // Try to steal a task from a random victim.
-    std::size_t k = frnd.get() % (slot_num_limit - 1);
-    auto same_or_empty_slot = [this, arena_index] (unsigned k) {
-        return k == arena_index || !pool_mask[k].load(std::memory_order_relaxed);
-    };
-    for (std::size_t i = 0; i < 2 * my_num_slots && same_or_empty_slot(k); ++i) {
-        k = frnd.get() % (slot_num_limit - 1);
+    std::size_t k = 0;
+    for (std::size_t i = 0; i < my_num_slots; ++i) {
+        if (pool_mask[i].load(std::memory_order_relaxed)) {
+            ++k;
+        }
+    }
+    if (k == 0) {
+        return nullptr;
+    }
+    k = frnd.get() % k + 1;
+    for (std::size_t i = 0; i < my_num_slots; ++i) {
+        if (i != arena_index && pool_mask[i].load(std::memory_order_relaxed)) {
+            if ((--k) == 0) {
+                k = i;
+                break;
+            }
+        }
+        if ((i + 1) == my_num_slots) {
+            return nullptr;
+        }
     }
     // The following condition excludes the external thread that might have
     // already taken our previous place in the arena from the list .
     // of potential victims. But since such a situation can take
     // place only in case of significant oversubscription, keeping
     // the checks simple seems to be preferable to complicating the code.
-    if (k >= arena_index) {
-        ++k; // Adjusts random distribution to exclude self
-    }
     arena_slot* victim = &my_slots[k];
     d1::task **pool = victim->task_pool.load(std::memory_order_relaxed);
     d1::task *t = nullptr;

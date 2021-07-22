@@ -76,18 +76,23 @@ d1::task* arena_slot::get_task(execution_data_ext& ed, isolation_type isolation)
         if ( (std::intptr_t)( head.load(std::memory_order_acquire) ) > (std::intptr_t)T ) {
             acquire_task_pool();
             H0 = head.load(std::memory_order_relaxed);
+            thread_data* td = ed.task_disp->m_thread_data;
             if ( (std::intptr_t)H0 > (std::intptr_t)T ) {
                 // The thief has not backed off - nothing to grab.
                 __TBB_ASSERT( H0 == head.load(std::memory_order_relaxed)
                     && T == tail.load(std::memory_order_relaxed)
                     && H0 == T + 1, "victim/thief arbitration algorithm failure" );
                 reset_task_pool_and_leave();
+                td->my_arena->pool_mask[this_task_arena::current_thread_index()].store(
+                        0, std::memory_order_relaxed);
                 // No tasks in the task pool.
                 task_pool_empty = true;
                 break;
             } else if ( H0 == T ) {
                 // There is only one task in the task pool.
                 reset_task_pool_and_leave();
+                td->my_arena->pool_mask[this_task_arena::current_thread_index()].store(
+                        0, std::memory_order_relaxed);
                 task_pool_empty = true;
             } else {
                 // Release task pool if there are still some tasks.
@@ -126,7 +131,8 @@ d1::task* arena_slot::get_task(execution_data_ext& ed, isolation_type isolation)
                 // The release fence is used in publish_task_pool.
                 publish_task_pool();
                 thread_data* td = ed.task_disp->m_thread_data;
-                td->my_arena->pool_mask[td->my_arena_index].store(false, std::memory_order_relaxed);
+                td->my_arena->pool_mask[this_task_arena::current_thread_index()].store(
+                        1, std::memory_order_relaxed);
                 // Synchronize with snapshot as we published some tasks.
                 ed.task_disp->m_thread_data->my_arena->advertise_new_work<arena::wakeup>();
             }
