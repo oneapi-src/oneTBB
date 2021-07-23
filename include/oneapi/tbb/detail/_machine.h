@@ -91,7 +91,7 @@ static inline void atomic_fence(std::memory_order order) {
         _mm_mfence();
         return;
     }
-#endif /*(_WIN32)*/
+#endif /*_MSC_VER && (__TBB_x86_64 || __TBB_x86_32)*/
     std::atomic_thread_fence(order);
 }
 
