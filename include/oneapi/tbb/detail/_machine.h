@@ -82,7 +82,7 @@ using std::this_thread::yield;
 #endif
 
 static inline void atomic_fence(std::memory_order order) {
-#if (_WIN32) && _M_X64
+#if _MSC_VER && (__TBB_x86_64 || __TBB_x86_32)
     if (order == std::memory_order_seq_cst ||
         order == std::memory_order_acq_rel ||
         order == std::memory_order_acquire ||
