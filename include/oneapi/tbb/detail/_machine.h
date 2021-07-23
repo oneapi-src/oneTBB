@@ -77,7 +77,7 @@ using std::this_thread::yield;
 // atomic_fence implementation
 //--------------------------------------------------------------------------------------------------
 
-#if (_MSC_VER) && _M_X64
+#if _MSC_VER && (__TBB_x86_64 || __TBB_x86_32)
 #pragma intrinsic(_mm_mfence)
 #endif
 
