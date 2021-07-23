@@ -21,20 +21,8 @@ Please report issues and suggestions via
 [oneTBB forum](https://community.intel.com/t5/Intel-oneAPI-Threading-Building/bd-p/oneapi-threading-building-blocks).
 
 ## How to Contribute
-To contribute to oneTBB, please open a GitHub pull request (preferred) or send us a patch by e-mail.
-
-Please use the sign-off line at the end of the patch.
-Your signature certifies that you wrote the patch or
-otherwise have the right to pass it on as an open-source patch.
-The rules are pretty simple:
-if you can certify the https://developercertificate.org then you just add a line to every git commit message:
-```
-Signed-off-by: Name Surname <user@email.com>
-```
-Use your real name (sorry, no pseudonyms or anonymous contributions).
-
-If you set your `user.name` and `user.email` git configs, you can sign your
-commit automatically with `git commit -s`.
+We welcome community contributions, so check our [contributing guidelines](CONTRIBUTING.md)
+to learn more.
 
 ## License
 oneAPI Threading Building Blocks is licensed under [Apache License, Version 2.0](LICENSE.txt).
