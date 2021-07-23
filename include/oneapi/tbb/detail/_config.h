@@ -491,7 +491,7 @@
 #if __TBB_STATISTICS
     #define __TBB_add_statistics(TLS, STAT) TLS->add_statistics(governor::statistics::STAT)
 #else
-    #define __TBB_add_statistics(TD, STAT)
+    #define __TBB_add_statistics(TLS, STAT)
 #endif // __TBB_STATISTICS
 
 /** Macros of the form __TBB_XXX_BROKEN denote known issues that are caused by
