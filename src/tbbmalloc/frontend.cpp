@@ -574,7 +574,7 @@ public:
     LargeMemoryBlock *get(size_t size);
     bool externalCleanup(ExtMemoryPool *extMemPool);
 #if __TBB_MALLOC_WHITEBOX_TEST
-    LocalLOCImpl() : head(NULL), tail(NULL), totalSize(0), numOfBlocks(0) {}
+    LocalLOCImpl() : tail(NULL), head(NULL), totalSize(0), numOfBlocks(0) {}
     static size_t getMaxSize() { return MAX_TOTAL_SIZE; }
     static const int LOC_HIGH_MARK = HIGH_MARK;
 #else
@@ -1532,7 +1532,6 @@ void Block::shareOrphaned(intptr_t binTag, unsigned index)
     tbb::detail::suppress_unused_warning(index);
     STAT_increment(getThreadId(), index, freeBlockPublic);
     markOrphaned();
-    bool syncOnMailbox = false;
     if ((intptr_t)nextPrivatizable.load(std::memory_order_relaxed) == binTag) {
         // First check passed: the block is not in mailbox yet.
         // Need to set publicFreeList to non-zero, so other threads
@@ -2686,7 +2685,7 @@ using namespace rml::internal;
 
 // legacy entry point saved for compatibility with binaries complied
 // with pre-6003 versions of TBB
-rml::MemoryPool *pool_create(intptr_t pool_id, const MemPoolPolicy *policy)
+TBBMALLOC_EXPORT rml::MemoryPool *pool_create(intptr_t pool_id, const MemPoolPolicy *policy)
 {
     rml::MemoryPool *pool;
     MemPoolPolicy pol(policy->pAlloc, policy->pFree, policy->granularity);
@@ -2956,7 +2955,7 @@ extern "C" void __TBB_malloc_free_definite_size(void *object, size_t size)
  * A variant that provides additional memory safety, by checking whether the given address
  * was obtained with this allocator, and if not redirecting to the provided alternative call.
  */
-extern "C" void __TBB_malloc_safer_free(void *object, void (*original_free)(void*))
+extern "C" TBBMALLOC_EXPORT void __TBB_malloc_safer_free(void *object, void (*original_free)(void*))
 {
     if (!object)
         return;
@@ -3011,7 +3010,7 @@ extern "C" void* scalable_realloc(void* ptr, size_t size)
  * A variant that provides additional memory safety, by checking whether the given address
  * was obtained with this allocator, and if not redirecting to the provided alternative call.
  */
-extern "C" void* __TBB_malloc_safer_realloc(void* ptr, size_t sz, void* original_realloc)
+extern "C" TBBMALLOC_EXPORT void* __TBB_malloc_safer_realloc(void* ptr, size_t sz, void* original_realloc)
 {
     void *tmp; // TODO: fix warnings about uninitialized use of tmp
 
@@ -3132,7 +3131,7 @@ extern "C" void * scalable_aligned_realloc(void *ptr, size_t size, size_t alignm
     return tmp;
 }
 
-extern "C" void * __TBB_malloc_safer_aligned_realloc(void *ptr, size_t size, size_t alignment, void* orig_function)
+extern "C" TBBMALLOC_EXPORT void * __TBB_malloc_safer_aligned_realloc(void *ptr, size_t size, size_t alignment, void* orig_function)
 {
     /* corner cases left out of reallocAligned to not deal with errno there */
     if (!isPowerOfTwo(alignment)) {
@@ -3212,7 +3211,7 @@ extern "C" size_t scalable_msize(void* ptr)
  * A variant that provides additional memory safety, by checking whether the given address
  * was obtained with this allocator, and if not redirecting to the provided alternative call.
  */
-extern "C" size_t __TBB_malloc_safer_msize(void *object, size_t (*original_msize)(void*))
+extern "C" TBBMALLOC_EXPORT size_t __TBB_malloc_safer_msize(void *object, size_t (*original_msize)(void*))
 {
     if (object) {
         // Check if the memory was allocated by scalable_malloc
@@ -3231,7 +3230,7 @@ extern "C" size_t __TBB_malloc_safer_msize(void *object, size_t (*original_msize
 /*
  * The same as above but for _aligned_msize case
  */
-extern "C" size_t __TBB_malloc_safer_aligned_msize(void *object, size_t alignment, size_t offset, size_t (*orig_aligned_msize)(void*,size_t,size_t))
+extern "C" TBBMALLOC_EXPORT size_t __TBB_malloc_safer_aligned_msize(void *object, size_t alignment, size_t offset, size_t (*orig_aligned_msize)(void*,size_t,size_t))
 {
     if (object) {
         // Check if the memory was allocated by scalable_malloc

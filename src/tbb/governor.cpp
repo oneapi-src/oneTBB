@@ -51,6 +51,10 @@ namespace rml {
 tbb_server* make_private_server( tbb_client& client );
 } // namespace rml
 
+namespace system_topology {
+    void destroy();
+}
+
 //------------------------------------------------------------------------
 // governor
 //------------------------------------------------------------------------
@@ -79,6 +83,7 @@ void governor::release_resources () {
         runtime_warning("failed to destroy task scheduler TLS: %s", std::strerror(status));
     clear_address_waiter_table();
 
+    system_topology::destroy();
     dynamic_unlink_all();
 }
 
@@ -284,6 +289,7 @@ bool __TBB_EXPORTED_FUNC finalize(d1::task_scheduler_handle& handle, std::intptr
 
 #if __TBB_WEAK_SYMBOLS_PRESENT
 #pragma weak __TBB_internal_initialize_system_topology
+#pragma weak __TBB_internal_destroy_system_topology
 #pragma weak __TBB_internal_allocate_binding_handler
 #pragma weak __TBB_internal_deallocate_binding_handler
 #pragma weak __TBB_internal_apply_affinity
@@ -296,6 +302,7 @@ void __TBB_internal_initialize_system_topology(
     int& numa_nodes_count, int*& numa_indexes_list,
     int& core_types_count, int*& core_types_indexes_list
 );
+void __TBB_internal_destroy_system_topology( );
 
 //TODO: consider renaming to `create_binding_handler` and `destroy_binding_handler`
 binding_handler* __TBB_internal_allocate_binding_handler( int slot_num, int numa_id, int core_type_id, int max_threads_per_core );
@@ -309,6 +316,7 @@ int __TBB_internal_get_default_concurrency( int numa_id, int core_type_id, int m
 #endif /* __TBB_WEAK_SYMBOLS_PRESENT */
 
 // Stubs that will be used if TBBbind library is unavailable.
+static void dummy_destroy_system_topology ( ) { }
 static binding_handler* dummy_allocate_binding_handler ( int, int, int, int ) { return nullptr; }
 static void dummy_deallocate_binding_handler ( binding_handler* ) { }
 static void dummy_apply_affinity ( binding_handler*, int ) { }
@@ -321,6 +329,7 @@ static void (*initialize_system_topology_ptr)(
     int& numa_nodes_count, int*& numa_indexes_list,
     int& core_types_count, int*& core_types_indexes_list
 ) = nullptr;
+static void (*destroy_system_topology_ptr)( ) = dummy_destroy_system_topology;
 
 static binding_handler* (*allocate_binding_handler_ptr)( int slot_num, int numa_id, int core_type_id, int max_threads_per_core )
     = dummy_allocate_binding_handler;
@@ -337,6 +346,7 @@ int (*get_default_concurrency_ptr)( int numa_id, int core_type_id, int max_threa
 // Table describing how to link the handlers.
 static const dynamic_link_descriptor TbbBindLinkTable[] = {
     DLD(__TBB_internal_initialize_system_topology, initialize_system_topology_ptr),
+    DLD(__TBB_internal_destroy_system_topology, destroy_system_topology_ptr),
     DLD(__TBB_internal_allocate_binding_handler, allocate_binding_handler_ptr),
     DLD(__TBB_internal_deallocate_binding_handler, deallocate_binding_handler_ptr),
     DLD(__TBB_internal_apply_affinity, apply_affinity_ptr),
@@ -438,6 +448,10 @@ void initialization_impl() {
 
 void initialize() {
     atomic_do_once(initialization_impl, initialization_state);
+}
+
+void destroy() {
+    destroy_system_topology_ptr();
 }
 } // namespace system_topology
 

@@ -32,8 +32,6 @@
 #define private public
 #define protected public
 #include "tbb/concurrent_queue.h"
-#include "../../src/tbb/concurrent_bounded_queue.cpp"
-#include "../../src/tbb/misc.cpp"
 #undef protected
 #undef private
 

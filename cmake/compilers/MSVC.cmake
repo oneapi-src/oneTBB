@@ -72,4 +72,11 @@ endif()
 set(TBB_IPO_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:/GL>)
 set(TBB_IPO_LINK_FLAGS $<$<NOT:$<CONFIG:Debug>>:-LTCG> $<$<NOT:$<CONFIG:Debug>>:-INCREMENTAL:NO>)
 
+if (CMAKE_CXX_COMPILER_ID MATCHES "(Clang|IntelLLVM)")
+    if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86|AMD64)")
+        set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -mrtm -mwaitpkg)
+    endif()
+    set(TBB_OPENMP_NO_LINK_FLAG TRUE)
+endif()
+
 set(TBB_OPENMP_FLAG /openmp)
