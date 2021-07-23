@@ -119,19 +119,19 @@ TEST_CASE("async_node with rejecting policy"){
     oneapi::tbb::flow::graph g;
     std::atomic<bool> flag{false};
     std::thread thr;
-    async_node_type tested_node{
+    async_node_type testing_node{
       g, tbb::flow::unlimited,
       [&](const int& input, gateway_type& gateway) {
           gateway.reserve_wait();
-          thr = std::thread{[&, gate = &gateway]{
+          thr = std::thread{[&]{
               flag = true;
-              gate->try_put(input);
-              gate->release_wait();
+              gateway.try_put(input);
+              gateway.release_wait();
           }};
       }
     };
 
-    tested_node.try_put(1);
+    testing_node.try_put(1);
     g.wait_for_all();
     CHECK_MESSAGE((flag.load()), "The body of assync_node must submits the messages to an external activity for processing outside of the graph");
     thr.join();

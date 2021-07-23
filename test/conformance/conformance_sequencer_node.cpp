@@ -63,26 +63,17 @@ TEST_CASE("Deduction guides"){
 #endif
 }
 
-template<typename T>
-struct Sequencer{
-    using input_type = T;
-
-    std::size_t operator()(T v) {
-        return v;
-    }
-};
-
 //! Test sequencer_node single_push
 //! \brief \ref requirement
 TEST_CASE("sequencer_node single_push"){
-    Sequencer<int> sequencer;
+    conformance::Sequencer<int> sequencer;
     conformance::test_forwarding_single_push<oneapi::tbb::flow::sequencer_node<int>>(sequencer);
 }
 
 //! Test function_node buffering
 //! \brief \ref requirement
 TEST_CASE("sequencer_node buffering"){
-    Sequencer<int> sequencer;
+    conformance::Sequencer<int> sequencer;
     conformance::test_buffering<oneapi::tbb::flow::sequencer_node<int>, int>(sequencer);
 }
 
@@ -90,7 +81,7 @@ TEST_CASE("sequencer_node buffering"){
 //! Any intermediate state of src, including its links to predecessors and successors, is not copied.
 //! \brief \ref requirement
 TEST_CASE("sequencer_node copy constructor"){
-    Sequencer<int> sequencer;
+    conformance::Sequencer<int> sequencer;
     conformance::test_copy_ctor_for_buffering_nodes<oneapi::tbb::flow::sequencer_node<int>>(sequencer);
 }
 
@@ -105,7 +96,7 @@ TEST_CASE("sequencer_node superclasses"){
 //! \brief \ref interface
 TEST_CASE("sequencer_node rejects duplicate"){
     oneapi::tbb::flow::graph g;
-    Sequencer<int> sequencer;
+    conformance::Sequencer<int> sequencer;
 
     oneapi::tbb::flow::sequencer_node<int> node(g, sequencer);
 
@@ -119,7 +110,7 @@ TEST_CASE("sequencer_node rejects duplicate"){
 //! \brief \ref requirement
 TEST_CASE("queue_node methods"){
     oneapi::tbb::flow::graph g;
-    Sequencer<int> sequencer;
+    conformance::Sequencer<int> sequencer;
 
     oneapi::tbb::flow::sequencer_node<int> node(g, sequencer);
 
@@ -140,29 +131,23 @@ TEST_CASE("queue_node methods"){
     CHECK_MESSAGE((node.try_get(tmp) == false), "Getting from sequencer should not succeed");
 }
 
-struct Message {
-    int id;
-    int data;
-};
-
 //! The example demonstrates ordering capabilities of the sequencer_node. 
 //! While being processed in parallel, the data is passed to the successor node in the exact same order it was read.
 //! \brief \ref requirement
 TEST_CASE("sequencer_node ordering"){
     using namespace oneapi::tbb::flow;
+    using Message = conformance::Sequencer<int>::Message;
     graph g;
 
     // Due to parallelism the node can push messages to its successors in any order
-    function_node<Message, Message> process(g, unlimited, [] (Message msg) -> Message {
+    function_node<Message, Message> process(g, unlimited, [] (Message msg) {
         msg.data++;
         return msg;
     });
 
-    sequencer_node<Message> ordering(g, [](const Message& msg) -> int {
-        return msg.id;
-    });
+    sequencer_node<Message> ordering(g, conformance::Sequencer<int>());
 
-    std::atomic<int> counter{0};
+    std::atomic<std::size_t> counter{0};
     function_node<Message> writer(g, tbb::flow::serial, [&] (const Message& msg) {
         CHECK_MESSAGE((msg.id == counter++), "The data is passed to the successor node in the exact same order it was read");
     });
@@ -170,7 +155,7 @@ TEST_CASE("sequencer_node ordering"){
     tbb::flow::make_edge(process, ordering);
     tbb::flow::make_edge(ordering, writer);
 
-    for (int i = 0; i < 100; ++i) {
+    for (std::size_t i = 0; i < 100; ++i) {
         Message msg = {i, 0};
         process.try_put(msg);
     }

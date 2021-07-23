@@ -55,20 +55,20 @@ TEST_CASE("buffer_node superclasses"){
 //! \brief \ref requirement
 TEST_CASE("buffer_node methods"){
     oneapi::tbb::flow::graph g;
-    oneapi::tbb::flow::buffer_node<int> tested_node(g);
+    oneapi::tbb::flow::buffer_node<int> testing_node(g);
 
     int tmp1 = -1;
     int tmp2 = -1;
 
-    CHECK_MESSAGE((!tested_node.try_get(tmp1) && tmp1 == -1), "`try_get` must returns false if there is no non-reserved item currently in the node.");
+    CHECK_MESSAGE((!testing_node.try_get(tmp1) && tmp1 == -1), "`try_get` must returns false if there is no non-reserved item currently in the node.");
 
-    tested_node.try_put(1);
-    tested_node.try_put(2);
+    testing_node.try_put(1);
+    testing_node.try_put(2);
 
     g.wait_for_all();
-    tested_node.try_get(tmp1);
+    testing_node.try_get(tmp1);
     CHECK_MESSAGE((tmp1 == 1 || tmp1 == 2), "Messages must be an arbitrary order");
 
-    tested_node.try_get(tmp2);
+    testing_node.try_get(tmp2);
     CHECK_MESSAGE((tmp2 != -1 && tmp2 != tmp1), "Additional `try_get()' does not receive the same value as previous");
 }

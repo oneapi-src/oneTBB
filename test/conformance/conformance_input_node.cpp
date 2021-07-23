@@ -175,12 +175,12 @@ TEST_CASE("concurrency follows set limits"){
     utils::ConcurrencyTracker::Reset();
     oneapi::tbb::flow::graph g;
     conformance::concurrency_peak_checker_body counter(1);
-    oneapi::tbb::flow::input_node<int> tested_node(g, counter);
+    oneapi::tbb::flow::input_node<int> testing_node(g, counter);
 
     conformance::test_push_receiver<int> sink(g);
 
-    make_edge(tested_node, sink);
-    tested_node.activate();
+    make_edge(testing_node, sink);
+    testing_node.activate();
 
     g.wait_for_all();
 }
@@ -228,10 +228,10 @@ TEST_CASE("input_node `try_get()' call testing: a call to body is made only when
     function_node_counter fun2;
 
     oneapi::tbb::flow::function_node <int, int, oneapi::tbb::flow::rejecting> fnode(g, oneapi::tbb::flow::serial, fun2);
-    oneapi::tbb::flow::input_node<int> tested_node(g, fun1);
+    oneapi::tbb::flow::input_node<int> testing_node(g, fun1);
 
-    make_edge(tested_node, fnode);
-    tested_node.activate();
+    make_edge(testing_node, fnode);
+    testing_node.activate();
 
     g.wait_for_all();
 }

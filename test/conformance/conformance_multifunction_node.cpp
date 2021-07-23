@@ -117,8 +117,8 @@ TEST_CASE("multifunction_node output_ports") {
     conformance::dummy_functor<int> fun;
     oneapi::tbb::flow::multifunction_node <int, std::tuple<int>> node(g, unlimited, fun);
 
-    CHECK_MESSAGE((std::is_same<oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>::output_ports_type&, decltype(node.output_ports())>::value), "multifunction_node output_ports should returns a tuple of output ports");
-
+    CHECK_MESSAGE((std::is_same<oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>::output_ports_type&,
+        decltype(node.output_ports())>::value), "multifunction_node output_ports should returns a tuple of output ports");
 }
 
 //! Test inheritance relations

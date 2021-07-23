@@ -160,36 +160,6 @@ void test_follows_and_precedes_api() {
 }
 #endif
 
-#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
-void test_deduction_guides() {
-    using namespace tbb::flow;
-
-    graph g;
-    using tuple_type = std::tuple<int, int, int>;
-    broadcast_node<int> b1(g), b2(g), b3(g);
-    broadcast_node<tuple_type> b4(g);
-    join_node<tuple_type> j0(g);
-
-#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
-    join_node j1(follows(b1, b2, b3));
-    static_assert(std::is_same_v<decltype(j1), join_node<tuple_type>>);
-
-    join_node j2(follows(b1, b2, b3), reserving());
-    static_assert(std::is_same_v<decltype(j2), join_node<tuple_type, reserving>>);
-
-    join_node j3(precedes(b4));
-    static_assert(std::is_same_v<decltype(j3), join_node<tuple_type>>);
-
-    join_node j4(precedes(b4), reserving());
-    static_assert(std::is_same_v<decltype(j4), join_node<tuple_type, reserving>>);
-#endif
-
-    join_node j5(j0);
-    static_assert(std::is_same_v<decltype(j5), join_node<tuple_type>>);
-}
-
-#endif
-
 namespace multiple_predecessors {
 
 using namespace tbb::flow;
@@ -290,14 +260,6 @@ void test(ConnectJoinNodeFunc&& connect_join_node) {
 //! \brief \ref error_guessing
 TEST_CASE("Test follows and preceedes API"){
     test_follows_and_precedes_api();
-}
-#endif
-
-#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
-//! Test deduction guides
-//! \brief \ref requirement
-TEST_CASE("Deduction guides test"){
-    test_deduction_guides();
 }
 #endif
 

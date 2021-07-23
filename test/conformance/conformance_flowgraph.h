@@ -48,17 +48,29 @@ struct conformance_input_msg {
 
     conformance_input_msg(int _data) : data(_data) {};
 
-    template<bool T = DefaultConstructible, std::enable_if_t<T, bool> = true>
+    template<bool T = DefaultConstructible, typename std::enable_if<T, bool>::type = true>
     conformance_input_msg(){};
 
-    template<bool T = CopyConstructible, std::enable_if_t<T, bool> = true>
+    template<bool T = CopyConstructible, typename std::enable_if<T, bool>::type = true>
     conformance_input_msg(const conformance_input_msg& msg) : data(msg.data) {};
 
-    template<bool T = CopyAssignable, std::enable_if_t<T, bool> = true>
+    template<bool T = CopyAssignable, typename std::enable_if<T, bool>::type = true>
     conformance_input_msg& operator=(const conformance_input_msg& msg) {
         this->data = msg.data;
         return *this;
     };
+
+    bool operator==(const int expected_data) const {
+        return data == expected_data;
+    }
+
+    bool operator==(const conformance_input_msg& msg) const {
+        return data == msg.data;
+    }
+
+    operator std::size_t() {
+        return static_cast<std::size_t>(data);
+    }
 };
 
 
@@ -68,20 +80,24 @@ struct conformance_output_msg {
 
     conformance_output_msg(int _data) : data(_data) {};
 
-    template<bool T = DefaultConstructible, std::enable_if_t<T, bool> = true>
+    template<bool T = DefaultConstructible, typename std::enable_if<T, bool>::type = true>
     conformance_output_msg(){};
 
-    template<bool T = CopyConstructible, std::enable_if_t<T, bool> = true>
+    template<bool T = CopyConstructible, typename std::enable_if<T, bool>::type = true>
     conformance_output_msg(const conformance_output_msg& msg) : data(msg.data) {};
 
-    template<bool T = CopyAssignable, std::enable_if_t<T, bool> = true>
+    template<bool T = CopyAssignable, typename std::enable_if<T, bool>::type = true>
     conformance_output_msg& operator=(const conformance_output_msg& msg) {
         this->data = msg.data;
         return *this;
     };
 
-    bool operator==(int expected_data) {
+    bool operator==(const int expected_data) const {
         return data == expected_data;
+    }
+
+    bool operator==(const conformance_output_msg& msg) const {
+        return data == msg.data;
     }
 
     operator std::size_t() {
@@ -90,7 +106,7 @@ struct conformance_output_msg {
 };
 
 template<typename V>
-std::vector<V> get_values( test_push_receiver<V>& rr ) {
+typename std::enable_if<!std::is_default_constructible<V>::value, std::vector<V>>::type get_values( test_push_receiver<V>& rr ) {
     std::vector<V> messages;
     int val = 0;
     for(V tmp(0); rr.try_get(tmp); ++val) {
@@ -98,6 +114,34 @@ std::vector<V> get_values( test_push_receiver<V>& rr ) {
     }
     return messages;
 }
+
+template<typename V>
+typename std::enable_if<std::is_default_constructible<V>::value, std::vector<V>>::type get_values( test_push_receiver<V>& rr ) {
+    std::vector<V> messages;
+    int val = 0;
+    for(V tmp; rr.try_get(tmp); ++val) {
+        messages.push_back(tmp);
+    }
+    return messages;
+}
+
+template<typename T>
+struct Sequencer{
+    struct Message {
+        std::size_t id;
+        T data;
+    };
+
+    using input_type = T;
+
+    std::size_t operator()(T v) {
+        return v;
+    }
+
+    std::size_t operator()(Message msg) {
+        return msg.id;
+    }
+};
 
 template<typename OutputType>
 struct track_first_id_functor {
@@ -177,11 +221,11 @@ template<typename OutputType>
 struct dummy_functor {
     template<typename InputType>
     OutputType operator()( InputType ) {
-        #ifdef CONTINUE_NODE
-            return OutputType();
-        #else
-            return OutputType(0);
-        #endif
+#ifdef CONTINUE_NODE
+        return OutputType();
+#else
+        return OutputType(0);
+#endif
     }
 
     template<typename InputType>
@@ -193,6 +237,9 @@ struct dummy_functor {
     void operator()( InputType, assync_ports_t<InputType, OutputType>& g ) {
         g.try_put(OutputType(0));
     }
+
+    template<typename InputType, typename T>
+    void operator()( InputType, std::tuple<T, T>& ) {}
 
     OutputType operator()( oneapi::tbb::flow_control & fc ) {
         static bool check = false;
@@ -216,11 +263,11 @@ struct wait_flag_body {
     template<typename InputType>
     InputType operator()( InputType ) {
         while(!flag.load()) { utils::yield(); };
-        #ifdef CONTINUE_NODE
-            return InputType();
-        #else
-            return InputType(0);
-        #endif
+#ifdef CONTINUE_NODE
+        return InputType();
+#else
+        return InputType(0);
+#endif
     }
 
     template<typename InputType>
@@ -393,13 +440,13 @@ void test_body_exec(Args... node_args) {
 
     constexpr std::size_t n = 10;
     for(std::size_t i = 0; i < n; ++i) {
-        #ifdef CONTINUE_NODE
-            CHECK_MESSAGE((node1.try_put(InputType()) == true),
-                        "try_put of first node should return true");
-        #else
-            CHECK_MESSAGE((node1.try_put(InputType(0)) == true),
-                        "try_put of first node should return true");
-        #endif
+#ifdef CONTINUE_NODE
+        CHECK_MESSAGE((node1.try_put(InputType()) == true),
+                "try_put of first node should return true");
+#else
+        CHECK_MESSAGE((node1.try_put(InputType(0)) == true),
+                "try_put of first node should return true");
+#endif
     }
     g.wait_for_all();
 
@@ -407,10 +454,10 @@ void test_body_exec(Args... node_args) {
 }
 
 template<typename Node, typename Body>
-void test_body_copying(Node& tested_node, Body& base_body) {
+void test_body_copying(Node& testing_node, Body& base_body) {
     using namespace oneapi::tbb::flow;
 
-    Body b2 = copy_body<Body, Node>(tested_node);
+    Body b2 = copy_body<Body, Node>(testing_node);
 
     CHECK_MESSAGE((base_body.copy_count + 1 < b2.copy_count), "copy_body and constructor should copy bodies");
 }
@@ -423,9 +470,9 @@ void test_copy_body(Args... node_args) {
 
     graph g;
 
-    Node tested_node(g, node_args..., base_body);
+    Node testing_node(g, node_args..., base_body);
 
-    Body b2 = copy_body<Body, Node>(tested_node);
+    Body b2 = copy_body<Body, Node>(testing_node);
 
     CHECK_MESSAGE((base_body.copy_count + 1 < b2.copy_count), "copy_body and constructor should copy bodies");
 }
@@ -434,38 +481,38 @@ template<typename Node, typename InputType, typename ...Args>
 void test_buffering(Args... node_args) {
     oneapi::tbb::flow::graph g;
 
-    Node tested_node(g, node_args...);
+    Node testing_node(g, node_args...);
     oneapi::tbb::flow::limiter_node<int> rejecter(g, 0);
 
-    oneapi::tbb::flow::make_edge(tested_node, rejecter);
+    oneapi::tbb::flow::make_edge(testing_node, rejecter);
 
     int tmp = -1;
-    #ifdef INPUT_NODE
-        tested_node.activate();
-        g.wait_for_all();
-        CHECK_MESSAGE((tested_node.try_get(tmp) == true), "try_get after rejection should succeed");
-        CHECK_MESSAGE((tmp == 0), "try_get should return correct value");
-    #else
-        #ifdef CONTINUE_NODE
-            tested_node.try_put(InputType());
-        #else
-            tested_node.try_put(InputType(1));
-        #endif
-        
-        g.wait_for_all();
+#ifdef INPUT_NODE
+    testing_node.activate();
+    g.wait_for_all();
+    CHECK_MESSAGE((testing_node.try_get(tmp) == true), "try_get after rejection should succeed");
+    CHECK_MESSAGE((tmp == 0), "try_get should return correct value");
+#else
+#ifdef CONTINUE_NODE
+    testing_node.try_put(InputType());
+#else
+    testing_node.try_put(InputType(1));
+#endif
+    
+    g.wait_for_all();
 
-        #if !defined BUFFERING_NODES || defined SEQUENCER_NODE
-            #ifdef MULTIFUNCTION_NODE
-                CHECK_MESSAGE((std::get<0>(tested_node.output_ports()).try_get(tmp) == false), "try_get after rejection should not succeed");
-            #else
-                CHECK_MESSAGE((tested_node.try_get(tmp) == false), "try_get after rejection should not succeed");
-            #endif
-            CHECK_MESSAGE((tmp == -1), "try_get after rejection should not alter passed value");
-        #else
-            CHECK_MESSAGE( (tested_node.try_get(tmp) == true), "try_get after rejection should succeed");
-            CHECK_MESSAGE( (tmp == 1), "try_get after rejection should set value");
-        #endif
-    #endif
+#if !defined BUFFERING_NODES || defined SEQUENCER_NODE
+#ifdef MULTIFUNCTION_NODE
+    CHECK_MESSAGE((std::get<0>(testing_node.output_ports()).try_get(tmp) == false), "try_get after rejection should not succeed");
+#else
+    CHECK_MESSAGE((testing_node.try_get(tmp) == false), "try_get after rejection should not succeed");
+#endif
+    CHECK_MESSAGE((tmp == -1), "try_get after rejection should not alter passed value");
+#else
+    CHECK_MESSAGE( (testing_node.try_get(tmp) == true), "try_get after rejection should succeed");
+    CHECK_MESSAGE( (tmp == 1), "try_get after rejection should set value");
+#endif
+#endif
 }
 
 
@@ -481,20 +528,20 @@ void test_forwarding(std::size_t messages_recieved, Args... node_args) {
         oneapi::tbb::flow::make_edge(testing_node, *receiver_nodes.back());
     }
 
-    #ifdef INPUT_NODE
-        __TBB_ASSERT(expected == messages_recieved, "For correct execution of test");
-        testing_node.activate();
-    #else
-        #ifdef BUFFERING_NODES
-            testing_node.try_put(expected);
-        #else
-            #ifdef CONTINUE_NODE
-                testing_node.try_put(InputType());
-            #else
-                testing_node.try_put(InputType(1));
-            #endif
-        #endif
-    #endif
+#ifdef INPUT_NODE
+    __TBB_ASSERT(expected == messages_recieved, "For correct execution of test");
+    testing_node.activate();
+#else
+#ifdef BUFFERING_NODES
+    testing_node.try_put(expected);
+#else
+#ifdef CONTINUE_NODE
+    testing_node.try_put(InputType());
+#else
+    testing_node.try_put(InputType(expected));
+#endif
+#endif
+#endif
 
     g.wait_for_all();
     for(auto receiver: receiver_nodes) {
@@ -509,14 +556,14 @@ template<typename Node, typename ...Args>
 void test_forwarding_single_push(Args... node_args) {
     oneapi::tbb::flow::graph g;
 
-    Node tested_node(g, node_args...);
+    Node testing_node(g, node_args...);
     conformance::test_push_receiver<int> suc_node1(g);
     conformance::test_push_receiver<int> suc_node2(g);
 
-    oneapi::tbb::flow::make_edge(tested_node, suc_node1);
-    oneapi::tbb::flow::make_edge(tested_node, suc_node2);
+    oneapi::tbb::flow::make_edge(testing_node, suc_node1);
+    oneapi::tbb::flow::make_edge(testing_node, suc_node2);
 
-    tested_node.try_put(0);
+    testing_node.try_put(0);
     g.wait_for_all();
 
     auto values1 = conformance::get_values(suc_node1);
@@ -524,7 +571,7 @@ void test_forwarding_single_push(Args... node_args) {
     CHECK_MESSAGE((values1.size() != values2.size()), "Only one descendant the node needs to receive");
     CHECK_MESSAGE((values1.size() + values2.size() == 1), "All messages need to be received");
 
-    tested_node.try_put(1);
+    testing_node.try_put(1);
     g.wait_for_all();
 
     auto values3 = conformance::get_values(suc_node1);
@@ -532,16 +579,16 @@ void test_forwarding_single_push(Args... node_args) {
     CHECK_MESSAGE((values3.size() != values4.size()), "Only one descendant the node needs to receive");
     CHECK_MESSAGE((values3.size() + values4.size() == 1), "All messages need to be received");
 
-    #ifdef QUEUE_NODE
+#ifdef QUEUE_NODE
+    CHECK_MESSAGE((values1[0] == 0), "Value passed is the actual one received");
+    CHECK_MESSAGE((values3[0] == 1), "Value passed is the actual one received");
+#else
+    if(values1.size() == 1) {
         CHECK_MESSAGE((values1[0] == 0), "Value passed is the actual one received");
-        CHECK_MESSAGE((values3[0] == 1), "Value passed is the actual one received");
-    #else
-        if(values1.size() == 1) {
-            CHECK_MESSAGE((values1[0] == 0), "Value passed is the actual one received");
-        }else{
-            CHECK_MESSAGE((values2[0] == 0), "Value passed is the actual one received");
-        }
-    #endif
+    }else{
+        CHECK_MESSAGE((values2[0] == 0), "Value passed is the actual one received");
+    }
+#endif
 }
 
 template<typename Node, typename I, typename O>
@@ -578,12 +625,12 @@ void test_copy_ctor() {
     node_copy.try_put(1);
     g.wait_for_all();
 
-    CHECK_MESSAGE((conformance::get_values(node2).size() == 0 && conformance::get_values(node3).size() == 1), "Copied node doesn`t copy successor, but copy number of predecessors");
+    CHECK_MESSAGE((conformance::get_values(node2).size() == 0 && conformance::get_values(node3).size() == 1), "Copied node doesn`t copy successor");
 
     node0.try_put(1);
     g.wait_for_all();
 
-    CHECK_MESSAGE((conformance::get_values(node2).size() == 1 && conformance::get_values(node3).size() == 0), "Copied node doesn`t copy predecessor, but copy number of predecessors");
+    CHECK_MESSAGE((conformance::get_values(node2).size() == 1 && conformance::get_values(node3).size() == 0), "Copied node doesn`t copy predecessor");
 }
 
 template<typename Node, typename ...Args>
@@ -592,25 +639,25 @@ void test_copy_ctor_for_buffering_nodes(Args... node_args) {
 
     conformance::dummy_functor<int> fun;
 
-    Node tested_node(g, node_args...);
+    Node testing_node(g, node_args...);
     oneapi::tbb::flow::continue_node<int> pred_node(g, fun);
     conformance::test_push_receiver<int> suc_node1(g);
     conformance::test_push_receiver<int> suc_node2(g);
 
-    oneapi::tbb::flow::make_edge(pred_node, tested_node);
-    oneapi::tbb::flow::make_edge(tested_node, suc_node1);
+    oneapi::tbb::flow::make_edge(pred_node, testing_node);
+    oneapi::tbb::flow::make_edge(testing_node, suc_node1);
 
-    #ifdef OVERWRITE_NODE
-        tested_node.try_put(1);
-    #endif
+#ifdef OVERWRITE_NODE
+    testing_node.try_put(1);
+#endif
 
-    Node node_copy(tested_node);
+    Node node_copy(testing_node);
 
-    #ifdef OVERWRITE_NODE
-        int tmp;
-        CHECK_MESSAGE((!node_copy.is_valid() && !node_copy.try_get(tmp)), "The buffered value is not copied from src");
-        conformance::get_values(suc_node1);
-    #endif
+#ifdef OVERWRITE_NODE
+    int tmp;
+    CHECK_MESSAGE((!node_copy.is_valid() && !node_copy.try_get(tmp)), "The buffered value is not copied from src");
+    conformance::get_values(suc_node1);
+#endif
 
     oneapi::tbb::flow::make_edge(node_copy, suc_node2);
 
@@ -619,10 +666,10 @@ void test_copy_ctor_for_buffering_nodes(Args... node_args) {
 
     CHECK_MESSAGE((conformance::get_values(suc_node1).size() == 0 && conformance::get_values(suc_node2).size() == 1), "Copied node doesn`t copy successor");
 
-    #ifdef OVERWRITE_NODE
-        node_copy.clear();
-        tested_node.clear();
-    #endif
+#ifdef OVERWRITE_NODE
+    node_copy.clear();
+    testing_node.clear();
+#endif
 
     pred_node.try_put(oneapi::tbb::flow::continue_msg());
     g.wait_for_all();
@@ -744,11 +791,11 @@ void test_output_class() {
     conformance::test_push_receiver<Output> node2(g);
     make_edge(node1, node2);
 
-    #ifdef INPUT_NODE
-        node1.activate();
-    #else
-        node1.try_put(oneapi::tbb::flow::continue_msg());
-    #endif
+#ifdef INPUT_NODE
+    node1.activate();
+#else
+    node1.try_put(oneapi::tbb::flow::continue_msg());
+#endif
 
     g.wait_for_all();
     Output b;
@@ -769,44 +816,58 @@ void test_with_reserving_join_node_class() {
             int result = int((msg >> 2) / 4);
             return result;
         });
-    Node tested_node(g); // for buffering once computed value
+    Node testing_node(g); // for buffering once computed value
 
     buffer_node<int> buffer_n(g);
     join_node<std::tuple<int, int>, reserving> join_n(g);
 
     std::atomic<int> number{2};
+    std::atomic<int> counter{0};
     function_node<std::tuple<int, int>> consumer_n(
         g, unlimited,
         [&](const std::tuple<int, int>& arg) {
             // use the precomputed static result along with dynamic data
-            #ifdef OVERWRITE_NODE
-                CHECK_MESSAGE((std::get<0>(arg) == int((number >> 2) / 4)), "A overwrite_node store a single item that can be overwritten");
-            #else
-                CHECK_MESSAGE((std::get<0>(arg) == int((number >> 2) / 4)), "A write_once_node store a single item that cannot be overwritten");
-            #endif
+            ++counter;
+#ifdef OVERWRITE_NODE
+            CHECK_MESSAGE((std::get<0>(arg) == int((number >> 2) / 4)), "A overwrite_node store a single item that can be overwritten");
+#else
+            CHECK_MESSAGE((std::get<0>(arg) == int((number >> 2) / 4)), "A write_once_node store a single item that cannot be overwritten");
+#endif
         });
 
-    make_edge(static_result_computer_n, tested_node);
-    make_edge(tested_node, input_port<0>(join_n));
+    make_edge(static_result_computer_n, testing_node);
+    make_edge(testing_node, input_port<0>(join_n));
     make_edge(buffer_n, input_port<1>(join_n));
     make_edge(join_n, consumer_n);
 
     // do one-time calculation that will be reused many times further in the graph
     static_result_computer_n.try_put(number);
 
-    for (int i = 0; i < 50; i++) {
+    constexpr int put_count = 50;
+    for (int i = 0; i < put_count / 2; i++) {
+        buffer_n.try_put(i);
+    }
+#ifdef OVERWRITE_NODE
+    number = 3;
+#endif
+    static_result_computer_n.try_put(number);
+    for (int i = 0; i < put_count / 2; i++) {
         buffer_n.try_put(i);
     }
 
-    #ifdef OVERWRITE_NODE
-        number = 3;
-        static_result_computer_n.try_put(number);
-        for (int i = 0; i < 50; i++) {
-            buffer_n.try_put(i);
-        }
-    #endif
-
     g.wait_for_all();
+    CHECK_MESSAGE((counter == put_count), "join_node with reserving policy \
+        if at least one successor accepts the tuple must consume messages");
+}
+
+template<typename T, typename U>
+typename std::enable_if<std::is_same<T, U>::value, bool>::type check_output_type(){
+    return true;
+}
+
+template<typename T, typename U>
+typename std::enable_if<!std::is_same<T, U>::value, bool>::type check_output_type(){
+    return false;
 }
 
 }

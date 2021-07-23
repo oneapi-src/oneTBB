@@ -173,7 +173,7 @@ TEST_CASE("continue_node constructors"){
 //! The node that is constructed has a reference to the same graph object as src,
 //! has a copy of the initial body used by src, and only has a non-zero threshold if src is constructed with a non-zero threshold..
 //! The predecessors and successors of src are not copied.
-//! \brief \ref requirement
+//! \brief \ref interface
 TEST_CASE("continue_node copy constructor"){
     using namespace oneapi::tbb::flow;
     graph g;

@@ -57,18 +57,18 @@ TEST_CASE("priority_queue_node superclasses"){
 TEST_CASE("priority_queue_node methods"){
     oneapi::tbb::flow::graph g;
 
-    oneapi::tbb::flow::priority_queue_node<int, std::greater<int>> tested_node(g);
+    oneapi::tbb::flow::priority_queue_node<int, std::greater<int>> testing_node(g);
 
-    tested_node.try_put(2);
-    tested_node.try_put(3);
-    tested_node.try_put(1);
+    testing_node.try_put(2);
+    testing_node.try_put(3);
+    testing_node.try_put(1);
     g.wait_for_all();
 
     int tmp = -1;
-    CHECK_MESSAGE((tested_node.try_get(tmp)), "Get should succeed");
+    CHECK_MESSAGE((testing_node.try_get(tmp)), "Get should succeed");
     CHECK_MESSAGE((tmp == 1), "Values should get sorted");
-    CHECK_MESSAGE((tested_node.try_get(tmp)), "Get should succeed");
+    CHECK_MESSAGE((testing_node.try_get(tmp)), "Get should succeed");
     CHECK_MESSAGE((tmp == 2), "Values should get sorted");
-    CHECK_MESSAGE((tested_node.try_get(tmp)), "Get should succeed");
+    CHECK_MESSAGE((testing_node.try_get(tmp)), "Get should succeed");
     CHECK_MESSAGE((tmp == 3), "Values should get sorted");
 }
