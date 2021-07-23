@@ -548,7 +548,7 @@ void arena::advertise_new_work() {
     }
 }
 
-inline d1::task* arena::steal_task(unsigned arena_index, FastRandom& frnd, execution_data_ext& ed, isolation_type isolation) {
+inline d1::task* arena::steal_task(unsigned /* arena_index */, FastRandom& frnd, execution_data_ext& ed, isolation_type isolation) {
     auto slot_num_limit = my_limit.load(std::memory_order_relaxed);
     if (slot_num_limit == 1) {
         // No slots to steal from
@@ -565,16 +565,18 @@ inline d1::task* arena::steal_task(unsigned arena_index, FastRandom& frnd, execu
         return nullptr;
     }
     k = frnd.get() % k + 1;
+    bool find_steal_pool = false;
     for (std::size_t i = 0; i < my_num_slots; ++i) {
-        if (i != arena_index && pool_mask[i].load(std::memory_order_relaxed)) {
+        if (pool_mask[i].load(std::memory_order_relaxed)) {
             if ((--k) == 0) {
                 k = i;
+                find_steal_pool = true;
                 break;
             }
         }
-        if ((i + 1) == my_num_slots) {
-            return nullptr;
-        }
+    }
+    if (!find_steal_pool) {
+        return nullptr;
     }
     // The following condition excludes the external thread that might have
     // already taken our previous place in the arena from the list .
