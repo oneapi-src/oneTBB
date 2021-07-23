@@ -186,7 +186,7 @@ public:
         void print_statistics() {
                 int offset = 2;
                 /* std::string not so bad because of Small String Optimization */
-                std::string column_names[] = {
+                const static std::string column_names[] = {
                     "executed", "getted",
                     "result != null", "steal", "try steal",
                     "vic pool empty",
