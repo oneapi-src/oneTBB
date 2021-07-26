@@ -46,6 +46,8 @@ Synopsis
                 task_scheduler_handle& operator=(const task_scheduler_handle& other) = delete;
                 task_scheduler_handle& operator=(task_scheduler_handle&& other) noexcept;
 
+                explicit operator bool() const noexcept;
+
                 static task_scheduler_handle get();
 
                 static void release(task_scheduler_handle& handle);
@@ -60,6 +62,12 @@ Synopsis
 Member Functions
 ----------------
 
+.. cpp:function:: task_scheduler_handle()
+
+    **Effects**: Creates an instance of the ``task_scheduler_handle`` class that does not contain any reference to a task scheduler
+
+-------------------------------------------------------
+
 .. cpp:function:: ~task_scheduler_handle()
 
     **Effects**: Destroys an instance of the ``task_scheduler_handle`` class.
@@ -67,9 +75,30 @@ Member Functions
 
 -------------------------------------------------------
 
+.. cpp:function:: task_scheduler_handle(task_scheduler_handle&& other) noexcept
+
+    **Effects**: Creates an instance of the ``task_scheduler_handle`` class that references to the task scheduler referenced with ``other``.
+    ``other`` releases a reference to the task scheduler.
+
+-------------------------------------------------------
+
+.. cpp:function:: task_scheduler_handle& operator=(task_scheduler_handle&& other) noexcept
+
+    **Effects**: Releases a reference to the task scheduler referenced with ``this`` and adds a reference to the task scheduler referenced with ``other``.
+    ``other`` releases a reference to the task scheduler.
+
+-------------------------------------------------------
+
+.. cpp:function:: explicit operator bool() const noexcept
+
+    **Returns**: ``true`` if ``this`` references any task scheduler; otherwise, returns ``false``
+
+-------------------------------------------------------
+
 .. cpp:function:: task_scheduler_handle get()
 
-    **Returns**: An instance of the ``task_scheduler_handle`` class.
+    **Returns**: An instance of the ``task_scheduler_handle`` class that holds a references to the task scheduler preventing
+    it from premature destruction.
 
 -------------------------------------------------------
 
