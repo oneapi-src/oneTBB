@@ -105,7 +105,7 @@ TEST_CASE("composite_node ports"){
     oneapi::tbb::flow::priority_queue_node<int> pq(g);
     oneapi::tbb::flow::write_once_node<int> wo(g);
     oneapi::tbb::flow::overwrite_node<int> ovw(g);
-    oneapi::tbb::flow::sequencer_node<int> seq(g, conformance::Sequencer<int>());
+    oneapi::tbb::flow::sequencer_node<int> seq(g, conformance::sequenser_functor<int>());
 
     auto input_tuple = std::tie(ct, s, m_fxn, fxn, bc, oneapi::tbb::flow::input_port<0>(j), lim, q, oneapi::tbb::flow::input_port<0>(ind),
                                 pq, ovw, wo, bf, seq);

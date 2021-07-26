@@ -43,19 +43,19 @@ using assync_ports_t =
 
 
 template<bool DefaultConstructible, bool CopyConstructible, bool CopyAssignable>
-struct conformance_input_msg {
+struct message {
     int data;
 
-    conformance_input_msg(int _data) : data(_data) {};
+    message(int _data) : data(_data) {};
 
     template<bool T = DefaultConstructible, typename std::enable_if<T, bool>::type = true>
-    conformance_input_msg(){};
+    message(){};
 
     template<bool T = CopyConstructible, typename std::enable_if<T, bool>::type = true>
-    conformance_input_msg(const conformance_input_msg& msg) : data(msg.data) {};
+    message(const message& msg) : data(msg.data) {};
 
     template<bool T = CopyAssignable, typename std::enable_if<T, bool>::type = true>
-    conformance_input_msg& operator=(const conformance_input_msg& msg) {
+    message& operator=(const message& msg) {
         this->data = msg.data;
         return *this;
     };
@@ -64,39 +64,7 @@ struct conformance_input_msg {
         return data == expected_data;
     }
 
-    bool operator==(const conformance_input_msg& msg) const {
-        return data == msg.data;
-    }
-
-    operator std::size_t() {
-        return static_cast<std::size_t>(data);
-    }
-};
-
-
-template<bool DefaultConstructible, bool CopyConstructible, bool CopyAssignable>
-struct conformance_output_msg {
-    int data;
-
-    conformance_output_msg(int _data) : data(_data) {};
-
-    template<bool T = DefaultConstructible, typename std::enable_if<T, bool>::type = true>
-    conformance_output_msg(){};
-
-    template<bool T = CopyConstructible, typename std::enable_if<T, bool>::type = true>
-    conformance_output_msg(const conformance_output_msg& msg) : data(msg.data) {};
-
-    template<bool T = CopyAssignable, typename std::enable_if<T, bool>::type = true>
-    conformance_output_msg& operator=(const conformance_output_msg& msg) {
-        this->data = msg.data;
-        return *this;
-    };
-
-    bool operator==(const int expected_data) const {
-        return data == expected_data;
-    }
-
-    bool operator==(const conformance_output_msg& msg) const {
+    bool operator==(const message& msg) const {
         return data == msg.data;
     }
 
@@ -125,9 +93,19 @@ typename std::enable_if<std::is_default_constructible<V>::value, std::vector<V>>
     return messages;
 }
 
+template<typename T, typename U>
+typename std::enable_if<std::is_same<T, U>::value, bool>::type check_output_type(){
+    return true;
+}
+
+template<typename T, typename U>
+typename std::enable_if<!std::is_same<T, U>::value, bool>::type check_output_type(){
+    return false;
+}
+
 template<typename T>
-struct Sequencer{
-    struct Message {
+struct sequenser_functor{
+    struct seq_message {
         std::size_t id;
         T data;
     };
@@ -138,7 +116,7 @@ struct Sequencer{
         return v;
     }
 
-    std::size_t operator()(Message msg) {
+    std::size_t operator()(seq_message msg) {
         return msg.id;
     }
 };
@@ -246,10 +224,10 @@ struct dummy_functor {
         if(check) {
             check = false;
             fc.stop();
-            return OutputType(0);
+            return OutputType(1);
         }
         check = true;
-        return OutputType(0);
+        return OutputType(1);
     }
 };
 
@@ -332,8 +310,8 @@ struct concurrency_peak_checker_body {
     }
 };
 
-template<typename O, typename I = int>
-struct CountingObject {
+template<typename OutputType, typename InputType = int>
+struct counting_object {
     std::size_t copy_count;
     mutable std::size_t copies_count;
     std::size_t assign_count;
@@ -341,32 +319,32 @@ struct CountingObject {
     std::size_t move_count;
     bool is_copy;
 
-    CountingObject():
+    counting_object():
         copy_count(0), copies_count(0), assign_count(0),
         assignes_count(0), move_count(0), is_copy(false) {}
 
-    CountingObject(int):
+    counting_object(int):
         copy_count(0), copies_count(0), assign_count(0),
         assignes_count(0), move_count(0), is_copy(false) {}
 
-    CountingObject( const CountingObject<O, I>& other ):
+    counting_object( const counting_object<OutputType, InputType>& other ):
         copy_count(other.copy_count + 1), is_copy(true) {
             ++other.copies_count;
         }
 
-    CountingObject& operator=( const CountingObject<O, I>& other ) {
+    counting_object& operator=( const counting_object<OutputType, InputType>& other ) {
         assign_count = other.assign_count + 1;
         ++other.assignes_count;
         is_copy = true;
         return *this;
     }
 
-    CountingObject( CountingObject<O, I>&& other ):
+    counting_object( counting_object<OutputType, InputType>&& other ):
          copy_count(other.copy_count), copies_count(other.copies_count),
          assign_count(other.assign_count), assignes_count(other.assignes_count),
          move_count(other.move_count + 1), is_copy(other.is_copy) {}
 
-    CountingObject& operator=( CountingObject<O, I>&& other ) {
+    counting_object& operator=( counting_object<OutputType, InputType>&& other ) {
         copy_count = other.copy_count;
         copies_count = other.copies_count;
         assign_count = other.assign_count;
@@ -376,27 +354,27 @@ struct CountingObject {
         return *this;
     }
 
-    O operator()( I ) {
-        return O();
+    OutputType operator()( InputType ) {
+        return OutputType(1);
     }
 
-    void operator()( I, multifunc_ports_t<I,O>& op ) {
-        std::get<0>(op).try_put(O());
+    void operator()( InputType, multifunc_ports_t<InputType,OutputType>& op ) {
+        std::get<0>(op).try_put(OutputType(1));
     }
 
-    void operator()( I , assync_ports_t<I, O>& g) {
-        g.try_put(O());
+    void operator()( InputType , assync_ports_t<InputType, OutputType>& g) {
+        g.try_put(OutputType(1));
     }
 
-    O operator()( oneapi::tbb::flow_control & fc ) {
+    OutputType operator()( oneapi::tbb::flow_control & fc ) {
         static bool check = false;
         if(check) {
             check = false;
             fc.stop();
-            return O();
+            return OutputType(1);
         }
         check = true;
-        return O();
+        return OutputType(1);
     }
 };
 
@@ -430,23 +408,31 @@ struct passthru_body {
     }
 };
 
+template<typename Node, typename InputType = void>
+bool produce_messages(Node& node, int arg = 1) {
+    arg += 0;
+#if defined INPUT_NODE
+    node.activate();
+    return true;
+#elif defined CONTINUE_NODE
+    return node.try_put(InputType());
+#else
+    return node.try_put(InputType(arg));
+#endif
+}
+
 template<typename Node, typename InputType, typename OutputType, typename ...Args>
 void test_body_exec(Args... node_args) {
     oneapi::tbb::flow::graph g;
     conformance::counting_functor<OutputType> counting_body;
     counting_body.execute_count = 0;
 
-    Node node1(g, node_args..., counting_body);
+    Node testing_node(g, node_args..., counting_body);
 
     constexpr std::size_t n = 10;
     for(std::size_t i = 0; i < n; ++i) {
-#ifdef CONTINUE_NODE
-        CHECK_MESSAGE((node1.try_put(InputType()) == true),
+        CHECK_MESSAGE((produce_messages<Node, InputType>(testing_node) == true),
                 "try_put of first node should return true");
-#else
-        CHECK_MESSAGE((node1.try_put(InputType(0)) == true),
-                "try_put of first node should return true");
-#endif
     }
     g.wait_for_all();
 
@@ -487,31 +473,20 @@ void test_buffering(Args... node_args) {
     oneapi::tbb::flow::make_edge(testing_node, rejecter);
 
     int tmp = -1;
-#ifdef INPUT_NODE
-    testing_node.activate();
-    g.wait_for_all();
-    CHECK_MESSAGE((testing_node.try_get(tmp) == true), "try_get after rejection should succeed");
-    CHECK_MESSAGE((tmp == 0), "try_get should return correct value");
-#else
-#ifdef CONTINUE_NODE
-    testing_node.try_put(InputType());
-#else
-    testing_node.try_put(InputType(1));
-#endif
-    
+    produce_messages<Node, InputType>(testing_node);
     g.wait_for_all();
 
-#if !defined BUFFERING_NODES || defined SEQUENCER_NODE
+
+#if defined BUFFERING_NODES || defined INPUT_NODE
+    CHECK_MESSAGE((testing_node.try_get(tmp) == true), "try_get after rejection should succeed");
+    CHECK_MESSAGE((tmp == 1), "try_get after rejection should set value");
+#else
 #ifdef MULTIFUNCTION_NODE
     CHECK_MESSAGE((std::get<0>(testing_node.output_ports()).try_get(tmp) == false), "try_get after rejection should not succeed");
 #else
     CHECK_MESSAGE((testing_node.try_get(tmp) == false), "try_get after rejection should not succeed");
 #endif
     CHECK_MESSAGE((tmp == -1), "try_get after rejection should not alter passed value");
-#else
-    CHECK_MESSAGE( (testing_node.try_get(tmp) == true), "try_get after rejection should succeed");
-    CHECK_MESSAGE( (tmp == 1), "try_get after rejection should set value");
-#endif
 #endif
 }
 
@@ -528,19 +503,10 @@ void test_forwarding(std::size_t messages_recieved, Args... node_args) {
         oneapi::tbb::flow::make_edge(testing_node, *receiver_nodes.back());
     }
 
+    produce_messages<Node, InputType>(testing_node, expected);
+
 #ifdef INPUT_NODE
-    __TBB_ASSERT(expected == messages_recieved, "For correct execution of test");
-    testing_node.activate();
-#else
-#ifdef BUFFERING_NODES
-    testing_node.try_put(expected);
-#else
-#ifdef CONTINUE_NODE
-    testing_node.try_put(InputType());
-#else
-    testing_node.try_put(InputType(expected));
-#endif
-#endif
+    CHECK_MESSAGE(expected == messages_recieved, "For correct execution of test");
 #endif
 
     g.wait_for_all();
@@ -591,13 +557,13 @@ void test_forwarding_single_push(Args... node_args) {
 #endif
 }
 
-template<typename Node, typename I, typename O>
+template<typename Node, typename InputType, typename OutputType>
 void test_inheritance() {
     using namespace oneapi::tbb::flow;
 
     CHECK_MESSAGE((std::is_base_of<graph_node, Node>::value), "Node should be derived from graph_node");
-    CHECK_MESSAGE((std::is_base_of<receiver<I>, Node>::value), "Node should be derived from receiver<Input>");
-    CHECK_MESSAGE((std::is_base_of<sender<O>, Node>::value), "Node should be derived from sender<Output>");
+    CHECK_MESSAGE((std::is_base_of<receiver<InputType>, Node>::value), "Node should be derived from receiver<Input>");
+    CHECK_MESSAGE((std::is_base_of<sender<OutputType>, Node>::value), "Node should be derived from sender<Output>");
 }
 
 template<typename Node, typename CountingBody>
@@ -610,27 +576,27 @@ void test_copy_ctor() {
 
     Node node0(g, unlimited, fun1);
     Node node1(g, unlimited, fun2);
-    conformance::test_push_receiver<int> node2(g);
-    conformance::test_push_receiver<int> node3(g);
+    conformance::test_push_receiver<int> suc_node1(g);
+    conformance::test_push_receiver<int> suc_node2(g);
 
     oneapi::tbb::flow::make_edge(node0, node1);
-    oneapi::tbb::flow::make_edge(node1, node2);
+    oneapi::tbb::flow::make_edge(node1, suc_node1);
 
     Node node_copy(node1);
 
     conformance::test_body_copying(node_copy, fun2);
 
-    oneapi::tbb::flow::make_edge(node_copy, node3);
+    oneapi::tbb::flow::make_edge(node_copy, suc_node2);
 
     node_copy.try_put(1);
     g.wait_for_all();
 
-    CHECK_MESSAGE((conformance::get_values(node2).size() == 0 && conformance::get_values(node3).size() == 1), "Copied node doesn`t copy successor");
+    CHECK_MESSAGE((conformance::get_values(suc_node1).size() == 0 && conformance::get_values(suc_node2).size() == 1), "Copied node doesn`t copy successor");
 
     node0.try_put(1);
     g.wait_for_all();
 
-    CHECK_MESSAGE((conformance::get_values(node2).size() == 1 && conformance::get_values(node3).size() == 0), "Copied node doesn`t copy predecessor");
+    CHECK_MESSAGE((conformance::get_values(suc_node1).size() == 1 && conformance::get_values(suc_node2).size() == 0), "Copied node doesn`t copy predecessor");
 }
 
 template<typename Node, typename ...Args>
@@ -729,9 +695,9 @@ void test_concurrency() {
         conformance::concurrency_peak_checker_body counter(expected_threads);
         Node fnode(g, num_threads, counter);
 
-        conformance::test_push_receiver<int> sink(g);
+        conformance::test_push_receiver<int> suc_node(g);
 
-        make_edge(fnode, sink);
+        make_edge(fnode, suc_node);
 
         for(int i = 0; i < 500; ++i) {
             fnode.try_put(i);
@@ -747,9 +713,9 @@ void test_rejecting() {
     wait_flag_body body;
     Node fnode(g, oneapi::tbb::flow::serial, body);
 
-    conformance::test_push_receiver<int> sink(g);
+    conformance::test_push_receiver<int> suc_node(g);
 
-    make_edge(fnode, sink);
+    make_edge(fnode, suc_node);
 
     fnode.try_put(0);
 
@@ -758,7 +724,7 @@ void test_rejecting() {
     wait_flag_body::flag = true;
 
     g.wait_for_all();
-    CHECK_MESSAGE((conformance::get_values(sink).size() == 1), "Messages should be rejected while the first is being processed");
+    CHECK_MESSAGE((conformance::get_values(suc_node).size() == 1), "Messages should be rejected while the first is being processed");
 }
 
 template<typename Node, typename CountingBody>
@@ -769,18 +735,18 @@ void test_output_input_class() {
 
     graph g;
     Node node1(g, unlimited, fun);
-    conformance::test_push_receiver<CountingBody> node2(g);
-    make_edge(node1, node2);
+    conformance::test_push_receiver<CountingBody> suc_node(g);
+    make_edge(node1, suc_node);
     CountingBody b1;
     CountingBody b2;
     node1.try_put(b1);
     g.wait_for_all();
-    node2.try_get(b2);
+    suc_node.try_get(b2);
     DOCTEST_WARN_MESSAGE( (b1.copies_count > 0), "The type Input must meet the DefaultConstructible and CopyConstructible requirements");
     DOCTEST_WARN_MESSAGE( (b2.is_copy), "The type Output must meet the CopyConstructible requirements");
 }
 
-template<typename Node, typename Output = conformance::CountingObject<int>>
+template<typename Node, typename Output = conformance::counting_object<int>>
 void test_output_class() {
     using namespace oneapi::tbb::flow;
 
@@ -788,8 +754,8 @@ void test_output_class() {
 
     graph g;
     Node node1(g, fun);
-    conformance::test_push_receiver<Output> node2(g);
-    make_edge(node1, node2);
+    conformance::test_push_receiver<Output> suc_node(g);
+    make_edge(node1, suc_node);
 
 #ifdef INPUT_NODE
     node1.activate();
@@ -799,7 +765,7 @@ void test_output_class() {
 
     g.wait_for_all();
     Output b;
-    node2.try_get(b);
+    suc_node.try_get(b);
     DOCTEST_WARN_MESSAGE((b.is_copy), "The type Output must meet the CopyConstructible requirements");
 }
 
@@ -859,16 +825,5 @@ void test_with_reserving_join_node_class() {
     CHECK_MESSAGE((counter == put_count), "join_node with reserving policy \
         if at least one successor accepts the tuple must consume messages");
 }
-
-template<typename T, typename U>
-typename std::enable_if<std::is_same<T, U>::value, bool>::type check_output_type(){
-    return true;
-}
-
-template<typename T, typename U>
-typename std::enable_if<!std::is_same<T, U>::value, bool>::type check_output_type(){
-    return false;
-}
-
 }
 #endif // __TBB_test_conformance_conformance_flowgraph_H

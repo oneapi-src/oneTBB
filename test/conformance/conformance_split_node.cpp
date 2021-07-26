@@ -23,7 +23,7 @@
 //! \file conformance_split_node.cpp
 //! \brief Test for [flow_graph.split_node] specification
 
-using input_msg = conformance::conformance_input_msg<true, true, false>;
+using input_msg = conformance::message</*default_ctor*/true, /*copy_ctor*/true, /*copy_assign*/false>;
 using my_input_tuple = std::tuple<int, float, input_msg>;
 using my_split_type = oneapi::tbb::flow::split_node<my_input_tuple>;
 
@@ -52,7 +52,7 @@ TEST_CASE("split_node buffering") {
     CHECK_MESSAGE((oneapi::tbb::flow::output_port<0>(testing_node).try_get(tmp1) == false 
                     && tmp1 == -1), "Value should be discarded after rejection");
     CHECK_MESSAGE((oneapi::tbb::flow::output_port<1>(testing_node).try_get(tmp2) == false 
-                    && tmp2 == -1), "Value should be discarded after rejection");
+                    && tmp2 == -1.f), "Value should be discarded after rejection");
     CHECK_MESSAGE((oneapi::tbb::flow::output_port<2>(testing_node).try_get(tmp3) == false 
                     && tmp3 == -1), "Value should be discarded after rejection");
 }
@@ -72,7 +72,7 @@ TEST_CASE("split_node broadcast and splitting"){
     oneapi::tbb::flow::make_edge(output_port<1>(testing_node), node3);
     oneapi::tbb::flow::make_edge(output_port<2>(testing_node), node4);
 
-    my_input_tuple my_tuple(1, 1.5, input_msg(2));
+    my_input_tuple my_tuple(1, 1.5f, input_msg(2));
 
     CHECK_MESSAGE((testing_node.try_put(my_tuple)), "`try_put()' must always returns `true'");
     g.wait_for_all();
@@ -84,7 +84,7 @@ TEST_CASE("split_node broadcast and splitting"){
     CHECK_MESSAGE((values2.size() == 1), "Descendant of the node must receive one message.");
     CHECK_MESSAGE((values3.size() == 1), "Descendant of the node must receive one message.");
     CHECK_MESSAGE((values1[0] == 1), "Descendant of the node needs to be receive N messages");
-    CHECK_MESSAGE((values2[0] == 1.5), "Descendant of the node must receive one message.");
+    CHECK_MESSAGE((values2[0] == 1.5f), "Descendant of the node must receive one message.");
     CHECK_MESSAGE((values3[0] == 2), "Descendant of the node must receive one message.");
 }
 

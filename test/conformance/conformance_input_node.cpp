@@ -25,7 +25,7 @@
 //! \file conformance_input_node.cpp
 //! \brief Test for [flow_graph.input_node] specification
 
-using output_msg = conformance::conformance_output_msg<true, true, true>;
+using output_msg = conformance::message<true, true, true>;
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 int input_body_f(tbb::flow_control&) { return 42; }
@@ -80,7 +80,7 @@ void test_inheritance(){
 //! Test the body object passed to a node is copied
 //! \brief \ref interface
 TEST_CASE("input_node and body copying"){
-    conformance::test_copy_body<oneapi::tbb::flow::input_node<int>, conformance::CountingObject<int>>();
+    conformance::test_copy_body<oneapi::tbb::flow::input_node<int>, conformance::counting_object<int>>();
 }
 
 //! The node that is constructed has a reference to the same graph object as src,
@@ -91,15 +91,15 @@ TEST_CASE("input_node copy constructor"){
     using namespace oneapi::tbb::flow;
     graph g;
 
-    conformance::CountingObject<int> fun2;
+    conformance::counting_object<output_msg> fun2;
 
-    input_node<int> node1(g, fun2);
-    conformance::test_push_receiver<int> node2(g);
-    conformance::test_push_receiver<int> node3(g);
+    input_node<output_msg> node1(g, fun2);
+    conformance::test_push_receiver<output_msg> node2(g);
+    conformance::test_push_receiver<output_msg> node3(g);
 
     oneapi::tbb::flow::make_edge(node1, node2);
 
-    input_node<int> node_copy(node1);
+    input_node<output_msg> node_copy(node1);
 
     conformance::test_body_copying(node_copy, fun2);
 
@@ -188,7 +188,7 @@ TEST_CASE("concurrency follows set limits"){
 //! Test node Output class meet the CopyConstructible requirements.
 //! \brief \ref interface \ref requirement
 TEST_CASE("Test input_node Output class") {
-    conformance::test_output_class<oneapi::tbb::flow::input_node<conformance::CountingObject<int>>>();
+    conformance::test_output_class<oneapi::tbb::flow::input_node<conformance::counting_object<int>>>();
 }
 
 struct input_node_counter{
@@ -223,6 +223,7 @@ int function_node_counter::count = 0;
 //! Test input_node `try_get()' call testing: a call to body is made only when the internal buffer is empty.
 //! \brief \ref requirement
 TEST_CASE("input_node `try_get()' call testing: a call to body is made only when the internal buffer is empty.") {
+    oneapi::tbb::global_control control(oneapi::tbb::global_control::max_allowed_parallelism, 1);
     oneapi::tbb::flow::graph g;
     input_node_counter fun1(500);
     function_node_counter fun2;

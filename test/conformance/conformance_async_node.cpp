@@ -23,8 +23,8 @@
 //! \file conformance_async_node.cpp
 //! \brief Test for [flow_graph.async_node] specification
 
-using input_msg = conformance::conformance_input_msg<true, true, false>;
-using output_msg = conformance::conformance_output_msg<false, false, false>;
+using input_msg = conformance::message</*default_ctor*/true, /*copy_ctor*/true, /*copy_assign*/false>;
+using output_msg = conformance::message</*default_ctor*/false, /*copy_ctor*/false, /*copy_assign*/false>;
 
 //! Test async_node constructors
 //! \brief \ref requirement
@@ -58,7 +58,7 @@ TEST_CASE("async_node priority support"){
 //! The predecessors and successors of src are not copied.
 //! \brief \ref requirement
 TEST_CASE("async_node copy constructor"){
-    conformance::test_copy_ctor<oneapi::tbb::flow::async_node<int, int>, conformance::CountingObject<int>>();
+    conformance::test_copy_ctor<oneapi::tbb::flow::async_node<int, int>, conformance::counting_object<int>>();
 }
 
 //! Test calling async body
@@ -94,7 +94,7 @@ TEST_CASE("concurrency follows set limits"){
 //! Test the body object passed to a node is copied
 //! \brief \ref interface
 TEST_CASE("async_node body copying"){
-    conformance::test_copy_body<oneapi::tbb::flow::async_node<int, int>, conformance::CountingObject<int>>(oneapi::tbb::flow::unlimited);
+    conformance::test_copy_body<oneapi::tbb::flow::async_node<int, int>, conformance::counting_object<int>>(oneapi::tbb::flow::unlimited);
 }
 
 //! Test node reject the incoming message if the concurrency limit achieved.
@@ -106,7 +106,7 @@ TEST_CASE("async_node with rejecting policy"){
 //! Test node Input class meet the DefaultConstructible and CopyConstructible requirements and Output class meet the CopyConstructible requirements.
 //! \brief \ref interface \ref requirement
 TEST_CASE("Test async_node Output and Input class") {
-    using Body = conformance::CountingObject<int>;
+    using Body = conformance::counting_object<int>;
     conformance::test_output_input_class<oneapi::tbb::flow::async_node<Body, Body>, Body>();
 }
 

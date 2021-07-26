@@ -23,13 +23,13 @@
 //! \file conformance_join_node.cpp
 //! \brief Test for [flow_graph.join_node] specification
 
-using input_msg = conformance::conformance_input_msg<true, true, true>;
+using input_msg = conformance::message</*default_ctor*/true, /*copy_ctor*/true, /*copy_assign*/true>;
 using my_input_tuple = std::tuple<int, float, input_msg>;
 
 std::vector<my_input_tuple> get_values( conformance::test_push_receiver<my_input_tuple>& rr ) {
     std::vector<my_input_tuple> messages;
     int val = 0;
-    for(my_input_tuple tmp(0, 0, input_msg(0)); rr.try_get(tmp); ++val) {
+    for(my_input_tuple tmp(0, 0.f, input_msg(0)); rr.try_get(tmp); ++val) {
         messages.push_back(tmp);
     }
     return messages;
@@ -146,7 +146,7 @@ TEST_CASE("join_node queueing policy and broadcast property") {
         f3( g, oneapi::tbb::flow::unlimited,
             [&]( const my_input_tuple &t ) {
                 CHECK_MESSAGE( (std::get<0>(t) == number), "Messages must be in first-in first-out order" );
-                CHECK_MESSAGE( (std::get<1>(t) == static_cast<float>(number) + 0.5), "Messages must be in first-in first-out order" );
+                CHECK_MESSAGE( (std::get<1>(t) == static_cast<float>(number) + 0.5f), "Messages must be in first-in first-out order" );
                 CHECK_MESSAGE( (std::get<2>(t) == 1), "Messages must be in first-in first-out order" );
                 ++number;
                 return t;
@@ -163,17 +163,17 @@ TEST_CASE("join_node queueing policy and broadcast property") {
     CHECK_MESSAGE((get_values(q_node).size() == 0),
         "join_node must broadcast when there is at least one message at each input port");
     f1.try_put(2);
-    f2.try_put(1.5);
+    f2.try_put(1.5f);
     g.wait_for_all();
     CHECK_MESSAGE((get_values(q_node).size() == 0),
         "join_node must broadcast when there is at least one message at each input port");
     f1.try_put(3);
-    f2.try_put(2.5);
+    f2.try_put(2.5f);
     c1.try_put(oneapi::tbb::flow::continue_msg());
     g.wait_for_all();
     CHECK_MESSAGE((get_values(q_node).size() == 1),
         "join_node must broadcast when there is at least one message at each input port");
-    f2.try_put(3.5);
+    f2.try_put(3.5f);
     c1.try_put(oneapi::tbb::flow::continue_msg());
     g.wait_for_all();
     CHECK_MESSAGE((get_values(q_node).size() == 1),
@@ -194,10 +194,10 @@ TEST_CASE("join_node queueing policy and broadcast property") {
     c1.try_put(oneapi::tbb::flow::continue_msg());
     g.wait_for_all();
 
-    my_input_tuple tmp(0, 0, input_msg(0));
+    my_input_tuple tmp(0, 0.f, input_msg(0));
     CHECK_MESSAGE((testing_node.try_get(tmp)), "If no one successor accepts the tuple the messages\
         must remain in their respective input port queues");
-    CHECK_MESSAGE((tmp == my_input_tuple(1, 1, input_msg(1))), "If no one successor accepts the tuple\
+    CHECK_MESSAGE((tmp == my_input_tuple(1, 1.f, input_msg(1))), "If no one successor accepts the tuple\
         the messages must remain in their respective input port queues");
 }
 
@@ -223,17 +223,17 @@ struct MyHash{
 TEST_CASE("join_node key_matching policy"){
     oneapi::tbb::flow::graph g;
     auto body1 = [](const oneapi::tbb::flow::continue_msg &) -> int { return 1; };
-    auto body2 = [](const double &val) -> int { return static_cast<int>(val); };
+    auto body2 = [](const float &val) -> int { return static_cast<int>(val); };
 
-    oneapi::tbb::flow::join_node<std::tuple<oneapi::tbb::flow::continue_msg, double>,
+    oneapi::tbb::flow::join_node<std::tuple<oneapi::tbb::flow::continue_msg, float>,
         oneapi::tbb::flow::key_matching<int, MyHash<int>>> testing_node(g, body1, body2);
 
     oneapi::tbb::flow::input_port<0>(testing_node).try_put(oneapi::tbb::flow::continue_msg());
-    oneapi::tbb::flow::input_port<1>(testing_node).try_put(1.3);
+    oneapi::tbb::flow::input_port<1>(testing_node).try_put(1.3f);
 
     g.wait_for_all();
 
-    std::tuple<oneapi::tbb::flow::continue_msg, double> tmp;
+    std::tuple<oneapi::tbb::flow::continue_msg, float> tmp;
     CHECK_MESSAGE((testing_node.try_get(tmp)), "Mapped keys should match.\
         If no successor accepts the tuple, it is must been saved and will be forwarded on a subsequent try_get");
     CHECK_MESSAGE((!testing_node.try_get(tmp)), "Message should not exist after item is consumed");
@@ -244,17 +244,17 @@ TEST_CASE("join_node key_matching policy"){
 TEST_CASE("join_node tag_matching policy"){
     oneapi::tbb::flow::graph g;
     auto body1 = [](const oneapi::tbb::flow::continue_msg &) -> oneapi::tbb::flow::tag_value { return 1; };
-    auto body2 = [](const double &val) -> oneapi::tbb::flow::tag_value { return static_cast<oneapi::tbb::flow::tag_value>(val); };
+    auto body2 = [](const float &val) -> oneapi::tbb::flow::tag_value { return static_cast<oneapi::tbb::flow::tag_value>(val); };
 
-    oneapi::tbb::flow::join_node<std::tuple<oneapi::tbb::flow::continue_msg, double>,
+    oneapi::tbb::flow::join_node<std::tuple<oneapi::tbb::flow::continue_msg, float>,
         oneapi::tbb::flow::tag_matching> testing_node(g, body1, body2);
 
     oneapi::tbb::flow::input_port<0>(testing_node).try_put(oneapi::tbb::flow::continue_msg());
-    oneapi::tbb::flow::input_port<1>(testing_node).try_put(1.3);
+    oneapi::tbb::flow::input_port<1>(testing_node).try_put(1.3f);
 
     g.wait_for_all();
 
-    std::tuple<oneapi::tbb::flow::continue_msg, double> tmp;
+    std::tuple<oneapi::tbb::flow::continue_msg, float> tmp;
     CHECK_MESSAGE((testing_node.try_get(tmp) == true), "Mapped keys should match");
 }
 

@@ -25,8 +25,8 @@
 //! \file conformance_multifunction_node.cpp
 //! \brief Test for [flow_graph.function_node] specification
 
-using input_msg = conformance::conformance_input_msg<true, true, false>;
-using output_msg = conformance::conformance_output_msg<false, false, false>;
+using input_msg = conformance::message</*default_ctor*/true, /*copy_ctor*/true, /*copy_assign*/false>;
+using output_msg = conformance::message</*default_ctor*/false, /*copy_ctor*/false, /*copy_assign*/false>;
 
 /*
     Test function_node is a graph_node, receiver<Input>, and sender<Output>
@@ -78,7 +78,7 @@ TEST_CASE("multifunction_node constructors"){
 //! The predecessors and successors of src are not copied.
 //! \brief \ref interface
 TEST_CASE("multifunction_node copy constructor"){
-    conformance::test_copy_ctor<oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>, conformance::CountingObject<int>>();
+    conformance::test_copy_ctor<oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>, conformance::counting_object<int>>();
 }
 
 //! Test node not buffered unsuccessful message, and try_get after rejection should not succeed.
@@ -99,7 +99,7 @@ TEST_CASE("multifunction_node broadcast"){
 //! Test the body object passed to a node is copied
 //! \brief \ref interface
 TEST_CASE("multifunction_node copy body"){
-    conformance::test_copy_body<oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>, conformance::CountingObject<int>>(oneapi::tbb::flow::unlimited);
+    conformance::test_copy_body<oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>, conformance::counting_object<int>>(oneapi::tbb::flow::unlimited);
 }
 
 //! Test execution of node body
@@ -132,6 +132,6 @@ TEST_CASE("multifunction_node superclasses"){
 //! Test node Input class meet the DefaultConstructible and CopyConstructible requirements and Output class meet the CopyConstructible requirements.
 //! \brief \ref interface \ref requirement
 TEST_CASE("Test function_node Output and Input class") {
-    using Body = conformance::CountingObject<int>;
+    using Body = conformance::counting_object<int>;
     conformance::test_output_input_class<oneapi::tbb::flow::multifunction_node<Body, std::tuple<Body>>, Body>();
 }

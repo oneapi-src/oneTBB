@@ -23,7 +23,7 @@
 //! \file conformance_indexer_node.cpp
 //! \brief Test for [flow_graph.indexer_node] specification
 
-using input_msg = conformance::conformance_input_msg<false, true, false>;
+using input_msg = conformance::message</*default_ctor*/false, /*copy_ctor*/true, /*copy_assign*/false>;
 using my_indexer_type = oneapi::tbb::flow::indexer_node<int, float, input_msg>;
 using my_output_type = my_indexer_type::output_type;
 

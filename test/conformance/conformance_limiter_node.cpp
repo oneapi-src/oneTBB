@@ -23,7 +23,7 @@
 //! \file conformance_limiter_node.cpp
 //! \brief Test for [flow_graph.limiter_node] specification
 
-using input_msg = conformance::conformance_input_msg<true, false, false>;
+using input_msg = conformance::message</*default_ctor*/true, /*copy_ctor*/false, /*copy_assign*/false>;
 
 //! Test limiter_node limiting
 //! \brief \ref requirement

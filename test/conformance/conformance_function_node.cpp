@@ -22,8 +22,8 @@
 
 #include "conformance_flowgraph.h"
 
-using input_msg = conformance::conformance_input_msg<true, true, false>;
-using output_msg = conformance::conformance_output_msg<false, true, false>;
+using input_msg = conformance::message</*default_ctor*/true, /*copy_ctor*/true, /*copy_assign*/false>;
+using output_msg = conformance::message</*default_ctor*/false, /*copy_ctor*/true, /*copy_assign*/false>;
 
 //! \file conformance_function_node.cpp
 //! \brief Test for [flow_graph.function_node] specification
@@ -103,7 +103,7 @@ TEST_CASE("function_node constructors"){
 //! The predecessors and successors of src are not copied.
 //! \brief \ref requirement
 TEST_CASE("function_node copy constructor"){
-    conformance::test_copy_ctor<oneapi::tbb::flow::function_node<int, int>, conformance::CountingObject<int>>();
+    conformance::test_copy_ctor<oneapi::tbb::flow::function_node<int, int>, conformance::counting_object<int>>();
 }
 
 //! Test node reject the incoming message if the concurrency limit achieved.
@@ -116,7 +116,7 @@ TEST_CASE("function_node with rejecting policy"){
 //! Test the body object passed to a node is copied
 //! \brief \ref interface
 TEST_CASE("function_node and body copying"){
-    conformance::test_copy_body<oneapi::tbb::flow::function_node<int, int>, conformance::CountingObject<int>>(oneapi::tbb::flow::unlimited);
+    conformance::test_copy_body<oneapi::tbb::flow::function_node<int, int>, conformance::counting_object<int>>(oneapi::tbb::flow::unlimited);
 }
 
 //! Test function_node is a graph_node, receiver<Input>, and sender<Output>
@@ -167,6 +167,6 @@ TEST_CASE("concurrency follows set limits"){
 //! Test node Input class meet the DefaultConstructible and CopyConstructible requirements and Output class meet the CopyConstructible requirements.
 //! \brief \ref interface \ref requirement
 TEST_CASE("Test function_node Output and Input class") {
-    using Body = conformance::CountingObject<int>;
+    using Body = conformance::counting_object<int>;
     conformance::test_output_input_class<oneapi::tbb::flow::function_node<Body, Body>, Body>();
 }
