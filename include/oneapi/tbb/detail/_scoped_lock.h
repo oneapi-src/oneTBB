@@ -108,6 +108,24 @@ public:
             release();
         }
     }
+    
+    rw_scoped_lock(rw_scoped_lock&& other) noexcept
+        : m_mutex(other.m_mutex)
+        , m_is_writer(other.m_is_writer) {
+        other.m_mutex = nullptr;
+    }
+
+    rw_scoped_lock& operator=(rw_scoped_lock&& other) noexcept {
+        if (this != &other) {
+            if (m_mutex != nullptr) {
+                release();
+            }
+            m_mutex = other.m_mutex;
+            other.m_mutex = nullptr;
+            m_is_writer = other.m_is_writer;
+        }
+        return *this;
+    }
 
     //! No Copy
     rw_scoped_lock(const rw_scoped_lock&) = delete;
