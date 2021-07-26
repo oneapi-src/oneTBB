@@ -36,6 +36,22 @@ public:
         acquire(m);
     }
 
+    unique_scoped_lock(unique_scoped_lock&& other) noexcept
+        : m_mutex(other.m_mutex) {
+        other.m_mutex = nullptr;
+    }
+
+    unique_scoped_lock& operator=(unique_scoped_lock&& other) noexcept {
+        if (this != &other) {
+            if (m_mutex != nullptr) {
+                release();
+            }
+            m_mutex = other.m_mutex;
+            other.m_mutex = nullptr;
+        }
+        return *this;
+    }
+
     //! No Copy
     unique_scoped_lock(const unique_scoped_lock&) = delete;
     unique_scoped_lock& operator=(const unique_scoped_lock&) = delete;
