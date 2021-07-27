@@ -52,7 +52,7 @@ if (NOT HWLOC_TARGET_EXPLICITLY_DEFINED AND
 )
     find_package(PkgConfig QUIET)
     if (PKG_CONFIG_FOUND AND CMAKE_VERSION VERSION_GREATER 3.6)
-            pkg_search_module(HWLOC hwloc IMPORTED_TARGET)
+        pkg_search_module(HWLOC hwloc IMPORTED_TARGET)
         if (TARGET PkgConfig::HWLOC)
             if (HWLOC_VERSION VERSION_LESS 2)
                 set(TBBBIND_LIBRARY_NAME tbbbind)
