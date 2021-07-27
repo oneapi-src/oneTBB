@@ -80,11 +80,6 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
         )
     endif()
 
-    # Get the full path to HWLOC if it was found by pkg-config
-    if (${REQUIRED_HWLOC_TARGET} STREQUAL ${HWLOC_LIBRARIES})
-        find_library(REQUIRED_HWLOC_TARGET ${HWLOC_LIBRARIES} PATHS ${HWLOC_LIBRARY_DIRS})
-    endif()
-
     target_link_libraries(${TBBBIND_NAME}
         PUBLIC
         ${REQUIRED_HWLOC_TARGET}
