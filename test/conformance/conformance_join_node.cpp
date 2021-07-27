@@ -65,17 +65,6 @@ void test_deduction_guides() {
 
 #endif
 
-void test_copies(){
-    using namespace oneapi::tbb::flow;
-
-    graph g;
-    join_node<std::tuple<int, int>> n(g);
-    join_node<std::tuple<int, int>> n2(n);
-
-    join_node <std::tuple<int, int, oneapi::tbb::flow::reserving>> nr(g);
-    join_node <std::tuple<int, int, oneapi::tbb::flow::reserving>> nr2(nr);
-}
-
 //! The node that is constructed has a reference to the same graph object as src.
 //! The list of predecessors, messages in the input ports, and successors are not copied.
 //! \brief \ref interface

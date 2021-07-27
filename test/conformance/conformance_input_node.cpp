@@ -18,7 +18,7 @@
 #pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
 #endif
 
-#define INPUT_NODE
+#define CONFORMANCE_INPUT_NODE
 
 #include "conformance_flowgraph.h"
 

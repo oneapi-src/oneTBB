@@ -164,6 +164,10 @@ struct counting_functor {
         execute_count = 0;
     }
 
+    counting_functor( const counting_functor& c ) : return_value(c.return_value) {
+        execute_count = 0;
+    }
+
     template<typename InputType>
     OutputType operator()( InputType ) {
         ++execute_count;
@@ -199,7 +203,7 @@ template<typename OutputType>
 struct dummy_functor {
     template<typename InputType>
     OutputType operator()( InputType ) {
-#ifdef CONTINUE_NODE
+#ifdef CONFORMANCE_CONTINUE_NODE
         return OutputType();
 #else
         return OutputType(0);
@@ -241,7 +245,7 @@ struct wait_flag_body {
     template<typename InputType>
     InputType operator()( InputType ) {
         while(!flag.load()) { utils::yield(); };
-#ifdef CONTINUE_NODE
+#ifdef CONFORMANCE_CONTINUE_NODE
         return InputType();
 #else
         return InputType(0);
@@ -411,10 +415,10 @@ struct passthru_body {
 template<typename Node, typename InputType = void>
 bool produce_messages(Node& node, int arg = 1) {
     arg += 0;
-#if defined INPUT_NODE
+#if defined CONFORMANCE_INPUT_NODE
     node.activate();
     return true;
-#elif defined CONTINUE_NODE
+#elif defined CONFORMANCE_CONTINUE_NODE
     return node.try_put(InputType());
 #else
     return node.try_put(InputType(arg));
@@ -477,11 +481,11 @@ void test_buffering(Args... node_args) {
     g.wait_for_all();
 
 
-#if defined BUFFERING_NODES || defined INPUT_NODE
+#if defined CONFORMANCE_BUFFERING_NODES || defined CONFORMANCE_INPUT_NODE
     CHECK_MESSAGE((testing_node.try_get(tmp) == true), "try_get after rejection should succeed");
     CHECK_MESSAGE((tmp == 1), "try_get after rejection should set value");
 #else
-#ifdef MULTIFUNCTION_NODE
+#ifdef CONFORMANCE_MULTIFUNCTION_NODE
     CHECK_MESSAGE((std::get<0>(testing_node.output_ports()).try_get(tmp) == false), "try_get after rejection should not succeed");
 #else
     CHECK_MESSAGE((testing_node.try_get(tmp) == false), "try_get after rejection should not succeed");
@@ -505,7 +509,7 @@ void test_forwarding(std::size_t messages_recieved, Args... node_args) {
 
     produce_messages<Node, InputType>(testing_node, expected);
 
-#ifdef INPUT_NODE
+#ifdef CONFORMANCE_INPUT_NODE
     CHECK_MESSAGE(expected == messages_recieved, "For correct execution of test");
 #endif
 
@@ -545,7 +549,7 @@ void test_forwarding_single_push(Args... node_args) {
     CHECK_MESSAGE((values3.size() != values4.size()), "Only one descendant the node needs to receive");
     CHECK_MESSAGE((values3.size() + values4.size() == 1), "All messages need to be received");
 
-#ifdef QUEUE_NODE
+#ifdef CONFORMANCE_QUEUE_NODE
     CHECK_MESSAGE((values1[0] == 0), "Value passed is the actual one received");
     CHECK_MESSAGE((values3[0] == 1), "Value passed is the actual one received");
 #else
@@ -613,13 +617,13 @@ void test_copy_ctor_for_buffering_nodes(Args... node_args) {
     oneapi::tbb::flow::make_edge(pred_node, testing_node);
     oneapi::tbb::flow::make_edge(testing_node, suc_node1);
 
-#ifdef OVERWRITE_NODE
+#ifdef CONFORMANCE_OVERWRITE_NODE
     testing_node.try_put(1);
 #endif
 
     Node node_copy(testing_node);
 
-#ifdef OVERWRITE_NODE
+#ifdef CONFORMANCE_OVERWRITE_NODE
     int tmp;
     CHECK_MESSAGE((!node_copy.is_valid() && !node_copy.try_get(tmp)), "The buffered value is not copied from src");
     conformance::get_values(suc_node1);
@@ -632,7 +636,7 @@ void test_copy_ctor_for_buffering_nodes(Args... node_args) {
 
     CHECK_MESSAGE((conformance::get_values(suc_node1).size() == 0 && conformance::get_values(suc_node2).size() == 1), "Copied node doesn`t copy successor");
 
-#ifdef OVERWRITE_NODE
+#ifdef CONFORMANCE_OVERWRITE_NODE
     node_copy.clear();
     testing_node.clear();
 #endif
@@ -757,7 +761,7 @@ void test_output_class() {
     conformance::test_push_receiver<Output> suc_node(g);
     make_edge(node1, suc_node);
 
-#ifdef INPUT_NODE
+#ifdef CONFORMANCE_INPUT_NODE
     node1.activate();
 #else
     node1.try_put(oneapi::tbb::flow::continue_msg());
@@ -794,7 +798,7 @@ void test_with_reserving_join_node_class() {
         [&](const std::tuple<int, int>& arg) {
             // use the precomputed static result along with dynamic data
             ++counter;
-#ifdef OVERWRITE_NODE
+#ifdef CONFORMANCE_OVERWRITE_NODE
             CHECK_MESSAGE((std::get<0>(arg) == int((number >> 2) / 4)), "A overwrite_node store a single item that can be overwritten");
 #else
             CHECK_MESSAGE((std::get<0>(arg) == int((number >> 2) / 4)), "A write_once_node store a single item that cannot be overwritten");
@@ -813,7 +817,7 @@ void test_with_reserving_join_node_class() {
     for (int i = 0; i < put_count / 2; i++) {
         buffer_n.try_put(i);
     }
-#ifdef OVERWRITE_NODE
+#ifdef CONFORMANCE_OVERWRITE_NODE
     number = 3;
 #endif
     static_result_computer_n.try_put(number);

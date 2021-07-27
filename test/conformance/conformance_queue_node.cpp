@@ -18,8 +18,8 @@
 #pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
 #endif
 
-#define BUFFERING_NODES
-#define QUEUE_NODE
+#define CONFORMANCE_BUFFERING_NODES
+#define CONFORMANCE_QUEUE_NODE
 
 #include "conformance_flowgraph.h"
 
