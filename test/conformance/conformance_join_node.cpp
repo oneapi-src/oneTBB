@@ -134,9 +134,9 @@ TEST_CASE("join_node queueing policy and broadcast property") {
     oneapi::tbb::flow::function_node<my_input_tuple, my_input_tuple>
         f3( g, oneapi::tbb::flow::unlimited,
             [&]( const my_input_tuple &t ) {
-                CHECK_MESSAGE( (std::get<0>(t) == number), "Messages must be in first-in first-out order" );
-                CHECK_MESSAGE( (std::get<1>(t) == static_cast<float>(number) + 0.5f), "Messages must be in first-in first-out order" );
-                CHECK_MESSAGE( (std::get<2>(t) == 1), "Messages must be in first-in first-out order" );
+                CHECK_MESSAGE((std::get<0>(t) == number), "Messages must be in first-in first-out order" );
+                CHECK_MESSAGE((std::get<1>(t) == static_cast<float>(number) + 0.5f), "Messages must be in first-in first-out order" );
+                CHECK_MESSAGE((std::get<2>(t) == 1), "Messages must be in first-in first-out order" );
                 ++number;
                 return t;
             } );

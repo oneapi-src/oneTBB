@@ -121,6 +121,44 @@ void test_nodes_with_body_rf_reset_bodies(Args... node_args){
     CHECK_MESSAGE((counting_body.execute_count == 1), "Body should be replaced with a copy of the body");
 }
 
+void test_limiter_node_rf_reset_protocol(){
+    oneapi::tbb::flow::graph g;
+
+    constexpr int limit = 5;
+    oneapi::tbb::flow::limiter_node<int> testing_node(g, limit);
+    conformance::test_push_receiver<int> suc_node(g);
+
+    oneapi::tbb::flow::make_edge(testing_node, suc_node);
+
+    for(int i = 0; i < limit * 2; ++i)
+        testing_node.try_put(1);
+    g.wait_for_all();
+
+    CHECK_MESSAGE((conformance::get_values(suc_node).size() == limit), "Descendant of the node needs be receive limited number of messages");
+
+    g.reset(oneapi::tbb::flow::rf_reset_protocol);
+
+    for(int i = 0; i < limit * 2; ++i)
+        testing_node.try_put(1);
+    g.wait_for_all();
+
+    CHECK_MESSAGE((conformance::get_values(suc_node).size() == limit), "Descendant of the node needs be receive limited number of messages");
+}
+
+void test_join_node_rf_reset_protocol(){
+    oneapi::tbb::flow::graph g;
+
+    oneapi::tbb::flow::join_node<std::tuple<int>, oneapi::tbb::flow::queueing> testing_node(g);
+
+    oneapi::tbb::flow::input_port<0>(testing_node).try_put(1);
+    
+    g.wait_for_all();
+    g.reset(oneapi::tbb::flow::rf_reset_protocol);
+
+    std::tuple<int> tmp(0);
+    CHECK_MESSAGE((!testing_node.try_get(tmp)), "All buffers must be emptied");
+}
+
 //! Graph reset
 //! \brief \ref requirement
 TEST_CASE("graph reset with rf_reset_protocol") {
@@ -139,6 +177,8 @@ TEST_CASE("graph reset with rf_reset_protocol") {
     conformance::sequenser_functor<int> sequencer;
     test_buffering_nodes_rf_reset_protocol<sequencer_node<int>>(sequencer);
 
+    test_limiter_node_rf_reset_protocol();
+    test_join_node_rf_reset_protocol();
 }
 
 //! Graph reset rf_clear_edges
