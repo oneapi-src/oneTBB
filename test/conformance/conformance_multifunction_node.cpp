@@ -78,7 +78,7 @@ TEST_CASE("multifunction_node constructors"){
 //! The predecessors and successors of src are not copied.
 //! \brief \ref interface
 TEST_CASE("multifunction_node copy constructor"){
-    conformance::test_copy_ctor<oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>, conformance::counting_object<int>>();
+    conformance::test_copy_ctor<oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>>();
 }
 
 //! Test node not buffered unsuccessful message, and try_get after rejection should not succeed.
@@ -99,7 +99,7 @@ TEST_CASE("multifunction_node broadcast"){
 //! Test the body object passed to a node is copied
 //! \brief \ref interface
 TEST_CASE("multifunction_node copy body"){
-    conformance::test_copy_body<oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>, conformance::counting_object<int>>(oneapi::tbb::flow::unlimited);
+    conformance::test_copy_body_function<oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>, conformance::counting_object<int>>(oneapi::tbb::flow::unlimited);
 }
 
 //! Test execution of node body

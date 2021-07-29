@@ -414,7 +414,7 @@ struct passthru_body {
 
 template<typename Node, typename InputType = void>
 bool produce_messages(Node& node, int arg = 1) {
-    arg += 0;
+    utils::suppress_unused_warning(arg);
 #if defined CONFORMANCE_INPUT_NODE
     node.activate();
     return true;
@@ -428,7 +428,7 @@ bool produce_messages(Node& node, int arg = 1) {
 template<typename Node, typename InputType, typename OutputType, typename ...Args>
 void test_body_exec(Args... node_args) {
     oneapi::tbb::flow::graph g;
-    conformance::counting_functor<OutputType> counting_body;
+    counting_functor<OutputType> counting_body;
     counting_body.execute_count = 0;
 
     Node testing_node(g, node_args..., counting_body);
@@ -443,17 +443,8 @@ void test_body_exec(Args... node_args) {
     CHECK_MESSAGE((counting_body.execute_count == n), "Body of the first node needs to be executed N times");
 }
 
-template<typename Node, typename Body>
-void test_body_copying(Node& testing_node, Body& base_body) {
-    using namespace oneapi::tbb::flow;
-
-    Body b2 = copy_body<Body, Node>(testing_node);
-
-    CHECK_MESSAGE((base_body.copy_count + 1 < b2.copy_count), "copy_body and constructor should copy bodies");
-}
-
 template<typename Node, typename Body, typename ...Args>
-void test_copy_body(Args... node_args) {
+void test_copy_body_function(Args... node_args) {
     using namespace oneapi::tbb::flow;
 
     Body base_body;
@@ -500,10 +491,10 @@ void test_forwarding(std::size_t messages_recieved, Args... node_args) {
     oneapi::tbb::flow::graph g;
 
     Node testing_node(g, node_args...);
-    std::vector<conformance::test_push_receiver<OutputType>*> receiver_nodes;
+    std::vector<test_push_receiver<OutputType>*> receiver_nodes;
 
     for(std::size_t i = 0; i < 10; ++i) {
-        receiver_nodes.emplace_back(new conformance::test_push_receiver<OutputType>(g));
+        receiver_nodes.emplace_back(new test_push_receiver<OutputType>(g));
         oneapi::tbb::flow::make_edge(testing_node, *receiver_nodes.back());
     }
 
@@ -515,7 +506,7 @@ void test_forwarding(std::size_t messages_recieved, Args... node_args) {
 
     g.wait_for_all();
     for(auto receiver: receiver_nodes) {
-        auto values = conformance::get_values(*receiver);
+        auto values = get_values(*receiver);
         CHECK_MESSAGE((values.size() == messages_recieved), std::string("Descendant of the node must receive " + std::to_string(messages_recieved) + " message."));
         CHECK_MESSAGE((values[0] == expected), "Value passed is the actual one received.");
         delete receiver;
@@ -527,8 +518,8 @@ void test_forwarding_single_push(Args... node_args) {
     oneapi::tbb::flow::graph g;
 
     Node testing_node(g, node_args...);
-    conformance::test_push_receiver<int> suc_node1(g);
-    conformance::test_push_receiver<int> suc_node2(g);
+    test_push_receiver<int> suc_node1(g);
+    test_push_receiver<int> suc_node2(g);
 
     oneapi::tbb::flow::make_edge(testing_node, suc_node1);
     oneapi::tbb::flow::make_edge(testing_node, suc_node2);
@@ -536,16 +527,16 @@ void test_forwarding_single_push(Args... node_args) {
     testing_node.try_put(0);
     g.wait_for_all();
 
-    auto values1 = conformance::get_values(suc_node1);
-    auto values2 = conformance::get_values(suc_node2);
+    auto values1 = get_values(suc_node1);
+    auto values2 = get_values(suc_node2);
     CHECK_MESSAGE((values1.size() != values2.size()), "Only one descendant the node needs to receive");
     CHECK_MESSAGE((values1.size() + values2.size() == 1), "All messages need to be received");
 
     testing_node.try_put(1);
     g.wait_for_all();
 
-    auto values3 = conformance::get_values(suc_node1);
-    auto values4 = conformance::get_values(suc_node2);
+    auto values3 = get_values(suc_node1);
+    auto values4 = get_values(suc_node2);
     CHECK_MESSAGE((values3.size() != values4.size()), "Only one descendant the node needs to receive");
     CHECK_MESSAGE((values3.size() + values4.size() == 1), "All messages need to be received");
 
@@ -570,49 +561,51 @@ void test_inheritance() {
     CHECK_MESSAGE((std::is_base_of<sender<OutputType>, Node>::value), "Node should be derived from sender<Output>");
 }
 
-template<typename Node, typename CountingBody>
+template<typename Node>
 void test_copy_ctor() {
     using namespace oneapi::tbb::flow;
     graph g;
 
-    conformance::dummy_functor<int> fun1;
-    CountingBody fun2;
+    dummy_functor<int> fun1;
+    conformance::counting_object<int> fun2;
 
     Node node0(g, unlimited, fun1);
     Node node1(g, unlimited, fun2);
-    conformance::test_push_receiver<int> suc_node1(g);
-    conformance::test_push_receiver<int> suc_node2(g);
+    test_push_receiver<int> suc_node1(g);
+    test_push_receiver<int> suc_node2(g);
 
     oneapi::tbb::flow::make_edge(node0, node1);
     oneapi::tbb::flow::make_edge(node1, suc_node1);
 
     Node node_copy(node1);
 
-    conformance::test_body_copying(node_copy, fun2);
+    conformance::counting_object<int> b2 = copy_body<conformance::counting_object<int>, Node>(node_copy);
+
+    CHECK_MESSAGE((fun2.copy_count + 1 < b2.copy_count), "constructor should copy bodies");
 
     oneapi::tbb::flow::make_edge(node_copy, suc_node2);
 
     node_copy.try_put(1);
     g.wait_for_all();
 
-    CHECK_MESSAGE((conformance::get_values(suc_node1).size() == 0 && conformance::get_values(suc_node2).size() == 1), "Copied node doesn`t copy successor");
+    CHECK_MESSAGE((get_values(suc_node1).size() == 0 && get_values(suc_node2).size() == 1), "Copied node doesn`t copy successor");
 
     node0.try_put(1);
     g.wait_for_all();
 
-    CHECK_MESSAGE((conformance::get_values(suc_node1).size() == 1 && conformance::get_values(suc_node2).size() == 0), "Copied node doesn`t copy predecessor");
+    CHECK_MESSAGE((get_values(suc_node1).size() == 1 && get_values(suc_node2).size() == 0), "Copied node doesn`t copy predecessor");
 }
 
 template<typename Node, typename ...Args>
 void test_copy_ctor_for_buffering_nodes(Args... node_args) {
     oneapi::tbb::flow::graph g;
 
-    conformance::dummy_functor<int> fun;
+    dummy_functor<int> fun;
 
     Node testing_node(g, node_args...);
     oneapi::tbb::flow::continue_node<int> pred_node(g, fun);
-    conformance::test_push_receiver<int> suc_node1(g);
-    conformance::test_push_receiver<int> suc_node2(g);
+    test_push_receiver<int> suc_node1(g);
+    test_push_receiver<int> suc_node2(g);
 
     oneapi::tbb::flow::make_edge(pred_node, testing_node);
     oneapi::tbb::flow::make_edge(testing_node, suc_node1);
@@ -626,7 +619,7 @@ void test_copy_ctor_for_buffering_nodes(Args... node_args) {
 #ifdef CONFORMANCE_OVERWRITE_NODE
     int tmp;
     CHECK_MESSAGE((!node_copy.is_valid() && !node_copy.try_get(tmp)), "The buffered value is not copied from src");
-    conformance::get_values(suc_node1);
+    get_values(suc_node1);
 #endif
 
     oneapi::tbb::flow::make_edge(node_copy, suc_node2);
@@ -634,7 +627,7 @@ void test_copy_ctor_for_buffering_nodes(Args... node_args) {
     node_copy.try_put(0);
     g.wait_for_all();
 
-    CHECK_MESSAGE((conformance::get_values(suc_node1).size() == 0 && conformance::get_values(suc_node2).size() == 1), "Copied node doesn`t copy successor");
+    CHECK_MESSAGE((get_values(suc_node1).size() == 0 && get_values(suc_node2).size() == 1), "Copied node doesn`t copy successor");
 
 #ifdef CONFORMANCE_OVERWRITE_NODE
     node_copy.clear();
@@ -644,7 +637,7 @@ void test_copy_ctor_for_buffering_nodes(Args... node_args) {
     pred_node.try_put(oneapi::tbb::flow::continue_msg());
     g.wait_for_all();
 
-    CHECK_MESSAGE((conformance::get_values(suc_node1).size() == 1 && conformance::get_values(suc_node2).size() == 0), "Copied node doesn`t copy predecessor");
+    CHECK_MESSAGE((get_values(suc_node1).size() == 1 && get_values(suc_node2).size() == 0), "Copied node doesn`t copy predecessor");
 }
 
 template<typename Node, typename InputType, typename ...Args>
@@ -656,9 +649,9 @@ void test_priority(Args... node_args) {
 
     oneapi::tbb::flow::continue_node<InputType> source(g, dummy_functor<InputType>());
 
-    conformance::track_first_id_functor<int>::first_id = -1;
-    conformance::track_first_id_functor<int> low_functor(1);
-    conformance::track_first_id_functor<int> high_functor(2);
+    track_first_id_functor<int>::first_id = -1;
+    track_first_id_functor<int> low_functor(1);
+    track_first_id_functor<int> high_functor(2);
 
     Node high(g, node_args..., high_functor, oneapi::tbb::flow::node_priority_t(1));
     Node low(g, node_args..., low_functor);
@@ -670,7 +663,7 @@ void test_priority(Args... node_args) {
 
     g.wait_for_all();
 
-    CHECK_MESSAGE((conformance::track_first_id_functor<int>::first_id == 2), "High priority node should execute first");
+    CHECK_MESSAGE((track_first_id_functor<int>::first_id == 2), "High priority node should execute first");
 }
 
 template<typename Node>
@@ -696,10 +689,10 @@ void test_concurrency() {
             expected_threads = 1;
         }
         oneapi::tbb::flow::graph g;
-        conformance::concurrency_peak_checker_body counter(expected_threads);
+        concurrency_peak_checker_body counter(expected_threads);
         Node fnode(g, num_threads, counter);
 
-        conformance::test_push_receiver<int> suc_node(g);
+        test_push_receiver<int> suc_node(g);
 
         make_edge(fnode, suc_node);
 
@@ -717,7 +710,7 @@ void test_rejecting() {
     wait_flag_body body;
     Node fnode(g, oneapi::tbb::flow::serial, body);
 
-    conformance::test_push_receiver<int> suc_node(g);
+    test_push_receiver<int> suc_node(g);
 
     make_edge(fnode, suc_node);
 
@@ -728,18 +721,18 @@ void test_rejecting() {
     wait_flag_body::flag = true;
 
     g.wait_for_all();
-    CHECK_MESSAGE((conformance::get_values(suc_node).size() == 1), "Messages should be rejected while the first is being processed");
+    CHECK_MESSAGE((get_values(suc_node).size() == 1), "Messages should be rejected while the first is being processed");
 }
 
 template<typename Node, typename CountingBody>
 void test_output_input_class() {
     using namespace oneapi::tbb::flow;
 
-    conformance::passthru_body<CountingBody> fun;
+    passthru_body<CountingBody> fun;
 
     graph g;
     Node node1(g, unlimited, fun);
-    conformance::test_push_receiver<CountingBody> suc_node(g);
+    test_push_receiver<CountingBody> suc_node(g);
     make_edge(node1, suc_node);
     CountingBody b1;
     CountingBody b2;
@@ -750,15 +743,15 @@ void test_output_input_class() {
     DOCTEST_WARN_MESSAGE( (b2.is_copy), "The type Output must meet the CopyConstructible requirements");
 }
 
-template<typename Node, typename Output = conformance::counting_object<int>>
+template<typename Node, typename Output = counting_object<int>>
 void test_output_class() {
     using namespace oneapi::tbb::flow;
 
-    conformance::passthru_body<Output> fun;
+    passthru_body<Output> fun;
 
     graph g;
     Node node1(g, fun);
-    conformance::test_push_receiver<Output> suc_node(g);
+    test_push_receiver<Output> suc_node(g);
     make_edge(node1, suc_node);
 
 #ifdef CONFORMANCE_INPUT_NODE

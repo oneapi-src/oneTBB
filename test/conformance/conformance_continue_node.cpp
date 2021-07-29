@@ -126,7 +126,7 @@ TEST_CASE("continue_node superclasses"){
 //! Test the body object passed to a node is copied
 //! \brief \ref interface
 TEST_CASE("continue_node and body copying"){
-    conformance::test_copy_body<oneapi::tbb::flow::continue_node<int>, conformance::counting_object<int, oneapi::tbb::flow::continue_msg>>();
+    conformance::test_copy_body_function<oneapi::tbb::flow::continue_node<int>, conformance::counting_object<int, oneapi::tbb::flow::continue_msg>>();
 }
 
 //! Test deduction guides
@@ -179,7 +179,8 @@ TEST_CASE("continue_node copy constructor"){
     graph g;
 
     conformance::dummy_functor<oneapi::tbb::flow::continue_msg> fun1;
-    conformance::counting_object<output_msg, oneapi::tbb::flow::continue_msg> fun2;
+    using counting_body = conformance::counting_object<output_msg, oneapi::tbb::flow::continue_msg>;
+    counting_body fun2;
 
     continue_node<oneapi::tbb::flow::continue_msg> node0(g, fun1);
     continue_node<output_msg> node1(g, 2, fun2);
@@ -191,7 +192,9 @@ TEST_CASE("continue_node copy constructor"){
 
     continue_node<output_msg> node_copy(node1);
 
-    conformance::test_body_copying(node_copy, fun2);
+    counting_body b2 = copy_body<counting_body, continue_node<output_msg>>(node_copy);
+
+    CHECK_MESSAGE((fun2.copy_count + 1 < b2.copy_count), "constructor should copy bodies");
 
     oneapi::tbb::flow::make_edge(node_copy, node3);
 

@@ -80,7 +80,7 @@ void test_inheritance(){
 //! Test the body object passed to a node is copied
 //! \brief \ref interface
 TEST_CASE("input_node and body copying"){
-    conformance::test_copy_body<oneapi::tbb::flow::input_node<int>, conformance::counting_object<int>>();
+    conformance::test_copy_body_function<oneapi::tbb::flow::input_node<int>, conformance::counting_object<int>>();
 }
 
 //! The node that is constructed has a reference to the same graph object as src,
@@ -101,19 +101,21 @@ TEST_CASE("input_node copy constructor"){
 
     input_node<output_msg> node_copy(node1);
 
-    conformance::test_body_copying(node_copy, fun2);
+    conformance::counting_object<output_msg> b2 = copy_body<conformance::counting_object<output_msg>, input_node<output_msg>>(node_copy);
+
+    CHECK_MESSAGE((fun2.copy_count + 1 < b2.copy_count), "constructor should copy bodies");
 
     oneapi::tbb::flow::make_edge(node_copy, node3);
 
     node_copy.activate();
     g.wait_for_all();
 
-    CHECK_MESSAGE((conformance::get_values(node2).size() == 0 && conformance::get_values(node3).size() > 0), "Copied node doesn`t copy successor, but copy number of predecessors");
+    CHECK_MESSAGE((conformance::get_values(node2).size() == 0 && conformance::get_values(node3).size() == 1), "Copied node doesn`t copy successor");
 
     node1.activate();
     g.wait_for_all();
 
-    CHECK_MESSAGE((conformance::get_values(node2).size() > 0 && conformance::get_values(node3).size() == 0), "Copied node doesn`t copy successor, but copy number of predecessors");
+    CHECK_MESSAGE((conformance::get_values(node2).size() == 1 && conformance::get_values(node3).size() == 0), "Copied node doesn`t copy successor");
 }
 
 //! Test inheritance relations

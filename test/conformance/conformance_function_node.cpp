@@ -103,7 +103,7 @@ TEST_CASE("function_node constructors"){
 //! The predecessors and successors of src are not copied.
 //! \brief \ref requirement
 TEST_CASE("function_node copy constructor"){
-    conformance::test_copy_ctor<oneapi::tbb::flow::function_node<int, int>, conformance::counting_object<int>>();
+    conformance::test_copy_ctor<oneapi::tbb::flow::function_node<int, int>>();
 }
 
 //! Test node reject the incoming message if the concurrency limit achieved.
@@ -116,7 +116,7 @@ TEST_CASE("function_node with rejecting policy"){
 //! Test the body object passed to a node is copied
 //! \brief \ref interface
 TEST_CASE("function_node and body copying"){
-    conformance::test_copy_body<oneapi::tbb::flow::function_node<int, int>, conformance::counting_object<int>>(oneapi::tbb::flow::unlimited);
+    conformance::test_copy_body_function<oneapi::tbb::flow::function_node<int, int>, conformance::counting_object<int>>(oneapi::tbb::flow::unlimited);
 }
 
 //! Test function_node is a graph_node, receiver<Input>, and sender<Output>
