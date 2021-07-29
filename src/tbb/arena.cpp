@@ -434,7 +434,7 @@ void __TBB_EXPORTED_FUNC enqueue(d1::task& t, d1::task_group_context& ctx, d1::t
 }
 
 void task_arena_impl::initialize(d1::task_arena_base& ta) {
-    governor::one_time_init();
+    (void)governor::get_thread_data();
     if (ta.my_max_concurrency < 1) {
 #if __TBB_ARENA_BINDING
 
