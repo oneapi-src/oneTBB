@@ -1752,7 +1752,7 @@ struct enqueue_test_helper {
 TEST_CASE("task_arena initialize soft limit ignoring affinity mask") {
     tbb::enumerable_thread_specific<int> ets;
 
-    tbb::task_arena arena(utils::get_platform_max_threads() * 2);
+    tbb::task_arena arena(int(utils::get_platform_max_threads() * 2));
     arena.execute([&ets] {
         tbb::parallel_for(0, 10000000, [&ets](int){
             ets.local() = 1;

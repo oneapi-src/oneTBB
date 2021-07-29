@@ -161,9 +161,9 @@ void submit_work( std::vector<arena_info>& arenas, unsigned repeats, utils::Spin
 }
 
 void wait_work_completion(
-    std::vector<arena_info>& arenas, std::size_t max_num_threads, unsigned overall_tasks_num )
+    std::vector<arena_info>& arenas, std::size_t max_num_workers, unsigned overall_tasks_num )
 {
-    if( max_num_threads > 1 )
+    if( max_num_workers > 1 )
         while( g_task_num < overall_tasks_num )
             utils::yield();
 
@@ -177,15 +177,16 @@ void wait_work_completion(
 
 void test() {
 
-    const std::size_t max_num_threads = tbb::global_control::active_value(
+    const std::size_t max_num_workers = tbb::global_control::active_value(
         tbb::global_control::max_allowed_parallelism
-    );
-    concurrency_type signed_max_num_threads = static_cast<int>(max_num_threads);
-    if( 1 == max_num_threads )
+    ) - 1;
+    concurrency_type signed_max_num_workers = static_cast<int>(max_num_workers);
+    if (0 == max_num_workers) {
         // Skipping workerless case
         return;
+    }
 
-    INFO( "max_num_threads = " << max_num_threads );
+    INFO( "max_num_workers = " << max_num_workers );
     // TODO: iterate over threads to see that the work is going on in low priority arena.
 
     const int min_arena_concurrency = 2; // implementation detail
@@ -218,11 +219,11 @@ void test() {
         g_task_num = 0;
 
         concurrency_type projected_concurrency =
-            (signed_max_num_threads + progressing_arenas_num - 1) / progressing_arenas_num;
+            (signed_max_num_workers + progressing_arenas_num - 1) / progressing_arenas_num;
         projected_concurrency = std::max(min_arena_concurrency, projected_concurrency); // implementation detail
-        adjusted_progressing_arenas = signed_max_num_threads / projected_concurrency;
+        adjusted_progressing_arenas = signed_max_num_workers / projected_concurrency;
 
-        int threads_left = signed_max_num_threads;
+        int threads_left = signed_max_num_workers;
 
         // Instantiate arenas with necessary concurrency so that progressing arenas consume all
         // available threads.
@@ -241,7 +242,7 @@ void test() {
 
             if( !actual_concurrency ) {
                 concurrency = tbb::task_arena::automatic;
-                actual_concurrency = signed_max_num_threads;
+                actual_concurrency = signed_max_num_workers;
             }
             actual_concurrency = std::max( min_arena_concurrency, actual_concurrency ); // implementation detail
 
@@ -268,12 +269,12 @@ void test() {
 
         g_work_submitted = false;
 
-        utils::SpinBarrier barrier{ max_num_threads };
+        utils::SpinBarrier barrier{ max_num_workers };
         submit_work( arenas, repeats, barrier );
 
         g_work_submitted = true;
 
-        wait_work_completion( arenas, max_num_threads, overall_tasks_num );
+        wait_work_completion( arenas, max_num_workers, overall_tasks_num );
 
         std::map<tbb::task_arena::priority, unsigned> wasted_tasks;
 
@@ -286,7 +287,7 @@ void test() {
 
             // Due to indeterministic submission of tasks in the beginning, count tasks priorities up
             // to additional epoch. Assume threads are rebalanced once the work is submitted.
-            unsigned last_task_idx = std::min((repeats + 1) * unsigned(max_num_threads), overall_tasks_num);
+            unsigned last_task_idx = std::min((repeats + 1) * unsigned(max_num_workers), overall_tasks_num);
             for( unsigned i = 0; i < last_task_idx; ++i ) {
                 tbb::task_arena::priority p = g_task_info[i];
                 ++per_priority_tasks_num[p];
@@ -295,7 +296,7 @@ void test() {
                     end_ptr != std::find(priorities, end_ptr, p)
                 );
 
-                if( i < max_num_threads || i >= repeats * max_num_threads )
+                if( i < max_num_workers || i >= repeats * max_num_workers )
                     ++wasted_tasks[p];
             }
 
@@ -325,7 +326,7 @@ void test() {
             // Other epochs - check remaining arenas
             std::map<tbb::task_arena::priority, unsigned> per_priority_tasks_num;
 
-            std::size_t lower_priority_start = (repeats + 1) * max_num_threads;
+            std::size_t lower_priority_start = (repeats + 1) * max_num_workers;
             for( std::size_t i = lower_priority_start; i < overall_tasks_num; ++i )
                 ++per_priority_tasks_num[ g_task_info[i] ];
 
