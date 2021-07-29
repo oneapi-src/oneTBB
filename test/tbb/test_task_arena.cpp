@@ -1748,7 +1748,7 @@ struct enqueue_test_helper {
 //--------------------------------------------------//
 
 // This test should be first
-//! \brief \ref regression
+//! \brief \ref requirement
 TEST_CASE("task_arena initialize soft limit ignoring affinity mask") {
     tbb::enumerable_thread_specific<int> ets;
 
