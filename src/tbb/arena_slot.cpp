@@ -175,9 +175,7 @@ d1::task* arena_slot::steal_task(arena& a, isolation_type isolation, std::size_t
                 }
                 task_proxy& tp = *static_cast<task_proxy*>(result);
                 // If mailed task is likely to be grabbed by its destination thread, skip it.
-
-                bool owner_worker_idle = a.mailbox(slot_index).recipient_is_idle();
-                if (!(task_proxy::is_shared(tp.task_and_tag) && tp.outbox->recipient_is_idle()) || owner_worker_idle) {
+                if (!task_proxy::is_shared(tp.task_and_tag) || !tp.outbox->recipient_is_idle() || a.mailbox(slot_index).recipient_is_idle()) {
                     break;
                 }
             }
@@ -218,4 +216,3 @@ unlock:
 } // namespace r1
 } // namespace detail
 } // namespace tbb
-
