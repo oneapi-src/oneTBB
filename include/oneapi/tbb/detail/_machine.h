@@ -33,7 +33,9 @@
 #include <windows.h> // SwitchToThread()
 #endif
 #ifdef _MSC_VER
+#if __TBB_x86_64 || __TBB_x86_32
 #pragma intrinsic(__rdtsc)
+#endif
 #endif
 #endif
 #if __TBB_x86_64 || __TBB_x86_32
@@ -75,12 +77,12 @@ using std::this_thread::yield;
 // atomic_fence implementation
 //--------------------------------------------------------------------------------------------------
 
-#if (_MSC_VER)
+#if _MSC_VER && (__TBB_x86_64 || __TBB_x86_32)
 #pragma intrinsic(_mm_mfence)
 #endif
 
 static inline void atomic_fence(std::memory_order order) {
-#if (_WIN32)
+#if _MSC_VER && (__TBB_x86_64 || __TBB_x86_32)
     if (order == std::memory_order_seq_cst ||
         order == std::memory_order_acq_rel ||
         order == std::memory_order_acquire ||
@@ -89,7 +91,7 @@ static inline void atomic_fence(std::memory_order order) {
         _mm_mfence();
         return;
     }
-#endif /*(_WIN32)*/
+#endif /*_MSC_VER && (__TBB_x86_64 || __TBB_x86_32)*/
     std::atomic_thread_fence(order);
 }
 
