@@ -315,7 +315,7 @@ public:
 };
 
 
-const char* const Statistics::mStatNames[Statistics::numActions] = { 
+const char* const Statistics::mStatNames[Statistics::numActions] = {
     "Arena create", "Arena destroy", "Arena acquire",
     "Skipped arena create", "Skipped arena destroy", "Skipped arena acquire",
     "Parallel algorithm", "Arena enqueue", "Arena execute"
@@ -331,9 +331,12 @@ public:
     class Guard {
     public:
         Guard(LifetimeTracker* obj) {
-            if (obj->mContinueFlag.load(std::memory_order_relaxed)) {
-                mObj = obj;
-                ++mObj->mReferences;
+            if (!(obj->mReferences.load(std::memory_order_relaxed) & SHUTDOWN_FLAG)) {
+                if (obj->mReferences.fetch_add(REFERENCE_FLAG) & SHUTDOWN_FLAG) {
+                    obj->mReferences.fetch_sub(REFERENCE_FLAG);
+                } else {
+                    mObj = obj;
+                }
             }
         }
 
@@ -343,7 +346,7 @@ public:
 
         ~Guard() {
             if (mObj) {
-                --mObj->mReferences;
+                mObj->mReferences.fetch_sub(REFERENCE_FLAG);
             }
         }
 
@@ -352,7 +355,7 @@ public:
         }
 
     private:
-        LifetimeTracker* mObj;
+        LifetimeTracker* mObj{nullptr};
     };
 
     Guard makeGuard() {
@@ -360,17 +363,18 @@ public:
     }
 
     void signalShutdown() {
-        mContinueFlag.store(false, std::memory_order_seq_cst);
+        mReferences.fetch_add(SHUTDOWN_FLAG);
     }
 
     void waitCompletion() {
-        utils::SpinWaitUntilEq(mContinueFlag, false);
+        utils::SpinWaitUntilEq(mReferences, SHUTDOWN_FLAG);
     }
 
 private:
     friend class Guard;
-    std::atomic<bool> mContinueFlag{true};
-    std::atomic<int> mReferences{};
+    static constexpr std::uintptr_t SHUTDOWN_FLAG = 1;
+    static constexpr std::uintptr_t REFERENCE_FLAG = 1 << 1;
+    std::atomic<std::uintptr_t> mReferences{};
 };
 
 class ArenaTable {
@@ -656,9 +660,10 @@ TEST_CASE("Stress test with mixing functionality") {
         startBarrier.wait();
         global_actor();
     });
+
     arenaTable.shutdown();
 
-    tbb::finalize(handle);
+    tbb::finalize(handle, std::nothrow_t{});
 
     gStats.report();
 }
