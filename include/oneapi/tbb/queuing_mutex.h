@@ -51,19 +51,6 @@ public:
             m_mutex = nullptr;
         }
 
-        void move_impl( scoped_lock&& other ) noexcept {
-            other.m_mutex = nullptr;
-
-            if (m_mutex->q_tail == &other) {
-                scoped_lock* other_ptr = &other;
-                if (!m_mutex->q_tail.compare_exchange_strong(other_ptr, this)) {
-                    m_next.store(other.m_next);
-                }
-            }
-
-            other.m_next.store(nullptr);
-        }
-
     public:
         //! Construct lock that has not acquired a mutex.
         /** Equivalent to zero-initialization of *this. */
@@ -83,7 +70,16 @@ public:
             : m_mutex(other.m_mutex)
             , m_next(other.m_next.load())
             , m_going(1U) {
-            move_impl(std::move(other));
+            other.m_mutex = nullptr;
+
+            if (m_mutex->q_tail == &other) {
+                scoped_lock* other_ptr = &other;
+                if (!m_mutex->q_tail.compare_exchange_strong(other_ptr, this)) {
+                    m_next.store(other.m_next);
+                }
+            }
+
+            other.m_next.store(nullptr);
         }
 
         scoped_lock& operator=( scoped_lock&& other ) noexcept {
@@ -95,7 +91,16 @@ public:
                 m_mutex = other.m_mutex;
                 m_next = other.m_next.load();
             
-                move_impl(std::move(other));
+                other.m_mutex = nullptr;
+
+                if (m_mutex->q_tail == &other) {
+                    scoped_lock* other_ptr = &other;
+                    if (!m_mutex->q_tail.compare_exchange_strong(other_ptr, this)) {
+                        m_next.store(other.m_next);
+                    }
+                }
+
+                other.m_next.store(nullptr);
             }
 
             return *this;
