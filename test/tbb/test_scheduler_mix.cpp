@@ -345,13 +345,13 @@ public:
         }
 
         ~Guard() {
-            if (mObj) {
+            if (mObj != nullptr) {
                 mObj->mReferences.fetch_sub(REFERENCE_FLAG);
             }
         }
 
         bool continue_execution() {
-            return mObj;
+            return mObj != nullptr;
         }
 
     private:
