@@ -81,7 +81,7 @@ thread_local Random::State* Random::mState = nullptr;
 void* aligned_malloc(std::size_t alignment, std::size_t size) {
 #if _WIN32
     return _aligned_malloc(size, alignment);
-#elif __unix__
+#elif __unix__ || __APPLE__
     void* ptr{};
     int res = posix_memalign(&ptr, alignment, size);
     CHECK(res == 0);
