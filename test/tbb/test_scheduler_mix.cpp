@@ -654,9 +654,9 @@ TEST_CASE("Stress test with mixing functionality") {
     // TODO add thread recreation
     tbb::task_scheduler_handle handle = tbb::task_scheduler_handle::get();
 
-    const int numExtraThreads = 16;
-    utils::SpinBarrier startBarrier{ numExtraThreads };
-    utils::NativeParallelFor(numExtraThreads, [&startBarrier](int) {
+    const std::size_t numExtraThreads = 16;
+    utils::SpinBarrier startBarrier{numExtraThreads};
+    utils::NativeParallelFor(numExtraThreads, [&startBarrier](std::size_t) {
         startBarrier.wait();
         global_actor();
     });
