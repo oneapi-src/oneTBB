@@ -137,9 +137,9 @@ market& market::global_market(bool is_public, unsigned workers_requested, std::s
         const unsigned workers_soft_limit = calc_workers_soft_limit(workers_requested, workers_hard_limit);
         // Create the global market instance
         std::size_t size = sizeof(market);
-        __TBB_ASSERT( __TBB_offsetof(market, my_workers) + sizeof(thread_data*) == sizeof(market),
+        __TBB_ASSERT( __TBB_offsetof(market, my_workers) + sizeof(std::atomic<thread_data*>) == sizeof(market),
                       "my_workers must be the last data field of the market class");
-        size += sizeof(thread_data*) * (workers_hard_limit - 1);
+        size += sizeof(std::atomic<thread_data*>) * (workers_hard_limit - 1);
         __TBB_InitOnce::add_ref();
         void* storage = cache_aligned_allocate(size);
         std::memset( storage, 0, size );
@@ -326,7 +326,8 @@ void market::try_destroy_arena ( arena* a, uintptr_t aba_epoch, unsigned priorit
             if ( a == &*it ) {
                 if ( it->my_aba_epoch == aba_epoch ) {
                     // Arena is alive
-                    if ( !a->my_num_workers_requested && !a->my_references.load(std::memory_order_relaxed) ) {
+                    // Acquire my_references to sync with threads that just left the arena
+                    if (!a->my_num_workers_requested && !a->my_references.load(std::memory_order_acquire)) {
                         __TBB_ASSERT(
                             !a->my_num_workers_allotted.load(std::memory_order_relaxed) &&
                             (a->my_pool_state == arena::SNAPSHOT_EMPTY || !a->my_max_num_workers),
@@ -621,8 +622,8 @@ void market::acknowledge_close_connection() {
     // index serves as a hint decreasing conflicts between workers when they migrate between arenas
     thread_data* td = new(cache_aligned_allocate(sizeof(thread_data))) thread_data{ index, true };
     __TBB_ASSERT( index <= my_num_workers_hard_limit, NULL );
-    __TBB_ASSERT( my_workers[index - 1] == nullptr, NULL );
-    my_workers[index - 1] = td;
+    __TBB_ASSERT( my_workers[index - 1].load(std::memory_order_relaxed) == nullptr, NULL );
+    my_workers[index - 1].store(td, std::memory_order_release);
     return td;
 }
 

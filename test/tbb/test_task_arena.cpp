@@ -1745,6 +1745,7 @@ struct enqueue_test_helper {
     tbb::enumerable_thread_specific<bool>& my_ets;
     std::atomic<std::size_t>& my_task_counter;
 };
+
 //--------------------------------------------------//
 //! Test for task arena in concurrent cases
 //! \brief \ref requirement

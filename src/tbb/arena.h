@@ -476,8 +476,12 @@ inline void arena::on_thread_leaving ( ) {
         // concurrently, can't guarantee last is_out_of_work() return true.
     }
 #endif
-    if ( (my_references -= ref_param ) == 0 )
+
+    // Release our reference to sync with arena destroy
+    unsigned remaining_ref = my_references.fetch_sub(ref_param, std::memory_order_release) - ref_param;
+    if (remaining_ref == 0) {
         m->try_destroy_arena( this, aba_epoch, priority_level );
+    }
 }
 
 template<arena::new_work_type work_type>
@@ -564,7 +568,7 @@ inline d1::task* arena::steal_task(unsigned arena_index, FastRandom& frnd, execu
     arena_slot* victim = &my_slots[k];
     d1::task **pool = victim->task_pool.load(std::memory_order_relaxed);
     d1::task *t = nullptr;
-    if (pool == EmptyTaskPool || !(t = victim->steal_task(*this, isolation))) {
+    if (pool == EmptyTaskPool || !(t = victim->steal_task(*this, isolation, k))) {
         return nullptr;
     }
     if (task_accessor::is_proxy_task(*t)) {

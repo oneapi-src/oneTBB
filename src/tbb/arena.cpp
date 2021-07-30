@@ -122,7 +122,7 @@ void arena::process(thread_data& tls) {
     // worker thread enters the dispatch loop to look for a work
     tls.my_inbox.set_is_idle(true);
     if (tls.my_arena_slot->is_task_pool_published()) {
-            tls.my_inbox.set_is_idle(false);
+        tls.my_inbox.set_is_idle(false);
     }
 
     task_dispatcher& task_disp = tls.my_arena_slot->default_task_dispatcher();

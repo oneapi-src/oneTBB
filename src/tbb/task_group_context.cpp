@@ -257,7 +257,7 @@ bool market::propagate_task_group_state(std::atomic<T> d1::task_group_context::*
     // Propagate to all workers and external threads and sync up their local epochs with the global one
     unsigned num_workers = my_first_unused_worker_idx;
     for (unsigned i = 0; i < num_workers; ++i) {
-        thread_data* td = my_workers[i];
+        thread_data* td = my_workers[i].load(std::memory_order_acquire);
         // If the worker is only about to be registered, skip it.
         if (td)
             td->propagate_task_group_state(mptr_state, src, new_state);

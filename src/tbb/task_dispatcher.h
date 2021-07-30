@@ -231,6 +231,7 @@ d1::task* task_dispatcher::receive_or_steal_task(
         waiter.pause(slot);
     } // end of nonlocal task retrieval loop
 
+    __TBB_ASSERT(is_alive(a.my_guard), nullptr);
     if (inbox.is_idle_state(true)) {
         inbox.set_is_idle(false);
     }
