@@ -51,9 +51,9 @@ if (NOT HWLOC_TARGET_EXPLICITLY_DEFINED AND
     NOT TBB_DISABLE_HWLOC_AUTOMATIC_SEARCH
 )
     find_package(PkgConfig QUIET)
-    if (PKG_CONFIG_FOUND)
-        pkg_search_module(HWLOC hwloc)
-        if (HWLOC_FOUND)
+    if (PKG_CONFIG_FOUND AND NOT CMAKE_VERSION VERSION_LESS 3.6)
+        pkg_search_module(HWLOC hwloc IMPORTED_TARGET)
+        if (TARGET PkgConfig::HWLOC)
             if (HWLOC_VERSION VERSION_LESS 2)
                 set(TBBBIND_LIBRARY_NAME tbbbind)
             elseif(HWLOC_VERSION VERSION_LESS 2.5)
@@ -64,4 +64,3 @@ if (NOT HWLOC_TARGET_EXPLICITLY_DEFINED AND
         endif()
     endif()
 endif()
-
