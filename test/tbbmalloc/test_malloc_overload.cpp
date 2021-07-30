@@ -514,6 +514,7 @@ TEST_CASE("Address range tracker regression test") {
                 ptr = realloc(ptr, 1024*1024 + 4096*j);
             }
         }
+        free(ptr);
     });
 }
 #endif // !HARNESS_SKIP_TEST
