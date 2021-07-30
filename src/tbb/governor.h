@@ -118,9 +118,11 @@ public:
         return theTLS.get();
     }
 
+#if TBB_USE_ASSERT
     static bool is_thread_data_set(thread_data* td) {
         return theTLS.get() == td;
     }
+#endif
 
     //! Undo automatic initialization if necessary; call when a thread exits.
     static void terminate_external_thread() {

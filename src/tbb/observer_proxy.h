@@ -79,8 +79,6 @@ public:
     //! Accessor to the reader-writer mutex associated with the list.
     spin_rw_mutex& mutex () { return my_mutex.begin()[0]; }
 
-    bool empty () const { return my_head.load(std::memory_order_relaxed) == nullptr; }
-
     //! Call entry notifications on observers added after last was notified.
     /** Updates last to become the last notified observer proxy (in the global list)
         or leaves it to be nullptr. The proxy has its refcount incremented. **/
