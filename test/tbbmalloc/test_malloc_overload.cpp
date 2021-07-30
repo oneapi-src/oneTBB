@@ -500,4 +500,21 @@ TEST_CASE("Main set of tests") {
     TestZoneOverload();
     TestRuntimeRoutines();
 }
+
+//! Test address range tracker in backend that could be
+//! broken during remap because of incorrect order of
+//! deallocation event and the mremap system call
+//! \brief \ref regression
+TEST_CASE("Address range tracker regression test") {
+    int numThreads = 16;
+    utils::NativeParallelFor(numThreads, [](int) {
+        void *ptr = nullptr;
+        for (int i = 0; i < 1000; ++i) {
+            for (int j = 0; j < 100; ++j) {
+                ptr = realloc(ptr, 1024*1024 + 4096*j);
+            }
+        }
+        free(ptr);
+    });
+}
 #endif // !HARNESS_SKIP_TEST
