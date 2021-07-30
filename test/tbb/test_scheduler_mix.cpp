@@ -641,9 +641,10 @@ void global_actor() {
             localNumActions = 0;
             globalNumActions += 100;
 
-            static std::mutex mutex;
-            std::lock_guard<std::mutex> lock{ mutex };
-            std::cout << globalNumActions << "\r" << std::flush;
+            // TODO: Enable statistics
+            // static std::mutex mutex;
+            // std::lock_guard<std::mutex> lock{ mutex };
+            // std::cout << globalNumActions << "\r" << std::flush;
         }
     }
 }
@@ -652,7 +653,8 @@ void global_actor() {
 //! \brief \ref stress
 TEST_CASE("Stress test with mixing functionality") {
     // TODO add thread recreation
-    tbb::task_scheduler_handle handle = tbb::task_scheduler_handle::get();
+    // TODO: Enable statistics
+    // tbb::task_scheduler_handle handle = tbb::task_scheduler_handle::get();
 
     const std::size_t numExtraThreads = 16;
     utils::SpinBarrier startBarrier{numExtraThreads};
@@ -663,8 +665,8 @@ TEST_CASE("Stress test with mixing functionality") {
 
     arenaTable.shutdown();
 
-    tbb::finalize(handle, std::nothrow_t{});
+    // tbb::finalize(handle, std::nothrow_t{});
 
-    gStats.report();
+    // gStats.report();
 }
 #endif
