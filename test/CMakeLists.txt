@@ -361,7 +361,7 @@ unset(_sde_find_name)
 # Common target for the tbbbind related tests
 add_custom_target(test_suite_arena_constraints)
 
-if (TBB_BUILD)
+if (TARGET TBB::tbb)
     # Define the tests
     tbb_add_test(SUBDIR tbb NAME test_tick_count DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_allocators DEPENDENCIES TBB::tbb)
@@ -526,7 +526,7 @@ if (TBB_BUILD)
     endif()
 endif()
 
-if (TBBMALLOC_BUILD)
+if (TARGET TBB::tbbmalloc)
     # TBB allocator tests
     if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
         # Define TBB malloc tests
@@ -534,7 +534,7 @@ if (TBBMALLOC_BUILD)
         tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_pools DEPENDENCIES TBB::tbbmalloc)
         tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_init_shutdown DEPENDENCIES TBB::tbbmalloc)
         tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_regression DEPENDENCIES TBB::tbbmalloc)
-        if (TBB_BUILD)
+        if (TARGET TBB::tbb)
             tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_shutdown_hang DEPENDENCIES TBB::tbb TBB::tbbmalloc)
         endif()
 
