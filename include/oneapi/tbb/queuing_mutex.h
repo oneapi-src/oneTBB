@@ -66,21 +66,8 @@ public:
             if (m_mutex) release();
         }
 
-        scoped_lock( scoped_lock&& other ) noexcept
-            : m_mutex(other.m_mutex)
-            , m_next(other.m_next.load())
-            , m_going(1U) {
-            other.m_mutex = nullptr;
-
-            if (m_mutex->q_tail == &other) {
-                scoped_lock* other_ptr = &other;
-                if (!m_mutex->q_tail.compare_exchange_strong(other_ptr, this)) {
-                    spin_wait_while_eq(other.m_next, nullptr);
-                    m_next.store(other.m_next);
-                }
-            }
-
-            other.m_next.store(nullptr);
+        scoped_lock( scoped_lock&& other ) noexcept {
+            move_constructor_implementation(std::move(other));
         }
 
         scoped_lock& operator=( scoped_lock&& other ) noexcept {
@@ -88,23 +75,8 @@ public:
                 if (m_mutex != nullptr) {
                     release();
                 }
-
-                m_mutex = other.m_mutex;
-                m_next = other.m_next.load();
-            
-                other.m_mutex = nullptr;
-
-                if (m_mutex->q_tail == &other) {
-                    scoped_lock* other_ptr = &other;
-                    if (!m_mutex->q_tail.compare_exchange_strong(other_ptr, this)) {
-                        spin_wait_while_eq(other.m_next, nullptr);
-                        m_next.store(other.m_next);
-                    }
-                }
-
-                other.m_next.store(nullptr);
+                move_constructor_implementation(std::move(other));
             }
-
             return *this;
         }
 
@@ -181,6 +153,21 @@ public:
         }
 
     private:
+        void move_constructor_implementation( scoped_lock && other ) noexcept {
+            m_mutex = other.m_mutex;
+            m_next.store(other.m_next.load());
+            m_going.store(1U);
+            other.m_mutex = nullptr;
+            if (m_mutex->q_tail == &other) {
+                scoped_lock * other_ptr = &other;
+                if (!m_mutex->q_tail.compare_exchange_strong(other_ptr, this)) {
+                    spin_wait_while_eq(other.m_next, nullptr);
+                    m_next.store(other.m_next);
+                }
+            }
+            other.m_next.store(nullptr);
+        }
+
         //! The pointer to the mutex owned, or NULL if not holding a mutex.
         queuing_mutex* m_mutex{nullptr};
 
