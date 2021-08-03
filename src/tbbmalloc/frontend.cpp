@@ -2044,7 +2044,7 @@ static bool initMemoryManager()
         extMemPool.init(0, NULL, NULL, granularity,
                         /*keepAllMemory=*/false, /*fixedPool=*/false);
 // TODO: extMemPool.init() to not allocate memory
-    if (!initOk || !initBackRefMaster(&defaultMemPool->extMemPool.backend) || !ThreadId::init())
+    if (!initOk || !initBackRefMain(&defaultMemPool->extMemPool.backend) || !ThreadId::init())
         return false;
     MemoryPool::initDefaultPool();
     // init() is required iff initMemoryManager() is called
@@ -2916,7 +2916,7 @@ extern "C" void __TBB_mallocProcessShutdownNotification(bool windows_process_dyi
    on thread termination when then the tbbmalloc code can be already unloaded.
 */
     defaultMemPool->destroy();
-    destroyBackRefMaster(&defaultMemPool->extMemPool.backend);
+    destroyBackRefMain(&defaultMemPool->extMemPool.backend);
     ThreadId::destroy();      // Delete key for thread id
     hugePages.reset();
     // new total malloc initialization is possible after this point

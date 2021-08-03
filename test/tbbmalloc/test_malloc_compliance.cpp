@@ -354,13 +354,13 @@ void InvariantDataRealloc(bool aligned, size_t maxAllocSize, bool checkData)
     size_t size = 0, start = 0;
     char *ptr = NULL,
         // external thread to create copies and compare ralloc result against it
-        *master = (char*)Tmalloc(2*maxAllocSize);
+        *base = (char*)Tmalloc(2*maxAllocSize);
 
-    REQUIRE(master);
+    REQUIRE(base);
     REQUIRE_MESSAGE(!(2*maxAllocSize%sizeof(unsigned short)),
            "The loop below expects that 2*maxAllocSize contains sizeof(unsigned short)");
     for (size_t k = 0; k<2*maxAllocSize; k+=sizeof(unsigned short))
-        *(unsigned short*)(master+k) = fastRandom.get();
+        *(unsigned short*)(base+k) = fastRandom.get();
 
     for (int i=0; i<100; i++) {
         // don't want sizeNew==0 here
@@ -371,21 +371,21 @@ void InvariantDataRealloc(bool aligned, size_t maxAllocSize, bool checkData)
         REQUIRE(ptrNew);
         // check that old data not changed
         if (checkData)
-            REQUIRE_MESSAGE(!memcmp(ptrNew, master+start, utils::min(size, sizeNew)), "broken data");
+            REQUIRE_MESSAGE(!memcmp(ptrNew, base+start, utils::min(size, sizeNew)), "broken data");
 
         // prepare fresh data, copying them from random position in external
         size = sizeNew;
         ptr = ptrNew;
         if (checkData) {
             start = fastRandom.get() % maxAllocSize;
-            memcpy(ptr, master+start, size);
+            memcpy(ptr, base+start, size);
         }
     }
     if (aligned)
         Taligned_realloc(ptr, 0, choose_random_alignment());
     else
         Trealloc(ptr, 0);
-    Tfree(master);
+    Tfree(base);
 }
 
 void CheckReallocLeak()
