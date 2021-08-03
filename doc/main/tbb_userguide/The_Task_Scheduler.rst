@@ -16,5 +16,7 @@ onto one of the high-level templates, use the task scheduler.
 
    ../tbb_userguide/Task-Based_Programming
    ../tbb_userguide/When_Task-Based_Programming_Is_Inappropriate
+   ../tbb_userguide/How_Does_Task_Scheduler_Works
+   ../tbb_userguide/Task_Scheduler_Bypass
    ../tbb_userguide/Task_Scheduler_Summary
    ../tbb_userguide/Guiding_Task_Scheduler_Execution
