@@ -75,6 +75,7 @@ public:
             if (m_mutex->q_tail == &other) {
                 scoped_lock* other_ptr = &other;
                 if (!m_mutex->q_tail.compare_exchange_strong(other_ptr, this)) {
+                    spin_wait_while_eq(other.m_next, nullptr);
                     m_next.store(other.m_next);
                 }
             }
@@ -96,6 +97,7 @@ public:
                 if (m_mutex->q_tail == &other) {
                     scoped_lock* other_ptr = &other;
                     if (!m_mutex->q_tail.compare_exchange_strong(other_ptr, this)) {
+                        spin_wait_while_eq(other.m_next, nullptr);
                         m_next.store(other.m_next);
                     }
                 }
