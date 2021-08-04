@@ -25,6 +25,7 @@
 #include "profiling.h"
 
 #include <atomic>
+#include <utility>
 
 namespace tbb {
 namespace detail {
