@@ -33,6 +33,7 @@
 #include "concurrent_monitor.h"
 #include "observer_proxy.h"
 #include "oneapi/tbb/spin_mutex.h"
+#include <algorithm>
 
 namespace tbb {
 namespace detail {
@@ -288,6 +289,9 @@ struct arena_base : padded<intrusive_list_node> {
     //! Used to trap accesses to the object after its destruction.
     std::uintptr_t my_guard;
 #endif /* TBB_USE_ASSERT */
+
+    using pool_mask_type = std::atomic<int>;
+    pool_mask_type* pool_mask;
 }; // struct arena_base
 
 class arena: public padded<arena_base>
@@ -545,22 +549,43 @@ void arena::advertise_new_work() {
     }
 }
 
-inline d1::task* arena::steal_task(unsigned arena_index, FastRandom& frnd, execution_data_ext& ed, isolation_type isolation) {
-    auto slot_num_limit = my_limit.load(std::memory_order_relaxed);
+inline d1::task* arena::steal_task(unsigned /* arena_index */, FastRandom& frnd, execution_data_ext& ed, isolation_type isolation) {
+    auto slot_num_limit = my_limit.load();
     if (slot_num_limit == 1) {
         // No slots to steal from
         return nullptr;
     }
-    // Try to steal a task from a random victim.
-    std::size_t k = frnd.get() % (slot_num_limit - 1);
+
+    std::size_t k = std::count_if(pool_mask, pool_mask + slot_num_limit, [](std::atomic<int> &el) {
+        return el.load(std::memory_order_relaxed);
+    });
+
+    if (k == 0) {
+        return nullptr;
+    }
+
+    k = (frnd.get() % k) + 1;
+    bool find_steal_pool = false;
+    for (std::size_t i = 0; i < slot_num_limit; ++i) {
+        if (pool_mask[i].load(std::memory_order_relaxed)) {
+            if (k == 1) {
+                k = i;
+                find_steal_pool = true;
+                break;
+            }
+            --k;
+        }
+    }
+
+    if (!find_steal_pool) {
+        return nullptr;
+    }
+
     // The following condition excludes the external thread that might have
     // already taken our previous place in the arena from the list .
     // of potential victims. But since such a situation can take
     // place only in case of significant oversubscription, keeping
     // the checks simple seems to be preferable to complicating the code.
-    if (k >= arena_index) {
-        ++k; // Adjusts random distribution to exclude self
-    }
     arena_slot* victim = &my_slots[k];
     d1::task **pool = victim->task_pool.load(std::memory_order_relaxed);
     d1::task *t = nullptr;

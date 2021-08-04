@@ -206,6 +206,10 @@ arena::arena ( market& m, unsigned num_slots, unsigned num_reserved_slots, unsig
     my_local_concurrency_flag.clear();
     my_global_concurrency_mode.store(false, std::memory_order_relaxed);
 #endif
+    pool_mask = new (cache_aligned_allocate(num_slots * sizeof(pool_mask_type))) pool_mask_type{};
+    for (std::size_t i = 0; i < my_num_slots; ++i) {
+        new (pool_mask + i) pool_mask_type{};
+    }
 }
 
 arena& arena::allocate_arena( market& m, unsigned num_slots, unsigned num_reserved_slots,
@@ -231,12 +235,6 @@ void arena::free_arena () {
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
     __TBB_ASSERT( !my_global_concurrency_mode, NULL );
 #endif
-#if __TBB_ARENA_BINDING
-    if (my_numa_binding_observer != nullptr) {
-        destroy_binding_observer(my_numa_binding_observer);
-        my_numa_binding_observer = nullptr;
-    }
-#endif /*__TBB_ARENA_BINDING*/
     poison_value( my_guard );
     for ( unsigned i = 0; i < my_num_slots; ++i ) {
         // __TBB_ASSERT( !my_slots[i].my_scheduler, "arena slot is not empty" );
@@ -258,13 +256,19 @@ void arena::free_arena () {
 #endif
     // remove an internal reference
     my_market->release( /*is_public=*/false, /*blocking_terminate=*/false );
-
+    
     // Clear enfources synchronization with observe(false)
     my_observers.clear();
-
+    
     void* storage  = &mailbox(my_num_slots-1);
     __TBB_ASSERT( my_references.load(std::memory_order_relaxed) == 0, NULL );
     __TBB_ASSERT( my_pool_state.load(std::memory_order_relaxed) == SNAPSHOT_EMPTY || !my_max_num_workers, NULL );
+
+    for (std::size_t i = 0; i < my_num_slots; ++i) {
+        pool_mask[i].~pool_mask_type();
+    }
+    cache_aligned_deallocate(pool_mask);
+
     this->~arena();
 #if TBB_USE_ASSERT > 1
     std::memset( storage, 0, allocation_size(my_num_slots) );

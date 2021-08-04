@@ -161,7 +161,7 @@ public:
         task_pool_ptr[T] = &t;
         commit_spawned_tasks(T + 1);
         if (!is_task_pool_published()) {
-            publish_task_pool();
+            publish_task_pool(governor::get_thread_data());
         }
     }
 
@@ -266,13 +266,7 @@ private:
 
     //! Used by workers to enter the task pool
     /** Does not lock the task pool in case if arena slot has been successfully grabbed. **/
-    void publish_task_pool() {
-        __TBB_ASSERT ( task_pool == EmptyTaskPool, "someone else grabbed my arena slot?" );
-        __TBB_ASSERT ( head.load(std::memory_order_relaxed) < tail.load(std::memory_order_relaxed),
-                "entering arena without tasks to share" );
-        // Release signal on behalf of previously spawned tasks (when this thread was not in arena yet)
-        task_pool.store(task_pool_ptr, std::memory_order_release );
-    }
+    void publish_task_pool(thread_data* td);
 
     //! Locks the local task pool
     /** Garbles task_pool for the duration of the lock. Requires correctly set task_pool_ptr.
@@ -383,12 +377,7 @@ private:
 
     //! Resets head and tail indices to 0, and leaves task pool
     /** The task pool must be locked by the owner (via acquire_task_pool).**/
-    void reset_task_pool_and_leave() {
-        __TBB_ASSERT(task_pool.load(std::memory_order_relaxed) == LockedTaskPool, "Task pool must be locked when resetting task pool");
-        tail.store(0, std::memory_order_relaxed);
-        head.store(0, std::memory_order_relaxed);
-        leave_task_pool();
-    }
+    void reset_task_pool_and_leave(thread_data* td);
 
     //! Makes relocated tasks visible to thieves and releases the local task pool.
     /** Obviously, the task pool must be locked when calling this method. **/
