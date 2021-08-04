@@ -224,6 +224,19 @@ private:
         }
     }
 
+    void enforce_hwloc_2_5_runtime_linkage() {
+        // Without the call of this function HWLOC 2.4 can be successfully loaded during the tbbbind_2_5 loading.
+        // It is possible since tbbbind_2_5 don't use any new entry points that were introduced in HWLOC 2.5
+        // But tbbbind_2_5 compiles with HWLOC 2.5 header, therefore such situation requires binary forward compatibility
+        // which are not guaranteed by the HWLOC library. To enforce linkage tbbbind_2_5 only with HWLOC >= 2.5 version
+        // this function calls the interface that is available in the HWLOC 2.5 only.
+#if HWLOC_API_VERSION >= 0x20500
+        auto some_core = hwloc_get_next_obj_by_type(topology, HWLOC_OBJ_CORE, nullptr);
+        hwloc_get_obj_with_same_locality(topology, some_core, HWLOC_OBJ_CORE, nullptr, nullptr, 0);
+#endif
+    }
+
+  
     void initialize( std::size_t groups_num ) {
         if ( initialization_state != uninitialized )
             return;
@@ -231,6 +244,8 @@ private:
         topology_initialization(groups_num);
         numa_topology_parsing();
         core_types_topology_parsing();
+
+        enforce_hwloc_2_5_runtime_linkage();
 
         if (initialization_state == topology_loaded)
             initialization_state = topology_parsed;

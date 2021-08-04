@@ -19,6 +19,7 @@
 #include "common/config.h"
 
 #include "tbb/flow_graph.h"
+#include "tbb/global_control.h"
 
 #include "common/test.h"
 #include "common/utils.h"
@@ -497,6 +498,7 @@ void test_deduction_guides() {
 //! \brief \ref requirement \ref error_guessing
 TEST_CASE("Parallel, serial test"){
     for (int p = 2; p <= 4; ++p) {
+        tbb::global_control thread_limit(tbb::global_control::max_allowed_parallelism, p);
         tbb::task_arena arena(p);
         arena.execute(
             [&]() {

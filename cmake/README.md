@@ -50,6 +50,8 @@ The search for a suitable version of the HWLOC library is enabled by default, bu
  - `CMAKE_HWLOC_<HWLOC_VER>_LIBRARY_PATH` - path to the corresponding HWLOC version shared library on Linux or path to `.lib` file on Windows.
  - `CMAKE_HWLOC_<HWLOC_VER>_INCLUDE_PATH` - path to the corresponding HWLOC version includes directory.
 
+Automatic HWLOC searching requires CMake >= 3.6.
+
 Windows requires one additional variable for correct TBBBind library building:
  - `CMAKE_HWLOC_<HWLOC_VER>_DLL_PATH` - path to the corresponding HWLOC version `.dll` file.
 

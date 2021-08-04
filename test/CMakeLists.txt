@@ -256,21 +256,12 @@ function(tbb_add_tbbbind_test)
     set_property(TEST ${_tbbbind_test_NAME} PROPERTY ENVIRONMENT TBB_VERSION=1 APPEND)
 
     # Handle the case when HWLOC was found using pkg-config
-    if (NOT DEFINED HWLOC_TARGET_EXPLICITLY_DEFINED AND DEFINED HWLOC_LIBRARIES)
+    if (NOT DEFINED HWLOC_TARGET_EXPLICITLY_DEFINED AND TARGET PkgConfig::HWLOC)
         set_tests_properties(${_tbbbind_test_NAME} PROPERTIES
             PASS_REGULAR_EXPRESSION "oneTBB: TBBBIND.*${TBBBIND_LIBRARY_NAME}"
             FAIL_REGULAR_EXPRESSION "Status: FAILURE!"
         )
-        set_property(
-            TARGET ${_tbbbind_test_NAME}
-            PROPERTY LINK_LIBRARIES ${HWLOC_LIBRARY_DIRS} ${HWLOC_LIBRARIES}
-            APPEND
-        )
-        set_property(
-            TARGET ${_tbbbind_test_NAME}
-            PROPERTY INCLUDE_DIRECTORIES ${HWLOC_INCLUDE_DIRS}
-            APPEND
-        )
+        target_link_libraries(${_tbbbind_test_NAME} PRIVATE PkgConfig::HWLOC)
         target_compile_definitions(${_tbbbind_test_NAME} PRIVATE __TBB_HWLOC_VALID_ENVIRONMENT)
         return()
     endif()
@@ -435,6 +426,7 @@ tbb_add_test(SUBDIR tbb NAME test_eh_thread DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_global_control DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_task DEPENDENCIES TBB::tbb)
 tbb_add_test(SUBDIR tbb NAME test_concurrent_monitor DEPENDENCIES TBB::tbb)
+tbb_add_test(SUBDIR tbb NAME test_scheduler_mix DEPENDENCIES TBB::tbb)
 
 # test_handle_perror
 tbb_add_test(SUBDIR tbb NAME test_handle_perror)
