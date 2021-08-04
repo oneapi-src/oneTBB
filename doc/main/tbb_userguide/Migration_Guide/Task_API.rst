@@ -325,3 +325,43 @@ task:
         }
         tg.wait();
     }
+
+
+Scheduler Bypass
+----------------
+
+In TBB task::execute() method can return a pointer to task to be executed next. 
+Thus both avoids spawn overhead and prevents steal of the task by other thread.
+
+.. code:: cpp
+
+    // Assuming OtherTask is defined.
+    
+    struct Task: tbb::task {
+        task* execute(){
+            //some work to do...
+            return new(tbb::task::allocate_root()) OtherTask{};
+        }
+    };
+    
+    int main(){
+        tbb::task * r = new (tbb::task::allocate_root()) Task {};
+        task::spawn_root_and_wait(r);
+    }
+
+In oneTBB this can be done using preview feature of ``oneapi::tbb::task_group``. 
+
+.. code:: cpp
+
+    // Assuming OtherTask is defined.
+    
+    int main(){
+        oneapi::tbb::task_group tg;
+        
+        tg.run([&](){
+            //some work to do...
+            return tg.defer(OtherTask{});
+        });
+        
+        tg.wait();
+    }
