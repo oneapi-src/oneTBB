@@ -254,6 +254,66 @@ void TestIsWriter<oneapi::tbb::null_rw_mutex>( const char* ) {
     CHECK(l.is_writer());
 }
 
+namespace test_move_constructor_details {
+
+static constexpr std::size_t buckets_number = 10;
+static constexpr std::size_t bucket_capacity = 42;
+static constexpr std::size_t total_elements = buckets_number * bucket_capacity;
+
+template <class Mutex>
+class hash_set_facade {
+    unsigned values[total_elements];
+    Mutex mutexes[buckets_number];
+
+    std::mt19937 random;
+
+    struct element {
+        unsigned & value;
+        typename Mutex::scoped_lock lock;
+    };
+
+public:
+    hash_set_facade() noexcept {
+        std::for_each(values, values + total_elements, [this] (unsigned & value) {
+            value = random();
+        });
+    }
+
+    using iterator = unsigned *;
+
+    iterator begin() noexcept {
+        return values;
+    }
+
+    iterator end() noexcept {
+        return values + total_elements;
+    }
+
+    element operator[](std::size_t required_index) {
+        {
+            auto in_range = [] (std::size_t a, std::size_t b, std::size_t c) {
+                return a <= b && b <= c;
+            };
+            CHECK(in_range(0, required_index, total_elements));
+        }
+        std::size_t bucket_index = required_index / bucket_capacity;
+        Mutex::scoped_lock lock(mutexes[bucket_index]);
+        return element {values[required_index], std::move(lock)};
+    }
+
+    unsigned get_pure_value(std::size_t required_index) {
+        {
+            auto in_range = [] (std::size_t a, std::size_t b, std::size_t c) {
+                return a <= b && b <= c;
+            };
+            CHECK(in_range(0, required_index, total_elements));
+        }
+        return values[required_index];
+    }
+};
+
+}
+
 template <class Mutex>
 void test_scoped_lock_move_constructor_basic() {
     Mutex mutex;
@@ -274,66 +334,6 @@ void test_scoped_lock_move_constructor_basic() {
     thread1.join();
 
     REQUIRE(mutable_data == 12);
-}
-
-namespace test_move_constructor_details {
-
-static constexpr std::size_t buckets_number = 10;
-static constexpr std::size_t bucket_capacity = 42;
-static constexpr std::size_t total_elements = buckets_number * bucket_capacity;
-
-template <class Mutex>
-class hash_set_facade {
-    unsigned values[total_elements];
-    Mutex mutexes[buckets_number];
-        
-    std::mt19937 random;
-
-    struct element {
-        unsigned & value;
-        typename Mutex::scoped_lock lock;
-    };
-
-public:
-    hash_set_facade() noexcept {
-        std::for_each(values, values + total_elements, [this](unsigned & value) {
-            value = random();
-        });
-    }
-
-    using iterator = unsigned *;
-
-    iterator begin() noexcept {
-        return values;
-    }
-
-    iterator end() noexcept {
-        return values + total_elements;
-    }
-
-    element operator[](std::size_t required_index) {
-        {
-            auto in_range = [](std::size_t a, std::size_t b, std::size_t c) {
-                return a <= b && b <= c;
-            };
-            CHECK(in_range(0, required_index, total_elements));
-        }
-        std::size_t bucket_index = required_index / bucket_capacity;
-        Mutex::scoped_lock lock(mutexes[bucket_index]);
-        return element{ values[required_index], std::move(lock)};
-    }
-
-    unsigned get_pure_value(std::size_t required_index) {
-        {
-            auto in_range = [](std::size_t a, std::size_t b, std::size_t c) {
-                return a <= b && b <= c;
-            };
-            CHECK(in_range(0, required_index, total_elements));
-        }
-        return values[required_index];
-    }
-};
-
 }
 
 template <class Mutex>
