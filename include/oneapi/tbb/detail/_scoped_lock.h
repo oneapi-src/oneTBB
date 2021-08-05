@@ -92,7 +92,7 @@ public:
 
     //! Destroy lock. If holding a lock, releases the lock first.
     ~unique_scoped_lock() {
-        smart_rest();
+        smart_reset();
     }
 };
 
@@ -111,25 +111,17 @@ public:
 
     //! Release lock (if lock is held).
     ~rw_scoped_lock() {
-        if (m_mutex) {
-            release();
-        }
+        smart_reset();
     }
     
-    rw_scoped_lock(rw_scoped_lock&& other) noexcept
-        : m_mutex(other.m_mutex)
-        , m_is_writer(other.m_is_writer) {
-        other.m_mutex = nullptr;
+    constexpr rw_scoped_lock(rw_scoped_lock&& other) noexcept {
+        move_constructor_implementation(std::move(other));
     }
 
     rw_scoped_lock& operator=(rw_scoped_lock&& other) noexcept {
         if (this != &other) {
-            if (m_mutex != nullptr) {
-                release();
-            }
-            m_mutex = other.m_mutex;
-            other.m_mutex = nullptr;
-            m_is_writer = other.m_is_writer;
+            smart_reset();
+            move_constructor_implementation(std::move(other));
         }
         return *this;
     }
@@ -200,6 +192,18 @@ public:
     }
 
 protected:
+    constexpr void move_constructor_implementation() noexcept {
+        m_mutex = other.m_mutex;
+        m_is_writer = other.m_is_writer;
+        other.m_mutex = nullptr;
+    }
+
+    void smart_reset() noexcept {
+        if (m_mutex != nullptr) {
+            release();
+        }
+    }
+
     //! The pointer to the current mutex that is held, or nullptr if no mutex is held.
     Mutex* m_mutex{};
 
