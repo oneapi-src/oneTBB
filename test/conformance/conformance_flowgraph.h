@@ -41,7 +41,6 @@ template<typename Input, typename Output = Input>
 using assync_ports_t =
       typename oneapi::tbb::flow::async_node<Input, Output>::gateway_type;
 
-
 template<bool DefaultConstructible, bool CopyConstructible, bool CopyAssignable>
 struct message {
     int data;
@@ -164,7 +163,8 @@ struct counting_functor {
         execute_count = 0;
     }
 
-    counting_functor( const counting_functor& c ) : return_value(c.return_value) {
+    counting_functor( const typename std::enable_if<std::is_copy_constructible<OutputType>::value,
+                            counting_functor>::type & c ) : return_value(c.return_value) {
         execute_count = 0;
     }
 
