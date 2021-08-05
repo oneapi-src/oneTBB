@@ -50,6 +50,9 @@ public:
         //! Destructor
         ~scoped_lock() = default;
 
+        constexpr scoped_lock(scoped_lock&&) noexcept = default;
+        constexpr scoped_lock& operator=(scoped_lock&&) noexcept = default;
+
         //! No Copy
         scoped_lock(const scoped_lock&) = delete;
         scoped_lock& operator=(const scoped_lock&) = delete;
