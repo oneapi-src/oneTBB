@@ -19,6 +19,7 @@
 
 #include <atomic>
 #include <cstring>
+#include <algorithm>
 
 #include "oneapi/tbb/detail/_task.h"
 
@@ -33,7 +34,6 @@
 #include "concurrent_monitor.h"
 #include "observer_proxy.h"
 #include "oneapi/tbb/spin_mutex.h"
-#include <algorithm>
 
 namespace tbb {
 namespace detail {
@@ -360,8 +360,11 @@ public:
     //! If necessary, raise a flag that there is new job in arena.
     template<arena::new_work_type work_type> void advertise_new_work();
 
+    //! Get gets the index of a non-empty task pool
+    long long get_index_for_steal(FastRandom& frnd, std::size_t slot_num_limit);
+
     //! Attempts to steal a task from a randomly chosen arena slot
-    d1::task* steal_task(unsigned arena_index, FastRandom& frnd, execution_data_ext& ed, isolation_type isolation);
+    d1::task* steal_task(FastRandom& frnd, execution_data_ext& ed, isolation_type isolation);
 
     //! Get a task from a global starvation resistant queue
     template<task_stream_accessor_type accessor>
@@ -549,35 +552,43 @@ void arena::advertise_new_work() {
     }
 }
 
-inline d1::task* arena::steal_task(unsigned /* arena_index */, FastRandom& frnd, execution_data_ext& ed, isolation_type isolation) {
-    auto slot_num_limit = my_limit.load();
+inline long long arena::get_index_for_steal(FastRandom& frnd, std::size_t slot_num_limit) {
+    std::size_t k = std::count_if(pool_mask, pool_mask + slot_num_limit, [] (std::atomic<int>& el) {
+        return el.load(std::memory_order_relaxed);
+    });
+
+    if (k == 0) {
+        return -1;
+    }
+
+    std::size_t target_slot = (frnd.get() % k) + 1;
+    std::size_t i = 0; 
+    for (; target_slot > 0 && i < slot_num_limit; ++i) {
+        if (pool_mask[i].load(std::memory_order_relaxed)) {
+            --target_slot;
+        }
+    }
+
+    if (i < slot_num_limit) {
+        return i - 1;
+    } else {
+        return -1;
+    }
+}
+
+inline d1::task* arena::steal_task(FastRandom& frnd, execution_data_ext& ed, isolation_type isolation) {
+    auto slot_num_limit = my_limit.load(std::memory_order_relaxed);
     if (slot_num_limit == 1) {
         // No slots to steal from
         return nullptr;
     }
 
-    std::size_t k = std::count_if(pool_mask, pool_mask + slot_num_limit, [](std::atomic<int> &el) {
-        return el.load(std::memory_order_relaxed);
-    });
+    long long index = get_index_for_steal(frnd, slot_num_limit);
+    std::size_t k;
 
-    if (k == 0) {
-        return nullptr;
-    }
-
-    k = (frnd.get() % k) + 1;
-    bool find_steal_pool = false;
-    for (std::size_t i = 0; i < slot_num_limit; ++i) {
-        if (pool_mask[i].load(std::memory_order_relaxed)) {
-            if (k == 1) {
-                k = i;
-                find_steal_pool = true;
-                break;
-            }
-            --k;
-        }
-    }
-
-    if (!find_steal_pool) {
+    if (index != -1) {
+        k = index;
+    } else {
         return nullptr;
     }
 
