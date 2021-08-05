@@ -64,6 +64,8 @@ public:
         bool downgrade_to_reader() { return true; }
 
         bool is_writer() const { return true; }
+
+        constexpr void swap(scoped_lock&) noexcept {}
     };
 
     //! Mutex traits

@@ -60,6 +60,8 @@ public:
         void acquire(null_mutex&) {}
         bool try_acquire(null_mutex&) { return true; }
         void release() {}
+
+        constexpr void swap(scoped_lock&) noexcept {}
     };
 
     //! Mutex traits

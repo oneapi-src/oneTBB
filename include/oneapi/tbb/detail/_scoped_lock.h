@@ -17,6 +17,7 @@
 #ifndef __TBB_detail_scoped_lock_H
 #define __TBB_detail_scoped_lock_H
 
+#include <algorithm>
 #include <utility>
 
 namespace tbb {
@@ -93,6 +94,10 @@ public:
     //! Destroy lock. If holding a lock, releases the lock first.
     ~unique_scoped_lock() {
         smart_reset();
+    }
+
+    _CONSTEXPR20 void swap(unique_scoped_lock& other) noexcept {
+        std::swap(m_mutex, other.m_mutex);
     }
 };
 
@@ -189,6 +194,11 @@ public:
     bool is_writer() const {
         __TBB_ASSERT(m_mutex != nullptr, "The mutex is not acquired");
         return m_is_writer;
+    }
+
+    _CONSTEXPR20 void swap(rw_scoped_lock& other) noexcept {
+        std::swap(m_mutex, other.m_mutex);
+        std::swap(m_is_writer, other.m_is_writer);
     }
 
 protected:
