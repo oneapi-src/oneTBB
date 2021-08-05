@@ -64,7 +64,7 @@ public:
 
         //! Release lock (if lock is held).
         ~scoped_lock() {
-            smart_release();
+            smart_reset();
         }
 
         scoped_lock( scoped_lock&& other ) noexcept {
@@ -73,7 +73,7 @@ public:
 
         scoped_lock& operator=( scoped_lock&& other ) noexcept {
             if (this != &other) {
-                smart_release();
+                smart_reset();
                 move_constructor_implementation(std::move(other));
             }
             return *this;
@@ -167,7 +167,7 @@ public:
             other.m_next.store(nullptr);
         }
 
-        void smart_release() noexcept {
+        void smart_reset() noexcept {
             if (m_mutex != nullptr) {
                 release();
             }

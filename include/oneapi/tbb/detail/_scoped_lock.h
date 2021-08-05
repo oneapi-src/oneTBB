@@ -192,7 +192,7 @@ public:
     }
 
 protected:
-    constexpr void move_constructor_implementation() noexcept {
+    constexpr void move_constructor_implementation(rw_scoped_lock&& other) noexcept {
         m_mutex = other.m_mutex;
         m_is_writer = other.m_is_writer;
         other.m_mutex = nullptr;
