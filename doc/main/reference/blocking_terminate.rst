@@ -84,21 +84,21 @@ Member Functions
 
 .. cpp:function:: task_scheduler_handle& operator=(task_scheduler_handle&& other) noexcept
 
-    **Effects**: Releases a reference to the task scheduler referenced with ``this`` and adds a reference to the task scheduler referenced with ``other``.
+    **Effects**: Releases a reference to the task scheduler referenced with ``this``. Adds a reference to the task scheduler referenced with ``other``.
     ``other`` releases a reference to the task scheduler.
 
 -------------------------------------------------------
 
 .. cpp:function:: explicit operator bool() const noexcept
 
-    **Returns**: ``true`` if ``this`` references any task scheduler; otherwise, returns ``false``
+    **Returns**: ``true`` if ``this`` references any task scheduler; ``false`` otherwise.
 
 -------------------------------------------------------
 
 .. cpp:function:: task_scheduler_handle get()
 
-    **Returns**: An instance of the ``task_scheduler_handle`` class that holds a references to the task scheduler preventing
-    it from premature destruction.
+    **Returns**: An instance of the ``task_scheduler_handle`` class that holds a reference to the task scheduler preventing
+    its premature destruction.
 
 -------------------------------------------------------
 
