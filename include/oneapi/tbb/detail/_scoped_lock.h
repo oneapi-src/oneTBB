@@ -17,6 +17,8 @@
 #ifndef __TBB_detail_scoped_lock_H
 #define __TBB_detail_scoped_lock_H
 
+#include <utility>
+
 namespace tbb {
 namespace detail {
 namespace d1 {
@@ -27,6 +29,17 @@ class unique_scoped_lock {
     //! Points to currently held Mutex, or NULL if no lock is held.
     Mutex* m_mutex{};
 
+    constexpr void move_constructor_implementation(unique_scoped_lock&& other) noexcept {
+        m_mutex = other.m_mutex;
+        other.m_mutex = nullptr;
+    }
+
+    void smart_reset() noexcept {
+        if (m_mutex != nullptr) {
+            release();
+        }
+    }
+
 public:
     //! Construct without acquiring a Mutex.
     constexpr unique_scoped_lock() noexcept : m_mutex(nullptr) {}
@@ -36,18 +49,14 @@ public:
         acquire(m);
     }
 
-    unique_scoped_lock(unique_scoped_lock&& other) noexcept
-        : m_mutex(other.m_mutex) {
-        other.m_mutex = nullptr;
+    constexpr unique_scoped_lock(unique_scoped_lock&& other) noexcept {
+        move_constructor_implementation(std::move(other));
     }
 
     unique_scoped_lock& operator=(unique_scoped_lock&& other) noexcept {
         if (this != &other) {
-            if (m_mutex != nullptr) {
-                release();
-            }
-            m_mutex = other.m_mutex;
-            other.m_mutex = nullptr;
+            smart_reset();
+            move_constructor_implementation(std::move(other));
         }
         return *this;
     }
@@ -83,9 +92,7 @@ public:
 
     //! Destroy lock. If holding a lock, releases the lock first.
     ~unique_scoped_lock() {
-        if (m_mutex) {
-            release();
-        }
+        smart_rest();
     }
 };
 
