@@ -169,24 +169,28 @@ TEST_CASE("mutex::scoped_lock move constructor basic") {
     test_scoped_lock_move_constructor_basic<tbb::spin_mutex>();
     test_scoped_lock_move_constructor_basic<tbb::spin_rw_mutex>();
     test_scoped_lock_move_constructor_basic<tbb::queuing_mutex>();
+    test_scoped_lock_move_constructor_basic<tbb::queuing_rw_mutex>();
 }
 
 TEST_CASE("mutex::scoped_lock move constructor return value") {
     test_scoped_lock_move_constructor_return_value<tbb::spin_mutex>();
     test_scoped_lock_move_constructor_return_value<tbb::spin_rw_mutex>();
     test_scoped_lock_move_constructor_return_value<tbb::queuing_mutex>();
+    test_scoped_lock_move_constructor_return_value<tbb::queuing_rw_mutex>();
 }
 
 TEST_CASE("mutex::scoped_lock move assignment operator basic") {
     test_scoped_lock_move_assignment_operator_basic<tbb::spin_mutex>();
     test_scoped_lock_move_assignment_operator_basic<tbb::spin_rw_mutex>();
     test_scoped_lock_move_assignment_operator_basic<tbb::queuing_mutex>();
+    test_scoped_lock_move_assignment_operator_basic<tbb::queuing_rw_mutex>();
 }
 
 TEST_CASE("mutex::scoped_lock move assignment operator complex") {
     test_scoped_lock_move_assignment_operator_complex<tbb::spin_mutex>();
     test_scoped_lock_move_assignment_operator_complex<tbb::spin_rw_mutex>();
     test_scoped_lock_move_assignment_operator_complex<tbb::queuing_mutex>();
+    test_scoped_lock_move_assignment_operator_complex<tbb::queuing_rw_mutex>();
 }
 
 #if __TBB_CPP20_CONCEPTS_PRESENT

@@ -26,6 +26,7 @@
 
 #include <cstring>
 #include <atomic>
+#include <utility>
 
 namespace tbb {
 namespace detail {
@@ -87,6 +88,9 @@ public:
         ~scoped_lock() {
             if( my_mutex ) release();
         }
+
+        scoped_lock(scoped_lock&&) noexcept;
+        scoped_lock & operator=(scoped_lock &&) noexcept;
 
         //! No Copy
         scoped_lock(const scoped_lock&) = delete;
@@ -158,6 +162,8 @@ inline void set_name(queuing_rw_mutex&, const wchar_t*) {}
 } // namespace d1
 
 namespace r1 {
+TBB_EXPORT void move_constructor_implementation(d1::queuing_rw_mutex::scoped_lock&, d1::queuing_rw_mutex::scoped_lock&&) noexcept;
+TBB_EXPORT d1::queuing_rw_mutex::scoped_lock& move_assignment_operator_implementation(d1::queuing_rw_mutex::scoped_lock&, d1::queuing_rw_mutex::scoped_lock&&) noexcept;
 TBB_EXPORT void acquire(d1::queuing_rw_mutex&, d1::queuing_rw_mutex::scoped_lock&, bool);
 TBB_EXPORT bool try_acquire(d1::queuing_rw_mutex&, d1::queuing_rw_mutex::scoped_lock&, bool);
 TBB_EXPORT void release(d1::queuing_rw_mutex::scoped_lock&);
@@ -168,6 +174,13 @@ TBB_EXPORT bool is_writer(const d1::queuing_rw_mutex::scoped_lock&);
 
 namespace d1 {
 
+inline queuing_rw_mutex::scoped_lock::scoped_lock(scoped_lock&& other) noexcept {
+    r1::move_constructor_implementation(*this, std::move(other));
+}
+
+inline queuing_rw_mutex::scoped_lock& queuing_rw_mutex::scoped_lock::operator=(scoped_lock&& other) noexcept {
+    return r1::move_assignment_operator_implementation(*this, std::move(other));
+}
 
 inline void queuing_rw_mutex::scoped_lock::acquire(queuing_rw_mutex& m,bool write) {
     r1::acquire(m, *this, write);

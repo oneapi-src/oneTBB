@@ -23,6 +23,8 @@
 #include "oneapi/tbb/detail/_utils.h"
 #include "itt_notify.h"
 
+#include <utility>
+
 namespace tbb {
 namespace detail {
 namespace r1 {
@@ -153,6 +155,38 @@ struct queuing_rw_mutex_impl {
     //------------------------------------------------------------------------
     // Methods of queuing_rw_mutex::scoped_lock
     //------------------------------------------------------------------------
+
+    static void smart_reset(d1::queuing_rw_mutex::scoped_lock& scoped_lock) noexcept {
+        if (scoped_lock.my_mutex != nullptr) {
+            scoped_lock.release();
+        }
+    }
+
+    static void move_constructor_implementation(d1::queuing_rw_mutex::scoped_lock& destination, d1::queuing_rw_mutex::scoped_lock&& source) noexcept {
+        destination.my_mutex = source.my_mutex;
+        destination.my_going.store(1U);
+        destination.my_state.store(source.my_state.load());
+        destination.my_prev.store(source.my_prev.load());
+        destination.my_next.store(source.my_next.load());
+        source.my_mutex = nullptr;
+        if (destination.my_mutex->q_tail == &source) {
+            d1::queuing_rw_mutex::scoped_lock * source_ptr = &source;
+            if (!destination.my_mutex->q_tail.compare_exchange_strong(source_ptr, &destination)) {
+                spin_wait_while_eq(source.my_next, 0U);
+                destination.my_next.store(source.my_next);
+            }
+        }
+        source.my_state.store(STATE_NONE);
+        source.my_next.store(0U);
+    }
+
+    static d1::queuing_rw_mutex::scoped_lock& move_assignment_operator_implementation(d1::queuing_rw_mutex::scoped_lock& destination, d1::queuing_rw_mutex::scoped_lock&& source) noexcept {
+        if (&destination != &source) {
+            smart_reset(destination);
+            move_constructor_implementation(destination, std::move(source));
+        }
+        return destination;
+    }
 
     //! A method to acquire queuing_rw_mutex lock
     static void acquire(d1::queuing_rw_mutex& m, d1::queuing_rw_mutex::scoped_lock& s, bool write)
@@ -529,6 +563,14 @@ struct queuing_rw_mutex_impl {
         ITT_SYNC_CREATE(&m, _T("tbb::queuing_rw_mutex"), _T(""));
     }
 };
+
+void __TBB_EXPORTED_FUNC move_constructor_implementation(d1::queuing_rw_mutex::scoped_lock& destination, d1::queuing_rw_mutex::scoped_lock&& source) noexcept {
+    queuing_rw_mutex_impl::move_constructor_implementation(destination, std::move(source));
+}
+
+d1::queuing_rw_mutex::scoped_lock& __TBB_EXPORTED_FUNC move_assignment_operator_implementation(d1::queuing_rw_mutex::scoped_lock& desintation, d1::queuing_rw_mutex::scoped_lock&& source) noexcept {
+    return queuing_rw_mutex_impl::move_assignment_operator_implementation(desintation, std::move(source));
+}
 
 void __TBB_EXPORTED_FUNC acquire(d1::queuing_rw_mutex& m, d1::queuing_rw_mutex::scoped_lock& s, bool write) {
     queuing_rw_mutex_impl::acquire(m, s, write);
