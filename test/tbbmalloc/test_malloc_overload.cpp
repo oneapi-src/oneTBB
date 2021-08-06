@@ -135,14 +135,14 @@ using namespace std;
 
 class BackRefIdx { // composite index to backreference array
 private:
-    uint16_t master;      // index in BackRefMaster
+    uint16_t main;      // index in BackRefMain
     uint16_t largeObj:1;  // is this object "large"?
     uint16_t offset  :15; // offset from beginning of BackRefBlock
 public:
-    BackRefIdx() : master((uint16_t)-1) {}
-    bool isInvalid() { return master == (uint16_t)-1; }
+    BackRefIdx() : main((uint16_t)-1) {}
+    bool isInvalid() { return main == (uint16_t)-1; }
     bool isLargeObject() const { return largeObj; }
-    uint16_t getMaster() const { return master; }
+    uint16_t getMain() const { return main; }
     uint16_t getOffset() const { return offset; }
 
     // only newBackRef can modify BackRefIdx
