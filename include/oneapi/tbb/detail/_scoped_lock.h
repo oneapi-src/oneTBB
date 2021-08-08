@@ -30,13 +30,20 @@ class unique_scoped_lock {
     //! Points to currently held Mutex, or NULL if no lock is held.
     Mutex* m_mutex{};
 
+    // Move constructor logic. Assumes that current scoped_lock doesn't own any mutex.
+    // The method mustn't be called concurrently.
     constexpr void move_constructor_implementation(unique_scoped_lock&& other) noexcept {
+        // Since there is only a pointer to a mutex in the class, it's sufficient to move that pointer.
         m_mutex = other.m_mutex;
         other.m_mutex = nullptr;
     }
 
+    // Convenient method.
+    // The method mustn't be called concurrently.
     void smart_reset() noexcept {
+        // If current scoped_lock owns a mutex.
         if (m_mutex != nullptr) {
+            // Then release it.
             release();
         }
     }
@@ -51,12 +58,17 @@ public:
     }
 
     constexpr unique_scoped_lock(unique_scoped_lock&& other) noexcept {
+        // The whole logic contains in the method below.
         move_constructor_implementation(std::move(other));
     }
 
+    // Move assignment works similar as move constructor.
     unique_scoped_lock& operator=(unique_scoped_lock&& other) noexcept {
+        // If this differ from other.
         if (this != &other) {
+            // If current scoped_lock owns a mutex, then release it.
             smart_reset();
+            // We now have the scoped_lock instance that doesn't own any mutex.
             move_constructor_implementation(std::move(other));
         }
         return *this;
@@ -93,9 +105,12 @@ public:
 
     //! Destroy lock. If holding a lock, releases the lock first.
     ~unique_scoped_lock() {
+        // If current scoped_lock owns a mutex, then release it.
         smart_reset();
     }
 
+    // Swap semantics, constexpr since C++ 20.
+    // The method mustn't be called concurrently.
     _CONSTEXPR20 void swap(unique_scoped_lock& other) noexcept {
         std::swap(m_mutex, other.m_mutex);
     }
@@ -116,16 +131,22 @@ public:
 
     //! Release lock (if lock is held).
     ~rw_scoped_lock() {
+        // If current scoped_lock owns a mutex, then release it.
         smart_reset();
     }
     
     constexpr rw_scoped_lock(rw_scoped_lock&& other) noexcept {
+        // The whole logic contains in the method below.
         move_constructor_implementation(std::move(other));
     }
 
+    // Move assignment works similar as move constructor.
     rw_scoped_lock& operator=(rw_scoped_lock&& other) noexcept {
+        // If this differ from other.
         if (this != &other) {
+            // If current scoped_lock owns a mutex, then release it.
             smart_reset();
+            // We now have the scoped_lock instance that doesn't own any mutex.
             move_constructor_implementation(std::move(other));
         }
         return *this;
@@ -196,20 +217,29 @@ public:
         return m_is_writer;
     }
 
+    // Swap semantics, constexpr since C++ 20.
+    // The method mustn't be called concurrently.
     _CONSTEXPR20 void swap(rw_scoped_lock& other) noexcept {
         std::swap(m_mutex, other.m_mutex);
         std::swap(m_is_writer, other.m_is_writer);
     }
 
 protected:
+    // Move constructor logic. Assumes that current scoped_lock doesn't own any mutex.
+    // The method mustn't be called concurrently.
     constexpr void move_constructor_implementation(rw_scoped_lock&& other) noexcept {
+        // It's sufficient to move the pointer and assign the flag.
         m_mutex = other.m_mutex;
         m_is_writer = other.m_is_writer;
         other.m_mutex = nullptr;
     }
 
+    // Convenient method.
+    // The method mustn't be called concurrently.
     void smart_reset() noexcept {
+        // If current scoped_lock owns a mutex.
         if (m_mutex != nullptr) {
+            // Then release it.
             release();
         }
     }

@@ -89,6 +89,7 @@ public:
             if( my_mutex ) release();
         }
 
+        // Move semantics.
         scoped_lock(scoped_lock&&) noexcept;
         scoped_lock & operator=(scoped_lock &&) noexcept;
 

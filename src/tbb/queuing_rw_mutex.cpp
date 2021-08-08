@@ -156,33 +156,60 @@ struct queuing_rw_mutex_impl {
     // Methods of queuing_rw_mutex::scoped_lock
     //------------------------------------------------------------------------
 
+    // Convenient method.
+    // The method mustn't be called concurrently.
     static void smart_reset(d1::queuing_rw_mutex::scoped_lock& scoped_lock) noexcept {
+        // If current scoped_lock owns a mutex.
         if (scoped_lock.my_mutex != nullptr) {
+            // Then release it.
             scoped_lock.release();
         }
     }
 
+    // [BUG FOUND]
+    // Move constructor logic. Assumes that current scoped_lock doesn't own any mutex.
+    // The method mustn't be called concurrently.
     static void move_constructor_implementation(d1::queuing_rw_mutex::scoped_lock& destination, d1::queuing_rw_mutex::scoped_lock&& source) noexcept {
+        // Assigning fields.
         destination.my_mutex = source.my_mutex;
-        destination.my_going.store(1U);
         destination.my_state.store(source.my_state.load());
         destination.my_prev.store(source.my_prev.load());
         destination.my_next.store(source.my_next.load());
+
+        // For consistency with the class invariant.
+        destination.my_going.store(1U);
+        
+        // For correct destruction.
         source.my_mutex = nullptr;
+
+        // The source scoped_lock must be the head of the queue, because
+        // the other elements of this queue (if present) spin on the
+        // my_going flag and wait for predecessor to set the flag to zero.
+
         if (destination.my_mutex->q_tail == &source) {
             d1::queuing_rw_mutex::scoped_lock * source_ptr = &source;
+            // If the source scoped_lock is no longer the only element in the queue.
             if (!destination.my_mutex->q_tail.compare_exchange_strong(source_ptr, &destination)) {
+                // Wait while another thread to update the data.
                 spin_wait_while_eq(source.my_next, 0U);
+                // We now can assign this field correctly.
                 destination.my_next.store(source.my_next);
             }
         }
+
+        // For consistency and safety.
         source.my_state.store(STATE_NONE);
         source.my_next.store(0U);
     }
 
+    // Move assignment works similar as move constructor.
+    // The method mustn't be called concurrently.
     static d1::queuing_rw_mutex::scoped_lock& move_assignment_operator_implementation(d1::queuing_rw_mutex::scoped_lock& destination, d1::queuing_rw_mutex::scoped_lock&& source) noexcept {
+        // If this differ from other.
         if (&destination != &source) {
+            // If current scoped_lock owns a mutex, then release it.
             smart_reset(destination);
+            // We now have the scoped_lock instance that doesn't own any mutex.
             move_constructor_implementation(destination, std::move(source));
         }
         return destination;

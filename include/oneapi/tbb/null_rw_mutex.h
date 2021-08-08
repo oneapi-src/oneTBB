@@ -50,6 +50,7 @@ public:
         //! Destructor
         ~scoped_lock() = default;
 
+        // Trivial move semantics for consistency with other scoped_lock types
         constexpr scoped_lock(scoped_lock&&) noexcept = default;
         constexpr scoped_lock& operator=(scoped_lock&&) noexcept = default;
 
@@ -65,6 +66,7 @@ public:
 
         bool is_writer() const { return true; }
 
+        // Trivial swap semantics for consistency with other scoped_lock types
         constexpr void swap(scoped_lock&) noexcept {}
     };
 

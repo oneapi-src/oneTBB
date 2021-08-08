@@ -64,16 +64,22 @@ public:
 
         //! Release lock (if lock is held).
         ~scoped_lock() {
+            // If current scoped_lock owns a mutex, then release it.
             smart_reset();
         }
 
         scoped_lock( scoped_lock&& other ) noexcept {
+            // The whole logic contains in the method below.
             move_constructor_implementation(std::move(other));
         }
-
+        
+        // Move assignment works similar as move constructor.
         scoped_lock& operator=( scoped_lock&& other ) noexcept {
+            // If this differ from other.
             if (this != &other) {
+                // If current scoped_lock owns a mutex, then release it.
                 smart_reset();
+                // We now have the scoped_lock instance that doesn't own any mutex.
                 move_constructor_implementation(std::move(other));
             }
             return *this;
@@ -152,23 +158,45 @@ public:
         }
 
     private:
-        void move_constructor_implementation( scoped_lock && other ) noexcept {
+        // Move constructor logic. Assumes that current scoped_lock doesn't own any mutex.
+        // The method mustn't be called concurrently.
+        void move_constructor_implementation( scoped_lock&& other ) noexcept {
+            // Assigning fields.
             m_mutex = other.m_mutex;
             m_next.store(other.m_next.load());
+
+            // For consistency with the class invariant.
             m_going.store(1U);
+
+            // For correct destruction.
             other.m_mutex = nullptr;
+
+            // The other scoped_lock must be the head of the queue, because
+            // the other elements of this queue (if present) spin on the
+            // m_going flag and wait for predecessor to set the flag to zero.
+
+            // If the other scoped_lock is the only element in the queue.
+            // Only in this scenario we have to change something.
             if (m_mutex->q_tail == &other) {
-                scoped_lock * other_ptr = &other;
+                scoped_lock* other_ptr = &other;
+                // If the other scoped_lock is no longer the only element in the queue.
                 if (!m_mutex->q_tail.compare_exchange_strong(other_ptr, this)) {
+                    // Wait while another thread to update the data.
                     spin_wait_while_eq(other.m_next, nullptr);
+                    // We now can assign this field correctly.
                     m_next.store(other.m_next);
                 }
             }
+            // For consistency and safety.
             other.m_next.store(nullptr);
         }
 
+        // Convenient method.
+        // The method mustn't be called concurrently.
         void smart_reset() noexcept {
+            // If current scoped_lock owns a mutex.
             if (m_mutex != nullptr) {
+                // Then release it.
                 release();
             }
         }
