@@ -360,9 +360,6 @@ public:
     //! If necessary, raise a flag that there is new job in arena.
     template<arena::new_work_type work_type> void advertise_new_work();
 
-    //! Get gets the index of a non-empty task pool
-    long long get_index_for_steal(FastRandom& frnd, std::size_t slot_num_limit);
-
     //! Attempts to steal a task from a randomly chosen arena slot
     d1::task* steal_task(FastRandom& frnd, execution_data_ext& ed, isolation_type isolation);
 
@@ -552,43 +549,32 @@ void arena::advertise_new_work() {
     }
 }
 
-inline long long arena::get_index_for_steal(FastRandom& frnd, std::size_t slot_num_limit) {
-    std::size_t k = std::count_if(pool_mask, pool_mask + slot_num_limit, [] (std::atomic<int>& el) {
-        return el.load(std::memory_order_relaxed);
-    });
-
-    if (k == 0) {
-        return -1;
-    }
-
-    std::size_t target_slot = (frnd.get() % k) + 1;
-    std::size_t i = 0; 
-    for (; target_slot > 0 && i < slot_num_limit; ++i) {
-        if (pool_mask[i].load(std::memory_order_relaxed)) {
-            --target_slot;
-        }
-    }
-
-    if (i < slot_num_limit) {
-        return i - 1;
-    } else {
-        return -1;
-    }
-}
-
 inline d1::task* arena::steal_task(FastRandom& frnd, execution_data_ext& ed, isolation_type isolation) {
-    auto slot_num_limit = my_limit.load(std::memory_order_relaxed);
-    if (slot_num_limit == 1) {
-        // No slots to steal from
-        return nullptr;
-    }
+    auto get_index_for_steal = [&] {
+        std::size_t k = std::count_if(pool_mask, pool_mask + my_num_slots, [] (std::atomic<int>& el) {
+            return el.load(std::memory_order_relaxed);
+        });
+        if (k == 0) {
+            return -1;
+        }
 
-    long long index = get_index_for_steal(frnd, slot_num_limit);
-    std::size_t k;
+        std::size_t target_slot = frnd.get() % k;
+        for (unsigned i = 0; i < my_num_slots; ++i) {
+            if (pool_mask[i].load(std::memory_order_relaxed) && target_slot-- == 0) {
+                return static_cast<int>(i);
+            }
+        }
 
-    if (index != -1) {
-        k = index;
-    } else {
+        for (unsigned i = 0; i < my_num_slots; ++i) {
+            if (pool_mask[i].load(std::memory_order_relaxed)) {
+                return static_cast<int>(i);
+            }
+        }
+        return -1;
+    };
+
+    int k = get_index_for_steal();
+    if (k < 0) {
         return nullptr;
     }
 
