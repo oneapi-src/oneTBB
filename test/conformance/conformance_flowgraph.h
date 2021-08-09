@@ -495,7 +495,7 @@ void test_forwarding(std::size_t messages_received, Args... node_args) {
     std::vector<std::unique_ptr<test_push_receiver<OutputType>>> receiver_nodes;
 
     for(std::size_t i = 0; i < 10; ++i) {
-        receiver_nodes.emplace_back(std::make_unique<test_push_receiver<OutputType>>(g));
+        receiver_nodes.emplace_back(new test_push_receiver<OutputType>(g));
         oneapi::tbb::flow::make_edge(testing_node, *receiver_nodes.back());
     }
 
