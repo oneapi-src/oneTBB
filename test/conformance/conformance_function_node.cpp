@@ -18,8 +18,6 @@
 #pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
 #endif
 
-#define COPY_CONSTRUCTIBLE_OUTPUT
-
 #include "conformance_flowgraph.h"
 
 using input_msg = conformance::message</*default_ctor*/true, /*copy_ctor*/true, /*copy_assign*/false>;

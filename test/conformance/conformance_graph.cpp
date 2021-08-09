@@ -18,6 +18,8 @@
 #pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
 #endif
 
+#define CONFORMANCE_GRAPH
+
 #include "conformance_flowgraph.h"
 
 //! \file conformance_graph.cpp
@@ -106,7 +108,7 @@ void test_buffering_nodes_rf_reset_protocol(Args... node_body){
 template<typename Node, typename InputType, typename ...Args>
 void test_nodes_with_body_rf_reset_bodies(Args... node_args){
     oneapi::tbb::flow::graph g;
-    conformance::counting_functor<int> counting_body;
+    conformance::counting_functor<int> counting_body(5);
     Node testing_node(g, node_args..., counting_body);
 
     testing_node.try_put(InputType());
@@ -174,7 +176,7 @@ TEST_CASE("graph reset with rf_reset_protocol") {
     test_buffering_nodes_rf_reset_protocol<overwrite_node<int>>();
     test_buffering_nodes_rf_reset_protocol<write_once_node<int>>();
     test_buffering_nodes_rf_reset_protocol<priority_queue_node<int>>();
-    conformance::sequenser_functor<int> sequencer;
+    conformance::sequencer_functor<int> sequencer;
     test_buffering_nodes_rf_reset_protocol<sequencer_node<int>>(sequencer);
 
     test_limiter_node_rf_reset_protocol();
@@ -205,7 +207,7 @@ TEST_CASE("graph reset with rf_clear_edges") {
     oneapi::tbb::flow::priority_queue_node<int> pq(g);
     oneapi::tbb::flow::write_once_node<int> wo(g);
     oneapi::tbb::flow::overwrite_node<int> ovw(g);
-    oneapi::tbb::flow::sequencer_node<int> seq(g, conformance::sequenser_functor<int>());
+    oneapi::tbb::flow::sequencer_node<int> seq(g, conformance::sequencer_functor<int>());
 
     oneapi::tbb::flow::make_edge(ct, successor);
     oneapi::tbb::flow::make_edge(s, successor);

@@ -38,7 +38,7 @@ using multifunc_ports_t =
       typename oneapi::tbb::flow::multifunction_node<Input, std::tuple<Output>>::output_ports_type;
 
 template<typename Input, typename Output = Input>
-using assync_ports_t =
+using async_ports_t =
       typename oneapi::tbb::flow::async_node<Input, Output>::gateway_type;
 
 template<bool DefaultConstructible, bool CopyConstructible, bool CopyAssignable>
@@ -47,13 +47,13 @@ struct message {
 
     message(int _data) : data(_data) {};
 
-    template<bool T = DefaultConstructible, typename std::enable_if<T, bool>::type = true>
+    template<bool T = DefaultConstructible, typename = typename std::enable_if<T>::type>
     message(){};
 
-    template<bool T = CopyConstructible, typename std::enable_if<T, bool>::type = true>
+    template<bool T = CopyConstructible, typename = typename std::enable_if<T>::type>
     message(const message& msg) : data(msg.data) {};
 
-    template<bool T = CopyAssignable, typename std::enable_if<T, bool>::type = true>
+    template<bool T = CopyAssignable, typename = typename std::enable_if<T>::type>
     message& operator=(const message& msg) {
         this->data = msg.data;
         return *this;
@@ -92,6 +92,19 @@ typename std::enable_if<std::is_default_constructible<V>::value, std::vector<V>>
     return messages;
 }
 
+template<typename Node, typename InputType = void>
+bool produce_messages(Node& node, int arg = 1) {
+    utils::suppress_unused_warning(arg);
+#if defined CONFORMANCE_INPUT_NODE
+    node.activate();
+    return true;
+#elif defined CONFORMANCE_CONTINUE_NODE
+    return node.try_put(InputType());
+#else
+    return node.try_put(InputType(arg));
+#endif
+}
+
 template<typename T, typename U>
 typename std::enable_if<std::is_same<T, U>::value, bool>::type check_output_type(){
     return true;
@@ -103,7 +116,7 @@ typename std::enable_if<!std::is_same<T, U>::value, bool>::type check_output_typ
 }
 
 template<typename T>
-struct sequenser_functor{
+struct sequencer_functor {
     struct seq_message {
         std::size_t id;
         T data;
@@ -140,7 +153,7 @@ struct track_first_id_functor {
     }
 
     template<typename InputType>
-    void operator()( InputType, assync_ports_t<InputType, OutputType>& g ) {
+    void operator()( InputType, async_ports_t<InputType, OutputType>& g ) {
         g.try_put(operator()(OutputType(0)));
     }
 
@@ -163,10 +176,11 @@ struct counting_functor {
         execute_count = 0;
     }
 
-    counting_functor( const typename std::enable_if<std::is_copy_constructible<OutputType>::value,
-                            counting_functor>::type & c ) : return_value(c.return_value) {
+#ifdef CONFORMANCE_GRAPH
+    counting_functor( const counting_functor & c ) : return_value(c.return_value) {
         execute_count = 0;
     }
+#endif
 
     template<typename InputType>
     OutputType operator()( InputType ) {
@@ -190,7 +204,7 @@ struct counting_functor {
     }
 
     template<typename InputType>
-    void operator()( InputType, assync_ports_t<InputType, OutputType>& g ) {
+    void operator()( InputType, async_ports_t<InputType, OutputType>& g ) {
         ++execute_count;
         g.try_put(return_value);
     }
@@ -216,7 +230,7 @@ struct dummy_functor {
     }
 
     template<typename InputType>
-    void operator()( InputType, assync_ports_t<InputType, OutputType>& g ) {
+    void operator()( InputType, async_ports_t<InputType, OutputType>& g ) {
         g.try_put(OutputType(0));
     }
 
@@ -259,7 +273,7 @@ struct wait_flag_body {
     }
 
     template<typename InputType>
-    void operator()( InputType argument, assync_ports_t<InputType>& g ) {
+    void operator()( InputType argument, async_ports_t<InputType>& g ) {
         while(!flag.load()) { };
         g.try_put(argument);
     }
@@ -305,7 +319,7 @@ struct concurrency_peak_checker_body {
         std::get<0>(op).try_put(argument);
     }
 
-    void operator()( const int& argument , assync_ports_t<int>& g ) {
+    void operator()( const int& argument , async_ports_t<int>& g ) {
         utils::ConcurrencyTracker ct;
         utils::doDummyWork(1000);
         CHECK_MESSAGE((int)utils::ConcurrencyTracker::PeakParallelism() <= required_max_concurrency,
@@ -319,17 +333,17 @@ struct counting_object {
     std::size_t copy_count;
     mutable std::size_t copies_count;
     std::size_t assign_count;
-    mutable std::size_t assignes_count;
+    mutable std::size_t assigns_count;
     std::size_t move_count;
     bool is_copy;
 
     counting_object():
         copy_count(0), copies_count(0), assign_count(0),
-        assignes_count(0), move_count(0), is_copy(false) {}
+        assigns_count(0), move_count(0), is_copy(false) {}
 
     counting_object(int):
         copy_count(0), copies_count(0), assign_count(0),
-        assignes_count(0), move_count(0), is_copy(false) {}
+        assigns_count(0), move_count(0), is_copy(false) {}
 
     counting_object( const counting_object<OutputType, InputType>& other ):
         copy_count(other.copy_count + 1), is_copy(true) {
@@ -338,21 +352,21 @@ struct counting_object {
 
     counting_object& operator=( const counting_object<OutputType, InputType>& other ) {
         assign_count = other.assign_count + 1;
-        ++other.assignes_count;
+        ++other.assigns_count;
         is_copy = true;
         return *this;
     }
 
     counting_object( counting_object<OutputType, InputType>&& other ):
          copy_count(other.copy_count), copies_count(other.copies_count),
-         assign_count(other.assign_count), assignes_count(other.assignes_count),
+         assign_count(other.assign_count), assigns_count(other.assigns_count),
          move_count(other.move_count + 1), is_copy(other.is_copy) {}
 
     counting_object& operator=( counting_object<OutputType, InputType>&& other ) {
         copy_count = other.copy_count;
         copies_count = other.copies_count;
         assign_count = other.assign_count;
-        assignes_count = other.assignes_count;
+        assigns_count = other.assigns_count;
         move_count = other.move_count + 1;
         is_copy = other.is_copy;
         return *this;
@@ -366,7 +380,7 @@ struct counting_object {
         std::get<0>(op).try_put(OutputType(1));
     }
 
-    void operator()( InputType , assync_ports_t<InputType, OutputType>& g) {
+    void operator()( InputType , async_ports_t<InputType, OutputType>& g) {
         g.try_put(OutputType(1));
     }
 
@@ -407,23 +421,10 @@ struct passthru_body {
         std::get<0>(op).try_put(argument);
     }
 
-    void operator()( OutputType argument, assync_ports_t<OutputType>& g ) {
+    void operator()( OutputType argument, async_ports_t<OutputType>& g ) {
         g.try_put(argument);
     }
 };
-
-template<typename Node, typename InputType = void>
-bool produce_messages(Node& node, int arg = 1) {
-    utils::suppress_unused_warning(arg);
-#if defined CONFORMANCE_INPUT_NODE
-    node.activate();
-    return true;
-#elif defined CONFORMANCE_CONTINUE_NODE
-    return node.try_put(InputType());
-#else
-    return node.try_put(InputType(arg));
-#endif
-}
 
 template<typename Node, typename InputType, typename OutputType, typename ...Args>
 void test_body_exec(Args... node_args) {
@@ -487,29 +488,28 @@ void test_buffering(Args... node_args) {
 
 
 template<typename Node, typename InputType, typename OutputType = InputType, typename ...Args>
-void test_forwarding(std::size_t messages_recieved, Args... node_args) {
+void test_forwarding(std::size_t messages_received, Args... node_args) {
     oneapi::tbb::flow::graph g;
 
     Node testing_node(g, node_args...);
-    std::vector<test_push_receiver<OutputType>*> receiver_nodes;
+    std::vector<std::unique_ptr<test_push_receiver<OutputType>>> receiver_nodes;
 
     for(std::size_t i = 0; i < 10; ++i) {
-        receiver_nodes.emplace_back(new test_push_receiver<OutputType>(g));
+        receiver_nodes.emplace_back(std::make_unique<test_push_receiver<OutputType>>(g));
         oneapi::tbb::flow::make_edge(testing_node, *receiver_nodes.back());
     }
 
     produce_messages<Node, InputType>(testing_node, expected);
 
 #ifdef CONFORMANCE_INPUT_NODE
-    CHECK_MESSAGE(expected == messages_recieved, "For correct execution of test");
+    CHECK_MESSAGE(expected == messages_received, "For correct execution of test");
 #endif
 
     g.wait_for_all();
-    for(auto receiver: receiver_nodes) {
+    for(auto& receiver : receiver_nodes) {
         auto values = get_values(*receiver);
-        CHECK_MESSAGE((values.size() == messages_recieved), std::string("Descendant of the node must receive " + std::to_string(messages_recieved) + " message."));
+        CHECK_MESSAGE((values.size() == messages_received), std::string("Descendant of the node must receive " + std::to_string(messages_received) + " message."));
         CHECK_MESSAGE((values[0] == expected), "Value passed is the actual one received.");
-        delete receiver;
     }
 }
 
