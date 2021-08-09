@@ -97,7 +97,7 @@ TEST_CASE("Too many threads") {
     std::thread /* isolate test */ ([] {
         std::vector<Thread> threads;
         stop = false;
-        auto finilize = [&] {
+        auto finalize = [&] {
             stop = true;
             cv.notify_all();
             for (auto& t : threads) {
@@ -113,7 +113,7 @@ TEST_CASE("Too many threads") {
             threads.push_back(thread);
             if (i == 1024) {
                 WARN_MESSAGE(false, "setrlimit seems having no effect");
-                finilize();
+                finalize();
                 return;
             }
         }
@@ -132,7 +132,7 @@ TEST_CASE("Too many threads") {
         if (!g_exception_caught) {
             FAIL("No exception was caught");
         }
-        finilize();
+        finalize();
     }).join();
 }
 #endif
