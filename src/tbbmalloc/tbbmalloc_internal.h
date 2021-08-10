@@ -288,31 +288,31 @@ public:
 /* Large objects entities */
 #include "large_objects.h"
 
-// select index size for BackRefMaster based on word size: default is uint32_t,
+// select index size for BackRefMain based on word size: default is uint32_t,
 // uint16_t for 32-bit platforms
 template<bool>
-struct MasterIndexSelect {
-    typedef uint32_t master_type;
+struct MainIndexSelect {
+    typedef uint32_t main_type;
 };
 
 template<>
-struct MasterIndexSelect<false> {
-    typedef uint16_t master_type;
+struct MainIndexSelect<false> {
+    typedef uint16_t main_type;
 };
 
 class BackRefIdx { // composite index to backreference array
 public:
-    typedef MasterIndexSelect<4 < sizeof(uintptr_t)>::master_type master_t;
+    typedef MainIndexSelect<4 < sizeof(uintptr_t)>::main_type main_t;
 private:
-    static const master_t invalid = ~master_t(0);
-    master_t master;      // index in BackRefMaster
+    static const main_t invalid = ~main_t(0);
+    main_t main;      // index in BackRefMain
     uint16_t largeObj:1;  // is this object "large"?
     uint16_t offset  :15; // offset from beginning of BackRefBlock
 public:
-    BackRefIdx() : master(invalid), largeObj(0), offset(0) {}
-    bool isInvalid() const { return master == invalid; }
+    BackRefIdx() : main(invalid), largeObj(0), offset(0) {}
+    bool isInvalid() const { return main == invalid; }
     bool isLargeObject() const { return largeObj; }
-    master_t getMaster() const { return master; }
+    main_t getMain() const { return main; }
     uint16_t getOffset() const { return offset; }
 
 #if __TBB_USE_THREAD_SANITIZER
@@ -320,7 +320,7 @@ public:
     __attribute__((no_sanitize("thread")))
      BackRefIdx dereference(const BackRefIdx* ptr) {
         BackRefIdx idx;
-        idx.master = ptr->master;
+        idx.main = ptr->main;
         idx.largeObj = ptr->largeObj;
         idx.offset = ptr->offset;
         return idx;
@@ -733,8 +733,8 @@ public:
 
 unsigned int getThreadId();
 
-bool initBackRefMaster(Backend *backend);
-void destroyBackRefMaster(Backend *backend);
+bool initBackRefMain(Backend *backend);
+void destroyBackRefMain(Backend *backend);
 void removeBackRef(BackRefIdx backRefIdx);
 void setBackRef(BackRefIdx backRefIdx, void *newPtr);
 void *getBackRef(BackRefIdx backRefIdx);

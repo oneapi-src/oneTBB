@@ -967,9 +967,15 @@ void *Backend::remap(void *ptr, size_t oldSize, size_t newSize, size_t alignment
         return NULL;
     regionList.remove(oldRegion);
 
+    // The deallocation should be registered in address range before mremap to
+    // prevent a race condition with allocation on another thread.
+    // (OS can reuse the memory and registerAlloc will be missed on another thread)
+    usedAddrRange.registerFree((uintptr_t)oldRegion, (uintptr_t)oldRegion + oldRegionSize);
+
     void *ret = mremap(oldRegion, oldRegion->allocSz, requestSize, MREMAP_MAYMOVE);
     if (MAP_FAILED == ret) { // can't remap, revert and leave
         regionList.add(oldRegion);
+        usedAddrRange.registerAlloc((uintptr_t)oldRegion, (uintptr_t)oldRegion + oldRegionSize);
         return NULL;
     }
     MemRegion *region = (MemRegion*)ret;
@@ -1001,7 +1007,6 @@ void *Backend::remap(void *ptr, size_t oldSize, size_t newSize, size_t alignment
     MALLOC_ASSERT((uintptr_t)lmb + lmb->unalignedSize >=
                   (uintptr_t)object + lmb->objectSize, "An object must fit to the block.");
 
-    usedAddrRange.registerFree((uintptr_t)oldRegion, (uintptr_t)oldRegion + oldRegionSize);
     usedAddrRange.registerAlloc((uintptr_t)region, (uintptr_t)region + requestSize);
     totalMemSize.fetch_add(region->allocSz - oldRegionSize);
 

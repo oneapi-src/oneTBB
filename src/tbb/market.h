@@ -294,7 +294,7 @@ public:
     //! Array of pointers to the registered workers
     /** Used by cancellation propagation mechanism.
         Must be the last data member of the class market. **/
-    thread_data* my_workers[1];
+    std::atomic<thread_data*> my_workers[1];
 
     static unsigned max_num_workers() {
         global_market_mutex_type::scoped_lock lock( theMarketMutex );

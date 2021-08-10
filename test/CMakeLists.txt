@@ -256,21 +256,12 @@ function(tbb_add_tbbbind_test)
     set_property(TEST ${_tbbbind_test_NAME} PROPERTY ENVIRONMENT TBB_VERSION=1 APPEND)
 
     # Handle the case when HWLOC was found using pkg-config
-    if (NOT DEFINED HWLOC_TARGET_EXPLICITLY_DEFINED AND DEFINED HWLOC_LIBRARIES)
+    if (NOT DEFINED HWLOC_TARGET_EXPLICITLY_DEFINED AND TARGET PkgConfig::HWLOC)
         set_tests_properties(${_tbbbind_test_NAME} PROPERTIES
             PASS_REGULAR_EXPRESSION "oneTBB: TBBBIND.*${TBBBIND_LIBRARY_NAME}"
             FAIL_REGULAR_EXPRESSION "Status: FAILURE!"
         )
-        set_property(
-            TARGET ${_tbbbind_test_NAME}
-            PROPERTY LINK_LIBRARIES ${HWLOC_LIBRARY_DIRS} ${HWLOC_LIBRARIES}
-            APPEND
-        )
-        set_property(
-            TARGET ${_tbbbind_test_NAME}
-            PROPERTY INCLUDE_DIRECTORIES ${HWLOC_INCLUDE_DIRS}
-            APPEND
-        )
+        target_link_libraries(${_tbbbind_test_NAME} PRIVATE PkgConfig::HWLOC)
         target_compile_definitions(${_tbbbind_test_NAME} PRIVATE __TBB_HWLOC_VALID_ENVIRONMENT)
         return()
     endif()
@@ -370,246 +361,253 @@ unset(_sde_find_name)
 # Common target for the tbbbind related tests
 add_custom_target(test_suite_arena_constraints)
 
-# Define the tests
-tbb_add_test(SUBDIR tbb NAME test_tick_count DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_allocators DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_arena_priorities DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_dynamic_link DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_collaborative_call_once DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_concurrent_lru_cache DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_concurrent_unordered_map DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_concurrent_unordered_set DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_concurrent_map DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_concurrent_set DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_concurrent_priority_queue DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_partitioner DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_parallel_for DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_parallel_for_each DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_parallel_reduce DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_parallel_sort DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_parallel_invoke DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_parallel_scan DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_parallel_pipeline DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_eh_algorithms DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_blocked_range DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_concurrent_vector DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_task_group DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_concurrent_hash_map DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_task_arena DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_enumerable_thread_specific DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_concurrent_queue DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_resumable_tasks DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_mutex DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_adaptive_mutex DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_function_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_multifunction_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_broadcast_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_buffer_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_composite_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_continue_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_eh_flow_graph DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_flow_graph DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_flow_graph_priorities DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_flow_graph_whitebox DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_indexer_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_join_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_join_node_key_matching DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_join_node_msg_key_matching DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_limiter_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_priority_queue_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_queue_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_sequencer_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_split_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_tagged_msg DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_overwrite_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_write_once_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_async_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_input_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_profiling DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_concurrent_queue_whitebox DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_intrusive_list DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_semaphore DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_environment_whitebox DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_hw_concurrency DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_eh_thread DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_global_control DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_task DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR tbb NAME test_concurrent_monitor DEPENDENCIES TBB::tbb)
+if (TARGET TBB::tbb)
+    # Define the tests
+    tbb_add_test(SUBDIR tbb NAME test_tick_count DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_allocators DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_arena_priorities DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_dynamic_link DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_collaborative_call_once DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_concurrent_lru_cache DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_concurrent_unordered_map DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_concurrent_unordered_set DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_concurrent_map DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_concurrent_set DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_concurrent_priority_queue DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_partitioner DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_parallel_for DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_parallel_for_each DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_parallel_reduce DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_parallel_sort DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_parallel_invoke DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_parallel_scan DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_parallel_pipeline DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_eh_algorithms DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_blocked_range DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_concurrent_vector DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_task_group DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_concurrent_hash_map DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_task_arena DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_enumerable_thread_specific DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_concurrent_queue DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_resumable_tasks DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_mutex DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_adaptive_mutex DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_function_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_multifunction_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_broadcast_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_buffer_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_composite_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_continue_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_eh_flow_graph DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_flow_graph DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_flow_graph_priorities DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_flow_graph_whitebox DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_indexer_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_join_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_join_node_key_matching DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_join_node_msg_key_matching DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_limiter_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_priority_queue_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_queue_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_sequencer_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_split_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_tagged_msg DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_overwrite_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_write_once_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_async_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_input_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_profiling DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_concurrent_queue_whitebox DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_intrusive_list DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_semaphore DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_environment_whitebox DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_hw_concurrency DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_eh_thread DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_global_control DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_task DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_concurrent_monitor DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_scheduler_mix DEPENDENCIES TBB::tbb)
 
-# test_handle_perror
-tbb_add_test(SUBDIR tbb NAME test_handle_perror)
-target_include_directories(test_handle_perror PRIVATE
-    $<TARGET_PROPERTY:TBB::tbb,INTERFACE_INCLUDE_DIRECTORIES>
-)
-
-# HWLOC related test
-tbb_add_tbbbind_test(SUBDIR tbb NAME test_arena_constraints)
-
-if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
-    # TODO: Fix for MIPS
-    tbb_add_test(SUBDIR tbb NAME test_tbb_fork DEPENDENCIES TBB::tbb)
-endif()
-
-tbb_add_test(SUBDIR tbb NAME test_tbb_header DEPENDENCIES TBB::tbb)
-target_sources(test_tbb_header PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/tbb/test_tbb_header_secondary.cpp)
-if (TBB_OPENMP_FLAG AND NOT CMAKE_SYSTEM_PROCESSOR MATCHES "(mips)")
-    tbb_add_test(SUBDIR tbb NAME test_openmp DEPENDENCIES TBB::tbb)
-
-    set_target_properties(test_openmp PROPERTIES COMPILE_FLAGS ${TBB_OPENMP_FLAG})
-
-    if (NOT TBB_OPENMP_NO_LINK_FLAG)
-        set_target_properties(test_openmp PROPERTIES LINK_FLAGS ${TBB_OPENMP_FLAG})
-    endif()
-endif()
-
-# Define the conformance tests
-tbb_add_test(SUBDIR conformance NAME conformance_tick_count DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_allocators DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_mutex DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_task_group_context DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_task_arena DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_concurrent_lru_cache DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_concurrent_unordered_map DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_concurrent_unordered_set DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_concurrent_map DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_concurrent_set DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_concurrent_priority_queue DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_parallel_for DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_parallel_for_each DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_parallel_reduce DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_parallel_scan DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_parallel_sort DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_parallel_pipeline DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_parallel_invoke DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_blocked_range DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_blocked_range2d DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_blocked_range3d DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_blocked_rangeNd DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_concurrent_vector DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_global_control DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_concurrent_hash_map DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_enumerable_thread_specific DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_combinable DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_concurrent_queue DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_resumable_tasks DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_version DEPENDENCIES TBB::tbb)
-# functional nodes conformance
-tbb_add_test(SUBDIR conformance NAME conformance_function_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_multifunction_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_input_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_continue_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_async_node DEPENDENCIES TBB::tbb)
-# buffering nodes conformance
-tbb_add_test(SUBDIR conformance NAME conformance_overwrite_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_write_once_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_buffer_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_queue_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_priority_queue_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_sequencer_node DEPENDENCIES TBB::tbb)
-# service nodes conformance
-tbb_add_test(SUBDIR conformance NAME conformance_limiter_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_broadcast_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_composite_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_indexer_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_split_node DEPENDENCIES TBB::tbb)
-tbb_add_test(SUBDIR conformance NAME conformance_join_node DEPENDENCIES TBB::tbb)
-# flowraph auxiliary conformance
-# TODO: add conformance tests for graph_node, continue_msg, tagged_msg, copy_body, input_port, output_port, make_edge, remove_edge
-tbb_add_test(SUBDIR conformance NAME conformance_graph DEPENDENCIES TBB::tbb)
-
-# HWLOC related conformance
-tbb_add_tbbbind_test(SUBDIR conformance NAME conformance_arena_constraints)
-
-if (MSVC AND BUILD_SHARED_LIBS AND CMAKE_VERSION VERSION_GREATER 3.13) # LINK_OPTIONS property first appeared in 3.13
-                                                 # version of the CMake
-    tbb_add_test(SUBDIR tbb NAME test_implicit_linkage_on_windows)
-    # TODO: consider setting environment instead of passing additional
-    #       compiler and linker options
-    target_include_directories(test_implicit_linkage_on_windows PRIVATE
-      $<TARGET_PROPERTY:TBB::tbb,INTERFACE_INCLUDE_DIRECTORIES>)
-    set_target_properties(test_implicit_linkage_on_windows PROPERTIES
-      LINK_OPTIONS /LIBPATH:$<TARGET_LINKER_FILE_DIR:TBB::tbb>)
-    add_dependencies(test_implicit_linkage_on_windows TBB::tbb)
-endif()
-
-# TBB allocator tests
-if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
-    # Define TBB malloc tests
-    tbb_add_test(SUBDIR tbbmalloc NAME test_scalable_allocator DEPENDENCIES TBB::tbbmalloc)
-    tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_pools DEPENDENCIES TBB::tbbmalloc)
-    tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_init_shutdown DEPENDENCIES TBB::tbbmalloc)
-    tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_regression DEPENDENCIES TBB::tbbmalloc)
-    tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_shutdown_hang DEPENDENCIES TBB::tbb TBB::tbbmalloc)
-
-    if (NOT (WINDOWS_STORE OR TBB_WINDOWS_DRIVER))
-        # TODO: Consider adding following tests on WINDOWS_STORE and TBB_WINDOWS_DRIVER platforms
-        tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_compliance DEPENDENCIES TBB::tbbmalloc)
-        tbb_add_lib_test(SUBDIR tbbmalloc NAME test_malloc_used_by_lib DEPENDENCIES TBB::tbbmalloc)
-        tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_used_by_lib DEPENDENCIES _test_malloc_used_by_lib)
-        tbb_add_lib_test(SUBDIR tbbmalloc NAME test_malloc_lib_unload)
-        tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_lib_unload DEPENDENCIES _test_malloc_lib_unload)
-    endif()
-
-    enable_language(C)
-    tbb_add_c_test(SUBDIR tbbmalloc NAME test_malloc_pure_c DEPENDENCIES TBB::tbbmalloc)
-
-    # ----------------------------------------------------------------------------------------
-    # Whitebox testing
-
-    add_executable(test_malloc_whitebox tbbmalloc/test_malloc_whitebox.cpp)
-
-    target_include_directories(test_malloc_whitebox
-        PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/../include
-        ${CMAKE_CURRENT_SOURCE_DIR}/..
-        ${CMAKE_CURRENT_SOURCE_DIR})
-    target_compile_definitions(test_malloc_whitebox PRIVATE __TBBMALLOC_BUILD)
-    target_compile_options(test_malloc_whitebox
-        PRIVATE
-        ${TBB_CXX_STD_FLAG}
-        ${TBB_WARNING_SUPPRESS}
-        ${TBB_TEST_COMPILE_FLAGS}
-        ${TBB_COMMON_COMPILE_FLAGS}
-        ${TBBMALLOC_LIB_COMPILE_FLAGS}
+    # test_handle_perror
+    tbb_add_test(SUBDIR tbb NAME test_handle_perror)
+    target_include_directories(test_handle_perror PRIVATE
+        $<TARGET_PROPERTY:TBB::tbb,INTERFACE_INCLUDE_DIRECTORIES>
     )
-    if (ANDROID_PLATFORM)
-        target_link_libraries(test_malloc_whitebox PRIVATE -rdynamic) # for the test_dynamic_link
-        add_test(NAME test_malloc_whitebox
-                 COMMAND ${CMAKE_COMMAND}
-                         -DBINARIES_PATH=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-                         -DTEST_NAME=test_malloc_whitebox
-                         -P ${PROJECT_SOURCE_DIR}/cmake/android/test_launcher.cmake)
-    else()
-        add_test(NAME test_malloc_whitebox COMMAND test_malloc_whitebox --force-colors=1)
+
+    # HWLOC related test
+    tbb_add_tbbbind_test(SUBDIR tbb NAME test_arena_constraints)
+
+    if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
+        # TODO: Fix for MIPS
+        tbb_add_test(SUBDIR tbb NAME test_tbb_fork DEPENDENCIES TBB::tbb)
     endif()
-    if (COMMAND target_link_options)
-        target_link_options(test_malloc_whitebox PRIVATE ${TBB_COMMON_LINK_FLAGS})
-    else()
-        target_link_libraries(test_malloc_whitebox PRIVATE ${TBB_COMMON_LINK_FLAGS})
-    endif()
-    target_link_libraries(test_malloc_whitebox PRIVATE Threads::Threads ${TBB_COMMON_LINK_LIBS})
 
-    # ------------------------------------------------------------------------------------------
+    tbb_add_test(SUBDIR tbb NAME test_tbb_header DEPENDENCIES TBB::tbb)
+    target_sources(test_tbb_header PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/tbb/test_tbb_header_secondary.cpp)
+    if (TBB_OPENMP_FLAG AND NOT CMAKE_SYSTEM_PROCESSOR MATCHES "(mips)")
+        tbb_add_test(SUBDIR tbb NAME test_openmp DEPENDENCIES TBB::tbb)
 
-    # Define TBB malloc conformance tests
-    # tbbmalloc_add_test(conformance conformance_scalable_allocator)
+        set_target_properties(test_openmp PROPERTIES COMPILE_FLAGS ${TBB_OPENMP_FLAG})
 
-    if ("${CMAKE_MSVC_RUNTIME_LIBRARY}" STREQUAL MultiThreaded OR "${CMAKE_MSVC_RUNTIME_LIBRARY}" STREQUAL MultiThreadedDebug)
-        if ("${CMAKE_MSVC_RUNTIME_LIBRARY}" STREQUAL MultiThreaded)
-            set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreadedDLL)
-        else()
-            set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreadedDebugDLL)
+        if (NOT TBB_OPENMP_NO_LINK_FLAG)
+            set_target_properties(test_openmp PROPERTIES LINK_FLAGS ${TBB_OPENMP_FLAG})
         endif()
     endif()
 
-    # Thread Sanitizer overloads memory management routines that conflicts with tbbmalloc_proxy.
-    if (BUILD_SHARED_LIBS AND NOT TBB_SANITIZE MATCHES "thread")
-        # Define TBB malloc proxy tests
-        tbb_add_lib_test(SUBDIR tbbmalloc NAME test_malloc_atexit DEPENDENCIES TBB::tbbmalloc_proxy TBB::tbbmalloc)
-        tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_atexit DEPENDENCIES TBB::tbbmalloc_proxy TBB::tbbmalloc _test_malloc_atexit)
-        tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_overload DEPENDENCIES TBB::tbbmalloc_proxy)
-        tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_overload_disable DEPENDENCIES TBB::tbbmalloc_proxy TBB::tbbmalloc) # safer_msize call need to be available
-        tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_new_handler DEPENDENCIES TBB::tbbmalloc_proxy)
+    # Define the conformance tests
+    tbb_add_test(SUBDIR conformance NAME conformance_tick_count DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_allocators DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_mutex DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_task_group_context DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_task_arena DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_concurrent_lru_cache DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_concurrent_unordered_map DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_concurrent_unordered_set DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_concurrent_map DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_concurrent_set DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_concurrent_priority_queue DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_parallel_for DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_parallel_for_each DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_parallel_reduce DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_parallel_scan DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_parallel_sort DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_parallel_pipeline DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_parallel_invoke DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_blocked_range DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_blocked_range2d DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_blocked_range3d DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_blocked_rangeNd DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_concurrent_vector DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_global_control DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_concurrent_hash_map DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_enumerable_thread_specific DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_combinable DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_concurrent_queue DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_resumable_tasks DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_version DEPENDENCIES TBB::tbb)
+    # functional nodes conformance
+    tbb_add_test(SUBDIR conformance NAME conformance_function_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_multifunction_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_input_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_continue_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_async_node DEPENDENCIES TBB::tbb)
+    # buffering nodes conformance
+    tbb_add_test(SUBDIR conformance NAME conformance_overwrite_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_write_once_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_buffer_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_queue_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_priority_queue_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_sequencer_node DEPENDENCIES TBB::tbb)
+    # service nodes conformance
+    tbb_add_test(SUBDIR conformance NAME conformance_limiter_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_broadcast_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_composite_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_indexer_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_split_node DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_join_node DEPENDENCIES TBB::tbb)
+    # flowraph auxiliary conformance
+    # TODO: add conformance tests for graph_node, continue_msg, tagged_msg, copy_body, input_port, output_port, make_edge, remove_edge
+    tbb_add_test(SUBDIR conformance NAME conformance_graph DEPENDENCIES TBB::tbb)
+
+    # HWLOC related conformance
+    tbb_add_tbbbind_test(SUBDIR conformance NAME conformance_arena_constraints)
+
+    if (MSVC AND BUILD_SHARED_LIBS AND CMAKE_VERSION VERSION_GREATER 3.13) # LINK_OPTIONS property first appeared in 3.13
+                                                    # version of the CMake
+        tbb_add_test(SUBDIR tbb NAME test_implicit_linkage_on_windows)
+        # TODO: consider setting environment instead of passing additional
+        #       compiler and linker options
+        target_include_directories(test_implicit_linkage_on_windows PRIVATE
+        $<TARGET_PROPERTY:TBB::tbb,INTERFACE_INCLUDE_DIRECTORIES>)
+        set_target_properties(test_implicit_linkage_on_windows PROPERTIES
+        LINK_OPTIONS /LIBPATH:$<TARGET_LINKER_FILE_DIR:TBB::tbb>)
+        add_dependencies(test_implicit_linkage_on_windows TBB::tbb)
+    endif()
+endif()
+
+if (TARGET TBB::tbbmalloc)
+    # TBB allocator tests
+    if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
+        # Define TBB malloc tests
+        tbb_add_test(SUBDIR tbbmalloc NAME test_scalable_allocator DEPENDENCIES TBB::tbbmalloc)
+        tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_pools DEPENDENCIES TBB::tbbmalloc)
+        tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_init_shutdown DEPENDENCIES TBB::tbbmalloc)
+        tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_regression DEPENDENCIES TBB::tbbmalloc)
+        if (TARGET TBB::tbb)
+            tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_shutdown_hang DEPENDENCIES TBB::tbb TBB::tbbmalloc)
+        endif()
+
+        if (NOT (WINDOWS_STORE OR TBB_WINDOWS_DRIVER))
+            # TODO: Consider adding following tests on WINDOWS_STORE and TBB_WINDOWS_DRIVER platforms
+            tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_compliance DEPENDENCIES TBB::tbbmalloc)
+            tbb_add_lib_test(SUBDIR tbbmalloc NAME test_malloc_used_by_lib DEPENDENCIES TBB::tbbmalloc)
+            tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_used_by_lib DEPENDENCIES _test_malloc_used_by_lib)
+            tbb_add_lib_test(SUBDIR tbbmalloc NAME test_malloc_lib_unload)
+            tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_lib_unload DEPENDENCIES _test_malloc_lib_unload)
+        endif()
+
+        enable_language(C)
+        tbb_add_c_test(SUBDIR tbbmalloc NAME test_malloc_pure_c DEPENDENCIES TBB::tbbmalloc)
+
+        # ----------------------------------------------------------------------------------------
+        # Whitebox testing
+
+        add_executable(test_malloc_whitebox tbbmalloc/test_malloc_whitebox.cpp)
+
+        target_include_directories(test_malloc_whitebox
+            PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/../include
+            ${CMAKE_CURRENT_SOURCE_DIR}/..
+            ${CMAKE_CURRENT_SOURCE_DIR})
+        target_compile_definitions(test_malloc_whitebox PRIVATE __TBBMALLOC_BUILD)
+        target_compile_options(test_malloc_whitebox
+            PRIVATE
+            ${TBB_CXX_STD_FLAG}
+            ${TBB_WARNING_SUPPRESS}
+            ${TBB_TEST_COMPILE_FLAGS}
+            ${TBB_COMMON_COMPILE_FLAGS}
+            ${TBBMALLOC_LIB_COMPILE_FLAGS}
+        )
+        if (ANDROID_PLATFORM)
+            target_link_libraries(test_malloc_whitebox PRIVATE -rdynamic) # for the test_dynamic_link
+            add_test(NAME test_malloc_whitebox
+                    COMMAND ${CMAKE_COMMAND}
+                            -DBINARIES_PATH=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+                            -DTEST_NAME=test_malloc_whitebox
+                            -P ${PROJECT_SOURCE_DIR}/cmake/android/test_launcher.cmake)
+        else()
+            add_test(NAME test_malloc_whitebox COMMAND test_malloc_whitebox --force-colors=1)
+        endif()
+        if (COMMAND target_link_options)
+            target_link_options(test_malloc_whitebox PRIVATE ${TBB_COMMON_LINK_FLAGS})
+        else()
+            target_link_libraries(test_malloc_whitebox PRIVATE ${TBB_COMMON_LINK_FLAGS})
+        endif()
+        target_link_libraries(test_malloc_whitebox PRIVATE Threads::Threads ${TBB_COMMON_LINK_LIBS})
+
+        # ------------------------------------------------------------------------------------------
+
+        # Define TBB malloc conformance tests
+        # tbbmalloc_add_test(conformance conformance_scalable_allocator)
+
+        if ("${CMAKE_MSVC_RUNTIME_LIBRARY}" STREQUAL MultiThreaded OR "${CMAKE_MSVC_RUNTIME_LIBRARY}" STREQUAL MultiThreadedDebug)
+            if ("${CMAKE_MSVC_RUNTIME_LIBRARY}" STREQUAL MultiThreaded)
+                set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreadedDLL)
+            else()
+                set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreadedDebugDLL)
+            endif()
+        endif()
+
+        # Thread Sanitizer overloads memory management routines that conflicts with tbbmalloc_proxy.
+        if (BUILD_SHARED_LIBS AND NOT TBB_SANITIZE MATCHES "thread")
+            # Define TBB malloc proxy tests
+            tbb_add_lib_test(SUBDIR tbbmalloc NAME test_malloc_atexit DEPENDENCIES TBB::tbbmalloc_proxy TBB::tbbmalloc)
+            tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_atexit DEPENDENCIES TBB::tbbmalloc_proxy TBB::tbbmalloc _test_malloc_atexit)
+            tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_overload DEPENDENCIES TBB::tbbmalloc_proxy)
+            tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_overload_disable DEPENDENCIES TBB::tbbmalloc_proxy TBB::tbbmalloc) # safer_msize call need to be available
+            tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_new_handler DEPENDENCIES TBB::tbbmalloc_proxy)
+        endif()
     endif()
 endif()
 

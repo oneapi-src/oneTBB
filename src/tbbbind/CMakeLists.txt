@@ -18,7 +18,7 @@ endif()
 set(CMAKE_SKIP_BUILD_RPATH TRUE)
 
 function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
-    if (NOT TARGET ${REQUIRED_HWLOC_TARGET} AND NOT DEFINED HWLOC_LIBRARIES)
+    if (NOT TARGET ${REQUIRED_HWLOC_TARGET})
         message(STATUS "HWLOC target ${REQUIRED_HWLOC_TARGET} doesn't exist."
                        " The ${TBBBIND_NAME} target cannot be created")
         return()
@@ -70,7 +70,6 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
             ${TBB_LIB_LINK_FLAGS}
             ${TBB_COMMON_LINK_FLAGS}
             ${TBB_IPO_LINK_FLAGS}
-            ${HWLOC_LIBRARY_DIRS} # pkg-config defined
         )
     else()
         target_link_libraries(${TBBBIND_NAME}
@@ -78,7 +77,6 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
             ${TBB_LIB_LINK_FLAGS}
             ${TBB_COMMON_LINK_FLAGS}
             ${TBB_IPO_LINK_FLAGS}
-            ${HWLOC_LIBRARY_DIRS} # pkg-config defined
         )
     endif()
 
@@ -97,9 +95,9 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
     endif()
 endfunction()
 
-if (NOT DEFINED HWLOC_TARGET_EXPLICITLY_DEFINED AND DEFINED HWLOC_LIBRARIES)
+if (NOT DEFINED HWLOC_TARGET_EXPLICITLY_DEFINED AND TARGET PkgConfig::HWLOC)
     message(STATUS "The ${TBBBIND_LIBRARY_NAME} target will be configured using the HWLOC ${HWLOC_VERSION}")
-    tbbbind_build(${TBBBIND_LIBRARY_NAME} ${HWLOC_LIBRARIES})
+    tbbbind_build(${TBBBIND_LIBRARY_NAME} PkgConfig::HWLOC)
 else()
     tbbbind_build(tbbbind     HWLOC::hwloc_1_11)
     tbbbind_build(tbbbind_2_0 HWLOC::hwloc_2   )

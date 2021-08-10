@@ -279,8 +279,8 @@ public:
 static size_t allocatedBackRefCount()
 {
     size_t cnt = 0;
-    for (int i=0; i<=backRefMaster.load(std::memory_order_relaxed)->lastUsed.load(std::memory_order_relaxed); i++)
-        cnt += backRefMaster.load(std::memory_order_relaxed)->backRefBl[i]->allocatedCount;
+    for (int i=0; i<=backRefMain.load(std::memory_order_relaxed)->lastUsed.load(std::memory_order_relaxed); i++)
+        cnt += backRefMain.load(std::memory_order_relaxed)->backRefBl[i]->allocatedCount;
     return cnt;
 }
 
@@ -312,7 +312,7 @@ public:
             char *p1 = (char*)scalable_malloc(minLargeObjectSize-1);
             LargeObjectHdr *hdr =
                 (LargeObjectHdr*)(p1+minLargeObjectSize-1 - sizeof(LargeObjectHdr));
-            hdr->backRefIdx.master = 7;
+            hdr->backRefIdx.main = 7;
             hdr->backRefIdx.largeObj = 1;
             hdr->backRefIdx.offset = 2000;
 
@@ -346,9 +346,9 @@ void TestBackRef() {
     REQUIRE_MESSAGE(beforeNumBackRef==afterNumBackRef, "backreference leak detected");
     // lastUsed marks peak resource consumption. As we allocate below the mark,
     // it must not move up, otherwise there is a resource leak.
-    int sustLastUsed = backRefMaster.load(std::memory_order_relaxed)->lastUsed.load(std::memory_order_relaxed);
+    int sustLastUsed = backRefMain.load(std::memory_order_relaxed)->lastUsed.load(std::memory_order_relaxed);
     utils::NativeParallelFor( 1, BackRefWork<2*BR_MAX_CNT+2>() );
-    REQUIRE_MESSAGE(sustLastUsed == backRefMaster.load(std::memory_order_relaxed)->lastUsed.load(std::memory_order_relaxed), "backreference leak detected");
+    REQUIRE_MESSAGE(sustLastUsed == backRefMain.load(std::memory_order_relaxed)->lastUsed.load(std::memory_order_relaxed), "backreference leak detected");
     // check leak of back references while per-thread caches are in use
     // warm up needed to cover bootStrapMalloc call
     utils::NativeParallelFor( 1, LocalCachesHit() );
@@ -591,9 +591,9 @@ void TestObjectRecognition() {
     const int NUM_OF_IDX = BR_MAX_CNT+2;
     BackRefIdx idxs[NUM_OF_IDX];
     for (int cnt=0; cnt<2; cnt++) {
-        for (int master = -10; master<10; master++) {
-            falseBlock->backRefIdx.master = (uint16_t)master;
-            headerLO->backRefIdx.master = (uint16_t)master;
+        for (int main = -10; main<10; main++) {
+            falseBlock->backRefIdx.main = (uint16_t)main;
+            headerLO->backRefIdx.main = (uint16_t)main;
 
             for (int bl = -10; bl<BR_MAX_CNT+10; bl++) {
                 falseBlock->backRefIdx.offset = (uint16_t)bl;

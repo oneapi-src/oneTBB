@@ -1745,7 +1745,25 @@ struct enqueue_test_helper {
     tbb::enumerable_thread_specific<bool>& my_ets;
     std::atomic<std::size_t>& my_task_counter;
 };
+
 //--------------------------------------------------//
+
+// This test should be first
+//! \brief \ref requirement
+TEST_CASE("task_arena initialize soft limit ignoring affinity mask") {
+    tbb::enumerable_thread_specific<int> ets;
+
+    tbb::task_arena arena(int(utils::get_platform_max_threads() * 2));
+    arena.execute([&ets] {
+        tbb::parallel_for(0, 10000000, [&ets](int){
+            ets.local() = 1;
+            utils::doDummyWork(100);
+        });
+    });
+
+    CHECK(ets.combine(std::plus<int>{}) <= int(utils::get_platform_max_threads()));
+}
+
 //! Test for task arena in concurrent cases
 //! \brief \ref requirement
 TEST_CASE("Test for concurrent functionality") {

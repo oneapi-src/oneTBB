@@ -122,7 +122,7 @@ void arena::process(thread_data& tls) {
     // worker thread enters the dispatch loop to look for a work
     tls.my_inbox.set_is_idle(true);
     if (tls.my_arena_slot->is_task_pool_published()) {
-            tls.my_inbox.set_is_idle(false);
+        tls.my_inbox.set_is_idle(false);
     }
 
     task_dispatcher& task_disp = tls.my_arena_slot->default_task_dispatcher();
@@ -434,7 +434,8 @@ void __TBB_EXPORTED_FUNC enqueue(d1::task& t, d1::task_group_context& ctx, d1::t
 }
 
 void task_arena_impl::initialize(d1::task_arena_base& ta) {
-    governor::one_time_init();
+    // Enforce global market initialization to properly initialize soft limit
+    (void)governor::get_thread_data();
     if (ta.my_max_concurrency < 1) {
 #if __TBB_ARENA_BINDING
 

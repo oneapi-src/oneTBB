@@ -22,6 +22,7 @@
 
 #include "common/spin_barrier.h"
 #include "common/utils.h"
+#include "common/utils_concurrency_limit.h"
 
 #include <cstddef>
 #include <algorithm>
@@ -177,13 +178,14 @@ void wait_work_completion(
 
 void test() {
 
-    const std::size_t max_num_threads = tbb::global_control::active_value(
-        tbb::global_control::max_allowed_parallelism
-    );
+    const std::size_t max_num_threads = utils::get_platform_max_threads();
+
+    tbb::global_control control(tbb::global_control::max_allowed_parallelism, max_num_threads + 1);
     concurrency_type signed_max_num_threads = static_cast<int>(max_num_threads);
-    if( 1 == max_num_threads )
+    if (1 == max_num_threads) {
         // Skipping workerless case
         return;
+    }
 
     INFO( "max_num_threads = " << max_num_threads );
     // TODO: iterate over threads to see that the work is going on in low priority arena.

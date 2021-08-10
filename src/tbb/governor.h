@@ -53,12 +53,6 @@ private:
     //! TLS for scheduler instances associated with individual threads
     static basic_tls<thread_data*> theTLS;
 
-    //! Caches the maximal level of parallelism supported by the hardware
-    static unsigned DefaultNumberOfThreads;
-
-    //! Caches the size of OS regular memory page
-    static std::size_t DefaultPageSize;
-
     // TODO (TBB_REVAMP_TODO): reconsider constant names
     static rml::tbb_factory theRMLServerFactory;
 
@@ -78,13 +72,14 @@ private:
 
 public:
     static unsigned default_num_threads () {
-        // No memory fence required, because at worst each invoking thread calls AvailableHwConcurrency once.
-        return DefaultNumberOfThreads ? DefaultNumberOfThreads :
-                                        DefaultNumberOfThreads = AvailableHwConcurrency();
+        // Caches the maximal level of parallelism supported by the hardware
+        static unsigned num_threads = AvailableHwConcurrency();
+        return num_threads;
     }
     static std::size_t default_page_size () {
-        return DefaultPageSize ? DefaultPageSize :
-                                 DefaultPageSize = DefaultSystemPageSize();
+        // Caches the size of OS regular memory page
+        static std::size_t page_size = DefaultSystemPageSize();
+        return page_size;
     }
     static void one_time_init();
     //! Processes scheduler initialization request (possibly nested) in an external thread
@@ -123,9 +118,11 @@ public:
         return theTLS.get();
     }
 
+#if TBB_USE_ASSERT
     static bool is_thread_data_set(thread_data* td) {
         return theTLS.get() == td;
     }
+#endif
 
     //! Undo automatic initialization if necessary; call when a thread exits.
     static void terminate_external_thread() {

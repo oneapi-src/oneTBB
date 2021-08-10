@@ -23,6 +23,7 @@
 #include "tbb/task_scheduler_observer.h"
 #endif
 #include "tbb/flow_graph.h"
+#include "tbb/global_control.h"
 
 #include "common/test.h"
 
@@ -2029,6 +2030,7 @@ void TestOneThreadNum(int nThread) {
 TEST_CASE("Testing several threads"){
     // reverse order of tests
     for(unsigned int nThread=utils::MaxThread; nThread >= utils::MinThread; --nThread) {
+        tbb::global_control thread_limit(tbb::global_control::max_allowed_parallelism, nThread);
         TestOneThreadNum(nThread);
     }
 }
