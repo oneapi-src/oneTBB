@@ -92,14 +92,14 @@ TEST_CASE("multifunction_node buffering"){
 //! Test multifunction_node broadcasting
 //! \brief \ref requirement
 TEST_CASE("multifunction_node broadcast"){
-    conformance::counting_functor<output_msg> fun(conformance::expected);
-    conformance::test_forwarding<oneapi::tbb::flow::multifunction_node<input_msg, std::tuple<output_msg>>, input_msg, output_msg>(1, oneapi::tbb::flow::unlimited, fun);
+    conformance::counting_functor<int> fun(conformance::expected);
+    conformance::test_forwarding<oneapi::tbb::flow::multifunction_node<input_msg, std::tuple<int>>, input_msg, int>(1, oneapi::tbb::flow::unlimited, fun);
 }
 
 //! Test the body object passed to a node is copied
 //! \brief \ref interface
 TEST_CASE("multifunction_node copy body"){
-    conformance::test_copy_body_function<oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>, conformance::counting_object<int>>(oneapi::tbb::flow::unlimited);
+    conformance::test_copy_body_function<oneapi::tbb::flow::multifunction_node<int, std::tuple<int>>, conformance::copy_counting_object<int>>(oneapi::tbb::flow::unlimited);
 }
 
 //! Test execution of node body
@@ -132,6 +132,6 @@ TEST_CASE("multifunction_node superclasses"){
 //! Test node Input class meet the DefaultConstructible and CopyConstructible requirements and Output class meet the CopyConstructible requirements.
 //! \brief \ref interface \ref requirement
 TEST_CASE("Test function_node Output and Input class") {
-    using Body = conformance::counting_object<int>;
+    using Body = conformance::copy_counting_object<int>;
     conformance::test_output_input_class<oneapi::tbb::flow::multifunction_node<Body, std::tuple<Body>>, Body>();
 }

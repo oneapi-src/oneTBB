@@ -329,46 +329,26 @@ struct concurrency_peak_checker_body {
 };
 
 template<typename OutputType, typename InputType = int>
-struct counting_object {
-    std::size_t copy_count;
-    mutable std::size_t copies_count;
+struct copy_counting_object {
+    std::size_t copy_count;/*increases on every new copied object*/
+    mutable std::size_t copies_count;/*count number of objects copied from this object*/
     std::size_t assign_count;
-    mutable std::size_t assigns_count;
-    std::size_t move_count;
     bool is_copy;
 
-    counting_object():
-        copy_count(0), copies_count(0), assign_count(0),
-        assigns_count(0), move_count(0), is_copy(false) {}
+    copy_counting_object():
+        copy_count(0), copies_count(0), assign_count(0), is_copy(false) {}
 
-    counting_object(int):
-        copy_count(0), copies_count(0), assign_count(0),
-        assigns_count(0), move_count(0), is_copy(false) {}
+    copy_counting_object(int):
+        copy_count(0), copies_count(0), assign_count(0), is_copy(false) {}
 
-    counting_object( const counting_object<OutputType, InputType>& other ):
+    copy_counting_object( const copy_counting_object<OutputType, InputType>& other ):
         copy_count(other.copy_count + 1), is_copy(true) {
             ++other.copies_count;
         }
 
-    counting_object& operator=( const counting_object<OutputType, InputType>& other ) {
+    copy_counting_object& operator=( const copy_counting_object<OutputType, InputType>& other ) {
         assign_count = other.assign_count + 1;
-        ++other.assigns_count;
         is_copy = true;
-        return *this;
-    }
-
-    counting_object( counting_object<OutputType, InputType>&& other ):
-         copy_count(other.copy_count), copies_count(other.copies_count),
-         assign_count(other.assign_count), assigns_count(other.assigns_count),
-         move_count(other.move_count + 1), is_copy(other.is_copy) {}
-
-    counting_object& operator=( counting_object<OutputType, InputType>&& other ) {
-        copy_count = other.copy_count;
-        copies_count = other.copies_count;
-        assign_count = other.assign_count;
-        assigns_count = other.assigns_count;
-        move_count = other.move_count + 1;
-        is_copy = other.is_copy;
         return *this;
     }
 
@@ -567,7 +547,7 @@ void test_copy_ctor() {
     graph g;
 
     dummy_functor<int> fun1;
-    conformance::counting_object<int> fun2;
+    conformance::copy_counting_object<int> fun2;
 
     Node node0(g, unlimited, fun1);
     Node node1(g, unlimited, fun2);
@@ -579,7 +559,7 @@ void test_copy_ctor() {
 
     Node node_copy(node1);
 
-    conformance::counting_object<int> b2 = copy_body<conformance::counting_object<int>, Node>(node_copy);
+    conformance::copy_counting_object<int> b2 = copy_body<conformance::copy_counting_object<int>, Node>(node_copy);
 
     CHECK_MESSAGE((fun2.copy_count + 1 < b2.copy_count), "constructor should copy bodies");
 
@@ -739,11 +719,11 @@ void test_output_input_class() {
     node1.try_put(b1);
     g.wait_for_all();
     suc_node.try_get(b2);
-    DOCTEST_WARN_MESSAGE( (b1.copies_count > 0), "The type Input must meet the DefaultConstructible and CopyConstructible requirements");
-    DOCTEST_WARN_MESSAGE( (b2.is_copy), "The type Output must meet the CopyConstructible requirements");
+    DOCTEST_WARN_MESSAGE((b1.copies_count > 0), "The type Input must meet the DefaultConstructible and CopyConstructible requirements");
+    DOCTEST_WARN_MESSAGE((b2.is_copy), "The type Output must meet the CopyConstructible requirements");
 }
 
-template<typename Node, typename Output = counting_object<int>>
+template<typename Node, typename Output = copy_counting_object<int>>
 void test_output_class() {
     using namespace oneapi::tbb::flow;
 

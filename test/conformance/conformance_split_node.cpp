@@ -23,7 +23,7 @@
 //! \file conformance_split_node.cpp
 //! \brief Test for [flow_graph.split_node] specification
 
-using input_msg = conformance::message</*default_ctor*/true, /*copy_ctor*/true, /*copy_assign*/false>;
+using input_msg = conformance::message</*default_ctor*/true, /*copy_ctor*/true, /*copy_assign*/true/*enable for queue_node successor*/>;
 using my_input_tuple = std::tuple<int, float, input_msg>;
 using my_split_type = oneapi::tbb::flow::split_node<my_input_tuple>;
 

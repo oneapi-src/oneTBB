@@ -78,8 +78,8 @@ TEST_CASE("async_node superclasses"){
 //! Test node broadcast messages to successors
 //! \brief \ref requirement
 TEST_CASE("async_node broadcast"){
-    conformance::counting_functor<output_msg> fun(conformance::expected);
-    conformance::test_forwarding<oneapi::tbb::flow::async_node<input_msg, output_msg>, input_msg, output_msg>(1, oneapi::tbb::flow::unlimited, fun);
+    conformance::counting_functor<int> fun(conformance::expected);
+    conformance::test_forwarding<oneapi::tbb::flow::async_node<input_msg, int>, input_msg, int>(1, oneapi::tbb::flow::unlimited, fun);
 }
 
 //! Test async_node has a user-settable concurrency limit. It can be set to one of predefined values. 
@@ -94,7 +94,7 @@ TEST_CASE("concurrency follows set limits"){
 //! Test the body object passed to a node is copied
 //! \brief \ref interface
 TEST_CASE("async_node body copying"){
-    conformance::test_copy_body_function<oneapi::tbb::flow::async_node<int, int>, conformance::counting_object<int>>(oneapi::tbb::flow::unlimited);
+    conformance::test_copy_body_function<oneapi::tbb::flow::async_node<int, int>, conformance::copy_counting_object<int>>(oneapi::tbb::flow::unlimited);
 }
 
 //! Test node reject the incoming message if the concurrency limit achieved.
@@ -106,7 +106,7 @@ TEST_CASE("async_node with rejecting policy"){
 //! Test node Input class meet the DefaultConstructible and CopyConstructible requirements and Output class meet the CopyConstructible requirements.
 //! \brief \ref interface \ref requirement
 TEST_CASE("Test async_node Output and Input class") {
-    using Body = conformance::counting_object<int>;
+    using Body = conformance::copy_counting_object<int>;
     conformance::test_output_input_class<oneapi::tbb::flow::async_node<Body, Body>, Body>();
 }
 

@@ -114,7 +114,7 @@ TEST_CASE("function_node with rejecting policy"){
 //! Test the body object passed to a node is copied
 //! \brief \ref interface
 TEST_CASE("function_node and body copying"){
-    conformance::test_copy_body_function<oneapi::tbb::flow::function_node<int, int>, conformance::counting_object<int>>(oneapi::tbb::flow::unlimited);
+    conformance::test_copy_body_function<oneapi::tbb::flow::function_node<int, int>, conformance::copy_counting_object<int>>(oneapi::tbb::flow::unlimited);
 }
 
 //! Test function_node is a graph_node, receiver<Input>, and sender<Output>
@@ -136,8 +136,8 @@ TEST_CASE("function_node buffering"){
 //! Test node broadcast messages to successors
 //! \brief \ref requirement
 TEST_CASE("function_node broadcast"){
-    conformance::counting_functor<output_msg> fun(conformance::expected);
-    conformance::test_forwarding<oneapi::tbb::flow::function_node<input_msg, output_msg>, input_msg, output_msg>(1, oneapi::tbb::flow::unlimited, fun);
+    conformance::counting_functor<int> fun(conformance::expected);
+    conformance::test_forwarding<oneapi::tbb::flow::function_node<input_msg, int>, input_msg, int>(1, oneapi::tbb::flow::unlimited, fun);
 }
 
 //! Test deduction guides
@@ -165,6 +165,6 @@ TEST_CASE("concurrency follows set limits"){
 //! Test node Input class meet the DefaultConstructible and CopyConstructible requirements and Output class meet the CopyConstructible requirements.
 //! \brief \ref interface \ref requirement
 TEST_CASE("Test function_node Output and Input class") {
-    using Body = conformance::counting_object<int>;
+    using Body = conformance::copy_counting_object<int>;
     conformance::test_output_input_class<oneapi::tbb::flow::function_node<Body, Body>, Body>();
 }

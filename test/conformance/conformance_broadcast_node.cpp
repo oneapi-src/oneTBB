@@ -23,8 +23,7 @@
 //! \file conformance_broadcast_node.cpp
 //! \brief Test for [flow_graph.broadcast_node] specification
 
-using input_msg = conformance::message</*default_ctor*/false, /*copy_ctor*/false, /*copy_assign*/false>;
-
+using input_msg = conformance::message</*default_ctor*/false, /*copy_ctor*/false, /*copy_assign*/true/*enable for queue_node successor*/>;
 
 //! Test function_node broadcast
 //! \brief \ref requirement

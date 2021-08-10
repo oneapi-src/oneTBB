@@ -80,7 +80,7 @@ void test_inheritance(){
 //! Test the body object passed to a node is copied
 //! \brief \ref interface
 TEST_CASE("input_node and body copying"){
-    conformance::test_copy_body_function<oneapi::tbb::flow::input_node<int>, conformance::counting_object<int>>();
+    conformance::test_copy_body_function<oneapi::tbb::flow::input_node<int>, conformance::copy_counting_object<int>>();
 }
 
 //! The node that is constructed has a reference to the same graph object as src,
@@ -91,7 +91,7 @@ TEST_CASE("input_node copy constructor"){
     using namespace oneapi::tbb::flow;
     graph g;
 
-    conformance::counting_object<output_msg> fun2;
+    conformance::copy_counting_object<output_msg> fun2;
 
     input_node<output_msg> node1(g, fun2);
     conformance::test_push_receiver<output_msg> node2(g);
@@ -101,7 +101,7 @@ TEST_CASE("input_node copy constructor"){
 
     input_node<output_msg> node_copy(node1);
 
-    conformance::counting_object<output_msg> b2 = copy_body<conformance::counting_object<output_msg>, input_node<output_msg>>(node_copy);
+    conformance::copy_counting_object<output_msg> b2 = copy_body<conformance::copy_counting_object<output_msg>, input_node<output_msg>>(node_copy);
 
     CHECK_MESSAGE((fun2.copy_count + 1 < b2.copy_count), "constructor should copy bodies");
 
@@ -190,7 +190,7 @@ TEST_CASE("concurrency follows set limits"){
 //! Test node Output class meet the CopyConstructible requirements.
 //! \brief \ref interface \ref requirement
 TEST_CASE("Test input_node Output class") {
-    conformance::test_output_class<oneapi::tbb::flow::input_node<conformance::counting_object<int>>>();
+    conformance::test_output_class<oneapi::tbb::flow::input_node<conformance::copy_counting_object<int>>>();
 }
 
 struct input_node_counter{

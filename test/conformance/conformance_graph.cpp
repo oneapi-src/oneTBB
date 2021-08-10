@@ -51,7 +51,7 @@ void test_continue_node_rf_reset_protocol(){
 void test_input_node_rf_reset_protocol(){
     oneapi::tbb::flow::graph g;
 
-    conformance::counting_object<int> fun;
+    conformance::copy_counting_object<int> fun;
 
     oneapi::tbb::flow::input_node<int> node(g, fun);
     oneapi::tbb::flow::limiter_node<int> rejecter(g, 0);
