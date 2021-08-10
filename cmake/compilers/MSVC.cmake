@@ -21,6 +21,9 @@ string(REGEX REPLACE "/W[0-4]" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 # Warning suppression C4324: structure was padded due to alignment specifier
 set(TBB_WARNING_LEVEL $<$<NOT:$<CXX_COMPILER_ID:Intel>>:/W4> $<$<BOOL:${TBB_STRICT}>:/WX>)
+if (${MSVC_CXX_ARCHITECTURE_ID} STREQUAL ARM64)
+    set(TBB_ALIGNMENT_WARNING_SUPPRESS /wd4324)
+endif()
 set(TBB_WARNING_SUPPRESS /wd4324)
 set(TBB_TEST_COMPILE_FLAGS /bigobj)
 if (MSVC_VERSION LESS_EQUAL 1900)

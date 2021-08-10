@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(tbb 
+add_library(tbb
     address_waiter.cpp
     allocator.cpp
     arena.cpp
@@ -71,6 +71,8 @@ target_include_directories(tbb
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 target_compile_options(tbb
+    PUBLIC
+    ${TBB_ALIGNMENT_WARNING_SUPPRESS}
     PRIVATE
     ${TBB_CXX_STD_FLAG} # TODO: consider making it PUBLIC.
     ${TBB_MMD_FLAG}
