@@ -41,7 +41,7 @@ class tricky_atomic_pointer {
 public:
     using word = uintptr_t;
 
-    static T* fetch_add( std::atomic<word>& location, word addend, std::memory_order memory_order ) {
+    static T* fetch_add( std::atomic<word>& location, word addend, std::memory_order memory_order = std::memory_order_seq_cst ) {
         return reinterpret_cast<T*>(location.fetch_add(addend, memory_order));
     }
 
@@ -49,17 +49,17 @@ public:
         return reinterpret_cast<T*>(location.exchange(reinterpret_cast<word>(value), memory_order));
     }
 
-    static T* compare_exchange_strong( std::atomic<word>& obj, const T* expected, const T* desired, std::memory_order memory_order ) {
+    static T* compare_exchange_strong( std::atomic<word>& obj, const T* expected, const T* desired, std::memory_order memory_order = std::memory_order_seq_cst) {
         word expd = reinterpret_cast<word>(expected);
         obj.compare_exchange_strong(expd, reinterpret_cast<word>(desired), memory_order);
         return reinterpret_cast<T*>(expd);
     }
 
-    static void store( std::atomic<word>& location, const T* value, std::memory_order memory_order ) {
+    static void store( std::atomic<word>& location, const T* value, std::memory_order memory_order = std::memory_order_seq_cst) {
         location.store(reinterpret_cast<word>(value), memory_order);
     }
 
-    static T* load( std::atomic<word>& location, std::memory_order memory_order ) {
+    static T* load( std::atomic<word>& location, std::memory_order memory_order = std::memory_order_seq_cst) {
         return reinterpret_cast<T*>(location.load(memory_order));
     }
 
@@ -159,51 +159,151 @@ struct queuing_rw_mutex_impl {
     // Convenient method.
     // The method mustn't be called concurrently.
     static void smart_reset(d1::queuing_rw_mutex::scoped_lock& scoped_lock) noexcept {
-        // If current scoped_lock owns a mutex.
+        // If the current scoped_lock owns a mutex.
         if (scoped_lock.my_mutex != nullptr) {
             // Then release it.
             scoped_lock.release();
         }
     }
 
-    // [BUG FOUND]
     // Move constructor logic. Assumes that current scoped_lock doesn't own any mutex.
     // The method mustn't be called concurrently.
     static void move_constructor_implementation(d1::queuing_rw_mutex::scoped_lock& destination, d1::queuing_rw_mutex::scoped_lock&& source) noexcept {
-        // Assigning fields.
-        destination.my_mutex = source.my_mutex;
-        destination.my_state.store(source.my_state.load());
-        destination.my_prev.store(source.my_prev.load());
-        destination.my_next.store(source.my_next.load());
-
-        // For consistency with the class invariant.
-        destination.my_going.store(1U);
+        using scoped_lock = d1::queuing_rw_mutex::scoped_lock;
         
-        // For correct destruction.
+        destination.my_mutex = source.my_mutex;
         source.my_mutex = nullptr;
+        // Mutex pointers are updated.
 
-        // The source scoped_lock must be the head of the queue, because
-        // the other elements of this queue (if present) spin on the
-        // my_going flag and wait for predecessor to set the flag to zero.
+         // Only active readers and writers can be moved.
+        __TBB_ASSERT(source.my_state.load() == STATE_ACTIVEREADER || source.my_state.load() == STATE_WRITER, "Invalid processor state.");
 
-        if (destination.my_mutex->q_tail == &source) {
-            d1::queuing_rw_mutex::scoped_lock * source_ptr = &source;
-            // If the source scoped_lock is no longer the only element in the queue.
-            if (!destination.my_mutex->q_tail.compare_exchange_strong(source_ptr, &destination)) {
-                // Wait while another thread to update the data.
-                spin_wait_while_eq(source.my_next, 0U);
-                // We now can assign this field correctly.
-                destination.my_next.store(source.my_next);
+        destination.my_state.store(source.my_state.load());
+        // State is updated.
+
+        // We haven't to spin.
+        destination.my_going.store(1);
+
+        // Bringing the predecessor and m_prev to consistency.
+
+        // A writer case.
+        if (destination.my_state.load() == STATE_WRITER) {
+            // The writer case is simple, because a writer is always a head of the queue.
+            // Other writers in the queue are spinning.
+            // Hence, there isn't any successor for the current lock.
+            destination.my_prev.store(0U);
+        } else {
+            // Taking a snapshot.
+            scoped_lock* prev = tricky_pointer::load(source.my_prev);
+            if (prev != nullptr) {
+                acquire_internal_lock(*prev);
+
+                // We're looping until catch the moment when the predecessor is free and immutable.
+                while (prev != tricky_pointer::load(source.my_prev)) {
+                    release_internal_lock(*prev);
+
+                    // Updating the snapshot.
+                    prev = tricky_pointer::load(source.my_prev);
+
+                    // The current lock has become the queue head.
+                    if (prev == nullptr) {
+                        break;
+                    }
+
+                    acquire_internal_lock(*prev);
+                }
+
+                // We have caught a such moment as described above.
+
+                // The value is either nullptr or predecessor.
+                tricky_pointer::store(destination.my_prev, prev);
+
+                // If the value is nullptr, predecessor isn't acquired, otherwise is acquired.
+                // If the current lock has a predecessor.
+                if (prev != nullptr) {
+                    // Then we have to update the predecessor.
+                    tricky_pointer::store(prev->my_next, &destination);
+
+                    release_internal_lock(*prev);
+                }
             }
         }
 
-        // For consistency and safety.
+        // The predecessor and m_prev are consistent.
+
+        // If the current scoped_lock is the queue
+        // tail, we have to reassign queue tail to
+        // current scoped_lock.
+        // In a writer case it implies that the
+         // queue consists of exactly one element.
+
+        // If other is the queue tail, then it has no successor.
+        tricky_pointer::store(destination.my_next, nullptr);
+
+        scoped_lock* source_ptr = &source;
+        // If other is the queue tail, then replace the queue tail with the current scoped_lock.
+        if (!destination.my_mutex->q_tail.compare_exchange_strong(source_ptr, &destination)) {
+            // The queue tail has updated, and now other isn't the queue tail.
+            
+            // Waiting until a thread to set m_next field to other during acquiring.
+            spin_wait_while_eq(source.my_next, 0U);
+
+            // Bringing the successor and m_next to consistency.
+
+            // A writer case.
+            if (destination.my_state.load() == STATE_WRITER) {
+                // The writer case is simple, because a writer constrains others from acquiring.
+                // Other locks in the queue are spinning.
+                // Hence, the successor can't mutate.
+                tricky_pointer::store(destination.my_next, tricky_pointer::load(source.my_next));
+            } else {
+                // Taking a snapshot.
+                scoped_lock* next = tricky_pointer::load(source.my_next);
+
+                if (next != nullptr) {
+                    acquire_internal_lock(*next);
+
+                    // We're looping until catch the moment when the successor is free and immutable.
+                    while (next != tricky_pointer::load(source.my_next)) {
+                        release_internal_lock(*next);
+
+                        // Updating the snapshot.
+                        next = tricky_pointer::load(source.my_next);
+
+                        // The current lock has become the queue head.
+                        if (next == nullptr) {
+                            break;
+                        }
+
+                        acquire_internal_lock(*next);
+                    }
+
+                    // We have caught a such moment as described abobe.
+
+                    // The value is either nullptr or predecessor.
+                    tricky_pointer::store(destination.my_next, next);
+
+                    // If the value is nullptr, successor isn't acquired, otherwise is acquired.
+                    // If the current lock has a successor.
+                    if (next != nullptr) {
+                        // Then we have to update the successor.
+                        tricky_pointer::store(next->my_prev, &destination);
+
+                        release_internal_lock(*next);
+                    }
+                }
+            }
+
+            // The successor and m_next are consistent.
+        }
+
+        // For consistency and correct destruction.
         source.my_state.store(STATE_NONE);
-        source.my_next.store(0U);
+        tricky_pointer::store(source.my_prev, nullptr);
+        tricky_pointer::store(source.my_next, nullptr);
     }
 
     // Move assignment works similar as move constructor.
-    // The method mustn't be called concurrently.
     static d1::queuing_rw_mutex::scoped_lock& move_assignment_operator_implementation(d1::queuing_rw_mutex::scoped_lock& destination, d1::queuing_rw_mutex::scoped_lock&& source) noexcept {
         // If this differ from other.
         if (&destination != &source) {
