@@ -77,14 +77,14 @@ Member Functions
 
 .. cpp:function:: task_scheduler_handle(task_scheduler_handle&& other) noexcept
 
-    **Effects**: Creates an instance of the ``task_scheduler_handle`` class that references the task scheduler referenced by other. In turn, ``other`` releases its reference to the task scheduler.
+    **Effects**: Creates an instance of the ``task_scheduler_handle`` class that references the task scheduler referenced by ``other``. In turn, ``other`` releases its reference to the task scheduler.
 
 -------------------------------------------------------
 
 .. cpp:function:: task_scheduler_handle& operator=(task_scheduler_handle&& other) noexcept
 
-    **Effects**: Releases a reference to the task scheduler referenced with ``this``. Adds a reference to the task scheduler referenced with ``other``.
-    ``other`` releases a reference to the task scheduler.
+    **Effects**: Releases a reference to the task scheduler referenced by ``this``. Adds a reference to the task scheduler referenced by ``other``.
+In turn, ``other`` releases its reference to the task scheduler.
 
 -------------------------------------------------------
 
