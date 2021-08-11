@@ -18,8 +18,6 @@
 #pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
 #endif
 
-#define CONFORMANCE_GRAPH
-
 #include "conformance_flowgraph.h"
 
 //! \file conformance_graph.cpp

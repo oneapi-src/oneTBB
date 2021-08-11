@@ -67,8 +67,12 @@ struct message {
         return data == msg.data;
     }
 
-    operator std::size_t() {
+    operator std::size_t() const {
         return static_cast<std::size_t>(data);
+    }
+
+    operator int() const {
+        return data;
     }
 };
 
@@ -148,7 +152,7 @@ struct track_first_id_functor {
     }
 
     template<typename InputType>
-    OutputType operator()( InputType&  ) {
+    OutputType operator()( InputType& ) {
         return operator()(OutputType(0));
     }
 
@@ -176,11 +180,9 @@ struct counting_functor {
         execute_count = 0;
     }
 
-#ifdef CONFORMANCE_GRAPH
-    counting_functor( const counting_functor & c ) : return_value(c.return_value) {
+    counting_functor( const counting_functor & c ) : return_value(static_cast<int>(c.return_value)) {
         execute_count = 0;
     }
-#endif
 
     template<typename InputType>
     OutputType operator()( InputType ) {
@@ -211,7 +213,7 @@ struct counting_functor {
 };
 
 template<typename OutputType>
-std::atomic<std::size_t> counting_functor<OutputType>::execute_count;
+std::atomic<std::size_t> counting_functor<OutputType>::execute_count{0};
 
 template<typename OutputType>
 struct dummy_functor {
