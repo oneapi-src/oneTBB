@@ -20,6 +20,7 @@
 #include "itt_notify.h"
 #include "semaphore.h"
 #include "waiters.h"
+#include "misc.h"
 #include "oneapi/tbb/detail/_task.h"
 #include "oneapi/tbb/info.h"
 #include "oneapi/tbb/tbb_allocator.h"
@@ -90,6 +91,16 @@ template <bool as_worker>
 std::size_t arena::occupy_free_slot(thread_data& tls) {
     // Firstly, external threads try to occupy reserved slots
     std::size_t index = as_worker ? out_of_arena : occupy_free_slot_in_range( tls,  0, my_num_reserved_slots );
+
+    if (index == out_of_arena && has_numa_optimization()) {
+        std::pair<int, int> my_range = {my_num_reserved_slots, governor::default_num_threads()};
+        auto it = numa_intervals.find(governor::get_my_current_numa_node());
+        __TBB_ASSERT(it != numa_intervals.end(), "Current numa node does not exist in numa_intervals");
+        my_range = it->second;
+        index = occupy_free_slot_in_range(tls, max(static_cast<int>(my_num_reserved_slots), my_range.first),
+                                               min(static_cast<int>(my_num_slots), my_range.second) );
+    }
+
     if ( index == out_of_arena ) {
         // Secondly, all threads try to occupy all non-reserved slots
         index = occupy_free_slot_in_range(tls, my_num_reserved_slots, my_num_slots );
@@ -198,6 +209,22 @@ arena::arena ( market& m, unsigned num_slots, unsigned num_reserved_slots, unsig
     }
     my_fifo_task_stream.initialize(my_num_slots);
     my_resume_task_stream.initialize(my_num_slots);
+
+    if (has_numa_optimization()) {
+        auto first_numa_id = governor::get_my_current_numa_node();
+        auto left = governor::get_numa_cores_count(first_numa_id);
+        numa_intervals[first_numa_id] = {0, left};
+
+        for (auto numa_index : info::numa_nodes()) {
+            if (numa_index != first_numa_id) {
+                __TBB_ASSERT(numa_index >= 0, "NUMA id can not be negative number");
+                int curr_numa_size = governor::get_numa_cores_count(numa_index);
+                numa_intervals[numa_index] = {left, left + curr_numa_size};
+                left += curr_numa_size;
+            }
+        }
+    }
+
 #if __TBB_PREVIEW_CRITICAL_TASKS
     my_critical_task_stream.initialize(my_num_slots);
 #endif

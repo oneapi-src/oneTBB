@@ -469,7 +469,7 @@ public:
     d1::task* get_stream_or_critical_task(execution_data_ext&, arena&, task_stream<front_accessor>&,
                                       unsigned& /*hint_for_stream*/, isolation_type,
                                       bool /*critical_allowed*/);
-    d1::task* steal_or_get_critical(execution_data_ext&, arena&, FastRandom&,
+    d1::task* steal_or_get_critical(execution_data_ext&, arena&, unsigned /* arena_index */ , FastRandom&,
                                 isolation_type, bool /*critical_allowed*/);
 
 #if __TBB_RESUMABLE_TASKS

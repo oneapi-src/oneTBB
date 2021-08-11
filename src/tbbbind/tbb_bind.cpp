@@ -16,6 +16,7 @@
 
 #include <vector>
 #include <mutex>
+#include <algorithm>
 
 #include "../tbb/assert_impl.h" // Out-of-line TBB assertion handling routines are instantiated here.
 #include "oneapi/tbb/detail/_assert.h"
@@ -62,6 +63,7 @@ class system_topology {
     // NUMA API related topology members
     std::vector<hwloc_cpuset_t> numa_affinity_masks_list{};
     std::vector<int> numa_indexes_list{};
+    std::vector<int> numa_nodes_size{};
     int numa_nodes_count{0};
 
     // Hybrid CPUs API related topology members
@@ -160,6 +162,7 @@ private:
 
             // Fill concurrency and affinity masks lists
             numa_affinity_masks_list.resize(max_numa_index + 1);
+            numa_nodes_size.resize(max_numa_index + 1);
             int index = 0;
             hwloc_bitmap_foreach_begin(i, process_node_affinity_mask) {
                 node_buffer = hwloc_get_numanode_obj_by_os_index(topology, i);
@@ -170,6 +173,7 @@ private:
 
                 hwloc_bitmap_and(current_mask, current_mask, process_cpu_affinity_mask);
                 __TBB_ASSERT(!hwloc_bitmap_iszero(current_mask), "hwloc detected unavailable NUMA node");
+                numa_nodes_size[index] = hwloc_bitmap_weight(current_mask);
             } hwloc_bitmap_foreach_end();
         }
     }
@@ -255,6 +259,20 @@ private:
 public:
     typedef hwloc_cpuset_t             affinity_mask;
     typedef hwloc_const_cpuset_t const_affinity_mask;
+    class raii_affinity_mask {
+    public:
+        raii_affinity_mask() {
+            mask = hwloc_bitmap_alloc();
+        }
+        ~raii_affinity_mask() {
+            hwloc_bitmap_free(mask);
+        }
+        operator affinity_mask() {
+            return mask;
+        }
+    private:
+        affinity_mask mask;
+    };
 
     bool is_topology_parsed() { return initialization_state == topology_parsed; }
 
@@ -379,6 +397,40 @@ public:
 
     void free_affinity_mask( affinity_mask mask_to_free ) {
         hwloc_bitmap_free(mask_to_free); // If bitmap is nullptr, no operation is performed.
+    }
+
+    int get_last_cpu_location() {
+        /* thread_local variable has automatically static-like initialization and lifetime */
+        thread_local raii_affinity_mask last_cpu_location{};
+        int err = hwloc_get_last_cpu_location(topology, last_cpu_location, HWLOC_CPUBIND_THREAD);
+        __TBB_ASSERT_EX((int)err == 0 && hwloc_bitmap_weight(last_cpu_location) == 1, "hwloc_bitmap weight error");
+        int cpu_number = hwloc_bitmap_first(last_cpu_location);
+        return cpu_number;
+    }
+
+    int my_current_numa_node() {
+        __TBB_ASSERT(is_topology_parsed(), "Trying to get access to uninitialized platform_topology");
+        static constexpr int err_code = -1;
+        auto my_cpu_id = get_last_cpu_location();
+        auto it = std::find_if(
+                    numa_affinity_masks_list.begin(),
+                    numa_affinity_masks_list.end(),
+                    [my_cpu_id](const affinity_mask& mask) {
+            return mask ? hwloc_bitmap_isset(mask, my_cpu_id) : 0;
+        });
+        int numa_id = err_code;
+        if (it != numa_affinity_masks_list.end()) {
+            numa_id = static_cast<int>(it - numa_affinity_masks_list.begin());
+        }
+        return numa_id;
+    }
+
+    int numa_cores_count(int numa_id) {
+        __TBB_ASSERT(is_topology_parsed(), "Trying to get access to uninitialized platform_topology");
+        __TBB_ASSERT(numa_id >= 0, "numa_id should be non-negative integer number");
+        __TBB_ASSERT(static_cast<size_t>(numa_id) < numa_affinity_masks_list.size(),
+            "numa_id should be less then number of numa nodes used by process");
+        return numa_nodes_size[numa_id];
     }
 
     void store_current_affinity_mask( affinity_mask current_mask ) {
@@ -522,6 +574,14 @@ TBBBIND_EXPORT int __TBB_internal_get_default_concurrency(int numa_id, int core_
 
 void __TBB_internal_destroy_system_topology() {
     return system_topology::destroy();
+}
+
+int __TBB_internal_my_current_numa_node() {
+    return system_topology::instance().my_current_numa_node();
+}
+
+int __TBB_internal_numa_cores_count(int numa_id) {
+    return system_topology::instance().numa_cores_count(numa_id);
 }
 
 } // extern "C"
