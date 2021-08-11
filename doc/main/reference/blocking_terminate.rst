@@ -64,7 +64,7 @@ Member Functions
 
 .. cpp:function:: task_scheduler_handle()
 
-    **Effects**: Creates an instance of the ``task_scheduler_handle`` class that does not contain any reference to a task scheduler
+    **Effects**: Creates an instance of the ``task_scheduler_handle`` class that does not contain any reference to the task scheduler.
 
 -------------------------------------------------------
 
