@@ -168,7 +168,7 @@ struct track_first_id_functor {
 };
 
 template<typename OutputType>
-std::atomic<int> track_first_id_functor<OutputType>::first_id{-1};
+std::atomic<int> track_first_id_functor<OutputType>::first_id = {-1};
 
 template<typename OutputType>
 struct counting_functor {
@@ -213,7 +213,7 @@ struct counting_functor {
 };
 
 template<typename OutputType>
-std::atomic<std::size_t> counting_functor<OutputType>::execute_count{0};
+std::atomic<std::size_t> counting_functor<OutputType>::execute_count = {0};
 
 template<typename OutputType>
 struct dummy_functor {

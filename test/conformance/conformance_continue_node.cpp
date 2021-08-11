@@ -25,7 +25,7 @@
 //! \file conformance_continue_node.cpp
 //! \brief Test for [flow_graph.continue_node] specification
 
-using output_msg = conformance::message</*default_ctor*/false, /*copy_ctor*/true, /*copy_assign*/false>;
+using output_msg = conformance::message</*default_ctor*/false, /*copy_ctor*/true, /*copy_assign*/true/*enable for queue_node successor*/>;
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 
