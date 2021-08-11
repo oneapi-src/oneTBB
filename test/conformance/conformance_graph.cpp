@@ -27,7 +27,7 @@ void test_continue_node_rf_reset_protocol(){
     using namespace oneapi::tbb::flow;
     graph g;
 
-    bool flag = false;
+    std::atomic<bool> flag = {false};
     continue_node<int> source(g, 2, [&](const continue_msg&){ flag = true; return 1;});
 
     source.try_put(continue_msg());
@@ -76,7 +76,6 @@ void test_functional_nodes_rf_reset_protocol(){
 
     f.try_put(0);
     f.try_put(0);
-
     CHECK_MESSAGE((counting_body.execute_count == 0), "Body should not be executed");
     g.reset(oneapi::tbb::flow::rf_reset_protocol);
 
@@ -94,7 +93,7 @@ void test_buffering_nodes_rf_reset_protocol(Args... node_body){
     CHECK_MESSAGE((tmp == -1), "Value should not be updated");
 
     testing_node.try_put(1);
-
+    g.wait_for_all();
     g.reset(oneapi::tbb::flow::rf_reset_protocol);
 
     tmp = -1;
@@ -222,6 +221,7 @@ TEST_CASE("graph reset with rf_clear_edges") {
     oneapi::tbb::flow::make_edge(ovw, successor);
     oneapi::tbb::flow::make_edge(seq, successor);
 
+    g.wait_for_all();
     g.reset(oneapi::tbb::flow::rf_clear_edges);
 
     ct.try_put(oneapi::tbb::flow::continue_msg());
