@@ -33,6 +33,7 @@ function(tbb_add_test)
         PRIVATE
         ${TBB_CXX_STD_FLAG}
         ${TBB_WARNING_LEVEL}
+        ${TBB_ALIGNMENT_WARNING_SUPPRESS}
         ${TBB_TEST_WARNING_FLAGS}
         ${TBB_TEST_COMPILE_FLAGS}
         ${TBB_COMMON_COMPILE_FLAGS}
@@ -344,7 +345,7 @@ if (TBB_FOUND)
     unset(_tbb_test_components)
 endif()
 
-# Find Intel(R) Software Development Emulator to run test_mutex and conformance_mutex for coverage 
+# Find Intel(R) Software Development Emulator to run test_mutex and conformance_mutex for coverage
 set(_sde_find_name sde)
 
 if (UNIX AND TBB_ARCH EQUAL 64)
@@ -360,6 +361,11 @@ unset(_sde_find_name)
 
 # Common target for the tbbbind related tests
 add_custom_target(test_suite_arena_constraints)
+
+# Warning suppression C4324: structure was padded due to alignment specifier
+if ("${MSVC_CXX_ARCHITECTURE_ID}" STREQUAL "ARM64")
+    set(TBB_ALIGNMENT_WARNING_SUPPRESS /wd4324)
+endif()
 
 if (TARGET TBB::tbb)
     # Define the tests

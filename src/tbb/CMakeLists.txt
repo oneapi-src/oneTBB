@@ -71,8 +71,6 @@ target_include_directories(tbb
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 target_compile_options(tbb
-    PUBLIC
-    ${TBB_PUBLIC_WARNING_SUPPRESS}
     PRIVATE
     ${TBB_CXX_STD_FLAG} # TODO: consider making it PUBLIC.
     ${TBB_MMD_FLAG}
