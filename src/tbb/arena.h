@@ -19,6 +19,7 @@
 
 #include <atomic>
 #include <cstring>
+#include <algorithm>
 
 #include "oneapi/tbb/detail/_task.h"
 
@@ -288,6 +289,9 @@ struct arena_base : padded<intrusive_list_node> {
     //! Used to trap accesses to the object after its destruction.
     std::uintptr_t my_guard;
 #endif /* TBB_USE_ASSERT */
+
+    using pool_mask_type = std::atomic<int>;
+    pool_mask_type* pool_mask;
 }; // struct arena_base
 
 class arena: public padded<arena_base>
@@ -356,8 +360,11 @@ public:
     //! If necessary, raise a flag that there is new job in arena.
     template<arena::new_work_type work_type> void advertise_new_work();
 
+    //! Get the index of a non-empty task pool
+    long long get_index_for_steal(FastRandom& frnd);
+
     //! Attempts to steal a task from a randomly chosen arena slot
-    d1::task* steal_task(unsigned arena_index, FastRandom& frnd, execution_data_ext& ed, isolation_type isolation);
+    d1::task* steal_task(FastRandom& frnd, execution_data_ext& ed, isolation_type isolation);
 
     //! Get a task from a global starvation resistant queue
     template<task_stream_accessor_type accessor>
@@ -549,22 +556,43 @@ void arena::advertise_new_work() {
     }
 }
 
-inline d1::task* arena::steal_task(unsigned arena_index, FastRandom& frnd, execution_data_ext& ed, isolation_type isolation) {
+inline long long arena::get_index_for_steal(FastRandom& frnd) {
     auto slot_num_limit = my_limit.load(std::memory_order_relaxed);
     if (slot_num_limit == 1) {
         // No slots to steal from
+        return -1;
+    }
+
+    std::size_t k = std::count_if(pool_mask, pool_mask + slot_num_limit, [] (std::atomic<int>& el) {
+        return el.load(std::memory_order_relaxed);
+    });
+
+    if (k == 0) {
+        return -1;
+    }
+
+    std::size_t target_slot = frnd.get() % k;
+    for (std::size_t i = 0; i < slot_num_limit; ++i) {
+        if (pool_mask[i].load(std::memory_order_relaxed) && (target_slot-- == 0)) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+inline d1::task* arena::steal_task(FastRandom& frnd, execution_data_ext& ed, isolation_type isolation) {
+    long long k = get_index_for_steal(frnd);
+
+    if (k < 0) {
         return nullptr;
     }
-    // Try to steal a task from a random victim.
-    std::size_t k = frnd.get() % (slot_num_limit - 1);
+
     // The following condition excludes the external thread that might have
     // already taken our previous place in the arena from the list .
     // of potential victims. But since such a situation can take
     // place only in case of significant oversubscription, keeping
     // the checks simple seems to be preferable to complicating the code.
-    if (k >= arena_index) {
-        ++k; // Adjusts random distribution to exclude self
-    }
     arena_slot* victim = &my_slots[k];
     d1::task **pool = victim->task_pool.load(std::memory_order_relaxed);
     d1::task *t = nullptr;
