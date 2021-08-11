@@ -33,7 +33,8 @@ function(tbb_add_test)
         PRIVATE
         ${TBB_CXX_STD_FLAG}
         ${TBB_WARNING_LEVEL}
-        ${TBB_ALIGNMENT_WARNING_SUPPRESS}
+        # Warning suppression C4324: structure was padded due to alignment specifier
+        $<$<STREQUAL:${MSVC_CXX_ARCHITECTURE_ID},ARM64>:/wd4324>
         ${TBB_TEST_WARNING_FLAGS}
         ${TBB_TEST_COMPILE_FLAGS}
         ${TBB_COMMON_COMPILE_FLAGS}
@@ -361,11 +362,6 @@ unset(_sde_find_name)
 
 # Common target for the tbbbind related tests
 add_custom_target(test_suite_arena_constraints)
-
-# Warning suppression C4324: structure was padded due to alignment specifier
-if ("${MSVC_CXX_ARCHITECTURE_ID}" STREQUAL "ARM64")
-    set(TBB_ALIGNMENT_WARNING_SUPPRESS /wd4324)
-endif()
 
 if (TARGET TBB::tbb)
     # Define the tests
