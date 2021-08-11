@@ -19,9 +19,11 @@ set(TBB_DEF_FILE_PREFIX win${TBB_ARCH})
 # TODO: consider use of CMP0092 CMake policy.
 string(REGEX REPLACE "/W[0-4]" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
-# Warning suppression C4324: structure was padded due to alignment specifier
 set(TBB_WARNING_LEVEL $<$<NOT:$<CXX_COMPILER_ID:Intel>>:/W4> $<$<BOOL:${TBB_STRICT}>:/WX>)
+
+# Warning suppression C4324: structure was padded due to alignment specifier
 set(TBB_WARNING_SUPPRESS /wd4324)
+
 set(TBB_TEST_COMPILE_FLAGS /bigobj)
 if (MSVC_VERSION LESS_EQUAL 1900)
     # Warning suppression C4503 for VS2015 and earlier:

@@ -33,6 +33,8 @@ function(tbb_add_test)
         PRIVATE
         ${TBB_CXX_STD_FLAG}
         ${TBB_WARNING_LEVEL}
+        # Warning suppression C4324: structure was padded due to alignment specifier
+        $<$<STREQUAL:${MSVC_CXX_ARCHITECTURE_ID},ARM64>:/wd4324>
         ${TBB_TEST_WARNING_FLAGS}
         ${TBB_TEST_COMPILE_FLAGS}
         ${TBB_COMMON_COMPILE_FLAGS}
@@ -344,7 +346,7 @@ if (TBB_FOUND)
     unset(_tbb_test_components)
 endif()
 
-# Find Intel(R) Software Development Emulator to run test_mutex and conformance_mutex for coverage 
+# Find Intel(R) Software Development Emulator to run test_mutex and conformance_mutex for coverage
 set(_sde_find_name sde)
 
 if (UNIX AND TBB_ARCH EQUAL 64)
