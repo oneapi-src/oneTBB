@@ -18,158 +18,121 @@
 #pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
 #endif
 
-#include "common/test.h"
-
-#include "common/utils.h"
-#include "common/graph_utils.h"
-
-#include "oneapi/tbb/flow_graph.h"
-#include "oneapi/tbb/task_arena.h"
-#include "oneapi/tbb/global_control.h"
-
 #include "conformance_flowgraph.h"
 
 //! \file conformance_async_node.cpp
 //! \brief Test for [flow_graph.async_node] specification
 
-/*
-TODO: implement missing conformance tests for async_node:
-  - [ ] Write `test_forwarding()'.
-  - [ ] Improve test of the node's copy-constructor.
-  - [ ] Write `test_priority'.
-  - [ ] Rename `test_discarding' to `test_buffering'.
-  - [ ] Write inheritance test.
-  - [ ] Constructor with explicitly passed Policy parameter.
-  - [ ] Concurrency testing of the node: make a loop over possible concurrency levels. It is
-    important to test at least on five values: 1, oneapi::tbb::flow::serial, `max_allowed_parallelism'
-    obtained from `oneapi::tbb::global_control', `oneapi::tbb::flow::unlimited', and, if `max allowed
-    parallelism' is > 2, use something in the middle of the [1, max_allowed_parallelism]
-    interval. Use `utils::ExactConcurrencyLevel' entity (extending it if necessary).
-  - [ ] Write `test_rejecting', where avoid dependency on OS scheduling of the threads; add check
-    that `try_put()' returns `false'
-  - [ ] The `copy_body' function copies altered body (e.g. after successful `try_put()' call).
-  - [ ] The copy constructor and copy assignment are called for the node's input and output types.
-  - [ ] Add CTAD test.
-*/
+using input_msg = conformance::message</*default_ctor*/true, /*copy_ctor*/true, /*copy_assign*/false>;
+using output_msg = conformance::message</*default_ctor*/false, /*copy_ctor*/false, /*copy_assign*/false>;
 
-template<typename I, typename O>
-void test_inheritance(){
-    using namespace oneapi::tbb::flow;
-
-    CHECK_MESSAGE( (std::is_base_of<graph_node, async_node<I, O>>::value), "async_node should be derived from graph_node");
-    CHECK_MESSAGE( (std::is_base_of<receiver<I>, async_node<I, O>>::value), "async_node should be derived from receiver<Input>");
-    CHECK_MESSAGE( (std::is_base_of<sender<O>, async_node<I, O>>::value), "async_node should be derived from sender<Output>");
-}
-
-template< typename OutputType >
-struct as_inc_functor {
-    std::thread my_thread;
-
-    std::atomic<size_t>& local_execute_count;
-
-    as_inc_functor(std::atomic<size_t>& execute_count ) :
-        local_execute_count (execute_count)
-    {  }
-
-    as_inc_functor( const as_inc_functor &f ) : local_execute_count(f.local_execute_count) { }
-    void operator=(const as_inc_functor &f) { local_execute_count = size_t(f.local_execute_count); }
-
-    void operator()( int num , oneapi::tbb::flow::async_node<int, int>::gateway_type& g) {
-        ++local_execute_count;
-        g.try_put(num);
-        //    my_thread = std::thread([&](){
-        //                                g.try_put(num);
-        //                            });
-    }
-
-};
-
-void test_async_body(){
-    oneapi::tbb::flow::graph g;
-
-    std::atomic<size_t> local_count(0);
-    as_inc_functor<int> fun(local_count);
-
-    oneapi::tbb::flow::async_node<int, int> node1(g, oneapi::tbb::flow::unlimited, fun);
-
-    const size_t n = 10;
-    for(size_t i = 0; i < n; ++i) {
-        CHECK_MESSAGE((node1.try_put(1) == true), "try_put needs to return true");
-    }
-
-    //fun.my_thread.join();
-    g.wait_for_all();
-
-    CHECK_MESSAGE( (fun.local_execute_count.load() == n), "Body of the node needs to be executed N times");
-}
-
-void test_copy(){
-    oneapi::tbb::flow::graph g;
-    std::atomic<size_t> local_count(0);
-    as_inc_functor<int> fun(local_count);
-
-    oneapi::tbb::flow::async_node<int, int> node1(g, oneapi::tbb::flow::unlimited, fun);
-    oneapi::tbb::flow::async_node<int, int> node2(node1);
-}
-
-void test_priority(){
-    oneapi::tbb::flow::graph g;
-    std::atomic<size_t> local_count(0);
-    as_inc_functor<int> fun(local_count);
-
-    oneapi::tbb::flow::async_node<int, int> node1(g, oneapi::tbb::flow::unlimited, fun, oneapi::tbb::flow::no_priority);
-}
-
-void test_discarding(){
-    oneapi::tbb::flow::graph g;
-
-    std::atomic<size_t> local_count(0);
-    as_inc_functor<int> fun(local_count);
-
-    oneapi::tbb::flow::async_node<int, int> node1(g, oneapi::tbb::flow::unlimited, fun);
-
-    oneapi::tbb::flow::limiter_node< int > rejecter1( g,0);
-    oneapi::tbb::flow::limiter_node< int > rejecter2( g,0);
-
-    make_edge(node1, rejecter2);
-    make_edge(node1, rejecter1);
-
-    node1.try_put(1);
-
-    int tmp = -1;
-    CHECK_MESSAGE((node1.try_get(tmp) == false), "Value should be discarded after rejection");
-
-    g.wait_for_all();
-}
-
-//! Test discarding property
+//! Test async_node constructors
 //! \brief \ref requirement
-TEST_CASE("async_node discarding") {
-    test_discarding();
+TEST_CASE("async_node constructors"){
+    using namespace oneapi::tbb::flow;
+    graph g;
 
+    conformance::dummy_functor<int> fun;
+
+    async_node<int, int> fn1(g, unlimited, fun);
+    async_node<int, int> fn2(g, unlimited, fun, oneapi::tbb::flow::node_priority_t(1));
+
+    async_node<int, int, lightweight> lw_node1(g, serial, fun, lightweight());
+    async_node<int, int, lightweight> lw_node2(g, serial, fun, lightweight(), oneapi::tbb::flow::node_priority_t(1));
 }
 
-//! Test async_node priority interface
-//! \brief \ref interface
-TEST_CASE("async_node priority interface"){
-    test_priority();
+//! Test buffering property
+//! \brief \ref requirement
+TEST_CASE("async_node buffering") {
+    conformance::dummy_functor<int> fun;
+    conformance::test_buffering<oneapi::tbb::flow::async_node<input_msg, int>, input_msg>(oneapi::tbb::flow::unlimited, fun);
 }
 
-//! Test async_node copy
-//! \brief \ref interface
-TEST_CASE("async_node copy"){
-    test_copy();
+//! Test priorities work in single-threaded configuration
+//! \brief \ref requirement
+TEST_CASE("async_node priority support"){
+    conformance::test_priority<oneapi::tbb::flow::async_node<input_msg, int>, input_msg>(oneapi::tbb::flow::unlimited);
+}
+
+//! The node that is constructed has a reference to the same graph object as src, has a copy of the initial body used by src, and has the same concurrency threshold as src.
+//! The predecessors and successors of src are not copied.
+//! \brief \ref requirement
+TEST_CASE("async_node copy constructor"){
+    conformance::test_copy_ctor<oneapi::tbb::flow::async_node<int, int>>();
 }
 
 //! Test calling async body
 //! \brief \ref interface \ref requirement
 TEST_CASE("Test async_node body") {
-    test_async_body();
+    conformance::test_body_exec<oneapi::tbb::flow::async_node<input_msg, output_msg>, input_msg, output_msg>(oneapi::tbb::flow::unlimited);
 }
 
 //! Test async_node inheritance relations
 //! \brief \ref interface
 TEST_CASE("async_node superclasses"){
-    test_inheritance<int, int>();
-    test_inheritance<void*, float>();
+    conformance::test_inheritance<oneapi::tbb::flow::async_node<int, int>, int, int>();
+    conformance::test_inheritance<oneapi::tbb::flow::async_node<void*, float>, void*, float>();
+    conformance::test_inheritance<oneapi::tbb::flow::async_node<input_msg, output_msg>, input_msg, output_msg>();
+}
+
+//! Test node broadcast messages to successors
+//! \brief \ref requirement
+TEST_CASE("async_node broadcast"){
+    conformance::counting_functor<int> fun(conformance::expected);
+    conformance::test_forwarding<oneapi::tbb::flow::async_node<input_msg, int>, input_msg, int>(1, oneapi::tbb::flow::unlimited, fun);
+}
+
+//! Test async_node has a user-settable concurrency limit. It can be set to one of predefined values. 
+//! The user can also provide a value of type std::size_t to limit concurrency.
+//! Test that not more than limited threads works in parallel.
+//! \brief \ref requirement
+TEST_CASE("concurrency follows set limits"){
+    conformance::test_concurrency<oneapi::tbb::flow::async_node<int, int>>();
+}
+
+//! Test body copying and copy_body logic
+//! Test the body object passed to a node is copied
+//! \brief \ref interface
+TEST_CASE("async_node body copying"){
+    conformance::test_copy_body_function<oneapi::tbb::flow::async_node<int, int>, conformance::copy_counting_object<int>>(oneapi::tbb::flow::unlimited);
+}
+
+//! Test node reject the incoming message if the concurrency limit achieved.
+//! \brief \ref interface
+TEST_CASE("async_node with rejecting policy"){
+    conformance::test_rejecting<oneapi::tbb::flow::async_node<int, int, oneapi::tbb::flow::rejecting>>();
+}
+
+//! Test node Input class meet the DefaultConstructible and CopyConstructible requirements and Output class meet the CopyConstructible requirements.
+//! \brief \ref interface \ref requirement
+TEST_CASE("Test async_node Output and Input class") {
+    using Body = conformance::copy_counting_object<int>;
+    conformance::test_output_input_class<oneapi::tbb::flow::async_node<Body, Body>, Body>();
+}
+
+//! Test the body of assync_node typically submits the messages to an external activity for processing outside of the graph.
+//! \brief \ref interface
+TEST_CASE("async_node with rejecting policy"){
+    using async_node_type = tbb::flow::async_node<int, int>;
+    using gateway_type = async_node_type::gateway_type;
+
+    oneapi::tbb::flow::graph g;
+    std::atomic<bool> flag{false};
+    std::thread thr;
+    async_node_type testing_node{
+      g, tbb::flow::unlimited,
+      [&](const int& input, gateway_type& gateway) {
+          gateway.reserve_wait();
+          thr = std::thread{[&]{
+              flag = true;
+              gateway.try_put(input);
+              gateway.release_wait();
+          }};
+      }
+    };
+
+    testing_node.try_put(1);
+    g.wait_for_all();
+    CHECK_MESSAGE((flag.load()), "The body of assync_node must submits the messages to an external activity for processing outside of the graph");
+    thr.join();
 }

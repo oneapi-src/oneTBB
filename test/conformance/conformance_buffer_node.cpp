@@ -18,107 +18,57 @@
 #pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
 #endif
 
-#include "common/test.h"
-
-#include "common/utils.h"
-#include "common/graph_utils.h"
-
-#include "oneapi/tbb/flow_graph.h"
-#include "oneapi/tbb/task_arena.h"
-#include "oneapi/tbb/global_control.h"
+#define CONFORMANCE_BUFFERING_NODES
 
 #include "conformance_flowgraph.h"
 
 //! \file conformance_buffer_node.cpp
 //! \brief Test for [flow_graph.buffer_node] specification
 
-/*
-TODO: implement missing conformance tests for buffer_node:
-  - [ ] The copy constructor is called for the node's type template parameter.
-  - [ ] Improve `test_forwarding' by checking that the value passed is the actual one received.
-  - [ ] Improve `test_buffering' by checking that additional `try_get()' does not receive the same
-    value.
-  - [ ] Improve tests of the constructors.
-  - [ ] Based on the decision about the details for `try_put()' and `try_get()' write corresponding
-    tests.
-  - [ ] Fix description in `TEST_CASEs'.*/
-template<typename T>
-void test_inheritance(){
-    using namespace oneapi::tbb::flow;
-
-    CHECK_MESSAGE( (std::is_base_of<graph_node, buffer_node<T>>::value), "buffer_node should be derived from graph_node");
-    CHECK_MESSAGE( (std::is_base_of<receiver<T>, buffer_node<T>>::value), "buffer_node should be derived from receiver<T>");
-    CHECK_MESSAGE( (std::is_base_of<sender<T>, buffer_node<T>>::value), "buffer_node should be derived from sender<T>");
-}
-
-void test_copies(){
-    using namespace oneapi::tbb::flow;
-
-    graph g;
-    buffer_node<int> n(g);
-    buffer_node<int> n2(n);
-
-}
-
-void test_buffering(){
-    oneapi::tbb::flow::graph g;
-
-    oneapi::tbb::flow::buffer_node<int> node(g);
-    oneapi::tbb::flow::limiter_node<int> rejecter(g, 0);
-
-    oneapi::tbb::flow::make_edge(node, rejecter);
-
-    int tmp = -1;
-    CHECK_MESSAGE( (node.try_get(tmp) == false), "try_get before placemnt should not succeed");
-
-    node.try_put(1);
-
-    tmp = -1;
-    CHECK_MESSAGE( (node.try_get(tmp) == true), "try_get after rejection should succeed");
-    CHECK_MESSAGE( (tmp == 1), "try_get after rejection should set value");
-    g.wait_for_all();
-}
-
-void test_forwarding(){
-    oneapi::tbb::flow::graph g;
-
-    oneapi::tbb::flow::buffer_node<int> node1(g);
-    test_push_receiver<int> node2(g);
-    test_push_receiver<int> node3(g);
-
-    oneapi::tbb::flow::make_edge(node1, node2);
-    oneapi::tbb::flow::make_edge(node1, node3);
-
-    node1.try_put(1);
-    g.wait_for_all();
-
-    int c2 = get_count(node2), c3 = get_count(node3);
-    CHECK_MESSAGE( (c2 != c3 ), "Only one descendant the node needs to receive");
-    CHECK_MESSAGE( (c2 + c3 == 1 ), "All messages need to be received");
+//! Test buffer_node broadcast
+//! \brief \ref requirement
+TEST_CASE("buffer_node single_push"){
+    conformance::test_forwarding_single_push<oneapi::tbb::flow::buffer_node<int>>();
 }
 
 //! Test function_node buffering
 //! \brief \ref requirement
 TEST_CASE("buffer_node buffering"){
-    test_forwarding();
+    conformance::test_buffering<oneapi::tbb::flow::buffer_node<int>, int>();
 }
 
-//! Test function_node buffering
+//! Constructs an empty buffer_node that belongs to the same graph g as src.
+//! Any intermediate state of src, including its links to predecessors and successors, is not copied.
 //! \brief \ref requirement
-TEST_CASE("buffer_node buffering"){
-    test_buffering();
-}
-
-//! Test copy constructor
-//! \brief \ref interface
 TEST_CASE("buffer_node copy constructor"){
-    test_copies();
+    conformance::test_copy_ctor_for_buffering_nodes<oneapi::tbb::flow::buffer_node<int>>();
 }
 
 //! Test inheritance relations
 //! \brief \ref interface
 TEST_CASE("buffer_node superclasses"){
-    test_inheritance<int>();
-    test_inheritance<void*>();
+    conformance::test_inheritance<oneapi::tbb::flow::buffer_node<int>, int, int>();
+    conformance::test_inheritance<oneapi::tbb::flow::buffer_node<void*>, void*, void*>();
 }
 
+//! Test buffer_node node `try_put()` and `try_get()`
+//! \brief \ref requirement
+TEST_CASE("buffer_node methods"){
+    oneapi::tbb::flow::graph g;
+    oneapi::tbb::flow::buffer_node<int> testing_node(g);
+
+    int tmp1 = -1;
+    int tmp2 = -1;
+
+    CHECK_MESSAGE((!testing_node.try_get(tmp1) && tmp1 == -1), "`try_get` must returns false if there is no non-reserved item currently in the node.");
+
+    testing_node.try_put(1);
+    testing_node.try_put(2);
+
+    g.wait_for_all();
+    testing_node.try_get(tmp1);
+    CHECK_MESSAGE((tmp1 == 1 || tmp1 == 2), "Messages must be an arbitrary order");
+
+    testing_node.try_get(tmp2);
+    CHECK_MESSAGE((tmp2 != -1 && tmp2 != tmp1), "Additional `try_get()' does not receive the same value as previous");
+}

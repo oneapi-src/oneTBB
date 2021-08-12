@@ -89,88 +89,6 @@ struct compare<1, T1, T2> {
     }
 };
 
-void add_all_nodes (){
-    tbb::flow::graph g;
-
-    typedef std::tuple<tbb::flow::continue_msg, std::tuple<int, int>, int, int, int, int,
-                             int, int, int, int, int, int, int, int > InputTupleType;
-
-    typedef std::tuple<tbb::flow::continue_msg, std::tuple<int, int>, tbb::flow::tagged_msg<size_t, int, float>,
-                             int, int, int, int, int, int, int, int, int, int, int, int >  OutputTupleType;
-
-    typedef std::tuple< > EmptyTupleType;
-
-    typedef tbb::flow::composite_node<InputTupleType, OutputTupleType > input_output_type;
-    typedef tbb::flow::composite_node<InputTupleType, EmptyTupleType > input_only_type;
-    typedef tbb::flow::composite_node<EmptyTupleType, OutputTupleType > output_only_type;
-
-    const size_t NUM_INPUTS = std::tuple_size<InputTupleType>::value;
-    const size_t NUM_OUTPUTS = std::tuple_size<OutputTupleType>::value;
-
-    //node types
-    tbb::flow::continue_node<tbb::flow::continue_msg> ct(g, ct_body());
-    tbb::flow::split_node< std::tuple<int, int> > s(g);
-    tbb::flow::input_node<int> src(g, my_input_body(20,5));
-    tbb::flow::function_node<int, int> fxn(g, tbb::flow::unlimited, passthru_body());
-    tbb::flow::multifunction_node<int, std::tuple<int, int> > m_fxn(g, tbb::flow::unlimited, m_fxn_body());
-    tbb::flow::broadcast_node<int> bc(g);
-    tbb::flow::limiter_node<int> lim(g, 2);
-    tbb::flow::indexer_node<int, float> ind(g);
-    tbb::flow::join_node< std::tuple< int, int >, tbb::flow::queueing > j(g);
-    tbb::flow::queue_node<int> q(g);
-    tbb::flow::buffer_node<int> bf(g);
-    tbb::flow::priority_queue_node<int> pq(g);
-    tbb::flow::write_once_node<int> wo(g);
-    tbb::flow::overwrite_node<int> ovw(g);
-    tbb::flow::sequencer_node<int> seq(g, seq_body());
-
-    auto input_tuple = std::tie(ct, s, m_fxn, fxn, bc, tbb::flow::input_port<0>(j), lim, q, tbb::flow::input_port<0>(ind),
-                                pq, ovw, wo, bf, seq);
-    auto output_tuple = std::tie(ct,j, ind, fxn, src, bc, tbb::flow::output_port<0>(s), lim, tbb::flow::output_port<0>(m_fxn),
-                                 q, pq, ovw, wo, bf, seq );
-
-    //composite_node with both input_ports and output_ports
-    input_output_type a_node(g);
-    a_node.set_external_ports(input_tuple, output_tuple);
-
-    a_node.add_visible_nodes(src, fxn, m_fxn, bc, lim, ind, s, ct, j, q, bf, pq, wo, ovw, seq);
-    a_node.add_nodes(src, fxn, m_fxn, bc, lim, ind, s, ct, j, q, bf, pq, wo, ovw, seq);
-
-    auto a_node_input_ports_ptr = a_node.input_ports();
-    compare<NUM_INPUTS-1, decltype(a_node_input_ports_ptr), decltype(input_tuple)>::compare_refs(a_node_input_ports_ptr, input_tuple);
-    CHECK_MESSAGE(NUM_INPUTS == std::tuple_size<decltype(a_node_input_ports_ptr)>::value, "not all declared input ports were bound to nodes");
-
-    auto a_node_output_ports_ptr = a_node.output_ports();
-    compare<NUM_OUTPUTS-1, decltype(a_node_output_ports_ptr), decltype(output_tuple)>::compare_refs(a_node_output_ports_ptr, output_tuple);
-    CHECK_MESSAGE( (NUM_OUTPUTS == std::tuple_size<decltype(a_node_output_ports_ptr)>::value), "not all declared output ports were bound to nodes");
-
-    //composite_node with only input_ports
-    input_only_type b_node(g);
-    b_node.set_external_ports(input_tuple);
-
-    b_node.add_visible_nodes(src, fxn, m_fxn, bc, lim, ind, s, ct, j, q, bf, pq, wo, ovw, seq);
-    b_node.add_nodes(src, fxn, m_fxn, bc, lim, ind, s, ct, j, q, bf, pq, wo, ovw, seq);
-
-    auto b_node_input_ports_ptr = b_node.input_ports();
-    compare<NUM_INPUTS-1, decltype(b_node_input_ports_ptr), decltype(input_tuple)>::compare_refs(b_node_input_ports_ptr, input_tuple);
-    CHECK_MESSAGE(NUM_INPUTS == std::tuple_size<decltype(b_node_input_ports_ptr)>::value, "not all declared input ports were bound to nodes");
-
-    //composite_node with only output_ports
-    output_only_type c_node(g);
-    c_node.set_external_ports(output_tuple);
-
-    // Reset is not suppose to do anything. Check that it can be called.
-    g.reset();
-
-    c_node.add_visible_nodes(src, fxn, m_fxn, bc, lim, ind, s, ct, j, q, bf, pq, wo, ovw, seq);
-
-    c_node.add_nodes(src, fxn, m_fxn, bc, lim, ind, s, ct, j, q, bf, pq, wo, ovw, seq);
-
-    auto c_node_output_ports_ptr = c_node.output_ports();
-    compare<NUM_OUTPUTS-1, decltype(c_node_output_ports_ptr), decltype(output_tuple)>::compare_refs(c_node_output_ports_ptr, output_tuple);
-    CHECK_MESSAGE(NUM_OUTPUTS == std::tuple_size<decltype(c_node_output_ports_ptr)>::value, "not all declared input ports were bound to nodes");
-}
-
 struct tiny_node : public tbb::flow::composite_node< std::tuple< int >, std::tuple< int > > {
     tbb::flow::function_node< int, int > f1;
     tbb::flow::function_node< int, int > f2;
@@ -178,11 +96,11 @@ struct tiny_node : public tbb::flow::composite_node< std::tuple< int >, std::tup
 
 public:
     tiny_node(tbb::flow::graph &g, bool hidden = false) : base_type(g), f1(g, tbb::flow::unlimited, passthru_body() ), f2(g, tbb::flow::unlimited, passthru_body() ) {
-        tbb::flow::make_edge( f1, f2 );
+        tbb::flow::make_edge(f1, f2);
 
         std::tuple<tbb::flow::function_node< int, int >& > input_tuple(f1);
         std::tuple<tbb::flow::function_node< int, int >& > output_tuple(f2);
-        base_type::set_external_ports( input_tuple, output_tuple );
+        base_type::set_external_ports(input_tuple, output_tuple);
 
         if(hidden)
             base_type::add_nodes(f1, f2);
@@ -566,12 +484,6 @@ void input_only_output_only_composite(bool hidden) {
         CHECK_MESSAGE( (num == 4*i - 3), "number does not match position in sequence");
     }
     g.wait_for_all();
-}
-
-//! Test all node types inside composite node
-//! \brief \ref error_guessing
-TEST_CASE("Add all nodes"){
-    add_all_nodes();
 }
 
 //! Test single node inside composite nodes

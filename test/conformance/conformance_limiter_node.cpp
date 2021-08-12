@@ -18,122 +18,167 @@
 #pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
 #endif
 
-#include "common/test.h"
-
-#include "common/utils.h"
-#include "common/graph_utils.h"
-
-#include "oneapi/tbb/flow_graph.h"
-#include "oneapi/tbb/task_arena.h"
-#include "oneapi/tbb/global_control.h"
-
 #include "conformance_flowgraph.h"
 
 //! \file conformance_limiter_node.cpp
 //! \brief Test for [flow_graph.limiter_node] specification
 
-/*
-TODO: implement missing conformance tests for limiter_node:
-  - [ ] The copy constructor and copy assignment are called for the node's type template parameter.
-  - [ ] Add use of `decrement' member into the `test_limiting' and see how positive and negative
-    values sent to `decrement's' port affect node's internal threshold.
-  - [ ] Add test checking the node gets value from the predecessors when threshold decreases enough.
-  - [ ] Add test that `continue_msg' decreases the threshold by one.
-*/
-
-template<typename T>
-void test_inheritance(){
-    using namespace oneapi::tbb::flow;
-
-    CHECK_MESSAGE( (std::is_base_of<graph_node, limiter_node<T>>::value), "sequencer_node should be derived from graph_node");
-    CHECK_MESSAGE( (std::is_base_of<receiver<T>, limiter_node<T>>::value), "sequencer_node should be derived from receiver<T>");
-    CHECK_MESSAGE( (std::is_base_of<sender<T>, limiter_node<T>>::value), "sequencer_node should be derived from sender<T>");
-}
-
-void test_copies(){
-    using namespace oneapi::tbb::flow;
-
-    graph g;
-    limiter_node<int> n(g, 5);
-    limiter_node<int> n2(n);
-
-}
-
-void test_buffering(){
-    oneapi::tbb::flow::graph g;
-
-    oneapi::tbb::flow::limiter_node<int> node(g, 5);
-    oneapi::tbb::flow::limiter_node<int> rejecter(g, 0);
-
-    oneapi::tbb::flow::make_edge(node, rejecter);
-    node.try_put(1);
-    g.wait_for_all();
-
-    int tmp = -1;
-    CHECK_MESSAGE( (node.try_get(tmp) == false), "try_get after rejection should not succeed");
-    CHECK_MESSAGE( (tmp == -1), "try_get after rejection should not set value");
-}
-
-void test_forwarding(){
-    oneapi::tbb::flow::graph g;
-
-    oneapi::tbb::flow::limiter_node<int> node1(g, 5);
-    test_push_receiver<int> node2(g);
-    test_push_receiver<int> node3(g);
-
-    oneapi::tbb::flow::make_edge(node1, node2);
-    oneapi::tbb::flow::make_edge(node1, node3);
-
-    node1.try_put(1);
-    g.wait_for_all();
-
-    CHECK_MESSAGE( (get_count(node2) == 1), "Descendant of the node needs to be receive N messages");
-    CHECK_MESSAGE( (get_count(node3) == 1), "Descendant of the node must receive one message.");
-}
-
-void test_limiting(){
-    oneapi::tbb::flow::graph g;
-
-    oneapi::tbb::flow::limiter_node<int> node1(g, 5);
-    test_push_receiver<int> node2(g);
-
-    oneapi::tbb::flow::make_edge(node1, node2);
-
-    for(int i = 0; i < 10; ++i)
-        node1.try_put(1);
-    g.wait_for_all();
-
-    CHECK_MESSAGE( (get_count(node2) == 5), "Descendant of the node needs be receive limited number of messages");
-}
+using input_msg = conformance::message</*default_ctor*/true, /*copy_ctor*/true/*enable for queue_node successor*/, /*copy_assign*/true/*enable for queue_node successor*/>;
 
 //! Test limiter_node limiting
 //! \brief \ref requirement
 TEST_CASE("limiter_node limiting"){
-    test_limiting();
+    oneapi::tbb::flow::graph g;
+
+    constexpr int limit = 5;
+    oneapi::tbb::flow::limiter_node<input_msg> node1(g, limit);
+    conformance::test_push_receiver<input_msg> node2(g);
+
+    oneapi::tbb::flow::make_edge(node1, node2);
+
+    for(int i = 0; i < limit * 2; ++i)
+        node1.try_put(input_msg(1));
+    g.wait_for_all();
+
+    CHECK_MESSAGE((conformance::get_values(node2).size() == limit), "Descendant of the node needs be receive limited number of messages");
 }
 
-//! Test function_node broadcast
+//! Test node broadcast messages to successors
 //! \brief \ref requirement
 TEST_CASE("limiter_node broadcast"){
-    test_forwarding();
+    conformance::test_forwarding<oneapi::tbb::flow::limiter_node<int>, int>(1, 5);
+    conformance::test_forwarding<oneapi::tbb::flow::limiter_node<input_msg>, input_msg>(1, 5);
 }
 
-//! Test limiter_node buffering
+//! Test node not buffered unsuccessful message, and try_get after rejection should not succeed.
 //! \brief \ref requirement
 TEST_CASE("limiter_node buffering"){
-    test_buffering();
+    conformance::test_buffering<oneapi::tbb::flow::limiter_node<int>, int>(5);
+    conformance::test_buffering<oneapi::tbb::flow::limiter_node<int, int>, int>(5);
 }
 
-//! Test copy constructor
+//! The node that is constructed has a reference to the same graph object as src, has the same threshold.
+//! The predecessors and successors of src are not copied.
 //! \brief \ref interface
 TEST_CASE("limiter_node copy constructor"){
-    test_copies();
+    using namespace oneapi::tbb::flow;
+    graph g;
+
+    limiter_node<int> node0(g, 1);
+    limiter_node<int> node1(g, 1);
+    conformance::test_push_receiver<int> node2(g);
+    conformance::test_push_receiver<int> node3(g);
+
+    oneapi::tbb::flow::make_edge(node0, node1);
+    oneapi::tbb::flow::make_edge(node1, node2);
+
+    limiter_node<int> node_copy(node1);
+
+    oneapi::tbb::flow::make_edge(node_copy, node3);
+
+    node_copy.try_put(1);
+    g.wait_for_all();
+
+    CHECK_MESSAGE((conformance::get_values(node2).size() == 0 && conformance::get_values(node3).size() == 1), "Copied node doesn`t copy successor");
+
+    node_copy.try_put(1);
+    g.wait_for_all();
+
+    CHECK_MESSAGE((conformance::get_values(node2).size() == 0 && conformance::get_values(node3).size() == 0), "Copied node copy threshold");
+
+    node0.try_put(1);
+    g.wait_for_all();
+
+    CHECK_MESSAGE((conformance::get_values(node2).size() == 1 && conformance::get_values(node3).size() == 0), "Copied node doesn`t copy predecessor");
 }
 
 //! Test inheritance relations
 //! \brief \ref interface
 TEST_CASE("limiter_node superclasses"){
-    test_inheritance<int>();
-    test_inheritance<void*>();
+    conformance::test_inheritance<oneapi::tbb::flow::limiter_node<int>, int, int>();
+    conformance::test_inheritance<oneapi::tbb::flow::limiter_node<float>, float, float>();
+    conformance::test_inheritance<oneapi::tbb::flow::limiter_node<input_msg>, input_msg, input_msg>();
 }
 
+//! Test limiter_node decrementer
+//! \brief \ref interface
+TEST_CASE("limiter_node decrementer"){
+    const int threshold = 5;
+    oneapi::tbb::flow::graph g;
+    oneapi::tbb::flow::limiter_node<int, int> limit(g, threshold);
+    oneapi::tbb::flow::queue_node<int> queue(g);
+    make_edge(limit, queue);
+    int m = 0;
+    CHECK_MESSAGE(( limit.try_put( m++ )), "Newly constructed limiter node does not accept message." );
+    CHECK_MESSAGE(limit.decrementer().try_put( -threshold ), // close limiter's gate
+                   "Limiter node decrementer's port does not accept message." );
+    CHECK_MESSAGE(( !limit.try_put( m++ )), "Closed limiter node's accepts message." );
+    CHECK_MESSAGE(limit.decrementer().try_put( threshold + 5 ),  // open limiter's gate
+                   "Limiter node decrementer's port does not accept message." );
+    for( int i = 0; i < threshold; ++i )
+        CHECK_MESSAGE(( limit.try_put( m++ )), "Limiter node does not accept message while open." );
+    CHECK_MESSAGE(( !limit.try_put( m )), "Limiter node's gate is not closed." );
+    g.wait_for_all();
+    int expected[] = {0, 2, 3, 4, 5, 6};
+    int actual = -1; m = 0;
+    while( queue.try_get(actual) )
+        CHECK_MESSAGE(actual == expected[m++], "" );
+    CHECK_MESSAGE(( sizeof(expected) / sizeof(expected[0]) == m), "Not all messages have been processed." );
+    g.wait_for_all();
+
+    const size_t threshold2 = size_t(-1);
+    oneapi::tbb::flow::limiter_node<int, long long> limit2(g, threshold2);
+    make_edge(limit2, queue);
+    CHECK_MESSAGE(( limit2.try_put( 1 )), "Newly constructed limiter node does not accept message." );
+    long long decrement_value = (long long)( size_t(-1)/2 );
+    CHECK_MESSAGE(limit2.decrementer().try_put( -decrement_value ),
+                   "Limiter node decrementer's port does not accept message" );
+    CHECK_MESSAGE(( limit2.try_put( 2 )), "Limiter's gate should not be closed yet." );
+    CHECK_MESSAGE(limit2.decrementer().try_put( -decrement_value ),
+                   "Limiter node decrementer's port does not accept message" );
+    CHECK_MESSAGE(( !limit2.try_put( 3 )), "Overflow happened for internal counter." );
+    int expected2[] = {1, 2};
+    actual = -1; m = 0;
+    while( queue.try_get(actual) )
+        CHECK_MESSAGE(actual == expected2[m++], "" );
+    CHECK_MESSAGE(( sizeof(expected2) / sizeof(expected2[0]) == m), "Not all messages have been processed." );
+    g.wait_for_all();
+
+    const size_t threshold3 = 10;
+    oneapi::tbb::flow::limiter_node<int, long long> limit3(g, threshold3);
+    make_edge(limit3, queue);
+    long long decrement_value3 = 3;
+    CHECK_MESSAGE(limit3.decrementer().try_put( -decrement_value3 ),
+                   "Limiter node decrementer's port does not accept message" );
+
+    m = 0;
+    while( limit3.try_put( m ) ){ m++; };
+    CHECK_MESSAGE(m == threshold3 - decrement_value3, "Not all messages have been accepted." );
+
+    actual = -1; m = 0;
+    while( queue.try_get(actual) ){
+        CHECK_MESSAGE(actual == m++, "Not all messages have been processed." );
+    }
+
+    g.wait_for_all();
+    CHECK_MESSAGE(m == threshold3 - decrement_value3, "Not all messages have been processed." );
+
+    const size_t threshold4 = 10;
+    oneapi::tbb::flow::limiter_node<int> limit4(g, threshold4);
+    make_edge(limit4, queue);
+
+    limit4.try_put(-1);
+    CHECK_MESSAGE(limit4.decrementer().try_put(oneapi::tbb::flow::continue_msg()),
+                   "Limiter node decrementer's port does not accept continue_msg" );
+
+    m = 0;
+    while( limit4.try_put( m ) ){ m++; };
+    CHECK_MESSAGE(m == threshold4, "Not all messages have been accepted." );
+
+    actual = -1; m = -1;
+    while( queue.try_get(actual) ){
+        CHECK_MESSAGE(actual == m++, "Not all messages have been processed." );
+    }
+
+    g.wait_for_all();
+}

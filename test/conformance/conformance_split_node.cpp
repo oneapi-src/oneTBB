@@ -18,138 +18,119 @@
 #pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
 #endif
 
-#include "common/test.h"
-
-#include "common/utils.h"
-#include "common/graph_utils.h"
-
-#include "oneapi/tbb/flow_graph.h"
-#include "oneapi/tbb/task_arena.h"
-#include "oneapi/tbb/global_control.h"
-
 #include "conformance_flowgraph.h"
 
 //! \file conformance_split_node.cpp
 //! \brief Test for [flow_graph.split_node] specification
 
-/*
-TODO: implement missing conformance tests for split_node:
-  - [ ] Check that copy constructor and copy assignment is called for each type the tuple stores.
-  - [ ] Rewrite `test_forwarding' to check broadcast semantics of the node.
-  - [ ] Improve test for constructors.
-  - [ ] Unify code style in the test by extracting the implementation from the `TEST_CASE' scope
-    into separate functions.
-  - [ ] Rename discarding test to `test_buffering' and add checking that the value does not change
-    in the `try_get()' method of the output ports of the node.
-  - [ ] Add checking of the unlimited concurrency.
-  - [ ] Check that `try_put()' always returns `true'.
-  - [ ] Explicitly check that `output_ports_type' is defined, accessible.
-  - [ ] Explicitly check the method `indexer_node::output_ports()' exists, is accessible and it
-    returns a reference to the `output_ports_type' type.
-*/
+using input_msg = conformance::message</*default_ctor*/true, /*copy_ctor*/true, /*copy_assign*/true/*enable for queue_node successor*/>;
+using my_input_tuple = std::tuple<int, float, input_msg>;
+using my_split_type = oneapi::tbb::flow::split_node<my_input_tuple>;
 
-using namespace oneapi::tbb::flow;
-using namespace std;
-
-template<typename T>
-void test_inheritance(){
-    CHECK_MESSAGE( (std::is_base_of<graph_node, split_node<std::tuple<T,T>>>::value), "split_node should be derived from graph_node");
-    CHECK_MESSAGE( (std::is_base_of<receiver<std::tuple<T,T>>, split_node<std::tuple<T,T>>>::value), "split_node should be derived from receiver<T>");
-}
-
-void test_split(){
-    graph g;
-
-    queue_node<int> first_queue(g);
-    queue_node<int> second_queue(g);
-    split_node< std::tuple<int,int> > my_split_node(g);
-    make_edge(output_port<0>(my_split_node), first_queue);
-    make_edge(output_port<1>(my_split_node), second_queue);
-
-    tuple<int, int> my_tuple(0, 1);
-    my_split_node.try_put(my_tuple);
-
-    g.wait_for_all();
-
-    int tmp = -1;
-    CHECK_MESSAGE((first_queue.try_get(tmp) == true), "Getting from target queue should succeed");
-    CHECK_MESSAGE((tmp == 0), "Received value should be correct");
-
-    tmp = -1;
-    CHECK_MESSAGE((second_queue.try_get(tmp) == true), "Getting from target queue should succeed");
-    CHECK_MESSAGE((tmp == 1), "Received value should be correct");
-}
-
-void test_copies(){
-    using namespace oneapi::tbb::flow;
-
-    graph g;
-    split_node<std::tuple<int, int>> n(g);
-    split_node<std::tuple<int, int>> n2(n);
-}
-
-void test_forwarding(){
+//! Test node not buffered unsuccessful message, and try_get after rejection should not succeed.
+//! \brief \ref requirement
+TEST_CASE("split_node buffering") {
     oneapi::tbb::flow::graph g;
 
-    oneapi::tbb::flow::split_node<std::tuple<int, int>> node1(g);
-    test_push_receiver<int> node2(g);
-    test_push_receiver<int> node3(g);
+    my_split_type testing_node(g);
 
-    oneapi::tbb::flow::make_edge(output_port<0>(node1), node2);
-    oneapi::tbb::flow::make_edge(output_port<1>(node1), node3);
+    oneapi::tbb::flow::limiter_node<int> rejecter1(g,0);
+    oneapi::tbb::flow::limiter_node<float> rejecter2(g,0);
+    oneapi::tbb::flow::limiter_node<input_msg> rejecter3(g,0);
 
-    tuple<int, int> my_tuple(0, 1);
-    node1.try_put(my_tuple);
+    oneapi::tbb::flow::make_edge(oneapi::tbb::flow::output_port<0>(testing_node), rejecter1);
+    oneapi::tbb::flow::make_edge(oneapi::tbb::flow::output_port<1>(testing_node), rejecter2);
+    oneapi::tbb::flow::make_edge(oneapi::tbb::flow::output_port<2>(testing_node), rejecter3);
 
+    my_input_tuple my_tuple(1, 1.5f, input_msg(2));
+    testing_node.try_put(my_tuple);
     g.wait_for_all();
 
-    CHECK_MESSAGE( (get_count(node2) == 1), "Descendant of the node needs to be receive N messages");
-    CHECK_MESSAGE( (get_count(node3) == 1), "Descendant of the node must receive one message.");
+    int tmp1 = -1;
+    float tmp2 = -1;
+    input_msg tmp3(-1);
+    CHECK_MESSAGE((oneapi::tbb::flow::output_port<0>(testing_node).try_get(tmp1) == false 
+                    && tmp1 == -1), "Value should be discarded after rejection");
+    CHECK_MESSAGE((oneapi::tbb::flow::output_port<1>(testing_node).try_get(tmp2) == false 
+                    && tmp2 == -1.f), "Value should be discarded after rejection");
+    CHECK_MESSAGE((oneapi::tbb::flow::output_port<2>(testing_node).try_get(tmp3) == false 
+                    && tmp3 == -1), "Value should be discarded after rejection");
 }
 
-//! Test broadcast
-//! \brief \ref interface
-TEST_CASE("split_node broadcast") {
-    test_forwarding();
-}
-
-//! Test discarding property
+//! Test node broadcast messages to successors and splitting them in correct order
 //! \brief \ref requirement
-TEST_CASE("split_node discarding") {
-    graph g;
+TEST_CASE("split_node broadcast and splitting"){
+    using namespace oneapi::tbb::flow;
+    oneapi::tbb::flow::graph g;
 
-    split_node< std::tuple<int,int> > my_split_node(g);
+    my_split_type testing_node(g);
+    conformance::test_push_receiver<int> node2(g);
+    conformance::test_push_receiver<float> node3(g);
+    conformance::test_push_receiver<input_msg> node4(g);
 
-    limiter_node< int > rejecter1( g,0);
-    limiter_node< int > rejecter2( g,0);
+    oneapi::tbb::flow::make_edge(output_port<0>(testing_node), node2);
+    oneapi::tbb::flow::make_edge(output_port<1>(testing_node), node3);
+    oneapi::tbb::flow::make_edge(output_port<2>(testing_node), node4);
 
-    make_edge(output_port<0>(my_split_node), rejecter2);
-    make_edge(output_port<1>(my_split_node), rejecter1);
+    my_input_tuple my_tuple(1, 1.5f, input_msg(2));
 
-    tuple<int, int> my_tuple(0, 1);
-    my_split_node.try_put(my_tuple);
+    CHECK_MESSAGE((testing_node.try_put(my_tuple)), "`try_put()' must always returns `true'");
+    g.wait_for_all();
+    auto values1 = conformance::get_values(node2);
+    auto values2 = conformance::get_values(node3);
+    auto values3 = conformance::get_values(node4);
+
+    CHECK_MESSAGE((values1.size() == 1), "Descendant of the node must receive one message.");
+    CHECK_MESSAGE((values2.size() == 1), "Descendant of the node must receive one message.");
+    CHECK_MESSAGE((values3.size() == 1), "Descendant of the node must receive one message.");
+    CHECK_MESSAGE((values1[0] == 1), "Descendant of the node needs to be receive N messages");
+    CHECK_MESSAGE((values2[0] == 1.5f), "Descendant of the node must receive one message.");
+    CHECK_MESSAGE((values3[0] == 2), "Descendant of the node must receive one message.");
+}
+
+//! The node that is constructed has a reference to the same graph object as src.
+//! The predecessors and successors of src are not copied.
+//! \brief \ref interface
+TEST_CASE("split_node copy constructor"){
+    oneapi::tbb::flow::graph g;
+    oneapi::tbb::flow::continue_node<std::tuple<int>> node0( g,
+                                [](oneapi::tbb::flow::continue_msg) { return std::tuple<int>(1); } );
+
+    oneapi::tbb::flow::split_node<std::tuple<int>> node1(g);
+    conformance::test_push_receiver<int> node2(g);
+    conformance::test_push_receiver<int> node3(g);
+
+    oneapi::tbb::flow::make_edge(node0, node1);
+    oneapi::tbb::flow::make_edge(oneapi::tbb::flow::output_port<0>(node1), node2);
+
+    oneapi::tbb::flow::split_node<std::tuple<int>> node_copy(node1);
+
+    oneapi::tbb::flow::make_edge(oneapi::tbb::flow::output_port<0>(node_copy), node3);
+
+    node_copy.try_put(std::tuple<int>(1));
     g.wait_for_all();
 
-    int tmp = -1;
-    CHECK_MESSAGE((output_port<0>(my_split_node).try_get(tmp) == false), "Value should be discarded after rejection");
-    CHECK_MESSAGE((output_port<1>(my_split_node).try_get(tmp) == false), "Value should be discarded after rejection");
-}
+    CHECK_MESSAGE((conformance::get_values(node2).size() == 0 && conformance::get_values(node3).size() == 1), "Copied node doesn`t copy successor");
 
-//! Test copy constructor
-//! \brief \ref interface
-TEST_CASE("split_node copy constructor") {
-    test_copies();
-}
+    node0.try_put(oneapi::tbb::flow::continue_msg());
+    g.wait_for_all();
 
-//! Test copy constructor
-//! \brief \ref interface \ref requirement
-TEST_CASE("split_node messages") {
-    test_split();
+    CHECK_MESSAGE((conformance::get_values(node2).size() == 1 && conformance::get_values(node3).size() == 0), "Copied node doesn`t copy predecessor");
 }
 
 //! Test copy constructor
 //! \brief \ref interface
 TEST_CASE("split_node superclasses") {
-    test_inheritance<int>();
+    CHECK_MESSAGE((std::is_base_of<oneapi::tbb::flow::graph_node, my_split_type>::value), "split_node should be derived from graph_node");
+    CHECK_MESSAGE((std::is_base_of<oneapi::tbb::flow::receiver<my_input_tuple>, my_split_type>::value), "split_node should be derived from receiver<T>");
 }
 
+//! Test split_node output_ports() returns a tuple of output ports.
+//! \brief \ref interface \ref requirement
+TEST_CASE("split_node output_ports") {
+    oneapi::tbb::flow::graph g;
+    my_split_type node(g);
+
+    CHECK_MESSAGE((std::is_same<my_split_type::output_ports_type&,
+        decltype(node.output_ports())>::value), "split_node output_ports should returns a tuple of output ports");
+}
