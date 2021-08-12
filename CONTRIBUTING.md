@@ -47,9 +47,9 @@ git config --global user.email taylor.developer@company.com
 
 Before contributing changes directly to the oneTBB repository: 
 
-* Make sure you can build the product and run all the testd with your patch. 
+* Make sure you can build the product and run all the tests with your patch. 
 * For a larger feature, provide a relevant test. 
-* Document your code. The oneTBB project reStructuredText for documentation.  
+* Document your code. The oneTBB project uses reStructuredText for documentation.  
 * Submit a pull request into the master branch. You can submit changes with a pull request (preferred) or by sending an email patch.  
 
 Continuous Integration (CI) testing is enabled for the repository. Your pull request must pass all checks before it can be merged. We will review your contribution and may provide feedback to guide you if any additional fixes or modifications are necessary. When reviewed and accepted, your pull request will be merged into our GitHub repository. 
