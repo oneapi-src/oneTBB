@@ -320,6 +320,7 @@ d1::task* task_dispatcher::local_wait_for_all(d1::task* t, Waiter& waiter ) {
                         t = t->cancel(ed);
                     } else {
                         t = t->execute(ed);
+                        __TBB_add_statistics(governor::get_thread_data(), executed);
                     }
 
                     ITT_CALLEE_LEAVE(ITTPossible, itt_caller);

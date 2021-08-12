@@ -135,6 +135,20 @@
 #endif // TBB_USE_DEBUG
 #endif // TBB_USE_PROFILING_TOOLS
 
+#ifndef __TBB_STATISTICS
+#if __TBB_STATISTICS_SUM
+    #define __TBB_STATISTICS 1
+#else
+    #define __TBB_STATISTICS 0
+#endif // __TBB_STATISTICS_SUM
+#endif // __TBB_STATISTICS
+
+#if __TBB_STATISTICS
+    #define __TBB_add_statistics(TLS, STAT) TLS->add_statistics(governor::statistics::STAT)
+#else
+    #define __TBB_add_statistics(TLS, STAT)
+#endif // __TBB_STATISTICS
+
 // Exceptions support cases
 #if !(__EXCEPTIONS || defined(_CPPUNWIND) || __SUNPRO_CC)
     #if TBB_USE_EXCEPTIONS
