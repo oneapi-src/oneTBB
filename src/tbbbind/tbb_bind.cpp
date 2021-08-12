@@ -400,8 +400,8 @@ public:
     }
 
     int get_last_cpu_location() {
-        /* thread_local variable has automatically static-like initialization and lifetime */
-        thread_local raii_affinity_mask last_cpu_location{};
+        // TODO: every call of this function create allocation, try to fix this
+        raii_affinity_mask last_cpu_location{};
         int err = hwloc_get_last_cpu_location(topology, last_cpu_location, HWLOC_CPUBIND_THREAD);
         __TBB_ASSERT_EX((int)err == 0 && hwloc_bitmap_weight(last_cpu_location) == 1, "hwloc_bitmap weight error");
         int cpu_number = hwloc_bitmap_first(last_cpu_location);
