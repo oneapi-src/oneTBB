@@ -197,7 +197,7 @@ public:
             }
             std::cout << std::endl;
             array_stat summary{};
-            for (const auto &thread_stat : accumulate_statistics) {
+            for (const auto &thread_stat : accumulate_statistics_) {
                 for (std::size_t k = 0; k < thread_stat.size(); ++k) {
 #if !__TBB_STATISTICS_SUM
                     std::cout << std::left << std::setw(column_names[k].size() + offset) << thread_stat[k];

@@ -173,16 +173,13 @@ d1::task* arena_slot::get_task(execution_data_ext& ed, isolation_type isolation)
 }
 
 d1::task* arena_slot::steal_task(arena& a, isolation_type isolation, std::size_t slot_index) {
-<<<<<<< HEAD
 #if __TBB_STATISTICS
     thread_data *tls = governor::get_thread_data();
 #endif /* __TBB_STATISTICS */
     __TBB_add_statistics(tls, try_steal); // try_steal
 
     d1::task** victim_pool = try_lock_task_pool();
-=======
-    d1::task** victim_pool = try_lock_task_pool();
->>>>>>> 59cf491f... Add pool mask optimization
+
     if (!victim_pool) {
         __TBB_add_statistics(tls, empty_vic_pool);
         return nullptr;
