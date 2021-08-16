@@ -74,18 +74,6 @@ private:
     tls_key_t my_key;
 };
 
-//! More advanced TLS support template class.
-/** It supports RAII and to some extent mimic __declspec(thread) variables. */
-template <typename T>
-class tls : public basic_tls<T> {
-    typedef basic_tls<T> base;
-public:
-    tls()  { base::create();  }
-    ~tls() { base::destroy(); }
-    T operator=(T value) { base::set(value); return value; }
-    operator T() { return base::get(); }
-};
-
 } // namespace r1
 } // namespace detail
 } // namespace tbb
