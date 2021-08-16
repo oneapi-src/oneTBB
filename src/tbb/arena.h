@@ -651,7 +651,7 @@ inline d1::task* arena::steal_task(unsigned arena_index, FastRandom& frnd, execu
         range.second = min(range.second, static_cast<int>(slot_num_limit));
         auto* task_to_steal = try_steal_in_range(range);
         if (task_to_steal) {
-             return task_to_steal;
+            return task_to_steal;
         }
     }
     return try_steal_in_range({0u, slot_num_limit});
