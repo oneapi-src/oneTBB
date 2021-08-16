@@ -129,6 +129,10 @@ public:
         auto_terminate(get_thread_data_if_initialized());
     }
 
+    static int get_my_current_numa_node();
+
+    static unsigned get_numa_cores_count(numa_node_id);
+
     static void initialize_rml_factory ();
 
     static bool does_client_join_workers (const rml::tbb_client &client);

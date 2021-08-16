@@ -295,6 +295,8 @@ bool __TBB_EXPORTED_FUNC finalize(d1::task_scheduler_handle& handle, std::intptr
 #pragma weak __TBB_internal_apply_affinity
 #pragma weak __TBB_internal_restore_affinity
 #pragma weak __TBB_internal_get_default_concurrency
+#pragma weak __TBB_internal_my_current_numa_node
+#pragma weak __TBB_internal_numa_cores_count
 
 extern "C" {
 void __TBB_internal_initialize_system_topology(
@@ -312,6 +314,9 @@ void __TBB_internal_apply_affinity( binding_handler* handler_ptr, int slot_num )
 void __TBB_internal_restore_affinity( binding_handler* handler_ptr, int slot_num );
 
 int __TBB_internal_get_default_concurrency( int numa_id, int core_type_id, int max_threads_per_core );
+
+int __TBB_internal_my_current_numa_node();
+int __TBB_internal_numa_cores_count(numa_node_id numa_id);
 }
 #endif /* __TBB_WEAK_SYMBOLS_PRESENT */
 
@@ -322,6 +327,8 @@ static void dummy_deallocate_binding_handler ( binding_handler* ) { }
 static void dummy_apply_affinity ( binding_handler*, int ) { }
 static void dummy_restore_affinity ( binding_handler*, int ) { }
 static int dummy_get_default_concurrency( int, int, int ) { return governor::default_num_threads(); }
+static int dummy_my_current_numa_node() { return 0; }
+static int dummy_numa_cores_count( numa_node_id ) { return governor::default_num_threads(); }
 
 // Handlers for communication with TBBbind
 static void (*initialize_system_topology_ptr)(
@@ -341,6 +348,8 @@ static void (*restore_affinity_ptr)( binding_handler* handler_ptr, int slot_num 
     = dummy_restore_affinity;
 int (*get_default_concurrency_ptr)( int numa_id, int core_type_id, int max_threads_per_core )
     = dummy_get_default_concurrency;
+int (*my_current_numa_node)() = dummy_my_current_numa_node;
+int (*numa_cores_count)(numa_node_id numa_id) = dummy_numa_cores_count;
 
 #if _WIN32 || _WIN64 || __unix__
 // Table describing how to link the handlers.
@@ -351,7 +360,9 @@ static const dynamic_link_descriptor TbbBindLinkTable[] = {
     DLD(__TBB_internal_deallocate_binding_handler, deallocate_binding_handler_ptr),
     DLD(__TBB_internal_apply_affinity, apply_affinity_ptr),
     DLD(__TBB_internal_restore_affinity, restore_affinity_ptr),
-    DLD(__TBB_internal_get_default_concurrency, get_default_concurrency_ptr)
+    DLD(__TBB_internal_get_default_concurrency, get_default_concurrency_ptr),
+    DLD(__TBB_internal_my_current_numa_node, my_current_numa_node),
+    DLD(__TBB_internal_numa_cores_count, numa_cores_count),
 };
 
 static const unsigned LinkTableSize = sizeof(TbbBindLinkTable) / sizeof(dynamic_link_descriptor);
@@ -543,6 +554,22 @@ int __TBB_EXPORTED_FUNC constraints_threads_per_core(const d1::constraints&, int
     return system_topology::automatic;
 }
 #endif /* __TBB_ARENA_BINDING */
+
+int governor::get_my_current_numa_node() {
+    system_topology::initialize();
+    int res = my_current_numa_node();
+    res = (res >= 0 ? res : 0);
+    return res;
+}
+
+unsigned governor::get_numa_cores_count(numa_node_id numa_id) {
+    system_topology::initialize();
+    int res = -1;
+    if (numa_id >= 0) {
+        res = numa_cores_count(numa_id);
+    }
+    return res > 0 ? numa_cores_count(numa_id) : governor::default_num_threads();
+}
 
 } // namespace r1
 } // namespace detail
