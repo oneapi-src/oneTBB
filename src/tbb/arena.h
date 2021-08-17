@@ -291,8 +291,26 @@ struct arena_base : padded<intrusive_list_node> {
     std::uintptr_t my_guard;
 #endif /* TBB_USE_ASSERT */
 
-    using pool_mask_type = std::atomic<int>;
+#if __TBB_POOL_MASK_OPTIMIZATION
+    template <class T, std::size_t N = alignof(T)>
+    struct alignas(N) pool_mask_template {
+        static_assert(
+            std::is_integral<T>::value &&
+            sizeof(T) <= 8 &&
+            sizeof(std::atomic<T>) <= N, "Pool mask type error");
+
+        T load(std::memory_order order) {
+            return value.load(order);
+        }
+        void store(T val, std::memory_order order) {
+            value.store(val, order);
+        }
+    private:
+        std::atomic<T> value;
+    };
+    using pool_mask_type = pool_mask_template<int, 16>;
     pool_mask_type* pool_mask;
+#endif
 
     using numa_interval = std::pair<int, int>;
     //! Map from numa nodes to range of slots to this numa node
@@ -368,14 +386,14 @@ public:
             return numa_node_count() > 1 && my_num_slots == governor::default_num_threads() && my_num_reserved_slots == 1u;
         #else
             return false;
-        #endif /* __TBB_HIERARCHICAL_STEALING_OPTIMIZATION */
+        #endif
     }
 
     //! If necessary, raise a flag that there is new job in arena.
     template<arena::new_work_type work_type> void advertise_new_work();
 
     //! Get the index of a non-empty task pool
-    long long get_index_for_steal_in_range(FastRandom& frnd, const std::pair<std::size_t, std::size_t>& range);
+    int get_index_for_steal_in_range(FastRandom& frnd, const std::pair<std::size_t, std::size_t>& range, unsigned);
 
     //! Try steal task from slot with slot number
     d1::task* try_steal_from_slot(int slot_number, execution_data_ext& ed, isolation_type isolation);
@@ -575,12 +593,15 @@ void arena::advertise_new_work() {
 
 /*  Trying to find index in the passed range using pool mask
     Pre-condition: range.second <= my_limit */
-inline long long arena::get_index_for_steal_in_range(FastRandom& frnd, const std::pair<std::size_t, std::size_t>& range) {
+inline int arena::get_index_for_steal_in_range(FastRandom& frnd, const std::pair<std::size_t, std::size_t>& range, unsigned arena_index) {
+    __TBB_ASSERT(range.second <= my_limit.load(std::memory_order_relaxed), "pre-condition in get_index_for_steal failed");
     if (range.first >= range.second) {
         return -1;
     }
 
-    std::size_t k = std::count_if(pool_mask + range.first, pool_mask + range.second, [] (std::atomic<int>& el) {
+#if __TBB_POOL_MASK_OPTIMIZATION
+    (void)arena_index;
+    std::size_t k = std::count_if(pool_mask + range.first, pool_mask + range.second, [] (pool_mask_type& el) {
         return el.load(std::memory_order_relaxed);
     });
 
@@ -591,11 +612,18 @@ inline long long arena::get_index_for_steal_in_range(FastRandom& frnd, const std
     std::size_t target_slot = frnd.get() % k;
     for (std::size_t i = range.first; i < range.second; ++i) {
         if (pool_mask[i].load(std::memory_order_relaxed) && (target_slot-- == 0)) {
-            return i;
+            return static_cast<int>(i);
         }
     }
-
+    
     return -1;
+#else
+    int k = (frnd.get() % (range.second - range.first - 1)) + range.first;
+    if (k >= (int) arena_index) {
+        ++k;
+    }
+    return k;
+#endif
 }
 
 inline d1::task* arena::try_steal_from_slot(int slot_number, execution_data_ext& ed, isolation_type isolation) {
@@ -633,7 +661,7 @@ inline d1::task* arena::steal_task(unsigned arena_index, FastRandom& frnd, execu
         return nullptr;
     }
     auto try_steal_in_range = [&](numa_interval range) {
-        auto slot_number = get_index_for_steal_in_range(frnd, range);
+        auto slot_number = get_index_for_steal_in_range(frnd, range, arena_index);
         return try_steal_from_slot(slot_number, ed, isolation);
     };
 

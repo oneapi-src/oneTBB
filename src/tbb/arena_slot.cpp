@@ -26,7 +26,11 @@ namespace r1 {
 // Arena Slot
 //------------------------------------------------------------------------
 void arena_slot::reset_task_pool_and_leave(thread_data* td) {
+#if __TBB_POOL_MASK_OPTIMIZATION
     td->my_arena->pool_mask[td->my_arena_index].store(0, std::memory_order_relaxed);
+#else
+    (void)td;
+#endif
     __TBB_ASSERT(task_pool.load(std::memory_order_relaxed) == LockedTaskPool, "Task pool must be locked when resetting task pool");
     tail.store(0, std::memory_order_relaxed);
     head.store(0, std::memory_order_relaxed);
@@ -39,7 +43,11 @@ void arena_slot::publish_task_pool(thread_data* td) {
         "entering arena without tasks to share" );
     // Release signal on behalf of previously spawned tasks (when this thread was not in arena yet)
     task_pool.store(task_pool_ptr, std::memory_order_release );
+#if __TBB_POOL_MASK_OPTIMIZATION
     td->my_arena->pool_mask[td->my_arena_index].store(1, std::memory_order_relaxed);
+#else
+    (void)td;
+#endif
 }
 
 
