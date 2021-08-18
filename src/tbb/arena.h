@@ -290,7 +290,23 @@ struct arena_base : padded<intrusive_list_node> {
     std::uintptr_t my_guard;
 #endif /* TBB_USE_ASSERT */
 
-    using pool_mask_type = std::atomic<int>;
+    template <class T, std::size_t N = alignof(T)>
+    struct alignas(N) pool_mask_template {
+        static_assert(
+            std::is_integral<T>::value &&
+            sizeof(T) <= 8 &&
+            sizeof(std::atomic<T>) <= N, "Pool mask type error");
+
+        T load(std::memory_order order) {
+            return value.load(order);
+        }
+        void store(T val, std::memory_order order) {
+            value.store(val, order);
+        }
+    private:
+        std::atomic<T> value;
+    };
+    using pool_mask_type = pool_mask_template<char, 64>;
     pool_mask_type* pool_mask;
 }; // struct arena_base
 
@@ -361,7 +377,10 @@ public:
     template<arena::new_work_type work_type> void advertise_new_work();
 
     //! Get the index of a non-empty task pool
-    long long get_index_for_steal(FastRandom& frnd);
+    int get_index_for_steal_in_range(FastRandom& frnd, const std::pair<std::size_t, std::size_t>& range);
+
+    //! Try steal task from slot with slot number
+    d1::task* try_steal_from_slot(int slot_number, execution_data_ext& ed, isolation_type isolation);
 
     //! Attempts to steal a task from a randomly chosen arena slot
     d1::task* steal_task(FastRandom& frnd, execution_data_ext& ed, isolation_type isolation);
@@ -556,47 +575,28 @@ void arena::advertise_new_work() {
     }
 }
 
-inline long long arena::get_index_for_steal(FastRandom& frnd) {
-    auto slot_num_limit = my_limit.load(std::memory_order_relaxed);
-    if (slot_num_limit == 1) {
-        // No slots to steal from
+/*  Trying to find index in the passed range using pool mask
+    Pre-condition: range.second <= my_limit */
+inline int arena::get_index_for_steal_in_range(FastRandom& frnd, const std::pair<std::size_t, std::size_t>& range) {
+    __TBB_ASSERT(range.second <= my_limit.load(std::memory_order_relaxed), "pre-condition in get_index_for_steal failed");
+    if (range.first >= range.second) {
         return -1;
     }
 
-    std::size_t k = std::count_if(pool_mask, pool_mask + slot_num_limit, [] (std::atomic<int>& el) {
-        return el.load(std::memory_order_relaxed);
-    });
-
-    if (k == 0) {
-        return -1;
-    }
-
-    std::size_t target_slot = frnd.get() % k;
-    for (std::size_t i = 0; i < slot_num_limit; ++i) {
-        if (pool_mask[i].load(std::memory_order_relaxed) && (target_slot-- == 0)) {
-            return i;
-        }
+    int k = (frnd.get() % (range.second - range.first)) + range.first;
+    if (pool_mask[k].load(std::memory_order_relaxed)) {
+        return k;
     }
 
     return -1;
 }
 
-inline d1::task* arena::steal_task(FastRandom& frnd, execution_data_ext& ed, isolation_type isolation) {
-    long long k = get_index_for_steal(frnd);
-
-    if (k < 0) {
-        return nullptr;
-    }
-
-    // The following condition excludes the external thread that might have
-    // already taken our previous place in the arena from the list .
-    // of potential victims. But since such a situation can take
-    // place only in case of significant oversubscription, keeping
-    // the checks simple seems to be preferable to complicating the code.
-    arena_slot* victim = &my_slots[k];
+inline d1::task* arena::try_steal_from_slot(int slot_number, execution_data_ext& ed, isolation_type isolation) {
+    if (slot_number < 0) return nullptr;
+    arena_slot* victim = &my_slots[slot_number];
     d1::task **pool = victim->task_pool.load(std::memory_order_relaxed);
     d1::task *t = nullptr;
-    if (pool == EmptyTaskPool || !(t = victim->steal_task(*this, isolation, k))) {
+    if (pool == EmptyTaskPool || !(t = victim->steal_task(*this, isolation, slot_number))) {
         return nullptr;
     }
     if (task_accessor::is_proxy_task(*t)) {
@@ -615,8 +615,22 @@ inline d1::task* arena::steal_task(FastRandom& frnd, execution_data_ext& ed, iso
         ed.affinity_slot = d1::any_slot;
     }
     // Update task owner thread id to identify stealing
-    ed.original_slot = k;
+    ed.original_slot = slot_number;
     return t;
+}
+
+inline d1::task* arena::steal_task(FastRandom& frnd, execution_data_ext& ed, isolation_type isolation) {
+    auto slot_num_limit = my_limit.load(std::memory_order_relaxed);
+    if (slot_num_limit == 1) {
+        // No slots to steal from
+        return nullptr;
+    }
+    auto try_steal_in_range = [&](std::pair<std::size_t, std::size_t> range) {
+        auto slot_number = get_index_for_steal_in_range(frnd, range);
+        return try_steal_from_slot(slot_number, ed, isolation);
+    };
+
+    return try_steal_in_range({0u, slot_num_limit});
 }
 
 template<task_stream_accessor_type accessor>

@@ -26,8 +26,8 @@ namespace r1 {
 // Arena Slot
 //------------------------------------------------------------------------
 void arena_slot::reset_task_pool_and_leave(thread_data* td) {
-    td->my_arena->pool_mask[td->my_arena_index].store(0, std::memory_order_relaxed);
     __TBB_ASSERT(task_pool.load(std::memory_order_relaxed) == LockedTaskPool, "Task pool must be locked when resetting task pool");
+    td->my_arena->pool_mask[td->my_arena_index].store(0, std::memory_order_relaxed);
     tail.store(0, std::memory_order_relaxed);
     head.store(0, std::memory_order_relaxed);
     leave_task_pool();
