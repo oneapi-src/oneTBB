@@ -583,11 +583,21 @@ inline int arena::get_index_for_steal_in_range(FastRandom& frnd, const std::pair
         return -1;
     }
 
-    int k = (frnd.get() % (range.second - range.first)) + range.first;
-    if (pool_mask[k].load(std::memory_order_relaxed)) {
-        return k;
+    std::size_t k = std::count_if(pool_mask + range.first, pool_mask + range.second, [] (pool_mask_type& el) {
+        return el.load(std::memory_order_relaxed);
+    });
+
+    if (k == 0) {
+        return -1;
     }
 
+    std::size_t target_slot = frnd.get() % k;
+    for (std::size_t i = range.first; i < range.second; ++i) {
+        if (pool_mask[i].load(std::memory_order_relaxed) && (target_slot-- == 0)) {
+            return static_cast<int>(i);
+        }
+    }
+    
     return -1;
 }
 
