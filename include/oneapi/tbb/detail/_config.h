@@ -154,7 +154,7 @@
 #endif
 
 #ifndef __TBB_POOL_MASK_OPTIMIZATION
-#define __TBB_POOL_MASK_OPTIMIZATION 1
+#define __TBB_POOL_MASK_OPTIMIZATION 0
 #endif
 
 // Exceptions support cases
