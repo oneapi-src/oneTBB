@@ -1752,7 +1752,7 @@ struct enqueue_test_helper {
 //! Test for uninitilized arena
 //! \brief \ref requirement \ref error_guessing
 TEST_CASE("Test current_thread_index") {
-    CHECK(tbb::this_task_arena::current_thread_index() < 0);
+    CHECK((tbb::this_task_arena::current_thread_index() == tbb::task_arena::not_initialized));
 }
 
 // This test requires TBB in an uninitialized state
