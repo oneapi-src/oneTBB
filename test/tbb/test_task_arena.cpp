@@ -1748,6 +1748,7 @@ struct enqueue_test_helper {
 
 //--------------------------------------------------//
 
+// This test requires TBB in an uninitialized state
 //! Test for uninitilized arena
 //! \brief \ref requirement \ref error_guessing
 TEST_CASE("Test current_thread_index") {
