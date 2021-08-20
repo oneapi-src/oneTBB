@@ -451,8 +451,8 @@ inline auto isolate(F&& f) -> decltype(f()) {
 
 //! Returns the index, aka slot number, of the calling thread in its current arena
 inline int current_thread_index() {
-    int idx = r1::execution_slot(nullptr);
-    return idx == -1 ? task_arena_base::not_initialized : idx;
+    slot_id idx = r1::execution_slot(nullptr);
+    return idx == slot_id(-1) ? task_arena_base::not_initialized : int(idx);
 }
 
 #if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS

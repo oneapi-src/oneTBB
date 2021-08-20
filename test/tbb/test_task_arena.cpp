@@ -1748,7 +1748,13 @@ struct enqueue_test_helper {
 
 //--------------------------------------------------//
 
-// This test should be first
+//! Test for uninitilized arena
+//! \brief \ref requirement \ref error_guessing
+TEST_CASE("Test current_thread_index") {
+    CHECK(tbb::this_task_arena::current_thread_index() < 0);
+}
+
+// This test requires TBB in an uninitialized state
 //! \brief \ref requirement
 TEST_CASE("task_arena initialize soft limit ignoring affinity mask") {
     tbb::enumerable_thread_specific<int> ets;
