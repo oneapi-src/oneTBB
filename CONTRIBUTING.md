@@ -14,9 +14,8 @@
 * limitations under the License.
 *******************************************************************************/-->
 
-## How to Contribute 
-
-As an open source project, we welcome community contributions to oneAPI Threading Building Blocks (oneTBB).  This document explains how to participate in project conversations, log bugs and enhancement requests, and submit code patches to the project.   
+# How to Contribute
+As an open source project, we welcome community contributions to oneAPI Threading Building Blocks (oneTBB).  This document explains how to participate in project conversations, log bugs and enhancement requests, and submit code patches to the project. 
 
 ## Licensing 
 
