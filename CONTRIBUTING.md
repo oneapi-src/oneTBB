@@ -13,6 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 *******************************************************************************/-->
+
 # How to Contribute 
 
 As an open source project, we welcome community contributions to oneAPI Threading Building Blocks (oneTBB).  This document explains how to participate in project conversations, log bugs and enhancement requests, and submit code patches to the project.   
@@ -27,10 +28,10 @@ The DCO is an attestation attached to every contribution made by every developer
 
 ## Prerequisites 
 
-As a contributor, you’ll want to be familiar with the oneTBB project and the repository layout. You should also know how to use it as explained in the oneTBB documentation and how to set up your build development environment to configure, build, and test oneTBB as explained in the [oneTBB Build System Description](https://github.com/oneapi-src/oneTBB/blob/master/cmake/README.md). 
+As a contributor, you’ll want to be familiar with the oneTBB project and the repository layout. You should also know how to use it as explained in the [oneTBB documentation](https://oneapi-src.github.io/oneTBB/) and how to set up your build development environment to configure, build, and test oneTBB as explained in the [oneTBB Build System Description](cmake/README.md). 
 
 ## Issues 
-Before starting on a patch, first check out open [oneTBB GitHub issues](https://github.com/oneapi-src/oneTBB/issues) to see if the issue you’d like to address is already reported. You may find users that have encountered the bug you’re finding or have similar ideas for changes or additions.
+If you face a problem, first check out open [oneTBB GitHub issues](https://github.com/oneapi-src/oneTBB/issues) to see if the issue you’d like to address is already reported. You may find users that have encountered the bug you’re finding or have similar ideas for changes or additions.
 
 You can use issues to report a problem, make a feature request, or add comments on an existing issue. 
 
@@ -38,11 +39,11 @@ You can use issues to report a problem, make a feature request, or add comments 
 
 You can find all [open oneTBB pull requests](https://github.com/oneapi-src/oneTBB/pulls) on GitHub. 
 
-No anonymous contributions are accepted. The name in the commit message Signed-of-by line and your email must match the change authorship information.  Make sure your .gitconfig is set up correctly so you can use git commit -s for signing your patches: 
+No anonymous contributions are accepted. The name in the commit message Signed-of-by line and your email must match the change authorship information.  Make sure your .gitconfig is set up correctly so you can use `git commit -s` for signing your patches: 
 
-git config --global user.name "Taylor Developer" 
+`git config --global user.name "Taylor Developer"`
 
-git config --global user.email taylor.developer@company.com   
+`git config --global user.email taylor.developer@company.com`
  
 
 Before contributing changes directly to the oneTBB repository: 
