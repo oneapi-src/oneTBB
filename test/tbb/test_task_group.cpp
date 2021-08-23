@@ -1179,7 +1179,7 @@ TEST_CASE("Task handle run_and_wait"){
     tbb::task_handle h;
 
     tbb::task_group tg;
-    std::atomic<bool> run {false};
+    bool run {false};
 
     h = tg.defer([&]{
         run = true;
