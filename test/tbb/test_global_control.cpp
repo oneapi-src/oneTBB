@@ -222,6 +222,19 @@ void TestTerminationAndAutoinit(bool autoinit) {
     REQUIRE(res2);
 }
 
+TEST_CASE("test decrease reference") {
+    auto thread_func = [] {
+        tbb::parallel_for(0, 1, [](int) {});
+    };
+
+    tbb::task_scheduler_handle handle = tbb::task_scheduler_handle::get();
+
+    std::thread thr(thread_func);
+    thr.join();
+
+    REQUIRE(tbb::finalize(handle, std::nothrow));
+}
+
 //! Testing lifetime control conformance
 //! \brief \ref interface \ref requirement
 TEST_CASE("prolong lifetime simple") {

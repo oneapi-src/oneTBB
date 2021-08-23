@@ -167,8 +167,20 @@ static std::uintptr_t get_stack_base(std::size_t stack_size) {
 #endif /* USE_PTHREAD */
 }
 
+#if (_WIN32||_WIN64) && !__TBB_DYNAMIC_LOAD_ENABLED
+struct thread_destructor {
+   ~thread_destructor() {
+       governor::terminate_external_thread();
+   }
+} 
+static thread_local thr_destructor;
+#endif // (_WIN32||_WIN64) && !__TBB_DYNAMIC_LOAD_ENABLED
+
 void governor::init_external_thread() {
     one_time_init();
+#if (_WIN32||_WIN64) && !__TBB_DYNAMIC_LOAD_ENABLED
+    (void)thr_destructor;
+#endif // (_WIN32||_WIN64) && !__TBB_DYNAMIC_LOAD_ENABLED
     // Create new scheduler instance with arena
     int num_slots = default_num_threads();
     // TODO_REVAMP: support an external thread without an implicit arena
