@@ -129,7 +129,8 @@ else:
     'path_to_docs': 'doc/main',
     'use_issues_button': True,
     'use_edit_page_button': True,
-    'repository_branch': 'master'
+    'repository_branch': 'master',
+    'extra_footer': '<p align="right"><a href="https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html">Cookies</a></p>'
     }
 
 
