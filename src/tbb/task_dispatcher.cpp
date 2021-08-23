@@ -133,7 +133,7 @@ d1::slot_id __TBB_EXPORTED_FUNC execution_slot(const d1::execution_data* ed) {
         return ed_ext->task_disp->m_thread_data->my_arena_index;
     } else {
         thread_data* td = governor::get_thread_data_if_initialized();
-        return td ? int(td->my_arena_index) : -1;
+        return td ? td->my_arena_index : d1::slot_id(-1);
     }
 }
 

@@ -1748,9 +1748,10 @@ struct enqueue_test_helper {
 
 //--------------------------------------------------//
 
-// This test should be first
+// This test requires TBB in an uninitialized state
 //! \brief \ref requirement
 TEST_CASE("task_arena initialize soft limit ignoring affinity mask") {
+    REQUIRE_MESSAGE((tbb::this_task_arena::current_thread_index() == tbb::task_arena::not_initialized), "TBB was initialized state");
     tbb::enumerable_thread_specific<int> ets;
 
     tbb::task_arena arena(int(utils::get_platform_max_threads() * 2));
