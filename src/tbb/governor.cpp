@@ -168,19 +168,18 @@ static std::uintptr_t get_stack_base(std::size_t stack_size) {
 }
 
 #if (_WIN32||_WIN64) && !__TBB_DYNAMIC_LOAD_ENABLED
-struct thread_destructor {
-   ~thread_destructor() {
-       governor::terminate_external_thread();
-   }
-} 
-static thread_local thr_destructor;
+void governor::register_external_thread_destructor() {
+    struct thread_destructor {
+        ~thread_destructor() {
+            governor::terminate_external_thread();
+        }
+    };
+    static thread_local thread_destructor thr_destructor;
+}
 #endif // (_WIN32||_WIN64) && !__TBB_DYNAMIC_LOAD_ENABLED
 
 void governor::init_external_thread() {
     one_time_init();
-#if (_WIN32||_WIN64) && !__TBB_DYNAMIC_LOAD_ENABLED
-    (void)thr_destructor;
-#endif // (_WIN32||_WIN64) && !__TBB_DYNAMIC_LOAD_ENABLED
     // Create new scheduler instance with arena
     int num_slots = default_num_threads();
     // TODO_REVAMP: support an external thread without an implicit arena
@@ -204,6 +203,9 @@ void governor::init_external_thread() {
     td.my_arena_slot->occupy();
     a.my_market->add_external_thread(td);
     set_thread_data(td);
+#if (_WIN32||_WIN64) && !__TBB_DYNAMIC_LOAD_ENABLED
+    register_external_thread_destructor();
+#endif // (_WIN32||_WIN64) && !__TBB_DYNAMIC_LOAD_ENABLED
 }
 
 void governor::auto_terminate(void* tls) {

@@ -222,14 +222,12 @@ void TestTerminationAndAutoinit(bool autoinit) {
     REQUIRE(res2);
 }
 
+//! Check no reference leak for an external thread
+//! \brief \ref regression \ref error_guessing
 TEST_CASE("test decrease reference") {
-    auto thread_func = [] {
-        tbb::parallel_for(0, 1, [](int) {});
-    };
-
     tbb::task_scheduler_handle handle = tbb::task_scheduler_handle::get();
 
-    std::thread thr(thread_func);
+    std::thread thr([] { tbb::parallel_for(0, 1, [](int) {}); } );
     thr.join();
 
     REQUIRE(tbb::finalize(handle, std::nothrow));
