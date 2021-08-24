@@ -205,6 +205,8 @@ void governor::init_external_thread() {
     a.my_market->add_external_thread(td);
     set_thread_data(td);
 #if (_WIN32||_WIN64) && !__TBB_DYNAMIC_LOAD_ENABLED
+    // The external thread destructor is called from dllMain but it is not available with a static build.
+    // Therefore, we need to register the current thread to call the destructor during thread termination.
     register_external_thread_destructor();
 #endif
 }
