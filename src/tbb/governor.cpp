@@ -169,13 +169,13 @@ static std::uintptr_t get_stack_base(std::size_t stack_size) {
 
 #if (_WIN32||_WIN64) && !__TBB_DYNAMIC_LOAD_ENABLED
 static void register_external_thread_destructor() {
-    struct thread_data_destructor {
-        ~thread_data_destructor() {
+    struct thread_destructor {
+        ~thread_destructor() {
             governor::terminate_external_thread();
         }
     };
-    // ~thread_data_destructor() will be call during the calling thread termination
-    static thread_local thread_data_destructor thr_destructor;
+    // ~thread_destructor() will be call during the calling thread termination
+    static thread_local thread_destructor thr_destructor;
 }
 #endif // (_WIN32||_WIN64) && !__TBB_DYNAMIC_LOAD_ENABLED
 
