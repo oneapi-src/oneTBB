@@ -87,10 +87,6 @@ public:
         The auto_init argument specifies if the call is due to automatic initialization. **/
     static void init_external_thread();
 
-#if (_WIN32||_WIN64) && !__TBB_DYNAMIC_LOAD_ENABLED
-    static void register_external_thread_destructor();
-#endif // (_WIN32||_WIN64) && !__TBB_DYNAMIC_LOAD_ENABLED
-
     //! The routine to undo automatic initialization.
     /** The signature is written with void* so that the routine
         can be the destructor argument to pthread_key_create. */

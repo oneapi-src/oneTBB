@@ -168,13 +168,13 @@ static std::uintptr_t get_stack_base(std::size_t stack_size) {
 }
 
 #if (_WIN32||_WIN64) && !__TBB_DYNAMIC_LOAD_ENABLED
-void governor::register_external_thread_destructor() {
-    struct thread_destructor {
-        ~thread_destructor() {
+static void register_external_thread_destructor() {
+    struct thread_data_destructor {
+        ~thread_data_destructor() {
             governor::terminate_external_thread();
         }
     };
-    static thread_local thread_destructor thr_destructor;
+    static thread_local thread_data_destructor thr_destructor;
 }
 #endif // (_WIN32||_WIN64) && !__TBB_DYNAMIC_LOAD_ENABLED
 
@@ -205,7 +205,7 @@ void governor::init_external_thread() {
     set_thread_data(td);
 #if (_WIN32||_WIN64) && !__TBB_DYNAMIC_LOAD_ENABLED
     register_external_thread_destructor();
-#endif // (_WIN32||_WIN64) && !__TBB_DYNAMIC_LOAD_ENABLED
+#endif
 }
 
 void governor::auto_terminate(void* tls) {
