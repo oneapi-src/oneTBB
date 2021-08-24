@@ -222,6 +222,17 @@ void TestTerminationAndAutoinit(bool autoinit) {
     REQUIRE(res2);
 }
 
+//! Check no reference leak for an external thread
+//! \brief \ref regression \ref error_guessing
+TEST_CASE("test decrease reference") {
+    tbb::task_scheduler_handle handle = tbb::task_scheduler_handle::get();
+
+    std::thread thr([] { tbb::parallel_for(0, 1, [](int) {}); } );
+    thr.join();
+
+    REQUIRE(tbb::finalize(handle, std::nothrow));
+}
+
 //! Testing lifetime control conformance
 //! \brief \ref interface \ref requirement
 TEST_CASE("prolong lifetime simple") {
