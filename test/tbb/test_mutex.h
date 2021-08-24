@@ -22,7 +22,11 @@
 #include "common/concepts_common.h"
 #include <tbb/null_rw_mutex.h>
 
+#include <algorithm>
 #include <atomic>
+#include <cstddef>
+#include <random>
+#include <utility>
 
 namespace test_with_native_threads {
 
@@ -248,4 +252,186 @@ void TestIsWriter<oneapi::tbb::null_rw_mutex>( const char* ) {
     oneapi::tbb::null_rw_mutex nrw_mutex;
     scoped_lock l(nrw_mutex);
     CHECK(l.is_writer());
+}
+
+namespace test_move_constructor_details {
+
+static constexpr std::size_t buckets_number = 10;
+static constexpr std::size_t bucket_capacity = 42;
+static constexpr std::size_t total_elements = buckets_number * bucket_capacity;
+
+template <class Mutex>
+class hash_set_facade {
+    unsigned values[total_elements];
+    Mutex mutexes[buckets_number];
+
+    std::mt19937 random;
+
+    struct element {
+        unsigned & value;
+        typename Mutex::scoped_lock lock;
+    };
+
+public:
+    hash_set_facade() noexcept {
+        std::for_each(values, values + total_elements, [this] (unsigned & value) {
+            value = random();
+        });
+    }
+
+    using iterator = unsigned *;
+
+    iterator begin() noexcept {
+        return values;
+    }
+
+    iterator end() noexcept {
+        return values + total_elements;
+    }
+
+    element operator[](std::size_t required_index) {
+        {
+            auto in_range = [] (std::size_t a, std::size_t b, std::size_t c) {
+                return a <= b && b <= c;
+            };
+            CHECK(in_range(0, required_index, total_elements));
+        }
+        std::size_t bucket_index = required_index / bucket_capacity;
+        Mutex::scoped_lock lock(mutexes[bucket_index]);
+        return element {values[required_index], std::move(lock)};
+    }
+
+    unsigned get_pure_value(std::size_t required_index) {
+        {
+            auto in_range = [] (std::size_t a, std::size_t b, std::size_t c) {
+                return a <= b && b <= c;
+            };
+            CHECK(in_range(0, required_index, total_elements));
+        }
+        return values[required_index];
+    }
+};
+
+}
+
+template <class Mutex>
+void test_scoped_lock_move_constructor_basic() {
+    Mutex mutex;
+    Mutex::scoped_lock global_lock(mutex);
+
+    int mutable_data = 42;
+
+    std::thread thread1([&mutex, &global_lock, &mutable_data]() {
+        auto thread1_lock = std::move(global_lock);
+        
+        std::thread thread2([&thread1_lock, &mutable_data]() {
+            auto thread2_lock = std::move(thread1_lock);
+
+            mutable_data = 12;
+        });
+        thread2.join();
+    });
+    thread1.join();
+
+    REQUIRE(mutable_data == 12);
+}
+
+template <class Mutex>
+void test_scoped_lock_move_constructor_return_value() {
+    using namespace test_move_constructor_details;
+
+    hash_set_facade<Mutex> hash_set;
+
+    utils::NativeParallelFor(total_elements, [&hash_set](std::size_t required_index) {
+        auto access = hash_set[required_index];
+        REQUIRE(access.value == hash_set.get_pure_value(required_index));
+        access.value = 0;
+    });
+
+    REQUIRE(std::all_of(hash_set.begin(), hash_set.end(), [](unsigned value) {
+        return (value == 0);
+    }));
+}
+
+template <class Mutex>
+void test_scoped_lock_move_assignment_operator_basic() {
+    Mutex mutex1;
+    Mutex mutex2;
+
+    Mutex::scoped_lock lock1(mutex1);
+    Mutex::scoped_lock lock2(mutex2);
+
+    lock1 = std::move(lock2);
+    lock2 = std::move(lock1);
+
+    std::thread t1([&mutex1]() {
+        Mutex::scoped_lock local_lock;
+        REQUIRE(local_lock.try_acquire(mutex1));
+    });
+
+    std::atomic<bool> try_lock_reached(false);
+    
+    std::thread t2([&mutex2, &try_lock_reached]() {
+        Mutex::scoped_lock local_lock;
+       
+        REQUIRE(!local_lock.try_acquire(mutex2));
+
+        try_lock_reached.store(true);
+
+        local_lock.acquire(mutex2);
+    });
+
+    tbb::detail::d0::spin_wait_while_eq(try_lock_reached, false);
+
+    lock2.release();
+    
+    t1.join();
+    t2.join();
+}
+
+template <class Mutex>
+void test_scoped_lock_move_assignment_operator_complex() {
+    constexpr std::size_t mutable_data_number = 200;
+
+    std::array<int, mutable_data_number> mutable_data;
+    mutable_data.fill(0);
+
+    std::array<Mutex, mutable_data_number> mutexes;
+
+    std::array<Mutex::scoped_lock, mutable_data_number> main_locks;
+    
+    std::transform(main_locks.begin(), main_locks.end(), mutexes.begin(), main_locks.begin(),
+        [](Mutex::scoped_lock & lock, Mutex & mutex) -> Mutex::scoped_lock {
+            lock.acquire(mutex);
+            return std::move(lock);
+        }
+    );
+
+    std::vector<std::thread> aside_threads;
+    aside_threads.reserve(mutable_data_number);
+
+    for (std::size_t i = 0; i < mutable_data_number; ++i) {
+        aside_threads.emplace_back([i, &mutable_data, &mutexes]() {
+            Mutex::scoped_lock local_lock(mutexes.at(i));
+            REQUIRE(mutable_data.at(i) == 1);
+            mutable_data.at(i) = 2;
+        });
+    }
+
+    for (std::size_t i = 0; i < mutable_data_number; ++i) {
+        main_locks.front() = std::move(main_locks.at(i));
+
+        REQUIRE(mutable_data.at(i) == 0);
+        mutable_data.at(i) = 1;
+    }
+
+    main_locks.front().release();
+
+    std::for_each(aside_threads.begin(), aside_threads.end(), [](std::thread & thread) {
+        thread.join();
+    });
+
+    REQUIRE(std::all_of(mutable_data.begin(), mutable_data.end(), [](int value) {
+        return (value == 2); 
+    }));
 }

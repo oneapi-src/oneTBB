@@ -120,6 +120,8 @@ EXPORTS
 ?upgrade_to_writer@r1@detail@tbb@@YA_NAEAVscoped_lock@queuing_rw_mutex@d1@23@@Z
 ?downgrade_to_reader@r1@detail@tbb@@YA_NAEAVscoped_lock@queuing_rw_mutex@d1@23@@Z
 ?is_writer@r1@detail@tbb@@YA_NAEBVscoped_lock@queuing_rw_mutex@d1@23@@Z
+?move_constructor_implementation@r1@detail@tbb@@YAXAEAVscoped_lock@queuing_rw_mutex@d1@23@$$QEAV45623@@Z
+?move_assignment_operator_implementation@r1@detail@tbb@@YAAEAVscoped_lock@queuing_rw_mutex@d1@23@AEAV45623@$$QEAV45623@@Z
 
 ; Global control (global_control.cpp)
 ?global_control_active_value@r1@detail@tbb@@YA_KH@Z
