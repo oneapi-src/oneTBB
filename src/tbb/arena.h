@@ -348,6 +348,18 @@ public:
         return my_references.load(std::memory_order_acquire) >> ref_external_bits;
     }
 
+    bool try_add_worker_reference() {
+        unsigned references = my_references.load(std::memory_order_relaxed);
+        do {
+            if ((references >> ref_external_bits) == my_num_workers_allotted.load(std::memory_order_relaxed)) {
+                return false;
+            }
+        } while (!my_references.compare_exchange_strong(references, references + arena::ref_worker));
+        __TBB_ASSERT(num_workers_active() <= my_num_workers_allotted.load(std::memory_order_relaxed), nullptr);
+
+        return true;
+    }
+
     //! Check if the recall is requested by the market.
     bool is_recall_requested() const {
         return num_workers_active() > my_num_workers_allotted.load(std::memory_order_relaxed);
@@ -372,6 +384,11 @@ public:
     /** Return true if no job or if arena is being cleaned up. */
     bool is_out_of_work();
 
+    //! Recompute the number of workers requested by the arena based on the passed delta demand value.
+    //! Returns the actual delta value the request was updated with.
+    //! Should be called under market::my_arenas_list_mutex
+    int update_workers_request(int delta, bool mandatory);
+
     //! enqueue a task into starvation-resistance queue
     void enqueue_task(d1::task&, d1::task_group_context&, thread_data&);
 
@@ -384,6 +401,10 @@ public:
 
     //! Check for the presence of enqueued tasks at all priority levels
     bool has_enqueued_tasks();
+
+    //! Get max_num workers
+    //! Should be called under market::my_arenas_list_mutex
+    int get_max_num_workers();
 
     static const std::size_t out_of_arena = ~size_t(0);
     //! Tries to occupy a slot in the arena. On success, returns the slot index; if no slot is available, returns out_of_arena.
@@ -498,7 +519,7 @@ void arena::advertise_new_work() {
             my_market->enable_mandatory_concurrency(this);
 
         if (my_max_num_workers == 0 && my_num_reserved_slots == 1 && my_local_concurrency_flag.test_and_set()) {
-            my_market->adjust_demand(*this, /* delta = */ 1, /* mandatory = */ true);
+            my_market->increase_demand(*this, /* delta = */ 1, /* mandatory = */ true);
         }
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
         // Local memory fence here and below is required to avoid missed wakeups; see the comment below.
@@ -541,7 +562,9 @@ void arena::advertise_new_work() {
             }
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
             // TODO: investigate adjusting of arena's demand by a single worker.
-            my_market->adjust_demand(*this, my_max_num_workers, /* mandatory = */ false);
+            if (my_max_num_workers) {
+                my_market->increase_demand(*this, my_max_num_workers, /* mandatory = */ false);
+            }
 
             // Notify all sleeping threads that work has appeared in the arena.
             my_market->get_wait_list().notify(is_related_arena);

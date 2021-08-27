@@ -177,7 +177,7 @@ arena::arena ( market& m, unsigned num_slots, unsigned num_reserved_slots, unsig
     my_num_reserved_slots = num_reserved_slots;
     my_max_num_workers = num_slots-num_reserved_slots;
     my_priority_level = priority_level;
-    my_references = ref_external; // accounts for the external thread
+    my_references.store(ref_external, std::memory_order_relaxed); // accounts for the external thread
     my_aba_epoch = m.my_arenas_aba_epoch.load(std::memory_order_relaxed);
     my_observers.my_arena = this;
     my_co_cache.init(4 * num_slots);
@@ -281,7 +281,7 @@ bool arena::is_out_of_work() {
     if (my_local_concurrency_flag.try_clear_if([this] {
         return !has_enqueued_tasks();
     })) {
-        my_market->adjust_demand(*this, /* delta = */ -1, /* mandatory = */ true);
+        my_market->decrease_demand(*this, /* delta = */ 1, /* mandatory = */ true);
     }
 #endif
 
@@ -332,7 +332,9 @@ bool arena::is_out_of_work() {
                     if (my_pool_state.compare_exchange_strong(expected_state, SNAPSHOT_EMPTY)) {
                         // This thread transitioned pool to empty state, and thus is
                         // responsible for telling the market that there is no work to do.
-                        my_market->adjust_demand(*this, -current_demand, /* mandatory = */ false);
+                        if (current_demand > 0) {
+                            my_market->decrease_demand(*this, current_demand, /* mandatory = */ false);
+                        }
                         return true;
                     }
                     return false;
@@ -348,6 +350,44 @@ bool arena::is_out_of_work() {
         // Another thread is taking a snapshot.
         return false;
     }
+}
+
+int arena::get_max_num_workers() {
+    int max_num_workers = int(my_max_num_workers);
+#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
+    // At least one thread should be requested when mandatory concurrency
+    if (my_local_concurrency_requests > 0 && max_num_workers == 0) {
+        max_num_workers = 1;
+    }
+#endif
+    return max_num_workers;
+}
+
+int arena::update_workers_request(int delta, bool mandatory) {
+    suppress_unused_warning(mandatory);
+#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
+    if (mandatory) {
+        __TBB_ASSERT(delta == 1 || delta == -1, nullptr);
+        // Count the number of mandatory requests and proceed only for 0->1 and 1->0 transitions.
+        my_local_concurrency_requests += delta;
+        bool enable_mandatory_concurrency = delta > 0 && my_local_concurrency_requests == 1;
+        bool disable_mandatory_concurrency = delta < 0 && my_local_concurrency_requests == 0;
+        if (!enable_mandatory_concurrency && !disable_mandatory_concurrency) {
+            return 0;
+        }
+    }
+#endif
+    my_total_num_workers_requested += delta;
+    // Cap target_workers into interval [0, my_max_num_workers]
+    int target_workers = clamp(my_total_num_workers_requested, 0, get_max_num_workers());
+
+    delta = target_workers - my_num_workers_requested;
+    my_num_workers_requested += delta;
+    if (my_num_workers_requested == 0) {
+        my_num_workers_allotted.store(0, std::memory_order_relaxed);
+    }
+
+    return delta;
 }
 
 void arena::enqueue_task(d1::task& t, d1::task_group_context& ctx, thread_data& td) {
@@ -481,7 +521,7 @@ bool task_arena_impl::attach(d1::task_arena_base& ta) {
         arena* a = td->my_arena;
         // There is an active arena to attach to.
         // It's still used by s, so won't be destroyed right away.
-        __TBB_ASSERT(a->my_references > 0, NULL );
+        __TBB_ASSERT(a->my_references.load(std::memory_order_relaxed) > 0, NULL );
         a->my_references += arena::ref_external;
         ta.my_num_reserved_slots = a->my_num_reserved_slots;
         ta.my_priority = arena_priority(a->my_priority_level);
@@ -532,7 +572,7 @@ public:
             // If the calling thread occupies the slots out of external thread reserve we need to notify the
             // market that this arena requires one worker less.
             if (td.my_arena_index >= td.my_arena->my_num_reserved_slots) {
-                td.my_arena->my_market->adjust_demand(*td.my_arena, /* delta = */ -1, /* mandatory = */ false);
+                td.my_arena->my_market->decrease_demand(*td.my_arena, /* delta = */ 1, /* mandatory = */ false);
             }
 
             td.my_last_observer = nullptr;
@@ -568,7 +608,7 @@ public:
             // Notify the market that this thread releasing a one slot
             // that can be used by a worker thread.
             if (td.my_arena_index >= td.my_arena->my_num_reserved_slots) {
-                td.my_arena->my_market->adjust_demand(*td.my_arena, /* delta = */ 1, /* mandatory = */ false);
+                td.my_arena->my_market->increase_demand(*td.my_arena, /* delta = */ 1, /* mandatory = */ false);
             }
 
             td.my_task_dispatcher->set_stealing_threshold(0);

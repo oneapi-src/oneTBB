@@ -168,6 +168,15 @@ void market::destroy () {
     __TBB_InitOnce::remove_ref();
 }
 
+void market::notify_server(int target_epoch, int delta) {
+    my_adjust_demand_current_epoch.wait_until(target_epoch - 1, /* context = */ target_epoch - 1, std::memory_order_acquire);
+    // Must be called outside of any locks
+    my_server->adjust_job_count_estimate(delta);
+    __TBB_ASSERT(my_adjust_demand_current_epoch.load(std::memory_order_relaxed) == target_epoch - 1, nullptr);
+    my_adjust_demand_current_epoch.exchange(target_epoch);
+    my_adjust_demand_current_epoch.notify_relaxed(target_epoch);
+}
+
 bool market::release ( bool is_public, bool blocking_terminate ) {
     market::enforce([this] { return theMarket == this; }, "Global market instance was destroyed prematurely?");
     bool do_release = false;
@@ -204,6 +213,15 @@ bool market::release ( bool is_public, bool blocking_terminate ) {
         }
     }
     if( do_release ) {
+        int delta{}, target_epoch{};
+        {
+            arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex);
+            delta = my_num_workers_actual_request;
+            my_num_workers_actual_request = 0;
+            target_epoch = ++my_adjust_demand_target_epoch;
+        }
+        notify_server(target_epoch, -delta);
+
         __TBB_ASSERT( !my_public_ref_count.load(std::memory_order_relaxed),
             "No public references remain if we remove the market." );
         // inform RML that blocking termination is required
@@ -214,18 +232,47 @@ bool market::release ( bool is_public, bool blocking_terminate ) {
     return false;
 }
 
-int market::update_workers_request() {
-    int old_request = my_num_workers_requested;
-    my_num_workers_requested = min(my_total_demand.load(std::memory_order_relaxed),
-                                   (int)my_num_workers_soft_limit.load(std::memory_order_relaxed));
+int market::get_num_target_workers() {
+    int soft_limit = (int)my_num_workers_soft_limit.load(std::memory_order_relaxed);
+    int num_workers_target_request = min(my_total_demand.load(std::memory_order_relaxed), soft_limit);
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
     if (my_mandatory_num_requested > 0) {
-        __TBB_ASSERT(my_num_workers_soft_limit.load(std::memory_order_relaxed) == 0, NULL);
-        my_num_workers_requested = 1;
+        __TBB_ASSERT(soft_limit == 0, NULL);
+        __TBB_ASSERT(num_workers_target_request == 0, NULL);
+        num_workers_target_request = 1;
     }
 #endif
-    update_allotment(my_num_workers_requested);
-    return my_num_workers_requested - old_request;
+
+    return num_workers_target_request;
+}
+
+int market::update_workers_request(int old_request) {
+    int num_workers_target_request = get_num_target_workers();
+    update_allotment(num_workers_target_request);
+
+    int request_diff = num_workers_target_request - old_request;
+    if (request_diff > 0) {
+#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
+        if (my_mandatory_num_requested > 0) {
+            __TBB_ASSERT(request_diff == 1, nullptr);
+            if (my_num_workers_actual_request == 0) {
+                my_num_workers_actual_request = 1;
+            } else {
+                request_diff = 0;
+            }
+        } else
+#endif
+        {
+            request_diff = min(request_diff,
+                (int)my_num_workers_soft_limit.load(std::memory_order_relaxed) - my_num_workers_actual_request);
+            if (request_diff > 0) {
+                my_num_workers_actual_request += request_diff;
+            }
+        }
+    }
+    __TBB_ASSERT(my_num_workers_actual_request >= num_workers_target_request, nullptr);
+
+    return request_diff;
 }
 
 void market::set_active_num_workers ( unsigned soft_limit ) {
@@ -242,10 +289,11 @@ void market::set_active_num_workers ( unsigned soft_limit ) {
     }
     // have my_ref_count for market, use it safely
 
-    int delta = 0;
+    int delta = 0, old_workers_request = 0;
     {
         arenas_list_mutex_type::scoped_lock lock( m->my_arenas_list_mutex );
         __TBB_ASSERT(soft_limit <= m->my_num_workers_hard_limit, NULL);
+        old_workers_request = m->get_num_target_workers();
 
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
         arena_list_type* arenas = m->my_arenas;
@@ -274,11 +322,13 @@ void market::set_active_num_workers ( unsigned soft_limit ) {
         }
 #endif
 
-        delta = m->update_workers_request();
+        delta = m->update_workers_request(old_workers_request);
     }
-    // adjust_job_count_estimate must be called outside of any locks
-    if( delta!=0 )
+
+    if (delta > 0) {
+        // adjust_job_count_estimate must be called outside of any locks
         m->my_server->adjust_job_count_estimate( delta );
+    }
     // release internal market reference to match ++m->my_ref_count above
     m->release( /*is_public=*/false, /*blocking_terminate=*/false );
 }
@@ -365,9 +415,11 @@ arena* market::arena_in_need ( arena_list_type* arenas, arena* hint ) {
             } while ( arenas[curr_priority_level].empty() );
             it = arenas[curr_priority_level].begin();
         }
-        if( a.num_workers_active() < a.my_num_workers_allotted.load(std::memory_order_relaxed) ) {
-            a.my_references += arena::ref_worker;
-            return &a;
+
+        if (a.num_workers_active() < a.my_num_workers_allotted.load(std::memory_order_relaxed)) {
+            if (a.try_add_worker_reference()) {
+                return &a;
+            }
         }
     } while ( it != hint );
     return nullptr;
@@ -422,6 +474,7 @@ int market::update_allotment ( arena_list_type* arenas, int workers_demand, int 
                 __TBB_ASSERT(allotted <= a.my_num_workers_requested, nullptr);
                 __TBB_ASSERT(allotted <= int(a.my_num_slots - a.my_num_reserved_slots), nullptr);
             }
+
             a.my_num_workers_allotted.store(allotted, std::memory_order_relaxed);
             a.my_is_top_priority.store(list_idx == max_priority_level, std::memory_order_relaxed);
             assigned += allotted;
@@ -472,10 +525,10 @@ void market::enable_mandatory_concurrency ( arena *a ) {
             return;
 
         enable_mandatory_concurrency_impl(a);
-        delta = update_workers_request();
+        delta = update_workers_request(0);
     }
 
-    if (delta != 0)
+    if (delta > 0)
         my_server->adjust_job_count_estimate(delta);
 }
 
@@ -493,7 +546,7 @@ void market::mandatory_concurrency_disable ( arena *a ) {
         arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex);
         if (!a->my_global_concurrency_mode.load(std::memory_order_relaxed))
             return;
-        // There is a racy window in advertise_new_work between mandtory concurrency enabling and 
+        // There is a racy window in advertise_new_work between mandatory concurrency enabling and
         // setting SNAPSHOT_FULL. It gives a chance to spawn request to disable mandatory concurrency.
         // Therefore, we double check that there is no enqueued tasks.
         if (a->has_enqueued_tasks())
@@ -502,108 +555,138 @@ void market::mandatory_concurrency_disable ( arena *a ) {
         __TBB_ASSERT(my_num_workers_soft_limit.load(std::memory_order_relaxed) == 0, NULL);
         disable_mandatory_concurrency_impl(a);
 
-        delta = update_workers_request();
+        delta = update_workers_request(1);
     }
-    if (delta != 0)
+    if (delta > 0)
         my_server->adjust_job_count_estimate(delta);
 }
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
 
-void market::adjust_demand ( arena& a, int delta, bool mandatory ) {
-    if (!delta) {
-        return;
+void market::update_demand(int delta, int priority_level) {
+    int total_demand = my_total_demand.load(std::memory_order_relaxed) + delta;
+    my_total_demand.store(total_demand, std::memory_order_relaxed);
+    my_priority_level_demand[priority_level] += delta;
+}
+
+int market::effective_soft_limit() {
+    unsigned limit = my_num_workers_soft_limit.load(std::memory_order_relaxed);
+    if (my_mandatory_num_requested > 0) {
+        __TBB_ASSERT(limit == 0, NULL);
+        limit = 1;
     }
+
+    return limit;
+}
+
+static int clamp_delta(int delta, int max_delta) {
+    return max_delta > 0 ? clamp(delta, 0, max_delta) : 0;
+}
+
+int market::adjust_demand(arena& a, int delta, bool mandatory) {
+    __TBB_ASSERT(theMarket != nullptr, "market instance was destroyed prematurely?");
+
+    delta = a.update_workers_request(delta, mandatory);
+    if (delta) {
+        update_demand(delta, a.my_priority_level);
+
+        int soft_limit = effective_soft_limit();
+        update_allotment(soft_limit);
+
+        delta = clamp_delta(delta, soft_limit - my_num_workers_actual_request);
+        my_num_workers_actual_request += delta;
+    }
+    return delta;
+}
+
+void market::increase_demand(arena& a, int delta, bool mandatory) {
+    __TBB_ASSERT(delta >= 0, nullptr);
     int target_epoch{};
     {
         arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex);
-        __TBB_ASSERT(theMarket != nullptr, "market instance was destroyed prematurely?");
-#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-        if (mandatory) {
-            __TBB_ASSERT(delta == 1 || delta == -1, nullptr);
-            // Count the number of mandatory requests and proceed only for 0->1 and 1->0 transitions.
-            a.my_local_concurrency_requests += delta;
-            if ((delta > 0 && a.my_local_concurrency_requests != 1) ||
-                (delta < 0 && a.my_local_concurrency_requests != 0))
-            {
-                return;
-            }
-        }
-#endif
-        a.my_total_num_workers_requested += delta;
-        int target_workers = 0;
-        // Cap target_workers into interval [0, a.my_max_num_workers]
-        if (a.my_total_num_workers_requested > 0) {
-#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-            // At least one thread should be requested when mandatory concurrency
-            int max_num_workers = int(a.my_max_num_workers);
-            if (a.my_local_concurrency_requests > 0 && max_num_workers == 0) {
-                max_num_workers = 1;
-            }
-#endif
-            target_workers = min(a.my_total_num_workers_requested, max_num_workers);
-        }
-
-        delta = target_workers - a.my_num_workers_requested;
-
-        if (delta == 0) {
+        delta = adjust_demand(a, delta, mandatory);
+        if (!delta) {
             return;
         }
+        target_epoch = ++my_adjust_demand_target_epoch;
+    }
+    if (target_epoch) {
+        notify_server(target_epoch, delta);
+    }
+}
 
-        a.my_num_workers_requested += delta;
-        if (a.my_num_workers_requested == 0) {
-            a.my_num_workers_allotted.store(0, std::memory_order_relaxed);
+// The decrease demand logic does not notify RML about decreased demand.
+// The idea is that the worker threads notify RML when they leave the market.
+// This logic allows allocating more threads than total demand of all arenas
+// (to satisfy full arena requests if some empty arenas cannot release workers).
+void market::decrease_demand(arena& a, int delta, bool mandatory) {
+    delta *= -1;
+    __TBB_ASSERT(delta <= 0, nullptr);
+    arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex);
+    delta = adjust_demand(a, delta, mandatory);
+    __TBB_ASSERT_EX(delta == 0, nullptr);
+}
+
+arena* market::try_leave_market(int ticket, arena* prev_arena) {
+    int target_epoch{};
+    int delta{};
+    {
+        arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex);
+        if (ticket < my_num_workers_actual_request) {
+            __TBB_ASSERT(my_num_workers_actual_request > 0, nullptr);
+            arena* next_arena = nullptr;
+            if (is_arena_alive(prev_arena)) {
+                next_arena = arena_in_need(my_arenas, prev_arena);
+            } else {
+                next_arena = arena_in_need(my_arenas, nullptr);
+            }
+
+            if (next_arena) {
+                return next_arena;
+            }
+
+            delta = min(1, my_num_workers_actual_request - get_num_target_workers());
+            __TBB_ASSERT(delta >= 0, nullptr);
+
+            my_num_workers_actual_request -= delta;
+        } else {
+            return nullptr;
         }
 
-        int total_demand = my_total_demand.load(std::memory_order_relaxed) + delta;
-        my_total_demand.store(total_demand, std::memory_order_relaxed);
-        my_priority_level_demand[a.my_priority_level] += delta;
-        unsigned effective_soft_limit = my_num_workers_soft_limit.load(std::memory_order_relaxed);
-        if (my_mandatory_num_requested > 0) {
-            __TBB_ASSERT(effective_soft_limit == 0, NULL);
-            effective_soft_limit = 1;
-        }
-
-        update_allotment(effective_soft_limit);
-        if (delta > 0) {
-            // can't overflow soft_limit, but remember values request by arenas in
-            // my_total_demand to not prematurely release workers to RML
-            if (my_num_workers_requested + delta > (int)effective_soft_limit)
-                delta = effective_soft_limit - my_num_workers_requested;
-        }
-        else {
-            // the number of workers should not be decreased below my_total_demand
-            if (my_num_workers_requested + delta < total_demand)
-                delta = min(total_demand, (int)effective_soft_limit) - my_num_workers_requested;
-        }
-        my_num_workers_requested += delta;
-        __TBB_ASSERT(my_num_workers_requested <= (int)effective_soft_limit, NULL);
-
-        target_epoch = my_adjust_demand_target_epoch++;
+        target_epoch = ++my_adjust_demand_target_epoch;
     }
 
-    my_adjust_demand_current_epoch.wait_until(target_epoch, /* context = */ target_epoch, std::memory_order_acquire);
-    // Must be called outside of any locks
-    my_server->adjust_job_count_estimate( delta );
-    my_adjust_demand_current_epoch.exchange(target_epoch + 1);
-    my_adjust_demand_current_epoch.notify_relaxed(target_epoch + 1);
+    notify_server(target_epoch, -delta);
+    return nullptr;
 }
 
 void market::process( job& j ) {
     thread_data& td = static_cast<thread_data&>(j);
     // td.my_arena can be dead. Don't access it until arena_in_need is called
-    arena *a = td.my_arena;
-    for (int i = 0; i < 2; ++i) {
-        while ( (a = arena_in_need(a)) ) {
-            a->process(td);
+    arena* a = td.my_arena;
+    arena* next_arena = nullptr;
+    arena* prev_arena = nullptr;
+    do {
+        ++my_num_active_workers;
+        if (next_arena) {
+            next_arena->process(td);
         }
-        // Workers leave market because there is no arena in need. It can happen earlier than
-        // adjust_job_count_estimate() decreases my_slack and RML can put this thread to sleep.
-        // It might result in a busy-loop checking for my_slack<0 and calling this method instantly.
-        // the yield refines this spinning.
-        if ( !i ) {
-            yield();
+
+        for (int i = 0; i < 2; ++i) {
+            while ( (a = arena_in_need(a)) ) {
+                a->process(td);
+                prev_arena = a;
+            }
+            // Workers leave market because there is no arena in need. It can happen earlier than
+            // adjust_job_count_estimate() decreases my_slack and RML can put this thread to sleep.
+            // It might result in a busy-loop checking for my_slack<0 and calling this method instantly.
+            // the yield refines this spinning.
+            if ( !i ) {
+                yield();
+            }
         }
-    }
+        int ticket = --my_num_active_workers;
+        next_arena = try_leave_market(ticket, prev_arena);
+    } while (next_arena);
 }
 
 void market::cleanup( job& j) {
