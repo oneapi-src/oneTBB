@@ -263,7 +263,7 @@ void TestSuspendResume() {
     inner_par_iters = outer_par_iters = 0;
 
     tbb::parallel_for(0, N, [&](int) {
-        for (int i = 0; i < 100; ++i) {
+        for (int i = 0; i < 50000; ++i) {
             ets_fiber.local() = i;
 
             int local_epoch;
@@ -286,7 +286,7 @@ void TestSuspendResume() {
         ++outer_par_iters;
     });
     CHECK(outer_par_iters == N);
-    CHECK(inner_par_iters == N*N*100);
+    CHECK(inner_par_iters == N*N*50000);
 }
 
 // During cleanup external thread's local task pool may
