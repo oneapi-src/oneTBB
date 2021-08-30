@@ -168,7 +168,11 @@ struct queuing_rw_mutex_impl {
         s.my_state.store(d1::queuing_rw_mutex::scoped_lock::state_t(write ? STATE_WRITER : STATE_READER), std::memory_order_relaxed);
         s.my_internal_lock.store(RELEASED, std::memory_order_relaxed);
 
-        queuing_rw_mutex::scoped_lock* predecessor = m.q_tail.exchange(&s, std::memory_order_release);
+
+        // The CAS must have release semantics, because we are
+        // "sending" the fields initialized above to other actors.
+        // We need acquire semantics, because we are acquiring the predecessor (or mutex if no predecessor)
+        queuing_rw_mutex::scoped_lock* predecessor = m.q_tail.exchange(&s, std::memory_order_acq_rel);
 
         if( write ) {       // Acquiring for write
 
@@ -177,7 +181,7 @@ struct queuing_rw_mutex_impl {
                 predecessor = tricky_pointer(predecessor) & ~FLAG;
                 __TBB_ASSERT( !predecessor->my_next, "the predecessor has another successor!");
                 tricky_pointer::store(predecessor->my_next, &s, std::memory_order_release);
-                spin_wait_until_eq(s.my_going, 1U);
+                spin_wait_until_eq(s.my_going, 1U, std::memory_order_acquire);
             }
 
         } else {            // Acquiring for read
@@ -195,9 +199,12 @@ struct queuing_rw_mutex_impl {
                     // Load predecessor->my_state now, because once predecessor->my_next becomes
                     // non-NULL, we must assume that *predecessor might be destroyed.
                     pred_state = STATE_READER;
-                    predecessor->my_state.compare_exchange_strong(pred_state, STATE_READER_UNBLOCKNEXT, std::memory_order_acq_rel);
+                    // While on success we need memory_order_relaxed, but on fail we need memory_order_acquire
+                    // According to C++, success semantics cannot be weaker than fail semantics,
+                    // so use memory_order_acquire in both cases
+                    predecessor->my_state.compare_exchange_strong(pred_state, STATE_READER_UNBLOCKNEXT, std::memory_order_acquire);
                 }
-                tricky_pointer::store(s.my_prev, predecessor, std::memory_order_relaxed); // TODO: order?
+                tricky_pointer::store(s.my_prev, predecessor, std::memory_order_relaxed);
                 __TBB_ASSERT( !( tricky_pointer(predecessor) & FLAG ), "use of corrupted pointer!" );
                 __TBB_ASSERT( !predecessor->my_next.load(std::memory_order_relaxed), "the predecessor has another successor!");
                 tricky_pointer::store(predecessor->my_next, &s, std::memory_order_release);
@@ -212,7 +219,11 @@ struct queuing_rw_mutex_impl {
 
             // The protected state must have been acquired here before it can be further released to any other reader(s):
             unsigned char old_state = STATE_READER;
-            s.my_state.compare_exchange_strong(old_state, STATE_ACTIVEREADER, std::memory_order_acq_rel);
+            // When this reader is signaled by previous actor it acquires the mutex.
+            // We need to build happens-before relation with all other comming readers that will read our ACTIVEREADER
+            // without blocking on my_going. Therefore, we need to publish ACTIVEREADER with release semantics.
+            // On fail it is relaxed, because we will build happens-before on my_going.
+            s.my_state.compare_exchange_strong(old_state, STATE_ACTIVEREADER, std::memory_order_release, std::memory_order_relaxed);
             if( old_state!=STATE_READER ) {
 #if __TBB_USE_ITT_NOTIFY
                 if( !sync_prepare_done )
@@ -220,20 +231,16 @@ struct queuing_rw_mutex_impl {
 #endif
                 // Failed to become active reader -> need to unblock the next waiting reader first
                 __TBB_ASSERT( s.my_state.load(std::memory_order_relaxed)==STATE_READER_UNBLOCKNEXT, "unexpected state" );
-                spin_wait_while_eq(s.my_next, 0U);
+                spin_wait_while_eq(s.my_next, 0U, std::memory_order_acquire);
                 /* my_state should be changed before unblocking the next otherwise it might finish
                    and another thread can get our old state and left blocked */
                 s.my_state.store(STATE_ACTIVEREADER, std::memory_order_relaxed);
                 tricky_pointer::load(s.my_next, std::memory_order_relaxed)->my_going.store(1U, std::memory_order_release);
             }
-            __TBB_ASSERT( s.my_state.load(std::memory_order_relaxed) ==STATE_ACTIVEREADER, "unlocked reader is active reader" );
+            __TBB_ASSERT(s.my_state.load(std::memory_order_relaxed) == STATE_ACTIVEREADER, "unlocked reader is active reader");
         }
 
         ITT_NOTIFY(sync_acquired, s.my_mutex);
-
-        // Force acquire so that user's critical section receives correct values
-        // from processor that was previously in the user's critical section.
-        atomic_fence(std::memory_order_acquire); // TODO: consider exchange on line 171
     }
 
     //! A method to acquire queuing_rw_mutex if it is free
@@ -253,13 +260,11 @@ struct queuing_rw_mutex_impl {
         s.my_internal_lock.store(RELEASED, std::memory_order_relaxed);
 
         // The CAS must have release semantics, because we are
-        // "sending" the fields initialized above to other processors.
+        // "sending" the fields initialized above to other actors.
+        // We need acquire semantics, because we are acquiring the mutex
         d1::queuing_rw_mutex::scoped_lock* expected = nullptr;
-        if (!m.q_tail.compare_exchange_strong(expected, &s, std::memory_order_release))
+        if (!m.q_tail.compare_exchange_strong(expected, &s, std::memory_order_acq_rel))
             return false; // Someone already took the lock
-        // Force acquire so that user's critical section receives correct values
-        // from processor that was previously in the user's critical section.
-        atomic_fence(std::memory_order_acquire);
         s.my_mutex = &m;
         ITT_NOTIFY(sync_acquired, s.my_mutex);
         return true;
@@ -280,27 +285,29 @@ struct queuing_rw_mutex_impl {
             d1::queuing_rw_mutex::scoped_lock* next = tricky_pointer::load(s.my_next, std::memory_order_acquire);
             if( !next ) {
                 d1::queuing_rw_mutex::scoped_lock* expected = &s;
-                if( s.my_mutex->q_tail.compare_exchange_strong(expected, nullptr, std::memory_order_release) ) {
+                if( s.my_mutex->q_tail.compare_exchange_strong(expected, nullptr,
+                    std::memory_order_release, std::memory_order_relaxed) )
+                {
                     // this was the only item in the queue, and the queue is now empty.
                     goto done;
                 }
-                spin_wait_while_eq(s.my_next, 0U);
-                next = tricky_pointer::load(s.my_next, std::memory_order_acquire);
+                spin_wait_while_eq(s.my_next, 0U, std::memory_order_acquire);
+                next = tricky_pointer::load(s.my_next, std::memory_order_relaxed);
             }
             next->my_going.store(2U, std::memory_order_relaxed); // protect next queue node from being destroyed too early
-            if( next->my_state.load()==STATE_UPGRADE_WAITING ) {
+            if( next->my_state.load(std::memory_order_relaxed)==STATE_UPGRADE_WAITING ) {
                 // the next waiting for upgrade means this writer was upgraded before.
                 acquire_internal_lock(s);
                 // Responsibility transition, the one who reads uncorrupted my_prev will do release.
                 d1::queuing_rw_mutex::scoped_lock* tmp = tricky_pointer::exchange(next->my_prev, nullptr, std::memory_order_release);
-                next->my_state.store(STATE_UPGRADE_LOSER, std::memory_order_relaxed);
+                next->my_state.exchange(STATE_UPGRADE_LOSER, std::memory_order_release);
                 next->my_going.store(1U, std::memory_order_release);
                 unblock_or_wait_on_internal_lock(s, get_flag(tmp));
             } else {
                 // next->state cannot be STATE_UPGRADE_REQUESTED
                 __TBB_ASSERT( next->my_state.load(std::memory_order_relaxed) & (STATE_COMBINED_WAITINGREADER | STATE_WRITER), "unexpected state" );
                 __TBB_ASSERT( !( next->my_prev.load(std::memory_order_relaxed) & FLAG ), "use of corrupted pointer!" );
-                tricky_pointer::store(next->my_prev, nullptr, std::memory_order_relaxed);
+                tricky_pointer::store(next->my_prev, nullptr, std::memory_order_release);
                 next->my_going.store(1U, std::memory_order_release);
             }
 
@@ -317,12 +324,13 @@ struct queuing_rw_mutex_impl {
                     // Failed to acquire the lock on predecessor. The predecessor either unlinks or upgrades.
                     // In the second case, it could or could not know my "in use" flag - need to check
                     // Responsibility transition, the one who reads uncorrupted my_prev will do release.
-                    tmp = tricky_pointer::compare_exchange_strong(s.my_prev, tricky_pointer(predecessor) | FLAG, predecessor, std::memory_order_release);
+                    tmp = tricky_pointer::compare_exchange_strong(s.my_prev, tricky_pointer(predecessor) | FLAG, predecessor,
+                        std::memory_order_acquire);
                     if( !(tricky_pointer(tmp) & FLAG) ) {
                         // Wait for the predecessor to change my_prev (e.g. during unlink)
                         // TODO: spin_wait condition seems never reachable
                         __TBB_ASSERT(tricky_pointer::load(s.my_prev, std::memory_order_relaxed) != (tricky_pointer(predecessor) | FLAG), nullptr);
-                        tricky_pointer::spin_wait_while_eq( s.my_prev, tricky_pointer(predecessor)|FLAG );
+                        // tricky_pointer::spin_wait_while_eq( s.my_prev, tricky_pointer(predecessor)|FLAG );
                         // Now owner of predecessor is waiting for _us_ to release its lock
                         release_internal_lock(*predecessor);
                     }
@@ -338,13 +346,13 @@ struct queuing_rw_mutex_impl {
                 tricky_pointer::store(predecessor->my_next, nullptr, std::memory_order_release);
 
                 d1::queuing_rw_mutex::scoped_lock* expected = &s;
-                if( !tricky_pointer::load(s.my_next, std::memory_order_relaxed) && !s.my_mutex->q_tail.compare_exchange_strong(expected, predecessor, std::memory_order_release) ) {
+                if( !tricky_pointer::load(s.my_next, std::memory_order_acquire) && !s.my_mutex->q_tail.compare_exchange_strong(expected, predecessor, std::memory_order_release) ) {
                     spin_wait_while_eq( s.my_next, 0U, std::memory_order_acquire );
                 }
                 __TBB_ASSERT( !(s.my_next.load(std::memory_order_relaxed) & FLAG), "use of corrupted pointer" );
 
                 // ensure acquire semantics of reading 'my_next'
-                if(d1::queuing_rw_mutex::scoped_lock *const l_next = tricky_pointer::load(s.my_next, std::memory_order_acquire) ) { // I->next != nil, TODO: rename to next after clearing up and adapting the n in the comment two lines below
+                if(d1::queuing_rw_mutex::scoped_lock *const l_next = tricky_pointer::load(s.my_next, std::memory_order_relaxed) ) { // I->next != nil, TODO: rename to next after clearing up and adapting the n in the comment two lines below
                     // Equivalent to I->next->prev = I->prev but protected against (prev[n]&FLAG)!=0
                     tmp = tricky_pointer::exchange(l_next->my_prev, predecessor, std::memory_order_release);
                     // I->prev->next = I->next;
@@ -359,8 +367,10 @@ struct queuing_rw_mutex_impl {
                 d1::queuing_rw_mutex::scoped_lock* next = tricky_pointer::load(s.my_next, std::memory_order_acquire);
                 if( !next ) {
                     d1::queuing_rw_mutex::scoped_lock* expected = &s;
-                    if( !s.my_mutex->q_tail.compare_exchange_strong(expected, nullptr, std::memory_order_release) ) {
-                        spin_wait_while_eq( s.my_next, 0U );
+                    if( !s.my_mutex->q_tail.compare_exchange_strong(expected, nullptr,
+                        std::memory_order_release, std::memory_order_relaxed) )
+                    {
+                        spin_wait_while_eq( s.my_next, 0U, std::memory_order_acquire );
                         next = tricky_pointer::load(s.my_next, std::memory_order_relaxed);
                     } else {
                         goto unlock_self;
@@ -375,7 +385,7 @@ struct queuing_rw_mutex_impl {
             unblock_or_wait_on_internal_lock(s, get_flag(tmp));
         }
     done:
-        spin_wait_while_eq( s.my_going, 2U );
+        spin_wait_while_eq( s.my_going, 2U, std::memory_order_relaxed );
 
         s.initialize();
     }
@@ -384,17 +394,17 @@ struct queuing_rw_mutex_impl {
         if ( s.my_state.load(std::memory_order_relaxed) == STATE_ACTIVEREADER ) return true; // Already a reader
 
         ITT_NOTIFY(sync_releasing, s.my_mutex);
-        s.my_state.store(STATE_READER, std::memory_order_relaxed);
-        if( ! tricky_pointer::load(s.my_next, std::memory_order_relaxed)) {
+        s.my_state.store(STATE_READER, std::memory_order_seq_cst);
+        if( !tricky_pointer::load(s.my_next, std::memory_order_relaxed) ) {
             // the following load of q_tail must not be reordered with setting STATE_READER above
-            if( &s==s.my_mutex->q_tail.load() ) {
+            if( &s == s.my_mutex->q_tail.load(std::memory_order_seq_cst) ) {
                 unsigned char old_state = STATE_READER;
-                s.my_state.compare_exchange_strong(old_state, STATE_ACTIVEREADER, std::memory_order_release);
+                s.my_state.compare_exchange_strong(old_state, STATE_ACTIVEREADER, std::memory_order_release, std::memory_order_relaxed);
                 if( old_state==STATE_READER )
                     return true; // Downgrade completed
             }
             /* wait for the next to register */
-            spin_wait_while_eq( s.my_next, 0U );
+            spin_wait_while_eq(s.my_next, 0U, std::memory_order_relaxed);
         }
         d1::queuing_rw_mutex::scoped_lock *const next = tricky_pointer::load(s.my_next, std::memory_order_acquire);
         __TBB_ASSERT( next, "still no successor at this point!" );
@@ -402,8 +412,8 @@ struct queuing_rw_mutex_impl {
             next->my_going.store(1U, std::memory_order_release);
         else if( next->my_state==STATE_UPGRADE_WAITING )
             // the next waiting for upgrade means this writer was upgraded before.
-            next->my_state.store(STATE_UPGRADE_LOSER, std::memory_order_relaxed);
-        s.my_state.store(STATE_ACTIVEREADER, std::memory_order_relaxed);
+            next->my_state.exchange(STATE_UPGRADE_LOSER, std::memory_order_release);
+        s.my_state.store(STATE_ACTIVEREADER, std::memory_order_release);
         return true;
     }
 
@@ -424,11 +434,11 @@ struct queuing_rw_mutex_impl {
         __TBB_ASSERT( !(s.my_next.load(std::memory_order_relaxed) & FLAG), "use of corrupted pointer!" );
         acquire_internal_lock(s);
         d1::queuing_rw_mutex::scoped_lock* expected = &s;
-        if( !s.my_mutex->q_tail.compare_exchange_strong(expected, tricky_pointer(me)|FLAG, std::memory_order_release) ) {
-            spin_wait_while_eq( s.my_next, 0U );
+        if( !s.my_mutex->q_tail.compare_exchange_strong(expected, tricky_pointer(me)|FLAG, std::memory_order_acq_rel) ) {
+            spin_wait_while_eq( s.my_next, 0U, std::memory_order_relaxed );
             queuing_rw_mutex::scoped_lock * next;
             next = tricky_pointer::fetch_add(s.my_next, FLAG, std::memory_order_acquire);
-            unsigned short n_state = next->my_state;
+            unsigned short n_state = next->my_state.load(std::memory_order_acquire);
             /* the next reader can be blocked by our state. the best thing to do is to unblock it */
             if( n_state & STATE_COMBINED_WAITINGREADER )
                 next->my_going.store(1U, std::memory_order_release);
@@ -438,8 +448,8 @@ struct queuing_rw_mutex_impl {
             if( n_state & (STATE_COMBINED_READER | STATE_UPGRADE_REQUESTED) ) {
                 // save next|FLAG for simplicity of following comparisons
                 tmp = tricky_pointer(next)|FLAG;
-                for( atomic_backoff b; tricky_pointer::load(s.my_next, std::memory_order_relaxed)==tmp; b.pause() ) {
-                    if( s.my_state & STATE_COMBINED_UPGRADING ) {
+                for( atomic_backoff b; tricky_pointer::load(s.my_next, std::memory_order_acquire)==tmp; b.pause() ) {
+                    if( s.my_state.load(std::memory_order_acquire) & STATE_COMBINED_UPGRADING ) {
                         if( tricky_pointer::load(s.my_next, std::memory_order_acquire)==tmp )
                             tricky_pointer::store(s.my_next, next, std::memory_order_relaxed);
                         goto waiting;
@@ -458,7 +468,7 @@ struct queuing_rw_mutex_impl {
         } // if( this != my_mutex->q_tail... )
         {
             unsigned char old_state = STATE_UPGRADE_REQUESTED;
-            s.my_state.compare_exchange_strong(old_state, STATE_UPGRADE_WAITING, std::memory_order_acquire);
+            s.my_state.compare_exchange_strong(old_state, STATE_UPGRADE_WAITING, std::memory_order_release, std::memory_order_acquire);
         }
     waiting:
         __TBB_ASSERT( !( s.my_next.load(std::memory_order_relaxed) & FLAG ), "use of corrupted pointer!" );
@@ -477,11 +487,12 @@ struct queuing_rw_mutex_impl {
                 // While the predecessor pointer (my_prev) is in use (FLAG is set), we can safely update the node`s state.
                 // Corrupted pointer transitions responsibility to release the predecessor`s node on us.
                 unsigned char old_state = STATE_UPGRADE_REQUESTED;
-                predecessor->my_state.compare_exchange_strong(old_state, STATE_UPGRADE_WAITING, std::memory_order_release);
+                predecessor->my_state.compare_exchange_strong(old_state, STATE_UPGRADE_WAITING, std::memory_order_release,
+                    std::memory_order_relaxed);
             }
             if( !success ) {
                 // Responsibility transition, the one who reads uncorrupted my_prev will do release.
-                tmp = tricky_pointer::compare_exchange_strong(s.my_prev, tricky_pointer(predecessor)|FLAG, predecessor, std::memory_order_release);
+                tmp = tricky_pointer::compare_exchange_strong(s.my_prev, tricky_pointer(predecessor)|FLAG, predecessor, std::memory_order_acquire);
                 if( tricky_pointer(tmp) & FLAG ) {
                     tricky_pointer::spin_wait_while_eq(s.my_prev, predecessor);
                     predecessor = tricky_pointer::load(s.my_prev, std::memory_order_relaxed);
@@ -508,9 +519,6 @@ struct queuing_rw_mutex_impl {
         wait_for_release_of_internal_lock(s);
         // now wait for the predecessor to finish working with my fields
         spin_wait_while_eq( s.my_going, 2U );
-
-        // Acquire critical section indirectly from previous owner or directly from predecessor (TODO: not clear).
-        atomic_fence(std::memory_order_acquire); // on either "my_mutex->q_tail" or "my_going" (TODO: not clear)
 
         bool result = ( s.my_state != STATE_UPGRADE_LOSER );
         s.my_state.store(STATE_WRITER, std::memory_order_relaxed);
