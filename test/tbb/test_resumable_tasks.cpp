@@ -255,7 +255,7 @@ private:
 
 // Simple test for basic resumable tasks functionality
 void TestSuspendResume() {
-#if __TBB_USE_SANITIZER
+#if __TBB_USE_SANITIZERS
     constexpr int iter_size = 100;
 #else
     constexpr int iter_size = 50000;
