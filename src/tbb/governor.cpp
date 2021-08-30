@@ -132,11 +132,11 @@ void governor::one_time_init() {
 static std::uintptr_t get_stack_base(std::size_t stack_size) {
     // Stacks are growing top-down. Highest address is called "stack base",
     // and the lowest is "stack limit".
-#if USE_WINTHREAD
+#if __TBB_USE_WINAPI
     suppress_unused_warning(stack_size);
     NT_TIB* pteb = (NT_TIB*)NtCurrentTeb();
     __TBB_ASSERT(&pteb < pteb->StackBase && &pteb > pteb->StackLimit, "invalid stack info in TEB");
-    return pteb->StackBase;
+    return std::uintptr_t(pteb->StackBase);
 #else /* USE_PTHREAD */
     // There is no portable way to get stack base address in Posix, so we use
     // non-portable method (on all modern Linux) or the simplified approach
