@@ -1173,6 +1173,23 @@ TEST_CASE("Task handle run"){
     CHECK_MESSAGE(h == nullptr, "Delayed task can be executed only once");
 }
 
+//! Basic test for task handle
+//! \brief \ref interface \ref requirement
+TEST_CASE("Task handle run_and_wait"){
+    tbb::task_handle h;
+
+    tbb::task_group tg;
+    bool run {false};
+
+    h = tg.defer([&]{
+        run = true;
+    });
+    CHECK_MESSAGE(run == false, "delayed task should not be run until run(task_handle) is called");
+    tg.run_and_wait(std::move(h));
+    CHECK_MESSAGE(run == true, "Delayed task should be completed when task_group::wait exits");
+
+    CHECK_MESSAGE(h == nullptr, "Delayed task can be executed only once");
+}
 //! Test for empty check
 //! \brief \ref interface
 TEST_CASE("Task handle empty check"){
@@ -1308,7 +1325,7 @@ TEST_CASE("task_handle cannot be scheduled into different task_group"){
 //! The test for error in task_handle being scheduled into task_group different from one it was created from
 //! \brief \ref requirement
 TEST_CASE("task_handle cannot be scheduled into other task_group of the same context"
-        * doctest::should_fail()    //Implementation is no there yet, as it is not clear that is the expected behaviour
+        * doctest::should_fail()    //Implementation is no there yet, as it is not clear that is the expected behavior
         * doctest::skip()           //skip the test for now, to not pollute the test log
 )
 {

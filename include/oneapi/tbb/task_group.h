@@ -524,6 +524,28 @@ protected:
         return cancellation_status ? canceled : complete;
     }
 
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+    task_group_status internal_run_and_wait(d2::task_handle&& h) {
+        if (h == nullptr) {
+            throw_exception(exception_id::bad_task_handle);
+        }
+
+        using acs = d2::task_handle_accessor;
+        if (&acs::ctx_of(h) != &context()) {
+            throw_exception(exception_id::bad_task_handle_wrong_task_group);
+        }
+
+        bool cancellation_status = false;
+        try_call([&] {
+            execute_and_wait(*acs::release(h), context(), m_wait_ctx, context());
+        }).on_completion([&] {
+            // TODO: the reset method is not thread-safe. Ensure the correct behavior.
+            cancellation_status = context().is_group_execution_cancelled();
+            context().reset();
+        });
+        return cancellation_status ? canceled : complete;
+    }
+#endif
     template<typename F>
     task* prepare_task(F&& f) {
         m_wait_ctx.reserve();
@@ -632,6 +654,12 @@ public:
     task_group_status run_and_wait(const F& f) {
         return internal_run_and_wait(f);
     }
+
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+    task_group_status run_and_wait(d2::task_handle&& h) {
+        return internal_run_and_wait(std::move(h));
+    }
+#endif
 }; // class task_group
 
 #if TBB_PREVIEW_ISOLATED_TASK_GROUP
