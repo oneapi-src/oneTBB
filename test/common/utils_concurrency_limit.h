@@ -30,9 +30,11 @@
 
 #if _WIN32 || _WIN64
 #include <windows.h>
-#elif __linux__
+#elif __unix__
 #include <unistd.h>
+#if __linux__
 #include <sys/sysinfo.h>
+#endif
 #include <string.h>
 #include <sched.h>
 #elif __FreeBSD__
@@ -166,7 +168,8 @@ int limit_number_of_threads( int max_threads ) {
 
 #endif // __TBB_TEST_SKIP_AFFINITY
 
-#define OS_AFFINITY_SYSCALL_PRESENT ((__linux__ && !__ANDROID__) || (__FreeBSD_version >= 701000))
+// TODO: consider using cpuset_setaffinity/sched_getaffinity on FreeBSD to enable the functionality
+#define OS_AFFINITY_SYSCALL_PRESENT (__linux__ && !__ANDROID__)
 
 #if OS_AFFINITY_SYSCALL_PRESENT
 void get_thread_affinity_mask(std::size_t& ncpus, std::vector<int>& free_indexes) {
@@ -258,12 +261,12 @@ public:
     ~pinning_observer() { }
 };
 
-#if __linux__
+#if __unix__
 #include <sched.h>
 #endif
 
 bool can_change_thread_priority() {
-#if __linux__
+#if __unix__
     pthread_t this_thread = pthread_self();
     sched_param old_params;
     int old_policy;
@@ -284,7 +287,7 @@ bool can_change_thread_priority() {
 }
 
 void increase_thread_priority() {
-#if __linux__
+#if __unix__
     pthread_t this_thread = pthread_self();
     sched_param params;
     params.sched_priority = sched_get_priority_max(SCHED_FIFO);
@@ -295,7 +298,7 @@ void increase_thread_priority() {
 }
 
 void decrease_thread_priority() {
-#if __linux__
+#if __unix__
     pthread_t this_thread = pthread_self();
     sched_param params;
     params.sched_priority = sched_get_priority_min(SCHED_FIFO);

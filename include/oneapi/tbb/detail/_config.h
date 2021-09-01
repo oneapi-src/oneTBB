@@ -28,6 +28,8 @@
 /* Check which standard library we use. */
 #include <cstddef>
 
+#include "_export.h"
+
 #if _MSC_VER
     #define __TBB_EXPORTED_FUNC   __cdecl
     #define __TBB_EXPORTED_METHOD __thiscall
@@ -92,7 +94,7 @@
 #define __TBB_IS_MACRO_EMPTY(A,IGNORED) __TBB_CONCAT_AUX(__TBB_MACRO_EMPTY,A)
 #define __TBB_MACRO_EMPTY 1
 
-#if _M_X64
+#if _M_X64 || _M_ARM64
     #define __TBB_W(name) name##64
 #else
     #define __TBB_W(name) name
@@ -206,6 +208,15 @@
     #define __TBB_USE_OPTIONAL_RTTI (__GXX_RTTI || __RTTI || __INTEL_RTTI__)
 #endif
 
+/** Address sanitizer detection **/
+#ifdef __SANITIZE_ADDRESS__
+    #define __TBB_USE_ADDRESS_SANITIZER 1
+#elif defined(__has_feature)
+#if __has_feature(address_sanitizer)
+    #define __TBB_USE_ADDRESS_SANITIZER 1
+#endif
+#endif
+
 /** Library features presence macros **/
 
 #define __TBB_CPP14_INTEGER_SEQUENCE_PRESENT       (__TBB_LANG >= 201402L)
@@ -257,7 +268,7 @@
     #define __TBB_CPP20_COMPARISONS_PRESENT __TBB_CPP20_PRESENT
 #endif
 
-#define __TBB_RESUMABLE_TASKS                           (!__TBB_WIN8UI_SUPPORT && !__ANDROID__)
+#define __TBB_RESUMABLE_TASKS                           (!__TBB_WIN8UI_SUPPORT && !__ANDROID__ && !__QNXNTO__)
 
 /* This macro marks incomplete code or comments describing ideas which are considered for the future.
  * See also for plain comment with TODO and FIXME marks for small improvement opportunities.
@@ -289,6 +300,10 @@
     #define __TBB_GCC_WARNING_IGNORED_ATTRIBUTES_PRESENT (__TBB_GCC_VERSION >= 60100)
 #endif
 
+#if __GNUC__ && !__INTEL_COMPILER && !__clang__
+    #define __TBB_GCC_PARAMETER_PACK_IN_LAMBDAS_BROKEN (__TBB_GCC_VERSION <= 40805)
+#endif
+
 #define __TBB_CPP17_FALLTHROUGH_PRESENT (__TBB_LANG >= 201703L)
 #define __TBB_CPP17_NODISCARD_PRESENT   (__TBB_LANG >= 201703L)
 #define __TBB_FALLTHROUGH_PRESENT       (__TBB_GCC_VERSION >= 70000 && !__INTEL_COMPILER)
@@ -312,7 +327,7 @@
 #define __TBB_CPP17_UNCAUGHT_EXCEPTIONS_PRESENT             (_MSC_VER >= 1900 || __GLIBCXX__ && __cpp_lib_uncaught_exceptions \
                                                             || _LIBCPP_VERSION >= 3700 && (!__TBB_MACOS_TARGET_VERSION || __TBB_MACOS_TARGET_VERSION >= 101200))
 
-#define __TBB_TSX_INTRINSICS_PRESENT ((__RTM__ || _MSC_VER>=1700 || __INTEL_COMPILER) && !__ANDROID__)
+#define __TBB_TSX_INTRINSICS_PRESENT (__RTM__ || __INTEL_COMPILER || (_MSC_VER>=1700 && (__TBB_x86_64 || __TBB_x86_32)))
 
 #define __TBB_WAITPKG_INTRINSICS_PRESENT ((__INTEL_COMPILER >= 1900 || __TBB_GCC_VERSION >= 110000 || __TBB_CLANG_VERSION >= 120000) && !__ANDROID__)
 
@@ -371,7 +386,7 @@
 #endif
 
 #if !defined(__TBB_SURVIVE_THREAD_SWITCH) && \
-          (_WIN32 || _WIN64 || __APPLE__ || (__linux__ && !__ANDROID__))
+          (_WIN32 || _WIN64 || __APPLE__ || (__unix__ && !__ANDROID__))
     #define __TBB_SURVIVE_THREAD_SWITCH 1
 #endif /* __TBB_SURVIVE_THREAD_SWITCH */
 
@@ -391,7 +406,7 @@
 // instantiation site, which is too late for suppression of the corresponding messages for internal
 // stuff.
 #if !defined(__INTEL_COMPILER) && (!defined(TBB_SUPPRESS_DEPRECATED_MESSAGES) || (TBB_SUPPRESS_DEPRECATED_MESSAGES == 0))
-    #if (__TBB_LANG >= 201402L)
+    #if (__TBB_LANG >= 201402L && (!defined(_MSC_VER) || _MSC_VER >= 1920))
         #define __TBB_DEPRECATED [[deprecated]]
         #define __TBB_DEPRECATED_MSG(msg) [[deprecated(msg)]]
     #elif _MSC_VER
@@ -441,6 +456,14 @@
 #if __has_feature(thread_sanitizer)
     #define __TBB_USE_THREAD_SANITIZER 1
 #endif
+#endif
+
+#ifndef __TBB_USE_SANITIZERS
+#define __TBB_USE_SANITIZERS (__TBB_USE_THREAD_SANITIZER || __TBB_USE_ADDRESS_SANITIZER)
+#endif
+
+#ifndef __TBB_RESUMABLE_TASKS_USE_THREADS
+#define __TBB_RESUMABLE_TASKS_USE_THREADS __TBB_USE_SANITIZERS
 #endif
 
 #ifndef __TBB_USE_CONSTRAINTS
@@ -506,6 +529,10 @@
 
 #if TBB_PREVIEW_TASK_GROUP_EXTENSIONS || __TBB_BUILD
 #define __TBB_PREVIEW_TASK_GROUP_EXTENSIONS 1
+#endif
+
+#if TBB_PREVIEW_COLLABORATIVE_CALL_ONCE || __TBB_BUILD
+#define __TBB_PREVIEW_COLLABORATIVE_CALL_ONCE 1
 #endif
 
 #endif // __TBB_detail__config_H

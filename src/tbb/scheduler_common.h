@@ -33,6 +33,7 @@
 #endif
 // TODO: add conditional inclusion based on specified type
 #include "oneapi/tbb/spin_mutex.h"
+#include "oneapi/tbb/mutex.h"
 
 #if TBB_USE_ASSERT
 #include <atomic>
@@ -174,7 +175,7 @@ public:
 #endif // _WIN64
 };
 
-#if (_WIN32 || _WIN64 || __linux__) && (__TBB_x86_32 || __TBB_x86_64)
+#if (_WIN32 || _WIN64 || __unix__) && (__TBB_x86_32 || __TBB_x86_64)
 #if _MSC_VER
 #pragma intrinsic(__rdtsc)
 #endif
@@ -219,7 +220,7 @@ inline void prolonged_pause_impl() {
 #endif
 
 inline void prolonged_pause() {
-#if __TBB_WAITPKG_INTRINSICS_PRESENT && (_WIN32 || _WIN64 || __linux__) && (__TBB_x86_32 || __TBB_x86_64)
+#if __TBB_WAITPKG_INTRINSICS_PRESENT && (_WIN32 || _WIN64 || __unix__) && (__TBB_x86_32 || __TBB_x86_64)
     if (governor::wait_package_enabled()) {
         std::uint64_t time_stamp = machine_time_stamp();
         // _tpause function directs the processor to enter an implementation-dependent optimized state
@@ -474,7 +475,7 @@ public:
 #if __TBB_RESUMABLE_TASKS
     /* [[noreturn]] */ void co_local_wait_for_all() noexcept;
     void suspend(suspend_callback_type suspend_callback, void* user_callback);
-    void resume(task_dispatcher& target);
+    bool resume(task_dispatcher& target);
     suspend_point_type* get_suspend_point();
     void init_suspend_point(arena* a, std::size_t stack_size);
     friend void internal_resume(suspend_point_type*);

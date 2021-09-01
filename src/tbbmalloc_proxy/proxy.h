@@ -22,26 +22,19 @@
 
 // MALLOC_UNIXLIKE_OVERLOAD_ENABLED depends on MALLOC_CHECK_RECURSION stuff
 // TODO: limit MALLOC_CHECK_RECURSION to *_OVERLOAD_ENABLED only
-#if __linux__ || __APPLE__ || __sun || __FreeBSD__ || MALLOC_UNIXLIKE_OVERLOAD_ENABLED
+#if __unix__ || __APPLE__ || MALLOC_UNIXLIKE_OVERLOAD_ENABLED
 #define MALLOC_CHECK_RECURSION 1
 #endif
 
+#include "oneapi/tbb/detail/_config.h"
 #include <stddef.h>
 
 extern "C" {
-    void * scalable_malloc(size_t size);
-    void * scalable_calloc(size_t nobj, size_t size);
-    void   scalable_free(void *ptr);
-    void * scalable_realloc(void* ptr, size_t size);
-    void * scalable_aligned_malloc(size_t size, size_t alignment);
-    void * scalable_aligned_realloc(void* ptr, size_t size, size_t alignment);
-    int    scalable_posix_memalign(void **memptr, size_t alignment, size_t size);
-    size_t scalable_msize(void *ptr);
-    void   __TBB_malloc_safer_free( void *ptr, void (*original_free)(void*));
-    void * __TBB_malloc_safer_realloc( void *ptr, size_t, void* );
-    void * __TBB_malloc_safer_aligned_realloc( void *ptr, size_t, size_t, void* );
-    size_t __TBB_malloc_safer_msize( void *ptr, size_t (*orig_msize_crt80d)(void*));
-    size_t __TBB_malloc_safer_aligned_msize( void *ptr, size_t, size_t, size_t (*orig_msize_crt80d)(void*,size_t,size_t));
+    TBBMALLOC_EXPORT void   __TBB_malloc_safer_free( void *ptr, void (*original_free)(void*));
+    TBBMALLOC_EXPORT void * __TBB_malloc_safer_realloc( void *ptr, size_t, void* );
+    TBBMALLOC_EXPORT void * __TBB_malloc_safer_aligned_realloc( void *ptr, size_t, size_t, void* );
+    TBBMALLOC_EXPORT size_t __TBB_malloc_safer_msize( void *ptr, size_t (*orig_msize_crt80d)(void*));
+    TBBMALLOC_EXPORT size_t __TBB_malloc_safer_aligned_msize( void *ptr, size_t, size_t, size_t (*orig_msize_crt80d)(void*,size_t,size_t));
 
 #if MALLOC_ZONE_OVERLOAD_ENABLED
     void   __TBB_malloc_free_definite_size(void *object, size_t size);

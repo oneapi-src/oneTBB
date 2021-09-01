@@ -16,7 +16,6 @@
 
 // Message based key matching is a preview feature
 #define TBB_PREVIEW_FLOW_GRAPH_FEATURES 1
-#define MAX_TUPLE_TEST_SIZE 10
 
 #include "common/config.h"
 
@@ -69,13 +68,6 @@ void test_deduction_guides() {
 }
 #endif
 
-//! Serial test with matching policies
-//! \brief \ref error_guessing
-TEST_CASE("Serial test") {
-    generate_test<serial_test, std::tuple<MyMessageKeyWithBrokenKey<int, double>, MyMessageKeyWithoutKey<int, float> >, message_based_key_matching<int> >::do_test();
-    generate_test<serial_test, std::tuple<MyMessageKeyWithoutKeyMethod<std::string, double>, MyMessageKeyWithBrokenKey<std::string, float> >, message_based_key_matching<std::string> >::do_test();
-}
-
 template <typename T1, typename T2>
 using make_tuple = decltype(std::tuple_cat(T1(), std::tuple<T2>()));
 using T1 = std::tuple<MyMessageKeyWithoutKeyMethod<std::string, double>>;
@@ -89,16 +81,30 @@ using T8 = make_tuple < T7, MyMessageKeyWithBrokenKey<std::string, int>>;
 using T9 = make_tuple < T8, MyMessageKeyWithoutKeyMethod<std::string, threebyte>>;
 using T10 = make_tuple < T9, MyMessageKeyWithBrokenKey<std::string, size_t>>;
 
+#if TBB_TEST_LOW_WORKLOAD && TBB_USE_DEBUG
+// the compiler might generate huge object file in debug (>64M)
+#define TEST_CASE_TEMPLATE_N_ARGS(dec) TEST_CASE_TEMPLATE(dec, T, T2, T10)
+#else
+#define TEST_CASE_TEMPLATE_N_ARGS(dec) TEST_CASE_TEMPLATE(dec, T, T2, T3, T4, T5, T6, T7, T8, T9, T10)
+#endif
+
 //! Serial test with different tuple sizes
 //! \brief \ref error_guessing
-TEST_CASE_TEMPLATE("Serial N tests", T, T2, T3, T4, T5, T6, T7, T8, T9, T10) {
+TEST_CASE_TEMPLATE_N_ARGS("Serial N tests") {
     generate_test<serial_test, T, message_based_key_matching<std::string&> >::do_test();
 }
 
 //! Parallel test with different tuple sizes
 //! \brief \ref error_guessing
-TEST_CASE_TEMPLATE("Parallel N tests", T, T2, T3, T4, T5, T6, T7, T8, T9, T10) {
+TEST_CASE_TEMPLATE_N_ARGS("Parallel N tests") {
     generate_test<parallel_test, T, message_based_key_matching<std::string&> >::do_test();
+}
+
+//! Serial test with matching policies
+//! \brief \ref error_guessing
+TEST_CASE("Serial test") {
+    generate_test<serial_test, std::tuple<MyMessageKeyWithBrokenKey<int, double>, MyMessageKeyWithoutKey<int, float> >, message_based_key_matching<int> >::do_test();
+    generate_test<serial_test, std::tuple<MyMessageKeyWithoutKeyMethod<std::string, double>, MyMessageKeyWithBrokenKey<std::string, float> >, message_based_key_matching<std::string> >::do_test();
 }
 
 //! Parallel test with special key types
@@ -116,10 +122,3 @@ TEST_CASE("Deduction guides test"){
     test_deduction_guides();
 }
 #endif
-
-//! Serial test with special key types
-//! \brief \ref error_guessing
-TEST_CASE("Serial test"){
-    generate_test<serial_test, std::tuple<MyMessageKeyWithBrokenKey<int, double>, MyMessageKeyWithoutKey<int, float> >, message_based_key_matching<int> >::do_test();
-    generate_test<serial_test, std::tuple<MyMessageKeyWithoutKeyMethod<std::string, double>, MyMessageKeyWithBrokenKey<std::string, float> >, message_based_key_matching<std::string> >::do_test();
-}

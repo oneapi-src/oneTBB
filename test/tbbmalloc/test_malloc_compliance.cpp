@@ -91,7 +91,7 @@ void limitMem( size_t limit )
     }
     if (rlim.rlim_max==(rlim_t)RLIM_INFINITY)
         rlim.rlim_cur = (limit > 0) ? limit*MByte : rlim.rlim_max;
-    else rlim.rlim_cur = (limit > 0 && limit<rlim.rlim_max) ? limit*MByte : rlim.rlim_max;
+    else rlim.rlim_cur = (limit > 0 && static_cast<rlim_t>(limit)<rlim.rlim_max) ? limit*MByte : rlim.rlim_max;
     ret = setrlimit(RLIMIT_AS,&rlim);
     if (0 != ret) {
         REPORT("Can't set limits: errno %d\n", errno);
@@ -113,15 +113,15 @@ static bool Verbose = false;
 #include <errno.h>
 #include <limits.h> // for CHAR_BIT
 
-#if __linux__
+#if __unix__
 #include <stdint.h> // uintptr_t
 #endif
 #if _WIN32 || _WIN64
 #include <malloc.h> // _aligned_(malloc|free|realloc)
 #if __MINGW64__
 // Workaround a bug in MinGW64 headers with _aligned_(malloc|free) not declared by default
-extern "C" void __cdecl _aligned_free(void *);
-extern "C" void *__cdecl _aligned_malloc(size_t,size_t);
+extern "C" void __cdecl __declspec(dllimport) _aligned_free(void *);
+extern "C" void *__cdecl __declspec(dllimport) _aligned_malloc(size_t,size_t);
 #endif
 #endif
 
@@ -166,7 +166,7 @@ int   Tposix_memalign(void **memptr, size_t alignment, size_t size);
 void* Taligned_malloc(size_t size, size_t alignment);
 void* Taligned_realloc(void* memblock, size_t size, size_t alignment);
 
-bool error_occurred = false;
+std::atomic<bool> error_occurred{ false };
 
 #if __APPLE__
 // Tests that use the variables are skipped on macOS*
@@ -189,14 +189,12 @@ struct MemStruct
 
 class CMemTest: utils::NoAssign
 {
-    UINT CountErrors;
     bool FullLog;
     utils::SpinBarrier *limitBarrier;
     static bool firstTime;
 
 public:
-    CMemTest(utils::SpinBarrier *barrier, bool isVerbose=false) :
-        CountErrors(0), limitBarrier(barrier)
+    CMemTest(utils::SpinBarrier *barrier, bool isVerbose=false) : limitBarrier(barrier)
         {
             srand((UINT)time(NULL));
             FullLog=isVerbose;
@@ -448,7 +446,7 @@ void* Tmalloc(size_t size)
     size_t alignment = (sizeof(intptr_t)>4 && size>8) ? 16 : 8;
     void *ret = Rmalloc(size);
     if (0 != ret)
-        REQUIRE_MESSAGE(0==((uintptr_t)ret & (alignment-1)),
+        CHECK_FAST_MESSAGE(0==((uintptr_t)ret & (alignment-1)),
                "allocation result should be properly aligned");
     return ret;
 }
@@ -458,7 +456,7 @@ void* Tcalloc(size_t num, size_t size)
     size_t alignment = (sizeof(intptr_t)>4 && num && size>8) ? 16 : 8;
     void *ret = Rcalloc(num, size);
     if (0 != ret)
-        REQUIRE_MESSAGE(0==((uintptr_t)ret & (alignment-1)),
+        CHECK_FAST_MESSAGE(0==((uintptr_t)ret & (alignment-1)),
                "allocation result should be properly aligned");
     return ret;
 }
@@ -468,7 +466,7 @@ void* Trealloc(void* memblock, size_t size)
     size_t alignment = (sizeof(intptr_t)>4 && size>8) ? 16 : 8;
     void *ret = Rrealloc(memblock, size);
     if (0 != ret)
-        REQUIRE_MESSAGE(0==((uintptr_t)ret & (alignment-1)),
+        CHECK_FAST_MESSAGE(0==((uintptr_t)ret & (alignment-1)),
                "allocation result should be properly aligned");
     return ret;
 }
@@ -476,7 +474,7 @@ int Tposix_memalign(void **memptr, size_t alignment, size_t size)
 {
     int ret = Rposix_memalign(memptr, alignment, size);
     if (0 == ret)
-        REQUIRE_MESSAGE(0==((uintptr_t)*memptr & (alignment-1)),
+        CHECK_FAST_MESSAGE(0==((uintptr_t)*memptr & (alignment-1)),
                "allocation result should be aligned");
     return ret;
 }
@@ -484,7 +482,7 @@ void* Taligned_malloc(size_t size, size_t alignment)
 {
     void *ret = Raligned_malloc(size, alignment);
     if (0 != ret)
-        REQUIRE_MESSAGE(0==((uintptr_t)ret & (alignment-1)),
+        CHECK_FAST_MESSAGE(0==((uintptr_t)ret & (alignment-1)),
                "allocation result should be aligned");
     return ret;
 }
@@ -492,7 +490,7 @@ void* Taligned_realloc(void* memblock, size_t size, size_t alignment)
 {
     void *ret = Raligned_realloc(memblock, size, alignment);
     if (0 != ret)
-        REQUIRE_MESSAGE(0==((uintptr_t)ret & (alignment-1)),
+        CHECK_FAST_MESSAGE(0==((uintptr_t)ret & (alignment-1)),
                "allocation result should be aligned");
     return ret;
 }
@@ -582,7 +580,7 @@ void CMemTest::Zerofilling()
 {
     TestStruct* TSMas;
     size_t CountElement;
-    CountErrors=0;
+    static std::atomic<int> CountErrors{0};
     if (FullLog) REPORT("\nzeroings elements of array....");
     //test struct
     for (int i=0; i<COUNTEXPERIMENT; i++)
@@ -603,14 +601,14 @@ void CMemTest::Zerofilling()
     }
     if (CountErrors) REPORT("%s\n",strError);
     else if (FullLog) REPORT("%s\n",strOk);
-    error_occurred |= ( CountErrors>0 ) ;
+    if (CountErrors) error_occurred = true;
 }
 
 #if !__APPLE__
 
 void myMemset(void *ptr, int c, size_t n)
 {
-#if  __linux__ &&  __i386__
+#if  __unix__ &&  __i386__
 // memset in Fedora 13 not always correctly sets memory to required values.
     char *p = (char*)ptr;
     for (size_t i=0; i<n; i++)
@@ -635,7 +633,7 @@ void CMemTest::NULLReturn(UINT MinSize, UINT MaxSize, int total_threads)
 
     std::vector<MemStruct> PointerList;
     void *tmp;
-    CountErrors=0;
+    static std::atomic<int> CountErrors{0};
     int CountNULL, num_1024;
     if (FullLog) REPORT("\nNULL return & check errno:\n");
     UINT Size;
@@ -708,9 +706,9 @@ void CMemTest::NULLReturn(UINT MinSize, UINT MaxSize, int total_threads)
                 // Technically, if malloc returns a non-NULL pointer, it is allowed to set errno anyway.
                 // However, on most systems it does not set errno.
                 bool known_issue = false;
-#if __linux__ || __ANDROID__
+#if __unix__ || __ANDROID__
                 if( CHECK_ERRNO(errno==ENOMEM) ) known_issue = true;
-#endif /* __linux__ */
+#endif /* __unix__ */
                 if ( CHECK_ERRNO(errno != ENOMEM+j+1) && !known_issue) {
                     CountErrors++;
                     if (ShouldReportError()) REPORT("error: errno changed to %d though valid pointer was returned\n", errno);
@@ -722,9 +720,8 @@ void CMemTest::NULLReturn(UINT MinSize, UINT MaxSize, int total_threads)
     if (FullLog) REPORT("end malloc\n");
     if (CountErrors) REPORT("%s\n",strError);
     else if (FullLog) REPORT("%s\n",strOk);
-    error_occurred |= ( CountErrors>0 ) ;
+    if (CountErrors) error_occurred = true;
 
-    CountErrors=0;
     //calloc
     if (FullLog) REPORT("calloc....");
     CountNULL = 0;
@@ -747,9 +744,9 @@ void CMemTest::NULLReturn(UINT MinSize, UINT MaxSize, int total_threads)
                 // Technically, if calloc returns a non-NULL pointer, it is allowed to set errno anyway.
                 // However, on most systems it does not set errno.
                 bool known_issue = false;
-#if __linux__
+#if __unix__
                 if( CHECK_ERRNO(errno==ENOMEM) ) known_issue = true;
-#endif /* __linux__ */
+#endif /* __unix__ */
                 if ( CHECK_ERRNO(errno != ENOMEM+j+1) && !known_issue ) {
                     CountErrors++;
                     if (ShouldReportError()) REPORT("error: errno changed to %d though valid pointer was returned\n", errno);
@@ -760,8 +757,7 @@ void CMemTest::NULLReturn(UINT MinSize, UINT MaxSize, int total_threads)
     if (FullLog) REPORT("end calloc\n");
     if (CountErrors) REPORT("%s\n",strError);
     else if (FullLog) REPORT("%s\n",strOk);
-    error_occurred |= ( CountErrors>0 ) ;
-    CountErrors=0;
+    if (CountErrors) error_occurred = true;
     if (FullLog) REPORT("realloc....");
     CountNULL = 0;
     if (PointerList.size() > 0)
@@ -773,9 +769,9 @@ void CMemTest::NULLReturn(UINT MinSize, UINT MaxSize, int total_threads)
                 if (tmp != NULL) // same or another place
                 {
                     bool known_issue = false;
-#if __linux__
+#if __unix__
                     if( errno==ENOMEM ) known_issue = true;
-#endif /* __linux__ */
+#endif /* __unix__ */
                     if (errno != 0 && !known_issue) {
                         CountErrors++;
                         if (ShouldReportError()) REPORT("valid pointer returned, error: errno not kept\n");
@@ -801,7 +797,7 @@ void CMemTest::NULLReturn(UINT MinSize, UINT MaxSize, int total_threads)
     if (FullLog) REPORT("realloc end\n");
     if (CountErrors) REPORT("%s\n",strError);
     else if (FullLog) REPORT("%s\n",strOk);
-    error_occurred |= ( CountErrors>0 ) ;
+    if (CountErrors) error_occurred = true;
     for (UINT i=0; i<PointerList.size(); i++)
     {
         Tfree(PointerList[i].Pointer);
@@ -816,7 +812,7 @@ void CMemTest::NULLReturn(UINT MinSize, UINT MaxSize, int total_threads)
 
 void CMemTest::UniquePointer()
 {
-    CountErrors=0;
+    static std::atomic<int> CountErrors{0};
     int **MasPointer = (int **)Tmalloc(sizeof(int*)*COUNT_ELEM);
     size_t *MasCountElem = (size_t*)Tmalloc(sizeof(size_t)*COUNT_ELEM);
     if (FullLog) REPORT("\nUnique pointer using 0\n");
@@ -844,12 +840,11 @@ void CMemTest::UniquePointer()
     }
     if (CountErrors) REPORT("%s\n",strError);
     else if (FullLog) REPORT("%s\n",strOk);
-    error_occurred |= ( CountErrors>0 ) ;
+    if (CountErrors) error_occurred = true;
     //----------------------------------------------------------
     //calloc
     for (int i=0; i<COUNT_ELEM; i++)
         Tfree(MasPointer[i]);
-    CountErrors=0;
     for (long i=0; i<COUNT_ELEM; i++)
     {
         MasPointer[i]=(int*)Tcalloc(MasCountElem[i]*sizeof(int),2);
@@ -868,10 +863,9 @@ void CMemTest::UniquePointer()
     }
     if (CountErrors) REPORT("%s\n",strError);
     else if (FullLog) REPORT("%s\n",strOk);
-    error_occurred |= ( CountErrors>0 ) ;
+    if (CountErrors) error_occurred = true;
     //---------------------------------------------------------
     //realloc
-    CountErrors=0;
     for (int i=0; i<COUNT_ELEM; i++)
     {
         MasCountElem[i]*=2;
@@ -890,7 +884,7 @@ void CMemTest::UniquePointer()
     }
     if (CountErrors) REPORT("%s\n",strError);
     else if (FullLog) REPORT("%s\n",strOk);
-    error_occurred |= ( CountErrors>0 ) ;
+    if (CountErrors) error_occurred = true;
     for (int i=0; i<COUNT_ELEM; i++)
         Tfree(MasPointer[i]);
     Tfree(MasCountElem);
@@ -911,7 +905,7 @@ bool CMemTest::ShouldReportError()
 
 void CMemTest::Free_NULL()
 {
-    CountErrors=0;
+    static std::atomic<int> CountErrors{0};
     if (FullLog) REPORT("\ncall free with parameter NULL....");
     errno = 0;
     for (int i=0; i<COUNTEXPERIMENT; i++)
@@ -925,7 +919,7 @@ void CMemTest::Free_NULL()
     }
     if (CountErrors) REPORT("%s\n",strError);
     else if (FullLog) REPORT("%s\n",strOk);
-    error_occurred |= ( CountErrors>0 ) ;
+    if (CountErrors) error_occurred = true;
 }
 
 void CMemTest::TestAlignedParameters()
@@ -1009,9 +1003,10 @@ void CMemTest::RunAllTests(int total_threads)
     TestAlignedParameters();
     UniquePointer();
     AddrArifm();
-#if __APPLE__
+#if __APPLE__ || __TBB_USE_THREAD_SANITIZER
     REPORT("Known issue: some tests are skipped on macOS\n");
 #else
+    // TODO: enable
     NULLReturn(1*MByte,100*MByte,total_threads);
 #endif
     if (FullLog) REPORT("Tests for %d threads ended\n", total_threads);
@@ -1033,8 +1028,7 @@ TEST_CASE("MAIN TEST") {
     // Check if we were called to test standard behavior
     // TODO: enable this mode
     // setSystemAllocs();
-
-#if __linux__
+#if __unix__
     /* According to man pthreads
        "NPTL threads do not share resource limits (fixed in kernel 2.6.10)".
        Use per-threads limits for affected systems.
@@ -1043,8 +1037,9 @@ TEST_CASE("MAIN TEST") {
         perProcessLimits = false;
 #endif
     //-------------------------------------
-#if __APPLE__
+#if __APPLE__ || __TBB_USE_SANITIZERS
     /* Skip due to lack of memory limit enforcing under macOS. */
+    //Skip this test under ASAN , as OOM condition breaks the ASAN as well
 #else
     limitMem(200);
     ReallocParam();
@@ -1078,7 +1073,7 @@ TEST_CASE("MAIN TEST") {
 #else  // _MSC_VER
     __tbb_test_errno = true;
 #endif // _MSC_VER
- 
+
     CheckArgumentsOverflow();
     CheckReallocLeak();
     for( int p=MaxThread; p>=MinThread; --p ) {

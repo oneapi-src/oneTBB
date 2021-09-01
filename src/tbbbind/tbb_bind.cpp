@@ -19,6 +19,7 @@
 
 #include "../tbb/assert_impl.h" // Out-of-line TBB assertion handling routines are instantiated here.
 #include "oneapi/tbb/detail/_assert.h"
+#include "oneapi/tbb/detail/_config.h"
 
 #if _MSC_VER && !__INTEL_COMPILER && !__clang__
 #pragma warning( push )
@@ -34,7 +35,8 @@
 #pragma GCC diagnostic pop
 #endif
 
-#define __HWLOC_HYBRID_CPUS_INTERFACES_PRESENT (HWLOC_API_VERSION >= 0x20400)
+#define __TBBBIND_HWLOC_HYBRID_CPUS_INTERFACES_PRESENT (HWLOC_API_VERSION >= 0x20400)
+#define __TBBBIND_HWLOC_TOPOLOGY_FLAG_RESTRICT_TO_CPUBINDING_PRESENT (HWLOC_API_VERSION >= 0x20500)
 
 // Most of hwloc calls returns negative exit code on error.
 // This macro tracks error codes that are returned from the hwloc interfaces.
@@ -48,7 +50,7 @@ namespace r1 {
 //------------------------------------------------------------------------
 // Information about the machine's hardware TBB is happen to work on
 //------------------------------------------------------------------------
-class platform_topology {
+class system_topology {
     friend class binding_handler;
 
     // Common topology members
@@ -85,6 +87,16 @@ private:
         // Parse topology
         if ( hwloc_topology_init( &topology ) == 0 ) {
             initialization_state = topology_allocated;
+#if __TBBBIND_HWLOC_TOPOLOGY_FLAG_RESTRICT_TO_CPUBINDING_PRESENT
+            if ( groups_num == 1 &&
+                 hwloc_topology_set_flags(topology,
+                     HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM |
+                     HWLOC_TOPOLOGY_FLAG_RESTRICT_TO_CPUBINDING
+                 ) != 0
+            ) {
+                return;
+            }
+#endif
             if ( hwloc_topology_load( topology ) == 0 ) {
                 initialization_state = topology_loaded;
             }
@@ -135,7 +147,7 @@ private:
             numa_indexes_list.resize(numa_nodes_count);
             hwloc_obj_t node_buffer;
             hwloc_bitmap_foreach_begin(i, process_node_affinity_mask) {
-                node_buffer = hwloc_get_obj_by_type(topology, HWLOC_OBJ_NUMANODE, i);
+                node_buffer = hwloc_get_numanode_obj_by_os_index(topology, i);
                 numa_indexes_list[counter] = static_cast<int>(node_buffer->logical_index);
 
                 if ( numa_indexes_list[counter] > max_numa_index ) {
@@ -150,7 +162,7 @@ private:
             numa_affinity_masks_list.resize(max_numa_index + 1);
             int index = 0;
             hwloc_bitmap_foreach_begin(i, process_node_affinity_mask) {
-                node_buffer = hwloc_get_obj_by_type(topology, HWLOC_OBJ_NUMANODE, i);
+                node_buffer = hwloc_get_numanode_obj_by_os_index(topology, i);
                 index = static_cast<int>(node_buffer->logical_index);
 
                 hwloc_cpuset_t& current_mask = numa_affinity_masks_list[index];
@@ -168,7 +180,7 @@ private:
             core_types_indexes_list.push_back(-1);
             return;
         }
-#if __HWLOC_HYBRID_CPUS_INTERFACES_PRESENT
+#if __TBBBIND_HWLOC_HYBRID_CPUS_INTERFACES_PRESENT
         __TBB_ASSERT(hwloc_get_api_version() >= 0x20400, "Hybrid CPUs support interfaces required HWLOC >= 2.4");
         // Parsing the hybrid CPU topology
         int core_types_number = hwloc_cpukinds_get_nr(topology, 0);
@@ -196,9 +208,9 @@ private:
                 }
             }
         }
-#else /*!__HWLOC_HYBRID_CPUS_INTERFACES_PRESENT*/
+#else /*!__TBBBIND_HWLOC_HYBRID_CPUS_INTERFACES_PRESENT*/
         bool core_types_parsing_broken{true};
-#endif /*__HWLOC_HYBRID_CPUS_INTERFACES_PRESENT*/
+#endif /*__TBBBIND_HWLOC_HYBRID_CPUS_INTERFACES_PRESENT*/
 
         if (core_types_parsing_broken) {
             for (auto& core_type_mask : core_types_affinity_masks_list) {
@@ -212,17 +224,19 @@ private:
         }
     }
 
-public:
-    typedef hwloc_cpuset_t             affinity_mask;
-    typedef hwloc_const_cpuset_t const_affinity_mask;
-
-    static platform_topology& instance() {
-        static platform_topology topology;
-        return topology;
+    void enforce_hwloc_2_5_runtime_linkage() {
+        // Without the call of this function HWLOC 2.4 can be successfully loaded during the tbbbind_2_5 loading.
+        // It is possible since tbbbind_2_5 don't use any new entry points that were introduced in HWLOC 2.5
+        // But tbbbind_2_5 compiles with HWLOC 2.5 header, therefore such situation requires binary forward compatibility
+        // which are not guaranteed by the HWLOC library. To enforce linkage tbbbind_2_5 only with HWLOC >= 2.5 version
+        // this function calls the interface that is available in the HWLOC 2.5 only.
+#if HWLOC_API_VERSION >= 0x20500
+        auto some_core = hwloc_get_next_obj_by_type(topology, HWLOC_OBJ_CORE, nullptr);
+        hwloc_get_obj_with_same_locality(topology, some_core, HWLOC_OBJ_CORE, nullptr, nullptr, 0);
+#endif
     }
 
-    bool is_topology_parsed() { return initialization_state == topology_parsed; }
-
+  
     void initialize( std::size_t groups_num ) {
         if ( initialization_state != uninitialized )
             return;
@@ -231,11 +245,37 @@ public:
         numa_topology_parsing();
         core_types_topology_parsing();
 
+        enforce_hwloc_2_5_runtime_linkage();
+
         if (initialization_state == topology_loaded)
             initialization_state = topology_parsed;
     }
 
-    ~platform_topology() {
+    static system_topology* instance_ptr;
+public:
+    typedef hwloc_cpuset_t             affinity_mask;
+    typedef hwloc_const_cpuset_t const_affinity_mask;
+
+    bool is_topology_parsed() { return initialization_state == topology_parsed; }
+
+    static void construct( std::size_t groups_num ) {
+        if (instance_ptr == nullptr) {
+            instance_ptr = new system_topology();
+            instance_ptr->initialize(groups_num);
+        }
+    }
+
+    static system_topology& instance() {
+        __TBB_ASSERT(instance_ptr != nullptr, "Getting instance of non-constructed topology");
+        return *instance_ptr;
+    }
+
+    static void destroy() {
+        __TBB_ASSERT(instance_ptr != nullptr, "Destroying non-constructed topology");
+        delete instance_ptr;
+    }
+
+    ~system_topology() {
         if ( is_topology_parsed() ) {
             for (auto& numa_node_mask : numa_affinity_masks_list) {
                 hwloc_bitmap_free(numa_node_mask);
@@ -260,7 +300,7 @@ public:
         int& _numa_nodes_count, int*& _numa_indexes_list,
         int& _core_types_count, int*& _core_types_indexes_list
     ) {
-        __TBB_ASSERT(is_topology_parsed(), "Trying to get access to uninitialized platform_topology");
+        __TBB_ASSERT(is_topology_parsed(), "Trying to get access to uninitialized system_topology");
         _numa_nodes_count = numa_nodes_count;
         _numa_indexes_list = numa_indexes_list.data();
 
@@ -269,7 +309,7 @@ public:
     }
 
     void fill_constraints_affinity_mask(affinity_mask input_mask, int numa_node_index, int core_type_index, int max_threads_per_core) {
-        __TBB_ASSERT(is_topology_parsed(), "Trying to get access to uninitialized platform_topology");
+        __TBB_ASSERT(is_topology_parsed(), "Trying to get access to uninitialized system_topology");
         __TBB_ASSERT(numa_node_index < (int)numa_affinity_masks_list.size(), "Wrong NUMA node id");
         __TBB_ASSERT(core_type_index < (int)core_types_affinity_masks_list.size(), "Wrong core type id");
         __TBB_ASSERT(max_threads_per_core == -1 || max_threads_per_core > 0, "Wrong max_threads_per_core");
@@ -322,7 +362,7 @@ public:
     }
 
     int get_default_concurrency(int numa_node_index, int core_type_index, int max_threads_per_core) {
-        __TBB_ASSERT(is_topology_parsed(), "Trying to get access to uninitialized platform_topology");
+        __TBB_ASSERT(is_topology_parsed(), "Trying to get access to uninitialized system_topology");
 
         hwloc_cpuset_t constraints_mask = hwloc_bitmap_alloc();
         fill_constraints_affinity_mask(constraints_mask, numa_node_index, core_type_index, max_threads_per_core);
@@ -333,7 +373,7 @@ public:
     }
 
     affinity_mask allocate_process_affinity_mask() {
-        __TBB_ASSERT(is_topology_parsed(), "Trying to get access to uninitialized platform_topology");
+        __TBB_ASSERT(is_topology_parsed(), "Trying to get access to uninitialized system_topology");
         return hwloc_bitmap_dup(process_cpu_affinity_mask);
     }
 
@@ -356,12 +396,14 @@ public:
     }
 };
 
+system_topology* system_topology::instance_ptr{nullptr};
+
 class binding_handler {
     // Following vector saves thread affinity mask on scheduler entry to return it to this thread 
     // on scheduler exit.
-    typedef std::vector<platform_topology::affinity_mask> affinity_masks_container;
+    typedef std::vector<system_topology::affinity_mask> affinity_masks_container;
     affinity_masks_container affinity_backup;
-    platform_topology::affinity_mask handler_affinity_mask;
+    system_topology::affinity_mask handler_affinity_mask;
 
 #if WIN32
     affinity_masks_container affinity_buffer;
@@ -381,32 +423,32 @@ public:
 #endif
     {
         for (std::size_t i = 0; i < size; ++i) {
-            affinity_backup[i] = platform_topology::instance().allocate_process_affinity_mask();
+            affinity_backup[i] = system_topology::instance().allocate_process_affinity_mask();
 #if WIN32
-            affinity_buffer[i] = platform_topology::instance().allocate_process_affinity_mask();
+            affinity_buffer[i] = system_topology::instance().allocate_process_affinity_mask();
 #endif
         }
-        handler_affinity_mask = platform_topology::instance().allocate_process_affinity_mask();
-        platform_topology::instance().fill_constraints_affinity_mask
+        handler_affinity_mask = system_topology::instance().allocate_process_affinity_mask();
+        system_topology::instance().fill_constraints_affinity_mask
             (handler_affinity_mask, numa_node_id, core_type_id, max_threads_per_core);
     }
 
     ~binding_handler() {
         for (std::size_t i = 0; i < affinity_backup.size(); ++i) {
-            platform_topology::instance().free_affinity_mask(affinity_backup[i]);
+            system_topology::instance().free_affinity_mask(affinity_backup[i]);
 #if WIN32
-            platform_topology::instance().free_affinity_mask(affinity_buffer[i]);
+            system_topology::instance().free_affinity_mask(affinity_buffer[i]);
 #endif
         }
-        platform_topology::instance().free_affinity_mask(handler_affinity_mask);
+        system_topology::instance().free_affinity_mask(handler_affinity_mask);
     }
 
     void apply_affinity( unsigned slot_num ) {
-        auto& topology = platform_topology::instance();
+        auto& topology = system_topology::instance();
         __TBB_ASSERT(slot_num < affinity_backup.size(),
             "The slot number is greater than the number of slots in the arena");
         __TBB_ASSERT(topology.is_topology_parsed(),
-            "Trying to get access to uninitialized platform_topology");
+            "Trying to get access to uninitialized system_topology");
 
         topology.store_current_affinity_mask(affinity_backup[slot_num]);
 
@@ -432,9 +474,9 @@ public:
     }
 
     void restore_previous_affinity_mask( unsigned slot_num ) {
-        auto& topology = platform_topology::instance();
+        auto& topology = system_topology::instance();
         __TBB_ASSERT(topology.is_topology_parsed(),
-            "Trying to get access to uninitialized platform_topology");
+            "Trying to get access to uninitialized system_topology");
         topology.set_affinity_mask(affinity_backup[slot_num]);
     };
 
@@ -442,40 +484,44 @@ public:
 
 extern "C" { // exported to TBB interfaces
 
-void __TBB_internal_initialize_system_topology(
+TBBBIND_EXPORT void __TBB_internal_initialize_system_topology(
     std::size_t groups_num,
     int& numa_nodes_count, int*& numa_indexes_list,
     int& core_types_count, int*& core_types_indexes_list
 ) {
-    platform_topology::instance().initialize(groups_num);
-    platform_topology::instance().fill_topology_information(
+    system_topology::construct(groups_num);
+    system_topology::instance().fill_topology_information(
         numa_nodes_count, numa_indexes_list,
         core_types_count, core_types_indexes_list
     );
 }
 
-binding_handler* __TBB_internal_allocate_binding_handler(int number_of_slots, int numa_id, int core_type_id, int max_threads_per_core) {
+TBBBIND_EXPORT binding_handler* __TBB_internal_allocate_binding_handler(int number_of_slots, int numa_id, int core_type_id, int max_threads_per_core) {
     __TBB_ASSERT(number_of_slots > 0, "Trying to create numa handler for 0 threads.");
     return new binding_handler(number_of_slots, numa_id, core_type_id, max_threads_per_core);
 }
 
-void __TBB_internal_deallocate_binding_handler(binding_handler* handler_ptr) {
+TBBBIND_EXPORT void __TBB_internal_deallocate_binding_handler(binding_handler* handler_ptr) {
     __TBB_ASSERT(handler_ptr != nullptr, "Trying to deallocate nullptr pointer.");
     delete handler_ptr;
 }
 
-void __TBB_internal_apply_affinity(binding_handler* handler_ptr, int slot_num) {
+TBBBIND_EXPORT void __TBB_internal_apply_affinity(binding_handler* handler_ptr, int slot_num) {
     __TBB_ASSERT(handler_ptr != nullptr, "Trying to get access to uninitialized metadata.");
     handler_ptr->apply_affinity(slot_num);
 }
 
-void __TBB_internal_restore_affinity(binding_handler* handler_ptr, int slot_num) {
+TBBBIND_EXPORT void __TBB_internal_restore_affinity(binding_handler* handler_ptr, int slot_num) {
     __TBB_ASSERT(handler_ptr != nullptr, "Trying to get access to uninitialized metadata.");
     handler_ptr->restore_previous_affinity_mask(slot_num);
 }
 
-int __TBB_internal_get_default_concurrency(int numa_id, int core_type_id, int max_threads_per_core) {
-    return platform_topology::instance().get_default_concurrency(numa_id, core_type_id, max_threads_per_core);
+TBBBIND_EXPORT int __TBB_internal_get_default_concurrency(int numa_id, int core_type_id, int max_threads_per_core) {
+    return system_topology::instance().get_default_concurrency(numa_id, core_type_id, max_threads_per_core);
+}
+
+void __TBB_internal_destroy_system_topology() {
+    return system_topology::destroy();
 }
 
 } // extern "C"

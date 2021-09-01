@@ -39,8 +39,13 @@ extern "C" {
     extern __declspec(dllexport) void scalable_aligned_free(void *);
     extern __declspec(dllexport) size_t scalable_msize(void *);
     extern __declspec(dllexport) size_t safer_scalable_msize (void *, size_t (*)(void*));
+    extern __declspec(dllexport) int anchor();
 }
 #endif
+
+extern "C" int anchor() {
+    return 42;
+}
 
 // Those functions must not be called instead of presented in dynamic library.
 extern "C" void *scalable_malloc(size_t)
@@ -110,12 +115,14 @@ int main() {}
 
 #else  // _USRDLL
 
+#include "common/config.h"
 // harness_defs.h must be included before tbb_stddef.h to overcome exception-dependent
 // system headers that come from tbb_stddef.h
-#if __TBB_WIN8UI_SUPPORT || __TBB_MIC_OFFLOAD
+#if __TBB_WIN8UI_SUPPORT || __TBB_MIC_OFFLOAD || (__GNUC__ && __GNUC__ < 10 && __TBB_USE_SANITIZERS) || __TBB_SOURCE_DIRECTLY_INCLUDED
 // The test does not work if dynamic load is unavailable.
 // For MIC offload, it fails because liboffload brings libiomp which observes and uses the fake scalable_* calls.
-#else /* !(__TBB_WIN8UI_SUPPORT || __TBB_MIC_OFFLOAD) */
+// For sanitizers, it fails because RUNPATH is lost: https://github.com/google/sanitizers/issues/1219
+#else
 #include "common/test.h"
 #include "common/memory_usage.h"
 #include "common/utils_dynamic_libs.h"
@@ -128,6 +135,11 @@ extern "C" {
     extern __declspec(dllimport)
 #endif
     void *scalable_malloc(size_t);
+
+#if _WIN32||_WIN64
+    extern __declspec(dllimport)
+#endif
+    int anchor();
 }
 
 struct Run {
@@ -141,7 +153,7 @@ struct Run {
 
         const char* actual_name;
         utils::LIBRARY_HANDLE lib = utils::OpenLibrary(actual_name = MALLOCLIB_NAME1);
-        if (!lib)      lib = utils::OpenLibrary(actual_name = MALLOCLIB_NAME2);
+        if (!lib) lib = utils::OpenLibrary(actual_name = MALLOCLIB_NAME2);
         if (!lib) {
             REPORT("Can't load " MALLOCLIB_NAME1 " or " MALLOCLIB_NAME2 "\n");
             exit(1);
@@ -174,11 +186,14 @@ struct Run {
 
 //! \brief \ref error_guessing
 TEST_CASE("test unload lib") {
-    std::ptrdiff_t memory_leak = 0;
+    CHECK(anchor() == 42);
 
     // warm-up run
     utils::NativeParallelFor( 1, Run() );
 
+    // It seems Thread Sanitizer remembers some history information about destroyed threads,
+    // so memory consumption cannot be stabilized
+    std::ptrdiff_t memory_leak = 0;
     {
         /* 1st call to GetMemoryUsage() allocate some memory,
            but it seems memory consumption stabilized after this.
@@ -189,6 +204,7 @@ TEST_CASE("test unload lib") {
         REQUIRE_MESSAGE(memory_in_use == memory_check,
             "Memory consumption should not increase after 1st GetMemoryUsage() call");
     }
+
     {
         // expect that memory consumption stabilized after several runs
         for (;;) {
@@ -202,6 +218,6 @@ TEST_CASE("test unload lib") {
     }
 }
 
-#endif /* !(__TBB_WIN8UI_SUPPORT || __TBB_MIC_OFFLOAD) */
+#endif /* Unsupported configurations */
 
 #endif // _USRDLL

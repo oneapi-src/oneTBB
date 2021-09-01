@@ -14,17 +14,14 @@
     limitations under the License.
 */
 
-#define MAX_TUPLE_TEST_SIZE 10
 #include "common/config.h"
 
 #include "test_join_node.h"
 
 #include "common/concepts_common.h"
 
-
 //! \file test_join_node_key_matching.cpp
 //! \brief Test for [flow_graph.join_node] specification
-
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 void test_deduction_guides() {
@@ -68,6 +65,13 @@ using T8 = make_tuple<T7, MyKeyFirst<std::string, int>>;
 using T9 = make_tuple<T8, MyKeySecond<std::string, threebyte>>;
 using T10 = make_tuple<T9, MyKeyWithBrokenMessageKey<std::string, size_t>>;
 
+#if TBB_TEST_LOW_WORKLOAD && TBB_USE_DEBUG
+// the compiler might generate huge object file in debug (>64M)
+#define TEST_CASE_TEMPLATE_N_ARGS(dec) TEST_CASE_TEMPLATE(dec, T, T2, T5, T8, T10)
+#else
+#define TEST_CASE_TEMPLATE_N_ARGS(dec) TEST_CASE_TEMPLATE(dec, T, T2, T3, T4, T5, T6, T7, T8, T9, T10)
+#endif
+
 //! Test serial key matching on special input types
 //! \brief \ref error_guessing
 TEST_CASE("Serial test on tuples") {
@@ -79,7 +83,7 @@ TEST_CASE("Serial test on tuples") {
 
 //! Serial test with different tuple sizes
 //! \brief \ref error_guessing
-TEST_CASE_TEMPLATE("Serial N tests on tuples", T, T2, T3, T4, T5, T6, T7, T8, T9, T10) {
+TEST_CASE_TEMPLATE_N_ARGS("Serial N tests on tuples") {
      generate_test<serial_test, T, tbb::flow::key_matching<std::string&>>::do_test();
 }
 
@@ -101,7 +105,7 @@ TEST_CASE("Parallel test on tuples"){
 
 //! Parallel test with different tuple sizes
 //! \brief \ref error_guessing
-TEST_CASE_TEMPLATE("Parallel N tests on tuples", T, T2, T3, T4, T5, T6, T7, T8, T9, T10) {
+TEST_CASE_TEMPLATE_N_ARGS("Parallel N tests on tuples") {
     generate_test<parallel_test, T, tbb::flow::key_matching<std::string&>>::do_test();
 }
 

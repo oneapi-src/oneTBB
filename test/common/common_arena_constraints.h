@@ -18,7 +18,6 @@
 #define __TBB_test_common_arena_constraints_H_
 
 #define TBB_PREVIEW_TASK_ARENA_CONSTRAINTS_EXTENSION 1
-#define __TBB_EXTRA_DEBUG 1
 
 #if _WIN32 || _WIN64
 #define _CRT_SECURE_NO_WARNINGS
@@ -38,9 +37,26 @@
 
 #if (_WIN32 || _WIN64) && __TBB_HWLOC_VALID_ENVIRONMENT
 #include <windows.h>
-int get_processors_groups_count() { return GetActiveProcessorGroupCount(); }
+int get_processors_group_count() {
+    SYSTEM_INFO si;
+    GetNativeSystemInfo(&si);
+    DWORD_PTR pam, sam, m = 1;
+    GetProcessAffinityMask( GetCurrentProcess(), &pam, &sam );
+    int nproc = 0;
+    for ( std::size_t i = 0; i < sizeof(DWORD_PTR) * CHAR_BIT; ++i, m <<= 1 ) {
+        if ( pam & m )
+            ++nproc;
+    }
+    // Setting up processor groups in case the process does not restrict affinity mask and more than one processor group is present
+    if ( nproc == (int)si.dwNumberOfProcessors  ) {
+        // The process does not have restricting affinity mask and multiple processor groups are possible
+        return (int)GetActiveProcessorGroupCount();
+    } else {
+        return 1;
+    }
+}
 #else
-int get_processors_groups_count() { return 1; }
+int get_processors_group_count() { return 1; }
 #endif
 
 //TODO: Write a test that checks for memory leaks during dynamic link/unlink of TBBbind.
@@ -69,6 +85,7 @@ int get_processors_groups_count() { return 1; }
 #endif
 
 #define __HWLOC_HYBRID_CPUS_INTERFACES_PRESENT (HWLOC_API_VERSION >= 0x20400)
+#define __HWLOC_TOPOLOGY_FLAG_RESTRICT_TO_CPUBINDING_PRESENT (HWLOC_API_VERSION >= 0x20500)
 // At this moment the hybrid CPUs HWLOC interfaces returns unexpected results on some Windows machines
 // in the 32-bit arch mode.
 #define __HWLOC_HYBRID_CPUS_INTERFACES_VALID (!_WIN32 || _WIN64)
@@ -153,9 +170,18 @@ private:
 
     system_info() {
         hwloc_require_ex(hwloc_topology_init, &topology);
+#if __HWLOC_TOPOLOGY_FLAG_RESTRICT_TO_CPUBINDING_PRESENT
+        if ( get_processors_group_count() == 1 ) {
+            REQUIRE(
+                hwloc_topology_set_flags(topology,
+                    HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM |
+                    HWLOC_TOPOLOGY_FLAG_RESTRICT_TO_CPUBINDING) == 0
+            );
+        }
+#endif
         hwloc_require_ex(hwloc_topology_load, topology);
 
-        if ( get_processors_groups_count() > 1 ) {
+        if ( get_processors_group_count() > 1 ) {
             process_cpuset = hwloc_bitmap_dup(hwloc_topology_get_complete_cpuset(topology));
         } else {
             process_cpuset = hwloc_bitmap_alloc();
@@ -166,7 +192,7 @@ private:
         index_info current_node_info{};
         while ((current_numa_node = hwloc_get_next_obj_by_type(topology,
                                                                HWLOC_OBJ_NUMANODE,
-                                                               current_numa_node))) {
+                                                               current_numa_node)) != nullptr) {
             current_node_info.index = static_cast<int>(current_numa_node->logical_index);
             current_node_info.cpuset = hwloc_bitmap_dup(current_numa_node->cpuset);
             hwloc_bitmap_and(current_node_info.cpuset, current_node_info.cpuset, process_cpuset);
@@ -235,7 +261,7 @@ private:
 
         hwloc_bitmap_t core_affinity = hwloc_bitmap_alloc();
         hwloc_obj_t current_core = nullptr;
-        while ((current_core = hwloc_get_next_obj_by_type(topology, HWLOC_OBJ_CORE, current_core))) {
+        while ((current_core = hwloc_get_next_obj_by_type(topology, HWLOC_OBJ_CORE, current_core)) != nullptr) {
             hwloc_bitmap_and(core_affinity, process_cpuset, current_core->cpuset);
             if (hwloc_bitmap_weight(core_affinity) > 0) {
                 core_infos.emplace_back(core_affinity);
@@ -385,7 +411,7 @@ void test_constraints_affinity_and_concurrency(tbb::task_arena::constraints cons
                                                system_info::affinity_mask arena_affinity) {
     int default_concurrency = tbb::info::default_concurrency(constraints);
     system_info::affinity_mask reference_affinity = prepare_reference_affinity_mask(constraints);
-    int max_threads_per_core = system_info::get_maximal_threads_per_core();
+    int max_threads_per_core = static_cast<int>(system_info::get_maximal_threads_per_core());
 
     if (constraints.max_threads_per_core == tbb::task_arena::automatic || constraints.max_threads_per_core == max_threads_per_core) {
         REQUIRE_MESSAGE(hwloc_bitmap_isequal(reference_affinity, arena_affinity),
@@ -425,27 +451,23 @@ system_info::affinity_mask get_arena_affinity(tbb::task_arena& ta) {
         arena_affinity = system_info::allocate_current_affinity_mask();
     });
 
-    utils::SpinBarrier barrier;
-    barrier.initialize(ta.max_concurrency() - 1);
+    utils::SpinBarrier exit_barrier(ta.max_concurrency());
     tbb::spin_mutex affinity_mutex{};
     for (int i = 0; i < ta.max_concurrency() - 1; ++i) {
-        ta.enqueue([&]
+        ta.enqueue([&] {
             {
-                barrier.wait();
                 tbb::spin_mutex::scoped_lock lock(affinity_mutex);
                 system_info::affinity_mask thread_affinity = system_info::allocate_current_affinity_mask();
-                if (get_processors_groups_count() == 1) {
+                if (get_processors_group_count() == 1) {
                     REQUIRE_MESSAGE(hwloc_bitmap_isequal(thread_affinity, arena_affinity),
                         "Threads have different masks on machine without several processors groups.");
                 }
                 hwloc_bitmap_or(arena_affinity, arena_affinity, thread_affinity);
             }
-        );
+            exit_barrier.wait();
+        });
     }
-
-    //TODO: Synchronization using atomics without debug_wait_until_empty() cause
-    // a race which cause the absence of on_scheduler_exit() call.
-    ta.debug_wait_until_empty();
+    exit_barrier.wait();
     return arena_affinity;
 }
 
@@ -532,7 +554,7 @@ constraints_container generate_constraints_variety() {
         }
 
         // Some constraints may cause unexpected behavior, which would be fixed later.
-        if (get_processors_groups_count() > 1) {
+        if (get_processors_group_count() > 1) {
             for(auto it = results.begin(); it != results.end(); ++it) {
                 if (it->max_threads_per_core != tbb::task_arena::automatic
                    && (it->numa_id == tbb::task_arena::automatic || tbb::info::numa_nodes().size() == 1)

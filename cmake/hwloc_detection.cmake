@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-list(APPEND HWLOC_REQUIRED_VERSIONS 1_11 2 2_4)
+list(APPEND HWLOC_REQUIRED_VERSIONS 1_11 2 2_5)
 
 foreach(hwloc_version ${HWLOC_REQUIRED_VERSIONS})
     if (NOT WIN32)
@@ -45,19 +45,22 @@ endforeach()
 
 unset(HWLOC_TARGET_NAME)
 
-if (NOT HWLOC_TARGET_EXPLICITLY_DEFINED)
+if (NOT HWLOC_TARGET_EXPLICITLY_DEFINED AND
+    # No hwloc auto detection for cross compilation
+    NOT CMAKE_CROSSCOMPILING AND
+    NOT TBB_DISABLE_HWLOC_AUTOMATIC_SEARCH
+)
     find_package(PkgConfig QUIET)
-    if (PKG_CONFIG_FOUND)
-        pkg_search_module(HWLOC hwloc)
-        if (HWLOC_FOUND)
+    if (PKG_CONFIG_FOUND AND NOT CMAKE_VERSION VERSION_LESS 3.6)
+        pkg_search_module(HWLOC hwloc IMPORTED_TARGET)
+        if (TARGET PkgConfig::HWLOC)
             if (HWLOC_VERSION VERSION_LESS 2)
                 set(TBBBIND_LIBRARY_NAME tbbbind)
-            elseif(HWLOC_VERSION VERSION_LESS 2.4)
+            elseif(HWLOC_VERSION VERSION_LESS 2.5)
                 set(TBBBIND_LIBRARY_NAME tbbbind_2_0)
             else()
-                set(TBBBIND_LIBRARY_NAME tbbbind_2_4)
+                set(TBBBIND_LIBRARY_NAME tbbbind_2_5)
             endif()
         endif()
     endif()
 endif()
-

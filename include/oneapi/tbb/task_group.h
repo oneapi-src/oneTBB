@@ -25,10 +25,14 @@
 #include "detail/_exception.h"
 #include "detail/_task.h"
 #include "detail/_small_object_pool.h"
+#include "detail/_intrusive_list_node.h"
+
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+#include "detail/_task_handle.h"
+#endif
 
 #include "profiling.h"
 
-#include <memory>
 #include <type_traits>
 
 #if _MSC_VER && !defined(__INTEL_COMPILER)
@@ -56,16 +60,17 @@ class task_dispatcher;
 template <bool>
 class context_guard_helper;
 struct task_arena_impl;
+class context_list;
 
-void __TBB_EXPORTED_FUNC execute(d1::task_arena_base&, d1::delegate_base&);
-void __TBB_EXPORTED_FUNC isolate_within_arena(d1::delegate_base&, std::intptr_t);
+TBB_EXPORT void __TBB_EXPORTED_FUNC execute(d1::task_arena_base&, d1::delegate_base&);
+TBB_EXPORT void __TBB_EXPORTED_FUNC isolate_within_arena(d1::delegate_base&, std::intptr_t);
 
-void __TBB_EXPORTED_FUNC initialize(d1::task_group_context&);
-void __TBB_EXPORTED_FUNC destroy(d1::task_group_context&);
-void __TBB_EXPORTED_FUNC reset(d1::task_group_context&);
-bool __TBB_EXPORTED_FUNC cancel_group_execution(d1::task_group_context&);
-bool __TBB_EXPORTED_FUNC is_group_execution_cancelled(d1::task_group_context&);
-void __TBB_EXPORTED_FUNC capture_fp_settings(d1::task_group_context&);
+TBB_EXPORT void __TBB_EXPORTED_FUNC initialize(d1::task_group_context&);
+TBB_EXPORT void __TBB_EXPORTED_FUNC destroy(d1::task_group_context&);
+TBB_EXPORT void __TBB_EXPORTED_FUNC reset(d1::task_group_context&);
+TBB_EXPORT bool __TBB_EXPORTED_FUNC cancel_group_execution(d1::task_group_context&);
+TBB_EXPORT bool __TBB_EXPORTED_FUNC is_group_execution_cancelled(d1::task_group_context&);
+TBB_EXPORT void __TBB_EXPORTED_FUNC capture_fp_settings(d1::task_group_context&);
 
 struct task_group_context_impl;
 }
@@ -73,98 +78,6 @@ struct task_group_context_impl;
 namespace d2 {
 
 #if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
-class task_handle;
-class task_handle_task;
-
-//move the helper functions into separate namespace in order hide the from argument-dependent lookup
-//(to not make them visible in the user code)
-namespace h {
-d1::task*               release(task_handle& th);
-d1::task_group_context* ctx_of(task_handle& th);
-}
-using namespace h;
-
-class task_handle_task : public d1::task {
-protected:
-    std::uint64_t m_version_and_traits{};
-    d1::wait_context& m_wait_ctx;
-    d1::task_group_context& m_ctx;
-    d1::small_object_allocator m_allocator;
-public:
-    void finalize(const d1::execution_data* ed = nullptr) {
-        if (ed) {
-            m_allocator.delete_object(this, *ed);
-        } else {
-            m_allocator.delete_object(this);
-        }
-    }
-
-    task_handle_task(d1::wait_context& wo, d1::task_group_context& ctx, d1::small_object_allocator& alloc)
-        : m_wait_ctx(wo)
-        , m_ctx(ctx)
-        , m_allocator(alloc) {
-        suppress_unused_warning(m_version_and_traits);
-    }
-
-    ~task_handle_task(){
-        m_wait_ctx.release();
-    }
-
-    d1::task_group_context& ctx() const { return m_ctx; }
-};
-
-class task_handle {
-    struct task_handle_task_finalizer_t{
-        void operator()(task_handle_task* p){ p->finalize();}
-    };
-    using handle_impl_t = std::unique_ptr<task_handle_task, task_handle_task_finalizer_t>;
-
-    handle_impl_t m_handle = {nullptr};
-public:
-    task_handle() = default;
-    task_handle(task_handle&& )  = default;
-    task_handle& operator=(task_handle&& )  = default;
-
-    explicit operator bool() const noexcept { return static_cast<bool>(m_handle);}
-
-    friend bool operator==(task_handle const& th, std::nullptr_t) noexcept;
-    friend bool operator==(std::nullptr_t, task_handle const& th) noexcept;
-
-    friend bool operator!=(task_handle const& th, std::nullptr_t) noexcept;
-    friend bool operator!=(std::nullptr_t, task_handle const& th) noexcept;
-
-private:
-    friend class d1::task_group_base;
-    friend d1::task*               h::release(task_handle& th);
-    friend d1::task_group_context* h::ctx_of(task_handle& th);
-
-    task_handle(task_handle_task* t) : m_handle {t}{};
-
-    d1::task* release() {
-       return m_handle.release();
-    }
-};
-
-namespace h{
-inline d1::task*                release(task_handle& th){ return th.release();}
-inline d1::task_group_context*  ctx_of(task_handle& th) { return th ? & th.m_handle->ctx() : nullptr;}
-}
-
-inline bool operator==(task_handle const& th, std::nullptr_t) noexcept {
-    return th.m_handle == nullptr;
-}
-inline bool operator==(std::nullptr_t, task_handle const& th) noexcept {
-    return th.m_handle == nullptr;
-}
-
-inline bool operator!=(task_handle const& th, std::nullptr_t) noexcept {
-    return th.m_handle != nullptr;
-}
-
-inline bool operator!=(std::nullptr_t, task_handle const& th) noexcept {
-    return th.m_handle != nullptr;
-}
-
 namespace {
 template<typename F>
 d1::task* task_ptr_or_nullptr(F&& f);
@@ -177,7 +90,7 @@ class function_task : public task_handle_task  {
 
 private:
     d1::task* execute(d1::execution_data& ed) override {
-        __TBB_ASSERT(ed.context == &this->m_ctx, "The task group context should be used for all tasks");
+        __TBB_ASSERT(ed.context == &this->ctx(), "The task group context should be used for all tasks");
         task* res = task_ptr_or_nullptr(m_func);
         finalize(&ed);
         return res;
@@ -197,7 +110,7 @@ namespace {
     template<typename F>
     d1::task* task_ptr_or_nullptr_impl(std::false_type, F&& f){
         task_handle th = std::forward<F>(f)();
-        return release(th);
+        return task_handle_accessor::release(th);
     }
 
     template<typename F>
@@ -228,16 +141,10 @@ namespace {
 
 namespace d1 {
 
+// This structure is left here for backward compatibility check
 struct context_list_node {
     std::atomic<context_list_node*> prev{};
     std::atomic<context_list_node*> next{};
-
-    void remove_relaxed() {
-        context_list_node* p = prev.load(std::memory_order_relaxed);
-        context_list_node* n = next.load(std::memory_order_relaxed);
-        p->next.store(n, std::memory_order_relaxed);
-        n->prev.store(p, std::memory_order_relaxed);
-    }
 };
 
 //! Used to form groups of tasks
@@ -307,8 +214,7 @@ private:
         locked,
         isolated,
         bound,
-        detached,
-        dying
+        dead
     };
 
     //! The synchronization machine state to manage lifetime.
@@ -323,15 +229,19 @@ private:
     };
 
     //! Thread data instance that registered this context in its list.
-    std::atomic<r1::thread_data*> my_owner;
+    r1::context_list* my_context_list;
+    static_assert(sizeof(std::atomic<r1::thread_data*>) == sizeof(r1::context_list*), "To preserve backward compatibility these types should have the same size");
 
     //! Used to form the thread specific list of contexts without additional memory allocation.
     /** A context is included into the list of the current thread when its binding to
         its parent happens. Any context can be present in the list of one thread only. **/
-    context_list_node my_node;
+    intrusive_list_node my_node;
+    static_assert(sizeof(intrusive_list_node) == sizeof(context_list_node), "To preserve backward compatibility these types should have the same size");
 
     //! Pointer to the container storing exception being propagated across this task group.
-    r1::tbb_exception_ptr* my_exception;
+    std::atomic<r1::tbb_exception_ptr*> my_exception;
+    static_assert(sizeof(std::atomic<r1::tbb_exception_ptr*>) == sizeof(r1::tbb_exception_ptr*),
+        "backward compatibility check");
 
     //! Used to set and maintain stack stitching point for Intel Performance Tools.
     void* my_itt_caller;
@@ -340,18 +250,18 @@ private:
     string_resource_index my_name;
 
     char padding[max_nfs_size
-        - sizeof(std::uint64_t)                     // my_cpu_ctl_env
-        - sizeof(std::atomic<std::uint32_t>)        // my_cancellation_requested
-        - sizeof(std::uint8_t)                      // my_version
-        - sizeof(context_traits)                    // my_traits
-        - sizeof(std::atomic<std::uint8_t>)         // my_state
-        - sizeof(std::atomic<lifetime_state>)       // my_lifetime_state
-        - sizeof(task_group_context*)               // my_parent
-        - sizeof(std::atomic<r1::thread_data*>)     // my_owner
-        - sizeof(context_list_node)                 // my_node
-        - sizeof(r1::tbb_exception_ptr*)            // my_exception
-        - sizeof(void*)                             // my_itt_caller
-        - sizeof(string_resource_index)             // my_name
+        - sizeof(std::uint64_t)                          // my_cpu_ctl_env
+        - sizeof(std::atomic<std::uint32_t>)             // my_cancellation_requested
+        - sizeof(std::uint8_t)                           // my_version
+        - sizeof(context_traits)                         // my_traits
+        - sizeof(std::atomic<std::uint8_t>)              // my_state
+        - sizeof(std::atomic<lifetime_state>)            // my_lifetime_state
+        - sizeof(task_group_context*)                    // my_parent
+        - sizeof(r1::context_list*)                      // my_context_list
+        - sizeof(intrusive_list_node)                    // my_node
+        - sizeof(std::atomic<r1::tbb_exception_ptr*>)    // my_exception
+        - sizeof(void*)                                  // my_itt_caller
+        - sizeof(string_resource_index)                  // my_name
     ];
 
     task_group_context(context_traits t, string_resource_index name)
@@ -633,7 +543,7 @@ protected:
         using function_task_t =  d2::function_task<typename std::decay<F>::type>;
         d2::task_handle_task* function_task_p =  alloc.new_object<function_task_t>(std::forward<F>(f), m_wait_ctx, context(), alloc);
 
-        return {function_task_p};
+        return d2::task_handle_accessor::construct(function_task_p);
     }
 #endif
 
@@ -699,13 +609,16 @@ public:
 
 #if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS    
     void run(d2::task_handle&& h) {
-        if (h == nullptr)
+        if (h == nullptr) {
             throw_exception(exception_id::bad_task_handle);
+        }
 
-        if (d2::ctx_of(h) != &context())
+        using acs = d2::task_handle_accessor;
+        if (&acs::ctx_of(h) != &context()) {
             throw_exception(exception_id::bad_task_handle_wrong_task_group);
+        }
 
-        spawn(*d2::release(h), context());
+        spawn(*acs::release(h), context());
     }
 
     template<typename F>
@@ -778,14 +691,17 @@ public:
     }
 
 #if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
-    void run(d2::task_handle&& m_handle) {
-        if (m_handle == nullptr)
+    void run(d2::task_handle&& h) {
+        if (h == nullptr) {
             throw_exception(exception_id::bad_task_handle);
+        }
 
-        if (d2::ctx_of(m_handle) != &context())
+        using acs = d2::task_handle_accessor;
+        if (&acs::ctx_of(h) != &context()) {
             throw_exception(exception_id::bad_task_handle_wrong_task_group);
+        }
 
-        spawn_delegate sd(d2::release(m_handle), context());
+        spawn_delegate sd(acs::release(h), context());
         r1::isolate_within_arena(sd, this_isolation());
     }
 #endif //__TBB_PREVIEW_TASK_GROUP_EXTENSIONS

@@ -25,7 +25,7 @@
 #include "oneapi/tbb/info.h"
 #endif /*__TBB_ARENA_BINDING*/
 
-#if __linux__ || __FreeBSD__
+#if __unix__
 #include <sys/param.h>  // __FreeBSD_version
 #if __FreeBSD_version >= 701000
 #include <sys/cpuset.h>
@@ -206,7 +206,6 @@ T1 atomic_update(std::atomic<T1>& dst, T1 newValue, Pred compare) {
     class affinity_helper : no_copy {
     public:
         void protect_affinity_mask( bool ) {}
-        void dismiss() {}
     };
     inline void destroy_process_mask(){}
 #endif /* __TBB_USE_OS_AFFINITY_SYSCALL */

@@ -95,12 +95,12 @@ template <typename T>
 concept splittable = std::constructible_from<T, T&, tbb::detail::split>;
 
 template <typename Range>
-concept range = std::copy_constructible<Range> &&
-                splittable<Range> &&
-                requires( const std::remove_reference_t<Range>& range ) {
-                    { range.empty() } -> relaxed_convertible_to<bool>;
-                    { range.is_divisible() } -> relaxed_convertible_to<bool>;
-                };
+concept tbb_range = std::copy_constructible<Range> &&
+                    splittable<Range> &&
+                    requires( const std::remove_reference_t<Range>& range ) {
+                        { range.empty() } -> relaxed_convertible_to<bool>;
+                        { range.is_divisible() } -> relaxed_convertible_to<bool>;
+                    };
 
 template <typename Iterator>
 constexpr bool iterator_concept_helper( std::input_iterator_tag ) {

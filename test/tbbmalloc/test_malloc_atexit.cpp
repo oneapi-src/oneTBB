@@ -60,7 +60,7 @@ bool exe_isMallocOverloaded()
 #endif
 #include <signal.h>
 
-#if __linux__ && !__ANDROID__
+#if __unix__ && !__ANDROID__
 extern "C" {
 void __libc_free(void *ptr);
 void *__libc_realloc(void *ptr, size_t size);
@@ -76,13 +76,13 @@ void *realloc(void *ptr, size_t size)
     return __libc_realloc(ptr, size);
 }
 } // extern "C"
-#endif // __linux__ && !__ANDROID__
+#endif // __unix__ && !__ANDROID__
 
 #endif // MALLOC_UNIXLIKE_OVERLOAD_ENABLED || MALLOC_ZONE_OVERLOAD_ENABLED
 
 // Even when the test is skipped, dll source must not be empty to generate .lib to link with.
 
-#ifndef _PGO_INSTRUMENT
+#if !defined(_PGO_INSTRUMENT) && !__TBB_USE_ADDRESS_SANITIZER
 void dummyFunction() {}
 
 // TODO: enable the check under Android
@@ -132,7 +132,7 @@ public:
 };
 
 static Foo f;
-#endif
+#endif // !defined(_PGO_INSTRUMENT) && !__TBB_USE_ADDRESS_SANITIZER
 
 int main() {}
 
@@ -149,6 +149,9 @@ bool dll_isMallocOverloaded();
 #ifdef _PGO_INSTRUMENT
 //! \brief \ref error_guessing
 TEST_CASE("Known issue: test_malloc_atexit hangs if compiled with -prof-genx\n" * doctest::skip(true)) {}
+#elif __TBB_USE_ADDRESS_SANITIZER
+//! \brief \ref error_guessing
+TEST_CASE("Known issue: test_malloc_atexit is not applicable under ASAN\n" * doctest::skip(true)) {}
 #else
 // Check common/allocator_overload.h for skip cases
 #if !HARNESS_SKIP_TEST

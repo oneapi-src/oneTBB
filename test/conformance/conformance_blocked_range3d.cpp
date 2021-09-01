@@ -191,7 +191,9 @@ TEST_CASE("blocked_range3d proportional splitting") {
     oneapi::tbb::proportional_split ps(3, 1);
     oneapi::tbb::blocked_range3d<int> second(first, ps);
 
-    int expected_first_end = original.rows().begin() + ps.left() * (original.rows().end() - original.rows().begin()) / (ps.left() + ps.right());
+    int expected_first_end = static_cast<int>(
+        original.rows().begin() + ps.left() * (original.rows().end() - original.rows().begin()) / (ps.left() + ps.right())
+    );
     if (first.rows().size() == second.rows().size()) {
         if (first.cols().size() == second.cols().size()) {
             // Splitting was made by pages

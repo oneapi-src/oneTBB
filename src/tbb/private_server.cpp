@@ -155,7 +155,7 @@ private:
         which in turn each wake up two threads, etc. */
     void propagate_chain_reaction() {
         // First test of a double-check idiom.  Second test is inside wake_some(0).
-        if( my_asleep_list_root.load(std::memory_order_acquire) )
+        if( my_asleep_list_root.load(std::memory_order_relaxed) )
             wake_some(0);
     }
 
@@ -197,7 +197,7 @@ public:
 
     void adjust_job_count_estimate( int delta ) override;
 
-#if _WIN32||_WIN64
+#if _WIN32 || _WIN64
     void register_external_thread ( ::rml::server::execution_resource_t& ) override {}
     void unregister_external_thread ( ::rml::server::execution_resource_t ) override {}
 #endif /* _WIN32||_WIN64 */
@@ -333,7 +333,8 @@ private_server::private_server( tbb_client& client ) :
     my_thread_array = tbb::cache_aligned_allocator<padded_private_worker>().allocate( my_n_thread );
     for( std::size_t i=0; i<my_n_thread; ++i ) {
         private_worker* t = new( &my_thread_array[i] ) padded_private_worker( *this, client, i );
-        t->my_next = my_asleep_list_root.exchange(t, std::memory_order_relaxed);
+        t->my_next = my_asleep_list_root.load(std::memory_order_relaxed);
+        my_asleep_list_root.store(t, std::memory_order_relaxed);
     }
 }
 
@@ -351,49 +352,58 @@ inline bool private_server::try_insert_in_asleep_list( private_worker& t ) {
         return false;
     // Contribute to slack under lock so that if another takes that unit of slack,
     // it sees us sleeping on the list and wakes us up.
-    int k = ++my_slack;
-    if( k<=0 ) {
-        t.my_next = my_asleep_list_root.exchange(&t, std::memory_order_relaxed);
-        return true;
-    } else {
-        --my_slack;
-        return false;
+    auto expected = my_slack.load(std::memory_order_relaxed);
+    while (expected < 0) {
+        if (my_slack.compare_exchange_strong(expected, expected + 1)) {
+            t.my_next = my_asleep_list_root.load(std::memory_order_relaxed);
+            my_asleep_list_root.store(&t, std::memory_order_relaxed);
+            return true;
+        }
     }
+
+    return false;
 }
 
 void private_server::wake_some( int additional_slack ) {
-    __TBB_ASSERT( additional_slack>=0, NULL );
+    __TBB_ASSERT( additional_slack>=0, nullptr );
     private_worker* wakee[2];
     private_worker**w = wakee;
+
+    if (additional_slack) {
+        // Contribute our unused slack to my_slack.
+        my_slack += additional_slack;
+    }
+
+    int allotted_slack = 0;
+    while (allotted_slack < 2) {
+        // Chain reaction; Try to claim unit of slack
+        int old = my_slack.load(std::memory_order_relaxed);
+        do {
+            if (old <= 0) goto done;
+        } while (!my_slack.compare_exchange_strong(old, old - 1));
+        ++allotted_slack;
+    }
+done:
+
+    if (allotted_slack)
     {
         asleep_list_mutex_type::scoped_lock lock(my_asleep_list_mutex);
-        while( my_asleep_list_root.load(std::memory_order_relaxed) && w<wakee+2 ) {
-            if( additional_slack>0 ) {
-                // additional demand does not exceed surplus supply
-                if ( additional_slack+my_slack.load(std::memory_order_acquire)<=0 )
-                    break;
-                --additional_slack;
-            } else {
-                // Chain reaction; Try to claim unit of slack
-                int old = my_slack;
-                do {
-                    if( old<=0 ) goto done;
-                } while( !my_slack.compare_exchange_strong(old,old-1) );
-            }
+
+        while( my_asleep_list_root.load(std::memory_order_relaxed) && w<wakee+2 && allotted_slack) {
+            --allotted_slack;
             // Pop sleeping worker to combine with claimed unit of slack
             auto old = my_asleep_list_root.load(std::memory_order_relaxed);
             my_asleep_list_root.store(old->my_next, std::memory_order_relaxed);
             *w++ = old;
         }
-        if( additional_slack ) {
+        if(allotted_slack) {
             // Contribute our unused slack to my_slack.
-            my_slack += additional_slack;
+            my_slack += allotted_slack;
         }
     }
-done:
     while( w>wakee ) {
         private_worker* ww = *--w;
-        ww->my_next = NULL;
+        ww->my_next = nullptr;
         ww->wake_or_launch();
     }
 }

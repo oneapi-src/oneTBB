@@ -39,7 +39,7 @@
 #include "profiling.h"
 #include "task_arena.h"
 
-#if TBB_USE_PROFILING_TOOLS && ( __linux__ || __APPLE__ )
+#if TBB_USE_PROFILING_TOOLS && ( __unix__ || __APPLE__ )
    #if __INTEL_COMPILER
        // Disabled warning "routine is both inline and noinline"
        #pragma warning (push)
@@ -1896,12 +1896,16 @@ private:
     graph_task* decrement_counter( long long delta ) {
         {
             spin_mutex::scoped_lock lock(my_mutex);
-            if( delta > 0 && size_t(delta) > my_count )
+            if( delta > 0 && size_t(delta) > my_count ) {
                 my_count = 0;
-            else if( delta < 0 && size_t(delta) > my_threshold - my_count )
+            }
+            else if( delta < 0 && size_t(-delta) > my_threshold - my_count ) {
                 my_count = my_threshold;
-            else
+            }
+            else {
                 my_count -= size_t(delta); // absolute value of delta is sufficiently small
+            }
+            __TBB_ASSERT(my_count <= my_threshold, "counter values are truncated to be inside the [0, threshold] interval");
         }
         return forward_task();
     }
@@ -3332,7 +3336,7 @@ namespace profiling {
 } // tbb
 
 
-#if TBB_USE_PROFILING_TOOLS  && ( __linux__ || __APPLE__ )
+#if TBB_USE_PROFILING_TOOLS  && ( __unix__ || __APPLE__ )
    // We don't do pragma pop here, since it still gives warning on the USER side
    #undef __TBB_NOINLINE_SYM
 #endif

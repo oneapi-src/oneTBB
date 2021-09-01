@@ -262,7 +262,9 @@ TEST_CASE("blocked_rangeNd proportional splitting") {
     oneapi::tbb::proportional_split ps(3, 1);
     oneapi::tbb::blocked_rangeNd<int, 2> second(first, ps);
 
-    int expected_first_end = original.dim(0).begin() + ps.left() * (original.dim(0).end() - original.dim(0).begin()) / (ps.left() + ps.right());
+    int expected_first_end = static_cast<int>(
+        original.dim(0).begin() + ps.left() * (original.dim(0).end() - original.dim(0).begin()) / (ps.left() + ps.right())
+    );
     if (first.dim(0).size() == second.dim(0).size()) {
         // Splitting was made by cols
         utils::check_range_bounds_after_splitting(original.dim(1), first.dim(1), second.dim(1), expected_first_end);

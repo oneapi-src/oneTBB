@@ -114,7 +114,7 @@ void task_dispatcher::suspend(suspend_callback_type suspend_callback, void* user
     }
 }
 
-void task_dispatcher::resume(task_dispatcher& target) {
+bool task_dispatcher::resume(task_dispatcher& target) {
     // Do not create non-trivial objects on the stack of this function. They might never be destroyed
     {
         thread_data* td = m_thread_data;
@@ -133,7 +133,7 @@ void task_dispatcher::resume(task_dispatcher& target) {
     // Swap to the target coroutine.
     m_suspend_point->m_co_context.resume(target.m_suspend_point->m_co_context);
     // Pay attention that m_thread_data can be changed after resume
-    {
+    if (m_thread_data) {
         thread_data* td = m_thread_data;
         __TBB_ASSERT(td != nullptr, "This task dispatcher must be attach to a thread data");
         __TBB_ASSERT(td->my_task_dispatcher == this, "Thread data must be attached to this task dispatcher");
@@ -146,7 +146,9 @@ void task_dispatcher::resume(task_dispatcher& target) {
             __TBB_ASSERT(m_suspend_point != nullptr, nullptr);
             m_suspend_point->m_is_owner_recalled.store(false, std::memory_order_relaxed);
         }
+        return true;
     }
+    return false;
 }
 
 void thread_data::do_post_resume_action() {
@@ -173,7 +175,7 @@ void thread_data::do_post_resume_action() {
     case post_resume_action::cleanup:
     {
         task_dispatcher* to_cleanup = static_cast<task_dispatcher*>(my_post_resume_arg);
-        // Release coroutine's reference to my_arena.
+        // Release coroutine's reference to my_arena
         my_arena->on_thread_leaving<arena::ref_external>();
         // Cache the coroutine for possible later re-usage
         my_arena->my_co_cache.push(to_cleanup);
@@ -181,9 +183,14 @@ void thread_data::do_post_resume_action() {
     }
     case post_resume_action::notify:
     {
-        std::atomic<bool>& owner_recall_flag = *static_cast<std::atomic<bool>*>(my_post_resume_arg);
-        owner_recall_flag.store(true, std::memory_order_release);
-        // Do not access recall_flag because it can be destroyed after the notification.
+        suspend_point_type* sp = static_cast<suspend_point_type*>(my_post_resume_arg);
+        sp->m_is_owner_recalled.store(true, std::memory_order_release);
+        // Do not access sp because it can be destroyed after the store
+
+        auto is_our_suspend_point = [sp](market_context ctx) {
+            return  std::uintptr_t(sp) == ctx.my_uniq_addr;
+        };
+        my_arena->my_market->get_wait_list().notify(is_our_suspend_point);
         break;
     }
     default:

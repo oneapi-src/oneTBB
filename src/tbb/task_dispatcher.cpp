@@ -51,7 +51,7 @@ void __TBB_EXPORTED_FUNC spawn(d1::task& t, d1::task_group_context& ctx, d1::slo
     // Mark isolation
     task_accessor::isolation(t) = ed.isolation;
 
-    if ( id != d1::no_slot && id != tls->my_arena_index ) {
+    if ( id != d1::no_slot && id != tls->my_arena_index && id < a->my_num_slots) {
         // Allocate proxy task
         d1::small_object_allocator alloc{};
         auto proxy = alloc.new_object<task_proxy>(static_cast<d1::execution_data&>(ed));
@@ -173,9 +173,10 @@ void task_dispatcher::execute_and_wait(d1::task* t, d1::wait_context& wait_ctx, 
         local_td.m_thread_data->my_inbox.set_is_idle(false);
     }
 
-    if (w_ctx.my_exception) {
+    auto exception = w_ctx.my_exception.load(std::memory_order_acquire);
+    if (exception) {
         __TBB_ASSERT(w_ctx.is_group_execution_cancelled(), "The task group context with an exception should be canceled.");
-        w_ctx.my_exception->throw_self();
+        exception->throw_self();
     }
 }
 
@@ -208,17 +209,18 @@ void task_dispatcher::execute_and_wait(d1::task* t, d1::wait_context& wait_ctx, 
     m_thread_data->do_post_resume_action();
 
     // Endless loop here because coroutine could be reused
-    for (;;) {
+    d1::task* resume_task{};
+    do {
         arena* a = m_thread_data->my_arena;
         coroutine_waiter waiter(*a);
-        d1::task* resume_task = local_wait_for_all(nullptr, waiter);
+        resume_task = local_wait_for_all(nullptr, waiter);
         assert_task_valid(resume_task);
         __TBB_ASSERT(this == m_thread_data->my_task_dispatcher, nullptr);
 
         m_thread_data->set_post_resume_action(thread_data::post_resume_action::cleanup, this);
-        resume(static_cast<suspend_point_type::resume_task*>(resume_task)->m_target);
-    }
-    // This code is unreachable
+       
+    } while (resume(static_cast<suspend_point_type::resume_task*>(resume_task)->m_target));
+    // This code might be unreachable
 }
 
 d1::suspend_point task_dispatcher::get_suspend_point() {
@@ -239,4 +241,3 @@ void task_dispatcher::init_suspend_point(arena* a, std::size_t stack_size) {
 } // namespace r1
 } // namespace detail
 } // namespace tbb
-

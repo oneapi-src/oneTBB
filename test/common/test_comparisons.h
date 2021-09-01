@@ -23,6 +23,10 @@
 #define __TBB_TEST_CPP20_COMPARISONS __TBB_CPP20_COMPARISONS_PRESENT
 #endif
 
+#if __TBB_TEST_CPP20_COMPARISONS
+#include <compare>
+#endif
+
 namespace comparisons_testing {
 
 template <bool ExpectEqual, bool ExpectLess, typename T>

@@ -25,14 +25,23 @@
 #include <cstdint>
 #include <cstddef>
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #include <intrin.h>
+#ifdef __TBBMALLOC_BUILD
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h> // SwitchToThread()
+#endif
+#ifdef _MSC_VER
+#if __TBB_x86_64 || __TBB_x86_32
 #pragma intrinsic(__rdtsc)
+#endif
+#endif
 #endif
 #if __TBB_x86_64 || __TBB_x86_32
 #include <immintrin.h> // _mm_pause
 #endif
-#if (_WIN32 || _WIN64)
+#if (_WIN32)
 #include <float.h> // _control87
 #endif
 
@@ -53,7 +62,12 @@ inline namespace d0 {
 #if __TBB_GLIBCXX_THIS_THREAD_YIELD_BROKEN
 static inline void yield() {
     int err = sched_yield();
-    __TBB_ASSERT_EX(err == 0, "sched_yiled has failed");
+    __TBB_ASSERT_EX(err == 0, "sched_yield has failed");
+}
+#elif __TBBMALLOC_BUILD && _WIN32
+// Use Windows API for yield in tbbmalloc to avoid dependency on C++ runtime with some implementations.
+static inline void yield() {
+    SwitchToThread();
 }
 #else
 using std::this_thread::yield;
@@ -63,12 +77,12 @@ using std::this_thread::yield;
 // atomic_fence implementation
 //--------------------------------------------------------------------------------------------------
 
-#if (_WIN32 || _WIN64)
+#if _MSC_VER && (__TBB_x86_64 || __TBB_x86_32)
 #pragma intrinsic(_mm_mfence)
 #endif
 
 static inline void atomic_fence(std::memory_order order) {
-#if (_WIN32 || _WIN64)
+#if _MSC_VER && (__TBB_x86_64 || __TBB_x86_32)
     if (order == std::memory_order_seq_cst ||
         order == std::memory_order_acq_rel ||
         order == std::memory_order_acquire ||
@@ -77,7 +91,7 @@ static inline void atomic_fence(std::memory_order order) {
         _mm_mfence();
         return;
     }
-#endif /*(_WIN32 || _WIN64)*/
+#endif /*_MSC_VER && (__TBB_x86_64 || __TBB_x86_32)*/
     std::atomic_thread_fence(order);
 }
 
@@ -229,7 +243,7 @@ T machine_reverse_bits(T src) {
 
 namespace d1 {
 
-#if (_WIN32 || _WIN64)
+#if (_WIN32)
 // API to retrieve/update FPU control setting
 #define __TBB_CPU_CTL_ENV_PRESENT 1
 struct cpu_ctl_env {

@@ -1248,7 +1248,7 @@ void TestSlabAlignment() {
 // TODO: Consider adding Huge Pages support on macOS (special mmap flag).
 // Transparent Huge pages support could be enabled by different system parsing mechanism,
 // because there is no /proc/meminfo on macOS
-#if __linux__
+#if __unix__
 void TestTHP() {
     // Get backend from default memory pool
     rml::internal::Backend *backend = &(defaultMemPool->extMemPool.backend);
@@ -1310,7 +1310,7 @@ void TestTHP() {
                 "Something went wrong during raw memory free");
     }
 }
-#endif // __linux__
+#endif // __unix__
 
 inline size_t getStabilizedMemUsage() {
     for (int i = 0; i < 3; i++) utils::GetMemoryUsage();
@@ -1685,7 +1685,7 @@ TEST_CASE("Huge size threshold settings") {
     TestHugeSizeThreshold();
 }
 
-#if __linux__
+#if __unix__
 //! \brief \ref error_guessing
 TEST_CASE("Transparent huge pages") {
     if (utils::isTHPEnabledOnMachine()) {

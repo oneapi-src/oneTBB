@@ -18,7 +18,7 @@ endif()
 set(CMAKE_SKIP_BUILD_RPATH TRUE)
 
 function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
-    if (NOT TARGET ${REQUIRED_HWLOC_TARGET} AND NOT DEFINED HWLOC_LIBRARIES)
+    if (NOT TARGET ${REQUIRED_HWLOC_TARGET})
         message(STATUS "HWLOC target ${REQUIRED_HWLOC_TARGET} doesn't exist."
                        " The ${TBBBIND_NAME} target cannot be created")
         return()
@@ -34,7 +34,7 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
     target_include_directories(${TBBBIND_NAME}
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../include>
-        $<INSTALL_INTERFACE:include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
         ${HWLOC_INCLUDE_DIRS} # pkg-config defined
     )
 
@@ -46,6 +46,7 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
         ${TBB_WARNING_LEVEL}
         ${TBB_LIB_COMPILE_FLAGS}
         ${TBB_COMMON_COMPILE_FLAGS}
+        ${TBB_IPO_COMPILE_FLAGS}
     )
 
     # Avoid use of target_link_libraries here as it changes /DEF option to \DEF on Windows.
@@ -53,9 +54,13 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
         DEFINE_SYMBOL ""
         VERSION ${TBBBIND_BINARY_VERSION}.${TBB_BINARY_MINOR_VERSION}
         SOVERSION ${TBBBIND_BINARY_VERSION}
-        LINK_FLAGS ${TBB_LINK_DEF_FILE_FLAG}${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbbind.def
-        LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbbind.def
     )
+    if (TBB_DEF_FILE_PREFIX) # If there's no prefix, assume we're using export directives
+        set_target_properties(${TBBBIND_NAME} PROPERTIES
+            LINK_FLAGS ${TBB_LINK_DEF_FILE_FLAG}${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbbind.def
+            LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbbind.def
+        )
+    endif()
 
     # Prefer using target_link_options instead of target_link_libraries to specify link options because
     # target_link_libraries may incorrectly handle some options (on Windows, for example).
@@ -64,14 +69,14 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
             PRIVATE
             ${TBB_LIB_LINK_FLAGS}
             ${TBB_COMMON_LINK_FLAGS}
-            ${HWLOC_LIBRARY_DIRS} # pkg-config defined
+            ${TBB_IPO_LINK_FLAGS}
         )
     else()
         target_link_libraries(${TBBBIND_NAME}
             PRIVATE
             ${TBB_LIB_LINK_FLAGS}
             ${TBB_COMMON_LINK_FLAGS}
-            ${HWLOC_LIBRARY_DIRS} # pkg-config defined
+            ${TBB_IPO_LINK_FLAGS}
         )
     endif()
 
@@ -90,13 +95,13 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
     endif()
 endfunction()
 
-if (NOT DEFINED HWLOC_TARGET_EXPLICITLY_DEFINED AND DEFINED HWLOC_LIBRARIES)
+if (NOT DEFINED HWLOC_TARGET_EXPLICITLY_DEFINED AND TARGET PkgConfig::HWLOC)
     message(STATUS "The ${TBBBIND_LIBRARY_NAME} target will be configured using the HWLOC ${HWLOC_VERSION}")
-    tbbbind_build(${TBBBIND_LIBRARY_NAME} ${HWLOC_LIBRARIES})
+    tbbbind_build(${TBBBIND_LIBRARY_NAME} PkgConfig::HWLOC)
 else()
     tbbbind_build(tbbbind     HWLOC::hwloc_1_11)
     tbbbind_build(tbbbind_2_0 HWLOC::hwloc_2   )
-    tbbbind_build(tbbbind_2_4 HWLOC::hwloc_2_4 )
+    tbbbind_build(tbbbind_2_5 HWLOC::hwloc_2_5 )
 endif()
 
 

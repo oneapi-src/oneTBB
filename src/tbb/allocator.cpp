@@ -19,6 +19,8 @@
 #include "oneapi/tbb/detail/_exception.h"
 #include "oneapi/tbb/detail/_assert.h"
 #include "oneapi/tbb/detail/_utils.h"
+#include "oneapi/tbb/tbb_allocator.h" // Is this OK?
+#include "oneapi/tbb/cache_aligned_allocator.h"
 
 #include "dynamic_link.h"
 #include "misc.h"
@@ -55,7 +57,9 @@ namespace r1 {
 static void* initialize_allocate_handler(std::size_t size);
 
 //! Handler for memory allocation
-static void* (*allocate_handler)(std::size_t size) = &initialize_allocate_handler;
+using allocate_handler_type = void* (*)(std::size_t size);
+static std::atomic<allocate_handler_type> allocate_handler{ &initialize_allocate_handler };
+allocate_handler_type allocate_handler_unsafe = nullptr;
 
 //! Handler for memory deallocation
 static void  (*deallocate_handler)(void* pointer) = nullptr;
@@ -70,16 +74,18 @@ static void* std_cache_aligned_allocate(std::size_t n, std::size_t alignment);
 static void  std_cache_aligned_deallocate(void* p);
 
 //! Handler for padded memory allocation
-static void* (*cache_aligned_allocate_handler)(std::size_t n, std::size_t alignment) = &initialize_cache_aligned_allocate_handler;
+using cache_aligned_allocate_handler_type = void* (*)(std::size_t n, std::size_t alignment);
+static std::atomic<cache_aligned_allocate_handler_type> cache_aligned_allocate_handler{ &initialize_cache_aligned_allocate_handler };
+cache_aligned_allocate_handler_type cache_aligned_allocate_handler_unsafe = nullptr;
 
 //! Handler for padded memory deallocation
 static void (*cache_aligned_deallocate_handler)(void* p) = nullptr;
 
 //! Table describing how to link the handlers.
 static const dynamic_link_descriptor MallocLinkTable[] = {
-    DLD(scalable_malloc, allocate_handler),
+    DLD(scalable_malloc, allocate_handler_unsafe),
     DLD(scalable_free, deallocate_handler),
-    DLD(scalable_aligned_malloc, cache_aligned_allocate_handler),
+    DLD(scalable_aligned_malloc, cache_aligned_allocate_handler_unsafe),
     DLD(scalable_aligned_free, cache_aligned_deallocate_handler),
 };
 
@@ -97,7 +103,7 @@ static const dynamic_link_descriptor MallocLinkTable[] = {
 #define MALLOCLIB_NAME "libtbbmalloc" DEBUG_SUFFIX ".dylib"
 #elif __FreeBSD__ || __NetBSD__ || __OpenBSD__ || __sun || _AIX || __ANDROID__
 #define MALLOCLIB_NAME "libtbbmalloc" DEBUG_SUFFIX ".so"
-#elif __linux__  // Note that order of these #elif's is important!
+#elif __unix__  // Note that order of these #elif's is important!
 #define MALLOCLIB_NAME "libtbbmalloc" DEBUG_SUFFIX ".so.2"
 #else
 #error Unknown OS
@@ -115,11 +121,14 @@ void initialize_handler_pointers() {
         // This must be done now, and not before FillDynamicLinks runs, because if other
         // threads call the handlers, we want them to go through the DoOneTimeInitializations logic,
         // which forces them to wait.
-        allocate_handler = &std::malloc;
+        allocate_handler_unsafe = &std::malloc;
         deallocate_handler = &std::free;
-        cache_aligned_allocate_handler = &std_cache_aligned_allocate;
+        cache_aligned_allocate_handler_unsafe = &std_cache_aligned_allocate;
         cache_aligned_deallocate_handler = &std_cache_aligned_deallocate;
     }
+
+    allocate_handler.store(allocate_handler_unsafe, std::memory_order_release);
+    cache_aligned_allocate_handler.store(cache_aligned_allocate_handler_unsafe, std::memory_order_release);
 
     PrintExtraVersionInfo( "ALLOCATOR", success?"scalable_malloc":"malloc" );
 }
@@ -162,7 +171,7 @@ void* __TBB_EXPORTED_FUNC cache_aligned_allocate(std::size_t size) {
     // scalable_aligned_malloc considers zero size request an error, and returns NULL
     if (size == 0) size = 1;
 
-    void* result = cache_aligned_allocate_handler(size, cache_line_size);
+    void* result = cache_aligned_allocate_handler.load(std::memory_order_acquire)(size, cache_line_size);
     if (!result) {
         throw_exception(exception_id::bad_alloc);
     }
@@ -203,7 +212,7 @@ static void std_cache_aligned_deallocate(void* p) {
 }
 
 void* __TBB_EXPORTED_FUNC allocate_memory(std::size_t size) {
-    void* result = (*allocate_handler)(size);
+    void* result = allocate_handler.load(std::memory_order_acquire)(size);
     if (!result) {
         throw_exception(exception_id::bad_alloc);
     }
@@ -218,15 +227,16 @@ void __TBB_EXPORTED_FUNC deallocate_memory(void* p) {
 }
 
 bool __TBB_EXPORTED_FUNC is_tbbmalloc_used() {
-    if (allocate_handler == &initialize_allocate_handler) {
-        void* void_ptr = allocate_handler(1);
-        deallocate_handler(void_ptr);
+    auto handler_snapshot = allocate_handler.load(std::memory_order_acquire);
+    if (handler_snapshot == &initialize_allocate_handler) {
+        initialize_cache_aligned_allocator();
     }
-    __TBB_ASSERT(allocate_handler != &initialize_allocate_handler && deallocate_handler != nullptr, NULL);
+    handler_snapshot = allocate_handler.load(std::memory_order_relaxed);
+    __TBB_ASSERT(handler_snapshot != &initialize_allocate_handler && deallocate_handler != nullptr, NULL);
     // Cast to void avoids type mismatch errors on some compilers (e.g. __IBMCPP__)
-    __TBB_ASSERT((reinterpret_cast<void*>(allocate_handler) == reinterpret_cast<void*>(&std::malloc)) == (reinterpret_cast<void*>(deallocate_handler) == reinterpret_cast<void*>(&std::free)),
+    __TBB_ASSERT((reinterpret_cast<void*>(handler_snapshot) == reinterpret_cast<void*>(&std::malloc)) == (reinterpret_cast<void*>(deallocate_handler) == reinterpret_cast<void*>(&std::free)),
                   "Both shim pointers must refer to routines from the same package (either TBB or CRT)");
-    return reinterpret_cast<void*>(allocate_handler) == reinterpret_cast<void*>(&std::malloc);
+    return reinterpret_cast<void*>(handler_snapshot) == reinterpret_cast<void*>(&std::malloc);
 }
 
 } // namespace r1

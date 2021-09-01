@@ -355,7 +355,7 @@ void test_reserve_release_messages() {
     broad.try_put(1); //failed message retrieved.
     g.wait_for_all();
 
-#if __GNUC__ && __GNUC__ < 10 && !TBB_USE_DEBUG
+#if __GNUC__ && __GNUC__ < 12 && !TBB_USE_DEBUG
     // Seemingly, GNU compiler generates incorrect code for the call of limiter.register_successor in release (-03)
     // The function pointer to make_edge workarounds the issue for unknown reason
     auto make_edge_ptr = make_edge<int>;
@@ -419,19 +419,38 @@ void test_decrementer() {
         CHECK_MESSAGE( actual == expected2[m++], "" );
     CHECK_MESSAGE( ( sizeof(expected2) / sizeof(expected2[0]) == m), "Not all messages have been processed." );
     g.wait_for_all();
+
+    const size_t threshold3 = 10;
+    tbb::flow::limiter_node<int, long long> limit3(g, threshold3);
+    make_edge(limit3, queue);
+    long long decrement_value3 = 3;
+    CHECK_MESSAGE( limit3.decrementer().try_put( -decrement_value3 ),
+                   "Limiter node decrementer's port does not accept message" );
+
+    m = 0;
+    while( limit3.try_put( m ) ){ m++; };
+    CHECK_MESSAGE( m == threshold3 - decrement_value3, "Not all messages have been accepted." );
+
+    actual = -1; m = 0;
+    while( queue.try_get(actual) ){
+        CHECK_MESSAGE( actual == m++, "Not all messages have been processed." );
+    }
+
+    g.wait_for_all();
+    CHECK_MESSAGE( m == threshold3 - decrement_value3, "Not all messages have been processed." );
 }
 
 void test_try_put_without_successors() {
     tbb::flow::graph g;
-    std::size_t try_put_num{3};
+    int try_put_num{3};
     tbb::flow::buffer_node<int> bn(g);
     tbb::flow::limiter_node<int> ln(g, try_put_num);
     tbb::flow::make_edge(bn, ln);
-    std::size_t i = 1;
+    int i = 1;
     for (; i <= try_put_num; i++)
         bn.try_put(i);
 
-    std::atomic<std::size_t> counter{0};
+    std::atomic<int> counter{0};
     tbb::flow::function_node<int, int> fn(g, tbb::flow::unlimited,
         [&](int input) {
             counter += input;

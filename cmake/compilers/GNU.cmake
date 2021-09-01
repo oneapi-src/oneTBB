@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if (APPLE)
+if (MINGW)
+    set(TBB_LINK_DEF_FILE_FLAG "")
+    set(TBB_DEF_FILE_PREFIX "")
+elseif (APPLE)
     set(TBB_LINK_DEF_FILE_FLAG -Wl,-exported_symbols_list,)
     set(TBB_DEF_FILE_PREFIX mac${TBB_ARCH})
 
@@ -37,7 +40,9 @@ if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86|AMD64)")
     set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -mrtm $<$<AND:$<NOT:$<CXX_COMPILER_ID:Intel>>,$<NOT:$<VERSION_LESS:${CMAKE_CXX_COMPILER_VERSION},11.0>>>:-mwaitpkg>)
 endif()
 
-set(TBB_COMMON_LINK_LIBS dl)
+if (NOT MINGW)
+    set(TBB_COMMON_LINK_LIBS dl)
+endif()
 
 # Ignore -Werror set through add_compile_options() or added to CMAKE_CXX_FLAGS if TBB_STRICT is disabled.
 if (NOT TBB_STRICT AND COMMAND tbb_remove_compile_flag)
@@ -49,9 +54,19 @@ if (NOT ${CMAKE_CXX_COMPILER_ID} STREQUAL Intel)
     set(TBB_DSE_FLAG $<$<NOT:$<VERSION_LESS:${CMAKE_CXX_COMPILER_VERSION},6.0>>:-flifetime-dse=1>)
 endif()
 
-# Workaround for heavy tests
+# Workaround for heavy tests and too many symbols in debug (rellocation truncated to fit: R_MIPS_CALL16)
 if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
-    set(TBB_TEST_COMPILE_FLAGS ${TBB_TEST_COMPILE_FLAGS} -DTBB_TEST_LOW_WORKLOAD)
+    set(TBB_TEST_COMPILE_FLAGS ${TBB_TEST_COMPILE_FLAGS} -DTBB_TEST_LOW_WORKLOAD $<$<CONFIG:DEBUG>:-mxgot>)
+endif()
+
+if (MINGW)
+    list(APPEND TBB_COMMON_COMPILE_FLAGS -U__STRICT_ANSI__)
+endif()
+
+# For some reason GCC does not instrument code with Thread Sanitizer when lto is enabled and C linker is used.
+if (NOT TBB_SANITIZE MATCHES "thread")
+    set(TBB_IPO_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:-flto>)
+    set(TBB_IPO_LINK_FLAGS $<$<NOT:$<CONFIG:Debug>>:-flto>)
 endif()
 
 # TBB malloc settings

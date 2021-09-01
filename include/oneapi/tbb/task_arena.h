@@ -23,6 +23,10 @@
 #include "detail/_aligned_space.h"
 #include "detail/_small_object_pool.h"
 
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+#include "detail/_task_handle.h"
+#endif
+
 #if __TBB_ARENA_BINDING
 #include "info.h"
 #endif /*__TBB_ARENA_BINDING*/
@@ -78,46 +82,31 @@ namespace r1 {
 class arena;
 struct task_arena_impl;
 
-void __TBB_EXPORTED_FUNC observe(d1::task_scheduler_observer&, bool);
-void __TBB_EXPORTED_FUNC initialize(d1::task_arena_base&);
-void __TBB_EXPORTED_FUNC terminate(d1::task_arena_base&);
-bool __TBB_EXPORTED_FUNC attach(d1::task_arena_base&);
-void __TBB_EXPORTED_FUNC execute(d1::task_arena_base&, d1::delegate_base&);
-void __TBB_EXPORTED_FUNC wait(d1::task_arena_base&);
-int __TBB_EXPORTED_FUNC max_concurrency(const d1::task_arena_base*);
-void __TBB_EXPORTED_FUNC isolate_within_arena(d1::delegate_base& d, std::intptr_t);
+TBB_EXPORT void __TBB_EXPORTED_FUNC observe(d1::task_scheduler_observer&, bool);
+TBB_EXPORT void __TBB_EXPORTED_FUNC initialize(d1::task_arena_base&);
+TBB_EXPORT void __TBB_EXPORTED_FUNC terminate(d1::task_arena_base&);
+TBB_EXPORT bool __TBB_EXPORTED_FUNC attach(d1::task_arena_base&);
+TBB_EXPORT void __TBB_EXPORTED_FUNC execute(d1::task_arena_base&, d1::delegate_base&);
+TBB_EXPORT void __TBB_EXPORTED_FUNC wait(d1::task_arena_base&);
+TBB_EXPORT int  __TBB_EXPORTED_FUNC max_concurrency(const d1::task_arena_base*);
+TBB_EXPORT void __TBB_EXPORTED_FUNC isolate_within_arena(d1::delegate_base& d, std::intptr_t);
 
-void __TBB_EXPORTED_FUNC enqueue(d1::task&, d1::task_arena_base*);
-void __TBB_EXPORTED_FUNC enqueue(d1::task&, d1::task_group_context&, d1::task_arena_base*);
-void __TBB_EXPORTED_FUNC submit(d1::task&, d1::task_group_context&, arena*, std::uintptr_t);
+TBB_EXPORT void __TBB_EXPORTED_FUNC enqueue(d1::task&, d1::task_arena_base*);
+TBB_EXPORT void __TBB_EXPORTED_FUNC enqueue(d1::task&, d1::task_group_context&, d1::task_arena_base*);
+TBB_EXPORT void __TBB_EXPORTED_FUNC submit(d1::task&, d1::task_group_context&, arena*, std::uintptr_t);
 } // namespace r1
 
 namespace d2 {
 #if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
-class task_handle;
-
-//move the helper functions into separate namespace in order hide the from argument-dependent lookup
-//(to not make them visible in the user code)
-namespace h {
-d1::task*                release(task_handle& th);
-d1::task_group_context*  ctx_of(task_handle& th);
-}
-using namespace h;
-
-bool operator==(task_handle const& th, std::nullptr_t) noexcept;
-bool operator==(std::nullptr_t, task_handle const& th) noexcept;
-
-bool operator!=(task_handle const& th, std::nullptr_t) noexcept;
-bool operator!=(std::nullptr_t, task_handle const& th) noexcept;
-
 inline void enqueue_impl(task_handle&& th, d1::task_arena_base* ta) {
-    if (th == nullptr)
+    if (th == nullptr) {
         throw_exception(exception_id::bad_task_handle);
+    }
 
-    __TBB_ASSERT(ctx_of(th), "task_group_context of the task_handle being enqueued should not be null");
-    auto* ctx = ctx_of(th);
+    auto& ctx = task_handle_accessor::ctx_of(th);
+
     // Do not access th after release
-    r1::enqueue(*release(th), *ctx, ta);
+    r1::enqueue(*task_handle_accessor::release(th), ctx, ta);
 }
 #endif// __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 

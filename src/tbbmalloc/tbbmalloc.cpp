@@ -19,6 +19,7 @@
 
 #include "../tbb/assert_impl.h" // Out-of-line TBB assertion handling routines are instantiated here.
 #include "oneapi/tbb/version.h"
+#include "oneapi/tbb/scalable_allocator.h"
 
 #undef UNICODE
 
@@ -44,7 +45,7 @@ namespace internal {
 #define MALLOCLIB_NAME "libtbbmalloc" DEBUG_SUFFIX ".dylib"
 #elif __FreeBSD__ || __NetBSD__ || __OpenBSD__ || __sun || _AIX || __ANDROID__
 #define MALLOCLIB_NAME "libtbbmalloc" DEBUG_SUFFIX ".so"
-#elif __linux__
+#elif __unix__
 #define MALLOCLIB_NAME "libtbbmalloc" DEBUG_SUFFIX  __TBB_STRING(.so.2)
 #else
 #error Unknown OS
@@ -87,7 +88,6 @@ extern "C" BOOL WINAPI DllMain( HINSTANCE /*hInst*/, DWORD callReason, LPVOID lp
 #else /* !USE_WINTHREAD */
 struct RegisterProcessShutdownNotification {
 // Work around non-reentrancy in dlopen() on Android
-#if !__TBB_USE_DLOPEN_REENTRANCY_WORKAROUND
     RegisterProcessShutdownNotification() {
         // prevents unloading, POSIX case
 
@@ -97,7 +97,6 @@ struct RegisterProcessShutdownNotification {
         // MALLOC_ASSERT(ret, "Allocator can't load itself.");
         dlopen(MALLOCLIB_NAME, RTLD_NOW);
     }
-#endif /* !__TBB_USE_DLOPEN_REENTRANCY_WORKAROUND */
     ~RegisterProcessShutdownNotification() {
         __TBB_mallocProcessShutdownNotification(false);
     }

@@ -28,7 +28,7 @@
  *  can be used from pure C programs; also some regression checks are done
  */
 
-#if __linux__
+#if __unix__
 /* huge pages supported only under Linux so far */
 const int ExpectedResultHugePages = TBBMALLOC_OK;
 #else

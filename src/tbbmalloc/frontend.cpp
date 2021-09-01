@@ -574,7 +574,7 @@ public:
     LargeMemoryBlock *get(size_t size);
     bool externalCleanup(ExtMemoryPool *extMemPool);
 #if __TBB_MALLOC_WHITEBOX_TEST
-    LocalLOCImpl() : head(NULL), tail(NULL), totalSize(0), numOfBlocks(0) {}
+    LocalLOCImpl() : tail(NULL), head(NULL), totalSize(0), numOfBlocks(0) {}
     static size_t getMaxSize() { return MAX_TOTAL_SIZE; }
     static const int LOC_HIGH_MARK = HIGH_MARK;
 #else
@@ -706,7 +706,7 @@ void AllLocalCaches::markUnused()
 
 #if MALLOC_CHECK_RECURSION
 MallocMutex RecursiveMallocCallProtector::rmc_mutex;
-pthread_t   RecursiveMallocCallProtector::owner_thread;
+std::atomic<pthread_t> RecursiveMallocCallProtector::owner_thread;
 std::atomic<void*> RecursiveMallocCallProtector::autoObjPtr;
 bool        RecursiveMallocCallProtector::mallocRecursionDetected;
 #if __FreeBSD__
@@ -775,7 +775,7 @@ static inline unsigned int highestBitPos(unsigned int n)
     unsigned int pos;
 #if __ARCH_x86_32||__ARCH_x86_64
 
-# if __linux__||__APPLE__||__FreeBSD__||__NetBSD__||__OpenBSD__||__sun||__MINGW32__
+# if __unix__||__APPLE__||__MINGW32__
     __asm__ ("bsr %1,%0" : "=r"(pos) : "r"(n));
 # elif (_WIN32 && (!_WIN64 || __INTEL_COMPILER))
     __asm
@@ -802,21 +802,15 @@ static inline unsigned int highestBitPos(unsigned int n)
     return pos;
 }
 
-
-#if __TBB_x86_32 || __aarch32__
 unsigned int getSmallObjectIndex(unsigned int size)
 {
-    return (size-1)>>3;
-}
-#elif __TBB_x86_64 || __aarch64__
-unsigned int getSmallObjectIndex(unsigned int size)
-{
-    // For 64-bit malloc, 16 byte alignment is needed except for bin 0.
     unsigned int result = (size-1)>>3;
-    if (result) result |= 1; // 0,1,3,5,7; bins 2,4,6 are not aligned to 16 bytes
+    if (sizeof(void*)==8) {
+        // For 64-bit malloc, 16 byte alignment is needed except for bin 0.
+        if (result) result |= 1; // 0,1,3,5,7; bins 2,4,6 are not aligned to 16 bytes
+    }
     return result;
 }
-#endif // __TBB_x86_32 ||  __aarch32__
 
 /*
  * Depending on indexRequest, for a given size return either the index into the bin
@@ -1538,7 +1532,6 @@ void Block::shareOrphaned(intptr_t binTag, unsigned index)
     tbb::detail::suppress_unused_warning(index);
     STAT_increment(getThreadId(), index, freeBlockPublic);
     markOrphaned();
-    bool syncOnMailbox = false;
     if ((intptr_t)nextPrivatizable.load(std::memory_order_relaxed) == binTag) {
         // First check passed: the block is not in mailbox yet.
         // Need to set publicFreeList to non-zero, so other threads
@@ -1958,7 +1951,7 @@ static MallocMutex initMutex;
     delivers a clean result. */
 static char VersionString[] = "\0" TBBMALLOC_VERSION_STRINGS;
 
-#if USE_PTHREAD && (__TBB_SOURCE_DIRECTLY_INCLUDED || __TBB_USE_DLOPEN_REENTRANCY_WORKAROUND)
+#if USE_PTHREAD && __TBB_SOURCE_DIRECTLY_INCLUDED
 
 /* Decrease race interval between dynamic library unloading and pthread key
    destructor. Protect only Pthreads with supported unloading. */
@@ -2001,7 +1994,7 @@ public:
     void processExit() { }
 };
 
-#endif // USE_PTHREAD && (__TBB_SOURCE_DIRECTLY_INCLUDED || __TBB_USE_DLOPEN_REENTRANCY_WORKAROUND)
+#endif // USE_PTHREAD && __TBB_SOURCE_DIRECTLY_INCLUDED
 
 static ShutdownSync shutdownSync;
 
@@ -2692,7 +2685,7 @@ using namespace rml::internal;
 
 // legacy entry point saved for compatibility with binaries complied
 // with pre-6003 versions of TBB
-rml::MemoryPool *pool_create(intptr_t pool_id, const MemPoolPolicy *policy)
+TBBMALLOC_EXPORT rml::MemoryPool *pool_create(intptr_t pool_id, const MemPoolPolicy *policy)
 {
     rml::MemoryPool *pool;
     MemPoolPolicy pol(policy->pAlloc, policy->pFree, policy->granularity);
@@ -2928,16 +2921,6 @@ extern "C" void __TBB_mallocProcessShutdownNotification(bool windows_process_dyi
     hugePages.reset();
     // new total malloc initialization is possible after this point
     mallocInitialized.store(0, std::memory_order_release);
-#elif __TBB_USE_DLOPEN_REENTRANCY_WORKAROUND
-/* In most cases we prevent unloading tbbmalloc, and don't clean up memory
-   on process shutdown. When impossible to prevent, library unload results
-   in shutdown notification, and it makes sense to release unused memory
-   at that point (we can't release all memory because it's possible that
-   it will be accessed after this point).
-   TODO: better support systems where we can't prevent unloading by removing
-   pthread destructors and releasing caches.
- */
-    defaultMemPool->extMemPool.hardCachesCleanup();
 #endif // __TBB_SOURCE_DIRECTLY_INCLUDED
 
 #if COLLECT_STATISTICS
@@ -2972,7 +2955,7 @@ extern "C" void __TBB_malloc_free_definite_size(void *object, size_t size)
  * A variant that provides additional memory safety, by checking whether the given address
  * was obtained with this allocator, and if not redirecting to the provided alternative call.
  */
-extern "C" void __TBB_malloc_safer_free(void *object, void (*original_free)(void*))
+extern "C" TBBMALLOC_EXPORT void __TBB_malloc_safer_free(void *object, void (*original_free)(void*))
 {
     if (!object)
         return;
@@ -3027,7 +3010,7 @@ extern "C" void* scalable_realloc(void* ptr, size_t size)
  * A variant that provides additional memory safety, by checking whether the given address
  * was obtained with this allocator, and if not redirecting to the provided alternative call.
  */
-extern "C" void* __TBB_malloc_safer_realloc(void* ptr, size_t sz, void* original_realloc)
+extern "C" TBBMALLOC_EXPORT void* __TBB_malloc_safer_realloc(void* ptr, size_t sz, void* original_realloc)
 {
     void *tmp; // TODO: fix warnings about uninitialized use of tmp
 
@@ -3148,7 +3131,7 @@ extern "C" void * scalable_aligned_realloc(void *ptr, size_t size, size_t alignm
     return tmp;
 }
 
-extern "C" void * __TBB_malloc_safer_aligned_realloc(void *ptr, size_t size, size_t alignment, void* orig_function)
+extern "C" TBBMALLOC_EXPORT void * __TBB_malloc_safer_aligned_realloc(void *ptr, size_t size, size_t alignment, void* orig_function)
 {
     /* corner cases left out of reallocAligned to not deal with errno there */
     if (!isPowerOfTwo(alignment)) {
@@ -3228,7 +3211,7 @@ extern "C" size_t scalable_msize(void* ptr)
  * A variant that provides additional memory safety, by checking whether the given address
  * was obtained with this allocator, and if not redirecting to the provided alternative call.
  */
-extern "C" size_t __TBB_malloc_safer_msize(void *object, size_t (*original_msize)(void*))
+extern "C" TBBMALLOC_EXPORT size_t __TBB_malloc_safer_msize(void *object, size_t (*original_msize)(void*))
 {
     if (object) {
         // Check if the memory was allocated by scalable_malloc
@@ -3247,7 +3230,7 @@ extern "C" size_t __TBB_malloc_safer_msize(void *object, size_t (*original_msize
 /*
  * The same as above but for _aligned_msize case
  */
-extern "C" size_t __TBB_malloc_safer_aligned_msize(void *object, size_t alignment, size_t offset, size_t (*orig_aligned_msize)(void*,size_t,size_t))
+extern "C" TBBMALLOC_EXPORT size_t __TBB_malloc_safer_aligned_msize(void *object, size_t alignment, size_t offset, size_t (*orig_aligned_msize)(void*,size_t,size_t))
 {
     if (object) {
         // Check if the memory was allocated by scalable_malloc
@@ -3269,7 +3252,7 @@ extern "C" int scalable_allocation_mode(int param, intptr_t value)
         defaultMemPool->extMemPool.backend.setRecommendedMaxSize((size_t)value);
         return TBBMALLOC_OK;
     } else if (param == USE_HUGE_PAGES) {
-#if __linux__
+#if __unix__
         switch (value) {
         case 0:
         case 1:

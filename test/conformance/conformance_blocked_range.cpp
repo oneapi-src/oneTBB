@@ -139,7 +139,9 @@ TEST_CASE("blocked_range proportional splitting") {
     CHECK(splitted_copy.size() == copy.size());
 
 
-    int expected_first_end = original.begin() + ps.left() * (original.end() - original.begin()) / (ps.left() + ps.right());
+    int expected_first_end = static_cast<int>(
+        original.begin() + ps.left() * (original.end() - original.begin()) / (ps.left() + ps.right())
+    );
     utils::check_range_bounds_after_splitting(original, first, second, expected_first_end);
 }
 

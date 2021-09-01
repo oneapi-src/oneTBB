@@ -21,6 +21,7 @@
 
 #include <limits.h> // for INT_MAX
 #include <thread>
+#include <vector>
 
 #include "tbb/parallel_for.h"
 #include "tbb/parallel_reduce.h"
@@ -746,20 +747,34 @@ TEST_CASE("parallel_for and parallel_reduce cancellation test #4") {
 // Tests for tbb::parallel_for_each
 ////////////////////////////////////////////////////////////////////////////////
 
-#define ITER_RANGE          1000
-#define ITEMS_TO_FEED       50
-#define INNER_ITER_RANGE   100
-#define OUTER_ITER_RANGE  50
+std::size_t get_iter_range_size() {
+    // Set the minimal iteration sequence size to 50 to improve test complexity on small machines
+    return std::max(50, g_NumThreads * 2);
+}
 
-#define PREPARE_RANGE(Iterator, rangeSize)  \
-    size_t test_vector[rangeSize + 1]; \
-    for (int i =0; i < rangeSize; i++) \
-        test_vector[i] = i; \
-    Iterator begin(&test_vector[0]); \
-    Iterator end(&test_vector[rangeSize])
+template<typename Iterator>
+struct adaptive_range {
+    std::vector<std::size_t> my_array;
+
+    adaptive_range(std::size_t size) : my_array(size + 1) {}
+    using iterator = Iterator;
+
+    iterator begin() const {
+        return iterator{&my_array.front()};
+    }
+    iterator begin() {
+        return iterator{&my_array.front()};
+    }
+    iterator end() const {
+        return iterator{&my_array.back()};
+    }
+    iterator end() {
+        return iterator{&my_array.back()};
+    }
+};
 
 void Feed ( tbb::feeder<size_t> &feeder, size_t val ) {
-    if (g_FedTasksCount < ITEMS_TO_FEED) {
+    if (g_FedTasksCount < 50) {
         ++g_FedTasksCount;
         feeder.add(val);
     }
@@ -805,9 +820,9 @@ public:
 template <class Iterator, class simple_body>
 void Test1_parallel_for_each () {
     ResetGlobals();
-    PREPARE_RANGE(Iterator, ITER_RANGE);
+    auto range = adaptive_range<Iterator>(get_iter_range_size());
     TRY();
-        tbb::parallel_for_each<Iterator, simple_body>(begin, end, simple_body() );
+        tbb::parallel_for_each(std::begin(range), std::end(range), simple_body() );
     CATCH_AND_ASSERT();
     REQUIRE_MESSAGE (g_CurExecuted <= g_ExecutedAtLastCatch + g_NumThreads, "Too many tasks survived exception");
     g_TGCCancelled.validate(g_NumThreads, "Too many tasks survived cancellation");
@@ -822,8 +837,8 @@ class OuterParForEachBody {
 public:
     void operator()( size_t& /*value*/ ) const {
         ++g_OuterParCalls;
-        PREPARE_RANGE(Iterator, INNER_ITER_RANGE);
-        tbb::parallel_for_each<Iterator, SimpleParForEachBody>(begin, end, SimpleParForEachBody());
+        auto range = adaptive_range<Iterator>(get_iter_range_size());
+        tbb::parallel_for_each(std::begin(range), std::end(range), SimpleParForEachBody());
     }
 };
 
@@ -844,9 +859,9 @@ public:
 template <class Iterator, class outer_body>
 void Test2_parallel_for_each () {
     ResetGlobals();
-    PREPARE_RANGE(Iterator, ITER_RANGE);
+    auto range = adaptive_range<Iterator>(get_iter_range_size());
     TRY();
-        tbb::parallel_for_each<Iterator, outer_body >(begin, end, outer_body() );
+        tbb::parallel_for_each(std::begin(range), std::end(range), outer_body() );
     CATCH_AND_ASSERT();
     REQUIRE_MESSAGE (g_CurExecuted <= g_ExecutedAtLastCatch + g_NumThreads, "Too many tasks survived exception");
     g_TGCCancelled.validate(g_NumThreads, "Too many tasks survived cancellation");
@@ -861,8 +876,8 @@ public:
     void operator()( size_t& /*value*/ ) const {
         tbb::task_group_context ctx(tbb::task_group_context::isolated);
         ++g_OuterParCalls;
-        PREPARE_RANGE(Iterator, INNER_ITER_RANGE);
-        tbb::parallel_for_each<Iterator, SimpleParForEachBody>(begin, end, SimpleParForEachBody(), ctx);
+        auto range = adaptive_range<Iterator>(get_iter_range_size());
+        tbb::parallel_for_each(std::begin(range), std::end(range), SimpleParForEachBody(), ctx);
     }
 };
 
@@ -884,13 +899,13 @@ public:
 template <class Iterator, class outer_body>
 void Test3_parallel_for_each () {
     ResetGlobals();
-    PREPARE_RANGE(Iterator, OUTER_ITER_RANGE);
-    intptr_t innerCalls = INNER_ITER_RANGE,
+    auto range = adaptive_range<Iterator>(get_iter_range_size());
+    intptr_t innerCalls = get_iter_range_size(),
              // The assumption here is the same as in outer parallel fors.
              minExecuted = (g_NumThreads - 1) * innerCalls;
     g_Master = std::this_thread::get_id();
     TRY();
-        tbb::parallel_for_each<Iterator, outer_body >(begin, end, outer_body());
+        tbb::parallel_for_each(std::begin(range), std::end(range), outer_body());
     CATCH_AND_ASSERT();
     // figure actual number of expected executions given the number of outer PDos started.
     minExecuted = (g_OuterParCalls - 1) * innerCalls;
@@ -911,9 +926,9 @@ public:
     void operator()( size_t& /*value*/ ) const {
         tbb::task_group_context ctx(tbb::task_group_context::isolated);
         ++g_OuterParCalls;
-        PREPARE_RANGE(Iterator, INNER_ITER_RANGE);
+        auto range = adaptive_range<Iterator>(get_iter_range_size());
         TRY();
-            tbb::parallel_for_each<Iterator, SimpleParForEachBody>(begin, end, SimpleParForEachBody(), ctx);
+            tbb::parallel_for_each(std::begin(range), std::end(range), SimpleParForEachBody(), ctx);
         CATCH();
     }
 };
@@ -937,14 +952,14 @@ public:
 template <class Iterator, class outer_body_with_eh>
 void Test4_parallel_for_each () {
     ResetGlobals( true, true );
-    PREPARE_RANGE(Iterator, OUTER_ITER_RANGE);
+    auto range = adaptive_range<Iterator>(get_iter_range_size());
     g_Master = std::this_thread::get_id();
     TRY();
-        tbb::parallel_for_each<Iterator, outer_body_with_eh>(begin, end, outer_body_with_eh());
+        tbb::parallel_for_each(std::begin(range), std::end(range), outer_body_with_eh());
     CATCH();
     REQUIRE_MESSAGE (!l_ExceptionCaughtAtCurrentLevel, "All exceptions must have been handled in the parallel_for_each body");
-    intptr_t innerCalls = INNER_ITER_RANGE,
-             outerCalls = OUTER_ITER_RANGE + g_FedTasksCount,
+    intptr_t innerCalls = get_iter_range_size(),
+             outerCalls = get_iter_range_size() + g_FedTasksCount,
              maxExecuted = outerCalls * innerCalls,
              minExecuted = 0;
     g_TGCCancelled.validate(g_NumThreads, "Too many tasks survived exception");
@@ -985,10 +1000,10 @@ public:
 template <class Iterator>
 void Test5_parallel_for_each () {
     ResetGlobals();
-    PREPARE_RANGE(Iterator, ITER_RANGE);
+    auto range = adaptive_range<Iterator>(get_iter_range_size());
     g_Master = std::this_thread::get_id();
     TRY();
-        tbb::parallel_for_each<Iterator, ParForEachBodyWithThrowingFeederTasks>(begin, end, ParForEachBodyWithThrowingFeederTasks());
+        tbb::parallel_for_each(std::begin(range), std::end(range), ParForEachBodyWithThrowingFeederTasks());
     CATCH();
     if (g_SolitaryException) {
         // Failure occurs when g_ExceptionInMaster is false, but all the 1 values in the range
@@ -1120,8 +1135,8 @@ class ParForEachWorker {
     tbb::task_group_context &my_ctx;
 public:
     void operator()() const {
-        PREPARE_RANGE(Iterator, INNER_ITER_RANGE);
-        tbb::parallel_for_each<Iterator, B>( begin, end, B(), my_ctx );
+        auto range = adaptive_range<Iterator>(get_iter_range_size());
+        tbb::parallel_for_each( std::begin(range), std::end(range), B(), my_ctx );
     }
 
     ParForEachWorker ( tbb::task_group_context& ctx ) : my_ctx(ctx) {}
@@ -1131,7 +1146,9 @@ public:
 template <class Iterator, class body_to_cancel>
 void TestCancelation1_parallel_for_each () {
     ResetGlobals( false );
-    intptr_t  threshold = 10;
+    // Threshold should leave more than max_threads tasks to test the cancellation. Set the threshold to iter_range_size()/4 since iter_range_size >= max_threads*2
+    intptr_t threshold = get_iter_range_size() / 4;
+    REQUIRE_MESSAGE(get_iter_range_size() - threshold > g_NumThreads, "Threshold should leave more than max_threads tasks to test the cancellation.");
     tbb::task_group tg;
     tbb::task_group_context  ctx;
     Cancellator cancellator(ctx, threshold);
@@ -1184,7 +1201,6 @@ TEST_CASE("parallel_for_each cancellation test #1") {
             for ( size_t j = 0; j < 4; ++j ) {
                 g_ExceptionInMaster = (j & 1) != 0;
                 g_SolitaryException = (j & 2) != 0;
-
                 RunWithSimpleBody(TestCancelation1_parallel_for_each, ParForEachBodyToCancel);
             }
         }
@@ -1213,26 +1229,21 @@ TEST_CASE("parallel_for_each cancellation test #2") {
 ////////////////////////////////////////////////////////////////////////////////
 // Tests for tbb::parallel_pipeline
 ////////////////////////////////////////////////////////////////////////////////
-#define NUM_ITEMS   100
-
-const size_t c_DataEndTag = size_t(~0);
-
 int g_NumTokens = 0;
 
 // Simple input filter class, it assigns 1 to all array members
 // It stops when it receives item equal to -1
 class InputFilter {
     mutable std::atomic<size_t> m_Item{};
-    mutable size_t m_Buffer[NUM_ITEMS + 1];
+    mutable std::vector<size_t> m_Buffer;
 public:
-    InputFilter() {
+    InputFilter() : m_Buffer(get_iter_range_size()) {
         m_Item = 0;
-        for (size_t i = 0; i < NUM_ITEMS; ++i )
+        for (size_t i = 0; i < get_iter_range_size(); ++i )
             m_Buffer[i] = 1;
-        m_Buffer[NUM_ITEMS] = c_DataEndTag;
     }
-    InputFilter(const InputFilter& other) : m_Item(other.m_Item.load()) {
-        for (size_t i = 0; i < NUM_ITEMS; ++i )
+    InputFilter(const InputFilter& other) : m_Item(other.m_Item.load()), m_Buffer(get_iter_range_size()) {
+        for (size_t i = 0; i < get_iter_range_size(); ++i )
             m_Buffer[i] = other.m_Buffer[i];
     }
 
@@ -1244,7 +1255,7 @@ public:
         if(item == 1) {
             ++g_PipelinesStarted;   // count on emitting the first item.
         }
-        if ( item >= NUM_ITEMS ) {
+        if ( item >= get_iter_range_size() ) {
             control.stop();
             return nullptr;
         }
@@ -1252,7 +1263,7 @@ public:
         return &m_Buffer[item];
     }
 
-    size_t* buffer() { return m_Buffer; }
+    size_t* buffer() { return m_Buffer.data(); }
 }; // class InputFilter
 
 #if TBB_USE_EXCEPTIONS
@@ -1332,7 +1343,7 @@ void Test1_pipeline ( const FilterSet& filters ) {
     SimplePipeline testPipeline(filters);
     TRY();
         testPipeline.run();
-        if ( g_CurExecuted == 2 * NUM_ITEMS ) {
+        if ( g_CurExecuted == 2 * static_cast<int>(get_iter_range_size()) ) {
             // all the items were processed, though an exception was supposed to occur.
             if(!g_ExceptionInMaster && g_NonMasterExecutedThrow > 0) {
                 // if !g_ExceptionInMaster, the external thread is not allowed to throw.
@@ -1411,7 +1422,7 @@ void Test3_pipeline ( const FilterSet& filters ) {
         ResetGlobals();
         g_NestedPipelines = true;
         g_Master = std::this_thread::get_id();
-        intptr_t innerCalls = NUM_ITEMS,
+        intptr_t innerCalls = get_iter_range_size(),
                  minExecuted = (g_NumThreads - 1) * innerCalls;
         CustomPipeline<InputFilter, OuterFilterWithIsolatedCtx> testPipeline(filters);
         TRY();
@@ -1438,12 +1449,12 @@ void Test3_pipeline ( const FilterSet& filters ) {
                 //
                 // So g_CurExecuted should be about
                 //
-                //   (2*NUM_ITEMS) * (g_PipelinesStarted - 2) + 1
+                //   (2*get_iter_range_size()) * (g_PipelinesStarted - 2) + 1
                 //   ^ executions for each completed pipeline
                 //                   ^ completing pipelines (remembering two will not complete)
                 //                                              ^ one for the inner throwing pipeline
 
-                minExecuted = (2*NUM_ITEMS) * (g_PipelinesStarted - 2) + 1;
+                minExecuted = (2*get_iter_range_size()) * (g_PipelinesStarted - 2) + 1;
                 // each failing pipeline must execute at least two tasks
                 REQUIRE_MESSAGE(g_CurExecuted >= minExecuted, "Too few tasks survived exception");
                 // no more than g_NumThreads tasks will be executed in a cancelled context.  Otherwise
@@ -1487,12 +1498,12 @@ void Test4_pipeline ( const FilterSet& filters ) {
     }
 #endif
     ResetGlobals( true, true );
-    // each outer pipeline stage will start NUM_ITEMS inner pipelines.
-    // each inner pipeline that doesn't throw will process NUM_ITEMS items.
+    // each outer pipeline stage will start get_iter_range_size() inner pipelines.
+    // each inner pipeline that doesn't throw will process get_iter_range_size() items.
     // for solitary exception there will be one pipeline that only processes one stage, one item.
-    // innerCalls should be 2*NUM_ITEMS
-    intptr_t innerCalls = 2*NUM_ITEMS,
-             outerCalls = 2*NUM_ITEMS,
+    // innerCalls should be 2*get_iter_range_size()
+    intptr_t innerCalls = 2*get_iter_range_size(),
+             outerCalls = 2*get_iter_range_size(),
              maxExecuted = outerCalls * innerCalls;  // the number of invocations of the inner pipelines
     CustomPipeline<InputFilter, OuterFilterWithEhBody> testPipeline(filters);
     TRY();
@@ -1528,23 +1539,26 @@ void TestWithDifferentFiltersAndConcurrency() {
         g_NumThreads = static_cast<int>(concurrency_level);
         g_Master = std::this_thread::get_id();
         if (g_NumThreads > 1) {
+
+            const tbb::filter_mode modes[] = {
+                tbb::filter_mode::parallel,
+                tbb::filter_mode::serial_in_order,
+                tbb::filter_mode::serial_out_of_order
+            };
+
+            const int NumFilterTypes = sizeof(modes)/sizeof(modes[0]);
+
             // Execute in all the possible modes
             for ( size_t j = 0; j < 4; ++j ) {
                 tbb::global_control control(tbb::global_control::max_allowed_parallelism, g_NumThreads);
                 g_ExceptionInMaster = (j & 1) != 0;
                 g_SolitaryException = (j & 2) != 0;
                 g_NumTokens = 2 * g_NumThreads;
-                const int NumFilterTypes = 3;
-                const tbb::filter_mode modes[NumFilterTypes] = {
-                    tbb::filter_mode::parallel,
-                    tbb::filter_mode::serial_in_order,
-                    tbb::filter_mode::serial_out_of_order
-                };
 
                 for ( int i = 0; i < NumFilterTypes; ++i ) {
                     for ( int n = 0; n < NumFilterTypes; ++n ) {
                         for ( int k = 0; k < 2; ++k )
-                            testFunc( FilterSet(modes[i], modes[j], k == 0, k != 0) );
+                            testFunc( FilterSet(modes[i], modes[n], k == 0, k != 0) );
                     }
                 }
             }
@@ -1611,7 +1625,10 @@ public:
 void TestCancelation1_pipeline () {
     ResetGlobals();
     g_ThrowException = false;
-    RunCancellationTest<PipelineLauncher<FilterToCancel>, Cancellator>(10);
+    // Threshold should leave more than max_threads tasks to test the cancellation. Set the threshold to iter_range_size()/4 since iter_range_size >= max_threads*2
+    intptr_t threshold = get_iter_range_size() / 4;
+    REQUIRE_MESSAGE(get_iter_range_size() - threshold > g_NumThreads, "Threshold should leave more than max_threads tasks to test the cancellation.");
+    RunCancellationTest<PipelineLauncher<FilterToCancel>, Cancellator>(threshold);
     g_TGCCancelled.validate(g_NumThreads, "Too many tasks survived cancellation");
     REQUIRE_MESSAGE (g_CurExecuted < g_ExecutedAtLastCatch + g_NumThreads, "Too many tasks were executed after cancellation");
 }

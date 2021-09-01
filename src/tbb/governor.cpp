@@ -51,6 +51,10 @@ namespace rml {
 tbb_server* make_private_server( tbb_client& client );
 } // namespace rml
 
+namespace system_topology {
+    void destroy();
+}
+
 //------------------------------------------------------------------------
 // governor
 //------------------------------------------------------------------------
@@ -79,6 +83,7 @@ void governor::release_resources () {
         runtime_warning("failed to destroy task scheduler TLS: %s", std::strerror(status));
     clear_address_waiter_table();
 
+    system_topology::destroy();
     dynamic_unlink_all();
 }
 
@@ -284,6 +289,7 @@ bool __TBB_EXPORTED_FUNC finalize(d1::task_scheduler_handle& handle, std::intptr
 
 #if __TBB_WEAK_SYMBOLS_PRESENT
 #pragma weak __TBB_internal_initialize_system_topology
+#pragma weak __TBB_internal_destroy_system_topology
 #pragma weak __TBB_internal_allocate_binding_handler
 #pragma weak __TBB_internal_deallocate_binding_handler
 #pragma weak __TBB_internal_apply_affinity
@@ -296,6 +302,7 @@ void __TBB_internal_initialize_system_topology(
     int& numa_nodes_count, int*& numa_indexes_list,
     int& core_types_count, int*& core_types_indexes_list
 );
+void __TBB_internal_destroy_system_topology( );
 
 //TODO: consider renaming to `create_binding_handler` and `destroy_binding_handler`
 binding_handler* __TBB_internal_allocate_binding_handler( int slot_num, int numa_id, int core_type_id, int max_threads_per_core );
@@ -309,6 +316,7 @@ int __TBB_internal_get_default_concurrency( int numa_id, int core_type_id, int m
 #endif /* __TBB_WEAK_SYMBOLS_PRESENT */
 
 // Stubs that will be used if TBBbind library is unavailable.
+static void dummy_destroy_system_topology ( ) { }
 static binding_handler* dummy_allocate_binding_handler ( int, int, int, int ) { return nullptr; }
 static void dummy_deallocate_binding_handler ( binding_handler* ) { }
 static void dummy_apply_affinity ( binding_handler*, int ) { }
@@ -321,6 +329,7 @@ static void (*initialize_system_topology_ptr)(
     int& numa_nodes_count, int*& numa_indexes_list,
     int& core_types_count, int*& core_types_indexes_list
 ) = nullptr;
+static void (*destroy_system_topology_ptr)( ) = dummy_destroy_system_topology;
 
 static binding_handler* (*allocate_binding_handler_ptr)( int slot_num, int numa_id, int core_type_id, int max_threads_per_core )
     = dummy_allocate_binding_handler;
@@ -333,10 +342,11 @@ static void (*restore_affinity_ptr)( binding_handler* handler_ptr, int slot_num 
 int (*get_default_concurrency_ptr)( int numa_id, int core_type_id, int max_threads_per_core )
     = dummy_get_default_concurrency;
 
-#if _WIN32 || _WIN64 || __linux__
+#if _WIN32 || _WIN64 || __unix__
 // Table describing how to link the handlers.
 static const dynamic_link_descriptor TbbBindLinkTable[] = {
     DLD(__TBB_internal_initialize_system_topology, initialize_system_topology_ptr),
+    DLD(__TBB_internal_destroy_system_topology, destroy_system_topology_ptr),
     DLD(__TBB_internal_allocate_binding_handler, allocate_binding_handler_ptr),
     DLD(__TBB_internal_deallocate_binding_handler, deallocate_binding_handler_ptr),
     DLD(__TBB_internal_apply_affinity, apply_affinity_ptr),
@@ -355,15 +365,16 @@ static const unsigned LinkTableSize = sizeof(TbbBindLinkTable) / sizeof(dynamic_
 #if _WIN32 || _WIN64
 #define LIBRARY_EXTENSION ".dll"
 #define LIBRARY_PREFIX
-#elif __linux__
+#elif __unix__
 #define LIBRARY_EXTENSION __TBB_STRING(.so.3)
 #define LIBRARY_PREFIX "lib"
-#endif /* __linux__ */
+#endif /* __unix__ */
 
 #define TBBBIND_NAME LIBRARY_PREFIX "tbbbind" DEBUG_SUFFIX LIBRARY_EXTENSION
 #define TBBBIND_2_0_NAME LIBRARY_PREFIX "tbbbind_2_0" DEBUG_SUFFIX LIBRARY_EXTENSION
-#define TBBBIND_2_4_NAME LIBRARY_PREFIX "tbbbind_2_4" DEBUG_SUFFIX LIBRARY_EXTENSION
-#endif /* _WIN32 || _WIN64 || __linux__ */
+
+#define TBBBIND_2_5_NAME LIBRARY_PREFIX "tbbbind_2_5" DEBUG_SUFFIX LIBRARY_EXTENSION
+#endif /* _WIN32 || _WIN64 || __unix__ */
 
 // Representation of system hardware topology information on the TBB side.
 // System topology may be initialized by third-party component (e.g. hwloc)
@@ -382,19 +393,19 @@ int  core_types_count = 0;
 int* core_types_indexes = nullptr;
 
 const char* load_tbbbind_shared_object() {
-#if _WIN32 || _WIN64 || __linux__
+#if _WIN32 || _WIN64 || __unix__
 #if _WIN32 && !_WIN64
     // For 32-bit Windows applications, process affinity masks can only support up to 32 logical CPUs.
     SYSTEM_INFO si;
     GetNativeSystemInfo(&si);
     if (si.dwNumberOfProcessors > 32) return nullptr;
 #endif /* _WIN32 && !_WIN64 */
-    for (const auto& tbbbind_version : {TBBBIND_2_4_NAME, TBBBIND_2_0_NAME, TBBBIND_NAME}) {
-        if (dynamic_link(tbbbind_version, TbbBindLinkTable, LinkTableSize)) {
+    for (const auto& tbbbind_version : {TBBBIND_2_5_NAME, TBBBIND_2_0_NAME, TBBBIND_NAME}) {
+        if (dynamic_link(tbbbind_version, TbbBindLinkTable, LinkTableSize, nullptr, DYNAMIC_LINK_LOCAL_BINDING)) {
             return tbbbind_version;
         }
     }
-#endif /* _WIN32 || _WIN64 || __linux__ */
+#endif /* _WIN32 || _WIN64 || __unix__ */
     return nullptr;
 }
 
@@ -437,6 +448,10 @@ void initialization_impl() {
 
 void initialize() {
     atomic_do_once(initialization_impl, initialization_state);
+}
+
+void destroy() {
+    destroy_system_topology_ptr();
 }
 } // namespace system_topology
 

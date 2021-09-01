@@ -142,6 +142,7 @@ if [ -e "$TBBROOT/lib/$LIBTBB_NAME" ]; then
     DYLD_LIBRARY_PATH=$(prepend_path "${TBBROOT}/lib" "${DYLD_LIBRARY_PATH:-}") ; export DYLD_LIBRARY_PATH
     CPATH=$(prepend_path "${TBBROOT}/include" "${CPATH:-}") ; export CPATH
     CMAKE_PREFIX_PATH=$(prepend_path "${TBBROOT}" "${CMAKE_PREFIX_PATH:-}") ; export CMAKE_PREFIX_PATH
+    PKG_CONFIG_PATH=$(prepend_path "${TBBROOT}/lib/pkgconfig" "${PKG_CONFIG_PATH:-}") ; export PKG_CONFIG_PATH
 else
     >&2 echo "ERROR: $LIBTBB_NAME library does not exist in $TBBROOT/lib."
     return 255 2>/dev/null || exit 255

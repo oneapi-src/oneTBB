@@ -23,10 +23,10 @@ namespace tbb {
 namespace detail {
 
 namespace r1 {
-void __TBB_EXPORTED_FUNC wait_on_address(void* address, d1::delegate_base& wakeup_condition, std::uintptr_t context);
-void __TBB_EXPORTED_FUNC notify_by_address(void* address, std::uintptr_t context);
-void __TBB_EXPORTED_FUNC notify_by_address_one(void* address);
-void __TBB_EXPORTED_FUNC notify_by_address_all(void* address);
+TBB_EXPORT void __TBB_EXPORTED_FUNC wait_on_address(void* address, d1::delegate_base& wakeup_condition, std::uintptr_t context);
+TBB_EXPORT void __TBB_EXPORTED_FUNC notify_by_address(void* address, std::uintptr_t context);
+TBB_EXPORT void __TBB_EXPORTED_FUNC notify_by_address_one(void* address);
+TBB_EXPORT void __TBB_EXPORTED_FUNC notify_by_address_all(void* address);
 } // namespace r1
 
 namespace d1 {
@@ -51,10 +51,6 @@ public:
 
     T load(std::memory_order order) const noexcept {
         return my_atomic.load(order);
-    }
-
-    void store(T desired, std::memory_order order) noexcept {
-        return my_atomic.store(desired, order);
     }
 
     T exchange(T desired) noexcept {
@@ -93,9 +89,9 @@ public:
         r1::notify_by_address_one(this);
     }
 
-    void notify_all_relaxed() {
-        r1::notify_by_address_all(this);
-    }
+    // TODO: consider adding following interfaces:
+    // store(desired, memory_order)
+    // notify_all_relaxed()
 
 private:
     std::atomic<T> my_atomic{};
