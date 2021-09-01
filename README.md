@@ -17,7 +17,7 @@ See [Installation from Sources](INSTALL.md) for details.
 
 ## Support
 Please report issues and suggestions via
-[GitHub issues](https://github.com/oneapi-src/oneTBB/issues).
+[GitHub issues](https://github.com/oneapi-src/oneTBB/issues). See our [documentation](./CONTRIBUTING.md##Issues) to learn how to work with issues. 
 
 ## How to Contribute
 We welcome community contributions, so check our [contributing guidelines](CONTRIBUTING.md)
