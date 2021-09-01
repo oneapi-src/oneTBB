@@ -38,7 +38,7 @@ You can use issues to report a problem, make a feature request, or add comments 
 
 You can find all [open oneTBB pull requests](https://github.com/oneapi-src/oneTBB/pulls) on GitHub. 
 
-No anonymous contributions are accepted. The name in the commit message Signed-of-by line and your email must match the change authorship information.  Make sure your .gitconfig is set up correctly so you can use `git commit -s` for signing your patches: 
+No anonymous contributions are accepted. The name in the commit message Signed-off-by line and your email must match the change authorship information.  Make sure your .gitconfig is set up correctly so you can use `git commit -s` for signing your patches: 
 
 `git config --global user.name "Taylor Developer"`
 
