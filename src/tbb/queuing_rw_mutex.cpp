@@ -303,13 +303,21 @@ struct queuing_rw_mutex_impl {
                 next = tricky_pointer::load(s.my_next, std::memory_order_acquire);
             }
             next->my_going.store(2U, std::memory_order_relaxed); // protect next queue node from being destroyed too early
+            // If the next is STATE_UPGRADE_WAITING, it is expected to acquire all other released readers via release
+            // sequence in next->my_state. In that case, we need to preserve release sequence in next->my_state
+            // contributed by other reader. So, there are two approaches not to break the release sequence:
+            //   1. Use read-modify-write (exchange) operation to store with release the UPGRADE_LOSER state;
+            //   2. Acquire the release sequence and store the sequence and UPGRADE_LOSER state.
+            // The second approach seems better on x86 because it does not involve interlocked operations.
+            // Therefore, we read next->my_state with acquire while it is not required for else branch to get the 
+            // release sequence.
             if( next->my_state.load(std::memory_order_acquire)==STATE_UPGRADE_WAITING ) {
                 // the next waiting for upgrade means this writer was upgraded before.
                 acquire_internal_lock(s);
                 // Responsibility transition, the one who reads uncorrupted my_prev will do release.
-                // Guarantee that store to next->my_going happens-before resetting of next->my_prev
+                // Guarantee that above store of 2 into next->my_going happens-before resetting of next->my_prev
                 d1::queuing_rw_mutex::scoped_lock* tmp = tricky_pointer::exchange(next->my_prev, nullptr, std::memory_order_release);
-                // To safe release sequence on next->my_state read it with acquire
+                // Pass the release sequence that we acquired with the above load of next->my_state.
                 next->my_state.store(STATE_UPGRADE_LOSER, std::memory_order_release);
                 // We are releasing the mutex
                 next->my_going.store(1U, std::memory_order_release);
@@ -318,7 +326,7 @@ struct queuing_rw_mutex_impl {
                 // next->state cannot be STATE_UPGRADE_REQUESTED
                 __TBB_ASSERT( next->my_state.load(std::memory_order_relaxed) & (STATE_COMBINED_WAITINGREADER | STATE_WRITER), "unexpected state" );
                 __TBB_ASSERT( !( next->my_prev.load(std::memory_order_relaxed) & FLAG ), "use of corrupted pointer!" );
-                // Guarantee that store to next->my_going happens-before resetting of next->my_prev
+                // Guarantee that above store of 2 into next->my_going happens-before resetting of next->my_prev
                 tricky_pointer::store(next->my_prev, nullptr, std::memory_order_release);
                 // We are releasing the mutex
                 next->my_going.store(1U, std::memory_order_release);
