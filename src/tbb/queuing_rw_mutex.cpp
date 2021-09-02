@@ -199,14 +199,10 @@ struct queuing_rw_mutex_impl {
                 } else {
                     // Load predecessor->my_state now, because once predecessor->my_next becomes
                     // non-NULL, we must assume that *predecessor might be destroyed.
-                    pred_state = STATE_READER;
-                    // While on success we need memory_order_relaxed, but on fail we need memory_order_acquire
-                    // According to C++, success semantics cannot be weaker than fail semantics,
-                    // so use memory_order_acquire in both cases
                     pred_state = predecessor->my_state.load(std::memory_order_relaxed);
                     if (pred_state == STATE_READER) {
                         // Notify the previous reader to unblock us.
-                        predecessor->my_state.compare_exchange_strong(pred_state, STATE_READER_UNBLOCKNEXT, std::memory_order_relaxed)
+                        predecessor->my_state.compare_exchange_strong(pred_state, STATE_READER_UNBLOCKNEXT, std::memory_order_relaxed);
                     }
                     if (pred_state == STATE_ACTIVEREADER)  { // either we initially read it or CAS failed
                         // Active reader means that the predecessor already acquired the mutex and cannot notify us.
