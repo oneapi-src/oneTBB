@@ -4,7 +4,7 @@ _Add comprehensive description of proposed changes_
 
 Fixes # - _issue number(s) if exists_
 
-### Type(s)
+### Type of change
 
 _Choose one or multiple, leave empty if none of the other choices apply_
 _Add respective label(s) to PR if you have permissions_
@@ -15,7 +15,7 @@ _Add respective label(s) to PR if you have permissions_
 - [ ] infrastructure - _change in infrastructure and CI_
 - [ ] documentation - _documentation update_
 
-### Test(s)
+### Tests
 
 - [ ] added - _required for new features and for some bug fixes_
 - [ ] not needed
