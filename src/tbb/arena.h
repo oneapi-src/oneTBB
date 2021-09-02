@@ -281,6 +281,12 @@ struct arena_base : padded<intrusive_list_node> {
     //! The number of workers requested by the external thread owning the arena.
     unsigned my_max_num_workers;
 
+    //! The target serialization epoch for callers of adjust_job_count_estimate
+    int my_adjust_demand_target_epoch;
+
+    //! The current serialization epoch for callers of adjust_job_count_estimate
+    d1::waitable_atomic<int> my_adjust_demand_current_epoch;
+
 #if TBB_USE_ASSERT
     //! Used to trap accesses to the object after its destruction.
     std::uintptr_t my_guard;
