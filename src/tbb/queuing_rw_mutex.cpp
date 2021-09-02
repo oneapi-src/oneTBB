@@ -202,7 +202,16 @@ struct queuing_rw_mutex_impl {
                     // While on success we need memory_order_relaxed, but on fail we need memory_order_acquire
                     // According to C++, success semantics cannot be weaker than fail semantics,
                     // so use memory_order_acquire in both cases
-                    predecessor->my_state.compare_exchange_strong(pred_state, STATE_READER_UNBLOCKNEXT, std::memory_order_acquire);
+                    pred_state = predecessor->my_state.load(std::memory_order_relaxed);
+                    if (pred_state == STATE_READER) {
+                        // Notify the previous reader to unblock us.
+                        predecessor->my_state.compare_exchange_strong(pred_state, STATE_READER_UNBLOCKNEXT, std::memory_order_relaxed)
+                    }
+                    if (pred_state == STATE_ACTIVEREADER)  { // either we initially read it or CAS failed
+                        // Active reader means that the predecessor already acquired the mutex and cannot notify us.
+                        // Therefore, we need to acquire the mutex ourselves by re-reading predecessor state.
+                        (void)predecessor->my_state.load(std::memory_order_acquire);
+                    }
                 }
                 tricky_pointer::store(s.my_prev, predecessor, std::memory_order_relaxed);
                 __TBB_ASSERT( !( tricky_pointer(predecessor) & FLAG ), "use of corrupted pointer!" );
