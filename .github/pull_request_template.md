@@ -7,6 +7,7 @@ Fixes # - _issue number(s) if exists_
 ### Type of change
 
 _Choose one or multiple, leave empty if none of the other choices apply_
+
 _Add respective label(s) to PR if you have permissions_
 
 - [ ] bug fix - _change which fixes an issue_
