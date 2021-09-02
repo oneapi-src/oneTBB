@@ -186,6 +186,12 @@ public:
     Intrusive list node base class is used by market to form a list of arenas. **/
 // TODO: Analyze arena_base cache lines placement
 struct arena_base : padded<intrusive_list_node> {
+    //! The target serialization epoch for callers of adjust_job_count_estimate
+    int my_adjust_demand_target_epoch;
+
+    //! The current serialization epoch for callers of adjust_job_count_estimate
+    d1::waitable_atomic<int> my_adjust_demand_current_epoch;
+
     //! The number of workers that have been marked out by the resource manager to service the arena.
     std::atomic<unsigned> my_num_workers_allotted;   // heavy use in stealing loop
 
