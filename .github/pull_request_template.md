@@ -1,29 +1,37 @@
-## Description 
-Please include a summary of the change and which issue is fixed.
+### Description 
+_Add comprehensive description of proposed changes_
 
-Fixes # (issue if exist)
 
-## Please set a label for this PR:
-- [ ] bug fix (change which fixes an issue)
-- [ ] new feature (change which adds functionality)
-- [ ] tests (change in tests)
-- [ ] infrastructure (change in infrastructure and CI)
-- [ ] documentation (documentation update)
+Fixes # - _issue number(s) if exists_
 
-Leave empty if none of the other choices apply.
+### Type(s)
 
-## Pull request checklist
-Please check if your PR fulfills the following requirements:
-- [ ] Tests for the changes have been added (for bug fixes / features)
-- [ ] Docs have been reviewed and added / update is needed (for bug fixes / features)
-- [ ] Changes are signed off https://github.com/oneapi-src/oneTBB/blob/master/CONTRIBUTING.md#pull-requests 
+_Choose one or multiple, leave empty if none of the other choices apply_
+_Add respective label(s) to PR if you have permissions_
 
-## Does this introduce a breaking change?
+- [ ] bug fix - _change which fixes an issue_
+- [ ] new feature - _change which adds functionality_
+- [ ] tests - _change in tests_
+- [ ] infrastructure - _change in infrastructure and CI_
+- [ ] documentation - _documentation update_
+
+### Test(s)
+
+- [ ] added - _required for new features and for some bug fixes_
+- [ ] not needed
+
+### Documentation
+
+- [ ] updated in # - _add PR number_
+- [ ] needs to be updated
+- [ ] not needed
+
+### Breaks backward compatibility
 - [ ] Yes
 - [ ] No
 - [ ] Unknown
 
-## Notify the following users
-Please, use '@user' to send notification
+### Notify the following users
+_List users with `@` to send notifications_
 
-## Other information
+### Other information
