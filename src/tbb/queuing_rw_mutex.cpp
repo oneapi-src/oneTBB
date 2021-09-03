@@ -476,7 +476,7 @@ struct queuing_rw_mutex_impl {
             if( n_state & (STATE_COMBINED_READER | STATE_UPGRADE_REQUESTED) ) {
                 // save next|FLAG for simplicity of following comparisons
                 tmp = tricky_pointer(next)|FLAG;
-                for( atomic_backoff b; tricky_pointer::load(s.my_next, std::memory_order_acquire)==tmp; b.pause() ) {
+                for( atomic_backoff b; tricky_pointer::load(s.my_next, std::memory_order_relaxed)==tmp; b.pause() ) {
                     if( s.my_state.load(std::memory_order_acquire) & STATE_COMBINED_UPGRADING ) {
                         if( tricky_pointer::load(s.my_next, std::memory_order_acquire)==tmp )
                             tricky_pointer::store(s.my_next, next, std::memory_order_relaxed);
