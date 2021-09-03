@@ -46,6 +46,8 @@ Synopsis
                task_handle defer(F&& f);
                    
                void run(task_handle&& h);
+               
+               task_group_status run_and_wait(task_handle&& );
 
                //only F return type requirements have changed              
                template<typename F>
@@ -87,6 +89,17 @@ Schedules the task object pointed by the ``h`` for execution.
       * ``h`` is not empty.
       * ``*this`` is the same ``task_group`` that ``h`` is created with.    
 
+.. cpp:function:: task_group_status run_and_wait(task_handle&& h)
+
+Equivalent to ``{run(h); return wait();}``, but guarantees that ``h`` runs on the current thread.
+
+.. note::
+   The failure to satisfy the following conditions leads to undefined behavior:
+      * ``h`` is not empty.
+      * ``*this`` is the same ``task_group`` that ``h`` is created with.    
+
+ **Returns**: The status of ``task_group``. 
+    
 .. cpp:function:: template<typename F> void  run(F&& f)
 
 As an optimization hint, ``F`` might return a ``task_handle``, which task object can be executed next.
@@ -99,4 +112,5 @@ As an optimization hint, ``F`` might return a ``task_handle``, which task object
 
 * `oneapi::tbb::task_group specification <https://spec.oneapi.com/versions/latest/elements/oneTBB/source/task_scheduler/task_group/task_group_cls.html>`_
 * `oneapi::tbb::task_group_context specification <https://spec.oneapi.com/versions/latest/elements/oneTBB/source/task_scheduler/scheduling_controls/task_group_context_cls.html>`_
+* `oneapi::tbb::task_group_status specification <https://spec.oneapi.com/versions/latest/elements/oneTBB/source/task_scheduler/task_group/task_group_status_enum.html>`_ 
 * :doc:`oneapi::tbb::task_handle class <task_group_extensions/task_handle>`
