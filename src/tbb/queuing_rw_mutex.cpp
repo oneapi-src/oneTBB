@@ -334,7 +334,7 @@ struct queuing_rw_mutex_impl {
 
         } else { // Acquired for read
             // The basic idea it to build happens-before relation with left and right readers via prev and next. In addition,
-            // the first reader should acquire the left (prev) signal and propagate to rigth (next). To simplify, we always
+            // the first reader should acquire the left (prev) signal and propagate to right (next). To simplify, we always
             // build happens-before relation between left and right (left is happened before right).
             queuing_rw_mutex::scoped_lock *tmp = nullptr;
     retry:
@@ -477,7 +477,7 @@ struct queuing_rw_mutex_impl {
             next = tricky_pointer::fetch_add(s.my_next, FLAG, std::memory_order_acquire);
             // While we were READER the next READER might reach STATE_UPGRADE_WAITING state.
             // Therefore, it did not build happens before relation with us and we need to acquire the 
-            // next->my_state to build the happens before relation ourselves 
+            // next->my_state to build the happens before relation ourselves
             unsigned short n_state = next->my_state.load(std::memory_order_acquire);
             /* the next reader can be blocked by our state. the best thing to do is to unblock it */
             if( n_state & STATE_COMBINED_WAITINGREADER )
