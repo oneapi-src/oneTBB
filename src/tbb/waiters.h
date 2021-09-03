@@ -67,13 +67,13 @@ public:
 
             static constexpr std::chrono::microseconds worker_wait_leave_duration(80);
             static_assert(worker_wait_leave_duration > std::chrono::steady_clock::duration(1), "Clock resolution is not enough for measured interval.");
-            __TBB_ASSERT(m->my_adjust_demand_current_epoch.load(std::memory_order_relaxed) > 0, "The zero epoch is expected to be outdated");
+            __TBB_ASSERT(my_arena.my_adjust_demand_current_epoch.load(std::memory_order_relaxed) > 0, "The zero epoch is expected to be outdated");
 
             for (auto t1 = std::chrono::steady_clock::now(), t2 = t1;
                 std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1) < worker_wait_leave_duration;
                 t2 = std::chrono::steady_clock::now())
             {
-                int current_epoch = m->my_adjust_demand_current_epoch.load(std::memory_order_relaxed);
+                int current_epoch = my_arena.my_adjust_demand_current_epoch.load(std::memory_order_relaxed);
                 if (prev_epoch != current_epoch) {
                     prev_epoch = current_epoch;
 
