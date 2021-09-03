@@ -333,9 +333,9 @@ struct queuing_rw_mutex_impl {
             }
 
         } else { // Acquired for read
-            // On release every reader should build happens-before relation with right and left readers by:
-            // - acquire from my_prev and my_next
-            // - release in my_prev->my_next and my_next->my_prev
+            // The basic idea it to build happens-before relation with left and right readers via prev and next. In addition,
+            // the first reader should acquire the left (prev) signal and propagate to rigth (next). To simplify, we always
+            // build happens-before relation between left and right (left is happened before right).
             queuing_rw_mutex::scoped_lock *tmp = nullptr;
     retry:
             // Addition to the original paper: Mark my_prev as in use
@@ -347,8 +347,7 @@ struct queuing_rw_mutex_impl {
                     // Failed to acquire the lock on predecessor. The predecessor either unlinks or upgrades.
                     // In the second case, it could or could not know my "in use" flag - need to check
                     // Responsibility transition, the one who reads uncorrupted my_prev will do release.
-                    tmp = tricky_pointer::compare_exchange_strong(s.my_prev, tricky_pointer(predecessor) | FLAG, predecessor,
-                        std::memory_order_acquire);
+                    tmp = tricky_pointer::compare_exchange_strong(s.my_prev, tricky_pointer(predecessor) | FLAG, predecessor, std::memory_order_acquire);
                     if( !(tricky_pointer(tmp) & FLAG) ) {
                         __TBB_ASSERT(tricky_pointer::load(s.my_prev, std::memory_order_relaxed) != (tricky_pointer(predecessor) | FLAG), nullptr);
                         // Now owner of predecessor is waiting for _us_ to release its lock
@@ -371,7 +370,7 @@ struct queuing_rw_mutex_impl {
                 }
                 __TBB_ASSERT( !(s.my_next.load(std::memory_order_relaxed) & FLAG), "use of corrupted pointer" );
 
-                // ensure acquire semantics of reading 'my_next'
+                // my_next is acquired either with load or spin_wait.
                 if(d1::queuing_rw_mutex::scoped_lock *const l_next = tricky_pointer::load(s.my_next, std::memory_order_relaxed) ) { // I->next != nil, TODO: rename to next after clearing up and adapting the n in the comment two lines below
                     // Equivalent to I->next->prev = I->prev but protected against (prev[n]&FLAG)!=0
                     tmp = tricky_pointer::exchange(l_next->my_prev, predecessor, std::memory_order_release);
@@ -406,6 +405,7 @@ struct queuing_rw_mutex_impl {
             unblock_or_wait_on_internal_lock(s, get_flag(tmp));
         }
     done:
+        // Lifetime synchronization, no need to build happens-before relation
         spin_wait_while_eq( s.my_going, 2U, std::memory_order_relaxed );
 
         s.initialize();
@@ -437,6 +437,14 @@ struct queuing_rw_mutex_impl {
         __TBB_ASSERT( next, "still no successor at this point!" );
         if( next->my_state.load(std::memory_order_relaxed) & STATE_COMBINED_WAITINGREADER )
             next->my_going.store(1U, std::memory_order_release);
+        // If the next is STATE_UPGRADE_WAITING, it is expected to acquire all other released readers via release
+        // sequence in next->my_state. In that case, we need to preserve release sequence in next->my_state
+        // contributed by other reader. So, there are two approaches not to break the release sequence:
+        //   1. Use read-modify-write (exchange) operation to store with release the UPGRADE_LOSER state;
+        //   2. Acquire the release sequence and store the sequence and UPGRADE_LOSER state.
+        // The second approach seems better on x86 because it does not involve interlocked operations.
+        // Therefore, we read next->my_state with acquire while it is not required for else branch to get the 
+        // release sequence.
         else if( next->my_state.load(std::memory_order_acquire)==STATE_UPGRADE_WAITING )
             // the next waiting for upgrade means this writer was upgraded before.
             // To safe release sequence on next->my_state read it with acquire
@@ -466,6 +474,9 @@ struct queuing_rw_mutex_impl {
             spin_wait_while_eq( s.my_next, 0U, std::memory_order_relaxed );
             queuing_rw_mutex::scoped_lock * next;
             next = tricky_pointer::fetch_add(s.my_next, FLAG, std::memory_order_acquire);
+            // While we were READER the next READER might reach STATE_UPGRADE_WAITING state.
+            // Therefore, it did not build happens before relation with us and we need to acquire the 
+            // next->my_state to build the happens before relation ourselves 
             unsigned short n_state = next->my_state.load(std::memory_order_acquire);
             /* the next reader can be blocked by our state. the best thing to do is to unblock it */
             if( n_state & STATE_COMBINED_WAITINGREADER )
@@ -496,7 +507,11 @@ struct queuing_rw_mutex_impl {
         } // if( this != my_mutex->q_tail... )
         {
             unsigned char old_state = STATE_UPGRADE_REQUESTED;
-            s.my_state.compare_exchange_strong(old_state, STATE_UPGRADE_WAITING, std::memory_order_release, std::memory_order_acquire);
+            // If we reach STATE_UPGRADE_WAITING state we do not build happens-before relation with READER on
+            // left. We delegate this responsibility to READER on left when it try upgrading. Therefore, we are releasing
+            // on success.
+            // Otherwise, on fail, we already acquired the next->my_state.
+            s.my_state.compare_exchange_strong(old_state, STATE_UPGRADE_WAITING, std::memory_order_release, std::memory_order_relaxed);
         }
     waiting:
         __TBB_ASSERT( !( s.my_next.load(std::memory_order_relaxed) & FLAG ), "use of corrupted pointer!" );
@@ -515,6 +530,8 @@ struct queuing_rw_mutex_impl {
                 // While the predecessor pointer (my_prev) is in use (FLAG is set), we can safely update the node`s state.
                 // Corrupted pointer transitions responsibility to release the predecessor`s node on us.
                 unsigned char old_state = STATE_UPGRADE_REQUESTED;
+                // Try to build happens before with the upgrading READER on left. If fail, the predecessor state is not
+                // important for us because it will acquire our state.
                 predecessor->my_state.compare_exchange_strong(old_state, STATE_UPGRADE_WAITING, std::memory_order_release,
                     std::memory_order_relaxed);
             }
