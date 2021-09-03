@@ -415,8 +415,9 @@ struct queuing_rw_mutex_impl {
         if ( s.my_state.load(std::memory_order_relaxed) == STATE_ACTIVEREADER ) return true; // Already a reader
 
         ITT_NOTIFY(sync_releasing, s.my_mutex);
-        s.my_state.store(STATE_READER, std::memory_order_seq_cst);
-        if( !tricky_pointer::load(s.my_next, std::memory_order_relaxed) ) {
+        d1::queuing_rw_mutex::scoped_lock* next = tricky_pointer::load(s.my_next, std::memory_order_acquire);
+        if( !next ) {
+            s.my_state.store(STATE_READER, std::memory_order_seq_cst);
             // the following load of q_tail must not be reordered with setting STATE_READER above
             if( &s == s.my_mutex->q_tail.load(std::memory_order_seq_cst) ) {
                 unsigned char old_state = STATE_READER;
@@ -430,8 +431,9 @@ struct queuing_rw_mutex_impl {
             }
             /* wait for the next to register */
             spin_wait_while_eq(s.my_next, 0U, std::memory_order_relaxed);
+            next = tricky_pointer::load(s.my_next, std::memory_order_acquire);
         }
-        d1::queuing_rw_mutex::scoped_lock *const next = tricky_pointer::load(s.my_next, std::memory_order_acquire);
+
         __TBB_ASSERT( next, "still no successor at this point!" );
         if( next->my_state.load(std::memory_order_relaxed) & STATE_COMBINED_WAITINGREADER )
             next->my_going.store(1U, std::memory_order_release);
