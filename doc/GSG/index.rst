@@ -16,8 +16,15 @@ of multi-core processors. Use |short_name| to write scalable applications that:
 - Emphasize data parallel programming
 - Take advantage of concurrent collections and parallel algorithms
 
+System Requirements
+*******************
+Refer to the `oneTBB System Requirements <https://software.intel.com/content/www/us/en/develop/articles/intel-oneapi-threading-building-blocks-system-requirements.html>`_
+to learn about hardware, operating system, and software prerequisites. 
+
 Before You Begin
 ****************
+Download |short_name| as a `stand-alone product <https://software.intel.com/content/www/us/en/develop/articles/oneapi-standalone-components.html#onetbb>`_ 
+or as a part of the `Intel(R) oneAPI Base Toolkit <https://software.intel.com/content/www/us/en/develop/tools/oneapi/base-toolkit/download.html>`_.
 
 After installing |short_name|, you need to set the environment variables:
   
@@ -43,10 +50,10 @@ After installing |short_name|, you need to set the environment variables:
      ``vars.bat in <install_dir>/tbb/latest/env``
 
 
-System Requirements
-*******************
+Example
+*******
+Below you can find a typical example for a |short_name| algorithm.
 
-Refer to the `oneTBB System Requirements <https://software.intel.com/content/www/us/en/develop/articles/intel-oneapi-threading-building-blocks-system-requirements.html>`_.
 
 Find more
 *********
