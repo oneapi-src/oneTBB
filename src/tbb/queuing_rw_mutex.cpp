@@ -465,7 +465,8 @@ struct queuing_rw_mutex_impl {
         queuing_rw_mutex::scoped_lock* me = &s;
 
         ITT_NOTIFY(sync_releasing, s.my_mutex);
-        s.my_state.store(STATE_UPGRADE_REQUESTED, std::memory_order_relaxed);
+        // Build happens-before on my_state
+        s.my_state.store(STATE_UPGRADE_REQUESTED, std::memory_order_release);
     requested:
         __TBB_ASSERT( !(s.my_next.load(std::memory_order_relaxed) & FLAG), "use of corrupted pointer!" );
         acquire_internal_lock(s);
