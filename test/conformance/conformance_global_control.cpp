@@ -306,3 +306,90 @@ TEST_CASE("setting same value") {
     REQUIRE_MESSAGE(active == value, "Active value should not change, because of value duplication");
     delete ctl1;
 }
+
+//! Testing lifetime control conformance
+//! \brief \ref interface \ref requirement
+TEST_CASE("prolong lifetime simple") {
+    tbb::task_scheduler_handle hdl1{ tbb::attach{} };
+    {
+        tbb::parallel_for(0, 10, utils::DummyBody());
+
+        tbb::task_scheduler_handle hdl2;
+        hdl2 = tbb::task_scheduler_handle{ tbb::attach{} };
+        hdl2.release();
+    }
+    bool ok = tbb::finalize(hdl1, std::nothrow);
+    REQUIRE(ok);
+}
+
+//! Testing handle check for emptiness
+//! \brief \ref interface \ref requirement
+TEST_CASE("null handle check") {
+    tbb::task_scheduler_handle hndl;
+    REQUIRE_FALSE(hndl);
+}
+
+//! Testing handle check for emptiness
+//! \brief \ref interface \ref requirement
+TEST_CASE("null handle check 2") {
+    tbb::task_scheduler_handle hndl{ tbb::attach{} };
+    bool not_empty = (bool)hndl;
+
+    tbb::finalize(hndl, std::nothrow);
+
+    REQUIRE(not_empty);
+    REQUIRE_FALSE(hndl);
+}
+
+//! Testing handle check for emptiness
+//! \brief \ref interface \ref requirement
+TEST_CASE("null handle check 3") {
+    tbb::task_scheduler_handle handle1{ tbb::attach{} };
+    tbb::task_scheduler_handle handle2(std::move(handle1));
+
+    bool handle1_empty = !handle1;
+    bool handle2_not_empty = (bool)handle2;
+
+    tbb::finalize(handle2, std::nothrow);
+
+    REQUIRE(handle1_empty);
+    REQUIRE(handle2_not_empty);
+}
+
+//! Testing  global_control is created on one thread and destroyed on another.
+//! \brief \ref interface \ref requirement
+TEST_CASE("cross thread 1") {
+    // created GC, parallel_for on another thread - finalize
+    tbb::task_scheduler_handle ctl{ tbb::attach{} };
+    utils::NativeParallelFor(1, [&](int) {
+        tbb::parallel_for(0, 10, utils::DummyBody());
+        bool res = tbb::finalize(ctl, std::nothrow);
+        REQUIRE(res);
+        });
+}
+
+//! Testing  global_control is created on one thread and destroyed on another.
+//! \brief \ref interface \ref requirement
+TEST_CASE("cross thread 2") {
+    // created GC, called parallel_for on this thread, killed the thread - and finalize on another thread
+    tbb::task_scheduler_handle ctl;
+    utils::NativeParallelFor(1, [&](int) {
+        ctl = tbb::task_scheduler_handle{ tbb::attach{} };
+        tbb::parallel_for(0, 10, utils::DummyBody());
+        });
+    bool res = tbb::finalize(ctl, std::nothrow);
+    REQUIRE(res);
+}
+
+//! Testing multiple wait
+//! \brief \ref interface \ref requirement
+TEST_CASE("simple prolong lifetime 3") {
+    // Parallel region
+    tbb::parallel_for(0, 10, utils::DummyBody());
+    // Termination
+    tbb::task_scheduler_handle ctl = tbb::task_scheduler_handle{ tbb::attach{} };
+    bool res = tbb::finalize(ctl, std::nothrow);
+    REQUIRE(res);
+    // New parallel region
+    tbb::parallel_for(0, 10, utils::DummyBody());
+}

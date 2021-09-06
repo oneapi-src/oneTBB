@@ -44,7 +44,6 @@ The key properties of a preview feature are:
     :titlesonly:
 
     type_specified_message_keys
-    blocking_terminate
     scalable_memory_pools
     helpers_for_expressing_graphs
     concurrent_lru_cache_cls

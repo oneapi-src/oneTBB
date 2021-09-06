@@ -14,30 +14,19 @@
     limitations under the License.
 */
 
-#ifndef __TBB_test_common_dummy_body_H
-#define __TBB_test_common_dummy_body_H
+#ifndef __TBB_detail__attach_H
+#define __TBB_detail__attach_H
 
-#include "config.h"
-#include <cstddef>
+#include "_config.h"
 
-namespace utils {
-static void doDummyWork(std::size_t N) {
-    for (volatile std::size_t i = 0; i < N; ) { i = i + 1; }
-}
+namespace tbb {
+namespace detail {
+namespace d1 {
 
-//! Functor with N dummy iterations in it`s body
-class DummyBody {
-    int m_numIters;
-public:
-    explicit DummyBody( int iters = 0 ) : m_numIters( iters ) {}
-    void operator()( int ) const {
-        doDummyWork(m_numIters);
-    }
-    void operator()() const {
-        doDummyWork(m_numIters);
-    }
-};
+    struct attach {};
 
-} // namespace utils
+} // namespace d1
+} // namespace detail
+} // namespace tbb
 
-#endif // __TBB_test_common_dummy_body_H
+#endif // __TBB_detail__attach_H
