@@ -163,11 +163,11 @@ private:
 #if TBB_USE_EXCEPTIONS
 //! Waits for worker threads termination. Throws exception on error.
 inline void finalize(task_scheduler_handle& handle) {
-    try_call([&handle] {
+    try_call([&] {
         if (handle.m_ctl != nullptr) {
             r1::finalize(handle, finalize_throwing);
         }
-    }).on_completion([&handle] {
+    }).on_completion([&] {
         __TBB_ASSERT(!handle, "The handle should be empty after finalize");
     });
 }
