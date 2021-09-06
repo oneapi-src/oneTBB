@@ -33,7 +33,9 @@
 //! \brief Test for [mutex.spin_mutex mutex.spin_rw_mutex mutex.queuing_mutex mutex.queuing_rw_mutexmutex.speculative_spin_mutex mutex.speculative_spin_rw_mutex] specifications
 
 // TODO: Investigate why RTM doesn't work on some macOS.
-#if __TBB_TSX_INTRINSICS_PRESENT && !__APPLE__
+// TODO: Consider adding Thread Sanitizer (note that accesses inside the transaction
+// considered as races by Thread Sanitizer)
+#if __TBB_TSX_INTRINSICS_PRESENT && !__APPLE__ && !__TBB_USE_THREAD_SANITIZER
 
 inline static bool IsInsideTx() {
     return _xtest() != 0;
