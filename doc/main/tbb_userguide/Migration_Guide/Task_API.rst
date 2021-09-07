@@ -330,8 +330,8 @@ task:
 Scheduler Bypass
 ----------------
 
-TBB ``task::execute()`` method can return a pointer to task to be executed next. 
-This both avoids spawn overhead and prevents steal of the task by other thread.
+TBB ``task::execute()`` method can return a pointer to a task that can be executed next by the current thread.
+This might reduce scheduling overheads comparing with direct ``spawn``. Similar to ``spawn``, the bypassed task it is not guaranteed to be executed next by the current thread.
 
 .. code:: cpp
     
@@ -351,7 +351,7 @@ This both avoids spawn overhead and prevents steal of the task by other thread.
         task::spawn_root_and_wait(r);
     }
 
-In oneTBB this can be done using preview feature of ``oneapi::tbb::task_group``. 
+In oneTBB this can be done using the preview feature of ``oneapi::tbb::task_group``. 
 
 .. code:: cpp
    
