@@ -91,7 +91,7 @@ Schedules the task object pointed by the ``h`` for execution.
 
 .. cpp:function:: task_group_status run_and_wait(task_handle&& h)
 
-Equivalent to ``{run(h); return wait();}``, but guarantees that ``h`` runs on the current thread.
+Equivalent to ``{run(h); return wait();}``
 
 .. note::
    The failure to satisfy the following conditions leads to undefined behavior:
