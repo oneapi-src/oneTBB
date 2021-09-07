@@ -40,8 +40,12 @@ TEST_CASE("Basic Locable requirement test") {
     GeneralTest<oneapi::tbb::spin_rw_mutex>("Spin RW Mutex");
     GeneralTest<oneapi::tbb::queuing_mutex>("Queuing Mutex");
     GeneralTest<oneapi::tbb::queuing_rw_mutex>("Queuing RW Mutex");
+    // TODO: Consider adding Thread Sanitizer (note that accesses inside the transaction
+    // considered as races by Thread Sanitizer)
+#if !__TBB_USE_THREAD_SANITIZER
     GeneralTest<oneapi::tbb::speculative_spin_mutex>("Speculative Spin Mutex");
     GeneralTest<oneapi::tbb::speculative_spin_rw_mutex>("Speculative Spin RW Mutex");
+#endif
     // NullMutexes
     GeneralTest<oneapi::tbb::null_mutex, utils::AtomicCounter<oneapi::tbb::null_mutex>>("Null Mutex", false);
     GeneralTest<oneapi::tbb::null_rw_mutex, utils::AtomicCounter<oneapi::tbb::null_rw_mutex>>("Null RW Mutex", false);
@@ -56,8 +60,10 @@ TEST_CASE("Lockable requirement test") {
     TestTryAcquire<oneapi::tbb::spin_rw_mutex>("Spin RW Mutex");
     TestTryAcquire<oneapi::tbb::queuing_mutex>("Queuing Mutex");
     TestTryAcquire<oneapi::tbb::queuing_rw_mutex>("Queuing RW Mutex");
+#if !__TBB_USE_THREAD_SANITIZER
     TestTryAcquire<oneapi::tbb::speculative_spin_mutex>("Speculative Spin Mutex");
     TestTryAcquire<oneapi::tbb::speculative_spin_rw_mutex>("Speculative Spin RW Mutex");
+#endif
     TestTryAcquire<oneapi::tbb::null_mutex>("Null Mutex");
 }
 
@@ -67,16 +73,18 @@ TEST_CASE("Shared mutexes (reader/writer) test") {
     // General reader writer capabilities + upgrade/downgrade
     TestReaderWriterLock<oneapi::tbb::spin_rw_mutex>("Spin RW Mutex");
     TestReaderWriterLock<oneapi::tbb::queuing_rw_mutex>("Queuing RW Mutex");
-    TestReaderWriterLock<oneapi::tbb::speculative_spin_rw_mutex>("Speculative Spin RW Mutex");
     TestNullRWMutex<oneapi::tbb::null_rw_mutex>("Null RW Mutex");
     // Single threaded read/write try_acquire operations
     TestTryAcquireReader<oneapi::tbb::spin_rw_mutex>("Spin RW Mutex");
     TestTryAcquireReader<oneapi::tbb::queuing_rw_mutex>("Queuing RW Mutex");
     TestRWStateMultipleChange<oneapi::tbb::spin_rw_mutex>("Spin RW Mutex");
     TestRWStateMultipleChange<oneapi::tbb::queuing_rw_mutex>("Queuing RW Mutex");
+    TestTryAcquireReader<oneapi::tbb::null_rw_mutex>("Null RW Mutex");
+#if !__TBB_USE_THREAD_SANITIZER
+    TestReaderWriterLock<oneapi::tbb::speculative_spin_rw_mutex>("Speculative Spin RW Mutex");
     TestTryAcquireReader<oneapi::tbb::speculative_spin_rw_mutex>("Speculative Spin RW Mutex");
     TestRWStateMultipleChange<oneapi::tbb::speculative_spin_rw_mutex>("Speculative Spin RW Mutex");
-    TestTryAcquireReader<oneapi::tbb::null_rw_mutex>("Null RW Mutex");
+#endif
 }
 
 //! Testing ISO C++ Mutex and Shared Mutex requirements.
