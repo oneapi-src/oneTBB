@@ -445,7 +445,14 @@ void test_try_put_without_successors() {
     int try_put_num{3};
     tbb::flow::buffer_node<int> bn(g);
     tbb::flow::limiter_node<int> ln(g, try_put_num);
-    tbb::flow::make_edge(bn, ln);
+#if __GNUC__ && __GNUC__ < 12 && !TBB_USE_DEBUG
+    // Seemingly, GNU compiler generates incorrect code for the call of limiter.register_successor in release (-03)
+    // The function pointer to make_edge workarounds the issue for unknown reason
+    auto make_edge_ptr = tbb::flow::make_edge<int>;
+    make_edge_ptr(bn, ln); //putting the successor back
+#else
+    tbb::flow::make_edge(bn, ln); //putting the successor back
+#endif
     int i = 1;
     for (; i <= try_put_num; i++)
         bn.try_put(i);
@@ -457,7 +464,11 @@ void test_try_put_without_successors() {
             return int{};
         }
     );
-    tbb::flow::make_edge(ln, fn);
+#if __GNUC__ && __GNUC__ < 12 && !TBB_USE_DEBUG
+    make_edge_ptr(ln, fn); //putting the successor back
+#else
+    tbb::flow::make_edge(ln, fn); //putting the successor back
+#endif
     g.wait_for_all();
     CHECK((counter == i * try_put_num / 2));
 
