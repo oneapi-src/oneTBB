@@ -69,12 +69,14 @@ if (COMMAND target_link_options)
         PRIVATE
         ${TBB_LIB_LINK_FLAGS}
         ${TBB_COMMON_LINK_FLAGS}
+        ${TBB_static_intel_LINK_FLAGS}
     )
 else()
     target_link_libraries(tbbmalloc_proxy
         PRIVATE
         ${TBB_LIB_LINK_FLAGS}
         ${TBB_COMMON_LINK_FLAGS}
+        ${TBB_static_intel_LINK_FLAGS}
     )
 endif()
 
