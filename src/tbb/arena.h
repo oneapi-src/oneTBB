@@ -19,6 +19,7 @@
 
 #include <atomic>
 #include <cstring>
+#include <unordered_map>
 
 #include "oneapi/tbb/detail/_task.h"
 
@@ -291,6 +292,10 @@ struct arena_base : padded<intrusive_list_node> {
     //! Used to trap accesses to the object after its destruction.
     std::uintptr_t my_guard;
 #endif /* TBB_USE_ASSERT */
+
+    using numa_interval = std::pair<int, int>;
+    //! Map from numa nodes to range of slots to this numa node
+    std::unordered_map<numa_node_id, numa_interval> numa_intervals;
 }; // struct arena_base
 
 class arena: public padded<arena_base>

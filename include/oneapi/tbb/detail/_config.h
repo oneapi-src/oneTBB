@@ -135,6 +135,10 @@
 #endif // TBB_USE_DEBUG
 #endif // TBB_USE_PROFILING_TOOLS
 
+#ifndef __TBB_HIERARCHICAL_STEALING_OPTIMIZATION
+#define __TBB_HIERARCHICAL_STEALING_OPTIMIZATION 1
+#endif
+
 // Exceptions support cases
 #if !(__EXCEPTIONS || defined(_CPPUNWIND) || __SUNPRO_CC)
     #if TBB_USE_EXCEPTIONS
