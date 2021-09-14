@@ -325,3 +325,67 @@ task:
         }
         tg.wait();
     }
+
+
+Scheduler Bypass
+----------------
+
+TBB ``task::execute()`` method can return a pointer to a task that can be executed next by the current thread.
+This might reduce scheduling overheads compared to direct ``spawn``. Similar to ``spawn``, the returned task 
+is not guaranteed to be executed next by the current thread.
+
+.. code:: cpp
+    
+    #include <tbb/task.h>
+    
+    // Assuming OtherTask is defined.
+    
+    struct Task : tbb::task {
+        task* execute(){
+            // some work to do ...
+            
+            auto* other_p = new(this->parent().allocate_child()) OtherTask{};
+            this->parent().add_ref_count();
+            
+            return other_p;
+        }
+    };
+    
+    int main(){
+        // Assuming RootTask is  defined.
+        RootTask& root = *new(tbb::task::allocate_root()) RootTask{};
+    
+        Task& child = *new(root.allocate_child()) Task{/*params*/};
+        
+        root.add_ref_count();
+        
+        tbb::task_spawn(child);
+        
+        root.wait_for_all();;
+    }
+
+In oneTBB this can be done using the preview feature of ``oneapi::tbb::task_group``. 
+
+.. code:: cpp
+   
+    #define TBB_PREVIEW_TASK_GROUP_EXTENSIONS 1
+    #include <oneapi/tbb/task_group.h>
+    
+    // Assuming OtherTask is defined.
+    
+    int main(){
+        oneapi::tbb::task_group tg;
+        
+        tg.run([&tg](){
+            //some work to do ...
+            
+            return tg.defer(OtherTask{});
+        });
+        
+        tg.wait();
+    }
+
+Here ``oneapi::tbb::task_group::defer`` adds a new task into the ``tg``. However, the task is not put into a 
+queue of tasks ready for execution via ``oneapi::tbb::task_group::run``, but bypassed to the executing thread directly 
+via function return value. 
+
