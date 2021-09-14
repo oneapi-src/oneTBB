@@ -132,6 +132,12 @@ EXPORTS
 ?parallel_pipeline@r1@detail@tbb@@YAXAAVtask_group_context@d1@23@IABVfilter_node@523@@Z
 ?set_end_of_input@r1@detail@tbb@@YAXAAVbase_filter@d1@23@@Z
 
+; Enumerable thread specific (enumerable_thread_specific.cpp)
+?create_key@?$ets_base@$0A@@d1@detail@tbb@@AAAXXZ
+?destroy_key@?$ets_base@$0A@@d1@detail@tbb@@AAAXXZ
+?set_tls@?$ets_base@$0A@@d1@detail@tbb@@AAAXPAX@Z
+?get_tls@?$ets_base@$0A@@d1@detail@tbb@@AAAPAXXZ
+
 ; Concurrent bounded queue (concurrent_bounded_queue.cpp)
 ?abort_bounded_queue_monitors@r1@detail@tbb@@YAXPAVconcurrent_monitor@123@@Z
 ?allocate_bounded_queue_rep@r1@detail@tbb@@YAPAEI@Z
