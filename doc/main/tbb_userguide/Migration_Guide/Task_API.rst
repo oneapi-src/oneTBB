@@ -331,7 +331,8 @@ Scheduler Bypass
 ----------------
 
 TBB ``task::execute()`` method can return a pointer to a task that can be executed next by the current thread.
-This might reduce scheduling overheads compared to direct ``spawn``. Similar to ``spawn``, the returned task is not guaranteed to be executed next by the current thread.
+This might reduce scheduling overheads compared to direct ``spawn``. Similar to ``spawn``, the returned task 
+is not guaranteed to be executed next by the current thread.
 
 .. code:: cpp
     
@@ -341,14 +342,26 @@ This might reduce scheduling overheads compared to direct ``spawn``. Similar to 
     
     struct Task : tbb::task {
         task* execute(){
-            // some work to do
-            return new(tbb::task::allocate_root()) OtherTask{};
+            // some work to do ...
+            
+            auto* other_p = new(this->parent().allocate_child()) OtherTask{};
+            this->parent().add_ref_count();
+            
+            return other_p;
         }
     };
     
     int main(){
-        tbb::task* r = new (tbb::task::allocate_root()) Task{};
-        task::spawn_root_and_wait(r);
+        // Assuming RootTask is  defined.
+        RootTask& root = *new(tbb::task::allocate_root()) RootTask{};
+    
+        Task& child = *new(root.allocate_child()) Task{/*params*/};
+        
+        root.add_ref_count();
+        
+        tbb::task_spawn(child);
+        
+        root.wait_for_all();;
     }
 
 In oneTBB this can be done using the preview feature of ``oneapi::tbb::task_group``. 
@@ -364,9 +377,15 @@ In oneTBB this can be done using the preview feature of ``oneapi::tbb::task_grou
         oneapi::tbb::task_group tg;
         
         tg.run([&tg](){
-            //some work to do...
+            //some work to do ...
+            
             return tg.defer(OtherTask{});
         });
         
         tg.wait();
     }
+
+Here ``oneapi::tbb::task_group::defer`` adds a new task into the ``tg``. However, the task is not put into a 
+queue of ready for execution tasks (via ``oneapi::tbb::task_group::run``), but bypassed to the executing thread directly 
+via funcion return value. 
+
