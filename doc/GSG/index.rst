@@ -55,8 +55,21 @@ After installing |short_name|, you need to set the environment variables:
 Example
 *******
 
-Below you can find a typical example for a |short_name| algorithm.
+Below you can find a typical example for a |short_name| algorithm. 
+The sample calculates a sum of all integer numbers from 1 to 100. 
 
+.. code:: cpp
+   int sum = tbb::parallel_reduce(tbb::blocked_range<int>(1,101), 0,
+      [](tbb::blocked_range<int> const& r, int init) -> int {
+         for (int v = r.begin(); v != r.end(); v++  ) {
+            init += v;
+         }
+         return init;
+      },
+      [](int lhs, int rhs) -> int {
+         return lhs + rhs;
+      }
+   );
 
 Find more
 *********
