@@ -386,6 +386,6 @@ In oneTBB this can be done using the preview feature of ``oneapi::tbb::task_grou
     }
 
 Here ``oneapi::tbb::task_group::defer`` adds a new task into the ``tg``. However, the task is not put into a 
-queue of ready for execution tasks (via ``oneapi::tbb::task_group::run``), but bypassed to the executing thread directly 
-via funcion return value. 
+queue of tasks ready for execution via ``oneapi::tbb::task_group::run``, but bypassed to the executing thread directly 
+via function return value. 
 
