@@ -12,10 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if (WIN32)
+if (MSVC)
+    set(CMAKE_LINKER lld-link)
     include(${CMAKE_CURRENT_LIST_DIR}/MSVC.cmake)
 else()
     include(${CMAKE_CURRENT_LIST_DIR}/Clang.cmake)
-    set(TBB_IPO_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:-ipo>)
 endif()
-set(TBB_IPO_LINK_FLAGS ${TBB_IPO_LINK_FLAGS} ${TBB_IPO_COMPILE_FLAGS})
