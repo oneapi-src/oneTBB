@@ -33,7 +33,7 @@ if (MSVC_VERSION LESS_EQUAL 1900)
     set(TBB_TEST_COMPILE_FLAGS ${TBB_TEST_COMPILE_FLAGS} /wd4503)
 endif()
 set(TBB_LIB_COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS /GS)
-set(TBB_COMMON_COMPILE_FLAGS /volatile:iso /FS)
+set(TBB_COMMON_COMPILE_FLAGS /volatile:iso /FS $<$<AND:$<VERSION_LESS:${CMAKE_VERSION},3.17>,$<STREQUAL:${MSVC_CXX_ARCHITECTURE_ID},ARM64>>:/EHsc>)
 
 # Ignore /WX set through add_compile_options() or added to CMAKE_CXX_FLAGS if TBB_STRICT is disabled.
 if (NOT TBB_STRICT AND COMMAND tbb_remove_compile_flag)
