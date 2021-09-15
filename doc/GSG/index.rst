@@ -59,6 +59,7 @@ Below you can find a typical example for a |short_name| algorithm.
 The sample calculates a sum of all integer numbers from 1 to 100. 
 
 .. code:: cpp
+
    int sum = oneapi::tbb::parallel_reduce(oneapi::tbb::blocked_range<int>(1,101), 0,
       [](oneapi::tbb::blocked_range<int> const& r, int init) -> int {
          for (int v = r.begin(); v != r.end(); v++  ) {
