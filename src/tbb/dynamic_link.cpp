@@ -387,7 +387,11 @@ namespace r1 {
     #endif /* !__TBB_DYNAMIC_LOAD_ENABLED */
         // RTLD_GLOBAL - to guarantee that old TBB will find the loaded library
         // RTLD_NOLOAD - not to load the library without the full path
-        library_handle = dlopen(library, RTLD_LAZY | RTLD_GLOBAL | RTLD_NOLOAD);
+		#if !__HAIKU__
+            library_handle = dlopen(library, RTLD_LAZY | RTLD_GLOBAL | RTLD_NOLOAD);
+		#else
+            library_handle = dlopen(library, RTLD_LAZY);
+		#endif
 #endif /* _WIN32 */
         if (library_handle) {
             if (!resolve_symbols(library_handle, descriptors, required)) {
