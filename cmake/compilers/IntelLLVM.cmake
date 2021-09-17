@@ -13,7 +13,7 @@
 # limitations under the License.
 
 if (MSVC)
-    set(CMAKE_LINKER lld-link)
+    # set(CMAKE_LINKER lld-link)
     include(${CMAKE_CURRENT_LIST_DIR}/MSVC.cmake)
 else()
     include(${CMAKE_CURRENT_LIST_DIR}/Clang.cmake)
