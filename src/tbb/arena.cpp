@@ -716,12 +716,12 @@ void task_arena_impl::execute(d1::task_arena_base& ta, d1::delegate_base& d) {
     context_guard_helper</*report_tasks=*/false> context_guard;
     context_guard.set_ctx(a->my_default_ctx);
     nested_arena_context scope(*td, *a, index1);
-#if _WIN64
+#if defined _WIN64 && _HAS_EXCEPTIONS == 1
     try {
 #endif
         d();
         __TBB_ASSERT(same_arena || governor::is_thread_data_set(td), nullptr);
-#if _WIN64
+#if defined _WIN64 && _HAS_EXCEPTIONS == 1
     } catch (...) {
         context_guard.restore_default();
         throw;

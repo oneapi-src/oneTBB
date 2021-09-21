@@ -256,6 +256,21 @@ public:
     typedef hwloc_cpuset_t             affinity_mask;
     typedef hwloc_const_cpuset_t const_affinity_mask;
 
+    class raii_affinity_mask {
+    public:
+        raii_affinity_mask() {
+            mask = hwloc_bitmap_alloc();
+        }
+        ~raii_affinity_mask() {
+            hwloc_bitmap_free(mask);
+        }
+        operator affinity_mask() {
+            return mask;
+        }
+    private:
+        affinity_mask mask;
+    };
+
     bool is_topology_parsed() { return initialization_state == topology_parsed; }
 
     static void construct( std::size_t groups_num ) {
@@ -394,6 +409,40 @@ public:
             assertion_hwloc_wrapper(hwloc_set_cpubind, topology, mask, HWLOC_CPUBIND_THREAD);
         }
     }
+
+    int get_last_cpu_location() {
+        // TODO: every call of this function create allocation, try to fix this
+        raii_affinity_mask last_cpu_location{};
+        int err = hwloc_get_last_cpu_location(topology, last_cpu_location, HWLOC_CPUBIND_THREAD);
+        __TBB_ASSERT_EX((int)err == 0 && hwloc_bitmap_weight(last_cpu_location) == 1, "hwloc_bitmap weight error");
+        int cpu_number = hwloc_bitmap_first(last_cpu_location);
+        return cpu_number;
+    }
+
+    int my_current_numa_node() {
+        __TBB_ASSERT(is_topology_parsed(), "Trying to get access to uninitialized platform_topology");
+        static constexpr int err_code = -1;
+        auto my_cpu_id = get_last_cpu_location();
+        auto it = std::find_if(
+                    numa_affinity_masks_list.begin(),
+                    numa_affinity_masks_list.end(),
+                    [my_cpu_id](const affinity_mask& mask) {
+            return mask ? hwloc_bitmap_isset(mask, my_cpu_id) : 0;
+        });
+        int numa_id = err_code;
+        if (it != numa_affinity_masks_list.end()) {
+            numa_id = static_cast<int>(it - numa_affinity_masks_list.begin());
+        }
+        return numa_id;
+    }
+
+    int numa_cores_count(int numa_id) {
+        __TBB_ASSERT(is_topology_parsed(), "Trying to get access to uninitialized platform_topology");
+        __TBB_ASSERT(numa_id >= 0, "numa_id should be non-negative integer number");
+        __TBB_ASSERT(static_cast<size_t>(numa_id) < numa_affinity_masks_list.size(),
+            "numa_id should be less then number of numa nodes used by process");
+        return numa_nodes_size[numa_id];
+    }
 };
 
 system_topology* system_topology::instance_ptr{nullptr};
@@ -522,6 +571,14 @@ TBBBIND_EXPORT int __TBB_internal_get_default_concurrency(int numa_id, int core_
 
 void __TBB_internal_destroy_system_topology() {
     return system_topology::destroy();
+}
+
+int __TBB_internal_my_current_numa_node() {
+    return system_topology::instance().my_current_numa_node();
+}
+
+int __TBB_internal_numa_cores_count(int numa_id) {
+    return system_topology::instance().numa_cores_count(numa_id);
 }
 
 } // extern "C"
