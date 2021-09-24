@@ -34,6 +34,7 @@
 #include <cstring>
 #include <atomic>
 #include <algorithm>
+#include <iostream>
 
 namespace tbb {
 namespace detail {
@@ -453,7 +454,6 @@ int processor_groups_num() {
 // in another case, fills NUMA topology by stubs.
 void initialization_impl() {
     governor::one_time_init();
-
     if (const char* tbbbind_name = load_tbbbind_shared_object()) {
         initialize_system_topology_ptr(
             processor_groups_num(),

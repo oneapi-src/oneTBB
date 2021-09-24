@@ -12,35 +12,60 @@
 #include "common/exception_handling.h"
 #include "common/concepts_common.h"
 #include "test_partitioner.h"
+#include "common/test.h"
+#include "common/spin_barrier.h"
+#include "common/utils.h"
+#include "common/memory_usage.h"
+#include "common/utils_concurrency_limit.h"
+
+#include "oneapi/tbb/task_arena.h"
+#include "oneapi/tbb/task_group.h"
+#include "oneapi/tbb/spin_mutex.h"
 
 #include <cstddef>
 #include <vector>
+#include <thread>
 
-struct TestSimplePartitionerStabilityFunctor {
-  std::vector<int> & ranges;
-  TestSimplePartitionerStabilityFunctor(std::vector<int> & theRanges):ranges(theRanges){}
-  void operator()(tbb::blocked_range<size_t>& r)const{
-      ranges.at(r.begin()) = 1;
-  }
+std::atomic<std::size_t> global_accumullator{0};
+
+struct my_task {
+    static constexpr std::size_t array_size {500000};
+    mutable std::array<std::size_t, array_size> data;
+    int level{0};
+    tbb::task_group& tg;
+    my_task(tbb::task_group& _tg) : tg(_tg){};
+
+    void operator()() const {
+        double accumulation = 1.;
+
+        for(std::size_t i = 0; i < array_size; ++i){
+            data[i] = i;
+        }
+        for (auto& el: data) {
+            accumulation += sin(el);
+        }
+
+        if (level < 3) {
+            my_task new_task(tg);
+            new_task.level = this->level + 1;
+            for(int i = 0; i < 10; ++i){
+                tg.run(new_task);
+            }
+        }
+        global_accumullator += std::size_t(sin(accumulation));
+    };
 };
+
+
 void TestSimplePartitionerStability(){
-    const std::size_t repeat_count= 10;
-    const std::size_t rangeToSplitSize=1000000;
-    const std::size_t grainsizeStep=rangeToSplitSize/repeat_count;
-    typedef TestSimplePartitionerStabilityFunctor FunctorType;
-
-    for (std::size_t i=0 , grainsize=grainsizeStep; i<repeat_count;i++, grainsize+=grainsizeStep){
-        std::vector<int> firstSeries(rangeToSplitSize,0);
-        std::vector<int> secondSeries(rangeToSplitSize,0);
-
-        tbb::parallel_for(tbb::blocked_range<size_t>(0,rangeToSplitSize,grainsize),FunctorType(firstSeries),tbb::simple_partitioner());
-        tbb::parallel_for(tbb::blocked_range<size_t>(0,rangeToSplitSize,grainsize),FunctorType(secondSeries),tbb::simple_partitioner());
-
-        CHECK_MESSAGE(
-            firstSeries == secondSeries,
-            "Splitting range with tbb::simple_partitioner must be reproducible; i = " << i
-        );
+    tbb::task_group tg;
+    auto t1 = tbb::tick_count::now();
+    for(int i = 0; i < 10; ++i){
+        tg.run(my_task(tg));
     }
+
+    tg.wait();
+    std::cout << "Elapsed time: " << (tbb::tick_count::now() - t1).seconds() << std::endl;
 }
 
 //! Testing simple partitioner stability
@@ -48,3 +73,4 @@ void TestSimplePartitionerStability(){
 TEST_CASE("Simple partitioner stability hier") {
     TestSimplePartitionerStability();
 }
+

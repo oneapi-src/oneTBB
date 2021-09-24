@@ -262,6 +262,7 @@ void arena::free_arena () {
     }
 #endif /*__TBB_ARENA_BINDING*/
     poison_value( my_guard );
+    std::cout << "steel from my numa node " << steel_info.first << " steel from other numa node " << steel_info.second <<std::endl;
     for ( unsigned i = 0; i < my_num_slots; ++i ) {
         // __TBB_ASSERT( !my_slots[i].my_scheduler, "arena slot is not empty" );
         // TODO: understand the assertion and modify
@@ -294,6 +295,7 @@ void arena::free_arena () {
     std::memset( storage, 0, allocation_size(my_num_slots) );
 #endif /* TBB_USE_ASSERT */
     cache_aligned_deallocate( storage );
+
 }
 
 bool arena::has_enqueued_tasks() {

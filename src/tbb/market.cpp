@@ -322,6 +322,7 @@ void market::try_destroy_arena ( arena* a, uintptr_t aba_epoch, unsigned priorit
     __TBB_ASSERT( my_ref_count!=0, NULL );
     my_arenas_list_mutex.lock();
         arena_list_type::iterator it = my_arenas[priority_level].begin();
+        std::cout << "free_arena" <<std::endl;
         for ( ; it != my_arenas[priority_level].end(); ++it ) {
             if ( a == &*it ) {
                 if ( it->my_aba_epoch == aba_epoch ) {

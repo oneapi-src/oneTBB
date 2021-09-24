@@ -20,6 +20,8 @@
 #include <atomic>
 #include <cstring>
 #include <unordered_map>
+#include <algorithm>
+#include <iostream>
 
 #include "oneapi/tbb/detail/_task.h"
 
@@ -288,6 +290,8 @@ struct arena_base : padded<intrusive_list_node> {
     //! The current serialization epoch for callers of adjust_job_count_estimate
     d1::waitable_atomic<int> my_adjust_demand_current_epoch;
 
+    std::pair<std::atomic<int>, std::atomic<int>> steel_info{0,0};
+
 #if TBB_USE_ASSERT
     //! Used to trap accesses to the object after its destruction.
     std::uintptr_t my_guard;
@@ -380,7 +384,7 @@ public:
     d1::task* try_steal_from_slot(int slot_number, execution_data_ext& ed, isolation_type isolation);
 
     //! Attempts to steal a task from a randomly chosen arena slot
-    d1::task* steal_task(unsigned arena_index, FastRandom& frnd, execution_data_ext& ed, isolation_type isolation);
+    d1::task* steal_task(unsigned arena_index, FastRandom& frnd, execution_data_ext& ed, isolation_type isolation, std::size_t& numa_steal_threshold);
 
     //! Get a task from a global starvation resistant queue
     template<task_stream_accessor_type accessor>
@@ -615,18 +619,44 @@ inline d1::task* arena::try_steal_from_slot(int slot_number, execution_data_ext&
     return t;
 }
 
-inline d1::task* arena::steal_task(unsigned arena_index, FastRandom& frnd, execution_data_ext& ed, isolation_type isolation) {
+#define STEAL_TRESHOLD 2
+inline d1::task* arena::steal_task(unsigned arena_index, FastRandom& frnd, execution_data_ext& ed, isolation_type isolation, std::size_t& numa_steal_threshold) {
     auto slot_num_limit = my_limit.load(std::memory_order_relaxed);
     if (slot_num_limit == 1) {
         // No slots to steal from
         return nullptr;
     }
-    auto try_steal_in_range = [&](numa_interval range) {
+    auto try_steal_in_range1 = [&](numa_interval range) {
         auto slot_number = get_index_for_steal_in_range(frnd, range, arena_index);
-        return try_steal_from_slot(slot_number, ed, isolation);
+        auto* task = try_steal_from_slot(slot_number, ed, isolation);
+        if(task){
+            //  std::cout <<"--"<< numa_node<< std::endl;
+            ++steel_info.first;
+        }
+        return task;
     };
 
-    if (has_numa_optimization()) {
+    auto try_steal_in_range2 = [&](numa_interval range) {
+        auto slot_number = get_index_for_steal_in_range(frnd, range, arena_index);
+        auto* task = try_steal_from_slot(slot_number, ed, isolation);
+        if(task){
+            auto it = std::find_if(numa_intervals.begin(), numa_intervals.end(), 
+            [arena_index](const std::pair<numa_node_id, numa_interval>& el) {
+                return
+                    arena_index >= static_cast<unsigned>(el.second.first) &&
+                    arena_index < static_cast<unsigned>(el.second.second);
+            });
+            if(slot_number >= it->second.first && slot_number < it->second.second)
+                ++steel_info.first;
+            else
+                ++steel_info.second;
+            //  std::cout <<"++"<<slot_number<< std::endl;
+        }
+        return task;
+    };
+
+    if (has_numa_optimization() && numa_steal_threshold < STEAL_TRESHOLD) {
+        ++numa_steal_threshold;
         numa_interval range {0, 0};
         auto it = std::find_if(numa_intervals.begin(), numa_intervals.end(), 
         [arena_index](const std::pair<numa_node_id, numa_interval>& el) {
@@ -638,12 +668,11 @@ inline d1::task* arena::steal_task(unsigned arena_index, FastRandom& frnd, execu
             range = it->second;
         }
         range.second = min(range.second, static_cast<int>(slot_num_limit));
-        auto* task_to_steal = try_steal_in_range(range);
-        if (task_to_steal) {
-            return task_to_steal;
-        }
+
+        return try_steal_in_range1(range);
+    }else{
+        return try_steal_in_range2({0u, slot_num_limit});
     }
-    return try_steal_in_range({0u, slot_num_limit});
 }
 
 template<task_stream_accessor_type accessor>

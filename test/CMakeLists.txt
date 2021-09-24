@@ -365,7 +365,6 @@ add_custom_target(test_suite_arena_constraints)
 
 if (TARGET TBB::tbb)
     # Define the tests
-    tbb_add_test(SUBDIR tbb NAME test_hierarchical_ts DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_tick_count DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_allocators DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_arena_priorities DEPENDENCIES TBB::tbb)
@@ -440,6 +439,7 @@ if (TARGET TBB::tbb)
 
     # HWLOC related test
     tbb_add_tbbbind_test(SUBDIR tbb NAME test_arena_constraints)
+    tbb_add_tbbbind_test(SUBDIR tbb NAME test_hierarchical_ts)
 
     if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
         # TODO: Fix for MIPS

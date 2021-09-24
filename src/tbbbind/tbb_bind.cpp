@@ -16,6 +16,7 @@
 
 #include <vector>
 #include <mutex>
+#include <algorithm>
 
 #include "../tbb/assert_impl.h" // Out-of-line TBB assertion handling routines are instantiated here.
 #include "oneapi/tbb/detail/_assert.h"
@@ -62,6 +63,7 @@ class system_topology {
     // NUMA API related topology members
     std::vector<hwloc_cpuset_t> numa_affinity_masks_list{};
     std::vector<int> numa_indexes_list{};
+    std::vector<int> numa_nodes_size{};
     int numa_nodes_count{0};
 
     // Hybrid CPUs API related topology members
@@ -160,6 +162,7 @@ private:
 
             // Fill concurrency and affinity masks lists
             numa_affinity_masks_list.resize(max_numa_index + 1);
+            numa_nodes_size.resize(max_numa_index + 1);
             int index = 0;
             hwloc_bitmap_foreach_begin(i, process_node_affinity_mask) {
                 node_buffer = hwloc_get_numanode_obj_by_os_index(topology, i);
@@ -170,6 +173,7 @@ private:
 
                 hwloc_bitmap_and(current_mask, current_mask, process_cpu_affinity_mask);
                 __TBB_ASSERT(!hwloc_bitmap_iszero(current_mask), "hwloc detected unavailable NUMA node");
+                numa_nodes_size[index] = hwloc_bitmap_weight(current_mask);
             } hwloc_bitmap_foreach_end();
         }
     }

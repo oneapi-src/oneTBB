@@ -470,7 +470,7 @@ public:
                                       unsigned& /*hint_for_stream*/, isolation_type,
                                       bool /*critical_allowed*/);
     d1::task* steal_or_get_critical(execution_data_ext&, arena&, unsigned /*arena_index*/, FastRandom&,
-                                isolation_type, bool /*critical_allowed*/);
+                                isolation_type, bool /*critical_allowed*/, std::size_t& /*numa_steal_threshold*/);
 
 #if __TBB_RESUMABLE_TASKS
     /* [[noreturn]] */ void co_local_wait_for_all() noexcept;
