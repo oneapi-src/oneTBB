@@ -131,9 +131,9 @@ void make_edge_impl(Sender& sender, Receiver& receiver){
     // Seemingly, GNU compiler generates incorrect code for the call of limiter.register_successor in release (-03)
     // The function pointer to make_edge workarounds the issue for unknown reason
     auto make_edge_ptr = tbb::flow::make_edge<int>;
-    make_edge_ptr(sender, receiver); //putting the successor back
+    make_edge_ptr(sender, receiver);
 #else
-    tbb::flow::make_edge(sender, receiver); //putting the successor back
+    tbb::flow::make_edge(sender, receiver);
 #endif
 }
 
@@ -367,7 +367,7 @@ void test_reserve_release_messages() {
     broad.try_put(1); //failed message retrieved.
     g.wait_for_all();
 
-    make_edge_impl(limit, output_queue);
+    make_edge_impl(limit, output_queue); //putting the successor back
 
     broad.try_put(1);  //drop the count
 
