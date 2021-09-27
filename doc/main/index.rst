@@ -6,17 +6,8 @@ This document contains information about |full_name|.
 or as a stand-alone product. More information and specifications can be found on the
 |full_name| main page.
 
-Documentation for older versions of |short_name| is available for download only. 
-For a list of available documentation downloads by product version, see these pages:
-
-* `Download Documentation for Intel Parallel Studio XE <https://software.intel.com/content/www/us/en/develop/articles/download-documentation-intel-parallel-studio-xe-current-previous.html>`_
-* `Download Documentation for Intel System Studio <https://software.intel.com/content/www/us/en/develop/articles/download-documentation-intel-system-studio-current-previous.html>`_
 
 The following are some important topics for the ``novice user``:
-
-**Get Started with oneAPI Threading Building Blocks (oneTBB)**
-
-`Get Started with oneTBB <https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-onetbb/top.html>`_ gives you a brief explanation of what oneTBB is. 
 
 **oneTBB Benefits**
 

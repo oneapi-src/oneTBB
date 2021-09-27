@@ -16,17 +16,9 @@ of multi-core processors. Use |short_name| to write scalable applications that:
 - Emphasize data parallel programming
 - Take advantage of concurrent collections and parallel algorithms
 
-System Requirements
-*******************
-
-Refer to the `oneTBB System Requirements <https://software.intel.com/content/www/us/en/develop/articles/intel-oneapi-threading-building-blocks-system-requirements.html>`_.
-
 
 Before You Begin
 ****************
-
-Download |short_name| as a `stand-alone product <https://software.intel.com/content/www/us/en/develop/articles/oneapi-standalone-components.html#onetbb>`_ 
-or as a part of the `Intel(R) oneAPI Base Toolkit <https://software.intel.com/content/www/us/en/develop/tools/oneapi/base-toolkit/download.html>`_.
 
 After installing |short_name|, you need to set the environment variables:
   
@@ -72,50 +64,9 @@ The sample calculates a sum of all integer numbers from 1 to 100.
       }
    );
 
+
+
 Find more
 *********
 
-.. list-table:: 
-   :widths: 40 60
-   :header-rows: 0
-
-
-   * - 
-	   - `oneTBB Community Forum <https://community.intel.com/>`_
-	   - `Product FAQs <https://software.intel.com/content/www/us/en/develop/support/faq-product.html>`_
-	   - `Support requests <https://software.intel.com/content/www/us/en/develop/articles/how-to-create-a-support-request-at-online-service-center.html>`_
-     - Use these resources if you need support with oneTBB.
-   
-   * - `Release Notes <https://software.intel.com/content/www/us/en/develop/articles/intel-oneapi-threading-building-blocks-release-notes.html>`_
-     - Find up-to-date information about the product, including detailed notes, known issues, and changes.
-   
-   * - `Documentation <https://software.intel.com/content/www/us/en/develop/documentation/onetbb-documentation/top.html>`_: `Developer Guide <https://software.intel.com/content/www/us/en/develop/documentation/onetbb-documentation/top/onetbb-developer-guide.html>`_ and `API Reference <https://software.intel.com/content/www/us/en/develop/documentation/onetbb-documentation/top/onetbb-api-reference.html>`_
-     - Learn to use oneTBB.   
-   * - `GitHub* <https://github.com/oneapi-src/oneTBB>`_
-     - Find oneTBB implementation in open source.
-   
-
-Notices and Disclaimers
-***********************
-
-Intel technologies may require enabled hardware, software or service activation.
-
-No product or component can be absolutely secure.
-
-Your costs and results may vary.
-
-© Intel Corporation. Intel, the Intel logo, and other Intel marks are trademarks
-of Intel Corporation or its subsidiaries. Other names and brands may be claimed
-as the property of others.
-
-No license (express or implied, by estoppel or otherwise) to any intellectual
-property rights is granted by this document.
-
-The products described may contain design defects or errors known as errata which
-ay cause the product to deviate from published specifications. Current
-characterized errata are available on request.
-
-Intel disclaims all express and implied warranties, including without limitation,
-the implied warranties of merchantability, fitness for a particular purpose,
-and non-infringement, as well as any warranty arising from course of performance,
-course of dealing, or usage in trade.
+See our `documentation <https://oneapi-src.github.io/oneTBB/>`_ to learn more about |short_name|.
