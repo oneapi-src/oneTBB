@@ -93,7 +93,7 @@ std::size_t arena::occupy_free_slot(thread_data& tls) {
     if(index == out_of_arena){
         if(has_numa_optimization()){
             std::pair<int, int> my_range;
-            auto it = numa_intervals.find(governor::get_my_current_numa_node());
+            auto it = numa_intervals.find(tls.my_numa_node);
             __TBB_ASSERT(it != numa_intervals.end(), "Current numa node does not exist in numa_intervals");
             my_range = it->second;
             index = occupy_free_slot_in_range(tls, max(static_cast<int>(my_num_reserved_slots), my_range.first),
@@ -262,7 +262,7 @@ void arena::free_arena () {
     }
 #endif /*__TBB_ARENA_BINDING*/
     poison_value( my_guard );
-    std::cout << "steel from my numa node " << steel_info.first << " steel from other numa node " << steel_info.second <<std::endl;
+    std::cout << "steel from my numa node " << steel_my_numa << " steel from other numa node " << steel_other_numa <<std::endl;
     for ( unsigned i = 0; i < my_num_slots; ++i ) {
         // __TBB_ASSERT( !my_slots[i].my_scheduler, "arena slot is not empty" );
         // TODO: understand the assertion and modify

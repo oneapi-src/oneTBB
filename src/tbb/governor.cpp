@@ -192,7 +192,7 @@ void governor::init_external_thread() {
     // We need an internal reference to the market. TODO: is it legacy?
     market::global_market(false);
     // External thread always occupies the first slot
-    thread_data& td = *new(cache_aligned_allocate(sizeof(thread_data))) thread_data(0, false);
+    thread_data& td = *new(cache_aligned_allocate(sizeof(thread_data))) thread_data(governor::get_my_current_numa_node(), 0, false);
     td.attach_arena(a, /*slot index*/ 0);
     __TBB_ASSERT(td.my_inbox.is_idle_state(false), nullptr);
 
@@ -574,11 +574,11 @@ int __TBB_EXPORTED_FUNC constraints_threads_per_core(const d1::constraints&, int
 }
 #endif /* __TBB_ARENA_BINDING */
 
-int governor::get_my_current_numa_node() {
+unsigned short governor::get_my_current_numa_node() {
     system_topology::initialize();
     int res = my_current_numa_node_ptr();
     res = (res >= 0 ? res : 0);
-    return res;
+    return static_cast<unsigned short>(res);
 }
 
 unsigned governor::get_numa_cores_count(numa_node_id numa_id) {

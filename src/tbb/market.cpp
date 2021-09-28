@@ -322,7 +322,6 @@ void market::try_destroy_arena ( arena* a, uintptr_t aba_epoch, unsigned priorit
     __TBB_ASSERT( my_ref_count!=0, NULL );
     my_arenas_list_mutex.lock();
         arena_list_type::iterator it = my_arenas[priority_level].begin();
-        std::cout << "free_arena" <<std::endl;
         for ( ; it != my_arenas[priority_level].end(); ++it ) {
             if ( a == &*it ) {
                 if ( it->my_aba_epoch == aba_epoch ) {
@@ -621,7 +620,7 @@ void market::acknowledge_close_connection() {
     __TBB_ASSERT( index > 0, NULL );
     ITT_THREAD_SET_NAME(_T("TBB Worker Thread"));
     // index serves as a hint decreasing conflicts between workers when they migrate between arenas
-    thread_data* td = new(cache_aligned_allocate(sizeof(thread_data))) thread_data{ index, true };
+    thread_data* td = new(cache_aligned_allocate(sizeof(thread_data))) thread_data{governor::get_my_current_numa_node(), index, true };
     __TBB_ASSERT( index <= my_num_workers_hard_limit, NULL );
     __TBB_ASSERT( my_workers[index - 1].load(std::memory_order_relaxed) == nullptr, NULL );
     my_workers[index - 1].store(td, std::memory_order_release);

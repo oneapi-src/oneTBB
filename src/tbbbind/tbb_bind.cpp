@@ -15,6 +15,7 @@
 */
 
 #include <vector>
+#include <iostream>
 #include <mutex>
 #include <algorithm>
 
@@ -424,6 +425,7 @@ public:
     }
 
     int my_current_numa_node() {
+        // std::cout << "here" << std::endl;
         __TBB_ASSERT(is_topology_parsed(), "Trying to get access to uninitialized platform_topology");
         static constexpr int err_code = -1;
         auto my_cpu_id = get_last_cpu_location();

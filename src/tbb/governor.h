@@ -149,7 +149,7 @@ public:
 #endif
     }
 
-    static int get_my_current_numa_node();
+    static unsigned short get_my_current_numa_node();
 
     static unsigned get_numa_cores_count(numa_node_id);
 }; // class governor

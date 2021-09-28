@@ -289,8 +289,10 @@ struct arena_base : padded<intrusive_list_node> {
 
     //! The current serialization epoch for callers of adjust_job_count_estimate
     d1::waitable_atomic<int> my_adjust_demand_current_epoch;
+    using p_T = std::pair<std::atomic<int>, std::atomic<int>>;
 
-    std::pair<std::atomic<int>, std::atomic<int>> steel_info{0,0};
+    std::atomic<int> steel_my_numa{0};
+    std::atomic<int> steel_other_numa{0};
 
 #if TBB_USE_ASSERT
     //! Used to trap accesses to the object after its destruction.
@@ -619,7 +621,7 @@ inline d1::task* arena::try_steal_from_slot(int slot_number, execution_data_ext&
     return t;
 }
 
-#define STEAL_TRESHOLD 2
+#define STEAL_TRESHOLD 1
 inline d1::task* arena::steal_task(unsigned arena_index, FastRandom& frnd, execution_data_ext& ed, isolation_type isolation, std::size_t& numa_steal_threshold) {
     auto slot_num_limit = my_limit.load(std::memory_order_relaxed);
     if (slot_num_limit == 1) {
@@ -631,26 +633,20 @@ inline d1::task* arena::steal_task(unsigned arena_index, FastRandom& frnd, execu
         auto* task = try_steal_from_slot(slot_number, ed, isolation);
         if(task){
             //  std::cout <<"--"<< numa_node<< std::endl;
-            ++steel_info.first;
+            ++steel_my_numa;
         }
         return task;
     };
 
-    auto try_steal_in_range2 = [&](numa_interval range) {
+    auto try_steal_in_range2 = [&, arena_index](numa_interval range, int numa_node) {
+        
         auto slot_number = get_index_for_steal_in_range(frnd, range, arena_index);
         auto* task = try_steal_from_slot(slot_number, ed, isolation);
         if(task){
-            auto it = std::find_if(numa_intervals.begin(), numa_intervals.end(), 
-            [arena_index](const std::pair<numa_node_id, numa_interval>& el) {
-                return
-                    arena_index >= static_cast<unsigned>(el.second.first) &&
-                    arena_index < static_cast<unsigned>(el.second.second);
-            });
-            if(slot_number >= it->second.first && slot_number < it->second.second)
-                ++steel_info.first;
+            if(slot_number >= numa_intervals[numa_node].first && slot_number < numa_intervals[numa_node].second)
+                ++steel_my_numa;
             else
-                ++steel_info.second;
-            //  std::cout <<"++"<<slot_number<< std::endl;
+                ++steel_other_numa;
         }
         return task;
     };
@@ -671,7 +667,13 @@ inline d1::task* arena::steal_task(unsigned arena_index, FastRandom& frnd, execu
 
         return try_steal_in_range1(range);
     }else{
-        return try_steal_in_range2({0u, slot_num_limit});
+        auto it = std::find_if(numa_intervals.begin(), numa_intervals.end(),
+        [arena_index](const std::pair<numa_node_id, numa_interval>& el) {
+            return
+                arena_index >= static_cast<unsigned>(el.second.first) &&
+                arena_index < static_cast<unsigned>(el.second.second);
+        });
+        return try_steal_in_range2({0u, slot_num_limit}, it->first);
     }
 }
 

@@ -96,8 +96,9 @@ class thread_data : public ::rml::job
                   , public intrusive_list_node
                   , no_copy {
 public:
-    thread_data(unsigned short index, bool is_worker)
-        : my_arena_index{ index }
+    thread_data(unsigned short numa_node, unsigned short index, bool is_worker)
+        : my_numa_node{ numa_node }
+        , my_arena_index{ index }
         , my_is_worker{ is_worker }
         , my_task_dispatcher{ nullptr }
         , my_arena{}
@@ -136,6 +137,9 @@ public:
     void context_list_cleanup();
     template <typename T>
     void propagate_task_group_state(std::atomic<T> d1::task_group_context::* mptr_state, d1::task_group_context& src, T new_state);
+
+    //! Index of the arena slot the scheduler occupies now, or occupied last time
+    unsigned short my_numa_node;
 
     //! Index of the arena slot the scheduler occupies now, or occupied last time
     unsigned short my_arena_index;
