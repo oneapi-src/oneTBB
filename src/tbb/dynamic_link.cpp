@@ -281,13 +281,13 @@ namespace r1 {
         }
 
         if ( fname_len>0 ) {
+            ap_data._len += fname_len;
             if ( ap_data._len>PATH_MAX ) {
                 DYNAMIC_LINK_WARNING( dl_buff_too_small );
                 ap_data._len=0;
                 return;
             }
             std::strncpy( ap_data._path+rc, dlinfo.dli_fname, fname_len );
-            ap_data._len += fname_len;
             ap_data._path[ap_data._len]=0;
         }
     #endif /* _WIN32 */
