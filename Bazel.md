@@ -1,24 +1,31 @@
 # Bazel build support
 
 The main build system of oneTBB is CMake.
-Bazel support is community-based.
-The maintainers do not use Bazel internally.
-The Bazel configuration may not include recommended compiler and linker flags used in official CMake configuration.
+[Bazel](https://bazel.build/) support is community-based.
+The maintainers of oneTBB do not use Bazel internally.
+The Bazel configuration may not include recommended compiler and/or linker flags used in the official CMake configuration.
 
 The Bazel build of oneTBB currently only aims for a subset of oneTBB that suffices restricted use cases of the usage of oneTBB.
 Pull requests to improve the Bazel build experience are welcomed.
 
 The standard approach of how Bazel handles third-party libraries is static linking. 
-Even this is not recommended by the oneTBB maintainers this is chosen since this is considered as the best practice in the Bazel ecosystem.
+Even this is not recommended by the oneTBB maintainers this is chosen since this is considered as a best practice within the Bazel ecosystem.
 
-## Example usage
+## Using oneTBB as a dependency
 
-1. [Install Bazel](https://docs.bazel.build/versions/main/install.html).
+The following minimal example shows how to use oneTBB as a dependency within a Bazel project.
 
-2. Create the following files in one folder (this folder will be considered as the workspace folder):
+The following file structure is assumed:
+
+```
+example
+├── BUILD.bazel
+├── main.cpp
+└── WORKSPACE.bazel
+```
 
 _WORKSPACE.bazel_:
-```
+```python
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
@@ -28,8 +35,11 @@ git_repository(
 )
 ```
 
-_BUILD_:
-```
+In the *WORKSPACE* file, the oneTBB GitHub repository is fetched. 
+
+_BUILD.bazel_:
+
+```python
 cc_binary(
     name = "Demo",
     srcs = ["main.cpp"],
@@ -37,8 +47,11 @@ cc_binary(
 )
 ```
 
+The *BUILD* file defines a binary named `Demo` that has a dependency to oneTBB.
+
 _main.cpp_:
-```
+
+```c++
 #include "oneapi/tbb/version.h"
 
 #include <iostream>
@@ -54,7 +67,10 @@ int main() {
 }
 ```
 
-3. Switch to the folder where you create the files.
+The expected output of this program is the current version number of oneTBB.
 
-4. Execute the command `bazel run //:Demo`.
-As an expected output, you should see the oneTBB version.
+Switch to the folder where you have created the above-mentioned files and run the binary via `bazel run //:Demo`.
+
+## Build oneTBB using Bazel
+
+Run `bazel build //...` in the root directory of oneTBB.
