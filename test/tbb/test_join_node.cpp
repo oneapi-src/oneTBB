@@ -247,7 +247,7 @@ void test(ConnectJoinNodeFunc&& connect_join_node) {
 
     remove_edge(bn3, input_port<2>(*jn));
     remove_edge(bn2, input_port<1>(*jn));
-    remove_edge(bn1, input_port<0>(*jn));
+    remove_edge(bn1, *jn); //Removes an edge between a sender and port 0 of a multi-input successor.
     remove_edge(*jn, qn);
 
     run_and_check(g, bn1, bn2, bn3, qn, /*expected=*/false);
