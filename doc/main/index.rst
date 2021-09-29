@@ -35,4 +35,3 @@ Learn how to migrate from TBB to oneTBB with :ref:`Migration_Guide`.
    intro/Benefits
    tbb_userguide/title
    reference/reference
-   intro/notices_and_disclaimers
