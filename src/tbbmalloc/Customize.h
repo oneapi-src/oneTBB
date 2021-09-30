@@ -61,6 +61,10 @@ static inline bool isPowerOfTwoAtLeast(uintptr_t arg, uintptr_t power2) {
     return arg && tbb::detail::is_power_of_two_at_least(arg,power2);
 }
 
+inline void do_yield() {
+    tbb::detail::yield();
+}
+
 #define USE_DEFAULT_MEMORY_MAPPING 1
 
 // To support malloc replacement

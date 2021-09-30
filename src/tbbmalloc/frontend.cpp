@@ -28,7 +28,6 @@
     #define TlsGetValue_func pthread_getspecific
     #define GetMyTID() pthread_self()
     #include <sched.h>
-    inline void do_yield() {sched_yield();}
     extern "C" { static void mallocThreadShutdownNotification(void*); }
     #if __sun || __SUNPRO_CC
     #define __asm__ asm
@@ -43,12 +42,10 @@
     #define TlsAlloc() FlsAlloc(NULL)
     #define TLS_ALLOC_FAILURE FLS_OUT_OF_INDEXES
     #define TlsFree FlsFree
-    inline void do_yield() {std::this_thread::yield();}
 #else
     #define TlsSetValue_func TlsSetValue
     #define TlsGetValue_func TlsGetValue
     #define TLS_ALLOC_FAILURE TLS_OUT_OF_INDEXES
-    inline void do_yield() {SwitchToThread();}
 #endif
 #else
     #error Must define USE_PTHREAD or USE_WINTHREAD
