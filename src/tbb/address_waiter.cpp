@@ -28,12 +28,12 @@ namespace r1 {
 struct address_context {
     address_context() = default;
 
-    address_context(void* address, std::uintptr_t contex) :
-        my_address(address), my_contex(contex)
+    address_context(void* address, std::uintptr_t context) :
+        my_address(address), my_context(context)
     {}
 
     void* my_address{nullptr};
-    std::uintptr_t my_contex{0};
+    std::uintptr_t my_context{0};
 };
 
 class address_waiter : public concurrent_monitor_base<address_context> {
@@ -75,7 +75,7 @@ void notify_by_address(void* address, std::uintptr_t target_context) {
     address_waiter& waiter = get_address_waiter(address);
 
     auto predicate = [address, target_context] (address_context ctx) {
-        return ctx.my_address == address && ctx.my_contex == target_context;
+        return ctx.my_address == address && ctx.my_context == target_context;
     };
 
     waiter.notify_relaxed(predicate);
