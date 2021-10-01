@@ -365,6 +365,7 @@ add_custom_target(test_suite_arena_constraints)
 
 if (TARGET TBB::tbb)
     # Define the tests
+    tbb_add_test(SUBDIR tbb NAME test_420 DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_tick_count DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_allocators DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_arena_priorities DEPENDENCIES TBB::tbb)
