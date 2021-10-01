@@ -191,8 +191,7 @@ This final implementation has all of the nodes and edges from the
 much advantage in using an ``input_node`` over an explicit loop. But,
 because an ``input_node`` is able to react to the behavior of downstream
 nodes, it can limit memory use in more complex graphs. For more
-information, see `Creating a Token-Based
-System <create_token_based_system.html#create_token_based_system>`__
+information, see:ref:`create_token_based_system` .
 
 
 .. |image0| image:: Images/flow_graph.jpg
