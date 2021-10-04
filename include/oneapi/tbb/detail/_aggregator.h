@@ -20,6 +20,7 @@
 
 #include "_assert.h"
 #include "_utils.h"
+#include "_template_helpers.h"
 #include <atomic>
 #if !__TBBMALLOC_BUILD // TODO: check this macro with TBB Malloc
 #include "../profiling.h"
