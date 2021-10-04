@@ -480,6 +480,42 @@ void test_ports_return_references() {
     test_output_ports_return_ref(mf_node);
 }
 
+void test_exception_ligthweight_policy(){
+    using IndexerNodeType = oneapi::tbb::flow::indexer_node<int,int>;
+    using MultifunctionNodeType = oneapi::tbb::flow::multifunction_node<IndexerNodeType::output_type,
+                                                    std::tuple<int>, oneapi::tbb::flow::lightweight>;
+
+    oneapi::tbb::flow::graph g;
+    auto inputNodeBody = [](oneapi::tbb::flow_control &){ return 1; };
+    auto multifunctionNodeBody = [](MultifunctionNodeType::input_type, MultifunctionNodeType::output_ports_type)
+    {
+        throw std::exception();
+    };
+
+    oneapi::tbb::flow::input_node<int> input1(g, inputNodeBody);
+    oneapi::tbb::flow::input_node<int> input2(g, inputNodeBody);
+
+    IndexerNodeType indexer(g);
+    MultifunctionNodeType multi(g, oneapi::tbb::flow::serial, multifunctionNodeBody);
+    oneapi::tbb::flow::make_edge(indexer, multi);
+    oneapi::tbb::flow::make_edge(input1, indexer);
+    oneapi::tbb::flow::make_edge(input2, oneapi::tbb::flow::input_port<1>(indexer));
+
+    input1.activate();
+    input2.activate();
+
+    bool catchException = false;
+    try
+    {
+        g.wait_for_all();
+    }
+    catch (const std::exception&)
+    {
+        catchException = true;
+    }
+    CHECK_MESSAGE( catchException, "The exception must be thrown from graph.wait_for_all()" );
+}
+
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
 #include <array>
 #include <vector>
@@ -545,6 +581,12 @@ TEST_CASE("Test ports retrurn references"){
 //! \brief \ref error_guessing
 TEST_CASE("Lightweight testing"){
     lightweight_testing::test<tbb::flow::multifunction_node>(10);
+}
+
+//! Test exception thrown in node with lightweight policy was rethrown by graph
+//! \brief \ref error_guessing
+TEST_CASE("Exception in lightweight node"){
+    test_exception_ligthweight_policy();
 }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
