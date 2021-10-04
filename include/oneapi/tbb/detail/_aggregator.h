@@ -98,17 +98,6 @@ public:
    }
 
 private:
-    struct raii_handler_busy{
-        std::atomic<uintptr_t>& my_handler_busy;
-        raii_handler_busy(std::atomic<uintptr_t>& _handler_busy) : my_handler_busy(_handler_busy) {
-            // acquire the handler
-            my_handler_busy.store(1, std::memory_order_relaxed);
-        }
-        ~raii_handler_busy(){
-            // release the handler
-            my_handler_busy.store(0, std::memory_order_release);
-        }
-    };
     // Trigger the handling of operations when the handler is free
     template <typename HandlerType>
     void start_handle_operations( HandlerType& handle_operations ) {
@@ -125,8 +114,13 @@ private:
         // only one thread can possibly spin here at a time
         spin_wait_until_eq(handler_busy, uintptr_t(0));
         call_itt_notify(acquired, &handler_busy);
+
         // acquire fence not necessary here due to causality rule and surrounding atomics
-        raii_handler_busy handler_lock(handler_busy);
+        handler_busy.store(1, std::memory_order_relaxed);
+        auto handler_lock = make_raii_guard([&](){
+            // release the handler
+            handler_busy.store(0, std::memory_order_release);
+        });
 
         // ITT note: &pending_operations tag covers access to the handler_busy flag
         // itself. Capturing the state of the pending_operations signifies that
