@@ -22,6 +22,7 @@
 
 #if __TBB_ARENA_BINDING
 #include <vector>
+#include <cstdint>
 
 namespace tbb {
 namespace detail {
