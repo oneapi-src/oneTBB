@@ -214,7 +214,7 @@ TEST_CASE("Test concurrency getters output for constraints with custom concurren
 }
 
 //! Testing constraints_threads_per_core() reserved entry point
-//! \brief \ref interface \ref error_guessing
+//! \brief \ref error_guessing
 TEST_CASE("Testing constraints_threads_per_core() reserved entry point") {
     tbb::task_arena::constraints c{};
     REQUIRE(tbb::detail::r1::constraints_threads_per_core(c) == tbb::task_arena::automatic);
