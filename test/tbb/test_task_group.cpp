@@ -403,12 +403,7 @@ public:
     const char* what() const throw() override { return m_strDescription; }
 };
 
-#if TBB_USE_CAPTURED_EXCEPTION
-    #include "tbb/tbb_exception.h"
-    typedef tbb::captured_exception TestException;
-#else
-    typedef test_exception TestException;
-#endif
+using TestException = test_exception;
 
 #include <string.h>
 
