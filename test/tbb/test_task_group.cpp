@@ -403,8 +403,7 @@ public:
     const char* what() const throw() override { return m_strDescription; }
 };
 
-
-using TestException = test_exception ;
+using TestException = test_exception;
 
 #include <string.h>
 
