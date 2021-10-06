@@ -66,7 +66,7 @@ void read_board(const char *filename) {
     fclose(fp);
 }
 
-void print_board(board_element *b) {
+void print_board(const std::vector<board_element>& b) {
     for (unsigned row = 0; row < BOARD_DIM; ++row) {
         for (unsigned col = 0; col < BOARD_DIM; ++col) {
             printf(" %d", b[row * BOARD_DIM + col].solved_element);
@@ -79,7 +79,7 @@ void print_board(board_element *b) {
     }
 }
 
-void print_potential_board(board_element *b) {
+void print_potential_board(const std::vector<board_element>& b) {
     for (unsigned row = 0; row < BOARD_DIM; ++row) {
         for (unsigned col = 0; col < BOARD_DIM; ++col) {
             if (b[row * BOARD_DIM + col].solved_element)
@@ -95,50 +95,45 @@ void print_potential_board(board_element *b) {
     }
 }
 
-void init_board(board_element *b) {
+void init_board(std::vector<board_element>& b) {
     for (unsigned i = 0; i < BOARD_SIZE; ++i)
         b[i].solved_element = b[i].potential_set = 0;
 }
 
-void init_board(board_element *b, unsigned short arr[81]) {
+void init_board(std::vector<board_element>& b, unsigned short arr[81]) {
     for (unsigned i = 0; i < BOARD_SIZE; ++i) {
         b[i].solved_element = arr[i];
         b[i].potential_set = 0;
     }
 }
 
-void init_potentials(board_element *b) {
+void init_potentials(std::vector<board_element>& b) {
     for (unsigned i = 0; i < BOARD_SIZE; ++i)
         b[i].potential_set = 0;
 }
 
-void copy_board(board_element *src, board_element *dst) {
-    for (unsigned i = 0; i < BOARD_SIZE; ++i)
-        dst[i].solved_element = src[i].solved_element;
-}
-
-bool fixed_board(board_element *b) {
+bool fixed_board(const std::vector<board_element>& b) {
     for (int i = BOARD_SIZE - 1; i >= 0; --i)
         if (b[i].solved_element == 0)
             return false;
     return true;
 }
 
-bool in_row(board_element *b, unsigned row, unsigned col, unsigned short p) {
+bool in_row(const std::vector<board_element>& b, unsigned row, unsigned col, unsigned short p) {
     for (unsigned c = 0; c < BOARD_DIM; ++c)
         if (c != col && b[row * BOARD_DIM + c].solved_element == p)
             return true;
     return false;
 }
 
-bool in_col(board_element *b, unsigned row, unsigned col, unsigned short p) {
+bool in_col(const std::vector<board_element>& b, unsigned row, unsigned col, unsigned short p) {
     for (unsigned r = 0; r < BOARD_DIM; ++r)
         if (r != row && b[r * BOARD_DIM + col].solved_element == p)
             return true;
     return false;
 }
 
-bool in_block(board_element *b, unsigned row, unsigned col, unsigned short p) {
+bool in_block(const std::vector<board_element>& b, unsigned row, unsigned col, unsigned short p) {
     unsigned b_row = row / 3 * 3, b_col = col / 3 * 3;
     for (unsigned i = b_row; i < b_row + 3; ++i)
         for (unsigned j = b_col; j < b_col + 3; ++j)
@@ -147,7 +142,7 @@ bool in_block(board_element *b, unsigned row, unsigned col, unsigned short p) {
     return false;
 }
 
-void calculate_potentials(board_element *b) {
+void calculate_potentials(std::vector<board_element>& b) {
     for (unsigned i = 0; i < BOARD_SIZE; ++i) {
         b[i].potential_set = 0;
         if (!b[i].solved_element) { // element is not yet fixed
@@ -161,7 +156,7 @@ void calculate_potentials(board_element *b) {
     }
 }
 
-bool valid_board(board_element *b) {
+bool valid_board(const std::vector<board_element>& b) {
     bool success = true;
     for (unsigned i = 0; i < BOARD_SIZE; ++i) {
         if (success && b[i].solved_element) { // element is fixed
@@ -175,7 +170,7 @@ bool valid_board(board_element *b) {
     return success;
 }
 
-bool examine_potentials(board_element *b, bool *progress) {
+bool examine_potentials(std::vector<board_element>& b, bool *progress) {
     bool singletons = false;
     for (unsigned i = 0; i < BOARD_SIZE; ++i) {
         if (b[i].solved_element == 0 && b[i].potential_set == 0) // empty set
@@ -232,14 +227,13 @@ bool examine_potentials(board_element *b, bool *progress) {
     return valid_board(b);
 }
 
-void partial_solve(board_element *b, unsigned first_potential_set) {
+void partial_solve(std::vector<board_element> b, unsigned first_potential_set) {
     if (fixed_board(b)) {
         if (find_one)
             g->cancel();
         if (++nSols == 1 && verbose) {
             print_board(b);
         }
-        free(b);
         return;
     }
     calculate_potentials(b);
@@ -249,30 +243,28 @@ void partial_solve(board_element *b, unsigned first_potential_set) {
         partial_solve(b, first_potential_set);
     }
     else if (success && !progress) {
-        board_element *new_board;
         while (b[first_potential_set].solved_element != 0)
             ++first_potential_set;
         for (unsigned short potential = 1; potential <= BOARD_DIM; ++potential) {
             if (1 << (potential - 1) & b[first_potential_set].potential_set) {
-                new_board = (board_element *)malloc(BOARD_SIZE * sizeof(board_element));
-                copy_board(b, new_board);
+                std::vector<board_element> new_board = b;
                 new_board[first_potential_set].solved_element = potential;
-                g->run([=] {
+#ifdef __TBB_CPP14_PRESENT
+                g->run([new_board = std::move(new_board), first_potential_set]() {
+#else
+                g->run([=]() {
+#endif
                     partial_solve(new_board, first_potential_set);
                 });
             }
         }
-        free(b);
-    }
-    else {
-        free(b);
     }
 }
 
 unsigned solve(int p) {
     oneapi::tbb::global_control c(oneapi::tbb::global_control::max_allowed_parallelism, p);
     nSols = 0;
-    board_element *start_board = (board_element *)malloc(BOARD_SIZE * sizeof(board_element));
+    std::vector<board_element> start_board(BOARD_SIZE);
     init_board(start_board, init_values);
     g = new oneapi::tbb::task_group;
     oneapi::tbb::tick_count t0 = oneapi::tbb::tick_count::now();
