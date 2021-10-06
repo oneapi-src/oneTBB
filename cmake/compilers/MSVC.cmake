@@ -24,7 +24,7 @@ set(TBB_WARNING_LEVEL $<$<NOT:$<CXX_COMPILER_ID:Intel>>:/W4> $<$<BOOL:${TBB_STRI
 # Warning suppression C4324: structure was padded due to alignment specifier
 set(TBB_WARNING_SUPPRESS /wd4324)
 
-set(TBB_TEST_COMPILE_FLAGS /bigobj)
+set(TBB_TEST_COMPILE_FLAGS ${TBB_TEST_COMPILE_FLAGS} /bigobj)
 if (MSVC_VERSION LESS_EQUAL 1900)
     # Warning suppression C4503 for VS2015 and earlier:
     # decorated name length exceeded, name was truncated.
