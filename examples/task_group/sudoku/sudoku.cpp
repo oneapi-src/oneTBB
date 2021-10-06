@@ -227,6 +227,7 @@ bool examine_potentials(std::vector<board_element>& b, bool *progress) {
     return valid_board(b);
 }
 
+#include <iostream>
 void partial_solve(std::vector<board_element> b, unsigned first_potential_set) {
     if (fixed_board(b)) {
         if (find_one)
@@ -249,7 +250,7 @@ void partial_solve(std::vector<board_element> b, unsigned first_potential_set) {
             if (1 << (potential - 1) & b[first_potential_set].potential_set) {
                 std::vector<board_element> new_board = b;
                 new_board[first_potential_set].solved_element = potential;
-#ifdef __TBB_CPP14_PRESENT
+#if __TBB_CPP14_PRESENT
                 g->run([new_board = std::move(new_board), first_potential_set]() {
 #else
                 g->run([=]() {
