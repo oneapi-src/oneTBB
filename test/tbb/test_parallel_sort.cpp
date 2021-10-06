@@ -274,6 +274,24 @@ void test_psort_cbs_constraints() {
 
 #endif // __TBB_CPP20_CONCEPTS_PRESENT
 
+template<typename T>
+struct my_span {
+    my_span(T* input_data, std::size_t input_size)
+     : data{input_data}
+     , size{input_size}
+    {}
+
+    T* begin() const {
+        return data;
+    }
+    T* end() const {
+        return data + size;
+    }
+private:
+    T* data;
+    std::size_t size;
+};
+
 //! Minimal array sorting test (less comparator)
 //! \brief \ref error_guessing
 TEST_CASE("Minimal array sorting test (less comparator)") {
@@ -316,31 +334,51 @@ TEST_CASE("tbb::concurrent_vector<Minimal> sorting test (less comparator)") {
     parallel_sort_test_suite<tbb::concurrent_vector<Minimal>, MinimalLessCompare>();
 }
 
-const int vector_size = 10000;
+const int array_size = 10000;
+
+template<typename SortFunctor>
+void sort_array_test(const SortFunctor& sort_functor) {
+    int test_array[array_size];
+    for (int i = 0; i < array_size; ++i)
+        test_array[i] = rand() % array_size;
+
+    sort_functor(test_array);
+
+    for(int i = 0; i < array_size - 1; ++i)
+        REQUIRE_MESSAGE(test_array[i] <= test_array[i + 1], "Testing data not sorted");
+}
 
 //! Array sorting test (default comparator)
 //! \brief \ref error_guessing
 TEST_CASE("Array sorting test (default comparator)") {
-    for ( auto concurrency_level : utils::concurrency_range() ) {
-        tbb::global_control control(tbb::global_control::max_allowed_parallelism, concurrency_level);
+    sort_array_test([](int (&array)[array_size]) {
+        tbb::parallel_sort(array);
+    });
+}
 
-        int test_array[vector_size];
-        for (int i = 0; i < vector_size; ++i)
-            test_array[i] = rand() % vector_size;
+//! Test array sorting via rvalue span (default comparator)
+//! \brief \ref error_guessing
+TEST_CASE("Test array sorting via rvalue span (default comparator)") {
+    sort_array_test([](int (&array)[array_size]) {
+        tbb::parallel_sort(my_span<int>(array, array_size));
+    });
+}
 
-        tbb::parallel_sort(test_array);
-
-        for(int i = 0; i < vector_size - 1; ++i)
-            REQUIRE_MESSAGE(test_array[i] <= test_array[i + 1], "Testing data not sorted");
-    }
+//! Test array sorting via const span (default comparator)
+//! \brief \ref error_guessing
+TEST_CASE("Test array sorting via const span (default comparator)") {
+    sort_array_test([](int (&array)[array_size]) {
+        const my_span<int> span(array, array_size);
+        tbb::parallel_sort(span);
+    });
 }
 
 //! Testing workers going to sleep
 //! \brief \ref resource_usage
 TEST_CASE("That all workers sleep when no work") {
-    int test_array[vector_size];
-    for (int i = 0; i < vector_size; ++i)
-        test_array[i] = rand() % vector_size;
+    int test_array[array_size];
+    for (int i = 0; i < array_size; ++i)
+        test_array[i] = rand() % array_size;
 
     tbb::parallel_sort(test_array);
     TestCPUUserTime(utils::get_platform_max_threads());
