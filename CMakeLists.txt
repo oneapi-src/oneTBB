@@ -183,7 +183,7 @@ foreach(FILE_WITH_EXTRA_TARGETS ${FILES_WITH_EXTRA_TARGETS})
 endforeach()
 
 if (NOT TBB_DISABLE_IPO)
-    if (CMAKE_VERSION VERSION_GREATER 3.9)
+    if (NOT CMAKE_VERSION VERSION_LESS 3.9)
         cmake_policy(SET CMP0069 NEW)
         include(CheckIPOSupported)
         check_ipo_supported(RESULT result OUTPUT output)
