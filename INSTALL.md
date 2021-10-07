@@ -20,7 +20,8 @@ See [Build system description](cmake/README.md) to fully understand how to confi
 
 ---
 **CAUTION:** Be careful about installation. Avoid commands like `make install` that make this directory added to all install directories.
-By default, this directive is `/usr/local` on UNIX* and `c:/Program Files/${PROJECT_NAME}` on Windows*
+By default, this directive is `/usr/local` on UNIX* and `c:/Program Files/${PROJECT_NAME}` on Windows*.
+
 To avoid this, use:
 * `make DESTDIR=<installation_path> install` on UNIX*
 * 
