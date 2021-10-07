@@ -72,6 +72,10 @@ set_target_properties(tbbmalloc PROPERTIES
     LINKER_LANGUAGE C
 )
 
+if (TBB_IPO_PROPERTY)
+    set_target_properties(tbbmalloc PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
+
 if (TBB_DEF_FILE_PREFIX) # If there's no prefix, assume we're using export directives
     set_target_properties(tbbmalloc PROPERTIES
         LINK_FLAGS ${TBB_LINK_DEF_FILE_FLAG}${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbmalloc.def

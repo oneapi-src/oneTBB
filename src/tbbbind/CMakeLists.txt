@@ -55,6 +55,11 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
         VERSION ${TBBBIND_BINARY_VERSION}.${TBB_BINARY_MINOR_VERSION}
         SOVERSION ${TBBBIND_BINARY_VERSION}
     )
+
+    if (TBB_IPO_PROPERTY)
+        set_target_properties(${TBBBIND_NAME} PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+    endif()
+
     if (TBB_DEF_FILE_PREFIX) # If there's no prefix, assume we're using export directives
         set_target_properties(${TBBBIND_NAME} PROPERTIES
             LINK_FLAGS ${TBB_LINK_DEF_FILE_FLAG}${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbbind.def
