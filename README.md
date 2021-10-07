@@ -5,8 +5,7 @@ oneAPI Threading Building Blocks (oneTBB) lets you easily write parallel C++ pro
 full advantage of multicore performance that are portable, composable, and have future-proof scalability.
 
 ## Installation
-You can install oneTBB from [GitHub*](https://github.com/oneapi-src/oneTBB/releases).
-See [Installation from Sources](INSTALL.md) for details.
+You can install oneTBB from GitHub*, see [Installation from Sources](INSTALL.md) for details.
 
 ## Documentation
 * [oneTBB Specification](https://spec.oneapi.com/versions/latest/elements/oneTBB/source/nested-index.html)
