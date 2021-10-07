@@ -44,9 +44,7 @@ cmake <options> <repo_root>
 cmake --build . <options>
 ```
 
-4. If needed, run the tests and get the results by using: 
-
-```ctest```
+4. If needed, run the tests and get the results by using: ```ctest```
 
 5. To install the specific components, run:
 
