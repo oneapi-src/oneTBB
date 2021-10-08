@@ -182,7 +182,10 @@ foreach(FILE_WITH_EXTRA_TARGETS ${FILES_WITH_EXTRA_TARGETS})
     include(${FILE_WITH_EXTRA_TARGETS})
 endforeach()
 
-if (NOT TBB_DISABLE_IPO)
+# - Enabling LTO on Android causes the NDK bug.
+#   NDK throws the warning: "argument unused during compilation: '-Wa,--noexecstack'"
+# - For some reason GCC does not instrument code with Thread Sanitizer when lto is enabled and C linker is used.
+if (NOT ANDROID_PLATFORM AND NOT TBB_DISABLE_IPO AND BUILD_SHARED_LIBS NOT TBB_SANITIZE MATCHES "thread")
     if (NOT CMAKE_VERSION VERSION_LESS 3.9)
         cmake_policy(SET CMP0069 NEW)
         include(CheckIPOSupported)

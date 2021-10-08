@@ -63,8 +63,7 @@ if (MINGW)
     list(APPEND TBB_COMMON_COMPILE_FLAGS -U__STRICT_ANSI__)
 endif()
 
-# For some reason GCC does not instrument code with Thread Sanitizer when lto is enabled and C linker is used.
-if (NOT TBB_SANITIZE MATCHES "thread" AND TBB_IPO_FLAGS)
+if (TBB_IPO_FLAGS)
     set(TBB_IPO_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:-flto>)
     set(TBB_IPO_LINK_FLAGS $<$<NOT:$<CONFIG:Debug>>:-flto>)
 endif()
