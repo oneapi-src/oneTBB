@@ -19,12 +19,13 @@ The following instruction is an example of how you can install oneTBB.
 See [Build system description](cmake/README.md) to fully understand how to configure, build, test, and install the project. 
 
 ---
-**CAUTION:** Be careful about installation. Avoid commands like `make install` that make this directory added to all install directories.
+**CAUTION:** Be careful about installation. Avoid commands like `make install` that make this directory pre-pended onto all install directories.
 By default, this directive is `/usr/local` on UNIX* and `c:/Program Files/${PROJECT_NAME}` on Windows*.
 
 To avoid this, use:
-* `make DESTDIR=<installation_path> install` on UNIX*
-* 
+```
+cmake -DCMAKE_INSTALL_PREFIX=/usr ..
+```
 
 ---
 
