@@ -227,7 +227,6 @@ bool examine_potentials(std::vector<board_element>& b, bool *progress) {
     return valid_board(b);
 }
 
-#include <iostream>
 void partial_solve(std::vector<board_element> b, unsigned first_potential_set) {
     if (fixed_board(b)) {
         if (find_one)
