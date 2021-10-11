@@ -138,7 +138,7 @@ LIBTBB_NAME="libtbb.dylib"
 if [ -e "$TBBROOT/lib/$LIBTBB_NAME" ]; then
     export TBBROOT
 
-    TBB_BINARIES_PATH = $(prepend_path "${TBBROOT}/lib/$TBB_LIB_DIR" "${LIBRARY_PATH:-}") ; export TBB_BINARIES_PATH
+    TBB_BINARIES_PATH = $(prepend_path "${TBBROOT}/lib/$TBB_LIB_DIR") ; export TBB_BINARIES_PATH
 
     LIBRARY_PATH=$(prepend_path "${TBBROOT}/lib" "${LIBRARY_PATH:-}") ; export LIBRARY_PATH
     DYLD_LIBRARY_PATH=$(prepend_path "${TBBROOT}/lib" "${DYLD_LIBRARY_PATH:-}") ; export DYLD_LIBRARY_PATH
