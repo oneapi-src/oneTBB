@@ -8,9 +8,9 @@
 
 ## Required Software
 To create configuration files for a build system, you should have one of the following CMake generators:
-* Command-Line Build Tool Generators. For example, Borland Makefiles or Ninja.
-* IDE Build Tool Generators. For example, Visual Studio 16 2019.
-* Extra Generators. For example, CodeBlocks or Eclipse CDT4.
+* Command-Line Build Tool Generators. For example, Borland Makefiles* or Ninja*.
+* IDE Build Tool Generators. For example, Visual Studio* 16 2019.
+* Extra Generators. For example, CodeBlocks* or Eclipse* CDT4.
 
 
 ## Installation Steps
