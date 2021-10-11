@@ -97,6 +97,7 @@ void test_semaphore( int sem_init_cnt, int extra_threads ) {
             allPWaits += item;
         }
         allPWaits /= static_cast<double>(n_threads * n_iters);
+        INFO("Average wait time: " << allPWaits << "\n");
     }
     REQUIRE_MESSAGE(!pCount, "not all threads decremented pCount");
 

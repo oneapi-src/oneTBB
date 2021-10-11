@@ -330,12 +330,10 @@ void TestAccumulator( int mode ) {
 
             ScanIsRunning = false;
 
-            long used_once_count = 0;
             for( long i=0; i<n; ++i )
                 CHECK_MESSAGE((AddendHistory[i]&USED_FINAL), "failed to use addend[" << i << "] " << (AddendHistory[i] & USED_NONFINAL ? "(but used nonfinal)\n" : "\n"));
             for( long i=0; i<n; ++i ) {
                 VerifySum( 42, i, sum[i], __LINE__ );
-                used_once_count += AddendHistory[i]==USED_FINAL;
             }
             if( n )
                 CHECK(acc.get_total()==sum[n-1]);

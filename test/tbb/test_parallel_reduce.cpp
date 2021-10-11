@@ -531,7 +531,6 @@ public:
 template<typename Partitioner>
 void TestSplitting( std::size_t nthread ) {
     ForkCount = 0;
-    long join_count = 0;
     Partitioner partitioner;
     for( size_t i=0; i<=1000; ++i ) {
         FooBody f;
@@ -541,7 +540,6 @@ void TestSplitting( std::size_t nthread ) {
 
         if (nthread == 1) REQUIRE_MESSAGE(ForkCount==0, "Body was split during 1 thread execution");
 
-        join_count += f.join_count;
         REQUIRE_MESSAGE( FooBodyCount==1, "Some copies of FooBody was not removed after reduction");
         REQUIRE_MESSAGE( f.sum==i, "Incorrect reduction" );
         REQUIRE_MESSAGE( f.begin==(i==0 ? ~size_t(0) : 0), "Incorrect range borders" );

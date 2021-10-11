@@ -392,8 +392,6 @@ public:
 
     StaticSharedCountingAllocator() = default;
 
-    StaticSharedCountingAllocator( const StaticSharedCountingAllocator& ) = default;
-
     template <typename U>
     StaticSharedCountingAllocator( const StaticSharedCountingAllocator<U>& other) : alloc_base_type(other) {}
 
