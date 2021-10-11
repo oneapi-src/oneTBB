@@ -53,11 +53,11 @@ cmake --build . <options>
 cmake -DCOMPONENT=<component> [-DBUILD_TYPE=<build-type>] -P cmake_install.cmake
 ```
 
-The following installation components are supported:
+  The following installation components are supported:
 
-* `runtime` - oneTBB runtime package (core shared libraries and .dll files on Windows).
-* `devel` - oneTBB development package (header files, CMake integration files, library symbolic links, and .lib files on Windows).
-* `tbb4py` - oneTBB Module for Python.
+  * `runtime` - oneTBB runtime package (core shared libraries and .dll files on Windows).
+  * `devel` - oneTBB development package (header files, CMake integration files, library symbolic links, and .lib files on Windows).
+  * `tbb4py` - oneTBB Module for Python.
 
 6. Simple packaging using CPack is supported.
 The following commands allow you to create a simple portable package that includes header files, libraries, and integration files for CMake:
