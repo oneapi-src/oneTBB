@@ -100,7 +100,7 @@ void init_board(std::vector<board_element>& b) {
         b[i].solved_element = b[i].potential_set = 0;
 }
 
-void init_board(std::vector<board_element>& b, unsigned short arr[81]) {
+void init_board(std::vector<board_element>& b, unsigned short arr[BOARD_SIZE]) {
     for (unsigned i = 0; i < BOARD_SIZE; ++i) {
         b[i].solved_element = arr[i];
         b[i].potential_set = 0;
