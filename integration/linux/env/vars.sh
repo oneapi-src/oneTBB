@@ -162,8 +162,6 @@ TBB_LIB_DIR="$TBB_TARGET_ARCH/gcc4.8"
 if [ -e "$TBBROOT/lib/$TBB_LIB_DIR/$TBB_LIB_NAME" ]; then
   export TBBROOT
 
-  TBB_BINARIES_PATH = $(prepend_path "${TBBROOT}/lib/$TBB_LIB_DIR") ; export TBB_BINARIES_PATH
-
   LIBRARY_PATH=$(prepend_path "${TBBROOT}/lib/$TBB_LIB_DIR" "${LIBRARY_PATH:-}") ; export LIBRARY_PATH
   LD_LIBRARY_PATH=$(prepend_path "${TBBROOT}/lib/$TBB_LIB_DIR" "${LD_LIBRARY_PATH:-}") ; export LD_LIBRARY_PATH
   CPATH=$(prepend_path "${TBBROOT}/include" "${CPATH:-}") ; export CPATH

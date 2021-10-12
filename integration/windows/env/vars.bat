@@ -48,12 +48,12 @@ if /i "%1"=="all"          (set TBB_TARGET_VS=vc_mt)      & shift & goto ParseAr
 
 :SetEnv
 if exist "%TBBROOT%\redist\%TBB_TARGET_ARCH%\%TBB_TARGET_VS%\tbb12.dll" (
-    set "TBB_BINARIES_PATH=%TBBROOT%\redist\%TBB_TARGET_ARCH%\%TBB_TARGET_VS%"
-    set "PATH=%TBB_BINARIES_PATH%;%PATH%"
+    set "TBB_LIB=%TBBROOT%\redist\%TBB_TARGET_ARCH%\%TBB_TARGET_VS%"
+    set "PATH=%TBB_LIB%;%PATH%"
 )
 if exist "%TBBROOT%\..\redist\%TBB_TARGET_ARCH%\tbb\%TBB_TARGET_VS%\tbb12.dll" (
-    set "TBB_BINARIES_PATH=%TBBROOT%\..\redist\%TBB_TARGET_ARCH%\tbb\%TBB_TARGET_VS%"
-    set "PATH=%TBB_BINARIES_PATH%;%PATH%"
+    set "TBB_LIB=%TBBROOT%\..\redist\%TBB_TARGET_ARCH%\tbb\%TBB_TARGET_VS%"
+    set "PATH=%TBB_LIB%;%PATH%"
 )
 
 set "LIB=%TBBROOT%\lib\%TBB_TARGET_ARCH%\%TBB_TARGET_VS%;%LIB%"
