@@ -447,7 +447,7 @@ private:
     void parseSystemMemInfo() {
         bool hpAvailable  = false;
         bool thpAvailable = false;
-        unsigned long long hugePageSize = 0;
+        unsigned long long hugePageSize = ULLONG_MAX;
 
 #if __unix__
         // Check huge pages existence
@@ -471,7 +471,7 @@ private:
         // We parse a counter number, it can't be huge
         parseFile</*BUFF_SIZE=*/100>("/proc/sys/vm/nr_hugepages", vmItem);
 
-        if (meminfoHugePagesTotal > 0 || vmHugePagesTotal > 0) {
+        if (hugePageSize < ULLONG_MAX && meminfoHugePagesTotal > 0 || vmHugePagesTotal > 0) {
             MALLOC_ASSERT(hugePageSize != 0, "Huge Page size can't be zero if we found preallocated.");
 
             // Any non zero value clearly states that there are preallocated
@@ -484,7 +484,7 @@ private:
         parseFileItem thpItem[] = { { "[alwa%cs] madvise never\n", thpPresent } };
         parseFile</*BUFF_SIZE=*/100>("/sys/kernel/mm/transparent_hugepage/enabled", thpItem);
 
-        if (thpPresent == 'y') {
+        if (hugePageSize < ULLONG_MAX && thpPresent == 'y') {
             MALLOC_ASSERT(hugePageSize != 0, "Huge Page size can't be zero if we found thp existence.");
             thpAvailable = true;
         }
