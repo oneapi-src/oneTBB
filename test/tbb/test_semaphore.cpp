@@ -90,15 +90,6 @@ void test_semaphore( int sem_init_cnt, int extra_threads ) {
 
     pCount = 0;
     utils::NativeParallelFor(n_threads, body);
-
-    if (extra_threads == 0) {
-        double allPWaits = 0;
-        for (auto item : tot_times) {
-            allPWaits += item;
-        }
-        allPWaits /= static_cast<double>(n_threads * n_iters);
-        INFO("Average wait time: " << allPWaits << "\n");
-    }
     REQUIRE_MESSAGE(!pCount, "not all threads decremented pCount");
 
     int max_count = -1;
