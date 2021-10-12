@@ -60,14 +60,11 @@ public:
 };
 
 template<typename Value>
-typename std::enable_if<!std::is_same<Value, Minimal>::value, bool>::type
-compare(const Value& lhs, const Value& rhs) {
+bool compare(const Value& lhs, const Value& rhs) {
     return lhs == rhs;
 }
 
-template<typename Value>
-typename std::enable_if<std::is_same<Value, Minimal>::value, bool>::type
-compare(const Value& lhs, const Value& rhs) {
+bool compare(const Minimal& lhs, const Minimal& rhs) {
     return Minimal::AreEqual(lhs, rhs);
 }
 
