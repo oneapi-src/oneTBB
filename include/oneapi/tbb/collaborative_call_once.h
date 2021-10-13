@@ -35,10 +35,10 @@ namespace d1 {
     #pragma warning (disable: 4324)
 #endif
 
-constexpr std::uintptr_t collaborative_once_max_references = max_nfs_size;
+constexpr std::uintptr_t collaborative_once_max_references = 16;
 constexpr std::uintptr_t collaborative_once_references_mask = collaborative_once_max_references-1;
 
-class alignas(max_nfs_size) collaborative_once_runner : no_copy {
+class alignas(collaborative_once_max_references) collaborative_once_runner : no_copy {
 
     struct storage_t {
         task_arena m_arena{ task_arena::attach{} };

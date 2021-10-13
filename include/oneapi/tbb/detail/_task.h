@@ -207,7 +207,7 @@ class task_traits {
 };
 
 //! Alignment for a task object
-static constexpr std::size_t task_alignment = 64;
+static constexpr std::size_t task_alignment = 16;
 
 //! Base class for user-defined tasks.
 /** @ingroup task_scheduling */
@@ -223,7 +223,7 @@ private:
     std::uint64_t m_reserved[6]{};
     friend struct r1::task_accessor;
 };
-static_assert(sizeof(task) == task_alignment, "task size is broken");
+static_assert(sizeof(task) % task_alignment == 0, "task size is broken");
 
 } // namespace d1
 } // namespace detail
