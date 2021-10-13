@@ -19,6 +19,7 @@ The following file structure is assumed:
 
 ```
 example
+├── .bazelrc
 ├── BUILD.bazel
 ├── main.cpp
 └── WORKSPACE.bazel
@@ -74,3 +75,9 @@ Switch to the folder where you have created the above-mentioned files and run th
 ## Build oneTBB using Bazel
 
 Run `bazel build //...` in the root directory of oneTBB.
+
+## Compiler support
+
+The Bazel build makes use of the compiler flag `-mwaitpkg` in non-Windows builds.
+This flag is supported by GCC 9.3, Clang 12, and newer versions of those tools.
+If you want to use the Bazel build in combination with earlier versions of GCC you should remove this flag since it will lead to errors during compilation.
