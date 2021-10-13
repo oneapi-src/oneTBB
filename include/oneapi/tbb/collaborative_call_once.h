@@ -19,9 +19,9 @@
 
 #if __TBB_PREVIEW_COLLABORATIVE_CALL_ONCE
 
-#include "tbb/task_arena.h"
-#include "tbb/task_group.h"
-#include "tbb/task.h"
+#include "task_arena.h"
+#include "task_group.h"
+#include "task.h"
 
 #include <atomic>
 

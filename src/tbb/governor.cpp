@@ -167,6 +167,18 @@ static std::uintptr_t get_stack_base(std::size_t stack_size) {
 #endif /* USE_PTHREAD */
 }
 
+#if (_WIN32||_WIN64) && !__TBB_DYNAMIC_LOAD_ENABLED
+static void register_external_thread_destructor() {
+    struct thread_destructor {
+        ~thread_destructor() {
+            governor::terminate_external_thread();
+        }
+    };
+    // ~thread_destructor() will be call during the calling thread termination
+    static thread_local thread_destructor thr_destructor;
+}
+#endif // (_WIN32||_WIN64) && !__TBB_DYNAMIC_LOAD_ENABLED
+
 void governor::init_external_thread() {
     one_time_init();
     // Create new scheduler instance with arena
@@ -192,6 +204,11 @@ void governor::init_external_thread() {
     td.my_arena_slot->occupy();
     a.my_market->add_external_thread(td);
     set_thread_data(td);
+#if (_WIN32||_WIN64) && !__TBB_DYNAMIC_LOAD_ENABLED
+    // The external thread destructor is called from dllMain but it is not available with a static build.
+    // Therefore, we need to register the current thread to call the destructor during thread termination.
+    register_external_thread_destructor();
+#endif
 }
 
 void governor::auto_terminate(void* tls) {

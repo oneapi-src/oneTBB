@@ -217,9 +217,6 @@ struct arena_base : padded<intrusive_list_node> {
     task_stream<back_nonnull_accessor> my_critical_task_stream;
 #endif
 
-    //! The number of workers requested by the external thread owning the arena.
-    unsigned my_max_num_workers;
-
     //! The total number of workers that are requested from the resource manager.
     int my_total_num_workers_requested;
 
@@ -254,17 +251,8 @@ struct arena_base : padded<intrusive_list_node> {
     //! The market that owns this arena.
     market* my_market;
 
-    //! ABA prevention marker.
-    std::uintptr_t my_aba_epoch;
-
     //! Default task group context.
     d1::task_group_context* my_default_ctx;
-
-    //! The number of slots in the arena.
-    unsigned my_num_slots;
-
-    //! The number of reserved slots (can be occupied only by external threads).
-    unsigned my_num_reserved_slots;
 
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
     // arena needs an extra worker despite a global limit
@@ -283,6 +271,21 @@ struct arena_base : padded<intrusive_list_node> {
     // the number of local mandatory concurrency requests
     int my_local_concurrency_requests;
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY*/
+
+    //! ABA prevention marker.
+    std::uintptr_t my_aba_epoch;
+    //! The number of slots in the arena.
+    unsigned my_num_slots;
+    //! The number of reserved slots (can be occupied only by external threads).
+    unsigned my_num_reserved_slots;
+    //! The number of workers requested by the external thread owning the arena.
+    unsigned my_max_num_workers;
+
+    //! The target serialization epoch for callers of adjust_job_count_estimate
+    int my_adjust_demand_target_epoch;
+
+    //! The current serialization epoch for callers of adjust_job_count_estimate
+    d1::waitable_atomic<int> my_adjust_demand_current_epoch;
 
 #if TBB_USE_ASSERT
     //! Used to trap accesses to the object after its destruction.

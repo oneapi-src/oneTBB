@@ -104,6 +104,9 @@ TEST_CASE("Test constraints propagation during arenas copy construction") {
 }
 #endif /*__TBB_HWLOC_VALID_ENVIRONMENT*/
 
+// The test cannot be stabilized with TBB malloc under Thread Sanitizer
+#if !__TBB_USE_THREAD_SANITIZER
+
 //! Testing memory leaks absence
 //! \brief \ref resource_usage
 TEST_CASE("Test memory leaks") {
@@ -145,6 +148,7 @@ TEST_CASE("Test memory leaks") {
     }
     REQUIRE_MESSAGE(no_memory_leak, "Seems we get memory leak here.");
 }
+#endif
 
 //! Testing arena constraints setters
 //! \brief \ref interface \ref requirement
@@ -211,4 +215,11 @@ TEST_CASE("Test concurrency getters output for constraints with custom concurren
 
     c.set_max_threads_per_core(1);
     check_concurrency_level(c);
+}
+
+//! Testing constraints_threads_per_core() reserved entry point
+//! \brief \ref error_guessing
+TEST_CASE("Testing constraints_threads_per_core() reserved entry point") {
+    tbb::task_arena::constraints c{};
+    tbb::detail::r1::constraints_threads_per_core(c);
 }

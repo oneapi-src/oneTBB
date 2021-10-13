@@ -255,6 +255,12 @@ private:
 
 // Simple test for basic resumable tasks functionality
 void TestSuspendResume() {
+#if __TBB_USE_SANITIZERS
+    constexpr int iter_size = 100;
+#else
+    constexpr int iter_size = 50000;
+#endif
+
     std::atomic<int> global_epoch; global_epoch = 0;
     EpochAsyncActivity async(4, global_epoch);
 
@@ -263,7 +269,7 @@ void TestSuspendResume() {
     inner_par_iters = outer_par_iters = 0;
 
     tbb::parallel_for(0, N, [&](int) {
-        for (int i = 0; i < 100; ++i) {
+        for (int i = 0; i < iter_size; ++i) {
             ets_fiber.local() = i;
 
             int local_epoch;
@@ -286,7 +292,7 @@ void TestSuspendResume() {
         ++outer_par_iters;
     });
     CHECK(outer_par_iters == N);
-    CHECK(inner_par_iters == N*N*100);
+    CHECK(inner_par_iters == N*N*iter_size);
 }
 
 // During cleanup external thread's local task pool may

@@ -142,7 +142,7 @@ struct TestThread: utils::NoAssign {
         // intersectingObjects takes into account object shuffle
         REQUIRE_MESSAGE((!prevLarge || intersectingObjects(currLarge, prevLarge, 32*1024)), "Possible memory leak");
         pthread_key_create( &key, &threadDtor );
-        pthread_setspecific(key, (const void*)42);
+        pthread_setspecific(key, (const void*)this);
     }
 };
 

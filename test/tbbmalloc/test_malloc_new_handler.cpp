@@ -33,9 +33,7 @@
 #pragma warning (disable: 4800)
 #endif //#if _MSC_VER
 
-#include "../../src/tbb/tls.h"
-
-tbb::detail::r1::tls<bool> new_handler_called;
+thread_local bool new_handler_called = false;
 void customNewHandler() {
     new_handler_called = true;
     throw std::bad_alloc();
