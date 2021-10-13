@@ -27,11 +27,11 @@
 
 #include <cstdlib>
 
-#if _WIN32 || _WIN64
-#include <Windows.h>
+#ifdef _WIN32
+#include <windows.h>
 #else
 #include <dlfcn.h>
-#endif /* _WIN32||_WIN64 */
+#endif
 
 #if __TBB_WEAK_SYMBOLS_PRESENT
 
