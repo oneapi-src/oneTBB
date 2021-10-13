@@ -227,7 +227,7 @@ bool examine_potentials(std::vector<board_element>& b, bool *progress) {
     return valid_board(b);
 }
 
-void partial_solve(std::vector<board_element> b, unsigned first_potential_set) {
+void partial_solve(std::vector<board_element>& b, unsigned first_potential_set) {
     if (fixed_board(b)) {
         if (find_one)
             g->cancel();
@@ -247,13 +247,11 @@ void partial_solve(std::vector<board_element> b, unsigned first_potential_set) {
             ++first_potential_set;
         for (unsigned short potential = 1; potential <= BOARD_DIM; ++potential) {
             if (1 << (potential - 1) & b[first_potential_set].potential_set) {
-                std::vector<board_element> new_board = b;
-                new_board[first_potential_set].solved_element = potential;
-#if __TBB_CPP14_PRESENT
-                g->run([new_board = std::move(new_board), first_potential_set]() {
-#else
                 g->run([=]() {
-#endif
+                    //as task_group treat passed in functor as const - const_cast is needed 
+                    //to allow modification of the copy
+                    auto& new_board = const_cast<std::vector<board_element>&>(b);
+                    new_board[first_potential_set].solved_element = potential;
                     partial_solve(new_board, first_potential_set);
                 });
             }
