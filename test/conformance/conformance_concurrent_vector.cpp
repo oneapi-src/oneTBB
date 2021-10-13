@@ -990,7 +990,7 @@ void TestConcurrentGrowBy() {
         REQUIRE( v.size() == std::size_t(range_size) );
 
         // Verify that v is a permutation of 0..m
-        size_t inversions = 0, direct_inits = 0, def_inits = 0, copy_inits = 0, move_inits = 0;
+        size_t direct_inits = 0, def_inits = 0, copy_inits = 0, move_inits = 0;
         std::vector<bool> found(range_size, 0);
         for( std::size_t i=0; i<range_size; ++i ) {
             if( v[i].state == move_support_tests::Foo::DefaultInitialized ) ++def_inits;
@@ -1003,8 +1003,6 @@ void TestConcurrentGrowBy() {
             intptr_t index = v[i].bar();
             REQUIRE( !found[index] );
             found[index] = true;
-            if( i>0 )
-                inversions += v[i].bar()<v[i-1].bar();
         }
 
         std::size_t expected_direct_inits = 0, expected_def_inits = 0, expected_copy_inits = 0, expected_move_inits = 0;
