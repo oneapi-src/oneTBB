@@ -39,7 +39,6 @@ unsigned short init_values[BOARD_SIZE] = { 1, 0, 0, 9, 0, 0, 0, 8, 0, 0, 8, 0, 2
                                            0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 7, 4, 0, 0, 7, 0, 0,
                                            0, 3, 0, 0, 3, 0, 0, 0, 2, 0, 0, 5, 0, 0, 0, 0, 0,
                                            0, 1, 0, 0, 5, 0, 0, 0, 1, 0, 0, 0, 0 };
-oneapi::tbb::task_group *g;
 double solve_time;
 
 typedef struct {
@@ -227,10 +226,10 @@ bool examine_potentials(std::vector<board_element>& b, bool *progress) {
     return valid_board(b);
 }
 
-void partial_solve(std::vector<board_element>& b, unsigned first_potential_set) {
+void partial_solve(oneapi::tbb::task_group& g, std::vector<board_element>& b, unsigned first_potential_set) {
     if (fixed_board(b)) {
         if (find_one)
-            g->cancel();
+            g.cancel();
         if (++nSols == 1 && verbose) {
             print_board(b);
         }
@@ -240,19 +239,19 @@ void partial_solve(std::vector<board_element>& b, unsigned first_potential_set) 
     bool progress = true;
     bool success = examine_potentials(b, &progress);
     if (success && progress) {
-        partial_solve(b, first_potential_set);
+        partial_solve(g, b, first_potential_set);
     }
     else if (success && !progress) {
         while (b[first_potential_set].solved_element != 0)
             ++first_potential_set;
         for (unsigned short potential = 1; potential <= BOARD_DIM; ++potential) {
             if (1 << (potential - 1) & b[first_potential_set].potential_set) {
-                g->run([=]() {
+                g.run([&g, b /*make a copy of the board*/, first_potential_set, potential]() {
                     //as task_group treat passed in functor as const - const_cast is needed 
                     //to allow modification of the copy
                     auto& new_board = const_cast<std::vector<board_element>&>(b);
                     new_board[first_potential_set].solved_element = potential;
-                    partial_solve(new_board, first_potential_set);
+                    partial_solve(g, new_board, first_potential_set);
                 });
             }
         }
@@ -264,12 +263,11 @@ unsigned solve(int p) {
     nSols = 0;
     std::vector<board_element> start_board(BOARD_SIZE);
     init_board(start_board, init_values);
-    g = new oneapi::tbb::task_group;
+    oneapi::tbb::task_group g;
     oneapi::tbb::tick_count t0 = oneapi::tbb::tick_count::now();
-    partial_solve(start_board, 0);
-    g->wait();
+    partial_solve(g, start_board, 0);
+    g.wait();
     solve_time = (oneapi::tbb::tick_count::now() - t0).seconds();
-    delete g;
     return nSols;
 }
 
