@@ -228,7 +228,7 @@ public:
                                  unsigned arena_index, std::size_t stack_size );
 
     //! Removes the arena from the market's list
-    void try_destroy_arena ( arena*, uintptr_t aba_epoch, unsigned pririty_level );
+    void try_destroy_arena ( arena*, uintptr_t aba_epoch, unsigned priority_level );
 
     //! Removes the arena from the market's list
     void detach_arena ( arena& );
