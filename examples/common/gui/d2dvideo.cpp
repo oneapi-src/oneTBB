@@ -164,7 +164,7 @@ void video::terminate() {
         m_pD2DFactory->Release();
     g_video = 0;
     running = false;
-    
+
     delete[] g_pImg;
     g_pImg = 0;
 }
