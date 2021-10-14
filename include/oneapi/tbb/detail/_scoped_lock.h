@@ -79,7 +79,7 @@ class rw_scoped_lock {
 public:
     //! Construct lock that has not acquired a mutex.
     /** Equivalent to zero-initialization of *this. */
-    constexpr rw_scoped_lock() noexcept : m_mutex(nullptr), m_is_writer(false) {}
+    constexpr rw_scoped_lock() noexcept : m_mutex(nullptr) {}
 
     //! Acquire lock on given mutex.
     rw_scoped_lock(Mutex& m, bool write = true) : m_mutex(nullptr) {

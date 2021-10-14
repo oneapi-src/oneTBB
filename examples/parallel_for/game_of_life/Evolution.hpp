@@ -124,8 +124,7 @@ public:
 
     ~ParallelEvolution() {
         //! delete global_control object
-        if (m_pGlobControl != nullptr)
-            delete m_pGlobControl;
+        delete m_pGlobControl;
     }
     virtual void Run(double execution_time, int nthread);
     virtual void Step();

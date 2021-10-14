@@ -59,19 +59,19 @@ public:
 };
 
 class alignas(max_nfs_size) allowed_parallelism_control : public control_storage {
-    virtual std::size_t default_value() const override {
+    std::size_t default_value() const override {
         return max(1U, governor::default_num_threads());
     }
-    virtual bool is_first_arg_preferred(std::size_t a, std::size_t b) const override {
+    bool is_first_arg_preferred(std::size_t a, std::size_t b) const override {
         return a<b; // prefer min allowed parallelism
     }
-    virtual void apply_active(std::size_t new_active) override {
+    void apply_active(std::size_t new_active) override {
         control_storage::apply_active(new_active);
         __TBB_ASSERT( my_active_value>=1, NULL );
         // -1 to take external thread into account
         market::set_active_num_workers( my_active_value-1 );
     }
-    virtual std::size_t active_value() override {
+    std::size_t active_value() override {
         spin_mutex::scoped_lock lock(my_list_mutex); // protect my_list.empty() call
         if (my_list.empty())
             return default_value();
@@ -88,10 +88,10 @@ public:
 };
 
 class alignas(max_nfs_size) stack_size_control : public control_storage {
-    virtual std::size_t default_value() const override {
+    std::size_t default_value() const override {
         return ThreadStackSize;
     }
-    virtual void apply_active(std::size_t new_active) override {
+    void apply_active(std::size_t new_active) override {
         control_storage::apply_active(new_active);
 #if __TBB_WIN8UI_SUPPORT && (_WIN32_WINNT < 0x0A00)
         __TBB_ASSERT( false, "For Windows 8 Store* apps we must not set stack size" );
@@ -100,20 +100,20 @@ class alignas(max_nfs_size) stack_size_control : public control_storage {
 };
 
 class alignas(max_nfs_size) terminate_on_exception_control : public control_storage {
-    virtual std::size_t default_value() const override {
+    std::size_t default_value() const override {
         return 0;
     }
 };
 
 #if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
 class alignas(max_nfs_size) lifetime_control : public control_storage {
-    virtual bool is_first_arg_preferred(std::size_t, std::size_t) const override {
+    bool is_first_arg_preferred(std::size_t, std::size_t) const override {
         return false; // not interested
     }
-    virtual std::size_t default_value() const override {
+    std::size_t default_value() const override {
         return 0;
     }
-    virtual void apply_active(std::size_t new_active) override {
+    void apply_active(std::size_t new_active) override {
         if (new_active == 1) {
             // reserve the market reference
             market::global_market_mutex_type::scoped_lock lock( market::theMarketMutex );

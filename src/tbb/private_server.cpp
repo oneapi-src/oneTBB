@@ -165,7 +165,7 @@ private:
     //! Equivalent of adding additional_slack to my_slack and waking up to 2 threads if my_slack permits.
     void wake_some( int additional_slack );
 
-    virtual ~private_server();
+    ~private_server() override;
 
     void remove_server_ref() {
         if( --my_ref_count==0 ) {

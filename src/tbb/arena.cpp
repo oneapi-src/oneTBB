@@ -49,7 +49,7 @@ public:
         restore_affinity_mask(my_binding_handler, this_task_arena::current_thread_index());
     }
 
-    ~numa_binding_observer(){
+    ~numa_binding_observer() override{
         destroy_binding_handler(my_binding_handler);
     }
 };
@@ -631,7 +631,7 @@ class delegated_task : public d1::task {
 public:
     delegated_task(d1::delegate_base& d, concurrent_monitor& s, d1::wait_context& wo)
         : m_delegate(d), m_monitor(s), m_wait_ctx(wo), m_completed{ false }{}
-    ~delegated_task() {
+    ~delegated_task() override {
         // The destructor can be called earlier than the m_monitor is notified
         // because the waiting thread can be released after m_wait_ctx.release_wait.
         // To close that race we wait for the m_completed signal.
