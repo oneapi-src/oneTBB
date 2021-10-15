@@ -96,7 +96,7 @@ private:
 protected:
     private_worker( private_server& server, tbb_client& client, const std::size_t i ) :
         my_state(st_init), my_server(server), my_client(client), my_index(i),
-        my_thread_monitor(), my_handle(), my_next()
+        my_handle(), my_next()
     {}
 };
 

@@ -82,7 +82,7 @@ public:
         friend class thread_monitor;
         std::atomic<std::size_t> my_epoch{0};
     };
-    thread_monitor() : skipped_wakeup(false), my_sema() {
+    thread_monitor() : skipped_wakeup(false) {
         ITT_SYNC_CREATE(&my_sema, SyncType_RML, SyncObj_ThreadMonitor);
     }
     ~thread_monitor() {}
