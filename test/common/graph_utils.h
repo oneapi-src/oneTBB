@@ -310,14 +310,14 @@ struct harness_mapped_receiver : public tbb::flow::receiver<T> {
     virtual
 #endif
     ~harness_mapped_receiver() {
-        if ( my_multiset ) delete my_multiset;
+        delete my_multiset;
     }
 
     void initialize_map( const T& m, size_t c ) {
        my_count = 0;
        max_value = m;
        num_copies = c;
-       if ( my_multiset ) delete my_multiset;
+       delete my_multiset;
        my_multiset = new multiset_type;
     }
 

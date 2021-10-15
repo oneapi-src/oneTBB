@@ -82,7 +82,7 @@ public:
     // TODO: pass the graph_buffer_policy to the base so it can allocate the queue instead.
     // This would be an interface-breaking change.
     virtual ~function_input_base() {
-        if ( my_queue ) delete my_queue;
+        delete my_queue;
     }
 
     graph_task* try_put_task( const input_type& t) override {

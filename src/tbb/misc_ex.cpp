@@ -119,10 +119,8 @@ void affinity_helper::protect_affinity_mask( bool restore_process_mask ) {
     }
 }
 void affinity_helper::dismiss() {
-    if( threadMask ) {
-        delete [] threadMask;
-        threadMask = NULL;
-    }
+    delete [] threadMask;
+    threadMask = NULL;
     is_changed = 0;
 }
 #undef curMaskSize
