@@ -20,7 +20,6 @@
 
 #include "_assert.h"
 #include "_utils.h"
-#include "_template_helpers.h"
 #include <atomic>
 #if !__TBBMALLOC_BUILD // TODO: check this macro with TBB Malloc
 #include "../profiling.h"
@@ -118,10 +117,6 @@ private:
 
         // acquire fence not necessary here due to causality rule and surrounding atomics
         handler_busy.store(1, std::memory_order_relaxed);
-        // auto handler_lock = make_raii_guard([&](){
-        //     // release the handler
-            
-        // });
 
         // ITT note: &pending_operations tag covers access to the handler_busy flag
         // itself. Capturing the state of the pending_operations signifies that

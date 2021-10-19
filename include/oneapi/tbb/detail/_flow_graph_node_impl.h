@@ -202,7 +202,6 @@ private:
                 tmp->status.store(SUCCEEDED, std::memory_order_release);
                 break;
             case app_body_bypass: {
-                std::cout << "app_body_bypass" << std::endl;
                 tmp->bypass_t = NULL;
                 __TBB_ASSERT(my_max_concurrency != 0, NULL);
                 --my_concurrency;
