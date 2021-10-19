@@ -31,6 +31,7 @@
 #include "concurrent_monitor.h"
 
 #include <atomic>
+#include <iostream>
 
 #if !__TBB_CPU_CTL_ENV_PRESENT
 #include <fenv.h> //

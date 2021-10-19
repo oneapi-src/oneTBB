@@ -118,10 +118,10 @@ private:
 
         // acquire fence not necessary here due to causality rule and surrounding atomics
         handler_busy.store(1, std::memory_order_relaxed);
-        auto handler_lock = make_raii_guard([&](){
-            // release the handler
-            handler_busy.store(0, std::memory_order_release);
-        });
+        // auto handler_lock = make_raii_guard([&](){
+        //     // release the handler
+            
+        // });
 
         // ITT note: &pending_operations tag covers access to the handler_busy flag
         // itself. Capturing the state of the pending_operations signifies that
@@ -133,6 +133,9 @@ private:
 
         // handle all the operations
         handle_operations(op_list);
+
+        // release the handler
+        handler_busy.store(0, std::memory_order_release);
     }
 
     // An atomically updated list (aka mailbox) of pending operations

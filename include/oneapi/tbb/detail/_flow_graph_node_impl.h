@@ -202,6 +202,7 @@ private:
                 tmp->status.store(SUCCEEDED, std::memory_order_release);
                 break;
             case app_body_bypass: {
+                std::cout << "app_body_bypass" << std::endl;
                 tmp->bypass_t = NULL;
                 __TBB_ASSERT(my_max_concurrency != 0, NULL);
                 --my_concurrency;
@@ -264,16 +265,26 @@ private:
     }
 
     graph_task* try_put_task_impl( const input_type& t, /*lightweight=*/std::true_type ) {
+        graph_task* return_task = nullptr;
+        std::function<void()> lightweight_body;
         if( my_max_concurrency == 0 ) {
-            return apply_body_bypass(t);
+            lightweight_body = [&](){
+                return_task = apply_body_bypass(t);
+            };
         } else {
-            operation_type check_op(t, occupy_concurrency);
-            my_aggregator.execute(&check_op);
-            if( check_op.status == SUCCEEDED ) {
-                return apply_body_bypass(t);
-            }
-            return internal_try_put_bypass(t);
+            lightweight_body = [&](){
+                operation_type check_op(t, occupy_concurrency);
+                my_aggregator.execute(&check_op);
+                if( check_op.status == SUCCEEDED ) {
+                    return_task = apply_body_bypass(t);
+                }
+                if(!return_task){
+                    return_task = internal_try_put_bypass(t);
+                }
+            };
         }
+        execute_in_graph_arena(graph_reference(), lightweight_body);
+        return return_task;
     }
 
     graph_task* try_put_task_impl( const input_type& t, /*lightweight=*/std::false_type ) {
