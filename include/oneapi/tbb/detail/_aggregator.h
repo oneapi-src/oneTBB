@@ -114,7 +114,6 @@ private:
         // only one thread can possibly spin here at a time
         spin_wait_until_eq(handler_busy, uintptr_t(0));
         call_itt_notify(acquired, &handler_busy);
-
         // acquire fence not necessary here due to causality rule and surrounding atomics
         handler_busy.store(1, std::memory_order_relaxed);
 
