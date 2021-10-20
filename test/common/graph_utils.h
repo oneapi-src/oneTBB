@@ -311,6 +311,7 @@ struct harness_mapped_receiver : public tbb::flow::receiver<T> {
 #endif
     ~harness_mapped_receiver() {
         delete my_multiset;
+        my_multiset = nullptr;
     }
 
     void initialize_map( const T& m, size_t c ) {

@@ -91,7 +91,7 @@ void video::terminate() {
     running = false;
 
     delete[] g_pImg;
-    g_pImg = 0;
+    g_pImg = nullptr;
 }
 
 video::~video() {

@@ -83,6 +83,7 @@ public:
     // This would be an interface-breaking change.
     virtual ~function_input_base() {
         delete my_queue;
+        my_queue = nullptr;
     }
 
     graph_task* try_put_task( const input_type& t) override {

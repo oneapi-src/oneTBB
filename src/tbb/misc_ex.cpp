@@ -91,6 +91,7 @@ static int num_masks;
 
 void destroy_process_mask() {
     delete [] process_mask;
+    process_mask = nullptr;
 }
 
 #define curMaskSize sizeof(basic_mask_t) * num_masks
