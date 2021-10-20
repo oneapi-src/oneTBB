@@ -47,7 +47,7 @@ typedef struct {
 } board_element;
 
 void read_board(const char* filename) {
-    FILE *fp;
+    FILE* fp;
     int input;
     fp = fopen(filename, "r");
     if (!fp) {
