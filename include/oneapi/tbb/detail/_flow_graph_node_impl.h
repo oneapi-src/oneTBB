@@ -265,13 +265,14 @@ private:
 
     graph_task* try_put_task_impl( const input_type& t, /*lightweight=*/std::true_type ) {
         graph_task* return_task = nullptr;
-        std::function<void()> lightweight_body;
+
         if( my_max_concurrency == 0 ) {
-            lightweight_body = [&](){
+            auto lightweight_body = [&](){
                 return_task = apply_body_bypass(t);
             };
+            execute_in_graph_arena(graph_reference(), lightweight_body);
         } else {
-            lightweight_body = [&](){
+            auto lightweight_body = [&](){
                 operation_type check_op(t, occupy_concurrency);
                 my_aggregator.execute(&check_op);
                 if( check_op.status == SUCCEEDED ) {
@@ -281,8 +282,9 @@ private:
                     return_task = internal_try_put_bypass(t);
                 }
             };
+            execute_in_graph_arena(graph_reference(), lightweight_body);
         }
-        execute_in_graph_arena(graph_reference(), lightweight_body);
+        
         return return_task;
     }
 
