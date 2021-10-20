@@ -46,7 +46,7 @@ typedef struct {
     unsigned potential_set;
 } board_element;
 
-void read_board(const char *filename) {
+void read_board(const char* filename) {
     FILE *fp;
     int input;
     fp = fopen(filename, "r");
@@ -169,7 +169,7 @@ bool valid_board(const std::vector<board_element>& b) {
     return success;
 }
 
-bool examine_potentials(std::vector<board_element>& b, bool *progress) {
+bool examine_potentials(std::vector<board_element>& b, bool& progress) {
     bool singletons = false;
     for (unsigned i = 0; i < BOARD_SIZE; ++i) {
         if (b[i].solved_element == 0 && b[i].potential_set == 0) // empty set
@@ -222,11 +222,13 @@ bool examine_potentials(std::vector<board_element>& b, bool *progress) {
             }
         }
     }
-    *progress = singletons;
+    progress = singletons;
     return valid_board(b);
 }
 
-void partial_solve(oneapi::tbb::task_group& g, std::vector<board_element>& b, unsigned first_potential_set) {
+void partial_solve(oneapi::tbb::task_group& g,
+                   std::vector<board_element>& b,
+                   unsigned first_potential_set) {
     if (fixed_board(b)) {
         if (find_one)
             g.cancel();
@@ -237,7 +239,7 @@ void partial_solve(oneapi::tbb::task_group& g, std::vector<board_element>& b, un
     }
     calculate_potentials(b);
     bool progress = true;
-    bool success = examine_potentials(b, &progress);
+    bool success = examine_potentials(b, progress);
     if (success && progress) {
         partial_solve(g, b, first_potential_set);
     }
@@ -247,7 +249,7 @@ void partial_solve(oneapi::tbb::task_group& g, std::vector<board_element>& b, un
         for (unsigned short potential = 1; potential <= BOARD_DIM; ++potential) {
             if (1 << (potential - 1) & b[first_potential_set].potential_set) {
                 g.run([&g, b /*make a copy of the board*/, first_potential_set, potential]() {
-                    //as task_group treat passed in functor as const - const_cast is needed 
+                    //as task_group treat passed in functor as const - const_cast is needed
                     //to allow modification of the copy
                     auto& new_board = const_cast<std::vector<board_element>&>(b);
                     new_board[first_potential_set].solved_element = potential;
@@ -271,7 +273,7 @@ unsigned solve(int p) {
     return nSols;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     oneapi::tbb::tick_count mainStartTime = oneapi::tbb::tick_count::now();
 
     utility::thread_number_range threads(utility::get_default_num_threads);
