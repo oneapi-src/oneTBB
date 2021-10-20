@@ -139,7 +139,7 @@ public:
         }
 
     private:
-        //! The pointer to the mutex owned, or NULL if not holding a mutex.
+        //! The pointer to the mutex owned, or nullptr if not holding a mutex.
         queuing_mutex* m_mutex{nullptr};
 
         //! The pointer to the next competitor for a mutex

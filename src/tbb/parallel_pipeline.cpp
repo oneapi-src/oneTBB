@@ -143,7 +143,7 @@ class input_buffer {
     //! True for ordered filter, false otherwise.
     const bool is_ordered;
 
-    //! for parallel filters that accepts NULLs, thread-local flag for reaching end_of_input
+    //! for parallel filters that accepts nullptrs, thread-local flag for reaching end_of_input
     using end_of_input_tls_t = basic_tls<input_buffer*>;
     end_of_input_tls_t end_of_input_tls;
     bool end_of_input_tls_allocated; // no way to test pthread creation of TLS

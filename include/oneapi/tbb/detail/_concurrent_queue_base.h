@@ -478,7 +478,7 @@ public:
     }
 
     std::ptrdiff_t size() const {
-        __TBB_ASSERT(sizeof(std::ptrdiff_t) <= sizeof(size_type), NULL);
+        __TBB_ASSERT(sizeof(std::ptrdiff_t) <= sizeof(size_type), nullptr);
         std::ptrdiff_t hc = head_counter.load(std::memory_order_acquire);
         std::ptrdiff_t tc = tail_counter.load(std::memory_order_relaxed);
         std::ptrdiff_t nie = n_invalid_entries.load(std::memory_order_relaxed);

@@ -238,12 +238,12 @@ class graph : no_copy, public graph_proxy {
 
     void prepare_task_arena(bool reinit = false) {
         if (reinit) {
-            __TBB_ASSERT(my_task_arena, "task arena is NULL");
+            __TBB_ASSERT(my_task_arena, "task arena is nullptr");
             my_task_arena->terminate();
             my_task_arena->initialize(task_arena::attach());
         }
         else {
-            __TBB_ASSERT(my_task_arena == NULL, "task arena is not NULL");
+            __TBB_ASSERT(my_task_arena == nullptr, "task arena is not nullptr");
             my_task_arena = new task_arena(task_arena::attach());
         }
         if (!my_task_arena->is_active()) // failed to attach
@@ -449,7 +449,7 @@ inline void spawn_in_graph_arena(graph& g, graph_task& arena_task) {
         if( !gt )
             return;
 
-        __TBB_ASSERT(g.my_task_arena && g.my_task_arena->is_active(), NULL);
+        __TBB_ASSERT(g.my_task_arena && g.my_task_arena->is_active(), nullptr);
         submit( *gt, *g.my_task_arena, *g.my_context
 #if __TBB_PREVIEW_CRITICAL_TASKS
                 , /*as_critical=*/false

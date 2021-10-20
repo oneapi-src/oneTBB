@@ -145,7 +145,7 @@ extern "C" bool WINAPI DllMain( HANDLE /*hinstDLL*/, DWORD reason, LPVOID lpvRes
         case DLL_PROCESS_DETACH:
             // Since THREAD_DETACH is not called for the main thread, call auto-termination
             // here as well - but not during process shutdown (due to risk of a deadlock).
-            if ( lpvReserved==NULL ) { // library unload
+            if ( lpvReserved == nullptr ) { // library unload
                 governor::terminate_external_thread();
             }
             __TBB_InitOnce::remove_ref();

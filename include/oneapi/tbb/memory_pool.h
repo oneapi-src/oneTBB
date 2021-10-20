@@ -211,7 +211,7 @@ template <typename Alloc>
 void *memory_pool<Alloc>::allocate_request(intptr_t pool_id, size_t & bytes) {
     memory_pool<Alloc> &self = *reinterpret_cast<memory_pool<Alloc>*>(pool_id);
     const size_t unit_size = sizeof(typename Alloc::value_type);
-    __TBBMALLOC_ASSERT( 0 == bytes%unit_size, NULL);
+    __TBBMALLOC_ASSERT( 0 == bytes%unit_size, nullptr);
     void *ptr;
 #if TBB_USE_EXCEPTIONS
     try {
@@ -234,7 +234,7 @@ template <typename Alloc>
 int memory_pool<Alloc>::deallocate_request(intptr_t pool_id, void* raw_ptr, size_t raw_bytes) {
     memory_pool<Alloc> &self = *reinterpret_cast<memory_pool<Alloc>*>(pool_id);
     const size_t unit_size = sizeof(typename Alloc::value_type);
-    __TBBMALLOC_ASSERT( 0 == raw_bytes%unit_size, NULL);
+    __TBBMALLOC_ASSERT( 0 == raw_bytes%unit_size, nullptr);
     self.my_alloc.deallocate( static_cast<typename Alloc::value_type*>(raw_ptr), raw_bytes/unit_size );
     return 0;
 }

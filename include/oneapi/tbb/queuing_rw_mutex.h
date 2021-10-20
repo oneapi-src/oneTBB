@@ -46,7 +46,7 @@ public:
         create_itt_sync(this, "tbb::queuing_rw_mutex", "");
     }
 
-    //! Destructor asserts if the mutex is acquired, i.e. q_tail is non-NULL
+    //! Destructor asserts if the mutex is acquired, i.e. q_tail is non-nullptr
     ~queuing_rw_mutex() {
         __TBB_ASSERT(q_tail.load(std::memory_order_relaxed) == nullptr, "destruction of an acquired mutex");
     }
@@ -111,7 +111,7 @@ public:
         bool is_writer() const;
 
     private:
-        //! The pointer to the mutex owned, or NULL if not holding a mutex.
+        //! The pointer to the mutex owned, or nullptr if not holding a mutex.
         queuing_rw_mutex* my_mutex;
 
         //! The 'pointer' to the previous and next competitors for a mutex

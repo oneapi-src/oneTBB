@@ -171,7 +171,7 @@ d1::task* task_dispatcher::receive_or_steal_task(
     thread_data& tls, execution_data_ext& ed, Waiter& waiter, isolation_type isolation,
     bool fifo_allowed, bool critical_allowed)
 {
-    __TBB_ASSERT(governor::is_thread_data_set(&tls), NULL);
+    __TBB_ASSERT(governor::is_thread_data_set(&tls), nullptr);
     // Task to return
     d1::task* t = nullptr;
     // Get tls data (again)
@@ -341,7 +341,7 @@ d1::task* task_dispatcher::local_wait_for_all(d1::task* t, Waiter& waiter ) {
                 }
                 // Retrieve the task from local task pool
                 if (t || (slot.is_task_pool_published() && (t = slot.get_task(ed, isolation)))) {
-                    __TBB_ASSERT(ed.original_slot == m_thread_data->my_arena_index, NULL);
+                    __TBB_ASSERT(ed.original_slot == m_thread_data->my_arena_index, nullptr);
                     ed.context = task_accessor::context(*t);
                     ed.isolation = task_accessor::isolation(*t);
                     continue;
@@ -452,7 +452,7 @@ inline d1::task* task_dispatcher::get_mailbox_task(mail_inbox& my_inbox, executi
         // We have exclusive access to the proxy, and can destroy it.
         tp->allocator.delete_object(tp, ed);
     }
-    return NULL;
+    return nullptr;
 }
 
 template <typename Waiter>

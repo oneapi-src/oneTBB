@@ -78,7 +78,7 @@ class affinity_partitioner_base: no_copy {
     friend class affinity_partitioner;
     friend class affinity_partition_type;
     //! Array that remembers affinities of tree positions to affinity_id.
-    /** NULL if my_size==0. */
+    /** nullptr if my_size==0. */
     slot_id* my_array;
     //! Number of elements in my_array.
     std::size_t my_size;

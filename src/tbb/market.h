@@ -168,7 +168,7 @@ private:
         }
     }
 
-    //! Returns next arena that needs more workers, or NULL.
+    //! Returns next arena that needs more workers, or nullptr.
     arena* arena_in_need(arena* prev);
 
     template <typename Pred>

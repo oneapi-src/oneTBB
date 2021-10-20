@@ -66,7 +66,7 @@ public:
     function_input_base( graph &g, size_t max_concurrency, node_priority_t a_priority )
         : my_graph_ref(g), my_max_concurrency(max_concurrency)
         , my_concurrency(0), my_priority(a_priority)
-        , my_queue(!has_policy<rejecting, Policy>::value ? new input_queue_type() : NULL)
+        , my_queue(!has_policy<rejecting, Policy>::value ? new input_queue_type() : nullptr)
         , my_predecessors(this)
         , forwarder_busy(false)
     {
@@ -156,7 +156,7 @@ private:
         graph_task* bypass_t;
         operation_type(const input_type& e, op_type t) :
             type(char(t)), elem(const_cast<input_type*>(&e)) {}
-        operation_type(op_type t) : type(char(t)), r(NULL) {}
+        operation_type(op_type t) : type(char(t)), r(nullptr) {}
     };
 
     bool forwarder_busy;
@@ -165,7 +165,7 @@ private:
     aggregator< handler_type, operation_type > my_aggregator;
 
     graph_task* perform_queued_requests() {
-        graph_task* new_task = NULL;
+        graph_task* new_task = nullptr;
         if(my_queue) {
             if(!my_queue->empty()) {
                 ++my_concurrency;
@@ -202,8 +202,8 @@ private:
                 tmp->status.store(SUCCEEDED, std::memory_order_release);
                 break;
             case app_body_bypass: {
-                tmp->bypass_t = NULL;
-                __TBB_ASSERT(my_max_concurrency != 0, NULL);
+                tmp->bypass_t = nullptr;
+                __TBB_ASSERT(my_max_concurrency != 0, nullptr);
                 --my_concurrency;
                 if(my_concurrency<my_max_concurrency)
                     tmp->bypass_t = perform_queued_requests();
@@ -226,7 +226,7 @@ private:
 
     //! Put to the node, but return the task instead of enqueueing it
     void internal_try_put_task(operation_type *op) {
-        __TBB_ASSERT(my_max_concurrency != 0, NULL);
+        __TBB_ASSERT(my_max_concurrency != 0, nullptr);
         if (my_concurrency < my_max_concurrency) {
             ++my_concurrency;
             graph_task * new_task = create_body_task(*(op->elem));
@@ -236,14 +236,14 @@ private:
             op->bypass_t = SUCCESSFULLY_ENQUEUED;
             op->status.store(SUCCEEDED, std::memory_order_release);
         } else {
-            op->bypass_t = NULL;
+            op->bypass_t = nullptr;
             op->status.store(FAILED, std::memory_order_release);
         }
     }
 
     //! Creates tasks for postponed messages if available and if concurrency allows
     void internal_forward(operation_type *op) {
-        op->bypass_t = NULL;
+        op->bypass_t = nullptr;
         if (my_concurrency < my_max_concurrency)
             op->bypass_t = perform_queued_requests();
         if(op->bypass_t)
@@ -260,7 +260,7 @@ private:
         if( op_data.status == SUCCEEDED ) {
             return op_data.bypass_t;
         }
-        return NULL;
+        return nullptr;
     }
 
     graph_task* try_put_task_impl( const input_type& t, /*lightweight=*/std::true_type ) {
@@ -306,13 +306,13 @@ private:
     //! This is executed by an enqueued task, the "forwarder"
     graph_task* forward_task() {
         operation_type op_data(try_fwd);
-        graph_task* rval = NULL;
+        graph_task* rval = nullptr;
         do {
             op_data.status = WAIT;
             my_aggregator.execute(&op_data);
             if(op_data.status == SUCCEEDED) {
                 graph_task* ttask = op_data.bypass_t;
-                __TBB_ASSERT( ttask && ttask != SUCCESSFULLY_ENQUEUED, NULL );
+                __TBB_ASSERT( ttask && ttask != SUCCESSFULLY_ENQUEUED, nullptr);
                 rval = combine_tasks(my_graph_ref, rval, ttask);
             }
         } while (op_data.status == SUCCEEDED);
@@ -396,10 +396,10 @@ public:
     //TODO: consider moving into the base class
     graph_task* apply_body_impl_bypass( const input_type &i) {
         output_type v = apply_body_impl(i);
-        graph_task* postponed_task = NULL;
+        graph_task* postponed_task = nullptr;
         if( base_type::my_max_concurrency != 0 ) {
             postponed_task = base_type::try_get_postponed_task(i);
-            __TBB_ASSERT( !postponed_task || postponed_task != SUCCESSFULLY_ENQUEUED, NULL );
+            __TBB_ASSERT( !postponed_task || postponed_task != SUCCESSFULLY_ENQUEUED, nullptr);
         }
         if( postponed_task ) {
             // make the task available for other workers since we do not know successors'
@@ -524,7 +524,7 @@ public:
         fgt_begin_body( my_body );
         (*my_body)(i, my_output_ports);
         fgt_end_body( my_body );
-        graph_task* ttask = NULL;
+        graph_task* ttask = nullptr;
         if(base_type::my_max_concurrency != 0) {
             ttask = base_type::try_get_postponed_task(i);
         }
@@ -663,7 +663,7 @@ protected:
 
     graph_task* execute() override {
         if(!is_graph_active(my_graph_ref)) {
-            return NULL;
+            return nullptr;
         }
 #if _MSC_VER && !__INTEL_COMPILER
 #pragma warning (push)

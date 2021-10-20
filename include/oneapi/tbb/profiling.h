@@ -204,7 +204,7 @@ class event {
     const std::string my_name;
 
     static void emit_trace(const std::string &input) {
-        itt_metadata_str_add( ITT_DOMAIN_FLOW, NULL, FLOW_NULL, USER_EVENT, ( "FGA::DATAID::" + input ).c_str() );
+        itt_metadata_str_add( ITT_DOMAIN_FLOW, nullptr, FLOW_NULL, USER_EVENT, ( "FGA::DATAID::" + input ).c_str() );
     }
 
 public:

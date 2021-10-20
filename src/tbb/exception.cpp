@@ -158,7 +158,7 @@ bool gcc_rethrow_exception_broken() {
         is_broken = std::uncaught_exception();
     }
     if( is_broken ) fix_broken_rethrow();
-    __TBB_ASSERT( !std::uncaught_exception(), NULL );
+    __TBB_ASSERT( !std::uncaught_exception(), nullptr);
     return is_broken;
 }
 #else

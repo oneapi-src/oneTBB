@@ -185,7 +185,7 @@ public:
 
     void delete_segment( segment_index_type seg_index ) {
         segment_type disabled_segment = nullptr;
-        // Set the pointer to the segment to NULL in the table
+        // Set the pointer to the segment to nullptr in the table
         segment_type segment_to_delete = get_table()[seg_index].exchange(disabled_segment);
         if (segment_to_delete == segment_allocation_failure_tag) {
             return;
