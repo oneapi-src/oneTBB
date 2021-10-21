@@ -169,7 +169,7 @@ bool valid_board(const std::vector<board_element>& b) {
     return success;
 }
 
-bool examine_potentials(std::vector<board_element>& b, bool* progress) {
+bool examine_potentials(std::vector<board_element>& b, bool& progress) {
     bool singletons = false;
     for (unsigned i = 0; i < BOARD_SIZE; ++i) {
         if (b[i].solved_element == 0 && b[i].potential_set == 0) // empty set
@@ -222,7 +222,7 @@ bool examine_potentials(std::vector<board_element>& b, bool* progress) {
             }
         }
     }
-    *progress = singletons;
+    progress = singletons;
     return valid_board(b);
 }
 
@@ -239,7 +239,7 @@ void partial_solve(oneapi::tbb::task_group& g,
     }
     calculate_potentials(b);
     bool progress = true;
-    bool success = examine_potentials(b, &progress);
+    bool success = examine_potentials(b, progress);
     if (success && progress) {
         partial_solve(g, b, first_potential_set);
     }

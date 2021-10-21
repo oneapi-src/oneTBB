@@ -53,6 +53,10 @@
         // Suppress "typedef ignored ... when no variable is declared" warning by vc14
         #pragma warning (push)
         #pragma warning (disable: 4091)
+        #ifndef NOMINMAX
+            #define NOMINMAX
+        #endif
+        #include <windows.h>
         #include <dbghelp.h>
         #pragma warning (pop)
         #pragma comment (lib, "dbghelp.lib")
