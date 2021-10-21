@@ -88,7 +88,7 @@ public:
     NullAllocator() { }
     NullAllocator(const NullAllocator&) { }
     ~NullAllocator() { }
-    void *allocate(size_t) { return NULL; }
+    void *allocate(size_t) { return nullptr; }
     void deallocate(void *, size_t) { REQUIRE(false); }
 };
 
@@ -163,7 +163,7 @@ void TestSmallFixedSizePool()
     REQUIRE_MESSAGE(allocated, "Maximal buf size should be enough to create working fixed_pool");
 #if TBB_USE_EXCEPTIONS
     try {
-        tbb::fixed_pool pool(NULL, 10*1024*1024);
+        tbb::fixed_pool pool(nullptr, 10*1024*1024);
         REQUIRE_MESSAGE(false, "Useless allocator with no memory must not be created");
     } catch (std::invalid_argument&) {
     } catch (...) {

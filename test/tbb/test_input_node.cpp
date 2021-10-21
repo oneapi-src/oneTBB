@@ -74,7 +74,7 @@ class my_input_body {
 
 public:
 
-    my_input_body() : ninvocations(NULL) { my_count = 0; }
+    my_input_body() : ninvocations(nullptr) { my_count = 0; }
     my_input_body(int &_inv) : ninvocations(&_inv)  { my_count = 0; }
 
     T operator()( tbb::flow_control& fc ) {

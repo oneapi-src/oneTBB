@@ -166,7 +166,7 @@ public:
     }
     ~Accumulator() {
         // Clear self as first action of destructor, to indicate that object is not fully constructed.
-        self = 0;
+        self = nullptr;
     }
     Accumulator( Accumulator& a, tbb::split ) :
         my_array(a.my_array), my_sum(a.my_sum), storage(0), my_state(partial)

@@ -56,7 +56,7 @@ public:
         input_node_helper<N, JType>::print_remark("Recirculation test of tag-matching join");
         INFO(" >\n");
         for(int maxTag = 1; maxTag <10; maxTag *= 3) {
-            for(int i = 0; i < N; ++i) all_input_nodes[i][0] = NULL;
+            for(int i = 0; i < N; ++i) all_input_nodes[i][0] = nullptr;
 
             tbb::flow::graph g;
             // this is the tag-matching join we're testing

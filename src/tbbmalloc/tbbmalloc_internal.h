@@ -253,7 +253,7 @@ public:
     void unregisterThread(TLSRemote *tls);
     bool cleanup(bool cleanOnlyUnused);
     void markUnused();
-    void reset() { head = NULL; }
+    void reset() { head = nullptr; }
 };
 
 class LifoList {
@@ -670,7 +670,7 @@ class RecursiveMallocCallProtector {
     
 public:
 
-    RecursiveMallocCallProtector() : lock_acquired(NULL) {
+    RecursiveMallocCallProtector() : lock_acquired(nullptr) {
         lock_acquired = new (scoped_lock_space) MallocMutex::scoped_lock( rmc_mutex );
         if (canUsePthread)
             owner_thread.store(pthread_self(), std::memory_order_relaxed);

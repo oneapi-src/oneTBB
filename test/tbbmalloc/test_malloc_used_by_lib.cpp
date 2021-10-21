@@ -36,7 +36,7 @@ extern "C" void callDll()
 
     for (int i=0; i<NUM; i++) {
         ptrs[i] = scalable_malloc(i*1024);
-        ASSERT(ptrs[i], NULL);
+        ASSERT(ptrs[i], nullptr);
     }
     for (int i=0; i<NUM; i++)
         scalable_free(ptrs[i]);

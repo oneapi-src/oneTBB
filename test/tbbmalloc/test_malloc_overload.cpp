@@ -269,7 +269,7 @@ void CheckFreeAligned() {
 
     for (int s=0; sz[s]; s++)
         for (int a=0; align[a]; a++) {
-            void *ptr = NULL;
+            void *ptr = nullptr;
 #if __TBB_POSIX_MEMALIGN_PRESENT
             int ret = posix_memalign(&ptr, align[a], sz[s]);
             REQUIRE(!ret);
@@ -400,7 +400,7 @@ TEST_CASE("Main set of tests") {
     REQUIRE(mallopt(0, 0)); // add dummy mallopt call for coverage
 #endif // __unix__
 
-    void *ptr = NULL;
+    void *ptr = nullptr;
     utils::suppress_unused_warning(ptr); // for android
 
 #if MALLOC_UNIXLIKE_OVERLOAD_ENABLED || MALLOC_ZONE_OVERLOAD_ENABLED

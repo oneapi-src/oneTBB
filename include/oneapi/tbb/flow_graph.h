@@ -3168,7 +3168,7 @@ protected:
     template<typename X, typename Y> friend class round_robin_cache;
     graph_task *try_put_task( const T &v ) override {
         spin_mutex::scoped_lock l( this->my_mutex );
-        return this->my_buffer_is_valid ?  : this->try_put_task_impl(v);
+        return this->my_buffer_is_valid ? nullptr : this->try_put_task_impl(v);
     }
 }; // write_once_node
 

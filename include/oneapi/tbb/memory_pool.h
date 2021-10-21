@@ -106,7 +106,7 @@ public:
     const_pointer address(const_reference x) const { return &x; }
 
     //! Allocate space for n objects.
-    pointer allocate( size_type n, const void* /*hint*/ = 0) {
+    pointer allocate( size_type n, const void* /*hint*/ = nullptr) {
         pointer p = static_cast<pointer>( my_pool->malloc( n*sizeof(value_type) ) );
         if (!p)
             throw_exception(std::bad_alloc());
@@ -219,7 +219,7 @@ void *memory_pool<Alloc>::allocate_request(intptr_t pool_id, size_t & bytes) {
         ptr = self.my_alloc.allocate( bytes/unit_size );
 #if TBB_USE_EXCEPTIONS
     } catch(...) {
-        return 0;
+        return nullptr;
     }
 #endif
     return ptr;
@@ -245,7 +245,7 @@ inline fixed_pool::fixed_pool(void *buf, size_t size) : my_buffer(buf), my_size(
     if (!buf || !size)
         // TODO: improve support for mode with exceptions disabled
         throw_exception(std::invalid_argument("Zero in parameter is invalid"));
-    rml::MemPoolPolicy args(allocate_request, 0, size, /*fixedPool=*/true);
+    rml::MemPoolPolicy args(allocate_request, nullptr, size, /*fixedPool=*/true);
     rml::MemPoolError res = rml::pool_create_v1(intptr_t(this), &args, &my_pool);
     if (res!=rml::POOL_OK)
         throw_exception(std::runtime_error("Can't create pool"));

@@ -234,7 +234,7 @@ void RunTests() {
 
     try {
         int *ip = cast_to<int *>(i);
-        CHECK_MESSAGE( (false & (NULL!=ip)), "Error: non-array cast to pointer type.");
+        CHECK_MESSAGE( (false & (nullptr!=ip)), "Error: non-array cast to pointer type.");
     }
     catch(std::runtime_error &bc) {
         CHECK_MESSAGE( (0 == strcmp(bc.what(), "Illegal tagged_msg cast")), "Incorrect std:runtime_error");

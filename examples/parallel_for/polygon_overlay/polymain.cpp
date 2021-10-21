@@ -167,7 +167,7 @@ bool ParseCmdLine(int argc, char *argv[]) {
         char *end;
         gThreadsHigh = gThreadsLow = (int)strtol(argv[0], &end, 0);
         switch (*end) {
-            case ':': gThreadsHigh = (int)strtol(end + 1, 0, 0); break;
+            case ':': gThreadsHigh = (int)strtol(end + 1, nullptr, 0); break;
             case '\0': break;
             default:
                 std::cout << "Unexpected character in thread specifier: " << *end << "\n";

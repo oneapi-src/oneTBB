@@ -62,7 +62,7 @@ static void* thread_routine(void*)
 {
     std::unique_lock<std::mutex> lock(m);
     cv.wait(lock, [] { return stop == true; });
-    return 0;
+    return nullptr;
 }
 
 class Thread {

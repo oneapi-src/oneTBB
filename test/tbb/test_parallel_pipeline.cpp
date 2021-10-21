@@ -62,7 +62,7 @@ void *fetchNextBuffer() {
         }
     }
     CHECK_MESSAGE(false, "Ran out of buffers, p:"<< concurrency);
-    return 0;
+    return nullptr;
 }
 void freeBuffer(void *buf) {
     for(size_t i=0; i < n_buffers;++i) {

@@ -228,7 +228,7 @@ public:
         sink_node_helper<N,SType>::print_parallel_remark();
         INFO(" >\n");
         for(int i=0; i < MaxPorts; ++i) {
-            all_sink_nodes[i] = NULL;
+            all_sink_nodes[i] = nullptr;
         }
         // try test for # inputs 1 .. MaxNInputs
         for(int nInputs = 1; nInputs <= MaxNInputs; ++nInputs) {

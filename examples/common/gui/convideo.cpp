@@ -19,9 +19,9 @@
 
 #include "video.hpp"
 
-unsigned int *g_pImg = 0;
+unsigned int *g_pImg = nullptr;
 int g_sizex, g_sizey;
-static video *g_video = 0;
+static video *g_video = nullptr;
 static int g_fps = 0;
 
 #if _WIN32 || _WIN64
@@ -87,7 +87,7 @@ void video::terminate() {
         printf("%s: %.1f fps\n", title, fps);
     }
 #endif
-    g_video = 0;
+    g_video = nullptr;
     running = false;
 
     delete[] g_pImg;

@@ -43,7 +43,7 @@ public:
             if (h==TLS_OUT_OF_INDEXES)
 #else
             int setspecific_dummy=10;
-            if (pthread_key_create(&handles[lastUsedIdx], NULL)!=0)
+            if (pthread_key_create(&handles[lastUsedIdx], nullptr)!=0)
 #endif
             {
                 break;

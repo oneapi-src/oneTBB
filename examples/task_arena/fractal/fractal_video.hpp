@@ -87,7 +87,7 @@ private:
     }
 
 public:
-    fractal_video() : fg(0) {
+    fractal_video() : fg(nullptr) {
         title = "oneTBB: Fractal Example";
         v = this;
     }

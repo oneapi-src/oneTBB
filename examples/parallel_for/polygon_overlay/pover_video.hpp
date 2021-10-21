@@ -22,7 +22,7 @@
 
 #include "pover_global.hpp" // for declaration of DEFINE and INIT
 
-DEFINE class video *gVideo INIT(0);
+DEFINE class video *gVideo INIT(nullptr);
 
 DEFINE int n_next_frame_calls INIT(0);
 DEFINE int frame_skips INIT(10);

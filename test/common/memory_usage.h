@@ -96,11 +96,11 @@ namespace utils {
 #elif __unix__
         long unsigned size = 0;
         FILE* fst = fopen("/proc/self/status", "r");
-        ASSERT(fst != nullptr, NULL);
+        ASSERT(fst != nullptr, nullptr);
         const int BUF_SZ = 200;
         char buf_stat[BUF_SZ];
         const char* pattern = stat == peakUsage ? "VmPeak: %lu" : "VmSize: %lu";
-        while (NULL != fgets(buf_stat, BUF_SZ, fst)) {
+        while (nullptr != fgets(buf_stat, BUF_SZ, fst)) {
             if (1 == sscanf(buf_stat, pattern, &size)) {
                 ASSERT(size, "Invalid value of memory consumption.");
                 break;
@@ -128,7 +128,7 @@ namespace utils {
 
     //! Use approximately a specified amount of stack space.
     /** Recursion is used here instead of alloca because some implementations of alloca do not use the stack. */
-    void UseStackSpace(size_t amount, char* top = 0) {
+    void UseStackSpace(size_t amount, char* top = nullptr) {
         char x[1000];
         memset(x, -1, sizeof(x));
         if (!top)

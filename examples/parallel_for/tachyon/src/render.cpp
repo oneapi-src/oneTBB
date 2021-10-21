@@ -82,6 +82,6 @@ void renderscene(scenedef scene) {
   outfile = opentgafile(scene.outfilename);
   */
 
-    trace_region(scene, 0 /*outfile*/, 0, 0, scene.hres, scene.vres);
+    trace_region(scene, nullptr /*outfile*/, 0, 0, scene.hres, scene.vres);
     //fclose((FILE *)outfile);
 } /* end of renderscene() */

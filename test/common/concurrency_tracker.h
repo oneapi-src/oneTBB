@@ -96,7 +96,7 @@ private:
     static std::mutex global_mutex;
 
     ExactConcurrencyLevel(double timeout, size_t concLevel) :
-        myBarrier(NULL),
+        myBarrier(nullptr),
         myUniqueThreadsCnt(0), myReachedMax(false),
         myTimeout(timeout), myConcLevel(concLevel) {
         myActiveBodyCnt = 0;

@@ -89,7 +89,7 @@ class SharedGroupBodyImpl : utils::NoCopy, utils::NoAfterlife {
 
     void DeleteTaskGroup () {
         delete m_taskGroup;
-        m_taskGroup = NULL;
+        m_taskGroup = nullptr;
     }
 
     void Wait () {
@@ -118,7 +118,7 @@ public:
     SharedGroupBodyImpl ( std::uintptr_t numThreads, std::uintptr_t sharingMode = 0 )
         : m_numThreads(numThreads)
         , m_sharingMode(sharingMode)
-        , m_taskGroup(NULL)
+        , m_taskGroup(nullptr)
         , m_barrier(numThreads)
     {
         CHECK_MESSAGE( m_numThreads > 1, "SharedGroupBody tests require concurrency" );

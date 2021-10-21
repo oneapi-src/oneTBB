@@ -38,7 +38,7 @@ void allocatorRandomThrashing() {
     const int MAX_ITER = 10000;
     const int MAX_ALLOC = 10 * 1024 * 1024;
 
-    void *arr[ARRAY_SIZE] = {0};
+    void *arr[ARRAY_SIZE] = {nullptr};
     for (int i = 0; i < rand() % MAX_ITER; ++i) {
         // Random allocation size for random arrays
         for (int j = 0; j < rand() % ARRAY_SIZE; ++j) {
@@ -47,7 +47,7 @@ void allocatorRandomThrashing() {
         // Deallocate everything
         for (int j = 0; j < ARRAY_SIZE; ++j) {
             scalable_free(arr[j]);
-            arr[j] = NULL;
+            arr[j] = nullptr;
         }
     }
 }
