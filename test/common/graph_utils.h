@@ -376,7 +376,7 @@ struct harness_counting_sender : public tbb::flow::sender<T> {
     }
 
     harness_counting_sender( size_t limit ) : my_limit(limit) {
-       my_receiver = NULL;
+       my_receiver = nullptr;
        my_count = 0;
        my_received = 0;
     }

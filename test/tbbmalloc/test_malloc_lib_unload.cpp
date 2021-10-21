@@ -19,7 +19,7 @@
 
 #if _USRDLL
 #include "common/utils_assert.h"
-#include <stdlib.h> // for NULL
+#include <stdlib.h> // for nullptr
 
 const char *globalCallMsg = "A TBB allocator function call is resolved into wrong implementation.";
 

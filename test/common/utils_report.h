@@ -158,11 +158,11 @@ inline void print_call_stack() {
     #elif _WIN32_WINNT > 0x0501 && _MSC_VER>=1500 && !__TBB_WIN8UI_SUPPORT && !defined(WINAPI_FAMILY)
         const int sz = 62; // XP limitation for number of frames
         void *buff[sz];
-        int n = CaptureStackBackTrace(0, sz, buff, NULL);
+        int n = CaptureStackBackTrace(0, sz, buff, nullptr);
         REPORT("Call stack info (%d):\n", n);
         static LONG once = 0;
         if( !InterlockedExchange(&once, 1) )
-            SymInitialize(GetCurrentProcess(), NULL, TRUE);
+            SymInitialize(GetCurrentProcess(), nullptr, TRUE);
         const int len = 255; // just some reasonable string buffer size
         union { SYMBOL_INFO sym; char pad[sizeof(SYMBOL_INFO)+len]; };
         sym.MaxNameLen = len;

@@ -164,7 +164,7 @@ int UnmapMemory(void *area, size_t bytes)
 void* MapMemory (size_t bytes, PageType)
 {
     /* Is VirtualAlloc thread safe? */
-    return VirtualAlloc(NULL, bytes, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+    return VirtualAlloc(nullptr, bytes, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 }
 
 int UnmapMemory(void *area, size_t /*bytes*/)

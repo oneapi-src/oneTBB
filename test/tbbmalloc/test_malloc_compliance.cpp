@@ -51,13 +51,13 @@
 
 void limitMem( size_t limit )
 {
-    static HANDLE hJob = NULL;
+    static HANDLE hJob = nullptr;
     JOBOBJECT_EXTENDED_LIMIT_INFORMATION jobInfo;
 
     jobInfo.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_PROCESS_MEMORY;
     jobInfo.ProcessMemoryLimit = limit? limit*MByte : 2*MByte*1024;
-    if (NULL == hJob) {
-        if (NULL == (hJob = CreateJobObject(NULL, NULL))) {
+    if (nullptr == hJob) {
+        if (nullptr == (hJob = CreateJobObject(nullptr, nullptr))) {
             REPORT("Can't assign create job object: %ld\n", GetLastError());
             exit(1);
         }
@@ -199,7 +199,7 @@ public:
             srand((UINT)time(nullptr));
             FullLog=isVerbose;
         }
-    void NULLReturn(UINT MinSize, UINT MaxSize, int total_threads); // NULL pointer + check errno
+    void NULLReturn(UINT MinSize, UINT MaxSize, int total_threads); // nullptr pointer + check errno
     void UniquePointer(); // unique pointer - check with padding
     void AddrArifm(); // unique pointer - check with pointer arithmetic
     bool ShouldReportError();
@@ -305,16 +305,16 @@ void CheckArgumentsOverflow()
     for (unsigned i=0; i<utils::array_length(params); i++) {
         p = Tmalloc(params[i]);
         REQUIRE(!p);
-        ASSERT_ERRNO(errno==ENOMEM, NULL);
+        ASSERT_ERRNO(errno==ENOMEM, nullptr);
         p = Trealloc(nullptr, params[i]);
         REQUIRE(!p);
-        ASSERT_ERRNO(errno==ENOMEM, NULL);
+        ASSERT_ERRNO(errno==ENOMEM, nullptr);
         p = Tcalloc(1, params[i]);
         REQUIRE(!p);
-        ASSERT_ERRNO(errno==ENOMEM, NULL);
+        ASSERT_ERRNO(errno==ENOMEM, nullptr);
         p = Tcalloc(params[i], 1);
         REQUIRE(!p);
-        ASSERT_ERRNO(errno==ENOMEM, NULL);
+        ASSERT_ERRNO(errno==ENOMEM, nullptr);
     }
     const size_t max_alignment = size_t(1) << (sizeof(size_t)*CHAR_BIT - 1);
     if (Rposix_memalign) {
@@ -333,19 +333,19 @@ void CheckArgumentsOverflow()
         for (unsigned i=0; i<utils::array_length(params); i++) {
             p = Raligned_malloc(params[i], max_alignment);
             REQUIRE(!p);
-            ASSERT_ERRNO(errno==ENOMEM, NULL);
+            ASSERT_ERRNO(errno==ENOMEM, nullptr);
             p = Raligned_malloc(params[i], sizeof(void*));
             REQUIRE(!p);
-            ASSERT_ERRNO(errno==ENOMEM, NULL);
+            ASSERT_ERRNO(errno==ENOMEM, nullptr);
         }
     }
 
     p = Tcalloc(SIZE_MAX/2-16, SIZE_MAX/2-16);
     REQUIRE(!p);
-    ASSERT_ERRNO(errno==ENOMEM, NULL);
+    ASSERT_ERRNO(errno==ENOMEM, nullptr);
     p = Tcalloc(SIZE_MAX/2, SIZE_MAX/2);
     REQUIRE(!p);
-    ASSERT_ERRNO(errno==ENOMEM, NULL);
+    ASSERT_ERRNO(errno==ENOMEM, nullptr);
 }
 
 void InvariantDataRealloc(bool aligned, size_t maxAllocSize, bool checkData)
@@ -628,7 +628,7 @@ void myMemset(void *ptr, int c, size_t n)
 void CMemTest::NULLReturn(UINT MinSize, UINT MaxSize, int total_threads)
 {
     const int MB_PER_THREAD = TOTAL_MB_ALLOC / total_threads;
-    // find size to guarantee getting NULL for 1024 B allocations
+    // find size to guarantee getting nullptr for 1024 B allocations
     const int MAXNUM_1024 = (MB_PER_THREAD + (MB_PER_THREAD>>2)) * 1024;
 
     std::vector<MemStruct> PointerList;
@@ -657,13 +657,13 @@ void CMemTest::NULLReturn(UINT MinSize, UINT MaxSize, int total_threads)
     else
         limitMem(MB_PER_THREAD);
 
-    /* regression test against the bug in allocator when it dereference NULL
+    /* regression test against the bug in allocator when it dereference nullptr
        while lack of memory
     */
     for (num_1024=0; num_1024<MAXNUM_1024; num_1024++) {
         buf_1024[num_1024] = Tcalloc(1024, 1);
         if (! buf_1024[num_1024]) {
-            ASSERT_ERRNO(errno == ENOMEM, NULL);
+            ASSERT_ERRNO(errno == ENOMEM, nullptr);
             break;
         }
     }
@@ -680,7 +680,7 @@ void CMemTest::NULLReturn(UINT MinSize, UINT MaxSize, int total_threads)
             PointerList.push_back(MemStruct(tmp, Size));
         }
     } while(tmp != nullptr);
-    ASSERT_ERRNO(errno == ENOMEM, NULL);
+    ASSERT_ERRNO(errno == ENOMEM, nullptr);
     if (FullLog) REPORT("\n");
 
     // preparation complete, now running tests
@@ -698,12 +698,12 @@ void CMemTest::NULLReturn(UINT MinSize, UINT MaxSize, int total_threads)
                 CountNULL++;
                 if ( CHECK_ERRNO(errno != ENOMEM) ) {
                     CountErrors++;
-                    if (ShouldReportError()) REPORT("NULL returned, error: errno (%d) != ENOMEM\n", errno);
+                    if (ShouldReportError()) REPORT("nullptr returned, error: errno (%d) != ENOMEM\n", errno);
                 }
             }
             else
             {
-                // Technically, if malloc returns a non-NULL pointer, it is allowed to set errno anyway.
+                // Technically, if malloc returns a non-nullptr pointer, it is allowed to set errno anyway.
                 // However, on most systems it does not set errno.
                 bool known_issue = false;
 #if __unix__ || __ANDROID__
@@ -736,12 +736,12 @@ void CMemTest::NULLReturn(UINT MinSize, UINT MaxSize, int total_threads)
                 CountNULL++;
                 if ( CHECK_ERRNO(errno != ENOMEM) ){
                     CountErrors++;
-                    if (ShouldReportError()) REPORT("NULL returned, error: errno(%d) != ENOMEM\n", errno);
+                    if (ShouldReportError()) REPORT("nullptr returned, error: errno(%d) != ENOMEM\n", errno);
                 }
             }
             else
             {
-                // Technically, if calloc returns a non-NULL pointer, it is allowed to set errno anyway.
+                // Technically, if calloc returns a non-nullptr pointer, it is allowed to set errno anyway.
                 // However, on most systems it does not set errno.
                 bool known_issue = false;
 #if __unix__
@@ -785,12 +785,12 @@ void CMemTest::NULLReturn(UINT MinSize, UINT MaxSize, int total_threads)
                     if ( CHECK_ERRNO(errno != ENOMEM) )
                     {
                         CountErrors++;
-                        if (ShouldReportError()) REPORT("NULL returned, error: errno(%d) != ENOMEM\n", errno);
+                        if (ShouldReportError()) REPORT("nullptr returned, error: errno(%d) != ENOMEM\n", errno);
                     }
                     // check data integrity
                     if (NonZero(PointerList[i].Pointer, PointerList[i].Size)) {
                         CountErrors++;
-                        if (ShouldReportError()) REPORT("NULL returned, error: data changed\n");
+                        if (ShouldReportError()) REPORT("nullptr returned, error: data changed\n");
                     }
                 }
             }
@@ -906,7 +906,7 @@ bool CMemTest::ShouldReportError()
 void CMemTest::Free_NULL()
 {
     static std::atomic<int> CountErrors{0};
-    if (FullLog) REPORT("\ncall free with parameter NULL....");
+    if (FullLog) REPORT("\ncall free with parameter nullptr....");
     errno = 0;
     for (int i=0; i<COUNTEXPERIMENT; i++)
     {
@@ -914,7 +914,7 @@ void CMemTest::Free_NULL()
         if (CHECK_ERRNO(errno))
         {
             CountErrors++;
-            if (ShouldReportError()) REPORT("error is found by a call free with parameter NULL\n");
+            if (ShouldReportError()) REPORT("error is found by a call free with parameter nullptr\n");
         }
     }
     if (CountErrors) REPORT("%s\n",strError);
@@ -952,22 +952,22 @@ void CMemTest::TestAlignedParameters()
             if (bad_align&(bad_align-1)) {
                 memptr = Taligned_malloc(100, bad_align);
                 REQUIRE(memptr == nullptr);
-                ASSERT_ERRNO(EINVAL==errno, NULL);
+                ASSERT_ERRNO(EINVAL==errno, nullptr);
             }
 
         // size is zero
         memptr = Taligned_malloc(0, 16);
-        REQUIRE_MESSAGE(memptr == nullptr, "size is zero, so must return NULL");
-        ASSERT_ERRNO(EINVAL==errno, NULL);
+        REQUIRE_MESSAGE(memptr == nullptr, "size is zero, so must return nullptr");
+        ASSERT_ERRNO(EINVAL==errno, nullptr);
     }
     if (Taligned_free) {
-        // NULL pointer is OK to free
+        // nullptr pointer is OK to free
         errno = 0;
         Taligned_free(nullptr);
         /* As there is no return value for free, strictly speaking we can't
            check errno here. But checked implementations obey the assertion.
         */
-        ASSERT_ERRNO(0==errno, NULL);
+        ASSERT_ERRNO(0==errno, nullptr);
     }
     if (Raligned_realloc) {
         for (int i=1; i<20; i++) {
@@ -975,11 +975,11 @@ void CMemTest::TestAlignedParameters()
             errno = i;
             void *ptr = Taligned_malloc(i*10, 128);
             REQUIRE(ptr != nullptr);
-            ASSERT_ERRNO(0!=errno, NULL);
-            // if size is zero and pointer is not NULL, works like free
+            ASSERT_ERRNO(0!=errno, nullptr);
+            // if size is zero and pointer is not nullptr, works like free
             memptr = Taligned_realloc(ptr, 0, 64);
             REQUIRE(memptr == nullptr);
-            ASSERT_ERRNO(0!=errno, NULL);
+            ASSERT_ERRNO(0!=errno, nullptr);
         }
         // alignment isn't power of 2
         for (int bad_align=3; bad_align<16; bad_align++)
@@ -988,7 +988,7 @@ void CMemTest::TestAlignedParameters()
                 memptr = Taligned_realloc(&ptr, 100, bad_align);
                 REQUIRE(memptr == nullptr);
                 REQUIRE(&bad_align==ptr);
-                ASSERT_ERRNO(EINVAL==errno, NULL);
+                ASSERT_ERRNO(EINVAL==errno, nullptr);
             }
     }
 }
@@ -1050,9 +1050,9 @@ TEST_CASE("MAIN TEST") {
 //check if library compiled with /MD(d) and we can use errno
 #if _MSC_VER
 #if defined(_MT) && defined(_DLL) //check errno if test itself compiled with /MD(d) only
-    char*  version_info_block = NULL;
+    char*  version_info_block = nullptr;
     int version_info_block_size;
-    LPVOID comments_block = NULL;
+    LPVOID comments_block = nullptr;
     UINT comments_block_size;
 #ifdef _DEBUG
 #define __TBBMALLOCDLL "tbbmalloc_debug.dll"
@@ -1061,8 +1061,8 @@ TEST_CASE("MAIN TEST") {
 #endif //_DEBUG
     version_info_block_size = GetFileVersionInfoSize( __TBBMALLOCDLL, (LPDWORD)&version_info_block_size );
     if( version_info_block_size
-        && ((version_info_block = (char*)malloc(version_info_block_size)) != NULL)
-        && GetFileVersionInfo(  __TBBMALLOCDLL, NULL, version_info_block_size, version_info_block )
+        && ((version_info_block = (char*)malloc(version_info_block_size)) != nullptr)
+        && GetFileVersionInfo(  __TBBMALLOCDLL, nullptr, version_info_block_size, version_info_block )
         && VerQueryValue( version_info_block, "\\StringFileInfo\\000004b0\\Comments", &comments_block, &comments_block_size )
         && strstr( (char*)comments_block, "/MD" )
         ){

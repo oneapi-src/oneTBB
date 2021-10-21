@@ -360,7 +360,7 @@ private:
             return;
         }
 
-        CHECK_MESSAGE(root_node->m_right != nullptr, "Right child is NULL but must be present");
+        CHECK_MESSAGE(root_node->m_right != nullptr, "Right child is nullptr but must be present");
         if (is_subnode(root_node->m_right, node)) {
             push_subnode(root_node->m_right, node);
             return;
@@ -374,7 +374,7 @@ private:
     bool is_look_like_left_sibling(TreeNode *root_node, TreeNode *node) {
         if (root_node->m_range_begin == node->m_range_begin)
             return true;
-        CHECK_MESSAGE(root_node->m_range_end == node->m_range_end, NULL);
+        CHECK_MESSAGE(root_node->m_range_end == node->m_range_end, nullptr);
         return false;
     }
 

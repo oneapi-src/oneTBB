@@ -186,7 +186,7 @@ void TestSchedulerMemLeaks()
                 arena.enqueue([&]{});
             }
             bool ok = tbb::finalize(sch, std::nothrow);
-            ASSERT(ok, NULL);
+            ASSERT(ok, nullptr);
         }
 #if _MSC_VER && _DEBUG
         _CrtMemCheckpoint(&stateAfter);
@@ -282,7 +282,7 @@ int main()
             for (TidTableType::const_iterator it = tidTable.begin();
                 it != tidTable.end(); ++it) {
                 if (masterTid != it->first) {
-                    ASSERT(threadTerminated(it->second.h), NULL);
+                    ASSERT(threadTerminated(it->second.h), nullptr);
                 }
             }
             tidTable.clear();

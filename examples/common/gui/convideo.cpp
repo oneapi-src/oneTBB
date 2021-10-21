@@ -52,7 +52,7 @@ video::video()
           red_mask(0xff),
           green_mask(0xff00),
           blue_mask(0xff0000) {
-    assert(g_video == 0);
+    assert(g_video == nullptr);
     g_video = this;
     title = "Video";
     updating = calc_fps = false;

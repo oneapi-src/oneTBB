@@ -63,7 +63,7 @@ void hangOnExitReproducer() {
 #if (_WIN32 || _WIN64) && !__TBB_WIN8UI_SUPPORT
 #include <process.h> // _spawnl
 void processSpawn(const char* self) {
-    _spawnl(_P_WAIT, self, self, "1", NULL);
+    _spawnl(_P_WAIT, self, self, "1", nullptr);
 }
 #elif __unix__ || __APPLE__
 #include <unistd.h> // fork/exec
@@ -73,7 +73,7 @@ void processSpawn(const char* self) {
     if (pid == -1) {
         REPORT("ERROR: fork failed.\n");
     } else if (pid == 0) { // child
-        execl(self, self, "1", NULL);
+        execl(self, self, "1", nullptr);
         REPORT("ERROR: exec never returns\n");
         exit(1);
     } else { // parent

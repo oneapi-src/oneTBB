@@ -299,7 +299,7 @@ inline bool BackendSync::waitTillBlockReleased(intptr_t startModifiedCnt)
 #endif
     for (intptr_t myBinsInFlyBlocks = inFlyBlocks.load(std::memory_order_acquire),
              myCoalescQInFlyBlocks = backend->blocksInCoalescing(); ; backoff.pause()) {
-        MALLOC_ASSERT(myBinsInFlyBlocks>=0 && myCoalescQInFlyBlocks>=0, NULL);
+        MALLOC_ASSERT(myBinsInFlyBlocks>=0 && myCoalescQInFlyBlocks>=0, nullptr);
         intptr_t currBinsInFlyBlocks = inFlyBlocks.load(std::memory_order_acquire),
             currCoalescQInFlyBlocks = backend->blocksInCoalescing();
         WhiteboxTestingYield();
@@ -765,7 +765,7 @@ void Backend::requestBootstrapMem()
     MALLOC_ASSERT(bootsrapMemNotDone == bootsrapMemStatus, ASSERT_TEXT);
     bootsrapMemStatus = bootsrapMemInitializing;
     // request some rather big region during bootstrap in advance
-    // ok to get NULL here, as later we re-do a request with more modest size
+    // ok to get nullptr here, as later we re-do a request with more modest size
     addNewRegion(2*1024*1024, MEMREG_SLAB_BLOCKS, /*addToBin=*/true);
     bootsrapMemStatus = bootsrapMemDone;
 }
@@ -1248,7 +1248,7 @@ void Backend::startUseBlock(MemRegion *region, FreeBlock *fBlock, bool addToBin)
 
     LastFreeBlock *lastBl = static_cast<LastFreeBlock*>(fBlock->rightNeig(blockSz));
     // to not get unaligned atomics during LastFreeBlock access
-    MALLOC_ASSERT(isAligned(lastBl, sizeof(uintptr_t)), NULL);
+    MALLOC_ASSERT(isAligned(lastBl, sizeof(uintptr_t)), nullptr);
     lastBl->initHeader();
     lastBl->setMeFree(GuardedSize::LAST_REGION_BLOCK);
     lastBl->setLeftFree(blockSz);

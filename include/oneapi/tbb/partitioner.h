@@ -438,7 +438,7 @@ struct dynamic_grainsize_mode : Mode {
     }
     depth_t max_depth() { return my_max_depth; }
     void align_depth(depth_t base) {
-        __TBB_ASSERT(base <= my_max_depth, 0);
+        __TBB_ASSERT(base <= my_max_depth, nullptr);
         my_max_depth -= base;
     }
     template<typename StartType, typename Range>
@@ -548,7 +548,7 @@ public:
         ap.resize(factor);
         my_array = ap.my_array;
         my_max_depth = factor_power + 1;
-        __TBB_ASSERT( my_max_depth < __TBB_RANGE_POOL_CAPACITY, 0 );
+        __TBB_ASSERT( my_max_depth < __TBB_RANGE_POOL_CAPACITY, nullptr );
     }
     affinity_partition_type(affinity_partition_type& p, split)
         : dynamic_grainsize_mode<linear_affinity_mode<affinity_partition_type> >(p, split())

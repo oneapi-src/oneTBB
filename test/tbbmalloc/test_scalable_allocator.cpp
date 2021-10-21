@@ -110,11 +110,11 @@ struct FixedPool {
 static void *fixedBufGetMem(intptr_t pool_id, size_t &bytes)
 {
     if (((FixedPool*)pool_id)->used)
-        return NULL;
+        return nullptr;
 
     ((FixedPool*)pool_id)->used = true;
     bytes = ((FixedPool*)pool_id)->size;
-    return bytes? ((FixedPool*)pool_id)->buf : NULL;
+    return bytes? ((FixedPool*)pool_id)->buf : nullptr;
 }
 #endif
 
@@ -145,7 +145,7 @@ void TestSmallFixedSizePool()
    on creation failure. Instead test same functionality via low-level interface.
    TODO: add support for configuration with disabled exceptions to pools.
 */
-        rml::MemPoolPolicy pol(fixedBufGetMem, NULL, 0, /*fixedSizePool=*/true,
+        rml::MemPoolPolicy pol(fixedBufGetMem, nullptr, 0, /*fixedSizePool=*/true,
                                /*keepMemTillDestroy=*/false);
         rml::MemoryPool *pool;
         FixedPool fixedPool(buf, sz);

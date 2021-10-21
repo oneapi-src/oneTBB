@@ -1395,7 +1395,7 @@ namespace FunctionReplacement {
             HeapFree(GetProcessHeap(), 0, Log::records[i]);
         }
         for (unsigned i = 0; i < Log::RECORDS_COUNT + 1; i++){
-            Log::records[i] = NULL;
+            Log::records[i] = nullptr;
         }
         Log::replacement_status = true;
         Log::record_number = 0;
@@ -1422,7 +1422,7 @@ namespace FunctionReplacement {
 
         // Change status
         Log::record(funcInfo, "opcode string", false);
-        status = TBB_malloc_replacement_log(NULL);
+        status = TBB_malloc_replacement_log(nullptr);
         REQUIRE_MESSAGE(status == -1, "Status is true, but we have false search case");
 
         LogCleanup();
@@ -1443,7 +1443,7 @@ namespace FunctionReplacement {
     void TestWrongFunctionInDll(){
         HMODULE ucrtbase_handle = GetModuleHandle("ucrtbase.dll");
         if (ucrtbase_handle) {
-            IsPrologueKnown("ucrtbase.dll", "fake_function", NULL, ucrtbase_handle);
+            IsPrologueKnown("ucrtbase.dll", "fake_function", nullptr, ucrtbase_handle);
             std::string expected_line = "Fail: fake_function (ucrtbase.dll), byte pattern: <unknown>";
 
             status = TBB_malloc_replacement_log(&func_replacement_log);

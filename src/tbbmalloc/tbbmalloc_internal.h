@@ -67,7 +67,7 @@
 #define TRACEF(x) ((void)0)
 #endif /* MALLOC_TRACE */
 
-#define ASSERT_TEXT NULL
+#define ASSERT_TEXT nullptr
 
 #define COLLECT_STATISTICS ( MALLOC_DEBUG && MALLOCENV_COLLECT_STATISTICS )
 #ifndef USE_INTERNAL_TID

@@ -23,7 +23,7 @@ class LimitTLSKeysTo {
 #if _WIN32 || _WIN64
     #if __TBB_WIN8UI_SUPPORT && !defined(TLS_OUT_OF_INDEXES)
         // for SDKs for Windows*8 Store Apps that did not redirect TLS to FLS
-        #define TlsAlloc() FlsAlloc(NULL)
+        #define TlsAlloc() FlsAlloc(nullptr)
         #define TlsFree FlsFree
         #define TLS_OUT_OF_INDEXES FLS_OUT_OF_INDEXES
     #endif

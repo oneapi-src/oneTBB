@@ -114,7 +114,7 @@ public:
         : my_state(stack_size ? co_suspended : co_executing)
     {
         if (stack_size) {
-            __TBB_ASSERT(arg != 0, nullptr);
+            __TBB_ASSERT(arg != nullptr, nullptr);
             create_coroutine(my_coroutine, stack_size, arg);
         } else {
             current_coroutine(my_coroutine);

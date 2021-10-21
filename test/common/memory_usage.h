@@ -91,7 +91,7 @@ namespace utils {
 #elif _WIN32
         PROCESS_MEMORY_COUNTERS mem;
         bool status = GetProcessMemoryInfo(GetCurrentProcess(), &mem, sizeof(mem)) != 0;
-        ASSERT(status, NULL);
+        ASSERT(status, nullptr);
         return stat == currentUsage ? mem.PagefileUsage : mem.PeakPagefileUsage;
 #elif __unix__
         long unsigned size = 0;
@@ -119,7 +119,7 @@ namespace utils {
         task_basic_info info;
         mach_msg_type_number_t msg_type = TASK_BASIC_INFO_COUNT;
         status = task_info(mach_task_self(), TASK_BASIC_INFO, reinterpret_cast<task_info_t>(&info), &msg_type);
-        ASSERT(status == KERN_SUCCESS, NULL);
+        ASSERT(status == KERN_SUCCESS, nullptr);
         return info.virtual_size - shared_size;
 #else
         return 0;

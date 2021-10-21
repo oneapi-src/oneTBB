@@ -149,7 +149,7 @@ void BackRefMain::initEmptyBackRefBlock(BackRefBlock *newBl)
 {
     intptr_t nextLU = lastUsed+1;
     new (newBl) BackRefBlock(newBl, nextLU);
-    MALLOC_ASSERT(nextLU < dataSz, NULL);
+    MALLOC_ASSERT(nextLU < dataSz, nullptr);
     backRefBl[nextLU] = newBl;
     // lastUsed is read in getBackRef, and access to backRefBl[lastUsed]
     // is possible only after checking backref against current lastUsed

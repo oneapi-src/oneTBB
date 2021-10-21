@@ -24,7 +24,7 @@ unsigned int *g_pImg = 0;
 int g_sizex = 0, g_sizey = 0;
 static video *g_video = 0;
 static int g_fps = 0;
-char *window_title = NULL;
+char *window_title = nullptr;
 #define WINDOW_TITLE_SIZE 256
 int cocoa_update = 0;
 
@@ -63,7 +63,7 @@ bool video::init_window(int x, int y) {
     g_sizex = x;
     g_sizey = y;
     g_pImg = new unsigned int[x * y];
-    if (window_title == NULL)
+    if (window_title == nullptr)
         window_title = (char *)malloc(WINDOW_TITLE_SIZE);
     strncpy(window_title, title, WINDOW_TITLE_SIZE - 1);
     running = true;
@@ -150,9 +150,9 @@ void video::main_loop() {
     pthread_t handle;
     pthread_attr_t attr;
     pthread_attr_init(&attr);
-    pthread_create(&handle, &attr, &thread_func, (void *)NULL);
+    pthread_create(&handle, &attr, &thread_func, (void *)nullptr);
     pthread_detach(handle);
-    cocoa_main(0, NULL);
+    cocoa_main(0, nullptr);
 }
 
 //! Change window title

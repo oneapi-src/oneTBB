@@ -39,7 +39,7 @@
     #include<thread>
     #define TlsSetValue_func FlsSetValue
     #define TlsGetValue_func FlsGetValue
-    #define TlsAlloc() FlsAlloc(NULL)
+    #define TlsAlloc() FlsAlloc(nullptr)
     #define TLS_ALLOC_FAILURE FLS_OUT_OF_INDEXES
     #define TlsFree FlsFree
 #else
@@ -130,7 +130,7 @@ public:
         if (Tid_key == TLS_ALLOC_FAILURE)
             return false;
 #else
-        int status = pthread_key_create( &Tid_key, NULL );
+        int status = pthread_key_create( &Tid_key, nullptr );
         if ( status ) {
             fprintf (stderr, "The memory manager cannot create tls key during initialization\n");
             return false;
@@ -328,7 +328,7 @@ protected:
     FreeObject  *freeList;
     /* Pointer to local data for the owner thread. Used for fast finding tls
        when releasing object from a block that current thread owned.
-       NULL for orphaned blocks. */
+       nullptr for orphaned blocks. */
     std::atomic<TLSData*> tlsPtr;
     ThreadId     ownerTid;        /* the ID of the thread that owns or last owned the block */
     BackRefIdx   backRefIdx;
@@ -1080,7 +1080,7 @@ bool ExtMemoryPool::init(intptr_t poolId, rawAllocType rawAlloc,
         return false;
     loc.init(this);
     backend.init(this);
-    MALLOC_ASSERT(isPoolValid(), NULL);
+    MALLOC_ASSERT(isPoolValid(), nullptr);
     return true;
 }
 
@@ -1143,7 +1143,7 @@ bool MemoryPool::destroy()
         extMemPool.lmbList.releaseAll</*poolDestroy=*/true>(&extMemPool.backend);
     else {
         // only one non-userPool() is supported now
-        MALLOC_ASSERT(this==defaultMemPool, NULL);
+        MALLOC_ASSERT(this==defaultMemPool, nullptr);
         // There and below in extMemPool.destroy(), do not restore initial state
         // for user pool, because it's just about to be released. But for system
         // pool restoring, we do not want to do zeroing of it on subsequent reload.
@@ -1208,8 +1208,8 @@ void Bin::pushTLSBin(Block* block)
 
     MALLOC_ASSERT( block->isOwnedByCurrentThread(), ASSERT_TEXT );
     MALLOC_ASSERT( block->objectSize != 0, ASSERT_TEXT );
-    MALLOC_ASSERT( block->next == NULL, ASSERT_TEXT );
-    MALLOC_ASSERT( block->previous == NULL, ASSERT_TEXT );
+    MALLOC_ASSERT( block->next == nullptr, ASSERT_TEXT );
+    MALLOC_ASSERT( block->previous == nullptr, ASSERT_TEXT );
 
     MALLOC_ASSERT( this, ASSERT_TEXT );
     verifyTLSBin(size);
@@ -1345,7 +1345,7 @@ bool Block::adjustFullness()
 
 // This method resides in class Block, and not in class Bin, in order to avoid
 // calling getAllocationBin on a reasonably hot path in Block::freeOwnObject
-void Block::adjustPositionInBin(Bin* bin/*=NULL*/)
+void Block::adjustPositionInBin(Bin* bin/*=nullptr*/)
 {
     // If the block were full, but became empty enough to use,
     // move it to the front of the list
@@ -1416,8 +1416,8 @@ void Block::freePublicObject (FreeObject *objectToFree)
         // if the block is abandoned, its nextPrivatizable pointer should be UNUSABLE
         // otherwise, it should point to the bin the block belongs to.
         // reading nextPrivatizable is thread-safe below, because:
-        // 1) the executing thread atomically got publicFreeList==NULL and changed it to non-NULL;
-        // 2) only owning thread can change it back to NULL,
+        // 1) the executing thread atomically got publicFreeList==nullptr and changed it to non-nullptr;
+        // 2) only owning thread can change it back to nullptr,
         // 3) but it can not be done until the block is put to the mailbox
         // So the executing thread is now the only one that can change nextPrivatizable
         Block* next = nextPrivatizable.load(std::memory_order_acquire);
@@ -1449,7 +1449,7 @@ void Block::privatizePublicFreeList( bool reset )
     // to properly synchronize with other threads freeing objects to this slab.
     const intptr_t endMarker = reset ? 0 : UNUSABLE;
 
-    // Only the owner thread may reset the pointer to NULL
+    // Only the owner thread may reset the pointer to nullptr
     MALLOC_ASSERT( isOwnedByCurrentThread() || !reset, ASSERT_TEXT );
 #if FREELIST_NONBLOCKING
     localPublicFreeList = publicFreeList.exchange((FreeObject*)endMarker);
@@ -1464,14 +1464,14 @@ void Block::privatizePublicFreeList( bool reset )
     MALLOC_ITT_SYNC_ACQUIRED(&publicFreeList);
     MALLOC_ASSERT( !(reset && isNotForUse(publicFreeList)), ASSERT_TEXT );
 
-    // publicFreeList must have been UNUSABLE or valid, but not NULL
-    MALLOC_ASSERT( localPublicFreeList!=NULL, ASSERT_TEXT );
+    // publicFreeList must have been UNUSABLE or valid, but not nullptr
+    MALLOC_ASSERT( localPublicFreeList!=nullptr, ASSERT_TEXT );
     if( isSolidPtr(localPublicFreeList) ) {
         MALLOC_ASSERT( allocatedCount <= (slabSize-sizeof(Block))/objectSize, ASSERT_TEXT );
         /* other threads did not change the counter freeing our blocks */
         allocatedCount--;
         FreeObject *temp = localPublicFreeList;
-        while( isSolidPtr(temp->next) ){ // the list will end with either NULL or UNUSABLE
+        while( isSolidPtr(temp->next) ){ // the list will end with either nullptr or UNUSABLE
             temp = temp->next;
             allocatedCount--;
             MALLOC_ASSERT( allocatedCount < (slabSize-sizeof(Block))/objectSize, ASSERT_TEXT );
@@ -1489,7 +1489,7 @@ void Block::privatizeOrphaned(TLSData *tls, unsigned index)
     STAT_increment(getThreadId(), index, allocBlockPublic);
     next = nullptr;
     previous = nullptr;
-    MALLOC_ASSERT( publicFreeList.load(std::memory_order_relaxed) != NULL, ASSERT_TEXT );
+    MALLOC_ASSERT( publicFreeList.load(std::memory_order_relaxed) != nullptr, ASSERT_TEXT );
     /* There is not a race here since no other thread owns this block */
     markOwned(tls);
     // It is safe to change nextPrivatizable, as publicFreeList is not null
@@ -1515,7 +1515,7 @@ bool Block::readyToShare()
     STAT_increment(getThreadId(), ThreadCommonCounters, lockPublicFreeList);
     {
         MallocMutex::scoped_lock scoped_cs(publicFreeListLock);
-        if ( (oldVal=publicFreeList)==NULL )
+        if ( (oldVal=publicFreeList)==nullptr )
             (intptr_t&)(publicFreeList) = UNUSABLE;
     }
 #endif
@@ -1547,7 +1547,7 @@ void Block::shareOrphaned(intptr_t binTag, unsigned index)
             }
         }
     }
-    MALLOC_ASSERT( publicFreeList.load(std::memory_order_relaxed) !=NULL, ASSERT_TEXT );
+    MALLOC_ASSERT( publicFreeList.load(std::memory_order_relaxed) !=nullptr, ASSERT_TEXT );
     // now it is safe to change our data
     previous = nullptr;
     // it is caller responsibility to ensure that the list of blocks
@@ -1582,7 +1582,7 @@ void Block::initEmptyBlock(TLSData *tls, size_t size)
     bumpPtr = (FreeObject *)((uintptr_t)this + slabSize - objectSize);
 
     // each block should have the address where the head of the list of "privatizable" blocks is kept
-    // the only exception is a block for boot strap which is initialized when TLS is yet NULL
+    // the only exception is a block for boot strap which is initialized when TLS is yet nullptr
     nextPrivatizable.store( tls? (Block*)(tls->bin + index) : nullptr, std::memory_order_relaxed);
     TRACEF(( "[ScalableMalloc trace] Empty block %p is initialized, owner is %ld, objectSize is %d, bumpPtr is %p\n",
              this, tlsPtr.load(std::memory_order_relaxed) ? getThreadId() : -1, objectSize, bumpPtr ));
@@ -1622,7 +1622,7 @@ bool OrphanedBlocks::cleanup(Backend* backend)
         MALLOC_ITT_SYNC_ACQUIRED(bins+i);
         while (block) {
             Block* next = block->next;
-            block->privatizePublicFreeList( /*reset=*/false ); // do not set publicFreeList to NULL
+            block->privatizePublicFreeList( /*reset=*/false ); // do not set publicFreeList to nullptr
             if (block->empty()) {
                 block->reset();
                 // slab blocks in user's pools do not have valid backRefIdx
@@ -2496,7 +2496,7 @@ bool isLargeObject(void *object)
         safer_dereference(&header->backRefIdx) : dereference(&header->backRefIdx);
 
     return idx.isLargeObject()
-        // in valid LargeObjectHdr memoryBlock is not NULL
+        // in valid LargeObjectHdr memoryBlock is not nullptr
         && header->memoryBlock
         // in valid LargeObjectHdr memoryBlock points somewhere before header
         // TODO: more strict check
@@ -2614,9 +2614,9 @@ static void *internalPoolMalloc(MemoryPool* memPool, size_t size)
         return internalPoolMalloc(memPool, size);
     }
     /*
-     * else nothing works so return NULL
+     * else nothing works so return nullptr
      */
-    TRACEF(( "[ScalableMalloc trace] No memory found, returning NULL.\n" ));
+    TRACEF(( "[ScalableMalloc trace] No memory found, returning nullptr.\n" ));
     return nullptr;
 }
 
@@ -2833,11 +2833,11 @@ static unsigned int threadGoingDownCount = 0;
 
 /*
  * When a thread is shutting down this routine should be called to remove all the thread ids
- * from the malloc blocks and replace them with a NULL thread id.
+ * from the malloc blocks and replace them with a nullptr thread id.
  *
  * For pthreads, the function is set as a callback in pthread_key_create for TLS bin.
  * It will be automatically called at thread exit with the key value as the argument,
- * unless that value is NULL.
+ * unless that value is nullptr.
  * For Windows, it is called from DllMain( DLL_THREAD_DETACH ).
  *
  * However neither of the above is called for the main process thread, so the routine
@@ -2889,7 +2889,7 @@ extern "C" void __TBB_mallocThreadShutdownNotification()
 {
     // The routine is called once per thread on Windows
     if (!isMallocInitialized()) return;
-    doThreadShutdownNotification(NULL, false);
+    doThreadShutdownNotification(nullptr, false);
 }
 #endif
 
@@ -2984,7 +2984,7 @@ extern "C" TBBMALLOC_EXPORT void __TBB_malloc_safer_free(void *object, void (*or
  * "realloc changes the size of the object pointed to by p to size. The contents will
  * be unchanged up to the minimum of the old and the new sizes. If the new size is larger,
  * the new space is uninitialized. realloc returns a pointer to the new space, or
- * NULL if the request cannot be satisfied, in which case *p is unchanged."
+ * nullptr if the request cannot be satisfied, in which case *p is unchanged."
  *
  */
 extern "C" void* scalable_realloc(void* ptr, size_t size)
@@ -3034,7 +3034,7 @@ extern "C" TBBMALLOC_EXPORT void* __TBB_malloc_safer_realloc(void* ptr, size_t s
                 }
             }
         } else
-            tmp = NULL;
+            tmp = nullptr;
     }
 #else
     else if (original_realloc) {
@@ -3057,7 +3057,7 @@ extern "C" TBBMALLOC_EXPORT void* __TBB_malloc_safer_realloc(void* ptr, size_t s
 /*
  * From K&R
  * calloc returns a pointer to space for an array of nobj objects,
- * each of size size, or NULL if the request cannot be satisfied.
+ * each of size size, or nullptr if the request cannot be satisfied.
  * The space is initialized to zero bytes.
  *
  */
@@ -3168,7 +3168,7 @@ extern "C" TBBMALLOC_EXPORT void * __TBB_malloc_safer_aligned_realloc(void *ptr,
             if ( original_ptrs->aligned_free ){
                 original_ptrs->aligned_free( ptr );
             }
-            return NULL;
+            return nullptr;
         }
     }
 #else
@@ -3217,7 +3217,7 @@ extern "C" TBBMALLOC_EXPORT size_t __TBB_malloc_safer_msize(void *object, size_t
         else if (original_msize)
             return original_msize(object);
     }
-    // object is NULL or unknown, or foreign and no original_msize
+    // object is nullptr or unknown, or foreign and no original_msize
 #if USE_WINTHREAD
     errno = EINVAL; // errno expected to be set only on this platform
 #endif
@@ -3236,7 +3236,7 @@ extern "C" TBBMALLOC_EXPORT size_t __TBB_malloc_safer_aligned_msize(void *object
         else if (orig_aligned_msize)
             return orig_aligned_msize(object,alignment,offset);
     }
-    // object is NULL or unknown
+    // object is nullptr or unknown
     errno = EINVAL;
     return 0;
 }
