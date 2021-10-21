@@ -89,10 +89,9 @@ void video::terminate() {
 #endif
     g_video = 0;
     running = false;
-    if (g_pImg) {
-        delete[] g_pImg;
-        g_pImg = 0;
-    }
+
+    delete[] g_pImg;
+    g_pImg = nullptr;
 }
 
 video::~video() {

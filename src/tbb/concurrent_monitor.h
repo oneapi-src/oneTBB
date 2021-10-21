@@ -148,8 +148,7 @@ class sleep_node : public wait_node<Context> {
 public:
     using base_type::base_type;
 
-    // Make it virtual due to Intel Compiler warning
-    virtual ~sleep_node() {
+    ~sleep_node() override {
         if (this->my_initialized) {
             if (this->my_skipped_wakeup) semaphore().P();
             semaphore().~binary_semaphore();

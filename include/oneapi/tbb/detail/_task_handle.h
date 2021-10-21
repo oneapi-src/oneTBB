@@ -54,7 +54,7 @@ public:
         suppress_unused_warning(m_version_and_traits);
     }
 
-    ~task_handle_task(){
+    ~task_handle_task() override {
         m_wait_ctx.release();
     }
 

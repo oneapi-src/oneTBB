@@ -164,10 +164,9 @@ void video::terminate() {
         m_pD2DFactory->Release();
     g_video = 0;
     running = false;
-    if (g_pImg) {
-        delete[] g_pImg;
-        g_pImg = 0;
-    }
+
+    delete[] g_pImg;
+    g_pImg = 0;
 }
 
 //////////// drawing area constructor & destructor /////////////

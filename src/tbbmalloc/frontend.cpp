@@ -260,7 +260,7 @@ class MemoryPool {
     // and set reasonable low granularity
     static const size_t defaultGranularity = estimatedCacheLineSize;
 
-    MemoryPool();                  // deny
+    MemoryPool() = delete;                  // deny
 public:
     static MallocMutex  memPoolListLock;
 
@@ -543,7 +543,7 @@ public:
     static const int POOL_LOW_MARK  = 8;
 
     class ResOfGet {
-        ResOfGet();
+        ResOfGet() = delete;
     public:
         Block* block;
         bool   lastAccMiss;
