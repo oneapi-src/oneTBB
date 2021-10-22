@@ -332,7 +332,7 @@ struct DeciderBody {
 
 struct AsyncSubmissionBody {
     AsyncActivity* my_activity;
-    void operator()(data_type input, async_node_type::gateway_type& gateway) {
+    void operator()(data_type input, async_node_type::gateway_type& gateway) noexcept {
         my_activity->submit(input, &gateway);
     }
     AsyncSubmissionBody(AsyncActivity* activity) : my_activity(activity) {}

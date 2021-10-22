@@ -688,7 +688,7 @@ class native_loop_body {
 public:
     native_loop_body(NodeType& node) : my_node(node) {}
 
-    void operator()(int) const {
+    void operator()(int) const noexcept {
         std::thread::id this_id = std::this_thread::get_id();
         my_node.try_put(this_id);
     }
@@ -701,9 +701,9 @@ public:
     concurrency_checker_body() { g_body_count = 0; }
 
     template<typename gateway_type>
-    void operator()(const std::thread::id& input, gateway_type&) { increase_and_check(input); }
+    void operator()(const std::thread::id& input, gateway_type&) noexcept { increase_and_check(input); }
 
-    output_tuple_type operator()(const std::thread::id& input) {
+    output_tuple_type operator()(const std::thread::id& input) noexcept {
         increase_and_check(input);
         return output_tuple_type();
     }
@@ -740,7 +740,7 @@ class native_loop_limited_body {
 public:
     native_loop_limited_body(NodeType& node, utils::SpinBarrier& barrier):
         my_node(node), my_barrier(barrier) {}
-    void operator()(int) const {
+    void operator()(int) const noexcept {
         std::thread::id this_id = std::this_thread::get_id();
         my_node.try_put(this_id);
         if(!lightweight_work_processed) {
@@ -785,10 +785,10 @@ private:
     }
 public:
     template<typename gateway_type>
-    void operator()(const std::thread::id& input, gateway_type&) {
+    void operator()(const std::thread::id& input, gateway_type&) noexcept {
         increase_and_check(input);
     }
-    output_tuple_type operator()(const std::thread::id& input) {
+    output_tuple_type operator()(const std::thread::id& input) noexcept {
         increase_and_check(input);
         return output_tuple_type();
     }

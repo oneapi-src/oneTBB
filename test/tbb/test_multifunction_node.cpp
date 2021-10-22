@@ -583,7 +583,7 @@ TEST_CASE("Lightweight testing"){
     lightweight_testing::test<tbb::flow::multifunction_node>(10);
 }
 
-//! Test exception thrown in node with lightweight policy was rethrown by graph
+//! Test excesption thrown in node with lightweight policy was rethrown by graph
 //! \brief \ref error_guessing
 TEST_CASE("Exception in lightweight node"){
     test_exception_ligthweight_policy();
