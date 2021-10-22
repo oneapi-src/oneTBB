@@ -268,7 +268,7 @@ private:
         return NULL;
     }
 
-    graph_task* try_put_task_impl( const input_type& t, /*lightweight=*/std::true_type) {
+    graph_task* try_put_task_impl( const input_type& t, /*lightweight=*/std::true_type ) {
         if( my_max_concurrency == 0 ) {
             return apply_body_bypass(t);
         } else {
