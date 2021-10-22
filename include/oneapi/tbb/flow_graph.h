@@ -2830,9 +2830,7 @@ public:
     async_body(const Body &body, gateway_type *gateway)
         : base_type(gateway), my_body(body) { }
 
-    // GCC bug: error: invalid use of ‘this’ at top level
-    // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=52869
-    void operator()( const Input &v, Ports & ) noexcept(noexcept(my_body(v, *base_type::my_gateway))) {
+    void operator()( const Input &v, Ports & ) noexcept(noexcept(my_body(v, std::declval<gateway_type&>()))) {
         my_body(v, *this->my_gateway);
     }
 
