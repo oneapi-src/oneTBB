@@ -18,127 +18,11 @@ TBB_VALGRIND_MEMCHECK:BOOL - Enable scan for memory leaks using Valgrind (OFF by
 TBB_DISABLE_HWLOC_AUTOMATIC_SEARCH - Disable HWLOC automatic search by pkg-config tool (OFF by default)
 ```
 
-## Configure, build and test
+## Configure, build, test, and install
 
-### Prerequisites
+See [Installation from Sources](INSTALL.md) to learn how to configure, build, test, and install oneTBB. 
 
-*  CMake >= 3.1
-
-### Preparation
-
-In order to perform out-of-source build you have to create a build directory and go there:
-
-```bash
-mkdir /tmp/my-build
-cd /tmp/my-build
-```
-
-### Configure
-
-```bash
-cmake <options> <repo_root>
-```
-
-Some useful options:
-- `-G <generator>` - specify particular project generator, see `cmake --help` for details.
-- `-DCMAKE_BUILD_TYPE=Debug` - specify for Debug build, it isn't applicable for multi-config generators, e.g. for Visual Studio generator).
-
-#### TBBBind library configuration
-
-The TBBbind library has three versions: `tbbbind`, `tbbbind_2_0` and `tbbbind_2_5`. Each of these versions is linked with corresponding HWLOC library version: `tbbbind` links with HWLOC 1.11.x , `tbbbind_2_0` links with HWLOC 2.1-2.4, `tbbbind_2_5` links with HWLOC 2.5 and later.
-
-The search for a suitable version of the HWLOC library is enabled by default, but if you want to use a specific version of the library, you can specify the path to it manually using the following CMake variables:
-
- - `CMAKE_HWLOC_<HWLOC_VER>_LIBRARY_PATH` - path to the corresponding HWLOC version shared library on Linux or path to `.lib` file on Windows.
- - `CMAKE_HWLOC_<HWLOC_VER>_INCLUDE_PATH` - path to the corresponding HWLOC version includes directory.
-
-Automatic HWLOC searching requires CMake >= 3.6.
-
-Windows requires one additional variable for correct TBBBind library building:
- - `CMAKE_HWLOC_<HWLOC_VER>_DLL_PATH` - path to the corresponding HWLOC version `.dll` file.
-
-`HWLOC_VER` substring used above can be replaced with one of the three values: `1_11` for the `tbbbind` library configuration, `2` for the `tbbbind_2_0`, and `2_5` for the `tbbbind_2_5` library configuration.
-
-If you specify variables for several TBBBind versions, then building process for all of these versions will be performed during single build session.
-
-Specify the `TBB_DISABLE_HWLOC_AUTOMATIC_SEARCH` to disable HWLOC libraries automatic search.
-
-### Build
-
-```bash
-cmake --build . <options>
-```
-
-Some useful options:
-- `--target <target>` - specific target, "all" is default.
-- `--config <Release|Debug>` - build configuration, applicable only for multi-config generators, e.g. Visual Studio generator.
-
-Binaries are placed to `./<compiler-id>_<compiler-ver>_cxx<stdver>_<build-type>` (for example, `./gnu_4.8_cxx11_release`)
-
-#### Build for 32-bit
-
-* Intel Compiler: just source Intel(R) C++ Compiler with `ia32` and build as usual.
-* MSVC: use switch for [generator](https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html) (e.g. `-A Win32` for [VS2019](https://cmake.org/cmake/help/latest/generator/Visual%20Studio%2016%202019.html)) during the configuration stage and then build as usual.
-* GCC/Clang: specify `-m32` during the configuration: `CXXFLAGS=-m32 cmake ..` or `cmake -DCMAKE_CXX_FLAGS=-m32 ..`
-* Any other compiler which builds for 64-bit by default: specify 32-bit compiler key during the configuration as above.
-
-#### Windows specific builds (CMake 3.15 or newer is required)
-
-* Dynamic linkage with CRT: default behavior, can be explicitly specified by setting `CMAKE_MSVC_RUNTIME_LIBRARY` to `MultiThreadedDLL` or `MultiThreadedDebugDLL`.
-```bash
-cmake ..  # dynamic linkage is used by default
-```
-```bash
-cmake -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL ..
-```
-```bash
-cmake -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDebugDLL -DCMAKE_BUILD_TYPE=Debug ..
-```
-* Static linkage with CRT: set `CMAKE_MSVC_RUNTIME_LIBRARY` to `MultiThreaded` or `MultiThreadedDebug`.
-```bash
-cmake -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded ..
-```
-```bash
-cmake -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDebug -DCMAKE_BUILD_TYPE=Debug ..
-```
-* Windows 10 Universal Windows application build: set `CMAKE_SYSTEM_NAME` to `WindowsStore` and `CMAKE_SYSTEM_VERSION` to `10.0`.
-
-_Note: set `TBB_NO_APPCONTAINER` to `ON` in order to apply `/APPCONTAINER:NO` option during the compilation (used for testing)._
-```bash
-cmake -DCMAKE_SYSTEM_NAME:STRING=WindowsStore -DCMAKE_SYSTEM_VERSION:STRING=10.0 ..
-```
-* Universal Windows Driver build: set `TBB_WINDOWS_DRIVER` to `ON` and use static linkage with CRT (see above).
-
-```bash
-cmake -DTBB_WINDOWS_DRIVER=ON -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded ..
-```
-
-### Test
-
-#### Build test
-Using default ('all') target:
-```
-cmake --build .
-```
-
-or using specific test target:
-```
-cmake --build . --target <test> # e.g. test_version
-```
-
-#### Run test
-
-Using CTest:
-```bash
-ctest
-```
-
-or using 'test' target:
-```bash
-cmake --build . --target test # currently doesn't work on Windows
-```
-
-## Sanitizers - сonfigure, build and run
+## Sanitizers - сonfigure, build, and run
 
 ```bash
 mkdir build
@@ -148,7 +32,7 @@ make -j
 ctest -V
 ```
 
-## Valgrind memcheck - configure, build and run
+## Valgrind memcheck - configure, build, and run
 
 ### Prerequisites
 * Valgrind tool executable
@@ -160,36 +44,15 @@ cmake -DTBB_VALGRIND_MEMCHECK=ON ..
 make -j memcheck-<test name> # or memcheck-all to scan all tests 
 ```
 
-## Test specification (Doxygen)
+## Test specification
+
+Use Doxygen to test oneTBB specification:
 
 ```bash
 mkdir build
 cd build
 cmake -DTBB_TEST_SPEC=ON ..
 make test_spec
-```
-
-## Intallation and packaging
-
-**NOTE: be careful about installation: avoid commands like `make install` unless you fully understand the consequences.**
-
-The following install components are supported:
-- `runtime` - oneTBB runtime package (core shared libraries and `.dll` files on Windows).
-- `devel` - oneTBB development package (header files, CMake integration files, library symbolic links and `.lib` files on Windows).
-- `tbb4py` - [oneTBB Module for Python](#onetbb-python-module-support).
-
-How to install specific components after configuration and build:
-
-```bash
-cmake -DCOMPONENT=<component> [-DBUILD_TYPE=<build-type>] -P cmake_install.cmake
-```
-
-Simple packaging using CPack is supported.
-The following commands allow to create a simple portable package which includes header files, libraries and integration files for CMake:
-
-```bash
-cmake <options> ..
-cpack
 ```
 
 ## TBBConfig - integration of binary packages
