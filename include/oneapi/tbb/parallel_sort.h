@@ -236,7 +236,7 @@ void parallel_sort( RandomAccessIterator begin, RandomAccessIterator end, const 
     }
 }
 
-//! Sorts the data in [begin,end) with a default comparator \c std::less<RandomAccessIterator>
+//! Sorts the data in [begin,end) with a default comparator \c std::less
 /** @ingroup algorithms **/
 template<typename RandomAccessIterator>
     __TBB_requires(std::random_access_iterator<RandomAccessIterator> &&
@@ -251,16 +251,16 @@ template<typename Range, typename Compare>
     __TBB_requires(container_based_sequence<Range, std::random_access_iterator_tag> &&
                    compare<Compare, range_iterator_type<Range>>)
 void parallel_sort( Range&& rng, const Compare& comp ) {
-    parallel_sort(std::begin(std::forward<Range>(rng)), std::end(std::forward<Range>(rng)), comp);
+    parallel_sort(std::begin(rng), std::end(rng), comp);
 }
 
-//! Sorts the data in rng with a default comparator \c std::less<RandomAccessIterator>
+//! Sorts the data in rng with a default comparator \c std::less
 /** @ingroup algorithms **/
 template<typename Range>
     __TBB_requires(container_based_sequence<Range, std::random_access_iterator_tag> &&
                    less_than_comparable<typename std::iterator_traits<range_iterator_type<Range>>::value_type>)
 void parallel_sort( Range&& rng ) {
-    parallel_sort(std::begin(std::forward<Range>(rng)), std::end(std::forward<Range>(rng)));
+    parallel_sort(std::begin(rng), std::end(rng));
 }
 //@}
 

@@ -68,7 +68,6 @@ bool compare(const Minimal& lhs, const Minimal& rhs) {
     return Minimal::AreEqual(lhs, rhs);
 }
 
-//! The default validate; but it uses operator== which is not required
 template<typename Range>
 void validate(Range test_range, Range sorted_range, std::size_t size) {
     for (std::size_t i = 0; i < size; i++) {
@@ -357,7 +356,7 @@ TEST_CASE("Array sorting test (default comparator)") {
 //! \brief \ref error_guessing
 TEST_CASE("Test array sorting via rvalue span (default comparator)") {
     sort_array_test([](int (&array)[array_size]) {
-        tbb::parallel_sort(my_span<int>(array, array_size));
+        tbb::parallel_sort(my_span<int>{array, array_size});
     });
 }
 
@@ -368,6 +367,24 @@ TEST_CASE("Test array sorting via const span (default comparator)") {
         const my_span<int> span(array, array_size);
         tbb::parallel_sort(span);
     });
+}
+
+//! Test rvalue container with stateful comparator
+//! \brief \ref error_guessing
+TEST_CASE("Test rvalue container with stateful comparator") {
+    // Create sorted range
+    std::vector<int> test_vector(array_size);
+    for (int i = 0; i < array_size; ++i)
+        test_vector[i] = i;
+
+    std::atomic<std::size_t> count{0};
+    tbb::parallel_sort(std::move(test_vector), [&](int lhs, int rhs) {
+        ++count;
+        return lhs < rhs;
+    });
+
+    // The comparator should be called at least (size - 1) times to check that the array is sorted
+    REQUIRE_MESSAGE(count >= array_size - 1, "Incorrect comparator calls count");
 }
 
 //! Testing workers going to sleep
