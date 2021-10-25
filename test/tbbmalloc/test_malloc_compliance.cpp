@@ -1062,7 +1062,7 @@ TEST_CASE("MAIN TEST") {
     version_info_block_size = GetFileVersionInfoSize( __TBBMALLOCDLL, (LPDWORD)&version_info_block_size );
     if( version_info_block_size
         && ((version_info_block = (char*)malloc(version_info_block_size)) != nullptr)
-        && GetFileVersionInfo(  __TBBMALLOCDLL, nullptr, version_info_block_size, version_info_block )
+        && GetFileVersionInfo(  __TBBMALLOCDLL, NULL, version_info_block_size, version_info_block )
         && VerQueryValue( version_info_block, "\\StringFileInfo\\000004b0\\Comments", &comments_block, &comments_block_size )
         && strstr( (char*)comments_block, "/MD" )
         ){
