@@ -124,14 +124,14 @@ bool video::init_window(int sizex, int sizey) {
 
 void video::terminate() {
     delete g_pBitmap;
-    g_pBitmap = 0;
+    g_pBitmap = nullptr;
 
     Gdiplus::GdiplusShutdown(gdiplusToken);
-    g_video = 0;
+    g_video = nullptr;
     running = false;
 
     delete[] g_pImg;
-    g_pImg = 0;
+    g_pImg = nullptr;
 }
 
 //////////// drawing area constructor & destructor /////////////

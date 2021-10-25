@@ -20,9 +20,9 @@
 #include <iostream>
 #include <pthread.h>
 
-unsigned int *g_pImg = 0;
+unsigned int *g_pImg = nullptr;
 int g_sizex = 0, g_sizey = 0;
-static video *g_video = 0;
+static video *g_video = nullptr;
 static int g_fps = 0;
 char *window_title = nullptr;
 #define WINDOW_TITLE_SIZE 256
@@ -51,7 +51,7 @@ video::video()
           blue_mask(0xff)
 #endif
 {
-    assert(g_video == 0);
+    assert(g_video == nullptr);
     g_video = this;
     title = "Video";
     cocoa_update = 1;
@@ -85,11 +85,11 @@ void video::terminate() {
                (g_time.tv_sec + 1.0 * g_time.tv_usec / 1000000.0);
         printf("%s: %.1f fps\n", title, fps);
     }
-    g_video = 0;
+    g_video = nullptr;
     running = false;
 
     delete[] g_pImg;
-    g_pImg = 0;
+    g_pImg = nullptr;
 }
 
 video::~video() {
