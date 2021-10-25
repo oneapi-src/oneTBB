@@ -13,10 +13,10 @@
 # limitations under the License.
 
 if (MSVC)
-    # set(CMAKE_LINKER lld-link)
     include(${CMAKE_CURRENT_LIST_DIR}/MSVC.cmake)
 else()
     include(${CMAKE_CURRENT_LIST_DIR}/Clang.cmake)
-    # set(TBB_IPO_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:-ipo>)
-    # set(TBB_IPO_LINK_FLAGS $<$<NOT:$<CONFIG:Debug>>:-ipo>)
+    set(TBB_LIB_LINK_FLAGS ${TBB_LIB_LINK_FLAGS} -static-intel)
+    set(TBB_IPO_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:-ipo>)
+    set(TBB_IPO_LINK_FLAGS $<$<NOT:$<CONFIG:Debug>>:-ipo>)
 endif()
