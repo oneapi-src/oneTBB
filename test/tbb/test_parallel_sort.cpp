@@ -330,17 +330,17 @@ TEST_CASE("tbb::concurrent_vector<Minimal> sorting test (less comparator)") {
     parallel_sort_test_suite<tbb::concurrent_vector<Minimal>, MinimalLessCompare>();
 }
 
-const int array_size = 10000;
+constexpr std::size_t array_size = 10000;
 
 template<typename SortFunctor>
 void sort_array_test(const SortFunctor& sort_functor) {
     int test_array[array_size];
-    for (int i = 0; i < array_size; ++i)
+    for (std::size_t i = 0; i < array_size; ++i)
         test_array[i] = rand() % array_size;
 
     sort_functor(test_array);
 
-    for(int i = 0; i < array_size - 1; ++i)
+    for (std::size_t i = 0; i < array_size - 1; ++i)
         REQUIRE_MESSAGE(test_array[i] <= test_array[i + 1], "Testing data not sorted");
 }
 
@@ -374,7 +374,7 @@ TEST_CASE("Test array sorting via const span (default comparator)") {
 TEST_CASE("Test rvalue container with stateful comparator") {
     // Create sorted range
     std::vector<int> test_vector(array_size);
-    for (int i = 0; i < array_size; ++i)
+    for (std::size_t i = 0; i < array_size; ++i)
         test_vector[i] = i;
 
     std::atomic<std::size_t> count{0};
@@ -391,7 +391,7 @@ TEST_CASE("Test rvalue container with stateful comparator") {
 //! \brief \ref resource_usage
 TEST_CASE("That all workers sleep when no work") {
     int test_array[array_size];
-    for (int i = 0; i < array_size; ++i)
+    for (std::size_t i = 0; i < array_size; ++i)
         test_array[i] = rand() % array_size;
 
     tbb::parallel_sort(test_array);
