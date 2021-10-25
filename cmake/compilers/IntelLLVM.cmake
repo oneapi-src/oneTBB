@@ -14,9 +14,16 @@
 
 if (MSVC)
     include(${CMAKE_CURRENT_LIST_DIR}/MSVC.cmake)
+
+    set(TBB_OPENMP_FLAG /Qiopenmp)
+
+    set(TBB_IPO_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:/Qipo>)
+    set(TBB_IPO_LINK_FLAGS $<$<NOT:$<CONFIG:Debug>>:/INCREMENTAL:NO>)
 else()
     include(${CMAKE_CURRENT_LIST_DIR}/Clang.cmake)
+
     set(TBB_LIB_LINK_FLAGS ${TBB_LIB_LINK_FLAGS} -static-intel)
+
     set(TBB_IPO_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:-ipo>)
-    set(TBB_IPO_LINK_FLAGS $<$<NOT:$<CONFIG:Debug>>:-ipo>)
 endif()
+set(TBB_IPO_LINK_FLAGS ${TBB_IPO_LINK_FLAGS} ${TBB_IPO_COMPILE_FLAGS})
