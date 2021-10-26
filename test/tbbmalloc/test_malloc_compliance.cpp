@@ -703,7 +703,7 @@ void CMemTest::NULLReturn(UINT MinSize, UINT MaxSize, int total_threads)
             }
             else
             {
-                // Technically, if malloc returns a non-nullptr pointer, it is allowed to set errno anyway.
+                // Technically, if malloc returns a non-null pointer, it is allowed to set errno anyway.
                 // However, on most systems it does not set errno.
                 bool known_issue = false;
 #if __unix__ || __ANDROID__
@@ -741,7 +741,7 @@ void CMemTest::NULLReturn(UINT MinSize, UINT MaxSize, int total_threads)
             }
             else
             {
-                // Technically, if calloc returns a non-nullptr pointer, it is allowed to set errno anyway.
+                // Technically, if calloc returns a non-null pointer, it is allowed to set errno anyway.
                 // However, on most systems it does not set errno.
                 bool known_issue = false;
 #if __unix__

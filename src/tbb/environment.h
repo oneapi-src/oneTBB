@@ -44,7 +44,7 @@ static inline bool GetBoolEnvironmentVariable( const char * name ) {
         if (s[index] != '1') return false;
         index++;
         // Memory access after incrementing is safe, since the getenv() returns a
-        // nullptr terminated string, and even if the character getting by index is '1',
+        // null-terminated string, and even if the character getting by index is '1',
         // and this character is the end of string, after incrementing we will get
         // an index of character, that contains '\0'
         index += std::strspn(&s[index], " ");
