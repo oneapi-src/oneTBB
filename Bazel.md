@@ -1,19 +1,25 @@
-# Bazel build support
+# Bazel* build support
 
-The main build system of oneTBB is CMake.
-[Bazel](https://bazel.build/) support is community-based.
-The maintainers of oneTBB do not use Bazel internally.
+The main build system of oneTBB is CMake*.
+[Bazel*](https://bazel.build/) support is community-based.
 The Bazel configuration may not include recommended compiler and/or linker flags used in the official CMake configuration.
 
-The Bazel build of oneTBB currently only aims for a subset of oneTBB that suffices restricted use cases of the usage of oneTBB.
-Pull requests to improve the Bazel build experience are welcomed.
+---
+**NOTE**
 
-The standard approach of how Bazel handles third-party libraries is static linking. 
-Even this is not recommended by the oneTBB maintainers this is chosen since this is considered as a best practice within the Bazel ecosystem.
+Bazel is not recommended for use by oneTBB maintainers. Thus, it is not used internally. 
+
+---
+
+
+The Bazel oneTBB build is currently only intended for a subset of oneTBB that suffices restricted use cases.
+Pull requests to improve the Bazel build experience are welcome.
+
+The standard Bazel approach to handling third-party libraries is static linking. It is the best practice within the Bazel ecosystem.
 
 ## Using oneTBB as a dependency
 
-The following minimal example shows how to use oneTBB as a dependency within a Bazel project.
+This example demonstrates how to use oneTBB as a dependency within a Bazel project.
 
 The following file structure is assumed:
 
@@ -36,7 +42,7 @@ git_repository(
 )
 ```
 
-In the *WORKSPACE* file, the oneTBB GitHub repository is fetched. 
+In the *WORKSPACE* file, the oneTBB GitHub* repository is fetched. 
 
 _BUILD.bazel_:
 
@@ -68,16 +74,23 @@ int main() {
 }
 ```
 
-The expected output of this program is the current version number of oneTBB.
+The expected output of this program is the current version of oneTBB.
 
-Switch to the folder where you have created the above-mentioned files and run the binary via `bazel run //:Demo`.
+Switch to the folder with the files created earlier and run the binary with `bazel run //:Demo`.
 
 ## Build oneTBB using Bazel
 
-Run `bazel build //...` in the root directory of oneTBB.
+Run ```bazel build //...``` in the oneTBB root directory.
 
 ## Compiler support
 
-The Bazel build makes use of the compiler flag `-mwaitpkg` in non-Windows builds.
-This flag is supported by GCC 9.3, Clang 12, and newer versions of those tools.
-If you want to use the Bazel build in combination with earlier versions of GCC you should remove this flag since it will lead to errors during compilation.
+The Bazel build uses the compiler flag `-mwaitpkg` in non-Windows* builds.
+This flag is supported by the GNU* Compiler Collection (GCC) version 9.3, Clang* 12, and newer versions of those tools.
+
+
+---
+**NOTE**
+
+To use the Bazel build with earlier versions of GCC, remove `-mwaitpkg` flag as it leads to errors during compilation.
+
+---
