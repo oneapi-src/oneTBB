@@ -70,7 +70,6 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
             ${TBB_LIB_LINK_FLAGS}
             ${TBB_COMMON_LINK_FLAGS}
             ${TBB_IPO_LINK_FLAGS}
-            ${TBB_static_intel_LINK_FLAGS}
         )
     else()
         target_link_libraries(${TBBBIND_NAME}
@@ -78,7 +77,6 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
             ${TBB_LIB_LINK_FLAGS}
             ${TBB_COMMON_LINK_FLAGS}
             ${TBB_IPO_LINK_FLAGS}
-            ${TBB_static_intel_LINK_FLAGS}
         )
     endif()
 

@@ -89,7 +89,6 @@ if (COMMAND target_link_options)
         ${TBB_LIB_LINK_FLAGS}
         ${TBB_COMMON_LINK_FLAGS}
         ${TBB_IPO_LINK_FLAGS}
-        ${TBB_static_intel_LINK_FLAGS}
     )
 else()
     target_link_libraries(tbbmalloc
@@ -97,7 +96,6 @@ else()
         ${TBB_LIB_LINK_FLAGS}
         ${TBB_COMMON_LINK_FLAGS}
         ${TBB_IPO_LINK_FLAGS}
-        ${TBB_static_intel_LINK_FLAGS}
     )
 endif()
 

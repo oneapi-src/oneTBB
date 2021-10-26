@@ -78,7 +78,6 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "(Clang|IntelLLVM)")
 
     set(TBB_OPENMP_NO_LINK_FLAG TRUE)
     set(TBB_IPO_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:-flto>)
-    set(TBB_IPO_LINK_FLAGS $<$<NOT:$<CONFIG:Debug>>:/INCREMENTAL:NO>)
 else()
     set(TBB_IPO_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:/GL>)
     set(TBB_IPO_LINK_FLAGS $<$<NOT:$<CONFIG:Debug>>:-LTCG> $<$<NOT:$<CONFIG:Debug>>:-INCREMENTAL:NO>)
