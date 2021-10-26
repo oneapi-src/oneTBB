@@ -46,7 +46,6 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
         ${TBB_WARNING_LEVEL}
         ${TBB_LIB_COMPILE_FLAGS}
         ${TBB_COMMON_COMPILE_FLAGS}
-        ${TBB_IPO_COMPILE_FLAGS}
     )
 
     # Avoid use of target_link_libraries here as it changes /DEF option to \DEF on Windows.
@@ -56,9 +55,7 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
         SOVERSION ${TBBBIND_BINARY_VERSION}
     )
 
-    if (TBB_IPO_PROPERTY)
-        set_target_properties(${TBBBIND_NAME} PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
-    endif()
+    tbb_handle_ipo(${TBBBIND_NAME})
 
     if (TBB_DEF_FILE_PREFIX) # If there's no prefix, assume we're using export directives
         set_target_properties(${TBBBIND_NAME} PROPERTIES
@@ -74,14 +71,12 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
             PRIVATE
             ${TBB_LIB_LINK_FLAGS}
             ${TBB_COMMON_LINK_FLAGS}
-            ${TBB_IPO_LINK_FLAGS}
         )
     else()
         target_link_libraries(${TBBBIND_NAME}
             PRIVATE
             ${TBB_LIB_LINK_FLAGS}
             ${TBB_COMMON_LINK_FLAGS}
-            ${TBB_IPO_LINK_FLAGS}
         )
     endif()
 

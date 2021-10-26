@@ -59,7 +59,6 @@ target_compile_options(tbbmalloc
     ${TBB_LIB_COMPILE_FLAGS}
     ${TBBMALLOC_LIB_COMPILE_FLAGS}
     ${TBB_COMMON_COMPILE_FLAGS}
-    ${TBB_IPO_COMPILE_FLAGS}
 )
 
 enable_language(C)
@@ -72,9 +71,7 @@ set_target_properties(tbbmalloc PROPERTIES
     LINKER_LANGUAGE C
 )
 
-if (TBB_IPO_PROPERTY)
-    set_target_properties(tbbmalloc PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
-endif()
+tbb_handle_ipo(tbbmalloc)
 
 if (TBB_DEF_FILE_PREFIX) # If there's no prefix, assume we're using export directives
     set_target_properties(tbbmalloc PROPERTIES
@@ -92,14 +89,12 @@ if (COMMAND target_link_options)
         PRIVATE
         ${TBB_LIB_LINK_FLAGS}
         ${TBB_COMMON_LINK_FLAGS}
-        ${TBB_IPO_LINK_FLAGS}
     )
 else()
     target_link_libraries(tbbmalloc
         PRIVATE
         ${TBB_LIB_LINK_FLAGS}
         ${TBB_COMMON_LINK_FLAGS}
-        ${TBB_IPO_LINK_FLAGS}
     )
 endif()
 
