@@ -373,7 +373,7 @@ TEST_CASE("Test array sorting via const span (default comparator)") {
 //! \brief \ref error_guessing
 TEST_CASE("Test rvalue container with stateful comparator") {
     // Create sorted range
-    std::vector<int> test_vector(array_size);
+    std::vector<std::size_t> test_vector(array_size);
     for (std::size_t i = 0; i < array_size; ++i)
         test_vector[i] = i;
 
