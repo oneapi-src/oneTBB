@@ -378,7 +378,7 @@ TEST_CASE("Test rvalue container with stateful comparator") {
         test_vector[i] = i;
 
     std::atomic<std::size_t> count{0};
-    tbb::parallel_sort(std::move(test_vector), [&](int lhs, int rhs) {
+    tbb::parallel_sort(std::move(test_vector), [&](std::size_t lhs, std::size_t rhs) {
         ++count;
         return lhs < rhs;
     });
