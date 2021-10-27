@@ -69,10 +69,15 @@ bool compare(const Minimal& lhs, const Minimal& rhs) {
 }
 
 template<typename Range>
-void validate(Range test_range, Range sorted_range, std::size_t size) {
-    for (std::size_t i = 0; i < size; i++) {
-        REQUIRE( compare(test_range[i], sorted_range[i]) );
-    }
+void validate(Range test_range, Range sorted_range) {
+    using value_type = typename std::iterator_traits<decltype(std::begin(test_range))>::value_type;
+    REQUIRE(
+        std::equal(std::begin(test_range), std::end(test_range), std::begin(sorted_range),
+            [](value_type& tested, value_type reference) {
+                return compare(tested, reference);
+            }
+        )
+    );
 }
 
 //! The default initialization routine.
@@ -160,7 +165,7 @@ struct parallel_sort_test {
 
         while (fill_ranges(std::begin(range), std::begin(sorted_range), Size, default_comp)) {
             tbb::parallel_sort(range);
-            validate(range, sorted_range, Size);
+            validate(range, sorted_range);
         }
     }
 
@@ -171,7 +176,7 @@ struct parallel_sort_test {
 
         while (fill_ranges(std::begin(range), std::begin(sorted_range), Size, comp)) {
             tbb::parallel_sort(range, comp);
-            validate(range, sorted_range, Size);
+            validate(range, sorted_range);
         }
     }
 };
@@ -271,8 +276,8 @@ void test_psort_cbs_constraints() {
 #endif // __TBB_CPP20_CONCEPTS_PRESENT
 
 template<typename T>
-struct my_span {
-    my_span(T* input_data, std::size_t input_size)
+struct minimal_span {
+    minimal_span(T* input_data, std::size_t input_size)
      : data{input_data}
      , size{input_size}
     {}
@@ -356,7 +361,7 @@ TEST_CASE("Array sorting test (default comparator)") {
 //! \brief \ref error_guessing
 TEST_CASE("Test array sorting via rvalue span (default comparator)") {
     sort_array_test([](int (&array)[array_size]) {
-        tbb::parallel_sort(my_span<int>{array, array_size});
+        tbb::parallel_sort(minimal_span<int>{array, array_size});
     });
 }
 
@@ -364,7 +369,7 @@ TEST_CASE("Test array sorting via rvalue span (default comparator)") {
 //! \brief \ref error_guessing
 TEST_CASE("Test array sorting via const span (default comparator)") {
     sort_array_test([](int (&array)[array_size]) {
-        const my_span<int> span(array, array_size);
+        const minimal_span<int> span(array, array_size);
         tbb::parallel_sort(span);
     });
 }
