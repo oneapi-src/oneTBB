@@ -1,7 +1,7 @@
 .. _parallel_sort_rvalue_ranges:
 
 parallel_sort rvalue ranges support
-=================================================
+===================================
 
 .. contents::
     :local:
@@ -11,7 +11,7 @@ Description
 ***********
 
 |full_name| implementation extends the `tbb::parallel_sort specification <https://spec.oneapi.io/versions/latest/elements/oneTBB/source/algorithms/functions/parallel_sort_func.html>`_
-with an overloads that takes the container by a forwarding reference.
+with overloads that takes the container by forwarding reference.
 
 
 API
@@ -22,7 +22,7 @@ Header
 
 .. code:: cpp
 
-    #include <oneapi/tbb/flow_graph.h>
+    #include <oneapi/tbb/parallel_sort.h>
 
 Syntax
 ------
