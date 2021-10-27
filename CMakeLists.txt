@@ -103,6 +103,7 @@ option(TBBMALLOC_BUILD "Enable tbbmalloc build" ON)
 option(TBB_CPF "Enable preview features of the library" OFF)
 option(TBB_FIND_PACKAGE "Enable search for external oneTBB using find_package instead of build from sources" OFF)
 option(TBB_DISABLE_HWLOC_AUTOMATIC_SEARCH "Disable HWLOC automatic search by pkg-config tool" OFF)
+option(TBB_ENABLE_IPO "Enable Interprocedural Optimization (IPO) during the compilation" ON)
 
 if (NOT DEFINED BUILD_SHARED_LIBS)
     set(BUILD_SHARED_LIBS ON)
@@ -180,6 +181,22 @@ file(GLOB FILES_WITH_EXTRA_TARGETS ${CMAKE_CURRENT_SOURCE_DIR}/cmake/*.cmake)
 foreach(FILE_WITH_EXTRA_TARGETS ${FILES_WITH_EXTRA_TARGETS})
     include(${FILE_WITH_EXTRA_TARGETS})
 endforeach()
+
+# - Enabling LTO on Android causes the NDK bug.
+#   NDK throws the warning: "argument unused during compilation: '-Wa,--noexecstack'"
+# - For some reason GCC does not instrument code with Thread Sanitizer when lto is enabled and C linker is used.
+if (TBB_ENABLE_IPO AND BUILD_SHARED_LIBS AND NOT ANDROID_PLATFORM AND NOT TBB_SANITIZE MATCHES "thread")
+    if (NOT CMAKE_VERSION VERSION_LESS 3.9)
+        cmake_policy(SET CMP0069 NEW)
+        include(CheckIPOSupported)
+        check_ipo_supported(RESULT TBB_IPO_PROPERTY)
+    else()
+        set(TBB_IPO_FLAGS TRUE)
+    endif()
+    if (TBB_IPO_PROPERTY OR TBB_IPO_FLAGS)
+        message(STATUS "IPO enabled")
+    endif()
+endif()
 
 set(TBB_COMPILER_SETTINGS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/cmake/compilers/${CMAKE_CXX_COMPILER_ID}.cmake)
 if (EXISTS ${TBB_COMPILER_SETTINGS_FILE})
