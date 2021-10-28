@@ -1,7 +1,7 @@
-.. _parallel_sort_rvalue_ranges:
+.. _parallel_sort_ranges_extension:
 
-parallel_sort rvalue ranges support
-===================================
+parallel_sort ranges interface extension
+========================================
 
 .. contents::
     :local:
@@ -50,3 +50,23 @@ Functions
 .. cpp:function:: template <typename Container> void parallel_sort( Container&& c, const Compare& comp );
 
     Equivalent to ``parallel_sort( std::begin(c), std::end(c), comp )``.
+
+Example
+-------
+
+This interface may be used for sorting rvalue or constant views:
+
+.. code:: cpp
+
+    #include <array>
+    #include <span> // requires C++20
+    #include <oneapi/tbb/parallel_sort.h>
+
+    std::span<int> get_span() {
+        static std::array<int, 3> arr = {3, 2, 1};
+        return std::span<int>(arr);
+    }
+
+    int main() {
+        tbb::parallel_sort(get_span());
+    }
