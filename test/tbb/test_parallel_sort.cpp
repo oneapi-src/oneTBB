@@ -352,9 +352,12 @@ void sort_array_test(const SortFunctor& sort_functor) {
 //! Array sorting test (default comparator)
 //! \brief \ref error_guessing
 TEST_CASE("Array sorting test (default comparator)") {
-    sort_array_test([](int (&array)[array_size]) {
-        tbb::parallel_sort(array);
-    });
+    for ( auto concurrency_level : utils::concurrency_range() ) {
+        tbb::global_control control(tbb::global_control::max_allowed_parallelism, concurrency_level);
+        sort_array_test([](int (&array)[array_size]) {
+            tbb::parallel_sort(array);
+        });
+    }
 }
 
 //! Test array sorting via rvalue span (default comparator)
