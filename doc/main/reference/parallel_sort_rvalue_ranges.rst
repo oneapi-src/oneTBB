@@ -10,7 +10,7 @@ parallel_sort rvalue ranges support
 Description
 ***********
 
-|full_name| implementation extends the `tbb::parallel_sort specification <https://spec.oneapi.io/versions/latest/elements/oneTBB/source/algorithms/functions/parallel_sort_func.html>`_
+|full_name| implementation extends the `oneapi::tbb::parallel_sort specification <https://spec.oneapi.io/versions/latest/elements/oneTBB/source/algorithms/functions/parallel_sort_func.html>`_
 with overloads that takes the container by forwarding reference.
 
 
@@ -32,9 +32,9 @@ Syntax
     namespace oneapi {
         namespace tbb {
 
-            template<typename Container>
+            template <typename Container>
             void parallel_sort( Container&& c );
-            template<typename Container>
+            template <typename Container>
             void parallel_sort( Container&& c, const Compare& comp );
 
         } // namespace tbb
@@ -43,10 +43,10 @@ Syntax
 Functions
 ---------
 
-.. cpp:function:: template<typename Container> void parallel_sort( Container&& c );
+.. cpp:function:: template <typename Container> void parallel_sort( Container&& c );
 
     Equivalent to ``parallel_sort( std::begin(c), std::end(c), comp )``, where `comp` uses `operator<` to determine relative orderings.
 
-.. cpp:function:: template<typename Container> void parallel_sort( Container&& c, const Compare& comp );
+.. cpp:function:: template <typename Container> void parallel_sort( Container&& c, const Compare& comp );
 
     Equivalent to ``parallel_sort( std::begin(c), std::end(c), comp )``.
