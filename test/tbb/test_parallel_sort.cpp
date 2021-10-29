@@ -73,7 +73,7 @@ void validate(Range test_range, Range sorted_range) {
     using value_type = typename std::iterator_traits<decltype(std::begin(test_range))>::value_type;
     REQUIRE(
         std::equal(std::begin(test_range), std::end(test_range), std::begin(sorted_range),
-            [](value_type& tested, value_type reference) {
+            [](const value_type& tested, const value_type& reference) {
                 return compare(tested, reference);
             }
         )

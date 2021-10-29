@@ -34,7 +34,7 @@ Syntax
 
             template <typename Container>
             void parallel_sort( Container&& c );
-            template <typename Container>
+            template <typename Container, typename Compare>
             void parallel_sort( Container&& c, const Compare& comp );
 
         } // namespace tbb
@@ -47,7 +47,7 @@ Functions
 
     Equivalent to ``parallel_sort( std::begin(c), std::end(c), comp )``, where `comp` uses `operator<` to determine relative orderings.
 
-.. cpp:function:: template <typename Container> void parallel_sort( Container&& c, const Compare& comp );
+.. cpp:function:: template <typename Container, typename Compare> void parallel_sort( Container&& c, const Compare& comp );
 
     Equivalent to ``parallel_sort( std::begin(c), std::end(c), comp )``.
 
