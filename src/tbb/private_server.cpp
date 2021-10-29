@@ -219,7 +219,8 @@ __RML_DECL_THREAD_ROUTINE private_worker::thread_routine( void* arg ) {
     private_worker* self = static_cast<private_worker*>(arg);
     AVOID_64K_ALIASING( self->my_index );
     self->run();
-    return NULL;
+    // return 0 instead of nullptr due to the difference in the type __RML_DECL_THREAD_ROUTINE on various OSs
+    return 0;
 }
 #if _MSC_VER && !defined(__INTEL_COMPILER)
     #pragma warning(pop)
