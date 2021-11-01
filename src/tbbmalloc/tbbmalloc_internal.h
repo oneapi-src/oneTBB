@@ -471,7 +471,7 @@ private:
         // We parse a counter number, it can't be huge
         parseFile</*BUFF_SIZE=*/100>("/proc/sys/vm/nr_hugepages", vmItem);
 
-        if (hugePageSize < ULLONG_MAX && meminfoHugePagesTotal > 0 || vmHugePagesTotal > 0) {
+        if (hugePageSize > -1 && (meminfoHugePagesTotal > 0 || vmHugePagesTotal > 0)) {
             MALLOC_ASSERT(hugePageSize != 0, "Huge Page size can't be zero if we found preallocated.");
 
             // Any non zero value clearly states that there are preallocated
