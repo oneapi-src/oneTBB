@@ -4,7 +4,7 @@ _Add comprehensive description of proposed changes_
 
 Fixes # - _issue number(s) if exists_
 
-- [ ] - I added signed-off-by comment to the changes _(see [CONTRIBUTING.md](https://github.com/oneapi-src/oneTBB/blob/master/CONTRIBUTING.md#pull-requests) for details)_
+- [ ] - git commit message contains appropriate signed-off-by string _(see [CONTRIBUTING.md](https://github.com/oneapi-src/oneTBB/blob/master/CONTRIBUTING.md#pull-requests) for details)_
 
 ### Type of change
 
