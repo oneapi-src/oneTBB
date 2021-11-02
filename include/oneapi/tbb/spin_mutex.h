@@ -66,9 +66,11 @@ public:
     //! Acquire lock
     /** Spin if the lock is taken */
     void lock() {
-        atomic_backoff backoff;
         call_itt_notify(prepare, this);
-        while (m_flag.exchange(true)) backoff.pause();
+        for (atomic_backoff backoff; ; backoff.pause()) {
+            if(!m_flag.load(std::memory_order_relaxed) && !m_flag.exchange(true))
+                break;
+        }
         call_itt_notify(acquired, this);
     }
 
