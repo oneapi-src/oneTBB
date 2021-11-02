@@ -4,6 +4,8 @@ _Add comprehensive description of proposed changes_
 
 Fixes # - _issue number(s) if exists_
 
+- [ ] - git commit message contains appropriate signed-off-by string _(see [CONTRIBUTING.md](https://github.com/oneapi-src/oneTBB/blob/master/CONTRIBUTING.md#pull-requests) for details)_
+
 ### Type of change
 
 _Choose one or multiple, leave empty if none of the other choices apply_
