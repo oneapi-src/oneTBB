@@ -37,12 +37,11 @@
 #endif
 #include <string.h>
 #include <sched.h>
-#elif __FreeBSD__
-#include <unistd.h>
+#if __FreeBSD__
 #include <errno.h>
-#include <string.h>
 #include <sys/param.h>
 #include <sys/cpuset.h>
+#endif
 #endif
 #include <thread>
 
