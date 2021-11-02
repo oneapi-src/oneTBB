@@ -141,27 +141,32 @@ namespace utils {
 #if __unix__
 
     inline bool isTHPEnabledOnMachine() {
-        unsigned long long thpPresent = 'n';
-        parseFileItem thpItem[] = { { "[alwa%cs] madvise never\n", thpPresent } };
-        parseFile</*BUFF_SIZE=*/100>("/sys/kernel/mm/transparent_hugepage/enabled", thpItem);
+        long long thpPresent = 'n';
+        long long hugePageSize = -1;
 
-        if (thpPresent == 'y') {
+        parseFileItem thpItem[] = { { "[alwa%cs] madvise never\n", thpPresent } };
+        parseFileItem hpSizeItem[] = { { "Hugepagesize: %lld kB", hugePageSize } };
+
+        parseFile</*BUFF_SIZE=*/100>("/sys/kernel/mm/transparent_hugepage/enabled", thpItem);
+        parseFile</*BUFF_SIZE=*/100>("/proc/meminfo", hpSizeItem);
+
+        if (hugePageSize > -1 && thpPresent == 'y') {
             return true;
         } else {
             return false;
         }
     }
-    inline unsigned long long getSystemTHPAllocatedSize() {
-        unsigned long long anonHugePagesSize = 0;
+    inline long long getSystemTHPAllocatedSize() {
+        long long anonHugePagesSize = 0;
         parseFileItem meminfoItems[] = {
-            { "AnonHugePages: %llu kB", anonHugePagesSize } };
+            { "AnonHugePages: %lld kB", anonHugePagesSize } };
         parseFile</*BUFF_SIZE=*/100>("/proc/meminfo", meminfoItems);
         return anonHugePagesSize;
     }
-    inline unsigned long long getSystemTHPCount() {
-        unsigned long long anonHugePages = 0;
+    inline long long getSystemTHPCount() {
+        long long anonHugePages = 0;
         parseFileItem vmstatItems[] = {
-            { "nr_anon_transparent_hugepages %llu", anonHugePages } };
+            { "nr_anon_transparent_hugepages %lld", anonHugePages } };
         parseFile</*BUFF_SIZE=*/100>("/proc/vmstat", vmstatItems);
         return anonHugePages;
     }
