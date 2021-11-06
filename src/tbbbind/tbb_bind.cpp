@@ -21,6 +21,10 @@
 #include "oneapi/tbb/detail/_assert.h"
 #include "oneapi/tbb/detail/_config.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #if _MSC_VER && !__INTEL_COMPILER && !__clang__
 #pragma warning( push )
 #pragma warning( disable : 4100 )
