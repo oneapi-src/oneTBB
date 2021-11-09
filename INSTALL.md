@@ -6,7 +6,7 @@
 ---
 
 
-## Intallation and packaging
+## Installation and packaging
 
 ---
 **CAUTION**
