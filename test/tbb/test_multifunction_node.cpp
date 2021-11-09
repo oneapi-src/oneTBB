@@ -481,39 +481,45 @@ void test_ports_return_references() {
 }
 
 void test_exception_ligthweight_policy(){
+    std::atomic<int> counter {0};
+    constexpr int threshold = 10;
+
     using IndexerNodeType = oneapi::tbb::flow::indexer_node<int,int>;
     using MultifunctionNodeType = oneapi::tbb::flow::multifunction_node<IndexerNodeType::output_type,
                                                     std::tuple<int>, oneapi::tbb::flow::lightweight>;
 
     oneapi::tbb::flow::graph g;
-    auto inputNodeBody = [](oneapi::tbb::flow_control &){ return 1; };
-    auto multifunctionNodeBody = [](MultifunctionNodeType::input_type, MultifunctionNodeType::output_ports_type)
-    {
-        throw std::exception();
-    };
 
-    oneapi::tbb::flow::input_node<int> input1(g, inputNodeBody);
-    oneapi::tbb::flow::input_node<int> input2(g, inputNodeBody);
+    auto multifunctionNodeBody = [&](MultifunctionNodeType::input_type, MultifunctionNodeType::output_ports_type)
+    {
+        ++counter;
+        if(counter == threshold)
+            throw threshold;
+    };
 
     IndexerNodeType indexer(g);
     MultifunctionNodeType multi(g, oneapi::tbb::flow::serial, multifunctionNodeBody);
     oneapi::tbb::flow::make_edge(indexer, multi);
-    oneapi::tbb::flow::make_edge(input1, indexer);
-    oneapi::tbb::flow::make_edge(input2, oneapi::tbb::flow::input_port<1>(indexer));
 
-    input1.activate();
-    input2.activate();
+    utils::NativeParallelFor( threshold * 2, [&](int i){
+        if(i % 2)
+            std::get<1>(indexer.input_ports()).try_put(1);
+        else
+            std::get<0>(indexer.input_ports()).try_put(0);
+    } );
 
     bool catchException = false;
     try
     {
         g.wait_for_all();
     }
-    catch (const std::exception&)
+    catch (const int& exc)
     {
         catchException = true;
+        CHECK_MESSAGE( exc == threshold, "graph.wait_for_all() rethrow current exception" );
     }
     CHECK_MESSAGE( catchException, "The exception must be thrown from graph.wait_for_all()" );
+    CHECK_MESSAGE( counter == threshold, "Graph must cancel all tasks after exception" );
 }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET

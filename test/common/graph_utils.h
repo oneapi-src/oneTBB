@@ -24,6 +24,7 @@
 #include "config.h"
 
 #include "oneapi/tbb/flow_graph.h"
+#include "oneapi/tbb/task.h"
 #include "oneapi/tbb/null_rw_mutex.h"
 #include "oneapi/tbb/concurrent_unordered_set.h"
 
@@ -760,9 +761,9 @@ struct condition_predicate {
 std::atomic<unsigned> g_lightweight_count;
 std::atomic<unsigned> g_task_count;
 
-class limited_lightweight_checker_body {
+class limited_lightweight_checker_body_noexcept {
 public:
-    limited_lightweight_checker_body() {
+    limited_lightweight_checker_body_noexcept() {
         g_body_count = 0;
         g_lightweight_count = 0;
         g_task_count = 0;
@@ -770,10 +771,9 @@ public:
 private:
     void increase_and_check(const std::thread::id& /*input*/) {
         ++g_body_count;
-        // TODO revamp: in order not to rely on scheduler functionality anymore add
-        // __TBB_EXTRA_DEBUG for counting the number of tasks actually created by the flow graph,
-        // hence consider moving lightweight testing into whitebox test for the flow graph.
-        bool is_inside_task = false;/*tbb::task::self().state() == tbb::task::executing;*/
+
+        bool is_inside_task = oneapi::tbb::task::current_context() != nullptr;
+
         if(is_inside_task) {
             ++g_task_count;
         } else {
@@ -794,21 +794,70 @@ public:
     }
 };
 
+class limited_lightweight_checker_body {
+public:
+    limited_lightweight_checker_body() {
+        g_body_count = 0;
+        g_lightweight_count = 0;
+        g_task_count = 0;
+    }
+private:
+    void increase_and_check(const std::thread::id& /*input*/) {
+        ++g_body_count;
+
+        bool is_inside_task = oneapi::tbb::task::current_context() != nullptr;
+
+        if(is_inside_task) {
+            ++g_task_count;
+        } else {
+            std::unique_lock<std::mutex> lock(m);
+            lightweight_condition.wait(lock, condition_predicate());
+            ++g_lightweight_count;
+            lightweight_work_processed = true;
+        }
+    }
+public:
+    template<typename gateway_type>
+    void operator()(const std::thread::id& input, gateway_type&) {
+        increase_and_check(input);
+    }
+    output_tuple_type operator()(const std::thread::id& input) {
+        increase_and_check(input);
+        return output_tuple_type();
+    }
+};
+
 template<typename NodeType>
 void test_limited_lightweight_execution(unsigned N, unsigned concurrency) {
     CHECK_MESSAGE(concurrency != tbb::flow::unlimited,
                   "Test for limited concurrency cannot be called with unlimited concurrency argument");
     tbb::flow::graph g;
-    NodeType node(g, concurrency, limited_lightweight_checker_body());
+    NodeType node(g, concurrency, limited_lightweight_checker_body_noexcept());
     // Execute first body as lightweight, then wait for all other threads to fill internal buffer.
     // Then unblock the lightweight thread and check if other body executions are inside oneTBB task.
     utils::SpinBarrier barrier(N - concurrency);
     utils::NativeParallelFor(N, native_loop_limited_body<NodeType>(node, barrier));
     g.wait_for_all();
     CHECK_MESSAGE(g_body_count == N, "Body needs to be executed N times");
-    // TODO revamp: enable the following checks once whitebox flow graph testing is ready for it.
-    // CHECK_MESSAGE(g_lightweight_count == concurrency, "Body needs to be executed as lightweight once");
-    // CHECK_MESSAGE(g_task_count == N - concurrency, "Body needs to be executed as not lightweight N - 1 times");
+    CHECK_MESSAGE(g_lightweight_count == concurrency, "Body needs to be executed as lightweight once");
+    CHECK_MESSAGE(g_task_count == N - concurrency, "Body needs to be executed as not lightweight N - 1 times");
+    work_submitted = false;
+    lightweight_work_processed = false;
+}
+
+template<typename NodeType>
+void test_limited_lightweight_execution_with_throwing_body(unsigned N, unsigned concurrency) {
+    CHECK_MESSAGE(concurrency != tbb::flow::unlimited,
+                  "Test for limited concurrency cannot be called with unlimited concurrency argument");
+    tbb::flow::graph g;
+    NodeType node(g, concurrency, limited_lightweight_checker_body());
+    // Body is no noexcept, in this case it must be executed as tasks, instead of lightweight execution
+    utils::SpinBarrier barrier(N);
+    utils::NativeParallelFor(N, native_loop_limited_body<NodeType>(node, barrier));
+    g.wait_for_all();
+    CHECK_MESSAGE(g_body_count == N, "Body needs to be executed N times");
+    CHECK_MESSAGE(g_lightweight_count == 0, "Body needs to be executed with queueing policy");
+    CHECK_MESSAGE(g_task_count == N, "Body needs to be executed as task N times");
     work_submitted = false;
     lightweight_work_processed = false;
 }
@@ -818,6 +867,8 @@ void test_lightweight(unsigned N) {
     test_unlimited_lightweight_execution<NodeType>(N);
     test_limited_lightweight_execution<NodeType>(N, tbb::flow::serial);
     test_limited_lightweight_execution<NodeType>(N, (std::min)(std::thread::hardware_concurrency() / 2, N/2));
+
+    test_limited_lightweight_execution_with_throwing_body<NodeType>(N, tbb::flow::serial);
 }
 
 template<template<typename, typename, typename> class NodeType>
