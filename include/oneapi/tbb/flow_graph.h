@@ -1899,9 +1899,10 @@ private:
             if( delta > 0 && size_t(delta) > my_count ) {
                 my_count = 0;
                 if( my_tries > 0 ){
-                    if(size_t(delta) - my_count > my_tries){
+                    if( size_t(delta) - my_count > my_tries ){
                         my_tries = 0;
-                    }else{
+                    }
+                    else {
                         my_tries -= (size_t(delta) - my_count);
                     }
                 }

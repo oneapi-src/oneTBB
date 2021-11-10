@@ -433,7 +433,8 @@ void test_decrementer() {
                    "Limiter node decrementer's port does not accept message" );
 
     m = 0;
-    while( limit3.try_put( m++ ) ){};
+    while( limit3.try_put( m ) ){ m++; };
+    CHECK_MESSAGE( m == threshold3 - decrement_value3, "Not all messages have been accepted." );
 
     actual = -1; m = 0;
     while( queue.try_get(actual) ){
