@@ -433,8 +433,7 @@ void test_decrementer() {
                    "Limiter node decrementer's port does not accept message" );
 
     m = 0;
-    while( limit3.try_put( m ) ){ m++; };
-    CHECK_MESSAGE( m == threshold3 - decrement_value3, "Not all messages have been accepted." );
+    while( limit3.try_put( m++ ) ){};
 
     actual = -1; m = 0;
     while( queue.try_get(actual) ){
@@ -517,6 +516,35 @@ void test_deduction_guides() {
 }
 #endif
 
+void test_decrement_while_try_put_task() {
+    constexpr int threshold = 50000;
+
+    tbb::flow::graph graph{};
+    std::atomic<int> processed;
+    tbb::flow::input_node<int> input{ graph, [&](tbb::flow_control & fc) -> int {
+        static int i = {};
+        if (i++ >= threshold) fc.stop();
+        return i;
+    }};
+    tbb::flow::limiter_node<int, int> blockingNode{ graph, 1 };
+    tbb::flow::multifunction_node<int, std::tuple<int>> processing{ graph, tbb::flow::serial,
+        [&](const int & value, typename decltype(processing)::output_ports_type & out) {
+            if (value != threshold)
+                std::get<0>(out).try_put(1);
+            processed.store(value);
+        }};
+
+    tbb::flow::make_edge(input, blockingNode);
+    tbb::flow::make_edge(blockingNode, processing);
+    tbb::flow::make_edge(processing, blockingNode.decrementer());
+
+    input.activate();
+
+    graph.wait_for_all();
+    CHECK_MESSAGE(processed.load() == threshold, "decrementer terminate flow graph work");
+}
+
+
 //! Test puts on limiter_node with decrements and varying parallelism levels
 //! \brief \ref error_guessing
 TEST_CASE("Serial and parallel tests") {
@@ -535,6 +563,12 @@ TEST_CASE("Serial and parallel tests") {
 //! \brief \ref error_guessing
 TEST_CASE("Test continue_msg reception") {
     test_continue_msg_reception();
+}
+
+//! Test put message on decrementer port does not stop message flow
+//! \brief \ref error_guessing
+TEST_CASE("Test try_put to decrementer while try_put to limiter_node") {
+    test_decrement_while_try_put_task();
 }
 
 //! Test multifunction_node connected to limiter_node

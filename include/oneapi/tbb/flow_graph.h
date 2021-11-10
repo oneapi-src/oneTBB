@@ -1898,6 +1898,13 @@ private:
             spin_mutex::scoped_lock lock(my_mutex);
             if( delta > 0 && size_t(delta) > my_count ) {
                 my_count = 0;
+                if( my_tries > 0 ){
+                    if(size_t(delta) - my_count > my_tries){
+                        my_tries = 0;
+                    }else{
+                        my_tries -= (size_t(delta) - my_count);
+                    }
+                }
             }
             else if( delta < 0 && size_t(-delta) > my_threshold - my_count ) {
                 my_count = my_threshold;
@@ -1941,7 +1948,8 @@ private:
                 {
                     spin_mutex::scoped_lock lock(my_mutex);
                     ++my_count;
-                    --my_tries;
+                    if( my_tries )
+                        --my_tries;
                     my_predecessors.try_consume();
                     if ( check_conditions() ) {
                         if ( is_graph_active(this->my_graph) ) {
@@ -1961,7 +1969,8 @@ private:
         //if we can reserve but can't put, we decrement the tries and release the reservation
         {
             spin_mutex::scoped_lock lock(my_mutex);
-            --my_tries;
+            if( my_tries )
+                --my_tries;
             if (reserved) my_predecessors.try_release();
             if ( check_conditions() ) {
                 if ( is_graph_active(this->my_graph) ) {
@@ -2071,10 +2080,10 @@ protected:
         }
 
         graph_task* rtask = my_successors.try_put_task(t);
-
         if ( !rtask ) {  // try_put_task failed.
             spin_mutex::scoped_lock lock(my_mutex);
-            --my_tries;
+            if( my_tries )
+                --my_tries;
             if (check_conditions() && is_graph_active(this->my_graph)) {
                 small_object_allocator allocator{};
                 typedef forward_task_bypass<limiter_node<T, DecrementType>> task_type;
@@ -2085,8 +2094,9 @@ protected:
         else {
             spin_mutex::scoped_lock lock(my_mutex);
             ++my_count;
-            --my_tries;
-             }
+            if( my_tries )
+                --my_tries;
+        }
         return rtask;
     }
 
