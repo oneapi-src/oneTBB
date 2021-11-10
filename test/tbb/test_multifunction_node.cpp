@@ -480,48 +480,6 @@ void test_ports_return_references() {
     test_output_ports_return_ref(mf_node);
 }
 
-void test_exception_ligthweight_policy(){
-    std::atomic<int> counter {0};
-    constexpr int threshold = 10;
-
-    using IndexerNodeType = oneapi::tbb::flow::indexer_node<int,int>;
-    using MultifunctionNodeType = oneapi::tbb::flow::multifunction_node<IndexerNodeType::output_type,
-                                                    std::tuple<int>, oneapi::tbb::flow::lightweight>;
-
-    oneapi::tbb::flow::graph g;
-
-    auto multifunctionNodeBody = [&](MultifunctionNodeType::input_type, MultifunctionNodeType::output_ports_type)
-    {
-        ++counter;
-        if(counter == threshold)
-            throw threshold;
-    };
-
-    IndexerNodeType indexer(g);
-    MultifunctionNodeType multi(g, oneapi::tbb::flow::serial, multifunctionNodeBody);
-    oneapi::tbb::flow::make_edge(indexer, multi);
-
-    utils::NativeParallelFor( threshold * 2, [&](int i){
-        if(i % 2)
-            std::get<1>(indexer.input_ports()).try_put(1);
-        else
-            std::get<0>(indexer.input_ports()).try_put(0);
-    } );
-
-    bool catchException = false;
-    try
-    {
-        g.wait_for_all();
-    }
-    catch (const int& exc)
-    {
-        catchException = true;
-        CHECK_MESSAGE( exc == threshold, "graph.wait_for_all() rethrow current exception" );
-    }
-    CHECK_MESSAGE( catchException, "The exception must be thrown from graph.wait_for_all()" );
-    CHECK_MESSAGE( counter == threshold, "Graph must cancel all tasks after exception" );
-}
-
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
 #include <array>
 #include <vector>
@@ -587,12 +545,6 @@ TEST_CASE("Test ports retrurn references"){
 //! \brief \ref error_guessing
 TEST_CASE("Lightweight testing"){
     lightweight_testing::test<tbb::flow::multifunction_node>(10);
-}
-
-//! Test excesption thrown in node with lightweight policy was rethrown by graph
-//! \brief \ref error_guessing
-TEST_CASE("Exception in lightweight node"){
-    test_exception_ligthweight_policy();
 }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET

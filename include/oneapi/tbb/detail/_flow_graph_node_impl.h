@@ -87,11 +87,10 @@ public:
     }
 
     graph_task* try_put_task( const input_type& t) override {
-        if(my_is_no_throw){
+        if ( my_is_no_throw )
             return try_put_task_impl(t, has_policy<lightweight, Policy>());
-        }else{
+        else
             return try_put_task_impl(t, std::false_type());
-        }
     }
 
     //! Adds src to the list of cached predecessors.

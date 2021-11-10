@@ -761,39 +761,7 @@ struct condition_predicate {
 std::atomic<unsigned> g_lightweight_count;
 std::atomic<unsigned> g_task_count;
 
-class limited_lightweight_checker_body_noexcept {
-public:
-    limited_lightweight_checker_body_noexcept() {
-        g_body_count = 0;
-        g_lightweight_count = 0;
-        g_task_count = 0;
-    }
-private:
-    void increase_and_check(const std::thread::id& /*input*/) {
-        ++g_body_count;
-
-        bool is_inside_task = oneapi::tbb::task::current_context() != nullptr;
-
-        if(is_inside_task) {
-            ++g_task_count;
-        } else {
-            std::unique_lock<std::mutex> lock(m);
-            lightweight_condition.wait(lock, condition_predicate());
-            ++g_lightweight_count;
-            lightweight_work_processed = true;
-        }
-    }
-public:
-    template<typename gateway_type>
-    void operator()(const std::thread::id& input, gateway_type&) noexcept {
-        increase_and_check(input);
-    }
-    output_tuple_type operator()(const std::thread::id& input) noexcept {
-        increase_and_check(input);
-        return output_tuple_type();
-    }
-};
-
+template <bool NoExcept>
 class limited_lightweight_checker_body {
 public:
     limited_lightweight_checker_body() {
@@ -818,10 +786,10 @@ private:
     }
 public:
     template<typename gateway_type>
-    void operator()(const std::thread::id& input, gateway_type&) {
+    void operator()(const std::thread::id& input, gateway_type&) noexcept(NoExcept) {
         increase_and_check(input);
     }
-    output_tuple_type operator()(const std::thread::id& input) {
+    output_tuple_type operator()(const std::thread::id& input) noexcept(NoExcept) {
         increase_and_check(input);
         return output_tuple_type();
     }
@@ -832,7 +800,7 @@ void test_limited_lightweight_execution(unsigned N, unsigned concurrency) {
     CHECK_MESSAGE(concurrency != tbb::flow::unlimited,
                   "Test for limited concurrency cannot be called with unlimited concurrency argument");
     tbb::flow::graph g;
-    NodeType node(g, concurrency, limited_lightweight_checker_body_noexcept());
+    NodeType node(g, concurrency, limited_lightweight_checker_body<true>());
     // Execute first body as lightweight, then wait for all other threads to fill internal buffer.
     // Then unblock the lightweight thread and check if other body executions are inside oneTBB task.
     utils::SpinBarrier barrier(N - concurrency);
@@ -850,7 +818,7 @@ void test_limited_lightweight_execution_with_throwing_body(unsigned N, unsigned 
     CHECK_MESSAGE(concurrency != tbb::flow::unlimited,
                   "Test for limited concurrency cannot be called with unlimited concurrency argument");
     tbb::flow::graph g;
-    NodeType node(g, concurrency, limited_lightweight_checker_body());
+    NodeType node(g, concurrency, limited_lightweight_checker_body<false>());
     // Body is no noexcept, in this case it must be executed as tasks, instead of lightweight execution
     utils::SpinBarrier barrier(N);
     utils::NativeParallelFor(N, native_loop_limited_body<NodeType>(node, barrier));
@@ -860,6 +828,63 @@ void test_limited_lightweight_execution_with_throwing_body(unsigned N, unsigned 
     CHECK_MESSAGE(g_task_count == N, "Body needs to be executed as task N times");
     work_submitted = false;
     lightweight_work_processed = false;
+}
+
+template <int Threshold>
+struct throwing_body{
+    std::atomic<int>& my_counter;
+
+    throwing_body(std::atomic<int>& counter) : my_counter(counter) {}
+
+    template<typename input_type, typename gateway_type>
+    void operator()(const input_type&, gateway_type&) {
+        ++my_counter;
+        if(my_counter == Threshold)
+            throw Threshold;
+    }
+    
+    template<typename input_type>
+    output_tuple_type operator()(const input_type&) {
+        ++my_counter;
+        if(my_counter == Threshold)
+            throw Threshold;
+        return output_tuple_type();
+    }
+};
+
+//! Test excesption thrown in node with lightweight policy was rethrown by graph
+template<template<typename, typename, typename> class NodeType>
+void test_exception_ligthweight_policy(){
+    std::atomic<int> counter {0};
+    constexpr int threshold = 10;
+
+    using IndexerNodeType = oneapi::tbb::flow::indexer_node<int, int>;
+    using FuncNodeType = NodeType<IndexerNodeType::output_type, output_tuple_type, tbb::flow::lightweight>;
+    oneapi::tbb::flow::graph g;
+
+    IndexerNodeType indexer(g);
+    FuncNodeType tested_node(g, oneapi::tbb::flow::serial, throwing_body<threshold>(counter));
+    oneapi::tbb::flow::make_edge(indexer, tested_node);
+
+    utils::NativeParallelFor( threshold * 2, [&](int i){
+        if(i % 2)
+            std::get<1>(indexer.input_ports()).try_put(1);
+        else
+            std::get<0>(indexer.input_ports()).try_put(0);
+    });
+
+    bool catchException = false;
+    try
+    {
+        g.wait_for_all();
+    }
+    catch (const int& exc)
+    {
+        catchException = true;
+        CHECK_MESSAGE( exc == threshold, "graph.wait_for_all() rethrow current exception" );
+    }
+    CHECK_MESSAGE( catchException, "The exception must be thrown from graph.wait_for_all()" );
+    CHECK_MESSAGE( counter == threshold, "Graph must cancel all tasks after exception" );
 }
 
 template<typename NodeType>
@@ -876,6 +901,8 @@ void test(unsigned N) {
     typedef std::thread::id input_type;
     typedef NodeType<input_type, output_tuple_type, tbb::flow::queueing_lightweight> node_type;
     test_lightweight<node_type>(N);
+
+    test_exception_ligthweight_policy<NodeType>();
 }
 
 } // namespace lightweight_testing
