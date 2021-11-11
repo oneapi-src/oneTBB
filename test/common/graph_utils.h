@@ -852,6 +852,7 @@ struct throwing_body{
     }
 };
 
+#if TBB_USE_EXCEPTIONS
 //! Test excesption thrown in node with lightweight policy was rethrown by graph
 template<template<typename, typename, typename> class NodeType>
 void test_exception_ligthweight_policy(){
@@ -886,6 +887,7 @@ void test_exception_ligthweight_policy(){
     CHECK_MESSAGE( catchException, "The exception must be thrown from graph.wait_for_all()" );
     CHECK_MESSAGE( counter == threshold, "Graph must cancel all tasks after exception" );
 }
+#endif /* TBB_USE_EXCEPTIONS */
 
 template<typename NodeType>
 void test_lightweight(unsigned N) {
@@ -902,7 +904,9 @@ void test(unsigned N) {
     typedef NodeType<input_type, output_tuple_type, tbb::flow::queueing_lightweight> node_type;
     test_lightweight<node_type>(N);
 
+#if TBB_USE_EXCEPTIONS
     test_exception_ligthweight_policy<NodeType>();
+#endif /* TBB_USE_EXCEPTIONS */
 }
 
 } // namespace lightweight_testing
