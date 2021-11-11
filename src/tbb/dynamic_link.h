@@ -21,6 +21,8 @@
 
 #include "oneapi/tbb/detail/_config.h"
 
+#include "c_string_view.h"
+
 #include <atomic>
 #include <mutex>
 
@@ -30,6 +32,9 @@
 
 #include <cstddef>
 #ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <windows.h>
 #endif /* _WIN32 */
 
@@ -92,7 +97,7 @@ const int DYNAMIC_LINK_DEFAULT       = DYNAMIC_LINK_GLOBAL | DYNAMIC_LINK_LOAD |
     'flags' is the set of DYNAMIC_LINK_* flags. Each of the DYNAMIC_LINK_* flags
     allows its corresponding linking stage.
 **/
-bool dynamic_link( const char* library,
+bool dynamic_link( const c_string_view& library,
                    const dynamic_link_descriptor descriptors[],
                    std::size_t required,
                    dynamic_link_handle* handle = 0,

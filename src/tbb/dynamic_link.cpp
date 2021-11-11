@@ -19,6 +19,8 @@
 #include "oneapi/tbb/detail/_template_helpers.h"
 #include "oneapi/tbb/detail/_utils.h"
 
+#include "static_string.h"
+#include "c_string_view.h"
 /*
     This file is used by both TBB and OpenMP RTL. Do not use __TBB_ASSERT() macro
     and runtime_warning() function because they are not available in OpenMP. Use
@@ -144,10 +146,10 @@ namespace r1 {
     }
 
 #if __TBB_WIN8UI_SUPPORT
-    bool dynamic_link( const char*  library, const dynamic_link_descriptor descriptors[], std::size_t required, dynamic_link_handle*, int flags ) {
+    bool dynamic_link( const c_string_view& library, const dynamic_link_descriptor descriptors[], std::size_t required, dynamic_link_handle*, int flags ) {
         dynamic_link_handle tmp_handle = NULL;
         TCHAR wlibrary[256];
-        if ( MultiByteToWideChar(CP_UTF8, 0, library, -1, wlibrary, 255) == 0 ) return false;
+        if ( MultiByteToWideChar(CP_UTF8, 0, library.c_str(), -1, wlibrary, 255) == 0 ) return false;
         if ( flags & DYNAMIC_LINK_LOAD )
             tmp_handle = LoadPackagedLibrary( wlibrary, 0 );
         if (tmp_handle != NULL){
@@ -248,7 +250,7 @@ namespace r1 {
     #else
         // Get the library path
         Dl_info dlinfo;
-        int res = dladdr( (void*)&dynamic_link, &dlinfo ); // any function inside the library can be used for the address
+        int res = dladdr( (void*)&dynamic_unlink, &dlinfo ); // any function inside the library can be used for the address
         if ( !res ) {
             char const * err = dlerror();
             DYNAMIC_LINK_WARNING( dl_sys_fail, "dladdr", err );
@@ -275,7 +277,10 @@ namespace r1 {
                 DYNAMIC_LINK_WARNING( dl_buff_too_small );
                 return;
             }
+            // The argument of std::strlen below is guaranteed to have terminating null character,
+            // due POSIX specification of getcwd function.
             ap_data._len = std::strlen( ap_data._path );
+            __TBB_ASSERT(ap_data._len < (sizeof(ap_data._path)/ sizeof(ap_data._path[0])), nullptr);
             ap_data._path[ap_data._len++]='/';
             rc = ap_data._len;
         }
@@ -309,19 +314,18 @@ namespace r1 {
                     > len     -- Buffer too short, required size returned.
                     otherwise -- Ok, number of characters (incl. terminating null) written to buffer.
     */
-    static std::size_t abs_path( char const * name, char * path, std::size_t len ) {
+    template<std::size_t N>
+    static std::size_t abs_path( c_string_view const& name, static_string<N>& path ) {
         if ( ap_data._len == 0 )
             return 0;
 
-        std::size_t name_len = std::strlen( name );
-        std::size_t full_len = name_len+ap_data._len;
-        if ( full_len < len ) {
+        std::size_t full_len = name.size() + ap_data._len;
+        if ( full_len < path.max_size() ) {
             __TBB_ASSERT( ap_data._path[ap_data._len] == 0, NULL);
             __TBB_ASSERT( std::strlen(ap_data._path) == ap_data._len, NULL);
-            std::strncpy( path, ap_data._path, ap_data._len + 1 );
-            __TBB_ASSERT( path[ap_data._len] == 0, NULL );
-            std::strncat( path, name, len - ap_data._len );
-            __TBB_ASSERT( std::strlen(path) == full_len, NULL );
+
+            path = c_string_view(ap_data._path, ap_data._len);
+            path += name;
         }
         return full_len+1; // +1 for null character
     }
@@ -423,20 +427,19 @@ namespace r1 {
     }
 #endif
 
-    dynamic_link_handle dynamic_load( const char* library, const dynamic_link_descriptor descriptors[], std::size_t required, bool local_binding ) {
+    dynamic_link_handle dynamic_load( const c_string_view& library, const dynamic_link_descriptor descriptors[], std::size_t required, bool local_binding ) {
         ::tbb::detail::suppress_unused_warning( library, descriptors, required, local_binding );
 #if __TBB_DYNAMIC_LOAD_ENABLED
-        std::size_t const len = PATH_MAX + 1;
-        char path[ len ];
-        std::size_t rc = abs_path( library, path, len );
-        if ( 0 < rc && rc <= len ) {
+        static_string<PATH_MAX + 1> path;
+        std::size_t rc = abs_path( library,  path );
+        if ( 0 < rc && rc <= path.max_size() ) {
 #if _WIN32
             // Prevent Windows from displaying silly message boxes if it fails to load library
             // (e.g. because of MS runtime problems - one of those crazy manifest related ones)
             UINT prev_mode = SetErrorMode (SEM_FAILCRITICALERRORS);
 #endif /* _WIN32 */
             // The second argument (loading_flags) is ignored on Windows
-            dynamic_link_handle library_handle = dlopen( path, loading_flags(local_binding) );
+            dynamic_link_handle library_handle = dlopen( path.c_str(), loading_flags(local_binding) );
 #if _WIN32
             SetErrorMode (prev_mode);
 #endif /* _WIN32 */
@@ -447,9 +450,9 @@ namespace r1 {
                     library_handle = NULL;
                 }
             } else
-                DYNAMIC_LINK_WARNING( dl_lib_not_found, path, dlerror() );
+                DYNAMIC_LINK_WARNING( dl_lib_not_found, path.c_str(), dlerror() );
             return library_handle;
-        } else if ( rc>len )
+        } else if ( rc > path.max_size() )
                 DYNAMIC_LINK_WARNING( dl_buff_too_small );
                 // rc == 0 means failing of init_ap_data so the warning has already been issued.
 
@@ -457,11 +460,11 @@ namespace r1 {
             return 0;
     }
 
-    bool dynamic_link( const char* library, const dynamic_link_descriptor descriptors[], std::size_t required, dynamic_link_handle *handle, int flags ) {
+    bool dynamic_link( const c_string_view& library, const dynamic_link_descriptor descriptors[], std::size_t required, dynamic_link_handle *handle, int flags ) {
         init_dynamic_link_data();
 
         // TODO: May global_symbols_link find weak symbols?
-        dynamic_link_handle library_handle = ( flags & DYNAMIC_LINK_GLOBAL ) ? global_symbols_link( library, descriptors, required ) : 0;
+        dynamic_link_handle library_handle = ( flags & DYNAMIC_LINK_GLOBAL ) ? global_symbols_link( library.c_str(), descriptors, required ) : 0;
 
 #if defined(_MSC_VER) && _MSC_VER <= 1900
 #pragma warning (push)
@@ -486,7 +489,7 @@ namespace r1 {
 
 #endif /*__TBB_WIN8UI_SUPPORT*/
 #else /* __TBB_WEAK_SYMBOLS_PRESENT || __TBB_DYNAMIC_LOAD_ENABLED */
-    bool dynamic_link( const char*, const dynamic_link_descriptor*, std::size_t, dynamic_link_handle *handle, int ) {
+    bool dynamic_link( const c_string_view&, const dynamic_link_descriptor*, std::size_t, dynamic_link_handle *handle, int ) {
         if ( handle )
             *handle=0;
         return false;

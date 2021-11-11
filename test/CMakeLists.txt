@@ -437,6 +437,16 @@ if (TARGET TBB::tbb)
         $<TARGET_PROPERTY:TBB::tbb,INTERFACE_INCLUDE_DIRECTORIES>
     )
 
+    tbb_add_test(SUBDIR tbb NAME test_static_string)
+    target_include_directories(test_static_string PRIVATE
+        $<TARGET_PROPERTY:TBB::tbb,INTERFACE_INCLUDE_DIRECTORIES>
+    )
+        
+    tbb_add_test(SUBDIR tbb NAME test_c_string_view)
+    target_include_directories(test_c_string_view PRIVATE
+        $<TARGET_PROPERTY:TBB::tbb,INTERFACE_INCLUDE_DIRECTORIES>
+    )    
+
     # HWLOC related test
     tbb_add_tbbbind_test(SUBDIR tbb NAME test_arena_constraints)
 
