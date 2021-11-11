@@ -20,6 +20,7 @@
 #include <atomic>
 #include <memory>
 #include <type_traits>
+#include <iostream>
 
 #include "detail/_config.h"
 #include "detail/_namespace_injection.h"
@@ -1886,6 +1887,7 @@ private:
     size_t my_threshold;
     size_t my_count; // number of successful puts
     size_t my_tries; // number of active put attempts
+    size_t my_future_decrement; // number of active decrement 
     reservable_predecessor_cache< T, spin_mutex > my_predecessors;
     spin_mutex my_mutex;
     broadcast_cache< T > my_successors;
@@ -1894,18 +1896,19 @@ private:
     threshold_regulator< limiter_node<T, DecrementType>, DecrementType > decrement;
 
     graph_task* decrement_counter( long long delta ) {
+        if (delta > 0 && size_t(delta) > my_threshold ){
+            delta = my_threshold;
+        }
+        if ( delta < 0 && size_t(-delta) > my_threshold ){
+            delta = -my_threshold;
+        }
         {
             spin_mutex::scoped_lock lock(my_mutex);
             if( delta > 0 && size_t(delta) > my_count ) {
-                my_count = 0;
                 if( my_tries > 0 ){
-                    if( size_t(delta) - my_count > my_tries ){
-                        my_tries = 0;
-                    }
-                    else {
-                        my_tries -= (size_t(delta) - my_count);
-                    }
+                    my_future_decrement += (size_t(delta) - my_count);
                 }
+                my_count = 0;
             }
             else if( delta < 0 && size_t(-delta) > my_threshold - my_count ) {
                 my_count = my_threshold;
@@ -1949,8 +1952,16 @@ private:
                 {
                     spin_mutex::scoped_lock lock(my_mutex);
                     ++my_count;
-                    if( my_tries )
-                        --my_tries;
+                    if(my_future_decrement){
+                        if(my_count > my_future_decrement){
+                            my_count -= my_future_decrement;
+                            my_future_decrement = 0;
+                        }else{
+                            my_future_decrement -= my_count;
+                            my_count = 0;
+                        }
+                    }
+                    --my_tries;
                     my_predecessors.try_consume();
                     if ( check_conditions() ) {
                         if ( is_graph_active(this->my_graph) ) {
@@ -1970,8 +1981,7 @@ private:
         //if we can reserve but can't put, we decrement the tries and release the reservation
         {
             spin_mutex::scoped_lock lock(my_mutex);
-            if( my_tries )
-                --my_tries;
+            --my_tries;
             if (reserved) my_predecessors.try_release();
             if ( check_conditions() ) {
                 if ( is_graph_active(this->my_graph) ) {
@@ -1998,8 +2008,8 @@ private:
 public:
     //! Constructor
     limiter_node(graph &g, size_t threshold)
-        : graph_node(g), my_threshold(threshold), my_count(0), my_tries(0), my_predecessors(this)
-        , my_successors(this), decrement(this)
+        : graph_node(g), my_threshold(threshold), my_count(0), my_tries(0), my_future_decrement(0),
+        my_predecessors(this) , my_successors(this), decrement(this)
     {
         initialize();
     }
@@ -2083,8 +2093,7 @@ protected:
         graph_task* rtask = my_successors.try_put_task(t);
         if ( !rtask ) {  // try_put_task failed.
             spin_mutex::scoped_lock lock(my_mutex);
-            if( my_tries )
-                --my_tries;
+            --my_tries;
             if (check_conditions() && is_graph_active(this->my_graph)) {
                 small_object_allocator allocator{};
                 typedef forward_task_bypass<limiter_node<T, DecrementType>> task_type;
@@ -2095,8 +2104,16 @@ protected:
         else {
             spin_mutex::scoped_lock lock(my_mutex);
             ++my_count;
-            if( my_tries )
-                --my_tries;
+            if(my_future_decrement){
+                if(my_count > my_future_decrement){
+                    my_count -= my_future_decrement;
+                    my_future_decrement = 0;
+                }else{
+                    my_future_decrement -= my_count;
+                    my_count = 0;
+                }
+            }
+            --my_tries;
         }
         return rtask;
     }
