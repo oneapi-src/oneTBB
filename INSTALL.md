@@ -1,9 +1,20 @@
 # Installation from Sources
+You can install oneAPI Threading Building Blocks (oneTBB) from sources ot from binary packages. This topic describes the process of installation from sources. 
 
----
-**NOTE:** The project uses CMake build configuration. Make sure that you have CMake version 3.1 or higher.
+## Prerequisites 
+   - Configure and build the system. To work with build configurations, see [Build System Description](cmake\README.md). 
+   - Make sure you have installed CMake version 3.1 (or newer) on your system. The project uses CMake build configuration.
 
----
+
+## Configure oneTBB
+
+At the command prompt, type:
+```
+cmake <options> <repo_root>
+```
+
+You may want to use some additional options for configuration. 
+
 
 
 ## Installation and packaging
