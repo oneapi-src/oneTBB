@@ -1898,9 +1898,6 @@ private:
         if (delta > 0 && size_t(delta) > my_threshold ){
             delta = my_threshold;
         }
-        if ( delta < 0 && size_t(-delta) > my_threshold ){
-            delta = -my_threshold;
-        }
         {
             spin_mutex::scoped_lock lock(my_mutex);
             if( delta > 0 && size_t(delta) > my_count ) {
