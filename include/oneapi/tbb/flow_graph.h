@@ -20,7 +20,6 @@
 #include <atomic>
 #include <memory>
 #include <type_traits>
-#include <iostream>
 
 #include "detail/_config.h"
 #include "detail/_namespace_injection.h"
