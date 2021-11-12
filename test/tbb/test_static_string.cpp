@@ -35,6 +35,11 @@ TEST_CASE("Test +=") {
     using tbb::detail::r1::static_string;
 
     static_string<10> s;
+    s += "";
+
+    REQUIRE_MESSAGE(s.size() == 0, "adding empty c_string_view should not alter the string");
+    REQUIRE_MESSAGE(std::string(s.c_str()).empty(), "adding empty c_string_view should not alter the string");
+
     s += "test";
     REQUIRE_MESSAGE(s.size() == std::strlen("test"), "Wrong size of result string");
     REQUIRE_MESSAGE(std::string(s.c_str()) == "test", "");
