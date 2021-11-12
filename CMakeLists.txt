@@ -60,6 +60,7 @@ unset(_tbb_ver_minor)
 
 include(CheckCXXCompilerFlag)
 include(GNUInstallDirs)
+include(CMakeDependentOption)
 
 # ---------------------------------------------------------------------------------------------------------
 # Handle C++ standard version.
@@ -100,6 +101,7 @@ option(TBB_NO_APPCONTAINER "Apply /APPCONTAINER:NO (for testing binaries for Win
 option(TBB4PY_BUILD "Enable tbb4py build" OFF)
 option(TBB_BUILD "Enable tbb build" ON)
 option(TBBMALLOC_BUILD "Enable tbbmalloc build" ON)
+cmake_dependent_option(TBBMALLOC_PROXY_BUILD "Enable tbbmalloc_proxy build" ON "TBBMALLOC_BUILD" OFF)
 option(TBB_CPF "Enable preview features of the library" OFF)
 option(TBB_FIND_PACKAGE "Enable search for external oneTBB using find_package instead of build from sources" OFF)
 option(TBB_DISABLE_HWLOC_AUTOMATIC_SEARCH "Disable HWLOC automatic search by pkg-config tool" OFF)
@@ -217,7 +219,7 @@ else()
     if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
         if (TBBMALLOC_BUILD)
             add_subdirectory(src/tbbmalloc)
-            if (NOT "${MSVC_CXX_ARCHITECTURE_ID}" MATCHES "ARM64")
+            if(TBBMALLOC_PROXY_BUILD AND NOT "${MSVC_CXX_ARCHITECTURE_ID}" MATCHES "ARM64")
                 add_subdirectory(src/tbbmalloc_proxy)
             endif()
         endif()
