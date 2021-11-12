@@ -1900,13 +1900,13 @@ private:
         }
         {
             spin_mutex::scoped_lock lock(my_mutex);
-            if( delta > 0 && size_t(delta) > my_count ) {
+            if ( delta > 0 && size_t(delta) > my_count ) {
                 if( my_tries > 0 ){
                     my_future_decrement += (size_t(delta) - my_count);
                 }
                 my_count = 0;
             }
-            else if( delta < 0 && size_t(-delta) > my_threshold - my_count ) {
+            else if ( delta < 0 && size_t(-delta) > my_threshold - my_count ) {
                 my_count = my_threshold;
             }
             else {
@@ -1948,11 +1948,12 @@ private:
                 {
                     spin_mutex::scoped_lock lock(my_mutex);
                     ++my_count;
-                    if(my_future_decrement){
-                        if(my_count > my_future_decrement){
+                    if ( my_future_decrement ){
+                        if ( my_count > my_future_decrement ){
                             my_count -= my_future_decrement;
                             my_future_decrement = 0;
-                        }else{
+                        }
+                        else{
                             my_future_decrement -= my_count;
                             my_count = 0;
                         }
@@ -2100,11 +2101,12 @@ protected:
         else {
             spin_mutex::scoped_lock lock(my_mutex);
             ++my_count;
-            if(my_future_decrement){
-                if(my_count > my_future_decrement){
+            if ( my_future_decrement ){
+                if ( my_count > my_future_decrement ){
                     my_count -= my_future_decrement;
                     my_future_decrement = 0;
-                }else{
+                }
+                else{
                     my_future_decrement -= my_count;
                     my_count = 0;
                 }
