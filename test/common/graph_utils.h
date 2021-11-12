@@ -800,7 +800,7 @@ void test_limited_lightweight_execution(unsigned N, unsigned concurrency) {
     CHECK_MESSAGE(concurrency != tbb::flow::unlimited,
                   "Test for limited concurrency cannot be called with unlimited concurrency argument");
     tbb::flow::graph g;
-    NodeType node(g, concurrency, limited_lightweight_checker_body<true>());
+    NodeType node(g, concurrency, limited_lightweight_checker_body</*NoExcept*/true>());
     // Execute first body as lightweight, then wait for all other threads to fill internal buffer.
     // Then unblock the lightweight thread and check if other body executions are inside oneTBB task.
     utils::SpinBarrier barrier(N - concurrency);
@@ -818,7 +818,7 @@ void test_limited_lightweight_execution_with_throwing_body(unsigned N, unsigned 
     CHECK_MESSAGE(concurrency != tbb::flow::unlimited,
                   "Test for limited concurrency cannot be called with unlimited concurrency argument");
     tbb::flow::graph g;
-    NodeType node(g, concurrency, limited_lightweight_checker_body<false>());
+    NodeType node(g, concurrency, limited_lightweight_checker_body</*NoExcept*/false>());
     // Body is no noexcept, in this case it must be executed as tasks, instead of lightweight execution
     utils::SpinBarrier barrier(N);
     utils::NativeParallelFor(N, native_loop_limited_body<NodeType>(node, barrier));
