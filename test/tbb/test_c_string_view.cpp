@@ -18,6 +18,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
+#define __TBB_NO_IMPLICIT_LINKAGE 1
 
 #include "common/test.h"
 #include "common/utils.h"
