@@ -4,7 +4,7 @@
 ## Prerequisites 
    
    - Configure and build the system. To work with build configurations, see [Build System Description](cmake\README.md). 
-   - Make sure you have installed CMake version 3.1 (or newer) on your system. The project uses CMake build configuration.
+   - Make sure you have installed CMake version 3.1 (or newer) on your system. oneTBB uses CMake build configuration.
 
 
 ## Configure oneTB
@@ -34,10 +34,10 @@ Some useful build options:
 -	`--config <Release|Debug>` - build configuration, applicable only for multi-config generators such as Visual Studio generator.
 
 
-## Installation and packaging
+## Install and Pack oneTBB
 
 ---
-**CAUTION**
+**NOTE**
 
 Be careful about installing prefix. It defaults to `/usr/local` on UNIX* and `c:/Program Files/${PROJECT_NAME}` on Windows* OS.
 You can define custom `CMAKE_INSTALL_PREFIX` during configuration:
@@ -54,7 +54,7 @@ The following install components are supported:
 - `devel` - oneTBB development package (header files, CMake integration files, library symbolic links, and `.lib` files on Windows* OS).
 - `tbb4py` - [oneTBB Module for Python](#onetbb-python-module-support).
 
-To install specific components after configuration and build, run:
+If you want to install specific components after configuration and build, run:
 
 ```bash
 cmake -DCOMPONENT=<component> [-DBUILD_TYPE=<build-type>] -P cmake_install.cmake
