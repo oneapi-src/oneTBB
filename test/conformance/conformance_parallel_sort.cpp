@@ -93,27 +93,27 @@ TEST_CASE ("Range sorting test (greater comparator)") {
 struct CustomSwappable {
     int data{0};
 
-    CustomSwappable (int in_data) : data{in_data} {}
+    CustomSwappable (CustomSwappable&&) = delete;
+    CustomSwappable& operator=(CustomSwappable&&) = delete;
+
+    CustomSwappable (const CustomSwappable&) = delete;
+    CustomSwappable& operator=(const CustomSwappable&) = delete;
 };
 
 bool operator<(const CustomSwappable& lhs, const CustomSwappable& rhs) {
     return lhs.data < rhs.data;
 }
 
-std::atomic<bool> custom_swap_call_flag{false};
-
 void swap(CustomSwappable& lhs, CustomSwappable& rhs) {
-    custom_swap_call_flag = true;
     std::swap(lhs.data, rhs.data);
 }
 
 //! Testing range with custom swap overload
 //! \brief \ref requirement \ref interface
 TEST_CASE ("Testing range with custom swap overload") {
-    std::vector<CustomSwappable> test_sequence = {5, 4, 3, 2, 1};
+    CustomSwappable test_sequence[5] = {5, 4, 3, 2, 1};
     oneapi::tbb::parallel_sort(test_sequence);
-    REQUIRE_MESSAGE(custom_swap_call_flag, "Custom swap was not used to sort the sequence");
 
-    for(auto it = test_sequence.begin(); it != test_sequence.end() - 1; ++it)
-        REQUIRE_MESSAGE(*(it+1) < *(it), "Testing data not sorted");
+    for(auto it = std::begin(test_sequence); it != std::end(test_sequence) - 1; ++it)
+        REQUIRE_MESSAGE(*(it) < *(it+1), "Testing data not sorted");
 }
