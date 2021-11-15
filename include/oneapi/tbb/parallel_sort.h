@@ -218,6 +218,9 @@ void parallel_quick_sort( RandomAccessIterator begin, RandomAccessIterator end, 
     See also requirements on \ref parallel_sort_iter_req "iterators for parallel_sort". **/
 //@{
 
+template<typename It>
+using iter_value_type = typename std::iterator_traits<It>::value_type;
+
 //! Sorts the data in [begin,end) using the given comparator
 /** The compare function object is used for all comparisons between elements during sorting.
     The compare object must define a bool operator() function.
@@ -225,7 +228,9 @@ void parallel_quick_sort( RandomAccessIterator begin, RandomAccessIterator end, 
 template<typename RandomAccessIterator, typename Compare>
     __TBB_requires(std::random_access_iterator<RandomAccessIterator> &&
                    compare<Compare, RandomAccessIterator> &&
-                   std::swappable<typename std::iterator_traits<RandomAccessIterator>::value_type>)
+                   std::swappable<iter_value_type<RandomAccessIterator>> &&
+                   std::move_constructible<iter_value_type<RandomAccessIterator>> &&
+                   std::assignable_from<iter_value_type<RandomAccessIterator>&, iter_value_type<RandomAccessIterator>>)
 void parallel_sort( RandomAccessIterator begin, RandomAccessIterator end, const Compare& comp ) {
     constexpr int min_parallel_size = 500;
     if( end > begin ) {
@@ -241,18 +246,25 @@ void parallel_sort( RandomAccessIterator begin, RandomAccessIterator end, const 
 /** @ingroup algorithms **/
 template<typename RandomAccessIterator>
     __TBB_requires(std::random_access_iterator<RandomAccessIterator> &&
-                   less_than_comparable<typename std::iterator_traits<RandomAccessIterator>::value_type> &&
-                   std::swappable<typename std::iterator_traits<RandomAccessIterator>::value_type>)
+                   less_than_comparable<iter_value_type<RandomAccessIterator>> &&
+                   std::swappable<iter_value_type<RandomAccessIterator>> &&
+                   std::move_constructible<iter_value_type<RandomAccessIterator>> &&
+                   std::assignable_from<iter_value_type<RandomAccessIterator>&, iter_value_type<RandomAccessIterator>>)
 void parallel_sort( RandomAccessIterator begin, RandomAccessIterator end ) {
     parallel_sort(begin, end, std::less<typename std::iterator_traits<RandomAccessIterator>::value_type>());
 }
+
+template<typename Range>
+using range_value_type = typename std::iterator_traits<range_iterator_type<Range>>::value_type;
 
 //! Sorts the data in rng using the given comparator
 /** @ingroup algorithms **/
 template<typename Range, typename Compare>
     __TBB_requires(container_based_sequence<Range, std::random_access_iterator_tag> &&
                    compare<Compare, range_iterator_type<Range>> &&
-                   std::swappable<typename std::iterator_traits<range_iterator_type<Range>>>)
+                   std::swappable<range_value_type<Range>> &&
+                   std::move_constructible<range_value_type<Range>> &&
+                   std::assignable_from<range_value_type<Range>&, range_value_type<Range>&&>)
 void parallel_sort( Range&& rng, const Compare& comp ) {
     parallel_sort(std::begin(rng), std::end(rng), comp);
 }
@@ -261,8 +273,10 @@ void parallel_sort( Range&& rng, const Compare& comp ) {
 /** @ingroup algorithms **/
 template<typename Range>
     __TBB_requires(container_based_sequence<Range, std::random_access_iterator_tag> &&
-                   less_than_comparable<typename std::iterator_traits<range_iterator_type<Range>>::value_type> &&
-                   std::swappable<typename std::iterator_traits<range_iterator_type<Range>>>)
+                   less_than_comparable<range_value_type<Range>> &&
+                   std::swappable<range_value_type<Range>> &&
+                   std::move_constructible<range_value_type<Range>> &&
+                   std::assignable_from<range_value_type<Range>&, range_value_type<Range>&&>)
 void parallel_sort( Range&& rng ) {
     parallel_sort(std::begin(rng), std::end(rng));
 }

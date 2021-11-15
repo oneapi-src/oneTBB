@@ -235,6 +235,27 @@ template <typename T, typename F = T> using WithFeederOperatorRoundBracketsNonCo
 template <typename T, typename F = T> using WithFeederWrongFirstInputOperatorRoundBrackets = ParallelForEachFeederBody<T, F, /*() = */State::incorrect_first_input>;
 template <typename T, typename F = T> using WithFeederWrongSecondInputOperatorRoundBrackets = ParallelForEachFeederBody<T, F, /*() = */State::incorrect_second_input>;
 } // namespace parallel_for_each_body
+namespace parallel_sort_value {
+    template<bool MovableV, bool MoveAssignableV, bool ComparableV>
+    struct ParallelSortValue
+    {
+        ParallelSortValue(ParallelSortValue&&) requires MovableV {}
+        ParallelSortValue& operator=(ParallelSortValue&&) requires MoveAssignableV {return *this;}
+
+        friend bool operator<(const ParallelSortValue&, const ParallelSortValue&) requires ComparableV { return true; }
+    };
+
+    template<bool MovableV, bool MoveAssignableV, bool ComparableV>
+    void swap(ParallelSortValue<MovableV, MoveAssignableV, ComparableV>&,
+              ParallelSortValue<MovableV, MoveAssignableV, ComparableV>&)
+    {}
+
+
+    using NonSwappableValue = ParallelSortValue</*MovableV = */true, /*MoveAssignableV = */true, /*ComparableV = */true>;
+    using NonMovableValue = ParallelSortValue</*MovableV = */false, /*MoveAssignableV = */true, /*ComparableV = */true>;
+    using NonMoveAssignableValue = ParallelSortValue</*MovableV = */true, /*MoveAssignableV = */false, /*ComparableV = */true>;
+    using NonComparableValue = ParallelSortValue</*MovableV = */true, /*MoveAssignableV = */true, /*ComparableV = */false>;
+} // namespace parallel_sort_value
 namespace container_based_sequence {
 
 template <bool EnableBegin, bool EnableEnd, typename T = int>
@@ -247,7 +268,17 @@ struct ContainerBasedSequence {
 using Correct = ContainerBasedSequence</*Begin = */true, /*End = */true>;
 using NoBegin = ContainerBasedSequence</*Begin = */false, /*End = */true>;
 using NoEnd = ContainerBasedSequence</*Begin = */true, /*End = */false>;
-using ConstantCBS = ContainerBasedSequence</*Begin = */true, /*End = */false, /*T = */const int>;
+
+template <typename T>
+using CustomValueCBS = ContainerBasedSequence</*Begin = */true, /*End = */true, T>;
+
+
+template <typename T>
+struct ConstantAccessCBS {
+    using iterator = utils::RandomIterator<const T>;
+    iterator begin() requires EnableBegin { return nullptr; }
+    iterator end() requires EnableEnd { return nullptr; }
+};
 
 struct ForwardIteratorCBS {
     utils::ForwardIterator<int> begin() { return utils::ForwardIterator<int>{}; }
