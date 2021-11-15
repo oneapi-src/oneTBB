@@ -192,6 +192,7 @@ void parallel_quick_sort( RandomAccessIterator begin, RandomAccessIterator end, 
     for( ; k != begin + serial_cutoff; ++k ) {
         if( comp(*(k + 1), *k) ) {
             do_parallel_quick_sort(begin, end, comp);
+            return;
         }
     }
 
