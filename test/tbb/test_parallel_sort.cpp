@@ -235,17 +235,20 @@ void test_psort_iterator_constraints() {
     static_assert(can_call_parallel_sort_with_iterator<typename std::vector<int>::iterator>);
     static_assert(!can_call_parallel_sort_with_iterator<utils::ForwardIterator<int>>);
     static_assert(!can_call_parallel_sort_with_iterator<utils::InputIterator<int>>);
+    static_assert(!can_call_parallel_sort_with_iterator<utils::RandomIterator<const int>>);
 
     static_assert(can_call_parallel_sort_with_iterator_and_compare<utils::RandomIterator<int>, CorrectCompare<int>>);
     static_assert(can_call_parallel_sort_with_iterator_and_compare<typename std::vector<int>::iterator, CorrectCompare<int>>);
     static_assert(!can_call_parallel_sort_with_iterator_and_compare<utils::ForwardIterator<int>, CorrectCompare<int>>);
     static_assert(!can_call_parallel_sort_with_iterator_and_compare<utils::InputIterator<int>, CorrectCompare<int>>);
+    static_assert(!can_call_parallel_sort_with_iterator_and_compare<utils::RandomIterator<const int>, CorrectCompare<int>>);
 }
 
 void test_psort_compare_constraints() {
     using namespace test_concepts::compare;
-    using CorrectIterator = test_concepts::container_based_sequence::iterator;
     using CorrectCBS = test_concepts::container_based_sequence::Correct;
+    using CorrectIterator = CorrectCBS::iterator;
+
     static_assert(can_call_parallel_sort_with_iterator_and_compare<CorrectIterator, Correct<int>>);
     static_assert(!can_call_parallel_sort_with_iterator_and_compare<CorrectIterator, NoOperatorRoundBrackets<int>>);
     static_assert(!can_call_parallel_sort_with_iterator_and_compare<CorrectIterator, WrongFirstInputOperatorRoundBrackets<int>>);
@@ -266,11 +269,13 @@ void test_psort_cbs_constraints() {
     static_assert(!can_call_parallel_sort_with_cbs<NoBegin>);
     static_assert(!can_call_parallel_sort_with_cbs<NoEnd>);
     static_assert(!can_call_parallel_sort_with_cbs<ForwardIteratorCBS>);
+    static_assert(!can_call_parallel_sort_with_cbs<ConstantCBS>);
 
     static_assert(can_call_parallel_sort_with_cbs_and_compare<Correct, CorrectCompare>);
     static_assert(!can_call_parallel_sort_with_cbs_and_compare<NoBegin, CorrectCompare>);
     static_assert(!can_call_parallel_sort_with_cbs_and_compare<NoEnd, CorrectCompare>);
     static_assert(!can_call_parallel_sort_with_cbs_and_compare<ForwardIteratorCBS, CorrectCompare>);
+    static_assert(!can_call_parallel_sort_with_cbs_and_compare<ConstantCBS, CorrectCompare>);
 }
 
 #endif // __TBB_CPP20_CONCEPTS_PRESENT

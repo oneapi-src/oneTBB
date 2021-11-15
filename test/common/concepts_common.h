@@ -237,17 +237,17 @@ template <typename T, typename F = T> using WithFeederWrongSecondInputOperatorRo
 } // namespace parallel_for_each_body
 namespace container_based_sequence {
 
-using iterator = int*;
-
-template <bool EnableBegin, bool EnableEnd>
+template <bool EnableBegin, bool EnableEnd, typename T = int>
 struct ContainerBasedSequence {
-    int* begin() requires EnableBegin { return nullptr; }
-    int* end() requires EnableEnd { return nullptr; }
+    using iterator = T*;
+    T* begin() requires EnableBegin { return nullptr; }
+    T* end() requires EnableEnd { return nullptr; }
 };
 
 using Correct = ContainerBasedSequence</*Begin = */true, /*End = */true>;
 using NoBegin = ContainerBasedSequence</*Begin = */false, /*End = */true>;
 using NoEnd = ContainerBasedSequence</*Begin = */true, /*End = */false>;
+using ConstantCBS = ContainerBasedSequence</*Begin = */true, /*End = */false, /*T = */const int>;
 
 struct ForwardIteratorCBS {
     utils::ForwardIterator<int> begin() { return utils::ForwardIterator<int>{}; }
