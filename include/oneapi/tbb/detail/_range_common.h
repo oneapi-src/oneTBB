@@ -21,8 +21,8 @@
 #include "_utils.h"
 #if __TBB_CPP20_CONCEPTS_PRESENT
 #include <concepts>
-#include <iterator>
 #endif
+#include <iterator>
 
 namespace tbb {
 namespace detail {
