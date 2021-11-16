@@ -256,6 +256,11 @@ namespace parallel_sort_value {
     using NonMoveAssignableValue = ParallelSortValue</*MovableV = */true, /*MoveAssignableV = */false, /*ComparableV = */true>;
     using NonComparableValue = ParallelSortValue</*MovableV = */true, /*MoveAssignableV = */true, /*ComparableV = */false>;
 } // namespace parallel_sort_value
+template <typename T>
+class ConstantIT {
+    T data{};
+    const T& operator* () const { return data; }
+};
 namespace container_based_sequence {
 
 template <bool EnableBegin, bool EnableEnd, typename T = int>
@@ -272,12 +277,9 @@ using NoEnd = ContainerBasedSequence</*Begin = */true, /*End = */false>;
 template <typename T>
 using CustomValueCBS = ContainerBasedSequence</*Begin = */true, /*End = */true, T>;
 
-
-template <typename T>
-struct ConstantAccessCBS {
-    using iterator = utils::RandomIterator<const T>;
-    iterator begin() { return nullptr; }
-    iterator end() { return nullptr; }
+struct ConstantCBS {
+    ConstantIT<int> begin() const { return ConstantIT<int>{}; }
+    ConstantIT<int> end() const { return ConstantIT<int>{}; }
 };
 
 struct ForwardIteratorCBS {
