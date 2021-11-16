@@ -32,7 +32,7 @@ class c_string_view{
 public:
     template<std::size_t N>
     c_string_view(const char (&s)[N]): str(s), sz(N-1){}
-    c_string_view(const char* s, std::size_t size) : str(s), sz{size} {};
+    c_string_view(const char* s, std::size_t s_size) : str(s), sz{s_size} {};
 
     std::size_t size() const { return sz;}
 
