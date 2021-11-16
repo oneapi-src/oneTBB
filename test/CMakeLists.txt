@@ -269,7 +269,7 @@ function(tbb_add_tbbbind_test)
     endif()
 
     # Disable all HWLOC dependent tests in case of unsupported environment.
-    if (TBB_WINDOWS_DRIVER OR ANDROID_PLATFORM)
+    if (TBB_WINDOWS_DRIVER OR ANDROID_PLATFORM OR APPLE OR NOT BUILD_SHARED_LIBS)
         return()
     endif()
     ProcessorCount(SYSTEM_CONCURRENCY)
