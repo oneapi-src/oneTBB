@@ -49,7 +49,7 @@ Synopsis
                
                task_group_status run_and_wait(task_handle&&);
 
-               //only the requirements for the type of return value F have changed              
+               //only the requirements for the return type of function F are changed              
                template<typename F>
                void run(F&& f);
            }; 
@@ -88,7 +88,7 @@ As an optimization hint, ``F`` might return a ``task_handle``, which task object
 
 Schedules the task object pointed by the ``h`` for execution.
 
-.. caution:: If ``h`` is not empty or ``*this`` is the same ``task_group`` that ``h`` is created with, the behavior is undefined.
+.. caution:: If ``h`` is empty or ``*this`` is not the same ``task_group`` that ``h`` is created with, the behavior is undefined.
 
 
 .. cpp:function:: task_group_status run_and_wait(task_handle&& h)
@@ -98,7 +98,7 @@ Equivalent to ``{run(std::move(h)); return wait();}``.
 **Returns**: The status of ``task_group``.
 
 .. caution::
-   If ``h`` is not empty or ``*this`` is the same ``task_group`` that ``h`` is created with, the behavior is undefined.
+   If ``h`` is empty or ``*this`` is not the same ``task_group`` that ``h`` is created with, the behavior is undefined.
 
  
 .. cpp:function:: template<typename F> void  run(F&& f)
