@@ -276,8 +276,8 @@ using CustomValueCBS = ContainerBasedSequence</*Begin = */true, /*End = */true, 
 template <typename T>
 struct ConstantAccessCBS {
     using iterator = utils::RandomIterator<const T>;
-    iterator begin() requires EnableBegin { return nullptr; }
-    iterator end() requires EnableEnd { return nullptr; }
+    iterator begin() { return nullptr; }
+    iterator end() { return nullptr; }
 };
 
 struct ForwardIteratorCBS {
