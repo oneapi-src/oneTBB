@@ -37,20 +37,22 @@ This document provides details about hardware, operating system, and software pr
 
 ### Supported Operating Systems
 - Systems with Microsoft* Windows* operating systems
-- Microsoft* Windows* 10
-- Microsoft* Windows* Server 2016
-- Microsoft* Windows* Server 2019
+  - Microsoft* Windows* 10
+  - Microsoft* Windows* Server 2016
+  - Microsoft* Windows* Server 2019
 - Systems with Linux* operating systems
-- Clear Linux*
-- Amazon* Linux 2
-- CentOS* 8
-- Debian* 10
-- Fedora* 34
-- Red Hat* Enterprise Linux* 7, 8
-- SuSE* Linux* Enterprise Server 15
-- Ubuntu* 18.04 LTS, 20.04, 21.04
-- Systems with macOS* operating systems: macOS* 10.15, 11.x
-- Systems with Android* operating systems: Android* 9
+  - Clear Linux*
+  - Amazon* Linux 2
+  - CentOS* 8
+  - Debian* 10
+  - Fedora* 34
+  - Red Hat* Enterprise Linux* 7, 8
+  - SuSE* Linux* Enterprise Server 15
+  - Ubuntu* 18.04 LTS, 20.04, 21.04
+- Systems with macOS* operating systems
+  - macOS* 10.15, 11.x
+- Systems with Android* operating systems
+  - Android* 9
 
 ### Supported Compilers
 - Intel* oneAPI DPC++/C++ Compiler
