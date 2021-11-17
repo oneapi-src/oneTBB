@@ -14,8 +14,6 @@
     limitations under the License.
 */
 
-#define TBB_PREVIEW_COLLABORATIVE_CALL_ONCE 1
-
 #if _MSC_VER && !defined(__INTEL_COMPILER)
 // unreachable code
 #pragma warning( push )
@@ -40,7 +38,7 @@
 #include "tbb/task_arena.h"
 
 //! \file test_collaborative_call_once.cpp
-//! \brief Tests for [preview] functionality
+//! \brief Test for [algorithms.collaborative_call_once algorithms.collaborative_call_once.collaborative_once_flag] functionality
 
 struct increment_functor {
     int ct{0};
