@@ -20,8 +20,8 @@ This document provides details about hardware, operating system, and software pr
 ## Table of Contents <!-- omit in toc -->
 - [Supported Hardware](#supported-hardware)
 - [Software](#software)
-  -[Supported Operating Systems](#supported-operating-systems)
-  -[Supported Compilers](#supported-compilers)
+  - [Supported Operating Systems](#supported-operating-systems)
+  - [Supported Compilers](#supported-compilers)
 
 
 ## Supported Hardware
