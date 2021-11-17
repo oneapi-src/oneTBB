@@ -14,6 +14,12 @@
     limitations under the License.
 */
 
+#if _MSC_VER && !defined(__INTEL_COMPILER)
+    // unreachable code
+    #pragma warning( push )
+    #pragma warning( disable: 4702 )
+#endif
+
 #include "common/test.h"
 #include "oneapi/tbb/collaborative_call_once.h"
 
@@ -21,7 +27,7 @@
 #include "common/utils_concurrency_limit.h"
 #include "common/spin_barrier.h"
 #include "oneapi/tbb/parallel_for.h"
-#include "oneapi/tbb/task_arena.h"
+#include "oneapi/tbb/task_group.h"
 
 #include <type_traits>
 #include <exception>
@@ -78,13 +84,13 @@ TEST_CASE("collaborative_call_once executes function exactly once") {
 //! \brief \ref error_guessing \ref requirement
 TEST_CASE("Exception is received only by winner thread") {
     int num_threads = static_cast<int>(utils::get_platform_max_threads());
-
-    oneapi::tbb::task_arena arena{num_threads};
     utils::SpinBarrier barrier(num_threads);
+
+    oneapi::tbb::task_group tg;
     oneapi::tbb::collaborative_once_flag flag;
 
-    arena.enqueue( [&flag, &barrier, num_threads] {
-        utils::NativeParallelFor(num_threads-1, [&flag, &barrier] (int) {
+    for (int i = 0; i < num_threads-1; ++i) {
+        tg.run([&flag, &barrier] {
             barrier.wait();
             try {
                 oneapi::tbb::collaborative_call_once(flag, [] { });
@@ -92,7 +98,7 @@ TEST_CASE("Exception is received only by winner thread") {
                 REQUIRE_MESSAGE(false, "Unreachable code");
             }
         });
-    });
+    };
 
     bool exception_is_happend{false};
     try {
@@ -105,6 +111,11 @@ TEST_CASE("Exception is received only by winner thread") {
     }
 
     REQUIRE_MESSAGE(exception_is_happend == true, "Exception hasn't been received from the winner thread");
+    tg.wait();
 }
 
+#endif
+
+#if _MSC_VER && !defined(__INTEL_COMPILER)
+    #pragma warning( pop )
 #endif

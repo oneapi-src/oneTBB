@@ -19,7 +19,6 @@
 
 #include "task_arena.h"
 #include "task_group.h"
-#include "task.h"
 
 #include <atomic>
 
