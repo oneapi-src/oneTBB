@@ -63,7 +63,7 @@ Windows* OS requires an additional variable for correct TBBBind library building
 
 `HWLOC_VER` substring used earlier can be replaced with one of the three values:
 - `1_11` for the `tbbbind` library configuration
-- `2` for the `tbbbind_2_0`
+- `2` for the `tbbbind_2_0` library configuration
 - `2_5` for the `tbbbind_2_5` library configuration
 
 If you specify variables for several TBBBind versions, the building process for all of these versions is performed during single build session.
@@ -191,7 +191,7 @@ make -j memcheck-<test name> # or memcheck-all to scan all tests
 
 ## Test specification
 
-Use Doxygen to test oneTBB specification:
+Use Doxygen to generate oneTBB test specification:
 
 ```bash
 mkdir build
