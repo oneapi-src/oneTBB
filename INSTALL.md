@@ -80,7 +80,7 @@ cpack
 ## Example of Installation
 
 The following example demonstrates how to install oneTBB.
-```
+```bash
 # Do our experiments in /tmp
 cd /tmp
 # Clone oneTBB repository
