@@ -3,7 +3,7 @@
 
 ## Prerequisites 
    
-   - Configure and build the system. To work with build configurations, see [Build System Description](cmake\README.md). 
+   - Configure and build oneTBB. To work with build configurations, see [Build System Description](cmake/README.md). 
    - Make sure you have installed CMake version 3.1 (or newer) on your system. oneTBB uses CMake build configuration.
 
 
