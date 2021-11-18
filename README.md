@@ -16,7 +16,7 @@ Here are [Release Notes](RELEASE_NOTES.md) and [System Requirements](SYSTEM_REQU
 * [oneTBB Discussions](https://github.com/oneapi-src/oneTBB/discussions)
 
 ## Installation 
-See [Installation from Sources](../INSTALL.md) to learn how to install oneTBB. 
+See [Installation from Sources](INSTALL.md) to learn how to install oneTBB. 
 
 ## Support
 Please report issues and suggestions via [GitHub issues](https://github.com/oneapi-src/oneTBB/issues). See our [documentation](./CONTRIBUTING.md##Issues) to learn how to work with them.
