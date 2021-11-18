@@ -165,7 +165,7 @@ cmake --build . --target test # currently does not work on Windows* OS
 ```
 
 ## Installation
-See [Installation from Sources](INSTALL.md) to learn how to install oneTBB. 
+See [Installation from Sources](../INSTALL.md) to learn how to install oneTBB. 
 
 ## Sanitizers - сonfigure, build, and run
 
