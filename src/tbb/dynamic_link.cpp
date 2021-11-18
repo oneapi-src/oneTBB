@@ -208,7 +208,7 @@ namespace r1 {
     static std::once_flag init_dl_data_state;
 
     static struct ap_data_t {
-        static_string<PATH_MAX+1> _path;
+        static_string<PATH_MAX> _path = {PATH_MAX}; // resize the string to maximum size
     } ap_data;
 
     static void init_ap_data() {
@@ -225,27 +225,29 @@ namespace r1 {
             DYNAMIC_LINK_WARNING( dl_sys_fail, "GetModuleHandleEx", err );
             return;
         }
-        std::array<char, PATH_MAX+1> module_path_name;
+
+        auto& _path = ap_data._path;
         // Now get path to our DLL.
-        DWORD drc = GetModuleFileName( handle, module_path_name.data(), static_cast< DWORD >( module_path_name.size() ) );
+        DWORD drc = GetModuleFileName( handle, _path.data(), static_cast< DWORD >( _path.size() ) );
         if ( drc == 0 ) { // Error occurred.
             int err = GetLastError();
             DYNAMIC_LINK_WARNING( dl_sys_fail, "GetModuleFileName", err );
             return;
         }
-        if ( drc >= module_path_name.size() ) { // Buffer too short.
+        if ( drc >= _path.size() ) { // Buffer too short.
             DYNAMIC_LINK_WARNING( dl_buff_too_small );
             return;
         }
         // Find the position of the last backslash.
-        char *backslash = std::strrchr( module_path_name.data(), '\\' );
+        // For some unknown reason std::strrchr require non const c-string
+        char *backslash = std::strrchr( _path.data(), '\\' );
 
         if ( !backslash ) {    // Backslash not found.
             __TBB_ASSERT_EX( backslash != NULL, "Unbelievable.");
             return;
         }
-        __TBB_ASSERT_EX( backslash >= module_path_name.data(), "Unbelievable.");
-        ap_data._path = c_string_view{ module_path_name.data(), (std::size_t)(backslash - module_path_name.data()) + 1};
+        __TBB_ASSERT_EX( backslash >= _path.c_str(), "Unbelievable.");
+        _path.resize(backslash - _path.c_str() + 1);
     #else
         // Get the library path
         Dl_info dlinfo;
@@ -262,12 +264,15 @@ namespace r1 {
         char const *slash = std::strrchr( dlinfo.dli_fname, '/' );
         __TBB_ASSERT_EX( !slash || (slash >= dlinfo.dli_fname), "Unbelievable.");
 
-        auto SO_path = slash ? c_string_view{dlinfo.dli_fname, (std::size_t)(slash - dlinfo.dli_fname) + 1} : c_string_view{""};
+        auto SO_path = slash ? c_string_view{dlinfo.dli_fname, static_cast<std::size_t>(slash - dlinfo.dli_fname) + 1} : c_string_view{""};
 
         if ( dlinfo.dli_fname[0] != '/' ) {
             // The library path is relative so get the current working directory first
-            std::array<char, PATH_MAX+1> cwd;
-            if ( !getcwd( cwd.data(), cwd.size() ) ) {
+
+            auto& _path = ap_data._path;
+            _path.resize(_path.max_size());
+
+            if ( !getcwd( _path.data(), _path.size() ) ) {
                 DYNAMIC_LINK_WARNING( dl_buff_too_small );
                 return;
             }
@@ -275,8 +280,11 @@ namespace r1 {
 
             // The argument of std::strlen below is guaranteed to have terminating null character,
             // due POSIX specification of getcwd function.
-            ap_data._path = c_string_view{ cwd.data(), std::strlen( cwd.data() )};
-            ap_data._path += "/";
+            _path.resize(std::strlen(_path.c_str()));
+            _path += "/";
+        }
+        else {
+            ap_data._path.clear();
         }
 
 
