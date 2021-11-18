@@ -3,8 +3,8 @@
 
 ## Prerequisites 
    
-   - Configure and build oneTBB. To work with build configurations, see [Build System Description](cmake/README.md). 
    - Make sure you have installed CMake version 3.1 (or newer) on your system. oneTBB uses CMake build configuration.
+   - Configure and build oneTBB. To work with build configurations, see [Build System Description](cmake/README.md). 
 
 
 ## Configure oneTB
@@ -24,7 +24,7 @@ You may want to use some additional options for configuration:
 
 ## Build oneTBB
  
-To build the system, run :
+To build the system, run:
 ```
 cmake --build . <options>
 ```
@@ -48,6 +48,15 @@ cmake -DCMAKE_INSTALL_PREFIX=/my/install/prefix ..
 
 ---
 
+Installation can also be done using:
+
+```
+cmake --install <project-binary-dir>
+```
+
+Special ``--install`` target can alternatively be used for installation, e.g. ``make install``.
+
+You can use the ``install`` components for partial installation.
 
 The following install components are supported:
 - `runtime` - oneTBB runtime package (core shared libraries and `.dll` files on Windows* OS).
@@ -66,4 +75,24 @@ The following commands allow you to create a simple portable package that includ
 ```bash
 cmake <options> ..
 cpack
+```
+
+## Example of Installation
+
+The following example demonstrates how to install oneTBB.
+```
+# Do our experiments in /tmp
+cd /tmp
+# Clone oneTBB repository
+git clone https://github.com/oneapi-src/oneTBB.git
+cd oneTBB
+# Create binary directory for out-of-source build
+mkdir build && cd build
+# Configure. Customize CMAKE_INSTALL_PREFIX and disable TBB_TEST to avoid tests build
+cmake -DCMAKE_INSTALL_PREFIX=/tmp/my_installed_onetbb -DTBB_TEST=OFF ..
+# Build
+cmake --build .
+# Install
+cmake --install .
+# Well done! Your installed oneTBB is in /tmp/my_installed_onetbb
 ```
