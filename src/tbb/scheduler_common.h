@@ -488,6 +488,7 @@ public:
 #endif
 
 inline std::uintptr_t calculate_stealing_threshold(std::uintptr_t base, std::size_t stack_size) {
+    __TBB_ASSERT(base > stack_size / 2, "Stack anchor calculation overflow");
     return base - stack_size / 2;
 }
 

@@ -89,7 +89,16 @@ public:
 
 class alignas(max_nfs_size) stack_size_control : public control_storage {
     std::size_t default_value() const override {
+#if _WIN32_WINNT >= 0x0602 /* _WIN32_WINNT_WIN8 */
+        static auto ThreadStackSizeDefault = [] {
+            ULONG_PTR hi, lo;
+            GetCurrentThreadStackLimits(&lo, &hi);
+            return hi - lo;
+        }();
+        return ThreadStackSizeDefault;
+#else
         return ThreadStackSize;
+#endif
     }
     void apply_active(std::size_t new_active) override {
         control_storage::apply_active(new_active);
