@@ -93,7 +93,7 @@ class alignas(max_nfs_size) stack_size_control : public control_storage {
         static auto ThreadStackSizeDefault = [] {
             ULONG_PTR hi, lo;
             GetCurrentThreadStackLimits(&lo, &hi);
-            return std::size_t(hi - lo);
+            return hi - lo;
         }();
         return ThreadStackSizeDefault;
 #else

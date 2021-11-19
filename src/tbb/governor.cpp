@@ -137,7 +137,7 @@ static std::uintptr_t get_stack_base(std::size_t stack_size) {
     NT_TIB* pteb = (NT_TIB*)NtCurrentTeb();
     __TBB_ASSERT(&pteb < pteb->StackBase && &pteb > pteb->StackLimit, "invalid stack info in TEB");
     return reinterpret_cast<std::uintptr_t>(pteb->StackBase);
-#else /* USE_PTHREAD */
+#else
     // There is no portable way to get stack base address in Posix, so we use
     // non-portable method (on all modern Linux) or the simplified approach
     // based on the common sense assumptions. The most important assumption
@@ -164,7 +164,7 @@ static std::uintptr_t get_stack_base(std::size_t stack_size) {
         stack_base = reinterpret_cast<std::uintptr_t>(&anchor);
     }
     return stack_base;
-#endif /* USE_PTHREAD */
+#endif /* __TBB_USE_WINAPI */
 }
 
 #if (_WIN32||_WIN64) && !__TBB_DYNAMIC_LOAD_ENABLED
