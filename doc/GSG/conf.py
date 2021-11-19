@@ -151,7 +151,8 @@ if BUILD_TYPE == 'oneapi'  or BUILD_TYPE == 'dita':
 else:
     html_js_files = ['custom.js']
     html_logo = '_static/oneAPI-rgb-rev-100.png'
-    html_favicon = '_static/favicons.png'
+    
+html_favicon = '_static/favicons.png'
 
 
 
