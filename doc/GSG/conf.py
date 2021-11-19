@@ -148,10 +148,11 @@ if BUILD_TYPE == 'oneapi'  or BUILD_TYPE == 'dita':
             '_static/theme_overrides.css',  # override wide tables in RTD theme
         ],
     }
-    html_favicon = '_static/favicons.png'
 else:
     html_js_files = ['custom.js']
     html_logo = '_static/oneAPI-rgb-rev-100.png'
+    
+html_favicon = '_static/favicons.png'
 
 
 
