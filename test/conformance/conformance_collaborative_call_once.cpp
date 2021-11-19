@@ -47,11 +47,11 @@ TEST_CASE("collaborative_once_flag member functions match") {
     REQUIRE_MESSAGE(std::is_copy_constructible<oneapi::tbb::collaborative_once_flag>::value == false, 
         "collaborative_once_flag must not be copy constructible");
     REQUIRE_MESSAGE(std::is_copy_assignable<oneapi::tbb::collaborative_once_flag>::value == false, 
-        "collaborative_once_flag ust not be copy assignable");
+        "collaborative_once_flag must not be copy assignable");
     REQUIRE_MESSAGE(std::is_move_constructible<oneapi::tbb::collaborative_once_flag>::value == false, 
-        "collaborative_once_flag ust not be move constructible");
+        "collaborative_once_flag must not be move constructible");
     REQUIRE_MESSAGE(std::is_move_assignable<oneapi::tbb::collaborative_once_flag>::value == false, 
-        "collaborative_once_flag ust not be move assignable");
+        "collaborative_once_flag must not be move assignable");
 }
 
 //! Test for collaborative_call_once to execute function exactly once
@@ -104,17 +104,17 @@ TEST_CASE("Exception is received only by winner thread") {
         });
     };
 
-    bool exception_is_happend{false};
+    bool exception_happened{false};
     try {
         oneapi::tbb::collaborative_call_once(flag, [&barrier] {
             barrier.wait();
             throw std::exception{};
         });
     } catch (std::exception&) {
-        exception_is_happend = true;
+        exception_happened = true;
     }
 
-    REQUIRE_MESSAGE(exception_is_happend == true, "Exception hasn't been received from the winner thread");
+    REQUIRE_MESSAGE(exception_happened == true, "Exception hasn't been received from the winner thread");
     tg.wait();
 }
 
