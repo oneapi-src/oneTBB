@@ -23,9 +23,8 @@
 #include "detail/_aligned_space.h"
 #include "detail/_small_object_pool.h"
 
-#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 #include "detail/_task_handle.h"
-#endif
+
 
 #if __TBB_ARENA_BINDING
 #include "info.h"
@@ -97,7 +96,6 @@ TBB_EXPORT void __TBB_EXPORTED_FUNC submit(d1::task&, d1::task_group_context&, a
 } // namespace r1
 
 namespace d2 {
-#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 inline void enqueue_impl(task_handle&& th, d1::task_arena_base* ta) {
     if (th == nullptr) {
         throw_exception(exception_id::bad_task_handle);
@@ -108,9 +106,8 @@ inline void enqueue_impl(task_handle&& th, d1::task_arena_base* ta) {
     // Do not access th after release
     r1::enqueue(*task_handle_accessor::release(th), ctx, ta);
 }
-#endif// __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+} //namespace d2
 
-}
 namespace d1 {
 
 static constexpr int priority_stride = INT_MAX / 4;
@@ -466,7 +463,6 @@ inline int max_concurrency() {
     return r1::max_concurrency(nullptr);
 }
 
-#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 inline void enqueue(d2::task_handle&& th) {
     d2::enqueue_impl(std::move(th), nullptr);
 }
@@ -475,7 +471,6 @@ template<typename F>
 inline void enqueue(F&& f) {
     enqueue_impl(std::forward<F>(f), nullptr);
 }
-#endif //__TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 
 using r1::submit;
 
@@ -494,9 +489,8 @@ using detail::d1::current_thread_index;
 using detail::d1::max_concurrency;
 using detail::d1::isolate;
 
-#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 using detail::d1::enqueue;
-#endif
+
 } // namespace this_task_arena
 
 } // inline namespace v1

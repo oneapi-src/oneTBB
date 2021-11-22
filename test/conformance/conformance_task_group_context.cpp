@@ -52,3 +52,5 @@ TEST_CASE("Test methods") {
     CHECK_FALSE(ctx.is_group_execution_cancelled());
     ctx.traits();
 }
+
+//todo: add test for task_group_context(task_group_context*)
