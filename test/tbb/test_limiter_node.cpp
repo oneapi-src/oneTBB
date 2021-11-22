@@ -125,18 +125,6 @@ struct put_dec_body : utils::NoAssign {
 
 };
 
-template< typename Sender, typename Receiver >
-void make_edge_impl(Sender& sender, Receiver& receiver){
-#if __GNUC__ < 12 && !TBB_USE_DEBUG
-    // Seemingly, GNU compiler generates incorrect code for the call of limiter.register_successor in release (-03)
-    // The function pointer to make_edge workarounds the issue for unknown reason
-    auto make_edge_ptr = tbb::flow::make_edge<int>;
-    make_edge_ptr(sender, receiver);
-#else
-    tbb::flow::make_edge(sender, receiver);
-#endif
-}
-
 template< typename T >
 void test_puts_with_decrements( int num_threads, tbb::flow::limiter_node< T >& lim , tbb::flow::graph& g) {
     parallel_receiver<T> r(g);
@@ -367,7 +355,7 @@ void test_reserve_release_messages() {
     broad.try_put(1); //failed message retrieved.
     g.wait_for_all();
 
-    make_edge_impl(limit, output_queue); //putting the successor back
+    tbb::flow::make_edge(limit, output_queue); //putting the successor back
 
     broad.try_put(1);  //drop the count
 
@@ -465,7 +453,7 @@ void test_try_put_without_successors() {
         }
     );
 
-    make_edge_impl(ln, fn);
+    tbb::flow::make_edge(ln, fn);
 
     g.wait_for_all();
     CHECK((counter == i * try_put_num / 2));
