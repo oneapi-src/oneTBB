@@ -1895,13 +1895,14 @@ private:
     threshold_regulator< limiter_node<T, DecrementType>, DecrementType > decrement;
 
     graph_task* decrement_counter( long long delta ) {
-        if (delta > 0 && size_t(delta) > my_threshold ){
+        if ( delta > 0 && size_t(delta) > my_threshold ) {
             delta = my_threshold;
         }
+
         {
             spin_mutex::scoped_lock lock(my_mutex);
             if ( delta > 0 && size_t(delta) > my_count ) {
-                if( my_tries > 0 ){
+                if( my_tries > 0 ) {
                     my_future_decrement += (size_t(delta) - my_count);
                 }
                 my_count = 0;
@@ -1931,29 +1932,30 @@ private:
         input_type v;
         graph_task* rval = NULL;
         bool reserved = false;
-            {
-                spin_mutex::scoped_lock lock(my_mutex);
-                if ( check_conditions() )
-                    ++my_tries;
-                else
-                    return NULL;
-            }
+
+        {
+            spin_mutex::scoped_lock lock(my_mutex);
+            if ( check_conditions() )
+                ++my_tries;
+            else
+                return NULL;
+        }
 
         //SUCCESS
         // if we can reserve and can put, we consume the reservation
         // we increment the count and decrement the tries
-        if ( (my_predecessors.try_reserve(v)) == true ){
-            reserved=true;
-            if ( (rval = my_successors.try_put_task(v)) != NULL ){
+        if ( (my_predecessors.try_reserve(v)) == true ) {
+            reserved = true;
+            if ( (rval = my_successors.try_put_task(v)) != NULL ) {
                 {
                     spin_mutex::scoped_lock lock(my_mutex);
                     ++my_count;
-                    if ( my_future_decrement ){
-                        if ( my_count > my_future_decrement ){
+                    if ( my_future_decrement ) {
+                        if ( my_count > my_future_decrement ) {
                             my_count -= my_future_decrement;
                             my_future_decrement = 0;
                         }
-                        else{
+                        else {
                             my_future_decrement -= my_count;
                             my_count = 0;
                         }
@@ -2006,7 +2008,7 @@ public:
     //! Constructor
     limiter_node(graph &g, size_t threshold)
         : graph_node(g), my_threshold(threshold), my_count(0), my_tries(0), my_future_decrement(0),
-        my_predecessors(this) , my_successors(this), decrement(this)
+        my_predecessors(this), my_successors(this), decrement(this)
     {
         initialize();
     }
@@ -2101,12 +2103,12 @@ protected:
         else {
             spin_mutex::scoped_lock lock(my_mutex);
             ++my_count;
-            if ( my_future_decrement ){
-                if ( my_count > my_future_decrement ){
+            if ( my_future_decrement ) {
+                if ( my_count > my_future_decrement ) {
                     my_count -= my_future_decrement;
                     my_future_decrement = 0;
                 }
-                else{
+                else {
                     my_future_decrement -= my_count;
                     my_count = 0;
                 }
@@ -2118,15 +2120,14 @@ protected:
 
     graph& graph_reference() const override { return my_graph; }
 
-    void reset_node( reset_flags f) override {
+    void reset_node( reset_flags f ) override {
         my_count = 0;
-        if(f & rf_clear_edges) {
+        if ( f & rf_clear_edges ) {
             my_predecessors.clear();
             my_successors.clear();
         }
-        else
-        {
-            my_predecessors.reset( );
+        else {
+            my_predecessors.reset();
         }
         decrement.reset_receiver(f);
     }
