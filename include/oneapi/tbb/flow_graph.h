@@ -3111,7 +3111,12 @@ protected:
             if ( !register_predecessor(s, o) ) {
                 register_successor(o, s);
             }
-            finalize(ed);
+            finalize<register_predecessor_task>(ed);
+            return nullptr;
+        }
+
+        task* cancel(execution_data& ed) override {
+            finalize<register_predecessor_task>(ed);
             return nullptr;
         }
 
