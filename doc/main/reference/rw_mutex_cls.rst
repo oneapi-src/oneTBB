@@ -3,9 +3,6 @@
 rw_mutex
 =============
 
-.. note::
-   To enable this feature, define the ``TBB_PREVIEW_MUTEXES`` macro to 1.
-
 Description
 ***********
 
