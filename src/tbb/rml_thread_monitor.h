@@ -40,7 +40,7 @@
 
 #include "itt_notify.h"
 #include "semaphore.h"
-#include "c_string_view.h"
+#include "literal_const_string.h"
 
 // All platform-specific threading support is in this header.
 
@@ -65,7 +65,7 @@ namespace detail {
 namespace r1 {
 
 // Forward declaration: throws std::runtime_error with what() returning error_code description prefixed with aux_info
-void handle_perror(int error_code, const c_string_view& aux_info);
+void handle_perror(int error_code, const literal_const_string& aux_info);
 
 namespace rml {
 namespace internal {
@@ -133,7 +133,7 @@ private:
     bool skipped_wakeup{false};
     binary_semaphore my_sema;
 #if __TBB_USE_POSIX
-    static void check( int error_code, const c_string_view& routine );
+    static void check( int error_code, const literal_const_string& routine );
 #endif
 };
 
@@ -191,7 +191,7 @@ void thread_monitor::detach_thread(handle_type handle) {
 #endif /* __TBB_USE_WINAPI */
 
 #if __TBB_USE_POSIX
-inline void thread_monitor::check( int error_code, const c_string_view& routine ) {
+inline void thread_monitor::check( int error_code, const literal_const_string& routine ) {
     if( error_code ) {
         handle_perror(error_code, routine);
     }

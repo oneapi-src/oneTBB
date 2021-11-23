@@ -20,15 +20,12 @@
 #include "oneapi/tbb/detail/_utils.h"
 
 #include "static_string.h"
-#include "c_string_view.h"
-/*
-    This file is used by both TBB and OpenMP RTL. Do not use __TBB_ASSERT() macro
-    and runtime_warning() function because they are not available in OpenMP. Use
-    __TBB_ASSERT_EX and DYNAMIC_LINK_WARNING instead.
-*/
-
 #include <cstdarg>          // va_list etc.
 #include <cstring>          // strrchr
+
+#include "literal_const_string.h"
+#include "string_view.h"
+
 #if _WIN32
     #include <malloc.h>
 
@@ -146,7 +143,7 @@ namespace r1 {
     }
 
 #if __TBB_WIN8UI_SUPPORT
-    bool dynamic_link( const c_string_view& library, const dynamic_link_descriptor descriptors[], std::size_t required, dynamic_link_handle*, int flags ) {
+    bool dynamic_link( const literal_const_string& library, const dynamic_link_descriptor descriptors[], std::size_t required, dynamic_link_handle*, int flags ) {
         dynamic_link_handle tmp_handle = NULL;
         TCHAR wlibrary[256];
         if ( MultiByteToWideChar(CP_UTF8, 0, library.c_str(), -1, wlibrary, 255) == 0 ) return false;
@@ -264,7 +261,7 @@ namespace r1 {
         char const *slash = std::strrchr( dlinfo.dli_fname, '/' );
         __TBB_ASSERT_EX( !slash || (slash >= dlinfo.dli_fname), "Unbelievable.");
 
-        auto SO_path = slash ? c_string_view{dlinfo.dli_fname, static_cast<std::size_t>(slash - dlinfo.dli_fname) + 1} : c_string_view{""};
+        auto SO_path = slash ? string_view{dlinfo.dli_fname, static_cast<std::size_t>(slash - dlinfo.dli_fname) + 1} : string_view{};
 
         if ( dlinfo.dli_fname[0] != '/' ) {
             // The library path is relative so get the current working directory first
@@ -315,7 +312,7 @@ namespace r1 {
                     otherwise -- Ok, number of characters (incl. terminating null) written to buffer.
     */
     template<std::size_t N>
-    static std::size_t abs_path( c_string_view const& name, static_string<N>& path ) {
+    static std::size_t abs_path( literal_const_string const& name, static_string<N>& path ) {
         if ( ap_data._path.size() == 0 )
             return 0;
 
@@ -424,7 +421,7 @@ namespace r1 {
     }
 #endif
 
-    dynamic_link_handle dynamic_load( const c_string_view& library, const dynamic_link_descriptor descriptors[], std::size_t required, bool local_binding ) {
+    dynamic_link_handle dynamic_load( const literal_const_string& library, const dynamic_link_descriptor descriptors[], std::size_t required, bool local_binding ) {
         ::tbb::detail::suppress_unused_warning( library, descriptors, required, local_binding );
 #if __TBB_DYNAMIC_LOAD_ENABLED
         static_string<PATH_MAX + 1> path;
@@ -457,7 +454,7 @@ namespace r1 {
             return 0;
     }
 
-    bool dynamic_link( const c_string_view& library, const dynamic_link_descriptor descriptors[], std::size_t required, dynamic_link_handle *handle, int flags ) {
+    bool dynamic_link( const literal_const_string& library, const dynamic_link_descriptor descriptors[], std::size_t required, dynamic_link_handle *handle, int flags ) {
         init_dynamic_link_data();
 
         // TODO: May global_symbols_link find weak symbols?
@@ -486,7 +483,7 @@ namespace r1 {
 
 #endif /*__TBB_WIN8UI_SUPPORT*/
 #else /* __TBB_WEAK_SYMBOLS_PRESENT || __TBB_DYNAMIC_LOAD_ENABLED */
-    bool dynamic_link( const c_string_view&, const dynamic_link_descriptor*, std::size_t, dynamic_link_handle *handle, int ) {
+    bool dynamic_link( const literal_const_string&, const dynamic_link_descriptor*, std::size_t, dynamic_link_handle *handle, int ) {
         if ( handle )
             *handle=0;
         return false;

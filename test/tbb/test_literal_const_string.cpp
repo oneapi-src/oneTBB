@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2022 Intel Corporation
+    Copyright (c) 2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -23,21 +23,21 @@
 #include "common/test.h"
 #include "common/utils.h"
 
-#include "src/tbb/c_string_view.h"
+#include "../../src/tbb/literal_const_string.h"
 
-using tbb::detail::r1::c_string_view;
+using tbb::detail::r1::literal_const_string;
 TEST_CASE("Test creation") {
 
-    REQUIRE_MESSAGE( c_string_view("test").size() == std::strlen("test"), "Wrong size of non empty string");
-    REQUIRE_MESSAGE( std::string(c_string_view("test").c_str()) == std::string("test"), "");
+    REQUIRE_MESSAGE( literal_const_string("test").size() == std::strlen("test"), "Wrong size of non empty string");
+    REQUIRE_MESSAGE( std::string(literal_const_string("test").c_str()) == std::string("test"), "");
 }
 
 
-c_string_view inline operator "" _tbb_c_string(const char* s, size_t sz) {return c_string_view{s, sz};}
+//literal_const_string inline operator "" _tbb_c_string(const char* s, size_t sz) {return literal_const_string{s, sz};}
 
 
-TEST_CASE("Test creation via UDL") {
-
-    REQUIRE_MESSAGE( ("test"_tbb_c_string).size() == std::strlen("test"), "Wrong size of non empty string");
-    REQUIRE_MESSAGE( std::string(("test"_tbb_c_string).c_str()) == std::string("test"), "");
-}
+//TEST_CASE("Test creation via UDL") {
+//
+//    REQUIRE_MESSAGE( ("test"_tbb_c_string).size() == std::strlen("test"), "Wrong size of non empty string");
+//    REQUIRE_MESSAGE( std::string(("test"_tbb_c_string).c_str()) == std::string("test"), "");
+//}

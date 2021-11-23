@@ -19,10 +19,13 @@
 
 #include "oneapi/tbb/detail/_config.h"
 
-#include "c_string_view.h"
 #include <array>
 #include <cstring>
 #include <algorithm> // for std::min, std::fill
+
+#include "literal_const_string.h"
+#include "string_view.h"
+
 namespace tbb {
 namespace detail {
 //should we increase it here ?
@@ -80,26 +83,27 @@ public:
     }
 
 
-    static_string& operator+=(const c_string_view& csv) noexcept {
+    static_string& operator+=(const string_view& sv) noexcept {
         //clamp the result string to fit into the buffer
         //__TBB_ASSERT( m_size < (ar.max_size() - 1) );
-        auto symbols_to_write = std::min(csv.size(), ar.max_size() - m_size - 1);
+        auto symbols_to_write = std::min(sv.size(), ar.max_size() - m_size - 1);
 
-        std::memcpy(ar.data() + m_size, csv.c_str(), symbols_to_write);
+        std::memcpy(ar.data() + m_size, sv.begin(), symbols_to_write);
         m_size += symbols_to_write;
-        return *this;
-    }
-
-    static_string& operator=(const c_string_view& csv) noexcept {
-        //clamp the result string to fit into the buffer
-        auto symbols_to_write = std::min(csv.size(), ar.max_size() - 1);
-
-        std::memcpy( ar.data(), csv.c_str(), symbols_to_write);
-        m_size = symbols_to_write;
-
         //Ensure the string is null terminated
         ar[m_size] = 0;
 
+        return *this;
+    }
+
+    static_string& operator+=(const literal_const_string& csv) noexcept {
+        *this += string_view{csv.c_str(), csv.size()};
+        return *this;
+    }
+
+    static_string& operator=(const literal_const_string& csv) noexcept {
+        clear();
+        *this += csv;
         return *this;
     }
 
@@ -107,8 +111,7 @@ public:
     template<std::size_t N1>
     static_string& operator=(const static_string<N1>& ss) noexcept {
         clear();
-        *this += c_string_view(ss.c_str(), ss.size());
-
+        *this += string_view(ss.c_str(), ss.size());
         return *this;
     }
 
