@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef __TBB_c_string_view
-#define __TBB_c_string_view
+#ifndef __TBB_literal_const_string
+#define __TBB_literal_const_string
 
 // Support for dynamic loading entry points from other shared libraries.
 
@@ -26,16 +26,16 @@ namespace detail {
 //should we increase it here ?
 namespace r1 {
 
-class c_string_view{
+class literal_const_string{
     const char* str;
     std::size_t sz;
 public:
     template<std::size_t N>
-    c_string_view(const char (&s)[N]): str(s), sz(N-1){}
-    c_string_view(const char* s, std::size_t s_size) : str(s), sz{s_size} {};
+    literal_const_string(const char (&s)[N]): str(s), sz(N-1){}
 
     std::size_t size() const { return sz;}
 
+    //returned c-style string is guaranteed to be null terminated
     const char* c_str() const {return str;}
 };
 
@@ -43,4 +43,4 @@ public:
 } // namespace detail
 } // namespace tbb
 
-#endif /* __TBB_c_string_view */
+#endif /* __TBB_literal_const_string */

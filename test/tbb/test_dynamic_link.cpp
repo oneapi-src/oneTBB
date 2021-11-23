@@ -65,7 +65,7 @@ static const tbb::detail::r1::dynamic_link_descriptor LinkTable[] = {
 #include "common/utils.h"
 #include "common/utils_dynamic_libs.h"
 
-void test_dynamic_link(tbb::detail::r1::c_string_view const& lib_name) {
+void test_dynamic_link(tbb::detail::r1::literal_const_string const& lib_name) {
 #if __TBB_DYNAMIC_LOAD_ENABLED
 #if !_WIN32
     // Check if the executable exports its symbols.

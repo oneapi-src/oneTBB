@@ -35,7 +35,7 @@
 #include <condition_variable>
 #include "governor.h"
 
-#include "c_string_view.h"
+#include "literal_const_string.h"
 
 #elif _WIN32 || _WIN64
 #include <windows.h>
@@ -156,9 +156,9 @@ public:
 #endif
 
 #if __TBB_RESUMABLE_TASKS_USE_THREADS
-void handle_perror( int error_code, const c_string_view& what );
+void handle_perror( int error_code, const literal_const_string& what );
 
-inline void check(int error_code, const c_string_view& routine) {
+inline void check(int error_code, const literal_const_string& routine) {
     if (error_code) {
         handle_perror(error_code, routine);
     }

@@ -19,13 +19,13 @@
 #include "oneapi/tbb/detail/_template_helpers.h"
 
 #include "static_string.h"
-#include "c_string_view.h"
-
 #include <cstring>
 #include <cstdio>
 #include <stdexcept> // std::runtime_error
 #include <new>
 #include <stdexcept>
+#include "literal_const_string.h"
+#include "string_view.h"
 
 #define __TBB_STD_RETHROW_EXCEPTION_POSSIBLY_BROKEN                             \
     (__GLIBCXX__ && __TBB_GLIBCXX_VERSION>=40700 && __TBB_GLIBCXX_VERSION<60000 && TBB_USE_EXCEPTIONS)
@@ -110,7 +110,7 @@ void throw_exception ( exception_id eid ) {
    Design note: ADR put this routine off to the side in tbb_misc.cpp instead of
    Task.cpp because the throw generates a pathetic lot of code, and ADR wanted
    this large chunk of code to be placed on a cold page. */
-void handle_perror( int error_code, const c_string_view& what ) {
+void handle_perror( int error_code, const literal_const_string& what ) {
     //FIXME: assert on size of what related to buf
     static_string<255 + 1> buf;
 
@@ -121,7 +121,7 @@ void handle_perror( int error_code, const c_string_view& what ) {
         // string returned by the std::strerror is guarantted to be null terminated,
         // so it is perfectly OK to call std::strlen on it
         buf += ": ";
-        buf += c_string_view{err_desc, std::strlen(err_desc)};
+        buf += string_view{err_desc, std::strlen(err_desc)};
     }
 #if TBB_USE_EXCEPTIONS
     do_throw([&buf] { throw std::runtime_error(buf.c_str()); });
