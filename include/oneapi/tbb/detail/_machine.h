@@ -76,22 +76,15 @@ using std::this_thread::yield;
 #endif
 
 //--------------------------------------------------------------------------------------------------
-// atomic_fence implementation
+// atomic_fence_seq_cst implementation
 //--------------------------------------------------------------------------------------------------
 
-static inline void atomic_fence(std::memory_order order) {
+static inline void atomic_fence_seq_cst() {
 #if (__TBB_x86_64 || __TBB_x86_32) && defined(__GNUC__) && __GNUC__ < 11
-    if (order == std::memory_order_seq_cst)
-    {
-        unsigned char dummy = 0u;
-        __asm__ __volatile__ ("lock; notb %0" : "+m" (dummy) :: "memory");
-    }
-    else if (order != std::memory_order_relaxed)
-    {
-        __asm__ __volatile__ ("" ::: "memory");
-    }
+    unsigned char dummy = 0u;
+    __asm__ __volatile__ ("lock; notb %0" : "+m" (dummy) :: "memory");
 #else
-    std::atomic_thread_fence(order);
+    std::atomic_thread_fence(std::memory_order_seq_cst);
 #endif
 }
 
