@@ -37,7 +37,7 @@
 #include <exception>
 
 //! \file conformance_collaborative_call_once.cpp
-//! \brief Test for [algorithms.collaborative_call_once algorithms.collaborative_call_once.collaborative_once_flag] specifications
+//! \brief Test for [algorithms.collaborative_call_once] specification
 
 //! Test for collaborative_once_flag member functions to be matched with spec
 //! \brief \ref interface \ref requirement

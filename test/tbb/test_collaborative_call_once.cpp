@@ -38,7 +38,7 @@
 #include "tbb/task_arena.h"
 
 //! \file test_collaborative_call_once.cpp
-//! \brief Tests for [algorithms.collaborative_call_once algorithms.collaborative_call_once.collaborative_once_flag] functionality
+//! \brief Tests for [algorithms.collaborative_call_once] functionality
 
 struct increment_functor {
     int ct{0};
