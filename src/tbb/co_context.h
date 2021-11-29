@@ -156,7 +156,7 @@ public:
 #endif
 
 #if __TBB_RESUMABLE_TASKS_USE_THREADS
-void handle_perror( int error_code, const c_string_view& what );
+void handle_perror(int error_code, const c_string_view& what);
 
 inline void check(int error_code, const c_string_view& routine) {
     if (error_code) {

@@ -265,7 +265,6 @@ namespace r1 {
 
         if ( dlinfo.dli_fname[0] != '/' ) {
             // The library path is relative so get the current working directory first
-
             auto& _path = ap_data._path;
             _path.resize(_path.max_size());
 
