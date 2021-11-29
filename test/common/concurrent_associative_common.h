@@ -425,6 +425,26 @@ void test_comparison_operators() {
     check_unequal(cont, cont6);
 }
 
+template <typename Range, typename Container>
+void test_empty_container_range(Container&& cont) {
+    REQUIRE(cont.empty());
+    Range r = cont.range();
+    REQUIRE_MESSAGE(r.empty(), "Empty container range should be empty");
+    REQUIRE_MESSAGE(!r.is_divisible(), "Empty container range should not be divisible");
+    REQUIRE_MESSAGE(r.begin() == r.end(), "Incorrect iterators on empty range");
+    REQUIRE_MESSAGE(r.begin() == cont.begin(), "Incorrect iterators on empty range");
+
+    Range r2(r, tbb::split{});
+    REQUIRE_MESSAGE(r.empty(), "Empty container range should be empty");
+    REQUIRE_MESSAGE(r2.empty(), "Empty container range should be empty");
+    REQUIRE_MESSAGE(!r.is_divisible(), "Empty container range should not be divisible");
+    REQUIRE_MESSAGE(!r2.is_divisible(), "Empty container range should not be divisible");
+    REQUIRE_MESSAGE(r.begin() == r.end(), "Incorrect iterators on empty range");
+    REQUIRE_MESSAGE(r2.begin() == r2.end(), "Incorrect iterators on empty range");
+    REQUIRE_MESSAGE(r.begin() == cont.begin(), "Incorrect iterators on empty range");
+    REQUIRE_MESSAGE(r2.begin() == cont.begin(), "Incorrect iterators on empty range");
+}
+
 template<typename T, typename CheckElementState>
 void test_basic_common()
 {
@@ -445,6 +465,25 @@ void test_basic_common()
     REQUIRE_MESSAGE(cont.begin() == cont.end(), "Concurrent container iterators are invalid after construction");
     REQUIRE_MESSAGE(ccont.begin() == ccont.end(), "Concurrent container iterators are invalid after construction");
     REQUIRE_MESSAGE(cont.cbegin() == cont.cend(), "Concurrent container iterators are invalid after construction");
+
+    // Test range for empty container
+    using range_type = typename T::range_type;
+    using const_range_type = typename T::const_range_type;
+    test_empty_container_range<range_type>(cont);
+    test_empty_container_range<const_range_type>(cont);
+    test_empty_container_range<const_range_type>(ccont);
+
+    T empty_cont;
+    const T& empty_ccont = empty_cont;
+
+    for (int i = 0; i < 1000; ++i) {
+        empty_cont.insert(Value<T>::make(i));
+    }
+    empty_cont.clear();
+
+    test_empty_container_range<range_type>(empty_cont);
+    test_empty_container_range<const_range_type>(empty_cont);
+    test_empty_container_range<const_range_type>(empty_ccont);
 
     //std::pair<iterator, bool> insert(const value_type& obj);
     std::pair<typename T::iterator, bool> ins = cont.insert(Value<T>::make(1));
