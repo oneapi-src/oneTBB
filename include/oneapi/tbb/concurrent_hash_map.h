@@ -1050,7 +1050,6 @@ public:
     std::pair<iterator, iterator> equal_range( const Key& key ) { return internal_equal_range( key, end() ); }
     std::pair<const_iterator, const_iterator> equal_range( const Key& key ) const { return internal_equal_range( key, end() ); }
 
-#if __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS
     template <typename K>
     typename std::enable_if<hash_compare_is_transparent<K>::value,
                             std::pair<iterator, iterator>>::type equal_range( const K& key ) {
@@ -1062,7 +1061,6 @@ public:
                             std::pair<const_iterator, const_iterator>>::type equal_range( const K& key ) const {
         return internal_equal_range(key, end());
     }
-#endif // __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS
 
     // Number of items in table.
     size_type size() const { return this->my_size.load(std::memory_order_acquire); }
@@ -1098,13 +1096,11 @@ public:
         return const_cast<concurrent_hash_map*>(this)->lookup</*insert*/false>(key, nullptr, nullptr, /*write=*/false, &do_not_allocate_node);
     }
 
-#if __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS
     template <typename K>
     typename std::enable_if<hash_compare_is_transparent<K>::value,
                             size_type>::type count( const K& key ) const {
         return const_cast<concurrent_hash_map*>(this)->lookup</*insert*/false>(key, nullptr, nullptr, /*write=*/false, &do_not_allocate_node);
     }
-#endif // __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS
 
     // Find item and acquire a read lock on the item.
     /** Return true if item is found, false otherwise. */
@@ -1120,7 +1116,6 @@ public:
         return lookup</*insert*/false>(key, nullptr, &result, /*write=*/true, &do_not_allocate_node);
     }
 
-#if __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS
     template <typename K>
     typename std::enable_if<hash_compare_is_transparent<K>::value,
                             bool>::type find( const_accessor& result, const K& key ) {
@@ -1134,7 +1129,6 @@ public:
         result.release();
         return lookup</*insert*/false>(key, nullptr, &result, /*write=*/true, &do_not_allocate_node);
     }
-#endif // __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS
 
     // Insert item (if not already present) and acquire a read lock on the item.
     /** Returns true if item is new. */
@@ -1150,7 +1144,6 @@ public:
         return lookup</*insert*/true>(key, nullptr, &result, /*write=*/true, &allocate_node_default_construct<>);
     }
 
-#if __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS
     template <typename K>
     typename std::enable_if<hash_compare_is_transparent<K>::value &&
                             std::is_constructible<key_type, const K&>::value,
@@ -1166,7 +1159,6 @@ public:
         result.release();
         return lookup</*insert*/true>(key, nullptr, &result, /*write=*/true, &allocate_node_default_construct<K>);
     }
-#endif // __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS
 
     // Insert item by copying if there is no such key present already and acquire a read lock on the item.
     /** Returns true if item is new. */
@@ -1245,13 +1237,11 @@ public:
         return internal_erase(key);
     }
 
-#if __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS
     template <typename K>
     typename std::enable_if<hash_compare_is_transparent<K>::value,
                             bool>::type erase( const K& key ) {
         return internal_erase(key);
     }
-#endif // __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS
 
     // Erase item by const_accessor.
     /** Return true if item was erased by particularly this call. */
