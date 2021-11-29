@@ -82,7 +82,7 @@ public:
         friend class thread_monitor;
         std::atomic<std::size_t> my_epoch{0};
     };
-    thread_monitor() : skipped_wakeup(false), my_sema() {
+    thread_monitor() {
         ITT_SYNC_CREATE(&my_sema, SyncType_RML, SyncObj_ThreadMonitor);
     }
     ~thread_monitor() {}
@@ -129,7 +129,7 @@ public:
 private:
     cookie my_cookie; // epoch counter
     std::atomic<bool> in_wait{false};
-    bool skipped_wakeup;
+    bool skipped_wakeup{false};
     binary_semaphore my_sema;
 #if __TBB_USE_POSIX
     static void check( int error_code, const char* routine );
@@ -238,9 +238,14 @@ inline void thread_monitor::prepare_wait( cookie& c ) {
 }
 
 inline void thread_monitor::commit_wait( cookie& c ) {
-    bool do_it = ( c.my_epoch.load(std::memory_order_relaxed) == my_cookie.my_epoch.load(std::memory_order_relaxed) );
-    if( do_it ) my_sema.P();
-    else        cancel_wait();
+    bool do_it = ( c.my_epoch.load(std::memory_order_relaxed) == my_cookie.my_epoch.load(std::memory_order_acquire) );
+    if( do_it ) {
+        my_sema.P();
+    } else {
+        tbb::detail::atomic_backoff backoff;
+        while (in_wait.load(std::memory_order_relaxed)) { backoff.pause(); }
+        skipped_wakeup = true;
+    }
 }
 
 inline void thread_monitor::cancel_wait() {

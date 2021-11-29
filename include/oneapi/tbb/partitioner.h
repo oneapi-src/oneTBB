@@ -486,8 +486,7 @@ struct dynamic_grainsize_mode : Mode {
 
 class auto_partition_type: public dynamic_grainsize_mode<adaptive_mode<auto_partition_type> > {
 public:
-    auto_partition_type( const auto_partitioner& )
-        : dynamic_grainsize_mode<adaptive_mode<auto_partition_type> >() {
+    auto_partition_type( const auto_partitioner& ) {
         my_divisor *= __TBB_INITIAL_CHUNKS;
     }
     auto_partition_type( auto_partition_type& src, split)
@@ -533,8 +532,7 @@ public:
 class static_partition_type : public linear_affinity_mode<static_partition_type> {
 public:
     typedef detail::proportional_split split_type;
-    static_partition_type( const static_partitioner& )
-        : linear_affinity_mode<static_partition_type>() {}
+    static_partition_type( const static_partitioner& ) {}
     static_partition_type( static_partition_type& p, const proportional_split& split_obj )
         : linear_affinity_mode<static_partition_type>(p, split_obj) {}
 };
@@ -545,8 +543,7 @@ class affinity_partition_type : public dynamic_grainsize_mode<linear_affinity_mo
 public:
     static const unsigned factor = 1 << factor_power; // number of slots in affinity array per task
     typedef detail::proportional_split split_type;
-    affinity_partition_type( affinity_partitioner_base& ap )
-        : dynamic_grainsize_mode<linear_affinity_mode<affinity_partition_type> >() {
+    affinity_partition_type( affinity_partitioner_base& ap ) {
         __TBB_ASSERT( (factor&(factor-1))==0, "factor must be power of two" );
         ap.resize(factor);
         my_array = ap.my_array;

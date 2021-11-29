@@ -129,7 +129,7 @@ public:
     task_scheduler_handle& operator=(const task_scheduler_handle& other) = delete;
 
     //! Move only
-    task_scheduler_handle(task_scheduler_handle&& other) noexcept : m_ctl{nullptr} {
+    task_scheduler_handle(task_scheduler_handle&& other) noexcept {
         std::swap(m_ctl, other.m_ctl);
     }
     task_scheduler_handle& operator=(task_scheduler_handle&& other) noexcept {

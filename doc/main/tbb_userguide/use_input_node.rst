@@ -29,8 +29,7 @@ All ``input_node`` objects are constructed in the inactive state and usually
 activated after the entire flow graph is constructed.
 
 
-For example, you can use the code in `Data Flow
-Graph <Data_Flow_Graph.html#Data_Flow_Graph>`__. In that implementation,
+For example, you can use the code in :ref:`Data_Flow_Graph`. In that implementation,
 the ``input_node`` is constructed in the inactive state and activated after
 all other edges are made:
 

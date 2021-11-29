@@ -29,7 +29,9 @@
 #include <intrin.h>
 #ifdef __TBBMALLOC_BUILD
 #define WIN32_LEAN_AND_MEAN
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 #include <windows.h> // SwitchToThread()
 #endif
 #ifdef _MSC_VER

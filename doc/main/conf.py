@@ -25,7 +25,7 @@ BUILD_TYPE = os.getenv("BUILD_TYPE")
 
 # -- Project information -----------------------------------------------------
 
-if BUILD_TYPE == 'oneapi':
+if BUILD_TYPE == 'oneapi' or BUILD_TYPE == 'dita':
     project = u'Intel® oneAPI Threading Building Blocks (oneTBB)'
 else:
     project = u'oneAPI Threading Building Blocks (oneTBB)'
@@ -90,7 +90,7 @@ pygments_style = None
 # Syntax highlighting for the :: directive
 highlight_language = 'cpp' 
 
-if BUILD_TYPE == 'oneapi':
+if BUILD_TYPE == 'oneapi' or BUILD_TYPE == 'dita':
     rst_prolog = """
 .. |full_name| replace:: Intel\ |reg|\  oneAPI Threading Building Blocks (oneTBB)
 .. |short_name| replace:: oneTBB
@@ -120,7 +120,7 @@ else:
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-if BUILD_TYPE == 'oneapi':
+if BUILD_TYPE == 'oneapi' or BUILD_TYPE == 'dita':
     html_theme = 'sphinx_rtd_theme'
 else:
     html_theme = 'sphinx_book_theme'
@@ -140,7 +140,7 @@ else:
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-if BUILD_TYPE == 'oneapi':
+if BUILD_TYPE == 'oneapi'  or BUILD_TYPE == 'dita':
     html_context = {
         'css_files': [
             '_static/theme_overrides.css',  # override wide tables in RTD theme
@@ -149,7 +149,8 @@ if BUILD_TYPE == 'oneapi':
 else:
     html_js_files = ['custom.js']
     html_logo = '_static/oneAPI-rgb-rev-100.png'
-    html_favicon = '_static/favicons.png'
+    
+html_favicon = '_static/favicons.png'
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.

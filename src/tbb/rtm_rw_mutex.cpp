@@ -97,7 +97,6 @@ struct rtm_rw_mutex_impl {
         __TBB_ASSERT(!m.write_flag.load(std::memory_order_relaxed), "After acquire for write, write_flag already true");
         m.write_flag.store(true, std::memory_order_relaxed);                       // kill transactional readers
         s.m_transaction_state = d1::rtm_rw_mutex::rtm_type::rtm_real_writer;
-        return;
     }
 
     //! Acquire read lock on given mutex.

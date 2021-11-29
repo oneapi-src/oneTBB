@@ -22,6 +22,7 @@
 
 #if __TBB_ARENA_BINDING
 #include <vector>
+#include <cstdint>
 
 namespace tbb {
 namespace detail {
@@ -37,10 +38,6 @@ struct constraints {
     constraints(numa_node_id id = -1, int maximal_concurrency = -1)
         : numa_id(id)
         , max_concurrency(maximal_concurrency)
-#if __TBB_PREVIEW_TASK_ARENA_CONSTRAINTS_EXTENSION_PRESENT
-        , core_type(-1)
-        , max_threads_per_core(-1)
-#endif
     {}
 #endif /*!__TBB_CPP20_PRESENT*/
 

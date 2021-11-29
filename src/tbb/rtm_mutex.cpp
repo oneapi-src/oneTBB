@@ -86,7 +86,6 @@ struct rtm_mutex_impl {
         s.m_mutex = &m;
         s.m_mutex->lock();
         s.m_transaction_state = d1::rtm_mutex::rtm_state::rtm_real;
-        return;
     }
 
     //! Try to acquire lock on the given mutex.

@@ -331,7 +331,7 @@ public:
         return nullptr;
     }
 
-    ~stage_task() {
+    ~stage_task() override {
         if ( my_filter && my_object ) {
             my_filter->finalize(my_object);
             my_object = nullptr;

@@ -325,3 +325,131 @@ task:
         }
         tg.wait();
     }
+
+
+Scheduler Bypass
+----------------
+
+TBB ``task::execute()`` method can return a pointer to a task that can be executed next by the current thread.
+This might reduce scheduling overheads compared to direct ``spawn``. Similar to ``spawn``, the returned task 
+is not guaranteed to be executed next by the current thread.
+
+.. code:: cpp
+    
+    #include <tbb/task.h>
+    
+    // Assuming OtherTask is defined.
+    
+    struct Task : tbb::task {
+        task* execute(){
+            // some work to do ...
+            
+            auto* other_p = new(this->parent().allocate_child()) OtherTask{};
+            this->parent().add_ref_count();
+            
+            return other_p;
+        }
+    };
+    
+    int main(){
+        // Assuming RootTask is  defined.
+        RootTask& root = *new(tbb::task::allocate_root()) RootTask{};
+    
+        Task& child = *new(root.allocate_child()) Task{/*params*/};
+        
+        root.add_ref_count();
+        
+        tbb::task_spawn(child);
+        
+        root.wait_for_all();;
+    }
+
+In oneTBB this can be done using the preview feature of ``oneapi::tbb::task_group``. 
+
+.. code:: cpp
+   
+    #define TBB_PREVIEW_TASK_GROUP_EXTENSIONS 1
+    #include <oneapi/tbb/task_group.h>
+    
+    // Assuming OtherTask is defined.
+    
+    int main(){
+        oneapi::tbb::task_group tg;
+        
+        tg.run([&tg](){
+            //some work to do ...
+            
+            return tg.defer(OtherTask{});
+        });
+        
+        tg.wait();
+    }
+
+Here ``oneapi::tbb::task_group::defer`` adds a new task into the ``tg``. However, the task is not put into a 
+queue of tasks ready for execution via ``oneapi::tbb::task_group::run``, but bypassed to the executing thread directly 
+via function return value. 
+
+Deferred task creation
+----------------------
+The TBB low-level task API separates the task creation from the actual spawning. This separation allows to
+postpone the task spawning, while the parent task and final result production are blocked from premature leave. 
+For example, ``RootTask``, ``ChildTask``, and ``CallBackTask`` are the user-side functors that
+inherit ``tbb::task`` and implement its interface. Then, blocking the ``RootTask`` from leaving prematurely
+and waiting on it is implemented as follows: 
+
+.. code:: cpp
+
+    #include <tbb/task.h>
+
+    int main() {
+        // Assuming RootTask, ChildTask, and CallBackTask are defined.
+        RootTask& root = *new(tbb::task::allocate_root()) RootTask{};
+
+        ChildTask&    child    = *new(root.allocate_child()) ChildTask{/*params*/};
+        CallBackTask& cb_task  = *new(root.allocate_child()) CallBackTask{/*params*/};
+
+        root.set_ref_count(3);
+        
+        tbb::task::spawn(child);
+        
+        register_callback([cb_task&](){
+            tbb::task::enqueue(cb_task);
+        });
+
+        root.wait_for_all();
+        // Control flow will reach here only after both ChildTask and CallBackTask are executed,
+        // i.e. after the callback is called  
+    }
+
+In oneTBB this can be done using the preview feature of ``oneapi::tbb::task_group``.
+
+.. code:: cpp
+
+    #define TBB_PREVIEW_TASK_GROUP_EXTENSIONS 1
+    #include <oneapi/tbb/task_group.h>
+
+    int main(){
+        oneapi::tbb::task_group tg;
+        oneapi::tbb::task_arena arena;
+        // Assuming ChildTask and CallBackTask are defined.
+        
+        auto cb = tg.defer(CallBackTask{/*params*/});
+        
+        register_callback([&tg, c = std::move(cb), &arena]{
+            arena.enqueue(c);
+        });        
+
+        tg.run(ChildTask{/*params*/});
+
+ 
+        tg.wait();
+        // Control flow gets here once both ChildTask and CallBackTask are executed
+        // i.e. after the callback is called  
+    }
+
+Here ``oneapi::tbb::task_group::defer`` adds a new task into the ``tg``. However, the task is not spawned until 
+``oneapi::tbb::task_arena::enqueue`` is called. 
+
+.. note::
+   The call to ``oneapi::tbb::task_group::wait`` will not return control until both ``ChildTask`` and 
+   ``CallBackTask`` are executed.

@@ -23,7 +23,6 @@
 #pragma warning( disable: 4324 )
 #endif
 
-#define TBB_PREVIEW_MUTEXES 1
 #define TBB_PREVIEW_WAITING_FOR_WORKERS 1
 
 #include "common/test.h"

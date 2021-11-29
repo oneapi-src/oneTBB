@@ -18,6 +18,7 @@ It also describes features that are not included in the oneTBB specification.
 
     info_namespace
     parallel_for_each_semantics
+    parallel_sort_ranges_extension
 
 Preview features
 ****************
@@ -52,6 +53,4 @@ The key properties of a preview feature are:
     task_group_extensions
     task_arena_extensions
     this_task_arena_extensions
-    mutex_cls
-    rw_mutex_cls
     custom_mutex_chmap

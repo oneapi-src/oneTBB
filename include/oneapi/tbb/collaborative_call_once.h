@@ -17,11 +17,8 @@
 #ifndef __TBB_collaborative_call_once_H
 #define __TBB_collaborative_call_once_H
 
-#if __TBB_PREVIEW_COLLABORATIVE_CALL_ONCE
-
-#include "tbb/task_arena.h"
-#include "tbb/task_group.h"
-#include "tbb/task.h"
+#include "task_arena.h"
+#include "task_group.h"
 
 #include <atomic>
 
@@ -235,5 +232,4 @@ using detail::d1::collaborative_call_once;
 using detail::d1::collaborative_once_flag;
 } // namespace tbb
 
-#endif // __TBB_PREVIEW_COLLABORATIVE_CALL_ONCE
 #endif // __TBB_collaborative_call_once_H

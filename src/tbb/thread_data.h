@@ -102,7 +102,6 @@ public:
         , my_task_dispatcher{ nullptr }
         , my_arena{}
         , my_arena_slot{}
-        , my_inbox{}
         , my_random{ this }
         , my_last_observer{ nullptr }
         , my_small_object_pool{new (cache_aligned_allocate(sizeof(small_object_pool_impl))) small_object_pool_impl{}}

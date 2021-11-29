@@ -96,7 +96,7 @@ private:
 protected:
     private_worker( private_server& server, tbb_client& client, const std::size_t i ) :
         my_state(st_init), my_server(server), my_client(client), my_index(i),
-        my_thread_monitor(), my_handle(), my_next()
+        my_handle(), my_next()
     {}
 };
 
@@ -165,7 +165,7 @@ private:
     //! Equivalent of adding additional_slack to my_slack and waking up to 2 threads if my_slack permits.
     void wake_some( int additional_slack );
 
-    virtual ~private_server();
+    ~private_server() override;
 
     void remove_server_ref() {
         if( --my_ref_count==0 ) {

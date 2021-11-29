@@ -605,7 +605,7 @@ int run_tests() {
 
 #include "tbb/parallel_for.h"
 template<typename Input, typename Output>
-class equeueing_on_inner_level {
+class enqueueing_on_inner_level {
     typedef Input input_type;
     typedef Output output_type;
     typedef async_activity<input_type, output_type> async_activity_type;
@@ -661,8 +661,8 @@ public:
     }
 };
 
-int run_test_equeueing_on_inner_level() {
-    equeueing_on_inner_level<int, int>::run();
+int run_test_enqueueing_on_inner_level() {
+    enqueueing_on_inner_level<int, int>::run();
     return 0;
 }
 
@@ -824,10 +824,10 @@ TEST_CASE("Spin avoidance test"){
     test_for_spin_avoidance();
 }
 
-//! Test nested enqueing
+//! Test nested enqueuing
 //! \brief \ref error_guessing
-TEST_CASE("Inner enqueing test"){
-    run_test_equeueing_on_inner_level();
+TEST_CASE("Inner enqueuing test"){
+    run_test_enqueueing_on_inner_level();
 }
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET

@@ -917,7 +917,6 @@ void TestInsertFindErase( std::size_t nthread ) {
         TraverseTable(table,n,0);
         ParallelTraverseTable(table,n,0);
 
-        int expected_allocs = 0, expected_frees = 100;
         for ( int i = 0; i < 2; ++i ) {
             if ( i==0 )
                 DoConcurrentOperations<InsertInitList, test_table_type>( table, n, "insert(std::initializer_list)", nthread );
@@ -926,7 +925,6 @@ void TestInsertFindErase( std::size_t nthread ) {
             CHECK(MyDataCount == m);
             TraverseTable( table, n, m );
             ParallelTraverseTable( table, n, m );
-            expected_allocs += m;
 
             DoConcurrentOperations<Find, test_table_type>( table, n, "find", nthread );
             CHECK(MyDataCount == m);
@@ -939,7 +937,6 @@ void TestInsertFindErase( std::size_t nthread ) {
             CHECK(EraseCount == m);
             CHECK(MyDataCount == 0);
             TraverseTable( table, n, 0 );
-            expected_frees += m;
 
             table.clear();
         }

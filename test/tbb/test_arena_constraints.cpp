@@ -104,6 +104,9 @@ TEST_CASE("Test constraints propagation during arenas copy construction") {
 }
 #endif /*__TBB_HWLOC_VALID_ENVIRONMENT*/
 
+// The test cannot be stabilized with TBB malloc under Thread Sanitizer
+#if !__TBB_USE_THREAD_SANITIZER
+
 //! Testing memory leaks absence
 //! \brief \ref resource_usage
 TEST_CASE("Test memory leaks") {
@@ -145,6 +148,7 @@ TEST_CASE("Test memory leaks") {
     }
     REQUIRE_MESSAGE(no_memory_leak, "Seems we get memory leak here.");
 }
+#endif
 
 //! Testing arena constraints setters
 //! \brief \ref interface \ref requirement
