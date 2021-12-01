@@ -21,8 +21,8 @@
 
 #include "common/spin_barrier.h"
 
-//! \file conformance_task_grou.cpp
-//! \brief Test for [task_group] specification
+//! \file conformance_task_group.cpp
+//! \brief Test for [scheduler.task_group] specification
 
 
 //! Test checks that for lost task handle
