@@ -24,22 +24,6 @@
 //! \file conformance_task_group.cpp
 //! \brief Test for [scheduler.task_group] specification
 
-
-//! Test checks that for lost task handle
-//! \brief \ref requirement
-TEST_CASE("Task handle created but not run"){
-    {
-        oneapi::tbb::task_group tg;
-
-        std::atomic<bool> run {false};
-
-        auto h = tg.defer([&]{
-            run = true;
-        });
-        CHECK_MESSAGE(run == false, "delayed task should not be run until run(task_handle) is called");
-    }
-}
-
 //! Test checks that for lost task handle
 //! \brief \ref requirement
 TEST_CASE("Task handle created but not run"){
