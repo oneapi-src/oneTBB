@@ -231,7 +231,6 @@ template <typename T>
 using CorrectCompare = test_concepts::compare::Correct<T>;
 
 void test_psort_iterator_constraints() {
-    using namespace test_concepts;
     using namespace test_concepts::parallel_sort_value;
 
     static_assert(can_call_parallel_sort_with_iterator<utils::RandomIterator<int>>);
@@ -241,7 +240,7 @@ void test_psort_iterator_constraints() {
     static_assert(!can_call_parallel_sort_with_iterator<utils::RandomIterator<NonMovableValue>>);
     static_assert(!can_call_parallel_sort_with_iterator<utils::RandomIterator<NonMoveAssignableValue>>);
     static_assert(!can_call_parallel_sort_with_iterator<utils::RandomIterator<NonComparableValue>>);
-    static_assert(!can_call_parallel_sort_with_iterator<ConstantIT<int>>);
+    static_assert(!can_call_parallel_sort_with_iterator<test_concepts::ConstantIT<int>>);
 
     static_assert(can_call_parallel_sort_with_iterator_and_compare<utils::RandomIterator<int>, CorrectCompare<int>>);
     static_assert(can_call_parallel_sort_with_iterator_and_compare<typename std::vector<int>::iterator, CorrectCompare<int>>);
@@ -249,12 +248,11 @@ void test_psort_iterator_constraints() {
     static_assert(!can_call_parallel_sort_with_iterator_and_compare<utils::InputIterator<int>, CorrectCompare<int>>);
     static_assert(!can_call_parallel_sort_with_iterator_and_compare<utils::RandomIterator<NonMovableValue>, CorrectCompare<NonMovableValue>>);
     static_assert(!can_call_parallel_sort_with_iterator_and_compare<utils::RandomIterator<NonMoveAssignableValue>, CorrectCompare<NonMoveAssignableValue>>);
-    static_assert(!can_call_parallel_sort_with_iterator_and_compare<ConstantIT<int>, CorrectCompare<const int>>);
+    static_assert(!can_call_parallel_sort_with_iterator_and_compare<test_concepts::ConstantIT<int>, CorrectCompare<const int>>);
 }
 
 void test_psort_compare_constraints() {
     using namespace test_concepts::compare;
-    using namespace test_concepts::parallel_sort_value;
 
     using CorrectCBS = test_concepts::container_based_sequence::Correct;
     using CorrectIterator = CorrectCBS::iterator;

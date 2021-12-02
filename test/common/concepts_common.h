@@ -236,25 +236,23 @@ template <typename T, typename F = T> using WithFeederWrongFirstInputOperatorRou
 template <typename T, typename F = T> using WithFeederWrongSecondInputOperatorRoundBrackets = ParallelForEachFeederBody<T, F, /*() = */State::incorrect_second_input>;
 } // namespace parallel_for_each_body
 namespace parallel_sort_value {
-    template<bool MovableV, bool MoveAssignableV, bool ComparableV>
-    struct ParallelSortValue
-    {
-        ParallelSortValue(ParallelSortValue&&) requires MovableV {}
-        ParallelSortValue& operator=(ParallelSortValue&&) requires MoveAssignableV {return *this;}
+template<bool MovableV, bool MoveAssignableV, bool ComparableV>
+struct ParallelSortValue
+{
+    ParallelSortValue(ParallelSortValue&&) requires MovableV {}
+    ParallelSortValue& operator=(ParallelSortValue&&) requires MoveAssignableV {return *this;}
 
-        friend bool operator<(const ParallelSortValue&, const ParallelSortValue&) requires ComparableV { return true; }
-    };
+    friend bool operator<(const ParallelSortValue&, const ParallelSortValue&) requires ComparableV { return true; }
+};
 
-    template<bool MovableV, bool MoveAssignableV, bool ComparableV>
-    void swap(ParallelSortValue<MovableV, MoveAssignableV, ComparableV>&,
-              ParallelSortValue<MovableV, MoveAssignableV, ComparableV>&)
-    {}
+template<bool MovableV, bool MoveAssignableV, bool ComparableV>
+void swap(ParallelSortValue<MovableV, MoveAssignableV, ComparableV>&,
+          ParallelSortValue<MovableV, MoveAssignableV, ComparableV>&)
+{}
 
-
-    using NonSwappableValue = ParallelSortValue</*MovableV = */true, /*MoveAssignableV = */true, /*ComparableV = */true>;
-    using NonMovableValue = ParallelSortValue</*MovableV = */false, /*MoveAssignableV = */true, /*ComparableV = */true>;
-    using NonMoveAssignableValue = ParallelSortValue</*MovableV = */true, /*MoveAssignableV = */false, /*ComparableV = */true>;
-    using NonComparableValue = ParallelSortValue</*MovableV = */true, /*MoveAssignableV = */true, /*ComparableV = */false>;
+using NonMovableValue = ParallelSortValue</*MovableV = */false, /*MoveAssignableV = */true, /*ComparableV = */true>;
+using NonMoveAssignableValue = ParallelSortValue</*MovableV = */true, /*MoveAssignableV = */false, /*ComparableV = */true>;
+using NonComparableValue = ParallelSortValue</*MovableV = */true, /*MoveAssignableV = */true, /*ComparableV = */false>;
 } // namespace parallel_sort_value
 template <typename T>
 class ConstantIT {
