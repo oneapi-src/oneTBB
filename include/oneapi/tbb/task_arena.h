@@ -97,9 +97,7 @@ TBB_EXPORT void __TBB_EXPORTED_FUNC submit(d1::task&, d1::task_group_context&, a
 
 namespace d2 {
 inline void enqueue_impl(task_handle&& th, d1::task_arena_base* ta) {
-    if (th == nullptr) {
-        throw_exception(exception_id::bad_task_handle);
-    }
+    __TBB_ASSERT(th!=nullptr, "Attempt to schedule empty task_handle");
 
     auto& ctx = task_handle_accessor::ctx_of(th);
 

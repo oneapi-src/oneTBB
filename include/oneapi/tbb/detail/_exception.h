@@ -40,8 +40,6 @@ enum class exception_id {
     invalid_key,
     bad_tagged_msg_cast,
     unsafe_wait,
-    bad_task_handle,
-    bad_task_handle_wrong_task_group,
 
     last_entry
 };

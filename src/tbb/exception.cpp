@@ -92,9 +92,6 @@ void throw_exception ( exception_id eid ) {
     case exception_id::unsafe_wait: DO_THROW(unsafe_wait, ("Unsafe to wait further")); break;
 #endif
 
-    case exception_id::bad_task_handle:                   DO_THROW(std::runtime_error, ("Attempt to schedule empty task_handle")); break;
-    case exception_id::bad_task_handle_wrong_task_group:  DO_THROW(std::runtime_error, ("Attempt to schedule task_handle into different task_group")); break;
-
     default: __TBB_ASSERT ( false, "Unknown exception ID" );
     }
     __TBB_ASSERT(false, "Unreachable code");

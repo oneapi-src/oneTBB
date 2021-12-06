@@ -513,14 +513,10 @@ protected:
     }
 
     task_group_status internal_run_and_wait(d2::task_handle&& h) {
-        if (h == nullptr) {
-            throw_exception(exception_id::bad_task_handle);
-        }
+        __TBB_ASSERT(h!=nullptr, "Attempt to schedule empty task_handle");
 
         using acs = d2::task_handle_accessor;
-        if (&acs::ctx_of(h) != &context()) {
-            throw_exception(exception_id::bad_task_handle_wrong_task_group);
-        }
+        __TBB_ASSERT(&acs::ctx_of(h) == &context(), "Attempt to schedule task_handle into different task_group");
 
         bool cancellation_status = false;
         try_call([&] {
@@ -610,14 +606,11 @@ public:
     }
 
     void run(d2::task_handle&& h) {
-        if (h == nullptr) {
-            throw_exception(exception_id::bad_task_handle);
-        }
+        __TBB_ASSERT(h!=nullptr, "Attempt to schedule empty task_handle");
 
         using acs = d2::task_handle_accessor;
-        if (&acs::ctx_of(h) != &context()) {
-            throw_exception(exception_id::bad_task_handle_wrong_task_group);
-        }
+        __TBB_ASSERT(&acs::ctx_of(h) == &context(), "Attempt to schedule task_handle into different task_group");
+
 
         spawn(*acs::release(h), context());
     }
@@ -693,14 +686,10 @@ public:
     }
 
     void run(d2::task_handle&& h) {
-        if (h == nullptr) {
-            throw_exception(exception_id::bad_task_handle);
-        }
+        __TBB_ASSERT(h!=nullptr, "Attempt to schedule empty task_handle");
 
         using acs = d2::task_handle_accessor;
-        if (&acs::ctx_of(h) != &context()) {
-            throw_exception(exception_id::bad_task_handle_wrong_task_group);
-        }
+        __TBB_ASSERT(&acs::ctx_of(h) == &context(), "Attempt to schedule task_handle into different task_group");
 
         spawn_delegate sd(acs::release(h), context());
         r1::isolate_within_arena(sd, this_isolation());
