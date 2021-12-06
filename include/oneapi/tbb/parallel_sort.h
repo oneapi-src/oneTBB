@@ -233,8 +233,7 @@ using range_value_type = typename std::iterator_traits<range_iterator_type<Range
 template<typename RandomAccessIterator, typename Compare>
     __TBB_requires(std::random_access_iterator<RandomAccessIterator> &&
                    compare<Compare, RandomAccessIterator> &&
-                   std::swappable<iter_value_type<RandomAccessIterator>> &&
-                   std::movable<iter_value_type<RandomAccessIterator>>)
+                   std::swappable<iter_value_type<RandomAccessIterator>>)
 void parallel_sort( RandomAccessIterator begin, RandomAccessIterator end, const Compare& comp ) {
     constexpr int min_parallel_size = 500;
     if( end > begin ) {
@@ -251,8 +250,7 @@ void parallel_sort( RandomAccessIterator begin, RandomAccessIterator end, const 
 template<typename RandomAccessIterator>
     __TBB_requires(std::random_access_iterator<RandomAccessIterator> &&
                    less_than_comparable<iter_value_type<RandomAccessIterator>> &&
-                   std::swappable<iter_value_type<RandomAccessIterator>> &&
-                   std::movable<iter_value_type<RandomAccessIterator>>)
+                   std::swappable<iter_value_type<RandomAccessIterator>>)
 void parallel_sort( RandomAccessIterator begin, RandomAccessIterator end ) {
     parallel_sort(begin, end, std::less<typename std::iterator_traits<RandomAccessIterator>::value_type>());
 }
@@ -262,8 +260,7 @@ void parallel_sort( RandomAccessIterator begin, RandomAccessIterator end ) {
 template<typename Range, typename Compare>
     __TBB_requires(container_based_sequence<Range, std::random_access_iterator_tag> &&
                    compare<Compare, range_iterator_type<Range>> &&
-                   std::swappable<range_value_type<Range>> &&
-                   std::movable<range_value_type<Range>>)
+                   std::swappable<range_value_type<Range>>)
 void parallel_sort( Range&& rng, const Compare& comp ) {
     parallel_sort(std::begin(rng), std::end(rng), comp);
 }
@@ -273,8 +270,7 @@ void parallel_sort( Range&& rng, const Compare& comp ) {
 template<typename Range>
     __TBB_requires(container_based_sequence<Range, std::random_access_iterator_tag> &&
                    less_than_comparable<range_value_type<Range>> &&
-                   std::swappable<range_value_type<Range>> &&
-                   std::movable<range_value_type<Range>>)
+                   std::swappable<range_value_type<Range>>)
 void parallel_sort( Range&& rng ) {
     parallel_sort(std::begin(rng), std::end(rng));
 }

@@ -278,21 +278,22 @@ void test_psort_cbs_constraints() {
     static_assert(!can_call_parallel_sort_with_cbs<NoEnd>);
     static_assert(!can_call_parallel_sort_with_cbs<ForwardIteratorCBS>);
     static_assert(!can_call_parallel_sort_with_cbs<ConstantCBS>);
-    static_assert(!can_call_parallel_sort_with_iterator<CustomValueCBS<NonMovableValue>>);
-    static_assert(!can_call_parallel_sort_with_iterator<CustomValueCBS<NonMoveAssignableValue>>);
-    static_assert(!can_call_parallel_sort_with_iterator<CustomValueCBS<NonComparableValue>>);
 
+    static_assert(can_call_parallel_sort_with_cbs<CustomValueCBS<CorrectValue>>);
+    static_assert(!can_call_parallel_sort_with_cbs<CustomValueCBS<NonMovableValue>>);
+    static_assert(!can_call_parallel_sort_with_cbs<CustomValueCBS<NonMoveAssignableValue>>);
+    static_assert(!can_call_parallel_sort_with_cbs<CustomValueCBS<NonComparableValue>>);\
 
     using CorrectCompare = test_concepts::compare::Correct<int>;
-    using CompareMovable = test_concepts::compare::Correct<NonMovableValue>;
-    using CompareMoveAssignable = test_concepts::compare::Correct<NonMoveAssignableValue>;
+    using NonMovableCompare = test_concepts::compare::Correct<NonMovableValue>;
+    using NonMoveAssignableCompare = test_concepts::compare::Correct<NonMoveAssignableValue>;
     static_assert(can_call_parallel_sort_with_cbs_and_compare<Correct, CorrectCompare>);
     static_assert(!can_call_parallel_sort_with_cbs_and_compare<NoBegin, CorrectCompare>);
     static_assert(!can_call_parallel_sort_with_cbs_and_compare<NoEnd, CorrectCompare>);
     static_assert(!can_call_parallel_sort_with_cbs_and_compare<ForwardIteratorCBS, CorrectCompare>);
     static_assert(!can_call_parallel_sort_with_cbs_and_compare<ConstantCBS, CorrectCompare>);
-    static_assert(!can_call_parallel_sort_with_cbs_and_compare<CustomValueCBS<NonMovableValue>, CompareMovable>);
-    static_assert(!can_call_parallel_sort_with_cbs_and_compare<CustomValueCBS<NonMoveAssignableValue>, CompareMoveAssignable>);
+    static_assert(!can_call_parallel_sort_with_cbs_and_compare<CustomValueCBS<NonMovableValue>, NonMovableCompare>);
+    static_assert(!can_call_parallel_sort_with_cbs_and_compare<CustomValueCBS<NonMoveAssignableValue>, NonMoveAssignableCompare>);
 }
 
 #endif // __TBB_CPP20_CONCEPTS_PRESENT

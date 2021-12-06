@@ -239,17 +239,13 @@ namespace parallel_sort_value {
 template<bool MovableV, bool MoveAssignableV, bool ComparableV>
 struct ParallelSortValue
 {
-    ParallelSortValue(ParallelSortValue&&) requires MovableV {}
-    ParallelSortValue& operator=(ParallelSortValue&&) requires MoveAssignableV {return *this;}
+    ParallelSortValue(ParallelSortValue&&) requires MovableV = default;
+    ParallelSortValue& operator=(ParallelSortValue&&) requires MoveAssignableV = default;
 
     friend bool operator<(const ParallelSortValue&, const ParallelSortValue&) requires ComparableV { return true; }
 };
 
-template<bool MovableV, bool MoveAssignableV, bool ComparableV>
-void swap(ParallelSortValue<MovableV, MoveAssignableV, ComparableV>&,
-          ParallelSortValue<MovableV, MoveAssignableV, ComparableV>&)
-{}
-
+using CorrectValue = ParallelSortValue</*MovableV = */true, /*MoveAssignableV = */true, /*ComparableV = */true>;
 using NonMovableValue = ParallelSortValue</*MovableV = */false, /*MoveAssignableV = */true, /*ComparableV = */true>;
 using NonMoveAssignableValue = ParallelSortValue</*MovableV = */true, /*MoveAssignableV = */false, /*ComparableV = */true>;
 using NonComparableValue = ParallelSortValue</*MovableV = */true, /*MoveAssignableV = */true, /*ComparableV = */false>;
