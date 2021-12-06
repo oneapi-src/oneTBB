@@ -17,8 +17,6 @@
 #ifndef __TBB_test_common_arena_constraints_H_
 #define __TBB_test_common_arena_constraints_H_
 
-#define TBB_PREVIEW_TASK_ARENA_CONSTRAINTS_EXTENSION 1
-
 #if _WIN32 || _WIN64
 #define _CRT_SECURE_NO_WARNINGS
 #endif
