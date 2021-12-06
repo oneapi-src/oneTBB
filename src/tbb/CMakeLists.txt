@@ -122,7 +122,7 @@ target_link_libraries(tbb
 
 tbb_install_target(tbb)
 
-if (WIN32)
+if (MSVC)
     # Create a copy of target linker file (tbb<ver>[_debug].lib) with legacy name (tbb[_debug].lib)
     # to support previous user experience for linkage.
     install(FILES
