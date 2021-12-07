@@ -40,7 +40,6 @@ enum class exception_id {
     invalid_key,
     bad_tagged_msg_cast,
     unsafe_wait,
-
     last_entry
 };
 } // namespace d0

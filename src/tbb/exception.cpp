@@ -91,7 +91,6 @@ void throw_exception ( exception_id eid ) {
 #if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
     case exception_id::unsafe_wait: DO_THROW(unsafe_wait, ("Unsafe to wait further")); break;
 #endif
-
     default: __TBB_ASSERT ( false, "Unknown exception ID" );
     }
     __TBB_ASSERT(false, "Unreachable code");

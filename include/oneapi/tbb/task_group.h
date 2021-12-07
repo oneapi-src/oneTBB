@@ -28,7 +28,6 @@
 #include "detail/_intrusive_list_node.h"
 #include "detail/_task_handle.h"
 
-
 #include "profiling.h"
 
 #include <type_traits>
@@ -513,7 +512,7 @@ protected:
     }
 
     task_group_status internal_run_and_wait(d2::task_handle&& h) {
-        __TBB_ASSERT(h!=nullptr, "Attempt to schedule empty task_handle");
+        __TBB_ASSERT(h != nullptr, "Attempt to schedule empty task_handle");
 
         using acs = d2::task_handle_accessor;
         __TBB_ASSERT(&acs::ctx_of(h) == &context(), "Attempt to schedule task_handle into different task_group");
@@ -606,11 +605,10 @@ public:
     }
 
     void run(d2::task_handle&& h) {
-        __TBB_ASSERT(h!=nullptr, "Attempt to schedule empty task_handle");
+        __TBB_ASSERT(h != nullptr, "Attempt to schedule empty task_handle");
 
         using acs = d2::task_handle_accessor;
         __TBB_ASSERT(&acs::ctx_of(h) == &context(), "Attempt to schedule task_handle into different task_group");
-
 
         spawn(*acs::release(h), context());
     }
@@ -686,7 +684,7 @@ public:
     }
 
     void run(d2::task_handle&& h) {
-        __TBB_ASSERT(h!=nullptr, "Attempt to schedule empty task_handle");
+        __TBB_ASSERT(h != nullptr, "Attempt to schedule empty task_handle");
 
         using acs = d2::task_handle_accessor;
         __TBB_ASSERT(&acs::ctx_of(h) == &context(), "Attempt to schedule task_handle into different task_group");
