@@ -21,6 +21,8 @@
 
 #include "common/spin_barrier.h"
 
+#include <type_traits>
+
 //! \file conformance_task_group.cpp
 //! \brief Test for [scheduler.task_group] specification
 
@@ -110,6 +112,14 @@ TEST_CASE("Task handle comparison/empty checks"){
 
 }
 
+//! Test for task_handle being non copyable
+//! \brief \ref interface
+TEST_CASE("Task handle being non copyable"){
+    static_assert(
+              (!std::is_copy_constructible<oneapi::tbb::task_handle>::value)
+            &&(!std::is_copy_assignable<oneapi::tbb::task_handle>::value),
+            "oneapi::tbb::task_handle should be non copyable");
+}
 //! Test that task_handle prolongs task_group::wait
 //! \brief \ref requirement
 TEST_CASE("Task handle blocks wait"){
