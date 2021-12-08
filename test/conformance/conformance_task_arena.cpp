@@ -126,7 +126,9 @@ TEST_CASE("enqueue task_handle") {
     oneapi::tbb::task_arena arena;
     oneapi::tbb::task_group tg;
 
-    std::atomic<bool> run{false};
+    //This flag is intentionally made non-atomic for Thread Sanitizer
+    //to raise a flag if implementation of task_group is incorrect
+    bool run{false};
 
     auto task_handle = tg.defer([&]{ run = true; });
 
@@ -142,7 +144,9 @@ TEST_CASE("this_task_arena::enqueue task_handle") {
     oneapi::tbb::task_arena arena;
     oneapi::tbb::task_group tg;
 
-    std::atomic<bool> run{false};
+    //This flag is intentionally made non-atomic for Thread Sanitizer
+    //to raise a flag if implementation of task_group is incorrect
+    bool run{false};
 
     arena.execute([&]{
         auto task_handle = tg.defer([&]{ run = true; });
@@ -164,7 +168,10 @@ TEST_CASE("this_task_arena::enqueue prolonging task_group") {
     oneapi::tbb::task_arena arena;
     oneapi::tbb::task_group tg;
 
-    std::atomic<bool> run{false};
+    //This flag is intentionally made non-atomic for Thread Sanitizer
+    //to raise a flag if implementation of task_group is incorrect
+    bool run{false};
+
     //block the task_group to wait on it
     auto task_handle = tg.defer([]{});
 

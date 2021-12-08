@@ -32,7 +32,9 @@ TEST_CASE("Task handle created but not run"){
     {
         oneapi::tbb::task_group tg;
 
-        std::atomic<bool> run {false};
+        //This flag is intentionally made non-atomic for Thread Sanitizer
+        //to raise a flag if implementation of task_group is incorrect
+        bool run {false};
 
         auto h = tg.defer([&]{
             run = true;
@@ -47,7 +49,9 @@ TEST_CASE("Task handle run"){
     oneapi::tbb::task_handle h;
 
     oneapi::tbb::task_group tg;
-    std::atomic<bool> run {false};
+    //This flag is intentionally made non-atomic for Thread Sanitizer
+    //to raise a flag if implementation of task_group is incorrect
+    bool run {false};
 
     h = tg.defer([&]{
         run = true;
@@ -66,6 +70,8 @@ TEST_CASE("Task handle run_and_wait"){
     oneapi::tbb::task_handle h;
 
     oneapi::tbb::task_group tg;
+    //This flag is intentionally made non-atomic for Thread Sanitizer
+    //to raise a flag if implementation of task_group is incorrect
     bool run {false};
 
     h = tg.defer([&]{
@@ -125,7 +131,9 @@ TEST_CASE("Task handle being non copyable"){
 TEST_CASE("Task handle blocks wait"){
     oneapi::tbb::task_group tg;
 
-    std::atomic<bool> completed  {false};
+    //This flag is intentionally made non-atomic for Thread Sanitizer
+    //to raise a flag if implementation of task_group is incorrect
+    bool completed  {false};
     std::atomic<bool> start_wait {false};
     std::atomic<bool> thread_started{false};
 
