@@ -2820,6 +2820,9 @@ protected:
 
 template<typename Input, typename Ports, typename Gateway, typename Body>
 class async_body: public async_body_base<Gateway> {
+private:
+    Body my_body;
+
 public:
     typedef async_body_base<Gateway> base_type;
     typedef Gateway gateway_type;
@@ -2827,14 +2830,11 @@ public:
     async_body(const Body &body, gateway_type *gateway)
         : base_type(gateway), my_body(body) { }
 
-    void operator()( const Input &v, Ports & ) {
+    void operator()( const Input &v, Ports & ) noexcept(noexcept(my_body(v, std::declval<gateway_type&>()))) {
         my_body(v, *this->my_gateway);
     }
 
     Body get_body() { return my_body; }
-
-private:
-    Body my_body;
 };
 
 //! Implements async node
