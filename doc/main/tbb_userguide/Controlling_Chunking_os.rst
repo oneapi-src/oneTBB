@@ -157,11 +157,6 @@ quite well.
    work than an iteration of an inner loop.
 
 
-.. admonition:: Product and Performance Information 
-
-   Performance varies by use, configuration and other factors. Learn more at `www.intel.com/PerformanceIndex <https://www.intel.com/PerformanceIndex>`_.
-   Notice revision #20201201
-
 
 .. |image0| image:: Images/image002.jpg
    :width: 161px
