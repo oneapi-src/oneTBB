@@ -1,13 +1,13 @@
-.. _Get_Started_Guide
+.. _Get_Started_Guide:
 
 Get Started with |short_name|
 ==============================
 
-.. include:: GSG/intro_gsg.rst
+.. include:: intro_gsg.rst
 
-.. include:: GSG/system_requirements.rst
+.. include:: system_requirements.rst
 
-.. include:: GSG/before_beginning_and_example.rst
+.. include:: before_beginning_and_example.rst
 
 Find more
 *********

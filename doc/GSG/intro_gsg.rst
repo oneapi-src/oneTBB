@@ -1,3 +1,5 @@
+.. _Intro_gsg:
+
 
 |short_name| is a runtime-based parallel programming model for C++ code that uses threads. 
 It enables you to simplify parallel programming by breaking 
