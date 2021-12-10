@@ -68,7 +68,7 @@ jobs:
           mkdir html
       - name: Build documentation
         run: |
-          export BUILD_TYPE=${BUILD_TYPE} && sphinx-build doc/main html
+          export BUILD_TYPE=${BUILD_TYPE} && sphinx-build doc html
           tar -czvf html.tar.gz html/
       - name: Save docs
         uses: actions/upload-artifact@v2.2.1
