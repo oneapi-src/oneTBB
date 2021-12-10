@@ -137,7 +137,6 @@ public:
     node_priority_t priority;
     template <typename DerivedType>
     void destruct_and_deallocate(const execution_data& ed);
-    task* cancel(execution_data& ed) override;
 protected:
     template <typename DerivedType>
     void finalize(const execution_data& ed);
@@ -374,11 +373,6 @@ inline void graph_task::finalize(const execution_data& ed) {
     graph& g = my_graph;
     destruct_and_deallocate<DerivedType>(ed);
     g.release_wait();
-}
-
-inline task* graph_task::cancel(execution_data& ed) {
-    finalize<graph_task>(ed);
-    return nullptr;
 }
 
 //********************************************************************************
