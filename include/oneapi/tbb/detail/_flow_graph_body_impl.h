@@ -260,8 +260,13 @@ public:
             next_task = nullptr;
         else if (next_task)
             next_task = prioritize_task(my_node.graph_reference(), *next_task);
-        finalize(ed);
+        finalize<forward_task_bypass>(ed);
         return next_task;
+    }
+
+    task* cancel(execution_data& ed) override {
+        finalize<forward_task_bypass>(ed);
+        return nullptr;
     }
 };
 
@@ -284,9 +289,13 @@ public:
             next_task = nullptr;
         else if (next_task)
             next_task = prioritize_task(my_node.graph_reference(), *next_task);
-        finalize(ed);
+        finalize<apply_body_task_bypass>(ed);
         return next_task;
+    }
 
+    task* cancel(execution_data& ed) override {
+        finalize<apply_body_task_bypass>(ed);
+        return nullptr;
     }
 };
 
@@ -304,10 +313,14 @@ public:
             next_task = nullptr;
         else if (next_task)
             next_task = prioritize_task(my_node.graph_reference(), *next_task);
-        finalize(ed);
+        finalize<input_node_task_bypass>(ed);
         return next_task;
     }
 
+    task* cancel(execution_data& ed) override {
+        finalize<input_node_task_bypass>(ed);
+        return nullptr;
+    }
 };
 
 // ------------------------ end of node task bodies -----------------------------------
