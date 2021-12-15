@@ -251,6 +251,11 @@ DOCTEST_MSVC_SUPPRESS_WARNING(26812) // Prefer 'enum class' over 'enum'
 // MSVC++ 9.0       _MSC_VER == 1500 (Visual Studio 2008)
 // MSVC++ 8.0       _MSC_VER == 1400 (Visual Studio 2005)
 
+// Universal Windows Platform support
+// TODO: upstream changes to origin repository
+#ifdef WINAPI_FAMILY
+#define DOCTEST_CONFIG_NO_WINDOWS_SEH
+#endif // WINAPI_FAMILY
 #if DOCTEST_MSVC && !defined(DOCTEST_CONFIG_WINDOWS_SEH)
 #define DOCTEST_CONFIG_WINDOWS_SEH
 #endif // MSVC
