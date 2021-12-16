@@ -253,7 +253,7 @@ DOCTEST_MSVC_SUPPRESS_WARNING(26812) // Prefer 'enum class' over 'enum'
 
 // Universal Windows Platform support
 // TODO: upstream changes to origin repository
-#ifdef WINAPI_FAMILY
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
 #define DOCTEST_CONFIG_NO_WINDOWS_SEH
 #endif // WINAPI_FAMILY
 #if DOCTEST_MSVC && !defined(DOCTEST_CONFIG_WINDOWS_SEH)
@@ -391,11 +391,13 @@ DOCTEST_MSVC_SUPPRESS_WARNING(26812) // Prefer 'enum class' over 'enum'
 #define DOCTEST_PLATFORM_LINUX
 #endif // DOCTEST_PLATFORM
 
+// TODO: upstream the change to doctest : suppress unused variable warning
 #define DOCTEST_GLOBAL_NO_WARNINGS(var)                                                            \
     DOCTEST_CLANG_SUPPRESS_WARNING_WITH_PUSH("-Wglobal-constructors")                              \
     DOCTEST_CLANG_SUPPRESS_WARNING("-Wunused-variable")                                            \
-    static const int var DOCTEST_UNUSED // NOLINT(fuchsia-statically-constructed-objects,cert-err58-cpp)
-#define DOCTEST_GLOBAL_NO_WARNINGS_END() DOCTEST_CLANG_SUPPRESS_WARNING_POP
+    static volatile int var DOCTEST_UNUSED // NOLINT(fuchsia-statically-constructed-objects,cert-err58-cpp)
+#define DOCTEST_GLOBAL_NO_WARNINGS_END()                                                           \
+    DOCTEST_CLANG_SUPPRESS_WARNING_POP                                                             \
 
 #ifndef DOCTEST_BREAK_INTO_DEBUGGER
 // should probably take a look at https://github.com/scottt/debugbreak
@@ -467,14 +469,12 @@ typedef basic_ostream<char, char_traits<char>> ostream;
 template <class... Types>
 class tuple;
 #if DOCTEST_MSVC >= DOCTEST_COMPILER(19, 20, 0)
-DOCTEST_CLANG_SUPPRESS_WARNING_WITH_PUSH("-Wreserved-identifier")
 // see this issue on why this is needed: https://github.com/onqtam/doctest/issues/183
 template <class _Ty>
 class allocator;
 template <class _Elem, class _Traits, class _Alloc>
 class basic_string;
 using string = basic_string<char, char_traits<char>, allocator<char>>;
-DOCTEST_CLANG_SUPPRESS_WARNING_POP
 #endif // VS 2019
 DOCTEST_STD_NAMESPACE_END
 
@@ -4120,6 +4120,10 @@ namespace {
 
     DOCTEST_CLANG_SUPPRESS_WARNING_WITH_PUSH("-Wdeprecated-declarations")
     void color_to_stream(std::ostream& s, Color::Enum code) {
+// TODO: upstream the change to doctest : suppress unused variable warning
+#if defined(DOCTEST_CONFIG_COLORS_WINDOWS) && DOCTEST_ICC
+        static_cast<void>(dummy_init_console_colors);
+#endif
         static_cast<void>(s);    // for DOCTEST_CONFIG_COLORS_NONE or DOCTEST_CONFIG_COLORS_WINDOWS
         static_cast<void>(code); // for DOCTEST_CONFIG_COLORS_NONE
 #ifdef DOCTEST_CONFIG_COLORS_ANSI
