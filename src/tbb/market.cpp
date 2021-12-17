@@ -230,7 +230,6 @@ int market::update_workers_request() {
 
 void market::set_active_num_workers ( unsigned soft_limit ) {
     market *m;
-
     {
         global_market_mutex_type::scoped_lock lock( theMarketMutex );
         if ( !theMarket )
@@ -349,7 +348,7 @@ void market::try_destroy_arena ( arena* a, uintptr_t aba_epoch, unsigned priorit
 }
 
 /** This method must be invoked under my_arenas_list_mutex. **/
-arena* market::arena_in_need ( arena_list_type* arenas, arena* hint ) {
+arena* market::arena_in_need ( arena_list_type* arenas, arena* hint, arena* skip) {
     // TODO: make sure arena with higher priority returned only if there are available slots in it.
     hint = select_next_arena( hint );
     if ( !hint )
@@ -365,7 +364,10 @@ arena* market::arena_in_need ( arena_list_type* arenas, arena* hint ) {
             } while ( arenas[curr_priority_level].empty() );
             it = arenas[curr_priority_level].begin();
         }
-        if( a.num_workers_active() < a.my_num_workers_allotted.load(std::memory_order_relaxed) ) {
+
+        if ( &a != skip &&
+            a.num_workers_active() < a.my_num_workers_allotted.load(std::memory_order_relaxed) )
+        {
             a.my_references += arena::ref_worker;
             return &a;
         }
@@ -373,14 +375,14 @@ arena* market::arena_in_need ( arena_list_type* arenas, arena* hint ) {
     return nullptr;
 }
 
-arena* market::arena_in_need(arena* prev) {
+arena* market::arena_in_need(arena* prev, arena* skip) {
     if (my_total_demand.load(std::memory_order_acquire) <= 0)
         return nullptr;
     arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex, /*is_writer=*/false);
     // TODO: introduce three state response: alive, not_alive, no_market_arenas
-    if ( is_arena_alive(prev) )
-        return arena_in_need(my_arenas, prev);
-    return arena_in_need(my_arenas, my_next_arena);
+    if (is_arena_alive(prev))
+        return arena_in_need(my_arenas, prev, skip);
+    return arena_in_need(my_arenas, my_next_arena, skip);
 }
 
 int market::update_allotment ( arena_list_type* arenas, int workers_demand, int max_workers ) {
@@ -593,9 +595,11 @@ void market::process( job& j ) {
     // td.my_arena can be dead. Don't access it until arena_in_need is called
     arena *a = td.my_arena;
     for (int i = 0; i < 2; ++i) {
-        while ( (a = arena_in_need(a)) ) {
-            a->process(td);
+        a = arena_in_need(a, nullptr);
+        while (a) {
+            a = a->process(td);
         }
+
         // Workers leave market because there is no arena in need. It can happen earlier than
         // adjust_job_count_estimate() decreases my_slack and RML can put this thread to sleep.
         // It might result in a busy-loop checking for my_slack<0 and calling this method instantly.

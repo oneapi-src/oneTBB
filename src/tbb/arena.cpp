@@ -107,7 +107,7 @@ std::uintptr_t arena::calculate_stealing_threshold() {
     return r1::calculate_stealing_threshold(reinterpret_cast<std::uintptr_t>(&anchor), my_market->worker_stack_size());
 }
 
-void arena::process(thread_data& tls) {
+arena* arena::process(thread_data& tls) {
     governor::set_thread_data(tls); // TODO: consider moving to create_one_job.
     __TBB_ASSERT( is_alive(my_guard), nullptr);
     __TBB_ASSERT( my_num_slots > 1, nullptr);
@@ -115,7 +115,7 @@ void arena::process(thread_data& tls) {
     std::size_t index = occupy_free_slot</*as_worker*/true>(tls);
     if (index == out_of_arena) {
         on_thread_leaving<ref_worker>();
-        return;
+        return nullptr;
     }
     __TBB_ASSERT( index >= my_num_reserved_slots, "Workers cannot occupy reserved slots" );
     tls.attach_arena(*this, index);
@@ -163,6 +163,8 @@ void arena::process(thread_data& tls) {
     // arena::on_thread_leaving() for more details.
     on_thread_leaving<ref_worker>();
     __TBB_ASSERT(tls.my_arena == this, "my_arena is used as a hint when searching the arena to join");
+
+    return waiter.my_next_arena;
 }
 
 arena::arena ( market& m, unsigned num_slots, unsigned num_reserved_slots, unsigned priority_level )
