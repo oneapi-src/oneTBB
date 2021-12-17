@@ -26,7 +26,10 @@ BUILD_TYPE = os.getenv("BUILD_TYPE")
 # -- Project information -----------------------------------------------------
 
 
-project = u'Intel® oneAPI Threading Building Blocks (oneTBB)'
+if BUILD_TYPE == 'oneapi' or BUILD_TYPE == 'dita':
+    project = u'Intel® oneAPI Threading Building Blocks (oneTBB)'
+else:
+    project = u'oneAPI Threading Building Blocks (oneTBB)'
 copyright = u'2021, Intel Corporation'
 author = u'Intel'
 
@@ -90,8 +93,19 @@ pygments_style = None
 highlight_language = 'cpp' 
 
 
-rst_prolog = """
+if BUILD_TYPE == 'oneapi' or BUILD_TYPE == 'dita':
+    rst_prolog = """
 .. |full_name| replace:: Intel\ |reg|\  oneAPI Threading Building Blocks (oneTBB)
+.. |short_name| replace:: oneTBB
+.. |product| replace:: oneTBB
+.. |reg| unicode:: U+000AE
+.. |copy| unicode:: U+000A9
+.. |base_tk| replace:: Intel\ |reg|\  oneAPI Base Toolkit
+.. |dpcpp| replace:: Intel\ |reg|\  oneAPI DPC++/C++ Compiler
+    """
+else:
+    rst_prolog = """
+.. |full_name| replace:: oneAPI Threading Building Blocks (oneTBB)
 .. |short_name| replace:: oneTBB
 .. |product| replace:: oneTBB
 .. |reg| unicode:: U+000AE
@@ -110,12 +124,35 @@ rst_prolog = """
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-html_theme = 'sphinx_book_theme'
+if BUILD_TYPE == 'oneapi' or BUILD_TYPE == 'dita':
+    html_theme = 'sphinx_rtd_theme'
+else:
+    html_theme = 'sphinx_book_theme'
+    html_theme_options = {
+    'repository_url': 'https://github.com/oneapi-src/oneTBB',
+    'path_to_docs': 'doc/main',
+    'use_issues_button': True,
+    'use_edit_page_button': True,
+    'repository_branch': 'master',
+    'extra_footer': '<p align="right"><a href="https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html">Cookies</a></p>'
+    }
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+if BUILD_TYPE == 'oneapi'  or BUILD_TYPE == 'dita':
+    html_context = {
+        'css_files': [
+            '_static/theme_overrides.css',  # override wide tables in RTD theme
+        ],
+    }
+else:
+    html_js_files = ['custom.js']
+    html_logo = '_static/oneAPI-rgb-rev-100.png'
+    
+html_favicon = '_static/favicons.png'
 
 
 
