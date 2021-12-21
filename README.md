@@ -1,10 +1,10 @@
 # oneAPI Threading Building Blocks
 [![Apache License Version 2.0](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE.txt) [![oneTBB CI](https://github.com/oneapi-src/oneTBB/actions/workflows/ci.yml/badge.svg)](https://github.com/oneapi-src/oneTBB/actions/workflows/ci.yml?query=branch%3Amaster)
 
-oneTBB is a flexible performance library. It simplifies the work of adding parallelism
+oneTBB is a flexible C++ library that simplifies the work of adding parallelism
 to complex applications, even if you are not a threading expert.  
 
-The library lets you easily write parallel C++ programs that take full advantage of the multi-core performance. Such programs are portable, 
+The library lets you easily write parallel programs that take full advantage of the multi-core performance. Such programs are portable, 
 composable and have a future-proof scalability. oneTBB provides you with functions, interfaces, and classes to parallelize and scale the code.
 All you have to do is to use the templates. 
 
@@ -38,7 +38,7 @@ See [Installation from Sources](INSTALL.md) to learn how to install oneTBB.
 Please report issues and suggestions via [GitHub issues](https://github.com/oneapi-src/oneTBB/issues). See our [documentation](./CONTRIBUTING.md##Issues) to learn how to work with them.
 
 ## How to Contribute
-We welcome community contributions, so check our [contributing guidelines](CONTRIBUTING.md)
+We welcome community contributions, so check our [Contributing Guidelines](CONTRIBUTING.md)
 to learn more.
 
 ## License
