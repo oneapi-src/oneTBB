@@ -605,18 +605,18 @@ TEST_CASE( "Deduction guides" ) {
 }
 #endif
 
+struct TestLargeStruct {
+    char bytes[512]{ 0 };
+};
+
 //! Test correct node deallocation while using small_object_pool.
 //! (see https://github.com/oneapi-src/oneTBB/issues/639)
 //! \brief \ref error_guessing
 TEST_CASE("Test correct node deallocation while using small_object_pool") {
-    struct TestLargeStruct {
-        char bytes[512]{ 0 };
-    };
-
     tbb::flow::graph graph;
-    tbb::flow::queue_node<TestLargeStruct> input_node{ graph };
-    tbb::flow::function_node<TestLargeStruct> func{ graph, tbb::flow::serial,
-        [](const TestLargeStruct& input) { return input; } };
+    tbb::flow::queue_node<TestLargeStruct> input_node( graph );
+    tbb::flow::function_node<TestLargeStruct> func( graph, tbb::flow::serial,
+        [](const TestLargeStruct& input) { return input; } );
 
     tbb::flow::make_edge( input_node, func );
     CHECK( input_node.try_put( TestLargeStruct{} ) );
