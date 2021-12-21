@@ -118,3 +118,110 @@ TEST_CASE("Task arena copy constructor") {
     REQUIRE(arena.max_concurrency() == copy.max_concurrency());
     REQUIRE(arena.is_active() == copy.is_active());
 }
+
+
+//! Basic test for arena::enqueue with task handle
+//! \brief \ref interface \ref requirement
+TEST_CASE("enqueue task_handle") {
+    oneapi::tbb::task_arena arena;
+    oneapi::tbb::task_group tg;
+
+    //This flag is intentionally made non-atomic for Thread Sanitizer
+    //to raise a flag if implementation of task_group is incorrect
+    bool run{false};
+
+    auto task_handle = tg.defer([&]{ run = true; });
+
+    arena.enqueue(std::move(task_handle));
+    tg.wait();
+
+    CHECK(run == true);
+}
+
+//! Basic test for this_task_arena::enqueue with task handle
+//! \brief \ref interface \ref requirement
+TEST_CASE("this_task_arena::enqueue task_handle") {
+    oneapi::tbb::task_arena arena;
+    oneapi::tbb::task_group tg;
+
+    //This flag is intentionally made non-atomic for Thread Sanitizer
+    //to raise a flag if implementation of task_group is incorrect
+    bool run{false};
+
+    arena.execute([&]{
+        auto task_handle = tg.defer([&]{ run = true; });
+
+        oneapi::tbb::this_task_arena::enqueue(std::move(task_handle));
+    });
+
+    tg.wait();
+
+    CHECK(run == true);
+}
+
+//TODO: Add
+//! Basic test for this_task_arena::enqueue with functor
+
+//! Test case for the common use-case of prolonging task_group lifetime
+//! \brief \ref interface \ref requirement
+TEST_CASE("this_task_arena::enqueue prolonging task_group") {
+    oneapi::tbb::task_arena arena;
+    oneapi::tbb::task_group tg;
+
+    //This flag is intentionally made non-atomic for Thread Sanitizer
+    //to raise a flag if implementation of task_group is incorrect
+    bool run{false};
+
+    //block the task_group to wait on it
+    auto task_handle = tg.defer([]{});
+
+    arena.execute([&]{
+        oneapi::tbb::this_task_arena::enqueue([&]{
+            run = true;
+            //release the task_group
+            task_handle = oneapi::tbb::task_handle{};
+        });
+    });
+
+    tg.wait();
+
+    CHECK(run == true);
+}
+
+#if TBB_USE_EXCEPTIONS
+//! Basic test for exceptions in task_arena::enqueue with task_handle
+//! \brief \ref interface \ref requirement
+TEST_CASE("task_arena::enqueue(task_handle) exception propagation"){
+    oneapi::tbb::task_group tg;
+    oneapi::tbb::task_arena arena;
+
+    oneapi::tbb::task_handle h = tg.defer([&]{
+        volatile bool suppress_unreachable_code_warning = true;
+        if (suppress_unreachable_code_warning) {
+            throw std::runtime_error{ "" };
+        }
+    });
+
+    arena.enqueue(std::move(h));
+
+    CHECK_THROWS_AS(tg.wait(), std::runtime_error);
+}
+
+//! Basic test for exceptions in this_task_arena::enqueue with task_handle
+//! \brief \ref interface \ref requirement
+TEST_CASE("this_task_arena::enqueue(task_handle) exception propagation"){
+    oneapi::tbb::task_group tg;
+
+    oneapi::tbb::task_handle h = tg.defer([&]{
+        volatile bool suppress_unreachable_code_warning = true;
+        if (suppress_unreachable_code_warning) {
+            throw std::runtime_error{ "" };
+        }
+    });
+
+    oneapi::tbb::this_task_arena::enqueue(std::move(h));
+
+    CHECK_THROWS_AS(tg.wait(), std::runtime_error);
+}
+
+#endif // TBB_USE_EXCEPTIONS
