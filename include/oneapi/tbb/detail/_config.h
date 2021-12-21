@@ -182,7 +182,7 @@
 
 /** __TBB_DYNAMIC_LOAD_ENABLED describes the system possibility to load shared libraries at run time **/
 #ifndef __TBB_DYNAMIC_LOAD_ENABLED
-    #define __TBB_DYNAMIC_LOAD_ENABLED 1
+    #define __TBB_DYNAMIC_LOAD_ENABLED (!__EMSCRIPTEN__)
 #endif
 
 /** __TBB_WIN8UI_SUPPORT enables support of Windows* Store Apps and limit a possibility to load
@@ -195,7 +195,7 @@
 
 /** __TBB_WEAK_SYMBOLS_PRESENT denotes that the system supports the weak symbol mechanism **/
 #ifndef __TBB_WEAK_SYMBOLS_PRESENT
-    #define __TBB_WEAK_SYMBOLS_PRESENT ( !_WIN32 && !__APPLE__ && !__sun && (__TBB_GCC_VERSION >= 40000 || __INTEL_COMPILER ) )
+    #define __TBB_WEAK_SYMBOLS_PRESENT (!__EMSCRIPTEN__ && !_WIN32 && !__APPLE__ && !__sun && (__TBB_GCC_VERSION >= 40000 || __INTEL_COMPILER ) )
 #endif
 
 /** Presence of compiler features **/
@@ -268,7 +268,7 @@
     #define __TBB_CPP20_COMPARISONS_PRESENT __TBB_CPP20_PRESENT
 #endif
 
-#define __TBB_RESUMABLE_TASKS                           (!__TBB_WIN8UI_SUPPORT && !__ANDROID__ && !__QNXNTO__)
+#define __TBB_RESUMABLE_TASKS                           (!__TBB_WIN8UI_SUPPORT && !__ANDROID__ && !__QNXNTO__ && !__EMSCRIPTEN__ )
 
 /* This macro marks incomplete code or comments describing ideas which are considered for the future.
  * See also for plain comment with TODO and FIXME marks for small improvement opportunities.
