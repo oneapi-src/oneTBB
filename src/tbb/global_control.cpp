@@ -149,10 +149,8 @@ public:
 static allowed_parallelism_control allowed_parallelism_ctl;
 static stack_size_control stack_size_ctl;
 static terminate_on_exception_control terminate_on_exception_ctl;
-
 static lifetime_control lifetime_ctl;
 static control_storage *controls[] = {&allowed_parallelism_ctl, &stack_size_ctl, &terminate_on_exception_ctl, &lifetime_ctl};
-
 
 //! Comparator for a set of global_control objects
 inline bool control_storage_comparator::operator()(const global_control* lhs, const global_control* rhs) const {
