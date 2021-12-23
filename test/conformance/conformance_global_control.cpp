@@ -230,66 +230,6 @@ TEST_CASE("terminate_on_exception: nested") {
     delete c0;
 }
 
-// The test cannot work correctly with statically linked runtime.
-// TODO: investigate a failure in debug with MSVC
-#if !_MSC_VER || (defined(_DLL) && !defined(_DEBUG))
-#include <csetjmp>
-
-// Overall, the test case is not safe because the dtors might not be called during long jump.
-// Therefore, it makes sense to run the test case after all other test cases.
-//! Test terminate_on_exception behavior
-//! \brief \ref interface \ref requirement
-TEST_CASE("terminate_on_exception: enabled") {
-    oneapi::tbb::global_control c(oneapi::tbb::global_control::terminate_on_exception, 1);
-    static bool terminate_handler_called;
-    terminate_handler_called = false;
-
-#if TBB_USE_EXCEPTIONS
-    try {
-#endif
-        static std::jmp_buf buffer;
-        std::terminate_handler prev = std::set_terminate([] {
-            CHECK(!terminate_handler_called);
-            terminate_handler_called = true;
-            std::longjmp(buffer, 1);
-        });
-#if _MSC_VER
-#pragma warning(push)
-#pragma warning(disable:4611) // interaction between '_setjmp' and C++ object destruction is non - portable
-#endif
-        SUBCASE("internal exception") {
-            if (setjmp(buffer) == 0) {
-                oneapi::tbb::parallel_for(0, 1, -1, [](int) {});
-                FAIL("Unreachable code");
-            }
-        }
-#if TBB_USE_EXCEPTIONS
-        SUBCASE("user exception") {
-            if (setjmp(buffer) == 0) {
-                oneapi::tbb::parallel_for(0, 1, [](int) {
-                    volatile bool suppress_unreachable_code_warning = true;
-                    if (suppress_unreachable_code_warning) {
-                        throw std::exception();
-                    }
-                });
-                FAIL("Unreachable code");
-            }
-        }
-#endif
-#if _MSC_VER
-#pragma warning(pop)
-#endif
-        std::set_terminate(prev);
-        terminate_handler_called = true;
-#if TBB_USE_EXCEPTIONS
-    } catch (...) {
-        FAIL("The exception is not expected");
-    }
-#endif
-    CHECK(terminate_handler_called);
-}
-#endif
-
 //! Testing setting the same value but different objects
 //! \brief \ref interface \ref error_guessing
 TEST_CASE("setting same value") {
@@ -393,3 +333,64 @@ TEST_CASE("simple prolong lifetime 3") {
     // New parallel region
     tbb::parallel_for(0, 10, utils::DummyBody());
 }
+
+// The test cannot work correctly with statically linked runtime.
+// TODO: investigate a failure in debug with MSVC
+#if !_MSC_VER || (defined(_DLL) && !defined(_DEBUG))
+#include <csetjmp>
+
+// Overall, the test case is not safe because the dtors might not be called during long jump.
+// Therefore, it makes sense to run the test case after all other test cases.
+//! Test terminate_on_exception behavior
+//! \brief \ref interface \ref requirement
+TEST_CASE("terminate_on_exception: enabled") {
+    oneapi::tbb::global_control c(oneapi::tbb::global_control::terminate_on_exception, 1);
+    static bool terminate_handler_called;
+    terminate_handler_called = false;
+
+#if TBB_USE_EXCEPTIONS
+    try {
+#endif
+        static std::jmp_buf buffer;
+        std::terminate_handler prev = std::set_terminate([] {
+            CHECK(!terminate_handler_called);
+            terminate_handler_called = true;
+            std::longjmp(buffer, 1);
+            });
+#if _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4611) // interaction between '_setjmp' and C++ object destruction is non - portable
+#endif
+        SUBCASE("internal exception") {
+            if (setjmp(buffer) == 0) {
+                oneapi::tbb::parallel_for(0, 1, -1, [](int) {});
+                FAIL("Unreachable code");
+            }
+        }
+#if TBB_USE_EXCEPTIONS
+        SUBCASE("user exception") {
+            if (setjmp(buffer) == 0) {
+                oneapi::tbb::parallel_for(0, 1, [](int) {
+                    volatile bool suppress_unreachable_code_warning = true;
+                    if (suppress_unreachable_code_warning) {
+                        throw std::exception();
+                    }
+                    });
+                FAIL("Unreachable code");
+            }
+        }
+#endif
+#if _MSC_VER
+#pragma warning(pop)
+#endif
+        std::set_terminate(prev);
+        terminate_handler_called = true;
+#if TBB_USE_EXCEPTIONS
+    }
+    catch (...) {
+        FAIL("The exception is not expected");
+    }
+#endif
+    CHECK(terminate_handler_called);
+}
+#endif
