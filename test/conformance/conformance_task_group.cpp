@@ -15,13 +15,15 @@
 */
 
 #include "oneapi/tbb/task_group.h"
-
+#include "oneapi/tbb/task_arena.h"
 #include "common/test.h"
 #include "common/utils.h"
 
 #include "common/spin_barrier.h"
 
 #include <type_traits>
+#include "oneapi/tbb/global_control.h"
+
 
 //! \file conformance_task_group.cpp
 //! \brief Test for [scheduler.task_group] specification
@@ -129,7 +131,13 @@ TEST_CASE("Task handle being non copyable"){
 //! Test that task_handle prolongs task_group::wait
 //! \brief \ref requirement
 TEST_CASE("Task handle blocks wait"){
+    //Forbid creation of worker threads to ensure that task described by the task_handle is not run until wait is called
+    oneapi::tbb::global_control s(oneapi::tbb::global_control::max_allowed_parallelism, 1);
     oneapi::tbb::task_group tg;
+    //explicit task_arena is needed to prevent a deadlock,
+    //as both task_group::run() and task_group::wait() should be called in the same arena
+    //to guarantee execution of the task spawned by run().
+    oneapi::tbb::task_arena arena;
 
     //This flag is intentionally made non-atomic for Thread Sanitizer
     //to raise a flag if implementation of task_group is incorrect
@@ -146,16 +154,19 @@ TEST_CASE("Task handle blocks wait"){
 
         thread_started = true;
         utils::SpinWaitUntilEq(start_wait, true);
-        tg.wait();
-        CHECK_MESSAGE(completed == true, "Deferred task should be completed when task_group::wait exits");
+        arena.execute([&]{
+            tg.wait();
+            CHECK_MESSAGE(completed == true, "Deferred task should be completed when task_group::wait exits");
+        });
     }};
 
     utils::SpinWaitUntilEq(thread_started, true);
     CHECK_MESSAGE(completed == false, "Deferred task should not be run until run(task_handle) is called");
 
-    tg.run(std::move(h));
-    //TODO: more accurate test (with fixed number of threads (1 ?) to guarantee correctness of following assert)
-    //CHECK_MESSAGE(completed == false, "Deferred task should not be run until run(task_handle) and wait is called");
+    arena.execute([&]{
+        tg.run(std::move(h));
+    });
+    CHECK_MESSAGE(completed == false, "Deferred task should not be run until run(task_handle) and wait is called");
     start_wait = true;
     wait_thread.join();
 }
