@@ -198,7 +198,9 @@ private:
         bool reserved2          : 1;
         bool reserved3          : 1;
         bool reserved4          : 1;
-    } my_traits;
+    };
+
+    std::atomic<context_traits> my_traits;
 
     static_assert(sizeof(context_traits) == 1, "Traits shall fit into one byte.");
 
@@ -273,7 +275,8 @@ private:
         , my_actual_context{actual_context}
     {
         __TBB_ASSERT(my_actual_context, "Passed pointer value points to nothing.");
-        my_traits.proxy = true;
+        context_traits trts; trts.proxy = true;
+        my_traits.store(trts, std::memory_order_relaxed);
         my_name = actual_context->my_name;
 
         // no need to initialize 'this' context as it acts as a proxy for my_actual_context, which
@@ -291,7 +294,7 @@ private:
     }
 
     bool is_proxy() const {
-        return my_version >= task_group_context_version::proxy_support && my_traits.proxy;
+        return my_version >= task_group_context_version::proxy_support && my_traits.load(std::memory_order_relaxed).proxy;
     }
 
     task_group_context& actual_context() noexcept {
@@ -402,8 +405,9 @@ public:
     std::uintptr_t traits() const {
         std::uintptr_t t{};
         const task_group_context& ctx = actual_context();
-        t |= ctx.my_traits.fp_settings ? fp_settings : 0;
-        t |= ctx.my_traits.concurrent_wait ? concurrent_wait : 0;
+        auto trts = ctx.my_traits.load(std::memory_order_relaxed);
+        t |= trts.fp_settings ? fp_settings : 0;
+        t |= trts.concurrent_wait ? concurrent_wait : 0;
         return t;
     }
 private:

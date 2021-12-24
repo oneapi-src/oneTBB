@@ -98,7 +98,7 @@ void task_group_context_impl::initialize(d1::task_group_context& ctx) {
 
     static_assert(sizeof(d1::cpu_ctl_env) <= sizeof(ctx.my_cpu_ctl_env), "FPU settings storage does not fit to uint64_t");
     d1::cpu_ctl_env* ctl = new (&ctx.my_cpu_ctl_env) d1::cpu_ctl_env;
-    if (ctx.my_traits.fp_settings)
+    if (ctx.my_traits.load(std::memory_order_relaxed).fp_settings)
         ctl->get_env();
 }
 
@@ -119,7 +119,7 @@ void task_group_context_impl::bind_to_impl(d1::task_group_context& ctx, thread_d
     __TBB_ASSERT(ctx.my_parent, nullptr);
 
     // Inherit FPU settings only if the context has not captured FPU settings yet.
-    if (!ctx.my_traits.fp_settings)
+    if (!ctx.my_traits.load(std::memory_order_relaxed).fp_settings)
         copy_fp_settings(ctx, *ctx.my_parent);
 
     // Condition below prevents unnecessary thrashing parent context's cache line
@@ -180,8 +180,9 @@ void task_group_context_impl::bind_to(d1::task_group_context& ctx, thread_data* 
             // treating the context as isolated.
             __TBB_ASSERT(td->my_task_dispatcher->m_execute_data_ext.context != nullptr, nullptr);
             d1::task_group_context::lifetime_state release_state{};
-            if (td->my_task_dispatcher->m_execute_data_ext.context == td->my_arena->my_default_ctx || !ctx.my_traits.bound) {
-                if (!ctx.my_traits.fp_settings) {
+            auto ctx_traits = ctx.my_traits.load(std::memory_order_relaxed);
+            if (td->my_task_dispatcher->m_execute_data_ext.context == td->my_arena->my_default_ctx || !ctx_traits.bound) {
+                if (!ctx_traits.fp_settings) {
                     copy_fp_settings(ctx, *td->my_arena->my_default_ctx);
                 }
                 release_state = d1::task_group_context::lifetime_state::isolated;
@@ -308,21 +309,25 @@ void task_group_context_impl::capture_fp_settings(d1::task_group_context& ctx) {
     // No fences are necessary since this context can be accessed from another thread
     // only after stealing happened (which means necessary fences were used).
     d1::cpu_ctl_env* ctl = reinterpret_cast<d1::cpu_ctl_env*>(&ctx.my_cpu_ctl_env);
-    if (!ctx.my_traits.fp_settings) {
+    auto traits = ctx.my_traits.load(std::memory_order_relaxed);
+    if (!traits.fp_settings) {
         ctl = new (&ctx.my_cpu_ctl_env) d1::cpu_ctl_env;
-        ctx.my_traits.fp_settings = true;
+        traits.fp_settings = true;
+        ctx.my_traits.store(traits, std::memory_order_relaxed);
     }
     ctl->get_env();
 }
 
 void task_group_context_impl::copy_fp_settings(d1::task_group_context& ctx, const d1::task_group_context& src) {
     __TBB_ASSERT(!is_poisoned(ctx.my_context_list), nullptr);
-    __TBB_ASSERT(!ctx.my_traits.fp_settings, "The context already has FPU settings.");
-    __TBB_ASSERT(src.my_traits.fp_settings, "The source context does not have FPU settings.");
+    __TBB_ASSERT(!ctx.my_traits.load(std::memory_order_relaxed).fp_settings, "The context already has FPU settings.");
+    __TBB_ASSERT(src.my_traits.load(std::memory_order_relaxed).fp_settings, "The source context does not have FPU settings.");
 
     const d1::cpu_ctl_env* src_ctl = reinterpret_cast<const d1::cpu_ctl_env*>(&src.my_cpu_ctl_env);
     new (&ctx.my_cpu_ctl_env) d1::cpu_ctl_env(*src_ctl);
-    ctx.my_traits.fp_settings = true;
+    auto traits = ctx.my_traits.load(std::memory_order_relaxed);
+    traits.fp_settings = true;
+    ctx.my_traits.store(traits, std::memory_order_relaxed);
 }
 
 /*
