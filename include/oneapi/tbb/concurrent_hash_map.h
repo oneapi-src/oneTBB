@@ -455,12 +455,12 @@ private:
     template <typename Key, typename T, typename HashCompare, typename A
 #if __TBB_PREVIEW_CONCURRENT_HASH_MAP_EXTENSIONS
             , typename M
-			 >
-		__TBB_requires(tbb::detail::hash_compare<HashCompare, Key> &&
-					   ch_map_rw_scoped_lockable<M>)
+             >
+        __TBB_requires(tbb::detail::hash_compare<HashCompare, Key> &&
+                       ch_map_rw_scoped_lockable<M>)
 #else
-			 >
-		__TBB_requires(tbb::detail::hash_compare<HashCompare, Key>)
+             >
+        __TBB_requires(tbb::detail::hash_compare<HashCompare, Key>)
 #endif
     friend class concurrent_hash_map;
 
@@ -726,7 +726,7 @@ protected:
     void rehash_bucket( bucket *b_new, const hashcode_type hash ) {
         __TBB_ASSERT( hash > 1, "The lowermost buckets can't be rehashed" );
         b_new->node_list.store(reinterpret_cast<node_base*>(empty_rehashed_flag), std::memory_order_release); // mark rehashed
-        hashcode_type mask = (1u << tbb::detail::log2(hash)) - 1; // get parent mask from the topmost bit
+        hashcode_type mask = (hashcode_type(1) << tbb::detail::log2(hash)) - 1; // get parent mask from the topmost bit
         bucket_accessor b_old( this, hash & mask );
 
         mask = (mask<<1) | 1; // get full mask for new bucket
@@ -784,7 +784,7 @@ public:
         void release() {
             if( my_node ) {
                 node::scoped_type::release();
-                my_node = 0;
+                my_node = nullptr;
             }
         }
 
@@ -800,7 +800,7 @@ public:
         }
 
         // Create empty result
-        const_accessor() : my_node(nullptr) {}
+        const_accessor() : my_node(nullptr), my_hash() {}
 
         // Destroy result after releasing the underlying reference.
         ~const_accessor() {
@@ -971,7 +971,7 @@ public:
                 hashcode_type h = b; bucket *b_old = bp;
                 do {
                     __TBB_ASSERT( h > 1, "The lowermost buckets can't be rehashed" );
-                    hashcode_type m = ( 1u<<tbb::detail::log2( h ) ) - 1; // get parent mask from the topmost bit
+                    hashcode_type m = ( hashcode_type(1) << tbb::detail::log2( h ) ) - 1; // get parent mask from the topmost bit
                     b_old = this->get_bucket( h &= m );
                 } while( rehash_required(b_old->node_list.load(std::memory_order_relaxed)) );
                 // now h - is index of the root rehashed bucket b_old
@@ -1470,7 +1470,7 @@ protected:
         h &= m;
         bucket *b = this->get_bucket( h );
         while (rehash_required(b->node_list.load(std::memory_order_relaxed))) {
-            m = ( 1u<<tbb::detail::log2( h ) ) - 1; // get parent mask from the topmost bit
+            m = ( hashcode_type(1) << tbb::detail::log2( h ) ) - 1; // get parent mask from the topmost bit
             b = this->get_bucket( h &= m );
         }
         node *n = search_bucket( key, b );
