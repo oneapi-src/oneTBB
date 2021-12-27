@@ -433,16 +433,6 @@ void test_empty_container_range(Container&& cont) {
     REQUIRE_MESSAGE(!r.is_divisible(), "Empty container range should not be divisible");
     REQUIRE_MESSAGE(r.begin() == r.end(), "Incorrect iterators on empty range");
     REQUIRE_MESSAGE(r.begin() == cont.begin(), "Incorrect iterators on empty range");
-
-    Range r2(r, tbb::split{});
-    REQUIRE_MESSAGE(r.empty(), "Empty container range should be empty");
-    REQUIRE_MESSAGE(r2.empty(), "Empty container range should be empty");
-    REQUIRE_MESSAGE(!r.is_divisible(), "Empty container range should not be divisible");
-    REQUIRE_MESSAGE(!r2.is_divisible(), "Empty container range should not be divisible");
-    REQUIRE_MESSAGE(r.begin() == r.end(), "Incorrect iterators on empty range");
-    REQUIRE_MESSAGE(r2.begin() == r2.end(), "Incorrect iterators on empty range");
-    REQUIRE_MESSAGE(r.begin() == cont.begin(), "Incorrect iterators on empty range");
-    REQUIRE_MESSAGE(r2.begin() == cont.begin(), "Incorrect iterators on empty range");
 }
 
 template<typename T, typename CheckElementState>
