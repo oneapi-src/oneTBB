@@ -165,7 +165,7 @@ private:
 inline void finalize(task_scheduler_handle& handle) {
     try_call([&] {
         if (handle.m_ctl != nullptr) {
-            bool finalzed = r1::finalize(handle, finalize_throwing);
+            bool finalized = r1::finalize(handle, finalize_throwing);
             __TBB_ASSERT_EX(finalized, "r1::finalize did not respect finalize_throwing ?");
             
         }
