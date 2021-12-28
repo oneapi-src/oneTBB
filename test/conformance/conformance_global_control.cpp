@@ -356,7 +356,7 @@ TEST_CASE("terminate_on_exception: enabled") {
             CHECK(!terminate_handler_called);
             terminate_handler_called = true;
             std::longjmp(buffer, 1);
-            });
+        });
 #if _MSC_VER
 #pragma warning(push)
 #pragma warning(disable:4611) // interaction between '_setjmp' and C++ object destruction is non - portable
