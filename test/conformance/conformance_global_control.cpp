@@ -375,7 +375,7 @@ TEST_CASE("terminate_on_exception: enabled") {
                     if (suppress_unreachable_code_warning) {
                         throw std::exception();
                     }
-                    });
+                });
                 FAIL("Unreachable code");
             }
         }
