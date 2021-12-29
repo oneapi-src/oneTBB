@@ -17,11 +17,14 @@
 #ifndef __TBB_task_arena_H
 #define __TBB_task_arena_H
 
-#include "detail/_namespace_injection.h"
-#include "detail/_task.h"
-#include "detail/_exception.h"
+#include "detail/_config.h"
+
 #include "detail/_aligned_space.h"
+#include "detail/_attach.h"
+#include "detail/_exception.h"
+#include "detail/_namespace_injection.h"
 #include "detail/_small_object_pool.h"
+#include "detail/_task.h"
 
 #include "detail/_task_handle.h"
 
@@ -302,6 +305,11 @@ public:
         }
     }
 
+    //! Creates an instance of task_arena attached to the current arena of the thread
+    explicit task_arena(d1::attach)
+        : task_arena(attach{})
+    {}
+
     //! Forces allocation of the resources for the task_arena as specified in constructor arguments
     void initialize() {
         atomic_do_once([this]{ r1::initialize(*this); }, my_initialization_state);
@@ -351,6 +359,11 @@ public:
             }
             mark_initialized();
         }
+    }
+
+    //! Attaches this instance to the current arena of the thread
+    void initialize(d1::attach) {
+        initialize(attach{});
     }
 
     //! Removes the reference to the internal arena representation.
@@ -476,6 +489,7 @@ using r1::submit;
 
 inline namespace v1 {
 using detail::d1::task_arena;
+using detail::d1::attach;
 
 #if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 using detail::d1::is_inside_task;
