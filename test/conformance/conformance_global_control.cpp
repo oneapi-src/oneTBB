@@ -296,28 +296,28 @@ TEST_CASE("null handle check 3") {
     REQUIRE(handle2_not_empty);
 }
 
-//! Testing  global_control is created on one thread and destroyed on another.
+//! Testing  task_scheduler_handle is created on one thread and destroyed on another.
 //! \brief \ref interface \ref requirement
 TEST_CASE("cross thread 1") {
-    // created GC, parallel_for on another thread - finalize
-    tbb::task_scheduler_handle ctl{ tbb::attach{} };
+    // created task_scheduler_handle, parallel_for on another thread - finalize
+    tbb::task_scheduler_handle handle{ tbb::attach{} };
     utils::NativeParallelFor(1, [&](int) {
         tbb::parallel_for(0, 10, utils::DummyBody());
-        bool res = tbb::finalize(ctl, std::nothrow);
+        bool res = tbb::finalize(handle, std::nothrow);
         REQUIRE(res);
-        });
+    });
 }
 
-//! Testing  global_control is created on one thread and destroyed on another.
+//! Testing  task_scheduler_handle is created on one thread and destroyed on another.
 //! \brief \ref interface \ref requirement
 TEST_CASE("cross thread 2") {
-    // created GC, called parallel_for on this thread, killed the thread - and finalize on another thread
-    tbb::task_scheduler_handle ctl;
+    // created task_scheduler_handle, called parallel_for on this thread, killed the thread - and finalize on another thread
+    tbb::task_scheduler_handle handle;
     utils::NativeParallelFor(1, [&](int) {
-        ctl = tbb::task_scheduler_handle{ tbb::attach{} };
+        handle = tbb::task_scheduler_handle{ tbb::attach{} };
         tbb::parallel_for(0, 10, utils::DummyBody());
-        });
-    bool res = tbb::finalize(ctl, std::nothrow);
+    });
+    bool res = tbb::finalize(handle, std::nothrow);
     REQUIRE(res);
 }
 
@@ -327,8 +327,8 @@ TEST_CASE("simple prolong lifetime 3") {
     // Parallel region
     tbb::parallel_for(0, 10, utils::DummyBody());
     // Termination
-    tbb::task_scheduler_handle ctl = tbb::task_scheduler_handle{ tbb::attach{} };
-    bool res = tbb::finalize(ctl, std::nothrow);
+    tbb::task_scheduler_handle handle = tbb::task_scheduler_handle{ tbb::attach{} };
+    bool res = tbb::finalize(handle, std::nothrow);
     REQUIRE(res);
     // New parallel region
     tbb::parallel_for(0, 10, utils::DummyBody());
