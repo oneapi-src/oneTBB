@@ -621,5 +621,5 @@ TEST_CASE("Test correct node deallocation while using small_object_pool") {
     graph.wait_for_all();
 
     tbb::task_scheduler_handle handle{ tbb::attach{} };
-    REQUIRE_NOTHROW( tbb::finalize( handle, std::nothrow ) );
+    tbb::finalize( handle, std::nothrow );
 }
