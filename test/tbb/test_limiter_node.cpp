@@ -18,8 +18,6 @@
 #pragma warning(disable : 2586) // decorated name length exceeded, name was truncated
 #endif
 
-#define TBB_PREVIEW_WAITING_FOR_WORKERS 1
-
 #include "common/config.h"
 
 #include "tbb/flow_graph.h"
@@ -622,6 +620,6 @@ TEST_CASE("Test correct node deallocation while using small_object_pool") {
     CHECK( input_node.try_put( TestLargeStruct{} ) );
     graph.wait_for_all();
 
-    tbb::task_scheduler_handle handle = tbb::task_scheduler_handle::get();
+    tbb::task_scheduler_handle handle{ tbb::attach{} };
     tbb::finalize( handle, std::nothrow );
 }

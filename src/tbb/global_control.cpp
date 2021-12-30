@@ -114,7 +114,6 @@ class alignas(max_nfs_size) terminate_on_exception_control : public control_stor
     }
 };
 
-#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
 class alignas(max_nfs_size) lifetime_control : public control_storage {
     bool is_first_arg_preferred(std::size_t, std::size_t) const override {
         return false; // not interested
@@ -146,17 +145,12 @@ public:
         return my_list.empty();
     }
 };
-#endif // __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
 
 static allowed_parallelism_control allowed_parallelism_ctl;
 static stack_size_control stack_size_ctl;
 static terminate_on_exception_control terminate_on_exception_ctl;
-#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
 static lifetime_control lifetime_ctl;
 static control_storage *controls[] = {&allowed_parallelism_ctl, &stack_size_ctl, &terminate_on_exception_ctl, &lifetime_ctl};
-#else
-static control_storage *controls[] = {&allowed_parallelism_ctl, &stack_size_ctl, &terminate_on_exception_ctl};
-#endif // __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
 
 //! Comparator for a set of global_control objects
 inline bool control_storage_comparator::operator()(const global_control* lhs, const global_control* rhs) const {
@@ -172,11 +166,9 @@ bool terminate_on_exception() {
     return global_control::active_value(global_control::terminate_on_exception) == 1;
 }
 
-#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
 unsigned market::is_lifetime_control_present() {
     return !lifetime_ctl.is_empty();
 }
-#endif // __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
 
 struct global_control_impl {
 private:
@@ -209,20 +201,12 @@ public:
         control_storage* const c = controls[gc.my_param];
         // Concurrent reading and changing global parameter is possible.
         spin_mutex::scoped_lock lock(c->my_list_mutex);
-#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
         __TBB_ASSERT(gc.my_param == global_control::scheduler_handle || !c->my_list.empty(), NULL);
-#else
-        __TBB_ASSERT(!c->my_list.empty(), NULL);
-#endif // __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
         std::size_t new_active = (std::size_t)(-1), old_active = c->my_active_value;
 
         if (!erase_if_present(c, gc)) {
-#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
             __TBB_ASSERT(gc.my_param == global_control::scheduler_handle , NULL);
             return;
-#else
-            __TBB_ASSERT(false, "Unreachable code");
-#endif // __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
         }
         if (c->my_list.empty()) {
             __TBB_ASSERT(new_active == (std::size_t) - 1, NULL);

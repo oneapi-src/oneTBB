@@ -21,9 +21,7 @@
 
 #include <new>          // std::bad_alloc
 #include <exception>    // std::exception
-#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
 #include <stdexcept>    // std::runtime_error
-#endif
 
 namespace tbb {
 namespace detail {
@@ -67,13 +65,11 @@ public:
     const char* __TBB_EXPORTED_METHOD what() const noexcept(true) override;
 };
 
-#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
 //! Exception for impossible finalization of task_sheduler_handle
-class unsafe_wait : public std::runtime_error {
+class TBB_EXPORT unsafe_wait : public std::runtime_error {
 public:
     unsafe_wait(const char* msg) : std::runtime_error(msg) {}
 };
-#endif // __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
 
 //! Gathers all throw operators in one place.
 /** Its purpose is to minimize code bloat that can be caused by throw operators
