@@ -1,4 +1,4 @@
-; Copyright (c) 2005-2021 Intel Corporation
+; Copyright (c) 2005-2022 Intel Corporation
 ;
 ; Licensed under the Apache License, Version 2.0 (the "License");
 ; you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ EXPORTS
 ?what@bad_last_alloc@r1@detail@tbb@@UEBAPEBDXZ
 ?what@user_abort@r1@detail@tbb@@UEBAPEBDXZ
 ?what@missing_wait@r1@detail@tbb@@UEBAPEBDXZ
+?what@unsafe_wait@r1@detail@tbb@@UEBAPEBDXZ
 
 ; RTM Mutex (rtm_mutex.cpp)
 ?try_acquire@r1@detail@tbb@@YA_NAEAVrtm_mutex@d1@23@AEAVscoped_lock@4523@@Z
