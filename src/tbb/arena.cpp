@@ -206,6 +206,10 @@ arena::arena ( market& m, unsigned num_slots, unsigned num_reserved_slots, unsig
     my_local_concurrency_flag.clear();
     my_global_concurrency_mode.store(false, std::memory_order_relaxed);
 #endif
+    pool_mask = (pool_mask_type*)cache_aligned_allocate(my_num_slots * sizeof(pool_mask_type));
+    for (std::size_t i = 0; i < my_num_slots; ++i) {
+        new (pool_mask + i) pool_mask_type{};
+    }
 }
 
 arena& arena::allocate_arena( market& m, unsigned num_slots, unsigned num_reserved_slots,
@@ -258,13 +262,18 @@ void arena::free_arena () {
 #endif
     // remove an internal reference
     my_market->release( /*is_public=*/false, /*blocking_terminate=*/false );
-
     // Clear enfources synchronization with observe(false)
     my_observers.clear();
 
     void* storage  = &mailbox(my_num_slots-1);
     __TBB_ASSERT( my_references.load(std::memory_order_relaxed) == 0, NULL );
     __TBB_ASSERT( my_pool_state.load(std::memory_order_relaxed) == SNAPSHOT_EMPTY || !my_max_num_workers, NULL );
+
+    for (std::size_t i = 0; i < my_num_slots; ++i) {
+        pool_mask[i].~pool_mask_type();
+    }
+    cache_aligned_deallocate(pool_mask);
+
     this->~arena();
 #if TBB_USE_ASSERT > 1
     std::memset( storage, 0, allocation_size(my_num_slots) );
