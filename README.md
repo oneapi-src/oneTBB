@@ -26,7 +26,7 @@ Here are [Release Notes](RELEASE_NOTES.md) and [System Requirements](SYSTEM_REQU
 ## Documentation
 * [oneTBB Specification](https://spec.oneapi.com/versions/latest/elements/oneTBB/source/nested-index.html)
 * [oneTBB Developer Guide and Reference](https://oneapi-src.github.io/oneTBB)
-* [Migrating from TBB to oneTBB](https://oneapi-src.github.io/oneTBB/tbb_userguide/Migration_Guide.html)
+* [Migrating from TBB to oneTBB](https://oneapi-src.github.io/oneTBB/main/tbb_userguide/Migration_Guide.html)
 * [README for the CMake build system](cmake/README.md)
 * [Basic support for the Bazel build system](Bazel.md)
 * [oneTBB Discussions](https://github.com/oneapi-src/oneTBB/discussions)
