@@ -31,6 +31,7 @@
 #include "profiling.h"
 
 #include <type_traits>
+#include <limits>
 
 #if _MSC_VER && !defined(__INTEL_COMPILER)
     // Suppress warning: structure was padded due to alignment specifier
@@ -193,11 +194,11 @@ private:
         bool fp_settings        : 1;
         bool concurrent_wait    : 1;
         bool bound              : 1;
-        bool proxy              : 1; // true if 'this' acts as a proxy for user-specified context
         bool reserved1          : 1;
         bool reserved2          : 1;
         bool reserved3          : 1;
         bool reserved4          : 1;
+        bool reserved5          : 1;
     } my_traits;
 
     static_assert(sizeof(context_traits) == 1, "Traits shall fit into one byte.");
@@ -211,7 +212,8 @@ private:
         locked,
         isolated,
         bound,
-        dead
+        dead,
+        proxy = std::numeric_limits<std::underlying_type<lifetime_state>::type>::max()
     };
 
     //! The synchronization machine state to manage lifetime.
@@ -270,10 +272,10 @@ private:
 
     task_group_context(task_group_context* actual_context)
         : my_version{task_group_context_version::proxy_support}
+        , my_lifetime_state{lifetime_state::proxy}
         , my_actual_context{actual_context}
     {
         __TBB_ASSERT(my_actual_context, "Passed pointer value points to nothing.");
-        my_traits.proxy = true;
         my_name = actual_context->my_name;
 
         // no need to initialize 'this' context as it acts as a proxy for my_actual_context, which
@@ -285,13 +287,12 @@ private:
         ct.fp_settings = (user_traits & fp_settings) == fp_settings;
         ct.concurrent_wait = (user_traits & concurrent_wait) == concurrent_wait;
         ct.bound = relation_with_parent == bound;
-        ct.proxy = false;
-        ct.reserved1 = ct.reserved2 = ct.reserved3 = ct.reserved4 = false;
+        ct.reserved1 = ct.reserved2 = ct.reserved3 = ct.reserved4 = ct.reserved5 = false;
         return ct;
     }
 
     bool is_proxy() const {
-        return my_version >= task_group_context_version::proxy_support && my_traits.proxy;
+        return my_lifetime_state.load(std::memory_order_relaxed) == lifetime_state::proxy;
     }
 
     task_group_context& actual_context() noexcept {
