@@ -50,6 +50,8 @@ TEST_CASE("Arena interfaces") {
         //! Attach interface
         oneapi::tbb::task_arena attached_arena{oneapi::tbb::task_arena::attach()};
         CHECK(attached_arena.is_active());
+        oneapi::tbb::task_arena attached_arena2{oneapi::tbb::attach()};
+        CHECK(attached_arena2.is_active());
     });
     while (!done) {
         utils::yield();
