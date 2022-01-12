@@ -7,7 +7,7 @@ Controlling Chunking
 Chunking is the process of dividing up the overall work into individual jobs,
 controlled by a *partitioner* and a *grainsize*. The partitioner controls
 the kind of heuristic applied to the chunking process, and a grainsize
-controls how big the chunks of work are allowed to be. To gain the most control
+controls how small the chunks of work are allowed to be. To gain the most control
 over chunking, you specify both.
 
 
