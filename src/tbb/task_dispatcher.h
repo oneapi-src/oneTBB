@@ -390,7 +390,8 @@ inline void task_dispatcher::recall_point() {
             };
             sp->m_arena->my_market->get_wait_list().notify(is_related_suspend_point);
         };
-        recall_suspend(&d1::suspend_callback<decltype(callback)>, &callback);
+        bool is_suspend_aborted = internal_suspend(&d1::suspend_callback<decltype(callback)>, &callback, /*call callback after resume*/true);
+        __TBB_ASSERT_EX(!is_suspend_aborted, nullptr);
 
         if (m_thread_data->my_inbox.is_idle_state(true)) {
             m_thread_data->my_inbox.set_is_idle(false);

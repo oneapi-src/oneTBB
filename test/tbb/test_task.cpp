@@ -397,7 +397,9 @@ TEST_CASE("Isolation + resumable tasks") {
                 tbb::detail::d1::wait_context wait(1);
                 ++suspend_count;
                 tbb::this_task_arena::isolate([&wait, &test_context, &test_task] {
-                    tbb::task::suspend([&wait, &test_context, &test_task] (tbb::task::suspend_point tag) {
+                    auto thread_id = std::this_thread::get_id();
+                    tbb::task::suspend([&wait, &test_context, &test_task, thread_id] (tbb::task::suspend_point tag) {
+                        CHECK(thread_id == std::this_thread::get_id());
                         test_task.emplace_back(tag, wait);
                         tbb::detail::d1::spawn(test_task[0], test_context);
                     });
@@ -486,7 +488,9 @@ TEST_CASE("Bypass suspended by resume") {
     }
 
     auto suspend_func = [&resume_flag, &test_suspend_tag] {
-        tbb::task::suspend([&resume_flag, &test_suspend_tag] (tbb::task::suspend_point tag) {
+        auto thread_id = std::this_thread::get_id();
+        tbb::task::suspend([&resume_flag, &test_suspend_tag, thread_id] (tbb::task::suspend_point tag) {
+            CHECK(thread_id == std::this_thread::get_id());
             test_suspend_tag = tag;
             resume_flag = 1;
         });
@@ -539,7 +543,9 @@ TEST_CASE("Critical tasks + resume") {
     }
 
     auto suspend_func = [&resume_flag, &test_suspend_tag] {
-        tbb::task::suspend([&resume_flag, &test_suspend_tag] (tbb::task::suspend_point tag) {
+        auto thread_id = std::this_thread::get_id();
+        tbb::task::suspend([&resume_flag, &test_suspend_tag, thread_id] (tbb::task::suspend_point tag) {
+            CHECK(thread_id == std::this_thread::get_id());
             test_suspend_tag = tag;
             resume_flag.store(true, std::memory_order_release);
         });
@@ -632,7 +638,9 @@ TEST_CASE("All workers sleep") {
     utils::SpinBarrier barrier(thread_number);
     auto resumble_task = [&] {
         barrier.wait();
+        auto thread_id = std::this_thread::get_id();
         tbb::task::suspend([&] (tbb::task::suspend_point sp) {
+            CHECK(thread_id == std::this_thread::get_id());
             suspend_points.push_back(sp);
             barrier.wait();
         });

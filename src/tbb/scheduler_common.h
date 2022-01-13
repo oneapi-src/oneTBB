@@ -104,7 +104,7 @@ public:
     }
 
     bool is_aborted() {
-        return my_state.load(std::memory_order_acquire) != SET;
+        return my_state.load(std::memory_order_acquire) == SET;
     }
 
     template <typename Pred>
@@ -538,8 +538,7 @@ public:
 #if __TBB_RESUMABLE_TASKS
     /* [[noreturn]] */ void co_local_wait_for_all() noexcept;
     void suspend(suspend_callback_type suspend_callback, void* user_callback);
-    task_dispatcher& internal_suspend(suspend_callback_type suspend_callback, void* user_callback);
-    void recall_suspend(suspend_callback_type suspend_callback, void* user_callback);
+    bool internal_suspend(suspend_callback_type suspend_callback, void* user_callback, bool post_call);
     bool resume(task_dispatcher& target);
     suspend_point_type* get_suspend_point();
     void init_suspend_point(arena* a, std::size_t stack_size);

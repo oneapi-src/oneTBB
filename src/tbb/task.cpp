@@ -93,8 +93,7 @@ static task_dispatcher& create_coroutine(thread_data& td) {
     return *task_disp;
 }
 
-task_dispatcher& task_dispatcher::internal_suspend(suspend_callback_type suspend_callback, void* user_callback) {
-    suppress_unused_warning(suspend_callback, user_callback);
+bool task_dispatcher::internal_suspend(suspend_callback_type suspend_callback, void* user_callback, bool post_call) {
     __TBB_ASSERT(suspend_callback != nullptr, nullptr);
     __TBB_ASSERT(user_callback != nullptr, nullptr);
     __TBB_ASSERT(m_thread_data != nullptr, nullptr);
@@ -105,38 +104,32 @@ task_dispatcher& task_dispatcher::internal_suspend(suspend_callback_type suspend
     task_dispatcher& default_task_disp = slot->default_task_dispatcher();
     // TODO: simplify the next line, e.g. is_task_dispatcher_recalled( task_dispatcher& )
     bool is_recalled = default_task_disp.get_suspend_point()->m_is_owner_recalled.load(std::memory_order_acquire);
-    return is_recalled ? default_task_disp : create_coroutine(*m_thread_data);
-}
-
-void task_dispatcher::recall_suspend(suspend_callback_type suspend_callback, void* user_callback) {
-    task_dispatcher& target = internal_suspend(suspend_callback, user_callback);
+    task_dispatcher& target = is_recalled ? default_task_disp : create_coroutine(*m_thread_data);
 
     thread_data::suspend_callback_wrapper callback = { suspend_callback, user_callback, get_suspend_point() };
-    m_thread_data->set_post_resume_action(thread_data::post_resume_action::recall_callback, &callback);
+    if (post_call) {
+        m_thread_data->set_post_resume_action(thread_data::post_resume_action::recall_callback, &callback);
+    } else {
+        callback.sp->switch_flag.prepare_commit();
+        callback();
+        m_thread_data->set_post_resume_action(thread_data::post_resume_action::callback, callback.sp);
+    }
+
+    bool is_suspend_aborted = callback.sp->switch_flag.is_aborted();
 
     resume(target);
 
+    callback.sp->switch_flag.clear();
+
     if (m_properties.outermost) {
         recall_point();
     }
+
+    return is_suspend_aborted;
 }
 
 void task_dispatcher::suspend(suspend_callback_type suspend_callback, void* user_callback) {
-    task_dispatcher& target = internal_suspend(suspend_callback, user_callback);
-
-    d1::suspend_point sp = get_suspend_point();
-
-    sp->switch_flag.prepare_commit();
-    suspend_callback(user_callback, sp);
-    // if (!sp->switch_flag.is_aborted()) {
-        m_thread_data->set_post_resume_action(thread_data::post_resume_action::callback, sp);
-        resume(target);
-    // }
-    sp->switch_flag.clear();
-
-    if (m_properties.outermost) {
-        recall_point();
-    }
+    internal_suspend(suspend_callback, user_callback, /*call callback before resume*/false);
 }
 
 bool task_dispatcher::resume(task_dispatcher& target) {

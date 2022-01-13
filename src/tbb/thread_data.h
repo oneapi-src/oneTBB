@@ -182,11 +182,11 @@ public:
     struct suspend_callback_wrapper {
         suspend_callback_type suspend_callback;
         void* user_callback;
-        suspend_point_type* tag;
+        suspend_point_type* sp;
 
         void operator()() {
-            __TBB_ASSERT(suspend_callback && user_callback && tag, nullptr);
-            suspend_callback(user_callback, tag);
+            __TBB_ASSERT(suspend_callback && user_callback && sp, nullptr);
+            suspend_callback(user_callback, sp);
         }
     };
 
