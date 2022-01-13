@@ -82,7 +82,7 @@ public:
     }
 
     MyData( const MyData& other ) {
-        CHECK(other.my_state==LIVE);
+        CHECK_FAST(other.my_state==LIVE);
         my_state = LIVE;
         data = other.data;
         if(MyDataCountLimit && MyDataCount + 1 >= MyDataCountLimit) {
@@ -103,18 +103,18 @@ public:
     }
 
     int value_of() const {
-        CHECK(my_state==LIVE);
+        CHECK_FAST(my_state==LIVE);
         return data;
     }
 
     void set_value( int i ) {
-        CHECK(my_state==LIVE);
+        CHECK_FAST(my_state==LIVE);
         data = i;
     }
 
     bool operator==( const MyData& other ) const {
-        CHECK(other.my_state==LIVE);
-        CHECK(my_state==LIVE);
+        CHECK_FAST(other.my_state==LIVE);
+        CHECK_FAST(my_state==LIVE);
         return data == other.data;
     }
 };
@@ -124,32 +124,32 @@ public:
     MyData2( ) {}
 
     MyData2( const MyData2& other ) : MyData() {
-        CHECK(other.my_state==LIVE);
-        CHECK(my_state==LIVE);
+        CHECK_FAST(other.my_state==LIVE);
+        CHECK_FAST(my_state==LIVE);
         data = other.data;
     }
 
     MyData2( const MyData& other ) {
-        CHECK(other.my_state==LIVE);
-        CHECK(my_state==LIVE);
+        CHECK_FAST(other.my_state==LIVE);
+        CHECK_FAST(my_state==LIVE);
         data = other.data;
     }
 
     void operator=( const MyData& other ) {
-        CHECK(other.my_state==LIVE);
-        CHECK(my_state==LIVE);
+        CHECK_FAST(other.my_state==LIVE);
+        CHECK_FAST(my_state==LIVE);
         data = other.data;
     }
 
     void operator=( const MyData2& other ) {
-        CHECK(other.my_state==LIVE);
-        CHECK(my_state==LIVE);
+        CHECK_FAST(other.my_state==LIVE);
+        CHECK_FAST(my_state==LIVE);
         data = other.data;
     }
 
     bool operator==( const MyData2& other ) const {
-        CHECK(other.my_state==LIVE);
-        CHECK(my_state==LIVE);
+        CHECK_FAST(other.my_state==LIVE);
+        CHECK_FAST(my_state==LIVE);
         return data == other.data;
     }
 };
@@ -223,7 +223,7 @@ void FillTable( test_table_type& x, int n ) {
         MyKey key( MyKey::make(-i) ); // hash values must not be specified in direct order
         typename test_table_type::accessor a;
         bool b = x.insert(a,key);
-        CHECK(b);
+        CHECK_FAST(b);
         a->second.set_value( i*i );
     }
 }
@@ -237,8 +237,8 @@ static void CheckTable( const test_table_type& x, int n ) {
         MyKey key( MyKey::make(-i) );
         typename test_table_type::const_accessor a;
         bool b = x.find(a,key);
-        CHECK(b);
-        CHECK(a->second.value_of()==i*i);
+        CHECK_FAST(b);
+        CHECK_FAST(a->second.value_of()==i*i);
     }
     int count = 0;
     int key_sum = 0;
@@ -609,10 +609,10 @@ struct RvalueInsert {
     static void apply( DataStateTrackedTable& table, int i ) {
         DataStateTrackedTable::accessor a;
         int next = i + 1;
-        REQUIRE_MESSAGE((table.insert( a, std::make_pair(MyKey::make(i), move_support_tests::Foo(next)))),
+        CHECK_FAST_MESSAGE((table.insert( a, std::make_pair(MyKey::make(i), move_support_tests::Foo(next)))),
             "already present while should not ?" );
-        CHECK((*a).second == next);
-        CHECK((*a).second.state == StateTrackableBase::MoveInitialized);
+        CHECK_FAST((*a).second == next);
+        CHECK_FAST((*a).second.state == StateTrackableBase::MoveInitialized);
     }
 };
 
@@ -620,10 +620,10 @@ struct Emplace {
     template <typename Accessor>
     static void apply_impl( DataStateTrackedTable& table, int i) {
         Accessor a;
-        REQUIRE_MESSAGE((table.emplace( a, MyKey::make(i), (i + 1))),
+        CHECK_FAST_MESSAGE((table.emplace( a, MyKey::make(i), (i + 1))),
                 "already present while should not ?" );
-        CHECK((*a).second == i + 1);
-        CHECK((*a).second.state == StateTrackableBase::DirectInitialized);
+        CHECK_FAST((*a).second == i + 1);
+        CHECK_FAST((*a).second.state == StateTrackableBase::DirectInitialized);
     }
 
     static void apply( DataStateTrackedTable& table, int i ) {
@@ -665,11 +665,11 @@ struct Insert {
                 if( i&1 ) {
                     test_table_type::accessor a;
                     table.insert( a, std::make_pair(MyKey::make(i), MyData(i*i)) );
-                    CHECK((*a).second.value_of()==i*i);
+                    CHECK_FAST((*a).second.value_of()==i*i);
                 } else {
                     test_table_type::const_accessor ca;
                     table.insert( ca, std::make_pair(MyKey::make(i), MyData(i*i)) );
-                    CHECK(ca->second.value_of()==i*i);
+                    CHECK_FAST(ca->second.value_of()==i*i);
                 }
         }
     }
@@ -680,12 +680,12 @@ struct Find {
         test_table_type::accessor a;
         const test_table_type::accessor& ca = a;
         bool b = table.find( a, MyKey::make(i) );
-        CHECK(b==!a.empty());
+        CHECK_FAST(b==!a.empty());
         if( b ) {
             if( !UseKey(i) )
                 REPORT("Line %d: unexpected key %d present\n",__LINE__,i);
-            CHECK(ca->second.value_of()==i*i);
-            CHECK((*ca).second.value_of()==i*i);
+            CHECK_FAST(ca->second.value_of()==i*i);
+            CHECK_FAST((*ca).second.value_of()==i*i);
             if( i&1 )
                 ca->second.set_value( ~ca->second.value_of() );
             else
@@ -702,12 +702,12 @@ struct FindConst {
         test_table_type::const_accessor a;
         const test_table_type::const_accessor& ca = a;
         bool b = table.find( a, MyKey::make(i) );
-        CHECK(b==(table.count(MyKey::make(i))>0));
-        CHECK(b==!a.empty());
-        CHECK(b==UseKey(i));
+        CHECK_FAST(b==(table.count(MyKey::make(i))>0));
+        CHECK_FAST(b==!a.empty());
+        CHECK_FAST(b==UseKey(i));
         if( b ) {
-            CHECK(ca->second.value_of()==~(i*i));
-            CHECK((*ca).second.value_of()==~(i*i));
+            CHECK_FAST(ca->second.value_of()==~(i*i));
+            CHECK_FAST((*ca).second.value_of()==~(i*i));
         }
     }
 };
@@ -746,24 +746,24 @@ void TraverseTable( test_table_type& table, size_t n, size_t expected_size ) {
     for( test_table_type::iterator i = table.begin(); i!=table.end(); ++i ) {
         // Check iterator
         int k = i->first.value_of();
-        CHECK(UseKey(k));
-        CHECK((*i).first.value_of()==k);
-        REQUIRE_MESSAGE((0<=k && size_t(k)<n), "out of bounds key" );
-        REQUIRE_MESSAGE( !array[k], "duplicate key" );
+        CHECK_FAST(UseKey(k));
+        CHECK_FAST((*i).first.value_of()==k);
+        CHECK_FAST_MESSAGE((0<=k && size_t(k)<n), "out of bounds key" );
+        CHECK_FAST_MESSAGE( !array[k], "duplicate key" );
         array[k] = true;
         ++count;
 
         // Check lower/upper bounds
         std::pair<test_table_type::iterator, test_table_type::iterator> er = table.equal_range(i->first);
         std::pair<test_table_type::const_iterator, test_table_type::const_iterator> cer = const_table.equal_range(i->first);
-        CHECK((cer.first == er.first && cer.second == er.second));
-        CHECK(cer.first == i);
-        CHECK(std::distance(cer.first, cer.second) == 1);
+        CHECK_FAST((cer.first == er.first && cer.second == er.second));
+        CHECK_FAST(cer.first == i);
+        CHECK_FAST(std::distance(cer.first, cer.second) == 1);
 
         // Check const_iterator
         test_table_type::const_iterator cic = ci++;
-        CHECK(cic->first.value_of()==k);
-        CHECK((*cic).first.value_of()==k);
+        CHECK_FAST(cic->first.value_of()==k);
+        CHECK_FAST((*cic).first.value_of()==k);
     }
     CHECK(ci==const_table.end());
     delete[] array;
@@ -788,7 +788,7 @@ struct Erase {
         } else
             b = table.erase( MyKey::make(i) );
         if( b ) ++EraseCount;
-        CHECK(table.count(MyKey::make(i)) == 0);
+        CHECK_FAST(table.count(MyKey::make(i)) == 0);
     }
 };
 
@@ -865,7 +865,7 @@ struct ParallelTraverseBody {
     void operator()( const RangeType& range ) const {
         for( typename RangeType::iterator i = range.begin(); i!=range.end(); ++i ) {
             int k = i->first.value_of();
-            CHECK((0<=k && size_t(k)<n));
+            CHECK_FAST((0<=k && size_t(k)<n));
             ++array[k];
         }
     }
