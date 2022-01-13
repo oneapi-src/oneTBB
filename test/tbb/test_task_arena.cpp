@@ -626,6 +626,11 @@ struct TestAttachBody : utils::NoAssign {
         tbb::task_arena arena2{tbb::task_arena::attach()};
         ValidateAttachedArena( arena2, true, default_threads, 1 );
 
+        tbb::task_arena arena3;
+        arena3.initialize(tbb::attach());
+        ValidateAttachedArena( arena3, true, default_threads, 1 );
+
+
         // attach to another task_arena
         arena.initialize( maxthread, std::min(maxthread,idx) );
         arena.execute( *this );
