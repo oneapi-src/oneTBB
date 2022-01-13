@@ -31,7 +31,6 @@
 #include "profiling.h"
 
 #include <type_traits>
-#include <limits>
 
 #if _MSC_VER && !defined(__INTEL_COMPILER)
     // Suppress warning: structure was padded due to alignment specifier
@@ -184,8 +183,7 @@ private:
 
     //! Versioning for run-time checks and behavioral traits of the context.
     enum class task_group_context_version : std::uint8_t {
-        gold_2021U1   = 0,      // version of task_group_context released in oneTBB 2021.1 GOLD
-        proxy_support = 1       // backward compatible support for 'this' context to act as a proxy
+        unused = 1       // ensure that new versions, if any, will not clash with previously used ones
     };
     task_group_context_version my_version;
 
@@ -264,14 +262,14 @@ private:
     ];
 
     task_group_context(context_traits t, string_resource_index name)
-        : my_version{task_group_context_version::proxy_support}, my_name{name}
+        : my_version{task_group_context_version::unused}, my_name{name}
     {
         my_traits = t; // GCC4.8 issues warning list initialization for bitset (missing-field-initializers)
         r1::initialize(*this);
     }
 
     task_group_context(task_group_context* actual_context)
-        : my_version{task_group_context_version::proxy_support}
+        : my_version{task_group_context_version::unused}
         , my_lifetime_state{lifetime_state::proxy}
         , my_actual_context{actual_context}
     {
