@@ -213,7 +213,7 @@ private:
         isolated,
         bound,
         dead,
-        proxy = std::numeric_limits<std::underlying_type<lifetime_state>::type>::max()
+        proxy = std::uint8_t(-1)
     };
 
     //! The synchronization machine state to manage lifetime.
