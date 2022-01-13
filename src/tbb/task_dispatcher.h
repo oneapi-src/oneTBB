@@ -29,6 +29,7 @@
 #include "mailbox.h"
 #include "itt_notify.h"
 #include "concurrent_monitor.h"
+#include "co_context.h"
 
 #include <atomic>
 
@@ -380,14 +381,16 @@ inline void task_dispatcher::recall_point() {
     if (this != &m_thread_data->my_arena_slot->default_task_dispatcher()) {
         __TBB_ASSERT(m_suspend_point != nullptr, nullptr);
         __TBB_ASSERT(m_suspend_point->m_is_owner_recalled.load(std::memory_order_relaxed) == false, nullptr);
-        d1::suspend([](suspend_point_type* sp) {
+
+        auto callback = [] (suspend_point_type* sp) {
             sp->m_is_owner_recalled.store(true, std::memory_order_release);
             auto is_related_suspend_point = [sp] (market_context context) {
                 std::uintptr_t sp_addr = std::uintptr_t(sp);
                 return sp_addr == context.my_uniq_addr;
             };
             sp->m_arena->my_market->get_wait_list().notify(is_related_suspend_point);
-        });
+        };
+        recall_suspend(&d1::suspend_callback<decltype(callback)>, &callback);
 
         if (m_thread_data->my_inbox.is_idle_state(true)) {
             m_thread_data->my_inbox.set_is_idle(false);

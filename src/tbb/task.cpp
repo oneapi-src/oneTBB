@@ -47,29 +47,30 @@ void suspend(suspend_callback_type suspend_callback, void* user_callback) {
 void resume(suspend_point_type* sp) {
     assert_pointers_valid(sp, sp->m_arena);
     task_dispatcher& task_disp = sp->m_resume_task.m_target;
-    __TBB_ASSERT(task_disp.m_thread_data == nullptr, nullptr);
 
-    // TODO: remove this work-around
-    // Prolong the arena's lifetime while all coroutines are alive
-    // (otherwise the arena can be destroyed while some tasks are suspended).
-    arena& a = *sp->m_arena;
-    a.my_references += arena::ref_external;
+    // Thread finished suspend before resume
+    if (!sp->switch_flag.test() || sp->switch_flag.test_and_set()) {
+        // TODO: remove this work-around
+        // Prolong the arena's lifetime while all coroutines are alive
+        // (otherwise the arena can be destroyed while some tasks are suspended).
+        arena& a = *sp->m_arena;
+        a.my_references += arena::ref_external;
 
-    if (task_disp.m_properties.critical_task_allowed) {
-        // The target is not in the process of executing critical task, so the resume task is not critical.
-        a.my_resume_task_stream.push(&sp->m_resume_task, random_lane_selector(sp->m_random));
-    } else {
-#if __TBB_PREVIEW_CRITICAL_TASKS
-        // The target is in the process of executing critical task, so the resume task is critical.
-        a.my_critical_task_stream.push(&sp->m_resume_task, random_lane_selector(sp->m_random));
-#endif
+        if (task_disp.m_properties.critical_task_allowed) {
+            // The target is not in the process of executing critical task, so the resume task is not critical.
+            a.my_resume_task_stream.push(&sp->m_resume_task, random_lane_selector(sp->m_random));
+        } else {
+    #if __TBB_PREVIEW_CRITICAL_TASKS
+            // The target is in the process of executing critical task, so the resume task is critical.
+            a.my_critical_task_stream.push(&sp->m_resume_task, random_lane_selector(sp->m_random));
+    #endif
+        }
+        // Do not access target after that point.
+        a.advertise_new_work<arena::wakeup>();
+        // Release our reference to my_arena.
+        a.on_thread_leaving<arena::ref_external>();
     }
 
-    // Do not access target after that point.
-    a.advertise_new_work<arena::wakeup>();
-
-    // Release our reference to my_arena.
-    a.on_thread_leaving<arena::ref_external>();
 }
 
 suspend_point_type* current_suspend_point() {
@@ -92,8 +93,8 @@ static task_dispatcher& create_coroutine(thread_data& td) {
     return *task_disp;
 }
 
-void task_dispatcher::suspend(suspend_callback_type suspend_callback, void* user_callback) {
-    __TBB_ASSERT(suspend_callback != nullptr, nullptr);
+task_dispatcher& task_dispatcher::internal_suspend(suspend_callback_type suspend_callback, void* user_callback) {
+        __TBB_ASSERT(suspend_callback != nullptr, nullptr);
     __TBB_ASSERT(user_callback != nullptr, nullptr);
     __TBB_ASSERT(m_thread_data != nullptr, nullptr);
 
@@ -103,11 +104,34 @@ void task_dispatcher::suspend(suspend_callback_type suspend_callback, void* user
     task_dispatcher& default_task_disp = slot->default_task_dispatcher();
     // TODO: simplify the next line, e.g. is_task_dispatcher_recalled( task_dispatcher& )
     bool is_recalled = default_task_disp.get_suspend_point()->m_is_owner_recalled.load(std::memory_order_acquire);
-    task_dispatcher& target = is_recalled ? default_task_disp : create_coroutine(*m_thread_data);
+    return is_recalled ? default_task_disp : create_coroutine(*m_thread_data);
+}
+
+void task_dispatcher::recall_suspend(suspend_callback_type suspend_callback, void* user_callback) {
+    task_dispatcher& target = internal_suspend(suspend_callback, user_callback);
 
     thread_data::suspend_callback_wrapper callback = { suspend_callback, user_callback, get_suspend_point() };
-    m_thread_data->set_post_resume_action(thread_data::post_resume_action::callback, &callback);
+    m_thread_data->set_post_resume_action(thread_data::post_resume_action::recall_callback, &callback);
+
     resume(target);
+
+    if (m_properties.outermost) {
+        recall_point();
+    }
+}
+
+void task_dispatcher::suspend(suspend_callback_type suspend_callback, void* user_callback) {
+    task_dispatcher& target = internal_suspend(suspend_callback, user_callback);
+
+    d1::suspend_point sp = get_suspend_point();
+
+    sp->switch_flag.prepare_commit();
+    suspend_callback(user_callback, sp);
+    // if (!sp->switch_flag.is_aborted()) {
+        m_thread_data->set_post_resume_action(thread_data::post_resume_action::callback, sp);
+        resume(target);
+    // }
+    sp->switch_flag.clear();
 
     if (m_properties.outermost) {
         recall_point();
@@ -167,6 +191,14 @@ void thread_data::do_post_resume_action() {
         break;
     }
     case post_resume_action::callback:
+    {
+        suspend_point_type* sp = static_cast<suspend_point_type*>(my_post_resume_arg);
+        if (!sp->switch_flag.commit()) {
+            r1::resume(sp);
+        }
+        break;
+    }
+    case post_resume_action::recall_callback:
     {
         suspend_callback_wrapper callback = *static_cast<suspend_callback_wrapper*>(my_post_resume_arg);
         callback();

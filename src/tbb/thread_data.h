@@ -172,6 +172,7 @@ public:
         register_waiter,
         resume,
         callback,
+        recall_callback,
         cleanup,
         notify,
         none

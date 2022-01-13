@@ -133,54 +133,6 @@ struct stack_anchor_type {
     stack_anchor_type(const stack_anchor_type&) = delete;
 };
 
-#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-class atomic_flag {
-    static const std::uintptr_t SET = 1;
-    static const std::uintptr_t EMPTY = 0;
-    std::atomic<std::uintptr_t> my_state;
-public:
-    bool test_and_set() {
-        std::uintptr_t state = my_state.load(std::memory_order_acquire);
-        switch (state) {
-        case SET:
-            return false;
-        default: /* busy */
-            if (my_state.compare_exchange_strong(state, SET)) {
-                // We interrupted clear transaction
-                return false;
-            }
-            if (state != EMPTY) {
-                // We lost our epoch
-                return false;
-            }
-            // We are too late but still in the same epoch
-            __TBB_fallthrough;
-        case EMPTY:
-            return my_state.compare_exchange_strong(state, SET);
-        }
-    }
-    template <typename Pred>
-    bool try_clear_if(Pred&& pred) {
-        std::uintptr_t busy = std::uintptr_t(&busy);
-        std::uintptr_t state = my_state.load(std::memory_order_acquire);
-        if (state == SET && my_state.compare_exchange_strong(state, busy)) {
-            if (pred()) {
-                return my_state.compare_exchange_strong(busy, EMPTY);
-            }
-            // The result of the next operation is discarded, always false should be returned.
-            my_state.compare_exchange_strong(busy, SET);
-        }
-        return false;
-    }
-    void clear() {
-        my_state.store(EMPTY, std::memory_order_release);
-    }
-    bool test() {
-        return my_state.load(std::memory_order_acquire) != EMPTY;
-    }
-};
-#endif
-
 //! The structure of an arena, except the array of slots.
 /** Separated in order to simplify padding.
     Intrusive list node base class is used by market to form a list of arenas. **/
