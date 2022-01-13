@@ -94,7 +94,8 @@ static task_dispatcher& create_coroutine(thread_data& td) {
 }
 
 task_dispatcher& task_dispatcher::internal_suspend(suspend_callback_type suspend_callback, void* user_callback) {
-        __TBB_ASSERT(suspend_callback != nullptr, nullptr);
+    suppress_unused_warning(suspend_callback, user_callback);
+    __TBB_ASSERT(suspend_callback != nullptr, nullptr);
     __TBB_ASSERT(user_callback != nullptr, nullptr);
     __TBB_ASSERT(m_thread_data != nullptr, nullptr);
 
