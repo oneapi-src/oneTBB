@@ -203,19 +203,19 @@ private:
 
     static constexpr std::uint8_t may_have_children = 1;
     //! The context internal state (currently only may_have_children).
-    std::atomic<std::uint8_t> my_state;
+    std::atomic<std::uint8_t> my_may_have_children;
 
-    enum class lifetime_state : std::uint8_t {
+    enum class state : std::uint8_t {
         created,
         locked,
         isolated,
         bound,
         dead,
-        proxy = std::uint8_t(-1)
+        proxy = std::uint8_t(-1) //the context is not the real one, but proxy to other one
     };
 
     //! The synchronization machine state to manage lifetime.
-    std::atomic<lifetime_state> my_lifetime_state;
+    std::atomic<state> my_state;
 
     union {
         //! Pointer to the context of the parent cancellation group. NULL for isolated contexts.
@@ -252,7 +252,7 @@ private:
         - sizeof(std::uint8_t)                           // my_version
         - sizeof(context_traits)                         // my_traits
         - sizeof(std::atomic<std::uint8_t>)              // my_state
-        - sizeof(std::atomic<lifetime_state>)            // my_lifetime_state
+        - sizeof(std::atomic<state>)                     // my_state
         - sizeof(task_group_context*)                    // my_parent
         - sizeof(r1::context_list*)                      // my_context_list
         - sizeof(intrusive_list_node)                    // my_node
@@ -270,7 +270,7 @@ private:
 
     task_group_context(task_group_context* actual_context)
         : my_version{task_group_context_version::unused}
-        , my_lifetime_state{lifetime_state::proxy}
+        , my_state{state::proxy}
         , my_actual_context{actual_context}
     {
         __TBB_ASSERT(my_actual_context, "Passed pointer value points to nothing.");
@@ -290,7 +290,7 @@ private:
     }
 
     bool is_proxy() const {
-        return my_lifetime_state.load(std::memory_order_relaxed) == lifetime_state::proxy;
+        return my_state.load(std::memory_order_relaxed) == state::proxy;
     }
 
     task_group_context& actual_context() noexcept {
