@@ -37,4 +37,4 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -EL -mabi=64 -march=mips64r6 -mcrc -mfp64 -mmt -mtune=mips64r6 -ggdb -ffp-contract=off -mhard-float" CACHE INTERNAL "")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -mvirt -mxpa" CACHE INTERNAL "")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mvirt -mxpa" CACHE INTERNAL "")  # for tests
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mvirt -mxpa -pie" CACHE INTERNAL "")  # for tests
