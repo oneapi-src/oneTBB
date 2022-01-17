@@ -14,11 +14,6 @@
     limitations under the License.
 */
 
-#if __TBB_CPF_BUILD
-#define TBB_PREVIEW_ISOLATED_TASK_GROUP 1
-#define TBB_PREVIEW_TASK_GROUP_EXTENSIONS 1
-#endif
-
 #include "common/test.h"
 #include "common/utils.h"
 #include "oneapi/tbb/detail/_config.h"

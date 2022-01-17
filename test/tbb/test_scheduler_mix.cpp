@@ -14,8 +14,6 @@
     limitations under the License.
 */
 
-#define TBB_PREVIEW_TASK_GROUP_EXTENSIONS 1
-
 #include "common/config.h"
 
 #include <oneapi/tbb/task_arena.h>
