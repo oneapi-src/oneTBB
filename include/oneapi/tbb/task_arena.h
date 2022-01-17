@@ -398,12 +398,10 @@ public:
 
     //! Enqueues a task into the arena to process a functor wrapped in task_handle, and immediately returns.
     //! Does not require the calling thread to join the arena
-#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
     void enqueue(d2::task_handle&& th) {
         initialize();
         d2::enqueue_impl(std::move(th), this);
     }
-#endif //__TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 
     //! Joins the arena and executes a mutable functor, then returns
     //! If not possible to join, wraps the functor into a task, enqueues it and waits for task completion
