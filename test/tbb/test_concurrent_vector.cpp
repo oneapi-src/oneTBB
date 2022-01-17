@@ -710,3 +710,29 @@ TEST_CASE("container_range concept for concurrent_vector ranges") {
     static_assert(test_concepts::container_range<typename tbb::concurrent_vector<int>::const_range_type>);
 }
 #endif // __TBB_CPP20_CONCEPTS_PRESENT
+
+//! Test concurrent and unsafe operations
+//! \brief \ref regression
+TEST_CASE("testing resize on sequantual mode") {
+    tbb::concurrent_vector<int> v;
+
+    v.resize(382);
+    while (v.size() < 737) {
+        v.emplace_back();
+    }
+
+    v.resize(27);
+    while (v.size() < 737) {
+        v.emplace_back();
+    }
+
+    v.resize(1);
+    while (v.size() < 40) {
+        v.emplace_back();
+    }
+
+    v.resize(2222);
+    while (v.size() < 4444) {
+        v.emplace_back();
+    }
+}

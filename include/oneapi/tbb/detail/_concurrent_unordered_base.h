@@ -831,6 +831,10 @@ private:
             return new_segment;
         }
 
+        segment_type nullify_segment( typename base_type::segment_table_type table, size_type segment_index ) {
+            return table[segment_index].exchange(nullptr);
+        }
+
         // deallocate_segment is required by the segment_table base class, but
         // in unordered, it is also necessary to call the destructor during deallocation
         void deallocate_segment( segment_type address, size_type index ) {
