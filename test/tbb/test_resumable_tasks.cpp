@@ -241,11 +241,10 @@ private:
 };
 
 struct EpochSuspendBody {
-    EpochSuspendBody(EpochAsyncActivity& a_, std::atomic<int>& e_, int& le_, std::thread::id id) :
-        m_asyncActivity(a_), m_globalEpoch(e_), m_localEpoch(le_), thread_id(id) {}
+    EpochSuspendBody(EpochAsyncActivity& a_, std::atomic<int>& e_, int& le_) :
+        m_asyncActivity(a_), m_globalEpoch(e_), m_localEpoch(le_) {}
 
     void operator()(tbb::task::suspend_point ctx) {
-        CHECK(thread_id == std::this_thread::get_id());
         m_localEpoch = m_globalEpoch;
         m_asyncActivity.submit(ctx);
     }
@@ -254,7 +253,6 @@ private:
     EpochAsyncActivity& m_asyncActivity;
     std::atomic<int>& m_globalEpoch;
     int& m_localEpoch;
-    std::thread::id thread_id;
 };
 
 // Simple test for basic resumable tasks functionality
@@ -277,19 +275,19 @@ void TestSuspendResume() {
             ets_fiber.local() = i;
 
             int local_epoch;
-            tbb::task::suspend(EpochSuspendBody(async, global_epoch, local_epoch, std::this_thread::get_id()));
+            tbb::task::suspend(EpochSuspendBody(async, global_epoch, local_epoch));
             CHECK(local_epoch < global_epoch);
             CHECK(ets_fiber.local() == i);
 
             tbb::parallel_for(0, N, [&](int) {
                 int local_epoch2;
-                tbb::task::suspend(EpochSuspendBody(async, global_epoch, local_epoch2, std::this_thread::get_id()));
+                tbb::task::suspend(EpochSuspendBody(async, global_epoch, local_epoch2));
                 CHECK(local_epoch2 < global_epoch);
                 ++inner_par_iters;
             });
 
             ets_fiber.local() = i;
-            tbb::task::suspend(EpochSuspendBody(async, global_epoch, local_epoch, std::this_thread::get_id()));
+            tbb::task::suspend(EpochSuspendBody(async, global_epoch, local_epoch));
             CHECK(local_epoch < global_epoch);
             CHECK(ets_fiber.local() == i);
         }
