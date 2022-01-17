@@ -183,8 +183,7 @@ private:
 
     //! Versioning for run-time checks and behavioral traits of the context.
     enum class task_group_context_version : std::uint8_t {
-        gold_2021U1   = 0,      // version of task_group_context released in oneTBB 2021.1 GOLD
-        proxy_support = 1       // backward compatible support for 'this' context to act as a proxy
+        unused = 1       // ensure that new versions, if any, will not clash with previously used ones
     };
     task_group_context_version my_version;
 
@@ -193,29 +192,30 @@ private:
         bool fp_settings        : 1;
         bool concurrent_wait    : 1;
         bool bound              : 1;
-        bool proxy              : 1; // true if 'this' acts as a proxy for user-specified context
         bool reserved1          : 1;
         bool reserved2          : 1;
         bool reserved3          : 1;
         bool reserved4          : 1;
+        bool reserved5          : 1;
     } my_traits;
 
     static_assert(sizeof(context_traits) == 1, "Traits shall fit into one byte.");
 
     static constexpr std::uint8_t may_have_children = 1;
     //! The context internal state (currently only may_have_children).
-    std::atomic<std::uint8_t> my_state;
+    std::atomic<std::uint8_t> my_may_have_children;
 
-    enum class lifetime_state : std::uint8_t {
+    enum class state : std::uint8_t {
         created,
         locked,
         isolated,
         bound,
-        dead
+        dead,
+        proxy = std::uint8_t(-1) //the context is not the real one, but proxy to other one
     };
 
     //! The synchronization machine state to manage lifetime.
-    std::atomic<lifetime_state> my_lifetime_state;
+    std::atomic<state> my_state;
 
     union {
         //! Pointer to the context of the parent cancellation group. NULL for isolated contexts.
@@ -252,7 +252,7 @@ private:
         - sizeof(std::uint8_t)                           // my_version
         - sizeof(context_traits)                         // my_traits
         - sizeof(std::atomic<std::uint8_t>)              // my_state
-        - sizeof(std::atomic<lifetime_state>)            // my_lifetime_state
+        - sizeof(std::atomic<state>)                     // my_state
         - sizeof(task_group_context*)                    // my_parent
         - sizeof(r1::context_list*)                      // my_context_list
         - sizeof(intrusive_list_node)                    // my_node
@@ -262,18 +262,18 @@ private:
     ];
 
     task_group_context(context_traits t, string_resource_index name)
-        : my_version{task_group_context_version::proxy_support}, my_name{name}
+        : my_version{task_group_context_version::unused}, my_name{name}
     {
         my_traits = t; // GCC4.8 issues warning list initialization for bitset (missing-field-initializers)
         r1::initialize(*this);
     }
 
     task_group_context(task_group_context* actual_context)
-        : my_version{task_group_context_version::proxy_support}
+        : my_version{task_group_context_version::unused}
+        , my_state{state::proxy}
         , my_actual_context{actual_context}
     {
         __TBB_ASSERT(my_actual_context, "Passed pointer value points to nothing.");
-        my_traits.proxy = true;
         my_name = actual_context->my_name;
 
         // no need to initialize 'this' context as it acts as a proxy for my_actual_context, which
@@ -285,13 +285,12 @@ private:
         ct.fp_settings = (user_traits & fp_settings) == fp_settings;
         ct.concurrent_wait = (user_traits & concurrent_wait) == concurrent_wait;
         ct.bound = relation_with_parent == bound;
-        ct.proxy = false;
-        ct.reserved1 = ct.reserved2 = ct.reserved3 = ct.reserved4 = false;
+        ct.reserved1 = ct.reserved2 = ct.reserved3 = ct.reserved4 = ct.reserved5 = false;
         return ct;
     }
 
     bool is_proxy() const {
-        return my_version >= task_group_context_version::proxy_support && my_traits.proxy;
+        return my_state.load(std::memory_order_relaxed) == state::proxy;
     }
 
     task_group_context& actual_context() noexcept {
