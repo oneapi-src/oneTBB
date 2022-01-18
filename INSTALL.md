@@ -79,7 +79,7 @@ cpack
 
 ## Example of Installation
 
-The following example demonstrates how to install oneTBB.
+The following example demonstrates how to install oneTBB for single-configuration generators (e.g. GNU Make, Ninja, etc).
 ```bash
 # Do our experiments in /tmp
 cd /tmp
@@ -95,4 +95,22 @@ cmake --build .
 # Install
 cmake --install .
 # Well done! Your installed oneTBB is in /tmp/my_installed_onetbb
+```
+
+The following example demonstrates how to install oneTBB for multi-configuration generators (e.g. Visual Studio*), you should choose configuration on build and install steps:
+```batch
+REM Do our experiments in C:\temp
+cd C:\temp
+REM Clone oneTBB repository
+git clone https://github.com/oneapi-src/oneTBB.git
+REM cd oneTBB
+REM Create binary directory for out-of-source build
+mkdir build && cd build
+REM Configure. Customize CMAKE_INSTALL_PREFIX and disable TBB_TEST to avoid tests build
+cmake -DCMAKE_INSTALL_PREFIX=C:\temp\my_installed_onetbb -DTBB_TEST=OFF ..
+REM Build configuration "release with debug information"
+cmake --build . --config relwithdebinfo
+REM Install configuration "release with debug information"
+cmake --install . --config relwithdebinfo
+REM Well done! Your installed oneTBB is in C:\temp\my_installed_onetbb
 ```
