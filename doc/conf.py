@@ -28,7 +28,7 @@ BUILD_TYPE = os.getenv("BUILD_TYPE")
 if BUILD_TYPE == 'oneapi' or BUILD_TYPE == 'dita':
     project = u'Intel® oneAPI Threading Building Blocks (oneTBB)'
 else:
-    project = u'oneAPI Threading Building Blocks (oneTBB)'
+    project = u'oneTBB'
 copyright = u'2021, Intel Corporation'
 author = u'Intel'
 
