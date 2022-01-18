@@ -29,7 +29,6 @@
 #include "mailbox.h"
 #include "itt_notify.h"
 #include "concurrent_monitor.h"
-#include "co_context.h"
 
 #include <atomic>
 
@@ -390,7 +389,7 @@ inline void task_dispatcher::recall_point() {
             };
             sp->m_arena->my_market->get_wait_list().notify(is_related_suspend_point);
         };
-        bool is_suspend_aborted = internal_suspend(&d1::suspend_callback<decltype(callback)>, &callback, /*call callback after resume*/true);
+        bool is_suspend_aborted = internal_suspend(callback, /*call callback after resume*/true);
         __TBB_ASSERT_EX(!is_suspend_aborted, nullptr);
 
         if (m_thread_data->my_inbox.is_idle_state(true)) {

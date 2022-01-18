@@ -49,7 +49,7 @@ void resume(suspend_point_type* sp) {
     task_dispatcher& task_disp = sp->m_resume_task.m_target;
 
     // Thread finished suspend before resume
-    if (!sp->my_is_suspend_transactional || sp->my_suspend_protector.exchange(true)) {
+    if (sp->is_suspend_finished() || sp->try_finish_suspend()) {
         // TODO: remove this work-around
         // Prolong the arena's lifetime while all coroutines are alive
         // (otherwise the arena can be destroyed while some tasks are suspended).
@@ -93,7 +93,7 @@ static task_dispatcher& create_coroutine(thread_data& td) {
     return *task_disp;
 }
 
-bool task_dispatcher::internal_suspend(suspend_callback_type suspend_callback, void* user_callback, bool post_call) {
+bool task_dispatcher::internal_suspend(suspend_callback_type suspend_callback, void* user_callback, bool call_callback_before_resume) {
     __TBB_ASSERT(suspend_callback != nullptr, nullptr);
     __TBB_ASSERT(user_callback != nullptr, nullptr);
     __TBB_ASSERT(m_thread_data != nullptr, nullptr);
@@ -107,10 +107,10 @@ bool task_dispatcher::internal_suspend(suspend_callback_type suspend_callback, v
     task_dispatcher& target = is_recalled ? default_task_disp : create_coroutine(*m_thread_data);
 
     thread_data::suspend_callback_wrapper callback = { suspend_callback, user_callback, get_suspend_point() };
-    if (post_call) {
+    if (call_callback_before_resume) {
         m_thread_data->set_post_resume_action(thread_data::post_resume_action::callback, &callback);
     } else {
-        callback.sp->my_is_suspend_transactional = true;
+        callback.sp->mark_suspend_composite();
         callback();
         m_thread_data->set_post_resume_action(thread_data::post_resume_action::finilized_suspend, callback.sp);
     }
@@ -118,8 +118,6 @@ bool task_dispatcher::internal_suspend(suspend_callback_type suspend_callback, v
     bool is_suspend_aborted = callback.sp->my_suspend_protector.load(std::memory_order_relaxed);
 
     resume(target);
-
-    callback.sp->clear();
 
     if (m_properties.outermost) {
         recall_point();
@@ -187,7 +185,7 @@ void thread_data::do_post_resume_action() {
     case post_resume_action::finilized_suspend:
     {
         suspend_point_type* sp = static_cast<suspend_point_type*>(my_post_resume_arg);
-        if (sp->my_suspend_protector.exchange(true)) {
+        if (sp->try_finish_suspend()) {
             r1::resume(sp);
         }
         break;

@@ -355,13 +355,30 @@ struct suspend_point_type {
     co_context m_co_context;
 
     //! The flag is raised when suspend functor should be called on same thread
-    bool my_is_suspend_transactional{false};
-    //! The flag required to protect case when my_is_suspend_transactional == true for synchronization of suspend finish and resume call
+    bool my_is_suspend_composit{false};
+    //! The flag required to protect case when my_is_suspend_composit == true for synchronization of suspend finish and resume call
     std::atomic<bool> my_suspend_protector{false};
 
-    void clear() {
-        my_is_suspend_transactional = false;
-        my_suspend_protector.store(false, std::memory_order_relaxed);
+    void mark_suspend_composite() {
+        __TBB_ASSERT(!my_is_suspend_composit, nullptr);
+        __TBB_ASSERT(!my_suspend_protector.load(std::memory_order_relaxed), nullptr);
+        my_is_suspend_composit = true;
+    }
+
+    bool is_suspend_finished() {
+        return !my_is_suspend_composit;
+    }
+
+    bool try_finish_suspend() {
+        __TBB_ASSERT(my_is_suspend_composit, nullptr);
+        // Try to transfer the responsibilities of call the resume
+        bool should_call_resume = my_suspend_protector.exchange(true);
+        if (should_call_resume) {
+            my_is_suspend_composit = false;
+            my_suspend_protector.store(false, std::memory_order_relaxed);
+        }
+
+        return should_call_resume;
     }
 
     struct resume_task final : public d1::task {
@@ -485,7 +502,13 @@ public:
 #if __TBB_RESUMABLE_TASKS
     /* [[noreturn]] */ void co_local_wait_for_all() noexcept;
     void suspend(suspend_callback_type suspend_callback, void* user_callback);
-    bool internal_suspend(suspend_callback_type suspend_callback, void* user_callback, bool post_call);
+
+    template <typename F>
+    bool internal_suspend(F user_callback, bool call_callback_before_resume) {
+        return internal_suspend(&d1::suspend_callback<F>, &user_callback, call_callback_before_resume);
+    }
+    bool internal_suspend(suspend_callback_type suspend_callback, void* user_callback, bool call_callback_before_resume);
+
     bool resume(task_dispatcher& target);
     suspend_point_type* get_suspend_point();
     void init_suspend_point(arena* a, std::size_t stack_size);
