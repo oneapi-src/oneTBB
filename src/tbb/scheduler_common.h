@@ -68,68 +68,6 @@ template<task_stream_accessor_type> class task_stream;
 using isolation_type = std::intptr_t;
 constexpr isolation_type no_isolation = 0;
 
-class atomic_flag {
-    static const std::uintptr_t SET = 1;
-    static const std::uintptr_t UNSET = 0;
-    std::atomic<std::uintptr_t> my_state{UNSET};
-public:
-    bool test_and_set() {
-        std::uintptr_t state = my_state.load(std::memory_order_acquire);
-        switch (state) {
-        case SET:
-            return false;
-        default: /* busy */
-            if (my_state.compare_exchange_strong(state, SET)) {
-                // We interrupted clear transaction
-                return false;
-            }
-            if (state != UNSET) {
-                // We lost our epoch
-                return false;
-            }
-            // We are too late but still in the same epoch
-            __TBB_fallthrough;
-        case UNSET:
-            return my_state.compare_exchange_strong(state, SET);
-        }
-    }
-
-    void prepare_commit() {
-        std::uintptr_t busy = std::uintptr_t(&busy);
-        my_state.store(busy, std::memory_order_release);
-    }
-
-    bool commit() {
-        return my_state.exchange(UNSET) != SET;
-    }
-
-    bool is_aborted() {
-        return my_state.load(std::memory_order_acquire) == SET;
-    }
-
-    template <typename Pred>
-    bool try_clear_if(Pred&& pred) {
-        std::uintptr_t busy = std::uintptr_t(&busy);
-        std::uintptr_t state = my_state.load(std::memory_order_acquire);
-        if (state == SET && my_state.compare_exchange_strong(state, busy)) {
-            if (pred()) {
-                return my_state.compare_exchange_strong(busy, UNSET);
-            }
-            // The result of the next operation is discarded, always false should be returned.
-            my_state.compare_exchange_strong(busy, SET);
-        }
-        return false;
-    }
-
-    void clear() {
-        my_state.store(UNSET, std::memory_order_release);
-    }
-
-    bool test() {
-        return my_state.load(std::memory_order_acquire) != UNSET;
-    }
-};
-
 //------------------------------------------------------------------------
 // Extended execute data
 //------------------------------------------------------------------------
@@ -415,7 +353,16 @@ struct suspend_point_type {
     bool m_is_critical{ false };
     //! Associated coroutine
     co_context m_co_context;
-    atomic_flag switch_flag;
+
+    //! The flag is raised when suspend functor should be called on same thread
+    bool my_is_suspend_transactional{false};
+    //! The flag required to protect case when my_is_suspend_transactional == true for synchronization of suspend finish and resume call
+    std::atomic<bool> my_suspend_protector{false};
+
+    void clear() {
+        my_is_suspend_transactional = false;
+        my_suspend_protector.store(false, std::memory_order_relaxed);
+    }
 
     struct resume_task final : public d1::task {
         task_dispatcher& m_target;

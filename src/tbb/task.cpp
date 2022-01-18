@@ -49,7 +49,7 @@ void resume(suspend_point_type* sp) {
     task_dispatcher& task_disp = sp->m_resume_task.m_target;
 
     // Thread finished suspend before resume
-    if (!sp->switch_flag.test() || sp->switch_flag.test_and_set()) {
+    if (!sp->my_is_suspend_transactional || sp->my_suspend_protector.exchange(true)) {
         // TODO: remove this work-around
         // Prolong the arena's lifetime while all coroutines are alive
         // (otherwise the arena can be destroyed while some tasks are suspended).
@@ -108,18 +108,18 @@ bool task_dispatcher::internal_suspend(suspend_callback_type suspend_callback, v
 
     thread_data::suspend_callback_wrapper callback = { suspend_callback, user_callback, get_suspend_point() };
     if (post_call) {
-        m_thread_data->set_post_resume_action(thread_data::post_resume_action::recall_callback, &callback);
+        m_thread_data->set_post_resume_action(thread_data::post_resume_action::callback, &callback);
     } else {
-        callback.sp->switch_flag.prepare_commit();
+        callback.sp->my_is_suspend_transactional = true;
         callback();
-        m_thread_data->set_post_resume_action(thread_data::post_resume_action::callback, callback.sp);
+        m_thread_data->set_post_resume_action(thread_data::post_resume_action::finilized_suspend, callback.sp);
     }
 
-    bool is_suspend_aborted = callback.sp->switch_flag.is_aborted();
+    bool is_suspend_aborted = callback.sp->my_suspend_protector.load(std::memory_order_relaxed);
 
     resume(target);
 
-    callback.sp->switch_flag.clear();
+    callback.sp->clear();
 
     if (m_properties.outermost) {
         recall_point();
@@ -184,15 +184,15 @@ void thread_data::do_post_resume_action() {
         r1::resume(static_cast<suspend_point_type*>(my_post_resume_arg));
         break;
     }
-    case post_resume_action::callback:
+    case post_resume_action::finilized_suspend:
     {
         suspend_point_type* sp = static_cast<suspend_point_type*>(my_post_resume_arg);
-        if (!sp->switch_flag.commit()) {
+        if (sp->my_suspend_protector.exchange(true)) {
             r1::resume(sp);
         }
         break;
     }
-    case post_resume_action::recall_callback:
+    case post_resume_action::callback:
     {
         suspend_callback_wrapper callback = *static_cast<suspend_callback_wrapper*>(my_post_resume_arg);
         callback();
