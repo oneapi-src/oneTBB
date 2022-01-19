@@ -24,25 +24,6 @@
 //! \file test_join_node_msg_key_matching.cpp
 //! \brief Test for [preview] functionality
 
-#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
-#include <array>
-#include <vector>
-void test_follows_and_precedes_api() {
-    using msg_t = MyMessageKeyWithoutKey<int, int>;
-    using JoinOutputType = std::tuple<msg_t, msg_t, msg_t>;
-
-    std::array<msg_t, 3> messages_for_follows = { {msg_t(), msg_t(), msg_t()} };
-    std::vector<msg_t> messages_for_precedes = { msg_t(), msg_t(), msg_t() };
-
-    follows_and_precedes_testing::test_follows
-        <msg_t, tbb::flow::join_node<JoinOutputType, tbb::flow::key_matching<std::size_t>>, tbb::flow::buffer_node<msg_t>>
-        (messages_for_follows);
-    follows_and_precedes_testing::test_precedes
-        <msg_t, tbb::flow::join_node<JoinOutputType, tbb::flow::key_matching<std::size_t>>>
-        (messages_for_precedes);
-}
-#endif
-
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 struct message_key {
     int my_key;
