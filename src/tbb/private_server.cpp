@@ -53,6 +53,8 @@ private:
         st_starting,
         //! Associated thread is doing normal life sequence.
         st_normal,
+        //! Associated thread is going to sleep on monitor.
+        st_sleeping,
         //! Associated thread has ended normal life sequence and promises to never touch *this again.
         st_quit
     };
@@ -82,6 +84,9 @@ private:
 
     //! Actions executed by the associated thread
     void run() noexcept;
+
+    //! Send to sleep thread on associated monitor
+    void send_to_sleep();
 
     //! Wake up associated thread (or launch a thread if there is none)
     void wake_or_launch();
@@ -246,19 +251,42 @@ void private_worker::start_shutdown() {
         }
     }
 
-    if( expected_state==st_normal || expected_state==st_starting ) {
+    if (expected_state == st_normal || expected_state == st_sleeping || expected_state == st_starting) {
         // May have invalidated invariant for sleeping, so wake up the thread.
         // Note that the notify() here occurs without maintaining invariants for my_slack.
         // It does not matter, because my_state==st_quit overrides checking of my_slack.
-        my_thread_monitor.notify();
+        if (expected_state == st_sleeping) {
+            my_thread_monitor.notify();
+        }
         // Do not need release handle in st_init state,
         // because in this case the thread wasn't started yet.
         // For st_starting release is done at launch site.
-        if (expected_state==st_normal)
+        if (expected_state == st_normal || expected_state == st_sleeping) {
             release_handle(my_handle, governor::does_client_join_workers(my_client));
+        }
     } else if( expected_state==st_init ) {
         // Perform action that otherwise would be performed by associated thread when it quits.
         my_server.remove_server_ref();
+    }
+}
+
+void private_worker::send_to_sleep() {
+
+    thread_monitor::cookie c;
+    my_thread_monitor.prepare_wait(c);
+
+    state_t expected = st_normal;
+    if (my_state.compare_exchange_strong(expected, st_sleeping) && my_server.try_insert_in_asleep_list(*this)) {
+        my_thread_monitor.commit_wait(c);
+        __TBB_ASSERT(my_state.load(std::memory_order_relaxed) == st_quit || !my_next, "Thread monitor missed a spurious wakeup?");
+        my_server.propagate_chain_reaction();
+    } else {
+        my_thread_monitor.cancel_wait();
+    }
+
+    expected = my_state.load(std::memory_order_acquire);
+    if (expected == st_sleeping) {
+        my_state.compare_exchange_strong(expected, st_normal);
     }
 }
 
@@ -274,18 +302,8 @@ void private_worker::run() noexcept {
         if( my_server.my_slack.load(std::memory_order_acquire)>=0 ) {
             my_client.process(j);
         } else {
-            thread_monitor::cookie c;
-            // Prepare to wait
-            my_thread_monitor.prepare_wait(c);
-            // Check/set the invariant for sleeping
-            if( my_state.load(std::memory_order_acquire)!=st_quit && my_server.try_insert_in_asleep_list(*this) ) {
-                my_thread_monitor.commit_wait(c);
-                __TBB_ASSERT( my_state==st_quit || !my_next, "Thread monitor missed a spurious wakeup?" );
-                my_server.propagate_chain_reaction();
-            } else {
-                // Invariant broken
-                my_thread_monitor.cancel_wait();
-            }
+            send_to_sleep();
+            __TBB_ASSERT(my_state.load(std::memory_order_relaxed) != st_sleeping, nullptr);
         }
     }
     my_client.cleanup(j);
