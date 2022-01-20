@@ -832,7 +832,9 @@ private:
         }
 
         segment_type nullify_segment( typename base_type::segment_table_type table, size_type segment_index ) {
-            return table[segment_index].exchange(nullptr);
+            segment_type target_segment = table[segment_index].load(std::memory_order_relaxed);
+            table[segment_index].store(nullptr, std::memory_order_relaxed);
+            return target_segment;
         }
 
         // deallocate_segment is required by the segment_table base class, but

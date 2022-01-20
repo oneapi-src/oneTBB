@@ -647,7 +647,8 @@ private:
     segment_type nullify_segment( segment_table_type table, size_type segment_index ) {
         segment_type target_segment{nullptr};
         if (segment_index >= this->my_first_block) {
-            target_segment = table[segment_index].exchange(nullptr);
+            target_segment = table[segment_index].load(std::memory_order_relaxed);
+            table[segment_index].store(nullptr, std::memory_order_relaxed);
         } else {
             target_segment = table[segment_index].load(std::memory_order_relaxed);
             if (segment_index == 0) {

@@ -711,28 +711,42 @@ TEST_CASE("container_range concept for concurrent_vector ranges") {
 }
 #endif // __TBB_CPP20_CONCEPTS_PRESENT
 
-//! Test concurrent and unsafe operations
+// There was a bug in concurrent_vector that was reproduced when resize marked
+// segment (that owned by my_first_block) as deleted and
+// on segment allocation thread is stuck waiting this segment to be published by other thread that allocated first block.
+//! Testing resize behavior for case when new size lesser than old size.
 //! \brief \ref regression
 TEST_CASE("testing resize on sequantual mode") {
     tbb::concurrent_vector<int> v;
 
     v.resize(382);
+    CHECK(v.size() == 382);
     while (v.size() < 737) {
         v.emplace_back();
     }
+    CHECK(v.size() == 737);
 
     v.resize(27);
+    CHECK(v.size() == 27);
     while (v.size() < 737) {
         v.emplace_back();
     }
+    CHECK(v.size() == 737);
 
     v.resize(1);
+    CHECK(v.size() == 1);
     while (v.size() < 40) {
         v.emplace_back();
     }
+    CHECK(v.size() == 40);
 
     v.resize(2222);
+    CHECK(v.size() == 2222);
     while (v.size() < 4444) {
         v.emplace_back();
     }
+    CHECK(v.size() == 4444);
+
+    v.clear();
+    CHECK(v.size() == 0);
 }
