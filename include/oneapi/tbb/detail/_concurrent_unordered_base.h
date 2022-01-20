@@ -831,6 +831,12 @@ private:
             return new_segment;
         }
 
+        segment_type nullify_segment( typename base_type::segment_table_type table, size_type segment_index ) {
+            segment_type target_segment = table[segment_index].load(std::memory_order_relaxed);
+            table[segment_index].store(nullptr, std::memory_order_relaxed);
+            return target_segment;
+        }
+
         // deallocate_segment is required by the segment_table base class, but
         // in unordered, it is also necessary to call the destructor during deallocation
         void deallocate_segment( segment_type address, size_type index ) {
