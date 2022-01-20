@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -617,7 +617,7 @@ public:
         return prepare_task_handle(std::forward<F>(f));
 
     }
-    
+
     template<typename F>
     task_group_status run_and_wait(const F& f) {
         return internal_run_and_wait(f);

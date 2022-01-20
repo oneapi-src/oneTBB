@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2019-2021 Intel Corporation
+    Copyright (c) 2019-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public:
     using pointer = typename value_allocator_traits::pointer;
     using const_pointer = typename value_allocator_traits::const_pointer;
 
-    //In perfect world these constructor and destructor would have been private, 
+    //In perfect world these constructor and destructor would have been private,
     //however this seems technically impractical due to use of allocator_traits.
 
     //Should not be called directly, instead use create method

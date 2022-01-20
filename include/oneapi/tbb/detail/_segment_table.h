@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -120,7 +120,7 @@ public:
         return *this;
     }
 
-    segment_table& operator=( segment_table&& other ) 
+    segment_table& operator=( segment_table&& other )
         noexcept(derived_type::is_noexcept_assignment)
     {
         using pocma_type = typename segment_table_allocator_traits::propagate_on_container_move_assignment;
@@ -133,7 +133,7 @@ public:
         return *this;
     }
 
-    void swap( segment_table& other ) 
+    void swap( segment_table& other )
         noexcept(derived_type::is_noexcept_swap)
     {
         using is_equal_type = typename segment_table_allocator_traits::is_always_equal;
@@ -294,7 +294,7 @@ public:
                         throw_exception(exception_id::bad_alloc);
                     }
                     backoff.pause();
-                    table = my_segment_table.load(std::memory_order_acquire); 
+                    table = my_segment_table.load(std::memory_order_acquire);
                 } while (table == my_embedded_table);
             }
         }
