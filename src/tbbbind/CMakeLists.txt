@@ -90,9 +90,6 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
 
     tbb_install_target(${TBBBIND_NAME})
 
-    if (COMMAND tbb_gen_vars)
-        tbb_gen_vars(${TBBBIND_NAME})
-    endif()
 endfunction()
 
 if (NOT DEFINED HWLOC_TARGET_EXPLICITLY_DEFINED AND TARGET PkgConfig::HWLOC)
