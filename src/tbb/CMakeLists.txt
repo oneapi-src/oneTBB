@@ -19,6 +19,7 @@ add_library(tbb
     arena_slot.cpp
     concurrent_bounded_queue.cpp
     dynamic_link.cpp
+    enumerable_thread_specific.cpp
     exception.cpp
     governor.cpp
     global_control.cpp

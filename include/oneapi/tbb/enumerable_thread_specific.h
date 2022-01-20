@@ -35,9 +35,7 @@
 
 #include "task.h" // for task::suspend_point
 
-#if _WIN32 || _WIN64
-#include <windows.h>
-#else
+#if !(_WIN32 || _WIN64)
 #include <pthread.h>
 #endif
 
@@ -281,19 +279,11 @@ template <>
 class ets_base<ets_key_per_instance>: public ets_base<ets_no_key> {
     using super = ets_base<ets_no_key>;
 #if _WIN32||_WIN64
-#if __TBB_WIN8UI_SUPPORT
-    using tls_key_t = DWORD;
-    void create_key() { my_key = FlsAlloc(NULL); }
-    void destroy_key() { FlsFree(my_key); }
-    void set_tls(void * value) { FlsSetValue(my_key, (LPVOID)value); }
-    void* get_tls() { return (void *)FlsGetValue(my_key); }
-#else
-    using tls_key_t = DWORD;
-    void create_key() { my_key = TlsAlloc(); }
-    void destroy_key() { TlsFree(my_key); }
-    void set_tls(void * value) { TlsSetValue(my_key, (LPVOID)value); }
-    void* get_tls() { return (void *)TlsGetValue(my_key); }
-#endif
+    using tls_key_t = unsigned long;  // DWORD
+    TBB_EXPORT void __TBB_EXPORTED_FUNC create_key();
+    TBB_EXPORT void __TBB_EXPORTED_FUNC destroy_key();
+    TBB_EXPORT void __TBB_EXPORTED_FUNC set_tls(void * value);
+    TBB_EXPORT void* __TBB_EXPORTED_FUNC get_tls();
 #else
     using tls_key_t = pthread_key_t;
     void create_key() { pthread_key_create(&my_key, NULL); }
