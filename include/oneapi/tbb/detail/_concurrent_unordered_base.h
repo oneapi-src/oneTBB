@@ -703,7 +703,7 @@ public:
         using difference_type = typename concurrent_unordered_base::difference_type;
         using iterator = typename concurrent_unordered_base::const_iterator;
 
-        bool empty() const { return my_instance.first_value_node(my_begin_node) == my_end_node; }
+        bool empty() const { return my_begin_node == my_end_node; }
 
         bool is_divisible() const {
             return my_midpoint_node != my_end_node;
