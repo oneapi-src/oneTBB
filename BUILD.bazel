@@ -36,9 +36,7 @@ cc_library(
         "include/oneapi/tbb/detail/*.h",
     ]),
     copts = ["-w"] + select({
-        "@bazel_tools//platforms:windows": [
-            "",
-        ],
+        "@bazel_tools//platforms:windows": [""],
         "//conditions:default": ["-mwaitpkg"],
     }),
     defines =
