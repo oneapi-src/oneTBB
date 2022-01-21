@@ -86,6 +86,10 @@ public:
         observe(true); // activate the observer
     }
 
+    ~conformance_observer() {
+        observe(false);
+    }
+
     void on_scheduler_entry(bool) override {
         is_entry_called.store(true, std::memory_order_relaxed);
     }
