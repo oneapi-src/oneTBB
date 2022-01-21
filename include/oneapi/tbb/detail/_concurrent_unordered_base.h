@@ -727,13 +727,13 @@ public:
         iterator end() const { return iterator(my_instance.first_value_node(my_end_node)); }
 
         const_range_type( const concurrent_unordered_base& table )
-            : my_instance(table), my_begin_node(const_cast<node_ptr>(&table.my_head)), my_end_node(nullptr)
+            : my_instance(table), my_begin_node(my_instance.first_value_node(const_cast<node_ptr>(&table.my_head))), my_end_node(nullptr)
         {
             set_midpoint();
         }
     private:
         void set_midpoint() const {
-            if (my_begin_node == my_end_node) {
+            if (empty()) {
                 my_midpoint_node = my_end_node;
             } else {
                 sokey_type invalid_key = ~sokey_type(0);
