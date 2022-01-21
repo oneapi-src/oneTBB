@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -132,7 +132,7 @@ protected:
 
     //! NULL if not currently initialized.
     std::atomic<r1::arena*> my_arena;
-    static_assert(sizeof(std::atomic<r1::arena*>) == sizeof(r1::arena*), 
+    static_assert(sizeof(std::atomic<r1::arena*>) == sizeof(r1::arena*),
         "To preserve backward compatibility we need the equal size of an atomic pointer and a pointer");
 
     //! Concurrency level for deferred initialization

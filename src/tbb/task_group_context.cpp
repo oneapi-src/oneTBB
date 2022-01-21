@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ void tbb_exception_ptr::throw_self() {
 
 void task_group_context_impl::destroy(d1::task_group_context& ctx) {
     __TBB_ASSERT(!is_poisoned(ctx.my_context_list), nullptr);
-    
+
     if (ctx.my_context_list != nullptr) {
         __TBB_ASSERT(ctx.my_state.load(std::memory_order_relaxed) == d1::task_group_context::state::bound, nullptr);
         // The owner can be destroyed at any moment. Access the associate data with caution.
