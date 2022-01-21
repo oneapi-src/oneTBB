@@ -47,18 +47,19 @@ cc_library(
             "//conditions:default": [
                 "USE_PTHREAD",
             ],
-        }),
+        }) + ["_XOPEN_SOURCE"],
     includes = [
         "include",
     ],
     linkopts =
         select({
             "@bazel_tools//platforms:windows": [],
-            "//conditions:default": [
+            "@bazel_tools//platforms:linux": [
                 "-ldl",
                 "-pthread",
                 "-lrt",
             ],
+            "//conditions:default": ["-pthread"],
         }),
     local_defines = select({
         "@platforms//cpu:x86_64": [
