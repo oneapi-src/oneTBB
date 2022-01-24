@@ -23,4 +23,6 @@ __TBB_internal_allocate_binding_handler;
 __TBB_internal_deallocate_binding_handler;
 __TBB_internal_get_default_concurrency;
 __TBB_internal_destroy_system_topology;
+__TBB_internal_my_current_numa_node;
+__TBB_internal_numa_cores_count;
 };

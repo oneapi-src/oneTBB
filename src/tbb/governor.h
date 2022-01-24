@@ -22,6 +22,13 @@
 #include "misc.h" // for AvailableHwConcurrency
 #include "tls.h"
 
+#if __TBB_STATISTICS
+#include <mutex>
+#include <iostream>
+#include <iomanip>
+#include <array>
+#endif // __TBB_STATISTICS
+
 namespace tbb {
 namespace detail {
 namespace r1 {
@@ -129,6 +136,10 @@ public:
         auto_terminate(get_thread_data_if_initialized());
     }
 
+    static int get_my_current_numa_node();
+
+    static unsigned get_numa_cores_count(numa_node_id);
+
     static void initialize_rml_factory ();
 
     static bool does_client_join_workers (const rml::tbb_client &client);
@@ -148,6 +159,71 @@ public:
         return false;
 #endif
     }
+
+#if __TBB_STATISTICS
+    enum class statistics : std::size_t {
+        executed = 0,
+        try_get,
+        got,
+        try_steal,
+        stolen,
+        empty_vic_pool,
+        try_steal_from_my_numa,
+        stolen_from_my_numa,
+        size,
+    };
+    using array_stat = std::array<std::uint32_t, static_cast<std::size_t>(statistics::size)>;
+
+    class collect_statistics : no_copy {
+    public:
+        collect_statistics() = default;
+        ~collect_statistics() {
+            print_statistics();
+        }
+        void emplace(array_stat thread_stat) {
+            std::lock_guard<std::mutex> lk {m_};
+            accumulate_statistics_.emplace_back(thread_stat);
+        }
+
+        // thread-unsafe method
+        void print_statistics() {
+            int offset = 2;
+            /* std::string not so bad because of Small String Optimization */
+            const static std::string column_names[] = {
+                "executed", "try get",
+                "got", "try steal", "stolen",
+                "empty vic pool", "try_steal_from_my_numa", "stolen_from_my_numa"
+            };
+            for (auto& el : column_names) {
+                std::cout << std::left << std::setw(el.size() + offset) << el;
+           }
+            std::cout << std::endl;
+            array_stat summary{};
+            for (const auto &thread_stat : accumulate_statistics_) {
+                for (std::size_t k = 0; k < thread_stat.size(); ++k) {
+#if !__TBB_STATISTICS_SUM
+                    std::cout << std::left << std::setw(column_names[k].size() + offset) << thread_stat[k];
+#endif
+                    summary[k] += thread_stat[k];
+                }
+#if !__TBB_STATISTICS_SUM
+                std::cout << std::endl;
+#endif
+            }
+#if !__TBB_STATISTICS_SUM
+            std::cout << "SUMMARY:" << std::endl;
+#endif
+            for (std::size_t k = 0; k < summary.size(); ++k) {
+                std::cout << std::left << std::setw(column_names[k].size() + offset) << summary[k];
+            }
+            std::cout << std::endl;
+        }
+    private:
+        std::mutex m_;
+        std::vector<array_stat> accumulate_statistics_ {};
+    };
+    static collect_statistics accumulator;
+#endif // __TBB_STATISTICS
 }; // class governor
 
 } // namespace r1

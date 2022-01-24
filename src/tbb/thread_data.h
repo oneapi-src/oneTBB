@@ -115,6 +115,9 @@ public:
     }
 
     ~thread_data() {
+#if __TBB_STATISTICS
+        governor::accumulator.emplace(statistics);
+#endif /* __TBB_STATISTICS */
         my_context_list->orphan();
         my_small_object_pool->destroy();
         poison_pointer(my_task_dispatcher);
@@ -221,6 +224,13 @@ public:
     // TODO: consider using common default context because it is used only to simplify
     // cancellation check.
     d1::task_group_context my_default_context;
+#if __TBB_STATISTICS
+    void add_statistics(governor::statistics stat_type) {
+        ++statistics[static_cast<std::size_t>(stat_type)];
+    }
+private:
+    governor::array_stat statistics {}; // main thread statistics object
+#endif /* __TBB_STATISTICS */
 };
 
 inline void thread_data::attach_arena(arena& a, std::size_t index) {
