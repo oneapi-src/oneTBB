@@ -257,7 +257,9 @@ public:
         is_pinned = true;
     }
 
-    ~pinning_observer() { }
+    ~pinning_observer() {
+        observe(false);
+    }
 };
 
 #if __unix__

@@ -138,6 +138,7 @@ public:
         observe(true);
     }
     ~ArenaObserver () {
+        observe(false);
         CHECK_MESSAGE(!old_id.local(), "inconsistent observer state");
     }
 };
@@ -173,6 +174,9 @@ void TestConcurrentArenasFunc(int idx) {
         LocalObserver() : tbb::task_scheduler_observer() { observe(true); }
         LocalObserver(tbb::task_arena& a) : tbb::task_scheduler_observer(a) {
             observe(true);
+        }
+        ~LocalObserver() {
+            observe(false);
         }
     };
 
@@ -508,6 +512,9 @@ struct TestMandatoryConcurrencyObserver : public tbb::task_scheduler_observer {
         : tbb::task_scheduler_observer(a), m_barrier(barrier) {
         observe(true);
     }
+    ~TestMandatoryConcurrencyObserver() {
+        observe(false);
+    }
     void on_scheduler_exit(bool worker) override {
         if (worker) {
             m_barrier.wait();
@@ -545,7 +552,6 @@ void TestMandatoryConcurrency() {
                 exit_barrier.wait();
             } while (num_tasks < n_threads * 5);
         }
-        observer.observe(false);
     });
 }
 
@@ -1344,6 +1350,9 @@ struct MyObserver: public tbb::task_scheduler_observer {
         my_failure_counter(failure_counter), my_counter(counter), m_barrier(barrier) {
         observe(true);
     }
+    ~MyObserver(){
+        observe(false);
+    }
     void on_scheduler_entry(bool worker) override {
         if (worker) {
             ++my_counter;
@@ -1549,6 +1558,10 @@ public:
         , myMaxConcurrency(maxConcurrency)
         , myNumReservedSlots(numReservedSlots) {
         observe(true);
+    }
+
+    ~simple_observer(){
+        observe(false);
     }
 
     friend bool operator<(const simple_observer& lhs, const simple_observer& rhs) {
