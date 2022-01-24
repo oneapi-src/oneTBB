@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021 Intel Corporation
+# Copyright (c) 2020-2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -64,9 +64,9 @@ function(tbb_add_test)
     # Prefer using target_link_options instead of target_link_libraries to specify link options because
     # target_link_libraries may incorrectly handle some options (on Windows, for example).
     if (COMMAND target_link_options)
-        target_link_options(${_tbb_test_TARGET_NAME} PRIVATE ${TBB_COMMON_LINK_FLAGS})
+        target_link_options(${_tbb_test_TARGET_NAME} PRIVATE ${TBB_COMMON_LINK_FLAGS} ${TBB_TEST_LINK_FLAGS})
     else()
-        target_link_libraries(${_tbb_test_TARGET_NAME} PRIVATE ${TBB_COMMON_LINK_FLAGS})
+        target_link_libraries(${_tbb_test_TARGET_NAME} PRIVATE ${TBB_COMMON_LINK_FLAGS} ${TBB_TEST_LINK_FLAGS})
     endif()
 
     target_compile_definitions(${_tbb_test_TARGET_NAME} PRIVATE
@@ -408,6 +408,8 @@ if (TARGET TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_join_node DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_join_node_key_matching DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_join_node_msg_key_matching DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_join_node_msg_key_matching_n_args DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_join_node_preview DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_limiter_node DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_priority_queue_node DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_queue_node DEPENDENCIES TBB::tbb)
