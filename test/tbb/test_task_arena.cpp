@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -1923,7 +1923,7 @@ TEST_CASE("Empty task_handle cannot be scheduled"
     CHECK_THROWS_WITH_AS(ta.enqueue(tbb::task_handle{}),                    "Attempt to schedule empty task_handle", std::runtime_error);
     CHECK_THROWS_WITH_AS(tbb::this_task_arena::enqueue(tbb::task_handle{}), "Attempt to schedule empty task_handle", std::runtime_error);
 }
-#endif 
+#endif
 
 #if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 
