@@ -142,6 +142,11 @@ TEST_CASE("Recirculation test"){
     generate_recirc_test<std::tuple<int,float> >::do_test();
 }
 
+// TODO: Look deeper into this test to see if it has the right name
+// and if it actually tests some kind of regression. It is possible
+// that `connect_join_via_follows` and `connect_join_via_precedes`
+// functions are redundant.
+
 //! Test maintaining correct count of ports without input
 //! \brief \ref error_guessing
 TEST_CASE("Test removal of the predecessor while having none") {
