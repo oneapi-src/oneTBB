@@ -799,7 +799,6 @@ TEST_CASE("Test with priority inversion") {
     for (std::size_t i = 0; i < thread_number - 1; ++i) {
         high_priority_threads[i].join();
     }
-    obsr.observe(false);
 }
 
 // Explicit test for raii_guard move ctor because of copy elision optimization
