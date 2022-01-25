@@ -447,31 +447,31 @@ private:
     void parseSystemMemInfo() {
         bool hpAvailable  = false;
         bool thpAvailable = false;
-        unsigned long long hugePageSize = 0;
+        long long hugePageSize = -1;
 
 #if __unix__
         // Check huge pages existence
-        unsigned long long meminfoHugePagesTotal = 0;
+        long long meminfoHugePagesTotal = 0;
 
         parseFileItem meminfoItems[] = {
             // Parse system huge page size
-            { "Hugepagesize: %llu kB", hugePageSize },
+            { "Hugepagesize: %lld kB", hugePageSize },
             // Check if there are preallocated huge pages on the system
             // https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt
-            { "HugePages_Total: %llu", meminfoHugePagesTotal } };
+            { "HugePages_Total: %lld", meminfoHugePagesTotal } };
 
         parseFile</*BUFF_SIZE=*/100>("/proc/meminfo", meminfoItems);
 
         // Double check another system information regarding preallocated
         // huge pages if there are no information in /proc/meminfo
-        unsigned long long vmHugePagesTotal = 0;
+        long long vmHugePagesTotal = 0;
 
-        parseFileItem vmItem[] = { { "%llu", vmHugePagesTotal } };
+        parseFileItem vmItem[] = { { "%lld", vmHugePagesTotal } };
 
         // We parse a counter number, it can't be huge
         parseFile</*BUFF_SIZE=*/100>("/proc/sys/vm/nr_hugepages", vmItem);
 
-        if (meminfoHugePagesTotal > 0 || vmHugePagesTotal > 0) {
+        if (hugePageSize > -1 && (meminfoHugePagesTotal > 0 || vmHugePagesTotal > 0)) {
             MALLOC_ASSERT(hugePageSize != 0, "Huge Page size can't be zero if we found preallocated.");
 
             // Any non zero value clearly states that there are preallocated
@@ -480,11 +480,11 @@ private:
         }
 
         // Check if there is transparent huge pages support on the system
-        unsigned long long thpPresent = 'n';
+        long long thpPresent = 'n';
         parseFileItem thpItem[] = { { "[alwa%cs] madvise never\n", thpPresent } };
         parseFile</*BUFF_SIZE=*/100>("/sys/kernel/mm/transparent_hugepage/enabled", thpItem);
 
-        if (thpPresent == 'y') {
+        if (hugePageSize > -1 && thpPresent == 'y') {
             MALLOC_ASSERT(hugePageSize != 0, "Huge Page size can't be zero if we found thp existence.");
             thpAvailable = true;
         }

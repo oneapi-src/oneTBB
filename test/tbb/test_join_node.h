@@ -32,7 +32,6 @@
 #include "common/utils.h"
 #include "common/checktype.h"
 #include "common/graph_utils.h"
-#include "common/test_follows_and_precedes_api.h"
 
 #include <type_traits>
 

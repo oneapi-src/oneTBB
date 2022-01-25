@@ -135,9 +135,10 @@ public:
     graph& my_graph; // graph instance the task belongs to
     // TODO revamp: rename to my_priority
     node_priority_t priority;
+    template <typename DerivedType>
     void destruct_and_deallocate(const execution_data& ed);
-    task* cancel(execution_data& ed) override;
 protected:
+    template <typename DerivedType>
     void finalize(const execution_data& ed);
 private:
     // To organize task_list
@@ -359,22 +360,19 @@ private:
 
 };  // class graph
 
+template<typename DerivedType>
 inline void graph_task::destruct_and_deallocate(const execution_data& ed) {
     auto allocator = my_allocator;
     // TODO: investigate if direct call of derived destructor gives any benefits.
     this->~graph_task();
-    allocator.deallocate(this, ed);
+    allocator.deallocate(static_cast<DerivedType*>(this), ed);
 }
 
+template<typename DerivedType>
 inline void graph_task::finalize(const execution_data& ed) {
     graph& g = my_graph;
-    destruct_and_deallocate(ed);
+    destruct_and_deallocate<DerivedType>(ed);
     g.release_wait();
-}
-
-inline task* graph_task::cancel(execution_data& ed) {
-    finalize(ed);
-    return nullptr;
 }
 
 //********************************************************************************

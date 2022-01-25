@@ -220,7 +220,7 @@ public:
 
         // Prepare wait guarantees Write Read memory barrier.
         // In C++ only full fence covers this type of barrier.
-        atomic_fence(std::memory_order_seq_cst);
+        atomic_fence_seq_cst();
     }
 
     //! Commit wait if event count has not changed; otherwise, cancel wait.
@@ -272,7 +272,7 @@ public:
 
     //! Notify one thread about the event
     void notify_one() {
-        atomic_fence(std::memory_order_seq_cst);
+        atomic_fence_seq_cst();
         notify_one_relaxed();
     }
 
@@ -301,7 +301,7 @@ public:
 
     //! Notify all waiting threads of the event
     void notify_all() {
-        atomic_fence(std::memory_order_seq_cst);
+        atomic_fence_seq_cst();
         notify_all_relaxed();
     }
 
@@ -337,7 +337,7 @@ public:
     //! Notify waiting threads of the event that satisfies the given predicate
     template <typename P>
     void notify( const P& predicate ) {
-        atomic_fence(std::memory_order_seq_cst);
+        atomic_fence_seq_cst();
         notify_relaxed( predicate );
     }
 
@@ -409,7 +409,7 @@ public:
 
     //! Abort any sleeping threads at the time of the call
     void abort_all() {
-        atomic_fence( std::memory_order_seq_cst );
+        atomic_fence_seq_cst();
         abort_all_relaxed();
     }
 

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2021 Intel Corporation
+    Copyright (c) 2020-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -37,12 +37,11 @@
 #endif
 #include <string.h>
 #include <sched.h>
-#elif __FreeBSD__
-#include <unistd.h>
+#if __FreeBSD__
 #include <errno.h>
-#include <string.h>
 #include <sys/param.h>
 #include <sys/cpuset.h>
+#endif
 #endif
 #include <thread>
 
@@ -258,7 +257,9 @@ public:
         is_pinned = true;
     }
 
-    ~pinning_observer() { }
+    ~pinning_observer() {
+        observe(false);
+    }
 };
 
 #if __unix__

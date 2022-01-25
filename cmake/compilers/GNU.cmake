@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021 Intel Corporation
+# Copyright (c) 2020-2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -56,16 +56,17 @@ endif()
 
 # Workaround for heavy tests and too many symbols in debug (rellocation truncated to fit: R_MIPS_CALL16)
 if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
-    set(TBB_TEST_COMPILE_FLAGS ${TBB_TEST_COMPILE_FLAGS} -DTBB_TEST_LOW_WORKLOAD $<$<CONFIG:DEBUG>:-mxgot>)
-endif()
-
-if (MINGW)
-    list(APPEND TBB_COMMON_COMPILE_FLAGS -U__STRICT_ANSI__)
+    set(TBB_TEST_COMPILE_FLAGS ${TBB_TEST_COMPILE_FLAGS} -DTBB_TEST_LOW_WORKLOAD $<$<CONFIG:DEBUG>:-fPIE -mxgot>)
+    set(TBB_TEST_LINK_FLAGS ${TBB_TEST_LINK_FLAGS} $<$<CONFIG:DEBUG>:-pie>)
 endif()
 
 set(TBB_IPO_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:-flto>)
 set(TBB_IPO_LINK_FLAGS $<$<NOT:$<CONFIG:Debug>>:-flto>)
 
+
+if (MINGW AND CMAKE_SYSTEM_PROCESSOR MATCHES "i.86")
+    list (APPEND TBB_COMMON_COMPILE_FLAGS -msse2)
+endif ()
 
 # TBB malloc settings
 set(TBBMALLOC_LIB_COMPILE_FLAGS -fno-rtti -fno-exceptions)

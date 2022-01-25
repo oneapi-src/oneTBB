@@ -147,12 +147,10 @@ market& market::global_market(bool is_public, unsigned workers_requested, std::s
         market* m = new (storage) market( workers_soft_limit, workers_hard_limit, stack_size );
         if( is_public )
             m->my_public_ref_count.store(1, std::memory_order_relaxed);
-#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
         if (market::is_lifetime_control_present()) {
             ++m->my_public_ref_count;
             ++m->my_ref_count;
         }
-#endif // __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
         theMarket = m;
         // This check relies on the fact that for shared RML default_concurrency==max_concurrency
         if ( !governor::UsePrivateRML && m->my_server->default_concurrency() < workers_soft_limit )

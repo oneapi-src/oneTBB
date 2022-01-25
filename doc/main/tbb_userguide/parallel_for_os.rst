@@ -120,11 +120,5 @@ example uses the default grainsize of 1 because by default
 ``parallel_for`` applies a heuristic that works well with the default
 grainsize.
 
-.. toctree::
-   :maxdepth: 4
-
-   ../tbb_userguide/Lambda_Expressions
-   ../tbb_userguide/Automatic_Chunking
-   ../tbb_userguide/Controlling_Chunking
-   ../tbb_userguide/Bandwidth_and_Cache_Affinity
-   ../tbb_userguide/Partitioner_Summary
+.. include:: parallel_for_toctree.rst
+   

@@ -41,11 +41,9 @@ namespace r1 {
 
 void clear_address_waiter_table();
 
-#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
 //! global_control.cpp contains definition
 bool remove_and_check_if_empty(d1::global_control& gc);
 bool is_present(d1::global_control& gc);
-#endif // __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
 
 namespace rml {
 tbb_server* make_private_server( tbb_client& client );
@@ -132,12 +130,12 @@ void governor::one_time_init() {
 static std::uintptr_t get_stack_base(std::size_t stack_size) {
     // Stacks are growing top-down. Highest address is called "stack base",
     // and the lowest is "stack limit".
-#if USE_WINTHREAD
+#if __TBB_USE_WINAPI
     suppress_unused_warning(stack_size);
     NT_TIB* pteb = (NT_TIB*)NtCurrentTeb();
     __TBB_ASSERT(&pteb < pteb->StackBase && &pteb > pteb->StackLimit, "invalid stack info in TEB");
-    return pteb->StackBase;
-#else /* USE_PTHREAD */
+    return reinterpret_cast<std::uintptr_t>(pteb->StackBase);
+#else
     // There is no portable way to get stack base address in Posix, so we use
     // non-portable method (on all modern Linux) or the simplified approach
     // based on the common sense assumptions. The most important assumption
@@ -164,7 +162,7 @@ static std::uintptr_t get_stack_base(std::size_t stack_size) {
         stack_base = reinterpret_cast<std::uintptr_t>(&anchor);
     }
     return stack_base;
-#endif /* USE_PTHREAD */
+#endif /* __TBB_USE_WINAPI */
 }
 
 #if (_WIN32||_WIN64) && !__TBB_DYNAMIC_LOAD_ENABLED
@@ -248,7 +246,6 @@ void governor::initialize_rml_factory () {
     UsePrivateRML = res != ::rml::factory::st_success;
 }
 
-#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
 void __TBB_EXPORTED_FUNC get(d1::task_scheduler_handle& handle) {
     handle.m_ctl = new(allocate_memory(sizeof(global_control))) global_control(global_control::scheduler_handle, 1);
 }
@@ -300,7 +297,6 @@ bool __TBB_EXPORTED_FUNC finalize(d1::task_scheduler_handle& handle, std::intptr
         return ok;
     }
 }
-#endif // __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
 
 #if __TBB_ARENA_BINDING
 

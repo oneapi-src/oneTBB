@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -138,6 +138,7 @@ public:
         observe(true);
     }
     ~ArenaObserver () {
+        observe(false);
         CHECK_MESSAGE(!old_id.local(), "inconsistent observer state");
     }
 };
@@ -173,6 +174,9 @@ void TestConcurrentArenasFunc(int idx) {
         LocalObserver() : tbb::task_scheduler_observer() { observe(true); }
         LocalObserver(tbb::task_arena& a) : tbb::task_scheduler_observer(a) {
             observe(true);
+        }
+        ~LocalObserver() {
+            observe(false);
         }
     };
 
@@ -508,6 +512,9 @@ struct TestMandatoryConcurrencyObserver : public tbb::task_scheduler_observer {
         : tbb::task_scheduler_observer(a), m_barrier(barrier) {
         observe(true);
     }
+    ~TestMandatoryConcurrencyObserver() {
+        observe(false);
+    }
     void on_scheduler_exit(bool worker) override {
         if (worker) {
             m_barrier.wait();
@@ -545,7 +552,6 @@ void TestMandatoryConcurrency() {
                 exit_barrier.wait();
             } while (num_tasks < n_threads * 5);
         }
-        observer.observe(false);
     });
 }
 
@@ -625,6 +631,11 @@ struct TestAttachBody : utils::NoAssign {
 
         tbb::task_arena arena2{tbb::task_arena::attach()};
         ValidateAttachedArena( arena2, true, default_threads, 1 );
+
+        tbb::task_arena arena3;
+        arena3.initialize(tbb::attach());
+        ValidateAttachedArena( arena3, true, default_threads, 1 );
+
 
         // attach to another task_arena
         arena.initialize( maxthread, std::min(maxthread,idx) );
@@ -1339,6 +1350,9 @@ struct MyObserver: public tbb::task_scheduler_observer {
         my_failure_counter(failure_counter), my_counter(counter), m_barrier(barrier) {
         observe(true);
     }
+    ~MyObserver(){
+        observe(false);
+    }
     void on_scheduler_entry(bool worker) override {
         if (worker) {
             ++my_counter;
@@ -1544,6 +1558,10 @@ public:
         , myMaxConcurrency(maxConcurrency)
         , myNumReservedSlots(numReservedSlots) {
         observe(true);
+    }
+
+    ~simple_observer(){
+        observe(false);
     }
 
     friend bool operator<(const simple_observer& lhs, const simple_observer& rhs) {
@@ -1906,111 +1924,21 @@ TEST_CASE("Workers oversubscription") {
         );
     });
 }
-
-#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
-//! Basic test for arena::enqueue with task handle
-//! \brief \ref interface \ref requirement
-TEST_CASE("enqueue task_handle") {
-    tbb::task_arena arena;
-    tbb::task_group tg;
-
-    std::atomic<bool> run{false};
-
-    auto task_handle = tg.defer([&]{ run = true; });
-
-    arena.enqueue(std::move(task_handle));
-    tg.wait();
-
-    CHECK(run == true);
-}
-
-//! Basic test for this_task_arena::enqueue with task handle
-//! \brief \ref interface \ref requirement
-TEST_CASE("this_task_arena::enqueue task_handle") {
-    tbb::task_arena arena;
-    tbb::task_group tg;
-
-    std::atomic<bool> run{false};
-
-    arena.execute([&]{
-        auto task_handle = tg.defer([&]{ run = true; });
-
-        tbb::this_task_arena::enqueue(std::move(task_handle));
-    });
-
-    tg.wait();
-
-    CHECK(run == true);
-}
-
-//! Basic test for this_task_arena::enqueue with functor
-//! \brief \ref interface \ref requirement
-TEST_CASE("this_task_arena::enqueue function") {
-    tbb::task_arena arena;
-    tbb::task_group tg;
-
-    std::atomic<bool> run{false};
-    //block the task_group to wait on it
-    auto task_handle = tg.defer([]{});
-
-    arena.execute([&]{
-        tbb::this_task_arena::enqueue([&]{
-            run = true;
-            //release the task_group
-            task_handle = tbb::task_handle{};
-        });
-    });
-
-    tg.wait();
-
-    CHECK(run == true);
-}
-
 #if TBB_USE_EXCEPTIONS
-//! Basic test for exceptions in task_arena::enqueue with task_handle
-//! \brief \ref interface \ref requirement
-TEST_CASE("task_arena::enqueue(task_handle) exception propagation"){
-    tbb::task_group tg;
-    tbb::task_arena arena;
-
-    tbb::task_handle h = tg.defer([&]{
-        volatile bool suppress_unreachable_code_warning = true;
-        if (suppress_unreachable_code_warning) {
-            throw std::runtime_error{ "" };
-        }
-    });
-
-    arena.enqueue(std::move(h));
-
-    CHECK_THROWS_AS(tg.wait(), std::runtime_error);
-}
-
-//! Basic test for exceptions in this_task_arena::enqueue with task_handle
-//! \brief \ref interface \ref requirement
-TEST_CASE("this_task_arena::enqueue(task_handle) exception propagation"){
-    tbb::task_group tg;
-
-    tbb::task_handle h = tg.defer([&]{
-        volatile bool suppress_unreachable_code_warning = true;
-        if (suppress_unreachable_code_warning) {
-            throw std::runtime_error{ "" };
-        }
-    });
-
-    tbb::this_task_arena::enqueue(std::move(h));
-
-    CHECK_THROWS_AS(tg.wait(), std::runtime_error);
-}
-
 //! The test for error in scheduling empty task_handle
 //! \brief \ref requirement
-TEST_CASE("Empty task_handle cannot be scheduled"){
+TEST_CASE("Empty task_handle cannot be scheduled"
+        * doctest::should_fail()    //Test needs to revised as implementation uses assertions instead of exceptions
+        * doctest::skip()           //skip the test for now, to not pollute the test log
+){
     tbb::task_arena ta;
 
     CHECK_THROWS_WITH_AS(ta.enqueue(tbb::task_handle{}),                    "Attempt to schedule empty task_handle", std::runtime_error);
     CHECK_THROWS_WITH_AS(tbb::this_task_arena::enqueue(tbb::task_handle{}), "Attempt to schedule empty task_handle", std::runtime_error);
 }
-#endif // TBB_USE_EXCEPTIONS
+#endif
+
+#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 
 //! Basic test for is_inside_task in task_group
 //! \brief \ref interface \ref requirement
