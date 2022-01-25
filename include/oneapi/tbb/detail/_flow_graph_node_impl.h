@@ -63,9 +63,9 @@ public:
     static_assert(!has_policy<queueing, Policy>::value || !has_policy<rejecting, Policy>::value, "");
 
     //! Constructor for function_input_base
-    function_input_base( graph &g, size_t max_concurrency, node_priority_t a_priority )
+    function_input_base( graph &g, size_t max_concurrency, node_priority_t a_priority, bool is_no_throw )
         : my_graph_ref(g), my_max_concurrency(max_concurrency)
-        , my_concurrency(0), my_priority(a_priority)
+        , my_concurrency(0), my_priority(a_priority), my_is_no_throw(is_no_throw)
         , my_queue(!has_policy<rejecting, Policy>::value ? new input_queue_type() : NULL)
         , my_predecessors(this)
         , forwarder_busy(false)
@@ -75,18 +75,22 @@ public:
 
     //! Copy constructor
     function_input_base( const function_input_base& src )
-        : function_input_base(src.my_graph_ref, src.my_max_concurrency, src.my_priority) {}
+        : function_input_base(src.my_graph_ref, src.my_max_concurrency, src.my_priority, src.my_is_no_throw) {}
 
     //! Destructor
     // The queue is allocated by the constructor for {multi}function_node.
     // TODO: pass the graph_buffer_policy to the base so it can allocate the queue instead.
     // This would be an interface-breaking change.
     virtual ~function_input_base() {
-        if ( my_queue ) delete my_queue;
+        delete my_queue;
+        my_queue = nullptr;
     }
 
     graph_task* try_put_task( const input_type& t) override {
-        return try_put_task_impl(t, has_policy<lightweight, Policy>());
+        if ( my_is_no_throw )
+            return try_put_task_impl(t, has_policy<lightweight, Policy>());
+        else
+            return try_put_task_impl(t, std::false_type());
     }
 
     //! Adds src to the list of cached predecessors.
@@ -120,6 +124,7 @@ protected:
     const size_t my_max_concurrency;
     size_t my_concurrency;
     node_priority_t my_priority;
+    const bool my_is_no_throw;
     input_queue_type *my_queue;
     predecessor_cache<input_type, null_mutex > my_predecessors;
 
@@ -356,7 +361,7 @@ public:
     template<typename Body>
     function_input(
         graph &g, size_t max_concurrency, Body& body, node_priority_t a_priority )
-      : base_type(g, max_concurrency, a_priority)
+      : base_type(g, max_concurrency, a_priority, noexcept(body(input_type())))
       , my_body( new function_body_leaf< input_type, output_type, Body>(body) )
       , my_init_body( new function_body_leaf< input_type, output_type, Body>(body) ) {
     }
@@ -491,7 +496,7 @@ public:
     // constructor
     template<typename Body>
     multifunction_input(graph &g, size_t max_concurrency,Body& body, node_priority_t a_priority )
-      : base_type(g, max_concurrency, a_priority)
+      : base_type(g, max_concurrency, a_priority, noexcept(body(input_type(), my_output_ports)))
       , my_body( new multifunction_body_leaf<input_type, output_ports_type, Body>(body) )
       , my_init_body( new multifunction_body_leaf<input_type, output_ports_type, Body>(body) )
       , my_output_ports(init_output_ports<output_ports_type>::call(g, my_output_ports)){

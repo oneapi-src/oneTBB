@@ -17,8 +17,6 @@
 //! \file test_tbb_fork.cpp
 //! \brief Test for [sched.global_control] specification
 
-#define TBB_PREVIEW_WAITING_FOR_WORKERS 1
-
 #include "tbb/global_control.h"
 #include "tbb/blocked_range.h"
 #include "tbb/cache_aligned_allocator.h"
@@ -113,13 +111,13 @@ class RunWorkersBody : utils::NoAssign {
 public:
     RunWorkersBody(bool waitWorkers) : wait_workers(waitWorkers) {}
     void operator()(const int /*threadID*/) const {
-        tbb::task_scheduler_handle tsi = tbb::task_scheduler_handle::get();
+        tbb::task_scheduler_handle tsi{tbb::attach{}};
         CallParallelFor();
         if (wait_workers) {
             bool ok = tbb::finalize(tsi, std::nothrow);
             ASSERT(ok, NULL);
         } else {
-            tbb::task_scheduler_handle::release(tsi);
+            tsi.release();
         }
     }
 };
@@ -138,20 +136,20 @@ class RunInNativeThread : utils::NoAssign {
 public:
     RunInNativeThread(bool blocking_) : blocking(blocking_) {}
     void operator()(const int /*threadID*/) const {
-        tbb::task_scheduler_handle tsi = tbb::task_scheduler_handle::get();
+        tbb::task_scheduler_handle tsi = tbb::task_scheduler_handle{tbb::attach{}};
         CallParallelFor();
         if (blocking) {
             bool ok = tbb::finalize(tsi, std::nothrow);
             ASSERT(!ok, "Nested blocking terminate must fail.");
         } else {
-            tbb::task_scheduler_handle::release(tsi);
+            tsi.release();
         }
     }
 };
 
 void TestTasksInThread()
 {
-    tbb::task_scheduler_handle sch = tbb::task_scheduler_handle::get();
+    tbb::task_scheduler_handle sch{tbb::attach{}};
     CallParallelFor();
     utils::NativeParallelFor(2, RunInNativeThread(/*blocking=*/false));
     bool ok = tbb::finalize(sch, std::nothrow);
@@ -205,12 +203,13 @@ void TestNestingTSI()
 {
     // nesting with and without blocking is possible
     for (int i=0; i<2; i++) {
-        tbb::task_scheduler_handle schBlock = tbb::task_scheduler_handle::get();
+        tbb::task_scheduler_handle schBlock = tbb::task_scheduler_handle{tbb::attach{}};
         CallParallelFor();
-        tbb::task_scheduler_handle schBlock1 = tbb::task_scheduler_handle::get();
+        tbb::task_scheduler_handle schBlock1;
+        schBlock1 = tbb::task_scheduler_handle{tbb::attach{}};
         CallParallelFor();
         if (i) {
-            tbb::task_scheduler_handle::release(schBlock1);
+            schBlock1.release();
         } else {
             bool ok = tbb::finalize(schBlock1, std::nothrow);
             ASSERT(!ok, "Nested blocking terminate must fail.");
@@ -219,7 +218,7 @@ void TestNestingTSI()
         ASSERT(ok, NULL);
     }
     {
-        tbb::task_scheduler_handle schBlock = tbb::task_scheduler_handle::get();
+        tbb::task_scheduler_handle schBlock{tbb::attach{}};
         utils::NativeParallelFor(1, RunInNativeThread(/*blocking=*/true));
         bool ok = tbb::finalize(schBlock, std::nothrow);
         ASSERT(ok, NULL);
@@ -269,11 +268,11 @@ int main()
         for (int i=0; i<20; i++) {
             tbb::global_control ctl(tbb::global_control::max_allowed_parallelism, threads);
             {
-                tbb::task_scheduler_handle sch = tbb::task_scheduler_handle::get();
+                tbb::task_scheduler_handle sch{tbb::attach{}};
                 bool ok = tbb::finalize( sch, std::nothrow );
                 ASSERT(ok, NULL);
             }
-            tbb::task_scheduler_handle sch = tbb::task_scheduler_handle::get();
+            tbb::task_scheduler_handle sch{tbb::attach{}};
             CallParallelFor();
             bool ok = tbb::finalize( sch, std::nothrow );
             ASSERT(ok, NULL);

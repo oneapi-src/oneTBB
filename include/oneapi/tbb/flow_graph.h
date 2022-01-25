@@ -1886,6 +1886,7 @@ private:
     size_t my_threshold;
     size_t my_count; // number of successful puts
     size_t my_tries; // number of active put attempts
+    size_t my_future_decrement; // number of active decrement 
     reservable_predecessor_cache< T, spin_mutex > my_predecessors;
     spin_mutex my_mutex;
     broadcast_cache< T > my_successors;
@@ -1894,12 +1895,19 @@ private:
     threshold_regulator< limiter_node<T, DecrementType>, DecrementType > decrement;
 
     graph_task* decrement_counter( long long delta ) {
+        if ( delta > 0 && size_t(delta) > my_threshold ) {
+            delta = my_threshold;
+        }
+
         {
             spin_mutex::scoped_lock lock(my_mutex);
-            if( delta > 0 && size_t(delta) > my_count ) {
+            if ( delta > 0 && size_t(delta) > my_count ) {
+                if( my_tries > 0 ) {
+                    my_future_decrement += (size_t(delta) - my_count);
+                }
                 my_count = 0;
             }
-            else if( delta < 0 && size_t(-delta) > my_threshold - my_count ) {
+            else if ( delta < 0 && size_t(-delta) > my_threshold - my_count ) {
                 my_count = my_threshold;
             }
             else {
@@ -1924,23 +1932,34 @@ private:
         input_type v;
         graph_task* rval = NULL;
         bool reserved = false;
-            {
-                spin_mutex::scoped_lock lock(my_mutex);
-                if ( check_conditions() )
-                    ++my_tries;
-                else
-                    return NULL;
-            }
+
+        {
+            spin_mutex::scoped_lock lock(my_mutex);
+            if ( check_conditions() )
+                ++my_tries;
+            else
+                return NULL;
+        }
 
         //SUCCESS
         // if we can reserve and can put, we consume the reservation
         // we increment the count and decrement the tries
-        if ( (my_predecessors.try_reserve(v)) == true ){
-            reserved=true;
-            if ( (rval = my_successors.try_put_task(v)) != NULL ){
+        if ( (my_predecessors.try_reserve(v)) == true ) {
+            reserved = true;
+            if ( (rval = my_successors.try_put_task(v)) != NULL ) {
                 {
                     spin_mutex::scoped_lock lock(my_mutex);
                     ++my_count;
+                    if ( my_future_decrement ) {
+                        if ( my_count > my_future_decrement ) {
+                            my_count -= my_future_decrement;
+                            my_future_decrement = 0;
+                        }
+                        else {
+                            my_future_decrement -= my_count;
+                            my_count = 0;
+                        }
+                    }
                     --my_tries;
                     my_predecessors.try_consume();
                     if ( check_conditions() ) {
@@ -1988,8 +2007,8 @@ private:
 public:
     //! Constructor
     limiter_node(graph &g, size_t threshold)
-        : graph_node(g), my_threshold(threshold), my_count(0), my_tries(0), my_predecessors(this)
-        , my_successors(this), decrement(this)
+        : graph_node(g), my_threshold(threshold), my_count(0), my_tries(0), my_future_decrement(0),
+        my_predecessors(this), my_successors(this), decrement(this)
     {
         initialize();
     }
@@ -2071,7 +2090,6 @@ protected:
         }
 
         graph_task* rtask = my_successors.try_put_task(t);
-
         if ( !rtask ) {  // try_put_task failed.
             spin_mutex::scoped_lock lock(my_mutex);
             --my_tries;
@@ -2085,22 +2103,31 @@ protected:
         else {
             spin_mutex::scoped_lock lock(my_mutex);
             ++my_count;
+            if ( my_future_decrement ) {
+                if ( my_count > my_future_decrement ) {
+                    my_count -= my_future_decrement;
+                    my_future_decrement = 0;
+                }
+                else {
+                    my_future_decrement -= my_count;
+                    my_count = 0;
+                }
+            }
             --my_tries;
-             }
+        }
         return rtask;
     }
 
     graph& graph_reference() const override { return my_graph; }
 
-    void reset_node( reset_flags f) override {
+    void reset_node( reset_flags f ) override {
         my_count = 0;
-        if(f & rf_clear_edges) {
+        if ( f & rf_clear_edges ) {
             my_predecessors.clear();
             my_successors.clear();
         }
-        else
-        {
-            my_predecessors.reset( );
+        else {
+            my_predecessors.reset();
         }
         decrement.reset_receiver(f);
     }
@@ -2820,6 +2847,9 @@ protected:
 
 template<typename Input, typename Ports, typename Gateway, typename Body>
 class async_body: public async_body_base<Gateway> {
+private:
+    Body my_body;
+
 public:
     typedef async_body_base<Gateway> base_type;
     typedef Gateway gateway_type;
@@ -2827,14 +2857,11 @@ public:
     async_body(const Body &body, gateway_type *gateway)
         : base_type(gateway), my_body(body) { }
 
-    void operator()( const Input &v, Ports & ) {
+    void operator()( const Input &v, Ports & ) noexcept(noexcept(my_body(v, std::declval<gateway_type&>()))) {
         my_body(v, *this->my_gateway);
     }
 
     Body get_body() { return my_body; }
-
-private:
-    Body my_body;
 };
 
 //! Implements async node
@@ -3111,7 +3138,12 @@ protected:
             if ( !register_predecessor(s, o) ) {
                 register_successor(o, s);
             }
-            finalize(ed);
+            finalize<register_predecessor_task>(ed);
+            return nullptr;
+        }
+
+        task* cancel(execution_data& ed) override {
+            finalize<register_predecessor_task>(ed);
             return nullptr;
         }
 

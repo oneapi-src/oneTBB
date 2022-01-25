@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2021 Intel Corporation
+    Copyright (c) 2021-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-#define TBB_PREVIEW_MUTEXES 1
-#define TBB_PREVIEW_WAITING_FOR_WORKERS 1
-#define TBB_PREVIEW_TASK_GROUP_EXTENSIONS 1
 
 #include "common/config.h"
 
@@ -161,7 +157,7 @@ public:
             mMutex = nullptr;
             m->clear();
         }
-     
+
         //! Release lock.
         void release() {
             CHECK_FAST(mMutex != nullptr);

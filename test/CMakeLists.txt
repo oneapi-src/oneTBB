@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021 Intel Corporation
+# Copyright (c) 2020-2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -64,9 +64,9 @@ function(tbb_add_test)
     # Prefer using target_link_options instead of target_link_libraries to specify link options because
     # target_link_libraries may incorrectly handle some options (on Windows, for example).
     if (COMMAND target_link_options)
-        target_link_options(${_tbb_test_TARGET_NAME} PRIVATE ${TBB_COMMON_LINK_FLAGS})
+        target_link_options(${_tbb_test_TARGET_NAME} PRIVATE ${TBB_COMMON_LINK_FLAGS} ${TBB_TEST_LINK_FLAGS})
     else()
-        target_link_libraries(${_tbb_test_TARGET_NAME} PRIVATE ${TBB_COMMON_LINK_FLAGS})
+        target_link_libraries(${_tbb_test_TARGET_NAME} PRIVATE ${TBB_COMMON_LINK_FLAGS} ${TBB_TEST_LINK_FLAGS})
     endif()
 
     target_compile_definitions(${_tbb_test_TARGET_NAME} PRIVATE
@@ -269,7 +269,7 @@ function(tbb_add_tbbbind_test)
     endif()
 
     # Disable all HWLOC dependent tests in case of unsupported environment.
-    if (TBB_WINDOWS_DRIVER OR ANDROID_PLATFORM)
+    if (TBB_WINDOWS_DRIVER OR ANDROID_PLATFORM OR APPLE OR NOT BUILD_SHARED_LIBS)
         return()
     endif()
     ProcessorCount(SYSTEM_CONCURRENCY)
@@ -394,7 +394,6 @@ if (TARGET TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_concurrent_queue DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_resumable_tasks DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_mutex DEPENDENCIES TBB::tbb)
-    tbb_add_test(SUBDIR tbb NAME test_adaptive_mutex DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_function_node DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_multifunction_node DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_broadcast_node DEPENDENCIES TBB::tbb)
@@ -409,6 +408,8 @@ if (TARGET TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_join_node DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_join_node_key_matching DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_join_node_msg_key_matching DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_join_node_msg_key_matching_n_args DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_join_node_preview DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_limiter_node DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_priority_queue_node DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_queue_node DEPENDENCIES TBB::tbb)
@@ -461,8 +462,10 @@ if (TARGET TBB::tbb)
     tbb_add_test(SUBDIR conformance NAME conformance_tick_count DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR conformance NAME conformance_allocators DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR conformance NAME conformance_mutex DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_task_group DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR conformance NAME conformance_task_group_context DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR conformance NAME conformance_task_arena DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR conformance NAME conformance_collaborative_call_once DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR conformance NAME conformance_concurrent_lru_cache DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR conformance NAME conformance_concurrent_unordered_map DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR conformance NAME conformance_concurrent_unordered_set DEPENDENCIES TBB::tbb)
@@ -602,7 +605,7 @@ if (TARGET TBB::tbbmalloc)
         endif()
 
         # Thread Sanitizer overloads memory management routines that conflicts with tbbmalloc_proxy.
-        if (BUILD_SHARED_LIBS AND NOT TBB_SANITIZE MATCHES "thread")
+        if (BUILD_SHARED_LIBS AND NOT TBB_SANITIZE MATCHES "thread" AND TBBMALLOC_PROXY_BUILD AND NOT MSVC_CXX_ARCHITECTURE_ID MATCHES "ARM64")
             # Define TBB malloc proxy tests
             tbb_add_lib_test(SUBDIR tbbmalloc NAME test_malloc_atexit DEPENDENCIES TBB::tbbmalloc_proxy TBB::tbbmalloc)
             tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_atexit DEPENDENCIES TBB::tbbmalloc_proxy TBB::tbbmalloc _test_malloc_atexit)

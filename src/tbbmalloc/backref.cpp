@@ -162,7 +162,7 @@ bool BackRefMain::requestNewSpace()
     static_assert(!(blockSpaceSize % BackRefBlock::bytes),
                          "Must request space for whole number of blocks.");
 
-    if (backRefMain.load(std::memory_order_relaxed)->dataSz <= lastUsed + 1) // no space in main
+    if (BackRefMain::dataSz <= lastUsed + 1) // no space in main
         return false;
 
     // only one thread at a time may add blocks
@@ -181,7 +181,7 @@ bool BackRefMain::requestNewSpace()
 
     MallocMutex::scoped_lock lock(mainMutex); // ... and share under lock
 
-    const size_t numOfUnusedIdxs = backRefMain.load(std::memory_order_relaxed)->dataSz - lastUsed - 1;
+    const size_t numOfUnusedIdxs = BackRefMain::dataSz - lastUsed - 1;
     if (numOfUnusedIdxs <= 0) { // no space in main under lock, roll back
         backend->putBackRefSpace(newBl, blockSpaceSize, isRawMemUsed);
         return false;
