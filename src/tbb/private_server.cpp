@@ -233,7 +233,7 @@ void private_worker::release_handle(thread_handle handle, bool join) {
 }
 
 void private_worker::start_shutdown() {
-    // The state can be transfered only in one direction: st_init -> st_starting -> st_normal.
+    // The state can be transferred only in one direction: st_init -> st_starting -> st_normal.
     // So we do not need more than three CAS attempts.
     state_t expected_state = my_state.load(std::memory_order_relaxed);
     __TBB_ASSERT(expected_state != st_quit, "The quit state is expected to be set only once");
