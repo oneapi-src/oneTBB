@@ -278,6 +278,8 @@ void private_worker::run() noexcept {
             // Prepare to wait
             my_thread_monitor.prepare_wait(c);
             // Check/set the invariant for sleeping
+            // We need memory_order_seq_cst to enforce ordering with prepare_wait
+            // (note that a store in prepare_wait should be with memory_order_seq_cst as well)
             if( my_state.load(std::memory_order_seq_cst)!=st_quit && my_server.try_insert_in_asleep_list(*this) ) {
                 my_thread_monitor.commit_wait(c);
                 __TBB_ASSERT( my_state==st_quit || !my_next, "Thread monitor missed a spurious wakeup?" );
