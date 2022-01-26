@@ -62,10 +62,6 @@ include(CheckCXXCompilerFlag)
 include(GNUInstallDirs)
 include(CMakeDependentOption)
 
-if(CMAKE_CXX_COMPILER MATCHES "/em\\+\\+(-[a-zA-Z0-9.])?$")
-  message(" * C++ compiler: Emscripten")
-  set(CMAKE_EXECUTABLE_SUFFIX .html)
-endif()
 # ---------------------------------------------------------------------------------------------------------
 # Handle C++ standard version.
 if (NOT MSVC)  # no need to cover MSVC as it uses C++14 by default.
