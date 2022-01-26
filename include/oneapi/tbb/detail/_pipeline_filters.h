@@ -420,7 +420,7 @@ inline void filter_node_ptr::operator=(filter_node_ptr && rhs) {
 }
 
 inline filter_node& filter_node_ptr::operator*() const{
-    __TBB_ASSERT(my_node,"NULL node is used");
+    __TBB_ASSERT(my_node,"nullptr node is used");
     return *my_node;
 }
 

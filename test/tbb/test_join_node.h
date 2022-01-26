@@ -1172,7 +1172,7 @@ public:
         INFO("\n");
         for(int i = 0; i < MaxPorts; ++i) {
             for(int j = 0; j < MaxNInputs; ++j) {
-                all_input_nodes[i][j] = NULL;
+                all_input_nodes[i][j] = nullptr;
             }
         }
         for(int nInputs = 1; nInputs<=MaxNInputs; ++nInputs) {

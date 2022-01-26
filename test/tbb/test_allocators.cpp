@@ -41,7 +41,7 @@ TEST_CASE("Test cache_aligned_allocate throws") {
     // during address2 allocation.
     const size_t itemsize = 1024;
     const size_t nitems   = 1024;
-    void *address1 = NULL;
+    void *address1 = nullptr;
     try {
         address1 = cache_aligned_allocate(nitems * itemsize);
     } catch(...) {

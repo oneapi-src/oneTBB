@@ -74,7 +74,7 @@ bool global_usegraphics;
 
 bool silent_mode = false; /* silent mode */
 
-class tachyon_video *video = 0;
+class tachyon_video *video = nullptr;
 
 typedef struct {
     int foundfilename; /* was a model file name found in the args? */

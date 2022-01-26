@@ -153,7 +153,7 @@ class Accumulator {
 
     };
     mutable state_type my_state;
-    //! Equals this while object is fully constructed, NULL otherwise.
+    //! Equals this while object is fully constructed, nullptr otherwise.
     /** Used to detect premature destruction and accidental bitwise copy. */
     Accumulator* self;
     Accumulator& operator= (const Accumulator& other);
@@ -166,7 +166,7 @@ public:
     }
     ~Accumulator() {
         // Clear self as first action of destructor, to indicate that object is not fully constructed.
-        self = 0;
+        self = nullptr;
     }
     Accumulator( Accumulator& a, tbb::split ) :
         my_array(a.my_array), my_sum(a.my_sum), storage(0), my_state(partial)

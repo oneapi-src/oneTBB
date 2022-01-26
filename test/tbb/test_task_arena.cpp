@@ -435,7 +435,7 @@ class TestArenaConcurrencyBody : utils::NoAssign {
     utils::SpinBarrier *my_barrier;
     utils::SpinBarrier *my_worker_barrier;
 public:
-    TestArenaConcurrencyBody( tbb::task_arena &a, int max_concurrency, int reserved_slots, utils::SpinBarrier *b = NULL, utils::SpinBarrier *wb = NULL )
+    TestArenaConcurrencyBody( tbb::task_arena &a, int max_concurrency, int reserved_slots, utils::SpinBarrier *b = nullptr, utils::SpinBarrier *wb = nullptr )
     : my_a(a), my_max_concurrency(max_concurrency), my_reserved_slots(reserved_slots), my_barrier(b), my_worker_barrier(wb) {}
     // NativeParallelFor's functor
     void operator()( int ) const {
@@ -770,7 +770,7 @@ namespace TestIsolatedExecuteNS {
         int myNestedLevel;
 
         template <typename Partitioner, typename Body>
-        static void RunTwoBodies( utils::FastRandom<>& rnd, const Body &body, Partitioner& p, tbb::task_group_context* ctx = NULL ) {
+        static void RunTwoBodies( utils::FastRandom<>& rnd, const Body &body, Partitioner& p, tbb::task_group_context* ctx = nullptr ) {
             if ( rnd.get() % 2 ) {
                 if  (ctx )
                     tbb::parallel_for( 0, 2, body, p, *ctx );
@@ -1357,7 +1357,7 @@ struct MyObserver: public tbb::task_scheduler_observer {
         if (worker) {
             ++my_counter;
             tbb::task_arena*& cur_arena = my_tls.local();
-            if (cur_arena != 0 && cur_arena != &my_arena) {
+            if (cur_arena != nullptr && cur_arena != &my_arena) {
                 ++my_failure_counter;
             }
             cur_arena = &my_arena;

@@ -135,7 +135,7 @@ public:
     wait_context(const wait_context&) = delete;
 
     ~wait_context() {
-        __TBB_ASSERT(!continue_execution(), NULL);
+        __TBB_ASSERT(!continue_execution(), nullptr);
     }
 
     void reserve(std::uint32_t delta = 1) {

@@ -19,9 +19,9 @@
 
 #include "pover_global.hpp" // for declaration of DEFINE and INIT
 
-DEFINE Polygon_map_t *gPolymap1 INIT(0);
-DEFINE Polygon_map_t *gPolymap2 INIT(0);
-DEFINE Polygon_map_t *gResultMap INIT(0);
+DEFINE Polygon_map_t *gPolymap1 INIT(nullptr);
+DEFINE Polygon_map_t *gPolymap2 INIT(nullptr);
+DEFINE Polygon_map_t *gResultMap INIT(nullptr);
 
 extern void Usage(int argc, char *argv[]);
 

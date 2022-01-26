@@ -109,7 +109,7 @@ public:
     typedef unsigned (WINAPI *thread_routine_type)(void*);
 
     //! Launch a thread
-    static handle_type launch( thread_routine_type thread_routine, void* arg, std::size_t stack_size, const size_t* worker_index = NULL );
+    static handle_type launch( thread_routine_type thread_routine, void* arg, std::size_t stack_size, const size_t* worker_index = nullptr );
 
 #elif __TBB_USE_POSIX
     typedef pthread_t handle_type;
@@ -154,7 +154,7 @@ inline thread_monitor::handle_type thread_monitor::launch( thread_routine_type t
     unsigned thread_id;
     int number_of_processor_groups = ( worker_index ) ? NumberOfProcessorGroups() : 0;
     unsigned create_flags = ( number_of_processor_groups > 1 ) ? CREATE_SUSPENDED : 0;
-    HANDLE h = (HANDLE)_beginthreadex( NULL, unsigned(stack_size), thread_routine, arg, STACK_SIZE_PARAM_IS_A_RESERVATION | create_flags, &thread_id );
+    HANDLE h = (HANDLE)_beginthreadex( nullptr, unsigned(stack_size), thread_routine, arg, STACK_SIZE_PARAM_IS_A_RESERVATION | create_flags, &thread_id );
     if( !h ) {
         handle_perror(0, "thread_monitor::launch: _beginthreadex failed\n");
     }
@@ -171,12 +171,12 @@ void thread_monitor::join(handle_type handle) {
     DWORD res =
 #endif
         WaitForSingleObjectEx(handle, INFINITE, FALSE);
-    __TBB_ASSERT( res==WAIT_OBJECT_0, NULL );
+    __TBB_ASSERT( res==WAIT_OBJECT_0, nullptr);
 #if TBB_USE_ASSERT
     BOOL val =
 #endif
         CloseHandle(handle);
-    __TBB_ASSERT( val, NULL );
+    __TBB_ASSERT( val, nullptr);
 }
 
 void thread_monitor::detach_thread(handle_type handle) {
@@ -184,7 +184,7 @@ void thread_monitor::detach_thread(handle_type handle) {
     BOOL val =
 #endif
         CloseHandle(handle);
-    __TBB_ASSERT( val, NULL );
+    __TBB_ASSERT( val, nullptr);
 }
 
 #endif /* __TBB_USE_WINAPI */
@@ -211,7 +211,7 @@ inline thread_monitor::handle_type thread_monitor::launch( void* (*thread_routin
 }
 
 void thread_monitor::join(handle_type handle) {
-    check(pthread_join(handle, NULL), "pthread_join has failed");
+    check(pthread_join(handle, nullptr), "pthread_join has failed");
 }
 
 void thread_monitor::detach_thread(handle_type handle) {

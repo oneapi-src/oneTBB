@@ -102,7 +102,7 @@ public:
         }
         init_external_thread();
         td = theTLS.get();
-        __TBB_ASSERT(td, NULL);
+        __TBB_ASSERT(td, nullptr);
         return td;
     }
 

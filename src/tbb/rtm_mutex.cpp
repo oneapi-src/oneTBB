@@ -94,7 +94,7 @@ struct rtm_mutex_impl {
         if (s.m_transaction_state == d1::rtm_mutex::rtm_state::rtm_transacting) {
             return true;
         }
-        __TBB_ASSERT(s.m_transaction_state == d1::rtm_mutex::rtm_state::rtm_none, NULL);
+        __TBB_ASSERT(s.m_transaction_state == d1::rtm_mutex::rtm_state::rtm_none, nullptr);
         // transacting acquire failed. try_lock the real mutex
         if (m.try_lock()) {
             s.m_mutex = &m;

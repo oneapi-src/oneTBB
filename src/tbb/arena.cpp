@@ -65,7 +65,7 @@ numa_binding_observer* construct_binding_observer( d1::task_arena* ta, int num_s
 }
 
 void destroy_binding_observer( numa_binding_observer* binding_observer ) {
-    __TBB_ASSERT(binding_observer, "Trying to deallocate NULL pointer");
+    __TBB_ASSERT(binding_observer, "Trying to deallocate nullptr pointer");
     binding_observer->observe(false);
     binding_observer->~numa_binding_observer();
     deallocate_memory(binding_observer);
@@ -77,7 +77,7 @@ std::size_t arena::occupy_free_slot_in_range( thread_data& tls, std::size_t lowe
     // Start search for an empty slot from the one we occupied the last time
     std::size_t index = tls.my_arena_index;
     if ( index < lower || index >= upper ) index = tls.my_random.get() % (upper - lower) + lower;
-    __TBB_ASSERT( index >= lower && index < upper, NULL );
+    __TBB_ASSERT( index >= lower && index < upper, nullptr);
     // Find a free slot
     for ( std::size_t i = index; i < upper; ++i )
         if (my_slots[i].try_occupy()) return i;
@@ -181,16 +181,16 @@ arena::arena ( market& m, unsigned num_slots, unsigned num_reserved_slots, unsig
     my_aba_epoch = m.my_arenas_aba_epoch.load(std::memory_order_relaxed);
     my_observers.my_arena = this;
     my_co_cache.init(4 * num_slots);
-    __TBB_ASSERT ( my_max_num_workers <= my_num_slots, NULL );
+    __TBB_ASSERT ( my_max_num_workers <= my_num_slots, nullptr);
     // Initialize the default context. It should be allocated before task_dispatch construction.
     my_default_ctx = new (cache_aligned_allocate(sizeof(d1::task_group_context)))
         d1::task_group_context{ d1::task_group_context::isolated, d1::task_group_context::fp_settings };
     // Construct slots. Mark internal synchronization elements for the tools.
     task_dispatcher* base_td_pointer = reinterpret_cast<task_dispatcher*>(my_slots + my_num_slots);
     for( unsigned i = 0; i < my_num_slots; ++i ) {
-        // __TBB_ASSERT( !my_slots[i].my_scheduler && !my_slots[i].task_pool, NULL );
-        __TBB_ASSERT( !my_slots[i].task_pool_ptr, NULL );
-        __TBB_ASSERT( !my_slots[i].my_task_pool_size, NULL );
+        // __TBB_ASSERT( !my_slots[i].my_scheduler && !my_slots[i].task_pool, nullptr);
+        __TBB_ASSERT( !my_slots[i].task_pool_ptr, nullptr);
+        __TBB_ASSERT( !my_slots[i].my_task_pool_size, nullptr);
         mailbox(i).construct();
         my_slots[i].init_task_streams(i);
         my_slots[i].my_default_task_dispatcher = new(base_td_pointer + i) task_dispatcher(this);
@@ -223,13 +223,13 @@ arena& arena::allocate_arena( market& m, unsigned num_slots, unsigned num_reserv
 }
 
 void arena::free_arena () {
-    __TBB_ASSERT( is_alive(my_guard), NULL );
+    __TBB_ASSERT( is_alive(my_guard), nullptr);
     __TBB_ASSERT( !my_references.load(std::memory_order_relaxed), "There are threads in the dying arena" );
     __TBB_ASSERT( !my_num_workers_requested && !my_num_workers_allotted, "Dying arena requests workers" );
     __TBB_ASSERT( my_pool_state.load(std::memory_order_relaxed) == SNAPSHOT_EMPTY || !my_max_num_workers,
                   "Inconsistent state of a dying arena" );
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-    __TBB_ASSERT( !my_global_concurrency_mode, NULL );
+    __TBB_ASSERT( !my_global_concurrency_mode, nullptr);
 #endif
 #if __TBB_ARENA_BINDING
     if (my_numa_binding_observer != nullptr) {
@@ -241,8 +241,8 @@ void arena::free_arena () {
     for ( unsigned i = 0; i < my_num_slots; ++i ) {
         // __TBB_ASSERT( !my_slots[i].my_scheduler, "arena slot is not empty" );
         // TODO: understand the assertion and modify
-        // __TBB_ASSERT( my_slots[i].task_pool == EmptyTaskPool, NULL );
-        __TBB_ASSERT( my_slots[i].head == my_slots[i].tail, NULL ); // TODO: replace by is_quiescent_local_task_pool_empty
+        // __TBB_ASSERT( my_slots[i].task_pool == EmptyTaskPool, nullptr);
+        __TBB_ASSERT( my_slots[i].head == my_slots[i].tail, nullptr); // TODO: replace by is_quiescent_local_task_pool_empty
         my_slots[i].free_task_pool();
         mailbox(i).drain();
         my_slots[i].my_default_task_dispatcher->~task_dispatcher();
@@ -263,8 +263,8 @@ void arena::free_arena () {
     my_observers.clear();
 
     void* storage  = &mailbox(my_num_slots-1);
-    __TBB_ASSERT( my_references.load(std::memory_order_relaxed) == 0, NULL );
-    __TBB_ASSERT( my_pool_state.load(std::memory_order_relaxed) == SNAPSHOT_EMPTY || !my_max_num_workers, NULL );
+    __TBB_ASSERT( my_references.load(std::memory_order_relaxed) == 0, nullptr);
+    __TBB_ASSERT( my_pool_state.load(std::memory_order_relaxed) == SNAPSHOT_EMPTY || !my_max_num_workers, nullptr);
     this->~arena();
 #if TBB_USE_ASSERT > 1
     std::memset( storage, 0, allocation_size(my_num_slots) );
@@ -481,12 +481,12 @@ bool task_arena_impl::attach(d1::task_arena_base& ta) {
         arena* a = td->my_arena;
         // There is an active arena to attach to.
         // It's still used by s, so won't be destroyed right away.
-        __TBB_ASSERT(a->my_references > 0, NULL );
+        __TBB_ASSERT(a->my_references > 0, nullptr);
         a->my_references += arena::ref_external;
         ta.my_num_reserved_slots = a->my_num_reserved_slots;
         ta.my_priority = arena_priority(a->my_priority_level);
         ta.my_max_concurrency = ta.my_num_reserved_slots + a->my_max_num_workers;
-        __TBB_ASSERT(arena::num_arena_slots(ta.my_max_concurrency) == a->my_num_slots, NULL);
+        __TBB_ASSERT(arena::num_arena_slots(ta.my_max_concurrency) == a->my_num_slots, nullptr);
         ta.my_arena.store(a, std::memory_order_release);
         // increases market's ref count for task_arena
         market::global_market( /*is_public=*/true );
@@ -726,7 +726,7 @@ int task_arena_impl::max_concurrency(const d1::task_arena_base *ta) {
         a = td->my_arena; // the current arena if any
 
     if( a ) { // Get parameters from the arena
-        __TBB_ASSERT( !ta || ta->my_max_concurrency==1, NULL );
+        __TBB_ASSERT( !ta || ta->my_max_concurrency==1, nullptr);
         return a->my_num_reserved_slots + a->my_max_num_workers
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
             + (a->my_local_concurrency_flag.test() ? 1 : 0)
@@ -752,7 +752,7 @@ int task_arena_impl::max_concurrency(const d1::task_arena_base *ta) {
     }
 #endif /*!__TBB_ARENA_BINDING*/
 
-    __TBB_ASSERT(!ta || ta->my_max_concurrency==d1::task_arena_base::automatic, NULL );
+    __TBB_ASSERT(!ta || ta->my_max_concurrency==d1::task_arena_base::automatic, nullptr);
     return int(governor::default_num_threads());
 }
 
@@ -770,7 +770,7 @@ void isolate_within_arena(d1::delegate_base& d, std::intptr_t isolation) {
         // Isolation within this callable
         d();
     }).on_completion([&] {
-        __TBB_ASSERT(governor::get_thread_data()->my_task_dispatcher == dispatcher, NULL);
+        __TBB_ASSERT(governor::get_thread_data()->my_task_dispatcher == dispatcher, nullptr);
         dispatcher->set_isolation(previous_isolation);
     });
 }

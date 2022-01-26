@@ -204,7 +204,7 @@ struct rtm_rw_mutex_impl {
         if (s.m_transaction_state == d1::rtm_rw_mutex::rtm_type::rtm_transacting_writer) {
             return true;
         }
-        __TBB_ASSERT(s.m_transaction_state == d1::rtm_rw_mutex::rtm_type::rtm_not_in_mutex, NULL);
+        __TBB_ASSERT(s.m_transaction_state == d1::rtm_rw_mutex::rtm_type::rtm_not_in_mutex, nullptr);
         // transacting write acquire failed. try_lock the real mutex
         if (m.try_lock()) {
             s.m_mutex = &m;
@@ -224,7 +224,7 @@ struct rtm_rw_mutex_impl {
         if (s.m_transaction_state == d1::rtm_rw_mutex::rtm_type::rtm_transacting_reader) {
             return true;
         }
-        __TBB_ASSERT(s.m_transaction_state == d1::rtm_rw_mutex::rtm_type::rtm_not_in_mutex, NULL);
+        __TBB_ASSERT(s.m_transaction_state == d1::rtm_rw_mutex::rtm_type::rtm_not_in_mutex, nullptr);
         // transacting read acquire failed. try_lock_shared the real mutex
         if (m.try_lock_shared()) {
             s.m_mutex = &m;

@@ -86,7 +86,7 @@ void governor::release_resources () {
 }
 
 rml::tbb_server* governor::create_rml_server ( rml::tbb_client& client ) {
-    rml::tbb_server* server = NULL;
+    rml::tbb_server* server = nullptr;
     if( !UsePrivateRML ) {
         ::rml::factory::status_type status = theRMLServerFactory.make_server( server, client );
         if( status != ::rml::factory::st_success ) {
@@ -95,7 +95,7 @@ rml::tbb_server* governor::create_rml_server ( rml::tbb_client& client ) {
         }
     }
     if ( !server ) {
-        __TBB_ASSERT( UsePrivateRML, NULL );
+        __TBB_ASSERT( UsePrivateRML, nullptr);
         server = rml::make_private_server( client );
     }
     __TBB_ASSERT( server, "Failed to create RML server" );
@@ -211,7 +211,7 @@ void governor::init_external_thread() {
 
 void governor::auto_terminate(void* tls) {
     __TBB_ASSERT(get_thread_data_if_initialized() == nullptr ||
-        get_thread_data_if_initialized() == tls, NULL);
+        get_thread_data_if_initialized() == tls, nullptr);
     if (tls) {
         thread_data* td = static_cast<thread_data*>(tls);
 
@@ -238,7 +238,7 @@ void governor::auto_terminate(void* tls) {
 
         clear_thread_data();
     }
-    __TBB_ASSERT(get_thread_data_if_initialized() == nullptr, NULL);
+    __TBB_ASSERT(get_thread_data_if_initialized() == nullptr, nullptr);
 }
 
 void governor::initialize_rml_factory () {

@@ -63,7 +63,7 @@ static inline int STAT_increment(int thread, int bin, int ctr)
 
 static inline void initStatisticsCollection() {
 #if defined(MALLOCENV_COLLECT_STATISTICS)
-    if (NULL != getenv(MALLOCENV_COLLECT_STATISTICS))
+    if (nullptr != getenv(MALLOCENV_COLLECT_STATISTICS))
         reportAllocationStatistics = true;
 #endif
 }

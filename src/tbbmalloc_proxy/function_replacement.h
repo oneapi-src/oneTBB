@@ -38,8 +38,8 @@ typedef void (*FUNCPTR)();
 #define ReplaceFunction ReplaceFunctionW
 #endif //UNICODE
 
-FRR_TYPE ReplaceFunctionA(const char *dllName, const char *funcName, FUNCPTR newFunc, const char ** opcodes, FUNCPTR* origFunc=NULL);
-FRR_TYPE ReplaceFunctionW(const wchar_t *dllName, const char *funcName, FUNCPTR newFunc, const char ** opcodes, FUNCPTR* origFunc=NULL);
+FRR_TYPE ReplaceFunctionA(const char *dllName, const char *funcName, FUNCPTR newFunc, const char ** opcodes, FUNCPTR* origFunc=nullptr);
+FRR_TYPE ReplaceFunctionW(const wchar_t *dllName, const char *funcName, FUNCPTR newFunc, const char ** opcodes, FUNCPTR* origFunc=nullptr);
 
 bool IsPrologueKnown(const char* dllName, const char *funcName, const char **opcodes, HMODULE module);
 

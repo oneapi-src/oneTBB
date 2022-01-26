@@ -191,7 +191,7 @@ public:
 
     void yield() override { d0::yield(); }
 
-    void independent_thread_number_changed( int ) override {__TBB_ASSERT(false,NULL);}
+    void independent_thread_number_changed( int ) override {__TBB_ASSERT(false, nullptr);}
 
     unsigned default_concurrency() const override { return governor::default_num_threads() - 1; }
 
@@ -219,6 +219,7 @@ __RML_DECL_THREAD_ROUTINE private_worker::thread_routine( void* arg ) {
     private_worker* self = static_cast<private_worker*>(arg);
     AVOID_64K_ALIASING( self->my_index );
     self->run();
+    // return 0 instead of nullptr due to the difference in the type __RML_DECL_THREAD_ROUTINE on various OSs
     return 0;
 }
 #if _MSC_VER && !defined(__INTEL_COMPILER)
@@ -313,7 +314,7 @@ inline void private_worker::wake_or_launch() {
             // Do shutdown during startup. my_handle can't be released
             // by start_shutdown, because my_handle value might be not set yet
             // at time of transition from st_starting to st_quit.
-            __TBB_ASSERT( expected_state==st_quit, NULL );
+            __TBB_ASSERT( expected_state==st_quit, nullptr);
             release_handle(my_handle, governor::does_client_join_workers(my_client));
         }
     }
@@ -332,8 +333,8 @@ private_server::private_server( tbb_client& client ) :
     my_stack_size(client.min_stack_size()),
     my_slack(0),
     my_ref_count(my_n_thread+1),
-    my_thread_array(NULL),
-    my_asleep_list_root(NULL)
+    my_thread_array(nullptr),
+    my_asleep_list_root(nullptr)
 #if TBB_USE_ASSERT
     , my_net_slack_requests(0)
 #endif /* TBB_USE_ASSERT */
@@ -347,7 +348,7 @@ private_server::private_server( tbb_client& client ) :
 }
 
 private_server::~private_server() {
-    __TBB_ASSERT( my_net_slack_requests==0, NULL );
+    __TBB_ASSERT( my_net_slack_requests==0, nullptr);
     for( std::size_t i=my_n_thread; i--; )
         my_thread_array[i].~padded_private_worker();
     tbb::cache_aligned_allocator<padded_private_worker>().deallocate( my_thread_array, my_n_thread );

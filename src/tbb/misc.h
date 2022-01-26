@@ -194,7 +194,7 @@ T1 atomic_update(std::atomic<T1>& dst, T1 newValue, Pred compare) {
         basic_mask_t* threadMask;
         int is_changed;
     public:
-        affinity_helper() : threadMask(NULL), is_changed(0) {}
+        affinity_helper() : threadMask(nullptr), is_changed(0) {}
         ~affinity_helper();
         void protect_affinity_mask( bool restore_process_mask  );
         void dismiss();

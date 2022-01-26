@@ -87,7 +87,7 @@ public:
             start_handle_operations(handle_operations);
             // The operation with 'short' life time can already be destroyed
             if (long_life_time)
-                __TBB_ASSERT(op->status.load(std::memory_order_relaxed), NULL);
+                __TBB_ASSERT(op->status.load(std::memory_order_relaxed), nullptr);
         }
         // Not first; wait for op to be ready
         else if (!status) { // operation is blocking here.

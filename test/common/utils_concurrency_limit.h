@@ -183,7 +183,7 @@ void get_thread_affinity_mask(std::size_t& ncpus, std::vector<int>& free_indexes
         if (!err) break;
 
         CPU_FREE(mask);
-        mask = NULL;
+        mask = nullptr;
         if (errno != EINVAL) break;
         ncpus <<= 1;
     } while (ncpus < 16 * 1024 /* some reasonable limit */ );

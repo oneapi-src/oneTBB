@@ -51,7 +51,7 @@ int SetEnv( const char *envname, const char *envval ) {
 char* GetEnv(const char *envname) {
     CHECK_MESSAGE(envname, "Harness::GetEnv() requires a valid C string");
 #if __TBB_WIN8UI_SUPPORT
-    return NULL;
+    return nullptr;
 #else
     return std::getenv(envname);
 #endif

@@ -78,7 +78,7 @@ TEST_CASE("New handler callback") {
     // Run the test
     utils::NativeParallelFor(8, AllocLoopBody());
     // Undo custom handler
-    std::set_new_handler(0);
+    std::set_new_handler(nullptr);
 }
 
 #if _MSC_VER

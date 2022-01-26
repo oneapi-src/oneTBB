@@ -81,7 +81,7 @@ extern "C" BOOL WINAPI DllMain( HINSTANCE /*hInst*/, DWORD callReason, LPVOID lp
     }
     else if (callReason==DLL_PROCESS_DETACH)
     {
-        __TBB_mallocProcessShutdownNotification(lpvReserved != NULL);
+        __TBB_mallocProcessShutdownNotification(lpvReserved != nullptr);
     }
     return TRUE;
 }

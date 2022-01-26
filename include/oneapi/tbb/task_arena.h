@@ -130,7 +130,7 @@ protected:
 
     std::atomic<do_once_state> my_initialization_state;
 
-    //! NULL if not currently initialized.
+    //! nullptr if not currently initialized.
     std::atomic<r1::arena*> my_arena;
     static_assert(sizeof(std::atomic<r1::arena*>) == sizeof(r1::arena*),
         "To preserve backward compatibility we need the equal size of an atomic pointer and a pointer");

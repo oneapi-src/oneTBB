@@ -910,7 +910,7 @@
                     }
                     break;
                 case inc_count: {  // called from input ports
-                        count_element_type *p = 0;
+                        count_element_type *p = nullptr;
                         unref_key_type &t = current->my_val;
                         if(!(this->find_ref_with_key(t,p))) {
                             count_element_type ev;

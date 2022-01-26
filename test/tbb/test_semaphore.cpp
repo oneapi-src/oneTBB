@@ -195,7 +195,7 @@ public:
     }
 }; // class ProduceConsumeBody
 
-// send a bunch of non-null "tokens" to consumer, then a NULL
+// send a bunch of non-null "tokens" to consumer, then a nullptr
 void FilterBase::Produce( const int ) {
     nextBuffer[0] = 0; // just in case we provide no tokens
     sBarrier.wait();

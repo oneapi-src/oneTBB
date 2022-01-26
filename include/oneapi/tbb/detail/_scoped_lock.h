@@ -24,7 +24,7 @@ namespace d1 {
 // unique_scoped_lock supposes that Mutex operations never throw
 template <typename Mutex>
 class unique_scoped_lock {
-    //! Points to currently held Mutex, or NULL if no lock is held.
+    //! Points to currently held Mutex, or nullptr if no lock is held.
     Mutex* m_mutex{};
 
 public:
