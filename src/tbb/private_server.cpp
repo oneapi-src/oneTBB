@@ -87,10 +87,7 @@ private:
     void wake_or_launch();
 
     //! Called by a thread (usually not the associated thread) to commence termination.
-    state_t start_shutdown();
-
-    //! Called by a thread (usually not the associated thread) to finish termination.
-    void finish_shutdown(private_worker::state_t prev_state);
+    void start_shutdown();
 
     static __RML_DECL_THREAD_ROUTINE thread_routine( void* arg );
 
@@ -187,22 +184,9 @@ public:
     }
 
     void request_close_connection( bool /*exiting*/ ) override {
-        private_worker::state_t* workers_state = tbb::cache_aligned_allocator<private_worker::state_t>().allocate(my_n_thread);
-
-        {
-            // Lock ability to insert in a sleep list
-            asleep_list_mutex_type::scoped_lock lock(my_asleep_list_mutex);
-            for (std::size_t i = 0; i < my_n_thread; ++i) {
-                workers_state[i] = my_thread_array[i].start_shutdown();
-            }
-        }
-
-        for (std::size_t i = 0; i < my_n_thread; ++i) {
-            my_thread_array[i].finish_shutdown(workers_state[i]);
-        }
+        for( std::size_t i=0; i<my_n_thread; ++i )
+            my_thread_array[i].start_shutdown();
         remove_server_ref();
-
-        tbb::cache_aligned_allocator<private_worker::state_t>().deallocate(workers_state, my_n_thread);
     }
 
     void yield() override { d0::yield(); }
@@ -248,7 +232,7 @@ void private_worker::release_handle(thread_handle handle, bool join) {
         thread_monitor::detach_thread(handle);
 }
 
-private_worker::state_t private_worker::start_shutdown() {
+void private_worker::start_shutdown() {
     // The state can be transferred only in one direction: st_init -> st_starting -> st_normal.
     // So we do not need more than three CAS attempts.
     state_t expected_state = my_state.load(std::memory_order_relaxed);
@@ -262,12 +246,7 @@ private_worker::state_t private_worker::start_shutdown() {
         }
     }
 
-    return expected_state;
-}
-
-
-void private_worker::finish_shutdown(private_worker::state_t prev_state) {
-    if (prev_state == st_normal || prev_state == st_starting) {
+    if( expected_state==st_normal || expected_state==st_starting ) {
         // May have invalidated invariant for sleeping, so wake up the thread.
         // Note that the notify() here occurs without maintaining invariants for my_slack.
         // It does not matter, because my_state==st_quit overrides checking of my_slack.
@@ -275,10 +254,9 @@ void private_worker::finish_shutdown(private_worker::state_t prev_state) {
         // Do not need release handle in st_init state,
         // because in this case the thread wasn't started yet.
         // For st_starting release is done at launch site.
-        if (prev_state == private_worker::st_normal) {
+        if (expected_state==st_normal)
             release_handle(my_handle, governor::does_client_join_workers(my_client));
-        }
-    } else if (prev_state == st_init) {
+    } else if( expected_state==st_init ) {
         // Perform action that otherwise would be performed by associated thread when it quits.
         my_server.remove_server_ref();
     }
@@ -300,7 +278,7 @@ void private_worker::run() noexcept {
             // Prepare to wait
             my_thread_monitor.prepare_wait(c);
             // Check/set the invariant for sleeping
-            if( my_state.load(std::memory_order_acquire)!=st_quit && my_server.try_insert_in_asleep_list(*this) ) {
+            if( my_state.load(std::memory_order_seq_cst)!=st_quit && my_server.try_insert_in_asleep_list(*this) ) {
                 my_thread_monitor.commit_wait(c);
                 __TBB_ASSERT( my_state==st_quit || !my_next, "Thread monitor missed a spurious wakeup?" );
                 my_server.propagate_chain_reaction();
