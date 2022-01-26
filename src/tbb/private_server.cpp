@@ -234,10 +234,18 @@ void private_worker::release_handle(thread_handle handle, bool join) {
 }
 
 void private_worker::start_shutdown() {
-    state_t expected_state = my_state.load(std::memory_order_acquire);
-    __TBB_ASSERT( expected_state!=st_quit, nullptr);
-
-    while( !my_state.compare_exchange_strong( expected_state, st_quit ) );
+    // The state can be transferred only in one direction: st_init -> st_starting -> st_normal.
+    // So we do not need more than three CAS attempts.
+    state_t expected_state = my_state.load(std::memory_order_relaxed);
+    __TBB_ASSERT(expected_state != st_quit, "The quit state is expected to be set only once");
+    if (!my_state.compare_exchange_strong(expected_state, st_quit)) {
+        __TBB_ASSERT(expected_state == st_starting || expected_state == st_normal, "We failed once so the init state is not expected");
+        if (!my_state.compare_exchange_strong(expected_state, st_quit)) {
+            __TBB_ASSERT(expected_state == st_normal, "We failed twice so only the normal state is expected");
+            bool res = my_state.compare_exchange_strong(expected_state, st_quit);
+            __TBB_ASSERT_EX(res, "We cannot fail in the normal state");
+        }
+    }
 
     if( expected_state==st_normal || expected_state==st_starting ) {
         // May have invalidated invariant for sleeping, so wake up the thread.
