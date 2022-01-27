@@ -275,14 +275,13 @@ void private_worker::run() noexcept {
         if( my_server.my_slack.load(std::memory_order_acquire)>=0 ) {
             my_client.process(j);
         } else {
-            thread_monitor::cookie c;
             // Prepare to wait
-            my_thread_monitor.prepare_wait(c);
+            my_thread_monitor.prepare_wait();
             // Check/set the invariant for sleeping
             // We need memory_order_seq_cst to enforce ordering with prepare_wait
             // (note that a store in prepare_wait should be with memory_order_seq_cst as well)
             if( my_state.load(std::memory_order_seq_cst)!=st_quit && my_server.try_insert_in_asleep_list(*this) ) {
-                my_thread_monitor.commit_wait(c);
+                my_thread_monitor.commit_wait();
                 __TBB_ASSERT( my_state==st_quit || !my_next, "Thread monitor missed a spurious wakeup?" );
                 my_server.propagate_chain_reaction();
             } else {

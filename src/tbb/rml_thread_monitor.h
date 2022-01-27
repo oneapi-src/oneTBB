@@ -78,10 +78,6 @@ static const ::tbb::detail::r1::tchar *SyncObj_ThreadMonitor = _T("RML Thr Monit
 /** At most one thread should wait on an instance at a time. */
 class thread_monitor {
 public:
-    class cookie {
-        friend class thread_monitor;
-        std::atomic<std::size_t> my_epoch{0};
-    };
     thread_monitor() {
         ITT_SYNC_CREATE(&my_sema, SyncType_RML, SyncObj_ThreadMonitor);
     }
@@ -94,10 +90,10 @@ public:
     //! Begin two-phase wait.
     /** Should only be called by thread that owns the monitor.
         The caller must either complete the wait or cancel it. */
-    void prepare_wait( cookie& c );
+    void prepare_wait();
 
     //! Complete a two-phase wait and wait until notification occurs after the earlier prepare_wait.
-    void commit_wait( cookie& c );
+    void commit_wait();
 
     //! Cancel a two-phase wait.
     void cancel_wait();
@@ -127,7 +123,6 @@ public:
     //! Detach thread
     static void detach_thread(handle_type handle);
 private:
-    cookie my_cookie; // epoch counter
     std::atomic<bool> in_wait{false};
     bool skipped_wakeup{false};
     binary_semaphore my_sema;
@@ -220,30 +215,29 @@ void thread_monitor::detach_thread(handle_type handle) {
 #endif /* __TBB_USE_POSIX */
 
 inline void thread_monitor::notify() {
-    my_cookie.my_epoch.store(my_cookie.my_epoch.load(std::memory_order_acquire) + 1, std::memory_order_release);
-    bool do_signal = in_wait.exchange( false );
-    if( do_signal )
+    bool do_signal = in_wait.exchange( false, std::memory_order_release);
+    if( do_signal ) {
         my_sema.V();
+    }
 }
 
-inline void thread_monitor::prepare_wait( cookie& c ) {
+inline void thread_monitor::prepare_wait() {
     if( skipped_wakeup ) {
         // Lazily consume a signal that was skipped due to cancel_wait
         skipped_wakeup = false;
         my_sema.P(); // does not really wait on the semaphore
     }
-    // Former c = my_cookie
-    c.my_epoch.store(my_cookie.my_epoch.load(std::memory_order_acquire), std::memory_order_release);
+    // std::memory_order_seq_cst is required because prepare_wait
+    // should be ordered before futher operations (that are suppose to
+    // use memory_order_seq_cst where required)
     in_wait.store( true, std::memory_order_seq_cst );
 }
 
-inline void thread_monitor::commit_wait( cookie& c ) {
-    bool do_it = ( c.my_epoch.load(std::memory_order_relaxed) == my_cookie.my_epoch.load(std::memory_order_acquire) );
+inline void thread_monitor::commit_wait() {
+    bool do_it = in_wait.load(std::memory_order_acquire);
     if( do_it ) {
         my_sema.P();
     } else {
-        tbb::detail::atomic_backoff backoff;
-        while (in_wait.load(std::memory_order_relaxed)) { backoff.pause(); }
         skipped_wakeup = true;
     }
 }
@@ -251,7 +245,7 @@ inline void thread_monitor::commit_wait( cookie& c ) {
 inline void thread_monitor::cancel_wait() {
     // if not in_wait, then some thread has sent us a signal;
     // it will be consumed by the next prepare_wait call
-    skipped_wakeup = ! in_wait.exchange( false );
+    skipped_wakeup = ! in_wait.exchange( false, std::memory_order_relaxed);
 }
 
 } // namespace internal
