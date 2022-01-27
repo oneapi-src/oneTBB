@@ -34,6 +34,8 @@
 #include "observer_proxy.h"
 #include "oneapi/tbb/spin_mutex.h"
 
+#include "resource_manager.h"
+
 namespace tbb {
 namespace detail {
 namespace r1 {
@@ -185,7 +187,8 @@ public:
 /** Separated in order to simplify padding.
     Intrusive list node base class is used by market to form a list of arenas. **/
 // TODO: Analyze arena_base cache lines placement
-struct arena_base : padded<intrusive_list_node> {
+class arena_base : padded<intrusive_list_node> {
+protected:
     //! The number of workers that have been marked out by the resource manager to service the arena.
     std::atomic<unsigned> my_num_workers_allotted;   // heavy use in stealing loop
 
@@ -254,11 +257,6 @@ struct arena_base : padded<intrusive_list_node> {
     //! Default task group context.
     d1::task_group_context* my_default_ctx;
 
-#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-    // arena needs an extra worker despite a global limit
-    std::atomic<bool> my_global_concurrency_mode;
-#endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
-
     //! Waiting object for external threads that cannot join the arena.
     concurrent_monitor my_exit_monitors;
 
@@ -295,6 +293,25 @@ struct arena_base : padded<intrusive_list_node> {
 
 class arena: public padded<arena_base>
 {
+    friend class waiter_base;
+    friend class outermost_worker_waiter;
+    friend class sleep_waiter;
+    friend class task_dispatcher;
+    friend void observe(d1::task_scheduler_observer& tso, bool enable);
+    friend struct suspend_point_type;
+    friend void resume(suspend_point_type* sp);
+    friend task_dispatcher& create_coroutine(thread_data& td);
+    friend void spawn(d1::task& t, d1::task_group_context& ctx, d1::slot_id id);
+    friend void submit(d1::task& t, d1::task_group_context& ctx, arena* a, std::uintptr_t as_critical);
+    friend class governor;
+    friend struct task_group_context_impl;
+    friend struct task_arena_impl;
+    friend class nested_arena_context;
+    friend class thread_data;
+    friend class delegated_task;
+    friend void notify_waiters(std::uintptr_t wait_ctx_addr);
+
+
 public:
     using base_type = padded<arena_base>;
 
@@ -306,7 +323,7 @@ public:
     };
 
     //! Constructor
-    arena ( market& m, unsigned max_num_workers, unsigned num_reserved_slots, unsigned priority_level);
+    arena (permit_manager& m, unsigned max_num_workers, unsigned num_reserved_slots, unsigned priority_level, uintptr_t aba_epoch);
 
     //! Allocate an instance of arena.
     static arena& allocate_arena( market& m, unsigned num_slots, unsigned num_reserved_slots,
@@ -397,6 +414,10 @@ public:
 
     std::uintptr_t calculate_stealing_threshold();
 
+    unsigned priority_level() {
+        return my_priority_level;
+    }
+
     /** Must be the last data field */
     arena_slot my_slots[1];
 }; // class arena
@@ -482,6 +503,7 @@ inline void arena::on_thread_leaving ( ) {
 
     // Release our reference to sync with arena destroy
     unsigned remaining_ref = my_references.fetch_sub(ref_param, std::memory_order_release) - ref_param;
+    // do not access `this`
     if (remaining_ref == 0) {
         m->try_destroy_arena( this, aba_epoch, priority_level );
     }
@@ -496,8 +518,6 @@ void arena::advertise_new_work() {
     if( work_type == work_enqueued ) {
         atomic_fence_seq_cst();
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-        if ( my_market->my_num_workers_soft_limit.load(std::memory_order_acquire) == 0 &&
-            my_global_concurrency_mode.load(std::memory_order_acquire) == false )
             my_market->enable_mandatory_concurrency(this);
 
         if (my_max_num_workers == 0 && my_num_reserved_slots == 1 && my_local_concurrency_flag.test_and_set()) {

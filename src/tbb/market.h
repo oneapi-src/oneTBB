@@ -43,7 +43,7 @@ class task_scheduler_handle;
 
 namespace r1 {
 
-class task_arena_base;
+struct tbb_permit_manager_client;
 class task_group_context;
 
 //------------------------------------------------------------------------
@@ -51,9 +51,6 @@ class task_group_context;
 //------------------------------------------------------------------------
 
 class market : no_copy, rml::tbb_client {
-    friend class arena;
-    friend class task_arena_base;
-    template<typename SchedulerTraits> friend class custom_scheduler;
     friend class task_group_context;
     friend class governor;
     friend class lifetime_control;
@@ -66,7 +63,7 @@ private:
     friend void ITT_DoUnsafeOneTimeInitialization ();
     friend bool finalize_impl(d1::task_scheduler_handle& handle);
 
-    typedef intrusive_list<arena> arena_list_type;
+    typedef intrusive_list<tbb_permit_manager_client> arena_list_type;
     typedef intrusive_list<thread_data> thread_data_list_type;
 
     //! Currently active global market
@@ -120,7 +117,7 @@ private:
 
     //! The first arena to be checked when idle worker seeks for an arena to enter
     /** The check happens in round-robin fashion. **/
-    arena *my_next_arena;
+    tbb_permit_manager_client* my_next_arena;
 
     //! ABA prevention marker to assign to newly created arenas
     std::atomic<uintptr_t> my_arenas_aba_epoch;
@@ -180,19 +177,19 @@ private:
     ////////////////////////////////////////////////////////////////////////////////
     // Helpers to unify code branches dependent on priority feature presence
 
-    arena* select_next_arena( arena* hint );
+    tbb_permit_manager_client* select_next_arena(tbb_permit_manager_client* hint );
 
-    void insert_arena_into_list ( arena& a );
+    void insert_arena_into_list (tbb_permit_manager_client& a );
 
-    void remove_arena_from_list ( arena& a );
+    void remove_arena_from_list (tbb_permit_manager_client& a );
 
-    arena* arena_in_need ( arena_list_type* arenas, arena* hint );
+    tbb_permit_manager_client* arena_in_need ( arena_list_type* arenas, tbb_permit_manager_client* hint );
 
     int update_allotment ( arena_list_type* arenas, int total_demand, int max_workers );
 
-    bool is_arena_in_list( arena_list_type& arenas, arena* a );
+    bool is_arena_in_list( arena_list_type& arenas, tbb_permit_manager_client* a );
 
-    bool is_arena_alive( arena* a );
+    bool is_arena_alive(tbb_permit_manager_client* a );
 
     ////////////////////////////////////////////////////////////////////////////////
     // Implementation of rml::tbb_client interface methods
@@ -228,7 +225,7 @@ public:
     void try_destroy_arena ( arena*, uintptr_t aba_epoch, unsigned priority_level );
 
     //! Removes the arena from the market's list
-    void detach_arena ( arena& );
+    void detach_arena (tbb_permit_manager_client& );
 
     //! Decrements market's refcount and destroys it in the end
     bool release ( bool is_public, bool blocking_terminate );
@@ -238,16 +235,16 @@ public:
 
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
     //! Imlpementation of mandatory concurrency enabling
-    void enable_mandatory_concurrency_impl ( arena *a );
+    void enable_mandatory_concurrency_impl (tbb_permit_manager_client*a );
 
     //! Inform the external thread that there is an arena with mandatory concurrency
-    void enable_mandatory_concurrency ( arena *a );
+    void enable_mandatory_concurrency (tbb_permit_manager_client*a );
 
     //! Inform the external thread that the arena is no more interested in mandatory concurrency
-    void disable_mandatory_concurrency_impl(arena* a);
+    void disable_mandatory_concurrency_impl(tbb_permit_manager_client* a);
 
     //! Inform the external thread that the arena is no more interested in mandatory concurrency
-    void mandatory_concurrency_disable ( arena *a );
+    void mandatory_concurrency_disable (tbb_permit_manager_client*a );
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
 
     //! Request that arena's need in workers should be adjusted.

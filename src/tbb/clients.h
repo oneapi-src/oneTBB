@@ -29,7 +29,7 @@ using mask_type = void*;
 
 class thread_pool_ticket : public d1::intrusive_list_node /* Need for list in thread pool */ {
 public:
-    void apply_mask(mask_type mask);
+    void apply_mask(mask_type mask) {}
     // Interface of communication with thread pool
     bool try_join() {}
     void process() {}
@@ -39,9 +39,9 @@ private:
 };
 
 // TODO resource_manager_client and thread_pool_client
-class client {
+class permit_manager_client {
 public:
-    client(arena& a) : m_arena(a) {}
+    permit_manager_client(arena& a) : m_arena(a) {}
     // Interface of communication with resource manager
     virtual void update_allotment() = 0;
 protected:

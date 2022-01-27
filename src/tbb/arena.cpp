@@ -163,7 +163,7 @@ void arena::process(thread_data& tls) {
     __TBB_ASSERT(tls.my_arena == this, "my_arena is used as a hint when searching the arena to join");
 }
 
-arena::arena ( market& m, unsigned num_slots, unsigned num_reserved_slots, unsigned priority_level )
+arena::arena (permit_manager& m, unsigned num_slots, unsigned num_reserved_slots, unsigned priority_level, uintptr_t aba_epoch)
 {
     __TBB_ASSERT( !my_guard, "improperly allocated arena?" );
     __TBB_ASSERT( sizeof(my_slots[0]) % cache_line_size()==0, "arena::slot size not multiple of cache line size" );
@@ -176,7 +176,7 @@ arena::arena ( market& m, unsigned num_slots, unsigned num_reserved_slots, unsig
     my_max_num_workers = num_slots-num_reserved_slots;
     my_priority_level = priority_level;
     my_references = ref_external; // accounts for the external thread
-    my_aba_epoch = m.my_arenas_aba_epoch.load(std::memory_order_relaxed);
+    my_aba_epoch = aba_epoch;
     my_observers.my_arena = this;
     my_co_cache.init(4 * num_slots);
     __TBB_ASSERT ( my_max_num_workers <= my_num_slots, nullptr);
