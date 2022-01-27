@@ -63,6 +63,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install prerequisites
         run: |
+          pip3 install -U Jinja2
           pip3 install git+https://github.com/executablebooks/sphinx-book-theme.git
           echo GITHUB_SHA_SHORT=${GITHUB_SHA::8} >> $GITHUB_ENV
           mkdir html
