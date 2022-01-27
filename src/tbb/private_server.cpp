@@ -234,20 +234,14 @@ void private_worker::release_handle(thread_handle handle, bool join) {
 }
 
 void private_worker::start_shutdown() {
-    // The state can be transferred only in one direction: st_init -> st_starting -> st_normal.
-    // So we do not need more than three CAS attempts.
-    state_t expected_state = my_state.load(std::memory_order_relaxed);
-    __TBB_ASSERT(expected_state != st_quit, "The quit state is expected to be set only once");
-    if (!my_state.compare_exchange_strong(expected_state, st_quit)) {
-        __TBB_ASSERT(expected_state == st_starting || expected_state == st_normal, "We failed once so the init state is not expected");
-        if (!my_state.compare_exchange_strong(expected_state, st_quit)) {
-            __TBB_ASSERT(expected_state == st_normal, "We failed twice so only the normal state is expected");
-            bool res = my_state.compare_exchange_strong(expected_state, st_quit);
-            __TBB_ASSERT_EX(res, "We cannot fail in the normal state");
-        }
-    }
+    // memory_order_acquire to acquire my_handle
+    state_t prev_state = my_state.exchange(st_quit, std::memory_order_acquire);
 
-    if( expected_state==st_normal || expected_state==st_starting ) {
+    if (prev_state == st_init) {
+        // Perform action that otherwise would be performed by associated thread when it quits.
+        my_server.remove_server_ref();
+    } else {
+        __TBB_ASSERT(prev_state == st_normal || prev_state == st_starting, nullptr);
         // May have invalidated invariant for sleeping, so wake up the thread.
         // Note that the notify() here occurs without maintaining invariants for my_slack.
         // It does not matter, because my_state==st_quit overrides checking of my_slack.
@@ -255,11 +249,8 @@ void private_worker::start_shutdown() {
         // Do not need release handle in st_init state,
         // because in this case the thread wasn't started yet.
         // For st_starting release is done at launch site.
-        if (expected_state==st_normal)
+        if (prev_state == st_normal)
             release_handle(my_handle, governor::does_client_join_workers(my_client));
-    } else if( expected_state==st_init ) {
-        // Perform action that otherwise would be performed by associated thread when it quits.
-        my_server.remove_server_ref();
     }
 }
 
@@ -271,7 +262,7 @@ void private_worker::run() noexcept {
     // complications in handle management on Windows.
 
     ::rml::job& j = *my_client.create_one_job();
-    while( my_state.load(std::memory_order_acquire)!=st_quit ) {
+    while( my_state.load(std::memory_order_relaxed)!=st_quit ) {
         if( my_server.my_slack.load(std::memory_order_acquire)>=0 ) {
             my_client.process(j);
         } else {

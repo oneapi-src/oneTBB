@@ -228,7 +228,7 @@ inline void thread_monitor::prepare_wait() {
         my_sema.P(); // does not really wait on the semaphore
     }
     // std::memory_order_seq_cst is required because prepare_wait
-    // should be ordered before futher operations (that are suppose to
+    // should be ordered before further operations (that are suppose to
     // use memory_order_seq_cst where required)
     in_wait.store( true, std::memory_order_seq_cst );
 }
