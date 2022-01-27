@@ -77,7 +77,7 @@ suspend_point_type* current_suspend_point() {
     return td.my_task_dispatcher->get_suspend_point();
 }
 
-static task_dispatcher& create_coroutine(thread_data& td) {
+task_dispatcher& create_coroutine(thread_data& td) {
     // We may have some task dispatchers cached
     task_dispatcher* task_disp = td.my_arena->my_co_cache.pop();
     if (!task_disp) {
