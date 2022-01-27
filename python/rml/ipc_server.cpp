@@ -562,7 +562,7 @@ void ipc_worker::run() {
     // complications in handle management on Windows.
 
     ::rml::job& j = *my_client.create_one_job();
-    // TODO: reconsider if memory_order_acquire is requred here and other places
+    // TODO: reconsider if memory_order_acquire is required here and other places
     state_t state = my_state.load(std::memory_order_acquire);
     while( state!=st_quit && state!=st_stop ) {
         if( my_server.my_slack>=0 ) {
