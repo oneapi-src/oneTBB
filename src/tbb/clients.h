@@ -40,7 +40,7 @@ public:
     }
 private:
     arena& m_arena;
-    mask_type m_mask;
+    // mask_type m_mask;
 };
 
 // TODO resource_manager_client and thread_pool_client
