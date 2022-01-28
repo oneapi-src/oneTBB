@@ -25,6 +25,7 @@
 
 #include "oneapi/tbb/spin_rw_mutex.h"
 #include "oneapi/tbb/task_group.h"
+#include "resource_manager.h"
 
 #include <atomic>
 
@@ -43,6 +44,7 @@ class task_scheduler_handle;
 
 namespace r1 {
 
+class permit_manager_client;
 struct tbb_permit_manager_client;
 class task_group_context;
 
@@ -50,7 +52,7 @@ class task_group_context;
 // Class market
 //------------------------------------------------------------------------
 
-class market : no_copy, rml::tbb_client {
+class market : public permit_manager, rml::tbb_client {
     friend class task_group_context;
     friend class governor;
     friend class lifetime_control;
@@ -209,6 +211,13 @@ private:
     void process( job& j ) override;
 
 public:
+    permit_manager_client* create_client(arena& a, constraits_type* constraits) override;
+    void destroy_client(permit_manager_client& c) override;
+
+    void request_demand(unsigned min, unsigned max, permit_manager_client&) override;
+    void release_demand(permit_manager_client&) override;
+
+
     //! Factory method creating new market object
     static market& global_market( bool is_public, unsigned max_num_workers = 0, std::size_t stack_size = 0 );
 
@@ -237,14 +246,16 @@ public:
     //! Imlpementation of mandatory concurrency enabling
     void enable_mandatory_concurrency_impl (tbb_permit_manager_client*a );
 
+    bool is_global_concurrency_disabled(permit_manager_client*c );
+
     //! Inform the external thread that there is an arena with mandatory concurrency
-    void enable_mandatory_concurrency (tbb_permit_manager_client*a );
+    void enable_mandatory_concurrency (permit_manager_client*c );
 
     //! Inform the external thread that the arena is no more interested in mandatory concurrency
     void disable_mandatory_concurrency_impl(tbb_permit_manager_client* a);
 
     //! Inform the external thread that the arena is no more interested in mandatory concurrency
-    void mandatory_concurrency_disable (tbb_permit_manager_client*a );
+    void mandatory_concurrency_disable (permit_manager_client*a );
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
 
     //! Request that arena's need in workers should be adjusted.

@@ -163,7 +163,8 @@ void arena::process(thread_data& tls) {
     __TBB_ASSERT(tls.my_arena == this, "my_arena is used as a hint when searching the arena to join");
 }
 
-arena::arena (permit_manager& m, unsigned num_slots, unsigned num_reserved_slots, unsigned priority_level, uintptr_t aba_epoch)
+// arena::arena (permit_manager& m, unsigned num_slots, unsigned num_reserved_slots, unsigned priority_level, uintptr_t aba_epoch)
+arena::arena (market& m, unsigned num_slots, unsigned num_reserved_slots, unsigned priority_level, uintptr_t aba_epoch)
 {
     __TBB_ASSERT( !my_guard, "improperly allocated arena?" );
     __TBB_ASSERT( sizeof(my_slots[0]) % cache_line_size()==0, "arena::slot size not multiple of cache line size" );
@@ -202,12 +203,11 @@ arena::arena (permit_manager& m, unsigned num_slots, unsigned num_reserved_slots
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
     my_local_concurrency_requests = 0;
     my_local_concurrency_flag.clear();
-    my_global_concurrency_mode.store(false, std::memory_order_relaxed);
 #endif
 }
 
 arena& arena::allocate_arena( market& m, unsigned num_slots, unsigned num_reserved_slots,
-                              unsigned priority_level )
+                              unsigned priority_level, unsigned epoch )
 {
     __TBB_ASSERT( sizeof(base_type) + sizeof(arena_slot) == sizeof(arena), "All arena data fields must go to arena_base" );
     __TBB_ASSERT( sizeof(base_type) % cache_line_size() == 0, "arena slots area misaligned: wrong padding" );
@@ -217,7 +217,7 @@ arena& arena::allocate_arena( market& m, unsigned num_slots, unsigned num_reserv
     // Zero all slots to indicate that they are empty
     std::memset( storage, 0, n );
     return *new( storage + num_arena_slots(num_slots) * sizeof(mail_outbox) )
-        arena(m, num_slots, num_reserved_slots, priority_level);
+        arena(m, num_slots, num_reserved_slots, priority_level, epoch);
 }
 
 void arena::free_arena () {
@@ -226,9 +226,6 @@ void arena::free_arena () {
     __TBB_ASSERT( !my_num_workers_requested && !my_num_workers_allotted, "Dying arena requests workers" );
     __TBB_ASSERT( my_pool_state.load(std::memory_order_relaxed) == SNAPSHOT_EMPTY || !my_max_num_workers,
                   "Inconsistent state of a dying arena" );
-#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-    __TBB_ASSERT( !my_global_concurrency_mode, nullptr);
-#endif
 #if __TBB_ARENA_BINDING
     if (my_numa_binding_observer != nullptr) {
         destroy_binding_observer(my_numa_binding_observer);

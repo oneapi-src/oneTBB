@@ -183,6 +183,8 @@ public:
 };
 #endif
 
+class permit_manager_client;
+
 //! The structure of an arena, except the array of slots.
 /** Separated in order to simplify padding.
     Intrusive list node base class is used by market to form a list of arenas. **/
@@ -285,6 +287,8 @@ protected:
     //! The current serialization epoch for callers of adjust_job_count_estimate
     d1::waitable_atomic<int> my_adjust_demand_current_epoch;
 
+    permit_manager_client* my_client;
+
 #if TBB_USE_ASSERT
     //! Used to trap accesses to the object after its destruction.
     std::uintptr_t my_guard;
@@ -323,11 +327,12 @@ public:
     };
 
     //! Constructor
-    arena (permit_manager& m, unsigned max_num_workers, unsigned num_reserved_slots, unsigned priority_level, uintptr_t aba_epoch);
+    // arena (permit_manager& m, unsigned max_num_workers, unsigned num_reserved_slots, unsigned priority_level, uintptr_t aba_epoch);
+    arena (market& m, unsigned max_num_workers, unsigned num_reserved_slots, unsigned priority_level, uintptr_t aba_epoch);
 
     //! Allocate an instance of arena.
     static arena& allocate_arena( market& m, unsigned num_slots, unsigned num_reserved_slots,
-                                  unsigned priority_level );
+                                  unsigned priority_level, unsigned epoch );
 
     static int unsigned num_arena_slots ( unsigned num_slots ) {
         return max(2u, num_slots);
@@ -490,9 +495,7 @@ inline void arena::on_thread_leaving ( ) {
     // because it can create the demand of workers,
     // but the arena can be already empty (and so ready for destroying)
     // TODO: Fix the race: while we check soft limit and it might be changed.
-    if( ref_param==ref_external && my_num_slots != my_num_reserved_slots
-        && 0 == m->my_num_workers_soft_limit.load(std::memory_order_relaxed) &&
-        !my_global_concurrency_mode.load(std::memory_order_relaxed) ) {
+    if( ref_param==ref_external && my_num_slots != my_num_reserved_slots && m->is_global_concurrency_disabled(my_client)) {
         is_out_of_work();
         // We expect, that in worst case it's enough to have num_priority_levels-1
         // calls to restore priorities and yet another is_out_of_work() to conform
@@ -518,7 +521,7 @@ void arena::advertise_new_work() {
     if( work_type == work_enqueued ) {
         atomic_fence_seq_cst();
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-            my_market->enable_mandatory_concurrency(this);
+            my_market->enable_mandatory_concurrency(my_client);
 
         if (my_max_num_workers == 0 && my_num_reserved_slots == 1 && my_local_concurrency_flag.test_and_set()) {
             my_market->adjust_demand(*this, /* delta = */ 1, /* mandatory = */ true);
@@ -559,8 +562,7 @@ void arena::advertise_new_work() {
             // telling the market that there is work to do.
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
             if( work_type == work_spawned ) {
-                if ( my_global_concurrency_mode.load(std::memory_order_acquire) == true )
-                    my_market->mandatory_concurrency_disable( this );
+                my_market->mandatory_concurrency_disable( my_client );
             }
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
             // TODO: investigate adjusting of arena's demand by a single worker.
