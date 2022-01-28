@@ -42,7 +42,7 @@ struct tbb_permit_manager_client : public permit_manager_client, public d1::intr
     }
 
     // arena needs an extra worker despite a global limit
-    std::atomic<bool> m_global_concurrency_mode;
+    std::atomic<bool> m_global_concurrency_mode{false};
 
     //! The index in the array of per priority lists of arenas this object is in.
     unsigned priority_level() {
@@ -71,6 +71,10 @@ struct tbb_permit_manager_client : public permit_manager_client, public d1::intr
 
     void set_top_priority(bool b) {
         return m_is_top_priority.store(b, std::memory_order_relaxed);
+    }
+
+    void bind_with_arena() {
+        m_arena.set_client(this);
     }
 };
 
@@ -361,6 +365,7 @@ arena* market::create_arena ( int num_slots, int num_reserved_slots, unsigned ar
     market &m = global_market( /*is_public=*/true, num_slots-num_reserved_slots, stack_size );
     arena& a = arena::allocate_arena( m, num_slots, num_reserved_slots, arena_priority_level, m.my_arenas_aba_epoch.load(std::memory_order_relaxed) );
     tbb_permit_manager_client* c = static_cast<tbb_permit_manager_client*>(m.create_client(a, nullptr));
+    c->bind_with_arena();
     // Add newly created arena into the existing market's list.
     arenas_list_mutex_type::scoped_lock lock(m.my_arenas_list_mutex);
     m.insert_arena_into_list(*c);

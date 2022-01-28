@@ -422,6 +422,10 @@ public:
         return my_num_workers_requested;
     }
 
+    void set_client(permit_manager_client* c) {
+        my_client = c;
+    }
+
     unsigned references() {
         return my_references.load(std::memory_order_acquire);
     }
