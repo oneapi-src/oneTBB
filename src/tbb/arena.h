@@ -232,9 +232,6 @@ protected:
     //! The index in the array of per priority lists of arenas this object is in.
     /*const*/ unsigned my_priority_level;
 
-    //! The max priority level of arena in market.
-    std::atomic<bool> my_is_top_priority{false};
-
     //! Current task pool state and estimate of available tasks amount.
     /** The estimate is either 0 (SNAPSHOT_EMPTY) or infinity (SNAPSHOT_FULL).
         Special state is "busy" (any other unsigned value).
@@ -281,12 +278,6 @@ protected:
     //! The number of workers requested by the external thread owning the arena.
     unsigned my_max_num_workers;
 
-    //! The target serialization epoch for callers of adjust_job_count_estimate
-    int my_adjust_demand_target_epoch;
-
-    //! The current serialization epoch for callers of adjust_job_count_estimate
-    d1::waitable_atomic<int> my_adjust_demand_current_epoch;
-
     permit_manager_client* my_client;
 
 #if TBB_USE_ASSERT
@@ -314,7 +305,6 @@ class arena: public padded<arena_base>
     friend class thread_data;
     friend class delegated_task;
     friend void notify_waiters(std::uintptr_t wait_ctx_addr);
-
 
 public:
     using base_type = padded<arena_base>;
@@ -423,6 +413,72 @@ public:
         return my_priority_level;
     }
 
+    std::uintptr_t aba_epoch() {
+        return my_aba_epoch;
+    }
+
+
+    int num_workers_requested() {
+        return my_num_workers_requested;
+    }
+
+    unsigned references() {
+        return my_references.load(std::memory_order_acquire);
+    }
+
+    bool try_join() {
+        if (num_workers_active() < my_num_workers_allotted.load(std::memory_order_relaxed)) {
+            my_references += arena::ref_worker;
+            return true;
+        }
+        return false;
+    }
+
+    void set_allotment(unsigned allotment) {
+        my_num_workers_allotted.store(allotment, std::memory_order_relaxed);
+    }
+
+    int update_request(int delta, bool mandatory) {
+#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
+        if (mandatory) {
+            __TBB_ASSERT(delta == 1 || delta == -1, nullptr);
+            // Count the number of mandatory requests and proceed only for 0->1 and 1->0 transitions.
+            my_local_concurrency_requests += delta;
+            if ((delta > 0 && my_local_concurrency_requests != 1) ||
+                (delta < 0 && my_local_concurrency_requests != 0))
+            {
+                return 0;
+            }
+        }
+#endif
+        my_total_num_workers_requested += delta;
+        int target_workers = 0;
+        // Cap target_workers into interval [0, a.my_max_num_workers]
+        if (my_total_num_workers_requested > 0) {
+#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
+            // At least one thread should be requested when mandatory concurrency
+            int max_num_workers = int(my_max_num_workers);
+            if (my_local_concurrency_requests > 0 && max_num_workers == 0) {
+                max_num_workers = 1;
+            }
+#endif
+            target_workers = min(my_total_num_workers_requested, max_num_workers);
+        }
+
+        delta = target_workers - my_num_workers_requested;
+
+        if (delta == 0) {
+            return 0;
+        }
+
+        my_num_workers_requested += delta;
+        if (my_num_workers_requested == 0) {
+            my_num_workers_allotted.store(0, std::memory_order_relaxed);
+        }
+
+        return delta;
+    }
+
     /** Must be the last data field */
     arena_slot my_slots[1];
 }; // class arena
@@ -508,7 +564,11 @@ inline void arena::on_thread_leaving ( ) {
     unsigned remaining_ref = my_references.fetch_sub(ref_param, std::memory_order_release) - ref_param;
     // do not access `this`
     if (remaining_ref == 0) {
-        m->try_destroy_arena( this, aba_epoch, priority_level );
+        if (m->try_destroy_arena(my_client, aba_epoch, priority_level)) {
+            // We are requested to destroy ourself
+            my_market->destroy_client(*my_client);
+            free_arena();
+        }
     }
 }
 
@@ -524,7 +584,7 @@ void arena::advertise_new_work() {
             my_market->enable_mandatory_concurrency(my_client);
 
         if (my_max_num_workers == 0 && my_num_reserved_slots == 1 && my_local_concurrency_flag.test_and_set()) {
-            my_market->adjust_demand(*this, /* delta = */ 1, /* mandatory = */ true);
+            my_market->adjust_demand(*this->my_client, /* delta = */ 1, /* mandatory = */ true);
         }
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
         // Local memory fence here and below is required to avoid missed wakeups; see the comment below.
@@ -566,7 +626,7 @@ void arena::advertise_new_work() {
             }
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
             // TODO: investigate adjusting of arena's demand by a single worker.
-            my_market->adjust_demand(*this, my_max_num_workers, /* mandatory = */ false);
+            my_market->adjust_demand(*this->my_client, my_max_num_workers, /* mandatory = */ false);
 
             // Notify all sleeping threads that work has appeared in the arena.
             my_market->get_wait_list().notify(is_related_arena);

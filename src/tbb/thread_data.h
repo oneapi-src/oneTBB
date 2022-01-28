@@ -100,7 +100,8 @@ public:
         : my_arena_index{ index }
         , my_is_worker{ is_worker }
         , my_task_dispatcher{ nullptr }
-        , my_arena{}
+        , my_arena{ nullptr }
+        , my_last_client{ nullptr }
         , my_arena_slot{}
         , my_random{ this }
         , my_last_observer{ nullptr }
@@ -148,6 +149,8 @@ public:
 
     //! The arena that I own (if external thread) or am servicing at the moment (if worker)
     arena* my_arena;
+
+    tbb_permit_manager_client* my_last_client;
 
     //! Pointer to the slot in the arena we own at the moment
     arena_slot* my_arena_slot;
