@@ -24,7 +24,7 @@ namespace detail {
 namespace r1 {
 
 class arena;
-class client;
+class permit_manager_client;
 class thread_pool_ticket;
 
 using constraits_type = void*;
@@ -32,21 +32,23 @@ using constraits_type = void*;
 class permit_manager : no_copy {
 public:
     virtual ~permit_manager() {}
-    virtual client* create_client(arena& a, constraits_type* constraits) = 0;
-    virtual void destroy_client(client& c) = 0;
+    virtual permit_manager_client* create_client(arena& a, constraits_type* constraits) = 0;
+    virtual void destroy_client(permit_manager_client& c) = 0;
 
     // ??? Update demand ???
     // virtual void update_resource_request(unsigned min, unsigned max, client&) = 0;
     // virtual void release_resource_request(client&) = 0;
 
-    virtual void request_demand(unsigned min, unsigned max, client&) = 0;
-    virtual void release_demand(client&) = 0;
+    virtual void request_demand(unsigned min, unsigned max, permit_manager_client&) = 0;
+    virtual void release_demand(permit_manager_client&) = 0;
 };
 
 
 class thread_pool : no_copy {
 public:
-    void wake_up(thread_pool_ticket& ticket, unsigned request) {}
+    void wake_up(thread_pool_ticket& ticket, unsigned request) {
+        suppress_unused_warning(ticket, request);
+    }
 private:
     // Intrusive_list ticket_list;
 };

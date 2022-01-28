@@ -32,7 +32,10 @@ namespace detail {
 namespace r1 {
 
 struct tbb_permit_manager_client : public permit_manager_client, public d1::intrusive_list_node {
-    
+    tbb_permit_manager_client(arena& a) : permit_manager_client(a) {}
+
+    void update_allotment() override {}
+
     // arena needs an extra worker despite a global limit
     std::atomic<bool> m_global_concurrency_mode;
 
@@ -307,6 +310,23 @@ bool governor::does_client_join_workers (const rml::tbb_client &client) {
     return ((const market&)client).must_join_workers();
 }
 
+permit_manager_client* market::create_client(arena& a, constraits_type*) {
+    return new tbb_permit_manager_client(a);
+}
+
+void market::destroy_client(permit_manager_client& c) {
+    delete &c;
+}
+
+void market::request_demand(unsigned min, unsigned max, permit_manager_client&) {
+    suppress_unused_warning(min, max);
+}
+
+void market::release_demand(permit_manager_client&) {
+
+}
+
+
 arena* market::create_arena ( int num_slots, int num_reserved_slots, unsigned arena_priority_level,
                               std::size_t stack_size )
 {
@@ -314,10 +334,11 @@ arena* market::create_arena ( int num_slots, int num_reserved_slots, unsigned ar
     __TBB_ASSERT( num_reserved_slots <= num_slots, nullptr);
     // Add public market reference for an external thread/task_arena (that adds an internal reference in exchange).
     market &m = global_market( /*is_public=*/true, num_slots-num_reserved_slots, stack_size );
-    arena& a = arena::allocate_arena( m, num_slots, num_reserved_slots, arena_priority_level );
+    arena& a = arena::allocate_arena( m, num_slots, num_reserved_slots, arena_priority_level, m.my_arenas_aba_epoch.load(std::memory_order_relaxed) );
+    tbb_permit_manager_client* c = static_cast<tbb_permit_manager_client*>(m.create_client(a, nullptr));
     // Add newly created arena into the existing market's list.
     arenas_list_mutex_type::scoped_lock lock(m.my_arenas_list_mutex);
-    m.insert_arena_into_list(a);
+    m.insert_arena_into_list(*c);
     return &a;
 }
 
@@ -482,10 +503,14 @@ void market::enable_mandatory_concurrency_impl (tbb_permit_manager_client*a ) {
     my_mandatory_num_requested++;
 }
 
-void market::enable_mandatory_concurrency ( tbb_permit_manager_client *a ) {
-    if (my_num_workers_soft_limit.load(std::memory_order_acquire) == 0 &&
-        a->m_global_concurrency_mode.load(std::memory_order_acquire) == false) {
+bool market::is_global_concurrency_disabled(permit_manager_client *c) {
+    tbb_permit_manager_client* a = static_cast<tbb_permit_manager_client*>(c);
+    return my_num_workers_soft_limit.load(std::memory_order_acquire) == 0 && a->m_global_concurrency_mode.load(std::memory_order_acquire) == false;
+}
 
+void market::enable_mandatory_concurrency ( permit_manager_client *c ) {
+    tbb_permit_manager_client* a = static_cast<tbb_permit_manager_client*>(c);
+    if (is_global_concurrency_disabled(a)) {
         int delta = 0;
         {
             arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex);
@@ -510,25 +535,28 @@ void market::disable_mandatory_concurrency_impl(tbb_permit_manager_client* a) {
     my_mandatory_num_requested--;
 }
 
-void market::mandatory_concurrency_disable (tbb_permit_manager_client*a ) {
-    int delta = 0;
-    {
-        arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex);
-        if (!a->m_global_concurrency_mode.load(std::memory_order_relaxed))
-            return;
-        // There is a racy window in advertise_new_work between mandtory concurrency enabling and 
-        // setting SNAPSHOT_FULL. It gives a chance to spawn request to disable mandatory concurrency.
-        // Therefore, we double check that there is no enqueued tasks.
-        if (a->has_enqueued_tasks())
-            return;
+void market::mandatory_concurrency_disable (permit_manager_client*c ) {
+    tbb_permit_manager_client* a = static_cast<tbb_permit_manager_client*>(c);
+    if ( a->m_global_concurrency_mode.load(std::memory_order_acquire) == true ) {
+        int delta = 0;
+        {
+            arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex);
+            if (!a->m_global_concurrency_mode.load(std::memory_order_relaxed))
+                return;
+            // There is a racy window in advertise_new_work between mandtory concurrency enabling and 
+            // setting SNAPSHOT_FULL. It gives a chance to spawn request to disable mandatory concurrency.
+            // Therefore, we double check that there is no enqueued tasks.
+            if (a->has_enqueued_tasks())
+                return;
 
-        __TBB_ASSERT(my_num_workers_soft_limit.load(std::memory_order_relaxed) == 0, nullptr);
-        disable_mandatory_concurrency_impl(a);
+            __TBB_ASSERT(my_num_workers_soft_limit.load(std::memory_order_relaxed) == 0, NULL);
+            disable_mandatory_concurrency_impl(a);
 
-        delta = update_workers_request();
+            delta = update_workers_request();
+        }
+        if (delta != 0)
+            my_server->adjust_job_count_estimate(delta);
     }
-    if (delta != 0)
-        my_server->adjust_job_count_estimate(delta);
 }
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
 
