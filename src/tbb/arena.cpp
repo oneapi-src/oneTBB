@@ -276,7 +276,7 @@ bool arena::is_out_of_work() {
     if (my_local_concurrency_flag.try_clear_if([this] {
         return !has_enqueued_tasks();
     })) {
-        my_market->adjust_demand(*this, /* delta = */ -1, /* mandatory = */ true);
+        my_market->adjust_demand(*this->my_client, /* delta = */ -1, /* mandatory = */ true);
     }
 #endif
 
@@ -327,7 +327,7 @@ bool arena::is_out_of_work() {
                     if (my_pool_state.compare_exchange_strong(expected_state, SNAPSHOT_EMPTY)) {
                         // This thread transitioned pool to empty state, and thus is
                         // responsible for telling the market that there is no work to do.
-                        my_market->adjust_demand(*this, -current_demand, /* mandatory = */ false);
+                        my_market->adjust_demand(*this->my_client, -current_demand, /* mandatory = */ false);
                         return true;
                     }
                     return false;
@@ -520,7 +520,7 @@ public:
             // If the calling thread occupies the slots out of external thread reserve we need to notify the
             // market that this arena requires one worker less.
             if (td.my_arena_index >= td.my_arena->my_num_reserved_slots) {
-                td.my_arena->my_market->adjust_demand(*td.my_arena, /* delta = */ -1, /* mandatory = */ false);
+                td.my_arena->my_market->adjust_demand(*td.my_arena->my_client, /* delta = */ -1, /* mandatory = */ false);
             }
 
             td.my_last_observer = nullptr;
@@ -556,7 +556,7 @@ public:
             // Notify the market that this thread releasing a one slot
             // that can be used by a worker thread.
             if (td.my_arena_index >= td.my_arena->my_num_reserved_slots) {
-                td.my_arena->my_market->adjust_demand(*td.my_arena, /* delta = */ 1, /* mandatory = */ false);
+                td.my_arena->my_market->adjust_demand(*td.my_arena->my_client, /* delta = */ 1, /* mandatory = */ false);
             }
 
             td.leave_task_dispatcher();

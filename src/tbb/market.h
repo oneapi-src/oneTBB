@@ -164,8 +164,8 @@ private:
         }
     }
 
-    //! Returns next arena that needs more workers, or nullptr.
-    arena* arena_in_need(arena* prev);
+    //! Returns next arena that needs more workers, or NULL.
+    tbb_permit_manager_client* arena_in_need(tbb_permit_manager_client* prev);
 
     template <typename Pred>
     static void enforce (Pred pred, const char* msg) {
@@ -231,7 +231,7 @@ public:
                                  unsigned arena_index, std::size_t stack_size );
 
     //! Removes the arena from the market's list
-    void try_destroy_arena ( arena*, uintptr_t aba_epoch, unsigned priority_level );
+    bool try_destroy_arena (permit_manager_client*, uintptr_t aba_epoch, unsigned priority_level );
 
     //! Removes the arena from the market's list
     void detach_arena (tbb_permit_manager_client& );
@@ -260,7 +260,7 @@ public:
 
     //! Request that arena's need in workers should be adjusted.
     /** Concurrent invocations are possible only on behalf of different arenas. **/
-    void adjust_demand ( arena&, int delta, bool mandatory );
+    void adjust_demand (permit_manager_client&, int delta, bool mandatory );
 
     //! Used when RML asks for join mode during workers termination.
     bool must_join_workers () const { return my_join_workers; }
