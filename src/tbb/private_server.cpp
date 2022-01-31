@@ -234,6 +234,8 @@ void private_worker::release_handle(thread_handle handle, bool join) {
 }
 
 void private_worker::start_shutdown() {
+    __TBB_ASSERT(my_state.load(std::memory_order_relaxed) != st_quit, "The thread has alredy been requested to quit");
+
     // memory_order_acquire to acquire my_handle
     state_t prev_state = my_state.exchange(st_quit, std::memory_order_acquire);
 
@@ -262,23 +264,14 @@ void private_worker::run() noexcept {
     // complications in handle management on Windows.
 
     ::rml::job& j = *my_client.create_one_job();
-    while( my_state.load(std::memory_order_relaxed)!=st_quit ) {
+    // memory_order_seq_cst to be strictly ordered after thread_monitor::wait on the next iteration
+    while( my_state.load(std::memory_order_seq_cst)!=st_quit ) {
         if( my_server.my_slack.load(std::memory_order_acquire)>=0 ) {
             my_client.process(j);
-        } else {
-            // Prepare to wait
-            my_thread_monitor.prepare_wait();
-            // Check/set the invariant for sleeping
-            // We need memory_order_seq_cst to enforce ordering with prepare_wait
-            // (note that a store in prepare_wait should be with memory_order_seq_cst as well)
-            if( my_state.load(std::memory_order_seq_cst)!=st_quit && my_server.try_insert_in_asleep_list(*this) ) {
-                my_thread_monitor.commit_wait();
-                __TBB_ASSERT( my_state==st_quit || !my_next, "Thread monitor missed a spurious wakeup?" );
-                my_server.propagate_chain_reaction();
-            } else {
-                // Invariant broken
-                my_thread_monitor.cancel_wait();
-            }
+        } else if( my_server.try_insert_in_asleep_list(*this) ) {
+            my_thread_monitor.wait();
+            __TBB_ASSERT(my_state.load(std::memory_order_relaxed) == st_quit || !my_next, "Thread monitor missed a spurious wakeup?" );
+            my_server.propagate_chain_reaction();
         }
     }
     my_client.cleanup(j);
@@ -386,17 +379,16 @@ void private_server::wake_some( int additional_slack ) {
     }
 done:
 
-    if (allotted_slack)
-    {
+    if (allotted_slack) {
         asleep_list_mutex_type::scoped_lock lock(my_asleep_list_mutex);
-
-        while( my_asleep_list_root.load(std::memory_order_relaxed) && w<wakee+2 && allotted_slack) {
+        auto root = my_asleep_list_root.load(std::memory_order_relaxed);
+        while( root && w<wakee+2 && allotted_slack) {
             --allotted_slack;
             // Pop sleeping worker to combine with claimed unit of slack
-            auto old = my_asleep_list_root.load(std::memory_order_relaxed);
-            my_asleep_list_root.store(old->my_next, std::memory_order_relaxed);
-            *w++ = old;
+            *w++ = root;
+            root = root->my_next;
         }
+        my_asleep_list_root.store(root, std::memory_order_relaxed);
         if(allotted_slack) {
             // Contribute our unused slack to my_slack.
             my_slack += allotted_slack;

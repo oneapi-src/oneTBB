@@ -83,20 +83,12 @@ public:
     }
     ~thread_monitor() {}
 
-    //! If a thread is waiting or started a two-phase wait, notify it.
+    //! Notify waiting thread
     /** Can be called by any thread. */
     void notify();
 
-    //! Begin two-phase wait.
-    /** Should only be called by thread that owns the monitor.
-        The caller must either complete the wait or cancel it. */
-    void prepare_wait();
-
-    //! Complete a two-phase wait and wait until notification occurs after the earlier prepare_wait.
-    void commit_wait();
-
-    //! Cancel a two-phase wait.
-    void cancel_wait();
+    //! Wait for notification
+    void wait();
 
 #if __TBB_USE_WINAPI
     typedef HANDLE handle_type;
@@ -123,8 +115,8 @@ public:
     //! Detach thread
     static void detach_thread(handle_type handle);
 private:
-    std::atomic<bool> in_wait{false};
-    bool skipped_wakeup{false};
+    // The protection from double notification of the binary semaphore
+    std::atomic<bool> my_notified{ false };
     binary_semaphore my_sema;
 #if __TBB_USE_POSIX
     static void check( int error_code, const char* routine );
@@ -215,37 +207,17 @@ void thread_monitor::detach_thread(handle_type handle) {
 #endif /* __TBB_USE_POSIX */
 
 inline void thread_monitor::notify() {
-    bool do_signal = in_wait.exchange( false, std::memory_order_release);
-    if( do_signal ) {
+    // Check that the semaphore is not notified twice
+    if (!my_notified.exchange(true, std::memory_order_release)) {
         my_sema.V();
     }
 }
 
-inline void thread_monitor::prepare_wait() {
-    if( skipped_wakeup ) {
-        // Lazily consume a signal that was skipped due to cancel_wait
-        skipped_wakeup = false;
-        my_sema.P(); // does not really wait on the semaphore
-    }
-    // std::memory_order_seq_cst is required because prepare_wait
-    // should be ordered before further operations (that are suppose to
-    // use memory_order_seq_cst where required)
-    in_wait.store( true, std::memory_order_seq_cst );
-}
-
-inline void thread_monitor::commit_wait() {
-    bool do_it = in_wait.load(std::memory_order_acquire);
-    if( do_it ) {
-        my_sema.P();
-    } else {
-        skipped_wakeup = true;
-    }
-}
-
-inline void thread_monitor::cancel_wait() {
-    // if not in_wait, then some thread has sent us a signal;
-    // it will be consumed by the next prepare_wait call
-    skipped_wakeup = ! in_wait.exchange( false, std::memory_order_relaxed);
+inline void thread_monitor::wait() {
+    my_sema.P();
+    // memory_order_seq_cst is required here to be ordered with
+    // futher loads checking shutdown state
+    my_notified.store(false, std::memory_order_seq_cst);
 }
 
 } // namespace internal
