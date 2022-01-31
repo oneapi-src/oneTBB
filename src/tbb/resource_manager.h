@@ -41,6 +41,10 @@ public:
 
     virtual void request_demand(unsigned min, unsigned max, permit_manager_client&) = 0;
     virtual void release_demand(permit_manager_client&) = 0;
+
+        //! Removes the arena from the market's list
+    virtual bool try_destroy_arena (permit_manager_client*, uintptr_t aba_epoch, unsigned priority_level ) = 0;
+
 };
 
 

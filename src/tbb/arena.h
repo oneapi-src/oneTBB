@@ -28,11 +28,11 @@
 #include "arena_slot.h"
 #include "rml_tbb.h"
 #include "mailbox.h"
-#include "market.h"
 #include "governor.h"
 #include "concurrent_monitor.h"
 #include "observer_proxy.h"
 #include "oneapi/tbb/spin_mutex.h"
+#include "market_concurrent_monitor.h"
 
 #include "resource_manager.h"
 
@@ -251,7 +251,7 @@ protected:
     // Below are rarely modified members
 
     //! The market that owns this arena.
-    market* my_market;
+    permit_manager* my_permit_manager;
 
     //! Default task group context.
     d1::task_group_context* my_default_ctx;
@@ -318,10 +318,10 @@ public:
 
     //! Constructor
     // arena (permit_manager& m, unsigned max_num_workers, unsigned num_reserved_slots, unsigned priority_level, uintptr_t aba_epoch);
-    arena (market& m, unsigned max_num_workers, unsigned num_reserved_slots, unsigned priority_level, uintptr_t aba_epoch);
+    arena (permit_manager& m, unsigned max_num_workers, unsigned num_reserved_slots, unsigned priority_level, uintptr_t aba_epoch);
 
     //! Allocate an instance of arena.
-    static arena& allocate_arena( market& m, unsigned num_slots, unsigned num_reserved_slots,
+    static arena& allocate_arena( permit_manager& m, unsigned num_slots, unsigned num_reserved_slots,
                                   unsigned priority_level, unsigned epoch );
 
     static int unsigned num_arena_slots ( unsigned num_slots ) {
@@ -545,7 +545,7 @@ inline void arena::on_thread_leaving ( ) {
     //
     std::uintptr_t aba_epoch = my_aba_epoch;
     unsigned priority_level = my_priority_level;
-    market* m = my_market;
+    permit_manager* m = my_permit_manager;
     __TBB_ASSERT(my_references.load(std::memory_order_relaxed) >= ref_param, "broken arena reference counter");
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
     // When there is no workers someone must free arena, as
@@ -555,7 +555,7 @@ inline void arena::on_thread_leaving ( ) {
     // because it can create the demand of workers,
     // but the arena can be already empty (and so ready for destroying)
     // TODO: Fix the race: while we check soft limit and it might be changed.
-    if( ref_param==ref_external && my_num_slots != my_num_reserved_slots && m->is_global_concurrency_disabled(my_client)) {
+    if( ref_param==ref_external && my_num_slots != my_num_reserved_slots && my_num_workers_allotted.load(std::memory_order_relaxed) == 0) {
         is_out_of_work();
         // We expect, that in worst case it's enough to have num_priority_levels-1
         // calls to restore priorities and yet another is_out_of_work() to conform
@@ -570,7 +570,7 @@ inline void arena::on_thread_leaving ( ) {
     if (remaining_ref == 0) {
         if (m->try_destroy_arena(my_client, aba_epoch, priority_level)) {
             // We are requested to destroy ourself
-            my_market->destroy_client(*my_client);
+            my_permit_manager->destroy_client(*my_client);
             free_arena();
         }
     }
@@ -585,10 +585,10 @@ void arena::advertise_new_work() {
     if( work_type == work_enqueued ) {
         atomic_fence_seq_cst();
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-            my_market->enable_mandatory_concurrency(my_client);
+            my_permit_manager->enable_mandatory_concurrency(my_client);
 
         if (my_max_num_workers == 0 && my_num_reserved_slots == 1 && my_local_concurrency_flag.test_and_set()) {
-            my_market->adjust_demand(*this->my_client, /* delta = */ 1, /* mandatory = */ true);
+            my_permit_manager->adjust_demand(*this->my_client, /* delta = */ 1, /* mandatory = */ true);
         }
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
         // Local memory fence here and below is required to avoid missed wakeups; see the comment below.
@@ -626,14 +626,14 @@ void arena::advertise_new_work() {
             // telling the market that there is work to do.
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
             if( work_type == work_spawned ) {
-                my_market->mandatory_concurrency_disable( my_client );
+                my_permit_manager->mandatory_concurrency_disable( my_client );
             }
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
             // TODO: investigate adjusting of arena's demand by a single worker.
-            my_market->adjust_demand(*this->my_client, my_max_num_workers, /* mandatory = */ false);
+            my_permit_manager->adjust_demand(*this->my_client, my_max_num_workers, /* mandatory = */ false);
 
             // Notify all sleeping threads that work has appeared in the arena.
-            my_market->get_wait_list().notify(is_related_arena);
+            my_permit_manager->get_wait_list().notify(is_related_arena);
         }
     }
 }
