@@ -231,7 +231,7 @@ public:
                                  unsigned arena_index, std::size_t stack_size );
 
     //! Removes the arena from the market's list
-    bool try_destroy_arena (permit_manager_client*, uintptr_t aba_epoch, unsigned priority_level );
+    bool try_destroy_arena (permit_manager_client*, uintptr_t aba_epoch, unsigned priority_level ) override;
 
     //! Removes the arena from the market's list
     void detach_arena (tbb_permit_manager_client& );
