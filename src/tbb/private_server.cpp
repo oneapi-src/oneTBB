@@ -234,7 +234,7 @@ void private_worker::release_handle(thread_handle handle, bool join) {
 }
 
 void private_worker::start_shutdown() {
-    __TBB_ASSERT(my_state.load(std::memory_order_relaxed) != st_quit, "The thread has alredy been requested to quit");
+    __TBB_ASSERT(my_state.load(std::memory_order_relaxed) != st_quit, "The quit state is expected to be set only once");
 
     // memory_order_acquire to acquire my_handle
     state_t prev_state = my_state.exchange(st_quit, std::memory_order_acquire);

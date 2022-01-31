@@ -216,7 +216,7 @@ inline void thread_monitor::notify() {
 inline void thread_monitor::wait() {
     my_sema.P();
     // memory_order_seq_cst is required here to be ordered with
-    // futher loads checking shutdown state
+    // further load checking shutdown state
     my_notified.store(false, std::memory_order_seq_cst);
 }
 
