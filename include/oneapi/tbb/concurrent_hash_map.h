@@ -1149,7 +1149,7 @@ public:
                             std::is_constructible<key_type, const K&>::value,
                             bool>::type insert( const_accessor& result, const K& key ) {
         result.release();
-        return lookup</*insert*/true>(key, nullptr, &result, /*write=*/true, &allocate_node_default_construct<K>);
+        return lookup</*insert*/true>(key, nullptr, &result, /*write=*/false, &allocate_node_default_construct<K>);
     }
 
     template <typename K>
