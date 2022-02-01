@@ -383,13 +383,16 @@ public:
         , my_value(other.my_identity_element)
     { }
     void operator()(Range& range) {
-        my_value = my_real_body(range, const_cast<const Value&>(my_value));
+        my_value = my_real_body(range, std::move(my_value));
     }
     void join( lambda_reduce_body& rhs ) {
-        my_value = my_reduction(const_cast<const Value&>(my_value), const_cast<const Value&>(rhs.my_value));
+        my_value = my_reduction(std::move(my_value), std::move(rhs.my_value));
     }
-    Value result() const {
+    const Value& result() const& noexcept {
         return my_value;
+    }
+    Value&& result() && noexcept {
+      return std::move(my_value);
     }
 };
 
