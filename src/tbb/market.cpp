@@ -72,10 +72,6 @@ struct tbb_permit_manager_client : public permit_manager_client, public d1::intr
     void set_top_priority(bool b) {
         return m_is_top_priority.store(b, std::memory_order_relaxed);
     }
-
-    void bind_with_arena() {
-        m_arena.set_client(this);
-    }
 };
 
 /** This method must be invoked under my_arenas_list_mutex. **/
@@ -339,8 +335,39 @@ bool governor::does_client_join_workers (const rml::tbb_client &client) {
     return ((const market&)client).must_join_workers();
 }
 
+bool market::propagate_task_group_state(std::atomic<std::uint32_t> d1::task_group_context::* mptr_state, d1::task_group_context& src, std::uint32_t new_state) {
+    if (src.my_may_have_children.load(std::memory_order_relaxed) != d1::task_group_context::may_have_children)
+        return true;
+    // The whole propagation algorithm is under the lock in order to ensure correctness
+    // in case of concurrent state changes at the different levels of the context tree.
+    // See comment at the bottom of scheduler.cpp
+    context_state_propagation_mutex_type::scoped_lock lock(the_context_state_propagation_mutex);
+    if ((src.*mptr_state).load(std::memory_order_relaxed) != new_state)
+        // Another thread has concurrently changed the state. Back down.
+        return false;
+    // Advance global state propagation epoch
+    ++the_context_state_propagation_epoch;
+    // Propagate to all workers and external threads and sync up their local epochs with the global one
+    unsigned num_workers = my_first_unused_worker_idx;
+    for (unsigned i = 0; i < num_workers; ++i) {
+        thread_data* td = my_workers[i].load(std::memory_order_acquire);
+        // If the worker is only about to be registered, skip it.
+        if (td)
+            td->propagate_task_group_state(mptr_state, src, new_state);
+    }
+    // Propagate to all external threads
+    // The whole propagation sequence is locked, thus no contention is expected
+    for (thread_data_list_type::iterator it = my_masters.begin(); it != my_masters.end(); it++)
+        it->propagate_task_group_state(mptr_state, src, new_state);
+    return true;
+}
+
 permit_manager_client* market::create_client(arena& a, constraits_type*) {
-    return new tbb_permit_manager_client(a);
+    auto c = new tbb_permit_manager_client(a);
+    // Add newly created arena into the existing market's list.
+    arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex);
+    insert_arena_into_list(*c);
+    return c;
 }
 
 void market::destroy_client(permit_manager_client& c) {
@@ -356,21 +383,21 @@ void market::release_demand(permit_manager_client&) {
 }
 
 
-arena* market::create_arena ( int num_slots, int num_reserved_slots, unsigned arena_priority_level,
-                              std::size_t stack_size )
-{
-    __TBB_ASSERT( num_slots > 0, nullptr);
-    __TBB_ASSERT( num_reserved_slots <= num_slots, nullptr);
-    // Add public market reference for an external thread/task_arena (that adds an internal reference in exchange).
-    market &m = global_market( /*is_public=*/true, num_slots-num_reserved_slots, stack_size );
-    arena& a = arena::allocate_arena( m, num_slots, num_reserved_slots, arena_priority_level, m.my_arenas_aba_epoch.load(std::memory_order_relaxed) );
-    tbb_permit_manager_client* c = static_cast<tbb_permit_manager_client*>(m.create_client(a, nullptr));
-    c->bind_with_arena();
-    // Add newly created arena into the existing market's list.
-    arenas_list_mutex_type::scoped_lock lock(m.my_arenas_list_mutex);
-    m.insert_arena_into_list(*c);
-    return &a;
-}
+//arena* market::create_arena ( int num_slots, int num_reserved_slots, unsigned arena_priority_level,
+//                              std::size_t stack_size )
+//{
+//    __TBB_ASSERT( num_slots > 0, NULL );
+//    __TBB_ASSERT( num_reserved_slots <= num_slots, NULL );
+//    // Add public market reference for an external thread/task_arena (that adds an internal reference in exchange).
+//    market &m = global_market( /*is_public=*/true, num_slots-num_reserved_slots, stack_size );
+//    arena& a = arena::allocate_arena( m, num_slots, num_reserved_slots, arena_priority_level, m.my_arenas_aba_epoch.load(std::memory_order_relaxed) );
+//    tbb_permit_manager_client* c = static_cast<tbb_permit_manager_client*>(m.create_client(a, nullptr));
+//    c->bind_with_arena();
+//    // Add newly created arena into the existing market's list.
+//    arenas_list_mutex_type::scoped_lock lock(m.my_arenas_list_mutex);
+//    m.insert_arena_into_list(*c);
+//    return &a;
+//}
 
 /** This method must be invoked under my_arenas_list_mutex. **/
 void market::detach_arena (tbb_permit_manager_client& a ) {

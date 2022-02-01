@@ -83,7 +83,7 @@ task_dispatcher& create_coroutine(thread_data& td) {
     if (!task_disp) {
         void* ptr = cache_aligned_allocate(sizeof(task_dispatcher));
         task_disp = new(ptr) task_dispatcher(td.my_arena);
-        task_disp->init_suspend_point(td.my_arena, td.my_arena->my_market->worker_stack_size());
+        task_disp->init_suspend_point(td.my_arena, td.my_arena->my_permit_manager->worker_stack_size());
     }
     // Prolong the arena's lifetime until all coroutines is alive
     // (otherwise the arena can be destroyed while some tasks are suspended).

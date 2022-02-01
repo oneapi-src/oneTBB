@@ -21,6 +21,11 @@
 
 namespace tbb {
 namespace detail {
+
+namespace d1 {
+class task_group_context;
+}
+
 namespace r1 {
 
 class arena;
@@ -45,6 +50,10 @@ public:
     virtual void mandatory_concurrency_disable(permit_manager_client* c) = 0;
     virtual std::size_t worker_stack_size() const = 0;
     virtual bool release( bool is_public, bool blocking_terminate ) = 0;
+    virtual std::uintptr_t aba_epoch() = 0;
+    virtual bool propagate_task_group_state(std::atomic<uint32_t> d1::task_group_context::* mptr_state, d1::task_group_context& src, uint32_t new_state) = 0;
+    virtual void add_external_thread(thread_data& td) = 0;
+    virtual void remove_external_thread(thread_data& td) = 0;
 };
 
 

@@ -217,11 +217,7 @@ public:
     //! Add reference to market if theMarket exists
     static bool add_ref_unsafe( global_market_mutex_type::scoped_lock& lock, bool is_public, unsigned max_num_workers = 0, std::size_t stack_size = 0 );
 
-    //! Creates an arena object
-    /** If necessary, also creates global market instance, and boosts its ref count.
-        Each call to create_arena() must be matched by the call to arena::free_arena(). **/
-    static arena* create_arena ( int num_slots, int num_reserved_slots,
-                                 unsigned arena_index, std::size_t stack_size );
+    static market& global_market(bool is_public, unsigned workers_requested = 0, std::size_t stack_size = 0);
 
     //! Removes the arena from the market's list
     bool try_destroy_arena (permit_manager_client*, uintptr_t aba_epoch, unsigned priority_level ) override;
@@ -250,7 +246,7 @@ public:
 
     //! Request that arena's need in workers should be adjusted.
     /** Concurrent invocations are possible only on behalf of different arenas. **/
-    void adjust_demand (permit_manager_client&, int delta, bool mandatory );
+    void adjust_demand (permit_manager_client&, int delta, bool mandatory ) override;
 
     //! Used when RML asks for join mode during workers termination.
     bool must_join_workers () const { return my_join_workers; }
@@ -272,8 +268,7 @@ public:
         external thread can be passed to and executed by other external threads. This means
         that context trees can span several arenas at once and thus state change
         propagation cannot be generally localized to one arena only. **/
-    template <typename T>
-    bool propagate_task_group_state (std::atomic<T> d1::task_group_context::*mptr_state, d1::task_group_context& src, T new_state );
+    bool propagate_task_group_state (std::atomic<uint32_t> d1::task_group_context::*mptr_state, d1::task_group_context& src, uint32_t new_state ) override;
 
     //! List of registered external threads
     thread_data_list_type my_masters;
@@ -288,9 +283,13 @@ public:
         return theMarket? theMarket->my_num_workers_hard_limit : 0;
     }
 
-    void add_external_thread(thread_data& td);
+    void add_external_thread(thread_data& td) override;
 
-    void remove_external_thread(thread_data& td);
+    void remove_external_thread(thread_data& td) override;
+
+    uintptr_t aba_epoch() override {
+        return my_arenas_aba_epoch.load(std::memory_order_relaxed);
+    }
 }; // class market
 
 } // namespace r1
