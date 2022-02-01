@@ -558,8 +558,7 @@ struct task_group_context_impl {
     static void register_with(d1::task_group_context&, thread_data*);
     static void bind_to_impl(d1::task_group_context&, thread_data*);
     static void bind_to(d1::task_group_context&, thread_data*);
-    template <typename T>
-    static void propagate_task_group_state(d1::task_group_context&, std::atomic<T> d1::task_group_context::*, d1::task_group_context&, T);
+    static void propagate_task_group_state(d1::task_group_context&, std::atomic<uint32_t> d1::task_group_context::*, d1::task_group_context&, uint32_t);
     static bool cancel_group_execution(d1::task_group_context&);
     static bool is_group_execution_cancelled(const d1::task_group_context&);
     static void reset(d1::task_group_context&);

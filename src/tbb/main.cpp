@@ -38,6 +38,7 @@ basic_tls<thread_data*> governor::theTLS;
 rml::tbb_factory governor::theRMLServerFactory;
 bool governor::UsePrivateRML;
 bool governor::is_rethrow_broken;
+market_concurrent_monitor* governor::sleep_monitor;
 
 //------------------------------------------------------------------------
 // market data

@@ -353,6 +353,17 @@ void arena::enqueue_task(d1::task& t, d1::task_group_context& ctx, thread_data& 
     advertise_new_work<work_enqueued>();
 }
 
+arena& arena::create(int num_slots, int num_reserved_slots, unsigned arena_priority_level, std::size_t stack_size)
+{
+    __TBB_ASSERT(num_slots > 0, NULL);
+    __TBB_ASSERT(num_reserved_slots <= num_slots, NULL);
+    // Add public market reference for an external thread/task_arena (that adds an internal reference in exchange).
+    permit_manager& m = governor::get_permit_manager( /*is_public=*/true, num_slots - num_reserved_slots, stack_size);
+    arena& a = arena::allocate_arena(m, num_slots, num_reserved_slots, arena_priority_level, m.aba_epoch());
+    a.my_client = m.create_client(a, nullptr);
+    return a;
+}
+
 } // namespace r1
 } // namespace detail
 } // namespace tbb
@@ -445,13 +456,13 @@ void task_arena_impl::initialize(d1::task_arena_base& ta) {
 
     __TBB_ASSERT(ta.my_arena.load(std::memory_order_relaxed) == nullptr, "Arena already initialized");
     unsigned priority_level = arena_priority_level(ta.my_priority);
-    arena* a = permit_manager::create_arena(ta.my_max_concurrency, ta.my_num_reserved_slots, priority_level, /* stack_size = */ 0);
-    ta.my_arena.store(a, std::memory_order_release);
+    arena& a = arena::create(ta.my_max_concurrency, ta.my_num_reserved_slots, priority_level, /* stack_size = */ 0);
+    ta.my_arena.store(&a, std::memory_order_release);
     // add an internal market reference; a public reference was added in create_arena
-    permit_manager::global_market( /*is_public=*/false);
+    governor::get_permit_manager( /*is_public=*/false);
 #if __TBB_ARENA_BINDING
-    a->my_numa_binding_observer = construct_binding_observer(
-        static_cast<d1::task_arena*>(&ta), a->my_num_slots, ta.my_numa_id, ta.core_type(), ta.max_threads_per_core());
+    a.my_numa_binding_observer = construct_binding_observer(
+        static_cast<d1::task_arena*>(&ta), a.my_num_slots, ta.my_numa_id, ta.core_type(), ta.max_threads_per_core());
 #endif /*__TBB_ARENA_BINDING*/
 }
 
@@ -478,7 +489,7 @@ bool task_arena_impl::attach(d1::task_arena_base& ta) {
         __TBB_ASSERT(arena::num_arena_slots(ta.my_max_concurrency) == a->my_num_slots, nullptr);
         ta.my_arena.store(a, std::memory_order_release);
         // increases market's ref count for task_arena
-        permit_manager::global_market( /*is_public=*/true );
+        governor::get_permit_manager( /*is_public=*/true );
         return true;
     }
     return false;

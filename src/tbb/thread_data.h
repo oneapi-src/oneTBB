@@ -39,7 +39,7 @@ class task;
 class arena_slot;
 class task_group_context;
 class task_dispatcher;
-class tbb_permit_manager_client;
+struct tbb_permit_manager_client;
 
 class context_list : public intrusive_list<intrusive_list_node> {
 public:
@@ -136,8 +136,7 @@ public:
     void detach_task_dispatcher();
     void enter_task_dispatcher(task_dispatcher& task_disp, std::uintptr_t stealing_threshold);
     void leave_task_dispatcher();
-    template <typename T>
-    void propagate_task_group_state(std::atomic<T> d1::task_group_context::* mptr_state, d1::task_group_context& src, T new_state);
+    void propagate_task_group_state(std::atomic<uint32_t> d1::task_group_context::* mptr_state, d1::task_group_context& src, uint32_t new_state);
 
     //! Index of the arena slot the scheduler occupies now, or occupied last time
     unsigned short my_arena_index;
@@ -234,6 +233,21 @@ inline void thread_data::enter_task_dispatcher(task_dispatcher& task_disp, std::
 inline void thread_data::leave_task_dispatcher() {
     my_task_dispatcher->set_stealing_threshold(0);
     detach_task_dispatcher();
+}
+
+inline void thread_data::propagate_task_group_state(std::atomic<std::uint32_t> d1::task_group_context::* mptr_state, d1::task_group_context& src, std::uint32_t new_state) {
+    mutex::scoped_lock lock(my_context_list->m_mutex);
+    // Acquire fence is necessary to ensure that the subsequent node->my_next load
+    // returned the correct value in case it was just inserted in another thread.
+    // The fence also ensures visibility of the correct ctx.my_parent value.
+    for (context_list::iterator it = my_context_list->begin(); it != my_context_list->end(); ++it) {
+        d1::task_group_context& ctx = __TBB_get_object_ref(d1::task_group_context, my_node, &(*it));
+        if ((ctx.*mptr_state).load(std::memory_order_relaxed) != new_state)
+            task_group_context_impl::propagate_task_group_state(ctx, mptr_state, src, new_state);
+    }
+    // Sync up local propagation epoch with the global one. Release fence prevents
+    // reordering of possible store to *mptr_state after the sync point.
+    my_context_list->epoch.store(the_context_state_propagation_epoch.load(std::memory_order_relaxed), std::memory_order_release);
 }
 
 } // namespace r1

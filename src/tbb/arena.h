@@ -324,6 +324,8 @@ public:
     static arena& allocate_arena( permit_manager& m, unsigned num_slots, unsigned num_reserved_slots,
                                   unsigned priority_level, unsigned epoch );
 
+    static arena& arena::create(int num_slots, int num_reserved_slots, unsigned arena_priority_level, std::size_t stack_size);
+
     static int unsigned num_arena_slots ( unsigned num_slots ) {
         return max(2u, num_slots);
     }
@@ -420,10 +422,6 @@ public:
 
     int num_workers_requested() {
         return my_num_workers_requested;
-    }
-
-    void set_client(permit_manager_client* c) {
-        my_client = c;
     }
 
     unsigned references() {

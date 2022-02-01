@@ -189,21 +189,21 @@ void governor::init_external_thread() {
     int num_reserved_slots = 1;
     unsigned arena_priority_level = 1; // corresponds to tbb::task_arena::priority::normal
     std::size_t stack_size = 0;
-    arena& a = *market::create_arena(num_slots, num_reserved_slots, arena_priority_level, stack_size);
+    arena& a = arena::create(num_slots, num_reserved_slots, arena_priority_level, stack_size);
     // We need an internal reference to the market. TODO: is it legacy?
-    market::global_market(false);
+    get_permit_manager(false);
     // External thread always occupies the first slot
     thread_data& td = *new(cache_aligned_allocate(sizeof(thread_data))) thread_data(0, false);
     td.attach_arena(a, /*slot index*/ 0);
     __TBB_ASSERT(td.my_inbox.is_idle_state(false), nullptr);
 
-    stack_size = a.my_market->worker_stack_size();
+    stack_size = a.my_permit_manager->worker_stack_size();
     std::uintptr_t stack_base = get_stack_base(stack_size);
     task_dispatcher& task_disp = td.my_arena_slot->default_task_dispatcher();
     td.enter_task_dispatcher(task_disp, calculate_stealing_threshold(stack_base, stack_size));
 
     td.my_arena_slot->occupy();
-    a.my_market->add_external_thread(td);
+    a.my_permit_manager->add_external_thread(td);
     set_thread_data(td);
 #if (_WIN32||_WIN64) && !__TBB_DYNAMIC_LOAD_ENABLED
     // The external thread destructor is called from dllMain but it is not available with a static build.
@@ -227,7 +227,7 @@ void governor::auto_terminate(void* tls) {
         // Only external thread can be inside an arena during termination.
         if (td->my_arena_slot) {
             arena* a = td->my_arena;
-            market* m = a->my_market;
+            permit_manager* m = a->my_permit_manager;
 
             // If the TLS slot is already cleared by OS or underlying concurrency
             // runtime, restore its value to properly clean up arena
@@ -572,6 +572,10 @@ int __TBB_EXPORTED_FUNC constraints_threads_per_core(const d1::constraints&, int
     return system_topology::automatic;
 }
 #endif /* __TBB_ARENA_BINDING */
+
+permit_manager& governor::get_permit_manager(bool is_public, unsigned max_num_workers, std::size_t stack_size) {
+    return market::global_market(is_public, max_num_workers, stack_size);
+}
 
 } // namespace r1
 } // namespace detail

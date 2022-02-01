@@ -30,6 +30,7 @@ class market;
 class thread_data;
 class __TBB_InitOnce;
 class market_concurrent_monitor;
+class permit_manager;
 
 #if __TBB_USE_ITT_NOTIFY
 //! Defined in profiling.cpp
@@ -151,7 +152,7 @@ public:
     }
 
     //! Factory method creating new market object
-    static market& global_market( bool is_public, unsigned max_num_workers = 0, std::size_t stack_size = 0 );
+    static permit_manager& get_permit_manager( bool is_public, unsigned max_num_workers = 0, std::size_t stack_size = 0 );
 
     //! Return wait list
     static market_concurrent_monitor& get_wait_list() { 
