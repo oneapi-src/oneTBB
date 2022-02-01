@@ -35,9 +35,9 @@ inline namespace d0 {
 
 template <typename Body, typename Range>
 concept parallel_reduce_body = splittable<Body> &&
-                               requires( Body& body, const Range& range, Body& rhs ) {
+                               requires( Body& body, const Range& range, Body&& rhs ) {
                                    body(range);
-                                   body.join(rhs);
+                                   body.join(std::move(rhs));
                                };
 
 template <typename Function, typename Range, typename Value>
@@ -74,7 +74,7 @@ struct reduction_tree_node : public tree_node {
 
     void join(task_group_context* context) {
         if (has_right_zombie && !context->is_group_execution_cancelled())
-            left_body.join(*zombie_space.begin());
+            left_body.join(std::move(*zombie_space.begin()));
     }
 
     ~reduction_tree_node() {
@@ -236,7 +236,7 @@ struct deterministic_reduction_tree_node : public tree_node {
 
     void join(task_group_context* context) {
         if (!context->is_group_execution_cancelled())
-            left_body.join(right_body);
+            left_body.join(std::move(right_body));
     }
 };
 
@@ -385,7 +385,7 @@ public:
     void operator()(Range& range) {
         my_value = my_real_body(range, std::move(my_value));
     }
-    void join( lambda_reduce_body& rhs ) {
+    void join( lambda_reduce_body&& rhs ) {
         my_value = my_reduction(std::move(my_value), std::move(rhs.my_value));
     }
     const Value& result() const& noexcept {
@@ -406,7 +406,7 @@ public:
     - \code Body::~Body(); \endcode                     Destructor
     - \code void Body::operator()( Range& r ); \endcode Function call operator applying body to range \c r
                                                         and accumulating the result
-    - \code void Body::join( Body& b ); \endcode        Join results.
+    - \code void Body::join( Body&& b ); \endcode       Join results.
                                                         The result in \c b should be merged into the result of \c this
 **/
 
