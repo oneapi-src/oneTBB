@@ -35,16 +35,16 @@ public:
     virtual permit_manager_client* create_client(arena& a, constraits_type* constraits) = 0;
     virtual void destroy_client(permit_manager_client& c) = 0;
 
-    // ??? Update demand ???
-    // virtual void update_resource_request(unsigned min, unsigned max, client&) = 0;
-    // virtual void release_resource_request(client&) = 0;
-
     virtual void request_demand(unsigned min, unsigned max, permit_manager_client&) = 0;
     virtual void release_demand(permit_manager_client&) = 0;
 
-        //! Removes the arena from the market's list
-    virtual bool try_destroy_arena (permit_manager_client*, uintptr_t aba_epoch, unsigned priority_level ) = 0;
-
+    // Remove this trash from PM
+    virtual bool try_destroy_arena(permit_manager_client*, uintptr_t aba_epoch, unsigned priority_level) = 0;
+    virtual void adjust_demand (permit_manager_client&, int delta, bool mandatory ) = 0;
+    virtual void enable_mandatory_concurrency(permit_manager_client* c) = 0;
+    virtual void mandatory_concurrency_disable(permit_manager_client* c) = 0;
+    virtual std::size_t worker_stack_size() const = 0;
+    virtual bool release( bool is_public, bool blocking_terminate ) = 0;
 };
 
 

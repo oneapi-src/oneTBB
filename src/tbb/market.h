@@ -214,10 +214,6 @@ public:
     void request_demand(unsigned min, unsigned max, permit_manager_client&) override;
     void release_demand(permit_manager_client&) override;
 
-
-    //! Factory method creating new market object
-    static market& global_market( bool is_public, unsigned max_num_workers = 0, std::size_t stack_size = 0 );
-
     //! Add reference to market if theMarket exists
     static bool add_ref_unsafe( global_market_mutex_type::scoped_lock& lock, bool is_public, unsigned max_num_workers = 0, std::size_t stack_size = 0 );
 
@@ -234,7 +230,7 @@ public:
     void detach_arena (tbb_permit_manager_client& );
 
     //! Decrements market's refcount and destroys it in the end
-    bool release ( bool is_public, bool blocking_terminate );
+    bool release ( bool is_public, bool blocking_terminate ) override;
 
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
     //! Imlpementation of mandatory concurrency enabling
@@ -243,13 +239,13 @@ public:
     bool is_global_concurrency_disabled(permit_manager_client*c );
 
     //! Inform the external thread that there is an arena with mandatory concurrency
-    void enable_mandatory_concurrency (permit_manager_client*c );
+    void enable_mandatory_concurrency (permit_manager_client*c ) override;
 
     //! Inform the external thread that the arena is no more interested in mandatory concurrency
     void disable_mandatory_concurrency_impl(tbb_permit_manager_client* a);
 
     //! Inform the external thread that the arena is no more interested in mandatory concurrency
-    void mandatory_concurrency_disable (permit_manager_client*a );
+    void mandatory_concurrency_disable (permit_manager_client*c ) override;
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
 
     //! Request that arena's need in workers should be adjusted.
@@ -260,7 +256,7 @@ public:
     bool must_join_workers () const { return my_join_workers; }
 
     //! Returns the requested stack size of worker threads.
-    std::size_t worker_stack_size () const { return my_stack_size; }
+    std::size_t worker_stack_size() const override { return my_stack_size; }
 
     //! Set number of active workers
     static void set_active_num_workers( unsigned w );
