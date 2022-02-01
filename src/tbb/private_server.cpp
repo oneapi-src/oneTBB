@@ -236,8 +236,9 @@ void private_worker::release_handle(thread_handle handle, bool join) {
 void private_worker::start_shutdown() {
     __TBB_ASSERT(my_state.load(std::memory_order_relaxed) != st_quit, "The quit state is expected to be set only once");
 
-    // memory_order_acquire to acquire my_handle
-    state_t prev_state = my_state.exchange(st_quit, std::memory_order_acquire);
+    // `acq` to acquire my_handle
+    // `rel` to release market state
+    state_t prev_state = my_state.exchange(st_quit, std::memory_order_acq_rel);
 
     if (prev_state == st_init) {
         // Perform action that otherwise would be performed by associated thread when it quits.
@@ -281,31 +282,40 @@ void private_worker::run() noexcept {
 }
 
 inline void private_worker::wake_or_launch() {
-    state_t expected_state = st_init;
-    if( my_state.compare_exchange_strong( expected_state, st_starting ) ) {
-        // after this point, remove_server_ref() must be done by created thread
-#if __TBB_USE_WINAPI
-        my_handle = thread_monitor::launch( thread_routine, this, my_server.my_stack_size, &this->my_index );
-#elif __TBB_USE_POSIX
-        {
-        affinity_helper fpa;
-        fpa.protect_affinity_mask( /*restore_process_mask=*/true );
-        my_handle = thread_monitor::launch( thread_routine, this, my_server.my_stack_size );
-        // Implicit destruction of fpa resets original affinity mask.
-        }
-#endif /* __TBB_USE_POSIX */
-        expected_state = st_starting;
-        if ( !my_state.compare_exchange_strong( expected_state, st_normal ) ) {
-            // Do shutdown during startup. my_handle can't be released
-            // by start_shutdown, because my_handle value might be not set yet
-            // at time of transition from st_starting to st_quit.
-            __TBB_ASSERT( expected_state==st_quit, nullptr);
-            release_handle(my_handle, governor::does_client_join_workers(my_client));
-        }
-    }
-    else {
-        __TBB_ASSERT( !my_next, "Should not wake a thread while it's still in asleep list" );
+    state_t state = my_state.load(std::memory_order_relaxed);
+
+    switch (state) {
+    case st_starting:
+        __TBB_fallthrough;
+    case st_normal:
+        __TBB_ASSERT(!my_next, "Should not wake a thread while it's still in asleep list");
         my_thread_monitor.notify();
+        break;
+    case st_init:
+        if (my_state.compare_exchange_strong(state, st_starting)) {
+            // after this point, remove_server_ref() must be done by created thread
+#if __TBB_USE_WINAPI
+            my_handle = thread_monitor::launch(thread_routine, this, my_server.my_stack_size, &this->my_index);
+#elif __TBB_USE_POSIX
+            {
+                affinity_helper fpa;
+                fpa.protect_affinity_mask( /*restore_process_mask=*/true);
+                my_handle = thread_monitor::launch(thread_routine, this, my_server.my_stack_size);
+                // Implicit destruction of fpa resets original affinity mask.
+            }
+#endif /* __TBB_USE_POSIX */
+            state = st_starting;
+            if (!my_state.compare_exchange_strong(state, st_normal)) {
+                // Do shutdown during startup. my_handle can't be released
+                // by start_shutdown, because my_handle value might be not set yet
+                // at time of transition from st_starting to st_quit.
+                __TBB_ASSERT(state == st_quit, nullptr);
+                release_handle(my_handle, governor::does_client_join_workers(my_client));
+            }
+        }
+        break;
+    default:
+        __TBB_ASSERT(state == st_quit, nullptr);
     }
 }
 
