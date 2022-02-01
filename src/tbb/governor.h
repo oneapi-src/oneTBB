@@ -150,6 +150,9 @@ public:
 #endif
     }
 
+    //! Factory method creating new market object
+    static market& global_market( bool is_public, unsigned max_num_workers = 0, std::size_t stack_size = 0 );
+
     //! Return wait list
     static market_concurrent_monitor& get_wait_list() { 
         return *sleep_monitor;

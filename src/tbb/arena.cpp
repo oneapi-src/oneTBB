@@ -379,12 +379,12 @@ void assert_arena_priority_valid( tbb::task_arena::priority ) {}
 
 unsigned arena_priority_level( tbb::task_arena::priority a_priority ) {
     assert_arena_priority_valid( a_priority );
-    return permit_manager::num_priority_levels - unsigned(int(a_priority) / d1::priority_stride);
+    return d1::num_priority_levels - unsigned(int(a_priority) / d1::priority_stride);
 }
 
 tbb::task_arena::priority arena_priority( unsigned priority_level ) {
     auto priority = tbb::task_arena::priority(
-        (permit_manager::num_priority_levels - priority_level) * d1::priority_stride
+        (d1::num_priority_levels - priority_level) * d1::priority_stride
     );
     assert_arena_priority_valid( priority );
     return priority;
