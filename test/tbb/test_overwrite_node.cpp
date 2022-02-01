@@ -230,3 +230,33 @@ TEST_CASE("try_release"){
 
     CHECK_MESSAGE ((on.try_release()== true), "try_release should return true");
 }
+
+template< typename Type >
+struct fake_receiver : public tbb::flow::receiver<Type>, utils::NoAssign {
+    tbb::flow::graph& my_graph;
+
+    fake_receiver(tbb::flow::graph& g) : my_graph(g) {}
+
+    tbb::detail::d1::graph_task* try_put_task(const Type&) override {
+        return nullptr;
+    }
+
+    tbb::flow::graph& graph_reference() const override {
+        return my_graph;
+    }
+};
+
+//! Test for cancel register_predecessor_task
+//! \brief \ref error_guessing
+TEST_CASE("Cancel register_predecessor_task") {
+    tbb::flow::graph g;
+
+    fake_receiver<size_t> r(g);
+    oneapi::tbb::flow::overwrite_node<size_t> node(g);
+
+    node.try_put(1);
+    tbb::flow::make_edge(node, r);
+
+    g.cancel();
+    g.wait_for_all();
+}
