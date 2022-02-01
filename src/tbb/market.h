@@ -84,9 +84,6 @@ private:
     //! Pointer to the RML server object that services this TBB instance.
     rml::tbb_server* my_server;
 
-    //! Waiting object for external and coroutine waiters.
-    market_concurrent_monitor my_sleep_monitor;
-
     //! Maximal number of workers allowed for use by the underlying resource manager
     /** It can't be changed after market creation. **/
     unsigned my_num_workers_hard_limit;
@@ -238,9 +235,6 @@ public:
 
     //! Decrements market's refcount and destroys it in the end
     bool release ( bool is_public, bool blocking_terminate );
-
-    //! Return wait list
-    market_concurrent_monitor& get_wait_list() { return my_sleep_monitor; }
 
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
     //! Imlpementation of mandatory concurrency enabling
