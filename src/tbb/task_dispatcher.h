@@ -71,7 +71,7 @@ inline d1::task* suspend_point_type::resume_task::execute(d1::execution_data& ed
         thread_data* td = ed_ext.task_disp->m_thread_data;
         td->set_post_resume_action(task_dispatcher::post_resume_action::register_waiter, &monitor_node);
 
-        market_concurrent_monitor& wait_list = td->my_arena->my_market->get_wait_list();
+        market_concurrent_monitor& wait_list = governor::get_wait_list();
 
         if (wait_list.wait([&] { return !ed_ext.wait_ctx->continue_execution(); }, monitor_node)) {
             return nullptr;

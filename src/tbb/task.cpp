@@ -186,7 +186,7 @@ void task_dispatcher::do_post_resume_action() {
         auto is_our_suspend_point = [sp] (market_context ctx) {
             return std::uintptr_t(sp) == ctx.my_uniq_addr;
         };
-        td->my_arena->my_market->get_wait_list().notify(is_our_suspend_point);
+        governor::get_wait_list().notify(is_our_suspend_point);
         break;
     }
     default:
@@ -218,7 +218,7 @@ void notify_waiters(std::uintptr_t wait_ctx_addr) {
         return wait_ctx_addr == context.my_uniq_addr;
     };
 
-    r1::governor::get_thread_data()->my_arena->my_market->get_wait_list().notify(is_related_wait_ctx);
+    governor::get_wait_list().notify(is_related_wait_ctx);
 }
 
 } // namespace r1

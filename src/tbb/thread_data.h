@@ -39,6 +39,7 @@ class task;
 class arena_slot;
 class task_group_context;
 class task_dispatcher;
+class tbb_permit_manager_client;
 
 class context_list : public intrusive_list<intrusive_list_node> {
 public:

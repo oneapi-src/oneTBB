@@ -633,7 +633,7 @@ void arena::advertise_new_work() {
             my_permit_manager->adjust_demand(*this->my_client, my_max_num_workers, /* mandatory = */ false);
 
             // Notify all sleeping threads that work has appeared in the arena.
-            my_permit_manager->get_wait_list().notify(is_related_arena);
+            governor::get_wait_list().notify(is_related_arena);
         }
     }
 }

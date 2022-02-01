@@ -21,6 +21,7 @@
 #include "arena.h"
 #include "dynamic_link.h"
 #include "concurrent_monitor.h"
+#include "market_concurrent_monitor.h"
 
 #include "oneapi/tbb/task_group.h"
 #include "oneapi/tbb/global_control.h"
@@ -68,6 +69,7 @@ void governor::acquire_resources () {
     detect_cpu_features(cpu_features);
 
     is_rethrow_broken = gcc_rethrow_exception_broken();
+    sleep_monitor = new (cache_aligned_allocate(sizeof(market_concurrent_monitor))) market_concurrent_monitor;
 }
 
 void governor::release_resources () {
@@ -79,6 +81,8 @@ void governor::release_resources () {
     int status = theTLS.destroy();
     if( status )
         runtime_warning("failed to destroy task scheduler TLS: %s", std::strerror(status));
+    sleep_monitor->~market_concurrent_monitor();
+    cache_aligned_deallocate(sleep_monitor);
     clear_address_waiter_table();
 
     system_topology::destroy();
