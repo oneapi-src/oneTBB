@@ -364,7 +364,7 @@ is not guaranteed to be executed next by the current thread.
         root.wait_for_all();;
     }
 
-In oneTBB this can be done using ``oneapi::tbb::task_group``. 
+In oneTBB, this can be done using ``oneapi::tbb::task_group``. 
 
 .. code:: cpp
    
@@ -420,7 +420,7 @@ and waiting on it is implemented as follows:
         // i.e. after the callback is called  
     }
 
-In oneTBB this can be done using ``oneapi::tbb::task_group``.
+In oneTBB, this can be done using ``oneapi::tbb::task_group``.
 
 .. code:: cpp
 

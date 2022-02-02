@@ -72,7 +72,7 @@ As an optimization hint, ``F`` might return a ``task_handle``, which task object
 As an optimization hint, ``F`` might return a ``task_handle``, which task object can be executed next.
 
 .. note::
-   The ``task_handle`` returned by the function must be created with ``*this`` ``task_group``. It means, with the one for which run method is called, otherwise it is an undefined behavior. 
+   The ``task_handle`` returned by the function must be created using ``*this`` ``task_group``. It means, with the one for which the run method is called, otherwise it is undefined behavior. 
 
  
 .. cpp:function:: template<typename F> void  run(F&& f)
