@@ -220,6 +220,12 @@ void governor::auto_terminate(void* tls) {
             arena* a = td->my_arena;
             market* m = a->my_market;
 
+            // If the TLS slot is already cleared by OS or underlying concurrency
+            // runtime, restore its value to properly clean up arena
+            if (!is_thread_data_set(td)) {
+                set_thread_data(*td);
+            }
+
             a->my_observers.notify_exit_observers(td->my_last_observer, td->my_is_worker);
 
             td->my_task_dispatcher->m_stealing_threshold = 0;
