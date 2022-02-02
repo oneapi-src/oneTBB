@@ -190,22 +190,22 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: windows-2016
-            generator: Visual Studio 15 2017
+          - os: windows-2019
+            generator: Visual Studio 16 2019
             c_compiler: cl
             cxx_compiler: cl
             std: 14
             build_type: relwithdebinfo
             preview: 'ON'
-            job_name: windows_cl2017_cxx14_relwithdebinfo_preview=ON
-          - os: windows-2019
-            generator: Visual Studio 16 2019
+            job_name: windows_cl2019_cxx14_relwithdebinfo_preview=ON
+          - os: windows-2022
+            generator: Visual Studio 17 2022
             c_compiler: cl
             cxx_compiler: cl
             std: 17
             build_type: relwithdebinfo
             preview: 'OFF'
-            job_name: windows_cl2019_cxx17_relwithdebinfo_preview=OFF
+            job_name: windows_cl2022_cxx17_relwithdebinfo_preview=OFF
     steps:
       - uses: actions/checkout@v2
       - name: Run testing
@@ -290,22 +290,22 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: windows-2016
-            generator: Visual Studio 15 2017
+          - os: windows-2019
+            generator: Visual Studio 16 2019
             c_compiler: cl
             cxx_compiler: cl
             std: 14
             build_type: relwithdebinfo
             preview: 'ON'
-            job_name: examples_windows_cl2017_cxx14_relwithdebinfo_preview=ON
-          - os: windows-2019
-            generator: Visual Studio 16 2019
+            job_name: examples_windows_cl2019_cxx14_relwithdebinfo_preview=ON
+          - os: windows-2022
+            generator: Visual Studio 17 2022
             c_compiler: cl
             cxx_compiler: cl
             std: 17
             build_type: relwithdebinfo
             preview: 'OFF'
-            job_name: examples_windows_cl2019_cxx17_relwithdebinfo_preview=OFF
+            job_name: examples_windows_cl2022_cxx17_relwithdebinfo_preview=OFF
     steps:
       - uses: actions/checkout@v2
       - name: Run testing
