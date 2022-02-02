@@ -1003,7 +1003,7 @@ void CMemTest::RunAllTests(int total_threads)
     TestAlignedParameters();
     UniquePointer();
     AddrArifm();
-#if __APPLE__ || __TBB_USE_THREAD_SANITIZER
+#if __APPLE__ || __HAIKU__ || __TBB_USE_THREAD_SANITIZER
     REPORT("Known issue: some tests are skipped on macOS\n");
 #else
     // TODO: enable

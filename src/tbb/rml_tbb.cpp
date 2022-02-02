@@ -54,6 +54,8 @@ namespace rml {
 #define RML_SERVER_NAME "libirml" DEBUG_SUFFIX ".so"
 #elif __unix__
 #define RML_SERVER_NAME "libirml" DEBUG_SUFFIX ".so.1"
+#elif __HAIKU__
+#define RML_SERVER_NAME "libirml" DEBUG_SUFFIX ".so.1"
 #else
 #error Unknown OS
 #endif

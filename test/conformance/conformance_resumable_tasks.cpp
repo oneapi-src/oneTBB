@@ -16,7 +16,7 @@
 
 #include "common/test.h"
 
-#if (!__TBB_WIN8UI_SUPPORT && !defined(WINAPI_FAMILY) && !__ANDROID__)
+#if (!__TBB_WIN8UI_SUPPORT && !defined(WINAPI_FAMILY) && !__ANDROID__  && !__HAIKU__)
 
 #include "oneapi/tbb/task.h"
 #include "oneapi/tbb/task_group.h"

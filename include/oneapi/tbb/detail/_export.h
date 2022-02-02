@@ -21,6 +21,8 @@
     #define _EXPORT __declspec(dllexport)
 #elif defined(_WIN32) || defined(__unix__) || defined(__APPLE__) // Use .def files for these
     #define _EXPORT
+#elif defined(__HAIKU__) // _EXPORT gets redefined in BeBuild.h HAIKU specific header
+    #include <os/BeBuild.h>
 #else
     #error "Unknown platform/compiler"
 #endif
