@@ -215,6 +215,12 @@ void governor::auto_terminate(void* tls) {
     if (tls) {
         thread_data* td = static_cast<thread_data*>(tls);
 
+        auto clear_tls = [td] {
+            td->~thread_data();
+            cache_aligned_deallocate(td);
+            clear_thread_data();
+        };
+
         // Only external thread can be inside an arena during termination.
         if (td->my_arena_slot) {
             arena* a = td->my_arena;
@@ -228,21 +234,22 @@ void governor::auto_terminate(void* tls) {
 
             a->my_observers.notify_exit_observers(td->my_last_observer, td->my_is_worker);
 
-            td->my_task_dispatcher->m_stealing_threshold = 0;
             td->detach_task_dispatcher();
             td->my_arena_slot->release();
             // Release an arena
             a->on_thread_leaving<arena::ref_external>();
 
             m->remove_external_thread(*td);
+
+            // The tls should be cleared before market::release because
+            // market can destroy the tls key if we keep the last reference
+            clear_tls();
+
             // If there was an associated arena, it added a public market reference
             m->release( /*is_public*/ true, /*blocking_terminate*/ false);
+        } else {
+            clear_tls();
         }
-
-        td->~thread_data();
-        cache_aligned_deallocate(td);
-
-        clear_thread_data();
     }
     __TBB_ASSERT(get_thread_data_if_initialized() == nullptr, nullptr);
 }
