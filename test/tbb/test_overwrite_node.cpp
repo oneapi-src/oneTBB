@@ -251,6 +251,6 @@ TEST_CASE("Cancel register_predecessor_task") {
     // overwrite_node successor and spanw register_predecessor_task
     tbb::flow::make_edge(node, tbb::flow::input_port<0>(j_node));
 
-    // Wait for cancellation spawned tasks
+    // Wait for cancellation of spawned tasks
     g.wait_for_all();
 }
