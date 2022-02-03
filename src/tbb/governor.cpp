@@ -196,8 +196,7 @@ void governor::init_external_thread() {
     stack_size = a.my_market->worker_stack_size();
     std::uintptr_t stack_base = get_stack_base(stack_size);
     task_dispatcher& task_disp = td.my_arena_slot->default_task_dispatcher();
-    task_disp.set_stealing_threshold(calculate_stealing_threshold(stack_base, stack_size));
-    td.attach_task_dispatcher(task_disp);
+    td.enter_task_dispatcher(task_disp, calculate_stealing_threshold(stack_base, stack_size));
 
     td.my_arena_slot->occupy();
     a.my_market->add_external_thread(td);
@@ -234,7 +233,7 @@ void governor::auto_terminate(void* tls) {
 
             a->my_observers.notify_exit_observers(td->my_last_observer, td->my_is_worker);
 
-            td->detach_task_dispatcher();
+            td->leave_task_dispatcher();
             td->my_arena_slot->release();
             // Release an arena
             a->on_thread_leaving<arena::ref_external>();
