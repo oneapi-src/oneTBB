@@ -239,16 +239,18 @@ TEST_CASE("Cancel register_predecessor_task") {
     // calling cancel method of spawned tasks
     g.cancel();
 
-    // To spanw register_predecessor_task internal buffer of overwrite_node
+    // To spawn register_predecessor_task internal buffer of overwrite_node
     // should be valid and successor should failed during putting an item to it
     oneapi::tbb::flow::overwrite_node<size_t> node(g);
-    // join_node always fails during putting an item to it
+    // Reserving join_node always fails during putting an item to it
     tbb::flow::join_node<std::tuple<size_t>, tbb::flow::reserving> j_node(g);
 
     // Make internal buffer of overwrite_node valid
     node.try_put(1);
-    // Make edge between overwrite_node and join_node, register join_node as
-    // overwrite_node successor and spanw register_predecessor_task
+    // Making an edge attempts pushing an item to join_node
+    // that immediately fails and tries to reverse an edge into PULL state
+    // by spawning register_predecessor_task, which will be cancelled
+    // during execution
     tbb::flow::make_edge(node, tbb::flow::input_port<0>(j_node));
 
     // Wait for cancellation of spawned tasks
