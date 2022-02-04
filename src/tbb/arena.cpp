@@ -126,9 +126,8 @@ void arena::process(thread_data& tls) {
     }
 
     task_dispatcher& task_disp = tls.my_arena_slot->default_task_dispatcher();
-    task_disp.set_stealing_threshold(calculate_stealing_threshold());
+    tls.enter_task_dispatcher(task_disp, calculate_stealing_threshold());
     __TBB_ASSERT(task_disp.can_steal(), nullptr);
-    tls.attach_task_dispatcher(task_disp);
 
     __TBB_ASSERT( !tls.my_last_observer, "There cannot be notified local observers when entering arena" );
     my_observers.notify_entry_observers(tls.my_last_observer, tls.my_is_worker);
@@ -147,8 +146,7 @@ void arena::process(thread_data& tls) {
     my_observers.notify_exit_observers(tls.my_last_observer, tls.my_is_worker);
     tls.my_last_observer = nullptr;
 
-    task_disp.set_stealing_threshold(0);
-    tls.detach_task_dispatcher();
+    tls.leave_task_dispatcher();
 
     // Arena slot detach (arena may be used in market::process)
     // TODO: Consider moving several calls below into a new method(e.g.detach_arena).
@@ -526,8 +524,7 @@ public:
             if (td.my_inbox.is_idle_state(true))
                 td.my_inbox.set_is_idle(false);
             task_dispatcher& task_disp = td.my_arena_slot->default_task_dispatcher();
-            task_disp.set_stealing_threshold(m_orig_execute_data_ext.task_disp->m_stealing_threshold);
-            td.attach_task_dispatcher(task_disp);
+            td.enter_task_dispatcher(task_disp, m_orig_execute_data_ext.task_disp->m_stealing_threshold);
 
             // If the calling thread occupies the slots out of external thread reserve we need to notify the
             // market that this arena requires one worker less.
@@ -571,8 +568,7 @@ public:
                 td.my_arena->my_market->adjust_demand(*td.my_arena, /* delta = */ 1, /* mandatory = */ false);
             }
 
-            td.my_task_dispatcher->set_stealing_threshold(0);
-            td.detach_task_dispatcher();
+            td.leave_task_dispatcher();
             td.my_arena_slot->release();
             td.my_arena->my_exit_monitors.notify_one(); // do not relax!
 

@@ -196,8 +196,7 @@ void governor::init_external_thread() {
     stack_size = a.my_market->worker_stack_size();
     std::uintptr_t stack_base = get_stack_base(stack_size);
     task_dispatcher& task_disp = td.my_arena_slot->default_task_dispatcher();
-    task_disp.set_stealing_threshold(calculate_stealing_threshold(stack_base, stack_size));
-    td.attach_task_dispatcher(task_disp);
+    td.enter_task_dispatcher(task_disp, calculate_stealing_threshold(stack_base, stack_size));
 
     td.my_arena_slot->occupy();
     a.my_market->add_external_thread(td);
@@ -215,28 +214,41 @@ void governor::auto_terminate(void* tls) {
     if (tls) {
         thread_data* td = static_cast<thread_data*>(tls);
 
+        auto clear_tls = [td] {
+            td->~thread_data();
+            cache_aligned_deallocate(td);
+            clear_thread_data();
+        };
+
         // Only external thread can be inside an arena during termination.
         if (td->my_arena_slot) {
             arena* a = td->my_arena;
             market* m = a->my_market;
 
+            // If the TLS slot is already cleared by OS or underlying concurrency
+            // runtime, restore its value to properly clean up arena
+            if (!is_thread_data_set(td)) {
+                set_thread_data(*td);
+            }
+
             a->my_observers.notify_exit_observers(td->my_last_observer, td->my_is_worker);
 
-            td->my_task_dispatcher->m_stealing_threshold = 0;
-            td->detach_task_dispatcher();
+            td->leave_task_dispatcher();
             td->my_arena_slot->release();
             // Release an arena
             a->on_thread_leaving<arena::ref_external>();
 
             m->remove_external_thread(*td);
+
+            // The tls should be cleared before market::release because
+            // market can destroy the tls key if we keep the last reference
+            clear_tls();
+
             // If there was an associated arena, it added a public market reference
             m->release( /*is_public*/ true, /*blocking_terminate*/ false);
+        } else {
+            clear_tls();
         }
-
-        td->~thread_data();
-        cache_aligned_deallocate(td);
-
-        clear_thread_data();
     }
     __TBB_ASSERT(get_thread_data_if_initialized() == nullptr, nullptr);
 }

@@ -650,7 +650,7 @@ void global_actor() {
 TEST_CASE("Stress test with mixing functionality") {
     // TODO add thread recreation
     // TODO: Enable statistics
-    // tbb::task_scheduler_handle handle = tbb::task_scheduler_handle::get();
+    tbb::task_scheduler_handle handle{ tbb::attach{} };
 
     const std::size_t numExtraThreads = 16;
     utils::SpinBarrier startBarrier{numExtraThreads};
@@ -661,7 +661,7 @@ TEST_CASE("Stress test with mixing functionality") {
 
     arenaTable.shutdown();
 
-    // tbb::finalize(handle, std::nothrow_t{});
+    tbb::finalize(handle);
 
     // gStats.report();
 }

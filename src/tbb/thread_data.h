@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2021 Intel Corporation
+    Copyright (c) 2020-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -132,7 +132,8 @@ public:
     bool is_attached_to(arena*);
     void attach_task_dispatcher(task_dispatcher&);
     void detach_task_dispatcher();
-    void context_list_cleanup();
+    void enter_task_dispatcher(task_dispatcher& task_disp, std::uintptr_t stealing_threshold);
+    void leave_task_dispatcher();
     template <typename T>
     void propagate_task_group_state(std::atomic<T> d1::task_group_context::* mptr_state, d1::task_group_context& src, T new_state);
 
@@ -245,6 +246,16 @@ inline void thread_data::detach_task_dispatcher() {
     __TBB_ASSERT(my_task_dispatcher->m_thread_data == this, nullptr);
     my_task_dispatcher->m_thread_data = nullptr;
     my_task_dispatcher = nullptr;
+}
+
+inline void thread_data::enter_task_dispatcher(task_dispatcher& task_disp, std::uintptr_t stealing_threshold) {
+    task_disp.set_stealing_threshold(stealing_threshold);
+    attach_task_dispatcher(task_disp);
+}
+
+inline void thread_data::leave_task_dispatcher() {
+    my_task_dispatcher->set_stealing_threshold(0);
+    detach_task_dispatcher();
 }
 
 } // namespace r1
