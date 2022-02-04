@@ -51,7 +51,7 @@ No anonymous contributions are accepted. The name in the commit message Signed-o
 * Document your code. The oneTBB project uses reStructuredText for documentation.  
 * Update the copyright year in the first line of the changing file(s). 
   For example, if you commit your changes in 2022:
-  * the copyright year should be `2005-2022` for exesting files
+  * the copyright year should be `2005-2022` for existing files
   * the copyright year should be `2022` for new files
 * Submit a pull request into the master branch. You can submit changes with a pull request (preferred) or by sending an email patch.  
 
