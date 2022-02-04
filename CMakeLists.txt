@@ -278,7 +278,7 @@ if (TBB_BENCH)
 endif()
 
 if (ANDROID_PLATFORM)
-    if (${ANDROID_STL} STREQUAL "c++_shared")
+    if ("${ANDROID_STL}" STREQUAL "c++_shared")
         configure_file(
         "${ANDROID_NDK}/sources/cxx-stl/llvm-libc++/libs/${ANDROID_ABI}/libc++_shared.so"
         "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libc++_shared.so"
