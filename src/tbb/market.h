@@ -48,6 +48,29 @@ class permit_manager_client;
 struct tbb_permit_manager_client;
 class task_group_context;
 
+class thread_pool : no_copy {
+public:
+    // void wake_up(thread_pool_ticket& ticket, unsigned request) {
+    //     suppress_unused_warning(ticket, request);
+    // }
+
+    void insert_ticket() {
+        ticket_list_mutex_type::scoped_lock lock(m_mutex);
+    }
+
+    void remove_ticket() {
+        ticket_list_mutex_type::scoped_lock lock(m_mutex);
+    }
+
+private:
+    using ticket_list_type = intrusive_list<thread_pool_ticket>;
+    using ticket_list_mutex_type = d1::rw_mutex;
+
+    static constexpr unsigned num_priority_levels = 3;
+    ticket_list_mutex_type m_mutex;
+    ticket_list_type m_ticket_list;
+};
+
 //------------------------------------------------------------------------
 // Class market
 //------------------------------------------------------------------------
