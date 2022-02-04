@@ -47,29 +47,8 @@ namespace r1 {
 class permit_manager_client;
 struct tbb_permit_manager_client;
 class task_group_context;
+class thread_pool;
 
-class thread_pool : no_copy {
-public:
-    // void wake_up(thread_pool_ticket& ticket, unsigned request) {
-    //     suppress_unused_warning(ticket, request);
-    // }
-
-    void insert_ticket() {
-        ticket_list_mutex_type::scoped_lock lock(m_mutex);
-    }
-
-    void remove_ticket() {
-        ticket_list_mutex_type::scoped_lock lock(m_mutex);
-    }
-
-private:
-    using ticket_list_type = intrusive_list<thread_pool_ticket>;
-    using ticket_list_mutex_type = d1::rw_mutex;
-
-    static constexpr unsigned num_priority_levels = 3;
-    ticket_list_mutex_type m_mutex;
-    ticket_list_type m_ticket_list;
-};
 
 //------------------------------------------------------------------------
 // Class market
@@ -90,6 +69,8 @@ private:
 
     typedef intrusive_list<tbb_permit_manager_client> arena_list_type;
     typedef intrusive_list<thread_data> thread_data_list_type;
+
+    thread_pool* my_thread_pool;
 
     //! Currently active global market
     static market* theMarket;
@@ -184,9 +165,6 @@ private:
         }
     }
 
-    //! Returns next arena that needs more workers, or NULL.
-    tbb_permit_manager_client* arena_in_need(tbb_permit_manager_client* prev);
-
     template <typename Pred>
     static void enforce (Pred pred, const char* msg) {
         suppress_unused_warning(pred, msg);
@@ -205,13 +183,7 @@ private:
 
     void remove_arena_from_list (tbb_permit_manager_client& a );
 
-    tbb_permit_manager_client* arena_in_need ( arena_list_type* arenas, tbb_permit_manager_client* hint );
-
     int update_allotment ( arena_list_type* arenas, int total_demand, int max_workers );
-
-    bool is_arena_in_list( arena_list_type& arenas, tbb_permit_manager_client* a );
-
-    bool is_arena_alive(tbb_permit_manager_client* a );
 
     ////////////////////////////////////////////////////////////////////////////////
     // Implementation of rml::tbb_client interface methods

@@ -38,6 +38,10 @@ public:
     void process(thread_data& td) {
         m_arena.process(td);
     }
+
+    unsigned priority_level() {
+        return m_arena.priority_level();
+    }
 private:
     arena& m_arena;
     // mask_type m_mask;
