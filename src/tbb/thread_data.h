@@ -39,7 +39,7 @@ class task;
 class arena_slot;
 class task_group_context;
 class task_dispatcher;
-struct tbb_permit_manager_client;
+class thread_pool_ticket;
 
 class context_list : public intrusive_list<intrusive_list_node> {
 public:
@@ -102,7 +102,7 @@ public:
         , my_is_worker{ is_worker }
         , my_task_dispatcher{ nullptr }
         , my_arena{ nullptr }
-        , my_last_client{ nullptr }
+        , my_last_ticket{ nullptr }
         , my_arena_slot{}
         , my_random{ this }
         , my_last_observer{ nullptr }
@@ -150,7 +150,7 @@ public:
     //! The arena that I own (if external thread) or am servicing at the moment (if worker)
     arena* my_arena;
 
-    tbb_permit_manager_client* my_last_client;
+    thread_pool_ticket* my_last_ticket;
 
     //! Pointer to the slot in the arena we own at the moment
     arena_slot* my_arena_slot;
