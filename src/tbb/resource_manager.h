@@ -57,15 +57,6 @@ public:
 };
 
 
-class thread_pool : no_copy {
-public:
-    void wake_up(thread_pool_ticket& ticket, unsigned request) {
-        suppress_unused_warning(ticket, request);
-    }
-private:
-    // Intrusive_list ticket_list;
-};
-
 } // namespace r1
 } // namespace detail
 } // namespace tbb
