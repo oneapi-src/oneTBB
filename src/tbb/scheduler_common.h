@@ -354,7 +354,7 @@ struct suspend_point_type {
     //! Associated coroutine
     co_context m_co_context;
     //! Supend point before resume
-    suspend_point_type* m_prev_sp{nullptr};
+    suspend_point_type* m_prev_suspend_point{nullptr};
 
     // Possible state transitions:
     // A -> S -> N -> A
@@ -371,7 +371,7 @@ struct suspend_point_type {
     void resume(suspend_point_type* sp) {
         __TBB_ASSERT(m_stack_state.load(std::memory_order_relaxed) != stack_state::suspended, "The stack is expected to be active");
 
-        sp->m_prev_sp = this;
+        sp->m_prev_suspend_point = this;
 
         m_co_context.resume(sp->m_co_context);
         __TBB_ASSERT(m_stack_state.load(std::memory_order_relaxed) != stack_state::active, nullptr);
@@ -381,10 +381,10 @@ struct suspend_point_type {
 
     void finilize_resume() {
         m_stack_state.store(stack_state::active, std::memory_order_relaxed);
-        if (m_prev_sp && m_prev_sp->m_stack_state.exchange(stack_state::suspended) == stack_state::notified) {
-            r1::resume(m_prev_sp);
+        if (m_prev_suspend_point && m_prev_suspend_point->m_stack_state.exchange(stack_state::suspended) == stack_state::notified) {
+            r1::resume(m_prev_suspend_point);
         }
-        m_prev_sp = nullptr;
+        m_prev_suspend_point = nullptr;
     }
 
     bool try_notify_resume() {
