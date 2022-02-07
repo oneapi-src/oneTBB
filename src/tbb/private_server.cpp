@@ -234,20 +234,17 @@ void private_worker::release_handle(thread_handle handle, bool join) {
 }
 
 void private_worker::start_shutdown() {
-    // The state can be transferred only in one direction: st_init -> st_starting -> st_normal.
-    // So we do not need more than three CAS attempts.
-    state_t expected_state = my_state.load(std::memory_order_relaxed);
-    __TBB_ASSERT(expected_state != st_quit, "The quit state is expected to be set only once");
-    if (!my_state.compare_exchange_strong(expected_state, st_quit)) {
-        __TBB_ASSERT(expected_state == st_starting || expected_state == st_normal, "We failed once so the init state is not expected");
-        if (!my_state.compare_exchange_strong(expected_state, st_quit)) {
-            __TBB_ASSERT(expected_state == st_normal, "We failed twice so only the normal state is expected");
-            bool res = my_state.compare_exchange_strong(expected_state, st_quit);
-            __TBB_ASSERT_EX(res, "We cannot fail in the normal state");
-        }
-    }
+    __TBB_ASSERT(my_state.load(std::memory_order_relaxed) != st_quit, "The quit state is expected to be set only once");
 
-    if( expected_state==st_normal || expected_state==st_starting ) {
+    // `acq` to acquire my_handle
+    // `rel` to release market state
+    state_t prev_state = my_state.exchange(st_quit, std::memory_order_acq_rel);
+
+    if (prev_state == st_init) {
+        // Perform action that otherwise would be performed by associated thread when it quits.
+        my_server.remove_server_ref();
+    } else {
+        __TBB_ASSERT(prev_state == st_normal || prev_state == st_starting, nullptr);
         // May have invalidated invariant for sleeping, so wake up the thread.
         // Note that the notify() here occurs without maintaining invariants for my_slack.
         // It does not matter, because my_state==st_quit overrides checking of my_slack.
@@ -255,11 +252,8 @@ void private_worker::start_shutdown() {
         // Do not need release handle in st_init state,
         // because in this case the thread wasn't started yet.
         // For st_starting release is done at launch site.
-        if (expected_state==st_normal)
+        if (prev_state == st_normal)
             release_handle(my_handle, governor::does_client_join_workers(my_client));
-    } else if( expected_state==st_init ) {
-        // Perform action that otherwise would be performed by associated thread when it quits.
-        my_server.remove_server_ref();
     }
 }
 
@@ -271,24 +265,14 @@ void private_worker::run() noexcept {
     // complications in handle management on Windows.
 
     ::rml::job& j = *my_client.create_one_job();
-    while( my_state.load(std::memory_order_acquire)!=st_quit ) {
+    // memory_order_seq_cst to be strictly ordered after thread_monitor::wait on the next iteration
+    while( my_state.load(std::memory_order_seq_cst)!=st_quit ) {
         if( my_server.my_slack.load(std::memory_order_acquire)>=0 ) {
             my_client.process(j);
-        } else {
-            thread_monitor::cookie c;
-            // Prepare to wait
-            my_thread_monitor.prepare_wait(c);
-            // Check/set the invariant for sleeping
-            // We need memory_order_seq_cst to enforce ordering with prepare_wait
-            // (note that a store in prepare_wait should be with memory_order_seq_cst as well)
-            if( my_state.load(std::memory_order_seq_cst)!=st_quit && my_server.try_insert_in_asleep_list(*this) ) {
-                my_thread_monitor.commit_wait(c);
-                __TBB_ASSERT( my_state==st_quit || !my_next, "Thread monitor missed a spurious wakeup?" );
-                my_server.propagate_chain_reaction();
-            } else {
-                // Invariant broken
-                my_thread_monitor.cancel_wait();
-            }
+        } else if( my_server.try_insert_in_asleep_list(*this) ) {
+            my_thread_monitor.wait();
+            __TBB_ASSERT(my_state.load(std::memory_order_relaxed) == st_quit || !my_next, "Thread monitor missed a spurious wakeup?" );
+            my_server.propagate_chain_reaction();
         }
     }
     my_client.cleanup(j);
@@ -298,31 +282,40 @@ void private_worker::run() noexcept {
 }
 
 inline void private_worker::wake_or_launch() {
-    state_t expected_state = st_init;
-    if( my_state.compare_exchange_strong( expected_state, st_starting ) ) {
-        // after this point, remove_server_ref() must be done by created thread
-#if __TBB_USE_WINAPI
-        my_handle = thread_monitor::launch( thread_routine, this, my_server.my_stack_size, &this->my_index );
-#elif __TBB_USE_POSIX
-        {
-        affinity_helper fpa;
-        fpa.protect_affinity_mask( /*restore_process_mask=*/true );
-        my_handle = thread_monitor::launch( thread_routine, this, my_server.my_stack_size );
-        // Implicit destruction of fpa resets original affinity mask.
-        }
-#endif /* __TBB_USE_POSIX */
-        expected_state = st_starting;
-        if ( !my_state.compare_exchange_strong( expected_state, st_normal ) ) {
-            // Do shutdown during startup. my_handle can't be released
-            // by start_shutdown, because my_handle value might be not set yet
-            // at time of transition from st_starting to st_quit.
-            __TBB_ASSERT( expected_state==st_quit, nullptr);
-            release_handle(my_handle, governor::does_client_join_workers(my_client));
-        }
-    }
-    else {
-        __TBB_ASSERT( !my_next, "Should not wake a thread while it's still in asleep list" );
+    state_t state = my_state.load(std::memory_order_relaxed);
+
+    switch (state) {
+    case st_starting:
+        __TBB_fallthrough;
+    case st_normal:
+        __TBB_ASSERT(!my_next, "Should not wake a thread while it's still in asleep list");
         my_thread_monitor.notify();
+        break;
+    case st_init:
+        if (my_state.compare_exchange_strong(state, st_starting)) {
+            // after this point, remove_server_ref() must be done by created thread
+#if __TBB_USE_WINAPI
+            my_handle = thread_monitor::launch(thread_routine, this, my_server.my_stack_size, &this->my_index);
+#elif __TBB_USE_POSIX
+            {
+                affinity_helper fpa;
+                fpa.protect_affinity_mask( /*restore_process_mask=*/true);
+                my_handle = thread_monitor::launch(thread_routine, this, my_server.my_stack_size);
+                // Implicit destruction of fpa resets original affinity mask.
+            }
+#endif /* __TBB_USE_POSIX */
+            state = st_starting;
+            if (!my_state.compare_exchange_strong(state, st_normal)) {
+                // Do shutdown during startup. my_handle can't be released
+                // by start_shutdown, because my_handle value might be not set yet
+                // at time of transition from st_starting to st_quit.
+                __TBB_ASSERT(state == st_quit, nullptr);
+                release_handle(my_handle, governor::does_client_join_workers(my_client));
+            }
+        }
+        break;
+    default:
+        __TBB_ASSERT(state == st_quit, nullptr);
     }
 }
 
@@ -396,17 +389,16 @@ void private_server::wake_some( int additional_slack ) {
     }
 done:
 
-    if (allotted_slack)
-    {
+    if (allotted_slack) {
         asleep_list_mutex_type::scoped_lock lock(my_asleep_list_mutex);
-
-        while( my_asleep_list_root.load(std::memory_order_relaxed) && w<wakee+2 && allotted_slack) {
+        auto root = my_asleep_list_root.load(std::memory_order_relaxed);
+        while( root && w<wakee+2 && allotted_slack) {
             --allotted_slack;
             // Pop sleeping worker to combine with claimed unit of slack
-            auto old = my_asleep_list_root.load(std::memory_order_relaxed);
-            my_asleep_list_root.store(old->my_next, std::memory_order_relaxed);
-            *w++ = old;
+            *w++ = root;
+            root = root->my_next;
         }
+        my_asleep_list_root.store(root, std::memory_order_relaxed);
         if(allotted_slack) {
             // Contribute our unused slack to my_slack.
             my_slack += allotted_slack;
