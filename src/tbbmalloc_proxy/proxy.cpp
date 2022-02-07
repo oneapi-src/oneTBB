@@ -260,6 +260,7 @@ int mallopt(int /*param*/, int /*value*/) __THROW
     return 1;
 }
 
+#if defined(__GLIBC__) || defined(__ANDROID__)
 struct mallinfo mallinfo() __THROW
 {
     struct mallinfo m;
@@ -267,6 +268,7 @@ struct mallinfo mallinfo() __THROW
 
     return m;
 }
+#endif
 
 #if __ANDROID__
 // Android doesn't have malloc_usable_size, provide it to be compatible
