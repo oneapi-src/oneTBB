@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -681,6 +681,59 @@ void test_mutex_customization() {
     test_with_minimalistic_mutex</*SimulateReacquiring = */true>();
 }
 
+struct SimpleTransparentHashCompare {
+    using is_transparent = void;
+
+    template <typename T>
+    std::size_t hash(const T&) const { return 0; }
+
+    template <typename T, typename U>
+    bool equal(const T& key1, const U& key2) const { return key1 == key2; }
+};
+
+template <typename Accessor>
+struct IsWriterAccessor : public Accessor {
+    using Accessor::is_writer;
+};
+
+template <typename Map, typename Accessor>
+void test_chmap_access_mode(bool expect_write) {
+    static_assert(std::is_same<int, typename Map::key_type>::value, "Incorrect test setup");
+    Map map;
+    Accessor acc;
+
+    // Test homogeneous insert
+    bool result = map.insert(acc, 1);
+    CHECK(result);
+    CHECK_MESSAGE(acc.is_writer() == expect_write, "Incorrect access into the map from homogeneous insert");
+
+    // Test heterogeneous insert
+    result = map.insert(acc, 2L);
+    CHECK(result);
+    CHECK_MESSAGE(acc.is_writer() == expect_write, "Incorrect access into the map from heterogeneous insert");
+
+    // Test lvalue insert
+    typename Map::value_type value{3, 3};
+    result = map.insert(acc, value);
+    CHECK(result);
+    CHECK_MESSAGE(acc.is_writer() == expect_write, "Incorrect access into the map from lvalue insert");
+
+    // Test rvalue insert
+    result = map.insert(acc, typename Map::value_type{4, 4});
+    CHECK(result);
+    CHECK_MESSAGE(acc.is_writer() == expect_write, "Incorrect access into the map from rvalue insert");
+
+    // Test homogeneous find
+    result = map.find(acc, 1);
+    CHECK(result);
+    CHECK_MESSAGE(acc.is_writer() == expect_write, "Incorrect access into the map from homogeneous find");
+
+    // Test heterogeneous find
+    result = map.find(acc, 2L);
+    CHECK(result);
+    CHECK_MESSAGE(acc.is_writer() == expect_write, "Incorrect access into the map from heterogeneous find");
+}
+
 //! Test of insert operation
 //! \brief \ref error_guessing
 TEST_CASE("testing range based for support"){
@@ -783,6 +836,17 @@ TEST_CASE("swap with NotAlwaysEqualAllocator allocators") {
 //! \brief \ref error_guessing
 TEST_CASE("test concurrent_hash_map mutex customization") {
     test_mutex_customization();
+}
+
+// A test for an issue when const_accessor passed to find provides write access into the map after the lookup
+//! \brief \ref regression
+TEST_CASE("test concurrent_hash_map accessors issue") {
+    using map_type = tbb::concurrent_hash_map<int, int, SimpleTransparentHashCompare>;
+    using accessor = IsWriterAccessor<typename map_type::accessor>;
+    using const_accessor = IsWriterAccessor<typename map_type::const_accessor>;
+
+    test_chmap_access_mode<map_type, accessor>(/*expect_write = */true);
+    test_chmap_access_mode<map_type, const_accessor>(/*expect_write = */false);
 }
 
 #if __TBB_CPP20_CONCEPTS_PRESENT
