@@ -69,7 +69,7 @@ inline d1::task* suspend_point_type::resume_task::execute(d1::execution_data& ed
         // The wait_ctx is present only in external_waiter. In that case we leave the current stack
         // in the abandoned state to resume when waiting completes.
         thread_data* td = ed_ext.task_disp->m_thread_data;
-        td->set_post_resume_action(thread_data::post_resume_action::register_waiter, &monitor_node);
+        td->set_post_resume_action(task_dispatcher::post_resume_action::register_waiter, &monitor_node);
 
         market_concurrent_monitor& wait_list = td->my_arena->my_market->get_wait_list();
 
@@ -78,11 +78,11 @@ inline d1::task* suspend_point_type::resume_task::execute(d1::execution_data& ed
         }
 
         td->clear_post_resume_action();
-        td->set_post_resume_action(thread_data::post_resume_action::resume, ed_ext.task_disp->get_suspend_point());
+        r1::resume(ed_ext.task_disp->get_suspend_point());
     } else {
         // If wait_ctx is null, it can be only a worker thread on outermost level because
         // coroutine_waiter interrupts bypass loop before the resume_task execution.
-        ed_ext.task_disp->m_thread_data->set_post_resume_action(thread_data::post_resume_action::notify,
+        ed_ext.task_disp->m_thread_data->set_post_resume_action(task_dispatcher::post_resume_action::notify,
             ed_ext.task_disp->get_suspend_point());
     }
     // Do not access this task because it might be destroyed
@@ -381,16 +381,8 @@ inline void task_dispatcher::recall_point() {
         __TBB_ASSERT(m_suspend_point != nullptr, nullptr);
         __TBB_ASSERT(m_suspend_point->m_is_owner_recalled.load(std::memory_order_relaxed) == false, nullptr);
 
-        auto callback = [] (suspend_point_type* sp) {
-            sp->m_is_owner_recalled.store(true, std::memory_order_release);
-            auto is_related_suspend_point = [sp] (market_context context) {
-                std::uintptr_t sp_addr = std::uintptr_t(sp);
-                return sp_addr == context.my_uniq_addr;
-            };
-            sp->m_arena->my_market->get_wait_list().notify(is_related_suspend_point);
-        };
-        bool is_suspend_aborted = internal_suspend(callback, /*call callback after resume*/true);
-        __TBB_ASSERT_EX(!is_suspend_aborted, nullptr);
+        m_thread_data->set_post_resume_action(post_resume_action::notify, get_suspend_point());
+        internal_suspend();
 
         if (m_thread_data->my_inbox.is_idle_state(true)) {
             m_thread_data->my_inbox.set_is_idle(false);

@@ -353,32 +353,48 @@ struct suspend_point_type {
     bool m_is_critical{ false };
     //! Associated coroutine
     co_context m_co_context;
+    //! Supend point before resume
+    suspend_point_type* m_prev_sp{nullptr};
 
-    //! The flag is raised when suspend functor should be called on same thread
-    bool my_is_suspend_composit{false};
-    //! The flag required to protect case when my_is_suspend_composit == true for synchronization of suspend finish and resume call
-    std::atomic<bool> my_suspend_protector{false};
+    // Possible state transitions:
+    // A -> S -> N -> A
+    // A -> N -> S -> N -> A
+    enum class stack_state {
+        active, // some thread is working with this stack
+        suspended, // no thread is working with this stack
+        notified // some thread tried to resume this stack
+    };
 
-    void mark_suspend_composite() {
-        __TBB_ASSERT(!my_is_suspend_composit, nullptr);
-        __TBB_ASSERT(!my_suspend_protector.load(std::memory_order_relaxed), nullptr);
-        my_is_suspend_composit = true;
+    //! The flag required to protect suspend finish and resume call
+    std::atomic<stack_state> m_stack_state{stack_state::active};
+
+    void resume(suspend_point_type* sp) {
+        __TBB_ASSERT(m_stack_state.load(std::memory_order_relaxed) != stack_state::suspended, "The stack is expected to be active");
+
+        sp->m_prev_sp = this;
+
+        m_co_context.resume(sp->m_co_context);
+        __TBB_ASSERT(m_stack_state.load(std::memory_order_relaxed) != stack_state::active, nullptr);
+
+        finilize_resume();
     }
 
-    bool is_suspend_finished() {
-        return !my_is_suspend_composit;
-    }
-
-    bool try_finish_suspend() {
-        __TBB_ASSERT(my_is_suspend_composit, nullptr);
-        // Try to transfer the responsibilities of call the resume
-        bool should_call_resume = my_suspend_protector.exchange(true);
-        if (should_call_resume) {
-            my_is_suspend_composit = false;
-            my_suspend_protector.store(false, std::memory_order_relaxed);
+    void finilize_resume() {
+        m_stack_state.store(stack_state::active, std::memory_order_relaxed);
+        if (m_prev_sp && m_prev_sp->m_stack_state.exchange(stack_state::suspended) == stack_state::notified) {
+            r1::resume(m_prev_sp);
         }
+        m_prev_sp = nullptr;
+    }
 
-        return should_call_resume;
+    bool try_notify_resume() {
+        return m_stack_state.exchange(stack_state::notified) == stack_state::suspended;
+    }
+
+    void recall_owner() {
+        __TBB_ASSERT(m_stack_state.load(std::memory_order_relaxed) == stack_state::suspended, nullptr);
+        m_stack_state.store(stack_state::notified, std::memory_order_relaxed);
+        m_is_owner_recalled.store(true, std::memory_order_release);
     }
 
     struct resume_task final : public d1::task {
@@ -411,6 +427,15 @@ public:
     friend class nested_arena_context;
     friend class delegated_task;
     friend struct base_waiter;
+
+    //! The list of possible post resume actions.
+    enum class post_resume_action {
+        invalid,
+        register_waiter,
+        cleanup,
+        notify,
+        none
+    };
 
     //! The data of the current thread attached to this task_dispatcher
     thread_data* m_thread_data{ nullptr };
@@ -502,12 +527,8 @@ public:
 #if __TBB_RESUMABLE_TASKS
     /* [[noreturn]] */ void co_local_wait_for_all() noexcept;
     void suspend(suspend_callback_type suspend_callback, void* user_callback);
-
-    template <typename F>
-    bool internal_suspend(F user_callback, bool call_callback_before_resume) {
-        return internal_suspend(&d1::suspend_callback<F>, &user_callback, call_callback_before_resume);
-    }
-    bool internal_suspend(suspend_callback_type suspend_callback, void* user_callback, bool call_callback_before_resume);
+    void internal_suspend();
+    void do_post_resume_action();
 
     bool resume(task_dispatcher& target);
     suspend_point_type* get_suspend_point();
