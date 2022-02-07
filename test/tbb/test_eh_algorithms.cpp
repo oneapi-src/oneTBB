@@ -1535,6 +1535,11 @@ void Test4_pipeline ( const FilterSet& filters ) {
 //! Tests pipeline function passed with different combination of filters
 template<void testFunc(const FilterSet&)>
 void TestWithDifferentFiltersAndConcurrency() {
+#if __TBB_USE_ADDRESS_SANITIZER
+    // parallel_pipeline allocates tls that sporadically observed as a memory leak with
+    // detached threads. So, use task_scheduler_handle to join threads with finalize
+    tbb::task_scheduler_handle handle{ tbb::attach{} };
+#endif
     for (auto concurrency_level: utils::concurrency_range()) {
         g_NumThreads = static_cast<int>(concurrency_level);
         g_Master = std::this_thread::get_id();
@@ -1564,6 +1569,9 @@ void TestWithDifferentFiltersAndConcurrency() {
             }
         }
     }
+#if __TBB_USE_ADDRESS_SANITIZER
+    tbb::finalize(handle);
+#endif
 }
 
 //! Testing parallel_pipeline exception handling

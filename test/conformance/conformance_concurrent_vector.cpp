@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -596,10 +596,10 @@ struct test_grow_by {
 
 template<typename Iterator, typename T>
 void TestIteratorTraits() {
-    AssertSameType( static_cast<typename Iterator::difference_type*>(0), static_cast<std::ptrdiff_t*>(0) );
-    AssertSameType( static_cast<typename Iterator::value_type*>(0), static_cast<T*>(0) );
-    AssertSameType( static_cast<typename Iterator::pointer*>(0), static_cast<T**>(0) );
-    AssertSameType( static_cast<typename Iterator::iterator_category*>(0), static_cast<std::random_access_iterator_tag*>(0) );
+    AssertSameType( static_cast<typename Iterator::difference_type*>(nullptr), static_cast<std::ptrdiff_t*>(nullptr) );
+    AssertSameType( static_cast<typename Iterator::value_type*>(nullptr), static_cast<T*>(nullptr) );
+    AssertSameType( static_cast<typename Iterator::pointer*>(nullptr), static_cast<T**>(nullptr) );
+    AssertSameType( static_cast<typename Iterator::iterator_category*>(nullptr), static_cast<std::random_access_iterator_tag*>(nullptr) );
     T x;
     typename Iterator::reference xr = x;
     typename Iterator::pointer xp = &x;

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -37,11 +37,9 @@
 namespace tbb {
 namespace detail {
 
-#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
 namespace d1 {
 class task_scheduler_handle;
 }
-#endif
 
 namespace r1 {
 
@@ -58,9 +56,7 @@ class market : no_copy, rml::tbb_client {
     template<typename SchedulerTraits> friend class custom_scheduler;
     friend class task_group_context;
     friend class governor;
-#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
     friend class lifetime_control;
-#endif
 
 public:
     //! Keys for the arena map array. The lower the value the higher priority of the arena list.
@@ -68,9 +64,7 @@ public:
 
 private:
     friend void ITT_DoUnsafeOneTimeInitialization ();
-#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
     friend bool finalize_impl(d1::task_scheduler_handle& handle);
-#endif
 
     typedef intrusive_list<arena> arena_list_type;
     typedef intrusive_list<thread_data> thread_data_list_type;
@@ -168,7 +162,7 @@ private:
         }
     }
 
-    //! Returns next arena that needs more workers, or NULL.
+    //! Returns next arena that needs more workers, or nullptr.
     arena* arena_in_need(arena* prev);
 
     template <typename Pred>
@@ -269,10 +263,8 @@ public:
     //! Reports active parallelism level according to user's settings
     static unsigned app_parallelism_limit();
 
-#if __TBB_SUPPORTS_WORKERS_WAITING_IN_TERMINATE
     //! Reports if any active global lifetime references are present
     static unsigned is_lifetime_control_present();
-#endif
 
     //! Finds all contexts affected by the state change and propagates the new state to them.
     /** The propagation is relayed to the market because tasks created by one
