@@ -50,4 +50,5 @@ The key properties of a preview feature are:
     constraints_extensions
     info_namespace_extensions
     task_group_extensions
+    isolated_task_group
     custom_mutex_chmap
