@@ -371,7 +371,7 @@ void Test4 () {
         // to do the solitary throw swaps out after registering its intent to throw but before it
         // actually does so. As a result, the number of extra tasks cannot exceed the number of thread
         // for each nested pfor invication)
-        REQUIRE_MESSAGE (g_CurExecuted <= minExecuted + (g_NumThreads-1)*g_NumThreads/2, "Too many tasks survived exception");
+        REQUIRE_MESSAGE (g_CurExecuted <= minExecuted + (g_ExecutedAtLastCatch + g_NumThreads), "Too many tasks survived exception");
     }
     else {
         REQUIRE_MESSAGE (((g_NumExceptionsCaught >= 1 && g_NumExceptionsCaught <= outerCalls) || okayNoExceptionsCaught), "Unexpected actual number of exceptions");
