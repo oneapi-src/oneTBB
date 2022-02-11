@@ -261,7 +261,7 @@ private:
         // emit "task was released" signal
         // Release fence is necessary to make sure that previously stored task pointers
         // are visible to thieves.
-        tail.store(new_tail, std::memory_order_release);
+        tail.exchange(new_tail);
     }
 
     //! Used by workers to enter the task pool
