@@ -108,7 +108,6 @@ void task_dispatcher::internal_suspend() {
     if (m_properties.outermost) {
         recall_point();
     }
-
 }
 
 void task_dispatcher::suspend(suspend_callback_type suspend_callback, void* user_callback) {
@@ -165,8 +164,7 @@ void task_dispatcher::do_post_resume_action() {
     case post_resume_action::register_waiter:
     {
         __TBB_ASSERT(td->my_post_resume_arg, "The post resume action must have an argument");
-        auto resume_ctx = static_cast<market_concurrent_monitor::resume_context*>(td->my_post_resume_arg);
-        resume_ctx->notify();
+        static_cast<market_concurrent_monitor::resume_context*>(td->my_post_resume_arg)->notify();
         break;
     }
     case post_resume_action::cleanup:
@@ -186,8 +184,8 @@ void task_dispatcher::do_post_resume_action() {
         sp->recall_owner();
         // Do not access sp because it can be destroyed after recall
 
-        auto is_our_suspend_point = [sp](market_context ctx) {
-            return  std::uintptr_t(sp) == ctx.my_uniq_addr;
+        auto is_our_suspend_point = [sp] (market_context ctx) {
+            return std::uintptr_t(sp) == ctx.my_uniq_addr;
         };
         td->my_arena->my_market->get_wait_list().notify(is_our_suspend_point);
         break;
