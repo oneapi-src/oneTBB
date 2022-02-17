@@ -144,7 +144,7 @@ public:
     }
 
     void operator()(int i) const {
-        tbb::task::suspend(SuspendBody(m_asyncActivity, std::this_thread::get_id()));
+        tbb::task::suspend([&] (tbb::task::suspend_point sp) { m_asyncActivity.submit(sp); });
 
         tbb::task_arena& nested_arena = (i % 3 == 0) ?
             m_outermostArena : (i % 3 == 1 ? m_innermostArena : m_innermostArenaDefault);
@@ -423,12 +423,12 @@ public:
 
 thread_local bool TestCaseGuard::m_local = false;
 
-// //! Nested test for suspend and resume
-// //! \brief \ref error_guessing
-// TEST_CASE("Nested test for suspend and resume") {
-//     TestCaseGuard guard;
-//     TestSuspendResume();
-// }
+//! Nested test for suspend and resume
+//! \brief \ref error_guessing
+TEST_CASE("Nested test for suspend and resume") {
+    TestCaseGuard guard;
+    TestSuspendResume();
+}
 
 //! Nested arena complex test
 //! \brief \ref error_guessing
@@ -437,21 +437,21 @@ TEST_CASE("Nested arena") {
     TestNestedArena();
 }
 
-// //! Test with external threads
-// //! \brief \ref error_guessing
-// TEST_CASE("External threads") {
-//     TestNativeThread();
-// }
+//! Test with external threads
+//! \brief \ref error_guessing
+TEST_CASE("External threads") {
+    TestNativeThread();
+}
 
-// //! Stress test with external threads
-// //! \brief \ref stress
-// TEST_CASE("Stress test with external threads") {
-//     TestCleanupMaster();
-// }
+//! Stress test with external threads
+//! \brief \ref stress
+TEST_CASE("Stress test with external threads") {
+    TestCleanupMaster();
+}
 
-// //! Test with an arena observer
-// //! \brief \ref error_guessing
-// TEST_CASE("Arena observer") {
-//     TestObservers();
-// }
+//! Test with an arena observer
+//! \brief \ref error_guessing
+TEST_CASE("Arena observer") {
+    TestObservers();
+}
 #endif /* __TBB_RESUMABLE_TASKS */
