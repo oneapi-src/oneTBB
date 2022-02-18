@@ -373,6 +373,7 @@ struct suspend_point_type {
 
         sp->m_prev_suspend_point = this;
 
+        // Do not access sp after resume
         m_co_context.resume(sp->m_co_context);
         __TBB_ASSERT(m_stack_state.load(std::memory_order_relaxed) != stack_state::active, nullptr);
 
@@ -381,6 +382,8 @@ struct suspend_point_type {
 
     void finilize_resume() {
         m_stack_state.store(stack_state::active, std::memory_order_relaxed);
+        // Set the suspended state for the stack that we left. If the state is already notified, it means that 
+        // someone already tried to resume our previous stack but failed. So, we need to resume it.
         if (m_prev_suspend_point && m_prev_suspend_point->m_stack_state.exchange(stack_state::suspended) == stack_state::notified) {
             r1::resume(m_prev_suspend_point);
         }
@@ -388,6 +391,7 @@ struct suspend_point_type {
     }
 
     bool try_notify_resume() {
+        // Check that stack is already suspended. Return false if not yet.
         return m_stack_state.exchange(stack_state::notified) == stack_state::suspended;
     }
 

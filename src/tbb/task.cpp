@@ -113,7 +113,6 @@ void task_dispatcher::internal_suspend() {
 void task_dispatcher::suspend(suspend_callback_type suspend_callback, void* user_callback) {
     __TBB_ASSERT(suspend_callback != nullptr, nullptr);
     __TBB_ASSERT(user_callback != nullptr, nullptr);
-
     suspend_callback(user_callback, get_suspend_point());
 
     __TBB_ASSERT(m_thread_data != nullptr, nullptr);
@@ -192,6 +191,7 @@ void task_dispatcher::do_post_resume_action() {
     }
     default:
         __TBB_ASSERT(td->my_post_resume_action == post_resume_action::none, "Unknown post resume action");
+        __TBB_ASSERT(td->my_post_resume_arg == nullptr, "The post resume argument should not be set");
     }
     td->clear_post_resume_action();
 }
