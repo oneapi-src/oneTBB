@@ -353,6 +353,54 @@ struct suspend_point_type {
     bool m_is_critical{ false };
     //! Associated coroutine
     co_context m_co_context;
+    //! Supend point before resume
+    suspend_point_type* m_prev_suspend_point{nullptr};
+
+    // Possible state transitions:
+    // A -> S -> N -> A
+    // A -> N -> S -> N -> A
+    enum class stack_state {
+        active, // some thread is working with this stack
+        suspended, // no thread is working with this stack
+        notified // some thread tried to resume this stack
+    };
+
+    //! The flag required to protect suspend finish and resume call
+    std::atomic<stack_state> m_stack_state{stack_state::active};
+
+    void resume(suspend_point_type* sp) {
+        __TBB_ASSERT(m_stack_state.load(std::memory_order_relaxed) != stack_state::suspended, "The stack is expected to be active");
+
+        sp->m_prev_suspend_point = this;
+
+        // Do not access sp after resume
+        m_co_context.resume(sp->m_co_context);
+        __TBB_ASSERT(m_stack_state.load(std::memory_order_relaxed) != stack_state::active, nullptr);
+
+        finilize_resume();
+    }
+
+    void finilize_resume() {
+        m_stack_state.store(stack_state::active, std::memory_order_relaxed);
+        // Set the suspended state for the stack that we left. If the state is already notified, it means that 
+        // someone already tried to resume our previous stack but failed. So, we need to resume it.
+        // m_prev_suspend_point might be nullptr when destroying co_context based on threads
+        if (m_prev_suspend_point && m_prev_suspend_point->m_stack_state.exchange(stack_state::suspended) == stack_state::notified) {
+            r1::resume(m_prev_suspend_point);
+        }
+        m_prev_suspend_point = nullptr;
+    }
+
+    bool try_notify_resume() {
+        // Check that stack is already suspended. Return false if not yet.
+        return m_stack_state.exchange(stack_state::notified) == stack_state::suspended;
+    }
+
+    void recall_owner() {
+        __TBB_ASSERT(m_stack_state.load(std::memory_order_relaxed) == stack_state::suspended, nullptr);
+        m_stack_state.store(stack_state::notified, std::memory_order_relaxed);
+        m_is_owner_recalled.store(true, std::memory_order_release);
+    }
 
     struct resume_task final : public d1::task {
         task_dispatcher& m_target;
@@ -384,6 +432,15 @@ public:
     friend class nested_arena_context;
     friend class delegated_task;
     friend struct base_waiter;
+
+    //! The list of possible post resume actions.
+    enum class post_resume_action {
+        invalid,
+        register_waiter,
+        cleanup,
+        notify,
+        none
+    };
 
     //! The data of the current thread attached to this task_dispatcher
     thread_data* m_thread_data{ nullptr };
@@ -475,6 +532,9 @@ public:
 #if __TBB_RESUMABLE_TASKS
     /* [[noreturn]] */ void co_local_wait_for_all() noexcept;
     void suspend(suspend_callback_type suspend_callback, void* user_callback);
+    void internal_suspend();
+    void do_post_resume_action();
+
     bool resume(task_dispatcher& target);
     suspend_point_type* get_suspend_point();
     void init_suspend_point(arena* a, std::size_t stack_size);

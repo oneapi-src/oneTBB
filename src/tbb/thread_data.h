@@ -107,7 +107,7 @@ public:
         , my_small_object_pool{new (cache_aligned_allocate(sizeof(small_object_pool_impl))) small_object_pool_impl{}}
         , my_context_list(new (cache_aligned_allocate(sizeof(context_list))) context_list{})
 #if __TBB_RESUMABLE_TASKS
-        , my_post_resume_action{ post_resume_action::none }
+        , my_post_resume_action{ task_dispatcher::post_resume_action::none }
         , my_post_resume_arg{nullptr}
 #endif /* __TBB_RESUMABLE_TASKS */
     {
@@ -166,26 +166,15 @@ public:
 
     context_list* my_context_list;
 #if __TBB_RESUMABLE_TASKS
-    //! The list of possible post resume actions.
-    enum class post_resume_action {
-        invalid,
-        register_waiter,
-        resume,
-        callback,
-        cleanup,
-        notify,
-        none
-    };
-
     //! The callback to call the user callback passed to tbb::suspend.
     struct suspend_callback_wrapper {
         suspend_callback_type suspend_callback;
         void* user_callback;
-        suspend_point_type* tag;
+        suspend_point_type* sp;
 
         void operator()() {
-            __TBB_ASSERT(suspend_callback && user_callback && tag, nullptr);
-            suspend_callback(user_callback, tag);
+            __TBB_ASSERT(suspend_callback && user_callback && sp, nullptr);
+            suspend_callback(user_callback, sp);
         }
     };
 
@@ -196,23 +185,20 @@ public:
     void resume(task_dispatcher& target);
 
     //! Set post resume action to perform after resume.
-    void set_post_resume_action(post_resume_action pra, void* arg) {
-        __TBB_ASSERT(my_post_resume_action == post_resume_action::none, "The Post resume action must not be set");
+    void set_post_resume_action(task_dispatcher::post_resume_action pra, void* arg) {
+        __TBB_ASSERT(my_post_resume_action == task_dispatcher::post_resume_action::none, "The Post resume action must not be set");
         __TBB_ASSERT(!my_post_resume_arg, "The post resume action must not have an argument");
         my_post_resume_action = pra;
         my_post_resume_arg = arg;
     }
 
     void clear_post_resume_action() {
-        my_post_resume_action = thread_data::post_resume_action::none;
+        my_post_resume_action = task_dispatcher::post_resume_action::none;
         my_post_resume_arg = nullptr;
     }
 
-    //! Performs post resume action.
-    void do_post_resume_action();
-
     //! The post resume action requested after the swap contexts.
-    post_resume_action my_post_resume_action;
+    task_dispatcher::post_resume_action my_post_resume_action;
 
     //! The post resume action argument.
     void* my_post_resume_arg;
