@@ -384,8 +384,8 @@ struct suspend_point_type {
         m_stack_state.store(stack_state::active, std::memory_order_relaxed);
         // Set the suspended state for the stack that we left. If the state is already notified, it means that 
         // someone already tried to resume our previous stack but failed. So, we need to resume it.
-        __TBB_ASSERT(m_prev_suspend_point != nullptr, "m_prev_suspend_point should be set by resume");
-        if (m_prev_suspend_point->m_stack_state.exchange(stack_state::suspended) == stack_state::notified) {
+        // m_prev_suspend_point might be nullptr when destroying co_context based on threads
+        if (m_prev_suspend_point && m_prev_suspend_point->m_stack_state.exchange(stack_state::suspended) == stack_state::notified) {
             r1::resume(m_prev_suspend_point);
         }
         m_prev_suspend_point = nullptr;
