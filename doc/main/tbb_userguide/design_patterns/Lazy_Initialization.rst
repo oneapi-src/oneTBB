@@ -31,12 +31,13 @@ Lazy Initialization
 
    .. rubric:: Solution
       :class: sectiontitle
+
    Using ``oneapi::tbb::collaborative_call_once`` with ``oneapi::tbb::collaborative_once_flag``
    helps to implement thread-safe lazy initialization for a user object.
 
 
    In addition, ``collaborative_call_once`` allows other thread blocked on
-   the same ``collaborative_once_once`` flag to join other |short_name|
+   the same ``collaborative_once_flag`` to join other |short_name|
    parallel constructions called within the intializing function.
 
 
@@ -53,3 +54,5 @@ Lazy Initialization
 
 
 .. |image0| image:: Images/image008a.jpg
+   :width: 344px
+   :height: 191px
