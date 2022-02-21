@@ -50,8 +50,80 @@ Lazy Initialization
    The example presented here illustrate implementation "lazy initialization" for segment tree
    that stores information about the sum of each vector subinterval. Here is a graphical
    representation of the segment tree for vector of size 4.
+   
+
    |image0|
 
+
+   ::
+
+
+      class SumTree {
+
+         oneapi::tbb::collaborative_once_flag flag;
+         const std::vector<int>& elems_ref;
+         std::unique_ptr<Node> root = nullptr;
+
+      public:
+         explicit SumTree(const std::vector<int>& numbers) : elems_ref(numbers) {}
+
+         size_t GetSum(size_t begin, size_t end) {
+               oneapi::tbb::collaborative_call_once(flag, [this] {
+                  root = std::unique_ptr<Node>(new Node(0, elems_ref.size(), elems_ref));
+               });
+               return root->GetSum(begin, end);
+         }
+      };
+
+
+   Sample text
+
+
+   ::
+
+
+      struct Node {
+            size_t begin;
+            size_t end;
+            size_t sum = 0;
+
+            std::unique_ptr<Node> left_child = nullptr;
+            std::unique_ptr<Node> right_child = nullptr;
+
+            Node(size_t left, size_t right, const std::vector<int>& elems) : begin(left), 
+                                                                              end(right)
+            {
+               if (end-begin <= 1) {
+                     sum = elems[begin];
+               } else {
+                     std::size_t mid = (begin + end) / 2;
+
+                     oneapi::tbb::parallel_invoke(
+                        [this, mid, &elems] {
+                           left_child = std::unique_ptr<Node>(new Node(begin, mid, elems));
+                        },
+                        [this, mid, &elems] {
+                           right_child = std::unique_ptr<Node>(new Node(mid, end, elems));
+                        }
+                     );
+                     
+                     sum = left_child->sum + right_child->sum;
+               }
+            }
+
+            size_t GetSum(size_t left, size_t right) {
+               size_t result_sum = 0;
+               if (left <= begin && end <= right) {
+                     result_sum = sum;
+               } else if (left_child && right_child) {
+                     result_sum = left_child->GetSum(left, right) + right_child->GetSum(left, right);
+               }
+               return result_sum;
+            }
+      };
+
+
+   Sample text
 
 .. |image0| image:: Images/image008a.jpg
    :width: 344px
