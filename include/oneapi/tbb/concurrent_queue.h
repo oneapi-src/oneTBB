@@ -183,7 +183,8 @@ private:
     bool internal_try_pop( void* dst ) {
         ticket_type k;
         do {
-            k = my_queue_representation->head_counter.load(std::memory_order_relaxed);
+            // Bassicaly, we need to read `head` before `tail`. To achive it we build happens-before on `head`
+            k = my_queue_representation->head_counter.load(std::memory_order_acquire);
             do {
                 if (static_cast<std::ptrdiff_t>(my_queue_representation->tail_counter.load(std::memory_order_relaxed) - k) <= 0) {
                     // Queue is empty
@@ -514,7 +515,8 @@ private:
     bool internal_pop_if_present( void* dst ) {
         ticket_type ticket;
         do {
-            ticket = my_queue_representation->head_counter.load(std::memory_order_relaxed);
+            // Bassicaly, we need to read `head` before `tail`. To achive it we build happens-before on `head`
+            ticket = my_queue_representation->head_counter.load(std::memory_order_acquire);
             do {
                 if (static_cast<std::ptrdiff_t>(my_queue_representation->tail_counter.load(std::memory_order_relaxed) - ticket) <= 0) { // queue is empty
                     // Queue is empty
