@@ -75,6 +75,11 @@ market::market ( unsigned workers_soft_limit, unsigned workers_hard_limit, std::
     __TBB_ASSERT( my_server, "Failed to create RML server" );
 }
 
+market::~market() {
+    poison_pointer(my_server);
+    poison_pointer(my_next_arena);
+}
+
 static unsigned calc_workers_soft_limit(unsigned workers_soft_limit, unsigned workers_hard_limit) {
     if( int soft_limit = market::app_parallelism_limit() )
         workers_soft_limit = soft_limit-1;
@@ -315,9 +320,8 @@ void market::detach_arena ( arena& a ) {
 void market::try_destroy_arena ( arena* a, uintptr_t aba_epoch, unsigned priority_level ) {
     bool locked = true;
     __TBB_ASSERT( a, nullptr);
-    // we hold reference to the market, so it cannot be destroyed at any moment here
-    market::enforce([this] { return theMarket == this; }, nullptr);
-    __TBB_ASSERT( my_ref_count!=0, nullptr);
+    // we hold reference to the server, so market cannot be destroyed at any moment here
+    __TBB_ASSERT(!is_poisoned(my_server), nullptr);
     my_arenas_list_mutex.lock();
         arena_list_type::iterator it = my_arenas[priority_level].begin();
         for ( ; it != my_arenas[priority_level].end(); ++it ) {
