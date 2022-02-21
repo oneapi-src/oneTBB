@@ -146,6 +146,9 @@ private:
     //! Constructor
     market ( unsigned workers_soft_limit, unsigned workers_hard_limit, std::size_t stack_size );
 
+    //! Destructor
+    ~market();
+
     //! Destroys and deallocates market object created by market::create()
     void destroy ();
 
