@@ -105,7 +105,17 @@ jobs:
           git add .
           git commit --reset-author --amend -m "Update from GitHub Actions"
           git push --force origin gh-pages
-
+          
+  copyright_check:
+    runs-on: [ubuntu-20.04]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run check
+        shell: bash
+        run: |
+          git diff --name-only ${{ github.event.pull_request.base.sha }} > changed_files.txt
+          python3 .github/scripts/copyright_checker.py -c changed_files.txt
+          
   python_module_test_ubuntu18-04:
     runs-on: [ubuntu-18.04]
     timeout-minutes: 15
