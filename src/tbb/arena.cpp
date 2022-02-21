@@ -299,24 +299,24 @@ bool arena::is_out_of_work() {
             // Got permission. Take the snapshot.
             // NOTE: This is not a lock, as the state can be set to FULL at
             //       any moment by a thread that spawns/enqueues new task.
-            std::size_t n = my_limit.load(std::memory_order_acquire);
+            std::size_t n = my_limit.load(std::memory_order_seq_cst);
             // Make local copies of volatile parameters. Their change during
             // snapshot taking procedure invalidates the attempt, and returns
             // this thread into the dispatch loop.
             std::size_t k;
             for (k = 0; k < n; ++k) {
-                if (my_slots[k].task_pool.load(std::memory_order_relaxed) != EmptyTaskPool &&
-                    my_slots[k].head.load(std::memory_order_relaxed) < my_slots[k].tail.load(std::memory_order_relaxed))
+                if (my_slots[k].task_pool.load(std::memory_order_seq_cst) != EmptyTaskPool &&
+                    my_slots[k].head.load(std::memory_order_seq_cst) < my_slots[k].tail.load(std::memory_order_seq_cst))
                 {
                     // k-th primary task pool is nonempty and does contain tasks.
                     break;
                 }
-                if (my_pool_state.load(std::memory_order_acquire) != busy)
+                if (my_pool_state.load(std::memory_order_seq_cst) != busy)
                     return false; // the work was published
             }
             bool work_absent = k == n;
             // Test and test-and-set.
-            if (my_pool_state.load(std::memory_order_acquire) == busy) {
+            if (my_pool_state.load(std::memory_order_seq_cst) == busy) {
                 bool no_stream_tasks = !has_enqueued_tasks() && my_resume_task_stream.empty();
 #if __TBB_PREVIEW_CRITICAL_TASKS
                 no_stream_tasks = no_stream_tasks && my_critical_task_stream.empty();

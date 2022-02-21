@@ -73,7 +73,7 @@ d1::task* arena_slot::get_task(execution_data_ext& ed, isolation_type isolation)
         T = --tail;
         // The acquire load of head is required to guarantee consistency of our task pool
         // when a thief rolls back the head.
-        if ( (std::intptr_t)( head.load(std::memory_order_acquire) ) > (std::intptr_t)T ) {
+        if ( (std::intptr_t)( head.load(std::memory_order_seq_cst) ) > (std::intptr_t)T ) {
             acquire_task_pool();
             H0 = head.load(std::memory_order_relaxed);
             if ( (std::intptr_t)H0 > (std::intptr_t)T ) {
@@ -159,7 +159,7 @@ d1::task* arena_slot::steal_task(arena& a, isolation_type isolation, std::size_t
         H = ++head;
         // The acquire load of tail is required to guarantee consistency of victim_pool
         // because the owner synchronizes task spawning via tail.
-        if ((std::intptr_t)H > (std::intptr_t)(tail.load(std::memory_order_acquire))) {
+        if ((std::intptr_t)H > (std::intptr_t)(tail.load(std::memory_order_seq_cst))) {
             // Stealing attempt failed, deque contents has not been changed by us
             head.store( /*dead: H = */ H0, std::memory_order_relaxed );
             __TBB_ASSERT( !result, nullptr );

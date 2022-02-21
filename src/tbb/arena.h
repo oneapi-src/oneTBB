@@ -517,7 +517,7 @@ void arena::advertise_new_work() {
     // fence might hurt overall performance more than it helps, because the fence would be executed
     // on every task pool release, even when stealing does not occur.  Since TBB allows parallelism,
     // but never promises parallelism, the missed wakeup is not a correctness problem.
-    pool_state_t snapshot = my_pool_state.load(std::memory_order_acquire);
+    pool_state_t snapshot = my_pool_state.load(std::memory_order_seq_cst);
     if( is_busy_or_empty(snapshot) ) {
         // Attempt to mark as full.  The compare_and_swap below is a little unusual because the
         // result is compared to a value that can be different than the comparand argument.
