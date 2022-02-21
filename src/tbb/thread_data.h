@@ -166,18 +166,6 @@ public:
 
     context_list* my_context_list;
 #if __TBB_RESUMABLE_TASKS
-    //! The callback to call the user callback passed to tbb::suspend.
-    struct suspend_callback_wrapper {
-        suspend_callback_type suspend_callback;
-        void* user_callback;
-        suspend_point_type* sp;
-
-        void operator()() {
-            __TBB_ASSERT(suspend_callback && user_callback && sp, nullptr);
-            suspend_callback(user_callback, sp);
-        }
-    };
-
     //! Suspends the current coroutine (task_dispatcher).
     void suspend(void* suspend_callback, void* user_callback);
 
