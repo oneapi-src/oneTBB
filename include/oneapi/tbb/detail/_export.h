@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,28 +19,30 @@
 
 #if defined(__MINGW32__)
     #define _EXPORT __declspec(dllexport)
-#elif defined(_WIN32) || defined(__unix__) || defined(__APPLE__) // Use .def files for these
+#elif defined(_WIN32)
     #define _EXPORT
+#elif defined(__unix__) || defined(__APPLE__) // Use .def files for these
+    #define _EXPORT __attribute__ ((visibility ("default")))
 #else
     #error "Unknown platform/compiler"
 #endif
 
-#if __TBB_BUILD
+//#if __TBB_BUILD
     #define TBB_EXPORT _EXPORT
-#else
-    #define TBB_EXPORT
-#endif
+//#else
+//    #define TBB_EXPORT
+//#endif
 
-#if __TBBMALLOC_BUILD
+//#if __TBBMALLOC_BUILD
     #define TBBMALLOC_EXPORT _EXPORT
-#else
-    #define TBBMALLOC_EXPORT
-#endif
+//#else
+//    #define TBBMALLOC_EXPORT
+//#endif
 
-#if __TBBBIND_BUILD
+//#if __TBBBIND_BUILD
     #define TBBBIND_EXPORT _EXPORT
-#else
-    #define TBBBIND_EXPORT
-#endif
+//#else
+//    #define TBBBIND_EXPORT
+//#endif
 
 #endif

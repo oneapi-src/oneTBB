@@ -40,6 +40,23 @@ extern "C" {
     extern __declspec(dllexport) size_t safer_scalable_msize (void *, size_t (*)(void*));
     extern __declspec(dllexport) int anchor();
 }
+#else
+extern "C" {
+    extern TBBMALLOC_EXPORT void *scalable_malloc(size_t);
+    extern TBBMALLOC_EXPORT void scalable_free (void *);
+    extern TBBMALLOC_EXPORT void safer_scalable_free (void *, void (*)(void*));
+    extern TBBMALLOC_EXPORT void *scalable_realloc(void *, size_t);
+    extern TBBMALLOC_EXPORT void *safer_scalable_realloc(void *, size_t, void *);
+    extern TBBMALLOC_EXPORT void *scalable_calloc(size_t, size_t);
+    extern TBBMALLOC_EXPORT int scalable_posix_memalign(void **, size_t, size_t);
+    extern TBBMALLOC_EXPORT void *scalable_aligned_malloc(size_t, size_t);
+    extern TBBMALLOC_EXPORT void *scalable_aligned_realloc(void *, size_t, size_t);
+    extern TBBMALLOC_EXPORT void *safer_scalable_aligned_realloc(void *, size_t, size_t, void *);
+    extern TBBMALLOC_EXPORT void scalable_aligned_free(void *);
+    extern TBBMALLOC_EXPORT size_t scalable_msize(void *);
+    extern TBBMALLOC_EXPORT size_t safer_scalable_msize (void *, size_t (*)(void*));
+    extern TBBMALLOC_EXPORT int anchor();
+}
 #endif
 
 extern "C" int anchor() {
@@ -137,6 +154,8 @@ extern "C" {
 
 #if _WIN32||_WIN64
     extern __declspec(dllimport)
+#else
+    TBBMALLOC_EXPORT
 #endif
     int anchor();
 }
