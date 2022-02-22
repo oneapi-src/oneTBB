@@ -140,7 +140,7 @@ protected:
         std::memset( a + 1, 0, n * sizeof(slot) );
         return a;
     }
-    void free(array* a) {
+    void deallocate(array* a) {
         std::size_t n = std::size_t(1) << (a->lg_size);
         free_array( static_cast<void*>(a), std::size_t(sizeof(array) + n * sizeof(slot)) );
     }
@@ -197,7 +197,7 @@ template<ets_key_usage_type ETS_key_type>
 void ets_base<ETS_key_type>::table_clear() {
     while ( array* r = my_root.load(std::memory_order_relaxed) ) {
         my_root.store(r->next, std::memory_order_relaxed);
-        free(r);
+        deallocate(r);
     }
     my_count.store(0, std::memory_order_relaxed);
 }
@@ -251,7 +251,7 @@ void* ets_base<ETS_key_type>::table_lookup( bool& exists ) {
                 __TBB_ASSERT(new_r != nullptr, nullptr);
                 if( new_r->lg_size >= s ) {
                     // Another thread inserted an equal or  bigger array, so our array is superfluous.
-                    free(a);
+                    deallocate(a);
                     break;
                 }
                 r = new_r;
