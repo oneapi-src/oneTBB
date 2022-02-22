@@ -55,11 +55,17 @@ Lazy Initialization
    |image0|
 
 
+   ``SumTree`` class represents a segment tree allowing to get the sum of a certain
+   interval using ``GetSum(begin, end)`` method. A segment tree also includes an ``update``
+   operation, but implementation was omitted in this example not to increase the size of
+   the code. Note that the tree is not created when the constructor is called, but at
+   the first time the sum is queried.
+
+
    ::
 
 
       class SumTree {
-
          oneapi::tbb::collaborative_once_flag flag;
          const std::vector<int>& elems_ref;
          std::unique_ptr<Node> root = nullptr;
@@ -68,15 +74,16 @@ Lazy Initialization
          explicit SumTree(const std::vector<int>& numbers) : elems_ref(numbers) {}
 
          size_t GetSum(size_t begin, size_t end) {
-               oneapi::tbb::collaborative_call_once(flag, [this] {
-                  root = std::unique_ptr<Node>(new Node(0, elems_ref.size(), elems_ref));
-               });
-               return root->GetSum(begin, end);
+            // executed once, other threads will join if there is a parallel construction inside
+            oneapi::tbb::collaborative_call_once(flag, [this] {
+               root = std::unique_ptr<Node>(new Node(0, elems_ref.size(), elems_ref));
+            });
+            return root->GetSum(begin, end);
          }
       };
 
 
-   Sample text
+   Code for ``Node`` is shown below. 
 
 
    ::
@@ -90,33 +97,36 @@ Lazy Initialization
             std::unique_ptr<Node> left_child = nullptr;
             std::unique_ptr<Node> right_child = nullptr;
 
-            Node(size_t left, size_t right, const std::vector<int>& elems) : begin(left), 
-                                                                              end(right)
+            Node(size_t left, size_t right, const std::vector<int>& elems) : begin(left),
+                                                                             end(right)
             {
                if (end-begin <= 1) {
-                     sum = elems[begin];
+                  // We have reached the leaf. Just add a value to sum
+                  sum = elems[begin];
                } else {
-                     std::size_t mid = (begin + end) / 2;
+                  // Split the interval in two and recursively descend
+                  std::size_t mid = (begin + end) / 2;
 
-                     oneapi::tbb::parallel_invoke(
-                        [this, mid, &elems] {
-                           left_child = std::unique_ptr<Node>(new Node(begin, mid, elems));
-                        },
-                        [this, mid, &elems] {
-                           right_child = std::unique_ptr<Node>(new Node(mid, end, elems));
-                        }
-                     );
-                     
-                     sum = left_child->sum + right_child->sum;
+                  oneapi::tbb::parallel_invoke(
+                     [this, mid, &elems] {
+                        left_child = std::unique_ptr<Node>(new Node(begin, mid, elems));
+                     },
+                     [this, mid, &elems] {
+                        right_child = std::unique_ptr<Node>(new Node(mid, end, elems));
+                     }
+                  );
+                  
+                  sum = left_child->sum + right_child->sum;
                }
             }
 
             size_t GetSum(size_t left, size_t right) {
                size_t result_sum = 0;
                if (left <= begin && end <= right) {
-                     result_sum = sum;
+                  // We are inside the queried interval so just return the sum
+                  result_sum = sum;
                } else if (left_child && right_child) {
-                     result_sum = left_child->GetSum(left, right) + right_child->GetSum(left, right);
+                  result_sum = left_child->GetSum(left, right) + right_child->GetSum(left, right);
                }
                return result_sum;
             }
@@ -126,5 +136,5 @@ Lazy Initialization
    Sample text
 
 .. |image0| image:: Images/image008a.jpg
-   :width: 344px
-   :height: 191px
+   :width: 458px
+   :height: 254px
