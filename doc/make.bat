@@ -1,7 +1,7 @@
 @ECHO OFF
 
 rem ============================================================================
-rem Copyright 2020 Intel Corporation
+rem Copyright (C) 2020 Intel Corporation
 rem
 rem Licensed under the Apache License, Version 2.0 (the "License");
 rem you may not use this file except in compliance with the License.
