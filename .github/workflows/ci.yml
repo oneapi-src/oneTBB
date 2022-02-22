@@ -113,7 +113,6 @@ jobs:
         with:
           fetch-depth: 0
       - name: Run check
-        shell: bash
         run: |
           git diff --diff-filter=d --name-only ${{ github.event.pull_request.base.sha }} | grep -v .bazelversion | grep -v .gitignore | grep -v .gitattributes | grep -v .gitlab-ci.yml | grep -v input1 | grep -v input2 | grep -v input3 | grep -v input4 | grep -v speedup.gif| grep -v PkgInfo | grep -v LICENSE.txt | grep -v third-party-programs.txt | grep -v .git/ | grep -v licensing/ | grep -v doc/ | grep -v dat/ | grep -v .github/ > changed_files.txt
           count=$(cat changed_files.txt | wc -l)
