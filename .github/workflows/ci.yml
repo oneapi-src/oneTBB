@@ -110,11 +110,36 @@ jobs:
     runs-on: [ubuntu-20.04]
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Run check
         shell: bash
         run: |
-          git diff --diff-filter=d --name-only ${{ github.event.pull_request.base.sha }} > changed_files.txt
-          python3 .github/scripts/copyright_checker.py -c changed_files.txt
+          git diff --diff-filter=d --name-only ${{ github.event.pull_request.base.sha }} | grep -v .bazelversion | grep -v .gitignore | grep -v .gitattributes | grep -v .gitlab-ci.yml | grep -v input1 | grep -v input2 | grep -v input3 | grep -v input4 | grep -v speedup.gif| grep -v PkgInfo | grep -v LICENSE.txt | grep -v third-party-programs.txt | grep -v .git/ | grep -v licensing/ | grep -v doc/ | grep -v dat/ | grep -v .github/ > changed_files.txt
+          count=$(cat changed_files.txt | wc -l)
+          all_correct=0
+          correct_year=$(date +%Y)
+          for ((i=1; i <= $count; i++)) do 
+            file=$(cat changed_files.txt | head -n$i | tail -n1)
+            line=$(grep -E 'Copyright \(c\) 20[[:digit:]]{2}(-[[:digit:]]{4})? Intel Corporation' $file) 
+            if [[ "$line" != "" ]]; then 
+              year=$(expr match "$line" '.*\([0-9]\{4\}.*\)')
+              year=$(expr match "$year" '\([0-9]\{4\}\)')
+              if [[ "$year" != "$correct_year" ]]; then
+                all_correct=1
+                if [[ "$line" == *"-"* ]]; then
+                  line=$(echo $line | sed -e "s/"$year"/"$correct_year"/")
+                else
+                  line=$(echo $line | sed -e "s/"$year"/"$year-$correct_year"/")
+                fi
+                echo "Incorrect copyright year (${year}) in ${file}. Try replacing with: ${line}"
+              fi
+            else 
+              all_correct=1
+              echo "File ${file} is not supported"
+            fi
+          done
+          exit ${all_correct}
 
   python_module_test_ubuntu18-04:
     runs-on: [ubuntu-18.04]
