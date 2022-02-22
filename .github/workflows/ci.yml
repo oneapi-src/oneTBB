@@ -138,8 +138,11 @@ jobs:
               echo "File ${file} is not supported"
             fi
           done
-          exit ${all_correct}
-
+          if [[ ${all_correct} == 1 ]]; then
+            exit ${all_correct}
+          else
+            echo "Done"
+          fi
   python_module_test_ubuntu18-04:
     runs-on: [ubuntu-18.04]
     timeout-minutes: 15
