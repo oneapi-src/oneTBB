@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2021 Intel Corporation
+    Copyright (c) 2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -211,7 +211,7 @@ TEST_CASE("only calls once - move only argument") {
 TEST_CASE("only calls once - stress test") {
 #if TBB_TEST_LOW_WORKLOAD
     constexpr std::size_t N = 32;
-#elif __TBB_x86_32 || __aarch32__  || __ANDROID__
+#elif __TBB_x86_32 || __arm__  || __ANDROID__
     // Some C++ implementations allocate 8MB stacks for std::thread on 32 bit platforms
     // that makes impossible to create more than ~500 threads.
     // Android has been added to decrease testing time.
@@ -282,7 +282,7 @@ TEST_CASE("handles exceptions - state reset") {
 TEST_CASE("handles exceptions - stress test") {
 #if TBB_TEST_LOW_WORKLOAD
     constexpr std::size_t N = 32;
-#elif __TBB_x86_32 || __aarch32__ || __ANDROID__
+#elif __TBB_x86_32 || __arm__ || __ANDROID__
     // Some C++ implementations allocate 8MB stacks for std::thread on 32 bit platforms
     // that makes impossible to create more than ~500 threads.
     // Android has been added to decrease testing time.
