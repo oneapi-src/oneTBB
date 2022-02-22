@@ -25,6 +25,12 @@
 #define NOMINMAX
 #endif // NOMINMAX
 
+#if _WIN32 && TBB_USE_DEBUG
+// Check that there is no conflict with _CRTDBG_MAP_ALLOC
+#define _CRTDBG_MAP_ALLOC
+#include "crtdbg.h"
+#endif
+
 #include <exception>
 
 #define CHECK(x) do { if (!(x)) { std::terminate(); } } while (false)
