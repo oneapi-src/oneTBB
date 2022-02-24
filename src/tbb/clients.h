@@ -18,6 +18,7 @@
 #define _TBB_clients_H
 
 #include "oneapi/tbb/detail/_intrusive_list_node.h"
+#include "arena.h"
 
 namespace tbb {
 namespace detail {

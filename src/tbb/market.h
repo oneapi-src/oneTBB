@@ -47,7 +47,7 @@ namespace r1 {
 class permit_manager_client;
 struct tbb_permit_manager_client;
 class task_group_context;
-class thread_pool;
+class thread_dispatcher;
 
 
 //------------------------------------------------------------------------
@@ -70,7 +70,7 @@ private:
     typedef intrusive_list<tbb_permit_manager_client> arena_list_type;
     typedef intrusive_list<thread_data> thread_data_list_type;
 
-    thread_pool* my_thread_pool;
+    thread_dispatcher* my_thread_dispatcher;
 
     //! Currently active global market
     static market* theMarket;
