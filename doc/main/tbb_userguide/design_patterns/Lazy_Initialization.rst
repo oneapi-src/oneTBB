@@ -151,7 +151,7 @@ Lazy Initialization
 
       oneapi::tbb::parallel_for(tbb::blocked_range<size_t>(0ull, N), [&tree] (auto r) {
          // Get the sum on interval. Threads that are blocked on the same flag can
-         // share the work received from oneapi::tbb::parallel_invoke. 
+         // share the work received from oneapi::tbb::parallel_invoke
          size_t sum = tree.GetSum(r.begin(), r.end());
          // Using the sum received further
       });
