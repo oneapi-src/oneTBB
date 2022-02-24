@@ -34,13 +34,17 @@ namespace r1 {
 
 
 struct tbb_permit_manager_client : public permit_manager_client, public d1::intrusive_list_node {
-    tbb_permit_manager_client(arena& a) : permit_manager_client(a) {}
+    tbb_permit_manager_client(arena& a, thread_dispatcher& td) : permit_manager_client(a, td) {}
 
     void update_allotment() override {
+        unsigned prev_allotment = my_arena.exchange_allotment(my_num_workers_allotted);
+        int delta = my_num_workers_allotted - prev_allotment;
+
+        suppress_unused_warning(delta);
     }
 
     void set_allotment(unsigned allotment) {
-        m_arena.set_allotment(allotment);
+        my_num_workers_allotted = allotment;
     }
 
     // arena needs an extra worker despite a global limit
@@ -48,32 +52,34 @@ struct tbb_permit_manager_client : public permit_manager_client, public d1::intr
 
     //! The index in the array of per priority lists of arenas this object is in.
     unsigned priority_level() {
-        return m_arena.priority_level();
+        return my_arena.priority_level();
     }
 
     bool has_enqueued_tasks() {
-        return m_arena.has_enqueued_tasks();
+        return my_arena.has_enqueued_tasks();
     }
 
     std::uintptr_t aba_epoch() {
-        return m_arena.aba_epoch();
+        return my_arena.aba_epoch();
     }
 
     int num_workers_requested() {
-        return m_arena.num_workers_requested();
+        return my_arena.num_workers_requested();
     }
 
     unsigned references() {
-        return m_arena.references();
+        return my_arena.references();
     }
 
     thread_pool_ticket& ticket() {
-        return m_ticket;
+        return my_ticket;
     }
 
     void set_top_priority(bool b) {
-        return m_is_top_priority.store(b, std::memory_order_relaxed);
+        return my_is_top_priority.store(b, std::memory_order_relaxed);
     }
+
+    unsigned my_num_workers_allotted;
 };
 
 void market::insert_arena_into_list (tbb_permit_manager_client& a ) {
@@ -91,23 +97,25 @@ void market::remove_arena_from_list (tbb_permit_manager_client& a ) {
 //------------------------------------------------------------------------
 
 market::market ( unsigned workers_soft_limit, unsigned workers_hard_limit, std::size_t stack_size )
-    : my_num_workers_hard_limit(workers_hard_limit)
-    , my_num_workers_soft_limit(workers_soft_limit)
+    : my_num_workers_soft_limit(workers_soft_limit)
     , my_next_arena(nullptr)
     , my_ref_count(1)
-    , my_stack_size(stack_size)
     , my_workers_soft_limit_to_report(workers_soft_limit)
 {
     // Once created RML server will start initializing workers that will need
     // global market instance to get worker stack size
-    my_server = governor::create_rml_server( *this );
-    my_thread_dispatcher = new thread_dispatcher();
-    __TBB_ASSERT( my_server, "Failed to create RML server" );
+    my_thread_dispatcher = new thread_dispatcher(*this, workers_hard_limit, stack_size);
 }
 
 market::~market() {
-    poison_pointer(my_server);
     poison_pointer(my_next_arena);
+}
+
+std::size_t market::worker_stack_size() const { return my_thread_dispatcher->my_stack_size; }
+
+unsigned market::max_num_workers() {
+    global_market_mutex_type::scoped_lock lock( theMarketMutex );
+    return theMarket? theMarket->my_thread_dispatcher->my_num_workers_hard_limit : 0;
 }
 
 static unsigned calc_workers_soft_limit(unsigned workers_soft_limit, unsigned workers_hard_limit) {
@@ -127,7 +135,7 @@ bool market::add_ref_unsafe( global_market_mutex_type::scoped_lock& lock, bool i
         const unsigned old_public_count = is_public ? m->my_public_ref_count++ : /*any non-zero value*/1;
         lock.release();
         if( old_public_count==0 )
-            set_active_num_workers( calc_workers_soft_limit(workers_requested, m->my_num_workers_hard_limit) );
+            set_active_num_workers( calc_workers_soft_limit(workers_requested, m->my_thread_dispatcher->my_num_workers_hard_limit) );
 
         // do not warn if default number of workers is requested
         if( workers_requested != governor::default_num_threads()-1 ) {
@@ -146,9 +154,9 @@ bool market::add_ref_unsafe( global_market_mutex_type::scoped_lock& lock, bool i
             }
 
         }
-        if( m->my_stack_size < stack_size )
+        if( m->my_thread_dispatcher->my_stack_size < stack_size )
             runtime_warning( "Thread stack size has been already set to %u. "
-                             "The request for larger stack (%u) cannot be satisfied.\n", m->my_stack_size, stack_size );
+                             "The request for larger stack (%u) cannot be satisfied.\n", m->my_thread_dispatcher->my_stack_size, stack_size );
         return true;
     }
     return false;
@@ -188,9 +196,9 @@ market& market::global_market(bool is_public, unsigned workers_requested, std::s
         }
         theMarket = m;
         // This check relies on the fact that for shared RML default_concurrency==max_concurrency
-        if ( !governor::UsePrivateRML && m->my_server->default_concurrency() < workers_soft_limit )
+        if ( !governor::UsePrivateRML && m->my_thread_dispatcher->my_server->default_concurrency() < workers_soft_limit )
             runtime_warning( "RML might limit the number of workers to %u while %u is requested.\n"
-                    , m->my_server->default_concurrency(), workers_soft_limit );
+                    , m->my_thread_dispatcher->my_server->default_concurrency(), workers_soft_limit );
     }
     return *theMarket;
 }
@@ -241,8 +249,8 @@ bool market::release ( bool is_public, bool blocking_terminate ) {
         __TBB_ASSERT( !my_public_ref_count.load(std::memory_order_relaxed),
             "No public references remain if we remove the market." );
         // inform RML that blocking termination is required
-        my_join_workers = blocking_terminate;
-        my_server->request_close_connection();
+        my_thread_dispatcher->my_join_workers = blocking_terminate;
+        my_thread_dispatcher->my_server->request_close_connection();
         return blocking_terminate;
     }
     return false;
@@ -279,7 +287,7 @@ void market::set_active_num_workers ( unsigned soft_limit ) {
     int delta = 0;
     {
         arenas_list_mutex_type::scoped_lock lock( m->my_arenas_list_mutex );
-        __TBB_ASSERT(soft_limit <= m->my_num_workers_hard_limit, nullptr);
+        __TBB_ASSERT(soft_limit <= m->my_thread_dispatcher->my_num_workers_hard_limit, nullptr);
 
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
         arena_list_type* arenas = m->my_arenas;
@@ -312,13 +320,9 @@ void market::set_active_num_workers ( unsigned soft_limit ) {
     }
     // adjust_job_count_estimate must be called outside of any locks
     if( delta!=0 )
-        m->my_server->adjust_job_count_estimate( delta );
+        m->my_thread_dispatcher->my_server->adjust_job_count_estimate( delta );
     // release internal market reference to match ++m->my_ref_count above
     m->release( /*is_public=*/false, /*blocking_terminate=*/false );
-}
-
-bool governor::does_client_join_workers (const rml::tbb_client &client) {
-    return ((const market&)client).must_join_workers();
 }
 
 bool market::propagate_task_group_state(std::atomic<std::uint32_t> d1::task_group_context::* mptr_state, d1::task_group_context& src, std::uint32_t new_state) {
@@ -334,7 +338,7 @@ bool market::propagate_task_group_state(std::atomic<std::uint32_t> d1::task_grou
     // Advance global state propagation epoch
     ++the_context_state_propagation_epoch;
     // Propagate to all workers and external threads and sync up their local epochs with the global one
-    unsigned num_workers = my_first_unused_worker_idx;
+    unsigned num_workers = my_thread_dispatcher->my_first_unused_worker_idx;
     for (unsigned i = 0; i < num_workers; ++i) {
         thread_data* td = my_workers[i].load(std::memory_order_acquire);
         // If the worker is only about to be registered, skip it.
@@ -349,7 +353,7 @@ bool market::propagate_task_group_state(std::atomic<std::uint32_t> d1::task_grou
 }
 
 permit_manager_client* market::create_client(arena& a, constraits_type*) {
-    auto c = new tbb_permit_manager_client(a);
+    auto c = new tbb_permit_manager_client(a, *my_thread_dispatcher);
     // Add newly created arena into the existing market's list.
     arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex);
     insert_arena_into_list(*c);
@@ -388,7 +392,7 @@ bool market::try_destroy_arena (permit_manager_client* c, uintptr_t aba_epoch, u
     bool locked = true;
     __TBB_ASSERT( a, nullptr);
     // we hold reference to the server, so market cannot be destroyed at any moment here
-    __TBB_ASSERT(!is_poisoned(my_server), nullptr);
+    __TBB_ASSERT(!is_poisoned(my_next_arena), nullptr);
     my_arenas_list_mutex.lock();
         arena_list_type::iterator it = my_arenas[priority_level].begin();
         for ( ; it != my_arenas[priority_level].end(); ++it ) {
@@ -461,6 +465,7 @@ int market::update_allotment ( arena_list_type* arenas, int workers_demand, int 
             //a.my_num_workers_allotted.store(allotted, std::memory_order_relaxed);
             a.set_allotment(allotted);
             a.set_top_priority(list_idx == max_priority_level);
+            a.update_allotment();
             assigned += allotted;
         }
     }
@@ -497,7 +502,7 @@ void market::enable_mandatory_concurrency ( permit_manager_client *c ) {
         }
 
         if (delta != 0)
-            my_server->adjust_job_count_estimate(delta);
+            my_thread_dispatcher->my_server->adjust_job_count_estimate(delta);
     }
 }
 
@@ -529,7 +534,7 @@ void market::mandatory_concurrency_disable (permit_manager_client*c ) {
             delta = update_workers_request();
         }
         if (delta != 0)
-            my_server->adjust_job_count_estimate(delta);
+            my_thread_dispatcher->my_server->adjust_job_count_estimate(delta);
     }
 }
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
@@ -579,34 +584,9 @@ void market::adjust_demand (permit_manager_client& c, int delta, bool mandatory 
 
     a.my_adjust_demand_current_epoch.wait_until(target_epoch, /* context = */ target_epoch, std::memory_order_relaxed);
     // Must be called outside of any locks
-    my_server->adjust_job_count_estimate( delta );
+    my_thread_dispatcher->my_server->adjust_job_count_estimate( delta );
     a.my_adjust_demand_current_epoch.exchange(target_epoch + 1);
     a.my_adjust_demand_current_epoch.notify_relaxed(target_epoch + 1);
-}
-
-void market::process( job& j ) {
-    my_thread_dispatcher->process(static_cast<thread_data&>(j));
-}
-
-void market::cleanup( job& j) {
-    market::enforce([this] { return theMarket != this; }, nullptr );
-    governor::auto_terminate(&j);
-}
-
-void market::acknowledge_close_connection() {
-    destroy();
-}
-
-::rml::job* market::create_one_job() {
-    unsigned short index = ++my_first_unused_worker_idx;
-    __TBB_ASSERT( index > 0, nullptr);
-    ITT_THREAD_SET_NAME(_T("TBB Worker Thread"));
-    // index serves as a hint decreasing conflicts between workers when they migrate between arenas
-    thread_data* td = new(cache_aligned_allocate(sizeof(thread_data))) thread_data{ index, true };
-    __TBB_ASSERT( index <= my_num_workers_hard_limit, nullptr);
-    __TBB_ASSERT( my_workers[index - 1].load(std::memory_order_relaxed) == nullptr, nullptr);
-    my_workers[index - 1].store(td, std::memory_order_release);
-    return td;
 }
 
 void market::add_external_thread(thread_data& td) {

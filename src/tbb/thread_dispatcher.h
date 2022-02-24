@@ -23,17 +23,31 @@
 #include "arena.h"
 #include "governor.h"
 #include "thread_data.h"
-
+#include "rml_tbb.h"
 #include "clients.h"
+#include "market.h"
 
 namespace tbb {
 namespace detail {
 namespace r1 {
 
-class thread_dispatcher : no_copy {
+class thread_dispatcher : no_copy, rml::tbb_client {
     using ticket_list_type = intrusive_list<thread_pool_ticket>;
     using ticket_list_mutex_type = d1::rw_mutex;
 public:
+    thread_dispatcher(market& m, unsigned hard_limit, std::size_t stack_size)
+        : my_num_workers_hard_limit(hard_limit)
+        , my_stack_size(stack_size)
+        , my_market(m)
+    {
+        my_server = governor::create_rml_server( *this );
+        __TBB_ASSERT( my_server, "Failed to create RML server" );
+    }
+
+    ~thread_dispatcher() {
+        poison_pointer(my_server);
+    }
+
     thread_pool_ticket* select_next_client(thread_pool_ticket* hint) {
         unsigned next_client_priority_level = num_priority_levels;
         if (hint) {
@@ -128,7 +142,8 @@ public:
         return ticket_in_need(m_ticket_list, m_next_ticket);
     }
 
-    void process(thread_data& td) {
+    void process(job& j) override {
+        thread_data& td = static_cast<thread_data&>(j);
         // td.my_last_client can be dead. Don't access it until arena_in_need is called
         thread_pool_ticket* ticket = td.my_last_ticket;
         for (int i = 0; i < 2; ++i) {
@@ -146,13 +161,73 @@ public:
         }
     }
 
+    void cleanup( job& j) override {
+        // market::enforce([this] { return theMarket != this; }, nullptr );
+        governor::auto_terminate(&j);
+    }
+
+    void acknowledge_close_connection() override {
+        my_market.destroy();
+    }
+
+    ::rml::job* create_one_job() override {
+        unsigned short index = ++my_first_unused_worker_idx;
+        __TBB_ASSERT( index > 0, nullptr);
+        ITT_THREAD_SET_NAME(_T("TBB Worker Thread"));
+        // index serves as a hint decreasing conflicts between workers when they migrate between arenas
+        thread_data* td = new(cache_aligned_allocate(sizeof(thread_data))) thread_data{ index, true };
+        __TBB_ASSERT( index <= my_num_workers_hard_limit, nullptr);
+        __TBB_ASSERT( my_market.my_workers[index - 1].load(std::memory_order_relaxed) == nullptr, nullptr);
+        my_market.my_workers[index - 1].store(td, std::memory_order_release);
+        return td;
+    }
+
+
+    //! Used when RML asks for join mode during workers termination.
+    bool must_join_workers () const { return my_join_workers; }
+
+    //! Returns the requested stack size of worker threads.
+    std::size_t worker_stack_size() const { return my_stack_size; }
+
+    version_type version () const override { return 0; }
+
+    unsigned max_job_count () const override { return my_num_workers_hard_limit; }
+
+    std::size_t min_stack_size () const override { return worker_stack_size(); }
+
 private:
+    friend class market;
     static constexpr unsigned num_priority_levels = 3;
     ticket_list_mutex_type m_mutex;
     ticket_list_type m_ticket_list[num_priority_levels];
 
     thread_pool_ticket* m_next_ticket{nullptr};
+
+    //! Shutdown mode
+    bool my_join_workers{false};
+
+    //! Maximal number of workers allowed for use by the underlying resource manager
+    /** It can't be changed after market creation. **/
+    unsigned my_num_workers_hard_limit{0};
+
+    //! Stack size of worker threads
+    std::size_t my_stack_size{0};
+
+    //! First unused index of worker
+    /** Used to assign indices to the new workers coming from RML, and busy part
+        of my_workers array. **/
+    std::atomic<unsigned> my_first_unused_worker_idx{0};
+
+    //! Pointer to the RML server object that services this TBB instance.
+    rml::tbb_server* my_server{nullptr};
+
+    // Remove market
+    market& my_market;
 };
+
+bool governor::does_client_join_workers (const rml::tbb_client &client) {
+    return ((const thread_dispatcher&)client).must_join_workers();
+}
 
 } // namespace r1
 } // namespace detail

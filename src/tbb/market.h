@@ -20,7 +20,6 @@
 #include "scheduler_common.h"
 #include "market_concurrent_monitor.h"
 #include "intrusive_list.h"
-#include "rml_tbb.h"
 #include "oneapi/tbb/rw_mutex.h"
 
 #include "oneapi/tbb/spin_rw_mutex.h"
@@ -54,7 +53,7 @@ class thread_dispatcher;
 // Class market
 //------------------------------------------------------------------------
 
-class market : public permit_manager, rml::tbb_client {
+class market : public permit_manager {
     friend class task_group_context;
     friend class governor;
     friend class lifetime_control;
@@ -66,6 +65,7 @@ public:
 private:
     friend void ITT_DoUnsafeOneTimeInitialization ();
     friend bool finalize_impl(d1::task_scheduler_handle& handle);
+    friend thread_dispatcher;
 
     typedef intrusive_list<tbb_permit_manager_client> arena_list_type;
     typedef intrusive_list<thread_data> thread_data_list_type;
@@ -85,24 +85,12 @@ private:
     // TODO: introduce fine-grained (per priority list) locking of arenas.
     arenas_list_mutex_type my_arenas_list_mutex;
 
-    //! Pointer to the RML server object that services this TBB instance.
-    rml::tbb_server* my_server;
-
-    //! Maximal number of workers allowed for use by the underlying resource manager
-    /** It can't be changed after market creation. **/
-    unsigned my_num_workers_hard_limit;
-
     //! Current application-imposed limit on the number of workers (see set_active_num_workers())
     /** It can't be more than my_num_workers_hard_limit. **/
     std::atomic<unsigned> my_num_workers_soft_limit;
 
     //! Number of workers currently requested from RML
     int my_num_workers_requested;
-
-    //! First unused index of worker
-    /** Used to assign indices to the new workers coming from RML, and busy part
-        of my_workers array. **/
-    std::atomic<unsigned> my_first_unused_worker_idx;
 
     //! Number of workers that were requested by all arenas on all priority levels
     std::atomic<int> my_total_demand;
@@ -130,12 +118,6 @@ private:
 
     //! Count of external threads attached
     std::atomic<unsigned> my_public_ref_count;
-
-    //! Stack size of worker threads
-    std::size_t my_stack_size;
-
-    //! Shutdown mode
-    bool my_join_workers;
 
     //! The value indicating that the soft limit warning is unnecessary
     static const unsigned skip_soft_limit_warning = ~0U;
@@ -185,29 +167,15 @@ private:
 
     int update_allotment ( arena_list_type* arenas, int total_demand, int max_workers );
 
-    ////////////////////////////////////////////////////////////////////////////////
-    // Implementation of rml::tbb_client interface methods
-
-    version_type version () const override { return 0; }
-
-    unsigned max_job_count () const override { return my_num_workers_hard_limit; }
-
-    std::size_t min_stack_size () const override { return worker_stack_size(); }
-
-    job* create_one_job () override;
-
-    void cleanup( job& j ) override;
-
-    void acknowledge_close_connection () override;
-
-    void process( job& j ) override;
-
 public:
     permit_manager_client* create_client(arena& a, constraits_type* constraits) override;
     void destroy_client(permit_manager_client& c) override;
 
     void request_demand(unsigned min, unsigned max, permit_manager_client&) override;
     void release_demand(permit_manager_client&) override;
+
+    //! Returns the requested stack size of worker threads.
+    std::size_t worker_stack_size() const override;
 
     //! Add reference to market if theMarket exists
     static bool add_ref_unsafe( global_market_mutex_type::scoped_lock& lock, bool is_public, unsigned max_num_workers = 0, std::size_t stack_size = 0 );
@@ -243,12 +211,6 @@ public:
     /** Concurrent invocations are possible only on behalf of different arenas. **/
     void adjust_demand (permit_manager_client&, int delta, bool mandatory ) override;
 
-    //! Used when RML asks for join mode during workers termination.
-    bool must_join_workers () const { return my_join_workers; }
-
-    //! Returns the requested stack size of worker threads.
-    std::size_t worker_stack_size() const override { return my_stack_size; }
-
     //! Set number of active workers
     static void set_active_num_workers( unsigned w );
 
@@ -273,10 +235,7 @@ public:
         Must be the last data member of the class market. **/
     std::atomic<thread_data*> my_workers[1];
 
-    static unsigned max_num_workers() {
-        global_market_mutex_type::scoped_lock lock( theMarketMutex );
-        return theMarket? theMarket->my_num_workers_hard_limit : 0;
-    }
+    static unsigned max_num_workers();
 
     void add_external_thread(thread_data& td) override;
 
