@@ -114,14 +114,10 @@ jobs:
           fetch-depth: 0
       - name: Run check
         run: |
-          for changed_file in $(git diff --diff-filter=d --name-only ${{ github.event.pull_request.base.sha }}); do
-            echo "Handle ${changed_file}"
-            if [[ -z $(grep "Copyright (c).*-.* Intel Corporation" ${changed_file}) ]]; then
-              sed -i "/Copyright (c).* Intel Corporation/s/[0-9]\{4\} /& -$(date +%Y) /" ${changed_file}
-            else
-              sed -i "/Copyright (c).*-.* Intel Corporation/s/[0-9]\{4\} /$(date +%Y) /g" ${changed_file}
-            fi
-          done
+          sed -i \
+            -e "/Copyright (c).*-.* Intel Corporation/s/[0-9]\+ /$(date +%Y) /" \
+            -e "/Copyright (c) [0-9]\+ Intel Corporation/s/[0-9]\+/&-$(date +%Y)/" \
+            $(git diff --diff-filter=d --name-only ${{ github.event.pull_request.base.sha }})
           git checkout -- third-party-programs.txt
           git diff > years.diff
           if [[ -s years.diff ]]; then
