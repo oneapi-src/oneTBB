@@ -38,7 +38,7 @@ Lazy Initialization
 
    In addition, ``collaborative_call_once`` allows other thread blocked on
    the same ``collaborative_once_flag`` to join other |short_name|
-   parallel constructions called within the intializing function.
+   parallel constructions called within the initializing function.
 
 
 .. container:: section
