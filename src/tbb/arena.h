@@ -436,8 +436,10 @@ public:
         return false;
     }
 
-    void set_allotment(unsigned allotment) {
+    unsigned exchange_allotment(unsigned allotment) {
+        unsigned prev_allotment = my_num_workers_allotted.load(std::memory_order_relaxed);
         my_num_workers_allotted.store(allotment, std::memory_order_relaxed);
+        return prev_allotment;
     }
 
     int update_request(int delta, bool mandatory) {

@@ -44,6 +44,8 @@ market_concurrent_monitor* governor::sleep_monitor;
 // market data
 market* market::theMarket;
 market::global_market_mutex_type market::theMarketMutex;
+// threading_lifetime_controller* threading_lifetime_controller::theTLC;
+// threading_lifetime_controller::global_mutex_type threading_lifetime_controller::theTLCMutex;
 
 //------------------------------------------------------------------------
 // context propagation data
