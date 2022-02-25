@@ -53,10 +53,17 @@ class thread_dispatcher;
 // TODO resource_manager_client and thread_pool_client
 class permit_manager_client {
 public:
-    permit_manager_client(arena& a, thread_dispatcher& td) : my_arena(a), my_thread_dispatcher(td), my_ticket(a) {}
+    permit_manager_client(arena& a, permit_manager& pm, thread_dispatcher& td)
+        : my_arena(a)
+        , my_permit_manager(pm)
+        , my_thread_dispatcher(td)
+        , my_ticket(a)
+    {}
+
     virtual ~permit_manager_client() {}
-    // Interface of communication with resource manager
-    virtual void update_allotment() = 0;
+
+    virtual void request_demand(unsigned min, unsigned max) = 0;
+    virtual void release_demand() = 0;
 
     bool is_top_priority() {
         return my_is_top_priority.load(std::memory_order_relaxed);
@@ -74,6 +81,7 @@ public:
 
 protected:
     arena& my_arena;
+    permit_manager& my_permit_manager;
     thread_dispatcher& my_thread_dispatcher;
     thread_pool_ticket my_ticket;
     //! The max priority level of arena in market.

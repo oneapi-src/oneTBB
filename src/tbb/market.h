@@ -171,9 +171,6 @@ public:
     permit_manager_client* create_client(arena& a, constraits_type* constraits) override;
     void destroy_client(permit_manager_client& c) override;
 
-    void request_demand(unsigned min, unsigned max, permit_manager_client&) override;
-    void release_demand(permit_manager_client&) override;
-
     //! Returns the requested stack size of worker threads.
     std::size_t worker_stack_size() const override;
 

@@ -40,9 +40,6 @@ public:
     virtual permit_manager_client* create_client(arena& a, constraits_type* constraits) = 0;
     virtual void destroy_client(permit_manager_client& c) = 0;
 
-    virtual void request_demand(unsigned min, unsigned max, permit_manager_client&) = 0;
-    virtual void release_demand(permit_manager_client&) = 0;
-
     // Remove this trash from PM
     virtual bool try_destroy_arena(permit_manager_client*, uintptr_t aba_epoch, unsigned priority_level) = 0;
     virtual void adjust_demand (permit_manager_client&, int delta, bool mandatory ) = 0;

@@ -34,17 +34,15 @@ namespace r1 {
 
 
 struct tbb_permit_manager_client : public permit_manager_client, public d1::intrusive_list_node {
-    tbb_permit_manager_client(arena& a, thread_dispatcher& td) : permit_manager_client(a, td) {}
+    tbb_permit_manager_client(arena& a, market& m, thread_dispatcher& td) : permit_manager_client(a, m, td) {}
 
-    void update_allotment() override {
-        unsigned prev_allotment = my_arena.exchange_allotment(my_num_workers_allotted);
-        int delta = my_num_workers_allotted - prev_allotment;
-
-        suppress_unused_warning(delta);
+    void request_demand(unsigned min, unsigned max) override {
+        suppress_unused_warning(min, max);
     }
+    void release_demand() override {}
 
     void set_allotment(unsigned allotment) {
-        my_num_workers_allotted = allotment;
+        my_arena.set_allotment(allotment);
     }
 
     // arena needs an extra worker despite a global limit
@@ -78,8 +76,6 @@ struct tbb_permit_manager_client : public permit_manager_client, public d1::intr
     void set_top_priority(bool b) {
         return my_is_top_priority.store(b, std::memory_order_relaxed);
     }
-
-    unsigned my_num_workers_allotted;
 };
 
 void market::insert_arena_into_list (tbb_permit_manager_client& a ) {
@@ -353,7 +349,7 @@ bool market::propagate_task_group_state(std::atomic<std::uint32_t> d1::task_grou
 }
 
 permit_manager_client* market::create_client(arena& a, constraits_type*) {
-    auto c = new tbb_permit_manager_client(a, *my_thread_dispatcher);
+    auto c = new tbb_permit_manager_client(a, *this, *my_thread_dispatcher);
     // Add newly created arena into the existing market's list.
     arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex);
     insert_arena_into_list(*c);
@@ -363,14 +359,6 @@ permit_manager_client* market::create_client(arena& a, constraits_type*) {
 
 void market::destroy_client(permit_manager_client& c) {
     delete &c;
-}
-
-void market::request_demand(unsigned min, unsigned max, permit_manager_client&) {
-    suppress_unused_warning(min, max);
-}
-
-void market::release_demand(permit_manager_client&) {
-
 }
 
 /** This method must be invoked under my_arenas_list_mutex. **/
@@ -465,7 +453,6 @@ int market::update_allotment ( arena_list_type* arenas, int workers_demand, int 
             //a.my_num_workers_allotted.store(allotted, std::memory_order_relaxed);
             a.set_allotment(allotted);
             a.set_top_priority(list_idx == max_priority_level);
-            a.update_allotment();
             assigned += allotted;
         }
     }
