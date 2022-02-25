@@ -3,7 +3,7 @@
 oneAPI Examples
 ===============
 
-See the following examples to see how |short_name| works. 
+Refer to the following examples to see how |short_name| works. 
 
 * `concurrent_hash_map <https://github.com/oneapi-src/oneTBB/tree/master/examples/concurrent_hash_map>`_ 
 * `concurrent_priority_queue <https://github.com/oneapi-src/oneTBB/tree/master/examples/concurrent_priority_queue>`_ 
