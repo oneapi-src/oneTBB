@@ -124,7 +124,7 @@ static unsigned calc_workers_soft_limit(unsigned workers_soft_limit, unsigned wo
     return workers_soft_limit;
 }
 
-bool market::add_ref_unsafe( global_market_mutex_type::scoped_lock& lock, bool is_public, unsigned workers_requested, std::size_t stack_size ) {
+market* market::add_ref_unsafe( global_market_mutex_type::scoped_lock& lock, bool is_public, unsigned workers_requested ) {
     market *m = theMarket;
     if( m ) {
         ++m->my_ref_count;
@@ -132,35 +132,14 @@ bool market::add_ref_unsafe( global_market_mutex_type::scoped_lock& lock, bool i
         lock.release();
         if( old_public_count==0 )
             set_active_num_workers( calc_workers_soft_limit(workers_requested, m->my_thread_dispatcher->my_num_workers_hard_limit) );
-
-        // do not warn if default number of workers is requested
-        if( workers_requested != governor::default_num_threads()-1 ) {
-            __TBB_ASSERT( skip_soft_limit_warning > workers_requested,
-                          "skip_soft_limit_warning must be larger than any valid workers_requested" );
-            unsigned soft_limit_to_report = m->my_workers_soft_limit_to_report.load(std::memory_order_relaxed);
-            if( soft_limit_to_report < workers_requested ) {
-                runtime_warning( "The number of workers is currently limited to %u. "
-                                 "The request for %u workers is ignored. Further requests for more workers "
-                                 "will be silently ignored until the limit changes.\n",
-                                 soft_limit_to_report, workers_requested );
-                // The race is possible when multiple threads report warnings.
-                // We are OK with that, as there are just multiple warnings.
-                unsigned expected_limit = soft_limit_to_report;
-                m->my_workers_soft_limit_to_report.compare_exchange_strong(expected_limit, skip_soft_limit_warning);
-            }
-
-        }
-        if( m->my_thread_dispatcher->my_stack_size < stack_size )
-            runtime_warning( "Thread stack size has been already set to %u. "
-                             "The request for larger stack (%u) cannot be satisfied.\n", m->my_thread_dispatcher->my_stack_size, stack_size );
-        return true;
     }
-    return false;
+    return m;
 }
 
 market& market::global_market(bool is_public, unsigned workers_requested, std::size_t stack_size) {
     global_market_mutex_type::scoped_lock lock( theMarketMutex );
-    if( !market::add_ref_unsafe(lock, is_public, workers_requested, stack_size) ) {
+    market* m = market::add_ref_unsafe(lock, is_public, workers_requested);
+    if( !m ) {
         // TODO: A lot is done under theMarketMutex locked. Can anything be moved out?
         if( stack_size == 0 )
             stack_size = global_control::active_value(global_control::thread_stack_size);
@@ -183,7 +162,7 @@ market& market::global_market(bool is_public, unsigned workers_requested, std::s
         void* storage = cache_aligned_allocate(size);
         std::memset( storage, 0, size );
         // Initialize and publish global market
-        market* m = new (storage) market( workers_soft_limit, workers_hard_limit, stack_size );
+        m = new (storage) market( workers_soft_limit, workers_hard_limit, stack_size );
         if( is_public )
             m->my_public_ref_count.store(1, std::memory_order_relaxed);
         if (market::is_lifetime_control_present()) {
@@ -195,6 +174,27 @@ market& market::global_market(bool is_public, unsigned workers_requested, std::s
         if ( !governor::UsePrivateRML && m->my_thread_dispatcher->my_server->default_concurrency() < workers_soft_limit )
             runtime_warning( "RML might limit the number of workers to %u while %u is requested.\n"
                     , m->my_thread_dispatcher->my_server->default_concurrency(), workers_soft_limit );
+    } else {
+        // do not warn if default number of workers is requested
+        if (workers_requested != governor::default_num_threads() - 1) {
+            __TBB_ASSERT(skip_soft_limit_warning > workers_requested,
+                "skip_soft_limit_warning must be larger than any valid workers_requested");
+            unsigned soft_limit_to_report = m->my_workers_soft_limit_to_report.load(std::memory_order_relaxed);
+            if (soft_limit_to_report < workers_requested) {
+                runtime_warning("The number of workers is currently limited to %u. "
+                    "The request for %u workers is ignored. Further requests for more workers "
+                    "will be silently ignored until the limit changes.\n",
+                    soft_limit_to_report, workers_requested);
+                // The race is possible when multiple threads report warnings.
+                // We are OK with that, as there are just multiple warnings.
+                unsigned expected_limit = soft_limit_to_report;
+                m->my_workers_soft_limit_to_report.compare_exchange_strong(expected_limit, skip_soft_limit_warning);
+            }
+
+        }
+        if (m->my_thread_dispatcher->my_stack_size < stack_size)
+            runtime_warning("Thread stack size has been already set to %u. "
+                "The request for larger stack (%u) cannot be satisfied.\n", m->my_thread_dispatcher->my_stack_size, stack_size);
     }
     return *theMarket;
 }

@@ -175,7 +175,7 @@ public:
     std::size_t worker_stack_size() const override;
 
     //! Add reference to market if theMarket exists
-    static bool add_ref_unsafe( global_market_mutex_type::scoped_lock& lock, bool is_public, unsigned max_num_workers = 0, std::size_t stack_size = 0 );
+    static market* add_ref_unsafe( global_market_mutex_type::scoped_lock& lock, bool is_public, unsigned max_num_workers = 0 );
 
     static market& global_market(bool is_public, unsigned workers_requested = 0, std::size_t stack_size = 0);
 
