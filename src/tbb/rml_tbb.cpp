@@ -50,7 +50,7 @@ namespace rml {
 #define RML_SERVER_NAME "irml" DEBUG_SUFFIX ".dll"
 #elif __APPLE__
 #define RML_SERVER_NAME "libirml" DEBUG_SUFFIX ".dylib"
-#elif __FreeBSD__ || __NetBSD__ || __OpenBSD__ || __sun || _AIX
+#elif __FreeBSD__ || __NetBSD__ || __OpenBSD__ || __sun || _AIX || __HAIKU__
 #define RML_SERVER_NAME "libirml" DEBUG_SUFFIX ".so"
 #elif __unix__
 #define RML_SERVER_NAME "libirml" DEBUG_SUFFIX ".so.1"
