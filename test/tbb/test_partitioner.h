@@ -481,50 +481,6 @@ public:
     }
 };
 
-/*
- * Possible use cases are:
- * -------------------------------------------------------------------------------------------------------------
- * Range#  is_splittable_in_proportion   Range proportional ctor      Used partitioner          Result Effect
- * -------------------------------------------------------------------------------------------------------------
- *   1           true                       available                proportional             pMN, r(p), part(p)
- * -------------------------------------------------------------------------------------------------------------
- *   2           false                      available                proportional             p11, r(p), part(p)
- * -------------------------------------------------------------------------------------------------------------
- *   3        not defined                   available                proportional             p11, r(p), part(p)
- * -------------------------------------------------------------------------------------------------------------
- *   4           true                     not available              proportional             pMN, r(s), part(p)  *
- * -------------------------------------------------------------------------------------------------------------
- *   5           false                    not available              proportional             p11, r(s), part(p)
- * -------------------------------------------------------------------------------------------------------------
- *   6        not defined                 not available              proportional             p11, r(s), part(p)
- * -------------------------------------------------------------------------------------------------------------
- *   1           true                       available                   simple                s, r(s), part(s)
- * -------------------------------------------------------------------------------------------------------------
- *   2           false                      available                   simple                s, r(s), part(s)
- * -------------------------------------------------------------------------------------------------------------
- *   3        not defined                   available                   simple                s, r(s), part(s)
- * -------------------------------------------------------------------------------------------------------------
- *   4           true                     not available                 simple                s, r(s), part(s)
- * -------------------------------------------------------------------------------------------------------------
- *   5           false                    not available                 simple                s, r(s), part(s)
- * -------------------------------------------------------------------------------------------------------------
- *   6        not defined                 not available                 simple                s, r(s), part(s)
- * -------------------------------------------------------------------------------------------------------------
- *
- * Legend:
- *   proportional - with proportional splits (e.g. affinity_partitioner)
- *   simple  - without proportional splits (e.g. simple_partitioner, auto_partitioner)
- *   pMN     - proportional_split object with proportion M to N is created. (p11 - proportion 1 to 1)
- *   s       - split object is created
- *   r(p)    - range's proportional split constructor is called
- *   r(s)    - range's ordinary split constructor is called
- *   part(p) - partitioner's proportional split constructor is called
- *   part(s) - partitioner's ordinary split constructor is called
- *      *    - incorrect split behavior is possible (e.g. partitioner divides at an arbitrary ratio while
- *             range divides into halves)
- */
-
-
 // proportional_split ctor defined
 class Range1: public SplitConstructorAssertedRange {
 public:
