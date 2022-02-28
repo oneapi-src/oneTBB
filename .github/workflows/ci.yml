@@ -107,6 +107,7 @@ jobs:
           git push --force origin gh-pages
 
   copyright_check:
+    if: ${{ github.ref != 'refs/heads/master' }}
     runs-on: [ubuntu-20.04]
     steps:
       - uses: actions/checkout@v2
