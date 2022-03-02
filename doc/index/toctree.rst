@@ -16,7 +16,6 @@
 
    /GSG/get_started
    /GSG/installation
-   /GSG/quick_start
    /GSG/examples
 
 
