@@ -40,17 +40,14 @@ public:
     virtual permit_manager_client* create_client(arena& a, constraits_type* constraits) = 0;
     virtual void destroy_client(permit_manager_client& c) = 0;
 
+    virtual int set_active_num_workers(unsigned soft_limit) = 0;
+
     // Remove this trash from PM
     virtual bool try_destroy_arena(permit_manager_client*, uintptr_t aba_epoch, unsigned priority_level) = 0;
-    virtual void adjust_demand (permit_manager_client&, int delta, bool mandatory ) = 0;
-    virtual void enable_mandatory_concurrency(permit_manager_client* c) = 0;
-    virtual void mandatory_concurrency_disable(permit_manager_client* c) = 0;
-    virtual std::size_t worker_stack_size() const = 0;
-    virtual bool release( bool is_public, bool blocking_terminate ) = 0;
+    virtual int adjust_demand(permit_manager_client&, int delta, bool mandatory ) = 0;
+    virtual int enable_mandatory_concurrency(permit_manager_client* c) = 0;
+    virtual int mandatory_concurrency_disable(permit_manager_client* c) = 0;
     virtual std::uintptr_t aba_epoch() = 0;
-    virtual bool propagate_task_group_state(std::atomic<uint32_t> d1::task_group_context::* mptr_state, d1::task_group_context& src, uint32_t new_state) = 0;
-    virtual void add_external_thread(thread_data& td) = 0;
-    virtual void remove_external_thread(thread_data& td) = 0;
 };
 
 

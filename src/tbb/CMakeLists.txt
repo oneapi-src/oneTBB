@@ -39,6 +39,8 @@ add_library(tbb
     task.cpp
     task_dispatcher.cpp
     task_group_context.cpp
+    thread_dispatcher.cpp
+    threading_control.cpp
     version.cpp
     queuing_rw_mutex.cpp)
 

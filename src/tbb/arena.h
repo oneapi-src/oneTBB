@@ -42,6 +42,7 @@ namespace r1 {
 
 class task_dispatcher;
 class task_group_context;
+class threading_control;
 class allocate_root_with_context_proxy;
 
 #if __TBB_ARENA_BINDING
@@ -250,6 +251,7 @@ protected:
 
     // Below are rarely modified members
 
+    threading_control* my_threading_control;
     //! The market that owns this arena.
     permit_manager* my_permit_manager;
 
@@ -317,14 +319,14 @@ public:
     };
 
     //! Constructor
-    // arena (permit_manager& m, unsigned max_num_workers, unsigned num_reserved_slots, unsigned priority_level, uintptr_t aba_epoch);
-    arena (permit_manager& m, unsigned max_num_workers, unsigned num_reserved_slots, unsigned priority_level, uintptr_t aba_epoch);
+    // arena (permit_manager& m, unsigned max_num_workers, unsigned num_reserved_slots, unsigned priority_level);
+    arena (threading_control& control, unsigned max_num_workers, unsigned num_reserved_slots, unsigned priority_level);
 
     //! Allocate an instance of arena.
-    static arena& allocate_arena( permit_manager& m, unsigned num_slots, unsigned num_reserved_slots,
-                                  unsigned priority_level, unsigned epoch );
+    static arena& allocate_arena(threading_control& control, unsigned num_slots, unsigned num_reserved_slots,
+                                  unsigned priority_level);
 
-    static arena& create(int num_slots, int num_reserved_slots, unsigned arena_priority_level, std::size_t stack_size);
+    static arena& create(threading_control* control, int num_slots, int num_reserved_slots, unsigned arena_priority_level);
 
     static int unsigned num_arena_slots ( unsigned num_slots ) {
         return max(2u, num_slots);
@@ -369,6 +371,10 @@ public:
     bool is_recall_requested() const {
         return num_workers_active() > my_num_workers_allotted.load(std::memory_order_relaxed);
     }
+
+    void enable_mandatory_concurrency();
+
+    void publish_work(arena::new_work_type work_type);
 
     //! If necessary, raise a flag that there is new job in arena.
     template<arena::new_work_type work_type> void advertise_new_work();
@@ -568,7 +574,7 @@ inline void arena::on_thread_leaving ( ) {
     if (remaining_ref == 0) {
         if (m->try_destroy_arena(my_client, aba_epoch, priority_level)) {
             // We are requested to destroy ourself
-            my_permit_manager->destroy_client(*my_client);
+            // my_permit_manager->destroy_client(*my_client);
             free_arena();
         }
     }
@@ -576,19 +582,9 @@ inline void arena::on_thread_leaving ( ) {
 
 template<arena::new_work_type work_type>
 void arena::advertise_new_work() {
-    auto is_related_arena = [&] (market_context context) {
-        return this == context.my_arena_addr;
-    };
-
-    if( work_type == work_enqueued ) {
+    if( work_type != work_enqueued ) {
         atomic_fence_seq_cst();
-#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-            my_permit_manager->enable_mandatory_concurrency(my_client);
-
-        if (my_max_num_workers == 0 && my_num_reserved_slots == 1 && my_local_concurrency_flag.test_and_set()) {
-            my_permit_manager->adjust_demand(*this->my_client, /* delta = */ 1, /* mandatory = */ true);
-        }
-#endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
+        enable_mandatory_concurrency();
         // Local memory fence here and below is required to avoid missed wakeups; see the comment below.
         // Starvation resistant tasks require concurrency, so missed wakeups are unacceptable.
     }
@@ -604,35 +600,7 @@ void arena::advertise_new_work() {
     // but never promises parallelism, the missed wakeup is not a correctness problem.
     pool_state_t snapshot = my_pool_state.load(std::memory_order_acquire);
     if( is_busy_or_empty(snapshot) ) {
-        // Attempt to mark as full.  The compare_and_swap below is a little unusual because the
-        // result is compared to a value that can be different than the comparand argument.
-        pool_state_t expected_state = snapshot;
-        my_pool_state.compare_exchange_strong( expected_state, SNAPSHOT_FULL );
-        if( expected_state == SNAPSHOT_EMPTY ) {
-            if( snapshot != SNAPSHOT_EMPTY ) {
-                // This thread read "busy" into snapshot, and then another thread transitioned
-                // my_pool_state to "empty" in the meantime, which caused the compare_and_swap above
-                // to fail.  Attempt to transition my_pool_state from "empty" to "full".
-                expected_state = SNAPSHOT_EMPTY;
-                if( !my_pool_state.compare_exchange_strong( expected_state, SNAPSHOT_FULL ) ) {
-                    // Some other thread transitioned my_pool_state from "empty", and hence became
-                    // responsible for waking up workers.
-                    return;
-                }
-            }
-            // This thread transitioned pool from empty to full state, and thus is responsible for
-            // telling the market that there is work to do.
-#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-            if( work_type == work_spawned ) {
-                my_permit_manager->mandatory_concurrency_disable( my_client );
-            }
-#endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
-            // TODO: investigate adjusting of arena's demand by a single worker.
-            my_permit_manager->adjust_demand(*this->my_client, my_max_num_workers, /* mandatory = */ false);
-
-            // Notify all sleeping threads that work has appeared in the arena.
-            governor::get_wait_list().notify(is_related_arena);
-        }
+        publish_work(work_type);
     }
 }
 

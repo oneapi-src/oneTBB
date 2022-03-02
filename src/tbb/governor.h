@@ -17,7 +17,6 @@
 #ifndef _TBB_governor_H
 #define _TBB_governor_H
 
-#include "oneapi/tbb/mutex.h"
 #include "rml_tbb.h"
 
 #include "misc.h" // for AvailableHwConcurrency
@@ -31,8 +30,8 @@ class market;
 class thread_data;
 class __TBB_InitOnce;
 class market_concurrent_monitor;
-class permit_manager;
 class thread_dispatcher;
+class threading_control;
 
 #if __TBB_USE_ITT_NOTIFY
 //! Defined in profiling.cpp
@@ -40,75 +39,6 @@ extern bool ITT_Present;
 #endif
 
 typedef std::size_t stack_size_type;
-
-// class threading_lifetime_controller {
-// public:
-//     using global_mutex_type = mutex;
-
-//     static bool add_unsafe_reference(global_mutex_type::scoped_lock& lock, bool is_public, unsigned max_num_workers = 0, std::size_t stack_size = 0) {
-//         threading_lifetime_controller *tlc = theTLC;
-//         if (tlc) {
-//             ++tlc->my_ref_count;
-//             const unsigned old_public_count = is_public ? tlc->my_public_ref_count++ : /*any non-zero value*/ 1;
-//             lock.release();
-//             if (old_public_count == 0)
-//                 set_active_num_workers(calc_workers_soft_limit(workers_requested, tlc->my_num_workers_hard_limit));
-
-//             // do not warn if default number of workers is requested
-//             if (workers_requested != governor::default_num_threads() - 1)  {
-//                 __TBB_ASSERT(skip_soft_limit_warning > workers_requested,
-//                              "skip_soft_limit_warning must be larger than any valid workers_requested");
-//                 unsigned soft_limit_to_report = tlc->my_workers_soft_limit_to_report.load(std::memory_order_relaxed);
-//                 if (soft_limit_to_report < workers_requested) {
-//                     runtime_warning("The number of workers is currently limited to %u. "
-//                                     "The request for %u workers is ignored. Further requests for more workers "
-//                                     "will be silently ignored until the limit changes.\n",
-//                                     soft_limit_to_report, workers_requested);
-//                     // The race is possible when multiple threads report warnings.
-//                     // We are OK with that, as there are just multiple warnings.
-//                     unsigned expected_limit = soft_limit_to_report;
-//                     tlc->my_workers_soft_limit_to_report.compare_exchange_strong(expected_limit, skip_soft_limit_warning);
-//                 }
-//             }
-//             if (tlc->my_stack_size < stack_size)
-//                 runtime_warning("Thread stack size has been already set to %u. "
-//                                 "The request for larger stack (%u) cannot be satisfied.\n",
-//                                 tlc->my_stack_size, stack_size);
-//             return true;
-//         }
-//         return false;
-//     }
-
-//     void get_permit_manager() {
-
-//     }
-
-//     void get_thread_pool() {
-
-//     }
-
-//     void release() {
-
-//     }
-
-// private:
-//     static threading_lifetime_controller* theTLC;
-
-//     //! ABA prevention marker to assign to newly created arenas
-//     std::atomic<uintptr_t> my_arenas_aba_epoch{0};
-
-//     //! Reference count controlling market object lifetime
-//     std::atomic<unsigned> my_ref_count{0};
-
-//     //! Count of external threads attached
-//     std::atomic<unsigned> my_public_ref_count{0};
-
-//     permit_manager* my_permit_manager;
-//     thread_dispatcher* my_thread_dispatcher;
-
-//     //! Mutex guarding creation/destruction of theMarket, insertions/deletions in my_arenas, and cancellation propagation
-//     static global_mutex_type theTLCMutex;
-// };
 
 //------------------------------------------------------------------------
 // Class governor
@@ -122,6 +52,7 @@ private:
     friend class __TBB_InitOnce;
     friend class market;
     friend class thread_dispatcher;
+    friend class threading_control;
 
     // TODO: consider using thread_local (measure performance and side effects)
     //! TLS for scheduler instances associated with individual threads
@@ -222,9 +153,6 @@ public:
         return false;
 #endif
     }
-
-    //! Factory method creating new market object
-    static permit_manager& get_permit_manager( bool is_public, unsigned max_num_workers = 0, std::size_t stack_size = 0 );
 
     //! Return wait list
     static market_concurrent_monitor& get_wait_list() { 
