@@ -582,7 +582,7 @@ inline void arena::on_thread_leaving ( ) {
 
 template<arena::new_work_type work_type>
 void arena::advertise_new_work() {
-    if( work_type != work_enqueued ) {
+    if( work_type == work_enqueued ) {
         atomic_fence_seq_cst();
         enable_mandatory_concurrency();
         // Local memory fence here and below is required to avoid missed wakeups; see the comment below.
