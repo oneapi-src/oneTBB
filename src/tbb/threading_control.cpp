@@ -112,10 +112,7 @@ permit_manager_client* threading_control::register_client(arena& a) {
 void threading_control::unregister_client(permit_manager_client* client) {
     my_thread_dispatcher->remove_ticket(client->get_ticket());
     my_permit_manager->destroy_client(*client);
-    {
-        global_mutex_type::scoped_lock lock(g_threading_control_mutex);
-        release(/*public = */ false, /*blocking_terminate = */ false);
-    }
+    release(/*public = */ false, /*blocking_terminate = */ false);
 }
 
 std::size_t threading_control::worker_stack_size() {
