@@ -67,21 +67,9 @@ private:
     friend bool finalize_impl(d1::task_scheduler_handle& handle);
     friend thread_dispatcher;
 
-    typedef intrusive_list<tbb_permit_manager_client> arena_list_type;
-    typedef intrusive_list<thread_data> thread_data_list_type;
+    using arena_list_type = intrusive_list<tbb_permit_manager_client>;
+    using arenas_list_mutex_type = d1::rw_mutex;
 
-    thread_dispatcher* my_thread_dispatcher;
-
-    //! Currently active global market
-    static market* theMarket;
-
-    typedef scheduler_mutex_type global_market_mutex_type;
-
-    //! Mutex guarding creation/destruction of theMarket, insertions/deletions in my_arenas, and cancellation propagation
-    static global_market_mutex_type  theMarketMutex;
-
-    //! Lightweight mutex guarding accounting operations with arenas list
-    typedef rw_mutex arenas_list_mutex_type;
     // TODO: introduce fine-grained (per priority list) locking of arenas.
     arenas_list_mutex_type my_arenas_list_mutex;
 
@@ -113,26 +101,11 @@ private:
     //! ABA prevention marker to assign to newly created arenas
     std::atomic<uintptr_t> my_arenas_aba_epoch;
 
-    //! Reference count controlling market object lifetime
-    std::atomic<unsigned> my_ref_count;
-
-    //! Count of external threads attached
-    std::atomic<unsigned> my_public_ref_count;
-
     //! The value indicating that the soft limit warning is unnecessary
     static const unsigned skip_soft_limit_warning = ~0U;
 
     //! Either workers soft limit to be reported via runtime_warning() or skip_soft_limit_warning
     std::atomic<unsigned> my_workers_soft_limit_to_report;
-
-    //! Constructor
-    market ( unsigned workers_soft_limit, unsigned workers_hard_limit, std::size_t stack_size );
-
-    //! Destructor
-    ~market();
-
-    //! Destroys and deallocates market object created by market::create()
-    void destroy ();
 
     //! Recalculates the number of workers requested from RML and updates the allotment.
     int update_workers_request();
@@ -147,18 +120,6 @@ private:
         }
     }
 
-    template <typename Pred>
-    static void enforce (Pred pred, const char* msg) {
-        suppress_unused_warning(pred, msg);
-#if TBB_USE_ASSERT
-        global_market_mutex_type::scoped_lock lock(theMarketMutex);
-        __TBB_ASSERT(pred(), msg);
-#endif
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////
-    // Helpers to unify code branches dependent on priority feature presence
-
     tbb_permit_manager_client* select_next_arena(tbb_permit_manager_client* hint );
 
     void insert_arena_into_list (tbb_permit_manager_client& a );
@@ -168,25 +129,20 @@ private:
     int update_allotment ( arena_list_type* arenas, int total_demand, int max_workers );
 
 public:
+    //! Constructor
+    market(unsigned workers_soft_limit);
+
+    //! Destructor
+    ~market();
+
     permit_manager_client* create_client(arena& a, constraits_type* constraits) override;
     void destroy_client(permit_manager_client& c) override;
-
-    //! Returns the requested stack size of worker threads.
-    std::size_t worker_stack_size() const override;
-
-    //! Add reference to market if theMarket exists
-    static market* add_ref_unsafe( global_market_mutex_type::scoped_lock& lock, bool is_public, unsigned max_num_workers = 0 );
-
-    static market& global_market(bool is_public, unsigned workers_requested = 0, std::size_t stack_size = 0);
 
     //! Removes the arena from the market's list
     bool try_destroy_arena (permit_manager_client*, uintptr_t aba_epoch, unsigned priority_level ) override;
 
     //! Removes the arena from the market's list
     void detach_arena (tbb_permit_manager_client& );
-
-    //! Decrements market's refcount and destroys it in the end
-    bool release ( bool is_public, bool blocking_terminate ) override;
 
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
     //! Imlpementation of mandatory concurrency enabling
@@ -195,48 +151,21 @@ public:
     bool is_global_concurrency_disabled(permit_manager_client*c );
 
     //! Inform the external thread that there is an arena with mandatory concurrency
-    void enable_mandatory_concurrency (permit_manager_client*c ) override;
+    int enable_mandatory_concurrency(permit_manager_client*c ) override;
 
     //! Inform the external thread that the arena is no more interested in mandatory concurrency
     void disable_mandatory_concurrency_impl(tbb_permit_manager_client* a);
 
     //! Inform the external thread that the arena is no more interested in mandatory concurrency
-    void mandatory_concurrency_disable (permit_manager_client*c ) override;
+    int mandatory_concurrency_disable(permit_manager_client*c ) override;
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
 
     //! Request that arena's need in workers should be adjusted.
     /** Concurrent invocations are possible only on behalf of different arenas. **/
-    void adjust_demand (permit_manager_client&, int delta, bool mandatory ) override;
+    int adjust_demand (permit_manager_client&, int delta, bool mandatory ) override;
 
     //! Set number of active workers
-    static void set_active_num_workers( unsigned w );
-
-    //! Reports active parallelism level according to user's settings
-    static unsigned app_parallelism_limit();
-
-    //! Reports if any active global lifetime references are present
-    static unsigned is_lifetime_control_present();
-
-    //! Finds all contexts affected by the state change and propagates the new state to them.
-    /** The propagation is relayed to the market because tasks created by one
-        external thread can be passed to and executed by other external threads. This means
-        that context trees can span several arenas at once and thus state change
-        propagation cannot be generally localized to one arena only. **/
-    bool propagate_task_group_state (std::atomic<uint32_t> d1::task_group_context::*mptr_state, d1::task_group_context& src, uint32_t new_state ) override;
-
-    //! List of registered external threads
-    thread_data_list_type my_masters;
-
-    //! Array of pointers to the registered workers
-    /** Used by cancellation propagation mechanism.
-        Must be the last data member of the class market. **/
-    std::atomic<thread_data*> my_workers[1];
-
-    static unsigned max_num_workers();
-
-    void add_external_thread(thread_data& td) override;
-
-    void remove_external_thread(thread_data& td) override;
+    int set_active_num_workers(unsigned w) override;
 
     uintptr_t aba_epoch() override {
         return my_arenas_aba_epoch.load(std::memory_order_relaxed);

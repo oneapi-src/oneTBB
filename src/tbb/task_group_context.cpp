@@ -22,6 +22,7 @@
 #include "scheduler_common.h"
 #include "itt_notify.h"
 #include "task_dispatcher.h"
+#include "threading_control.h"
 
 #include <type_traits>
 
@@ -234,7 +235,7 @@ bool task_group_context_impl::cancel_group_execution(d1::task_group_context& ctx
         // not missing out on any cancellation still being propagated, and a context cannot be uncanceled.)
         return false;
     }
-    governor::get_thread_data()->my_arena->my_permit_manager->propagate_task_group_state(&d1::task_group_context::my_cancellation_requested, ctx, uint32_t(1));
+    governor::get_thread_data()->my_arena->my_threading_control->propagate_task_group_state(&d1::task_group_context::my_cancellation_requested, ctx, uint32_t(1));
     return true;
 }
 

@@ -18,6 +18,7 @@
 
 #include "main.h"
 #include "governor.h"
+#include "threading_control.h"
 #include "environment.h"
 #include "market.h"
 #include "misc.h"
@@ -41,11 +42,9 @@ bool governor::is_rethrow_broken;
 market_concurrent_monitor* governor::sleep_monitor;
 
 //------------------------------------------------------------------------
-// market data
-market* market::theMarket;
-market::global_market_mutex_type market::theMarketMutex;
-// threading_lifetime_controller* threading_lifetime_controller::theTLC;
-// threading_lifetime_controller::global_mutex_type threading_lifetime_controller::theTLCMutex;
+// threading_control data
+cache_aligned_unique_ptr<threading_control> threading_control::g_threading_control;
+threading_control::global_mutex_type threading_control::g_threading_control_mutex;
 
 //------------------------------------------------------------------------
 // context propagation data
