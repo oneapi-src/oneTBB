@@ -1,62 +1,68 @@
 .. _attach_flow_graph_to_arena:
 
-Attach Flow Graph to arbitrary Task Arena
+Attach Flow Graph to an Arbitrary Task Arena
 ======================
 
 
-During construction a ``graph`` object captures a reference to the arena of the thread that
-constructed the object. Whenever a task is spawned to execute work in the graph, the tasks
-are spawned in this arena, not in the arena of the that caused the task to be spawned.
-All tasks are spawned into a single arena, the arena of the thread that constructed the graph
-object.
+|short_name| ``task_arena`` interface provides mechanisms to guide tasks execution within
+the arena by setting the preferred computation units or restricting part of computation units.
+In some case, you may want to use mechanisms within a flow graph.
+
+During its construction a ``graph`` object attaches to the arena, in which the constructing
+thread occupies a slot. Whenever a task is spawned on behalf of the graph, it is spawned
+in the arena of the graph it is attached to, disregarding the arena of the thread
+which is caused a task to be spawned.
+
+The example shows how to set the most performant core type as preferable for graph execution:
 
 
 ::
 
 
-       task_arena a{2};
-       a.execute( [&]() {
+       std::vector<tbb::core_type_id> core_types = tbb::info::core_types();
+       tbb::task_arena arena(
+           tbb::task_arena::constraints{}.set_core_type(core_types.back())
+       );
+       arena.execute( [&]() {
            graph g;
-           function_node< string > f( g, unlimited, []( const string& str ) {
-               int current_concurrency = tbb::this_task_arena::max_concurrency();
-               cout << str << " : " << current_concurrency << endl;
+           function_node< int > f( g, unlimited, []( int i ) {
+               /*the most performant core type is defined as preferred.*/
            } );
-           f.try_put("arena");
+           f.try_put(1);
            g.wait_for_all();
        } );
 
 
-Used by a ``graph`` the ``task_arena`` can be changed by calling the ``graph::reset()`` function.
-This reinitializes the ``graph``, including recapturing the task arena.
+A ``graph`` object can be reattached to a different ``task_arena`` by calling
+the ``graph::reset()`` function. This reinitializes the ``graph`` and reattaches
+it to the task arena instance, inside which the ``graph::reset()`` method is executed.
+
+The example shows how reattach existing graph to an arena with the most performant core type
+as preferable for work execution:
 
 
 ::
 
 
        graph g;
-       task_arena arena{2};
-       function_node< string > f( g, unlimited, []( const string& str ) {
-           int current_concurrency = tbb::this_task_arena::max_concurrency();
-           cout << str << " : " << current_concurrency << endl;
+       function_node< int > f( g, unlimited, []( int i ) {
+           /*the most performant core type is defined as preferred.*/
        } );
+       std::vector<tbb::core_type_id> core_types = tbb::info::core_types();
+       tbb::task_arena arena(
+           tbb::task_arena::constraints{}.set_core_type(core_types.back())
+       );
        arena.execute( [&]() {
            g.reset();
-           f.try_put("arena");
-           g.wait_for_all();
        } );
+       f.try_put(1);
+       g.wait_for_all();
 
-
-Since the main thread constructs the ``graph`` object, the ``graph`` will use the default arena,
-which we initialize with eight slots. After calling ``reset`` function to reinitialize
-the graph and nodes executes in arena ``arena``.
-
-
-So performance tuning optimizations which is described in sections below can be applied for
-flow graphs as well.
+See the following topics to learn more.
 
 .. toctree::
    :maxdepth: 4
 
-   ../tbb_userguide/work_isolation
    ../tbb_userguide/Guiding_Task_Scheduler_Execution
+   ../tbb_userguide/work_isolation
 
