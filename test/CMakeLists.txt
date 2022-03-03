@@ -40,11 +40,13 @@ function(tbb_add_test)
         ${TBB_COMMON_COMPILE_FLAGS}
     )
 
+    if (UNIX)
+        target_link_libraries(${_tbb_test_TARGET_NAME} PRIVATE -rdynamic) # for the test_dynamic_link
+    endif()
     if (ANDROID_PLATFORM)
         # Expand the linker rpath by the CMAKE_LIBRARY_OUTPUT_DIRECTORY path since clang compiler from Android SDK
         # doesn't respect the -L flag.
         target_link_libraries(${_tbb_test_TARGET_NAME} PRIVATE "-Wl,--rpath-link,${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
-        target_link_libraries(${_tbb_test_TARGET_NAME} PRIVATE -rdynamic) # for the test_dynamic_link
         add_test(NAME ${_tbb_test_TARGET_NAME}
                  COMMAND ${CMAKE_COMMAND}
                          -DBINARIES_PATH=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
@@ -93,8 +95,10 @@ function(tbb_add_c_test)
     add_executable(${_tbb_test_NAME} ${_tbb_test_SUBDIR}/${_tbb_test_NAME}.c)
     target_include_directories(${_tbb_test_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_SOURCE_DIR})
 
-    if (ANDROID_PLATFORM)
+    if (UNIX)
         target_link_libraries(${_tbb_test_NAME} PRIVATE -rdynamic) # for the test_dynamic_link
+    endif()
+    if (ANDROID_PLATFORM)
         add_test(NAME ${_tbb_test_NAME}
                 COMMAND ${CMAKE_COMMAND}
                         -DBINARIES_PATH=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
@@ -574,8 +578,10 @@ if (TARGET TBB::tbbmalloc)
             ${TBB_COMMON_COMPILE_FLAGS}
             ${TBBMALLOC_LIB_COMPILE_FLAGS}
         )
-        if (ANDROID_PLATFORM)
+        if (UNIX)
             target_link_libraries(test_malloc_whitebox PRIVATE -rdynamic) # for the test_dynamic_link
+        endif()
+        if (ANDROID_PLATFORM)
             add_test(NAME test_malloc_whitebox
                     COMMAND ${CMAKE_COMMAND}
                             -DBINARIES_PATH=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
