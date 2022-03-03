@@ -325,10 +325,10 @@ int market::mandatory_concurrency_disable(permit_manager_client* c) {
 }
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
 
-int market::adjust_demand(permit_manager_client& c, int delta, bool mandatory ) {
+std::pair<int, std::int64_t> market::adjust_demand(permit_manager_client& c, int delta, bool mandatory ) {
     auto& a = static_cast<tbb_permit_manager_client&>(c);
     if (!delta) {
-        return 0;
+        return std::make_pair(0, -1);
     }
     int target_epoch{};
     {
@@ -337,7 +337,7 @@ int market::adjust_demand(permit_manager_client& c, int delta, bool mandatory ) 
         delta = a.update_request(delta, mandatory);
 
         if (!delta) {
-            return 0;
+            return std::make_pair(0, -1);
         }
 
         int total_demand = my_total_demand.load(std::memory_order_relaxed) + delta;
@@ -367,7 +367,7 @@ int market::adjust_demand(permit_manager_client& c, int delta, bool mandatory ) 
         target_epoch = a.my_adjust_demand_target_epoch++;
     }
 
-    return delta;
+    return std::make_pair(delta, target_epoch);
 }
 
 } // namespace r1

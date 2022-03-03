@@ -135,12 +135,12 @@ void threading_control::set_active_num_workers(unsigned soft_limit) {
 }
 
 void threading_control::adjust_demand(permit_manager_client& c, int delta, bool mandatory) {
-    delta = my_permit_manager->adjust_demand(c, delta, mandatory);
-    // c.my_adjust_demand_current_epoch.wait_until(target_epoch, /* context = */ target_epoch, std::memory_order_relaxed);
-    // Must be called outside of any locks
-    my_thread_dispatcher->my_server->adjust_job_count_estimate(delta);
-    // c.my_adjust_demand_current_epoch.exchange(target_epoch + 1);
-    // c.my_adjust_demand_current_epoch.notify_relaxed(target_epoch + 1);
+    auto adj_result = my_permit_manager->adjust_demand(c, delta, mandatory);
+    if (adj_result.second != -1) {
+        c.wait_for_ticket(adj_result.second);
+        my_thread_dispatcher->my_server->adjust_job_count_estimate(adj_result.first);
+        c.commit_ticket(adj_result.second);
+    }
 }
 
 void threading_control::enable_mandatory_concurrency(permit_manager_client* c) {

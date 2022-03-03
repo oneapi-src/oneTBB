@@ -73,11 +73,20 @@ public:
         return my_arena.update_request(delta, mandatory);
     }
 
+    void wait_for_ticket(int ticket) {
+        my_adjust_demand_current_epoch.wait_until(ticket, /* context = */ ticket, std::memory_order_relaxed);
+    }
+
+    void commit_ticket(int ticket) {
+        my_adjust_demand_current_epoch.exchange(ticket + 1);
+        my_adjust_demand_current_epoch.notify_relaxed(ticket + 1);
+    }
+
     //! The target serialization epoch for callers of adjust_job_count_estimate
-    int my_adjust_demand_target_epoch{ 0 };
+    std::int64_t my_adjust_demand_target_epoch{ 0 };
 
     //! The current serialization epoch for callers of adjust_job_count_estimate
-    d1::waitable_atomic<int> my_adjust_demand_current_epoch{ 0 };
+    d1::waitable_atomic<std::int64_t> my_adjust_demand_current_epoch{ 0 };
 
 protected:
     arena& my_arena;
