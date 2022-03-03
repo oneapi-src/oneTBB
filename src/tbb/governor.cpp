@@ -278,20 +278,22 @@ bool finalize_impl(d1::task_scheduler_handle& handle) {
     __TBB_ASSERT_RELEASE(handle, "trying to finalize with null handle");
     __TBB_ASSERT(is_present(*handle.m_ctl), "finalize or release was already called on this object");
 
-    thread_data* td = governor::get_thread_data_if_initialized();
-    if (td) {
-        task_dispatcher* task_disp = td->my_task_dispatcher;
-        __TBB_ASSERT(task_disp, nullptr);
-        if (task_disp->m_properties.outermost && !td->my_is_worker) { // is not inside a parallel region
-            governor::auto_terminate(td);
-        }
-    }
-
     bool ok = true; // ok if threading_control does not exist yet
-    if (remove_and_check_if_empty(*handle.m_ctl)) {
-        ok = threading_control::unregister_lifetime_control(/*blocking_terminate*/ true);
-    } else {
-        ok = false;
+    if (threading_control::is_present()) {
+        thread_data* td = governor::get_thread_data_if_initialized();
+        if (td) {
+            task_dispatcher* task_disp = td->my_task_dispatcher;
+            __TBB_ASSERT(task_disp, nullptr);
+            if (task_disp->m_properties.outermost && !td->my_is_worker) { // is not inside a parallel region
+                governor::auto_terminate(td);
+            }
+        }
+
+        if (remove_and_check_if_empty(*handle.m_ctl)) {
+            ok = threading_control::unregister_lifetime_control(/*blocking_terminate*/ true);
+        } else {
+            ok = false;
+        }
     }
 
     return ok;

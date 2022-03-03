@@ -162,7 +162,7 @@ public:
 
     //! Request that arena's need in workers should be adjusted.
     /** Concurrent invocations are possible only on behalf of different arenas. **/
-    int adjust_demand (permit_manager_client&, int delta, bool mandatory ) override;
+    std::pair<int, std::int64_t> adjust_demand (permit_manager_client&, int delta, bool mandatory ) override;
 
     //! Set number of active workers
     int set_active_num_workers(unsigned w) override;

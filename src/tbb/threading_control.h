@@ -276,7 +276,7 @@ public:
 
     static void set_active_num_workers(unsigned soft_limit);
 
-    static bool is_threading_control_present() {
+    static bool is_present() {
         global_mutex_type::scoped_lock lock(g_threading_control_mutex);
         return g_threading_control.get() != nullptr;
     }

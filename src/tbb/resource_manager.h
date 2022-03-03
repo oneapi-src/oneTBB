@@ -44,7 +44,7 @@ public:
 
     // Remove this trash from PM
     virtual bool try_destroy_arena(permit_manager_client*, uintptr_t aba_epoch, unsigned priority_level) = 0;
-    virtual int adjust_demand(permit_manager_client&, int delta, bool mandatory ) = 0;
+    virtual std::pair<int, std::int64_t> adjust_demand(permit_manager_client&, int delta, bool mandatory ) = 0;
     virtual int enable_mandatory_concurrency(permit_manager_client* c) = 0;
     virtual int mandatory_concurrency_disable(permit_manager_client* c) = 0;
     virtual std::uintptr_t aba_epoch() = 0;
