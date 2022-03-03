@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -144,12 +144,12 @@ namespace r1 {
 
 #if __TBB_WIN8UI_SUPPORT
     bool dynamic_link( const literal_const_string& library, const dynamic_link_descriptor descriptors[], std::size_t required, dynamic_link_handle*, int flags ) {
-        dynamic_link_handle tmp_handle = NULL;
+        dynamic_link_handle tmp_handle = nullptr;
         TCHAR wlibrary[256];
         if ( MultiByteToWideChar(CP_UTF8, 0, library.c_str(), -1, wlibrary, 255) == 0 ) return false;
         if ( flags & DYNAMIC_LINK_LOAD )
             tmp_handle = LoadPackagedLibrary( wlibrary, 0 );
-        if (tmp_handle != NULL){
+        if (tmp_handle != nullptr){
             return resolve_symbols(tmp_handle, descriptors, required);
         }else{
             return false;
@@ -240,7 +240,7 @@ namespace r1 {
         char *backslash = std::strrchr( _path.data(), '\\' );
 
         if ( !backslash ) {    // Backslash not found.
-            __TBB_ASSERT_EX( backslash != NULL, "Unbelievable.");
+            __TBB_ASSERT_EX( backslash != nullptr, "Unbelievable.");
             return;
         }
         __TBB_ASSERT_EX( backslash >= _path.c_str(), "Unbelievable.");
@@ -254,7 +254,7 @@ namespace r1 {
             DYNAMIC_LINK_WARNING( dl_sys_fail, "dladdr", err );
             return;
         } else {
-            __TBB_ASSERT_EX( dlinfo.dli_fname != NULL, "Unbelievable." );
+            __TBB_ASSERT_EX( dlinfo.dli_fname != nullptr, "Unbelievable." );
         }
 
         //find the last / in the SO pathname
@@ -265,7 +265,6 @@ namespace r1 {
 
         if ( dlinfo.dli_fname[0] != '/' ) {
             // The library path is relative so get the current working directory first
-
             auto& _path = ap_data._path;
             _path.resize(_path.max_size());
 
@@ -411,7 +410,7 @@ namespace r1 {
         int flags = RTLD_NOW;
         if (local_binding) {
             flags = flags | RTLD_LOCAL;
-#if __linux__ && !__ANDROID__ && !__TBB_USE_SANITIZERS
+#if (__linux__ && __GLIBC__) && !__TBB_USE_SANITIZERS
             flags = flags | RTLD_DEEPBIND;
 #endif
         } else {
@@ -441,7 +440,7 @@ namespace r1 {
                 if( !resolve_symbols( library_handle, descriptors, required ) ) {
                     // The loaded library does not contain all the expected entry points
                     dynamic_unlink( library_handle );
-                    library_handle = NULL;
+                    library_handle = nullptr;
                 }
             } else
                 DYNAMIC_LINK_WARNING( dl_lib_not_found, path.c_str(), dlerror() );
@@ -451,14 +450,14 @@ namespace r1 {
                 // rc == 0 means failing of init_ap_data so the warning has already been issued.
 
 #endif /* __TBB_DYNAMIC_LOAD_ENABLED */
-            return 0;
+            return nullptr;
     }
 
     bool dynamic_link( const literal_const_string& library, const dynamic_link_descriptor descriptors[], std::size_t required, dynamic_link_handle *handle, int flags ) {
         init_dynamic_link_data();
 
         // TODO: May global_symbols_link find weak symbols?
-        dynamic_link_handle library_handle = ( flags & DYNAMIC_LINK_GLOBAL ) ? global_symbols_link( library.c_str(), descriptors, required ) : 0;
+        dynamic_link_handle library_handle = ( flags & DYNAMIC_LINK_GLOBAL ) ? global_symbols_link( library.c_str(), descriptors, required ) : nullptr;
 
 #if defined(_MSC_VER) && _MSC_VER <= 1900
 #pragma warning (push)

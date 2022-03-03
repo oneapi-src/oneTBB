@@ -30,7 +30,6 @@ namespace detail {
 namespace d1 { class task_group_context; class wait_context; struct execution_data; }
 namespace d2 {
 
-#if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 class task_handle;
 
 class task_handle_task : public d1::task {
@@ -115,7 +114,6 @@ inline bool operator!=(task_handle const& th, std::nullptr_t) noexcept {
 inline bool operator!=(std::nullptr_t, task_handle const& th) noexcept {
     return th.m_handle != nullptr;
 }
-#endif // __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 
 } // namespace d2
 } // namespace detail

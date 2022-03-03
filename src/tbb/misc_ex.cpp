@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -104,7 +104,7 @@ affinity_helper::~affinity_helper() {
     }
 }
 void affinity_helper::protect_affinity_mask( bool restore_process_mask ) {
-    if( threadMask == NULL && num_masks ) { // TODO: assert num_masks validity?
+    if( threadMask == nullptr && num_masks ) { // TODO: assert num_masks validity?
         threadMask = new basic_mask_t [num_masks];
         std::memset( threadMask, 0, curMaskSize );
         get_thread_affinity_mask( curMaskSize, threadMask );
@@ -121,7 +121,7 @@ void affinity_helper::protect_affinity_mask( bool restore_process_mask ) {
 }
 void affinity_helper::dismiss() {
     delete [] threadMask;
-    threadMask = NULL;
+    threadMask = nullptr;
     is_changed = 0;
 }
 #undef curMaskSize
@@ -191,7 +191,7 @@ static void initialize_hardware_concurrency_info () {
         delete[] processMask;
     }
     theNumProcs = availableProcs > 0 ? availableProcs : 1; // Fail safety strap
-    __TBB_ASSERT( theNumProcs <= sysconf(_SC_NPROCESSORS_ONLN), NULL );
+    __TBB_ASSERT( theNumProcs <= sysconf(_SC_NPROCESSORS_ONLN), nullptr);
 }
 
 int AvailableHwConcurrency() {
@@ -206,7 +206,7 @@ int AvailableHwConcurrency() {
 // Format of "present" file is: ([<int>-<int>|<int>],)+
 int AvailableHwConcurrency() {
     FILE *fp = fopen("/sys/devices/system/cpu/present", "r");
-    if (fp == NULL) return 1;
+    if (fp == nullptr) return 1;
     int num_args, lower, upper, num_cpus=0;
     while ((num_args = fscanf(fp, "%u-%u", &lower, &upper)) != EOF) {
         switch(num_args) {
@@ -264,8 +264,8 @@ struct TBB_GROUP_AFFINITY {
     WORD   Reserved[3];
 };
 
-static DWORD (WINAPI *TBB_GetActiveProcessorCount)( WORD groupIndex ) = NULL;
-static WORD (WINAPI *TBB_GetActiveProcessorGroupCount)() = NULL;
+static DWORD (WINAPI *TBB_GetActiveProcessorCount)( WORD groupIndex ) = nullptr;
+static WORD (WINAPI *TBB_GetActiveProcessorGroupCount)() = nullptr;
 static BOOL (WINAPI *TBB_SetThreadGroupAffinity)( HANDLE hThread,
                         const TBB_GROUP_AFFINITY* newAff, TBB_GROUP_AFFINITY *prevAff );
 static BOOL (WINAPI *TBB_GetThreadGroupAffinity)( HANDLE hThread, TBB_GROUP_AFFINITY* );
@@ -295,14 +295,14 @@ static void initialize_hardware_concurrency_info () {
         if ( pam & m )
             ++nproc;
     }
-    __TBB_ASSERT( nproc <= (int)si.dwNumberOfProcessors, NULL );
+    __TBB_ASSERT( nproc <= (int)si.dwNumberOfProcessors, nullptr);
     // By default setting up a number of processors for one processor group
     theProcessorGroups[0].numProcs = theProcessorGroups[0].numProcsRunningTotal = nproc;
     // Setting up processor groups in case the process does not restrict affinity mask and more than one processor group is present
     if ( nproc == (int)si.dwNumberOfProcessors && TBB_GetActiveProcessorCount ) {
         // The process does not have restricting affinity mask and multiple processor groups are possible
         ProcessorGroupInfo::NumGroups = (int)TBB_GetActiveProcessorGroupCount();
-        __TBB_ASSERT( ProcessorGroupInfo::NumGroups <= MaxProcessorGroups, NULL );
+        __TBB_ASSERT( ProcessorGroupInfo::NumGroups <= MaxProcessorGroups, nullptr);
         // Fail safety bootstrap. Release versions will limit available concurrency
         // level, while debug ones would assert.
         if ( ProcessorGroupInfo::NumGroups > MaxProcessorGroups )
@@ -315,11 +315,11 @@ static void initialize_hardware_concurrency_info () {
             for ( WORD i = 0; i < ProcessorGroupInfo::NumGroups; ++i ) {
                 ProcessorGroupInfo  &pgi = theProcessorGroups[i];
                 pgi.numProcs = (int)TBB_GetActiveProcessorCount(i);
-                __TBB_ASSERT( pgi.numProcs <= (int)sizeof(DWORD_PTR) * CHAR_BIT, NULL );
+                __TBB_ASSERT( pgi.numProcs <= (int)sizeof(DWORD_PTR) * CHAR_BIT, nullptr);
                 pgi.mask = pgi.numProcs == sizeof(DWORD_PTR) * CHAR_BIT ? ~(DWORD_PTR)0 : (DWORD_PTR(1) << pgi.numProcs) - 1;
                 pgi.numProcsRunningTotal = nprocs += pgi.numProcs;
             }
-            __TBB_ASSERT( nprocs == (int)TBB_GetActiveProcessorCount( TBB_ALL_PROCESSOR_GROUPS ), NULL );
+            __TBB_ASSERT( nprocs == (int)TBB_GetActiveProcessorCount( TBB_ALL_PROCESSOR_GROUPS ), nullptr);
         }
     }
 #endif /* __TBB_WIN8UI_SUPPORT */
@@ -356,7 +356,7 @@ int FindProcessorGroupIndex ( int procIdx ) {
     // Now adjust the approximation up or down
     if ( theProcessorGroups[i].numProcsRunningTotal > HoleAdjusted(procIdx, i) ) {
         while ( theProcessorGroups[i].numProcsRunningTotal - theProcessorGroups[i].numProcs > HoleAdjusted(procIdx, i) ) {
-            __TBB_ASSERT( i > 0, NULL );
+            __TBB_ASSERT( i > 0, nullptr);
             --i;
         }
     }
@@ -365,7 +365,7 @@ int FindProcessorGroupIndex ( int procIdx ) {
             ++i;
         } while ( theProcessorGroups[i].numProcsRunningTotal <= HoleAdjusted(procIdx, i) );
     }
-    __TBB_ASSERT( i < ProcessorGroupInfo::NumGroups, NULL );
+    __TBB_ASSERT( i < ProcessorGroupInfo::NumGroups, nullptr);
     return i;
 }
 
@@ -374,7 +374,7 @@ void MoveThreadIntoProcessorGroup( void* hThread, int groupIndex ) {
     if ( !TBB_SetThreadGroupAffinity )
         return;
     TBB_GROUP_AFFINITY ga = { theProcessorGroups[groupIndex].mask, (WORD)groupIndex, {0,0,0} };
-    TBB_SetThreadGroupAffinity( hThread, &ga, NULL );
+    TBB_SetThreadGroupAffinity( hThread, &ga, nullptr);
 }
 
 int AvailableHwConcurrency() {

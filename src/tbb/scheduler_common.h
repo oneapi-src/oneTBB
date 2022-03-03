@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -116,7 +116,7 @@ struct task_accessor {
 //------------------------------------------------------------------------
 //! Extended variant of the standard offsetof macro
 /** The standard offsetof macro is not sufficient for TBB as it can be used for
-    POD-types only. The constant 0x1000 (not NULL) is necessary to appease GCC. **/
+    POD-types only. The constant 0x1000 (not nullptr) is necessary to appease GCC. **/
 #define __TBB_offsetof(class_name, member_name) \
     ((ptrdiff_t)&(reinterpret_cast<class_name*>(0x1000)->member_name) - 0x1000)
 
@@ -134,7 +134,7 @@ class context_guard_helper {
     d1::cpu_ctl_env guard_cpu_ctl_env;
     d1::cpu_ctl_env curr_cpu_ctl_env;
 public:
-    context_guard_helper() : curr_ctx(NULL) {
+    context_guard_helper() : curr_ctx(nullptr) {
         guard_cpu_ctl_env.get_env();
         curr_cpu_ctl_env = guard_cpu_ctl_env;
     }
@@ -161,8 +161,8 @@ public:
                 ITT_TASK_END;
             // reporting begin of new task group context execution frame.
             // using address of task group context object to group tasks (parent).
-            // id of task execution frame is NULL and reserved for future use.
-            ITT_TASK_BEGIN(ctx, ctx->my_name, NULL);
+            // id of task execution frame is nullptr and reserved for future use.
+            ITT_TASK_BEGIN(ctx, ctx->my_name, nullptr);
             curr_ctx = ctx;
         }
     }
@@ -407,7 +407,7 @@ public:
 
     //! Attempt to get a task from the mailbox.
     /** Gets a task only if it has not been executed by its sender or a thief
-        that has stolen it from the sender's task pool. Otherwise returns NULL.
+        that has stolen it from the sender's task pool. Otherwise returns nullptr.
         This method is intended to be used only by the thread extracting the proxy
         from its mailbox. (In contrast to local task pool, mailbox can be read only
         by its owner). **/
@@ -489,6 +489,7 @@ public:
 #endif
 
 inline std::uintptr_t calculate_stealing_threshold(std::uintptr_t base, std::size_t stack_size) {
+    __TBB_ASSERT(base > stack_size / 2, "Stack anchor calculation overflow");
     return base - stack_size / 2;
 }
 

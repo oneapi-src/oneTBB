@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -288,7 +288,7 @@ private:
 };
 
 TreeNode* make_node(size_t range_begin, size_t range_end, size_t affinity,
-                    TreeNode* left = NULL, TreeNode* right = NULL) {
+                    TreeNode* left = nullptr, TreeNode* right = nullptr) {
     CHECK_MESSAGE((range_begin <= range_end), "Incorrect range interval");
     return new TreeNode(range_begin, range_end, affinity, left, right);
 }
@@ -298,7 +298,7 @@ TreeNode* make_node(size_t range_begin, size_t range_end, size_t affinity,
 // Note: BinaryTree deletes all TreeNode objects pushed into it in a destruction phase
 class BinaryTree {
 public:
-    BinaryTree() : m_root(NULL) { }
+    BinaryTree() : m_root(nullptr) { }
     ~BinaryTree() {
         if (m_root)
             remove_node_recursively(m_root);
@@ -360,7 +360,7 @@ private:
             return;
         }
 
-        CHECK_MESSAGE(root_node->m_right != nullptr, "Right child is NULL but must be present");
+        CHECK_MESSAGE(root_node->m_right != nullptr, "Right child is nullptr but must be present");
         if (is_subnode(root_node->m_right, node)) {
             push_subnode(root_node->m_right, node);
             return;
@@ -374,11 +374,11 @@ private:
     bool is_look_like_left_sibling(TreeNode *root_node, TreeNode *node) {
         if (root_node->m_range_begin == node->m_range_begin)
             return true;
-        CHECK_MESSAGE(root_node->m_range_end == node->m_range_end, NULL);
+        CHECK_MESSAGE(root_node->m_range_end == node->m_range_end, nullptr);
         return false;
     }
 
-    bool has_left_child(TreeNode *node) { return node->m_left != NULL; }
+    bool has_left_child(TreeNode *node) { return node->m_left != nullptr; }
 
     bool is_subnode(TreeNode *root_node, TreeNode *node) {
         return root_node->m_range_begin <= node->m_range_begin &&
@@ -415,17 +415,17 @@ private:
     }
 
     bool compare_nodes(TreeNode* node1, TreeNode* node2) const {
-        if (node1 == NULL && node2 == NULL) return true;
-        if (node1 == NULL || node2 == NULL) return false;
+        if (node1 == nullptr && node2 == nullptr) return true;
+        if (node1 == nullptr || node2 == nullptr) return false;
         return are_nodes_equal(node1, node2) && compare_nodes(node1->m_left, node2->m_left)
             && compare_nodes(node1->m_right, node2->m_right);
     }
 
     void fill_leafs_impl(TreeNode* node, std::vector<TreeNode*>& leafs) const {
-        if (node->m_left == NULL && node->m_right == NULL)
+        if (node->m_left == nullptr && node->m_right == nullptr)
             leafs.push_back(node);
-        if (node->m_left != NULL) fill_leafs_impl(node->m_left, leafs);
-        if (node->m_right != NULL) fill_leafs_impl(node->m_right, leafs);
+        if (node->m_left != nullptr) fill_leafs_impl(node->m_left, leafs);
+        if (node->m_right != nullptr) fill_leafs_impl(node->m_right, leafs);
     }
 };
 

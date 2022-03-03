@@ -75,7 +75,6 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "(Clang|IntelLLVM)")
     if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86|AMD64|i.86)")
         set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -mrtm -mwaitpkg)
     endif()
-    set(TBB_OPENMP_NO_LINK_FLAG TRUE)
     set(TBB_IPO_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:-flto>)
     set(TBB_IPO_LINK_FLAGS $<$<NOT:$<CONFIG:Debug>>:-flto>)
 else()
@@ -84,3 +83,4 @@ else()
 endif()
 
 set(TBB_OPENMP_FLAG /openmp)
+set(TBB_OPENMP_NO_LINK_FLAG TRUE) # TBB_OPENMP_FLAG will be used only on compilation but not on linkage

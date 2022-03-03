@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -466,7 +466,7 @@ private:
     FooBody( const FooBody& );          // Deny access
     void operator=( const FooBody& );   // Deny access
     template <typename Partitioner_> friend void TestSplitting( std::size_t nthread );
-    //! Parent that created this body via split operation.  NULL if original body.
+    //! Parent that created this body via split operation.  nullptr if original body.
     FooBody* parent;
     //! Total number of index values processed by body and its children.
     size_t sum;

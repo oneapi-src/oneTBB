@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ namespace d1 {
 // unique_scoped_lock supposes that Mutex operations never throw
 template <typename Mutex>
 class unique_scoped_lock {
-    //! Points to currently held Mutex, or NULL if no lock is held.
+    //! Points to currently held Mutex, or nullptr if no lock is held.
     Mutex* m_mutex{};
 
 public:

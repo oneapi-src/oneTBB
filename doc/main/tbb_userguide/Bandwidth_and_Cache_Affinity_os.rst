@@ -96,12 +96,6 @@ of computations to memory accesses.
    |image1|
 
 
-.. admonition:: Product and Performance Information 
-
-   Performance varies by use, configuration and other factors. Learn more at `www.Intel.com/PerformanceIndex <https://www.intel.com/PerformanceIndex>`_.
-   Notice revision #20201201
-
-
 
 
 .. |image0| image:: Images/image007.jpg

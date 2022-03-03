@@ -30,10 +30,6 @@ more conveniently than using raw threads, and at the same time can
 improve performance.
 
 
-.. admonition:: Product and Performance Information 
-
-   Performance varies by use, configuration and other factors. Learn more at `www.intel.com/PerformanceIndex <https://www.intel.com/PerformanceIndex>`_.
-   Notice revision #20201201 
 
 
 
