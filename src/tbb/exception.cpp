@@ -25,7 +25,6 @@
 #include <new>
 #include <stdexcept>
 #include "literal_const_string.h"
-#include "string_view.h"
 
 #define __TBB_STD_RETHROW_EXCEPTION_POSSIBLY_BROKEN                             \
     (__GLIBCXX__ && __TBB_GLIBCXX_VERSION>=40700 && __TBB_GLIBCXX_VERSION<60000 && TBB_USE_EXCEPTIONS)
@@ -115,7 +114,7 @@ void handle_perror( int error_code, const literal_const_string& what ) {
         // string returned by the std::strerror is guarantted to be null terminated,
         // so it is perfectly OK to call std::strlen on it
         buf += ": ";
-        buf += string_view{err_desc, std::strlen(err_desc)};
+        buf.append(err_desc, std::strlen(err_desc));
     }
 #if TBB_USE_EXCEPTIONS
     do_throw([&buf] { throw std::runtime_error(buf.c_str()); });

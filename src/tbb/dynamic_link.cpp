@@ -24,7 +24,6 @@
 #include <cstring>          // strrchr
 
 #include "literal_const_string.h"
-#include "string_view.h"
 
 #if _WIN32
     #include <malloc.h>
@@ -260,8 +259,14 @@ namespace r1 {
         //find the last / in the SO pathname
         char const *slash = std::strrchr( dlinfo.dli_fname, '/' );
         __TBB_ASSERT_EX( !slash || (slash >= dlinfo.dli_fname), "Unbelievable.");
+        struct string_view {
+            const char* str;
+            std::size_t size;
+        };
 
-        auto SO_path = slash ? string_view{dlinfo.dli_fname, static_cast<std::size_t>(slash - dlinfo.dli_fname) + 1} : string_view{};
+        auto SO_path = slash ?
+                string_view{dlinfo.dli_fname, static_cast<std::size_t>(slash - dlinfo.dli_fname) + 1}
+              : string_view{nullptr, 0};
 
         if ( dlinfo.dli_fname[0] != '/' ) {
             // The library path is relative so get the current working directory first
@@ -283,13 +288,12 @@ namespace r1 {
             ap_data._path.clear();
         }
 
-
-        if ( (ap_data._path.size() + SO_path.size()) > ap_data._path.max_size() ) {
+        if ( (ap_data._path.size() + SO_path.size) > ap_data._path.max_size() ) {
             DYNAMIC_LINK_WARNING( dl_buff_too_small );
             ap_data._path.clear();
             return;
         }
-        ap_data._path += SO_path;
+        ap_data._path.append(SO_path.str, SO_path.size);
 
     #endif /* _WIN32 */
     }

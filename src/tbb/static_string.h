@@ -24,7 +24,6 @@
 #include <algorithm> // for std::min, std::fill
 
 #include "literal_const_string.h"
-#include "string_view.h"
 
 namespace tbb {
 namespace detail {
@@ -82,13 +81,12 @@ public:
         ar[m_size] = 0;
     }
 
-
-    static_string& operator+=(const string_view& sv) noexcept {
+    static_string& append(const char* s,  std::size_t size) noexcept {
         //clamp the result string to fit into the buffer
         //__TBB_ASSERT( m_size < (ar.max_size() - 1) );
-        auto symbols_to_write = std::min(sv.size(), ar.max_size() - m_size - 1);
+        auto symbols_to_write = std::min(size, ar.max_size() - m_size - 1);
 
-        std::memcpy(ar.data() + m_size, sv.begin(), symbols_to_write);
+        std::memcpy(ar.data() + m_size, s, symbols_to_write);
         m_size += symbols_to_write;
         //Ensure the string is null terminated
         ar[m_size] = 0;
@@ -97,7 +95,7 @@ public:
     }
 
     static_string& operator+=(const literal_const_string& csv) noexcept {
-        *this += string_view{csv.c_str(), csv.size()};
+        this->append(csv.c_str(), csv.size());
         return *this;
     }
 
@@ -111,7 +109,7 @@ public:
     template<std::size_t N1>
     static_string& operator=(const static_string<N1>& ss) noexcept {
         clear();
-        *this += string_view(ss.c_str(), ss.size());
+        this->append(ss.c_str(), ss.size());
         return *this;
     }
 
