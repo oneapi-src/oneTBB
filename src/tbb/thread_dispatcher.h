@@ -167,9 +167,7 @@ public:
         }
     }
 
-    void cleanup( job& j) override {
-        governor::auto_terminate(&j);
-    }
+    void cleanup(job& j) override;
 
     void acknowledge_close_connection() override;
 
