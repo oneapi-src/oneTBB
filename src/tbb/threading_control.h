@@ -106,7 +106,7 @@ private:
 
     bool remove_ref(bool is_public) {
         if (is_public) {
-            __TBB_ASSERT(g_threading_control.get() == this, "Global threading controle instance was destroyed prematurely?");
+            __TBB_ASSERT(g_threading_control == this, "Global threading controle instance was destroyed prematurely?");
             __TBB_ASSERT(my_public_ref_count.load(std::memory_order_relaxed), nullptr);
             --my_public_ref_count;
         }
@@ -114,14 +114,14 @@ private:
         bool is_last_ref = --my_ref_count == 0;
         if (is_last_ref) {
             __TBB_ASSERT(!my_public_ref_count.load(std::memory_order_relaxed), nullptr);
-            g_threading_control.release();
+            g_threading_control = nullptr;
         }
 
         return is_last_ref;
     }
 
     static threading_control* get_threading_control(bool is_public) {
-        threading_control* control = g_threading_control.get();
+        threading_control* control = g_threading_control;
         if (control) {
            control->add_ref(is_public);
         }
@@ -194,7 +194,7 @@ private:
                 ++thr_control->my_ref_count;
             }
 
-            g_threading_control.reset(thr_control);
+            g_threading_control = thr_control;
         }).on_completion([] { global_control_unlock(); });
 
         return thr_control;
@@ -240,7 +240,7 @@ public:
     }
 
     static bool unregister_public_reference(bool blocking_terminate) {
-        __TBB_ASSERT(g_threading_control.get(), "Threading control should exist until last public reference");
+        __TBB_ASSERT(g_threading_control, "Threading control should exist until last public reference");
         __TBB_ASSERT(g_threading_control->my_public_ref_count.load(std::memory_order_relaxed), nullptr);
         return g_threading_control->release(/*public = */ true, /*blocking_terminate = */ blocking_terminate);
     }
@@ -263,7 +263,7 @@ public:
         threading_control* thr_control{nullptr};
         {
             global_mutex_type::scoped_lock lock(g_threading_control_mutex);
-            thr_control = g_threading_control.get();
+            thr_control = g_threading_control;
         }
 
         bool released{true};
@@ -278,7 +278,7 @@ public:
 
     static bool is_present() {
         global_mutex_type::scoped_lock lock(g_threading_control_mutex);
-        return g_threading_control.get() != nullptr;
+        return g_threading_control != nullptr;
     }
 
     void register_thread(thread_data& td) {
@@ -303,7 +303,7 @@ public:
 private:
     friend class thread_dispatcher;
 
-    static cache_aligned_unique_ptr<threading_control> g_threading_control;
+    static threading_control* g_threading_control;
 
     //! Mutex guarding creation/destruction of g_threading_control, insertions/deletions in my_arenas, and cancellation propagation
     static global_mutex_type g_threading_control_mutex;

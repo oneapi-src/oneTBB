@@ -43,7 +43,7 @@ market_concurrent_monitor* governor::sleep_monitor;
 
 //------------------------------------------------------------------------
 // threading_control data
-cache_aligned_unique_ptr<threading_control> threading_control::g_threading_control;
+threading_control* threading_control::g_threading_control;
 threading_control::global_mutex_type threading_control::g_threading_control_mutex;
 
 //------------------------------------------------------------------------
