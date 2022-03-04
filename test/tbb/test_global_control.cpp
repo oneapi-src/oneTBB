@@ -266,9 +266,7 @@ TEST_CASE("test concurrent task_scheduler_handle destruction") {
             tbb::parallel_for(0, 1, [](int) {});
         });
         thr2.join();
-        std::cout << "." << std::flush;
     }
-    std::cout << std::endl;
     stop = true;
     thr1.join();
 }
