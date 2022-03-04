@@ -41,6 +41,11 @@ void thread_dispatcher::acknowledge_close_connection() {
     return td;
 }
 
+void thread_dispatcher::cleanup(job& j) {
+    my_threading_control.unregister_thread(static_cast<thread_data&>(j));
+    governor::auto_terminate(&j);
+}
+
 } // namespace r1
 } // namespace detail
 } // namespace tbb
