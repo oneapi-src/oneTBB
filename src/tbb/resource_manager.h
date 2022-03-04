@@ -32,12 +32,12 @@ class arena;
 class permit_manager_client;
 class thread_pool_ticket;
 
-using constraits_type = void*;
+using constraints_type = void*;
 
 class permit_manager : no_copy {
 public:
     virtual ~permit_manager() {}
-    virtual permit_manager_client* create_client(arena& a, constraits_type* constraits) = 0;
+    virtual permit_manager_client* create_client(arena& a, constraints_type* constraints) = 0;
     virtual void destroy_client(permit_manager_client& c) = 0;
 
     virtual int set_active_num_workers(unsigned soft_limit) = 0;

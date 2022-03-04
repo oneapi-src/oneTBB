@@ -155,7 +155,7 @@ int market::set_active_num_workers(unsigned soft_limit) {
     return update_workers_request();
 }
 
-permit_manager_client* market::create_client(arena& a, constraits_type*) {
+permit_manager_client* market::create_client(arena& a, constraints_type*) {
     auto c = new tbb_permit_manager_client(a);
     // Add newly created arena into the existing market's list.
     arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex);

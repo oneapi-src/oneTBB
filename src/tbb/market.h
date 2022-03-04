@@ -135,7 +135,7 @@ public:
     //! Destructor
     ~market();
 
-    permit_manager_client* create_client(arena& a, constraits_type* constraits) override;
+    permit_manager_client* create_client(arena& a, constraints_type* constraints) override;
     void destroy_client(permit_manager_client& c) override;
 
     //! Removes the arena from the market's list
