@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -106,7 +106,7 @@ private:
 
     bool remove_ref(bool is_public) {
         if (is_public) {
-            __TBB_ASSERT(g_threading_control == this, "Global threading controle instance was destroyed prematurely?");
+            __TBB_ASSERT(g_threading_control == this, "Global threading control instance was destroyed prematurely?");
             __TBB_ASSERT(my_public_ref_count.load(std::memory_order_relaxed), nullptr);
             --my_public_ref_count;
         }
