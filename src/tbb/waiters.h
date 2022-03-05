@@ -83,7 +83,7 @@ private:
     using base_type = waiter_base;
 
     bool is_worker_should_leave(arena_slot& slot) const {
-        bool is_top_priority_arena = my_arena.my_client->is_top_priority();
+        bool is_top_priority_arena = my_arena.is_top_priority();
         bool is_task_pool_empty = slot.task_pool.load(std::memory_order_relaxed) == EmptyTaskPool;
 
         if (is_top_priority_arena) {

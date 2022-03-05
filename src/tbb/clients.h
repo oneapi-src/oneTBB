@@ -28,9 +28,10 @@ class arena;
 
 using mask_type = void*;
 
-class thread_pool_ticket : public d1::intrusive_list_node /* Need for list in thread pool */ {
+class thread_dispatcher_client : public d1::intrusive_list_node /* Need for list in thread pool */ {
 public:
-    thread_pool_ticket(arena& a) : my_arena(a) {}
+    thread_dispatcher_client(arena& a, std::uint64_t aba_epoch) : my_arena(a), my_aba_epoch(aba_epoch) {}
+
     void apply_mask(mask_type mask) { suppress_unused_warning(mask); }
     // Interface of communication with thread pool
     bool try_join() {
@@ -43,8 +44,22 @@ public:
     unsigned priority_level() {
         return my_arena.priority_level();
     }
+
+    unsigned get_aba_epoch() {
+        return my_aba_epoch;
+    }
+
+    unsigned references() {
+        return my_arena.references();
+    }
+
+    int num_workers_requested() {
+        return my_arena.num_workers_requested();
+    }
+
 private:
     arena& my_arena;
+    std::uint64_t my_aba_epoch;
     // mask_type m_mask;
 };
 
@@ -53,17 +68,13 @@ class thread_dispatcher;
 // TODO resource_manager_client and thread_pool_client
 class permit_manager_client {
 public:
-    permit_manager_client(arena& a) : my_arena(a), my_ticket(a)
+    permit_manager_client(arena& a) : my_arena(a)
     {}
 
     virtual ~permit_manager_client() {}
 
     virtual void request_demand(unsigned min, unsigned max) = 0;
     virtual void release_demand() = 0;
-
-    thread_pool_ticket& get_ticket() {
-        return my_ticket;
-    }
 
     bool is_top_priority() {
         return my_is_top_priority.load(std::memory_order_relaxed);
@@ -90,7 +101,6 @@ public:
 
 protected:
     arena& my_arena;
-    thread_pool_ticket my_ticket;
     //! The max priority level of arena in market.
     std::atomic<bool> my_is_top_priority{ false };
 };

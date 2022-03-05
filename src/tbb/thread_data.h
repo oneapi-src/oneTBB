@@ -40,7 +40,7 @@ class task;
 class arena_slot;
 class task_group_context;
 class task_dispatcher;
-class thread_pool_ticket;
+class thread_dispatcher_client;
 
 class context_list : public intrusive_list<d1::intrusive_list_node> {
 public:
@@ -103,7 +103,7 @@ public:
         , my_is_worker{ is_worker }
         , my_task_dispatcher{ nullptr }
         , my_arena{ nullptr }
-        , my_last_ticket{ nullptr }
+        , my_last_client{ nullptr }
         , my_arena_slot{}
         , my_random{ this }
         , my_last_observer{ nullptr }
@@ -151,7 +151,7 @@ public:
     //! The arena that I own (if external thread) or am servicing at the moment (if worker)
     arena* my_arena;
 
-    thread_pool_ticket* my_last_ticket;
+    thread_dispatcher_client* my_last_client;
 
     //! Pointer to the slot in the arena we own at the moment
     arena_slot* my_arena_slot;

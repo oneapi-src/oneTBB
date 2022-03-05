@@ -57,24 +57,12 @@ struct tbb_permit_manager_client : public permit_manager_client, public d1::intr
         return my_arena.has_enqueued_tasks();
     }
 
-    std::uintptr_t aba_epoch() {
-        return my_arena.aba_epoch();
+    void set_top_priority(bool b) {
+        return my_is_top_priority.store(b, std::memory_order_relaxed);
     }
 
     int num_workers_requested() {
         return my_arena.num_workers_requested();
-    }
-
-    unsigned references() {
-        return my_arena.references();
-    }
-
-    thread_pool_ticket& ticket() {
-        return my_ticket;
-    }
-
-    void set_top_priority(bool b) {
-        return my_is_top_priority.store(b, std::memory_order_relaxed);
     }
 };
 
@@ -156,63 +144,26 @@ int market::set_active_num_workers(unsigned soft_limit) {
 }
 
 permit_manager_client* market::create_client(arena& a, constraints_type*) {
-    auto c = new tbb_permit_manager_client(a);
-    // Add newly created arena into the existing market's list.
+    return new (cache_aligned_allocate(sizeof(tbb_permit_manager_client))) tbb_permit_manager_client(a);
+}
+
+void market::register_client(permit_manager_client* client) {
     arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex);
-    insert_arena_into_list(*c);
-    return c;
+    insert_arena_into_list(static_cast<tbb_permit_manager_client&>(*client));
 }
 
 void market::destroy_client(permit_manager_client& c) {
-    delete &c;
-}
-
-/** This method must be invoked under my_arenas_list_mutex. **/
-void market::detach_arena(tbb_permit_manager_client& a ) {
-    //__TBB_ASSERT( !a.my_slots[0].is_occupied(), NULL );
-    if (a.m_global_concurrency_mode.load(std::memory_order_relaxed))
-        disable_mandatory_concurrency_impl(&a);
-
-    remove_arena_from_list(a);
-    if (a.aba_epoch() == my_arenas_aba_epoch.load(std::memory_order_relaxed)) {
-        my_arenas_aba_epoch.store(my_arenas_aba_epoch.load(std::memory_order_relaxed) + 1, std::memory_order_relaxed);
+    auto& tbb_client = static_cast<tbb_permit_manager_client&>(c);
+    if (tbb_client.m_global_concurrency_mode.load(std::memory_order_relaxed)) {
+        disable_mandatory_concurrency_impl(&tbb_client);
     }
-}
 
-bool market::try_destroy_arena (permit_manager_client* c, uintptr_t aba_epoch, unsigned priority_level ) {
-    auto a = static_cast<tbb_permit_manager_client*>(c);
-    bool locked = true;
-    __TBB_ASSERT( a, nullptr);
-    // we hold reference to the server, so market cannot be destroyed at any moment here
-    __TBB_ASSERT(!is_poisoned(my_next_arena), nullptr);
-    my_arenas_list_mutex.lock();
-        arena_list_type::iterator it = my_arenas[priority_level].begin();
-        for ( ; it != my_arenas[priority_level].end(); ++it ) {
-            if ( a == &*it ) {
-                if ( it->aba_epoch() == aba_epoch ) {
-                    // Arena is alive
-                    // Acquire my_references to sync with threads that just left the arena
-                    if (!a->num_workers_requested() && !a->references()) {
-                        /*__TBB_ASSERT(
-                            !a->my_num_workers_allotted.load(std::memory_order_relaxed) &&
-                            (a->my_pool_state == arena::SNAPSHOT_EMPTY || !a->my_max_num_workers),
-                            "Inconsistent arena state"
-                        );*/
-                        // Arena is abandoned. Destroy it.
-                        detach_arena( *a );
-                        my_arenas_list_mutex.unlock();
-                        locked = false;
-                        //a->free_arena();
-                        return true;
-                    }
-                }
-                if (locked)
-                    my_arenas_list_mutex.unlock();
-                return false;
-            }
-        }
-    my_arenas_list_mutex.unlock();
-    return false;
+    {
+        arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex);
+        remove_arena_from_list(tbb_client);
+    }
+
+    delete &c;
 }
 
 int market::update_allotment ( arena_list_type* arenas, int workers_demand, int max_workers ) {

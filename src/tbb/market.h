@@ -98,9 +98,6 @@ private:
     /** The check happens in round-robin fashion. **/
     tbb_permit_manager_client* my_next_arena;
 
-    //! ABA prevention marker to assign to newly created arenas
-    std::atomic<uintptr_t> my_arenas_aba_epoch;
-
     //! The value indicating that the soft limit warning is unnecessary
     static const unsigned skip_soft_limit_warning = ~0U;
 
@@ -136,13 +133,8 @@ public:
     ~market();
 
     permit_manager_client* create_client(arena& a, constraints_type* constraints) override;
+    void register_client(permit_manager_client* client) override;
     void destroy_client(permit_manager_client& c) override;
-
-    //! Removes the arena from the market's list
-    bool try_destroy_arena (permit_manager_client*, uintptr_t aba_epoch, unsigned priority_level ) override;
-
-    //! Removes the arena from the market's list
-    void detach_arena (tbb_permit_manager_client& );
 
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
     //! Imlpementation of mandatory concurrency enabling
@@ -166,10 +158,6 @@ public:
 
     //! Set number of active workers
     int set_active_num_workers(unsigned w) override;
-
-    uintptr_t aba_epoch() override {
-        return my_arenas_aba_epoch.load(std::memory_order_relaxed);
-    }
 }; // class market
 
 } // namespace r1
