@@ -36,7 +36,7 @@ bool cancellation_disseminator::propagate_task_group_state(std::atomic<uint32_t>
     // The whole propagation algorithm is under the lock in order to ensure correctness
     // in case of concurrent state changes at the different levels of the context tree.
     // See comment at the bottom of scheduler.cpp
-    context_state_propagation_mutex_type::scoped_lock lock(the_context_state_propagation_mutex);
+    threads_list_mutex_type::scoped_lock lock(my_threads_list_mutex);
     if ((src.*mptr_state).load(std::memory_order_relaxed) != new_state) {
         // Another thread has concurrently changed the state. Back down.
         return false;
