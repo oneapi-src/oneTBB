@@ -56,7 +56,15 @@ Lazy Initialization
 
    As seen in the diagram, some elements are recalculated more than once. These operations are redundant,
    so the "lazy initialized" Fibonacci numbers are relevant here.
-   
+
+
+   An implementation without the use of "lazy initialization" would have *O(2^N)* time complexity due to
+   the full recursion tree traversal and recalculation of values. Since all the nodes are traversed once,
+   the tree previously shown becomes a list, making the time complexity *O(N)*.
+
+
+   |image1|
+
 
    The code for the implementation is shown below. Already calculated values are stored in a buffer paired with
    ``collaborative_once_flag`` and won't be recalculated when ``collaborative_call_once`` is invoked
@@ -93,5 +101,8 @@ Lazy Initialization
 
 
 .. |image0| image:: Images/image008a.jpg
+   :width: 740px
+   :height: 344px
+.. |image1| image:: Images/image009a.jpg
    :width: 740px
    :height: 344px
