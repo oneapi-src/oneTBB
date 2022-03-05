@@ -84,7 +84,10 @@ public:
                 if (it->get_aba_epoch() == aba_epoch) {
                     // Client is alive
                     // Acquire my_references to sync with threads that just left the arena
-                    if (!client->num_workers_requested() && !client->references()) {
+                    // Pay attention that references should be read before workers_requested because
+                    // if references is no zero some other thread might call adjust_demand and lead to
+                    // a race over workers_requested
+                    if (!client->references() && !client->num_workers_requested()) {
                         /*__TBB_ASSERT(
                             !a->my_num_workers_allotted.load(std::memory_order_relaxed) &&
                             (a->my_pool_state == arena::SNAPSHOT_EMPTY || !a->my_max_num_workers),
