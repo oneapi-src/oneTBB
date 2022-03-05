@@ -93,5 +93,5 @@ Lazy Initialization
 
 
 .. |image0| image:: Images/image008a.jpg
-   :width: 458px
-   :height: 254px
+   :width: 740px
+   :height: 344px
