@@ -76,7 +76,7 @@ public:
     bool try_unregister_client(thread_dispatcher_client* client, std::uint64_t aba_epoch, unsigned priority) {
         __TBB_ASSERT(client, nullptr);
         // we hold reference to the server, so market cannot be destroyed at any moment here
-        __TBB_ASSERT(!is_poisoned(my_next_client), nullptr);
+        __TBB_ASSERT(!is_poisoned(my_server), nullptr);
         my_list_mutex.lock();
         client_list_type::iterator it = my_client_list[priority].begin();
         for ( ; it != my_client_list[priority].end(); ++it ) {
