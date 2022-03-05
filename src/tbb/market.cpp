@@ -163,7 +163,8 @@ void market::destroy_client(permit_manager_client& c) {
         remove_arena_from_list(tbb_client);
     }
 
-    delete &c;
+    tbb_client.~tbb_permit_manager_client();
+    cache_aligned_deallocate(&tbb_client);
 }
 
 int market::update_allotment ( arena_list_type* arenas, int workers_demand, int max_workers ) {
