@@ -68,7 +68,7 @@ void resume(suspend_point_type* sp) {
         // Do not access target after that point.
         a.advertise_new_work<arena::wakeup>();
         // Release our reference to my_arena.
-        a.on_thread_leaving<arena::ref_external>();
+        a.on_thread_leaving(arena::ref_external);
     }
 
 }
@@ -172,7 +172,7 @@ void task_dispatcher::do_post_resume_action() {
         __TBB_ASSERT(td->my_post_resume_arg, "The post resume action must have an argument");
         task_dispatcher* to_cleanup = static_cast<task_dispatcher*>(td->my_post_resume_arg);
         // Release coroutine's reference to my_arena
-        td->my_arena->on_thread_leaving<arena::ref_external>();
+        td->my_arena->on_thread_leaving(arena::ref_external);
         // Cache the coroutine for possible later re-usage
         td->my_arena->my_co_cache.push(to_cleanup);
         break;

@@ -49,9 +49,6 @@ cache_aligned_unique_ptr<T> make_cache_aligned_unique(std::size_t size, Args&& .
     return cache_aligned_unique_ptr<T>(new (storage) T(std::forward<Args>(args)...));
 }
 
-
-
-
 class arena;
 class thread_data;
 class permit_manager_client;
@@ -59,7 +56,6 @@ class permit_manager_client;
 void global_control_lock();
 void global_control_unlock();
 std::size_t global_control_active_value_unsafe(d1::global_control::parameter);
-
 
 class cancellation_disseminator {
 public:
@@ -87,6 +83,13 @@ private:
 
     threads_list_mutex_type my_threads_list_mutex;
     thread_data_list_type my_threads_list{};
+};
+
+struct client_deleter {
+    std::uint64_t aba_epoch;
+    unsigned priority_level;
+    thread_dispatcher_client* my_td_client;
+    permit_manager_client* my_pm_client;
 };
 
 class threading_control {
@@ -245,10 +248,14 @@ public:
         return g_threading_control->release(/*public = */ true, /*blocking_terminate = */ blocking_terminate);
     }
 
+    threading_control_client create_client(arena& a);
 
-    permit_manager_client* register_client(arena& a);
+    client_deleter prepare_destroy(threading_control_client client);
+    bool try_destroy_client(client_deleter deleter);
 
-    void unregister_client(permit_manager_client* client);
+    void publish_client(threading_control_client client);
+
+    bool check_client_priority(threading_control_client client);
 
     permit_manager* get_permit_manager() {
         return my_permit_manager.get();
@@ -293,9 +300,9 @@ public:
 
     static unsigned max_num_workers();
 
-    void adjust_demand(permit_manager_client&, int delta, bool mandatory);
-    void enable_mandatory_concurrency(permit_manager_client* c);
-    void mandatory_concurrency_disable(permit_manager_client* c);
+    void adjust_demand(threading_control_client, int delta, bool mandatory);
+    void enable_mandatory_concurrency(threading_control_client c);
+    void mandatory_concurrency_disable(threading_control_client c);
 
     void propagate_task_group_state(std::atomic<uint32_t> d1::task_group_context::*mptr_state, d1::task_group_context& src, uint32_t new_state) {
         my_cancellation_disseminator->propagate_task_group_state(mptr_state, src, new_state);
@@ -307,9 +314,6 @@ private:
 
     //! Mutex guarding creation/destruction of g_threading_control, insertions/deletions in my_arenas, and cancellation propagation
     static global_mutex_type g_threading_control_mutex;
-
-    //! ABA prevention marker to assign to newly created arenas
-    std::atomic<uintptr_t> my_arenas_aba_epoch{0};
 
     //! Count of external threads attached
     std::atomic<unsigned> my_public_ref_count{0};

@@ -33,8 +33,8 @@ namespace detail {
 namespace r1 {
 
 class thread_dispatcher : no_copy, rml::tbb_client {
-    using ticket_list_type = intrusive_list<thread_pool_ticket>;
-    using ticket_list_mutex_type = d1::rw_mutex;
+    using client_list_type = intrusive_list<thread_dispatcher_client>;
+    using client_list_mutex_type = d1::rw_mutex;
 public:
     thread_dispatcher(threading_control& tc, unsigned hard_limit, std::size_t stack_size)
         : my_threading_control(tc)
@@ -49,82 +49,126 @@ public:
         poison_pointer(my_server);
     }
 
-    thread_pool_ticket* select_next_client(thread_pool_ticket* hint) {
+    thread_dispatcher_client* select_next_client(thread_dispatcher_client* hint) {
         unsigned next_client_priority_level = num_priority_levels;
         if (hint) {
             next_client_priority_level = hint->priority_level();
         }
 
         for (unsigned idx = 0; idx < next_client_priority_level; ++idx) {
-            if (!m_ticket_list[idx].empty()) {
-                return &*m_ticket_list[idx].begin();
+            if (!my_client_list[idx].empty()) {
+                return &*my_client_list[idx].begin();
             }
         }
 
         return hint;
     }
 
-    void insert_ticket(thread_pool_ticket& ticket) {
-        __TBB_ASSERT(ticket.priority_level() < num_priority_levels, nullptr);
-        ticket_list_mutex_type::scoped_lock lock(m_mutex);
-        m_ticket_list[ticket.priority_level()].push_front(ticket);
-
-        __TBB_ASSERT(!m_next_ticket || m_next_ticket->priority_level() < num_priority_levels, nullptr);
-        m_next_ticket = select_next_client(m_next_ticket);
+    thread_dispatcher_client* create_client(arena& a) {
+        return new (cache_aligned_allocate(sizeof(thread_dispatcher_client))) thread_dispatcher_client(a, my_clients_aba_epoch);
     }
 
-    void remove_ticket(thread_pool_ticket& ticket) {
-        __TBB_ASSERT(ticket.priority_level() < num_priority_levels, nullptr);
-        ticket_list_mutex_type::scoped_lock lock(m_mutex);
-        m_ticket_list[ticket.priority_level()].remove(ticket);
+    void register_client(thread_dispatcher_client* client) {
+        client_list_mutex_type::scoped_lock lock(my_list_mutex);
+        insert_client(*client);
+    }
 
-        if (m_next_ticket == &ticket) {
-            m_next_ticket = nullptr;
+    bool try_unregister_client(thread_dispatcher_client* client, std::uint64_t aba_epoch, unsigned priority) {
+        __TBB_ASSERT(client, nullptr);
+        // we hold reference to the server, so market cannot be destroyed at any moment here
+        __TBB_ASSERT(!is_poisoned(my_next_client), nullptr);
+        my_list_mutex.lock();
+        client_list_type::iterator it = my_client_list[priority].begin();
+        for ( ; it != my_client_list[priority].end(); ++it ) {
+            if (client == &*it) {
+                if (it->get_aba_epoch() == aba_epoch) {
+                    // Client is alive
+                    // Acquire my_references to sync with threads that just left the arena
+                    if (!client->num_workers_requested() && !client->references()) {
+                        /*__TBB_ASSERT(
+                            !a->my_num_workers_allotted.load(std::memory_order_relaxed) &&
+                            (a->my_pool_state == arena::SNAPSHOT_EMPTY || !a->my_max_num_workers),
+                            "Inconsistent arena state"
+                        );*/
+
+                        // Arena is abandoned. Destroy it.
+                        remove_client(*client);
+                        ++my_clients_aba_epoch;
+
+                        my_list_mutex.unlock();
+
+                        client->~thread_dispatcher_client();
+                        cache_aligned_deallocate(client);
+
+                        return true;
+                    }
+                }
+                break;
+            }
         }
-        m_next_ticket = select_next_client(m_next_ticket);
+        my_list_mutex.unlock();
+        return false;
     }
 
-    bool is_ticket_in_list(ticket_list_type& tickets, thread_pool_ticket* ticket) {
-        __TBB_ASSERT(ticket, "Expected non-null pointer to ticket.");
-        for (ticket_list_type::iterator it = tickets.begin(); it != tickets.end(); ++it) {
-            if (ticket == &*it) {
+    void insert_client(thread_dispatcher_client& client) {
+        __TBB_ASSERT(client.priority_level() < num_priority_levels, nullptr);
+        my_client_list[client.priority_level()].push_front(client);
+
+        __TBB_ASSERT(!my_next_client || my_next_client->priority_level() < num_priority_levels, nullptr);
+        my_next_client = select_next_client(my_next_client);
+    }
+
+    void remove_client(thread_dispatcher_client& client) {
+        __TBB_ASSERT(client.priority_level() < num_priority_levels, nullptr);
+        my_client_list[client.priority_level()].remove(client);
+
+        if (my_next_client == &client) {
+            my_next_client = nullptr;
+        }
+        my_next_client = select_next_client(my_next_client);
+    }
+
+    bool is_client_in_list(client_list_type& clients, thread_dispatcher_client* client) {
+        __TBB_ASSERT(client, "Expected non-null pointer to client.");
+        for (client_list_type::iterator it = clients.begin(); it != clients.end(); ++it) {
+            if (client == &*it) {
                 return true;
             }
         }
         return false;
     }
 
-    bool is_ticket_alive(thread_pool_ticket* ticket) {
-        if (!ticket) {
+    bool is_client_alive(thread_dispatcher_client* client) {
+        if (!client) {
             return false;
         }
 
         // Still cannot access internals of the arena since the object itself might be destroyed.
         for (unsigned idx = 0; idx < num_priority_levels; ++idx) {
-            if (is_ticket_in_list(m_ticket_list[idx], ticket)) {
+            if (is_client_in_list(my_client_list[idx], client)) {
                 return true;
             }
         }
         return false;
     }
 
-    thread_pool_ticket* ticket_in_need(ticket_list_type* tickets, thread_pool_ticket* hint) {
+    thread_dispatcher_client* client_in_need(client_list_type* clients, thread_dispatcher_client* hint) {
         // TODO: make sure arena with higher priority returned only if there are available slots in it.
         hint = select_next_client(hint);
         if (!hint) {
             return nullptr;
         }
 
-        ticket_list_type::iterator it = hint;
+        client_list_type::iterator it = hint;
         unsigned curr_priority_level = hint->priority_level();
-        __TBB_ASSERT(it != tickets[curr_priority_level].end(), nullptr);
+        __TBB_ASSERT(it != clients[curr_priority_level].end(), nullptr);
         do {
-            thread_pool_ticket& t = *it;
-            if (++it == tickets[curr_priority_level].end()) {
+            thread_dispatcher_client& t = *it;
+            if (++it == clients[curr_priority_level].end()) {
                 do {
                     ++curr_priority_level %= num_priority_levels;
-                } while (tickets[curr_priority_level].empty());
-                it = tickets[curr_priority_level].begin();
+                } while (clients[curr_priority_level].empty());
+                it = clients[curr_priority_level].begin();
             }
             if (t.try_join()) {
                 return &t;
@@ -134,22 +178,22 @@ public:
     }
 
 
-    thread_pool_ticket* ticket_in_need(thread_pool_ticket* prev) {
-        ticket_list_mutex_type::scoped_lock lock(m_mutex, /*is_writer=*/false);
-        if (is_ticket_alive(prev)) {
-            return ticket_in_need(m_ticket_list, prev);
+    thread_dispatcher_client* client_in_need(thread_dispatcher_client* prev) {
+        client_list_mutex_type::scoped_lock lock(my_list_mutex, /*is_writer=*/false);
+        if (is_client_alive(prev)) {
+            return client_in_need(my_client_list, prev);
         }
-        return ticket_in_need(m_ticket_list, m_next_ticket);
+        return client_in_need(my_client_list, my_next_client);
     }
 
     void process(job& j) override {
         thread_data& td = static_cast<thread_data&>(j);
         // td.my_last_client can be dead. Don't access it until arena_in_need is called
-        thread_pool_ticket* ticket = td.my_last_ticket;
+        thread_dispatcher_client* client = td.my_last_client;
         for (int i = 0; i < 2; ++i) {
-            while ((ticket = ticket_in_need(ticket)) ) {
-                td.my_last_ticket = ticket;
-                ticket->process(td);
+            while ((client = client_in_need(client)) ) {
+                td.my_last_client = client;
+                client->process(td);
             }
             // Workers leave thread_dispatcher because there is no arena in need. It can happen earlier than
             // adjust_job_count_estimate() decreases my_slack and RML can put this thread to sleep.
@@ -189,15 +233,18 @@ public:
 private:
     friend class threading_control;
     static constexpr unsigned num_priority_levels = 3;
-    ticket_list_mutex_type m_mutex;
-    ticket_list_type m_ticket_list[num_priority_levels];
+    client_list_mutex_type my_list_mutex;
+    client_list_type my_client_list[num_priority_levels];
 
-    thread_pool_ticket* m_next_ticket{nullptr};
+    thread_dispatcher_client* my_next_client{nullptr};
 
     //! Shutdown mode
     bool my_join_workers{false};
 
     threading_control& my_threading_control;
+
+    //! ABA prevention marker to assign to newly created arenas
+    std::atomic<std::uint64_t> my_clients_aba_epoch{0};
 
     //! Maximal number of workers allowed for use by the underlying resource manager
     /** It can't be changed after market creation. **/

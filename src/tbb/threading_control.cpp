@@ -97,22 +97,35 @@ bool threading_control::release(bool is_public, bool blocking_terminate) {
     return false;
 }
 
-permit_manager_client* threading_control::register_client(arena& a) {
+threading_control_client threading_control::create_client(arena& a) {
     {
         global_mutex_type::scoped_lock lock(g_threading_control_mutex);
         add_ref(/*public = */ false);
     }
 
-    permit_manager_client* client = my_permit_manager->create_client(a, nullptr);
-    my_thread_dispatcher->insert_ticket(client->get_ticket());
+    permit_manager_client* pm_client = my_permit_manager->create_client(a, nullptr);
+    thread_dispatcher_client* td_client = my_thread_dispatcher->create_client(a);
 
-    return client;
+    return {pm_client, td_client};
 }
 
-void threading_control::unregister_client(permit_manager_client* client) {
-    my_thread_dispatcher->remove_ticket(client->get_ticket());
-    my_permit_manager->destroy_client(*client);
-    release(/*public = */ false, /*blocking_terminate = */ false);
+client_deleter threading_control::prepare_destroy(threading_control_client client) {
+    thread_dispatcher_client* td_client = client.my_thread_dispatcher_client;
+    return {td_client->get_aba_epoch(), td_client->priority_level(), td_client, client.my_permit_manager_client};
+}
+
+bool threading_control::try_destroy_client(client_deleter deleter) {
+    if (my_thread_dispatcher->try_unregister_client(deleter.my_td_client, deleter.aba_epoch, deleter.priority_level)) {
+        my_permit_manager->destroy_client(*deleter.my_pm_client);
+        release(/*public = */ false, /*blocking_terminate = */ false);
+        return true;
+    }
+    return false;
+}
+
+void threading_control::publish_client(threading_control_client client) {
+    my_permit_manager->register_client(client.my_permit_manager_client);
+    my_thread_dispatcher->register_client(client.my_thread_dispatcher_client);
 }
 
 std::size_t threading_control::worker_stack_size() {
@@ -134,7 +147,12 @@ void threading_control::set_active_num_workers(unsigned soft_limit) {
     }
 }
 
-void threading_control::adjust_demand(permit_manager_client& c, int delta, bool mandatory) {
+bool threading_control::check_client_priority(threading_control_client client) {
+    return client.my_permit_manager_client->is_top_priority();
+}
+
+void threading_control::adjust_demand(threading_control_client tc_client, int delta, bool mandatory) {
+    permit_manager_client& c = *tc_client.my_permit_manager_client;
     auto adj_result = my_permit_manager->adjust_demand(c, delta, mandatory);
     if (adj_result.second != -1) {
         c.wait_for_ticket(adj_result.second);
@@ -143,12 +161,14 @@ void threading_control::adjust_demand(permit_manager_client& c, int delta, bool 
     }
 }
 
-void threading_control::enable_mandatory_concurrency(permit_manager_client* c) {
+void threading_control::enable_mandatory_concurrency(threading_control_client tc_client) {
+    permit_manager_client* c = tc_client.my_permit_manager_client;
     int delta = my_permit_manager->enable_mandatory_concurrency(c);
     my_thread_dispatcher->adjust_job_count_estimate(delta);
 }
 
-void threading_control::mandatory_concurrency_disable(permit_manager_client* c) {
+void threading_control::mandatory_concurrency_disable(threading_control_client tc_client) {
+    permit_manager_client* c = tc_client.my_permit_manager_client;
     int delta = my_permit_manager->mandatory_concurrency_disable(c);
     my_thread_dispatcher->adjust_job_count_estimate(delta);
 }

@@ -240,7 +240,7 @@ void governor::auto_terminate(void* tls) {
             td->leave_task_dispatcher();
             td->my_arena_slot->release();
             // Release an arena
-            a->on_thread_leaving<arena::ref_external>();
+            a->on_thread_leaving(arena::ref_external);
 
             thr_control->unregister_thread(*td);
 

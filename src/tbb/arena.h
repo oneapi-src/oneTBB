@@ -41,9 +41,16 @@ namespace detail {
 namespace r1 {
 
 class task_dispatcher;
+class thread_dispatcher_client;
+class permit_manager_client;
 class task_group_context;
 class threading_control;
 class allocate_root_with_context_proxy;
+
+struct threading_control_client {
+    permit_manager_client* my_permit_manager_client;
+    thread_dispatcher_client* my_thread_dispatcher_client;
+};
 
 #if __TBB_ARENA_BINDING
 class numa_binding_observer;
@@ -184,8 +191,6 @@ public:
 };
 #endif
 
-class permit_manager_client;
-
 //! The structure of an arena, except the array of slots.
 /** Separated in order to simplify padding.
     Intrusive list node base class is used by market to form a list of arenas. **/
@@ -252,8 +257,6 @@ protected:
     // Below are rarely modified members
 
     threading_control* my_threading_control;
-    //! The market that owns this arena.
-    permit_manager* my_permit_manager;
 
     //! Default task group context.
     d1::task_group_context* my_default_ctx;
@@ -271,8 +274,6 @@ protected:
     int my_local_concurrency_requests;
 #endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY*/
 
-    //! ABA prevention marker.
-    std::uintptr_t my_aba_epoch;
     //! The number of slots in the arena.
     unsigned my_num_slots;
     //! The number of reserved slots (can be occupied only by external threads).
@@ -280,7 +281,7 @@ protected:
     //! The number of workers requested by the external thread owning the arena.
     unsigned my_max_num_workers;
 
-    permit_manager_client* my_client;
+    threading_control_client my_tc_client;
 
 #if TBB_USE_ASSERT
     //! Used to trap accesses to the object after its destruction.
@@ -402,8 +403,8 @@ public:
     void process(thread_data&);
 
     //! Notification that the thread leaves its arena
-    template<unsigned ref_param>
-    inline void on_thread_leaving ( );
+
+    void on_thread_leaving(unsigned ref_param);
 
     //! Check for the presence of enqueued tasks at all priority levels
     bool has_enqueued_tasks();
@@ -421,11 +422,6 @@ public:
         return my_priority_level;
     }
 
-    std::uintptr_t aba_epoch() {
-        return my_aba_epoch;
-    }
-
-
     int num_workers_requested() {
         return my_num_workers_requested;
     }
@@ -433,6 +429,8 @@ public:
     unsigned references() {
         return my_references.load(std::memory_order_acquire);
     }
+
+    bool is_top_priority();
 
     bool try_join() {
         if (num_workers_active() < my_num_workers_allotted.load(std::memory_order_relaxed)) {
@@ -490,95 +488,6 @@ public:
     /** Must be the last data field */
     arena_slot my_slots[1];
 }; // class arena
-
-template<unsigned ref_param>
-inline void arena::on_thread_leaving ( ) {
-    //
-    // Implementation of arena destruction synchronization logic contained various
-    // bugs/flaws at the different stages of its evolution, so below is a detailed
-    // description of the issues taken into consideration in the framework of the
-    // current design.
-    //
-    // In case of using fire-and-forget tasks (scheduled via task::enqueue())
-    // external thread is allowed to leave its arena before all its work is executed,
-    // and market may temporarily revoke all workers from this arena. Since revoked
-    // workers never attempt to reset arena state to EMPTY and cancel its request
-    // to RML for threads, the arena object is destroyed only when both the last
-    // thread is leaving it and arena's state is EMPTY (that is its external thread
-    // left and it does not contain any work).
-    // Thus resetting arena to EMPTY state (as earlier TBB versions did) should not
-    // be done here (or anywhere else in the external thread to that matter); doing so
-    // can result either in arena's premature destruction (at least without
-    // additional costly checks in workers) or in unnecessary arena state changes
-    // (and ensuing workers migration).
-    //
-    // A worker that checks for work presence and transitions arena to the EMPTY
-    // state (in snapshot taking procedure arena::is_out_of_work()) updates
-    // arena::my_pool_state first and only then arena::my_num_workers_requested.
-    // So the check for work absence must be done against the latter field.
-    //
-    // In a time window between decrementing the active threads count and checking
-    // if there is an outstanding request for workers. New worker thread may arrive,
-    // finish remaining work, set arena state to empty, and leave decrementing its
-    // refcount and destroying. Then the current thread will destroy the arena
-    // the second time. To preclude it a local copy of the outstanding request
-    // value can be stored before decrementing active threads count.
-    //
-    // But this technique may cause two other problem. When the stored request is
-    // zero, it is possible that arena still has threads and they can generate new
-    // tasks and thus re-establish non-zero requests. Then all the threads can be
-    // revoked (as described above) leaving this thread the last one, and causing
-    // it to destroy non-empty arena.
-    //
-    // The other problem takes place when the stored request is non-zero. Another
-    // thread may complete the work, set arena state to empty, and leave without
-    // arena destruction before this thread decrements the refcount. This thread
-    // cannot destroy the arena either. Thus the arena may be "orphaned".
-    //
-    // In both cases we cannot dereference arena pointer after the refcount is
-    // decremented, as our arena may already be destroyed.
-    //
-    // If this is the external thread, the market is protected by refcount to it.
-    // In case of workers market's liveness is ensured by the RML connection
-    // rundown protocol, according to which the client (i.e. the market) lives
-    // until RML server notifies it about connection termination, and this
-    // notification is fired only after all workers return into RML.
-    //
-    // Thus if we decremented refcount to zero we ask the market to check arena
-    // state (including the fact if it is alive) under the lock.
-    //
-    std::uintptr_t aba_epoch = my_aba_epoch;
-    unsigned priority_level = my_priority_level;
-    permit_manager* m = my_permit_manager;
-    __TBB_ASSERT(my_references.load(std::memory_order_relaxed) >= ref_param, "broken arena reference counter");
-#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-    // When there is no workers someone must free arena, as
-    // without workers, no one calls is_out_of_work().
-    // Skip workerless arenas because they have no demand for workers.
-    // TODO: consider more strict conditions for the cleanup,
-    // because it can create the demand of workers,
-    // but the arena can be already empty (and so ready for destroying)
-    // TODO: Fix the race: while we check soft limit and it might be changed.
-    if( ref_param==ref_external && my_num_slots != my_num_reserved_slots && my_num_workers_allotted.load(std::memory_order_relaxed) == 0) {
-        is_out_of_work();
-        // We expect, that in worst case it's enough to have num_priority_levels-1
-        // calls to restore priorities and yet another is_out_of_work() to conform
-        // that no work was found. But as market::set_active_num_workers() can be called
-        // concurrently, can't guarantee last is_out_of_work() return true.
-    }
-#endif
-
-    // Release our reference to sync with arena destroy
-    unsigned remaining_ref = my_references.fetch_sub(ref_param, std::memory_order_release) - ref_param;
-    // do not access `this`
-    if (remaining_ref == 0) {
-        if (m->try_destroy_arena(my_client, aba_epoch, priority_level)) {
-            // We are requested to destroy ourself
-            // my_permit_manager->destroy_client(*my_client);
-            free_arena();
-        }
-    }
-}
 
 template<arena::new_work_type work_type>
 void arena::advertise_new_work() {
