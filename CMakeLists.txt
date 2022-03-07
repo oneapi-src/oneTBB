@@ -112,6 +112,7 @@ option(TBB_FIND_PACKAGE "Enable search for external oneTBB using find_package in
 option(TBB_DISABLE_HWLOC_AUTOMATIC_SEARCH "Disable HWLOC automatic search by pkg-config tool" ${CMAKE_CROSSCOMPILING})
 option(TBB_ENABLE_IPO "Enable Interprocedural Optimization (IPO) during the compilation" ON)
 option(TBB_FUZZ_TESTING "Enable fuzz testing" OFF)
+option(TBB_INSTALL "Enable installation" ON)
 
 if (NOT DEFINED BUILD_SHARED_LIBS)
     set(BUILD_SHARED_LIBS ON)
@@ -255,34 +256,35 @@ else()
     else()
         add_subdirectory(src/tbbbind)
     endif()
+    if (TBB_INSTALL)
+        # -------------------------------------------------------------------
+        # Installation instructions
+        include(CMakePackageConfigHelpers)
 
-    # -------------------------------------------------------------------
-    # Installation instructions
-    include(CMakePackageConfigHelpers)
+        install(DIRECTORY include/
+                DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+                COMPONENT devel)
 
-    install(DIRECTORY include/
-            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-            COMPONENT devel)
+        install(EXPORT ${PROJECT_NAME}Targets
+                NAMESPACE TBB::
+                DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+                COMPONENT devel)
+        file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+                   "include(\${CMAKE_CURRENT_LIST_DIR}/${PROJECT_NAME}Targets.cmake)\n")
 
-    install(EXPORT ${PROJECT_NAME}Targets
-            NAMESPACE TBB::
-            DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
-            COMPONENT devel)
-    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
-               "include(\${CMAKE_CURRENT_LIST_DIR}/${PROJECT_NAME}Targets.cmake)\n")
+        write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+                                         COMPATIBILITY AnyNewerVersion)
 
-    write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-                                     COMPATIBILITY AnyNewerVersion)
+        install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+                      "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+                DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+                COMPONENT devel)
 
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-                  "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-            DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
-            COMPONENT devel)
-
-    install(FILES "README.md"
-            DESTINATION ${CMAKE_INSTALL_DOCDIR}
-            COMPONENT devel)
-    # -------------------------------------------------------------------
+        install(FILES "README.md"
+                DESTINATION ${CMAKE_INSTALL_DOCDIR}
+                COMPONENT devel)
+        # -------------------------------------------------------------------
+    endif()
 endif()
 
 if (TBB_TEST)
