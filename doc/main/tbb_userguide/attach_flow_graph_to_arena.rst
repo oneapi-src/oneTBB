@@ -27,7 +27,7 @@ the task arena instance, inside which the ``graph::reset()`` method is executed.
 
 This example shows how to reattach existing graph to an arena with the most performant
 core type as the preferred one for a work execution. Whenever a task is spawned on behalf
-of the graph, it is spawned in the arena of the graph it is attached to, disregarding
+of the graph, it is spawned in the arena of a graph it is attached to, disregarding
 the arena of the thread that the task is spawned from:
 
 
