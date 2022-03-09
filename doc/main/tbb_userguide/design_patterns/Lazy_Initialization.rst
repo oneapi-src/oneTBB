@@ -10,8 +10,8 @@ Lazy Initialization
    .. rubric:: Problem
       :class: sectiontitle
 
-   Delay the creation of an object (potentially expensive) until it is accessed.
-   In parallel programming initialization also must be guarded against race conditions.
+   Delay the creation of an object, potentially expensive, until it is accessed.
+   In parallel programming, initialization must also be guarded against race conditions.
 
 
 .. container:: section
@@ -22,8 +22,8 @@ Lazy Initialization
 
    The cost of operations that take place during the initialization
    of the object may be considerably high. In that case, the object
-   should be initialized only when it is needed. Lazy initialization
-   is the common tactic that allows implementing such approach.
+   should be initialized only when needed. Lazy initialization is
+   the common tactic that allows implementing such an approach.
 
 
 .. container:: section
@@ -47,8 +47,9 @@ Lazy Initialization
    .. rubric:: Example
       :class: sectiontitle
 
-   The example presented here illustrate implementation of "lazy initialization" for Fibonacci numbers calculation.
-   Here is a graphical representation of the Fibonacci recursion tree for N=4.
+   This example illustrates the implementation of lazy initialization
+   for the calculation of the Fibonacci numbers. Here is a graphical
+   representation of the Fibonacci recursion tree for N=4.
 
 
    |image0|
@@ -58,17 +59,17 @@ Lazy Initialization
    so the "lazy initialized" Fibonacci numbers are relevant here.
 
 
-   An implementation without the use of "lazy initialization" would have *O(2^N)* time complexity due to
+   An implementation without the use of lazy initialization would have *O(2^N)* time complexity due to
    the full recursion tree traversal and recalculation of values. Since all the nodes are traversed once,
-   the tree previously shown becomes a list, making the time complexity *O(N)*.
+   the tree becomes a list, making the time complexity *O(N)*.
 
 
    |image1|
 
 
-   The code for the implementation is shown below. Already calculated values are stored in a buffer paired with
-   ``collaborative_once_flag`` and won't be recalculated when ``collaborative_call_once`` is invoked
-   when initialization has already been done.
+   Here you can see the code for the implementation. Already calculated values are stored in a buffer
+   paired with ``collaborative_once_flag`` and will not be recalculated when ``collaborative_call_once``
+   is invoked when initialization has already been done.
 
 
    ::
@@ -101,8 +102,8 @@ Lazy Initialization
 
 
 .. |image0| image:: Images/image008a.jpg
-   :width: 740px
-   :height: 344px
+   :width: 744px
+   :height: 367px
 .. |image1| image:: Images/image009a.jpg
-   :width: 740px
-   :height: 344px
+   :width: 744px
+   :height: 367px
