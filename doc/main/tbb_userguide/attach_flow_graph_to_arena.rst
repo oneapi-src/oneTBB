@@ -4,9 +4,10 @@ Attach Flow Graph to an Arbitrary Task Arena
 ======================
 
 
-|short_name| ``task_arena`` interface provides mechanisms to guide tasks execution
-within the arena by setting the preferred computation units or restricting part of
-computation units. In some cases, you may want to use mechanisms within a flow graph.
+|short_name| ``task_arena`` interface provides mechanisms to guide tasks
+execution within the arena by setting the preferred computation units,
+restricting part of computation units, or limiting arena concurrency. In some
+cases, you may want to apply such mechanisms when a flow graph executes.
 
 During its construction, a ``graph`` object attaches to the arena, in which the constructing
 thread occupies a slot.
