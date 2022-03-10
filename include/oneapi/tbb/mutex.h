@@ -36,9 +36,7 @@ public:
     };
 
     //! Destructor
-    ~mutex() {
-        __TBB_ASSERT(!my_flag.load(std::memory_order_relaxed), "destruction of an acquired mutex");
-    }
+    ~mutex() = default;
 
     //! No Copy
     mutex(const mutex&) = delete;
