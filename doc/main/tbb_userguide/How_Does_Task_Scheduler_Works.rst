@@ -3,19 +3,27 @@
 How Does Task Scheduler Works
 =============================
 
-The scheduler runs tasks in a way that tends to minimize both memory 
-demands and cross-thread communication. The intuition is that a balance 
-must be reached between depth-first and breadth-first executions. 
-Assuming that the tree is finite, depth-first is better for sequential 
-execution for the following reasons:
+
+While the task scheduler is not bound to any particular type of the  parallelism, 
+it was designed to works efficiently for fork-join parallelism with lots of forks 
+(this type of parallelism is typical to parallel algorithms like parallel_for).
+
+Lets consider mapping of fork-join parallelsm on the task scheduler in more details. 
+
+The scheduler runs tasks in a way that tries to achievel several targets simulteniously : 
+ - utilize as more threads as possible, to acieve actual parallelism
+ - preserve data locality, to make single thread execution more efficient  
+ - minimize both memory demands and cross-thread communication, to reduce overhead 
+
+To achieve this a balance between depth-first and breadth-first execution strategies 
+must be reached. Assuming that the task graph is finite, depth-first is better for 
+sequential execution for the following reasons:
 
 - **Strike when the cache is hot**. The deepest tasks are the most recently created tasks and therefore are the hottest in the cache.
-  The deepest tasks are the most recently created tasks and therefore are the hottest in the cache. 
   Also, if they can complete, then tasks depending on it can continue executing, and though not the hottest in cache, 
-they are still warmer than the older tasks above.
+  they are still warmer than the older tasks above.
  
-- **Minimize space**. Executing the shallowest task leads to breadth-first unfolding of the tree. It creates an exponential
-  Executing the shallowest task leads to breadth-first unfolding of the tree. It creates an exponential
+- **Minimize space**. Executing the shallowest task leads to breadth-first unfolding of the graph. It creates an exponential
   number of nodes that co-exist simultaneously. In contrast, depth-first execution creates the same number 
   of nodes, but only a linear number can exist at the same time, because it creates a stack of other ready 
   tasks.
@@ -24,13 +32,11 @@ Each thread has its own deque[8] of tasks that are ready to run. When a
 thread spawns a task, it pushes it onto the bottom of its deque.
 
 When a thread participates in the evaluation of tasks, it constantly executes 
-a task obtained by the first rule below that applies:
+a task obtained by the first rule that applies from the roughly equivalent ruleset below:
 
-- Get the task returned by the previous one. This rule does not apply 
-  if the task does not return anything.
+- Get the task returned by the previous one, if any.
 
-- Take a task from the bottom of its own deque. This rule does not apply 
-  if the deque is empty.
+- Take a task from the bottom of its own deque, if any.
 
 - Steal a task from the top of another randomly chosen deque. If the 
   selected deque is empty, the thread tries again to execute this rule until it succeeds.
