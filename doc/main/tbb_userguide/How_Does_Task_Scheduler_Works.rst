@@ -12,7 +12,7 @@ execution for the following reasons:
 - **Strike when the cache is hot**. The deepest tasks are the most recently created tasks and therefore are the hottest in the cache.
   The deepest tasks are the most recently created tasks and therefore are the hottest in the cache. 
   Also, if they can complete, then tasks depending on it can continue executing, and though not the hottest in cache, 
-  it is still warmer than the older tasks above it.
+they are still warmer than the older tasks above.
  
 - **Minimize space**. Executing the shallowest task leads to breadth-first unfolding of the tree. It creates an exponential
   Executing the shallowest task leads to breadth-first unfolding of the tree. It creates an exponential

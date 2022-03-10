@@ -9,7 +9,7 @@ spawning of the new task causes the executing thread to do the following:
 
  -  Push a new task onto the thread's deque.
  -  Continue to execute the current task until it is completed.
- -  Pop the task from the thread's deque, unless it is stolen by another thread.
+ -  Take a task from the thread's deque, unless it is stolen by another thread.
 
 Steps 1 and 3 introduce unnecessary deque operations or, even worse, allow stealing that can hurt 
 locality without adding significant parallelism. These problems can be avoided by returning next task to execute 
