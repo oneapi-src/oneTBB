@@ -9,7 +9,7 @@ parallelism is carried out through threads, an operating system mechanism that a
 to be executed simultaneously.
 
 
-.. image:: /Images/how-does-parallelism-work.png
+.. image:: /Images/how-oneTBB-works.png
 
 
 Use oneTBB to write scalable applications that:
