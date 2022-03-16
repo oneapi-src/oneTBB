@@ -8,6 +8,7 @@ oneTBB enables you to simplify parallel programming by breaking computation into
 parallelism is carried out through threads, an operating system mechanism that allows the same or different sets of instructions 
 to be executed simultaneously.
 
+Here you can see one of the possible options for executing tasks by threads.
 
 .. image:: Images/how-oneTBB-works.png
 
