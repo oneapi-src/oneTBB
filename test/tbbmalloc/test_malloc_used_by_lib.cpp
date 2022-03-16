@@ -23,11 +23,11 @@
 #include "common/utils_assert.h"
 #include "tbb/scalable_allocator.h"
 
-#if _WIN32||_WIN64
+//#if _WIN32||_WIN64
 extern "C" {
-    extern __declspec(dllexport) void callDll();
+    extern _EXPORT void callDll();
 }
-#endif
+//#endif
 
 extern "C" void callDll()
 {
