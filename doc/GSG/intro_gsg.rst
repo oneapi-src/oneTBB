@@ -19,4 +19,4 @@ Use oneTBB to write scalable applications that:
 * Emphasize data-parallel programming
 * Take advantage of concurrent collections and parallel algorithms
 
-oneTBB supports nested parallelism as well. It means that you can use the library without being worried about overloading a computer. 
+oneTBB supports nested parallelism and load balancing. It means that you can use the library without being worried about oversubscribing a system.
