@@ -5,7 +5,7 @@ Task Scheduler Bypass
 
 Scheduler bypass is an optimization where you directly specify the next task to run. 
 According to the rules of execution described in :doc:`How Task Scheduling Works <How_Does_Task_Scheduler_Works>`, 
-spawning of the new task to be executed by the current thread, involves these steps:
+the spawning of the new task to be executed by the current thread involves the next steps:
 
  -  Push a new task onto the thread's deque.
  -  Continue to execute the current task until it is completed.

@@ -1,6 +1,6 @@
-.. _How_Does_Task_Scheduler_Works.rst:
+.. _How_Task_Scheduler_Works.rst:
 
-How Does Task Scheduler Works
+How Task Scheduler Works
 =============================
 
 
@@ -15,7 +15,7 @@ The scheduler runs tasks in a way that tries to achieve several targets simultan
  - Preserve data locality to make a single thread execution more efficient  
  - Minimize both memory demands and cross-thread communication to reduce an overhead 
 
-To achieve this a balance between depth-first and breadth-first execution strategies 
+To achieve this, a balance between depth-first and breadth-first execution strategies 
 must be reached. Assuming that the task graph is finite, depth-first is better for 
 sequential execution for the following reasons:
 
@@ -28,7 +28,7 @@ sequential execution for the following reasons:
   of nodes, but only a linear number can exist at the same time, because it creates a stack of other ready 
   tasks.
   
-Each thread has its own deque[8] of tasks that are ready to run. When a 
+Each thread has its deque[8] of tasks that are ready to run. When a 
 thread spawns a task, it pushes it onto the bottom of its deque.
 
 When a thread participates in the evaluation of tasks, it constantly executes 
