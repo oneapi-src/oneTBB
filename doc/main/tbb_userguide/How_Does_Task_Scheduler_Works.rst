@@ -4,16 +4,16 @@ How Does Task Scheduler Works
 =============================
 
 
-While the task scheduler is not bound to any particular type of the  parallelism, 
-it was designed to works efficiently for fork-join parallelism with lots of forks 
-(this type of parallelism is typical to parallel algorithms like parallel_for).
+While the task scheduler is not bound to any particular type of parallelism, 
+it was designed to work efficiently for fork-join parallelism with lots of forks.
+This type of parallelism is typical for parallel algorithms such as parallel_for.
 
-Lets consider mapping of fork-join parallelsm on the task scheduler in more details. 
+Let's consider the mapping of fork-join parallelism on the task scheduler in more detail. 
 
-The scheduler runs tasks in a way that tries to achievel several targets simulteniously : 
+The scheduler runs tasks in a way that tries to achieve several targets simultaneously: 
  - utilize as more threads as possible, to acieve actual parallelism
- - preserve data locality, to make single thread execution more efficient  
- - minimize both memory demands and cross-thread communication, to reduce overhead 
+ - Preserve data locality to make a single thread execution more efficient  
+ - Minimize both memory demands and cross-thread communication to reduce an overhead 
 
 To achieve this a balance between depth-first and breadth-first execution strategies 
 must be reached. Assuming that the task graph is finite, depth-first is better for 
@@ -32,11 +32,11 @@ Each thread has its own deque[8] of tasks that are ready to run. When a
 thread spawns a task, it pushes it onto the bottom of its deque.
 
 When a thread participates in the evaluation of tasks, it constantly executes 
-a task obtained by the first rule that applies from the roughly equivalent ruleset below:
+a task obtained by the first rule that applies from the roughly equivalent ruleset:
 
 - Get the task returned by the previous one, if any.
 
-- Take a task from the bottom of its own deque, if any.
+- Take a task from the bottom of its deque, if any.
 
 - Steal a task from the top of another randomly chosen deque. If the 
   selected deque is empty, the thread tries again to execute this rule until it succeeds.
