@@ -1,12 +1,13 @@
 .. _How_Task_Scheduler_Works.rst:
 
 How Task Scheduler Works
-=============================
+========================
 
 
 While the task scheduler is not bound to any particular type of parallelism, 
 it was designed to work efficiently for fork-join parallelism with lots of forks.
-This type of parallelism is typical for parallel algorithms such as parallel_for.
+This type of parallelism is typical for parallel algorithms such as `oneapi::tbb::parallel_for
+<https://spec.oneapi.io/versions/latest/elements/oneTBB/source/algorithms/functions/parallel_for_func.html>`_.
 
 Let's consider the mapping of fork-join parallelism on the task scheduler in more detail. 
 
@@ -28,7 +29,7 @@ a sequential execution because:
   of nodes, but only a linear number can exists at the same time, since it creates a stack of other ready 
   tasks.
   
-Each thread has its deque[8] of tasks that are ready to run. When a 
+Each thread has its deque of tasks that are ready to run. When a 
 thread spawns a task, it pushes it onto the bottom of its deque.
 
 When a thread participates in the evaluation of tasks, it constantly executes 
