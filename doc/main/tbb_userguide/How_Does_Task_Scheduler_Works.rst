@@ -17,13 +17,13 @@ The scheduler runs tasks in a way that tries to achieve several targets simultan
 
 To achieve this, a balance between depth-first and breadth-first execution strategies 
 must be reached. Assuming that the task graph is finite, depth-first is better for 
-sequential execution for the following reasons:
+a sequential execution because:
 
 - **Strike when the cache is hot**. The deepest tasks are the most recently created tasks and therefore are the hottest in the cache.
   Also, if they can complete, then tasks depending on it can continue executing, and though not the hottest in cache, 
   they are still warmer than the older tasks above.
  
-- **Minimize space**. Executing the shallowest task leads to breadth-first unfolding of the graph. It creates an exponential
+- **Minimize space**. Execution of the shallowest task leads to the breadth-first unfolding of a graph. It creates an exponential
   number of nodes that co-exist simultaneously. In contrast, depth-first execution creates the same number 
   of nodes, but only a linear number can exist at the same time, because it creates a stack of other ready 
   tasks.
