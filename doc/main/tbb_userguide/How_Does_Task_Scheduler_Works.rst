@@ -11,7 +11,7 @@ This type of parallelism is typical for parallel algorithms such as parallel_for
 Let's consider the mapping of fork-join parallelism on the task scheduler in more detail. 
 
 The scheduler runs tasks in a way that tries to achieve several targets simultaneously: 
- - utilize as more threads as possible, to acieve actual parallelism
+ - utilize as more threads as possible, to achieve actual parallelism
  - Preserve data locality to make a single thread execution more efficient  
  - Minimize both memory demands and cross-thread communication to reduce an overhead 
 
@@ -20,7 +20,7 @@ must be reached. Assuming that the task graph is finite, depth-first is better f
 a sequential execution because:
 
 - **Strike when the cache is hot**. The deepest tasks are the most recently created tasks and therefore are the hottest in the cache.
-  Also, if they can complete, then tasks depending on it can continue executing, and though not the hottest in cache, 
+  Also, if they can be completed, tasks that depend on it can continue executing, and though not the hottest in a cache, 
   they are still warmer than the older tasks above.
  
 - **Minimize space**. Execution of the shallowest task leads to the breadth-first unfolding of a graph. It creates an exponential
