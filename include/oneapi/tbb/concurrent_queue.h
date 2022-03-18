@@ -375,12 +375,12 @@ public:
     }
 
     // Attempt to dequeue an item from head of queue.
-    /** Does not wait for item to become available.
-        Returns true if successful; false otherwise. */
     bool pop( T& result ) {
         return internal_pop(&result);
     }
 
+    /** Does not wait for item to become available.
+        Returns true if successful; false otherwise. */
     bool try_pop( T& result ) {
         return internal_pop_if_present(&result);
     }
