@@ -21,11 +21,11 @@ a sequential execution because:
 
 - **Strike when the cache is hot**. The deepest tasks are the most recently created tasks and therefore are the hottest in the cache.
   Also, if they can be completed, tasks that depend on it can continue executing, and though not the hottest in a cache, 
-  they are still warmer than the older tasks above.
+  they are still warmer than the older tasks deeper in the dequeue.
  
 - **Minimize space**. Execution of the shallowest task leads to the breadth-first unfolding of a graph. It creates an exponential
   number of nodes that co-exist simultaneously. In contrast, depth-first execution creates the same number 
-  of nodes, but only a linear number can exist at the same time, because it creates a stack of other ready 
+  of nodes, but only a linear number can exists at the same time, since it creates a stack of other ready 
   tasks.
   
 Each thread has its deque[8] of tasks that are ready to run. When a 
