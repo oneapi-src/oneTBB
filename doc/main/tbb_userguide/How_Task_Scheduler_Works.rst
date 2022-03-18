@@ -12,7 +12,7 @@ This type of parallelism is typical for parallel algorithms such as `oneapi::tbb
 Let's consider the mapping of fork-join parallelism on the task scheduler in more detail. 
 
 The scheduler runs tasks in a way that tries to achieve several targets simultaneously: 
- - utilize as more threads as possible, to achieve actual parallelism
+ - Enable as many threads as possible, by creating enough job, to achieve actual parallelism
  - Preserve data locality to make a single thread execution more efficient  
  - Minimize both memory demands and cross-thread communication to reduce an overhead 
 
