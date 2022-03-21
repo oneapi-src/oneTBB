@@ -1,7 +1,7 @@
 .. _Intro_gsg:
 
 
-|full-name| is a runtime-based parallel programming model for C++ code that uses threads. 
+|full_name| is a runtime-based parallel programming model for C++ code that uses threads. 
 It consists of a template-based runtime library to help you harness the latent performance of multi-core processors.
 
 oneTBB enables you to simplify parallel programming by breaking computation into parallel running tasks. Within a single process, 
@@ -10,8 +10,9 @@ to be executed simultaneously.
 
 Here you can see one of the possible executions of tasks by threads.
 
-.. image:: /Images/how-oneTBB-works.png
-
+.. figure:: /GSG/Images/how-oneTBB-works.png
+   :scale: 100%
+   :align: center
 
 Use oneTBB to write scalable applications that:
 
