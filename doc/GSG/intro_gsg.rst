@@ -10,7 +10,9 @@ to be executed simultaneously.
 
 Here you can see one of the possible executions of tasks by threads.
 
-.. figure:: /Images/how-oneTBB-works.png
+.. figure:: /GSG/Images/how-oneTBB-works.png
+   :scale: 100%
+   :align: center
 
 Use oneTBB to write scalable applications that:
 
