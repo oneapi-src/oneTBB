@@ -121,8 +121,9 @@ else:
 # documentation.
 #
 
+html_theme = 'sphinx_book_theme'
+
 if BUILD_TYPE == 'dita':
-    html_theme = 'sphinx_book_theme'
     html_theme_options = {
         'repository_url': 'https://github.com/oneapi-src/oneTBB',
         'path_to_docs': 'doc/main',
@@ -130,8 +131,7 @@ if BUILD_TYPE == 'dita':
         'repository_branch': 'master',
         'extra_footer': '<p align="right"><a href="https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html">Cookies</a></p>'
     }
-else
-    html_theme = 'sphinx_book_theme'
+else:
     html_theme_options = {
         'repository_url': 'https://github.com/oneapi-src/oneTBB',
         'path_to_docs': 'doc/main',
