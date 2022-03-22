@@ -11,7 +11,7 @@ to be executed simultaneously.
 Here you can see one of the possible executions of tasks by threads.
 
 .. figure:: /GSG/Images/how-oneTBB-works.png
-   :scale: 100%
+   :scale: 70%
    :align: center
 
 Use oneTBB to write scalable applications that:

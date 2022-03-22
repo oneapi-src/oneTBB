@@ -122,15 +122,22 @@ else:
 #
 
 html_theme = 'sphinx_book_theme'
-html_theme_options = {
-    'repository_url': 'https://github.com/oneapi-src/oneTBB',
-    'path_to_docs': 'doc/main',
-    'use_issues_button': True,
-    'use_edit_page_button': True,
-    'repository_branch': 'master',
-    'extra_footer': '<p align="right"><a href="https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html">Cookies</a></p>'
-}
 
+if BUILD_TYPE == 'dita':
+    html_theme_options = {
+        'repository_url': 'https://github.com/oneapi-src/oneTBB',
+        'path_to_docs': 'doc',
+        'repository_branch': 'master'
+    }
+else:
+    html_theme_options = {
+        'repository_url': 'https://github.com/oneapi-src/oneTBB',
+        'path_to_docs': 'doc/main',
+        'use_issues_button': True,
+        'use_edit_page_button': True,
+        'repository_branch': 'master',
+        'extra_footer': '<p align="right"><a href="https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html">Cookies</a></p>'
+    }
 
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -146,8 +153,9 @@ if BUILD_TYPE == 'oneapi'  or BUILD_TYPE == 'dita':
     }
 else:
     html_js_files = ['custom.js']
-    html_logo = '_static/oneAPI-rgb-rev-100.png'
+
     
+html_logo = '_static/oneAPI-rgb-rev-100.png'
 html_favicon = '_static/favicons.png'
 
 # Custom sidebar templates, must be a dictionary that maps document names
