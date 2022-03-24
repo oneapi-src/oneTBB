@@ -18,12 +18,12 @@ Refer to the following examples to see how |short_name| works.
    * `Split computational kernel for execution between CPU and GPU <https://github.com/oneapi-src/oneAPI-samples/tree/master/Libraries/oneTBB/tbb-async-sycl>`_
 * Algorithms
   * `parallel_for <https://github.com/oneapi-src/oneTBB/tree/master/examples/parallel_for>`_
-    * `Game of life overlay <https://github.com/oneapi-src/oneTBB/tree/master/examples/parallel_for/game_of_life>`_
-    * `Polygon overlay <https://github.com/oneapi-src/oneTBB/tree/master/examples/parallel_for/polygon_overlay>`_
-    * `Parallel seismic wave simulation <https://github.com/oneapi-src/oneTBB/tree/master/examples/parallel_for/seismic>`_
-    * `Parallel 2-D raytracer/renderer <https://github.com/oneapi-src/oneTBB/tree/master/examples/parallel_for/tachyon>`_
-    * `Find largest matching substrings <https://github.com/oneapi-src/oneTBB/tree/master/examples/getting_started>`_
-    * `Resumable task: Split computational kernel for execution between CPU and GPU <https://github.com/oneapi-src/oneAPI-samples/tree/master/Libraries/oneTBB/tbb-resumable-tasks-sycl>`_
+     * `Game of life overlay <https://github.com/oneapi-src/oneTBB/tree/master/examples/parallel_for/game_of_life>`_
+     * `Polygon overlay <https://github.com/oneapi-src/oneTBB/tree/master/examples/parallel_for/polygon_overlay>`_
+     * `Parallel seismic wave simulation <https://github.com/oneapi-src/oneTBB/tree/master/examples/parallel_for/seismic>`_
+     * `Parallel 2-D raytracer/renderer <https://github.com/oneapi-src/oneTBB/tree/master/examples/parallel_for/tachyon>`_
+     * `Find largest matching substrings <https://github.com/oneapi-src/oneTBB/tree/master/examples/getting_started>`_
+     * `Resumable task: Split computational kernel for execution between CPU and GPU <https://github.com/oneapi-src/oneAPI-samples/tree/master/Libraries/oneTBB/tbb-resumable-tasks-sycl>`_
   * `parallel_for_each <https://github.com/oneapi-src/oneTBB/tree/master/examples/parallel_for_each>`_
   * `parallel_pipeline <https://github.com/oneapi-src/oneTBB/tree/master/examples/parallel_pipeline>`_
   * `parallel_reduce <https://github.com/oneapi-src/oneTBB/tree/master/examples/parallel_reduce>`_
