@@ -17,6 +17,7 @@ Refer to the following examples to see how |short_name| works.
    * `An example of a Kohonen Self-Organizing Map using cancellation <https://github.com/oneapi-src/oneTBB/tree/master/examples/graph/som>`_
    * `Split computational kernel for execution between CPU and GPU <https://github.com/oneapi-src/oneAPI-samples/tree/master/Libraries/oneTBB/tbb-async-sycl>`_
 * Algorithms
+
   * `parallel_for <https://github.com/oneapi-src/oneTBB/tree/master/examples/parallel_for>`_
      * `Game of life overlay <https://github.com/oneapi-src/oneTBB/tree/master/examples/parallel_for/game_of_life>`_
      * `Polygon overlay <https://github.com/oneapi-src/oneTBB/tree/master/examples/parallel_for/polygon_overlay>`_
