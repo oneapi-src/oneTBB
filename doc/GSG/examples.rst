@@ -5,7 +5,7 @@ oneTBB Samples
 
 Refer to the following examples to see how |short_name| works. 
 
-* Containers 
+* *Containers* 
 
   * `concurrent_hash_map <https://github.com/oneapi-src/oneTBB/tree/master/examples/concurrent_hash_map>`_ 
   * `concurrent_priority_queue <https://github.com/oneapi-src/oneTBB/tree/master/examples/concurrent_priority_queue>`_ 
@@ -19,7 +19,7 @@ Refer to the following examples to see how |short_name| works.
    * `An example of a Kohonen Self-Organizing Map using cancellation <https://github.com/oneapi-src/oneTBB/tree/master/examples/graph/som>`_
    * `Split computational kernel for execution between CPU and GPU <https://github.com/oneapi-src/oneAPI-samples/tree/master/Libraries/oneTBB/tbb-async-sycl>`_
 
-* Algorithms
+* *Algorithms*
 
   * `parallel_for <https://github.com/oneapi-src/oneTBB/tree/master/examples/parallel_for>`_
      * `Game of life overlay <https://github.com/oneapi-src/oneTBB/tree/master/examples/parallel_for/game_of_life>`_
@@ -32,13 +32,13 @@ Refer to the following examples to see how |short_name| works.
   * `parallel_pipeline <https://github.com/oneapi-src/oneTBB/tree/master/examples/parallel_pipeline>`_
   * `parallel_reduce <https://github.com/oneapi-src/oneTBB/tree/master/examples/parallel_reduce>`_
 
-* Task Scheduler
+* *Task Scheduler*
 
   * `task_arena <https://github.com/oneapi-src/oneTBB/tree/master/examples/task_arena>`_
   * `task_group <https://github.com/oneapi-src/oneTBB/tree/master/examples/task_group>`_
   * `Execute similar computational kernels, with one task executing the SYCL* code and the other task executing the oneTBB code <https://github.com/oneapi-src/oneAPI-samples/tree/master/Libraries/oneTBB/tbb-task-sycl>`_
 
-* Other
+* *Other*
 
   * `Compute Fibonacci numbers in different ways <https://github.com/oneapi-src/oneTBB/tree/master/examples/test_all>`_
 
