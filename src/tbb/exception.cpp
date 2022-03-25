@@ -105,8 +105,7 @@ void throw_exception ( exception_id eid ) {
    Task.cpp because the throw generates a pathetic lot of code, and ADR wanted
    this large chunk of code to be placed on a cold page. */
 void handle_perror( int error_code, const literal_const_string& what ) {
-    //FIXME: assert on size of what related to buf
-    static_string<255 + 1> buf;
+    static_string<255> buf;
 
     buf = what;
 

@@ -31,13 +31,3 @@ TEST_CASE("Test creation") {
     REQUIRE_MESSAGE( literal_const_string("test").size() == std::strlen("test"), "Wrong size of non empty string");
     REQUIRE_MESSAGE( std::string(literal_const_string("test").c_str()) == std::string("test"), "");
 }
-
-
-//literal_const_string inline operator "" _tbb_c_string(const char* s, size_t sz) {return literal_const_string{s, sz};}
-
-
-//TEST_CASE("Test creation via UDL") {
-//
-//    REQUIRE_MESSAGE( ("test"_tbb_c_string).size() == std::strlen("test"), "Wrong size of non empty string");
-//    REQUIRE_MESSAGE( std::string(("test"_tbb_c_string).c_str()) == std::string("test"), "");
-//}

@@ -17,8 +17,6 @@
 #ifndef __TBB_literal_const_string
 #define __TBB_literal_const_string
 
-// Support for dynamic loading entry points from other shared libraries.
-
 #include "oneapi/tbb/detail/_config.h"
 
 namespace tbb {
