@@ -33,7 +33,7 @@ public:
     template<std::size_t N>
     literal_const_string(const char (&s)[N]): str(s), sz(N-1){}
 
-    std::size_t size() const { return sz;}
+    std::size_t size() const {return sz;}
 
     //returned c-style string is guaranteed to be null terminated
     const char* c_str() const {return str;}

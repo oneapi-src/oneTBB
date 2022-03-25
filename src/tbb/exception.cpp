@@ -18,13 +18,14 @@
 #include "oneapi/tbb/detail/_assert.h"
 #include "oneapi/tbb/detail/_template_helpers.h"
 
+#include "literal_const_string.h"
 #include "static_string.h"
+
 #include <cstring>
 #include <cstdio>
 #include <stdexcept> // std::runtime_error
 #include <new>
 #include <stdexcept>
-#include "literal_const_string.h"
 
 #define __TBB_STD_RETHROW_EXCEPTION_POSSIBLY_BROKEN                             \
     (__GLIBCXX__ && __TBB_GLIBCXX_VERSION>=40700 && __TBB_GLIBCXX_VERSION<60000 && TBB_USE_EXCEPTIONS)

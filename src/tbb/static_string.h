@@ -43,8 +43,8 @@ public:
     static_string(std::size_t sz = 0) : ar{0}, m_size (sz) {};
 
 
-    std::size_t size()  const noexcept      { return m_size;}
-    std::size_t max_size() const noexcept   { return ar.max_size() -1;}
+    std::size_t size()  const noexcept      { return m_size; }
+    std::size_t max_size() const noexcept   { return ar.max_size() - 1; }
 
     //FIXME: cover with tests
     void clear() noexcept {
