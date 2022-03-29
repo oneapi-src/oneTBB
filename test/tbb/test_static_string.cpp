@@ -37,12 +37,11 @@ TEST_CASE("Test creation of specific size") {
     using tbb::detail::r1::static_string;
     static_string<2> s(2);
     REQUIRE_MESSAGE(s.size() == 2, "Wrong size of non empty string");
-    REQUIRE_MESSAGE(std::count(s.data(), s.data() + s.size(), 0) == s.size(), "constructor should zero-fil the buffer");
+    REQUIRE_MESSAGE(std::count(s.data(), s.data() + s.size(), 0) == s.size(), "constructor should zero-fill the buffer");
     REQUIRE_MESSAGE(std::strlen(s.c_str()) == 0, "c_str() for zero-filled string should not contain any characters");
 }
 
 TEST_CASE("Test creation over size"
-
         * doctest::skip() //Test needs to be revised as implementation uses assertions instead of exceptions
 ) {
     using tbb::detail::r1::static_string;

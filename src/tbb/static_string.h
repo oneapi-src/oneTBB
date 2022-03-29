@@ -35,38 +35,39 @@ template<std::size_t N>
 class static_string{
 
     static_assert(N > 0,"no point in creating static_string with no storage allocated");
-    std::array<char, N + 1> ar = {}; // According to c++ rules this is aggregate initialization,
-                                     // which in case of this case is zero initialization
+    std::array<char, N + 1> m_buf = {}; // According to c++ rules this is aggregate initialization,
+                                        // which in case of this case is zero initialization.
+                                        // This guarantees that m_buf is zero filled.
     std::size_t m_size = 0;
 
     void assert_correct_state() const {
-        __TBB_ASSERT( m_size < this->max_size(), "Size of the string should not exceed size of preallocated storage" );
-        __TBB_ASSERT( ar[m_size] == 0, "String should be terminated with zero" );
+        __TBB_ASSERT( m_size <= this->max_size(), "Size of the string should not exceed size of preallocated storage" );
+        __TBB_ASSERT( m_buf[m_size] == 0, "String should be terminated with zero" );
     }
 public:
 
-    //While initialization of ar can be omitted due to C++ rules, gcc 4.8 insist on it
-    static_string(std::size_t sz = 0) : ar{}, m_size (std::min(sz, this->max_size())) {
+    //While initialization of m_buf can be omitted due to C++ rules, gcc 4.8 insist on it
+    static_string(std::size_t sz = 0) : m_buf{}, m_size (std::min(sz, this->max_size())) {
         __TBB_ASSERT(sz <= this->max_size(), "Size of the string should not exceed size of preallocated storage");
     };
 
 
     std::size_t size()  const noexcept      { return m_size; }
-    std::size_t max_size() const noexcept   { return ar.max_size() - 1; }
+    std::size_t max_size() const noexcept   { return m_buf.max_size() - 1; }
 
     void clear() noexcept {
         m_size = 0;
-        ar[m_size] = 0;
+        m_buf[m_size] = 0;
     }
 
     const char* c_str() const noexcept{
         assert_correct_state();
-        return ar.data();
+        return m_buf.data();
     }
 
     char* data() noexcept{
         assert_correct_state();
-        return ar.data();
+        return m_buf.data();
     }
 
     void resize(size_t new_size, char ch = 0) noexcept{
@@ -76,12 +77,11 @@ public:
         new_size = std::min(new_size, this->max_size());
 
         if ( new_size > m_size ) {
-            std::fill_n(ar.begin() + m_size, new_size - m_size, ch);
+            std::fill_n(m_buf.begin() + m_size, new_size - m_size, ch);
         }
 
-
         m_size = new_size;
-        ar[m_size] = 0;
+        m_buf[m_size] = 0;
         assert_correct_state();
     }
 
@@ -89,12 +89,12 @@ public:
     static_string& append(const char* s,  std::size_t size) noexcept {
         assert_correct_state();
         //clamp the result string to fit into the buffer
-        auto symbols_to_write = std::min(size, ar.max_size() - m_size - 1);
+        auto symbols_to_write = std::min(size, m_buf.max_size() - m_size - 1);
 
-        std::memcpy(ar.data() + m_size, s, symbols_to_write);
+        std::memcpy(m_buf.data() + m_size, s, symbols_to_write);
         m_size += symbols_to_write;
         //Ensure the string is null terminated
-        ar[m_size] = 0;
+        m_buf[m_size] = 0;
 
         assert_correct_state();
         return *this;

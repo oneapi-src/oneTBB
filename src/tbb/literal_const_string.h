@@ -18,6 +18,7 @@
 #define __TBB_literal_const_string
 
 #include "oneapi/tbb/detail/_config.h"
+#include "oneapi/tbb/detail/_assert.h"
 
 namespace tbb {
 namespace detail {
@@ -25,16 +26,18 @@ namespace detail {
 namespace r1 {
 
 class literal_const_string{
-    const char* str;
-    std::size_t sz;
+    const char* m_str;
+    std::size_t m_sz;
 public:
     template<std::size_t N>
-    literal_const_string(const char (&s)[N]): str(s), sz(N-1){}
+    literal_const_string(const char (&s)[N]): m_str(s), m_sz(N-1){
+        __TBB_ASSERT( s[N-1] == 0, "passed in char array should be a string, i.e. terminated with zero" );
+    }
 
-    std::size_t size() const {return sz;}
+    std::size_t size() const {return m_sz;}
 
     //returned c-style string is guaranteed to be null terminated
-    const char* c_str() const {return str;}
+    const char* c_str() const {return m_str;}
 };
 
 } // namespace r1

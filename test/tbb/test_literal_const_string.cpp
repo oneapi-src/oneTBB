@@ -19,6 +19,7 @@
 #endif
 
 #define __TBB_NO_IMPLICIT_LINKAGE 1
+#include "../../src/tbb/assert_impl.h" // Out-of-line TBB assertion handling routines are instantiated here.
 
 #include "common/test.h"
 #include "common/utils.h"
@@ -30,4 +31,12 @@ TEST_CASE("Test creation") {
 
     REQUIRE_MESSAGE( literal_const_string("test").size() == std::strlen("test"), "Wrong size of non empty string");
     REQUIRE_MESSAGE( std::string(literal_const_string("test").c_str()) == std::string("test"), "");
+}
+
+TEST_CASE("Test creation with non-string"
+        * doctest::skip() //Test needs to be revised as implementation uses assertions instead of exceptions
+) {
+
+    char not_a_tring[] = {'n','o','t',' ','a','s','t','r','i','n','g'};
+    REQUIRE_THROWS(literal_const_string(not_a_tring));
 }
