@@ -129,11 +129,12 @@ cmake -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDebug -DCMAKE_BUILD_TYPE=Debug .
 **NOTE**
 
 Set `TBB_NO_APPCONTAINER` to `ON` in order to apply `/APPCONTAINER:NO` option during the compilation (used for testing).
+
+---
+
 ```bash
 cmake -DCMAKE_SYSTEM_NAME:STRING=WindowsStore -DCMAKE_SYSTEM_VERSION:STRING=10.0 ..
 ```
-
----
 
 * **Universal Windows* OS Driver build**. Set `TBB_WINDOWS_DRIVER` to `ON` and use static linkage with CRT.
 
