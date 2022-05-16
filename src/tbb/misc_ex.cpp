@@ -371,54 +371,44 @@ int FindProcessorGroupIndex ( int procIdx ) {
 }
 
 #endif
+
 /*
-* By design the workers thread id go from 0 to Hard limit set by TBB market::global_market
-* The worker threads are added to processor group same as the master thread and when it's full go to the next processor group.
+* Algorithm is designed on the assumption that the workers thread id go from 1 to Hard limit set by TBB market::global_market
+* The worker threads are added starting from processor group same as the master thread and when it's full go to the next processor group.
 * If there is an oversubscription each worker thread is allocated to the processor group in round robin order.
 */
-
-// Implementation for close thread affinity scheme in Win Numa system.
-// TODO: There is a bug  => Fix race condition!!
 int FindProcessorGroupIndex(int procIdx) {
-    static std::atomic<int> worker_id_tracker = 0;
-    static std::atomic<int> proc_id_tracker = 0;
+    // TODO : retrieve Hard limit set by TBB market::global_market
+    const int hard_max = 288;
+    int worker_id_tracker = 288 - procIdx;
+    int proc_id_tracker = 0;
 
-    // initialize the current processor grp index to master thread processor group => modified later.
-    static int current_grp_idx = ProcessorGroupInfo::HoleIndex;
+    // initialize the current processor grp index to master thread processor group.
+     int current_grp_idx = ProcessorGroupInfo::HoleIndex;
     __TBB_ASSERT(hardware_concurrency_info == do_once_state::initialized, "FindProcessorGroupIndex is used before AvailableHwConcurrency");
 
-    if (0 == worker_id_tracker) { // Initialize proc_id_tracker the very first time
-        if (ProcessorGroupInfo::HoleIndex >= 1) {
+    if (ProcessorGroupInfo::HoleIndex >= 1) {
             // shift the worker_id index to position it on processor group same as master thread
-            proc_id_tracker = worker_id_tracker + (theProcessorGroups[ProcessorGroupInfo::HoleIndex - 1].numProcsRunningTotal) + 1;
-        }
-        else {
+            proc_id_tracker = worker_id_tracker + (theProcessorGroups[ProcessorGroupInfo::HoleIndex - 1].numProcsRunningTotal);
+    } else {
             // master thread is in group 0 => No shifting required
-            // +1 is to leave the space alloted for master thread
-            proc_id_tracker = worker_id_tracker + 1;
-        }
+            proc_id_tracker = worker_id_tracker;
     }
-    worker_id_tracker++;
-    procIdx = procIdx + 1;
+
     if (worker_id_tracker > theProcessorGroups[ProcessorGroupInfo::NumGroups - 1].numProcsRunningTotal) {
         // over subscription - Round Robin.
         current_grp_idx = (current_grp_idx + 1) % (ProcessorGroupInfo::NumGroups);
-        }
-    else {
+    } else {
         // check if there is space in current Numa node (processor group)
         if (proc_id_tracker < theProcessorGroups[current_grp_idx].numProcsRunningTotal) {
-            // Increment proc_id_tracker
-            proc_id_tracker++;
-        }
-        else {
+            // do nothing
+            // the most likely scenario.
+        } else {
             // allocate it to the next available Numa node (processor group)
-            //current_grp_idx = (current_grp_idx + 1) % ProcessorGroupInfo::NumGroups;
-            current_grp_idx++;
-            if (current_grp_idx >= ProcessorGroupInfo::NumGroups) {
-                // Rollback to processor group_0
-                current_grp_idx = 0;
-                proc_id_tracker = 1;
-            }
+            proc_id_tracker = proc_id_tracker % (theProcessorGroups[ProcessorGroupInfo::NumGroups - 1].numProcsRunningTotal);
+            do {
+                current_grp_idx = (current_grp_idx + 1) % (ProcessorGroupInfo::NumGroups);
+            } while (proc_id_tracker >= theProcessorGroups[current_grp_idx].numProcsRunningTotal);
         }
     }
     __TBB_ASSERT(current_grp_idx < ProcessorGroupInfo::NumGroups, NULL);
