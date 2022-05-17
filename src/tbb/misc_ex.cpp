@@ -378,24 +378,21 @@ int FindProcessorGroupIndex ( int procIdx ) {
 * If there is an oversubscription each worker thread is allocated to the processor group in round robin order.
 */
 int FindProcessorGroupIndex(int procIdx) {
-    // TODO : retrieve Hard limit set by TBB market::global_market
-    const int hard_max = 288;
-    int worker_id_tracker = 288 - procIdx;
-    int proc_id_tracker = 0;
 
+    int proc_id_tracker = 0;
     // initialize the current processor grp index to master thread processor group.
      int current_grp_idx = ProcessorGroupInfo::HoleIndex;
     __TBB_ASSERT(hardware_concurrency_info == do_once_state::initialized, "FindProcessorGroupIndex is used before AvailableHwConcurrency");
 
     if (ProcessorGroupInfo::HoleIndex >= 1) {
             // shift the worker_id index to position it on processor group same as master thread
-            proc_id_tracker = worker_id_tracker + (theProcessorGroups[ProcessorGroupInfo::HoleIndex - 1].numProcsRunningTotal);
+            proc_id_tracker = procIdx + (theProcessorGroups[ProcessorGroupInfo::HoleIndex - 1].numProcsRunningTotal);
     } else {
             // master thread is in group 0 => No shifting required
-            proc_id_tracker = worker_id_tracker;
+            proc_id_tracker = procIdx;
     }
 
-    if (worker_id_tracker > theProcessorGroups[ProcessorGroupInfo::NumGroups - 1].numProcsRunningTotal) {
+    if (procIdx > theProcessorGroups[ProcessorGroupInfo::NumGroups - 1].numProcsRunningTotal) {
         // over subscription - Round Robin.
         current_grp_idx = (current_grp_idx + 1) % (ProcessorGroupInfo::NumGroups);
     } else {
