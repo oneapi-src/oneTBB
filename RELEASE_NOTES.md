@@ -18,17 +18,15 @@
 This document contains changes of oneTBB compared to the last release.
 
 ## Table of Contents <!-- omit in toc -->
-- [Preview Features](#preview-features)
 - [New Features](#new_features)
 - [Known Limitations](#known-limitations)
 - [Fixed Issues](#fixed-issues)
-
-
-## :computer: Preview Features
-- Extended task_group interface with a new run_and_wait overload to accept task_handle.
+- [Open-source Contributions Integrated](#open-source-contributions-integrated)
 
 ## :white_check_mark: New Features
-- Enabled Microsoft Visual Studio* 2022 and Python 3.9 support.
+- Improved support and use of the latest C++ standards for parallel_sort that allows using this algorithm with user-defined and standard library-defined objects with modern semantics.
+- The following features are now fully functional: task_arena extensions, collaborative_call_once, adaptive mutexes, heterogeneous overloads for concurrent_hash_map, and task_scheduler_handle.
+- Added support for Windows* Server 2022 and Python 3.10.
 
 ## :rotating_light: Known Limitations
 - An application using Parallel STL algorithms in libstdc++ versions 9 and 10 may fail to compile due to incompatible interface changes between earlier versions of Threading Building Blocks (TBB) and oneAPI Threading Building Blocks (oneTBB). Disable support for Parallel STL algorithms by defining PSTL_USE_PARALLEL_POLICIES (in libstdc++ 9) or _GLIBCXX_USE_TBB_PAR_BACKEND (in libstdc++ 10) macro to zero before inclusion of the first standard header file in each translation unit.
@@ -41,7 +39,15 @@ This document contains changes of oneTBB compared to the last release.
 - C++ exception handling mechanism on Windows* OS on ARM64* might corrupt memory if an exception is thrown from any oneTBB parallel algorithm (see Windows* OS on ARM64* compiler issue: https://developercommunity.visualstudio.com/t/ARM64-incorrect-stack-unwinding-for-alig/1544293).
 
 ## :hammer: Fixed Issues
-- Reworked synchronization mechanism to reduce contention when multiple task_arena's are used concurrently.
-- Fixed possible correctness issue in queuing_rw_mutex on non-Intel platforms.
-- Fixed GCC* 11 warnings.
-- Fixed sporadic memory corruption.
+- Memory allocator crash on a system with an incomplete /proc/meminfo (GitHub* [#584](https://github.com/oneapi-src/oneTBB/issues/584)).
+- Incorrect blocking of task stealing (GitHub* #[478](https://github.com/oneapi-src/oneTBB/issues/478)).
+- Hang due to incorrect decrement of a limiter_node (GitHub* [#634](https://github.com/oneapi-src/oneTBB/issues/634)).
+- Memory corruption in some rare cases when passing big messages in a flow graph (GitHub* [#639](https://github.com/oneapi-src/oneTBB/issues/639)).
+- Possible deadlock in a throwable flow graph node with a lightweight policy. The lightweight policy is now ignored for functors that can throw exceptions (GitHub* [#420](https://github.com/oneapi-src/oneTBB/issues/420)).
+- Crash when obtaining a range from empty ordered and unordered containers (GitHub* [#641](https://github.com/oneapi-src/oneTBB/issues/641)).
+- Deadlock in a concurrent_vector resize() that could happen when the new size is less than the previous size (GitHub* [#733](https://github.com/oneapi-src/oneTBB/issues/733)).
+
+## :octocat: Open-source Contributions Integrated
+- Improved aligned memory allocation. Contributed by Andrey Semashev (https://github.com/oneapi-src/oneTBB/pull/671).
+- Optimized usage of atomic_fence on IA-32 and Intel(R) 64 architectures. Contributed by Andrey Semashev (https://github.com/oneapi-src/oneTBB/pull/328).
+- Fixed incorrect definition of the assignment operator in containers. Contributed by Andrey Semashev (https://github.com/oneapi-src/oneTBB/issues/372).
