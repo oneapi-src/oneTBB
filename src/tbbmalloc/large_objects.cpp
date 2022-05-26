@@ -63,7 +63,7 @@ void LargeObjectCache::setHugeSizeThreshold(size_t value)
 
 bool LargeObjectCache::sizeInCacheRange(size_t size)
 {
-    return size <= maxHugeSize && (size <= defaultMaxHugeSize || size >= hugeSizeThreshold);
+    return size < maxHugeSize && (size <= defaultMaxHugeSize || size >= hugeSizeThreshold);
 }
 
 /* ----------------------------------------------------------------------------------------------------- */

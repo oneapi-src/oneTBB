@@ -1632,6 +1632,12 @@ void TestHugeSizeThreshold() {
     // Unit testing for scalable_allocation_command
     scalable_allocation_mode(TBBMALLOC_SET_HUGE_SIZE_THRESHOLD, 56 * MByte);
     TestHugeSizeThresholdImpl(loc, 56 * MByte, true);
+    // Verify that objects whose sizes align to maxHugeSize are not cached.
+    size_t sz = LargeObjectCache::maxHugeSize;
+    size_t aligned_sz = LargeObjectCache::alignToBin(sz);
+    REQUIRE_MESSAGE(sz == aligned_sz, "maxHugeSize should be aligned.");
+    REQUIRE_MESSAGE(!loc->sizeInCacheRange(sz), "Upper bound sized object shouldn't be cached.");
+    REQUIRE_MESSAGE(loc->get(sz) == nullptr, "Upper bound sized object shouldn't be cached.");
 }
 
 //! \brief \ref error_guessing
