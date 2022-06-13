@@ -120,6 +120,7 @@ void test_cancellation_on_exception( bool reset_ctx ) {
 }
 #endif // TBB_USE_EXCEPTIONS
 
+#if 1
 //! \brief \ref error_guessing
 TEST_CASE("External threads sleep") {
     if (utils::get_platform_max_threads() < 2) return;
@@ -660,6 +661,7 @@ TEST_CASE("All workers sleep") {
 }
 
 #endif // __TBB_RESUMABLE_TASKS
+#endif
 
 //! \brief \ref error_guessing
 TEST_CASE("Enqueue with exception") {
@@ -723,6 +725,7 @@ TEST_CASE("Enqueue with exception") {
     REQUIRE_MESSAGE(task_type::cancel_counter() == 0, "Some task was canceled");
 }
 
+#if 1
 struct resubmitting_task : public tbb::detail::d1::task {
     tbb::task_arena& my_arena;
     tbb::task_group_context& my_ctx;
@@ -822,3 +825,4 @@ TEST_CASE("raii_guard move ctor") {
     tbb::detail::d0::raii_guard<decltype(func)> guard1(func);
     tbb::detail::d0::raii_guard<decltype(func)> guard2(std::move(guard1));
 }
+#endif

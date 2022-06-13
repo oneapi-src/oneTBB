@@ -111,7 +111,7 @@ protected:
     using waiter_base::waiter_base;
 
     bool is_arena_empty() {
-        return my_arena.my_pool_state.load(std::memory_order_relaxed) == arena::SNAPSHOT_EMPTY;
+        return my_arena.my_pool_state.test() == false;
     }
 
     template <typename Pred>

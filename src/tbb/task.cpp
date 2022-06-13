@@ -54,7 +54,7 @@ void resume(suspend_point_type* sp) {
         // Prolong the arena's lifetime while all coroutines are alive
         // (otherwise the arena can be destroyed while some tasks are suspended).
         arena& a = *sp->m_arena;
-        a.my_references += arena::ref_external;
+        a.my_references += arena::ref_worker;
 
         if (task_disp.m_properties.critical_task_allowed) {
             // The target is not in the process of executing critical task, so the resume task is not critical.
@@ -68,7 +68,7 @@ void resume(suspend_point_type* sp) {
         // Do not access target after that point.
         a.advertise_new_work<arena::wakeup>();
         // Release our reference to my_arena.
-        a.on_thread_leaving(arena::ref_external);
+        a.on_thread_leaving(arena::ref_worker);
     }
 
 }

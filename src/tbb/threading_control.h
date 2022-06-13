@@ -18,11 +18,14 @@
 #define _TBB_threading_cont_H
 
 #include "oneapi/tbb/mutex.h"
+#include "oneapi/tbb/rw_mutex.h"
 #include "oneapi/tbb/global_control.h"
-#include "thread_dispatcher.h"
-#include "resource_manager.h"
+
 #include "intrusive_list.h"
 #include "main.h"
+#include "permit_manager.h"
+#include "pm_client.h"
+#include "thread_dispatcher.h"
 
 #include <memory>
 
@@ -30,28 +33,8 @@ namespace tbb {
 namespace detail {
 namespace r1 {
 
-
-struct cache_aligned_deleter {
-    template <typename T>
-    void operator() (T* ptr) const {
-        ptr->~T();
-        cache_aligned_deallocate(ptr);
-    }
-};
-
-template <typename T>
-using cache_aligned_unique_ptr = std::unique_ptr<T, cache_aligned_deleter>;
-
-template <typename T, typename ...Args>
-cache_aligned_unique_ptr<T> make_cache_aligned_unique(std::size_t size, Args&& ...args) {
-    void* storage = cache_aligned_allocate(size);
-    std::memset(storage, 0, size);
-    return cache_aligned_unique_ptr<T>(new (storage) T(std::forward<Args>(args)...));
-}
-
 class arena;
 class thread_data;
-class permit_manager_client;
 
 void global_control_lock();
 void global_control_unlock();
@@ -89,7 +72,90 @@ struct client_deleter {
     std::uint64_t aba_epoch;
     unsigned priority_level;
     thread_dispatcher_client* my_td_client;
-    permit_manager_client* my_pm_client;
+    pm_client* my_pm_client;
+};
+
+class thread_request_serializer : public thread_request_observer {
+    using mutex_type = d1::mutex;
+
+public:
+    thread_request_serializer(thread_dispatcher& td, int soft_limit);
+    void set_active_num_workers(int soft_limit);
+    bool is_no_workers_avaliable() { return my_soft_limit == 0; }
+
+private:
+    static int limit_delta(int delta, int limit, int new_value);
+    void update(int delta) override;
+
+    thread_dispatcher& my_thread_dispatcher;
+    int my_soft_limit{};
+    int my_total_request{ 0 };
+    static constexpr std::uint64_t pending_delta_base = 1 << 15;
+    // my_pending_delta is set to pending_delta_base to have ability to hold negative values
+    std::atomic<std::uint64_t> my_pending_delta{ pending_delta_base };
+    mutex_type my_mutex;
+};
+
+class concurrency_tracker {
+    using mutex_type = d1::rw_mutex;
+public:
+    concurrency_tracker(thread_request_serializer& serializer) : my_serializer(serializer) {}
+
+    void register_mandatory_request(int mandatory_delta) {
+        if (mandatory_delta != 0) {
+            mutex_type::scoped_lock lock(my_mutex, /* is_write = */ false);
+            int prev_value = my_num_mandatory_requests.fetch_add(mandatory_delta);
+
+            try_enable_mandatory_concurrency(lock, mandatory_delta > 0 && prev_value == 0);
+            try_disable_mandatory_concurrency(lock, mandatory_delta < 0 && prev_value == 1);
+        }
+    }
+
+    void set_active_num_workers(int soft_limit) {
+        mutex_type::scoped_lock lock(my_mutex, /* is_write = */ true);
+
+        if (soft_limit != 0) {
+            my_is_mandatory_concurrency_enabled = false;
+            my_serializer.set_active_num_workers(soft_limit);
+        } else {
+            if (my_num_mandatory_requests > 0 && !my_is_mandatory_concurrency_enabled) {
+                my_is_mandatory_concurrency_enabled = true;
+                my_serializer.set_active_num_workers(1);
+            }
+        }
+    }
+
+private:
+    void try_enable_mandatory_concurrency(mutex_type::scoped_lock& lock, bool should_enable) {
+        if (should_enable) {
+            lock.upgrade_to_writer();
+            bool still_should_enable = my_num_mandatory_requests.load(std::memory_order_relaxed) > 0 &&
+                 !my_is_mandatory_concurrency_enabled && my_serializer.is_no_workers_avaliable();
+
+            if (still_should_enable) {
+                my_is_mandatory_concurrency_enabled = true;
+                my_serializer.set_active_num_workers(1);
+            }
+        }
+    }
+
+    void try_disable_mandatory_concurrency(mutex_type::scoped_lock& lock, bool should_disable) {
+        if (should_disable) {
+            lock.upgrade_to_writer();
+            bool still_should_disable = my_num_mandatory_requests.load(std::memory_order_relaxed) <= 0 &&
+                 my_is_mandatory_concurrency_enabled && !my_serializer.is_no_workers_avaliable();
+
+            if (still_should_disable) {
+                my_is_mandatory_concurrency_enabled = false;
+                my_serializer.set_active_num_workers(0);
+            }
+        }
+    }
+
+    std::atomic<int> my_num_mandatory_requests{0};
+    bool my_is_mandatory_concurrency_enabled{false};
+    thread_request_serializer& my_serializer;
+    mutex_type my_mutex;
 };
 
 class threading_control {
@@ -165,46 +231,14 @@ private:
         return std::make_pair(workers_soft_limit, workers_hard_limit);
     }
 
-    static cache_aligned_unique_ptr<permit_manager> make_permit_manager(unsigned workers_soft_limit);
+    static d1::cache_aligned_unique_ptr<permit_manager> make_permit_manager(unsigned workers_soft_limit);
 
-    static cache_aligned_unique_ptr<thread_dispatcher> make_thread_dispatcher(threading_control* control, unsigned workers_soft_limit, unsigned workers_hard_limit);
+    static d1::cache_aligned_unique_ptr<thread_dispatcher> make_thread_dispatcher(threading_control* control, unsigned workers_soft_limit, unsigned workers_hard_limit);
 
-    static threading_control* create_threading_control() {
-        threading_control* thr_control{nullptr};
-
-        try_call([&] {
-            // Global control should be locked before threading_control
-            global_control_lock();
-            global_mutex_type::scoped_lock lock(g_threading_control_mutex);
-
-            thr_control = get_threading_control(/*public = */ true);
-            if (thr_control != nullptr) {
-                return;
-            }
-
-            thr_control = new (cache_aligned_allocate(sizeof(threading_control))) threading_control();
-
-            unsigned workers_soft_limit{}, workers_hard_limit{};
-            std::tie(workers_soft_limit, workers_hard_limit) = calculate_workers_limits();
-
-            thr_control->my_permit_manager = make_permit_manager(workers_soft_limit);
-            thr_control->my_thread_dispatcher = make_thread_dispatcher(thr_control, workers_soft_limit, workers_hard_limit);
-            thr_control->my_cancellation_disseminator = make_cache_aligned_unique<cancellation_disseminator>(sizeof(cancellation_disseminator));
-            __TBB_InitOnce::add_ref();
-
-            if (global_control_active_value_unsafe(global_control::scheduler_handle)) {
-                ++thr_control->my_public_ref_count;
-                ++thr_control->my_ref_count;
-            }
-
-            g_threading_control = thr_control;
-        }).on_completion([] { global_control_unlock(); });
-
-        return thr_control;
-    }
+    static threading_control* create_threading_control();
 
     void destroy () {
-        cache_aligned_deleter deleter;
+        d1::cache_aligned_deleter deleter;
         deleter(this);
         __TBB_InitOnce::remove_ref();
     }
@@ -300,13 +334,14 @@ public:
 
     static unsigned max_num_workers();
 
-    void adjust_demand(threading_control_client, int delta, bool mandatory);
-    void enable_mandatory_concurrency(threading_control_client c);
-    void mandatory_concurrency_disable(threading_control_client c);
+    void adjust_demand(threading_control_client, int mandatory_delta, int workers_delta);
 
     void propagate_task_group_state(std::atomic<uint32_t> d1::task_group_context::*mptr_state, d1::task_group_context& src, uint32_t new_state) {
         my_cancellation_disseminator->propagate_task_group_state(mptr_state, src, new_state);
     }
+
+    void update_worker_request(int delta);
+
 private:
     friend class thread_dispatcher;
 
@@ -321,9 +356,11 @@ private:
     //! Reference count controlling threading_control object lifetime
     std::atomic<unsigned> my_ref_count{0};
 
-    cache_aligned_unique_ptr<permit_manager> my_permit_manager{nullptr};
-    cache_aligned_unique_ptr<thread_dispatcher> my_thread_dispatcher{nullptr};
-    cache_aligned_unique_ptr<cancellation_disseminator> my_cancellation_disseminator{nullptr};
+    d1::cache_aligned_unique_ptr<permit_manager> my_permit_manager{nullptr};
+    d1::cache_aligned_unique_ptr<thread_dispatcher> my_thread_dispatcher{nullptr};
+    d1::cache_aligned_unique_ptr<thread_request_serializer> my_thread_request_serializer{nullptr};
+    d1::cache_aligned_unique_ptr<concurrency_tracker> my_concurrency_tracker{nullptr};
+    d1::cache_aligned_unique_ptr<cancellation_disseminator> my_cancellation_disseminator{nullptr};
 };
 
 } // r1

@@ -53,8 +53,8 @@ public:
         return my_arena.references();
     }
 
-    int num_workers_requested() {
-        return my_arena.num_workers_requested();
+    bool has_request() {
+        return my_arena.has_request();
     }
 
 private:
@@ -62,49 +62,6 @@ private:
     std::uint64_t my_aba_epoch;
     // mask_type m_mask;
 };
-
-class thread_dispatcher;
-
-// TODO resource_manager_client and thread_pool_client
-class permit_manager_client {
-public:
-    permit_manager_client(arena& a) : my_arena(a)
-    {}
-
-    virtual ~permit_manager_client() {}
-
-    virtual void request_demand(unsigned min, unsigned max) = 0;
-    virtual void release_demand() = 0;
-
-    bool is_top_priority() {
-        return my_is_top_priority.load(std::memory_order_relaxed);
-    }
-
-    int update_request(int delta, bool mandatory) {
-        return my_arena.update_request(delta, mandatory);
-    }
-
-    void wait_for_ticket(int ticket) {
-        my_adjust_demand_current_epoch.wait_until(ticket, /* context = */ ticket, std::memory_order_relaxed);
-    }
-
-    void commit_ticket(int ticket) {
-        my_adjust_demand_current_epoch.exchange(ticket + 1);
-        my_adjust_demand_current_epoch.notify_relaxed(ticket + 1);
-    }
-
-    //! The target serialization epoch for callers of adjust_job_count_estimate
-    std::int64_t my_adjust_demand_target_epoch{ 0 };
-
-    //! The current serialization epoch for callers of adjust_job_count_estimate
-    d1::waitable_atomic<std::int64_t> my_adjust_demand_current_epoch{ 0 };
-
-protected:
-    arena& my_arena;
-    //! The max priority level of arena in market.
-    std::atomic<bool> my_is_top_priority{ false };
-};
-
 
 } // namespace r1
 } // namespace detail

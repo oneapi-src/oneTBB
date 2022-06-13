@@ -26,11 +26,11 @@
 #include "rml_tbb.h"
 #include "clients.h"
 
-class threading_control;
-
 namespace tbb {
 namespace detail {
 namespace r1 {
+
+class thread_dispatcher;
 
 class thread_dispatcher : no_copy, rml::tbb_client {
     using client_list_type = intrusive_list<thread_dispatcher_client>;
@@ -87,7 +87,7 @@ public:
                     // Pay attention that references should be read before workers_requested because
                     // if references is no zero some other thread might call adjust_demand and lead to
                     // a race over workers_requested
-                    if (!client->references() && !client->num_workers_requested()) {
+                    if (!client->references() && !client->has_request()) {
                         /*__TBB_ASSERT(
                             !a->my_num_workers_allotted.load(std::memory_order_relaxed) &&
                             (a->my_pool_state == arena::SNAPSHOT_EMPTY || !a->my_max_num_workers),
@@ -208,11 +208,6 @@ public:
         }
     }
 
-    void adjust_job_count_estimate(int delta) {
-        if (delta != 0) {
-            my_server->adjust_job_count_estimate(delta);
-        }
-    }
 
     void cleanup(job& j) override;
 
@@ -232,6 +227,10 @@ public:
     unsigned max_job_count () const override { return my_num_workers_hard_limit; }
 
     std::size_t min_stack_size () const override { return worker_stack_size(); }
+
+    void adjust_job_count_estimate(int delta) {
+        my_server->adjust_job_count_estimate(delta);
+    }
 
 private:
     friend class threading_control;
