@@ -367,6 +367,7 @@ if (TARGET TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_allocators DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_arena_priorities DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_dynamic_link DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_numa_dist DEPENDENCIES TBB::tbb)
     if (APPLE OR ANDROID_PLATFORM)
         target_link_libraries(test_dynamic_link PRIVATE -rdynamic) # for the test_dynamic_link
     endif()
