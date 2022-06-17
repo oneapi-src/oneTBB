@@ -35,9 +35,8 @@
 #include <cstddef>
 #include <vector>
 
-//! \file test_parallel_for.cpp
-//! \brief Test for [algorithms.parallel_for] specification
-
+//! \file test_numa_dist.cpp
+//! \brief Test for [internal] functionality
 #if _MSC_VER
 #pragma warning (push)
 // Suppress conditional expression is constant
@@ -67,43 +66,81 @@ struct numa {
 };
 
 
-void TestNumaDistribution(){
-	std::vector<DWORD> validateProcgrp;
+int TestNumaDistribution(std::vector<DWORD> &validateProcgrp, int additionalParallelism, bool allThreads){
+	
 	validateProcgrp.resize(GetMaximumProcessorGroupCount());
 	PROCESSOR_NUMBER proc;
 	struct numa nodes;
 	GetThreadIdealProcessorEx(GetCurrentThread(), &proc);
 	int master_thread_proc_grp = proc.Group;
-	auto requested_parallelism = nodes.numaProcessors.at(master_thread_proc_grp);
-    tbb::global_control global_limit(oneapi::tbb::global_control::max_allowed_parallelism, requested_parallelism);
+    int requested_parallelism;
+    if (allThreads) 
+        requested_parallelism = additionalParallelism;
+	else 
+        requested_parallelism = nodes.numaProcessors.at(master_thread_proc_grp) + additionalParallelism;
+   
+    tbb::global_control global_limit(oneapi::tbb::global_control::max_allowed_parallelism, requested_parallelism*2);
     tbb::enumerable_thread_specific< std::pair<int, int> > tls;
 	tbb::enumerable_thread_specific< double > tls_dummy;
-	
-    tbb::parallel_for(0, 1000, [&](int i)
-        {
-            // dummy work
-            double& b = tls_dummy.local();
-            for (int k = 0; k < 1000000; ++k)
-                b += pow(i * k, 1. / 3.);
+    tbb::static_partitioner s;
+    SYNCHRONIZATION_BARRIER lpBarrier;
+   InitializeSynchronizationBarrier(&lpBarrier, requested_parallelism, -1);
+    oneapi::tbb::task_arena limited(requested_parallelism);
+    limited.execute([&]() {
 
-            PROCESSOR_NUMBER proc;
-            if (GetThreadIdealProcessorEx(GetCurrentThread(), &proc))
+        tbb::parallel_for(0, requested_parallelism, [&](int i)
             {
-                tls.local() = std::pair<int, int>(proc.Group, proc.Number);
-            }
-        });
-    for (const auto it : tls) {
-		validateProcgrp[it.first]++;
-	}
-	REQUIRE(validateProcgrp[master_thread_proc_grp] == requested_parallelism);
+                // dummy work
+                double& b = tls_dummy.local();
+                for (int k = 0; k < 100000; ++k)
+                    b += pow(i * k, 1. / 3.);
+
+                PROCESSOR_NUMBER proc;
+                if (GetThreadIdealProcessorEx(GetCurrentThread(), &proc))
+                {
+                    tls.local() = std::pair<int, int>(proc.Group, proc.Number);
+                    EnterSynchronizationBarrier(&lpBarrier, SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY);
+                    DeleteSynchronizationBarrier(&lpBarrier);
+                }
+            }, s);
+        for (const auto it : tls) {
+           validateProcgrp[it.first]++;
+        }
+      });
+	
+    return master_thread_proc_grp;
 }
 
 //! Testing Numa Thread Distribution
 //! \brief \ref number of processor in Numa node of master thread
-TEST_CASE("Numa stability") {
-    TestNumaDistribution();
+TEST_CASE("Numa stability for the same node") {
+    numa example;
+    std::vector<DWORD> validateProcgrp;
+    
+    int numaGrp = TestNumaDistribution(validateProcgrp,0, 0);
+    std::vector<DWORD> result(GetMaximumProcessorGroupCount(), 0);
+    result[numaGrp] = example.numaProcessors[numaGrp];
+    std::cout << "Numa Group : " << numaGrp << "\n";
+    REQUIRE(validateProcgrp == result);
 }
 
+TEST_CASE("Numa overflow") {
+    numa example;
+    std::vector<DWORD> validateProcgrp;
+
+    int numaGrp = TestNumaDistribution(validateProcgrp, 1, 0);
+    std::vector<DWORD> result(GetMaximumProcessorGroupCount(), 0);
+    result[numaGrp] = example.numaProcessors[numaGrp];
+    result[(numaGrp+1)% GetMaximumProcessorGroupCount()] = 1;
+    REQUIRE(validateProcgrp == result);
+}
+
+TEST_CASE("Numa all threads") {
+    numa example;
+    std::vector<DWORD> validateProcgrp;
+    TestNumaDistribution(validateProcgrp, example.maxProcessors, 1);
+    REQUIRE(validateProcgrp == example.numaProcessors);
+}
 #if _MSC_VER
 #pragma warning (pop)
 #endif
