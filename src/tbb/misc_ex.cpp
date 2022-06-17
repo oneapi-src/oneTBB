@@ -150,7 +150,7 @@ static void initialize_hardware_concurrency_info () {
         int pid = getpid();
         err = sched_getaffinity( pid, curMaskSize, processMask );
         if ( !err || errno != EINVAL || curMaskSize * CHAR_BIT >= 256 * 1024 )
-            break;
+             break;
 #endif
         delete[] processMask;
         numMasks <<= 1;
@@ -257,7 +257,8 @@ int ProcessorGroupInfo::NumGroups = 1;
 int ProcessorGroupInfo::HoleIndex = 0;
 
 ProcessorGroupInfo theProcessorGroups[MaxProcessorGroups];
-
+int calculate_numa[MaxProcessorGroups];  //Array needed for FindProcessorGroupIndex
+int numaSum;
 struct TBB_GROUP_AFFINITY {
     DWORD_PTR Mask;
     WORD   Group;
@@ -312,15 +313,27 @@ static void initialize_hardware_concurrency_info () {
             if ( TBB_GetThreadGroupAffinity( GetCurrentThread(), &ga ) )
                 ProcessorGroupInfo::HoleIndex = ga.Group;
             int nprocs = 0;
+            int min_procs = INT_MAX;
             for ( WORD i = 0; i < ProcessorGroupInfo::NumGroups; ++i ) {
                 ProcessorGroupInfo  &pgi = theProcessorGroups[i];
                 pgi.numProcs = (int)TBB_GetActiveProcessorCount(i);
+                if (pgi.numProcs < min_procs) min_procs = pgi.numProcs;  //Finding the minimum number of processors in the Processor Groups
+                calculate_numa[i] = pgi.numProcs;
                 __TBB_ASSERT( pgi.numProcs <= (int)sizeof(DWORD_PTR) * CHAR_BIT, nullptr);
                 pgi.mask = pgi.numProcs == sizeof(DWORD_PTR) * CHAR_BIT ? ~(DWORD_PTR)0 : (DWORD_PTR(1) << pgi.numProcs) - 1;
                 pgi.numProcsRunningTotal = nprocs += pgi.numProcs;
             }
             __TBB_ASSERT( nprocs == (int)TBB_GetActiveProcessorCount( TBB_ALL_PROCESSOR_GROUPS ), nullptr);
+
+            for (WORD i = 0; i < ProcessorGroupInfo::NumGroups; ++i) {
+                if (i == 0) calculate_numa[i] = (calculate_numa[i] / min_procs) - 1;
+                else calculate_numa[i] = calculate_numa[i-1] + (calculate_numa[i] / min_procs);
+                
+            }
+            numaSum = calculate_numa[ProcessorGroupInfo::NumGroups - 1]+1;
+
         }
+
     }
 #endif /* __TBB_WIN8UI_SUPPORT */
 
@@ -335,80 +348,28 @@ int NumberOfProcessorGroups() {
     return ProcessorGroupInfo::NumGroups;
 }
 
-#if 0 // old-code for win-numa(Spread thread affinity)
-// Offset for the slot reserved for the first external thread
-#define HoleAdjusted(procIdx, grpIdx) (procIdx + (holeIdx <= grpIdx))
-
 int FindProcessorGroupIndex ( int procIdx ) {
-    // In case of oversubscription spread extra workers in a round robin manner
-    int holeIdx;
-    const int numProcs = theProcessorGroups[ProcessorGroupInfo::NumGroups - 1].numProcsRunningTotal;
-    if ( procIdx >= numProcs - 1 ) {
-        holeIdx = INT_MAX;
-        procIdx = (procIdx - numProcs + 1) % numProcs;
-    }
-    else
-        holeIdx = ProcessorGroupInfo::HoleIndex;
-    __TBB_ASSERT( hardware_concurrency_info == do_once_state::initialized, "FindProcessorGroupIndex is used before AvailableHwConcurrency" );
-    // Approximate the likely group index assuming all groups are of the same size
-    int i = procIdx / theProcessorGroups[0].numProcs;
-    // Make sure the approximation is a valid group index
-    if (i >= ProcessorGroupInfo::NumGroups) i = ProcessorGroupInfo::NumGroups-1;
-    // Now adjust the approximation up or down
-    if ( theProcessorGroups[i].numProcsRunningTotal > HoleAdjusted(procIdx, i) ) {
-        while ( theProcessorGroups[i].numProcsRunningTotal - theProcessorGroups[i].numProcs > HoleAdjusted(procIdx, i) ) {
-            __TBB_ASSERT( i > 0, nullptr);
-            --i;
-        }
-    }
-    else {
+    int current_grp_idx = ProcessorGroupInfo::HoleIndex;
+    if (procIdx > theProcessorGroups[ProcessorGroupInfo::HoleIndex].numProcs-1  && procIdx <= theProcessorGroups[ProcessorGroupInfo::NumGroups - 1].numProcsRunningTotal-1 ) {
+        procIdx = procIdx - theProcessorGroups[current_grp_idx].numProcs;
         do {
-            ++i;
-        } while ( theProcessorGroups[i].numProcsRunningTotal <= HoleAdjusted(procIdx, i) );
+            current_grp_idx = (current_grp_idx + 1) % (ProcessorGroupInfo::NumGroups);
+            procIdx = procIdx - theProcessorGroups[current_grp_idx].numProcs;
+
+        } while (procIdx >= 0);
     }
-    __TBB_ASSERT( i < ProcessorGroupInfo::NumGroups, nullptr);
-    return i;
-}
+    else if (procIdx > theProcessorGroups[ProcessorGroupInfo::NumGroups - 1].numProcsRunningTotal) {
+        int temp_grp_index = 0;
+        procIdx = procIdx - (theProcessorGroups[ProcessorGroupInfo::NumGroups - 1].numProcsRunningTotal); //starts from 0
+        procIdx = procIdx % (numaSum + 1); 
 
-#endif
-
-/*
-* Algorithm is designed on the assumption that the workers thread id go from 1 to Hard limit set by TBB market::global_market
-* The worker threads are added starting from processor group same as the master thread and when it's full go to the next processor group.
-* If there is an oversubscription each worker thread is allocated to the processor group in round robin order.
-*/
-int FindProcessorGroupIndex(int procIdx) {
-
-    int proc_id_tracker = 0;
-    // initialize the current processor grp index to master thread processor group.
-     int current_grp_idx = ProcessorGroupInfo::HoleIndex;
-    __TBB_ASSERT(hardware_concurrency_info == do_once_state::initialized, "FindProcessorGroupIndex is used before AvailableHwConcurrency");
-
-    if (ProcessorGroupInfo::HoleIndex >= 1) {
-            // shift the worker_id index to position it on processor group same as master thread
-            proc_id_tracker = procIdx + (theProcessorGroups[ProcessorGroupInfo::HoleIndex - 1].numProcsRunningTotal);
-    } else {
-            // master thread is in group 0 => No shifting required
-            proc_id_tracker = procIdx;
-    }
-
-    if (procIdx > theProcessorGroups[ProcessorGroupInfo::NumGroups - 1].numProcsRunningTotal) {
-        // over subscription - Round Robin.
-        current_grp_idx = (current_grp_idx + 1) % (ProcessorGroupInfo::NumGroups);
-    } else {
-        // check if there is space in current Numa node (processor group)
-        if (proc_id_tracker < theProcessorGroups[current_grp_idx].numProcsRunningTotal) {
-            // do nothing
-            // the most likely scenario.
-        } else {
-            // allocate it to the next available Numa node (processor group)
-            proc_id_tracker = proc_id_tracker % (theProcessorGroups[ProcessorGroupInfo::NumGroups - 1].numProcsRunningTotal);
-            do {
-                current_grp_idx = (current_grp_idx + 1) % (ProcessorGroupInfo::NumGroups);
-            } while (proc_id_tracker >= theProcessorGroups[current_grp_idx].numProcsRunningTotal);
+        while (procIdx - calculate_numa[temp_grp_index] > 0) {
+            temp_grp_index = (temp_grp_index + 1) % ProcessorGroupInfo::NumGroups;
         }
+        current_grp_idx = temp_grp_index;
     }
     __TBB_ASSERT(current_grp_idx < ProcessorGroupInfo::NumGroups, NULL);
+
     return current_grp_idx;
 }
 
