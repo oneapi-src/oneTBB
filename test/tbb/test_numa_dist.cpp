@@ -130,8 +130,12 @@ TEST_CASE("Numa overflow") {
 
     int numaGrp = TestNumaDistribution(validateProcgrp, 1, 0);
     std::vector<DWORD> result(GetMaximumProcessorGroupCount(), 0);
-    result[numaGrp] = example.numaProcessors[numaGrp];
-    result[(numaGrp+1)% GetMaximumProcessorGroupCount()] = 1;
+	if (example.processorGroupCount <= 1) { // for single Numa node
+       result[numaGrp] = example.numaProcessors[numaGrp] + 1;
+	} else {
+       result[numaGrp] = example.numaProcessors[numaGrp];
+       result[(numaGrp+1)% GetMaximumProcessorGroupCount()] = 1;
+	}
     REQUIRE(validateProcgrp == result);
 }
 
