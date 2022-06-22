@@ -326,10 +326,11 @@ static void initialize_hardware_concurrency_info () {
             __TBB_ASSERT( nprocs == (int)TBB_GetActiveProcessorCount( TBB_ALL_PROCESSOR_GROUPS ), nullptr);
 
             for (WORD i = 0; i < ProcessorGroupInfo::NumGroups; ++i) {
-                if (i == 0) calculate_numa[i] = (calculate_numa[i] / min_procs) - 1;
+                if (i == 0) calculate_numa[i] = (calculate_numa[i] / min_procs);
                 else calculate_numa[i] = calculate_numa[i-1] + (calculate_numa[i] / min_procs);
                 
             }
+
             numaSum = calculate_numa[ProcessorGroupInfo::NumGroups - 1]+1;
 
         }
@@ -350,7 +351,7 @@ int NumberOfProcessorGroups() {
 
 int FindProcessorGroupIndex ( int procIdx ) {
     int current_grp_idx = ProcessorGroupInfo::HoleIndex;
-    if (procIdx > theProcessorGroups[ProcessorGroupInfo::HoleIndex].numProcs-1  && procIdx <= theProcessorGroups[ProcessorGroupInfo::NumGroups - 1].numProcsRunningTotal-1 ) {
+    if (procIdx >= theProcessorGroups[current_grp_idx].numProcs  && procIdx < theProcessorGroups[ProcessorGroupInfo::NumGroups - 1].numProcsRunningTotal) {
         procIdx = procIdx - theProcessorGroups[current_grp_idx].numProcs;
         do {
             current_grp_idx = (current_grp_idx + 1) % (ProcessorGroupInfo::NumGroups);
@@ -358,17 +359,17 @@ int FindProcessorGroupIndex ( int procIdx ) {
 
         } while (procIdx >= 0);
     }
-    else if (procIdx > theProcessorGroups[ProcessorGroupInfo::NumGroups - 1].numProcsRunningTotal) {
+    else if (procIdx >= theProcessorGroups[ProcessorGroupInfo::NumGroups - 1].numProcsRunningTotal) {
         int temp_grp_index = 0;
-        procIdx = procIdx - (theProcessorGroups[ProcessorGroupInfo::NumGroups - 1].numProcsRunningTotal); //starts from 0
-        procIdx = procIdx % (numaSum + 1); 
+        procIdx = procIdx - (theProcessorGroups[ProcessorGroupInfo::NumGroups - 1].numProcsRunningTotal-1); 
+        procIdx = procIdx % numaSum;  //ProcIdx to stay between 1 and numaSum
 
         while (procIdx - calculate_numa[temp_grp_index] > 0) {
             temp_grp_index = (temp_grp_index + 1) % ProcessorGroupInfo::NumGroups;
         }
         current_grp_idx = temp_grp_index;
     }
-    __TBB_ASSERT(current_grp_idx < ProcessorGroupInfo::NumGroups, NULL);
+    __TBB_ASSERT(current_grp_idx < ProcessorGroupInfo::NumGroups, nullptr);
 
     return current_grp_idx;
 }
