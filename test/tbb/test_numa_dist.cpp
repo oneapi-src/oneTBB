@@ -67,21 +67,19 @@ struct numa {
 
 
 int TestNumaDistribution(std::vector<DWORD> &validateProcgrp, int additionalParallelism, bool allThreads){
-	
-	validateProcgrp.resize(GetMaximumProcessorGroupCount());
-	PROCESSOR_NUMBER proc;
-	struct numa nodes;
-	GetThreadIdealProcessorEx(GetCurrentThread(), &proc);
-	int master_thread_proc_grp = proc.Group;
+    validateProcgrp.resize(GetMaximumProcessorGroupCount());
+    PROCESSOR_NUMBER proc;
+    struct numa nodes;
+    GetThreadIdealProcessorEx(GetCurrentThread(), &proc);
+    int master_thread_proc_grp = proc.Group;
     int requested_parallelism;
     if (allThreads) 
         requested_parallelism = additionalParallelism;
-	else 
+    else 
         requested_parallelism = nodes.numaProcessors.at(master_thread_proc_grp) + additionalParallelism;
-   
     tbb::global_control global_limit(oneapi::tbb::global_control::max_allowed_parallelism, requested_parallelism*2);
     tbb::enumerable_thread_specific< std::pair<int, int> > tls;
-	tbb::enumerable_thread_specific< double > tls_dummy;
+    tbb::enumerable_thread_specific< double > tls_dummy;
     tbb::static_partitioner s;
     SYNCHRONIZATION_BARRIER lpBarrier;
    InitializeSynchronizationBarrier(&lpBarrier, requested_parallelism, -1);
@@ -107,7 +105,6 @@ int TestNumaDistribution(std::vector<DWORD> &validateProcgrp, int additionalPara
            validateProcgrp[it.first]++;
         }
       });
-	
     return master_thread_proc_grp;
 }
 
@@ -116,26 +113,23 @@ int TestNumaDistribution(std::vector<DWORD> &validateProcgrp, int additionalPara
 TEST_CASE("Numa stability for the same node") {
     numa example;
     std::vector<DWORD> validateProcgrp;
-    
     int numaGrp = TestNumaDistribution(validateProcgrp,0, 0);
     std::vector<DWORD> result(GetMaximumProcessorGroupCount(), 0);
     result[numaGrp] = example.numaProcessors[numaGrp];
-    std::cout << "Numa Group : " << numaGrp << "\n";
     REQUIRE(validateProcgrp == result);
 }
 
 TEST_CASE("Numa overflow") {
     numa example;
     std::vector<DWORD> validateProcgrp;
-
     int numaGrp = TestNumaDistribution(validateProcgrp, 1, 0);
     std::vector<DWORD> result(GetMaximumProcessorGroupCount(), 0);
-	if (example.processorGroupCount <= 1) { // for single Numa node
+    if (example.processorGroupCount <= 1) { // for single Numa node
        result[numaGrp] = example.numaProcessors[numaGrp] + 1;
-	} else {
+    } else {
        result[numaGrp] = example.numaProcessors[numaGrp];
        result[(numaGrp+1)% GetMaximumProcessorGroupCount()] = 1;
-	}
+    }
     REQUIRE(validateProcgrp == result);
 }
 
