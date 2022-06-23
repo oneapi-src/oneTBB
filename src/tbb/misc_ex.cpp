@@ -257,7 +257,7 @@ int ProcessorGroupInfo::NumGroups = 1;
 int ProcessorGroupInfo::HoleIndex = 0;
 
 ProcessorGroupInfo theProcessorGroups[MaxProcessorGroups];
-int calculate_numa[MaxProcessorGroups];  //Array needed for FindProcessorGroupIndex
+int calculate_numa[MaxProcessorGroups];  //Array needed for FindProcessorGroupIndex to calculate Processor Group when number of threads > number of cores to distribute threads evenly between processor groups
 int numaSum;
 struct TBB_GROUP_AFFINITY {
     DWORD_PTR Mask;
@@ -325,13 +325,12 @@ static void initialize_hardware_concurrency_info () {
             }
             __TBB_ASSERT( nprocs == (int)TBB_GetActiveProcessorCount( TBB_ALL_PROCESSOR_GROUPS ), nullptr);
 
-            for (WORD i = 0; i < ProcessorGroupInfo::NumGroups; ++i) {
-                if (i == 0) calculate_numa[i] = (calculate_numa[i] / min_procs);
-                else calculate_numa[i] = calculate_numa[i-1] + (calculate_numa[i] / min_procs);
-                
+            calculate_numa[0] = (calculate_numa[0] / min_procs);
+            for (WORD i = 1; i < ProcessorGroupInfo::NumGroups; ++i) {
+                calculate_numa[i] = calculate_numa[i-1] + (calculate_numa[i] / min_procs);
             }
 
-            numaSum = calculate_numa[ProcessorGroupInfo::NumGroups - 1]+1;
+            numaSum = calculate_numa[ProcessorGroupInfo::NumGroups - 1];
 
         }
 
@@ -362,7 +361,7 @@ int FindProcessorGroupIndex ( int procIdx ) {
     else if (procIdx >= theProcessorGroups[ProcessorGroupInfo::NumGroups - 1].numProcsRunningTotal) {
         int temp_grp_index = 0;
         procIdx = procIdx - (theProcessorGroups[ProcessorGroupInfo::NumGroups - 1].numProcsRunningTotal-1); 
-        procIdx = procIdx % numaSum;  //ProcIdx to stay between 1 and numaSum
+        procIdx = procIdx % (numaSum+1);  //ProcIdx to stay between 1 and numaSum
 
         while (procIdx - calculate_numa[temp_grp_index] > 0) {
             temp_grp_index = (temp_grp_index + 1) % ProcessorGroupInfo::NumGroups;
