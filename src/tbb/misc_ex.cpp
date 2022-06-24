@@ -325,7 +325,7 @@ static void initialize_hardware_concurrency_info () {
             }
             __TBB_ASSERT( nprocs == (int)TBB_GetActiveProcessorCount( TBB_ALL_PROCESSOR_GROUPS ), nullptr);
 
-            calculate_numa[0] = (calculate_numa[0] / min_procs);
+            calculate_numa[0] = (calculate_numa[0] / min_procs)-1;
             for (WORD i = 1; i < ProcessorGroupInfo::NumGroups; ++i) {
                 calculate_numa[i] = calculate_numa[i-1] + (calculate_numa[i] / min_procs);
             }
@@ -360,8 +360,8 @@ int FindProcessorGroupIndex ( int procIdx ) {
     }
     else if (procIdx >= theProcessorGroups[ProcessorGroupInfo::NumGroups - 1].numProcsRunningTotal) {
         int temp_grp_index = 0;
-        procIdx = procIdx - (theProcessorGroups[ProcessorGroupInfo::NumGroups - 1].numProcsRunningTotal-1); 
-        procIdx = procIdx % (numaSum+1);  //ProcIdx to stay between 1 and numaSum
+        procIdx = procIdx - theProcessorGroups[ProcessorGroupInfo::NumGroups - 1].numProcsRunningTotal; 
+        procIdx = procIdx % (numaSum+1);  //ProcIdx to stay between 0 and numaSum
 
         while (procIdx - calculate_numa[temp_grp_index] > 0) {
             temp_grp_index = (temp_grp_index + 1) % ProcessorGroupInfo::NumGroups;
