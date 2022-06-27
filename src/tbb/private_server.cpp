@@ -295,7 +295,9 @@ inline void private_worker::wake_or_launch() {
         if (my_state.compare_exchange_strong(state, st_starting)) {
             // after this point, remove_server_ref() must be done by created thread
 #if __TBB_USE_WINAPI
-            my_handle = thread_monitor::launch(thread_routine, this, my_server.my_stack_size, &this->my_index);
+            // Win thread_monitor::launch is designed on the assumption that the workers thread id go from 1 to Hard limit set by TBB market::global_market
+            const std::size_t worker_idx = my_server.my_n_thread - this->my_index; 
+            my_handle = thread_monitor::launch(thread_routine, this, my_server.my_stack_size, &worker_idx);
 #elif __TBB_USE_POSIX
             {
                 affinity_helper fpa;
