@@ -143,7 +143,7 @@ TEST_CASE("Double threads") {
     numa example;
     std::vector<DWORD> validateProcgrp;
     std::vector<DWORD> result(example.numaProcessors.size(), 0);
-    for (int i = 0; i < example.numaProcessors.size(); i++) result[i] = 2 * example.numaProcessors[i];
+    for (size_t i = 0; i < example.numaProcessors.size(); i++) result[i] = 2 * example.numaProcessors[i];
     TestNumaDistribution(validateProcgrp, example.maxProcessors * 2, 1);
     REQUIRE(validateProcgrp == result);
 }
