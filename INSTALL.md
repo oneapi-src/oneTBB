@@ -7,7 +7,7 @@
    - Configure and build oneTBB. To work with build configurations, see [Build System Description](cmake/README.md). 
 
 
-## Configure oneTB
+## Configure oneTBB
 
 At the command prompt, type:
 ```
