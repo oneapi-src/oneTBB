@@ -104,7 +104,7 @@ int TestNumaDistribution(std::vector<DWORD> &validateProcgrp, int additionalPara
     return master_thread_proc_grp;
 }
 
-//! Testing Numa Thread Distribution
+//! \brief Testing Numa Thread Distribution
 //! \brief \ref number of processor in Numa node of master thread
 
 TEST_CASE("Numa stability for the same node") {
