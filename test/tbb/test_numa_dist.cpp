@@ -104,9 +104,8 @@ int TestNumaDistribution(std::vector<DWORD> &validateProcgrp, int additionalPara
     return master_thread_proc_grp;
 }
 
-//! \brief Testing Numa Thread Distribution
-//! \brief \ref number of processor in Numa node of master thread
-
+//! Testing Numa Thread Distribution Stability
+//! \brief \ref stress
 TEST_CASE("Numa stability for the same node") {
     numa example;
     std::vector<DWORD> validateProcgrp;
@@ -117,6 +116,8 @@ TEST_CASE("Numa stability for the same node") {
     REQUIRE(validateProcgrp == result);
 }
 
+//! Testing Numa Thread Distribution Overflow
+//! \brief \ref stress
 TEST_CASE("Numa overflow") {
     numa example;
     std::vector<DWORD> validateProcgrp;
@@ -132,6 +133,8 @@ TEST_CASE("Numa overflow") {
     REQUIRE(validateProcgrp == result);
 }
 
+//! Testing Numa Thread Distribution Maximum
+//! \brief \ref stress
 TEST_CASE("Numa all threads") {
     numa example;
     std::vector<DWORD> validateProcgrp;
@@ -139,6 +142,8 @@ TEST_CASE("Numa all threads") {
     REQUIRE(validateProcgrp == example.numaProcessors);
 }
 
+//! Testing Numa Thread Distribution Doubled Max
+//! \brief \ref stress
 TEST_CASE("Double threads") {
     numa example;
     std::vector<DWORD> validateProcgrp;
