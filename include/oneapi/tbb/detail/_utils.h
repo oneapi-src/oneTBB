@@ -340,6 +340,20 @@ concept adaptive_same_as =
 #endif
 #endif // __TBB_CPP20_CONCEPTS_PRESENT
 
+template <typename F, typename... Args>
+auto invoke(F&& f, Args&&... args)
+#if __TBB_CPP17_INVOKE_PRESENT
+    -> std::invoke_result_t<F, Args...>
+{
+    return std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
+}
+#else // __TBB_CPP17_INVOKE_PRESENT
+    -> decltype(std::forward<F>(f)(std::forward<Args>(args)...))
+{
+    return std::forward<F>(f)(std::forward<Args>(args)...);
+}
+#endif // __TBB_CPP17_INVOKE_PRESENT
+
 } // namespace d0
 
 namespace d1 {

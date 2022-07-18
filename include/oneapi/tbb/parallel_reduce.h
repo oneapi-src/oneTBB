@@ -147,7 +147,7 @@ struct start_reduce : public task {
     }
     //! Run body for range, serves as callback for partitioner
     void run_body( Range &r ) {
-        (*my_body)(r);
+        tbb::detail::invoke(*my_body, r);
     }
 
     //! spawn right task, serves as callback for partitioner
@@ -290,7 +290,7 @@ struct start_deterministic_reduce : public task {
     }
     //! Run body for range, serves as callback for partitioner
     void run_body( Range &r ) {
-        my_body( r );
+        tbb::detail::invoke(my_body, r);
     }
     //! Spawn right task, serves as callback for partitioner
     void offer_work(typename Partitioner::split_type& split_obj, execution_data& ed) {
@@ -383,10 +383,11 @@ public:
         , my_value(other.my_identity_element)
     { }
     void operator()(Range& range) {
-        my_value = my_real_body(range, const_cast<const Value&>(my_value));
+        my_value = tbb::detail::invoke(my_real_body, range, const_cast<const Value&>(my_value));
     }
     void join( lambda_reduce_body& rhs ) {
-        my_value = my_reduction(const_cast<const Value&>(my_value), const_cast<const Value&>(rhs.my_value));
+        my_value = tbb::detail::invoke(my_reduction, const_cast<const Value&>(my_value),
+                                                     const_cast<const Value&>(rhs.my_value));
     }
     Value result() const {
         return my_value;

@@ -37,10 +37,7 @@ namespace detail {
 inline namespace d0 {
 
 template <typename Body, typename Range>
-concept parallel_for_body = std::copy_constructible<Body> &&
-                            requires( const std::remove_reference_t<Body>& body, Range& range ) {
-                                body(range);
-                            };
+concept parallel_for_body = std::copy_constructible<Body> && std::invocable<const std::remove_reference_t<Body>&, Range&>;
 
 template <typename Index>
 concept parallel_for_index = std::constructible_from<Index, int> &&
@@ -52,9 +49,7 @@ concept parallel_for_index = std::constructible_from<Index, int> &&
                              };
 
 template <typename Function, typename Index>
-concept parallel_for_function = requires( const std::remove_reference_t<Function>& func, Index index ) {
-    func(index);
-};
+concept parallel_for_function = std::invocable<const std::remove_reference_t<Function>&, Index>;
 
 } // namespace d0
 #endif // __TBB_CPP20_CONCEPTS_PRESENT
@@ -116,7 +111,7 @@ struct start_for : public task {
     }
     //! Run body for range, serves as callback for partitioner
     void run_body( Range &r ) {
-        my_body( r );
+        tbb::detail::invoke(my_body, r);
     }
 
     //! spawn right task, serves as callback for partitioner
@@ -205,7 +200,7 @@ public:
 #endif
 #endif
         for ( Index i = b; i < e; ++i, k += ms ) {
-            my_func( k );
+            tbb::detail::invoke(my_func, k);
         }
     }
 };
