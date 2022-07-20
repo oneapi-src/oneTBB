@@ -37,48 +37,38 @@ private:
     MinimalisticRange(CreateFlag) {}
 }; // struct MinimalisticRange
 
-// std::atomic<std::size_t> ValueCounter = 0;
+struct MinimalisticValue {
+    MinimalisticValue() = delete;
+    MinimalisticValue(const MinimalisticValue&) = default;
+    ~MinimalisticValue() = default;
+    MinimalisticValue& operator=(const MinimalisticValue&) = default;
 
-// struct MinimalisticValue {
-//     MinimalisticValue() = delete;
-//     MinimalisticValue(const MinimalisticValue&) = delete;
-//     MinimalisticValue& operator=(const MinimalisticValue&) = delete;
+    static MinimalisticValue build() { return MinimalisticValue(CreateFlag{}); }
 
-//     static MinimalisticValue* build_ptr() {
-//         MinimalisticValue* ptr = static_cast<MinimalisticValue*>(::operator new(sizeof(MinimalisticValue)));
-//         ::new(ptr) MinimalisticValue(CreateFlag{});
-//         return ptr;
-//     }
+private:
+    MinimalisticValue(CreateFlag) {}
+}; // struct MinimalisticValue
 
-//     static void eliminate(MinimalisticValue* ptr) {
-//         ptr->~MinimalisticValue();
-//         ::operator delete(ptr);
-//     }
-// private:
-//     MinimalisticValue(CreateFlag) { ++ValueCounter; }
-//     ~MinimalisticValue() { --ValueCounter; }
-// }; // struct MinimalisticValue
+struct MinimalisticReduction {
+    MinimalisticValue operator()(const MinimalisticValue& x, const MinimalisticValue&) const { return x; }
 
-// struct MinimalisticReduction {
-//     MinimalisticValue operator()(const MinimalisticValue&, const MinimalisticValue&) {}
+    MinimalisticReduction() = delete;
+    MinimalisticReduction(const MinimalisticReduction&) = delete;
+    MinimalisticReduction& operator=(const MinimalisticReduction&) = delete;
 
-//     MinimalisticReduction() = delete;
-//     MinimalisticReduction(const MinimalisticReduction&) = delete;
-//     MinimalisticReduction& operator=(const MinimalisticReduction&) = delete;
+    static MinimalisticReduction* build_ptr() {
+        MinimalisticReduction* ptr = static_cast<MinimalisticReduction*>(::operator new(sizeof(MinimalisticReduction)));
+        ::new(ptr) MinimalisticReduction(CreateFlag{});
+        return ptr;
+    }
 
-//     static MinimalisticReduction* build_ptr() {
-//         MinimalisticReduction* ptr = static_cast<MinimalisticReduction*>(::operator new(sizeof(MinimalisticReduction)));
-//         ::new(ptr) MinimalisticReduction(CreateFlag{});
-//         return ptr;
-//     }
-
-//     static void eliminate(MinimalisticReduction* ptr) {
-//         ptr->~MinimalisticReduction();
-//         ::operator delete(ptr);
-//     }
-// private:
-//     MinimalisticReduction(CreateFlag) {}
-//     ~MinimalisticReduction() = default;
-// }; // struct MinimalisticReduction
+    static void eliminate(MinimalisticReduction* ptr) {
+        ptr->~MinimalisticReduction();
+        ::operator delete(ptr);
+    }
+private:
+    MinimalisticReduction(CreateFlag) {}
+    ~MinimalisticReduction() = default;
+}; // struct MinimalisticReduction
 
 #endif // __TBB_test_common_named_requirements_test_H_
