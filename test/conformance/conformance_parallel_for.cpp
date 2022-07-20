@@ -18,6 +18,7 @@
 #include "common/test.h"
 #include "common/utils.h"
 #include "common/utils_report.h"
+#include "common/named_requirements_test.h"
 
 #include "oneapi/tbb/parallel_for.h"
 #include "oneapi/tbb/tick_count.h"
@@ -244,6 +245,89 @@ void TestParallelForWithStepSupport() {
     oneapi::tbb::parallel_for(static_cast<T>(2), static_cast<T>(1), static_cast<T>(1), TestFunctor<T>());
 }
 
+struct MinimalisticPForBody {
+    MinimalisticPForBody(const MinimalisticPForBody&) = default;
+    ~MinimalisticPForBody() = default;
+
+    void operator()(MinimalisticRange&) const {}
+
+    MinimalisticPForBody() = delete;
+    MinimalisticPForBody& operator=(const MinimalisticPForBody&) = delete;
+
+    static MinimalisticPForBody build() { return MinimalisticPForBody(CreateFlag{}); }
+private:
+    MinimalisticPForBody(CreateFlag) {}
+}; // struct MinimalisticPForBody
+
+struct MinimalisticPForIndex {
+    MinimalisticPForIndex(int v) : real_index(v) {}
+    MinimalisticPForIndex(const MinimalisticPForIndex&) = default;
+    ~MinimalisticPForIndex() = default;
+
+    MinimalisticPForIndex& operator=(const MinimalisticPForIndex&) = default;
+
+    bool operator<(const MinimalisticPForIndex& other) const { return real_index < other.real_index; }
+    std::size_t operator-(const MinimalisticPForIndex& other) const { return real_index - other.real_index; }
+
+    MinimalisticPForIndex operator+(std::size_t) const { return *this; }
+
+    MinimalisticPForIndex() = delete;
+
+    // Extra
+    bool operator<=(const MinimalisticPForIndex& other) const { return real_index <= other.real_index; }
+    MinimalisticPForIndex operator/(const MinimalisticPForIndex& other) const { return MinimalisticPForIndex(real_index / other.real_index); }
+    MinimalisticPForIndex operator*(const MinimalisticPForIndex& other) const { return MinimalisticPForIndex(real_index * other.real_index); }
+    MinimalisticPForIndex operator+(const MinimalisticPForIndex& other) const { return MinimalisticPForIndex(real_index + other.real_index); }
+    MinimalisticPForIndex& operator+=(const MinimalisticPForIndex& other) { real_index += other.real_index; return *this; }
+    MinimalisticPForIndex& operator++() { ++real_index; return *this; }
+
+private:
+    std::size_t real_index;
+}; // struct MinimalisticPForIndex
+
+struct MinimalisticPForFunc {
+    void operator()(MinimalisticPForIndex) const {}
+
+    MinimalisticPForFunc() = delete;
+    MinimalisticPForFunc(const MinimalisticPForFunc&) = delete;
+
+    MinimalisticPForFunc& operator=(const MinimalisticPForFunc&) = delete;
+
+    static MinimalisticPForFunc* build_ptr() {
+        MinimalisticPForFunc* ptr = static_cast<MinimalisticPForFunc*>(::operator new(sizeof(MinimalisticPForFunc)));
+        ::new(ptr) MinimalisticPForFunc(CreateFlag{});
+        return ptr;
+    }
+
+    static void eliminate(MinimalisticPForFunc* ptr) {
+        ptr->~MinimalisticPForFunc();
+        ::operator delete(ptr);
+    }
+private:
+    MinimalisticPForFunc(CreateFlag) {}
+    // ParallelForFunc is not required to be destructible
+    // We need to check that parallel_for does not use the destructor
+    ~MinimalisticPForFunc() = default;
+}; // struct MinimalisticPForFunc
+
+template <typename... Args>
+void run_parallel_for_overloads(const Args&... args) {
+    oneapi::tbb::affinity_partitioner aff;
+    oneapi::tbb::task_group_context ctx;
+
+    oneapi::tbb::parallel_for(args...);
+    oneapi::tbb::parallel_for(args..., oneapi::tbb::simple_partitioner{});
+    oneapi::tbb::parallel_for(args..., oneapi::tbb::auto_partitioner{});
+    oneapi::tbb::parallel_for(args..., oneapi::tbb::static_partitioner{});
+    oneapi::tbb::parallel_for(args..., aff);
+
+    oneapi::tbb::parallel_for(args..., ctx);
+    oneapi::tbb::parallel_for(args..., oneapi::tbb::simple_partitioner{}, ctx);
+    oneapi::tbb::parallel_for(args..., oneapi::tbb::auto_partitioner{}, ctx);
+    oneapi::tbb::parallel_for(args..., oneapi::tbb::static_partitioner{}, ctx);
+    oneapi::tbb::parallel_for(args..., aff, ctx);
+}
+
 //! Test simple parallel_for with different partitioners
 //! \brief \ref interface \ref requirement
 TEST_CASE("Basic parallel_for") {
@@ -312,4 +396,19 @@ TEST_CASE("Testing parallel_for with partitioners") {
 
     parallel_for(Range1(true, false), b, oneapi::tbb::static_partitioner());
     parallel_for(Range6(false, true), b, oneapi::tbb::static_partitioner());
+}
+
+//! Testing parallel_for named requirements
+//! \brief \ref interface \ref requirement
+TEST_CASE("Testing parallel_for named requirements") {
+    MinimalisticRange range = MinimalisticRange::build();
+    MinimalisticPForBody body = MinimalisticPForBody::build();
+    MinimalisticPForFunc* func_ptr = MinimalisticPForFunc::build_ptr();
+    MinimalisticPForIndex index(1);
+
+    run_parallel_for_overloads(range, body);
+    run_parallel_for_overloads(index, index, *func_ptr);
+    run_parallel_for_overloads(index, index, index, *func_ptr);
+
+    MinimalisticPForFunc::eliminate(func_ptr);
 }
