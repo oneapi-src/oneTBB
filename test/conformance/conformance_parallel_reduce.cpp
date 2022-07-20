@@ -16,6 +16,7 @@
 
 #include "common/parallel_reduce_common.h"
 #include "common/concurrency_tracker.h"
+#include "common/named_requirements_test.h"
 
 #include "../tbb/test_partitioner.h"
 
@@ -90,6 +91,77 @@ void TestDeterministicReductionFor() {
     }
 }
 
+struct MinimalisticReduceFunc {
+    MinimalisticReduceValue operator()(const MinimalisticRange&, const MinimalisticReduceValue& x) const { return x; }
+
+    MinimalisticReduceFunc() = delete;
+    MinimalisticReduceFunc(const MinimalisticReduceFunc&) = delete;
+    MinimalisticReduceFunc& operator=(const MinimalisticReduceFunc&) = delete;
+
+    static MinimalisticReduceFunc* build_ptr() {
+        MinimalisticReduceFunc* ptr = static_cast<MinimalisticReduceFunc*>(::operator new(sizeof(MinimalisticReduceFunc)));
+        ::new(ptr) MinimalisticReduceFunc(CreateFlag{});
+        return ptr;
+    }
+
+    static void eliminate(MinimalisticReduceFunc* ptr) {
+        ptr->~MinimalisticReduceFunc();
+        ::operator delete(ptr);
+    }
+private:
+    MinimalisticReduceFunc(CreateFlag) {}
+    ~MinimalisticReduceFunc() = default;
+}; // struct MinimalisticReduceFunc
+
+struct MinimalisticReduceBody {
+    MinimalisticReduceBody(MinimalisticReduceBody&, oneapi::tbb::split) {}
+    ~MinimalisticReduceBody() = default;
+
+    void operator()(const MinimalisticRange&) {}
+
+    void join(MinimalisticReduceBody&) {}
+
+    MinimalisticReduceBody() = delete;
+    MinimalisticReduceBody(const MinimalisticReduceBody&) = delete;
+    MinimalisticReduceBody& operator=(const MinimalisticReduceBody&) = delete;
+
+    static MinimalisticReduceBody build() { return MinimalisticReduceBody(CreateFlag{}); }
+private:
+    MinimalisticReduceBody(CreateFlag) {}
+}; // struct MinimalisticReduceBody
+
+template <typename... Args>
+void run_parallel_reduce_overloads(const Args&... args) {
+    // oneapi::tbb::affinity_partitioner aff;
+    // oneapi::tbb::task_group_context ctx;
+
+    results.emplace_back(oneapi::tbb::parallel_reduce(args...));
+    // results.emplace_back(oneapi::tbb::parallel_reduce(args..., oneapi::tbb::simple_partitioner{}));
+    // results.emplace_back(oneapi::tbb::parallel_reduce(args..., oneapi::tbb::auto_partitioner{}));
+    // results.emplace_back(oneapi::tbb::parallel_reduce(args..., oneapi::tbb::static_partitioner{}));
+    // results.emplace_back(oneapi::tbb::parallel_reduce(args..., aff));
+
+    // results.emplace_back(oneapi::tbb::parallel_reduce(args..., ctx));
+    // results.emplace_back(oneapi::tbb::parallel_reduce(args..., oneapi::tbb::simple_partitioner{}, ctx));
+    // results.emplace_back(oneapi::tbb::parallel_reduce(args..., oneapi::tbb::auto_partitioner{}, ctx));
+    // results.emplace_back(oneapi::tbb::parallel_reduce(args..., oneapi::tbb::static_partitioner{}, ctx));
+    // results.emplace_back(oneapi::tbb::parallel_reduce(args..., aff, ctx));
+}
+
+template <typename... Args>
+void run_parallel_deterministic_reduce_overloads(const Args&... args) {
+    // oneapi::tbb::affinity_partitioner aff;
+    // oneapi::tbb::task_group_context ctx;
+
+    // oneapi::tbb::parallel_deterministic_reduce(args...);
+    // onepai::tbb::parallel_deterministic_reduce(args..., oneapi::tbb::simple_partitioner{});
+    // onepai::tbb::parallel_deterministic_reduce(args..., oneapi::tbb::static_partitioner{});
+
+    // oneapi::tbb::parallel_deterministic_reduce(args..., ctx);
+    // onepai::tbb::parallel_deterministic_reduce(args..., oneapi::tbb::simple_partitioner{}, ctx);
+    // onepai::tbb::parallel_deterministic_reduce(args..., oneapi::tbb::static_partitioner{}, ctx);
+}
+
 //! Test that deterministic reduction returns the same result during several measurements
 //! \brief \ref requirement \ref interface
 TEST_CASE("Test deterministic reduce correctness") {
@@ -129,4 +201,24 @@ TEST_CASE("Test partitioners interaction with various ranges") {
         parallel_deterministic_reduce(Range1(/*assert_in_split*/false, /*assert_in_proportional_split*/ true), body, oneapi::tbb::simple_partitioner());
         parallel_deterministic_reduce(Range6(false, true), body, oneapi::tbb::simple_partitioner());
     }
+}
+
+//! Testing parallel_reduce and parallel_deterministic_reduce named requirements
+//! \brief \ref interface \ref requirement
+TEST_CASE("Testing parallel_[deterministic_]reduce named requirements") {
+    MinimalisticRange range = MinimalisticRange::build();
+    MinimalisticReduceBody body = MinimalisticReduceBody::build();
+    MinimalisticValue* value_ptr = MinimalisticValue::build_ptr();
+    MinimalisticReduceFunc* func_ptr = MinimalisticReduceFunc::build_ptr();
+    MinimalisticReduction* reduction_ptr = MinimalisticReduction::build_ptr();
+
+    run_parallel_reduce_overloads(range, body);
+    run_parallel_reduce_overloads(range, *value_ptr, *func_ptr, *reduction_ptr);
+
+    run_parallel_deterministic_reduce_overloads(range, body);
+    run_parallel_deterministic_reduce_overloads(range, *value_ptr, *func_ptr, *reduction_ptr);
+
+    MinimalisticValue::eliminate(value_ptr);
+    MinimalisticReduceFunc::eliminate(func_ptr);
+    MinimalisticReduction::eliminate(reduction_ptr);
 }
