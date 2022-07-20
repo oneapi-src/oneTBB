@@ -136,7 +136,7 @@ void threading_control::set_active_num_workers(unsigned soft_limit) {
     threading_control* thr_control = get_threading_control(/*public = */ false);
     if (thr_control != nullptr) {
         __TBB_ASSERT(soft_limit <= thr_control->my_thread_dispatcher->my_num_workers_hard_limit, nullptr);
-        thr_control->my_concurrency_tracker->set_active_num_workers(soft_limit);
+        thr_control->my_thread_request_serializer->set_active_num_workers(soft_limit);
         thr_control->my_permit_manager->set_active_num_workers(soft_limit);
         thr_control->release(/*is_public=*/false, /*blocking_terminate=*/false);
     }
@@ -148,7 +148,7 @@ bool threading_control::check_client_priority(threading_control_client client) {
 
 void threading_control::adjust_demand(threading_control_client tc_client, int mandatory_delta, int workers_delta) {
     pm_client& c = *static_cast<pm_client*>(tc_client.my_permit_manager_client);
-    my_concurrency_tracker->register_mandatory_request(mandatory_delta);
+    my_thread_request_serializer->register_mandatory_request(mandatory_delta);
     my_permit_manager->adjust_demand(c, mandatory_delta, workers_delta);
 }
 
@@ -177,9 +177,7 @@ threading_control* threading_control::create_threading_control() {
         thr_control->my_permit_manager = make_permit_manager(workers_soft_limit);
         thr_control->my_thread_dispatcher = make_thread_dispatcher(thr_control, workers_soft_limit, workers_hard_limit);
         thr_control->my_thread_request_serializer =
-            d1::make_cache_aligned_unique<thread_request_serializer>(*thr_control->my_thread_dispatcher, workers_soft_limit);
-        thr_control->my_concurrency_tracker =
-            d1::make_cache_aligned_unique<concurrency_tracker>(*thr_control->my_thread_request_serializer.get());
+            d1::make_cache_aligned_unique<thread_request_serializer_proxy>(*thr_control->my_thread_dispatcher, workers_soft_limit);
         thr_control->my_permit_manager->set_thread_request_observer(*thr_control->my_thread_request_serializer);
 
         thr_control->my_cancellation_disseminator = d1::make_cache_aligned_unique<cancellation_disseminator>();

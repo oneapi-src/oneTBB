@@ -82,10 +82,10 @@ public:
     thread_request_serializer(thread_dispatcher& td, int soft_limit);
     void set_active_num_workers(int soft_limit);
     bool is_no_workers_avaliable() { return my_soft_limit == 0; }
+    void update(int delta) override;
 
 private:
     static int limit_delta(int delta, int limit, int new_value);
-    void update(int delta) override;
 
     thread_dispatcher& my_thread_dispatcher;
     int my_soft_limit{};
@@ -96,10 +96,10 @@ private:
     mutex_type my_mutex;
 };
 
-class concurrency_tracker {
+class thread_request_serializer_proxy : public thread_request_observer {
     using mutex_type = d1::rw_mutex;
 public:
-    concurrency_tracker(thread_request_serializer& serializer) : my_serializer(serializer) {}
+    thread_request_serializer_proxy(thread_dispatcher& td, int soft_limit) : my_serializer(td, soft_limit) {}
 
     void register_mandatory_request(int mandatory_delta) {
         if (mandatory_delta != 0) {
@@ -126,6 +126,10 @@ public:
     }
 
 private:
+    void update(int delta) override {
+        my_serializer.update(delta);
+    }
+
     void try_enable_mandatory_concurrency(mutex_type::scoped_lock& lock, bool should_enable) {
         if (should_enable) {
             lock.upgrade_to_writer();
@@ -154,7 +158,7 @@ private:
 
     std::atomic<int> my_num_mandatory_requests{0};
     bool my_is_mandatory_concurrency_enabled{false};
-    thread_request_serializer& my_serializer;
+    thread_request_serializer my_serializer;
     mutex_type my_mutex;
 };
 
@@ -358,8 +362,7 @@ private:
 
     d1::cache_aligned_unique_ptr<permit_manager> my_permit_manager{nullptr};
     d1::cache_aligned_unique_ptr<thread_dispatcher> my_thread_dispatcher{nullptr};
-    d1::cache_aligned_unique_ptr<thread_request_serializer> my_thread_request_serializer{nullptr};
-    d1::cache_aligned_unique_ptr<concurrency_tracker> my_concurrency_tracker{nullptr};
+    d1::cache_aligned_unique_ptr<thread_request_serializer_proxy> my_thread_request_serializer{nullptr};
     d1::cache_aligned_unique_ptr<cancellation_disseminator> my_cancellation_disseminator{nullptr};
 };
 
