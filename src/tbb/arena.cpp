@@ -138,10 +138,10 @@ void arena::on_thread_leaving(unsigned ref_param) {
     }
 
     threading_control* tc = my_threading_control;
-    client_deleter tc_client_deleter = tc->prepare_destroy(my_tc_client);
-    // Release our reference to sync with arena destroy
+    client_deleter tc_client_deleter = tc->prepare_client_destruction(my_tc_client);
+    // Release our reference to sync with destroy_client
     unsigned remaining_ref = my_references.fetch_sub(ref_param, std::memory_order_release) - ref_param;
-    // do not access `this`
+    // do not access `this` it might be destroyed already
     if (remaining_ref == 0) {
         if (tc->try_destroy_client(tc_client_deleter)) {
             // We are requested to destroy ourself
@@ -196,8 +196,6 @@ void arena::process(thread_data& tls) {
         return;
     }
 
-    my_tc_client.my_permit_manager_client->register_thread();
-
     __TBB_ASSERT( index >= my_num_reserved_slots, "Workers cannot occupy reserved slots" );
     tls.attach_arena(*this, index);
     // worker thread enters the dispatch loop to look for a work
@@ -237,8 +235,6 @@ void arena::process(thread_data& tls) {
     __TBB_ASSERT(tls.my_inbox.is_idle_state(true), nullptr);
     __TBB_ASSERT(is_alive(my_guard), nullptr);
 
-    my_tc_client.my_permit_manager_client->unregister_thread();
-
     // In contrast to earlier versions of TBB (before 3.0 U5) now it is possible
     // that arena may be temporarily left unpopulated by threads. See comments in
     // arena::on_thread_leaving() for more details.
@@ -246,12 +242,11 @@ void arena::process(thread_data& tls) {
     __TBB_ASSERT(tls.my_arena == this, "my_arena is used as a hint when searching the arena to join");
 }
 
-// arena::arena (permit_manager& m, unsigned num_slots, unsigned num_reserved_slots, unsigned priority_level)
-arena::arena(threading_control& control, unsigned num_slots, unsigned num_reserved_slots, unsigned priority_level) {
+arena::arena(threading_control* control, unsigned num_slots, unsigned num_reserved_slots, unsigned priority_level) {
     __TBB_ASSERT( !my_guard, "improperly allocated arena?" );
     __TBB_ASSERT( sizeof(my_slots[0]) % cache_line_size()==0, "arena::slot size not multiple of cache line size" );
     __TBB_ASSERT( is_aligned(this, cache_line_size()), "arena misaligned" );
-    my_threading_control = &control;
+    my_threading_control = control;
     my_limit = 1;
     // Two slots are mandatory: for the external thread, and for 1 worker (required to support starvation resistant tasks).
     my_num_slots = num_arena_slots(num_slots);
@@ -285,7 +280,7 @@ arena::arena(threading_control& control, unsigned num_slots, unsigned num_reserv
     my_mandatory_concurrency.clear();
 }
 
-arena& arena::allocate_arena(threading_control& control, unsigned num_slots, unsigned num_reserved_slots,
+arena& arena::allocate_arena(threading_control* control, unsigned num_slots, unsigned num_reserved_slots,
                               unsigned priority_level)
 {
     __TBB_ASSERT( sizeof(base_type) + sizeof(arena_slot) == sizeof(arena), "All arena data fields must go to arena_base" );
@@ -351,7 +346,7 @@ void arena::request_workers(int mandatory_delta, int workers_delta) {
 
     if (mandatory_delta > 0 || workers_delta > 0) {
         // Notify all sleeping threads that work has appeared in the arena.
-        governor::get_wait_list().notify([&] (market_context context) {
+        get_waiting_threads_monitor().notify([&] (market_context context) {
             return this == context.my_arena_addr;
         });
     }
@@ -360,24 +355,23 @@ void arena::request_workers(int mandatory_delta, int workers_delta) {
 bool arena::is_arena_empty() {
     // TODO: rework it to return at least a hint about where a task was found; better if the task itself.
     std::size_t n = my_limit.load(std::memory_order_acquire);
-    for (std::size_t k = 0; k < n; ++k) {
-        if (my_slots[k].task_pool.load(std::memory_order_relaxed) != EmptyTaskPool &&
-            my_slots[k].head.load(std::memory_order_relaxed) < my_slots[k].tail.load(std::memory_order_relaxed))
-        {
-            return false;
-        }
+    bool no_available_tasks = true;
+    for (std::size_t k = 0; k < n && no_available_tasks; ++k) {
+        no_available_tasks = my_slots[k].is_empty();
     }
-    bool no_stream_tasks = !has_enqueued_tasks() && my_resume_task_stream.empty();
+    no_available_tasks = no_available_tasks && !has_enqueued_tasks() && my_resume_task_stream.empty();
 #if __TBB_PREVIEW_CRITICAL_TASKS
-    no_stream_tasks = no_stream_tasks && my_critical_task_stream.empty();
+    no_available_tasks = no_available_tasks && my_critical_task_stream.empty();
 #endif
-    return no_stream_tasks;
+    return no_available_tasks;
 }
 
 void arena::is_out_of_work() {
     bool disable_mandatory = false;
     bool release_workers = false;
 
+    // We should try unset my_pool_state first due to keep arena invariants in consistent state
+    // Otherwise, we might have my_pool_state = false and my_mandatory_concurrency = true that is broken invariant
     release_workers = my_pool_state.try_clear_if([this] { return is_arena_empty(); });
     disable_mandatory = my_mandatory_concurrency.try_clear_if([this] { return !has_enqueued_tasks(); });
 
@@ -397,6 +391,43 @@ bool arena::is_top_priority() {
     return my_threading_control->check_client_priority(my_tc_client);
 }
 
+bool arena::try_join() {
+    if (num_workers_active() < my_num_workers_allotted.load(std::memory_order_relaxed)) {
+        my_references += arena::ref_worker;
+        return true;
+    }
+    return false;
+}
+
+void arena::set_allotment(unsigned allotment) {
+    if (my_num_workers_allotted.load(std::memory_order_relaxed) != allotment) {
+        my_num_workers_allotted.store(allotment, std::memory_order_relaxed);
+    }
+}
+
+std::pair<int, int> arena::update_request(int mandatory_delta, int workers_delta) {
+    __TBB_ASSERT(-1 <= mandatory_delta && mandatory_delta <= 1, nullptr);
+
+    int min_workers_request = 0;
+    int max_workers_request = 0;
+
+    // Calculate min request
+    my_mandatory_requests += mandatory_delta;
+    min_workers_request = my_mandatory_requests > 0 ? 1 : 0;
+
+    // Calculate max request
+    my_total_num_workers_requested += workers_delta;
+    // Clamp worker request into interval [0, my_max_num_workers]
+    max_workers_request = clamp(my_total_num_workers_requested, 0,
+        min_workers_request > 0 && is_arena_workerless() ? 1 : (int)my_max_num_workers);
+
+    return { min_workers_request, max_workers_request };
+}
+
+thread_control_monitor& arena::get_waiting_threads_monitor() {
+    return my_threading_control->get_waiting_threads_monitor();
+}
+
 void arena::enqueue_task(d1::task& t, d1::task_group_context& ctx, thread_data& td) {
     task_group_context_impl::bind_to(ctx, &td);
     task_accessor::context(t) = &ctx;
@@ -410,19 +441,11 @@ arena& arena::create(threading_control* control, int num_slots, int num_reserved
     __TBB_ASSERT(num_slots > 0, NULL);
     __TBB_ASSERT(num_reserved_slots <= num_slots, NULL);
     // Add public market reference for an external thread/task_arena (that adds an internal reference in exchange).
-    arena& a = arena::allocate_arena(*control, num_slots, num_reserved_slots, arena_priority_level);
+    arena& a = arena::allocate_arena(control, num_slots, num_reserved_slots, arena_priority_level);
     a.my_tc_client = control->create_client(a);
     // We should not publish arena until all fields are initialized
     control->publish_client(a.my_tc_client);
     return a;
-}
-
-int arena::update_concurrency(int concurrency) {
-    int delta = concurrency - static_cast<int>(my_num_workers_allotted.load(std::memory_order_relaxed));
-    if (delta != 0) {
-        my_num_workers_allotted.store(concurrency, std::memory_order_relaxed);
-    }
-    return delta;
 }
 
 } // namespace r1
@@ -597,7 +620,7 @@ public:
             // If the calling thread occupies the slots out of external thread reserve we need to notify the
             // market that this arena requires one worker less.
             if (td.my_arena_index >= td.my_arena->my_num_reserved_slots) {
-                td.my_arena->my_threading_control->adjust_demand(td.my_arena->my_tc_client, /* delta = */ -1, /* mandatory = */ false);
+                td.my_arena->request_workers(/* mandatory_delta = */ 0, /* workers_delta = */ -1);
             }
 
             td.my_last_observer = nullptr;
@@ -633,7 +656,7 @@ public:
             // Notify the market that this thread releasing a one slot
             // that can be used by a worker thread.
             if (td.my_arena_index >= td.my_arena->my_num_reserved_slots) {
-                td.my_arena->my_threading_control->adjust_demand(td.my_arena->my_tc_client, /* delta = */ 1, /* mandatory = */ false);
+                td.my_arena->request_workers(/* mandatory_delta = */ 0, /* workers_delta = */ 1);
             }
 
             td.leave_task_dispatcher();

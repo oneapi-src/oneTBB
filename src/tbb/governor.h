@@ -29,7 +29,6 @@ namespace r1 {
 class market;
 class thread_data;
 class __TBB_InitOnce;
-class market_concurrent_monitor;
 class thread_dispatcher;
 class threading_control;
 
@@ -50,7 +49,6 @@ typedef std::size_t stack_size_type;
 class governor {
 private:
     friend class __TBB_InitOnce;
-    friend class market;
     friend class thread_dispatcher;
     friend class threading_control;
 
@@ -66,8 +64,6 @@ private:
     // Flags for runtime-specific conditions
     static cpu_features_type cpu_features;
     static bool is_rethrow_broken;
-
-    static market_concurrent_monitor* sleep_monitor;
 
     //! Create key for thread-local storage and initialize RML.
     static void acquire_resources ();
@@ -152,11 +148,6 @@ public:
 #else
         return false;
 #endif
-    }
-
-    //! Return wait list
-    static market_concurrent_monitor& get_wait_list() { 
-        return *sleep_monitor;
     }
 }; // class governor
 

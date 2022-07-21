@@ -22,6 +22,7 @@
 
 #include "oneapi/tbb/detail/_task.h"
 #include "oneapi/tbb/detail/_utils.h"
+#include "oneapi/tbb/spin_mutex.h"
 
 #include "scheduler_common.h"
 #include "intrusive_list.h"
@@ -32,10 +33,7 @@
 #include "governor.h"
 #include "concurrent_monitor.h"
 #include "observer_proxy.h"
-#include "oneapi/tbb/spin_mutex.h"
-#include "market_concurrent_monitor.h"
-
-#include "permit_manager.h"
+#include "thread_control_monitor.h"
 
 namespace tbb {
 namespace detail {
@@ -43,15 +41,10 @@ namespace r1 {
 
 class task_dispatcher;
 class thread_dispatcher_client;
-class pm_client_interface;
+class pm_client;
 class task_group_context;
 class threading_control;
 class allocate_root_with_context_proxy;
-
-struct threading_control_client {
-    pm_client_interface* my_permit_manager_client;
-    thread_dispatcher_client* my_thread_dispatcher_client;
-};
 
 #if __TBB_ARENA_BINDING
 class numa_binding_observer;
@@ -194,8 +187,7 @@ public:
 /** Separated in order to simplify padding.
     Intrusive list node base class is used by market to form a list of arenas. **/
 // TODO: Analyze arena_base cache lines placement
-class arena_base : padded<intrusive_list_node> {
-protected:
+struct arena_base : padded<intrusive_list_node> {
     //! The number of workers that have been marked out by the resource manager to service the arena.
     std::atomic<unsigned> my_num_workers_allotted;   // heavy use in stealing loop
 
@@ -269,7 +261,7 @@ protected:
     //! The number of workers requested by the external thread owning the arena.
     unsigned my_max_num_workers;
 
-    threading_control_client my_tc_client;
+    std::pair<pm_client*, thread_dispatcher_client*> my_tc_client;
 
 #if TBB_USE_ASSERT
     //! Used to trap accesses to the object after its destruction.
@@ -279,24 +271,6 @@ protected:
 
 class arena: public padded<arena_base>
 {
-    friend class waiter_base;
-    friend class outermost_worker_waiter;
-    friend class sleep_waiter;
-    friend class task_dispatcher;
-    friend void observe(d1::task_scheduler_observer& tso, bool enable);
-    friend struct suspend_point_type;
-    friend void resume(suspend_point_type* sp);
-    friend task_dispatcher& create_coroutine(thread_data& td);
-    friend void spawn(d1::task& t, d1::task_group_context& ctx, d1::slot_id id);
-    friend void submit(d1::task& t, d1::task_group_context& ctx, arena* a, std::uintptr_t as_critical);
-    friend class governor;
-    friend struct task_group_context_impl;
-    friend struct task_arena_impl;
-    friend class nested_arena_context;
-    friend class thread_data;
-    friend class delegated_task;
-    friend void notify_waiters(std::uintptr_t wait_ctx_addr);
-
 public:
     using base_type = padded<arena_base>;
 
@@ -308,20 +282,19 @@ public:
     };
 
     //! Constructor
-    // arena (permit_manager& m, unsigned max_num_workers, unsigned num_reserved_slots, unsigned priority_level);
-    arena (threading_control& control, unsigned max_num_workers, unsigned num_reserved_slots, unsigned priority_level);
+    arena(threading_control* control, unsigned max_num_workers, unsigned num_reserved_slots, unsigned priority_level);
 
     //! Allocate an instance of arena.
-    static arena& allocate_arena(threading_control& control, unsigned num_slots, unsigned num_reserved_slots,
+    static arena& allocate_arena(threading_control* control, unsigned num_slots, unsigned num_reserved_slots,
                                   unsigned priority_level);
 
     static arena& create(threading_control* control, int num_slots, int num_reserved_slots, unsigned arena_priority_level);
 
-    static int unsigned num_arena_slots ( unsigned num_slots ) {
+    static int unsigned num_arena_slots( unsigned num_slots ) {
         return max(2u, num_slots);
     }
 
-    static int allocation_size ( unsigned num_slots ) {
+    static int allocation_size( unsigned num_slots ) {
         return sizeof(base_type) + num_slots * (sizeof(mail_outbox) + sizeof(arena_slot) + sizeof(task_dispatcher));
     }
 
@@ -333,7 +306,7 @@ public:
     }
 
     //! Completes arena shutdown, destructs and deallocates it.
-    void free_arena ();
+    void free_arena();
 
     //! The number of least significant bits for external references
     static const unsigned ref_external_bits = 12; // up to 4095 external and 1M workers
@@ -388,6 +361,8 @@ public:
     //! Check for the presence of any tasks
     bool is_arena_empty();
 
+    thread_control_monitor& get_waiting_threads_monitor();
+
     static const std::size_t out_of_arena = ~size_t(0);
     //! Tries to occupy a slot in the arena. On success, returns the slot index; if no slot is available, returns out_of_arena.
     template <bool as_worker>
@@ -397,73 +372,27 @@ public:
 
     std::uintptr_t calculate_stealing_threshold();
 
-    unsigned priority_level() {
-        return my_priority_level;
-    }
+    unsigned priority_level() { return my_priority_level; }
 
-    int has_request() {
-        return my_total_num_workers_requested;
-    }
+    int has_request() { return my_total_num_workers_requested; }
 
-    bool is_mandatory_request() {
-        return my_mandatory_requests > 0;
-    }
+    unsigned references() { return my_references.load(std::memory_order_acquire); }
 
-    unsigned references() {
-        return my_references.load(std::memory_order_acquire);
-    }
-
-    bool is_arena_workerless() {
-        return my_max_num_workers == 0;
-    }
+    bool is_arena_workerless() { return my_max_num_workers == 0; }
 
     bool is_top_priority();
 
-    bool try_join() {
-        if (num_workers_active() < my_num_workers_allotted.load(std::memory_order_relaxed)) {
-            my_references += arena::ref_worker;
-            return true;
-        }
-        return false;
-    }
+    bool try_join();
 
-    void set_allotment(unsigned allotment) {
-        if (my_num_workers_allotted.load(std::memory_order_relaxed) != allotment) {
-            my_num_workers_allotted.store(allotment, std::memory_order_relaxed);
-        }
-    }
+    void set_allotment(unsigned allotment);
 
-    int update_concurrency(int concurrency);
-
-    std::pair<int, int> update_request(int mandatory_delta, int workers_delta) {
-        __TBB_ASSERT(-1 <= mandatory_delta && mandatory_delta <= 1, nullptr);
-
-        int min_workers_request = 0;
-        int max_workers_request = 0;
-
-        // Calculate min request
-        my_mandatory_requests += mandatory_delta;
-        min_workers_request = my_mandatory_requests > 0 ? 1 : 0;
-
-        // Calculate max request
-        my_total_num_workers_requested += workers_delta;
-        // Clamp worker request into interval [0, my_max_num_workers]
-        max_workers_request = clamp(my_total_num_workers_requested, 0,
-            min_workers_request > 0 && is_arena_workerless() ? 1 : (int)my_max_num_workers);
-
-        // Max request cannot be lower min request
-        //max_workers_request = max(max_workers_request, min_workers_request);
-
-        // __TBB_ASSERT(max_workers_request <= int(my_max_num_workers), nullptr);
-
-        return { min_workers_request, max_workers_request };
-    }
+    std::pair<int, int> update_request(int mandatory_delta, int workers_delta);
 
     /** Must be the last data field */
     arena_slot my_slots[1];
 }; // class arena
 
-template<arena::new_work_type work_type>
+template <arena::new_work_type work_type>
 void arena::advertise_new_work() {
     bool is_mandatory_needed = false;
     bool are_workers_needed = false;

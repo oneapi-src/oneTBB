@@ -32,11 +32,11 @@ void thread_dispatcher::acknowledge_close_connection() {
 
 ::rml::job* thread_dispatcher::create_one_job() {
     unsigned short index = ++my_first_unused_worker_idx;
-    __TBB_ASSERT( index > 0, nullptr);
+    __TBB_ASSERT(index > 0, nullptr);
     ITT_THREAD_SET_NAME(_T("TBB Worker Thread"));
     // index serves as a hint decreasing conflicts between workers when they migrate between arenas
-    thread_data* td = new(cache_aligned_allocate(sizeof(thread_data))) thread_data{ index, true };
-    __TBB_ASSERT( index <= my_num_workers_hard_limit, nullptr);
+    thread_data* td = new (cache_aligned_allocate(sizeof(thread_data))) thread_data{ index, true };
+    __TBB_ASSERT(index <= my_num_workers_hard_limit, nullptr);
     my_threading_control.register_thread(*td);
     return td;
 }

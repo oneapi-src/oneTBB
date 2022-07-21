@@ -169,6 +169,11 @@ public:
         return task_pool.load(std::memory_order_relaxed) != EmptyTaskPool;
     }
 
+    bool is_empty() const {
+        return task_pool.load(std::memory_order_relaxed) == EmptyTaskPool ||
+               head.load(std::memory_order_relaxed) >= tail.load(std::memory_order_relaxed);
+    }
+
     bool is_occupied() const {
         return my_is_occupied.load(std::memory_order_relaxed);
     }

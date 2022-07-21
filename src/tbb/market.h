@@ -30,13 +30,11 @@ namespace tbb {
 namespace detail {
 namespace r1 {
 
-class tbb_permit_manager_client;
-
 class market : public permit_manager {
 public:
     market(unsigned soft_limit);
 
-    pm_client* create_client(arena& a, constraints_type* constraints) override;
+    pm_client* create_client(arena& a) override;
     void register_client(pm_client* client) override;
     void destroy_client(pm_client& c) override;
 
@@ -46,33 +44,30 @@ public:
     //! Set number of active workers
     void set_active_num_workers(int soft_limit) override;
 private:
+    //! Recalculates the number of workers assigned to each arena in the list.
+    void update_allotment();
 
-    void check_clients();
     //! Keys for the arena map array. The lower the value the higher priority of the arena list.
     static constexpr unsigned num_priority_levels = 3;
 
     using mutex_type = d1::rw_mutex;
-
     mutex_type my_mutex;
 
     //! Current application-imposed limit on the number of workers
-    int my_num_workers_soft_limit;
+    int my_num_workers_soft_limit{0};
 
     //! Number of workers that were requested by all arenas on all priority levels
-    int my_total_demand;
+    int my_total_demand{0};
 
     //! Number of workers that were requested by arenas per single priority list item
-    int my_priority_level_demand[num_priority_levels];
+    int my_priority_level_demand[num_priority_levels] = {0};
 
     //! How many times mandatory concurrency was requested from the market
-    int my_mandatory_num_requested;
+    int my_mandatory_num_requested{0};
 
     //! Per priority list of registered arenas
-    using list_type = std::vector<tbb_permit_manager_client*, tbb::tbb_allocator<tbb_permit_manager_client*>>;
-    list_type my_clients[num_priority_levels];
-
-    //! Recalculates the number of workers assigned to each arena in the list.
-    void update_allotment();
+    using clients_container_type = std::vector<pm_client*, tbb::tbb_allocator<pm_client*>>;
+    clients_container_type my_clients[num_priority_levels];
 }; // class market
 
 } // namespace r1

@@ -132,8 +132,8 @@ bool timed_spin_wait_until(Condition condition) {
 }
 
 template <typename T>
-T clamp(T value, T low_bound, T high_bound) {
-    return value > low_bound ? (value > high_bound ? high_bound : value) : low_bound;
+T clamp(T value, T lower_bound, T higher_bound) {
+    return value > lower_bound ? (value > higher_bound ? higher_bound : value) : lower_bound;
 }
 
 template <typename T>

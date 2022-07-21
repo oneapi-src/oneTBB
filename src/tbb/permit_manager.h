@@ -27,12 +27,10 @@ namespace r1 {
 class arena;
 class pm_client;
 
-using constraints_type = void*;
-
 class permit_manager : no_copy {
 public:
     virtual ~permit_manager() {}
-    virtual pm_client* create_client(arena& a, constraints_type* constraints) = 0;
+    virtual pm_client* create_client(arena& a) = 0;
     virtual void register_client(pm_client* client) = 0;
     virtual void destroy_client(pm_client& c) = 0;
 
@@ -51,7 +49,7 @@ protected:
         }
     }
 private:
-    thread_request_observer* my_thread_request_observer;
+    thread_request_observer* my_thread_request_observer{nullptr};
 };
 
 

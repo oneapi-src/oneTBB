@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef _TBB_clients_H
-#define _TBB_clients_H
+#ifndef _TBB_thread_dispatcher_client_H
+#define _TBB_thread_dispatcher_client_H
 
 #include "oneapi/tbb/detail/_intrusive_list_node.h"
 #include "arena.h"
@@ -24,15 +24,10 @@ namespace tbb {
 namespace detail {
 namespace r1 {
 
-class arena;
-
-using mask_type = void*;
-
 class thread_dispatcher_client : public d1::intrusive_list_node /* Need for list in thread pool */ {
 public:
     thread_dispatcher_client(arena& a, std::uint64_t aba_epoch) : my_arena(a), my_aba_epoch(aba_epoch) {}
 
-    void apply_mask(mask_type mask) { suppress_unused_warning(mask); }
     // Interface of communication with thread pool
     bool try_join() {
         return my_arena.try_join();
@@ -67,6 +62,4 @@ private:
 } // namespace detail
 } // namespace tbb
 
-
-
-#endif // _TBB_clients_H
+#endif // _TBB_thread_dispatcher_client_H

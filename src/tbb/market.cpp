@@ -31,18 +31,6 @@ public:
     void set_allotment(unsigned allotment) {
         my_arena.set_allotment(allotment);
     }
-
-    //! The index in the array of per priority lists of arenas this object is in.
-    unsigned priority_level() {
-        return my_arena.priority_level();
-    }
-
-    void set_top_priority(bool b) {
-        return my_is_top_priority.store(b, std::memory_order_relaxed);
-    }
-
-    void register_thread() override {}
-    void unregister_thread() override {}
 };
 
 //------------------------------------------------------------------------
@@ -53,25 +41,24 @@ market::market(unsigned workers_soft_limit)
     : my_num_workers_soft_limit(workers_soft_limit)
 {}
 
-pm_client* market::create_client(arena& a, constraints_type*) {
+pm_client* market::create_client(arena& a) {
     return new (cache_aligned_allocate(sizeof(tbb_permit_manager_client))) tbb_permit_manager_client(a);
 }
 
 void market::register_client(pm_client* c) {
     mutex_type::scoped_lock lock(my_mutex);
-    auto client = static_cast<tbb_permit_manager_client*>(c);
-    my_clients[client->priority_level()].push_back(client);
+    my_clients[c->priority_level()].push_back(c);
 }
 
 void market::destroy_client(pm_client& c) {
-    auto client = static_cast<tbb_permit_manager_client*>(&c);
     {
         mutex_type::scoped_lock lock(my_mutex);
-        auto& clients = my_clients[client->priority_level()];
-        auto it = std::find(clients.begin(), clients.end(), client);
+        auto& clients = my_clients[c.priority_level()];
+        auto it = std::find(clients.begin(), clients.end(), &c);
         clients.erase(it);
     }
 
+    auto client = static_cast<tbb_permit_manager_client*>(&c);
     client->~tbb_permit_manager_client();
     cache_aligned_deallocate(client);
 }
@@ -88,8 +75,9 @@ void market::update_allotment() {
     for (unsigned list_idx = 0; list_idx < num_priority_levels; ++list_idx ) {
         int assigned_per_priority = min(my_priority_level_demand[list_idx], unassigned_workers);
         unassigned_workers -= assigned_per_priority;
+        // We use reverse iterator there to serve last added clients first
         for (auto it = my_clients[list_idx].rbegin(); it != my_clients[list_idx].rend(); ++it) {
-            tbb_permit_manager_client& client = **it;
+            tbb_permit_manager_client& client = static_cast<tbb_permit_manager_client&>(**it);
             if (client.max_workers() == 0) {
                 client.set_allotment(0);
                 continue;
@@ -128,16 +116,15 @@ void market::set_active_num_workers(int soft_limit) {
 void market::adjust_demand(pm_client& c, int mandatory_delta, int workers_delta) {
     __TBB_ASSERT(-1 <= mandatory_delta && mandatory_delta <= 1, nullptr);
 
-    auto& client = static_cast<tbb_permit_manager_client&>(c);
     int delta{};
     {
         mutex_type::scoped_lock lock(my_mutex);
         // Update client's state
-        delta = client.update_request(mandatory_delta, workers_delta);
+        delta = c.update_request(mandatory_delta, workers_delta);
 
         // Update makret's state
         my_total_demand += delta;
-        my_priority_level_demand[client.priority_level()] += delta;
+        my_priority_level_demand[c.priority_level()] += delta;
         my_mandatory_num_requested += mandatory_delta;
 
         update_allotment();

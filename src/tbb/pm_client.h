@@ -18,18 +18,26 @@
 #define _TBB_pm_client_H
 
 #include "arena.h"
-#include "pm_client_interface.h"
 
 namespace tbb {
 namespace detail {
 namespace r1 {
 
-class pm_client : public pm_client_interface {
+class pm_client {
 public:
     pm_client(arena& a) : my_arena(a) {}
 
+    //! The index in the array of per priority lists of arenas this object is in.
+    unsigned priority_level() {
+        return my_arena.priority_level();
+    }
+
     bool is_top_priority() {
         return my_is_top_priority.load(std::memory_order_relaxed);
+    }
+
+    void set_top_priority(bool b) {
+        return my_is_top_priority.store(b, std::memory_order_relaxed);
     }
 
     int min_workers() const {
@@ -63,11 +71,8 @@ protected:
     int my_max_workers{0};
 };
 
-
 } // namespace r1
 } // namespace detail
 } // namespace tbb
-
-
 
 #endif // _TBB_pm_client_H

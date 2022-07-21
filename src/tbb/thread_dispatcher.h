@@ -24,7 +24,7 @@
 #include "governor.h"
 #include "thread_data.h"
 #include "rml_tbb.h"
-#include "clients.h"
+#include "thread_dispatcher_client.h"
 
 namespace tbb {
 namespace detail {
@@ -68,6 +68,11 @@ public:
         return new (cache_aligned_allocate(sizeof(thread_dispatcher_client))) thread_dispatcher_client(a, my_clients_aba_epoch);
     }
 
+    void destroy_client(thread_dispatcher_client* client) {
+        client->~thread_dispatcher_client();
+        cache_aligned_deallocate(client);
+    }
+
     void register_client(thread_dispatcher_client* client) {
         client_list_mutex_type::scoped_lock lock(my_list_mutex);
         insert_client(*client);
@@ -88,20 +93,12 @@ public:
                     // if references is no zero some other thread might call adjust_demand and lead to
                     // a race over workers_requested
                     if (!client->references() && !client->has_request()) {
-                        /*__TBB_ASSERT(
-                            !a->my_num_workers_allotted.load(std::memory_order_relaxed) &&
-                            (a->my_pool_state == arena::SNAPSHOT_EMPTY || !a->my_max_num_workers),
-                            "Inconsistent arena state"
-                        );*/
-
-                        // Arena is abandoned. Destroy it.
+                        // Client is abandoned. Destroy it.
                         remove_client(*client);
                         ++my_clients_aba_epoch;
 
                         my_list_mutex.unlock();
-
-                        client->~thread_dispatcher_client();
-                        cache_aligned_deallocate(client);
+                        destroy_client(client);
 
                         return true;
                     }
@@ -146,7 +143,7 @@ public:
             return false;
         }
 
-        // Still cannot access internals of the arena since the object itself might be destroyed.
+        // Still cannot access internals of the client since the object itself might be destroyed.
         for (unsigned idx = 0; idx < num_priority_levels; ++idx) {
             if (is_client_in_list(my_client_list[idx], client)) {
                 return true;
@@ -156,7 +153,7 @@ public:
     }
 
     thread_dispatcher_client* client_in_need(client_list_type* clients, thread_dispatcher_client* hint) {
-        // TODO: make sure arena with higher priority returned only if there are available slots in it.
+        // TODO: make sure client with higher priority returned only if there are available slots in it.
         hint = select_next_client(hint);
         if (!hint) {
             return nullptr;
@@ -180,7 +177,6 @@ public:
         return nullptr;
     }
 
-
     thread_dispatcher_client* client_in_need(thread_dispatcher_client* prev) {
         client_list_mutex_type::scoped_lock lock(my_list_mutex, /*is_writer=*/false);
         if (is_client_alive(prev)) {
@@ -191,14 +187,14 @@ public:
 
     void process(job& j) override {
         thread_data& td = static_cast<thread_data&>(j);
-        // td.my_last_client can be dead. Don't access it until arena_in_need is called
+        // td.my_last_client can be dead. Don't access it until client_in_need is called
         thread_dispatcher_client* client = td.my_last_client;
         for (int i = 0; i < 2; ++i) {
             while ((client = client_in_need(client)) ) {
                 td.my_last_client = client;
                 client->process(td);
             }
-            // Workers leave thread_dispatcher because there is no arena in need. It can happen earlier than
+            // Workers leave thread_dispatcher because there is no client in need. It can happen earlier than
             // adjust_job_count_estimate() decreases my_slack and RML can put this thread to sleep.
             // It might result in a busy-loop checking for my_slack<0 and calling this method instantly.
             // the yield refines this spinning.
@@ -209,30 +205,24 @@ public:
     }
 
 
-    void cleanup(job& j) override;
-
-    void acknowledge_close_connection() override;
-
-    ::rml::job* create_one_job() override;
-
-
     //! Used when RML asks for join mode during workers termination.
     bool must_join_workers () const { return my_join_workers; }
 
     //! Returns the requested stack size of worker threads.
     std::size_t worker_stack_size() const { return my_stack_size; }
 
-    version_type version () const override { return 0; }
-
-    unsigned max_job_count () const override { return my_num_workers_hard_limit; }
-
-    std::size_t min_stack_size () const override { return worker_stack_size(); }
-
     void adjust_job_count_estimate(int delta) {
         my_server->adjust_job_count_estimate(delta);
     }
 
 private:
+    version_type version () const override { return 0; }
+    unsigned max_job_count () const override { return my_num_workers_hard_limit; }
+    std::size_t min_stack_size () const override { return worker_stack_size(); }
+    void cleanup(job& j) override;
+    void acknowledge_close_connection() override;
+    ::rml::job* create_one_job() override;
+
     friend class threading_control;
     static constexpr unsigned num_priority_levels = 3;
     client_list_mutex_type my_list_mutex;
@@ -245,11 +235,11 @@ private:
 
     threading_control& my_threading_control;
 
-    //! ABA prevention marker to assign to newly created arenas
+    //! ABA prevention marker to assign to newly created clients
     std::atomic<std::uint64_t> my_clients_aba_epoch{0};
 
     //! Maximal number of workers allowed for use by the underlying resource manager
-    /** It can't be changed after market creation. **/
+    /** It can't be changed after thread_dispatcher creation. **/
     unsigned my_num_workers_hard_limit{0};
 
     //! Stack size of worker threads

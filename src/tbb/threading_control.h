@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef _TBB_threading_cont_H
-#define _TBB_threading_cont_H
+#ifndef _TBB_threading_control_H
+#define _TBB_threading_control_H
 
 #include "oneapi/tbb/mutex.h"
 #include "oneapi/tbb/rw_mutex.h"
@@ -65,7 +65,7 @@ private:
     using threads_list_mutex_type = d1::mutex;
 
     threads_list_mutex_type my_threads_list_mutex;
-    thread_data_list_type my_threads_list{};
+    thread_data_list_type my_threads_list;
 };
 
 struct client_deleter {
@@ -164,12 +164,13 @@ private:
 
 class threading_control {
 public:
-    using global_mutex_type = d1::mutex;
+    using threading_control_client = std::pair<pm_client*, thread_dispatcher_client*>;
 
     threading_control() : my_public_ref_count(1), my_ref_count(1)
     {}
 
 private:
+    using global_mutex_type = d1::mutex;
     void add_ref(bool is_public) {
         ++my_ref_count;
         if (is_public) {
@@ -288,7 +289,7 @@ public:
 
     threading_control_client create_client(arena& a);
 
-    client_deleter prepare_destroy(threading_control_client client);
+    client_deleter prepare_client_destruction(threading_control_client client);
     bool try_destroy_client(client_deleter deleter);
 
     void publish_client(threading_control_client client);
@@ -346,6 +347,10 @@ public:
 
     void update_worker_request(int delta);
 
+    thread_control_monitor& get_waiting_threads_monitor() { 
+        return *my_waiting_threads_monitor;
+    }
+
 private:
     friend class thread_dispatcher;
 
@@ -364,6 +369,7 @@ private:
     d1::cache_aligned_unique_ptr<thread_dispatcher> my_thread_dispatcher{nullptr};
     d1::cache_aligned_unique_ptr<thread_request_serializer_proxy> my_thread_request_serializer{nullptr};
     d1::cache_aligned_unique_ptr<cancellation_disseminator> my_cancellation_disseminator{nullptr};
+    d1::cache_aligned_unique_ptr<thread_control_monitor> my_waiting_threads_monitor{nullptr};
 };
 
 } // r1
@@ -371,4 +377,4 @@ private:
 } // tbb
 
 
-#endif // _TBB_threading_cont_H
+#endif // _TBB_threading_control_H

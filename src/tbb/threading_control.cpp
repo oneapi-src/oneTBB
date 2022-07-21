@@ -20,7 +20,7 @@
 #include "market.h"
 #include "thread_dispatcher.h"
 #include "governor.h"
-#include "clients.h"
+#include "thread_dispatcher_client.h"
 
 namespace tbb {
 namespace detail {
@@ -92,21 +92,21 @@ bool threading_control::release(bool is_public, bool blocking_terminate) {
     return false;
 }
 
-threading_control_client threading_control::create_client(arena& a) {
+threading_control::threading_control_client threading_control::create_client(arena& a) {
     {
         global_mutex_type::scoped_lock lock(g_threading_control_mutex);
         add_ref(/*public = */ false);
     }
 
-    pm_client* pm_client = my_permit_manager->create_client(a, nullptr);
+    pm_client* pm_client = my_permit_manager->create_client(a);
     thread_dispatcher_client* td_client = my_thread_dispatcher->create_client(a);
 
     return {pm_client, td_client};
 }
 
-client_deleter threading_control::prepare_destroy(threading_control_client client) {
-    thread_dispatcher_client* td_client = client.my_thread_dispatcher_client;
-    return {td_client->get_aba_epoch(), td_client->priority_level(), td_client, static_cast<pm_client*>(client.my_permit_manager_client)};
+client_deleter threading_control::prepare_client_destruction(threading_control::threading_control_client client) {
+    thread_dispatcher_client* td_client = client.second;
+    return {td_client->get_aba_epoch(), td_client->priority_level(), td_client, static_cast<pm_client*>(client.first)};
 }
 
 bool threading_control::try_destroy_client(client_deleter deleter) {
@@ -118,9 +118,9 @@ bool threading_control::try_destroy_client(client_deleter deleter) {
     return false;
 }
 
-void threading_control::publish_client(threading_control_client client) {
-    my_permit_manager->register_client(static_cast<pm_client*>(client.my_permit_manager_client));
-    my_thread_dispatcher->register_client(client.my_thread_dispatcher_client);
+void threading_control::publish_client(threading_control::threading_control_client client) {
+    my_permit_manager->register_client(static_cast<pm_client*>(client.first));
+    my_thread_dispatcher->register_client(client.second);
 }
 
 std::size_t threading_control::worker_stack_size() {
@@ -142,12 +142,12 @@ void threading_control::set_active_num_workers(unsigned soft_limit) {
     }
 }
 
-bool threading_control::check_client_priority(threading_control_client client) {
-    return static_cast<pm_client*>(client.my_permit_manager_client)->is_top_priority();
+bool threading_control::check_client_priority(threading_control::threading_control_client client) {
+    return static_cast<pm_client*>(client.first)->is_top_priority();
 }
 
-void threading_control::adjust_demand(threading_control_client tc_client, int mandatory_delta, int workers_delta) {
-    pm_client& c = *static_cast<pm_client*>(tc_client.my_permit_manager_client);
+void threading_control::adjust_demand(threading_control::threading_control_client tc_client, int mandatory_delta, int workers_delta) {
+    pm_client& c = *static_cast<pm_client*>(tc_client.first);
     my_thread_request_serializer->register_mandatory_request(mandatory_delta);
     my_permit_manager->adjust_demand(c, mandatory_delta, workers_delta);
 }
@@ -181,6 +181,7 @@ threading_control* threading_control::create_threading_control() {
         thr_control->my_permit_manager->set_thread_request_observer(*thr_control->my_thread_request_serializer);
 
         thr_control->my_cancellation_disseminator = d1::make_cache_aligned_unique<cancellation_disseminator>();
+        thr_control->my_waiting_threads_monitor = d1::make_cache_aligned_unique<thread_control_monitor>();
         __TBB_InitOnce::add_ref();
 
         if (global_control_active_value_unsafe(global_control::scheduler_handle)) {
