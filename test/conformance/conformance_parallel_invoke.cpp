@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2021 Intel Corporation
+    Copyright (c) 2020-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -211,7 +211,7 @@ TEST_CASE("Test cancellation") {
 //! \brief \ref requirement
 TEST_CASE("parallel_invoke type requirements") {
     using function_type = test_req::MinFunctionObject</*Args = */>;
-    function_type* function_ptr = test_req::create_ptr<function_type>();
+    auto function_ptr = test_req::create_ptr<function_type>();
 
     oneapi::tbb::task_group_context ctx;
 
@@ -220,6 +220,4 @@ TEST_CASE("parallel_invoke type requirements") {
 
     oneapi::tbb::parallel_invoke(*function_ptr, *function_ptr, ctx);
     oneapi::tbb::parallel_invoke(*function_ptr, *function_ptr, *function_ptr, ctx);
-
-    test_req::delete_ptr(function_ptr);
 }

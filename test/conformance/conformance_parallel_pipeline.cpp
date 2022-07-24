@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2021 Intel Corporation
+    Copyright (c) 2020-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -446,20 +446,18 @@ TEST_CASE_TEMPLATE("Deduction guides testing", T, int, unsigned int, double)
 //! Testing parallel_pipeline type requirements
 //! \brief \ref requirement
 TEST_CASE("parallel_pipeline type requirements") {
-    test_req::NonDestructible* value_ptr = test_req::create_ptr<test_req::NonDestructible>();
-    MinMiddleFilterBody middle_body = test_req::create<MinMiddleFilterBody>();
-    MinFirstFilterBody first_body = test_req::create<MinFirstFilterBody>(value_ptr);
-    MinLastFilterBody last_body = test_req::create<MinLastFilterBody>();
-    MinSingleFilterBody single_body = test_req::create<MinSingleFilterBody>();
+    auto value_ptr = test_req::create_ptr<test_req::NonDestructible>();
+    auto middle_body_ptr = test_req::create_ptr<MinMiddleFilterBody>();
+    auto first_body_ptr = test_req::create_ptr<MinFirstFilterBody>(value_ptr.get());
+    auto last_body_ptr = test_req::create_ptr<MinLastFilterBody>();
+    auto single_body_ptr = test_req::create_ptr<MinSingleFilterBody>();
 
     auto middle_filter = oneapi::tbb::make_filter<test_req::NonDestructible*,
-                                                  test_req::NonDestructible*>(oneapi::tbb::filter_mode::serial_in_order, middle_body);
-    auto first_filter = oneapi::tbb::make_filter<void, test_req::NonDestructible*>(oneapi::tbb::filter_mode::serial_in_order, first_body);
-    auto last_filter = oneapi::tbb::make_filter<test_req::NonDestructible*, void>(oneapi::tbb::filter_mode::serial_in_order, last_body);
-    auto single_filter = oneapi::tbb::make_filter<void, void>(oneapi::tbb::filter_mode::serial_in_order, single_body);
+                                                  test_req::NonDestructible*>(oneapi::tbb::filter_mode::serial_in_order, *middle_body_ptr);
+    auto first_filter = oneapi::tbb::make_filter<void, test_req::NonDestructible*>(oneapi::tbb::filter_mode::serial_in_order, *first_body_ptr);
+    auto last_filter = oneapi::tbb::make_filter<test_req::NonDestructible*, void>(oneapi::tbb::filter_mode::serial_in_order, *last_body_ptr);
+    auto single_filter = oneapi::tbb::make_filter<void, void>(oneapi::tbb::filter_mode::serial_in_order, *single_body_ptr);
 
     oneapi::tbb::parallel_pipeline(n_tokens, single_filter);
     oneapi::tbb::parallel_pipeline(n_tokens, first_filter & middle_filter & last_filter);
-
-    test_req::delete_ptr(value_ptr);
 }

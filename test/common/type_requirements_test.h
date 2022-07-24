@@ -19,30 +19,30 @@
 
 #include "oneapi/tbb/blocked_range.h" // for oneapi::tbb::split
 #include <atomic>
+#include <memory>
 
 namespace test_req {
 
 struct CreateFlag {};
 
 struct Creator {
-    template <typename T, typename... Args>
-    static T create(Args&&... args) { return T(CreateFlag{}, std::forward<Args>(args)...); }
+    struct Deleter {
+        template <typename T>
+        void operator()(T* ptr) const {
+            delete ptr;
+        }
+    };
 
     template <typename T, typename... Args>
-    static T* create_ptr(Args&&... args) { return new T(CreateFlag{}, std::forward<Args>(args)...); }
-
-    template <typename T>
-    static void delete_ptr(T* ptr) { delete ptr; }
+    static std::unique_ptr<T, Deleter> create_ptr(Args&&... args) {
+        return std::unique_ptr<T, Deleter>{new T(CreateFlag{}, std::forward<Args>(args)...)};
+    }
 };
 
 template <typename T, typename... Args>
-T create(Args&&... args) { return Creator::create<T>(std::forward<Args>(args)...); }
-
-template <typename T, typename... Args>
-T* create_ptr(Args&&... args) { return Creator::create_ptr<T>(std::forward<Args>(args)...); }
-
-template <typename T>
-void delete_ptr(T* ptr) { Creator::delete_ptr(ptr); }
+std::unique_ptr<T, Creator::Deleter> create_ptr(Args&&... args) {
+    return Creator::create_ptr<T>(std::forward<Args>(args)...);
+}
 
 struct MinRange {
     MinRange(const MinRange&) = default;

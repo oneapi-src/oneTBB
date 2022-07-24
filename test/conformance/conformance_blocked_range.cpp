@@ -169,9 +169,9 @@ TEST_CASE("Deduction guides") {
 //! Testing blocked_range type requirements
 //! \brief \ref requirement
 TEST_CASE("bloked_range type requirements") {
-    test_req::MinBlockedRangeValue first = test_req::create<test_req::MinBlockedRangeValue>(0);
-    test_req::MinBlockedRangeValue last = test_req::create<test_req::MinBlockedRangeValue>(10);
+    auto first_ptr = test_req::create_ptr<test_req::MinBlockedRangeValue>(10);
+    auto last_ptr = test_req::create_ptr<test_req::MinBlockedRangeValue>(10);
 
-    oneapi::tbb::blocked_range<test_req::MinBlockedRangeValue> range(first, last);
+    oneapi::tbb::blocked_range<test_req::MinBlockedRangeValue> range(*first_ptr, *last_ptr);
     oneapi::tbb::parallel_for(range, [](const decltype(range)&) {});
 }

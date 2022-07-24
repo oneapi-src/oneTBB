@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -281,6 +281,9 @@ struct MinPForIndex {
     MinPForIndex& operator++() { ++real_index; return *this; }
 
 private:
+    MinPForIndex(test_req::CreateFlag, std::size_t ri) : real_index(ri) {}
+    friend struct test_req::Creator;
+
     std::size_t real_index;
 }; // struct MinPForIndex
 
@@ -389,14 +392,12 @@ TEST_CASE("Testing parallel_for with partitioners") {
 //! Testing parallel_for type requirements
 //! \brief \ref requirement
 TEST_CASE("parallel_for type requirements") {
-    test_req::MinRange range = test_req::create<test_req::MinRange>();
-    MinPForBody body = test_req::create<MinPForBody>();
-    MinPForFunc* func_ptr = test_req::create_ptr<MinPForFunc>();
-    MinPForIndex index(1);
+    auto range_ptr = test_req::create_ptr<test_req::MinRange>();
+    auto body_ptr = test_req::create_ptr<MinPForBody>();
+    auto func_ptr = test_req::create_ptr<MinPForFunc>();
+    auto index_ptr = test_req::create_ptr<MinPForIndex>(1);
 
-    run_parallel_for_overloads(range, body);
-    run_parallel_for_overloads(index, index, *func_ptr);
-    run_parallel_for_overloads(index, index, index, *func_ptr);
-
-    test_req::delete_ptr(func_ptr);
+    run_parallel_for_overloads(*range_ptr, *body_ptr);
+    run_parallel_for_overloads(*index_ptr, *index_ptr, *func_ptr);
+    run_parallel_for_overloads(*index_ptr, *index_ptr, *index_ptr, *func_ptr);
 }
