@@ -20,6 +20,7 @@
 
 #define DOCTEST_CONFIG_SUPER_FAST_ASSERTS
 #include "common/test.h"
+#include "common/type_requirements_test.h"
 
 #include "oneapi/tbb/parallel_scan.h"
 
@@ -72,6 +73,43 @@ struct parallel_scan_wrapper<default_partitioner_tag>{
     oneapi::tbb::parallel_scan(std::forward<Args>(args)...);
     }
 };
+
+struct MinScanBody {
+    void operator()(const test_req::MinRange&, oneapi::tbb::pre_scan_tag) {}
+    void operator()(const test_req::MinRange&, oneapi::tbb::final_scan_tag) {}
+
+    MinScanBody(MinScanBody&, oneapi::tbb::split) {}
+    ~MinScanBody() = default;
+
+    void reverse_join(MinScanBody&) {}
+    void assign(MinScanBody&) {}
+
+    MinScanBody() = delete;
+    MinScanBody(const MinScanBody&) = delete;
+    MinScanBody& operator=(const MinScanBody&) = delete;
+private:
+    MinScanBody(test_req::CreateFlag) {}
+    friend struct test_req::Creator;
+}; // struct MinScanBody
+
+struct MinScanFunc {
+    test_req::MinValue operator()(const test_req::MinRange&, const test_req::MinValue& x, bool) const { return x; }
+
+    MinScanFunc() = delete;
+    MinScanFunc(const MinScanFunc&) = delete;
+    MinScanFunc& operator=(const MinScanFunc&) = delete;
+private:
+    MinScanFunc(test_req::CreateFlag) {}
+    ~MinScanFunc() = default;
+    friend struct test_req::Creator;
+}; // struct MinScanFunc
+
+template <typename... Args>
+void run_parallel_scan_overloads(Args&&... args) {
+    oneapi::tbb::parallel_scan(args...);
+    oneapi::tbb::parallel_scan(args..., oneapi::tbb::auto_partitioner());
+    oneapi::tbb::parallel_scan(args..., oneapi::tbb::simple_partitioner());
+}
 
 // Test scan tag
 //! \brief \ref interface
@@ -133,4 +171,20 @@ TEST_CASE_TEMPLATE("Test parallel scan with body", Partitioner, default_partitio
         });
 
     CHECK((control==output));
+}
+
+//! Testing parallel_scan type requirements
+//! \brief \ref requirement
+TEST_CASE("parallel_scan type requirements") {
+    test_req::MinRange range = test_req::create<test_req::MinRange>();
+    MinScanBody body = test_req::create<MinScanBody>();
+    test_req::MinValue value = test_req::create<test_req::MinValue>();
+    MinScanFunc* func_ptr = test_req::create_ptr<MinScanFunc>();
+    test_req::MinReduction* combine_ptr = test_req::create_ptr<test_req::MinReduction>();
+
+    run_parallel_scan_overloads(range, body);
+    run_parallel_scan_overloads(range, value, *func_ptr, *combine_ptr);
+
+    test_req::delete_ptr(func_ptr);
+    test_req::delete_ptr(combine_ptr);
 }

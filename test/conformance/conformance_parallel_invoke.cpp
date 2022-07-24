@@ -25,6 +25,7 @@
 #include "common/utils_concurrency_limit.h"
 #include "common/parallel_invoke_common.h"
 #include "common/memory_usage.h"
+#include "common/type_requirements_test.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -204,4 +205,21 @@ TEST_CASE("Test cancellation") {
             }
         }
     }
+}
+
+//! Testing type requirements
+//! \brief \ref requirement
+TEST_CASE("parallel_invoke type requirements") {
+    using function_type = test_req::MinFunctionObject</*Args = */>;
+    function_type* function_ptr = test_req::create_ptr<function_type>();
+
+    oneapi::tbb::task_group_context ctx;
+
+    oneapi::tbb::parallel_invoke(*function_ptr, *function_ptr);
+    oneapi::tbb::parallel_invoke(*function_ptr, *function_ptr, *function_ptr);
+
+    oneapi::tbb::parallel_invoke(*function_ptr, *function_ptr, ctx);
+    oneapi::tbb::parallel_invoke(*function_ptr, *function_ptr, *function_ptr, ctx);
+
+    test_req::delete_ptr(function_ptr);
 }

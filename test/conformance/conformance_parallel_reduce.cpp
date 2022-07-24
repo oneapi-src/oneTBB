@@ -16,7 +16,7 @@
 
 #include "common/parallel_reduce_common.h"
 #include "common/concurrency_tracker.h"
-#include "common/named_requirements_test.h"
+#include "common/type_requirements_test.h"
 
 #include "../tbb/test_partitioner.h"
 
@@ -91,44 +91,34 @@ void TestDeterministicReductionFor() {
     }
 }
 
-struct MinimalisticReduceFunc {
-    MinimalisticValue operator()(const MinimalisticRange&, const MinimalisticValue& x) const { return x; }
+struct MinReduceFunc {
+    test_req::MinValue operator()(const test_req::MinRange&, const test_req::MinValue& x) const { return x; }
 
-    MinimalisticReduceFunc() = delete;
-    MinimalisticReduceFunc(const MinimalisticReduceFunc&) = delete;
-    MinimalisticReduceFunc& operator=(const MinimalisticReduceFunc&) = delete;
+    MinReduceFunc() = delete;
+    MinReduceFunc(const MinReduceFunc&) = delete;
+    MinReduceFunc& operator=(const MinReduceFunc&) = delete;
 
-    static MinimalisticReduceFunc* build_ptr() {
-        MinimalisticReduceFunc* ptr = static_cast<MinimalisticReduceFunc*>(::operator new(sizeof(MinimalisticReduceFunc)));
-        ::new(ptr) MinimalisticReduceFunc(CreateFlag{});
-        return ptr;
-    }
-
-    static void eliminate(MinimalisticReduceFunc* ptr) {
-        ptr->~MinimalisticReduceFunc();
-        ::operator delete(ptr);
-    }
 private:
-    MinimalisticReduceFunc(CreateFlag) {}
-    ~MinimalisticReduceFunc() = default;
-}; // struct MinimalisticReduceFunc
+    MinReduceFunc(test_req::CreateFlag) {}
+    ~MinReduceFunc() = default;
+    friend struct test_req::Creator;
+}; // struct MinReduceFunc
 
-struct MinimalisticReduceBody {
-    MinimalisticReduceBody(MinimalisticReduceBody&, oneapi::tbb::split) {}
-    ~MinimalisticReduceBody() = default;
+struct MinReduceBody {
+    MinReduceBody(MinReduceBody&, oneapi::tbb::split) {}
+    ~MinReduceBody() = default;
 
-    void operator()(const MinimalisticRange&) {}
+    void operator()(const test_req::MinRange&) {}
 
-    void join(MinimalisticReduceBody&) {}
+    void join(MinReduceBody&) {}
 
-    MinimalisticReduceBody() = delete;
-    MinimalisticReduceBody(const MinimalisticReduceBody&) = delete;
-    MinimalisticReduceBody& operator=(const MinimalisticReduceBody&) = delete;
-
-    static MinimalisticReduceBody build() { return MinimalisticReduceBody(CreateFlag{}); }
+    MinReduceBody() = delete;
+    MinReduceBody(const MinReduceBody&) = delete;
+    MinReduceBody& operator=(const MinReduceBody&) = delete;
 private:
-    MinimalisticReduceBody(CreateFlag) {}
-}; // struct MinimalisticReduceBody
+    MinReduceBody(test_req::CreateFlag) {}
+    friend struct test_req::Creator;
+}; // struct MinReduceBody
 
 template <typename... Args>
 void run_parallel_reduce_overloads(Args&&... args) {
@@ -204,13 +194,13 @@ TEST_CASE("Test partitioners interaction with various ranges") {
 }
 
 //! Testing parallel_reduce and parallel_deterministic_reduce named requirements
-//! \brief \ref interface \ref requirement
-TEST_CASE("Testing parallel_[deterministic_]reduce named requirements") {
-    MinimalisticRange range = MinimalisticRange::build();
-    MinimalisticReduceBody body = MinimalisticReduceBody::build();
-    MinimalisticValue value = MinimalisticValue::build();
-    MinimalisticReduceFunc* func_ptr = MinimalisticReduceFunc::build_ptr();
-    MinimalisticReduction* reduction_ptr = MinimalisticReduction::build_ptr();
+//! \brief \ref requirement
+TEST_CASE("parallel_[deterministic_]reduce type requirements") {
+    test_req::MinRange range = test_req::create<test_req::MinRange>();
+    MinReduceBody body = test_req::create<MinReduceBody>();
+    test_req::MinValue value = test_req::create<test_req::MinValue>();
+    MinReduceFunc* func_ptr = test_req::create_ptr<MinReduceFunc>();
+    test_req::MinReduction* reduction_ptr = test_req::create_ptr<test_req::MinReduction>();
 
     run_parallel_reduce_overloads(range, body);
     run_parallel_reduce_overloads(range, value, *func_ptr, *reduction_ptr);
@@ -218,6 +208,6 @@ TEST_CASE("Testing parallel_[deterministic_]reduce named requirements") {
     run_parallel_deterministic_reduce_overloads(range, body);
     run_parallel_deterministic_reduce_overloads(range, value, *func_ptr, *reduction_ptr);
 
-    MinimalisticReduceFunc::eliminate(func_ptr);
-    MinimalisticReduction::eliminate(reduction_ptr);
+    test_req::delete_ptr(func_ptr);
+    test_req::delete_ptr(reduction_ptr);
 }
