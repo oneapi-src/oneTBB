@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -141,26 +141,26 @@ TEST_CASE("Move Semantics | Item: MoveOnly") {
 //! Test parallel_for_each type requirements
 //! \brief \ref requirement
 TEST_CASE("parallel_for_each type requirements") {
-    test_req::CopyConstructibleAndDestructible value1 = test_req::create<test_req::CopyConstructibleAndDestructible>();
-    test_req::OnlyDestructible value2 = test_req::create<test_req::OnlyDestructible>();
+    auto value1_ptr = test_req::create_ptr<test_req::CopyConstructibleAndDestructible>();
+    auto value2_ptr = test_req::create_ptr<test_req::OnlyDestructible>();
 
-    utils::InputIterator<test_req::CopyConstructibleAndDestructible> input_it(&value1);
-    utils::ForwardIterator<test_req::OnlyDestructible> forward_it(&value2);
-    utils::RandomIterator<test_req::OnlyDestructible> random_it(&value2);
+    utils::InputIterator<test_req::CopyConstructibleAndDestructible> input_it(value1_ptr.get());
+    utils::ForwardIterator<test_req::OnlyDestructible> forward_it(value2_ptr.get());
+    utils::RandomIterator<test_req::OnlyDestructible> random_it(value2_ptr.get());
 
     using input_seq_type = test_req::MinContainerBasedSequence<decltype(input_it)>;
     using forward_seq_type = test_req::MinContainerBasedSequence<decltype(forward_it)>;
     using random_seq_type = test_req::MinContainerBasedSequence<decltype(random_it)>;
 
-    input_seq_type* input_seq_ptr = test_req::create_ptr<input_seq_type>();
-    forward_seq_type* forward_seq_ptr = test_req::create_ptr<forward_seq_type>();
-    random_seq_type* random_seq_ptr = test_req::create_ptr<random_seq_type>();
+    auto input_seq_ptr = test_req::create_ptr<input_seq_type>();
+    auto forward_seq_ptr = test_req::create_ptr<forward_seq_type>();
+    auto random_seq_ptr = test_req::create_ptr<random_seq_type>();
 
     const input_seq_type& const_input_seq_ref = *input_seq_ptr;
     const forward_seq_type& const_forward_seq_ref = *forward_seq_ptr;
     const random_seq_type& const_random_seq_ref = *random_seq_ptr;
 
-    MinPForEachBody* body_ptr = test_req::create_ptr<MinPForEachBody>();
+    auto body_ptr = test_req::create_ptr<MinPForEachBody>();
     
     run_parallel_for_each_overloads(input_it, input_it, *body_ptr);
     run_parallel_for_each_overloads(*input_seq_ptr, *body_ptr);
@@ -173,9 +173,4 @@ TEST_CASE("parallel_for_each type requirements") {
     run_parallel_for_each_overloads(random_it, random_it, *body_ptr);
     run_parallel_for_each_overloads(*random_seq_ptr, *body_ptr);
     run_parallel_for_each_overloads(const_random_seq_ref, *body_ptr);
-    
-    test_req::delete_ptr(body_ptr);
-    test_req::delete_ptr(input_seq_ptr);
-    test_req::delete_ptr(forward_seq_ptr);
-    test_req::delete_ptr(random_seq_ptr);
 }

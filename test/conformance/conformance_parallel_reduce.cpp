@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -196,18 +196,15 @@ TEST_CASE("Test partitioners interaction with various ranges") {
 //! Testing parallel_reduce and parallel_deterministic_reduce named requirements
 //! \brief \ref requirement
 TEST_CASE("parallel_[deterministic_]reduce type requirements") {
-    test_req::MinRange range = test_req::create<test_req::MinRange>();
-    MinReduceBody body = test_req::create<MinReduceBody>();
-    test_req::MinValue value = test_req::create<test_req::MinValue>();
-    MinReduceFunc* func_ptr = test_req::create_ptr<MinReduceFunc>();
-    test_req::MinReduction* reduction_ptr = test_req::create_ptr<test_req::MinReduction>();
+    auto range_ptr = test_req::create_ptr<test_req::MinRange>();
+    auto body_ptr = test_req::create_ptr<MinReduceBody>();
+    auto value_ptr = test_req::create_ptr<test_req::MinValue>();
+    auto func_ptr = test_req::create_ptr<MinReduceFunc>();
+    auto reduction_ptr = test_req::create_ptr<test_req::MinReduction>();
 
-    run_parallel_reduce_overloads(range, body);
-    run_parallel_reduce_overloads(range, value, *func_ptr, *reduction_ptr);
+    run_parallel_reduce_overloads(*range_ptr, *body_ptr);
+    run_parallel_reduce_overloads(*range_ptr, *value_ptr, *func_ptr, *reduction_ptr);
 
-    run_parallel_deterministic_reduce_overloads(range, body);
-    run_parallel_deterministic_reduce_overloads(range, value, *func_ptr, *reduction_ptr);
-
-    test_req::delete_ptr(func_ptr);
-    test_req::delete_ptr(reduction_ptr);
+    run_parallel_deterministic_reduce_overloads(*range_ptr, *body_ptr);
+    run_parallel_deterministic_reduce_overloads(*range_ptr, *value_ptr, *func_ptr, *reduction_ptr);
 }

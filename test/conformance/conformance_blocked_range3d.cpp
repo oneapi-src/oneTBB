@@ -235,12 +235,12 @@ TEST_CASE("Deduction guides") {
 //! Testing blocked_range3d type requirements
 //! \brief \ref requirement
 TEST_CASE("bloked_range3d type requirements") {
-    test_req::MinBlockedRangeValue first = test_req::create<test_req::MinBlockedRangeValue>(0);
-    test_req::MinBlockedRangeValue last = test_req::create<test_req::MinBlockedRangeValue>(10);
+    auto first_ptr = test_req::create_ptr<test_req::MinBlockedRangeValue>(10);
+    auto last_ptr = test_req::create_ptr<test_req::MinBlockedRangeValue>(10);
 
-    oneapi::tbb::blocked_range3d<test_req::MinBlockedRangeValue> range(first, last, 1,
-                                                                       first, last, 1,
-                                                                       first, last, 1);
+    oneapi::tbb::blocked_range3d<test_req::MinBlockedRangeValue> range(*first_ptr, *last_ptr, 1,
+                                                                       *first_ptr, *last_ptr, 1,
+                                                                       *first_ptr, *last_ptr, 1);
     oneapi::tbb::parallel_for(range, [](const decltype(range)&) {});
 }
 

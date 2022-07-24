@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2021 Intel Corporation
+    Copyright (c) 2020-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -118,27 +118,23 @@ TEST_CASE ("Range sorting test (greater comparator)") {
 //! Testing parallel_sort type requirements
 //! \brief \ref requirement
 TEST_CASE("parallel_sort type requirements") {
-    MinSortable value = test_req::create<MinSortable>();
-    MinLessThanSortable less_value = test_req::create<MinLessThanSortable>();
+    auto value_ptr = test_req::create_ptr<MinSortable>();
+    auto less_value_ptr = test_req::create_ptr<MinLessThanSortable>();
 
-    utils::RandomIterator<MinSortable> random_it(&value);
-    utils::RandomIterator<MinLessThanSortable> random_less_it(&less_value);
+    utils::RandomIterator<MinSortable> random_it(value_ptr.get());
+    utils::RandomIterator<MinLessThanSortable> random_less_it(less_value_ptr.get());
 
     using seq_type = test_req::MinContainerBasedSequence<decltype(random_it)>;
     using less_seq_type = test_req::MinContainerBasedSequence<decltype(random_less_it)>;
 
-    seq_type* seq_ptr = test_req::create_ptr<seq_type>();
-    less_seq_type* less_seq_ptr = test_req::create_ptr<less_seq_type>();
+    auto seq_ptr = test_req::create_ptr<seq_type>();
+    auto less_seq_ptr = test_req::create_ptr<less_seq_type>();
 
-    using compare_type = test_req::MinCompare<MinSortable>;
-    compare_type compare = test_req::create<compare_type>();
+    auto compare_ptr = test_req::create_ptr<test_req::MinCompare<MinSortable>>();
 
     oneapi::tbb::parallel_sort(random_less_it, random_less_it);
-    oneapi::tbb::parallel_sort(random_it, random_it, compare);
+    oneapi::tbb::parallel_sort(random_it, random_it, *compare_ptr);
 
     oneapi::tbb::parallel_sort(*less_seq_ptr);
-    oneapi::tbb::parallel_sort(*seq_ptr, compare);
-
-    test_req::delete_ptr(seq_ptr);
-    test_req::delete_ptr(less_seq_ptr);
+    oneapi::tbb::parallel_sort(*seq_ptr, *compare_ptr);
 }

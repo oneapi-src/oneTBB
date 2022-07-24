@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2021 Intel Corporation
+    Copyright (c) 2020-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -176,15 +176,12 @@ TEST_CASE_TEMPLATE("Test parallel scan with body", Partitioner, default_partitio
 //! Testing parallel_scan type requirements
 //! \brief \ref requirement
 TEST_CASE("parallel_scan type requirements") {
-    test_req::MinRange range = test_req::create<test_req::MinRange>();
-    MinScanBody body = test_req::create<MinScanBody>();
-    test_req::MinValue value = test_req::create<test_req::MinValue>();
-    MinScanFunc* func_ptr = test_req::create_ptr<MinScanFunc>();
-    test_req::MinReduction* combine_ptr = test_req::create_ptr<test_req::MinReduction>();
+    auto range_ptr = test_req::create_ptr<test_req::MinRange>();
+    auto body_ptr = test_req::create_ptr<MinScanBody>();
+    auto value_ptr = test_req::create_ptr<test_req::MinValue>();
+    auto func_ptr = test_req::create_ptr<MinScanFunc>();
+    auto combine_ptr = test_req::create_ptr<test_req::MinReduction>();
 
-    run_parallel_scan_overloads(range, body);
-    run_parallel_scan_overloads(range, value, *func_ptr, *combine_ptr);
-
-    test_req::delete_ptr(func_ptr);
-    test_req::delete_ptr(combine_ptr);
+    run_parallel_scan_overloads(*range_ptr, *body_ptr);
+    run_parallel_scan_overloads(*range_ptr, *value_ptr, *func_ptr, *combine_ptr);
 }
