@@ -19,6 +19,7 @@
 #include "common/checktype.h"
 #include "common/spin_barrier.h"
 #include "common/utils_concurrency_limit.h"
+#include "common/type_requirements_test.h"
 
 #include "oneapi/tbb/parallel_pipeline.h"
 #include "oneapi/tbb/global_control.h"
@@ -170,6 +171,52 @@ void RootSequence( Iterator1 first, Iterator1 last, Iterator2 res) {
         )
     );
 }
+
+struct MinFilterBodyBase {
+    MinFilterBodyBase() = delete;
+    MinFilterBodyBase(const MinFilterBodyBase&) = default;
+    MinFilterBodyBase& operator=(const MinFilterBodyBase&) = delete;
+
+    ~MinFilterBodyBase() = default;
+protected:
+    MinFilterBodyBase(test_req::CreateFlag) {}
+}; // struct MinFilterBodyBase
+
+struct MinMiddleFilterBody : MinFilterBodyBase {
+    test_req::NonDestructible* operator()(test_req::NonDestructible* x) const { return x; }
+private:
+    MinMiddleFilterBody(test_req::CreateFlag) : MinFilterBodyBase(test_req::CreateFlag{}) {}
+    friend struct test_req::Creator;
+}; // struct MinMiddleFilterBody
+
+struct MinFirstFilterBody : MinFilterBodyBase {
+    test_req::NonDestructible* operator()(oneapi::tbb::flow_control& fc) const {
+        fc.stop();
+        return ptr;
+    }
+private:
+    MinFirstFilterBody(test_req::CreateFlag, test_req::NonDestructible* value_ptr)
+        : MinFilterBodyBase(test_req::CreateFlag{}), ptr(value_ptr) {}
+    friend struct test_req::Creator;
+
+    test_req::NonDestructible* ptr;
+}; // struct MinFirstFilterBody
+
+struct MinLastFilterBody : MinFilterBodyBase {
+    void operator()(test_req::NonDestructible*) const {}
+private:
+    MinLastFilterBody(test_req::CreateFlag) : MinFilterBodyBase(test_req::CreateFlag{}) {}
+    friend struct test_req::Creator;
+}; // struct MinLastFilterBody
+
+struct MinSingleFilterBody : MinFilterBodyBase {
+    void operator()(oneapi::tbb::flow_control& fc) const {
+        fc.stop();
+    }
+private:
+    MinSingleFilterBody(test_req::CreateFlag) : MinFilterBodyBase(test_req::CreateFlag{}) {}
+    friend struct test_req::Creator;
+}; // struct MinSingleFilterBody
 
 //! Testing pipeline correctness
 //! \brief \ref interface \ref requirement
@@ -395,3 +442,24 @@ TEST_CASE_TEMPLATE("Deduction guides testing", T, int, unsigned int, double)
     static_assert(std::is_same_v<decltype(fc), oneapi::tbb::filter<int, double>>);
 }
 #endif  //__TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+
+//! Testing parallel_pipeline type requirements
+//! \brief \ref requirement
+TEST_CASE("parallel_pipeline type requirements") {
+    test_req::NonDestructible* value_ptr = test_req::create_ptr<test_req::NonDestructible>();
+    MinMiddleFilterBody middle_body = test_req::create<MinMiddleFilterBody>();
+    MinFirstFilterBody first_body = test_req::create<MinFirstFilterBody>(value_ptr);
+    MinLastFilterBody last_body = test_req::create<MinLastFilterBody>();
+    MinSingleFilterBody single_body = test_req::create<MinSingleFilterBody>();
+
+    auto middle_filter = oneapi::tbb::make_filter<test_req::NonDestructible*,
+                                                  test_req::NonDestructible*>(oneapi::tbb::filter_mode::serial_in_order, middle_body);
+    auto first_filter = oneapi::tbb::make_filter<void, test_req::NonDestructible*>(oneapi::tbb::filter_mode::serial_in_order, first_body);
+    auto last_filter = oneapi::tbb::make_filter<test_req::NonDestructible*, void>(oneapi::tbb::filter_mode::serial_in_order, last_body);
+    auto single_filter = oneapi::tbb::make_filter<void, void>(oneapi::tbb::filter_mode::serial_in_order, single_body);
+
+    oneapi::tbb::parallel_pipeline(n_tokens, single_filter);
+    oneapi::tbb::parallel_pipeline(n_tokens, first_filter & middle_filter & last_filter);
+
+    test_req::delete_ptr(value_ptr);
+}

@@ -18,6 +18,7 @@
 #include "common/utils.h"
 #include "common/utils_assert.h"
 #include "common/utils_concurrency_limit.h"
+#include "common/type_requirements_test.h"
 
 #include "oneapi/tbb/blocked_range.h"
 #include "oneapi/tbb/parallel_for.h"
@@ -165,3 +166,12 @@ TEST_CASE("Deduction guides") {
 }
 #endif
 
+//! Testing blocked_range type requirements
+//! \brief \ref requirement
+TEST_CASE("bloked_range type requirements") {
+    test_req::MinBlockedRangeValue first = test_req::create<test_req::MinBlockedRangeValue>(0);
+    test_req::MinBlockedRangeValue last = test_req::create<test_req::MinBlockedRangeValue>(10);
+
+    oneapi::tbb::blocked_range<test_req::MinBlockedRangeValue> range(first, last);
+    oneapi::tbb::parallel_for(range, [](const decltype(range)&) {});
+}

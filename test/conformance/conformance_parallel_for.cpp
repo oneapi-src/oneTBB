@@ -18,7 +18,7 @@
 #include "common/test.h"
 #include "common/utils.h"
 #include "common/utils_report.h"
-#include "common/named_requirements_test.h"
+#include "common/type_requirements_test.h"
 
 #include "oneapi/tbb/parallel_for.h"
 #include "oneapi/tbb/tick_count.h"
@@ -245,69 +245,57 @@ void TestParallelForWithStepSupport() {
     oneapi::tbb::parallel_for(static_cast<T>(2), static_cast<T>(1), static_cast<T>(1), TestFunctor<T>());
 }
 
-struct MinimalisticPForBody {
-    MinimalisticPForBody(const MinimalisticPForBody&) = default;
-    ~MinimalisticPForBody() = default;
+struct MinPForBody {
+    MinPForBody(const MinPForBody&) = default;
+    ~MinPForBody() = default;
 
-    void operator()(MinimalisticRange&) const {}
+    void operator()(test_req::MinRange&) const {}
 
-    MinimalisticPForBody() = delete;
-    MinimalisticPForBody& operator=(const MinimalisticPForBody&) = delete;
-
-    static MinimalisticPForBody build() { return MinimalisticPForBody(CreateFlag{}); }
+    MinPForBody() = delete;
+    MinPForBody& operator=(const MinPForBody&) = delete;
 private:
-    MinimalisticPForBody(CreateFlag) {}
-}; // struct MinimalisticPForBody
+    MinPForBody(test_req::CreateFlag) {}
+    friend struct test_req::Creator;
+}; // struct MinPForBody
 
-struct MinimalisticPForIndex {
-    MinimalisticPForIndex(int v) : real_index(v) {}
-    MinimalisticPForIndex(const MinimalisticPForIndex&) = default;
-    ~MinimalisticPForIndex() = default;
+struct MinPForIndex {
+    MinPForIndex(int v) : real_index(v) {}
+    MinPForIndex(const MinPForIndex&) = default;
+    ~MinPForIndex() = default;
 
-    MinimalisticPForIndex& operator=(const MinimalisticPForIndex&) = default;
+    MinPForIndex& operator=(const MinPForIndex&) = default;
 
-    bool operator<(const MinimalisticPForIndex& other) const { return real_index < other.real_index; }
-    std::size_t operator-(const MinimalisticPForIndex& other) const { return real_index - other.real_index; }
+    bool operator<(const MinPForIndex& other) const { return real_index < other.real_index; }
+    std::size_t operator-(const MinPForIndex& other) const { return real_index - other.real_index; }
 
-    MinimalisticPForIndex operator+(std::size_t) const { return *this; }
+    MinPForIndex operator+(std::size_t) const { return *this; }
 
-    MinimalisticPForIndex() = delete;
+    MinPForIndex() = delete;
 
     // Extra
-    bool operator<=(const MinimalisticPForIndex& other) const { return real_index <= other.real_index; }
-    MinimalisticPForIndex operator/(const MinimalisticPForIndex& other) const { return MinimalisticPForIndex(real_index / other.real_index); }
-    MinimalisticPForIndex operator*(const MinimalisticPForIndex& other) const { return MinimalisticPForIndex(real_index * other.real_index); }
-    MinimalisticPForIndex operator+(const MinimalisticPForIndex& other) const { return MinimalisticPForIndex(real_index + other.real_index); }
-    MinimalisticPForIndex& operator+=(const MinimalisticPForIndex& other) { real_index += other.real_index; return *this; }
-    MinimalisticPForIndex& operator++() { ++real_index; return *this; }
+    bool operator<=(const MinPForIndex& other) const { return real_index <= other.real_index; }
+    MinPForIndex operator/(const MinPForIndex& other) const { return MinPForIndex(real_index / other.real_index); }
+    MinPForIndex operator*(const MinPForIndex& other) const { return MinPForIndex(real_index * other.real_index); }
+    MinPForIndex operator+(const MinPForIndex& other) const { return MinPForIndex(real_index + other.real_index); }
+    MinPForIndex& operator+=(const MinPForIndex& other) { real_index += other.real_index; return *this; }
+    MinPForIndex& operator++() { ++real_index; return *this; }
 
 private:
     std::size_t real_index;
-}; // struct MinimalisticPForIndex
+}; // struct MinPForIndex
 
-struct MinimalisticPForFunc {
-    void operator()(MinimalisticPForIndex) const {}
+struct MinPForFunc {
+    void operator()(MinPForIndex) const {}
 
-    MinimalisticPForFunc() = delete;
-    MinimalisticPForFunc(const MinimalisticPForFunc&) = delete;
+    MinPForFunc() = delete;
+    MinPForFunc(const MinPForFunc&) = delete;
 
-    MinimalisticPForFunc& operator=(const MinimalisticPForFunc&) = delete;
+    MinPForFunc& operator=(const MinPForFunc&) = delete;
 
-    static MinimalisticPForFunc* build_ptr() {
-        MinimalisticPForFunc* ptr = static_cast<MinimalisticPForFunc*>(::operator new(sizeof(MinimalisticPForFunc)));
-        ::new(ptr) MinimalisticPForFunc(CreateFlag{});
-        return ptr;
-    }
-
-    static void eliminate(MinimalisticPForFunc* ptr) {
-        ptr->~MinimalisticPForFunc();
-        ::operator delete(ptr);
-    }
 private:
-    MinimalisticPForFunc(CreateFlag) {}
-    // ParallelForFunc is not required to be destructible
-    // We need to check that parallel_for does not use the destructor
-    ~MinimalisticPForFunc() = default;
+    MinPForFunc(test_req::CreateFlag) {}
+    ~MinPForFunc() = default;
+    friend struct test_req::Creator;
 }; // struct MinimalisticPForFunc
 
 template <typename... Args>
@@ -398,17 +386,17 @@ TEST_CASE("Testing parallel_for with partitioners") {
     parallel_for(Range6(false, true), b, oneapi::tbb::static_partitioner());
 }
 
-//! Testing parallel_for named requirements
-//! \brief \ref interface \ref requirement
-TEST_CASE("Testing parallel_for named requirements") {
-    MinimalisticRange range = MinimalisticRange::build();
-    MinimalisticPForBody body = MinimalisticPForBody::build();
-    MinimalisticPForFunc* func_ptr = MinimalisticPForFunc::build_ptr();
-    MinimalisticPForIndex index(1);
+//! Testing parallel_for type requirements
+//! \brief \ref requirement
+TEST_CASE("parallel_for type requirements") {
+    test_req::MinRange range = test_req::create<test_req::MinRange>();
+    MinPForBody body = test_req::create<MinPForBody>();
+    MinPForFunc* func_ptr = test_req::create_ptr<MinPForFunc>();
+    MinPForIndex index(1);
 
     run_parallel_for_overloads(range, body);
     run_parallel_for_overloads(index, index, *func_ptr);
     run_parallel_for_overloads(index, index, index, *func_ptr);
 
-    MinimalisticPForFunc::eliminate(func_ptr);
+    test_req::delete_ptr(func_ptr);
 }
