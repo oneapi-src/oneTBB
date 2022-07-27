@@ -305,7 +305,7 @@ void parallel_for_impl(Index first, Index last, Index step, const Function& f, P
         throw_exception(exception_id::nonpositive_step); // throws std::invalid_argument
     else if (first < last) {
         // Above "else" avoids "potential divide by zero" warning on some platforms
-        Index end = (last - first - Index(1)) / step + Index(1);
+        Index end = Index(last - first - 1) / step + Index(1);
         blocked_range<Index> range(static_cast<Index>(0), end);
         parallel_for_body_wrapper<Function, Index> body(f, first, step);
         parallel_for(range, body, partitioner);

@@ -20,6 +20,7 @@
 #include <type_traits>
 #include <cstdint>
 #include <atomic>
+#include <functional>
 
 #include "_config.h"
 #include "_assert.h"

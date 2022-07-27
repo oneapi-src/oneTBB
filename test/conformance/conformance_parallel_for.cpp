@@ -246,7 +246,7 @@ void TestParallelForWithStepSupport() {
 
 #if __TBB_CPP17_INVOKE_PRESENT
 template <typename Value>
-class SmartRange : oneapi::tbb::blocked_range<Value> {
+class SmartRange : public oneapi::tbb::blocked_range<Value> {
     using base_type = oneapi::tbb::blocked_range<Value>;
 
 public:
@@ -257,7 +257,7 @@ public:
         : base_type(r, oneapi::tbb::split{}), change_vector(r.change_vector) {}
 
     void increase() const {
-        for (std::size_t index = begin(); index != end(); ++index) {
+        for (std::size_t index = this->begin(); index != this->end(); ++index) {
             ++change_vector[index];
         }
     }
@@ -271,6 +271,7 @@ private:
 }; // struct SmartRange
 
 class SmartIndex {
+public:
     SmartIndex(int ri) : real_index(ri), change_vector(nullptr) {}
     SmartIndex(int ri, std::vector<std::size_t>& cv)
         : real_index(ri), change_vector(&cv) {}
@@ -288,17 +289,40 @@ class SmartIndex {
         return real_index < other.real_index;
     }
 
-    int operator-(const SmartIndex& other) const {
+    bool operator<=(const SmartIndex& other) const {
+        return real_index <= other.real_index;
+    }
+
+    SmartIndex operator/(const SmartIndex& other) const {
+        return {real_index / other.real_index, *change_vector};
+    }
+
+    SmartIndex operator*(const SmartIndex& other) const {
+        return {real_index * other.real_index, *change_vector};
+    }
+
+    SmartIndex operator+(const SmartIndex& other) const {
+        return {real_index + other.real_index, *change_vector};
+    }
+
+    SmartIndex& operator+=(const SmartIndex& other) {
+        real_index += other.real_index;
+        return *this;
+    }
+
+    SmartIndex& operator++() { ++real_index; return *this; }
+
+    std::size_t operator-(const SmartIndex& other) const {
         return real_index - other.real_index;
     }
 
     SmartIndex operator+(int k) {
-        return SmartIndex{real_index + k, change_vector}
+        return {real_index + k, *change_vector};
     }
 
     void increase() const {
         CHECK(change_vector);
-        ++*change_vector[real_index];
+        ++(*change_vector)[real_index];
     }
 private:
     int real_index;
@@ -309,24 +333,25 @@ void test_pfor_body_invoke_semantics() {
     const std::size_t number_of_overloads = 5;
     const std::size_t iterations = 100000;
 
+    using range_type = SmartRange<std::size_t>;
     std::vector<std::size_t> change_vector(iterations, 0);
-    SmartRange range{0, iterations, change_vector};
+    range_type range{0, iterations, change_vector};
 
-    oneapi::tbb::parallel_for(range, &SmartRange::increase);
-    oneapi::tbb::parallel_for(range, &SmartRange::increase, oneapi::tbb::simple_partitioner());
-    oneapi::tbb::parallel_for(range, &SmartRange::increase, oneapi::tbb::auto_partitioner());
-    oneapi::tbb::parallel_for(range, &SmartRange::increase, oneapi::tbb::static_partitioner());
+    oneapi::tbb::parallel_for(range, &range_type::increase);
+    oneapi::tbb::parallel_for(range, &range_type::increase, oneapi::tbb::simple_partitioner());
+    oneapi::tbb::parallel_for(range, &range_type::increase, oneapi::tbb::auto_partitioner());
+    oneapi::tbb::parallel_for(range, &range_type::increase, oneapi::tbb::static_partitioner());
     oneapi::tbb::affinity_partitioner aff;
-    oneapi::tbb::parallel_for(range, &SmartRange::increase, aff);
+    oneapi::tbb::parallel_for(range, &range_type::increase, aff);
 
     for (std::size_t item : change_vector) {
-        CHECK_EQ(item == number_of_overloads);
+        CHECK(item == number_of_overloads);
     }
 }
 
 
 void test_pfor_func_invoke_semantics() {
-    const std::size_t number_of_overloads = 10;
+    const std::size_t number_of_overloads = 5;
     const std::size_t iterations = 100000;
 
     std::vector<std::size_t> change_vector(iterations, 0);
@@ -342,7 +367,7 @@ void test_pfor_func_invoke_semantics() {
     oneapi::tbb::parallel_for(first, last, &SmartIndex::increase, aff);
 
     for (std::size_t& item : change_vector) {
-        CHECK_EQ(item == number_of_overloads);
+        CHECK(item == number_of_overloads);
         item = 0;
     }
 
@@ -352,13 +377,13 @@ void test_pfor_func_invoke_semantics() {
     oneapi::tbb::parallel_for(first, last, stride, &SmartIndex::increase, oneapi::tbb::static_partitioner());
     oneapi::tbb::parallel_for(first, last, stride, &SmartIndex::increase, aff);
 
-    CHECK_EQ(change_vector[0] == number_of_overloads);
+    CHECK(change_vector[0] == number_of_overloads);
     for (std::size_t i = 1; i < iterations; ++i) {
         std::size_t expected = change_vector[i - 1] == 0 ? number_of_overloads : 0;
-        CHECK_EQ(change_vector[i] == expected);
+        CHECK(change_vector[i] == expected);
     }
 }
-#endif
+#endif // __TBB_CPP17_INVOKE_PRESENT
 
 //! Test simple parallel_for with different partitioners
 //! \brief \ref interface \ref requirement
