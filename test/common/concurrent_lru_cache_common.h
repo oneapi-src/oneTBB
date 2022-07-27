@@ -114,10 +114,16 @@ namespace concurrent_lru_cache_helpers {
         }
 
         ~instance_counter() {
+#if __GNUC__ && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuse-after-free"
+#endif
             if (! --(*my_p_count))
                 delete(my_p_count);
+#if __GNUC__ && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#pragma GCC diagnostic pop
+#endif
         }
-
         std::size_t instances_count() const { return *my_p_count; }
     };
 
