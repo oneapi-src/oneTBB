@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021 Intel Corporation
+# Copyright (c) 2020-2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,9 @@
 # limitations under the License.
 
 set(TBB_LINK_DEF_FILE_FLAG -Wl,-exported_symbols_list,)
-set(TBB_DEF_FILE_PREFIX mac${TBB_ARCH})
+if (NOT "${CMAKE_OSX_ARCHITECTURES}" MATCHES "armv7")
+    set(TBB_DEF_FILE_PREFIX mac${TBB_ARCH})
+endif()
 set(TBB_WARNING_LEVEL -Wall -Wextra $<$<BOOL:${TBB_STRICT}>:-Werror>)
 set(TBB_TEST_WARNING_FLAGS -Wshadow -Wcast-qual -Woverloaded-virtual -Wnon-virtual-dtor)
 set(TBB_WARNING_SUPPRESS -Wno-parentheses -Wno-non-virtual-dtor -Wno-dangling-else)
