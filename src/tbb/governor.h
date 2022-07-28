@@ -30,7 +30,7 @@ class market;
 class thread_data;
 class __TBB_InitOnce;
 class thread_dispatcher;
-class threading_control;
+class threading_control_impl;
 
 #if __TBB_USE_ITT_NOTIFY
 //! Defined in profiling.cpp
@@ -50,7 +50,7 @@ class governor {
 private:
     friend class __TBB_InitOnce;
     friend class thread_dispatcher;
-    friend class threading_control;
+    friend class threading_control_impl;
 
     // TODO: consider using thread_local (measure performance and side effects)
     //! TLS for scheduler instances associated with individual threads

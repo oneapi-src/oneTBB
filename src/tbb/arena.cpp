@@ -138,7 +138,7 @@ void arena::on_thread_leaving(unsigned ref_param) {
     }
 
     threading_control* tc = my_threading_control;
-    client_deleter tc_client_deleter = tc->prepare_client_destruction(my_tc_client);
+    auto tc_client_deleter = tc->prepare_client_destruction(my_tc_client);
     // Release our reference to sync with destroy_client
     unsigned remaining_ref = my_references.fetch_sub(ref_param, std::memory_order_release) - ref_param;
     // do not access `this` it might be destroyed already

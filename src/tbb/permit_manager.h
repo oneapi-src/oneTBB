@@ -18,7 +18,7 @@
 #define _TBB_permit_manager_H
 
 #include "oneapi/tbb/detail/_utils.h"
-#include "thread_request_observer.h"
+#include "thread_request_serializer.h"
 
 namespace tbb {
 namespace detail {
