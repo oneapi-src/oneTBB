@@ -16,6 +16,7 @@
 
 #include "common/parallel_reduce_common.h"
 #include "common/concurrency_tracker.h"
+#include "common/test_invoke.h"
 
 #include "../tbb/test_partitioner.h"
 
@@ -131,99 +132,70 @@ TEST_CASE("Test partitioners interaction with various ranges") {
     }
 }
 
-template <typename T>
-std::size_t get_real_index(const T&);
-
-class SmartInvokeObjectBase {
-    SmartInvokeObjectBase() : change_vector(nullptr) {}
-    SmartInvokeObjectBase(const SmartInvokeObjectBase&) = default;
-    SmartInvokeObjectBase(std::vector<std::size_t>& cv)
-        : change_vector(&cv) {}
-
-    SmartInvokeObjectBase& operator=(const SmartInvokeObjectBase&) = default;
-protected:
-    std::vector<std::size_t>* change_vector;
-};
-
-template <typename Value>
-class SmartInvokeRange : oneapi::tbb::blocked_range<Value>, SmartInvokeObjectBase {
-    using base_range = oneapi::tbb::blocked_range<Value>;
-public:
-    SmartInvokeRange(const Value& first, const Value& last) : base_range(first, last) {}
-    SmartInvokeRange(const Value& first, const Value& last, std::vector<std::size_t>& cv)
-        : base_range(first, last), SmartInvokeObjectBase(cv) {}
-    SmartInvokeRange(const SmartInvokeRange&) = default;
-    SmartInvokeRange(SmartInvokeRange& other, oneapi::tbb::split)
-        : base_range(other, oneapi::tbb::split{}), SmartInvokeObjectBase(other) {}
-
-    void increase() const {
-        CHECK_MESSAGE(this->change_vector, "Attempt to operate with no associated vector");
-        for (std::size_t index = get_real_index(begin()); index != get_real_index(end()); ++index) {
-            ++*change_vector[index];
-        }
-    }
-
-    Value reduction() const {
-        CHECK_MESSAGE(this->change_vector, "Attempt to operate with no associated vector");
-        std::size_t result = 0;
-        for (std::size_t index = get_real_index(begin()); index != get_real_index(end()); ++index) {
-            result += *change_vector[index];
-        }
-        return Value(result);
-    }
-};
-
-class SmartPforIndex : SmartInvokeObjectBase {
-public:
-    SmartPforIndex(int ri) : real_index(ri) {}
-    SmartPforIndex(int ri, std::vector<std::size_t>& cv)
-        : real_index(ri), SmartInvokeObjectBase(cv) {}
-    
-private:
-    int real_index;
-};
-
 class SmartValue {
 public:
-    SmartValue(int rv) : real_value(rv) {}
+    SmartValue(std::size_t rv) : real_value(rv) {}
     SmartValue(const SmartValue&) = default;
     SmartValue& operator=(const SmartValue&) = default;
 
     SmartValue operator+(const SmartValue& other) const {
         return SmartValue{real_value + other.real_value};
     }
-    int get() const { return real_value; }
+    std::size_t operator-(const SmartValue& other) const {
+        return real_value - other.real_value;
+    }
+
+    std::size_t get() const { return real_value; }
+
+    bool operator<(const SmartValue& other) const {
+        return real_value < other.real_value;
+    }
+
+    SmartValue& operator++() { ++real_value; return *this; }
 private:
-    int real_value;
+    std::size_t real_value;
 };
+
+std::size_t get_real_index(const SmartValue& value) {
+    return value.get();
+}
 
 template <typename Body, typename Reduction>
 void test_preduce_invoke_basic(const Body& body, const Reduction& reduction) {
-    // const std::size_t number_of_overloads = 5;
     const std::size_t iterations = 100000;
+    const std::size_t result = iterations * (iterations - 1) / 2;
 
-    std::vector<std::size_t> change_vector(iterations, 0);
-    SmartRange range(0, iterations, change_vector);
+    test_invoke::SmartRange<SmartValue> range(0, iterations);
     SmartValue identity(0);
 
-    CHECK(iterations == oneapi::tbb::parallel_reduce(range, identity, body, reduction).get());
-    CHECK(iterations == oneapi::tbb::parallel_reduce(range, identity, body, reduction, oneapi::tbb::simple_partitioner()).get());
-    CHECK(iterations == oneapi::tbb::parallel_reduce(range, identity, body, reduction, oneapi::tbb::auto_partitioner()).get());
-    CHECK(iterations == oneapi::tbb::parallel_reduce(range, identity, body, reduction, oneapi::tbb::static_partitioner()).get());
+    CHECK(result == oneapi::tbb::parallel_reduce(range, identity, body, reduction).get());
+    CHECK(result == oneapi::tbb::parallel_reduce(range, identity, body, reduction, oneapi::tbb::simple_partitioner()).get());
+    CHECK(result == oneapi::tbb::parallel_reduce(range, identity, body, reduction, oneapi::tbb::auto_partitioner()).get());
+    CHECK(result == oneapi::tbb::parallel_reduce(range, identity, body, reduction, oneapi::tbb::static_partitioner()).get());
     oneapi::tbb::affinity_partitioner aff;
-    CHECK(iterations == oneapi::tbb::parallel_reduce(range, identity, body, reduction, aff));
+    CHECK(result == oneapi::tbb::parallel_reduce(range, identity, body, reduction, aff).get());
+
+    CHECK(result == oneapi::tbb::parallel_deterministic_reduce(range, identity, body, reduction).get());
+    CHECK(result == oneapi::tbb::parallel_deterministic_reduce(range, identity, body, reduction, oneapi::tbb::simple_partitioner()).get());
+    CHECK(result == oneapi::tbb::parallel_deterministic_reduce(range, identity, body, reduction, oneapi::tbb::static_partitioner()).get());
 }
 
 //! Test that parallel_reduce uses std::invoke to run the body
 //! \brief \ref interface \ref requirement
-TEST_CASE("Test invoke semantics for parallel_reduce") {
-    auto regular_reduce = [](const SmartRange& range) {
-        SmartValue
+TEST_CASE("Test invoke semantics for parallel_[deterministic_]reduce") {
+    auto regular_reduce = [](const test_invoke::SmartRange<SmartValue>& range, const SmartValue& idx) {
+        SmartValue result = idx;
+        for (auto i = range.begin(); i.get() != range.end().get(); ++i) {
+            result = result + i;
+        }
+        return result;
     };
     auto regular_join = [](const SmartValue& lhs, const SmartValue& rhs) {
-        return SmartValue{lhs.get() + rhs.get()};
+        return lhs + rhs;
     };
-    test_preduce_invoke_basic(&SmartRange::reduce, &SmartValue::operator+);
-    test_preduce_invoke_basic(&SmartRange::reduce, regular_join);
+
+    test_preduce_invoke_basic(&test_invoke::SmartRange<SmartValue>::reduction, &SmartValue::operator+);
+    test_preduce_invoke_basic(&test_invoke::SmartRange<SmartValue>::reduction, regular_join);
     test_preduce_invoke_basic(regular_reduce, &SmartValue::operator+);
 }
+

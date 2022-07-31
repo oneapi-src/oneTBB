@@ -18,6 +18,7 @@
 #include "common/test.h"
 #include "common/utils.h"
 #include "common/utils_report.h"
+#include "common/test_invoke.h"
 
 #include "oneapi/tbb/parallel_for.h"
 #include "oneapi/tbb/tick_count.h"
@@ -245,31 +246,6 @@ void TestParallelForWithStepSupport() {
 }
 
 #if __TBB_CPP17_INVOKE_PRESENT
-template <typename Value>
-class SmartRange : public oneapi::tbb::blocked_range<Value> {
-    using base_type = oneapi::tbb::blocked_range<Value>;
-
-public:
-    SmartRange(std::size_t first, std::size_t last, std::vector<std::size_t>& cv)
-        : base_type(first, last), change_vector(cv) {}
-    SmartRange(const SmartRange&) = default;
-    SmartRange(SmartRange& r, oneapi::tbb::split)
-        : base_type(r, oneapi::tbb::split{}), change_vector(r.change_vector) {}
-
-    void increase() const {
-        for (std::size_t index = this->begin(); index != this->end(); ++index) {
-            ++change_vector[index];
-        }
-    }
-
-    void reduce() const {
-
-    }
-
-private:
-    std::vector<std::size_t>& change_vector;
-}; // struct SmartRange
-
 class SmartIndex {
 public:
     SmartIndex(int ri) : real_index(ri), change_vector(nullptr) {}
@@ -333,7 +309,7 @@ void test_pfor_body_invoke_semantics() {
     const std::size_t number_of_overloads = 5;
     const std::size_t iterations = 100000;
 
-    using range_type = SmartRange<std::size_t>;
+    using range_type = test_invoke::SmartRange<std::size_t>;
     std::vector<std::size_t> change_vector(iterations, 0);
     range_type range{0, iterations, change_vector};
 

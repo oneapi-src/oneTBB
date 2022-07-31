@@ -53,6 +53,42 @@ struct SmartObjectImpl<0> {
 
 using SmartObject = SmartObjectImpl<9>;
 
+// Can be customized
+template <typename T>
+std::size_t get_real_index(const T& obj) {
+    return obj;
+}
+
+template <typename Value>
+class SmartRange : public oneapi::tbb::blocked_range<Value> {
+    using base_range = oneapi::tbb::blocked_range<Value>;
+public:
+    SmartRange(const Value& first, const Value& last) : base_range(first, last), change_vector(nullptr) {}
+    SmartRange(const Value& first, const Value& last, std::vector<std::size_t>& cv)
+        : base_range(first, last), change_vector(&cv) {}
+
+    SmartRange(const SmartRange&) = default;
+    SmartRange(SmartRange& other, oneapi::tbb::split)
+        : base_range(other, oneapi::tbb::split{}), change_vector(other.change_vector) {}
+    
+    void increase() const {
+        CHECK_MESSAGE(change_vector, "Attempt to operate with no associated vector");
+        for (std::size_t index = get_real_index(this->begin()); index != get_real_index(this->end()); ++index) {
+            ++(*change_vector)[index];
+        }
+    }
+
+    Value reduction(const Value& idx) const {
+        Value result = idx;
+        for (std::size_t index = get_real_index(this->begin()); index != get_real_index(this->end()); ++index) {
+            result = result + Value(index);
+        }
+        return Value(result);
+    }
+private:
+    std::vector<std::size_t>* change_vector;
+};
+
 } // namespace test_invoke
 
 #endif // __TBB_CPP17_INVOKE_PRESENT
