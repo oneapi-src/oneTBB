@@ -76,6 +76,54 @@ void test_deduction_guides() {
 
 #endif
 
+#if __TBB_CPP17_INVOKE_PRESENT
+
+template <typename Input1, typename Output1, typename Output2, typename Output3,
+          typename Body1, typename Body2, typename Body3>
+void test_invoke_semantics_basic(const Body1& body1, const Body2& body2, const Body3& body3,
+                                 bool expect_body_call) {
+    using namespace oneapi::tbb::flow;
+
+    graph g;
+
+    function_node<Input1, Output1> f1(g, unlimited, body1);
+    function_node<Output1, Output2> f2(g, unlimited, body2);
+    function_node<Output2, Output3> f3(g, unlimited, body3);
+
+    make_edge(f1, f2);
+    make_edge(f2, f3);
+
+    std::vector<std::size_t> change_vector(10, 0);
+    f1.try_put(SmartObject{change_vector});
+
+    g.wait_for_all();
+
+    if (expect_body_call) {
+        CHECK_MESSAGE(change_vector[9] == 1, "body was not called");
+        CHECK_MESSAGE(change_vector[8] == 1, "body was not called");
+        CHECK_MESSAGE(change_vector[7] == 1, "body was not called");
+        for (std::size_t i = 0; i < 7; ++i) {
+            CHECK_MESSAGE(change_vector[i] == 0, "body was called but should not");
+        }
+    }
+}
+
+void test_invoke_semantics() {
+    using input1 = SmartObject;
+    using output1 = input1::subobject_type;
+    using output2 = output1::subobject_type;
+    using output3 = output2::subobject_type;
+    // Testing pointer to member function
+    test_invoke_semantics_basic<input1, output1,
+                                output2, output3>(&input1::get_subobject, &output1::get_subobject, &output2::get_subobject,
+                                                  /*expect_body_call = */true);
+    // Testing pointer to member object
+    test_invoke_semantics_basic<input1, output1,
+                                output2, output3>(&input1::subobject, &output1::subobject, &output2::subobject,
+                                                  /*expect_body_call = */false);
+}
+#endif // __TBB_CPP17_INVOKE_PRESENT
+
 //! Test calling function body
 //! \brief \ref interface \ref requirement
 TEST_CASE("Test function_node body") {
@@ -168,3 +216,11 @@ TEST_CASE("Test function_node Output and Input class") {
     using Body = conformance::copy_counting_object<int>;
     conformance::test_output_input_class<oneapi::tbb::flow::function_node<Body, Body>, Body>();
 }
+
+#if __TBB_CPP17_INVOKE_PRESENT
+//! Test that function_node uses std::invoke to execute the body
+//! \brief \ref interface \ref requirement
+TEST_CASE("Test function_node invoke semantics") {
+    test_invoke_semantics();
+}
+#endif

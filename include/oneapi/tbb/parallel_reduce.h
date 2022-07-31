@@ -41,17 +41,18 @@ concept parallel_reduce_body = splittable<Body> &&
                                };
 
 template <typename Function, typename Range, typename Value>
-concept parallel_reduce_function = requires( const std::remove_reference_t<Function>& func,
-                                             const Range& range,
-                                             const Value& value ) {
-    { func(range, value) } -> std::convertible_to<Value>;
-};
+concept parallel_reduce_function = std::invocable<const std::remove_reference_t<Function>&,
+                                                  const Range&, const Value&> &&
+                                   std::convertible_to<std::invoke_result_t<const std::remove_reference_t<Function>&,
+                                                                            const Range&, const Value&>,
+                                                        Value>;
 
 template <typename Combine, typename Value>
-concept parallel_reduce_combine = requires( const std::remove_reference_t<Combine>& combine,
-                                            const Value& lhs, const Value& rhs ) {
-    { combine(lhs, rhs) } -> std::convertible_to<Value>;
-};
+concept parallel_reduce_combine = std::invocable<const std::remove_reference_t<Combine>&,
+                                                 const Value&, const Value&> &&
+                                  std::convertible_to<std::invoke_result_t<const std::remove_reference_t<Combine>&,
+                                                                           const Value&, const Value&>,
+                                                      Value>;
 
 } // namespace d0
 #endif // __TBB_CPP20_CONCEPTS_PRESENT

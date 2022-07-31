@@ -90,6 +90,7 @@ template <typename ReturnType, typename OutputType>
 concept node_body_return_type = std::same_as<OutputType, tbb::detail::d1::continue_msg> ||
                                 std::same_as<OutputType, ReturnType>;
 
+// TODO: consider using std::invocable here
 template <typename Body, typename Output>
 concept continue_node_body = std::copy_constructible<Body> &&
                              requires( Body& body, const tbb::detail::d1::continue_msg& v ) {
@@ -98,9 +99,8 @@ concept continue_node_body = std::copy_constructible<Body> &&
 
 template <typename Body, typename Input, typename Output>
 concept function_node_body = std::copy_constructible<Body> &&
-                             requires( Body& body, const Input& v ) {
-                                 { body(v) } -> node_body_return_type<Output>;
-                             };
+                             std::invocable<Body&, const Input&> &&
+                             node_body_return_type<std::invoke_result_t<Body&, const Input&>, Output>;
 
 template <typename FunctionObject, typename Input, typename Key>
 concept join_node_function_object = std::copy_constructible<FunctionObject> &&
@@ -116,9 +116,7 @@ concept input_node_body = std::copy_constructible<Body> &&
 
 template <typename Body, typename Input, typename OutputPortsType>
 concept multifunction_node_body = std::copy_constructible<Body> &&
-                                  requires( Body& body, const Input& v, OutputPortsType& p ) {
-                                      body(v, p);
-                                  };
+                                  std::invocable<Body&, const Input&, OutputPortsType&>;
 
 template <typename Sequencer, typename Value>
 concept sequencer = std::copy_constructible<Sequencer> &&

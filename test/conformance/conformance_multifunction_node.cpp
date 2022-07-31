@@ -21,6 +21,7 @@
 #define CONFORMANCE_MULTIFUNCTION_NODE
 
 #include "conformance_flowgraph.h"
+#include "common/test_invoke.h"
 
 //! \file conformance_multifunction_node.cpp
 //! \brief Test for [flow_graph.function_node] specification
@@ -135,3 +136,70 @@ TEST_CASE("Test function_node Output and Input class") {
     using Body = conformance::copy_counting_object<int>;
     conformance::test_output_input_class<oneapi::tbb::flow::multifunction_node<Body, std::tuple<Body>>, Body>();
 }
+
+#if __TBB_CPP17_INVOKE_PRESENT
+//! Test that multifunction_node uses std::invoke to execute the body
+//! \brief \ref interface \ref requirement
+TEST_CASE("Test multifunction_node invoke semantics") {
+    using namespace oneapi::tbb::flow;
+
+    using input1 = test_invoke::SmartObject;
+    using output1 = input1::subobject_type;
+    using output2 = output1::subobject_type;
+    using output3 = output2::subobject_type;
+
+    using output_types1 = std::tuple<output1, output1>;
+    using output_types2 = std::tuple<output2, output2>;
+    using output_types3 = std::tuple<output3, output3>;
+
+    graph g;
+
+    // building graph
+    /*
+                        
+                   mf31 =
+                 /       
+            mf21 - mf32 = 
+          /              
+     mf11 - mf22 - mf33 =
+                 \         
+                   mf34 = 
+    */
+
+    multifunction_node<input1, output_types1> mf11(g, unlimited, &input1::send_subobject);
+
+    multifunction_node<output1, output_types2> mf21(g, unlimited, &output1::send_subobject);
+    multifunction_node<output1, output_types2> mf22(g, unlimited, &output1::send_subobject);
+
+    multifunction_node<output2, output_types3> mf31(g, unlimited, &output2::send_subobject);
+    multifunction_node<output2, output_types3> mf32(g, unlimited, &output2::send_subobject);
+    multifunction_node<output2, output_types3> mf33(g, unlimited, &output2::send_subobject);
+    multifunction_node<output2, output_types3> mf34(g, unlimited, &output2::send_subobject);
+
+    buffer_node<output3> buf(g);
+
+    make_edge(output_port<0>(mf11), mf21);
+    make_edge(output_port<1>(mf11), mf22);
+
+    make_edge(output_port<0>(mf21), mf31);
+    make_edge(output_port<1>(mf21), mf32);
+
+    make_edge(output_port<0>(mf22), mf33);
+    make_edge(output_port<1>(mf22), mf34);
+
+    make_edge(output_port<0>(mf31), buf);
+    make_edge(output_port<0>(mf32), buf);
+    make_edge(output_port<0>(mf33), buf);
+    make_edge(output_port<0>(mf34), buf);
+
+    mf11.try_put(input1{});
+
+    g.wait_for_all();
+
+    std::size_t buf_size = 0;
+    output3 tmp;
+    while(buf.try_get(tmp)) { ++buf_size; }
+
+    CHECK(buf_size == 4);
+}
+#endif
