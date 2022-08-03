@@ -218,7 +218,7 @@ template <typename Input, typename Output, typename B>
 class type_to_key_function_body_leaf : public type_to_key_function_body<Input, Output> {
 public:
     type_to_key_function_body_leaf( const B &_body ) : body(_body) { }
-    Output operator()(const Input &i) override { return body(i); }
+    Output operator()(const Input &i) override { return tbb::detail::invoke(body, i); }
     type_to_key_function_body_leaf* clone() override {
         return new type_to_key_function_body_leaf< Input, Output, B>(body);
     }

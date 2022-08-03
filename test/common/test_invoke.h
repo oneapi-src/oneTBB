@@ -89,6 +89,14 @@ private:
     std::vector<std::size_t>* change_vector;
 };
 
+struct SmartID {
+    SmartID() : id(999) {}
+    SmartID(std::size_t n) : id(n) {}
+
+    std::size_t get_id() const { return id; }
+    std::size_t id;    
+};
+
 } // namespace test_invoke
 
 #endif // __TBB_CPP17_INVOKE_PRESENT

@@ -104,9 +104,8 @@ concept function_node_body = std::copy_constructible<Body> &&
 
 template <typename FunctionObject, typename Input, typename Key>
 concept join_node_function_object = std::copy_constructible<FunctionObject> &&
-                                    requires( FunctionObject& func, const Input& v ) {
-                                        { func(v) } -> adaptive_same_as<Key>;
-                                    };
+                                    std::invocable<FunctionObject&, const Input&> &&
+                                    adaptive_same_as<std::invoke_result_t<FunctionObject&, const Input&>, Key>;
 
 template <typename Body, typename Output>
 concept input_node_body = std::copy_constructible<Body> &&
@@ -120,15 +119,12 @@ concept multifunction_node_body = std::copy_constructible<Body> &&
 
 template <typename Sequencer, typename Value>
 concept sequencer = std::copy_constructible<Sequencer> &&
-                    requires( Sequencer& seq, const Value& value ) {
-                        { seq(value) } -> adaptive_same_as<std::size_t>;
-                    };
+                    std::invocable<Sequencer&, const Value&> &&
+                    adaptive_same_as<std::invoke_result_t<Sequencer&, const Value&>, std::size_t>;
 
 template <typename Body, typename Input, typename GatewayType>
 concept async_node_body = std::copy_constructible<Body> &&
-                          requires( Body& body, const Input& v, GatewayType& gateway ) {
-                              body(v, gateway);
-                          };
+                          std::invocable<Body&, const Input&, GatewayType&>;
 
 } // namespace d0
 #endif // __TBB_CPP20_CONCEPTS_PRESENT

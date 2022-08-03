@@ -1,3 +1,4 @@
+
 /*
     Copyright (c) 2005-2022 Intel Corporation
 
@@ -154,3 +155,45 @@ TEST_CASE("Test removal of the predecessor while having none") {
 
     test(connect_join_via_make_edge);
 }
+
+#if __TBB_CPP17_INVOKE_PRESENT
+
+//! Test that key_matching join_node uses std::invoke to run the body
+//! \brief \ref requirement
+TEST_CASE("key_matching join_node invoke semantics") {
+    using namespace oneapi::tbb::flow;
+    auto generator = [](std::size_t n) { return test_invoke::SmartID(n); };
+    graph g;
+
+    function_node<std::size_t, test_invoke::SmartID> f1(g, unlimited, generator);
+    function_node<std::size_t, test_invoke::SmartID> f2(g, unlimited, generator);
+
+    using tuple_type = std::tuple<test_invoke::SmartID, test_invoke::SmartID>;
+    using join_type = join_node<tuple_type, key_matching<std::size_t>>;
+
+    join_type j(g, &test_invoke::SmartID::get_number, &test_invoke::SmartID::number);
+
+    buffer_node<tuple_type> buf(g);
+
+    make_edge(f1, input_port<0>(j));
+    make_edge(f2, input_port<1>(j));
+    make_edge(j, buf);
+
+    std::size_t objects_count = 100;
+    for (std::size_t i = 0; i < objects_count; ++i) {
+        f1.try_put(i);
+        f2.try_put(objects_count - i - 1);
+    }
+
+    g.wait_for_all();
+
+    std::size_t buf_size = 0;
+    tuple_type tpl;
+
+    while(buf.try_get(tpl)) {
+        ++buf_size;
+        CHECK(std::get<0>(tpl).number == std::get<1>(tpl).number);
+    }
+    CHECK(buf_size == objects_count);
+}
+#endif // __TBB_CPP17_INVOKE_PRESENT
