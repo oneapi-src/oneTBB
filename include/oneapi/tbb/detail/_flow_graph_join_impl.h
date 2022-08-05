@@ -1028,6 +1028,7 @@
                            public sender<OutputTuple> {
     protected:
         using graph_node::my_graph;
+        using input_type = typename join_node_FE<JP, InputTuple, OutputTuple>::input_type;
     public:
         typedef OutputTuple output_type;
 
