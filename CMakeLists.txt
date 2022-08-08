@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2022 Intel Corporation
+# Copyright (c) 2020-2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -170,6 +170,13 @@ foreach(output_type LIBRARY ARCHIVE PDB RUNTIME)
         unset(_tbb_suffix_upper)
     endif()
 endforeach()
+
+if (CMAKE_CONFIGURATION_TYPES)
+    # We can't use generator expressions in a cmake variable name.
+    set(TBB_TEST_WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${TBB_OUTPUT_DIR_BASE}_$<LOWER_CASE:$<CONFIG>>)
+else()
+    set(TBB_TEST_WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+endif()
 
 # -------------------------------------------------------------------
 
