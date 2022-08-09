@@ -29,7 +29,7 @@ if BUILD_TYPE == 'oneapi' or BUILD_TYPE == 'dita':
     project = u'Intel® oneAPI Threading Building Blocks (oneTBB)'
 else:
     project = u'oneTBB'
-copyright = u'2021, Intel Corporation'
+copyright = u'2022, Intel Corporation'
 author = u'Intel'
 
 # The short X.Y version
@@ -60,7 +60,7 @@ extensions = [
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ['main/_templates']
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -120,19 +120,24 @@ else:
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-if BUILD_TYPE == 'oneapi' or BUILD_TYPE == 'dita':
-    html_theme = 'sphinx_rtd_theme'
-else:
-    html_theme = 'sphinx_book_theme'
-    html_theme_options = {
-    'repository_url': 'https://github.com/oneapi-src/oneTBB',
-    'path_to_docs': 'doc/main',
-    'use_issues_button': True,
-    'use_edit_page_button': True,
-    'repository_branch': 'master',
-    'extra_footer': '<p align="right"><a href="https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html">Cookies</a></p>'
-    }
 
+html_theme = 'sphinx_book_theme'
+
+if BUILD_TYPE == 'dita':
+    html_theme_options = {
+        'repository_url': 'https://github.com/oneapi-src/oneTBB',
+        'path_to_docs': 'doc',
+        'repository_branch': 'master'
+    }
+else:
+    html_theme_options = {
+        'repository_url': 'https://github.com/oneapi-src/oneTBB',
+        'path_to_docs': 'doc/main',
+        'use_issues_button': True,
+        'use_edit_page_button': True,
+        'repository_branch': 'master',
+        'extra_footer': '<p align="right"><a href="https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html">Cookies</a></p>'
+    }
 
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -148,8 +153,9 @@ if BUILD_TYPE == 'oneapi'  or BUILD_TYPE == 'dita':
     }
 else:
     html_js_files = ['custom.js']
-    html_logo = '_static/oneAPI-rgb-rev-100.png'
+
     
+html_logo = '_static/oneAPI-rgb-rev-100.png'
 html_favicon = '_static/favicons.png'
 
 # Custom sidebar templates, must be a dictionary that maps document names
