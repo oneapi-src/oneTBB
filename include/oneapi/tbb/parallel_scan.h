@@ -519,11 +519,11 @@ public:
 
     template<typename Tag>
     void operator()( const Range& r, Tag tag ) {
-        m_sum_slot = m_scan(r, m_sum_slot, tag);
+        m_sum_slot = tbb::detail::invoke(m_scan, r, m_sum_slot, tag);
     }
 
     void reverse_join( lambda_scan_body& a ) {
-        m_sum_slot = m_reverse_join(a.m_sum_slot, m_sum_slot);
+        m_sum_slot = tbb::detail::invoke(m_reverse_join, a.m_sum_slot, m_sum_slot);
     }
 
     void assign( lambda_scan_body& b ) {

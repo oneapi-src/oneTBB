@@ -220,7 +220,6 @@
 /** Library features presence macros **/
 
 #define __TBB_CPP14_INTEGER_SEQUENCE_PRESENT       (__TBB_LANG >= 201402L)
-#define __TBB_CPP17_INVOKE_RESULT_PRESENT          (__TBB_LANG >= 201703L)
 #define __TBB_CPP17_INVOKE_PRESENT                 (__TBB_LANG >= 201703L)
 
 // TODO: Remove the condition(__INTEL_COMPILER > 2021) from the __TBB_CPP17_DEDUCTION_GUIDES_PRESENT

@@ -18,6 +18,7 @@
 #define __TBB_test_common_test_invoke_H
 
 #include "oneapi/tbb/flow_graph.h"
+#include "oneapi/tbb/blocked_range.h"
 
 #if __TBB_CPP17_INVOKE_PRESENT
 namespace test_invoke {
@@ -85,6 +86,16 @@ public:
         }
         return Value(result);
     }
+
+    Value scan(const Value& idx, bool is_final_scan) const {
+        CHECK_MESSAGE(change_vector, "Attempt to operate with no associated vector");
+        Value result = idx;
+        for (std::size_t index = get_real_index(this->begin()); index != get_real_index(this->end()); ++index) {
+            result = result + Value(index);
+            if (is_final_scan) (*change_vector)[index] = get_real_index(result);
+        }
+        return result;
+    }
 private:
     std::vector<std::size_t>* change_vector;
 };
@@ -96,6 +107,35 @@ struct SmartID {
     std::size_t get_id() const { return id; }
     std::size_t id;    
 };
+
+class SmartValue {
+public:
+    SmartValue(std::size_t rv) : real_value(rv) {}
+    SmartValue(const SmartValue&) = default;
+    SmartValue& operator=(const SmartValue&) = default;
+
+    SmartValue operator+(const SmartValue& other) const {
+        return SmartValue{real_value + other.real_value};
+    }
+    std::size_t operator-(const SmartValue& other) const {
+        return real_value - other.real_value;
+    }
+
+    std::size_t get() const { return real_value; }
+
+    bool operator<(const SmartValue& other) const {
+        return real_value < other.real_value;
+    }
+
+    SmartValue& operator++() { ++real_value; return *this; }
+private:
+    std::size_t real_value;
+};
+
+std::size_t get_real_index(const SmartValue& value) {
+    return value.get();
+}
+
 
 } // namespace test_invoke
 

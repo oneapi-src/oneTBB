@@ -132,34 +132,6 @@ TEST_CASE("Test partitioners interaction with various ranges") {
     }
 }
 
-class SmartValue {
-public:
-    SmartValue(std::size_t rv) : real_value(rv) {}
-    SmartValue(const SmartValue&) = default;
-    SmartValue& operator=(const SmartValue&) = default;
-
-    SmartValue operator+(const SmartValue& other) const {
-        return SmartValue{real_value + other.real_value};
-    }
-    std::size_t operator-(const SmartValue& other) const {
-        return real_value - other.real_value;
-    }
-
-    std::size_t get() const { return real_value; }
-
-    bool operator<(const SmartValue& other) const {
-        return real_value < other.real_value;
-    }
-
-    SmartValue& operator++() { ++real_value; return *this; }
-private:
-    std::size_t real_value;
-};
-
-std::size_t get_real_index(const SmartValue& value) {
-    return value.get();
-}
-
 template <typename Body, typename Reduction>
 void test_preduce_invoke_basic(const Body& body, const Reduction& reduction) {
     const std::size_t iterations = 100000;
