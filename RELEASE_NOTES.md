@@ -34,7 +34,7 @@ This document contains changes of oneTBB compared to the last release.
 
 ## :hammer: Fixed Issues
 - Memory allocator crash when allocating ~1TB on 64-bit systems (GitHub* [#838](https://github.com/oneapi-src/oneTBB/issues/838)).
-- Thread Distribution over NUMA Nodes on Windows* OS systems.
+- Thread Distribution over NUMA Nodes on Windows OS systems.
 - The function provided to oneapi::tbb::suspend is now guaranteed to be executed on the same thread.
 
 ## :octocat: Open-source Contributions Integrated
