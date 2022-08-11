@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -132,7 +132,7 @@ static const dynamic_link_descriptor MallocLinkTable[] = {
     The routine attempts to dynamically link with the TBB memory allocator.
     If that allocator is not found, it links to malloc and free. */
 void initialize_handler_pointers() {
-    __TBB_ASSERT(allocate_handler == &initialize_allocate_handler, NULL);
+    __TBB_ASSERT(allocate_handler == &initialize_allocate_handler, nullptr);
     bool success = dynamic_link(MALLOCLIB_NAME, MallocLinkTable, 4);
     if(!success) {
         // If unsuccessful, set the handlers to the default routines.
@@ -159,14 +159,14 @@ void initialize_cache_aligned_allocator() {
 //! Executed on very first call through allocate_handler
 static void* initialize_allocate_handler(std::size_t size) {
     initialize_cache_aligned_allocator();
-    __TBB_ASSERT(allocate_handler != &initialize_allocate_handler, NULL);
+    __TBB_ASSERT(allocate_handler != &initialize_allocate_handler, nullptr);
     return (*allocate_handler)(size);
 }
 
 //! Executed on very first call through cache_aligned_allocate_handler
 static void* initialize_cache_aligned_allocate_handler(std::size_t bytes, std::size_t alignment) {
     initialize_cache_aligned_allocator();
-    __TBB_ASSERT(cache_aligned_allocate_handler != &initialize_cache_aligned_allocate_handler, NULL);
+    __TBB_ASSERT(cache_aligned_allocate_handler != &initialize_cache_aligned_allocate_handler, nullptr);
     return (*cache_aligned_allocate_handler)(bytes, alignment);
 }
 
@@ -186,7 +186,7 @@ void* __TBB_EXPORTED_FUNC cache_aligned_allocate(std::size_t size) {
     if (size + cache_line_size < size) {
         throw_exception(exception_id::bad_alloc);
     }
-    // scalable_aligned_malloc considers zero size request an error, and returns NULL
+    // scalable_aligned_malloc considers zero size request an error, and returns nullptr
     if (size == 0) size = 1;
 
     void* result = cache_aligned_allocate_handler.load(std::memory_order_acquire)(size, cache_line_size);
@@ -268,7 +268,7 @@ bool __TBB_EXPORTED_FUNC is_tbbmalloc_used() {
         initialize_cache_aligned_allocator();
     }
     handler_snapshot = allocate_handler.load(std::memory_order_relaxed);
-    __TBB_ASSERT(handler_snapshot != &initialize_allocate_handler && deallocate_handler != nullptr, NULL);
+    __TBB_ASSERT(handler_snapshot != &initialize_allocate_handler && deallocate_handler != nullptr, nullptr);
     // Cast to void avoids type mismatch errors on some compilers (e.g. __IBMCPP__)
     __TBB_ASSERT((reinterpret_cast<void*>(handler_snapshot) == reinterpret_cast<void*>(&std::malloc)) == (reinterpret_cast<void*>(deallocate_handler) == reinterpret_cast<void*>(&std::free)),
                   "Both shim pointers must refer to routines from the same package (either TBB or CRT)");

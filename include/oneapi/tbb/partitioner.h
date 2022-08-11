@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ class affinity_partitioner_base: no_copy {
     friend class affinity_partitioner;
     friend class affinity_partition_type;
     //! Array that remembers affinities of tree positions to affinity_id.
-    /** NULL if my_size==0. */
+    /** nullptr if my_size==0. */
     slot_id* my_array;
     //! Number of elements in my_array.
     std::size_t my_size;
@@ -438,7 +438,7 @@ struct dynamic_grainsize_mode : Mode {
     }
     depth_t max_depth() { return my_max_depth; }
     void align_depth(depth_t base) {
-        __TBB_ASSERT(base <= my_max_depth, 0);
+        __TBB_ASSERT(base <= my_max_depth, nullptr);
         my_max_depth -= base;
     }
     template<typename StartType, typename Range>
@@ -548,7 +548,7 @@ public:
         ap.resize(factor);
         my_array = ap.my_array;
         my_max_depth = factor_power + 1;
-        __TBB_ASSERT( my_max_depth < __TBB_RANGE_POOL_CAPACITY, 0 );
+        __TBB_ASSERT( my_max_depth < __TBB_RANGE_POOL_CAPACITY, nullptr );
     }
     affinity_partition_type(affinity_partition_type& p, split)
         : dynamic_grainsize_mode<linear_affinity_mode<affinity_partition_type> >(p, split())

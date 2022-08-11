@@ -892,7 +892,7 @@ private:
 
     #if TBB_USE_DEBUG
         size_type cap = capacity();
-        __TBB_ASSERT( cap >= new_size, NULL);
+        __TBB_ASSERT( cap >= new_size, nullptr);
     #endif
         return iterator(*this, size());
     }

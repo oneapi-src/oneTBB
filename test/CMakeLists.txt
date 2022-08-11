@@ -44,7 +44,6 @@ function(tbb_add_test)
         # Expand the linker rpath by the CMAKE_LIBRARY_OUTPUT_DIRECTORY path since clang compiler from Android SDK
         # doesn't respect the -L flag.
         target_link_libraries(${_tbb_test_TARGET_NAME} PRIVATE "-Wl,--rpath-link,${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
-        target_link_libraries(${_tbb_test_TARGET_NAME} PRIVATE -rdynamic) # for the test_dynamic_link
         add_test(NAME ${_tbb_test_TARGET_NAME}
                  COMMAND ${CMAKE_COMMAND}
                          -DBINARIES_PATH=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
@@ -94,7 +93,6 @@ function(tbb_add_c_test)
     target_include_directories(${_tbb_test_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_SOURCE_DIR})
 
     if (ANDROID_PLATFORM)
-        target_link_libraries(${_tbb_test_NAME} PRIVATE -rdynamic) # for the test_dynamic_link
         add_test(NAME ${_tbb_test_NAME}
                 COMMAND ${CMAKE_COMMAND}
                         -DBINARIES_PATH=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
@@ -369,6 +367,12 @@ if (TARGET TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_allocators DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_arena_priorities DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_dynamic_link DEPENDENCIES TBB::tbb)
+    if (WIN32)
+        tbb_add_test(SUBDIR tbb NAME test_numa_dist DEPENDENCIES TBB::tbb)
+    endif()
+    if (APPLE OR ANDROID_PLATFORM)
+        target_link_libraries(test_dynamic_link PRIVATE -rdynamic) # for the test_dynamic_link
+    endif()
     tbb_add_test(SUBDIR tbb NAME test_collaborative_call_once DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_concurrent_lru_cache DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_concurrent_unordered_map DEPENDENCIES TBB::tbb)
@@ -575,7 +579,6 @@ if (TARGET TBB::tbbmalloc)
             ${TBBMALLOC_LIB_COMPILE_FLAGS}
         )
         if (ANDROID_PLATFORM)
-            target_link_libraries(test_malloc_whitebox PRIVATE -rdynamic) # for the test_dynamic_link
             add_test(NAME test_malloc_whitebox
                     COMMAND ${CMAKE_COMMAND}
                             -DBINARIES_PATH=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}

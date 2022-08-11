@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ void governor::release_resources () {
 }
 
 rml::tbb_server* governor::create_rml_server ( rml::tbb_client& client ) {
-    rml::tbb_server* server = NULL;
+    rml::tbb_server* server = nullptr;
     if( !UsePrivateRML ) {
         ::rml::factory::status_type status = theRMLServerFactory.make_server( server, client );
         if( status != ::rml::factory::st_success ) {
@@ -95,7 +95,7 @@ rml::tbb_server* governor::create_rml_server ( rml::tbb_client& client ) {
         }
     }
     if ( !server ) {
-        __TBB_ASSERT( UsePrivateRML, NULL );
+        __TBB_ASSERT( UsePrivateRML, nullptr);
         server = rml::make_private_server( client );
     }
     __TBB_ASSERT( server, "Failed to create RML server" );
@@ -196,8 +196,7 @@ void governor::init_external_thread() {
     stack_size = a.my_market->worker_stack_size();
     std::uintptr_t stack_base = get_stack_base(stack_size);
     task_dispatcher& task_disp = td.my_arena_slot->default_task_dispatcher();
-    task_disp.set_stealing_threshold(calculate_stealing_threshold(stack_base, stack_size));
-    td.attach_task_dispatcher(task_disp);
+    td.enter_task_dispatcher(task_disp, calculate_stealing_threshold(stack_base, stack_size));
 
     td.my_arena_slot->occupy();
     a.my_market->add_external_thread(td);
@@ -211,34 +210,47 @@ void governor::init_external_thread() {
 
 void governor::auto_terminate(void* tls) {
     __TBB_ASSERT(get_thread_data_if_initialized() == nullptr ||
-        get_thread_data_if_initialized() == tls, NULL);
+        get_thread_data_if_initialized() == tls, nullptr);
     if (tls) {
         thread_data* td = static_cast<thread_data*>(tls);
+
+        auto clear_tls = [td] {
+            td->~thread_data();
+            cache_aligned_deallocate(td);
+            clear_thread_data();
+        };
 
         // Only external thread can be inside an arena during termination.
         if (td->my_arena_slot) {
             arena* a = td->my_arena;
             market* m = a->my_market;
 
+            // If the TLS slot is already cleared by OS or underlying concurrency
+            // runtime, restore its value to properly clean up arena
+            if (!is_thread_data_set(td)) {
+                set_thread_data(*td);
+            }
+
             a->my_observers.notify_exit_observers(td->my_last_observer, td->my_is_worker);
 
-            td->my_task_dispatcher->m_stealing_threshold = 0;
-            td->detach_task_dispatcher();
+            td->leave_task_dispatcher();
             td->my_arena_slot->release();
             // Release an arena
             a->on_thread_leaving<arena::ref_external>();
 
             m->remove_external_thread(*td);
+
+            // The tls should be cleared before market::release because
+            // market can destroy the tls key if we keep the last reference
+            clear_tls();
+
             // If there was an associated arena, it added a public market reference
             m->release( /*is_public*/ true, /*blocking_terminate*/ false);
+        } else {
+            clear_tls();
         }
-
-        td->~thread_data();
-        cache_aligned_deallocate(td);
-
-        clear_thread_data();
     }
-    __TBB_ASSERT(get_thread_data_if_initialized() == nullptr, NULL);
+    __TBB_ASSERT(get_thread_data_if_initialized() == nullptr, nullptr);
 }
 
 void governor::initialize_rml_factory () {

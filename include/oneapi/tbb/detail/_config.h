@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -268,7 +268,7 @@
     #define __TBB_CPP20_COMPARISONS_PRESENT __TBB_CPP20_PRESENT
 #endif
 
-#define __TBB_RESUMABLE_TASKS                           (!__TBB_WIN8UI_SUPPORT && !__ANDROID__ && !__QNXNTO__)
+#define __TBB_RESUMABLE_TASKS                           (!__TBB_WIN8UI_SUPPORT && !__ANDROID__ && !__QNXNTO__ && (!__linux__ || __GLIBC__))
 
 /* This macro marks incomplete code or comments describing ideas which are considered for the future.
  * See also for plain comment with TODO and FIXME marks for small improvement opportunities.

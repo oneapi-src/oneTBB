@@ -449,7 +449,7 @@ private:
             }
             ++k;
         }
-        my_bucket = 0; my_node = 0; my_index = k; // the end
+        my_bucket = nullptr; my_node = nullptr; my_index = k; // the end
     }
 
     template <typename Key, typename T, typename HashCompare, typename A
@@ -526,7 +526,7 @@ public:
     // Init range with container and grainsize specified
     hash_map_range( const map_type &map, size_type grainsize_ = 1 ) :
         my_begin( Iterator( map, 0, map.my_embedded_segment, map.my_embedded_segment->node_list.load(std::memory_order_relaxed) ) ),
-        my_end( Iterator( map, map.my_mask.load(std::memory_order_relaxed) + 1, 0, 0 ) ),
+        my_end( Iterator( map, map.my_mask.load(std::memory_order_relaxed) + 1, nullptr, nullptr ) ),
         my_grainsize( grainsize_ )
     {
         __TBB_ASSERT( grainsize_>0, "grainsize must be positive" );
@@ -1044,9 +1044,9 @@ public:
     iterator begin() { return iterator( *this, 0, this->my_embedded_segment, this->my_embedded_segment->node_list.load(std::memory_order_relaxed) ); }
     const_iterator begin() const { return const_iterator( *this, 0, this->my_embedded_segment, this->my_embedded_segment->node_list.load(std::memory_order_relaxed) ); }
     const_iterator cbegin() const { return const_iterator( *this, 0, this->my_embedded_segment, this->my_embedded_segment->node_list.load(std::memory_order_relaxed) ); }
-    iterator end() { return iterator( *this, 0, 0, 0 ); }
-    const_iterator end() const { return const_iterator( *this, 0, 0, 0 ); }
-    const_iterator cend() const { return const_iterator( *this, 0, 0, 0 ); }
+    iterator end() { return iterator( *this, 0, nullptr, nullptr ); }
+    const_iterator end() const { return const_iterator( *this, 0, nullptr, nullptr ); }
+    const_iterator cend() const { return const_iterator( *this, 0, nullptr, nullptr ); }
     std::pair<iterator, iterator> equal_range( const Key& key ) { return internal_equal_range( key, end() ); }
     std::pair<const_iterator, const_iterator> equal_range( const Key& key ) const { return internal_equal_range( key, end() ); }
 
@@ -1149,7 +1149,7 @@ public:
                             std::is_constructible<key_type, const K&>::value,
                             bool>::type insert( const_accessor& result, const K& key ) {
         result.release();
-        return lookup</*insert*/true>(key, nullptr, &result, /*write=*/true, &allocate_node_default_construct<K>);
+        return lookup</*insert*/true>(key, nullptr, &result, /*write=*/false, &allocate_node_default_construct<K>);
     }
 
     template <typename K>
@@ -1269,7 +1269,7 @@ protected:
 
     // Insert or find item and optionally acquire a lock on the item.
     template <bool OpInsert, typename K, typename AllocateNodeType>
-    bool lookup( const K &key, const T *t, const_accessor *result, bool write, AllocateNodeType allocate_node, node *tmp_n  = 0)
+    bool lookup( const K &key, const T *t, const_accessor *result, bool write, AllocateNodeType allocate_node, node *tmp_n  = nullptr)
     {
         __TBB_ASSERT( !result || !result->my_node, nullptr );
         bool return_value;
@@ -1313,7 +1313,7 @@ protected:
                         goto restart; // b.release() is done in ~b().
                     // insert and set flag to grow the container
                     grow_segment = this->insert_new_node( b(), n = tmp_n, m );
-                    tmp_n = 0;
+                    tmp_n = nullptr;
                     return_value = true;
                 }
             } else { // find or count
@@ -1485,7 +1485,7 @@ protected:
         hashcode_type mask = source.my_mask.load(std::memory_order_relaxed);
         if( this->my_mask.load(std::memory_order_relaxed) == mask ) { // optimized version
             this->reserve(source.my_size.load(std::memory_order_relaxed)); // TODO: load_factor?
-            bucket *dst = 0, *src = 0;
+            bucket *dst = nullptr, *src = nullptr;
             bool rehashing_required = false;
             for( hashcode_type k = 0; k <= mask; k++ ) {
                 if( k & (k-2) ) ++dst,src++; // not the beginning of a segment
@@ -1591,7 +1591,7 @@ protected:
             return n->storage();
         else if( this->check_mask_race( h, m ) )
             goto restart;
-        return 0;
+        return nullptr;
     }
 };
 

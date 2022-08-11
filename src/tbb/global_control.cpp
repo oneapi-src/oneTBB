@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ class alignas(max_nfs_size) allowed_parallelism_control : public control_storage
     }
     void apply_active(std::size_t new_active) override {
         control_storage::apply_active(new_active);
-        __TBB_ASSERT( my_active_value>=1, NULL );
+        __TBB_ASSERT( my_active_value>=1, nullptr);
         // -1 to take external thread into account
         market::set_active_num_workers( my_active_value-1 );
     }
@@ -154,7 +154,7 @@ static control_storage *controls[] = {&allowed_parallelism_ctl, &stack_size_ctl,
 
 //! Comparator for a set of global_control objects
 inline bool control_storage_comparator::operator()(const global_control* lhs, const global_control* rhs) const {
-    __TBB_ASSERT_RELEASE(lhs->my_param < global_control::parameter_max , NULL);
+    __TBB_ASSERT_RELEASE(lhs->my_param < global_control::parameter_max , nullptr);
     return lhs->my_value < rhs->my_value || (lhs->my_value == rhs->my_value && lhs < rhs);
 }
 
@@ -184,7 +184,7 @@ private:
 public:
 
     static void create(d1::global_control& gc) {
-        __TBB_ASSERT_RELEASE(gc.my_param < global_control::parameter_max, NULL);
+        __TBB_ASSERT_RELEASE(gc.my_param < global_control::parameter_max, nullptr);
         control_storage* const c = controls[gc.my_param];
 
         spin_mutex::scoped_lock lock(c->my_list_mutex);
@@ -197,19 +197,19 @@ public:
     }
 
     static void destroy(d1::global_control& gc) {
-        __TBB_ASSERT_RELEASE(gc.my_param < global_control::parameter_max, NULL);
+        __TBB_ASSERT_RELEASE(gc.my_param < global_control::parameter_max, nullptr);
         control_storage* const c = controls[gc.my_param];
         // Concurrent reading and changing global parameter is possible.
         spin_mutex::scoped_lock lock(c->my_list_mutex);
-        __TBB_ASSERT(gc.my_param == global_control::scheduler_handle || !c->my_list.empty(), NULL);
+        __TBB_ASSERT(gc.my_param == global_control::scheduler_handle || !c->my_list.empty(), nullptr);
         std::size_t new_active = (std::size_t)(-1), old_active = c->my_active_value;
 
         if (!erase_if_present(c, gc)) {
-            __TBB_ASSERT(gc.my_param == global_control::scheduler_handle , NULL);
+            __TBB_ASSERT(gc.my_param == global_control::scheduler_handle , nullptr);
             return;
         }
         if (c->my_list.empty()) {
-            __TBB_ASSERT(new_active == (std::size_t) - 1, NULL);
+            __TBB_ASSERT(new_active == (std::size_t) - 1, nullptr);
             new_active = c->default_value();
         } else {
             new_active = (*c->my_list.begin())->my_value;
@@ -220,17 +220,17 @@ public:
     }
 
     static bool remove_and_check_if_empty(d1::global_control& gc) {
-        __TBB_ASSERT_RELEASE(gc.my_param < global_control::parameter_max, NULL);
+        __TBB_ASSERT_RELEASE(gc.my_param < global_control::parameter_max, nullptr);
         control_storage* const c = controls[gc.my_param];
 
         spin_mutex::scoped_lock lock(c->my_list_mutex);
-        __TBB_ASSERT(!c->my_list.empty(), NULL);
+        __TBB_ASSERT(!c->my_list.empty(), nullptr);
         erase_if_present(c, gc);
         return c->my_list.empty();
     }
 #if TBB_USE_ASSERT
     static bool is_present(d1::global_control& gc) {
-        __TBB_ASSERT_RELEASE(gc.my_param < global_control::parameter_max, NULL);
+        __TBB_ASSERT_RELEASE(gc.my_param < global_control::parameter_max, nullptr);
         control_storage* const c = controls[gc.my_param];
 
         spin_mutex::scoped_lock lock(c->my_list_mutex);
@@ -259,7 +259,7 @@ bool is_present(d1::global_control& gc) {
 }
 #endif // TBB_USE_ASSERT
 std::size_t __TBB_EXPORTED_FUNC global_control_active_value(int param) {
-    __TBB_ASSERT_RELEASE(param < global_control::parameter_max, NULL);
+    __TBB_ASSERT_RELEASE(param < global_control::parameter_max, nullptr);
     return controls[param]->active_value();
 }
 

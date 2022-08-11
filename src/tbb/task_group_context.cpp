@@ -163,7 +163,6 @@ void task_group_context_impl::bind_to_impl(d1::task_group_context& ctx, thread_d
 }
 
 void task_group_context_impl::bind_to(d1::task_group_context& ctx, thread_data* td) {
-    __TBB_ASSERT(!is_poisoned(ctx.my_context_list), nullptr);
     d1::task_group_context::state state = ctx.my_state.load(std::memory_order_acquire);
     if (state <= d1::task_group_context::state::locked) {
         if (state == d1::task_group_context::state::created &&

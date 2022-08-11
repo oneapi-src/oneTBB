@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021 Intel Corporation
+# Copyright (c) 2020-2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -278,7 +278,7 @@ if (TBB_BENCH)
 endif()
 
 if (ANDROID_PLATFORM)
-    if (${ANDROID_STL} STREQUAL "c++_shared")
+    if ("${ANDROID_STL}" STREQUAL "c++_shared")
         configure_file(
         "${ANDROID_NDK}/sources/cxx-stl/llvm-libc++/libs/${ANDROID_ABI}/libc++_shared.so"
         "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libc++_shared.so"

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -326,7 +326,7 @@ namespace d1 {
 class cpu_ctl_env {
     fenv_t *my_fenv_ptr;
 public:
-    cpu_ctl_env() : my_fenv_ptr(NULL) {}
+    cpu_ctl_env() : my_fenv_ptr(nullptr) {}
     ~cpu_ctl_env() {
         if ( my_fenv_ptr )
             r1::cache_aligned_deallocate( (void*)my_fenv_ptr );
@@ -337,11 +337,11 @@ public:
     //   dispatch loop may become invalid.
     // But do we really want to improve the fenv implementation? It seems to be better to replace the fenv implementation
     // with a platform specific implementation.
-    cpu_ctl_env( const cpu_ctl_env &src ) : my_fenv_ptr(NULL) {
+    cpu_ctl_env( const cpu_ctl_env &src ) : my_fenv_ptr(nullptr) {
         *this = src;
     }
     cpu_ctl_env& operator=( const cpu_ctl_env &src ) {
-        __TBB_ASSERT( src.my_fenv_ptr, NULL );
+        __TBB_ASSERT( src.my_fenv_ptr, nullptr);
         if ( !my_fenv_ptr )
             my_fenv_ptr = (fenv_t*)r1::cache_aligned_allocate(sizeof(fenv_t));
         *my_fenv_ptr = *src.my_fenv_ptr;

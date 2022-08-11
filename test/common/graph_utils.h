@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -301,7 +301,7 @@ struct harness_mapped_receiver : public tbb::flow::receiver<T> {
     multiset_type *my_multiset;
     tbb::flow::graph& my_graph;
 
-    harness_mapped_receiver(tbb::flow::graph& g) : my_multiset(NULL), my_graph(g) {
+    harness_mapped_receiver(tbb::flow::graph& g) : my_multiset(nullptr), my_graph(g) {
        my_count = 0;
     }
 
@@ -371,13 +371,13 @@ struct harness_counting_sender : public tbb::flow::sender<T> {
     size_t my_limit;
 
     harness_counting_sender( ) : my_limit(~size_t(0)) {
-       my_receiver = NULL;
+       my_receiver = nullptr;
        my_count = 0;
        my_received = 0;
     }
 
     harness_counting_sender( size_t limit ) : my_limit(limit) {
-       my_receiver = NULL;
+       my_receiver = nullptr;
        my_count = 0;
        my_received = 0;
     }
@@ -388,7 +388,7 @@ struct harness_counting_sender : public tbb::flow::sender<T> {
     }
 
     bool remove_successor( successor_type &r ) override {
-        successor_type *s = my_receiver.exchange( NULL );
+        successor_type *s = my_receiver.exchange( nullptr );
         CHECK( s == &r );
         return true;
     }

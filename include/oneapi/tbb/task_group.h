@@ -218,7 +218,7 @@ private:
     std::atomic<state> my_state;
 
     union {
-        //! Pointer to the context of the parent cancellation group. NULL for isolated contexts.
+        //! Pointer to the context of the parent cancellation group. nullptr for isolated contexts.
         task_group_context* my_parent;
 
         //! Pointer to the actual context 'this' context represents a proxy of.

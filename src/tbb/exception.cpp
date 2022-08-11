@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -152,7 +152,7 @@ bool gcc_rethrow_exception_broken() {
         is_broken = std::uncaught_exception();
     }
     if( is_broken ) fix_broken_rethrow();
-    __TBB_ASSERT( !std::uncaught_exception(), NULL );
+    __TBB_ASSERT( !std::uncaught_exception(), nullptr);
     return is_broken;
 }
 #else
