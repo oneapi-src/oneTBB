@@ -38,4 +38,4 @@ This document contains changes of oneTBB compared to the last release.
 - The function provided to oneapi::tbb::suspend is now guaranteed to be executed on the same thread.
 
 ## :octocat: Open-source Contributions Integrated
-- Fix for full LTO build (library and tests) on UNIX* OS systems. Contributed by Vladislav Shchapov (https://github.com/oneapi-src/oneTBB/pull/671).
+- Fix for full LTO build (library and tests) on UNIX* OS systems. Contributed by Vladislav Shchapov (https://github.com/oneapi-src/oneTBB/pull/798).
