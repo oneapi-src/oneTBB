@@ -25,7 +25,8 @@ namespace test_invoke {
 
 template <std::size_t I>
 struct SmartObjectImpl {
-    SmartObjectImpl() {}
+    SmartObjectImpl() : operate_signal_point(nullptr) {}
+    SmartObjectImpl(std::size_t* sp) : operate_signal_point(sp), subobject(sp) {}
     SmartObjectImpl(const SmartObjectImpl&) = default;
  
     using subobject_type = SmartObjectImpl<I - 1>;
@@ -43,13 +44,19 @@ public:
         std::get<1>(ports).try_put(subobject);
     }
 
+    void operate() const {
+        CHECK_MESSAGE(operate_signal_point, "incorrect test setup");
+        ++(*operate_signal_point);
+    }
+
+    std::size_t* operate_signal_point;
     subobject_type subobject;
 };
 
 template <>
 struct SmartObjectImpl<0> {
     SmartObjectImpl() = default;
-    SmartObjectImpl(std::vector<std::size_t>&) {}
+    SmartObjectImpl(std::size_t*) {}
 };
 
 using SmartObject = SmartObjectImpl<9>;

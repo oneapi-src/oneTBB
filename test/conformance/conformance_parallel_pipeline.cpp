@@ -19,6 +19,7 @@
 #include "common/checktype.h"
 #include "common/spin_barrier.h"
 #include "common/utils_concurrency_limit.h"
+#include "common/test_invoke.h"
 
 #include "oneapi/tbb/parallel_pipeline.h"
 #include "oneapi/tbb/global_control.h"
@@ -369,7 +370,7 @@ TEST_CASE("Testing max token number")
     }
 }
 
-#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+#if 0
 
 //! Testing deduction guides
 //! \brief \ref interface \ref requirement
@@ -395,3 +396,42 @@ TEST_CASE_TEMPLATE("Deduction guides testing", T, int, unsigned int, double)
     static_assert(std::is_same_v<decltype(fc), oneapi::tbb::filter<int, double>>);
 }
 #endif  //__TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+
+#if __TBB_CPP17_INVOKE_PRESENT
+
+template <typename MiddleFilterBody, typename LastFilterBody>
+void test_pipeline_invoke_basic(const MiddleFilterBody& middle_body, const LastFilterBody& last_body) {
+    using input_type = test_invoke::SmartObject;
+    using output_type = input_type::subobject_type;
+
+    const std::size_t input_count = 10;
+    std::size_t signal_point = 0;
+    std::size_t counter = 0;
+
+    auto first_body = [&](oneapi::tbb::flow_control& fc) -> input_type {
+        if (++counter > input_count) {
+            fc.stop();
+        }
+        return input_type{&signal_point};
+    };
+
+    auto first_filter = oneapi::tbb::make_filter<void, input_type>(oneapi::tbb::filter_mode::serial_in_order, first_body);
+    auto middle_filter = oneapi::tbb::make_filter<input_type, output_type>(oneapi::tbb::filter_mode::serial_in_order, middle_body);
+    auto last_filter = oneapi::tbb::make_filter<output_type, void>(oneapi::tbb::filter_mode::serial_in_order, last_body);
+
+    oneapi::tbb::parallel_pipeline(16, first_filter & middle_filter & last_filter);
+
+    CHECK(signal_point == input_count);
+}
+
+//! Test that parallel_pipeline uses std::invoke to run the filter body
+//! \brief \ref requirement
+TEST_CASE("parallel_pipeline and std::invoke") {
+    using object_type = test_invoke::SmartObject;
+    using output_type = object_type::subobject_type;
+
+    test_pipeline_invoke_basic(&object_type::get_subobject, &output_type::operate); // Pointer to non-static function as middle filter
+    test_pipeline_invoke_basic(&object_type::subobject, &output_type::operate); // Pointer to non-static member as middle filter
+}
+
+#endif // __TBB_CPP17_INVOKE_PRESENT

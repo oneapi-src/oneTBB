@@ -344,7 +344,7 @@ concept adaptive_same_as =
 template <typename F, typename... Args>
 auto invoke(F&& f, Args&&... args)
 #if __TBB_CPP17_INVOKE_PRESENT
-    noexcept(noexcept(std::invoke(std::forward<F>(f), std::forward<Args>(args)...)))
+    noexcept(std::is_nothrow_invocable_v<F, Args...>)
     -> std::invoke_result_t<F, Args...>
 {
     return std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
