@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2021 Intel Corporation
+    Copyright (c) 2020-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -150,7 +150,7 @@ void test_pscan_invoke(const std::vector<std::size_t>& desired_vector,
 
 //! Test that parallel_scan uses std::invoke to run the body
 //! \brief \ref requirement
-TEST_CASE("Test parallel_scan invoke") {
+TEST_CASE("parallel_scan and std::invoke") {
     const std::size_t iterations = 1000000;
     std::vector<std::size_t> desired_vector(iterations);
 

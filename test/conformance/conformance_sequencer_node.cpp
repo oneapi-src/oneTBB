@@ -166,7 +166,7 @@ TEST_CASE("sequencer_node ordering"){
 #if __TBB_CPP17_INVOKE_PRESENT
 //! Test that sequencer node uses std::invoke to execute the body
 //! \brief \ref requirement
-TEST_CASE("sequencer_node invoke semantics") {
+TEST_CASE("sequencer_node and std::invoke") {
     using namespace oneapi::tbb::flow;
 
     graph g;

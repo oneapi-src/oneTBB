@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2021 Intel Corporation
+    Copyright (c) 2020-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -140,7 +140,7 @@ TEST_CASE("Test function_node Output and Input class") {
 #if __TBB_CPP17_INVOKE_PRESENT
 //! Test that multifunction_node uses std::invoke to execute the body
 //! \brief \ref interface \ref requirement
-TEST_CASE("Test multifunction_node invoke semantics") {
+TEST_CASE("Test multifunction_node and std::invoke") {
     using namespace oneapi::tbb::flow;
 
     using output_type1 = test_invoke::SmartID<std::size_t>;

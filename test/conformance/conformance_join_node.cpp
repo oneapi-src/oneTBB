@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2021 Intel Corporation
+    Copyright (c) 2020-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 #endif
 
 #include "conformance_flowgraph.h"
+#include "common/test_invoke.h"
 
 //! \file conformance_join_node.cpp
 //! \brief Test for [flow_graph.join_node] specification
@@ -264,3 +265,45 @@ TEST_CASE("join_node output_ports") {
     CHECK_MESSAGE((std::is_same<oneapi::tbb::flow::join_node<std::tuple<int>>::input_ports_type&,
         decltype(node.input_ports())>::value), "join_node input_ports should returns a tuple of input ports");
 }
+
+#if __TBB_CPP17_INVOKE_PRESENT
+
+//! Test that key_matching join_node uses std::invoke to run the body
+//! \brief \ref requirement
+TEST_CASE("key_matching join_node invoke semantics") {
+    using namespace oneapi::tbb::flow;
+    auto generator = [](std::size_t n) { return test_invoke::SmartID<std::size_t>(n); };
+    graph g;
+
+    function_node<std::size_t, test_invoke::SmartID<std::size_t>> f1(g, unlimited, generator);
+    function_node<std::size_t, test_invoke::SmartID<std::size_t>> f2(g, unlimited, generator);
+
+    using tuple_type = std::tuple<test_invoke::SmartID<std::size_t>, test_invoke::SmartID<std::size_t>>;
+    using join_type = join_node<tuple_type, key_matching<std::size_t>>;
+
+    join_type j(g, &test_invoke::SmartID<std::size_t>::get_id, &test_invoke::SmartID<std::size_t>::id);
+
+    buffer_node<tuple_type> buf(g);
+
+    make_edge(f1, input_port<0>(j));
+    make_edge(f2, input_port<1>(j));
+    make_edge(j, buf);
+
+    std::size_t objects_count = 100;
+    for (std::size_t i = 0; i < objects_count; ++i) {
+        f1.try_put(i);
+        f2.try_put(objects_count - i - 1);
+    }
+
+    g.wait_for_all();
+
+    std::size_t buf_size = 0;
+    tuple_type tpl;
+
+    while(buf.try_get(tpl)) {
+        ++buf_size;
+        CHECK(std::get<0>(tpl).id == std::get<1>(tpl).id);
+    }
+    CHECK(buf_size == objects_count);
+}
+#endif // __TBB_CPP17_INVOKE_PRESENT

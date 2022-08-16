@@ -234,7 +234,6 @@ class concrete_filter: public base_filter {
     void* operator()(void* input) override {
         input_pointer temp_input = input_helper::cast_from_void_ptr(input);
         output_pointer temp_output = output_helper::create_token(tbb::detail::invoke(my_body, std::move(input_helper::token(temp_input))));
-        // output_pointer temp_output = output_helper::create_token(my_body(std::move(input_helper::token(temp_input))));
         input_helper::destroy_token(temp_input);
         return output_helper::cast_to_void_ptr(temp_output);
     }

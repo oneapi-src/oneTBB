@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -179,7 +179,6 @@ TEST_CASE("Move Semantics | Item: MoveOnly") {
 //! Test that parallel_for_each uses std::invoke to run the body
 //! \brief \ref requirement
 TEST_CASE("parallel_for_each and std::invoke") {
-    oneapi::tbb::global_control gc(oneapi::tbb::global_control::max_allowed_parallelism, 1);
     test_pfor_each_invoke_basic<utils::InputIterator>();
     test_pfor_each_invoke_basic<utils::ForwardIterator>();
     test_pfor_each_invoke_basic<utils::RandomIterator>();

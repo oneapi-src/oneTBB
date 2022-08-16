@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2021 Intel Corporation
+    Copyright (c) 2020-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ void test_deduction_guides() {
 
 template <typename InputType, typename OutputType1, typename OutputType2,
           typename Body1, typename Body2>
-void test_invoke_semantics_basic(const Body1& body1, const Body2& body2) {
+void test_fn_invoke_basic(const Body1& body1, const Body2& body2) {
     using namespace oneapi::tbb::flow;
 
     graph g;
@@ -103,13 +103,13 @@ void test_invoke_semantics_basic(const Body1& body1, const Body2& body2) {
     CHECK(!buf.try_get(result));
 }
 
-void test_invoke_semantics() {
+void test_fn_invoke() {
     using output_type = test_invoke::SmartID<std::size_t>;
     using input_type = test_invoke::SmartID<output_type>;
     // Testing pointer to member function
-    test_invoke_semantics_basic<input_type, output_type, std::size_t>(&input_type::get_id, &output_type::get_id);
+    test_fn_invoke_basic<input_type, output_type, std::size_t>(&input_type::get_id, &output_type::get_id);
     // Testing pointer to member object
-    test_invoke_semantics_basic<input_type, output_type, std::size_t>(&input_type::id, &output_type::id);
+    test_fn_invoke_basic<input_type, output_type, std::size_t>(&input_type::id, &output_type::id);
 }
 #endif // __TBB_CPP17_INVOKE_PRESENT
 
@@ -209,7 +209,7 @@ TEST_CASE("Test function_node Output and Input class") {
 #if __TBB_CPP17_INVOKE_PRESENT
 //! Test that function_node uses std::invoke to execute the body
 //! \brief \ref interface \ref requirement
-TEST_CASE("Test function_node invoke semantics") {
-    test_invoke_semantics();
+TEST_CASE("Test function_node and std::invoke") {
+    test_fn_invoke();
 }
 #endif

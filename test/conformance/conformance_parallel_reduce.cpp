@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022  Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -132,6 +132,8 @@ TEST_CASE("Test partitioners interaction with various ranges") {
     }
 }
 
+#if __TBB_CPP17_INVOKE_PRESENT
+
 template <typename Body, typename Reduction>
 void test_preduce_invoke_basic(const Body& body, const Reduction& reduction) {
     const std::size_t iterations = 100000;
@@ -154,7 +156,7 @@ void test_preduce_invoke_basic(const Body& body, const Reduction& reduction) {
 
 //! Test that parallel_reduce uses std::invoke to run the body
 //! \brief \ref interface \ref requirement
-TEST_CASE("Test invoke semantics for parallel_[deterministic_]reduce") {
+TEST_CASE("parallel_[deterministic_]reduce and std::invoke") {
     auto regular_reduce = [](const test_invoke::SmartRange<test_invoke::SmartValue>& range, const test_invoke::SmartValue& idx) {
         test_invoke::SmartValue result = idx;
         for (auto i = range.begin(); i.get() != range.end().get(); ++i) {
@@ -171,3 +173,4 @@ TEST_CASE("Test invoke semantics for parallel_[deterministic_]reduce") {
     test_preduce_invoke_basic(regular_reduce, &test_invoke::SmartValue::operator+);
 }
 
+#endif

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -305,7 +305,7 @@ private:
     std::vector<std::size_t>* change_vector;
 };
 
-void test_pfor_body_invoke_semantics() {
+void test_pfor_body_invoke() {
     const std::size_t number_of_overloads = 5;
     const std::size_t iterations = 100000;
 
@@ -326,7 +326,7 @@ void test_pfor_body_invoke_semantics() {
 }
 
 
-void test_pfor_func_invoke_semantics() {
+void test_pfor_func_invoke() {
     const std::size_t number_of_overloads = 5;
     const std::size_t iterations = 100000;
 
@@ -432,10 +432,10 @@ TEST_CASE("Testing parallel_for with partitioners") {
 }
 
 #if __TBB_CPP17_INVOKE_PRESENT
-//! Testing body and func invoke semantics
+//! Test that parallel_for uses std::invoke to run body and function
 //! \brief \ref interface \ref requirement
-TEST_CASE("Testing invoke semantics") {
-    test_pfor_body_invoke_semantics();
-    test_pfor_func_invoke_semantics();
+TEST_CASE("parallel_for and std::invoke") {
+    test_pfor_body_invoke();
+    test_pfor_func_invoke();
 }
 #endif
