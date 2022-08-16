@@ -17,49 +17,12 @@
 #ifndef __TBB_test_common_test_invoke_H
 #define __TBB_test_common_test_invoke_H
 
+#include "test.h"
 #include "oneapi/tbb/flow_graph.h"
 #include "oneapi/tbb/blocked_range.h"
 
 #if __TBB_CPP17_INVOKE_PRESENT
 namespace test_invoke {
-
-template <std::size_t I>
-struct SmartObjectImpl {
-    SmartObjectImpl() : operate_signal_point(nullptr) {}
-    SmartObjectImpl(std::size_t* sp) : operate_signal_point(sp), subobject(sp) {}
-    SmartObjectImpl(const SmartObjectImpl&) = default;
- 
-    using subobject_type = SmartObjectImpl<I - 1>;
-
-    subobject_type get_subobject() const {
-        return subobject;
-    }
-
-private:
-    using multinode_of_two = oneapi::tbb::flow::multifunction_node<SmartObjectImpl, std::tuple<subobject_type, subobject_type>>;
-public:
-
-    void send_subobject(typename multinode_of_two::output_ports_type& ports) const {
-        std::get<0>(ports).try_put(subobject);
-        std::get<1>(ports).try_put(subobject);
-    }
-
-    void operate() const {
-        CHECK_MESSAGE(operate_signal_point, "incorrect test setup");
-        ++(*operate_signal_point);
-    }
-
-    std::size_t* operate_signal_point;
-    subobject_type subobject;
-};
-
-template <>
-struct SmartObjectImpl<0> {
-    SmartObjectImpl() = default;
-    SmartObjectImpl(std::size_t*) {}
-};
-
-using SmartObject = SmartObjectImpl<9>;
 
 // Can be customized
 template <typename T>
@@ -107,12 +70,36 @@ private:
     std::vector<std::size_t>* change_vector;
 };
 
-struct SmartID {
-    SmartID() : id(999) {}
-    SmartID(std::size_t n) : id(n) {}
+template <typename IDType>
+class SmartID {
+public:
+    SmartID() : id(999), operate_signal_point(nullptr) {}
+    SmartID(std::size_t* sp) : id(999), operate_signal_point(sp) {}
 
-    std::size_t get_id() const { return id; }
-    std::size_t id;    
+    SmartID(const IDType& n) : id(n), operate_signal_point(nullptr) {}
+    SmartID(const IDType& n, std::size_t* sp) : id(n), operate_signal_point(sp) {}
+
+    IDType get_id() const { return id; }
+
+private:
+    template <typename TupleOfPorts, std::size_t... Is>
+    void send_id_impl(TupleOfPorts& ports, std::index_sequence<Is...>) const {
+        (std::get<Is>(ports).try_put(id) , ...);
+    }
+public:
+    template <typename TupleOfPorts>
+    void send_id(TupleOfPorts& ports) const {
+        send_id_impl(ports, std::make_index_sequence<std::tuple_size<TupleOfPorts>::value>());
+    }
+
+    void operate() const {
+        CHECK_MESSAGE(operate_signal_point, "incorrect test setup");
+        ++(*operate_signal_point);
+    }
+
+    IDType id;
+private:
+    std::size_t* operate_signal_point;
 };
 
 class SmartValue {

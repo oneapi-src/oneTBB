@@ -171,13 +171,13 @@ TEST_CASE("sequencer_node invoke semantics") {
 
     graph g;
 
-    function_node<std::size_t, test_invoke::SmartID> starter(g, unlimited, [](std::size_t x) { return test_invoke::SmartID(x); });
-    sequencer_node<test_invoke::SmartID> seq1(g, &test_invoke::SmartID::get_id); // Member function
-    sequencer_node<test_invoke::SmartID> seq2(g, &test_invoke::SmartID::id); // Member object
+    function_node<std::size_t, test_invoke::SmartID<std::size_t>> starter(g, unlimited, [](std::size_t x) { return test_invoke::SmartID(x); });
+    sequencer_node<test_invoke::SmartID<std::size_t>> seq1(g, &test_invoke::SmartID<std::size_t>::get_id); // Member function
+    sequencer_node<test_invoke::SmartID<std::size_t>> seq2(g, &test_invoke::SmartID<std::size_t>::id); // Member object
 
     std::size_t expected_item = 0;
     
-    function_node<test_invoke::SmartID, std::size_t> check(g, serial, [&](const test_invoke::SmartID& x) {
+    function_node<test_invoke::SmartID<std::size_t>, std::size_t> check(g, serial, [&](const test_invoke::SmartID<std::size_t>& x) {
         CHECK(x.id == expected_item);
         ++expected_item;
         return x.id;

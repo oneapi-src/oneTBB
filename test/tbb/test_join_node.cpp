@@ -21,6 +21,7 @@
 #endif
 
 #include "common/config.h"
+#include "common/test_invoke.h"
 
 #include "test_join_node.h"
 #include "common/test_join_node_multiple_predecessors.h"
@@ -162,16 +163,16 @@ TEST_CASE("Test removal of the predecessor while having none") {
 //! \brief \ref requirement
 TEST_CASE("key_matching join_node invoke semantics") {
     using namespace oneapi::tbb::flow;
-    auto generator = [](std::size_t n) { return test_invoke::SmartID(n); };
+    auto generator = [](std::size_t n) { return test_invoke::SmartID<std::size_t>(n); };
     graph g;
 
-    function_node<std::size_t, test_invoke::SmartID> f1(g, unlimited, generator);
-    function_node<std::size_t, test_invoke::SmartID> f2(g, unlimited, generator);
+    function_node<std::size_t, test_invoke::SmartID<std::size_t>> f1(g, unlimited, generator);
+    function_node<std::size_t, test_invoke::SmartID<std::size_t>> f2(g, unlimited, generator);
 
-    using tuple_type = std::tuple<test_invoke::SmartID, test_invoke::SmartID>;
+    using tuple_type = std::tuple<test_invoke::SmartID<std::size_t>, test_invoke::SmartID<std::size_t>>;
     using join_type = join_node<tuple_type, key_matching<std::size_t>>;
 
-    join_type j(g, &test_invoke::SmartID::get_number, &test_invoke::SmartID::number);
+    join_type j(g, &test_invoke::SmartID<std::size_t>::get_id, &test_invoke::SmartID<std::size_t>::id);
 
     buffer_node<tuple_type> buf(g);
 
@@ -192,7 +193,7 @@ TEST_CASE("key_matching join_node invoke semantics") {
 
     while(buf.try_get(tpl)) {
         ++buf_size;
-        CHECK(std::get<0>(tpl).number == std::get<1>(tpl).number);
+        CHECK(std::get<0>(tpl).id == std::get<1>(tpl).id);
     }
     CHECK(buf_size == objects_count);
 }

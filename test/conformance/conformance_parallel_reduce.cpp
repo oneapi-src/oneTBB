@@ -137,8 +137,8 @@ void test_preduce_invoke_basic(const Body& body, const Reduction& reduction) {
     const std::size_t iterations = 100000;
     const std::size_t result = iterations * (iterations - 1) / 2;
 
-    test_invoke::SmartRange<SmartValue> range(0, iterations);
-    SmartValue identity(0);
+    test_invoke::SmartRange<test_invoke::SmartValue> range(0, iterations);
+    test_invoke::SmartValue identity(0);
 
     CHECK(result == oneapi::tbb::parallel_reduce(range, identity, body, reduction).get());
     CHECK(result == oneapi::tbb::parallel_reduce(range, identity, body, reduction, oneapi::tbb::simple_partitioner()).get());
@@ -155,19 +155,19 @@ void test_preduce_invoke_basic(const Body& body, const Reduction& reduction) {
 //! Test that parallel_reduce uses std::invoke to run the body
 //! \brief \ref interface \ref requirement
 TEST_CASE("Test invoke semantics for parallel_[deterministic_]reduce") {
-    auto regular_reduce = [](const test_invoke::SmartRange<SmartValue>& range, const SmartValue& idx) {
-        SmartValue result = idx;
+    auto regular_reduce = [](const test_invoke::SmartRange<test_invoke::SmartValue>& range, const test_invoke::SmartValue& idx) {
+        test_invoke::SmartValue result = idx;
         for (auto i = range.begin(); i.get() != range.end().get(); ++i) {
             result = result + i;
         }
         return result;
     };
-    auto regular_join = [](const SmartValue& lhs, const SmartValue& rhs) {
+    auto regular_join = [](const test_invoke::SmartValue& lhs, const test_invoke::SmartValue& rhs) {
         return lhs + rhs;
     };
 
-    test_preduce_invoke_basic(&test_invoke::SmartRange<SmartValue>::reduction, &SmartValue::operator+);
-    test_preduce_invoke_basic(&test_invoke::SmartRange<SmartValue>::reduction, regular_join);
-    test_preduce_invoke_basic(regular_reduce, &SmartValue::operator+);
+    test_preduce_invoke_basic(&test_invoke::SmartRange<test_invoke::SmartValue>::reduction, &test_invoke::SmartValue::operator+);
+    test_preduce_invoke_basic(&test_invoke::SmartRange<test_invoke::SmartValue>::reduction, regular_join);
+    test_preduce_invoke_basic(regular_reduce, &test_invoke::SmartValue::operator+);
 }
 

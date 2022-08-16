@@ -143,63 +143,46 @@ TEST_CASE("Test function_node Output and Input class") {
 TEST_CASE("Test multifunction_node invoke semantics") {
     using namespace oneapi::tbb::flow;
 
-    using input1 = test_invoke::SmartObject;
-    using output1 = input1::subobject_type;
-    using output2 = output1::subobject_type;
-    using output3 = output2::subobject_type;
+    using output_type1 = test_invoke::SmartID<std::size_t>;
+    using input_type = test_invoke::SmartID<output_type1>;
 
-    using output_types1 = std::tuple<output1, output1>;
-    using output_types2 = std::tuple<output2, output2>;
-    using output_types3 = std::tuple<output3, output3>;
+    using output_tuple1 = std::tuple<output_type1, output_type1>;
+    using output_tuple2 = std::tuple<std::size_t>;
+
+    using first_mf_node_type = multifunction_node<input_type, output_tuple1>;
+    using second_mf_node_type = multifunction_node<output_type1, output_tuple2>;
+
+    using first_ports_type = typename first_mf_node_type::output_ports_type;
+    using second_ports_type = typename second_mf_node_type::output_ports_type;
 
     graph g;
 
-    // building graph
-    /*
-                        
-                   mf31 =
-                 /       
-            mf21 - mf32 = 
-          /              
-     mf11 - mf22 - mf33 =
-                 \         
-                   mf34 = 
-    */
+    auto first_body = &input_type::template send_id<first_ports_type>;
+    auto second_body = &output_type1::template send_id<second_ports_type>;
 
-    multifunction_node<input1, output_types1> mf11(g, unlimited, &input1::send_subobject);
+    first_mf_node_type mf1(g, unlimited, first_body);
+    second_mf_node_type mf21(g, unlimited, second_body);
+    second_mf_node_type mf22(g, unlimited, second_body);
 
-    multifunction_node<output1, output_types2> mf21(g, unlimited, &output1::send_subobject);
-    multifunction_node<output1, output_types2> mf22(g, unlimited, &output1::send_subobject);
+    buffer_node<std::size_t> buf(g);
 
-    multifunction_node<output2, output_types3> mf31(g, unlimited, &output2::send_subobject);
-    multifunction_node<output2, output_types3> mf32(g, unlimited, &output2::send_subobject);
-    multifunction_node<output2, output_types3> mf33(g, unlimited, &output2::send_subobject);
-    multifunction_node<output2, output_types3> mf34(g, unlimited, &output2::send_subobject);
+    make_edge(output_port<0>(mf1), mf21);
+    make_edge(output_port<1>(mf1), mf22);
 
-    buffer_node<output3> buf(g);
+    make_edge(output_port<0>(mf21), buf);
+    make_edge(output_port<0>(mf22), buf);
 
-    make_edge(output_port<0>(mf11), mf21);
-    make_edge(output_port<1>(mf11), mf22);
-
-    make_edge(output_port<0>(mf21), mf31);
-    make_edge(output_port<1>(mf21), mf32);
-
-    make_edge(output_port<0>(mf22), mf33);
-    make_edge(output_port<1>(mf22), mf34);
-
-    make_edge(output_port<0>(mf31), buf);
-    make_edge(output_port<0>(mf32), buf);
-    make_edge(output_port<0>(mf33), buf);
-    make_edge(output_port<0>(mf34), buf);
-
-    mf11.try_put(input1{});
+    mf1.try_put(input_type{output_type1{1}});
 
     g.wait_for_all();
 
     std::size_t buf_size = 0;
-    output3 tmp;
-    while(buf.try_get(tmp)) { ++buf_size; }
+    std::size_t tmp = 0;
+    while(buf.try_get(tmp)) {
+        ++buf_size;
+        CHECK(tmp == 1);
+    }
 
-    CHECK(buf_size == 4);
+    CHECK(buf_size == 2);
 }
 #endif

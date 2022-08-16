@@ -401,23 +401,23 @@ TEST_CASE_TEMPLATE("Deduction guides testing", T, int, unsigned int, double)
 
 template <typename MiddleFilterBody, typename LastFilterBody>
 void test_pipeline_invoke_basic(const MiddleFilterBody& middle_body, const LastFilterBody& last_body) {
-    using input_type = test_invoke::SmartObject;
-    using output_type = input_type::subobject_type;
+    using output_filter_type = test_invoke::SmartID<std::size_t>;
+    using middle_filter_type = test_invoke::SmartID<output_filter_type>;
 
     const std::size_t input_count = 10;
     std::size_t signal_point = 0;
     std::size_t counter = 0;
 
-    auto first_body = [&](oneapi::tbb::flow_control& fc) -> input_type {
+    auto first_body = [&](oneapi::tbb::flow_control& fc) -> middle_filter_type {
         if (++counter > input_count) {
             fc.stop();
         }
-        return input_type{&signal_point};
+        return middle_filter_type{output_filter_type{&signal_point}};
     };
 
-    auto first_filter = oneapi::tbb::make_filter<void, input_type>(oneapi::tbb::filter_mode::serial_in_order, first_body);
-    auto middle_filter = oneapi::tbb::make_filter<input_type, output_type>(oneapi::tbb::filter_mode::serial_in_order, middle_body);
-    auto last_filter = oneapi::tbb::make_filter<output_type, void>(oneapi::tbb::filter_mode::serial_in_order, last_body);
+    auto first_filter = oneapi::tbb::make_filter<void, middle_filter_type>(oneapi::tbb::filter_mode::serial_in_order, first_body);
+    auto middle_filter = oneapi::tbb::make_filter<middle_filter_type, output_filter_type>(oneapi::tbb::filter_mode::serial_in_order, middle_body);
+    auto last_filter = oneapi::tbb::make_filter<output_filter_type, void>(oneapi::tbb::filter_mode::serial_in_order, last_body);
 
     oneapi::tbb::parallel_pipeline(16, first_filter & middle_filter & last_filter);
 
@@ -427,11 +427,11 @@ void test_pipeline_invoke_basic(const MiddleFilterBody& middle_body, const LastF
 //! Test that parallel_pipeline uses std::invoke to run the filter body
 //! \brief \ref requirement
 TEST_CASE("parallel_pipeline and std::invoke") {
-    using object_type = test_invoke::SmartObject;
-    using output_type = object_type::subobject_type;
+    using output_filter_type = test_invoke::SmartID<std::size_t>;
+    using middle_filter_type = test_invoke::SmartID<output_filter_type>;
 
-    test_pipeline_invoke_basic(&object_type::get_subobject, &output_type::operate); // Pointer to non-static function as middle filter
-    test_pipeline_invoke_basic(&object_type::subobject, &output_type::operate); // Pointer to non-static member as middle filter
+    test_pipeline_invoke_basic(&middle_filter_type::get_id, &output_filter_type::operate); // Pointer to non-static function as middle filter
+    test_pipeline_invoke_basic(&middle_filter_type::id, &output_filter_type::operate); // Pointer to non-static member as middle filter
 }
 
 #endif // __TBB_CPP17_INVOKE_PRESENT

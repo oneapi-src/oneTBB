@@ -88,7 +88,7 @@ namespace d0 {
 
 template <typename ReturnType, typename OutputType>
 concept node_body_return_type = std::same_as<OutputType, tbb::detail::d1::continue_msg> ||
-                                std::same_as<OutputType, ReturnType>;
+                                std::convertible_to<OutputType, ReturnType>;
 
 // TODO: consider using std::invocable here
 template <typename Body, typename Output>
@@ -105,7 +105,7 @@ concept function_node_body = std::copy_constructible<Body> &&
 template <typename FunctionObject, typename Input, typename Key>
 concept join_node_function_object = std::copy_constructible<FunctionObject> &&
                                     std::invocable<FunctionObject&, const Input&> &&
-                                    adaptive_same_as<std::invoke_result_t<FunctionObject&, const Input&>, Key>;
+                                    std::convertible_to<std::invoke_result_t<FunctionObject&, const Input&>, Key>;
 
 template <typename Body, typename Output>
 concept input_node_body = std::copy_constructible<Body> &&
@@ -120,7 +120,7 @@ concept multifunction_node_body = std::copy_constructible<Body> &&
 template <typename Sequencer, typename Value>
 concept sequencer = std::copy_constructible<Sequencer> &&
                     std::invocable<Sequencer&, const Value&> &&
-                    adaptive_same_as<std::invoke_result_t<Sequencer&, const Value&>, std::size_t>;
+                    std::convertible_to<std::invoke_result_t<Sequencer&, const Value&>, std::size_t>;
 
 template <typename Body, typename Input, typename GatewayType>
 concept async_node_body = std::copy_constructible<Body> &&
