@@ -92,6 +92,13 @@ public:
         send_id_impl(ports, std::make_index_sequence<std::tuple_size<TupleOfPorts>::value>());
     }
 
+    template <typename GatewayType>
+    void send_id_to_gateway(GatewayType& gateway) const {
+        gateway.reserve_wait();
+        gateway.try_put(id);
+        gateway.release_wait();
+    }
+
     void operate() const {
         CHECK_MESSAGE(operate_signal_point, "incorrect test setup");
         ++(*operate_signal_point);

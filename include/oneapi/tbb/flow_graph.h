@@ -2851,8 +2851,8 @@ public:
     async_body(const Body &body, gateway_type *gateway)
         : base_type(gateway), my_body(body) { }
 
-    void operator()( const Input &v, Ports & ) noexcept(noexcept(my_body(v, std::declval<gateway_type&>()))) {
-        my_body(v, *this->my_gateway);
+    void operator()( const Input &v, Ports & ) noexcept(noexcept(tbb::detail::invoke(my_body, v, std::declval<gateway_type&>()))) {
+        tbb::detail::invoke(my_body, v, *this->my_gateway);
     }
 
     Body get_body() { return my_body; }
