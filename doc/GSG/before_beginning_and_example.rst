@@ -46,3 +46,4 @@ The sample calculates a sum of all integer numbers from 1 to 100.
          return lhs + rhs;
       }
    );
+   
