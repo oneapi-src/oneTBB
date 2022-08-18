@@ -30,7 +30,7 @@ After installing |short_name|, you need to set the environment variables:
 Example
 *******
 
-Below you can find a typical example for a |short_name| algorithm. 
+Below you can find, a typical example for a |short_name| algorithm. 
 The sample calculates a sum of all integer numbers from 1 to 100. 
 
 .. code:: cpp
@@ -46,4 +46,3 @@ The sample calculates a sum of all integer numbers from 1 to 100.
          return lhs + rhs;
       }
    );
-   
