@@ -288,8 +288,8 @@ public:
 
     SmartIndex& operator++() { ++real_index; return *this; }
 
-    SmartIndex operator-(const SmartIndex& other) const {
-        return {real_index - other.real_index};
+    std::size_t operator-(const SmartIndex& other) const {
+        return std::size_t(real_index - other.real_index);
     }
 
     SmartIndex operator+(int k) {
