@@ -248,8 +248,8 @@ void TestParallelForWithStepSupport() {
 #if __TBB_CPP17_INVOKE_PRESENT
 class SmartIndex {
 public:
-    SmartIndex(int ri) : real_index(ri), change_vector(nullptr) {}
-    SmartIndex(int ri, std::vector<std::size_t>& cv)
+    SmartIndex(std::size_t ri) : real_index(ri), change_vector(nullptr) {}
+    SmartIndex(std::size_t ri, std::vector<std::size_t>& cv)
         : real_index(ri), change_vector(&cv) {}
     SmartIndex(const SmartIndex& other) : real_index(other.real_index),
                                           change_vector(other.change_vector) {}
@@ -289,7 +289,7 @@ public:
     SmartIndex& operator++() { ++real_index; return *this; }
 
     std::size_t operator-(const SmartIndex& other) const {
-        return std::size_t(real_index - other.real_index);
+        return real_index - other.real_index;
     }
 
     SmartIndex operator+(int k) {
@@ -301,7 +301,7 @@ public:
         ++(*change_vector)[real_index];
     }
 private:
-    int real_index;
+    std::size_t real_index;
     std::vector<std::size_t>* change_vector;
 };
 
