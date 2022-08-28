@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -1319,7 +1319,7 @@ void TestMoveConstructors() {
     T::construction_num = T::destruction_num = 0;
     CQ dst_queue( std::move(src_queue), allocator<T>(1) );
     CHECK(T::construction_num == size);
-    CHECK(T::destruction_num == size * 2); // One item is used by the queue destructor
+    CHECK(T::destruction_num == size);
 
     TestQueueOperabilityAfterDataMove<T>( src_queue );
 
