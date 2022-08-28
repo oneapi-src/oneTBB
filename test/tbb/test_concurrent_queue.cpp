@@ -248,7 +248,7 @@ void test_basics(Container& container, std::size_t desired_size) {
     CHECK(container.empty());
 }
 
-template <template <class...> typename Container>
+template <template <class...> class Container>
 void test_with_minimalistic_objects() {
     // Test with MinimalisticObject and no pop operations
     const std::size_t elements_count = 100;
