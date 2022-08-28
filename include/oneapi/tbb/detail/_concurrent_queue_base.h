@@ -342,6 +342,7 @@ private:
 
     // No assign for pop while clearing the queue
     void select_pop_operation( void* dst, padded_page& src, size_type index, /*do_assign = */std::false_type ) {
+        suppress_unused_warning(dst);
         __TBB_ASSERT(!dst, nullptr);
         destroyer d(src[index]);
     }
