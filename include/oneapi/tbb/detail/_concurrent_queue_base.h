@@ -173,7 +173,10 @@ public:
         tail_counter.fetch_add(queue_rep_type::n_queue);
     }
 
-    bool pop( void* dst, ticket_type k, queue_rep_type& base, queue_allocator_type& allocator) {
+    template <typename DoAssignTag = std::true_type>
+    bool pop( void* dst, ticket_type k, queue_rep_type& base, queue_allocator_type& allocator,
+              DoAssignTag do_assign = DoAssignTag{} )
+    {
         k &= -queue_rep_type::n_queue;
         spin_wait_until_eq(head_counter, k);
         d1::call_itt_notify(d1::acquired, &head_counter);
@@ -189,7 +192,7 @@ public:
                 k + queue_rep_type::n_queue, index == items_per_page - 1 ? p : nullptr );
             if (p->mask.load(std::memory_order_relaxed) & (std::uintptr_t(1) << index)) {
                 success = true;
-                assign_and_destroy_item( dst, *p, index );
+                select_pop_operation(dst, *p, index, do_assign);
             } else {
                 --base.n_invalid_entries;
             }
@@ -329,10 +332,18 @@ private:
         construct_item( &dst[dindex], static_cast<const void*>(&src_item) );
     }
 
-    void assign_and_destroy_item( void* dst, padded_page& src, size_type index ) {
+    // Assign the item for regular pop operation
+    void select_pop_operation( void* dst, padded_page& src, size_type index, /*do_assign = */std::true_type ) {
+        __TBB_ASSERT(dst, "Incorrect destination for assign operation during pop");
         auto& from = src[index];
         destroyer d(from);
         *static_cast<T*>(dst) = std::move(from);
+    }
+
+    // No assign for pop while clearing the queue
+    void select_pop_operation( void* dst, padded_page& src, size_type index, /*do_assign = */std::false_type ) {
+        __TBB_ASSERT(!dst, nullptr);
+        destroyer d(src[index]);
     }
 
     void spin_wait_until_my_turn( std::atomic<ticket_type>& counter, ticket_type k, queue_rep_type& rb ) const {
