@@ -1600,6 +1600,8 @@ public:
         __TBB_requires(sequencer<Sequencer, T>)
     __TBB_NOINLINE_SYM sequencer_node( graph &g, const Sequencer& s ) : queue_node<T>(g),
         my_sequencer(new function_body_leaf< T, size_t, Sequencer>(s) ) {
+        static_assert(std::is_same_v<decltype(std::declval<Sequencer>()(std::declval<input_type>())), size_t>);
+
         fgt_node( CODEPTR(), FLOW_SEQUENCER_NODE, &(this->my_graph),
                                  static_cast<receiver<input_type> *>(this),
                                  static_cast<sender<output_type> *>(this) );
