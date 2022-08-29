@@ -375,8 +375,8 @@ public:
     }
 
     // Attempt to dequeue an item from head of queue.
-    bool pop( T& result ) {
-        return internal_pop(&result);
+    void pop( T& result ) {
+        internal_pop(&result);
     }
 
     /** Does not wait for item to become available.
@@ -482,7 +482,7 @@ private:
         return true;
     }
 
-    bool internal_pop( void* dst ) {
+    void internal_pop( void* dst ) {
         std::ptrdiff_t target;
         // This loop is a single pop operation; abort_counter should not be re-read inside
         unsigned old_abort_counter = my_abort_counter.load(std::memory_order_relaxed);
@@ -508,7 +508,6 @@ private:
         } while (!my_queue_representation->choose(target).pop(dst, target, *my_queue_representation, my_allocator));
 
         r1::notify_bounded_queue_monitor(my_monitors, cbq_slots_avail_tag, target);
-        return true;
     }
 
     bool internal_pop_if_present( void* dst ) {
