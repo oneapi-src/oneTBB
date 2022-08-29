@@ -148,9 +148,7 @@ public:
 
     // Clear the queue. not thread-safe.
     void clear() {
-        while(!empty()) {
-            internal_try_pop(nullptr, /*do_assign = */std::false_type{});
-        }
+        my_queue_representation->clear(my_allocator);
     }
 
     // Return allocator object
@@ -179,8 +177,7 @@ private:
         my_queue_representation->choose(k).push(k, *my_queue_representation, my_allocator, std::forward<Args>(args)...);
     }
 
-    template <typename DoAssignTag = std::true_type>
-    bool internal_try_pop( void* dst, DoAssignTag do_assign = DoAssignTag{} ) {
+    bool internal_try_pop( void* dst ) {
         ticket_type k;
         do {
             k = my_queue_representation->head_counter.load(std::memory_order_relaxed);
@@ -193,7 +190,7 @@ private:
                 // Queue had item with ticket k when we looked. Attempt to get that item.
                 // Another thread snatched the item, retry.
             } while (!my_queue_representation->head_counter.compare_exchange_strong(k, k + 1));
-        } while (!my_queue_representation->choose(k).pop(dst, k, *my_queue_representation, my_allocator, do_assign));
+        } while (!my_queue_representation->choose(k).pop(dst, k, *my_queue_representation, my_allocator));
         return true;
     }
 
@@ -410,9 +407,7 @@ public:
 
     // Clear the queue. not thread-safe.
     void clear() {
-        while (!empty()) {
-            internal_pop_if_present(nullptr, std::false_type{});
-        }
+        my_queue_representation->clear(my_allocator);
     }
 
     // Return allocator object
@@ -510,8 +505,7 @@ private:
         return true;
     }
 
-    template <typename DoAssignTag = std::true_type>
-    bool internal_pop_if_present( void* dst, DoAssignTag do_assign = DoAssignTag{} ) {
+    bool internal_pop_if_present( void* dst ) {
         ticket_type ticket;
         do {
             ticket = my_queue_representation->head_counter.load(std::memory_order_relaxed);
@@ -523,7 +517,7 @@ private:
                 // Queue had item with ticket k when we looked.  Attempt to get that item.
                 // Another thread snatched the item, retry.
             } while (!my_queue_representation->head_counter.compare_exchange_strong(ticket, ticket + 1));
-        } while (!my_queue_representation->choose(ticket).pop(dst, ticket, *my_queue_representation, my_allocator, do_assign));
+        } while (!my_queue_representation->choose(ticket).pop(dst, ticket, *my_queue_representation, my_allocator));
 
         r1::notify_bounded_queue_monitor(my_monitors, cbq_slots_avail_tag, ticket);
         return true;

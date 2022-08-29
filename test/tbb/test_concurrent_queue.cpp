@@ -20,6 +20,7 @@
 #include <common/custom_allocators.h>
 
 #include <tbb/concurrent_queue.h>
+#include <unordered_set>
 
 //! \file test_concurrent_queue.cpp
 //! \brief Test for [containers.concurrent_queue containers.concurrent_bounded_queue] specification
@@ -200,95 +201,39 @@ TEST_CASE("Test exception in allocation") {
 
 #endif // TBB_USE_EXCEPTIONS
 
-class MinimalisticObject {
-public:
-    struct flag {};
-    static constexpr std::size_t default_obj = 42;
+struct TrackableItem {
+    static std::unordered_set<TrackableItem*> object_addresses;
+    static std::size_t global_count_for_exceptions;
 
-    MinimalisticObject() = delete;
-    MinimalisticObject(flag) : underlying_obj(default_obj) {}
+    TrackableItem() {
+        if (global_count_for_exceptions++ % 3 == 0) throw 1;
+        bool res = object_addresses.emplace(this).second;
+        CHECK(res);
+    }
 
-    MinimalisticObject(const MinimalisticObject&) = delete;
-    MinimalisticObject& operator=(const MinimalisticObject&) = delete;
-
-    std::size_t get_obj() const { return underlying_obj; }
-
-protected:
-    std::size_t underlying_obj;
-    friend struct MoveAssignableMinimalisticObject;
-};
-
-constexpr std::size_t MinimalisticObject::default_obj;
-
-struct MoveAssignableMinimalisticObject : MinimalisticObject {
-public:
-    using MinimalisticObject::MinimalisticObject;
-
-    MoveAssignableMinimalisticObject& operator=(MoveAssignableMinimalisticObject&& other) {
-        if (this != &other) {
-            underlying_obj = other.underlying_obj;
-            other.underlying_obj = 0;
-        }
-        return *this;
+    ~TrackableItem() {
+        auto it = object_addresses.find(this);
+        CHECK(it != object_addresses.end());
+        object_addresses.erase(it);
     }
 };
 
-template <typename Container>
-void test_basics(Container& container, std::size_t desired_size) {
-    CHECK(!container.empty());
-
-    std::size_t counter = 0;
-    for (auto it = container.unsafe_begin(); it != container.unsafe_end(); ++it) {
-        CHECK(it->get_obj() == MinimalisticObject::default_obj);
-        ++counter;
-    }
-    CHECK(counter == desired_size);
-
-    container.clear();
-    CHECK(container.empty());
-}
-
-template <template <class...> class Container>
-void test_with_minimalistic_objects() {
-    // Test with MinimalisticObject and no pop operations
-    const std::size_t elements_count = 100;
-    {
-        Container<MinimalisticObject> default_container;
-
-        for (std::size_t i = 0; i < elements_count; ++i) {
-            default_container.emplace(MinimalisticObject::flag{});
-        }
-        test_basics(default_container, elements_count);
-    }
-    // Test with MoveAssignableMinimalisticObject with pop operation
-    {
-        Container<MoveAssignableMinimalisticObject> default_container;
-
-        for (std::size_t i = 0; i < elements_count; ++i) {
-            default_container.emplace(MinimalisticObject::flag{});
-        }
-        test_basics(default_container, elements_count);
-
-        // Refill again
-        for (std::size_t i = 0; i < elements_count; ++i) {
-            default_container.emplace(MinimalisticObject::flag{});
-        }
-
-        MoveAssignableMinimalisticObject result(MinimalisticObject::flag{});
-
-        std::size_t element_counter = 0;
-        while(!default_container.empty()) {
-            CHECK(default_container.try_pop(result));
-            ++element_counter;
-        }
-
-        CHECK(element_counter == elements_count);
-        CHECK(default_container.empty());
-    }
-}
+std::unordered_set<TrackableItem*> TrackableItem::object_addresses;
+std::size_t TrackableItem::global_count_for_exceptions = 0;
 
 //! \brief \ref regression \ref error_guessing
-TEST_CASE("Test with minimalistic object type") {
-    test_with_minimalistic_objects<oneapi::tbb::concurrent_queue>();
-    test_with_minimalistic_objects<oneapi::tbb::concurrent_bounded_queue>();
+TEST_CASE("Test with TrackableItem") {
+    oneapi::tbb::concurrent_queue<TrackableItem> q;
+    
+    for (std::size_t i = 0; i < 100000; ++i) {
+        try {
+            q.emplace();
+        } catch (int exception) {
+            CHECK(exception == 1);
+        }
+    }
+
+    q.clear();
+
+    CHECK(TrackableItem::object_addresses.empty());
 }
