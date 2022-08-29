@@ -173,9 +173,7 @@ public:
         tail_counter.fetch_add(queue_rep_type::n_queue);
     }
 
-    template <typename DoAssignTag = std::true_type>
-    bool pop( void* dst, ticket_type k, queue_rep_type& base, queue_allocator_type& allocator,
-              DoAssignTag do_assign = DoAssignTag{} )
+    bool pop( void* dst, ticket_type k, queue_rep_type& base, queue_allocator_type& allocator )
     {
         k &= -queue_rep_type::n_queue;
         spin_wait_until_eq(head_counter, k);
@@ -192,7 +190,7 @@ public:
                 k + queue_rep_type::n_queue, index == items_per_page - 1 ? p : nullptr );
             if (p->mask.load(std::memory_order_relaxed) & (std::uintptr_t(1) << index)) {
                 success = true;
-                select_pop_operation(dst, *p, index, do_assign);
+                assign_and_destroy_item(dst, *p, index);
             } else {
                 --base.n_invalid_entries;
             }
@@ -343,18 +341,11 @@ private:
     }
 
     // Assign the item for regular pop operation
-    void select_pop_operation( void* dst, padded_page& src, size_type index, /*do_assign = */std::true_type ) {
+    void assign_and_destroy_item( void* dst, padded_page& src, size_type index ) {
         __TBB_ASSERT(dst, "Incorrect destination for assign operation during pop");
         auto& from = src[index];
         destroyer d(from);
         *static_cast<T*>(dst) = std::move(from);
-    }
-
-    // No assign for pop while clearing the queue
-    void select_pop_operation( void* dst, padded_page& src, size_type index, /*do_assign = */std::false_type ) {
-        suppress_unused_warning(dst);
-        __TBB_ASSERT(!dst, nullptr);
-        destroyer d(src[index]);
     }
 
     void spin_wait_until_my_turn( std::atomic<ticket_type>& counter, ticket_type k, queue_rep_type& rb ) const {
