@@ -1662,7 +1662,7 @@ void test_with_minimalistic_objects() {
         MoveAssignableMinimalisticObject result(MinimalisticObject::flag{});
 
         std::size_t element_counter = 0;
-        while(!default_container.empty()) {
+        while (!default_container.empty()) {
             CHECK(default_container.try_pop(result));
             ++element_counter;
         }
