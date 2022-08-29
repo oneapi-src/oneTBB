@@ -203,10 +203,14 @@ TEST_CASE("Test exception in allocation") {
 
 struct TrackableItem {
     static std::unordered_set<TrackableItem*> object_addresses;
+#if TBB_USE_EXCEPTIONS
     static std::size_t global_count_for_exceptions;
+#endif
 
     TrackableItem() {
+#if TBB_USE_EXCEPTIONS
         if (global_count_for_exceptions++ % 3 == 0) throw 1;
+#endif
         bool res = object_addresses.emplace(this).second;
         CHECK(res);
     }
@@ -219,18 +223,24 @@ struct TrackableItem {
 };
 
 std::unordered_set<TrackableItem*> TrackableItem::object_addresses;
+#if TBB_USE_EXCEPTIONS
 std::size_t TrackableItem::global_count_for_exceptions = 0;
+#endif
 
 //! \brief \ref regression \ref error_guessing
 TEST_CASE("Test with TrackableItem") {
     oneapi::tbb::concurrent_queue<TrackableItem> q;
     
     for (std::size_t i = 0; i < 100000; ++i) {
+#if TBB_USE_EXCEPTIONS
         try {
+#endif
             q.emplace();
+#if TBB_USE_EXCEPTIONS
         } catch (int exception) {
             CHECK(exception == 1);
         }
+#endif
     }
 
     q.clear();
