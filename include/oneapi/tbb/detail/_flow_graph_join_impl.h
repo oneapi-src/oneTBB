@@ -669,12 +669,12 @@
 
     template<typename InputTuple, typename OutputTuple>
     class join_node_FE<reserving, InputTuple, OutputTuple> : public reserving_forwarding_base {
-    public:
+    private:
         static const int N = std::tuple_size<OutputTuple>::value;
         typedef OutputTuple output_type;
         typedef InputTuple input_type;
         typedef join_node_base<reserving, InputTuple, OutputTuple> base_node_type; // for forwarding
-
+    public:
         join_node_FE(graph &g) : reserving_forwarding_base(g), my_node(nullptr) {
             ports_with_no_inputs = N;
             join_helper<N>::set_join_node_pointer(my_inputs, this);
@@ -1028,7 +1028,6 @@
                            public sender<OutputTuple> {
     protected:
         using graph_node::my_graph;
-        using input_type = typename join_node_FE<JP, InputTuple, OutputTuple>::input_type;
     public:
         typedef OutputTuple output_type;
 
