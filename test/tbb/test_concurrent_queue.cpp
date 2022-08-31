@@ -236,7 +236,11 @@ void fill_and_catch(Container& q, std::size_t elements_count) {
         }
 #endif
     }
+#if TBB_USE_EXCEPTIONS
     CHECK(TrackableItem::object_addresses.size() == 2 * elements_count / 3);
+#else
+    CHECK(TrackableItem::object_addresses.size() == elements_count);
+#endif
 }
 
 std::unordered_set<TrackableItem*> TrackableItem::object_addresses;
@@ -256,7 +260,9 @@ void test_tracking_dtors_on_clear() {
         
         CHECK(q.empty());
         CHECK(TrackableItem::object_addresses.empty());
+#if TBB_USE_EXCEPTIONS
         TrackableItem::global_count_for_exceptions = 0;
+#endif
     }
     {
         {
@@ -264,7 +270,9 @@ void test_tracking_dtors_on_clear() {
             fill_and_catch(q, elements_count);
         } // Dtor of q would be called here
         CHECK(TrackableItem::object_addresses.empty());
+#if TBB_USE_EXCEPTIONS
         TrackableItem::global_count_for_exceptions = 0;
+#endif
     }
 }
 
