@@ -222,16 +222,10 @@ struct TrackableItem {
     }
 };
 
-std::unordered_set<TrackableItem*> TrackableItem::object_addresses;
-#if TBB_USE_EXCEPTIONS
-std::size_t TrackableItem::global_count_for_exceptions = 0;
-#endif
-
-//! \brief \ref regression \ref error_guessing
-TEST_CASE("Test with TrackableItem") {
-    oneapi::tbb::concurrent_queue<TrackableItem> q;
-    
-    for (std::size_t i = 0; i < 100000; ++i) {
+template <typename Container>
+void fill_and_catch(Container& q, std::size_t elements_count) {
+    CHECK(TrackableItem::object_addresses.size() == 0);
+    for (std::size_t i = 0; i < elements_count; ++i) {
 #if TBB_USE_EXCEPTIONS
         try {
 #endif
@@ -242,8 +236,40 @@ TEST_CASE("Test with TrackableItem") {
         }
 #endif
     }
+    CHECK(TrackableItem::object_addresses.size() == 2 * elements_count / 3);
+}
 
-    q.clear();
+std::unordered_set<TrackableItem*> TrackableItem::object_addresses;
+#if TBB_USE_EXCEPTIONS
+std::size_t TrackableItem::global_count_for_exceptions = 0;
+#endif
 
-    CHECK(TrackableItem::object_addresses.empty());
+template <typename Container>
+void test_tracking_dtors_on_clear() {
+    static_assert(std::is_same<typename Container::value_type, TrackableItem>::value, "Incorrect test setup");
+    const std::size_t elements_count = 100000;
+    {
+        Container q;
+        fill_and_catch(q, elements_count);
+
+        q.clear();
+        
+        CHECK(q.empty());
+        CHECK(TrackableItem::object_addresses.empty());
+        TrackableItem::global_count_for_exceptions = 0;
+    }
+    {
+        {
+            Container q;
+            fill_and_catch(q, elements_count);
+        } // Dtor of q would be called here
+        CHECK(TrackableItem::object_addresses.empty());
+        TrackableItem::global_count_for_exceptions = 0;
+    }
+}
+
+//! \brief \ref regression \ref error_guessing
+TEST_CASE("Test clear and dtor with TrackableItem") {
+    test_tracking_dtors_on_clear<oneapi::tbb::concurrent_queue<TrackableItem>>();
+    test_tracking_dtors_on_clear<oneapi::tbb::concurrent_bounded_queue<TrackableItem>>();
 }

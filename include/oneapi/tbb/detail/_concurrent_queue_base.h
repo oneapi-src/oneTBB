@@ -294,7 +294,7 @@ public:
         page_allocator_type page_allocator(allocator);
 
         while (curr_page && is_valid_page(curr_page)) {
-            while(index != items_per_page) {
+            while (index != items_per_page) {
                 if (curr_page->mask.load(std::memory_order_relaxed) & (std::uintptr_t(1) << index)) {
                     page_allocator_traits::destroy(page_allocator, &curr_page->operator[](index));
                 }
