@@ -292,7 +292,7 @@ public:
         return real_index - other.real_index;
     }
 
-    SmartIndex operator+(int k) {
+    SmartIndex operator+(std::size_t k) {
         return {real_index + k, *change_vector};
     }
 
