@@ -148,10 +148,7 @@ public:
 
     // Clear the queue. not thread-safe.
     void clear() {
-        while (!empty()) {
-            T value;
-            try_pop(value);
-        }
+        my_queue_representation->clear(my_allocator);
     }
 
     // Return allocator object
@@ -410,10 +407,7 @@ public:
 
     // Clear the queue. not thread-safe.
     void clear() {
-        while (!empty()) {
-            T value;
-            try_pop(value);
-        }
+        my_queue_representation->clear(my_allocator);
     }
 
     // Return allocator object
