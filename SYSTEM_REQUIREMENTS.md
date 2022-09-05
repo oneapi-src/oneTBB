@@ -48,7 +48,7 @@ This document provides details about hardware, operating system, and software pr
   - Fedora* 34
   - Red Hat* Enterprise Linux* 7, 8
   - SuSE* Linux* Enterprise Server 15
-  - Ubuntu* 18.04 LTS, 20.04, 21.04
+  - Ubuntu* 18.04 LTS, 20.04, 21.04, 22.04
 - Systems with macOS* operating systems
   - macOS* 10.15, 11.x
 - Systems with Android* operating systems
