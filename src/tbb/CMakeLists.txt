@@ -45,7 +45,7 @@ add_library(tbb
 add_library(TBB::tbb ALIAS tbb)
 
 if (WIN32)
-    set_target_properties(tbb PROPERTIES OUTPUT_NAME "tbb${TBB_BINARY_VERSION}")
+    set_target_properties(tbb PROPERTIES RUNTIME_OUTPUT_NAME "tbb${TBB_BINARY_VERSION}")
 endif()
 
 # TODO: Add statistics.cpp
@@ -145,7 +145,7 @@ endif()
 set(_tbb_pc_lib_name tbb)
 
 if (WIN32)
-    set(_tbb_pc_lib_name ${_tbb_pc_lib_name}${TBB_BINARY_VERSION})
+    set(_tbb_pc_lib_name ${_tbb_pc_lib_name})
 endif()
 
 if (CMAKE_SIZEOF_VOID_P EQUAL 8)
