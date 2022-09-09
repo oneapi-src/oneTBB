@@ -1,0 +1,20 @@
+# The ucontext API may be implemented outside the default library set
+include(CheckSymbolExists)
+if (NOT DEFINED UCONTEXT_LIBRARIES
+    AND CMAKE_SYSTEM_NAME MATCHES "^Linux")
+    check_symbol_exists("getcontext" "ucontext.h" HAVE_UCONTEXT)
+    if (NOT HAVE_UCONTEXT)
+        message(STATUS "Checking for libucontext")
+        find_library(LIBUCONTEXT "ucontext")
+        if (LIBUCONTEXT STREQUAL "LIBUCONTEXT-NOTFOUND")
+            message(WARNING "No ucontext API available")
+            set(LIBUCONTEXT "")
+        else()
+            message(STATUS "Found libucontext: ${LIBUCONTEXT}")
+            set(HAVE_UCONTEXT 1)
+        endif()
+        set(UCONTEXT_LIBRARIES "${LIBUCONTEXT}" CACHE FILEPATH
+          "Library providing the ucontext API (if not in the default set)")
+    endif()
+endif()
+mark_as_advanced(LIBUCONTEXT HAVE_UCONTEXT)

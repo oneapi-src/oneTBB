@@ -118,6 +118,7 @@ target_link_libraries(tbb
     Threads::Threads
     ${TBB_LIB_LINK_LIBS}
     ${TBB_COMMON_LINK_LIBS}
+    ${UCONTEXT_LIBRARIES}
 )
 
 tbb_install_target(tbb)
