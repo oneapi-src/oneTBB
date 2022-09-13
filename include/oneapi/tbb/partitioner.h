@@ -314,25 +314,6 @@ struct adaptive_mode : partition_type_base<Partition> {
 //! Helper type for checking availability of proportional_split constructor
 template <typename T> using supports_proportional_splitting = typename std::is_constructible<T, T&, proportional_split&>;
 
-//! A helper class to create a proportional_split object for a given type of Range.
-/** If the Range has proportional_split constructor,
-    then created object splits a provided value in an implemenation-defined proportion;
-    otherwise it represents equal-size split. */
-// TODO: check if this helper can be a nested class of proportional_mode.
-template <typename Range, typename = void>
-struct proportion_helper {
-    static proportional_split get_split(std::size_t) { return proportional_split(1,1); }
-};
-
-template <typename Range>
-struct proportion_helper<Range, typename std::enable_if<supports_proportional_splitting<Range>::value>::type> {
-    static proportional_split get_split(std::size_t n) {
-        std::size_t right = n / 2;
-        std::size_t left  = n - right;
-        return proportional_split(left, right);
-    }
-};
-
 //! Provides proportional splitting strategy for partition objects
 template <typename Partition>
 struct proportional_mode : adaptive_mode<Partition> {
@@ -358,7 +339,10 @@ struct proportional_mode : adaptive_mode<Partition> {
     template <typename Range>
     proportional_split get_split() {
         // Create a proportion for the number of threads expected to handle "this" subrange
-        return proportion_helper<Range>::get_split( self().my_divisor / my_partition::factor );
+        std::size_t n = self().my_divisor / my_partition::factor;
+        std::size_t right = n / 2;
+        std::size_t left  = n - right;
+        return proportional_split(left, right);
     }
 };
 
