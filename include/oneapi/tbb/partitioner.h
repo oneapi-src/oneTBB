@@ -311,7 +311,6 @@ struct adaptive_mode : partition_type_base<Partition> {
     }
 };
 
-//! Helper type for checking availability of proportional_split constructor
 
 //! Provides proportional splitting strategy for partition objects
 template <typename Partition>
