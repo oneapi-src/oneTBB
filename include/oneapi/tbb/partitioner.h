@@ -312,7 +312,6 @@ struct adaptive_mode : partition_type_base<Partition> {
 };
 
 //! Helper type for checking availability of proportional_split constructor
-template <typename T> using supports_proportional_splitting = typename std::is_constructible<T, T&, proportional_split&>;
 
 //! Provides proportional splitting strategy for partition objects
 template <typename Partition>
