@@ -149,7 +149,7 @@ void test_custom_range() {
     oneapi::tbb::mutex results_mutex;
 
     for (int i = 0; i < num_trials; ++i) {
-        oneapi::tbb::parallel_for(Range(0, 42 * utils::get_platform_max_threads(), 1), [&] (const Range& r) {
+        oneapi::tbb::parallel_for(Range(0, int(100 * utils::get_platform_max_threads()), 1), [&] (const Range& r) {
             oneapi::tbb::mutex::scoped_lock lock(results_mutex);
             results[i].push_back(r.size());
         }, oneapi::tbb::static_partitioner{});
@@ -159,8 +159,8 @@ void test_custom_range() {
         REQUIRE(res.size() == utils::get_platform_max_threads());
 
         std::size_t min_size = *std::min_element(res.begin(), res.end());
-        for (std::size_t idx = 0; idx < res.size(); ++idx) {
-            REQUIRE(min_size * 2 >= res[idx]);
+        for (auto elem : res) {
+            REQUIRE(min_size * 2 + 1 >= elem);
         }
     }
 }
