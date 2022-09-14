@@ -120,3 +120,17 @@ REM Install "release with debug information" configuration
 cmake --install . --config relwithdebinfo
 REM Well done! Your installed oneTBB is in %TMP%\my_installed_onetbb
 ```
+
+# Installation from vcpkg
+
+You can download and install oneTBB using the [vcpkg](https://github.com/Microsoft/vcpkg) dependency manager:
+```sh
+  git clone https://github.com/Microsoft/vcpkg.git
+  cd vcpkg
+  ./bootstrap-vcpkg.sh #.\bootstrap-vcpkg.bat(for windows)
+  ./vcpkg integrate install
+  ./vcpkg install tbb
+```
+
+The oneTBB port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out of date, please [create an issue or pull   request](https://github.com/Microsoft/vcpkg) on the vcpkg repository.
+
