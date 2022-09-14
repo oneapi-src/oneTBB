@@ -166,7 +166,7 @@ void test_custom_range() {
 }
 
 //! \brief \ref regression
-TEST_CASE("Test ranges without proportional split") {
+TEST_CASE("Test partitioned tasks count and size for static_partitioner") {
     class custom_range : public oneapi::tbb::blocked_range<int> {
         using base_type = oneapi::tbb::blocked_range<int>;
     public:
