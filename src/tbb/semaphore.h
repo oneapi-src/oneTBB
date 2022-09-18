@@ -22,10 +22,7 @@
 #if _WIN32||_WIN64
 #include <windows.h>
 #elif __APPLE__
-#include <mach/semaphore.h>
-#include <mach/task.h>
-#include <mach/mach_init.h>
-#include <mach/error.h>
+#include <dispatch/dispatch.h>
 #else
 #include <semaphore.h>
 #ifdef TBB_USE_DEBUG
@@ -150,28 +147,18 @@ private:
 class semaphore : no_copy {
 public:
     //! ctor
-    semaphore(int start_cnt_ = 0) : sem(start_cnt_) { init_semaphore(start_cnt_); }
+    semaphore(int start_cnt_ = 0) { my_sem = dispatch_semaphore_create(start_cnt_); }
     //! dtor
-    ~semaphore() {
-        kern_return_t ret = semaphore_destroy( mach_task_self(), sem );
-        __TBB_ASSERT_EX( ret==err_none, nullptr);
-    }
+    ~semaphore() { dispatch_release(my_sem); }
     //! wait/acquire
     void P() {
-        int ret;
-        do {
-            ret = semaphore_wait( sem );
-        } while( ret==KERN_ABORTED );
-        __TBB_ASSERT( ret==KERN_SUCCESS, "semaphore_wait() failed" );
+        std::intptr_t ret = dispatch_semaphore_wait(my_sem, DISPATCH_TIME_FOREVER);
+        __TBB_ASSERT(ret == 0, "dispatch_semaphore_wait() failed");
     }
     //! post/release
-    void V() { semaphore_signal( sem ); }
+    void V() { dispatch_semaphore_signal(my_sem); }
 private:
-    semaphore_t sem;
-    void init_semaphore(int start_cnt_) {
-        kern_return_t ret = semaphore_create( mach_task_self(), &sem, SYNC_POLICY_FIFO, start_cnt_ );
-        __TBB_ASSERT_EX( ret==err_none, "failed to create a semaphore" );
-    }
+    dispatch_semaphore_t my_sem;
 };
 #else /* Linux/Unix */
 typedef uint32_t sem_count_t;
@@ -247,27 +234,18 @@ private:
 class binary_semaphore : no_copy {
 public:
     //! ctor
-    binary_semaphore() : my_sem(0) {
-        kern_return_t ret = semaphore_create( mach_task_self(), &my_sem, SYNC_POLICY_FIFO, 0 );
-        __TBB_ASSERT_EX( ret==err_none, "failed to create a semaphore" );
-    }
+    binary_semaphore(int start_cnt_ = 0) { my_sem = dispatch_semaphore_create(start_cnt_); }
     //! dtor
-    ~binary_semaphore() {
-        kern_return_t ret = semaphore_destroy( mach_task_self(), my_sem );
-        __TBB_ASSERT_EX( ret==err_none, nullptr);
-    }
+    ~binary_semaphore() { dispatch_release(my_sem); }
     //! wait/acquire
     void P() {
-        int ret;
-        do {
-            ret = semaphore_wait( my_sem );
-        } while( ret==KERN_ABORTED );
-        __TBB_ASSERT( ret==KERN_SUCCESS, "semaphore_wait() failed" );
+        std::intptr_t ret = dispatch_semaphore_wait(my_sem, DISPATCH_TIME_FOREVER);
+        __TBB_ASSERT(ret == 0, "dispatch_semaphore_wait() failed");
     }
     //! post/release
-    void V() { semaphore_signal( my_sem ); }
+    void V() { dispatch_semaphore_signal(my_sem); }
 private:
-    semaphore_t my_sem;
+    dispatch_semaphore_t my_sem;
 };
 #else /* Linux/Unix */
 
