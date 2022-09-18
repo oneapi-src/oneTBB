@@ -153,7 +153,7 @@ public:
     //! wait/acquire
     void P() {
         std::intptr_t ret = dispatch_semaphore_wait(my_sem, DISPATCH_TIME_FOREVER);
-        __TBB_ASSERT(ret == 0, "dispatch_semaphore_wait() failed");
+        __TBB_ASSERT_EX(ret == 0, "dispatch_semaphore_wait() failed");
     }
     //! post/release
     void V() { dispatch_semaphore_signal(my_sem); }
@@ -240,7 +240,7 @@ public:
     //! wait/acquire
     void P() {
         std::intptr_t ret = dispatch_semaphore_wait(my_sem, DISPATCH_TIME_FOREVER);
-        __TBB_ASSERT(ret == 0, "dispatch_semaphore_wait() failed");
+        __TBB_ASSERT_EX(ret == 0, "dispatch_semaphore_wait() failed");
     }
     //! post/release
     void V() { dispatch_semaphore_signal(my_sem); }
