@@ -336,10 +336,10 @@ struct proportional_mode : adaptive_mode<Partition> {
     }
     template <typename Range>
     proportional_split get_split() {
-        // Spilt the partitioner internal resources (threads) into proportion that would be used on next task creation:
-        // - into proportional_mode constructor
-        // - if Range supports the proportional_mode constructor it would use proposed proportion,
-        //   otherwise, it will be called cast to default tbb::split
+        // Create the proportion from partitioner internal resources (threads) that would be used:
+        // - into proportional_mode constructor to split the partitioner
+        // - if Range supports the proportional_split constructor it would use proposed proportion,
+        //   otherwise, it will be casted into tbb::split
 
         std::size_t n = self().my_divisor / my_partition::factor;
         std::size_t right = n / 2;
