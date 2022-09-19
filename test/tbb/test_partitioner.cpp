@@ -160,7 +160,7 @@ void test_custom_range(int diff_mult) {
 
         std::size_t min_size = *std::min_element(res.begin(), res.end());
         for (auto elem : res) {
-            REQUIRE(min_size * diff_mult + 1 >= elem);
+            REQUIRE(min_size * diff_mult + 2 >= elem);
         }
     }
 }
