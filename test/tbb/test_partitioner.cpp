@@ -29,7 +29,7 @@
 #include <cstddef>
 #include <utility>
 #include <vector>
-#include <algorithm>
+#include <algorithm> // std::min_element
 
 //! \file test_partitioner.cpp
 //! \brief Test for [internal] functionality
@@ -142,7 +142,7 @@ TEST_CASE("Threads respect task affinity") {
 }
 
 template <typename Range>
-void test_custom_range() {
+void test_custom_range(int diff_mult) {
     int num_trials = 100;
 
     std::vector<std::vector<std::size_t>> results(num_trials);
@@ -160,7 +160,7 @@ void test_custom_range() {
 
         std::size_t min_size = *std::min_element(res.begin(), res.end());
         for (auto elem : res) {
-            REQUIRE(min_size * 2 + 1 >= elem);
+            REQUIRE(min_size * diff_mult + 1 >= elem);
         }
     }
 }
@@ -176,7 +176,7 @@ TEST_CASE("Test partitioned tasks count and size for static_partitioner") {
         custom_range(custom_range& r, tbb::split) : base_type(r, tbb::split()) {}
     };
 
-    test_custom_range<custom_range>();
+    test_custom_range<custom_range>(2);
 
     class custom_range_with_psplit : public oneapi::tbb::blocked_range<int> {
         using base_type = oneapi::tbb::blocked_range<int>;
@@ -188,5 +188,5 @@ TEST_CASE("Test partitioned tasks count and size for static_partitioner") {
         custom_range_with_psplit(custom_range_with_psplit& r, tbb::proportional_split& p) : base_type(r, p) {}
     };
 
-    test_custom_range<custom_range_with_psplit>();
+    test_custom_range<custom_range_with_psplit>(1);
 }
