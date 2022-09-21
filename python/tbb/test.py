@@ -87,7 +87,6 @@ def test(arg=None):
     def timeout_work(param):
         nonlocal spin_flag
         while spin_flag:
-            # print(spin_flag)
             time.sleep(0.0001) # yield equivalent
         return str(param) if param != None else None
 
