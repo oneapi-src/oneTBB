@@ -4,6 +4,7 @@ Testing Approach
 ================
 
 You can face four main hazard types in the libraries for parallelism:
+
 * Interface correspondence to specification
 * Memory errors
 * Data race
@@ -17,6 +18,7 @@ Memory errors and data races are additionally covered by special tools that incl
 
 Race conditions and deadlocks are the most complicated errors.
 They are covered by:
+
 * **Unit tests** that, however, have limited capability to catch such errors
 * **Integration tests**. Multiple different functionalities are heavily combined to emulate user use cases that may trigger such errors based on prior knowledge and expertise. 
 * **Stress testing with different possible combinations**. It ensures that even rarely triggered error conditions are caught by testing.
