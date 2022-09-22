@@ -86,8 +86,10 @@ def test(arg=None):
     spin_flag = True
     def timeout_work(param):
         nonlocal spin_flag
+        say("[%d] Spin wait work start..." % get_tid())
         while spin_flag:
             time.sleep(0.0001) # yield equivalent
+        say("[%d] Work done." % get_tid())
         return str(param) if param != None else None
 
     ### Test copy/pasted from multiprocessing
