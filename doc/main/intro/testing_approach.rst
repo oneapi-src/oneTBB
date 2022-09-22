@@ -26,5 +26,6 @@ They are covered by:
 .. note:: Every fix is required to be covered by a test to guarantee the detection of such issues in the future.
 
 Continuous Integration triggers all the tests on each commit. This ensures that:
+
 * Issues are detected, starting from the early development phase and up to the moment of integration of changes into the library.
 * The highest quality of the library even in such error-prone domains as parallelism.
