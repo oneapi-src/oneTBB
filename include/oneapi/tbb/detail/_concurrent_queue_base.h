@@ -276,16 +276,8 @@ public:
         }
     }
 
-    padded_page* get_tail_page() {
-        return tail_page.load(std::memory_order_relaxed);
-    }
-
     padded_page* get_head_page() {
         return head_page.load(std::memory_order_relaxed);
-    }
-
-    void set_tail_page( padded_page* pg ) {
-        tail_page.store(pg, std::memory_order_relaxed);
     }
 
     void clear(queue_allocator_type& allocator, padded_page* new_head = nullptr, padded_page* new_tail = nullptr) {
