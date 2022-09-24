@@ -45,6 +45,7 @@ add_library(tbb
 add_library(TBB::tbb ALIAS tbb)
 
 if (WIN32)
+    target_sources(tbb PRIVATE resource.rc)
     set_target_properties(tbb PROPERTIES OUTPUT_NAME "tbb${TBB_BINARY_VERSION}")
 endif()
 
