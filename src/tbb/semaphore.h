@@ -231,22 +231,7 @@ private:
 #endif /* !__TBB_USE_SRWLOCK */
 #elif __APPLE__
 //! binary_semaphore for concurrent monitor
-class binary_semaphore : no_copy {
-public:
-    //! ctor
-    binary_semaphore(int start_cnt_ = 0) { my_sem = dispatch_semaphore_create(start_cnt_); }
-    //! dtor
-    ~binary_semaphore() { dispatch_release(my_sem); }
-    //! wait/acquire
-    void P() {
-        std::intptr_t ret = dispatch_semaphore_wait(my_sem, DISPATCH_TIME_FOREVER);
-        __TBB_ASSERT_EX(ret == 0, "dispatch_semaphore_wait() failed");
-    }
-    //! post/release
-    void V() { dispatch_semaphore_signal(my_sem); }
-private:
-    dispatch_semaphore_t my_sem;
-};
+using binary_semaphore = semaphore;
 #else /* Linux/Unix */
 
 #if __TBB_USE_FUTEX
