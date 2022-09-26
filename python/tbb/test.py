@@ -103,7 +103,7 @@ def test(arg=None):
             say("Good. Got expected timeout exception.")
         else:
             assert False, "Expected exception !"
-        spin_flag = False
+        spin_flag = False # unlock threads
 
     ### Test copy/pasted from multiprocessing
     pool = Pool(4)  # start worker threads
