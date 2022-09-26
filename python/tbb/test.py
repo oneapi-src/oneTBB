@@ -83,14 +83,27 @@ def test(arg=None):
         return res
 
     # special flag to to be set by thread calling async work
-    spin_flag = True
+    spin_flag = None
     def timeout_work(param):
-        nonlocal spin_flag
         say("[%d] Spin wait work start..." % get_tid())
         while spin_flag:
             time.sleep(0.0001) # yield equivalent
         say("[%d] Work done." % get_tid())
         return str(param) if param != None else None
+
+    def prepare_timeout_exception():
+        nonlocal spin_flag
+        spin_flag = True # lock threads in timeout_work
+
+    def check_timeout_exception(pool_object, func):
+        nonlocal spin_flag
+        try:
+            func(pool_object)
+        except TimeoutError:
+            say("Good. Got expected timeout exception.")
+        else:
+            assert False, "Expected exception !"
+        spin_flag = False
 
     ### Test copy/pasted from multiprocessing
     pool = Pool(4)  # start worker threads
@@ -115,49 +128,32 @@ def test(arg=None):
     assert next(it) == 4
 
     # Test apply_sync exceptions
+    prepare_timeout_exception()
     result = pool.apply_async(timeout_work, (None,))
-    try:
-        say(result.get(timeout=1))  # raises `TimeoutError`
-    except TimeoutError:
-        say("Good. Got expected timeout exception.")
-        spin_flag = False
-    else:
-        assert False, "Expected exception !"
+    check_timeout_exception(result, lambda result : say(result.get(timeout=1)))
     assert result.get() is None  # sleep() returns None
 
     def cb(s):
         say("Result ready: %s" % s)
 
     # Test imap()
-    assert list(pool.imap(timeout_work, range(10, 3, -1), chunksize=4)) == list(map(
+    assert list(pool.imap(work, range(10, 3, -1), chunksize=4)) == list(map(
         str, range(10, 3, -1)))
 
     # Test imap_unordered()
-    assert sorted(pool.imap_unordered(timeout_work, range(10, 3, -1))) == sorted(map(
+    assert sorted(pool.imap_unordered(work, range(10, 3, -1))) == sorted(map(
         str, range(10, 3, -1)))
 
     # Test map_async()
-    spin_flag = True
+    prepare_timeout_exception()
     result = pool.map_async(timeout_work, range(10), callback=cb)
-    try:
-        result.get(timeout=0.01)  # raises `TimeoutError`
-    except TimeoutError:
-        say("Good. Got expected timeout exception.")
-        spin_flag = False
-    else:
-        assert False, "Expected exception !"
+    check_timeout_exception(result, lambda result : result.get(timeout=0.01))
     say(result.get())
 
     # Test imap_async()
-    spin_flag = True
+    prepare_timeout_exception()
     result = pool.imap_async(timeout_work, range(3, 10), callback=cb)
-    try:
-        result.get(timeout=0.01)  # raises `TimeoutError`
-    except TimeoutError:
-        say("Good. Got expected timeout exception.")
-        spin_flag = False
-    else:
-        assert False, "Expected exception !"
+    check_timeout_exception(result, lambda result : result.get(timeout=0.01))
     for i in result.get():
         say("Item:", i)
     say("### Loop again:")
@@ -165,15 +161,9 @@ def test(arg=None):
         say("Item2:", i)
 
     # Test imap_unordered_async()
-    spin_flag = True
+    prepare_timeout_exception()
     result = pool.imap_unordered_async(timeout_work, range(10, 3, -1), callback=cb)
-    try:
-        say(result.get(timeout=0.01))  # raises `TimeoutError`
-    except TimeoutError:
-        say("Good. Got expected timeout exception.")
-        spin_flag = False
-    else:
-        assert False, "Expected exception !"
+    check_timeout_exception(result, lambda result : result.get(timeout=0.01))
     for i in result.get():
         say("Item1:", i)
     for i in result.get():
