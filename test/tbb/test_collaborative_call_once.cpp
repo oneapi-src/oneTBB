@@ -217,7 +217,7 @@ TEST_CASE("only calls once - stress test") {
     // Android has been added to decrease testing time.
     constexpr std::size_t N = tbb::detail::d0::max_nfs_size * 2;
 #elif __TBB_USE_THREAD_SANITIZER
-    // Reduce execution time uner Thread Sanitizer
+    // Reduce execution time under Thread Sanitizer
     constexpr std::size_t N = tbb::detail::d0::max_nfs_size + 64;
 #else 
     constexpr std::size_t N = tbb::detail::d0::max_nfs_size * 4;

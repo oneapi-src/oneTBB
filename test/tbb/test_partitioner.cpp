@@ -40,7 +40,7 @@ template <typename PerBodyFunc> float test(PerBodyFunc&& body) {
     tbb::task_arena big_arena(static_cast<int>(num_threads));
 
 #if __TBB_USE_THREAD_SANITIZER
-    // Reduce execution time uner Thread Sanitizer
+    // Reduce execution time under Thread Sanitizer
     const std::size_t repeats = 50;
 #else
     const std::size_t repeats = 100;
