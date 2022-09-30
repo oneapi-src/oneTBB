@@ -20,6 +20,10 @@ add_library(tbbmalloc_proxy
     function_replacement.cpp
     proxy.cpp)
 
+if (WIN32)
+    target_sources(tbbmalloc_proxy PRIVATE tbbmalloc_proxy.rc)
+endif()
+
 add_library(TBB::tbbmalloc_proxy ALIAS tbbmalloc_proxy)
 
 target_compile_definitions(tbbmalloc_proxy
