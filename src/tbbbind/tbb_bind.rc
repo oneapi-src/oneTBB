@@ -30,6 +30,7 @@
 // Generated from the TEXTINCLUDE 2 resource.
 //
 #include <winresrc.h>
+#include "../../include/oneapi/tbb/version.h"
 #define ENDL "\r\n"
 
 /////////////////////////////////////////////////////////////////////////////
@@ -54,8 +55,8 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 //
 // Version
 //
-#define TBB_VERNUMBERS 2021,8,2022,1003
-#define TBB_VERSION "2021,8,2022,1003"
+#define TBB_VERNUMBERS TBB_VERSION_MAJOR,TBB_VERSION_MINOR
+#define TBB_VERSION TBB_VERSION_STRING
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION TBB_VERNUMBERS
@@ -84,7 +85,7 @@ BEGIN
 #else
             VALUE "OriginalFilename", "tbbbind_debug.dll\0"
 #endif
-            VALUE "ProductName", "oneAPI Threading Building Blocks (oneTBB) for Windows\0"
+            VALUE "ProductName", "oneAPI Threading Building Blocks (oneTBB)\0"
             VALUE "ProductVersion", TBB_VERSION "\0"
             VALUE "PrivateBuild", "\0"
             VALUE "SpecialBuild", "\0"
