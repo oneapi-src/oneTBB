@@ -24,6 +24,11 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
         return()
     endif()
     add_library(${TBBBIND_NAME} tbb_bind.cpp)
+    
+    if (WIN32)
+        target_sources(${TBBBIND_NAME} PRIVATE tbb_bind.rc)
+    endif()
+    
     add_library(TBB::${TBBBIND_NAME} ALIAS ${TBBBIND_NAME})
 
     target_compile_definitions(${TBBBIND_NAME}
