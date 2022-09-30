@@ -75,7 +75,7 @@ BEGIN
         BLOCK "000004b0"
         BEGIN
             VALUE "CompanyName", "Intel Corporation\0"
-            VALUE "FileDescription", "Intel(R) Threading Building Blocks library\0"
+            VALUE "FileDescription", "oneAPI Threading Building Blocks (oneTBB) library\0"
             VALUE "FileVersion", TBB_VERSION "\0"
             VALUE "LegalCopyright", "Copyright 2005-2022 Intel Corporation.  All Rights Reserved.\0"
             VALUE "LegalTrademarks", "\0"
@@ -84,7 +84,7 @@ BEGIN
 #else
             VALUE "OriginalFilename", "tbb12_debug.dll\0"
 #endif
-            VALUE "ProductName", "Intel(R) Threading Building Blocks for Windows\0"
+            VALUE "ProductName", "oneAPI Threading Building Blocks (oneTBB) for Windows\0"
             VALUE "ProductVersion", TBB_VERSION "\0"
             VALUE "PrivateBuild", "\0"
             VALUE "SpecialBuild", "\0"
