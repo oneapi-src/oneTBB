@@ -19,6 +19,10 @@ add_library(tbbmalloc
     large_objects.cpp
     tbbmalloc.cpp
     ../tbb/itt_notify.cpp)
+    
+if (WIN32)
+    target_sources(tbbmalloc PRIVATE tbbmalloc.rc)
+endif()
 
 add_library(TBB::tbbmalloc ALIAS tbbmalloc)
 
