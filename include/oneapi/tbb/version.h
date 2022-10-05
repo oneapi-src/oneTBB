@@ -17,8 +17,14 @@
 #ifndef __TBB_version_H
 #define __TBB_version_H
 
-#include "detail/_config.h"
-#include "detail/_namespace_injection.h"
+// Exclude all includes during .rc files compilation
+#ifndef RC_INVOKED
+    #include "detail/_config.h"
+    #include "detail/_namespace_injection.h"
+#else
+    #define __TBB_STRING_AUX(x) #x
+    #define __TBB_STRING(x) __TBB_STRING_AUX(x)
+#endif
 
 // Product version
 #define TBB_VERSION_MAJOR 2021

@@ -31,7 +31,6 @@
 //
 #include <winresrc.h>
 #include "../../include/oneapi/tbb/version.h"
-#define ENDL "\r\n"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
