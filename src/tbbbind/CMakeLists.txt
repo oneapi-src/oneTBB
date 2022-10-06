@@ -66,8 +66,8 @@ function(tbbbind_build TBBBIND_NAME REQUIRED_HWLOC_TARGET)
 
     if (TBB_DEF_FILE_PREFIX) # If there's no prefix, assume we're using export directives
         set_target_properties(${TBBBIND_NAME} PROPERTIES
-            LINK_FLAGS ${TBB_LINK_DEF_FILE_FLAG}${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbbind.def
-            LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbbind.def
+            LINK_FLAGS "${TBB_LINK_DEF_FILE_FLAG}\"${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbbind.def\""
+            LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbbind.def"
         )
     endif()
 
