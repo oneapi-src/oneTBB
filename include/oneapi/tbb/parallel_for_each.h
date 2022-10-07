@@ -306,7 +306,9 @@ struct input_block_handling_task : public task {
     ~input_block_handling_task() {
         for(std::size_t counter = 0; counter < max_block_size; ++counter) {
             (task_pool.begin() + counter)->~iteration_task();
-            (block_iteration_space.begin() + counter)->~Item();
+            if (counter < my_size) {
+                (block_iteration_space.begin() + counter)->~Item();
+            }
         }
     }
 
