@@ -1,4 +1,4 @@
-.. _Automically_Replacing_malloc:
+.. _automatically-replacing-malloc:
 
 Automatically Replacing ``malloc`` and Other C/C++ Functions for Dynamic Memory Allocation
 ==========================================================================================
