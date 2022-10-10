@@ -3,7 +3,7 @@
 Testing Approach 
 ================
 
-There are four main types of errors you can encounter in the development of libraries for parallelism:
+There are four main types of errors/hazards you can encounter in the development of libraries for parallelism:
 
 * Interface correspondence to specification
 * Memory errors
