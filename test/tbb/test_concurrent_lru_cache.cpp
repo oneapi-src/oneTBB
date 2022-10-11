@@ -125,3 +125,27 @@ TEST_CASE("basic test for eviction of only unused items 2") {
     REQUIRE_MESSAGE(is_correct, "cache should not evict items in use");
 }
 
+//! \brief \ref error_guessing
+TEST_CASE("basic test for handling case when number_of_lru_history_items is zero") {
+    int call_count = 0;
+    auto counter_func = [&call_count] (int key) {
+        call_count++;
+        return key*2;
+    };
+    
+    using cache_type =  tbb::concurrent_lru_cache<int, int, decltype(counter_func)>;
+    cache_type cache{counter_func, 0};
+
+    for(int i = 1; i <= 10; ++i) {
+        cache[1];
+        REQUIRE_MESSAGE(call_count == i, "when number_of_lru_history_items is zero, element must be erased after use");
+    }
+
+    call_count = 0;
+    cache_type::handle h = cache[1];
+    for(int i = 0; i < 10; ++i) {
+        cache[1];
+        REQUIRE_MESSAGE(call_count == 1, "there is still a reference for key=1");
+    }
+    REQUIRE(h.value() == 2);
+}
