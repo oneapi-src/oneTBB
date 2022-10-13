@@ -457,6 +457,53 @@ private:
             MALLOC_ASSERT(hugePageSize != 0, "Huge Page size can't be zero if we found thp existence.");
             thpAvailable = true;
         }
+#elif (_WIN32||_WIN64)
+        BOOL memoryPriviledgeAsserted = FALSE;
+
+        HANDLE hThread;
+        BOOL isTokenAvailable = OpenThreadToken(GetCurrentThread(), TOKEN_ADJUST_PRIVILEGES |
+            TOKEN_QUERY, TRUE, &hThread);
+
+        if (!isTokenAvailable && (GetLastError() == ERROR_NO_TOKEN))
+        {
+            HANDLE hProcess;
+            if (OpenProcessToken(GetCurrentProcess(), TOKEN_DUPLICATE, &hProcess))
+            {
+                if (DuplicateTokenEx(hProcess, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY |
+                    TOKEN_IMPERSONATE, NULL, SecurityImpersonation,
+                    TokenImpersonation, &hThread))
+                {
+                    isTokenAvailable = SetThreadToken(NULL, hThread);
+                }
+
+                CloseHandle(hProcess);
+            }
+        }
+
+        if (isTokenAvailable)
+        {
+            TOKEN_PRIVILEGES tokenPrivileges;
+            ZeroMemory(&tokenPrivileges, sizeof(tokenPrivileges));
+
+            if (LookupPrivilegeValue(NULL, L"SeLockMemoryPrivilege", &tokenPrivileges.Privileges[0].Luid))
+            {
+                tokenPrivileges.PrivilegeCount = 1;
+                    tokenPrivileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
+                TOKEN_PRIVILEGES oldTokenPrivileges;
+                DWORD oldPrivilegesLength;
+
+                memoryPriviledgeAsserted = AdjustTokenPrivileges(hThread, FALSE, &tokenPrivileges,
+                    sizeof(tokenPrivileges), &oldTokenPrivileges,
+                    &oldPrivilegesLength);
+            }
+
+            CloseHandle(hThread);
+        }
+
+        hugePageSize = GetLargePageMinimum() >> 10;
+
+        hpAvailable = (memoryPriviledgeAsserted == TRUE) && (hugePageSize != 0);
 #endif
         MALLOC_ASSERT(!pageSize, "Huge page size can't be set twice. Double initialization.");
 

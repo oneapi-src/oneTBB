@@ -3240,7 +3240,7 @@ extern "C" int scalable_allocation_mode(int param, intptr_t value)
         defaultMemPool->extMemPool.backend.setRecommendedMaxSize((size_t)value);
         return TBBMALLOC_OK;
     } else if (param == USE_HUGE_PAGES) {
-#if __linux__
+#if (_WIN32||_WIN64||__linux__)
         switch (value) {
         case 0:
         case 1:
