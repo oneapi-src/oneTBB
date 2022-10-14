@@ -1058,7 +1058,10 @@ ITT_EXTERN_C void _N_(fini_ittlib)(void)
                 current_thread = 0;
             }
         }
-        if (PTHREAD_SYMBOLS) __itt_mutex_unlock(&_N_(_ittapi_global).mutex);
+        if (PTHREAD_SYMBOLS) {
+            __itt_mutex_unlock(&_N_(_ittapi_global).mutex);
+            __itt_mutex_destroy(&_N_(_ittapi_global).mutex);
+        }
     }
 }
 
