@@ -167,6 +167,18 @@
 #  define ITT_ARCH_LOONGARCH64  7
 #endif /* ITT_ARCH_LOONGARCH64 */
 
+#ifndef ITT_ARCH_S390X
+#  define ITT_ARCH_S390X  8
+#endif /* ITT_ARCH_S390X */
+
+#ifndef ITT_ARCH_HPPA
+#  define ITT_ARCH_HPPA  9
+#endif /* ITT_ARCH_HPPA */
+
+#ifndef ITT_ARCH_RISCV64
+#  define ITT_ARCH_RISCV64  10
+#endif /* ITT_ARCH_RISCV64 */
+
 #ifndef ITT_ARCH
 #  if defined _M_IX86 || defined __i386__
 #    define ITT_ARCH ITT_ARCH_IA32
@@ -182,6 +194,12 @@
 #    define ITT_ARCH ITT_ARCH_PPC64
 #  elif defined __loongarch__
 #    define ITT_ARCH ITT_ARCH_LOONGARCH64
+#  elif defined __s390__ || defined __s390x__
+#    define ITT_ARCH ITT_ARCH_S390X
+#  elif defined __hppa__
+#    define ITT_ARCH ITT_ARCH_HPPA
+#  elif defined __riscv && __riscv_xlen == 64
+#    define ITT_ARCH ITT_ARCH_RISCV64
 #  endif
 #endif
 
