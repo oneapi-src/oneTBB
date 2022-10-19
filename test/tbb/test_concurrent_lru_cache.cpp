@@ -128,13 +128,15 @@ TEST_CASE("basic test for eviction of only unused items 2") {
 
 //! \brief \ref error_guessing
 TEST_CASE("basic test for handling case when number_of_lru_history_items is zero") {
-    auto counter_func = [] (int) {
+    auto foo = [] (int) {
         return utils::LifeTrackableObject{};
     };
-    using cache_type =  tbb::concurrent_lru_cache<int, utils::LifeTrackableObject, decltype(counter_func)>;
-    cache_type cache{counter_func, 0};
+    using cache_type =  tbb::concurrent_lru_cache<int, utils::LifeTrackableObject, decltype(foo)>;
+    cache_type cache{foo, 0};
     
     for(int i = 0; i < 10; ++i) {
+        // Check that no history is stored when my_history_list_capacity is 0.
+        // In this case, when trying to fill the cache, the items will be deleted if reference was not taken.
         const utils::LifeTrackableObject* obj_addr = &cache[1].value();
         REQUIRE_MESSAGE(utils::LifeTrackableObject::is_alive(obj_addr) == false, "when number_of_lru_history_items is zero, element must be erased after use");
     }
@@ -143,8 +145,9 @@ TEST_CASE("basic test for handling case when number_of_lru_history_items is zero
     const utils::LifeTrackableObject* obj_addr = &h.value();
     auto& object_set = utils::LifeTrackableObject::set();
     for(int i = 0; i < 10; ++i) {
+        // Verify that item will still be alive if there is a handle holding that item.
         cache[1];
-        REQUIRE_MESSAGE(utils::LifeTrackableObject::is_alive(obj_addr), "there is still a reference for key=1");
+        REQUIRE_MESSAGE(utils::LifeTrackableObject::is_alive(obj_addr), "the object with the key=1 was destroyed but should not");
         REQUIRE_MESSAGE(object_set.size() == 1, "no other values should be added");
     }
 }

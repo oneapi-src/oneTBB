@@ -462,13 +462,11 @@ public:
     }
 
     static bool is_alive(const LifeTrackableObject& object) {
-        auto it = alive_objects.find(&object);
-        return it != alive_objects.end();
+        return is_alive(&object);
     }
 
     static bool is_alive(const LifeTrackableObject* object) {
-        auto it = alive_objects.find(object);
-        return it != alive_objects.end();
+        return alive_objects.find(object) != alive_objects.end();
     }
 
     static const set_type& set() {
