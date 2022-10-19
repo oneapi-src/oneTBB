@@ -126,8 +126,6 @@ TEST_CASE("basic test for eviction of only unused items 2") {
     REQUIRE_MESSAGE(is_correct, "cache should not evict items in use");
 }
 
-
-#include <iostream>
 //! \brief \ref error_guessing
 TEST_CASE("basic test for handling case when number_of_lru_history_items is zero") {
     auto counter_func = [] (int) {
