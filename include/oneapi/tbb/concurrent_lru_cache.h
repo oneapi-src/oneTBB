@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2022 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -140,6 +140,11 @@ private:
         if (! --(map_it->second.my_ref_counter)) {
             // if the LRU history is full, evict the oldest items to get space
             if (my_history_list.size() >= my_history_list_capacity) {
+                if (my_history_list_capacity == 0) {
+                    // Since LRU history capacity is zero, there is no need to keep the element in history
+                    my_storage_map.erase(map_it);
+                    return;
+                }
                 std::size_t number_of_elements_to_evict = 1 + my_history_list.size() - my_history_list_capacity;
 
                 for (std::size_t i = 0; i < number_of_elements_to_evict; ++i) {
