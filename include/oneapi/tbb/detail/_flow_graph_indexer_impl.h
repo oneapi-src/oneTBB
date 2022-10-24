@@ -330,7 +330,7 @@
     struct indexer_types : public input_types<std::tuple_size<OutputTuple>::value, OutputTuple> {
         static const int N = std::tuple_size<OutputTuple>::value;
         typedef typename input_types<N, OutputTuple>::type output_type;
-        typedef typename wrap_tuple_elements<N,indexer_input_port,OutputTuple>::type input_ports_type;
+        typedef typename wrap_tuple_elements<indexer_input_port,OutputTuple>::type input_ports_type;
         typedef indexer_node_FE<input_ports_type,output_type,OutputTuple> indexer_FE_type;
         typedef indexer_node_base<input_ports_type, output_type, OutputTuple> indexer_base_type;
     };

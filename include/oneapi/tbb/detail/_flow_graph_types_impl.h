@@ -43,21 +43,21 @@ struct KeyTrait {
 };
 
 // wrap each element of a tuple in a template, and make a tuple of the result.
-template<int N, template<class> class PT, typename TypeTuple>
+template<template<class> class PT, typename TypeTuple>
 struct wrap_tuple_elements;
 
 // A wrapper that generates the traits needed for each port of a key-matching join,
 // and the type of the tuple of input ports.
-template<int N, template<class> class PT, typename KeyTraits, typename TypeTuple>
+template<template<class> class PT, typename KeyTraits, typename TypeTuple>
 struct wrap_key_tuple_elements;
 
-template<int N, template<class> class PT,  typename... Args>
-struct wrap_tuple_elements<N, PT, std::tuple<Args...> >{
+template<template<class> class PT,  typename... Args>
+struct wrap_tuple_elements<PT, std::tuple<Args...> >{
     typedef typename std::tuple<PT<Args>... > type;
 };
 
-template<int N, template<class> class PT, typename KeyTraits, typename... Args>
-struct wrap_key_tuple_elements<N, PT, KeyTraits, std::tuple<Args...> > {
+template<template<class> class PT, typename KeyTraits, typename... Args>
+struct wrap_key_tuple_elements<PT, KeyTraits, std::tuple<Args...> > {
     typedef typename KeyTraits::key_type K;
     typedef typename KeyTraits::hash_compare_type KHash;
     typedef typename std::tuple<PT<KeyTrait<K, KHash, Args> >... > type;
