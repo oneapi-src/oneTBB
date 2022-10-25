@@ -119,6 +119,7 @@ TEST_CASE("Too many threads") {
                 return;
             }
         }
+        tbb::global_control g(tbb::global_control::max_allowed_parallelism, 2);
         g_exception_caught = false;
         try {
             // Initialize the library to create worker threads
@@ -132,7 +133,9 @@ TEST_CASE("Too many threads") {
         }
         // Do not CHECK to avoid memory allocation (we can be out of memory)
         if (!g_exception_caught) {
-            FAIL("No exception was caught");
+            // There is no guarantee that new thread creation will fail even if we directly set the limit
+            // because another process might free resources during library initialization.
+            WARN_MESSAGE(false, "No exception was thrown on library initialization");
         }
         finalize();
     }).join();
