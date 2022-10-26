@@ -120,7 +120,6 @@ TEST_CASE("Too many threads") {
         if (!g_exception_caught) {
             FAIL("No exception was thrown on library initialization");
         }
-        finalize();
     } else {
         WARN_MESSAGE(false, "setrlimit seems having no effect");
     }
