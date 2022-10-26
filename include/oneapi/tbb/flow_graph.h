@@ -2255,13 +2255,12 @@ public:
 template <typename T0, typename... TN>
 __TBB_requires(std::copy_constructible<T0> &&
                (... && std::copy_constructible<TN>))
-class indexer_node : public unfolded_indexer_node<std::tuple<T0, TN...>> {
+class indexer_node : public unfolded_indexer_node<T0, TN...> {
 private:
     static constexpr std::size_t N = sizeof...(TN) + 1;
 public:
-    using InputTuple = std::tuple<T0, TN...>;
     using output_type = tagged_msg<std::size_t, T0, TN...>;
-    using unfolded_type = unfolded_indexer_node<InputTuple>;
+    using unfolded_type = unfolded_indexer_node<T0, TN...>;
 
     __TBB_NOINLINE_SYM indexer_node(graph& g) : unfolded_type(g) {
         fgt_multiinput_node<N>( CODEPTR(), FLOW_INDEXER_NODE, &this->my_graph,
