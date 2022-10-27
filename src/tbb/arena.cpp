@@ -130,28 +130,18 @@ void arena::on_thread_leaving(unsigned ref_param) {
     //
 
     __TBB_ASSERT(my_references.load(std::memory_order_relaxed) >= ref_param, "broken arena reference counter");
-#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
+
     // When there is no workers someone must free arena, as
     // without workers, no one calls is_out_of_work().
-    // Skip workerless arenas because they have no demand for workers.
-    // TODO: consider more strict conditions for the cleanup,
-    // because it can create the demand of workers,
-    // but the arena can be already empty (and so ready for destroying)
-    // TODO: Fix the race: while we check soft limit and it might be changed.
-    if (ref_param == ref_external && my_num_slots != my_num_reserved_slots && my_num_workers_allotted.load(std::memory_order_relaxed) == 0) {
+    if (ref_param == ref_external) {
         is_out_of_work();
-        // We expect, that in worst case it's enough to have num_priority_levels-1
-        // calls to restore priorities and yet another is_out_of_work() to conform
-        // that no work was found. But as market::set_active_num_workers() can be called
-        // concurrently, can't guarantee last is_out_of_work() return true.
     }
-#endif
 
     threading_control* tc = my_threading_control;
-    client_deleter tc_client_deleter = tc->prepare_destroy(my_tc_client);
-    // Release our reference to sync with arena destroy
+    auto tc_client_deleter = tc->prepare_client_destruction(my_tc_client);
+    // Release our reference to sync with destroy_client
     unsigned remaining_ref = my_references.fetch_sub(ref_param, std::memory_order_release) - ref_param;
-    // do not access `this`
+    // do not access `this` it might be destroyed already
     if (remaining_ref == 0) {
         if (tc->try_destroy_client(tc_client_deleter)) {
             // We are requested to destroy ourself
@@ -205,6 +195,7 @@ void arena::process(thread_data& tls) {
         on_thread_leaving(ref_worker);
         return;
     }
+
     __TBB_ASSERT( index >= my_num_reserved_slots, "Workers cannot occupy reserved slots" );
     tls.attach_arena(*this, index);
     // worker thread enters the dispatch loop to look for a work
@@ -251,12 +242,11 @@ void arena::process(thread_data& tls) {
     __TBB_ASSERT(tls.my_arena == this, "my_arena is used as a hint when searching the arena to join");
 }
 
-// arena::arena (permit_manager& m, unsigned num_slots, unsigned num_reserved_slots, unsigned priority_level)
-arena::arena(threading_control& control, unsigned num_slots, unsigned num_reserved_slots, unsigned priority_level) {
+arena::arena(threading_control* control, unsigned num_slots, unsigned num_reserved_slots, unsigned priority_level) {
     __TBB_ASSERT( !my_guard, "improperly allocated arena?" );
     __TBB_ASSERT( sizeof(my_slots[0]) % cache_line_size()==0, "arena::slot size not multiple of cache line size" );
     __TBB_ASSERT( is_aligned(this, cache_line_size()), "arena misaligned" );
-    my_threading_control = &control;
+    my_threading_control = control;
     my_limit = 1;
     // Two slots are mandatory: for the external thread, and for 1 worker (required to support starvation resistant tasks).
     my_num_slots = num_arena_slots(num_slots);
@@ -286,13 +276,11 @@ arena::arena(threading_control& control, unsigned num_slots, unsigned num_reserv
 #if __TBB_PREVIEW_CRITICAL_TASKS
     my_critical_task_stream.initialize(my_num_slots);
 #endif
-#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-    my_local_concurrency_requests = 0;
-    my_local_concurrency_flag.clear();
-#endif
+    my_mandatory_requests = 0;
+    my_mandatory_concurrency.clear();
 }
 
-arena& arena::allocate_arena(threading_control& control, unsigned num_slots, unsigned num_reserved_slots,
+arena& arena::allocate_arena(threading_control* control, unsigned num_slots, unsigned num_reserved_slots,
                               unsigned priority_level)
 {
     __TBB_ASSERT( sizeof(base_type) + sizeof(arena_slot) == sizeof(arena), "All arena data fields must go to arena_base" );
@@ -309,9 +297,8 @@ arena& arena::allocate_arena(threading_control& control, unsigned num_slots, uns
 void arena::free_arena () {
     __TBB_ASSERT( is_alive(my_guard), nullptr);
     __TBB_ASSERT( !my_references.load(std::memory_order_relaxed), "There are threads in the dying arena" );
-    __TBB_ASSERT( !my_num_workers_requested && !my_num_workers_allotted, "Dying arena requests workers" );
-    __TBB_ASSERT( my_pool_state.load(std::memory_order_relaxed) == SNAPSHOT_EMPTY || !my_max_num_workers,
-                  "Inconsistent state of a dying arena" );
+    __TBB_ASSERT( !my_total_num_workers_requested && !my_num_workers_allotted, "Dying arena requests workers" );
+    __TBB_ASSERT( my_pool_state.test() == false || !my_max_num_workers, "Inconsistent state of a dying arena" );
 #if __TBB_ARENA_BINDING
     if (my_numa_binding_observer != nullptr) {
         destroy_binding_observer(my_numa_binding_observer);
@@ -342,7 +329,7 @@ void arena::free_arena () {
 
     void* storage  = &mailbox(my_num_slots-1);
     __TBB_ASSERT( my_references.load(std::memory_order_relaxed) == 0, nullptr);
-    __TBB_ASSERT( my_pool_state.load(std::memory_order_relaxed) == SNAPSHOT_EMPTY || !my_max_num_workers, nullptr);
+    __TBB_ASSERT( my_pool_state.test() == false|| !my_max_num_workers, nullptr);
     this->~arena();
 #if TBB_USE_ASSERT > 1
     std::memset( storage, 0, allocation_size(my_num_slots) );
@@ -354,127 +341,91 @@ bool arena::has_enqueued_tasks() {
     return !my_fifo_task_stream.empty();
 }
 
-void arena::enable_mandatory_concurrency() {
-#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-    my_threading_control->enable_mandatory_concurrency(my_tc_client);
+void arena::request_workers(int mandatory_delta, int workers_delta) {
+    my_threading_control->adjust_demand(my_tc_client, mandatory_delta, workers_delta);
 
-    if (my_max_num_workers == 0 && my_num_reserved_slots == 1 && my_local_concurrency_flag.test_and_set()) {
-        my_threading_control->adjust_demand(my_tc_client, /* delta = */ 1, /* mandatory = */ true);
-    }
-#endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
-}
-
-void arena::publish_work(arena::new_work_type work_type) {
-    // Attempt to mark as full.  The compare_and_swap below is a little unusual because the
-    // result is compared to a value that can be different than the comparand argument.
-    pool_state_t snapshot = my_pool_state.load(std::memory_order_relaxed);
-    pool_state_t expected_state = snapshot;
-    my_pool_state.compare_exchange_strong(expected_state, SNAPSHOT_FULL);
-    if (expected_state == SNAPSHOT_EMPTY) {
-        if (snapshot != SNAPSHOT_EMPTY) {
-            // This thread read "busy" into snapshot, and then another thread transitioned
-            // my_pool_state to "empty" in the meantime, which caused the compare_and_swap above
-            // to fail.  Attempt to transition my_pool_state from "empty" to "full".
-            expected_state = SNAPSHOT_EMPTY;
-            if (!my_pool_state.compare_exchange_strong(expected_state, SNAPSHOT_FULL)) {
-                // Some other thread transitioned my_pool_state from "empty", and hence became
-                // responsible for waking up workers.
-                return;
-            }
-        }
-        // This thread transitioned pool from empty to full state, and thus is responsible for
-        // telling the market that there is work to do.
-#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-        if (work_type == work_spawned) {
-            my_threading_control->mandatory_concurrency_disable(my_tc_client);
-        }
-#endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
-        // TODO: investigate adjusting of arena's demand by a single worker.
-        my_threading_control->adjust_demand(my_tc_client, my_max_num_workers, /* mandatory = */ false);
-
+    if (mandatory_delta > 0 || workers_delta > 0) {
         // Notify all sleeping threads that work has appeared in the arena.
-        governor::get_wait_list().notify([&] (market_context context) {
+        get_waiting_threads_monitor().notify([&] (market_context context) {
             return this == context.my_arena_addr;
         });
     }
 }
 
-bool arena::is_out_of_work() {
-#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-    if (my_local_concurrency_flag.try_clear_if([this] {
-        return !has_enqueued_tasks();
-    })) {
-        my_threading_control->adjust_demand(my_tc_client, /* delta = */ -1, /* mandatory = */ true);
-    }
-#endif
-
+bool arena::is_arena_empty() {
     // TODO: rework it to return at least a hint about where a task was found; better if the task itself.
-    switch (my_pool_state.load(std::memory_order_acquire)) {
-    case SNAPSHOT_EMPTY:
-        return true;
-    case SNAPSHOT_FULL: {
-        // Use unique id for "busy" in order to avoid ABA problems.
-        const pool_state_t busy = pool_state_t(&busy);
-        // Helper for CAS execution
-        pool_state_t expected_state;
-
-        // Request permission to take snapshot
-        expected_state = SNAPSHOT_FULL;
-        if (my_pool_state.compare_exchange_strong(expected_state, busy)) {
-            // Got permission. Take the snapshot.
-            // NOTE: This is not a lock, as the state can be set to FULL at
-            //       any moment by a thread that spawns/enqueues new task.
-            std::size_t n = my_limit.load(std::memory_order_acquire);
-            // Make local copies of volatile parameters. Their change during
-            // snapshot taking procedure invalidates the attempt, and returns
-            // this thread into the dispatch loop.
-            std::size_t k;
-            for (k = 0; k < n; ++k) {
-                if (my_slots[k].task_pool.load(std::memory_order_relaxed) != EmptyTaskPool &&
-                    my_slots[k].head.load(std::memory_order_relaxed) < my_slots[k].tail.load(std::memory_order_relaxed))
-                {
-                    // k-th primary task pool is nonempty and does contain tasks.
-                    break;
-                }
-                if (my_pool_state.load(std::memory_order_acquire) != busy)
-                    return false; // the work was published
-            }
-            bool work_absent = k == n;
-            // Test and test-and-set.
-            if (my_pool_state.load(std::memory_order_acquire) == busy) {
-                bool no_stream_tasks = !has_enqueued_tasks() && my_resume_task_stream.empty();
-#if __TBB_PREVIEW_CRITICAL_TASKS
-                no_stream_tasks = no_stream_tasks && my_critical_task_stream.empty();
-#endif
-                work_absent = work_absent && no_stream_tasks;
-                if (work_absent) {
-                    // save current demand value before setting SNAPSHOT_EMPTY,
-                    // to avoid race with advertise_new_work.
-                    int current_demand = (int)my_max_num_workers;
-                    expected_state = busy;
-                    if (my_pool_state.compare_exchange_strong(expected_state, SNAPSHOT_EMPTY)) {
-                        // This thread transitioned pool to empty state, and thus is
-                        // responsible for telling the market that there is no work to do.
-                        my_threading_control->adjust_demand(my_tc_client, -current_demand, /* mandatory = */ false);
-                        return true;
-                    }
-                    return false;
-                }
-                // Undo previous transition SNAPSHOT_FULL-->busy, unless another thread undid it.
-                expected_state = busy;
-                my_pool_state.compare_exchange_strong(expected_state, SNAPSHOT_FULL);
-            }
-        }
-        return false;
+    std::size_t n = my_limit.load(std::memory_order_acquire);
+    bool no_available_tasks = true;
+    for (std::size_t k = 0; k < n && no_available_tasks; ++k) {
+        no_available_tasks = my_slots[k].is_empty();
     }
-    default:
-        // Another thread is taking a snapshot.
-        return false;
+    no_available_tasks = no_available_tasks && !has_enqueued_tasks() && my_resume_task_stream.empty();
+#if __TBB_PREVIEW_CRITICAL_TASKS
+    no_available_tasks = no_available_tasks && my_critical_task_stream.empty();
+#endif
+    return no_available_tasks;
+}
+
+void arena::is_out_of_work() {
+    bool disable_mandatory = false;
+    bool release_workers = false;
+
+    // We should try unset my_pool_state first due to keep arena invariants in consistent state
+    // Otherwise, we might have my_pool_state = false and my_mandatory_concurrency = true that is broken invariant
+    release_workers = my_pool_state.try_clear_if([this] { return is_arena_empty(); });
+    disable_mandatory = my_mandatory_concurrency.try_clear_if([this] { return !has_enqueued_tasks(); });
+
+    if (disable_mandatory || release_workers) {
+        int mandatory_delta = disable_mandatory ? -1 : 0;
+        int workers_delta = release_workers ? -(int)my_max_num_workers : 0;
+
+        if (disable_mandatory && is_arena_workerless()) {
+            // We had set workers_delta to 1 when enabled mandatory concurrency, so revert it now
+            workers_delta = -1;
+        }
+        request_workers(mandatory_delta, workers_delta);
     }
 }
 
 bool arena::is_top_priority() {
     return my_threading_control->check_client_priority(my_tc_client);
+}
+
+bool arena::try_join() {
+    if (num_workers_active() < my_num_workers_allotted.load(std::memory_order_relaxed)) {
+        my_references += arena::ref_worker;
+        return true;
+    }
+    return false;
+}
+
+void arena::set_allotment(unsigned allotment) {
+    if (my_num_workers_allotted.load(std::memory_order_relaxed) != allotment) {
+        my_num_workers_allotted.store(allotment, std::memory_order_relaxed);
+    }
+}
+
+std::pair<int, int> arena::update_request(int mandatory_delta, int workers_delta) {
+    __TBB_ASSERT(-1 <= mandatory_delta && mandatory_delta <= 1, nullptr);
+
+    int min_workers_request = 0;
+    int max_workers_request = 0;
+
+    // Calculate min request
+    my_mandatory_requests += mandatory_delta;
+    min_workers_request = my_mandatory_requests > 0 ? 1 : 0;
+
+    // Calculate max request
+    my_total_num_workers_requested += workers_delta;
+    // Clamp worker request into interval [0, my_max_num_workers]
+    max_workers_request = clamp(my_total_num_workers_requested, 0,
+        min_workers_request > 0 && is_arena_workerless() ? 1 : (int)my_max_num_workers);
+
+    return { min_workers_request, max_workers_request };
+}
+
+thread_control_monitor& arena::get_waiting_threads_monitor() {
+    return my_threading_control->get_waiting_threads_monitor();
 }
 
 void arena::enqueue_task(d1::task& t, d1::task_group_context& ctx, thread_data& td) {
@@ -490,7 +441,7 @@ arena& arena::create(threading_control* control, int num_slots, int num_reserved
     __TBB_ASSERT(num_slots > 0, NULL);
     __TBB_ASSERT(num_reserved_slots <= num_slots, NULL);
     // Add public market reference for an external thread/task_arena (that adds an internal reference in exchange).
-    arena& a = arena::allocate_arena(*control, num_slots, num_reserved_slots, arena_priority_level);
+    arena& a = arena::allocate_arena(control, num_slots, num_reserved_slots, arena_priority_level);
     a.my_tc_client = control->create_client(a);
     // We should not publish arena until all fields are initialized
     control->publish_client(a.my_tc_client);
@@ -663,7 +614,7 @@ public:
             // If the calling thread occupies the slots out of external thread reserve we need to notify the
             // market that this arena requires one worker less.
             if (td.my_arena_index >= td.my_arena->my_num_reserved_slots) {
-                td.my_arena->my_threading_control->adjust_demand(td.my_arena->my_tc_client, /* delta = */ -1, /* mandatory = */ false);
+                td.my_arena->request_workers(/* mandatory_delta = */ 0, /* workers_delta = */ -1);
             }
 
             td.my_last_observer = nullptr;
@@ -699,7 +650,7 @@ public:
             // Notify the market that this thread releasing a one slot
             // that can be used by a worker thread.
             if (td.my_arena_index >= td.my_arena->my_num_reserved_slots) {
-                td.my_arena->my_threading_control->adjust_demand(td.my_arena->my_tc_client, /* delta = */ 1, /* mandatory = */ false);
+                td.my_arena->request_workers(/* mandatory_delta = */ 0, /* workers_delta = */ 1);
             }
 
             td.leave_task_dispatcher();
@@ -753,7 +704,7 @@ class delegated_task : public d1::task {
     }
     void finalize() {
         m_wait_ctx.release(); // must precede the wakeup
-        m_monitor.notify([this](std::uintptr_t ctx) {
+        m_monitor.notify([this] (std::uintptr_t ctx) {
             return ctx == std::uintptr_t(&m_delegate);
         }); // do not relax, it needs a fence!
         m_completed.store(true, std::memory_order_release);
@@ -842,7 +793,7 @@ void task_arena_impl::wait(d1::task_arena_base& ta) {
     __TBB_ASSERT_EX(td, "Scheduler is not initialized");
     __TBB_ASSERT(td->my_arena != a || td->my_arena_index == 0, "internal_wait is not supported within a worker context" );
     if (a->my_max_num_workers != 0) {
-        while (a->num_workers_active() || a->my_pool_state.load(std::memory_order_acquire) != arena::SNAPSHOT_EMPTY) {
+        while (a->num_workers_active() || a->my_pool_state.test()) {
             yield();
         }
     }
@@ -857,11 +808,11 @@ int task_arena_impl::max_concurrency(const d1::task_arena_base *ta) {
 
     if( a ) { // Get parameters from the arena
         __TBB_ASSERT( !ta || ta->my_max_concurrency==1, nullptr);
-        return a->my_num_reserved_slots + a->my_max_num_workers
-#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-            + (a->my_local_concurrency_flag.test() ? 1 : 0)
-#endif
-            ;
+        int mandatory_worker = 0;
+        if (a->is_arena_workerless() && a->my_num_reserved_slots == 1) {
+            mandatory_worker = a->my_mandatory_concurrency.test() ? 1 : 0;
+        }
+        return a->my_num_reserved_slots + a->my_max_num_workers + mandatory_worker;
     }
 
     if (ta && ta->my_max_concurrency == 1) {

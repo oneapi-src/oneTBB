@@ -20,7 +20,6 @@
 #include "arena.h"
 #include "thread_data.h"
 #include "task_dispatcher.h"
-#include "threading_control.h"
 #include "waiters.h"
 #include "itt_notify.h"
 
@@ -54,7 +53,7 @@ void resume(suspend_point_type* sp) {
         // Prolong the arena's lifetime while all coroutines are alive
         // (otherwise the arena can be destroyed while some tasks are suspended).
         arena& a = *sp->m_arena;
-        a.my_references += arena::ref_external;
+        a.my_references += arena::ref_worker;
 
         if (task_disp.m_properties.critical_task_allowed) {
             // The target is not in the process of executing critical task, so the resume task is not critical.
@@ -68,7 +67,7 @@ void resume(suspend_point_type* sp) {
         // Do not access target after that point.
         a.advertise_new_work<arena::wakeup>();
         // Release our reference to my_arena.
-        a.on_thread_leaving(arena::ref_external);
+        a.on_thread_leaving(arena::ref_worker);
     }
 
 }
@@ -164,7 +163,7 @@ void task_dispatcher::do_post_resume_action() {
     case post_resume_action::register_waiter:
     {
         __TBB_ASSERT(td->my_post_resume_arg, "The post resume action must have an argument");
-        static_cast<market_concurrent_monitor::resume_context*>(td->my_post_resume_arg)->notify();
+        static_cast<thread_control_monitor::resume_context*>(td->my_post_resume_arg)->notify();
         break;
     }
     case post_resume_action::cleanup:
@@ -187,7 +186,7 @@ void task_dispatcher::do_post_resume_action() {
         auto is_our_suspend_point = [sp] (market_context ctx) {
             return std::uintptr_t(sp) == ctx.my_uniq_addr;
         };
-        governor::get_wait_list().notify(is_our_suspend_point);
+        td->my_arena->get_waiting_threads_monitor().notify(is_our_suspend_point);
         break;
     }
     default:
@@ -219,7 +218,7 @@ void notify_waiters(std::uintptr_t wait_ctx_addr) {
         return wait_ctx_addr == context.my_uniq_addr;
     };
 
-    governor::get_wait_list().notify(is_related_wait_ctx);
+    governor::get_thread_data()->my_arena->get_waiting_threads_monitor().notify(is_related_wait_ctx);
 }
 
 } // namespace r1

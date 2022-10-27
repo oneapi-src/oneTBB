@@ -361,7 +361,6 @@ void test() {
 
 
 // TODO: nested arena case
-
 //! Test for setting a priority to arena
 //! \brief \ref requirement
 TEST_CASE("Arena priorities") {

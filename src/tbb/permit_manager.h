@@ -18,35 +18,38 @@
 #define _TBB_permit_manager_H
 
 #include "oneapi/tbb/detail/_utils.h"
+#include "thread_request_serializer.h"
 
 namespace tbb {
 namespace detail {
-
-namespace d1 {
-class task_group_context;
-}
-
 namespace r1 {
 
 class arena;
-class permit_manager_client;
-class thread_dispatcher_client;
-
-using constraints_type = void*;
+class pm_client;
 
 class permit_manager : no_copy {
 public:
     virtual ~permit_manager() {}
-    virtual permit_manager_client* create_client(arena& a, constraints_type* constraints) = 0;
-    virtual void register_client(permit_manager_client* client) = 0;
-    virtual void destroy_client(permit_manager_client& c) = 0;
+    virtual pm_client* create_client(arena& a) = 0;
+    virtual void register_client(pm_client* client) = 0;
+    virtual void destroy_client(pm_client& c) = 0;
 
-    virtual int set_active_num_workers(unsigned soft_limit) = 0;
+    virtual void set_active_num_workers(int soft_limit) = 0;
+    virtual void adjust_demand(pm_client&, int mandatory_delta, int workers_delta) = 0;
 
-    // Remove this trash from PM
-    virtual std::pair<int, std::int64_t> adjust_demand(permit_manager_client&, int delta, bool mandatory ) = 0;
-    virtual int enable_mandatory_concurrency(permit_manager_client* c) = 0;
-    virtual int mandatory_concurrency_disable(permit_manager_client* c) = 0;
+    void set_thread_request_observer(thread_request_observer& tr_observer) {
+        __TBB_ASSERT(!my_thread_request_observer, nullptr);
+        my_thread_request_observer = &tr_observer;
+    }
+protected:
+    void notify_thread_request(int delta) {
+        __TBB_ASSERT(my_thread_request_observer, nullptr);
+        if (delta) {
+            my_thread_request_observer->update(delta);
+        }
+    }
+private:
+    thread_request_observer* my_thread_request_observer{nullptr};
 };
 
 

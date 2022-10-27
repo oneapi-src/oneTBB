@@ -154,11 +154,6 @@ static terminate_on_exception_control terminate_on_exception_ctl;
 static lifetime_control lifetime_ctl;
 static control_storage *controls[] = {&allowed_parallelism_ctl, &stack_size_ctl, &terminate_on_exception_ctl, &lifetime_ctl};
 
-template <typename T, int N>
-int array_length(const T(&)[N]) {
-    return N;
-}
-
 void global_control_lock() {
     for (int i = 0; i < array_length(controls); ++i) {
         controls[i]->my_list_mutex.lock();

@@ -22,11 +22,8 @@
 #include "scheduler_common.h"
 #include "itt_notify.h"
 #include "task_dispatcher.h"
-#include "threading_control.h"
 
 #include <type_traits>
-
-#include "market.h"
 
 namespace tbb {
 namespace detail {

@@ -14,15 +14,19 @@
     limitations under the License.
 */
 
-#ifndef _TBB_threading_cont_H
-#define _TBB_threading_cont_H
+#ifndef _TBB_threading_control_H
+#define _TBB_threading_control_H
 
 #include "oneapi/tbb/mutex.h"
 #include "oneapi/tbb/global_control.h"
-#include "thread_dispatcher.h"
-#include "resource_manager.h"
+
 #include "intrusive_list.h"
 #include "main.h"
+#include "permit_manager.h"
+#include "pm_client.h"
+#include "thread_dispatcher.h"
+#include "cancellation_disseminator.h"
+#include "thread_request_serializer.h"
 
 #include <memory>
 
@@ -30,300 +34,119 @@ namespace tbb {
 namespace detail {
 namespace r1 {
 
-
-struct cache_aligned_deleter {
-    template <typename T>
-    void operator() (T* ptr) const {
-        ptr->~T();
-        cache_aligned_deallocate(ptr);
-    }
-};
-
-template <typename T>
-using cache_aligned_unique_ptr = std::unique_ptr<T, cache_aligned_deleter>;
-
-template <typename T, typename ...Args>
-cache_aligned_unique_ptr<T> make_cache_aligned_unique(std::size_t size, Args&& ...args) {
-    void* storage = cache_aligned_allocate(size);
-    std::memset(storage, 0, size);
-    return cache_aligned_unique_ptr<T>(new (storage) T(std::forward<Args>(args)...));
-}
-
 class arena;
 class thread_data;
-class permit_manager_client;
 
-void global_control_lock();
-void global_control_unlock();
-std::size_t global_control_active_value_unsafe(d1::global_control::parameter);
+class threading_control;
 
-class cancellation_disseminator {
-public:
-    //! Finds all contexts affected by the state change and propagates the new state to them.
-    /*  The propagation is relayed to the cancellation_disseminator because tasks created by one
-        external thread can be passed to and executed by other external threads. This means
-        that context trees can span several arenas at once and thus state change
-        propagation cannot be generally localized to one arena only.
-    */
-    bool propagate_task_group_state(std::atomic<uint32_t> d1::task_group_context::*mptr_state, d1::task_group_context& src, uint32_t new_state);
-
-    void register_thread(thread_data& td) {
-        threads_list_mutex_type::scoped_lock lock(my_threads_list_mutex);
-        my_threads_list.push_front(td);
-    }
-
-    void unregister_thread(thread_data& td) {
-        threads_list_mutex_type::scoped_lock lock(my_threads_list_mutex);
-        my_threads_list.remove(td);
-    }
-
-private:
-    using thread_data_list_type = intrusive_list<thread_data>;
-    using threads_list_mutex_type = d1::mutex;
-
-    threads_list_mutex_type my_threads_list_mutex;
-    thread_data_list_type my_threads_list{};
-};
-
-struct client_deleter {
-    std::uint64_t aba_epoch;
-    unsigned priority_level;
-    thread_dispatcher_client* my_td_client;
-    permit_manager_client* my_pm_client;
-};
-
-class threading_control {
-public:
+class threading_control_impl {
     using global_mutex_type = d1::mutex;
-
-    threading_control() : my_public_ref_count(1), my_ref_count(1)
-    {}
-
-private:
-    void add_ref(bool is_public) {
-        ++my_ref_count;
-        if (is_public) {
-            my_public_ref_count++;
-        }
-    }
-
-    bool remove_ref(bool is_public) {
-        if (is_public) {
-            __TBB_ASSERT(g_threading_control == this, "Global threading control instance was destroyed prematurely?");
-            __TBB_ASSERT(my_public_ref_count.load(std::memory_order_relaxed), nullptr);
-            --my_public_ref_count;
-        }
-
-        bool is_last_ref = --my_ref_count == 0;
-        if (is_last_ref) {
-            __TBB_ASSERT(!my_public_ref_count.load(std::memory_order_relaxed), nullptr);
-            g_threading_control = nullptr;
-        }
-
-        return is_last_ref;
-    }
-
-    static threading_control* get_threading_control(bool is_public) {
-        threading_control* control = g_threading_control;
-        if (control) {
-           control->add_ref(is_public);
-        }
-
-        return control;
-    }
-
-    static unsigned calc_workers_soft_limit(unsigned workers_soft_limit, unsigned workers_hard_limit) {
-        unsigned soft_limit = global_control_active_value_unsafe(global_control::max_allowed_parallelism);
-        if (soft_limit) {
-            workers_soft_limit = soft_limit - 1;
-        } else {
-            // if user set no limits (yet), use threading control's parameter
-            workers_soft_limit = max(governor::default_num_threads() - 1, workers_soft_limit);
-        }
-
-        if (workers_soft_limit >= workers_hard_limit) {
-            workers_soft_limit = workers_hard_limit - 1;
-        }
-
-        return workers_soft_limit;
-    }
-
-    static std::pair<unsigned, unsigned> calculate_workers_limits() {
-        // Expecting that 4P is suitable for most applications.
-        // Limit to 2P for large thread number.
-        // TODO: ask RML for max concurrency and possibly correct hard_limit
-        unsigned factor = governor::default_num_threads() <= 128 ? 4 : 2;
-
-        // The requested number of threads is intentionally not considered in
-        // computation of the hard limit, in order to separate responsibilities
-        // and avoid complicated interactions between global_control and task_scheduler_init.
-        // The threading control guarantees that at least 256 threads might be created.
-        unsigned workers_app_limit = global_control_active_value_unsafe(global_control::max_allowed_parallelism);
-        unsigned workers_hard_limit = max(max(factor * governor::default_num_threads(), 256u), workers_app_limit);
-        unsigned workers_soft_limit = calc_workers_soft_limit(governor::default_num_threads(), workers_hard_limit);
-        
-        return std::make_pair(workers_soft_limit, workers_hard_limit);
-    }
-
-    static cache_aligned_unique_ptr<permit_manager> make_permit_manager(unsigned workers_soft_limit);
-
-    static cache_aligned_unique_ptr<thread_dispatcher> make_thread_dispatcher(threading_control* control, unsigned workers_soft_limit, unsigned workers_hard_limit);
-
-    static threading_control* create_threading_control() {
-        threading_control* thr_control{nullptr};
-
-        try_call([&] {
-            // Global control should be locked before threading_control
-            global_control_lock();
-            global_mutex_type::scoped_lock lock(g_threading_control_mutex);
-
-            thr_control = get_threading_control(/*public = */ true);
-            if (thr_control != nullptr) {
-                return;
-            }
-
-            thr_control = new (cache_aligned_allocate(sizeof(threading_control))) threading_control();
-
-            unsigned workers_soft_limit{}, workers_hard_limit{};
-            std::tie(workers_soft_limit, workers_hard_limit) = calculate_workers_limits();
-
-            thr_control->my_permit_manager = make_permit_manager(workers_soft_limit);
-            thr_control->my_thread_dispatcher = make_thread_dispatcher(thr_control, workers_soft_limit, workers_hard_limit);
-            thr_control->my_cancellation_disseminator = make_cache_aligned_unique<cancellation_disseminator>(sizeof(cancellation_disseminator));
-            __TBB_InitOnce::add_ref();
-
-            if (global_control_active_value_unsafe(global_control::scheduler_handle)) {
-                ++thr_control->my_public_ref_count;
-                ++thr_control->my_ref_count;
-            }
-
-            g_threading_control = thr_control;
-        }).on_completion([] { global_control_unlock(); });
-
-        return thr_control;
-    }
-
-    void destroy () {
-        cache_aligned_deleter deleter;
-        deleter(this);
-        __TBB_InitOnce::remove_ref();
-    }
-
-    void wait_last_reference(global_mutex_type::scoped_lock& lock) {
-        while (my_public_ref_count.load(std::memory_order_relaxed) == 1 && my_ref_count.load(std::memory_order_relaxed) > 1) {
-            lock.release();
-            // To guarantee that request_close_connection() is called by the last external thread, we need to wait till all
-            // references are released. Re-read my_public_ref_count to limit waiting if new external threads are created.
-            // Theoretically, new private references to the threading control can be added during waiting making it potentially
-            // endless.
-            // TODO: revise why the weak scheduler needs threading control's pointer and try to remove this wait.
-            // Note that the threading control should know about its schedulers for cancellation/exception/priority propagation,
-            // see e.g. task_group_context::cancel_group_execution()
-            while (my_public_ref_count.load(std::memory_order_acquire) == 1 && my_ref_count.load(std::memory_order_acquire) > 1) {
-                yield();
-            }
-            lock.acquire(g_threading_control_mutex);
-        }
-    }
-
-    bool release(bool is_public, bool blocking_terminate);
+public:
+    using threading_control_client = std::pair<pm_client*, thread_dispatcher_client*>;
+    threading_control_impl(threading_control*);
 
 public:
-    static threading_control* register_public_reference() {
-        threading_control* control{nullptr};
-        global_mutex_type::scoped_lock lock(g_threading_control_mutex);
-        control = get_threading_control(/*public = */ true);
-        if (!control) {
-            // We are going to create threading_control, we should acquire mutexes in right order
-            lock.release();
-            control = create_threading_control();
-        }
-
-        return control;
-    }
-
-    static bool unregister_public_reference(bool blocking_terminate) {
-        __TBB_ASSERT(g_threading_control, "Threading control should exist until last public reference");
-        __TBB_ASSERT(g_threading_control->my_public_ref_count.load(std::memory_order_relaxed), nullptr);
-        return g_threading_control->release(/*public = */ true, /*blocking_terminate = */ blocking_terminate);
-    }
+    void release(bool blocking_terminate);
 
     threading_control_client create_client(arena& a);
-
-    client_deleter prepare_destroy(threading_control_client client);
-    bool try_destroy_client(client_deleter deleter);
-
     void publish_client(threading_control_client client);
-
     bool check_client_priority(threading_control_client client);
 
-    permit_manager* get_permit_manager() {
-        return my_permit_manager.get();
-    }
+    struct client_deleter {
+        std::uint64_t aba_epoch;
+        unsigned priority_level;
+        thread_dispatcher_client* my_td_client;
+        pm_client* my_pm_client;
+    };
 
-    static bool register_lifetime_control() {
-        global_mutex_type::scoped_lock lock(g_threading_control_mutex);
-        return get_threading_control(/*public = */ true) != nullptr;
-    }
+    client_deleter prepare_client_destruction(threading_control_client client);
+    bool try_destroy_client(client_deleter deleter);
 
-    static bool unregister_lifetime_control(bool blocking_terminate) {
-        threading_control* thr_control{nullptr};
-        {
-            global_mutex_type::scoped_lock lock(g_threading_control_mutex);
-            thr_control = g_threading_control;
-        }
+    void register_thread(thread_data& td);
+    void unregister_thread(thread_data& td);
+    void propagate_task_group_state(std::atomic<uint32_t> d1::task_group_context::*mptr_state,
+                                    d1::task_group_context& src, uint32_t new_state);
 
-        bool released{true};
-        if (thr_control) {
-            released = thr_control->release(/*public = */ true, /*blocking_terminate = */ blocking_terminate);
-        }
+    void set_active_num_workers(unsigned soft_limit);
+    std::size_t worker_stack_size();
+    unsigned max_num_workers();
 
-        return released;
-    }
+    void adjust_demand(threading_control_client, int mandatory_delta, int workers_delta);
 
+    thread_control_monitor& get_waiting_threads_monitor();
+
+private:
+    static unsigned calc_workers_soft_limit(unsigned workers_soft_limit, unsigned workers_hard_limit);
+    static std::pair<unsigned, unsigned> calculate_workers_limits();
+    static d1::cache_aligned_unique_ptr<permit_manager> make_permit_manager(unsigned workers_soft_limit);
+    static d1::cache_aligned_unique_ptr<thread_dispatcher> make_thread_dispatcher(threading_control& control,
+                                                                                  unsigned workers_soft_limit,
+                                                                                  unsigned workers_hard_limit);
+
+    d1::cache_aligned_unique_ptr<permit_manager> my_permit_manager{nullptr};
+    d1::cache_aligned_unique_ptr<thread_dispatcher> my_thread_dispatcher{nullptr};
+    d1::cache_aligned_unique_ptr<thread_request_serializer_proxy> my_thread_request_serializer{nullptr};
+    d1::cache_aligned_unique_ptr<cancellation_disseminator> my_cancellation_disseminator{nullptr};
+    d1::cache_aligned_unique_ptr<thread_control_monitor> my_waiting_threads_monitor{nullptr};
+};
+
+
+class threading_control {
+    using global_mutex_type = d1::mutex;
+public:
+    using threading_control_client = threading_control_impl::threading_control_client;
+    using client_deleter = threading_control_impl::client_deleter;
+
+    threading_control(unsigned public_ref, unsigned ref);
+
+    static threading_control* register_public_reference();
+    static bool unregister_public_reference(bool blocking_terminate);
+
+    static bool is_present();
     static void set_active_num_workers(unsigned soft_limit);
+    static bool register_lifetime_control();
+    static bool unregister_lifetime_control(bool blocking_terminate);
 
-    static bool is_present() {
-        global_mutex_type::scoped_lock lock(g_threading_control_mutex);
-        return g_threading_control != nullptr;
-    }
+    threading_control_client create_client(arena& a);
+    void publish_client(threading_control_client client);
+    bool check_client_priority(threading_control_client client);
+    client_deleter prepare_client_destruction(threading_control_client client);
+    bool try_destroy_client(client_deleter deleter);
 
-    void register_thread(thread_data& td) {
-        my_cancellation_disseminator->register_thread(td);
-    }
-
-    void unregister_thread(thread_data& td) {
-        my_cancellation_disseminator->unregister_thread(td);
-    }
+    void register_thread(thread_data& td);
+    void unregister_thread(thread_data& td);
+    void propagate_task_group_state(std::atomic<uint32_t> d1::task_group_context::*mptr_state,
+                                    d1::task_group_context& src, uint32_t new_state);
 
     std::size_t worker_stack_size();
-
     static unsigned max_num_workers();
 
-    void adjust_demand(threading_control_client, int delta, bool mandatory);
-    void enable_mandatory_concurrency(threading_control_client c);
-    void mandatory_concurrency_disable(threading_control_client c);
+    void adjust_demand(threading_control_client client, int mandatory_delta, int workers_delta);
 
-    void propagate_task_group_state(std::atomic<uint32_t> d1::task_group_context::*mptr_state, d1::task_group_context& src, uint32_t new_state) {
-        my_cancellation_disseminator->propagate_task_group_state(mptr_state, src, new_state);
-    }
+    thread_control_monitor& get_waiting_threads_monitor();
+
 private:
+    void add_ref(bool is_public);
+    bool remove_ref(bool is_public);
+
+    static threading_control* get_threading_control(bool is_public);
+    static threading_control* create_threading_control();
+
+    bool release(bool is_public, bool blocking_terminate);
+    void wait_last_reference(global_mutex_type::scoped_lock& lock);
+    void destroy ();
+
     friend class thread_dispatcher;
 
     static threading_control* g_threading_control;
-
     //! Mutex guarding creation/destruction of g_threading_control, insertions/deletions in my_arenas, and cancellation propagation
     static global_mutex_type g_threading_control_mutex;
 
+    d1::cache_aligned_unique_ptr<threading_control_impl> my_pimpl{nullptr};
     //! Count of external threads attached
     std::atomic<unsigned> my_public_ref_count{0};
-
     //! Reference count controlling threading_control object lifetime
     std::atomic<unsigned> my_ref_count{0};
-
-    cache_aligned_unique_ptr<permit_manager> my_permit_manager{nullptr};
-    cache_aligned_unique_ptr<thread_dispatcher> my_thread_dispatcher{nullptr};
-    cache_aligned_unique_ptr<cancellation_disseminator> my_cancellation_disseminator{nullptr};
 };
 
 } // r1
@@ -331,4 +154,4 @@ private:
 } // tbb
 
 
-#endif // _TBB_threading_cont_H
+#endif // _TBB_threading_control_H

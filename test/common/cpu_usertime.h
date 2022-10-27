@@ -41,7 +41,7 @@ inline double GetCPUUserTime() {
 #elif _WIN32
     FILETIME my_times[4];
     bool status = GetProcessTimes(GetCurrentProcess(), my_times, my_times+1, my_times+2, my_times+3)!=0;
-    CHECK( status );
+    CHECK_FAST(status);
     LARGE_INTEGER usrtime;
     usrtime.LowPart = my_times[3].dwLowDateTime;
     usrtime.HighPart = my_times[3].dwHighDateTime;

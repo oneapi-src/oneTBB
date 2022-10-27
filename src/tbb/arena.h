@@ -21,6 +21,8 @@
 #include <cstring>
 
 #include "oneapi/tbb/detail/_task.h"
+#include "oneapi/tbb/detail/_utils.h"
+#include "oneapi/tbb/spin_mutex.h"
 
 #include "scheduler_common.h"
 #include "intrusive_list.h"
@@ -31,10 +33,7 @@
 #include "governor.h"
 #include "concurrent_monitor.h"
 #include "observer_proxy.h"
-#include "oneapi/tbb/spin_mutex.h"
-#include "market_concurrent_monitor.h"
-
-#include "resource_manager.h"
+#include "thread_control_monitor.h"
 
 namespace tbb {
 namespace detail {
@@ -42,15 +41,10 @@ namespace r1 {
 
 class task_dispatcher;
 class thread_dispatcher_client;
-class permit_manager_client;
+class pm_client;
 class task_group_context;
 class threading_control;
 class allocate_root_with_context_proxy;
-
-struct threading_control_client {
-    permit_manager_client* my_permit_manager_client;
-    thread_dispatcher_client* my_thread_dispatcher_client;
-};
 
 #if __TBB_ARENA_BINDING
 class numa_binding_observer;
@@ -143,11 +137,10 @@ struct stack_anchor_type {
     stack_anchor_type(const stack_anchor_type&) = delete;
 };
 
-#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
 class atomic_flag {
     static const std::uintptr_t SET = 1;
-    static const std::uintptr_t EMPTY = 0;
-    std::atomic<std::uintptr_t> my_state;
+    static const std::uintptr_t UNSET = 0;
+    std::atomic<std::uintptr_t> my_state{UNSET};
 public:
     bool test_and_set() {
         std::uintptr_t state = my_state.load(std::memory_order_acquire);
@@ -159,13 +152,13 @@ public:
                 // We interrupted clear transaction
                 return false;
             }
-            if (state != EMPTY) {
+            if (state != UNSET) {
                 // We lost our epoch
                 return false;
             }
             // We are too late but still in the same epoch
             __TBB_fallthrough;
-        case EMPTY:
+        case UNSET:
             return my_state.compare_exchange_strong(state, SET);
         }
     }
@@ -175,7 +168,7 @@ public:
         std::uintptr_t state = my_state.load(std::memory_order_acquire);
         if (state == SET && my_state.compare_exchange_strong(state, busy)) {
             if (pred()) {
-                return my_state.compare_exchange_strong(busy, EMPTY);
+                return my_state.compare_exchange_strong(busy, UNSET);
             }
             // The result of the next operation is discarded, always false should be returned.
             my_state.compare_exchange_strong(busy, SET);
@@ -183,20 +176,18 @@ public:
         return false;
     }
     void clear() {
-        my_state.store(EMPTY, std::memory_order_release);
+        my_state.store(UNSET, std::memory_order_release);
     }
     bool test() {
-        return my_state.load(std::memory_order_acquire) != EMPTY;
+        return my_state.load(std::memory_order_acquire) != UNSET;
     }
 };
-#endif
 
 //! The structure of an arena, except the array of slots.
 /** Separated in order to simplify padding.
     Intrusive list node base class is used by market to form a list of arenas. **/
 // TODO: Analyze arena_base cache lines placement
-class arena_base : padded<intrusive_list_node> {
-protected:
+struct arena_base : padded<intrusive_list_node> {
     //! The number of workers that have been marked out by the resource manager to service the arena.
     std::atomic<unsigned> my_num_workers_allotted;   // heavy use in stealing loop
 
@@ -231,20 +222,11 @@ protected:
     //! The total number of workers that are requested from the resource manager.
     int my_total_num_workers_requested;
 
-    //! The number of workers that are really requested from the resource manager.
-    //! Possible values are in [0, my_max_num_workers]
-    int my_num_workers_requested;
-
     //! The index in the array of per priority lists of arenas this object is in.
     /*const*/ unsigned my_priority_level;
 
     //! Current task pool state and estimate of available tasks amount.
-    /** The estimate is either 0 (SNAPSHOT_EMPTY) or infinity (SNAPSHOT_FULL).
-        Special state is "busy" (any other unsigned value).
-        Note that the implementation of arena::is_busy_or_empty() requires
-        my_pool_state to be unsigned. */
-    using pool_state_t = std::uintptr_t ;
-    std::atomic<pool_state_t> my_pool_state;
+    atomic_flag my_pool_state;
 
     //! The list of local observers attached to this arena.
     observer_list my_observers;
@@ -267,12 +249,10 @@ protected:
     //! Coroutines (task_dispathers) cache buffer
     arena_co_cache my_co_cache;
 
-#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
     // arena needs an extra worker despite the arena limit
-    atomic_flag my_local_concurrency_flag;
+    atomic_flag my_mandatory_concurrency;
     // the number of local mandatory concurrency requests
-    int my_local_concurrency_requests;
-#endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY*/
+    int my_mandatory_requests;
 
     //! The number of slots in the arena.
     unsigned my_num_slots;
@@ -281,7 +261,7 @@ protected:
     //! The number of workers requested by the external thread owning the arena.
     unsigned my_max_num_workers;
 
-    threading_control_client my_tc_client;
+    std::pair<pm_client*, thread_dispatcher_client*> my_tc_client;
 
 #if TBB_USE_ASSERT
     //! Used to trap accesses to the object after its destruction.
@@ -291,24 +271,6 @@ protected:
 
 class arena: public padded<arena_base>
 {
-    friend class waiter_base;
-    friend class outermost_worker_waiter;
-    friend class sleep_waiter;
-    friend class task_dispatcher;
-    friend void observe(d1::task_scheduler_observer& tso, bool enable);
-    friend struct suspend_point_type;
-    friend void resume(suspend_point_type* sp);
-    friend task_dispatcher& create_coroutine(thread_data& td);
-    friend void spawn(d1::task& t, d1::task_group_context& ctx, d1::slot_id id);
-    friend void submit(d1::task& t, d1::task_group_context& ctx, arena* a, std::uintptr_t as_critical);
-    friend class governor;
-    friend struct task_group_context_impl;
-    friend struct task_arena_impl;
-    friend class nested_arena_context;
-    friend class thread_data;
-    friend class delegated_task;
-    friend void notify_waiters(std::uintptr_t wait_ctx_addr);
-
 public:
     using base_type = padded<arena_base>;
 
@@ -320,20 +282,19 @@ public:
     };
 
     //! Constructor
-    // arena (permit_manager& m, unsigned max_num_workers, unsigned num_reserved_slots, unsigned priority_level);
-    arena (threading_control& control, unsigned max_num_workers, unsigned num_reserved_slots, unsigned priority_level);
+    arena(threading_control* control, unsigned max_num_workers, unsigned num_reserved_slots, unsigned priority_level);
 
     //! Allocate an instance of arena.
-    static arena& allocate_arena(threading_control& control, unsigned num_slots, unsigned num_reserved_slots,
+    static arena& allocate_arena(threading_control* control, unsigned num_slots, unsigned num_reserved_slots,
                                   unsigned priority_level);
 
     static arena& create(threading_control* control, int num_slots, int num_reserved_slots, unsigned arena_priority_level);
 
-    static int unsigned num_arena_slots ( unsigned num_slots ) {
+    static int unsigned num_arena_slots( unsigned num_slots ) {
         return max(2u, num_slots);
     }
 
-    static int allocation_size ( unsigned num_slots ) {
+    static int allocation_size( unsigned num_slots ) {
         return sizeof(base_type) + num_slots * (sizeof(mail_outbox) + sizeof(arena_slot) + sizeof(task_dispatcher));
     }
 
@@ -345,13 +306,7 @@ public:
     }
 
     //! Completes arena shutdown, destructs and deallocates it.
-    void free_arena ();
-
-    //! No tasks to steal since last snapshot was taken
-    static const pool_state_t SNAPSHOT_EMPTY = 0;
-
-    //! At least one task has been offered for stealing since the last snapshot started
-    static const pool_state_t SNAPSHOT_FULL = pool_state_t(-1);
+    void free_arena();
 
     //! The number of least significant bits for external references
     static const unsigned ref_external_bits = 12; // up to 4095 external and 1M workers
@@ -359,9 +314,6 @@ public:
     //! Reference increment values for externals and workers
     static const unsigned ref_external = 1;
     static const unsigned ref_worker   = 1 << ref_external_bits;
-
-    //! No tasks to steal or snapshot is being taken.
-    static bool is_busy_or_empty( pool_state_t s ) { return s < SNAPSHOT_FULL; }
 
     //! The number of workers active in the arena.
     unsigned num_workers_active() const {
@@ -373,9 +325,7 @@ public:
         return num_workers_active() > my_num_workers_allotted.load(std::memory_order_relaxed);
     }
 
-    void enable_mandatory_concurrency();
-
-    void publish_work(arena::new_work_type work_type);
+    void request_workers(int mandatory_delta, int workers_delta);
 
     //! If necessary, raise a flag that there is new job in arena.
     template<arena::new_work_type work_type> void advertise_new_work();
@@ -393,8 +343,7 @@ public:
 #endif
 
     //! Check if there is job anywhere in arena.
-    /** Return true if no job or if arena is being cleaned up. */
-    bool is_out_of_work();
+    void is_out_of_work();
 
     //! enqueue a task into starvation-resistance queue
     void enqueue_task(d1::task&, d1::task_group_context&, thread_data&);
@@ -406,8 +355,13 @@ public:
 
     void on_thread_leaving(unsigned ref_param);
 
-    //! Check for the presence of enqueued tasks at all priority levels
+    //! Check for the presence of enqueued tasks
     bool has_enqueued_tasks();
+
+    //! Check for the presence of any tasks
+    bool is_arena_empty();
+
+    thread_control_monitor& get_waiting_threads_monitor();
 
     static const std::size_t out_of_arena = ~size_t(0);
     //! Tries to occupy a slot in the arena. On success, returns the slot index; if no slot is available, returns out_of_arena.
@@ -418,87 +372,39 @@ public:
 
     std::uintptr_t calculate_stealing_threshold();
 
-    unsigned priority_level() {
-        return my_priority_level;
-    }
+    unsigned priority_level() { return my_priority_level; }
 
-    int num_workers_requested() {
-        return my_num_workers_requested;
-    }
+    int has_request() { return my_total_num_workers_requested; }
 
-    unsigned references() {
-        return my_references.load(std::memory_order_acquire);
-    }
+    unsigned references() { return my_references.load(std::memory_order_acquire); }
+
+    bool is_arena_workerless() { return my_max_num_workers == 0; }
 
     bool is_top_priority();
 
-    bool try_join() {
-        if (num_workers_active() < my_num_workers_allotted.load(std::memory_order_relaxed)) {
-            my_references += arena::ref_worker;
-            return true;
-        }
-        return false;
-    }
+    bool try_join();
 
-    void set_allotment(unsigned allotment) {
-        my_num_workers_allotted.store(allotment, std::memory_order_relaxed);
-    }
+    void set_allotment(unsigned allotment);
 
-    int update_request(int delta, bool mandatory) {
-#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-        if (mandatory) {
-            __TBB_ASSERT(delta == 1 || delta == -1, nullptr);
-            // Count the number of mandatory requests and proceed only for 0->1 and 1->0 transitions.
-            my_local_concurrency_requests += delta;
-            if ((delta > 0 && my_local_concurrency_requests != 1) ||
-                (delta < 0 && my_local_concurrency_requests != 0))
-            {
-                return 0;
-            }
-        }
-#endif
-        my_total_num_workers_requested += delta;
-        int target_workers = 0;
-        // Cap target_workers into interval [0, a.my_max_num_workers]
-        if (my_total_num_workers_requested > 0) {
-#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-            // At least one thread should be requested when mandatory concurrency
-            int max_num_workers = int(my_max_num_workers);
-            if (my_local_concurrency_requests > 0 && max_num_workers == 0) {
-                max_num_workers = 1;
-            }
-#endif
-            target_workers = min(my_total_num_workers_requested, max_num_workers);
-        }
-
-        delta = target_workers - my_num_workers_requested;
-
-        if (delta == 0) {
-            return 0;
-        }
-
-        my_num_workers_requested += delta;
-        if (my_num_workers_requested == 0) {
-            my_num_workers_allotted.store(0, std::memory_order_relaxed);
-        }
-
-        return delta;
-    }
+    std::pair<int, int> update_request(int mandatory_delta, int workers_delta);
 
     /** Must be the last data field */
     arena_slot my_slots[1];
 }; // class arena
 
-template<arena::new_work_type work_type>
+template <arena::new_work_type work_type>
 void arena::advertise_new_work() {
-    if( work_type == work_enqueued ) {
-        atomic_fence_seq_cst();
-        enable_mandatory_concurrency();
+    bool is_mandatory_needed = false;
+    bool are_workers_needed = false;
+
+    if (work_type != work_spawned) {
         // Local memory fence here and below is required to avoid missed wakeups; see the comment below.
         // Starvation resistant tasks require concurrency, so missed wakeups are unacceptable.
-    }
-    else if( work_type == wakeup ) {
         atomic_fence_seq_cst();
+    }
+
+    if (work_type == work_enqueued && my_num_slots > my_num_reserved_slots) {
+        is_mandatory_needed = my_mandatory_concurrency.test_and_set();
     }
 
     // Double-check idiom that, in case of spawning, is deliberately sloppy about memory fences.
@@ -507,9 +413,17 @@ void arena::advertise_new_work() {
     // fence might hurt overall performance more than it helps, because the fence would be executed
     // on every task pool release, even when stealing does not occur.  Since TBB allows parallelism,
     // but never promises parallelism, the missed wakeup is not a correctness problem.
-    pool_state_t snapshot = my_pool_state.load(std::memory_order_acquire);
-    if( is_busy_or_empty(snapshot) ) {
-        publish_work(work_type);
+    are_workers_needed = my_pool_state.test_and_set();
+
+    if (is_mandatory_needed || are_workers_needed) {
+        int mandatory_delta = is_mandatory_needed ? 1 : 0;
+        int workers_delta = are_workers_needed ? my_max_num_workers : 0;
+
+        if (is_mandatory_needed && is_arena_workerless()) {
+            // Set workers_delta to 1 to keep arena invariants consistent
+            workers_delta = 1;
+        }
+        request_workers(mandatory_delta, workers_delta);
     }
 }
 

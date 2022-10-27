@@ -20,7 +20,7 @@
 #include "oneapi/tbb/detail/_task.h"
 #include "scheduler_common.h"
 #include "arena.h"
-#include "clients.h"
+#include "threading_control.h"
 
 namespace tbb {
 namespace detail {
@@ -111,12 +111,12 @@ protected:
     using waiter_base::waiter_base;
 
     bool is_arena_empty() {
-        return my_arena.my_pool_state.load(std::memory_order_relaxed) == arena::SNAPSHOT_EMPTY;
+        return my_arena.my_pool_state.test() == false;
     }
 
     template <typename Pred>
     void sleep(std::uintptr_t uniq_tag, Pred wakeup_condition) {
-        governor::get_wait_list().wait<market_concurrent_monitor::thread_context>(wakeup_condition,
+        my_arena.get_waiting_threads_monitor().wait<thread_control_monitor::thread_context>(wakeup_condition,
             market_context{uniq_tag, &my_arena});
     }
 };

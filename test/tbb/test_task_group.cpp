@@ -925,58 +925,60 @@ TEST_CASE("Test for stack overflow avoidance mechanism within arena") {
         return;
     }
 
-    tbb::global_control thread_limit(tbb::global_control::max_allowed_parallelism, 2);
-    tbb::task_group tg1;
-    tbb::task_group tg2;
-    std::atomic<int> tasks_executed{};
+    tbb::task_arena a1(2, 1);
+    a1.execute([] {
+        tbb::task_group tg1;
+        tbb::task_group tg2;
+        std::atomic<int> tasks_executed{};
 
-    // Determine nested task execution limit.
-    int second_thread_executed{};
-    tg1.run_and_wait([&tg1, &tg2, &tasks_executed, &second_thread_executed] {
-        run_deep_stealing(tg1, tg2, 10000, tasks_executed);
-        do {
-            second_thread_executed = tasks_executed;
-            utils::Sleep(10);
-        } while (second_thread_executed < 100 || second_thread_executed != tasks_executed);
-        CHECK(tasks_executed < 10000);
-    });
-    tg2.wait();
-    CHECK(tasks_executed == 10000);
-
-    tasks_executed = 0;
-    tbb::task_arena a(2, 2);
-    tg1.run_and_wait([&a, &tg1, &tg2, &tasks_executed, second_thread_executed] {
-        run_deep_stealing(tg1, tg2, second_thread_executed-1, tasks_executed);
-        while (tasks_executed < second_thread_executed-1) {
-            // Wait until the second thread near the limit.
-            utils::yield();
-        }
-        tg2.run([&a, &tg1, &tasks_executed] {
-            a.execute([&tg1, &tasks_executed] {
-                volatile char consume_stack[1000]{};
-                ++tasks_executed;
-                tg1.wait();
-                utils::suppress_unused_warning(consume_stack);
-            });
-        });
-        while (tasks_executed < second_thread_executed) {
-            // Wait until the second joins the arena.
-            utils::yield();
-        }
-        a.execute([&tg1, &tg2, &tasks_executed] {
+        // Determine nested task execution limit.
+        int second_thread_executed{};
+        tg1.run_and_wait([&tg1, &tg2, &tasks_executed, &second_thread_executed] {
             run_deep_stealing(tg1, tg2, 10000, tasks_executed);
+            do {
+                second_thread_executed = tasks_executed;
+                utils::Sleep(10);
+            } while (second_thread_executed < 100 || second_thread_executed != tasks_executed);
+            CHECK(tasks_executed < 10000);
         });
-        int currently_executed{};
-        do {
-            currently_executed = tasks_executed;
-            utils::Sleep(10);
-        } while (currently_executed != tasks_executed);
-        CHECK(tasks_executed < 10000 + second_thread_executed);
-    });
-    a.execute([&tg2] {
         tg2.wait();
+        CHECK(tasks_executed == 10000);
+
+        tasks_executed = 0;
+        tbb::task_arena a2(2, 2);
+        tg1.run_and_wait([&a2, &tg1, &tg2, &tasks_executed, second_thread_executed] {
+            run_deep_stealing(tg1, tg2, second_thread_executed - 1, tasks_executed);
+            while (tasks_executed < second_thread_executed - 1) {
+                // Wait until the second thread near the limit.
+                utils::yield();
+            }
+            tg2.run([&a2, &tg1, &tasks_executed] {
+                a2.execute([&tg1, &tasks_executed] {
+                    volatile char consume_stack[1000]{};
+                    ++tasks_executed;
+                    tg1.wait();
+                    utils::suppress_unused_warning(consume_stack);
+                });
+            });
+            while (tasks_executed < second_thread_executed) {
+                // Wait until the second joins the arena.
+                utils::yield();
+            }
+            a2.execute([&tg1, &tg2, &tasks_executed] {
+                run_deep_stealing(tg1, tg2, 10000, tasks_executed);
+            });
+            int currently_executed{};
+            do {
+                currently_executed = tasks_executed;
+                utils::Sleep(10);
+            } while (currently_executed != tasks_executed);
+            CHECK(tasks_executed < 10000 + second_thread_executed);
+        });
+        a2.execute([&tg2] {
+            tg2.wait();
+        });
+        CHECK(tasks_executed == 10000 + second_thread_executed);
     });
-    CHECK(tasks_executed == 10000 + second_thread_executed);
 }
 
 //! Test checks that we can submit work to task_group asynchronously with waiting.

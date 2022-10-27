@@ -14,162 +14,60 @@
     limitations under the License.
 */
 
-#include "oneapi/tbb/global_control.h" // global_control::active_value
-
-#include "thread_dispatcher.h"
-#include "market.h"
-#include "main.h"
-#include "governor.h"
 #include "arena.h"
-#include "thread_data.h"
-#include "itt_notify.h"
+#include "market.h"
 
-#include <cstring> // std::memset()
-
-#include "clients.h"
+#include <algorithm>
 
 namespace tbb {
 namespace detail {
 namespace r1 {
 
 
-struct tbb_permit_manager_client : public permit_manager_client, public d1::intrusive_list_node {
-    tbb_permit_manager_client(arena& a) : permit_manager_client(a) {}
-
-    void request_demand(unsigned min, unsigned max) override {
-        suppress_unused_warning(min, max);
-    }
-    void release_demand() override {}
+class tbb_permit_manager_client : public pm_client {
+public:
+    tbb_permit_manager_client(arena& a) : pm_client(a) {}
 
     void set_allotment(unsigned allotment) {
         my_arena.set_allotment(allotment);
     }
-
-    // arena needs an extra worker despite a global limit
-    std::atomic<bool> m_global_concurrency_mode{false};
-
-    //! The index in the array of per priority lists of arenas this object is in.
-    unsigned priority_level() {
-        return my_arena.priority_level();
-    }
-
-    bool has_enqueued_tasks() {
-        return my_arena.has_enqueued_tasks();
-    }
-
-    void set_top_priority(bool b) {
-        return my_is_top_priority.store(b, std::memory_order_relaxed);
-    }
-
-    int num_workers_requested() {
-        return my_arena.num_workers_requested();
-    }
 };
-
-void market::insert_arena_into_list (tbb_permit_manager_client& a ) {
-    __TBB_ASSERT( a.priority_level() < num_priority_levels, nullptr );
-    my_arenas[a.priority_level()].push_front( a );
-}
-
-void market::remove_arena_from_list (tbb_permit_manager_client& a ) {
-    __TBB_ASSERT( a.priority_level() < num_priority_levels, nullptr );
-    my_arenas[a.priority_level()].remove( a );
-}
 
 //------------------------------------------------------------------------
 // market
 //------------------------------------------------------------------------
 
-market::market(unsigned workers_soft_limit )
+market::market(unsigned workers_soft_limit)
     : my_num_workers_soft_limit(workers_soft_limit)
-    , my_next_arena(nullptr)
-    , my_workers_soft_limit_to_report(workers_soft_limit)
 {}
 
-market::~market() {
-    poison_pointer(my_next_arena);
-}
-
-int market::update_workers_request() {
-    int old_request = my_num_workers_requested;
-    my_num_workers_requested = min(my_total_demand.load(std::memory_order_relaxed),
-                                   (int)my_num_workers_soft_limit.load(std::memory_order_relaxed));
-#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-    if (my_mandatory_num_requested > 0) {
-        __TBB_ASSERT(my_num_workers_soft_limit.load(std::memory_order_relaxed) == 0, nullptr);
-        my_num_workers_requested = 1;
-    }
-#endif
-    update_allotment(my_num_workers_requested);
-    return my_num_workers_requested - old_request;
-}
-
-int market::set_active_num_workers(unsigned soft_limit) {
-    if (my_num_workers_soft_limit.load(std::memory_order_relaxed) == soft_limit) {
-        return 0;
-    }
-
-    arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex);
-#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-    arena_list_type* arenas = my_arenas;
-
-    if (my_num_workers_soft_limit.load(std::memory_order_relaxed) == 0 && my_mandatory_num_requested > 0) {
-        for (unsigned level = 0; level < num_priority_levels; ++level ) {
-            for (arena_list_type::iterator it = arenas[level].begin(); it != arenas[level].end(); ++it) {
-                if (it->m_global_concurrency_mode.load(std::memory_order_relaxed)) {
-                    disable_mandatory_concurrency_impl(&*it);
-                }
-            }
-        }
-    }
-    __TBB_ASSERT(my_mandatory_num_requested == 0, nullptr);
-#endif
-    my_num_workers_soft_limit.store(soft_limit, std::memory_order_release);
-    // report only once after new soft limit value is set
-    my_workers_soft_limit_to_report.store(soft_limit, std::memory_order_relaxed);
-
-#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-    if (my_num_workers_soft_limit.load(std::memory_order_relaxed) == 0) {
-        for (unsigned level = 0; level < num_priority_levels; ++level) {
-            for (arena_list_type::iterator it = arenas[level].begin(); it != arenas[level].end(); ++it) {
-                if (it->has_enqueued_tasks()) {
-                    enable_mandatory_concurrency_impl(&*it);
-                }
-            }
-        }
-    }
-#endif
-
-    return update_workers_request();
-}
-
-permit_manager_client* market::create_client(arena& a, constraints_type*) {
+pm_client* market::create_client(arena& a) {
     return new (cache_aligned_allocate(sizeof(tbb_permit_manager_client))) tbb_permit_manager_client(a);
 }
 
-void market::register_client(permit_manager_client* client) {
-    arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex);
-    insert_arena_into_list(static_cast<tbb_permit_manager_client&>(*client));
+void market::register_client(pm_client* c) {
+    mutex_type::scoped_lock lock(my_mutex);
+    my_clients[c->priority_level()].push_back(c);
 }
 
-void market::destroy_client(permit_manager_client& c) {
-    auto& tbb_client = static_cast<tbb_permit_manager_client&>(c);
-    if (tbb_client.m_global_concurrency_mode.load(std::memory_order_relaxed)) {
-        disable_mandatory_concurrency_impl(&tbb_client);
-    }
-
+void market::destroy_client(pm_client& c) {
     {
-        arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex);
-        remove_arena_from_list(tbb_client);
+        mutex_type::scoped_lock lock(my_mutex);
+        auto& clients = my_clients[c.priority_level()];
+        auto it = std::find(clients.begin(), clients.end(), &c);
+        clients.erase(it);
     }
 
-    tbb_client.~tbb_permit_manager_client();
-    cache_aligned_deallocate(&tbb_client);
+    auto client = static_cast<tbb_permit_manager_client*>(&c);
+    client->~tbb_permit_manager_client();
+    cache_aligned_deallocate(client);
 }
 
-int market::update_allotment ( arena_list_type* arenas, int workers_demand, int max_workers ) {
-    __TBB_ASSERT( workers_demand > 0, nullptr );
-    max_workers = min(workers_demand, max_workers);
+void market::update_allotment() {
+    int effective_soft_limit = my_mandatory_num_requested > 0 && my_num_workers_soft_limit == 0 ? 1 : my_num_workers_soft_limit;
+    int max_workers = min(my_total_demand, effective_soft_limit);
+    __TBB_ASSERT(max_workers >= 0, nullptr);
+
     int unassigned_workers = max_workers;
     int assigned = 0;
     int carry = 0;
@@ -177,13 +75,11 @@ int market::update_allotment ( arena_list_type* arenas, int workers_demand, int 
     for (unsigned list_idx = 0; list_idx < num_priority_levels; ++list_idx ) {
         int assigned_per_priority = min(my_priority_level_demand[list_idx], unassigned_workers);
         unassigned_workers -= assigned_per_priority;
-        for (arena_list_type::iterator it = arenas[list_idx].begin(); it != arenas[list_idx].end(); ++it) {
-            tbb_permit_manager_client& a = *it;
-            __TBB_ASSERT(a.num_workers_requested() >= 0, nullptr);
-            //__TBB_ASSERT(a.num_workers_requested() <= int(a.my_max_num_workers)
-            //    || (a.my_max_num_workers == 0 && a.my_local_concurrency_requests > 0 && a.num_workers_requested() == 1), nullptr);
-            if (a.num_workers_requested() == 0) {
-             //   __TBB_ASSERT(!a.my_num_workers_allotted.load(std::memory_order_relaxed), nullptr);
+        // We use reverse iterator there to serve last added clients first
+        for (auto it = my_clients[list_idx].rbegin(); it != my_clients[list_idx].rend(); ++it) {
+            tbb_permit_manager_client& client = static_cast<tbb_permit_manager_client&>(**it);
+            if (client.max_workers() == 0) {
+                client.set_allotment(0);
                 continue;
             }
 
@@ -192,134 +88,49 @@ int market::update_allotment ( arena_list_type* arenas, int workers_demand, int 
             }
 
             int allotted = 0;
-#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-            if (my_num_workers_soft_limit.load(std::memory_order_relaxed) == 0) {
+            if (my_num_workers_soft_limit == 0) {
                 __TBB_ASSERT(max_workers == 0 || max_workers == 1, nullptr);
-                allotted = a.m_global_concurrency_mode.load(std::memory_order_relaxed) &&
-                    assigned < max_workers ? 1 : 0;
-            } else
-#endif
-            {
-                int tmp = a.num_workers_requested() * assigned_per_priority + carry;
+                allotted = client.min_workers() > 0 && assigned < max_workers ? 1 : 0;
+            } else {
+                int tmp = client.max_workers() * assigned_per_priority + carry;
                 allotted = tmp / my_priority_level_demand[list_idx];
                 carry = tmp % my_priority_level_demand[list_idx];
-                __TBB_ASSERT(allotted <= a.num_workers_requested(), nullptr);
-                //__TBB_ASSERT(allotted <= int(a.my_num_slots - a.my_num_reserved_slots), nullptr);
+                __TBB_ASSERT(allotted <= client.max_workers(), nullptr);
             }
-            //a.my_num_workers_allotted.store(allotted, std::memory_order_relaxed);
-            a.set_allotment(allotted);
-            a.set_top_priority(list_idx == max_priority_level);
+            client.set_allotment(allotted);
+            client.set_top_priority(list_idx == max_priority_level);
             assigned += allotted;
         }
     }
-    __TBB_ASSERT( 0 <= assigned && assigned <= max_workers, nullptr );
-    return assigned;
+    __TBB_ASSERT(assigned == max_workers, nullptr);
 }
 
-#if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
-void market::enable_mandatory_concurrency_impl (tbb_permit_manager_client*a ) {
-    __TBB_ASSERT(!a->m_global_concurrency_mode.load(std::memory_order_relaxed), NULL);
-    __TBB_ASSERT(my_num_workers_soft_limit.load(std::memory_order_relaxed) == 0, NULL);
-
-    a->m_global_concurrency_mode.store(true, std::memory_order_relaxed);
-    my_mandatory_num_requested++;
-}
-
-bool market::is_global_concurrency_disabled(permit_manager_client *c) {
-    tbb_permit_manager_client* a = static_cast<tbb_permit_manager_client*>(c);
-    return my_num_workers_soft_limit.load(std::memory_order_acquire) == 0 && a->m_global_concurrency_mode.load(std::memory_order_acquire) == false;
-}
-
-int market::enable_mandatory_concurrency(permit_manager_client *c) {
-    tbb_permit_manager_client* a = static_cast<tbb_permit_manager_client*>(c);
-    int delta = 0;
-    if (is_global_concurrency_disabled(a)) {
-        arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex);
-        if (my_num_workers_soft_limit.load(std::memory_order_relaxed) != 0 || a->m_global_concurrency_mode.load(std::memory_order_relaxed)) {
-            return 0;
-        }
-
-        enable_mandatory_concurrency_impl(a);
-        delta = update_workers_request();
+void market::set_active_num_workers(int soft_limit) {
+    mutex_type::scoped_lock lock(my_mutex);
+    if (my_num_workers_soft_limit != soft_limit) {
+        my_num_workers_soft_limit = soft_limit;
+        update_allotment();
     }
-    return delta;
 }
 
-void market::disable_mandatory_concurrency_impl(tbb_permit_manager_client* a) {
-    __TBB_ASSERT(a->m_global_concurrency_mode.load(std::memory_order_relaxed), NULL);
-    __TBB_ASSERT(my_mandatory_num_requested > 0, NULL);
+void market::adjust_demand(pm_client& c, int mandatory_delta, int workers_delta) {
+    __TBB_ASSERT(-1 <= mandatory_delta && mandatory_delta <= 1, nullptr);
 
-    a->m_global_concurrency_mode.store(false, std::memory_order_relaxed);
-    my_mandatory_num_requested--;
-}
-
-int market::mandatory_concurrency_disable(permit_manager_client* c) {
-    tbb_permit_manager_client* a = static_cast<tbb_permit_manager_client*>(c);
-    int delta = 0;
-    if ( a->m_global_concurrency_mode.load(std::memory_order_acquire) == true ) {
-        arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex);
-        if (!a->m_global_concurrency_mode.load(std::memory_order_relaxed)) {
-            return 0;
-        }
-        // There is a racy window in advertise_new_work between mandtory concurrency enabling and 
-        // setting SNAPSHOT_FULL. It gives a chance to spawn request to disable mandatory concurrency.
-        // Therefore, we double check that there is no enqueued tasks.
-        if (a->has_enqueued_tasks()) {
-            return 0;
-        }
-
-        __TBB_ASSERT(my_num_workers_soft_limit.load(std::memory_order_relaxed) == 0, NULL);
-        disable_mandatory_concurrency_impl(a);
-
-        delta = update_workers_request();
-    }
-    return delta;
-}
-#endif /* __TBB_ENQUEUE_ENFORCED_CONCURRENCY */
-
-std::pair<int, std::int64_t> market::adjust_demand(permit_manager_client& c, int delta, bool mandatory ) {
-    auto& a = static_cast<tbb_permit_manager_client&>(c);
-    if (!delta) {
-        return std::make_pair(0, -1);
-    }
-    int target_epoch{};
+    int delta{};
     {
-        arenas_list_mutex_type::scoped_lock lock(my_arenas_list_mutex);
+        mutex_type::scoped_lock lock(my_mutex);
+        // Update client's state
+        delta = c.update_request(mandatory_delta, workers_delta);
 
-        delta = a.update_request(delta, mandatory);
+        // Update makret's state
+        my_total_demand += delta;
+        my_priority_level_demand[c.priority_level()] += delta;
+        my_mandatory_num_requested += mandatory_delta;
 
-        if (!delta) {
-            return std::make_pair(0, -1);
-        }
-
-        int total_demand = my_total_demand.load(std::memory_order_relaxed) + delta;
-        my_total_demand.store(total_demand, std::memory_order_relaxed);
-        my_priority_level_demand[a.priority_level()] += delta;
-        unsigned effective_soft_limit = my_num_workers_soft_limit.load(std::memory_order_relaxed);
-        if (my_mandatory_num_requested > 0) {
-            __TBB_ASSERT(effective_soft_limit == 0, nullptr);
-            effective_soft_limit = 1;
-        }
-
-        update_allotment(effective_soft_limit);
-        if (delta > 0) {
-            // can't overflow soft_limit, but remember values request by arenas in
-            // my_total_demand to not prematurely release workers to RML
-            if (my_num_workers_requested + delta > (int)effective_soft_limit)
-                delta = effective_soft_limit - my_num_workers_requested;
-        }
-        else {
-            // the number of workers should not be decreased below my_total_demand
-            if (my_num_workers_requested + delta < total_demand)
-                delta = min(total_demand, (int)effective_soft_limit) - my_num_workers_requested;
-        }
-        my_num_workers_requested += delta;
-        __TBB_ASSERT(my_num_workers_requested <= (int)effective_soft_limit, nullptr);
-
-        target_epoch = a.my_adjust_demand_target_epoch++;
+        update_allotment();
     }
 
-    return std::make_pair(delta, target_epoch);
+    notify_thread_request(delta);
 }
 
 } // namespace r1
