@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021 Intel Corporation
+# Copyright (c) 2020-2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,10 @@ add_library(tbbmalloc
     large_objects.cpp
     tbbmalloc.cpp
     ../tbb/itt_notify.cpp)
+    
+if (WIN32)
+    target_sources(tbbmalloc PRIVATE tbbmalloc.rc)
+endif()
 
 add_library(TBB::tbbmalloc ALIAS tbbmalloc)
 
