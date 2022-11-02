@@ -384,7 +384,7 @@
             graph_task* bypass_t;
             // constructor for value parameter
             queueing_port_operation(const T& e, op_type t) :
-                type(char(t)), my_val(e)
+                type(char(t)), my_val(e), my_arg(nullptr)
                 , bypass_t(nullptr)
             {}
             // constructor for pointer parameter
@@ -393,7 +393,7 @@
                 , bypass_t(nullptr)
             {}
             // constructor with no parameter
-            queueing_port_operation(op_type t) : type(char(t))
+            queueing_port_operation(op_type t) : type(char(t)), my_arg(nullptr)
                 , bypass_t(nullptr)
             {}
         };
@@ -422,6 +422,7 @@
                     break;
                 case get__item:
                     if(!this->buffer_empty()) {
+                        __TBB_ASSERT(current->my_arg, nullptr);
                         *(current->my_arg) = this->front();
                         current->status.store( SUCCEEDED, std::memory_order_release);
                     }
@@ -547,12 +548,12 @@
             input_type *my_arg;
             // constructor for value parameter
             key_matching_port_operation(const input_type& e, op_type t) :
-                type(char(t)), my_val(e) {}
+                type(char(t)), my_val(e), my_arg(nullptr) {}
             // constructor for pointer parameter
             key_matching_port_operation(const input_type* p, op_type t) :
                 type(char(t)), my_arg(const_cast<input_type*>(p)) {}
             // constructor with no parameter
-            key_matching_port_operation(op_type t) : type(char(t)) {}
+            key_matching_port_operation(op_type t) : type(char(t)), my_arg(nullptr) {}
         };
 
         typedef aggregating_functor<class_type, key_matching_port_operation> handler_type;
@@ -573,6 +574,7 @@
                     break;
                 case get__item:
                     // use current_key from FE for item
+                    __TBB_ASSERT(current->my_arg, nullptr);
                     if(!this->find_with_key(my_join->current_key, *(current->my_arg))) {
                         __TBB_ASSERT(false, "Failed to find item corresponding to current_key.");
                     }

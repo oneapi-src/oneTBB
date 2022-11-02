@@ -325,13 +325,16 @@ public:
 public:
     retrieve_aggregator_operation(key_type key)
         : aggregator_operation(aggregator_operation::op_type::retrieve),
-          my_key(key), my_is_new_value_needed(false) {}
+          my_key(key), my_map_record_ptr(nullptr), my_is_new_value_needed(false) {}
 
     void handle(lru_cache_type& lru_cache_ref) {
         my_map_record_ptr = &lru_cache_ref.retrieve_serial(my_key, my_is_new_value_needed);
     }
 
-    storage_map_reference_type result() { return *my_map_record_ptr; }
+    storage_map_reference_type result() {
+        __TBB_ASSERT(my_map_record_ptr, "Attempt to call result() before calling handle()");
+        return *my_map_record_ptr;
+    }
 
     bool is_new_value_needed() { return my_is_new_value_needed; }
 };

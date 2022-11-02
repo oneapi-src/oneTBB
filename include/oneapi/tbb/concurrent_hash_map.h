@@ -147,9 +147,9 @@ public:
     }
 
     template <typename... Args>
-    void init_buckets_impl( segment_ptr_type ptr, size_type sz, Args&&... args ) {
+    void init_buckets_impl( segment_ptr_type ptr, size_type sz, const Args&... args ) {
         for (size_type i = 0; i < sz; ++i) {
-            bucket_allocator_traits::construct(my_allocator, ptr + i, std::forward<Args>(args)...);
+            bucket_allocator_traits::construct(my_allocator, ptr + i, args...);
         }
     }
 
@@ -158,7 +158,8 @@ public:
         if (is_initial) {
             init_buckets_impl(ptr, sz);
         } else {
-            init_buckets_impl(ptr, sz, reinterpret_cast<node_base*>(rehash_req_flag));
+            node_base* bucket_initializer = reinterpret_cast<node_base*>(rehash_req_flag);
+            init_buckets_impl(ptr, sz, bucket_initializer);
         }
     }
 
