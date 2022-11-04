@@ -336,7 +336,7 @@ private:
     }
 
     void spin_wait_until_my_turn( std::atomic<ticket_type>& counter, ticket_type k, queue_rep_type& rb ) const {
-        for (atomic_backoff b(true);; b.pause()) {
+        for (atomic_backoff b{};; b.pause()) {
             ticket_type c = counter.load(std::memory_order_acquire);
             if (c == k) return;
             else if (c & 1) {

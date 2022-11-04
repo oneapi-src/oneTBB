@@ -32,7 +32,7 @@ template <typename QueueRep, typename Allocator>
 std::pair<bool, ticket_type> internal_try_pop_impl(void* dst, QueueRep& queue, Allocator& alloc ) {
     ticket_type ticket{};
     do {
-        // Basically, we need to read `head` before `tail`. To achieve it we build happens-before on `head`
+        // Basically, we need to read `head_counter` before `tail_counter`. To achieve it we build happens-before on `head_counter`
         ticket = queue.head_counter.load(std::memory_order_acquire);
         do {
             if (static_cast<std::ptrdiff_t>(queue.tail_counter.load(std::memory_order_relaxed) - ticket) <= 0) { // queue is empty
