@@ -3646,7 +3646,7 @@ ITT_STUBV(ITTAPI, void, enable_attach, (void))
 /**
  * @brief Module load notification
  * This API is used to report necessary information in case of bypassing default system loader.
- * Notification should be done immidiatelly after this module is loaded to process memory.
+ * Notification should be done immediately after this module is loaded to process memory.
  * @param[in] start_addr - module start address
  * @param[in] end_addr - module end address
  * @param[in] path - file system full path to the module
@@ -3959,21 +3959,21 @@ ITT_STUB(ITTAPI, __itt_histogram*, histogram_create, (const __itt_domain* domain
 
 /**
  * @brief Submit statistics for a histogram instance.
- * @param[in] hist    Pointer to the histogram instance to which the histogram statistic is to be dumped.
+ * @param[in] histogram    Pointer to the histogram instance to which the histogram statistic is to be dumped.
  * @param[in] length  The number of elements in dumped axis data array.
  * @param[in] x_data  The X axis dumped data itself (may be NULL to calculate batch statistics).
  * @param[in] y_data  The Y axis dumped data itself.
 */
-void ITTAPI __itt_histogram_submit(__itt_histogram* hist, size_t length, void* x_data, void* y_data);
+void ITTAPI __itt_histogram_submit(__itt_histogram* histogram, size_t length, void* x_data, void* y_data);
 
 /** @cond exclude_from_documentation */
 #ifndef INTEL_NO_MACRO_BODY
 #ifndef INTEL_NO_ITTNOTIFY_API
-ITT_STUBV(ITTAPI, void, histogram_submit, (__itt_histogram* hist, size_t length, void* x_data, void* y_data))
+ITT_STUBV(ITTAPI, void, histogram_submit, (__itt_histogram* histogram, size_t length, void* x_data, void* y_data))
 #define __itt_histogram_submit     ITTNOTIFY_VOID(histogram_submit)
 #define __itt_histogram_submit_ptr ITTNOTIFY_NAME(histogram_submit)
 #else  /* INTEL_NO_ITTNOTIFY_API */
-#define __itt_histogram_submit(hist, length, x_data, y_data)
+#define __itt_histogram_submit(histogram, length, x_data, y_data)
 #define __itt_histogram_submit_ptr 0
 #endif /* INTEL_NO_ITTNOTIFY_API */
 #else  /* INTEL_NO_MACRO_BODY */
