@@ -350,6 +350,6 @@ ITT_STUBV(ITTAPI, void, module_load, (void *start_addr, void *end_addr, const ch
 #endif /* ITT_PLATFORM==ITT_PLATFORM_WIN */
 ITT_STUBV(ITTAPI, void, module_unload, (void *start_addr), (ITT_FORMAT start_addr), module_unload, __itt_group_module, "%p")
 
-ITT_STUBV(ITTAPI, void, histogram_submit, (__itt_histogram* hist, size_t length, void* x_data, void* y_data), (ITT_FORMAT hist, length, x_data, y_data), histogram_submit, __itt_group_structure, "%p, %lu, %p, %p")
+ITT_STUBV(ITTAPI, void, histogram_submit, (__itt_histogram* histogram, size_t length, void* x_data, void* y_data), (ITT_FORMAT histogram, length, x_data, y_data), histogram_submit, __itt_group_structure, "%p, %lu, %p, %p")
 
 #endif /* __ITT_INTERNAL_INIT */
