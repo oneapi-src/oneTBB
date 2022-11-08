@@ -157,6 +157,10 @@
 #  define ITT_ARCH_ARM64  6
 #endif /* ITT_ARCH_ARM64 */
 
+#ifndef ITT_ARCH_LOONGARCH64
+#  define ITT_ARCH_LOONGARCH64  7
+#endif /* ITT_ARCH_LOONGARCH64 */
+
 #ifndef ITT_ARCH_S390X
 #  define ITT_ARCH_S390X  8
 #endif /* ITT_ARCH_S390X */
@@ -182,6 +186,8 @@
 #    define ITT_ARCH ITT_ARCH_ARM64
 #  elif defined __powerpc64__
 #    define ITT_ARCH ITT_ARCH_PPC64
+#  elif defined __loongarch__
+#    define ITT_ARCH ITT_ARCH_LOONGARCH64
 #  elif defined __s390__ || defined __s390x__
 #    define ITT_ARCH ITT_ARCH_S390X
 #  elif defined __hppa__
