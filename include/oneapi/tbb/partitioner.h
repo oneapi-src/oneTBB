@@ -160,6 +160,7 @@ struct tree_node : public node {
 template<typename TreeNodeType>
 void fold_tree(node* n, const execution_data& ed) {
     for (;;) {
+        __TBB_ASSERT(n, nullptr);
         __TBB_ASSERT(n->m_ref_count.load(std::memory_order_relaxed) > 0, "The refcount must be positive.");
         call_itt_task_notify(releasing, n);
         if (--n->m_ref_count > 0) {
