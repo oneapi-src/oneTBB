@@ -155,7 +155,7 @@ public:
 // template<class U, class V> friend class aggregating_functor;
 template <typename AggregatingClass, typename OperationList>
 class aggregating_functor {
-    AggregatingClass* my_object = nullptr;
+    AggregatingClass* my_object{nullptr};
 public:
     aggregating_functor() = default;
     aggregating_functor( AggregatingClass* object ) : my_object(object) {
