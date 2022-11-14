@@ -158,8 +158,7 @@ public:
         if (is_initial) {
             init_buckets_impl(ptr, sz);
         } else {
-            node_base* bucket_initializer = reinterpret_cast<node_base*>(rehash_req_flag);
-            init_buckets_impl(ptr, sz, bucket_initializer);
+            init_buckets_impl(ptr, sz, reinterpret_cast<node_base*>(rehash_req_flag));
         }
     }
 
