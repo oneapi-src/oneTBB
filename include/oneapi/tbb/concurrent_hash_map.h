@@ -147,9 +147,9 @@ public:
     }
 
     template <typename... Args>
-    void init_buckets_impl( segment_ptr_type ptr, size_type sz, Args&&... args ) {
+    void init_buckets_impl( segment_ptr_type ptr, size_type sz, const Args&... args ) {
         for (size_type i = 0; i < sz; ++i) {
-            bucket_allocator_traits::construct(my_allocator, ptr + i, std::forward<Args>(args)...);
+            bucket_allocator_traits::construct(my_allocator, ptr + i, args...);
         }
     }
 
