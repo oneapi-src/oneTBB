@@ -154,8 +154,10 @@ struct DoMallocReplacement {
         zone.introspect = &introspect;
         zone.version = 8;
         zone.memalign = impl_memalign;
+    #if __MAC_OS_X_VERSION_MAX_ALLOWED >= 1060 && !defined(__POWERPC__) // Unavailable on macOS < 10.6 and any PPC
         zone.free_definite_size = &impl_free_definite_size;
         zone.pressure_relief = &impl_pressure_relief;
+    #endif
 
         // make sure that default purgeable zone is initialized
         malloc_default_purgeable_zone();
