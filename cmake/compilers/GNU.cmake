@@ -50,7 +50,7 @@ set(TBB_COMMON_LINK_LIBS ${CMAKE_DL_LIBS})
 
 # At least on macOS, GCC does not automatically link to libatomic.
 if (APPLE)
-    set(TBB_COMMON_LINK_FLAGS -latomic)
+    set(TBB_COMMON_LINK_FLAGS -latomic -lpthread)
 endif()
 
 # Ignore -Werror set through add_compile_options() or added to CMAKE_CXX_FLAGS if TBB_STRICT is disabled.
