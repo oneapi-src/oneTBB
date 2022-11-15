@@ -184,6 +184,10 @@
 #  define ITT_ARCH_RISCV64  10
 #endif /* ITT_ARCH_RISCV64 */
 
+#ifndef ITT_ARCH_PPC
+#  define ITT_ARCH_PPC  11
+#endif /* ITT_ARCH_PPC */
+
 #ifndef ITT_ARCH
 #  if defined _M_IX86 || defined __i386__
 #    define ITT_ARCH ITT_ARCH_IA32
@@ -195,7 +199,9 @@
 #    define ITT_ARCH ITT_ARCH_ARM
 #  elif defined __aarch64__
 #    define ITT_ARCH ITT_ARCH_ARM64
-#  elif defined __powerpc64__
+#  elif defined __powerpc__ || defined __ppc__
+#    define ITT_ARCH ITT_ARCH_PPC
+#  elif defined __powerpc64__ || defined __ppc64__
 #    define ITT_ARCH ITT_ARCH_PPC64
 #  elif defined __loongarch__
 #    define ITT_ARCH ITT_ARCH_LOONGARCH64
