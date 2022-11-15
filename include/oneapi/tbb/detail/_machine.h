@@ -132,7 +132,7 @@ constexpr std::uintptr_t number_of_bits() {
 
 // logarithm is the index of the most significant non-zero bit
 static inline uintptr_t machine_log2(uintptr_t x) {
-#if defined(__GNUC__) || defined(__clang__)
+#if (defined(__GNUC__) || defined(__clang__)) && !defined(__POWERPC__)
     // If P is a power of 2 and x<P, then (P-1)-x == (P-1) XOR x
     return (number_of_bits<decltype(x)>() - 1) ^ gnu_builtins::clz(x);
 #elif defined(_MSC_VER)
