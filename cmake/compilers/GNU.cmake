@@ -36,7 +36,13 @@ if (NOT CMAKE_GENERATOR MATCHES "Ninja" AND NOT CMAKE_CXX_DEPENDS_USE_COMPILER)
 endif()
 
 # Enable Intel(R) Transactional Synchronization Extensions (-mrtm) and WAITPKG instructions support (-mwaitpkg) on relevant processors
-if (CMAKE_SYSTEM_PROCESSOR MATCHES "(AMD64|amd64|i.86|x86)")
+# Like with Apple Clang case, use CMAKE_OSX_ARCHITECTURES if it is defined. Defaulting to CMAKE_SYSTEM_PROCESSOR breaks build on Rosetta.
+if (CMAKE_OSX_ARCHITECTURES)
+    set(_tbb_target_architectures "${CMAKE_OSX_ARCHITECTURES}")
+else()
+    set(_tbb_target_architectures "${CMAKE_SYSTEM_PROCESSOR}")
+endif()
+if ("${_tbb_target_architectures}" MATCHES "(AMD64|amd64|i.86|x86)")
     set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -mrtm $<$<AND:$<NOT:$<CXX_COMPILER_ID:Intel>>,$<NOT:$<VERSION_LESS:${CMAKE_CXX_COMPILER_VERSION},11.0>>>:-mwaitpkg>)
 endif()
 
