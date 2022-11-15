@@ -433,7 +433,11 @@ private:
     friend class task_group_base;
 }; // class task_group_context
 
-static_assert(sizeof(task_group_context) == 128, "Wrong size of task_group_context");
+#if defined __APPLE__ && defined __POWERPC__
+    // static_assert(sizeof(task_group_context) == 128, "Wrong size of task_group_context");
+#else
+    static_assert(sizeof(task_group_context) == 128, "Wrong size of task_group_context");
+#endif
 
 enum task_group_status {
     not_complete,
