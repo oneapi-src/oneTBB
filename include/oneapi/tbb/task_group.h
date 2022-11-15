@@ -187,6 +187,21 @@ private:
     };
     task_group_context_version my_version;
 
+  #if defined __APPLE__ && defined __POWERPC__ // bool is 32 bits on Darwin PPC: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=107590
+    //! The context traits.
+    struct context_traits {
+        bool fp_settings        : 4;
+        bool concurrent_wait    : 4;
+        bool bound              : 4;
+        bool reserved1          : 4;
+        bool reserved2          : 4;
+        bool reserved3          : 4;
+        bool reserved4          : 4;
+        bool reserved5          : 4;
+    } my_traits;
+
+    static_assert(sizeof(context_traits) == 4, "Traits shall fit into 4 bytes.");
+  #else // Everything else besides Darwin PPC:
     //! The context traits.
     struct context_traits {
         bool fp_settings        : 1;
@@ -200,6 +215,7 @@ private:
     } my_traits;
 
     static_assert(sizeof(context_traits) == 1, "Traits shall fit into one byte.");
+  #endif
 
     static constexpr std::uint8_t may_have_children = 1;
     //! The context internal state (currently only may_have_children).
