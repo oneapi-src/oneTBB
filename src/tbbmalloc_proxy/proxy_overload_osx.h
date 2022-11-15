@@ -134,10 +134,14 @@ struct DoMallocReplacement {
         introspect.force_lock = &zone_force_lock;
         introspect.force_unlock = &zone_force_unlock;
         introspect.statistics = zone_statistics;
+    #if __MAC_OS_X_VERSION_MAX_ALLOWED >= 1060 && !defined(__POWERPC__) // zone_locked is not defined on macOS < 10.6 and any PPC
         introspect.zone_locked = &zone_locked;
+    #if __MAC_OS_X_VERSION_MAX_ALLOWED >= 1070 // Only available on macOS > 10.6
         introspect.enable_discharge_checking = &impl_zone_enable_discharge_checking;
         introspect.disable_discharge_checking = &impl_zone_disable_discharge_checking;
         introspect.discharge = &impl_zone_discharge;
+    #endif
+    #endif
 
         zone.size = &impl_malloc_usable_size;
         zone.malloc = &impl_malloc;
