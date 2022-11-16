@@ -133,4 +133,3 @@ REM Install "release with debug information" configuration
 cmake --install . --config relwithdebinfo
 REM Well done! Your installed oneTBB is in %TMP%\my_installed_onetbb
 ```
-
