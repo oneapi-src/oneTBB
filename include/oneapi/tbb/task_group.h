@@ -187,7 +187,9 @@ private:
     };
     task_group_context_version my_version;
 
-  #if defined __APPLE__ && defined __POWERPC__ // bool is 32 bits on Darwin PPC: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=107590
+  #if defined __APPLE__ && defined __ppc__
+    /** bool is 32 bits on Darwin ppc32 (but not on ppc64): https://gcc.gnu.org/bugzilla/show_bug.cgi?id=107590
+    https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/LowLevelABI/100-32-bit_PowerPC_Function_Calling_Conventions/32bitPowerPC.html. */
     //! The context traits.
     struct context_traits {
         bool fp_settings        : 4;
