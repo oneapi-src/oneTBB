@@ -135,9 +135,11 @@ struct DoMallocReplacement {
         introspect.force_unlock = &zone_force_unlock;
         introspect.statistics = zone_statistics;
         introspect.zone_locked = &zone_locked;
+#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
         introspect.enable_discharge_checking = &impl_zone_enable_discharge_checking;
         introspect.disable_discharge_checking = &impl_zone_disable_discharge_checking;
         introspect.discharge = &impl_zone_discharge;
+#endif
 
         zone.size = &impl_malloc_usable_size;
         zone.malloc = &impl_malloc;
@@ -151,7 +153,9 @@ struct DoMallocReplacement {
         zone.version = 8;
         zone.memalign = impl_memalign;
         zone.free_definite_size = &impl_free_definite_size;
+#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
         zone.pressure_relief = &impl_pressure_relief;
+#endif
 
         // make sure that default purgeable zone is initialized
         malloc_default_purgeable_zone();
