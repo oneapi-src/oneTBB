@@ -55,6 +55,7 @@ void market::destroy_client(pm_client& c) {
         mutex_type::scoped_lock lock(my_mutex);
         auto& clients = my_clients[c.priority_level()];
         auto it = std::find(clients.begin(), clients.end(), &c);
+        __TBB_ASSERT(it != clients.end(), "Destroying of an unregistered client");
         clients.erase(it);
     }
 
@@ -122,7 +123,7 @@ void market::adjust_demand(pm_client& c, int mandatory_delta, int workers_delta)
         // Update client's state
         delta = c.update_request(mandatory_delta, workers_delta);
 
-        // Update makret's state
+        // Update market's state
         my_total_demand += delta;
         my_priority_level_demand[c.priority_level()] += delta;
         my_mandatory_num_requested += mandatory_delta;

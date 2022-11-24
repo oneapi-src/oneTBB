@@ -40,7 +40,7 @@ public:
         return my_arena.priority_level();
     }
 
-    unsigned get_aba_epoch() {
+    std::uint64_t get_aba_epoch() {
         return my_aba_epoch;
     }
 

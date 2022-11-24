@@ -22,10 +22,6 @@ namespace tbb {
 namespace detail {
 namespace r1 {
 
-bool governor::does_client_join_workers(const rml::tbb_client &client) {
-    return ((const thread_dispatcher&)client).must_join_workers();
-}
-
 thread_dispatcher::thread_dispatcher(threading_control& tc, unsigned hard_limit, std::size_t stack_size)
     : my_threading_control(tc)
     , my_num_workers_hard_limit(hard_limit)
@@ -121,8 +117,8 @@ void thread_dispatcher::remove_client(thread_dispatcher_client& client) {
 
 bool thread_dispatcher::is_client_in_list(client_list_type& clients, thread_dispatcher_client* client) {
     __TBB_ASSERT(client, "Expected non-null pointer to client.");
-    for (client_list_type::iterator it = clients.begin(); it != clients.end(); ++it) {
-        if (client == &*it) {
+    for (auto& c : clients) {
+        if (client == &c) {
             return true;
         }
     }
@@ -135,8 +131,8 @@ bool thread_dispatcher::is_client_alive(thread_dispatcher_client* client) {
     }
 
     // Still cannot access internals of the client since the object itself might be destroyed.
-    for (unsigned idx = 0; idx < num_priority_levels; ++idx) {
-        if (is_client_in_list(my_client_list[idx], client)) {
+    for (auto& priority_list : my_client_list) {
+        if (is_client_in_list(priority_list, client)) {
             return true;
         }
     }

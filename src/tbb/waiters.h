@@ -34,7 +34,7 @@ public:
 
     bool pause() {
         if (my_backoff.pause()) {
-            my_arena.is_out_of_work();
+            my_arena.out_of_work();
             return true;
         }
 

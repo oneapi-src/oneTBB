@@ -27,7 +27,6 @@ class pm_client {
 public:
     pm_client(arena& a) : my_arena(a) {}
 
-    //! The index in the array of per priority lists of arenas this object is in.
     unsigned priority_level() {
         return my_arena.priority_level();
     }

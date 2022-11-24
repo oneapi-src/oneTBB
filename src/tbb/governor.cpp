@@ -22,6 +22,7 @@
 #include "arena.h"
 #include "dynamic_link.h"
 #include "concurrent_monitor.h"
+#include "thread_dispatcher.h"
 
 #include "oneapi/tbb/task_group.h"
 #include "oneapi/tbb/global_control.h"
@@ -107,6 +108,10 @@ void governor::one_time_init() {
     if ( !__TBB_InitOnce::initialization_done() ) {
         DoOneTimeInitialization();
     }
+}
+
+bool governor::does_client_join_workers(const rml::tbb_client &client) {
+    return ((const thread_dispatcher&)client).must_join_workers();
 }
 
 /*

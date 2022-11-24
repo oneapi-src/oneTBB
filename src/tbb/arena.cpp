@@ -94,7 +94,7 @@ void arena::on_thread_leaving(unsigned ref_param) {
     // (and ensuing workers migration).
     //
     // A worker that checks for work presence and transitions arena to the EMPTY
-    // state (in snapshot taking procedure arena::is_out_of_work()) updates
+    // state (in snapshot taking procedure arena::out_of_work()) updates
     // arena::my_pool_state first and only then arena::my_num_workers_requested.
     // So the check for work absence must be done against the latter field.
     //
@@ -132,18 +132,18 @@ void arena::on_thread_leaving(unsigned ref_param) {
     __TBB_ASSERT(my_references.load(std::memory_order_relaxed) >= ref_param, "broken arena reference counter");
 
     // When there is no workers someone must free arena, as
-    // without workers, no one calls is_out_of_work().
+    // without workers, no one calls out_of_work().
     if (ref_param == ref_external) {
-        is_out_of_work();
+        out_of_work();
     }
 
     threading_control* tc = my_threading_control;
-    auto tc_client_deleter = tc->prepare_client_destruction(my_tc_client);
+    auto tc_client_snapshot = tc->prepare_client_destruction(my_tc_client);
     // Release our reference to sync with destroy_client
     unsigned remaining_ref = my_references.fetch_sub(ref_param, std::memory_order_release) - ref_param;
     // do not access `this` it might be destroyed already
     if (remaining_ref == 0) {
-        if (tc->try_destroy_client(tc_client_deleter)) {
+        if (tc->try_destroy_client(tc_client_snapshot)) {
             // We are requested to destroy ourself
             free_arena();
         }
@@ -366,14 +366,11 @@ bool arena::is_arena_empty() {
     return no_available_tasks;
 }
 
-void arena::is_out_of_work() {
-    bool disable_mandatory = false;
-    bool release_workers = false;
-
+void arena::out_of_work() {
     // We should try unset my_pool_state first due to keep arena invariants in consistent state
     // Otherwise, we might have my_pool_state = false and my_mandatory_concurrency = true that is broken invariant
-    release_workers = my_pool_state.try_clear_if([this] { return is_arena_empty(); });
-    disable_mandatory = my_mandatory_concurrency.try_clear_if([this] { return !has_enqueued_tasks(); });
+    bool disable_mandatory = my_pool_state.try_clear_if([this] { return is_arena_empty(); });
+    bool release_workers = my_mandatory_concurrency.try_clear_if([this] { return !has_enqueued_tasks(); });
 
     if (disable_mandatory || release_workers) {
         int mandatory_delta = disable_mandatory ? -1 : 0;
@@ -436,7 +433,7 @@ void arena::enqueue_task(d1::task& t, d1::task_group_context& ctx, thread_data& 
     advertise_new_work<work_enqueued>();
 }
 
-arena& arena::create(threading_control* control, int num_slots, int num_reserved_slots, unsigned arena_priority_level)
+arena& arena::create(threading_control* control, unsigned num_slots, unsigned num_reserved_slots, unsigned arena_priority_level)
 {
     __TBB_ASSERT(num_slots > 0, NULL);
     __TBB_ASSERT(num_reserved_slots <= num_slots, NULL);
@@ -541,7 +538,7 @@ void task_arena_impl::initialize(d1::task_arena_base& ta) {
     __TBB_ASSERT(ta.my_arena.load(std::memory_order_relaxed) == nullptr, "Arena already initialized");
     unsigned priority_level = arena_priority_level(ta.my_priority);
     threading_control* thr_control = threading_control::register_public_reference();
-    arena& a = arena::create(thr_control, ta.my_max_concurrency, ta.my_num_reserved_slots, priority_level);
+    arena& a = arena::create(thr_control, unsigned(ta.my_max_concurrency), ta.my_num_reserved_slots, priority_level);
     ta.my_arena.store(&a, std::memory_order_release);
 #if __TBB_ARENA_BINDING
     a.my_numa_binding_observer = construct_binding_observer(

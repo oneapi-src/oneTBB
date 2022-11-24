@@ -155,13 +155,14 @@ static lifetime_control lifetime_ctl;
 static control_storage *controls[] = {&allowed_parallelism_ctl, &stack_size_ctl, &terminate_on_exception_ctl, &lifetime_ctl};
 
 void global_control_lock() {
-    for (int i = 0; i < array_length(controls); ++i) {
-        controls[i]->my_list_mutex.lock();
+    for (auto& ctl : controls) {
+        ctl->my_list_mutex.lock();
     }
 }
 
 void global_control_unlock() {
-    for (int i = array_length(controls) - 1; i >= 0; --i) {
+    int N = std::distance(std::begin(controls), std::end(controls));
+    for (int i = N - 1; i >= 0; --i) {
         controls[i]->my_list_mutex.unlock();
     }
 }

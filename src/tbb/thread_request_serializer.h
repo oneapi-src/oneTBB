@@ -47,14 +47,16 @@ private:
     static int limit_delta(int delta, int limit, int new_value);
 
     thread_dispatcher& my_thread_dispatcher;
-    int my_soft_limit{};
+    int my_soft_limit{ 0 };
     int my_total_request{ 0 };
-    static constexpr std::uint64_t pending_delta_base = 1 << 15;
     // my_pending_delta is set to pending_delta_base to have ability to hold negative values
+    // consider increase base since thead number will be bigger than 1 << 15
+    static constexpr std::uint64_t pending_delta_base = 1 << 15;
     std::atomic<std::uint64_t> my_pending_delta{ pending_delta_base };
     mutex_type my_mutex;
 };
 
+// Handles mandatory concurrency i.e. enables worker threads for enqueue tasks
 class thread_request_serializer_proxy : public thread_request_observer {
     using mutex_type = d1::rw_mutex;
 public:
@@ -64,8 +66,8 @@ public:
 
 private:
     void update(int delta) override;
-    void try_enable_mandatory_concurrency(mutex_type::scoped_lock& lock, bool should_enable);
-    void try_disable_mandatory_concurrency(mutex_type::scoped_lock& lock, bool should_disable);
+    void try_enable_mandatory_concurrency(mutex_type::scoped_lock& lock);
+    void try_disable_mandatory_concurrency(mutex_type::scoped_lock& lock);
 
     std::atomic<int> my_num_mandatory_requests{0};
     bool my_is_mandatory_concurrency_enabled{false};

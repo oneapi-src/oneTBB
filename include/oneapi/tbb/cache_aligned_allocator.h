@@ -20,8 +20,7 @@
 #include "detail/_utils.h"
 #include "detail/_namespace_injection.h"
 #include <cstdlib>
-#include <cstring>
-#include <memory>
+#include <memory> // std::unique_ptr
 #include <utility>
 
 #if __TBB_CPP17_MEMORY_RESOURCE_PRESENT

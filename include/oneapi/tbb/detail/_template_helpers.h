@@ -396,11 +396,6 @@ struct type_identity {
 template <typename T>
 using type_identity_t = typename type_identity<T>::type;
 
-template <typename T, int N>
-int array_length(const T(&)[N]) {
-    return N;
-}
-
 } // inline namespace d0
 } // namespace detail
 } // namespace tbb

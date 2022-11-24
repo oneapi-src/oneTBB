@@ -40,7 +40,6 @@ class thread_data;
 class threading_control;
 
 class threading_control_impl {
-    using global_mutex_type = d1::mutex;
 public:
     using threading_control_client = std::pair<pm_client*, thread_dispatcher_client*>;
     threading_control_impl(threading_control*);
@@ -52,15 +51,15 @@ public:
     void publish_client(threading_control_client client);
     bool check_client_priority(threading_control_client client);
 
-    struct client_deleter {
+    struct client_snapshot {
         std::uint64_t aba_epoch;
         unsigned priority_level;
         thread_dispatcher_client* my_td_client;
         pm_client* my_pm_client;
     };
 
-    client_deleter prepare_client_destruction(threading_control_client client);
-    bool try_destroy_client(client_deleter deleter);
+    client_snapshot prepare_client_destruction(threading_control_client client);
+    bool try_destroy_client(client_snapshot deleter);
 
     void register_thread(thread_data& td);
     void unregister_thread(thread_data& td);
@@ -95,7 +94,7 @@ class threading_control {
     using global_mutex_type = d1::mutex;
 public:
     using threading_control_client = threading_control_impl::threading_control_client;
-    using client_deleter = threading_control_impl::client_deleter;
+    using client_snapshot = threading_control_impl::client_snapshot;
 
     threading_control(unsigned public_ref, unsigned ref);
 
@@ -110,8 +109,8 @@ public:
     threading_control_client create_client(arena& a);
     void publish_client(threading_control_client client);
     bool check_client_priority(threading_control_client client);
-    client_deleter prepare_client_destruction(threading_control_client client);
-    bool try_destroy_client(client_deleter deleter);
+    client_snapshot prepare_client_destruction(threading_control_client client);
+    bool try_destroy_client(client_snapshot deleter);
 
     void register_thread(thread_data& td);
     void unregister_thread(thread_data& td);

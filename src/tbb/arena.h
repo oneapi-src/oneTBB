@@ -288,7 +288,7 @@ public:
     static arena& allocate_arena(threading_control* control, unsigned num_slots, unsigned num_reserved_slots,
                                   unsigned priority_level);
 
-    static arena& create(threading_control* control, int num_slots, int num_reserved_slots, unsigned arena_priority_level);
+    static arena& create(threading_control* control, unsigned num_slots, unsigned num_reserved_slots, unsigned arena_priority_level);
 
     static int unsigned num_arena_slots( unsigned num_slots ) {
         return max(2u, num_slots);
@@ -343,7 +343,7 @@ public:
 #endif
 
     //! Check if there is job anywhere in arena.
-    void is_out_of_work();
+    void out_of_work();
 
     //! enqueue a task into starvation-resistance queue
     void enqueue_task(d1::task&, d1::task_group_context&, thread_data&);

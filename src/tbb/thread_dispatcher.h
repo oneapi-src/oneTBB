@@ -39,19 +39,9 @@ public:
     thread_dispatcher(threading_control& tc, unsigned hard_limit, std::size_t stack_size);
     ~thread_dispatcher();
 
-    thread_dispatcher_client* select_next_client(thread_dispatcher_client* hint);
     thread_dispatcher_client* create_client(arena& a);
     void register_client(thread_dispatcher_client* client);
     bool try_unregister_client(thread_dispatcher_client* client, std::uint64_t aba_epoch, unsigned priority);
-    void destroy_client(thread_dispatcher_client* client);
-
-
-    void insert_client(thread_dispatcher_client& client);
-    void remove_client(thread_dispatcher_client& client);
-    bool is_client_in_list(client_list_type& clients, thread_dispatcher_client* client);
-    bool is_client_alive(thread_dispatcher_client* client);
-    thread_dispatcher_client* client_in_need(client_list_type* clients, thread_dispatcher_client* hint);
-    thread_dispatcher_client* client_in_need(thread_dispatcher_client* prev);
 
     void adjust_job_count_estimate(int delta);
     void process(job& j) override;
@@ -67,6 +57,15 @@ private:
     void cleanup(job& j) override;
     void acknowledge_close_connection() override;
     ::rml::job* create_one_job() override;
+
+    thread_dispatcher_client* select_next_client(thread_dispatcher_client* hint);
+    void destroy_client(thread_dispatcher_client* client);
+    void insert_client(thread_dispatcher_client& client);
+    void remove_client(thread_dispatcher_client& client);
+    bool is_client_in_list(client_list_type& clients, thread_dispatcher_client* client);
+    bool is_client_alive(thread_dispatcher_client* client);
+    thread_dispatcher_client* client_in_need(client_list_type* clients, thread_dispatcher_client* hint);
+    thread_dispatcher_client* client_in_need(thread_dispatcher_client* prev);
 
     friend class threading_control_impl;
     static constexpr unsigned num_priority_levels = 3;

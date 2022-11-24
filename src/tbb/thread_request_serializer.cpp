@@ -27,7 +27,7 @@ thread_request_serializer::thread_request_serializer(thread_dispatcher& td, int 
 {}
 
 void thread_request_serializer::update(int delta) {
-    constexpr std::uint64_t delta_mask = 0xFFFF;
+    constexpr std::uint64_t delta_mask = (pending_delta_base << 1) - 1;
     constexpr std::uint64_t counter_value = delta_mask + 1;
 
     int prev_pending_delta = my_pending_delta.fetch_add(counter_value + delta);
@@ -68,7 +68,7 @@ int thread_request_serializer::limit_delta(int delta, int limit, int new_value) 
         delta = delta > 0 ? limit - prev_value : new_value - limit;
         break;
     case BELOW_LIMIT:
-        // No chagnes to delta
+        // No changes to delta
         break;
     }
 
@@ -84,8 +84,14 @@ void thread_request_serializer_proxy::register_mandatory_request(int mandatory_d
         mutex_type::scoped_lock lock(my_mutex, /* is_write = */ false);
         int prev_value = my_num_mandatory_requests.fetch_add(mandatory_delta);
 
-        try_enable_mandatory_concurrency(lock, mandatory_delta > 0 && prev_value == 0);
-        try_disable_mandatory_concurrency(lock, mandatory_delta < 0 && prev_value == 1);
+        const bool should_try_enable = (mandatory_delta > 0 && prev_value == 0);
+        const bool should_try_disable = (mandatory_delta < 0 && prev_value == 1);
+
+        if (should_try_enable) {
+            try_enable_mandatory_concurrency(lock);
+        } else if (should_try_disable) {
+            try_disable_mandatory_concurrency(lock);
+        }
     }
 }
 
@@ -105,29 +111,25 @@ void thread_request_serializer_proxy::set_active_num_workers(int soft_limit) {
 
 void thread_request_serializer_proxy::update(int delta) { my_serializer.update(delta); }
 
-void thread_request_serializer_proxy::try_enable_mandatory_concurrency(mutex_type::scoped_lock& lock, bool should_enable) {
-    if (should_enable) {
-        lock.upgrade_to_writer();
-        bool still_should_enable = my_num_mandatory_requests.load(std::memory_order_relaxed) > 0 &&
-                !my_is_mandatory_concurrency_enabled && my_serializer.is_no_workers_avaliable();
+void thread_request_serializer_proxy::try_enable_mandatory_concurrency(mutex_type::scoped_lock& lock) {
+    lock.upgrade_to_writer();
+    bool still_should_enable = my_num_mandatory_requests.load(std::memory_order_relaxed) > 0 &&
+            !my_is_mandatory_concurrency_enabled && my_serializer.is_no_workers_avaliable();
 
-        if (still_should_enable) {
-            my_is_mandatory_concurrency_enabled = true;
-            my_serializer.set_active_num_workers(1);
-        }
+    if (still_should_enable) {
+        my_is_mandatory_concurrency_enabled = true;
+        my_serializer.set_active_num_workers(1);
     }
 }
 
-void thread_request_serializer_proxy::try_disable_mandatory_concurrency(mutex_type::scoped_lock& lock, bool should_disable) {
-    if (should_disable) {
-        lock.upgrade_to_writer();
-        bool still_should_disable = my_num_mandatory_requests.load(std::memory_order_relaxed) <= 0 &&
-                my_is_mandatory_concurrency_enabled && !my_serializer.is_no_workers_avaliable();
+void thread_request_serializer_proxy::try_disable_mandatory_concurrency(mutex_type::scoped_lock& lock) {
+    lock.upgrade_to_writer();
+    bool still_should_disable = my_num_mandatory_requests.load(std::memory_order_relaxed) <= 0 &&
+            my_is_mandatory_concurrency_enabled && !my_serializer.is_no_workers_avaliable();
 
-        if (still_should_disable) {
-            my_is_mandatory_concurrency_enabled = false;
-            my_serializer.set_active_num_workers(0);
-        }
+    if (still_should_disable) {
+        my_is_mandatory_concurrency_enabled = false;
+        my_serializer.set_active_num_workers(0);
     }
 }
 

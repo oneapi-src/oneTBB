@@ -245,7 +245,7 @@ class stealing_loop_backoff {
     int my_yield_count;
 public:
     // my_yield_threshold = 100 is an experimental value. Ideally, once we start calling __TBB_Yield(),
-    // the time spent spinning before calling is_out_of_work() should be approximately
+    // the time spent spinning before calling out_of_work() should be approximately
     // the time it takes for a thread to be woken up. Doing so would guarantee that we do
     // no worse than 2x the optimal spin time. Or perhaps a time-slice quantum is the right amount.
     stealing_loop_backoff(int num_workers, int yields_multiplier)

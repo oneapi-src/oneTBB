@@ -115,12 +115,12 @@ threading_control_impl::threading_control_client threading_control_impl::create_
     return {pm_client, td_client};
 }
 
-threading_control_impl::client_deleter threading_control_impl::prepare_client_destruction(threading_control_impl::threading_control_client client) {
+threading_control_impl::client_snapshot threading_control_impl::prepare_client_destruction(threading_control_impl::threading_control_client client) {
     thread_dispatcher_client* td_client = client.second;
     return {td_client->get_aba_epoch(), td_client->priority_level(), td_client, static_cast<pm_client*>(client.first)};
 }
 
-bool threading_control_impl::try_destroy_client(threading_control_impl::client_deleter deleter) {
+bool threading_control_impl::try_destroy_client(threading_control_impl::client_snapshot deleter) {
     if (my_thread_dispatcher->try_unregister_client(deleter.my_td_client, deleter.aba_epoch, deleter.priority_level)) {
         my_permit_manager->destroy_client(*deleter.my_pm_client);
         return true;
@@ -269,7 +269,7 @@ bool threading_control::release(bool is_public, bool blocking_terminate) {
     }
 
     if (do_release) {
-        __TBB_ASSERT(!my_public_ref_count.load(std::memory_order_relaxed), "No public references remain if we remove the threading control.");
+        __TBB_ASSERT(!my_public_ref_count.load(std::memory_order_relaxed), "No public references must remain if we remove the threading control.");
         // inform RML that blocking termination is required
         my_pimpl->release(blocking_terminate);
         return blocking_terminate;
@@ -316,11 +316,11 @@ bool threading_control::check_client_priority(threading_control::threading_contr
     return my_pimpl->check_client_priority(client);
 }
 
-threading_control::client_deleter threading_control::prepare_client_destruction(threading_control::threading_control_client client) {
+threading_control::client_snapshot threading_control::prepare_client_destruction(threading_control::threading_control_client client) {
     return my_pimpl->prepare_client_destruction(client);
 }
 
-bool threading_control::try_destroy_client(threading_control::client_deleter deleter) {
+bool threading_control::try_destroy_client(threading_control::client_snapshot deleter) {
     bool res = my_pimpl->try_destroy_client(deleter);
     if (res) {
         release(/*public = */ false, /*blocking_terminate = */ false);

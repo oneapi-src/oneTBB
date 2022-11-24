@@ -38,12 +38,12 @@ public:
     virtual void adjust_demand(pm_client&, int mandatory_delta, int workers_delta) = 0;
 
     void set_thread_request_observer(thread_request_observer& tr_observer) {
-        __TBB_ASSERT(!my_thread_request_observer, nullptr);
+        __TBB_ASSERT(!my_thread_request_observer, "set_thread_request_observer was called already?");
         my_thread_request_observer = &tr_observer;
     }
 protected:
     void notify_thread_request(int delta) {
-        __TBB_ASSERT(my_thread_request_observer, nullptr);
+        __TBB_ASSERT(my_thread_request_observer, "set_thread_request_observer was not called?");
         if (delta) {
             my_thread_request_observer->update(delta);
         }
