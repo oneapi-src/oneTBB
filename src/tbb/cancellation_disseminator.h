@@ -53,8 +53,8 @@ public:
         ++the_context_state_propagation_epoch;
         // Propagate to all workers and external threads and sync up their local epochs with the global one
         // The whole propagation sequence is locked, thus no contention is expected
-        for (thread_data_list_type::iterator it = my_threads_list.begin(); it != my_threads_list.end(); it++) {
-            it->propagate_task_group_state(mptr_state, src, new_state);
+        for (auto& thr_data : my_threads_list) {
+            thr_data.propagate_task_group_state(mptr_state, src, new_state);
         }
 
         return true;

@@ -62,18 +62,18 @@ unsigned threading_control_impl::calc_workers_soft_limit(unsigned workers_soft_l
     return workers_soft_limit;
 }
 
-d1::cache_aligned_unique_ptr<permit_manager> threading_control_impl::make_permit_manager(unsigned workers_soft_limit) {
-    return d1::make_cache_aligned_unique<market>(workers_soft_limit);
+cache_aligned_unique_ptr<permit_manager> threading_control_impl::make_permit_manager(unsigned workers_soft_limit) {
+    return make_cache_aligned_unique<market>(workers_soft_limit);
 }
 
-d1::cache_aligned_unique_ptr<thread_dispatcher> threading_control_impl::make_thread_dispatcher(threading_control& tc,
+cache_aligned_unique_ptr<thread_dispatcher> threading_control_impl::make_thread_dispatcher(threading_control& tc,
                                                                                                unsigned workers_soft_limit,
                                                                                                unsigned workers_hard_limit)
 {
     stack_size_type stack_size = global_control_active_value_unsafe(global_control::thread_stack_size);
 
-    d1::cache_aligned_unique_ptr<thread_dispatcher> td =
-        d1::make_cache_aligned_unique<thread_dispatcher>(tc, workers_hard_limit, stack_size);
+    cache_aligned_unique_ptr<thread_dispatcher> td =
+        make_cache_aligned_unique<thread_dispatcher>(tc, workers_hard_limit, stack_size);
     // This check relies on the fact that for shared RML default_concurrency == max_concurrency
     if (!governor::UsePrivateRML && td->my_server->default_concurrency() < workers_soft_limit) {
         runtime_warning("RML might limit the number of workers to %u while %u is requested.\n",
@@ -90,11 +90,11 @@ threading_control_impl::threading_control_impl(threading_control* tc) {
     my_permit_manager = make_permit_manager(workers_soft_limit);
     my_thread_dispatcher = make_thread_dispatcher(*tc, workers_soft_limit, workers_hard_limit);
     my_thread_request_serializer =
-        d1::make_cache_aligned_unique<thread_request_serializer_proxy>(*my_thread_dispatcher, workers_soft_limit);
+        make_cache_aligned_unique<thread_request_serializer_proxy>(*my_thread_dispatcher, workers_soft_limit);
     my_permit_manager->set_thread_request_observer(*my_thread_request_serializer);
 
-    my_cancellation_disseminator = d1::make_cache_aligned_unique<cancellation_disseminator>();
-    my_waiting_threads_monitor = d1::make_cache_aligned_unique<thread_control_monitor>();
+    my_cancellation_disseminator = make_cache_aligned_unique<cancellation_disseminator>();
+    my_waiting_threads_monitor = make_cache_aligned_unique<thread_control_monitor>();
 }
 
 void threading_control_impl::release(bool blocking_terminate) {
@@ -219,7 +219,7 @@ threading_control* threading_control::create_threading_control() {
 
         // POSSIBLE MEMORY LEAK THERE!!!!!!!
         thr_control = new (cache_aligned_allocate(sizeof(threading_control))) threading_control(1, 1);
-        thr_control->my_pimpl = d1::make_cache_aligned_unique<threading_control_impl>(thr_control);
+        thr_control->my_pimpl = make_cache_aligned_unique<threading_control_impl>(thr_control);
 
         __TBB_InitOnce::add_ref();
 
@@ -235,7 +235,7 @@ threading_control* threading_control::create_threading_control() {
 }
 
 void threading_control::destroy () {
-    d1::cache_aligned_deleter deleter;
+    cache_aligned_deleter deleter;
     deleter(this);
     __TBB_InitOnce::remove_ref();
 }

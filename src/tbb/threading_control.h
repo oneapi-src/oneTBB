@@ -27,8 +27,7 @@
 #include "thread_dispatcher.h"
 #include "cancellation_disseminator.h"
 #include "thread_request_serializer.h"
-
-#include <memory>
+#include "scheduler_common.h"
 
 namespace tbb {
 namespace detail {
@@ -77,16 +76,16 @@ public:
 private:
     static unsigned calc_workers_soft_limit(unsigned workers_soft_limit, unsigned workers_hard_limit);
     static std::pair<unsigned, unsigned> calculate_workers_limits();
-    static d1::cache_aligned_unique_ptr<permit_manager> make_permit_manager(unsigned workers_soft_limit);
-    static d1::cache_aligned_unique_ptr<thread_dispatcher> make_thread_dispatcher(threading_control& control,
+    static cache_aligned_unique_ptr<permit_manager> make_permit_manager(unsigned workers_soft_limit);
+    static cache_aligned_unique_ptr<thread_dispatcher> make_thread_dispatcher(threading_control& control,
                                                                                   unsigned workers_soft_limit,
                                                                                   unsigned workers_hard_limit);
 
-    d1::cache_aligned_unique_ptr<permit_manager> my_permit_manager{nullptr};
-    d1::cache_aligned_unique_ptr<thread_dispatcher> my_thread_dispatcher{nullptr};
-    d1::cache_aligned_unique_ptr<thread_request_serializer_proxy> my_thread_request_serializer{nullptr};
-    d1::cache_aligned_unique_ptr<cancellation_disseminator> my_cancellation_disseminator{nullptr};
-    d1::cache_aligned_unique_ptr<thread_control_monitor> my_waiting_threads_monitor{nullptr};
+    cache_aligned_unique_ptr<permit_manager> my_permit_manager{nullptr};
+    cache_aligned_unique_ptr<thread_dispatcher> my_thread_dispatcher{nullptr};
+    cache_aligned_unique_ptr<thread_request_serializer_proxy> my_thread_request_serializer{nullptr};
+    cache_aligned_unique_ptr<cancellation_disseminator> my_cancellation_disseminator{nullptr};
+    cache_aligned_unique_ptr<thread_control_monitor> my_waiting_threads_monitor{nullptr};
 };
 
 
@@ -141,7 +140,7 @@ private:
     //! Mutex guarding creation/destruction of g_threading_control, insertions/deletions in my_arenas, and cancellation propagation
     static global_mutex_type g_threading_control_mutex;
 
-    d1::cache_aligned_unique_ptr<threading_control_impl> my_pimpl{nullptr};
+    cache_aligned_unique_ptr<threading_control_impl> my_pimpl{nullptr};
     //! Count of external threads attached
     std::atomic<unsigned> my_public_ref_count{0};
     //! Reference count controlling threading_control object lifetime

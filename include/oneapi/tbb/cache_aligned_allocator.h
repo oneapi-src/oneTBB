@@ -20,7 +20,6 @@
 #include "detail/_utils.h"
 #include "detail/_namespace_injection.h"
 #include <cstdlib>
-#include <memory> // std::unique_ptr
 #include <utility>
 
 #if __TBB_CPP17_MEMORY_RESOURCE_PRESENT
@@ -174,22 +173,6 @@ private:
 };
 
 #endif // __TBB_CPP17_MEMORY_RESOURCE_PRESENT
-
-struct cache_aligned_deleter {
-    template <typename T>
-    void operator() (T* ptr) const {
-        ptr->~T();
-        cache_aligned_deallocate(ptr);
-    }
-};
-
-template <typename T>
-using cache_aligned_unique_ptr = std::unique_ptr<T, cache_aligned_deleter>;
-
-template <typename T, typename ...Args>
-cache_aligned_unique_ptr<T> make_cache_aligned_unique(Args&& ...args) {
-    return cache_aligned_unique_ptr<T>(new (r1::cache_aligned_allocate(sizeof(T))) T(std::forward<Args>(args)...));
-}
 
 } // namespace d1
 } // namespace detail
