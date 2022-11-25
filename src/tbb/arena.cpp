@@ -369,8 +369,8 @@ bool arena::is_arena_empty() {
 void arena::out_of_work() {
     // We should try unset my_pool_state first due to keep arena invariants in consistent state
     // Otherwise, we might have my_pool_state = false and my_mandatory_concurrency = true that is broken invariant
-    bool disable_mandatory = my_pool_state.try_clear_if([this] { return is_arena_empty(); });
-    bool release_workers = my_mandatory_concurrency.try_clear_if([this] { return !has_enqueued_tasks(); });
+    bool disable_mandatory = my_mandatory_concurrency.try_clear_if([this] { return !has_enqueued_tasks(); });
+    bool release_workers = my_pool_state.try_clear_if([this] { return is_arena_empty(); });
 
     if (disable_mandatory || release_workers) {
         int mandatory_delta = disable_mandatory ? -1 : 0;

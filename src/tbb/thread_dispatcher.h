@@ -44,6 +44,7 @@ public:
     bool try_unregister_client(thread_dispatcher_client* client, std::uint64_t aba_epoch, unsigned priority);
 
     void adjust_job_count_estimate(int delta);
+    void release(bool blocking_terminate);
     void process(job& j) override;
     //! Used when RML asks for join mode during workers termination.
     bool must_join_workers() const;

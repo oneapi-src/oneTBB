@@ -81,6 +81,7 @@ private:
                                                                                   unsigned workers_soft_limit,
                                                                                   unsigned workers_hard_limit);
 
+    // TODO: Consider allocation one chank of memory and construct objects on it
     cache_aligned_unique_ptr<permit_manager> my_permit_manager{nullptr};
     cache_aligned_unique_ptr<thread_dispatcher> my_thread_dispatcher{nullptr};
     cache_aligned_unique_ptr<thread_request_serializer_proxy> my_thread_request_serializer{nullptr};
@@ -94,8 +95,6 @@ class threading_control {
 public:
     using threading_control_client = threading_control_impl::threading_control_client;
     using client_snapshot = threading_control_impl::client_snapshot;
-
-    threading_control(unsigned public_ref, unsigned ref);
 
     static threading_control* register_public_reference();
     static bool unregister_public_reference(bool blocking_terminate);
@@ -124,6 +123,7 @@ public:
     thread_control_monitor& get_waiting_threads_monitor();
 
 private:
+    threading_control(unsigned public_ref, unsigned ref);
     void add_ref(bool is_public);
     bool remove_ref(bool is_public);
 

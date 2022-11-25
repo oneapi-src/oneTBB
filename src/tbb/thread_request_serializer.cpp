@@ -35,10 +35,9 @@ void thread_request_serializer::update(int delta) {
     // There is a pseudo request aggregator, so only thread that see pending_delta_base in my_pending_delta
     // Will enter to critical section and call adjust_job_count_estimate
     if (prev_pending_delta == pending_delta_base) {
-        mutex_type::scoped_lock lock(my_mutex);
         delta = int(my_pending_delta.exchange(pending_delta_base) & delta_mask) - int(pending_delta_base);
+        mutex_type::scoped_lock lock(my_mutex);
         my_total_request += delta;
-
         delta = limit_delta(delta, my_soft_limit, my_total_request);
         my_thread_dispatcher.adjust_job_count_estimate(delta);
     }
@@ -52,27 +51,29 @@ void thread_request_serializer::set_active_num_workers(int soft_limit) {
     my_soft_limit = soft_limit;
 }
 
-int thread_request_serializer::limit_delta(int delta, int limit, int new_value) {
-    int prev_value = new_value - delta;
-
+/*
+    This method can be described with such pseudocode:
     bool above_limit = prev_value >= limit && new_value >= limit;
     bool below_limit = prev_value <= limit && new_value <= limit;
     enum request_type { ABOVE_LIMIT, CROSS_LIMIT, BELOW_LIMIT };
-    request_type request = above_limit ? ABOVE_LIMIT : below_limit ? BELOW_LIMIT : CROSS_LIMIT;
+    request = above_limit ? ABOVE_LIMIT : below_limit ? BELOW_LIMIT : CROSS_LIMIT;
 
     switch (request) {
     case ABOVE_LIMIT:
         delta = 0;
-        break;
     case CROSS_LIMIT:
         delta = delta > 0 ? limit - prev_value : new_value - limit;
-        break;
     case BELOW_LIMIT:
-        // No changes to delta
-        break;
+        // No chagnes to delta
     }
+*/
+int thread_request_serializer::limit_delta(int delta, int limit, int new_value) {
+   int prev_value = new_value - delta;
 
-    return delta;
+    // actual new_value and prev_value cannot exceed the limit
+    new_value = std::min(limit, new_value);
+    prev_value = std::min(limit, prev_value);
+    return new_value - prev_value;
 }
 
 

@@ -65,10 +65,9 @@ bool thread_dispatcher::try_unregister_client(thread_dispatcher_client* client, 
     // we hold reference to the server, so market cannot be destroyed at any moment here
     __TBB_ASSERT(!is_poisoned(my_server), nullptr);
     my_list_mutex.lock();
-    client_list_type::iterator it = my_client_list[priority].begin();
-    for ( ; it != my_client_list[priority].end(); ++it ) {
-        if (client == &*it) {
-            if (it->get_aba_epoch() == aba_epoch) {
+    for (auto& it : my_client_list[priority]) {
+        if (client == &it) {
+            if (it.get_aba_epoch() == aba_epoch) {
                 // Client is alive
                 // Acquire my_references to sync with threads that just left the arena
                 // Pay attention that references should be read before workers_requested because
@@ -174,6 +173,11 @@ thread_dispatcher_client* thread_dispatcher::client_in_need(thread_dispatcher_cl
 
 void thread_dispatcher::adjust_job_count_estimate(int delta) {
     my_server->adjust_job_count_estimate(delta);
+}
+
+void thread_dispatcher::release(bool blocking_terminate) {
+    my_join_workers = blocking_terminate;
+    my_server->request_close_connection();
 }
 
 void thread_dispatcher::process(job& j) {

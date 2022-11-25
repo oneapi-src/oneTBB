@@ -98,8 +98,7 @@ threading_control_impl::threading_control_impl(threading_control* tc) {
 }
 
 void threading_control_impl::release(bool blocking_terminate) {
-    my_thread_dispatcher->my_join_workers = blocking_terminate;
-    my_thread_dispatcher->my_server->request_close_connection();
+    my_thread_dispatcher->release(blocking_terminate);
 }
 
 void threading_control_impl::set_active_num_workers(unsigned soft_limit) {
@@ -117,7 +116,7 @@ threading_control_impl::threading_control_client threading_control_impl::create_
 
 threading_control_impl::client_snapshot threading_control_impl::prepare_client_destruction(threading_control_impl::threading_control_client client) {
     thread_dispatcher_client* td_client = client.second;
-    return {td_client->get_aba_epoch(), td_client->priority_level(), td_client, static_cast<pm_client*>(client.first)};
+    return {td_client->get_aba_epoch(), td_client->priority_level(), td_client, client.first};
 }
 
 bool threading_control_impl::try_destroy_client(threading_control_impl::client_snapshot deleter) {
@@ -129,7 +128,7 @@ bool threading_control_impl::try_destroy_client(threading_control_impl::client_s
 }
 
 void threading_control_impl::publish_client(threading_control_impl::threading_control_client client) {
-    my_permit_manager->register_client(static_cast<pm_client*>(client.first));
+    my_permit_manager->register_client(client.first);
     my_thread_dispatcher->register_client(client.second);
 }
 
@@ -155,11 +154,11 @@ unsigned threading_control_impl::max_num_workers() {
 }
 
 bool threading_control_impl::check_client_priority(threading_control_impl::threading_control_client client) {
-    return static_cast<pm_client*>(client.first)->is_top_priority();
+    return client.first->is_top_priority();
 }
 
 void threading_control_impl::adjust_demand(threading_control_impl::threading_control_client tc_client, int mandatory_delta, int workers_delta) {
-    pm_client& c = *static_cast<pm_client*>(tc_client.first);
+    pm_client& c = *tc_client.first;
     my_thread_request_serializer->register_mandatory_request(mandatory_delta);
     my_permit_manager->adjust_demand(c, mandatory_delta, workers_delta);
 }
