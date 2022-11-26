@@ -292,7 +292,7 @@ public:
         if( sz >= mask ) { // TODO: add custom load_factor
             segment_index_type new_seg = tbb::detail::log2( mask+1 ); //optimized segment_index_of
             __TBB_ASSERT( is_valid(my_table[new_seg-1].load(std::memory_order_relaxed)), "new allocations must not publish new mask until segment has allocated");
-            static const segment_ptr_type is_allocating = segment_ptr_type(2);;
+            static const segment_ptr_type is_allocating = segment_ptr_type(2);
             segment_ptr_type disabled = nullptr;
             if (!(my_table[new_seg].load(std::memory_order_acquire))
                 && my_table[new_seg].compare_exchange_strong(disabled, is_allocating))
