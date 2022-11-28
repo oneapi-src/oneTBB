@@ -132,7 +132,7 @@ private:
 
     bool release(bool is_public, bool blocking_terminate);
     void wait_last_reference(global_mutex_type::scoped_lock& lock);
-    void destroy ();
+    void destroy();
 
     friend class thread_dispatcher;
 

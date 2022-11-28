@@ -51,23 +51,22 @@ void thread_request_serializer::set_active_num_workers(int soft_limit) {
     my_soft_limit = soft_limit;
 }
 
-/*
-    This method can be described with such pseudocode:
-    bool above_limit = prev_value >= limit && new_value >= limit;
-    bool below_limit = prev_value <= limit && new_value <= limit;
-    enum request_type { ABOVE_LIMIT, CROSS_LIMIT, BELOW_LIMIT };
-    request = above_limit ? ABOVE_LIMIT : below_limit ? BELOW_LIMIT : CROSS_LIMIT;
-
-    switch (request) {
-    case ABOVE_LIMIT:
-        delta = 0;
-    case CROSS_LIMIT:
-        delta = delta > 0 ? limit - prev_value : new_value - limit;
-    case BELOW_LIMIT:
-        // No chagnes to delta
-    }
-*/
 int thread_request_serializer::limit_delta(int delta, int limit, int new_value) {
+    // This method can be described with such pseudocode:
+    // bool above_limit = prev_value >= limit && new_value >= limit;
+    // bool below_limit = prev_value <= limit && new_value <= limit;
+    // enum request_type { ABOVE_LIMIT, CROSS_LIMIT, BELOW_LIMIT };
+    // request = above_limit ? ABOVE_LIMIT : below_limit ? BELOW_LIMIT : CROSS_LIMIT;
+
+    // switch (request) {
+    // case ABOVE_LIMIT:
+    //     delta = 0;
+    // case CROSS_LIMIT:
+    //     delta = delta > 0 ? limit - prev_value : new_value - limit;
+    // case BELOW_LIMIT:
+    //     // No changes to delta
+    // }
+
    int prev_value = new_value - delta;
 
     // actual new_value and prev_value cannot exceed the limit
@@ -85,8 +84,8 @@ void thread_request_serializer_proxy::register_mandatory_request(int mandatory_d
         mutex_type::scoped_lock lock(my_mutex, /* is_write = */ false);
         int prev_value = my_num_mandatory_requests.fetch_add(mandatory_delta);
 
-        const bool should_try_enable = (mandatory_delta > 0 && prev_value == 0);
-        const bool should_try_disable = (mandatory_delta < 0 && prev_value == 1);
+        const bool should_try_enable = mandatory_delta > 0 && prev_value == 0;
+        const bool should_try_disable = mandatory_delta < 0 && prev_value == 1;
 
         if (should_try_enable) {
             try_enable_mandatory_concurrency(lock);
