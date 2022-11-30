@@ -15,7 +15,7 @@
 */
 
 #include "thread_request_serializer.h"
-
+#include <algorithm> // std::min
 
 namespace tbb {
 namespace detail {
