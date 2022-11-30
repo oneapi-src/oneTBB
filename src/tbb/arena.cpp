@@ -383,7 +383,7 @@ void arena::out_of_work() {
     }
 }
 
-bool arena::is_top_priority() {
+bool arena::is_top_priority() const {
     return my_threading_control->check_client_priority(my_tc_client);
 }
 
