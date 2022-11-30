@@ -140,7 +140,7 @@ void threading_control_impl::unregister_thread(thread_data& td) {
 }
 
 void threading_control_impl::propagate_task_group_state(std::atomic<uint32_t> d1::task_group_context::*mptr_state,
-                                d1::task_group_context& src, uint32_t new_state)
+                                                        d1::task_group_context& src, uint32_t new_state)
 {
     my_cancellation_disseminator->propagate_task_group_state(mptr_state, src, new_state);
 }
@@ -169,6 +169,7 @@ thread_control_monitor& threading_control_impl::get_waiting_threads_monitor() {
 
 // ---------------------------------------- threading_control -------------------------------------------------------------------
 
+// Defined in global_control.cpp
 void global_control_lock();
 void global_control_unlock();
 

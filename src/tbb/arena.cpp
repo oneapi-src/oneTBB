@@ -277,7 +277,6 @@ arena::arena(threading_control* control, unsigned num_slots, unsigned num_reserv
     my_critical_task_stream.initialize(my_num_slots);
 #endif
     my_mandatory_requests = 0;
-    my_mandatory_concurrency.clear();
 }
 
 arena& arena::allocate_arena(threading_control* control, unsigned num_slots, unsigned num_reserved_slots,

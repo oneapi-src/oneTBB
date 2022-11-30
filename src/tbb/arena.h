@@ -376,11 +376,11 @@ public:
 
     bool has_request() { return my_total_num_workers_requested; }
 
-    unsigned references() { return my_references.load(std::memory_order_acquire); }
+    unsigned references() const { return my_references.load(std::memory_order_acquire); }
 
-    bool is_arena_workerless() { return my_max_num_workers == 0; }
+    bool is_arena_workerless() const { return my_max_num_workers == 0; }
 
-    bool is_top_priority();
+    bool is_top_priority() const;
 
     bool try_join();
 
