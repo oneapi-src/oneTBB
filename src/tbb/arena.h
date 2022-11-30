@@ -178,8 +178,8 @@ public:
     void clear() {
         my_state.store(UNSET, std::memory_order_release);
     }
-    bool test() {
-        return my_state.load(std::memory_order_acquire) != UNSET;
+    bool test(std::memory_order order = std::memory_order_acquire) {
+        return my_state.load(order) != UNSET;
     }
 };
 
@@ -374,7 +374,7 @@ public:
 
     unsigned priority_level() { return my_priority_level; }
 
-    int has_request() { return my_total_num_workers_requested; }
+    bool has_request() { return my_total_num_workers_requested; }
 
     unsigned references() { return my_references.load(std::memory_order_acquire); }
 
@@ -386,7 +386,7 @@ public:
 
     void set_allotment(unsigned allotment);
 
-    std::pair<int, int> update_request(int mandatory_delta, int workers_delta);
+    std::pair</*min workers = */ int, /*max workers = */ int> update_request(int mandatory_delta, int workers_delta);
 
     /** Must be the last data field */
     arena_slot my_slots[1];

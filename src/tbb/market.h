@@ -36,7 +36,7 @@ public:
 
     pm_client* create_client(arena& a) override;
     void register_client(pm_client* client) override;
-    void destroy_client(pm_client& c) override;
+    void unregister_and_destroy_client(pm_client& c) override;
 
     //! Request that arena's need in workers should be adjusted.
     void adjust_demand(pm_client&, int mandatory_delta, int workers_delta) override;
@@ -54,7 +54,7 @@ private:
     mutex_type my_mutex;
 
     //! Current application-imposed limit on the number of workers
-    int my_num_workers_soft_limit{0};
+    int my_num_workers_soft_limit;
 
     //! Number of workers that were requested by all arenas on all priority levels
     int my_total_demand{0};

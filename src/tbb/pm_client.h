@@ -40,12 +40,10 @@ public:
     }
 
     int min_workers() const {
-        __TBB_ASSERT(my_min_workers >= 0, nullptr);
         return my_min_workers;
     }
 
     int max_workers() const {
-        __TBB_ASSERT(my_max_workers >= 0, nullptr);
         return my_max_workers;
     }
 

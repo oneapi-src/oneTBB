@@ -50,7 +50,7 @@ void market::register_client(pm_client* c) {
     my_clients[c->priority_level()].push_back(c);
 }
 
-void market::destroy_client(pm_client& c) {
+void market::unregister_and_destroy_client(pm_client& c) {
     {
         mutex_type::scoped_lock lock(my_mutex);
         auto& clients = my_clients[c.priority_level()];

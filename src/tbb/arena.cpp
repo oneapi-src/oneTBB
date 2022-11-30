@@ -298,7 +298,7 @@ void arena::free_arena () {
     __TBB_ASSERT( is_alive(my_guard), nullptr);
     __TBB_ASSERT( !my_references.load(std::memory_order_relaxed), "There are threads in the dying arena" );
     __TBB_ASSERT( !my_total_num_workers_requested && !my_num_workers_allotted, "Dying arena requests workers" );
-    __TBB_ASSERT( my_pool_state.test() == false || !my_max_num_workers, "Inconsistent state of a dying arena" );
+    __TBB_ASSERT( my_pool_state.test(std::memory_order_relaxed) == false || !my_max_num_workers, "Inconsistent state of a dying arena" );
 #if __TBB_ARENA_BINDING
     if (my_numa_binding_observer != nullptr) {
         destroy_binding_observer(my_numa_binding_observer);
@@ -329,7 +329,7 @@ void arena::free_arena () {
 
     void* storage  = &mailbox(my_num_slots-1);
     __TBB_ASSERT( my_references.load(std::memory_order_relaxed) == 0, nullptr);
-    __TBB_ASSERT( my_pool_state.test() == false|| !my_max_num_workers, nullptr);
+    __TBB_ASSERT( my_pool_state.test(std::memory_order_relaxed) == false|| !my_max_num_workers, nullptr);
     this->~arena();
 #if TBB_USE_ASSERT > 1
     std::memset( storage, 0, allocation_size(my_num_slots) );

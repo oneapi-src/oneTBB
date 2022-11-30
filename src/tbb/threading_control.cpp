@@ -121,7 +121,7 @@ threading_control_impl::client_snapshot threading_control_impl::prepare_client_d
 
 bool threading_control_impl::try_destroy_client(threading_control_impl::client_snapshot deleter) {
     if (my_thread_dispatcher->try_unregister_client(deleter.my_td_client, deleter.aba_epoch, deleter.priority_level)) {
-        my_permit_manager->destroy_client(*deleter.my_pm_client);
+        my_permit_manager->unregister_and_destroy_client(*deleter.my_pm_client);
         return true;
     }
     return false;

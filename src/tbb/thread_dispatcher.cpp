@@ -96,6 +96,7 @@ void thread_dispatcher::destroy_client(thread_dispatcher_client* client) {
     cache_aligned_deallocate(client);
 }
 
+// Should be called under lock
 void thread_dispatcher::insert_client(thread_dispatcher_client& client) {
     __TBB_ASSERT(client.priority_level() < num_priority_levels, nullptr);
     my_client_list[client.priority_level()].push_front(client);
@@ -104,6 +105,7 @@ void thread_dispatcher::insert_client(thread_dispatcher_client& client) {
     my_next_client = select_next_client(my_next_client);
 }
 
+// Should be called under lock
 void thread_dispatcher::remove_client(thread_dispatcher_client& client) {
     __TBB_ASSERT(client.priority_level() < num_priority_levels, nullptr);
     my_client_list[client.priority_level()].remove(client);

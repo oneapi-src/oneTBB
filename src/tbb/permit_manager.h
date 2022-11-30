@@ -32,7 +32,7 @@ public:
     virtual ~permit_manager() {}
     virtual pm_client* create_client(arena& a) = 0;
     virtual void register_client(pm_client* client) = 0;
-    virtual void destroy_client(pm_client& c) = 0;
+    virtual void unregister_and_destroy_client(pm_client& c) = 0;
 
     virtual void set_active_num_workers(int soft_limit) = 0;
     virtual void adjust_demand(pm_client&, int mandatory_delta, int workers_delta) = 0;
