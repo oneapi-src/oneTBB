@@ -2927,6 +2927,7 @@ extern "C" void __TBB_mallocProcessShutdownNotification(bool windows_process_dyi
 #endif
     if (!usedBySrcIncluded)
         MALLOC_ITT_FINI_ITTLIB();
+        MALLOC_ITT_RELEASE_RESOURCES();
 }
 
 extern "C" void * scalable_malloc(size_t size)
