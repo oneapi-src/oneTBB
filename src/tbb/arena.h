@@ -324,7 +324,7 @@ public:
         return num_workers_active() > my_num_workers_allotted.load(std::memory_order_relaxed);
     }
 
-    void request_workers(int mandatory_delta, int workers_delta);
+    void request_workers(int mandatory_delta, int workers_delta, bool wakeup_threads = false);
 
     //! If necessary, raise a flag that there is new job in arena.
     template<arena::new_work_type work_type> void advertise_new_work();
@@ -422,7 +422,9 @@ void arena::advertise_new_work() {
             // Set workers_delta to 1 to keep arena invariants consistent
             workers_delta = 1;
         }
-        request_workers(mandatory_delta, workers_delta);
+
+        bool wakeup_workers = is_mandatory_needed || are_workers_needed;
+        request_workers(mandatory_delta, workers_delta, wakeup_workers);
     }
 }
 

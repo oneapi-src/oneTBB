@@ -340,10 +340,10 @@ bool arena::has_enqueued_tasks() {
     return !my_fifo_task_stream.empty();
 }
 
-void arena::request_workers(int mandatory_delta, int workers_delta) {
+void arena::request_workers(int mandatory_delta, int workers_delta, bool wakeup_threads) {
     my_threading_control->adjust_demand(my_tc_client, mandatory_delta, workers_delta);
 
-    if (mandatory_delta > 0 || workers_delta > 0) {
+    if (wakeup_threads) {
         // Notify all sleeping threads that work has appeared in the arena.
         get_waiting_threads_monitor().notify([&] (market_context context) {
             return this == context.my_arena_addr;
