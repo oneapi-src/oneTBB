@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-list(APPEND HWLOC_REQUIRED_VERSIONS 1_11 2 2_5)
+list(APPEND HWLOC_REQUIRED_VERSIONS 1_11 2 2_5 2_5_static)
 
 foreach(hwloc_version ${HWLOC_REQUIRED_VERSIONS})
     if (NOT WIN32)
