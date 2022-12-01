@@ -65,7 +65,6 @@ private:
     void destroy_client(thread_dispatcher_client* client);
     void insert_client(thread_dispatcher_client& client);
     void remove_client(thread_dispatcher_client& client);
-    bool is_client_in_list(client_list_type& clients, thread_dispatcher_client* client);
     bool is_client_alive(thread_dispatcher_client* client);
     thread_dispatcher_client* client_in_need(client_list_type* clients, thread_dispatcher_client* hint);
     thread_dispatcher_client* client_in_need(thread_dispatcher_client* prev);

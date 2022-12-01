@@ -17,7 +17,6 @@
 #include "thread_dispatcher.h"
 #include "threading_control.h"
 
-
 namespace tbb {
 namespace detail {
 namespace r1 {
@@ -116,16 +115,6 @@ void thread_dispatcher::remove_client(thread_dispatcher_client& client) {
     my_next_client = select_next_client(my_next_client);
 }
 
-bool thread_dispatcher::is_client_in_list(client_list_type& clients, thread_dispatcher_client* client) {
-    __TBB_ASSERT(client, "Expected non-null pointer to client.");
-    for (auto& c : clients) {
-        if (client == &c) {
-            return true;
-        }
-    }
-    return false;
-}
-
 bool thread_dispatcher::is_client_alive(thread_dispatcher_client* client) {
     if (!client) {
         return false;
@@ -133,8 +122,10 @@ bool thread_dispatcher::is_client_alive(thread_dispatcher_client* client) {
 
     // Still cannot access internals of the client since the object itself might be destroyed.
     for (auto& priority_list : my_client_list) {
-        if (is_client_in_list(priority_list, client)) {
-            return true;
+        for (auto& c : priority_list) {
+            if (client == &c) {
+                return true;
+            }
         }
     }
     return false;
