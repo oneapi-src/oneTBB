@@ -20,6 +20,7 @@
 #include "oneapi/tbb/mutex.h"
 #include "oneapi/tbb/global_control.h"
 
+#include "threading_control_client.h"
 #include "intrusive_list.h"
 #include "main.h"
 #include "permit_manager.h"
@@ -40,7 +41,6 @@ class threading_control;
 
 class threading_control_impl {
 public:
-    using threading_control_client = std::pair<pm_client*, thread_dispatcher_client*>;
     threading_control_impl(threading_control*);
 
 public:
@@ -78,8 +78,8 @@ private:
     static std::pair<unsigned, unsigned> calculate_workers_limits();
     static cache_aligned_unique_ptr<permit_manager> make_permit_manager(unsigned workers_soft_limit);
     static cache_aligned_unique_ptr<thread_dispatcher> make_thread_dispatcher(threading_control& control,
-                                                                                  unsigned workers_soft_limit,
-                                                                                  unsigned workers_hard_limit);
+                                                                              unsigned workers_soft_limit,
+                                                                              unsigned workers_hard_limit);
 
     // TODO: Consider allocation one chank of memory and construct objects on it
     cache_aligned_unique_ptr<permit_manager> my_permit_manager{nullptr};
@@ -93,7 +93,6 @@ private:
 class threading_control {
     using global_mutex_type = d1::mutex;
 public:
-    using threading_control_client = threading_control_impl::threading_control_client;
     using client_snapshot = threading_control_impl::client_snapshot;
 
     static threading_control* register_public_reference();

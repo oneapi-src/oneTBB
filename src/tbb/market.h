@@ -19,6 +19,7 @@
 
 #include "oneapi/tbb/rw_mutex.h"
 #include "oneapi/tbb/tbb_allocator.h"
+#include "oneapi/tbb/task_arena.h"
 
 #include "permit_manager.h"
 #include "pm_client.h"
@@ -48,7 +49,7 @@ private:
     void update_allotment();
 
     //! Keys for the arena map array. The lower the value the higher priority of the arena list.
-    static constexpr unsigned num_priority_levels = 3;
+    static constexpr unsigned num_priority_levels = d1::num_priority_levels;
 
     using mutex_type = d1::rw_mutex;
     mutex_type my_mutex;

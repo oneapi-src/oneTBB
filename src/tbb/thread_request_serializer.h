@@ -66,8 +66,8 @@ public:
 
 private:
     void update(int delta) override;
-    void try_enable_mandatory_concurrency(mutex_type::scoped_lock& lock);
-    void try_disable_mandatory_concurrency(mutex_type::scoped_lock& lock);
+    void enable_mandatory_concurrency(mutex_type::scoped_lock& lock);
+    void disable_mandatory_concurrency(mutex_type::scoped_lock& lock);
 
     std::atomic<int> my_num_mandatory_requests{0};
     bool my_is_mandatory_concurrency_enabled{false};

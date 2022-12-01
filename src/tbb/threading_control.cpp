@@ -67,8 +67,8 @@ cache_aligned_unique_ptr<permit_manager> threading_control_impl::make_permit_man
 }
 
 cache_aligned_unique_ptr<thread_dispatcher> threading_control_impl::make_thread_dispatcher(threading_control& tc,
-                                                                                               unsigned workers_soft_limit,
-                                                                                               unsigned workers_hard_limit)
+                                                                                           unsigned workers_soft_limit,
+                                                                                           unsigned workers_hard_limit)
 {
     stack_size_type stack_size = global_control_active_value_unsafe(global_control::thread_stack_size);
 
@@ -107,29 +107,29 @@ void threading_control_impl::set_active_num_workers(unsigned soft_limit) {
     my_permit_manager->set_active_num_workers(soft_limit);
 }
 
-threading_control_impl::threading_control_client threading_control_impl::create_client(arena& a) {
+threading_control_client threading_control_impl::create_client(arena& a) {
     pm_client* pm_client = my_permit_manager->create_client(a);
     thread_dispatcher_client* td_client = my_thread_dispatcher->create_client(a);
 
-    return {pm_client, td_client};
+    return threading_control_client{pm_client, td_client};
 }
 
-threading_control_impl::client_snapshot threading_control_impl::prepare_client_destruction(threading_control_impl::threading_control_client client) {
-    thread_dispatcher_client* td_client = client.second;
-    return {td_client->get_aba_epoch(), td_client->priority_level(), td_client, client.first};
+threading_control_impl::client_snapshot threading_control_impl::prepare_client_destruction(threading_control_client client) {
+    auto td_client = client.get_thread_dispatcher_client();
+    return {td_client->get_aba_epoch(), td_client->priority_level(), td_client, client.get_pm_client()};
 }
 
-bool threading_control_impl::try_destroy_client(threading_control_impl::client_snapshot deleter) {
-    if (my_thread_dispatcher->try_unregister_client(deleter.my_td_client, deleter.aba_epoch, deleter.priority_level)) {
-        my_permit_manager->unregister_and_destroy_client(*deleter.my_pm_client);
+bool threading_control_impl::try_destroy_client(threading_control_impl::client_snapshot snapshot) {
+    if (my_thread_dispatcher->try_unregister_client(snapshot.my_td_client, snapshot.aba_epoch, snapshot.priority_level)) {
+        my_permit_manager->unregister_and_destroy_client(*snapshot.my_pm_client);
         return true;
     }
     return false;
 }
 
-void threading_control_impl::publish_client(threading_control_impl::threading_control_client client) {
-    my_permit_manager->register_client(client.first);
-    my_thread_dispatcher->register_client(client.second);
+void threading_control_impl::publish_client(threading_control_client tc_client) {
+    my_permit_manager->register_client(tc_client.get_pm_client());
+    my_thread_dispatcher->register_client(tc_client.get_thread_dispatcher_client());
 }
 
 void threading_control_impl::register_thread(thread_data& td) {
@@ -153,12 +153,12 @@ unsigned threading_control_impl::max_num_workers() {
     return my_thread_dispatcher->my_num_workers_hard_limit;
 }
 
-bool threading_control_impl::check_client_priority(threading_control_impl::threading_control_client client) {
-    return client.first->is_top_priority();
+bool threading_control_impl::check_client_priority(threading_control_client tc_client) {
+    return tc_client.get_pm_client()->is_top_priority();
 }
 
-void threading_control_impl::adjust_demand(threading_control_impl::threading_control_client tc_client, int mandatory_delta, int workers_delta) {
-    pm_client& c = *tc_client.first;
+void threading_control_impl::adjust_demand(threading_control_client tc_client, int mandatory_delta, int workers_delta) {
+    auto& c = *tc_client.get_pm_client();
     my_thread_request_serializer->register_mandatory_request(mandatory_delta);
     my_permit_manager->adjust_demand(c, mandatory_delta, workers_delta);
 }
@@ -206,31 +206,35 @@ threading_control* threading_control::get_threading_control(bool is_public) {
 }
 
 threading_control* threading_control::create_threading_control() {
+    // Global control should be locked before threading_control_impl
+    global_control_lock();
+
     threading_control* thr_control{ nullptr };
     try_call([&] {
-        // Global control should be locked before threading_control_impl
-        global_control_lock();
         global_mutex_type::scoped_lock lock(g_threading_control_mutex);
 
         thr_control = get_threading_control(/*public = */ true);
-        if (thr_control != nullptr) {
-            return;
+        if (thr_control == nullptr) {
+            thr_control =  new (cache_aligned_allocate(sizeof(threading_control))) threading_control(/*public_ref = */ 1, /*private_ref = */ 1);
+            thr_control->my_pimpl = make_cache_aligned_unique<threading_control_impl>(thr_control);
+
+            __TBB_InitOnce::add_ref();
+
+            if (global_control_active_value_unsafe(global_control::scheduler_handle)) {
+                ++thr_control->my_public_ref_count;
+                ++thr_control->my_ref_count;
+            }
+
+            g_threading_control = thr_control;
         }
+    }).on_exception([&] {
+        global_control_unlock();
 
-        // POSSIBLE MEMORY LEAK THERE!!!!!!!
-        thr_control = new (cache_aligned_allocate(sizeof(threading_control))) threading_control(1, 1);
-        thr_control->my_pimpl = make_cache_aligned_unique<threading_control_impl>(thr_control);
+        cache_aligned_deleter deleter{};
+        deleter(thr_control);
+    });
 
-        __TBB_InitOnce::add_ref();
-
-        if (global_control_active_value_unsafe(global_control::scheduler_handle)) {
-            ++thr_control->my_public_ref_count;
-            ++thr_control->my_ref_count;
-        }
-
-        g_threading_control = thr_control;
-        }).on_completion([] { global_control_unlock(); });
-
+    global_control_unlock();
     return thr_control;
 }
 
@@ -299,7 +303,7 @@ bool threading_control::unregister_public_reference(bool blocking_terminate) {
     return g_threading_control->release(/*public = */ true, /*blocking_terminate = */ blocking_terminate);
 }
 
-threading_control::threading_control_client threading_control::create_client(arena& a) {
+threading_control_client threading_control::create_client(arena& a) {
     {
         global_mutex_type::scoped_lock lock(g_threading_control_mutex);
         add_ref(/*public = */ false);
@@ -308,15 +312,15 @@ threading_control::threading_control_client threading_control::create_client(are
     return my_pimpl->create_client(a);
 }
 
-void threading_control::publish_client(threading_control::threading_control_client client) {
+void threading_control::publish_client(threading_control_client client) {
     return my_pimpl->publish_client(client);
 }
 
-bool threading_control::check_client_priority(threading_control::threading_control_client client) {
+bool threading_control::check_client_priority(threading_control_client client) {
     return my_pimpl->check_client_priority(client);
 }
 
-threading_control::client_snapshot threading_control::prepare_client_destruction(threading_control::threading_control_client client) {
+threading_control::client_snapshot threading_control::prepare_client_destruction(threading_control_client client) {
     return my_pimpl->prepare_client_destruction(client);
 }
 

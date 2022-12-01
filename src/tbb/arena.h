@@ -34,14 +34,13 @@
 #include "concurrent_monitor.h"
 #include "observer_proxy.h"
 #include "thread_control_monitor.h"
+#include "threading_control_client.h"
 
 namespace tbb {
 namespace detail {
 namespace r1 {
 
 class task_dispatcher;
-class thread_dispatcher_client;
-class pm_client;
 class task_group_context;
 class threading_control;
 class allocate_root_with_context_proxy;
@@ -261,7 +260,7 @@ struct arena_base : padded<intrusive_list_node> {
     //! The number of workers requested by the external thread owning the arena.
     unsigned my_max_num_workers;
 
-    std::pair<pm_client*, thread_dispatcher_client*> my_tc_client;
+    threading_control_client my_tc_client;
 
 #if TBB_USE_ASSERT
     //! Used to trap accesses to the object after its destruction.

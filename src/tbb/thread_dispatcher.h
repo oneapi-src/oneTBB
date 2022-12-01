@@ -20,6 +20,8 @@
 #include "oneapi/tbb/detail/_config.h"
 #include "oneapi/tbb/detail/_utils.h"
 #include "oneapi/tbb/rw_mutex.h"
+#include "oneapi/tbb/task_arena.h"
+
 #include "arena.h"
 #include "governor.h"
 #include "thread_data.h"
@@ -69,7 +71,7 @@ private:
     thread_dispatcher_client* client_in_need(thread_dispatcher_client* prev);
 
     friend class threading_control_impl;
-    static constexpr unsigned num_priority_levels = 3;
+    static constexpr unsigned num_priority_levels = d1::num_priority_levels;
     client_list_mutex_type my_list_mutex;
     client_list_type my_client_list[num_priority_levels];
 
