@@ -14,6 +14,10 @@
     limitations under the License.
 */
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif // NOMINMAX
+
 #include "thread_request_serializer.h"
 #include <algorithm> // std::min
 
