@@ -31,6 +31,7 @@
 #include "tbb/task_group.h"
 #include "tbb/concurrent_unordered_map.h"
 #include "tbb/task.h"
+#include "tbb/global_control.h"
 
 //! \file test_eh_algorithms.cpp
 //! \brief Test for [algorithms.parallel_for algorithms.parallel_reduce algorithms.parallel_deterministic_reduce algorithms.parallel_for_each algorithms.parallel_pipeline algorithms.parallel_pipeline.flow_control] specifications
