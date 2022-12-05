@@ -29,6 +29,8 @@ class thread_dispatcher_client;
 class threading_control_client {
 public:
     threading_control_client() = default;
+    threading_control_client(const threading_control_client&) = default;
+    threading_control_client& operator=(const threading_control_client&) = default;
 
     threading_control_client(pm_client* p, thread_dispatcher_client* t) : my_pm_client(p), my_thread_dispatcher_client(t) {
         __TBB_ASSERT(my_pm_client, nullptr);
