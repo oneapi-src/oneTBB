@@ -55,7 +55,6 @@ public:
 private:
     arena& my_arena;
     std::uint64_t my_aba_epoch;
-    // mask_type m_mask;
 };
 
 } // namespace r1

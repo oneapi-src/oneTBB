@@ -14,12 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif // NOMINMAX
-
+#include "misc.h"
 #include "thread_request_serializer.h"
-#include <algorithm> // std::min
 
 namespace tbb {
 namespace detail {
@@ -74,8 +70,8 @@ int thread_request_serializer::limit_delta(int delta, int limit, int new_value) 
    int prev_value = new_value - delta;
 
     // actual new_value and prev_value cannot exceed the limit
-    new_value = std::min(limit, new_value);
-    prev_value = std::min(limit, prev_value);
+    new_value = min(limit, new_value);
+    prev_value = min(limit, prev_value);
     return new_value - prev_value;
 }
 
