@@ -82,7 +82,7 @@ using cache_aligned_unique_ptr = std::unique_ptr<T, cache_aligned_deleter>;
 
 template <typename T, typename ...Args>
 cache_aligned_unique_ptr<T> make_cache_aligned_unique(Args&& ...args) {
-    return cache_aligned_unique_ptr<T>(new (r1::cache_aligned_allocate(sizeof(T))) T(std::forward<Args>(args)...));
+    return cache_aligned_unique_ptr<T>(new (cache_aligned_allocate(sizeof(T))) T(std::forward<Args>(args)...));
 }
 
 //------------------------------------------------------------------------

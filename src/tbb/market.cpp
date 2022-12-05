@@ -17,7 +17,7 @@
 #include "arena.h"
 #include "market.h"
 
-#include <algorithm>
+#include <algorithm> // std::find
 
 namespace tbb {
 namespace detail {
