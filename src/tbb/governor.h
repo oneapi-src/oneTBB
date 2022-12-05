@@ -29,8 +29,6 @@ namespace r1 {
 class market;
 class thread_data;
 class __TBB_InitOnce;
-class thread_dispatcher;
-class threading_control_impl;
 
 #if __TBB_USE_ITT_NOTIFY
 //! Defined in profiling.cpp
