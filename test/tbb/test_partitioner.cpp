@@ -41,7 +41,12 @@ template <typename PerBodyFunc> float test(PerBodyFunc&& body) {
     tbb::global_control concurrency(tbb::global_control::max_allowed_parallelism, num_threads);
     tbb::task_arena big_arena(static_cast<int>(num_threads));
 
+#if __TBB_USE_THREAD_SANITIZER
+    // Reduce execution time under Thread Sanitizer
+    const std::size_t repeats = 50;
+#else
     const std::size_t repeats = 100;
+#endif
     const std::size_t per_thread_iters = 1000;
 
     using range = std::pair<std::size_t, std::size_t>;
