@@ -359,10 +359,11 @@ void test() {
 
 } // namespace HighPriorityArenasTakeExecutionPrecedence
 
-
+#if !__TBB_TEST_TCM
 // TODO: nested arena case
 //! Test for setting a priority to arena
 //! \brief \ref requirement
 TEST_CASE("Arena priorities") {
     HighPriorityArenasTakeExecutionPrecedence::test();
 }
+#endif // __TBB_TEST_TCM

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -545,16 +545,17 @@ void TestSplitting( std::size_t nthread ) {
 //! \brief \ref resource_usage \ref error_guessing
 TEST_CASE("Test splitting range and body during reduction, test that all workers sleep when no work") {
     for ( auto concurrency_level : utils::concurrency_range() ) {
-        tbb::global_control control(tbb::global_control::max_allowed_parallelism, concurrency_level);
+        tbb::task_arena a{int(concurrency_level)};
+        a.execute([&] {
+            TestSplitting<tbb::simple_partitioner>(concurrency_level);
+            TestSplitting<tbb::static_partitioner>(concurrency_level);
+            TestSplitting<tbb::auto_partitioner>(concurrency_level);
+            TestSplitting<tbb::affinity_partitioner>(concurrency_level);
+            TestSplitting<utils_default_partitioner>(concurrency_level);
 
-        TestSplitting<tbb::simple_partitioner>(concurrency_level);
-        TestSplitting<tbb::static_partitioner>(concurrency_level);
-        TestSplitting<tbb::auto_partitioner>(concurrency_level);
-        TestSplitting<tbb::affinity_partitioner>(concurrency_level);
-        TestSplitting<utils_default_partitioner>(concurrency_level);
-
-        // Test that all workers sleep when no work
-        TestCPUUserTime(concurrency_level);
+            // Test that all workers sleep when no work
+            TestCPUUserTime(concurrency_level);
+        });
     }
 }
 

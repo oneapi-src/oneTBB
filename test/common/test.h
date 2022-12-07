@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2021 Intel Corporation
+    Copyright (c) 2020-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 #ifndef __TBB_test_common_test_H
 #define __TBB_test_common_test_H
+
+#define __TBB_TEST_TCM 1
 
 #include "config.h"
 

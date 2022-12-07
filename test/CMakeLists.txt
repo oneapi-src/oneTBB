@@ -266,6 +266,16 @@ function(tbb_add_tbbbind_test)
         return()
     endif()
 
+    if (TCM_TESTING AND TARGET HWLOC::hwloc_2_5)
+        set_tests_properties(${_tbbbind_test_NAME} PROPERTIES
+            PASS_REGULAR_EXPRESSION "oneTBB: TBBBIND.*tbbbind_2_5"
+            FAIL_REGULAR_EXPRESSION "Status: FAILURE!"
+        )
+        target_link_libraries(${_tbbbind_test_NAME} PRIVATE HWLOC::hwloc_2_5)
+        target_compile_definitions(${_tbbbind_test_NAME} PRIVATE __TBB_HWLOC_VALID_ENVIRONMENT)
+        return()
+    endif()
+
     # Disable all HWLOC dependent tests in case of unsupported environment.
     if (TBB_WINDOWS_DRIVER OR ANDROID_PLATFORM OR APPLE OR NOT BUILD_SHARED_LIBS)
         return()

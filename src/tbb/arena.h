@@ -290,7 +290,7 @@ public:
     static arena& allocate_arena(threading_control* control, unsigned num_slots, unsigned num_reserved_slots,
                                   unsigned priority_level);
 
-    static arena& create(threading_control* control, unsigned num_slots, unsigned num_reserved_slots, unsigned arena_priority_level);
+    static arena& create(threading_control* control, unsigned num_slots, unsigned num_reserved_slots, unsigned arena_priority_level, d1::constraints constraints = d1::constraints{});
 
     static int unsigned num_arena_slots ( unsigned num_slots, unsigned num_reserved_slots ) {
         return num_reserved_slots == 0 ? num_slots : max(2u, num_slots);
@@ -391,6 +391,8 @@ public:
     bool try_join();
 
     void set_allotment(unsigned allotment);
+
+    int update_concurrency(int concurrency);
 
     std::pair</*min workers = */ int, /*max workers = */ int> update_request(int mandatory_delta, int workers_delta);
 

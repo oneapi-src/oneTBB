@@ -146,7 +146,9 @@ void strict_test() {
 //! \brief \ref error_guessing
 TEST_CASE("Threads respect task affinity") {
     task_affinity_retention::relaxed_test();
+#if !__TBB_TEST_TCM
     task_affinity_retention::strict_test();
+#endif
 }
 
 template <typename Range>

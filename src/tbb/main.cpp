@@ -21,6 +21,7 @@
 #include "threading_control.h"
 #include "environment.h"
 #include "market.h"
+#include "tcm_adaptor.h"
 #include "misc.h"
 #include "itt_notify.h"
 
@@ -91,8 +92,10 @@ static check_observer_proxy_count the_check_observer_proxy_count;
 //------------------------------------------------------------------------
 
 void __TBB_InitOnce::add_ref() {
-    if( ++count==1 )
+    if (++count == 1) {
         governor::acquire_resources();
+        tcm_adaptor::initialize();
+    }
 }
 
 void __TBB_InitOnce::remove_ref() {
@@ -118,8 +121,10 @@ void DoOneTimeInitialization() {
     // No fence required for load of InitializationDone, because we are inside a critical section.
     if( !__TBB_InitOnce::InitializationDone ) {
         __TBB_InitOnce::add_ref();
-        if( GetBoolEnvironmentVariable("TBB_VERSION") )
+        if( GetBoolEnvironmentVariable("TBB_VERSION") ) {
             PrintVersion();
+            tcm_adaptor::print_version();
+        }
         bool itt_present = false;
 #if __TBB_USE_ITT_NOTIFY
         ITT_DoUnsafeOneTimeInitialization();

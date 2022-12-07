@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2021-2022 Intel Corporation
+    Copyright (c) 2021-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -137,7 +137,7 @@ TEST_CASE("Task handle blocks wait"){
     //explicit task_arena is needed to prevent a deadlock,
     //as both task_group::run() and task_group::wait() should be called in the same arena
     //to guarantee execution of the task spawned by run().
-    oneapi::tbb::task_arena arena;
+    oneapi::tbb::task_arena arena(2, 1);
 
     //This flag is intentionally made non-atomic for Thread Sanitizer
     //to raise a flag if implementation of task_group is incorrect
