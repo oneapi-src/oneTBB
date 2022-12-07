@@ -835,6 +835,6 @@ TEST_CASE("Check correct arena destruction with enqueue") {
             });
             std::this_thread::sleep_for(std::chrono::microseconds(1));
         }
-        tbb::finalize(handle);
+        tbb::finalize(handle, std::nothrow_t{});
     }
 }
