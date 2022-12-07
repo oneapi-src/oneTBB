@@ -824,7 +824,7 @@ TEST_CASE("raii_guard move ctor") {
 }
 
 //! \brief \ref error_guessing
-TEST_CASE("Chech correct arena destruction with enqueue") {
+TEST_CASE("Check correct arena destruction with enqueue") {
     for (int i = 0; i < 100; ++i) {
         tbb::task_scheduler_handle handle{ tbb::attach{} };
         {
