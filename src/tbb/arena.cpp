@@ -133,7 +133,7 @@ void arena::on_thread_leaving(unsigned ref_param) {
 
     // When there is no workers someone must free arena, as
     // without workers, no one calls out_of_work().
-    if (ref_param == ref_external) {
+    if (ref_param == ref_external && !my_mandatory_concurrency.test()) {
         out_of_work();
     }
 
