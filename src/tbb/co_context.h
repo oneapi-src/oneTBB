@@ -47,6 +47,8 @@
         #pragma clang diagnostic push
         #pragma clang diagnostic ignored "-Wdeprecated-declarations"
     #endif
+    // Workaround error "The deprecated ucontext routines require _XOPEN_SOURCE to be defined" found in modern MacOS SDKs
+    #define _XOPEN_SOURCE 700
 #endif // __APPLE__
 
 #include <ucontext.h>
