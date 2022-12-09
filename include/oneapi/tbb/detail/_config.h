@@ -383,7 +383,7 @@
 #endif
 
 #if !defined(__TBB_SURVIVE_THREAD_SWITCH) && \
-          (_WIN32 || _WIN64 || __APPLE__ || (__unix__ && !__ANDROID__))
+          (_WIN32 || _WIN64 || __APPLE__ || (defined(__unix__) && !__ANDROID__))
     #define __TBB_SURVIVE_THREAD_SWITCH 1
 #endif /* __TBB_SURVIVE_THREAD_SWITCH */
 
