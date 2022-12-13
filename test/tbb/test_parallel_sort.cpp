@@ -103,7 +103,7 @@ void set(std::string& string_ref, KeyType key) {
 #if _MSC_VER && __STDC_SECURE_LIB__>=200411
     sprintf_s(buffer, sizeof(buffer), "%f", static_cast<float>(key));
 #else
-    sprintf(buffer, "%f", static_cast<float>(key));
+    snprintf(buffer, sizeof(buffer), "%f", static_cast<float>(key));
 #endif
     string_ref = buffer;
 }
