@@ -3692,6 +3692,7 @@ String toString(float in) { return fpToString(in, 5) + "f"; }
 String toString(double in) { return fpToString(in, 10); }
 String toString(double long in) { return fpToString(in, 15); }
 
+DOCTEST_CLANG_SUPPRESS_WARNING_WITH_PUSH("-Wdeprecated-declarations")
 #define DOCTEST_TO_STRING_OVERLOAD(type, fmt)                                                      \
     String toString(type in) {                                                                     \
         char buf[64];                                                                              \
@@ -3710,6 +3711,7 @@ DOCTEST_TO_STRING_OVERLOAD(int long, "%ld")
 DOCTEST_TO_STRING_OVERLOAD(int long unsigned, "%lu")
 DOCTEST_TO_STRING_OVERLOAD(int long long, "%lld")
 DOCTEST_TO_STRING_OVERLOAD(int long long unsigned, "%llu")
+DOCTEST_CLANG_SUPPRESS_WARNING_POP
 
 String toString(std::nullptr_t) { return "NULL"; }
 
