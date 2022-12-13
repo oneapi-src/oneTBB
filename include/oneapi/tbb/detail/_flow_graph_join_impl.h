@@ -669,12 +669,12 @@
 
     template<typename InputTuple, typename OutputTuple>
     class join_node_FE<reserving, InputTuple, OutputTuple> : public reserving_forwarding_base {
-    public:
+    private:
         static const int N = std::tuple_size<OutputTuple>::value;
         typedef OutputTuple output_type;
         typedef InputTuple input_type;
         typedef join_node_base<reserving, InputTuple, OutputTuple> base_node_type; // for forwarding
-
+    public:
         join_node_FE(graph &g) : reserving_forwarding_base(g), my_node(nullptr) {
             ports_with_no_inputs = N;
             join_helper<N>::set_join_node_pointer(my_inputs, this);
@@ -1214,10 +1214,10 @@
     //  using tuple_element.  The class PT is the port type (reserving_port, queueing_port, key_matching_port)
     //  and should match the typename.
 
-    template<int N, template<class> class PT, typename OutputTuple, typename JP>
-    class unfolded_join_node : public join_base<N,PT,OutputTuple,JP>::type {
+    template<int M, template<class> class PT, typename OutputTuple, typename JP>
+    class unfolded_join_node : public join_base<M,PT,OutputTuple,JP>::type {
     public:
-        typedef typename wrap_tuple_elements<N, PT, OutputTuple>::type input_ports_type;
+        typedef typename wrap_tuple_elements<M, PT, OutputTuple>::type input_ports_type;
         typedef OutputTuple output_type;
     private:
         typedef join_node_base<JP, input_ports_type, output_type > base_type;
