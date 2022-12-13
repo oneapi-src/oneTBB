@@ -1215,7 +1215,7 @@
     //  and should match the typename.
 
     template<int M, template<class> class PT, typename OutputTuple, typename JP>
-    class unfolded_join_node : public join_base<N,PT,OutputTuple,JP>::type {
+    class unfolded_join_node : public join_base<M,PT,OutputTuple,JP>::type {
     public:
         typedef typename wrap_tuple_elements<M, PT, OutputTuple>::type input_ports_type;
         typedef OutputTuple output_type;
