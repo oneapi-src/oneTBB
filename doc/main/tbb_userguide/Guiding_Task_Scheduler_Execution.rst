@@ -63,7 +63,7 @@ The processors with `Intel® Hybrid Technology <https://www.intel.com/content/ww
 contain several core types, each is suited for different purposes.
 In most cases, systems with hybrid CPU architecture show reasonable performance without involving additional API calls,
 however in some exceptional scenarios, performance may be tuned by setting the preferred core type.
-To set execution preference, assign specific core type identifier to the ``task_arena::constraints::core_type`` field.
+To set preferred core type for the execution, assign specific core type identifier to the ``task_arena::constraints::core_type`` field.
 
 The example shows how to set the most performant core type as preferable for work execution:
 
