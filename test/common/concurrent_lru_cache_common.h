@@ -114,15 +114,16 @@ namespace concurrent_lru_cache_helpers {
         }
 
         ~instance_counter() {
-#if __GNUC__ && !defined(__clang__) && !defined(__INTEL_COMPILER)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wuse-after-free"
+            bool is_last = ! --(*my_p_count);
+#if __GNUC__ == 12
+        // GCC 12 warns about using my_p_count after delete.
+        // The test was investigated and no problems were detected
+        // The following statement silence the warning
+        static bool unused_is_last = is_last;
+        utils::suppress_unused_warning(unused_is_last);
 #endif
-            if (! --(*my_p_count))
+            if (is_last)
                 delete(my_p_count);
-#if __GNUC__ && !defined(__clang__) && !defined(__INTEL_COMPILER)
-#pragma GCC diagnostic pop
-#endif
         }
         std::size_t instances_count() const { return *my_p_count; }
     };
