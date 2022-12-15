@@ -95,7 +95,7 @@ int TestNumaDistribution(std::vector<DWORD> &validateProcgrp, int additionalPara
                     sb.wait();
                 }
             }, s);
-        for (const auto it : tls) {
+        for (const auto& it : tls) {
            validateProcgrp[it.first]++;
         }
       });

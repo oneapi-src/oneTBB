@@ -8,6 +8,7 @@
    /main/intro/notation
    /main/intro/intro_os
    /main/intro/Benefits
+   /main/intro/testing_approach
 
 
 .. toctree::
