@@ -258,6 +258,121 @@ void observer_list::do_notify_exit_observers(observer_proxy* last, bool worker) 
     }
 }
 
+void observer_list::do_notify_idle_observers(observer_proxy*& last, bool worker) {
+    // Pointer p marches though the list from last (exclusively) to the end.
+    observer_proxy* p = last, * prev = p;
+    for (;;) {
+        d1::task_scheduler_observer* tso = nullptr;
+        // Hold lock on list only long enough to advance to the next proxy in the list.
+        {
+            scoped_lock lock(mutex(), /*is_writer=*/false);
+            do {
+                if (p) {
+                    // We were already processing the list.
+                    if (observer_proxy* q = p->my_next) {
+                        if (p == prev) {
+                            remove_ref_fast(prev); // sets prev to nullptr if successful
+                        }
+                        p = q;
+                    } else {
+                        // Reached the end of the list.
+                        if (p == prev) {
+                            // Keep the reference as we store the 'last' pointer in scheduler
+                            __TBB_ASSERT(int(p->my_ref_count.load(std::memory_order_relaxed)) >= 1 + (p->my_observer ? 1 : 0), nullptr);
+                        } else {
+                            // The last few proxies were empty
+                            __TBB_ASSERT(int(p->my_ref_count.load(std::memory_order_relaxed)), nullptr);
+                            ++p->my_ref_count;
+                            if (prev) {
+                                lock.release();
+                                remove_ref(prev);
+                            }
+                        }
+                        last = p;
+                        return;
+                    }
+                } else {
+                    // Starting pass through the list
+                    p = my_head.load(std::memory_order_relaxed);
+                    if (!p) {
+                        return;
+                    }
+                }
+                tso = p->my_observer;
+            } while (!tso);
+            ++p->my_ref_count;
+            ++tso->my_busy_count;
+        }
+        __TBB_ASSERT(!prev || p != prev, nullptr);
+        // Release the proxy pinned before p
+        if (prev) {
+            remove_ref(prev);
+        }
+        // Do not hold any locks on the list while calling user's code.
+        // Do not intercept any exceptions that may escape the callback so that
+        // they are either handled by the TBB scheduler or passed to the debugger.
+        tso->on_scheduler_idle(worker);
+        __TBB_ASSERT(p->my_ref_count.load(std::memory_order_relaxed), nullptr);
+        intptr_t bc = --tso->my_busy_count;
+        __TBB_ASSERT_EX(bc >= 0, "my_busy_count underflowed");
+        prev = p;
+    }
+}
+
+void observer_list::do_notify_active_observers(observer_proxy* last, bool worker) {
+    // Pointer p marches though the list from the beginning to last (inclusively).
+    observer_proxy* p = nullptr, * prev = nullptr;
+    for (;;) {
+        d1::task_scheduler_observer* tso = nullptr;
+        // Hold lock on list only long enough to advance to the next proxy in the list.
+        {
+            scoped_lock lock(mutex(), /*is_writer=*/false);
+            do {
+                if (p) {
+                    // We were already processing the list.
+                    if (p != last) {
+                        __TBB_ASSERT(p->my_next, "List items before 'last' must have valid my_next pointer");
+                        if (p == prev)
+                            remove_ref_fast(prev); // sets prev to nullptr if successful
+                        p = p->my_next;
+                    } else {
+                        // remove the reference from the last item
+                        remove_ref_fast(p);
+                        if (p) {
+                            lock.release();
+                            if (p != prev && prev) {
+                                remove_ref(prev);
+                            }
+                            remove_ref(p);
+                        }
+                        return;
+                    }
+                } else {
+                    // Starting pass through the list
+                    p = my_head.load(std::memory_order_relaxed);
+                    __TBB_ASSERT(p, "Nonzero 'last' must guarantee that the global list is non-empty");
+                }
+                tso = p->my_observer;
+            } while (!tso);
+            // The item is already refcounted
+            if (p != last) // the last is already referenced since idle notification
+                ++p->my_ref_count;
+            ++tso->my_busy_count;
+        }
+        __TBB_ASSERT(!prev || p != prev, nullptr);
+        if (prev)
+            remove_ref(prev);
+        // Do not hold any locks on the list while calling user's code.
+        // Do not intercept any exceptions that may escape the callback so that
+        // they are either handled by the TBB scheduler or passed to the debugger.
+        tso->on_scheduler_active(worker);
+        __TBB_ASSERT(p->my_ref_count || p == last, nullptr);
+        intptr_t bc = --tso->my_busy_count;
+        __TBB_ASSERT_EX(bc >= 0, "my_busy_count underflowed");
+        prev = p;
+    }
+}
+
 void __TBB_EXPORTED_FUNC observe(d1::task_scheduler_observer &tso, bool enable) {
     if( enable ) {
         if( !tso.my_proxy.load(std::memory_order_relaxed) ) {

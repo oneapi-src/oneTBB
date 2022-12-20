@@ -56,6 +56,12 @@ class observer_list {
     //! Implements notify_exit_observers functionality.
     void do_notify_exit_observers( observer_proxy* last, bool worker );
 
+    // Implements notify_idle_observers functionality.
+    void do_notify_idle_observers( observer_proxy*& last, bool worker );
+
+    //! Implements notify_active_observers functionality.
+    void do_notify_active_observers( observer_proxy* last, bool worker );
+
 public:
     observer_list () = default;
 
@@ -86,6 +92,12 @@ public:
 
     //! Call exit notifications on last and observers added before it.
     inline void notify_exit_observers( observer_proxy*& last, bool worker );
+
+    //! Call idle notifications on observers added after last was notified.
+    inline void notify_idle_observers( observer_proxy*& last, bool worker );
+
+    //! Call activity notifications on last and observers added before it.
+    inline void notify_active_observers( observer_proxy*& last, bool worker );
 }; // class observer_list
 
 //! Wrapper for an observer object
@@ -130,17 +142,35 @@ void observer_list::remove_ref_fast( observer_proxy*& p ) {
 }
 
 void observer_list::notify_entry_observers(observer_proxy*& last, bool worker) {
-    if (last == my_tail.load(std::memory_order_relaxed))
+    if (last == my_tail.load(std::memory_order_relaxed)) {
         return;
+    }
     do_notify_entry_observers(last, worker);
 }
 
-void observer_list::notify_exit_observers( observer_proxy*& last, bool worker ) {
+void observer_list::notify_exit_observers(observer_proxy*& last, bool worker) {
     if (last == nullptr) {
         return;
     }
     __TBB_ASSERT(!is_poisoned(last), nullptr);
     do_notify_exit_observers( last, worker );
+    __TBB_ASSERT(last != nullptr, nullptr);
+    poison_pointer(last);
+}
+
+void observer_list::notify_idle_observers(observer_proxy*& last, bool worker) {
+    if (last == my_tail.load(std::memory_order_relaxed)) {
+        return;
+    }
+    do_notify_idle_observers(last, worker);
+}
+
+void observer_list::notify_active_observers(observer_proxy*& last, bool worker) {
+    if (last == nullptr) {
+        return;
+    }
+    __TBB_ASSERT(!is_poisoned(last), nullptr);
+    do_notify_active_observers(last, worker);
     __TBB_ASSERT(last != nullptr, nullptr);
     poison_pointer(last);
 }
