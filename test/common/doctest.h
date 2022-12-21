@@ -4401,7 +4401,7 @@ namespace {
     void color_to_stream(std::ostream& s, Color::Enum code) {
       // TODO: upstream the change to doctest : suppress unused variable warning
 #if defined(DOCTEST_CONFIG_COLORS_WINDOWS) && DOCTEST_ICC
-      static_cast<void>(dummy_init_console_colors);
+      //static_cast<void>(dummy_init_console_colors);
 #endif
         static_cast<void>(s);    // for DOCTEST_CONFIG_COLORS_NONE or DOCTEST_CONFIG_COLORS_WINDOWS
         static_cast<void>(code); // for DOCTEST_CONFIG_COLORS_NONE
@@ -6411,7 +6411,6 @@ namespace {
       //DOCTEST_THREAD_LOCAL static doctest_thread_local_wrapper<std::ostringstream> wrapped_oss;
 
         DebugOutputWindowReporter(const ContextOptions& co)
-	  //: ConsoleReporter(co, wrapped_oss) {}
 	  : ConsoleReporter(co, oss) {}
 
 #define DOCTEST_DEBUG_OUTPUT_REPORTER_OVERRIDE(func, type, arg)                                    \
