@@ -6440,7 +6440,7 @@ namespace {
     };
 
   //DOCTEST_THREAD_LOCAL std::ostringstream DebugOutputWindowReporter::wrapped_oss;
-  DOCTEST_THREAD_LOCAL doctest_thread_local_wrapper<std::ostringstream> DebugOutputWindowReporter::wrapped_oss;
+  DOCTEST_THREAD_LOCAL doctest_thread_local_wrapper<std::ostringstream> DebugOutputWindowReporter::oss;
 #endif // DOCTEST_PLATFORM_WINDOWS
 
     // the implementation of parseOption()
