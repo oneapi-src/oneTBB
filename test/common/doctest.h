@@ -6417,20 +6417,21 @@ namespace {
 #ifdef DOCTEST_PLATFORM_WINDOWS
     struct DebugOutputWindowReporter : public ConsoleReporter
     {
-      //DOCTEST_THREAD_LOCAL static std::ostringstream oss;
-      DOCTEST_THREAD_LOCAL static doctest_thread_local_wrapper<std::ostringstream> wrapped_oss;
+      DOCTEST_THREAD_LOCAL static std::ostringstream oss;
+      //DOCTEST_THREAD_LOCAL static doctest_thread_local_wrapper<std::ostringstream> wrapped_oss;
 
         DebugOutputWindowReporter(const ContextOptions& co)
-                : ConsoleReporter(co, wrapped_oss) {}
+	  //: ConsoleReporter(co, wrapped_oss) {}
+	  : ConsoleReporter(co, oss) {}
 
 #define DOCTEST_DEBUG_OUTPUT_REPORTER_OVERRIDE(func, type, arg)                                    \
     void func(type arg) override {                                                                 \
         bool with_col = g_no_colors;                                                               \
         g_no_colors   = false;                                                                     \
         ConsoleReporter::func(arg);                                                                \
-        if(wrapped_oss.tellp() != std::streampos{}) {				\
-            DOCTEST_OUTPUT_DEBUG_STRING(wrapped_oss.str().c_str());                                        \
-            wrapped_oss.str("");                                                                           \
+        if(oss.tellp() != std::streampos{}) {				\
+            DOCTEST_OUTPUT_DEBUG_STRING(oss.str().c_str());                                        \
+            oss.str("");                                                                           \
         }                                                                                          \
         g_no_colors = with_col;                                                                    \
     }
