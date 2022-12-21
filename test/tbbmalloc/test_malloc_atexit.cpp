@@ -33,6 +33,8 @@
 #if _USRDLL
 #if _WIN32||_WIN64
 extern __declspec(dllexport)
+#else
+TBBMALLOC_EXPORT
 #endif
 bool dll_isMallocOverloaded()
 #else
@@ -143,6 +145,8 @@ int main() {}
 #include "tbb/tbbmalloc_proxy.h"
 
 extern __declspec(dllimport)
+#else
+TBBMALLOC_EXPORT
 #endif
 bool dll_isMallocOverloaded();
 

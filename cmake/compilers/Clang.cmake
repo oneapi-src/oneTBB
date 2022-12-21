@@ -61,5 +61,8 @@ endif()
 set(TBB_IPO_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:-flto>)
 set(TBB_IPO_LINK_FLAGS $<$<NOT:$<CONFIG:Debug>>:-flto>)
 
+# TODO: remove 
+list (APPEND TBB_COMMON_COMPILE_FLAGS -fvisibility=hidden)
+
 # TBB malloc settings
 set(TBBMALLOC_LIB_COMPILE_FLAGS -fno-rtti -fno-exceptions)

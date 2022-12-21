@@ -68,6 +68,8 @@ if (MINGW AND CMAKE_SYSTEM_PROCESSOR MATCHES "i.86")
     list (APPEND TBB_COMMON_COMPILE_FLAGS -msse2)
 endif ()
 
+# TODO: remove 
+list (APPEND TBB_COMMON_COMPILE_FLAGS -fvisibility=hidden)
 # TBB malloc settings
 set(TBBMALLOC_LIB_COMPILE_FLAGS -fno-rtti -fno-exceptions)
 set(TBB_OPENMP_FLAG -fopenmp)
