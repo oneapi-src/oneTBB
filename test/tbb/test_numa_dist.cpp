@@ -16,6 +16,8 @@
 
 #include "common/test.h"
 
+#if !__TBB_WIN8UI_SUPPORT
+
 #include <stdio.h>
 #include "tbb/parallel_for.h"
 #include "tbb/global_control.h"
@@ -156,3 +158,5 @@ TEST_CASE("Double threads") {
 #if _MSC_VER
 #pragma warning (pop)
 #endif
+
+#endif // !__TBB_WIN8UI_SUPPORT
