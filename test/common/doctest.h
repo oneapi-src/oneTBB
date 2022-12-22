@@ -3321,7 +3321,7 @@ namespace {
         }
     }
 
-    struct Endianness
+  /*struct Endianness
     {
         enum Arch
         {
@@ -3337,7 +3337,7 @@ namespace {
                 return Little;
             return Big;
         }
-    };
+	};*/
 } // namespace
 
 namespace detail {
@@ -6438,8 +6438,8 @@ namespace {
         DOCTEST_DEBUG_OUTPUT_REPORTER_OVERRIDE(test_case_skipped, const TestCaseData&, in)
     };
 
-  //DOCTEST_THREAD_LOCAL std::ostringstream DebugOutputWindowReporter::wrapped_oss;
-  DOCTEST_THREAD_LOCAL doctest_thread_local_wrapper<std::ostringstream> DebugOutputWindowReporter::oss;
+  DOCTEST_THREAD_LOCAL std::ostringstream DebugOutputWindowReporter::oss;
+  //DOCTEST_THREAD_LOCAL doctest_thread_local_wrapper<std::ostringstream> DebugOutputWindowReporter::oss;
 #endif // DOCTEST_PLATFORM_WINDOWS
 
     // the implementation of parseOption()
