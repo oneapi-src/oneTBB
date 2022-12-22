@@ -3320,24 +3320,6 @@ namespace {
                 return d;
         }
     }
-
-  /*struct Endianness
-    {
-        enum Arch
-        {
-            Big,
-            Little
-        };
-
-        static Arch which() {
-            int x = 1;
-            // casting any data pointer to char* is allowed
-            auto ptr = reinterpret_cast<char*>(&x);
-            if(*ptr)
-                return Little;
-            return Big;
-        }
-	};*/
 } // namespace
 
 namespace detail {
@@ -3364,7 +3346,6 @@ namespace detail {
         }
     } g_oss;
 
-  //DOCTEST_THREAD_LOCAL doctest_thread_local_wrapper<std::ostringstream> wrapped_g_oss; // NOLINT(cert-err58-cpp)
     std::ostream* tlssPush() {
         return g_oss.push();
     }
@@ -4587,7 +4568,6 @@ namespace detail {
             getExceptionTranslators().push_back(et);
     }
 
-  //DOCTEST_THREAD_LOCAL std::vector<IContextScope*> wrapped_g_infoContexts; // for logging with INFO()
   DOCTEST_THREAD_LOCAL doctest_thread_local_wrapper<std::vector<IContextScope*>> wrapped_g_infoContexts; // for logging with INFO()
 
     ContextScopeBase::ContextScopeBase() {
@@ -6408,7 +6388,6 @@ namespace {
     struct DebugOutputWindowReporter : public ConsoleReporter
     {
       DOCTEST_THREAD_LOCAL static std::ostringstream oss;
-      //DOCTEST_THREAD_LOCAL static doctest_thread_local_wrapper<std::ostringstream> wrapped_oss;
 
         DebugOutputWindowReporter(const ContextOptions& co)
 	  : ConsoleReporter(co, oss) {}
@@ -6439,7 +6418,7 @@ namespace {
     };
 
   DOCTEST_THREAD_LOCAL std::ostringstream DebugOutputWindowReporter::oss;
-  //DOCTEST_THREAD_LOCAL doctest_thread_local_wrapper<std::ostringstream> DebugOutputWindowReporter::oss;
+
 #endif // DOCTEST_PLATFORM_WINDOWS
 
     // the implementation of parseOption()
