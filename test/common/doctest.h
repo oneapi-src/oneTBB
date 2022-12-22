@@ -4011,11 +4011,11 @@ String toString(const Approx& in) {
     return "Approx( " + doctest::toString(in.m_value) + " )";
 }
 const ContextOptions* getContextOptions() { return DOCTEST_BRANCH_ON_DISABLED(nullptr, g_cs); }
-
-DOCTEST_MSVC_SUPPRESS_WARNING_WITH_PUSH(4738)
+  
+  /*DOCTEST_MSVC_SUPPRESS_WARNING_WITH_PUSH(4738)
 template <typename F>
 IsNaN<F>::operator bool() const {
-    return std::isnan(value) ^ flipped;
+  return std::isnan(value) ^ flipped;
 }
 DOCTEST_MSVC_SUPPRESS_WARNING_POP
 template struct DOCTEST_INTERFACE_DEF IsNaN<float>;
@@ -4026,7 +4026,7 @@ String toString(IsNaN<F> in) { return String(in.flipped ? "! " : "") + "IsNaN( "
 String toString(IsNaN<float> in) { return toString<float>(in); }
 String toString(IsNaN<double> in) { return toString<double>(in); }
 String toString(IsNaN<double long> in) { return toString<double long>(in); }
-
+  */
 } // namespace doctest
 
 #ifdef DOCTEST_CONFIG_DISABLE
