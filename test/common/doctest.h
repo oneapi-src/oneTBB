@@ -1215,12 +1215,12 @@ DOCTEST_MSVC_SUPPRESS_WARNING_POP
         static void fill(std::ostream* stream, const void* in);
     };
 
-    template <typename T>
+  template <typename T>
     struct filldata<T*> {
-        static void fill(std::ostream* stream, const T* in) {
-            filldata<const void*>::fill(stream, (const void*)in);
+        static void fill(std::ostream* stream, T* in) {
+	  filldata<const void*>::fill(stream, (const void*)in);
         }
-    };
+	};
 }
 
 struct DOCTEST_INTERFACE Approx
