@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ TEST_CASE("Basic Locable requirement test") {
     GeneralTest<oneapi::tbb::spin_mutex>("Spin Mutex");
     GeneralTest<oneapi::tbb::spin_rw_mutex>("Spin RW Mutex");
     GeneralTest<oneapi::tbb::queuing_mutex>("Queuing Mutex");
+    GeneralTest<oneapi::tbb::queuing_rw_mutex>("Queuing RW Mutex");
     GeneralTest<oneapi::tbb::mutex>("Adaptive Mutex");
     GeneralTest<oneapi::tbb::rw_mutex>("Adaptive RW Mutex");
     // TODO: Consider adding Thread Sanitizer (note that accesses inside the transaction
@@ -46,15 +47,13 @@ TEST_CASE("Basic Locable requirement test") {
 #if !__TBB_USE_THREAD_SANITIZER
     GeneralTest<oneapi::tbb::speculative_spin_mutex>("Speculative Spin Mutex");
     GeneralTest<oneapi::tbb::speculative_spin_rw_mutex>("Speculative Spin RW Mutex");
-    GeneralTest<oneapi::tbb::queuing_rw_mutex>("Queuing RW Mutex");
-    TestNullMutex<oneapi::tbb::null_mutex>("Null Mutex");
-    TestNullMutex<oneapi::tbb::null_rw_mutex>("Null RW Mutex");
-
 #endif
     // NullMutexes
     GeneralTest<oneapi::tbb::null_mutex, utils::AtomicCounter<oneapi::tbb::null_mutex>>("Null Mutex", false);
     GeneralTest<oneapi::tbb::null_rw_mutex, utils::AtomicCounter<oneapi::tbb::null_rw_mutex>>("Null RW Mutex", false);
-    }
+    TestNullMutex<oneapi::tbb::null_mutex>("Null Mutex");
+    TestNullMutex<oneapi::tbb::null_rw_mutex>("Null RW Mutex");
+}
 
 //! \brief \ref interface \ref requirement
 TEST_CASE("Lockable requirement test") {
@@ -77,7 +76,9 @@ TEST_CASE("Lockable requirement test") {
 TEST_CASE("Shared mutexes (reader/writer) test") {
     // General reader writer capabilities + upgrade/downgrade
     TestReaderWriterLock<oneapi::tbb::spin_rw_mutex>("Spin RW Mutex");
+    TestReaderWriterLock<oneapi::tbb::queuing_rw_mutex>("Queuing RW Mutex");
     TestReaderWriterLock<oneapi::tbb::rw_mutex>("Adaptive RW Mutex");
+    TestNullRWMutex<oneapi::tbb::null_rw_mutex>("Null RW Mutex");
     // Single threaded read/write try_acquire operations
     TestTryAcquireReader<oneapi::tbb::spin_rw_mutex>("Spin RW Mutex");
     TestTryAcquireReader<oneapi::tbb::queuing_rw_mutex>("Queuing RW Mutex");
@@ -89,8 +90,6 @@ TEST_CASE("Shared mutexes (reader/writer) test") {
     TestReaderWriterLock<oneapi::tbb::speculative_spin_rw_mutex>("Speculative Spin RW Mutex");
     TestTryAcquireReader<oneapi::tbb::speculative_spin_rw_mutex>("Speculative Spin RW Mutex");
     TestRWStateMultipleChange<oneapi::tbb::speculative_spin_rw_mutex>("Speculative Spin RW Mutex");
-    TestReaderWriterLock<oneapi::tbb::queuing_rw_mutex>("Queuing RW Mutex");
-    TestNullRWMutex<oneapi::tbb::null_rw_mutex>("Null RW Mutex");
 #endif
 }
 

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2022 Intel Corporation
+    Copyright (c) 2020-2021 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -157,7 +157,7 @@ void test_join_node_rf_reset_protocol(){
     std::tuple<int> tmp(0);
     CHECK_MESSAGE((!testing_node.try_get(tmp)), "All buffers must be emptied");
 }
-#if !__TBB_USE_THREAD_SANITIZER
+
 //! Graph reset
 //! \brief \ref requirement
 TEST_CASE("graph reset with rf_reset_protocol") {
@@ -312,5 +312,3 @@ TEST_CASE("graph cancel") {
     CHECK_MESSAGE(g.is_cancelled(), "Wait for all should not change the cancellation status." );
     CHECK_MESSAGE(1 == executed, "Buffered messages should be dropped by the cancelled graph." );
 }
-
-#endif
