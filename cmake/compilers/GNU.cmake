@@ -68,6 +68,9 @@ if (MINGW AND CMAKE_SYSTEM_PROCESSOR MATCHES "i.86")
     list (APPEND TBB_COMMON_COMPILE_FLAGS -msse2)
 endif ()
 
+# Gnu flags to prevent compiler from optimizing out security checks
+set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -fno-strict-overflow -fno-delete-null-pointer-checks -fwrapv
+
 # TBB malloc settings
 set(TBBMALLOC_LIB_COMPILE_FLAGS -fno-rtti -fno-exceptions)
 set(TBB_OPENMP_FLAG -fopenmp)
