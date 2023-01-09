@@ -54,6 +54,12 @@ This document provides details about hardware, operating system, and software pr
 - Systems with Android* operating systems
   - Android* 9
 
+### Community Supported Platforms
+- MinGW*
+- FreeBSD*
+- Microsoft* Windows* OS on ARM/ARM64*
+- macOS* on ARM/ARM64*
+
 ### Supported Compilers
 - Intel* oneAPI DPC++/C++ Compiler
 - Intel* C++ Compiler 19.0 and 19.1 version
@@ -63,3 +69,5 @@ This document provides details about hardware, operating system, and software pr
   - GNU Compilers (gcc) 4.8.5 - 11.1.1
   - GNU C Library (glibc) version 2.17 - 2.33
   - Clang* 6.0.0 - 12.0.0
+
+
