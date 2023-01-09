@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2022 Intel Corporation
+# Copyright (c) 2020-2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -216,18 +216,16 @@ else()
     if (TBB_BUILD)
         add_subdirectory(src/tbb)
     endif()
-    if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")
-        if (TBBMALLOC_BUILD)
-            add_subdirectory(src/tbbmalloc)
-            if(TBBMALLOC_PROXY_BUILD AND NOT "${MSVC_CXX_ARCHITECTURE_ID}" MATCHES "ARM64")
-                add_subdirectory(src/tbbmalloc_proxy)
-            endif()
+    if (TBBMALLOC_BUILD)
+        add_subdirectory(src/tbbmalloc)
+        if(TBBMALLOC_PROXY_BUILD AND NOT "${MSVC_CXX_ARCHITECTURE_ID}" MATCHES "ARM64")
+            add_subdirectory(src/tbbmalloc_proxy)
         endif()
-        if (APPLE OR NOT BUILD_SHARED_LIBS)
-            message(STATUS "TBBBind build targets are disabled due to unsupported environment")
-        else()
-            add_subdirectory(src/tbbbind)
-        endif()
+    endif()
+    if (APPLE OR NOT BUILD_SHARED_LIBS)
+        message(STATUS "TBBBind build targets are disabled due to unsupported environment")
+    else()
+        add_subdirectory(src/tbbbind)
     endif()
 
     # -------------------------------------------------------------------
