@@ -61,5 +61,8 @@ endif()
 set(TBB_IPO_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:-flto>)
 set(TBB_IPO_LINK_FLAGS $<$<NOT:$<CONFIG:Debug>>:-flto>)
 
+# Flags to prevent compiler from optimizing out security checks
+set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -fno-strict-overflow -fno-delete-null-pointer-checks -fwrapv)
+
 # TBB malloc settings
 set(TBBMALLOC_LIB_COMPILE_FLAGS -fno-rtti -fno-exceptions)

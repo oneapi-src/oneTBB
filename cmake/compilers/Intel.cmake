@@ -30,6 +30,8 @@ else()
     set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -fstack-protector -Wformat -Wformat-security
                                  $<$<NOT:$<CONFIG:Debug>>:-qno-opt-report-embed -D_FORTIFY_SOURCE=2>
                                  $<$<EQUAL:${TBB_ARCH},32>:-falign-stack=maintain-16-byte>)
+    # Flags to prevent compiler from optimizing out security checks
+    set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -fno-strict-overflow -fno-delete-null-pointer-checks -fwrapv)
     set(TBB_OPENMP_FLAG -qopenmp)
     set(TBB_IPO_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:-ipo>)
 endif()
