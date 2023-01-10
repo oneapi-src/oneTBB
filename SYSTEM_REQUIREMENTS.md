@@ -59,7 +59,7 @@ This document provides details about hardware, operating system, and software pr
 - MinGW*
 - FreeBSD*
 - Microsoft* Windows* on ARM*/ARM64*
-- macOS* on ARM*/ARM64*
+- macOS* on ARM64*
 
 ### Supported Compilers
 - Intel* oneAPI DPC++/C++ Compiler
