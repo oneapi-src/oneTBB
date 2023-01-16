@@ -106,7 +106,7 @@ else()
     tbbbind_build(tbbbind            HWLOC::hwloc_1_11)
     tbbbind_build(tbbbind_2_0        HWLOC::hwloc_2   )
     tbbbind_build(tbbbind_2_5        HWLOC::hwloc_2_5 )
-    tbbbind_build(tbbbind_standalone HWLOC::hwloc_2_5_static )
+    tbbbind_build(tbbbind_standalone HWLOC::hwloc_2_5_STATIC )
 endif()
 
 
