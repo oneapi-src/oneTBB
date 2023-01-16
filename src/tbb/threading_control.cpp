@@ -153,10 +153,6 @@ unsigned threading_control_impl::max_num_workers() {
     return my_thread_dispatcher->my_num_workers_hard_limit;
 }
 
-bool threading_control_impl::check_client_priority(threading_control_client tc_client) {
-    return tc_client.get_pm_client()->is_top_priority();
-}
-
 void threading_control_impl::adjust_demand(threading_control_client tc_client, int mandatory_delta, int workers_delta) {
     auto& c = *tc_client.get_pm_client();
     my_thread_request_serializer->register_mandatory_request(mandatory_delta);
@@ -314,10 +310,6 @@ threading_control_client threading_control::create_client(arena& a) {
 
 void threading_control::publish_client(threading_control_client client) {
     return my_pimpl->publish_client(client);
-}
-
-bool threading_control::check_client_priority(threading_control_client client) {
-    return my_pimpl->check_client_priority(client);
 }
 
 threading_control::client_snapshot threading_control::prepare_client_destruction(threading_control_client client) {

@@ -48,7 +48,6 @@ public:
 
     threading_control_client create_client(arena& a);
     void publish_client(threading_control_client client);
-    bool check_client_priority(threading_control_client client);
 
     struct client_snapshot {
         std::uint64_t aba_epoch;
@@ -105,7 +104,6 @@ public:
 
     threading_control_client create_client(arena& a);
     void publish_client(threading_control_client client);
-    bool check_client_priority(threading_control_client client);
     client_snapshot prepare_client_destruction(threading_control_client client);
     bool try_destroy_client(client_snapshot deleter);
 

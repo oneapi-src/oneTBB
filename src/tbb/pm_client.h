@@ -31,12 +31,8 @@ public:
         return my_arena.priority_level();
     }
 
-    bool is_top_priority() {
-        return my_is_top_priority.load(std::memory_order_relaxed);
-    }
-
     void set_top_priority(bool b) {
-        return my_is_top_priority.store(b, std::memory_order_relaxed);
+        my_arena.set_top_priority(b);
     }
 
     int min_workers() const {
@@ -63,7 +59,6 @@ protected:
     }
 
     arena& my_arena;
-    std::atomic<bool> my_is_top_priority{ false };
     int my_min_workers{0};
     int my_max_workers{0};
 };

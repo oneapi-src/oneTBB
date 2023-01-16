@@ -224,6 +224,9 @@ struct arena_base : padded<intrusive_list_node> {
     //! The index in the array of per priority lists of arenas this object is in.
     /*const*/ unsigned my_priority_level;
 
+    //! The max priority level of arena in permit manager.
+    std::atomic<bool> my_is_top_priority{false};
+
     //! Current task pool state and estimate of available tasks amount.
     atomic_flag my_pool_state;
 
@@ -378,6 +381,8 @@ public:
     unsigned references() const { return my_references.load(std::memory_order_acquire); }
 
     bool is_arena_workerless() const { return my_max_num_workers == 0; }
+
+    void set_top_priority(bool);
 
     bool is_top_priority() const;
 

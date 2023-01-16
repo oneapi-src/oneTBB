@@ -383,8 +383,12 @@ void arena::out_of_work() {
     }
 }
 
+void arena::set_top_priority(bool is_top_priority) {
+    my_is_top_priority.store(is_top_priority, std::memory_order_relaxed);
+}
+
 bool arena::is_top_priority() const {
-    return my_threading_control->check_client_priority(my_tc_client);
+    return my_is_top_priority.load(std::memory_order_relaxed);
 }
 
 bool arena::try_join() {
