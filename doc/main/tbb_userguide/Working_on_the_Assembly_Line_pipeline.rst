@@ -172,13 +172,13 @@ equivalent version of the previous example that does this follows:
 
 
    void RunPipeline( int ntoken, FILE* input_file, FILE* output_file ) {
-       oneapi::tbb::filter_mode<void,TextSlice*> f1( oneapi::tbb::filter_mode::serial_in_order, 
+       oneapi::tbb::filter<void,TextSlice*> f1( oneapi::tbb::filter_mode::serial_in_order, 
                                           MyInputFunc(input_file) );
-       oneapi::tbb::filter_mode<TextSlice*,TextSlice*> f2(oneapi::tbb::filter_mode::parallel, 
+       oneapi::tbb::filter<TextSlice*,TextSlice*> f2(oneapi::tbb::filter_mode::parallel, 
                                                MyTransformFunc() );
-       oneapi::tbb::filter_mode<TextSlice*,void> f3(oneapi::tbb::filter_mode::serial_in_order, 
+       oneapi::tbb::filter<TextSlice*,void> f3(oneapi::tbb::filter_mode::serial_in_order, 
                                          MyOutputFunc(output_file) );
-       oneapi::tbb::filter_mode<void,void> f = f1 & f2 & f3;
+       oneapi::tbb::filter<void,void> f = f1 & f2 & f3;
        oneapi::tbb::parallel_pipeline(ntoken,f);
    }
 
