@@ -90,7 +90,7 @@ void test_member_types() {
 
     static_assert(utils::is_forward_iterator<typename container_type::iterator>::value,
                   "Incorrect container iterator member type");
-    static_assert(!std::is_const<typename container_type::iterator::value_type>::value,
+    static_assert(std::is_const<typename container_type::iterator::value_type>::value,
                   "Incorrect container iterator member type");
     static_assert(utils::is_forward_iterator<typename container_type::const_iterator>::value,
                   "Incorrect container const_iterator member type");
@@ -98,7 +98,7 @@ void test_member_types() {
                   "Incorrect container iterator member type");
     static_assert(utils::is_forward_iterator<typename container_type::local_iterator>::value,
                   "Incorrect container local_iterator member type");
-    static_assert(!std::is_const<typename container_type::local_iterator::value_type>::value,
+    static_assert(std::is_const<typename container_type::local_iterator::value_type>::value,
                   "Incorrect container local_iterator member type");
     static_assert(utils::is_forward_iterator<typename container_type::const_local_iterator>::value,
                   "Incorrect container const_local_iterator member type");

@@ -156,6 +156,17 @@ public:
     void merge( concurrent_unordered_multimap<key_type, mapped_type, OtherHash, OtherKeyEqual, allocator_type>&& source ) {
         this->internal_merge(std::move(source));
     }
+    
+    using base_type::unsafe_erase;
+    using base_type::unsafe_extract;
+    
+    iterator unsafe_erase(iterator position) {
+        return this->unsafe_erase(const_iterator(position));
+    }
+    
+    node_type unsafe_extract( iterator position ) {
+        return this->unsafe_extract(const_iterator(position));   
+    }
 }; // class concurrent_unordered_map
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
@@ -316,6 +327,17 @@ public:
     template <typename OtherHash, typename OtherKeyEqual>
     void merge( concurrent_unordered_multimap<key_type, mapped_type, OtherHash, OtherKeyEqual, allocator_type>&& source ) {
         this->internal_merge(std::move(source));
+    }
+    
+    using base_type::unsafe_erase;
+    using base_type::unsafe_extract;
+    
+    iterator unsafe_erase(iterator position) {
+        return this->unsafe_erase(const_iterator(position));
+    }
+    
+    node_type unsafe_extract( iterator position ) {
+        return this->unsafe_extract(const_iterator(position));
     }
 }; // class concurrent_unordered_multimap
 
