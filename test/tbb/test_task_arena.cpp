@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@
 #include "tbb/enumerable_thread_specific.h"
 #include "tbb/parallel_for.h"
 #include "tbb/global_control.h"
-#include "tbb/concurrent_set.h"
+#include "tbb/concurrent_map.h"
 #include "tbb/spin_mutex.h"
 #include "tbb/spin_rw_mutex.h"
 #include "tbb/task_group.h"
@@ -1539,8 +1539,6 @@ void ExceptionInExecute() {
 #endif // TBB_USE_EXCEPTIONS
 
 class simple_observer : public tbb::task_scheduler_observer {
-    static std::atomic<int> idx_counter;
-    int my_idx;
     int myMaxConcurrency;   // concurrency of the associated arena
     int myNumReservedSlots; // reserved slots in the associated arena
     void on_scheduler_entry( bool is_worker ) override {
@@ -1554,7 +1552,7 @@ class simple_observer : public tbb::task_scheduler_observer {
     {}
 public:
     simple_observer(tbb::task_arena &a, int maxConcurrency, int numReservedSlots)
-        : tbb::task_scheduler_observer(a), my_idx(idx_counter++)
+        : tbb::task_scheduler_observer(a)
         , myMaxConcurrency(maxConcurrency)
         , myNumReservedSlots(numReservedSlots) {
         observe(true);
@@ -1563,13 +1561,9 @@ public:
     ~simple_observer(){
         observe(false);
     }
-
-    friend bool operator<(const simple_observer& lhs, const simple_observer& rhs) {
-        return lhs.my_idx < rhs.my_idx;
-    }
 };
 
-std::atomic<int> simple_observer::idx_counter{};
+std::atomic<int> idx_counter{0};
 
 struct arena_handler {
     enum arena_status {
@@ -1578,19 +1572,10 @@ struct arena_handler {
         deleted
     };
 
-    tbb::task_arena* arena;
-
     std::atomic<arena_status> status{alive};
     tbb::spin_rw_mutex arena_in_use{};
 
-    tbb::concurrent_set<simple_observer> observers;
-
-    arena_handler(tbb::task_arena* ptr) : arena(ptr)
-    {}
-
-    friend bool operator<(const arena_handler& lhs, const arena_handler& rhs) {
-        return lhs.arena < rhs.arena;
-    }
+    tbb::concurrent_map<int, simple_observer> observers;
 };
 
 // TODO: Add observer operations
@@ -1622,7 +1607,7 @@ void StressTestMixFunctionality() {
         return arena_rnd.get();
     };
 
-    tbb::concurrent_set<arena_handler> arenas_pool;
+    tbb::concurrent_map<tbb::task_arena*, arena_handler> arenas_pool;
 
     std::vector<std::thread> thread_pool;
 
@@ -1631,10 +1616,12 @@ void StressTestMixFunctionality() {
     std::atomic<std::size_t> curr_operation{};
 
     auto find_arena = [&arenas_pool](tbb::spin_rw_mutex::scoped_lock& lock) -> decltype(arenas_pool.begin()) {
-        for (auto curr_arena = arenas_pool.begin(); curr_arena != arenas_pool.end(); ++curr_arena) {
-            if (lock.try_acquire(curr_arena->arena_in_use, /*writer*/ false)) {
-                if (curr_arena->status == arena_handler::alive) {
-                    return curr_arena;
+        for (auto it = arenas_pool.begin(); it != arenas_pool.end(); ++it) {
+            auto& handler = it->second;
+
+            if (lock.try_acquire(handler.arena_in_use, /*writer*/ false)) {
+                if (handler.status == arena_handler::alive) {
+                    return it;
                 }
                 else {
                     lock.release();
@@ -1645,13 +1632,17 @@ void StressTestMixFunctionality() {
     };
 
     auto thread_func = [&] () {
-        arenas_pool.emplace(new tbb::task_arena());
+        arenas_pool.emplace(std::piecewise_construct,
+                            std::forward_as_tuple(new tbb::task_arena()),
+                            std::tuple<>{});
         thread_barrier.wait();
         while (curr_operation++ < max_operations) {
             switch (get_random_operation()) {
                 case create_arena :
                 {
-                    arenas_pool.emplace(new tbb::task_arena());
+                    arenas_pool.emplace(std::piecewise_construct,
+                                        std::forward_as_tuple(new tbb::task_arena()),
+                                        std::tuple<>{});
                     break;
                 }
                 case delete_arena :
@@ -1659,17 +1650,17 @@ void StressTestMixFunctionality() {
                     auto curr_arena = arenas_pool.begin();
                     for (; curr_arena != arenas_pool.end(); ++curr_arena) {
                         arena_handler::arena_status curr_status = arena_handler::alive;
-                        if (curr_arena->status.compare_exchange_strong(curr_status, arena_handler::deleting)) {
+                        if (curr_arena->second.status.compare_exchange_strong(curr_status, arena_handler::deleting)) {
                             break;
                         }
                     }
 
                     if (curr_arena == arenas_pool.end()) break;
 
-                    tbb::spin_rw_mutex::scoped_lock lock(curr_arena->arena_in_use, /*writer*/ true);
+                    tbb::spin_rw_mutex::scoped_lock lock(curr_arena->second.arena_in_use, /*writer*/ true);
 
-                    delete curr_arena->arena;
-                    curr_arena->status.store(arena_handler::deleted);
+                    delete curr_arena->first;
+                    curr_arena->second.status.store(arena_handler::deleted);
 
                     break;
                 }
@@ -1679,7 +1670,9 @@ void StressTestMixFunctionality() {
 
                     auto curr_arena = find_arena(lock);
                     if (curr_arena != arenas_pool.end()) {
-                        curr_arena->observers.emplace(*curr_arena->arena, thread_number, 1);
+                        curr_arena->second.observers.emplace(std::piecewise_construct,
+                                                             std::forward_as_tuple(idx_counter++),
+                                                             std::forward_as_tuple(*curr_arena->first, thread_number, 1));
                     }
                     break;
                 }
@@ -1689,9 +1682,10 @@ void StressTestMixFunctionality() {
                     auto curr_arena = arenas_pool.begin();
                     std::advance(curr_arena, arena_number);
 
-                    for (auto it = curr_arena->observers.begin(); it != curr_arena->observers.end(); ++it) {
-                        if (it->is_observing()) {
-                            it->observe(false);
+                    for (auto& observer_entity : curr_arena->second.observers) {
+                        auto& observer = observer_entity.second;
+                        if (observer.is_observing()) {
+                            observer.observe(false);
                             break;
                         }
                     }
@@ -1704,7 +1698,7 @@ void StressTestMixFunctionality() {
                     auto curr_arena = find_arena(lock);
 
                     if (curr_arena != arenas_pool.end()) {
-                        curr_arena->arena->execute([]() {
+                        curr_arena->first->execute([]() {
                             tbb::affinity_partitioner aff;
                             tbb::parallel_for(0, 10000, utils::DummyBody(10), tbb::auto_partitioner{});
                             tbb::parallel_for(0, 10000, utils::DummyBody(10), aff);
@@ -1719,7 +1713,7 @@ void StressTestMixFunctionality() {
                     auto curr_arena = find_arena(lock);
 
                     if (curr_arena != arenas_pool.end()) {
-                        curr_arena->arena->enqueue([] { utils::doDummyWork(1000); });
+                        curr_arena->first->enqueue([] { utils::doDummyWork(1000); });
                     }
 
                     break;
@@ -1740,8 +1734,8 @@ void StressTestMixFunctionality() {
         if (thread_pool[i].joinable()) thread_pool[i].join();
     }
 
-    for (auto& handler : arenas_pool) {
-        if (handler.status != arena_handler::deleted) delete handler.arena;
+    for (auto& arena_entity : arenas_pool) {
+        if (arena_entity.second.status != arena_handler::deleted) delete arena_entity.first;
     }
 }
 

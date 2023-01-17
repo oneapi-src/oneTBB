@@ -175,14 +175,14 @@ public:
     void merge(concurrent_multimap<key_type, mapped_type, OtherCompare, Allocator>&& source) {
         this->internal_merge(std::move(source));
     }
-    
+
     using base_type::unsafe_erase;
     using base_type::unsafe_extract;
-    
+
     iterator unsafe_erase(iterator pos) {
         return this->unsafe_erase(const_iterator(pos));
     }
-    
+
     node_type unsafe_extract(iterator pos) {
         return this->unsafe_extract(const_iterator(pos));
     }
@@ -303,14 +303,14 @@ public:
     void merge(concurrent_map<key_type, mapped_type, OtherCompare, Allocator>&& source) {
         this->internal_merge(std::move(source));
     }
-    
+
     using base_type::unsafe_erase;
     using base_type::unsafe_extract;
-    
+
     iterator unsafe_erase(iterator pos) {
         return this->unsafe_erase(const_iterator(pos));
     }
-    
+
     node_type unsafe_extract(iterator pos) {
         return this->unsafe_extract(const_iterator(pos));
     }
