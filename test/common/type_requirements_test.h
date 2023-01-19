@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2022 Intel Corporation
+    Copyright (c) 2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -23,153 +23,73 @@
 
 namespace test_req {
 
-struct CreateFlag {};
+struct ConstructT {};
 
-struct Creator {
-    struct Deleter {
-        template <typename T>
-        void operator()(T* ptr) const {
-            delete ptr;
-        }
-    };
+constexpr ConstructT construct{};
 
-    template <typename T, typename... Args>
-    static std::unique_ptr<T, Deleter> create_ptr(Args&&... args) {
-        return std::unique_ptr<T, Deleter>{new T(CreateFlag{}, std::forward<Args>(args)...)};
-    }
+struct MinObj {
+    ~MinObj() = default;
+
+    MinObj() = delete;
+    MinObj(const MinObj&) = delete;
+    MinObj(MinObj&&) = delete;
+
+    MinObj& operator=(const MinObj&) = delete;
+    MinObj& operator=(MinObj&&) = delete;
+
+#if __TBB_CPP20_COMPARISONS_PRESENT
+    friend bool operator==(const MinObj&, const MinObj&) = delete;
+    friend auto operator<=>(const MinObj&, const MinObj&) = delete;
+#endif
+
+    MinObj(ConstructT) {}
+}; // struct MinObj
+
+struct CopyConstructible : MinObj {
+    using MinObj::MinObj;
+    CopyConstructible(const CopyConstructible&) : MinObj(construct) {}
 };
 
-template <typename T, typename... Args>
-std::unique_ptr<T, Creator::Deleter> create_ptr(Args&&... args) {
-    return Creator::create_ptr<T>(std::forward<Args>(args)...);
-}
+struct Copyable : MinObj {
+    using MinObj::MinObj;
+    Copyable(const Copyable&) : MinObj(construct) {}
+    Copyable& operator=(const Copyable&) { return *this; }
+};
 
-struct MinRange {
-    MinRange(const MinRange&) = default;
-    MinRange(MinRange&, oneapi::tbb::split) {}
-    ~MinRange() = default;
+struct MinRange : MinObj {
+    using MinObj::MinObj;
+    MinRange(const MinRange&) : MinObj(construct) {}
+    ~MinRange() {}
 
     bool empty() const { return true; }
     bool is_divisible() const { return false; }
 
-    MinRange() = delete;
-    MinRange& operator=(const MinRange&) = delete;
+    MinRange(MinRange&, oneapi::tbb::split) : MinObj(construct) {}
+};
 
-private:
-    MinRange(CreateFlag) {}
-    friend struct Creator;
-}; // struct MinRange
+struct MinBlockedRangeValue : MinObj {
+    using MinObj::MinObj;
 
-struct NonDestructible {
-    NonDestructible() = delete;
-    NonDestructible(const NonDestructible&) = delete;
-    NonDestructible& operator=(const NonDestructible&) = delete;
-protected:
-    NonDestructible(CreateFlag) {}
-    ~NonDestructible() = default;
-    friend struct Creator;
-}; // struct NonDestructible
+    MinBlockedRangeValue(const MinBlockedRangeValue&) : MinObj(construct) {}
+    ~MinBlockedRangeValue() {}
 
-struct OnlyDestructible {
-    ~OnlyDestructible() = default;
+    void operator=(const MinBlockedRangeValue&) {}
 
-    OnlyDestructible() = delete;
-    OnlyDestructible(const OnlyDestructible&) = delete;
-    OnlyDestructible& operator=(const OnlyDestructible&) = delete;
-
-protected:
-    OnlyDestructible(CreateFlag) {}
-    friend struct Creator;
-}; // struct OnlyDestructible
-
-struct CopyConstructibleAndDestructible : OnlyDestructible {
-    CopyConstructibleAndDestructible(const CopyConstructibleAndDestructible&) : OnlyDestructible(CreateFlag{}) {}
-private:
-    CopyConstructibleAndDestructible(CreateFlag) : OnlyDestructible(CreateFlag{}) {}
-    friend struct Creator;
-}; // struct CopyConstructibleAndDestructible
-
-// Value for parallel_reduce and parallel_scan
-struct MinValue {
-    MinValue() = delete;
-    MinValue(const MinValue&) = default;
-    ~MinValue() = default;
-    MinValue& operator=(const MinValue&) = default;
-private:
-    MinValue(CreateFlag) {}
-    friend struct Creator;
-}; // struct MinValue
-
-struct MinReduction {
-    MinValue operator()(const MinValue& x, const MinValue&) const { return x; }
-
-    MinReduction() = delete;
-    MinReduction(const MinReduction&) = delete;
-    MinReduction& operator=(const MinReduction&) = delete;
-
-private:
-    MinReduction(CreateFlag) {}
-    ~MinReduction() = default;
-    friend struct Creator;
-}; // struct MinReduction
+    friend bool operator<(const MinBlockedRangeValue&, const MinBlockedRangeValue&) { return false; }
+    friend std::size_t operator-(const MinBlockedRangeValue&, const MinBlockedRangeValue&) { return 0; }
+    friend MinBlockedRangeValue operator+(const MinBlockedRangeValue&, std::size_t) { return MinBlockedRangeValue(construct); }
+};
 
 template <typename Iterator>
-struct MinContainerBasedSequence {
-    Iterator begin() const { return Iterator{nullptr}; }
-    Iterator end() const { return Iterator{nullptr}; }
+struct MinSequence : MinObj {
+    using MinObj::MinObj;
+    Iterator begin() const { return my_it; }
+    Iterator end() const { return my_it; }
 
-    MinContainerBasedSequence() = delete;
-    MinContainerBasedSequence(const MinContainerBasedSequence&) = delete;
-    MinContainerBasedSequence& operator=(const MinContainerBasedSequence&) = delete;
+    MinSequence(ConstructT, Iterator it) : MinObj(construct), my_it(it) {}
 private:
-    MinContainerBasedSequence(CreateFlag) {}
-    ~MinContainerBasedSequence() = default;
-    friend struct Creator;
-}; // struct MinContainerBasedSequence
-
-template <typename... Args>
-struct MinFunctionObject {
-    void operator()(Args...) const {}
-
-    MinFunctionObject() = delete;
-    MinFunctionObject(const MinFunctionObject&) = delete;
-    MinFunctionObject& operator=(const MinFunctionObject&) = delete;
-private:
-    MinFunctionObject(CreateFlag) {}
-    ~MinFunctionObject() = default;
-    friend struct Creator;
-}; // struct MinFunctionObject
-
-template <typename T>
-struct MinCompare {
-    bool operator()(const T&, const T&) const { return true; }
-
-    MinCompare() = delete;
-    MinCompare(const MinCompare&) = default;
-    MinCompare& operator=(const MinCompare&) = delete;
-
-    ~MinCompare() = default;
-private:
-    MinCompare(CreateFlag) {}
-    friend struct Creator;
-}; // struct MinCompare
-
-struct MinBlockedRangeValue {
-    MinBlockedRangeValue(const MinBlockedRangeValue&) = default;
-    MinBlockedRangeValue& operator=(const MinBlockedRangeValue&) = default;
-    ~MinBlockedRangeValue() = default;
-
-    MinBlockedRangeValue() = delete;
-
-    bool operator<(const MinBlockedRangeValue& other) const { return real_value < other.real_value; }
-    int operator-(const MinBlockedRangeValue& other) const { return real_value - other.real_value; }
-    MinBlockedRangeValue operator+(int k) const { return MinBlockedRangeValue(CreateFlag{}, real_value + k); }
-private:
-    MinBlockedRangeValue(CreateFlag, int rv) : real_value(rv) {}
-    friend struct Creator;
-    
-    int real_value;
-}; // struct MinBlockedRangeValue
+    Iterator my_it;
+};
 
 } // namespace test_req
 

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2022 Intel Corporation
+    Copyright (c) 2020-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -36,28 +36,32 @@ std::vector<int> get_random_vector() {
     return result;
 }
 
-struct MinSortable {
-    MinSortable(MinSortable&&) = default;
-    MinSortable& operator=(MinSortable&&) = default;
+namespace test_req {
 
-    MinSortable() = delete;
-    MinSortable(const MinSortable&) = delete;
-    MinSortable& operator=(const MinSortable&) = delete;
+struct MinSwappable : MinObj {
+    using MinObj::MinObj;
+    MinSwappable(MinSwappable&&) : MinObj(construct) {}
+    MinSwappable& operator=(MinSwappable&&) { return *this; }
+};
 
-    ~MinSortable() = default;
-protected:
-    MinSortable(test_req::CreateFlag) {}
-    friend struct test_req::Creator;
-}; // struct MinSortable
+void swap(MinSwappable&, MinSwappable&) {}
 
-void swap(MinSortable&, MinSortable&) {}
+struct MinLessThanComparableAndSwappable : MinObj {
+    using MinObj::MinObj;
+    MinLessThanComparableAndSwappable(MinLessThanComparableAndSwappable&&) : MinObj(construct) {}
+    MinLessThanComparableAndSwappable& operator=(MinLessThanComparableAndSwappable&&) { return *this; }
+};
 
-struct MinLessThanSortable : MinSortable {
-    bool operator<(const MinLessThanSortable&) const { return true; }
-private:
-    MinLessThanSortable(test_req::CreateFlag) : MinSortable(test_req::CreateFlag{}) {}
-    friend struct test_req::Creator;
-}; // struct MinLessThanSortable
+void swap(MinLessThanComparableAndSwappable&, MinLessThanComparableAndSwappable&) {}
+bool operator<(const MinLessThanComparableAndSwappable&, const MinLessThanComparableAndSwappable&) { return true; }
+
+struct MinCompare : MinObj {
+    using MinObj::MinObj;
+    MinCompare(const MinCompare&) : MinObj(construct) {}
+    bool operator()(const MinSwappable&, const MinSwappable&) const { return true; }
+};
+
+} // namespace test_req
 
 //! Iterator based range sorting test (default comparator)
 //! \brief \ref requirement \ref interface
@@ -118,23 +122,20 @@ TEST_CASE ("Range sorting test (greater comparator)") {
 //! Testing parallel_sort type requirements
 //! \brief \ref requirement
 TEST_CASE("parallel_sort type requirements") {
-    auto value_ptr = test_req::create_ptr<MinSortable>();
-    auto less_value_ptr = test_req::create_ptr<MinLessThanSortable>();
+    test_req::MinSwappable value(test_req::construct);
+    test_req::MinLessThanComparableAndSwappable comp_value(test_req::construct);
 
-    utils::RandomIterator<MinSortable> random_it(value_ptr.get());
-    utils::RandomIterator<MinLessThanSortable> random_less_it(less_value_ptr.get());
+    utils::RandomIterator<test_req::MinSwappable>                      random_it(&value);
+    utils::RandomIterator<test_req::MinLessThanComparableAndSwappable> comp_random_it(&comp_value);
 
-    using seq_type = test_req::MinContainerBasedSequence<decltype(random_it)>;
-    using less_seq_type = test_req::MinContainerBasedSequence<decltype(random_less_it)>;
+    test_req::MinSequence<decltype(random_it)> sequence(test_req::construct, random_it);
+    test_req::MinSequence<decltype(comp_random_it)> comp_sequence(test_req::construct, comp_random_it);
 
-    auto seq_ptr = test_req::create_ptr<seq_type>();
-    auto less_seq_ptr = test_req::create_ptr<less_seq_type>();
+    test_req::MinCompare compare(test_req::construct);
 
-    auto compare_ptr = test_req::create_ptr<test_req::MinCompare<MinSortable>>();
+    oneapi::tbb::parallel_sort(random_it, random_it, compare);
+    oneapi::tbb::parallel_sort(comp_random_it, comp_random_it);
 
-    oneapi::tbb::parallel_sort(random_less_it, random_less_it);
-    oneapi::tbb::parallel_sort(random_it, random_it, *compare_ptr);
-
-    oneapi::tbb::parallel_sort(*less_seq_ptr);
-    oneapi::tbb::parallel_sort(*seq_ptr, *compare_ptr);
+    oneapi::tbb::parallel_sort(sequence, compare);
+    oneapi::tbb::parallel_sort(comp_sequence);
 }

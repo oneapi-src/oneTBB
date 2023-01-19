@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2022 Intel Corporation
+    Copyright (c) 2020-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -172,51 +172,38 @@ void RootSequence( Iterator1 first, Iterator1 last, Iterator2 res) {
     );
 }
 
-struct MinFilterBodyBase {
-    MinFilterBodyBase() = delete;
-    MinFilterBodyBase(const MinFilterBodyBase&) = default;
-    MinFilterBodyBase& operator=(const MinFilterBodyBase&) = delete;
+namespace test_req {
 
-    ~MinFilterBodyBase() = default;
-protected:
-    MinFilterBodyBase(test_req::CreateFlag) {}
-}; // struct MinFilterBodyBase
+struct MinMiddleFilterBody : MinObj {
+    using MinObj::MinObj;
+    MinMiddleFilterBody(const MinMiddleFilterBody&) : MinObj(construct) {} // Not part of the spec
+    test_req::MinObj* operator()(MinObj* x) const { return x; }
+};
 
-struct MinMiddleFilterBody : MinFilterBodyBase {
-    test_req::NonDestructible* operator()(test_req::NonDestructible* x) const { return x; }
-private:
-    MinMiddleFilterBody(test_req::CreateFlag) : MinFilterBodyBase(test_req::CreateFlag{}) {}
-    friend struct test_req::Creator;
-}; // struct MinMiddleFilterBody
-
-struct MinFirstFilterBody : MinFilterBodyBase {
-    test_req::NonDestructible* operator()(oneapi::tbb::flow_control& fc) const {
+struct MinFirstFilterBody : MinObj {
+    using MinObj::MinObj;
+    MinFirstFilterBody(const MinFirstFilterBody&) : MinObj(construct) {} // Not part of the spec
+    test_req::MinObj* operator()(oneapi::tbb::flow_control& fc) const {
         fc.stop();
-        return ptr;
+        return nullptr;
     }
-private:
-    MinFirstFilterBody(test_req::CreateFlag, test_req::NonDestructible* value_ptr)
-        : MinFilterBodyBase(test_req::CreateFlag{}), ptr(value_ptr) {}
-    friend struct test_req::Creator;
+};
 
-    test_req::NonDestructible* ptr;
-}; // struct MinFirstFilterBody
-
-struct MinLastFilterBody : MinFilterBodyBase {
-    void operator()(test_req::NonDestructible*) const {}
-private:
-    MinLastFilterBody(test_req::CreateFlag) : MinFilterBodyBase(test_req::CreateFlag{}) {}
-    friend struct test_req::Creator;
-}; // struct MinLastFilterBody
-
-struct MinSingleFilterBody : MinFilterBodyBase {
+struct MinSingleFilterBody : MinObj {
+    using MinObj::MinObj;
+    MinSingleFilterBody(const MinSingleFilterBody&) : MinObj(construct) {} // Not part of the spec
     void operator()(oneapi::tbb::flow_control& fc) const {
         fc.stop();
     }
-private:
-    MinSingleFilterBody(test_req::CreateFlag) : MinFilterBodyBase(test_req::CreateFlag{}) {}
-    friend struct test_req::Creator;
-}; // struct MinSingleFilterBody
+};
+
+struct MinLastFilterBody : MinObj {
+    using MinObj::MinObj;
+    MinLastFilterBody(const MinLastFilterBody&) : MinObj(construct) {} // Not part of the spec
+    void operator()(MinObj*) const {}
+};
+
+} // namespace test_req
 
 //! Testing pipeline correctness
 //! \brief \ref interface \ref requirement
@@ -446,17 +433,16 @@ TEST_CASE_TEMPLATE("Deduction guides testing", T, int, unsigned int, double)
 //! Testing parallel_pipeline type requirements
 //! \brief \ref requirement
 TEST_CASE("parallel_pipeline type requirements") {
-    auto value_ptr = test_req::create_ptr<test_req::NonDestructible>();
-    auto middle_body_ptr = test_req::create_ptr<MinMiddleFilterBody>();
-    auto first_body_ptr = test_req::create_ptr<MinFirstFilterBody>(value_ptr.get());
-    auto last_body_ptr = test_req::create_ptr<MinLastFilterBody>();
-    auto single_body_ptr = test_req::create_ptr<MinSingleFilterBody>();
+    test_req::MinMiddleFilterBody middle_body(test_req::construct);
+    test_req::MinFirstFilterBody  first_body(test_req::construct);
+    test_req::MinLastFilterBody   last_body(test_req::construct);
+    test_req::MinSingleFilterBody single_body(test_req::construct);
 
-    auto middle_filter = oneapi::tbb::make_filter<test_req::NonDestructible*,
-                                                  test_req::NonDestructible*>(oneapi::tbb::filter_mode::serial_in_order, *middle_body_ptr);
-    auto first_filter = oneapi::tbb::make_filter<void, test_req::NonDestructible*>(oneapi::tbb::filter_mode::serial_in_order, *first_body_ptr);
-    auto last_filter = oneapi::tbb::make_filter<test_req::NonDestructible*, void>(oneapi::tbb::filter_mode::serial_in_order, *last_body_ptr);
-    auto single_filter = oneapi::tbb::make_filter<void, void>(oneapi::tbb::filter_mode::serial_in_order, *single_body_ptr);
+    auto mode = oneapi::tbb::filter_mode::serial_in_order;
+    auto middle_filter = oneapi::tbb::make_filter<test_req::MinObj*, test_req::MinObj*>(mode, middle_body);
+    auto first_filter = oneapi::tbb::make_filter<void, test_req::MinObj*>(mode, first_body);
+    auto last_filter = oneapi::tbb::make_filter<test_req::MinObj*, void>(mode, last_body);
+    auto single_filter = oneapi::tbb::make_filter<void, void>(mode, single_body);
 
     oneapi::tbb::parallel_pipeline(n_tokens, single_filter);
     oneapi::tbb::parallel_pipeline(n_tokens, first_filter & middle_filter & last_filter);

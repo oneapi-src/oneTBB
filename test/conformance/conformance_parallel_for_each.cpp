@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,26 +19,6 @@
 
 //! \file conformance_parallel_for_each.cpp
 //! \brief Test for [algorithms.parallel_for_each] specification
-
-struct MinPForEachBody {
-    void operator()(const test_req::OnlyDestructible&) const {}
-
-    MinPForEachBody() = delete;
-    MinPForEachBody(const MinPForEachBody&) = delete;
-    MinPForEachBody& operator=(const MinPForEachBody&) = delete;
-private:
-    MinPForEachBody(test_req::CreateFlag) {}
-    ~MinPForEachBody() = default;
-    friend struct test_req::Creator;
-}; // struct MinPForEachBody
-
-template <typename... Args>
-void run_parallel_for_each_overloads(Args&&... args) {
-    oneapi::tbb::task_group_context ctx;
-
-    oneapi::tbb::parallel_for_each(args...);
-    oneapi::tbb::parallel_for_each(args..., ctx);
-}
 
 //! Test input access iterator support
 //! \brief \ref requirement \ref interface
@@ -138,39 +118,71 @@ TEST_CASE("Move Semantics | Item: MoveOnly") {
     DoTestMoveSemantics<TestMoveSem::MoveOnly>();
 }
 
+namespace test_req {
+
+template <typename ItemType>
+struct MinForEachBody : MinObj {
+    using MinObj::MinObj;
+    void operator()(const ItemType&) const {}
+};
+
+template <typename ItemType>
+struct MinForEachFeederBody : MinObj {
+    using MinObj::MinObj;
+    void operator()(const ItemType&, oneapi::tbb::feeder<ItemType>& feeder) const {
+        ItemType item(construct);
+        feeder.add(item);
+    }
+};
+
+} // namespace test_req
+
+template <typename Iterator, typename Body>
+void run_parallel_for_each_overloads() {
+    using value_type = typename std::iterator_traits<Iterator>::value_type;
+
+    value_type value(test_req::construct);
+
+    Iterator it(&value);
+
+    test_req::MinSequence<Iterator> sequence(test_req::construct, it);
+    const auto& const_sequence = sequence;
+
+    Body body(test_req::construct);
+    oneapi::tbb::task_group_context ctx;
+
+    oneapi::tbb::parallel_for_each(it, it, body);
+    oneapi::tbb::parallel_for_each(it, it, body, ctx);
+
+    oneapi::tbb::parallel_for_each(sequence, body);
+    oneapi::tbb::parallel_for_each(sequence, body, ctx);
+
+    oneapi::tbb::parallel_for_each(const_sequence, body);
+    oneapi::tbb::parallel_for_each(const_sequence, body, ctx);
+}
+
 //! Test parallel_for_each type requirements
 //! \brief \ref requirement
 TEST_CASE("parallel_for_each type requirements") {
-    auto value1_ptr = test_req::create_ptr<test_req::CopyConstructibleAndDestructible>();
-    auto value2_ptr = test_req::create_ptr<test_req::OnlyDestructible>();
+    // value_type should be copy constructible for input iterators
+    using MinInputIterator = utils::InputIterator<test_req::CopyConstructible>;
+    using MinForwardIterator = utils::ForwardIterator<test_req::MinObj>;
+    using MinRandomIterator = utils::RandomIterator<test_req::MinObj>;
 
-    utils::InputIterator<test_req::CopyConstructibleAndDestructible> input_it(value1_ptr.get());
-    utils::ForwardIterator<test_req::OnlyDestructible> forward_it(value2_ptr.get());
-    utils::RandomIterator<test_req::OnlyDestructible> random_it(value2_ptr.get());
+    // value_type should be copy/move constructible to be used in feeder.add and feeder task
+    using FeederForwardIterator = utils::ForwardIterator<test_req::CopyConstructible>;
+    using FeederRandomIterator = utils::RandomIterator<test_req::CopyConstructible>;
 
-    using input_seq_type = test_req::MinContainerBasedSequence<decltype(input_it)>;
-    using forward_seq_type = test_req::MinContainerBasedSequence<decltype(forward_it)>;
-    using random_seq_type = test_req::MinContainerBasedSequence<decltype(random_it)>;
+    using MinBody = test_req::MinForEachBody<test_req::MinObj>;
+    using CopyBody = test_req::MinForEachBody<test_req::CopyConstructible>;
+    using FeederBody = test_req::MinForEachFeederBody<test_req::CopyConstructible>;
 
-    auto input_seq_ptr = test_req::create_ptr<input_seq_type>();
-    auto forward_seq_ptr = test_req::create_ptr<forward_seq_type>();
-    auto random_seq_ptr = test_req::create_ptr<random_seq_type>();
+    run_parallel_for_each_overloads<MinInputIterator, CopyBody>();
+    run_parallel_for_each_overloads<MinInputIterator, FeederBody>();
 
-    const input_seq_type& const_input_seq_ref = *input_seq_ptr;
-    const forward_seq_type& const_forward_seq_ref = *forward_seq_ptr;
-    const random_seq_type& const_random_seq_ref = *random_seq_ptr;
+    run_parallel_for_each_overloads<MinForwardIterator, MinBody>();
+    run_parallel_for_each_overloads<FeederForwardIterator, FeederBody>();
 
-    auto body_ptr = test_req::create_ptr<MinPForEachBody>();
-    
-    run_parallel_for_each_overloads(input_it, input_it, *body_ptr);
-    run_parallel_for_each_overloads(*input_seq_ptr, *body_ptr);
-    run_parallel_for_each_overloads(const_input_seq_ref, *body_ptr);
-
-    run_parallel_for_each_overloads(forward_it, forward_it, *body_ptr);
-    run_parallel_for_each_overloads(*forward_seq_ptr, *body_ptr);
-    run_parallel_for_each_overloads(const_forward_seq_ref, *body_ptr);
-
-    run_parallel_for_each_overloads(random_it, random_it, *body_ptr);
-    run_parallel_for_each_overloads(*random_seq_ptr, *body_ptr);
-    run_parallel_for_each_overloads(const_random_seq_ref, *body_ptr);
+    run_parallel_for_each_overloads<MinRandomIterator, MinBody>();
+    run_parallel_for_each_overloads<FeederRandomIterator, FeederBody>();
 }

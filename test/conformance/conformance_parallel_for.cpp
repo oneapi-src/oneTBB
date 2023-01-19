@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -245,61 +245,48 @@ void TestParallelForWithStepSupport() {
     oneapi::tbb::parallel_for(static_cast<T>(2), static_cast<T>(1), static_cast<T>(1), TestFunctor<T>());
 }
 
-struct MinPForBody {
-    MinPForBody(const MinPForBody&) = default;
-    ~MinPForBody() = default;
+namespace test_req {
 
-    void operator()(test_req::MinRange&) const {}
+struct MinForBody : MinObj {
+    using MinObj::MinObj;
+    MinForBody(const MinForBody&) : MinObj(construct) {}
+    ~MinForBody() {}
 
-    MinPForBody() = delete;
-    MinPForBody& operator=(const MinPForBody&) = delete;
-private:
-    MinPForBody(test_req::CreateFlag) {}
-    friend struct test_req::Creator;
-}; // struct MinPForBody
+    void operator()(MinRange&) const {}
+};
 
-struct MinPForIndex {
-    MinPForIndex(int v) : real_index(v) {}
-    MinPForIndex(const MinPForIndex&) = default;
-    ~MinPForIndex() = default;
+struct MinForIndex : MinObj {
+    MinForIndex(int i) : MinObj(construct), real_index(i) {}
+    MinForIndex(const MinForIndex& other) : MinObj(construct), real_index(other.real_index) {}
+    ~MinForIndex() {}
 
-    MinPForIndex& operator=(const MinPForIndex&) = default;
+    // Can return void by the spec, but implementation requires to return Index&
+    MinForIndex& operator=(const MinForIndex& other) { real_index = other.real_index; return *this; }
 
-    bool operator<(const MinPForIndex& other) const { return real_index < other.real_index; }
-    std::size_t operator-(const MinPForIndex& other) const { return real_index - other.real_index; }
+    friend bool operator<(const MinForIndex& lhs, const MinForIndex& rhs) { return lhs.real_index < rhs.real_index; }
+    friend std::size_t operator-(const MinForIndex& lhs, const MinForIndex& rhs) { return lhs.real_index - rhs.real_index; }
 
-    MinPForIndex operator+(std::size_t) const { return *this; }
+    friend MinForIndex operator+(const MinForIndex& idx, std::size_t k) { return MinForIndex{idx.real_index + int(k)}; }
 
-    MinPForIndex() = delete;
+    // Not included into the spec but required by the implementation
+    friend bool operator<=(const MinForIndex& lhs, const MinForIndex& rhs) { return lhs.real_index <= rhs.real_index; }
+    friend MinForIndex operator/(const MinForIndex& lhs, const MinForIndex& rhs) { return {lhs.real_index / rhs.real_index}; }
+    friend MinForIndex operator+(const MinForIndex& lhs, const MinForIndex& rhs) { return {lhs.real_index + rhs.real_index}; }
+    friend MinForIndex operator*(const MinForIndex& lhs, const MinForIndex& rhs) { return {lhs.real_index * rhs.real_index}; }
 
-    // Extra
-    bool operator<=(const MinPForIndex& other) const { return real_index <= other.real_index; }
-    MinPForIndex operator/(const MinPForIndex& other) const { return MinPForIndex(real_index / other.real_index); }
-    MinPForIndex operator*(const MinPForIndex& other) const { return MinPForIndex(real_index * other.real_index); }
-    MinPForIndex operator+(const MinPForIndex& other) const { return MinPForIndex(real_index + other.real_index); }
-    MinPForIndex& operator+=(const MinPForIndex& other) { real_index += other.real_index; return *this; }
-    MinPForIndex& operator++() { ++real_index; return *this; }
+    MinForIndex& operator++() { ++real_index; return *this; }
+    MinForIndex& operator+=(const MinForIndex& rhs) { real_index += rhs.real_index; return *this; }
 
 private:
-    MinPForIndex(test_req::CreateFlag, std::size_t ri) : real_index(ri) {}
-    friend struct test_req::Creator;
+    int real_index;
+};
 
-    std::size_t real_index;
-}; // struct MinPForIndex
+struct MinForFunc : MinObj {
+    using MinObj::MinObj;
+    void operator()(MinForIndex) const {}
+};
 
-struct MinPForFunc {
-    void operator()(MinPForIndex) const {}
-
-    MinPForFunc() = delete;
-    MinPForFunc(const MinPForFunc&) = delete;
-
-    MinPForFunc& operator=(const MinPForFunc&) = delete;
-
-private:
-    MinPForFunc(test_req::CreateFlag) {}
-    ~MinPForFunc() = default;
-    friend struct test_req::Creator;
-}; // struct MinimalisticPForFunc
+} // namespace test_req
 
 template <typename... Args>
 void run_parallel_for_overloads(const Args&... args) {
@@ -392,12 +379,13 @@ TEST_CASE("Testing parallel_for with partitioners") {
 //! Testing parallel_for type requirements
 //! \brief \ref requirement
 TEST_CASE("parallel_for type requirements") {
-    auto range_ptr = test_req::create_ptr<test_req::MinRange>();
-    auto body_ptr = test_req::create_ptr<MinPForBody>();
-    auto func_ptr = test_req::create_ptr<MinPForFunc>();
-    auto index_ptr = test_req::create_ptr<MinPForIndex>(1);
+    test_req::MinRange   range(test_req::construct);
+    test_req::MinForBody body(test_req::construct);
+    test_req::MinForFunc func(test_req::construct);
 
-    run_parallel_for_overloads(*range_ptr, *body_ptr);
-    run_parallel_for_overloads(*index_ptr, *index_ptr, *func_ptr);
-    run_parallel_for_overloads(*index_ptr, *index_ptr, *index_ptr, *func_ptr);
+    test_req::MinForIndex index{1}, stride{1};
+
+    run_parallel_for_overloads(range, body);
+    run_parallel_for_overloads(index, index, func);
+    run_parallel_for_overloads(index, index, stride, func);
 }

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2022 Intel Corporation
+    Copyright (c) 2020-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -74,35 +74,30 @@ struct parallel_scan_wrapper<default_partitioner_tag>{
     }
 };
 
-struct MinScanBody {
-    void operator()(const test_req::MinRange&, oneapi::tbb::pre_scan_tag) {}
-    void operator()(const test_req::MinRange&, oneapi::tbb::final_scan_tag) {}
+namespace test_req {
 
-    MinScanBody(MinScanBody&, oneapi::tbb::split) {}
-    ~MinScanBody() = default;
+struct MinScanBody : MinObj {
+    using MinObj::MinObj;
+    void operator()(const MinRange&, oneapi::tbb::pre_scan_tag) {}
+    void operator()(const MinRange&, oneapi::tbb::final_scan_tag) {}
+
+    MinScanBody(MinScanBody&, oneapi::tbb::split) : MinObj(construct) {}
 
     void reverse_join(MinScanBody&) {}
     void assign(MinScanBody&) {}
+};
 
-    MinScanBody() = delete;
-    MinScanBody(const MinScanBody&) = delete;
-    MinScanBody& operator=(const MinScanBody&) = delete;
-private:
-    MinScanBody(test_req::CreateFlag) {}
-    friend struct test_req::Creator;
-}; // struct MinScanBody
+struct MinScanFunc : MinObj {
+    using MinObj::MinObj;
+    Copyable operator()(const MinRange&, const Copyable& x, bool) const { return x; }
+};
 
-struct MinScanFunc {
-    test_req::MinValue operator()(const test_req::MinRange&, const test_req::MinValue& x, bool) const { return x; }
+struct MinScanCombine : MinObj {
+    using MinObj::MinObj;
+    Copyable operator()(const Copyable&, const Copyable& x) const { return x; }
+};
 
-    MinScanFunc() = delete;
-    MinScanFunc(const MinScanFunc&) = delete;
-    MinScanFunc& operator=(const MinScanFunc&) = delete;
-private:
-    MinScanFunc(test_req::CreateFlag) {}
-    ~MinScanFunc() = default;
-    friend struct test_req::Creator;
-}; // struct MinScanFunc
+} // namespace test_req
 
 template <typename... Args>
 void run_parallel_scan_overloads(Args&&... args) {
@@ -176,12 +171,12 @@ TEST_CASE_TEMPLATE("Test parallel scan with body", Partitioner, default_partitio
 //! Testing parallel_scan type requirements
 //! \brief \ref requirement
 TEST_CASE("parallel_scan type requirements") {
-    auto range_ptr = test_req::create_ptr<test_req::MinRange>();
-    auto body_ptr = test_req::create_ptr<MinScanBody>();
-    auto value_ptr = test_req::create_ptr<test_req::MinValue>();
-    auto func_ptr = test_req::create_ptr<MinScanFunc>();
-    auto combine_ptr = test_req::create_ptr<test_req::MinReduction>();
+    test_req::MinRange range(test_req::construct);
+    test_req::MinScanBody body(test_req::construct);
+    test_req::MinScanFunc func(test_req::construct);
+    test_req::MinScanCombine combine(test_req::construct);
+    test_req::Copyable value(test_req::construct);
 
-    run_parallel_scan_overloads(*range_ptr, *body_ptr);
-    run_parallel_scan_overloads(*range_ptr, *value_ptr, *func_ptr, *combine_ptr);
+    run_parallel_scan_overloads(range, body);
+    run_parallel_scan_overloads(range, value, func, combine);
 }

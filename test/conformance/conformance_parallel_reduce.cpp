@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ void TestDeterministicReductionFor() {
         deterministic_reduce_invoker(range, measurement_body, Partitioner());
         REQUIRE_MESSAGE( benchmark_body.my_value == measurement_body.my_value,
         "parallel_deterministic_reduce behaves differently from run to run" );
-        
+
         Type lambda_measurement_result = deterministic_reduce_invoker<Type>( range,
             [](const oneapi::tbb::blocked_range<int>& br, Type value) -> Type {
                 utils::ConcurrencyTracker ct;
@@ -91,34 +91,28 @@ void TestDeterministicReductionFor() {
     }
 }
 
-struct MinReduceFunc {
-    test_req::MinValue operator()(const test_req::MinRange&, const test_req::MinValue& x) const { return x; }
+namespace test_req {
 
-    MinReduceFunc() = delete;
-    MinReduceFunc(const MinReduceFunc&) = delete;
-    MinReduceFunc& operator=(const MinReduceFunc&) = delete;
+struct MinReduceBody : MinObj {
+    using MinObj::MinObj;
+    MinReduceBody(MinReduceBody&, oneapi::tbb::split) : MinObj(construct) {}
+    ~MinReduceBody() {}
 
-private:
-    MinReduceFunc(test_req::CreateFlag) {}
-    ~MinReduceFunc() = default;
-    friend struct test_req::Creator;
-}; // struct MinReduceFunc
-
-struct MinReduceBody {
-    MinReduceBody(MinReduceBody&, oneapi::tbb::split) {}
-    ~MinReduceBody() = default;
-
-    void operator()(const test_req::MinRange&) {}
-
+    void operator()(const MinRange&) {}
     void join(MinReduceBody&) {}
+};
 
-    MinReduceBody() = delete;
-    MinReduceBody(const MinReduceBody&) = delete;
-    MinReduceBody& operator=(const MinReduceBody&) = delete;
-private:
-    MinReduceBody(test_req::CreateFlag) {}
-    friend struct test_req::Creator;
-}; // struct MinReduceBody
+struct MinReduceFunc : MinObj {
+    using MinObj::MinObj;
+    Copyable operator()(const MinRange&, const Copyable& obj) const { return obj; }
+};
+
+struct MinReduction : MinObj {
+    using MinObj::MinObj;
+    Copyable operator()(const Copyable&, const Copyable& rhs) const { return rhs; }
+};
+
+} // namespace test_req
 
 template <typename... Args>
 void run_parallel_reduce_overloads(Args&&... args) {
@@ -196,15 +190,15 @@ TEST_CASE("Test partitioners interaction with various ranges") {
 //! Testing parallel_reduce and parallel_deterministic_reduce named requirements
 //! \brief \ref requirement
 TEST_CASE("parallel_[deterministic_]reduce type requirements") {
-    auto range_ptr = test_req::create_ptr<test_req::MinRange>();
-    auto body_ptr = test_req::create_ptr<MinReduceBody>();
-    auto value_ptr = test_req::create_ptr<test_req::MinValue>();
-    auto func_ptr = test_req::create_ptr<MinReduceFunc>();
-    auto reduction_ptr = test_req::create_ptr<test_req::MinReduction>();
+    test_req::MinRange      range(test_req::construct);
+    test_req::MinReduceBody body(test_req::construct);
+    test_req::Copyable      value(test_req::construct);
+    test_req::MinReduceFunc func(test_req::construct);
+    test_req::MinReduction  reduction(test_req::construct);
 
-    run_parallel_reduce_overloads(*range_ptr, *body_ptr);
-    run_parallel_reduce_overloads(*range_ptr, *value_ptr, *func_ptr, *reduction_ptr);
+    run_parallel_reduce_overloads(range, body);
+    run_parallel_reduce_overloads(range, value, func, reduction);
 
-    run_parallel_deterministic_reduce_overloads(*range_ptr, *body_ptr);
-    run_parallel_deterministic_reduce_overloads(*range_ptr, *value_ptr, *func_ptr, *reduction_ptr);
+    run_parallel_deterministic_reduce_overloads(range, body);
+    run_parallel_deterministic_reduce_overloads(range, value, func, reduction);
 }
