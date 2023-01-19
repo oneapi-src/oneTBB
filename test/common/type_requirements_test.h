@@ -91,6 +91,12 @@ private:
     Iterator my_it;
 };
 
+template <typename... Args>
+struct MinFunctionObject : MinObj {
+    using MinObj::MinObj;
+    void operator()(Args...) {}
+};
+
 } // namespace test_req
 
 #endif // __TBB_test_common_type_requirements_test_H_
