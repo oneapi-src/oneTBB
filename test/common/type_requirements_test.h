@@ -94,7 +94,7 @@ private:
 template <typename... Args>
 struct MinFunctionObject : MinObj {
     using MinObj::MinObj;
-    void operator()(Args...) {}
+    void operator()(Args...) const {}
 };
 
 } // namespace test_req

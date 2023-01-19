@@ -210,7 +210,7 @@ TEST_CASE("Test cancellation") {
 //! Testing type requirements
 //! \brief \ref requirement
 TEST_CASE("parallel_invoke type requirements") {
-    test_req::MinFunctionObject</*Args = */> function;
+    test_req::MinFunctionObject</*Args = */> function(test_req::construct);
 
     oneapi::tbb::task_group_context ctx;
 
