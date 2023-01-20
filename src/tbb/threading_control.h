@@ -73,7 +73,7 @@ public:
     thread_control_monitor& get_waiting_threads_monitor();
 
 private:
-    static unsigned calc_workers_soft_limit(unsigned workers_soft_limit, unsigned workers_hard_limit);
+    static unsigned calc_workers_soft_limit(unsigned workers_hard_limit);
     static std::pair<unsigned, unsigned> calculate_workers_limits();
     static cache_aligned_unique_ptr<permit_manager> make_permit_manager(unsigned workers_soft_limit);
     static cache_aligned_unique_ptr<thread_dispatcher> make_thread_dispatcher(threading_control& control,

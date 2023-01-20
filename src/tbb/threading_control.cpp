@@ -41,19 +41,17 @@ std::pair<unsigned, unsigned> threading_control_impl::calculate_workers_limits()
     // The threading control guarantees that at least 256 threads might be created.
     unsigned workers_app_limit = global_control_active_value_unsafe(global_control::max_allowed_parallelism);
     unsigned workers_hard_limit = max(max(factor * governor::default_num_threads(), 256u), workers_app_limit);
-    unsigned workers_soft_limit = calc_workers_soft_limit(governor::default_num_threads(), workers_hard_limit);
+    unsigned workers_soft_limit = calc_workers_soft_limit(workers_hard_limit);
     
     return std::make_pair(workers_soft_limit, workers_hard_limit);
 }
 
-unsigned threading_control_impl::calc_workers_soft_limit(unsigned workers_soft_limit, unsigned workers_hard_limit) {
+unsigned threading_control_impl::calc_workers_soft_limit(unsigned workers_hard_limit) {
+    unsigned workers_soft_limit{};
     unsigned soft_limit = global_control_active_value_unsafe(global_control::max_allowed_parallelism);
-    if (soft_limit) {
-        workers_soft_limit = soft_limit - 1;
-    } else {
-        // if user set no limits (yet), use threading control's parameter
-        workers_soft_limit = max(governor::default_num_threads() - 1, workers_soft_limit);
-    }
+
+    // if user set no limits (yet), use threading control's parameter
+    workers_soft_limit = soft_limit != 0 ? soft_limit - 1 : governor::default_num_threads() - 1;
 
     if (workers_soft_limit >= workers_hard_limit) {
         workers_soft_limit = workers_hard_limit - 1;
