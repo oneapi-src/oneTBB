@@ -50,7 +50,7 @@ unsigned threading_control_impl::calc_workers_soft_limit(unsigned workers_hard_l
     unsigned workers_soft_limit{};
     unsigned soft_limit = global_control_active_value_unsafe(global_control::max_allowed_parallelism);
 
-    // if user set no limits (yet), use threading control's parameter
+    // if user set no limits (yet), use default value
     workers_soft_limit = soft_limit != 0 ? soft_limit - 1 : governor::default_num_threads() - 1;
 
     if (workers_soft_limit >= workers_hard_limit) {
