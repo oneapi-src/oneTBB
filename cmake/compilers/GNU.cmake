@@ -63,6 +63,9 @@ endif()
 set(TBB_IPO_COMPILE_FLAGS $<$<NOT:$<CONFIG:Debug>>:-flto>)
 set(TBB_IPO_LINK_FLAGS $<$<NOT:$<CONFIG:Debug>>:-flto>)
 
+if (MINGW)
+    list(APPEND TBB_COMMON_COMPILE_FLAGS -U__STRICT_ANSI__)
+endif()
 
 if (MINGW AND CMAKE_SYSTEM_PROCESSOR MATCHES "i.86")
     list (APPEND TBB_COMMON_COMPILE_FLAGS -msse2)
