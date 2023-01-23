@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -207,7 +207,7 @@ task* start_reduce<Range,Body,Partitioner>::execute(execution_data& ed) {
     __TBB_ASSERT(my_parent, nullptr);
     if( is_right_child && my_parent->m_ref_count.load(std::memory_order_acquire) == 2 ) {
         tree_node_type* parent_ptr = static_cast<tree_node_type*>(my_parent);
-        my_body = (Body*) new( parent_ptr->zombie_space.begin() ) Body(*my_body, split());
+        my_body = static_cast<Body*>(new( parent_ptr->zombie_space.begin() ) Body(*my_body, split()));
         parent_ptr->has_right_zombie = true;
     }
     __TBB_ASSERT(my_body != nullptr, "Incorrect body value");
