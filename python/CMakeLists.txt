@@ -14,7 +14,7 @@
 
 find_package(PythonInterp 3.5 REQUIRED)
 
-set(PYTHON_BUILD_WORK_DIR .)
+set(PYTHON_BUILD_WORK_DIR python_build)
 
 add_custom_target(
     python_copy
@@ -40,7 +40,7 @@ add_custom_target(
     ${PYTHON_EXECUTABLE} ${PYTHON_BUILD_WORK_DIR}/setup.py
         build -b${PYTHON_BUILD_WORK_DIR}
         build_ext ${TBB4PY_INCLUDE_STRING} -L$<TARGET_FILE_DIR:TBB::tbb>
-        install --prefix ${PYTHON_BUILD_WORK_DIR}/build -f
+        install --prefix build -f
     COMMENT "Build and install to work directory the oneTBB Python module"
 )
 
