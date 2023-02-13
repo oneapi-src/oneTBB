@@ -171,6 +171,13 @@ foreach(output_type LIBRARY ARCHIVE PDB RUNTIME)
     endif()
 endforeach()
 
+if (CMAKE_CONFIGURATION_TYPES)
+    # We can't use generator expressions in a cmake variable name.
+    set(TBB_TEST_WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${TBB_OUTPUT_DIR_BASE}_$<LOWER_CASE:$<CONFIG>>)
+else()
+    set(TBB_TEST_WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+endif()
+
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
