@@ -88,3 +88,4 @@ cmake/TBBConfigVersion.cmake
 crash*
 *.tmp
 /.vs
+/out
