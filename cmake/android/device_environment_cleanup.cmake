@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2021 Intel Corporation
+# Copyright (c) 2020-2021 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(PACKAGE_VERSION @TBB_VERSION@)
+include(${CMAKE_CURRENT_LIST_DIR}/environment.cmake)
 
-if ("${PACKAGE_VERSION}" VERSION_LESS "${PACKAGE_FIND_VERSION}")
-    set(PACKAGE_VERSION_COMPATIBLE FALSE)
-else()
-    set(PACKAGE_VERSION_COMPATIBLE TRUE)
-    if ("${PACKAGE_VERSION}" VERSION_EQUAL "${PACKAGE_FIND_VERSION}")
-        set(PACKAGE_VERSION_EXACT TRUE)
-    endif()
-endif()
+execute_on_device("rm -rf ${ANDROID_DEVICE_TESTING_DIRECTORY}")

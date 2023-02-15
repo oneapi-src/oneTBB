@@ -1,4 +1,6 @@
-# Copyright (c) 2017-2021 Intel Corporation
+#!/bin/sh
+#
+# Copyright (c) 2005-2021 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(PACKAGE_VERSION @TBB_VERSION@)
+export TBBROOT=@TBBROOT_REPLACEMENT@
 
-if ("${PACKAGE_VERSION}" VERSION_LESS "${PACKAGE_FIND_VERSION}")
-    set(PACKAGE_VERSION_COMPATIBLE FALSE)
-else()
-    set(PACKAGE_VERSION_COMPATIBLE TRUE)
-    if ("${PACKAGE_VERSION}" VERSION_EQUAL "${PACKAGE_FIND_VERSION}")
-        set(PACKAGE_VERSION_EXACT TRUE)
-    endif()
-endif()
+LD_LIBRARY_PATH="@LIBRARY_PATH_REPLACEMENT@:${LD_LIBRARY_PATH}"; export LD_LIBRARY_PATH
+LIBRARY_PATH="@LIBRARY_PATH_REPLACEMENT@:${LIBRARY_PATH}"; export LIBRARY_PATH
+CPATH="${TBBROOT}/include:${CPATH}"; export CPATH
+PKG_CONFIG_PATH="@LIBRARY_PATH_REPLACEMENT@/pkgconfig:${PKG_CONFIG_PATH}"; export PKG_CONFIG_PATH
+
+@CMAKE_ENVIRONMENT_SOURCING_STRING@

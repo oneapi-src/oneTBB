@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2021 Intel Corporation
+# Copyright (c) 2020-2021 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(PACKAGE_VERSION @TBB_VERSION@)
-
-if ("${PACKAGE_VERSION}" VERSION_LESS "${PACKAGE_FIND_VERSION}")
-    set(PACKAGE_VERSION_COMPATIBLE FALSE)
-else()
-    set(PACKAGE_VERSION_COMPATIBLE TRUE)
-    if ("${PACKAGE_VERSION}" VERSION_EQUAL "${PACKAGE_FIND_VERSION}")
-        set(PACKAGE_VERSION_EXACT TRUE)
-    endif()
+# Add code signing as post-install step.
+if (DEFINED TBB_SIGNTOOL)
+    file(TO_CMAKE_PATH "${TBB_SIGNTOOL}" TBB_SIGNTOOL)
+    install(CODE "
+    file(GLOB_RECURSE FILES_TO_SIGN \${CMAKE_INSTALL_PREFIX}/*${CMAKE_SHARED_LIBRARY_SUFFIX})
+    execute_process(COMMAND ${TBB_SIGNTOOL} \${FILES_TO_SIGN} ${TBB_SIGNTOOL_ARGS})
+")
 endif()
