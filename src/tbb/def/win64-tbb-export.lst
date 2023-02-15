@@ -19,15 +19,19 @@
 
 // Assembly-language support that is called directly by clients
 __TBB_SYMBOL( __TBB_machine_cmpswp1 )
+#if !defined(_M_ARM) && !defined(_M_ARM64) //CJH: Backporting- Arm64 doens't define these
 __TBB_SYMBOL( __TBB_machine_fetchadd1 )
 __TBB_SYMBOL( __TBB_machine_fetchstore1 )
 __TBB_SYMBOL( __TBB_machine_cmpswp2 )
 __TBB_SYMBOL( __TBB_machine_fetchadd2 )
 __TBB_SYMBOL( __TBB_machine_fetchstore2 )
+#endif
 __TBB_SYMBOL( __TBB_machine_pause )
+#if !defined(_M_ARM) && !defined(_M_ARM64) //CJH: Backporting- Arm64 doens't define these
 __TBB_SYMBOL( __TBB_machine_try_lock_elided )
 __TBB_SYMBOL( __TBB_machine_unlock_elided )
 __TBB_SYMBOL( __TBB_machine_is_in_transaction )
+#endif
 
 // cache_aligned_allocator.cpp
 __TBB_SYMBOL( ?NFS_Allocate@internal@tbb@@YAPEAX_K0PEAX@Z )
@@ -204,6 +208,7 @@ __TBB_SYMBOL( ?internal_release_writer@spin_rw_mutex_v3@tbb@@AEAAXXZ )
 __TBB_SYMBOL( ?internal_try_acquire_reader@spin_rw_mutex_v3@tbb@@AEAA_NXZ )
 __TBB_SYMBOL( ?internal_try_acquire_writer@spin_rw_mutex_v3@tbb@@AEAA_NXZ )
 
+#if !defined(_M_ARM) && !defined(_M_ARM64) //CJH: Backporting- Arm64 doens't define these
 // x86_rtm_rw_mutex.cpp
 __TBB_SYMBOL( ?internal_acquire_writer@x86_rtm_rw_mutex@internal@interface8@tbb@@AEAAXAEAVscoped_lock@1234@_N@Z )
 __TBB_SYMBOL( ?internal_acquire_reader@x86_rtm_rw_mutex@internal@interface8@tbb@@AEAAXAEAVscoped_lock@1234@_N@Z )
@@ -212,6 +217,7 @@ __TBB_SYMBOL( ?internal_downgrade@x86_rtm_rw_mutex@internal@interface8@tbb@@AEAA
 __TBB_SYMBOL( ?internal_try_acquire_writer@x86_rtm_rw_mutex@internal@interface8@tbb@@AEAA_NAEAVscoped_lock@1234@@Z )
 __TBB_SYMBOL( ?internal_release@x86_rtm_rw_mutex@internal@interface8@tbb@@AEAAXAEAVscoped_lock@1234@@Z )
 __TBB_SYMBOL( ?internal_construct@x86_rtm_rw_mutex@internal@interface8@tbb@@AEAAXXZ )
+#endif
 
 // spin_mutex.cpp
 __TBB_SYMBOL( ?internal_construct@spin_mutex@tbb@@QEAAXXZ )
