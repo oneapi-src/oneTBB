@@ -14,13 +14,18 @@
     limitations under the License.
 */
 
-#if !defined(__TBB_machine_H) || defined(__TBB_msvc_armv7_H)
+#if !defined(__TBB_machine_H) || defined(__TBB_msvc_arm_H)
 #error Do not #include this internal file directly; use public TBB headers instead.
 #endif
 
-#define __TBB_msvc_armv7_H
+#define __TBB_msvc_arm_H
 
 #include <intrin.h>
+#if defined (_M_ARM)
+#include <armintr.h>
+#elif defined (_M_ARM64)
+#include <arm64intr.h>
+#endif
 #include <float.h>
 
 #define __TBB_WORDSIZE 4
@@ -39,8 +44,13 @@
 #else
 //Now __dmb(_ARM_BARRIER_SY) is used for both compiler and memory fences
 //This might be changed later after testing
+#if defined (_M_ARM)
 #define __TBB_compiler_fence()    __dmb(_ARM_BARRIER_SY)
 #define __TBB_full_memory_fence() __dmb(_ARM_BARRIER_SY)
+#elif defined(_M_ARM64)
+#define __TBB_compiler_fence()    __dmb(_ARM64_BARRIER_SY)
+#define __TBB_full_memory_fence() __dmb(_ARM64_BARRIER_SY)
+#endif
 #define __TBB_control_consistency_helper() __TBB_compiler_fence()
 #define __TBB_acquire_consistency_helper() __TBB_full_memory_fence()
 #define __TBB_release_consistency_helper() __TBB_full_memory_fence()
