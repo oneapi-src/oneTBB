@@ -83,25 +83,25 @@ if (TBB_DEF_FILE_PREFIX) # If there's no prefix, assume we're using export direc
     endif()
 
     if (MSVC)
-      add_custom_command(OUTPUT tbb.def
-        COMMAND ${CMAKE_CXX_COMPILER} /TC /EP ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbb-export.def  -I ${PROJECT_SOURCE_DIR}/include > tbb.def
+      add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/tbb.def
+        COMMAND ${CMAKE_CXX_COMPILER} /TC /EP ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbb-export.def  -I ${PROJECT_SOURCE_DIR}/include > ${CMAKE_BINARY_DIR}/tbb.def
         MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbb-export.def
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbb-export.lst
         COMMENT "Preprocessing tbb.def"
       )
     else()
-      add_custom_command(OUTPUT tbb.def
-        COMMAND ${CMAKE_CXX_COMPILER} -xc++ -std=c++11 -E ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbb-export.def  -I ${PROJECT_SOURCE_DIR}/include -o tbb.def
+      add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/tbb.def
+        COMMAND ${CMAKE_CXX_COMPILER} -xc++ -std=c++11 -E ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbb-export.def  -I ${PROJECT_SOURCE_DIR}/include -o ${CMAKE_BINARY_DIR}/tbb.def
         MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbb-export.def
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbb-export.lst
         COMMENT "Preprocessing tbb.def"
       )
     endif()
     
-    target_sources(tbb PRIVATE tbb.def)
+    target_sources(tbb PRIVATE ${CMAKE_BINARY_DIR}/tbb.def)
     set_target_properties(tbb PROPERTIES
-        LINK_FLAGS "${TBB_LINK_DEF_FILE_FLAG}\"tbb.def\""
-        LINK_DEPENDS tbb.def
+        LINK_FLAGS "${TBB_LINK_DEF_FILE_FLAG}\"${CMAKE_BINARY_DIR}/tbb.def\""
+        LINK_DEPENDS ${CMAKE_BINARY_DIR}/tbb.def
     )
 endif()
 
