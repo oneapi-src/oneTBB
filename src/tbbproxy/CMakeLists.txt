@@ -37,7 +37,10 @@ target_compile_definitions(tbbmalloc_proxy
 target_include_directories(tbbmalloc_proxy
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+ PRIVATE # CJH: backport compatibility - 2020 sources in other folders!
+     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>  #"tbb/tbb_environment.h": No such file or directory 
+)
 
 if (NOT APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     # gcc 5.0 and later have -Wno-sized-deallocation options
