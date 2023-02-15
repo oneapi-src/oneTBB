@@ -45,7 +45,10 @@ endif()
 target_include_directories(tbbmalloc
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    PRIVATE # CJH: backport compatibility - 2020 sources in other folders!
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>  #"tbb/tbb_environment.h": No such file or directory 
+)
 
 # TODO: fix warnings
 if (MSVC)
@@ -78,9 +81,24 @@ set_target_properties(tbbmalloc PROPERTIES
 tbb_handle_ipo(tbbmalloc)
 
 if (TBB_DEF_FILE_PREFIX) # If there's no prefix, assume we're using export directives
+    if (MSVC)
+      add_custom_command(OUTPUT tbbmalloc.def
+        COMMAND ${CMAKE_CXX_COMPILER} /TC /EP ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbmalloc-export.def  -I ${PROJECT_SOURCE_DIR}/include > tbbmalloc.def
+        MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbmalloc-export.def
+        COMMENT "Preprocessing tbbmalloc.def"
+      )
+    else()
+      add_custom_command(OUTPUT tbbmalloc.def
+        COMMAND ${CMAKE_CXX_COMPILER} -xc++ -std=c++11 -E ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbmalloc-export.def  -I ${PROJECT_SOURCE_DIR}/include -o tbbmalloc.def
+        MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbmalloc-export.def
+        COMMENT "Preprocessing tbbmalloc.def"
+      )
+    endif()
+    
+    target_sources(tbbmalloc PRIVATE tbbmalloc.def)
     set_target_properties(tbbmalloc PROPERTIES
-        LINK_FLAGS "${TBB_LINK_DEF_FILE_FLAG}\"${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbmalloc.def\""
-        LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbmalloc.def"
+        LINK_FLAGS "${TBB_LINK_DEF_FILE_FLAG}\"tbbmalloc.def\""
+        LINK_DEPENDS tbbmalloc.def
     )
 endif()
 

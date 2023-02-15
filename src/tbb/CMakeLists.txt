@@ -48,8 +48,11 @@ endif()
 
 target_include_directories(tbb
     PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    PRIVATE # CJH: backport compatibility - 2020 sources in other folders!
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>  #'tbb/dynamic_link.h': No such file or directory 
+)
 
 target_compile_options(tbb
     PRIVATE
@@ -72,9 +75,33 @@ set_target_properties(tbb PROPERTIES
 tbb_handle_ipo(tbb)
 
 if (TBB_DEF_FILE_PREFIX) # If there's no prefix, assume we're using export directives
+
+    if (MINGW)
+      set (TBB_DEF_FILE_PREFIX "${TBB_DEF_FILE_PREFIX}-gcc")
+      # there's no win32-gcc-tbb-export.def, use lin32-tbb-export.def
+      execute_process (COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/def/lin32-tbb-export.def ${CMAKE_CURRENT_SOURCE_DIR}/def/win32-gcc-tbb-export.def)
+    endif()
+
+    if (MSVC)
+      add_custom_command(OUTPUT tbb.def
+        COMMAND ${CMAKE_CXX_COMPILER} /TC /EP ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbb-export.def  -I ${PROJECT_SOURCE_DIR}/include > tbb.def
+        MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbb-export.def
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbb-export.lst
+        COMMENT "Preprocessing tbb.def"
+      )
+    else()
+      add_custom_command(OUTPUT tbb.def
+        COMMAND ${CMAKE_CXX_COMPILER} -xc++ -std=c++11 -E ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbb-export.def  -I ${PROJECT_SOURCE_DIR}/include -o tbb.def
+        MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbb-export.def
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbb-export.lst
+        COMMENT "Preprocessing tbb.def"
+      )
+    endif()
+    
+    target_sources(tbb PRIVATE tbb.def)
     set_target_properties(tbb PROPERTIES
-        LINK_FLAGS "${TBB_LINK_DEF_FILE_FLAG}\"${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbb.def\""
-        LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbb.def"
+        LINK_FLAGS "${TBB_LINK_DEF_FILE_FLAG}\"tbb.def\""
+        LINK_DEPENDS tbb.def
     )
 endif()
 
