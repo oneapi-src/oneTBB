@@ -861,7 +861,7 @@ inline intptr_t __TBB_Log2( uintptr_t x ) {
     if( x==0 ) return -1;
     intptr_t result = 0;
 
-#if !defined(_M_ARM)
+#if !defined(_M_ARM) && !defined(_M_ARM64)
     uintptr_t tmp_;
     if( sizeof(x)>4 && (tmp_ = ((uint64_t)x)>>32) ) { x=tmp_; result += 32; }
 #endif
