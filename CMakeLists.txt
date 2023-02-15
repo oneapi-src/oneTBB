@@ -63,10 +63,36 @@ unset(_tbb_ver_minor)
 unset(_tbb_ver_patch)
 unset(_tbb_version_info)
 
+# version_string.ver
+if (UNIX AND NOT TBB_NO_DATE)
+  execute_process (COMMAND date "+%a, %d %b %Y %H:%M:%S %z"
+                   OUTPUT_VARIABLE _configure_date
+                   OUTPUT_STRIP_TRAILING_WHITESPACE)
+elseif (WIN32 AND NOT TBB_NO_DATE)
+  execute_process (COMMAND cmd " /C date /T"
+                   OUTPUT_VARIABLE _configure_date
+                   OUTPUT_STRIP_TRAILING_WHITESPACE)
+else ()
+  set (_configure_date "Unknown")
+endif()
+set (TBB_CONFIG_DATE "${_configure_date}" CACHE STRING "First time that TBB was configured")
+set (_configure_date "${TBB_CONFIG_DATE}")
+include_directories (${CMAKE_BINARY_DIR})
+configure_file (build/version_string.ver.in version_string.ver @ONLY)
 
 include(CheckCXXCompilerFlag)
 include(GNUInstallDirs)
 include(CMakeDependentOption)
+
+# CJH: TODO refactor cmake backport so defines are correctly placed
+if (WIN32) 
+    add_compile_definitions( USE_WINTHREAD )
+elseif(UNIX)
+    add_compile_definitions( USE_PTHREAD )
+endif()
+if (MSVC) 
+    add_compile_definitions( TBB_SUPPRESS_DEPRECATED_MESSAGES=1 )
+endif()
 
 # ---------------------------------------------------------------------------------------------------------
 # Handle C++ standard version.
