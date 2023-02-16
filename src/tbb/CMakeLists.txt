@@ -12,6 +12,47 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_library(tbb )
+
+target_sources( tbb PRIVATE
+    ../old/concurrent_queue_v2.cpp
+    ../old/concurrent_vector_v2.cpp
+    ../old/spin_rw_mutex_v2.cpp
+    ../old/task_v2.cpp
+    arena.cpp
+    cache_aligned_allocator.cpp
+    concurrent_hash_map.cpp
+    concurrent_monitor.cpp
+    concurrent_queue.cpp
+    concurrent_vector.cpp
+    condition_variable.cpp
+    critical_section.cpp
+    dynamic_link.cpp
+    governor.cpp
+    itt_notify.cpp
+    market.cpp
+    mutex.cpp
+    observer_proxy.cpp
+    pipeline.cpp
+    private_server.cpp
+    queuing_mutex.cpp
+    queuing_rw_mutex.cpp
+    reader_writer_lock.cpp
+    recursive_mutex.cpp
+    scheduler.cpp
+    semaphore.cpp
+    spin_mutex.cpp
+    spin_rw_mutex.cpp
+    task.cpp
+    task_group_context.cpp
+    tbb_main.cpp
+    tbb_misc.cpp
+    tbb_misc_ex.cpp
+    tbb_statistics.cpp
+    tbb_thread.cpp
+    x86_rtm_rw_mutex.cpp
+    ../rml/client/rml_tbb.cpp
+)
 
 file(GLOB tbb_src "${PROJECT_SOURCE_DIR}/src/tbb/*.cpp" "${PROJECT_SOURCE_DIR}/src/old/*.cpp")
 list(REMOVE_ITEM tbb_src "${PROJECT_SOURCE_DIR}/src/tbb/tbb_bind.cpp")
