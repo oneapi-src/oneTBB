@@ -299,7 +299,7 @@ endif()
 
 if (TBB_TEST)
     enable_testing()
-    #CJH: TODO add_subdirectory(src/test)
+    add_subdirectory(src/test)
 endif()
 
 if (TBB_EXAMPLES)
