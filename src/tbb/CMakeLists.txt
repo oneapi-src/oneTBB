@@ -54,14 +54,47 @@ target_sources( tbb PRIVATE
     ../rml/client/rml_tbb.cpp
 )
 
-file(GLOB tbb_src "${PROJECT_SOURCE_DIR}/src/tbb/*.cpp" "${PROJECT_SOURCE_DIR}/src/old/*.cpp")
-list(REMOVE_ITEM tbb_src "${PROJECT_SOURCE_DIR}/src/tbb/tbb_bind.cpp")
-list(APPEND tbb_src "${PROJECT_SOURCE_DIR}/src/rml/client/rml_tbb.cpp")
-file(GLOB to_remove "${PROJECT_SOURCE_DIR}/src/old/test*.cpp")
-list(REMOVE_ITEM tbb_src ${to_remove})
+if(WIN32)
+    #target_compile_definitions(tbb_interface INTERFACE USE_WINTHREAD _WIN32_WINNT=0x0600)
+    if (MSVC AND NOT "${MSVC_CXX_ARCHITECTURE_ID}" MATCHES "ARM64" )
+        enable_language(ASM_MASM)
 
-add_library(tbb
-    ${tbb_src})
+        # CJH: TODO - support target_compile_options(tbb INTERFACE $<$<COMPILE_LANGUAGE:CXX>:/wd4267 /wd4800 /wd4146 /wd4244 /wd4577 /wd4018>)
+        if (NOT CMAKE_SIZEOF_VOID_P)
+           message(FATAL_ERROR "'CMAKE_SIZEOF_VOID_P' is undefined. Please delete your build directory and rerun CMake again!")
+        endif()
+
+        if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+            target_sources(tbb PRIVATE
+                intel64-masm/atomic_support.asm
+                intel64-masm/itsx.asm 
+                intel64-masm/intel64_misc.asm)
+            set_source_files_properties(
+                intel64-masm/atomic_support.asm
+                intel64-masm/itsx.asm 
+                intel64-masm/intel64_misc.asm
+                intel64-masm/atomic_support.asm
+                PROPERTIES 
+                    LANGUAGE ASM_MASM)
+            
+                list(APPEND tbbmalloc_src intel64-masm/atomic_support.asm)
+                set(CMAKE_ASM_MASM_FLAGS "/DEM64T=1 ${CMAKE_ASM_MASM_FLAGS}")
+        else()
+            target_sources(tbb PRIVATE 
+                ia32-masm/atomic_support.asm
+                ia32-masm/itsx.asm
+                ia32-masm/lock_byte.asm)
+            set_source_files_properties(
+                ia32-masm/atomic_support.asm
+                ia32-masm/itsx.asm 
+                ia32-masm/lock_byte.asm
+                PROPERTIES 
+                    LANGUAGE ASM_MASM)
+            # Enable SAFESEH feature for assembly (x86 builds only).
+            set(CMAKE_ASM_MASM_FLAGS "/safeseh ${CMAKE_ASM_MASM_FLAGS}")
+        endif()
+    endif()
+endif()
 
 add_library(TBB::tbb ALIAS tbb)
 
@@ -100,7 +133,7 @@ target_compile_options(tbb
     ${TBB_CXX_STD_FLAG} # TODO: consider making it PUBLIC.
     ${TBB_MMD_FLAG}
     ${TBB_DSE_FLAG}
-    ${TBB_WARNING_LEVEL}
+    $<$<COMPILE_LANGUAGE:CXX>:${TBB_WARNING_LEVEL}>
     ${TBB_WARNING_SUPPRESS}
     ${TBB_LIB_COMPILE_FLAGS}
     ${TBB_COMMON_COMPILE_FLAGS}

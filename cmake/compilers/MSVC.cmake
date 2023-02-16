@@ -22,7 +22,7 @@ string(REGEX REPLACE "/W[0-4]" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 set(TBB_WARNING_LEVEL $<$<NOT:$<CXX_COMPILER_ID:Intel>>:/W4> $<$<BOOL:${TBB_STRICT}>:/WX>)
 
 # Warning suppression C4324: structure was padded due to alignment specifier
-set(TBB_WARNING_SUPPRESS /wd4324)
+set(TBB_WARNING_SUPPRESS $<$<NOT:$<COMPILE_LANGUAGE:ASM_MASM>>:/wd4324>)
 
 set(TBB_TEST_COMPILE_FLAGS ${TBB_TEST_COMPILE_FLAGS} /bigobj)
 if (MSVC_VERSION LESS_EQUAL 1900)
@@ -32,8 +32,8 @@ if (MSVC_VERSION LESS_EQUAL 1900)
     # https://docs.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4503
     set(TBB_TEST_COMPILE_FLAGS ${TBB_TEST_COMPILE_FLAGS} /wd4503)
 endif()
-set(TBB_LIB_COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS /GS)
-set(TBB_COMMON_COMPILE_FLAGS /volatile:iso /FS /EHsc)
+set(TBB_LIB_COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS $<$<NOT:$<COMPILE_LANGUAGE:ASM_MASM>>:/GS>)
+set(TBB_COMMON_COMPILE_FLAGS $<$<NOT:$<COMPILE_LANGUAGE:ASM_MASM>>:/volatile:iso /FS /EHsc>)
 
 # Ignore /WX set through add_compile_options() or added to CMAKE_CXX_FLAGS if TBB_STRICT is disabled.
 if (NOT TBB_STRICT AND COMMAND tbb_remove_compile_flag)
