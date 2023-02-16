@@ -597,7 +597,7 @@ if (TARGET TBB::tbbmalloc)
                             -DTEST_NAME=test_malloc_whitebox
                             -P ${PROJECT_SOURCE_DIR}/cmake/android/test_launcher.cmake)
         else()
-            add_test(NAME test_malloc_whitebox COMMAND test_malloc_whitebox --force-colors=1)
+            add_test(NAME test_malloc_whitebox COMMAND test_malloc_whitebox)# --force-colors=1)
         endif()
         if (COMMAND target_link_options)
             target_link_options(test_malloc_whitebox PRIVATE ${TBB_COMMON_LINK_FLAGS})
