@@ -34,9 +34,9 @@ This document contains changes of oneTBB compared to the last release.
 - C++ exception handling mechanism on Windows* OS on ARM64* might corrupt memory if an exception is thrown from any oneTBB parallel algorithm (see Windows* OS on ARM64* compiler issue: https://developercommunity.visualstudio.com/t/ARM64-incorrect-stack-unwinding-for-alig/1544293).
 
 ## :hammer: Fixed Issues
-- Memory allocator crash when allocating ~1TB on 64-bit systems (GitHub* [#838](https://github.com/oneapi-src/oneTBB/issues/838)).
-- Fixed thread distribution over NUMA nodes on Windows* OS systems.
-- For oneapi::tbb::suspend, it is guaranteed that the user-specified callable object is executed by the calling thread.
+- Fixed oneapi::tbb::concurrent_bounded_queue::pop return type (GitHub* [#807](https://github.com/oneapi-src/oneTBB/issues/807)).
+- Fixed oneapi::tbb::concurrent_queue and oneapi::tbb::concurrent_bounded_queue with non-default constructible value types (GitHub* [#885](https://github.com/oneapi-src/oneTBB/issues/885)).
+- Fixed incorrect splitting of iteration space in case there is no support for proportional splitting in custom ranges.
 
 ## :octocat: Open-source Contributions Integrated
 - Fix for full LTO* build, library and tests, on UNIX* OS systems. Contributed by Vladislav Shchapov (https://github.com/oneapi-src/oneTBB/pull/798).
