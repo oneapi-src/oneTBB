@@ -363,7 +363,7 @@ inline void CoalRequestQ::blockWasProcessed()
 {
     bkndSync->binsModified();
     int prev = inFlyBlocks.fetch_sub(1);
-	tbb::detail::suppress_unused_warning(prev);
+    tbb::detail::suppress_unused_warning(prev);
     MALLOC_ASSERT(prev > 0, ASSERT_TEXT);
 }
 

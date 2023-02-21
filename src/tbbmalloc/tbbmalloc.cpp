@@ -67,7 +67,7 @@ void init_tbbmalloc() {
                                  |GET_MODULE_HANDLE_EX_FLAG_PIN,
                                  (LPCTSTR)&scalable_malloc, &lib);
     MALLOC_ASSERT(lib && ret, "Allocator can't find itself.");
-	tbb::detail::suppress_unused_warning(ret);
+    tbb::detail::suppress_unused_warning(ret);
     SetErrorMode (prev_mode);
 #endif /* USE_PTHREAD && !__TBB_SOURCE_DIRECTLY_INCLUDED */
 }

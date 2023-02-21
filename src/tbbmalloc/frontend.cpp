@@ -802,10 +802,11 @@ static inline unsigned int highestBitPos(unsigned int n)
 unsigned int getSmallObjectIndex(unsigned int size)
 {
     unsigned int result = (size-1)>>3;
-	constexpr bool is_64bit = (8 == sizeof(void*));
-	if (is_64bit)
+    constexpr bool is_64bit = (8 == sizeof(void*));
+    if (is_64bit) {
         // For 64-bit malloc, 16 byte alignment is needed except for bin 0.
         if (result) result |= 1; // 0,1,3,5,7; bins 2,4,6 are not aligned to 16 bytes
+    }
     return result;
 }
 
