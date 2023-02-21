@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -363,6 +363,7 @@ inline void CoalRequestQ::blockWasProcessed()
 {
     bkndSync->binsModified();
     int prev = inFlyBlocks.fetch_sub(1);
+	tbb::detail::suppress_unused_warning(prev);
     MALLOC_ASSERT(prev > 0, ASSERT_TEXT);
 }
 
