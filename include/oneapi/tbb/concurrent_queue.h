@@ -143,7 +143,6 @@ public:
 
     concurrent_queue& operator=( concurrent_queue&& other ){
       if (my_queue_representation != other.my_queue_representation) {
-	// TODO: check if exceptions from std::vector::operator=(vector&&) should be handled separately
 	my_queue_representation = std::move(other.my_queue_representation);
       }
       return *this;
@@ -157,7 +156,6 @@ public:
     template <typename InputIterator>
     void assign( InputIterator first, InputIterator last ){
       my_queue_representation->clear(my_allocator);
-      //my_queue_representation->assign(*src.my_queue_representation, my_allocator, copy_construct_item);
       for (; first != last; ++first)
 	push(*first);
     }
@@ -211,17 +209,6 @@ public:
 
     // Return allocator object
     allocator_type get_allocator() const { return my_allocator; }
-  
-    friend bool operator==( const concurrent_queue<T, Allocator>& lhs,
-			    const concurrent_queue<T, Allocator>& rhs ){
-      return lhs.my_queue_representation == rhs.my_queue_representation;
-    }
-
-    friend bool operator!=( const concurrent_queue<T, Allocator>& lhs,
-			    const concurrent_queue<T, Allocator>& rhs ){
-      return lhs.my_queue_representation != rhs.my_queue_representation;
-    }
-
     //------------------------------------------------------------------------
     // The iterators are intended only for debugging.  They are slow and not thread safe.
     //------------------------------------------------------------------------
@@ -265,6 +252,16 @@ private:
 
     queue_allocator_type my_allocator;
     queue_representation_type* my_queue_representation;
+
+    friend bool operator==( const concurrent_queue<T, Allocator>& lhs,
+                            const concurrent_queue<T, Allocator>& rhs ){
+      return lhs.my_queue_representation == rhs.my_queue_representation;
+    }
+  
+    friend bool operator!=( const concurrent_queue<T, Allocator>& lhs,
+                            const concurrent_queue<T, Allocator>& rhs ){
+      return lhs.my_queue_representation != rhs.my_queue_representation;
+    }
 }; // class concurrent_queue
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
@@ -508,16 +505,6 @@ public:
     // Return allocator object
     allocator_type get_allocator() const { return my_allocator; }
 
-    friend bool operator==( const concurrent_bounded_queue<T, Allocator>& lhs,
-			    const concurrent_bounded_queue<T, Allocator>& rhs ){
-      return lhs.my_queue_representation == rhs.my_queue_representation;
-    }
-
-    friend bool operator!=( const concurrent_bounded_queue<T, Allocator>& lhs,
-			    const concurrent_bounded_queue<T, Allocator>& rhs ){
-      return lhs.my_queue_representation != rhs.my_queue_representation;
-    }
-
     //------------------------------------------------------------------------
     // The iterators are intended only for debugging.  They are slow and not thread safe.
     //------------------------------------------------------------------------
@@ -644,6 +631,16 @@ private:
     queue_representation_type* my_queue_representation;
 
     r1::concurrent_monitor* my_monitors;
+
+    friend bool operator==( const concurrent_bounded_queue<T, Allocator>& lhs,
+                            const concurrent_bounded_queue<T, Allocator>& rhs ){
+      return lhs.my_queue_representation == rhs.my_queue_representation;
+    }
+  
+    friend bool operator!=( const concurrent_bounded_queue<T, Allocator>& lhs,
+                            const concurrent_bounded_queue<T, Allocator>& rhs ){
+      return lhs.my_queue_representation != rhs.my_queue_representation;
+    }
 }; // class concurrent_bounded_queue
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
