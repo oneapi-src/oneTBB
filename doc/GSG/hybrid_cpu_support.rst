@@ -37,4 +37,4 @@ To do so, run: ``sudo apt install hwloc``.
 
 
 .. note:: For Hybrid CPU support, make sure that HWLOC* is version 2.5 or higher.
-          For NUMA support, install HWLOC* version 1.11 or higher
+          For NUMA support, install HWLOC* version 1.11 or higher.
