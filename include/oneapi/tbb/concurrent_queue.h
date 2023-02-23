@@ -416,9 +416,8 @@ public:
 
     template <typename InputIterator>
     void assign( InputIterator first, InputIterator last ){
-      my_queue_representation->clear(my_allocator);
-      for (; first != last; ++first)
-        push(*first);
+      concurrent_bounded_queue src(first, last);
+      my_queue_representation->assign(*src.my_queue_representation, my_allocator, move_construct_item);
     }
 
     void assign( std::initializer_list<value_type> init ){
