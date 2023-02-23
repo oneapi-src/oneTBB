@@ -34,6 +34,10 @@ if (MSVC_VERSION LESS_EQUAL 1900)
 endif()
 set(TBB_LIB_COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS /GS)
 set(TBB_COMMON_COMPILE_FLAGS /volatile:iso /FS /EHsc)
+if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    # 32 bits
+    set(TBB_LIB_LINK_FLAGS ${TBB_LIB_LINK_FLAGS} /SAFESEH )
+endif()
 
 # Ignore /WX set through add_compile_options() or added to CMAKE_CXX_FLAGS if TBB_STRICT is disabled.
 if (NOT TBB_STRICT AND COMMAND tbb_remove_compile_flag)
