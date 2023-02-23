@@ -305,8 +305,5 @@ void test_iterator_ctor(){
 
 TEST_CASE("Test iterator queue"){
   test_iterator_ctor<tbb::concurrent_queue<std::vector<int>>, std::vector<int>>();
-}
-
-TEST_CASE("Test iterator queue"){
   test_iterator_ctor<tbb::concurrent_bounded_queue<std::vector<int>>, std::vector<int>>();
 }
