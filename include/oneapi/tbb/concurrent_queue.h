@@ -419,7 +419,6 @@ public:
     template <typename InputIterator>
     void assign( InputIterator first, InputIterator last ){
       my_queue_representation->clear(my_allocator);
-      //my_queue_representation->assign(*src.my_queue_representation, my_allocator, copy_construct_item);
       for (; first != last; ++first)
         push(*first);
     }
