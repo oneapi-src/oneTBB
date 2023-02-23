@@ -405,7 +405,6 @@ public:
 
     concurrent_bounded_queue& operator=( concurrent_bounded_queue&& other ){
       if (my_queue_representation != other.my_queue_representation) {
-        // TODO: check if exceptions from std::vector::operator=(vector&&) should be handled separately
         my_queue_representation = std::move(other.my_queue_representation);
       }
       return *this;
