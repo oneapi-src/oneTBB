@@ -56,8 +56,9 @@ set(TBB_BINARY_MINOR_VERSION ${_tbb_ver_minor})
 set(TBBMALLOC_BINARY_VERSION 2)
 set(TBBBIND_BINARY_VERSION 3)
 
-message("${_tbb_ver_major}.${_tbb_ver_minor}.${_tbb_ver_patch}")
 project(TBB VERSION "${_tbb_ver_major}.${_tbb_ver_minor}.${_tbb_ver_patch}" LANGUAGES CXX)
+message(STATUS "TBB Version= ${PROJECT_VERSION}")
+
 unset(_tbb_ver_major)
 unset(_tbb_ver_minor)
 unset(_tbb_ver_patch)
