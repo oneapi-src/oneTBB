@@ -20,6 +20,7 @@
 // Marketing-driven product version
 #define TBB_VERSION_MAJOR 2020
 #define TBB_VERSION_MINOR 3
+#define TBB_VERSION_PATCH 1
 
 // Engineering-focused interface version
 #define TBB_INTERFACE_VERSION 11103
@@ -32,9 +33,6 @@
 #define __TBB_STRING_AUX(x) #x
 #define __TBB_STRING(x) __TBB_STRING_AUX(x)
 
-// CJH: backport for `.rc` compatibility
-// "Patch" version for custom releases
-#define TBB_VERSION_PATCH 0
 // Suffix string
 #define __TBB_VERSION_SUFFIX ""
 // Full official version string
