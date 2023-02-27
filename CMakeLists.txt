@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.12)
 
 # Enable CMake policies
 
@@ -44,7 +44,7 @@ if (CMAKE_VERSION VERSION_LESS 3.4)
     enable_language(C)
 endif()
 
-file(READ "${CMAKE_CURRENT_SOURCE_DIR}/include/tbb/tbb_stddef.h" _tbb_version_info)
+file(READ "${CMAKE_CURRENT_LIST_DIR}/include/tbb/tbb_stddef.h" _tbb_version_info)
 string(REGEX REPLACE ".*#define TBB_VERSION_MAJOR ([0-9]+).*" "\\1" _tbb_ver_major "${_tbb_version_info}")
 string(REGEX REPLACE ".*#define TBB_VERSION_MINOR ([0-9]+).*" "\\1" _tbb_ver_minor "${_tbb_version_info}")
 #CJH string(REGEX REPLACE ".*#define TBB_VERSION_PATCH ([0-9]+).*" "\\1" _tbb_ver_patch "${_tbb_version_info}")
@@ -78,7 +78,7 @@ endif()
 set (TBB_CONFIG_DATE "${_configure_date}" CACHE STRING "First time that TBB was configured")
 set (_configure_date "${TBB_CONFIG_DATE}")
 include_directories (${CMAKE_BINARY_DIR})
-configure_file (build/version_string.ver.in version_string.ver @ONLY)
+configure_file ( ${CMAKE_CURRENT_LIST_DIR}/build/version_string.ver.in ${CMAKE_BINARY_DIR}/version_string.ver @ONLY)
 
 include(CheckCXXCompilerFlag)
 include(GNUInstallDirs)
@@ -218,7 +218,7 @@ set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
 # -------------------------------------------------------------------
 
-file(GLOB FILES_WITH_EXTRA_TARGETS ${CMAKE_CURRENT_SOURCE_DIR}/cmake/*.cmake)
+file(GLOB FILES_WITH_EXTRA_TARGETS ${CMAKE_CURRENT_LIST_DIR}/cmake/*.cmake)
 foreach(FILE_WITH_EXTRA_TARGETS ${FILES_WITH_EXTRA_TARGETS})
     include(${FILE_WITH_EXTRA_TARGETS})
 endforeach()
@@ -239,7 +239,7 @@ if (TBB_ENABLE_IPO AND BUILD_SHARED_LIBS AND NOT ANDROID_PLATFORM AND NOT TBB_SA
     endif()
 endif()
 
-set(TBB_COMPILER_SETTINGS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/cmake/compilers/${CMAKE_CXX_COMPILER_ID}.cmake)
+set(TBB_COMPILER_SETTINGS_FILE ${CMAKE_CURRENT_LIST_DIR}/cmake/compilers/${CMAKE_CXX_COMPILER_ID}.cmake)
 if (EXISTS ${TBB_COMPILER_SETTINGS_FILE})
     include(${TBB_COMPILER_SETTINGS_FILE})
 else()
@@ -343,7 +343,7 @@ if (ANDROID_PLATFORM)
     # ADB(Android Debug Bridge) executable file availability, so to incapsulate this requirement
     # only for corresponding custom target, it was implemented by this way.
     add_custom_target(device_environment_cleanup COMMAND ${CMAKE_COMMAND}
-                      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/android/device_environment_cleanup.cmake)
+                      -P ${CMAKE_CURRENT_LIST_DIR}/cmake/android/device_environment_cleanup.cmake)
 endif()
 
 if (TBB4PY_BUILD)
