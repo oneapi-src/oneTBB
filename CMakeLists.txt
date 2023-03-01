@@ -247,12 +247,16 @@ else()
     message(WARNING "TBB compiler settings not found ${TBB_COMPILER_SETTINGS_FILE}")
 endif()
 
+set_property(GLOBAL PROPERTY USE_FOLDERS TRUE)
+
+
 if (TBB_FIND_PACKAGE OR TBB_DIR)
     # Allow specifying external TBB to test with.
     # Do not add main targets and installation instructions in that case.
     message(STATUS "Using external TBB for testing")
     find_package(TBB REQUIRED)
 else()
+    set(CMAKE_FOLDER "TBB")
     if (TBB_BUILD)
         add_subdirectory(src/tbb)
     endif()
@@ -299,11 +303,13 @@ else()
 endif()
 
 if (TBB_TEST)
+    set(CMAKE_FOLDER "TBB/test")
     enable_testing()
     add_subdirectory(src/test)
 endif()
 
 if (TBB_EXAMPLES)
+    set(CMAKE_FOLDER "TBB/examples")
     add_subdirectory(examples)
 endif()
 
@@ -313,10 +319,12 @@ if (TBB_BENCH)
     endif()
 
     enable_testing()
+    set(CMAKE_FOLDER "TBB/benchmark")
     add_subdirectory(benchmark)
 endif()
 
 if (ANDROID_PLATFORM)
+    set(CMAKE_FOLDER "TBB/android")
     if ("${ANDROID_STL}" STREQUAL "c++_shared")
         if (${ANDROID_NDK_MAJOR} GREATER_EQUAL "25")
             if(ANDROID_ABI STREQUAL "arm64-v8a")
@@ -348,6 +356,7 @@ if (ANDROID_PLATFORM)
 endif()
 
 if (TBB4PY_BUILD)
+    set(CMAKE_FOLDER "TBB/python")
     add_subdirectory(python)
 endif()
 
