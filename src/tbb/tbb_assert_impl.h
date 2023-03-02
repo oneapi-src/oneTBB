@@ -65,7 +65,7 @@ namespace tbb {
                 if( comment )
                     fprintf( stderr, "Detailed description: %s\n", comment );
 #if _MSC_VER && _DEBUG
-                if(1 == _CrtDbgReport(_CRT_ASSERT, filename, line, "tbb_debug.dll", "%s\r\n%s", expression, comment?comment:""))
+                if(1 == _CrtDbgReport(_CRT_ASSERT, filename, line, "tbb2_debug.dll", "%s\r\n%s", expression, comment?comment:""))
                         _CrtDbgBreak();
 #else
                 fflush(stderr);

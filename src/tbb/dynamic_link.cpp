@@ -165,14 +165,14 @@ OPEN_INTERNAL_NAMESPACE
     See http://www.microsoft.com/technet/security/advisory/2269637.mspx for details.
     To avoid the issue, we have to pass full path (not just library name) to LoadLibrary. This
     function constructs full path to the specified library (it is assumed the library located
-    side-by-side with the tbb.dll.
+    side-by-side with the tbb2.dll.
 
     The function constructs absolute path for given relative path. Important: Base directory is not
-    current one, it is the directory tbb.dll loaded from.
+    current one, it is the directory tbb2.dll loaded from.
 
     Example:
-        Let us assume "tbb.dll" is located in "c:\program files\common\intel\" directory, e. g.
-        absolute path of tbb library is "c:\program files\common\intel\tbb.dll". Absolute path for
+        Let us assume "tbb2.dll" is located in "c:\program files\common\intel\" directory, e. g.
+        absolute path of tbb library is "c:\program files\common\intel\tbb2.dll". Absolute path for
         "tbbmalloc.dll" would be "c:\program files\common\intel\tbbmalloc.dll". Absolute path for
         "malloc\tbbmalloc.dll" would be "c:\program files\common\intel\malloc\tbbmalloc.dll".
 */

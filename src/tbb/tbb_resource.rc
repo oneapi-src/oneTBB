@@ -80,9 +80,9 @@ BEGIN
             VALUE "LegalCopyright", "Copyright 2005-2020 Intel Corporation.  All Rights Reserved.\0"
             VALUE "LegalTrademarks", "\0"
 #ifndef TBB_USE_DEBUG
-            VALUE "OriginalFilename", "tbb.dll\0"
+            VALUE "OriginalFilename", "tbb2.dll\0"
 #else
-            VALUE "OriginalFilename", "tbb_debug.dll\0"
+            VALUE "OriginalFilename", "tbb2_debug.dll\0"
 #endif
             VALUE "ProductName", "Intel(R) Threading Building Blocks for Windows\0"
             VALUE "ProductVersion", TBB_VERSION "\0"

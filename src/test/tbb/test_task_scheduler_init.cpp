@@ -323,10 +323,10 @@ int TestMain () {
     // as a static variable, or as a member of a static variable.
 #if _MSC_VER && !__TBB_NO_IMPLICIT_LINKAGE && !defined(__TBB_LIB_NAME)
     #ifdef _DEBUG
-        ASSERT(!GetModuleHandle(_T("tbb.dll")) && GetModuleHandle(_T("tbb_debug.dll")),
+        ASSERT(!GetModuleHandle(_T("tbb2.dll")) && GetModuleHandle(_T("tbb2_debug.dll")),
             "test linked with wrong (non-debug) TBB library");
     #else
-        ASSERT(!GetModuleHandle(_T("tbb_debug.dll")) && GetModuleHandle(_T("tbb.dll")),
+        ASSERT(!GetModuleHandle(_T("tbb2_debug.dll")) && GetModuleHandle(_T("tbb2.dll")),
             "test linked with wrong (debug) TBB library");
     #endif
 #endif /* _MSC_VER && !__TBB_NO_IMPLICIT_LINKAGE && !__TBB_LIB_NAME */

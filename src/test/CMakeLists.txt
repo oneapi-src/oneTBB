@@ -376,7 +376,7 @@ if (TARGET TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_tick_count DEPENDENCIES TBB::tbb)
     # CJH: BACKPORT: tbb_add_test(SUBDIR tbb NAME test_allocators DEPENDENCIES TBB::tbb)
     # CJH: TODO: hwloc dependent test macro: tbb_add_test(SUBDIR tbb NAME test_arena_constraints_hwloc DEPENDENCIES TBB::tbb)
-   # CJH: Need NUMA? tbb_add_test(SUBDIR tbb NAME test_arena_constraints_stubs DEPENDENCIES TBB::tbb)
+    # CJH: Need NUMA? tbb_add_test(SUBDIR tbb NAME test_arena_constraints_stubs DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_dynamic_link DEPENDENCIES TBB::tbb)
     if (LINKER_HAS_NO_AS_NEEDED)
         # The linker may not detect a dependency on pthread in static variable constructors.

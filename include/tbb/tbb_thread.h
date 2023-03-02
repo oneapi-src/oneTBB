@@ -95,7 +95,7 @@ namespace internal {
     template<class F, class X> struct thread_closure_1: thread_closure_base {
         F function;
         X arg1;
-        //! Routine passed to Windows's _beginthreadex by thread::internal_start() inside tbb.dll
+        //! Routine passed to Windows's _beginthreadex by thread::internal_start() inside tbb2.dll
         static __TBB_NATIVE_THREAD_ROUTINE start_routine( void* c ) {
             thread_closure_1 *self = static_cast<thread_closure_1*>(c);
             self->function(self->arg1);
@@ -108,7 +108,7 @@ namespace internal {
         F function;
         X arg1;
         Y arg2;
-        //! Routine passed to Windows's _beginthreadex by thread::internal_start() inside tbb.dll
+        //! Routine passed to Windows's _beginthreadex by thread::internal_start() inside tbb2.dll
         static __TBB_NATIVE_THREAD_ROUTINE start_routine( void* c ) {
             thread_closure_2 *self = static_cast<thread_closure_2*>(c);
             self->function(self->arg1, self->arg2);
