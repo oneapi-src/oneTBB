@@ -23,11 +23,11 @@ set(LIB_REL_PATH "lib")
 set(DLL_REL_PATH "redist")
 
 # Parse version info
-file(READ ${CMAKE_CURRENT_LIST_DIR}/../../include/oneapi/tbb/version.h _tbb_version_info)
+file(READ "${PROJECT_SOURCE_DIR}/include/tbb/tbb_stddef.h" _tbb_version_info)
 string(REGEX REPLACE ".*#define TBB_VERSION_MAJOR ([0-9]+).*" "\\1" _tbb_ver_major "${_tbb_version_info}")
 string(REGEX REPLACE ".*#define TBB_VERSION_MINOR ([0-9]+).*" "\\1" _tbb_ver_minor "${_tbb_version_info}")
 string(REGEX REPLACE ".*#define TBB_VERSION_PATCH ([0-9]+).*" "\\1" _tbb_ver_patch "${_tbb_version_info}")
-string(REGEX REPLACE ".*#define __TBB_BINARY_VERSION ([0-9]+).*" "\\1" TBB_BINARY_VERSION "${_tbb_version_info}")
+string(REGEX REPLACE ".*#define TBB_COMPATIBLE_INTERFACE_VERSION ([0-9]+).*" "\\1" TBB_BINARY_VERSION "${_tbb_version_info}")
 file(READ ${CMAKE_CURRENT_LIST_DIR}/../../CMakeLists.txt _tbb_cmakelist)
 string(REGEX REPLACE ".*TBBMALLOC_BINARY_VERSION ([0-9]+).*" "\\1" TBBMALLOC_BINARY_VERSION "${_tbb_cmakelist}")
 set(TBBMALLOC_PROXY_BINARY_VERSION ${TBBMALLOC_BINARY_VERSION})

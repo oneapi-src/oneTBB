@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.14)
 
 # Enable CMake policies
 
@@ -38,20 +38,15 @@ if (APPLE)
     endif()
 endif()
 
-# Until CMake 3.4.0 FindThreads.cmake requires C language enabled.
-# Enable C language before CXX to avoid possible override of CMAKE_SIZEOF_VOID_P.
-if (CMAKE_VERSION VERSION_LESS 3.4)
-    enable_language(C)
-endif()
-
+# @note PROJECT_SOURCE_DIR unavailable - Must use CMAKE_CURRENT_LIST_DIR
 file(READ "${CMAKE_CURRENT_LIST_DIR}/include/tbb/tbb_stddef.h" _tbb_version_info)
 string(REGEX REPLACE ".*#define TBB_VERSION_MAJOR ([0-9]+).*" "\\1" _tbb_ver_major "${_tbb_version_info}")
 string(REGEX REPLACE ".*#define TBB_VERSION_MINOR ([0-9]+).*" "\\1" _tbb_ver_minor "${_tbb_version_info}")
 string(REGEX REPLACE ".*#define TBB_VERSION_PATCH ([0-9]+).*" "\\1" _tbb_ver_patch "${_tbb_version_info}")
 
 string(REGEX REPLACE ".*#define TBB_INTERFACE_VERSION ([0-9]+).*" "\\1" TBB_INTERFACE_VERSION "${_tbb_version_info}")
-#string(REGEX REPLACE ".*#define __TBB_BINARY_VERSION ([0-9]+).*" "\\1" TBB_BINARY_VERSION "${_tbb_version_info}")
-set(TBB_BINARY_VERSION 0) # CJH
+string(REGEX REPLACE ".*#define TBB_COMPATIBLE_INTERFACE_VERSION ([0-9]+).*" "\\1" TBB_BINARY_VERSION "${_tbb_version_info}")
+
 set(TBB_BINARY_MINOR_VERSION ${_tbb_ver_minor})
 set(TBBMALLOC_BINARY_VERSION 2)
 set(TBBBIND_BINARY_VERSION 3)
@@ -78,8 +73,8 @@ else ()
 endif()
 set (TBB_CONFIG_DATE "${_configure_date}" CACHE STRING "First time that TBB was configured")
 set (_configure_date "${TBB_CONFIG_DATE}")
-include_directories (${CMAKE_BINARY_DIR})
-configure_file ( ${CMAKE_CURRENT_LIST_DIR}/build/version_string.ver.in ${CMAKE_BINARY_DIR}/version_string.ver @ONLY)
+include_directories (${CMAKE_CURRENT_BINARY_DIR})
+configure_file ( ${CMAKE_CURRENT_LIST_DIR}/build/version_string.ver.in ${CMAKE_CURRENT_BINARY_DIR}/version_string.ver @ONLY)
 
 include(CheckCXXCompilerFlag)
 include(GNUInstallDirs)

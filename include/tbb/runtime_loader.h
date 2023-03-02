@@ -42,10 +42,10 @@
     #if ! __TBB_NO_IMPLICIT_LINKAGE
         #ifdef _DEBUG
             #pragma comment( linker, "/nodefaultlib:tbb_debug.lib" )
-            #pragma comment( linker, "/defaultlib:tbbproxy_debug.lib" )
+            #pragma comment( linker, "/defaultlib:tbbmalloc_proxy_debug.lib" )
         #else
             #pragma comment( linker, "/nodefaultlib:tbb.lib" )
-            #pragma comment( linker, "/defaultlib:tbbproxy.lib" )
+            #pragma comment( linker, "/defaultlib:tbbmalloc_proxy.lib" )
         #endif
     #endif
 #endif

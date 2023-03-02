@@ -106,19 +106,11 @@ set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "")
 
 # Prefer using target_link_options instead of target_link_libraries to specify link options because
 # target_link_libraries may incorrectly handle some options (on Windows, for example).
-if (COMMAND target_link_options)
-    target_link_options(tbbmalloc
-        PRIVATE
-        ${TBB_LIB_LINK_FLAGS}
-        ${TBB_COMMON_LINK_FLAGS}
-    )
-else()
-    target_link_libraries(tbbmalloc
-        PRIVATE
-        ${TBB_LIB_LINK_FLAGS}
-        ${TBB_COMMON_LINK_FLAGS}
-    )
-endif()
+target_link_options(tbbmalloc
+    PRIVATE
+    ${TBB_LIB_LINK_FLAGS}
+    ${TBB_COMMON_LINK_FLAGS}
+)
 
 target_link_libraries(tbbmalloc
     PRIVATE

@@ -24,6 +24,7 @@
     #pragma warning( pop )
 #endif
 #include "tbb/tbb_stddef.h"
+#include "tbb/tbb.h"
 #include "harness.h"
 #include <vector>
 

@@ -50,7 +50,7 @@ namespace std {
 #    endif
 #endif
 
-#if (__TBB_BUILD || __TBBMALLOC_BUILD || __TBBBIND_BUILD) && !defined(__TBB_NO_IMPLICIT_LINKAGE)
+#if (__TBB_BUILD || __TBBMALLOC_BUILD || __TBBMALLOCPROXY_BUILD || __TBBBIND_BUILD) && !defined(__TBB_NO_IMPLICIT_LINKAGE)
 #define __TBB_NO_IMPLICIT_LINKAGE 1
 #endif
 
@@ -60,9 +60,9 @@ namespace std {
 	        #pragma comment(lib, __TBB_STRING(__TBB_LIB_NAME))
         #else
 			#ifdef _DEBUG
-				#pragma comment(lib, "tbb_debug.lib")
+				#pragma comment(lib, "tbb2_debug.lib")
 			#else
-				#pragma comment(lib, "tbb.lib")
+				#pragma comment(lib, "tbb2.lib")
 			#endif
         #endif
     #endif
