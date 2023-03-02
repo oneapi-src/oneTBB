@@ -48,9 +48,9 @@ endmacro()
 macro(tbb_handle_ipo target)
     if (TBB_IPO_PROPERTY)
         set_target_properties(${target} PROPERTIES 
-                              INTERPROCEDURAL_OPTIMIZATION TRUE
-                              INTERPROCEDURAL_OPTIMIZATION_DEBUG FALSE
-                             )
+            INTERPROCEDURAL_OPTIMIZATION TRUE
+            INTERPROCEDURAL_OPTIMIZATION_DEBUG FALSE
+        )
     elseif (TBB_IPO_FLAGS)
         target_compile_options(${target} PRIVATE ${TBB_IPO_COMPILE_FLAGS})
         if (COMMAND target_link_options)
