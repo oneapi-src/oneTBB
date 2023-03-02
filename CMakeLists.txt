@@ -123,16 +123,13 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE RelWithDebInfo)
-    message(STATUS "CMAKE_BUILD_TYPE is not specified. Using default: ${CMAKE_BUILD_TYPE}")
+if (CMAKE_BUILD_TYPE)
+    string(TOLOWER ${CMAKE_BUILD_TYPE} _tbb_build_type)
+    if (_tbb_build_type STREQUAL "debug")
+        set(TBB_ENABLE_IPO OFF)
+    endif()
+    unset(_tbb_build_type)
 endif()
-
-string(TOLOWER ${CMAKE_BUILD_TYPE} _tbb_build_type)
-if (_tbb_build_type STREQUAL "debug")
-    set(TBB_ENABLE_IPO OFF)
-endif()
-unset(_tbb_build_type)
 
 # -------------------------------------------------------------------
 # Files and folders naming
