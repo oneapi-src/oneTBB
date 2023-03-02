@@ -39,9 +39,7 @@ void spin_mutex::scoped_lock::internal_release() {
 
 bool spin_mutex::scoped_lock::internal_try_acquire( spin_mutex& m ) {
     __TBB_ASSERT( !my_mutex, "already holding a lock on a spin_mutex" );
-    if( __TBB_IsLocked(m.flag) )
-        return false;
-    bool result = bool( __TBB_TryLockByte(m.flag) );
+    bool result = !bool( __TBB_IsLocked(m.flag) ) && bool( __TBB_TryLockByte(m.flag) );
     if( result ) {
         my_mutex = &m;
         ITT_NOTIFY(sync_acquired, &m);

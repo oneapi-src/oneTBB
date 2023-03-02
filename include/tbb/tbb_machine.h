@@ -911,7 +911,7 @@ typedef __TBB_atomic __TBB_Flag __TBB_atomic_flag;
 
 #ifndef __TBB_IsLocked
 inline bool __TBB_IsLocked( const __TBB_atomic_flag& flag ) {
-    return (flag == 1);
+    return flag == 1;
 }
 #endif
 
@@ -924,11 +924,9 @@ inline bool __TBB_TryLockByte( __TBB_atomic_flag &flag ) {
 #ifndef __TBB_LockByte
 inline __TBB_Flag __TBB_LockByte( __TBB_atomic_flag& flag ) {
     tbb::internal::atomic_backoff backoff;
-    do {
-        while( __TBB_IsLocked(flag) )
-            backoff.pause();
+    while (__TBB_IsLocked(flag) ||  !__TBB_TryLockByte(flag)) {
+        backoff.pause();
     }
-    while( !__TBB_TryLockByte(flag) ) ;
     return 0;
 }
 #endif
