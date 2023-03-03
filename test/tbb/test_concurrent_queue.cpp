@@ -300,7 +300,7 @@ void test_queue_helper(){
     q2 = std::move(q3);
 
     CHECK(q1 != q4);
-    swap(q1,q4);
+    q1.swap(q4);
     CHECK(q2 == q4);
     CHECK(q2 == q3);
 }
