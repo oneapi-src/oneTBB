@@ -283,27 +283,29 @@ TEST_CASE("Test clear and dtor with TrackableItem") {
 }
 
 template<typename CQ, typename T>
-void test_iterator_ctor(){
+void test_queue_helper(){
     int size = 5;
     T vec_1(size, 0), vec_2(size, 0), vec_3(size, 0), vec_4(size, 0);
-    srand(time(0));
+    srand(static_cast<unsigned>(time(0)));
     generate(vec_1.begin(), vec_1.end(), rand);
     generate(vec_2.begin(), vec_2.end(), rand);
     generate(vec_3.begin(), vec_3.end(), rand);
     generate(vec_4.begin(), vec_4.end(), rand);
     
-    CQ q1, q2, q3;
+    CQ q1, q2;
     CQ q4({vec_1, vec_2, vec_3});
+    CQ q3 = {vec_4, vec_2, vec_3};
 
-    q1 = q4;
-    q2 = std::move(q4);
-    q3 = {vec_4, vec_2, vec_3};
-    CHECK(q1 != q3);
-    swap(q1,q3);
+    q1 = q3;
+    q2 = std::move(q3);
+
+    CHECK(q1 != q4);
+    swap(q1,q4);
+    CHECK(q2 == q4);
     CHECK(q2 == q3);
 }
 
 TEST_CASE("Test iterator queue"){
-  test_iterator_ctor<tbb::concurrent_queue<std::vector<int>>, std::vector<int>>();
-  test_iterator_ctor<tbb::concurrent_bounded_queue<std::vector<int>>, std::vector<int>>();
+    test_queue_helper<tbb::concurrent_queue<std::vector<int>>, std::vector<int>>();
+    test_queue_helper<tbb::concurrent_bounded_queue<std::vector<int>>, std::vector<int>>();
 }
