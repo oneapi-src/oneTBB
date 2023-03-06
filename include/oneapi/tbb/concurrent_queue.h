@@ -279,21 +279,7 @@ private:
 #if !__TBB_CPP20_COMPARISONS_PRESENT
     friend bool operator!=( const concurrent_queue<T, Allocator>& lhs,
                             const concurrent_queue<T, Allocator>& rhs ){
-        bool ret{false};
-	const_iterator lhs_ptr = lhs.unsafe_begin();
-        const_iterator rhs_ptr = rhs.unsafe_begin();
-        if(lhs.unsafe_size() != rhs.unsafe_size()){
-            ret = true;
-	}
-	else{
-            while(lhs_ptr != lhs.unsafe_end()){
-                if(*lhs_ptr != *rhs_ptr)
-                  ret = true;
-                lhs_ptr++;
-                rhs_ptr++;
-            }
-        }
-        return ret;
+        return !(lhs == rhs);
     }
 #endif // __TBB_CPP20_COMPARISONS_PRESENT
 }; // class concurrent_queue
