@@ -261,19 +261,7 @@ private:
 
     friend bool operator==( const concurrent_queue<T, Allocator>& lhs,
                             const concurrent_queue<T, Allocator>& rhs ){
-        bool ret{false};
-	const_iterator lhs_ptr = lhs.unsafe_begin();
-	const_iterator rhs_ptr = rhs.unsafe_begin();
-	if(lhs.unsafe_size() == rhs.unsafe_size()){
-	    ret = true;
-	    while(lhs_ptr != lhs.unsafe_end()){
-	        if(*lhs_ptr != *rhs_ptr)
-		  ret = false;
-		lhs_ptr++;
-		rhs_ptr++;
-	    }
-	}
-	return ret;
+        return lhs.unsafe_size() == rhs.unsafe_size() && std::equal(lhs.unsafe_begin(), lhs.unsafe_end(), rhs.unsafe_begin());
     }
 
 #if !__TBB_CPP20_COMPARISONS_PRESENT
