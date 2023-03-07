@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ void spin_mutex::scoped_lock::internal_release() {
 
 bool spin_mutex::scoped_lock::internal_try_acquire( spin_mutex& m ) {
     __TBB_ASSERT( !my_mutex, "already holding a lock on a spin_mutex" );
-    bool result = bool( __TBB_TryLockByte(m.flag) );
+    bool result = !bool( __TBB_IsLocked(m.flag) ) && bool( __TBB_TryLockByte(m.flag) );
     if( result ) {
         my_mutex = &m;
         ITT_NOTIFY(sync_acquired, &m);
