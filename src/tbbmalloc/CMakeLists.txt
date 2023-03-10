@@ -53,12 +53,12 @@ if (MSVC)
     set(TBB_WARNING_SUPPRESS ${TBB_WARNING_SUPPRESS} /wd4267 /wd4244 /wd4245 /wd4018 /wd4458)
 endif()
 
-# TODO: add ${TBB_WARNING_LEVEL} and fix problems
 target_compile_options(tbbmalloc
     PRIVATE
     ${TBB_CXX_STD_FLAG} # TODO: consider making it PUBLIC.
     ${TBB_MMD_FLAG}
     ${TBB_DSE_FLAG}
+    ${TBB_WARNING_LEVEL}
     ${TBB_WARNING_SUPPRESS}
     ${TBB_LIB_COMPILE_FLAGS}
     ${TBBMALLOC_LIB_COMPILE_FLAGS}
