@@ -32,7 +32,7 @@ To install HWLOC*, visit the official Portable Hardware Locality website (https:
 * For Windows* OS, binaries are available for download. 
 * For Linux* OS, only the source code is provided and binaries should be built. 
 
-On Linux* OS, HWLOC* can be also installed with packet managers, such as APT*, YUM*, etc. 
+On Linux* OS, HWLOC* can be also installed with package managers, such as APT*, YUM*, etc. 
 To do so, run: ``sudo apt install hwloc``. 
 
 
