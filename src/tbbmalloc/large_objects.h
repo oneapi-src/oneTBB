@@ -174,7 +174,7 @@ public:
 
     public:
         void init() {
-            memset(this, 0, sizeof(CacheBin));
+            memset(static_cast<void *>(this), 0, sizeof(CacheBin));
         }
 
         /* ---------- Cache accessors ---------- */

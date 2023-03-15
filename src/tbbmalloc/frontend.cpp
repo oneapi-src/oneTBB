@@ -928,7 +928,7 @@ static MallocMutex publicFreeListLock; // lock for changes of publicFreeList
 LifoList::LifoList( ) : top(nullptr)
 {
     // MallocMutex assumes zero initialization
-    memset(&lock, 0, sizeof(MallocMutex));
+    memset(static_cast<void *>(&lock), 0, sizeof(MallocMutex));
 }
 
 void LifoList::push(Block *block)
@@ -1864,7 +1864,7 @@ FreeObject *StartupBlock::allocate(size_t size)
 {
     FreeObject *result;
     StartupBlock *newBlock = nullptr;
-    bool newBlockUnused = false;
+    //bool newBlockUnused = false;
 
     /* Objects must be aligned on their natural bounds,
        and objects bigger than word on word's bound. */
@@ -2719,7 +2719,7 @@ rml::MemPoolError pool_create_v1(intptr_t pool_id, const MemPoolPolicy *policy,
         *pool = nullptr;
         return NO_MEMORY;
     }
-    memset(memPool, 0, sizeof(rml::internal::MemoryPool));
+    memset(static_cast<void *>(memPool), 0, sizeof(rml::internal::MemoryPool));
     if (!memPool->init(pool_id, policy)) {
         internalFree(memPool);
         *pool = nullptr;

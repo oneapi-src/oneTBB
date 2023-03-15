@@ -749,7 +749,7 @@ int Backend::IndexedBins::getMinNonemptyBin(unsigned startBin) const
 FreeBlock *Backend::IndexedBins::findBlock(int nativeBin, BackendSync *sync, size_t size,
         bool needAlignedBlock, bool alignedBin, int *numOfLockedBins)
 {
-    for (int i=getMinNonemptyBin(nativeBin); i<freeBinsNum; i=getMinNonemptyBin(i+1))
+    for (int i=getMinNonemptyBin(nativeBin); i<(int)freeBinsNum; i=getMinNonemptyBin(i+1))
         if (FreeBlock *block = getFromBin(i, sync, size, needAlignedBlock, alignedBin, /*wait=*/false, numOfLockedBins))
             return block;
 

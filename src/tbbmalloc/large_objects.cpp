@@ -462,7 +462,7 @@ template<typename Props> LargeMemoryBlock *LargeObjectCacheImpl<Props>::
     CacheBin::get(ExtMemoryPool *extMemPool, size_t size, BinBitMask *bitMask, int idx)
 {
     LargeMemoryBlock *lmb=nullptr;
-    OpGet data = {&lmb, size};
+    OpGet data = {&lmb, size, (uintptr_t)NULL};
     CacheBinOperation op(data);
     ExecuteOperation( &op, extMemPool, bitMask, idx );
     return lmb;
@@ -611,9 +611,9 @@ template<typename Props> void LargeObjectCacheImpl<Props>::
 
     intptr_t threshold = ageThreshold.load(std::memory_order_relaxed);
     if (threshold)
-        doCleanup = sinceLastGet > Props::LongWaitFactor * threshold;
+        doCleanup = sinceLastGet > (uintptr_t)Props::LongWaitFactor * threshold;
     else if (lastCleanedAge)
-        doCleanup = sinceLastGet > Props::LongWaitFactor * (lastCleanedAge - lastGet);
+        doCleanup = sinceLastGet > (uintptr_t)Props::LongWaitFactor * (lastCleanedAge - lastGet);
 
     if (doCleanup) {
         lastCleanedAge = 0;
