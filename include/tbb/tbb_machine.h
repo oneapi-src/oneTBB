@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2020 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -909,6 +909,12 @@ typedef unsigned char __TBB_Flag;
 #endif
 typedef __TBB_atomic __TBB_Flag __TBB_atomic_flag;
 
+#ifndef __TBB_IsLocked
+inline bool __TBB_IsLocked( const __TBB_atomic_flag& flag ) {
+    return flag == 1;
+}
+#endif
+
 #ifndef __TBB_TryLockByte
 inline bool __TBB_TryLockByte( __TBB_atomic_flag &flag ) {
     return __TBB_machine_cmpswp1(&flag,1,0)==0;
@@ -918,7 +924,9 @@ inline bool __TBB_TryLockByte( __TBB_atomic_flag &flag ) {
 #ifndef __TBB_LockByte
 inline __TBB_Flag __TBB_LockByte( __TBB_atomic_flag& flag ) {
     tbb::internal::atomic_backoff backoff;
-    while( !__TBB_TryLockByte(flag) ) backoff.pause();
+    while (__TBB_IsLocked(flag) ||  !__TBB_TryLockByte(flag)) {
+        backoff.pause();
+    }
     return 0;
 }
 #endif
