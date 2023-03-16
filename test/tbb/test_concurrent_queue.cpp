@@ -18,6 +18,7 @@
 #include <common/utils.h>
 #include <common/vector_types.h>
 #include <common/custom_allocators.h>
+#include <common/container_move_support.h>
 
 #include <tbb/concurrent_queue.h>
 #include <unordered_set>
@@ -308,4 +309,36 @@ void test_queue_helper(){
 TEST_CASE("Test iterator queue"){
     test_queue_helper<tbb::concurrent_queue<std::vector<int>>, std::vector<int>>();
     test_queue_helper<tbb::concurrent_bounded_queue<std::vector<int>>, std::vector<int>>();
+}
+
+template <typename queue_type, typename allocator_type>
+void TestMoveQueue(){
+    allocator_type::set_limits(300);
+    queue_type q1, q2;
+    move_support_tests::Foo obj;
+    int n1(15), n2(7);
+
+    allocator_type::init_counters();
+    for(int i =0; i < n1; i++)
+      q1.push(obj);
+    int q1_items_constructed = allocator_type::items_constructed;
+    int q1_items_allocated =  allocator_type::items_allocated;
+
+    allocator_type::init_counters();
+    for(int i =0; i < n2; i++)
+      q2.push(obj);
+    int q2_items_allocated =  allocator_type::items_allocated;
+
+    allocator_type::init_counters();
+    q1 = q2;
+
+    CHECK(q1_items_allocated == allocator_type::items_freed);
+    CHECK(q1_items_constructed == allocator_type::items_destroyed);
+    CHECK(q2_items_allocated == allocator_type::items_allocated);
+}
+
+TEST_CASE("Test move queue"){
+    using allocator_type = StaticSharedCountingAllocator<std::allocator<move_support_tests::Foo>>;
+    TestMoveQueue<tbb::concurrent_queue<move_support_tests::Foo, allocator_type>, allocator_type>();
+    TestMoveQueue<tbb::concurrent_bounded_queue<move_support_tests::Foo, allocator_type>, allocator_type>();
 }
