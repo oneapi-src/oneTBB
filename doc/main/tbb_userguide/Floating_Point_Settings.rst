@@ -34,7 +34,7 @@ Floating-point settings captured to a task group context prevail over the settin
 Otherwise, if floating-point settings are not captured to the context, or a context is not explicitly specified, the settings captured during the task arena initialization are used.
 
 In a nested call to a parallel algorithm that does not use the context of a task group with explicitly captured floating-point settings, the outer-level settings are used. 
-If none of the outer-level contexts capture floating-point settings, the settings captured during task scheduler initialization are used.
+If none of the outer-level contexts capture floating-point settings, the settings captured during task arena initialization are used.
 
 It guarantees that: 
 
