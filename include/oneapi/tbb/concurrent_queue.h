@@ -146,12 +146,13 @@ public:
 
     concurrent_queue& operator=( concurrent_queue&& other ){
         //TODO: implement support for std::allocator_traits::propogate_on_container_move_assignment
+        clear();
         if (my_allocator == other.my_allocator){
 	    my_queue_representation = other.my_queue_representation;
 	}
 	else{
-	    clear();
             my_queue_representation->assign(*other.my_queue_representation, my_allocator, move_construct_item);
+	    other.clear();
 	}
 	return *this;
     }
@@ -419,12 +420,13 @@ public:
 
     concurrent_bounded_queue& operator=( concurrent_bounded_queue&& other ){
         //TODO: implement support for std::allocator_traits::propogate_on_container_move_assignment
+        clear();
         if (my_allocator == other.my_allocator){
 	    my_queue_representation = other.my_queue_representation;
         }
         else{
-	    clear();
             my_queue_representation->assign(*other.my_queue_representation, my_allocator, move_construct_item);
+	    other.clear();
         }
         return *this;
     }
