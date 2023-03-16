@@ -1,7 +1,7 @@
 .. _malloc_replacement_log:
 
-TBB_malloc_replacement_log
-==========================
+TBB_malloc_replacement_log Function
+===================================
 
 .. note:: This function is for Windows* OS only. 
 
