@@ -148,7 +148,6 @@ public:
         //TODO: implement support for std::allocator_traits::propogate_on_container_move_assignment
         if (my_allocator == other.my_allocator){
 	    my_queue_representation = other.my_queue_representation;
-	    other.my_queue_representation = nullptr;
 	}
 	else{
 	    clear();
