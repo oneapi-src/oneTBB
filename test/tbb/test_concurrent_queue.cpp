@@ -319,13 +319,13 @@ void TestMoveQueue(){
     size_t n1(15), n2(7);
 
     allocator_type::init_counters();
-    for(int i =0; i < n1; i++)
+    for(size_t i =0; i < n1; i++)
       q1.push(obj);
     size_t q1_items_constructed = allocator_type::items_constructed;
     size_t q1_items_allocated =  allocator_type::items_allocated;
 
     allocator_type::init_counters();
-    for(int i =0; i < n2; i++)
+    for(size_t i =0; i < n2; i++)
       q2.push(obj);
     size_t q2_items_allocated =  allocator_type::items_allocated;
 
