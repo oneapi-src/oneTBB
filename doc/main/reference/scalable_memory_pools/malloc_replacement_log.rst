@@ -1,7 +1,7 @@
 .. _malloc_replacement_log:
 
-oneTBB_malloc_replacement_log Function
-======================================
+TBB_malloc_replacement_log
+==========================
 
 .. note:: This function is for Windows* OS only. 
 
@@ -34,7 +34,7 @@ To make sure that such instrumentation is safe, oneTBB first searches for a subs
 and checks if each one has a known bytecode pattern. If any required function is not found or its bytecode pattern is unknown, the replacement is skipped, 
 and the program continues to use the standard memory allocation functions.
 
-The ``oneTBB_malloc_replacement_log`` function allows the program to check if the dynamic memory replacement happens and to get a log of the performed checks.
+The ``TBB_malloc_replacement_log`` function allows the program to check if the dynamic memory replacement happens and to get a log of the performed checks.
 
 **Returns:**
 
