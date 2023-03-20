@@ -1411,7 +1411,7 @@ bool Backend::clean()
 void Backend::IndexedBins::verify()
 {
 #if MALLOC_DEBUG
-    for (int i=0; i<freeBinsNum; i++) {
+    for (int i=0; i<(int)freeBinsNum; i++) {
         for (FreeBlock *fb = freeBins[i].head.load(std::memory_order_relaxed); fb; fb=fb->next) {
             uintptr_t mySz = fb->myL.value;
             MALLOC_ASSERT(mySz>GuardedSize::MAX_SPEC_VAL, ASSERT_TEXT);
