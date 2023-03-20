@@ -1864,7 +1864,6 @@ FreeObject *StartupBlock::allocate(size_t size)
 {
     FreeObject *result;
     StartupBlock *newBlock = nullptr;
-    //bool newBlockUnused = false;
 
     /* Objects must be aligned on their natural bounds,
        and objects bigger than word on word's bound. */
