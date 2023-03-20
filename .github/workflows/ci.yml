@@ -126,7 +126,7 @@ jobs:
             cat years.diff
             exit 1
           fi
-  python_module_test_ubuntulatest:
+  python_module_test_ubuntu_latest:
     runs-on: [ubuntu-latest]
     timeout-minutes: 15
     steps:
