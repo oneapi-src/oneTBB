@@ -342,3 +342,98 @@ TEST_CASE("Test move queue"){
     TestMoveQueue<tbb::concurrent_queue<move_support_tests::Foo, allocator_type>, allocator_type>();
     TestMoveQueue<tbb::concurrent_bounded_queue<move_support_tests::Foo, allocator_type>, allocator_type>();
 }
+
+template<class T>
+struct stateful_allocator
+{
+    typedef T value_type;
+    stateful_allocator () = default;
+    int state;
+    template<class U>
+    constexpr stateful_allocator (const stateful_allocator <U>&) noexcept {}
+
+    [[nodiscard]] T* allocate(std::size_t n)
+    {
+        if (n > std::numeric_limits<std::size_t>::max() / sizeof(T))
+            throw std::bad_array_new_length();
+
+        if (auto p = static_cast<T*>(std::malloc(n * sizeof(T))))
+        {
+            return p;
+        }
+
+        throw std::bad_alloc();
+    }
+
+    void deallocate(T* p, std::size_t n) noexcept
+    {
+        std::free(p);
+    }
+};
+
+template<class T, class U>
+bool operator==(const stateful_allocator <T>& lhs, const stateful_allocator <U>& rhs) { return &lhs.state == &rhs.state; }
+
+template<class T, class U>
+bool operator!=(const stateful_allocator <T>& lhs, const stateful_allocator <U>& rhs) { return &lhs.state != &rhs.state; }
+
+void test_move_assignment_test_stateless(){
+  int n = 5;
+  std::vector<int> vect1(n, 10), vect2(n,20), vect3(n, 30);
+  tbb::concurrent_queue<std::vector<int>> src({vect1, vect2, vect3});
+  tbb::concurrent_queue<std::vector<int>> dst(src.get_allocator());
+  dst = std::move(src);
+  
+  REQUIRE_MESSAGE(src.get_allocator() == dst.get_allocator(), "Incorrect test setup: allocators should be equal");
+  REQUIRE_MESSAGE(&*(src.unsafe_begin()) ==  &*(dst.unsafe_begin()), "Container move actually changed element locations, while should not");
+  REQUIRE_MESSAGE(src.unsafe_size() == dst.unsafe_size(), "Queues are not equal");
+  REQUIRE_MESSAGE(std::equal(dst.unsafe_begin(), dst.unsafe_end(), src.unsafe_begin()), "Elements are not equal");
+
+  //
+  tbb::concurrent_bounded_queue<std::vector<int>> src_bnd({vect1, vect2, vect3});
+  tbb::concurrent_bounded_queue<std::vector<int>> dst_bnd(src_bnd.get_allocator());
+  dst_bnd = std::move(src_bnd);
+
+  REQUIRE_MESSAGE(src_bnd.get_allocator() == dst_bnd.get_allocator(), "Incorrect test setup: allocators should be equal");
+  REQUIRE_MESSAGE(&*(src_bnd.unsafe_begin()) ==  &*(dst_bnd.unsafe_begin()), "Container move actually changed element locations, while should not");
+  REQUIRE_MESSAGE(src_bnd.size() == dst_bnd.size(), "Queues are not equal");
+  REQUIRE_MESSAGE(std::equal(dst_bnd.unsafe_begin(), dst_bnd.unsafe_end(), src_bnd.unsafe_begin()), "Elements are not equal");
+
+
+}
+
+void test_move_assignment_test_stateful(){
+  stateful_allocator<int> src_alloc;
+  src_alloc.state = 0;
+  std::vector<int, stateful_allocator<int>> v(8, src_alloc);
+  v.push_back(42);
+  v.push_back(82);
+  tbb::concurrent_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>> src(src_alloc);
+  src.push(v);
+  src.push(v);
+
+  stateful_allocator<int> dst_alloc;
+  dst_alloc.state = 1;
+  tbb::concurrent_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>> dst(dst_alloc);
+  dst = std::move(src);
+  REQUIRE_MESSAGE(src.get_allocator() != dst.get_allocator(), "Incorrect test setup: allocators should be unequal");
+  REQUIRE_MESSAGE(&*(src.unsafe_begin()) !=  &*(dst.unsafe_begin()), "Container did not changed element locations for unequal allocators");
+  REQUIRE_MESSAGE(src.unsafe_size() == 0, "Moved from container should not contain any elements");
+
+  //
+  tbb::concurrent_bounded_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>> src_bnd(src_alloc);
+  tbb::concurrent_bounded_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>> dst_bnd(dst_alloc);
+  src_bnd.push(v);
+  src_bnd.push(v);
+  dst_bnd = std::move(src_bnd);
+  REQUIRE_MESSAGE(src_bnd.get_allocator() != dst_bnd.get_allocator(), "Incorrect test setup: allocators should be unequal");
+  REQUIRE_MESSAGE(&*(src_bnd.unsafe_begin()) !=  &*(dst_bnd.unsafe_begin()), "Container did not changed element locations for unequal allocators");
+  REQUIRE_MESSAGE(src_bnd.size() == 0, "Moved from container should not contain any elements");
+
+  
+}
+
+TEST_CASE("concurrent_queue") {
+  test_move_assignment_test_stateless();
+  test_move_assignment_test_stateful();
+}
