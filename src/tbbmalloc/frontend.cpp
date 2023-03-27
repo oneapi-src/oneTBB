@@ -1264,7 +1264,7 @@ Block* Bin::getPrivatizedFreeListBlock()
     Block* block;
     MALLOC_ASSERT( this, ASSERT_TEXT );
     // if this method is called, active block usage must be unsuccessful
-    MALLOC_ASSERT( !activeBlk && !mailbox.load(std::memory_order_relaxed) || activeBlk && activeBlk->isFull, ASSERT_TEXT );
+    MALLOC_ASSERT( (!activeBlk && !mailbox.load(std::memory_order_relaxed)) || (activeBlk && activeBlk->isFull), ASSERT_TEXT );
 
 // the counter should be changed    STAT_increment(getThreadId(), ThreadCommonCounters, lockPublicFreeList);
     if (!mailbox.load(std::memory_order_acquire)) // hotpath is empty mailbox
