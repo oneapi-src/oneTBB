@@ -366,6 +366,7 @@ struct stateful_allocator
 
     void deallocate(T* p, std::size_t n) noexcept
     {
+        static_cast<void>(n);
         std::free(p);
     }
 };
