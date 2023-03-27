@@ -377,60 +377,67 @@ bool operator==(const stateful_allocator <T>& lhs, const stateful_allocator <U>&
 template<class T, class U>
 bool operator!=(const stateful_allocator <T>& lhs, const stateful_allocator <U>& rhs) { return &lhs.state != &rhs.state; }
 
+
+template<typename Container>
+void test_check_move_equal_allocator(Container& src, Container& dst){
+    REQUIRE_MESSAGE(src.get_allocator() == dst.get_allocator(), "Incorrect test setup: allocators should be equal");
+    REQUIRE_MESSAGE(&*(src.unsafe_begin()) ==  &*(dst.unsafe_begin()), "Container move actually changed element locations, while should not");
+    REQUIRE_MESSAGE(std::equal(dst.unsafe_begin(), dst.unsafe_end(), src.unsafe_begin()), "Elements are not equal");
+}
+
+template<typename Container>
+void test_check_move_unequal_allocator(Container& src, Container& dst){
+    REQUIRE_MESSAGE(src.get_allocator() != dst.get_allocator(), "Incorrect test setup: allocators should be unequal");
+    REQUIRE_MESSAGE(&*(src.unsafe_begin()) !=  &*(dst.unsafe_begin()), "Container did not changed element locations for unequal allocators");
+}
+
 void test_move_assignment_test_stateless(){
-  int n = 5;
-  std::vector<int> vect1(n, 10), vect2(n,20), vect3(n, 30);
-  tbb::concurrent_queue<std::vector<int>> src({vect1, vect2, vect3});
-  tbb::concurrent_queue<std::vector<int>> dst(src.get_allocator());
-  dst = std::move(src);
-  
-  REQUIRE_MESSAGE(src.get_allocator() == dst.get_allocator(), "Incorrect test setup: allocators should be equal");
-  REQUIRE_MESSAGE(&*(src.unsafe_begin()) ==  &*(dst.unsafe_begin()), "Container move actually changed element locations, while should not");
-  REQUIRE_MESSAGE(src.unsafe_size() == dst.unsafe_size(), "Queues are not equal");
-  REQUIRE_MESSAGE(std::equal(dst.unsafe_begin(), dst.unsafe_end(), src.unsafe_begin()), "Elements are not equal");
+    int n = 5;
+    std::vector<int> vect1(n, 10), vect2(n,20), vect3(n, 30);
 
-  //
-  tbb::concurrent_bounded_queue<std::vector<int>> src_bnd({vect1, vect2, vect3});
-  tbb::concurrent_bounded_queue<std::vector<int>> dst_bnd(src_bnd.get_allocator());
-  dst_bnd = std::move(src_bnd);
+    tbb::concurrent_queue<std::vector<int>> src({vect1, vect2, vect3});
+    tbb::concurrent_queue<std::vector<int>> dst(src.get_allocator());
+    dst = std::move(src);
 
-  REQUIRE_MESSAGE(src_bnd.get_allocator() == dst_bnd.get_allocator(), "Incorrect test setup: allocators should be equal");
-  REQUIRE_MESSAGE(&*(src_bnd.unsafe_begin()) ==  &*(dst_bnd.unsafe_begin()), "Container move actually changed element locations, while should not");
-  REQUIRE_MESSAGE(src_bnd.size() == dst_bnd.size(), "Queues are not equal");
-  REQUIRE_MESSAGE(std::equal(dst_bnd.unsafe_begin(), dst_bnd.unsafe_end(), src_bnd.unsafe_begin()), "Elements are not equal");
+    tbb::concurrent_bounded_queue<std::vector<int>> src_bnd({vect1, vect2, vect3});
+    tbb::concurrent_bounded_queue<std::vector<int>> dst_bnd(src_bnd.get_allocator());
+    dst_bnd = std::move(src_bnd);
 
+    test_check_move_equal_allocator<tbb::concurrent_queue<std::vector<int>>>(src, dst);  
+    REQUIRE_MESSAGE(src.unsafe_size() == dst.unsafe_size(), "Queues are not equal");
 
+    test_check_move_equal_allocator<tbb::concurrent_bounded_queue<std::vector<int>>>(src_bnd, dst_bnd);
+    REQUIRE_MESSAGE(src_bnd.size() == dst_bnd.size(), "Queues are not equal");
 }
 
 void test_move_assignment_test_stateful(){
-  stateful_allocator<int> src_alloc;
-  src_alloc.state = 0;
-  std::vector<int, stateful_allocator<int>> v(8, src_alloc);
-  v.push_back(42);
-  v.push_back(82);
-  tbb::concurrent_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>> src(src_alloc);
-  src.push(v);
-  src.push(v);
+    stateful_allocator<int> src_alloc;
+    std::vector<int, stateful_allocator<int>> v(8, src_alloc);
+    tbb::concurrent_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>> src(src_alloc);
+    
+    
+    src_alloc.state = 0;
+    v.push_back(42);
+    v.push_back(82);
+    src.push(v);
+    src.push(v);
 
-  stateful_allocator<int> dst_alloc;
-  dst_alloc.state = 1;
-  tbb::concurrent_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>> dst(dst_alloc);
-  dst = std::move(src);
-  REQUIRE_MESSAGE(src.get_allocator() != dst.get_allocator(), "Incorrect test setup: allocators should be unequal");
-  REQUIRE_MESSAGE(&*(src.unsafe_begin()) !=  &*(dst.unsafe_begin()), "Container did not changed element locations for unequal allocators");
-  REQUIRE_MESSAGE(src.unsafe_size() == 0, "Moved from container should not contain any elements");
+    stateful_allocator<int> dst_alloc;
+    dst_alloc.state = 1;
+    tbb::concurrent_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>> dst(dst_alloc);
+    dst = std::move(src);
 
-  //
-  tbb::concurrent_bounded_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>> src_bnd(src_alloc);
-  tbb::concurrent_bounded_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>> dst_bnd(dst_alloc);
-  src_bnd.push(v);
-  src_bnd.push(v);
-  dst_bnd = std::move(src_bnd);
-  REQUIRE_MESSAGE(src_bnd.get_allocator() != dst_bnd.get_allocator(), "Incorrect test setup: allocators should be unequal");
-  REQUIRE_MESSAGE(&*(src_bnd.unsafe_begin()) !=  &*(dst_bnd.unsafe_begin()), "Container did not changed element locations for unequal allocators");
-  REQUIRE_MESSAGE(src_bnd.size() == 0, "Moved from container should not contain any elements");
-
-  
+    tbb::concurrent_bounded_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>> src_bnd(src_alloc);
+    tbb::concurrent_bounded_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>> dst_bnd(dst_alloc);
+    src_bnd.push(v);
+    src_bnd.push(v);
+    dst_bnd = std::move(src_bnd);
+    
+    test_check_move_unequal_allocator<tbb::concurrent_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>>>(src, dst);
+    REQUIRE_MESSAGE(src.unsafe_size() == 0, "Moved from container should not contain any elements");
+    
+    test_check_move_unequal_allocator<tbb::concurrent_bounded_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>>>(src_bnd, dst_bnd);
+    REQUIRE_MESSAGE(src_bnd.size() == 0, "Moved from container should not contain any elements");
 }
 
 TEST_CASE("concurrent_queue") {
