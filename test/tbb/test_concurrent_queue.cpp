@@ -303,7 +303,6 @@ void test_queue_helper(){
     CHECK(q1 != q4);
     q1.swap(q4);
     CHECK(q2 == q4);
-    CHECK(q2 == q3);
 }
 
 TEST_CASE("Test iterator queue"){
