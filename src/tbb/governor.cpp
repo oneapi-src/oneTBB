@@ -57,6 +57,9 @@ namespace system_topology {
 // governor
 //------------------------------------------------------------------------
 
+void init_controls();
+void destroy_controls();
+
 void governor::acquire_resources () {
 #if __TBB_USE_POSIX
     int status = theTLS.create(auto_terminate);
@@ -65,6 +68,7 @@ void governor::acquire_resources () {
 #endif
     if( status )
         handle_perror(status, "TBB failed to initialize task scheduler TLS\n");
+    init_controls();
     detect_cpu_features(cpu_features);
 
     is_rethrow_broken = gcc_rethrow_exception_broken();
@@ -79,6 +83,7 @@ void governor::release_resources () {
     int status = theTLS.destroy();
     if( status )
         runtime_warning("failed to destroy task scheduler TLS: %s", std::strerror(status));
+    destroy_controls();
     clear_address_waiter_table();
 
     system_topology::destroy();

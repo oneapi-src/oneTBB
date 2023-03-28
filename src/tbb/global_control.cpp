@@ -45,6 +45,7 @@ protected:
     std::set<global_control*, control_storage_comparator, tbb_allocator<global_control*>> my_list{};
     spin_mutex my_list_mutex{};
 public:
+    virtual ~control_storage() = default;
     virtual std::size_t default_value() const = 0;
     virtual void apply_active(std::size_t new_active) {
         my_active_value = new_active;
@@ -146,11 +147,39 @@ public:
     }
 };
 
-static allowed_parallelism_control allowed_parallelism_ctl;
-static stack_size_control stack_size_ctl;
-static terminate_on_exception_control terminate_on_exception_ctl;
-static lifetime_control lifetime_ctl;
-static control_storage *controls[] = {&allowed_parallelism_ctl, &stack_size_ctl, &terminate_on_exception_ctl, &lifetime_ctl};
+static control_storage* controls[4]{/*allowed_parallelism_control, stack_size_control, terminate_on_exception_control, lifetime_control*/};
+
+void init_controls() {
+    controls[0] = static_cast<allowed_parallelism_control*>(cache_aligned_allocate(sizeof(allowed_parallelism_control)));
+    new (controls[0]) allowed_parallelism_control();
+
+    controls[1] = static_cast<stack_size_control*>(cache_aligned_allocate(sizeof(stack_size_control)));
+    new (controls[1]) stack_size_control();
+
+    controls[2] = static_cast<terminate_on_exception_control*>(cache_aligned_allocate(sizeof(terminate_on_exception_control)));
+    new (controls[2]) terminate_on_exception_control();
+
+    controls[3] = static_cast<lifetime_control*>(cache_aligned_allocate(sizeof(lifetime_control)));
+    new (controls[3]) lifetime_control();
+}
+
+void destroy_controls() {
+    // allowed_parallelism_control
+    controls[0]->~control_storage();
+    cache_aligned_deallocate(controls[0]);
+
+    // stack_size_control
+    controls[1]->~control_storage();
+    cache_aligned_deallocate(controls[1]);
+
+    // terminate_on_exception_control
+    controls[2]->~control_storage();
+    cache_aligned_deallocate(controls[2]);
+
+    // lifetime_control
+    controls[3]->~control_storage();
+    cache_aligned_deallocate(controls[3]);
+}
 
 //! Comparator for a set of global_control objects
 inline bool control_storage_comparator::operator()(const global_control* lhs, const global_control* rhs) const {
@@ -159,7 +188,7 @@ inline bool control_storage_comparator::operator()(const global_control* lhs, co
 }
 
 unsigned market::app_parallelism_limit() {
-    return allowed_parallelism_ctl.active_value_if_present();
+    return static_cast<allowed_parallelism_control*>(controls[0])->active_value_if_present();
 }
 
 bool terminate_on_exception() {
@@ -167,7 +196,7 @@ bool terminate_on_exception() {
 }
 
 unsigned market::is_lifetime_control_present() {
-    return !lifetime_ctl.is_empty();
+    return !static_cast<lifetime_control*>(controls[3])->is_empty();
 }
 
 struct global_control_impl {
@@ -244,9 +273,11 @@ public:
 };
 
 void __TBB_EXPORTED_FUNC create(d1::global_control& gc) {
+    governor::one_time_init();
     global_control_impl::create(gc);
 }
 void __TBB_EXPORTED_FUNC destroy(d1::global_control& gc) {
+    governor::one_time_init();
     global_control_impl::destroy(gc);
 }
 
@@ -259,6 +290,7 @@ bool is_present(d1::global_control& gc) {
 }
 #endif // TBB_USE_ASSERT
 std::size_t __TBB_EXPORTED_FUNC global_control_active_value(int param) {
+    governor::one_time_init();
     __TBB_ASSERT_RELEASE(param < global_control::parameter_max, nullptr);
     return controls[param]->active_value();
 }
