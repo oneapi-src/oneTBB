@@ -462,7 +462,7 @@ template<typename Props> LargeMemoryBlock *LargeObjectCacheImpl<Props>::
     CacheBin::get(ExtMemoryPool *extMemPool, size_t size, BinBitMask *bitMask, int idx)
 {
     LargeMemoryBlock *lmb=nullptr;
-    OpGet data = {&lmb, size, static_cast<intptr_t>(0)};
+    OpGet data = {&lmb, size, static_cast<uintptr_t>(0)};
     CacheBinOperation op(data);
     ExecuteOperation( &op, extMemPool, bitMask, idx );
     return lmb;
