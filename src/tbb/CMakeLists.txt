@@ -80,6 +80,7 @@ target_compile_options(tbb
     ${TBB_WARNING_SUPPRESS}
     ${TBB_LIB_COMPILE_FLAGS}
     ${TBB_COMMON_COMPILE_FLAGS}
+    ${TBB_RESUMABLE_TASKS_USE_THREADS}
 )
 
 # Avoid use of target_link_libraries here as it changes /DEF option to \DEF on Windows.
