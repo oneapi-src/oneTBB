@@ -16,10 +16,10 @@ name: oneTBB CI
 
 on:
   push:
-    branches: [master]
+    branches: [master, tbb_2020]
 
   pull_request:
-    branches: [master]
+    branches: [master, tbb_2020]
     types:
       - opened
       - synchronize
