@@ -14,9 +14,10 @@
 
 include(CheckSymbolExists)
 
-if (CMAKE_SYSTEM_NAME MATCHES "^Linux")
-    check_symbol_exists("getcontext" "ucontext.h" HAVE_UCONTEXT)
-    if (HAVE_UCONTEXT)
+if (UNIX)
+    check_symbol_exists("getcontext" "ucontext.h" _tbb_have_ucontext)
+    if (_tbb_have_ucontext)
         set(TBB_RESUMABLE_TASKS_USE_THREADS "-D__TBB_RESUMABLE_TASKS_USE_THREADS=1")
     endif()
+    unset(_tbb_have_ucontext)
 endif()
