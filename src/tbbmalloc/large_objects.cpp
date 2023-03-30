@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -225,8 +225,8 @@ std::atomic<intptr_t> memAllocKB, memHitKB;
 #if MALLOC_DEBUG
 inline bool lessThanWithOverflow(intptr_t a, intptr_t b)
 {
-    return (a < b && (b - a < UINTPTR_MAX/2)) ||
-           (a > b && (a - b > UINTPTR_MAX/2));
+    return (a < b && (b - a < static_cast<intptr_t>(UINTPTR_MAX/2))) ||
+           (a > b && (a - b > static_cast<intptr_t>(UINTPTR_MAX/2)));
 }
 #endif
 
@@ -462,7 +462,7 @@ template<typename Props> LargeMemoryBlock *LargeObjectCacheImpl<Props>::
     CacheBin::get(ExtMemoryPool *extMemPool, size_t size, BinBitMask *bitMask, int idx)
 {
     LargeMemoryBlock *lmb=nullptr;
-    OpGet data = {&lmb, size};
+    OpGet data = {&lmb, size, static_cast<uintptr_t>(0)};
     CacheBinOperation op(data);
     ExecuteOperation( &op, extMemPool, bitMask, idx );
     return lmb;
@@ -611,9 +611,9 @@ template<typename Props> void LargeObjectCacheImpl<Props>::
 
     intptr_t threshold = ageThreshold.load(std::memory_order_relaxed);
     if (threshold)
-        doCleanup = sinceLastGet > Props::LongWaitFactor * threshold;
+        doCleanup = sinceLastGet > static_cast<uintptr_t>(Props::LongWaitFactor * threshold);
     else if (lastCleanedAge)
-        doCleanup = sinceLastGet > Props::LongWaitFactor * (lastCleanedAge - lastGet);
+        doCleanup = sinceLastGet > static_cast<uintptr_t>(Props::LongWaitFactor * (lastCleanedAge - lastGet));
 
     if (doCleanup) {
         lastCleanedAge = 0;
@@ -847,7 +847,7 @@ template<typename Props>
 void LargeObjectCacheImpl<Props>::updateCacheState(ExtMemoryPool *extMemPool, DecreaseOrIncrease op, size_t size)
 {
     int idx = Props::sizeToIdx(size);
-    MALLOC_ASSERT(idx<numBins, ASSERT_TEXT);
+    MALLOC_ASSERT(idx < static_cast<int>(numBins), ASSERT_TEXT);
     bin[idx].updateUsedSize(extMemPool, op==decrease? -size : size, &bitMask, idx);
 }
 
