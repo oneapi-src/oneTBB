@@ -56,6 +56,7 @@ target_compile_definitions(tbb
                            $<$<CONFIG:DEBUG>:TBB_USE_DEBUG>
                            PRIVATE
                            __TBB_BUILD
+                           ${TBB_RESUMABLE_TASKS_USE_THREADS}
                            $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:__TBB_DYNAMIC_LOAD_ENABLED=0>
                            $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:__TBB_SOURCE_DIRECTLY_INCLUDED=1>)
 
@@ -80,7 +81,6 @@ target_compile_options(tbb
     ${TBB_WARNING_SUPPRESS}
     ${TBB_LIB_COMPILE_FLAGS}
     ${TBB_COMMON_COMPILE_FLAGS}
-    ${TBB_RESUMABLE_TASKS_USE_THREADS}
 )
 
 # Avoid use of target_link_libraries here as it changes /DEF option to \DEF on Windows.
