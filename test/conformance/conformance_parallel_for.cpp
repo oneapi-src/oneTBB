@@ -255,35 +255,9 @@ struct MinForBody : MinObj {
     void operator()(MinRange&) const {}
 };
 
-struct MinForIndex : MinObj {
-    MinForIndex(int i) : MinObj(construct), real_index(i) {}
-    MinForIndex(const MinForIndex& other) : MinObj(construct), real_index(other.real_index) {}
-    ~MinForIndex() {}
-
-    // Can return void by the spec, but implementation requires to return Index&
-    MinForIndex& operator=(const MinForIndex& other) { real_index = other.real_index; return *this; }
-
-    friend bool operator<(const MinForIndex& lhs, const MinForIndex& rhs) { return lhs.real_index < rhs.real_index; }
-    friend std::size_t operator-(const MinForIndex& lhs, const MinForIndex& rhs) { return lhs.real_index - rhs.real_index; }
-
-    friend MinForIndex operator+(const MinForIndex& idx, std::size_t k) { return MinForIndex{idx.real_index + int(k)}; }
-
-    // Not included into the spec but required by the implementation
-    friend bool operator<=(const MinForIndex& lhs, const MinForIndex& rhs) { return lhs.real_index <= rhs.real_index; }
-    friend MinForIndex operator/(const MinForIndex& lhs, const MinForIndex& rhs) { return {lhs.real_index / rhs.real_index}; }
-    friend MinForIndex operator+(const MinForIndex& lhs, const MinForIndex& rhs) { return {lhs.real_index + rhs.real_index}; }
-    friend MinForIndex operator*(const MinForIndex& lhs, const MinForIndex& rhs) { return {lhs.real_index * rhs.real_index}; }
-
-    MinForIndex& operator++() { ++real_index; return *this; }
-    MinForIndex& operator+=(const MinForIndex& rhs) { real_index += rhs.real_index; return *this; }
-
-private:
-    int real_index;
-};
-
 struct MinForFunc : MinObj {
     using MinObj::MinObj;
-    void operator()(MinForIndex) const {}
+    void operator()(std::size_t) const {}
 };
 
 } // namespace test_req
@@ -383,7 +357,8 @@ TEST_CASE("parallel_for type requirements") {
     test_req::MinForBody body(test_req::construct);
     test_req::MinForFunc func(test_req::construct);
 
-    test_req::MinForIndex index{1}, stride{1};
+    // TODO: add tests for ParallelForIndex after resolving implementation and spec discrepancy
+    std::size_t index{1}, stride{1};
 
     run_parallel_for_overloads(range, body);
     run_parallel_for_overloads(index, index, func);

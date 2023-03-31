@@ -176,13 +176,15 @@ namespace test_req {
 
 struct MinMiddleFilterBody : MinObj {
     using MinObj::MinObj;
-    MinMiddleFilterBody(const MinMiddleFilterBody&) : MinObj(construct) {} // Not part of the spec
+    // TODO: FilterBody is required to be copy constructible, but this is not mentioned in the spec
+    MinMiddleFilterBody(const MinMiddleFilterBody&) : MinObj(construct) {}
     test_req::MinObj* operator()(MinObj* x) const { return x; }
 };
 
 struct MinFirstFilterBody : MinObj {
     using MinObj::MinObj;
-    MinFirstFilterBody(const MinFirstFilterBody&) : MinObj(construct) {} // Not part of the spec
+    // TODO: FilterBody is required to be copy constructible, but this is not mentioned in the spec
+    MinFirstFilterBody(const MinFirstFilterBody&) : MinObj(construct) {}
     test_req::MinObj* operator()(oneapi::tbb::flow_control& fc) const {
         fc.stop();
         return nullptr;
@@ -191,7 +193,8 @@ struct MinFirstFilterBody : MinObj {
 
 struct MinSingleFilterBody : MinObj {
     using MinObj::MinObj;
-    MinSingleFilterBody(const MinSingleFilterBody&) : MinObj(construct) {} // Not part of the spec
+    // TODO: FilterBody is required to be copy constructible, but this is not mentioned in the spec
+    MinSingleFilterBody(const MinSingleFilterBody&) : MinObj(construct) {}
     void operator()(oneapi::tbb::flow_control& fc) const {
         fc.stop();
     }
@@ -199,7 +202,8 @@ struct MinSingleFilterBody : MinObj {
 
 struct MinLastFilterBody : MinObj {
     using MinObj::MinObj;
-    MinLastFilterBody(const MinLastFilterBody&) : MinObj(construct) {} // Not part of the spec
+    // TODO: FilterBody is required to be copy constructible, but this is not mentioned in the spec
+    MinLastFilterBody(const MinLastFilterBody&) : MinObj(construct) {}
     void operator()(MinObj*) const {}
 };
 

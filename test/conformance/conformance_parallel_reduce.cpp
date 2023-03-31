@@ -104,12 +104,12 @@ struct MinReduceBody : MinObj {
 
 struct MinReduceFunc : MinObj {
     using MinObj::MinObj;
-    Copyable operator()(const MinRange&, const Copyable& obj) const { return obj; }
+    std::size_t operator()(const MinRange&, const std::size_t& obj) const { return obj; }
 };
 
 struct MinReduction : MinObj {
     using MinObj::MinObj;
-    Copyable operator()(const Copyable&, const Copyable& rhs) const { return rhs; }
+    std::size_t operator()(const std::size_t&, const std::size_t& rhs) const { return rhs; }
 };
 
 } // namespace test_req
@@ -192,7 +192,8 @@ TEST_CASE("Test partitioners interaction with various ranges") {
 TEST_CASE("parallel_[deterministic_]reduce type requirements") {
     test_req::MinRange      range(test_req::construct);
     test_req::MinReduceBody body(test_req::construct);
-    test_req::Copyable      value(test_req::construct);
+    // TODO: add tests for Value after resolving implementation and spec discrepancy
+    std::size_t             value = 0;
     test_req::MinReduceFunc func(test_req::construct);
     test_req::MinReduction  reduction(test_req::construct);
 
