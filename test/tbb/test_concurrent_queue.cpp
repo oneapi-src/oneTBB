@@ -472,7 +472,7 @@ void test_move_assignment_test_unequal(){
     dst_bnd = std::move(src_bnd);
     
     test_check_move_unequal_allocator<tbb::concurrent_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>>>(src, dst, cpy);
-    //REQUIRE_MESSAGE(src.unsafe_size() == 0, "Moved from container should not contain any elements");
+    REQUIRE_MESSAGE(src.unsafe_size() == 0, "Moved from container should not contain any elements");
     REQUIRE_MESSAGE(dst.unsafe_size() == cpy.unsafe_size(), "Queues are not equal");
     REQUIRE_MESSAGE(std::equal(dst.unsafe_begin(), dst.unsafe_end(), cpy.unsafe_begin()), "Elements are not equal");
     
