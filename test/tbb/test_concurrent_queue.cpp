@@ -332,9 +332,9 @@ void TestMoveQueue(){
     allocator_type::init_counters();
     q1 = std::move(q2);
 
-    CHECK(allocator_type::items_freed == q1_items_allocated);
-    CHECK(allocator_type::items_destroyed == q1_items_constructed);
-    CHECK(allocator_type::items_allocated <= q2_items_allocated);
+    CHECK(q1_items_allocated == allocator_type::items_freed);
+    CHECK(q1_items_constructed == allocator_type::items_destroyed);
+    CHECK(q2_items_allocated >= allocator_type::items_allocated);
 }
 
 //move assignment test for equal allocator
@@ -398,9 +398,7 @@ void TestMoveQueueUnequal(){
     allocator_type::init_counters();
     q1 = std::move(q2);
 
-    CHECK(allocator_type::items_allocated <= q2_items_allocated);
     REQUIRE_MESSAGE( (allocator_type::items_allocated - q2_items_allocated) <= 0, "More then excepted memory allocated ?" );
-    
     REQUIRE_MESSAGE(std::all_of(q1.unsafe_begin(), q1.unsafe_end(), is_state_predicate<move_support_tests::Foo::MoveInitialized>()),
 		    "Container did not move construct some elements");
     REQUIRE_MESSAGE(std::all_of(q2.unsafe_begin(), q2.unsafe_end(), is_state_predicate<move_support_tests::Foo::MovedFrom>()),
