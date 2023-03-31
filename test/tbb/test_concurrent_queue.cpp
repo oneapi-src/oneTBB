@@ -430,7 +430,7 @@ void test_check_move_unequal_allocator(Container& src, Container& dst, Container
     REQUIRE_MESSAGE(std::equal(dst.unsafe_begin(), dst.unsafe_end(), cpy.unsafe_begin()), "Elements are not equal");
 }
 
-void test_move_assignment_test_stateless(){
+void test_move_assignment_test_equal(){
     int n = 5;
     std::vector<int> vect1(n, 10), vect2(n,20), vect3(n, 30);
 
@@ -449,7 +449,7 @@ void test_move_assignment_test_stateless(){
     REQUIRE_MESSAGE(src_bnd.size() == dst_bnd.size(), "Queues are not equal");
 }
 
-void test_move_assignment_test_stateful(){
+void test_move_assignment_test_unequal(){
     stateful_allocator<int> src_alloc;
     std::vector<int, stateful_allocator<int>> v(8, src_alloc);
     tbb::concurrent_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>> src(src_alloc);
@@ -488,6 +488,6 @@ void test_move_assignment_test_stateful(){
 
 //move assignment test for equal and unequal allocator
 TEST_CASE("concurrent_queue") {
-    test_move_assignment_test_stateless();
-    test_move_assignment_test_stateful();
+    test_move_assignment_test_equal();
+    test_move_assignment_test_unequal();
 }
