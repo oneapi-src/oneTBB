@@ -381,18 +381,28 @@ bool operator!=(const stateful_allocator <T>& lhs, const stateful_allocator <U>&
 
 template <typename queue_type, typename allocator_type>
 void TestMoveQueueUnequal(){
+    allocator_type::set_limits(300);
     queue_type q1, q2;
     move_support_tests::Foo obj;
     size_t n1(15), n2(7);
 
+    allocator_type::init_counters();
     for(size_t i =0; i < n1; i++)
       q1.push(obj);
+    size_t q1_items_constructed = allocator_type::items_constructed;
+    size_t q1_items_allocated =  allocator_type::items_allocated;
 
+    allocator_type::init_counters();
     for(size_t i =0; i < n2; i++)
       q2.push(obj);
+    size_t q2_items_allocated =  allocator_type::items_allocated;
 
+    allocator_type::init_counters();
     q1 = std::move(q2);
 
+    CHECK(allocator_type::items_allocated <= q2_items_allocated);
+    REQUIRE_MESSAGE( (allocator_type::items_allocated - q2_items_allocated) <= 0, "More then excepted memory allocated ?" );
+    
     REQUIRE_MESSAGE(std::all_of(q1.unsafe_begin(), q1.unsafe_end(), is_state_predicate<move_support_tests::Foo::MoveInitialized>()),
 		    "Container did not move construct some elements");
     REQUIRE_MESSAGE(std::all_of(q2.unsafe_begin(), q2.unsafe_end(), is_state_predicate<move_support_tests::Foo::MovedFrom>()),
@@ -416,7 +426,7 @@ void test_check_move_equal_allocator(Container& src, Container& dst){
 template<typename Container>
 void test_check_move_unequal_allocator(Container& src, Container& dst, Container& cpy){
     REQUIRE_MESSAGE(src.get_allocator() != dst.get_allocator(), "Incorrect test setup: allocators should be unequal");
-    REQUIRE_MESSAGE(&*(src.unsafe_begin()) !=  &*(dst.unsafe_begin()), "Container did not changed element locations for unequal allocators");
+    REQUIRE_MESSAGE(&*(src.unsafe_begin()) !=  &*(dst.unsafe_begin()), "Container did not change element locations for unequal allocators");
     REQUIRE_MESSAGE(std::equal(dst.unsafe_begin(), dst.unsafe_end(), cpy.unsafe_begin()), "Elements are not equal");
 }
 
