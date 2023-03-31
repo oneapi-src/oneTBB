@@ -154,7 +154,7 @@ public:
 	        my_queue_representation = other.my_queue_representation;
 	    } else {
 	        my_queue_representation->assign(*other.my_queue_representation, other.my_allocator, move_construct_item);
-		other.clear();
+		//other.clear();
 	    }
 	}
 	return *this;
