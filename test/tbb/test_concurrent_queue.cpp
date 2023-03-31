@@ -305,6 +305,7 @@ void test_queue_helper(){
     CHECK(q2 == q4);
 }
 
+//basic test for copy, move and swap
 TEST_CASE("Test iterator queue"){
     test_queue_helper<tbb::concurrent_queue<std::vector<int>>, std::vector<int>>();
     test_queue_helper<tbb::concurrent_bounded_queue<std::vector<int>>, std::vector<int>>();
@@ -329,13 +330,14 @@ void TestMoveQueue(){
     size_t q2_items_allocated =  allocator_type::items_allocated;
 
     allocator_type::init_counters();
-    q1 = q2;
+    q1 = std::move(q2);
 
-    CHECK(q1_items_allocated == allocator_type::items_freed);
-    CHECK(q1_items_constructed == allocator_type::items_destroyed);
-    CHECK(q2_items_allocated == allocator_type::items_allocated);
+    CHECK(allocator_type::items_freed == q1_items_allocated);
+    CHECK(allocator_type::items_destroyed == q1_items_constructed);
+    CHECK(allocator_type::items_allocated <= q2_items_allocated);
 }
 
+//move assignment test for equal allocator
 TEST_CASE("Test move queue"){
     using allocator_type = StaticSharedCountingAllocator<std::allocator<move_support_tests::Foo>>;
     TestMoveQueue<tbb::concurrent_queue<move_support_tests::Foo, allocator_type>, allocator_type>();
@@ -377,6 +379,39 @@ bool operator==(const stateful_allocator <T>& lhs, const stateful_allocator <U>&
 template<class T, class U>
 bool operator!=(const stateful_allocator <T>& lhs, const stateful_allocator <U>& rhs) { return &lhs.state != &rhs.state; }
 
+template <typename queue_type, typename allocator_type>
+void TestMoveQueueUnequal(){
+    allocator_type::set_limits(300);
+    queue_type q1, q2;
+    move_support_tests::Foo obj;
+    size_t n1(15), n2(7);
+
+    allocator_type::init_counters();
+    for(size_t i =0; i < n1; i++)
+      q1.push(obj);
+    size_t q1_items_constructed = allocator_type::items_constructed;
+    size_t q1_items_allocated =  allocator_type::items_allocated;
+
+    allocator_type::init_counters();
+    for(size_t i =0; i < n2; i++)
+      q2.push(obj);
+    size_t q2_items_allocated =  allocator_type::items_allocated;
+
+    allocator_type::init_counters();
+    q1 = std::move(q2);
+
+    REQUIRE_MESSAGE(std::all_of(q1.unsafe_begin(), q1.unsafe_end(), is_state_predicate<move_support_tests::Foo::MoveInitialized>()),
+		    "Container did not move construct some elements");
+    REQUIRE_MESSAGE(std::all_of(q2.unsafe_begin(), q2.unsafe_end(), is_state_predicate<move_support_tests::Foo::MovedFrom>()),
+		    		    "Container did not move all the elements");
+}
+
+//move assignment test for unequal allocator
+TEST_CASE("Test move queue-unequal allocator"){
+    using allocator_type = StaticSharedCountingAllocator<stateful_allocator<move_support_tests::Foo>>;
+    TestMoveQueueUnequal<tbb::concurrent_queue<move_support_tests::Foo, allocator_type>, allocator_type>();
+    TestMoveQueueUnequal<tbb::concurrent_bounded_queue<move_support_tests::Foo, allocator_type>, allocator_type>();
+}
 
 template<typename Container>
 void test_check_move_equal_allocator(Container& src, Container& dst){
@@ -386,9 +421,10 @@ void test_check_move_equal_allocator(Container& src, Container& dst){
 }
 
 template<typename Container>
-void test_check_move_unequal_allocator(Container& src, Container& dst){
+void test_check_move_unequal_allocator(Container& src, Container& dst, Container& cpy){
     REQUIRE_MESSAGE(src.get_allocator() != dst.get_allocator(), "Incorrect test setup: allocators should be unequal");
     REQUIRE_MESSAGE(&*(src.unsafe_begin()) !=  &*(dst.unsafe_begin()), "Container did not changed element locations for unequal allocators");
+    REQUIRE_MESSAGE(std::equal(dst.unsafe_begin(), dst.unsafe_end(), cpy.unsafe_begin()), "Elements are not equal");
 }
 
 void test_move_assignment_test_stateless(){
@@ -415,7 +451,6 @@ void test_move_assignment_test_stateful(){
     std::vector<int, stateful_allocator<int>> v(8, src_alloc);
     tbb::concurrent_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>> src(src_alloc);
     
-    
     src_alloc.state = 0;
     v.push_back(42);
     v.push_back(82);
@@ -425,22 +460,31 @@ void test_move_assignment_test_stateful(){
     stateful_allocator<int> dst_alloc;
     dst_alloc.state = 1;
     tbb::concurrent_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>> dst(dst_alloc);
+    tbb::concurrent_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>> cpy(src_alloc);
+    cpy = src;
     dst = std::move(src);
 
     tbb::concurrent_bounded_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>> src_bnd(src_alloc);
     tbb::concurrent_bounded_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>> dst_bnd(dst_alloc);
+    tbb::concurrent_bounded_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>> cpy_bnd(src_alloc);
     src_bnd.push(v);
     src_bnd.push(v);
+    cpy_bnd = src_bnd;
     dst_bnd = std::move(src_bnd);
     
-    test_check_move_unequal_allocator<tbb::concurrent_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>>>(src, dst);
+    test_check_move_unequal_allocator<tbb::concurrent_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>>>(src, dst, cpy);
     REQUIRE_MESSAGE(src.unsafe_size() == 0, "Moved from container should not contain any elements");
+    REQUIRE_MESSAGE(dst.unsafe_size() == cpy.unsafe_size(), "Queues are not equal");
+    REQUIRE_MESSAGE(std::equal(dst.unsafe_begin(), dst.unsafe_end(), cpy.unsafe_begin()), "Elements are not equal");
     
-    test_check_move_unequal_allocator<tbb::concurrent_bounded_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>>>(src_bnd, dst_bnd);
+    test_check_move_unequal_allocator<tbb::concurrent_bounded_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>>>(src_bnd, dst_bnd, cpy_bnd);
     REQUIRE_MESSAGE(src_bnd.size() == 0, "Moved from container should not contain any elements");
+    REQUIRE_MESSAGE(dst_bnd.size() == cpy_bnd.size(), "Queues are not equal");
+    REQUIRE_MESSAGE(std::equal(dst_bnd.unsafe_begin(), dst_bnd.unsafe_end(), cpy_bnd.unsafe_begin()), "Elements are not equal");
 }
 
+//move assignment test for equal and unequal allocator
 TEST_CASE("concurrent_queue") {
-  test_move_assignment_test_stateless();
-  test_move_assignment_test_stateful();
+    test_move_assignment_test_stateless();
+    test_move_assignment_test_stateful();
 }

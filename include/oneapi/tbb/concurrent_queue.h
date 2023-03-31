@@ -91,8 +91,9 @@ public:
             push(*begin);
     }
   
-    concurrent_queue( std::initializer_list<value_type> init, const allocator_type& alloc = allocator_type() ):
-        concurrent_queue(init.begin(), init.end(), alloc){}
+    concurrent_queue( std::initializer_list<value_type> init, const allocator_type& alloc = allocator_type() ) :
+        concurrent_queue(init.begin(), init.end(), alloc)
+    {}
 
     concurrent_queue(const concurrent_queue& src, const allocator_type& a) :
         concurrent_queue(a)
@@ -135,7 +136,7 @@ public:
         r1::cache_aligned_deallocate(my_queue_representation);
     }
   
-    concurrent_queue& operator=( const concurrent_queue& other ){
+    concurrent_queue& operator=( const concurrent_queue& other ) {
         //TODO: implement support for std::allocator_traits::propogate_on_container_copy_assignment
         if (my_queue_representation != other.my_queue_representation) {
             clear();
@@ -145,14 +146,13 @@ public:
 	return *this;
     }
 
-    concurrent_queue& operator=( concurrent_queue&& other ){
+    concurrent_queue& operator=( concurrent_queue&& other ) {
         //TODO: implement support for std::allocator_traits::propogate_on_container_move_assignment
-        clear();
 	if (my_queue_representation != other.my_queue_representation) {
-	    if (my_allocator == other.my_allocator){
+	  clear();
+	    if (my_allocator == other.my_allocator) {
 	        my_queue_representation = other.my_queue_representation;
-	    }
-	    else{
+	    } else {
 	        my_queue_representation->assign(*other.my_queue_representation, other.my_allocator, move_construct_item);
 		other.clear();
 	    }
@@ -160,30 +160,29 @@ public:
 	return *this;
     }
 
-    concurrent_queue& operator=( std::initializer_list<value_type> init ){
+    concurrent_queue& operator=( std::initializer_list<value_type> init ) {
         assign(init);
         return *this;
     }
 
     template <typename InputIterator>
-    void assign( InputIterator first, InputIterator last ){
+    void assign( InputIterator first, InputIterator last ) {
         concurrent_queue src(first, last);
 	clear();
 	my_queue_representation->assign(*src.my_queue_representation, my_allocator, move_construct_item);
     }
 
-    void assign( std::initializer_list<value_type> init ){
+    void assign( std::initializer_list<value_type> init ) {
         assign(init.begin(), init.end());
     }
 
-    void swap( concurrent_queue& other ){
+    void swap ( concurrent_queue& other ) {
         //TODO: implement support for std::allocator_traits::propagate_on_container_swap
         __TBB_ASSERT(my_allocator == other.my_allocator, "unequal allocators");
         internal_swap(other);
     }
   
     // Enqueue an item at tail of queue.
-
     void push(const T& value) {
         internal_push(value);
     }
@@ -222,7 +221,6 @@ public:
 
     // Return allocator object
     allocator_type get_allocator() const { return my_allocator; }
-  
     //------------------------------------------------------------------------
     // The iterators are intended only for debugging.  They are slow and not thread safe.
     //------------------------------------------------------------------------
@@ -368,7 +366,8 @@ public:
     }
 
     concurrent_bounded_queue( std::initializer_list<value_type> init, const allocator_type& alloc = allocator_type() ):
-        concurrent_bounded_queue(init.begin(), init.end(), alloc){}
+        concurrent_bounded_queue(init.begin(), init.end(), alloc)
+    {}
 
     concurrent_bounded_queue( const concurrent_bounded_queue& src, const allocator_type& a ) :
         concurrent_bounded_queue(a)
@@ -412,7 +411,7 @@ public:
                                          sizeof(queue_representation_type));
     }
 
-      concurrent_bounded_queue& operator=( const concurrent_bounded_queue& other ){
+      concurrent_bounded_queue& operator=( const concurrent_bounded_queue& other ) {
           //TODO: implement support for std::allocator_traits::propogate_on_container_copy_assignment
           if (my_queue_representation != other.my_queue_representation) {
               clear();
@@ -422,38 +421,37 @@ public:
 	  return *this;
     }
 
-    concurrent_bounded_queue& operator=( concurrent_bounded_queue&& other ){
+    concurrent_bounded_queue& operator=( concurrent_bounded_queue&& other ) {
         //TODO: implement support for std::allocator_traits::propogate_on_container_move_assignment
-        clear();
 	if (my_queue_representation != other.my_queue_representation) {
-	    if (my_allocator == other.my_allocator){
+	    clear();
+	    if (my_allocator == other.my_allocator) {
 	        my_queue_representation = other.my_queue_representation;
-	    }
-	    else{
-	        my_queue_representation->assign(*other.my_queue_representation, my_allocator, move_construct_item);
+	    } else {
+	        my_queue_representation->assign(*other.my_queue_representation, other.my_allocator, move_construct_item);
 		other.clear();
 	    }
 	}
 	return *this;
     }
 
-    concurrent_bounded_queue& operator=( std::initializer_list<value_type> init ){
+    concurrent_bounded_queue& operator=( std::initializer_list<value_type> init ) {
         assign(init);
 	return *this;
     }
 
     template <typename InputIterator>
-    void assign( InputIterator first, InputIterator last ){
+    void assign( InputIterator first, InputIterator last ) {
         concurrent_bounded_queue src(first, last);
 	clear();
 	my_queue_representation->assign(*src.my_queue_representation, my_allocator, move_construct_item);
     }
 
-    void assign( std::initializer_list<value_type> init ){
+    void assign( std::initializer_list<value_type> init ) {
         assign(init.begin(), init.end());
     }
 
-    void swap( concurrent_bounded_queue& other ){
+    void swap ( concurrent_bounded_queue& other ) {
         //TODO: implement support for std::allocator_traits::propagate_on_container_swap
         __TBB_ASSERT(my_allocator == other.my_allocator, "unequal allocators");
         internal_swap(other);
