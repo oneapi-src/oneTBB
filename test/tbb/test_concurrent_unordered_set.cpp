@@ -229,3 +229,9 @@ TEST_CASE("container_range concept for concurrent_unordered_multiset ranges") {
     static_assert(test_concepts::container_range<typename tbb::concurrent_unordered_multiset<int>::const_range_type>);
 }
 #endif // __TBB_CPP20_CONCEPTS_PRESENT
+
+//! \brief \ref regression
+TEST_CASE("reserve(0) issue regression test") {
+    test_reserve_regression<oneapi::tbb::concurrent_unordered_set<int>>();
+    test_reserve_regression<oneapi::tbb::concurrent_unordered_multiset<int>>();
+}

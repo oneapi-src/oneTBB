@@ -372,4 +372,22 @@ void test_set_comparisons() {
     test_two_way_comparable_container<two_way_comparable_container>();
 }
 
+template <typename Container>
+void test_reserve_regression() {
+    Container container;
+
+    float lf = container.max_load_factor();
+    std::size_t buckets = container.unsafe_bucket_count();
+    std::size_t capacity = buckets * lf;
+
+    for (std::size_t elements = 0; elements < capacity; ++elements) {
+        container.reserve(elements);
+        REQUIRE_MESSAGE(container.unsafe_bucket_count() == buckets,
+                        "reserve() should not increase bucket count if the capacity is not reached");
+    }
+
+    container.reserve(capacity * 2);
+    REQUIRE_MESSAGE(container.unsafe_bucket_count() > buckets, "reserve() should increase bucket count if the capacity is reached");
+}
+
 #endif // __TBB_test_common_concurrent_unordered_common
