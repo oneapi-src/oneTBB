@@ -149,7 +149,7 @@ public:
     concurrent_queue& operator=( concurrent_queue&& other ) {
         //TODO: implement support for std::allocator_traits::propogate_on_container_move_assignment
 	if (my_queue_representation != other.my_queue_representation) {
-	  clear();
+	    clear();
 	    if (my_allocator == other.my_allocator) {
 	        internal_swap(other);
 	    } else {

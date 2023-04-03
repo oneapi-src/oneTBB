@@ -284,7 +284,7 @@ TEST_CASE("Test clear and dtor with TrackableItem") {
 }
 
 template<typename CQ, typename T>
-void test_queue_helper(){
+void test_queue_helper() {
     int size = 5;
     T vec_1(size, 0), vec_2(size, 0), vec_3(size, 0), vec_4(size, 0);
     srand(static_cast<unsigned>(time(0)));
@@ -306,13 +306,13 @@ void test_queue_helper(){
 }
 
 //basic test for copy, move and swap
-TEST_CASE("Test iterator queue"){
+TEST_CASE("Test iterator queue") {
     test_queue_helper<tbb::concurrent_queue<std::vector<int>>, std::vector<int>>();
     test_queue_helper<tbb::concurrent_bounded_queue<std::vector<int>>, std::vector<int>>();
 }
 
 template <typename queue_type, typename allocator_type>
-void TestMoveQueue(){
+void TestMoveQueue() {
     allocator_type::set_limits(300);
     queue_type q1, q2;
     move_support_tests::Foo obj;
@@ -320,13 +320,13 @@ void TestMoveQueue(){
 
     allocator_type::init_counters();
     for(size_t i =0; i < n1; i++)
-      q1.push(obj);
+        q1.push(obj);
     size_t q1_items_constructed = allocator_type::items_constructed;
     size_t q1_items_allocated =  allocator_type::items_allocated;
 
     allocator_type::init_counters();
     for(size_t i =0; i < n2; i++)
-      q2.push(obj);
+        q2.push(obj);
     size_t q2_items_allocated =  allocator_type::items_allocated;
 
     allocator_type::init_counters();
@@ -338,36 +338,32 @@ void TestMoveQueue(){
 }
 
 //move assignment test for equal allocator
-TEST_CASE("Test move queue"){
+TEST_CASE("Test move queue") {
     using allocator_type = StaticSharedCountingAllocator<std::allocator<move_support_tests::Foo>>;
     TestMoveQueue<tbb::concurrent_queue<move_support_tests::Foo, allocator_type>, allocator_type>();
     TestMoveQueue<tbb::concurrent_bounded_queue<move_support_tests::Foo, allocator_type>, allocator_type>();
 }
 
 template<class T>
-struct stateful_allocator
-{
+struct stateful_allocator {
     typedef T value_type;
     stateful_allocator () = default;
     int state;
     template<class U>
     constexpr stateful_allocator (const stateful_allocator <U>&) noexcept {}
 
-    [[nodiscard]] T* allocate(std::size_t n)
-    {
+    [[nodiscard]] T* allocate(std::size_t n) {
         if (n > std::numeric_limits<std::size_t>::max() / sizeof(T))
             throw std::bad_array_new_length();
 
-        if (auto p = static_cast<T*>(std::malloc(n * sizeof(T))))
-        {
-            return p;
+        if (auto p = static_cast<T*>(std::malloc(n * sizeof(T)))) {
+	    return p;
         }
 
         throw std::bad_alloc();
     }
-
-    void deallocate(T* p, std::size_t n) noexcept
-    {
+  
+    void deallocate(T* p, std::size_t n) noexcept {
         static_cast<void>(n);
         std::free(p);
     }
@@ -380,7 +376,7 @@ template<class T, class U>
 bool operator!=(const stateful_allocator <T>& lhs, const stateful_allocator <U>& rhs) { return &lhs.state != &rhs.state; }
 
 template <typename queue_type, typename allocator_type>
-void TestMoveQueueUnequal(){
+void TestMoveQueueUnequal() {
     allocator_type::set_limits(300);
     queue_type q1, q2;
     move_support_tests::Foo obj;
@@ -388,11 +384,11 @@ void TestMoveQueueUnequal(){
 
     allocator_type::init_counters();
     for(size_t i =0; i < n1; i++)
-      q1.push(obj);
+        q1.push(obj);
 
     allocator_type::init_counters();
     for(size_t i =0; i < n2; i++)
-      q2.push(obj);
+        q2.push(obj);
     size_t q2_items_allocated =  allocator_type::items_allocated;
 
     allocator_type::init_counters();
@@ -406,25 +402,24 @@ void TestMoveQueueUnequal(){
 }
 
 //move assignment test for unequal allocator
-TEST_CASE("Test move queue-unequal allocator"){
+TEST_CASE("Test move queue-unequal allocator") {
     using allocator_type = StaticSharedCountingAllocator<stateful_allocator<move_support_tests::Foo>>;
     TestMoveQueueUnequal<tbb::concurrent_queue<move_support_tests::Foo, allocator_type>, allocator_type>();
     TestMoveQueueUnequal<tbb::concurrent_bounded_queue<move_support_tests::Foo, allocator_type>, allocator_type>();
 }
 
 template<typename Container>
-void test_check_move_allocator(Container& src, Container& dst, Container& cpy){
-  if(src.get_allocator() == dst.get_allocator()){
-    REQUIRE_MESSAGE(&*(src.unsafe_begin()) ==  NULL, "Source didn't clear");
-    REQUIRE_MESSAGE(std::equal(dst.unsafe_begin(), dst.unsafe_end(), cpy.unsafe_begin()), "Elements are not equal");
-  }
-  else {
-    REQUIRE_MESSAGE(&*(src.unsafe_begin()) !=  &*(dst.unsafe_begin()), "Container did not change element locations for unequal allocators");
-    REQUIRE_MESSAGE(std::equal(dst.unsafe_begin(), dst.unsafe_end(), cpy.unsafe_begin()), "Elements are not equal");
-  }
+void test_check_move_allocator(Container& src, Container& dst, Container& cpy) {
+    if(src.get_allocator() == dst.get_allocator()){
+        REQUIRE_MESSAGE(&*(src.unsafe_begin()) ==  NULL, "Source didn't clear");
+	REQUIRE_MESSAGE(std::equal(dst.unsafe_begin(), dst.unsafe_end(), cpy.unsafe_begin()), "Elements are not equal");
+    } else {
+        REQUIRE_MESSAGE(&*(src.unsafe_begin()) !=  &*(dst.unsafe_begin()), "Container did not change element locations for unequal allocators");
+	REQUIRE_MESSAGE(std::equal(dst.unsafe_begin(), dst.unsafe_end(), cpy.unsafe_begin()), "Elements are not equal");
+    }
 }
 
-void test_move_assignment_test_equal(){
+void test_move_assignment_test_equal() {
     int n = 5;
     std::vector<int> vect1(n, 10), vect2(n,20), vect3(n, 30);
 
@@ -449,7 +444,7 @@ void test_move_assignment_test_equal(){
     REQUIRE_MESSAGE(cpy_bnd.size() == dst_bnd.size(), "Queues are not equal");
 }
 
-void test_move_assignment_test_unequal(){
+void test_move_assignment_test_unequal() {
     stateful_allocator<int> src_alloc;
     std::vector<int, stateful_allocator<int>> v(8, src_alloc);
     tbb::concurrent_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>> src(src_alloc);
