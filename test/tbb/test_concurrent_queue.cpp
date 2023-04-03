@@ -413,10 +413,10 @@ TEST_CASE("Test move queue-unequal allocator"){
 }
 
 template<typename Container>
-void test_check_move_equal_allocator(Container& src, Container& dst){
+void test_check_move_equal_allocator(Container& src, Container& dst, Container& cpy){
     REQUIRE_MESSAGE(src.get_allocator() == dst.get_allocator(), "Incorrect test setup: allocators should be equal");
-    REQUIRE_MESSAGE(&*(src.unsafe_begin()) ==  &*(dst.unsafe_begin()), "Container move actually changed element locations, while should not");
-    REQUIRE_MESSAGE(std::equal(dst.unsafe_begin(), dst.unsafe_end(), src.unsafe_begin()), "Elements are not equal");
+    REQUIRE_MESSAGE(&*(src.unsafe_begin()) ==  NULL, "Source didn't clear");
+    REQUIRE_MESSAGE(std::equal(dst.unsafe_begin(), dst.unsafe_end(), cpy.unsafe_begin()), "Elements are not equal");
 }
 
 template<typename Container>
@@ -432,17 +432,21 @@ void test_move_assignment_test_equal(){
 
     tbb::concurrent_queue<std::vector<int>> src({vect1, vect2, vect3});
     tbb::concurrent_queue<std::vector<int>> dst(src.get_allocator());
+    tbb::concurrent_queue<std::vector<int>> cpy(src.get_allocator());
+    cpy = src;
     dst = std::move(src);
 
     tbb::concurrent_bounded_queue<std::vector<int>> src_bnd({vect1, vect2, vect3});
     tbb::concurrent_bounded_queue<std::vector<int>> dst_bnd(src_bnd.get_allocator());
+    tbb::concurrent_bounded_queue<std::vector<int>> cpy_bnd(src_bnd.get_allocator());
+    cpy_bnd = src_bnd;
     dst_bnd = std::move(src_bnd);
 
-    test_check_move_equal_allocator<tbb::concurrent_queue<std::vector<int>>>(src, dst);  
-    REQUIRE_MESSAGE(src.unsafe_size() == dst.unsafe_size(), "Queues are not equal");
+    test_check_move_equal_allocator<tbb::concurrent_queue<std::vector<int>>>(src, dst, cpy);
+    REQUIRE_MESSAGE(cpy.unsafe_size() == dst.unsafe_size(), "Queues are not equal");
 
-    test_check_move_equal_allocator<tbb::concurrent_bounded_queue<std::vector<int>>>(src_bnd, dst_bnd);
-    REQUIRE_MESSAGE(src_bnd.size() == dst_bnd.size(), "Queues are not equal");
+    test_check_move_equal_allocator<tbb::concurrent_bounded_queue<std::vector<int>>>(src_bnd, dst_bnd, cpy_bnd);
+    REQUIRE_MESSAGE(cpy_bnd.size() == dst_bnd.size(), "Queues are not equal");
 }
 
 void test_move_assignment_test_unequal(){
@@ -487,3 +491,4 @@ TEST_CASE("concurrent_queue") {
     test_move_assignment_test_equal();
     test_move_assignment_test_unequal();
 }
+
