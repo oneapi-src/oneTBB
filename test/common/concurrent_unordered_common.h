@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -378,7 +378,7 @@ void test_reserve_regression() {
 
     float lf = container.max_load_factor();
     std::size_t buckets = container.unsafe_bucket_count();
-    std::size_t capacity = buckets * lf;
+    std::size_t capacity = std::size_t(buckets * lf);
 
     for (std::size_t elements = 0; elements < capacity; ++elements) {
         container.reserve(elements);
