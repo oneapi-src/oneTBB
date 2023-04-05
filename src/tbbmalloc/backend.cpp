@@ -815,7 +815,9 @@ FreeBlock *Backend::genericGetBlock(int num, size_t size, bool needAlignedBlock)
         if (block)
             break;
 
-        if (!(scanCoalescQ(/*forceCoalescQDrop=*/true) | extMemPool->softCachesCleanup())) {
+        bool retScanCoalescQ = scanCoalescQ(/*forceCoalescQDrop=*/true);
+        bool retSoftCachesCleanup = extMemPool->softCachesCleanup();
+        if (!(retScanCoalescQ || retSoftCachesCleanup)) {
             // bins are not updated,
             // only remaining possibility is to ask for more memory
             block = askMemFromOS(totalReqSize, startModifiedCnt, &lockedBinsThreshold,
