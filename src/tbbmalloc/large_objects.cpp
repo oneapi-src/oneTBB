@@ -804,8 +804,10 @@ bool LargeObjectCache::doCleanup(uintptr_t currTime, bool doThreshDecr)
 {
     if (!doThreshDecr)
         extMemPool->allLocalCaches.markUnused();
-    return largeCache.regularCleanup(extMemPool, currTime, doThreshDecr)
-        | hugeCache.regularCleanup(extMemPool, currTime, doThreshDecr);
+
+    bool large_cache_cleaned = largeCache.regularCleanup(extMemPool, currTime, doThreshDecr);
+    bool huge_cache_cleaned = hugeCache.regularCleanup(extMemPool, currTime, doThreshDecr);
+    return large_cache_cleaned || huge_cache_cleaned;
 }
 
 bool LargeObjectCache::decreasingCleanup()
@@ -820,7 +822,9 @@ bool LargeObjectCache::regularCleanup()
 
 bool LargeObjectCache::cleanAll()
 {
-    return largeCache.cleanAll(extMemPool) | hugeCache.cleanAll(extMemPool);
+    bool large_cache_cleaned = largeCache.cleanAll(extMemPool);
+    bool huge_cache_cleaned = hugeCache.cleanAll(extMemPool);
+    return large_cache_cleaned || huge_cache_cleaned;
 }
 
 void LargeObjectCache::reset()

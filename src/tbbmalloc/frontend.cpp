@@ -601,7 +601,9 @@ public:
         // should be called only for the current thread
         bool released = cleanBins ? cleanupBlockBins() : false;
         // both cleanups to be called, and the order is not important
-        return released | lloc.externalCleanup(&memPool->extMemPool) | freeSlabBlocks.externalCleanup();
+        bool lloc_cleaned = lloc.externalCleanup(&memPool->extMemPool);
+        bool free_slab_blocks_cleaned = freeSlabBlocks.externalCleanup();
+        return released || lloc_cleaned || free_slab_blocks_cleaned;
     }
     bool cleanupBlockBins();
     void markUsed() { unused.store(false, std::memory_order_relaxed); } // called by owner when TLS touched
