@@ -49,7 +49,7 @@ namespace rml {
 #if _WIN32 || _WIN64
 #define RML_SERVER_NAME "irml" DEBUG_SUFFIX ".dll"
 #elif __APPLE__
-#define RML_SERVER_NAME "libirml" DEBUG_SUFFIX ".dylib"
+#define RML_SERVER_NAME "libirml" DEBUG_SUFFIX ".1.dylib"
 #elif __FreeBSD__ || __NetBSD__ || __OpenBSD__ || __sun || _AIX
 #define RML_SERVER_NAME "libirml" DEBUG_SUFFIX ".so"
 #elif __unix__
