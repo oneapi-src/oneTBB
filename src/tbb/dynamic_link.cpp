@@ -15,6 +15,7 @@
 */
 
 #include "dynamic_link.h"
+#include "environment.h"
 
 #include "oneapi/tbb/detail/_template_helpers.h"
 #include "oneapi/tbb/detail/_utils.h"
@@ -414,7 +415,9 @@ namespace r1 {
         if (local_binding) {
             flags = flags | RTLD_LOCAL;
 #if (__linux__ && __GLIBC__) && !__TBB_USE_SANITIZERS
-            flags = flags | RTLD_DEEPBIND;
+            if( !GetBoolEnvironmentVariable("DisableDeepBind") ) {
+                flags = flags | RTLD_DEEPBIND;
+            }
 #endif
         } else {
             flags = flags | RTLD_GLOBAL;
