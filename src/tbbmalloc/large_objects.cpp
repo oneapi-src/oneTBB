@@ -225,8 +225,8 @@ std::atomic<intptr_t> memAllocKB, memHitKB;
 #if MALLOC_DEBUG
 inline bool lessThanWithOverflow(intptr_t a, intptr_t b)
 {
-    return (a < b && (b - a < static_cast<intptr_t>(UINTPTR_MAX/2))) ||
-           (a > b && (a - b > static_cast<intptr_t>(UINTPTR_MAX/2)));
+    return (a < b && (b - a < UINTPTR_MAX/2)) ||
+           (a > b && (a - b > UINTPTR_MAX/2));
 }
 #endif
 
