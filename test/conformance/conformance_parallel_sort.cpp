@@ -58,7 +58,7 @@ bool operator<(const MinLessThanComparableAndSwappable&, const MinLessThanCompar
 struct MinCompare : MinObj {
     using MinObj::MinObj;
     MinCompare(const MinCompare&) : MinObj(construct) {}
-    bool operator()(const MinSwappable&, const MinSwappable&) const { return true; }
+    bool operator()(const MinSwappable& v1, const MinSwappable& v2) const { return &v1 < &v2; }
 };
 
 } // namespace test_req
