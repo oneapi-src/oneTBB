@@ -73,7 +73,7 @@ struct MinBlockedRangeValue : MinObj {
     MinBlockedRangeValue(const MinBlockedRangeValue&) : MinObj(construct) {}
     ~MinBlockedRangeValue() {}
 
-    void operator=(const MinBlockedRangeValue&) {}
+    MinBlockedRangeValue& operator=(const MinBlockedRangeValue&) { return *this; }
 
     friend bool operator<(const MinBlockedRangeValue&, const MinBlockedRangeValue&) { return false; }
     friend std::size_t operator-(const MinBlockedRangeValue&, const MinBlockedRangeValue&) { return 0; }
