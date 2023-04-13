@@ -133,8 +133,8 @@ TEST_CASE("parallel_sort type requirements") {
 
     test_req::MinCompare compare(test_req::construct);
 
-    oneapi::tbb::parallel_sort(random_it, random_it, compare);
-    oneapi::tbb::parallel_sort(comp_random_it, comp_random_it);
+    oneapi::tbb::parallel_sort(random_it, std::next(random_it), compare);
+    oneapi::tbb::parallel_sort(comp_random_it, std::next(comp_random_it));
 
     oneapi::tbb::parallel_sort(sequence, compare);
     oneapi::tbb::parallel_sort(comp_sequence);

@@ -84,7 +84,7 @@ template <typename Iterator>
 struct MinSequence : MinObj {
     using MinObj::MinObj;
     Iterator begin() const { return my_it; }
-    Iterator end() const { return my_it; }
+    Iterator end() const { return std::next(my_it); }
 
     MinSequence(ConstructT, Iterator it) : MinObj(construct), my_it(it) {}
 private:
