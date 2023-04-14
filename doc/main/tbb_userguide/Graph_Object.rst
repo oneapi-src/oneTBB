@@ -29,6 +29,6 @@ The graph object does not own the nodes associated with it. You need to make sur
 
 .. tip:: Call ``wait_for_all`` on a graph object before destroying it to make sure all activities are complete. 
 
- Even when using smart pointers, you need to be aware of the order of destruction for nodes and the graph to make sure that nodes are not deleted before the graph.
+ Even when using smart pointers, be aware of the order of destruction for nodes and the graph to make sure that nodes are not deleted before the graph.
 
 
