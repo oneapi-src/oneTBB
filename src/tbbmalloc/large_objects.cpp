@@ -124,7 +124,7 @@ class CacheBinFunctor {
     public:
         OperationPreprocessor(typename LargeObjectCacheImpl<Props>::CacheBin *bin) :
             bin(bin), lclTime(0), opGet(nullptr), opClean(nullptr), cleanTime(0),
-            lastGetOpTime(0), updateUsedSize(0), head(nullptr), tail(nullptr), putListNum(0), isCleanAll(false)  {}
+            lastGetOpTime(0), lastGet(0), updateUsedSize(0), head(nullptr), tail(nullptr), putListNum(0), isCleanAll(false)  {}
         void operator()(CacheBinOperation* opList);
         uintptr_t getTimeRange() const { return -lclTime; }
 
