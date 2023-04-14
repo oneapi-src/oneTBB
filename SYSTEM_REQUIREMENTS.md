@@ -44,7 +44,7 @@ This document provides details about hardware, operating system, and software pr
   - Microsoft* Windows* Server 2022
 - Systems with Linux* operating systems:
   - Oracle Linux* 8
-  - Amazon* Linux* 2, 2022
+  - Amazon* Linux* 2
   - Debian* 9, 10, 11
   - Fedora* 36, 37
   - Red Hat* Enterprise Linux* 8, 9
