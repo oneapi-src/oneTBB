@@ -124,7 +124,7 @@ class CacheBinFunctor {
     public:
         OperationPreprocessor(typename LargeObjectCacheImpl<Props>::CacheBin *bin) :
             bin(bin), lclTime(0), opGet(nullptr), opClean(nullptr), cleanTime(0),
-            lastGetOpTime(0), updateUsedSize(0), head(nullptr), isCleanAll(false)  {}
+            lastGetOpTime(0), lastGet(0), updateUsedSize(0), head(nullptr), tail(nullptr), putListNum(0), isCleanAll(false)  {}
         void operator()(CacheBinOperation* opList);
         uintptr_t getTimeRange() const { return -lclTime; }
 
@@ -543,6 +543,7 @@ template<typename Props> LargeMemoryBlock *LargeObjectCacheImpl<Props>::
     MALLOC_ASSERT( !last.load(std::memory_order_relaxed) ||
         (last.load(std::memory_order_relaxed)->age != 0 && last.load(std::memory_order_relaxed)->age != -1U), ASSERT_TEXT );
     MALLOC_ASSERT( (tail==head && num==1) || (tail!=head && num>1), ASSERT_TEXT );
+    MALLOC_ASSERT( tail, ASSERT_TEXT );
     LargeMemoryBlock *toRelease = nullptr;
     if (size < hugeSizeThreshold && !lastCleanedAge) {
         // 1st object of such size was released.
@@ -559,7 +560,6 @@ template<typename Props> LargeMemoryBlock *LargeObjectCacheImpl<Props>::
     }
     if (num) {
         // add [head;tail] list to cache
-        MALLOC_ASSERT( tail, ASSERT_TEXT );
         tail->next = first;
         if (first)
             first->prev = tail;
@@ -1055,4 +1055,3 @@ void *ExtMemoryPool::remap(void *ptr, size_t oldSize, size_t newSize, size_t ali
 #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
     #pragma warning(pop)
 #endif
-
