@@ -132,7 +132,7 @@ if BUILD_TYPE == 'dita':
 else:
     html_theme_options = {
         'repository_url': 'https://github.com/oneapi-src/oneTBB',
-        'path_to_docs': 'doc/main',
+        'path_to_docs': 'doc',
         'use_issues_button': True,
         'use_edit_page_button': True,
         'repository_branch': 'master',
@@ -157,6 +157,7 @@ else:
     
 html_logo = '_static/oneAPI-rgb-rev-100.png'
 html_favicon = '_static/favicons.png'
+html_title = 'oneTBB Documentation'
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
