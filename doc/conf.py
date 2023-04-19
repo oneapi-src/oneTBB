@@ -163,11 +163,6 @@ html_theme_options = {
 html_logo = '_static/oneAPI-rgb-rev-100.png'
 html_favicon = '_static/favicons.png'
 
-html_theme_options = { 
-    "logo": {
-        "text": "oneTBB Documentation",
-    }
-}
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
