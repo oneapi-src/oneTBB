@@ -77,7 +77,7 @@ function(tbb_add_test)
     target_link_libraries(${_tbb_test_TARGET_NAME} PRIVATE ${_tbb_test_DEPENDENCIES} Threads::Threads ${TBB_COMMON_LINK_LIBS})
 
     if (COMMAND _tbb_run_memcheck)
-        _tbb_run_memcheck(${_tbb_test_NAME})
+        _tbb_run_memcheck(${_tbb_test_NAME} ${_tbb_test_SUBDIR})
     endif()
 endfunction()
 
