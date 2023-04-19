@@ -154,10 +154,20 @@ if BUILD_TYPE == 'oneapi'  or BUILD_TYPE == 'dita':
 else:
     html_js_files = ['custom.js']
 
+html_theme_options = { 
+    "logo": {
+        "text": "oneTBB Documentation",
+    }
+}
     
 html_logo = '_static/oneAPI-rgb-rev-100.png'
 html_favicon = '_static/favicons.png'
-html_title = 'oneTBB Documentation'
+
+html_theme_options = { 
+    "logo": {
+        "text": "oneTBB Documentation",
+    }
+}
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
