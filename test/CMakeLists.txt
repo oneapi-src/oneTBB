@@ -16,7 +16,6 @@ include(ProcessorCount)
 
 # General function for test target generation
 function(tbb_add_test)
-    set(options NOMEMCHECK)
     set(oneValueArgs SUBDIR NAME SUFFIX)
     set(multiValueArgs DEPENDENCIES)
     cmake_parse_arguments(_tbb_test "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -77,7 +76,7 @@ function(tbb_add_test)
 
     target_link_libraries(${_tbb_test_TARGET_NAME} PRIVATE ${_tbb_test_DEPENDENCIES} Threads::Threads ${TBB_COMMON_LINK_LIBS})
 
-    if (COMMAND _tbb_run_memcheck AND (NOT _tbb_test_NOMEMCHECK))
+    if (COMMAND _tbb_run_memcheck)
         _tbb_run_memcheck(${_tbb_test_NAME})
     endif()
 endfunction()
@@ -627,7 +626,7 @@ if (TARGET TBB::tbbmalloc)
             tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_atexit DEPENDENCIES TBB::tbbmalloc_proxy TBB::tbbmalloc _test_malloc_atexit)
             tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_overload DEPENDENCIES TBB::tbbmalloc_proxy)
             tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_overload_disable DEPENDENCIES TBB::tbbmalloc_proxy TBB::tbbmalloc) # safer_msize call need to be available
-            tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_new_handler DEPENDENCIES TBB::tbbmalloc_proxy NOMEMCHECK)
+            tbb_add_test(SUBDIR tbbmalloc NAME test_malloc_new_handler DEPENDENCIES TBB::tbbmalloc_proxy)
         endif()
     endif()
 endif()
