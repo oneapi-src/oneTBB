@@ -90,7 +90,7 @@ public:
         for (; begin != end; ++begin)
             push(*begin);
     }
-  
+
     concurrent_queue( std::initializer_list<value_type> init, const allocator_type& alloc = allocator_type() ) :
         concurrent_queue(init.begin(), init.end(), alloc)
     {}
@@ -135,29 +135,29 @@ public:
         queue_allocator_traits::destroy(my_allocator, my_queue_representation);
         r1::cache_aligned_deallocate(my_queue_representation);
     }
-  
+
     concurrent_queue& operator=( const concurrent_queue& other ) {
         //TODO: implement support for std::allocator_traits::propogate_on_container_copy_assignment
         if (my_queue_representation != other.my_queue_representation) {
             clear();
-	    my_allocator = other.my_allocator;
-	    my_queue_representation->assign(*other.my_queue_representation, my_allocator, copy_construct_item);
-	}
-	return *this;
+            my_allocator = other.my_allocator;
+            my_queue_representation->assign(*other.my_queue_representation, my_allocator, copy_construct_item);
+        }
+        return *this;
     }
 
     concurrent_queue& operator=( concurrent_queue&& other ) {
         //TODO: implement support for std::allocator_traits::propogate_on_container_move_assignment
-	if (my_queue_representation != other.my_queue_representation) {
-	    clear();
-	    if (my_allocator == other.my_allocator) {
-	        internal_swap(other);
-	    } else {
-	        my_queue_representation->assign(*other.my_queue_representation, other.my_allocator, move_construct_item);
-		other.clear();
-	    }
-	}
-	return *this;
+        if (my_queue_representation != other.my_queue_representation) {
+            clear();
+            if (my_allocator == other.my_allocator) {
+                internal_swap(other);
+            } else {
+                my_queue_representation->assign(*other.my_queue_representation, other.my_allocator, move_construct_item);
+                other.clear();
+            }
+        }
+        return *this;
     }
 
     concurrent_queue& operator=( std::initializer_list<value_type> init ) {
@@ -168,8 +168,8 @@ public:
     template <typename InputIterator>
     void assign( InputIterator first, InputIterator last ) {
         concurrent_queue src(first, last);
-	clear();
-	my_queue_representation->assign(*src.my_queue_representation, my_allocator, move_construct_item);
+        clear();
+        my_queue_representation->assign(*src.my_queue_representation, my_allocator, move_construct_item);
     }
 
     void assign( std::initializer_list<value_type> init ) {
@@ -181,7 +181,7 @@ public:
         __TBB_ASSERT(my_allocator == other.my_allocator, "unequal allocators");
         internal_swap(other);
     }
-  
+
     // Enqueue an item at tail of queue.
     void push(const T& value) {
         internal_push(value);
@@ -221,6 +221,7 @@ public:
 
     // Return allocator object
     allocator_type get_allocator() const { return my_allocator; }
+
     //------------------------------------------------------------------------
     // The iterators are intended only for debugging.  They are slow and not thread safe.
     //------------------------------------------------------------------------
@@ -265,14 +266,16 @@ private:
     queue_allocator_type my_allocator;
     queue_representation_type* my_queue_representation;
 
-    friend bool operator==( const concurrent_queue<T, Allocator>& lhs,
-                            const concurrent_queue<T, Allocator>& rhs ){
+    friend void swap( concurrent_queue& lhs, concurrent_queue& rhs ) {
+        lhs.swap(rhs);
+    }
+
+    friend bool operator==( const concurrent_queue& lhs, const concurrent_queue& rhs ) {
         return lhs.unsafe_size() == rhs.unsafe_size() && std::equal(lhs.unsafe_begin(), lhs.unsafe_end(), rhs.unsafe_begin());
     }
 
 #if !__TBB_CPP20_COMPARISONS_PRESENT
-    friend bool operator!=( const concurrent_queue<T, Allocator>& lhs,
-                            const concurrent_queue<T, Allocator>& rhs ){
+    friend bool operator!=( const concurrent_queue& lhs,  const concurrent_queue& rhs ) {
         return !(lhs == rhs);
     }
 #endif // __TBB_CPP20_COMPARISONS_PRESENT
@@ -411,40 +414,40 @@ public:
                                          sizeof(queue_representation_type));
     }
 
-      concurrent_bounded_queue& operator=( const concurrent_bounded_queue& other ) {
-          //TODO: implement support for std::allocator_traits::propogate_on_container_copy_assignment
-          if (my_queue_representation != other.my_queue_representation) {
-              clear();
-	      my_allocator = other.my_allocator;
-	      my_queue_representation->assign(*other.my_queue_representation, my_allocator, copy_construct_item);
-	  }
-	  return *this;
+    concurrent_bounded_queue& operator=( const concurrent_bounded_queue& other ) {
+        //TODO: implement support for std::allocator_traits::propogate_on_container_copy_assignment
+        if (my_queue_representation != other.my_queue_representation) {
+            clear();
+            my_allocator = other.my_allocator;
+            my_queue_representation->assign(*other.my_queue_representation, my_allocator, copy_construct_item);
+        }
+        return *this;
     }
 
     concurrent_bounded_queue& operator=( concurrent_bounded_queue&& other ) {
         //TODO: implement support for std::allocator_traits::propogate_on_container_move_assignment
-	if (my_queue_representation != other.my_queue_representation) {
-	    clear();
-	    if (my_allocator == other.my_allocator) {
-	        internal_swap(other);
-	    } else {
-	        my_queue_representation->assign(*other.my_queue_representation, other.my_allocator, move_construct_item);
-		other.clear();
-	    }
-	}
-	return *this;
+        if (my_queue_representation != other.my_queue_representation) {
+            clear();
+            if (my_allocator == other.my_allocator) {
+                internal_swap(other);
+            } else {
+                my_queue_representation->assign(*other.my_queue_representation, other.my_allocator, move_construct_item);
+                other.clear();
+            }
+        }
+        return *this;
     }
 
     concurrent_bounded_queue& operator=( std::initializer_list<value_type> init ) {
         assign(init);
-	return *this;
+        return *this;
     }
 
     template <typename InputIterator>
     void assign( InputIterator first, InputIterator last ) {
         concurrent_bounded_queue src(first, last);
-	clear();
-	my_queue_representation->assign(*src.my_queue_representation, my_allocator, move_construct_item);
+        clear();
+        my_queue_representation->assign(*src.my_queue_representation, my_allocator, move_construct_item);
     }
 
     void assign( std::initializer_list<value_type> init ) {
@@ -656,41 +659,17 @@ private:
 
     r1::concurrent_monitor* my_monitors;
 
-    friend bool operator==( const concurrent_bounded_queue<T, Allocator>& lhs,
-                            const concurrent_bounded_queue<T, Allocator>& rhs ){
-        bool ret{false};
-        const_iterator lhs_ptr = lhs.unsafe_begin();
-        const_iterator rhs_ptr = rhs.unsafe_begin();
-        if(lhs.size() == rhs.size()){
-            ret = true;
-            while(lhs_ptr != lhs.unsafe_end()){
-                if(*lhs_ptr != *rhs_ptr)
-                  ret = false;
-                lhs_ptr++;
-                rhs_ptr++;
-            }
-        }
-        return ret;
+    friend void swap( concurrent_bounded_queue& lhs, concurrent_bounded_queue& rhs ) {
+        lhs.swap(rhs);
+    }
+
+    friend bool operator==( const concurrent_bounded_queue& lhs, const concurrent_bounded_queue& rhs ) {
+        return lhs.size() == rhs.size() && std::equal(lhs.unsafe_begin(), lhs.unsafe_end(), rhs.unsafe_begin());
     }
 
 #if !__TBB_CPP20_COMPARISONS_PRESENT
-    friend bool operator!=( const concurrent_bounded_queue<T, Allocator>& lhs,
-                            const concurrent_bounded_queue<T, Allocator>& rhs ){
-        bool ret{false};
-        const_iterator lhs_ptr = lhs.unsafe_begin();
-        const_iterator rhs_ptr = rhs.unsafe_begin();
-        if(lhs.size() != rhs.size()){
-            ret = true;
-	}
-	else{
-            while(lhs_ptr != lhs.unsafe_end()){
-                if(*lhs_ptr != *rhs_ptr)
-                  ret = true;
-                lhs_ptr++;
-                rhs_ptr++;
-            }
-        }
-        return ret;
+    friend bool operator!=( const concurrent_bounded_queue& lhs, const concurrent_bounded_queue& rhs ) {
+        return !(lhs == rhs);
     }
 #endif // __TBB_CPP20_COMPARISONS_PRESENT
 }; // class concurrent_bounded_queue

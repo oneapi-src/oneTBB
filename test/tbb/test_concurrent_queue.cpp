@@ -292,17 +292,22 @@ void test_queue_helper() {
     generate(vec_2.begin(), vec_2.end(), rand);
     generate(vec_3.begin(), vec_3.end(), rand);
     generate(vec_4.begin(), vec_4.end(), rand);
-    
+
     CQ q1, q2;
     CQ q4({vec_1, vec_2, vec_3});
     CQ q3 = {vec_4, vec_2, vec_3};
 
     q1 = q3;
     q2 = std::move(q3);
+    CHECK(q3.empty());
 
     CHECK(q1 != q4);
     q1.swap(q4);
     CHECK(q2 == q4);
+
+    swap(q2, q3);
+    CHECK(q2.empty());
+    CHECK(q3 == q4);
 }
 
 //basic test for copy, move and swap
@@ -357,12 +362,12 @@ struct stateful_allocator {
             throw std::bad_array_new_length();
 
         if (auto p = static_cast<T*>(std::malloc(n * sizeof(T)))) {
-	    return p;
+            return p;
         }
 
         throw std::bad_alloc();
     }
-  
+
     void deallocate(T* p, std::size_t n) noexcept {
         static_cast<void>(n);
         std::free(p);
@@ -396,9 +401,9 @@ void TestMoveQueueUnequal() {
 
     REQUIRE_MESSAGE( (allocator_type::items_allocated - q2_items_allocated) <= 0, "More then excepted memory allocated ?" );
     REQUIRE_MESSAGE(std::all_of(q1.unsafe_begin(), q1.unsafe_end(), is_state_predicate<move_support_tests::Foo::MoveInitialized>()),
-		    "Container did not move construct some elements");
+                    "Container did not move construct some elements");
     REQUIRE_MESSAGE(std::all_of(q2.unsafe_begin(), q2.unsafe_end(), is_state_predicate<move_support_tests::Foo::MovedFrom>()),
-		    		    "Container did not move all the elements");
+                    "Container did not move all the elements");
 }
 
 //move assignment test for unequal allocator
@@ -412,10 +417,10 @@ template<typename Container>
 void test_check_move_allocator(Container& src, Container& dst, Container& cpy) {
     if(src.get_allocator() == dst.get_allocator()){
         REQUIRE_MESSAGE(&*(src.unsafe_begin()) ==  NULL, "Source didn't clear");
-	REQUIRE_MESSAGE(std::equal(dst.unsafe_begin(), dst.unsafe_end(), cpy.unsafe_begin()), "Elements are not equal");
+        REQUIRE_MESSAGE(std::equal(dst.unsafe_begin(), dst.unsafe_end(), cpy.unsafe_begin()), "Elements are not equal");
     } else {
         REQUIRE_MESSAGE(&*(src.unsafe_begin()) !=  &*(dst.unsafe_begin()), "Container did not change element locations for unequal allocators");
-	REQUIRE_MESSAGE(std::equal(dst.unsafe_begin(), dst.unsafe_end(), cpy.unsafe_begin()), "Elements are not equal");
+        REQUIRE_MESSAGE(std::equal(dst.unsafe_begin(), dst.unsafe_end(), cpy.unsafe_begin()), "Elements are not equal");
     }
 }
 
@@ -448,7 +453,7 @@ void test_move_assignment_test_unequal() {
     stateful_allocator<int> src_alloc;
     std::vector<int, stateful_allocator<int>> v(8, src_alloc);
     tbb::concurrent_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>> src(src_alloc);
-    
+
     src_alloc.state = 0;
     v.push_back(42);
     v.push_back(82);
@@ -469,13 +474,13 @@ void test_move_assignment_test_unequal() {
     src_bnd.push(v);
     cpy_bnd = src_bnd;
     dst_bnd = std::move(src_bnd);
-    
+
     test_check_move_allocator<tbb::concurrent_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>>>(src, dst, cpy);
     REQUIRE_MESSAGE(src.get_allocator() != dst.get_allocator(), "Incorrect test setup: allocators should be unequal");
     REQUIRE_MESSAGE(src.unsafe_size() == 0, "Moved from container should not contain any elements");
     REQUIRE_MESSAGE(dst.unsafe_size() == cpy.unsafe_size(), "Queues are not equal");
     REQUIRE_MESSAGE(std::equal(dst.unsafe_begin(), dst.unsafe_end(), cpy.unsafe_begin()), "Elements are not equal");
-    
+
     test_check_move_allocator<tbb::concurrent_bounded_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>>>(src_bnd, dst_bnd, cpy_bnd);
     REQUIRE_MESSAGE(src.get_allocator() != dst.get_allocator(), "Incorrect test setup: allocators should be unequal");
     REQUIRE_MESSAGE(src_bnd.size() == 0, "Moved from container should not contain any elements");
@@ -488,4 +493,3 @@ TEST_CASE("concurrent_queue") {
     test_move_assignment_test_equal();
     test_move_assignment_test_unequal();
 }
-
