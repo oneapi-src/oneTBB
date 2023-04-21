@@ -155,6 +155,7 @@ public:
             } else {
                 my_queue_representation->assign(*other.my_queue_representation, other.my_allocator, move_construct_item);
                 other.clear();
+                my_allocator = std::move(other.my_allocator);
             }
         }
         return *this;
@@ -433,6 +434,7 @@ public:
             } else {
                 my_queue_representation->assign(*other.my_queue_representation, other.my_allocator, move_construct_item);
                 other.clear();
+                my_allocator = std::move(other.my_allocator);
             }
         }
         return *this;

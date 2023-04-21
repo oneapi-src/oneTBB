@@ -310,7 +310,8 @@ void test_queue_helper() {
     CHECK(q3 == q4);
 }
 
-//basic test for copy, move and swap
+//! basic test for copy, move and swap
+//! \brief \ref error_guessing
 TEST_CASE("Test iterator queue") {
     test_queue_helper<tbb::concurrent_queue<std::vector<int>>, std::vector<int>>();
     test_queue_helper<tbb::concurrent_bounded_queue<std::vector<int>>, std::vector<int>>();
@@ -342,7 +343,8 @@ void TestMoveQueue() {
     CHECK(q2_items_allocated >= allocator_type::items_allocated);
 }
 
-//move assignment test for equal allocator
+//! move assignment test for equal allocator
+//! \brief \ref error_guessing
 TEST_CASE("Test move queue") {
     using allocator_type = StaticSharedCountingAllocator<std::allocator<move_support_tests::Foo>>;
     TestMoveQueue<tbb::concurrent_queue<move_support_tests::Foo, allocator_type>, allocator_type>();
@@ -353,7 +355,7 @@ template<class T>
 struct stateful_allocator {
     typedef T value_type;
     stateful_allocator () = default;
-    int state;
+    int state = 0;
     template<class U>
     constexpr stateful_allocator (const stateful_allocator <U>&) noexcept {}
 
@@ -406,7 +408,8 @@ void TestMoveQueueUnequal() {
                     "Container did not move all the elements");
 }
 
-//move assignment test for unequal allocator
+//! move assignment test for unequal allocator
+//! \brief \ref error_guessing
 TEST_CASE("Test move queue-unequal allocator") {
     using allocator_type = StaticSharedCountingAllocator<stateful_allocator<move_support_tests::Foo>>;
     TestMoveQueueUnequal<tbb::concurrent_queue<move_support_tests::Foo, allocator_type>, allocator_type>();
@@ -416,7 +419,7 @@ TEST_CASE("Test move queue-unequal allocator") {
 template<typename Container>
 void test_check_move_allocator(Container& src, Container& dst, Container& cpy) {
     if(src.get_allocator() == dst.get_allocator()){
-        REQUIRE_MESSAGE(&*(src.unsafe_begin()) ==  NULL, "Source didn't clear");
+        REQUIRE_MESSAGE(src.empty(), "Source didn't clear");
         REQUIRE_MESSAGE(std::equal(dst.unsafe_begin(), dst.unsafe_end(), cpy.unsafe_begin()), "Elements are not equal");
     } else {
         REQUIRE_MESSAGE(&*(src.unsafe_begin()) !=  &*(dst.unsafe_begin()), "Container did not change element locations for unequal allocators");
@@ -488,7 +491,8 @@ void test_move_assignment_test_unequal() {
     REQUIRE_MESSAGE(std::equal(dst_bnd.unsafe_begin(), dst_bnd.unsafe_end(), cpy_bnd.unsafe_begin()), "Elements are not equal");
 }
 
-//move assignment test for equal and unequal allocator
+//! move assignment test for equal and unequal allocator
+//! \brief \ref error_guessing
 TEST_CASE("concurrent_queue") {
     test_move_assignment_test_equal();
     test_move_assignment_test_unequal();
