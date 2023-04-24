@@ -359,15 +359,8 @@ struct stateful_allocator {
     template<class U>
     constexpr stateful_allocator (const stateful_allocator <U>&) noexcept {}
 
-    [[nodiscard]] T* allocate(std::size_t n) {
-        if (n > std::numeric_limits<std::size_t>::max() / sizeof(T))
-            throw std::bad_array_new_length();
-
-        if (auto p = static_cast<T*>(std::malloc(n * sizeof(T)))) {
-            return p;
-        }
-
-        throw std::bad_alloc();
+    T* allocate(std::size_t n) {
+        return static_cast<T*>(std::malloc(n * sizeof(T)));
     }
 
     void deallocate(T* p, std::size_t n) noexcept {
@@ -454,7 +447,7 @@ void test_move_assignment_test_equal() {
 
 void test_move_assignment_test_unequal() {
     stateful_allocator<int> src_alloc;
-    std::vector<int, stateful_allocator<int>> v(8, src_alloc);
+    std::vector<int, stateful_allocator<int>> v(8, 0, src_alloc);
     tbb::concurrent_queue<std::vector<int, stateful_allocator<int>>, stateful_allocator<int>> src(src_alloc);
 
     src_alloc.state = 0;
