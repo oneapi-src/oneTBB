@@ -18,39 +18,8 @@
 
 #include "test_join_node.h"
 
-#include "common/concepts_common.h"
-
 //! \file test_join_node_key_matching_n_args.cpp
 //! \brief Test for [flow_graph.join_node] specification
-
-#if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
-void test_deduction_guides() {
-    using namespace tbb::flow;
-    using tuple_type = std::tuple<int, int, double>;
-
-    graph g;
-    auto body_int = [](const int&)->int { return 1; };
-    auto body_double = [](const double&)->int { return 1; };
-
-    join_node j1(g, body_int, body_int, body_double);
-    static_assert(std::is_same_v<decltype(j1), join_node<tuple_type, key_matching<int>>>);
-
-#if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
-    broadcast_node<int> b1(g), b2(g);
-    broadcast_node<double> b3(g);
-    broadcast_node<tuple_type> b4(g);
-
-    join_node j2(follows(b1, b2, b3), body_int, body_int, body_double);
-    static_assert(std::is_same_v<decltype(j2), join_node<tuple_type, key_matching<int>>>);
-
-    join_node j3(precedes(b4), body_int, body_int, body_double);
-    static_assert(std::is_same_v<decltype(j3), join_node<tuple_type, key_matching<int>>>);
-#endif
-
-    join_node j4(j1);
-    static_assert(std::is_same_v<decltype(j4), join_node<tuple_type, key_matching<int>>>);
-}
-#endif
 
 template <typename T1, typename T2>
 using make_tuple = decltype(std::tuple_cat(T1(), std::tuple<T2>()));
