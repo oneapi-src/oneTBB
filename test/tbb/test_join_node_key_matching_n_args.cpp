@@ -20,7 +20,7 @@
 
 #include "common/concepts_common.h"
 
-//! \file test_join_node_key_matching.cpp
+//! \file test_join_node_key_matching_n_args.cpp
 //! \brief Test for [flow_graph.join_node] specification
 
 #if __TBB_CPP17_DEDUCTION_GUIDES_PRESENT
