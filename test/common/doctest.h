@@ -405,7 +405,8 @@ DOCTEST_MSVC_SUPPRESS_WARNING(4623) // default constructor was implicitly define
 #endif // DOCTEST_CONSTEXPR
 
 #ifndef DOCTEST_NO_SANITIZE_INTEGER
-#if DOCTEST_CLANG >= DOCTEST_COMPILER(3, 7, 0)
+// TODO: upstream the change to doctest : Work-around for the error on macOS with icpc: error #1292: unknown attribute "no_sanitize"
+#if DOCTEST_CLANG >= DOCTEST_COMPILER(3, 7, 0) && !DOCTEST_ICC
 #define DOCTEST_NO_SANITIZE_INTEGER __attribute__((no_sanitize("integer")))
 #else
 #define DOCTEST_NO_SANITIZE_INTEGER
