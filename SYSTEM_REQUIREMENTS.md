@@ -29,7 +29,6 @@ This document provides details about hardware, operating system, and software pr
 - Intel(R) Celeron(R) processor family
 - Intel(R) Core* processor family
 - Intel(R) Xeon(R) processor family
-- Intel(R) Xeon Phi* processor family
 - Intel(R) Atom* processor family
 - Non-Intel(R) processors compatible with the processors listed above
 
