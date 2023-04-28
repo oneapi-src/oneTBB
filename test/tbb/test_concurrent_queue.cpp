@@ -293,9 +293,9 @@ void test_queue_helper() {
     generate(vec_3.begin(), vec_3.end(), rand);
     generate(vec_4.begin(), vec_4.end(), rand);
 
-    CQ q1, q2;
+    CQ q1, q2, q3;
     CQ q4({vec_1, vec_2, vec_3});
-    CQ q3 = {vec_4, vec_2, vec_3};
+    q3 = {vec_4, vec_2, vec_3};
 
     q1 = q3;
     q2 = std::move(q3);
