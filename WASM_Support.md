@@ -19,10 +19,13 @@
 ``WASM`` stands for WebAssembly, a low-level binary format for executing code in web browsers. 
 It is designed to be a portable target for compilers and to be efficient to parse and execute. 
 
-WebAssembly aims to provide a fast, efficient, and safe way to run code in web browsers without needing plugins or other software. WebAssembly code can be written in a variety of programming languages, including C, C++, Rust, and others, and then compiled into WebAssembly format for use in web pages. This allows you to write high-performance applications that run directly in the browser.
+WebAssembly aims to provide a fast, efficient, and safe way to run code in web browsers without needing plugins or other software. Code written in a variety of programming languages, including C, C++, Rust and others, can be compiled into WebAssembly format for use in web pages. This allows you to write high-performance applications that run directly in the browser.
 
 We currently have an [under development branch that provides you with WASM support](https://github.com/oneapi-src/oneTBB/tree/tbb_wasm). 
 
-By offering WASM support, we help developers take advantage of the benefits that WebAssembly provides, such as improved performance, increased security, and better compatibility with a wide range of programming languages.
+By using WASM, you can:
+* Create highly performant and scalable applications that can meet the demands of modern web-based systems. 
+* Take advantage of oneTBB features to optimize the performance of your web-based applications.
+
 
 
