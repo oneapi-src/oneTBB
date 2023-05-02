@@ -48,4 +48,5 @@ The key properties of a preview feature are:
     helpers_for_expressing_graphs
     concurrent_lru_cache_cls
     task_group_extensions
+    isolated_task_group
     custom_mutex_chmap
