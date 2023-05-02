@@ -29,7 +29,6 @@ This document provides details about hardware, operating system, and software pr
 - Intel(R) Celeron(R) processor family
 - Intel(R) Core* processor family
 - Intel(R) Xeon(R) processor family
-- Intel(R) Xeon Phi* processor family
 - Intel(R) Atom* processor family
 - Non-Intel(R) processors compatible with the processors listed above
 
@@ -47,6 +46,7 @@ This document provides details about hardware, operating system, and software pr
   - Amazon* Linux* 2
   - Debian* 9, 10, 11
   - Fedora* 36, 37
+  - Rocky* Linux* 9
   - Red Hat* Enterprise Linux* 8, 9
   - SuSE* Linux* Enterprise Server 15
   - Ubuntu* 20.04, 22.04
