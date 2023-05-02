@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -178,7 +178,7 @@ inline ArgIntegerType modulo_power_of_two(ArgIntegerType arg, DivisorIntegerType
 //! A function to check if passed in pointer is aligned on a specific border
 template<typename T>
 constexpr bool is_aligned(T* pointer, std::uintptr_t alignment) {
-    return 0 == ((std::uintptr_t)pointer & (alignment - 1));
+    return 0 == (reinterpret_cast<std::uintptr_t>(pointer) & (alignment - 1));
 }
 
 #if TBB_USE_ASSERT

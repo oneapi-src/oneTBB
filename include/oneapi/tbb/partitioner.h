@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ class affinity_partitioner_base;
 
 inline std::size_t get_initial_auto_partitioner_divisor() {
     const std::size_t factor = 4;
-    return factor * max_concurrency();
+    return factor * static_cast<std::size_t>(max_concurrency());
 }
 
 //! Defines entry point for affinity partitioner into oneTBB run-time library.
@@ -90,7 +90,7 @@ class affinity_partitioner_base: no_copy {
     /** Retains values if resulting size is the same. */
     void resize(unsigned factor) {
         // Check factor to avoid asking for number of workers while there might be no arena.
-        unsigned max_threads_in_arena = max_concurrency();
+        unsigned max_threads_in_arena = static_cast<unsigned>(max_concurrency());
         std::size_t new_size = factor ? factor * max_threads_in_arena : 0;
         if (new_size != my_size) {
             if (my_array) {
@@ -160,6 +160,7 @@ struct tree_node : public node {
 template<typename TreeNodeType>
 void fold_tree(node* n, const execution_data& ed) {
     for (;;) {
+        __TBB_ASSERT(n, nullptr);
         __TBB_ASSERT(n->m_ref_count.load(std::memory_order_relaxed) > 0, "The refcount must be positive.");
         call_itt_task_notify(releasing, n);
         if (--n->m_ref_count > 0) {
@@ -311,27 +312,6 @@ struct adaptive_mode : partition_type_base<Partition> {
     }
 };
 
-//! Helper type for checking availability of proportional_split constructor
-template <typename T> using supports_proportional_splitting = typename std::is_constructible<T, T&, proportional_split&>;
-
-//! A helper class to create a proportional_split object for a given type of Range.
-/** If the Range has proportional_split constructor,
-    then created object splits a provided value in an implemenation-defined proportion;
-    otherwise it represents equal-size split. */
-// TODO: check if this helper can be a nested class of proportional_mode.
-template <typename Range, typename = void>
-struct proportion_helper {
-    static proportional_split get_split(std::size_t) { return proportional_split(1,1); }
-};
-
-template <typename Range>
-struct proportion_helper<Range, typename std::enable_if<supports_proportional_splitting<Range>::value>::type> {
-    static proportional_split get_split(std::size_t n) {
-        std::size_t right = n / 2;
-        std::size_t left  = n - right;
-        return proportional_split(left, right);
-    }
-};
 
 //! Provides proportional splitting strategy for partition objects
 template <typename Partition>
@@ -357,8 +337,16 @@ struct proportional_mode : adaptive_mode<Partition> {
     }
     template <typename Range>
     proportional_split get_split() {
-        // Create a proportion for the number of threads expected to handle "this" subrange
-        return proportion_helper<Range>::get_split( self().my_divisor / my_partition::factor );
+        // Create the proportion from partitioner internal resources (threads) that would be used:
+        // - into proportional_mode constructor to split the partitioner
+        // - if Range supports the proportional_split constructor it would use proposed proportion,
+        //   otherwise, the tbb::proportional_split object will be implicitly (for Range implementor)
+        //   casted to tbb::split
+
+        std::size_t n = self().my_divisor / my_partition::factor;
+        std::size_t right = n / 2;
+        std::size_t left  = n - right;
+        return proportional_split(left, right);
     }
 };
 

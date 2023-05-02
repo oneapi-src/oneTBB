@@ -29,8 +29,8 @@ using my_input_tuple = std::tuple<int, float, input_msg>;
 
 std::vector<my_input_tuple> get_values( conformance::test_push_receiver<my_input_tuple>& rr ) {
     std::vector<my_input_tuple> messages;
-    int val = 0;
-    for(my_input_tuple tmp(0, 0.f, input_msg(0)); rr.try_get(tmp); ++val) {
+    my_input_tuple tmp(0, 0.f, input_msg(0));
+    while(rr.try_get(tmp)) {
         messages.push_back(tmp);
     }
     return messages;

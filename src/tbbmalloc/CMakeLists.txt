@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021 Intel Corporation
+# Copyright (c) 2020-2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,10 @@ add_library(tbbmalloc
     large_objects.cpp
     tbbmalloc.cpp
     ../tbb/itt_notify.cpp)
+    
+if (WIN32)
+    target_sources(tbbmalloc PRIVATE tbbmalloc.rc)
+endif()
 
 add_library(TBB::tbbmalloc ALIAS tbbmalloc)
 
@@ -30,7 +34,7 @@ target_compile_definitions(tbbmalloc
                            $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:__TBB_DYNAMIC_LOAD_ENABLED=0>
                            $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:__TBB_SOURCE_DIRECTLY_INCLUDED=1>)
 
-if (NOT ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(armv7-a|aarch64|mips|arm64)" OR
+if (NOT ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(armv7-a|aarch64|mips|arm64|riscv)" OR
          "${CMAKE_OSX_ARCHITECTURES}" MATCHES "arm64" OR
          WINDOWS_STORE OR
          TBB_WINDOWS_DRIVER OR
@@ -46,15 +50,15 @@ target_include_directories(tbbmalloc
 # TODO: fix warnings
 if (MSVC)
     # signed unsigned mismatch, declaration hides class member
-    set(TBB_WARNING_SUPPRESS ${TBB_WARNING_SUPPRESS} /wd4267 /wd4244 /wd4245 /wd4018 /wd4458)
+    set(TBB_WARNING_SUPPRESS ${TBB_WARNING_SUPPRESS} /wd4267 /wd4244 /wd4245 /wd4458)
 endif()
 
-# TODO: add ${TBB_WARNING_LEVEL} and fix problems
 target_compile_options(tbbmalloc
     PRIVATE
     ${TBB_CXX_STD_FLAG} # TODO: consider making it PUBLIC.
     ${TBB_MMD_FLAG}
     ${TBB_DSE_FLAG}
+    ${TBB_WARNING_LEVEL}
     ${TBB_WARNING_SUPPRESS}
     ${TBB_LIB_COMPILE_FLAGS}
     ${TBBMALLOC_LIB_COMPILE_FLAGS}
@@ -75,8 +79,8 @@ tbb_handle_ipo(tbbmalloc)
 
 if (TBB_DEF_FILE_PREFIX) # If there's no prefix, assume we're using export directives
     set_target_properties(tbbmalloc PROPERTIES
-        LINK_FLAGS ${TBB_LINK_DEF_FILE_FLAG}${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbmalloc.def
-        LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbmalloc.def
+        LINK_FLAGS "${TBB_LINK_DEF_FILE_FLAG}\"${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbmalloc.def\""
+        LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbbmalloc.def"
     )
 endif()
 

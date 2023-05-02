@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -677,13 +677,17 @@ public:
         size_type current_bucket_count = my_bucket_count.load(std::memory_order_acquire);
         size_type necessary_bucket_count = current_bucket_count;
 
-        do {
-            // TODO: Log2 seems useful here
-            while (necessary_bucket_count * max_load_factor() < elements_count) {
+        // max_load_factor() is currently unsafe, so we can assume that my_max_load_factor
+        // would not be changed during the calculation
+        // TODO: Log2 seems useful here
+        while (necessary_bucket_count * max_load_factor() < elements_count) {
                 necessary_bucket_count <<= 1;
-            }
-        } while (current_bucket_count >= necessary_bucket_count ||
-                 !my_bucket_count.compare_exchange_strong(current_bucket_count, necessary_bucket_count));
+        }
+
+        while (!my_bucket_count.compare_exchange_strong(current_bucket_count, necessary_bucket_count)) {
+            if (current_bucket_count >= necessary_bucket_count)
+                break;
+        }
     }
 
     // Observers
@@ -917,7 +921,7 @@ private:
             node_allocator_traits::deallocate(dummy_node_allocator, node, 1);
         } else {
             // GCC 11.1 issues a warning here that incorrect destructor might be called for dummy_nodes
-            #if (__TBB_GCC_VERSION >= 110100 && __TBB_GCC_VERSION < 120000 ) && !__clang__ && !__INTEL_COMPILER
+            #if (__TBB_GCC_VERSION >= 110100 && __TBB_GCC_VERSION < 130000 ) && !__clang__ && !__INTEL_COMPILER
             volatile
             #endif
             value_node_ptr val_node = static_cast<value_node_ptr>(node);

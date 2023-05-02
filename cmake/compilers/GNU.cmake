@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2022 Intel Corporation
+# Copyright (c) 2020-2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ endif()
 if (NOT ${CMAKE_CXX_COMPILER_ID} STREQUAL Intel)
     # gcc 6.0 and later have -flifetime-dse option that controls elimination of stores done outside the object lifetime
     set(TBB_DSE_FLAG $<$<NOT:$<VERSION_LESS:${CMAKE_CXX_COMPILER_VERSION},6.0>>:-flifetime-dse=1>)
+    set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} $<$<NOT:$<VERSION_LESS:${CMAKE_CXX_COMPILER_VERSION},8.0>>:-fstack-clash-protection>)
 endif()
 
 # Workaround for heavy tests and too many symbols in debug (rellocation truncated to fit: R_MIPS_CALL16)
@@ -67,6 +68,14 @@ set(TBB_IPO_LINK_FLAGS $<$<NOT:$<CONFIG:Debug>>:-flto>)
 if (MINGW AND CMAKE_SYSTEM_PROCESSOR MATCHES "i.86")
     list (APPEND TBB_COMMON_COMPILE_FLAGS -msse2)
 endif ()
+
+# Gnu flags to prevent compiler from optimizing out security checks
+set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -fno-strict-overflow -fno-delete-null-pointer-checks -fwrapv)
+set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} -Wformat -Wformat-security -Werror=format-security
+    -fstack-protector-strong )
+set(TBB_LIB_LINK_FLAGS ${TBB_LIB_LINK_FLAGS} -Wl,-z,relro,-z,now,-z,noexecstack)
+set(TBB_COMMON_COMPILE_FLAGS ${TBB_COMMON_COMPILE_FLAGS} $<$<NOT:$<CONFIG:Debug>>:-D_FORTIFY_SOURCE=2> )
+
 
 # TBB malloc settings
 set(TBBMALLOC_LIB_COMPILE_FLAGS -fno-rtti -fno-exceptions)
