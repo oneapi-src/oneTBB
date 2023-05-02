@@ -441,11 +441,11 @@ public:
 };
 
 
-template <typename Body, typename Input = typename body_types<decltype(&Body::operator())>::input_type>
+template <typename Body, typename Input = typename filter_body_types<decltype(&Body::operator())>::input_type>
 using filter_input = typename std::conditional<std::is_same<Input, flow_control>::value, void, Input>::type;
 
 template <typename Body>
-using filter_output = typename body_types<decltype(&Body::operator())>::output_type;
+using filter_output = typename filter_body_types<decltype(&Body::operator())>::output_type;
 
 } // namespace d1
 } // namespace detail
