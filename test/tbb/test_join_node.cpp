@@ -20,7 +20,6 @@
 #endif
 
 #include "common/config.h"
-#include "common/test_invoke.h"
 
 #include "test_join_node.h"
 #include "common/test_join_node_multiple_predecessors.h"

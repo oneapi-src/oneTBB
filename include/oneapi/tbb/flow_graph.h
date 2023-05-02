@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -1886,7 +1886,7 @@ private:
     size_t my_threshold;
     size_t my_count; // number of successful puts
     size_t my_tries; // number of active put attempts
-    size_t my_future_decrement; // number of active decrement 
+    size_t my_future_decrement; // number of active decrement
     reservable_predecessor_cache< T, spin_mutex > my_predecessors;
     spin_mutex my_mutex;
     broadcast_cache< T > my_successors;

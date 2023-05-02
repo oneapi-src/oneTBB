@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2022 Intel Corporation
+    Copyright (c) 2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public:
     SmartRange(const SmartRange&) = default;
     SmartRange(SmartRange& other, oneapi::tbb::split)
         : base_range(other, oneapi::tbb::split{}), change_vector(other.change_vector) {}
-    
+
     void increase() const {
         CHECK_MESSAGE(change_vector, "Attempt to operate with no associated vector");
         for (std::size_t index = get_real_index(this->begin()); index != get_real_index(this->end()); ++index) {

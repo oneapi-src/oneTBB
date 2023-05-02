@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -127,7 +127,7 @@ void test_pfor_each_invoke_basic() {
     using iterator_type = IteratorType<ForEachInvokeItem>;
 
     // Test without feeder
-    oneapi::tbb::parallel_for_each(iterator_type(items_to_proceed.data()), 
+    oneapi::tbb::parallel_for_each(iterator_type(items_to_proceed.data()),
                                    iterator_type(items_to_proceed.data() + items_count),
                                    &ForEachInvokeItem::do_action);
 
@@ -136,9 +136,9 @@ void test_pfor_each_invoke_basic() {
         CHECK(change_vector[i + items_count] == 0);
         change_vector[i] = 0; // reset
     }
-    
+
     // Test with feeder
-    oneapi::tbb::parallel_for_each(iterator_type(items_to_proceed.data()), 
+    oneapi::tbb::parallel_for_each(iterator_type(items_to_proceed.data()),
                                    iterator_type(items_to_proceed.data() + items_count),
                                    &ForEachInvokeItem::do_action_and_feed);
 

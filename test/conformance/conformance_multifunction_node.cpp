@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2022 Intel Corporation
+    Copyright (c) 2020-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ TEST_CASE("multifunction_node priority"){
     conformance::test_priority<oneapi::tbb::flow::multifunction_node<input_msg, std::tuple<int>>, input_msg>(oneapi::tbb::flow::unlimited);
 }
 
-//! Test function_node has a user-settable concurrency limit. It can be set to one of predefined values. 
+//! Test function_node has a user-settable concurrency limit. It can be set to one of predefined values.
 //! The user can also provide a value of type std::size_t to limit concurrency.
 //! Test that not more than limited threads works in parallel.
 //! \brief \ref interface

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2022 Intel Corporation
+    Copyright (c) 2020-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -131,7 +131,7 @@ TEST_CASE("queue_node methods"){
     CHECK_MESSAGE((node.try_get(tmp) == false), "Getting from sequencer should not succeed");
 }
 
-//! The example demonstrates ordering capabilities of the sequencer_node. 
+//! The example demonstrates ordering capabilities of the sequencer_node.
 //! While being processed in parallel, the data is passed to the successor node in the exact same order it was read.
 //! \brief \ref requirement
 TEST_CASE("sequencer_node ordering"){
@@ -176,7 +176,7 @@ TEST_CASE("sequencer_node and std::invoke") {
     sequencer_node<test_invoke::SmartID<std::size_t>> seq2(g, &test_invoke::SmartID<std::size_t>::id); // Member object
 
     std::size_t expected_item = 0;
-    
+
     function_node<test_invoke::SmartID<std::size_t>, std::size_t> check(g, serial, [&](const test_invoke::SmartID<std::size_t>& x) {
         CHECK(x.id == expected_item);
         ++expected_item;
@@ -205,7 +205,7 @@ TEST_CASE("sequencer_node and std::invoke") {
     for (std::size_t i = 0; i < objects_count; ++i) {
         starter.try_put(objects_count - i - 1);
     }
-    
+
     g.wait_for_all();
 
     CHECK(expected_item == objects_count);

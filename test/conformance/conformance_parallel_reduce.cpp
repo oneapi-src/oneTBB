@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022  Intel Corporation
+    Copyright (c) 2005-2023  Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ void TestDeterministicReductionFor() {
         deterministic_reduce_invoker(range, measurement_body, Partitioner());
         REQUIRE_MESSAGE( benchmark_body.my_value == measurement_body.my_value,
         "parallel_deterministic_reduce behaves differently from run to run" );
-        
+
         Type lambda_measurement_result = deterministic_reduce_invoker<Type>( range,
             [](const oneapi::tbb::blocked_range<int>& br, Type value) -> Type {
                 utils::ConcurrencyTracker ct;

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2022 Intel Corporation
+    Copyright (c) 2020-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ TEST_CASE("async_node broadcast"){
     conformance::test_forwarding<oneapi::tbb::flow::async_node<input_msg, int>, input_msg, int>(1, oneapi::tbb::flow::unlimited, fun);
 }
 
-//! Test async_node has a user-settable concurrency limit. It can be set to one of predefined values. 
+//! Test async_node has a user-settable concurrency limit. It can be set to one of predefined values.
 //! The user can also provide a value of type std::size_t to limit concurrency.
 //! Test that not more than limited threads works in parallel.
 //! \brief \ref requirement
