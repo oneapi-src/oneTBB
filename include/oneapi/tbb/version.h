@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@
 // Update version
 #define TBB_VERSION_MINOR 2
 // "Patch" version for custom releases
-#define TBB_VERSION_PATCH 1
+#define TBB_VERSION_PATCH 2
 // Suffix string
 #define __TBB_VERSION_SUFFIX ""
 // Full official version string
