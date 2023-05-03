@@ -13,9 +13,7 @@ task_group extensions
 Description
 ***********
 
-|full_name| implementation extends the `tbb::task_group specification <https://spec.oneapi.com/versions/latest/elements/oneTBB/source/task_scheduler/task_group/task_group_cls.html>`_ with the following members:
-
-  - requirements for a user-provided function object
+|full_name| implementation extends the `tbb::task_group specification <https://spec.oneapi.com/versions/latest/elements/oneTBB/source/task_scheduler/task_group/task_group_cls.html>`_ with the requirements for a user-provided function object.
    
 
 API
