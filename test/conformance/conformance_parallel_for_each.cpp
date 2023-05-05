@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 */
 
 #include "common/parallel_for_each_common.h"
+#include "common/type_requirements_test.h"
 
 //! \file conformance_parallel_for_each.cpp
 //! \brief Test for [algorithms.parallel_for_each] specification
@@ -115,4 +116,73 @@ TEST_CASE("Move Semantics Test | Item: MovePreferable") {
 TEST_CASE("Move Semantics | Item: MoveOnly") {
     //  parallel_for_each uses is_copy_constructible to support non-copyable types
     DoTestMoveSemantics<TestMoveSem::MoveOnly>();
+}
+
+namespace test_req {
+
+template <typename ItemType>
+struct MinForEachBody : MinObj {
+    using MinObj::MinObj;
+    void operator()(const ItemType&) const {}
+};
+
+template <typename ItemType>
+struct MinForEachFeederBody : MinObj {
+    using MinObj::MinObj;
+    void operator()(const ItemType&, oneapi::tbb::feeder<ItemType>& feeder) const {
+        ItemType item(construct);
+        feeder.add(item);
+    }
+};
+
+} // namespace test_req
+
+template <typename Iterator, typename Body>
+void run_parallel_for_each_overloads() {
+    using value_type = typename std::iterator_traits<Iterator>::value_type;
+
+    value_type value(test_req::construct);
+
+    Iterator it(&value);
+
+    test_req::MinSequence<Iterator> sequence(test_req::construct, it);
+    const auto& const_sequence = sequence;
+
+    Body body(test_req::construct);
+    oneapi::tbb::task_group_context ctx;
+
+    oneapi::tbb::parallel_for_each(it, it, body);
+    oneapi::tbb::parallel_for_each(it, it, body, ctx);
+
+    oneapi::tbb::parallel_for_each(sequence, body);
+    oneapi::tbb::parallel_for_each(sequence, body, ctx);
+
+    oneapi::tbb::parallel_for_each(const_sequence, body);
+    oneapi::tbb::parallel_for_each(const_sequence, body, ctx);
+}
+
+//! Test parallel_for_each type requirements
+//! \brief \ref requirement
+TEST_CASE("parallel_for_each type requirements") {
+    // value_type should be copy constructible for input iterators
+    using MinInputIterator = utils::InputIterator<test_req::CopyConstructible>;
+    using MinForwardIterator = utils::ForwardIterator<test_req::MinObj>;
+    using MinRandomIterator = utils::RandomIterator<test_req::MinObj>;
+
+    // value_type should be copy/move constructible to be used in feeder.add and feeder task
+    using FeederForwardIterator = utils::ForwardIterator<test_req::CopyConstructible>;
+    using FeederRandomIterator = utils::RandomIterator<test_req::CopyConstructible>;
+
+    using MinBody = test_req::MinForEachBody<test_req::MinObj>;
+    using CopyBody = test_req::MinForEachBody<test_req::CopyConstructible>;
+    using FeederBody = test_req::MinForEachFeederBody<test_req::CopyConstructible>;
+
+    run_parallel_for_each_overloads<MinInputIterator, CopyBody>();
+    run_parallel_for_each_overloads<MinInputIterator, FeederBody>();
+
+    run_parallel_for_each_overloads<MinForwardIterator, MinBody>();
+    run_parallel_for_each_overloads<FeederForwardIterator, FeederBody>();
+
+    run_parallel_for_each_overloads<MinRandomIterator, MinBody>();
+    run_parallel_for_each_overloads<FeederRandomIterator, FeederBody>();
 }

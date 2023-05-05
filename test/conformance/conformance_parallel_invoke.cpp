@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2021 Intel Corporation
+    Copyright (c) 2020-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 #include "common/utils_concurrency_limit.h"
 #include "common/parallel_invoke_common.h"
 #include "common/memory_usage.h"
+#include "common/type_requirements_test.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -204,4 +205,17 @@ TEST_CASE("Test cancellation") {
             }
         }
     }
+}
+
+//! Testing type requirements
+//! \brief \ref requirement
+TEST_CASE("parallel_invoke type requirements") {
+    test_req::MinFunctionObject</*Args = */> function(test_req::construct);
+
+    oneapi::tbb::task_group_context ctx;
+
+    oneapi::tbb::parallel_invoke(function, function);
+    oneapi::tbb::parallel_invoke(function, function, function);
+    oneapi::tbb::parallel_invoke(function, function, ctx);
+    oneapi::tbb::parallel_invoke(function, function, function, ctx);
 }

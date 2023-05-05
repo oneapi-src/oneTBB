@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2021 Intel Corporation
+    Copyright (c) 2020-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 #include "common/checktype.h"
 #include "common/spin_barrier.h"
 #include "common/utils_concurrency_limit.h"
+#include "common/type_requirements_test.h"
 
 #include "oneapi/tbb/parallel_pipeline.h"
 #include "oneapi/tbb/global_control.h"
@@ -170,6 +171,43 @@ void RootSequence( Iterator1 first, Iterator1 last, Iterator2 res) {
         )
     );
 }
+
+namespace test_req {
+
+struct MinMiddleFilterBody : MinObj {
+    using MinObj::MinObj;
+    // TODO: FilterBody is required to be copy constructible, but this is not mentioned in the spec
+    MinMiddleFilterBody(const MinMiddleFilterBody&) : MinObj(construct) {}
+    test_req::MinObj* operator()(MinObj* x) const { return x; }
+};
+
+struct MinFirstFilterBody : MinObj {
+    using MinObj::MinObj;
+    // TODO: FilterBody is required to be copy constructible, but this is not mentioned in the spec
+    MinFirstFilterBody(const MinFirstFilterBody&) : MinObj(construct) {}
+    test_req::MinObj* operator()(oneapi::tbb::flow_control& fc) const {
+        fc.stop();
+        return nullptr;
+    }
+};
+
+struct MinSingleFilterBody : MinObj {
+    using MinObj::MinObj;
+    // TODO: FilterBody is required to be copy constructible, but this is not mentioned in the spec
+    MinSingleFilterBody(const MinSingleFilterBody&) : MinObj(construct) {}
+    void operator()(oneapi::tbb::flow_control& fc) const {
+        fc.stop();
+    }
+};
+
+struct MinLastFilterBody : MinObj {
+    using MinObj::MinObj;
+    // TODO: FilterBody is required to be copy constructible, but this is not mentioned in the spec
+    MinLastFilterBody(const MinLastFilterBody&) : MinObj(construct) {}
+    void operator()(MinObj*) const {}
+};
+
+} // namespace test_req
 
 //! Testing pipeline correctness
 //! \brief \ref interface \ref requirement
@@ -395,3 +433,21 @@ TEST_CASE_TEMPLATE("Deduction guides testing", T, int, unsigned int, double)
     static_assert(std::is_same_v<decltype(fc), oneapi::tbb::filter<int, double>>);
 }
 #endif  //__TBB_CPP17_DEDUCTION_GUIDES_PRESENT
+
+//! Testing parallel_pipeline type requirements
+//! \brief \ref requirement
+TEST_CASE("parallel_pipeline type requirements") {
+    test_req::MinMiddleFilterBody middle_body(test_req::construct);
+    test_req::MinFirstFilterBody  first_body(test_req::construct);
+    test_req::MinLastFilterBody   last_body(test_req::construct);
+    test_req::MinSingleFilterBody single_body(test_req::construct);
+
+    auto mode = oneapi::tbb::filter_mode::serial_in_order;
+    auto middle_filter = oneapi::tbb::make_filter<test_req::MinObj*, test_req::MinObj*>(mode, middle_body);
+    auto first_filter = oneapi::tbb::make_filter<void, test_req::MinObj*>(mode, first_body);
+    auto last_filter = oneapi::tbb::make_filter<test_req::MinObj*, void>(mode, last_body);
+    auto single_filter = oneapi::tbb::make_filter<void, void>(mode, single_body);
+
+    oneapi::tbb::parallel_pipeline(n_tokens, single_filter);
+    oneapi::tbb::parallel_pipeline(n_tokens, first_filter & middle_filter & last_filter);
+}

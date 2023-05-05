@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 #include "common/utils.h"
 #include "common/utils_assert.h"
 #include "common/utils_concurrency_limit.h"
+#include "common/type_requirements_test.h"
 
 #include "oneapi/tbb/blocked_range.h"
 #include "oneapi/tbb/parallel_for.h"
@@ -165,3 +166,10 @@ TEST_CASE("Deduction guides") {
 }
 #endif
 
+//! Testing blocked_range type requirements
+//! \brief \ref requirement
+TEST_CASE("bloked_range type requirements") {
+    test_req::MinBlockedRangeValue value(test_req::construct);
+    oneapi::tbb::blocked_range<test_req::MinBlockedRangeValue> range(value, value);
+    oneapi::tbb::parallel_for(range, [](const decltype(range)&) {});
+}

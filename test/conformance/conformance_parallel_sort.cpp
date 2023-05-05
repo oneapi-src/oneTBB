@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2020-2021 Intel Corporation
+    Copyright (c) 2020-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 #include "common/test.h"
 #include "common/utils_concurrency_limit.h"
+#include "common/type_requirements_test.h"
+#include "common/iterator.h"
 
 #include "oneapi/tbb/parallel_sort.h"
 #include "oneapi/tbb/global_control.h"
@@ -33,6 +35,33 @@ std::vector<int> get_random_vector() {
         result[i] = rand() % vector_size;
     return result;
 }
+
+namespace test_req {
+
+struct MinSwappable : MinObj {
+    using MinObj::MinObj;
+    MinSwappable(MinSwappable&&) : MinObj(construct) {}
+    MinSwappable& operator=(MinSwappable&&) { return *this; }
+};
+
+void swap(MinSwappable&, MinSwappable&) {}
+
+struct MinLessThanComparableAndSwappable : MinObj {
+    using MinObj::MinObj;
+    MinLessThanComparableAndSwappable(MinLessThanComparableAndSwappable&&) : MinObj(construct) {}
+    MinLessThanComparableAndSwappable& operator=(MinLessThanComparableAndSwappable&&) { return *this; }
+};
+
+void swap(MinLessThanComparableAndSwappable&, MinLessThanComparableAndSwappable&) {}
+bool operator<(const MinLessThanComparableAndSwappable&, const MinLessThanComparableAndSwappable&) { return true; }
+
+struct MinCompare : MinObj {
+    using MinObj::MinObj;
+    MinCompare(const MinCompare&) : MinObj(construct) {}
+    bool operator()(const MinSwappable& v1, const MinSwappable& v2) const { return &v1 < &v2; }
+};
+
+} // namespace test_req
 
 //! Iterator based range sorting test (default comparator)
 //! \brief \ref requirement \ref interface
@@ -88,4 +117,25 @@ TEST_CASE ("Range sorting test (greater comparator)") {
         for(auto it = test_vector.begin(); it != test_vector.end() - 1; ++it)
             REQUIRE_MESSAGE(*it >= *(it+1), "Testing data not sorted");
     }
+}
+
+//! Testing parallel_sort type requirements
+//! \brief \ref requirement
+TEST_CASE("parallel_sort type requirements") {
+    test_req::MinSwappable value(test_req::construct);
+    test_req::MinLessThanComparableAndSwappable comp_value(test_req::construct);
+
+    utils::RandomIterator<test_req::MinSwappable>                      random_it(&value);
+    utils::RandomIterator<test_req::MinLessThanComparableAndSwappable> comp_random_it(&comp_value);
+
+    test_req::MinSequence<decltype(random_it)> sequence(test_req::construct, random_it);
+    test_req::MinSequence<decltype(comp_random_it)> comp_sequence(test_req::construct, comp_random_it);
+
+    test_req::MinCompare compare(test_req::construct);
+
+    oneapi::tbb::parallel_sort(random_it, std::next(random_it), compare);
+    oneapi::tbb::parallel_sort(comp_random_it, std::next(comp_random_it));
+
+    oneapi::tbb::parallel_sort(sequence, compare);
+    oneapi::tbb::parallel_sort(comp_sequence);
 }

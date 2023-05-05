@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 #include "common/test.h"
 #include "common/utils.h"
 #include "common/utils_report.h"
+#include "common/type_requirements_test.h"
 
 #include "oneapi/tbb/parallel_for.h"
 #include "oneapi/tbb/tick_count.h"
@@ -244,6 +245,41 @@ void TestParallelForWithStepSupport() {
     oneapi::tbb::parallel_for(static_cast<T>(2), static_cast<T>(1), static_cast<T>(1), TestFunctor<T>());
 }
 
+namespace test_req {
+
+struct MinForBody : MinObj {
+    using MinObj::MinObj;
+    MinForBody(const MinForBody&) : MinObj(construct) {}
+    ~MinForBody() {}
+
+    void operator()(MinRange&) const {}
+};
+
+struct MinForFunc : MinObj {
+    using MinObj::MinObj;
+    void operator()(std::size_t) const {}
+};
+
+} // namespace test_req
+
+template <typename... Args>
+void run_parallel_for_overloads(const Args&... args) {
+    oneapi::tbb::affinity_partitioner aff;
+    oneapi::tbb::task_group_context ctx;
+
+    oneapi::tbb::parallel_for(args...);
+    oneapi::tbb::parallel_for(args..., oneapi::tbb::simple_partitioner{});
+    oneapi::tbb::parallel_for(args..., oneapi::tbb::auto_partitioner{});
+    oneapi::tbb::parallel_for(args..., oneapi::tbb::static_partitioner{});
+    oneapi::tbb::parallel_for(args..., aff);
+
+    oneapi::tbb::parallel_for(args..., ctx);
+    oneapi::tbb::parallel_for(args..., oneapi::tbb::simple_partitioner{}, ctx);
+    oneapi::tbb::parallel_for(args..., oneapi::tbb::auto_partitioner{}, ctx);
+    oneapi::tbb::parallel_for(args..., oneapi::tbb::static_partitioner{}, ctx);
+    oneapi::tbb::parallel_for(args..., aff, ctx);
+}
+
 //! Test simple parallel_for with different partitioners
 //! \brief \ref interface \ref requirement
 TEST_CASE("Basic parallel_for") {
@@ -312,4 +348,19 @@ TEST_CASE("Testing parallel_for with partitioners") {
 
     parallel_for(Range1(true, false), b, oneapi::tbb::static_partitioner());
     parallel_for(Range6(false, true), b, oneapi::tbb::static_partitioner());
+}
+
+//! Testing parallel_for type requirements
+//! \brief \ref requirement
+TEST_CASE("parallel_for type requirements") {
+    test_req::MinRange   range(test_req::construct);
+    test_req::MinForBody body(test_req::construct);
+    test_req::MinForFunc func(test_req::construct);
+
+    // TODO: add tests for ParallelForIndex after resolving implementation and spec discrepancy
+    std::size_t index{1}, stride{1};
+
+    run_parallel_for_overloads(range, body);
+    run_parallel_for_overloads(index, index, func);
+    run_parallel_for_overloads(index, index, stride, func);
 }
