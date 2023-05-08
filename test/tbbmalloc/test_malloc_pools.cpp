@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -431,12 +431,13 @@ void TestFixedBufferPool()
             const int p = 256;
             utils::SpinBarrier barrier(p);
 
-            // Find maximal useful object size. Start with MAX_OBJECT/2,
+            // Find maximal useful object size. Start with (512 * 1024 + 1),
             // as the pool might be fragmented by BootStrapBlocks consumed during
             // FixedPoolRun.
             size_t l, r;
-            REQUIRE(haveEnoughSpace(pool, MAX_OBJECT/2));
-            for (l = MAX_OBJECT/2, r = MAX_OBJECT + 1024*1024; l < r-1; ) {
+            const int start_size = 512 * 1024 + 1;
+            REQUIRE(haveEnoughSpace(pool, start_size));
+            for (l = start_size, r = MAX_OBJECT + 1024*1024; l < r-1; ) {
                 size_t mid = (l+r)/2;
                 if (haveEnoughSpace(pool, mid))
                     l = mid;
@@ -455,7 +456,7 @@ void TestFixedBufferPool()
                 utils::NativeParallelFor( p, FixedPoolNomem(&barrier, pool) );
             pool_free(pool, largeObj);
             // keep some space unoccupied
-            largeObj = pool_malloc(pool, maxSz-512*1024);
+            largeObj = pool_malloc(pool, maxSz - 512 * 1024);
             REQUIRE(largeObj);
             utils::NativeParallelFor( p, FixedPoolSomeMem(&barrier, pool) );
             pool_free(pool, largeObj);
