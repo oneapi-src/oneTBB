@@ -82,11 +82,10 @@ set(_tbbbind_bin_version ${tbb_gen_cfg_TBBBIND_BINARY_VERSION})
         set(TBB_LIB_EXT "lib")
         set(TBB_COMPILE_DEFINITIONS "
                                   INTERFACE_COMPILE_DEFINITIONS \"__TBB_NO_IMPLICIT_LINKAGE=1\"")
-
-        # .lib files installed to TBB_LIB_REL_PATH (e.g. <prefix>/lib);
-        # .dll files installed to TBB_DLL_REL_PATH (e.g. <prefix>/bin);
-        # Expand TBB_LIB_REL_PATH here in IMPORTED_IMPLIB property and
-        # redefine it with TBB_DLL_REL_PATH value to properly fill IMPORTED_LOCATION property in TBBConfig.cmake.in template.
+        
+        # On Windows library consists of two files:
+        # .lib - installed to TBB_LIB_REL_PATH (e.g. <prefix>/lib) and are passed as IMPORTED_IMPLIB_<CONFIG> property to target
+        # .dll - installed to <prefix>/bin or <prefix>/redist and are passed as IMPORTED_LOCATION_<CONFIG> property to target
         set (TBB_HANDLE_IMPLIB "
             find_file(_tbb_release_dll
                 NAMES \${_tbb_component}\${_bin_version}.dll
