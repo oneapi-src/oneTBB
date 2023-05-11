@@ -137,7 +137,7 @@ public:
     }
 
     concurrent_queue& operator=( const concurrent_queue& other ) {
-        //TODO: implement support for std::allocator_traits::propogate_on_container_copy_assignment
+        //TODO: implement support for std::allocator_traits::propagate_on_container_copy_assignment
         if (my_queue_representation != other.my_queue_representation) {
             clear();
             my_allocator = other.my_allocator;
@@ -147,7 +147,7 @@ public:
     }
 
     concurrent_queue& operator=( concurrent_queue&& other ) {
-        //TODO: implement support for std::allocator_traits::propogate_on_container_move_assignment
+        //TODO: implement support for std::allocator_traits::propagate_on_container_move_assignment
         if (my_queue_representation != other.my_queue_representation) {
             clear();
             if (my_allocator == other.my_allocator) {
@@ -416,7 +416,7 @@ public:
     }
 
     concurrent_bounded_queue& operator=( const concurrent_bounded_queue& other ) {
-        //TODO: implement support for std::allocator_traits::propogate_on_container_copy_assignment
+        //TODO: implement support for std::allocator_traits::propagate_on_container_copy_assignment
         if (my_queue_representation != other.my_queue_representation) {
             clear();
             my_allocator = other.my_allocator;
@@ -426,7 +426,7 @@ public:
     }
 
     concurrent_bounded_queue& operator=( concurrent_bounded_queue&& other ) {
-        //TODO: implement support for std::allocator_traits::propogate_on_container_move_assignment
+        //TODO: implement support for std::allocator_traits::propagate_on_container_move_assignment
         if (my_queue_representation != other.my_queue_representation) {
             clear();
             if (my_allocator == other.my_allocator) {
