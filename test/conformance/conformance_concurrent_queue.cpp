@@ -1684,7 +1684,7 @@ TEST_CASE("Test with minimalistic object type") {
 template<typename CQ>
 void test_queue_helper() {
     int size = 5;
-    CQ::value_type vec_1(size, 0), vec_2(size, 0), vec_3(size, 0), vec_4(size, 0);
+    typename CQ::value_type vec_1(size, 0), vec_2(size, 0), vec_3(size, 0), vec_4(size, 0);
     srand(static_cast<unsigned>(time(0)));
     generate(vec_1.begin(), vec_1.end(), rand);
     generate(vec_2.begin(), vec_2.end(), rand);
@@ -1717,7 +1717,7 @@ TEST_CASE("testing assignment and swapping") {
 
 template <typename QueueType>
 void TestMoveQueue() {
-    using allocator_type = QueueType::allocator_type;
+    using allocator_type = typename QueueType::allocator_type;
 
     QueueType q1, q2;
     move_support_tests::Foo obj;
@@ -1775,7 +1775,7 @@ bool operator!=(const stateful_allocator<T>& lhs, const stateful_allocator<U>& r
 
 template <typename QueueType>
 void TestMoveQueueUnequal() {
-    using allocator_type = QueueType::allocator_type;
+    using allocator_type = typename QueueType::allocator_type;
     allocator_type alloc1, alloc2;
     alloc1.state = 0;
     alloc2.state = 1;
