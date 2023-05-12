@@ -415,7 +415,7 @@ namespace r1 {
         if (local_binding) {
             flags = flags | RTLD_LOCAL;
 #if (__linux__ && __GLIBC__) && !__TBB_USE_SANITIZERS
-            if( !GetBoolEnvironmentVariable("DisableDeepBind") ) {
+            if( !GetBoolEnvironmentVariable("TBB_ENABLE_SANITIZERS") ) {
                 flags = flags | RTLD_DEEPBIND;
             }
 #endif
