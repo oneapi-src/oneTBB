@@ -80,6 +80,7 @@ public:
     SmartID(const IDType& n, std::size_t* sp) : id(n), operate_signal_point(sp) {}
 
     IDType get_id() const { return id; }
+    const IDType& get_id_ref() const { return id; }
 
 private:
     template <typename TupleOfPorts, std::size_t... Is>

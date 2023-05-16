@@ -268,9 +268,9 @@ TEST_CASE("join_node output_ports") {
 
 #if __TBB_CPP17_INVOKE_PRESENT
 
-//! Test that key_matching join_node uses std::invoke to run the body
-//! \brief \ref requirement
-TEST_CASE("key_matching join_node invoke semantics") {
+template <typename K, typename Body1, typename Body2>
+void test_invoke_basic(Body1 body1, Body2 body2) {
+    static_assert(std::is_same_v<std::decay_t<K>, std::size_t>, "incorrect test setup");
     using namespace oneapi::tbb::flow;
     auto generator = [](std::size_t n) { return test_invoke::SmartID<std::size_t>(n); };
     graph g;
@@ -279,9 +279,10 @@ TEST_CASE("key_matching join_node invoke semantics") {
     function_node<std::size_t, test_invoke::SmartID<std::size_t>> f2(g, unlimited, generator);
 
     using tuple_type = std::tuple<test_invoke::SmartID<std::size_t>, test_invoke::SmartID<std::size_t>>;
-    using join_type = join_node<tuple_type, key_matching<std::size_t>>;
+    using join_type = join_node<tuple_type, key_matching<K>>;
 
-    join_type j(g, &test_invoke::SmartID<std::size_t>::get_id, &test_invoke::SmartID<std::size_t>::id);
+
+    join_type j(g, body1, body2);
 
     buffer_node<tuple_type> buf(g);
 
@@ -305,5 +306,12 @@ TEST_CASE("key_matching join_node invoke semantics") {
         CHECK(std::get<0>(tpl).id == std::get<1>(tpl).id);
     }
     CHECK(buf_size == objects_count);
+}
+
+//! Test that key_matching join_node uses std::invoke to run the body
+//! \brief \ref requirement
+TEST_CASE("key_matching join_node invoke semantics") {
+    test_invoke_basic</*K = */std::size_t>(&test_invoke::SmartID<std::size_t>::get_id, &test_invoke::SmartID<std::size_t>::id);
+    test_invoke_basic</*K = */std::size_t&>(&test_invoke::SmartID<std::size_t>::get_id_ref, &test_invoke::SmartID<std::size_t>::get_id_ref);
 }
 #endif // __TBB_CPP17_INVOKE_PRESENT

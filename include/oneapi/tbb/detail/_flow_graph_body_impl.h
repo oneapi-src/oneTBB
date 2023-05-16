@@ -231,7 +231,7 @@ class type_to_key_function_body_leaf<Input,Output&,B> : public type_to_key_funct
 public:
     type_to_key_function_body_leaf( const B &_body ) : body(_body) { }
     const Output& operator()(const Input &i) override {
-        return body(i);
+        return tbb::detail::invoke(body, i);
     }
     type_to_key_function_body_leaf* clone() override {
         return new type_to_key_function_body_leaf< Input, Output&, B>(body);
