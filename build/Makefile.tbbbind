@@ -1,4 +1,4 @@
-# Copyright (c) 2005-2020 Intel Corporation
+# Copyright (c) 2005-2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -51,8 +51,8 @@ endif
 
 ifneq (,$(TBBBIND.DLL))
 $(TBBBIND.DLL): BUILDING_LIBRARY = $(TBBBIND.DLL)
-$(TBBBIND.DLL): $(TBBBIND.OBJ) $(TBBBIND_NO_VERSION.DLL)
-	$(LIB_LINK_CMD) $(LIB_OUTPUT_KEY)$(TBBBIND.DLL) $(TBBBIND.OBJ) $(HWLOC.LIB) $(LIB_LINK_FLAGS)
+$(TBBBIND.DLL): $(TBBBIND.OBJ) $(TBBBIND.RES) $(TBBBIND_NO_VERSION.DLL)
+	$(LIB_LINK_CMD) $(LIB_OUTPUT_KEY)$(TBBBIND.DLL) $(TBBBIND.OBJ) $(TBBBIND.RES) $(HWLOC.LIB) $(LIB_LINK_FLAGS)
 endif
 
 ifneq (,$(TBBBIND_NO_VERSION.DLL))
