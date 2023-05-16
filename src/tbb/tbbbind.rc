@@ -77,7 +77,7 @@ BEGIN
             VALUE "CompanyName", "Intel Corporation\0"
             VALUE "FileDescription", "Intel(R) Threading Building Blocks library\0"
             VALUE "FileVersion", TBB_VERSION "\0"
-            VALUE "LegalCopyright", "Copyright 2005-2020 Intel Corporation.  All Rights Reserved.\0"
+            VALUE "LegalCopyright", "Copyright 2005-2023 Intel Corporation.  All Rights Reserved.\0"
             VALUE "LegalTrademarks", "\0"
 #ifndef TBB_USE_DEBUG
             VALUE "OriginalFilename", "tbbbind.dll\0"
