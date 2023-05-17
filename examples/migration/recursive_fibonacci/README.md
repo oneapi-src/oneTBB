@@ -19,4 +19,4 @@ fibonacci K C P
 ```
 * `N` - specifies the fibonacci number which would be calculated.
 * `C` - cutoff that will be used to stop recursive split.
-* `P` -a range of numbers of threads to be used.
+* `I` - number of iteration to measure benchmark time.
