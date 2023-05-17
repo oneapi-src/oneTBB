@@ -33,18 +33,18 @@ struct fib_continuation : task::base_task {
         sum = x + y;
     }
 
-    int x{0}, y{0};
+    int x{ 0 }, y{ 0 };
     int& sum;
 };
 
 struct fib_computation : task::base_task {
-    fib_computation(int n, int* x) : n(n), x(x)
-    {}
+    fib_computation(int n, int* x) : n(n), x(x) {}
 
     void execute() override {
         if (n < /*cutoff = */ 16) {
             *x = serial_fib(n);
-        } else {
+        }
+        else {
             // Continuation passing
             auto& c = *this->create_continuation<fib_continuation>(/* children_counter = */ 2, *x);
             task::run_task(c.create_child_of_continuation<fib_computation>(n - 1, &c.x));
@@ -67,12 +67,13 @@ int fibonacci(int n) {
     int sum{};
     tbb::task_group tg;
     tg.run_and_wait(task::create_root_task<fib_computation>(/* for root task = */ tg, n, &sum));
-
     return sum;
 }
 
 template <typename F>
-std::pair</* result */ unsigned long, /* time */ unsigned long> measure(F&& f, int number, unsigned long ntrial) {
+std::pair</* result */ unsigned long, /* time */ unsigned long> measure(F&& f,
+                                                                        int number,
+                                                                        unsigned long ntrial) {
     std::vector<unsigned long> times;
 
     unsigned long result;
@@ -81,20 +82,19 @@ std::pair</* result */ unsigned long, /* time */ unsigned long> measure(F&& f, i
         result = f(number);
         auto t2 = std::chrono::steady_clock::now();
 
-        auto time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - t1).count();
+        auto time = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
         times.push_back(time);
     }
 
     return std::make_pair(result, std::accumulate(times.begin(), times.end(), 0) / times.size());
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     int numbers = argc > 1 ? strtol(argv[1], nullptr, 0) : 50;
     cutoff = argc > 2 ? strtol(argv[1], nullptr, 0) : 16;
     unsigned long ntrial = argc > 3 ? (unsigned long)strtoul(argv[3], nullptr, 0) : 20;
 
-
     auto res = measure(fibonacci, numbers, ntrial);
-    std::cout << "Fibonacci N = " << res.first << " Avg time = " << res.second << " ms" << std::endl;
-
+    std::cout << "Fibonacci N = " << res.first << " Avg time = " << res.second << " ms"
+              << std::endl;
 }
