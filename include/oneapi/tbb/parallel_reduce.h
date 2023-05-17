@@ -41,17 +41,18 @@ concept parallel_reduce_body = splittable<Body> &&
                                };
 
 template <typename Function, typename Range, typename Value>
-concept parallel_reduce_function = requires( const std::remove_reference_t<Function>& func,
-                                             const Range& range,
-                                             const Value& value ) {
-    { func(range, value) } -> std::convertible_to<Value>;
-};
+concept parallel_reduce_function = std::invocable<const std::remove_reference_t<Function>&,
+                                                  const Range&, const Value&> &&
+                                   std::convertible_to<std::invoke_result_t<const std::remove_reference_t<Function>&,
+                                                                            const Range&, const Value&>,
+                                                        Value>;
 
 template <typename Combine, typename Value>
-concept parallel_reduce_combine = requires( const std::remove_reference_t<Combine>& combine,
-                                            const Value& lhs, const Value& rhs ) {
-    { combine(lhs, rhs) } -> std::convertible_to<Value>;
-};
+concept parallel_reduce_combine = std::invocable<const std::remove_reference_t<Combine>&,
+                                                 const Value&, const Value&> &&
+                                  std::convertible_to<std::invoke_result_t<const std::remove_reference_t<Combine>&,
+                                                                           const Value&, const Value&>,
+                                                      Value>;
 
 } // namespace d0
 #endif // __TBB_CPP20_CONCEPTS_PRESENT
@@ -150,7 +151,7 @@ struct start_reduce : public task {
     }
     //! Run body for range, serves as callback for partitioner
     void run_body( Range &r ) {
-        (*my_body)(r);
+        tbb::detail::invoke(*my_body, r);
     }
 
     //! spawn right task, serves as callback for partitioner
@@ -296,7 +297,7 @@ struct start_deterministic_reduce : public task {
     }
     //! Run body for range, serves as callback for partitioner
     void run_body( Range &r ) {
-        my_body( r );
+        tbb::detail::invoke(my_body, r);
     }
     //! Spawn right task, serves as callback for partitioner
     void offer_work(typename Partitioner::split_type& split_obj, execution_data& ed) {
@@ -389,10 +390,11 @@ public:
         , my_value(other.my_identity_element)
     { }
     void operator()(Range& range) {
-        my_value = my_real_body(range, const_cast<const Value&>(my_value));
+        my_value = tbb::detail::invoke(my_real_body, range, const_cast<const Value&>(my_value));
     }
     void join( lambda_reduce_body& rhs ) {
-        my_value = my_reduction(const_cast<const Value&>(my_value), const_cast<const Value&>(rhs.my_value));
+        my_value = tbb::detail::invoke(my_reduction, const_cast<const Value&>(my_value),
+                                                     const_cast<const Value&>(rhs.my_value));
     }
     Value result() const {
         return my_value;
