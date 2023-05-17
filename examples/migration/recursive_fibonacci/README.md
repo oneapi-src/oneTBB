@@ -15,7 +15,7 @@ cmake --build .
 ### Application parameters
 Usage:
 ```
-fibonacci K C P
+recursive_fibonacci K C P
 ```
 * `N` - specifies the fibonacci number which would be calculated.
 * `C` - cutoff that will be used to stop recursive split.

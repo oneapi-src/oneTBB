@@ -41,7 +41,7 @@ struct fib_computation : task::base_task {
     fib_computation(int n, int* x) : n(n), x(x) {}
 
     void execute() override {
-        if (n < /*cutoff = */ 16) {
+        if (n < cutoff) {
             *x = serial_fib(n);
         }
         else {
