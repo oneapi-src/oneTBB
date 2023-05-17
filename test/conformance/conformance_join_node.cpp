@@ -312,6 +312,6 @@ void test_invoke_basic(Body1 body1, Body2 body2) {
 //! \brief \ref requirement
 TEST_CASE("key_matching join_node invoke semantics") {
     test_invoke_basic</*K = */std::size_t>(&test_invoke::SmartID<std::size_t>::get_id, &test_invoke::SmartID<std::size_t>::id);
-    test_invoke_basic</*K = */std::size_t&>(&test_invoke::SmartID<std::size_t>::get_id_ref, &test_invoke::SmartID<std::size_t>::get_id_ref);
+    test_invoke_basic</*K = */const std::size_t&>(&test_invoke::SmartID<std::size_t>::get_id_ref, &test_invoke::SmartID<std::size_t>::get_id_ref);
 }
 #endif // __TBB_CPP17_INVOKE_PRESENT
