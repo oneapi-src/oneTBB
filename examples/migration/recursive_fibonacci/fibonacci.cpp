@@ -91,7 +91,7 @@ std::pair</* result */ unsigned long, /* time */ unsigned long> measure(F&& f,
 
 int main(int argc, char* argv[]) {
     int numbers = argc > 1 ? strtol(argv[1], nullptr, 0) : 50;
-    cutoff = argc > 2 ? strtol(argv[1], nullptr, 0) : 16;
+    cutoff = argc > 2 ? strtol(argv[2], nullptr, 0) : 16;
     unsigned long ntrial = argc > 3 ? (unsigned long)strtoul(argv[3], nullptr, 0) : 20;
 
     auto res = measure(fibonacci, numbers, ntrial);
