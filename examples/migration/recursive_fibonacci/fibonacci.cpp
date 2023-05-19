@@ -26,7 +26,7 @@ long serial_fib(int n) {
     return n < 2 ? n : serial_fib(n - 1) + serial_fib(n - 2);
 }
 
-struct fib_continuation : task::base_task {
+struct fib_continuation : task_emulation::base_task {
     fib_continuation(int& s) : sum(s) {}
 
     void execute() override {
@@ -37,7 +37,7 @@ struct fib_continuation : task::base_task {
     int& sum;
 };
 
-struct fib_computation : task::base_task {
+struct fib_computation : task_emulation::base_task {
     fib_computation(int n, int* x) : n(n), x(x) {}
 
     void execute() override {
@@ -47,14 +47,19 @@ struct fib_computation : task::base_task {
         else {
             // Continuation passing
             auto& c = *this->create_continuation<fib_continuation>(/* children_counter = */ 2, *x);
-            task::run_task(c.create_child_of_continuation<fib_computation>(n - 1, &c.x));
+            task_emulation::run_task(c.create_child_of_continuation<fib_computation>(n - 1, &c.x));
 
             // Recycling
             this->recycle_as_child_of_continuation(c);
             n = n - 2;
             x = &c.y;
 
-            // Bypass
+            // old-TBB bypass: the next task is passed to scheduler and prevent stack growth.
+            // Bypass emulation: do not return the next task from the function
+            // but instead execute it directly here.
+            // Consider submit another task if recursion call is not acceptable
+            // i.e. instead Recycling + Bypass emulation submit
+            // task_emulation::run_task(c.create_child_of_continuation<fib_computation>(n - 2, &c.y));
             this->operator()();
         }
     }
@@ -66,7 +71,8 @@ struct fib_computation : task::base_task {
 int fibonacci(int n) {
     int sum{};
     tbb::task_group tg;
-    tg.run_and_wait(task::create_root_task<fib_computation>(/* for root task = */ tg, n, &sum));
+    tg.run_and_wait(
+        task_emulation::create_root_task<fib_computation>(/* for root task = */ tg, n, &sum));
     return sum;
 }
 
@@ -77,7 +83,7 @@ std::pair</* result */ unsigned long, /* time */ unsigned long> measure(F&& f,
     std::vector<unsigned long> times;
 
     unsigned long result;
-    for (int i = 0; i < ntrial; ++i) {
+    for (unsigned long i = 0; i < ntrial; ++i) {
         auto t1 = std::chrono::steady_clock::now();
         result = f(number);
         auto t2 = std::chrono::steady_clock::now();
@@ -86,7 +92,9 @@ std::pair</* result */ unsigned long, /* time */ unsigned long> measure(F&& f,
         times.push_back(time);
     }
 
-    return std::make_pair(result, std::accumulate(times.begin(), times.end(), 0) / times.size());
+    return std::make_pair(
+        result,
+        static_cast<unsigned long>(std::accumulate(times.begin(), times.end(), 0) / times.size()));
 }
 
 int main(int argc, char* argv[]) {

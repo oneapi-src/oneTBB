@@ -22,7 +22,7 @@
 
 #include <atomic>
 
-namespace task {
+namespace task_emulation {
 
 struct task_group_pool {
     task_group_pool() : pool_size(std::thread::hardware_concurrency()), task_submiters(new tbb::task_group[pool_size]) {}
@@ -140,6 +140,6 @@ template <typename F>
 void run_task(F&& f) {
     tg_pool[tbb::this_task_arena::current_thread_index()].run(std::forward<F>(f));
 }
-}
+} // namespace task_emulation
 
 #endif // __TBB_task_emulation_layer_H
