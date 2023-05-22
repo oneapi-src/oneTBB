@@ -54,12 +54,12 @@ struct fib_computation : task_emulation::base_task {
             n = n - 2;
             x = &c.y;
 
-            // old-TBB bypass: the next task is passed to scheduler and prevent stack growth.
-            // Bypass emulation: do not return the next task from the function
-            // but instead execute it directly here.
+            // Bypass is not supported by task_emulation and next_task executed directly.
+            // Howewer, the old-TBB bypass behavior can be achived with
+            // `return task_group::defer()` (check Migration Guide).
             // Consider submit another task if recursion call is not acceptable
-            // i.e. instead Recycling + Bypass emulation submit
-            // task_emulation::run_task(c.create_child_of_continuation<fib_computation>(n - 2, &c.y));
+            // i.e. instead Recycling + Direct Body call
+            // submit task_emulation::run_task(c.create_child_of_continuation<fib_computation>(n - 2, &c.y));
             this->operator()();
         }
     }
