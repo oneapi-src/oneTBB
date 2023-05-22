@@ -400,41 +400,41 @@ TEST_CASE_TEMPLATE("Deduction guides testing", T, int, unsigned int, double)
 }
 #endif  //__TBB_CPP17_DEDUCTION_GUIDES_PRESENT
 
-// #if __TBB_CPP17_INVOKE_PRESENT
+#if __TBB_CPP17_INVOKE_PRESENT
 
-// template <typename MiddleFilterBody, typename LastFilterBody>
-// void test_pipeline_invoke_basic(const MiddleFilterBody& middle_body, const LastFilterBody& last_body) {
-//     using output_filter_type = test_invoke::SmartID<std::size_t>;
-//     using middle_filter_type = test_invoke::SmartID<output_filter_type>;
+template <typename MiddleFilterBody, typename LastFilterBody>
+void test_pipeline_invoke_basic(const MiddleFilterBody& middle_body, const LastFilterBody& last_body) {
+    using output_filter_type = test_invoke::SmartID<std::size_t>;
+    using middle_filter_type = test_invoke::SmartID<output_filter_type>;
 
-//     const std::size_t input_count = 10;
-//     std::size_t signal_point = 0;
-//     std::size_t counter = 0;
+    const std::size_t input_count = 10;
+    std::size_t signal_point = 0;
+    std::size_t counter = 0;
 
-//     auto first_body = [&](oneapi::tbb::flow_control& fc) -> middle_filter_type {
-//         if (++counter > input_count) {
-//             fc.stop();
-//         }
-//         return middle_filter_type{output_filter_type{&signal_point}};
-//     };
+    auto first_body = [&](oneapi::tbb::flow_control& fc) -> middle_filter_type {
+        if (++counter > input_count) {
+            fc.stop();
+        }
+        return middle_filter_type{output_filter_type{&signal_point}};
+    };
 
-//     auto first_filter = oneapi::tbb::make_filter<void, middle_filter_type>(oneapi::tbb::filter_mode::serial_in_order, first_body);
-//     auto middle_filter = oneapi::tbb::make_filter<middle_filter_type, output_filter_type>(oneapi::tbb::filter_mode::serial_in_order, middle_body);
-//     auto last_filter = oneapi::tbb::make_filter<output_filter_type, void>(oneapi::tbb::filter_mode::serial_in_order, last_body);
+    auto first_filter = oneapi::tbb::make_filter<void, middle_filter_type>(oneapi::tbb::filter_mode::serial_in_order, first_body);
+    auto middle_filter = oneapi::tbb::make_filter<middle_filter_type, output_filter_type>(oneapi::tbb::filter_mode::serial_in_order, middle_body);
+    auto last_filter = oneapi::tbb::make_filter<output_filter_type, void>(oneapi::tbb::filter_mode::serial_in_order, last_body);
 
-//     oneapi::tbb::parallel_pipeline(16, first_filter & middle_filter & last_filter);
+    oneapi::tbb::parallel_pipeline(16, first_filter & middle_filter & last_filter);
 
-//     CHECK(signal_point == input_count);
-// }
+    CHECK(signal_point == input_count);
+}
 
-// //! Test that parallel_pipeline uses std::invoke to run the filter body
-// //! \brief \ref requirement
-// TEST_CASE("parallel_pipeline and std::invoke") {
-//     using output_filter_type = test_invoke::SmartID<std::size_t>;
-//     using middle_filter_type = test_invoke::SmartID<output_filter_type>;
+//! Test that parallel_pipeline uses std::invoke to run the filter body
+//! \brief \ref requirement
+TEST_CASE("parallel_pipeline and std::invoke") {
+    using output_filter_type = test_invoke::SmartID<std::size_t>;
+    using middle_filter_type = test_invoke::SmartID<output_filter_type>;
 
-//     test_pipeline_invoke_basic(&middle_filter_type::get_id, &output_filter_type::operate); // Pointer to non-static function as middle filter
-//     test_pipeline_invoke_basic(&middle_filter_type::id, &output_filter_type::operate); // Pointer to non-static member as middle filter
-// }
+    test_pipeline_invoke_basic(&middle_filter_type::get_id, &output_filter_type::operate); // Pointer to non-static function as middle filter
+    test_pipeline_invoke_basic(&middle_filter_type::id, &output_filter_type::operate); // Pointer to non-static member as middle filter
+}
 
-// #endif // __TBB_CPP17_INVOKE_PRESENT
+#endif // __TBB_CPP17_INVOKE_PRESENT
