@@ -86,4 +86,4 @@ As an optimization hint, ``F`` might return a ``task_handle``, which task object
 * `oneapi::tbb::task_group specification <https://spec.oneapi.com/versions/latest/elements/oneTBB/source/task_scheduler/task_group/task_group_cls.html>`_
 * `oneapi::tbb::task_group_context specification <https://spec.oneapi.com/versions/latest/elements/oneTBB/source/task_scheduler/scheduling_controls/task_group_context_cls.html>`_
 * `oneapi::tbb::task_group_status specification <https://spec.oneapi.com/versions/latest/elements/oneTBB/source/task_scheduler/task_group/task_group_status_enum.html>`_ 
-* :doc:`oneapi::tbb::task_handle class <task_group_extensions/task_handle>`
+* `oneapi::tbb::task_handle class <https://oneapi-src.github.io/oneAPI-spec/spec/elements/oneTBB/source/task_scheduler/task_group/task_handle.html>`_

@@ -1,9 +1,12 @@
-.. _examples:
+.. _samples:
 
 oneTBB Samples
 ==============
 
-Refer to the following examples to see how |short_name| works. 
+To become an expert in using oneTBB, explore its samples and examples to learn how 
+to properly utilize the features and functionality of oneTBB and avoid common mistakes that may impede your performance.
+
+The following samples are available:
 
 * **Containers** 
 
@@ -43,3 +46,4 @@ Refer to the following examples to see how |short_name| works.
   * `Compute Fibonacci numbers in different ways <https://github.com/oneapi-src/oneTBB/tree/master/examples/test_all>`_
 
 
+.. note:: You can also refer to the `oneAPI Samples <https://oneapi-src.github.io/oneAPI-samples/>`_ to learn more about the ecosystem. 
