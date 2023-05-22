@@ -55,7 +55,7 @@ struct fib_computation : task_emulation::base_task {
             x = &c.y;
 
             // Bypass is not supported by task_emulation and next_task executed directly.
-            // Howewer, the old-TBB bypass behavior can be achived with
+            // Howewer, the old-TBB bypass behavior can be achieved with
             // `return task_group::defer()` (check Migration Guide).
             // Consider submit another task if recursion call is not acceptable
             // i.e. instead Recycling + Direct Body call
