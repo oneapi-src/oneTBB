@@ -110,8 +110,8 @@ private:
         return p;
     }
 
-    mutable base_task* m_parent{nullptr};
-    mutable std::atomic<std::uint64_t> m_child_counter{0};
+    base_task* m_parent{nullptr};
+    std::atomic<std::uint64_t> m_child_counter{0};
 };
 
 class root_task : public base_task {
