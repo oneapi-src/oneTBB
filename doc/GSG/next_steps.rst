@@ -69,7 +69,7 @@ Build and Run a Sample
                            "args": [ 
                                "/IC:\\Program Files (x86)\\Intel\\oneAPI\\tbb\\2021.9.0\\include",
                                "C:\\Program Files (x86)\\Intel\\oneAPI\\tbb\\2021.9.0\\lib\\ia32\\vc14\\tbb12.lib"
-                           ]
+                           
 
       #. Build the project. 
       #. Run the example. 
