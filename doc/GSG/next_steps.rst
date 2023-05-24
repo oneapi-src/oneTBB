@@ -54,7 +54,7 @@ Build and Run a Sample
       #. Open the ``tasks.json`` file in the ``.vscode`` directory and paste the following lines to the args array:
 
          * ``-Ipath/to/oneTBB/include`` to add oneTBB include directory. 
-         * ``-Lpath/to/oneTBB/`` to add oneTBB. 
+         * ``path/to/oneTBB/`` to add oneTBB. 
 
          For example:
 
@@ -64,13 +64,12 @@ Build and Run a Sample
                    "tasks": [
                         {
                            "label": "build & run",
-                           "type": "shell",
+                           "type": "cppbuild",
                            "group": {
-                           "args": [
-                               "-std=c++11",
-                               "-c", 
-                               "-Ic:/Program Files (x86)/Intel/oneAPI/tbb/2021.9/include",
-                               "-Lc:/Program Files (x86)/Intel/oneAPI/tbb/latest/lib/intel64/vc14"
+                           "args": [ 
+                               "/IC:\\Program Files (x86)\\Intel\\oneAPI\\tbb\\2021.9.0\\include",
+                               "C:\\Program Files (x86)\\Intel\\oneAPI\\tbb\\2021.9.0\\lib\\ia32\\vc14\\tbb12.lib"
+                           ]
 
       #. Build the project. 
       #. Run the example. 
