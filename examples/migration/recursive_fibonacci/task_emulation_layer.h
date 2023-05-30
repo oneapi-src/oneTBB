@@ -37,7 +37,7 @@ struct task_group_pool {
 
     tbb::task_group& operator[] (std::size_t idx) { return task_submiters[idx]; }
 
-    std::size_t pool_size;
+    const std::size_t pool_size;
     tbb::task_group* task_submiters;
 };
 

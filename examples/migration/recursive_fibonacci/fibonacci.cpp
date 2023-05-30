@@ -58,7 +58,7 @@ struct fib_computation : task_emulation::base_task {
             // Howewer, the old-TBB bypass behavior can be achieved with
             // `return task_group::defer()` (check Migration Guide).
             // Consider submit another task if recursion call is not acceptable
-            // i.e. instead Recycling + Direct Body call
+            // i.e. instead of Recycling + Direct Body call
             // submit task_emulation::run_task(c.create_child_of_continuation<fib_computation>(n - 2, &c.y));
             this->operator()();
         }
