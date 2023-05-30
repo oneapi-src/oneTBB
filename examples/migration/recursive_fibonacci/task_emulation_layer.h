@@ -25,20 +25,20 @@
 namespace task_emulation {
 
 struct task_group_pool {
-    task_group_pool() : pool_size(std::thread::hardware_concurrency()), task_submiters(new tbb::task_group[pool_size]) {}
+    task_group_pool() : pool_size(std::thread::hardware_concurrency()), task_submitters(new tbb::task_group[pool_size]) {}
 
     ~task_group_pool() {
         for (std::size_t i = 0; i < pool_size; ++i) {
-            task_submiters[i].wait();
+            task_submitters[i].wait();
         }
 
-        delete [] task_submiters;
+        delete [] task_submitters;
     }
 
-    tbb::task_group& operator[] (std::size_t idx) { return task_submiters[idx]; }
+    tbb::task_group& operator[] (std::size_t idx) { return task_submitters[idx]; }
 
     const std::size_t pool_size;
-    tbb::task_group* task_submiters;
+    tbb::task_group* task_submitters;
 };
 
 static task_group_pool tg_pool;
@@ -65,7 +65,7 @@ public:
     template <typename C, typename... Args>
     C* create_continuation(std::uint64_t ref, Args&&... args) {
         C* continuation = new C{std::forward<Args>(args)...};
-        continuation->set_parent(release_parent());
+        continuation->reset_parent(reset_parent());
         continuation->m_child_counter = ref;
         return continuation;
     }
@@ -73,13 +73,13 @@ public:
     template <typename F, typename... Args>
     F create_child_of_continuation(Args&&... args) {
         F obj{std::forward<Args>(args)...};
-        obj.set_parent(this);
+        obj.reset_parent(this);
         return obj;
     }
 
     template <typename C>
     void recycle_as_child_of_continuation(C& c) {
-        set_parent(&c);
+        reset_parent(&c);
     }
 
 protected:
@@ -100,13 +100,9 @@ private:
         }
     }
 
-    void set_parent(base_task* p) {
-        m_parent = p;
-    }
-
-    base_task* release_parent() {
+    base_task* reset_parent(base_task* ptr = nullptr) {
         auto p = m_parent;
-        m_parent = nullptr;
+        m_parent = ptr;
         return p;
     }
 
@@ -132,7 +128,7 @@ private:
 template <typename F, typename... Args>
 F create_root_task(tbb::task_group& tg, Args&&... args) {
     F obj{std::forward<Args>(args)...};
-    obj.set_parent(new root_task{tg});
+    obj.reset_parent(new root_task{tg});
     return obj;
 }
 

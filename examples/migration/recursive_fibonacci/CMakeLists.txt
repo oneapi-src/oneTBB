@@ -28,6 +28,11 @@ target_link_libraries(recursive_fibonacci
 target_compile_options(recursive_fibonacci PRIVATE ${TBB_CXX_STD_FLAG})
 
 set(EXECUTABLE "$<TARGET_FILE:recursive_fibonacci>")
+
+# Parameters of executable N C I:
+# `N` - specifies the fibonacci number which would be calculated.
+# `C` - cutoff that will be used to stop recursive split.
+# `I` - number of iteration to measure benchmark time.
 set(ARGS 30 16 20)
 set(PERF_ARGS 50 5 20)
 
