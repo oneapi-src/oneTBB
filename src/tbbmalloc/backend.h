@@ -265,6 +265,7 @@ private:
     IndexedBins freeLargeBlockBins,
                 freeSlabAlignedBins;
 
+    std::atomic<intptr_t> backendCleanCnt;
     // Our friends
     friend class BackendSync;
 

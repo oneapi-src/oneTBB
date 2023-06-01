@@ -1020,17 +1020,33 @@ void ExtMemoryPool::freeLargeObjectList(LargeMemoryBlock *head)
 
 bool ExtMemoryPool::softCachesCleanup()
 {
-    return loc.regularCleanup();
+    bool ret = false;
+    if (!softCachesCleanupInProgress.fetch_or(0x1)) {
+        ret = loc.regularCleanup();
+        softCachesCleanupInProgress = 0;
+    }
+    return ret;
 }
 
-bool ExtMemoryPool::hardCachesCleanup()
+bool ExtMemoryPool::hardCachesCleanup(bool wait)
 {
+    if (hardCachesCleanupInProgress.fetch_or(0x1)) {
+        if (!wait)
+            return false;
+
+        AtomicBackoff backoff;
+        while (hardCachesCleanupInProgress.fetch_or(0x1))
+            backoff.pause();
+    }
+
     // thread-local caches must be cleaned before LOC,
     // because object from thread-local cache can be released to LOC
     bool ret = releaseAllLocalCaches();
     ret |= orphanedBlocks.cleanup(&backend);
     ret |= loc.cleanAll();
     ret |= backend.clean();
+
+    hardCachesCleanupInProgress = 0;
     return ret;
 }
 
