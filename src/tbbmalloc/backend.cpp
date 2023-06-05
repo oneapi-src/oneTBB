@@ -297,11 +297,13 @@ inline bool BackendSync::waitTillBlockReleased(intptr_t startModifiedCnt)
     };
     ITT_Guard ittGuard(&inFlyBlocks);
 #endif
-    for (intptr_t myBinsInFlyBlocks = inFlyBlocks.load(std::memory_order_acquire),
-             myCoalescQInFlyBlocks = backend->blocksInCoalescing(); ; backoff.pause()) {
+    intptr_t myBinsInFlyBlocks = inFlyBlocks.load(std::memory_order_acquire);
+    intptr_t myCoalescQInFlyBlocks = backend->blocksInCoalescing();
+    while (true) {
         MALLOC_ASSERT(myBinsInFlyBlocks>=0 && myCoalescQInFlyBlocks>=0, nullptr);
-        intptr_t currBinsInFlyBlocks = inFlyBlocks.load(std::memory_order_acquire),
-            currCoalescQInFlyBlocks = backend->blocksInCoalescing();
+
+        intptr_t currBinsInFlyBlocks = inFlyBlocks.load(std::memory_order_acquire);
+        intptr_t currCoalescQInFlyBlocks = backend->blocksInCoalescing();
         WhiteboxTestingYield();
         // Stop waiting iff:
 
@@ -322,6 +324,7 @@ inline bool BackendSync::waitTillBlockReleased(intptr_t startModifiedCnt)
             return startModifiedCnt != getNumOfMods();
         myBinsInFlyBlocks = currBinsInFlyBlocks;
         myCoalescQInFlyBlocks = currCoalescQInFlyBlocks;
+        backoff.pause();
     }
     return true;
 }
