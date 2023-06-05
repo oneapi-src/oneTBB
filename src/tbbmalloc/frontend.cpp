@@ -3295,7 +3295,7 @@ extern "C" int scalable_allocation_command(int cmd, void *param)
             released = tls->externalCleanup(/*cleanOnlyUnused*/false, /*cleanBins=*/true);
         break;
     case TBBMALLOC_CLEAN_ALL_BUFFERS:
-        released = defaultMemPool->extMemPool.hardCachesCleanup();
+        released = defaultMemPool->extMemPool.hardCachesCleanup(true);
         break;
     default:
         return TBBMALLOC_INVALID_PARAM;

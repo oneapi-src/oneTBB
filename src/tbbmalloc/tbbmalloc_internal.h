@@ -576,6 +576,9 @@ struct ExtMemoryPool {
                       fixedPool;
     TLSKey            tlsPointerKey;  // per-pool TLS key
 
+    std::atomic<int> softCachesCleanupInProgress;
+    std::atomic<int> hardCachesCleanupInProgress;
+
     bool init(intptr_t poolId, rawAllocType rawAlloc, rawFreeType rawFree,
               size_t granularity, bool keepAllMemory, bool fixedPool);
     bool initTLS();
@@ -586,7 +589,7 @@ struct ExtMemoryPool {
      // true if something has been released
     bool softCachesCleanup();
     bool releaseAllLocalCaches();
-    bool hardCachesCleanup();
+    bool hardCachesCleanup(bool wait);
     void *remap(void *ptr, size_t oldSize, size_t newSize, size_t alignment);
     bool reset() {
         loc.reset();
