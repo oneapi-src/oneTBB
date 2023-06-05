@@ -319,9 +319,17 @@ inline bool BackendSync::waitTillBlockReleased(intptr_t startModifiedCnt)
         if (currCoalescQInFlyBlocks > 0 && backend->scanCoalescQ(/*forceCoalescQDrop=*/false))
             break;
         // 4) when there are no blocks
-        if (!currBinsInFlyBlocks && !currCoalescQInFlyBlocks)
+        if (!currBinsInFlyBlocks && !currCoalescQInFlyBlocks) {
             // re-scan make sense only if bins were modified since scanned
+            auto pool = backend->extMemPool;
+            if (pool->hardCachesCleanupInProgress.load(std::memory_order_acquire) ||
+                pool->softCachesCleanupInProgress.load(std::memory_order_acquire)) {
+                backoff.pause();
+                continue;
+            }
+
             return startModifiedCnt != getNumOfMods();
+        }
         myBinsInFlyBlocks = currBinsInFlyBlocks;
         myCoalescQInFlyBlocks = currCoalescQInFlyBlocks;
         backoff.pause();
@@ -630,10 +638,12 @@ FreeBlock *Backend::releaseMemInCaches(intptr_t startModifiedCnt,
                                     int *lockedBinsThreshold, int numOfLockedBins)
 {
     // something released from caches
-    if (extMemPool->hardCachesCleanup()
-        // ..or can use blocks that are in processing now
-        || bkndSync.waitTillBlockReleased(startModifiedCnt))
+    if (extMemPool->hardCachesCleanup(false))
         return (FreeBlock*)VALID_BLOCK_IN_BIN;
+
+    if (bkndSync.waitTillBlockReleased(startModifiedCnt))
+        return (FreeBlock*)VALID_BLOCK_IN_BIN;
+
     // OS can't give us more memory, but we have some in locked bins
     if (*lockedBinsThreshold && numOfLockedBins) {
         *lockedBinsThreshold = 0;
@@ -740,7 +750,7 @@ void Backend::releaseCachesToLimit()
                 (locMemSoftLimit = memSoftLimit.load(std::memory_order_acquire)))
                 return;
     // last chance to match memSoftLimit
-    extMemPool->hardCachesCleanup();
+    extMemPool->hardCachesCleanup(true);
 }
 
 int Backend::IndexedBins::getMinNonemptyBin(unsigned startBin) const
@@ -797,8 +807,9 @@ FreeBlock *Backend::genericGetBlock(int num, size_t size, bool needAlignedBlock)
     for (;;) {
         const intptr_t startModifiedCnt = bkndSync.getNumOfMods();
         int numOfLockedBins;
-
+        intptr_t cleanCnt;
         do {
+            cleanCnt = backendCleanCnt.load(std::memory_order_acquire);
             numOfLockedBins = 0;
             if (needAlignedBlock) {
                 block = freeSlabAlignedBins.findBlock(nativeBin, &bkndSync, num*size, needAlignedBlock,
@@ -813,7 +824,8 @@ FreeBlock *Backend::genericGetBlock(int num, size_t size, bool needAlignedBlock)
                     block = freeSlabAlignedBins.findBlock(nativeBin, &bkndSync, num*size, needAlignedBlock,
                                                         /*alignedBin=*/true, &numOfLockedBins);
             }
-        } while (!block && numOfLockedBins>lockedBinsThreshold);
+        } while (!block && (numOfLockedBins>lockedBinsThreshold || cleanCnt % 2 == 1 ||
+                            cleanCnt != backendCleanCnt.load(std::memory_order_acquire)));
 
         if (block)
             break;
@@ -1398,7 +1410,10 @@ bool Backend::destroy()
 bool Backend::clean()
 {
     scanCoalescQ(/*forceCoalescQDrop=*/false);
-
+    // Backend::clean is always called under synchronization so only one thread can
+    // enter to this method at once.
+    // backendCleanCnt%2== 1 means that clean operation is in progress
+    backendCleanCnt.fetch_add(1, std::memory_order_acq_rel);
     bool res = false;
     // We can have several blocks occupying a whole region,
     // because such regions are added in advance (see askMemFromOS() and reset()),
@@ -1409,7 +1424,7 @@ bool Backend::clean()
         if (i == freeLargeBlockBins.getMinNonemptyBin(i))
             res |= freeLargeBlockBins.tryReleaseRegions(i, this);
     }
-
+    backendCleanCnt.fetch_add(1, std::memory_order_acq_rel);
     return res;
 }
 
