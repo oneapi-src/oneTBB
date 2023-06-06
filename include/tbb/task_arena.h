@@ -304,8 +304,8 @@ public:
     struct attach {};
 
     //! Creates an instance of task_arena attached to the current arena of the thread
-    explicit task_arena( attach )
-        : task_arena_base(automatic, 1) // use default settings if attach fails
+    explicit task_arena( attach, int max_concurrency_ = automatic, unsigned reserved_for_masters = 1 )
+        : task_arena_base(max_concurrency_, reserved_for_masters)
     {
         internal_attach();
         if( my_arena ) my_initialized = true;
