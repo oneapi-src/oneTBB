@@ -379,7 +379,7 @@ FreeBlock *Backend::IndexedBins::getFromBin(int binIdx, BackendSync *sync, size_
 try_next:
     FreeBlock *fBlock = nullptr;
     if (!b->empty()) {
-        bool locked;
+        bool locked = false;
         MallocMutex::scoped_lock scopedLock(b->tLock, wait, &locked);
 
         if (!locked) {
@@ -505,7 +505,7 @@ void Backend::IndexedBins::addBlock(int binIdx, FreeBlock *fBlock, size_t /* blo
 
 bool Backend::IndexedBins::tryAddBlock(int binIdx, FreeBlock *fBlock, bool addToTail)
 {
-    bool locked;
+    bool locked = false;
     Bin *b = &freeBins[binIdx];
     fBlock->myBin = binIdx;
     if (addToTail) {
