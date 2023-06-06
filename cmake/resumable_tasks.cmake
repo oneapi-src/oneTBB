@@ -15,9 +15,17 @@
 include(CheckSymbolExists)
 
 if (UNIX)
+    set(CMAKE_REQUIRED_FLAGS -Wno-deprecated-declarations)
+    if (APPLE)
+        set(CMAKE_REQUIRED_DEFINITIONS -D_XOPEN_SOURCE)
+    endif()
+
     check_symbol_exists("getcontext" "ucontext.h" _tbb_have_ucontext)
     if (NOT _tbb_have_ucontext)
         set(TBB_RESUMABLE_TASKS_USE_THREADS "__TBB_RESUMABLE_TASKS_USE_THREADS=1")
     endif()
+
     unset(_tbb_have_ucontext)
+    unset(CMAKE_REQUIRED_DEFINITIONS)
+    unset(CMAKE_REQUIRED_FLAGS)
 endif()
