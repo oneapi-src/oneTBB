@@ -448,6 +448,7 @@ if (TARGET TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_task DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_concurrent_monitor DEPENDENCIES TBB::tbb)
     tbb_add_test(SUBDIR tbb NAME test_scheduler_mix DEPENDENCIES TBB::tbb)
+    tbb_add_test(SUBDIR tbb NAME test_statistics DEPENDENCIES TBB::tbb)
 
     # test_handle_perror
     tbb_add_test(SUBDIR tbb NAME test_handle_perror)

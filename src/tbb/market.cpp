@@ -206,7 +206,7 @@ bool market::release ( bool is_public, bool blocking_terminate ) {
             theMarket = nullptr;
         }
     }
-    if( do_release ) {
+    if ( do_release ) {
         __TBB_ASSERT( !my_public_ref_count.load(std::memory_order_relaxed),
             "No public references remain if we remove the market." );
         // inform RML that blocking termination is required
