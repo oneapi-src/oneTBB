@@ -196,7 +196,7 @@ public:
         return *this;
     }
     static bool init() { return true; }
-#if __TBB_SOURCE_DIRECTLY_INCLUDED   
+#if __TBB_SOURCE_DIRECTLY_INCLUDED
     static void destroy() {}
 #endif
 };
@@ -694,7 +694,7 @@ bool AllLocalCaches::cleanup(bool cleanOnlyUnused)
 
 void AllLocalCaches::markUnused()
 {
-    bool locked;
+    bool locked = false;
     MallocMutex::scoped_lock lock(listLock, /*block=*/false, &locked);
     if (!locked) // not wait for marking if someone doing something with it
         return;
@@ -1808,7 +1808,7 @@ void TLSData::release()
 
         if (syncOnMailbox) {
             // Although, we synchronized on nextPrivatizable inside a block, we still need to
-            // synchronize on the bin lifetime because the thread releasing an object into the public 
+            // synchronize on the bin lifetime because the thread releasing an object into the public
             // free list is touching the bin (mailbox and mailLock)
             MallocMutex::scoped_lock scoped_cs(bin[index].mailLock);
         }
@@ -2868,7 +2868,7 @@ void doThreadShutdownNotification(TLSData* tls, bool main_thread)
         defaultMemPool->onThreadShutdown(defaultMemPool->getTLS(/*create=*/false));
         // Take lock to walk through other pools; but waiting might be dangerous at this point
         // (e.g. on Windows the main thread might deadlock)
-        bool locked;
+        bool locked = false;
         MallocMutex::scoped_lock lock(MemoryPool::memPoolListLock, /*wait=*/!main_thread, &locked);
         if (locked) { // the list is safe to process
             for (MemoryPool *memPool = defaultMemPool->next; memPool; memPool = memPool->next)
