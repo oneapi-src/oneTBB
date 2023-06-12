@@ -1979,3 +1979,22 @@ TEST_CASE("is_inside_task in arena::execute") {
     });
 }
 #endif //__TBB_PREVIEW_TASK_GROUP_EXTENSIONS
+
+//! \brief \ref interface \ref requirement \ref regression
+TEST_CASE("worker threads occupy slots in correct range") {
+    std::vector<tbb::task_arena> arenas(42);
+    for (auto& arena : arenas) {
+        arena.initialize(1, 0);
+    }
+
+    tbb::task_group tg;
+    for (auto& arena : arenas) {
+        arena.execute([&] {
+            tg.run([] {
+                CHECK(tbb::this_task_arena::current_thread_index() == 0);
+            });
+        });
+    }
+
+    tg.wait();
+}

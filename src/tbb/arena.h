@@ -312,8 +312,8 @@ public:
     static arena& allocate_arena( market& m, unsigned num_slots, unsigned num_reserved_slots,
                                   unsigned priority_level );
 
-    static int unsigned num_arena_slots ( unsigned num_slots ) {
-        return max(2u, num_slots);
+    static int unsigned num_arena_slots ( unsigned num_slots, unsigned num_reserved_slots ) {
+        return num_reserved_slots == 0 ? num_slots : max(2u, num_slots);
     }
 
     static int allocation_size ( unsigned num_slots ) {
