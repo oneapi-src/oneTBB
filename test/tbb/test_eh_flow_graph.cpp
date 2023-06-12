@@ -1928,7 +1928,7 @@ public:
     }
 };
 
-// test from user ahelwer: http://software.intel.com/en-us/forums/showthread.php?t=103786
+// test from user ahelwer: https://community.intel.com/t5/Intel-oneAPI-Threading-Building/Exception-in-flow-graph-results-in-graph-wait-for-all-hanging/td-p/789352
 // exception thrown in graph node, not caught in wait_for_all()
 void
 test_flow_graph_exception0() {

@@ -353,7 +353,7 @@ ITT_STUBV(ITTAPI, void, detach, (void))
  * @defgroup Intel Processor Trace control
  * API from this group provides control over collection and analysis of Intel Processor Trace (Intel PT) data
  * Information about Intel Processor Trace technology can be found here (Volume 3 chapter 35):
- * https://software.intel.com/sites/default/files/managed/39/c5/325462-sdm-vol-1-2abcd-3abcd.pdf
+ * https://github.com/tpn/pdfs/blob/master/Intel%2064%20and%20IA-32%20Architectures%20Software%20Developer's%20Manual%20-%20Combined%20Volumes%201-4%20-%20May%202018%20(325462-sdm-vol-1-2abcd-3abcd).pdf
  * Use this API to mark particular code regions for loading detailed performance statistics.
  * This mode makes your analysis faster and more accurate.
  * @{
