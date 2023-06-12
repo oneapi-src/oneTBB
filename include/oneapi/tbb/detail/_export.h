@@ -39,6 +39,12 @@
     #define TBBMALLOC_EXPORT
 #endif
 
+#if __TBBMALLOCPROXY_BUILD
+    #define TBBMALLOCPROXY_EXPORT __TBB_EXPORT
+#else
+    #define TBBMALLOCPROXY_EXPORT
+#endif
+
 #if __TBBBIND_BUILD
     #define TBBBIND_EXPORT __TBB_EXPORT
 #else

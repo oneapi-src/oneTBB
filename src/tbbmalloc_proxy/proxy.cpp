@@ -133,7 +133,7 @@ static inline void initPageSize()
    2) check that dlsym("malloc") found something different from our replacement malloc
 */
 
-extern "C" __TBB_EXPORT void *__TBB_malloc_proxy(size_t) __TBB_ALIAS_ATTR_COPY(malloc);
+extern "C" TBBMALLOCPROXY_EXPORT void *__TBB_malloc_proxy(size_t) __TBB_ALIAS_ATTR_COPY(malloc);
 
 static void *orig_msize;
 
@@ -184,23 +184,23 @@ inline void InitOrigPointers() {}
 
 #endif // MALLOC_UNIXLIKE_OVERLOAD_ENABLED and MALLOC_ZONE_OVERLOAD_ENABLED
 
-__TBB_EXPORT void *PREFIX(malloc)(ZONE_ARG size_t size) __THROW
+TBBMALLOCPROXY_EXPORT void *PREFIX(malloc)(ZONE_ARG size_t size) __THROW
 {
     return scalable_malloc(size);
 }
 
-__TBB_EXPORT void *PREFIX(calloc)(ZONE_ARG size_t num, size_t size) __THROW
+TBBMALLOCPROXY_EXPORT void *PREFIX(calloc)(ZONE_ARG size_t num, size_t size) __THROW
 {
     return scalable_calloc(num, size);
 }
 
-__TBB_EXPORT void PREFIX(free)(ZONE_ARG void *object) __THROW
+TBBMALLOCPROXY_EXPORT void PREFIX(free)(ZONE_ARG void *object) __THROW
 {
     InitOrigPointers();
     __TBB_malloc_safer_free(object, (void (*)(void*))orig_free);
 }
 
-__TBB_EXPORT void *PREFIX(realloc)(ZONE_ARG void* ptr, size_t sz) __THROW
+TBBMALLOCPROXY_EXPORT void *PREFIX(realloc)(ZONE_ARG void* ptr, size_t sz) __THROW
 {
     InitOrigPointers();
     return __TBB_malloc_safer_realloc(ptr, sz, orig_realloc);
@@ -209,13 +209,13 @@ __TBB_EXPORT void *PREFIX(realloc)(ZONE_ARG void* ptr, size_t sz) __THROW
 /* The older *NIX interface for aligned allocations;
    it's formally substituted by posix_memalign and deprecated,
    so we do not expect it to cause cyclic dependency with C RTL. */
-__TBB_EXPORT void *PREFIX(memalign)(ZONE_ARG size_t alignment, size_t size) __THROW
+TBBMALLOCPROXY_EXPORT void *PREFIX(memalign)(ZONE_ARG size_t alignment, size_t size) __THROW
 {
     return scalable_aligned_malloc(size, alignment);
 }
 
 /* valloc allocates memory aligned on a page boundary */
-__TBB_EXPORT void *PREFIX(valloc)(ZONE_ARG size_t size) __THROW
+TBBMALLOCPROXY_EXPORT void *PREFIX(valloc)(ZONE_ARG size_t size) __THROW
 {
     if (! memoryPageSize) initPageSize();
 
@@ -229,23 +229,23 @@ __TBB_EXPORT void *PREFIX(valloc)(ZONE_ARG size_t size) __THROW
 
 // match prototype from system headers
 #if __ANDROID__
-__TBB_EXPORT size_t malloc_usable_size(const void *ptr) __THROW
+TBBMALLOCPROXY_EXPORT size_t malloc_usable_size(const void *ptr) __THROW
 #else
-__TBB_EXPORT size_t malloc_usable_size(void *ptr) __THROW
+TBBMALLOCPROXY_EXPORT size_t malloc_usable_size(void *ptr) __THROW
 #endif
 {
     InitOrigPointers();
     return __TBB_malloc_safer_msize(const_cast<void*>(ptr), (size_t (*)(void*))orig_msize);
 }
 
-__TBB_EXPORT int posix_memalign(void **memptr, size_t alignment, size_t size) __THROW
+TBBMALLOCPROXY_EXPORT int posix_memalign(void **memptr, size_t alignment, size_t size) __THROW
 {
     return scalable_posix_memalign(memptr, alignment, size);
 }
 
 /* pvalloc allocates smallest set of complete pages which can hold
    the requested number of bytes. Result is aligned on page boundary. */
-__TBB_EXPORT void *pvalloc(size_t size) __THROW
+TBBMALLOCPROXY_EXPORT void *pvalloc(size_t size) __THROW
 {
     if (! memoryPageSize) initPageSize();
     // align size up to the page size,
@@ -255,13 +255,13 @@ __TBB_EXPORT void *pvalloc(size_t size) __THROW
     return scalable_aligned_malloc(size, memoryPageSize);
 }
 
-__TBB_EXPORT int mallopt(int /*param*/, int /*value*/) __THROW
+TBBMALLOCPROXY_EXPORT int mallopt(int /*param*/, int /*value*/) __THROW
 {
     return 1;
 }
 
 #if defined(__GLIBC__) || defined(__ANDROID__)
-__TBB_EXPORT struct mallinfo mallinfo() __THROW
+TBBMALLOCPROXY_EXPORT struct mallinfo mallinfo() __THROW
 {
     struct mallinfo m;
     memset(&m, 0, sizeof(struct mallinfo));
@@ -274,30 +274,30 @@ __TBB_EXPORT struct mallinfo mallinfo() __THROW
 // Android doesn't have malloc_usable_size, provide it to be compatible
 // with Linux, in addition overload dlmalloc_usable_size() that presented
 // under Android.
-__TBB_EXPORT size_t dlmalloc_usable_size(const void *ptr) __TBB_ALIAS_ATTR_COPY(malloc_usable_size);
+TBBMALLOCPROXY_EXPORT size_t dlmalloc_usable_size(const void *ptr) __TBB_ALIAS_ATTR_COPY(malloc_usable_size);
 #else // __ANDROID__
 // TODO: consider using __typeof__ to guarantee the correct declaration types
 // C11 function, supported starting GLIBC 2.16
-__TBB_EXPORT void *aligned_alloc(size_t alignment, size_t size) __TBB_ALIAS_ATTR_COPY(memalign);
+TBBMALLOCPROXY_EXPORT void *aligned_alloc(size_t alignment, size_t size) __TBB_ALIAS_ATTR_COPY(memalign);
 // Those non-standard functions are exported by GLIBC, and might be used
 // in conjunction with standard malloc/free, so we must overload them.
 // Bionic doesn't have them. Not removing from the linker scripts,
 // as absent entry points are ignored by the linker.
 
-__TBB_EXPORT void *__libc_malloc(size_t size) __TBB_ALIAS_ATTR_COPY(malloc);
-__TBB_EXPORT void *__libc_calloc(size_t num, size_t size) __TBB_ALIAS_ATTR_COPY(calloc);
-__TBB_EXPORT void *__libc_memalign(size_t alignment, size_t size) __TBB_ALIAS_ATTR_COPY(memalign);
-__TBB_EXPORT void *__libc_pvalloc(size_t size) __TBB_ALIAS_ATTR_COPY(pvalloc);
-__TBB_EXPORT void *__libc_valloc(size_t size) __TBB_ALIAS_ATTR_COPY(valloc);
+TBBMALLOCPROXY_EXPORT void *__libc_malloc(size_t size) __TBB_ALIAS_ATTR_COPY(malloc);
+TBBMALLOCPROXY_EXPORT void *__libc_calloc(size_t num, size_t size) __TBB_ALIAS_ATTR_COPY(calloc);
+TBBMALLOCPROXY_EXPORT void *__libc_memalign(size_t alignment, size_t size) __TBB_ALIAS_ATTR_COPY(memalign);
+TBBMALLOCPROXY_EXPORT void *__libc_pvalloc(size_t size) __TBB_ALIAS_ATTR_COPY(pvalloc);
+TBBMALLOCPROXY_EXPORT void *__libc_valloc(size_t size) __TBB_ALIAS_ATTR_COPY(valloc);
 
 // call original __libc_* to support naive replacement of free via __libc_free etc
-__TBB_EXPORT void __libc_free(void *ptr)
+TBBMALLOCPROXY_EXPORT void __libc_free(void *ptr)
 {
     InitOrigPointers();
     __TBB_malloc_safer_free(ptr, (void (*)(void*))orig_libc_free);
 }
 
-__TBB_EXPORT void *__libc_realloc(void *ptr, size_t size)
+TBBMALLOCPROXY_EXPORT void *__libc_realloc(void *ptr, size_t size)
 {
     InitOrigPointers();
     return __TBB_malloc_safer_realloc(ptr, size, orig_libc_realloc);
@@ -308,31 +308,31 @@ __TBB_EXPORT void *__libc_realloc(void *ptr, size_t size)
 
 /*** replacements for global operators new and delete ***/
 
-__TBB_EXPORT void* operator new(size_t sz) {
+TBBMALLOCPROXY_EXPORT void* operator new(size_t sz) {
     return InternalOperatorNew(sz);
 }
-__TBB_EXPORT void* operator new[](size_t sz) {
+TBBMALLOCPROXY_EXPORT void* operator new[](size_t sz) {
     return InternalOperatorNew(sz);
 }
-__TBB_EXPORT void operator delete(void* ptr) noexcept {
+TBBMALLOCPROXY_EXPORT void operator delete(void* ptr) noexcept {
     InitOrigPointers();
     __TBB_malloc_safer_free(ptr, (void (*)(void*))orig_free);
 }
-__TBB_EXPORT void operator delete[](void* ptr) noexcept {
+TBBMALLOCPROXY_EXPORT void operator delete[](void* ptr) noexcept {
     InitOrigPointers();
     __TBB_malloc_safer_free(ptr, (void (*)(void*))orig_free);
 }
-__TBB_EXPORT void* operator new(size_t sz, const std::nothrow_t&) noexcept {
+TBBMALLOCPROXY_EXPORT void* operator new(size_t sz, const std::nothrow_t&) noexcept {
     return scalable_malloc(sz);
 }
-__TBB_EXPORT void* operator new[](std::size_t sz, const std::nothrow_t&) noexcept {
+TBBMALLOCPROXY_EXPORT void* operator new[](std::size_t sz, const std::nothrow_t&) noexcept {
     return scalable_malloc(sz);
 }
-__TBB_EXPORT void operator delete(void* ptr, const std::nothrow_t&) noexcept {
+TBBMALLOCPROXY_EXPORT void operator delete(void* ptr, const std::nothrow_t&) noexcept {
     InitOrigPointers();
     __TBB_malloc_safer_free(ptr, (void (*)(void*))orig_free);
 }
-__TBB_EXPORT void operator delete[](void* ptr, const std::nothrow_t&) noexcept {
+TBBMALLOCPROXY_EXPORT void operator delete[](void* ptr, const std::nothrow_t&) noexcept {
     InitOrigPointers();
     __TBB_malloc_safer_free(ptr, (void (*)(void*))orig_free);
 }
