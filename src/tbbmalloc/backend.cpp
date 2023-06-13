@@ -1458,6 +1458,7 @@ size_t Backend::Bin::reportFreeBlocks(FILE *f)
     for (FreeBlock *fb = head; fb; fb = fb->next) {
         size_t sz = fb->tryLockBlock();
         fb->setMeFree(sz);
+        fb->rightNeig(sz)->setLeftFree(sz);
         fprintf(f, " [%p;%p]", fb, (void*)((uintptr_t)fb+sz));
         totalSz += sz;
     }
