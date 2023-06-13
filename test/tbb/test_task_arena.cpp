@@ -1987,14 +1987,13 @@ TEST_CASE("worker threads occupy slots in correct range") {
         arena.initialize(1, 0);
     }
 
-    tbb::task_group tg;
+    std::atomic<int> counter{0};
     for (auto& arena : arenas) {
-        arena.execute([&] {
-            tg.run([] {
-                CHECK(tbb::this_task_arena::current_thread_index() == 0);
-            });
+        arena.enqueue([&] {
+            CHECK(tbb::this_task_arena::current_thread_index() == 0);
+            ++counter;
         });
     }
 
-    tg.wait();
+    while (counter < 42) { utils::yield(); }
 }
