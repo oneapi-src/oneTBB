@@ -235,7 +235,7 @@ struct arena_base : padded<intrusive_list_node> {
 
 #if __TBB_ARENA_BINDING
     //! Pointer to internal observer that allows to bind threads in arena to certain NUMA node.
-    numa_binding_observer* my_numa_binding_observer;
+    numa_binding_observer* my_numa_binding_observer{nullptr};
 #endif /*__TBB_ARENA_BINDING*/
 
     // Below are rarely modified members

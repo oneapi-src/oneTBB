@@ -543,10 +543,10 @@ void task_arena_impl::initialize(d1::task_arena_base& ta) {
     threading_control* thr_control = threading_control::register_public_reference();
     arena& a = arena::create(thr_control, unsigned(ta.my_max_concurrency), ta.my_num_reserved_slots, priority_level);
     ta.my_arena.store(&a, std::memory_order_release);
-#if __TBB_ARENA_BINDING
+#if __TBB_CPUBIND_PRESENT
     a.my_numa_binding_observer = construct_binding_observer(
         static_cast<d1::task_arena*>(&ta), a.my_num_slots, ta.my_numa_id, ta.core_type(), ta.max_threads_per_core());
-#endif /*__TBB_ARENA_BINDING*/
+#endif /*__TBB_CPUBIND_PRESENT*/
 }
 
 void task_arena_impl::terminate(d1::task_arena_base& ta) {

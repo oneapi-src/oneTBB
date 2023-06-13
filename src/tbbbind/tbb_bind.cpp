@@ -104,6 +104,7 @@ private:
         if ( initialization_state != topology_loaded )
             return;
 
+#if __TBB_CPUBIND_PRESENT
         // Getting process affinity mask
         if ( intergroup_binding_allowed(groups_num) ) {
             process_cpu_affinity_mask  = hwloc_bitmap_dup(hwloc_topology_get_complete_cpuset (topology));
@@ -115,6 +116,10 @@ private:
             assertion_hwloc_wrapper(hwloc_get_cpubind, topology, process_cpu_affinity_mask, 0);
             hwloc_cpuset_to_nodeset(topology, process_cpu_affinity_mask, process_node_affinity_mask);
         }
+#else
+        process_cpu_affinity_mask  = hwloc_bitmap_dup(hwloc_topology_get_complete_cpuset (topology));
+        process_node_affinity_mask = hwloc_bitmap_dup(hwloc_topology_get_complete_nodeset(topology));
+#endif
 
         number_of_processors_groups = groups_num;
     }
