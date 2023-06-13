@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -110,7 +110,7 @@ std::uintptr_t arena::calculate_stealing_threshold() {
 void arena::process(thread_data& tls) {
     governor::set_thread_data(tls); // TODO: consider moving to create_one_job.
     __TBB_ASSERT( is_alive(my_guard), nullptr);
-    __TBB_ASSERT( my_num_slots > 1, nullptr);
+    __TBB_ASSERT( my_num_slots >= 1, nullptr);
 
     std::size_t index = occupy_free_slot</*as_worker*/true>(tls);
     if (index == out_of_arena) {
@@ -171,7 +171,7 @@ arena::arena ( market& m, unsigned num_slots, unsigned num_reserved_slots, unsig
     my_market = &m;
     my_limit = 1;
     // Two slots are mandatory: for the external thread, and for 1 worker (required to support starvation resistant tasks).
-    my_num_slots = num_arena_slots(num_slots);
+    my_num_slots = num_arena_slots(num_slots, num_reserved_slots);
     my_num_reserved_slots = num_reserved_slots;
     my_max_num_workers = num_slots-num_reserved_slots;
     my_priority_level = priority_level;
@@ -212,11 +212,11 @@ arena& arena::allocate_arena( market& m, unsigned num_slots, unsigned num_reserv
     __TBB_ASSERT( sizeof(base_type) + sizeof(arena_slot) == sizeof(arena), "All arena data fields must go to arena_base" );
     __TBB_ASSERT( sizeof(base_type) % cache_line_size() == 0, "arena slots area misaligned: wrong padding" );
     __TBB_ASSERT( sizeof(mail_outbox) == max_nfs_size, "Mailbox padding is wrong" );
-    std::size_t n = allocation_size(num_arena_slots(num_slots));
+    std::size_t n = allocation_size(num_arena_slots(num_slots, num_reserved_slots));
     unsigned char* storage = (unsigned char*)cache_aligned_allocate(n);
     // Zero all slots to indicate that they are empty
     std::memset( storage, 0, n );
-    return *new( storage + num_arena_slots(num_slots) * sizeof(mail_outbox) )
+    return *new( storage + num_arena_slots(num_slots, num_reserved_slots) * sizeof(mail_outbox) )
         arena(m, num_slots, num_reserved_slots, priority_level);
 }
 
@@ -478,7 +478,7 @@ bool task_arena_impl::attach(d1::task_arena_base& ta) {
         ta.my_num_reserved_slots = a->my_num_reserved_slots;
         ta.my_priority = arena_priority(a->my_priority_level);
         ta.my_max_concurrency = ta.my_num_reserved_slots + a->my_max_num_workers;
-        __TBB_ASSERT(arena::num_arena_slots(ta.my_max_concurrency) == a->my_num_slots, nullptr);
+        __TBB_ASSERT(arena::num_arena_slots(ta.my_max_concurrency, ta.my_num_reserved_slots) == a->my_num_slots, nullptr);
         ta.my_arena.store(a, std::memory_order_release);
         // increases market's ref count for task_arena
         market::global_market( /*is_public=*/true );
