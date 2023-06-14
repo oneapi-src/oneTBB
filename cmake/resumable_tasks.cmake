@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-prefix=@_prefix_for_pc_file@
-libdir=@_libdir_for_pc_file@
-includedir=@_includedir_for_pc_file@
+include(CheckSymbolExists)
 
-Name: oneAPI Threading Building Blocks (oneTBB)
-Description: C++ library for parallel programming on multi-core processors.
-URL: https://github.com/oneapi-src/oneTBB
-Version: @TBB_VERSION@
-Libs: -L${libdir} @_tbb_pc_extra_libdir@ -l@_tbb_pc_lib_name@
-Cflags: -I${includedir}
+if (UNIX)
+    set(CMAKE_REQUIRED_FLAGS -Wno-deprecated-declarations)
+    if (APPLE)
+        set(CMAKE_REQUIRED_DEFINITIONS -D_XOPEN_SOURCE)
+    endif()
+
+    check_symbol_exists("getcontext" "ucontext.h" _tbb_have_ucontext)
+    if (NOT _tbb_have_ucontext)
+        set(TBB_RESUMABLE_TASKS_USE_THREADS "__TBB_RESUMABLE_TASKS_USE_THREADS=1")
+    endif()
+
+    unset(_tbb_have_ucontext)
+    unset(CMAKE_REQUIRED_DEFINITIONS)
+    unset(CMAKE_REQUIRED_FLAGS)
+endif()

@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-prefix=@_prefix_for_pc_file@
-libdir=@_libdir_for_pc_file@
-includedir=@_includedir_for_pc_file@
+name: "Issue Labeler"
+on:
+  issues:
+    types: [opened, edited]
+  pull_request:
+    types: [opened, edited]
 
-Name: oneAPI Threading Building Blocks (oneTBB)
-Description: C++ library for parallel programming on multi-core processors.
-URL: https://github.com/oneapi-src/oneTBB
-Version: @TBB_VERSION@
-Libs: -L${libdir} @_tbb_pc_extra_libdir@ -l@_tbb_pc_lib_name@
-Cflags: -I${includedir}
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: github/issue-labeler@v2.5 #May not be the latest version
+      with:
+        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        configuration-path: .github/issue_labeler.yml
+        enable-versioned-regex: 0

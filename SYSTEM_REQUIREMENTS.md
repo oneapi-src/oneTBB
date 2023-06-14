@@ -23,6 +23,7 @@ This document provides details about hardware, operating system, and software pr
   - [Supported Operating Systems](#supported-operating-systems)
   - [Community-Supported Platforms](#community-supported-platforms)
   - [Supported Compilers](#supported-compilers)
+- [Limitations](#limitations)
 
 
 ## Supported Hardware
@@ -70,3 +71,16 @@ This document provides details about hardware, operating system, and software pr
   - GNU Compilers (gcc) 4.8.5 - 11.2.1
   - GNU C Library (glibc) version 2.17 - 2.34
   - Clang* 6.0.0 - 13.0.0
+
+## Limitations
+There are some cases where we cannot provide support for your platforms. It includes: 
+
+1. The platform is out of official support (met end of life). When you use an unsupported platform, you can face a security risk that can be difficult to resolve.
+2. We do not have the infrastructure to test a platform. Therefore we cannot guarantee that oneTBB works correctly on that platform. 
+3. Changes affect more code than just platform-specific macros.
+4. The platform is incompatible with oneTBB. Some platforms may have limitations that prevent oneTBB from working correctly. We cannot provide support in these cases as the issue is beyond our control.
+5. The platform is modified or customized. If you made significant updates to your platform, it might be hard for us to find the root cause of the issue. Therefore, we may not be able to provide support as the modification could affect the oneTBB functionality. 
+
+
+We understand that these limitations can be frustrating. Thus, we suggest creating a branch specifically for the unsupported platform, allowing other users to contribute to or use your implementation.
+

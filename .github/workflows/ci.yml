@@ -65,6 +65,7 @@ jobs:
         run: |
           pip3 install -U Jinja2
           pip3 install git+https://github.com/executablebooks/sphinx-book-theme.git
+          pip3 install sphinx-tabs
           echo GITHUB_SHA_SHORT=${GITHUB_SHA::8} >> $GITHUB_ENV
           mkdir html
       - name: Build documentation
@@ -184,7 +185,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-10.15
+          - os: macos-12
             c_compiler: clang
             cxx_compiler: clang++
             std: 14
@@ -284,7 +285,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-10.15
+          - os: macos-12
             c_compiler: clang
             cxx_compiler: clang++
             std: 14
