@@ -297,7 +297,7 @@ void arena::free_arena () {
     __TBB_ASSERT( is_alive(my_guard), nullptr);
     __TBB_ASSERT( !my_references.load(std::memory_order_relaxed), "There are threads in the dying arena" );
     __TBB_ASSERT( !my_total_num_workers_requested && !my_num_workers_allotted, "Dying arena requests workers" );
-    __TBB_ASSERT( my_pool_state.test(std::memory_order_relaxed) == false || !my_max_num_workers, "Inconsistent state of a dying arena" );
+    __TBB_ASSERT( is_arena_empty() || !my_max_num_workers, "Inconsistent state of a dying arena" );
 #if __TBB_ARENA_BINDING
     if (my_numa_binding_observer != nullptr) {
         destroy_binding_observer(my_numa_binding_observer);
@@ -328,7 +328,7 @@ void arena::free_arena () {
 
     void* storage  = &mailbox(my_num_slots-1);
     __TBB_ASSERT( my_references.load(std::memory_order_relaxed) == 0, nullptr);
-    __TBB_ASSERT( my_pool_state.test(std::memory_order_relaxed) == false|| !my_max_num_workers, nullptr);
+    __TBB_ASSERT( is_arena_empty() || !my_max_num_workers, nullptr);
     this->~arena();
 #if TBB_USE_ASSERT > 1
     std::memset( storage, 0, allocation_size(my_num_slots) );
@@ -351,7 +351,7 @@ void arena::request_workers(int mandatory_delta, int workers_delta, bool wakeup_
     }
 }
 
-bool arena::is_arena_empty() {
+bool arena::check_work_absence() {
     // TODO: rework it to return at least a hint about where a task was found; better if the task itself.
     std::size_t n = my_limit.load(std::memory_order_acquire);
     bool no_available_tasks = true;
@@ -369,7 +369,7 @@ void arena::out_of_work() {
     // We should try unset my_pool_state first due to keep arena invariants in consistent state
     // Otherwise, we might have my_pool_state = false and my_mandatory_concurrency = true that is broken invariant
     bool disable_mandatory = my_mandatory_concurrency.try_clear_if([this] { return !has_enqueued_tasks(); });
-    bool release_workers = my_pool_state.try_clear_if([this] { return is_arena_empty(); });
+    bool release_workers = my_pool_state.try_clear_if([this] { return check_work_absence(); });
 
     if (disable_mandatory || release_workers) {
         int mandatory_delta = disable_mandatory ? -1 : 0;
@@ -793,7 +793,7 @@ void task_arena_impl::wait(d1::task_arena_base& ta) {
     __TBB_ASSERT_EX(td, "Scheduler is not initialized");
     __TBB_ASSERT(td->my_arena != a || td->my_arena_index == 0, "internal_wait is not supported within a worker context" );
     if (a->my_max_num_workers != 0) {
-        while (a->num_workers_active() || a->my_pool_state.test()) {
+        while (a->num_workers_active() || !a->is_arena_empty()) {
             yield();
         }
     }

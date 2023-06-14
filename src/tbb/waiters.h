@@ -110,10 +110,6 @@ class sleep_waiter : public waiter_base {
 protected:
     using waiter_base::waiter_base;
 
-    bool is_arena_empty() {
-        return my_arena.my_pool_state.test() == false;
-    }
-
     template <typename Pred>
     void sleep(std::uintptr_t uniq_tag, Pred wakeup_condition) {
         my_arena.get_waiting_threads_monitor().wait<thread_control_monitor::thread_context>(wakeup_condition,
@@ -140,7 +136,7 @@ public:
             return;
         }
 
-        auto wakeup_condition = [&] { return !is_arena_empty() || !my_wait_ctx.continue_execution(); };
+        auto wakeup_condition = [&] { return !my_arena.is_arena_empty() || !my_wait_ctx.continue_execution(); };
 
         sleep(std::uintptr_t(&my_wait_ctx), wakeup_condition);
         my_backoff.reset_wait();
@@ -177,7 +173,7 @@ public:
 
         suspend_point_type* sp = slot.default_task_dispatcher().m_suspend_point;
 
-        auto wakeup_condition = [&] { return !is_arena_empty() || sp->m_is_owner_recalled.load(std::memory_order_relaxed); };
+        auto wakeup_condition = [&] { return !my_arena.is_arena_empty() || sp->m_is_owner_recalled.load(std::memory_order_relaxed); };
 
         sleep(std::uintptr_t(sp), wakeup_condition);
         my_backoff.reset_wait();
