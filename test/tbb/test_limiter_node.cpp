@@ -222,7 +222,7 @@ int test_serial() {
    return 0;
 }
 
-// reported bug in limiter (http://software.intel.com/en-us/comment/1752355)
+// reported bug in limiter (https://community.intel.com/t5/Intel-oneAPI-Threading-Building/multifun-node-try-put-several-messages-to-one-successor-crashes/m-p/922844)
 #define DECREMENT_OUTPUT 1  // the port number of the decrement output of the multifunction_node
 #define LIMITER_OUTPUT 0    // port number of the integer output
 
