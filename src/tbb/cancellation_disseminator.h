@@ -43,6 +43,7 @@ public:
         // The whole propagation algorithm is under the lock in order to ensure correctness
         // in case of concurrent state changes at the different levels of the context tree.
         threads_list_mutex_type::scoped_lock lock(my_threads_list_mutex);
+        // TODO: consider to use double-check idiom
         if ((src.*mptr_state).load(std::memory_order_relaxed) != new_state) {
             // Another thread has concurrently changed the state. Back down.
             return false;
