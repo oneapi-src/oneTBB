@@ -136,7 +136,7 @@ public:
             return;
         }
 
-        auto wakeup_condition = [&] { return !my_arena.is_arena_empty() || !my_wait_ctx.continue_execution(); };
+        auto wakeup_condition = [&] { return !my_arena.is_empty() || !my_wait_ctx.continue_execution(); };
 
         sleep(std::uintptr_t(&my_wait_ctx), wakeup_condition);
         my_backoff.reset_wait();
@@ -173,7 +173,7 @@ public:
 
         suspend_point_type* sp = slot.default_task_dispatcher().m_suspend_point;
 
-        auto wakeup_condition = [&] { return !my_arena.is_arena_empty() || sp->m_is_owner_recalled.load(std::memory_order_relaxed); };
+        auto wakeup_condition = [&] { return !my_arena.is_empty() || sp->m_is_owner_recalled.load(std::memory_order_relaxed); };
 
         sleep(std::uintptr_t(sp), wakeup_condition);
         my_backoff.reset_wait();

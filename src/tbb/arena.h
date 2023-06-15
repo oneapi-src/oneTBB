@@ -361,9 +361,9 @@ public:
     bool has_enqueued_tasks();
 
     //! Check for the presence of any tasks
-    bool check_work_absence();
+    bool has_tasks();
 
-    bool is_arena_empty() { return my_pool_state.test() == /* EMPTY */ false; }
+    bool is_empty() { return my_pool_state.test() == /* EMPTY */ false; }
 
     thread_control_monitor& get_waiting_threads_monitor();
 
