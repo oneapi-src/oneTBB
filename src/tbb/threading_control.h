@@ -80,7 +80,7 @@ private:
                                                                               unsigned workers_soft_limit,
                                                                               unsigned workers_hard_limit);
 
-    // TODO: Consider allocation one chank of memory and construct objects on it
+    // TODO: Consider allocation one chunk of memory and construct objects on it
     cache_aligned_unique_ptr<permit_manager> my_permit_manager{nullptr};
     cache_aligned_unique_ptr<thread_dispatcher> my_thread_dispatcher{nullptr};
     cache_aligned_unique_ptr<thread_request_serializer_proxy> my_thread_request_serializer{nullptr};
