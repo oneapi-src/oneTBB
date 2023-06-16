@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2021 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -251,3 +251,22 @@ TEST_CASE("prolong lifetime multiple wait") {
     TestBlockingTerminateNS::TestMultpleWait();
 }
 
+//! \brief \ref regression
+TEST_CASE("test concurrent task_scheduler_handle destruction") {
+    std::atomic<bool> stop{ false };
+    std::thread thr1([&] {
+        while (!stop) {
+            auto h = tbb::task_scheduler_handle{ tbb::attach{} };
+            tbb::finalize(h, std::nothrow_t{});
+        }
+    });
+
+    for (int i = 0; i < 1000; ++i) {
+        std::thread thr2([] {
+            tbb::parallel_for(0, 1, [](int) {});
+        });
+        thr2.join();
+    }
+    stop = true;
+    thr1.join();
+}

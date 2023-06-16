@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2022 Intel Corporation
+    Copyright (c) 2005-2023 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 #include "main.h"
 #include "governor.h"
+#include "threading_control.h"
 #include "environment.h"
 #include "market.h"
 #include "misc.h"
@@ -40,9 +41,9 @@ bool governor::UsePrivateRML;
 bool governor::is_rethrow_broken;
 
 //------------------------------------------------------------------------
-// market data
-market* market::theMarket;
-market::global_market_mutex_type market::theMarketMutex;
+// threading_control data
+threading_control* threading_control::g_threading_control;
+threading_control::global_mutex_type threading_control::g_threading_control_mutex;
 
 //------------------------------------------------------------------------
 // context propagation data

@@ -18,6 +18,7 @@
 
 #define __TBB_EXTRA_DEBUG 1
 #include "common/concurrency_tracker.h"
+#include "common/cpu_usertime.h"
 #include "common/spin_barrier.h"
 #include "common/utils.h"
 #include "common/utils_report.h"
@@ -33,12 +34,13 @@
 #include "tbb/spin_rw_mutex.h"
 #include "tbb/task_group.h"
 
-#include <stdexcept>
-#include <cstdlib>
-#include <cstdio>
-#include <vector>
-#include <thread>
 #include <atomic>
+#include <condition_variable>
+#include <cstdio>
+#include <cstdlib>
+#include <stdexcept>
+#include <thread>
+#include <vector>
 
 //#include "harness_fp.h"
 
@@ -446,10 +448,10 @@ public:
     // Arena's functor
     void operator()() const {
         int idx = tbb::this_task_arena::current_thread_index();
-        CHECK( idx < (my_max_concurrency > 1 ? my_max_concurrency : 2) );
-        CHECK( my_a.max_concurrency() == tbb::this_task_arena::max_concurrency() );
+        REQUIRE( idx < (my_max_concurrency > 1 ? my_max_concurrency : 2) );
+        REQUIRE( my_a.max_concurrency() == tbb::this_task_arena::max_concurrency() );
         int max_arena_concurrency = tbb::this_task_arena::max_concurrency();
-        CHECK( max_arena_concurrency == my_max_concurrency );
+        REQUIRE( max_arena_concurrency == my_max_concurrency );
         if ( my_worker_barrier ) {
             if ( local_id.local() == 1 ) {
                 // External thread in a reserved slot
@@ -1764,6 +1766,46 @@ struct enqueue_test_helper {
     std::atomic<std::size_t>& my_task_counter;
 };
 
+void test_threads_sleep(int concurrency, int reserved_slots, int num_external_threads) {
+    tbb::task_arena a(concurrency, reserved_slots);
+    std::mutex m;
+    std::condition_variable cond_var;
+    bool completed{ false };
+    utils::SpinBarrier barrier( concurrency - reserved_slots + 1 );
+
+    auto body = [&] {
+        std::unique_lock<std::mutex> lock(m);
+        cond_var.wait(lock, [&] { return completed == true; });
+    };
+
+    for (int i = 0; i < concurrency - reserved_slots; ++i) {
+        a.enqueue([&] {
+            body();
+            barrier.signalNoWait();
+        });
+    }
+    std::vector<std::thread> threads;
+    for (int i = 0; i < num_external_threads; ++i) {
+        threads.emplace_back([&]() { a.execute(body); });
+    }
+    TestCPUUserTime(concurrency);
+
+    {
+        std::lock_guard<std::mutex> lock(m);
+        completed = true;
+        cond_var.notify_all();
+    }
+    for (auto& t : threads) {
+        t.join();
+    }
+    barrier.wait();
+}
+
+void test_threads_sleep(int concurrency, int reserved_slots) {
+    test_threads_sleep(concurrency, reserved_slots, reserved_slots);
+    test_threads_sleep(concurrency, reserved_slots, 2 * concurrency);
+}
+
 //--------------------------------------------------//
 
 // This test requires TBB in an uninitialized state
@@ -1884,10 +1926,12 @@ TEST_CASE("Exception thrown during tbb::task_arena::execute call") {
     }(), std::exception );
 }
 #endif // TBB_USE_EXCEPTIONS
+
 //! \brief \ref stress
 TEST_CASE("Stress test with mixing functionality") {
     StressTestMixFunctionality();
 }
+
 //! \brief \ref stress
 TEST_CASE("Workers oversubscription") {
     std::size_t num_threads = utils::get_platform_max_threads();
@@ -1924,6 +1968,7 @@ TEST_CASE("Workers oversubscription") {
         );
     });
 }
+
 #if TBB_USE_EXCEPTIONS
 //! The test for error in scheduling empty task_handle
 //! \brief \ref requirement
@@ -1937,6 +1982,17 @@ TEST_CASE("Empty task_handle cannot be scheduled"
     CHECK_THROWS_WITH_AS(tbb::this_task_arena::enqueue(tbb::task_handle{}), "Attempt to schedule empty task_handle", std::runtime_error);
 }
 #endif
+
+//! \brief \ref error_guessing
+TEST_CASE("Test threads sleep") {
+    for (auto concurrency_level : utils::concurrency_range()) {
+        int conc = int(concurrency_level);
+        test_threads_sleep(conc, 0);
+        test_threads_sleep(conc, 1);
+        test_threads_sleep(conc, conc/2);
+        test_threads_sleep(conc, conc);
+    }
+}
 
 #if __TBB_PREVIEW_TASK_GROUP_EXTENSIONS
 
