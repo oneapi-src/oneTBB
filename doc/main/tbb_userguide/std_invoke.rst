@@ -10,7 +10,7 @@ Previously, the body of the algorithm or Flow Graph node needed to be a Function
 Now the body needs to meet the more relaxed requirements of being Callable (see `C++ Standard Callable <https://en.cppreference.com/w/cpp/named_req/Callable>`_) that covers three types of objects:
 
 * **Function Objects that provide operator(arg1, arg2, ...)**, which accepts the input parameters
-* **Pointers to member functions** that you can use as the body of the algorithm or parallel construct
+* **Pointers to member functions** that you can use as the body of the algorithm or the Flow Graph node
 * **Pointers to member objects** work as the body of the algorithm or parallel construct
 
 Consider the following example: 
@@ -94,7 +94,7 @@ Before C++17, to utilize a range in a parallel algorithm, such as ``parallel_for
         delete[] array_to_iterate;
    }
 
-An additional lambda function ``pfor_body`` was also often required. This lambda function invoked the ``rage.iterate()`` function.
+An additional lambda function ``pfor_body`` was also required. This lambda function invoked the ``rage.iterate()`` function.
 
 Now with C++17, you can directly utilize a pointer to ``range.iterate()`` as the body of the algorithm:
 
