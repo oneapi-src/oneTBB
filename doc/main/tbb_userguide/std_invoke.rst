@@ -13,7 +13,7 @@ Now the body needs to meet the more relaxed requirements of being Callable (see 
 * **Pointers to member functions** that you can use as the body of the algorithm or the Flow Graph node
 * **Pointers to member objects** work as the body of the algorithm or parallel construct
 
-Consider the following example: 
+You can use it not only for a Flow Graph but also for algorithms. See the example below: 
 
 .. code::
    
@@ -121,7 +121,7 @@ Now with C++17, you can directly utilize a pointer to ``range.iterate()`` as the
 ``std::invoke`` is a function template that provides a syntax for invoking different types of callable objects with a set of arguments.
 
 oneTBB implementation uses the C++ standard function ``std::invoke(&StrideRange::iterate, range)`` to execute the body. It is the equivalent of ``range.iterate()``.
-Therefore, it allows you to invoke a callable object, such as function object, with the provided arguments. 
+Therefore, it allows you to invoke a callable object, such as a function object, with the provided arguments. 
 
 .. tip:: Refer to `C++ Standard <https://en.cppreference.com/w/cpp/utility/functional/invoke>`_ to learn more about ``std::invoke``. 
 
