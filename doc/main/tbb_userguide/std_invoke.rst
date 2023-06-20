@@ -120,7 +120,7 @@ Now with C++17, you can directly utilize a pointer to ``range.iterate()`` as the
 
 ``std::invoke`` is a function template that provides a syntax for invoking different types of callable objects with a set of arguments.
 
-oneTBB implementation uses the C++ standard function ``std::invoke(&StrideRange::iterate, range) <std::invoke link>`` to execute the body. It is the equivalent of ``range.iterate()``.
+oneTBB implementation uses the C++ standard function ``std::invoke(&StrideRange::iterate, range)`` to execute the body. It is the equivalent of ``range.iterate()``.
 Therefore, it allows you to invoke a callable object, such as function object, with the provided arguments. 
 
 .. tip:: Refer to `C++ Standard <https://en.cppreference.com/w/cpp/utility/functional/invoke>`_ to learn more about ``std::invoke``. 
