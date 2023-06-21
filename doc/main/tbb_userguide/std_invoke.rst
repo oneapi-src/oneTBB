@@ -129,46 +129,38 @@ In the example below, a ``function_node`` takes an object as an input to read a 
 
 .. code:: 
 
-   struct Object
-   {
-       int number;
+    struct Object {
+        int number;
+    };
 
-   };
+    int main() {
+        using namespace oneapi::tbb::flow;
 
-   int main()
-   {
-       using namespace oneapi::tbb::flow;
-       
-       // Lambda function to read the member object of the input Object
-       auto number_reader =[](const Object &obj)
-       {
-           return obj.number;
-       };
+        // Lambda function to read the member object of the input Object
+        auto number_reader = [] (const Object& obj) {
+            return obj.number;
+        };
 
-       // Lambda function to process the received integer
-       auto number_processor =[](int i)
-       { /*processing integer*/ };
+        // Lambda function to process the received integer
+        auto number_processor = [] (int i) { /* processing integer */ };
 
-       graph g;
+        graph g;
 
-       // Function node that takes an Object as input and produces an integer
-       function_node<Object, int> func1(g, unlimited, number_reader);
+        // Function node that takes an Object as input and produces an integer
+        function_node<Object, int> func1(g, unlimited, number_reader);
 
-       // Function node that takes an integer as input and processes it
-       function_node<int, int> func2(g, unlimited, number_processor);
-       
-       // Connect the function nodes
-       make_edge(func1, func2);
-       
-       // Provide produced input to the graph
-       func1.try_put(Object
-       {
-           1 });
-       
-       // Wait for the graph to complete
-       g.wait_for_all();
+        // Function node that takes an integer as input and processes it
+        function_node<int, int> func2(g, unlimited, number_processor);
 
-   }
+        // Connect the function nodes
+        make_edge(func1, func2);
+
+        // Provide produced input to the graph
+        func1.try_put(Object{1});
+
+        // Wait for the graph to complete
+        g.wait_for_all();
+    }
 
 
 Before C++17, the ``function_node`` in the Flow Graph required the body to be a Function Object. A lambda function was required to extract the number from the Object. 
