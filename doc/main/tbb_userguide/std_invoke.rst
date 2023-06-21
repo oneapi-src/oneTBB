@@ -71,25 +71,23 @@ Before C++17, to utilize a range in a parallel algorithm, such as ``parallel_for
 
 .. code:: 
 
-   int main()
-   {    
+    int main() {
         std::size_t array_size = 1000;
 
-        int *array_to_iterate = new int[array_size];
+        int* array_to_iterate = new int[array_size];
         
-        StrideRange range(array_to_iterate, array_size, /*stride = */ 2);
-        
-         // Define a lambda function as the body of the parallel_for loop
-        auto pfor_body =[](const StrideRange &range)
-        {
+        StrideRange range(array_to_iterate, array_size, /* stride = */ 2);
+
+        // Define a lambda function as the body of the parallel_for loop
+        auto pfor_body = [] (const StrideRange& range) {
             range.iterate();
         };
-        
-         // Perform parallel iteration 
+
+        // Perform parallel iteration 
         oneapi::tbb::parallel_for(range, pfor_body);
 
         delete[] array_to_iterate;
-   }
+    }
 
 An additional lambda function ``pfor_body`` was also required. This lambda function invoked the ``rage.iterate()`` function.
 
