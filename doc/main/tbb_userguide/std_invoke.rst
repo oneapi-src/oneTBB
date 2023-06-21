@@ -17,50 +17,47 @@ You can use it not only for a Flow Graph but also for algorithms. See the exampl
 
 .. code::
    
-  	// The class models oneTBB Range 
+    // The class models oneTBB Range 
+    class StrideRange {
+    public:
+        StrideRange(int* s, std::size_t sz, std::size_t str)
+            : start(s), size(sz), stride(str) {}
 
-   class StrideRange
-   {
-       StrideRange(int *s, std::size_t sz, std::size_t str): start(s), size(sz), stride(str) {}
-       
-       // A copy constructor
-       StrideRange(const StrideRange &) = default;
-       // A splitting constructor
-       StrideRange(StrideRange &other, oneapi::tbb::split): start(other.start), size(other.size / 2)
-           {
-               other.size -= size;
+        // A copy constructor
+        StrideRange(const StrideRange&) = default;
 
-               other.start += size;
-           }
+        // A splitting constructor
+        StrideRange(StrideRange& other, oneapi::tbb::split) 
+            : start(other.start), size(other.size / 2)
+        {
+            other.size -= size;
+            other.start += size;
+        }
 
-           ~StrideRange() = default;
-       
-       // Indicate if the range is empty
-       bool empty() const
-       {
-           return size == 0;
-       }
-       
-       // Indicate if the range can be divided
-       bool is_divisible() const
-       {
-           return size >= stride;
-       }
+        ~StrideRange() = default;
 
-       void iterate() const
-       {
-           for (std::size_t i = 0; i < size; i += stride)
+        // Indicate if the range is empty
+        bool empty() const {
+            return size == 0;
+        }
 
-          	// Performed an action for each element of the range, implement the code based on your requirements
+        // Indicate if the range can be divided
+        bool is_divisible() const {
+            return size >= stride;
+        }
 
-       }
+        void iterate() const {
+            for (std::size_t i = 0; i < size; i += stride) {
+                // Performed an action for each element of the range,
+                // implement the code based on your requirements
+            }
+        }
 
-       private:
-           int *start;
-       std::size_t size;
-
-       std::size_t stride;
-   };
+    private:
+        int* start;
+        std::size_t size;
+        std::size_t stride;
+    };
 
 Where:
 
