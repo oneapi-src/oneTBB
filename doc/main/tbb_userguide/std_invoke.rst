@@ -95,20 +95,19 @@ Now with C++17, you can directly utilize a pointer to ``range.iterate()`` as the
 
 .. code::
    
-   int main()
-   {
-       std::size_t array_size = 1000;
+    int main() {
+        std::size_t array_size = 1000;
 
-       int *array_to_iterate = new int[array_size];
-       
-       // Performs the iteration over the array elements with the specified stride
-       StrideRange range(array_to_iterate, array_size, /*stride = */ 2);
-       
-       // Parallelize the iteration over the range object
-       oneapi::tbb::parallel_for(range, &StrideRange::iterate);
+        int* array_to_iterate = new int[array_size];
 
-       delete[] array_to_iterate;
-   }
+        // Performs the iteration over the array elements with the specified stride
+        StrideRange range(array_to_iterate, array_size, /* stride = */ 2);
+
+        // Parallelize the iteration over the range object
+        oneapi::tbb::parallel_for(range, &StrideRange::iterate);
+
+        delete[] array_to_iterate;
+    }
 
 ``std::invoke``
 ****************
