@@ -171,40 +171,34 @@ You can update the previous example as follows:
 
 .. code::
 
-   struct Object
-   {
-       int number;
+    struct Object {
+        int number;
+    };
 
-   };
+    int main() {
+        using namespace oneapi::tbb::flow;
+ 
+        // The processing logic for the received integer
+        auto number_processor = [] (int i) { /* processing integer */ };
 
-   int main()
-   {
-       using namespace oneapi::tbb::flow;
-       
-       // The processing logic for the received integer
-       auto number_processor =[](int i)
-       { /*processing integer*/ };
-       
-       // Create a graph object g to hold the flow graph
-       graph g;
-       
-       // Use a member function pointer to the number member of the Object struct as the body
-       function_node<Object, int> func1(g, unlimited, &Object::number);
-       
-       // Use the number_processor lambda function as the body
-       function_node<int, int> func2(g, unlimited, number_processor);
+        // Create a graph object g to hold the flow graph
+        graph g;
 
-       // Connect the function nodes
-       make_edge(func1, func2);
-       
-       // Connect the function nodes
-       func1.try_put(Object
-       {
-           1 });
+        // Use a member function pointer to the number member of the Object struct as the body
+        function_node<Object, int> func1(g, unlimited, &Object::number);
+
+        // Use the number_processor lambda function as the body
+        function_node<int, int> func2(g, unlimited, number_processor);
+
+        // Connect the function nodes
+        make_edge(func1, func2);
+
+        // Connect the function nodes
+        func1.try_put(Object{1});
+
        // Wait for the graph to complete
        g.wait_for_all();
-
-   }
+    }
 
 Find More 
 *********
