@@ -58,6 +58,23 @@ public:
         __TBB_ASSERT(t == nullptr, nullptr);
 
         if (is_worker_should_leave(slot)) {
+            static constexpr std::chrono::microseconds worker_wait_leave_duration(80);
+            static_assert(worker_wait_leave_duration > std::chrono::steady_clock::duration(1), "Clock resolution is not enough for measured interval.");
+
+            for (auto t1 = std::chrono::steady_clock::now(), t2 = t1;
+                std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1) < worker_wait_leave_duration;
+                t2 = std::chrono::steady_clock::now())
+            {
+                if (!my_arena.is_empty() && !my_arena.is_recall_requested()) {
+                    return true;
+                }
+
+                if (!my_arena.try_keep_thread_idle()) {
+                    break;
+                }
+                d0::yield();
+            }
+
             // Leave dispatch loop
             return false;
         }

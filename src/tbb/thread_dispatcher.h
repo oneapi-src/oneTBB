@@ -45,6 +45,7 @@ public:
     void register_client(thread_dispatcher_client* client);
     bool try_unregister_client(thread_dispatcher_client* client, std::uint64_t aba_epoch, unsigned priority);
 
+    bool check_for_client_in_need();
     void adjust_job_count_estimate(int delta);
     void release(bool blocking_terminate);
     void process(job& j) override;
@@ -66,7 +67,7 @@ private:
     void insert_client(thread_dispatcher_client& client);
     void remove_client(thread_dispatcher_client& client);
     bool is_client_alive(thread_dispatcher_client* client);
-    thread_dispatcher_client* client_in_need(client_list_type* clients, thread_dispatcher_client* hint);
+    thread_dispatcher_client* client_in_need(client_list_type* clients, thread_dispatcher_client* hint, bool should_join = true);
     thread_dispatcher_client* client_in_need(thread_dispatcher_client* prev);
 
     friend class threading_control_impl;

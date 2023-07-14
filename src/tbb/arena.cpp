@@ -391,12 +391,20 @@ bool arena::is_top_priority() const {
     return my_is_top_priority.load(std::memory_order_relaxed);
 }
 
+bool arena::try_keep_thread_idle() {
+    return my_threading_control->try_keep_thread_idle();
+}
+
 bool arena::try_join() {
     if (num_workers_active() < my_num_workers_allotted.load(std::memory_order_relaxed)) {
         my_references += arena::ref_worker;
         return true;
     }
     return false;
+}
+
+bool arena::can_join() {
+    return num_workers_active() < my_num_workers_allotted.load(std::memory_order_relaxed);
 }
 
 void arena::set_allotment(unsigned allotment) {

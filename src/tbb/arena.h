@@ -390,6 +390,10 @@ public:
 
     bool try_join();
 
+    bool can_join();
+
+    bool try_keep_thread_idle();
+
     void set_allotment(unsigned allotment);
 
     std::pair</*min workers = */ int, /*max workers = */ int> update_request(int mandatory_delta, int workers_delta);

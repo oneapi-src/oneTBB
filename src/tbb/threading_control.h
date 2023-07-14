@@ -69,6 +69,7 @@ public:
     unsigned max_num_workers();
 
     void adjust_demand(threading_control_client, int mandatory_delta, int workers_delta);
+    bool try_keep_thread_idle();
 
     thread_control_monitor& get_waiting_threads_monitor();
 
@@ -116,6 +117,7 @@ public:
     static unsigned max_num_workers();
 
     void adjust_demand(threading_control_client client, int mandatory_delta, int workers_delta);
+    bool try_keep_thread_idle();
 
     thread_control_monitor& get_waiting_threads_monitor();
 

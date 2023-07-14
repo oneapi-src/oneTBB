@@ -157,6 +157,10 @@ void threading_control_impl::adjust_demand(threading_control_client tc_client, i
     my_permit_manager->adjust_demand(c, mandatory_delta, workers_delta);
 }
 
+bool threading_control_impl::try_keep_thread_idle() {
+    return !my_thread_dispatcher->check_for_client_in_need();
+}
+
 thread_control_monitor& threading_control_impl::get_waiting_threads_monitor() {
     return *my_waiting_threads_monitor;
 }
@@ -380,6 +384,10 @@ unsigned threading_control::max_num_workers() {
 
 void threading_control::adjust_demand(threading_control_client client, int mandatory_delta, int workers_delta) {
     my_pimpl->adjust_demand(client, mandatory_delta, workers_delta);
+}
+
+bool threading_control::try_keep_thread_idle() {
+    return my_pimpl->try_keep_thread_idle();
 }
 
 thread_control_monitor& threading_control::get_waiting_threads_monitor() {

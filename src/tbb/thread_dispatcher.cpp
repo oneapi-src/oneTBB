@@ -131,7 +131,7 @@ bool thread_dispatcher::is_client_alive(thread_dispatcher_client* client) {
     return false;
 }
 
-thread_dispatcher_client* thread_dispatcher::client_in_need(client_list_type* clients, thread_dispatcher_client* hint) {
+thread_dispatcher_client* thread_dispatcher::client_in_need(client_list_type* clients, thread_dispatcher_client* hint, bool should_join) {
     // TODO: make sure client with higher priority returned only if there are available slots in it.
     hint = select_next_client(hint);
     if (!hint) {
@@ -149,7 +149,10 @@ thread_dispatcher_client* thread_dispatcher::client_in_need(client_list_type* cl
             } while (clients[curr_priority_level].empty());
             it = clients[curr_priority_level].begin();
         }
-        if (t.try_join()) {
+
+        bool joined_to_client = should_join && t.try_join();
+        bool found_client_in_need = !should_join && t.can_join();
+        if (joined_to_client || found_client_in_need) {
             return &t;
         }
     } while (it != hint);
@@ -162,6 +165,11 @@ thread_dispatcher_client* thread_dispatcher::client_in_need(thread_dispatcher_cl
         return client_in_need(my_client_list, prev);
     }
     return client_in_need(my_client_list, my_next_client);
+}
+
+bool thread_dispatcher::check_for_client_in_need() {
+    client_list_mutex_type::scoped_lock lock(my_list_mutex, /*is_writer=*/false);
+    return client_in_need(my_client_list, nullptr, /* should_join = */ false) != nullptr;
 }
 
 void thread_dispatcher::adjust_job_count_estimate(int delta) {

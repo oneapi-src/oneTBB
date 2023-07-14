@@ -32,6 +32,11 @@ public:
     bool try_join() {
         return my_arena.try_join();
     }
+
+    bool can_join() {
+        return my_arena.can_join();
+    }
+
     void process(thread_data& td) {
         my_arena.process(td);
     }
