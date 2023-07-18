@@ -543,13 +543,6 @@ void task_arena_impl::initialize(d1::task_arena_base& ta) {
         .set_core_type(ta.core_type())
         .set_max_threads_per_core(ta.max_threads_per_core())
         .set_numa_id(ta.my_numa_id);
-
-    numa_binding_observer* observer = construct_binding_observer(
-        static_cast<d1::task_arena*>(&ta), arena::num_arena_slots(ta.my_max_concurrency, ta.my_num_reserved_slots),
-        ta.my_numa_id, ta.core_type(), ta.max_threads_per_core());
-    if (observer) {
-        observer->on_scheduler_entry(true);
-    }
 #endif /*__TBB_ARENA_BINDING*/
 
     if (ta.my_max_concurrency < 1) {
@@ -559,6 +552,15 @@ void task_arena_impl::initialize(d1::task_arena_base& ta) {
         ta.my_max_concurrency = (int)governor::default_num_threads();
 #endif /*!__TBB_ARENA_BINDING*/
     }
+
+#if __TBB_ARENA_BINDING
+    numa_binding_observer* observer = construct_binding_observer(
+        static_cast<d1::task_arena*>(&ta), arena::num_arena_slots(ta.my_max_concurrency, ta.my_num_reserved_slots),
+        ta.my_numa_id, ta.core_type(), ta.max_threads_per_core());
+    if (observer) {
+        observer->on_scheduler_entry(true);
+    }
+#endif /*__TBB_ARENA_BINDING*/
 
     __TBB_ASSERT(ta.my_arena.load(std::memory_order_relaxed) == nullptr, "Arena already initialized");
     unsigned priority_level = arena_priority_level(ta.my_priority);
