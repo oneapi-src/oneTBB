@@ -99,8 +99,10 @@ class SharedGroupBodyImpl : utils::NoCopy, utils::NoAfterlife {
                 utils::ConcurrencyTracker ct;
                 m_taskGroup->wait();
             }
-            if ( utils::ConcurrencyTracker::PeakParallelism() == 1 )
-                WARN( "Warning: No parallel waiting detected in TestParallelWait" );
+            if ( utils::ConcurrencyTracker::PeakParallelism() == 1 ) {
+                const char* msg = "Warning: No parallel waiting detected in TestParallelWait";
+                WARN( msg );
+            }
             m_barrier.wait();
         }
         else
